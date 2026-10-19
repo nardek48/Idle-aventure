@@ -425,6 +425,39 @@ var ADVENTURE_QUESTS = {
     reward: {}
   },
 
+  /* v3.455.0 (Crypte, acte III étape 14) — « Ce qu'elle garde » : trois rencontres dans l'Ossuaire (dormeurs
+     nombreux), puis la Pleureuse, avec Ysolt dans le groupe. Cible : 65-80 % par classe au profil du palier
+     Épique. Multiplicateurs au banc. */
+  aq_crypte_pleureuse: {
+    id: "aq_crypte_pleureuse",
+    type: "elite",
+    section: "adventure",
+    difficulty: "hard",
+    progressionStage: "world_end",
+    category: "side",
+    worldId: "crypt",
+    adventureIndex: 1,
+    eliteId: "pleureuse",
+    requiresStoryStep: "crypte_14",
+    requiresParty: "ysolt",
+    encounters: [
+      { group: ["spectre", "wraith", "deadknight"], groupHpMult: 0.35, sleepers: 2 },
+      { group: ["necromancer", "spectre"], groupHpMult: 0.55, sleepers: 1 },
+      { group: ["wraith", "deadknight", "spectre"], groupHpMult: 0.35, sleepers: 2 }
+    ],
+    encounterHpMult: 2.1, // v3.455.0 : au banc (crypte-acte3-bench --pleureuse), 75-92 %
+    enemyPowerMult: 5.3,
+    eliteStatMult: { power: 3.3, endurance: 3.0 },
+    name: "Ce qu'elle garde",
+    story: "Au fond de l'Ossuaire, des pleurs. Une salle où toutes les alcôves sont vides, sauf une.",
+    icon: "./images/Icons/quest_icons/elite/elite_pleureuse.png",
+    steps: [
+      { id: "rencontres_pleureuse", type: "encounter", worldId: "crypt", target: 3, desc: "Vaincre {target} rencontres dans l'Ossuaire" },
+      { id: "elite_pleureuse", type: "eliteKill", eliteId: "pleureuse", target: 1, desc: "Vaincre la Pleureuse" }
+    ],
+    reward: {}
+  },
+
   /* v3.428.0 (Ruines, acte I étape 2) — « Ce qui se relève » : cinq rencontres aux Couloirs
      effondrés, la leçon de la relève (systems/rise-system.js). Cible du banc (Seb, 03/10/2026) :
      aucun mort, 30 à 45 % de PV perdus. Multiplicateurs provisoires, au banc (sim/ruines-bench.js). */

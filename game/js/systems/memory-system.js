@@ -20,6 +20,7 @@ var MemoryManager = {
     if (typeof m.firstOffering !== "boolean") m.firstOffering = false;
     if (typeof m.announced !== "number") m.announced = 0;  // dernier niveau annoncé au joueur
     if (typeof m.voieFreeDay !== "string") m.voieFreeDay = "";
+    if (!m.freeUsed || typeof m.freeUsed !== "object") m.freeUsed = {}; // v3.455.0 : reprises gratuites déjà prises, par niveau
     return m;
   },
 
@@ -53,6 +54,11 @@ var MemoryManager = {
     return !!(o && o.line && !this.lineOpen(level, o.line));
   },
   V: function (k) { return Number((window.MEMORY_VALUES || {})[k] || 0); },
+  /* v3.455.0 : reprise offerte une fois quand un choix pesant rend un niveau caduc (Ysolt recouchée). */
+  isFreeReprise: function (level) {
+    var def = this.getLevelDef(level), f = def && def.freeRepriseOnChoice, m = this.ensure();
+    return !!(f && this.getChoice(level) && !m.freeUsed[level] && window.StoryQuestManager && StoryQuestManager.getChoice(f.key) === f.value);
+  },
 
   /* Voie libre (niveau 7) : un changement de voie gratuit par jour (date locale). */
   todayKey: function () {
@@ -130,7 +136,9 @@ var MemoryManager = {
     if (opt.line && !this.lineOpen(level, opt.line)) return false; // v3.453.0 : ligne fermée
     var current = m.choices[level];
     if (current === optionId) return false;
-    if (current && !this.isLineBroken(level)) {   // ligne cassée : on rechoisit sans frais
+    var gratuite = this.isFreeReprise(level);
+    if (gratuite && current) m.freeUsed[level] = true;
+    if (current && !this.isLineBroken(level) && !gratuite) {   // ligne cassée, ou reprise offerte : sans frais
       var cost = this.getRepriseCost();
       if (Number(game.gold || 0) < cost) { showToast(_t("Pas assez d'or ({n})", { n: formatNumber(cost) }), 1400); return false; }
       game.gold = Number(game.gold || 0) - cost;

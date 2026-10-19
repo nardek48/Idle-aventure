@@ -104,7 +104,10 @@ var WORKSHOPS_CONFIG = {
     buildingId: "mine", name: "Fonderie", icon: "images/Icons/workshops/smelter.png", active: true,
     upgradeCostBase: { planche: 3, lingot: 2 },
     recipes: [
-      { id: "lingot", inputs: [{ resourceId: "fer", quantity: 5 }], outputs: [{ resourceId: "lingot", quantity: 1 }], craftTimeMs: 3000 }
+      { id: "lingot", inputs: [{ resourceId: "fer", quantity: 5 }], outputs: [{ resourceId: "lingot", quantity: 1 }], craftTimeMs: 3000 },
+      // v3.455.0 (Crypte, acte III) : la Cire consacrée, Cire de sépulcre fondue et coulée en barres. Au banc.
+      { id: "cire_consacree", inputs: [{ resourceId: "cire_sepulcre", quantity: 3 }, { resourceId: "lingot", quantity: 2 }],
+        outputs: [{ resourceId: "cire_consacree", quantity: 1 }], craftTimeMs: 30000 }
     ]
   },
   /* v3.221.0 (lot V-8) : troisième atelier de tier 2 activé, pour alimenter la

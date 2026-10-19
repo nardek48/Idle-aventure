@@ -84,7 +84,18 @@ var CompanionManager = {
 
   isUnlocked: function (companionId) {
     var st = this.state(companionId);
-    return !!(st && st.unlocked);
+    return !!(st && st.unlocked) && !this.hasDeparted(companionId);
+  },
+
+  /* v3.455.0 : un choix pesant peut faire partir un compagnon pour de bon (Ysolt, branche Garder). */
+  hasDeparted: function (companionId) {
+    var def = getCompanionDef(companionId), d = def && def.departsOnChoice;
+    return !!(d && window.StoryQuestManager && StoryQuestManager.getChoice(d.key) === d.value);
+  },
+  /* v3.455.0 : modificateurs d'un choix pesant sur un compagnon (Ysolt, branche Donner), ou null. */
+  choiceModsOf: function (companionId) {
+    var def = getCompanionDef(companionId), m = def && def.choiceMods;
+    return (m && window.StoryQuestManager && StoryQuestManager.getChoice(m.key) === m.value) ? m : null;
   },
 
   /* Appelé par l'étape d'Histoire qui fait rejoindre le compagnon. */
@@ -105,9 +116,9 @@ var CompanionManager = {
   },
 
   unlockedIds: function () {
-    var all = this.ensure(), out = [];
+    var all = this.ensure(), out = [], self = this;
     Object.keys(COMPANIONS_DB).forEach(function (id) {
-      if (all[id] && all[id].unlocked) out.push(id);
+      if (all[id] && all[id].unlocked && !self.hasDeparted(id)) out.push(id);
     });
     return out;
   },
@@ -203,6 +214,8 @@ var CompanionManager = {
       s.maxHp = Math.floor(s.maxHp * TalentManager.companionHpMult());
       s.damage = Math.floor(s.damage * TalentManager.companionDamageMult());
     }
+    var cm = s ? this.choiceModsOf(companionId) : null;
+    if (cm && cm.hpMult) s.maxHp = Math.max(1, Math.floor(s.maxHp * cm.hpMult)); // v3.455.0 : Ysolt s'use
     return s;
   },
 
@@ -332,6 +345,8 @@ var CompanionManager = {
   chargesMax: function (companionId) {
     var def = getCompanionDef(companionId);
     var n = (def && def.skill && typeof def.skill.charges === "number") ? def.skill.charges : 0;
+    var cm = n > 0 ? this.choiceModsOf(companionId) : null;
+    if (cm && cm.extraCharges) n += Number(cm.extraCharges); // v3.455.0 : Ysolt reste, Pas encore deux fois
     return n > 0 && window.TalentManager && TalentManager.companionExtraCharges ? n + TalentManager.companionExtraCharges() : n; // v3.453.0 : Une charge de plus
   },
 
@@ -452,6 +467,11 @@ var CompanionManager = {
   takeTurn: function (actor, forcedSlot, forcedArg) {
     if (!actor || !actor.companionId) return false;
     if (actor.hp <= 0) return false;
+    if (actor.lulled > 0) { // v3.455.0 : endormi par la Pleureuse, un round
+      actor.lulled -= 1;
+      if (typeof addLog === "function") addLog("💤 " + _t("{x} dort debout.", { x: actor.name ? _td(actor.name) : _t("Compagnon") }), "normal");
+      return true;
+    }
     var def = getCompanionDef(actor.companionId);
     if (!def) return false;
 

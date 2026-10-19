@@ -140,7 +140,8 @@ var MEMORY_LEVELS = [
     { id: "cire_chaude", side: "donner", name: "Cire chaude", icon: "images/Icons/memory/cire_chaude.png",
       desc: "+1 Cire de sépulcre à chaque destination atteinte à la Crypte." }
   ] },
-  { level: 15, theme: "Ysolt", options: [
+  // v3.455.0 : si Ysolt se recouche (choix « ysolt » = garder), ce niveau se reprend une fois sans frais
+  { level: 15, theme: "Ysolt", freeRepriseOnChoice: { key: "ysolt", value: "garder" }, options: [
     { id: "fidelite_ysolt", side: "garder", name: "Fidélité d'Ysolt", icon: "images/Icons/memory/fidelite_ysolt.png",
       desc: "Après un KO, Ysolt revient au combat suivant avec tous ses PV." },
     { id: "pas_encore_encore", side: "donner", name: "Pas encore, encore", icon: "images/Icons/memory/pas_encore_encore.png",

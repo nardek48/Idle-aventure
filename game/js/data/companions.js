@@ -180,6 +180,10 @@ COMPANIONS_DB.ysolt = {
   autoPolicy: ["skill", "basic"],
   upgrades: { costs: [960, 1920, 3840, 7200, 12000], statPct: 0.06 }, // prix de la Crypte, provisoires
   unlockedBy: "crypte_03",
+  /* v3.455.0 (acte III, choix « ysolt », décision Seb du 19/10 : option A) — Garder : elle se recouche et
+     quitte le groupe pour de bon ; Donner : elle reste, Pas encore deux fois par combat, −15 % de PV max. */
+  departsOnChoice: { key: "ysolt", value: "garder" },
+  choiceMods: { key: "ysolt", value: "donner", extraCharges: 1, hpMult: 0.85 },
   lines: {
     join: "Ne marchez pas si fort. Ils dorment.",
     skill: "Pas encore. Dors.",

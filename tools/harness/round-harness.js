@@ -4476,8 +4476,8 @@ console.log("\n[32] v3.223.0 \u2014 Donjons : plafond par monde et mat\u00e9riau
 
   var sansMateriau = (g.DUNGEONS || []).filter(function (t) { return !t.specialResourceId; });
   // v3.321.0 : la Cité engloutie rapporte du Verre des dunes ; v3.430.0 : le Sanctuaire, de la Pierre errante — trois à venir
-  ok(sansMateriau.length === 3 && D.getById(2).specialResourceId === "verre_des_dunes" && D.getById(3).specialResourceId === "pierre_errante",
-    "la Cit\u00e9 rapporte du Verre des dunes, le Sanctuaire de la Pierre errante, les trois donjons suivants attendent le leur");
+  ok(sansMateriau.length === 2 && D.getById(2).specialResourceId === "verre_des_dunes" && D.getById(3).specialResourceId === "pierre_errante" && D.getById(4).specialResourceId === "cire_sepulcre",
+    "la Cit\u00e9 rapporte du Verre des dunes, le Sanctuaire de la Pierre errante, l'Ossuaire de la Cire ; les deux suivants attendent le leur"); // v3.455.0
   var tousDeclares = (g.DUNGEONS || []).every(function (t) { return typeof t.worldRequired === "number"; });
   ok(tousDeclares, "chaque donjon d\u00e9clare son monde requis");
 
@@ -14348,7 +14348,7 @@ console.log("\n[207] v3.431.0 — Ruines, acte III (livraison 2) : Clé de voût
     var rec = g.WORKSHOPS_CONFIG.tailleur_de_pierre.recipes.filter(function (r) { return r.id === "cle_de_voute"; })[0];
     ok(rec && rec.inputs[0].resourceId === "pierre_errante" && rec.outputs[0].resourceId === "cle_de_voute", "taillée au Tailleur de pierre, à partir de Pierres errantes");
     var F = g.VILLAGE_BUILDINGS.forge, t4 = g.VillageBuildingManager.getCostTierForLevel(F, 3);
-    ok(F.maxLevel === 4 && t4 && t4.baseCost.cle_de_voute === 3 && g.WORLD_CAPS[2].village.forge === 4 && g.WORLD_CAPS[1].village.forge === 3, "Forge 4 aux Ruines, payée en Clés de voûte ; 3 au Désert");
+    ok(F.maxLevel === 5 && t4 && t4.baseCost.cle_de_voute === 3 && g.WORLD_CAPS[2].village.forge === 4 && g.WORLD_CAPS[1].village.forge === 3, "Forge 4 aux Ruines, payée en Clés de voûte ; 3 au Désert (v3.455.0 : 5 à la Crypte)");
     ok(g.isStoryVillageLevel("forge", 4), "la Forge 4 est un niveau d'Histoire (matériaux communs fournis)");
     g.VillageBuildingManager.ensure();
     game.village.buildings.forge = { level: 4 };
@@ -15510,7 +15510,7 @@ console.log("\n[238] v3.450.0 — Crypte, lot C-0 : socle et passage entre les m
     ok(R.cire_sepulcre && R.cire_sepulcre.worldIndex === 3 && R.cire_consacree && R.cire_consacree.worldIndex === 3, "Cire de sépulcre et Cire consacrée : matériaux du monde 4");
     ok(g.WORLD_HERO_SCALING.refByWorld.crypt && g.HERO_SCALING_REFS.joueurRuines, "ajustement au héros : référence de fin des Ruines");
     var d4 = g.DUNGEONS.filter(function (d) { return d.id === 4; })[0];
-    ok(d4.locked === true && d4.requiresStoryStep === "crypte_12" && d4.storyChapterId === "crypt", "Ossuaire : fermé jusqu'à son contenu, puis derrière son étape d'Histoire (acte III)");
+    ok(!d4.locked && d4.requiresStoryStep === "crypte_12" && d4.storyChapterId === "crypt", "Ossuaire : derrière son étape d'Histoire (acte III, v3.455.0)");
     // Le passage : arrivée, monde posé, plafonds de la Crypte, Ossuaire toujours fermé, voyage retour
     game.worldsEverReached = { 0: true, 1: true, 2: true };
     game.dungeonTierCleared = { 1: true, 2: true, 3: true };
@@ -15734,7 +15734,7 @@ console.log("\n[242] v3.454.0 — Crypte, lot C-3 : acte II (obscurité, Lantern
   var wiAvant = g.WorldManager.worldIndex, savedReached = SQ.isStepReached, savedHas = g.MemoryManager.has, savedEff = LM.hasEffect;
   try {
     var ch = g.STORY_QUESTS.crypt;
-    ok(ch.steps.map(function (st) { return st.id; }).slice(5).join() === "crypte_06,crypte_07,crypte_08,crypte_09,crypte_10", "acte II : cinq étapes, crypte_06 à crypte_10");
+    ok(ch.steps.map(function (st) { return st.id; }).slice(5, 10).join() === "crypte_06,crypte_07,crypte_08,crypte_09,crypte_10", "acte II : cinq étapes, crypte_06 à crypte_10");
     ok(g.PA2_MAPS_BY_WORLD.crypt.join() === "crypte_1,crypte_2" && g.SCENE_TEMPLATES.petite_aventure_crypte.boardRequires.storyStep === "crypte_06", "Petite Aventure de la Crypte : deux cartes, ouverte à crypte_06");
     ["crypte_1", "crypte_2"].forEach(function (id) {
       var m = g.PA2_MAPS[id], miss = [];
@@ -15815,6 +15815,107 @@ console.log("\n[242] v3.454.0 — Crypte, lot C-3 : acte II (obscurité, Lantern
     SQ.isStepReached = savedReached; g.MemoryManager.has = savedHas; LM.hasEffect = savedEff; g.WorldManager.worldIndex = wiAvant;
     if (game.sceneRun) game.sceneRun = null;
     if (g.SortieManager.isActive()) g.SortieManager.end("return");
+  }
+})();
+
+console.log("\n[243] v3.455.0 — Crypte, lot C-4 : acte III (Ossuaire, Porte-couronne, Pleureuse, Liche, choix « ysolt », palier Épique)");
+(function () {
+  var SL = g.SleepSystem, CE = g.CombatEngine, SQ = g.StoryQuestManager, CM = g.CompanionManager, MM = g.MemoryManager;
+  var wiAvant = g.WorldManager.worldIndex, savedChoice = SQ.getChoice, savedMemLevel = MM.getLevel;
+  var choix = function (v) { SQ.getChoice = function (k) { return k === "ysolt" ? v : savedChoice.call(SQ, k); }; };
+  try {
+    var ch = g.STORY_QUESTS.crypt;
+    ok(ch.steps.map(function (st) { return st.id; }).slice(10, 15).join() === "crypte_11,crypte_12,crypte_13,crypte_14,crypte_15", "acte III : cinq étapes, crypte_11 à crypte_15");
+    var d4 = g.DUNGEONS.filter(function (d) { return d.id === 4; })[0];
+    ok(d4.requiresStoryStep === "crypte_12" && d4.eliteWaves[8] === "porte_couronne" && d4.eliteWaves[12] === "pleureuse" && d4.camp.afterWave === 8 && d4.specialResourceId === "cire_sepulcre", "Ossuaire : ouvert à crypte_12, Porte-couronne puis campement à la vague 8, Pleureuse à la 12");
+    ok(d4.boss.phases.length === 3 && d4.boss.phases[0].sleepAdds.length === 2 && d4.boss.phases[1].wakeAll && d4.boss.phases[2].halfSleep.rounds === 2, "la Liche : deux morts couchés, le réveil à 60 %, le demi-sommeil à 30 %");
+    game = freshCombat("knight"); giveWeapon();
+    g.WorldManager.worldIndex = 3;
+    var mk = function (id, elite) { var d = g.ENEMY_DB[id] || g.ENEMY_DB[g.ELITE_DB[id].baseId]; return { id: id, name: (elite ? g.ELITE_DB[id].name : d.name), isBoss: false, isElite: !!elite, archetype: null, hp: 300, maxHp: 300, stats: d.stats, resists: [], weak: [], goldReward: 20 }; };
+    var pose = function (eveilles) {
+      var es = g.CombatActors.aliveEnemies();
+      es.forEach(function (e) { e.asleep = eveilles.indexOf(e.id) < 0; e.wakeIn = e.asleep ? 3 : 0; e.wokenByHero = false; });
+      return es;
+    };
+    // Le Porte-couronne : frappé, il réveille un dormeur, une fois par round
+    SL.planNext(0);
+    CE.spawnGroup([mk("porte_couronne", true), mk("spectre"), mk("wraith")]);
+    var es = pose(["porte_couronne"]), pc = es.filter(function (e) { return e.id === "porte_couronne"; })[0];
+    SL.onCrownHit(pc);
+    ok(SL.sleepers().length === 1 && es.some(function (e) { return !e.asleep && e.id !== "porte_couronne" && !e.wokenByHero; }), "Porte-couronne frappé : un dormeur se lève, sans or en plus");
+    SL.onCrownHit(pc);
+    ok(SL.sleepers().length === 1, "une fois par round");
+    SL.onEnemyTurn(pc); SL.onCrownHit(pc);
+    ok(SL.sleepers().length === 0, "au round suivant, il recommence");
+    // La Pleureuse : elle annonce, puis endort un compagnon un round
+    SL.planNext(0);
+    CE.spawnGroup([mk("pleureuse", true)]);
+    var pl = pose(["pleureuse"])[0], ally = { companionId: "ysolt", name: "Ysolt", hp: 100, maxHp: 100, charges: 1, cooldown: 0, damage: 10 };
+    g.CombatActors.allies().push(ally);
+    ok(SL.onEnemyTurn(pl) === false && pl.lullArmed && !ally.lulled, "la Pleureuse commence à pleurer (annonce)");
+    ok(SL.onLull(pl) === true && ally.lulled === 1, "au tour suivant, Ysolt s'endort");
+    ok(CM.takeTurn(ally) === true && ally.lulled === 0 && ally.charges === 1, "le compagnon endormi saute son tour, un round");
+    // La Liche : phases
+    SL.planNext(0);
+    var liche = { id: "necrosupreme", name: d4.boss.name, isBoss: true, archetype: "corrupted", hp: 10000, maxHp: 10000, stats: g.BOSS_DB.necrosupreme.stats, resists: [], weak: [], goldReward: 200, phases: JSON.parse(JSON.stringify(d4.boss.phases)) };
+    CE.spawnGroup([liche]);
+    liche = g.CombatActors.enemies()[0]; liche.asleep = false;
+    liche.hp = 7900; CE.checkPhases(liche);
+    var couches = g.CombatActors.enemies().filter(function (e) { return e !== liche; });
+    ok(couches.length === 2 && couches.every(function (e) { return e.asleep && e.wakeIn > 0; }), "80 % : elle couche deux morts à ses pieds, endormis");
+    liche.hp = 5900; CE.checkPhases(liche);
+    ok(SL.sleepers().length === 0 && couches.every(function (e) { return !e.asleep && !e.wokenByHero; }), "60 % : elle dérange ses lignes, tout le monde se lève");
+    liche.hp = 2900; CE.checkPhases(liche);
+    ok(liche.halfSleepRounds === 2, "30 % : demi-sommeil, deux rounds");
+    ok(SL.onEnemyTurn(liche) === true && liche.hp === 2900 + 400 && liche.halfSleepRounds === 1, "à moitié couchée : elle ne frappe pas, elle se soigne de 4 %");
+    SL.onEnemyTurn(liche);
+    ok(liche.halfSleepRounds === 0 && SL.onEnemyTurn(liche) === false, "puis elle se relève");
+    // Le choix « ysolt »
+    ok(g.STORY_CHOICE_AXES.ysolt && g.STORY_CHOICE_AXES.ysolt.garder[0] === "garder", "choix « ysolt » déclaré");
+    choix(null);
+    var hp0 = CM.statsOf("ysolt").maxHp, ch0 = CM.chargesMax("ysolt");
+    choix("donner");
+    ok(!CM.hasDeparted("ysolt") && CM.chargesMax("ysolt") === ch0 + 1 && CM.statsOf("ysolt").maxHp === Math.max(1, Math.floor(hp0 * 0.85)), "Donner : Pas encore deux fois, Ysolt à 85 % de ses PV");
+    choix("garder");
+    game.companions = game.companions || {};
+    ok(CM.hasDeparted("ysolt") && CM.unlockedIds().indexOf("ysolt") < 0, "Garder : Ysolt quitte le groupe pour de bon");
+    game.equipped.amulet = g.EliteManager.buildUniqueLoot("carquois_ysolt");
+    ok(game.equipped.amulet.rarity === "epic" && SL.wearsQuiver(), "le carquois d'Ysolt : Épique, porté il retarde les dormeurs");
+    // Mémoire 15 : une reprise offerte après « garder »
+    MM.getLevel = function () { return 16; };
+    var m = MM.ensure(); m.choices[15] = "fidelite_ysolt"; game.gold = 0;
+    ok(MM.isFreeReprise(15), "Mémoire 15 : reprise offerte");
+    ok(MM.choose(15, "pas_encore_encore") && m.freeUsed[15] && m.choices[15] === "pas_encore_encore", "reprise sans or");
+    ok(!MM.isFreeReprise(15) && !MM.choose(15, "fidelite_ysolt"), "une seule fois : la suivante se paie");
+    choix("donner"); m.freeUsed = {};
+    ok(!MM.isFreeReprise(15), "pas d'offre sur la branche Donner");
+    // Palier Épique, Forge 5, Cire consacrée
+    game.equipped = {};
+    g.EQUIPMENT_SLOTS.forEach(function (sl) { game.equipped[sl] = g.generateEquipmentItem(sl, "rare", 3); });
+    ["weapon", "armor", "ring"].forEach(function (sl) { game.equipped[sl] = g.generateEquipmentItem(sl, "epic", 3); });
+    g.VillageBuildingManager.ensure && g.VillageBuildingManager.ensure();
+    game.village.buildings.forge = { level: 5 };
+    game.forge = { levels: { weapon: 9 } };
+    var st13 = ch.steps.filter(function (x) { return x.id === "crypte_13"; })[0];
+    ok(st13.check(game), "palier Épique : 3 Épiques, Forge 5, arme à 9");
+    game.forge.levels.weapon = 8;
+    ok(!st13.check(game) && g.storyPalierCrypteEpiqueMissing(game).length >= 1, "arme à 8 : il manque, et on sait quoi");
+    var c9 = g.ForgeManager.getCost("weapon");
+    ok(c9 && c9.cire_consacree === 1 && !c9.cle_de_voute, "reforge 9 : Cire consacrée, plus de Clé de voûte");
+    game.forge.levels.weapon = 6;
+    var c7 = g.ForgeManager.getCost("weapon");
+    ok(c7 && c7.cle_de_voute >= 1 && !c7.cire_consacree, "reforge 7 : toujours la Clé de voûte");
+    ok(g.VILLAGE_BUILDINGS.forge.maxLevel === 5 && g.WORLD_CAPS[3].village.forge === 5, "Forge 5, plafond de la Crypte");
+    ok(g.WORKSHOPS && JSON.stringify(g.WORKSHOPS).indexOf("cire_consacree") >= 0 || fs.readFileSync(path.join(ROOT, "js/data/workshops.js"), "utf8").indexOf('id: "cire_consacree"') >= 0, "recette de la Cire consacrée à la Fonderie");
+    var aq = g.ADVENTURE_QUESTS.aq_crypte_pleureuse;
+    ok(aq && aq.eliteId === "pleureuse" && aq.requiresStoryStep === "crypte_14" && aq.requiresParty === "ysolt", "quête de la Pleureuse : à crypte_14, avec Ysolt");
+    ok(g.TALENT_CAP_BY_ACT.some(function (a) { return a.stepId === "crypte_11" && a.points === 18; }), "plafond de talents de l'acte III : 18");
+    choix("garder");
+    ok(ch.steps[14].narrative.dialogue[1].who === "Edda" && ch.steps[14].narrative.completionDialogue[1].who === "Edda", "Garder : Edda reprend les répliques d'Ysolt à l'étape 15");
+  } catch (err) {
+    ok(false, "[243] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  } finally {
+    SQ.getChoice = savedChoice; MM.getLevel = savedMemLevel; g.WorldManager.worldIndex = wiAvant;
   }
 })();
 

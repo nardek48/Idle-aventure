@@ -29,6 +29,7 @@ var DATA_TEXT_FIELDS = {
   GRIMOIRE_TARGET_POLICIES: ["*.label", "*.desc"], // v3.428.0 (Ruines)
   STORY_SEUIL_TEXTS: ["*.completion", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.428.0 (Ruines) : les deux branches du choix « seuil »
   STORY_PORTENT_TEXTS: ["*.completion", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.452.0 (Crypte) : les deux branches du choix « portent »
+  STORY_YSOLT_TEXTS: ["*.completion", "*.edda15", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.455.0 (Crypte) : les deux branches du choix « ysolt »
   LABYRINTH_TEXTS: [""], // v3.434.0 (Ruines, RU12) : le Labyrinthe aux leviers
   LABYRINTH_CONFIG: ["bossName"],
   STORY_SALLE_TEXTS: ["*.completion", "*.chaise", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.431.0 (Ruines) : les deux branches du choix « salle »

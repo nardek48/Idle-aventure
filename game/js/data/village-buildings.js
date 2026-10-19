@@ -199,7 +199,7 @@ var VILLAGE_BUILDINGS = {
        coûte du Verre trempé (étape 9) et ouvre la reforge jusqu'au niveau 6 — c'est le
        deuxième compteur du palier de l'étape 13. Les niveaux 4 à 6 attendent les mondes
        suivants, comme avant. */
-    maxLevel: 4, // v3.431.0 (Ruines, acte III) : la Forge 4 à la Clé de voûte (plafond par monde : world-caps.js)
+    maxLevel: 5, // v3.431.0 : la Forge 4 à la Clé de voûte ; v3.455.0 : la Forge 5 à la Cire consacrée (plafond par monde : world-caps.js)
     implemented: true,
     desc: "Reforge une pièce d'équipement. Le niveau appartient à l'emplacement, pas à l'objet : changer de pièce ne fait rien perdre.",
     costTiers: [
@@ -230,6 +230,14 @@ var VILLAGE_BUILDINGS = {
         minLevel: 3, maxLevel: 3,
         resources: ["gold", "pierre", "acier", "cle_de_voute"],
         baseCost: { gold: 8000, pierre: 300, acier: 70, cle_de_voute: 3 },
+        costMult: 1.50
+      },
+      /* v3.455.0 (Crypte, acte III) : palier de la Crypte, la Forge 5 à la Cire consacrée (crypte_13).
+         3 Cires consacrées = 9 Cires de sépulcre à la Fonderie. Provisoire, au banc. */
+      {
+        minLevel: 4, maxLevel: 4,
+        resources: ["gold", "pierre", "acier", "cire_consacree"],
+        baseCost: { gold: 11000, pierre: 400, acier: 100, cire_consacree: 3 },
         costMult: 1.50
       }
     ],

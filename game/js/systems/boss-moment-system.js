@@ -87,6 +87,7 @@ var BossMomentManager = {
   },
 
   onPhase: function (enemy, ph) {
+    if (window.SleepSystem && enemy) SleepSystem.onBossPhase(enemy, ph); // v3.455.0 : effets de phase de la Crypte (la Liche), même réglages coupés
     if (!enemy || (window.Prefs && !Prefs.get("bossMoments"))) return;
     var m = this.getMoment(enemy);
     if (typeof showBossPhase === "function") {

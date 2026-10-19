@@ -138,7 +138,9 @@ var ForgeManager = {
        accompagne les niveaux que ce monde ouvre. */
     if (target > seuil * 2 && target <= seuil * 3) cost.chitine_profondeurs = target - seuil * 2;
     // v3.431.0 (Ruines) : la bande de la Forge 4 (niveaux 7 et 8) demande la Clé de voûte, à la place de la Chitine
-    if (target > seuil * 3) cost.cle_de_voute = target - seuil * 3;
+    if (target > seuil * 3 && target <= seuil * 4) cost.cle_de_voute = target - seuil * 3;
+    // v3.455.0 (Crypte, acte III) : la bande de la Forge 5 (niveaux 9 et 10) demande la Cire consacrée
+    if (target > seuil * 4) cost.cire_consacree = target - seuil * 4;
     // v3.433.0 (choix « plan » = tomber) : la clé du Cœur, une Clé de voûte de moins (la reforge 7 n'en coûte plus)
     if (cost.cle_de_voute && window.StoryQuestManager && StoryQuestManager.getChoice("plan") === "tomber") {
       cost.cle_de_voute -= (typeof VILLAGE_COEUR_KEY_DISCOUNT === "number" ? VILLAGE_COEUR_KEY_DISCOUNT : 1);

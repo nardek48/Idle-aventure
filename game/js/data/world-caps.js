@@ -43,9 +43,10 @@ var WORLD_CAPS = [
     petiteAventureCap: 4
   },
   /* 3 — Crypte oubliée. v3.450.0 (Conception Crypte CR8, lot C-0) : écrit avant d'ouvrir le monde.
-     Provisoire, égal aux Ruines ; seule la 3e rangée de zones s'ouvre. Les crans des actes II-III au banc. */
+     Provisoire, égal aux Ruines ; seule la 3e rangée de zones s'ouvre. Les crans des actes II-III au banc.
+     v3.455.0 (acte III) : Forge 5, à la Cire consacrée (reforges 9 et 10). */
   {
-    village: { workshop: 8, training: 11, hall: 8, warehouse: 7, palisade: 8, tavern: 5, apothecary: 6, forge: 4, enchanter: 2 },
+    village: { workshop: 8, training: 11, hall: 8, warehouse: 7, palisade: 8, tavern: 5, apothecary: 6, forge: 5, enchanter: 2 },
     zoneRows: 3,
     zoneLevel: 5,
     workshopLevel: 3,
@@ -85,7 +86,8 @@ var TALENT_CAP_BY_ACT = [
   { worldIndex: 2, stepId: "ruines_06", act: "II", points: 12 },      // v3.429.0
   { worldIndex: 2, stepId: "ruines_11", act: "III", points: 13 },     // v3.431.0
   { worldIndex: 3, stepId: "crypte_01", act: "I", points: 15 },       // v3.453.0 : Crypte, acte I — +2 pour le Commandement (13 → 18 sur la Crypte)
-  { worldIndex: 3, stepId: "crypte_06", act: "II", points: 17 }        // v3.454.0 : Crypte, acte II
+  { worldIndex: 3, stepId: "crypte_06", act: "II", points: 17 },       // v3.454.0 : Crypte, acte II
+  { worldIndex: 3, stepId: "crypte_11", act: "III", points: 18 }       // v3.455.0 : Crypte, acte III — fin de la montée 13 → 18
 ];
 
 /* « de la Forêt enchantée », « du Désert oublié » : pour « l'acte II du Désert oublié ».

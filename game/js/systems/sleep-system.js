@@ -63,7 +63,8 @@ var SleepSystem = {
     for (var i = pool.length - 1; i > 0; i--) { var j = randInt(0, i), t = pool[i]; pool[i] = pool[j]; pool[j] = t; }
     for (var k = 0; k < n; k++) {
       pool[k].asleep = true;
-      pool[k].wakeIn = randInt(SLEEP_WAKE_ROUNDS_MIN, SLEEP_WAKE_ROUNDS_MAX) + this.mem("sommeil_lourd", "sommeil_lourd_rounds"); // v3.453.0 : Sommeil lourd
+      pool[k].wakeIn = randInt(SLEEP_WAKE_ROUNDS_MIN, SLEEP_WAKE_ROUNDS_MAX) + this.mem("sommeil_lourd", "sommeil_lourd_rounds") // v3.453.0 : Sommeil lourd
+        + (this.wearsQuiver() ? 1 : 0); // v3.455.0 : le carquois d'Ysolt
     }
     if (n) addLog("🌫️ " + _tn(n, "Un des morts dort encore.", "{n} des morts dorment encore."), "event");
     return n;
@@ -80,6 +81,9 @@ var SleepSystem = {
   /* Garde de enemyTurn : true si l'ennemi dort (il ne joue pas). Le compte à rebours du réveil
      seul descend à son tour ; à zéro, il se lève, et joue au round suivant. */
   onEnemyTurn: function (e) {
+    if (e && Number(e.halfSleepRounds || 0) > 0) return this.halfSleepTurn(e); // v3.455.0 : la Liche à moitié couchée
+    if (e) e._crownReady = true; // v3.455.0 : le Porte-couronne peut de nouveau réveiller (une fois par round)
+    if (!this.isAsleep(e) && this.onLull(e)) return false;
     if (!this.isAsleep(e)) return this.onCall(e);
     e.wakeIn = Number(e.wakeIn || 0) - 1;
     if (e.wakeIn <= 0 && this.has("personne_ne_se_leve") && !game._sleepRelapseUsed) { // v3.453.0 : ligne Garder du jalon 16
@@ -114,6 +118,66 @@ var SleepSystem = {
     return true;
   },
 
+  /* ---------- v3.455.0 (Crypte, acte III) : l'Ossuaire ---------- */
+  eliteDef: function (e) { return (e && e.isElite && window.ELITE_DB && ELITE_DB[e.id]) || null; },
+  wakeSoonest: function (byHero) {
+    var sl = this.sleepers();
+    if (!sl.length) return null;
+    sl.sort(function (a, b) { return Number(a.wakeIn || 0) - Number(b.wakeIn || 0); });
+    this.wake(sl[0], !!byHero);
+    return sl[0];
+  },
+  /* Le Porte-couronne : frappé, il réveille un dormeur de son escorte (sans bonus d'or), une fois par round. */
+  onCrownHit: function (foe) {
+    var def = this.eliteDef(foe);
+    if (!def || !def.wakesOnHit || foe._crownReady === false || Number(foe.hp || 0) <= 0) return;
+    if (!this.sleepers().length) return;
+    foe._crownReady = false;
+    addLog("👑 " + _t("{x} se redresse sous le coup. Derrière lui, quelqu'un se lève.", { x: _td(foe.name) }), "event");
+    this.wakeSoonest(false);
+  },
+  /* La Pleureuse : elle annonce, puis endort un compagnon un round (CompanionManager.takeTurn le saute).
+     Renvoie true le tour où elle endort (elle frappe quand même). */
+  onLull: function (e) {
+    var def = this.eliteDef(e);
+    if (!def || !def.lulls || Number(e.hp || 0) <= 0 || !window.CombatActors) return false;
+    var allies = CombatActors.aliveAllies().filter(function (a) { return a && a.companionId && !(a.lulled > 0); });
+    if (!allies.length) { e.lullArmed = false; return false; }
+    if (!e.lullArmed) { e.lullArmed = true; addLog("😢 " + _t("{x} commence à pleurer.", { x: _td(e.name) }), "event"); return false; }
+    e.lullArmed = false;
+    var a = allies[Math.floor(Math.random() * allies.length)];
+    a.lulled = 1;
+    addLog("😢 " + _t("{x} s'endort en l'écoutant.", { x: _td(a.name) }), "event");
+    return true;
+  },
+  /* Phases de boss propres à la Crypte, appelées par BossMomentManager.onPhase (checkPhases). */
+  onBossPhase: function (e, ph) {
+    if (!e || !ph) return;
+    if (Array.isArray(ph.sleepAdds) && ph.sleepAdds.length && window.CombatEngine && window.CombatActors) {
+      var avant = CombatActors.enemies().slice();
+      CombatEngine.summonAdds(e, { adds: ph.sleepAdds, addsHpMult: ph.addsHpMult, addsPowerMult: ph.addsPowerMult });
+      CombatActors.enemies().filter(function (x) { return avant.indexOf(x) < 0; }).forEach(function (x) {
+        x.asleep = true; x.wokenByHero = false; x.wakeIn = randInt(SLEEP_WAKE_ROUNDS_MIN, SLEEP_WAKE_ROUNDS_MAX);
+      });
+    }
+    if (ph.wakeAll) { var self = this; this.sleepers().forEach(function (x) { self.wake(x, false); }); }
+    if (ph.halfSleep) { e.halfSleepRounds = Number(ph.halfSleep.rounds || 2); e.halfSleepHeal = Number(ph.halfSleep.healPct || 0); }
+  },
+  /* Demi-sommeil : il ne frappe pas, il se soigne d'une part de ses PV max. */
+  halfSleepTurn: function (e) {
+    e.halfSleepRounds -= 1;
+    var soin = Math.floor(Number(e.maxHp || 0) * Number(e.halfSleepHeal || 0));
+    if (soin > 0) e.hp = Math.min(Number(e.maxHp || 0), Number(e.hp || 0) + soin);
+    addLog("💤 " + _t("{x} se recouche à moitié et se soigne (+{n}).", { x: _td(e.name), n: formatNumber(soin) }), "event");
+    if (typeof renderEnemyHp === "function") renderEnemyHp();
+    return true;
+  },
+  /* Le carquois d'Ysolt porté (choix « ysolt » = garder) : les dormeurs se lèvent un round plus tard. */
+  wearsQuiver: function () {
+    var am = game.equipped && game.equipped.amulet;
+    return !!(am && am.eliteId === "carquois_ysolt");
+  },
+
   /* v3.453.0 : choix de Mémoire (niveaux 13 et 16). */
   has: function (id) { return !!(window.MemoryManager && MemoryManager.has(id)); },
   mem: function (id, key) { return this.has(id) ? MemoryManager.V(key) : 0; },
@@ -134,6 +198,7 @@ var SleepSystem = {
   /* v3.453.0 : Réveil brutal (Mémoire 13) — ce coup-là seulement, par la vulnérabilité que lit
      dealDamage juste après ; elle est rendue à son état d'avant dès le coup suivant. */
   onHit: function (foe) {
+    this.onCrownHit(foe); // v3.455.0 : le Porte-couronne frappé réveille un dormeur
     var b = this._brutal;
     if (b) { this._brutal = null; b.e.vulnerableRounds = b.r; b.e.vulnerableMult = b.m; }
     if (!this.isAsleep(foe)) return;

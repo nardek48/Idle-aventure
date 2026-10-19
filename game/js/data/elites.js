@@ -208,6 +208,41 @@ var ELITE_DB = {
     repeatable: false
   },
 
+  /* v3.455.0 (Crypte, acte III, CR11) — LE PORTE-COURONNE, vague élite 8 de l'Ossuaire. Un roi en
+     parodie : il porte une couronne de trop. Frappé, il réveille un dormeur de son escorte, une fois
+     par round (SleepSystem.onHit, wakesOnHit). Chiffres au banc. */
+  porte_couronne: {
+    id: "porte_couronne",
+    baseId: "deadknight",
+    name: "Le Porte-couronne",
+    archetype: "armored",
+    wakesOnHit: true,
+    statMult: { endurance: 3, power: 3, celerity: 1.0 },
+    lore: "Il porte deux couronnes, l'une sur l'autre. La seconde n'est pas à lui. Il ne l'enlève pas.",
+    image: "./images/Enemies/elite_porte_couronne.jpg", // à générer : icône générique en attendant
+    questIcon: "./images/Icons/quest_icons/elite/elite_porte_couronne.png",
+    escort: { members: ["spectre", "wraith"], hpMult: 0.3, goldMult: 0.3 },
+    phases: null,
+    repeatable: false
+  },
+
+  /* v3.455.0 (Crypte, acte III) — LA PLEUREUSE, vague élite 12 de l'Ossuaire ; gardienne de l'étape 14.
+     Elle annonce, puis endort un compagnon un round (SleepSystem.onEnemyTurn, lulls). Chiffres au banc. */
+  pleureuse: {
+    id: "pleureuse",
+    baseId: "wraith",
+    name: "La Pleureuse",
+    archetype: "vampiric",
+    lulls: true,
+    statMult: { endurance: 3, power: 3.2, celerity: 1.0 },
+    lore: "Elle pleure tous ceux qui ne dorment pas. Ça fait beaucoup.",
+    image: "./images/Enemies/elite_pleureuse.jpg", // à générer : icône générique en attendant
+    questIcon: "./images/Icons/quest_icons/elite/elite_pleureuse.png",
+    escort: { members: ["spectre"], hpMult: 0.3, goldMult: 0.3 },
+    phases: null,
+    repeatable: false
+  },
+
   arbre_mere: {
     id: "arbre_mere",
     baseId: "foresttroll",
@@ -351,6 +386,19 @@ var ELITE_UNIQUE_LOOT = {
       archer: { name: "Arc du Cœur", icon: "bow" },
       mage: { name: "Bâton du Cœur", icon: "staff" }
     }
+  },
+
+  /* v3.455.0 (Crypte, acte III, choix « ysolt » = garder) — LE CARQUOIS D'YSOLT : elle le laisse en se
+     recouchant. Amulette Épique (fourchette 8-13) ; avec elle, les dormeurs se lèvent seuls un round plus
+     tard (SleepSystem, eliteId « carquois_ysolt »). Chiffres au banc. */
+  carquois_ysolt: {
+    slot: "amulet",
+    stat: "critChance",
+    rarity: "epic",
+    value: 9,
+    worldIndex: 3,
+    affixes: [{ stat: "maxHpPct", value: 0.06, tier: "P" }],
+    item: { name: "Le carquois d'Ysolt", icon: "amulet" }
   },
 
   ronce_ardente: {

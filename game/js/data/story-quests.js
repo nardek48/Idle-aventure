@@ -111,7 +111,13 @@ var STORY_REWARDS = {
   crypte_07: { gold: 6200, equipmentRarity: "rare", equipmentCount: 1, equipmentFill: true },
   crypte_08: { gold: 6400, resources: { cire_sepulcre: 3 }, equipmentRarity: "rare", equipmentCount: 1, equipmentFill: true },
   crypte_09: { gold: 6600 },
-  crypte_10: { gold: 7200, resources: { cire_sepulcre: 5 } }
+  crypte_10: { gold: 7200, resources: { cire_sepulcre: 5 } },
+  // v3.455.0 (Crypte, acte III, provisoire : au banc) : une pièce Épique aux étapes 11 et 12, pour le palier de crypte_13
+  crypte_11: { gold: 7400, equipmentRarity: "epic", equipmentCount: 1, equipmentFill: true },
+  crypte_12: { gold: 7600, resources: { cire_sepulcre: 4 }, equipmentRarity: "epic", equipmentCount: 1, equipmentFill: true },
+  crypte_13: { gold: 7800, resources: { cire_consacree: 2 } },
+  crypte_14: { gold: 8000 },  // + selon le choix : le carquois d'Ysolt
+  crypte_15: { gold: 9000, resources: { cire_consacree: 4 } }
 };
 
 /* Libellés des onglets débloqués (clé = game.unlockedTabs), pour l'affichage « Débloque : … ». */
@@ -191,7 +197,8 @@ var STORY_CHOICE_AXES = {
   seuil: { soi: ["soi", "chaos"], aeswyn: ["aeswyn"] }, // v3.428.0 (Ruines, acte I étape 5) : la pierre de seuil
   salle: { fermer: ["garder"], rouvrir: ["donner"] },   // v3.431.0 (Ruines, acte III étape 14) : la salle que la cité ne finit pas
   plan: { finir: ["donner", "soi"], tomber: ["garder", "aeswyn"] }, // v3.433.0 (Ruines, acte IV étape 20) : le plan, option A du 09/10
-  portent: { soi: ["soi", "chaos"], aeswyn: ["aeswyn"] }            // v3.452.0 (Crypte, acte I étape 5) : ce que portent les morts
+  portent: { soi: ["soi", "chaos"], aeswyn: ["aeswyn"] },           // v3.452.0 (Crypte, acte I étape 5) : ce que portent les morts
+  ysolt: { garder: ["garder"], donner: ["donner"] }                 // v3.455.0 (Crypte, acte III étape 14) : ce qu'elle garde
 };
 
 /* v3.293.0 (règle Seb 18/09/2026) : storyResetLisiere, storyLisiereCrossingProgress et
@@ -2539,7 +2546,7 @@ STORY_QUESTS.crypt = {
   title: "Ceux qui sont montés", // provisoire
   subtitle: "Chapitre 4 — Crypte",
   icon: "images/Icons/codex/world_crypt.png",
-  endText: "La suite de l'histoire arrive bientôt…", // v3.454.0 : actes I et II ; l'amorce de la Montagne viendra avec l'acte IV
+  endText: "La suite de l'histoire arrive bientôt…", // v3.455.0 : actes I à III ; l'amorce de la Montagne viendra avec l'acte IV
   steps: [
     /* ---------- Acte I — La descente ---------- */
     /* Étape 1 (doc §3) : le passage entre les mondes, parcours v2 de quatre paliers ; le monde est
@@ -2945,6 +2952,214 @@ STORY_QUESTS.crypt = {
       linkTo: { section: "adventure", cardId: "adv_aq_crypte_chaines" },
       check: function (game) { return storyAdvDone(game, "aq_crypte_chaines"); },
       progress: function (game) { return "Rencontres " + storyAdvProgress(game, "aq_crypte_chaines", "rencontres_chaines", 4) + "/4"; }
+    },
+    /* ---------- Acte III — L'Ossuaire (document « Crypte — Acte III », validé le 19/10/2026, option A) ---------- */
+    /* Étape 11 (§3) : libérer « Les côtes » : dessous, l'escalier d'os et la porte de l'Ossuaire. */
+    {
+      id: "crypte_11",
+      title: "Les os rangés",
+      act: "Acte III — L'Ossuaire",
+      narrative: {
+        objective: "Edda a posé sa feuille sur la pierre plate. Au bord, une voûte dessinée en traits courbes, comme des côtes. Dessous, elle a écrit un mot, puis l'a barré.",
+        completion: "Sous la dernière côte, un escalier. Les marches sont faites d'os bien alignés, les plus grands en bas. Sur la dernière, une porte en fer, pas fermée.",
+        dialogue: [
+          { who: "Edda", text: "Sous les côtes, il y a un escalier. Je ne l'ai pas descendu." },
+          { who: "Maddoc", text: "Pourquoi ?" },
+          { who: "Edda", text: "En bas, les os sont rangés. Par taille. Quelqu'un fait ça tous les jours." },
+          { who: "Ysolt", text: "Elle. Elle range. Elle n'aime pas qu'on déplace." },
+          { who: "Wenna", text: "Elle qui ?" },
+          { who: "Ysolt", text: "Tu verras. Ne marche pas sur les petits." }
+        ],
+        completionDialogue: [
+          { who: "Edda", text: "Je la dessine ouverte ou fermée ?" },
+          { who: "Ysolt", text: "Ouverte. Elle ne se ferme jamais. Elle n'en a pas besoin." }
+        ]
+      },
+      objectiveLabel: "Libérer « Les côtes » sur la carte de la Crypte",
+      storyPa: { worldId: "crypt" },
+      unlockTabs: [],
+      reward: STORY_REWARDS.crypte_11,
+      linkTo: { section: "map", cardId: "livingmap_crypt" },
+      check: function () { return storyCryptSectorFreed("cotes"); },
+      progress: function () { return "Les côtes " + (storyCryptSectorFreed("cotes") ? "1/1" : "0/1"); }
+    },
+    /* Étape 12 (§4) : l'Ossuaire s'ouvre (verrou crypte_12) ; atteindre son campement, après le Porte-couronne. */
+    {
+      id: "crypte_12",
+      title: "L'Ossuaire",
+      act: "Acte III — L'Ossuaire",
+      narrative: {
+        objective: "La porte de fer est ouverte. Derrière, des couloirs bas, des niches pleines d'os rangés. Les crânes regardent tous dans le même sens.",
+        completion: "La salle d'Ysolt. Un banc d'os, un cercle de cendres froides. Tu fais du feu. La fumée sort par les orbites des crânes du mur, une à une.",
+        dialogue: [
+          { who: "Maddoc", text: "Ils dorment aussi, en bas ?" },
+          { who: "Ysolt", text: "En bas, ils dorment mieux. Personne ne vient." },
+          { who: "Wenna", text: "Et si c'est trop long ?" },
+          { who: "Ysolt", text: "À mi-chemin, il y a une salle où je m'asseyais. On peut y faire du feu. La fumée part par les crânes." }
+        ],
+        completionDialogue: [
+          { who: "Wenna", text: "Tu venais souvent ici ?" },
+          { who: "Ysolt", text: "Entre deux montées. Pour me souvenir de ce que c'était, avoir froid." }
+        ]
+      },
+      objectiveLabel: "Atteindre le campement de l'Ossuaire (vaincre le Porte-couronne dans un même run)",
+      unlockTabs: [],
+      reward: STORY_REWARDS.crypte_12,
+      linkTo: { tab: "dungeon" },
+      tutorial: {
+        tab: "dungeon",
+        icon: "images/Dungeons/Icone_base/palier4.jpg",
+        title: "L'Ossuaire",
+        points: [
+          { icon: "images/Icons/camp/campfire.png", text: "L'Ossuaire se joue en deux étapes, comme le Sanctuaire scellé. Entre les deux, le campement : une halte, un seul choix." },
+          { icon: "images/Icons/combat_status/asleep.png", text: "Ici aussi, des morts dorment. Le Porte-couronne, frappé, en réveille un : tue-le vite, ou garde Ysolt près de toi." },
+          { icon: "images/Icons/dungeon/dungeon_weapon.png", text: "Les pièces Épiques sortent d'ici. L'arme du Cœur en est une." }
+        ]
+      },
+      check: function (game) { return !!(game && game.explorationProgression && game.explorationProgression.ossuaireCamp); },
+      progress: function (game) { return "Campement " + ((game && game.explorationProgression && game.explorationProgression.ossuaireCamp) ? "1/1" : "0/1"); }
+    },
+    /* Étape 13 (§5) : palier Épique partiel (CR7) — 3 Épiques portées (l'arme du Cœur compte), Forge 5, arme à 9. */
+    {
+      id: "crypte_13",
+      title: "La cire qui ne coule plus",
+      act: "Acte III — L'Ossuaire",
+      narrative: {
+        objective: "À la Veillée, Sarkel fait fondre un pain de cire dans une gamelle. La cire ne fume pas. Quand il la verse, elle prend tout de suite.",
+        completion: "La lame sort de la Forge avec un filet de cire pris dans le métal. Il ne fond pas. Ysolt passe le doigt dessus.",
+        dialogue: [
+          { who: "Sarkel", text: "Celle-là ne coule plus, même au feu. Ils la faisaient comme ça, en bas." },
+          { who: "Maddoc", text: "Pour quoi faire ?" },
+          { who: "Sarkel", text: "Pour sceller. Ce qu'on scelle à la cire consacrée, ça reste fermé." },
+          { who: "Edda", text: "Ou ça tient. Ta Forge, par exemple." },
+          { who: "Sarkel", text: "Je ne vends pas la recette. Je te la donne. C'est différent." }
+        ],
+        completionDialogue: [
+          { who: "Ysolt", text: "Celle-là, elle tiendra jusqu'en bas." },
+          { who: "Wenna", text: "Et au-delà ?" },
+          { who: "Ysolt", text: "Au-delà, on ne porte plus rien." }
+        ]
+      },
+      objectiveLabel: "3 pièces Épiques portées, Forge 5, arme reforgée à 9",
+      unlockTabs: [],
+      reward: STORY_REWARDS.crypte_13,
+      linkTo: { tab: "equip" },
+      tutorial: {
+        tab: "equip",
+        icon: "images/Icons/resources/cire_consacree_icon.png",
+        title: "Le palier Épique",
+        points: [
+          { icon: "images/Icons/equipment_slots/slot_weapon.png", text: "Pour aller au bout de l'Ossuaire, il faut trois pièces Épiques. L'arme du Cœur en est une ; les étapes 11 et 12 t'en ont donné une chacune." },
+          { icon: "images/Icons/resources/cire_consacree_icon.png", text: "La Cire consacrée se coule à la Fonderie, avec de la Cire de sépulcre. Elle construit la Forge 5." },
+          { icon: "images/Icons/workshops/smithing_station.png", text: "La Forge 5 ouvre les reforges 9 et 10. Elles demandent aussi de la Cire consacrée." }
+        ]
+      },
+      check: function (game) {
+        var p = storyPalierCrypteEpique(game), P = STORY_PALIER_CRYPTE_EPIQUE;
+        return p.pieces >= P.pieces && p.forge >= P.forge && p.arme >= P.reforge;
+      },
+      progress: function (game) {
+        var p = storyPalierCrypteEpique(game), P = STORY_PALIER_CRYPTE_EPIQUE;
+        return "Épiques " + Math.min(p.pieces, P.pieces) + "/" + P.pieces + " · Forge " + Math.min(p.forge, P.forge) + "/" + P.forge
+          + " · Reforge de l'arme " + Math.min(p.arme, P.reforge) + "/" + P.reforge;
+      },
+      missing: function (game) { return storyPalierCrypteEpiqueMissing(game); }
+    },
+    /* Étape 14 (§6) : la Pleureuse, puis le deuxième choix pesant (clé « ysolt », Garder / Donner).
+       Garder -> Le repos d'Ysolt (elle part, le carquois reste). Donner -> Ysolt reste (deux charges, −15 % PV). */
+    {
+      id: "crypte_14",
+      title: "Ce qu'elle garde",
+      act: "Acte III — L'Ossuaire",
+      narrative: {
+        objective: "Au fond de l'Ossuaire, des pleurs. Pas fort. Ça vient d'une salle où toutes les alcôves sont vides, sauf une.",
+        get completion() { return STORY_YSOLT_TEXTS[storyYsoltBranch()].completion; },
+        dialogue: [
+          { who: "Wenna", text: "Quelqu'un pleure." },
+          { who: "Ysolt", text: "Elle pleure tous ceux qui ne dorment pas. Ça fait beaucoup." },
+          { who: "Maddoc", text: "Elle est dangereuse ?" },
+          { who: "Ysolt", text: "Elle endort. Ceux qui l'écoutent trop longtemps ne se relèvent pas." },
+          { who: "Ysolt", text: "Restez éveillés. Moi, je sais faire." }
+        ],
+        get completionDialogue() { return STORY_YSOLT_TEXTS[storyYsoltBranch()].dialogue; }
+      },
+      objectiveLabel: "Terminer « Ce qu'elle garde » (3 rencontres, puis la Pleureuse), puis décider",
+      unlockTabs: [],
+      reward: STORY_REWARDS.crypte_14,
+      linkTo: { section: "adventure", cardId: "adv_aq_crypte_pleureuse" },
+      choice: {
+        key: "ysolt", onStoryCard: true,
+        buttonLabel: "Décider",
+        title: "Ce qu'elle garde",
+        text: "La Pleureuse se tait. Dans la salle, une seule alcôve est occupée : personne dedans, juste une forme dans la pierre, à la taille d'Ysolt. « Montée neuf fois. Revenue huit. La neuvième, je me suis couchée ici. Je me suis réveillée. Je n'aurais pas dû. » Elle attend que quelqu'un décide, et ce ne sera pas elle.",
+        options: [
+          { value: "garder", label: "La laisser se recoucher", desc: "Elle reprend sa place. Son carquois reste avec toi." },
+          { value: "donner", label: "La garder éveillée", desc: "Elle reste avec toi. Elle s'use, un peu, à chaque combat." }
+        ],
+        ready: function () { return storyAdvDone(game, "aq_crypte_pleureuse"); },
+        apply: function (value) {
+          if (value === "garder") {
+            var loot = window.EliteManager && EliteManager.buildUniqueLoot("carquois_ysolt");
+            if (loot && typeof addLootToInventory === "function") {
+              addLootToInventory(loot);
+              if (typeof addLog === "function") addLog(_t("Au bord de l'alcôve, un carquois vide. ({x})", { x: _td(loot.name) }), "event");
+            }
+            if (window.CompanionManager) CompanionManager.refreshParty();
+          } else if (typeof addLog === "function") addLog(_t("Ysolt reste : Pas encore sert deux fois par combat. Elle s'use un peu."), "event");
+        }
+      },
+      check: function () { return !!(window.StoryQuestManager && StoryQuestManager.getChoice("ysolt")); },
+      progress: function (game) {
+        var chosen = !!(window.StoryQuestManager && StoryQuestManager.getChoice("ysolt"));
+        return "Pleureuse " + (storyAdvDone(game, "aq_crypte_pleureuse") ? "1/1" : "0/1") + " · Choix " + (chosen ? "1/1" : "0/1");
+      }
+    },
+    /* Étape 15 (§7) : la Liche des sépulcres, au bout de l'Ossuaire (donjon 4 terminé). */
+    {
+      id: "crypte_15",
+      title: "La Liche des sépulcres",
+      act: "Acte III — L'Ossuaire",
+      narrative: {
+        objective: "Au bout de l'Ossuaire, une salle ronde. Au centre, quelqu'un trie des os, assis par terre. Elle les pose en lignes, sans regarder ses mains. Elle a entendu la Pleureuse se taire.",
+        completion: "La Liche s'affaisse sur ses lignes. Les os ne roulent pas : ils restent rangés. Derrière elle, au mur, un anneau de fer. Une chaîne en part, vers le bas. La chaîne se tend. Doucement. Quelqu'un, très loin en dessous, vient de tirer.",
+        get dialogue() {
+          var d = [
+            { who: "Edda", text: "C'est elle qui range." },
+            { who: "Ysolt", text: "Depuis avant moi. Elle ne sait plus pourquoi. Elle continue." },
+            { who: "Maddoc", text: "Elle va se lever ?" },
+            { who: "Ysolt", text: "Si on dérange une ligne, oui." },
+            { who: null, text: "Wenna regarde ses pieds. Elle est sur une ligne." }
+          ];
+          if (storyYsoltBranch() !== "garder") return d;
+          // Ysolt s'est recouchée : Edda rapporte ce qu'elle en disait
+          return [d[0], { who: "Edda", text: STORY_YSOLT_TEXTS.garder.edda15 }, d[2],
+            { who: "Edda", text: "Si on dérange une ligne, oui." }, d[4]];
+        },
+        get completionDialogue() {
+          return [
+            { who: "Sarkel", text: "C'est la même. Celle de l'autre fois." },
+            { who: storyYsoltBranch() === "garder" ? "Edda" : "Ysolt", text: "Il sait qu'on est là." },
+            { who: "Wenna", text: "Qui ?" },
+            { who: null, text: "Personne ne répond. Sous les pieds, quelque chose bat. Plus fort qu'avant." }
+          ];
+        }
+      },
+      objectiveLabel: "Vaincre la Liche des sépulcres, au bout de l'Ossuaire",
+      unlockTabs: [],
+      reward: STORY_REWARDS.crypte_15,
+      linkTo: { tab: "dungeon" },
+      tutorial: {
+        tab: "dungeon",
+        icon: "images/Icons/combat_status/corruption.png",
+        title: "La Liche des sépulcres",
+        points: [
+          { icon: "images/Icons/combat_status/asleep.png", text: "La Liche range les os. Elle couche deux morts à ses pieds, puis, à 60 % de ses PV, les réveille tous : garde de quoi les tenir." },
+          { icon: "images/Icons/combat_stats/stat_attack.png", text: "À 30 %, elle se recouche à moitié : elle ne frappe plus pendant deux rounds, mais elle se soigne. Frappe fort à ce moment-là." },
+          { icon: "images/Icons/combat_status/corruption.png", text: "Elle corrompt, comme les Corrupteurs : chaque coup reçu réduit un peu tes dégâts. Dans le Grimoire, la condition « L'ennemi est corrompu » t'aide à la tenir." }
+        ]
+      },
+      check: function (game) { return !!((game.dungeonTierCleared || {})[4]); },
+      progress: function (game) { return "Liche vaincue " + ((game.dungeonTierCleared || {})[4] ? "1/1" : "0/1"); }
     }
   ]
 };
@@ -3088,6 +3303,64 @@ function storySanctuaireCamp(game) {
 }
 
 /* v3.429.0 (Ruines, acte II) — quartiers de la carte des Ruines libérés au moins une fois. */
+/* v3.455.0 (Crypte, crypte_11) — un couloir donné de la carte de la Crypte libéré au moins une fois. */
+function storyCryptSectorFreed(id) {
+  var lm = window.LivingMapManager, st = lm && lm.getState("crypt", id);
+  return !!(st && st.liberatedCount > 0);
+}
+
+/* v3.455.0 (Crypte, crypte_13) — palier Épique partiel (CR7) : pièces Épiques portées (l'arme du Cœur
+   compte), niveau de la Forge, reforge de l'arme. Lecture seule. Au banc. */
+var STORY_PALIER_CRYPTE_EPIQUE = { pieces: 3, forge: 5, reforge: 9 };
+function storyPalierCrypteEpique(game) {
+  var portes = (game && game.equipped) || {}, order = window.RARITY_ORDER || [], rang = order.indexOf("epic"), pieces = 0;
+  (window.EQUIPMENT_SLOTS || []).forEach(function (slot) { var it = portes[slot]; if (it && order.indexOf(it.rarity) >= rang) pieces++; });
+  var F = window.ForgeManager, V = window.VillageBuildingManager;
+  return { pieces: pieces, forge: (V && typeof V.getLevel === "function") ? V.getLevel("forge") : 0, arme: (F && typeof F.getLevel === "function") ? F.getLevel("weapon") : 0 };
+}
+function storyPalierCrypteEpiqueMissing(game) {
+  var p = storyPalierCrypteEpique(game), P = STORY_PALIER_CRYPTE_EPIQUE, out = [];
+  if (p.pieces < P.pieces) out.push({ text: _t("Pièces Épiques : {a} / {b}", { a: p.pieces, b: P.pieces }), where: _t("L'Ossuaire, et les étapes 11 et 12.") });
+  var V = window.VillageBuildingManager, F = window.ForgeManager;
+  if (p.forge < P.forge && V && typeof V.getNextCost === "function") {
+    var fl = storyMissingCostLines(V.getNextCost("forge"), _t("Forge {n}", { n: p.forge + 1 }));
+    out = out.concat(fl.length ? fl : [{ text: _t("Forge {n}", { n: p.forge + 1 }), where: _t("Tout est là : à construire au Village, Bâtiments.") }]);
+  }
+  if (p.arme < P.reforge && F && typeof F.getCost === "function") {
+    var c = F.getCost("weapon"), lab = _t("Reforge {n} de l'arme", { n: p.arme + 1 });
+    if (!c) out.push({ text: lab, where: _t("Il faut d'abord la Forge {n}.", { n: p.forge + 1 }) });
+    else {
+      var rl = storyMissingCostLines(c, lab);
+      out = out.concat(rl.length ? rl : [{ text: lab, where: _t("Tout est là : à la Forge, Établi.") }]);
+    }
+  }
+  return out;
+}
+
+/* v3.455.0 (crypte_14) : textes des deux branches du choix « ysolt ». */
+var STORY_YSOLT_TEXTS = {
+  garder: {
+    completion: "Ysolt pose le carquois vide au bord de l'alcôve, puis le pousse vers toi. Elle s'allonge. La forme dans la pierre lui va exactement.",
+    dialogue: [
+      { who: "Ysolt", text: "Dis mon nom quelque part où il y a du pain." },
+      { who: null, text: "Wenna l'écrit dans son carnet. Elle souligne deux fois." },
+      { who: "Wenna", text: "À Aeswyn. Chez Orwen. Promis." }
+    ],
+    edda15: "Ysolt disait qu'elle range depuis toujours. Qu'elle ne sait plus pourquoi."
+  },
+  donner: {
+    completion: "Tu tends la main. Ysolt la prend, se relève, et tourne le dos à l'alcôve. Sa main est froide. Elle l'était déjà, avant.",
+    dialogue: [
+      { who: "Ysolt", text: "D'accord. Encore un peu." },
+      { who: "Maddoc", text: "Ça te coûte quoi ?" },
+      { who: "Ysolt", text: "Un peu, à chaque fois. Je compterai." }
+    ]
+  }
+};
+function storyYsoltBranch() {
+  return (window.StoryQuestManager && StoryQuestManager.getChoice("ysolt") === "garder") ? "garder" : "donner";
+}
+
 /* v3.454.0 (Crypte, crypte_07) — couloirs de la carte de la Crypte libérés au moins une fois. */
 function storyCryptSectorsFreed() {
   var lm = window.LivingMapManager, map = lm && lm.getMap("crypt");
@@ -3149,6 +3422,12 @@ window.STORY_PALIER_RUINES_RARE = STORY_PALIER_RUINES_RARE;
 window.STORY_PALIER_CRYPTE_RARE = STORY_PALIER_CRYPTE_RARE;
 window.storyPalierCrypteRareMissing = storyPalierCrypteRareMissing;
 window.storyCryptSectorsFreed = storyCryptSectorsFreed;
+window.storyCryptSectorFreed = storyCryptSectorFreed;
+window.STORY_PALIER_CRYPTE_EPIQUE = STORY_PALIER_CRYPTE_EPIQUE;
+window.storyPalierCrypteEpique = storyPalierCrypteEpique;
+window.storyPalierCrypteEpiqueMissing = storyPalierCrypteEpiqueMissing;
+window.STORY_YSOLT_TEXTS = STORY_YSOLT_TEXTS;
+window.storyYsoltBranch = storyYsoltBranch;
 window.storyMissingCostLines = storyMissingCostLines;
 window.storyPalierRuinesRareMissing = storyPalierRuinesRareMissing;
 window.STORY_SALLE_TEXTS = STORY_SALLE_TEXTS;

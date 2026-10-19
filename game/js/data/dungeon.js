@@ -200,18 +200,34 @@ var DUNGEONS = [
     name: "Ossuaire",
     worldId: "crypt", worldRequired: 3, worldPower: 3, difficultyMult: 14,
     maxRarity: "epic",
-    specialResourceId: null, specialResourceAmount: 0,
+    // v3.455.0 (Crypte, acte III) : la Cire de sépulcre en fin de run
+    specialResourceId: "cire_sepulcre", specialResourceAmount: 3,
     icon: "images/Dungeons/Icone_base/palier4.jpg", banner: null, combatMap: null,
     desc: "Les os y sont rangés. Pas tous.",
-    story: "Les murs eux-mêmes semblent respirer. Peu de ceux qui s'aventurent ici en ressortent sans égratignures — et encore moins sans butin.",
-    enemyPool: null, eliteWaves: null,
-    boss: { baseId: "necrosupreme", name: "Liche des sépulcres", archetype: "corrupted", statMult: { endurance: 1, power: 1 }, image: null },
-    /* v3.450.0 (Crypte, lot C-0) : fermé tant que l'Ossuaire n'a pas son contenu (acte III, CR11).
-       locked tant que le chapitre n'existe pas (isStepReached dit oui pour une étape inconnue) ;
-       à l'acte III, locked passe à false et le verrou d'Histoire prend le relais. */
-    locked: true,
+    story: "Des couloirs bas, des niches pleines d'os rangés. Les crânes regardent tous dans le même sens.",
+    /* v3.455.0 (Crypte, acte III, CR11) : le pool de la Crypte. Vague 8 : le Porte-couronne (frappé, il
+       réveille un dormeur de son escorte) ; vague 12 : la Pleureuse (elle endort un compagnon), la même
+       qu'à l'étape 14. Les morts dorment dans les vagues de groupe (escortes), comme partout à la Crypte. */
+    enemyPool: ["spectre", "wraith", "necromancer", "deadknight"],
+    eliteWaves: { 8: "porte_couronne", 12: "pleureuse" },
+    camp: { afterWave: 8, healPct: 0.4, stoneAmount: 2, storyFlag: "ossuaireCamp" }, // la salle d'Ysolt
+    /* LA LICHE DES SÉPULCRES (CR11) : Corrupteur. Phases (lues par CombatEngine.checkPhases, effets
+       propres à la Crypte dans SleepSystem.onBossPhase) : 80 % elle couche deux morts à ses pieds ;
+       60 % elle les réveille tous ; 30 % demi-sommeil, 2 rounds sans frapper, elle se soigne.
+       Portrait propre à fournir (icône générique : ne pas reprendre celui du Nécromancien). Au banc. */
+    boss: { baseId: "necrosupreme", name: "Liche des sépulcres", archetype: "corrupted",
+      statMult: { endurance: 0.82, power: 0.72 }, image: "./images/Boss/liche_sepulcres.jpg",
+      phases: [
+        { atPct: 0.8, sleepAdds: ["spectre", "wraith"], addsHpMult: 0.18, addsPowerMult: 0.5, label: "elle couche deux morts à ses pieds" },
+        { atPct: 0.6, wakeAll: true, label: "elle dérange ses lignes" },
+        { atPct: 0.3, halfSleep: { rounds: 2, healPct: 0.04 }, label: "elle se recouche à moitié" }
+      ] },
+    /* v3.450.0 : fermé tant que l'Ossuaire n'avait pas son contenu. v3.455.0 : verrou d'Histoire, comme le
+       Sanctuaire — il s'ouvre à crypte_12 ; entrée offerte pendant les étapes 12 et 15. */
+    locked: false,
     requiresStoryStep: "crypte_12",
     storyChapterId: "crypt",
+    storyFreeSteps: ["crypte_12", "crypte_15"],
     lockedHint: "L'Ossuaire est encore fermé."
   },
   {

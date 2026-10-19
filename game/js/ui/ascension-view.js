@@ -6,7 +6,7 @@
 function chooseMemoryOption(level, optionId) {
   if (!window.MemoryManager) return;
   var current = MemoryManager.getChoice(level);
-  if (current && current !== optionId && !MemoryManager.isLineBroken(level) && typeof showConfirmModal === "function") { // v3.453.0 : ligne cassée, sans frais
+  if (current && current !== optionId && !MemoryManager.isLineBroken(level) && !MemoryManager.isFreeReprise(level) && typeof showConfirmModal === "function") { // ligne cassée, reprise offerte : sans frais
     var cost = MemoryManager.getRepriseCost();
     showConfirmModal(
       _t("Reprendre ce choix ?"),
@@ -47,6 +47,7 @@ function buildMemoryLevelHTML(def, p) {
   } else if (pending) {
     h += '<div class="mem-level-lock is-pending"><img class="ico-inline" src="images/Icons/aether_icon.png" alt=""> ' + (broken ? _t("La ligne ne tient plus : choisis à nouveau, sans frais.") : _t("Un choix t'attend ici.")) + '</div>';
   }
+  if (reached && MemoryManager.isFreeReprise(level)) h += '<div class="mem-level-lock is-pending"><img class="ico-inline" src="images/Icons/aether_icon.png" alt=""> ' + _t("Ysolt s'est recouchée : tu peux changer ce choix une fois, sans frais.") + '</div>'; // v3.455.0
   h += '<div class="mem-options">';
   def.options.forEach(function (o) {
     var isChosen = chosen === o.id && !(broken && o.line);
