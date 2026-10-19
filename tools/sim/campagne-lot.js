@@ -13,7 +13,7 @@ function arg(name, def) { var i = ARGS.indexOf(name); return i >= 0 ? ARGS[i + 1
 var N = Number(arg("--n", 4));
 var CLASSES = arg("--classes", "knight,ranger,mage").split(",");
 var PASS = ["--combats", "--attendre-camp", "--tactique", "--compagnons-malins", "--investi", "--laisser", "--farm-reforges"].filter(function (f) { return ARGS.indexOf(f) >= 0; });
-var OUT = require("../chemins.js").captures("campagne-lot");
+var OUT = require("../chemins.js").captures(arg("--sortie", "campagne-lot")); // v3.456.0 : --sortie pour deux lots en parallèle
 if (!fs.existsSync(OUT)) fs.mkdirSync(OUT);
 
 var runs = [];

@@ -1277,6 +1277,8 @@ var SOLVERS = {
     playAdventure("aq_crypte_pleureuse");
     var val = ARGS.indexOf("--ysolt-donner") >= 0 ? "donner" : "garder";
     if (!g.storyMakeChoice("crypt", val)) note("choix refusé (ysolt)");
+    // Ysolt recouchée quitte le groupe : un joueur reprend un compagnon pour la place libre
+    ["wenna", "maddoc", "edda"].forEach(function (id) { if (g.CompanionManager.partyIds().length < g.COMPANION_MAX_PRESENT) withCompanion(g, id); });
   },
   crypte_15: function (g) { if (!(g.game.dungeonTierCleared || {})[4]) playDungeon(4, false); },
   crypte_16: function (g) { g.STORY_CHAIN_SECTORS.forEach(function (id) { if (!g.LivingMapManager.isLiberated("crypt", id)) freeSector("crypt", id); }); },
