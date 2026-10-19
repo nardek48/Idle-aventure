@@ -3056,7 +3056,7 @@ STORY_QUESTS.crypt = {
         icon: "images/Icons/resources/cire_consacree_icon.png",
         title: "Le palier Épique",
         points: [
-          { icon: "images/Icons/equipment_slots/slot_weapon.png", text: "Pour aller au bout de l'Ossuaire, il faut trois pièces Épiques. L'arme du Cœur en est une ; les étapes 11 et 12 t'en ont donné une chacune." },
+          { icon: "images/Icons/equipment_slots/slot_weapon.png", text: "Pour aller au bout de l'Ossuaire, il faut trois pièces Épiques. L'arme du Cœur en est une ; les étapes 11 et 12 t'en ont donné une chacune. La quête d'élite « La couronne de trop » en donne une de plus : un casque." },
           { icon: "images/Icons/resources/cire_consacree_icon.png", text: "La Cire consacrée se coule à la Fonderie, avec de la Cire de sépulcre. Elle construit la Forge 5." },
           { icon: "images/Icons/workshops/smithing_station.png", text: "La Forge 5 ouvre les reforges 9 et 10. Elles demandent aussi de la Cire consacrée." }
         ]
@@ -3491,7 +3491,7 @@ function storyPalierCrypteEpique(game) {
 }
 function storyPalierCrypteEpiqueMissing(game) {
   var p = storyPalierCrypteEpique(game), P = STORY_PALIER_CRYPTE_EPIQUE, out = [];
-  if (p.pieces < P.pieces) out.push({ text: _t("Pièces Épiques : {a} / {b}", { a: p.pieces, b: P.pieces }), where: _t("L'Ossuaire, et les étapes 11 et 12.") });
+  if (p.pieces < P.pieces) out.push({ text: _t("Pièces Épiques : {a} / {b}", { a: p.pieces, b: P.pieces }), where: _t("Les étapes 11 et 12, la quête d'élite « La couronne de trop » et l'Ossuaire.") });
   var V = window.VillageBuildingManager, F = window.ForgeManager;
   if (p.forge < P.forge && V && typeof V.getNextCost === "function") {
     var fl = storyMissingCostLines(V.getNextCost("forge"), _t("Forge {n}", { n: p.forge + 1 }));

@@ -400,6 +400,19 @@ var ELITE_UNIQUE_LOOT = {
     affixes: [{ stat: "maxHpPct", value: 0.06, tier: "P" }],
     item: { name: "Le carquois d'Ysolt", icon: "amulet" }
   },
+  /* v3.456.3 (Crypte, lot C-6, décision Seb du 19/10) — LA SECONDE COURONNE : butin de la quête d'élite
+     « La couronne de trop » (aq_crypte_couronne), ouverte à crypte_12. Une source sûre d'Épique pour le
+     palier de crypte_13 : objet unique, il entre en dépassement si le sac est plein. Bas de la fourchette
+     Épique du casque (0,55 à 0,85). Chiffres au banc. */
+  porte_couronne: {
+    slot: "helmet",
+    stat: "critMult",
+    rarity: "epic",
+    value: 0.58,
+    worldIndex: 3,
+    affixes: [{ stat: "maxHpPct", value: 0.06, tier: "P" }],
+    item: { name: "La seconde couronne", icon: "casque" }
+  },
   /* v3.456.0 (Crypte, crypte_20) — LE MAILLON : un maillon de la chaîne brisée, que Wenna a limé en bague.
      Cadeau de fin de chapitre dans les deux branches (comme les armes du Fleuve et du Cœur). Bas de la
      fourchette Épique de l'anneau (5 à 8). Chiffres au banc. */

@@ -5477,7 +5477,6 @@ I18n.register("en", {
   "Au bord de l'alcôve, un carquois vide. ({x})": "At the edge of the alcove, an empty quiver. ({x})",
   "Ysolt reste : Pas encore sert deux fois par combat. Elle s'use un peu.": "Ysolt stays: Not Yet works twice per fight. She wears down a little.",
   "Pièces Épiques : {a} / {b}": "Epic pieces: {a} / {b}",
-  "L'Ossuaire, et les étapes 11 et 12.": "The Ossuary, and steps 11 and 12.",
   "{x} dort debout.": "{x} is asleep on their feet.",
   "{x} se redresse sous le coup. Derrière lui, quelqu'un se lève.": "{x} straightens under the blow. Behind him, someone gets up.",
   "{x} commence à pleurer.": "{x} starts weeping.",
@@ -5553,7 +5552,6 @@ I18n.register("en", {
   "L'Ossuaire se joue en deux étapes, comme le Sanctuaire scellé. Entre les deux, le campement : une halte, un seul choix.": "The Ossuary is played in two stages, like the Sealed Sanctuary. Between them, the camp: one stop, one choice.",
   "Ici aussi, des morts dorment. Le Porte-couronne, frappé, en réveille un : tue-le vite, ou garde Ysolt près de toi.": "Here too, some of the dead are sleeping. The Crown-Bearer, when struck, wakes one: kill him fast, or keep Ysolt close.",
   "Les pièces Épiques sortent d'ici. L'arme du Cœur en est une.": "Epic pieces come from here. The Heart weapon is one of them.",
-  "Pour aller au bout de l'Ossuaire, il faut trois pièces Épiques. L'arme du Cœur en est une ; les étapes 11 et 12 t'en ont donné une chacune.": "To reach the end of the Ossuary, you need three Epic pieces. The Heart weapon is one; steps 11 and 12 gave you one each.",
   "La Cire consacrée se coule à la Fonderie, avec de la Cire de sépulcre. Elle construit la Forge 5.": "Consecrated Wax is cast at the Smelter, from Sepulchre Wax. It builds Forge 5.",
   "La Forge 5 ouvre les reforges 9 et 10. Elles demandent aussi de la Cire consacrée.": "Forge 5 opens reforges 9 and 10. They also need Consecrated Wax.",
   "La Liche range les os. Elle couche deux morts à ses pieds, puis, à 60 % de ses PV, les réveille tous : garde de quoi les tenir.": "The Lich sorts the bones. She lays two dead at her feet, then, at 60% of her HP, wakes them all: keep something in reserve to hold them.",
@@ -5709,5 +5707,11 @@ I18n.register("en", {
   "Le dernier tombe sur les marches. Sa chaîne glisse jusqu'en bas, puis se tend.": "The last one falls on the steps. His chain slides to the bottom, then goes taut.",
   "Le carnet de Wenna": "Wenna's Notebook",
   "Un carnet acheté trop cher à Sarkel. Les premières pages comptent des sillons. Les suivantes sont des noms, recopiés sous les alcôves de la Crypte, à la lampe.\n\nAldwin. Rôdeur. Trois.\nMerrin. Chevalier. Cinq.\nPersonne n'a de nom de famille, en bas.\nYsolt. Rôdeuse. Neuf.\n\nLa dernière page est pleine jusque dans la marge. En bas, en tout petit : « beaucoup ».\n\nChez Orwen, il y a une place vide à table. Le pain posé devant n'y est jamais le lendemain.": "A notebook bought from Sarkel for too much. The first pages count furrows. The next ones are names, copied from under the alcoves of the Crypt, by lamplight.\n\nAldwin. Ranger. Three.\nMerrin. Knight. Five.\nNo one has a family name, down there.\nYsolt. Ranger. Nine.\n\nThe last page is full right into the margin. At the bottom, very small: \"a lot\".\n\nAt Orwen's, there's an empty place at the table. The bread set in front of it is never there the next day.",
-  "{x} prend la place libre dans le groupe.": "{x} takes the free place in the group."
+  "{x} prend la place libre dans le groupe.": "{x} takes the free place in the group.",
+  "La seconde couronne": "The Second Crown",
+  "La couronne de trop": "The Crown Too Many",
+  "Dans l'Ossuaire, un couloir où toutes les niches sont vides. Au bout, quelqu'un porte deux couronnes, l'une sur l'autre.": "In the Ossuary, a corridor where every niche is empty. At the end, someone wears two crowns, one on top of the other.",
+  "Vaincre le Porte-couronne": "Defeat the Crown-Bearer",
+  "Les étapes 11 et 12, la quête d'élite « La couronne de trop » et l'Ossuaire.": "Steps 11 and 12, the elite quest \"The Crown Too Many\" and the Ossuary.",
+  "Pour aller au bout de l'Ossuaire, il faut trois pièces Épiques. L'arme du Cœur en est une ; les étapes 11 et 12 t'en ont donné une chacune. La quête d'élite « La couronne de trop » en donne une de plus : un casque.": "To reach the end of the Ossuary, you need three Epic pieces. The Heart weapon is one; steps 11 and 12 gave you one each. The elite quest \"The Crown Too Many\" gives one more: a helmet."
 });

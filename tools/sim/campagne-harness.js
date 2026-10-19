@@ -1106,6 +1106,7 @@ function gearRarity(rarity, n, needWeapon) {
     (g.game.inventory || []).slice().forEach(function (it) {
       if (good(it) && it.slot && !good(g.game.equipped[it.slot])) g.EquipmentManager.equip(it.uid);
     });
+    if (process.env.TRACE_EPIC && rarity === "epic" && k < 2) console.log("      [gear " + k + "] " + g.EQUIPMENT_SLOTS.map(function (sl) { var it = g.game.equipped[sl]; return sl + ":" + (it ? it.rarity : "-"); }).join(" ") + " · sac épiques " + (g.game.inventory || []).filter(function (it) { return it.rarity === "epic"; }).map(function (it) { return it.slot + "/" + it.icon + "/" + good(it); }).join(", ") + " · verrou " + g.heroLockReason());
     if (done()) break;
     compte(g.game.inventory, "sac");
     /* Sac plein : l'échoppe refuse d'acheter. Le joueur vide ce qui ne sert pas. */
@@ -1267,8 +1268,10 @@ var SOLVERS = {
       var t0 = CLOCK.offset, o0 = g.game.gold, farm0 = STATS.grindMs;
       fn();
       (STATS.c13 = STATS.c13 || []).push({ part: nom, h: (CLOCK.offset - t0) / 3600e3, farmH: (STATS.grindMs - farm0) / 3600e3, orAvant: Math.floor(o0), orApres: Math.floor(g.game.gold) });
+      if (process.env.TRACE_EPIC) console.log("      [palier] " + nom + " : " + ((CLOCK.offset - t0) / 3600e3).toFixed(1) + " h · obtention " + JSON.stringify(Object.keys(STATS.obtainH || {}).filter(function (k) { return /crypte_13/.test(k); }).map(function (k) { return k + " " + STATS.obtainH[k].toFixed(0); })) + " · attentes " + JSON.stringify(STATS.attente));
     }
     if (process.env.TRACE_EPIC) console.log("      [épiques] portées " + g.EQUIPMENT_SLOTS.map(function (sl) { var it = g.game.equipped[sl]; return sl + ":" + (it ? it.rarity : "-"); }).join(" ") + " · sac " + (g.game.inventory || []).filter(function (it) { return it.rarity === "epic"; }).map(function (it) { return it.slot + "/" + it.name; }).join(", ") + " · sac " + (g.game.inventory || []).length + "/" + g.getInventoryCap() + " · verrou « " + (g.heroLockReason() || "") + " » · sceneRun " + !!g.game.sceneRun + " · sortie " + g.SortieManager.isActive());
+    part("La couronne de trop", function () { playAdventure("aq_crypte_couronne"); }); // v3.456.3 : le casque Épique sûr
     part(P.pieces + " Épiques", function () { gearRarity("epic", P.pieces, true); });
     part("Forge " + P.forge, function () { upgradeBuilding("forge", P.forge); });
     part("reforge arme " + P.reforge, function () { reforgeTo("weapon", P.reforge); });

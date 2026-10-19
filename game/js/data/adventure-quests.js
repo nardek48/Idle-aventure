@@ -428,6 +428,40 @@ var ADVENTURE_QUESTS = {
   /* v3.455.0 (Crypte, acte III étape 14) — « Ce qu'elle garde » : trois rencontres dans l'Ossuaire (dormeurs
      nombreux), puis la Pleureuse, avec Ysolt dans le groupe. Cible : 65-80 % par classe au profil du palier
      Épique. Multiplicateurs au banc. */
+  /* v3.456.3 (Crypte, lot C-6, décision Seb du 19/10) — LA COURONNE DE TROP : quête d'élite du Porte-couronne,
+     ouverte à crypte_12. Butin : La seconde couronne, casque Épique unique (ELITE_UNIQUE_LOOT.porte_couronne),
+     une source sûre pour le palier Épique de crypte_13. Chiffres au banc (profil d'entrée de l'acte III). */
+  aq_crypte_couronne: {
+    id: "aq_crypte_couronne",
+    type: "elite",
+    section: "adventure",
+    difficulty: "hard",
+    progressionStage: "world_mid",
+    category: "side",
+    worldId: "crypt",
+    adventureIndex: 1,
+    eliteId: "porte_couronne",
+    requiresStoryStep: "crypte_12",
+    encounters: [
+      { group: ["deadknight", "spectre", "wraith"], groupHpMult: 0.35, sleepers: 2 },
+      { group: ["necromancer", "deadknight"], groupHpMult: 0.55, sleepers: 1 },
+      { group: ["spectre", "deadknight", "spectre"], groupHpMult: 0.35, sleepers: 2 }
+    ],
+    // banc (crypte-acte3-bench --quete --profil rare, 12 runs, Chev. / Rôd. / Mage) : 2,0 / 5,0 / p2,8 e2,6 -> 0 / 8 / 25 % ;
+    // 1,6 / 4,0 / p1,9 e1,7 -> 92 / 100 / 92 % ; 1,8 / 4,5 / p2,3 e2,1 -> 50 / 58 / 58 %. Retenu le milieu.
+    encounterHpMult: 1.7,
+    enemyPowerMult: 4.2,
+    eliteStatMult: { power: 2.1, endurance: 1.9 },
+    name: "La couronne de trop",
+    story: "Dans l'Ossuaire, un couloir où toutes les niches sont vides. Au bout, quelqu'un porte deux couronnes, l'une sur l'autre.",
+    icon: "./images/Icons/quest_icons/elite/elite_porte_couronne.png",
+    steps: [
+      { id: "rencontres_couronne", type: "encounter", worldId: "crypt", target: 3, desc: "Vaincre {target} rencontres dans l'Ossuaire" },
+      { id: "elite_couronne", type: "eliteKill", eliteId: "porte_couronne", target: 1, desc: "Vaincre le Porte-couronne" }
+    ],
+    reward: {}
+  },
+
   aq_crypte_pleureuse: {
     id: "aq_crypte_pleureuse",
     type: "elite",

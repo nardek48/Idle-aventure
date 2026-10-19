@@ -68,7 +68,7 @@ var extra = function () {
     if (QENC) { Q.encounterHpMult = QENC[0]; Q.enemyPowerMult = QENC[1]; }
     if (QELITE) Q.eliteStatMult = { power: QELITE[0], endurance: QELITE[1] };
     var garde = Q.requiresStoryStep; Q.requiresStoryStep = null;
-    console.log(Q.name.toUpperCase() + " — " + RUNS + " runs, profil Épique, " + PARTY.join(" + ") + ", potions du profil"
+    console.log(Q.name.toUpperCase() + " — " + RUNS + " runs, profil " + (PROFIL_ARG || "epique") + ", " + PARTY.join(" + ") + ", potions du profil"
       + (QENC ? " · essai rencontres PV ×" + QENC[0] + " puissance ×" + QENC[1] : "") + (QELITE ? " · essai Pleureuse p" + QELITE[0] + " e" + QELITE[1] : "") + (QBOSS4 ? " · essai boss PV ×" + QBOSS4[0] + " puissance ×" + QBOSS4[1] : ""));
     console.log("Cible : 65-80 % par classe, Rôdeur ≥ 60 %.\n");
     var chaines = 0, _chain = g.SleepSystem.chainedTurn; // v3.456.0 : tours perdus aux chaînes
@@ -77,7 +77,7 @@ var extra = function () {
       var n = 0, ok = 0, rounds = 0, hp = 0;
       chaines = 0;
       for (var i = 0; i < RUNS; i++) {
-        prep(c, PROFILS.epique, 79000 + i);
+        prep(c, PROFILS[PROFIL_ARG || "epique"], 79000 + i); // v3.456.3 : --profil rare pour la quête de l'étape 12
         g.game.adventureQuestsCompleted = {};
         var r = playQuest(QID);
         if (!r) continue;

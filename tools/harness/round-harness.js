@@ -16051,5 +16051,25 @@ console.log("\n[245] v3.456.2 — Crypte, lot C-6 : groupe repris, crans du Terr
   } finally { SQ.getChoice = savedChoice; }
 })();
 
+console.log("\n[246] v3.456.3 — Crypte, lot C-6 : la quête d'élite du Porte-couronne et La seconde couronne");
+(function () {
+  try {
+    var q = g.ADVENTURE_QUESTS.aq_crypte_couronne, u = g.ELITE_UNIQUE_LOOT.porte_couronne;
+    ok(q && q.type === "elite" && q.eliteId === "porte_couronne" && q.requiresStoryStep === "crypte_12" && q.encounters.length === 3, "La couronne de trop : quête d'élite, ouverte à crypte_12, 3 rencontres puis le Porte-couronne");
+    ok(u && u.slot === "helmet" && u.rarity === "epic", "butin : La seconde couronne, casque Épique");
+    game = freshCombat("knight");
+    game.inventory = [];
+    for (var i = 0; i < g.getInventoryCap(); i++) game.inventory.push(g.generateEquipmentItem("ring", "common", 1));
+    var n0 = game.inventory.length;
+    var rows = g.EliteManager.grantReward("porte_couronne", 0);
+    var pris = game.inventory.filter(function (it) { return it.eliteId === "porte_couronne"; })[0];
+    ok(pris && pris.rarity === "epic" && game.inventory.length === n0 + 1, "sac plein : la couronne entre quand même (objet unique)");
+    game.equipped = { weapon: g.EliteManager.buildUniqueLoot("arme_coeur"), helmet: pris };
+    ok(g.storyPalierCrypteEpique(game).pieces === 2, "elle compte au palier Épique");
+  } catch (err) {
+    ok(false, "[246] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);
