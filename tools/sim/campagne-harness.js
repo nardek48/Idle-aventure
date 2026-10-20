@@ -352,6 +352,64 @@ function developVillage() {
     if (okR) STATS.village.push("reforge " + slot + " " + F.getLevel(slot) + " (" + CURRENT_STEP + ")");
   });
 }
+/* v3.457.3 (audit I2) : ce que fait un joueur riche de l'or qui dort. Vitrine renouvelée si elle coûte
+   moins de 15 % de la bourse (au-delà de 20 000 or) ; relances de l'Enchanteresse sur les pièces portées
+   Épiques ou mieux, ligne sous 85 % de sa fourchette, avec l'or (au plus 10 % de la bourse) et la Sève
+   au-delà de 20 en stock : la Sève reste aux chantiers. */
+function depensesOr(g) {
+  var S = g.EquipShopManager, ST = STATS.depenses = STATS.depenses || { vitrine: 0, vitrineOr: 0, relances: 0, relancesOr: 0 };
+  if (S && g.game.gold > 20000 && typeof S.getManualRefreshCost === "function") {
+    var rc = Number(S.getManualRefreshCost() || 0);
+    if (rc > 0 && rc <= g.game.gold * 0.15 && S.manualRefresh() !== false) { ST.vitrine++; ST.vitrineOr += rc; }
+  }
+  /* L'Enchanteresse se bâtit avec le stock seulement (pas de farm), si le chantier coûte moins de 20 % de la bourse. */
+  var V = g.VillageBuildingManager, ce = V.getNextCost("enchanter");
+  if (ce && !V.isBuilding() && !V.getBlockReason("enchanter") && Number(ce.gold || 0) <= g.game.gold * 0.2) {
+    V.startBuild("enchanter"); wait(V.getSiteSecondsLeft() * 1000 + 1000, "chantier"); V.tick();
+    STATS.village.push("Enchanteresse " + V.getLevel("enchanter") + " (" + CURRENT_STEP + ")");
+  }
+  var E = g.EnchantManager, ORD = g.RARITY_ORDER;
+  if (!E || E.getBuildingLevel() <= 0) return;
+  for (var n = 0; n < 12; n++) {
+    var best = null;
+    g.EQUIPMENT_SLOTS.forEach(function (sl) {
+      var it = g.game.equipped[sl];
+      if (!it || ORD.indexOf(it.rarity) < ORD.indexOf("epic")) return;
+      (it.affixes || []).forEach(function (a, i) {
+        var r = E.getRange(it, i), c = E.getCost(it, i);
+        if (!r || !c || r.max <= r.min) return;
+        var part = (Number(a.value) - r.min) / (r.max - r.min);
+        if (part >= 0.85 || c.gold > g.game.gold * 0.1 || g.WarehouseManager.getAmount("seve_aeswyn") - c.seve_aeswyn < 20) return;
+        if (E.getBlockReason(it, i)) return;
+        if (!best || part < best.part) best = { it: it, i: i, part: part, gold: c.gold };
+      });
+    });
+    if (!best) break;
+    E._rolling = false;
+    if (!E.reroll(best.it, best.i)) break;
+    E._rolling = false;
+    ST.relances++; ST.relancesOr += best.gold;
+  }
+}
+
+/* v3.457.3 : une caravane par marché libre (trajet Long dès la Halle 3, sinon Moyen) ; déchargées au retour. */
+function caravanes(g) {
+  var C = g.CaravanManager;
+  if (!C || !C.isAvailable()) return;
+  var ST = STATS.caravanes = STATS.caravanes || { departs: 0, or: 0, rares: 0 };
+  if (C.isBack()) { var l = C.unload(); if (l) { ST.or += l.gold; if (l.rare) ST.rares += l.rare.n; } }
+  var trip = C.isTripOpen("long") ? "long" : "moyen";
+  // un joueur garde une place pour le marché que l'Histoire va demander (ruines_04, crypte_04)
+  var ep = g.game.explorationProgression || {}, reached = g.game.worldsEverReached || {};
+  var garde = (reached[2] && !ep.ruinsMarketDone) || (reached[3] && !ep.cryptMarketDone) ? 1 : 0;
+  C.getMarkets().forEach(function (m) {
+    if (C.list().length >= C.getMaxCaravans() - garde) return;
+    if (C.getBlockReason(trip, m.world)) return;
+    harvest();
+    if (C.depart(trip, m.world)) ST.departs++;
+  });
+}
+
 function closeRec(rec) {
   rec.hp1 = Math.max(0, G.game.heroHp / (G.game.heroMaxHp || 1));
   rec.hpLost = Math.max(0, rec.hp0 - rec.hp1);
@@ -491,6 +549,8 @@ function entretien() {
     }
   });
   developVillage();
+  depensesOr(g);       // v3.457.3 (audit I2) : vitrine et Enchanteresse quand l'or s'entasse
+  caravanes(g);        // v3.457.3 : les caravanes partent vers chaque marché libre
   var budget = g.game.gold * 0.6, avant = g.game.gold;
   for (var j = 0; j < 60 && avant - g.game.gold < budget; j++) { var o = g.game.gold; buyTraining(g, 1, true, true); if (g.game.gold === o) break; }
 }
@@ -611,6 +671,7 @@ function obtainIn(res, qty, depth) {
       if (process.env.TRACE_CARTE) console.log("      [carte] " + res + " " + CURRENT_STEP + " victoires du jour " + gagnes + " · frein " + LMc.getBrakeMult(CARTE[res][0], CARTE[res][1]).toFixed(2) + " · " + new RealDate(FakeDate.now()).toDateString());
       if (freeSectorAgain(CARTE[res][0], CARTE[res][1])) { ca.victoires++; continue; }
       if (gagnes <= 0) break;   // perdu sans frein : l'élite est trop forte, pas une question d'attente
+      if (sortieDonjonPour(res)) continue; // v3.457.3 (audit P11) : un ticket de donjon avant d'attendre le lendemain
       if (SANS_LENDEMAIN) break; // v3.457.1 : une reforge facultative n'attend pas le lendemain (le joueur continue l'Histoire)
       ca.parJour.push(gagnes);
       attendreLendemain();
@@ -625,7 +686,13 @@ function obtainIn(res, qty, depth) {
   var bid = Object.keys(g.PRODUCTION_BUILDINGS).filter(function (id) { return g.PRODUCTION_BUILDINGS[id].resourceKey === res; })[0];
   if (bid) {
     if (!g.ProductionManager.isBuildingUnlocked(bid)) { note(res + " : bâtiment " + bid + " verrouillé"); return false; }
-    for (var h = 0; h < 72 && have() < qty; h++) { wait(3600e3, "production"); harvest(); }
+    // v3.457.3 (audit P2) : un joueur récolte d'abord ; il attend ensuite au plus juste, 10 min à 1 h selon le débit
+    harvest();
+    for (var h = 0; h < 432 && have() < qty; h++) {
+      var parMin = Number(g.ProductionManager.getRatePerMin(bid) || 0);
+      var minutes = parMin > 0 ? Math.ceil((qty - have()) / parMin) : 60;
+      wait(Math.max(10, Math.min(60, minutes)) * 60e3, "production"); harvest();
+    }
     if (have() < qty) note(res + " : " + have() + " / " + qty + " après 72 h de production (plafond de l'Entrepôt ?)");
     return have() >= qty;
   }
@@ -772,7 +839,12 @@ function freeSector(mapId, sectorId) {
       STATS.expeditionFails.push(cible + " (" + (LAST_END || "?") + ", profondeur " + fr.depth + ", Souffle " + fr.breath + ", blessures " + (fr.injuries || []).length + ")");
       note("secteur " + cible + " : essai " + (essai + 1) + " sans libération (" + LAST_END + ")");
       // élite répétable déjà battue aujourd'hui : le frein reste, un joueur revient le lendemain
-      if (LM.isRepeatable(mapId, cible) && LM.getDailyWins(mapId, cible) > 0) attendreLendemain(); else wait(3600e3, "échec à rejouer");
+      if (LM.isRepeatable(mapId, cible) && LM.getDailyWins(mapId, cible) > 0) {
+        // v3.457.3 (audit P11) : le matériau de cette élite vient aussi d'un donjon ; un ticket avant le lendemain
+        var matiere = { arbremere: "seve_aeswyn", bete_dune: "chitine_profondeurs" }[cible];
+        if (matiere && sortieDonjonPour(matiere)) return false;
+        attendreLendemain();
+      } else wait(3600e3, "échec à rejouer");
     }
   }
   return LM.isLiberated(mapId, cible);
@@ -852,14 +924,17 @@ function caravaneMarcheRuines(g, world, flagKey) {
   var m = C.getMarkets().filter(function (x) { return x.world === world; })[0];
   if (!m) { note("marché du monde " + world + " absent : " + JSON.stringify(C.getMarkets())); return; }
   for (var essai = 0; essai < 6 && !g.storyDesertFlag(flagKey); essai++) {
-    if (C.get() && C.isBack()) C.unload();
-    if (C.get()) { wait(Math.max(60e3, C.getSecondsLeft() * 1000 + 1000), "caravane"); continue; }
+    // v3.457.3 : caravanes multiples — on suit celle de CE marché ; une place prise ailleurs se libère au retour
+    if (C.isBack(m.world)) { C.unload(m.world); continue; }
+    if (C.get(m.world)) { wait(Math.max(60e3, C.getSecondsLeft(m.world) * 1000 + 1000), "caravane"); continue; }
     harvest();   // un joueur récolte avant de charger : la caravane ne prend que le surplus de l'Entrepôt
-    var why = C.getBlockReason("court");
+    var why = C.getBlockReason("court", m.world);
+    if (why && C.isBack()) { C.unload(); why = C.getBlockReason("court", m.world); }
+    if (why && C.list().length >= C.getMaxCaravans()) { wait(Math.max(60e3, C.getSecondsLeft() * 1000 + 1000), "caravane"); continue; }
     if (why) { note("caravane : " + why); wait(2 * 3600e3, "caravane"); continue; }
     C.depart("court", m.world);
-    wait(Math.max(60e3, C.getSecondsLeft() * 1000 + 1000), "caravane");
-    if (C.isBack()) C.unload();
+    wait(Math.max(60e3, C.getSecondsLeft(m.world) * 1000 + 1000), "caravane");
+    if (C.isBack(m.world)) C.unload(m.world);
   }
 }
 
@@ -987,6 +1062,22 @@ function run() {
 }
 
 /* Retour au jour civil suivant (le frein des élites répétables retombe). */
+/* v3.457.3 (audit P11) : un run du donjon qui donne ce matériau (Tanière : Sève), si un ticket reste.
+   Une Marque à partir des Ruines (+2 par Marque). Renvoie true si le stock a monté. */
+function sortieDonjonPour(res) {
+  var g = G, D = g.DungeonManager;
+  var dg = (g.DUNGEONS || []).filter(function (d) { return d.specialResourceId === res; })[0];
+  if (process.env.TRACE_DONJON) console.log("      [donjon pour " + res + "] " + CURRENT_STEP + " · " + (dg ? "donjon " + dg.id + " verrou " + D.getLockReason(dg.id) + " · tickets " + D.getRunsLeft(dg.id) : "aucun donjon"));
+  if (!dg || !D.isUnlocked(dg.id) || D.getRunsLeft(dg.id) <= 0) return false;
+  var avant = g.WarehouseManager.getAmount(res);
+  if (COMBATS) healUp();
+  playDungeonOnce(dg.id, Number(g.WorldManager.worldIndex || 0) >= 2);
+  var gain = g.WarehouseManager.getAmount(res) - avant;
+  STATS.donjonMatiere = STATS.donjonMatiere || {};
+  STATS.donjonMatiere[res] = (STATS.donjonMatiere[res] || 0) + Math.max(0, gain);
+  return gain > 0;
+}
+
 var SANS_LENDEMAIN = 0; // > 0 : achat facultatif en cours, le matériau du monde se prend sans attendre le jour suivant
 function attendreLendemain() {
   var ca = STATS.carte = STATS.carte || { victoires: 0, lendemains: 0, parJour: [] }; ca.lendemains++;
