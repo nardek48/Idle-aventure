@@ -209,7 +209,7 @@ var expSheet = null; // null | { type: "patrol" | "caravan", id }
     h += '<div class="exp-dests">';
     here.forEach(function (d) {
       h += '<button type="button" class="exp-dest' + (ui.sectorId === d.sectorId ? ' is-on' : '') + '" onclick="patrolPick(\'' + id + '\', \'sectorId\', \'' + d.sectorId + '\')">'
-        + '<span class="exp-dest-head"><b>' + esc(_td(d.name)) + '</b>' + ringDots(d.ring) + (d.total === best ? '<i class="exp-best">' + _t("le plus") + '</i>' : '') + '</span><span class="exp-dest-loot">';
+        + '<span class="exp-dest-head"><b>' + esc(_td(d.name)) + '</b>' + ringDots(d.ring) + (best > 0 && d.total === best ? '<i class="exp-best">' + _t("le plus") + '</i>' : '') + '</span><span class="exp-dest-loot">';
       Object.keys(d.est.loot).forEach(function (k) {
         if (d.est.loot[k] > 0) h += '<span class="exp-res">' + img(resDef(k).icon || "images/Icons/system/warehouse_supplies.png") + '<b>' + formatNumber(d.est.loot[k]) + '</b><small>' + esc(resDef(k).name ? _td(resDef(k).name) : k) + '</small></span>';
       });

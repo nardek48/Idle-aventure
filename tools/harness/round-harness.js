@@ -16222,5 +16222,36 @@ console.log("\n[252] v3.457.2 — Gabarit du Chevalier sur les quêtes à multip
   }
 })();
 
+console.log("\n[253] v3.457.3 — Patrouilles des Ruines et de la Crypte (audit P1)");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight';");
+    var PM = g.PatrolManager;
+    ok(g.PATROL_RATES.ruins.matPerHour === 125 && g.PATROL_RATES.crypt.matPerHour === 190 && g.PATROL_RATES.crypt.goldPerHour === 21, "taux : Ruines 125/18, Crypte 190/21");
+    var manque = [];
+    ["ruins", "crypt"].forEach(function (m) { g.LIVING_MAPS[m].sectors.forEach(function (sec) { if (!g.PATROL_SECTORS[m][sec.id]) manque.push(m + ":" + sec.id); }); });
+    ok(!manque.length, "chaque lieu des Ruines et de la Crypte a ses ressources" + (manque.length ? " (manque " + manque.join(",") + ")" : ""));
+    var e = PM.estimate("edda", "crypt", "lac", 8);
+    ok(e.loot.eau > 0 && e.loot.pierre > 0 && e.gold > 0, "Crypte, Lac froid, 8 h : eau, pierre et or (plus 0)");
+    ok(g.PATROL_COMPANION_FEMININE.edda && g.PATROL_COMPANION_FEMININE.ysolt && !g.PATROL_COMPANION_FEMININE.maddoc, "Edda et Ysolt au féminin");
+    var sec = g.LIVING_MAPS.ruins.sectors[0].id;
+    var t1 = PM.storyText("edda", { mapId: "ruins", sectorId: sec, story: { rare: false, index: 1 } });
+    ok(/trois fois/.test(t1) && t1.indexOf("{secteur}") < 0, "Edda aux Ruines : son récit");
+    var t2 = PM.storyText("edda", { mapId: "forest", sectorId: g.LIVING_MAPS.forest.sectors[0].id, story: { rare: false, index: 0 } });
+    ok(/^Edda rentre de .+, les sacs pleins\.$/.test(t2), "Edda en Forêt : le narrateur (« " + t2 + " »)");
+    var t3 = PM.storyText("wenna", { mapId: "crypt", sectorId: "lac", story: { rare: true, index: 0 } });
+    ok(/gisant/.test(t3), "Wenna dans la Crypte : récit rare de la Crypte, plus celui de la Forêt");
+    // garde-fou : une carte sans taux n'est plus proposée
+    var savedRate = g.PATROL_RATES.crypt; delete g.PATROL_RATES.crypt;
+    var libSave = g.LivingMapManager.isLiberated; g.LivingMapManager.isLiberated = function () { return true; };
+    ok(PM.reachedMapIds().indexOf("crypt") === -1 && PM.getDestinations("crypt").length === 0, "carte sans taux : pas de patrouille");
+    g.PATROL_RATES.crypt = savedRate;
+    ok(PM.reachedMapIds().indexOf("crypt") !== -1, "avec son taux, la Crypte revient");
+    g.LivingMapManager.isLiberated = libSave;
+  } catch (err) {
+    ok(false, "[253] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

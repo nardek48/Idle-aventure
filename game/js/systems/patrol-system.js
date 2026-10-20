@@ -59,15 +59,16 @@ var PatrolManager = {
      dès qu'un de ses secteurs est libéré. Les identifiants de secteur sont uniques entre cartes. */
   reachedMapIds: function () {
     if (!window.LIVING_MAPS || !window.LivingMapManager) return [];
+    // v3.457.3 (audit P1) : seulement les cartes qui ont un rendement (une carte future sans taux rapportait 0)
     return Object.keys(LIVING_MAPS).filter(function (m) {
-      return LIVING_MAPS[m].sectors.some(function (s) { return LivingMapManager.isLiberated(m, s.id); });
+      return !!(window.PATROL_RATES && PATROL_RATES[m]) && LIVING_MAPS[m].sectors.some(function (s) { return LivingMapManager.isLiberated(m, s.id); });
     });
   },
 
   /* getDestinations([mapId]) : les secteurs libérés d'une carte, ou de toutes les cartes atteintes. */
   getDestinations: function (mapId) {
     if (!window.LivingMapManager || !window.LIVING_MAPS) return [];
-    var self = this, maps = mapId ? (LIVING_MAPS[mapId] ? [mapId] : []) : this.reachedMapIds(), out = [];
+    var self = this, maps = mapId ? (LIVING_MAPS[mapId] && window.PATROL_RATES && PATROL_RATES[mapId] ? [mapId] : []) : this.reachedMapIds(), out = [];
     maps.forEach(function (m) {
       LIVING_MAPS[m].sectors.forEach(function (s) {
         if (!LivingMapManager.isLiberated(m, s.id)) return;
@@ -124,7 +125,7 @@ var PatrolManager = {
 
   _storyPool: function (companionId, mapId) {
     var c = (window.PATROL_STORIES && PATROL_STORIES[companionId]) || {};
-    var w = c[mapId] || c.forest || {};
+    var w = c[mapId] || {}; // v3.457.3 : plus de récits de la Forêt ailleurs ; sans récit, le narrateur (storyText)
     return { common: w.common || [], rare: w.rare || [] };
   },
 
@@ -133,8 +134,9 @@ var PatrolManager = {
     var pool = this._storyPool(companionId, p.mapId);
     var list = p.story.rare ? pool.rare : pool.common;
     var txt = list[p.story.index] || list[0] || "";
-    var def = this.getSectorDef(p.mapId, p.sectorId);
-    return _td(txt).replace(/\{secteur\}/g, def ? _td(def.name) : ""); // v3.374.0 : traduit AVANT la substitution
+    var def = this.getSectorDef(p.mapId, p.sectorId), cdef = window.getCompanionDef ? getCompanionDef(companionId) : null;
+    if (!txt) txt = window.PATROL_STORY_NARRATOR || ""; // v3.457.3 : compagnon hors de son monde
+    return _td(txt).replace(/\{secteur\}/g, def ? _td(def.name) : "").replace(/\{nom\}/g, cdef ? _td(cdef.name) : ""); // v3.374.0 : traduit AVANT la substitution
   },
 
   /* ---------- Actions ---------- */
