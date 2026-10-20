@@ -5758,5 +5758,6 @@ I18n.register("en", {
   "Ruines": "Ruins",
   "Crypte": "Crypt",
   "Qui lit les murs": "Who Reads the Walls",
-  "Qui laisse dormir les morts": "Who Lets the Dead Sleep"
+  "Qui laisse dormir les morts": "Who Lets the Dead Sleep",
+  "Créatures rencontrées : {a} / {b}": "Creatures met: {a} / {b}"
 });

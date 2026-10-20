@@ -18,28 +18,20 @@ function getWorldThumb(world) {
   return "images/Worlds/thumb_" + (world.assetKey || "forest") + ".png";
 }
 
+/* v3.456.7 (liste de Seb) : toutes les créatures du monde, comme le Bestiaire (ennemis, élites, boss d'Histoire
+   et de donjon). Une créature pas encore rencontrée reste un « ? » : on la découvre en la croisant. */
 function getWorldMonsterList(world) {
-  var ids = [];
-  var bossId = null;
-
-  (world.adventures || []).forEach(function (adv) {
-    (adv.enemyPool || []).forEach(function (enemyId) {
-      if (ids.indexOf(enemyId) === -1) ids.push(enemyId);
-    });
-    if (!bossId && adv.boss) bossId = adv.boss;
-  });
-
-  var monsters = ids.map(function (id) {
-    var data = ENEMY_DB[id];
-    return data ? { id: id, name: data.name, icon: renderIcon("enemies", data.asset), image: data.image || "", isBoss: false } : null;
+  var idx = (window.WORLDS || []).indexOf(world);
+  var ids = (idx >= 0 && typeof getBestiaryGroupedByWorld === "function") ? (getBestiaryGroupedByWorld()[idx] || []) : [];
+  var kills = game.killCounts || {};
+  return ids.map(function (id) {
+    var elite = window.ELITE_DB && ELITE_DB[id];
+    var data = elite ? (typeof buildEliteBestiaryData === "function" ? buildEliteBestiaryData(elite) : null) : (ENEMY_DB[id] || BOSS_DB[id]);
+    if (!data) return null;
+    var isBoss = !!BOSS_DB[id];
+    return { id: id, name: data.name, icon: renderIcon(isBoss ? "bosses" : "enemies", data.asset), image: data.image || "",
+      isBoss: isBoss, isElite: !!elite, met: Number(kills[id] || 0) > 0 };
   }).filter(Boolean);
-
-  if (bossId && BOSS_DB[bossId]) {
-    var bossData = BOSS_DB[bossId];
-    monsters.push({ id: bossId, name: bossData.name, icon: renderIcon("bosses", bossData.asset), image: bossData.image || "", isBoss: true });
-  }
-
-  return monsters;
 }
 
 var MAP_WORLD_CODEX_IDS = ["world_forest", "world_desert", "world_ruins", "world_crypt", "world_mountain", "world_tower"];
@@ -148,9 +140,15 @@ function buildWorldPopupHTML(index) {
 
   var monsters = getWorldMonsterList(world);
   if (monsters.length) {
+    var vus = monsters.filter(function (m) { return m.met; }).length;
+    h += '<div class="map-monster-count">' + _t("Créatures rencontrées : {a} / {b}", { a: vus, b: monsters.length }) + '</div>'; // v3.456.7
     h += '<div class="map-monster-row">';
     monsters.forEach(function (m) {
-      h += '<div class="map-monster-chip' + (m.isBoss ? " is-boss" : "") + (m.image ? " has-icon-img" : "") + '" title="' + esc(_td(m.name)) + '">';
+      if (!m.met) { // v3.456.7 : pas encore rencontrée
+        h += '<div class="map-monster-chip is-unknown' + (m.isBoss ? " is-boss" : "") + (m.isElite ? " is-elite" : "") + '" title="' + esc(_t("Pas encore rencontré")) + '">?</div>';
+        return;
+      }
+      h += '<div class="map-monster-chip' + (m.isBoss ? " is-boss" : "") + (m.isElite ? " is-elite" : "") + (m.image ? " has-icon-img" : "") + '" title="' + esc(_td(m.name)) + '">';
       if (m.image) {
         h += '<img src="' + esc(m.image) + '" alt="' + esc(_td(m.name)) + '" onerror="this.parentElement.classList.remove(\'has-icon-img\'); this.remove();">';
         h += '<span class="icon-img-fallback">' + renderIconOrEmojiHTML(m.icon, "map-fallback-ico", "") + '</span>';

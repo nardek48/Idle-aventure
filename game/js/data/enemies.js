@@ -175,6 +175,7 @@ var ENEMY_DB = {
      épée / magie du bestiaire des Ruines (mesure U-0). Image à générer. */
   batisseur: {
     name: "Bâtisseur",
+    worldId: "ruins", // v3.456.7 : hors des listes d'aventure (quêtes, Sanctuaire) — dit son monde au Bestiaire
     asset: "batisseur",
     image: "./images/Enemies/batisseur.jpg",
     resists: ["magic"],
