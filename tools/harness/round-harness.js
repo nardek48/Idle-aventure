@@ -16117,5 +16117,27 @@ console.log("\n[248] v3.456.6 — Hauts faits des Ruines et de la Crypte");
   }
 })();
 
+console.log("\n[249] v3.456.8 — Bestiaire : fiche en grand, boss de donjon, « où la trouver », aperçu de la carte");
+(function () {
+  try {
+    game = freshCombat("knight");
+    game.killCounts = { spectre: 2 }; game.dungeonTierCleared = {};
+    var ids = g.getAllBestiaryIds();
+    ok(ids.indexOf("donjon_4") !== -1 && ids.indexOf("donjon_3") !== -1 && ids.indexOf("donjon_1") !== -1, "la Liche, Varrek et le Basilic ont leur fiche (boss de donjon)");
+    var liche = g.bestiaryData("donjon_4");
+    ok(liche && liche.name === "Liche des sépulcres" && liche.isBoss && /liche/.test(liche.image), "fiche de la Liche : son nom, son image");
+    ok(!g.bestiaryMet("donjon_4"), "rencontrée seulement quand l'Ossuaire est terminé");
+    game.dungeonTierCleared[4] = true;
+    ok(g.bestiaryMet("donjon_4") && g.getBestiaryGroupedByWorld()[3].indexOf("donjon_4") !== -1, "Ossuaire terminé : la Liche est rencontrée, rangée dans la Crypte");
+    ok(g.creatureWhere("porte_couronne").join("|").indexOf("Ossuaire") !== -1, "où trouver le Porte-couronne : l'Ossuaire");
+    ok(g.creatureWhere("batisseur").length > 0, "le Bâtisseur a un lieu");
+    var m = g.getWorldMonsterList(g.WORLDS[3]);
+    ok(m.some(function (x) { return x.id === "donjon_4" && x.met; }) && m.filter(function (x) { return x.met; }).length === 2, "aperçu de la Crypte : la Liche et le Spectre rencontrés");
+    ok(m.filter(function (x) { return x.isNew; }).length === 2, "nouvelles tant que l'aperçu n'a pas été ouvert");
+  } catch (err) {
+    ok(false, "[249] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

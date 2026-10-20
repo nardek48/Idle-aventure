@@ -5759,5 +5759,14 @@ I18n.register("en", {
   "Crypte": "Crypt",
   "Qui lit les murs": "Who Reads the Walls",
   "Qui laisse dormir les morts": "Who Lets the Dead Sleep",
-  "Créatures rencontrées : {a} / {b}": "Creatures met: {a} / {b}"
+  "Créatures rencontrées : {a} / {b}": "Creatures met: {a} / {b}",
+  "Soutien : elle aide les autres, vise-la d'abord.": "Support: it helps the others, target it first.",
+  "Appelle : réveille un mort qui dort.": "Calls: wakes one of the sleeping dead.",
+  "Frappé, il réveille un dormeur de son escorte.": "When struck, he wakes a sleeper from his escort.",
+  "Endort un compagnon un round.": "Puts a companion to sleep for one round.",
+  "Où la trouver :": "Where to find it:",
+  "vaincue une fois||vaincue {n} fois": ["defeated once", "defeated {n} times"],
+  "l'épée": "the sword",
+  "l'arc": "the bow",
+  "la magie": "magic"
 });

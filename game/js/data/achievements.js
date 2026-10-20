@@ -16,7 +16,8 @@ function achievementBestiaryPercent() {
   if (typeof getAllBestiaryIds !== "function") return 0;
   var ids = getAllBestiaryIds();
   if (!ids.length) return 0;
-  var found = ids.filter(function (id) { return (game.killCounts && game.killCounts[id]) > 0; }).length;
+  var met = (typeof bestiaryMet === "function") ? bestiaryMet : function (id) { return (game.killCounts && game.killCounts[id]) > 0; }; // v3.456.8
+  var found = ids.filter(met).length;
   return Math.round((found / ids.length) * 100);
 }
 
@@ -59,7 +60,8 @@ function achMapSize(mapId) { return (window.LIVING_MAPS && LIVING_MAPS[mapId]) ?
 function achBestiaryWorld(worldIndex) {
   if (typeof getBestiaryGroupedByWorld !== "function") return { found: 0, total: 1 };
   var ids = getBestiaryGroupedByWorld()[worldIndex] || [];
-  return { found: ids.filter(function (id) { return achKills(id) > 0; }).length, total: ids.length || 1 };
+  var met = (typeof bestiaryMet === "function") ? bestiaryMet : function (id) { return achKills(id) > 0; }; // v3.456.8 : boss de donjon compris
+  return { found: ids.filter(met).length, total: ids.length || 1 };
 }
 
 /* Bâtiments ouverts par le plafond d'un monde (niveau > 0), construits. */

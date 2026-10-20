@@ -23,14 +23,13 @@ function getWorldThumb(world) {
 function getWorldMonsterList(world) {
   var idx = (window.WORLDS || []).indexOf(world);
   var ids = (idx >= 0 && typeof getBestiaryGroupedByWorld === "function") ? (getBestiaryGroupedByWorld()[idx] || []) : [];
-  var kills = game.killCounts || {};
+  var seen = (game.explorationProgression && game.explorationProgression.bestiarySeen) || {};
   return ids.map(function (id) {
-    var elite = window.ELITE_DB && ELITE_DB[id];
-    var data = elite ? (typeof buildEliteBestiaryData === "function" ? buildEliteBestiaryData(elite) : null) : (ENEMY_DB[id] || BOSS_DB[id]);
+    var data = typeof bestiaryData === "function" ? bestiaryData(id) : null; // v3.456.8 : boss de donjon compris
     if (!data) return null;
-    var isBoss = !!BOSS_DB[id];
-    return { id: id, name: data.name, icon: renderIcon(isBoss ? "bosses" : "enemies", data.asset), image: data.image || "",
-      isBoss: isBoss, isElite: !!elite, met: Number(kills[id] || 0) > 0 };
+    var met = bestiaryMet(id);
+    return { id: id, name: data.name, icon: renderIcon(data.isBoss && !data.isElite ? "bosses" : "enemies", data.asset), image: data.image || "",
+      isBoss: data.isBoss && !data.isElite, isElite: data.isElite, met: met, isNew: met && !seen[id] };
   }).filter(Boolean);
 }
 
@@ -144,20 +143,24 @@ function buildWorldPopupHTML(index) {
     h += '<div class="map-monster-count">' + _t("Créatures rencontrées : {a} / {b}", { a: vus, b: monsters.length }) + '</div>'; // v3.456.7
     h += '<div class="map-monster-row">';
     monsters.forEach(function (m) {
+      var tap = ' onclick="openCreatureSheet(\'' + esc(m.id) + '\')"'; // v3.456.8 : la fiche en grand, ou où la chercher
       if (!m.met) { // v3.456.7 : pas encore rencontrée
-        h += '<div class="map-monster-chip is-unknown' + (m.isBoss ? " is-boss" : "") + (m.isElite ? " is-elite" : "") + '" title="' + esc(_t("Pas encore rencontré")) + '">?</div>';
+        h += '<button type="button" class="map-monster-chip is-unknown' + (m.isBoss ? " is-boss" : "") + (m.isElite ? " is-elite" : "") + '" title="' + esc(_t("Pas encore rencontré")) + '"' + tap + '>?</button>';
         return;
       }
-      h += '<div class="map-monster-chip' + (m.isBoss ? " is-boss" : "") + (m.isElite ? " is-elite" : "") + (m.image ? " has-icon-img" : "") + '" title="' + esc(_td(m.name)) + '">';
+      h += '<button type="button" class="map-monster-chip' + (m.isBoss ? " is-boss" : "") + (m.isElite ? " is-elite" : "") + (m.isNew ? " is-new" : "") + (m.image ? " has-icon-img" : "") + '" title="' + esc(_td(m.name)) + '"' + tap + '>';
       if (m.image) {
         h += '<img src="' + esc(m.image) + '" alt="' + esc(_td(m.name)) + '" onerror="this.parentElement.classList.remove(\'has-icon-img\'); this.remove();">';
         h += '<span class="icon-img-fallback">' + renderIconOrEmojiHTML(m.icon, "map-fallback-ico", "") + '</span>';
       } else {
         h += m.icon;
       }
-      h += '</div>';
+      h += '</button>';
     });
     h += '</div>';
+    // v3.456.8 : vues une fois ouvertes, elles ne sont plus « nouvelles » (jour noté dans explorationProgression, déjà sauvegardé)
+    var ep = game.explorationProgression || (game.explorationProgression = {}), seenMap = ep.bestiarySeen || (ep.bestiarySeen = {});
+    monsters.forEach(function (m) { if (m.met) seenMap[m.id] = 1; });
   }
 
   h += '<div class="map-adventure-list">';
@@ -177,11 +180,21 @@ function buildWorldPopupHTML(index) {
     h += '<div class="' + advClasses.join(" ") + '">';
     h += '<div class="map-adventure-top">';
     h += '<span class="map-adventure-name">' + esc(_td(adv.name)) + '</span>';
-    if (BOSS_DB[adv.boss]) {
-      h += '<span class="map-adventure-boss">' + esc(_td(BOSS_DB[adv.boss].name)) + '</span>';
+    if (BOSS_DB[adv.boss]) { // v3.456.8 : le boss se découvre comme les autres
+      h += '<span class="map-adventure-boss">' + (bestiaryMet(adv.boss) ? esc(_td(BOSS_DB[adv.boss].name)) : "?") + '</span>';
     }
     h += '</div>';
     h += '<div class="map-adventure-text">' + esc(_td(adv.introText || "")) + '</div>';
+    h += '</div>';
+  });
+  /* v3.456.8 : le donjon du monde et son vrai boss (la Liche à l'Ossuaire, Varrek au Sanctuaire) */
+  (window.DUNGEONS || []).forEach(function (d) {
+    if (d.worldId !== world.id || !d.boss || (d.locked && !d.requiresStoryStep)) return;
+    var bid = (typeof bestiaryDungeonOf === "function" && bestiaryDungeonOf("donjon_" + d.id)) ? "donjon_" + d.id : d.boss.baseId;
+    h += '<div class="map-adventure-item is-dungeon">';
+    h += '<div class="map-adventure-top"><span class="map-adventure-name">' + esc(_td(d.name)) + '</span>';
+    h += '<span class="map-adventure-boss">' + (bestiaryMet(bid) ? esc(_td(d.boss.name)) : "?") + '</span></div>';
+    h += '<div class="map-adventure-text">' + _t("Donjon") + '</div>';
     h += '</div>';
   });
   h += '</div>';
