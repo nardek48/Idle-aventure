@@ -68,7 +68,9 @@ function tavernGoldPerDay(level) {
 
 var WORLDS_BENCH = [
   { id: "forest", idx: 0, companions: 1 },
-  { id: "desert", idx: 1, companions: 2 }
+  { id: "desert", idx: 1, companions: 2 },
+  { id: "ruins", idx: 2, companions: 2 },   // v3.457.3 (audit P1) : Edda rejoint, deux compagnons hors du groupe tour à tour
+  { id: "crypt", idx: 3, companions: 2 }
 ];
 
 console.log("PATROUILLES — banc P-0 (données v" + G.GAME_VERSION + ")");
@@ -81,6 +83,12 @@ WORLDS_BENCH.forEach(function (w) {
   var goldDay = tavernGoldPerDay(cap.village.tavern);
 
   var rate = G.PATROL_RATES[w.id];
+  if (!rate) {  // v3.457.3 : monde sans taux, le banc dit ce qu'il faudrait pour la cible
+    var m0 = (Object.keys(G.PATROL_RING_MULT).reduce(function (a, k) { return a + G.PATROL_RING_MULT[k]; }, 0) / Object.keys(G.PATROL_RING_MULT).length) * (1 + G.PATROL_UPGRADE_BONUS * UPG);
+    console.log(w.id.toUpperCase() + " : pas de taux. Joueur actif " + fmt(matDay) + " matériaux/jour · " + fmt(goldDay) + " or/jour de Taverne (Taverne " + cap.village.tavern + ")");
+    console.log("   Pour 15 % / 8 % : matPerHour ≈ " + fmt(0.15 * matDay / (HEURES * m0 * w.companions)) + " · goldPerHour ≈ " + fmt(0.08 * goldDay / (HEURES * (1 + G.PATROL_UPGRADE_BONUS * UPG) * w.companions)) + "\n");
+    return;
+  }
   var rings = Object.keys(G.PATROL_RING_MULT).map(function (k) { return G.PATROL_RING_MULT[k]; });
   var ringAvg = rings.reduce(function (a, b) { return a + b; }, 0) / rings.length;
   var mult = ringAvg * (1 + G.PATROL_UPGRADE_BONUS * UPG);
