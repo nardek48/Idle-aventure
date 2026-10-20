@@ -9796,7 +9796,7 @@ console.log("\n[120] v3.325.0 — Plafond du Terrain d'entraînement par acte");
 /* [121] v3.326.0 — Lot C-2 : dégâts des ennemis de quête (enemyPowerMult) et réglages. */
 console.log("\n[121] v3.326.0 — Lot C-2 : enemyPowerMult et recalage des combats");
 (function () {
-  run("fullResetState(); game.playerName='Test'; game.heroId='knight';");
+  run("fullResetState(); game.playerName='Test'; game.heroId='mage';"); // v3.457.2 : multiplicateur brut (le Chevalier a son gabarit, [252])
   var Q = g.QuestEnemyManager, A = g.ADVENTURE_QUESTS;
   var genSave = g.WorldManager.generateEnemy;
   g.WorldManager.generateEnemy = function () { return { id: "x", hp: 100, maxHp: 100, isBoss: false, stats: { power: 20 } }; };
@@ -16201,6 +16201,24 @@ console.log("\n[251] v3.457.1 — Boss de donjon comptés à part au Bestiaire ;
     ok(g.caravanRoadImageFor(3) === "images/Maps/parcours/crypte_descente.jpg" && g.caravanRoadImageFor(2) === "images/Maps/parcours/ruines_route.jpg", "Marché de la Crypte : la descente, plus la route des Ruines");
   } catch (err) {
     ok(false, "[251] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[252] v3.457.2 — Gabarit du Chevalier sur les quêtes à multiplicateur fixe");
+(function () {
+  try {
+    var Q = g.QuestEnemyManager, A = g.ADVENTURE_QUESTS;
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight';");
+    ok(Q.getClassGabarit() === 1.3 && Math.abs(Q.getPowerMult(A.aq_forest_depths) - 6 / 1.3) < 1e-9, "Chevalier : le Cœur de la Forêt à ×6 ÷ 1,3");
+    ok(Math.abs(Q.getPowerMult(A.aq_crypte_retient, true) - A.aq_crypte_retient.bossPowerMult / 1.3) < 1e-9, "Chevalier : bossPowerMult divisé aussi");
+    ok(Q.getPowerMult(A.aq_desert_trone) === A.aq_desert_trone.enemyPowerMult, "quête à heroRef (Trône) : pas de second gabarit");
+    ok(Q.getPowerMult(A.aq_story_premier_sang) === 1, "quête sans multiplicateur : ×1");
+    run("game.heroId='ranger';");
+    ok(Q.getClassGabarit() === 1 && Q.getPowerMult(A.aq_forest_depths) === 6, "Rôdeur : ×6 inchangé");
+    run("game.heroId='mage';");
+    ok(Q.getPowerMult(A.aq_forest_depths) === 6, "Mage : ×6 inchangé");
+  } catch (err) {
+    ok(false, "[252] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
 })();
 

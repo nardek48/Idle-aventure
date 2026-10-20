@@ -109,12 +109,24 @@ var QuestEnemyManager = {
   /* v3.326.0 (plan C-2) — enemyPowerMult : PUISSANCE (dégâts) de tous les ennemis de la quête,
      le pendant de enemyHpMult ; bossPowerMult règle le boss à part. Lu sur la donnée d'origine
      (ADVENTURE_QUESTS / HUNT_QUESTS) : les rencontres scriptées arrivent ici sous une copie
-     réduite, fabriquée par adventure-quest-system.js (protégé). Absent = 1, rien ne change. */
+     réduite, fabriquée par adventure-quest-system.js (protégé). Absent = 1, rien ne change.
+     v3.457.2 : divisé par le gabarit de la classe, sauf quête à heroRef (le gabarit y est déjà). */
   getPowerMult: function (quest, isBoss) {
     if (!quest) return 1;
     var src = (window.ADVENTURE_QUESTS && ADVENTURE_QUESTS[quest.id]) || (window.HUNT_QUESTS && HUNT_QUESTS[quest.id]) || quest;
     var m = Number(isBoss && src.bossPowerMult != null ? src.bossPowerMult : src.enemyPowerMult);
-    return (isFinite(m) && m > 0) ? m : 1;
+    if (!(isFinite(m) && m > 0)) return 1;
+    // v3.457.2 (accord de Seb) : gabarit de classe des quêtes fixes (Chevalier ÷1,3), comme heroRef depuis v3.448.7
+    if (!src.heroRef) m /= this.getClassGabarit();
+    return m;
+  },
+
+  /* Diviseur de puissance de la classe du héros (WORLD_HERO_SCALING.classEhpGabarit) ; 1 par défaut. */
+  getClassGabarit: function () {
+    var tab = window.WORLD_HERO_SCALING && WORLD_HERO_SCALING.classEhpGabarit;
+    var cls = (tab && typeof getClassByHeroId === "function") ? getClassByHeroId(game.heroId) : null;
+    var g = cls ? Number(tab[cls.id]) : 1;
+    return (isFinite(g) && g > 0) ? g : 1;
   },
 
   applyPowerMult: function (quest, enemy) {
