@@ -33,6 +33,9 @@ function achievementHasRarityOwned(rarity) {
 
 /* ---------- Aides de suivi (v3.338.0) ---------- */
 
+/* v3.456.6 : une quête d'aventure terminée (boss d'Histoire : Maître d'œuvre, Nécromancien suprême). */
+function storyAdvDoneAch(id) { return (game.adventureQuestsCompleted && game.adventureQuestsCompleted[id]) ? 1 : 0; }
+
 /* Compteur neuf (game.achievementStats.counters), sans rattrapage. */
 function achCounter(key) {
   var st = game.achievementStats;
@@ -142,6 +145,54 @@ var ACHIEVEMENTS_DB = [
     hidden: true, hint: "Rien n'est perdu pour toujours.", fresh: true,
     target: 1, track: function () { return achCounter("retakenDesert"); }, reward: { gold: 1200 } },
 
+  /* ===================== Ruines anciennes (v3.456.6, décision Seb du 20/10) ===================== */
+  { id: "hf_ruines_plan", category: "ruins", name: "Le plan fait pierre", desc: "Vaincre le Maître d'œuvre.",
+    target: 1, track: function () { return storyAdvDoneAch("aq_ruines_plan"); }, reward: { gold: 1500 } },
+  { id: "hf_ruines_varrek", category: "ruins", name: "Le garde scellé", desc: "Vaincre Varrek, au fond du Sanctuaire scellé.",
+    target: 1, track: function () { return (game.dungeonTierCleared || {})[3] ? 1 : 0; }, reward: { gold: 1500 } },
+  { id: "hf_ruines_map", category: "ruins", name: "Les murs reculent", desc: "Tous les quartiers de la carte des Ruines libérés en même temps.",
+    target: 14, track: function () { return achMapLiberated("ruins"); }, targetFn: function () { return achMapSize("ruins"); }, reward: { gold: 1500 } },
+  { id: "hf_ruines_elites", category: "ruins", name: "Les marques des Ruines", desc: "Vaincre le Contremaître et le Golem.",
+    target: 2, track: function () { return (achKills("contremaitre") > 0 ? 1 : 0) + (achKills("golem") > 0 ? 1 : 0); }, reward: { gold: 1500 } },
+  { id: "hf_ruines_golem", category: "ruins", name: "Le Golem, encore", desc: "Vaincre le Golem 10 fois.",
+    target: 10, track: function () { return achKills("golem"); }, reward: { gold: 1500 } },
+  { id: "hf_ruines_palisade", category: "ruins", name: "Le mur d'en haut", desc: "Palissade niveau 8.",
+    target: 8, track: function () { return achBuildingLevel("palisade"); }, reward: { gold: 1500 } },
+  { id: "hf_ruines_run", category: "ruins", name: "Une rue qui tourne", desc: "Mener une Petite Aventure des Ruines jusqu'au bout.",
+    target: 1, fresh: true, track: function () { return achCounter("runRuins"); }, reward: { gold: 1500 } },
+  { id: "hf_ruines_bestiary", category: "ruins", name: "Naturaliste des Ruines", desc: "Rencontrer toutes les créatures des Ruines.",
+    target: 1, track: function () { return achBestiaryWorld(2).found; }, targetFn: function () { return achBestiaryWorld(2).total; }, reward: { gold: 1500 } },
+  { id: "hf_ruines_plan_nopotion", category: "ruins", name: "Pas une pierre de trop", desc: "Vaincre le Maître d'œuvre sans boire de potion pendant ce combat.",
+    hidden: true, hint: "Il se relève. Toi, tu tiens.", fresh: true,
+    target: 1, track: function () { return achCounter("maitreNoPotion"); }, reward: { gold: 3000 } },
+  { id: "hf_ruines_retaken", category: "ruins", name: "Ce qui retombe se relève", desc: "Libérer à nouveau un quartier repris par la cité.",
+    hidden: true, hint: "La cité refait. Toi aussi.", fresh: true,
+    target: 1, track: function () { return achCounter("retakenRuins"); }, reward: { gold: 3000 } },
+
+  /* ===================== Crypte oubliée (v3.456.6, décision Seb du 20/10) ===================== */
+  { id: "hf_crypte_retient", category: "crypt", name: "Celui qui retient", desc: "Vaincre le Nécromancien suprême.",
+    target: 1, track: function () { return storyAdvDoneAch("aq_crypte_retient"); }, reward: { gold: 3000 } },
+  { id: "hf_crypte_liche", category: "crypt", name: "Les os en ordre", desc: "Vaincre la Liche des sépulcres, au bout de l'Ossuaire.",
+    target: 1, track: function () { return (game.dungeonTierCleared || {})[4] ? 1 : 0; }, reward: { gold: 3000 } },
+  { id: "hf_crypte_map", category: "crypt", name: "Tous les couloirs", desc: "Tous les couloirs de la carte de la Crypte libérés en même temps.",
+    target: 14, track: function () { return achMapLiberated("crypt"); }, targetFn: function () { return achMapSize("crypt"); }, reward: { gold: 3000 } },
+  { id: "hf_crypte_elites", category: "crypt", name: "Les marques de la Crypte", desc: "Vaincre le Porte-couronne et la Pleureuse.",
+    target: 2, track: function () { return (achKills("porte_couronne") > 0 ? 1 : 0) + (achKills("pleureuse") > 0 ? 1 : 0); }, reward: { gold: 3000 } },
+  { id: "hf_crypte_sleepers", category: "crypt", name: "Laisse-les dormir", desc: "Laisser dormir 100 morts.",
+    target: 100, fresh: true, track: function () { return achCounter("sleepersLeft"); }, reward: { gold: 3000 } },
+  { id: "hf_crypte_woken", category: "crypt", name: "Ceux qu'on réveille", desc: "Réveiller puis vaincre 50 morts.",
+    target: 50, fresh: true, track: function () { return achCounter("wokenKilled"); }, reward: { gold: 3000 } },
+  { id: "hf_crypte_run", category: "crypt", name: "Une lampe dans le noir", desc: "Mener une Petite Aventure de la Crypte jusqu'au bout.",
+    target: 1, fresh: true, track: function () { return achCounter("runCrypt"); }, reward: { gold: 3000 } },
+  { id: "hf_crypte_bestiary", category: "crypt", name: "Naturaliste de la Crypte", desc: "Rencontrer toutes les créatures de la Crypte.",
+    target: 1, track: function () { return achBestiaryWorld(3).found; }, targetFn: function () { return achBestiaryWorld(3).total; }, reward: { gold: 3000 } },
+  { id: "hf_crypte_nochain", category: "crypt", name: "Personne ne reste", desc: "Vaincre le Nécromancien suprême sans qu'aucune chaîne ne tienne jusqu'au bout.",
+    hidden: true, hint: "Il tient. Toi, tu défais.", fresh: true,
+    target: 1, track: function () { return achCounter("retientNoChain"); }, reward: { gold: 6000 } },
+  { id: "hf_crypte_retaken", category: "crypt", name: "Le réveil, repris", desc: "Reprendre un couloir resté hostile après « Le réveil ».",
+    hidden: true, hint: "Il dort mal, ce couloir.", fresh: true,
+    target: 1, track: function () { return achCounter("retakenCrypt"); }, reward: { gold: 6000 } },
+
   /* ===================== Grimoire ===================== */
   { id: "hf_grim_rule", category: "grimoire", name: "Première règle", desc: "Écrire une règle du Grimoire.",
     target: 1, track: function () { return Array.isArray(game.grimoireRules) && game.grimoireRules.length ? 1 : 0; }, reward: { gold: 150 } },
@@ -210,6 +261,11 @@ var ACHIEVEMENT_CATEGORIES = [
     tierRewards: [{ gold: 500 }, { gold: 1250 }, { gold: 500, title: "Gardien d'Aeswyn" }] },
   { id: "desert", label: "Désert", world: 1, tiers: [3, 6, 8],
     tierRewards: [{ gold: 1500 }, { gold: 3750 }, { gold: 750, title: "Celui qui marche sur le sable" }] },
+  // v3.456.6 : Ruines et Crypte (titres neutres, règle des textes adressés au héros)
+  { id: "ruins", label: "Ruines", world: 2, tiers: [3, 6, 8],
+    tierRewards: [{ gold: 4500 }, { gold: 11250 }, { gold: 2250, title: "Qui lit les murs" }] },
+  { id: "crypt", label: "Crypte", world: 3, tiers: [3, 6, 8],
+    tierRewards: [{ gold: 9000 }, { gold: 22500 }, { gold: 4500, title: "Qui laisse dormir les morts" }] },
   { id: "grimoire", label: "Grimoire" },
   { id: "village", label: "Village" },
   { id: "companions", label: "Compagnons" },

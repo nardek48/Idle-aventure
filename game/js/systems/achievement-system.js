@@ -278,6 +278,9 @@ var AchievementManager = {
     if (enemy.isBoss && grimoire && this._fight.startMode === "grimoire" && !this._fight.modeChanged) this.flag("grimoireBoss");
     if (enemy.id === "orcwarlord" && this._fight.enemy === enemy && !this._fight.potion) this.flag("orcNoPotion");
     if (enemy.id === "nezzam" && this._fight.enemy === enemy && !this._fight.potion) this.flag("nezzamNoPotion"); // v3.362.0
+    if (enemy.id === "maitre_oeuvre" && this._fight.enemy === enemy && !this._fight.potion) this.flag("maitreNoPotion"); // v3.456.6
+    if (enemy.wokenByHero) this.bump("wokenKilled"); // v3.456.6 : réveillé par ton camp, puis vaincu
+    if (enemy.id === "necrosupreme" && window.SleepSystem && SleepSystem.questDef() && SleepSystem.questDef().id === "aq_crypte_retient" && !game._chainHeldFull) this.flag("retientNoChain"); // v3.456.6
   },
 
   /* scene-run-system.js : chambre finale résolue. */
@@ -287,6 +290,8 @@ var AchievementManager = {
     if (worldId && window.WORLDS) WORLDS.forEach(function (w, i) { if (w.id === worldId) idx = i; });
     if (idx === 0) this.bump("runForest");
     else if (idx === 1) this.bump("runDesert");
+    else if (idx === 2) this.bump("runRuins"); // v3.456.6
+    else if (idx === 3) this.bump("runCrypt");
   },
 
   /* patrol-system.js */
@@ -304,6 +309,7 @@ var AchievementManager = {
   /* living-map-system.js : un secteur recouvert redevient libéré. */
   onSectorRetaken: function (mapId) {
     if (mapId === "desert") this.flag("retakenDesert");
+    if (mapId === "ruins") this.flag("retakenRuins"); // v3.456.6
   },
 
   /* class-combat-system.js : une règle du joueur a choisi l'action. */

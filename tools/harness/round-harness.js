@@ -10764,7 +10764,7 @@ console.log("\n[133] v3.338.0 — Hauts faits : catalogue, rattrapage, paliers, 
   var byCat = function (c) { return DB.filter(function (a) { return a.category === c; }); };
 
   // --- Catalogue (H1, H2, H5) ---
-  ok(DB.length === 44, "catalogue : 44 hauts faits, « Pas une goutte » compris (v3.362.0) (" + DB.length + ")");
+  ok(DB.length === 64, "catalogue : 64 hauts faits, Ruines et Crypte compris (v3.456.6) (" + DB.length + ")");
   ok(byCat("forest").length === 10 && byCat("forest").filter(function (a) { return a.hidden; }).length === 2, "Forêt : 8 + 2 cachés");
   ok(byCat("desert").length === 11 && byCat("desert").filter(function (a) { return a.hidden; }).length === 3, "Désert : 8 + 3 cachés (v3.362.0 : « Pas une goutte »)");
   ok(["grimoire", "village", "companions"].every(function (c) { return byCat(c).length === 5; }) && byCat("collection").length === 8, "transversales : 5, 5, 5 et Collection 8");
@@ -16091,6 +16091,29 @@ console.log("\n[247] v3.456.5 — L'arme du Cœur grandit avec le monde ; le Lé
     ok(!bad.length, "aucune fourchette ne chevauche la rareté du dessous" + (bad.length ? " (" + bad.join() + ")" : ""));
   } catch (err) {
     ok(false, "[247] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[248] v3.456.6 — Hauts faits des Ruines et de la Crypte");
+(function () {
+  var AM = g.AchievementManager;
+  try {
+    var R = g.ACHIEVEMENTS_DB.filter(function (a) { return a.category === "ruins"; }), C = g.ACHIEVEMENTS_DB.filter(function (a) { return a.category === "crypt"; });
+    ok(R.length === 10 && C.length === 10 && R.filter(function (a) { return a.hidden; }).length === 2 && C.filter(function (a) { return a.hidden; }).length === 2, "10 hauts faits par monde, dont 2 cachés");
+    var cats = g.ACHIEVEMENT_CATEGORIES.filter(function (c) { return c.id === "ruins" || c.id === "crypt"; });
+    ok(cats.length === 2 && cats[0].world === 2 && cats[1].world === 3 && cats[1].tierRewards[2].title, "catégories Ruines et Crypte, paliers et titre");
+    game = freshCombat("knight");
+    game.achievementStats = null; AM.ensure();
+    AM.onRunSuccess("ruins"); AM.onRunSuccess("crypt");
+    ok(g.achCounter("runRuins") === 1 && g.achCounter("runCrypt") === 1, "Petites Aventures des Ruines et de la Crypte comptées");
+    AM.onEnemyKilled({ id: "spectre", wokenByHero: true });
+    ok(g.achCounter("wokenKilled") === 1, "réveillé puis vaincu : compté");
+    AM.onSectorRetaken("ruins");
+    ok(g.achCounter("retakenRuins") === 1, "quartier repris : compté");
+    game.adventureQuestsCompleted = { aq_crypte_retient: true };
+    ok(C.filter(function (a) { return a.id === "hf_crypte_retient"; })[0].track() === 1, "Nécromancien suprême : lu sur la quête");
+  } catch (err) {
+    ok(false, "[248] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
 })();
 

@@ -619,6 +619,7 @@ var LivingMapManager = {
     var s = this.getState(mapId, sectorId);
 
     if (result === "success") {
+      if (this.isHostile(mapId, sectorId) && window.AchievementManager) AchievementManager.flag("retakenCrypt"); // v3.456.6 : Le réveil, repris
       delete s.hostileDay; // v3.454.0 : le couloir repris se recouche
       var chantierDuJour = this.isChantier(mapId, sectorId); // v3.429.0 : lu avant la libération
       s.state = "libere";

@@ -62,6 +62,7 @@ var SleepSystem = {
     if (!Array.isArray(list)) return 0;
     list.forEach(function (e) { e.asleep = false; e.wokenByHero = false; e.wakeIn = 0; });
     game._sleepRelapseUsed = false; // v3.453.0 : Personne ne se lève, une fois par combat
+    game._chainHeldFull = false;    // v3.456.6 : « Personne ne reste », une chaîne a-t-elle tenu jusqu'au bout
     var pool = list.filter(function (e) { return !e.isBoss && !e.isElite; });
     var n = list.length > 1 ? Math.min(this.countFor(list), pool.length) : (this._planned = null, 0);
     for (var i = pool.length - 1; i > 0; i--) { var j = randInt(0, i), t = pool[i]; pool[i] = pool[j]; pool[j] = t; }
@@ -190,7 +191,7 @@ var SleepSystem = {
     if (!a || !a.chained) return false;
     a.chained.rounds -= 1;
     addLog("⛓️ " + _t("{x} tire sur sa chaîne.", { x: _td(a.name) }), "normal");
-    if (a.chained.rounds <= 0) a.chained = null;
+    if (a.chained.rounds <= 0) { a.chained = null; game._chainHeldFull = true; } // v3.456.6 : elle a tenu ses 2 rounds
     return true;
   },
   anyChained: function () {
@@ -338,7 +339,8 @@ var SleepSystem = {
     if (!others.length || others.some(function (e) { return !self.isAsleep(e); })) return 0;
     others.forEach(function (e) { CombatActors.removeEnemy(e); });
     game.combatSleepersLeft = others.length;
-    this.aeswynVigil(others.length);   // dernier combat gagné : dormeurs laissés (choix `portent`, lot C-2) ; non sauvegardé
+    this.aeswynVigil(others.length);
+    if (window.AchievementManager) AchievementManager.bump("sleepersLeft", others.length); // v3.456.6 : « Laisse-les dormir »   // dernier combat gagné : dormeurs laissés (choix `portent`, lot C-2) ; non sauvegardé
     addLog("🌫️ " + _tn(others.length, "Les éveillés sont tombés. Un mort dort encore.", "Les éveillés sont tombés. {n} morts dorment encore."), "normal");
     return others.length;
   },
