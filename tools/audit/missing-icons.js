@@ -2,8 +2,8 @@
 /* tools/audit/missing-icons.js — v3.304.0 : liste des images citées par le jeu et absentes du disque.
    Règle Seb : une icône pas encore dessinée garde son vrai chemin dans les données (le jeu
    affiche l'icône générique à sa place) ; ce contrôle en fait la liste à générer en une fois.
-   Lit js/, css/ et index.html. Les chemins construits à l'exécution (concaténations) échappent
-   à ce contrôle : en jeu, window.MISSING_ICONS liste ceux qui sont réellement tombés.
+   Lit js/, css/ et index.html, puis les données chargées (v3.457.1 : chemins construits au chargement).
+   Les chemins construits plus tard, à l'exécution, échappent encore : en jeu, window.MISSING_ICONS les liste.
    USAGE : node tools/audit/missing-icons.js . */
 var fs = require("fs"), path = require("path");
 var ROOT = require("../chemins.js").jeu(process.argv[2]);
@@ -32,6 +32,31 @@ fichiers.forEach(function (f) {
     if (manquants[rel].indexOf(cite) === -1) manquants[rel].push(cite);
   }
 });
+
+/* v3.457.1 : seconde passe — les données chargées (js/data) livrent les chemins construits au
+   chargement (icônes des hauts faits : ACH_ICON + id + ".png"), que la lecture du texte ne voit pas. */
+(function () {
+  var vm = require("vm"), sb = { console: { log: function () {}, warn: function () {}, error: function () {} }, Math: Math, JSON: JSON, Date: Date,
+    _t: function (x) { return x; }, _td: function (x) { return x; }, _tn: function (n, a) { return a; }, game: {}, localStorage: { getItem: function () { return null; }, setItem: function () {} } };
+  sb.window = sb; sb.self = sb;
+  vm.createContext(sb);
+  var scripts = require("../harness/index-scripts.js")(ROOT, /pwa\.js|boot\.js/).filter(function (f) { return /^js\/(core|data)\//.test(f); });
+  scripts.forEach(function (f) { try { vm.runInContext(fs.readFileSync(path.join(ROOT, f), "utf8"), sb, { filename: f }); } catch (e) { /* donnée qui dépend d'un système : ignorée */ } });
+  var vus = [];
+  function fouille(v, d) {
+    if (d > 8 || v == null) return;
+    if (typeof v === "string") {
+      if (!/^(\.{0,2}\/)*images\/.+\.(png|jpe?g|webp|svg|gif)$/i.test(v)) return;
+      var rel = v.replace(/^(\.{0,2}\/)+/, "");
+      if (!fs.existsSync(path.join(ROOT, rel))) { manquants[rel] = manquants[rel] || []; if (manquants[rel].indexOf("(données chargées)") === -1) manquants[rel].push("(données chargées)"); }
+      return;
+    }
+    if (typeof v !== "object" || vus.indexOf(v) !== -1) return;
+    vus.push(v);
+    Object.keys(v).forEach(function (k) { try { fouille(v[k], d + 1); } catch (e) {} });
+  }
+  Object.keys(sb).forEach(function (k) { if (/^[A-Z][A-Z0-9_]+$/.test(k)) fouille(sb[k], 0); });
+})();
 
 var cles = Object.keys(manquants).sort();
 console.log(cles.length ? cles.length + " image(s) absente(s) :\n" : "Aucune image absente.");

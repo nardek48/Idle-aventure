@@ -69,6 +69,7 @@ function caravanGoldHTML(n) {
 
 /* Bannière de piste : celle du monde du marché (en route : celui du départ). */
 function caravanRoadImageFor(world) {
+  if (world >= 3) return "images/Maps/parcours/crypte_descente.jpg"; // v3.457.1 : la Crypte avait la route des Ruines
   if (world >= 2) return "images/Maps/parcours/ruines_route.jpg"; // v3.428.0 : fond des Ruines
   return world >= 1 ? "images/Maps/parcours/desert_route.jpg" : "images/Maps/parcours/foret_quetes.jpg";
 }

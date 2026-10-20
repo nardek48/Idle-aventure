@@ -148,10 +148,17 @@ function bestiaryData(id) {
   out.isElite = !!elite;
   return out;
 }
+/* v3.457.1 : un boss de donjon porte l'id de son boss de base (la Liche est « necrosupreme ») ;
+   ses victoires sont comptées à part (achievement-system) et retirées de celles du boss de base. */
+function bestiaryDungeonKills(dungeonId) {
+  return Number(((game.explorationProgression || {}).dungeonBossKills || {})[dungeonId] || 0);
+}
 function bestiaryKills(id) {
   var dj = bestiaryDungeonOf(id);
-  if (dj) return (game.dungeonTierCleared || {})[dj.id] ? 1 : 0;
-  return Number((game.killCounts || {})[id] || 0);
+  if (dj) return Math.max((game.dungeonTierCleared || {})[dj.id] ? 1 : 0, bestiaryDungeonKills(dj.id));
+  var n = Number((game.killCounts || {})[id] || 0);
+  (window.DUNGEONS || []).forEach(function (d) { if (d.boss && d.boss.baseId === id) n -= bestiaryDungeonKills(d.id); });
+  return Math.max(0, n);
 }
 function bestiaryMet(id) { return bestiaryKills(id) > 0; }
 

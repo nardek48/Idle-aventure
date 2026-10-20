@@ -280,6 +280,13 @@ var AchievementManager = {
     if (enemy.id === "nezzam" && this._fight.enemy === enemy && !this._fight.potion) this.flag("nezzamNoPotion"); // v3.362.0
     if (enemy.id === "maitre_oeuvre" && this._fight.enemy === enemy && !this._fight.potion) this.flag("maitreNoPotion"); // v3.456.6
     if (enemy.wokenByHero) this.bump("wokenKilled"); // v3.456.6 : réveillé par ton camp, puis vaincu
+    // v3.457.1 : boss de donjon vaincu, compté à part (il porte l'id de son boss de base, cf. Bestiaire)
+    var run = game.dungeonRun, dg = run && run.active && (window.DUNGEONS || []).filter(function (d) { return d.id === run.dungeonId; })[0];
+    if (dg && dg.boss && dg.boss.baseId === enemy.id) {
+      var ep = game.explorationProgression = game.explorationProgression || {};
+      var dk = ep.dungeonBossKills = ep.dungeonBossKills || {};
+      dk[dg.id] = Number(dk[dg.id] || 0) + 1;
+    }
     if (enemy.id === "necrosupreme" && window.SleepSystem && SleepSystem.questDef() && SleepSystem.questDef().id === "aq_crypte_retient" && !game._chainHeldFull) this.flag("retientNoChain"); // v3.456.6
   },
 

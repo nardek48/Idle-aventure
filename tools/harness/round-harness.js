@@ -16185,5 +16185,24 @@ console.log("\n[250] v3.457.0 — Plusieurs caravanes : 1 + 1 tous les 3 niveaux
   }
 })();
 
+console.log("\n[251] v3.457.1 — Boss de donjon comptés à part au Bestiaire ; route de la Crypte");
+(function () {
+  try {
+    game = freshCombat("knight");
+    game.killCounts = { necrosupreme: 3 }; game.dungeonTierCleared = {}; game.explorationProgression = {};
+    game.dungeonRun = { active: true, wave: 12, dungeonId: 4, marks: [] };
+    g.AchievementManager.onEnemyKilled({ id: "necrosupreme", isBoss: true });
+    game.dungeonRun.active = false;
+    g.AchievementManager.onEnemyKilled({ id: "necrosupreme", isBoss: true });
+    ok((game.explorationProgression.dungeonBossKills || {})[4] === 1, "la Liche vaincue au donjon est comptée à part, pas le Nécromancien hors donjon");
+    ok(g.bestiaryKills("necrosupreme") === 2 && g.bestiaryKills("donjon_4") === 1, "Bestiaire : 3 victoires dont 1 Liche -> 2 Nécromanciens, 1 Liche");
+    game.killCounts = { necrosupreme: 1 };
+    ok(!g.bestiaryMet("necrosupreme") && g.bestiaryMet("donjon_4"), "seule la Liche vaincue : le Nécromancien suprême n'est pas rencontré");
+    ok(g.caravanRoadImageFor(3) === "images/Maps/parcours/crypte_descente.jpg" && g.caravanRoadImageFor(2) === "images/Maps/parcours/ruines_route.jpg", "Marché de la Crypte : la descente, plus la route des Ruines");
+  } catch (err) {
+    ok(false, "[251] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

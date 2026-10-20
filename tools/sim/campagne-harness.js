@@ -346,7 +346,10 @@ function developVillage() {
     if (!c2 || (why2 && why2 !== "Matériaux manquants") || Number(c2.gold || 0) > g.game.gold * part) return;
     // décision Seb (option A) : les pièces hors arme/armure ne se reforgent qu'avec les matériaux en stock, sans farm
     if (why2 === "Matériaux manquants" && slot !== "weapon" && slot !== "armor" && !FARM_REFORGES) return;
-    if (reforgeTo(slot, F.getLevel(slot) + 1)) STATS.village.push("reforge " + slot + " " + F.getLevel(slot) + " (" + CURRENT_STEP + ")");
+    SANS_LENDEMAIN++;
+    var okR = reforgeTo(slot, F.getLevel(slot) + 1);
+    SANS_LENDEMAIN--;
+    if (okR) STATS.village.push("reforge " + slot + " " + F.getLevel(slot) + " (" + CURRENT_STEP + ")");
   });
 }
 function closeRec(rec) {
@@ -581,6 +584,10 @@ function playPa2Step(run) {
    fabriquer à l'atelier qui le sait (ingrédients obtenus d'abord, récursivement). Le temps
    passe par pas d'une heure, 72 h au plus : au-delà, la ressource est déclarée introuvable. */
 function obtain(res, qty, depth) {
+  // TRACE_OBTAIN=resine_durcie,seve_aeswyn : qui demande cette ressource (étape et appelants)
+  if (process.env.TRACE_OBTAIN && process.env.TRACE_OBTAIN.split(",").indexOf(res) >= 0 && G.WarehouseManager.getAmount(res) < qty) {
+    console.log("      [obtain] " + res + " ×" + qty + " (stock " + G.WarehouseManager.getAmount(res) + ") à " + CURRENT_STEP + " ← " + new Error().stack.split("\n").slice(2, 7).map(function (l) { return l.trim().replace(/^at /, "").replace(/ \(.*\)$/, ""); }).join(" ← "));
+  }
   // Temps passé à obtenir chaque ressource (appel de tête seulement), pour lire où part le temps
   if (!depth) { var t0o = CLOCK.offset, okO = obtainIn(res, qty, 0), dH = (CLOCK.offset - t0o) / 3600e3;
     if (dH > 0) { var oh = STATS.obtainH = STATS.obtainH || {}; oh[res + " (" + CURRENT_STEP + ")"] = (oh[res + " (" + CURRENT_STEP + ")"] || 0) + dH; }
@@ -604,6 +611,7 @@ function obtainIn(res, qty, depth) {
       if (process.env.TRACE_CARTE) console.log("      [carte] " + res + " " + CURRENT_STEP + " victoires du jour " + gagnes + " · frein " + LMc.getBrakeMult(CARTE[res][0], CARTE[res][1]).toFixed(2) + " · " + new RealDate(FakeDate.now()).toDateString());
       if (freeSectorAgain(CARTE[res][0], CARTE[res][1])) { ca.victoires++; continue; }
       if (gagnes <= 0) break;   // perdu sans frein : l'élite est trop forte, pas une question d'attente
+      if (SANS_LENDEMAIN) break; // v3.457.1 : une reforge facultative n'attend pas le lendemain (le joueur continue l'Histoire)
       ca.parJour.push(gagnes);
       attendreLendemain();
     }
@@ -979,6 +987,7 @@ function run() {
 }
 
 /* Retour au jour civil suivant (le frein des élites répétables retombe). */
+var SANS_LENDEMAIN = 0; // > 0 : achat facultatif en cours, le matériau du monde se prend sans attendre le jour suivant
 function attendreLendemain() {
   var ca = STATS.carte = STATS.carte || { victoires: 0, lendemains: 0, parJour: [] }; ca.lendemains++;
   var now = FakeDate.now(), d = new RealDate(now);
