@@ -550,6 +550,7 @@ function entretien() {
   });
   developVillage();
   depensesOr(g);       // v3.457.3 (audit I2) : vitrine et Enchanteresse quand l'or s'entasse
+  boutiqueEclats(g);   // v3.457.3 : Éclats du donjon (5 sorties par jour, Sacoche)
   caravanes(g);        // v3.457.3 : les caravanes partent vers chaque marché libre
   var budget = g.game.gold * 0.6, avant = g.game.gold;
   for (var j = 0; j < 60 && avant - g.game.gold < budget; j++) { var o = g.game.gold; buyTraining(g, 1, true, true); if (g.game.gold === o) break; }
@@ -843,6 +844,7 @@ function freeSector(mapId, sectorId) {
         // v3.457.3 (audit P11) : le matériau de cette élite vient aussi d'un donjon ; un ticket avant le lendemain
         var matiere = { arbremere: "seve_aeswyn", bete_dune: "chitine_profondeurs" }[cible];
         if (matiere && sortieDonjonPour(matiere)) return false;
+        if (SANS_LENDEMAIN) return false; // achat facultatif : pas d'attente du lendemain (le joueur continue l'Histoire)
         attendreLendemain();
       } else wait(3600e3, "échec à rejouer");
     }
@@ -870,8 +872,10 @@ function playDungeonOnce(id, withMark) {
   if (!D.isUnlocked(id)) { note("donjon " + id + " verrouillé : " + D.getLockReason(id)); return null; }
   var marks = [];
   if (withMark) {
-    var m = (g.DUNGEON_MARKS || []).filter(function (x) { return D.isMarkUnlocked(x.id, id); })[0];
-    if (m) marks.push(m.id); else note("donjon " + id + " : aucune Marque disponible");
+    var nbM = typeof withMark === "number" ? withMark : 1; // v3.457.3 : plusieurs Marques (au plus maxMarks)
+    var dispo = (g.DUNGEON_MARKS || []).filter(function (x) { return D.isMarkUnlocked(x.id, id); });
+    dispo.slice(0, Math.min(nbM, Number((g.DUNGEON_CONFIG || {}).maxMarks || 3))).forEach(function (m) { marks.push(m.id); });
+    if (!marks.length) note("donjon " + id + " : aucune Marque disponible");
   }
   /* v3.358.0 (D7) : plus de tickets. Sorties du jour épuisées : on attend le renouvellement. */
   if (!D.hasRunLeft(id)) {
@@ -1071,11 +1075,31 @@ function sortieDonjonPour(res) {
   if (!dg || !D.isUnlocked(dg.id) || D.getRunsLeft(dg.id) <= 0) return false;
   var avant = g.WarehouseManager.getAmount(res);
   if (COMBATS) healUp();
-  playDungeonOnce(dg.id, Number(g.WorldManager.worldIndex || 0) >= 2);
+  // v3.457.3 : Marques selon l'avance du héros (Désert 1, Ruines 2, Crypte 3 : +2 matériaux chacune) ; une de moins après un échec
+  var w = Number(g.WorldManager.worldIndex || 0), voulu = Math.min(3, Math.max(0, w));
+  var nbM = Math.max(0, Math.min(voulu, MARQUES_MATIERE[dg.id] != null ? MARQUES_MATIERE[dg.id] : voulu));
+  playDungeonOnce(dg.id, nbM || false);
   var gain = g.WarehouseManager.getAmount(res) - avant;
+  MARQUES_MATIERE[dg.id] = gain > 0 ? Math.min(voulu, nbM + 1) : Math.max(0, nbM - 1);
   STATS.donjonMatiere = STATS.donjonMatiere || {};
   STATS.donjonMatiere[res] = (STATS.donjonMatiere[res] || 0) + Math.max(0, gain);
   return gain > 0;
+}
+
+var MARQUES_MATIERE = {}; // donjon -> Marques du prochain run de matériau (redescend après un échec)
+
+/* v3.457.3 (demande de Seb) : les Éclats se dépensent à la boutique du donjon. D'abord la Clé de faille
+   (3 -> 5 sorties par jour), puis la Sacoche (+1 matériau par run), le Doigté, l'Éclaireur. */
+function boutiqueEclats(g) {
+  var D = g.DungeonManager, ST = STATS.eclats = STATS.eclats || { achats: [] };
+  ["d_cle", "d_sacoche", "d_doigte", "d_eclaireur"].forEach(function (id) {
+    var item = (g.DUNGEON_SHOP || []).filter(function (x) { return x.id === id; })[0];
+    for (var k = 0; item && k < 6; k++) {
+      if (D.getShardShopLevel(id) >= item.maxLevel || Number(g.game.dungeonShards || 0) < D.getShardShopCost(item)) break;
+      D.buyShardUpgrade(id);
+      ST.achats.push(id + " " + D.getShardShopLevel(id) + " (" + CURRENT_STEP + ")");
+    }
+  });
 }
 
 var SANS_LENDEMAIN = 0; // > 0 : achat facultatif en cours, le matériau du monde se prend sans attendre le jour suivant
