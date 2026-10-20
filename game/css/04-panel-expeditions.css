@@ -98,3 +98,5 @@ body.exp-on-board .hud-dock { display: none !important; }
 /* v3.426.1 : une seule carte atteinte — la vignette sur toute la largeur, sans effet « non choisi ». */
 .exp-worlds.is-single { grid-template-columns: 1fr; }
 .exp-worlds.is-single .exp-world { height: 72px; }
+/* v3.457.0 : marché où une caravane est déjà partie — grisé, non cliquable. */
+.exp-world.is-busy { opacity: .6; filter: grayscale(.8) brightness(.8); }

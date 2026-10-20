@@ -13449,11 +13449,11 @@ console.log("\n[191] v3.419.0 — La Caravane de la Halle marchande (R3, version
     ok(run("CaravanManager.getBlockReason('long')") !== "" && run("CaravanManager.getBlockReason('moyen')") === "", "Long refusé à la Halle 1, Moyen possible");
     var gold0 = run("game.gold = 0; game.gold");
     run("CaravanManager._now = function () { return 1000000; }; CaravanManager.depart('moyen');");
-    var c = run("game.village.caravan");
+    var c = run("CaravanManager.get()");
     ok(c && c.trip === "moyen" && c.endsAt === 1000000 + 4 * 3600 * 1000 && c.gold === 400, "départ : trajet, retour dans 4 h, 400 or (300 Blé et Eau à 1 or, 100 Viande à 2 or, × 80 %)");
     ok(run("game.resources.ble") >= 250 && run("game.resources.bois") === 500 && run("game.resources.viande") === 400, "jamais sous la moitié du plafond ni sous la réserve ; le Bois n'est pas touché");
     ok(run("CaravanManager.getBlockReason('court')") !== "" && run("CaravanManager.depart('court')") === false, "une seule caravane à la fois");
-    ok(run("buildSaveData()").village.caravan.trip === "moyen", "la caravane est dans la sauvegarde (game.village)");
+    ok(run("buildSaveData()").village.caravans[0].trip === "moyen", "la caravane est dans la sauvegarde (game.village)");
     // v3.426.0 (chantier Expéditions) : la Caravane vit dans Campement › Expéditions ; la Halle garde un renvoi.
     run("expSheet = { type: 'caravan' };");
     var route = run("buildExpeditionsSheetHTML()");
@@ -13464,14 +13464,14 @@ console.log("\n[191] v3.419.0 — La Caravane de la Halle marchande (R3, version
     run("CaravanManager._now = function () { return 1000000 + 4 * 3600 * 1000 + 5; };");
     ok(run("CaravanManager.isBack()") && run("CaravanManager.checkArrival()") === true && run("CaravanManager.checkArrival()") === false, "retour hors ligne : annoncé une seule fois");
     ok(run("getVillageSubTabBadges().buildings") >= 1 && run("buildVillageBuildingCardHTML('hall')").indexOf("is-caravan-back") !== -1, "ruban « De retour » sur la tuile de la Halle, pastille sur Bâtiments");
-    ok(run("buildExpeditionsSheetHTML()").indexOf("unloadCaravanFromSheet()") !== -1 && run("buildExpeditionsBoardHTML()").indexOf("unloadCaravanFromSheet()") !== -1, "de retour : bouton Décharger (feuille et tableau des départs)");
+    ok(run("buildExpeditionsSheetHTML()").indexOf("unloadCaravanFromSheet(1)") !== -1 && run("buildExpeditionsBoardHTML()").indexOf("unloadCaravanFromSheet(1)") !== -1, "de retour : bouton Décharger (feuille et tableau des départs)");
     run("expSheet = null;");
     var loot = run("CaravanManager.unload()");
-    ok(loot && loot.gold === 400 && run("game.gold") === gold0 + 400 && run("game.village.caravan") === null, "décharger : +400 or, la Halle est libre");
+    ok(loot && loot.gold === 400 && run("game.gold") === gold0 + 400 && run("CaravanManager.get()") === null, "décharger : +400 or, la Halle est libre");
     /* Trajet Long au niveau 3 : matériau du monde et objet, tirés au départ */
     run("game.village.buildings.hall.level = 3; ['ble','viande','bois','eau','pierre'].forEach(function (k) { game.resources[k] = 500; }); game.resources.verre_des_dunes = 0; game.inventory = [];");
     run("var _r = Math.random; Math.random = function () { return 0; }; CaravanManager.depart('long'); Math.random = _r;");
-    c = run("game.village.caravan");
+    c = run("CaravanManager.get()");
     ok(c.trip === "long" && c.rare && c.rare.key === "verre_des_dunes" && c.rare.n === 2 && !!c.item, "Long au Désert : Verre des dunes et objet d'équipement tirés au départ");
     run("CaravanManager._now = function () { return 1e13; };");
     run("CaravanManager.unload(); CaravanManager._now = function () { return Date.now(); };");
@@ -13493,7 +13493,7 @@ console.log("\n[192] v3.420.0 — La caravane sur la carte vivante, icône de Se
     ok(run("Object.keys(LIVING_MAPS).every(function (k) { var m = LIVING_MAPS[k].caravanMarket; return m && m.x > 0 && m.x < 100 && m.y > 0 && m.y < 100; })"), "chaque carte vivante a son marché");
     ok(run("buildLivingMapHTML('desert')").indexOf("lm-caravan") === -1, "pas de caravane sur la carte quand elle est au village");
     run("CaravanManager._now = function () { return 5e12; }; CaravanManager.depart('long');");
-    ok(run("game.village.caravan.world") === 1 && run("CaravanManager.getMapId()") === "desert", "la caravane roule sur la carte du monde de départ (Désert)");
+    ok(run("CaravanManager.get().world") === 1 && run("CaravanManager.getMapId()") === "desert", "la caravane roule sur la carte du monde de départ (Désert)");
     var v = run("LIVING_MAPS.desert.village"), m = run("LIVING_MAPS.desert.caravanMarket");
     var p0 = run("CaravanManager.getMapPosition('desert')");
     ok(Math.abs(p0.x - v.x) < 1e-6 && Math.abs(p0.y - v.y) < 1e-6 && p0.outbound, "au départ : au village, sur l'aller");
@@ -13804,10 +13804,10 @@ console.log("\n[198] v3.426.0 — Chantier Expéditions : Campement › Expédit
     var cs = run("buildExpeditionsSheetHTML()");
     ok((cs.match(/class="exp-world( is-on)?"/g) || []).length === 2 && cs.indexOf("exp-world is-on") !== -1 && cs.indexOf("seve") !== -1, "feuille Caravane : deux vignettes de marché, la Forêt choisie (Sève au trajet Long)");
     run("selectCaravanTrip('long'); var _r = Math.random; Math.random = function () { return 0; }; departCaravanFromSheet(); Math.random = _r;");
-    var c = run("game.village.caravan");
+    var c = run("CaravanManager.get()");
     ok(c && c.world === 0 && c.rare && c.rare.key === "seve_aeswyn" && run("CaravanManager.getMapId()") === "forest", "départ au marché de la Forêt depuis le Désert : Sève d'Aeswyn, roule sur la carte de la Forêt");
     ok(run("getExpeditionEntries().filter(function (e) { return e.kind === 'caravan'; })[0].tone") === "away", "caravane en route dans le tableau");
-    run("game.village.caravan = null; expSheet = null;");
+    run("game.village.caravans = []; expSheet = null;");
     // --- fichiers ---
     var idx = fsx.readFileSync(px.join(ROOT, "index.html"), "utf8"), sw = fsx.readFileSync(px.join(ROOT, "sw.js"), "utf8");
     ok(idx.indexOf('id="exp-sheet-root"') !== -1 && idx.indexOf("js/ui/expeditions-view.js") > idx.indexOf("js/ui/patrol-view.js") && sw.indexOf("./js/ui/expeditions-view.js") > 0 && sw.indexOf("./css/04-panel-expeditions.css") > 0, "fichiers chargés et précachés");
@@ -13816,7 +13816,7 @@ console.log("\n[198] v3.426.0 — Chantier Expéditions : Campement › Expédit
     run("LivingMapManager.isLiberated = function (m, s) { return m === 'forest' && s === 'etang'; }; WorldManager.worldIndex = 0; patrolUi = {}; expSheet = { type: 'patrol', id: 'maddoc' };");
     var one = run("buildExpeditionsSheetHTML()");
     ok(one.indexOf("exp-worlds is-single") !== -1 && (one.match(/class="exp-world( is-on)?"/g) || []).length === 1, "une seule carte atteinte : sa vignette reste affichée (v3.426.1)");
-    run("game.village.caravan = null; expSheet = { type: 'caravan' };");
+    run("game.village.caravans = []; expSheet = { type: 'caravan' };");
     ok(run("buildExpeditionsSheetHTML()").indexOf("exp-worlds is-single") !== -1, "...et le marché de la Caravane aussi");
     run("expSheet = null;");
     // v3.426.2 (retours Seb) : jauge du stock plus épaisse, icônes plus grandes, détail d'Équipé collé en bas
@@ -16136,6 +16136,52 @@ console.log("\n[249] v3.456.8 — Bestiaire : fiche en grand, boss de donjon, «
     ok(m.filter(function (x) { return x.isNew; }).length === 2, "nouvelles tant que l'aperçu n'a pas été ouvert");
   } catch (err) {
     ok(false, "[249] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[250] v3.457.0 — Plusieurs caravanes : 1 + 1 tous les 3 niveaux de Halle, une par marché");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); VillageBuildingManager.ensure(); Prefs._cache = {}; Prefs._save({}); CaravanManager._now = function () { return 1e12; };");
+    run("game.village.buildings.warehouse.level = 0; game.village.buildings.hall.level = 1; WorldManager.worldIndex = 1;");
+    ok(Array.isArray(run("createInitialGameState()").village.caravans), "valeur par défaut : game.village.caravans = []");
+    ok([0, 1, 2, 3, 5, 6, 9, 10].map(function (l) { return run("CaravanManager.getMaxCaravans(" + l + ")"); }).join() === "0,1,1,2,2,3,4,4", "Halle 0 : aucune ; 1 : une ; 3 : deux ; 6 : trois ; 9 : quatre");
+    /* ancienne sauvegarde : une seule caravane, sans monde noté */
+    run("game.village.caravan = { trip: 'court', startedAt: 1, endsAt: 2, cargo: { ble: 5 }, gold: 3, rare: null, item: null, notified: true };");
+    ok(run("CaravanManager.list().length") === 1 && run("CaravanManager.get().world") === 1 && !("caravan" in run("game.village")), "ancienne caravane reprise dans la liste, au monde courant");
+    ok(run("CaravanManager.unload().gold") === 3 && run("CaravanManager.list().length") === 0, "elle se décharge comme avant");
+    /* Halle 3 : deux caravanes, deux marchés */
+    run("game.village.buildings.hall.level = 3; ['ble','viande','eau','pierre'].forEach(function (k) { game.resources[k] = 500; });");
+    ok(run("CaravanManager.depart('court', 0)") === true && run("CaravanManager.getBlockReason('court', 0)") === "Une caravane est déjà sur ce marché", "un marché, une caravane");
+    var spare = run("CaravanManager.computeLoad('court')");
+    ok(run("CaravanManager.getLoadUnits(" + JSON.stringify(spare) + ")") > 0 && run("CaravanManager.depart('court', 1)") === true, "la seconde part avec le surplus qui reste");
+    ok(run("CaravanManager.getBlockReason('court', 2)") === "Toutes les caravanes sont parties" && run("CaravanManager.depart('court', 2)") === false, "Halle 3 : pas de troisième");
+    ok(run("CaravanManager.getForMap('forest').world") === 0 && run("CaravanManager.getForMap('desert').world") === 1, "chacune roule sur la carte de son marché");
+    ok(run("buildLivingMapHTML('forest')").indexOf("lm-caravan") !== -1 && run("buildLivingMapHTML('desert')").indexOf("lm-caravan") !== -1, "les deux sont sur leur carte vivante");
+    run("expSheet = { type: 'caravan' };");
+    var sh = run("buildExpeditionsSheetHTML()");
+    ok((sh.match(/data-car="route"/g) || []).length === 2 && sh.indexOf("car-left-0") !== -1 && sh.indexOf("car-left-1") !== -1 && sh.indexOf('data-car="depart"') === -1, "feuille : deux blocs en route, pas de départ");
+    ok(sh.indexOf("Une caravane de plus à la Halle niveau 6.") !== -1 && sh.indexOf("Marché · ") !== -1, "feuille : le marché de chaque caravane, la prochaine au niveau 6");
+    ok(run("getExpeditionEntries().filter(function (e) { return e.kind === 'caravan'; }).map(function (e) { return e.tone; }).join()") === "away,away", "tableau des départs : une ligne par caravane");
+    ok(run("VILLAGE_BUILDINGS.hall.effectLabel(6)").indexOf("3 caravanes") !== -1, "fiche de la Halle : « 3 caravanes » au niveau 6");
+    /* Halle 6 : une place de plus, le départ revient ; les marchés pris sont grisés */
+    run("game.village.buildings.hall.level = 6; LivingMapManager.__lib2 = LivingMapManager.isLiberated; LivingMapManager.isLiberated = function (m, s) { return m === 'forest' || m === 'desert'; };");
+    sh = run("buildExpeditionsSheetHTML()");
+    ok(sh.indexOf("Chaque marché ouvert a déjà sa caravane.") !== -1 && (sh.match(/exp-world is-busy/g) || []).length === 0, "Halle 6, Forêt et Désert pris : plus de marché libre");
+    run("LivingMapManager.isLiberated = LivingMapManager.__lib2;");
+    /* retours : une à la fois, ou toutes */
+    run("CaravanManager._now = function () { return 1e12 + 3600 * 1000 + 5; };");
+    ok(run("CaravanManager.checkArrival()") === true && run("CaravanManager.checkArrival()") === false, "retour annoncé une seule fois");
+    var l0 = run("CaravanManager.unload(0)");
+    ok(l0 && l0.world === 0 && run("CaravanManager.list().length") === 1 && run("CaravanManager.get().world") === 1, "décharger le marché de la Forêt laisse celle du Désert");
+    run("CaravanManager.depart('court', 0);");
+    ok(run("buildSaveData()").village.caravans.length === 2, "les caravanes sont dans la sauvegarde (game.village)");
+    run("CaravanManager._now = function () { return 1e13; };");
+    var all = run("CaravanManager.unload()");
+    ok(all && all.count === 2 && run("CaravanManager.list().length") === 0, "sans marché : toutes celles qui sont rentrées");
+    run("CaravanManager._now = function () { return Date.now(); }; expSheet = null;");
+  } catch (err) {
+    ok(false, "[250] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
 })();
 

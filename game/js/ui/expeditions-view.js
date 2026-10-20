@@ -85,11 +85,19 @@ var expSheet = null; // null | { type: "patrol" | "caravan", id }
   function caravanEntries() {
     var CM = window.CaravanManager;
     if (!CM || !CM.isAvailable()) return [];
-    var e = { kind: "caravan", icon: ICON.caravan, title: _t("Caravane"), open: "openExpeditionsSheet('caravan')" };
-    if (CM.isBack()) { e.status = _t("Rentrée · {n} or à décharger", { n: formatNumber(CM.get().gold) }); e.tone = "collect"; e.action = { label: _t("Décharger"), onclick: "unloadCaravanFromSheet()", primary: true }; }
-    else if (CM.isTraveling()) { e.status = _t("En route vers le marché"); e.tone = "away"; e.endAt = CM.get().endsAt; }
-    else { e.status = _t("Prête · vend le surplus de l'Entrepôt"); e.tone = "ready"; e.action = { label: _t("Partir") + "…", onclick: e.open }; }
-    return [e];
+    // v3.457.0 : une ligne par caravane partie, plus une « prête » s'il reste une place et un marché libre
+    var multi = CM.getMaxCaravans() > 1, now = CM._now(), out = [];
+    CM.list().forEach(function (c) {
+      var e = { kind: "caravan", icon: ICON.caravan, open: "openExpeditionsSheet('caravan')",
+        title: multi && window.WORLDS && WORLDS[c.world] ? _t("Caravane · {x}", { x: _td(WORLDS[c.world].name) }) : _t("Caravane") };
+      if (now >= c.endsAt) { e.status = _t("Rentrée · {n} or à décharger", { n: formatNumber(c.gold) }); e.tone = "collect"; e.action = { label: _t("Décharger"), onclick: "unloadCaravanFromSheet(" + c.world + ")", primary: true }; }
+      else { e.status = _t("En route vers le marché"); e.tone = "away"; e.endAt = c.endsAt; }
+      out.push(e);
+    });
+    var free = CM.hasFreeSlot() && CM.getMarkets().some(function (m) { return !CM.get(m.world); });
+    if (free) out.push({ kind: "caravan", icon: ICON.caravan, title: _t("Caravane"), open: "openExpeditionsSheet('caravan')",
+      status: _t("Prête · vend le surplus de l'Entrepôt"), tone: "ready", action: { label: _t("Partir") + "…", onclick: "openExpeditionsSheet('caravan')" } });
+    return out;
   }
 
   function dungeonEntries() {

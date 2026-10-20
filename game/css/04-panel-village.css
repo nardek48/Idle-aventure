@@ -709,6 +709,8 @@
 .vb-card-flag.is-good { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; background: var(--c-green-650-2); color: var(--c-white-50-soft); }
 
 .car { color: var(--c-brown-850-2); }
+/* v3.457.0 : plusieurs caravanes, un bloc chacune, séparés d'un filet. */
+.car + .car, .car + .car-note { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--c-bronze-500); }
 .car-h6 { margin: 4px 0 6px; font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--c-brown-700); }
 .car-why { display: block; margin: 8px 0 0; font-size: 12px; line-height: 1.35; color: var(--c-brown-750-2); }
 

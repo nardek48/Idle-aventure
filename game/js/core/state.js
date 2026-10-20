@@ -188,7 +188,7 @@ function createInitialGameState() {
     // v3.213.0 (lot V-1) : socle des bâtiments du Village — { buildings: { id: { level } }, site }.
     // Déclaré ici comme production ci-dessus pour qu'une partie neuve ait la clé dès le
     // départ ; VillageBuildingManager.ensure() remplit le détail.
-    village: { buildings: {}, site: null },
+    village: { buildings: {}, site: null, caravans: [] }, // v3.457.0 : caravanes (caravan-system.js)
     // v3.217.0 (lot V-6) : tableau de contrats de la Taverne.
     tavern: { contracts: [], resetTime: 0 },
     // v3.221.0 (lot V-8) : niveaux de forge, PAR EMPLACEMENT et non par objet.

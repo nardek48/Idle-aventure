@@ -5769,5 +5769,13 @@ I18n.register("en", {
   "l'épée": "the sword",
   "l'arc": "the bow",
   "la magie": "magic",
-  "contrats payés +{p} %": "contracts pay +{p}%"
+  "contrats payés +{p} %": "contracts pay +{p}%",
+  "{n} caravanes": "{n} caravans",
+  "Toutes les caravanes sont parties": "All caravans are away",
+  "Une caravane est déjà sur ce marché": "A caravan is already at this market",
+  "Marché · {x}": "Market · {x}",
+  "Elle continue hors ligne. {n} caravanes à la fois, une par marché.": "It keeps going offline. {n} caravans at once, one per market.",
+  "Chaque marché ouvert a déjà sa caravane.": "Every open market already has its caravan.",
+  "Une caravane de plus à la Halle niveau {n}.": "One more caravan at Market Hall level {n}.",
+  "Caravane · {x}": "Caravan · {x}"
 });

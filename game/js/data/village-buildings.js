@@ -364,6 +364,7 @@ var VILLAGE_BUILDINGS = {
       var car = "";
       if (level >= 3) car += " · " + _t("trajet Long");
       if (level >= 2) car += " · " + _t("Caravane +{p} %", { p: Math.round((level - 1) * 10) });
+      if (level >= 3) car += " · " + _t("{n} caravanes", { n: 1 + Math.floor(level / 3) }); // v3.457.0 : une de plus tous les 3 niveaux
       return _t("{n} objets en vitrine", { n: slots }) + (remise > 0 ? " · " + _t("-{p} % sur le renouvellement", { p: remise }) : "") + car;
     }
   },
