@@ -22,6 +22,7 @@
    livrées. 2,2 = livrer vaut nettement mieux que vendre, sans rendre la vente
    au détail absurde. */
 var TAVERN_REWARD_MULT = 2.2;
+var TAVERN_LEVEL6_BONUS = 1.15; // v3.456.9 (décision Seb) : Taverne 6, contrats payés 15 % de plus
 
 /* Renouvellement du tableau, aligné sur celui de l'échoppe d'équipement (6 h) :
    un seul rythme à retenir pour le joueur. */
@@ -49,5 +50,6 @@ var TAVERN_CONTRACT_TEMPLATES = [
 ];
 
 window.TAVERN_REWARD_MULT = TAVERN_REWARD_MULT;
+window.TAVERN_LEVEL6_BONUS = TAVERN_LEVEL6_BONUS;
 window.TAVERN_REFRESH_MS = TAVERN_REFRESH_MS;
 window.TAVERN_CONTRACT_TEMPLATES = TAVERN_CONTRACT_TEMPLATES;

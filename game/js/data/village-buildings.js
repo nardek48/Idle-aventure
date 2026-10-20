@@ -376,7 +376,7 @@ var VILLAGE_BUILDINGS = {
     rank: 2,   // v3.418.0 (R1, décision Seb) : Atelier 2 (était Atelier 4, D12)
     /* 5 niveaux ; v3.418.0 : 2 contrats au niveau 1 puis +1 par niveau
        (TavernManager.getSlotCount) — chaque chantier se voit tout de suite sur le tableau. */
-    maxLevel: 5,
+    maxLevel: 6, // v3.456.9 (décision Seb) : le niveau 6 à l'acte III de la Crypte (Cire consacrée)
     implemented: true,
     desc: "Un tableau de contrats de livraison, renouvelé toutes les 6 heures. Avec la caravane de la Halle marchande, c'est le débouché du surplus de Production : l'Entrepôt ne rachète plus rien.",
     costTiers: [
@@ -391,12 +391,19 @@ var VILLAGE_BUILDINGS = {
         resources: ["gold", "planche", "bloc", "pierre", "lingot"],
         baseCost: { gold: 3200, planche: 40, bloc: 40, pierre: 95, lingot: 20 }, // v3.330.0 (E3) : moitié des planches en blocs
         costMult: 1.45
+      },
+      {
+        // v3.456.9 : Taverne 6, 7 contrats payés 15 % de plus ; la Cire consacrée (acte III) l'ouvre
+        minLevel: 5, maxLevel: 5,
+        resources: ["gold", "bloc", "lingot", "cire_consacree"],
+        baseCost: { gold: 9000, bloc: 60, lingot: 40, cire_consacree: 2 }
       }
     ],
     effectLabel: function (level) {
       var n = (window.TavernManager && typeof TavernManager.getSlotCount === "function")
         ? TavernManager.getSlotCount(level) : 0;
-      return n <= 0 ? _t("Aucun contrat") : _tn(n, "{n} contrat à la fois", "{n} contrats simultanés");
+      if (n <= 0) return _t("Aucun contrat");
+      return _tn(n, "{n} contrat à la fois", "{n} contrats simultanés") + (level >= 6 ? " · " + _t("contrats payés +{p} %", { p: Math.round((TAVERN_LEVEL6_BONUS - 1) * 100) }) : ""); // v3.456.9
     }
   },
 

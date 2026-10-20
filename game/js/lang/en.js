@@ -2240,7 +2240,7 @@ I18n.register("en", {
   // WORLDS
   "Désert oublié": "Forgotten Desert",
   "Ruines anciennes": "Ancient Ruins",
-  "Crypte oubliée": "Forgotten Crypt",
+  "Crypte des dormeurs": "Crypt of Sleepers",
   "Montagne brûlante": "Burning Mountain",
   "Tour du sorcier": "Sorcerer's Tower",
   "Lisière de la forêt": "Forest Edge",
@@ -5768,5 +5768,6 @@ I18n.register("en", {
   "vaincue une fois||vaincue {n} fois": ["defeated once", "defeated {n} times"],
   "l'épée": "the sword",
   "l'arc": "the bow",
-  "la magie": "magic"
+  "la magie": "magic",
+  "contrats payés +{p} %": "contracts pay +{p}%"
 });

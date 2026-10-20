@@ -343,7 +343,7 @@ var LIVING_MAPS = {
   crypt: {
     id: "crypt",
     worldId: "crypt",
-    name: "Crypte oubliée",
+    name: "Crypte des dormeurs",
     asset: "images/Maps/crypte.jpg",
     opensAtStoryStep: "crypte_07",
     rewardResourceId: "cire_sepulcre",

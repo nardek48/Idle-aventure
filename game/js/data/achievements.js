@@ -171,7 +171,7 @@ var ACHIEVEMENTS_DB = [
     hidden: true, hint: "La cité refait. Toi aussi.", fresh: true,
     target: 1, track: function () { return achCounter("retakenRuins"); }, reward: { gold: 3000 } },
 
-  /* ===================== Crypte oubliée (v3.456.6, décision Seb du 20/10) ===================== */
+  /* ===================== Crypte des dormeurs (v3.456.6, décision Seb du 20/10) ===================== */
   { id: "hf_crypte_retient", category: "crypt", name: "Celui qui retient", desc: "Vaincre le Nécromancien suprême.",
     target: 1, track: function () { return storyAdvDoneAch("aq_crypte_retient"); }, reward: { gold: 3000 } },
   { id: "hf_crypte_liche", category: "crypt", name: "Les os en ordre", desc: "Vaincre la Liche des sépulcres, au bout de l'Ossuaire.",

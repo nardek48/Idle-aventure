@@ -42,11 +42,11 @@ var WORLD_CAPS = [
     workshopLevel: 3,
     petiteAventureCap: 4
   },
-  /* 3 — Crypte oubliée. v3.450.0 (Conception Crypte CR8, lot C-0) : écrit avant d'ouvrir le monde.
+  /* 3 — Crypte des dormeurs. v3.450.0 (Conception Crypte CR8, lot C-0) : écrit avant d'ouvrir le monde.
      Provisoire, égal aux Ruines ; seule la 3e rangée de zones s'ouvre. Les crans des actes II-III au banc.
      v3.455.0 (acte III) : Forge 5, à la Cire consacrée (reforges 9 et 10). */
   {
-    village: { workshop: 8, training: 13, hall: 8, warehouse: 7, palisade: 8, tavern: 5, apothecary: 6, forge: 5, enchanter: 2 }, // v3.456.2 : Terrain 13
+    village: { workshop: 8, training: 13, hall: 8, warehouse: 7, palisade: 8, tavern: 6, apothecary: 6, forge: 5, enchanter: 2 }, // v3.456.2 : Terrain 13 ; v3.456.9 : Taverne 6
     zoneRows: 3,
     zoneLevel: 5,
     workshopLevel: 3,

@@ -4017,7 +4017,7 @@ console.log("\n[26] v3.217.0 (lot V-6) \u2014 Taverne : contrats de livraison");
   ok(T.getSlotCount(0) === 0, "sans Taverne : aucun contrat");
   ok(T.getSlotCount(1) === 2, "niveau 1 : deux contrats (v3.418.0, R1)");
   ok(T.getSlotCount(2) === 3 && T.getSlotCount(5) === 6, "un contrat de plus par niveau (6 au niveau 5)");
-  ok(g.VILLAGE_BUILDINGS.tavern.maxLevel === 5, "5 niveaux, 5 contrats : chaque chantier se voit sur le tableau");
+  ok(g.VILLAGE_BUILDINGS.tavern.maxLevel === 6 && T.getSlotCount(6) === 7, "6 niveaux (v3.456.9 : la Taverne 6 de la Crypte), 7 contrats au niveau 6");
   var tousUtiles = true;
   for (var lv = 2; lv <= g.VILLAGE_BUILDINGS.tavern.maxLevel; lv++) {
     if (T.getSlotCount(lv) !== T.getSlotCount(lv - 1) + 1) tousUtiles = false;

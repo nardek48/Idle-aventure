@@ -60,7 +60,8 @@ var TavernManager = {
     if (unit <= 0) return 0;
     // v3.330.0 (E6) : le bonus de l'Atelier de Construction s'applique aux contrats
     var bonus = (window.WarehouseManager && typeof WarehouseManager.getSellPriceMultiplier === "function") ? WarehouseManager.getSellPriceMultiplier() : 1;
-    return Math.max(1, Math.floor(unit * quantity * TAVERN_REWARD_MULT * bonus));
+    var t6 = this.getLevel() >= 6 ? TAVERN_LEVEL6_BONUS : 1; // v3.456.9 : Taverne 6, contrats mieux payés
+    return Math.max(1, Math.floor(unit * quantity * TAVERN_REWARD_MULT * bonus * t6));
   },
 
   generateContracts: function () {

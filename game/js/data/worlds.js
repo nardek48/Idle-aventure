@@ -89,7 +89,7 @@ var WORLDS = [
   },
   {
     id: "crypt",
-    name: "Crypte oubliée",
+    name: "Crypte des dormeurs", // v3.456.9 (décision Seb) : était « Crypte oubliée », doublon du Désert oublié
     requiredAscension: 3,
     assetKey: "crypt",
     bg: "#0a0a15",
