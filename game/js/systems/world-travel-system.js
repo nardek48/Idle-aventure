@@ -29,6 +29,7 @@ var WorldTravel = {
     WorldManager.adventureIndex = adv;
     WorldManager.enemyIndex = 0;
     if (typeof WorldManager.markWorldReached === "function") WorldManager.markWorldReached(idx);
+    if (window.EliteManager && typeof EliteManager.growUniques === "function") EliteManager.growUniques(); // v3.456.5 : l'arme du Cœur grandit
     if (typeof WorldManager.applyWorldTheme === "function") WorldManager.applyWorldTheme();
     if (typeof addLog === "function") addLog("🗺️ " + (first ? _t("Nouveau monde : {x}.", { x: _td(world.name) }) : _t("Tu rejoins {x}.", { x: _td(world.name) })), "zone");
     if (typeof saveGame === "function") saveGame();

@@ -136,7 +136,7 @@ var EQUIPMENT_SLOT_CONFIG = {
       green: [23, 32],
       rare: [32, 48],
       epic: [49, 72],
-      legendary: [59, 84]
+      legendary: [72, 95] // v3.456.5 (règle Seb) : le Légendaire commence au plus haut de l'Épique
     }
   },
   armor: {
@@ -158,7 +158,7 @@ var EQUIPMENT_SLOT_CONFIG = {
       green: [0.032, 0.055],
       rare: [0.05, 0.08],
       epic: [0.08, 0.105], // v3.456.4 (règle Seb) : l'Épique commence au plus haut du Rare,
-      legendary: [0.10, 0.13]
+      legendary: [0.105, 0.13]
     }
   },
   helmet: {
@@ -200,7 +200,7 @@ var EQUIPMENT_SLOT_CONFIG = {
       green: [4, 8],
       rare: [7, 12],
       epic: [12, 17], // v3.456.4 (règle Seb) : l'Épique commence au plus haut du Rare,
-      legendary: [11, 19]
+      legendary: [17, 22]
     }
   },
   ring: {
@@ -292,18 +292,18 @@ var AFFIX_POOLS = {
 };
 
 /* Fourchettes [min, max] par rareté (à partir de l'Inhabituel). flat = × échelle de monde.
-   v3.456.4 (règle Seb) : le minimum Épique est le maximum Rare (plus de chevauchement). */
+   v3.456.4 (règle Seb) : le minimum Épique est le maximum Rare ; v3.456.5 : le minimum Légendaire, le maximum Épique. */
 var AFFIX_RANGES = {
-  tapDmg: { flat: true, decimals: 0, green: [6, 10], rare: [9, 15], epic: [15, 22], legendary: [18, 28] },
+  tapDmg: { flat: true, decimals: 0, green: [6, 10], rare: [9, 15], epic: [15, 22], legendary: [22, 29] },
   tapMult: { decimals: 2, green: [0.08, 0.15], rare: [0.15, 0.25], epic: [0.25, 0.40], legendary: [0.40, 0.65] },
   critChance: { decimals: 0, green: [1, 2], rare: [2, 4], epic: [4, 6], legendary: [6, 9] },
   critMult: { decimals: 2, green: [0.08, 0.15], rare: [0.15, 0.25], epic: [0.25, 0.40], legendary: [0.40, 0.60] },
-  defense: { decimals: 3, green: [0.015, 0.025], rare: [0.022, 0.036], epic: [0.036, 0.047], legendary: [0.045, 0.06] },
-  autoDps: { flat: true, decimals: 0, green: [2, 3], rare: [3, 5], epic: [5, 7], legendary: [5, 9] },
+  defense: { decimals: 3, green: [0.015, 0.025], rare: [0.022, 0.036], epic: [0.036, 0.047], legendary: [0.047, 0.06] },
+  autoDps: { flat: true, decimals: 0, green: [2, 3], rare: [3, 5], epic: [5, 7], legendary: [7, 9] },
   maxHpPct: { decimals: 2, green: [0.03, 0.06], rare: [0.06, 0.10], epic: [0.10, 0.15], legendary: [0.15, 0.22] },
-  goldMult: { decimals: 2, green: [0.03, 0.06], rare: [0.05, 0.10], epic: [0.10, 0.15], legendary: [0.12, 0.20] },
-  xpMult: { decimals: 2, green: [0.03, 0.06], rare: [0.05, 0.10], epic: [0.10, 0.15], legendary: [0.12, 0.20] },
-  dropChance: { decimals: 0, green: [2, 4], rare: [4, 7], epic: [7, 10], legendary: [8, 14] }
+  goldMult: { decimals: 2, green: [0.03, 0.06], rare: [0.05, 0.10], epic: [0.10, 0.15], legendary: [0.15, 0.20] },
+  xpMult: { decimals: 2, green: [0.03, 0.06], rare: [0.05, 0.10], epic: [0.10, 0.15], legendary: [0.15, 0.20] },
+  dropChance: { decimals: 0, green: [2, 4], rare: [4, 7], epic: [7, 10], legendary: [10, 14] }
 };
 
 /* Plafond de la chance de butin apportée par l'équipement (points, sur les 50 % de base). */

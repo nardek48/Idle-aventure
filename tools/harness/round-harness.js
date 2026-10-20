@@ -4593,7 +4593,8 @@ console.log("\n[34] v3.225.0 \u2014 Affixes d'\u00e9quipement (Lot 1b : donn\u00
   for (var k = 0; k < 300; k++) {
     g.rollEquipmentAffixes("gloves", "tapMult", "legendary", 5).forEach(function (a) { if (a.stat === "tapDmg") maxFlat = Math.max(maxFlat, a.value); });
   }
-  ok(maxFlat > 28 && maxFlat <= 28 * 18, "affixe plat mis \u00e0 l'\u00e9chelle du monde (" + maxFlat + " \u2264 504)");
+  var legMax = g.AFFIX_RANGES.tapDmg.legendary[1]; // v3.456.5 : lu dans la donnée (29 depuis la règle du Légendaire)
+  ok(maxFlat > legMax && maxFlat <= legMax * 18, "affixe plat mis \u00e0 l'\u00e9chelle du monde (" + maxFlat + " \u2264 " + legMax * 18 + ")");
   var maxPct = 0;
   for (var k2 = 0; k2 < 300; k2++) {
     g.rollEquipmentAffixes("weapon", "tapDmg", "legendary", 5).forEach(function (a) { if (a.stat === "tapMult") maxPct = Math.max(maxPct, a.value); });
@@ -16068,6 +16069,28 @@ console.log("\n[246] v3.456.3 — Crypte, lot C-6 : la quête d'élite du Porte-
     ok(g.storyPalierCrypteEpique(game).pieces === 2, "elle compte au palier Épique");
   } catch (err) {
     ok(false, "[246] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[247] v3.456.5 — L'arme du Cœur grandit avec le monde ; le Légendaire commence au plus haut de l'Épique");
+(function () {
+  try {
+    game = freshCombat("knight");
+    game.worldsEverReached = { 0: true, 1: true, 2: true };
+    var arme = g.EliteManager.buildUniqueLoot("arme_coeur");
+    ok(arme.value === 110, "aux Ruines : 110 (inchangée)");
+    game.equipped.weapon = arme;
+    game.worldsEverReached[3] = true;
+    ok(g.EliteManager.growUniques() === 1 && arme.value === Math.round(49 * g.getEquipWorldScale(3)), "en Crypte : au plancher Épique du monde (" + arme.value + ")");
+    ok(g.EliteManager.growUniques() === 0, "une seule fois par monde");
+    var fleuve = g.EliteManager.buildUniqueLoot("arme_fleuve");
+    ok(fleuve.value === g.ELITE_UNIQUE_LOOT.arme_fleuve.value, "les autres uniques ne bougent pas");
+    var C = g.EQUIPMENT_SLOT_CONFIG, bad = [];
+    Object.keys(C).forEach(function (sl) { var r = C[sl].ranges; if (r.legendary[0] < r.epic[1] || r.epic[0] < r.rare[1]) bad.push(sl); });
+    Object.keys(g.AFFIX_RANGES).forEach(function (k) { var r = g.AFFIX_RANGES[k]; if (r.legendary[0] < r.epic[1] || r.epic[0] < r.rare[1]) bad.push(k); });
+    ok(!bad.length, "aucune fourchette ne chevauche la rareté du dessous" + (bad.length ? " (" + bad.join() + ")" : ""));
+  } catch (err) {
+    ok(false, "[247] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
 })();
 

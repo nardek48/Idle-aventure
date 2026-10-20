@@ -379,6 +379,7 @@ var ELITE_UNIQUE_LOOT = {
     stat: "tapDmg",
     rarity: "epic",
     value: 110,
+    growsWithWorld: true, // v3.456.5 (décision Seb, A) : au plancher Épique du plus haut monde atteint (EliteManager.growUniques)
     worldIndex: 2,
     affixes: [{ stat: "tapMult", value: 0.25, tier: "P" }, { stat: "xpMult", value: 0.10, tier: "S" }], // v3.456.4 (règle Seb) : affixes au plancher Épique
     byClass: {

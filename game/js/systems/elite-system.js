@@ -222,12 +222,38 @@ var EliteManager = {
       icon: entry.icon,
       rarity: def.rarity || "green",
       stat: def.stat,
-      value: def.value,
+      value: this.grownValue(def), // v3.456.5 : l'arme du Cœur grandit avec le monde
       affixes: Array.isArray(def.affixes) ? def.affixes.map(function (a) { return { stat: a.stat, value: a.value, tier: a.tier || "P" }; }) : [], // v3.225.0 : copie, jamais la référence de la donnée
       worldIndex: Number(def.worldIndex || 0), // v3.356.0 : monde d'origine affiché (arme de la Cité)
       unique: true,
       eliteId: eliteId
     };
+  },
+
+  /* v3.456.5 (décision Seb, A) — un unique `growsWithWorld` vaut au moins le plancher de sa rareté dans le plus
+     haut monde atteint (l'Épique commence au plus haut du Rare) : l'arme du Cœur 110 aux Ruines, 196 en Crypte. */
+  grownValue: function (def) {
+    var base = Number(def.value || 0);
+    if (!def.growsWithWorld || typeof EQUIPMENT_SLOT_CONFIG === "undefined" || typeof getEquipWorldScale !== "function") return base;
+    var cfg = EQUIPMENT_SLOT_CONFIG[def.slot], r = cfg && cfg.ranges && cfg.ranges[def.rarity];
+    if (!r) return base;
+    var reached = game.worldsEverReached || {}, top = 0;
+    Object.keys(reached).forEach(function (k) { if (reached[k]) top = Math.max(top, Number(k) || 0); });
+    return Math.max(base, Math.round(r[0] * (cfg.scalesWithWorld ? getEquipWorldScale(top) : 1)));
+  },
+  /* Met à niveau les uniques qui grandissent, portés ou au sac. Appelé à l'arrivée dans un monde et au chargement. */
+  growUniques: function () {
+    var db = window.ELITE_UNIQUE_LOOT || {}, self = this, changed = 0;
+    var items = (game.inventory || []).slice();
+    Object.keys(game.equipped || {}).forEach(function (sl) { if (game.equipped[sl]) items.push(game.equipped[sl]); });
+    items.forEach(function (it) {
+      var def = it && it.eliteId && db[it.eliteId];
+      if (!def || !def.growsWithWorld) return;
+      var v = self.grownValue(def);
+      if (v > Number(it.value || 0)) { it.value = v; changed++; }
+    });
+    if (changed && window.StatsSystem && typeof StatsSystem.recalcStats === "function") StatsSystem.recalcStats();
+    return changed;
   },
 
   /* Butin d'une élite vaincue : l'objet unique + la Sève. Appelé par la quête. */

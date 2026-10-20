@@ -75,6 +75,7 @@ function init() {
     }
   }
 
+  if (window.EliteManager && typeof EliteManager.growUniques === "function") EliteManager.growUniques(); // v3.456.5 : l'arme du Cœur grandit avec le monde
   if (window.EquipmentManager && typeof EquipmentManager.recalcStats === "function") {
     EquipmentManager.recalcStats();
   }
