@@ -16518,5 +16518,24 @@ console.log("\n[262] v3.458.4 — Lot 7b : une fenêtre de fin, Histoire, Mémoi
   }
 })();
 
+console.log("\n[263] v3.458.7 — Icônes d'équipement en WebP 256 px (audit O4, premier dossier)");
+(function () {
+  try {
+    var manque = [], gros = [];
+    Object.keys(g.EQUIPMENT_ICON_PNG_TYPES || {}).forEach(function (icon) {
+      ["common", "green", "rare", "epic", "legendary"].forEach(function (r) {
+        var rel = g.getEquipmentIconPath({ icon: icon, rarity: r }), f = path.join(ROOT, rel);
+        if (!/\.webp$/.test(rel) || !fs.existsSync(f)) manque.push(rel);
+        else if (fs.statSync(f).size > 60 * 1024) gros.push(rel);
+      });
+    });
+    ok(manque.length === 0 && Object.keys(g.EQUIPMENT_ICON_PNG_TYPES).length === 11, "les 55 icônes d'équipement existent en WebP" + (manque.length ? " — " + manque.slice(0, 3).join(", ") : ""));
+    ok(gros.length === 0, "aucune au-delà de 60 Ko" + (gros.length ? " — " + gros.slice(0, 3).join(", ") : ""));
+    ok(!/equipment_icon\/[a-z]+_[a-z]+\.png/.test(fs.readFileSync(path.join(ROOT, "js/ui/caravan-view.js"), "utf8")), "plus de chemin .png d'équipement dans la caravane");
+  } catch (err) {
+    ok(false, "[263] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

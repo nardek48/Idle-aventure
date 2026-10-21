@@ -110,7 +110,7 @@ function buildCaravanTripsHTML(sel) {
     }
     h += '<span class="car-trip-bonus">';
     if (t.rareChance > 0 && caravanRareIcon()) h += '<img src="' + caravanRareIcon() + '" alt="">';
-    if (t.itemChance > 0) h += '<img src="images/Icons/equipment_icon/casque_rare.png" alt="">';
+    if (t.itemChance > 0) h += '<img src="images/Icons/equipment_icon/casque_rare.webp" alt="">';
     h += '</span></button>';
   });
   h += '</div>';
@@ -123,7 +123,7 @@ function buildCaravanChancesHTML(t, c) {
   var h = '<div class="car-hope">';
   if (t.rareChance > 0 && rk) h += '<span><img src="' + WAREHOUSE_RESOURCES[rk].icon + '" alt="">'
     + esc(_t("{p} % : {x}", { p: Math.round(t.rareChance * 100), x: _td(WAREHOUSE_RESOURCES[rk].name) })) + '</span>';
-  if (t.itemChance > 0) h += '<span><img src="images/Icons/equipment_icon/casque_rare.png" alt="">'
+  if (t.itemChance > 0) h += '<span><img src="images/Icons/equipment_icon/casque_rare.webp" alt="">'
     + esc(_t("{p} % : un objet", { p: Math.round(t.itemChance * 100) })) + '</span>';
   return h + '</div>';
 }
@@ -195,7 +195,7 @@ function buildCaravanBackHTML(c) {
     h += '<span class="car-lt is-rare"><img src="' + rd.icon + '" alt="">×' + c.rare.n + '<small>' + esc(_td(rd.name)) + '</small></span>';
   }
   if (c.item) {
-    var icon = (typeof getEquipmentIconPath === "function") ? getEquipmentIconPath(c.item) : "images/Icons/equipment_icon/casque_rare.png";
+    var icon = (typeof getEquipmentIconPath === "function") ? getEquipmentIconPath(c.item) : "images/Icons/equipment_icon/casque_rare.webp";
     h += '<span class="car-lt is-item"><img src="' + icon + '" alt="">' + esc(_td(c.item.name)) + '<small>'
       + esc(_td((typeof RARITY_LABELS !== "undefined" && RARITY_LABELS[c.item.rarity]) || c.item.rarity)) + '</small></span>';
   }

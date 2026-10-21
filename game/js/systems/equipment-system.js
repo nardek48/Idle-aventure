@@ -68,7 +68,7 @@ function getEquipmentIconPath(item) {
   if (!item || !item.icon) return "";
 
   if (EQUIPMENT_ICON_PNG_TYPES[item.icon]) {
-    return "images/Icons/equipment_icon/" + item.icon + "_" + item.rarity + ".png";
+    return "images/Icons/equipment_icon/" + item.icon + "_" + item.rarity + ".webp"; // v3.458.7 (audit O4) : WebP 256 px, 13 → 1 Mo
   }
 
   var rarityFile = EQUIPMENT_ICON_JPG_RARITY_FALLBACK[item.rarity] || "common";
