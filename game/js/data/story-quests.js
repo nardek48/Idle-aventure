@@ -711,7 +711,7 @@ var STORY_QUESTS = {
         title: "Les braises s'éveillent",
         act: "Acte IV — L'Aether",
         narrative: {
-          objective: "La braise sous Aeswyn ne s'éteint plus. Elle demande quelque chose : la sève de la forêt, et le pain du village. Un jour tu devras tout lui rendre pour renaître plus fort — pas aujourd'hui, mais la porte est ouverte.",
+          objective: "La braise sous Aeswyn ne s'éteint plus. Elle demande quelque chose : la sève de la forêt, et le pain du village. Un jour, tu lui donneras aussi ce que tu portes : elle en gardera la mémoire.",
           completion: "La braise a pris. Tu sais ce qu'elle prend, maintenant. Sarkel dit que le sable commence là où la forêt s'arrête, et qu'on y vend cher.",
           // v3.197.0 (passe de ton, bible B §4.7) : le dialogue tient enfin la promesse « tu sais ce qu'est
           // l'Aether » — par les anciens, jamais par le narrateur (pilier 6). Affiché au bloc « Les braises »

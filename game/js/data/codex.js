@@ -46,7 +46,7 @@ var CODEX_ENTRIES = [
     icon: "images/Icons/aether_icon.png",
     category: "system",
     // v3.322.0 (Offrande) : réécrit — plus de remise à zéro, on donne ce qu'on choisit.
-    text: "Les anciens champions Ascensionnaient : ils acceptaient de tout perdre pour renaître un peu plus proches de ce que l'Aether exige. Certains l'ont fait jusqu'à n'avoir plus rien à rendre.\n\nToi, tu donnes autrement. Ce dont tu te sépares, ce que tu traverses, l'Aether le retient — un objet offert, une victoire qui compte. Ce n'est pas qu'une monnaie : c'est un souvenir, une trace qui reste. Et chaque fois que la Mémoire s'élargit, elle te laisse choisir ce que tu deviens.",
+    text: "Les anciens champions croyaient qu'il fallait tout perdre pour renaître plus fort. Certains ont tout rendu, jusqu'à n'avoir plus rien.\n\nToi, tu donnes autrement. Ce dont tu te sépares, ce que tu traverses, l'Aether le retient — un objet offert, une victoire qui compte. Ce n'est pas qu'une monnaie : c'est un souvenir, une trace qui reste. Et chaque fois que la Mémoire s'élargit, elle te laisse choisir ce que tu deviens.",
     isUnlocked: function () { return !!(window.MemoryManager && MemoryManager.getLevel() >= 1); }
   },
 
@@ -55,7 +55,7 @@ var CODEX_ENTRIES = [
     title: "Le Chaos",
     icon: "images/Icons/camp/campfire.png",
     category: "system",
-    text: "Le Chevalier du Chaos, le Rôdeur du Chaos, le Sorcier du Chaos — ces variantes plus instables des héros classiques ne sont pas un choix esthétique : ce sont des champions qui ont laissé l'Aether s'installer un peu plus profondément en eux que les autres. Leur puissance brute — la Fureur, le Tir chaotique, le Cataclysme — est à la mesure du risque qu'ils ont pris en cessant de résister à ce qui les traverse.",
+    text: "Le Chevalier du Chaos, le Rôdeur du Chaos, le Sorcier du Chaos ne sont pas un choix esthétique : ce sont des champions qui ont laissé l'Aether s'installer un peu plus profondément en eux. Ils gardent les gestes et les compétences de leur classe. Ce qui a changé, c'est la répartition de leurs forces : ce que l'Aether a donné d'un côté, il l'a pris de l'autre.",
     isUnlocked: function () { return !!game.codexChaosSeen; }
   },
 
@@ -110,7 +110,7 @@ var CODEX_ENTRIES = [
     title: "Ce qui attend au sommet",
     icon: "images/Icons/scene/node_discovery.png",
     category: "system",
-    text: "Personne ne sait avec certitude ce qui a causé la Rupture, ni ce qui attend réellement au sommet de la Tour, au cœur du cinquième Sceau. Mais chaque Ascension, chaque créature du Bestiaire comprise, chaque Éclat arraché à la Faille rapproche un peu plus le héros d'une réponse.\n\nLe Cycle continuera tant que personne n'aura franchi ce dernier seuil. Jusque-là, il ne reste qu'une chose à faire : recommencer, un peu plus fort, un peu plus proche de la vérité — et voir jusqu'où l'Aether est prêt à mener celui qui refuse de s'arrêter.",
+    text: "Personne ne sait avec certitude ce qui a causé la Rupture, ni ce qui attend réellement au sommet de la Tour, au cœur du cinquième Sceau. Mais chaque niveau de Mémoire, chaque créature du Bestiaire comprise, chaque Éclat arraché à la Faille rapproche un peu plus le héros d'une réponse.\n\nLe Cycle continuera tant que personne n'aura franchi ce dernier seuil. Jusque-là, il ne reste qu'une chose à faire : continuer, un peu plus fort, un peu plus proche de la vérité — et voir jusqu'où l'Aether est prêt à mener qui refuse de s'arrêter.",
     isUnlocked: function () { return (game.dungeonBossClears || 0) >= 1 && !!(window.MemoryManager && MemoryManager.getLevel() >= 1); } // v3.322.0
   }
 ];
