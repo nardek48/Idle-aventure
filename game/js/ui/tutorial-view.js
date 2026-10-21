@@ -190,7 +190,7 @@ var GENERIC_TUTORIALS = {
       { icon: "images/Maps/labyrinthe/levier.webp", text: "Un levier fait tourner des pans de mur : un passage s'ouvre, un autre se ferme. Le tirer encore remet tout comme avant. L'un des deux leviers de l'étage est gardé." },
       { icon: "images/Maps/labyrinthe/papier.webp", text: "Edda dessine la carte dans le coin. Ce que les leviers font tourner, même au loin, y est noté en violet. Touche une salle dessinée sur la grande carte pour y retourner." },
       { icon: "images/Maps/labyrinthe/escalier_bas.webp", text: "À l'escalier : descends pour un sac plus lourd, ou remonte avec tout ce que tu portes. Tomber ou t'essouffler en bas n'en garde que la moitié." },
-      { icon: "images/Enemies/elite_contremaitre.jpg", text: "Dès l'étage 2, le Contremaître te cherche. Tu l'entends avant de le voir : écoute de quel côté viennent ses pas." }
+      { icon: "images/Enemies/elite_contremaitre.webp", text: "Dès l'étage 2, le Contremaître te cherche. Tu l'entends avant de le voir : écoute de quel côté viennent ses pas." }
     ]
   },
   grimoire_rules: {

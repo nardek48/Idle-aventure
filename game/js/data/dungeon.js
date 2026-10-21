@@ -84,7 +84,7 @@ var DUNGEONS = [
        sinon les renforts allongeraient le combat et multiplieraient les soins. */
     boss: {
       baseId: "slimeking", name: "Basilic", archetype: "corrupted",
-      statMult: { endurance: 1.2, power: 1.5 }, image: "./images/Boss/basilic.jpg", // v3.348.0
+      statMult: { endurance: 1.2, power: 1.5 }, image: "./images/Boss/basilic.webp", // v3.348.0
       phases: [
         /* Seb parlait de serpents : il n'y en a pas au bestiaire. On prend l'araignée,
            qui existe et tient le rôle dans un antre humide. Le jour où un serpent est
@@ -186,7 +186,7 @@ var DUNGEONS = [
     // v3.438.2 : Blindé -> Enragé (le Blindé reste aux Gargouille, Contremaître, Golem)
     boss: { baseId: "skeletonlord", name: "Varrek, le Garde scellé", archetype: "enraged", rises: true,
       riseLine: "Varrek se relève. Personne ne lui a dit de rester à terre.",
-      statMult: { endurance: 0.6, power: 0.58 }, image: "./images/Boss/varrek.jpg" }, // v3.438.2 : 0,72 -> 0,58, Enragé (Rare : 80 / 55 / 83 %)
+      statMult: { endurance: 0.6, power: 0.58 }, image: "./images/Boss/varrek.webp" }, // v3.438.2 : 0,72 -> 0,58, Enragé (Rare : 80 / 55 / 83 %)
     /* v3.429.2 : fermé dès l'arrivée aux Ruines, faute de contenu. v3.430.0 : verrou d'Histoire,
        comme la Cité — il s'ouvre à ruines_12 ; entrée offerte pendant les étapes 12 et 15. */
     locked: false,
@@ -216,7 +216,7 @@ var DUNGEONS = [
        60 % elle les réveille tous ; 30 % demi-sommeil, 2 rounds sans frapper, elle se soigne.
        Portrait propre à fournir (icône générique : ne pas reprendre celui du Nécromancien). Au banc. */
     boss: { baseId: "necrosupreme", name: "Liche des sépulcres", archetype: "corrupted",
-      statMult: { endurance: 0.82, power: 0.72 }, image: "./images/Boss/liche_sepulcres.jpg",
+      statMult: { endurance: 0.82, power: 0.72 }, image: "./images/Boss/liche_sepulcres.webp",
       phases: [
         { atPct: 0.8, sleepAdds: ["spectre", "wraith"], addsHpMult: 0.18, addsPowerMult: 0.5, label: "elle couche deux morts à ses pieds" },
         { atPct: 0.6, wakeAll: true, label: "elle dérange ses lignes" },

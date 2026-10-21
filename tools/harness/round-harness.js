@@ -739,8 +739,8 @@ console.log("\n[34] P5 : Troll des forêts, Ronce animée, Seigneur de guerre or
 ok(g.ENEMY_DB.foresttroll && g.ENEMY_DB.foresttroll.name === "Troll des forêts", "Troll des forêts dans ENEMY_DB");
 ok(g.ENEMY_DB.bramble && g.ENEMY_DB.bramble.name === "Ronce animée", "Ronce animée dans ENEMY_DB");
 ok(g.BOSS_DB.orcwarlord && g.BOSS_DB.orcwarlord.name === "Seigneur de guerre orc", "Seigneur de guerre orc dans BOSS_DB");
-ok(g.ENEMY_DB.foresttroll.image === "./images/Enemies/foresttroll.jpg" && g.ENEMY_DB.bramble.image === "./images/Enemies/bramble.jpg", "chemins d'image ennemis corrects");
-ok(g.BOSS_DB.orcwarlord.image === "./images/Boss/Lord_OrcWarlord.jpg", "chemin d'image boss correct");
+ok(g.ENEMY_DB.foresttroll.image === "./images/Enemies/foresttroll.webp" && g.ENEMY_DB.bramble.image === "./images/Enemies/bramble.webp", "chemins d'image ennemis corrects");
+ok(g.BOSS_DB.orcwarlord.image === "./images/Boss/Lord_OrcWarlord.webp", "chemin d'image boss correct");
 ok(g.ASSETS.enemies.foresttroll && g.ASSETS.enemies.bramble && g.ASSETS.bosses.orcwarlord, "emojis de repli présents (ASSETS)");
 
 console.log("\n[35] P5/v3.107.4 : pools Forêt réduits au tutoriel de base, boss du Cœur changé");
@@ -2933,7 +2933,7 @@ console.log("\n[ÉLITES] Créatures élite et leurs quêtes");
   ok(e.archetype === "enraged", "[ÉLITES] archétype posé à la construction");
   // v3.348.0 : portrait propre de l'élite ; la base garde le sien, et sans portrait propre on retombe sur la base
   ok(e.image === g.ELITE_DB.araignee_marquee.image && e.image !== g.ENEMY_DB.spider.image, "[ÉLITES] portrait propre de l'élite (v3.348.0)");
-  ok(g.ENEMY_DB.spider.image === "./images/Enemies/spider.jpg", "[ÉLITES] le portrait de la base ne change pas");
+  ok(g.ENEMY_DB.spider.image === "./images/Enemies/spider.webp", "[ÉLITES] le portrait de la base ne change pas");
   (function () {
     var d = g.ELITE_DB.araignee_marquee, img = d.image; d.image = undefined;
     var e2 = g.EliteManager.build("araignee_marquee", g.EliteManager.scaleFor(0, 0));
@@ -10541,13 +10541,13 @@ console.log("\n[134] v3.351.0 — loadGame() d'un héros à compagnon : aucune s
 console.log("\n[135] v3.355.0 — Portrait propre, conseil du compagnon, place du jour rendue, ateliers");
 (function () {
   /* D3 : l'image propre de l'ennemi passe avant la fiche de base (Basilic sur base slimeking) */
-  var basilic = { id: "slimeking", isBoss: true, image: "./images/Boss/basilic.jpg" };
-  ok(g.getEnemyPortrait(basilic) === "./images/Boss/basilic.jpg", "rangée de groupe : le Basilic garde son portrait (" + g.getEnemyPortrait(basilic) + ")");
+  var basilic = { id: "slimeking", isBoss: true, image: "./images/Boss/basilic.webp" };
+  ok(g.getEnemyPortrait(basilic) === "./images/Boss/basilic.webp", "rangée de groupe : le Basilic garde son portrait (" + g.getEnemyPortrait(basilic) + ")");
   ok(g.getEnemyPortrait({ id: "slimeking", isBoss: true }) === g.BOSS_DB.slimeking.image, "sans image propre : repli sur la fiche de base");
   var src = require("fs").readFileSync(ROOT + "/js/ui/combat-view.js", "utf8");
   ok(/var imagePath = game\.enemy\.image \|\| enemyData\.image/.test(src), "écran de combat : image propre d'abord");
   var d1 = g.DUNGEONS.filter(function (d) { return d.id === 1; })[0];
-  ok(d1 && d1.boss.image === "./images/Boss/basilic.jpg", "le boss du Donjon I porte basilic.jpg");
+  ok(d1 && d1.boss.image === "./images/Boss/basilic.webp", "le boss du Donjon I porte basilic.jpg");
 
   /* D5 : en Tactique, le bouton conseillé du compagnon est marqué ; en Grimoire, rien */
   var game = freshCombat("knight");
@@ -11021,7 +11021,7 @@ console.log("\n[138] v3.360.0 — Acte IV, socle : boss de quête, Nezzam, boss 
 (function () {
   var cat = function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); };
   var B = g.BOSS_DB;
-  ok(!B.djinn && B.nezzam && B.nezzam.name === "Nezzam le Desséché" && B.nezzam.image === "./images/Boss/Lord_Djinn.jpg", "la fiche du Djinn devient Nezzam, même image");
+  ok(!B.djinn && B.nezzam && B.nezzam.name === "Nezzam le Desséché" && B.nezzam.image === "./images/Boss/Lord_Djinn.webp", "la fiche du Djinn devient Nezzam, même image");
   var desert = g.WORLDS.find(function (w) { return w.id === "desert"; });
   ok(desert.adventures.every(function (a) { return a.boss === "sphinx"; }), "les deux aventures du Désert déclarent le sphinx");
 
@@ -15252,7 +15252,7 @@ console.log("\n[227] v3.448.3 — Images allégées : écran titre et barre d'on
     var st = fs.existsSync(path.join(ROOT, f)) ? fs.statSync(path.join(ROOT, f)).size : -1;
     ok(st > 0 && st < 400000, f + " présent et léger (" + Math.round(st / 1024) + " Ko)");
   });
-  ["Maps/forest-combat.webp", "Maps/ruins-combat.webp", "Enemies/corruptmage.jpg", "Enemies/guardian.jpg"].forEach(function (f) {
+  ["Maps/forest-combat.webp", "Maps/ruins-combat.webp", "Enemies/corruptmage.webp", "Enemies/guardian.webp"].forEach(function (f) {
     var st = fs.statSync(path.join(ROOT, "images", f)).size;
     ok(st < 900000, f + " recompressé (" + Math.round(st / 1024) + " Ko)");
   });

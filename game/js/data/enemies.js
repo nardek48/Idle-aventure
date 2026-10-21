@@ -98,7 +98,7 @@ var ENEMY_DB = {
   slime: {
     name: "Slime",
     asset: "slime",
-    image: "./images/Enemies/slime.jpg",
+    image: "./images/Enemies/slime.webp",
     resists: ["magic"],
     weak: ["sword"],
     stats: makeRpgStats(12, 18, 20, 8, 5)
@@ -106,7 +106,7 @@ var ENEMY_DB = {
   wolf: {
     name: "Loup sauvage",
     asset: "wolf",
-    image: "./images/Enemies/wolf.jpg",
+    image: "./images/Enemies/wolf.webp",
     resists: ["sword"],
     weak: ["magic"],
     stats: makeRpgStats(28, 24, 52, 30, 12)
@@ -114,7 +114,7 @@ var ENEMY_DB = {
   goblin: {
     name: "Gobelin",
     asset: "goblin",
-    image: "./images/Enemies/goblin.jpg",
+    image: "./images/Enemies/goblin.webp",
     resists: ["bow"],
     weak: ["magic"],
     stats: makeRpgStats(24, 18, 44, 36, 14)
@@ -122,7 +122,7 @@ var ENEMY_DB = {
   spider: {
     name: "Araignée géante",
     asset: "spider",
-    image: "./images/Enemies/spider.jpg",
+    image: "./images/Enemies/spider.webp",
     resists: ["magic"],
     weak: ["bow"],
     stats: makeRpgStats(20, 14, 58, 34, 10)
@@ -130,7 +130,7 @@ var ENEMY_DB = {
   skeleton: {
     name: "Squelette",
     asset: "skeleton",
-    image: "./images/Enemies/skeleton.jpg",
+    image: "./images/Enemies/skeleton.webp",
     resists: ["sword"],
     weak: ["magic"],
     rises: true, // v3.428.0 (Ruines, U-3) : se relève une fois (systems/rise-system.js)
@@ -139,7 +139,7 @@ var ENEMY_DB = {
   ghoul: {
     name: "Goule",
     asset: "ghoul",
-    image: "./images/Enemies/ghoul.jpg",
+    image: "./images/Enemies/ghoul.webp",
     resists: ["magic"],
     weak: ["sword"],
     stats: makeRpgStats(30, 28, 30, 22, 16)
@@ -147,7 +147,7 @@ var ENEMY_DB = {
   gargoyle: {
     name: "Gargouille",
     asset: "gargoyle",
-    image: "./images/Enemies/gargoyle.jpg",
+    image: "./images/Enemies/gargoyle.webp",
     resists: ["sword"],
     weak: ["magic"],
     stats: makeRpgStats(34, 48, 16, 20, 24)
@@ -155,7 +155,7 @@ var ENEMY_DB = {
   spectre: {
     name: "Spectre",
     asset: "spectre",
-    image: "./images/Enemies/spectre.jpg",
+    image: "./images/Enemies/spectre.webp",
     resists: ["magic"],
     weak: ["bow"],
     stats: makeRpgStats(22, 18, 46, 28, 52)
@@ -163,7 +163,7 @@ var ENEMY_DB = {
   zombie: {
     name: "Zombie",
     asset: "zombie",
-    image: "./images/Enemies/zombie.jpg",
+    image: "./images/Enemies/zombie.webp",
     resists: ["sword"],
     weak: ["magic"],
     rises: true, // v3.428.0 (Ruines, U-3) : se relève une fois
@@ -177,7 +177,7 @@ var ENEMY_DB = {
     name: "Bâtisseur",
     worldId: "ruins", // v3.456.7 : hors des listes d'aventure (quêtes, Sanctuaire) — dit son monde au Bestiaire
     asset: "batisseur",
-    image: "./images/Enemies/batisseur.jpg",
+    image: "./images/Enemies/batisseur.webp",
     resists: ["magic"],
     weak: ["sword"],
     support: true,
@@ -186,7 +186,7 @@ var ENEMY_DB = {
   wraith: {
     name: "Spectre errant",
     asset: "wraith",
-    image: "./images/Enemies/wraith.jpg",
+    image: "./images/Enemies/wraith.webp",
     resists: ["magic"],
     weak: ["bow"],
     stats: makeRpgStats(34, 26, 42, 38, 60)
@@ -194,7 +194,7 @@ var ENEMY_DB = {
   necromancer: {
     name: "Nécromancien",
     asset: "necromancer",
-    image: "./images/Enemies/necromancer.jpg",
+    image: "./images/Enemies/necromancer.webp",
     support: true, calls: true, // v3.454.0 (Crypte, acte II) : l'appel — il réveille un dormeur (sleep-system.js)
     resists: ["magic"],
     weak: ["sword", "bow"],
@@ -203,7 +203,7 @@ var ENEMY_DB = {
   deadknight: {
     name: "Chevalier mort",
     asset: "deadknight",
-    image: "./images/Enemies/deadknight.jpg",
+    image: "./images/Enemies/deadknight.webp",
     resists: ["sword"],
     weak: ["magic"],
     stats: makeRpgStats(40, 56, 18, 28, 26)
@@ -211,7 +211,7 @@ var ENEMY_DB = {
   lavagolem: {
     name: "Golem de lave",
     asset: "lavagolem",
-    image: "./images/Enemies/lavagolem.jpg",
+    image: "./images/Enemies/lavagolem.webp",
     resists: ["sword"],
     weak: ["magic"],
     stats: makeRpgStats(42, 74, 8, 16, 30)
@@ -219,7 +219,7 @@ var ENEMY_DB = {
   dragonling: {
     name: "Dragonnet",
     asset: "dragonling",
-    image: "./images/Enemies/dragonling.jpg",
+    image: "./images/Enemies/dragonling.webp",
     resists: ["bow"],
     weak: ["magic"],
     stats: makeRpgStats(38, 36, 34, 30, 24)
@@ -227,7 +227,7 @@ var ENEMY_DB = {
   minordemon: {
     name: "Démon mineur",
     asset: "minordemon",
-    image: "./images/Enemies/minordemon.jpg",
+    image: "./images/Enemies/minordemon.webp",
     resists: ["magic"],
     weak: ["sword"],
     stats: makeRpgStats(36, 30, 32, 28, 40)
@@ -235,7 +235,7 @@ var ENEMY_DB = {
   ifrit: {
     name: "Ifrit",
     asset: "ifrit",
-    image: "./images/Enemies/ifrit.jpg",
+    image: "./images/Enemies/ifrit.webp",
     resists: ["magic"],
     weak: ["bow"],
     stats: makeRpgStats(44, 34, 38, 32, 46)
@@ -243,7 +243,7 @@ var ENEMY_DB = {
   arcanegolem: {
     name: "Golem arcanique",
     asset: "arcanegolem",
-    image: "./images/Enemies/arcanegolem.jpg",
+    image: "./images/Enemies/arcanegolem.webp",
     resists: ["magic"],
     weak: ["sword"],
     stats: makeRpgStats(40, 70, 12, 22, 58)
@@ -251,7 +251,7 @@ var ENEMY_DB = {
   corruptmage: {
     name: "Mage corrompu",
     asset: "corruptmage",
-    image: "./images/Enemies/corruptmage.jpg",
+    image: "./images/Enemies/corruptmage.webp",
     resists: ["magic"],
     weak: ["sword", "bow"],
     stats: makeRpgStats(32, 24, 28, 40, 72)
@@ -259,7 +259,7 @@ var ENEMY_DB = {
   hybrid: {
     name: "Hybride",
     asset: "hybrid",
-    image: "./images/Enemies/hybrid.jpg",
+    image: "./images/Enemies/hybrid.webp",
     resists: ["sword", "bow"],
     weak: ["magic"],
     stats: makeRpgStats(46, 44, 34, 36, 44)
@@ -267,7 +267,7 @@ var ENEMY_DB = {
   guardian: {
     name: "Gardien",
     asset: "guardian",
-    image: "./images/Enemies/guardian.jpg",
+    image: "./images/Enemies/guardian.webp",
     resists: ["sword"],
     weak: ["magic"],
     stats: makeRpgStats(38, 68, 14, 24, 40)
@@ -279,7 +279,7 @@ var ENEMY_DB = {
   scarab: {
     name: "Scarabée",
     asset: "scarab",
-    image: "./images/Enemies/scarab.jpg",
+    image: "./images/Enemies/scarab.webp",
     resists: ["magic"],
     weak: ["sword"],
     stats: makeRpgStats(14, 33, 34, 26, 18) // v3.302.0 (D1) : était 26/22
@@ -287,7 +287,7 @@ var ENEMY_DB = {
   scorpion: {
     name: "Scorpion",
     asset: "scorpion",
-    image: "./images/Enemies/scorpion.jpg",
+    image: "./images/Enemies/scorpion.webp",
     resists: ["bow"],
     weak: ["magic"],
     stats: makeRpgStats(18, 45, 40, 34, 16) // v3.302.0 (D1) : était 32/30
@@ -295,7 +295,7 @@ var ENEMY_DB = {
   sandworm: {
     name: "Ver des sables",
     asset: "sandworm",
-    image: "./images/Enemies/sandworm.jpg",
+    image: "./images/Enemies/sandworm.webp",
     resists: ["sword"],
     weak: ["bow"],
     stats: makeRpgStats(23, 81, 22, 18, 12) // v3.302.0 (D1) : était 42/54
@@ -303,7 +303,7 @@ var ENEMY_DB = {
   sandwarrior: {
     name: "Guerrier des sables",
     asset: "sandwarrior",
-    image: "./images/Enemies/sandwarrior.jpg",
+    image: "./images/Enemies/sandwarrior.webp",
     resists: ["sword", "bow"],
     weak: ["magic"],
     stats: makeRpgStats(21, 60, 28, 32, 20) // v3.302.0 (D1) : était 38/40 ; Blindé (enemy-archetypes.js)
@@ -313,7 +313,7 @@ var ENEMY_DB = {
     // encaisse au contact). Calibré via sim/combat-round-sim.js : RPT moy. 3,9 (cible 3,5-4), sortie Lisière 100/94/100 %.
     name: "Troll des forêts",
     asset: "foresttroll",
-    image: "./images/Enemies/foresttroll.jpg",
+    image: "./images/Enemies/foresttroll.webp",
     resists: ["sword"],
     weak: ["magic"],
     stats: makeRpgStats(30, 22, 14, 20, 16)
@@ -322,7 +322,7 @@ var ENEMY_DB = {
     // v3.104.0 (P5) : agressive/rapide — grosse célérité et précision, faible endurance (buissonneuse, griffes-lianes)
     name: "Ronce animée",
     asset: "bramble",
-    image: "./images/Enemies/bramble.jpg",
+    image: "./images/Enemies/bramble.webp",
     resists: ["bow"],
     weak: ["sword"],
     stats: makeRpgStats(26, 16, 50, 40, 12)

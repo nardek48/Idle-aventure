@@ -5,7 +5,7 @@ var BOSS_DB = {
   slimeking: {
     name: "Roi Slime géant",
     asset: "slimeking",
-    image: "./images/Boss/Lord_Slim.jpg",
+    image: "./images/Boss/Lord_Slim.webp",
     resists: ["magic"],
     weak: ["sword"],
     stats: makeRpgStats(30, 58, 16, 18, 22)
@@ -18,7 +18,7 @@ var BOSS_DB = {
     // où le Rôdeur est déjà structurellement le point faible face aux boss).
     name: "Seigneur de guerre orc",
     asset: "orcwarlord",
-    image: "./images/Boss/Lord_OrcWarlord.jpg",
+    image: "./images/Boss/Lord_OrcWarlord.webp",
     resists: ["sword"],
     weak: ["magic"],
     stats: makeRpgStats(26, 40, 20, 24, 26)
@@ -40,7 +40,7 @@ var BOSS_DB = {
   maitre_oeuvre: {
     name: "Le Maître d'œuvre",
     asset: "maitre_oeuvre",
-    image: "./images/Boss/maitre_oeuvre.jpg",
+    image: "./images/Boss/maitre_oeuvre.webp",
     worldId: "ruins",
     lore: "Ce n'est pas un homme. C'est la cité, debout.",
     resists: ["magic"],
@@ -59,7 +59,7 @@ var BOSS_DB = {
   nezzam: {
     name: "Nezzam le Desséché",
     asset: "nezzam",
-    image: "./images/Boss/Lord_Djinn.jpg",
+    image: "./images/Boss/Lord_Djinn.webp",
     worldId: "desert",
     lore: "Il a bu le fleuve pour ne pas mourir. Il a encore soif.",
     resists: ["magic", "bow"],
@@ -75,7 +75,7 @@ var BOSS_DB = {
   sphinx: {
     name: "Le sphinx",
     asset: "sphinx",
-    image: "./images/Boss/sphinx.jpg",
+    image: "./images/Boss/sphinx.webp",
     resists: ["bow", "magic"],
     weak: ["sword"],
     stats: makeRpgStats(40, 104, 26, 44, 50)
@@ -84,7 +84,7 @@ var BOSS_DB = {
   skeletonlord: {
     name: "Seigneur squelette",
     asset: "skeletonlord",
-    image: "./images/Boss/Lord_Skelette.jpg",
+    image: "./images/Boss/Lord_Skelette.webp",
     resists: ["sword"],
     weak: ["magic"],
     stats: makeRpgStats(54, 82, 18, 26, 36)
@@ -93,7 +93,7 @@ var BOSS_DB = {
   necrosupreme: {
     name: "Nécromancien suprême",
     asset: "necrosupreme",
-    image: "./images/Boss/Lord_Necro.jpg",
+    image: "./images/Boss/Lord_Necro.webp",
     resists: ["magic"],
     weak: ["sword", "bow"],
     stats: makeRpgStats(62, 76, 30, 40, 62)
@@ -102,7 +102,7 @@ var BOSS_DB = {
   ancientdragon: {
     name: "Dragon ancien",
     asset: "ancientdragon",
-    image: "./images/Boss/Lord_Dragon.jpg",
+    image: "./images/Boss/Lord_Dragon.webp",
     resists: ["bow"],
     weak: ["magic"],
     stats: makeRpgStats(74, 96, 28, 38, 50)
@@ -111,7 +111,7 @@ var BOSS_DB = {
   archmage: {
     name: "Archimage",
     asset: "archmage",
-    image: "./images/Boss/Lord_Archimage.jpg",
+    image: "./images/Boss/Lord_Archimage.webp",
     resists: ["magic"],
     weak: ["sword", "bow"],
     stats: makeRpgStats(84, 92, 34, 48, 74)
