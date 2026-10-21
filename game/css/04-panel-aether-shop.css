@@ -96,6 +96,9 @@
   border: 1px solid var(--c-brown-700-vivid); background: var(--c-cream-100-3);
   font-size: 13px; font-weight: 800; color: var(--c-brown-800-vivid);
 }
+/* v3.458.3 (audit C4) : la pastille est un bouton qui mène au choix en attente */
+button.mem-pending { position: relative; font-family: inherit; min-height: 32px; cursor: pointer; }
+button.mem-pending::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 44px; transform: translateY(-50%); }
 
 .mem-level { margin: 4px 0 6px; }
 /* v3.458.2 (audit P14) : le voile porte sur l'icône, le nom et la description, plus sur la condition d'ouverture */

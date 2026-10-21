@@ -40,7 +40,7 @@ function buildMemoryLevelHTML(def, p) {
   var worldLocked = !reached && level > p.cap;
   var broken = reached && !!chosen && MemoryManager.isLineBroken(level); // v3.453.0 : la ligne ne tient plus
   var pending = reached && (!chosen || broken);
-  var h = '<div class="mem-level' + (reached ? '' : ' is-locked') + (pending ? ' is-pending' : '') + '">';
+  var h = '<div class="mem-level' + (reached ? '' : ' is-locked') + (pending ? ' is-pending' : '') + '" id="mem-level-' + level + '">';
   h += '<div class="ksec mem-level-head"><span>' + _t("Niveau {n}", { n: level }) + ' <small>' + esc(_td(def.theme)) + (def.jalon ? ' · ' + _t("jalon") : '') + '</small></span></div>';
   if (!reached) {
     h += '<div class="mem-level-lock"><img class="ico-inline" src="images/Icons/system/lock_closed.png" alt=""> ' + (worldLocked ? _t("S'ouvre dans un monde plus lointain.") : _t("Encore un peu d'Aether à rassembler.")) + '</div>';
@@ -81,7 +81,8 @@ function buildAscensionHTML() {
   h += '<div class="mem-head">';
   h += '<p class="mem-head-desc">' + _t("Ce que tu offres et ce que tu vis, l'Aether le retient. Offre les objets dont tu te sépares depuis ton sac ; tes grandes victoires comptent aussi.") + '</p>';
   h += buildMemoryGaugeHTML(p);
-  if (pending.length) h += '<div class="mem-pending"><img class="ico-inline" src="images/Icons/aether_icon.png" alt=""> ' + (pending.length > 1 ? _t("{n} choix t'attendent.", { n: pending.length }) : _t("Un choix t'attend.")) + '</div>';
+  // v3.458.3 (audit C4) : la pastille mène au premier choix en attente
+  if (pending.length) h += '<button type="button" class="mem-pending" onclick="memScrollToPending()"><img class="ico-inline" src="images/Icons/aether_icon.png" alt=""> ' + (pending.length > 1 ? _t("{n} choix t'attendent.", { n: pending.length }) : _t("Un choix t'attend.")) + ' ›</button>';
   h += '<p class="mem-head-note">' + _t("Reprendre un choix coûte de l'or : {n} pour la prochaine reprise, trois fois plus ensuite.", { n: formatNumber(MemoryManager.getRepriseCost()) }) + '</p>'; // v3.358.0 (D7)
   h += '</div>';
 
@@ -89,3 +90,15 @@ function buildAscensionHTML() {
   return '<div class="nb-page-frame nb-page-frame-fill kframe-page mem-page" data-kf-title="' + esc("images/Icons/aether_icon.png|" + _t("Mémoire")) + '">' + h + '</div>';
 }
 window.buildAscensionHTML = buildAscensionHTML;
+
+/* v3.458.3 (audit C4) : amène à l'écran le premier niveau qui attend un choix (l'écran fait
+   plus de 4 000 px ; le choix en attente était à 3 200 px). Appelé par la pastille et à l'ouverture. */
+function memScrollToPending() {
+  var pending = window.MemoryManager ? MemoryManager.getPendingLevels() : [];
+  if (!pending.length || typeof document === "undefined") return false;
+  var lvl = pending[0], el = document.getElementById("mem-level-" + (lvl && lvl.level != null ? lvl.level : lvl));
+  if (!el || typeof el.scrollIntoView !== "function") return false;
+  el.scrollIntoView({ block: "start" });
+  return true;
+}
+window.memScrollToPending = memScrollToPending;

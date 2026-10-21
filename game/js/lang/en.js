@@ -1714,7 +1714,6 @@ I18n.register("en", {
   "Un ennemi dort": "An enemy is sleeping",
   "Un mort dort encore. Ton action le vise : le frapper le réveille, et vaincu il rapporte plus d'or. Sans cette règle, tu le laisses dormir.": "One of the dead is still sleeping. Your action targets it: striking it wakes it, and defeated it brings more gold. Without this rule, you let it sleep.",
   "{a} / {b} placés · plafond de l'acte": "{a} / {b} placed · act cap",
-  "{a} placés": "{a} placed",
   "Réinitialiser": "Reset",
   "gratuit": "free",
   "Tronc": "Trunk",
@@ -5819,4 +5818,8 @@ I18n.register("en", {
   "1 près du foyer, 3 au plus loin et au plus dur": "1 near home, 3 farthest and hardest",
   "Tourne ton téléphone": "Turn your phone",
   "Aethervale se joue en hauteur : en paysage, le combat n'a pas la place de s'afficher.": "Aethervale is played upright: in landscape, combat has no room to show.",
+  // v3.458.3 (lot 7a)
+  "{a} placés · le prochain au niveau {n}": "{a} placed · the next at level {n}",
+  "{a} / {b} placés · le prochain au niveau {n}": "{a} / {b} placed · the next at level {n}",
+  "Les rations se préparent à la Cuisine de camp : Village › Ateliers.": "Rations are cooked at the Camp Kitchen: Village › Workshops.",
 });

@@ -113,10 +113,22 @@ var MissionBoard = {
       if (cardChoice) {
         m.launch = function () { if (typeof openQuestsAt === "function") openQuestsAt("worldexpedition"); };
         m.launchLabel = cardChoice.choice.buttonLabel ? _td(cardChoice.choice.buttonLabel) : _t("Choisir");
-      } else if (status === "accepted" && step.linkTo) m.launch = function () { StoryQuestManager.goToLink(chapterId); };
+      } else if (status === "accepted" && step.linkTo) m.launch = function () { MissionBoard.launchStoryLink(chapterId, step.linkTo); };
       out.push(m);
     });
     return out;
+  },
+
+  /* v3.458.3 (audit C1) : « Partir » d'une étape liée à une quête d'aventure ou de chasse lance cette
+     quête comme sa propre carte (fenêtre « Commencer », pronostic, préparation), sans le détour par
+     Quêtes où elle redemandait « Accepter ». Sinon (onglet, carte, donjon…) : le lien d'origine. */
+  launchStoryLink: function (chapterId, linkTo) {
+    var cardId = String((linkTo && !linkTo.tab && !linkTo.beforeGo && linkTo.cardId) || "");
+    var id = cardId.indexOf("adv_hq_") === 0 ? "hunt_" + cardId.slice(4) : (cardId.indexOf("adv_aq_") === 0 ? cardId : "");
+    var target = id ? this.getById(id) : null;
+    if (target && target.status === "available" && target.accept && typeof campMissionAction === "function") return campMissionAction(id, "accept");
+    if (target && target.status === "running" && target.launch) return target.launch();
+    StoryQuestManager.goToLink(chapterId);
   },
 
   /* ---------- Quêtes d'aventure (kill/transition scopées à une aventure) ---------- */

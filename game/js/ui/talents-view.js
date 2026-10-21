@@ -39,7 +39,11 @@ function talentNodeHTML(node) {
 
 function buildTalentPointsHTML() {
   var TM = TalentManager, cap = TM.cap(), res = TM.reserve(), av = TM.available();
-  var capTxt = isFinite(cap) ? _t("{a} / {b} placés · plafond de l'acte", { a: TM.spent(), b: cap }) : _t("{a} placés", { a: TM.spent() });
+  // v3.458.3 (audit C13) : quand c'est le niveau qui limite, on le dit (un point par niveau)
+  var lvlBound = TM.earned() < cap, next = Number(game.heroLevel || 1) + 1;
+  var capTxt = !isFinite(cap) ? _t("{a} placés · le prochain au niveau {n}", { a: TM.spent(), n: next })
+    : lvlBound ? _t("{a} / {b} placés · le prochain au niveau {n}", { a: TM.spent(), b: cap, n: next })
+    : _t("{a} / {b} placés · plafond de l'acte", { a: TM.spent(), b: cap });
   return '<div class="tt-points"><div class="tt-points-main">'
     + '<div class="tt-points-big">' + _tn(av, "<b>{n}</b> point à placer", "<b>{n}</b> points à placer") + '</div>'
     + '<div class="tt-points-sub">' + capTxt

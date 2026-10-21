@@ -122,18 +122,20 @@ function talentsFor(classId, points) {
 
 /* v3.326.0 (lot C-2) : un profil par acte, au plafond d'entraînement DE L'ACTE (TRAINING_CAP_BY_ACT).
    L'équipement est pris au plus prudent : celui qu'on est SÛR d'avoir à ce moment-là. */
+/* v3.458.3 (audit C13) : points de talent recalés sur le niveau réel du robot en début d'acte
+   (lot lot1d, 6 parties) : 4 / 6 / 7 / 8 points, 9 à l'entrée de desert_15, 10 en fin de Désert. */
 var PROFILS = {
   // v3.331.0 (suite du recalage) : actes I et II de la Forêt, au plafond de l'acte, sans talents
   foretI: { label: "Forêt, acte I (entr. 20, vitrine de départ)", train: 20, gear: "vitrine", points: 0, wenna: 0, maddoc: 0 },
   foretII: { label: "Forêt, acte II (entr. 40, vitrine de départ)", train: 40, gear: "vitrine", points: 0, wenna: 0, maddoc: 0 },
-  foretIII: { label: "Forêt, acte III (entr. 60, vitrine de départ)", train: 60, gear: "vitrine", points: 5, wenna: 5, maddoc: 0 },
+  foretIII: { label: "Forêt, acte III (entr. 60, vitrine de départ)", train: 60, gear: "vitrine", points: 4, wenna: 5, maddoc: 0 },
   foret: { label: "Forêt, fin (entr. 60, uniques des deux élites + vitrine, Wenna +5)", train: 60, gear: "foret", points: 5, wenna: 5, maddoc: 0 },
-  desertI: { label: "Désert, acte I (entr. 70, équipement de Forêt, Wenna +5)", train: 70, gear: "foret", points: 7, wenna: 5, maddoc: 0 },
-  desertII: { label: "Désert, acte II (entr. 90, équipement de Forêt, Wenna +5, Maddoc +1)", train: 90, gear: "foret", points: 9, wenna: 5, maddoc: 1 },
-  desert0: { label: "Désert, début d'acte III (entr. 110, équipement de Forêt)", train: 110, gear: "foret", points: 11, wenna: 5, maddoc: 3 },
-  desertfin: { label: "Désert, fin d'acte III (profil réel de Mar : entr. 110, Forge, talents)", train: 110, gear: "mar", points: 11, wenna: 5, maddoc: 3 },
+  desertI: { label: "Désert, acte I (entr. 70, équipement de Forêt, Wenna +5)", train: 70, gear: "foret", points: 6, wenna: 5, maddoc: 0 },
+  desertII: { label: "Désert, acte II (entr. 90, équipement de Forêt, Wenna +5, Maddoc +1)", train: 90, gear: "foret", points: 7, wenna: 5, maddoc: 1 },
+  desert0: { label: "Désert, début d'acte III (entr. 110, équipement de Forêt)", train: 110, gear: "foret", points: 8, wenna: 5, maddoc: 3 },
+  desertfin: { label: "Désert, fin d'acte III (profil réel de Mar : entr. 110, Forge, talents)", train: 110, gear: "mar", points: 10, wenna: 5, maddoc: 3 },
   // v3.356.0 (D4) : le héros de la campagne B à l'entrée de desert_15 — uniques de la Forêt, heaume, arme de la Cité, reforge arme 4 / armure 2
-  campagne: { label: "Désert, campagne (entr. 110, uniques + heaume + arme de la Cité, Forge arme 4 / armure 2)", train: 110, gear: "cite", points: 11, wenna: 5, maddoc: 2 }
+  campagne: { label: "Désert, campagne (entr. 110, uniques + heaume + arme de la Cité, Forge arme 4 / armure 2)", train: 110, gear: "cite", points: 9, wenna: 5, maddoc: 2 }
 };
 
 function equipFor(p) {

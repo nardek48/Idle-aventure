@@ -378,6 +378,8 @@ function renderPanel() {
   if (window.decoratePageFrames) decoratePageFrames(container);
 
   revealActiveChips(container, sameTab ? savedChipsScroll : []);
+  // v3.458.3 (audit C4) : à l'ouverture de la Mémoire, le premier choix en attente est à l'écran
+  if (!sameTab && game.activeTab === "ascension" && typeof memScrollToPending === "function") memScrollToPending();
 
   if (sameTab) {
     container.scrollTop = savedScrollTop;

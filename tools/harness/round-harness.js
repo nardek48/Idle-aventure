@@ -16437,5 +16437,43 @@ console.log("\n[260] v3.458.2 — Lot 6b : ressource lisible, compagnons, paysag
   }
 })();
 
+console.log("\n[261] v3.458.3 — Lot 7a : Partir lance la quête, Mémoire sur le choix, ration vide, talents (audit C1, C4, C9, C13)");
+(function () {
+  try {
+    var fs9 = require("fs");
+    // C1 : « Partir » d'une étape liée à une quête d'aventure passe par la carte de la quête (campMissionAction)
+    game = freshCombat("knight");
+    run("StoryQuestManager.ensure();");
+    var st = game.storyQuests.forest, idx = g.STORY_QUESTS.forest.steps.findIndex(function (x) { return /premier_sang/.test((x.linkTo || {}).cardId || ""); });
+    st.currentStep = idx; st.accepted = false; run("StoryQuestManager.acceptStep('forest');");
+    var appel = null, lien = 0;
+    run("var _cma = campMissionAction, _gtl = StoryQuestManager.goToLink;");
+    g.campMissionAction = function (id, a) { appel = id + ":" + a; };
+    run("campMissionAction = window.campMissionAction; StoryQuestManager.goToLink = function () { window._lienPris = (window._lienPris || 0) + 1; };");
+    run("MissionBoard.getById('story_forest').launch();");
+    ok(appel === "adv_aq_story_premier_sang:accept" && !run("window._lienPris"), "Partir : la quête liée s'ouvre directement (" + appel + ")");
+    // un lien d'onglet (donjon) garde le chemin d'origine
+    run("MissionBoard.launchStoryLink('forest', { tab: 'dungeon' });");
+    ok(run("window._lienPris") === 1, "lien vers un onglet : chemin d'origine");
+    run("campMissionAction = _cma; window.campMissionAction = _cma; StoryQuestManager.goToLink = _gtl; window._lienPris = 0;");
+    // C4
+    var asc = fs9.readFileSync(ROOT + "/js/ui/ascension-view.js", "utf8");
+    ok(/<button type="button" class="mem-pending" onclick="memScrollToPending\(\)"/.test(asc) && typeof g.memScrollToPending === "function"
+      && /game\.activeTab === "ascension" && typeof memScrollToPending/.test(fs9.readFileSync(ROOT + "/js/ui/ui-root.js", "utf8")), "Mémoire : ouverte sur le choix en attente, la pastille y mène");
+    // C9
+    ok(/onclick="campRationEmpty\(\)"/.test(fs9.readFileSync(ROOT + "/js/ui/camp-view.js", "utf8")) && typeof g.campRationEmpty === "function", "ration à 0 : dit où elle se prépare");
+    // C13
+    game.heroLevel = 3;
+    run("var _tcap = TalentManager.cap; TalentManager.cap = function () { return 5; };");
+    var d = run("buildTalentPointsHTML()");
+    game.heroLevel = 9;
+    var d2 = run("buildTalentPointsHTML()");
+    run("TalentManager.cap = _tcap;");
+    ok(/le prochain au niveau 4/.test(d) && /plafond de l'acte/.test(d2), "talents : le niveau qui limite est annoncé, sinon le plafond de l'acte (" + d.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").slice(0, 70) + ")");
+  } catch (err) {
+    ok(false, "[261] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);
