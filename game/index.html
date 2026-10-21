@@ -9,7 +9,10 @@
   <!-- Métadonnées & configuration mobile / PWA -->
   <meta charset="UTF-8">
   <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <!-- v3.458.1 (audit P30) : pincement permis (Android). Sur iOS, maximum-scale n'empêche pas le
+       pincement mais évite le zoom automatique sur un champ de saisie de moins de 16 px. -->
+  <script>if (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)) document.querySelector('meta[name="viewport"]').setAttribute("content", "width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover");</script>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#020312">

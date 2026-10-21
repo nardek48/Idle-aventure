@@ -94,6 +94,11 @@ function restoreEquipBagScroll() {
   });
 }
 
+/* v3.458.1 (audit C8) : écrans ouverts depuis un onglet du bas (Expéditions, bâtiments, Héros). */
+var TAB_PARENT = { grimoire: "campement", dungeon: "campement", map: "campement", shop: "village",
+  ascension: "more", equip: "more", talents: "more" };
+window.TAB_PARENT = TAB_PARENT;
+
 function switchTab(tabName) {
   // v3.99.15 : sécurité — un onglet verrouillé ne doit jamais devenir l'onglet actif
   // (état sauvegardé corrompu, bouton resté dans le DOM avant un refreshTabBarVisibility(),
@@ -178,7 +183,8 @@ function switchTab(tabName) {
 
   var combatMode = tabName === "combat";
 
-  var directBtn = document.querySelector('.tab-btn[data-tab="' + tabName + '"]');
+  // v3.458.1 (audit C8) : un écran sans bouton allume l'onglet qui le contient ; à défaut, Menu
+  var directBtn = document.querySelector('.tab-btn[data-tab="' + (TAB_PARENT[tabName] || tabName) + '"]');
   if (directBtn) {
     directBtn.classList.add("active");
   } else {
@@ -249,6 +255,20 @@ function getPanelScreenKey(container) {
   return game.activeTab + "|" + Array.prototype.map.call(container.querySelectorAll(".kseg .is-on"), function (b) { return b.textContent.trim(); }).join("|");
 }
 
+/* v3.458.1 (audit P29) : une rangée de pastilles qui défile garde sa position au re-rendu,
+   et la pastille active revient dans le champ si elle en sort (Hauts faits à 320 px). */
+function revealActiveChips(root, saved) {
+  [].forEach.call(root.querySelectorAll(".kchips.is-scroll"), function (row, i) {
+    if (saved && typeof saved[i] === "number") row.scrollLeft = saved[i];
+    var on = row.querySelector(".is-on");
+    if (!on) return;
+    var left = on.offsetLeft - row.offsetLeft, right = left + on.offsetWidth;
+    if (left < row.scrollLeft || right > row.scrollLeft + row.clientWidth) {
+      row.scrollLeft = Math.max(0, left - (row.clientWidth - on.offsetWidth) / 2);
+    }
+  });
+}
+
 function renderPanel() {
   var container = document.getElementById("panel-container");
   if (!container) return;
@@ -262,6 +282,8 @@ function renderPanel() {
   // haut. On la garde tant que l'écran est le même : même onglet, mêmes boutons « allumés ».
   var frameZone = sameTab ? container.querySelector(".kfp-scrollzone") : null;
   var savedFrameScroll = frameZone ? { key: getPanelScreenKey(container), top: frameZone.scrollTop } : null;
+  // v3.458.1 (audit P29) : position des rangées de pastilles qui défilent, rendue après le rendu
+  var savedChipsScroll = [].map.call(container.querySelectorAll(".kchips.is-scroll"), function (el) { return el.scrollLeft; });
 
   container.classList.toggle("sandbox-wide-mode", game.activeTab === "combat-sandbox" || game.activeTab === "admin");
 
@@ -355,6 +377,8 @@ function renderPanel() {
   // (voir ui/kframe-decorator.js), AVANT la restauration du scroll (les hauteurs changent).
   if (window.decoratePageFrames) decoratePageFrames(container);
 
+  revealActiveChips(container, sameTab ? savedChipsScroll : []);
+
   if (sameTab) {
     container.scrollTop = savedScrollTop;
     if (savedInnerScrollTop !== null) {
@@ -370,6 +394,8 @@ function renderPanel() {
   if (document.body) document.body.classList.toggle("hs-on-heros", game.activeTab === "more");
   // v3.426.0 : idem sur Campement › Expéditions (les bulles cachaient les boutons des lignes).
   if (document.body) document.body.classList.toggle("exp-on-board", game.activeTab === "campement" && typeof campShownTab !== "undefined" && campShownTab === "depart");
+  // v3.458.1 (audit P28) : idem sur le Donjon (les bulles mordaient de 22 px sur les cartes à 390 px).
+  if (document.body) document.body.classList.toggle("dg-on-list", game.activeTab === "dungeon");
   lastRenderedTab = game.activeTab;
   // v3.401.0 (lot O-1) : les bulles du HUD remontent au-dessus des sous-onglets du bas
   if (typeof liftHudDock === "function") liftHudDock();

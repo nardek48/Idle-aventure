@@ -2,6 +2,9 @@
    Donjon
    ========================= */
 
+/* v3.458.1 (audit P28) : pas de bulles flottantes sur le Donjon (elles mordaient sur les cartes). */
+body.dg-on-list .hud-dock { display: none !important; }
+
 /* v2.83.4 : structure flex du panel Donjon (contenu scrollable +
    sous-onglets collés en bas). v2.83.5 : classes renommées en
    génériques .subtab-page/-content/-bar-wrapper, déplacées vers

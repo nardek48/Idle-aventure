@@ -16381,5 +16381,24 @@ console.log("\n[258] v3.458.0 — Admin : confirmation, plus de « Débloquer to
   }
 })();
 
+console.log("\n[259] v3.458.1 — Lot 6a : pastilles, onglet parent, bulles du Donjon, zoom (audit P29, C8, P28, P30)");
+(function () {
+  try {
+    var fs7 = require("fs");
+    var P = g.TAB_PARENT || {};
+    ok(P.dungeon === "campement" && P.map === "campement" && P.grimoire === "campement" && P.shop === "village" && P.ascension === "more" && !P.achievements,
+      "C8 : chaque écran sans bouton allume l'onglet qui le contient (Menu pour le reste)");
+    ok(typeof g.revealActiveChips === "function", "P29 : la pastille active revient dans le champ");
+    var root = fs7.readFileSync(ROOT + "/js/ui/ui-root.js", "utf8"), dg = fs7.readFileSync(ROOT + "/css/04-panel-dungeon.css", "utf8");
+    ok(/toggle\("dg-on-list", game.activeTab === "dungeon"\)/.test(root) && /body\.dg-on-list \.hud-dock \{ display: none !important; \}/.test(dg), "P28 : pas de bulles flottantes sur le Donjon");
+    var idx = fs7.readFileSync(ROOT + "/index.html", "utf8");
+    var meta = idx.match(/<meta name="viewport"\s+content="([^"]+)"/);
+    ok(meta && !/user-scalable|maximum-scale/.test(meta[1]) && /maximum-scale=1\.0/.test(idx.split(meta[0])[1].split("</script>")[0]),
+      "P30 : pincement permis ; iOS garde maximum-scale (pas de zoom sur un champ)");
+  } catch (err) {
+    ok(false, "[259] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

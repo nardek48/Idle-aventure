@@ -7,13 +7,9 @@
   padding: 0;             /* Supprime les espacements internes par défaut */
 }
 
-/* v2.83.13 : désactive le double-tap-to-zoom sur mobile, dans tout le
-   jeu (voir touch-action ci-dessous). Le viewport a déjà
-   user-scalable=no/maximum-scale=1.0 dans index.html, mais Safari iOS
-   récent les ignore pour l'accessibilité — la vraie garantie
-   cross-navigateur est touch-action:manipulation. "manipulation"
-   autorise toujours le scroll normal (pan) et le tap simple, retire
-   seulement le double-tap-zoom et le pinch-zoom. */
+/* v2.83.13 : désactive le double-tap-to-zoom sur mobile (touch-action:manipulation).
+   v3.458.1 (audit P30) : le pincement reste permis partout (accessibilité) ; les cartes
+   gèrent le leur (touch-action: none). Le viewport ne le bloque plus non plus. */
 
 /* =========================
    Racine du document
@@ -26,7 +22,7 @@ html {
   color: var(--text);                     /* Couleur de texte principale */
   -webkit-tap-highlight-color: transparent; /* Retire le flash bleu/gris au tap sur mobile WebKit */
   overscroll-behavior: none;              /* Empêche le rebond / scroll chaining global */
-  touch-action: manipulation;             /* Désactive le double-tap-to-zoom (et le pinch-zoom) sur tout le jeu */
+  touch-action: manipulation;             /* Désactive le double-tap-to-zoom ; le pincement reste permis */
 }
 
 /* =========================
