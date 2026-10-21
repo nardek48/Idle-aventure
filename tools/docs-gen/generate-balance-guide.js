@@ -461,7 +461,7 @@ P(table(["Règle", "Valeur"], [
   ["Potions de soin par sortie", G.SORTIE_POTION_CAP],
   ["Fuite", pct(G.SORTIE_FLEE_KEEP_PCT) + " du butin conservé, mission non validée"],
   ["Mort", "tout le butin de la sortie perdu ; relève à 0 PV"],
-  ["Régénération au Campement", pct(G.CAMP_REGEN_PCT_PER_MIN) + " des PV max par minute hors combat (+50 % avec « Repos du camp ») ; hors ligne, " + pct(G.CAMP_OFFLINE_REGEN_CAP_PCT) + " au plus (75 % avec « Repos du camp »)"],
+  ["Régénération au Campement", pct(G.CAMP_REGEN_PCT_PER_MIN) + " des PV max par minute hors combat (+50 % avec « Repos du camp ») ; même rythme hors ligne, sans plafond"],
   ["Seuils du pronostic", Object.keys(G.FORECAST_RATIO_THRESHOLDS).map(function (k) { return k + " ≥ " + fr(G.FORECAST_RATIO_THRESHOLDS[k]); }).join(" · ")]
 ]));
 

@@ -9637,7 +9637,7 @@ console.log("\n[118] v3.322.0 — Offrande, Souvenirs, niveau de Mémoire et ses
   M.useVoieFree();
   ok(M.isVoieFreeToday() === false, "...et un seul par jour");
   M.choose(2, "repos_camp");
-  ok(g.getCampOfflineRegenCap() === 0.75, "Repos du camp : 75 % hors ligne");
+  ok(Math.abs(g.CampManager.getRegenPctPerMin() - 0.075) < 1e-9, "Repos du camp : 7,5 % PV/min");
 
   /* --- Fidélité : retour après KO --- */
   game.gold = 1e7;
@@ -16286,6 +16286,30 @@ console.log("\n[254] v3.457.4 — Sauvegarde et mise à jour (audit P3, P4, P6, 
     ok(/function checkPwaIosStorageHint/.test(pwa), "rappel Safari (7 jours)");
   } catch (err) {
     ok(false, "[254] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[255] v3.457.7 — Feu de camp sans plafond hors ligne (audit P10)");
+(function () {
+  try {
+    var fs5 = require("fs");
+    // P10 : rechargement (offline) et reprise (en ligne) soignent pareil, jusqu'au plein
+    game = freshCombat("knight");
+    game.activeTab = "campement"; game.heroMaxHp = 400;
+    game.heroHp = 40; game.campRegenLastAt = Date.now() - 30 * 60000;
+    g.CampManager.applyRegen(true);
+    var off = game.heroHp;
+    game.heroHp = 40; game.campRegenLastAt = Date.now() - 30 * 60000;
+    g.CampManager.applyRegen(false);
+    ok(off === 400 && game.heroHp === 400, "30 min d'absence : plein au rechargement comme à la reprise (" + off + "/" + game.heroHp + ")");
+    game.heroHp = 40; game.campRegenLastAt = Date.now() - 4 * 60000;
+    g.CampManager.applyRegen(true);
+    ok(game.heroHp === 40 + 80, "4 min hors ligne : 5 %/min, pas plus (" + game.heroHp + ")");
+    ok(typeof g.getCampOfflineRegenCap === "undefined", "plus de plafond hors ligne exposé");
+    var rc = JSON.stringify(g.MEMORY_LEVELS).match(/"id":"repos_camp"[^}]*/)[0];
+    ok(rc.indexOf("hors ligne") === -1 && fs5.readFileSync(ROOT + "/js/ui/tutorial-view.js", "utf8").indexOf("jusqu'à 50 % si") === -1, "Repos du camp et tutoriel : plus de plafond annoncé");
+  } catch (err) {
+    ok(false, "[255] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
 })();
 

@@ -51,7 +51,7 @@ var MEMORY_LEVELS = [
     { id: "grimoire_etendu", name: "Grimoire étendu", icon: "images/Icons/memory/grimoire_etendu.png",
       desc: "Une règle active de plus dans le Grimoire." },
     { id: "repos_camp", name: "Repos du camp", icon: "images/Icons/memory/repos_camp.png",
-      desc: "Tu récupères 50 % plus vite au Campement, et jusqu'à 75 % de tes PV hors ligne au lieu de 50 %." }
+      desc: "Tu récupères 50 % plus vite au Campement." }
   ] },
   /* v3.323.0 (décision Seb) : la Fiole de réserve quitte le niveau 3 — au banc elle portait le
      Chevalier de 67 à 92 % sur le sphinx. Elle ira aux Ruines (niveaux 9 à 12), où le calibrage

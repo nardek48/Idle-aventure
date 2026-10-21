@@ -1,15 +1,10 @@
 "use strict";
 /* systems/camp-system.js — v3.106.0 : plus de repos à horloge. Régénération lente au Campement
-   (5 % PV max / min, plafonnée à 50 % hors ligne) + Rations (v3.106.0 : remplace Repas viande/eau).
+   (5 % PV max / min, sans plafond hors ligne depuis v3.457.7) + Rations (v3.106.0 : remplace Repas viande/eau).
    Chaque ration restaure un % fixe de PV max (WAREHOUSE_RESOURCES[id].healPct). Détail : LIGNE_DIRECTRICE §4, §10. */
 
 var CAMP_REGEN_PCT_PER_MIN = 0.05;
-var CAMP_OFFLINE_REGEN_CAP_PCT = 0.50;
-/* v3.322.0 : Repos du camp (Mémoire niveau 2) — plafond hors ligne 75 % au lieu de 50 %. */
-function getCampOfflineRegenCap() {
-  return (window.MemoryManager && MemoryManager.has("repos_camp")) ? 0.75 : CAMP_OFFLINE_REGEN_CAP_PCT;
-}
-window.getCampOfflineRegenCap = getCampOfflineRegenCap;
+/* v3.457.7 (P10, choix Seb) : plus de plafond hors ligne — rechargement et reprise après veille soignent pareil. */
 
 var CampManager = {
   ensureDefaults: function () {
@@ -38,7 +33,7 @@ var CampManager = {
     return game.activeTab !== "combat" || (game.heroHp || 0) <= 0;
   },
 
-  /* Accrual paresseux : appelé par renderHud (chaque tick) et au boot (offline = plafond 50 %).
+  /* Accrual paresseux : appelé par renderHud (chaque tick) et au boot (offline : journal, quel que soit l'onglet).
      Le repère est avancé hors régénération (pas de temps de combat accumulé), conservé tant que le soin arrondit à 0. */
   applyRegen: function (offline) {
     this.ensureDefaults();
@@ -50,9 +45,9 @@ var CampManager = {
     // Hors ligne : le joueur était absent, on régénère quel que soit l'onglet restauré (sauf run en cours).
     if (offline ? this._hasActiveRun() : !this.isRegenActive()) return 0;
 
-    // v3.448.0 : le feu soigne aussi les compagnons restés au camp (même rythme, même plafond hors ligne)
-    var self = this, pctMin = this.getRegenPctPerMin(), cap = offline ? getCampOfflineRegenCap() : Infinity;
-    var gain = function (cur, max) { return Math.floor(Math.max(0, Math.min(max * pctMin * elapsedMin, max * cap, max - cur))); };
+    // v3.448.0 : le feu soigne aussi les compagnons restés au camp (même rythme)
+    var self = this, pctMin = this.getRegenPctPerMin();
+    var gain = function (cur, max) { return Math.floor(Math.max(0, Math.min(max * pctMin * elapsedMin, max - cur))); };
     var maxHp = game.heroMaxHp || 1;
     var hp = game.heroHp != null ? game.heroHp : maxHp;
     var heal = gain(hp, maxHp), total = heal;

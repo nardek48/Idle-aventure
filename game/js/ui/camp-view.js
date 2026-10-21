@@ -145,8 +145,7 @@ function buildCampHTML(tab) {
   h += '<button type="button" class="camp-help-btn" aria-label="' + _t("Régénération : explication") + '" aria-expanded="' + (campRegenHelpOpen ? 'true' : 'false') + '" onclick="toggleCampRegenHelp()">?</button>';
   h += '</div>';
   if (campRegenHelpOpen) {
-    h += '<div class="camp-regen-desc">' + _t("Hors combat, tes PV remontent seuls au rythme indiqué. Les rations soignent tout de suite. Pendant ton absence, le feu rend au plus {n} % des PV max.",
-      { n: Math.round((typeof getCampOfflineRegenCap === "function" ? getCampOfflineRegenCap() : 0.5) * 100) }) + '</div>';
+    h += '<div class="camp-regen-desc">' + _t("Hors combat, tes PV remontent seuls au rythme indiqué, même pendant ton absence. Les rations soignent tout de suite.") + '</div>';
   }
 
   /* v3.448.0 : les compagnons au camp, une ligne fine chacun — le feu et les rations les soignent aussi. */

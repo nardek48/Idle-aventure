@@ -86,7 +86,7 @@ var GENERIC_TUTORIALS = {
     title: "Le Campement",
     points: [
       { icon: "images/Icons/plots/hunting_blind.png", text: "Le Campement est ton point de ralliement entre deux expéditions — c'est ici que tu gères tout ce qui n'est pas le combat." },
-      { icon: "images/Icons/combat_stats/stat_health.png", text: "Ta santé — hors combat, tu récupères 5 % de tes PV max par minute (jusqu'à 50 % si tu es hors ligne). Suis ta barre de vie et la régénération en haut de l'écran." },
+      { icon: "images/Icons/combat_stats/stat_health.png", text: "Ta santé — hors combat, tu récupères 5 % de tes PV max par minute, même hors ligne. Suis ta barre de vie et la régénération en haut de l'écran." },
       { icon: "images/Icons/quests/ration_reward.png", text: "Les rations soignent instantanément un % fixe de tes PV (35/60/100 % selon le type) : utile pour repartir vite sans attendre." },
       { icon: "images/Icons/quests/quest_list.png", text: "Le tableau de missions — l'étape d'Histoire en cours (badge doré « Histoire ») est toujours en tête. Touche « Accepter », puis « Partir » pour ta prochaine quête : c'est elle qui te mènera au combat avec un vrai objectif." }
     ]
