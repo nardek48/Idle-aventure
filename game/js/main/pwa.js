@@ -67,10 +67,33 @@ function waitForPwaControllerThenHideGate() {
   navigator.serviceWorker.addEventListener("controllerchange", resolve, { once: true });
 }
 
+/* v3.457.4 (audit P9) : la bannière ne couvre plus un combat ni une expédition en cours — elle attend que
+   le héros soit libre (même règle que l'écran de retour), et « Plus tard » la ferme pour la session. */
+var pwaUpdatePending = false, pwaUpdateDismissed = false, pwaUpdateTimer = null;
+function pwaHeroEngaged() {
+  if (!window.game) return false;
+  if (game.activeTab === "combat" || game.activeTab === "scene") return true;
+  return !!(window.SceneRunManager && typeof SceneRunManager.isHeroEngaged === "function" && SceneRunManager.isHeroEngaged());
+}
 function showPwaUpdateBanner() {
   var el = document.getElementById("pwa-update-banner");
-  if (!el || el.classList.contains("show")) return;
+  if (!el || el.classList.contains("show") || pwaUpdateDismissed) return;
+  if (pwaHeroEngaged()) {
+    pwaUpdatePending = true;
+    if (!pwaUpdateTimer) pwaUpdateTimer = setInterval(function () {
+      if (pwaHeroEngaged()) return;
+      clearInterval(pwaUpdateTimer); pwaUpdateTimer = null; pwaUpdatePending = false;
+      showPwaUpdateBanner();
+    }, 3000);
+    return;
+  }
   el.classList.add("show");
+}
+
+function dismissPwaUpdateBanner() {
+  pwaUpdateDismissed = true;
+  var el = document.getElementById("pwa-update-banner");
+  if (el) el.classList.remove("show");
 }
 
 function reloadForPwaUpdate() {
@@ -160,14 +183,14 @@ var PwaInstall = {
     } catch (e) { noteErreur("pwa.persist", e); /* non supporté */ }
   },
 
-  openIosSheet: function () {
+  openIosSheet: function (warn) {
     var host = document.getElementById("pwa-install-root");
     if (!host) {
       host = document.createElement("div");
       host.id = "pwa-install-root";
       document.body.appendChild(host);
     }
-    host.innerHTML = buildPwaIosSheetHTML();
+    host.innerHTML = buildPwaIosSheetHTML(!!warn);
   },
 
   closeIosSheet: function () {
@@ -212,13 +235,27 @@ function buildPwaSettingsCardHTML() {
   return h;
 }
 
-/* iPhone, iPad : le geste à faire, en trois étapes. La couche est au-dessus de l'écran titre. */
-function buildPwaIosSheetHTML() {
+/* v3.457.4 (audit P5) : dans un onglet Safari (jeu non installé), la sauvegarde peut être effacée
+   après 7 jours sans visite. Rappel une fois par semaine au plus, sur une partie commencée. */
+var PWA_IOS_STORAGE_HINT_MS = 7 * 24 * 3600 * 1000;
+function checkPwaIosStorageHint() {
+  if (PwaInstall.status() !== "ios" || !window.game || !game.playerName || !window.Prefs) return;
+  var last = Number(Prefs.getValue("iosStorageHintAt") || 0);
+  if (Date.now() - last < PWA_IOS_STORAGE_HINT_MS) return;
+  Prefs.setValue("iosStorageHintAt", Date.now());
+  PwaInstall.openIosSheet(true);
+}
+
+/* iPhone, iPad : le geste à faire, en trois étapes. La couche est au-dessus de l'écran titre.
+   warn (v3.457.4) : l'ouverture vient du rappel Safari, une ligne dit pourquoi. */
+function buildPwaIosSheetHTML(warn) {
   var h = '<div class="pwa-install-layer">';
   h += '<div class="ksheet-backdrop" onclick="PwaInstall.closeIosSheet()"></div>';
   h += '<div class="ksheet pwa-install-sheet">';
   h += kSheetHeadHTML({ icon: '<img src="images/Icons/apple-touch-icon.png" alt="">', title: _t("Installer sur iPhone ou iPad"), close: "PwaInstall.closeIosSheet()" });
-  h += '<div class="ksheet-body"><ol class="pwa-install-steps">';
+  h += '<div class="ksheet-body">';
+  if (warn) h += '<p class="pwa-install-warn">' + _t("Dans Safari, ta partie peut être effacée après 7 jours sans visite. Installe le jeu, ou exporte ta partie (Paramètres › Partie).") + '</p>';
+  h += '<ol class="pwa-install-steps">';
   h += '<li>' + _t("Ouvre le jeu dans <b>Safari</b>.") + '</li>';
   h += '<li>' + _t("Touche le bouton <b>Partager</b> (le carré avec une flèche vers le haut).") + '</li>';
   h += '<li>' + _t("Choisis <b>Sur l'écran d'accueil</b>, puis <b>Ajouter</b>.") + '</li>';
@@ -237,6 +274,8 @@ window.buildPwaIosSheetHTML = buildPwaIosSheetHTML;
 
 window.initPwaServiceWorker = initPwaServiceWorker;
 window.reloadForPwaUpdate = reloadForPwaUpdate;
+window.dismissPwaUpdateBanner = dismissPwaUpdateBanner;
 
 initPwaServiceWorker();
 PwaInstall.init();
+window.addEventListener("load", function () { setTimeout(checkPwaIosStorageHint, 4000); }); // v3.457.4 : après le chargement de la partie

@@ -16253,5 +16253,41 @@ console.log("\n[253] v3.457.3 — Patrouilles des Ruines et de la Crypte (audit 
   }
 })();
 
+console.log("\n[254] v3.457.4 — Sauvegarde et mise à jour (audit P3, P4, P6, P8, O2)");
+(function () {
+  try {
+    var fs4 = require("fs");
+    // P3 : l'effacement complet remet à zéro hauts faits réclamés, meilleure vague, vitesse
+    run("game.achievementsClaimed = { hf_x: 1 }; game.dungeonBestWave = 9; game.combatSpeed = 4; fullResetState();");
+    ok(Object.keys(run("game.achievementsClaimed")).length === 0 && run("game.dungeonBestWave") === 0 && run("game.combatSpeed") === 1, "effacer la partie : hauts faits réclamés, meilleure vague et vitesse remis à zéro");
+    // P6 : une erreur du code au chargement ne passe plus pour une sauvegarde illisible
+    run("game.playerName='Test'; game.heroId='knight'; game.gold = 777; saveGame();");
+    var key = run("getActiveSaveKey()");
+    var raw = run("localStorage.getItem(getActiveSaveKey())");
+    run("var _rbs = restoreBaseState; restoreBaseState = function () { throw new Error('bug simulé'); }; saveLockedKey = null;");
+    var r = run("loadGame()");
+    run("restoreBaseState = _rbs;");
+    ok(r === false && run("lastLoadCodeError") === true && run("saveLockedKey") === key, "erreur du code : partie verrouillée en écriture (saveLockedKey)");
+    ok(run("localStorage.getItem('" + key + "' + SAVE_UNREADABLE_SUFFIX)") === null && run("localStorage.getItem(getActiveSaveKey())") === raw, "la sauvegarde n'est ni mise de côté ni réécrite");
+    ok(run("saveGame()") === false, "plus aucune écriture pendant la session");
+    run("saveLockedKey = null; loadGame();");
+    ok(run("game.gold") === 777, "le bug corrigé, la partie se recharge intacte");
+    // P4 : verrou entre fenêtres
+    var idx = fs4.readFileSync(ROOT + "/index.html", "utf8"), sw = fs4.readFileSync(ROOT + "/sw.js", "utf8");
+    ok(idx.indexOf("js/main/instance-unique.js") > idx.indexOf("js/main/boot.js") && sw.indexOf("./js/main/instance-unique.js") > 0, "instance-unique.js chargé après boot.js et précaché");
+    run("saveLockedKey = null; instanceLocked = false; lockGameInstance();");
+    ok(run("saveLockedKey") === key && run("saveGame()") === false, "fenêtre qui perd la main : elle ne sauvegarde plus");
+    run("saveLockedKey = null; instanceLocked = false;");
+    // O2, P8 : service worker
+    ok(/new Request\(url, \{ cache: "no-cache" \}\)/.test(sw) && sw.indexOf('cache: "reload"') === -1, "précache en no-cache (fichiers inchangés en 304)");
+    ok(/var IMAGE_CACHE = "aethervale-images"/.test(sw) && sw.indexOf('name.indexOf("quest-idle-") === 0') > 0, "images dans un cache durable, hors du nettoyage des versions");
+    var pwa = fs4.readFileSync(ROOT + "/js/main/pwa.js", "utf8");
+    ok(/function dismissPwaUpdateBanner/.test(pwa) && /pwaHeroEngaged\(\)/.test(pwa) && idx.indexOf("dismissPwaUpdateBanner()") > 0, "bannière de mise à jour : reportée pendant un combat, « Plus tard »");
+    ok(/function checkPwaIosStorageHint/.test(pwa), "rappel Safari (7 jours)");
+  } catch (err) {
+    ok(false, "[254] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

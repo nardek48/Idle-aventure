@@ -977,6 +977,13 @@ function loadGame() {
     try { localStorage.setItem(key + SAVE_BACKUP_SUFFIX, raw); } catch (e) { noteErreur("save-system.loadGame", e); }
     return true;
   }
+  // v3.457.4 (audit P6) : sauvegarde lisible, erreur du jeu — on ne touche ni à elle ni à sa copie saine
+  if (lastLoadCodeError) {
+    resetGameToFreshState();
+    saveLockedKey = key;
+    notifySaveRecovery(_t("Une erreur du jeu a empêché de charger ta partie. Elle reste intacte : rien ne sera écrit dessus pendant cette session. Recharge la page après la prochaine mise à jour."));
+    return false;
+  }
   return recoverUnreadableSave(key, raw);
 }
 
@@ -1023,11 +1030,16 @@ function notifySaveRecovery(message) {
   }, 2500);
 }
 
-/* Restaure une sauvegarde brute dans `game` ; false si elle est illisible ou si la restauration échoue. */
+/* Restaure une sauvegarde brute dans `game` ; false si elle est illisible ou si la restauration échoue.
+   v3.457.4 (audit P6) : une exception du CODE pendant la restauration n'est plus une sauvegarde illisible
+   (lastLoadCodeError) — elle est tracée, et loadGame protège la partie au lieu de la mettre de côté. */
+var lastLoadCodeError = false;
 function loadGameFromRaw(raw) {
+  lastLoadCodeError = false;
+  var d;
+  try { d = JSON.parse(raw); } catch (e) { return false; }
+  if (!d || typeof d !== "object") return false;
   try {
-    var d = JSON.parse(raw);
-    if (!d || typeof d !== "object") return false;
 
     restoreBaseState(d);
     reapplyProgressEffects();
@@ -1045,6 +1057,8 @@ function loadGameFromRaw(raw) {
 
     return true;
   } catch (e) {
+    noteErreur("save-system.loadGameFromRaw", e);
+    lastLoadCodeError = true;
     return false;
   }
 }
@@ -1070,6 +1084,7 @@ function fullResetState() {
   game.achievementStats = null; // v3.338.0 : Hauts faits repartis de zéro
   game.bossTrophies = {}; // v3.333.0 : partie neuve, aucun trophée
   game.patrols = {}; // v3.334.0 : partie neuve, aucune patrouille
+  game.achievementsClaimed = {}; game.dungeonBestWave = 0; game.combatSpeed = 1; // v3.457.4 (audit P3) : ils survivaient à l'effacement
   if (window.MemoryManager) MemoryManager.ensure();
   game.playerName = "";
   game.heroId = "";

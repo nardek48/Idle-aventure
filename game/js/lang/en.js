@@ -5802,5 +5802,10 @@ I18n.register("en", {
   "À {secteur}, j'ai dit les noms que je connais. Il en manque toujours un.": "At {secteur}, I said the names I know. There's always one missing.",
   "J'ai fait le tour de {secteur}. Personne ne s'est levé. C'est ce que je voulais.": "I went all around {secteur}. No one got up. That's what I wanted.",
   "À {secteur}, quelqu'un a dit mon nom en dormant. Je ne l'ai pas réveillé.": "At {secteur}, someone said my name in their sleep. I didn't wake them.",
-  "{nom} rentre de {secteur}, les sacs pleins.": "{nom} comes back from {secteur}, bags full."
+  "{nom} rentre de {secteur}, les sacs pleins.": "{nom} comes back from {secteur}, bags full.",
+  "Ta partie est ouverte dans une autre fenêtre.": "Your game is open in another window.",
+  "Cette fenêtre ne sauvegarde plus, pour ne rien effacer. Continue dans l'autre, ou reprends la main ici.": "This window no longer saves, so nothing gets overwritten. Keep playing in the other one, or take over here.",
+  "Recharger ici": "Reload here",
+  "Dans Safari, ta partie peut être effacée après 7 jours sans visite. Installe le jeu, ou exporte ta partie (Paramètres › Partie).": "In Safari, your game can be erased after 7 days without a visit. Install the game, or export your save (Settings › Game).",
+  "Une erreur du jeu a empêché de charger ta partie. Elle reste intacte : rien ne sera écrit dessus pendant cette session. Recharge la page après la prochaine mise à jour.": "A game error prevented your save from loading. It is untouched: nothing will be written to it during this session. Reload the page after the next update."
 });

@@ -23,15 +23,15 @@ STRATÉGIE (volontairement simple, en 2 niveaux) :
 VERSIONING (important à chaque livraison, voir CHANGELOG) :
   CACHE_VERSION doit être incrémenté à CHAQUE version livrée
   (convention proposée : le numéro de version du jeu, ex. "2.90.4").
-  À l'activation d'un nouveau service worker, TOUS les caches d'une
-  version précédente sont supprimés (voir l'event "activate")  — ça
-  inclut le cache "runtime" des images : chaque nouvelle version
-  retélécharge donc les images au fil de la navigation du joueur,
-  ce qui élimine tout risque de servir une vieille image en cache
-  sous un nom de fichier réutilisé (ex. si une image est remplacée
-  par une nouvelle du même nom). C'est le compromis choisi (quelques
-  Mo retéléchargés par mise à jour, en échange d'aucune image
-  périmée jamais servie).
+  À l'activation d'un nouveau service worker, les caches de code d'une
+  version précédente sont supprimés (voir l'event "activate").
+  v3.457.4 (audit P8) : les IMAGES vivent dans un cache à part, sans
+  numéro de version (IMAGE_CACHE), qui survit aux mises à jour : hors
+  ligne après une mise à jour, elles ne tombent plus en « ? ». Une image
+  servie depuis ce cache est revérifiée en arrière-plan une fois par
+  démarrage du service worker (requête conditionnelle, 304 le plus
+  souvent) : une image remplacée sous le même nom s'affiche donc une
+  fois périmée, puis à jour.
 
 MISE À JOUR "IMMÉDIATE" (décision explicite de l'utilisateur, à
 l'inverse du comportement par défaut d'un service worker qui attend
@@ -45,8 +45,10 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.457.3"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.457.4"; // <- à incrémenter à CHAQUE livraison
 var CACHE_NAME = "quest-idle-" + CACHE_VERSION;
+var IMAGE_CACHE = "aethervale-images"; // v3.457.4 : hors du préfixe quest-idle-, jamais vidé par "activate"
+var imagesRevalidated = {};             // URL déjà revérifiées depuis le démarrage de ce service worker
 
 var PRECACHE_APP_SHELL = [
   "./",
@@ -124,6 +126,7 @@ var PRECACHE_APP_SHELL = [
   "./js/data/worlds.js",
   "./js/data/world-caps.js",
   "./js/main/boot.js",
+  "./js/main/instance-unique.js", // v3.457.4
   "./js/main/game-loop.js",
   "./js/main/pwa.js",
   "./js/main/log-service.js",
@@ -301,12 +304,11 @@ var PRECACHE_APP_SHELL = [
 self.addEventListener("install", function (event) {
   event.waitUntil(
     caches.open(CACHE_NAME).then(function (cache) {
-      // {cache: "reload"} pour ne jamais réutiliser une réponse HTTP
-      // déjà en cache navigateur (distincte du cache du Service
-      // Worker) au moment de CONSTITUER le précache — sinon on
-      // risquerait de precacher une version déjà périmée.
+      // v3.457.4 (audit O2) : {cache: "no-cache"} au lieu de "reload" — le navigateur revérifie
+      // chaque fichier auprès du serveur (ETag) : jamais de version périmée, mais un fichier
+      // inchangé revient en 304 au lieu d'être retéléchargé à chaque version.
       var requests = PRECACHE_APP_SHELL.map(function (url) {
-        return new Request(url, { cache: "reload" });
+        return new Request(url, { cache: "no-cache" });
       });
       /* v3.303.1 (bug Seb : application installée bloquée sur une ancienne version) : addAll
          échouait en entier si UN SEUL fichier manquait sur le serveur — la nouvelle version ne
@@ -369,6 +371,30 @@ self.addEventListener("fetch", function (event) {
   var url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
   if (url.protocol !== "http:" && url.protocol !== "https:") return;
+
+  // v3.457.4 (audit P8) : images d'abord depuis leur cache durable, revérifiées une fois en arrière-plan
+  if (url.pathname.indexOf("/images/") !== -1) {
+    event.respondWith(caches.open(IMAGE_CACHE).then(function (imgCache) {
+      return imgCache.match(req).then(function (hit) {
+        var refresh = function () {
+          return fetch(req, { cache: "no-cache" }).then(function (response) {
+            if (response && response.status === 200 && response.type === "basic") imgCache.put(req, response.clone());
+            return response;
+          });
+        };
+        if (hit) {
+          if (!imagesRevalidated[req.url]) { imagesRevalidated[req.url] = true; refresh().catch(function () {}); }
+          return hit;
+        }
+        return caches.match(req).then(function (old) { // précache de l'app shell (icônes)
+          if (old) return old;
+          imagesRevalidated[req.url] = true;
+          return refresh().catch(function () { return new Response("", { status: 504, statusText: "Hors-ligne" }); });
+        });
+      });
+    }));
+    return;
+  }
 
   event.respondWith(
     caches.match(req).then(function (cached) {

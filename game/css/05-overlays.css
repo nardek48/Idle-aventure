@@ -158,6 +158,10 @@
   cursor: pointer;
 }
 
+/* v3.457.4 (audit P9) : « Plus tard » ferme la bannière pour la session ; boutons plus hauts (32 px). */
+#pwa-update-banner button { min-height: 32px; }
+#pwa-update-banner button.pwa-later { background: transparent; color: var(--nb-ink-inverse); text-decoration: underline; }
+
 /* =========================
    Modales système
    ========================= */
@@ -419,4 +423,14 @@
 .pwa-install-steps { margin: 0 0 8px; padding-left: 22px; line-height: 1.5; font-size: 0.92rem; }
 .pwa-install-steps li { margin-bottom: 6px; }
 .pwa-install-note { margin: 0; font-size: 0.82rem; color: var(--nb-ink-dim); }
+/* v3.457.4 (audit P5) : le rappel Safari, au-dessus des étapes */
+.pwa-install-warn { margin: 0 0 10px; font-weight: 700; color: var(--c-red-650); }
 /* v3.399.0 (F-1) : actions dans .ksheet-foot (boutons du kit). */
+
+/* v3.457.4 (audit P4) : voile d'une fenêtre qui a perdu la main (instance-unique.js) — au-dessus de tout (le jeu monte à 9 500). */
+#instance-lock { position: fixed; inset: 0; z-index: 10000; display: flex; align-items: center; justify-content: center;
+  padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  background: rgba(20, 12, 4, 0.82); }
+.instance-lock-card { max-width: 340px; padding: 18px; border-radius: 14px; background: var(--c-cream-50-soft); color: var(--c-brown-850-2); text-align: center; display: grid; gap: 10px; }
+.instance-lock-card p { margin: 0; font-size: 14px; line-height: 1.4; color: var(--c-brown-750-2); }
+.instance-lock-card .kbtn { margin: 4px auto 0; }

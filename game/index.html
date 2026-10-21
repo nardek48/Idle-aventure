@@ -228,6 +228,7 @@
 <div id="pwa-update-banner">
   <span data-i18n="">Nouvelle version disponible.</span>
   <button type="button" onclick="reloadForPwaUpdate()" data-i18n="">Recharger</button>
+  <button type="button" class="pwa-later" onclick="dismissPwaUpdateBanner()" data-i18n="">Plus tard</button>
 </div>
 <div id="hero-selection-root"></div>
 <div id="title-screen-root"></div>
@@ -429,6 +430,7 @@
 <script src="js/main/game-loop.js"></script>
 <script src="js/main/pwa.js"></script>
 <script src="js/main/boot.js"></script>
+<script src="js/main/instance-unique.js"></script><!-- v3.457.4 : une seule fenêtre écrit la partie -->
 <script src="js/main/journal-test.js"></script><!-- v3.437.0 : journal de test, après le boot -->
 
 </body>
