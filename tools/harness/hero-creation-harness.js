@@ -36,15 +36,15 @@ ok(/Chevalier/.test(host()) && /Rôdeur/.test(host()) && /Mage/.test(host()), "n
 ok(/hc-class-card active/.test(host()) && /Maître du combat/.test(host()), "Chevalier actif par défaut + tagline");
 ok(/hc-chaos-toggle/.test(host()) && !/hc-chaos-toggle on/.test(host()), "toggle Chaos présent, désactivé");
 ok(/hc-stats/.test(host()) && /hc-skills-toggle/.test(host()), "stats + bandeau compétences présents");
-ok(/knight_m\.png/.test(host()) && /hc-gender-btn active"[^>]*>Homme/.test(host()), "genre par défaut = Homme (knight_m.png)");
+ok(/knight_m\.webp/.test(host()) && /hc-gender-btn active"[^>]*>Homme/.test(host()), "genre par défaut = Homme (knight_m.webp)");
 
 console.log("\n[hc-2b] Toggle Homme/Femme (v3.151.0, skin cosmétique)");
 g.selectHeroGender("f");
 ok(g.pendingHeroGender==="f", "pendingHeroGender = f : "+g.pendingHeroGender);
-ok(/knight_f\.png/.test(host()) && /hc-gender-btn active"[^>]*>Femme/.test(host()), "portrait Chevalier bascule sur knight_f.png");
+ok(/knight_f\.webp/.test(host()) && /hc-gender-btn active"[^>]*>Femme/.test(host()), "portrait Chevalier bascule sur knight_f.webp");
 ok(g.game.heroGender!=="f", "g.game.heroGender NON modifié tant que non confirmé (reste : "+g.game.heroGender+")");
 g.selectHeroClass("mage");
-ok(/mage_f\.png/.test(host()), "changement de classe conserve le genre Femme (mage_f.png)");
+ok(/mage_f\.webp/.test(host()), "changement de classe conserve le genre Femme (mage_f.webp)");
 
 console.log("\n[hc-3] Changement de classe + toggle Chaos");
 g.selectHeroClass("mage");
@@ -52,9 +52,9 @@ ok(g.pendingHeroId==="mage", "pendingHeroId = mage : "+g.pendingHeroId);
 g.toggleHeroChaosVariant();
 ok(g.pendingHeroId==="chaosMage", "toggle -> chaosMage : "+g.pendingHeroId);
 ok(/hc-chaos-toggle on/.test(host()) && /Sorcier du Chaos/.test(host()), "toggle affiché 'on' + nom de la variante");
-ok(/chaosMage_f\.png/.test(host()), "portrait de la colonne Mage = variante Chaos + genre Femme conservé");
+ok(/chaosMage_f\.webp/.test(host()), "portrait de la colonne Mage = variante Chaos + genre Femme conservé");
 g.selectHeroGender("m");
-ok(/chaosMage_m\.png/.test(host()), "repasse en Homme sans perdre la variante Chaos (chaosMage_m.png)");
+ok(/chaosMage_m\.webp/.test(host()), "repasse en Homme sans perdre la variante Chaos (chaosMage_m.webp)");
 g.selectHeroClass("mage");
 ok(g.pendingHeroId==="chaosMage", "re-clic sur la même classe ne réinitialise pas la variante");
 g.selectHeroClass("archer");
@@ -79,7 +79,7 @@ g.confirmHeroSelection();
 ok(g.game.heroId==="chaosRanger" && g.game.playerName==="Arvian", "game.heroId=chaosRanger, playerName=Arvian");
 ok(g.game.codexChaosSeen===true, "codexChaosSeen posé (variante Chaos)");
 ok(g.game.heroGender==="m", "game.heroGender='m' confirmé (dernier choix effectif : repassé en Homme en hc-3) : "+g.game.heroGender);
-ok(g.HEROES_DB.chaosRanger.image.indexOf("chaosRanger_m.png")!==-1, "getter hero.image (data/heroes.js) reflète bien game.heroGender après confirmation : "+g.HEROES_DB.chaosRanger.image);
+ok(g.HEROES_DB.chaosRanger.image.indexOf("chaosRanger_m.webp")!==-1, "getter hero.image (data/heroes.js) reflète bien game.heroGender après confirmation : "+g.HEROES_DB.chaosRanger.image);
 ok(host()==="", "création fermée");
 ok(g.titleScreenSlotBeingCreated===null || g.titleScreenSlotBeingCreated===undefined, "titleScreenSlotBeingCreated remis à null");
 ok(g.game.resources && g.game.resources.ration===3, "3 rations de départ (non-régression v3.107.2)");
@@ -87,11 +87,11 @@ ok(g.HeroSlotManager.hasSlot(1), "slot 1 sauvegardé");
 
 console.log("\n[hc-4b] getSlotSummary reflète le genre DU SLOT, pas celui de la partie active en mémoire");
 var summary1 = g.HeroSlotManager.getSlotSummary(1);
-ok(summary1 && summary1.heroImage.indexOf("chaosRanger_m.png")!==-1, "résumé slot 1 (Homme, tel que sauvegardé) correct : "+ (summary1 && summary1.heroImage));
+ok(summary1 && summary1.heroImage.indexOf("chaosRanger_m.webp")!==-1, "résumé slot 1 (Homme, tel que sauvegardé) correct : "+ (summary1 && summary1.heroImage));
 // Simule une 2e partie active en mémoire avec un genre différent, SANS toucher au slot 1 déjà sauvegardé sur disque.
 g.game.heroGender = "f";
 var summary1bis = g.HeroSlotManager.getSlotSummary(1);
-ok(summary1bis && summary1bis.heroImage.indexOf("chaosRanger_m.png")!==-1, "résumé slot 1 toujours 'Homme' malgré game.heroGender='f' en mémoire (pas de fuite entre parties) : "+(summary1bis && summary1bis.heroImage));
+ok(summary1bis && summary1bis.heroImage.indexOf("chaosRanger_m.webp")!==-1, "résumé slot 1 toujours 'Homme' malgré game.heroGender='f' en mémoire (pas de fuite entre parties) : "+(summary1bis && summary1bis.heroImage));
 g.game.heroGender = "m"; // remis en cohérence avec la partie réellement active (slot 1)
 
 console.log("\n[hc-4c] Migration ensureGameStateDefaults() sur une save sans heroGender (vieille save)");

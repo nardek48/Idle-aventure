@@ -232,7 +232,9 @@ function formatSavedAtDate(epochMs) {
    et le blason sont dans l'image : plus de cadre_slot ni de cercle ajouté par-dessus).
    ===================================================================== */
 function titleScreenHeroImage(summary) {
-  return (summary && summary.heroImage) ? '<img class="lc-med" src="' + esc(summary.heroImage) + '" alt="">' : '';
+  // v3.458.9 (audit O4) : une sauvegarde d'avant garde le portrait en .png ; il est passé en .webp
+  var img = summary && summary.heroImage ? String(summary.heroImage).replace(/(images\/Heroes\/[A-Za-z]+_[mf])\.png$/, "$1.webp") : "";
+  return img ? '<img class="lc-med" src="' + esc(img) + '" alt="">' : '';
 }
 
 /* Fond commun : illustration, voile pour la lisibilité, logo (petit sur les écrans longs). */

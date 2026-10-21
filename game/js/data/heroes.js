@@ -19,48 +19,48 @@ var HEROES_DB = {
   knight: {
     id: "knight",
     name: "Chevalier",
-    imageM: "./images/Heroes/knight_m.png",
-    imageF: "./images/Heroes/knight_f.png",
+    imageM: "./images/Heroes/knight_m.webp",
+    imageF: "./images/Heroes/knight_f.webp",
     weaponType: "sword",
     stats: makeRpgStats(60, 62, 32, 40, 52)
   },
   ranger: {
     id: "ranger",
     name: "Rôdeur",
-    imageM: "./images/Heroes/ranger_m.png",
-    imageF: "./images/Heroes/ranger_f.png",
+    imageM: "./images/Heroes/ranger_m.webp",
+    imageF: "./images/Heroes/ranger_f.webp",
     weaponType: "bow",
     stats: makeRpgStats(46, 44, 70, 60, 40)
   },
   mage: {
     id: "mage",
     name: "Mage",
-    imageM: "./images/Heroes/mage_m.png",
-    imageF: "./images/Heroes/mage_f.png",
+    imageM: "./images/Heroes/mage_m.webp",
+    imageF: "./images/Heroes/mage_f.webp",
     weaponType: "magic",
     stats: makeRpgStats(62, 40, 40, 42, 76)
   },
   chaosKnight: {
     id: "chaosKnight",
     name: "Chevalier du Chaos",
-    imageM: "./images/Heroes/chaosKnight_m.png",
-    imageF: "./images/Heroes/chaosKnight_f.png",
+    imageM: "./images/Heroes/chaosKnight_m.webp",
+    imageF: "./images/Heroes/chaosKnight_f.webp",
     weaponType: "sword",
     stats: makeRpgStats(63, 56, 42, 52, 47)
   },
   chaosRanger: {
     id: "chaosRanger",
     name: "Rôdeur du Chaos",
-    imageM: "./images/Heroes/chaosRanger_m.png",
-    imageF: "./images/Heroes/chaosRanger_f.png",
+    imageM: "./images/Heroes/chaosRanger_m.webp",
+    imageF: "./images/Heroes/chaosRanger_f.webp",
     weaponType: "bow",
     stats: makeRpgStats(50, 46, 62, 58, 44)
   },
   chaosMage: {
     id: "chaosMage",
     name: "Sorcier du Chaos",
-    imageM: "./images/Heroes/chaosMage_m.png",
-    imageF: "./images/Heroes/chaosMage_f.png",
+    imageM: "./images/Heroes/chaosMage_m.webp",
+    imageF: "./images/Heroes/chaosMage_f.webp",
     weaponType: "magic",
     stats: makeRpgStats(66, 44, 30, 44, 78)
   }

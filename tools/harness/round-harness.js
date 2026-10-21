@@ -16537,5 +16537,18 @@ console.log("\n[263] v3.458.7 — Icônes d'équipement en WebP 256 px (audit O4
   }
 })();
 
+console.log("\n[264] v3.458.9 — Portraits des héros en WebP (audit O4, troisième dossier)");
+(function () {
+  try {
+    var manque = [];
+    Object.keys(g.HEROES_DB).forEach(function (id) { var h = g.HEROES_DB[id]; [h.imageM, h.imageF].forEach(function (p) { if (!/\.webp$/.test(p) || !fs.existsSync(path.join(ROOT, p))) manque.push(p); }); });
+    ok(manque.length === 0, "les 12 portraits des héros en WebP" + (manque.length ? " — " + manque.slice(0, 3).join(", ") : ""));
+    var img = g.titleScreenHeroImage({ heroImage: "./images/Heroes/knight_f.png" });
+    ok(/knight_f\.webp/.test(img), "une ancienne sauvegarde (portrait en .png) montre le portrait WebP à l'écran titre");
+  } catch (err) {
+    ok(false, "[264] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);
