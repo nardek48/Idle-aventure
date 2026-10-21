@@ -406,3 +406,13 @@ window.buildEquipmentIconHTML = buildEquipmentIconHTML;
 window.switchTab = switchTab;
 window.renderAll = renderAll;
 window.renderPanel = renderPanel;
+/* v3.458.2 (audit P25) : voile « Tourne ton téléphone », affiché par css/05-overlays.css seulement en
+   paysage sur écran tactile ; posé une fois, au chargement, pour être traduit. */
+(function () {
+  if (typeof document === "undefined" || !document.body || document.getElementById("rotate-veil")) return;
+  var v = document.createElement("div");
+  v.id = "rotate-veil"; v.setAttribute("role", "alert");
+  v.innerHTML = '<i aria-hidden="true"></i><b>' + esc(_t("Tourne ton téléphone")) + '</b><span>'
+    + esc(_t("Aethervale se joue en hauteur : en paysage, le combat n'a pas la place de s'afficher.")) + '</span>';
+  document.body.appendChild(v);
+})();

@@ -82,7 +82,7 @@ html body.combat-active #combat-speed-bar { display: none !important; }
 .cbx-tgauge .kgauge-text { font-size: 12px; }
 .kgauge.cbx-tgauge.is-shielded { --kgauge-fill: linear-gradient(90deg, rgba(153, 27, 27, 1), var(--cbx-red) 70%, rgba(147, 197, 253, 1)); }
 .cbx-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
-.cbx-chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 12px; font-size: 12px; font-weight: 700; cursor: pointer;
+.cbx-chip { position: relative; display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 12px; font-size: 12px; font-weight: 700; cursor: pointer;
   background: rgba(0, 0, 0, .62); border: 1px solid var(--cbx-line); color: var(--cbx-ink); }
 .cbx-chip img { width: 16px; height: 16px; }
 .cbx-chip.is-urgent { border-color: rgba(248, 113, 113, 1); color: rgba(254, 202, 202, 1); animation: cbxPulse .9s ease-in-out infinite; }
@@ -249,12 +249,13 @@ html body.combat-active #combat-speed-bar { display: none !important; }
   background: rgba(245, 230, 196, 1); color: rgba(59, 42, 18, 1); border: 1px solid rgba(138, 106, 48, 1); }
 .cbx-card-nm { display: flex; justify-content: space-between; align-items: baseline; gap: 4px; min-width: 0; font-size: 12px; font-weight: 800; }
 .cbx-card-nm span:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cbx-card-nm .cbx-cd-count.is-chained { color: var(--cbx-ink); }   /* v3.456.0 : enchaîné */
-.cbx-card-nm .cbx-cd-count { font-size: 12px; font-weight: 700; color: var(--cbx-ink-dim); white-space: nowrap; }
-.cbx-team.c3 .cbx-card-nm .cbx-cd-count.is-ready { display: none; }   /* à trois, « Prêt » cède la place au nom */
-/* v3.448.5 : textes de combat passés de 10 à 12 px ; sous 360 px, « Prêt » cède aussi la place au nom. */
-@media (max-width: 359px) { .cbx-card-nm .cbx-cd-count.is-ready { display: none; } }
+/* v3.458.2 (audit P26) : le nom du compagnon prend toute la largeur de la carte, au-dessus du portrait ;
+   la recharge passe sous la barre de PV, la chaîne en pastille sur le portrait. */
+.cbx-card:not(.is-hero) .cbx-card-nm { grid-column: 1 / -1; }
+.cbx-card:not(.is-hero) .cbx-card-pt { grid-row: auto; }
 .cbx-bars { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.cbx-bars-foot { display: flex; align-items: center; justify-content: space-between; gap: 4px; min-height: 12px; }
+.cbx-bars-foot .cbx-cd-count { font-size: 12px; font-weight: 700; color: var(--cbx-ink-dim); white-space: nowrap; margin-left: auto; }
 .cbx-bar { position: relative; height: 9px; border-radius: 5px; background: rgba(0, 0, 0, .65); border: 1px solid rgba(0, 0, 0, .8); overflow: hidden; }
 .cbx-bar i { position: absolute; inset: 0 auto 0 0; transition: width .25s ease; background: linear-gradient(90deg, rgba(21, 128, 61, 1), var(--cbx-green)); }
 .cbx-bar.is-low i { background: linear-gradient(90deg, rgba(185, 28, 28, 1), var(--cbx-orange)); }
@@ -264,12 +265,18 @@ html body.combat-active #combat-speed-bar { display: none !important; }
 .cbx-team.c3 .cbx-card { column-gap: 5px; padding: 5px 6px 6px; }
 .cbx-team.c3 .cbx-card-pt { width: 32px; height: 32px; }
 .cbx-team.c3 .cbx-card-nm { font-size: 12px; }
-/* Ressource de classe (couleur par classe) + célérité en filet doré dessous. */
-.cbx-res { position: relative; height: 7px; border-radius: 4px; background: rgba(0, 0, 0, .65); overflow: hidden; align-self: start; }
+/* Ressource de classe (couleur par classe). v3.458.2 (audit C2) : nom et valeur écrits dedans, sur toute
+   la largeur de la carte ; la célérité a sa propre ligne dorée sous le nom. */
+.cbx-res { position: relative; height: 15px; border-radius: 6px; border: 1px solid rgba(0, 0, 0, .8); background: rgba(0, 0, 0, .65); overflow: hidden; }
+.cbx-card.is-hero .cbx-res { grid-column: 1 / -1; }
+.cbx-res-txt { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 1px; font-size: 12px; font-weight: 900; line-height: 1;
+  color: var(--cbx-ink); text-shadow: 0 1px 2px #000, 0 0 3px #000; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cbx-res-txt small { font-size: 12px; font-weight: 700; opacity: .8; }
+.cbx-cel { grid-column: 2; align-self: center; position: relative; height: 4px; border-radius: 2px; background: rgba(0, 0, 0, .55); overflow: hidden; }
+.cbx-cel u { position: absolute; inset: 0 auto 0 0; background: var(--cbx-gold); transition: width .25s ease; }
 .cbx-res i { position: absolute; inset: 0 auto 0 0; transition: width .25s ease; background: linear-gradient(90deg, rgba(15, 118, 110, 1), var(--cbx-teal)); }
 .cbx-res.r-rage i { background: linear-gradient(90deg, rgba(220, 38, 38, 1), var(--cbx-orange)); }
 .cbx-res.r-mana i { background: linear-gradient(90deg, rgba(29, 78, 216, 1), rgba(96, 165, 250, 1)); }
-.cbx-res u { position: absolute; left: 0; bottom: 0; height: 2px; background: var(--cbx-gold); transition: width .25s ease; }
 /* Vraie barre de PV du héros (CB-7) : pleine largeur, chiffres centrés, traînée ambre de ce qui vient d'être perdu. */
 .cbx-hpbar { grid-column: 1 / -1; position: relative; height: 18px; border-radius: 9px; overflow: hidden;
   background: linear-gradient(180deg, rgba(11, 7, 3, 1), rgba(31, 21, 10, 1)); border: 1px solid var(--cbx-gold-soft); box-shadow: inset 0 1px 3px rgba(0, 0, 0, .8); }
@@ -283,7 +290,7 @@ html body.combat-active #combat-speed-bar { display: none !important; }
 .cbx-team.c1 .cbx-card-pt { width: 52px; height: 52px; }
 .cbx-team.c1 .cbx-hpbar { height: 22px; border-radius: 11px; }
 .cbx-team.c1 .cbx-hpbar span { font-size: 14px; }
-.cbx-team.c1 .cbx-res { height: 9px; }
+.cbx-team.c1 .cbx-res { height: 17px; }
 /* États qui durent sur le héros : voile sur le portrait et mini-icônes. */
 .cbx-card.v-silence .cbx-card-pt > img { filter: saturate(.25) brightness(.8); box-shadow: 0 0 0 2px var(--cbx-violet), 0 0 10px var(--cbx-violet); }
 .cbx-card.v-corrupt .cbx-card-pt > img { filter: hue-rotate(60deg) saturate(1.3) brightness(.85); box-shadow: 0 0 8px var(--cbx-lime); }
@@ -291,6 +298,8 @@ html body.combat-active #combat-speed-bar { display: none !important; }
 .cbx-pt-badges i { position: relative; width: 17px; height: 17px; border-radius: 50%; background: rgba(18, 12, 6, 1); border: 1px solid var(--cbx-gold-soft); display: grid; place-items: center; }
 .cbx-pt-badges img { width: 13px; height: 13px; }
 .cbx-pt-badges b { position: absolute; right: -6px; bottom: -4px; font-size: 10px; font-weight: 900; color: rgba(217, 249, 157, 1); text-shadow: 0 1px 1px #000; }
+.cbx-pt-badges i.is-chain { border-color: rgba(248, 113, 113, 1); }   /* v3.458.2 : enchaîné, ses rounds en chiffre */
+.cbx-pt-badges i.is-chain b { color: rgba(254, 202, 202, 1); font-size: 12px; }
 /* Coups spéciaux reçus : la marque reste un instant au-dessus du tremblement. */
 .cbx { will-change: auto; }
 .cbx.is-shake { animation: cbxQuake .3s ease; }

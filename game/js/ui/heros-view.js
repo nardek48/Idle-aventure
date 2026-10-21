@@ -548,10 +548,13 @@ function buildHeroSkillCardHTML(action) {
   h += '<span class="pc-skill-ico">' + renderIconOrEmojiHTML(icon, "pc-skill-ico-img", _td(action.label)) + '</span>';
   h += '<span class="pc-skill-name">' + esc(_td(action.label)) + '</span>';
   h += '<span class="pc-skill-tags">';
-  h += cost > 0
+  var isBasic = action.slot === "basic";
+  h += isBasic
+    ? '<span class="pc-skill-tag is-free">' + esc(_t("Rend {x}", { x: resLabel })) + '</span>'
+    : cost > 0
     ? '<span class="pc-skill-tag is-cost">' + cost + (resLabel ? ' ' + esc(resLabel) : '') + '</span>'
     : '<span class="pc-skill-tag is-free">' + _t("Sans coût") + '</span>';
-  h += '<span class="pc-skill-tag is-cd' + (remaining > 0 ? ' is-active' : '') + '">'
+  if (!isBasic) h += '<span class="pc-skill-tag is-cd' + (remaining > 0 ? ' is-active' : '') + '">'
     + (remaining > 0 ? _t("{n} r restants", { n: remaining }) : _tn(Number(action.cooldownRounds || 0), "{n} round", "{n} rounds"))
     + '</span>';
   h += '</span>';
@@ -560,7 +563,7 @@ function buildHeroSkillCardHTML(action) {
 
   if (open) {
     h += '<div class="pc-skill-body">';
-    h += '<div class="pc-skill-desc">' + esc(_td(action.description || "")) + '</div>';
+    h += '<div class="pc-skill-desc">' + esc(getSkillDescText(ClassCombatManager.getCurrentClassId(), action)) + '</div>';
 
     h += '<div class="pc-skill-counters">';
     h += '<div class="pc-skill-counters-lbl"><img class=ico-inline src=images/Icons/combat_stats/stat_speed.png> ' + _t("Utile contre") + '</div>';
@@ -608,7 +611,8 @@ function buildHerosStatsHTML() {
     if (cls) h += '<div class="ksec pc-section-label">' + renderIconOrEmojiHTML(cls.icon, "pc-section-ico", "") + ' ' + esc(_t("Kit du {x}", { x: _td(cls.label) })) + '</div>';
 
     var cards = "";
-    ["skill1", "skill2", "skill3", "defense"].forEach(function (slot) {
+    // v3.458.2 (audit C2) : l'attaque de base en tête, avec la règle de la ressource
+    ["basic", "skill1", "skill2", "skill3", "defense"].forEach(function (slot) {
       cards += buildHeroSkillCardHTML(ClassCombatManager.getAction(slot));
     });
     h += cards || '<div class="pc-empty">' + _t("Aucune capacité disponible pour le moment.") + '</div>';

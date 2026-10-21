@@ -434,7 +434,7 @@ function buildHeroAttackPreviewBandeauHTML(selectedHero) {
 
   if (heroAttackPreviewExpanded) {
     html += '<div class="hc-skills-list">';
-    var slots = ["skill1", "skill2", "skill3", "defense"];
+    var slots = ["basic", "skill1", "skill2", "skill3", "defense"]; // v3.458.2 (audit C2) : attaque de base comprise
     slots.forEach(function (slot) {
       var action = kit.actions[slot];
       if (!action) return;
@@ -444,7 +444,7 @@ function buildHeroAttackPreviewBandeauHTML(selectedHero) {
       html += '  <div class="hc-skill-icon-wrap">' + renderIconOrEmojiHTML(icon, "hc-skill-icon", _td(action.label)) + '</div>';
       html += '  <div class="hc-skill-body">';
       html += '    <div class="hc-skill-name">' + esc(_td(action.label)) + '</div>';
-      html += '    <div class="hc-skill-desc">' + esc(_td(action.description)) + '</div>';
+      html += '    <div class="hc-skill-desc">' + esc(getSkillDescText(cls.id, action)) + '</div>';
       html += '  </div>';
       html += '</div>';
     });

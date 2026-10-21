@@ -417,7 +417,10 @@
     h += '<div class="cbx-card-pt">' + ico((def && def.image) || "") + '<span class="cbx-lvl-badge">' + _t("Niv. {n}", { n: num(game.heroLevel) || 1 }) + '</span>'
       + (marks ? '<span class="cbx-pt-badges">' + marks + '</span>' : '') + '</div>';
     h += '<div class="cbx-card-nm"><span>' + esc(hero.name || "") + '</span></div>';
-    h += '<div class="cbx-res r-' + esc((res && res.resourceId) || "") + '" title="' + esc(resDef ? _td(resDef.label) : "") + '"><i style="width:' + resPct.toFixed(1) + '%"></i><u style="width:' + celPct.toFixed(1) + '%"></u></div>';
+    // v3.458.2 (audit C2) : nom et valeur écrits dans la barre ; la célérité a sa propre ligne
+    h += '<div class="cbx-res r-' + esc((res && res.resourceId) || "") + '"><i style="width:' + resPct.toFixed(1) + '%"></i>'
+      + '<span class="cbx-res-txt">' + esc(resDef ? _td(resDef.label) : "") + ' ' + fmt(res ? res.current : 0) + '<small> / ' + fmt(res ? res.max : 0) + '</small></span></div>';
+    h += '<div class="cbx-cel"><u style="width:' + celPct.toFixed(1) + '%"></u></div>';
     h += '<div class="cbx-hpbar' + (pct < 35 ? ' is-low' : '') + '"><i class="is-trail" style="width:' + Math.max(prev, pct).toFixed(1) + '%" data-to="' + pct.toFixed(1) + '"></i>'
       + '<i class="is-fill" style="width:' + Math.min(prev, pct).toFixed(1) + '%" data-to="' + pct.toFixed(1) + '"></i>'
       + '<span class="gauge-text">' + fmt(hp) + '<small> / ' + fmt(max) + '</small></span></div>';
@@ -433,12 +436,15 @@
     var h = '<button type="button" class="cbx-card' + (ko ? ' is-ko' : '') + (st ? ' t-' + st : '') + '" data-who="' + esc(a.actorId) + '"'
       + (st === "wait" || st === "now" ? ' onclick="selectCombatActor(\'' + esc(a.actorId) + '\')"' : '') + '>';
     h += turnTagHTML(st);
-    h += '<div class="cbx-card-pt">' + ico((def && def.image) || "") + '</div>';
     var chained = !ko && a.chained && num(a.chained.rounds) > 0; // v3.456.0 : enchaîné, il ne joue pas
-    h += '<div class="cbx-card-nm"><span>' + esc(_td(a.name || "")) + '</span><small class="cbx-cd-count' + (chained ? ' is-chained' : (!ko && !num(a.cooldown) ? ' is-ready' : '')) + '">'
-      + (ko ? _t("K.O.") : chained ? "⛓️ " + _t("{n} r", { n: num(a.chained.rounds) }) : (num(a.cooldown) > 0 ? _t("{n} r", { n: num(a.cooldown) }) : _t("Prêt"))) + '</small></div>';
+    // v3.458.2 (audit P26) : la chaîne en pastille sur le portrait, le nom garde toute la largeur
+    h += '<div class="cbx-card-nm"><span>' + esc(_td(a.name || "")) + '</span></div>';
+    h += '<div class="cbx-card-pt">' + ico((def && def.image) || "")
+      + (chained ? '<span class="cbx-pt-badges"><i class="is-chain">' + ico(IC.st + "chained.png") + '<b>' + num(a.chained.rounds) + '</b></i></span>' : '') + '</div>';
+    var cd = ko ? _t("K.O.") : chained ? "" : (num(a.cooldown) > 0 ? _t("{n} r", { n: num(a.cooldown) }) : _t("Prêt"));
+    var cdCls = chained ? ' is-chained' : (!ko && !num(a.cooldown) ? ' is-ready' : '');
     h += '<div class="cbx-bars"><div class="cbx-bar' + (pct < 35 ? ' is-low' : '') + '"><i style="width:' + pct.toFixed(1) + '%"></i></div>'
-      + (cmax ? '<span class="cbx-dots">' + dots + '</span>' : '') + '</div>';
+      + '<span class="cbx-bars-foot">' + (cmax ? '<span class="cbx-dots">' + dots + '</span>' : '') + '<small class="cbx-cd-count' + cdCls + '">' + cd + '</small></span></div>';
     return h + '</button>';
   }
 

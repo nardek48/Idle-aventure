@@ -8257,7 +8257,7 @@ console.log("\n[88] v3.292.0 — Carte vivante plein écran");
   ok(!/lmx-legend"/.test(html), "légende repliée par défaut");
   run("lmxToggleLegend()");
   html = run("buildMapHTML()");
-  ok(/lmx-legend"/.test(html) && (html.match(/lmx-legend-row/g) || []).length === 7, "légende ouverte : sept états");
+  ok(/lmx-legend"/.test(html) && (html.match(/lmx-legend-row/g) || []).length === 8, "légende ouverte : sept états et les points de l'anneau (v3.458.2)");
   run("lmxToggleLegend()");
   run("selectLivingMapSector('gue')");
   html = run("buildMapHTML()");
@@ -15286,8 +15286,8 @@ console.log("\n[229] v3.448.5 — Lisibilité : contrastes, textes à 12 px, zon
   ok(/\.hud-gauge \.kgauge-text \{ font-size: 12px/.test(css("02-layout.css")), "PV et XP du haut à 12 px");
   var cb = css("03-combat-screen.css");
   ok(!/\.cbx-(turn-badge|lvl-badge|cost-badge)[^}]*font-size: 10px/.test(cb) && !/cbx-cd-count \{ font-size: 10px/.test(cb), "badges de combat : plus de texte à 10 px");
-  ok(/@media \(max-width: 359px\) \{ \.cbx-card-nm \.cbx-cd-count\.is-ready \{ display: none; \} \}/.test(cb), "sous 360 px, « Prêt » cède la place au nom");
-  ok(/\.klink::after \{\s*content: ""; position: absolute;[^}]*width: max\(100%, 44px\); height: max\(100%, 44px\)/.test(css("00-components.css")), "zones de toucher de 44 px sur les petits boutons");
+  ok(/\.cbx-card:not\(\.is-hero\) \.cbx-card-nm \{ grid-column: 1 \/ -1; \}/.test(cb), "v3.458.2 : le nom du compagnon a toute la largeur, « Prêt » passe sous la barre");
+  ok(/\.kf-back::after \{\s*content: ""; position: absolute;[^}]*width: max\(100%, 44px\); height: max\(100%, 44px\)/.test(css("00-components.css")), "zones de toucher de 44 px sur les petits boutons");
 })();
 
 /* [230] v3.448.6 — le palier Rare (ruines_13) dit ce qui manque et où le trouver ; l'établi de la Forge
@@ -16397,6 +16397,43 @@ console.log("\n[259] v3.458.1 — Lot 6a : pastilles, onglet parent, bulles du D
       "P30 : pincement permis ; iOS garde maximum-scale (pas de zoom sur un champ)");
   } catch (err) {
     ok(false, "[259] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[260] v3.458.2 — Lot 6b : ressource lisible, compagnons, paysage, contrastes, toucher, anneaux, retours (audit C2, P26, P25, P14, P27, C10, C8)");
+(function () {
+  try {
+    var fs8 = require("fs"), css = function (f) { return fs8.readFileSync(ROOT + "/css/" + f, "utf8"); };
+    // C2 : coût réel (talent), règle de l'attaque de base
+    game = freshCombat("ranger");
+    var kit = g.getClassSkills("archer"), old = kit.actions.skill3.resourceCost;
+    kit.actions.skill3.resourceCost = 40;
+    ok(/Coûte 40 Concentration/.test(g.getSkillDescText("archer", kit.actions.skill3)), "Tir perforant : le coût affiché suit le talent (40)");
+    kit.actions.skill3.resourceCost = old;
+    var basic = g.getSkillDescText("archer", kit.actions.basic);
+    ok(/^Inflige 85% des dégâts\. Chaque attaque de base qui touche rend 15 Concentration, 4 de plus/.test(basic), "attaque de base : la règle de la Concentration en clair");
+    ok(/rend Rage : 40 % des dégâts infligés, 20 au plus/.test(g.getSkillDescText("knight", g.getClassSkills("knight").actions.basic)), "Rage : 40 % des dégâts, 20 au plus");
+    ok(/\["basic", "skill1"/.test(fs8.readFileSync(ROOT + "/js/ui/heros-view.js", "utf8")), "Capacités : l'attaque de base en tête");
+    var cs = fs8.readFileSync(ROOT + "/js/ui/combat-screen-view.js", "utf8");
+    ok(/cbx-res-txt/.test(cs) && /\.cbx-res \{ position: relative; height: 15px;/.test(css("03-combat-screen.css")), "combat : « Rage 34 / 100 » écrit dans la barre de 15 px");
+    // P26
+    ok(/is-chain">' \+ ico\(IC\.st \+ "chained\.png"\)/.test(cs) && /cbx-bars-foot/.test(cs), "compagnon : la chaîne en pastille sur le portrait, la recharge sous la barre");
+    // P25
+    ok(/@media \(orientation: landscape\) and \(max-height: 500px\) and \(pointer: coarse\)/.test(css("05-overlays.css")) && /rotate-veil/.test(fs8.readFileSync(ROOT + "/js/ui/ui-root.js", "utf8")), "paysage sur téléphone : voile « Tourne ton téléphone »");
+    // P14
+    ok(/\.tavern-contract-need \.is-missing \{ color: var\(--c-red-650\)/.test(css("04-panel-village.css")) && /\.hf-count small \{ display: block; font-size: 12px;/.test(css("04-panel-achievements.css"))
+      && !/\.mem-option\.is-line-locked \{ opacity/.test(css("04-panel-aether-shop.css")), "contrastes : Taverne, Hauts faits, Mémoire");
+    // P27
+    ok(/\.map-monster-chip::before \{[^}]*width: max\(100%, 44px\)/.test(css("06-map.css")) && /\.map-monster-chip\.has-icon-img \{ overflow: visible; \}/.test(css("06-map.css"))
+      && /\.kchips button::after \{[^}]*height: 44px/.test(css("00-components.css")) && /\.cbx-chip::after, \.tavern-contract-btn::after/.test(css("00-components.css")), "toucher sur 44 px : pastilles de carte, catégories, alertes, « Livrer »");
+    // C10
+    var dots = g.lmRingDots(3);
+    ok((dots.match(/<i><\/i>/g) || []).length === 3 && g.lmRingDots(9).match(/<i><\/i>/g).length === 3, "carte vivante : l'anneau en points (1 à 3)");
+    ok(!/String\(i \+ 1\)/.test(fs8.readFileSync(ROOT + "/js/ui/living-map-view.js", "utf8")), "plus de numéro de secteur");
+    // C8
+    ok(/className = "kf-back"/.test(fs8.readFileSync(ROOT + "/js/ui/kframe-decorator.js", "utf8")), "retour « ‹ » dans le bandeau des écrans à onglet parent");
+  } catch (err) {
+    ok(false, "[260] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
 })();
 

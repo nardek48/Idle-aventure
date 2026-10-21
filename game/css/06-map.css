@@ -144,7 +144,7 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;   /* v3.458.2 (audit P27) : zones de 44 px côte à côte, sans chevauchement */
   margin-bottom: 12px;
 }
 
@@ -183,6 +183,10 @@
 }
 button.map-monster-chip { padding: 0; cursor: pointer; font: inherit; } /* v3.456.8 : la pastille ouvre la fiche */
 .map-monster-chip { position: relative; }
+/* v3.458.2 (audit P27) : touchable sur 44 px ; .has-icon-img coupait ce qui dépasse (zone et point « nouveau ») */
+.map-monster-chip::before { content: ""; position: absolute; left: 50%; top: 50%; width: max(100%, 44px); height: max(100%, 44px); transform: translate(-50%, -50%); }
+.map-monster-chip.has-icon-img { overflow: visible; }
+.map-monster-chip.has-icon-img > img { border-radius: 50%; }
 .map-monster-chip.is-new::after { content: ""; position: absolute; top: -2px; right: -2px; width: 9px; height: 9px; border-radius: 50%; background: var(--nb-gold); border: 1.5px solid var(--nb-cream); }
 .map-monster-count {
   text-align: center;

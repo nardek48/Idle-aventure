@@ -434,3 +434,16 @@
 .instance-lock-card { max-width: 340px; padding: 18px; border-radius: 14px; background: var(--c-cream-50-soft); color: var(--c-brown-850-2); text-align: center; display: grid; gap: 10px; }
 .instance-lock-card p { margin: 0; font-size: 14px; line-height: 1.4; color: var(--c-brown-750-2); }
 .instance-lock-card .kbtn { margin: 4px auto 0; }
+
+/* v3.458.2 (audit P25) : téléphone en paysage — le combat n'a plus de hauteur (iOS ignore l'orientation du
+   manifeste). Voile « Tourne ton téléphone », seulement au toucher, en paysage, sous 500 px de haut. */
+#rotate-veil { display: none; }
+@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+  #rotate-veil { position: fixed; inset: 0; z-index: 10001; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+    padding: 24px; text-align: center; background: var(--c-brown-950-vivid); color: var(--c-cream-50); }
+  #rotate-veil i { width: 34px; height: 58px; border: 3px solid currentColor; border-radius: 8px; box-shadow: inset 0 -6px 0 -3px currentColor; animation: rvTurn 2.4s ease-in-out infinite; }
+  #rotate-veil b { font-size: 20px; font-weight: 900; }
+  #rotate-veil span { font-size: 15px; opacity: .9; max-width: 34ch; }
+}
+@keyframes rvTurn { 0%, 30% { transform: rotate(-90deg); } 60%, 100% { transform: rotate(0); } }
+@media (prefers-reduced-motion: reduce) { #rotate-veil i { animation: none; } }

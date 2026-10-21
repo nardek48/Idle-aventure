@@ -52,6 +52,15 @@ function decoratePageFrames(root) {
         span.textContent = title;
       }
       top.appendChild(span);
+      // v3.458.2 (audit C8) : un écran ouvert depuis un onglet du bas a son retour « ‹ »
+      var parentTab = window.TAB_PARENT && typeof game !== "undefined" && TAB_PARENT[game.activeTab];
+      if (parentTab) {
+        var back = document.createElement("button");
+        back.type = "button"; back.className = "kf-back"; back.textContent = "‹";
+        back.setAttribute("aria-label", _t("Retour"));
+        back.setAttribute("onclick", "switchTab('" + parentTab + "')");
+        top.appendChild(back);
+      }
     }
     var bot = document.createElement("div");
     bot.className = "kf-bot";

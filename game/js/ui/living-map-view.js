@@ -408,7 +408,7 @@ function buildLivingMapHTML(mapId) {
     if (d.x > 84) cls += " is-edge-r"; else if (d.x < 14) cls += " is-edge-l";
     if (d.labelTop) cls += " is-label-top";
     h += '<button type="button" class="' + cls + '" style="left:' + d.x + '%;top:' + d.y + '%;" onclick="event.stopPropagation();lmxTapSector(\'' + d.id + '\')">';
-    h += '<span class="lm-node-disc">' + (s.state === "voile" ? "?" : String(i + 1)) + '</span>';
+    h += '<span class="lm-node-disc">' + (s.state === "voile" ? "?" : lmRingDots(d.ring)) + '</span>'; // v3.458.2 (audit C10) : l'anneau, pas un numéro
     h += '<span class="lm-node-name">' + esc(_td(d.name)) + '</span>';
     if (chantier) h += '<img class="lm-node-chantier" src="images/Icons/resources/pierre_errante_icon.png" alt="">';
     h += '</button>';
@@ -466,6 +466,13 @@ function livingMapWords() {
   return LM ? LM.getWords(id) : {};
 }
 
+/* v3.458.2 (audit C10) : un, deux ou trois points = l'anneau du secteur (plus loin du foyer, plus dur). */
+function lmRingDots(ring) {
+  var n = Math.max(1, Math.min(3, Number(ring) || 1)), h = '<span class="lm-ring" aria-label="' + _t("Anneau {n}", { n: n }) + '">';
+  for (var k = 0; k < n; k++) h += '<i></i>';
+  return h + '</span>';
+}
+
 /* Légende : les sept états, avec leur vraie pastille. */
 function buildLivingMapLegendHTML() {
   function node(cls, glyph) { return '<span class="lm-node ' + cls + '"><span class="lm-node-disc">' + glyph + '</span></span>'; }
@@ -474,10 +481,11 @@ function buildLivingMapLegendHTML() {
   h += row(node("is-village", "★"), _t("Foyer"), _t("point de départ, toujours sûr"));
   h += row(node("is-voile", "?"), _t("Voilé"), _t("à découvrir, atteignable"));
   h += row(node("is-voile is-far", "?"), _t("Voilé, trop loin"), _t("libère d'abord un voisin"));
-  h += row(node("is-libere", "1"), _t("Libéré"), _t("son effet s'applique"));
-  h += row(node("is-recouvert", "3"), esc(_td(livingMapWords().coveredState)), _t("effet perdu, à reprendre")); // v3.305.0
-  h += row(node("is-libere is-protege", "1"), _t("Tenu par la Palissade"), _t("un échec ne le reprend pas")); // v3.335.0
-  h += row(node("is-libere is-running", "4"), _t("Expédition en cours"), "");
+  h += row(node("is-libere", lmRingDots(1)), _t("Libéré"), _t("son effet s'applique"));
+  h += row(node("is-libere", lmRingDots(3)), _t("Points : l'anneau"), _t("1 près du foyer, 3 au plus loin et au plus dur"));
+  h += row(node("is-recouvert", lmRingDots(2)), esc(_td(livingMapWords().coveredState)), _t("effet perdu, à reprendre")); // v3.305.0
+  h += row(node("is-libere is-protege", lmRingDots(1)), _t("Tenu par la Palissade"), _t("un échec ne le reprend pas")); // v3.335.0
+  h += row(node("is-libere is-running", lmRingDots(3)), _t("Expédition en cours"), "");
   return h + '</div>';
 }
 

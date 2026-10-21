@@ -701,8 +701,8 @@ function buildClassSkillButtonHTML(slot, suggestedSlot) {
   var title = autoModeActive
     ? esc(_t("Combat automatique actif (mode Grimoire / Continuer)"))
     : (isSilenced ? esc(_t("Silencié : cette technique est bloquée un instant"))
-      : (!conditionOk ? esc(_t("Condition non remplie : {x}", { x: _td(action.description) }))
-        : esc(_td(action.description)) + (action.cooldownRounds ? " " + esc(_tn(action.cooldownRounds, "Recharge : {n} round.", "Recharge : {n} rounds.")) : "") + (keyLabel ? " " + esc(_t("(touche {k} sur PC)", { k: keyLabel })) : "")));
+      : (!conditionOk ? esc(_t("Condition non remplie : {x}", { x: getSkillDescText(ClassCombatManager.getCurrentClassId(), action) }))
+        : esc(getSkillDescText(ClassCombatManager.getCurrentClassId(), action)) + (action.cooldownRounds ? " " + esc(_tn(action.cooldownRounds, "Recharge : {n} round.", "Recharge : {n} rounds.")) : "") + (keyLabel ? " " + esc(_t("(touche {k} sur PC)", { k: keyLabel })) : "")));
 
   var h = '<button class="combat-action-btn class-skill-btn' + (action.type === "defense" ? " defense-action-btn" : " attack-action-btn")
     + (onCooldown ? ' on-cooldown' : '') + (isActiveNow ? ' is-active' : '') + (!affordable && !onCooldown ? ' not-affordable' : '')

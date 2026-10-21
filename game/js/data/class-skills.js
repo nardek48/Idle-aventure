@@ -351,6 +351,23 @@ function getClassResource(classId) {
   return kit.resource || null;
 }
 
+/* v3.458.2 (audit C2) : description d'une action telle qu'affichée. Le coût suit le kit (un talent
+   peut le baisser) ; l'attaque de base reçoit la règle de gain de la ressource, lue dans le kit. */
+function getSkillDescText(classId, action) {
+  if (!action) return "";
+  var txt = _td(action.description || "");
+  var cost = Number(action.resourceCost || 0);
+  if (cost > 0) txt = txt.replace(/(Coûte|Costs) \d+/, "$1 " + cost);
+  if (action.slot !== "basic") return txt;
+  var res = getClassResource(classId), g = res && res.generation, lbl = res ? _td(res.label) : "";
+  if (!g) return txt;
+  var rule = g.type === "damageDealtPercent" ? _t("Chaque attaque de base rend {x} : {p} % des dégâts infligés, {m} au plus.", { x: lbl, p: Math.round(g.value * 100), m: g.maxGainPerHit })
+    : g.type === "successfulBasicAttack" ? _t("Chaque attaque de base qui touche rend {n} {x}, {c} de plus sur un coup critique.", { n: g.value, x: lbl, c: g.criticalBonus })
+    : g.type === "passiveAndBasicAttack" ? _t("{x} : +{r} à chaque round, +{n} par attaque de base.", { x: lbl, r: g.passivePerRound, n: g.basicAttackGain }) : "";
+  return txt.split(".")[0] + ". " + rule + " " + _t("Les compétences dépensent ce que l'attaque de base a rendu.");
+}
+
 window.getClassSkills = getClassSkills;
+window.getSkillDescText = getSkillDescText;
 window.getClassAction = getClassAction;
 window.getClassResource = getClassResource;

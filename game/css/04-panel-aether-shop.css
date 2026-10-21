@@ -98,8 +98,9 @@
 }
 
 .mem-level { margin: 4px 0 6px; }
-.mem-level.is-locked .mem-options { opacity: 0.75; }
-.mem-level-head small { color: var(--c-brown-700-vivid); }
+/* v3.458.2 (audit P14) : le voile porte sur l'icône, le nom et la description, plus sur la condition d'ouverture */
+.mem-level.is-locked .mem-option-ico, .mem-level.is-locked .mem-option-name, .mem-level.is-locked .mem-option-desc { opacity: .8; }
+.mem-level-head small { color: var(--c-brown-800-vivid); }   /* v3.458.2 (audit P14) : 3,0 → 5,3:1 */
 .mem-level-lock { display: flex; align-items: center; justify-content: center; gap: 6px; margin: -4px 0 8px; font-size: 12px; color: var(--c-brown-750-2); }
 .mem-level-lock.is-pending { font-weight: 800; color: var(--c-brown-800-vivid); }
 
@@ -128,5 +129,6 @@ div.mem-option { cursor: default; }
 .mem-tag.is-garder { background: #dbe8e0; color: var(--c-green-750); border: 1px solid #7fa58d; }
 .mem-tag.is-donner { background: var(--c-cream-150-2); color: var(--c-red-650); border: 1px solid var(--c-bronze-500); }
 .mem-tag.is-line { background: linear-gradient(var(--c-bronze-400-4), var(--c-brown-550-3)); color: var(--c-brown-850-2); border: 1px solid var(--c-brown-750-3); }
-.mem-option.is-line-locked { opacity: .55; filter: grayscale(.6); border-style: dashed; }
-.mem-line-cond { display: block; margin-top: 3px; font-size: 12px; font-style: italic; color: var(--c-brown-650-soft); }
+.mem-option.is-line-locked { border-style: dashed; }
+.mem-option.is-line-locked .mem-option-ico, .mem-option.is-line-locked .mem-option-name, .mem-option.is-line-locked .mem-option-desc { opacity: .55; filter: grayscale(.6); }
+.mem-line-cond { display: block; margin-top: 3px; font-size: 12px; font-style: italic; font-weight: 700; color: var(--c-brown-750-2); }   /* 2,3 → 8,8:1 */

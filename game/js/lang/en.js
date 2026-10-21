@@ -5808,5 +5808,15 @@ I18n.register("en", {
   "Le frein retombe à minuit, dans {d}.": "The brake drops at midnight, in {d}.",
   "La Halle en permet plus : chaque nouveau marché ouvert ajoutera une caravane.": "The Hall allows more: each new market that opens will add a caravan.",
   "L'Arbre-mère, carte de la Forêt (+2 par victoire, rejouable) · la Tanière du Basilic (+2 par Marque) · Petites Aventures de la Forêt · caravane longue au marché de la Forêt": "The Mother Tree, Forest map (+2 per win, replayable) · the Basilisk's Den (+2 per Mark) · Forest Short Adventures · long caravan to the Forest market",
-  "La Cité engloutie (+2 par Marque) · Petites Aventures du Désert · caravane longue au marché du Désert": "The Sunken City (+2 per Mark) · Desert Short Adventures · long caravan to the Desert market"
+  "La Cité engloutie (+2 par Marque) · Petites Aventures du Désert · caravane longue au marché du Désert": "The Sunken City (+2 per Mark) · Desert Short Adventures · long caravan to the Desert market",
+  // v3.458.2 (lot 6b) : ressource de classe, carte vivante, voile paysage
+  "Chaque attaque de base rend {x} : {p} % des dégâts infligés, {m} au plus.": "Each basic attack gives {x}: {p}% of the damage dealt, {m} at most.",
+  "Chaque attaque de base qui touche rend {n} {x}, {c} de plus sur un coup critique.": "Each basic attack that hits gives {n} {x}, {c} more on a critical hit.",
+  "{x} : +{r} à chaque round, +{n} par attaque de base.": "{x}: +{r} each round, +{n} per basic attack.",
+  "Les compétences dépensent ce que l'attaque de base a rendu.": "Skills spend what basic attacks have built up.",
+  "Rend {x}": "Gives {x}",
+  "Points : l'anneau": "Dots: the ring",
+  "1 près du foyer, 3 au plus loin et au plus dur": "1 near home, 3 farthest and hardest",
+  "Tourne ton téléphone": "Turn your phone",
+  "Aethervale se joue en hauteur : en paysage, le combat n'a pas la place de s'afficher.": "Aethervale is played upright: in landscape, combat has no room to show.",
 });

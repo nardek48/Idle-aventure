@@ -934,7 +934,7 @@ button.nb-entry-card {
   display: flex;
   gap: 6px;
   margin: 0 0 10px;
-  padding: 4px 2px 4px;
+  padding: 5px 2px 5px;   /* v3.458.2 (audit P27) : la rangée défile et coupe ce qui dépasse ; 5 px gardent les 44 px du toucher */
   overflow-x: auto;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
@@ -964,6 +964,7 @@ button.nb-entry-card {
 }
 
 .kchips button img { width: 18px; height: 18px; object-fit: contain; }
+.kchips button::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 44px; transform: translateY(-50%); }
 
 .kchips button.is-on {
   background: var(--c-brown-800-3);
@@ -1091,9 +1092,10 @@ button.nb-entry-card {
 
 /* v3.448.5 : surface de toucher portée à 44 px sur les petits boutons, sans changer leur taille visible.
    Pseudo-élément ::after transparent, centré sur le bouton (vérifié : aucun ne prend le toucher d'un voisin). */
-.camp-help-btn, .cbx-pill, .cbx-dist-badge, .cbx-badges, .qb-completed-link, .exp-act, .klink { position: relative; }
+.camp-help-btn, .cbx-pill, .cbx-dist-badge, .cbx-badges, .qb-completed-link, .exp-act, .klink, .tavern-contract-btn, .kf-back { position: relative; }
+/* v3.458.2 (audit P27) : + alertes du combat, « Livrer » de la Taverne, retour « ‹ » du bandeau */
 .camp-help-btn::after, .ksheet-x::after, .cbx-pill::after, .cbx-dist-badge::after, .cbx-badges::after,
-.qb-completed-link::after, .hud-bub::after, .exp-act::after, .klink::after {
+.qb-completed-link::after, .hud-bub::after, .exp-act::after, .klink::after, .cbx-chip::after, .tavern-contract-btn::after, .kf-back::after {
   content: ""; position: absolute; left: 50%; top: 50%; width: max(100%, 44px); height: max(100%, 44px); transform: translate(-50%, -50%);
 }
 

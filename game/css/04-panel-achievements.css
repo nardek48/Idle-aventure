@@ -73,9 +73,9 @@
 ============================================================ */
 .hf-top { display: flex; align-items: center; gap: 8px; background: var(--c-cream-100-soft); border: 1px solid var(--c-bronze-250-soft); border-radius: 12px; padding: 8px 10px; color: var(--c-brown-850-soft); margin-bottom: 8px; }
 .hf-count { flex: 0 0 auto; font-size: 18px; font-weight: 900; color: var(--c-brown-700-soft); line-height: 1; white-space: nowrap; }
-.hf-count small { display: block; font-size: 10px; font-weight: 800; color: var(--c-brown-600-soft); letter-spacing: 0.3px; text-transform: uppercase; margin-top: 3px; }
-.hf-title-btn { flex: 1 1 auto; min-width: 0; text-align: left; font: inherit; background: #eddcb9; border: 1px dashed var(--c-bronze-500); border-radius: 10px; padding: 5px 8px; cursor: pointer; color: var(--c-brown-850-soft); }
-.hf-title-btn small { display: block; font-size: 12px; font-weight: 900; color: var(--c-brown-600-soft); text-transform: uppercase; letter-spacing: 0.3px; }
+.hf-count small { display: block; font-size: 12px; font-weight: 800; color: var(--c-brown-800-vivid); letter-spacing: 0.3px; text-transform: uppercase; margin-top: 3px; }
+.hf-title-btn { flex: 1 1 auto; min-width: 0; min-height: 44px; text-align: left; font: inherit; background: #eddcb9; border: 1px dashed var(--c-bronze-500); border-radius: 10px; padding: 5px 8px; cursor: pointer; color: var(--c-brown-850-soft); }
+.hf-title-btn small { display: block; font-size: 12px; font-weight: 900; color: var(--c-brown-800-vivid); text-transform: uppercase; letter-spacing: 0.3px; }
 .hf-title-btn b { font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
 /* v3.402.0 (lot B-1) : bouton principal du kit (.kbtn.primary), en taille compacte */
 .hf-claim-all.kbtn { flex: 0 0 auto; width: auto; min-height: 40px; margin: 0; padding: 6px 12px; font-size: 12px; }
@@ -85,7 +85,7 @@
 .hf-tiers-h { display: flex; justify-content: space-between; color: var(--c-brown-700-vivid); font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px; } /* v3.402.0 : surtitre du kit */
 .hf-track { position: relative; height: 8px; border-radius: 4px; background: var(--c-bronze-200); margin: 6px 11px 22px; }
 .hf-track-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: linear-gradient(90deg, var(--c-brown-550-2), var(--c-blue-200) 60%, var(--c-bronze-400-4)); }
-.hf-notch { position: absolute; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 900; border: 2px solid var(--c-bronze-400-soft); background: var(--c-cream-150-3); color: #8a7a64; }
+.hf-notch { position: absolute; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 900; border: 2px solid var(--c-bronze-400-soft); background: var(--c-cream-150-3); color: var(--c-brown-750-2); }   /* v3.458.2 (audit P14) : 3,4 → 8,4:1 */
 .hf-notch.is-bronze.is-got { background: var(--c-brown-550-2); border-color: var(--c-brown-700-soft); color: var(--c-white-50-soft); }
 .hf-notch.is-silver.is-got { background: var(--c-blue-200); border-color: var(--c-grey-600); color: #2a3036; }
 .hf-notch.is-gold.is-got { background: var(--c-bronze-400-4); border-color: var(--c-brown-750-vivid); color: #3a2a06; }

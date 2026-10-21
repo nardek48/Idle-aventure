@@ -195,3 +195,7 @@ body.living-map-active #panel-container { padding: 0; overflow: hidden; max-widt
 .lm-node.is-chantier .lm-node-disc { box-shadow: 0 0 0 3px rgba(240, 170, 62, .85), 0 0 12px rgba(240, 170, 62, .6); }
 .lm-panel-line.is-chantier { color: var(--c-gold-650); }
 .lm-panel-note { font-size: 12px; line-height: 1.45; color: var(--c-brown-650-soft); margin: 4px 0 0; } /* v3.454.0 : gisants réveillés (Crypte) */
+
+/* v3.458.2 (audit C10) : 1 à 3 points = l'anneau du secteur, à la place d'un numéro sans signification. */
+.lm-ring { display: flex; gap: 2px; align-items: center; justify-content: center; }
+.lm-ring i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
