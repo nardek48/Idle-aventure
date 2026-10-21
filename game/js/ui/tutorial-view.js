@@ -86,9 +86,9 @@ var GENERIC_TUTORIALS = {
     title: "Le Campement",
     points: [
       { icon: "images/Icons/plots/hunting_blind.png", text: "Le Campement est ton point de ralliement entre deux expéditions — c'est ici que tu gères tout ce qui n'est pas le combat." },
-      { icon: "images/Icons/combat_stats/stat_health.png", text: "Ta santé — hors combat, tu récupères 5 % de tes PV max par minute (jusqu'à 50 % si tu es hors ligne). Suis ta barre de vie et la régénération en bas de l'écran." },
+      { icon: "images/Icons/combat_stats/stat_health.png", text: "Ta santé — hors combat, tu récupères 5 % de tes PV max par minute (jusqu'à 50 % si tu es hors ligne). Suis ta barre de vie et la régénération en haut de l'écran." },
       { icon: "images/Icons/quests/ration_reward.png", text: "Les rations soignent instantanément un % fixe de tes PV (35/60/100 % selon le type) : utile pour repartir vite sans attendre." },
-      { icon: "images/Icons/quests/quest_list.png", text: "Le tableau de missions — l'étape d'Histoire en cours (badge doré « Principale ») est toujours en tête. Clique sur « Partir » pour ta prochaine quête : c'est elle qui te mènera au combat avec un vrai objectif." }
+      { icon: "images/Icons/quests/quest_list.png", text: "Le tableau de missions — l'étape d'Histoire en cours (badge doré « Histoire ») est toujours en tête. Touche « Accepter », puis « Partir » pour ta prochaine quête : c'est elle qui te mènera au combat avec un vrai objectif." }
     ]
   },
   /* v3.213.1 (lot V-2) : premier plafond d'entraînement. Condition : une
@@ -143,7 +143,7 @@ var GENERIC_TUTORIALS = {
     points: [
       { icon: "images/Icons/aether_icon.png", text: "Ce que tu donnes, l'Aether le retient. Chaque objet offert depuis ton sac et chaque grande victoire remplissent la jauge ; un niveau ouvre un choix." },
       { icon: "images/Icons/system/upgrade.png", text: "Choisis. Une seule amélioration par niveau. L'autre n'est pas perdue : elle reste là." },
-      { icon: "images/Icons/system/lock_closed.png", text: "Reprendre a un prix. Changer d'avis coûte de l'Aether, trois fois plus à chaque fois." },
+      { icon: "images/Icons/system/lock_closed.png", text: "Reprendre a un prix. Changer d'avis coûte de l'or, trois fois plus à chaque fois." },
       { icon: "images/Icons/gold_icon.png", text: "Un objet acheté à l'échoppe ne porte aucun souvenir : il ne rend pas d'Aether." }
     ]
   },

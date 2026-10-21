@@ -130,7 +130,7 @@ var STORY_REWARDS = {
 var STORY_TAB_LABELS = {
   combat: "Combat", village: "Village", more: "Héros",
   dungeon: "Donjon", shop: "Boutique", talents: "Talents", equip: "Équipement",
-  ascension: "Ascension", map: "Carte du monde", achievements: "Hauts faits",
+  ascension: "Mémoire", map: "Carte du monde", achievements: "Hauts faits", // v3.457.5 : la tuile s'appelle Mémoire depuis v3.322.0
   bestiary: "Bestiaire", grimoire: "Grimoire", companions: "Compagnons"
 };
 

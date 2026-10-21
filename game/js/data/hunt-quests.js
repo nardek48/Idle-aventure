@@ -54,10 +54,10 @@ var WAREHOUSE_RESOURCES = {
   // brutes non plafonnées). v3.137.0 : premier usage de craft (Grande ration) — desc mise à jour.
   // D'autres usages plus marquants (gemmes, enchantement, upgrade d'arme) restent envisagés
   // pour plus tard (décision Seb 04/09/2026, non actée).
-  seve_aeswyn: { id: "seve_aeswyn", name: "Sève d'Aeswyn", icon: "images/Icons/resources/seve_aeswyn_icon.png", desc: "Résine runique rare, trouvée en Petite Aventure. Sert à cuisiner la Grande ration et, durcie à la Menuiserie, à bâtir les hauts paliers du village.", sellPrice: 0, tier: "special" },
+  seve_aeswyn: { id: "seve_aeswyn", name: "Sève d'Aeswyn", icon: "images/Icons/resources/seve_aeswyn_icon.png", desc: "Résine runique rare de la Forêt. Sert à cuisiner la Grande ration et, durcie à la Menuiserie, à bâtir les hauts paliers du village.", sellPrice: 0, tier: "special", sourceHint: "L'Arbre-mère, carte de la Forêt (+2 par victoire, rejouable) · la Tanière du Basilic (+2 par Marque) · Petites Aventures de la Forêt · caravane longue au marché de la Forêt" }, // v3.457.5 (audit C7)
   /* v3.304.0 (W-2) : la ressource rare du Désert, butin exclusif de sa Petite Aventure (mêmes
      points de tirage que la Sève). Ses dépenses viendront avec le Tailleur de pierre (W-6). */
-  verre_des_dunes: { id: "verre_des_dunes", name: "Verre des dunes", icon: "images/Icons/resources/verre_des_dunes_icon.png", desc: "Sable fondu par la foudre, lisse comme de l'eau. Trouvé en Petite Aventure du Désert.", sellPrice: 0, tier: "special" },
+  verre_des_dunes: { id: "verre_des_dunes", name: "Verre des dunes", icon: "images/Icons/resources/verre_des_dunes_icon.png", desc: "Sable fondu par la foudre, lisse comme de l'eau. Trouvé en Petite Aventure du Désert.", sellPrice: 0, tier: "special", sourceHint: "La Cité engloutie (+2 par Marque) · Petites Aventures du Désert · caravane longue au marché du Désert" }, // v3.457.5 (audit C7)
   /* v3.312.0 (W-3c, acte II étape 9) : le matériau de monde du Désert, chauffé au Tailleur de
      pierre. Ses dépenses (hauts paliers du village) viennent avec W-6. Icône à générer. */
   /* v3.317.0 (W-4c, acte III §7) : lâchée par le Dard des profondeurs, ingrédient des reforges

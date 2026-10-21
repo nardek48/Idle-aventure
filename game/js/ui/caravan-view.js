@@ -177,8 +177,10 @@ function buildCaravanRouteHTML(c) {
     + '<b id="car-left-' + w + '">' + esc(formatTime(CaravanManager.getSecondsLeft(w))) + '</b></span>'
     + '<span class="car-chip">≈ ' + caravanGoldHTML(c.gold) + '</span></div>';
   h += buildCaravanChancesHTML(t, c);
-  var max = CaravanManager.getMaxCaravans();
+  // v3.457.5 (audit P17) : une caravane par marché — on annonce celles qui peuvent vraiment partir
+  var max = Math.min(CaravanManager.getMaxCaravans(), Math.max(1, CaravanManager.getMarkets().length));
   h += '<p class="car-why">' + (max > 1 ? _t("Elle continue hors ligne. {n} caravanes à la fois, une par marché.", { n: max }) : _t("Elle continue hors ligne. Une seule caravane à la fois.")) + '</p>';
+  if (CaravanManager.getMaxCaravans() > max) h += '<p class="car-why">' + _t("La Halle en permet plus : chaque nouveau marché ouvert ajoutera une caravane.") + '</p>';
   return h;
 }
 

@@ -10991,7 +10991,7 @@ console.log("\n[137] v3.358.0 — Essence retirée, sorties de donjon, Aether à
   run("DungeonManager.ensure(); DungeonManager.checkTicketReset(); game.unlockedTabs.dungeon = true;"); // 1er appel : pose l'échéance
   game.dungeonRunsUsed = { 1: 1 };
   var html = run("buildDungeonRunsLineHTML(1)");
-  ok(/Sorties aujourd'hui : 2 \/ 3/.test(html) && html.indexOf("is-empty") === -1, "carte : « Sorties aujourd'hui : 2 / 3 »");
+  ok(/Sorties restantes : 2 \/ 3/.test(html) && html.indexOf("is-empty") === -1, "carte : « Sorties restantes : 2 / 3 »");
   game.dungeonRunsUsed = { 1: 3 };
   ok(run("buildDungeonRunsLineHTML(1)").indexOf("is-empty") !== -1, "carte : quota épuisé grisé");
   ok(/\.dungeon-tier-runs\b/.test(cat("css/04-panel-dungeon.css")) && /\.dungeon-runs-badge\b/.test(cat("css/04-panel-dungeon.css")), "CSS des sorties présent");

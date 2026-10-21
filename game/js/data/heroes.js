@@ -50,7 +50,7 @@ var HEROES_DB = {
   },
   chaosRanger: {
     id: "chaosRanger",
-    name: "Rôdeur du chaos",
+    name: "Rôdeur du Chaos",
     imageM: "./images/Heroes/chaosRanger_m.png",
     imageF: "./images/Heroes/chaosRanger_f.png",
     weaponType: "bow",

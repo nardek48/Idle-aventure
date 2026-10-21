@@ -338,7 +338,7 @@ var VILLAGE_BUILDINGS = {
        et une remise croissante sur le renouvellement. */
     maxLevel: 10,
     implemented: true,
-    desc: "Envoie une caravane vendre le surplus de matières brutes au loin, et agrandit l'échoppe d'équipement : plus d'emplacements en vitrine, un renouvellement moins cher. L'échoppe reste dans Équipement → Échoppe.",
+    desc: "Envoie une caravane vendre le surplus de matières brutes au loin, et agrandit l'échoppe d'équipement : plus d'emplacements en vitrine, un renouvellement moins cher. L'échoppe s'installe ici, à la Halle.",
     costTiers: [
       {
         minLevel: 0, maxLevel: 4,
@@ -364,7 +364,7 @@ var VILLAGE_BUILDINGS = {
       var car = "";
       if (level >= 3) car += " · " + _t("trajet Long");
       if (level >= 2) car += " · " + _t("Caravane +{p} %", { p: Math.round((level - 1) * 10) });
-      if (level >= 3) car += " · " + _t("{n} caravanes", { n: 1 + Math.floor(level / 3) }); // v3.457.0 : une de plus tous les 3 niveaux
+      if (level >= 3) car += " · " + _t("jusqu'à {n} caravanes, une par marché", { n: 1 + Math.floor(level / 3) }); // v3.457.0 ; v3.457.5 (audit P17) : limitées par les marchés
       return _t("{n} objets en vitrine", { n: slots }) + (remise > 0 ? " · " + _t("-{p} % sur le renouvellement", { p: remise }) : "") + car;
     }
   },
@@ -416,7 +416,7 @@ var VILLAGE_BUILDINGS = {
     rank: 3,   // v3.289.0 (D12) : Atelier 3
     maxLevel: 10,
     implemented: true,
-    desc: "Relève le plafond de stockage de toutes les ressources fabriquées. Les matières brutes n'ont pas de plafond et ne sont pas concernées.",
+    desc: "Relève le plafond de stockage des ressources de l'Entrepôt, matières brutes comprises.",
     costTiers: [
       {
         minLevel: 0, maxLevel: 4,
@@ -455,7 +455,7 @@ var VILLAGE_BUILDINGS = {
        LIVING_MAP_RULES.palisade par LivingMapManager. */
     maxLevel: 10,
     implemented: true,
-    desc: "Le mur d'Aeswyn sur la carte de la Forêt : chaque niveau freine le Recouvrement quand une expédition échoue, et un secteur d'un anneau tenu ne peut plus être repris.",
+    desc: "Le mur d'Aeswyn, sur chaque carte vivante : chaque niveau freine le Recouvrement quand une expédition échoue, et un secteur d'un anneau tenu ne peut plus être repris.",
     costTiers: [
       /* v3.290.0 (équilibrage Forêt, décision Seb) : palier PROPRE pour les trois niveaux
          de la Forêt. Premier niveau bon marché — la cible le veut à l'arrivée au Désert —

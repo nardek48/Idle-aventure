@@ -323,7 +323,9 @@ var ProductionManager = {
         harvestBtn.classList.toggle("is-ready", hasStock);
         harvestBtn.classList.toggle("is-disabled", !hasStock);
         var harvestIcon = harvestBtn.querySelector("img");
-        harvestBtn.innerHTML = (harvestIcon ? harvestIcon.outerHTML : '<img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">') + "Récolter" + (hasStock ? " · " + formatNumber(Math.floor(stock)) : "");
+        // v3.457.5 (audit P12) : traduit, et réécrit seulement s'il change (« Harvest » redevenait « Récolter »)
+        var harvestHtml = (harvestIcon ? harvestIcon.outerHTML : '<img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">') + _t("Récolter") + (hasStock ? " · " + formatNumber(Math.floor(stock)) : "");
+        if (harvestBtn.innerHTML !== harvestHtml) harvestBtn.innerHTML = harvestHtml;
       }
 
       if (window.ProductionPlotsSystem && ProductionPlotsSystem.isManaged(id)) {

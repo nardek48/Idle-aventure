@@ -65,7 +65,7 @@ function init() {
     // v3.332.0 (R-1) : le résumé de retour est fait en FIN d'init (plus bas), une fois le feu
     // passé et le chantier soldé — l'écran de retour les montre.
   } else {
-    addLog(_t("Bienvenue, héros ! Tape l'ennemi pour commencer."), "event");
+    addLog(_t("Bienvenue à Aeswyn. Ta première mission t'attend au Campement."), "event");
     // v3.107.2 : bug préexistant — game.resources ne recevait aucune valeur de départ pour une TOUTE
     // première visite (avant même l'échec de loadGame() faute de save). fullResetState() ne s'exécute
     // que via le bouton "Réinitialiser tout", jamais ici. Sans ce correctif, un nouveau joueur n'avait

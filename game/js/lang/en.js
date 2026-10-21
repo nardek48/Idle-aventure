@@ -66,7 +66,7 @@ I18n.register("en", {
 
   // js/main/boot.js
   "Partie chargée": "Game loaded",
-  "Bienvenue, héros ! Tape l'ennemi pour commencer.": "Welcome, hero! Tap the enemy to begin.",
+  "Bienvenue à Aeswyn. Ta première mission t'attend au Campement.": "Welcome to Aeswyn. Your first mission awaits at the Camp.",
 
   // js/main/pwa.js
   "Aethervale est installé : tu le retrouves sur ton écran d'accueil.": "Aethervale is installed: you'll find it on your home screen.",
@@ -1070,7 +1070,7 @@ I18n.register("en", {
   "Héros à terre — repos requis": "Hero down — rest required",
   "Boss vaincu": "Boss defeated",
   "Sortie offerte par l'Histoire": "Run offered by the Story",
-  "Sorties aujourd'hui : {a} / {b}": "Runs today: {a} / {b}",
+  "Sorties restantes : {a} / {b}": "Runs left: {a} / {b}",
   "{n} sorties par jour et par donjon · renouvellement dans {d}": "{n} runs per day per dungeon · resets in {d}",
   "{n} vagues + boss · {r} max": "{n} waves + boss · {r} max",
   "Marques": "Marks",
@@ -1079,7 +1079,7 @@ I18n.register("en", {
   "Éclats": "Shards",
   "Entrée offerte": "Free entry",
   "— les braises te guident, aucune sortie du jour consommée": "— the embers guide you, no daily run used",
-  "Sorties restantes aujourd'hui :": "Runs left today:",
+  "Sorties restantes :": "Runs left:",
   "Entrer": "Enter",
   "{n} Marques au plus": "{n} Marks at most",
   "{x} : sortie terminée !": "{x}: run cleared!",
@@ -1319,7 +1319,7 @@ I18n.register("en", {
   "Rejeu :": "Replay:",
   "Petite Aventure ordinaire, {x}.": "Ordinary Short Adventure, {x}.",
   "Chaque victoire :": "Each victory:",
-  "+{n} {x}. Sans ration, hors cap. Fuir ou tomber reste un échec.": "+{n} {x}. No ration needed, outside the cap. Fleeing or falling is still a failure.",
+  "+{n} {x}. Chaque combat rejoué prend ses vivres (ci-dessous), hors cap des Petites Aventures. Fuir ou tomber reste un échec.": "+{n} {x}. Each replayed fight takes its provisions (below), outside the Short Adventure cap. Fleeing or falling is still a failure.",
   "Aujourd'hui :": "Today:",
   "prochain combat +{p} % PV et dégâts": "next fight +{p}% HP and damage",
   "prochain combat à sa force de base": "next fight at base strength",
@@ -1858,7 +1858,7 @@ I18n.register("en", {
   // HEROES_DB
   "Rôdeur": "Ranger",
   "Chevalier du Chaos": "Chaos Knight",
-  "Rôdeur du chaos": "Chaos Ranger",
+  "Rôdeur du Chaos": "Chaos Ranger",
   "Sorcier du Chaos": "Chaos Sorcerer",
 
   // CLASS_SKILLS
@@ -2072,7 +2072,7 @@ I18n.register("en", {
   "Repas au Campement : restaure 35 % des PV max de toute l'équipe. Vivres pour repartir en Forêt (chasse, donjon, élite rejouée). Crafté à la Cuisine de camp à partir de Viande et d'Eau.": "A meal at Camp: restores 35% of max HP to the whole team. Provisions for setting out again in the Forest (hunt, dungeon, replayed elite). Crafted at the Camp Kitchen from Meat and Water.",
   "Se remplit au Réservoir (Puits). Emportée dans un parcours du Désert, elle rend du Souffle une fois.": "Filled at the Reservoir (Well). Taken on a Desert route, it restores Breath once.",
   "Repas au Campement : restaure 100 % des PV max de toute l'équipe. Cuisine de camp (Chasse) : 1 Ration moyenne + 3 Sève d'Aeswyn → 1.": "A meal at Camp: restores 100% of max HP to the whole team. Camp Kitchen (Hunting Lodge): 1 Medium ration + 3 Aeswyn Sap → 1.",
-  "Résine runique rare, trouvée en Petite Aventure. Sert à cuisiner la Grande ration et, durcie à la Menuiserie, à bâtir les hauts paliers du village.": "Rare runic resin, found on Short Adventures. Used to cook the Large ration and, hardened at the Joinery, to build the village's high tiers.",
+  "Résine runique rare de la Forêt. Sert à cuisiner la Grande ration et, durcie à la Menuiserie, à bâtir les hauts paliers du village.": "Rare runic resin from the Forest. Used to cook the Large ration and, hardened at the Joinery, to build the village's high tiers.",
   "Sable fondu par la foudre, lisse comme de l'eau. Trouvé en Petite Aventure du Désert.": "Sand melted by lightning, smooth as water. Found on Desert Short Adventures.",
   "Une plaque arrachée au dard de la bête. Elle ne chauffe pas : elle boit le feu. On s'en sert pour les dernières reforges.": "A plate torn from the beast's sting. It doesn't heat up: it drinks the fire. Used for the last reforges.",
   "Verre des dunes chauffé deux fois au Tailleur de pierre. Il coupe le fer. Matériau des hauts paliers du village, au Désert.": "Dune glass heated twice at the Stonecutter. It cuts iron. Material for the village's high tiers, in the Desert.",
@@ -2185,7 +2185,7 @@ I18n.register("en", {
   "Zone lente": "Slow zone",
   "Fort débit, petite réserve — à récolter souvent.": "High output, small store — harvest often.",
   "Compromis entre débit et réserve.": "A compromise between output and store.",
-  "Faible débit, grande réserve — tolère l'absence.": "Low output, large store — tolerates absence.",
+  "Faible débit, grande réserve — la plus longue à remplir.": "Low output, large store — the slowest to fill.",
 
   // WORKSHOPS_CONFIG
   "Moulin": "Mill",
@@ -2214,10 +2214,10 @@ I18n.register("en", {
   "Reforge une pièce d'équipement. Le niveau appartient à l'emplacement, pas à l'objet : changer de pièce ne fait rien perdre.": "Reforges a piece of equipment. The level belongs to the slot, not the item: changing items loses nothing.",
   "Prépare les potions avec des ressources plutôt qu'avec de l'or. Les recettes se gagnent en livrant ses commandes ; chaque niveau permet plus de préparations par jour.": "Brews potions with resources rather than gold. Recipes are earned by delivering its orders; each level allows more brews per day.",
   "Relance la valeur d'un bonus sur une pièce équipée. Le bonus ne change jamais de nature, et la pièce ne peut pas empirer.": "Rerolls the value of a bonus on an equipped item. The bonus never changes its nature, and the item can never get worse.",
-  "Envoie une caravane vendre le surplus de matières brutes au loin, et agrandit l'échoppe d'équipement : plus d'emplacements en vitrine, un renouvellement moins cher. L'échoppe reste dans Équipement → Échoppe.": "Sends a caravan to sell surplus raw materials far away, and expands the equipment stall: more slots on display, cheaper restocking. The stall stays in Equipment → Stall.",
+  "Envoie une caravane vendre le surplus de matières brutes au loin, et agrandit l'échoppe d'équipement : plus d'emplacements en vitrine, un renouvellement moins cher. L'échoppe s'installe ici, à la Halle.": "Sends a caravan to sell surplus raw materials far away, and enlarges the equipment shop: more display slots, cheaper restocking. The shop moves here, to the Hall.",
   "Un tableau de contrats de livraison, renouvelé toutes les 6 heures. Avec la caravane de la Halle marchande, c'est le débouché du surplus de Production : l'Entrepôt ne rachète plus rien.": "A board of delivery contracts, renewed every 6 hours. Together with the Market Hall caravan, it's the outlet for Production surplus: the Warehouse no longer buys anything.",
-  "Relève le plafond de stockage de toutes les ressources fabriquées. Les matières brutes n'ont pas de plafond et ne sont pas concernées.": "Raises the storage cap of all crafted resources. Raw materials have no cap and aren't affected.",
-  "Le mur d'Aeswyn sur la carte de la Forêt : chaque niveau freine le Recouvrement quand une expédition échoue, et un secteur d'un anneau tenu ne peut plus être repris.": "Aeswyn's wall on the Forest map: each level brakes the Reclaiming when an expedition fails, and a sector in a held ring can no longer be taken back.",
+  "Relève le plafond de stockage des ressources de l'Entrepôt, matières brutes comprises.": "Raises the storage cap of the Warehouse resources, raw materials included.",
+  "Le mur d'Aeswyn, sur chaque carte vivante : chaque niveau freine le Recouvrement quand une expédition échoue, et un secteur d'un anneau tenu ne peut plus être repris.": "Aeswyn's wall, on every living map: each level brakes the Reclaiming when an expedition fails, and a sector in a held ring can no longer be retaken.",
   "Atteins 20 dans une caractéristique": "Reach 20 in one attribute",
 
   // CONSTRUCTION_BUILDINGS
@@ -2391,7 +2391,7 @@ I18n.register("en", {
   "Un ennemi normal s'apprête à charger.": "A normal enemy is about to charge.",
   "Il va bientôt réduire les dégâts qu'il subit.": "It will soon reduce the damage it takes.",
   "Le boss s'apprête à récupérer des PV.": "The boss is about to recover HP.",
-  "Sa nature va compter double pendant quelques rounds.": "Its nature will count double for a few rounds.",
+  "Sa nature va compter triple pendant quelques rounds.": "Its nature will count triple for a few rounds.",
   "Tes PV sont bas.": "Your HP is low.",
   "Sa jauge de célérité sera pleine au prochain tour : il enchaînera deux coups.": "Its celerity gauge will be full next turn: it will land two hits in a row.",
   "Il devient plus dangereux à mesure qu'il perd des PV.": "It gets more dangerous as it loses HP.",
@@ -2791,7 +2791,6 @@ I18n.register("en", {
   "Vaincre 3 boss de donjon.": "Defeat 3 dungeon bosses.",
 
   // STORY_TAB_LABELS
-  "Ascension": "Ascension",
 
   // ADVENTURE_QUESTS
   "Prouver sa valeur": "Prove Your Worth",
@@ -3037,9 +3036,9 @@ I18n.register("en", {
   "Les patrouilles": "Patrols",
   "Le Grimoire de tactiques": "The Grimoire of tactics",
   "Le Campement est ton point de ralliement entre deux expéditions — c'est ici que tu gères tout ce qui n'est pas le combat.": "The Camp is your rallying point between two expeditions — this is where you manage everything that isn't fighting.",
-  "Ta santé — hors combat, tu récupères 5 % de tes PV max par minute (jusqu'à 50 % si tu es hors ligne). Suis ta barre de vie et la régénération en bas de l'écran.": "Your health — out of combat, you recover 5% of your max HP per minute (up to 50% if you're offline). Watch your health bar and regeneration at the bottom of the screen.",
+  "Ta santé — hors combat, tu récupères 5 % de tes PV max par minute (jusqu'à 50 % si tu es hors ligne). Suis ta barre de vie et la régénération en haut de l'écran.": "Your health — out of combat, you recover 5% of your max HP per minute (up to 50% if you're offline). Watch your health bar and regeneration at the top of the screen.",
   "Les rations soignent instantanément un % fixe de tes PV (35/60/100 % selon le type) : utile pour repartir vite sans attendre.": "Rations instantly heal a fixed % of your HP (35/60/100% depending on the type): handy for setting out again quickly without waiting.",
-  "Le tableau de missions — l'étape d'Histoire en cours (badge doré « Principale ») est toujours en tête. Clique sur « Partir » pour ta prochaine quête : c'est elle qui te mènera au combat avec un vrai objectif.": "The mission board — the current Story step (gold “Main” badge) is always at the top. Tap “Set out” for your next quest: that's what will take you into combat with a real objective.",
+  "Le tableau de missions — l'étape d'Histoire en cours (badge doré « Histoire ») est toujours en tête. Touche « Accepter », puis « Partir » pour ta prochaine quête : c'est elle qui te mènera au combat avec un vrai objectif.": "The mission board — the current Story step (gold “Story” badge) is always at the top. Tap “Accept”, then “Set out” for your next quest: that's what will take you into combat with a real objective.",
   "Tes caractéristiques butent à 20 : c'est la limite de l'entraînement de fortune du campement. Pour aller plus loin, il faut un vrai terrain.": "Your attributes are stuck at 20: that's the limit of the camp's makeshift training. To go further, you need a real ground.",
   "Le Terrain se bâtit ici, au Village, comme l'Atelier : des matériaux, puis un chantier qui prend un peu de temps.": "The Ground is built here, in the Village, like the Workshop: materials, then building work that takes a little time.",
   "Chaque niveau du Terrain ouvre 10 niveaux de plus sur CHACUNE des cinq caractéristiques — jamais un total à répartir.": "Each level of the Ground opens 10 more levels on EACH of the five attributes — never a total to share out.",
@@ -3051,7 +3050,7 @@ I18n.register("en", {
   "Garde un œil sur ton Entrepôt : une ressource pleine ne se produit plus tant que tu ne l'as pas dépensée (l'Entrepôt ne rachète rien).": "Keep an eye on your Warehouse: a full resource stops being produced until you've spent some (the Warehouse buys nothing back).",
   "Ce que tu donnes, l'Aether le retient. Chaque objet offert depuis ton sac et chaque grande victoire remplissent la jauge ; un niveau ouvre un choix.": "What you give, the Aether keeps. Every item offered from your bag and every great victory fill the gauge; a level opens a choice.",
   "Choisis. Une seule amélioration par niveau. L'autre n'est pas perdue : elle reste là.": "Choose. Only one upgrade per level. The other isn't lost: it stays there.",
-  "Reprendre a un prix. Changer d'avis coûte de l'Aether, trois fois plus à chaque fois.": "Changing your mind has a price. It costs Aether, three times more each time.",
+  "Reprendre a un prix. Changer d'avis coûte de l'or, trois fois plus à chaque fois.": "Changing your mind has a price. It costs gold, three times more each time.",
   "Un objet acheté à l'échoppe ne porte aucun souvenir : il ne rend pas d'Aether.": "An item bought at the stall carries no memories: it gives back no Aether.",
   "Un compagnon peut partir en patrouille 2, 4 ou 8 heures vers un secteur libéré de la carte, même quand tu ne joues pas.": "A companion can go on patrol for 2, 4 or 8 hours to a freed sector of the map, even when you're not playing.",
   "Il rapporte les matériaux du secteur, un peu d'or, parfois de quoi faire des rations — et une petite histoire.": "They bring back the sector's materials, a little gold, sometimes what's needed for rations — and a short story.",
@@ -5770,7 +5769,7 @@ I18n.register("en", {
   "l'arc": "the bow",
   "la magie": "magic",
   "contrats payés +{p} %": "contracts pay +{p}%",
-  "{n} caravanes": "{n} caravans",
+  "jusqu'à {n} caravanes, une par marché": "up to {n} caravans, one per market",
   "Toutes les caravanes sont parties": "All caravans are away",
   "Une caravane est déjà sur ce marché": "A caravan is already at this market",
   "Marché · {x}": "Market · {x}",
@@ -5807,5 +5806,9 @@ I18n.register("en", {
   "Cette fenêtre ne sauvegarde plus, pour ne rien effacer. Continue dans l'autre, ou reprends la main ici.": "This window no longer saves, so nothing gets overwritten. Keep playing in the other one, or take over here.",
   "Recharger ici": "Reload here",
   "Dans Safari, ta partie peut être effacée après 7 jours sans visite. Installe le jeu, ou exporte ta partie (Paramètres › Partie).": "In Safari, your game can be erased after 7 days without a visit. Install the game, or export your save (Settings › Game).",
-  "Une erreur du jeu a empêché de charger ta partie. Elle reste intacte : rien ne sera écrit dessus pendant cette session. Recharge la page après la prochaine mise à jour.": "A game error prevented your save from loading. It is untouched: nothing will be written to it during this session. Reload the page after the next update."
+  "Une erreur du jeu a empêché de charger ta partie. Elle reste intacte : rien ne sera écrit dessus pendant cette session. Recharge la page après la prochaine mise à jour.": "A game error prevented your save from loading. It is untouched: nothing will be written to it during this session. Reload the page after the next update.",
+  "Le frein retombe à minuit, dans {d}.": "The brake drops at midnight, in {d}.",
+  "La Halle en permet plus : chaque nouveau marché ouvert ajoutera une caravane.": "The Hall allows more: each new market that opens will add a caravan.",
+  "L'Arbre-mère, carte de la Forêt (+2 par victoire, rejouable) · la Tanière du Basilic (+2 par Marque) · Petites Aventures de la Forêt · caravane longue au marché de la Forêt": "The Mother Tree, Forest map (+2 per win, replayable) · the Basilisk's Den (+2 per Mark) · Forest Short Adventures · long caravan to the Forest market",
+  "La Cité engloutie (+2 par Marque) · Petites Aventures du Désert · caravane longue au marché du Désert": "The Sunken City (+2 per Mark) · Desert Short Adventures · long caravan to the Desert market"
 });

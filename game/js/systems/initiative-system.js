@@ -64,6 +64,10 @@ var Initiative = {
     var self = this, list = this.participants();
     list.forEach(function (a) { self.roll(a); });
     if (this.legacy || list.length < 2 || typeof addLog !== "function") return;
+    // v3.457.5 (audit P21) : pas de ligne pour l'ennemi de fond, hors de tout combat (lancement, création du héros)
+    var engage = (typeof hasCombatQuestContext === "function" && hasCombatQuestContext())
+      || !!(window.SceneRunManager && typeof SceneRunManager.isRunActive === "function" && SceneRunManager.isRunActive());
+    if (!engage) return;
     addLog("🎲 " + _t("Initiative : {x}.", { x: this.order().map(function (a) { return self.describe(a); }).join(", ") }), "event");
   },
 

@@ -24,7 +24,7 @@ var GRIMOIRE_CONDITIONS = {
   eliteSurgeIncoming: {
     id: "eliteSurgeIncoming",
     label: "L'élite s'exalte",
-    description: "Sa nature va compter double pendant quelques rounds.",
+    description: "Sa nature va compter triple pendant quelques rounds.",
     icon: "images/Icons/combat_status/arcane_burn.png"
   },
   heroLowHp: {

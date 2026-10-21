@@ -47,7 +47,7 @@ var PRODUCTION_PLOTS_SHARED = {
     },
     lente: {
       label: "Zone lente",
-      desc: "Faible débit, grande réserve — tolère l'absence.",
+      desc: "Faible débit, grande réserve — la plus longue à remplir.",
       baseRatePerMin: 0.35,
       rateGrowthPerLevel: 1.78,
       baseCapacity: 60,

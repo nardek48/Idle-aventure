@@ -69,7 +69,7 @@ g.toggleHeroChaosVariant();
 g.goToConfirmStep();
 ok(/Confirmation/.test(host()) && /hc-confirm-portrait/.test(host()), "étape 3 rendue");
 ok(/hc-confirm-name">Arvian</.test(host()), "nom affiché");
-ok(/Rôdeur/.test(host()) && /hc-confirm-variant">Rôdeur du chaos</.test(host()), "classe Rôdeur + variante Chaos affichées");
+ok(/Rôdeur/.test(host()) && /hc-confirm-variant">Rôdeur du Chaos</.test(host()), "classe Rôdeur + variante Chaos affichées");
 ok(/Commencer l'aventure/.test(host()), "bouton Commencer l'aventure");
 g.backToHeroStep();
 ok(/Choix de la classe/.test(host()) && g.pendingHeroId==="chaosRanger", "retour à l'étape 2 sans perdre la sélection");

@@ -94,7 +94,7 @@ function buildDungeonCardHTML(dungeon) {
 function buildDungeonRunsLineHTML(dungeonId) {
   if (DungeonManager.isStoryTicketFree(dungeonId)) return '<div class="dungeon-tier-runs is-free">' + _t("Sortie offerte par l'Histoire") + '</div>';
   var left = DungeonManager.getRunsLeft(dungeonId), max = DungeonManager.getRunsPerDay();
-  return '<div class="dungeon-tier-runs' + (left <= 0 ? ' is-empty' : '') + '">' + _t("Sorties aujourd'hui : {a} / {b}", { a: left, b: max }) + '</div>';
+  return '<div class="dungeon-tier-runs' + (left <= 0 ? ' is-empty' : '') + '">' + _t("Sorties restantes : {a} / {b}", { a: left, b: max }) + '</div>';
 }
 window.buildDungeonRunsLineHTML = buildDungeonRunsLineHTML;
 
@@ -195,7 +195,7 @@ function buildDungeonSheetHTML(dungeonId) {
   if (storyFree) {
     h += '<div class="dsheet-ticket"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.png> <strong>' + _t("Entrée offerte") + '</strong> ' + _t("— les braises te guident, aucune sortie du jour consommée") + '</div>';
   } else {
-    h += '<div class="dsheet-ticket"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.png> ' + _t("Sorties restantes aujourd'hui :") + ' <strong>' + DungeonManager.getRunsLeft(dungeon.id) + ' / ' + DungeonManager.getRunsPerDay() + '</strong></div>';
+    h += '<div class="dsheet-ticket"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.png> ' + _t("Sorties restantes :") + ' <strong>' + DungeonManager.getRunsLeft(dungeon.id) + ' / ' + DungeonManager.getRunsPerDay() + '</strong></div>';
   }
   // v3.330.1 : vivres de sortie (donjon déjà fini une fois)
   var dDef = (window.DUNGEONS || []).filter(function (x) { return x.id === Number(dungeonId); })[0];
