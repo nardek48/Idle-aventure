@@ -61,7 +61,7 @@ body.scene-active.lab-run .lab-page { position: fixed; inset: 0; z-index: 60; ma
 
 /* La carte d'Edda : vignette dans le coin */
 .lab-chart { position: absolute; right: 8px; top: 8px; width: 34%; max-height: 40%; overflow: hidden; padding: 4px; border-radius: 10px;
-  border: 2px solid var(--lab-gold); background: var(--lab-paper) url("../images/Maps/labyrinthe/papier.jpg") center / cover; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.6); cursor: pointer; font: inherit; }
+  border: 2px solid var(--lab-gold); background: var(--lab-paper) url("../images/Maps/labyrinthe/papier.webp") center / cover; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.6); cursor: pointer; font: inherit; }
 .lab-chart svg { display: block; width: 100%; height: auto; max-height: 150px; }
 .lab-chart-cap { display: block; margin-top: 1px; font-size: 12px; font-weight: 800; text-align: center; color: var(--lab-chalk); letter-spacing: 0.3px; text-transform: uppercase; }
 .lab-c-room { fill: #f4ead1; stroke: var(--lab-chalk); stroke-width: 2.4; }
@@ -96,7 +96,7 @@ body.scene-active.lab-run .lab-page { position: fixed; inset: 0; z-index: 60; ma
 .lab-quote { font-style: italic; color: #6b5a40; }
 .lab-cost { font-size: 12.5px; font-weight: 700; color: var(--c-brown-700-vivid); }
 .lab-portrait { display: block; width: 100%; height: auto; max-height: 34vh; object-fit: cover; border-radius: 12px; border: 2px solid var(--lab-gold); margin-bottom: 10px; }
-.lab-bigchart { padding: 6px; border-radius: 12px; border: 2px solid var(--lab-gold); background: var(--lab-paper) url("../images/Maps/labyrinthe/papier.jpg") center / cover; }
+.lab-bigchart { padding: 6px; border-radius: 12px; border: 2px solid var(--lab-gold); background: var(--lab-paper) url("../images/Maps/labyrinthe/papier.webp") center / cover; }
 .lab-bigchart svg { display: block; width: 100%; height: auto; max-height: 52vh; }
 
 /* v3.436.0 : combats comme les Petites Aventures (approches, échanges, issue) */

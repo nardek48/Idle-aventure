@@ -11,7 +11,7 @@ var WORLDS = [
     requiredAscension: 0,
     assetKey: "forest",
     bg: "#0d1a0d",
-    combatMap: "../images/Maps/forest-combat.jpg",
+    combatMap: "../images/Maps/forest-combat.webp",
     adventures: [
       {
         id: "forest_1",
@@ -40,7 +40,7 @@ var WORLDS = [
     requiredAscension: 0,
     assetKey: "desert",
     bg: "#2a1b0f",
-    combatMap: "../images/Maps/desert-combat.jpg",
+    combatMap: "../images/Maps/desert-combat.webp",
     adventures: [
       {
         id: "desert_1",
@@ -67,7 +67,7 @@ var WORLDS = [
     requiredAscension: 2,
     assetKey: "ruins",
     bg: "#1a1510",
-    combatMap: "../images/Maps/ruins-combat.jpg",
+    combatMap: "../images/Maps/ruins-combat.webp",
     adventures: [
       {
         id: "ruins_1",
@@ -93,7 +93,7 @@ var WORLDS = [
     requiredAscension: 3,
     assetKey: "crypt",
     bg: "#0a0a15",
-    combatMap: "../images/Maps/crypt-combat.jpg",
+    combatMap: "../images/Maps/crypt-combat.webp",
     adventures: [
       {
         id: "crypt_1",
@@ -119,7 +119,7 @@ var WORLDS = [
     requiredAscension: 6,
     assetKey: "mountain",
     bg: "#1a0d0a",
-    combatMap: "../images/Maps/mountain-combat.jpg",
+    combatMap: "../images/Maps/mountain-combat.webp",
     adventures: [
       {
         id: "mountain_1",
@@ -145,7 +145,7 @@ var WORLDS = [
     requiredAscension: 10,
     assetKey: "tower",
     bg: "#0d0d1a",
-    combatMap: "../images/Maps/tower-combat.jpg",
+    combatMap: "../images/Maps/tower-combat.webp",
     adventures: [
       {
         id: "tower_1",

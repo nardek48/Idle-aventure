@@ -57,7 +57,7 @@ var LIVING_MAPS = {
     id: "forest",
     worldId: "forest",                       // WORLDS[0].id
     name: "Forêt enchantée",
-    asset: "images/Maps/foret_atelier.jpg",  // provisoire (décision 13), 372 Ko — v3.260.0 : casse du dossier (GitHub Pages distingue maps/Maps)
+    asset: "images/Maps/foret_atelier.webp",  // provisoire (décision 13), 372 Ko — v3.260.0 : casse du dossier (GitHub Pages distingue maps/Maps)
     village: { x: 51.1, y: 46.7, name: "Aeswyn" },
     caravanMarket: { x: 51, y: 74 },          // v3.420.0 (E-3) : le marché où va la caravane (route du sud, visible sans déplacer la carte)
     sectors: [
@@ -121,7 +121,7 @@ var LIVING_MAPS = {
     id: "desert",
     worldId: "desert",
     name: "Désert oublié",
-    asset: "images/Maps/desert.jpg", // image de Seb (18/09/2026), carrée, centre = le camp
+    asset: "images/Maps/desert.webp", // image de Seb (18/09/2026), carrée, centre = le camp
     opensAtStoryStep: "desert_04",
     rewardResourceId: "verre_des_dunes",
     /* v3.306.0 (étape 5) : noms laissés -> tant que les stèles sont libérées, elles tiennent le
@@ -231,7 +231,7 @@ var LIVING_MAPS = {
     id: "ruins",
     worldId: "ruins",
     name: "Ruines anciennes",
-    asset: "images/Maps/ruines.jpg",
+    asset: "images/Maps/ruines.webp",
     opensAtStoryStep: "ruines_07",
     rewardResourceId: "pierre_errante",
     chantier: { reward: 3 },   // Pierres errantes pour le chantier du jour (provisoire, banc)
@@ -344,7 +344,7 @@ var LIVING_MAPS = {
     id: "crypt",
     worldId: "crypt",
     name: "Crypte des dormeurs",
-    asset: "images/Maps/crypte.jpg",
+    asset: "images/Maps/crypte.webp",
     opensAtStoryStep: "crypte_07",
     rewardResourceId: "cire_sepulcre",
     gisants: { wakeMult: 1.3, wakeRare: 2, hostileMult: 1.25 },

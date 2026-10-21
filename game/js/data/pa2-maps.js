@@ -36,7 +36,7 @@ var PA2_MAPS = {
   foret_1: {
     id: "foret_1",
     worldId: "forest",
-    image: "images/Maps/pa2/foret_1.jpg",
+    image: "images/Maps/pa2/foret_1.webp",
     width: 848,
     height: 1264,
     start: "S",
@@ -75,7 +75,7 @@ var PA2_MAPS = {
   foret_2: {
     id: "foret_2",
     worldId: "forest",
-    image: "images/Maps/pa2/foret_2.jpg",
+    image: "images/Maps/pa2/foret_2.webp",
     width: 1024,
     height: 1461,
     start: "S",
@@ -136,7 +136,7 @@ var PA2_MAPS = {
   desert_1: {
     id: "desert_1",
     worldId: "desert",
-    image: "images/Maps/pa2/desert_1.jpg",
+    image: "images/Maps/pa2/desert_1.webp",
     width: 848,
     height: 1264,
     start: "S",
@@ -185,7 +185,7 @@ var PA2_MAPS = {
   ruines_1: {
     id: "ruines_1",
     worldId: "ruins",
-    image: "images/Maps/pa2/ruines_1.jpg",
+    image: "images/Maps/pa2/ruines_1.webp",
     width: 848,
     height: 1264,
     start: "S",
@@ -211,7 +211,7 @@ var PA2_MAPS = {
   ruines_2: {
     id: "ruines_2",
     worldId: "ruins",
-    image: "images/Maps/pa2/ruines_2.jpg",
+    image: "images/Maps/pa2/ruines_2.webp",
     width: 848,
     height: 1264,
     start: "S",
@@ -238,7 +238,7 @@ var PA2_MAPS = {
   crypte_1: {
     id: "crypte_1",
     worldId: "crypt",
-    image: "images/Maps/pa2/crypte_1.jpg",
+    image: "images/Maps/pa2/crypte_1.webp",
     width: 848,
     height: 1264,
     start: "S",
@@ -264,7 +264,7 @@ var PA2_MAPS = {
   crypte_2: {
     id: "crypte_2",
     worldId: "crypt",
-    image: "images/Maps/pa2/crypte_2.jpg",
+    image: "images/Maps/pa2/crypte_2.webp",
     width: 848,
     height: 1264,
     start: "S",
@@ -300,13 +300,13 @@ var PA2_MAPS_BY_WORLD = {
    Un canevas les choisit par template.parcours = { image, track, points: [indices] }. */
 var PA2_PARCOURS_IMAGES = {
   foret_quetes: {
-    image: "images/Maps/parcours/foret_quetes.jpg", width: 1024, height: 1536, start: [512, 1245],
+    image: "images/Maps/parcours/foret_quetes.webp", width: 1024, height: 1536, start: [512, 1245],
     tracks: { sentier: [[460, 1160], [505, 1015], [440, 870], [495, 720], [460, 590], [485, 480], [585, 455], [530, 320], [515, 210]] }
   },
   /* v3.428.1 (Ruines) : image de Seb (04/10/2026) ; piste relevée sur la route pavée, des dunes
      au mur de la cité. */
   ruines_route: {
-    image: "images/Maps/parcours/ruines_route.jpg", width: 1024, height: 1536, start: [420, 1300],
+    image: "images/Maps/parcours/ruines_route.webp", width: 1024, height: 1536, start: [420, 1300],
     tracks: { route: [[555, 1170], [500, 1030], [510, 885], [592, 760], [455, 665], [540, 560], [570, 500]] }
   },
   /* v3.452.0 (Crypte, acte I) : la descente. Image à fournir par Seb ; piste provisoire (celle de la
@@ -314,7 +314,7 @@ var PA2_PARCOURS_IMAGES = {
   /* v3.453.1 : image de Seb (19/10/2026) ; piste relevée sur le trait bleu, de la dernière rue des Ruines
      à la salle des alcôves. Paliers (points 0, 2, 4, 6) : l'escalier, les lampes, les trois formes, la salle. */
   crypte_descente: {
-    image: "images/Maps/parcours/crypte_descente.jpg", width: 1024, height: 1536, start: [512, 1415],
+    image: "images/Maps/parcours/crypte_descente.webp", width: 1024, height: 1536, start: [512, 1415],
     tracks: { route: [[512, 1290], [560, 1170], [590, 950], [455, 830], [512, 610], [512, 450], [512, 250]] }
   },
   /* v3.433.1 (Ruines, acte IV) : image de Seb (09/10/2026) ; piste relevée sur le trait violet, de la
@@ -324,15 +324,15 @@ var PA2_PARCOURS_IMAGES = {
      le trait doré, de la porte murée au nœud des chaînes. Paliers (points 0, 2, 4, 6, 8) : l'escalier, le couloir
      aux petites chaînes, le palier aux traits gravés, la brume des dormeurs enchaînés, le nœud. */
   le_long_de_la_chaine: {
-    image: "images/Maps/parcours/le_long_de_la_chaine.jpg", width: 1024, height: 1536, start: [513, 1490],
+    image: "images/Maps/parcours/le_long_de_la_chaine.webp", width: 1024, height: 1536, start: [513, 1490],
     tracks: { route: [[523, 1440], [512, 1260], [533, 1090], [524, 950], [519, 790], [535, 620], [528, 480], [522, 320], [516, 180]] }
   },
   vers_le_coeur: {
-    image: "images/Maps/parcours/vers_le_coeur.jpg", width: 1024, height: 1536, start: [478, 1440],
+    image: "images/Maps/parcours/vers_le_coeur.webp", width: 1024, height: 1536, start: [478, 1440],
     tracks: { route: [[575, 1290], [521, 1140], [644, 960], [626, 810], [512, 665], [490, 550], [565, 430], [528, 330], [520, 205]] }
   },
   desert_route: {
-    image: "images/Maps/parcours/desert_route.jpg", width: 1024, height: 1536, start: [520, 1270],
+    image: "images/Maps/parcours/desert_route.webp", width: 1024, height: 1536, start: [520, 1270],
     tracks: {
       route: [[520, 1150], [560, 1000], [560, 860], [575, 700], [540, 560], [470, 420], [520, 260]], // la piste de sable
       oued: [[760, 1180], [700, 1030], [640, 880], [690, 730], [640, 560], [600, 400], [560, 260]]    // le lit asséché
@@ -340,7 +340,7 @@ var PA2_PARCOURS_IMAGES = {
   },
   // v3.392.0 : du village au pied du Temple ensablé, la piste jusqu'aux marches de la porte
   desert_temple: {
-    image: "images/Maps/parcours/desert_temple.jpg", width: 1024, height: 1536, start: [528, 1290],
+    image: "images/Maps/parcours/desert_temple.webp", width: 1024, height: 1536, start: [528, 1290],
     tracks: { allee: [[546, 1140], [590, 880], [505, 710], [545, 590], [465, 460], [528, 318], [540, 215]] }
   }
 };

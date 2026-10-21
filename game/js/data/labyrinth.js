@@ -44,16 +44,16 @@ var LABYRINTH_CONFIG = {
 
 /* Tuiles (images de Seb du 09/10/2026), vues de dessus */
 var LABYRINTH_TILES = {
-  rooms: ["images/Maps/labyrinthe/salle_1.jpg", "images/Maps/labyrinthe/salle_1.jpg", "images/Maps/labyrinthe/salle_2.jpg", "images/Maps/labyrinthe/salle_3.jpg"],
-  corridor: "images/Maps/labyrinthe/couloir.jpg",
-  pan: "images/Maps/labyrinthe/pan.png",
-  lever: "images/Maps/labyrinthe/levier.jpg",
-  stairsDown: ["images/Maps/labyrinthe/escalier_bas.jpg", "images/Maps/labyrinthe/escalier_bas_2.jpg"],
-  stairsUp: "images/Maps/labyrinthe/escalier_haut.jpg",
-  spring: "images/Maps/labyrinthe/source.jpg",
-  chest: "images/Maps/labyrinthe/coffre.jpg",
-  bossRoom: "images/Maps/labyrinthe/salle_gardien.jpg",
-  paper: "images/Maps/labyrinthe/papier.jpg",
+  rooms: ["images/Maps/labyrinthe/salle_1.webp", "images/Maps/labyrinthe/salle_1.webp", "images/Maps/labyrinthe/salle_2.webp", "images/Maps/labyrinthe/salle_3.webp"],
+  corridor: "images/Maps/labyrinthe/couloir.webp",
+  pan: "images/Maps/labyrinthe/pan.webp",
+  lever: "images/Maps/labyrinthe/levier.webp",
+  stairsDown: ["images/Maps/labyrinthe/escalier_bas.webp", "images/Maps/labyrinthe/escalier_bas_2.webp"],
+  stairsUp: "images/Maps/labyrinthe/escalier_haut.webp",
+  spring: "images/Maps/labyrinthe/source.webp",
+  chest: "images/Maps/labyrinthe/coffre.webp",
+  bossRoom: "images/Maps/labyrinthe/salle_gardien.webp",
+  paper: "images/Maps/labyrinthe/papier.webp",
   bossPortrait: "images/Boss/gardien_du_plan.jpg",
   icon: "images/Icons/quest_icons/exploration/labyrinthe.png"
 };

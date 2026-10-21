@@ -35,7 +35,7 @@ var expSheet = null; // null | { type: "patrol" | "caravan", id }
     return w ? _td(w.name) : _td(LIVING_MAPS[mapId].name);
   }
   // v3.428.0 : une vignette par carte (Ruines : fond à venir)
-  function mapThumb(mapId) { return ({ desert: "images/Maps/parcours/desert_route.jpg", ruins: "images/Maps/parcours/ruines_route.jpg", crypt: "images/Maps/parcours/crypte_descente.jpg" })[mapId] || "images/Maps/parcours/foret_quetes.jpg"; }
+  function mapThumb(mapId) { return ({ desert: "images/Maps/parcours/desert_route.webp", ruins: "images/Maps/parcours/ruines_route.webp", crypt: "images/Maps/parcours/crypte_descente.webp" })[mapId] || "images/Maps/parcours/foret_quetes.webp"; }
   function resDef(k) { return (window.WAREHOUSE_RESOURCES || {})[k] || {}; }
 
   /* =========================================================

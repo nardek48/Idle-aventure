@@ -186,10 +186,10 @@ var GENERIC_TUTORIALS = {
     icon: "images/Icons/quest_icons/exploration/labyrinthe.png",
     title: "Le Labyrinthe aux leviers",
     points: [
-      { icon: "images/Maps/labyrinthe/salle_1.jpg", text: "Il fait noir : tu ne vois que ta salle et celles qui s'ouvrent à côté. Touche une salle voisine pour avancer. Chaque pas coûte du Souffle." },
-      { icon: "images/Maps/labyrinthe/levier.jpg", text: "Un levier fait tourner des pans de mur : un passage s'ouvre, un autre se ferme. Le tirer encore remet tout comme avant. L'un des deux leviers de l'étage est gardé." },
-      { icon: "images/Maps/labyrinthe/papier.jpg", text: "Edda dessine la carte dans le coin. Ce que les leviers font tourner, même au loin, y est noté en violet. Touche une salle dessinée sur la grande carte pour y retourner." },
-      { icon: "images/Maps/labyrinthe/escalier_bas.jpg", text: "À l'escalier : descends pour un sac plus lourd, ou remonte avec tout ce que tu portes. Tomber ou t'essouffler en bas n'en garde que la moitié." },
+      { icon: "images/Maps/labyrinthe/salle_1.webp", text: "Il fait noir : tu ne vois que ta salle et celles qui s'ouvrent à côté. Touche une salle voisine pour avancer. Chaque pas coûte du Souffle." },
+      { icon: "images/Maps/labyrinthe/levier.webp", text: "Un levier fait tourner des pans de mur : un passage s'ouvre, un autre se ferme. Le tirer encore remet tout comme avant. L'un des deux leviers de l'étage est gardé." },
+      { icon: "images/Maps/labyrinthe/papier.webp", text: "Edda dessine la carte dans le coin. Ce que les leviers font tourner, même au loin, y est noté en violet. Touche une salle dessinée sur la grande carte pour y retourner." },
+      { icon: "images/Maps/labyrinthe/escalier_bas.webp", text: "À l'escalier : descends pour un sac plus lourd, ou remonte avec tout ce que tu portes. Tomber ou t'essouffler en bas n'en garde que la moitié." },
       { icon: "images/Enemies/elite_contremaitre.jpg", text: "Dès l'étage 2, le Contremaître te cherche. Tu l'entends avant de le voir : écoute de quel côté viennent ses pas." }
     ]
   },

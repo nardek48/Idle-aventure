@@ -8581,7 +8581,7 @@ console.log("\n[95] v3.300.0 — W-2 : chapitre du Désert, la traversée");
   var P = g.Pa2Run, r = game.sceneRun;
   var types = Object.keys(r.nodes).filter(function (k) { return k !== "S"; }).map(function (k) { var n = r.nodes[k]; return n.type + (n.gabaritId ? "/" + n.gabaritId : "") + (n.foeId ? "/" + n.foeId + "x" + n.pack : ""); }).join(" ");
   ok(r.parcours && types === "obstacle/dalles_ensablees source combat/scarabx3 obstacle/vent_de_face", "parcours scripté : " + types);
-  ok(r.map.image === "images/Maps/parcours/desert_route.jpg", "fond : la piste de sable (image de Seb)");
+  ok(r.map.image === "images/Maps/parcours/desert_route.webp", "fond : la piste de sable (image de Seb)");
   ok(g.WorldManager.worldIndex === 0, "pendant la traversée : toujours résident de la Forêt");
   ok(/Les dalles du portail/.test(r.nodes.P0.narr) && /Wenna compte les carapaces/.test(r.nodes.P2.after), "journal : texte à chaque étape, et après la nuée");
   var sheet = g.pa2SheetBody(r, r.nodes.P0, { key: "P0", step: "intro" });
@@ -8780,7 +8780,7 @@ console.log("\n[100] v3.305.0 — Carte du Désert, Ensablement, étape 4");
 
   /* Données */
   var rings = {}; MAP.sectors.forEach(function (d) { rings[d.ring] = (rings[d.ring] || 0) + 1; });
-  ok(MAP.sectors.length === 12 && rings[1] === 4 && rings[2] === 5 && rings[3] === 3 && MAP.asset === "images/Maps/desert.jpg", "12 secteurs (4/5/3) sur l'image de Seb");
+  ok(MAP.sectors.length === 12 && rings[1] === 4 && rings[2] === 5 && rings[3] === 3 && MAP.asset === "images/Maps/desert.webp", "12 secteurs (4/5/3) sur l'image de Seb");
   ok(MAP.sectors.every(function (d) { return d.neighbors.every(function (n) { var o = LM.getSectorDef("desert", n); return o && o.neighbors.indexOf(d.id) !== -1; }); }), "voisinages symétriques");
   ok(MAP.village.name === "Le camp du Portail", "foyer : le camp du Portail");
 
@@ -11098,7 +11098,7 @@ console.log("\n[139] v3.361.0 — Acte IV, étape 16 : Personne ne remonte le fl
   ok(P.depart().ok && g.WarehouseManager.getAmount("ration") === 0 && g.WarehouseManager.getAmount("outre_pleine") === 0 && R.petiteAventureCountToday() === cap0, "départ : Ration moyenne et Outre prises, aucune place de Petite Aventure");
   var r = game.sceneRun, types = Object.keys(r.nodes).filter(function (k) { return k !== "S"; }).map(function (k) { var n = r.nodes[k]; return n.type + (n.gabaritId ? "/" + n.gabaritId : "") + (n.foeId ? "/" + n.foeId + "x" + n.pack : ""); }).join(" ");
   ok(types === "obstacle/vent_de_face combat/sandwormx1 obstacle/sables_mouvants source combat/sandwarriorx2 obstacle/dune", "parcours scripté : " + types);
-  ok(r.stock.gourde === 1 && r.map.image === "images/Maps/parcours/desert_route.jpg", "au Désert : une gorgée de gourde ; fond illustré");
+  ok(r.stock.gourde === 1 && r.map.image === "images/Maps/parcours/desert_route.webp", "au Désert : une gorgée de gourde ; fond illustré");
 
   /* Étape 4 : le Veilleur rend tout le Souffle */
   r.at = "P3"; r.status = "pa2-node"; r.breath = 20; r.nodes.P3.done = false;
@@ -12121,7 +12121,7 @@ console.log("\n[159] v3.382.0 — Petites Aventures v2 (PA2-1) : écrans (prépa
     P.depart();
     html = g.buildSceneScreenHTML();
     var map = P.getMap(runv), shown = Object.keys(map.nodes).filter(function (k) { return P.isShown(k, runv); });
-    ok(html.indexOf('id="pa2-hud"') > 0 && html.indexOf("images/Maps/pa2/foret_1.jpg") > 0, "carte : HUD du run et illustration de la Forêt");
+    ok(html.indexOf('id="pa2-hud"') > 0 && html.indexOf("images/Maps/pa2/foret_1.webp") > 0, "carte : HUD du run et illustration de la Forêt");
     ok((html.match(/class="pa2-node /g) || []).length === shown.length, "carte : seuls les nœuds visibles sont posés (" + shown.length + ")");
     ok((html.match(/is-open/g) || []).length === P.openMoves().length && html.indexOf("pa2Move('") > 0, "carte : les nœuds atteignables sont cliquables, et eux seuls");
     ok(html.indexOf("pa2Use('petite_ration')") > 0 && html.indexOf("pa2Use('gourde')") > 0, "HUD : rations et gourde utilisables depuis la carte");
@@ -12486,7 +12486,7 @@ console.log("\n[163] v3.386.0 — Petites Aventures v2 (PA2-4) : deuxième carte
     /* Écran : l'image et les nœuds de foret_2 */
     prep(6); S.startRun("petite_aventure_foret"); P.depart();
     var hm = g.buildPa2ScreenHTML(game.sceneRun);
-    ok(hm.indexOf("foret_2.jpg") > 0 && hm.indexOf("undefined") < 0 && hm.indexOf("NaN") < 0, "écran : la carte affiche foret_2, sans valeur vide");
+    ok(hm.indexOf("foret_2.webp") > 0 && hm.indexOf("undefined") < 0 && hm.indexOf("NaN") < 0, "écran : la carte affiche foret_2, sans valeur vide");
 
     /* L'homme du gouffre reste sans nom en Forêt (Maddoc garde sa rencontre du Désert) */
     var txt = JSON.stringify(g.PA2_HOOKS.gouffre || {});
@@ -12619,7 +12619,7 @@ console.log("\n[164] v3.387.0 — Petites Aventures v2 (PA2-5) : le Désert (car
     prep(9);
     S.startRun("petite_aventure_desert"); r = game.sceneRun; P.depart();
     var hm = g.buildPa2ScreenHTML(r);
-    ok(hm.indexOf("desert_1.jpg") > 0 && hm.indexOf("undefined") < 0 && hm.indexOf("NaN") < 0, "écran : la carte de nuit du Désert");
+    ok(hm.indexOf("desert_1.webp") > 0 && hm.indexOf("undefined") < 0 && hm.indexOf("NaN") < 0, "écran : la carte de nuit du Désert");
     r.at = "CAMP"; r.status = "pa2-node"; r.nodes.CAMP.done = false;
     var hc = g.pa2SheetBody(r, r.nodes.CAMP, { key: "CAMP", step: "intro" });
     ok(hc.indexOf(g.esc("L'oasis")) >= 0 && hc.indexOf("clairière basse") < 0, "écran : le camp du Désert est l'oasis");
@@ -12649,7 +12649,7 @@ console.log("\n[165] v3.389.0 — Chantier P, lot P-1 : les quêtes de déblocag
       fresh(id);
       var res = T[id].lootResource, before = g.WarehouseManager.getAmount(res), pa0 = S.petiteAventureCountToday();
       var st = S.startRun(id), r = g.game.sceneRun;
-      var okStart = st.ok && r.parcours && r.status === "pa2-map" && r.map.image === "images/Maps/parcours/foret_quetes.jpg"; // v3.390.0 : la carte de Seb
+      var okStart = st.ok && r.parcours && r.status === "pa2-map" && r.map.image === "images/Maps/parcours/foret_quetes.webp"; // v3.390.0 : la carte de Seb
       var r2 = playParcours(true);
       ok(okStart && r2.end.how === "parcours" && S.isQuestCompleted(id) && T[id].unlockOnSuccess.completionFlag && game.explorationProgression[T[id].unlockOnSuccess.completionFlag] === true
         && g.WarehouseManager.getAmount(res) >= before + T[id].lootRanges.finalSafe[0] + 2 && S.petiteAventureCountToday() === pa0,
@@ -12661,7 +12661,7 @@ console.log("\n[165] v3.389.0 — Chantier P, lot P-1 : les quêtes de déblocag
     fresh();
     S.startRun("sentier_obstrue");
     var r = g.game.sceneRun, hm = g.buildPa2ScreenHTML(r);
-    ok(hm.indexOf("foret_quetes.jpg") > 0 && hm.indexOf("pa2-parchment") < 0 && hm.indexOf(g.esc("Le Sentier Obstrué")) > 0 && hm.indexOf("undefined") < 0 && hm.indexOf("NaN") < 0, "écran : le tracé sur la carte de la Forêt, titre de la quête (v3.390.0)");
+    ok(hm.indexOf("foret_quetes.webp") > 0 && hm.indexOf("pa2-parchment") < 0 && hm.indexOf(g.esc("Le Sentier Obstrué")) > 0 && hm.indexOf("undefined") < 0 && hm.indexOf("NaN") < 0, "écran : le tracé sur la carte de la Forêt, titre de la quête (v3.390.0)");
     P.moveTo(P.openMoves()[0]);
     var hs = g.pa2SheetBody(r, P.node(r.at, r), { key: r.at, step: "intro" });
     ok(hs.indexOf(g.esc(g.PA2_OBSTACLE_LINES[P.node(r.at, r).gabaritId])) > 0 && hs.indexOf("pa2Obstacle(") > 0, "feuille d'obstacle : phrase d'ambiance et trois voies");
@@ -15252,7 +15252,7 @@ console.log("\n[227] v3.448.3 — Images allégées : écran titre et barre d'on
     var st = fs.existsSync(path.join(ROOT, f)) ? fs.statSync(path.join(ROOT, f)).size : -1;
     ok(st > 0 && st < 400000, f + " présent et léger (" + Math.round(st / 1024) + " Ko)");
   });
-  ["Maps/forest-combat.jpg", "Maps/ruins-combat.jpg", "Enemies/corruptmage.jpg", "Enemies/guardian.jpg"].forEach(function (f) {
+  ["Maps/forest-combat.webp", "Maps/ruins-combat.webp", "Enemies/corruptmage.jpg", "Enemies/guardian.jpg"].forEach(function (f) {
     var st = fs.statSync(path.join(ROOT, "images", f)).size;
     ok(st < 900000, f + " recompressé (" + Math.round(st / 1024) + " Ko)");
   });
@@ -16203,7 +16203,7 @@ console.log("\n[251] v3.457.1 — Boss de donjon comptés à part au Bestiaire ;
     ok(g.bestiaryKills("necrosupreme") === 2 && g.bestiaryKills("donjon_4") === 1, "Bestiaire : 3 victoires dont 1 Liche -> 2 Nécromanciens, 1 Liche");
     game.killCounts = { necrosupreme: 1 };
     ok(!g.bestiaryMet("necrosupreme") && g.bestiaryMet("donjon_4"), "seule la Liche vaincue : le Nécromancien suprême n'est pas rencontré");
-    ok(g.caravanRoadImageFor(3) === "images/Maps/parcours/crypte_descente.jpg" && g.caravanRoadImageFor(2) === "images/Maps/parcours/ruines_route.jpg", "Marché de la Crypte : la descente, plus la route des Ruines");
+    ok(g.caravanRoadImageFor(3) === "images/Maps/parcours/crypte_descente.webp" && g.caravanRoadImageFor(2) === "images/Maps/parcours/ruines_route.webp", "Marché de la Crypte : la descente, plus la route des Ruines");
   } catch (err) {
     ok(false, "[251] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
