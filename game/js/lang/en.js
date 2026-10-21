@@ -1578,13 +1578,11 @@ I18n.register("en", {
   "Retour au Campement": "Back to Camp",
 
   // js/ui/settings-view.js
-  "Débloquer tous les onglets": "Unlock all tabs",
   "Sauvegarde": "Save",
   "Le mode Grimoire se débloque avec la chaîne Histoire.": "Grimoire mode unlocks with the Story chain.",
   "Mises en scène des boss": "Boss scenes",
   "Sauvegarde : locale navigateur.": "Save: local to this browser.",
   "Sauvegarde : indisponible.": "Save: unavailable.",
-  "Tous les onglets sont débloqués": "All tabs unlocked",
 
   // js/ui/shop-view.js
 

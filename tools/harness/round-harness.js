@@ -9675,7 +9675,7 @@ console.log("\n[119] v3.324.0 — Admin (compagnons, Petites Aventures, avance d
   var game = g.game;
 
   /* --- Compagnons --- */
-  g.adminRecruitCompanions();
+  g.adminRecruitCompanions(true);
   ok(g.CompanionManager.isUnlocked("wenna") && g.CompanionManager.isUnlocked("maddoc"), "recrutement : Wenna et Maddoc recrutés");
   ok(g.CompanionManager.state("maddoc").voie === "tronc", "Maddoc sans voie : voie par défaut (tronc)");
   ok(g.isTabUnlocked("companions") && g.CompanionManager.partyIds().length === 2, "onglet Compagnons ouvert, deux compagnons présents");
@@ -9707,7 +9707,7 @@ console.log("\n[119] v3.324.0 — Admin (compagnons, Petites Aventures, avance d
   /* --- Histoire : avancer jusqu'à desert_09 --- */
   var sel = { value: "desert_09" }, oldGet = g.document.getElementById;
   g.document.getElementById = function (id) { return id === "admin-story-target" ? sel : oldGet(id); };
-  g.adminJumpToStoryStep();
+  g.adminJumpToStoryStep(true);
   g.document.getElementById = oldGet;
   var cur = SQ.getCurrentStep("desert");
   ok(SQ.isChapterCompleted("forest"), "Forêt terminée");
@@ -9725,7 +9725,7 @@ console.log("\n[119] v3.324.0 — Admin (compagnons, Petites Aventures, avance d
   /* --- Refus pendant une activité --- */
   game.huntRun = { active: true };
   var before = SQ.getState("desert").currentStep;
-  g.adminValidateStoryStep();
+  g.adminValidateStoryStep(true);
   ok(SQ.getState("desert").currentStep === before, "activité en cours : validation refusée");
   game.huntRun = { active: false };
 
@@ -16355,6 +16355,29 @@ console.log("\n[257] v3.457.9 — « 3 combats avec Wenna » : des combats, pas 
     ok(st.counters.companionWins === 2, "combat suivant : 2");
   } catch (err) {
     ok(false, "[257] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[258] v3.458.0 — Admin : confirmation, plus de « Débloquer tous les onglets » (audit P15)");
+(function () {
+  try {
+    var fs6 = require("fs");
+    game = freshCombat("knight");
+    run("StoryQuestManager.ensure();");
+    ok(typeof g.unlockAllTabsFromSettings === "undefined" && g.buildAdminHTML().indexOf("unlockAllTabsFromSettings") === -1, "« Débloquer tous les onglets » retiré (fonction et bouton)");
+    // sans confirmation, rien ne bouge ; la fenêtre est demandée
+    var asked = [];
+    run("var _scm = showConfirmModal;");
+    g.showConfirmModal = function (t) { asked.push(t); };
+    run("showConfirmModal = window.showConfirmModal;");
+    var before = JSON.stringify(game.storyQuests.forest), comp = JSON.stringify(game.companions || {});
+    g.adminValidateStoryStep(); g.adminRecruitCompanions();
+    ok(asked.length === 2 && JSON.stringify(game.storyQuests.forest) === before && JSON.stringify(game.companions || {}) === comp, "valider l'étape, recruter : confirmation demandée, partie intacte (" + asked.join(" | ") + ")");
+    run("showConfirmModal = _scm; window.showConfirmModal = _scm;");
+    var adm = fs6.readFileSync(ROOT + "/js/ui/admin-view.js", "utf8");
+    ok(/function adminJumpToStoryStep\(confirmed\)[\s\S]{0,400}adminConfirm\(/.test(adm), "avancer jusqu'à une étape : confirmation demandée");
+  } catch (err) {
+    ok(false, "[258] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
 })();
 

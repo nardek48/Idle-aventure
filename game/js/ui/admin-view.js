@@ -19,12 +19,7 @@ function buildAdminHTML() {
   h += '</div>';
   h += '</div>';
 
-  // v3.395.0 (décision Seb, audit design) : raccourci de test, retiré des Paramètres du joueur.
-  h += '<div class="panel-card admin-card">';
-  h += '<h3><img class=ico-inline src=images/Icons/system/lock_open.png> Onglets</h3>';
-  h += '<p class="panel-sub">Débloque tous les onglets sans passer par la chaîne Histoire.</p>';
-  h += '<div class="admin-quick-row"><button class="settings-btn admin-btn" onclick="unlockAllTabsFromSettings()">' + _t("Débloquer tous les onglets") + '</button></div>';
-  h += '</div>';
+  // v3.458.0 (audit P15, choix Seb) : « Débloquer tous les onglets » retiré (sautait l'Histoire sans retour).
 
   // v3.368.0 (i18n, D3) : choix de langue réservé à l'Admin tant que l'interface n'est pas traduite
   if (window.I18n) {
@@ -182,6 +177,11 @@ function adminReplayCombatQuest() {
   if (typeof saveGame === "function") saveGame();
 }
 
+/* v3.458.0 (audit P15) : confirmation des actions Admin qui font avancer la partie sans retour. */
+function adminConfirm(title, text, onConfirm) {
+  if (typeof showConfirmModal === "function") showConfirmModal(title, text, "images/Icons/system/warning.png", onConfirm);
+}
+
 function adminFieldRow(inputId, label, currentValue, onApplyCall, minVal, maxVal) {
   var v = (typeof currentValue === "number" && isFinite(currentValue)) ? Math.floor(currentValue) : 0;
   var attrs = "";
@@ -314,8 +314,10 @@ function buildAdminCompanionsHTML() {
   return h;
 }
 
-function adminRecruitCompanions() {
+function adminRecruitCompanions(confirmed) {
   if (!window.CompanionManager) return;
+  // v3.458.0 (audit P15) : action sans retour, confirmée d'abord
+  if (!confirmed) return adminConfirm("Recruter les compagnons", "Tous les compagnons rejoignent la partie, avec leur voie par défaut. Sans retour possible.", function () { adminRecruitCompanions(true); });
   var recrues = [];
   Object.keys(COMPANIONS_DB).forEach(function (id) {
     if (CompanionManager.unlock(id)) recrues.push(COMPANIONS_DB[id].name);
@@ -516,16 +518,18 @@ function adminStoryBusy() {
   return false;
 }
 
-function adminValidateStoryStep() {
+function adminValidateStoryStep(confirmed) {
   if (!window.StoryQuestManager || adminStoryBusy()) return;
+  if (!confirmed) return adminConfirm("Valider l'étape en cours", "L'Histoire avance d'une étape. Sans retour possible.", function () { adminValidateStoryStep(true); });
   var id = adminForceStoryStep(false);
   if (!id) showToast("Aucune étape à valider", 1400);
   adminRefresh();
 }
 
-function adminJumpToStoryStep() {
+function adminJumpToStoryStep(confirmed) {
   var sel = document.getElementById("admin-story-target");
   if (!sel || !sel.value || !window.StoryQuestManager || adminStoryBusy()) return;
+  if (!confirmed) return adminConfirm("Avancer jusqu'à cette étape", "Toutes les étapes d'ici là sont validées. Sans retour possible.", function () { adminJumpToStoryStep(true); });
   var target = sel.value, count = 0;
   // Garde-fou : jamais plus d'étapes qu'il n'en existe
   for (var n = adminStoryAllSteps().length; n > 0; n--) {

@@ -136,38 +136,6 @@ function buildSettingsHTML(tab) {
   return '<div class="nb-page-frame nb-page-frame-fill kframe-page settings-page" data-kf-title="' + esc("images/Icons/menu_icons/settings_menu.png|" + _t("Paramètres")) + '">' + h + '</div>';
 }
 
-/* v3.99.15 : débloque tous les onglets (tab-bar du bas + menu ☰ complet) en une
-   fois — seul moyen de déblocage pour l'instant, en attendant le vrai système
-   progressif par quêtes prévu pour une prochaine session. Construit la liste à
-   partir de MENU_ITEMS (menu-view.js, liste canonique du menu ☰) plutôt que de
-   dupliquer une liste statique ici, qui se désynchroniserait si un item est
-   ajouté/retiré du menu plus tard. */
-function unlockAllTabsFromSettings() {
-  if (!game.unlockedTabs || typeof game.unlockedTabs !== "object") game.unlockedTabs = {};
-
-  var fixedTabBarTabs = ["campement", "combat", "village", "more"];
-  fixedTabBarTabs.forEach(function (t) { game.unlockedTabs[t] = true; });
-
-  // v3.244.0 : ces onglets ont quitté MENU_ITEMS (chantier Navigation) mais restent
-  // des verrous d'Histoire — sans cette liste, le déverrouillage global les oublierait.
-  var relocatedTabs = ["dungeon", "shop", "talents", "equip", "ascension", "map", "grimoire", "quests"];
-  relocatedTabs.forEach(function (t) { game.unlockedTabs[t] = true; });
-
-  if (typeof MENU_ITEMS !== "undefined" && Array.isArray(MENU_ITEMS)) {
-    MENU_ITEMS.forEach(function (item) {
-      if (item && item.tab) game.unlockedTabs[item.tab] = true;
-    });
-  }
-
-  // v3.100.0 : chapitre Histoire marqué court-circuité (les étapes n'ont plus rien à débloquer).
-  if (window.StoryQuestManager && typeof StoryQuestManager.skipAll === "function") StoryQuestManager.skipAll();
-
-  saveGame();
-  if (typeof refreshTabBarVisibility === "function") refreshTabBarVisibility();
-  if (typeof renderPanel === "function") renderPanel();
-  showToast(_t("Tous les onglets sont débloqués"), 1600);
-}
-
 window.buildSettingsHTML = buildSettingsHTML;
 
 /* v3.375.0 : changer de langue relance le jeu (D2) — on le dit avant. */
@@ -191,4 +159,3 @@ function setDisplayPref(key, value) {
   if (typeof renderPanel === "function") renderPanel();
 }
 window.setDisplayPref = setDisplayPref;
-window.unlockAllTabsFromSettings = unlockAllTabsFromSettings;
