@@ -97,6 +97,8 @@ Maquette de référence : atelier-evolutions.html.
 .ret-acts .settings-btn { max-width: 300px; font-size: 13px; }
 .ret-btn-col { display: flex; flex-direction: column; align-items: center; }
 .ret-btn-col small { font-size: 12px; font-weight: 700; color: var(--c-cream-100-vivid); }
+/* v3.458.4 (audit C9) : sur un bouton clair (Manger, Livrer), le petit texte était crème sur crème */
+.ret-acts .settings-btn:not(.primary) .ret-btn-col small { color: var(--c-brown-750-2); }
 .ret-done { text-align: center; font-size: 12px; font-weight: 800; color: var(--c-green-750-vivid); margin: 2px 0 8px; }
 
 .ret-next { display: flex; align-items: center; gap: 8px; margin-top: 4px; border-top: 1px dashed var(--c-bronze-400-2); padding-top: 8px; }

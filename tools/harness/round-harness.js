@@ -1058,7 +1058,7 @@ for (var pk = 0; pk < 4; pk++) { game.enemy.chargeIn = 99; game.enemy.engageIn =
 ok(g.getCombatMissionProgressLabel() === "Premier sang · 4/5", "point 1 : compteur avance avec les kills (4/5)");
 game.enemy.chargeIn = 99; game.enemy.engageIn = 0; game.enemy.hp = 1; g.CombatEngine.heroAction("basic");
 g.StoryQuestManager._checkNow(true);
-ok(game.activeTab === "campement" && g.StoryQuestManager.isCurrentStepReady("forest"), "point 1 : run terminé -> retour au Campement, étape prête");
+ok(game.activeTab === "campement" && !!game.storyQuests.forest.claimedSteps.forest_02, "point 1 : run terminé -> retour au Campement, étape réclamée d'office (v3.458.4)");
 
 var forest04 = g.STORY_QUESTS.forest.steps[3];
 ok(forest04.objectiveLabel.indexOf("300") === -1 && forest04.objectiveLabel.indexOf("or") === -1, "point 2 : condition 300 or retirée du libellé du Colporteur");
@@ -1474,7 +1474,7 @@ for (var xk = 0; xk < 10 && game.adventureQuestRun.active; xk++) { if (game.enem
 ok(bossX === "slimeking" && game.adventureQuestsCompleted.aq_story_lisiere === true, "9 ennemis puis le Roi Slime : run terminé");
 ok(g.WorldManager.worldIndex === wiX && g.WorldManager.adventureIndex === aiX, "position WorldManager inchangée par le run (spawnFor restaure)");
 g.StoryQuestManager._checkNow(true);
-ok(g.StoryQuestManager.isCurrentStepReady("forest") === true && game.activeTab === "campement", "étape prête, retour au Campement");
+ok(!!game.storyQuests.forest.claimedSteps[g.STORY_QUESTS.forest.steps[idxX].id] && game.activeTab === "campement", "étape réclamée d'office (v3.458.4), retour au Campement");
 ok(g.STORY_QUESTS.forest.steps[idxX].progress(game) === "Lisière 10/10", "progression affichée : Lisière 10/10");
 // _trackKills ne compte plus aucun kill par position
 game = freshCombat("knight");
@@ -7488,7 +7488,7 @@ console.log("\n[73] v3.271.0 (L-5) — Grimoire de groupe et comportement du com
   /* --- La fiche affiche les réglages --- */
   run("game.unlockedTabs.companions = true;");
   // v3.440.0 : le comportement de soin se règle à la préparation de sortie
-  g.sortiePrep = { opts: { title: "t", onGo: function () {} }, preset: null, buffs: {} };
+  g.sortiePrep = { opts: { title: "t", onGo: function () {} }, preset: null, buffs: {}, tuneOpen: true }; // v3.458.4 : réglages ouverts
   var html = g.buildSortiePrepHTML();
   ok(html.indexOf("cp-behavior") !== -1 && html.indexOf("sortiePrepHeal") !== -1,
     "la préparation de sortie porte le bloc Comportement (plus la fiche)");
@@ -8686,7 +8686,7 @@ console.log("\n[97] v3.302.0 — D1 : le monde de l'usure ; étape 2 du Désert"
   ok(g.getCombatMissionProgressLabel() === "Ce qui tourne autour du camp · 0/6", "compteur en combat : 0/6");
   for (var k = 0; k < 6 && game.adventureQuestRun.active; k++) { game.enemy.chargeIn = 99; game.enemy.engageIn = 0; game.enemy.hp = 1; game.heroHp = game.heroMaxHp; g.CombatEngine.heroAction("basic"); }
   g.StoryQuestManager._checkNow(true);
-  ok(game.adventureQuestsCompleted.aq_desert_dunes === true && g.StoryQuestManager.isCurrentStepReady("desert"), "six bêtes vaincues : étape prête");
+  ok(game.adventureQuestsCompleted.aq_desert_dunes === true && g.STORY_QUESTS.desert.steps.some(function (s) { return /aq_desert_dunes/.test((s.linkTo || {}).cardId || "") && game.storyQuests.desert.claimedSteps[s.id]; }), "six bêtes vaincues : étape réclamée d'office (v3.458.4)");
   ok(g.WorldManager.worldIndex === 1, "le run n'a pas déplacé le joueur");
 })();
 
@@ -11158,7 +11158,7 @@ console.log("\n[140] v3.362.0 — Acte IV, étape 17 : le trône de sable, Nezza
   boss.hp = 0; g.CombatEngine.killEnemy(boss);
   ok(game.adventureQuestsCompleted.aq_desert_trone === true && !game.adventureQuestRun.active, "Nezzam vaincu : la quête est terminée");
   ok((game.killCounts.nezzam || 0) >= 1 && g.AchievementManager.ensure().counters.nezzamNoPotion === 1, "« Le trône vide » et « Pas une goutte » deviennent obtenables");
-  ok(S.isCurrentStepReady("desert") === true, "l'étape 17 est prête à réclamer");
+  ok(g.STORY_QUESTS.desert.steps.some(function (s) { return /aq_desert_trone/.test((s.linkTo || {}).cardId || "") && game.storyQuests.desert.claimedSteps[s.id]; }), "l'étape 17 est réclamée d'office (v3.458.4)");
   AQ.start("aq_desert_trone");
   ok(!game.adventureQuestRun.active, "combat unique : la quête ne se rejoue pas");
 
@@ -11780,7 +11780,7 @@ console.log("\n[155] v3.379.0 — Potion automatique du mode Grimoire (hors règ
 
   // v3.440.0 : la potion automatique se règle à la préparation de sortie, en mode Grimoire
   g.CombatEngine.setCombatMode("grimoire");
-  g.sortiePrep = { opts: { title: "t", onGo: function () {} }, preset: null, buffs: {} };
+  g.sortiePrep = { opts: { title: "t", onGo: function () {} }, preset: null, buffs: {}, tuneOpen: true }; // v3.458.4 : réglages ouverts
   var html = g.buildSortiePrepHTML();
   ok(html.indexOf("sortiePrepPotAuto('tard')") !== -1 && html.indexOf("Garder la dernière pour le boss") !== -1, "préparation : potion automatique avec les quatre seuils et la case du boss");
   g.I18n._lang = "en";
@@ -14787,13 +14787,15 @@ console.log("\n[214] v3.440.0 — Préparation de sortie : mode figé, équipe, 
     ok(parti === 1 && !g.sortiePrep, "rien à choisir (Grimoire fermé, ni compagnon ni potion) : départ direct, sans feuille");
     run("game.potionsOwned.potion_power = 1;");
     g.openSortiePrep({ title: "t", onGo: go });
-    ok(parti === 1 && !!g.sortiePrep && g.buildSortiePrepHTML().indexOf("sortiePrepBuff('potion_power')") !== -1, "une potion à boire : la feuille s'ouvre et la propose");
+    if (g.sortiePrep) g.sortiePrep.tuneOpen = true; // v3.458.4 : la potion est sous « Réglages »
+    ok(parti === 1 && !!g.sortiePrep && /1 potion à boire/.test(g.buildSortiePrepHTML()) && (g.sortiePrep.tuneOpen = true) && g.buildSortiePrepHTML().indexOf("sortiePrepBuff('potion_power')") !== -1, "une potion à boire : la feuille s'ouvre et la propose");
     g.sortiePrep.buffs.potion_power = true;
     g.confirmSortiePrep();
     ok(parti === 2 && g.PotionManager.isArmed("potion_power") && g.PotionManager.getStock("potion_power") === 0 && !g.sortiePrep, "« Partir » : la potion est bue (armée), la sortie part");
     g.isTabUnlocked = function (t) { return t === "grimoire" ? true : savedUnl(t); };
     game.grimoirePresets = [{ id: "p1", name: "Boss", icon: g.GRIMOIRE_PRESET_ICON_CHOICES[4], rules: game.grimoireRules.slice(), lastModified: 1 }];
     g.openSortiePrep({ title: "t", onGo: go });
+    g.sortiePrep.tuneOpen = true;
     var html = g.buildSortiePrepHTML();
     ok(html.indexOf("sortiePrepMode('grimoire')") !== -1 && html.indexOf("sortiePrepPreset('p1')") !== -1, "Grimoire ouvert : choix du mode et des presets");
     g.closeSortiePrep();
@@ -14988,6 +14990,7 @@ console.log("\n[220] v3.445.0 — Préparation de sortie : règles du départ en
     game.grimoirePresets = [{ id: "p1", name: "Boss", icon: g.GRIMOIRE_PRESET_ICON_CHOICES[4], rules: [{ conditionId: "heroLowHp", actionSlot: slots[2] }], lastModified: 1 }];
     g.renderSortiePrep = function () {};
     g.openSortiePrep({ title: "t", onGo: function () {} });
+    g.sortiePrep.tuneOpen = true;
     var html = g.buildSortiePrepHTML();
     ok(html.indexOf("sp-rule") !== -1 && html.indexOf(g.esc(g.getGrimoireConditionShortLabel("chargeIncoming"))) !== -1 && html.indexOf("sortiePrepEditRules()") !== -1, "règles actuelles affichées, bouton « Modifier mes règles »");
     g.sortiePrepPreset("p1");
@@ -16472,6 +16475,46 @@ console.log("\n[261] v3.458.3 — Lot 7a : Partir lance la quête, Mémoire sur 
     ok(/le prochain au niveau 4/.test(d) && /plafond de l'acte/.test(d2), "talents : le niveau qui limite est annoncé, sinon le plafond de l'acte (" + d.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").slice(0, 70) + ")");
   } catch (err) {
     ok(false, "[261] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[262] v3.458.4 — Lot 7b : une fenêtre de fin, Histoire, Mémoire, Ce que tu portes, retour, préparation (audit C1, C3, C4, C6, C9, C14)");
+(function () {
+  try {
+    var fs10 = require("fs");
+    // C1 : la fin de la quête liée réclame l'étape, une seule fenêtre
+    game = freshCombat("knight");
+    run("StoryQuestManager.ensure();");
+    var st = game.storyQuests.forest, idx = g.STORY_QUESTS.forest.steps.findIndex(function (x) { return /premier_sang/.test((x.linkTo || {}).cardId || ""); });
+    st.currentStep = idx; st.accepted = false; run("StoryQuestManager.acceptStep('forest');");
+    var vues = [];
+    run("var _bqc = buildQuestCompleteHTML;");
+    g.buildQuestCompleteHTML = function (c) { vues.push(c.title); return ""; };
+    run("buildQuestCompleteHTML = window.buildQuestCompleteHTML;");
+    run("game.adventureQuestsCompleted.aq_story_premier_sang = true;");
+    run("openQuestCompletePopup({ title: _t('Quête terminée !'), text: ADVENTURE_QUESTS.aq_story_premier_sang.name, rewardRows: [{ label: 'Or', value: '10' }] });");
+    run("buildQuestCompleteHTML = _bqc; window.buildQuestCompleteHTML = _bqc;");
+    ok(vues.length === 1 && st.claimedSteps.forest_02 && st.currentStep === idx + 1, "fin de « Premier sang » : étape réclamée, une seule fenêtre (" + vues.join(" | ") + ")");
+    // C3
+    var qv = fs10.readFileSync(ROOT + "/js/ui/quests-view.js", "utf8");
+    ok(/function buildStoryDoneChapterHTML/.test(qv) && /return h \+ done;/.test(qv) && /buildOtherWorldQuestsHTML\(cat\.kinds\)/.test(qv), "Histoire : chapitre en cours d'abord, chapitres terminés repliés ; autres mondes par catégorie");
+    // C4
+    var av = fs10.readFileSync(ROOT + "/js/ui/ascension-view.js", "utf8");
+    ok(/class="mem-chosen"/.test(av) && /chaque niveau oppose Garder/.test(av), "Mémoire : niveaux choisis repliés, Garder / Donner expliqués");
+    // C6
+    var hs = fs10.readFileSync(ROOT + "/js/ui/heros-screens-view.js", "utf8");
+    ok((hs.match(/\{ key: "\w+", value: "\w+", name: _t\(/g) || []).length === 14 && !/hs-trait-ico/.test(hs.split("STORY_TRAITS")[1] || ""), "Ce que tu portes : 14 effets possibles, sans icône");
+    ok(/dont \{p\} % par tes choix/.test(fs10.readFileSync(ROOT + "/js/ui/living-map-view.js", "utf8")), "Palissade : la part des choix dite à part");
+    // C9
+    ok(/class="settings-btn ret-eat"/.test(fs10.readFileSync(ROOT + "/js/ui/return-view.js", "utf8")), "écran de retour : « Manger »");
+    // C14
+    g.sortiePrep = { opts: { title: "t", onGo: function () {} }, preset: null, buffs: {} };
+    var ferme = g.buildSortiePrepHTML();
+    g.sortiePrep.tuneOpen = true;
+    var ouvert = g.buildSortiePrepHTML();
+    ok(/sp-fold/.test(ferme) && ferme.indexOf("buildSortiePrepPotions") === -1 && ferme.length < ouvert.length, "préparation : réglages repliés sous « Réglages », rouverts d'un toucher");
+  } catch (err) {
+    ok(false, "[262] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
 })();
 

@@ -646,9 +646,10 @@ var MissionBoard = {
     return m.worldId !== here;
   },
 
-  hiddenByWorld: function () {
+  hiddenByWorld: function (kinds) {
     var here = this._currentWorldId(), self = this, out = {};
     this.list({ allWorlds: true }).forEach(function (m) {
+      if (kinds && kinds.indexOf(m.sourceKind) === -1) return; // v3.458.4 (audit C3) : par catégorie
       if (self._isOtherWorld(m, here)) out[m.worldId] = (out[m.worldId] || 0) + 1;
     });
     return out;

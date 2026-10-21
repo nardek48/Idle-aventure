@@ -630,3 +630,12 @@
 .story-missing-row { display: grid; gap: 1px; }
 .story-missing-text { font-size: 13px; font-weight: 700; color: var(--nb-ink); }
 .story-missing-where { font-size: 12px; color: var(--nb-ink-dim); }
+
+/* v3.458.4 (audit C3) : un chapitre terminé tient sur une ligne repliée, sous le chapitre en cours. */
+.story-chain.is-done { padding: 0; background: var(--nb-cream-deep); }
+.story-done-head { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 6px 12px; border: 0; background: none; font: inherit; color: var(--nb-ink); text-align: left; cursor: pointer; }
+.story-done-head span { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; }
+.story-done-head b { font-size: 14px; }
+.story-done-head small { font-size: 12px; color: var(--nb-ink-dim); font-weight: 700; }
+.story-done-head i { font-style: normal; font-size: 14px; color: var(--nb-ink-dim); }
+.story-chain.is-done .story-claimed-list { padding: 0 12px 10px; }

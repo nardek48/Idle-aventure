@@ -92,6 +92,9 @@ function buildSortiePrepHTML() {
       ? _t("Les rounds s'enchaînent seuls et tes règles choisissent l'action.")
       : _t("Chaque round attend ton choix — tes règles se contentent de surligner l'action conseillée.")) + '</div>';
     h += '<div class="sp-lock"><img class="ico-inline" src="images/Icons/system/lock_closed.png" alt=""> ' + _t("Figé jusqu'au retour au Campement.") + '</div>';
+    h += '</div>';
+    // v3.458.4 (audit C14) : règles, cible et potions automatiques rejoignent les réglages repliés
+    var main = h; h = '';
 
     var presets = (typeof ensureGrimoirePresets === "function") ? ensureGrimoirePresets() : [];
     if (presets.length) {
@@ -117,13 +120,22 @@ function buildSortiePrepHTML() {
           + ' onclick="sortiePrepKeepBoss(this.checked)"><span>' + _t("Garder la dernière pour le boss") + '</span></label>';
       }
     }
-    h += '</div>';
-  }
+    var tune = h ? '<div class="sp-sec">' + h + '</div>' : '';
+    h = main;
+  } else var tune = '';
 
-  h += buildSortiePrepTeamHTML(grim);
-  h += buildSortiePrepAgainHTML();   // v3.449.0 : « Comme la dernière fois »
-  h += buildSortiePrepItemsHTML(grim);
-  h += buildSortiePrepPotionsHTML();
+  h += buildSortiePrepTeamHTML(grim, "mates");
+  // v3.458.4 (audit C14) : le reste se replie sous « Réglages », résumé sur une ligne ; ordre de v3.446.1 gardé
+  var open = !!sortiePrep.tuneOpen;
+  h += '<button type="button" class="sp-fold' + (open ? ' is-open' : '') + '" onclick="sortiePrepFold()"><span><b>' + _t("Réglages") + '</b><small>'
+    + esc(sortiePrepTuneSummary(grim)) + '</small></span><i>' + (open ? '▾' : '▸') + '</i></button>';
+  if (open) {
+    h += tune;
+    h += buildSortiePrepTeamHTML(grim, "sets");
+    h += buildSortiePrepAgainHTML();   // v3.449.0 : « Comme la dernière fois »
+    h += buildSortiePrepItemsHTML(grim);
+    h += buildSortiePrepPotionsHTML();
+  }
 
   h += '</div>';
   h += '<div class="ksheet-foot sp-foot">';
@@ -181,7 +193,8 @@ function sortiePrepEditRules() {
 }
 
 /* Équipe : deux compagnons au plus ; Wenna règle ses soins, la voie de Maddoc se lit (elle se paie à sa fiche). */
-function buildSortiePrepTeamHTML(grim) {
+/* v3.458.4 (audit C14) : part = "mates" (les portraits, visibles) ou "sets" (les comportements, repliés). */
+function buildSortiePrepTeamHTML(grim, part) {
   if (!window.CompanionManager) return "";
   var ids = CompanionManager.unlockedIds();
   if (!ids.length) return "";
@@ -197,6 +210,8 @@ function buildSortiePrepTeamHTML(grim) {
       + '<b>' + esc(_td(def.name)) + '</b><small>' + esc(patrol ? _t("En patrouille") : role) + '</small></button>';
   });
   h += '</div>';
+  if (part === "mates") return h + '<div class="cp-behavior-hint">' + (grim ? _t("En Grimoire, ils jouent seuls après toi à chaque round.") : _t("En Tactique, tu choisis aussi leur action à chaque round.")) + '</div></div>';
+  if (part === "sets") h = '<div class="sp-sec">';
   party.forEach(function (id) {
     var def = getCompanionDef(id), st = CompanionManager.state(id);
     if (def.skill && def.skill.type === "heal") {
@@ -214,6 +229,7 @@ function buildSortiePrepTeamHTML(grim) {
         + '<div class="cp-behavior-hint">' + _t("Elle se change à sa fiche, dans Compagnons.") + '</div></div>';
     }
   });
+  if (part === "sets") return h === '<div class="sp-sec">' ? "" : h + '</div>';
   h += '<div class="cp-behavior-hint">' + (grim ? _t("En Grimoire, ils jouent seuls après toi à chaque round.") : _t("En Tactique, tu choisis aussi leur action à chaque round.")) + '</div>';
   return h + '</div>';
 }
@@ -374,6 +390,22 @@ function buildSortiePrepPotionsHTML() {
 }
 
 /* ---------- Actions ---------- */
+function sortiePrepFold() { if (sortiePrep) sortiePrep.tuneOpen = !sortiePrep.tuneOpen; renderSortiePrep(); }
+/* v3.458.4 (audit C14) : ce que contiennent les réglages repliés, en une ligne. */
+function sortiePrepTuneSummary(grim) {
+  var parts = [];
+  if (grim) {
+    var pr = sortiePrep.preset && typeof ensureGrimoirePresets === "function" ? ensureGrimoirePresets().filter(function (p) { return p.id === sortiePrep.preset; })[0] : null;
+    parts.push(pr ? _td(pr.name) : _t("Mes règles actuelles"));
+  }
+  var items = (sortiePrep.items || []).filter(Boolean).length;
+  parts.push(_tn(items, "{n} objet", "{n} objets"));
+  var cap = (typeof getSortiePotionCap === "function") ? getSortiePotionCap() : 2;
+  parts.push(_tn(cap, "{n} potion de soin par sortie", "{n} potions de soin par sortie"));
+  var buffs = sortiePrepBuffList().length;
+  if (buffs) parts.push(_tn(buffs, "{n} potion à boire", "{n} potions à boire"));
+  return parts.join(" · ");
+}
 function sortiePrepMode(mode) { if (window.CombatEngine) CombatEngine.setCombatMode(mode); renderSortiePrep(); }
 function sortiePrepPreset(id) { if (sortiePrep) sortiePrep.preset = id || null; renderSortiePrep(); }
 function sortiePrepTarget(id) { if (window.RiseSystem) RiseSystem.setPolicy(id); renderSortiePrep(); }

@@ -135,3 +135,10 @@ div.mem-option { cursor: default; }
 .mem-option.is-line-locked { border-style: dashed; }
 .mem-option.is-line-locked .mem-option-ico, .mem-option.is-line-locked .mem-option-name, .mem-option.is-line-locked .mem-option-desc { opacity: .55; filter: grayscale(.6); }
 .mem-line-cond { display: block; margin-top: 3px; font-size: 12px; font-style: italic; font-weight: 700; color: var(--c-brown-750-2); }   /* 2,3 → 8,8:1 */
+
+/* v3.458.4 (audit C4) : un niveau déjà choisi se replie sur son choix ; « Changer › » le rouvre. */
+.mem-chosen { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 6px 12px; border-radius: 12px; border: 1px solid var(--c-bronze-500);
+  background: var(--c-cream-100-3); font: inherit; color: var(--c-brown-850-2); text-align: left; cursor: pointer; }
+.mem-chosen-img { width: 32px; height: 32px; object-fit: contain; flex: none; }
+.mem-chosen span { flex: 1 1 auto; font-weight: 800; font-size: 14px; }
+.mem-chosen small { font-size: 12px; font-weight: 700; color: var(--c-brown-750-2); }

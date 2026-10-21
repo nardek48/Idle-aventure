@@ -220,16 +220,16 @@ function buildQuestsGeneralSubTabHTML() {
     h += '<div class="eq-empty">' + esc(cat.emptyText) + '</div>';
   }
 
-  h += buildOtherWorldQuestsHTML();
+  h += buildOtherWorldQuestsHTML(cat.kinds); // v3.458.4 (audit C3) : seulement les quêtes de cette catégorie
   h += '<div class="qb-completed-bar"><button class="qb-completed-link" type="button" onclick="setQuestsFilter(\'completed\')">' + _t("Voir les quêtes terminées") + ' ▸</button></div>';
   return h;
 }
 
 /* v3.301.0 (W-2b) : quêtes proposées dans un autre monde, masquées du tableau — dites en une
    ligne par monde, avec le bouton pour y aller. Rien si le voyage est impossible. */
-function buildOtherWorldQuestsHTML() {
+function buildOtherWorldQuestsHTML(kinds) {
   if (!window.MissionBoard || typeof MissionBoard.hiddenByWorld !== "function" || !window.WORLDS) return "";
-  var hidden = MissionBoard.hiddenByWorld();
+  var hidden = MissionBoard.hiddenByWorld(kinds);
   var h = "";
   Object.keys(hidden).forEach(function (worldId) {
     var w = WORLDS.find(function (x) { return x.id === worldId; });
@@ -675,17 +675,19 @@ function buildStoryCurrentStepHTML(chapterId, chapter, step, index) {
 
 function buildStoryChainHTML() {
   if (!window.StoryQuestManager || !window.STORY_QUESTS) return "";
-  var h = "";
+  var h = "", done = "";
+  var completedMode = activeQuestsFilter === "completed";
 
+  // v3.458.4 (audit C3) : le chapitre en cours d'abord ; un chapitre terminé tient sur une ligne repliée, en dessous
   Object.keys(STORY_QUESTS).forEach(function (chapterId) {
     var chapter = STORY_QUESTS[chapterId];
     var st = StoryQuestManager.getState(chapterId);
     if (st.skipped) return;
     if (!StoryQuestManager.isChapterOpen(chapterId)) return; // v3.297.0 : chapitre suivant pas encore ouvert
+    if (!completedMode && StoryQuestManager.isChapterCompleted(chapterId)) { done += buildStoryDoneChapterHTML(chapterId, chapter, st); return; }
 
     var claimed = chapter.steps.filter(function (s) { return !!st.claimedSteps[s.id]; });
     var current = StoryQuestManager.getCurrentStep(chapterId);
-    var completedMode = activeQuestsFilter === "completed";
     if (completedMode && !claimed.length) return;
 
     h += '<div class="story-chain">';
@@ -715,7 +717,24 @@ function buildStoryChainHTML() {
     h += '</div>';
   });
 
-  return h;
+  return h + done;
+}
+
+/* v3.458.4 (audit C3) : chapitre terminé replié en une ligne ; le toucher déplie ses étapes. */
+function buildStoryDoneChapterHTML(chapterId, chapter, st) {
+  var claimed = chapter.steps.filter(function (s) { return !!st.claimedSteps[s.id]; });
+  var listId = "story_claimed_" + chapterId, open = !!expandedQuestCardIds[listId];
+  var h = '<div class="story-chain is-done">';
+  h += '<button type="button" class="story-done-head" onclick="toggleQuestCardExpand(\'' + esc(listId) + '\')">'
+    + renderIconOrEmojiHTML(chapter.icon || "images/Icons/quests/quest_story.png", "story-chain-ico", "")
+    + '<span><b>' + esc(_td(chapter.title)) + '</b><small>' + (chapter.endText ? _td(chapter.endText) : _tn(claimed.length, "Chapitre terminé · {n} étape", "Chapitre terminé · {n} étapes")) + '</small></span>'
+    + '<i>' + (open ? '▾' : '▸') + '</i></button>';
+  if (open) {
+    h += '<div class="story-claimed-list">';
+    claimed.forEach(function (step) { h += buildStoryClaimedStepHTML(chapterId, step, chapter.steps.indexOf(step)); });
+    h += '</div>';
+  }
+  return h + '</div>';
 }
 
 /* Ouvre l'écran Quêtes (Général, filtre Active) sur une section et une carte données — cible du bouton « Aller à la quête ». */
@@ -891,7 +910,29 @@ window.buildQuestCompleteHTML = buildQuestCompleteHTML;
 /* v3.429.10 : la carte de victoire d'un boss (#cycle-modal-root) passe d'abord ; la fin de
    quête attend sa fermeture (closeBossFinal) au lieu de s'empiler dessous. */
 var pendingQuestCompleteConfig = null;
+/* v3.458.4 (audit C1) : une quête d'aventure qui termine l'étape d'Histoire liée ne garde qu'une fenêtre —
+   l'étape est réclamée tout de suite et sa fenêtre reprend les récompenses de la quête. */
+var storyMergeRows = null;
+function storyStepClosedBy(config) {
+  if (!config || config.dialogue || !window.StoryQuestManager || !window.ADVENTURE_QUESTS || config.title !== _t("Quête terminée !")) return null;
+  var found = null;
+  Object.keys(STORY_QUESTS).forEach(function (ch) {
+    var step = StoryQuestManager.getCurrentStep(ch), id = step && step.linkTo && String(step.linkTo.cardId || "");
+    if (found || !id || id.indexOf("adv_aq_") !== 0) return;
+    var q = ADVENTURE_QUESTS[id.slice(4)];
+    if (q && q.name === config.text && StoryQuestManager.isCurrentStepAccepted(ch) && StoryQuestManager.isCurrentStepReady(ch)) found = ch;
+  });
+  return found;
+}
+
 function openQuestCompletePopup(config) {
+  var ch = storyMergeRows ? null : storyStepClosedBy(config);
+  if (ch) {
+    storyMergeRows = (config.rewardRows || []).map(function (r) { return { label: _td(r.label) + " · " + _td(config.text), value: r.value }; });
+    if (StoryQuestManager.claimStep(ch)) return;
+    storyMergeRows = null;
+  }
+  if (storyMergeRows) { config.rewardRows = storyMergeRows.concat(config.rewardRows || []); config.questDone = true; storyMergeRows = null; }
   applyQuestUnlockSideEffects();
   var boss = document.getElementById("cycle-modal-root");
   if (boss && boss.innerHTML) { pendingQuestCompleteConfig = config; return; }

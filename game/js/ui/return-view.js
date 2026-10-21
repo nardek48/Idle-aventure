@@ -102,6 +102,16 @@ function buildReturnScreenHTML() {
     if (!st.harvested) h += '<button type="button" class="settings-btn primary" onclick="returnHarvestAll()">' + _t("Tout récolter") + '</button>';
     else h += '<div class="ret-done"><img class="ico-inline" src="images/Icons/system/check_valid.png" alt=""> ' + _t("Récolte faite.") + '</div>';
   }
+  // v3.458.4 (audit C9) : manger sans repasser par le Campement — la plus petite ration qui remet à plein, sinon la plus grande
+  var CM = window.CampManager;
+  if (CM && !CM.teamFull() && !(window.heroLockReason && heroLockReason())) {
+    var opts = CM.getRationOptions().filter(function (r) { return r.amount >= 1; });
+    var miss = (game.heroMaxHp || 1) - (game.heroHp || 0);
+    var pick = opts.filter(function (r) { return (game.heroMaxHp || 1) * r.healPct >= miss; }).sort(function (a, b) { return a.healPct - b.healPct; })[0]
+      || opts.sort(function (a, b) { return b.healPct - a.healPct; })[0];
+    if (pick) h += '<button type="button" class="settings-btn ret-eat" onclick="CampManager.eatRation(\'' + esc(pick.id) + '\'); renderReturnScreen();"><span class="ret-btn-col"><span>'
+      + esc(_t("Manger : {x}", { x: _td(pick.name) })) + '</span><small>' + esc(_t("+{n} PV · {s} en stock", { n: formatNumber(Math.floor((game.heroMaxHp || 1) * pick.healPct)), s: formatNumber(pick.amount) })) + '</small></span></button>';
+  }
   if (ready.length && !st.delivered) {
     var cost = ready.map(function (c) { return '−' + formatNumber(c.quantity) + ' ' + returnResName(c.resourceId); }).join(", ");
     var pay = ready.reduce(function (sum, c) { return sum + TavernManager.getPayout(c); }, 0);

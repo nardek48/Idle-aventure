@@ -592,6 +592,16 @@ function buildLivingMapSheetHeadHTML(mapId) {
   return kSheetHeadHTML({ title: title, sub: sub, close: "selectLivingMapSector(null)" });
 }
 
+/* v3.458.4 (audit C6) : la part des choix d'Histoire dans le frein, dite à part (« dont 10 % par tes choix »). */
+function lmChoiceBrakeTxt(mapId) {
+  var LM = LivingMapManager, map = LM.getMap(mapId), part = 0;
+  if (LM.getPlan(mapId) === "finir") return "";
+  ((map && map.choiceBrakes) || []).forEach(function (cb) {
+    if (window.StoryQuestManager && StoryQuestManager.getChoice(cb.key) === cb.value && LM.isLiberated(mapId, cb.sectorId)) part += Number(cb.bonus || 0);
+  });
+  return part > 0 ? " " + _t("(dont {p} % par tes choix)", { p: Math.round(part * 100) }) : "";
+}
+
 function buildLivingMapPanelHTML(mapId, running) {
   var LM = LivingMapManager;
   var map = LM.getMap(mapId);
@@ -607,7 +617,7 @@ function buildLivingMapPanelHTML(mapId, running) {
   if (livingMapSelected === "village") {
     var pal = LM.getPalisadeLevel(), held = LM.getHeldRing(pal);
     h += '<p class="lm-panel-lore">' + esc(_td(W.homeLore)) + '</p>';
-    h += '<p class="lm-panel-line"><b>' + _t("Palissade niveau {n}", { n: pal }) + '</b> · ' + _t("frein {p} % sur l'échec", { p: Math.round(LM.getBrakeChance(mapId) * 100) }) + ' · '
+    h += '<p class="lm-panel-line"><b>' + _t("Palissade niveau {n}", { n: pal }) + '</b> · ' + _t("frein {p} % sur l'échec", { p: Math.round(LM.getBrakeChance(mapId) * 100) }) + lmChoiceBrakeTxt(mapId) + ' · '
       + (held === 3 ? _t("tient l'anneau 1 à 3 : un échec n'y reprend rien") : held === 2 ? _t("tient l'anneau 1 et 2 : un échec n'y reprend rien") : held ? _t("tient l'anneau 1 : un échec n'y reprend rien") : _t("ne tient aucun anneau (niveau 3)")); // v3.335.0 ; v3.370.0 : une phrase entière par cas
     return h + '</div>';
   }

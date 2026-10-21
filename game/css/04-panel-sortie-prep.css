@@ -187,3 +187,11 @@
 .sp-again { display: grid; gap: 4px; margin: 4px 0 10px; }
 .sp-again .kbtn { justify-self: start; }
 .sp-again small { font-size: 12px; color: var(--sheet-ink-dim); }
+
+/* v3.458.4 (audit C14) : menace, mode et équipe visibles ; le reste replié sous « Réglages », résumé sur une ligne. */
+.sp-fold { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; margin: 4px 0 8px; padding: 6px 12px; border-radius: 12px;
+  border: 1px solid var(--c-bronze-500); background: var(--c-cream-100-3); font: inherit; color: var(--c-brown-850-2); text-align: left; cursor: pointer; }
+.sp-fold span { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; }
+.sp-fold b { font-size: 14px; }
+.sp-fold small { font-size: 12px; font-weight: 700; color: var(--c-brown-750-2); }
+.sp-fold i { font-style: normal; color: var(--c-brown-750-2); }

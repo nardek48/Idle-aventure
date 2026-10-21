@@ -1032,7 +1032,9 @@ function run() {
       step.chapterId = cid;
       try { solver(G, step); } catch (e) { note("exception : " + e.message + " " + String(e.stack).split("\n")[1]); }
       G.StoryQuestManager._checkNow(true);
-      var pret = G.StoryQuestManager.isCurrentStepReady(cid);
+      // v3.458.4 (audit C1) : une étape liée à une quête d'aventure se réclame d'office à la fin de la quête
+      var faite = function () { return !!G.game.storyQuests[cid].claimedSteps[step.id] || G.StoryQuestManager.isCurrentStepReady(cid); };
+      var pret = faite();
       if (!pret && COMBATS) {
         note("héros : " + heroSnapshot());
         STATS.murs.push({ step: step.id, title: step.title, objective: step.objectiveLabel, hero: heroSnapshot(), notes: notes.slice(avant).filter(function (n) { return !/^   /.test(n); }).slice(0, 6) });
@@ -1041,10 +1043,10 @@ function run() {
         try { solver(G, step); } catch (e2) { note("exception (forcé) : " + e2.message); }
         FORCE = false;
         G.StoryQuestManager._checkNow(true);
-        pret = G.StoryQuestManager.isCurrentStepReady(cid);
+        pret = faite();
       }
       if (!ok(pret, step.id + " « " + step.title + " »" + (pret ? "  · " + (CLOCK.offset / 3600e3).toFixed(1) + " h, niv. " + G.game.heroLevel : "" ) + (pret ? "" : " — BLOQUÉE : « " + step.objectiveLabel + " » " + notes.slice(avant).join(" | ")))) return;
-      G.StoryQuestManager.claimStep(cid);
+      if (!G.game.storyQuests[cid].claimedSteps[step.id]) G.StoryQuestManager.claimStep(cid);
       flushTimers(G);
       if (G.closeQuestCompletePopup) G.closeQuestCompletePopup();
       STATS.steps.push({ id: step.id, title: step.title, h: (CLOCK.offset - t0s.h) / 3600e3, combatH: (STATS.combatMs - t0s.c) / 3600e3, healH: (STATS.healMs - t0s.s) / 3600e3,

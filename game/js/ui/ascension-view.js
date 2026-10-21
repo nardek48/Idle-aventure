@@ -48,6 +48,15 @@ function buildMemoryLevelHTML(def, p) {
     h += '<div class="mem-level-lock is-pending"><img class="ico-inline" src="images/Icons/aether_icon.png" alt=""> ' + (broken ? _t("La ligne ne tient plus : choisis à nouveau, sans frais.") : _t("Un choix t'attend ici.")) + '</div>';
   }
   if (reached && MemoryManager.isFreeReprise(level)) h += '<div class="mem-level-lock is-pending"><img class="ico-inline" src="images/Icons/aether_icon.png" alt=""> ' + _t("Ysolt s'est recouchée : tu peux changer ce choix une fois, sans frais.") + '</div>'; // v3.455.0
+  // v3.458.4 (audit C4) : un niveau déjà choisi se replie sur son choix ; un toucher le rouvre pour en changer
+  var free = reached && MemoryManager.isFreeReprise(level);
+  if (reached && chosen && !pending && !free && !memLevelOpen[level]) {
+    var pick = def.options.filter(function (o) { return o.id === chosen; })[0];
+    h += '<button type="button" class="mem-chosen" onclick="toggleMemLevel(' + level + ')">'
+      + renderIconOrEmojiHTML(pick ? pick.icon : "", "mem-chosen-img", pick ? _td(pick.name) : "")
+      + '<span>' + esc(pick ? _td(pick.name) : "") + '</span><small>' + _t("Changer") + ' ›</small></button>';
+    return h + '</div>';
+  }
   h += '<div class="mem-options">';
   def.options.forEach(function (o) {
     var isChosen = chosen === o.id && !(broken && o.line);
@@ -71,6 +80,10 @@ function buildMemoryLevelHTML(def, p) {
   return h;
 }
 
+var memLevelOpen = {};
+function toggleMemLevel(level) { memLevelOpen[level] = !memLevelOpen[level]; if (typeof renderPanel === "function") renderPanel(); }
+window.toggleMemLevel = toggleMemLevel;
+
 function buildAscensionHTML() {
   if (!window.MemoryManager) return '<div class="panel">' + _t("Mémoire indisponible") + '</div>';
   MemoryManager.ensure();
@@ -83,6 +96,8 @@ function buildAscensionHTML() {
   h += buildMemoryGaugeHTML(p);
   // v3.458.3 (audit C4) : la pastille mène au premier choix en attente
   if (pending.length) h += '<button type="button" class="mem-pending" onclick="memScrollToPending()"><img class="ico-inline" src="images/Icons/aether_icon.png" alt=""> ' + (pending.length > 1 ? _t("{n} choix t'attendent.", { n: pending.length }) : _t("Un choix t'attend.")) + ' ›</button>';
+  // v3.458.4 (audit C4) : Garder, Donner et le jalon en une phrase
+  h += '<p class="mem-head-note">' + _t("À partir du niveau 9, chaque niveau oppose Garder (prudence, réserves) à Donner (risquer, aller plus vite). Le jalon de chaque monde ajoute une ligne, ouverte si les trois niveaux d'avant sont du même côté.") + '</p>';
   h += '<p class="mem-head-note">' + _t("Reprendre un choix coûte de l'or : {n} pour la prochaine reprise, trois fois plus ensuite.", { n: formatNumber(MemoryManager.getRepriseCost()) }) + '</p>'; // v3.358.0 (D7)
   h += '</div>';
 
