@@ -399,6 +399,8 @@ function renderPanel() {
   // v3.458.1 (audit P28) : idem sur le Donjon (les bulles mordaient de 22 px sur les cartes à 390 px).
   if (document.body) document.body.classList.toggle("dg-on-list", game.activeTab === "dungeon");
   lastRenderedTab = game.activeTab;
+  // v3.458.5 (audit O5) : les bulles suivent l'écran tout de suite (renderHud ne les recalcule que 4 fois par seconde)
+  if (typeof renderHudDock === "function") renderHudDock();
   // v3.401.0 (lot O-1) : les bulles du HUD remontent au-dessus des sous-onglets du bas
   if (typeof liftHudDock === "function") liftHudDock();
 }

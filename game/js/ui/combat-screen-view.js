@@ -51,7 +51,8 @@
     if (host.innerHTML !== html) host.innerHTML = html;
     return true;
   }
-  function inCombatScreen() { return !!byId("cbx"); }
+  // v3.458.5 (audit O1) : l'écran caché (Village, Campement…) ne se redessine plus à chaque image
+  function inCombatScreen() { return game.activeTab === "combat" && !!byId("cbx"); }
   function actorsApi() { return window.CombatActors || null; }
   function engine() { return window.CombatEngine || null; }
   function isManual() {
@@ -266,7 +267,7 @@
      changent — c'est ce qui fait « marcher » un ennemi dans son couloir (transitions CSS). */
   function renderStage() {
     var stage = byId("cbx-stage");
-    if (!stage || !stage.querySelector) return;
+    if (!stage || !stage.querySelector || !inCombatScreen()) return;
     var list = enemies().filter(function (e) { return e && num(e.hp) > 0; });
     var t = target();
     var pos = layout(list);
@@ -294,13 +295,19 @@
         void el.offsetWidth;
       }
       var isT = (e === t);
-      el.style.left = p.left + "%"; el.style.bottom = p.bottom + "%"; el.style.width = width;
-      el.style.zIndex = isT ? 30 : p.z;   // la cible passe devant (choix Seb), sa profondeur ne change pas
+      // v3.458.5 (audit O12) : position et classe écrites seulement si elles changent (plus de mutation à chaque image)
+      var posKey = p.left + "|" + p.bottom + "|" + width + "|" + (isT ? 30 : p.z);
+      if (el._cbxPos !== posKey) {
+        el._cbxPos = posKey;
+        el.style.left = p.left + "%"; el.style.bottom = p.bottom + "%"; el.style.width = width;
+        el.style.zIndex = isT ? 30 : p.z;   // la cible passe devant (choix Seb), sa profondeur ne change pas
+      }
       var cls = "cbx-foe r" + p.rank + (p.boss ? " is-boss" : "") + (isT ? " is-target" : "")
         + (e.chargeTelegraphed ? " tele-charge" : "") + (e.healTelegraphed ? " tele-heal" : "") + (e.silenceTelegraphed ? " tele-silence" : "")
         + (e.shieldTelegraphed ? " tele-shield" : "") + (e.surgeTelegraphed ? " tele-surge" : "")
         + (e.dot && num(e.dot.rounds) > 0 ? " dot-burn" : "") + (num(e.shieldRounds) > 0 ? " is-shielded" : "") + (num(e.vulnerableRounds) > 0 ? " is-vuln" : "")
-        + (e._cbxDash ? " is-dash" : "") + (e.downed ? " is-downed" : "") + (e.asleep ? " is-asleep" : "");
+        + (e._cbxDash ? " is-dash" : "") + (e.downed ? " is-downed" : "") + (e.asleep ? " is-asleep" : "")
+        + (cbx.actingRef && el._cbxRef === cbx.actingRef ? " is-acting" : "");   // v3.458.5 : l'éclairage du tour vit ici, plus d'aller-retour avec renderIni
       if (el.className !== cls) el.className = cls;
       var ui = el.querySelector(".cbx-foe-ui"), html = foeUiHTML(e, list.length === 1);
       if (ui && ui._h !== html) { ui.innerHTML = html; ui._h = html; }
@@ -450,7 +457,7 @@
 
   function renderTeam() {
     var host = byId("cbx-team");
-    if (!host) return;
+    if (!host || !inCombatScreen()) return;
     var list = allies();
     var A = actorsApi();
     var hero = A ? A.heroActor() : { hp: game.heroHp, maxHp: game.heroMaxHp, name: "" };
@@ -596,7 +603,7 @@
 
   function renderCmd() {
     var host = byId("cbx-cmd");
-    if (!host) return;
+    if (!host || !inCombatScreen()) return;
     var cls = "cbx-cmd" + (game.combatMode === "grimoire" ? " is-grim" : "");
     if (host.className !== cls) host.className = cls;
     setHtml(host, buildCmdHTML());
@@ -822,7 +829,7 @@
   }
   function renderIni() {
     var host = byId("cbx-ini"), I = window.Initiative, E = engine();
-    if (!host) return;
+    if (!host || !inCombatScreen()) return;
     var on = !!(I && E && typeof E.turn === "function" && game.enemy && !I.legacy);
     if (host.hidden === on) host.hidden = !on;
     if (!on) return;
@@ -861,8 +868,10 @@
     Object.keys(ini.nodes).forEach(function (id) { if (!seen[id]) { ini.nodes[id].remove(); delete ini.nodes[id]; } });
     // Le même éclairage sur la scène (ennemi) et sur les cartes d'Équipe
     var stage = byId("cbx-stage"), team = byId("cbx-team");
-    if (stage) Array.prototype.forEach.call(stage.querySelectorAll(".cbx-foe"), function (f) { f.classList.toggle("is-acting", !rolling && !!now && f._cbxRef === now); });
-    if (team) Array.prototype.forEach.call(team.querySelectorAll(".cbx-card"), function (c) { c.classList.toggle("is-acting", !rolling && !!now && now.side !== "enemy" && c.getAttribute("data-who") === String(now.actorId)); });
+    cbx.actingRef = (!rolling && now) || null;
+    var setActing = function (el, on) { if (el.classList.contains("is-acting") !== on) el.classList.toggle("is-acting", on); };
+    if (stage) Array.prototype.forEach.call(stage.querySelectorAll(".cbx-foe"), function (f) { setActing(f, !rolling && !!now && f._cbxRef === now); });
+    if (team) Array.prototype.forEach.call(team.querySelectorAll(".cbx-card"), function (c) { setActing(c, !rolling && !!now && now.side !== "enemy" && c.getAttribute("data-who") === String(now.actorId)); });
   }
 
   /* ---------- Rendu complet / par image ---------- */
@@ -871,7 +880,12 @@
      Grimoire évalue ses règles) — les actions les redessinent tout de suite par leurs propres appels. */
   var lastCmdAt = 0;
   function renderFrame(force) {
-    if (!inCombatScreen()) return;
+    if (!inCombatScreen()) { cbx.hidden = true; return; }
+    // v3.458.5 (audit O1) : au retour sur le combat, les PV mémorisés repartent de zéro (pas de faux chiffres ni flashs)
+    if (cbx.hidden) {
+      cbx.hidden = false; force = true;
+      if (typeof WeakMap === "function") { cbx.hp = new WeakMap(); cbx.tele = new WeakMap(); }
+    }
     setHtml(byId("cbx-top"), buildTopHTML());
     setHtml(byId("cbx-target"), buildTargetHTML());
     renderStage();

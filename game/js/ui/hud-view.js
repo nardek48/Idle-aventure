@@ -77,12 +77,16 @@ function mountHudAndStatsBar() {
   if (typeof mountHudDock === "function") mountHudDock(); // v3.396.0 : bulles de raccourci
 }
 
+/* v3.458.5 (audit O5) : renderHud tourne à chaque image (game-loop) ; la régénération se calcule
+   une fois par seconde et les bulles quatre fois (renderPanel les redessine aussi, sans attendre). */
+var hudRegenAt = 0, hudDockAt = 0;
 function renderHud() {
+  var now = Date.now();
   // v3.101.0 : régénération au camp (accrual paresseux, voir systems/camp-system.js)
-  if (window.CampManager && typeof CampManager.applyRegen === "function") CampManager.applyRegen(false);
+  if (now - hudRegenAt >= 1000 && window.CampManager && typeof CampManager.applyRegen === "function") { hudRegenAt = now; CampManager.applyRegen(false); }
   renderHudBand();
   renderHeroHp();
-  if (typeof renderHudDock === "function") renderHudDock(); // v3.396.0 : fil rouge, sac, talents
+  if (now - hudDockAt >= 250 && typeof renderHudDock === "function") { hudDockAt = now; renderHudDock(); } // v3.396.0 : fil rouge, sac, talents
   renderHudAchievementTier(); // v3.338.0 (H4)
 }
 
@@ -154,8 +158,10 @@ function renderHeroHp() {
   var pct = Math.max(0, Math.min(100, (hp / maxHp) * 100));
   var hpText = hudHpShort(hp) + "/" + hudHpShort(maxHp); // v3.379.1 : court et sans espaces (« 623 / 895 » passait sur deux lignes)
 
-  if (miniText) miniText.textContent = hpText;
-  if (miniFill) {
+  // v3.458.5 (audit O5) : réécrit seulement si la valeur change
+  if (miniText && miniText.textContent !== hpText) miniText.textContent = hpText;
+  if (miniFill && miniFill._pct !== pct) {
+    miniFill._pct = pct;
     miniFill.style.width = pct + "%";
     miniFill.classList.toggle("low", pct <= 25);
   }
