@@ -7058,12 +7058,13 @@ console.log("\n[70] v3.268.0 (L-2) — Wenna : roster, tour du compagnon, menace
 
   /* Le compteur n'avance que si un compagnon est présent */
   st.counters.companionWins = 0;
-  W().state("wenna").present = false;
+  W().state("wenna").present = false; run("CompanionManager.refreshParty();");
   game.totalKills += 5; run("StoryQuestManager._trackKills();");
   ok(st.counters.companionWins === 0, "sans compagnon présent, rien n'est compté");
-  W().state("wenna").present = true;
-  game.totalKills += 2; run("StoryQuestManager._trackKills();");
-  ok(st.counters.companionWins === 2, "avec elle, les victoires comptent");
+  W().state("wenna").present = true; run("CompanionManager.refreshParty();");
+  run("Initiative.newCombat();"); game.totalKills += 3; run("StoryQuestManager._trackKills();");
+  run("Initiative.newCombat();"); game.totalKills += 1; run("StoryQuestManager._trackKills();");
+  ok(st.counters.companionWins === 2, "avec elle, chaque combat compte une fois (meute de 3 = 1)");
 
   /* Migration : une save déjà à l'étape des braises se décale d'un cran */
   st.currentStep = idxW; delete st.migratedV3268;
@@ -8452,8 +8453,9 @@ console.log("\n[92] v3.297.0 — W-1a : chapitres enchaînés, endroits « fores
     ok(g.isStoryLinkedQuest("aq_story_coeur") === true && g.isStoryLinkedQuest("aq_forest_depths") === false, "quête liée à l'étape du chapitre 2 : visible au tableau");
 
     /* Compteurs par chapitre. */
-    run("CompanionManager.unlock('wenna');");
-    game.totalKills += 2; run("StoryQuestManager._trackKills();");
+    run("CompanionManager.unlock('wenna'); CompanionManager.refreshParty();");
+    run("Initiative.newCombat();"); game.totalKills += 1; run("StoryQuestManager._trackKills();");
+    run("Initiative.newCombat();"); game.totalKills += 1; run("StoryQuestManager._trackKills();");
     ok(game.storyQuests.test2.counters.companionWins === 2, "kills avec compagnon comptés dans le chapitre actif (2)");
     game.activeTab = "combat";
     ok(g.getCombatMissionProgressLabel() === "Test · 2/3", "compteur de mission en combat lu sur le chapitre actif : " + g.getCombatMissionProgressLabel());
@@ -16328,6 +16330,31 @@ console.log("\n[256] v3.457.8 — Maîtrise d'arme retirée (audit P7)");
     ok(game.tapMult === base, "maîtrise d'arme : 1000 kills à l'épée ne changent plus les dégâts (" + base + ")");
   } catch (err) {
     ok(false, "[256] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[257] v3.457.9 — « 3 combats avec Wenna » : des combats, pas des kills (audit P23)");
+(function () {
+  try {
+    game = freshCombat("knight");
+    run("StoryQuestManager.ensure(); CompanionManager.unlock('wenna'); CompanionManager.refreshParty();");
+    var st = game.storyQuests.forest;
+    st.counters.companionWins = 0;
+    ok(run("CombatActors.allies().some(function (a) { return a.companionId === 'wenna'; })"), "Wenna est alliée du combat");
+    // une rencontre de Petite Aventure ne compte pas, même avec Wenna au groupe
+    game.sceneRun = { pa2: true, status: "pa2-node" };
+    run("Initiative.newCombat();"); game.totalKills += 3; run("StoryQuestManager._trackKills();");
+    ok(st.counters.companionWins === 0, "Petite Aventure : la meute ne compte pas");
+    game.sceneRun = null;
+    // un combat réel : plusieurs kills, un seul combat
+    run("Initiative.newCombat();");
+    game.totalKills += 1; run("StoryQuestManager._trackKills();");
+    game.totalKills += 2; run("StoryQuestManager._trackKills();");
+    ok(st.counters.companionWins === 1, "un combat de 3 ennemis = 1 (" + st.counters.companionWins + ")");
+    run("Initiative.newCombat();"); game.totalKills += 1; run("StoryQuestManager._trackKills();");
+    ok(st.counters.companionWins === 2, "combat suivant : 2");
+  } catch (err) {
+    ok(false, "[257] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
 })();
 

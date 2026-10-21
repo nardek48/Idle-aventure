@@ -329,18 +329,18 @@ var StoryQuestManager = {
       st.lastSeenTotalKills = total;
       if (delta <= 0) return; // reset/ascension : on resynchronise sans compter
       if (st.skipped || !self.isChapterOpen(chapterId) || self.isChapterCompleted(chapterId)) return;
-      self._countKills(st, delta);
+      self._countKills(st, delta, chapterId);
     });
   },
 
   /* Compteurs d'un chapitre actif pour `delta` victoires récentes. */
-  _countKills: function (st, delta) {
-    /* v3.268.0 (L-2) : combats gagnés avec un compagnon présent (étape forest_wenna).
-       Compté AVANT les filtres de contexte : ce qu'on découvre est le compagnon, pas un
-       lieu — tout combat de quête compte pareil (v3.293.0 : plus de farm libre). */
-    if (window.CompanionManager && typeof CompanionManager.partyIds === "function"
-      && CompanionManager.partyIds().length > 0) {
-      st.counters.companionWins += delta;
+  _countKills: function (st, delta, chapterId) {
+    /* v3.268.0 (L-2) : combats gagnés avec un compagnon (étape forest_wenna), tout combat de quête.
+       v3.457.9 (audit P23, accord Seb) : un par combat, compagnon allié du combat, Petites Aventures exclues. */
+    if (this._companionFought()) {
+      var key = window.Initiative ? Initiative.combatKey : null;
+      var seen = this._companionCombatKeys || (this._companionCombatKeys = {});
+      if (key === null || seen[chapterId] !== key) { seen[chapterId] = key; st.counters.companionWins += 1; }
     }
     if (game.huntRun && game.huntRun.active) return;
     if (game.dungeonRun && game.dungeonRun.active) {
@@ -352,6 +352,14 @@ var StoryQuestManager = {
         st.counters.coeurKillsMarked += delta;
       }
     }
+  },
+
+  /* v3.457.9 : vrai si un compagnon est allié du combat en cours (une PA se règle sans combat ni compagnon). */
+  _companionFought: function () {
+    var pa = window.Pa2Run && Pa2Run.getRun();
+    if (pa && pa.status !== "completed") return false;
+    if (!window.CombatActors) return false;
+    return CombatActors.allies().some(function (a) { return a && a.companionId; });
   },
 
   _checkNow: function (silent) {
