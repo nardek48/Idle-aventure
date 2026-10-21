@@ -16313,5 +16313,23 @@ console.log("\n[255] v3.457.7 — Feu de camp sans plafond hors ligne (audit P10
   }
 })();
 
+console.log("\n[256] v3.457.8 — Maîtrise d'arme retirée (audit P7)");
+(function () {
+  try {
+    // P7 : un vieux compteur figé n'ajoute plus de dégâts cachés
+    game = freshCombat("knight");
+    giveWeapon();
+    ok(run("getPlayerDamageType()") === "sword", "chevalier armé : type épée");
+    run("StatsSystem.recalcStats();");
+    var base = game.tapMult;
+    game.questProgress = game.questProgress || {};
+    game.questProgress.swordKills = 1000;
+    run("StatsSystem.recalcStats();");
+    ok(game.tapMult === base, "maîtrise d'arme : 1000 kills à l'épée ne changent plus les dégâts (" + base + ")");
+  } catch (err) {
+    ok(false, "[256] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

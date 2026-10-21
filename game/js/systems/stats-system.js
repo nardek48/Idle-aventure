@@ -163,17 +163,7 @@ var StatsSystem = {
     game.goldMult += bestiaryTotal.goldBonus || 0;
     game.essenceGlobalMult += bestiaryTotal.essenceBonus || 0;
 
-    var WEAPON_MASTERY_COEF = 0.0005;
-    var WEAPON_MASTERY_CAP = 0.25;
-    var masteryType = typeof getPlayerDamageType === "function" ? getPlayerDamageType() : null;
-    var masteryProgress = game.questProgress || {};
-    var masteryKillsById = {
-      sword: masteryProgress.swordKills,
-      bow: masteryProgress.bowKills,
-      magic: masteryProgress.magicKills
-    };
-    var masteryKills = masteryType ? Number(masteryKillsById[masteryType] || 0) : 0;
-    game.tapMult += Math.min(WEAPON_MASTERY_CAP, masteryKills * WEAPON_MASTERY_COEF);
+    // v3.457.8 (P7, accord Seb) : maîtrise d'arme retirée — ses compteurs ne montaient plus depuis v3.116.0.
 
     var equipped = game.equipped;
     (typeof EQUIPMENT_SLOTS !== "undefined" ? EQUIPMENT_SLOTS : ["weapon", "armor", "amulet"])
