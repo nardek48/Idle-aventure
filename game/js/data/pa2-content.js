@@ -13,20 +13,20 @@ var PA2_BAG_SIZE = 6;
    destination indiquée. Les rations reprennent le nom de l'Entrepôt (WAREHOUSE_RESOURCES). */
 var PA2_ITEMS = {
   petite_ration: { id: "petite_ration", resource: "petite_ration", size: 1, uses: 1, healPct: 0.35,
-    icon: "images/Icons/resources/petite_ration_icon.png",
+    icon: "images/Icons/resources/petite_ration_icon.webp",
     pro: "Rend 35 % des PV. Cuisinée au camp ou au seuil : 70 % et une blessure en moins." },
   ration: { id: "ration", resource: "ration", size: 2, uses: 1, healPct: 0.60, healsWound: true,
-    icon: "images/Icons/resources/ration_icon.png",
+    icon: "images/Icons/resources/ration_icon.webp",
     pro: "Rend 60 % des PV et efface une blessure.", con: "Encombrante." },
   grande_ration: { id: "grande_ration", resource: "grande_ration", size: 3, uses: 1, healPct: 1.00, healsWound: true,
-    icon: "images/Icons/resources/grande_ration_icon.png",
+    icon: "images/Icons/resources/grande_ration_icon.webp",
     pro: "Rend tous les PV et efface une blessure.", con: "Prend la moitié de la besace." },
   gourde: { id: "gourde", name: "Gourde", size: 1, uses: 2, breath: 25,
     icon: "images/Icons/scene/water_flask.png",
     pro: "Deux gorgées : +25 Souffle chacune." },
   // v3.387.0 (PA2-5, F2) : l'Outre du Désert, prise à l'Entrepôt. Puits sec tenu : +15 ; Outre de cuir (Mémoire) : ×1,5.
   outre: { id: "outre", resource: "outre_pleine", size: 1, uses: 1, breath: 40, worlds: ["desert"], bonusEffect: "outre_plus",
-    icon: "images/Icons/resources/outre_pleine_icon.png",
+    icon: "images/Icons/resources/outre_pleine_icon.webp",
     pro: "Une grande gorgée : +40 Souffle.", con: "Une seule gorgée." },
   // v3.429.0 (Ruines, U-6) : la Craie d'Edda, gratuite. Chaque trait empêche un mur de bouger à portée de vue.
   craie: { id: "craie", name: "Craie", size: 1, uses: 2, worlds: ["ruins"],

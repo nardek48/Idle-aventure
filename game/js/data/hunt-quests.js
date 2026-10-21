@@ -16,37 +16,37 @@ var WAREHOUSE_CAP_PER_LEVEL = 250;
 var RAW_STOCK_BASE = 500;
 
 var WAREHOUSE_RESOURCES = {
-  viande: { id: "viande", name: "Viande", icon: "images/Icons/resources/meat_icon.png", desc: "Butin de chasse, obtenu en Forêt ou au bâtiment Chasse.", sellPrice: 2, tier: "raw" },
-  viande_sechee: { id: "viande_sechee", name: "Viande séchée", icon: "images/Icons/resources/meat_icon.png", desc: "Séchée au Séchoir (atelier de Chasse) à partir de Viande.", sellPrice: 8, tier: "crafted", cap: 999 },
-  ble: { id: "ble", name: "Blé", icon: "images/Icons/resources/wheat_icon.png", desc: "Récolté au bâtiment Champs.", sellPrice: 1, tier: "raw" },
-  bois: { id: "bois", name: "Bois", icon: "images/Icons/resources/wood_icon.png", desc: "Coupé à la Scierie. Sert aux zones de production, aux planches et aux fondations du village.", sellPrice: 1, tier: "raw" },
-  fer: { id: "fer", name: "Fer", icon: "images/Icons/resources/iron_icon.png", desc: "Extrait à la Mine. Sert aux zones de production et aux lingots de la Fonderie.", sellPrice: 3, tier: "raw" },
-  pierre: { id: "pierre", name: "Pierre", icon: "images/Icons/resources/stone_icon.png", desc: "Extraite à la Carrière. Sert aux zones de production, aux sillons irrigués et aux fondations du village.", sellPrice: 1, tier: "raw" },
-  eau: { id: "eau", name: "Eau", icon: "images/Icons/resources/water_icon.png", desc: "Puisée au Puits — ressource la moins chère du village.", sellPrice: 1, tier: "raw" },
+  viande: { id: "viande", name: "Viande", icon: "images/Icons/resources/meat_icon.webp", desc: "Butin de chasse, obtenu en Forêt ou au bâtiment Chasse.", sellPrice: 2, tier: "raw" },
+  viande_sechee: { id: "viande_sechee", name: "Viande séchée", icon: "images/Icons/resources/meat_icon.webp", desc: "Séchée au Séchoir (atelier de Chasse) à partir de Viande.", sellPrice: 8, tier: "crafted", cap: 999 },
+  ble: { id: "ble", name: "Blé", icon: "images/Icons/resources/wheat_icon.webp", desc: "Récolté au bâtiment Champs.", sellPrice: 1, tier: "raw" },
+  bois: { id: "bois", name: "Bois", icon: "images/Icons/resources/wood_icon.webp", desc: "Coupé à la Scierie. Sert aux zones de production, aux planches et aux fondations du village.", sellPrice: 1, tier: "raw" },
+  fer: { id: "fer", name: "Fer", icon: "images/Icons/resources/iron_icon.webp", desc: "Extrait à la Mine. Sert aux zones de production et aux lingots de la Fonderie.", sellPrice: 3, tier: "raw" },
+  pierre: { id: "pierre", name: "Pierre", icon: "images/Icons/resources/stone_icon.webp", desc: "Extraite à la Carrière. Sert aux zones de production, aux sillons irrigués et aux fondations du village.", sellPrice: 1, tier: "raw" },
+  eau: { id: "eau", name: "Eau", icon: "images/Icons/resources/water_icon.webp", desc: "Puisée au Puits — ressource la moins chère du village.", sellPrice: 1, tier: "raw" },
   /* v3.215.0 (lot V-4) : intrant unique de l'Apothicaire. Purifiée au Puits,
      elle donne enfin un débouché à un bâtiment de production qui n'en avait
      qu'un très faible (l'eau brute ne servait qu'au pain et aux petites
      rations). Invendable : c'est un intrant, pas un revenu. */
-  eau_purifiee: { id: "eau_purifiee", name: "Eau purifiée", icon: "images/Icons/resources/water_icon.png", desc: "Eau filtrée à la Station de purification (atelier du Puits). Base de toutes les préparations de l'Apothicaire.", sellPrice: 0, tier: "crafted", cap: 999, sourceHint: "Se filtre à la Station de purification (Puits)" },
-  planche: { id: "planche", name: "Planche", icon: "images/Icons/resources/plank_icon.png", desc: "Fabriquée à partir de Bois.", sellPrice: 7, tier: "crafted", cap: 999 },
-  lingot: { id: "lingot", name: "Lingot", icon: "images/Icons/resources/ingot_icon.png", desc: "Fabriqué à partir de Fer.", sellPrice: 10, tier: "crafted", cap: 999 },
+  eau_purifiee: { id: "eau_purifiee", name: "Eau purifiée", icon: "images/Icons/resources/water_icon.webp", desc: "Eau filtrée à la Station de purification (atelier du Puits). Base de toutes les préparations de l'Apothicaire.", sellPrice: 0, tier: "crafted", cap: 999, sourceHint: "Se filtre à la Station de purification (Puits)" },
+  planche: { id: "planche", name: "Planche", icon: "images/Icons/resources/plank_icon.webp", desc: "Fabriquée à partir de Bois.", sellPrice: 7, tier: "crafted", cap: 999 },
+  lingot: { id: "lingot", name: "Lingot", icon: "images/Icons/resources/ingot_icon.webp", desc: "Fabriqué à partir de Fer.", sellPrice: 10, tier: "crafted", cap: 999 },
   /* v3.330.0 (E3) : Bloc taillé, Maçonnerie de la Carrière (ouverte au Désert). Invendable. */
-  bloc: { id: "bloc", name: "Bloc taillé", icon: "images/Icons/resources/bloc_taille_icon.png", desc: "Pierre équarrie et cerclée de fer, à la Maçonnerie de la Carrière. Sert aux constructions du Désert.", sellPrice: 0, tier: "crafted", cap: 999, worldIndex: 1, worldName: "Désert", sourceHint: "Se taille à la Maçonnerie (Carrière), avec de la Pierre et du Fer" },
+  bloc: { id: "bloc", name: "Bloc taillé", icon: "images/Icons/resources/bloc_taille_icon.webp", desc: "Pierre équarrie et cerclée de fer, à la Maçonnerie de la Carrière. Sert aux constructions du Désert.", sellPrice: 0, tier: "crafted", cap: 999, worldIndex: 1, worldName: "Désert", sourceHint: "Se taille à la Maçonnerie (Carrière), avec de la Pierre et du Fer" },
   /* v3.221.0 (lot V-8) : matériau de reforge. Troisième atelier de tier 2
      activé (Forge de la Mine), et premier débouché du Lingot en dehors de la
      construction. Invendable : c'est un intrant. */
-  acier: { id: "acier", name: "Acier", icon: "images/Icons/resources/acier_icon.png", desc: "Lingot retravaillé à la Forge de la Mine. Sert à reforger l'équipement.", sellPrice: 0, tier: "crafted", cap: 999, sourceHint: "Se forge à la Forge (Mine), à partir de Lingot" },
-  farine: { id: "farine", name: "Farine", icon: "images/Icons/resources/flour_icon.png", desc: "Moulue à partir de Blé.", sellPrice: 7, tier: "crafted", cap: 999 },
+  acier: { id: "acier", name: "Acier", icon: "images/Icons/resources/acier_icon.webp", desc: "Lingot retravaillé à la Forge de la Mine. Sert à reforger l'équipement.", sellPrice: 0, tier: "crafted", cap: 999, sourceHint: "Se forge à la Forge (Mine), à partir de Lingot" },
+  farine: { id: "farine", name: "Farine", icon: "images/Icons/resources/flour_icon.webp", desc: "Moulue à partir de Blé.", sellPrice: 7, tier: "crafted", cap: 999 },
   // v3.137.0 : desc corrigée — la Boulangerie (Champs), pas l'Atelier de Construction, cuit le Pain.
-  pain: { id: "pain", name: "Pain", icon: "images/Icons/resources/bread_icon.png", desc: "Cuit à la Boulangerie (Champs) à partir d'Eau et de Farine.", sellPrice: 19, tier: "crafted", cap: 999 },
-  ration: { id: "ration", name: "Ration moyenne", icon: "images/Icons/resources/ration_icon.png", desc: "Repas au Campement : restaure 60 % des PV max de toute l'équipe. Vivres pour repartir au Désert (chasse, donjon, élite rejouée). Cuisine de camp : 3 Viandes séchées + 1 Pain.", sellPrice: 36, tier: "crafted", cap: 999, healPct: 0.60 },
-  petite_ration: { id: "petite_ration", name: "Petite ration", icon: "images/Icons/resources/petite_ration_icon.png", desc: "Repas au Campement : restaure 35 % des PV max de toute l'équipe. Vivres pour repartir en Forêt (chasse, donjon, élite rejouée). Crafté à la Cuisine de camp à partir de Viande et d'Eau.", sellPrice: 18, tier: "crafted", cap: 999, healPct: 0.35 },
+  pain: { id: "pain", name: "Pain", icon: "images/Icons/resources/bread_icon.webp", desc: "Cuit à la Boulangerie (Champs) à partir d'Eau et de Farine.", sellPrice: 19, tier: "crafted", cap: 999 },
+  ration: { id: "ration", name: "Ration moyenne", icon: "images/Icons/resources/ration_icon.webp", desc: "Repas au Campement : restaure 60 % des PV max de toute l'équipe. Vivres pour repartir au Désert (chasse, donjon, élite rejouée). Cuisine de camp : 3 Viandes séchées + 1 Pain.", sellPrice: 36, tier: "crafted", cap: 999, healPct: 0.60 },
+  petite_ration: { id: "petite_ration", name: "Petite ration", icon: "images/Icons/resources/petite_ration_icon.webp", desc: "Repas au Campement : restaure 35 % des PV max de toute l'équipe. Vivres pour repartir en Forêt (chasse, donjon, élite rejouée). Crafté à la Cuisine de camp à partir de Viande et d'Eau.", sellPrice: 18, tier: "crafted", cap: 999, healPct: 0.35 },
   // v3.137.0 : recette de craft ajoutée (Cuisine de camp : Ration moyenne + 3 Sève d'Aeswyn) — desc mise à jour.
   /* v3.303.0 (W-2, Désert D3) : l'Outre pleine, fabriquée au Réservoir du Puits. Emportée dans
      la préparation d'un parcours du Désert, elle rend du Souffle une fois. Jamais obligatoire.
      v3.304.0 : icône propre (générique en jeu tant qu'elle n'est pas dessinée), plus celle de la gourde. */
-  outre_pleine: { id: "outre_pleine", name: "Outre pleine", icon: "images/Icons/resources/outre_pleine_icon.png", desc: "Se remplit au Réservoir (Puits). Emportée dans un parcours du Désert, elle rend du Souffle une fois.", sellPrice: 20, tier: "crafted", cap: 99 },
-  grande_ration: { id: "grande_ration", name: "Grande ration", icon: "images/Icons/resources/grande_ration_icon.png", desc: "Repas au Campement : restaure 100 % des PV max de toute l'équipe. Cuisine de camp (Chasse) : 1 Ration moyenne + 3 Sève d'Aeswyn → 1.", sellPrice: 60, tier: "crafted", cap: 999, healPct: 1.00 },
+  outre_pleine: { id: "outre_pleine", name: "Outre pleine", icon: "images/Icons/resources/outre_pleine_icon.webp", desc: "Se remplit au Réservoir (Puits). Emportée dans un parcours du Désert, elle rend du Souffle une fois.", sellPrice: 20, tier: "crafted", cap: 99 },
+  grande_ration: { id: "grande_ration", name: "Grande ration", icon: "images/Icons/resources/grande_ration_icon.webp", desc: "Repas au Campement : restaure 100 % des PV max de toute l'équipe. Cuisine de camp (Chasse) : 1 Ration moyenne + 3 Sève d'Aeswyn → 1.", sellPrice: 60, tier: "crafted", cap: 999, healPct: 1.00 },
   // v3.127.0 (Petites Aventures, Lot PA3) : butin exclusif du scene-engine petite_aventure_foret
   // (voir data/scene-templates.js, exclusiveLoot) — nom + icône validés Seb 03/09/2026.
   // Ressource de collection (tier "special", distinct de raw/crafted) : pas de sellPrice
@@ -54,35 +54,35 @@ var WAREHOUSE_RESOURCES = {
   // brutes non plafonnées). v3.137.0 : premier usage de craft (Grande ration) — desc mise à jour.
   // D'autres usages plus marquants (gemmes, enchantement, upgrade d'arme) restent envisagés
   // pour plus tard (décision Seb 04/09/2026, non actée).
-  seve_aeswyn: { id: "seve_aeswyn", name: "Sève d'Aeswyn", icon: "images/Icons/resources/seve_aeswyn_icon.png", desc: "Résine runique rare de la Forêt. Sert à cuisiner la Grande ration et, durcie à la Menuiserie, à bâtir les hauts paliers du village.", sellPrice: 0, tier: "special", sourceHint: "L'Arbre-mère, carte de la Forêt (+2 par victoire, rejouable) · la Tanière du Basilic (+2 par Marque) · Petites Aventures de la Forêt · caravane longue au marché de la Forêt" }, // v3.457.5 (audit C7)
+  seve_aeswyn: { id: "seve_aeswyn", name: "Sève d'Aeswyn", icon: "images/Icons/resources/seve_aeswyn_icon.webp", desc: "Résine runique rare de la Forêt. Sert à cuisiner la Grande ration et, durcie à la Menuiserie, à bâtir les hauts paliers du village.", sellPrice: 0, tier: "special", sourceHint: "L'Arbre-mère, carte de la Forêt (+2 par victoire, rejouable) · la Tanière du Basilic (+2 par Marque) · Petites Aventures de la Forêt · caravane longue au marché de la Forêt" }, // v3.457.5 (audit C7)
   /* v3.304.0 (W-2) : la ressource rare du Désert, butin exclusif de sa Petite Aventure (mêmes
      points de tirage que la Sève). Ses dépenses viendront avec le Tailleur de pierre (W-6). */
-  verre_des_dunes: { id: "verre_des_dunes", name: "Verre des dunes", icon: "images/Icons/resources/verre_des_dunes_icon.png", desc: "Sable fondu par la foudre, lisse comme de l'eau. Trouvé en Petite Aventure du Désert.", sellPrice: 0, tier: "special", sourceHint: "La Cité engloutie (+2 par Marque) · Petites Aventures du Désert · caravane longue au marché du Désert" }, // v3.457.5 (audit C7)
+  verre_des_dunes: { id: "verre_des_dunes", name: "Verre des dunes", icon: "images/Icons/resources/verre_des_dunes_icon.webp", desc: "Sable fondu par la foudre, lisse comme de l'eau. Trouvé en Petite Aventure du Désert.", sellPrice: 0, tier: "special", sourceHint: "La Cité engloutie (+2 par Marque) · Petites Aventures du Désert · caravane longue au marché du Désert" }, // v3.457.5 (audit C7)
   /* v3.312.0 (W-3c, acte II étape 9) : le matériau de monde du Désert, chauffé au Tailleur de
      pierre. Ses dépenses (hauts paliers du village) viennent avec W-6. Icône à générer. */
   /* v3.317.0 (W-4c, acte III §7) : lâchée par le Dard des profondeurs, ingrédient des reforges
      5 et 6 — la bande que la Forge 3 ouvre. Le Verre trempé CONSTRUIT la Forge, la Chitine
      NOURRIT la reforge : deux matériaux du Désert, deux rôles. */
-  chitine_profondeurs: { id: "chitine_profondeurs", name: "Chitine des profondeurs", icon: "images/Icons/resources/chitine_profondeurs_icon.png", desc: "Une plaque arrachée au dard de la bête. Elle ne chauffe pas : elle boit le feu. On s'en sert pour les dernières reforges.", sellPrice: 0, tier: "crafted", cap: 999, worldIndex: 1, worldName: "Désert", sourceHint: "Le Dard des profondeurs (la bête sous la dune, carte du Désert)" },
+  chitine_profondeurs: { id: "chitine_profondeurs", name: "Chitine des profondeurs", icon: "images/Icons/resources/chitine_profondeurs_icon.webp", desc: "Une plaque arrachée au dard de la bête. Elle ne chauffe pas : elle boit le feu. On s'en sert pour les dernières reforges.", sellPrice: 0, tier: "crafted", cap: 999, worldIndex: 1, worldName: "Désert", sourceHint: "Le Dard des profondeurs (la bête sous la dune, carte du Désert)" },
 
   /* v3.428.0 (Ruines, RU7) : la pierre qui bouge d'un Cycle à l'autre. Matériau brut du monde 3 :
      marché de la caravane (acte I), puis chantier errant, Petite Aventure et donjon (acte II).
      Sa forme raffinée, la Clé de voûte, viendra avec la Forge 4 (acte III). Icône à générer. */
-  pierre_errante: { id: "pierre_errante", name: "Pierre errante", icon: "images/Icons/resources/pierre_errante_icon.png", desc: "Une pierre taillée qui n'était pas là hier. Elle vient des Ruines, où rien ne reste en place.", sellPrice: 0, tier: "special", worldIndex: 2, worldName: "Ruines anciennes", sourceHint: "Le Marché des Ruines (caravane de la Halle marchande)" },
+  pierre_errante: { id: "pierre_errante", name: "Pierre errante", icon: "images/Icons/resources/pierre_errante_icon.webp", desc: "Une pierre taillée qui n'était pas là hier. Elle vient des Ruines, où rien ne reste en place.", sellPrice: 0, tier: "special", worldIndex: 2, worldName: "Ruines anciennes", sourceHint: "Le Marché des Ruines (caravane de la Halle marchande)" },
   /* v3.431.0 (Ruines, acte III §3, RU7) : la forme raffinée de la Pierre errante, taillée au Tailleur
      de pierre. Elle CONSTRUIT la Forge 4 et NOURRIT les reforges 7 et 8. Icône à générer. */
-  cle_de_voute: { id: "cle_de_voute", name: "Clé de voûte", icon: "images/Icons/resources/cle_de_voute_icon.png", desc: "Une pierre taillée en coin, plus large en haut qu'en bas. Elle tient une arche à elle seule. Matériau de la Forge 4 et des dernières reforges.", sellPrice: 0, tier: "crafted", cap: 999, worldIndex: 2, worldName: "Ruines anciennes", sourceHint: "Se taille au Tailleur de pierre (Carrière), à partir de Pierres errantes et de Pierre" },
+  cle_de_voute: { id: "cle_de_voute", name: "Clé de voûte", icon: "images/Icons/resources/cle_de_voute_icon.webp", desc: "Une pierre taillée en coin, plus large en haut qu'en bas. Elle tient une arche à elle seule. Matériau de la Forge 4 et des dernières reforges.", sellPrice: 0, tier: "crafted", cap: 999, worldIndex: 2, worldName: "Ruines anciennes", sourceHint: "Se taille au Tailleur de pierre (Carrière), à partir de Pierres errantes et de Pierre" },
   /* v3.450.0 (Crypte, CR8, lot C-0) : la cire des morts. Brute : Marché de la Crypte (acte I), puis
      gisants, Petite Aventure et Ossuaire. Raffinée : Forge du palier Épique et dernières reforges (acte III). Icônes à générer. */
-  cire_sepulcre: { id: "cire_sepulcre", name: "Cire de sépulcre", icon: "images/Icons/resources/cire_sepulcre_icon.png", desc: "Un pain de cire blanche, encore tiède. On le trouve là où on a laissé du pain aux morts.", sellPrice: 0, tier: "special", worldIndex: 3, worldName: "Crypte des dormeurs", sourceHint: "Le Marché de la Crypte (caravane de la Halle marchande)" },
-  cire_consacree: { id: "cire_consacree", name: "Cire consacrée", icon: "images/Icons/resources/cire_consacree_icon.png", desc: "Cire de sépulcre fondue et coulée en barres. Elle ne coule plus, même au feu. Matériau du palier Épique de la Forge et des dernières reforges.", sellPrice: 0, tier: "crafted", cap: 999, worldIndex: 3, worldName: "Crypte des dormeurs", sourceHint: "Se coule à partir de Cire de sépulcre (recette à l'acte III de la Crypte)" },
-  verre_trempe: { id: "verre_trempe", name: "Verre trempé", icon: "images/Icons/resources/verre_trempe_icon.png", desc: "Verre des dunes chauffé deux fois au Tailleur de pierre. Il coupe le fer. Matériau des hauts paliers du village, au Désert.", sellPrice: 0, tier: "crafted", cap: 999, worldIndex: 1, worldName: "Désert", sourceHint: "Verre des dunes et Pierre chauffés au Tailleur de pierre (Carrière)" },
+  cire_sepulcre: { id: "cire_sepulcre", name: "Cire de sépulcre", icon: "images/Icons/resources/cire_sepulcre_icon.webp", desc: "Un pain de cire blanche, encore tiède. On le trouve là où on a laissé du pain aux morts.", sellPrice: 0, tier: "special", worldIndex: 3, worldName: "Crypte des dormeurs", sourceHint: "Le Marché de la Crypte (caravane de la Halle marchande)" },
+  cire_consacree: { id: "cire_consacree", name: "Cire consacrée", icon: "images/Icons/resources/cire_consacree_icon.webp", desc: "Cire de sépulcre fondue et coulée en barres. Elle ne coule plus, même au feu. Matériau du palier Épique de la Forge et des dernières reforges.", sellPrice: 0, tier: "crafted", cap: 999, worldIndex: 3, worldName: "Crypte des dormeurs", sourceHint: "Se coule à partir de Cire de sépulcre (recette à l'acte III de la Crypte)" },
+  verre_trempe: { id: "verre_trempe", name: "Verre trempé", icon: "images/Icons/resources/verre_trempe_icon.webp", desc: "Verre des dunes chauffé deux fois au Tailleur de pierre. Il coupe le fer. Matériau des hauts paliers du village, au Désert.", sellPrice: 0, tier: "crafted", cap: 999, worldIndex: 1, worldName: "Désert", sourceHint: "Verre des dunes et Pierre chauffés au Tailleur de pierre (Carrière)" },
   /* v3.214.0 (lot V-3) : matériau de construction de la Forêt. Premier des six
      matériaux de monde — c'est lui qui porte le plafond de construction, à la
      place d'un verrou abstrait : un palier qui le demande est de fait
      injoignable avant d'avoir atteint son monde, et le joueur lit une ligne de
      coût avec l'endroit où la trouver. Invendable : ce n'est pas un revenu. */
-  resine_durcie: { id: "resine_durcie", name: "Résine durcie", icon: "images/Icons/resources/resine_durcie_icon.png", desc: "Sève d'Aeswyn durcie à la Menuiserie. Matériau de construction des hauts paliers du village, en Forêt enchantée.", sellPrice: 0, tier: "crafted", cap: 999, worldIndex: 0, worldName: "Forêt enchantée", sourceHint: "Sève d'Aeswyn durcie à la Menuiserie (Scierie)" }
+  resine_durcie: { id: "resine_durcie", name: "Résine durcie", icon: "images/Icons/resources/resine_durcie_icon.webp", desc: "Sève d'Aeswyn durcie à la Menuiserie. Matériau de construction des hauts paliers du village, en Forêt enchantée.", sellPrice: 0, tier: "crafted", cap: 999, worldIndex: 0, worldName: "Forêt enchantée", sourceHint: "Sève d'Aeswyn durcie à la Menuiserie (Scierie)" }
 };
 
 var HUNT_QUESTS = {

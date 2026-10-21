@@ -9,7 +9,7 @@
    - H5 : quelques cachés, jamais ratables.
    Champs : id, category, name, desc, icon, target, track() (progression lue dans l'état),
    reward { gold }, hidden + hint, fresh (compteur neuf, sans rattrapage), title.
-   Icônes des nouveaux : images/Icons/achivement/<id>.png, à générer (générique d'ici là).
+   Icônes des nouveaux : images/Icons/achivement/<id>.webp, à générer (générique d'ici là).
    Textes PROVISOIRES. Agrégation : systems/achievement-system.js. */
 
 function achievementBestiaryPercent() {
@@ -237,25 +237,25 @@ var ACHIEVEMENTS_DB = [
 
   /* ===================== Collection (H2 : identifiants gardés) ===================== */
   { id: "ach_ascend_1", category: "collection", name: "Premier souvenir", desc: "Atteindre le niveau de Mémoire 1.",
-    icon: ACH_ICON + "ach_ascend_1.png", target: 1, track: function () { return window.MemoryManager ? MemoryManager.getLevel() : 0; }, reward: { gold: 150 } },
+    icon: ACH_ICON + "ach_ascend_1.webp", target: 1, track: function () { return window.MemoryManager ? MemoryManager.getLevel() : 0; }, reward: { gold: 150 } },
   { id: "ach_ascend_2", category: "collection", name: "Ce que la Forêt a retenu", desc: "Atteindre le niveau de Mémoire 4.",
-    icon: ACH_ICON + "ach_ascend_2.png", target: 4, track: function () { return window.MemoryManager ? MemoryManager.getLevel() : 0; }, reward: { gold: 300 } },
+    icon: ACH_ICON + "ach_ascend_2.webp", target: 4, track: function () { return window.MemoryManager ? MemoryManager.getLevel() : 0; }, reward: { gold: 300 } },
   { id: "ach_ascend_3", category: "collection", name: "Au-delà des mondes", desc: "Atteindre le niveau de Mémoire 8.",
-    icon: ACH_ICON + "ach_ascend_3.png", target: 8, track: function () { return window.MemoryManager ? MemoryManager.getLevel() : 0; }, reward: { gold: 600 } },
+    icon: ACH_ICON + "ach_ascend_3.webp", target: 8, track: function () { return window.MemoryManager ? MemoryManager.getLevel() : 0; }, reward: { gold: 600 } },
   { id: "ach_bestiary_25", category: "collection", name: "Naturaliste amateur", desc: "Rencontrer 25 % des créatures du Bestiaire.",
-    icon: ACH_ICON + "ach_bestiary_25.png", target: 25, track: achievementBestiaryPercent, reward: { gold: 150 } },
+    icon: ACH_ICON + "ach_bestiary_25.webp", target: 25, track: achievementBestiaryPercent, reward: { gold: 150 } },
   { id: "ach_bestiary_50", category: "collection", name: "Naturaliste confirmé", desc: "Rencontrer 50 % des créatures du Bestiaire.",
-    icon: ACH_ICON + "ach_bestiary_50.png", target: 50, track: achievementBestiaryPercent, reward: { gold: 300 } },
+    icon: ACH_ICON + "ach_bestiary_50.webp", target: 50, track: achievementBestiaryPercent, reward: { gold: 300 } },
   { id: "ach_bestiary_100", category: "collection", name: "Naturaliste", desc: "Rencontrer toutes les créatures du Bestiaire.", title: "Naturaliste",
-    icon: ACH_ICON + "ach_bestiary_100.png", target: 100, track: achievementBestiaryPercent, reward: { gold: 600 } },
+    icon: ACH_ICON + "ach_bestiary_100.webp", target: 100, track: achievementBestiaryPercent, reward: { gold: 600 } },
   { id: "ach_equip_epic", category: "collection", name: "Premier éclat", desc: "Posséder un objet épique.",
-    icon: ACH_ICON + "ach_equip_epic.png", target: 1, track: function () { return achievementHasRarityOwned("epic") ? 1 : 0; }, reward: { gold: 150 } },
+    icon: ACH_ICON + "ach_equip_epic.webp", target: 1, track: function () { return achievementHasRarityOwned("epic") ? 1 : 0; }, reward: { gold: 150 } },
   { id: "ach_equip_legendary", category: "collection", name: "Éclat légendaire", desc: "Posséder un objet légendaire.",
-    icon: ACH_ICON + "ach_equip_legendary.png", target: 1, track: function () { return achievementHasRarityOwned("legendary") ? 1 : 0; }, reward: { gold: 300 } }
+    icon: ACH_ICON + "ach_equip_legendary.webp", target: 1, track: function () { return achievementHasRarityOwned("legendary") ? 1 : 0; }, reward: { gold: 300 } }
 ];
 
-/* Icône par défaut : images/Icons/achivement/<id>.png (à générer). */
-ACHIEVEMENTS_DB.forEach(function (a) { if (!a.icon) a.icon = ACH_ICON + a.id + ".png"; });
+/* Icône par défaut : images/Icons/achivement/<id>.webp (à générer). */
+ACHIEVEMENTS_DB.forEach(function (a) { if (!a.icon) a.icon = ACH_ICON + a.id + ".webp"; }); // v3.459.1 (audit O4) : WebP
 
 /* H1, H4 : catégories. `world` = index du monde (paliers, titre au palier or). */
 var ACHIEVEMENT_CATEGORIES = [

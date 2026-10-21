@@ -34,7 +34,7 @@ fichiers.forEach(function (f) {
 });
 
 /* v3.457.1 : seconde passe — les données chargées (js/data) livrent les chemins construits au
-   chargement (icônes des hauts faits : ACH_ICON + id + ".png"), que la lecture du texte ne voit pas. */
+   chargement (icônes des hauts faits : ACH_ICON + id + ".webp"), que la lecture du texte ne voit pas. */
 (function () {
   var vm = require("vm"), sb = { console: { log: function () {}, warn: function () {}, error: function () {} }, Math: Math, JSON: JSON, Date: Date,
     _t: function (x) { return x; }, _td: function (x) { return x; }, _tn: function (n, a) { return a; }, game: {}, localStorage: { getItem: function () { return null; }, setItem: function () {} } };

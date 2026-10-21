@@ -163,9 +163,9 @@ function buildWarehouseFilterRowHTML(keys) {
   function count(fl) { return keys.filter(function (k) { return warehousePassesFilter(k, fl, hidden) && (zeros || WarehouseManager.getAmount(k) > 0); }).length; }
   var D = [
     ["all", _t("Tout"), "images/Icons/system/warehouse_supplies.png"],
-    ["raw", _t("Matières brutes"), "images/Icons/resources/wood_icon.png"],
-    ["crafted", _t("Fabriqué"), "images/Icons/resources/plank_icon.png"],
-    ["special", _t("Rare"), "images/Icons/resources/seve_aeswyn_icon.png"],
+    ["raw", _t("Matières brutes"), "images/Icons/resources/wood_icon.webp"],
+    ["crafted", _t("Fabriqué"), "images/Icons/resources/plank_icon.webp"],
+    ["special", _t("Rare"), "images/Icons/resources/seve_aeswyn_icon.webp"],
     "-",
     ["full", _t("Pleins"), "images/Icons/system/warning.png", true],
     ["run", _t("En fabrication"), "images/Icons/system/auto_repeat.png"],

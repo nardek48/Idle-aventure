@@ -410,7 +410,7 @@ function buildLivingMapHTML(mapId) {
     h += '<button type="button" class="' + cls + '" style="left:' + d.x + '%;top:' + d.y + '%;" onclick="event.stopPropagation();lmxTapSector(\'' + d.id + '\')">';
     h += '<span class="lm-node-disc">' + (s.state === "voile" ? "?" : lmRingDots(d.ring)) + '</span>'; // v3.458.2 (audit C10) : l'anneau, pas un numéro
     h += '<span class="lm-node-name">' + esc(_td(d.name)) + '</span>';
-    if (chantier) h += '<img class="lm-node-chantier" src="images/Icons/resources/pierre_errante_icon.png" alt="">';
+    if (chantier) h += '<img class="lm-node-chantier" src="images/Icons/resources/pierre_errante_icon.webp" alt="">';
     h += '</button>';
   });
 
@@ -426,7 +426,7 @@ function buildLivingMapHTML(mapId) {
   h += '<button class="lmx-btn" type="button" aria-label="' + _t("Carte du monde") + '" onclick="closeLivingMap()">‹</button>';
   h += '<div class="lmx-pills">';
   h += '<span class="lmx-pill is-title">' + _t("{a}/{b} libérés", { a: sum.libere, b: sum.total }) + (sum.recouvert ? ' <small>· ' + _t("{n} repris", { n: sum.recouvert }) + '</small>' : '') + '</span>';
-  h += '<span class="lmx-pill"><img class=ico-inline src=' + esc((rewardDef && rewardDef.icon) || "images/Icons/resources/seve_aeswyn_icon.png") + ' alt=""> ' + seve + '</span>';
+  h += '<span class="lmx-pill"><img class=ico-inline src=' + esc((rewardDef && rewardDef.icon) || "images/Icons/resources/seve_aeswyn_icon.webp") + ' alt=""> ' + seve + '</span>';
   h += '<span class="lmx-pill is-pal">' + _t("Palissade {n}", { n: pal }) + '</span>';
   h += '</div>';
   if (worldIndex >= 0) h += '<button class="lmx-btn is-info" type="button" aria-label="' + _t("Le monde") + '" onclick="openWorldPopup(' + worldIndex + ')">i</button>';

@@ -1385,9 +1385,9 @@ g.closeGenericTutorialModal("village_production");
 ok(game.genericTutorialsSeen.village_production === true, "fermeture : marqué comme vu");
 
 console.log("\n[64] Icônes de rations dédiées (3.107.11) : les 3 fournies");
-ok(g.WAREHOUSE_RESOURCES.ration.icon === "images/Icons/resources/ration_icon.png", "Ration moyenne : icône dédiée");
-ok(g.WAREHOUSE_RESOURCES.grande_ration.icon === "images/Icons/resources/grande_ration_icon.png", "Grande ration : icône dédiée");
-ok(g.WAREHOUSE_RESOURCES.petite_ration.icon === "images/Icons/resources/petite_ration_icon.png", "Petite ration : icône dédiée (fournie, v3.107.11)");
+ok(g.WAREHOUSE_RESOURCES.ration.icon === "images/Icons/resources/ration_icon.webp", "Ration moyenne : icône dédiée");
+ok(g.WAREHOUSE_RESOURCES.grande_ration.icon === "images/Icons/resources/grande_ration_icon.webp", "Grande ration : icône dédiée");
+ok(g.WAREHOUSE_RESOURCES.petite_ration.icon === "images/Icons/resources/petite_ration_icon.webp", "Petite ration : icône dédiée (fournie, v3.107.11)");
 var rationIcons = [g.WAREHOUSE_RESOURCES.petite_ration.icon, g.WAREHOUSE_RESOURCES.ration.icon, g.WAREHOUSE_RESOURCES.grande_ration.icon];
 ok(new Set(rationIcons).size === 3, "les 3 rations ont bien 3 chemins d'icône tous distincts (aucun partage)");
 
@@ -5176,9 +5176,9 @@ console.log("\n[44] Chasse à la Sève");
   console.log("  · icônes partagées par plusieurs ressources : "
     + (partagees.length ? partagees.map(function (p) { return doublons[p].join("/"); }).join(", ") : "aucune"));
 
-  ok(db.acier && db.acier.icon === "images/Icons/resources/acier_icon.png",
+  ok(db.acier && db.acier.icon === "images/Icons/resources/acier_icon.webp",
     "l'Acier a son icône propre");
-  ok(db.resine_durcie && db.resine_durcie.icon === "images/Icons/resources/resine_durcie_icon.png",
+  ok(db.resine_durcie && db.resine_durcie.icon === "images/Icons/resources/resine_durcie_icon.webp",
     "la Résine durcie a son icône propre");
 })();
 

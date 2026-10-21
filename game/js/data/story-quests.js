@@ -955,7 +955,7 @@ STORY_QUESTS.desert = {
         title: "L'outre",
         points: [
           { icon: "images/Icons/workshops/water_reservoir.png", text: "Le Réservoir est un atelier du Puits, au Village. Il transforme ton eau en Outres pleines." },
-          { icon: "images/Icons/resources/outre_pleine_icon.png", text: "Avant une Petite aventure du Désert, mets une Outre dans ta besace : elle te rendra du Souffle quand tu en manques." },
+          { icon: "images/Icons/resources/outre_pleine_icon.webp", text: "Avant une Petite aventure du Désert, mets une Outre dans ta besace : elle te rendra du Souffle quand tu en manques." },
           { icon: "images/Icons/scene/journey_long.png", text: "Au Désert, chaque pas coûte du Souffle et la gourde n'a qu'une gorgée. Sans Outre, tu passes quand même, mais tu arrives à sec." }
         ]
       },
@@ -990,7 +990,7 @@ STORY_QUESTS.desert = {
       linkTo: { section: "map", cardId: "livingmap_desert" },
       tutorial: {
         tab: "map",
-        icon: "images/Icons/resources/verre_des_dunes_icon.png",
+        icon: "images/Icons/resources/verre_des_dunes_icon.webp",
         title: "L'Ensablement",
         points: [
           { icon: "images/Icons/scene/node_obstacle.png", text: "La carte du Désert fonctionne comme celle de la Forêt. Tu libères un secteur en terminant son parcours." },
@@ -1247,8 +1247,8 @@ STORY_QUESTS.desert = {
         title: "Le Tailleur de pierre",
         points: [
           { icon: "images/Icons/workshops/stonemason.png", text: "À la Carrière, le Tailleur de pierre chauffe le Verre des dunes avec de la Pierre. Il en sort du Verre trempé." },
-          { icon: "images/Icons/resources/verre_des_dunes_icon.png", text: "Le Verre des dunes se trouve en Petite Aventure du Désert, et à la première libération des secteurs de la carte." },
-          { icon: "images/Icons/resources/verre_trempe_icon.png", text: "Le Verre trempé servira aux hauts paliers des bâtiments d'Aeswyn." },
+          { icon: "images/Icons/resources/verre_des_dunes_icon.webp", text: "Le Verre des dunes se trouve en Petite Aventure du Désert, et à la première libération des secteurs de la carte." },
+          { icon: "images/Icons/resources/verre_trempe_icon.webp", text: "Le Verre trempé servira aux hauts paliers des bâtiments d'Aeswyn." },
           { icon: "images/Icons/scene/node_discovery.png", text: "Libérer la verrerie ensevelie fait travailler le Tailleur 10 % plus vite." }
         ]
       },
@@ -1488,11 +1488,11 @@ STORY_QUESTS.desert = {
       linkTo: { section: "map", cardId: "livingmap_desert:bete_dune" },
       tutorial: {
         tab: "map",
-        icon: "images/Icons/resources/chitine_profondeurs_icon.png",
+        icon: "images/Icons/resources/chitine_profondeurs_icon.webp",
         title: "Une bête qui revient",
         points: [
           { icon: "images/Icons/scene/node_encounter.png", text: "Cette bête revient. Tu peux la combattre à nouveau, et son butin avec elle." },
-          { icon: "images/Icons/resources/chitine_profondeurs_icon.png", text: "Chaque victoire donne une Chitine des profondeurs : c'est ce qu'exigent les reforges 5 et 6, ouvertes par la Forge 3." },
+          { icon: "images/Icons/resources/chitine_profondeurs_icon.webp", text: "Chaque victoire donne une Chitine des profondeurs : c'est ce qu'exigent les reforges 5 et 6, ouvertes par la Forge 3." },
           { icon: "images/Icons/combat_stats/stat_attack.png", text: "Chaque victoire du jour rend la suivante plus dure. Le lendemain, elle repart à sa force de base." }
         ]
       },
@@ -1894,11 +1894,11 @@ STORY_QUESTS.ruins = {
       },
       tutorial: {
         tab: "village",
-        icon: "images/Icons/resources/pierre_errante_icon.png",
+        icon: "images/Icons/resources/pierre_errante_icon.webp",
         title: "Le Marché des Ruines",
         points: [
           { icon: "images/Icons/village_buildings/merchant_hall.png", text: "La caravane de la Halle marchande peut maintenant partir vers le Marché des Ruines. Tu choisis le marché au départ, dans Campement › Expéditions." },
-          { icon: "images/Icons/resources/pierre_errante_icon.png", text: "Elle en rapporte de l'or et de la Pierre errante, la pierre des Ruines." }
+          { icon: "images/Icons/resources/pierre_errante_icon.webp", text: "Elle en rapporte de l'or et de la Pierre errante, la pierre des Ruines." }
         ]
       },
       check: function () { return storyDesertFlag("ruinsMarketDone"); },
@@ -1986,7 +1986,7 @@ STORY_QUESTS.ruins = {
         points: [
           { icon: "images/Icons/scene/node_obstacle.png", text: "Aux Ruines, la nuit, les passages changent : un chemin devant toi peut se fermer, et un autre s'ouvrir." },
           { icon: "images/Icons/scene/items/item_chalk.png", text: "La Craie d'Edda se met dans ta besace sans rien coûter : chaque trait empêche un mur de bouger près de toi." },
-          { icon: "images/Icons/resources/pierre_errante_icon.png", text: "La Pierre errante se trouve dans les trouvailles et aux destinations. Elle n'est jamais perdue." }
+          { icon: "images/Icons/resources/pierre_errante_icon.webp", text: "La Pierre errante se trouve dans les trouvailles et aux destinations. Elle n'est jamais perdue." }
         ]
       },
       check: function () { return storyDesertFlag("ruinsPaCompleted"); },
@@ -2015,12 +2015,12 @@ STORY_QUESTS.ruins = {
       linkTo: { section: "map", cardId: "livingmap_ruins" },
       tutorial: {
         tab: "map",
-        icon: "images/Icons/resources/pierre_errante_icon.png",
+        icon: "images/Icons/resources/pierre_errante_icon.webp",
         title: "Le chantier errant",
         points: [
           { icon: "images/Icons/scene/node_obstacle.png", text: "La carte des Ruines fonctionne comme celle du Désert : tu libères un quartier en terminant sa Petite Aventure." },
           { icon: "images/Icons/scene/node_unknown.png", text: "Chaque jour, la cité rebâtit un quartier : le chantier. Il change de place à minuit, et même un quartier libéré peut redevenir chantier." },
-          { icon: "images/Icons/resources/pierre_errante_icon.png", text: "Libérer le chantier du jour rapporte des Pierres errantes. Un échec sur un quartier déjà libéré le fait retomber : c'est l'Éboulement." },
+          { icon: "images/Icons/resources/pierre_errante_icon.webp", text: "Libérer le chantier du jour rapporte des Pierres errantes. Un échec sur un quartier déjà libéré le fait retomber : c'est l'Éboulement." },
           { icon: "images/Icons/scene/protective_amulet.png", text: "La Palissade d'Aeswyn freine l'Éboulement." }
         ]
       },
@@ -2233,11 +2233,11 @@ STORY_QUESTS.ruins = {
       linkTo: { tab: "equip" },
       tutorial: {
         tab: "equip",
-        icon: "images/Icons/resources/cle_de_voute_icon.png",
+        icon: "images/Icons/resources/cle_de_voute_icon.webp",
         title: "Le palier Rare",
         points: [
           { icon: "images/Icons/equipment_slots/slot_weapon.png", text: "Pour descendre au bout du Sanctuaire, quatre emplacements sur sept doivent être Rares. L'arme du Fleuve compte." },
-          { icon: "images/Icons/resources/cle_de_voute_icon.png", text: "La Clé de voûte se taille au Tailleur de pierre, avec des Pierres errantes. Elle construit la Forge 4." },
+          { icon: "images/Icons/resources/cle_de_voute_icon.webp", text: "La Clé de voûte se taille au Tailleur de pierre, avec des Pierres errantes. Elle construit la Forge 4." },
           { icon: "images/Icons/workshops/smithing_station.png", text: "La Forge 4 ouvre la reforge jusqu'au niveau 8. Les derniers niveaux demandent aussi des Clés de voûte." },
           { icon: "images/Icons/dungeon/dungeon_weapon.png", text: "Les pièces Rares viennent du Sanctuaire, de l'échoppe et des élites. Les étapes 11 et 12 t'en ont donné une chacune." }
         ]
@@ -2365,7 +2365,7 @@ STORY_QUESTS.ruins = {
         title: "Le Cœur",
         points: [
           { icon: "images/Icons/scene/node_unknown.png", text: "Un quartier nouveau est apparu au centre de la carte des Ruines : le Cœur." },
-          { icon: "images/Icons/resources/pierre_errante_icon.png", text: "Il s'ouvre quand les trois quartiers qui le touchent sont libérés. Le chantier errant ne s'y pose pas." }
+          { icon: "images/Icons/resources/pierre_errante_icon.webp", text: "Il s'ouvre quand les trois quartiers qui le touchent sont libérés. Le chantier errant ne s'y pose pas." }
         ]
       },
       check: function () { return storyCoeurVoisins() >= 3; },
@@ -2719,11 +2719,11 @@ STORY_QUESTS.crypt = {
       },
       tutorial: {
         tab: "village",
-        icon: "images/Icons/resources/cire_sepulcre_icon.png",
+        icon: "images/Icons/resources/cire_sepulcre_icon.webp",
         title: "Le Marché de la Crypte",
         points: [
           { icon: "images/Icons/village_buildings/merchant_hall.png", text: "La caravane de la Halle marchande peut maintenant partir vers le Marché de la Crypte. Tu choisis le marché au départ, dans Campement › Expéditions." },
-          { icon: "images/Icons/resources/cire_sepulcre_icon.png", text: "Elle en rapporte de l'or et de la Cire de sépulcre." }
+          { icon: "images/Icons/resources/cire_sepulcre_icon.webp", text: "Elle en rapporte de l'or et de la Cire de sépulcre." }
         ]
       },
       check: function () { return storyDesertFlag("cryptMarketDone"); },
@@ -2807,7 +2807,7 @@ STORY_QUESTS.crypt = {
           { icon: "images/Icons/scene/node_unknown.png", text: "Dans la Crypte, la Petite Aventure se fait dans le noir : tu ne vois que la rangée devant toi." },
           { icon: "images/Icons/scene/items/item_lantern.png", text: "La Lanterne de Sarkel se met dans ta besace sans rien coûter. Allumée, elle montre deux rangées de plus pendant quelques pas." },
           { icon: "images/Icons/combat_status/asleep.png", text: "Le gardien dort. Fais le tour, ou réveille-le pour son coffre : plus dur, plus riche." },
-          { icon: "images/Icons/resources/cire_sepulcre_icon.png", text: "La Cire de sépulcre se trouve dans les trouvailles et aux destinations. Elle n'est jamais perdue." }
+          { icon: "images/Icons/resources/cire_sepulcre_icon.webp", text: "La Cire de sépulcre se trouve dans les trouvailles et aux destinations. Elle n'est jamais perdue." }
         ]
       },
       check: function () { return storyDesertFlag("cryptPaCompleted"); },
@@ -2839,13 +2839,13 @@ STORY_QUESTS.crypt = {
       linkTo: { section: "map", cardId: "livingmap_crypt" },
       tutorial: {
         tab: "map",
-        icon: "images/Icons/resources/cire_sepulcre_icon.png",
+        icon: "images/Icons/resources/cire_sepulcre_icon.webp",
         title: "Les gisants",
         points: [
           { icon: "images/Icons/scene/node_obstacle.png", text: "La carte de la Crypte fonctionne comme celle des Ruines : tu libères un couloir en terminant sa Petite Aventure." },
           { icon: "images/Icons/combat_status/asleep.png", text: "Chaque couloir a ses gisants. Avant de partir, tu choisis : les laisser (plus facile, rapporte moins) ou les réveiller (plus dur, plus de Cire de sépulcre)." },
           { icon: "images/Icons/scene/node_unknown.png", text: "Un échec réveille le couloir : c'est Le réveil. Il reste hostile, et plus dur, jusqu'au lendemain." },
-          { icon: "images/Icons/resources/cire_sepulcre_icon.png", text: "Le Marché de la Crypte est sur la carte, à côté de la Veillée." }
+          { icon: "images/Icons/resources/cire_sepulcre_icon.webp", text: "Le Marché de la Crypte est sur la carte, à côté de la Veillée." }
         ]
       },
       check: function () { return storyCryptSectorsFreed() >= 2; },
@@ -2919,7 +2919,7 @@ STORY_QUESTS.crypt = {
         points: [
           { icon: "images/Icons/equipment_slots/slot_weapon.png", text: "Pour aller plus loin dans la Crypte, tes sept emplacements doivent être au moins Rares. L'arme du Cœur, Épique, compte." },
           { icon: "images/Icons/dungeon/dungeon_weapon.png", text: "Les étapes de l'acte t'en ont donné trois. Les autres : l'échoppe, le Sanctuaire scellé, les élites des Ruines." },
-          { icon: "images/Icons/resources/cle_de_voute_icon.png", text: "L'arme se reforge jusqu'au niveau 8 à la Forge 4, avec des Clés de voûte." }
+          { icon: "images/Icons/resources/cle_de_voute_icon.webp", text: "L'arme se reforge jusqu'au niveau 8 à la Forge 4, avec des Clés de voûte." }
         ]
       },
       check: function (game) {
@@ -3053,11 +3053,11 @@ STORY_QUESTS.crypt = {
       linkTo: { tab: "equip" },
       tutorial: {
         tab: "equip",
-        icon: "images/Icons/resources/cire_consacree_icon.png",
+        icon: "images/Icons/resources/cire_consacree_icon.webp",
         title: "Le palier Épique",
         points: [
           { icon: "images/Icons/equipment_slots/slot_weapon.png", text: "Pour aller au bout de l'Ossuaire, il faut trois pièces Épiques. L'arme du Cœur en est une ; les étapes 11 et 12 t'en ont donné une chacune. La quête d'élite « La couronne de trop » en donne une de plus : un casque." },
-          { icon: "images/Icons/resources/cire_consacree_icon.png", text: "La Cire consacrée se coule à la Fonderie, avec de la Cire de sépulcre. Elle construit la Forge 5." },
+          { icon: "images/Icons/resources/cire_consacree_icon.webp", text: "La Cire consacrée se coule à la Fonderie, avec de la Cire de sépulcre. Elle construit la Forge 5." },
           { icon: "images/Icons/workshops/smithing_station.png", text: "La Forge 5 ouvre les reforges 9 et 10. Elles demandent aussi de la Cire consacrée." }
         ]
       },
