@@ -58,6 +58,9 @@ var JSON_OUT = ARGS.indexOf("--json") >= 0 ? ARGS[ARGS.indexOf("--json") + 1] : 
    talents (celle de plafond-bench.js) et jusqu'à trois règles, chacune tenue par l'action que
    l'éditeur marque comme contre (⚡). Sans l'option, rien ne change : les mesures restent comparables. */
 var AVISE = ARGS.indexOf("--avise") >= 0;
+/* v3.459.10 (audit I2) : --apres <h> = après crypte_20, h heures simulées d'« après-Histoire » à l'Enchanteresse :
+   chantier, puis Sève de la carte et relances des pièces Épiques ou mieux, tant que l'or suit. */
+var APRES_H = ARGS.indexOf("--apres") >= 0 ? Number(ARGS[ARGS.indexOf("--apres") + 1]) || 0 : 0;
 /* v3.428.0 : --jusqua <étape> arrête la campagne à l'entrée de cette étape (sauvegarde de test). */
 var JUSQUA = ARGS.indexOf("--jusqua") >= 0 ? ARGS[ARGS.indexOf("--jusqua") + 1] : null;
 var TALENTS_AVISES = {
@@ -1537,6 +1540,46 @@ function activateGrimoireRule(g) {
 
 try { run(); }
 catch (e) { ok(false, "interrompu : " + e.message + "\n" + String(e.stack).split("\n").slice(1, 4).join("\n")); }
+if (APRES_H > 0) { try { apresHistoire(APRES_H); } catch (e) { ok(false, "après-Histoire interrompu : " + e.message); } }
+
+/* Après-Histoire (--apres) : l'or qui dort part-il à l'Enchanteresse quand on va chercher sa Sève ? */
+function apresHistoire(h) {
+  var g = G, V = g.VillageBuildingManager, E = g.EnchantManager, ORD = g.RARITY_ORDER;
+  var t0 = CLOCK.offset, or0 = g.game.gold, vic0 = STATS.carte ? STATS.carte.victoires : 0;
+  var A = STATS.apres = { heures: h, or0: Math.floor(or0), relances: 0, orRelances: 0, seve: 0, chantier: false };
+  CURRENT_STEP = "après-Histoire";
+  var cible = Math.min(2, g.WorldCaps.getVillageCap("enchanter")); // niveau 2 : les pièces Épiques
+  // la Résine se fabrique avec de la Sève : on reprend les matériaux tant que l'un manque encore
+  for (var k = 0; k < 8 && V.getLevel("enchanter") < cible; k++) {
+    for (var m = 0; m < 4 && V.getBlockReason("enchanter") === "Matériaux manquants"; m++) ensureCost(V.getNextCost("enchanter"));
+    upgradeBuilding("enchanter", V.getLevel("enchanter") + 1);
+  }
+  A.chantier = V.getLevel("enchanter") >= cible;
+  while (A.chantier && CLOCK.offset - t0 < h * 3600e3) {
+    var best = null;
+    g.EQUIPMENT_SLOTS.forEach(function (sl) {
+      var it = g.game.equipped[sl];
+      if (!it || ORD.indexOf(it.rarity) < ORD.indexOf("epic")) return;
+      (it.affixes || []).forEach(function (a, i) {
+        var r = E.getRange(it, i), c = E.getCost(it, i);
+        if (!r || !c || r.max <= r.min || c.gold > g.game.gold) return;
+        var part = (Number(a.value) - r.min) / (r.max - r.min);
+        if (part >= 0.95) return;
+        if (!best || part < best.part) best = { it: it, i: i, part: part, c: c };
+      });
+    });
+    if (!best) break;
+    if (!obtain("seve_aeswyn", best.c.seve_aeswyn)) break;
+    if (E.getBlockReason(best.it, best.i)) break;
+    E._rolling = false;
+    if (!E.reroll(best.it, best.i)) break;
+    E._rolling = false;
+    A.relances++; A.orRelances += best.c.gold; A.seve += best.c.seve_aeswyn;
+  }
+  if (!A.chantier) A.raison = "Enchanteresse " + V.getLevel("enchanter") + " : " + (V.getBlockReason("enchanter") || "?") + " " + JSON.stringify(V.getNextCost("enchanter")) + " · Sève " + g.WarehouseManager.getAmount("seve_aeswyn") + " · Résine " + g.WarehouseManager.getAmount("resine_durcie");
+  A.h = (CLOCK.offset - t0) / 3600e3; A.or1 = Math.floor(g.game.gold); A.victoiresCarte = (STATS.carte ? STATS.carte.victoires : 0) - vic0;
+  console.log("Après-Histoire (" + A.h.toFixed(1) + " h) : Enchanteresse " + (A.chantier ? "bâtie" : "non bâtie") + " · " + A.relances + " relances, " + A.orRelances + " or, " + A.seve + " Sève (" + A.victoiresCarte + " victoires d'Arbre-mère) · or " + A.or0 + " → " + A.or1 + (A.raison ? " · " + A.raison : ""));
+}
 if (COMBATS) {
   console.log("Renforcement (lots de chasse joués pour débloquer) : " + JSON.stringify(STATS.grinds) + " · " + (STATS.grindMs / 3600e3).toFixed(1) + " h" + (Object.keys(STATS.grindNone).length ? " · rien à farmer pendant : " + JSON.stringify(STATS.grindNone) : ""));
   Object.keys(STATS.goldFarm).forEach(function (k) { var f = STATS.goldFarm[k]; console.log("Farm " + k + " : " + f.lots + " lots, " + Math.round(f.or / Math.max(1, f.lots)) + " or par lot, " + Math.round(f.or / Math.max(0.01, f.h)) + " or par heure (soin compris), " + f.morts + " morts"); });
