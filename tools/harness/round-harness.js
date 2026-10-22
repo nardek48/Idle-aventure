@@ -16540,6 +16540,35 @@ console.log("\n[268] v3.459.9 — Crypte : Halle 10 et Entrepôt 8 (audit I3)");
   ok(h10.gold === 16263 && !h10.resine_durcie && !h10.cire_sepulcre, "Halle 10 : or et matériaux ordinaires (16 263 or)");
 })();
 
+console.log("\n[269] v3.459.11 — Fil rouge : après l'Histoire (audit I1)");
+(function () {
+  game = freshCombat("knight");
+  game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true }; // Crypte : Forge 5 (reforge 10), Enchanteresse 2
+  var F = g.FilRouge, SQ = g.StoryQuestManager;
+  F.invalidate();
+  ok(!F.all().some(function (x) { return /^apres_/.test(x.id); }), "Histoire en cours : aucun objectif d'après-Histoire");
+  SQ.ensure();
+  Object.keys(g.STORY_QUESTS).forEach(function (id) { SQ.getState(id).skipped = true; });
+  ok(SQ.activeChapterIds().length === 0, "tous les chapitres finis");
+  F.invalidate();
+  var ap = F.all().filter(function (x) { return /^apres_/.test(x.id); });
+  var ids = ap.map(function (x) { return x.id; });
+  ok(["apres_forge", "apres_memoire", "apres_enchanteresse", "apres_bestiaire", "apres_hauts_faits"].every(function (k) { return ids.indexOf(k) !== -1; }),
+    "cinq objectifs : reforges, Mémoire, Enchanteresse, Bestiaire, hauts faits (" + ids.join(", ") + ")");
+  ok(ap.every(function (x, i) { return i === 0 || ap[i - 1].ratio >= x.ratio; }), "le plus proche du but en tête");
+  ok(ap.every(function (x) { return / \d+ \/ \d+$/.test(x.title) && typeof x.go === "function" && x.goLabel; }), "chacun dit où il en est (« a / b ») et mène à son écran");
+  var all = F.all();
+  ok(all[all.length - 1].id === "idle" && all.indexOf(ap[0]) < all.length - 1, "« Rien ne presse » reste en dernier");
+  var getLvl = g.VillageBuildingManager.getLevel;
+  g.VillageBuildingManager.getLevel = function (id) { return id === "enchanter" ? 2 : getLvl.call(g.VillageBuildingManager, id); };
+  F.invalidate();
+  var ids2 = F.all().map(function (x) { return x.id; });
+  ok(ids2.indexOf("apres_enchanteresse") === -1, "Enchanteresse 2 bâtie : l'objectif devient les bonus au maximum" + (ids2.indexOf("apres_relances") !== -1 ? "" : " (aucune pièce relançable portée)"));
+  g.VillageBuildingManager.getLevel = getLvl;
+  Object.keys(g.STORY_QUESTS).forEach(function (id) { SQ.getState(id).skipped = false; });
+  F.invalidate();
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

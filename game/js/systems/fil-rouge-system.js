@@ -25,7 +25,11 @@ var FIL_ROUGE_ICONS = {
   patrol: "images/Icons/quests/mission_exploration.webp",
   tavern: "images/Icons/village_buildings/tavern.webp",
   plots: "images/Icons/system/collect_all.webp",
-  idle: "images/Icons/quests/quest_list.webp"
+  idle: "images/Icons/quests/quest_list.webp",
+  forge: "images/Icons/workshops/smithing_station.webp",
+  enchant: "images/Icons/village_buildings/enchantress_tower.webp",
+  bestiary: "images/Icons/subtabs/bestiary.webp",
+  achievement: "images/Icons/menu_icons/achivment_menu.webp"
 };
 
 var FilRouge = {
@@ -76,11 +80,11 @@ var FilRouge = {
      toujours présente : le fil rouge a toujours quelque chose à dire. */
   all: function () {
     var out = [];
-    var checks = [this._claim, this._memory, this._heal, this._story, this._patrol, this._tavern, this._plots];
+    var checks = [this._claim, this._memory, this._heal, this._story, this._patrol, this._tavern, this._plots, this._apres];
     for (var i = 0; i < checks.length; i++) {
       var r = null;
       try { r = checks[i].call(this); } catch (e) { r = null; } // une source cassée ne doit pas éteindre le fil
-      if (r) out.push(r);
+      if (r) out = out.concat(r); // _apres rend une liste
     }
     out.push(this._idle());
     return out;
@@ -237,6 +241,79 @@ var FilRouge = {
         if (typeof setVillageSubTab === "function") setVillageSubTab("production");
       }
     };
+  },
+
+  /* 7 bis. v3.459.11 (audit I1) — après l'Histoire : objectifs longs chiffrés, le plus proche du
+     but en tête (les autres passent dans « Aussi »). Rien tant qu'un chapitre reste ouvert. */
+  _apres: function () {
+    var SQ = window.StoryQuestManager;
+    if (!SQ || typeof SQ.activeChapterIds !== "function" || SQ.activeChapterIds().length) return null;
+    var out = [];
+    function obj(id, icon, titre, a, b, reason, goLabel, go) {
+      if (!(b > 0) || a >= b) return;
+      out.push({ id: "apres_" + id, urgent: false, icon: icon, ratio: a / b,
+        title: _t("{x} : {a} / {b}", { x: titre, a: a, b: b }), reason: _t("Après l'Histoire.") + " " + reason, goLabel: goLabel, go: go });
+    }
+    function sheet(bid) {
+      return function () {
+        if (typeof switchTab === "function") switchTab("village");
+        if (typeof setVillageSubTab === "function") setVillageSubTab("village");
+        if (typeof openVillageBuildingSheet === "function") openVillageBuildingSheet(bid);
+      };
+    }
+    var slots = window.EQUIPMENT_SLOTS || [];
+    if (window.ForgeManager && window.WorldCaps) {
+      var top = WorldCaps.getVillageCap("forge") * (window.FORGE_LEVELS_PER_BUILDING_LEVEL || 2);
+      if (isFinite(top) && top > 0) {
+        var n = slots.filter(function (sl) { return ForgeManager.getLevel(sl) >= top; }).length;
+        obj("forge", FIL_ROUGE_ICONS.forge, _t("Reforges"), n, slots.length,
+          _t("Pièces reforgées au niveau {n}, le plus haut de ce monde.", { n: top }), _t("Voir la Forge"), sheet("forge"));
+      }
+    }
+    if (window.MemoryManager && window.MEMORY_LEVEL_COSTS) {
+      var cap = Math.min(MemoryManager.getCap(), MEMORY_LEVEL_COSTS.length);
+      obj("memoire", FIL_ROUGE_ICONS.memory, _t("Mémoire"), MemoryManager.getLevel(), cap,
+        _t("L'Aether gagné en combat fait monter la Mémoire."), _t("Voir la Mémoire"),
+        function () { if (typeof switchTab === "function") switchTab("ascension"); });
+    }
+    if (window.EnchantManager && window.VillageBuildingManager && window.WorldCaps) {
+      var ecap = Math.min(2, WorldCaps.getVillageCap("enchanter")), elvl = VillageBuildingManager.getLevel("enchanter");
+      if (elvl < ecap) {
+        obj("enchanteresse", FIL_ROUGE_ICONS.enchant, _t("Enchanteresse"), elvl, ecap,
+          _t("Au niveau 2, elle relance les bonus des pièces Épiques, contre de l'or seul."), _t("Voir l'Enchanteresse"), sheet("enchanter"));
+      } else {
+        var lignes = 0, aMax = 0;
+        slots.forEach(function (sl) {
+          var it = (game.equipped || {})[sl];
+          if (!it || !EnchantManager.canRerollRarity(it.rarity)) return;
+          (it.affixes || []).forEach(function (a, i) {
+            var r = EnchantManager.getRange(it, i);
+            if (!r) return;
+            lignes++;
+            if (Number(a.value) >= r.max - Math.pow(10, -r.decimals) / 2) aMax++;
+          });
+        });
+        obj("relances", FIL_ROUGE_ICONS.enchant, _t("Bonus au maximum"), aMax, lignes,
+          _t("L'Enchanteresse relance un bonus contre de l'or ; il ne baisse jamais."), _t("Voir l'Enchanteresse"), sheet("enchanter"));
+      }
+    }
+    if (typeof BESTIARY_BONUS_CONFIG !== "undefined") {
+      var ids = Object.keys(BESTIARY_BONUS_CONFIG), faits = ids.filter(function (id) {
+        var t = BESTIARY_BONUS_CONFIG[id] || [], last = t.length ? Number(t[t.length - 1].kills || 0) : 0;
+        return last > 0 && Number((game.killCounts || {})[id] || 0) >= last;
+      }).length;
+      obj("bestiaire", FIL_ROUGE_ICONS.bestiary, _t("Bestiaire"), faits, ids.length,
+        _t("Fiches complètes : chaque créature vaincue assez souvent pour son dernier palier."), _t("Voir le Bestiaire"),
+        function () { if (typeof switchTab === "function") switchTab("bestiary"); });
+    }
+    if (window.AchievementManager && typeof ACHIEVEMENTS_DB !== "undefined") {
+      var hf = ACHIEVEMENTS_DB.filter(function (a) { return AchievementManager.isClaimed(a.id); }).length;
+      obj("hauts_faits", FIL_ROUGE_ICONS.achievement, _t("Hauts faits"), hf, ACHIEVEMENTS_DB.length,
+        _t("Hauts faits réclamés."), _t("Voir les Hauts faits"),
+        function () { if (typeof switchTab === "function") switchTab("achievements"); });
+    }
+    out.sort(function (x, y) { return y.ratio - x.ratio; }); // le plus proche du but d'abord
+    return out.length ? out : null;
   },
 
   /* 8. Rien ne presse : une activité engagée ou disponible du monde, sinon le tableau. */
