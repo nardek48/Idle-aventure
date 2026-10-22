@@ -16516,6 +16516,16 @@ console.log("\n[266] v3.459.6 — Lot 9b : quêtes, sauvegarde, paliers (audit O
   ok(d.pieces === p.pieces && d.armeVerte === p.armeOk && d.reforge === p.arme && d.forge === p.forge, "storyPalierDesert lit storyPalier (noms d'origine gardés)");
 })();
 
+console.log("\n[267] v3.459.8 — Terrain 12-13 en Cire de sépulcre (audit P11)");
+(function () {
+  var V = g.VillageBuildingManager;
+  var c11 = V.getLevelCost("training", 10), c12 = V.getLevelCost("training", 11), c13 = V.getLevelCost("training", 12), c14 = V.getLevelCost("training", 13);
+  ok(c11.resine_durcie === 6 && !c11.cire_sepulcre, "Terrain 11 (Ruines) : toujours 6 Résine");
+  ok(c12.cire_sepulcre === 6 && c13.cire_sepulcre === 8 && !c12.resine_durcie && !c13.resine_durcie, "Terrain 12 et 13 (Crypte) : 6 puis 8 Cire de sépulcre, plus de Résine");
+  ok(c12.gold === 2030 && c13.gold === 2943 && c13.pierre === 315 && c13.lingot === 84, "les autres coûts sont ceux d'avant");
+  ok(c14.resine_durcie === 18 && c14.gold === 4268, "Terrain 14 (pas encore ouvert) : coût d'avant");
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

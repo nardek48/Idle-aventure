@@ -165,11 +165,24 @@ var VILLAGE_BUILDINGS = {
         baseCost: { gold: 320, planche: 45, pierre: 60, lingot: 10 },
         costMult: 1.40
       },
-      /* v3.214.0 : les niveaux 11 à 14 (paliers 10-13) passent par la Résine. */
+      /* v3.214.0 : les niveaux 11 à 14 (paliers 10-13) passent par la Résine.
+         v3.459.8 (audit P11) : Terrain 12 et 13 (Crypte) en Cire de sépulcre, mêmes autres coûts. */
       {
-        minLevel: 10, maxLevel: 13,
+        minLevel: 10, maxLevel: 10,
         resources: ["gold", "planche", "pierre", "lingot", "resine_durcie"],
         baseCost: { gold: 1400, planche: 120, pierre: 150, lingot: 40, resine_durcie: 6 },
+        costMult: 1.45
+      },
+      {
+        minLevel: 11, maxLevel: 12,
+        resources: ["gold", "planche", "pierre", "lingot", "cire_sepulcre"],
+        baseCost: { gold: 2030, planche: 174, pierre: 217.5, lingot: 58, cire_sepulcre: 6 }, // 217,5 : mêmes arrondis qu'avant
+        costMult: 1.45
+      },
+      {
+        minLevel: 13, maxLevel: 13,
+        resources: ["gold", "planche", "pierre", "lingot", "resine_durcie"],
+        baseCost: { gold: 4268, planche: 365, pierre: 457, lingot: 121, resine_durcie: 18 },
         costMult: 1.45
       }
     ],
