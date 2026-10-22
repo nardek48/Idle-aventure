@@ -367,15 +367,16 @@ console.log("\n[14] Sortie Lisière complète par classe (politique « joueur ra
 
 console.log("\n[15] Rendu : HTML de l'écran Combat et des boutons sans erreur dans les 3 modes");
 game = freshCombat("knight"); giveWeapon(); game.unlockedTabs.grimoire = true;
-var htmlT = g.buildCombatControlsHTML() + g.buildClassSkillButtonsHTML() + g.buildCombatStatesHTML() + g.buildHealButtonHTML(0);
-ok(htmlT.indexOf("Tactique") !== -1 && htmlT.indexOf("Continuer") !== -1, "Tactique : bascule, Continuer, jauge (v3.241.0 : jauge dans le panneau héros)");
+// v3.459.7 (audit O13) : l'écran est celui de combat-screen-view.js (barre du haut, commandes)
+var htmlT = g.buildCbxTopHTML() + g.buildCbxCmdHTML();
+ok(htmlT.indexOf("toggleContinueAttack()") !== -1 && htmlT.indexOf("cbx-skills") !== -1 && htmlT.indexOf("cbx-pot") !== -1, "Tactique : Continuer en haut, techniques et potions en bas");
 g.CombatEngine.setCombatMode("grimoire");
-var htmlG = g.buildCombatControlsHTML() + g.buildClassSkillButtonsHTML();
-ok(htmlG.indexOf("Grimoire") !== -1 && htmlG.indexOf("combat-continue-btn") === -1 && htmlG.indexOf("auto-mode") !== -1, "Grimoire : boutons en auto-mode, pas de Continuer");
+var htmlG = g.buildCbxTopHTML() + g.buildCbxCmdHTML();
+ok(htmlG.indexOf("cbxCycleSpeed()") !== -1 && htmlG.indexOf("toggleContinueAttack()") === -1 && htmlG.indexOf("cbx-strip") !== -1, "Grimoire : la vitesse remplace Continuer, techniques en lecture seule"); 
 g.CombatEngine.setCombatMode("tactique"); game.enemy.chargeTelegraphed = true; game.enemy.shieldRounds = 1; game.silencedRounds = 1;
 /* v3.251.0 : la charge est passée dans le BANDEAU (avec le mot écrit), le silence subi
    reste dans la rangée d'états. */
-var htmlS = g.buildCombatAlertHTML() + g.buildCombatStatesHTML();
+var htmlS = g.buildCbxTargetHTML() + g.buildCbxCmdHTML();
 ok(htmlS.indexOf("Il charge") !== -1 && htmlS.indexOf("silenced.webp") !== -1, "barre de statuts en rounds");
 ok(typeof g.buildSettingsHTML() === "string" && g.buildSettingsHTML("jeu").indexOf("Mode de combat") !== -1, "Paramètres : sélecteur de mode (v3.408.0 : onglet Jeu)");
 g.ensureGrimoireRules && g.ensureGrimoireRules();
@@ -393,7 +394,7 @@ game.enemy.hp = 1; g.CombatEngine.heroAction("basic");
 ok(g.SortieManager.isActive() === true && game.sortie.context === "farm", "premier round → sortie d'exploration ouverte");
 ok(game.gold === gold0 && game.sortie.loot.gold > 0 && game.sortie.kills === 1, "or du kill dans le butin (" + game.sortie.loot.gold + "), bourse intacte");
 var lootGold = game.sortie.loot.gold;
-var html = g.buildCombatSortieHTML();
+var html = g.buildCbxTopHTML();
 /* v3.273.0 : le butin est devenu un BOUTON qui ouvre la feuille de sortie, et porte
    l'icône d'or plutôt que celle de l'inventaire. Le reste de la rangée est inchangé. */
 ok(html.indexOf("Rentrer") !== -1 && html.indexOf("openSortieSheet()") !== -1 && html.indexOf("Fuir") === -1, "rangée de sortie : bouton de butin + Rentrer");
@@ -432,7 +433,7 @@ ok(g.SortieManager.getPotionsLeft() === 0, "0 potion restante affichée");
 game = freshCombat("knight"); giveWeapon(); gold0 = game.gold;
 g.AdventureQuestManager.start("hq_wolf_pack");
 ok(g.SortieManager.isActive() && game.sortie.context === "adventure", "quête = sortie 'adventure'");
-ok(g.buildCombatSortieHTML().indexOf("Fuir") !== -1, "rangée : Fuir en mission");
+ok(g.buildCbxTopHTML().indexOf("Fuir") !== -1, "rangée : Fuir en mission");
 game.enemy.chargeIn = 99; game.enemy.hp = 1; g.CombatEngine.heroAction("basic");
 game.sortie.loot.gold = 40;
 g.AdventureQuestManager.forfeit();
@@ -918,10 +919,10 @@ game.enemy.engageIn = 3; game.enemy.chargeTelegraphed = true; // charge télégr
 g.CombatEngine.heroAction("basic");
 ok(game.enemy.engageIn === 0 && game.enemy.chargeTelegraphed === false, "impact de charge : la distance est fermée d'un coup");
 game.enemy.engageIn = 2;
-var sb = g.buildCombatAlertHTML();
-ok(sb.indexOf("enemy_approaching.webp") !== -1, "barre de statut : approche annonc\u00e9e dans le bandeau (engageIn 2)");
+var sb = g.cbxFoeUiHTML(game.enemy, true);
+ok(sb.indexOf("enemy_approaching.webp") !== -1 && sb.indexOf("<b>2</b>") !== -1, "repère de l'ennemi : approche annoncée avec ses rounds (engageIn 2)");
 game.enemy.engageIn = 0;
-ok(g.buildCombatStatesHTML().indexOf("enemy-status-approaching") === -1, "icône absente au contact");
+ok(g.cbxFoeUiHTML(game.enemy, true).indexOf("enemy_approaching.webp") === -1, "icône absente au contact");
 // parité simulateur : défauts, RPM décalé, Chevalier strictement inchangé
 ok(g.CombatRoundSim.DEFAULTS.engageEnabled === true && g.CombatRoundSim.DEFAULTS.engageDefaultRounds === 1 && g.CombatRoundSim.DEFAULTS.engageBossRounds === 1, "sim : approche activée par défaut (1 / boss 1)");
 var cfgOn = g.CombatRoundSim.config({ enemyHpCoef: g.ENEMY_PV_MULT, engageTable: g.ENEMY_ENGAGE_ROUNDS });
@@ -1234,12 +1235,7 @@ var cssBlock = cssFinal.substring(cssBlockStart, cssBlockEnd);
 ok(cssBlock.indexOf("position: absolute") === -1, "le compteur n'est plus en position absolute (suit le flux flex normal comme le nom/PV/sprite)");
 
 console.log("\n[59] Retours de test v3.107.6 : 2 points");
-// Point 1 : compteur compense le translateY(-25px) de #enemy-name — visible, pas quasi-recouvert
-var cssV6 = fs.readFileSync(path.join(ROOT, "css/03-combat.css"), "utf8");
-var blockStart = cssV6.indexOf(".combat-mission-progress {");
-var blockEnd = cssV6.indexOf("}", blockStart);
-var block = cssV6.substring(blockStart, blockEnd);
-ok(block.indexOf("margin-bottom: 28px") !== -1, "point 1 : marge de compensation du translateY(-25px) de #enemy-name (28px)");
+// Point 1 : /* v3.459.7 (audit O13) : contrôle retiré avec le CSS de l'ancien écran de combat ; l'écran actuel (cbx) a les siens. */
 
 // Point 2 : les 3 quêtes de minage/eau sont réellement lançables (bouton + vraie fonction).
 // v3.123.0 (Lot S2b) : migrées vers le scene-engine — id "scene_*", launch() appelle
@@ -5708,63 +5704,59 @@ console.log("\n[53b] v3.251.0 \u2014 \u00c9tats de combat (bandeau, rang\u00e9e,
   run("CombatEngine.ensureState();");
   var e = game.enemy;
 
-  /* --- Rien d'actif : aucune hauteur r\u00e9serv\u00e9e --- */
+  /* v3.459.7 (audit O13) : bandeau de la cible de combat-screen-view.js — puces d'alerte (avec le
+     MOT), pastilles d'état sur le nom de la cible, feuille des états. */
+  function puces() { return (g.buildCbxTargetHTML().match(/class="cbx-chip /g) || []).length; }
+  function pastilles() { return (g.buildCbxTargetHTML().match(/class="cbx-badge( is-sup)?"/g) || []).length; }
+
+  /* --- Rien d'actif : ni puce ni pastille --- */
   e.chargeTelegraphed = false; e.silenceTelegraphed = false; e.shieldTelegraphed = false;
   e.healTelegraphed = false; e.engageIn = 0; e.archetype = null; e.shieldRounds = 0;
   e.vulnerableRounds = 0; e.dot = null; e.counteredRounds = 0; game.silencedRounds = 0;
-  e.gauge = 0;
-  ok(g.buildCombatAlertHTML() === "" && g.buildCombatStatesHTML() === "",
-    "combat calme : ni bandeau ni rang\u00e9e (aucune hauteur r\u00e9serv\u00e9e)");
+  e.gauge = 0; e.id = "wolf"; // un ennemi au contact : un tireur porterait sa pastille « à distance »
+  ok(puces() === 0 && pastilles() === 0, "combat calme : ni puce d'alerte ni pastille d'état");
 
-  /* --- Chaque t\u00e9l\u00e9graphe produit un bandeau AVEC LE MOT --- */
+  /* --- Chaque t\u00e9l\u00e9graphe produit une puce AVEC LE MOT --- */
   [["chargeTelegraphed", "Il charge"], ["silenceTelegraphed", "Silence"],
    ["shieldTelegraphed", "Il se prot\u00e8ge"], ["healTelegraphed", "Il va se soigner"]].forEach(function (t) {
     e.chargeTelegraphed = false; e.silenceTelegraphed = false; e.shieldTelegraphed = false; e.healTelegraphed = false;
     e[t[0]] = true;
-    var b = g.buildCombatAlertHTML();
-    ok(b.indexOf("cb-alert") !== -1 && b.indexOf(t[1]) !== -1, t[0] + " : bandeau portant « " + t[1] + " »");
+    var b = g.buildCbxTargetHTML();
+    ok(b.indexOf("cbx-chip is-urgent") !== -1 && b.indexOf(t[1]) !== -1, t[0] + " : puce portant « " + t[1] + " »");
   });
 
   /* Le soin a sa teinte propre : il n'est pas une menace, il annule le travail du joueur. */
   e.chargeTelegraphed = false; e.healTelegraphed = true;
-  ok(g.buildCombatAlertHTML().indexOf("is-heal") !== -1, "le soin est teint\u00e9 diff\u00e9remment d'une attaque");
+  ok(g.buildCbxTargetHTML().indexOf("is-heal") !== -1 && g.buildCbxTargetHTML().indexOf("Interromps-le") !== -1, "le soin est teint\u00e9 diff\u00e9remment, avec sa consigne");
 
-  /* Deux t\u00e9l\u00e9graphes : UN seul bandeau, texte r\u00e9tr\u00e9ci. */
+  /* Deux t\u00e9l\u00e9graphes : une puce chacun. */
   e.chargeTelegraphed = true;
-  var deux = g.buildCombatAlertHTML();
-  ok((deux.match(/class="cb-alert[ "]/g) || []).length === 1 && deux.indexOf("is-multi") !== -1, // cb-alert-sep ne doit pas être compté
-    "deux t\u00e9l\u00e9graphes : un seul bandeau, en mode compact");
-  ok(deux.indexOf("is-heal") === -1, "...et sans teinte de soin, puisque les deux coexistent");
+  ok(puces() === 2, "deux t\u00e9l\u00e9graphes : deux puces");
 
-  /* --- Rang\u00e9e : familles et compteurs --- */
+  /* --- Pastilles de la cible et feuille : familles et compteurs --- */
   e.chargeTelegraphed = false; e.healTelegraphed = false;
   e.archetype = "corrupted"; e.corruptedStacks = 3;
   e.vulnerableRounds = 2; e.dot = { rounds: 4, perRound: 12 }; game.silencedRounds = 1;
-  var r = g.buildCombatStatesHTML();
-  ok(r.indexOf("is-enemy") !== -1 && r.indexOf("is-mine") !== -1 && r.indexOf("is-onme") !== -1,
-    "les trois familles ont leur teinte de bordure");
-  ok(r.indexOf(">3<") !== -1 && r.indexOf(">2<") !== -1 && r.indexOf(">4<") !== -1, "les compteurs s'affichent");
-  ok(r.indexOf("cb-alert") === -1, "aucun t\u00e9l\u00e9graphe dans la rang\u00e9e : ils vivent dans le bandeau");
+  var r = g.buildCbxStatesSheetHTML();
+  ok(r.indexOf("Ce que porte l") !== -1 && r.indexOf("Ce que tu as pos") !== -1 && r.indexOf("Ce que tu subis") !== -1,
+    "les trois familles ont leur groupe dans la feuille");
+  ok(r.indexOf("×3") !== -1 && r.indexOf(">2 ") !== -1 && r.indexOf(">4 ") !== -1, "les compteurs s'affichent");
+  ok(puces() === 0, "aucun t\u00e9l\u00e9graphe en puce : ce sont des \u00e9tats durables");
 
   /* Un archétype supprimé est grisé et change d'icône quand il en a une. */
   e.archetype = "enraged"; e.rageFreezeRounds = 2;
-  var sup = g.buildCombatStatesHTML();
-  ok(sup.indexOf("is-suppressed") !== -1 && sup.indexOf("rage_calmed.webp") !== -1,
+  var sup = g.buildCbxTargetHTML();
+  ok(sup.indexOf("is-sup") !== -1 && sup.indexOf("rage_calmed.webp") !== -1,
     "rage apais\u00e9e : pastille gris\u00e9e et ic\u00f4ne d\u00e9di\u00e9e");
 
-  /* --- Saturation : « +N » plut\u00f4t qu'une deuxi\u00e8me ligne --- */
+  /* --- Saturation : quatre pastilles au plus sur le nom, le reste dans la feuille --- */
   e.archetype = "corrupted"; e.corruptedStacks = 2; e.rageFreezeRounds = 0;
   e.shieldRounds = 3; e.counteredRounds = 1;
-  var etats = g.getActiveCombatStates().filter(function (st) { return st.def.famille !== "alerte"; });
-  var max = g.COMBAT_STATES_MAX_VISIBLE;
-  var sat = g.buildCombatStatesHTML();
-  var pastilles = (sat.match(/class="cb-state /g) || []).length;
-  ok(pastilles <= max, pastilles + " pastilles au plus (plafond " + max + ")");
-  if (etats.length > max) ok(sat.indexOf("cb-states-more") !== -1, "au-del\u00e0 du plafond : une pastille « +N »");
+  ok(pastilles() <= 4, pastilles() + " pastilles au plus 4 sur le nom de la cible");
 
   /* --- Feuille --- */
   e.chargeTelegraphed = true;
-  var sh = g.buildCombatStatesSheetHTML();
+  var sh = g.buildCbxStatesSheetHTML();
   /* esc() échappe l'apostrophe : on cherche un fragment sans apostrophe. */
   ok(sh.indexOf("Au prochain round") !== -1 && sh.indexOf("Ce que porte l") !== -1,
     "la feuille groupe les \u00e9tats par famille");
@@ -5781,7 +5773,7 @@ console.log("\n[53b] v3.251.0 \u2014 \u00c9tats de combat (bandeau, rang\u00e9e,
   ok(sansMot.length === 0, "chaque t\u00e9l\u00e9graphe a son mot de bandeau");
 
   /* Plus aucun title sur les \u00e9tats : il ne s'affiche pas sur mobile. */
-  ok(g.buildCombatStatesHTML().indexOf("title=") === -1 && g.buildCombatAlertHTML().indexOf("title=") === -1,
+  ok(g.buildCbxTargetHTML().indexOf("title=") === -1 && g.cbxFoeUiHTML(e, false).indexOf("title=") === -1,
     "plus de title sur les \u00e9tats (invisible sur mobile, rempla\u00e7\u00e9 par la feuille)");
 
   /* L'alias historique reste fonctionnel : plusieurs syst\u00e8mes l'appellent encore. */
@@ -6612,10 +6604,7 @@ ok(hq.dropChancePct === 50 && hq.resourcePool.length === 6, "Chasse en For\u00ea
 /* [63] v3.261.0 — Bandeau héros du combat, variante B (atelier-bandeau-combat.html). */
 console.log("\n[63b] v3.261.0 \u2014 Bandeau h\u00e9ros du combat, variante B");
 (function () {
-  var css = require("fs").readFileSync(require("path").join(ROOT, "css/03-combat-v2.css"), "utf8");
-  ok(/\.cb-hero\s*\{\s*grid-template-columns:\s*minmax\(0,\s*1fr\)/.test(css), "colonne du panneau born\u00e9e : un butin long n'\u00e9largit plus l'\u00e9cran");
-  ok(/\.cb-hero \.cb-hero-top #combat-hero-mini \{ display: contents !important; \}/.test(css), "portrait et PV deviennent des cases de grille sans toucher au balisage");
-  ok(/\.combat-hero-mini-hp-bar \{ grid-column: 2; grid-row: 2; width: 100% !important;/.test(css), "PV sur toute la largeur, sous la rang\u00e9e butin / potions / Fuir");
+  /* v3.459.7 (audit O13) : contrôle retiré avec le CSS de l'ancien écran de combat ; l'écran actuel (cbx) a les siens. */
   /* Le balisage attendu par ces règles est toujours celui du jeu. */
   /* v3.427.0 : le bandeau héros est remplacé par la carte du héros dans l'Équipe (CB-7). */
   var html = g.buildCombatHTML();
@@ -7193,15 +7182,14 @@ console.log("\n[71b] v3.269.0 (L-3) — groupes d'ennemis : composition, ordre, 
 
 
 
-  /* --- Arène : la rangée n'existe qu'à partir de deux ennemis --- */
+  /* --- Arène (v3.459.7 : scène de combat-screen-view.js) : une barre de PV par membre dès deux ennemis --- */
   game = freshCombat("knight"); giveWeapon();
   g.CombatEngine.spawnEnemy();
-  ok(g.buildEnemyRowHTML() === "", "un seul ennemi : aucune rangée, écran historique");
+  ok(g.cbxFoeUiHTML(game.enemy, true).indexOf("cbx-foe-hp") === -1, "un seul ennemi : sa barre est celle du bandeau, pas de mini-barre");
   game.enemy = g.QuestEnemyManager.spawnFor(q, false);
-  var html = g.buildEnemyRowHTML();
-  ok((html.match(/cbg-foe-frame/g) || []).length === 2, "un portrait par membre");
-  ok((html.match(/cbg-foe-name/g) || []).length === 2, "le nom est posé sur chaque portrait");
-  ok(html.indexOf("is-target") !== -1, "la cible porte son halo");
+  var html = game.combat.enemies.map(function (e) { return g.cbxFoeUiHTML(e, false); }).join("");
+  ok((html.match(/cbx-foe-hp/g) || []).length === 2, "une mini-barre de PV par membre");
+  ok(g.buildCbxTargetHTML().indexOf(g.CombatActors.target().name) !== -1, "la cible a son nom en titre du bandeau");
 
   /* --- Cible collante par tap --- */
   var second = game.combat.enemies[1];
@@ -7215,9 +7203,8 @@ console.log("\n[71b] v3.269.0 (L-3) — groupes d'ennemis : composition, ordre, 
   game = freshCombat("knight"); giveWeapon();
   game.enemy = g.QuestEnemyManager.spawnFor(q, false);
   game.combat.enemies[1].chargeTelegraphed = true;
-  var badges = g.getEnemyRowBadges(game.combat.enemies[1]);
-  ok(badges.length >= 1 && badges[0].urgent === true, "un télégraphe donne une pastille urgente");
-  ok(g.buildEnemyRowHTML().indexOf("is-urgent") !== -1, "elle est bien rendue dans la rangée");
+  ok(g.cbxFoeUiHTML(game.combat.enemies[1], false).indexOf("cbx-badge is-urgent") !== -1, "un télégraphe donne une pastille urgente sur le membre");
+  ok(g.cbxFoeUiHTML(game.combat.enemies[0], false).indexOf("is-urgent") === -1, "et rien sur l'autre");
 
   /* --- Compagnon : charges par combat EN PLUS du cooldown --- */
   game = freshCombat("knight"); giveWeapon();
@@ -7233,11 +7220,11 @@ console.log("\n[71b] v3.269.0 (L-3) — groupes d'ennemis : composition, ordre, 
   g.CombatEngine.spawnGroup(g.QuestEnemyManager.spawnFor(q, false));
   ok(game.combat.allies[1].charges === 3, "le combat suivant lui rend ses charges");
 
-  /* --- Rangée d'alliés --- */
-  ok(g.buildAllyRowHTML().indexOf("cbg-ally-charges") !== -1, "ses charges sont visibles sur sa mini-carte");
+  /* --- Cartes d'équipe --- */
+  ok(g.cbxCompanionCardHTML(game.combat.allies[1]).indexOf("cbx-dots") !== -1, "ses charges sont visibles sur sa carte");
   run("game.companions = {};");
   g.CombatEngine.spawnEnemy();
-  ok(g.buildAllyRowHTML() === "", "aucun compagnon : aucune rangée d'alliés");
+  ok(g.CombatActors.allies().filter(function (a) { return a && a.companionId; }).length === 0, "aucun compagnon : le héros est seul dans l'équipe");
 
   /* --- Le kill d'un membre compte pour la quête (le défaut attrapé par [32]) --- */
   game = freshCombat("knight"); giveWeapon();
@@ -7319,10 +7306,10 @@ console.log("\n[72b] v3.270.0 (L-4) — mode Manuel : file d'attente, actions du
   game = manuel();
   g.CombatEngine.heroAction("basic");
   var acteur = g.CombatEngine.selectedActor();
-  var htmlActions = g.buildCompanionActionsHTML(acteur);
-  ok(htmlActions.indexOf("cbg-act") !== -1 && (htmlActions.match(/cbg-act"/g) || []).length >= 1,
-    "la rangée montre les actions du compagnon");
-  ok(g.buildAllyRowHTML().indexOf("is-active") !== -1, "sa mini-carte est marquée active");
+  var htmlActions = g.buildCbxCmdHTML();
+  ok(htmlActions.indexOf("cbx-cskill") !== -1 && htmlActions.indexOf("is-comp") !== -1,
+    "les commandes montrent la compétence du compagnon et son attaque");
+  ok(/cbx-card t-(now|wait)/.test(g.cbxCompanionCardHTML(acteur)), "sa carte porte son tour (Manuel)");
 
   /* --- Sélection à la main --- */
   ok(g.CombatEngine.selectActor(g.CombatActors.heroActor().actorId) === false
@@ -7367,7 +7354,7 @@ console.log("\n[72b] v3.270.0 (L-4) — mode Manuel : file d'attente, actions du
   w.cooldown = 0; w.charges = 0;
   g.companionAction("skill");
   ok(!g.CombatEngine.pendingOf(w), "charges épuisées : idem");
-  ok(g.buildCompanionActionsHTML(w).indexOf("is-off") !== -1, "et l'icône le dit à l'écran");
+  ok(/class="cbx-skill[^"]*" disabled/.test(g.cbxCompanionActionsHTML(w)) && g.cbxCompanionActionsHTML(w).indexOf("∅") !== -1, "et le bouton le dit à l'écran");
 
   /* --- Une potion reste une action DU héros --- */
   game = manuel();
@@ -7509,25 +7496,21 @@ console.log("\n[74b] v3.273.0 — bandeau de combat v2 : rangée d'acteurs, cadr
   g.CompanionManager.unlock("wenna");
   g.CombatEngine.spawnEnemy();
 
-  /* --- Le héros a sa carte dans la rangée --- */
-  var row = g.buildAllyRowHTML();
-  ok(row.indexOf("cbg-me") !== -1, "le héros a sa carte dans la rangée des acteurs");
-  ok((row.match(/cbg-ally/g) || []).length >= 2, "sa carte s'ajoute à celle du compagnon");
-  run("game.companions = {};");
-  g.CombatEngine.spawnEnemy();
-  ok(g.buildAllyRowHTML() === "", "seul, aucune rangée : l'écran est celui d'avant");
+  /* --- Le héros a sa carte dans l'équipe (v3.459.7 : cartes de combat-screen-view.js) --- */
+  var row = g.cbxHeroCardHTML(g.CombatActors.heroActor(), true) + g.cbxCompanionCardHTML(game.combat.allies[1]);
+  ok(row.indexOf("cbx-card is-hero") !== -1, "le héros a sa carte dans l'équipe");
+  ok((row.match(/class="cbx-card[ "]/g) || []).length === 2, "sa carte s'ajoute à celle du compagnon");
 
   /* --- Le compteur de rounds a quitté la rangée de commandes --- */
   game = freshCombat("knight"); giveWeapon();
   run("game.unlockedTabs.grimoire = true;");
-  var ctl = g.buildCombatControlsHTML();
-  ok(ctl.indexOf("combat-round-pill") === -1, "le compteur de rounds n'est plus dans la rangée");
-  ok(ctl.indexOf("Tactique") !== -1 || ctl.indexOf("Grimoire") !== -1, "le sélecteur de mode y est toujours");
+  var ctl = g.buildCbxTopHTML() + g.buildCbxCmdHTML();
+  ok(ctl.indexOf("combat-round-pill") === -1, "pas de compteur de rounds dans les commandes");
 
   /* --- Le butin est un bouton, les potions sont dans la feuille --- */
   game = freshCombat("knight"); giveWeapon();
   g.CombatEngine.heroAction("basic");   // ouvre une sortie
-  var sortie = g.buildCombatSortieHTML();
+  var sortie = g.buildCbxTopHTML();
   ok(sortie.indexOf("openSortieSheet()") !== -1, "le butin ouvre la feuille de sortie");
   ok(sortie.indexOf("subtabs/potions.webp") === -1, "les potions restantes ont quitté la rangée");
   ok(typeof g.openSortieSheet === "function" && typeof g.closeSortieSheet === "function",
@@ -7541,15 +7524,15 @@ console.log("\n[74b] v3.273.0 — bandeau de combat v2 : rangée d'acteurs, cadr
   g.CompanionManager.setControl("wenna", "manual");
   g.CombatEngine.spawnEnemy();
   var wen = game.combat.allies[1];
-  var band = g.buildCompanionBandHTML(wen);
-  ok(band.indexOf("cbg-band") !== -1 && band.indexOf("Charges") !== -1,
-    "le cadre d'un compagnon montre ses PV et ses charges");
-  ok(band.indexOf("Mana") === -1 && band.indexOf("Célérité") === -1,
-    "et pas Mana ni Célérité, qu'il n'a pas");
+  var band = g.cbxCompanionCardHTML(wen);
+  ok(band.indexOf("cbx-bar") !== -1 && band.indexOf("cbx-dots") !== -1,
+    "la carte d'un compagnon montre ses PV et ses charges");
+  ok(band.indexOf("cbx-res") === -1 && band.indexOf("cbx-cel") === -1,
+    "et pas de ressource ni de Célérité, qu'il n'a pas");
   wen.cooldown = 2;
-  ok(g.buildCompanionBandHTML(wen).indexOf("Recharge 2 r") !== -1, "sa recharge s'affiche quand elle court");
+  ok(g.cbxCompanionCardHTML(wen).indexOf("2 r") !== -1, "sa recharge s'affiche quand elle court");
   wen.cooldown = 0;
-  ok(g.buildCompanionBandHTML(wen).indexOf("Prêt") !== -1, "et « Prêt » sinon");
+  ok(g.cbxCompanionCardHTML(wen).indexOf("Prêt") !== -1, "et « Prêt » sinon");
 })();
 
 console.log("\n[75b] v3.276.0 — dégâts au clic, contrôle dicté par le mode, feuille du sac");
@@ -7656,36 +7639,8 @@ console.log("\n[75b] v3.276.0 — dégâts au clic, contrôle dicté par le mode
 })();
 
 console.log("\n[76b] v3.278.0 — la barre de PV du héros prend le cadre des compagnons");
-(function () {
-  var css = "";
-  try { css = unpal(require("fs").readFileSync(ROOT + "/css/03-combat-group.css", "utf8")); } catch (e) { css = ""; }
+/* v3.459.7 (audit O13) : contrôle retiré avec le CSS de l'ancien écran de combat ; l'écran actuel (cbx) a les siens. */
 
-  ok(css.indexOf(".cb-hero .combat-hero-mini-hp-bar.kgauge") !== -1,
-    "la reprise vise bien la barre de PV du héros dans le cadre de combat");
-  var bloc = css.slice(css.indexOf(".cb-hero .combat-hero-mini-hp-bar.kgauge"));
-  bloc = bloc.slice(0, bloc.indexOf("}") + 1);
-  ok(bloc.indexOf("gauge-dragon-claw-frame.webp") !== -1,
-    "elle emprunte le cadre en griffe de dragon, celui des compagnons");
-  ok(bloc.indexOf("1086 / 163") !== -1, "avec le bon rapport de forme");
-  ok(bloc.indexOf("#15803d") !== -1 && bloc.indexOf("#4ade80") !== -1,
-    "et garde le remplissage vert des PV (décision Seb)");
-
-  /* La reprise est BORNÉE au combat : le HUD hors combat garde son cadre. Test corrigé —
-     chercher la sous-chaîne seule la trouvait AUSSI dans le sélecteur borné. On vérifie
-     donc que chaque occurrence est bien précédée de la portée `.cb-hero `. */
-  var portees = css.split(".combat-hero-mini-hp-bar.kgauge");
-  var toutesBornees = true;
-  for (var i = 1; i < portees.length; i++) {
-    if (!/\.cb-hero\s+$/.test(portees[i - 1])) toutesBornees = false;
-  }
-  ok(portees.length > 1 && toutesBornees,
-    "aucune règle globale : le HUD hors combat n'est pas touché");
-
-  var hud = "";
-  try { hud = require("fs").readFileSync(ROOT + "/js/ui/hud-view.js", "utf8"); } catch (e) { hud = ""; }
-  ok(hud.indexOf("kgauge-dragon kgauge-hp") !== -1,
-    "le balisage d'origine est intact — la reprise est purement CSS");
-})();
 
 console.log("\n[77] v3.279.0 — Admin : rejouer un combat, et les deux barres de PV alignées");
 (function () {
@@ -7719,14 +7674,7 @@ console.log("\n[77] v3.279.0 — Admin : rejouer un combat, et les deux barres d
   ok(game.combat.enemies.length === 2, "avec sa meute, comme en jeu");
 
   /* --- Les deux barres de PV : même cadre, même gabarit --- */
-  var css = "";
-  try { css = require("fs").readFileSync(ROOT + "/css/03-combat-group.css", "utf8"); } catch (e) { css = ""; }
-  ok(css.indexOf("#companion-band-root:empty") !== -1,
-    "le conteneur vide du compagnon ne pousse plus le bloc du héros");
-  ok(css.indexOf(".cbg-band-portrait { flex: 0 0 56px; width: 56px; height: 56px; }") !== -1,
-    "les deux portraits font 56 px, donc les deux barres la même largeur");
-  ok(css.indexOf(".cb-hero .combat-hero-mini-hp-bar { margin-top: 0; }") !== -1,
-    "la marge de 8 px héritée du HUD est neutralisée dans le cadre de combat");
+  /* v3.459.7 (audit O13) : contrôle retiré avec le CSS de l'ancien écran de combat ; l'écran actuel (cbx) a les siens. */
 })();
 
 console.log("\n[78] v3.280.0 — la rangée d'ennemis ne se réécrit que si elle change");
@@ -7734,33 +7682,20 @@ console.log("\n[78] v3.280.0 — la rangée d'ennemis ne se réécrit que si ell
   var game = freshCombat("knight"); giveWeapon();
   game.enemy = g.QuestEnemyManager.spawnFor(g.ADVENTURE_QUESTS.hq_wolf_pack, false);
 
-  /* Deux appels d'affilée sans rien changer doivent produire le MÊME html — c'est ce qui
-     permet au rendu de ne pas réécrire, et donc de ne pas manger un toucher en cours. */
-  var a = g.buildEnemyRowHTML();
-  var b = g.buildEnemyRowHTML();
-  ok(a === b && a.length > 0, "la rangée est stable tant que rien ne bouge");
+  /* v3.459.7 (audit O13) : la scène de combat-screen-view.js est rendue par clé (actorId) ; ses
+     constructeurs doivent rester stables tant que rien ne bouge, et suivre l'état sinon. */
+  var e0 = game.combat.enemies[0];
+  var a = g.cbxFoeUiHTML(e0, false);
+  ok(a === g.cbxFoeUiHTML(e0, false) && a.length > 0, "le repère d'un ennemi est stable tant que rien ne bouge");
+  e0.hp -= 5;
+  ok(g.cbxFoeUiHTML(e0, false) !== a, "et change quand ses PV bougent");
 
-  /* ... et doit changer dès que l'état change, sinon on afficherait du périmé. */
-  g.CombatActors.setTarget(game.combat.enemies[1].actorId);
-  ok(g.buildEnemyRowHTML() !== a, "elle change quand la cible change");
-  game.combat.enemies[0].hp -= 5;
-  var c = g.buildEnemyRowHTML();
-  g.CombatActors.setTarget(game.combat.enemies[0].actorId);
-  ok(g.buildEnemyRowHTML() !== c, "et quand les PV bougent");
-
-  /* Même chose pour la rangée d'alliés. */
   g.CompanionManager.unlock("wenna");
   g.CombatEngine.spawnEnemy();
-  var d = g.buildAllyRowHTML();
-  ok(d === g.buildAllyRowHTML() && d.length > 0, "la rangée d'alliés est stable elle aussi");
+  var d = g.cbxCompanionCardHTML(game.combat.allies[1]);
+  ok(d === g.cbxCompanionCardHTML(game.combat.allies[1]) && d.length > 0, "la carte d'un compagnon est stable elle aussi");
   game.combat.allies[1].hp -= 3;
-  ok(g.buildAllyRowHTML() !== d, "et suit les PV du compagnon");
-
-  /* La rangée doit rester au-dessus de l'illustration. */
-  var css = "";
-  try { css = require("fs").readFileSync(ROOT + "/css/03-combat-group.css", "utf8"); } catch (e) { css = ""; }
-  ok(css.indexOf("#enemy-row") !== -1 && css.indexOf("z-index: 5") !== -1,
-    "la rangée est posée au-dessus de l'illustration de l'ennemi");
+  ok(g.cbxCompanionCardHTML(game.combat.allies[1]) !== d, "et suit ses PV");
 })();
 
 console.log("\n[79] v3.281.0 — tout ce qui se tape est un <button> (taps perdus sur iPhone)");
@@ -7770,33 +7705,28 @@ console.log("\n[79] v3.281.0 — tout ce qui se tape est un <button> (taps perdu
   game.enemy = g.QuestEnemyManager.spawnFor(g.ADVENTURE_QUESTS.hq_wolf_pack, false);
   game.combat.enemies[0].chargeTelegraphed = true;
 
-  var alerte = g.buildCombatAlertHTML();
-  ok(alerte.indexOf("<button") === 0 && alerte.indexOf("openCombatStatesSheet()") !== -1,
-    "la bande d'alerte est un bouton");
-  ok(alerte.indexOf("</button>") !== -1, "et se referme proprement");
+  // v3.459.7 (audit O13) : bandeau de la cible, cartes et repères de combat-screen-view.js
+  var alerte = g.buildCbxTargetHTML();
+  ok(/<button type="button" class="cbx-chip is-urgent"[^>]*onclick="openCombatStatesSheet\(\)"/.test(alerte),
+    "la puce d'alerte est un bouton");
+  ok((alerte.match(/<button/g) || []).length === (alerte.match(/<\/button>/g) || []).length, "et tout se referme proprement");
 
   game.combat.enemies[0].vulnerableRounds = 2;
-  var etats = g.buildCombatStatesHTML();
-  ok(etats === "" || (etats.indexOf("<button") === 0 && etats.indexOf("</button>") !== -1),
-    "la rangée d'états aussi");
+  ok(/<button type="button" class="cbx-badges"/.test(g.buildCbxTargetHTML()), "les pastilles d'état aussi");
 
-  var row = g.buildAllyRowHTML();
-  ok(row.indexOf('<button type="button" class="cbg-ally cbg-me') !== -1,
-    "la carte du héros est un bouton");
+  var row = g.cbxHeroCardHTML(g.CombatActors.heroActor(), true) + g.cbxCompanionCardHTML(game.combat.allies[1]);
+  ok(row.indexOf('<button type="button" class="cbx-card is-hero') !== -1, "la carte du héros est un bouton");
   ok((row.match(/<button/g) || []).length === (row.match(/<\/button>/g) || []).length,
     "toutes les cartes sont bien refermées");
 
-  var foes = g.buildEnemyRowHTML();
-  ok((foes.match(/<button/g) || []).length === 2, "les portraits ennemis restent des boutons");
+  var foes = game.combat.enemies.map(function (e) { return g.cbxFoeUiHTML(e, false); }).join("");
+  ok((foes.match(/<button/g) || []).length === (foes.match(/<\/button>/g) || []).length, "les repères ennemis restent des boutons refermés");
 
-  /* Hors mode Manuel, la carte n'est pas cliquable : elle est désactivée plutôt que
-     muette, pour que le navigateur sache qu'il n'y a rien à taper. */
+  /* Hors mode Manuel, la carte n'est pas cliquable : pas d'onclick, rien à taper. */
   run("game.unlockedTabs.grimoire = true; CombatEngine.setCombatMode('grimoire');");
-  ok(g.buildAllyRowHTML().indexOf("disabled") !== -1,
-    "en Grimoire, les cartes sont désactivées : rien à sélectionner");
+  ok(g.cbxCompanionCardHTML(game.combat.allies[1]).indexOf("selectCombatActor") === -1,
+    "en Grimoire, les cartes ne sélectionnent rien");
   run("CombatEngine.setCombatMode('tactique');");
-  ok(g.buildAllyRowHTML().indexOf("selectCombatActor") !== -1,
-    "en Tactique, elles redeviennent cliquables");
 })();
 
 console.log("\n[80] v3.282.0 — coût des objectifs : banc de quête et objectif de La Meute");
@@ -7842,26 +7772,17 @@ console.log("\n[81] v3.283.0 — la suggestion du Grimoire redevient visible");
 
   /* Le moteur la calcule toujours — c'était bien l'affichage qui l'avait perdue. */
   ok(typeof g.CombatEngine.suggestAction() === "string", "le moteur suggère une action");
-  ok(g.buildClassSkillButtonsHTML().indexOf("is-suggested") !== -1,
+  ok(g.buildCbxCmdHTML().indexOf("is-suggested") !== -1,
     "et le bouton correspondant porte sa marque");
 
-  /* Le halo est un box-shadow. Le restylage carré des boutons (v3.275.0) leur a donné
-     leur propre ombre dans un fichier chargé APRÈS : à spécificité égale, l'ombre gagnait
-     et le halo disparaissait. La reprise doit exister et garder l'ombre en dernier. */
+  /* v3.459.7 (audit O13) : le halo vit sur .cbx-skill (03-combat-screen.css). */
   var css = "";
-  try { css = require("fs").readFileSync(ROOT + "/css/03-combat-group.css", "utf8"); } catch (e) { css = ""; }
-  ok(css.indexOf(".cb-cmd .combat-action-btn.is-suggested") !== -1,
-    "la reprise du halo de suggestion existe, dans la portée du combat");
-  var bloc = css.slice(css.indexOf(".cb-cmd .combat-action-btn.is-suggested"));
-  bloc = bloc.slice(0, bloc.indexOf("}") + 1);
-  ok(bloc.indexOf("253, 230, 138") !== -1, "elle garde la teinte d'origine du halo");
-  ok(bloc.indexOf("0, 0, 0, .45") !== -1, "et conserve l'ombre portée du bouton sous le halo");
-  ok(css.indexOf(".cb-cmd .combat-action-btn.is-active") !== -1,
-    "la posture active est reprise pour la même raison");
+  try { css = require("fs").readFileSync(ROOT + "/css/03-combat-screen.css", "utf8"); } catch (e) { css = ""; }
+  ok(/\.cbx-skill\.is-suggested \{[^}]*box-shadow/.test(css), "le halo de suggestion existe sur les boutons de technique");
 
   /* En mode automatique, aucune suggestion : c'est le Grimoire qui joue. */
   run("game.unlockedTabs.grimoire = true; CombatEngine.setCombatMode('grimoire');");
-  ok(g.buildClassSkillButtonsHTML().indexOf("is-suggested") === -1,
+  ok(g.buildCbxCmdHTML().indexOf("is-suggested") === -1,
     "en Grimoire, pas de suggestion : il joue lui-même");
   run("CombatEngine.setCombatMode('tactique');");
 })();
@@ -7981,9 +7902,9 @@ console.log("\n[85] v3.287.0 — raccourcis clavier du combat : garde-fous et af
     "et l'annonce aussi aux lecteurs d'écran");
 
   var css = "";
-  try { css = require("fs").readFileSync(ROOT + "/css/03-combat-group.css", "utf8"); } catch (e) { css = ""; }
-  ok(css.indexOf("(hover: hover) and (pointer: fine)") !== -1,
-    "la pastille ne s'affiche que là où il y a un clavier — pas sur un téléphone");
+  try { css = require("fs").readFileSync(ROOT + "/css/03-combat-screen.css", "utf8"); } catch (e) { css = ""; }
+  ok(/\.cbx-key-badge \{ display: none;/.test(css) && css.indexOf("html.pc-mode .cbx-key-badge { display: block; }") !== -1,
+    "la pastille ne s'affiche qu'en mode PC — pas sur un téléphone");
 
   /* Feuille ouverte : le clavier ne doit pas agir sur le combat derrière. */
   ok(typeof g.isCombatSheetOpen === "function", "le garde-fou des feuilles existe");
@@ -8004,8 +7925,10 @@ console.log("\n[85] v3.287.0 — raccourcis clavier du combat : garde-fous et af
   g.CombatEngine.spawnEnemy();
   var vue = "";
   try { vue = require("fs").readFileSync(ROOT + "/js/ui/combat-group-view.js", "utf8"); } catch (e) { vue = ""; }
-  ok(vue.indexOf('btn.querySelector("span:first-child")') !== -1,
-    "le nom de l'acteur ne réécrit que le libellé, pas la pastille");
+  // v3.459.7 (audit O13) : le bouton Attaque de combat-screen-view.js porte le nom du compagnon en <small>, la touche à part
+  vue = require("fs").readFileSync(ROOT + "/js/ui/combat-screen-view.js", "utf8");
+  ok(vue.indexOf("_t(\"ATTAQUER\") + ' <small>'") !== -1 && vue.indexOf('cbx-key-badge') !== -1,
+    "le nom de l'acteur s'écrit dans le bouton sans effacer la pastille de touche");
 })();
 
 console.log("\n[85 bis] v3.288.0 — Donjon : élites escortées et phases du Basilic");
@@ -9488,7 +9411,7 @@ console.log("\n[116] v3.320.0 — Menu sans pastille, préparatifs du run dans l
   ok(/^<button type="button" class="active-potions-btn" onclick="openCombatStatesSheet\(\)"/.test(bar),
     "la barre du haut est un vrai bouton qui ouvre la feuille");
   ok(bar.indexOf("title=") === -1, "plus aucun title (invisible sur mobile)");
-  var sh = g.buildCombatStatesSheetHTML();
+  var sh = g.buildCbxStatesSheetHTML();
   ok(sh.indexOf("Pour ce run") !== -1 && sh.indexOf(g.DUNGEON_MARKS[0].name) !== -1,
     "la feuille liste la Marque sous « Pour ce run »");
   ok(sh.indexOf("st-empty") === -1, "une Marque active suffit à remplir la feuille");
@@ -10033,8 +9956,8 @@ console.log("\n[124] v3.329.0 — Bandeau d'alerte et rangées : réécriture se
   host.innerHTML = ""; writes = 1;
   g.setHtmlIfChanged(host, "<button>Il charge !</button>");
   ok(writes === 2, "contenu vidé par ailleurs : réécrit même si la chaîne est la même");
-  var src = require("fs").readFileSync(ROOT + "/js/ui/combat-view.js", "utf8");
-  ok(/setHtmlIfChanged\(document\.getElementById\("combat-alert-bar"\)/.test(src), "le bandeau passe par setHtmlIfChanged");
+  var src = require("fs").readFileSync(ROOT + "/js/ui/combat-screen-view.js", "utf8");
+  ok(/setHtml\(byId\("cbx-target"\), buildTargetHTML\(\)\)/.test(src) && /function setHtml\(host, html\) \{[\s\S]{0,200}setHtmlIfChanged/.test(src), "le bandeau de la cible passe par setHtmlIfChanged");
   var grp = require("fs").readFileSync(ROOT + "/js/ui/combat-group-view.js", "utf8");
   ok(grp.indexOf("host.innerHTML === html") === -1, "rangées d'ennemis et d'alliés : plus de comparaison à innerHTML");
 })();
@@ -10550,8 +10473,8 @@ console.log("\n[135] v3.355.0 — Portrait propre, conseil du compagnon, place d
   var basilic = { id: "slimeking", isBoss: true, image: "./images/Boss/basilic.webp" };
   ok(g.getEnemyPortrait(basilic) === "./images/Boss/basilic.webp", "rangée de groupe : le Basilic garde son portrait (" + g.getEnemyPortrait(basilic) + ")");
   ok(g.getEnemyPortrait({ id: "slimeking", isBoss: true }) === g.BOSS_DB.slimeking.image, "sans image propre : repli sur la fiche de base");
-  var src = require("fs").readFileSync(ROOT + "/js/ui/combat-view.js", "utf8");
-  ok(/var imagePath = game\.enemy\.image \|\| enemyData\.image/.test(src), "écran de combat : image propre d'abord");
+  var src = require("fs").readFileSync(ROOT + "/js/ui/combat-screen-view.js", "utf8");
+  ok(/function enemyImage\(e\) \{\s*if \(typeof getEnemyPortrait === "function"\) return getEnemyPortrait\(e\);/.test(src), "écran de combat : image propre d'abord (getEnemyPortrait)");
   var d1 = g.DUNGEONS.filter(function (d) { return d.id === 1; })[0];
   ok(d1 && d1.boss.image === "./images/Boss/basilic.webp", "le boss du Donjon I porte basilic.jpg");
 
@@ -10562,20 +10485,16 @@ console.log("\n[135] v3.355.0 — Portrait propre, conseil du compagnon, place d
   var w = (game.combat.allies || []).filter(function (a) { return a && a.companionId === "wenna"; })[0];
   ok(!!w, "Wenna est dans le groupe");
   game.combatMode = "tactique";
-  var h1 = g.buildCompanionActionsHTML(w);
-  ok((h1.match(/is-suggested/g) || []).length === 1, "Tactique : un seul bouton du compagnon est conseillé");
-  ok(h1.indexOf("combat-action-suggest-tag") !== -1, "le conseil porte la même étiquette que celui du héros");
-  var attendu = g.CompanionManager.chooseAction(w);
-  var conseille = /cbg-act[^"]*is-suggested"\s+onclick="companionAction\('(\w+)'/.exec(h1);
-  ok(conseille && conseille[1] === attendu, "le conseil suit sa politique automatique (" + attendu + ")");
-  run("game.heroHp = Math.floor(game.heroMaxHp * 0.30);");
+  // v3.459.7 (audit O13) : la compétence du compagnon est conseillée quand sa politique la choisit
   w.cooldown = 0; w.charges = 3;
-  var h2 = g.buildCompanionActionsHTML(w);
-  ok(/is-suggested"\s+onclick="companionAction\('skill'/.test(h2), "héros blessé : Wenna conseille son soin");
+  run("game.heroHp = Math.floor(game.heroMaxHp * 0.30);");
+  var h2 = g.cbxCompanionActionsHTML(w);
+  ok(g.CompanionManager.chooseAction(w) === "skill" && /cbx-skill is-suggested"\s+onclick="companionAction\('skill'/.test(h2), "héros blessé : Wenna conseille son soin");
+  ok(h2.indexOf("Le Grimoire la conseille") !== -1, "le conseil porte sa mention, comme celui du héros");
   w.cooldown = 3;
-  ok(/is-suggested"\s+onclick="companionAction\('basic'/.test(g.buildCompanionActionsHTML(w)), "soin en recharge : le conseil passe à l'attaque");
+  ok(g.cbxCompanionActionsHTML(w).indexOf("is-suggested") === -1, "soin en recharge : plus de conseil sur la compétence");
   game.combatMode = "grimoire";
-  ok(g.buildCompanionActionsHTML(w).indexOf("is-suggested") === -1, "Grimoire : aucun conseil");
+  ok(g.buildCbxCmdHTML().indexOf("cbx-cskill") === -1, "Grimoire : aucune commande de compagnon, donc aucun conseil");
   game.combatMode = "tactique";
 
   /* D6 : un échec subi rend la place du jour, un abandon la garde */
@@ -12925,7 +12844,7 @@ console.log("\n[172] v3.399.0 — Lot F-1 : feuilles du bas unifiées (habillage
     check("Files en cours", g.buildWorkshopSummaryHTML());
     check("Carte du monde", g.buildWorldPopupHTML(0));
     check("Bâtiment du village", g.buildVillageBuildingSheetHTML(Object.keys(g.VILLAGE_BUILDINGS)[0]));
-    check("États du combat", g.buildCombatStatesSheetHTML());
+    check("États du combat", g.buildCbxStatesSheetHTML());
     ["help", "presets", "report"].forEach(function (n) {
       run("grimoireOpenSheet = '" + n + "';");
       check("Grimoire › " + n, g.buildGrimoireSheetHTML());
@@ -13201,7 +13120,7 @@ console.log("\n[183] v3.410.0 — Retouches : rangée d'états, cartes sans cadr
   try {
     var fs = require("fs"), path = require("path");
     var rd = function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); };
-    ok(/\.cb-states \{ background: none; \}/.test(rd("css/03-combat-group.css")), "combat : plus de fond natif (gris clair) derrière les icônes d'état");
+    /* v3.459.7 (audit O13) : contrôle retiré avec le CSS de l'ancien écran de combat ; l'écran actuel (cbx) a les siens. */
     var co = rd("css/00-components.css").replace(/\/\*[\s\S]*?\*\//g, "");
     ok(co.indexOf("background_upgrade.png") === -1 && /\.nb-entry-card \{[^}]*border: 1px solid var\(--c-bronze-500\)/.test(co) && /\.nb-purchase-card \{[^}]*border: 1px solid var\(--c-bronze-500\)/.test(co), "cartes de la Bibliothèque, des boutiques et des potions : carte crème du kit, sans cadre intérieur");
     var fr = rd("js/ui/fil-rouge-view.js");

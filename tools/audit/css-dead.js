@@ -1,5 +1,6 @@
 "use strict";
 /* tools/audit/css-dead.js — v3.459.5 (audit O11) : classes CSS que ni le JS ni index.html ne citent.
+   v3.459.7 : aussi les sélecteurs d'ID (#x) dont l'id n'est cité nulle part.
    Un nom construit par concaténation ("pc-sum-" + x, 'is-' + etat) n'est pas mort : la classe dont un
    préfixe (jusqu'à un tiret) finit une chaîne du JS est classée « construite », à vérifier à la main.
    USAGE : node tools/audit/css-dead.js [.] */
@@ -24,7 +25,7 @@ var code = walk(path.join(ROOT, "js"), /\.js$/, [path.join(ROOT, "index.html")])
 var prefixes = {}, m, RP = /["'`][^"'`\n]*?([a-z][a-z0-9_-]*)(?:["'`]\s*\+|\$\{)/g;
 while ((m = RP.exec(code))) prefixes[m[1]] = true;
 
-var classes = {}; // classe -> fichiers CSS
+var classes = {}, ids = {}; // classe ou id -> fichiers CSS
 walk(path.join(ROOT, "css"), /\.css$/, []).forEach(function (f) {
   var css = fs.readFileSync(f, "utf8").replace(/\/\*[\s\S]*?\*\//g, "").replace(/url\([^)]*\)/g, "");
   var RC = /\.(-?[a-zA-Z_][a-zA-Z0-9_-]*)/g, c;
@@ -32,6 +33,8 @@ walk(path.join(ROOT, "css"), /\.css$/, []).forEach(function (f) {
   css.split("{").forEach(function (part) {
     var sel = part.slice(part.lastIndexOf("}") + 1);
     while ((c = RC.exec(sel))) (classes[c[1]] = classes[c[1]] || {})[path.basename(f)] = true;
+    var RI = /#([a-zA-Z_][a-zA-Z0-9_-]*)/g, d;
+    while ((d = RI.exec(sel))) (ids[d[1]] = ids[d[1]] || {})[path.basename(f)] = true;
   });
 });
 
@@ -43,5 +46,10 @@ Object.keys(classes).sort().forEach(function (k) {
   (pre.length ? construites : mortes).push(k + "  (" + Object.keys(classes[k]).join(", ") + ")" + (pre.length ? "  <- " + pre.join(" ") : ""));
 });
 
+var idsMorts = Object.keys(ids).sort().filter(function (k) {
+  return !new RegExp("(^|[^a-zA-Z0-9_-])" + k.replace(/[-]/g, "\\-") + "($|[^a-zA-Z0-9_-])").test(code);
+}).map(function (k) { return k + "  (" + Object.keys(ids[k]).join(", ") + ")"; });
+
 console.log("Classes mortes (" + mortes.length + ") :\n  " + mortes.join("\n  "));
 console.log("\nConstruites par concaténation, à vérifier (" + construites.length + ") :\n  " + construites.join("\n  "));
+console.log("\nID morts (" + idsMorts.length + ") :\n  " + idsMorts.join("\n  "));

@@ -126,8 +126,6 @@ var COMBAT_STATE_FAMILIES = [
   { id: "onme", titre: "Ce que tu subis" }
 ];
 
-/* Au-delà, une pastille « +N » : la rangée ne doit jamais repousser l'image de l'ennemi. */
-var COMBAT_STATES_MAX_VISIBLE = 6;
 
 window.COMBAT_STATES = COMBAT_STATES;
 
@@ -172,4 +170,3 @@ var COMBAT_STATES_SCREEN = {
 };
 window.COMBAT_STATES_SCREEN = COMBAT_STATES_SCREEN;
 window.COMBAT_STATE_FAMILIES = COMBAT_STATE_FAMILIES;
-window.COMBAT_STATES_MAX_VISIBLE = COMBAT_STATES_MAX_VISIBLE;

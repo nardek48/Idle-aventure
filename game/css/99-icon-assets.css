@@ -113,8 +113,6 @@ img.vb-card-icon { width: 84px; height: 84px; object-fit: contain; } /* v3.414.0
 }
 
 /* Les 10 icônes ajoutées au second envoi. */
-.combat-continue-btn .ico-inline,
-.combat-sortie-btn .ico-inline { width: 17px; height: 17px; vertical-align: -3px; }
 .eq-detail-setbonus-icon .ico-inline { width: 18px; height: 18px; }
 .dungeon-wave-label .ico-inline { width: 18px; height: 18px; vertical-align: -3px; }
 

@@ -939,6 +939,11 @@
   window.cbxStatesOf = statesOf;
   window.cbxLayout = layout;
   window.cbxIsRanged = isRanged;
+  // v3.459.7 (audit O13) : constructeurs lus par le harnais, à la place de ceux de l'ancienne couche
+  window.cbxHeroCardHTML = heroCardHTML;
+  window.cbxCompanionCardHTML = companionCardHTML;
+  window.cbxFoeUiHTML = foeUiHTML;
+  window.cbxCompanionActionsHTML = companionActionsHTML;
 
   // Le moteur affiche ses dégâts dans l'ancien décor : on les reprend ici, sur le bon ennemi.
   window.showFloatingDamage = function (amount, isCrit) { onDamageShown(amount, isCrit); };

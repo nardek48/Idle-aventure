@@ -19,18 +19,6 @@ body.combat-active #game-area {
 body.combat-active #hud { display: none; }              /* le HUD entier cède la place au panneau héros */
 body.combat-active #combat-speed-bar { display: none !important; } /* la vitesse est rendue dans la rangée de contrôles */
 
-.cb-arena { flex: 1 1 auto; min-height: 0; width: 100%; display: flex; flex-direction: column; align-items: center; }
-.cb-cmd   { flex: 0 0 auto; width: 100%; padding: 4px 0 2px; }
-.cb-hero  { flex: 0 0 auto; width: 100%; padding: 0 0 calc(4px + var(--safe-bottom, 0px)); }
-
-/* ---------- Arène ---------- */
-.cb-arena #enemy-display {
-  flex: 1 1 auto; min-height: 0; width: 100%;
-  margin: 0; min-height: 0;
-}
-.cb-arena .combat-mission-progress { margin: 2px 0 2px; }
-.cb-arena #enemy-name { margin-top: 2px; }
-
 /* =====================================================================
    v3.251.0 (lot B-1, atelier atelier-statuts.html) — ÉTATS DE COMBAT.
    Deux zones au lieu d'une seule barre indifférenciée :
@@ -41,7 +29,6 @@ body.combat-active #combat-speed-bar { display: none !important; } /* la vitesse
    ===================================================================== */
 
 /* --- Bandeau d'alerte --- */
-.cb-arena .combat-alert-bar { display: flex; justify-content: center; }
 .cb-alert {
   display: flex; align-items: center; justify-content: center; gap: 6px;
   align-self: center; max-width: 96%;
@@ -57,7 +44,6 @@ body.combat-active #combat-speed-bar { display: none !important; } /* la vitesse
   cursor: pointer;
 }
 .cb-alert img { width: 20px; height: 20px; object-fit: contain; flex: 0 0 auto; }
-.cb-alert-sep { opacity: 0.5; }
 /* Deux télégraphes simultanés : on rétrécit le texte plutôt que de couper ou d'aller à la
    ligne — un bandeau sur deux lignes cesse d'être lu comme une alerte. */
 .cb-alert.is-multi { font-size: 12px; padding: 5px 10px; gap: 4px; }
@@ -73,38 +59,6 @@ body.combat-active #combat-speed-bar { display: none !important; } /* la vitesse
   50%      { box-shadow: 0 0 16px rgba(230, 90, 60, 0.75); }
 }
 @media (prefers-reduced-motion: reduce) { .cb-alert { animation: none; } }
-
-/* --- Rangée d'états --- */
-.cb-states {
-  display: flex; flex-wrap: wrap; justify-content: center; align-items: center;
-  gap: 6px; margin: 2px 0 0; padding: 4px 8px;
-  pointer-events: auto; cursor: pointer;
-}
-.cb-state {
-  position: relative; width: 34px; height: 34px; border-radius: 999px;
-  border: 1.5px solid var(--nb-gold-dark, var(--c-brown-700-vivid));
-  background: rgba(10, 8, 6, 0.78);
-  display: flex; align-items: center; justify-content: center;
-}
-.cb-state img { width: 74%; height: 74%; object-fit: contain; }
-.cb-state-n {
-  position: absolute; bottom: -5px; right: -5px; min-width: 17px; height: 17px; padding: 0 3px;
-  border-radius: 999px; background: var(--c-brown-850-2); border: 1px solid var(--nb-gold-dark, var(--c-brown-700-vivid));
-  color: var(--c-cream-100-2); font-size: 12px; font-weight: 800; line-height: 15px; text-align: center;
-}
-/* Trois familles, trois teintes : le joueur voit d'un coup d'œil ce qui vient de LUI. */
-.cb-state.is-enemy { border-color: #b8622e; }
-.cb-state.is-mine  { border-color: #4f9d5a; }
-.cb-state.is-onme  { border-color: #9a6fbf; }
-.cb-state.is-suppressed { opacity: 0.45; filter: grayscale(1); }
-.cb-states-more {
-  display: inline-flex; align-items: center; height: 34px; padding: 0 9px;
-  border-radius: 999px;
-  border: 1.5px solid var(--nb-gold-dark, var(--c-brown-700-vivid));
-  background: rgba(10, 8, 6, 0.78);
-  color: var(--c-cream-100-2); font-size: 12px; font-weight: 800;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
-}
 
 /* --- Feuille d'explication --- */
 .st-group-title { /* v3.402.0 (lot B-1) : surtitre du kit */
@@ -125,187 +79,9 @@ body.combat-active #combat-speed-bar { display: none !important; } /* la vitesse
 .st-row.is-alert { border-color: var(--danger, var(--c-red-550)); background: var(--c-red-50); }
 .st-empty { font-size: 12px; color: var(--nb-ink-dim); font-style: italic; padding: 10px 2px; }
 
-/* Ancienne barre : plus de hauteur minimale réservée (elle laissait un trou quand rien
-   n'était actif) et plus de pointer-events: none (la rangée est cliquable). */
-.cb-arena .enemy-status-bar {
-  position: static; flex-direction: row; flex-wrap: wrap; justify-content: center;
-  gap: 8px; margin-top: 0; min-height: 0;
-}
-
-/* Ennemi : occupe l'espace restant, bords fondus (les JPG n'ont pas d'alpha) */
-.cb-arena #enemy-emoji {
-  flex: 1 1 auto; min-height: 0; width: 100%; display: flex; align-items: center; justify-content: center;
-  margin: 2px 0 0;
-}
-.cb-arena #enemy-emoji img,
-.cb-arena .enemy-image {
-  max-height: 100%; max-width: 84%; width: auto; height: auto; object-fit: contain; border-radius: 0;
-  -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, var(--c-black-950) 72%, rgba(0, 0, 0, 0) 100%);
-          mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, var(--c-black-950) 72%, rgba(0, 0, 0, 0) 100%);
-}
-
-/* ---------- Commandes ---------- */
-.cb-cmd .combat-action-row {
-  position: static; bottom: auto; margin: 0; padding: 0;
-  display: flex; justify-content: center;
-}
-.cb-cmd #class-skills-root {
-  display: grid; grid-template-columns: repeat(4, var(--cb-skill));
-  gap: var(--cb-gap); justify-content: center;
-  --cb-skill: clamp(66px, 18.9vw, 80px);   /* 140 % de la base 48–58 px */
-  --cb-gap: clamp(6px, 2vw, 10px);
-}
-.cb-cmd #class-skills-root > * { width: var(--cb-skill) !important; height: var(--cb-skill) !important; max-width: none !important; }
-
-.cb-cmd .combat-attack-row {
-  position: static; bottom: auto; margin: clamp(5px, 1.5vw, 8px) 0 0; padding: 0;
-  display: grid; grid-template-columns: var(--cb-pot) 1fr var(--cb-pot); gap: var(--cb-gap, 8px); align-items: center;
-  --cb-pot: clamp(48px, 13.75vw, 59px);    /* 110 % */
-}
-.cb-cmd #heal-quick-root-left, .cb-cmd #heal-quick-root { width: var(--cb-pot); }
-.cb-cmd .heal-quick-btn { width: var(--cb-pot) !important; height: var(--cb-pot) !important; }
-.cb-cmd .heal-quick-btn img, .cb-cmd .heal-quick-icon img { width: 90% !important; height: 90% !important; object-fit: contain; }
-/* v3.273.0 (maquette validée par Seb) : le bouton d'attaque quitte l'image de fond pour
-   la pastille dorée de l'atelier, et rétrécit de 20 % — la hauteur passe de 64 à 51 px
-   au plus, la largeur de 80 à 64 % de la rangée. */
-.cb-cmd .combat-attack-btn {
-  width: 64%; height: auto; aspect-ratio: 168 / 50; max-height: 51px; justify-self: center;
-  background: linear-gradient(180deg, #e8bf5a, var(--c-brown-600)) !important;
-  border: 1px solid var(--c-brown-700-vivid); border-radius: 12px;
-  color: var(--c-brown-900); font-weight: 800; font-size: 16px; letter-spacing: .3px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, .45);
-  display: flex; align-items: center; justify-content: center;
-}
-.cb-cmd .combat-attack-btn::before,
-.cb-cmd .combat-attack-btn::after { content: none !important; }
-
-.cb-ctl-row { display: grid; grid-template-columns: 1fr auto; gap: 6px; align-items: center; margin-top: clamp(5px, 1.5vw, 8px); }
-.cb-ctl-row .combat-controls { position: static; bottom: auto; padding: 0; justify-content: flex-start; gap: 6px; flex-wrap: wrap; }
-.cb-ctl-row .combat-speed-inline { display: inline-flex; gap: 2px; }
-.cb-ctl-row .combat-speed-btn { padding: 4px 8px; font-size: max(12px, clamp(10px, 2.8vw, 11px)); }
-
-/* ---------- Panneau héros (bas) ---------- */
-.cb-hero {
-  margin-top: 6px;
-  background: linear-gradient(0deg, rgba(20, 14, 8, 0.85), rgba(20, 14, 8, 0.6));
-  border: 1px solid rgba(217, 164, 65, 0.5); border-radius: 12px;
-  /* v3.242.1 (bug Seb) : ce `padding` écrasait la réserve de safe-area posée plus
-     haut (l. 20) — sur iPhone, la barre de Célérité passait sous l'indicateur
-     home et se retrouvait coupée. La réserve est réintégrée ici. */
-  padding: 6px 8px calc(6px + var(--safe-bottom, 0px));
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
-  display: grid; gap: 3px;
-}
-.cb-hero-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.cb-hero-slot { flex: 1 1 auto; min-width: 0; }
-/* Le mini-héros du HUD, replacé ici : portrait à gauche, PV pleine largeur, cliquable à nouveau. */
-.cb-hero #combat-hero-mini { display: flex; align-items: center; gap: 8px; width: 100%; pointer-events: auto; cursor: pointer; }
-.cb-hero .combat-hero-mini-portrait { flex: 0 0 auto; width: 56px; height: 56px; }
-/* v3.242.1 (point iPhone laissé ouvert en v3.241) : à 56 px, le badge « Niv. »
-   mordait le bas du portrait et devenait illisible. Il descend sous le cadre et
-   se resserre ; le portrait garde sa place, seule la pastille bouge. */
-.cb-hero .combat-hero-mini-level {
-  bottom: -9px;
-  font-size: 10px;
-  padding: 1px 6px;
-}
-.cb-hero #combat-hero-mini { padding-bottom: 5px; }
-.cb-hero .combat-hero-mini-hp-bar { flex: 1 1 auto; min-width: 0; }
-.cb-hero .combat-sortie-row { position: static; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; padding: 0; }
-.cb-hero .combat-sortie-row .combat-loot-pill { font-size: 12px; }
-
-.cb-hero .class-resource-bar { position: static; bottom: auto; padding: 0; pointer-events: auto; }
-.cb-hero .class-resource-track { width: 100%; }
-.cb-hero .kgauge-text { font-size: 10px; }
-
-/* ---------- Petits écrans (SE) : le panneau héros se compacte ---------- */
-@media (max-height: 640px), (max-width: 340px) {
-  .cb-hero { padding: 4px 6px calc(4px + var(--safe-bottom, 0px)); gap: 2px; }
-  .cb-hero .combat-hero-mini-portrait { width: 44px; height: 44px; }
-  .cb-cmd #class-skills-root { --cb-skill: clamp(58px, 17vw, 66px); }
-  .cb-arena .enemy-status-bar { margin-top: 3px; min-height: 34px; }
-  .cb-ctl-row { margin-top: 4px; }
-}
-
-/* ---------- Neutralisation des réglages absolus hérités de 03-combat.css ---------- */
-.cb-arena #enemy-display { margin-top: 0 !important; min-height: 0 !important; margin-bottom: 0 !important; }
-.cb-arena #enemy-emoji {
-  width: 100% !important; height: auto !important; min-width: 0 !important; min-height: 0 !important;
-  transform: none !important; margin: 2px 0 0 !important;
-}
-.cb-arena #enemy-emoji.has-image img,
-.cb-arena .enemy-image {
-  width: auto !important; height: auto !important; max-height: 100% !important; max-width: 84% !important;
-  -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, var(--c-black-950) 72%, rgba(0, 0, 0, 0) 100%) !important;
-          mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, var(--c-black-950) 72%, rgba(0, 0, 0, 0) 100%) !important;
-  -webkit-mask-composite: initial !important; mask-composite: initial !important;
-}
-.cb-arena #enemy-emoji.has-image { flex: 1 1 auto; min-height: 120px !important; }
-
-/* Mini-héros en ligne dans le panneau du bas (le HUD le pose en colonne). */
-.cb-hero #combat-hero-mini {
-  flex-direction: row !important; width: 100% !important; max-width: none !important;
-  align-items: center; gap: 8px;
-}
-.cb-hero .combat-hero-mini-hp-bar { width: auto !important; flex: 1 1 auto; }
-
 /* ---------- Contraintes de hauteur : l'arène ne doit jamais déborder par le haut ---------- */
 body.combat-active #game-area { overflow: hidden; }
-.cb-arena { overflow: hidden; }
-.cb-arena #enemy-display { flex: 1 1 0 !important; height: 0; overflow: hidden; }
-.cb-arena #enemy-emoji, .cb-arena #enemy-emoji.has-image { flex: 1 1 0 !important; height: 0 !important; min-height: 0 !important; overflow: hidden; }
-.cb-arena #enemy-emoji.has-image img { max-height: 100% !important; }
 
-/* ---------- Potions : le bouton fait exactement la taille du cercle ---------- */
-.cb-cmd .heal-quick-bar { width: var(--cb-pot); height: var(--cb-pot); display: flex; }
-.cb-cmd .heal-quick-btn {
-  width: var(--cb-pot) !important; height: var(--cb-pot) !important; min-width: 0 !important; min-height: 0 !important;
-  padding: 0 !important; border-radius: 50%; overflow: visible; position: relative;
-  /* v3.320.0 (retour Seb) : plus de cercle blanc — c'était le fond par défaut du bouton. */
-  -webkit-appearance: none; appearance: none; background-color: transparent;
-}
-.cb-cmd .heal-quick-icon { width: 100% !important; height: 100% !important; display: flex; align-items: center; justify-content: center; }
-.cb-cmd .heal-quick-icon img { width: 88% !important; height: 88% !important; max-width: none !important; max-height: none !important; }
-
-/* Nom et jauge de PV ennemi : le translateY(-25px) de 03-combat.css n'a plus lieu d'être. */
-.cb-arena #enemy-name, .cb-arena #enemy-hp-bar-wrapper { transform: none !important; }
 /* Encoche iPhone : l'arène commence sous la zone sûre. */
 body.combat-active #game-area { padding-top: calc(4px + var(--safe-top, env(safe-area-inset-top, 0px))); }
 
-/* =====================================================================
-   v3.261.0 — BANDEAU HÉROS, variante B (atelier-bandeau-combat.html, retour Seb).
-   Portrait à gauche sur deux lignes ; à droite, butin / potions / Fuir, puis la
-   jauge de PV sur toute la largeur. Célérité centrée et agrandie.
-   Corrige aussi un défaut de v3.241 : un butin long écrasait la jauge de PV à 0 px
-   (la rangée de sortie prenait toute la ligne du flex).
-   Balisage inchangé : display:contents sur le slot et sur #combat-hero-mini fait du
-   portrait et de la jauge des cases de la grille. Le clic vers Talents bulle toujours
-   depuis les enfants (le DOM ne change pas).
-   ===================================================================== */
-.cb-hero { grid-template-columns: minmax(0, 1fr); } /* colonne bornée : un butin long n'élargit plus le panneau */
-.cb-hero .cb-hero-top {
-  display: grid;
-  grid-template-columns: 56px minmax(0, 1fr);
-  grid-template-rows: auto auto;
-  column-gap: 8px;
-  row-gap: 0;
-  align-items: center;
-}
-.cb-hero .cb-hero-top .cb-hero-slot,
-.cb-hero .cb-hero-top #combat-hero-mini { display: contents !important; }
-.cb-hero .cb-hero-top .combat-hero-mini-portrait { grid-column: 1; grid-row: 1 / span 2; cursor: pointer; }
-.cb-hero .cb-hero-top .combat-sortie-row {
-  grid-column: 2; grid-row: 1;
-  flex-direction: row; align-items: center; justify-content: flex-end;
-  gap: 5px; min-width: 0;
-}
-.cb-hero .cb-hero-top .combat-hero-mini-hp-bar { grid-column: 2; grid-row: 2; width: 100% !important; cursor: pointer; }
-.cb-hero .combat-hero-mini-hp-bar .kgauge-text { font-size: 12px; }
-
-.cb-hero .cb-celerity { display: flex; justify-content: center; }
-.cb-hero .cb-celerity .kgauge-text { font-size: 11px; }
-.cb-hero .cb-celerity .kgauge-text img { margin-right: 3px; }
-
-@media (max-height: 640px), (max-width: 340px) {
-  .cb-hero .cb-hero-top { grid-template-columns: 44px minmax(0, 1fr); }
-}
