@@ -5838,4 +5838,6 @@ I18n.register("en", {
   "Voir le Bestiaire": "See the Bestiary",
   "Hauts faits réclamés.": "Feats claimed.",
   "Voir les Hauts faits": "See the Feats",
+  // v3.459.12 : régler d'un coup
+  "Régler d'un coup": "Settle at once",
 });

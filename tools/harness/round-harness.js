@@ -16569,6 +16569,38 @@ console.log("\n[269] v3.459.11 — Fil rouge : après l'Histoire (audit I1)");
   F.invalidate();
 })();
 
+console.log("\n[270] v3.459.12 — Régler d'un coup (audit I4)");
+(function () {
+  game = freshCombat("knight"); giveWeapon();
+  run("game.heroLevel = 30; game.heroHp = game.heroMaxHp = 100000; game.activeTab = 'combat';");
+  g.AdventureQuestManager.start("hq_wolf_pack");
+  var Q = g.CombatQuick, foes = Q._foes();
+  run("game.heroMaxHp = 4000; game.heroHp = 4000;"); // héros solide : usure prévue sous 25 %
+  foes.forEach(function (e) { e.chargeIn = 99; });
+  var dispo = (Q.invalidate(), Q.available()), kills0 = game.totalKills, hp0 = game.heroHp, mode0 = game.combatMode;
+  ok(dispo, "combat ordinaire, héros très au-dessus : « Sans danger », le bouton est proposé");
+  ok((Q.invalidate(), g.buildCbxTargetHTML()).indexOf('class="cbx-chip is-quick" onclick="cbxQuickFight()"') !== -1, "variante B : la puce « Sans danger · Régler d'un coup » sous la barre de vie de la cible");
+  ok(Q.resolve() === true && foes.every(function (e) { return e.hp <= 0; }), "réglé d'un coup : tous les ennemis du combat sont tombés (" + foes.length + ")");
+  ok(game.totalKills === kills0 + foes.length, "les victoires comptent comme en jeu (+" + (game.totalKills - kills0) + ")");
+  ok(game.combatMode === mode0 && !game.combatRound.continueAttack, "le mode de combat du joueur est rendu tel quel");
+  ok(game.heroHp <= hp0, "les PV perdus sont ceux du combat joué (" + hp0 + " → " + game.heroHp + ")");
+  // pas de bouton contre un boss, une élite, en donjon, ou hors quête
+  var e = Q._foes()[0] || game.enemy;
+  if (e) { e.isElite = true; ok(!(Q.invalidate(), Q.available()), "élite : pas de règlement d'un coup"); e.isElite = false; }
+  run("game.dungeonRun = { active: true };"); ok(!(Q.invalidate(), Q.available()), "en donjon : pas de bouton (à discuter)"); run("game.dungeonRun = null;");
+  run("game.heroHp = 300;"); ok(!(Q.invalidate(), Q.available()), "usure prévue au-delà de 25 % des PV : pas de bouton");
+  // il rend la main sous 30 % des PV, sans aller jusqu'à la mort
+  g.AdventureQuestManager.forfeit && g.AdventureQuestManager.forfeit();
+  game = freshCombat("knight"); giveWeapon(); run("game.activeTab = 'combat';");
+  g.AdventureQuestManager.start("hq_wolf_pack");
+  run("game.heroMaxHp = 4000; game.heroHp = 4000;");
+  var f2 = Q._foes(); f2.forEach(function (x) { x.hp = x.maxHp = 100000; });   // un combat qui dure, lancé quand même
+  var av = Q.available; Q.available = function () { return true; };
+  Q.resolve(); Q.available = av;
+  ok(game.heroHp > 0 && game.heroHp < 4000 * 0.3 && f2.some(function (x) { return x.hp > 0; }), "sous 30 % des PV, le combat s'arrête et rend la main (" + game.heroHp + " PV)");
+  run("AdventureQuestManager.forfeit && AdventureQuestManager.forfeit();");
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

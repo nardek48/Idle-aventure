@@ -90,6 +90,9 @@ html body.combat-active #combat-speed-bar { display: none !important; }
 .cbx-chip.is-heal { font-size: 13px; padding: 5px 12px; border: 2px solid var(--cbx-blue); color: rgba(224, 242, 254, 1);
   background: linear-gradient(180deg, rgba(3, 105, 161, .92), rgba(12, 74, 110, .94)); animation: cbxHealChip 1.1s ease-in-out infinite; }
 .cbx-chip.is-heal small { font-size: 12px; font-weight: 800; color: rgba(253, 230, 138, 1); }
+/* v3.459.12 (audit I4) : « Sans danger · Régler d'un coup », vert du soin de la feuille des états */
+.cbx-chip.is-quick { font-size: 13px; padding: 5px 12px; border: 1.5px solid rgba(63, 158, 90, 1); background: rgba(20, 90, 45, .9); color: rgba(233, 255, 233, 1); }
+.cbx-chip.is-quick b { font-weight: 800; }
 .cbx-chip.is-heal img { width: 20px; height: 20px; }
 
 /* Préparatifs du run (potions armées, Marques) : petite colonne en haut à gauche. */

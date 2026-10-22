@@ -529,3 +529,67 @@ window.FORECAST_CLASS_DMG_MULT = FORECAST_CLASS_DMG_MULT;
 window.FORECAST_COMPANION_HEAL_MULT = FORECAST_COMPANION_HEAL_MULT;
 window.COMBAT_FORECAST_LEVELS = COMBAT_FORECAST_LEVELS;
 window.CombatForecast = CombatForecast;
+
+/* v3.459.12 (audit I4) — RÉGLER D'UN COUP. Un combat ordinaire jugé « Sans danger » se joue d'un
+   trait : les vrais tours du moteur (horloge du Grimoire), sans attendre l'animation. PV perdus,
+   butin, quêtes et morts sont ceux d'un combat joué. Pas en donjon (à discuter avec Seb). */
+var QUICK_FIGHT_MAX_COST = 0.25;  // usure prévue au plus 25 % des PV : la prévision d'un groupe peut doubler en vrai
+var QUICK_FIGHT_STOP_PCT = 0.30;  // sous 30 % des PV, le combat rend la main au joueur
+var QUICK_FIGHT_MAX_TICKS = 400;  // garde-fou : un combat ordinaire dure quelques rounds
+
+var CombatQuick = {
+  /* Ennemis vivants du combat en cours, ou [] hors combat. */
+  _foes: function () {
+    var list = (window.CombatActors && typeof CombatActors.enemies === "function") ? CombatActors.enemies() : (game.enemy ? [game.enemy] : []);
+    return list.filter(function (e) { return e && Number(e.hp || 0) > 0; });
+  },
+
+  /* Lu par le bandeau de la cible à chaque rafraîchissement : gardé 500 ms. */
+  _cache: null, _cacheAt: 0,
+  available: function () {
+    var now = Date.now();
+    if (this._cache !== null && now - this._cacheAt < 500) return this._cache;
+    this._cache = this._check(); this._cacheAt = now;
+    return this._cache;
+  },
+  invalidate: function () { this._cache = null; },
+
+  _check: function () {
+    if (game.activeTab !== "combat" || Number(game.heroHp || 0) <= 0) return false;
+    if (game.dungeonRun && game.dungeonRun.active) return false;
+    if (typeof hasCombatQuestContext === "function" && !hasCombatQuestContext()) return false;
+    if (game.combatRound && game.combatRound.busy) return false;
+    var foes = this._foes();
+    if (!foes.length || foes.some(function (e) { return e.isBoss || e.isElite; })) return false;
+    if (!foes.every(function (e) { var f = CombatForecast.forEnemy(e); return f && f.id === "trivial"; })) return false;
+    var cost = CombatForecast.getGroupFight(foes).cost;
+    return cost <= Number(game.heroHp || 0) * QUICK_FIGHT_MAX_COST;
+  },
+
+  /* Joue le combat jusqu'à la chute des ennemis présents ; rend la main sous 30 % des PV ou
+     si une fenêtre s'ouvre. */
+  resolve: function () {
+    this.invalidate();
+    if (!this.available() || !window.CombatEngine) return false;
+    var foes = this._foes(), round = game.combatRound;
+    var mode = game.combatMode, cont = !!round.continueAttack, ticks = 0;
+    game.combatMode = "grimoire"; round.continueAttack = false;
+    try {
+      while (ticks++ < QUICK_FIGHT_MAX_TICKS) {
+        if (Number(game.heroHp || 0) < Number(game.heroMaxHp || 1) * QUICK_FIGHT_STOP_PCT) break;
+        if (foes.every(function (e) { return Number(e.hp || 0) <= 0; })) break;
+        if (typeof isBlockingModalOpen === "function" && isBlockingModalOpen()) break;
+        if (game.activeTab !== "combat") break;
+        CombatEngine.tickRoundClock(60);
+      }
+    } finally {
+      game.combatMode = mode; round.continueAttack = cont;
+      this.invalidate();
+    }
+    if (typeof renderAll === "function") renderAll();
+    return true;
+  }
+};
+window.QUICK_FIGHT_MAX_COST = QUICK_FIGHT_MAX_COST;
+window.QUICK_FIGHT_STOP_PCT = QUICK_FIGHT_STOP_PCT;
+window.CombatQuick = CombatQuick;

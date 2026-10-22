@@ -189,6 +189,8 @@
       });
     });
     if (cbx.phase) chips += '<button type="button" class="cbx-chip is-phase" onclick="cbxReplayPhase()">⚑ ' + esc(cbx.phase.label) + '</button>';
+    // v3.459.12 (audit I4, variante B) : combat ordinaire « Sans danger » réglable d'un coup
+    if (!chips && window.CombatQuick && CombatQuick.available()) chips += '<button type="button" class="cbx-chip is-quick" onclick="cbxQuickFight()">✓ ' + _t("Sans danger") + ' · <b>' + _t("Régler d'un coup") + '</b></button>';
     h += '<div class="cbx-chips">' + chips + '</div>';
     return h;
   }
@@ -939,6 +941,7 @@
   window.cbxStatesOf = statesOf;
   window.cbxLayout = layout;
   window.cbxIsRanged = isRanged;
+  window.cbxQuickFight = function () { if (window.CombatQuick) CombatQuick.resolve(); renderFrame(true); };
   // v3.459.7 (audit O13) : constructeurs lus par le harnais, à la place de ceux de l'ancienne couche
   window.cbxHeroCardHTML = heroCardHTML;
   window.cbxCompanionCardHTML = companionCardHTML;
