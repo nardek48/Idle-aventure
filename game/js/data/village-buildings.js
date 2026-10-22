@@ -439,9 +439,22 @@ var VILLAGE_BUILDINGS = {
         costMult: 1.38
       },
       {
-        minLevel: 5, maxLevel: 9,
+        minLevel: 5, maxLevel: 6,
         resources: ["gold", "planche", "bloc", "pierre", "lingot", "resine_durcie"],
         baseCost: { gold: 5000, planche: 55, bloc: 55, pierre: 130, lingot: 30, resine_durcie: 3 }, // v3.330.0 (E3) : moitié des planches en blocs
+        costMult: 1.42
+      },
+      /* v3.459.9 (audit I3) : l'Entrepôt 8 (Crypte) en Cire de sépulcre ; bases = palier d'avant ×1,42^n, mêmes arrondis. */
+      {
+        minLevel: 7, maxLevel: 7,
+        resources: ["gold", "planche", "bloc", "pierre", "lingot", "cire_sepulcre"],
+        baseCost: { gold: 10082.0, planche: 110.902, bloc: 110.902, pierre: 262.132, lingot: 60.492, cire_sepulcre: 5 },
+        costMult: 1.42
+      },
+      {
+        minLevel: 8, maxLevel: 9,
+        resources: ["gold", "planche", "bloc", "pierre", "lingot", "resine_durcie"],
+        baseCost: { gold: 14316.44, planche: 157.48084, bloc: 157.48084, pierre: 372.22744, lingot: 85.89864, resine_durcie: 8.589864 },
         costMult: 1.42
       }
     ],

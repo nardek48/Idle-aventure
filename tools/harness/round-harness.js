@@ -16526,6 +16526,17 @@ console.log("\n[267] v3.459.8 — Terrain 12-13 en Cire de sépulcre (audit P11)
   ok(c14.resine_durcie === 18 && c14.gold === 4268, "Terrain 14 (pas encore ouvert) : coût d'avant");
 })();
 
+console.log("\n[268] v3.459.9 — Crypte : Halle 10 et Entrepôt 8 (audit I3)");
+(function () {
+  var V = g.VillageBuildingManager, cap = g.WORLD_CAPS[3].village;
+  ok(cap.hall === 10 && cap.warehouse === 8, "Crypte : Halle jusqu'à 10, Entrepôt jusqu'à 8");
+  var e8 = V.getLevelCost("warehouse", 7), e7 = V.getLevelCost("warehouse", 6), e9 = V.getLevelCost("warehouse", 8);
+  ok(e8.cire_sepulcre === 5 && !e8.resine_durcie && e8.gold === 10082 && e8.pierre === 262 && e8.lingot === 60, "Entrepôt 8 : 5 Cire de sépulcre au lieu de la Résine, le reste inchangé");
+  ok(e7.resine_durcie === 4 && e9.resine_durcie === 8 && e9.gold === 14316, "Entrepôt 7 et 9 : coûts d'avant");
+  var h10 = V.getLevelCost("hall", 9);
+  ok(h10.gold === 16263 && !h10.resine_durcie && !h10.cire_sepulcre, "Halle 10 : or et matériaux ordinaires (16 263 or)");
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

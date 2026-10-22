@@ -46,7 +46,7 @@ var WORLD_CAPS = [
      Provisoire, égal aux Ruines ; seule la 3e rangée de zones s'ouvre. Les crans des actes II-III au banc.
      v3.455.0 (acte III) : Forge 5, à la Cire consacrée (reforges 9 et 10). */
   {
-    village: { workshop: 8, training: 13, hall: 8, warehouse: 7, palisade: 8, tavern: 6, apothecary: 6, forge: 5, enchanter: 2 }, // v3.456.2 : Terrain 13 ; v3.456.9 : Taverne 6
+    village: { workshop: 8, training: 13, hall: 10, warehouse: 8, palisade: 8, tavern: 6, apothecary: 6, forge: 5, enchanter: 2 }, // v3.456.2 : Terrain 13 ; v3.456.9 : Taverne 6 ; v3.459.9 (audit I3) : Halle 10, Entrepôt 8
     zoneRows: 3,
     zoneLevel: 5,
     workshopLevel: 3,
