@@ -411,7 +411,7 @@ var StoryQuestManager = {
     addLog("📖 " + _t("Étape terminée : {x}", { x: _td(step.title) }), "event");
     if (typeof openQuestCompletePopup === "function") {
       openQuestCompletePopup({
-        icon: this.getChapter(chapterId).icon || "images/Icons/camp/campfire.png",
+        icon: this.getChapter(chapterId).icon || "images/Icons/camp/campfire.webp",
         title: step.title,
         text: step.narrative.completion,
         dialogue: step.narrative.completionDialogue || null, // v3.297.0 (W-1a) : la scène d'arrivée, à la réclamation

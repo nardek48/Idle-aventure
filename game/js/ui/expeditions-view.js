@@ -19,12 +19,12 @@ var expSheet = null; // null | { type: "patrol" | "caravan", id }
 
 (function () {
   var ICON = {
-    pa: "images/Icons/scene/path_easy.png",
-    patrol: "images/Icons/quests/mission_exploration.png",
-    caravan: "images/Icons/village_buildings/caravan.png",
-    dungeon: "images/Icons/subtabs/dungeon.png",
-    map: "images/Icons/menu_icons/map_menu.png",
-    potions: "images/Icons/subtabs/potions.png"
+    pa: "images/Icons/scene/path_easy.webp",
+    patrol: "images/Icons/quests/mission_exploration.webp",
+    caravan: "images/Icons/village_buildings/caravan.webp",
+    dungeon: "images/Icons/subtabs/dungeon.webp",
+    map: "images/Icons/menu_icons/map_menu.webp",
+    potions: "images/Icons/subtabs/potions.webp"
   };
   function img(src, cls) { return '<img class="' + (cls || "") + '" src="' + esc(src) + '" alt="">'; }
   function rerender() { if (typeof renderPanel === "function") renderPanel(); }
@@ -211,9 +211,9 @@ var expSheet = null; // null | { type: "patrol" | "caravan", id }
       h += '<button type="button" class="exp-dest' + (ui.sectorId === d.sectorId ? ' is-on' : '') + '" onclick="patrolPick(\'' + id + '\', \'sectorId\', \'' + d.sectorId + '\')">'
         + '<span class="exp-dest-head"><b>' + esc(_td(d.name)) + '</b>' + ringDots(d.ring) + (best > 0 && d.total === best ? '<i class="exp-best">' + _t("le plus") + '</i>' : '') + '</span><span class="exp-dest-loot">';
       Object.keys(d.est.loot).forEach(function (k) {
-        if (d.est.loot[k] > 0) h += '<span class="exp-res">' + img(resDef(k).icon || "images/Icons/system/warehouse_supplies.png") + '<b>' + formatNumber(d.est.loot[k]) + '</b><small>' + esc(resDef(k).name ? _td(resDef(k).name) : k) + '</small></span>';
+        if (d.est.loot[k] > 0) h += '<span class="exp-res">' + img(resDef(k).icon || "images/Icons/system/warehouse_supplies.webp") + '<b>' + formatNumber(d.est.loot[k]) + '</b><small>' + esc(resDef(k).name ? _td(resDef(k).name) : k) + '</small></span>';
       });
-      if (d.est.gold) h += '<span class="exp-res">' + img("images/Icons/gold_icon.png") + '<b>' + formatNumber(d.est.gold) + '</b><small>' + _t("or") + '</small></span>';
+      if (d.est.gold) h += '<span class="exp-res">' + img("images/Icons/gold_icon.webp") + '<b>' + formatNumber(d.est.gold) + '</b><small>' + _t("or") + '</small></span>';
       h += '</span></button>';
     });
     h += '</div>';

@@ -23,17 +23,17 @@
 function getEnemyRowBadges(e) {
   var out = [];
   if (!e) return out;
-  if (e.chargeTelegraphed) out.push({ ico: "images/Icons/combat_status/charge_incoming.png", urgent: true, t: _t("Charge au prochain round") });
-  else if (e.silenceTelegraphed) out.push({ ico: "images/Icons/combat_status/silence_incoming.png", urgent: true, t: _t("Silence au prochain round") });
-  else if (e.shieldTelegraphed) out.push({ ico: "images/Icons/combat_status/shield_incoming.png", urgent: true, t: _t("Bouclier au prochain round") });
-  else if (e.healTelegraphed) out.push({ ico: "images/Icons/combat_status/heal_incoming.png", urgent: true, t: _t("Soin au prochain round") });
-  else if (e.surgeTelegraphed) out.push({ ico: "images/Icons/combat_status/arcane_burn.png", urgent: true, t: _t("Exaltation au prochain round") });
+  if (e.chargeTelegraphed) out.push({ ico: "images/Icons/combat_status/charge_incoming.webp", urgent: true, t: _t("Charge au prochain round") });
+  else if (e.silenceTelegraphed) out.push({ ico: "images/Icons/combat_status/silence_incoming.webp", urgent: true, t: _t("Silence au prochain round") });
+  else if (e.shieldTelegraphed) out.push({ ico: "images/Icons/combat_status/shield_incoming.webp", urgent: true, t: _t("Bouclier au prochain round") });
+  else if (e.healTelegraphed) out.push({ ico: "images/Icons/combat_status/heal_incoming.webp", urgent: true, t: _t("Soin au prochain round") });
+  else if (e.surgeTelegraphed) out.push({ ico: "images/Icons/combat_status/arcane_burn.webp", urgent: true, t: _t("Exaltation au prochain round") });
 
-  if (Number(e.engageIn || 0) > 0) out.push({ ico: "images/Icons/combat_status/enemy_approaching.png", urgent: false, t: _tn(Number(e.engageIn), "Arrive dans {n} round", "Arrive dans {n} rounds") });
-  if (e.archetype === "armored") out.push({ ico: "images/Icons/combat_status/armored.png", urgent: false, t: _t("Blindé") });
-  if (e.archetype === "enraged") out.push({ ico: "images/Icons/combat_status/rage.png", urgent: false, t: _t("Enragé") });
-  if (e.archetype === "vampiric") out.push({ ico: "images/Icons/combat_status/vampiric.png", urgent: false, t: _t("Vampirique") });
-  if (e.archetype === "corrupted") out.push({ ico: "images/Icons/combat_status/corruption.png", urgent: false, t: _t("Corrompu") });
+  if (Number(e.engageIn || 0) > 0) out.push({ ico: "images/Icons/combat_status/enemy_approaching.webp", urgent: false, t: _tn(Number(e.engageIn), "Arrive dans {n} round", "Arrive dans {n} rounds") });
+  if (e.archetype === "armored") out.push({ ico: "images/Icons/combat_status/armored.webp", urgent: false, t: _t("Blindé") });
+  if (e.archetype === "enraged") out.push({ ico: "images/Icons/combat_status/rage.webp", urgent: false, t: _t("Enragé") });
+  if (e.archetype === "vampiric") out.push({ ico: "images/Icons/combat_status/vampiric.webp", urgent: false, t: _t("Vampirique") });
+  if (e.archetype === "corrupted") out.push({ ico: "images/Icons/combat_status/corruption.webp", urgent: false, t: _t("Corrompu") });
   return out.slice(0, 3); // au-delà, la rangée devient illisible en 320 px
 }
 
@@ -214,7 +214,7 @@ function buildCompanionActionsHTML(actor) {
      calculée par sa politique automatique. Le conseil ne choisit rien : le joueur tape. */
   var conseil = (!choix && game.combatMode !== "grimoire") ? CompanionManager.chooseAction(actor) : null;
   if (conseil === "skill" && off) conseil = "basic";
-  var tag = '<span class="combat-action-suggest-tag"><img class=ico-inline src=images/Icons/codex/codex_lore.png></span>';
+  var tag = '<span class="combat-action-suggest-tag"><img class=ico-inline src=images/Icons/codex/codex_lore.webp></span>';
   h += '<button type="button" class="cbg-act' + (off ? " is-off" : "") + (choix && choix.slot === "skill" ? " is-picked" : "") + (conseil === "skill" ? " is-suggested" : "") + '"'
     + ' onclick="companionAction(\'skill\')" aria-label="' + esc(_td(def.skill.name)) + '">'
     + '<img src="' + esc(def.skill.icon) + '" alt="">'

@@ -114,7 +114,7 @@
    (.warehouse-grid) : pas de sélection, pas de panneau détail, juste
    un clic vers une popup dédiée. */
 
-/* v3.45 : version image (images/Icons/construction_icon.png fournie
+/* v3.45 : version image (images/Icons/construction_icon.webp fournie
    par Seb) — remplace l'emoji 🏗️ générique par une illustration
    dédiée à l'Atelier, via renderIconOrEmojiHTML() (voir
    ui/warehouse-view.js). L'emoji reste le repli automatique si

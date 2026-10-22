@@ -27,7 +27,7 @@ var ADVENTURE_QUESTS = {
     bossHpMult: 0.4,
     name: "Prouver sa valeur",
     story: "Le Roi Slime géant règne sur la Lisière depuis des lunes, gardant jalousement le passage vers le cœur de la forêt. Pour qu'on te laisse poursuivre, il faudra d'abord montrer que tu n'es pas qu'un simple aventurier de passage.",
-    icon: "./images/Icons/quest_icons/exploration/exploration1.png",
+    icon: "./images/Icons/quest_icons/exploration/exploration1.webp",
     steps: [
       {
         id: "kills_expedition",
@@ -64,7 +64,7 @@ var ADVENTURE_QUESTS = {
     // Run dédié (spawnFor restaure les index) : plus de kill du boss en farm libre, qui relançait un cycle (+45 % de scale).
     name: "Le Cœur de la Forêt",
     story: "Au-delà de la Lisière, l'air se fait plus lourd et les arbres plus anciens. Le Seigneur de guerre orc tient le Cœur : il faudra s'enfoncer, faire ses preuves, puis l'abattre pour que le passage vers le Désert s'ouvre.",
-    icon: "./images/Icons/quest_icons/exploration/exploration3.png",
+    icon: "./images/Icons/quest_icons/exploration/exploration3.webp",
     steps: [
       {
         id: "kills_depths",
@@ -109,7 +109,7 @@ var ADVENTURE_QUESTS = {
     enemyHpMult: 0.8,
     name: "Premier sang",
     story: "Les bêtes viennent flairer les braises. Écarte-les du feu, une à une.",
-    icon: "./images/Icons/quest_icons/exploration/exploration1.png",
+    icon: "./images/Icons/quest_icons/exploration/exploration1.webp",
     steps: [
       { id: "kills_premier_sang", type: "kill", worldId: "forest", target: 5, desc: "Vaincre {target} ennemis à la Lisière" }
     ],
@@ -135,7 +135,7 @@ var ADVENTURE_QUESTS = {
     enemyFilter: ["slime", "goblin", "spider"],
     name: "Franchir la Lisière",
     story: "La Lisière d'un bout à l'autre, sans t'arrêter. Au bout, les marais. Ce qui les tient s'est relevé.",
-    icon: "./images/Icons/quest_icons/exploration/exploration4.png",
+    icon: "./images/Icons/quest_icons/exploration/exploration4.webp",
     steps: [
       { id: "kills_lisiere", type: "kill", worldId: "forest", target: 9, desc: "Vaincre {target} ennemis à la Lisière" },
       { id: "boss_lisiere", type: "bossKill", bossId: "slimeking", target: 1, desc: "Vaincre le Roi Slime géant" }
@@ -160,7 +160,7 @@ var ADVENTURE_QUESTS = {
     enemyFilter: ["slime", "goblin", "spider", "foresttroll", "bramble"],
     name: "Tenir le Cœur",
     story: "Au Cœur, les bêtes arrivent plus vite qu'on ne décide. Dix d'affilée. Laisse le Grimoire frapper quand tu ne regardes pas.",
-    icon: "./images/Icons/quest_icons/exploration/exploration3.png",
+    icon: "./images/Icons/quest_icons/exploration/exploration3.webp",
     steps: [
       { id: "kills_coeur", type: "kill", worldId: "forest", target: 10, desc: "Vaincre {target} ennemis au Cœur de la forêt" }
     ],
@@ -186,7 +186,7 @@ var ADVENTURE_QUESTS = {
     enemyFilter: ["scorpion", "sandworm", "sandwarrior"],
     name: "Ce qui tourne autour du camp",
     story: "Le sable bouge sous la toile, la nuit. Ce qui tourne autour du camp ne se presse pas.",
-    icon: "./images/Icons/quest_icons/exploration/exploration1.png",
+    icon: "./images/Icons/quest_icons/exploration/exploration1.webp",
     steps: [
       { id: "kills_dunes", type: "kill", worldId: "desert", target: 6, desc: "Vaincre {target} bêtes des Dunes" }
     ],
@@ -215,7 +215,7 @@ var ADVENTURE_QUESTS = {
     enemyPowerMult: 5.5,
     name: "Remonter à trois",
     story: "Derrière la porte, le gouffre. Maddoc boite devant, ou derrière. L'escalier est long.",
-    icon: "./images/Icons/quest_icons/exploration/exploration1.png",
+    icon: "./images/Icons/quest_icons/exploration/exploration1.webp",
     steps: [
       { id: "rencontres_gouffre", type: "encounter", worldId: "desert", target: 3, desc: "Vaincre {target} rencontres à trois" }
     ],
@@ -248,7 +248,7 @@ var ADVENTURE_QUESTS = {
     enemyPowerMult: 6.5,
     name: "La nuée",
     story: "Le sable crépite, au sud du camp. Les petites viennent par trois, les grands par deux.",
-    icon: "./images/Icons/quest_icons/exploration/exploration1.png",
+    icon: "./images/Icons/quest_icons/exploration/exploration1.webp",
     steps: [
       { id: "rencontres_nuee", type: "encounter", worldId: "desert", target: 6, desc: "Vaincre {target} rencontres (une nuée compte pour une)" }
     ],
@@ -293,7 +293,7 @@ var ADVENTURE_QUESTS = {
     bossLog: "Il revient par le fleuve. Il n'y a plus de fleuve.",
     name: "Le trône de sable",
     story: "Il revient par le lit du fleuve. Tiens le lit jusqu'au trône, puis tiens le trône.",
-    icon: "./images/Icons/quest_icons/exploration/exploration3.png",
+    icon: "./images/Icons/quest_icons/exploration/exploration3.webp",
     steps: [
       { id: "rencontres_trone", type: "encounter", worldId: "desert", target: 3, desc: "Vaincre {target} rencontres dans le lit du fleuve" },
       { id: "boss_nezzam", type: "bossKill", bossId: "nezzam", target: 1, desc: "Vaincre Nezzam le Desséché" }
@@ -326,7 +326,7 @@ var ADVENTURE_QUESTS = {
     enemyPowerMult: 5,
     name: "Les Sépulcres silencieux",
     story: "Ici, il n'y a pas de matin. Certains morts dorment encore dans le passage.",
-    icon: "./images/Icons/quest_icons/exploration/exploration1.png",
+    icon: "./images/Icons/quest_icons/exploration/exploration1.webp",
     steps: [
       { id: "rencontres_sepulcres", type: "encounter", worldId: "crypt", target: 5, desc: "Vaincre {target} rencontres aux Sépulcres silencieux" }
     ],
@@ -357,7 +357,7 @@ var ADVENTURE_QUESTS = {
     enemyPowerMult: 4.4,
     name: "Le carquois vide",
     story: "Une femme assise devant une alcôve vide. Elle connaît la place de chaque dormeur.",
-    icon: "./images/Icons/quest_icons/exploration/exploration4.png",
+    icon: "./images/Icons/quest_icons/exploration/exploration4.webp",
     steps: [
       { id: "rencontres_ysolt", type: "encounter", worldId: "crypt", target: 4, desc: "Vaincre {target} rencontres avec Ysolt" }
     ],
@@ -389,7 +389,7 @@ var ADVENTURE_QUESTS = {
     enemyPowerMult: 4.0,
     name: "Celui qui appelle",
     story: "Dans la Chambre funéraire, une voix dit des noms. Dans les alcôves, on se retourne.",
-    icon: "./images/Icons/quest_icons/exploration/exploration4.png",
+    icon: "./images/Icons/quest_icons/exploration/exploration4.webp",
     steps: [
       { id: "rencontres_appel", type: "encounter", worldId: "crypt", target: 5, desc: "Vaincre {target} rencontres à la Chambre funéraire" }
     ],
@@ -418,7 +418,7 @@ var ADVENTURE_QUESTS = {
     enemyPowerMult: 4.4,
     name: "Ceux qui sont tenus",
     story: "Une chaîne court d'alcôve en alcôve. Au bout, une porte basse, fermée de l'intérieur.",
-    icon: "./images/Icons/quest_icons/exploration/exploration3.png",
+    icon: "./images/Icons/quest_icons/exploration/exploration3.webp",
     steps: [
       { id: "rencontres_chaines", type: "encounter", worldId: "crypt", target: 4, desc: "Vaincre {target} rencontres" }
     ],
@@ -454,7 +454,7 @@ var ADVENTURE_QUESTS = {
     eliteStatMult: { power: 2.1, endurance: 1.9 },
     name: "La couronne de trop",
     story: "Dans l'Ossuaire, un couloir où toutes les niches sont vides. Au bout, quelqu'un porte deux couronnes, l'une sur l'autre.",
-    icon: "./images/Icons/quest_icons/elite/elite_porte_couronne.png",
+    icon: "./images/Icons/quest_icons/elite/elite_porte_couronne.webp",
     steps: [
       { id: "rencontres_couronne", type: "encounter", worldId: "crypt", target: 3, desc: "Vaincre {target} rencontres dans l'Ossuaire" },
       { id: "elite_couronne", type: "eliteKill", eliteId: "porte_couronne", target: 1, desc: "Vaincre le Porte-couronne" }
@@ -484,7 +484,7 @@ var ADVENTURE_QUESTS = {
     eliteStatMult: { power: 3.3, endurance: 3.0 },
     name: "Ce qu'elle garde",
     story: "Au fond de l'Ossuaire, des pleurs. Une salle où toutes les alcôves sont vides, sauf une.",
-    icon: "./images/Icons/quest_icons/elite/elite_pleureuse.png",
+    icon: "./images/Icons/quest_icons/elite/elite_pleureuse.webp",
     steps: [
       { id: "rencontres_pleureuse", type: "encounter", worldId: "crypt", target: 3, desc: "Vaincre {target} rencontres dans l'Ossuaire" },
       { id: "elite_pleureuse", type: "eliteKill", eliteId: "pleureuse", target: 1, desc: "Vaincre la Pleureuse" }
@@ -515,7 +515,7 @@ var ADVENTURE_QUESTS = {
     enemyPowerMult: 4.4,
     name: "Les couloirs qui changent",
     story: "Un couloir avec un toit, là où il y avait une rue. Ce qui tombe dedans ne reste pas à terre.",
-    icon: "./images/Icons/quest_icons/exploration/exploration1.png",
+    icon: "./images/Icons/quest_icons/exploration/exploration1.webp",
     steps: [
       { id: "rencontres_couloirs", type: "encounter", worldId: "ruins", target: 5, desc: "Vaincre {target} rencontres aux Couloirs effondrés" }
     ],
@@ -544,7 +544,7 @@ var ADVENTURE_QUESTS = {
     enemyPowerMult: 4.0,
     name: "Le couloir de midi",
     story: "Le mur s'ouvre à midi, comme Edda l'a dit. Le couloir est étroit : on y passe à trois.",
-    icon: "./images/Icons/quest_icons/exploration/exploration1.png",
+    icon: "./images/Icons/quest_icons/exploration/exploration1.webp",
     steps: [
       { id: "rencontres_edda", type: "encounter", worldId: "ruins", target: 4, desc: "Vaincre {target} rencontres avec Edda" }
     ],
@@ -573,7 +573,7 @@ var ADVENTURE_QUESTS = {
     enemyPowerMult: 4.0,
     name: "Celui qui pose les pierres",
     story: "Il pose une pierre, la regarde, la repose ailleurs. Devant ceux qui se relèvent, il monte des murs.",
-    icon: "./images/Icons/quest_icons/exploration/exploration1.png",
+    icon: "./images/Icons/quest_icons/exploration/exploration1.webp",
     steps: [
       { id: "rencontres_batisseur", type: "encounter", worldId: "ruins", target: 5, desc: "Vaincre {target} rencontres aux Couloirs effondrés" }
     ],
@@ -601,7 +601,7 @@ var ADVENTURE_QUESTS = {
     enemyPowerMult: 4.3,
     name: "La salle qu'il évite",
     story: "Une porte basse au fond de la maison. Elle se remonte plus vite que les autres.",
-    icon: "./images/Icons/quest_icons/exploration/exploration1.png",
+    icon: "./images/Icons/quest_icons/exploration/exploration1.webp",
     steps: [
       { id: "rencontres_salle", type: "encounter", worldId: "ruins", target: 4, desc: "Vaincre {target} rencontres au Sanctuaire enseveli" }
     ],
@@ -635,7 +635,7 @@ var ADVENTURE_QUESTS = {
     eliteStatMult: { power: 2.9, endurance: 2.6 },
     name: "Ce que la cité ne finit pas",
     story: "Sous la ville, une salle qui se refait chaque nuit et n'est jamais finie. Devant, une masse de pierre qui a des bras.",
-    icon: "./images/Icons/quest_icons/elite/elite_golem.png",
+    icon: "./images/Icons/quest_icons/elite/elite_golem.webp",
     steps: [
       { id: "rencontres_golem", type: "encounter", worldId: "ruins", target: 3, desc: "Vaincre {target} rencontres au Sanctuaire enseveli" },
       { id: "elite_golem", type: "eliteKill", eliteId: "golem", target: 1, desc: "Vaincre le Golem" }
@@ -669,7 +669,7 @@ var ADVENTURE_QUESTS = {
     eliteStatMult: { power: 3.0, endurance: 2.7 },
     name: "Le dernier trait",
     story: "Dans le Cœur, ils sont des dizaines. Des bâtisseurs, chacun avec sa pierre. Ils se battent contre ce qui n'est pas dans le plan.",
-    icon: "./images/Icons/quest_icons/elite/elite_golem.png",
+    icon: "./images/Icons/quest_icons/elite/elite_golem.webp",
     steps: [
       { id: "rencontres_coeur", type: "encounter", worldId: "ruins", target: 3, desc: "Vaincre {target} rencontres dans le Cœur" },
       { id: "elite_coeur", type: "eliteKill", eliteId: "golem", target: 1, desc: "Vaincre le Golem" }
@@ -712,7 +712,7 @@ var ADVENTURE_QUESTS = {
     enemyPowerMult: 6.8,
     name: "Les maillons",
     story: "Dans la salle, les petites chaînes passent au-dessus de vos têtes comme du linge tendu. Sous chaque alcôve, un nom gravé.",
-    icon: "./images/Icons/quest_icons/exploration/exploration3.png",
+    icon: "./images/Icons/quest_icons/exploration/exploration3.webp",
     steps: [
       { id: "rencontres_maillons", type: "encounter", worldId: "crypt", target: 4, desc: "Vaincre {target} rencontres" }
     ],
@@ -755,7 +755,7 @@ var ADVENTURE_QUESTS = {
     bossLog: "Il se lève. Il est plus petit que sa chaîne.",
     name: "Celui qui retient",
     story: "Une salle sans alcôves. Toutes les petites chaînes y arrivent et se nouent en une seule, qu'une main tient.",
-    icon: "./images/Icons/quest_icons/exploration/exploration3.png",
+    icon: "./images/Icons/quest_icons/exploration/exploration3.webp",
     steps: [
       { id: "rencontres_retient", type: "encounter", worldId: "crypt", target: 2, desc: "Vaincre {target} rencontres dans la salle des chaînes" },
       { id: "boss_retient", type: "bossKill", bossId: "necrosupreme", target: 1, desc: "Vaincre le Nécromancien suprême" }
@@ -787,7 +787,7 @@ var ADVENTURE_QUESTS = {
     bossLog: "Au milieu du Cœur, les pierres se lèvent ensemble.",
     name: "Le plan fait pierre",
     story: "Au milieu du Cœur, les pierres se lèvent ensemble. Ce n'est pas un homme. C'est la cité, debout.",
-    icon: "./images/Icons/quest_icons/exploration/exploration3.png",
+    icon: "./images/Icons/quest_icons/exploration/exploration3.webp",
     steps: [
       { id: "rencontres_plan", type: "encounter", worldId: "ruins", target: 2, desc: "Vaincre {target} rencontres dans le Cœur" },
       { id: "boss_plan", type: "bossKill", bossId: "maitre_oeuvre", target: 1, desc: "Vaincre le Maître d'œuvre" }
@@ -825,7 +825,7 @@ var ADVENTURE_QUESTS = {
     groupGoldMult: 0.40,
     name: "La Meute Affamée",
     story: "Des loups rôdent près du campement. Il faut réduire leur nombre avant d'envisager d'installer un poste de chasse permanent.",
-    icon: "images/Icons/quests/objective_wolf.png",
+    icon: "images/Icons/quests/objective_wolf.webp",
     steps: [
       {
         id: "kills_wolfpack",
@@ -880,7 +880,7 @@ var ADVENTURE_QUESTS = {
     story: "Les toiles de la Lisière ne prennent plus rien. Elles pendent, intactes, comme si "
       + "celle qui les a tissées avait cessé d'avoir faim. Wenna dit qu'elle a compté les fils "
       + "deux fois et qu'il y en a trop.",
-    icon: "./images/Icons/quest_icons/elite/elite1.png",
+    icon: "./images/Icons/quest_icons/elite/elite1.webp",
     steps: [
       {
         id: "track_spider",
@@ -915,7 +915,7 @@ var ADVENTURE_QUESTS = {
     name: "Ce qui a poussé sur la cendre",
     story: "Au Cœur, il y a un carré de terre où rien ne devrait tenir. Quelque chose y a poussé "
       + "quand même. Brannoc y est allé une fois, il n'en parle pas.",
-    icon: "./images/Icons/quest_icons/elite/elite4.png",
+    icon: "./images/Icons/quest_icons/elite/elite4.webp",
     steps: [
       {
         id: "track_bramble",

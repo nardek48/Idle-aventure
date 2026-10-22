@@ -30,16 +30,16 @@ function buildSettingsPartieHTML() {
   h += '<div class="kkick">' + _t("Sauvegarde") + '</div>';
   h += '<p>' + _t("Le jeu se sauvegarde tout seul toutes les 30 secondes, dans ce navigateur. Exporte une copie de temps en temps : elle te suit sur un autre appareil.") + '</p>';
   h += '<div class="set-stack">';
-  h += '<button class="settings-btn primary" onclick="saveGame()"><img class=ico-inline src=images/Icons/system/save.png> ' + _t("Sauvegarder maintenant") + '</button>';
-  h += '<div class="set-pair"><button class="settings-btn" onclick="exportSaveToFile()"><img class=ico-inline src=images/Icons/system/export.png> ' + _t("Exporter") + '</button>';
-  h += '<button class="settings-btn" onclick="triggerImportFilePicker()"><img class=ico-inline src=images/Icons/system/import.png> ' + _t("Importer") + '</button></div>';
+  h += '<button class="settings-btn primary" onclick="saveGame()"><img class=ico-inline src=images/Icons/system/save.webp> ' + _t("Sauvegarder maintenant") + '</button>';
+  h += '<div class="set-pair"><button class="settings-btn" onclick="exportSaveToFile()"><img class=ico-inline src=images/Icons/system/export.webp> ' + _t("Exporter") + '</button>';
+  h += '<button class="settings-btn" onclick="triggerImportFilePicker()"><img class=ico-inline src=images/Icons/system/import.webp> ' + _t("Importer") + '</button></div>';
   h += '<div class="set-links"><button type="button" class="klink" onclick="showExportTextModal()">' + _t("Copier le code de sauvegarde") + '</button>';
   h += '<button type="button" class="klink" onclick="showImportTextModal()">' + _t("Coller un code") + '</button></div>';
   h += '</div></div>';
 
-  h += '<div class="ksec"><img src="images/Icons/system/warning.png" alt=""><span>' + _t("Zone de danger") + '</span></div>';
+  h += '<div class="ksec"><img src="images/Icons/system/warning.webp" alt=""><span>' + _t("Zone de danger") + '</span></div>';
   h += '<div class="set-card"><p>' + _t("Effacer la partie supprime ton héros, ton village et toute ta progression sur cet appareil. C'est définitif.") + '</p>';
-  h += '<button class="settings-btn danger" onclick="resetGame()"><img class=ico-inline src=images/Icons/system/trash.png> ' + _t("Effacer la partie") + '</button></div>';
+  h += '<button class="settings-btn danger" onclick="resetGame()"><img class=ico-inline src=images/Icons/system/trash.webp> ' + _t("Effacer la partie") + '</button></div>';
   return h;
 }
 
@@ -58,9 +58,9 @@ function buildSettingsJeuHTML() {
   // v3.332.0 (Évolutions, F4 et B4) : préférences d'affichage de CET appareil (Prefs, hors sauvegarde)
   if (window.Prefs) {
     h += '<div class="set-card">';
-    h += settingsRowHTML("images/Icons/aether_icon.png", _t("Fil rouge"), _t("La petite bulle qui propose ta prochaine action."),
+    h += settingsRowHTML("images/Icons/aether_icon.webp", _t("Fil rouge"), _t("La petite bulle qui propose ta prochaine action."),
       kSwitchHTML(Prefs.get("filRouge"), "setDisplayPref('filRouge', " + !Prefs.get("filRouge") + ")", _t("Fil rouge")));
-    h += settingsRowHTML("images/Icons/dungeon/boss_crown.png", _t("Mises en scène des boss"), _t("Carte d'entrée, changement de phase, coup final et trophée."),
+    h += settingsRowHTML("images/Icons/dungeon/boss_crown.webp", _t("Mises en scène des boss"), _t("Carte d'entrée, changement de phase, coup final et trophée."),
       kSwitchHTML(Prefs.get("bossMoments"), "setDisplayPref('bossMoments', " + !Prefs.get("bossMoments") + ")", _t("Mises en scène des boss")));
     h += '<p class="set-note">' + _t("Réglages propres à cet appareil.") + '</p>';
     h += '</div>';
@@ -106,12 +106,12 @@ function buildSettingsAppareilHTML() {
     var jOn = JournalTest.isOn(), jN = JournalTest.count();
     h += '<div class="set-card">';
     h += '<div class="kkick">' + _t("Journal de test") + '</div>';
-    h += settingsRowHTML("images/Icons/system/hourglass_waiting.png", _t("Enregistrer ma partie"), _t("Relevés et moments clés, pour comparer ta partie aux simulations."),
+    h += settingsRowHTML("images/Icons/system/hourglass_waiting.webp", _t("Enregistrer ma partie"), _t("Relevés et moments clés, pour comparer ta partie aux simulations."),
       kSwitchHTML(jOn, "JournalTest.setOn(" + !jOn + ")", _t("Enregistrer ma partie")));
     h += '<p class="set-note">' + _tn(jN, "{n} ligne enregistrée sur cet appareil.", "{n} lignes enregistrées sur cet appareil.") + '</p>';
     if (jN > 0) {
-      h += '<div class="set-pair"><button class="settings-btn" onclick="JournalTest.exportFile()"><img class=ico-inline src=images/Icons/system/export.png> ' + _t("Exporter") + '</button>';
-      h += '<button class="settings-btn" onclick="JournalTest.clear()"><img class=ico-inline src=images/Icons/system/trash.png> ' + _t("Effacer") + '</button></div>';
+      h += '<div class="set-pair"><button class="settings-btn" onclick="JournalTest.exportFile()"><img class=ico-inline src=images/Icons/system/export.webp> ' + _t("Exporter") + '</button>';
+      h += '<button class="settings-btn" onclick="JournalTest.clear()"><img class=ico-inline src=images/Icons/system/trash.webp> ' + _t("Effacer") + '</button></div>';
     }
     h += '</div>';
   }
@@ -126,14 +126,14 @@ function buildSettingsAppareilHTML() {
 /* tab : optionnel (harnais) — sinon l'onglet actif */
 function buildSettingsHTML(tab) {
   var cur = tab || settingsTab;
-  var R = [["partie", _t("Partie"), "images/Icons/system/save.png"], ["jeu", _t("Jeu"), "images/Icons/combat_stats/stat_attack.png"], ["appareil", _t("Appareil"), "images/Icons/system/settings.png"]];
+  var R = [["partie", _t("Partie"), "images/Icons/system/save.webp"], ["jeu", _t("Jeu"), "images/Icons/combat_stats/stat_attack.webp"], ["appareil", _t("Appareil"), "images/Icons/system/settings.webp"]];
   var h = '<div class="kseg is-stack set-tabs">';
   R.forEach(function (r) {
     h += '<button type="button" class="' + (cur === r[0] ? 'is-on' : '') + '" onclick="setSettingsTab(\'' + r[0] + '\')"><img src="' + r[2] + '" alt=""><span>' + r[1] + '</span></button>';
   });
   h += '</div>';
   h += cur === "jeu" ? buildSettingsJeuHTML() : cur === "appareil" ? buildSettingsAppareilHTML() : buildSettingsPartieHTML();
-  return '<div class="nb-page-frame nb-page-frame-fill kframe-page settings-page" data-kf-title="' + esc("images/Icons/menu_icons/settings_menu.png|" + _t("Paramètres")) + '">' + h + '</div>';
+  return '<div class="nb-page-frame nb-page-frame-fill kframe-page settings-page" data-kf-title="' + esc("images/Icons/menu_icons/settings_menu.webp|" + _t("Paramètres")) + '">' + h + '</div>';
 }
 
 window.buildSettingsHTML = buildSettingsHTML;
@@ -145,7 +145,7 @@ function confirmLanguageChange(lang) {
   if (typeof showConfirmModal === "function") {
     showConfirmModal(lang === "en" ? "Switch to English?" : "Passer en français ?",
       lang === "en" ? "The game will restart. Your progress is saved first." : "Le jeu va redémarrer. Ta progression est sauvegardée avant.",
-      "images/Icons/system/settings.png", go);
+      "images/Icons/system/settings.webp", go);
   } else go();
 }
 window.confirmLanguageChange = confirmLanguageChange;

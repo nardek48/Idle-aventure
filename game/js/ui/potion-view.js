@@ -21,7 +21,7 @@ function buildApothecaryCraftRowHTML(potionId) {
   var remaining = ApothecaryManager.getDailyRemaining();
 
   var h = '<div class="potion-craft-row' + (unlocked ? '' : ' is-locked') + '">';
-  h += '<span class="potion-craft-label"><img class=ico-inline src=images/Icons/village_buildings/apothecary.png> ' + _t("Préparer") + '</span>';
+  h += '<span class="potion-craft-label"><img class=ico-inline src=images/Icons/village_buildings/apothecary.webp> ' + _t("Préparer") + '</span>';
 
   h += '<span class="potion-craft-inputs">';
   var inputs = ApothecaryManager.getInputs(potionId); // v3.363.0 : puits du roi (moitié moins d'eau)
@@ -37,7 +37,7 @@ function buildApothecaryCraftRowHTML(potionId) {
   h += '</span>';
 
   if (!unlocked) {
-    h += '<span class="potion-craft-locked"><img class=ico-inline src=images/Icons/system/lock_closed.png> ' + esc(ApothecaryManager.getLockReason(potionId)) + '</span>';
+    h += '<span class="potion-craft-locked"><img class=ico-inline src=images/Icons/system/lock_closed.webp> ' + esc(ApothecaryManager.getLockReason(potionId)) + '</span>';
   } else if (capped && remaining <= 0) {
     h += '<span class="potion-craft-locked">' + _t("Fini pour aujourd’hui ({a}/{b})", { a: ApothecaryManager.getDailyCap(), b: ApothecaryManager.getDailyCap() }) + '</span>';
   } else if (ApothecaryManager.canAfford(potionId)) {
@@ -67,19 +67,19 @@ function buildPotionCardHTML(potion) {
   h += '<div class="nb-purchase-info-col">';
   h += '<div class="nb-purchase-name">' + esc(_td(potion.name)) + '</div>';
   h += '<div class="nb-purchase-desc">' + esc(_td(potion.desc)) + '</div>';
-  h += '<div class="nb-purchase-meta"><img class=ico-inline src=images/Icons/subtabs/inventory.png> ' + (potion.perRun ? _t("Stock : {n} / {c}", { n: stock, c: cap }) : _t("Stock : {n}", { n: stock })) + '</div>';
+  h += '<div class="nb-purchase-meta"><img class=ico-inline src=images/Icons/subtabs/inventory.webp> ' + (potion.perRun ? _t("Stock : {n} / {c}", { n: stock, c: cap }) : _t("Stock : {n}", { n: stock })) + '</div>';
 
   if (isLive) {
-    h += '<div class="nb-purchase-meta"><img class=ico-inline src=images/Icons/village_buildings/apothecary.png> ' + _t("Active — mission en cours") + '</div>';
+    h += '<div class="nb-purchase-meta"><img class=ico-inline src=images/Icons/village_buildings/apothecary.webp> ' + _t("Active — mission en cours") + '</div>';
   } else if (isArmed) {
-    h += '<div class="nb-purchase-meta"><img class=ico-inline src=images/Icons/subtabs/potions.png> ' + _t("Armée pour la prochaine mission") + '</div>';
+    h += '<div class="nb-purchase-meta"><img class=ico-inline src=images/Icons/subtabs/potions.webp> ' + _t("Armée pour la prochaine mission") + '</div>';
   }
 
   h += '</div>';
   if (isStockCapped) {
     h += '<div class="nb-purchase-buy-col"><button class="btn-buy kbuy cant-afford" type="button" disabled>' + _t("STOCK PLEIN") + '</button></div>';
   } else {
-    h += '<div class="nb-purchase-buy-col"><button class="btn-buy kbuy' + (canBuy ? '' : ' cant-afford') + '" onclick="PotionManager.buyPotion(\'' + esc(potion.id) + '\')"><img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">' + formatNumber(cost) + '</button></div>';
+    h += '<div class="nb-purchase-buy-col"><button class="btn-buy kbuy' + (canBuy ? '' : ' cant-afford') + '" onclick="PotionManager.buyPotion(\'' + esc(potion.id) + '\')"><img class="btn-buy-icon" src="images/Icons/gold_icon.webp" alt="">' + formatNumber(cost) + '</button></div>';
   }
   h += '</div>'; // fin .nb-purchase-card
 
@@ -105,7 +105,7 @@ function buildPotionShopHTML() {
   var h = buildHealingPotionShopHTML();
 
   if (isPerRunPotionShopOpen()) {
-    h += '<div class="potion-section-label"><img class=ico-inline src=images/Icons/subtabs/potions.png> ' + _t("Potions de mission") + '</div>';
+    h += '<div class="potion-section-label"><img class=ico-inline src=images/Icons/subtabs/potions.webp> ' + _t("Potions de mission") + '</div>';
     h += '<div class="potion-grid">';
     (POTIONS_DB || []).forEach(function (potion) {
       h += buildPotionCardHTML(potion);
@@ -121,7 +121,7 @@ function buildPotionShopHTML() {
    La section n'existe qu'une fois l'Apothicaire construit ; la commande ou le monde se lisent sur la ligne. */
 function buildCombatItemShopHTML() {
   if (!window.CombatItems || !window.ApothecaryManager || ApothecaryManager.getLevel() <= 0) return "";
-  var h = '<div class="potion-section-label"><img class=ico-inline src=images/Icons/village_buildings/apothecary.png> ' + _t("Préparations de combat") + '</div>';
+  var h = '<div class="potion-section-label"><img class=ico-inline src=images/Icons/village_buildings/apothecary.webp> ' + _t("Préparations de combat") + '</div>';
   h += '<div class="potion-grid">';
   COMBAT_ITEM_ORDER.forEach(function (id) {
     var it = COMBAT_ITEMS[id], def = (typeof ENEMY_TRAIT_DEFS !== "undefined") ? ENEMY_TRAIT_DEFS[it.trait] : null;
@@ -155,7 +155,7 @@ function buildHealingPotionCardHTML(potion) {
   h += '<div class="nb-purchase-info-col">';
   h += '<div class="nb-purchase-name">' + esc(_td(potion.name)) + '</div>';
   h += '<div class="nb-purchase-desc">' + _t("Restaure {p}% des PV max, à la demande depuis l’écran Combat.", { p: Math.round(potion.healPercent * 100) }) + '</div>';
-  h += '<div class="nb-purchase-meta"><img class=ico-inline src=images/Icons/combat_status/heal_incoming.png> ' + _t("Stock : {n}", { n: stock }) + '</div>';
+  h += '<div class="nb-purchase-meta"><img class=ico-inline src=images/Icons/combat_status/heal_incoming.webp> ' + _t("Stock : {n}", { n: stock }) + '</div>';
   if (buyLeft !== Infinity) {
     h += '<div class="nb-purchase-meta">' + _t("Colporteur : {a} / {b} aujourd’hui", { a: buyLeft, b: potion.dailyBuyLimit }) + '</div>';
   }
@@ -163,7 +163,7 @@ function buildHealingPotionCardHTML(potion) {
   if (buyLeft <= 0) {
     h += '<div class="nb-purchase-buy-col"><button class="btn-buy kbuy cant-afford" type="button" disabled>' + _t("ÉPUISÉ") + '</button></div>';
   } else {
-    h += '<div class="nb-purchase-buy-col"><button class="btn-buy kbuy' + (canBuy ? '' : ' cant-afford') + '" onclick="PotionManager.buyHealingPotion(\'' + esc(potion.id) + '\')"><img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">' + formatNumber(cost) + '</button></div>';
+    h += '<div class="nb-purchase-buy-col"><button class="btn-buy kbuy' + (canBuy ? '' : ' cant-afford') + '" onclick="PotionManager.buyHealingPotion(\'' + esc(potion.id) + '\')"><img class="btn-buy-icon" src="images/Icons/gold_icon.webp" alt="">' + formatNumber(cost) + '</button></div>';
   }
   h += '</div>'; // fin .nb-purchase-card
 
@@ -172,7 +172,7 @@ function buildHealingPotionCardHTML(potion) {
 }
 
 function buildHealingPotionShopHTML() {
-  var h = '<div class="potion-section-label"><img class=ico-inline src=images/Icons/combat_status/heal_incoming.png> ' + _t("Potions de soin (usage instantané)") + '</div>';
+  var h = '<div class="potion-section-label"><img class=ico-inline src=images/Icons/combat_status/heal_incoming.webp> ' + _t("Potions de soin (usage instantané)") + '</div>';
   h += '<div class="potion-grid">';
   (HEALING_POTIONS_DB || []).forEach(function (potion) {
     h += buildHealingPotionCardHTML(potion);

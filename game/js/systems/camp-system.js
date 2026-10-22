@@ -102,8 +102,8 @@ var CampManager = {
       // v3.242.0 : même rendu que camp-view.js (icônes PNG) — ce textContent réécrivait
       // l'élément avec les anciens emoji à chaque tick, annulant l'icône de la vue.
       eta.innerHTML = full
-        ? '<img class=ico-inline src=images/Icons/system/check_valid.png> ' + _t("PV au maximum")
-        : '<img class=ico-inline src=images/Icons/system/hourglass_waiting.png> ' + _t("Max dans {d}", { d: formatTime(Math.ceil(this.getMinutesToFull() * 60)) });
+        ? '<img class=ico-inline src=images/Icons/system/check_valid.webp> ' + _t("PV au maximum")
+        : '<img class=ico-inline src=images/Icons/system/hourglass_waiting.webp> ' + _t("Max dans {d}", { d: formatTime(Math.ceil(this.getMinutesToFull() * 60)) });
       if (this.teamFull() && typeof renderPanel === "function") renderPanel(); // ré-évalue les boutons de ration (grisés si tous pleins)
     }
   },

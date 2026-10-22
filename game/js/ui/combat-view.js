@@ -123,7 +123,7 @@ function buildActivePotionsBarHTML() {
     if (p.kind === "potion") {
       h += '<span class="active-potion-icon' + (p.live ? '' : ' is-armed-idle') + '">';
       h += '<img src="' + esc(p.icon) + '" alt="">';
-      if (p.live) h += '<span class="active-potion-timer"><img class=ico-inline src=images/Icons/combat_stats/stat_attack.png></span>';
+      if (p.live) h += '<span class="active-potion-timer"><img class=ico-inline src=images/Icons/combat_stats/stat_attack.webp></span>';
       h += '</span>';
     } else {
       h += '<span class="active-potion-icon active-affliction-icon">';
@@ -357,14 +357,14 @@ function buildCombatControlsHTML() {
   if (grimoireUnlocked) {
     h += '<button type="button" class="combat-mode-btn' + (mode === "grimoire" ? ' is-auto' : '') + '" onclick="CombatEngine.setCombatMode(\'' + (mode === "grimoire" ? "tactique" : "grimoire") + '\')" title="'
       + (mode === "grimoire" ? _t("Mode Grimoire : les rounds s’enchaînent, le Grimoire choisit. Toucher pour repasser en Tactique.") : _t("Mode Tactique : chaque round attend ton choix. Toucher pour laisser le Grimoire jouer.")) + '">';
-    h += (mode === "grimoire" ? "<img class=ico-inline src=images/Icons/codex/codex_lore.png> " + _t("Grimoire") : "<img class=ico-inline src=images/Icons/combat_stats/stat_critical.png> " + _t("Tactique"));
+    h += (mode === "grimoire" ? "<img class=ico-inline src=images/Icons/codex/codex_lore.webp> " + _t("Grimoire") : "<img class=ico-inline src=images/Icons/combat_stats/stat_critical.webp> " + _t("Tactique"));
     h += '</button>';
   }
 
   if (mode !== "grimoire") {
     h += '<button type="button" class="combat-continue-btn' + (round.continueAttack ? ' is-active' : '') + '"' + (downed ? ' disabled' : '')
       + ' onclick="CombatEngine.toggleContinueAttack()" title="' + esc(_t("Répète l’Attaque jusqu’au prochain événement (PV < 50 %, télégraphe, double frappe, nouvel ennemi)")) + '">';
-    h += round.continueAttack ? "<img class=ico-inline src=images/Icons/system/pause_stop.png> " + _t("Stop") : "<img class=ico-inline src=images/Icons/quests/continue.png> " + _t("Continuer");
+    h += round.continueAttack ? "<img class=ico-inline src=images/Icons/system/pause_stop.webp> " + _t("Stop") : "<img class=ico-inline src=images/Icons/quests/continue.webp> " + _t("Continuer");
     h += '</button>';
   }
   return h;
@@ -384,14 +384,14 @@ function buildCombatSortieHTML() {
     var objets = (loot.items && loot.items.length) || 0;
     h += '<button type="button" class="combat-loot-pill" onclick="openSortieSheet()"'
       + ' title="' + esc(_t("Butin de la sortie — banqué au retour, perdu si tu tombes")) + '">'
-      + '<img class=ico-inline src=images/Icons/gold_icon.png> ' + formatNumber(Math.floor(loot.gold || 0))
+      + '<img class=ico-inline src=images/Icons/gold_icon.webp> ' + formatNumber(Math.floor(loot.gold || 0))
       + (objets ? ' · ' + _tn(objets, "{n} objet", "{n} objets") : '')
       + '</button>';
   }
   if (s.active && SortieManager.isMission()) {
-    h += '<button type="button" class="combat-sortie-btn is-flee"' + (downed ? ' disabled' : '') + ' onclick="confirmFlee()" title="' + esc(_t("Fuir : la mission n’est pas validée, tu rapportes {n} % du butin", { n: Math.round(100 * SortieManager.fleeKeepPct()) })) + '"><img class=ico-inline src=images/Icons/quests/flee.png> ' + _t("Fuir") + '</button>';
+    h += '<button type="button" class="combat-sortie-btn is-flee"' + (downed ? ' disabled' : '') + ' onclick="confirmFlee()" title="' + esc(_t("Fuir : la mission n’est pas validée, tu rapportes {n} % du butin", { n: Math.round(100 * SortieManager.fleeKeepPct()) })) + '"><img class=ico-inline src=images/Icons/quests/flee.webp> ' + _t("Fuir") + '</button>';
   } else {
-    h += '<button type="button" class="combat-sortie-btn"' + (downed ? ' disabled' : '') + ' onclick="SortieManager.returnToCamp()" title="' + esc(_t("Rentrer au Campement avec tout le butin")) + '"><img class=ico-inline src=images/Icons/plots/hunting_blind.png> ' + _t("Rentrer") + '</button>';
+    h += '<button type="button" class="combat-sortie-btn"' + (downed ? ' disabled' : '') + ' onclick="SortieManager.returnToCamp()" title="' + esc(_t("Rentrer au Campement avec tout le butin")) + '"><img class=ico-inline src=images/Icons/plots/hunting_blind.webp> ' + _t("Rentrer") + '</button>';
   }
   return h;
 }
@@ -410,25 +410,25 @@ function openSortieSheet() {
 
   var h = '<div class="ksheet-backdrop" onclick="closeSortieSheet()"></div>';
   h += '<div class="ksheet">';
-  h += kSheetHeadHTML({ icon: '<img src="images/Icons/subtabs/inventory.png" alt="">', title: _t("Sortie en cours"), close: "closeSortieSheet()" });
+  h += kSheetHeadHTML({ icon: '<img src="images/Icons/subtabs/inventory.webp" alt="">', title: _t("Sortie en cours"), close: "closeSortieSheet()" });
   h += '<div class="ksheet-body">';
 
   h += '<div class="cbs-sub">' + _t("Butin ramassé") + '</div>';
   var lignes = "";
-  if (Number(loot.gold || 0) > 0) lignes += buildSortieLineHTML("images/Icons/gold_icon.png", _t("Or"), formatNumber(Math.floor(loot.gold)));
+  if (Number(loot.gold || 0) > 0) lignes += buildSortieLineHTML("images/Icons/gold_icon.webp", _t("Or"), formatNumber(Math.floor(loot.gold)));
   Object.keys(loot.resources || {}).forEach(function (k) {
     var q = Math.floor(loot.resources[k]);
     if (q <= 0) return;
     var def = (window.WAREHOUSE_RESOURCES && WAREHOUSE_RESOURCES[k]) || null;
-    lignes += buildSortieLineHTML((def && def.icon) || "images/Icons/subtabs/inventory.png", (def && def.name) ? _td(def.name) : k, "×" + q);
+    lignes += buildSortieLineHTML((def && def.icon) || "images/Icons/subtabs/inventory.webp", (def && def.name) ? _td(def.name) : k, "×" + q);
   });
   (loot.items || []).forEach(function (it) {
-    lignes += buildSortieLineHTML("images/Icons/subtabs/equipment.png", it.name ? _td(it.name) : _t("Objet"), it.rarity || "");
+    lignes += buildSortieLineHTML("images/Icons/subtabs/equipment.webp", it.name ? _td(it.name) : _t("Objet"), it.rarity || "");
   });
   h += lignes || '<div class="cbs-empty">' + _t("Rien pour l'instant.") + '</div>';
 
   h += '<div class="cbs-sub">' + _t("Potions de cette sortie") + '</div>';
-  h += buildSortieLineHTML("images/Icons/subtabs/potions.png", _t("Il t'en reste"),
+  h += buildSortieLineHTML("images/Icons/subtabs/potions.webp", _t("Il t'en reste"),
     _t("{a} sur {b}", { a: SortieManager.getPotionsLeft(), b: (typeof getSortiePotionCap === "function" ? getSortiePotionCap() : "?") }));
 
   h += '</div></div>';
@@ -695,7 +695,7 @@ function buildClassSkillButtonHTML(slot, suggestedSlot) {
     : null;
   var isActiveNow = !!(activeDefense && activeDefense.actionId === action.id);
 
-  var icon = (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[action.id]) || (action.type === "defense" ? "images/Icons/combat_stats/stat_defense.png" : "images/Icons/scene/node_discovery.png");
+  var icon = (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[action.id]) || (action.type === "defense" ? "images/Icons/combat_stats/stat_defense.webp" : "images/Icons/scene/node_discovery.webp");
   var keyLabel = CLASS_SKILL_KEY_LABELS[action.slot] || "";
 
   var title = autoModeActive
@@ -717,7 +717,7 @@ function buildClassSkillButtonHTML(slot, suggestedSlot) {
   } else if (isActiveNow) {
     h += '<span class="combat-action-active-tag">' + _t("ACTIF") + '</span>';
   } else if (isSuggested) {
-    h += '<span class="combat-action-suggest-tag"><img class=ico-inline src=images/Icons/codex/codex_lore.png></span>';
+    h += '<span class="combat-action-suggest-tag"><img class=ico-inline src=images/Icons/codex/codex_lore.webp></span>';
   }
   h += '</button>';
   return h;

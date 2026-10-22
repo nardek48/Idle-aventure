@@ -17,7 +17,7 @@ var POTIONS_DB = [
   {
     id: "potion_power",
     name: "Potion de Force",
-    icon: "images/Icons/potions/potion_force.png",
+    icon: "images/Icons/potions/potion_force.webp",
     desc: "+20% de dégâts de l'attaque de base pour la prochaine mission.", // v3.224.0 : libellé, l'effet multiplie tapDamage quelle que soit la classe
     stat: "power",
     bonus: 0.20,
@@ -28,7 +28,7 @@ var POTIONS_DB = [
   {
     id: "potion_celerity",
     name: "Potion de Célérité",
-    icon: "images/Icons/potions/potion_celerite.png",
+    icon: "images/Icons/potions/potion_celerite.webp",
     desc: "+20% Célérité (jauge de frappe bonus) pour la prochaine mission.",
     stat: "celerity",
     bonus: 0.20,
@@ -39,7 +39,7 @@ var POTIONS_DB = [
   {
     id: "potion_precision",
     name: "Potion de Précision",
-    icon: "images/Icons/potions/potion_precision.png",
+    icon: "images/Icons/potions/potion_precision.webp",
     desc: "+15% chance de critique pour la prochaine mission.",
     stat: "critChance",
     bonus: 15,
@@ -50,7 +50,7 @@ var POTIONS_DB = [
   {
     id: "potion_endurance",
     name: "Potion d'Endurance",
-    icon: "images/Icons/potions/potion_endurance.png",
+    icon: "images/Icons/potions/potion_endurance.webp",
     desc: "+30% PV max et défense pour la prochaine mission.",
     stat: "endurance",
     bonus: 0.30,
@@ -61,7 +61,7 @@ var POTIONS_DB = [
   {
     id: "elixir_fortune",
     name: "Élixir de Fortune",
-    icon: "images/Icons/potions/potion_fortune.png",
+    icon: "images/Icons/potions/potion_fortune.webp",
     desc: "+25% or gagné pendant la prochaine mission.",
     stat: "gold",
     bonus: 0.25,
@@ -80,14 +80,14 @@ var HEALING_POTIONS_DB = [
   {
     id: "potion_soin_mineur",
     name: "Potion de soin mineure",
-    icon: "images/Icons/potions/potion_soin_mineur_icone.png",
+    icon: "images/Icons/potions/potion_soin_mineur_icone.webp",
     healPercent: 0.35, // v3.101.0 : 25 → 35 % (LIGNE_DIRECTRICE §10 n°10)
     cost: 150 // v3.101.0 : 1000 → 150, accessible dès l'Acte I (le soin complet reste le Repas)
   },
   {
     id: "potion_soin_majeur",
     name: "Potion de soin majeure",
-    icon: "images/Icons/potions/potion_soin_majeur_icone.png",
+    icon: "images/Icons/potions/potion_soin_majeur_icone.webp",
     healPercent: 0.60,
     /* v3.291.0 (décision Seb) : 400 -> 600 et 10 achats par jour civil. Pousse vers la
        préparation à l'Apothicaire, qui reste la voie bon marché. */

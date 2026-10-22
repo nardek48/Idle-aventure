@@ -80,7 +80,7 @@ html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-activ
   padding: 0;
   border: 1px solid var(--c-brown-700-vivid);
   border-radius: 14px;
-  background: linear-gradient(rgba(16, 12, 8, 0.78), rgba(16, 12, 8, 0.9)), url('../images/UI/textures/bg-stone-tile.png') 0 0 / 256px;
+  background: linear-gradient(rgba(16, 12, 8, 0.78), rgba(16, 12, 8, 0.9)), url('../images/UI/textures/bg-stone-tile.webp') 0 0 / 256px;
   box-shadow: inset 0 0 0 1px rgba(226, 177, 74, 0.25), 0 8px 18px -6px var(--c-black-950);
 }
 html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) #tab-bar-row {
@@ -139,8 +139,8 @@ html.wide-mode #panel-container .kf-top::after {
   border-style: solid;
   border-color: transparent;
   border-width: 0 calc(var(--kfh) * 494 / 269) 0 calc(var(--kfh) * 490 / 269);
-  border-image: url('../images/UI/frames/page/Cadre_Haut.png') 0 494 0 490 / 0 calc(var(--kfh) * 494 / 269) 0 calc(var(--kfh) * 490 / 269) stretch;
-  background: url('../images/UI/frames/page/Cadre_Haut.png') 16.25% 0 / 641.6% 100% no-repeat;
+  border-image: url('../images/UI/frames/page/Cadre_Haut.webp') 0 494 0 490 / 0 calc(var(--kfh) * 494 / 269) 0 calc(var(--kfh) * 490 / 269) stretch;
+  background: url('../images/UI/frames/page/Cadre_Haut.webp') 16.25% 0 / 641.6% 100% no-repeat;
   background-clip: padding-box;
 }
 html.wide-mode #panel-container .kf-orn {
@@ -152,7 +152,7 @@ html.wide-mode #panel-container .kf-orn {
   width: calc(var(--kfh) * 620 / 269);
   height: 100%;
   transform: translateX(-50%);
-  background: url('../images/UI/frames/page/Cadre_Haut.png') 50% 0 / auto 100% no-repeat;
+  background: url('../images/UI/frames/page/Cadre_Haut.webp') 50% 0 / auto 100% no-repeat;
   pointer-events: none;
 }
 html.wide-mode #panel-container .kf-mid::after {
@@ -160,14 +160,14 @@ html.wide-mode #panel-container .kf-mid::after {
   border-style: solid;
   border-color: transparent;
   border-width: 0 calc(var(--kfh) * 62 / 269) 0 calc(var(--kfh) * 60 / 269);
-  border-image: url('../images/UI/frames/page/Cadre_Milieux.png') 0 62 0 60 / 0 calc(var(--kfh) * 62 / 269) 0 calc(var(--kfh) * 60 / 269) stretch;
+  border-image: url('../images/UI/frames/page/Cadre_Milieux.webp') 0 62 0 60 / 0 calc(var(--kfh) * 62 / 269) 0 calc(var(--kfh) * 60 / 269) stretch;
 }
 html.wide-mode #panel-container .kf-bot::after {
   background: none;
   border-style: solid;
   border-color: transparent;
   border-width: 0 calc(var(--kfh) * 230 / 269);
-  border-image: url('../images/UI/frames/page/Cadre_Bas.png') 0 230 0 230 fill / 0 calc(var(--kfh) * 230 / 269) stretch;
+  border-image: url('../images/UI/frames/page/Cadre_Bas.webp') 0 230 0 230 fill / 0 calc(var(--kfh) * 230 / 269) stretch;
 }
 /* marges intérieures : celles du téléphone (6,5 % de 390 ≈ 25 px), pas 6,5 % de 1 000 px */
 html.wide-mode #panel-container .nb-page-frame.kframe > .kf-mid { padding: 8px 28px 10px; }

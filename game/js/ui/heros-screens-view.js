@@ -60,7 +60,7 @@
       ["skill1", "skill2", "skill3", "defense"].forEach(function (slot) {
         var a = ClassCombatManager.getAction(slot);
         if (!a) return;
-        var icon = (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[a.id]) || "images/Icons/scene/node_discovery.png";
+        var icon = (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[a.id]) || "images/Icons/scene/node_discovery.webp";
         out += renderIconOrEmojiHTML(icon, "hs-mini-ico", a.label ? _td(a.label) : "");
       });
     }
@@ -76,12 +76,12 @@
 
   function heroTiles() {
     var tr = trainingStatus();
-    var t = tileHTML({ icon: "images/Icons/subtabs/hero_stats.png", title: _t("Entraînement"), line: esc(tr.line), sub: esc(tr.sub), tone: tr.tone, onclick: "openHerosSheet('stats')" });
-    t += tileHTML({ icon: "images/Icons/subtabs/hero_abilities.png", title: _t("Capacités"), line: '<span class="hs-icons">' + skillIcons() + '</span>', sub: esc(_t("Quand s'en servir")), onclick: "openHerosSheet('abilities')" });
+    var t = tileHTML({ icon: "images/Icons/subtabs/hero_stats.webp", title: _t("Entraînement"), line: esc(tr.line), sub: esc(tr.sub), tone: tr.tone, onclick: "openHerosSheet('stats')" });
+    t += tileHTML({ icon: "images/Icons/subtabs/hero_abilities.webp", title: _t("Capacités"), line: '<span class="hs-icons">' + skillIcons() + '</span>', sub: esc(_t("Quand s'en servir")), onclick: "openHerosSheet('abilities')" });
     if (typeof isTabUnlocked !== "function" || isTabUnlocked("ascension")) {
       var mp = window.MemoryManager ? MemoryManager.getProgress() : { level: 0 };
       var pend = window.MemoryManager ? MemoryManager.getPendingLevels().length : 0;
-      t += tileHTML({ icon: "images/Icons/subtabs/ascension_tab.png", title: _t("Mémoire"), line: esc(_t("Niveau {n}", { n: mp.level })),
+      t += tileHTML({ icon: "images/Icons/subtabs/ascension_tab.webp", title: _t("Mémoire"), line: esc(_t("Niveau {n}", { n: mp.level })),
         sub: esc(pend ? _t("Un choix t'attend") : _t("Souvenirs du héros")), tone: pend ? "go" : "plain", badge: pend || "", onclick: "switchTab('ascension')" });
     }
     return t;
@@ -101,7 +101,7 @@
   // Les 4 chiffres sur UNE ligne (icône + valeur), le détail dans la feuille Stats.
   function kpiStripHTML() {
     var c = combatValues();
-    var k = function (ico, lbl, val) { return '<span class="hs-kstat">' + img("images/Icons/combat_stats/" + ico + ".png") + '<b>' + val + '</b><small>' + esc(lbl) + '</small></span>'; };
+    var k = function (ico, lbl, val) { return '<span class="hs-kstat">' + img("images/Icons/combat_stats/" + ico + ".webp") + '<b>' + val + '</b><small>' + esc(lbl) + '</small></span>'; };
     return '<button type="button" class="hs-kstrip" onclick="openHerosSheet(\'stats\')">'
       + k("stat_health", _t("PV"), num(c.hp)) + k("stat_attack", _t("Attaque"), num(c.atk)) + k("stat_defense", _t("Défense"), c.def + " %") + k("stat_critical", _t("Critique"), c.crit + " %")
       + '<i class="hs-chev">›</i></button>';
@@ -136,7 +136,7 @@
   function buildHerosResumeHTML() {
     var h = bannerHTML() + kpiStripHTML() + '<div class="hs-tiles">' + heroTiles() + '</div>' + traitsHTML();
     // Changer de héros : un vrai bouton en bas (une icône dans la bannière était trop petite).
-    h += '<button type="button" class="hs-roster-btn" onclick="openHeroSlotsScreen()">' + img("images/Icons/subtabs/hero_roster.png")
+    h += '<button type="button" class="hs-roster-btn" onclick="openHeroSlotsScreen()">' + img("images/Icons/subtabs/hero_roster.webp")
       + '<span><b>' + _t("Mes héros") + '</b><small>' + _t("Changer de héros ou en créer un") + '</small></span><i class="hs-chev">›</i></button>';
     return h;
   }
@@ -173,7 +173,7 @@
 
   function setLineHTML() {
     var active = (EquipmentManager.getActiveSetBonuses ? EquipmentManager.getActiveSetBonuses() : []);
-    var ico = img("images/Icons/equipment_slots/set_bonus.png", "hs-mini-ico");
+    var ico = img("images/Icons/equipment_slots/set_bonus.webp", "hs-mini-ico");
     if (!active.length) return '<div class="hs-set is-off">' + ico + _t("Aucune panoplie active") + '</div>';
     return active.map(function (e) { return '<div class="hs-set">' + ico + '<b>' + esc(_td(e.config.name)) + '</b> · ' + esc(_td(e.config.text)) + '</div>'; }).join("");
   }
@@ -215,13 +215,13 @@
      ========================================================= */
   function bagFilters() {
     return [
-      ["all", _t("Tout"), "images/Icons/subtabs/inventory.png"],
-      ["weapon", _t("Armes"), "images/Icons/equipment_slots/slot_weapon.png", ["weapon"]],
-      ["armor", _t("Armures"), "images/Icons/equipment_slots/slot_armor.png", ["helmet", "armor", "gloves", "boots"]],
-      ["jewel", _t("Bijoux"), "images/Icons/equipment_slots/slot_ring.png", ["ring", "amulet"]],
-      ["potion", _t("Consommables"), "images/Icons/subtabs/potions.png"], // v3.448.11 : potions et objets de combat
+      ["all", _t("Tout"), "images/Icons/subtabs/inventory.webp"],
+      ["weapon", _t("Armes"), "images/Icons/equipment_slots/slot_weapon.webp", ["weapon"]],
+      ["armor", _t("Armures"), "images/Icons/equipment_slots/slot_armor.webp", ["helmet", "armor", "gloves", "boots"]],
+      ["jewel", _t("Bijoux"), "images/Icons/equipment_slots/slot_ring.webp", ["ring", "amulet"]],
+      ["potion", _t("Consommables"), "images/Icons/subtabs/potions.webp"], // v3.448.11 : potions et objets de combat
       "-",
-      ["better", _t("Mieux que l'équipé"), "images/Icons/system/upgrade.png"]
+      ["better", _t("Mieux que l'équipé"), "images/Icons/system/upgrade.webp"]
     ];
   }
   var bagFilter = "all", bagMenuOpen = false;
@@ -284,7 +284,7 @@
     }
     h += '</div><span class="hs-bagcap"><b>' + n + '</b> / ' + cap + '<small>' + _t("objets") + '</small></span>';
     // v3.429.21 : l'Autovente sort du menu (elle était coupée sous la barre du bas sur iPhone)
-    h += '<button type="button" class="hs-bag-auto" onclick="openInventorySettings()"><img src="images/Icons/system/auto_sell.png" alt="">' + _t("Autovente") + '</button></div>';
+    h += '<button type="button" class="hs-bag-auto" onclick="openInventorySettings()"><img src="images/Icons/system/auto_sell.webp" alt="">' + _t("Autovente") + '</button></div>';
     var es = bagEntries(bagFilter);
     var eqs = es.filter(function (e) { return e.type === "equipment"; }), pots = es.filter(function (e) { return e.type === "potion"; });
     if (eqs.length) h += '<div class="ksec"><span>' + _t("Équipement") + '</span></div><div class="wh-grid hs-bgrid">' + eqs.map(bagTileHTML).join("") + '</div>';
@@ -416,12 +416,12 @@
   /* =========================================================
      FEUILLES (registre de ui/heros-view.js)
      ========================================================= */
-  HEROS_SHEETS.slot = { title: _t("Emplacement"), icon: "images/Icons/subtabs/equipment.png", build: function () {
+  HEROS_SHEETS.slot = { title: _t("Emplacement"), icon: "images/Icons/subtabs/equipment.webp", build: function () {
     return '<div class="hs-sheet">' + buildEquipDetailPanelHTML() + buildCompatibleItemsListHTML(selectedEquipSlot) + '</div>'; } };
   /* v3.427.1 (retour Seb) : après Équiper ou Offrir, on revient directement au sac — la fiche se
      referme au lieu de rester ouverte sur « Aucun objet sélectionné ». Les boutons du panneau partagé
      (equipment-view.js) sont redirigés ici, sans toucher au panneau lui-même. */
-  HEROS_SHEETS.item = { title: _t("Objet"), icon: "images/Icons/subtabs/inventory.png", build: function () {
+  HEROS_SHEETS.item = { title: _t("Objet"), icon: "images/Icons/subtabs/inventory.webp", build: function () {
     var panel = buildUnifiedDetailPanelHTML(getUnifiedInventoryEntries())
       .replace(/onclick="EquipmentManager\.equip\('([^']*)'\)"/g, 'onclick="herosItemEquip(\'$1\')"')
       .replace(/onclick="confirmSellItem\('([^']*)'\)"/g, 'onclick="herosItemOffer(\'$1\')"');
@@ -443,7 +443,7 @@
   };
   window.herosItemEquip = herosItemEquip;
   window.herosItemOffer = herosItemOffer;
-  HEROS_SHEETS.companion = { title: _t("Compagnon"), icon: "images/Icons/subtabs/hero_abilities.png", build: function () {
+  HEROS_SHEETS.companion = { title: _t("Compagnon"), icon: "images/Icons/subtabs/hero_abilities.webp", build: function () {
     return '<div class="hs-sheet">' + (openCompanionId ? buildCompanionCardHTML(openCompanionId) : "") + '</div>'; } };
 
   /* ---------- Exports ---------- */

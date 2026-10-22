@@ -38,7 +38,7 @@ var COMPANIONS_DB = {
     skill: {
       id: "wenna_bandage",
       name: "Pansement serré",
-      icon: "images/Icons/combat_status/heal_incoming.png",
+      icon: "images/Icons/combat_status/heal_incoming.webp",
       type: "heal",
       target: "ally_lowest",             // l'allié le plus bas en PV, héros compris
       value: 0.18,                       // % des PV max de la cible
@@ -84,7 +84,7 @@ var COMPANIONS_DB = {
         threatMult: 1.8,                   // Garde : il attire (§6.2)
         skill: {
           id: "maddoc_plante", name: "Planté",
-          icon: "images/Icons/companions/maddoc_plante.png", // à générer
+          icon: "images/Icons/companions/maddoc_plante.webp", // à générer
           type: "taunt",
           value: 0.12,                     // se rend 12 % de ses PV max
           cooldown: 4, charges: 0,
@@ -101,7 +101,7 @@ var COMPANIONS_DB = {
         threatMult: 0.6,                   // de loin, il attire peu
         skill: {
           id: "maddoc_tir", name: "Tir ajusté",
-          icon: "images/Icons/companions/maddoc_tir.png", // à générer
+          icon: "images/Icons/companions/maddoc_tir.webp", // à générer
           type: "strike",
           value: 2.5,                      // ×2,5 ses dégâts de base sur la cible
           cooldown: 3, charges: 0,
@@ -138,7 +138,7 @@ COMPANIONS_DB.edda = {
   skill: {
     id: "edda_dernier_trait",
     name: "Le dernier trait",
-    icon: "images/Icons/companions/edda_dernier_trait.png", // à générer
+    icon: "images/Icons/companions/edda_dernier_trait.webp", // à générer
     type: "finish",
     value: 1.5,                          // ×1,5 ses dégâts de base sur l'ennemi à terre (une frappe l'achève)
     cooldown: 2, charges: 0,
@@ -171,7 +171,7 @@ COMPANIONS_DB.ysolt = {
   skill: {
     id: "ysolt_pas_encore",
     name: "Pas encore",
-    icon: "images/Icons/companions/ysolt_pas_encore.png", // à générer
+    icon: "images/Icons/companions/ysolt_pas_encore.webp", // à générer
     type: "delaySleep",
     value: 2,                            // rounds de plus avant le réveil seul
     cooldown: 0, charges: 1,             // une fois par combat (CR5)

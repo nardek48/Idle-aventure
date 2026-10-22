@@ -11,7 +11,7 @@ function buildAdminHTML() {
   // v3.295.0 : diagnostic du bug iPhone « boutons de combat sans réponse » (ui/debug-touch-view.js)
   var debugOn = !!(window.TouchDebug && TouchDebug.isOn());
   h += '<div class="panel-card admin-card">';
-  h += '<h3><img class=ico-inline src=images/Icons/system/warning.png> Diagnostic combat</h3>';
+  h += '<h3><img class=ico-inline src=images/Icons/system/warning.webp> Diagnostic combat</h3>';
   h += '<p class="panel-sub">Affiche en haut de l\'écran ce que reçoit chaque toucher, l\'état du tour et les erreurs. Ne bloque aucun toucher.</p>';
   h += '<div class="admin-quick-row">';
   h += '<button class="settings-btn admin-btn" onclick="TouchDebug.setOn(' + (debugOn ? 'false' : 'true') + '); renderPanel();">' + (debugOn ? 'Désactiver' : 'Activer') + ' le diagnostic tactile</button>';
@@ -25,7 +25,7 @@ function buildAdminHTML() {
   if (window.I18n) {
     var cur = I18n.lang();
     h += '<div class="panel-card admin-card">';
-    h += '<h3><img class=ico-inline src=images/Icons/system/warning.png> Langue (test)</h3>';
+    h += '<h3><img class=ico-inline src=images/Icons/system/warning.webp> Langue (test)</h3>';
     h += '<p class="panel-sub">La pseudo-langue entoure de ⟦ ⟧ chaque texte déjà traduisible : ce qui reste nu n\'est pas encore extrait. Changer relance le jeu.</p>';
     h += '<div class="admin-quick-row">';
     Object.keys(I18N_LANGS).forEach(function (l) {
@@ -36,7 +36,7 @@ function buildAdminHTML() {
   }
 
   h += '<div class="panel-card admin-card">';
-  h += '<h3><img class=ico-inline src=images/Icons/gold_icon.png> Or</h3>';
+  h += '<h3><img class=ico-inline src=images/Icons/gold_icon.webp> Or</h3>';
   h += adminFieldRow("admin-gold", "Or", game.gold, "adminApplyGold()");
   h += '<div class="admin-quick-row">';
   h += '<button class="settings-btn admin-btn" onclick="adminQuickAdd(\'gold\', 10000)">+10 000 or</button>';
@@ -44,33 +44,33 @@ function buildAdminHTML() {
   h += '</div>';
 
   h += '<div class="panel-card admin-card">';
-  h += '<h3><img class=ico-inline src=images/Icons/system/warehouse_supplies.png> Éclats de donjon</h3>';
+  h += '<h3><img class=ico-inline src=images/Icons/system/warehouse_supplies.webp> Éclats de donjon</h3>';
   h += adminFieldRow("admin-shards", "Éclats", game.dungeonShards || 0, "adminApplyShards()");
   h += '</div>';
 
   h += '<div class="panel-card admin-card">';
-  h += '<h3><img class=ico-inline src=images/Icons/improvement_icons/power.png> Stats entraînées</h3>';
+  h += '<h3><img class=ico-inline src=images/Icons/improvement_icons/power.webp> Stats entraînées</h3>';
   h += adminFieldRow("admin-power", "Puissance", game.trainedStats.power, "adminApplyTrainedStat('power')");
   h += adminFieldRow("admin-endurance", "Endurance", game.trainedStats.endurance, "adminApplyTrainedStat('endurance')");
   h += adminFieldRow("admin-celerity", "Célérité", game.trainedStats.celerity, "adminApplyTrainedStat('celerity')");
   h += adminFieldRow("admin-precision", "Précision", game.trainedStats.precision, "adminApplyTrainedStat('precision')");
   h += adminFieldRow("admin-will", "Volonté", game.trainedStats.will, "adminApplyTrainedStat('will')");
   h += '<div class="admin-quick-row">';
-  h += '<button class="settings-btn admin-btn" onclick="adminRecalcStats()"><img class=ico-inline src=images/Icons/system/reset.png> Recalculer les stats</button>';
+  h += '<button class="settings-btn admin-btn" onclick="adminRecalcStats()"><img class=ico-inline src=images/Icons/system/reset.webp> Recalculer les stats</button>';
   h += '</div>';
   h += '</div>';
 
   h += '<div class="panel-card admin-card">';
-  h += '<h3><img class=ico-inline src=images/Icons/combat_stats/stat_health.png> PV du héros</h3>';
+  h += '<h3><img class=ico-inline src=images/Icons/combat_stats/stat_health.webp> PV du héros</h3>';
   h += adminFieldRow("admin-herohp", "PV actuels (max " + Math.floor(game.heroMaxHp) + ")", game.heroHp, "adminApplyHeroHp()");
   h += '<div class="admin-quick-row">';
-  h += '<button class="settings-btn admin-btn" onclick="adminHeroHpMax()"><img class=ico-inline src=images/Icons/combat_status/heal_incoming.png> PV au maximum</button>';
-  h += '<button class="settings-btn admin-btn" onclick="adminKillEnemy()"><img class=ico-inline src=images/Icons/combat_status/corruption.png> Tuer l\'ennemi affiché</button>';
+  h += '<button class="settings-btn admin-btn" onclick="adminHeroHpMax()"><img class=ico-inline src=images/Icons/combat_status/heal_incoming.webp> PV au maximum</button>';
+  h += '<button class="settings-btn admin-btn" onclick="adminKillEnemy()"><img class=ico-inline src=images/Icons/combat_status/corruption.webp> Tuer l\'ennemi affiché</button>';
   h += '</div>';
   h += '</div>';
 
   h += '<div class="panel-card admin-card">';
-  h += '<h3><img class=ico-inline src=images/Icons/quests/quest_resources.png> Monde & cycle</h3>';
+  h += '<h3><img class=ico-inline src=images/Icons/quests/quest_resources.webp> Monde & cycle</h3>';
   h += '<p class="panel-sub">Monde actuel : ' + (window.WorldManager ? WorldManager.worldIndex : 0) + ' (' + ((window.WorldManager && WorldManager.getWorld() && WorldManager.getWorld().name) || "?") + ')</p>';
   h += adminFieldRow("admin-worldindex", "Index de monde (0–6)", (window.WorldManager ? WorldManager.worldIndex : 0), "adminApplyWorldIndex()", 0, 6);
   h += adminFieldRow("admin-cyclecount", "Nombre de cycles", game.cycleCount || 0, "adminApplyCycleCount()");
@@ -78,9 +78,9 @@ function buildAdminHTML() {
   h += '</div>';
 
   h += '<div class="panel-card admin-card">';
-  h += '<h3><img class=ico-inline src=images/Icons/subtabs/potions.png> Bac à sable de combat</h3>';
+  h += '<h3><img class=ico-inline src=images/Icons/subtabs/potions.webp> Bac à sable de combat</h3>';
   h += '<p class="panel-sub">Simulateur de rounds sur les vraies données (budgets RPT/RPM, sorties Monte-Carlo, export Markdown) — sans effet sur ta partie.</p>';
-  h += '<button class="settings-btn admin-btn" onclick="switchTab(\'combat-sandbox\')"><img class=ico-inline src=images/Icons/subtabs/potions.png> Ouvrir le bac à sable</button>';
+  h += '<button class="settings-btn admin-btn" onclick="switchTab(\'combat-sandbox\')"><img class=ico-inline src=images/Icons/subtabs/potions.webp> Ouvrir le bac à sable</button>';
   h += '</div>';
 
   /* v3.279.0 (demande Seb) : relancer n'importe quelle quête de COMBAT pour la tester.
@@ -94,7 +94,7 @@ function buildAdminHTML() {
   h += buildAdminPetiteAventureHTML();
   h += buildAdminStoryHTML();
 
-  h += '<button class="settings-btn admin-btn" onclick="switchTab(\'settings\')"><img class=ico-inline src=images/Icons/system/back.png> Retour aux Paramètres</button>';
+  h += '<button class="settings-btn admin-btn" onclick="switchTab(\'settings\')"><img class=ico-inline src=images/Icons/system/back.webp> Retour aux Paramètres</button>';
 
   h += '</div>';
   return '<div class="nb-page-frame admin-root kframe-page" data-kf-title="Admin">' + h + '</div>';
@@ -133,7 +133,7 @@ function buildAdminCombatQuestHTML() {
   if (!liste.length) return "";
 
   var h = '<div class="panel-card admin-card">';
-  h += '<h3><img class=ico-inline src=images/Icons/combat_stats/stat_attack.png> Rejouer un combat</h3>';
+  h += '<h3><img class=ico-inline src=images/Icons/combat_stats/stat_attack.webp> Rejouer un combat</h3>';
   h += '<p class="panel-sub">Relance la quête choisie depuis le début : sa progression est remise à zéro, puis le run démarre. Le nombre entre parenthèses est la taille du groupe ennemi.</p>';
   h += '<select id="admin-combat-quest" class="admin-select">';
   liste.forEach(function (q) {
@@ -141,7 +141,7 @@ function buildAdminCombatQuestHTML() {
       + (q.groupe > 1 ? " (groupe de " + q.groupe + ")" : "") + '</option>';
   });
   h += '</select>';
-  h += '<button class="settings-btn admin-btn" onclick="adminReplayCombatQuest()"><img class=ico-inline src=images/Icons/system/reset.png> Lancer ce combat</button>';
+  h += '<button class="settings-btn admin-btn" onclick="adminReplayCombatQuest()"><img class=ico-inline src=images/Icons/system/reset.webp> Lancer ce combat</button>';
   h += '</div>';
   return h;
 }
@@ -179,7 +179,7 @@ function adminReplayCombatQuest() {
 
 /* v3.458.0 (audit P15) : confirmation des actions Admin qui font avancer la partie sans retour. */
 function adminConfirm(title, text, onConfirm) {
-  if (typeof showConfirmModal === "function") showConfirmModal(title, text, "images/Icons/system/warning.png", onConfirm);
+  if (typeof showConfirmModal === "function") showConfirmModal(title, text, "images/Icons/system/warning.webp", onConfirm);
 }
 
 function adminFieldRow(inputId, label, currentValue, onApplyCall, minVal, maxVal) {
@@ -301,7 +301,7 @@ window.adminApplyCycleCount = adminApplyCycleCount;
 function buildAdminCompanionsHTML() {
   if (!window.CompanionManager || !window.COMPANIONS_DB) return "";
   var h = '<div class="panel-card admin-card">';
-  h += '<h3><img class=ico-inline src=images/Icons/subtabs/hero_abilities.png> Compagnons</h3>';
+  h += '<h3><img class=ico-inline src=images/Icons/subtabs/hero_abilities.webp> Compagnons</h3>';
   var lignes = Object.keys(COMPANIONS_DB).map(function (id) {
     var st = CompanionManager.state(id), def = getCompanionDef(id);
     var etat = st && st.unlocked ? "recruté" + (st.voie ? " (" + COMPANIONS_DB[id].voies[st.voie].label + ")" : "") : "non recruté";
@@ -309,7 +309,7 @@ function buildAdminCompanionsHTML() {
   });
   h += '<p class="panel-sub">' + lignes.join(" · ") + '</p>';
   h += '<p class="panel-sub">Recrute les compagnons manquants et ouvre Héros › Compagnons. Une voie sans choix prend la voie par défaut, modifiable ensuite dans sa fiche.</p>';
-  h += '<button class="settings-btn admin-btn" onclick="adminRecruitCompanions()"><img class=ico-inline src=images/Icons/subtabs/hero_abilities.png> Recruter les compagnons</button>';
+  h += '<button class="settings-btn admin-btn" onclick="adminRecruitCompanions()"><img class=ico-inline src=images/Icons/subtabs/hero_abilities.webp> Recruter les compagnons</button>';
   h += '</div>';
   return h;
 }
@@ -341,13 +341,13 @@ function buildAdminPetiteAventureHTML() {
   var cap = SceneRunManager.getPetiteAventureCap();
   var restantes = cap - SceneRunManager.petiteAventureCountToday();
   var h = '<div class="panel-card admin-card">';
-  h += '<h3><img class=ico-inline src=images/Icons/scene/path_easy.png> Petites Aventures</h3>';
+  h += '<h3><img class=ico-inline src=images/Icons/scene/path_easy.webp> Petites Aventures</h3>';
   h += '<p class="panel-sub">Tentatives disponibles : ' + restantes + ' (réserve : ' + cap + ')'
     + (restantes < cap ? ' · prochaine dans ' + SceneRunManager.formatPetiteAventureWait(SceneRunManager.petiteAventureNextInMs() || SceneRunManager.PETITE_AVENTURE_RECHARGE_MS) : '') + '</p>';
   h += '<div class="admin-quick-row">';
   h += '<button class="settings-btn admin-btn" onclick="adminAddPetiteAventure(1)">+1 tentative</button>';
   h += '<button class="settings-btn admin-btn" onclick="adminAddPetiteAventure(5)">+5 tentatives</button>';
-  h += '<button class="settings-btn admin-btn" onclick="adminResetPetiteAventure()"><img class=ico-inline src=images/Icons/system/reset.png> Remplir la réserve</button>';
+  h += '<button class="settings-btn admin-btn" onclick="adminResetPetiteAventure()"><img class=ico-inline src=images/Icons/system/reset.webp> Remplir la réserve</button>';
   h += '</div>';
   h += '</div>';
   return h;
@@ -402,14 +402,14 @@ function buildAdminStoryHTML() {
   if (!window.StoryQuestManager || !window.STORY_QUESTS) return "";
   var all = adminStoryAllSteps(), pos = adminStoryCurrentPos(all);
   var h = '<div class="panel-card admin-card">';
-  h += '<h3><img class=ico-inline src=images/Icons/camp/campfire.png> Histoire</h3>';
+  h += '<h3><img class=ico-inline src=images/Icons/camp/campfire.webp> Histoire</h3>';
   if (pos < 0) {
     h += '<p class="panel-sub">Toute l\'Histoire livrée est terminée.</p></div>';
     return h;
   }
   var cur = all[pos], accepted = StoryQuestManager.getState(cur.chapterId).accepted;
   h += '<p class="panel-sub">Étape en cours : <strong>' + esc(cur.step.title) + '</strong> (' + esc(cur.step.id) + ', ' + (accepted ? "acceptée" : "pas encore acceptée") + ')</p>';
-  h += '<button class="settings-btn admin-btn" onclick="adminValidateStoryStep()"><img class=ico-inline src=images/Icons/dungeon/dungeon_guaranteed_loot.png> Valider l\'étape en cours</button>';
+  h += '<button class="settings-btn admin-btn" onclick="adminValidateStoryStep()"><img class=ico-inline src=images/Icons/dungeon/dungeon_guaranteed_loot.webp> Valider l\'étape en cours</button>';
 
   if (pos < all.length - 1) {
     h += '<select id="admin-story-target" class="admin-select">';
@@ -419,7 +419,7 @@ function buildAdminStoryHTML() {
       h += '<option value="' + esc(all[i].step.id) + '">' + esc((monde ? monde.name : all[i].chapterId) + " " + (all[i].idx + 1) + " — " + all[i].step.title) + '</option>';
     }
     h += '</select>';
-    h += '<button class="settings-btn admin-btn" onclick="adminJumpToStoryStep()"><img class=ico-inline src=images/Icons/system/forward.png> Avancer jusqu\'à cette étape</button>';
+    h += '<button class="settings-btn admin-btn" onclick="adminJumpToStoryStep()"><img class=ico-inline src=images/Icons/system/forward.webp> Avancer jusqu\'à cette étape</button>';
   }
   h += '<p class="panel-sub admin-warn">Valider donne la récompense de l\'étape, pose les drapeaux et le monde qu\'elle aurait posés, et prend la première option d\'un choix en attente. Les récompenses des quêtes d\'aventure liées ne sont pas données. On ne peut qu\'avancer.</p>';
   h += '</div>';

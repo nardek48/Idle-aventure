@@ -95,10 +95,10 @@ window.getVillageSubTabBadges = getVillageSubTabBadges;
 function buildVillageSubTabBarHTML() {
   var badges = getVillageSubTabBadges();
   var tabs = [
-    ["buildings", "images/Icons/construction_icon.png", _t("Bâtiments")],
-    ["production", "images/Icons/subtabs/production.png", _t("Production")],
-    ["shops", "images/Icons/subtabs/workshops.png", _t("Ateliers")],
-    ["entrepot", "images/Icons/system/warehouse_supplies.png", _t("Entrepôt")]
+    ["buildings", "images/Icons/construction_icon.webp", _t("Bâtiments")],
+    ["production", "images/Icons/subtabs/production.webp", _t("Production")],
+    ["shops", "images/Icons/subtabs/workshops.webp", _t("Ateliers")],
+    ["entrepot", "images/Icons/system/warehouse_supplies.webp", _t("Entrepôt")]
   ];
   var h = '<div class="kseg is-stack village-tabs">';
   tabs.forEach(function (t) {
@@ -119,7 +119,7 @@ function buildVillageSiteBannerHTML() {
 
   if (!site) {
     return '<div class="vb-site-banner is-idle">'
-      + '<div class="vb-site-banner-icon"><img class="ico-lg" src="images/Icons/plots/reinforced_gallery.png" alt=""></div>'
+      + '<div class="vb-site-banner-icon"><img class="ico-lg" src="images/Icons/plots/reinforced_gallery.webp" alt=""></div>'
       + '<div class="vb-site-banner-body">'
       + '<div class="vb-site-banner-title">' + _t("Aucun chantier en cours") + '</div>'
       + '<div class="vb-site-banner-sub">' + _t("Un seul chantier à la fois dans le village.") + '</div>'
@@ -190,7 +190,7 @@ function buildVillageBuildingCardHTML(id) {
   if (state === "ready") h += '<span class="vb-card-flag">' + _t("Construire") + '</span>';
   else if (state === "site") h += '<span class="vb-card-flag">' + _t("Chantier") + '</span>';
   // v3.419.0 (E-2) : la caravane rentrée attend sur la tuile de la Halle
-  else if (carBack) h += '<span class="vb-card-flag is-good"><img class="vb-flag-ico" src="images/Icons/village_buildings/caravan.png" alt=""> ' + _t("De retour") + '</span>';
+  else if (carBack) h += '<span class="vb-card-flag is-good"><img class="vb-flag-ico" src="images/Icons/village_buildings/caravan.webp" alt=""> ' + _t("De retour") + '</span>';
 
   h += '<div class="vb-card-top">';
   h += buildVillageBuildingIconHTML(def, "vb-card-icon");
@@ -198,7 +198,7 @@ function buildVillageBuildingCardHTML(id) {
   h += '</div>';
 
   if (locked) {
-    h += '<div class="vb-card-lock"><span class="vb-card-lock-icon"><img class="ico-sys" src="images/Icons/system/lock_closed.png" alt=""></span>'
+    h += '<div class="vb-card-lock"><span class="vb-card-lock-icon"><img class="ico-sys" src="images/Icons/system/lock_closed.webp" alt=""></span>'
        + '<span>' + esc(getVillageLockLabel(def)) + '</span></div>';
 
   } else if (state === "site") {
@@ -218,7 +218,7 @@ function buildVillageBuildingCardHTML(id) {
 
   } else if (state === "built") {
     var afford = VillageBuildingManager.getAffordability(id);
-    h += '<div class="vb-card-status">' + (afford.all ? '<img class=ico-inline src=images/Icons/system/upgrade.png> ' + _t("Améliorable") : _t("Matériaux manquants")) + '</div>';
+    h += '<div class="vb-card-status">' + (afford.all ? '<img class=ico-inline src=images/Icons/system/upgrade.webp> ' + _t("Améliorable") : _t("Matériaux manquants")) + '</div>';
 
   } else { /* ready */
     h += '<div class="vb-card-status">' + (level > 0 ? _t("Chantier possible") : _t("Non construit · chantier possible")) + '</div>';
@@ -254,7 +254,7 @@ function buildVillageMainSubTabHTML() {
 
 function buildVillageHTML() {
   activeVillageSubTab = normalizeVillageSubTab(activeVillageSubTab);
-  var h = '<div class="nb-page-frame nb-page-frame-fill village-page-frame kframe-page" data-kf-title="' + esc("images/Icons/menu_icons/village_menu.png|" + _t("Village")) + '">';
+  var h = '<div class="nb-page-frame nb-page-frame-fill village-page-frame kframe-page" data-kf-title="' + esc("images/Icons/menu_icons/village_menu.webp|" + _t("Village")) + '">';
   h += buildVillageSubTabBarHTML();
 
   if (activeVillageSubTab === "entrepot") h += buildWarehouseHTML();

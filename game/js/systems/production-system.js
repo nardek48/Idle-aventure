@@ -324,7 +324,7 @@ var ProductionManager = {
         harvestBtn.classList.toggle("is-disabled", !hasStock);
         var harvestIcon = harvestBtn.querySelector("img");
         // v3.457.5 (audit P12) : traduit, et réécrit seulement s'il change (« Harvest » redevenait « Récolter »)
-        var harvestHtml = (harvestIcon ? harvestIcon.outerHTML : '<img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">') + _t("Récolter") + (hasStock ? " · " + formatNumber(Math.floor(stock)) : "");
+        var harvestHtml = (harvestIcon ? harvestIcon.outerHTML : '<img class="btn-buy-icon" src="images/Icons/gold_icon.webp" alt="">') + _t("Récolter") + (hasStock ? " · " + formatNumber(Math.floor(stock)) : "");
         if (harvestBtn.innerHTML !== harvestHtml) harvestBtn.innerHTML = harvestHtml;
       }
 

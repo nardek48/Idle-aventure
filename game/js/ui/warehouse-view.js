@@ -101,7 +101,7 @@ function getWarehouseOtherUses(key) {
     var used = (d.costTiers || []).some(function (t) { return (t.resources || []).indexOf(key) !== -1; }) || (d.firstLevelCost && d.firstLevelCost[key]);
     if (used) vb.push(_td(d.name));
   });
-  if (vb.length) out.push({ icon: "images/Icons/construction_icon.png", text: _t("Constructions : {x}", { x: vb.join(", ") }) });
+  if (vb.length) out.push({ icon: "images/Icons/construction_icon.webp", text: _t("Constructions : {x}", { x: vb.join(", ") }) });
   var zones = [];
   Object.keys(window.PRODUCTION_PLOTS_BUILDINGS || {}).forEach(function (bid) {
     var c = PRODUCTION_PLOTS_BUILDINGS[bid];
@@ -109,25 +109,25 @@ function getWarehouseOtherUses(key) {
       .some(function (x) { return x && (x.resources || []).indexOf(key) !== -1; });
     if (used && PRODUCTION_BUILDINGS[bid]) zones.push(_td(PRODUCTION_BUILDINGS[bid].name));
   });
-  if (zones.length) out.push({ icon: "images/Icons/subtabs/production.png", text: _t("Zones de production : {x}", { x: zones.join(", ") }) });
+  if (zones.length) out.push({ icon: "images/Icons/subtabs/production.webp", text: _t("Zones de production : {x}", { x: zones.join(", ") }) });
   if (window.WORKSHOP_LEVEL_CONFIG && (WORKSHOP_LEVEL_CONFIG.upgradeCost.resources || []).indexOf(key) !== -1) {
-    out.push({ icon: "images/Icons/system/upgrade.png", text: _t("Améliorer les ateliers") });
+    out.push({ icon: "images/Icons/system/upgrade.webp", text: _t("Améliorer les ateliers") });
   }
   if ((window.APOTHECARY_RECIPES || []).some(function (r) { return (r.inputs && r.inputs[key]) || (r.order && r.order[key]); })) {
-    out.push({ icon: "images/Icons/village_buildings/apothecary.png", text: _t("Apothicaire : potions") });
+    out.push({ icon: "images/Icons/village_buildings/apothecary.webp", text: _t("Apothicaire : potions") });
   }
   if ((window.TAVERN_CONTRACT_TEMPLATES || []).some(function (t) { return t.resourceId === key; })) {
-    out.push({ icon: "images/Icons/village_buildings/tavern.png", text: _t("Contrats de la Taverne") });
+    out.push({ icon: "images/Icons/village_buildings/tavern.webp", text: _t("Contrats de la Taverne") });
   }
   // v3.419.0 (E-2) : la caravane emporte le surplus des matières brutes
   if (window.CaravanManager && CaravanManager.getEligibleKeys().indexOf(key) !== -1) {
-    out.push({ icon: "images/Icons/village_buildings/merchant_hall.png", text: _t("Caravane de la Halle (au-delà de la moitié du plafond)") });
+    out.push({ icon: "images/Icons/village_buildings/merchant_hall.webp", text: _t("Caravane de la Halle (au-delà de la moitié du plafond)") });
   }
   if (["acier", "resine_durcie", "chitine_profondeurs"].indexOf(key) !== -1) {
-    out.push({ icon: "images/Icons/village_buildings/village_forge.png", text: _t("Forge : reforge de l'équipement") });
+    out.push({ icon: "images/Icons/village_buildings/village_forge.webp", text: _t("Forge : reforge de l'équipement") });
   }
   var def = WAREHOUSE_RESOURCES[key] || {};
-  if (def.healPct) out.push({ icon: "images/Icons/quests/village_quest.png", text: _t("Campement : repas (+{p} % PV)", { p: Math.round(def.healPct * 100) }) });
+  if (def.healPct) out.push({ icon: "images/Icons/quests/village_quest.webp", text: _t("Campement : repas (+{p} % PV)", { p: Math.round(def.healPct * 100) }) });
   return out;
 }
 
@@ -139,7 +139,7 @@ function buildWarehouseTileHTML(key) {
   var full = isWarehouseFull(key);
   var h = '<button type="button" class="wh-tile' + (full ? ' is-full' : '') + (stock === 0 ? ' is-zero' : '') + '" onclick="openWarehouseSheet(\'' + esc(key) + '\')" aria-label="' + esc(_td(def.name)) + '">';
   h += renderIconOrEmojiHTML(def.icon, "wh-tile-img", _td(def.name));
-  if (isWarehouseBeingMade(key)) h += '<span class="wh-tile-gear"><img src="images/Icons/system/auto_repeat.png" alt=""></span>';
+  if (isWarehouseBeingMade(key)) h += '<span class="wh-tile-gear"><img src="images/Icons/system/auto_repeat.webp" alt=""></span>';
   h += '<span class="wh-tile-band"><span class="wh-tile-n">' + formatNumber(stock) + '</span><span class="wh-tile-name">' + esc(_td(def.name)) + '</span></span>';
   if (warehouseTier(key) === "raw" && cap !== Infinity) {
     h += '<span class="wh-tile-bar"><span style="width:' + Math.min(100, (stock / cap) * 100) + '%"></span></span>';
@@ -162,15 +162,15 @@ function buildWarehouseFilterRowHTML(keys) {
   var f = getWarehouseFilter(), hidden = getWarehouseHidden(), zeros = warehouseShowsZeros();
   function count(fl) { return keys.filter(function (k) { return warehousePassesFilter(k, fl, hidden) && (zeros || WarehouseManager.getAmount(k) > 0); }).length; }
   var D = [
-    ["all", _t("Tout"), "images/Icons/system/warehouse_supplies.png"],
+    ["all", _t("Tout"), "images/Icons/system/warehouse_supplies.webp"],
     ["raw", _t("Matières brutes"), "images/Icons/resources/wood_icon.webp"],
     ["crafted", _t("Fabriqué"), "images/Icons/resources/plank_icon.webp"],
     ["special", _t("Rare"), "images/Icons/resources/seve_aeswyn_icon.webp"],
     "-",
-    ["full", _t("Pleins"), "images/Icons/system/warning.png", true],
-    ["run", _t("En fabrication"), "images/Icons/system/auto_repeat.png"],
+    ["full", _t("Pleins"), "images/Icons/system/warning.webp", true],
+    ["run", _t("En fabrication"), "images/Icons/system/auto_repeat.webp"],
     "-",
-    ["mine", _t("Ma sélection"), "images/Icons/system/sort.png"]
+    ["mine", _t("Ma sélection"), "images/Icons/system/sort.webp"]
   ];
   var cur = D.filter(function (d) { return d !== "-" && d[0] === f; })[0];
   var h = '<div class="wh-filter wh-filter-wide">'; // v3.429.22 (atelier menu-entrepot) : menu sur toute la ligne
@@ -189,7 +189,7 @@ function buildWarehouseFilterRowHTML(keys) {
     h += '<div class="wh-dd-menu">' + item(by.all)
       + '<div class="wh-dd-grid">' + [by.raw, by.crafted, by.special, by.mine].map(item).join("") + '</div>'
       + '<div class="wh-dd-cap">' + _t("État") + '</div><div class="wh-dd-grid">' + [by.full, by.run].map(item).join("") + '</div><hr>';
-    h += '<button type="button" class="wh-dd-pick" onclick="openWarehousePicker()"><img src="images/Icons/system/sort.png" alt="">' + _t("Choisir ma sélection…") + '</button>';
+    h += '<button type="button" class="wh-dd-pick" onclick="openWarehousePicker()"><img src="images/Icons/system/sort.webp" alt="">' + _t("Choisir ma sélection…") + '</button>';
     h += '</div>';
   }
   h += '</div>';
@@ -397,7 +397,7 @@ function buildWarehouseSheetHTML(key) {
   // Réserve protégée (les ressources qu'un atelier consomme)
   if (getWorkshopsConsuming(key).length) {
     var r = ResourceReserveManager.getReserve(key) || 0;
-    h += '<div class="ksec"><img src="images/Icons/system/lock_closed.png" alt=""><span>' + _t("Réserve protégée") + '</span></div>';
+    h += '<div class="ksec"><img src="images/Icons/system/lock_closed.webp" alt=""><span>' + _t("Réserve protégée") + '</span></div>';
     h += '<div class="wh-resv">';
     h += '<div class="wh-resv-row"><button type="button" class="wh-step" onclick="stepWarehouseReserve(\'' + esc(key) + '\', -10)"' + (r <= 0 ? ' disabled' : '') + '>−</button>';
     h += '<input class="wh-resv-n" type="number" inputmode="numeric" min="0" step="1" value="' + r + '" onchange="commitWarehouseReserve(\'' + esc(key) + '\', this.value)" aria-label="' + esc(_t("Réserve protégée")) + '">';
@@ -465,7 +465,7 @@ function buildWarehousePickerHTML() {
   var h = '<div class="full-menu-overlay" onclick="if (event.target === this) closeWarehousePicker()">';
   h += '<div class="full-menu vb-sheet-card wh-sheet wh-picker" onclick="event.stopPropagation()">';
   h += kSheetHeadHTML({
-    icon: '<img class="vb-sheet-icon" src="images/Icons/system/sort.png" alt="">',
+    icon: '<img class="vb-sheet-icon" src="images/Icons/system/sort.webp" alt="">',
     title: _t("Ma sélection"),
     sub: _t("Touche une ressource pour la montrer ou la cacher"),
     close: "closeWarehousePicker()"

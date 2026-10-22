@@ -18,7 +18,7 @@ var SCENE_TEMPLATES = {
     mode: "parcours", // v3.389.0 (chantier P) : parcours sur le moteur des Petites Aventures v2
     title: "Le Sentier Obstrué",
     parcours: { steps: [{ type: "obstacle" }, { type: "obstacle" }], image: "foret_quetes", points: [0, 2] }, // gabarits tirés dans pools.obstacle
-    icon: "images/Icons/codex/world_forest.png",
+    icon: "images/Icons/codex/world_forest.webp",
 
     pools: { obstacle: ["tronc_deracine", "racines"] },
 
@@ -53,7 +53,7 @@ var SCENE_TEMPLATES = {
     mode: "parcours", // v3.389.0 (chantier P) : parcours sur le moteur des Petites Aventures v2
     title: "Le Bosquet Silencieux",
     parcours: { steps: [{ type: "obstacle" }, { type: "obstacle" }], image: "foret_quetes", points: [1, 3] }, // gabarits tirés dans pools.obstacle
-    icon: "images/Icons/scene/scene_woodland.png",
+    icon: "images/Icons/scene/scene_woodland.webp",
 
     pools: { obstacle: ["troncs_jumeaux", "fute_dense"] },
 
@@ -86,7 +86,7 @@ var SCENE_TEMPLATES = {
     mode: "parcours", // v3.389.0 (chantier P) : parcours sur le moteur des Petites Aventures v2
     title: "La Terre en Friche",
     parcours: { steps: [{ type: "obstacle" }, { type: "obstacle" }], image: "foret_quetes", points: [2, 4] }, // gabarits tirés dans pools.obstacle
-    icon: "images/Icons/scene/scene_harvest.png",
+    icon: "images/Icons/scene/scene_harvest.webp",
 
     pools: { obstacle: ["ronces_epaisses", "sillons_geles", "talus_boueux"] },
 
@@ -124,7 +124,7 @@ var SCENE_TEMPLATES = {
     mode: "parcours", // v3.389.0 (chantier P) : parcours sur le moteur des Petites Aventures v2
     title: "La Veine Instable",
     parcours: { steps: [{ type: "obstacle" }, { type: "obstacle" }], image: "foret_quetes", points: [3, 5] }, // gabarits tirés dans pools.obstacle
-    icon: "images/Icons/scene/scene_mine.png",
+    icon: "images/Icons/scene/scene_mine.webp",
 
     pools: { obstacle: ["filon_fragile", "paroi_instable"] },
 
@@ -155,7 +155,7 @@ var SCENE_TEMPLATES = {
     mode: "parcours", // v3.389.0 (chantier P) : parcours sur le moteur des Petites Aventures v2
     title: "L'Éboulis Ferreux",
     parcours: { steps: [{ type: "obstacle" }, { type: "obstacle" }], image: "foret_quetes", points: [4, 7] }, // gabarits tirés dans pools.obstacle
-    icon: "images/Icons/scene/scene_mine.png",
+    icon: "images/Icons/scene/scene_mine.webp",
 
     pools: { obstacle: ["veine_rougeatre", "eboulis_recent"] },
 
@@ -186,7 +186,7 @@ var SCENE_TEMPLATES = {
     mode: "parcours", // v3.389.0 (chantier P) : parcours sur le moteur des Petites Aventures v2
     title: "La Source Tarie",
     parcours: { steps: [{ type: "obstacle" }, { type: "obstacle" }], image: "foret_quetes", points: [5, 6] }, // gabarits tirés dans pools.obstacle
-    icon: "images/Icons/scene/node_clear_spring.png",
+    icon: "images/Icons/scene/node_clear_spring.webp",
 
     // v3.131.0 : seul canevas sans boardRequires (oubli) — disponible dès le lancement d'une
     // nouvelle partie, avant même Le Bosquet Silencieux. Gate désormais sur sawmillUnlocked
@@ -227,7 +227,7 @@ var SCENE_TEMPLATES = {
     adventureIndex: 0,
     mode: "parcours", // v3.390.0 (chantier P, lot P-2) : parcours v2 sur la piste de sable
     title: "La traversée",
-    icon: "images/Icons/codex/world_desert.png",
+    icon: "images/Icons/codex/world_desert.webp",
     // Journal fixe par étape (texte en tête de feuille ; after : après le combat).
     parcours: {
       image: "desert_route", track: "route", points: [0, 2, 4, 6],
@@ -263,7 +263,7 @@ var SCENE_TEMPLATES = {
     mode: "parcours",
     title: "Là où ils sont couchés",
     departLabel: "Descendre",
-    icon: "images/Icons/codex/world_crypt.png",
+    icon: "images/Icons/codex/world_crypt.webp",
     parcours: {
       image: "crypte_descente", track: "route", points: [0, 2, 4, 6],
       steps: [
@@ -288,7 +288,7 @@ var SCENE_TEMPLATES = {
     adventureIndex: 0,
     mode: "parcours",
     title: "La route du nord",
-    icon: "images/Icons/codex/world_ruins.png",
+    icon: "images/Icons/codex/world_ruins.webp",
     parcours: {
       image: "ruines_route", track: "route", points: [0, 2, 4, 6],
       steps: [
@@ -316,7 +316,7 @@ var SCENE_TEMPLATES = {
     adventureIndex: 1,
     mode: "parcours", // v3.390.0 (chantier P, lot P-2) : parcours v2
     title: "La descente",
-    icon: "images/Icons/codex/world_desert.png",
+    icon: "images/Icons/codex/world_desert.webp",
     parcours: {
       image: "desert_temple", track: "allee", points: [3, 4, 5, 6], // v3.392.0 : les ruines, jusqu'aux marches de la porte
       steps: [
@@ -347,7 +347,7 @@ var SCENE_TEMPLATES = {
     mode: "parcours", // v3.390.0 (chantier P, lot P-2) : parcours v2 dans le lit asséché, besace de 3 places (H4)
     title: "Personne ne remonte le fleuve",
     departLabel: "Remonter le lit",
-    icon: "images/Icons/codex/world_desert.png",
+    icon: "images/Icons/codex/world_desert.webp",
     parcours: {
       image: "desert_route", track: "oued", points: [0, 1, 2, 3, 4, 5], bag: 3,
       steps: [
@@ -379,7 +379,7 @@ var SCENE_TEMPLATES = {
     mode: "parcours",
     title: "Vers le Cœur",
     departLabel: "Marcher vers le Cœur",
-    icon: "images/Icons/codex/world_ruins.png",
+    icon: "images/Icons/codex/world_ruins.webp",
     parcours: {
       image: "vers_le_coeur", track: "route", points: [0, 2, 4, 6, 8], bag: 3,
       steps: [
@@ -408,7 +408,7 @@ var SCENE_TEMPLATES = {
     mode: "parcours",
     title: "Le long de la chaîne",
     departLabel: "Descendre le long de la chaîne",
-    icon: "images/Icons/codex/world_crypt.png",
+    icon: "images/Icons/codex/world_crypt.webp",
     parcours: {
       image: "le_long_de_la_chaine", track: "route", points: [0, 2, 4, 6, 8], bag: 3,
       steps: [
@@ -437,7 +437,7 @@ var SCENE_TEMPLATES = {
     mode: "pa2",
     worldId: "forest",
     title: "Petite aventure — Forêt",
-    icon: "images/Icons/scene/path_easy.png",
+    icon: "images/Icons/scene/path_easy.webp",
     boardRequires: { tabUnlocked: "village" }
   },
   petite_aventure_desert: {
@@ -447,7 +447,7 @@ var SCENE_TEMPLATES = {
     adventureIndex: 0,
     title: "Petite aventure — Désert",
     departLabel: "Partir dans les dunes",
-    icon: "images/Icons/scene/path_easy.png",
+    icon: "images/Icons/scene/path_easy.webp",
     boardRequires: { tabUnlocked: "village", storyStep: "desert_03" },
     successFlag: "desertPaCompleted"
   },
@@ -461,7 +461,7 @@ var SCENE_TEMPLATES = {
     adventureIndex: 0,
     title: "Petite aventure — Ruines",
     departLabel: "Partir dans la ville",
-    icon: "images/Icons/scene/path_easy.png",
+    icon: "images/Icons/scene/path_easy.webp",
     boardRequires: { tabUnlocked: "village", storyStep: "ruines_06" },
     successFlag: "ruinsPaCompleted"
   },
@@ -475,7 +475,7 @@ var SCENE_TEMPLATES = {
     adventureIndex: 0,
     title: "Petite aventure — Crypte",
     departLabel: "Descendre dans le noir",
-    icon: "images/Icons/scene/path_easy.png",
+    icon: "images/Icons/scene/path_easy.webp",
     boardRequires: { tabUnlocked: "village", storyStep: "crypte_06" },
     successFlag: "cryptPaCompleted"
   }

@@ -266,7 +266,7 @@ function buildTitleScreenLoadListHTML() {
     if (summary.savedAt) html += '    <small>' + esc(_t("Dernière partie : {d}", { d: formatSavedAtDate(summary.savedAt) })) + '</small>';
     html += '  </div>';
     html += '  <button type="button" class="kbtn primary title-slot-load-btn" onclick="titleScreenConfirmLoad(' + i + ')">' + _t("Charger") + '</button>';
-    html += '  <button type="button" class="lc-trash title-slot-delete-btn" aria-label="' + esc(_t("Supprimer")) + '" onclick="titleScreenAskDeleteSlot(' + i + ', event)"><img src="images/Icons/system/trash.png" alt=""></button>';
+    html += '  <button type="button" class="lc-trash title-slot-delete-btn" aria-label="' + esc(_t("Supprimer")) + '" onclick="titleScreenAskDeleteSlot(' + i + ', event)"><img src="images/Icons/system/trash.webp" alt=""></button>';
     html += '</div>';
   }
 
@@ -289,7 +289,7 @@ function buildTitleScreenDeleteConfirmHTML() {
   // v3.403.0 : fenêtre du kit (.kwin), danger D1 — comme toutes les confirmations du jeu.
   var html = '<div class="kwin-veil title-screen-delete-overlay">';
   html += '  <div class="kwin">';
-  html += kWinHeadHTML({ icon: '<img src="images/Icons/system/trash.png" alt="">', title: esc(_t("Supprimer {x} ?", { x: name })) });
+  html += kWinHeadHTML({ icon: '<img src="images/Icons/system/trash.webp" alt="">', title: esc(_t("Supprimer {x} ?", { x: name })) });
   html += '    <div class="kwin-body"><p class="kwin-text">' + esc(_t("La partie de {x} sera effacée de cet appareil. C'est définitif.", { x: name })) + '</p></div>';
   html += '    <div class="kwin-foot">';
   html += '      <button type="button" class="kbtn is-sec" onclick="titleScreenCancelDelete()">' + _t("Annuler") + '</button>';

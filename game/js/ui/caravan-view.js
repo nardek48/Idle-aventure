@@ -14,7 +14,7 @@
    ProductionManager.updateDOM() → refreshProductionSheetDOM(). Logique : CaravanManager.
    v3.457.0 : plusieurs caravanes (une par marché) — leurs blocs, puis le départ s'il reste une place. */
 
-var CARAVAN_ICON = "images/Icons/village_buildings/caravan.png"; // icône de Seb (01/10/2026)
+var CARAVAN_ICON = "images/Icons/village_buildings/caravan.webp"; // icône de Seb (01/10/2026)
 
 /* Trajet choisi au départ : mémorisé sur l'appareil, comme les filtres de l'Entrepôt. */
 function getCaravanSelectedTrip() {
@@ -64,7 +64,7 @@ function caravanRareIcon() {
 }
 
 function caravanGoldHTML(n) {
-  return '<img class="car-gold" src="images/Icons/gold_icon.png" alt=""> ' + formatNumber(n);
+  return '<img class="car-gold" src="images/Icons/gold_icon.webp" alt=""> ' + formatNumber(n);
 }
 
 /* Bannière de piste : celle du monde du marché (en route : celui du départ). */
@@ -105,7 +105,7 @@ function buildCaravanTripsHTML(sel) {
       h += '<small>' + esc(_t("{n} unités", { n: formatNumber(CaravanManager.getCapacity(id, level)) })) + '</small>';
       h += '<small class="car-trip-pct">' + esc(_t("{p} % de la valeur", { p: Math.round(t.valuePct * 100) })) + '</small>';
     } else {
-      h += '<small class="car-trip-lock"><img class="ico-sys" src="images/Icons/system/lock_closed.png" alt=""> '
+      h += '<small class="car-trip-lock"><img class="ico-sys" src="images/Icons/system/lock_closed.webp" alt=""> '
         + esc(_t("Halle niveau {n}", { n: t.minHall })) + '</small>';
     }
     h += '<span class="car-trip-bonus">';
@@ -172,7 +172,7 @@ function buildCaravanRouteHTML(c) {
   h += '<span class="car-pin" id="car-pin-' + w + '" style="left:' + (8 + pct * 0.84).toFixed(1) + '%"><img src="' + CARAVAN_ICON + '" alt=""></span>';
   h += '<span class="car-line"><i id="car-bar-' + w + '" style="width:' + pct.toFixed(1) + '%"></i></span>';
   h += '<span class="car-lbl"><span>' + _t("Village") + '</span><span>' + _t("Marché") + '</span></span></div>';
-  h += '<div class="car-eta"><img class="ico-sys" src="images/Icons/system/hourglass_waiting.png" alt="">'
+  h += '<div class="car-eta"><img class="ico-sys" src="images/Icons/system/hourglass_waiting.webp" alt="">'
     + '<span class="car-eta-t"><small>' + esc(_t("Trajet {x} · retour dans", { x: caravanTripLabel(t).toLowerCase() })) + '</small>'
     + '<b id="car-left-' + w + '">' + esc(formatTime(CaravanManager.getSecondsLeft(w))) + '</b></span>'
     + '<span class="car-chip">≈ ' + caravanGoldHTML(c.gold) + '</span></div>';
@@ -189,7 +189,7 @@ function buildCaravanBackHTML(c) {
   var h = caravanMarketHeadHTML(c) + '<div class="car-back"><h4>' + _t("La caravane est rentrée !") + '</h4>';
   h += '<span class="car-why">' + esc(_t("Trajet {x} · {n} unités vendues", { x: caravanTripLabel(t).toLowerCase(), n: formatNumber(CaravanManager.getLoadUnits(c.cargo)) })) + '</span>';
   h += '<div class="car-loot">';
-  h += '<span class="car-lt"><img src="images/Icons/gold_icon.png" alt="">' + formatNumber(c.gold) + '<small>' + _t("or") + '</small></span>';
+  h += '<span class="car-lt"><img src="images/Icons/gold_icon.webp" alt="">' + formatNumber(c.gold) + '<small>' + _t("or") + '</small></span>';
   if (c.rare && WAREHOUSE_RESOURCES[c.rare.key]) {
     var rd = WAREHOUSE_RESOURCES[c.rare.key];
     h += '<span class="car-lt is-rare"><img src="' + rd.icon + '" alt="">×' + c.rare.n + '<small>' + esc(_td(rd.name)) + '</small></span>';

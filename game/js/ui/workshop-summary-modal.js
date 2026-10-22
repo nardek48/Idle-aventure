@@ -53,7 +53,7 @@ function buildWorkshopSummaryBodyHTML() {
     h += '<div class="workshop-summary-row-body">';
     h += '<div class="workshop-summary-row-top">';
     h += '<span class="workshop-summary-row-name">' + esc(_td(def.name)) + '</span>';
-    if (entry.auto) h += '<span class="workshop-summary-row-auto-badge"><img class=ico-inline src=images/Icons/system/auto_repeat.png> ' + _t("auto") + '</span>';
+    if (entry.auto) h += '<span class="workshop-summary-row-auto-badge"><img class=ico-inline src=images/Icons/system/auto_repeat.webp> ' + _t("auto") + '</span>';
     h += '<span class="workshop-summary-row-building">' + esc(buildingDef ? _td(buildingDef.name) : def.buildingId) + '</span>';
     h += '</div>';
     h += '<div class="workshop-summary-row-recipe">' + esc(outputDef ? _td(outputDef.name) : (recipe ? recipe.id : "?")) + ' ×' + formatNumber(entry.times) + '</div>';
@@ -75,7 +75,7 @@ function buildWorkshopSummaryBodyHTML() {
 function buildWorkshopSummaryHTML() {
   var h = '<div class="full-menu-overlay" onclick="if (event.target === this) closeWorkshopSummaryModal();">';
   h += '  <div class="full-menu workshop-summary-card">';
-  h += kSheetHeadHTML({ icon: '<img src="images/Icons/subtabs/workshops.png" alt="">', title: _t("Files en cours"), close: "closeWorkshopSummaryModal()" });
+  h += kSheetHeadHTML({ icon: '<img src="images/Icons/subtabs/workshops.webp" alt="">', title: _t("Files en cours"), close: "closeWorkshopSummaryModal()" });
   h += '    <div class="ksheet-body" id="workshop-summary-body">' + buildWorkshopSummaryBodyHTML() + '</div>';
   h += '  </div>';
   h += '</div>';

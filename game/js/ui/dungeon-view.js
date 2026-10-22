@@ -16,7 +16,7 @@ function buildDungeonActiveHTML() {
 
   var h = '<div class="panel-card dungeon-active-card">';
   h += '<div class="dungeon-active-tier">' + esc(_td(dungeon.name)) + '</div>';
-  h += '<div class="dungeon-wave-label">' + (isBossWave ? '<img class=ico-inline src=images/Icons/dungeon/boss_crown.png> ' + _t("Boss du donjon") : _t("Vague {a} / {b}", { a: wave, b: total })) + '</div>';
+  h += '<div class="dungeon-wave-label">' + (isBossWave ? '<img class=ico-inline src=images/Icons/dungeon/boss_crown.webp> ' + _t("Boss du donjon") : _t("Vague {a} / {b}", { a: wave, b: total })) + '</div>';
   h += '<div class="dungeon-progress-bar"><div class="dungeon-progress-fill' + (isBossWave ? ' is-boss' : '') + '" style="width:' + progressPct + '%"></div></div>';
   if (marks.length) {
     h += '<div class="dungeon-active-marks">';
@@ -48,12 +48,12 @@ function buildDungeonCardHTML(dungeon) {
 
   var h = '<' + cardTag + ' class="dungeon-tier-card is-full' + (unlocked ? ' is-tappable' : ' is-locked') + (unlocked && heroDowned ? ' is-downed' : '') + '"' + cardAttrs + '>';
   h += '<div class="dungeon-tier-image">' + imageHTML
-     + (unlocked ? '' : '<span class="dungeon-tier-image-lock"><img class=ico-inline src=images/Icons/system/lock_closed.png></span>')
-     + (unlocked && heroDowned ? '<span class="dungeon-tier-image-lock"><img class=ico-inline src=images/Icons/camp/hero_defeated.png></span>' : '') + '</div>';
+     + (unlocked ? '' : '<span class="dungeon-tier-image-lock"><img class=ico-inline src=images/Icons/system/lock_closed.webp></span>')
+     + (unlocked && heroDowned ? '<span class="dungeon-tier-image-lock"><img class=ico-inline src=images/Icons/camp/hero_defeated.webp></span>' : '') + '</div>';
   h += '<div class="dungeon-tier-info">';
   if (world) h += '<div class="dungeon-tier-world">' + esc(_td(world.name)) + '</div>';
   h += '<div class="dungeon-tier-name">' + esc(_td(dungeon.name)) + '</div>';
-  h += '<div class="dungeon-tier-rarity" style="color:' + rarityColor + '"><img class=ico-inline src=images/Icons/dungeon/dungeon_guaranteed_loot.png> ' + esc(_t("{x} max", { x: rarityLabel })) + '</div>';
+  h += '<div class="dungeon-tier-rarity" style="color:' + rarityColor + '"><img class=ico-inline src=images/Icons/dungeon/dungeon_guaranteed_loot.webp> ' + esc(_t("{x} max", { x: rarityLabel })) + '</div>';
 
   /* v3.223.0 : le matériau de monde est annoncé AVANT d'entrer — c'est une raison de choisir ce donjon. */
   if (dungeon.specialResourceId && dungeon.specialResourceAmount > 0) {
@@ -82,7 +82,7 @@ function buildDungeonCardHTML(dungeon) {
   } else if (heroDowned) {
     h += '<div class="dungeon-tier-lock-text">' + _t("Héros à terre — repos requis") + '</div>';
   } else if ((game.dungeonTierCleared || {})[dungeon.id]) {
-    h += '<div class="dungeon-tier-done"><img src="images/Icons/dungeon/boss_crown.png" alt=""> ' + _t("Boss vaincu") + '</div>';
+    h += '<div class="dungeon-tier-done"><img src="images/Icons/dungeon/boss_crown.webp" alt=""> ' + _t("Boss vaincu") + '</div>';
   }
   if (unlocked) h += buildDungeonRunsLineHTML(dungeon.id); // v3.358.0 (D7)
 
@@ -102,7 +102,7 @@ window.buildDungeonRunsLineHTML = buildDungeonRunsLineHTML;
    de chaque donjon est sur sa carte. */
 function buildDungeonTicketBadgeHTML() {
   var h = '<div class="dungeon-ticket-badge dungeon-runs-badge">';
-  h += '<span class="dungeon-ticket-badge-icon"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.png></span>';
+  h += '<span class="dungeon-ticket-badge-icon"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.webp></span>';
   h += '<span class="dungeon-ticket-badge-label">' + esc(_t("{n} sorties par jour et par donjon · renouvellement dans {d}", { n: DungeonManager.getRunsPerDay(), d: DungeonManager.timeUntilTicketReset() })) + '</span>';
   h += '</div>';
   return h;
@@ -113,7 +113,7 @@ function buildDungeonLobbyHTML() {
   h += '<div class="dungeon-list">';
   (DUNGEONS || []).forEach(function (dungeon) { h += buildDungeonCardHTML(dungeon); });
   h += '</div>';
-  return '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="' + esc("images/Icons/subtabs/dungeon.png|" + _t("Donjon")) + '">' + h + '</div>'; // v2.83.28
+  return '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="' + esc("images/Icons/subtabs/dungeon.webp|" + _t("Donjon")) + '">' + h + '</div>'; // v2.83.28
 }
 
 function buildDungeonHTML() {
@@ -152,7 +152,7 @@ function buildDungeonSheetHTML(dungeonId) {
   var h = '<div class="ksheet-backdrop" onclick="closeDungeonSheet()"></div>';
   h += '<div class="ksheet dungeon-sheet">';
   h += kSheetHeadHTML({
-    icon: renderIconOrEmojiHTML(dungeon.icon || "images/Icons/subtabs/dungeon.png", "", _td(dungeon.name)),
+    icon: renderIconOrEmojiHTML(dungeon.icon || "images/Icons/subtabs/dungeon.webp", "", _td(dungeon.name)),
     title: esc(_td(dungeon.name)),
     sub: (world ? esc(_td(world.name)) + ' · ' : '') + _t("{n} vagues + boss · {r} max", { n: DUNGEON_CONFIG.waveCount, r: '<span class="dsheet-rarity" style="color:' + rarityColor + '">' + esc(rarityLabel) + '</span>' }),
     close: "closeDungeonSheet()"
@@ -177,7 +177,7 @@ function buildDungeonSheetHTML(dungeonId) {
   if (specialDef && dungeon.specialResourceAmount > 0) {
     h += '<span>' + renderIconOrEmojiHTML(specialDef.icon, "dsheet-reward-icon", _td(specialDef.name)) + ' ' + esc(_td(specialDef.name)) + ' <strong>+' + DungeonManager.getSpecialAmount(dungeon, n) + '</strong></span>';
   } else {
-    h += '<span><img class=ico-inline src=images/Icons/subtabs/shard_shop.png> ' + _t("Éclats") + ' <strong>+' + (DUNGEON_CONFIG.waveCount + DUNGEON_CONFIG.shardsBossBonus) + '</strong></span>';
+    h += '<span><img class=ico-inline src=images/Icons/subtabs/shard_shop.webp> ' + _t("Éclats") + ' <strong>+' + (DUNGEON_CONFIG.waveCount + DUNGEON_CONFIG.shardsBossBonus) + '</strong></span>';
   }
   h += '</div>';
 
@@ -190,12 +190,12 @@ function buildDungeonSheetHTML(dungeonId) {
     } catch (e) { noteErreur("dungeon-view.buildDungeonSheetHTML", e); /* pronostic indisponible : la feuille reste utilisable */ }
   }
   // v3.429.6 : conseil de préparation, tant que le donjon n'a jamais été vaincu
-  if (dungeon.prepHint && !(game.dungeonTierCleared || {})[dungeon.id]) h += '<div class="dsheet-ticket"><img class=ico-inline src=images/Icons/system/warning.png> ' + esc(_td(dungeon.prepHint)) + '</div>';
+  if (dungeon.prepHint && !(game.dungeonTierCleared || {})[dungeon.id]) h += '<div class="dsheet-ticket"><img class=ico-inline src=images/Icons/system/warning.webp> ' + esc(_td(dungeon.prepHint)) + '</div>';
 
   if (storyFree) {
-    h += '<div class="dsheet-ticket"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.png> <strong>' + _t("Entrée offerte") + '</strong> ' + _t("— les braises te guident, aucune sortie du jour consommée") + '</div>';
+    h += '<div class="dsheet-ticket"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.webp> <strong>' + _t("Entrée offerte") + '</strong> ' + _t("— les braises te guident, aucune sortie du jour consommée") + '</div>';
   } else {
-    h += '<div class="dsheet-ticket"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.png> ' + _t("Sorties restantes :") + ' <strong>' + DungeonManager.getRunsLeft(dungeon.id) + ' / ' + DungeonManager.getRunsPerDay() + '</strong></div>';
+    h += '<div class="dsheet-ticket"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.webp> ' + _t("Sorties restantes :") + ' <strong>' + DungeonManager.getRunsLeft(dungeon.id) + ' / ' + DungeonManager.getRunsPerDay() + '</strong></div>';
   }
   // v3.330.1 : vivres de sortie (donjon déjà fini une fois)
   var dDef = (window.DUNGEONS || []).filter(function (x) { return x.id === Number(dungeonId); })[0];
@@ -245,7 +245,7 @@ function confirmDungeonStart() {
   if (id == null) return;
   var d = DungeonManager.getById(id);
   // v3.440.0 : préparation de sortie avant le départ
-  openSortiePrep({ title: d ? _td(d.name) : "", icon: (d && d.icon) || "images/Icons/quests/mission_dungeon.png", ctx: { type: "dungeon", id: id },
+  openSortiePrep({ title: d ? _td(d.name) : "", icon: (d && d.icon) || "images/Icons/quests/mission_dungeon.webp", ctx: { type: "dungeon", id: id },
     onGo: function () { DungeonManager.start(id, marks); } });
 }
 
@@ -292,7 +292,7 @@ function buildDungeonCampSheetHTML() {
   var h = '<div class="ksheet-backdrop"></div>';
   h += '<div class="ksheet dungeon-camp-sheet">';
   h += kSheetHeadHTML({
-    icon: '<img src="images/Icons/camp/campfire.png" alt="">',
+    icon: '<img src="images/Icons/camp/campfire.webp" alt="">',
     title: _t("Le campement"),
     sub: _t("Salle de garde · étape 1 sur 2 passée")
   });
@@ -309,18 +309,18 @@ function buildDungeonCampSheetHTML() {
   h += '</div>';
 
   h += '<div class="dcamp-lbl">' + _t("Butin de l’étape 1") + '</div><div class="dcamp-card dcamp-loot">';
-  h += '<span><img class=ico-inline src=images/Icons/gold_icon.png> +' + formatNumber(loot.gold || 0) + ' ' + _t("or") + '</span>';
-  h += '<span><img class=ico-inline src=images/Icons/subtabs/shard_shop.png> +' + formatNumber(loot.shards || 0) + ' ' + _t("Éclats") + '</span>';
+  h += '<span><img class=ico-inline src=images/Icons/gold_icon.webp> +' + formatNumber(loot.gold || 0) + ' ' + _t("or") + '</span>';
+  h += '<span><img class=ico-inline src=images/Icons/subtabs/shard_shop.webp> +' + formatNumber(loot.shards || 0) + ' ' + _t("Éclats") + '</span>';
   var sDef = loot.stoneId && WAREHOUSE_RESOURCES[loot.stoneId];
   if (sDef && loot.stone > 0) h += '<span>' + renderIconOrEmojiHTML(sDef.icon, "ico-inline", _td(sDef.name)) + ' +' + loot.stone + ' ' + esc(_td(sDef.name)) + '</span>';
   (loot.items || []).forEach(function (it) {
     var col = (typeof RARITY_COLORS !== "undefined" && RARITY_COLORS[it.rarity]) || "inherit";
-    h += '<span><img class=ico-inline src=images/Icons/dungeon/dungeon_guaranteed_loot.png> <span style="color:' + col + '">' + esc(_td(it.name)) + '</span></span>';
+    h += '<span><img class=ico-inline src=images/Icons/dungeon/dungeon_guaranteed_loot.webp> <span style="color:' + col + '">' + esc(_td(it.name)) + '</span></span>';
   });
   h += '</div>';
 
   h += '<div class="dcamp-lbl">' + _t("Une seule action") + '</div>';
-  h += buildCampOptionHTML("souffler", "images/Icons/combat_stats/stat_health.png", _t("Souffler"), _t("Le groupe reprend {n} % de ses PV.", { n: Math.round(pct * 100) }), heal ? _t("Puis la descente reprend.") : "", "", true);
+  h += buildCampOptionHTML("souffler", "images/Icons/combat_stats/stat_health.webp", _t("Souffler"), _t("Le groupe reprend {n} % de ses PV.", { n: Math.round(pct * 100) }), heal ? _t("Puis la descente reprend.") : "", "", true);
   var sw = "";
   if (campPick === "changer") {
     sw = '<div class="dcamp-swap">' + cand.map(function (id) {
@@ -329,9 +329,9 @@ function buildDungeonCampSheetHTML() {
         + '<img src="' + esc(def && def.image || "") + '" alt="">' + esc(def ? _td(def.name) : id) + '</button>';
     }).join("") + '</div>';
   }
-  h += buildCampOptionHTML("changer", "images/Icons/subtabs/hero_summary.png", _t("Changer de compagnon"),
+  h += buildCampOptionHTML("changer", "images/Icons/subtabs/hero_summary.webp", _t("Changer de compagnon"),
     canSwap ? _t("Deux sur trois, selon ce qui attend en bas. Celui qui arrive est frais.") : _t("Aucun autre compagnon ne peut descendre."), campSwapText(now), sw, canSwap);
-  h += buildCampOptionHTML("sortir", "images/Icons/camp/campfire.png", _t("Sortir"), _t("Tu remontes avec le butin de l’étape 1. Il est à toi."), campPick === "sortir" ? _t("La sortie s’arrête là.") : "", "", true);
+  h += buildCampOptionHTML("sortir", "images/Icons/camp/campfire.webp", _t("Sortir"), _t("Tu remontes avec le butin de l’étape 1. Il est à toi."), campPick === "sortir" ? _t("La sortie s’arrête là.") : "", "", true);
   h += '<p class="dcamp-next">' + _t("En bas : vagues {a} à {b}, une élite, puis le boss. Tomber en bas ne coûte que le butin d’en bas.", { a: (Number(camp.afterWave) || 8) + 1, b: DUNGEON_CONFIG.waveCount }) + '</p>';
   h += '</div>';
 
@@ -405,12 +405,12 @@ function buildDungeonSummaryHTML(result) {
   }
   // v3.436.1 (bug Seb) : tout l'or reçu, dans l'ordre du run — vagues, campement, prime, total
   var wavesGold = Number(result.wavesGold || 0), campLoot = result.campLoot || {}, campGold = Number(campLoot.gold || 0);
-  var goldIco = '<img class=ico-inline src=images/Icons/gold_icon.png> ';
+  var goldIco = '<img class=ico-inline src=images/Icons/gold_icon.webp> ';
   if (wavesGold > 0) h += '      <div class="dungeon-summary-row"><span>' + goldIco + _t("Butin des vagues") + '</span><span>+' + formatNumber(wavesGold) + '</span></div>';
-  if (campGold > 0) h += '      <div class="dungeon-summary-row"><span><img class=ico-inline src=images/Icons/camp/campfire.png> ' + _t("En sûreté au campement") + '</span><span>+' + formatNumber(campGold) + '</span></div>';
+  if (campGold > 0) h += '      <div class="dungeon-summary-row"><span><img class=ico-inline src=images/Icons/camp/campfire.webp> ' + _t("En sûreté au campement") + '</span><span>+' + formatNumber(campGold) + '</span></div>';
   h += '      <div class="dungeon-summary-row"><span>' + goldIco + (wavesGold > 0 || campGold > 0 ? _t("Prime de fin") : _t("Or")) + '</span><span>+' + formatNumber(result.goldReward) + '</span></div>';
   if (wavesGold > 0 || campGold > 0) h += '      <div class="dungeon-summary-row"><span><b>' + _t("Total or") + '</b></span><span><b>+' + formatNumber(wavesGold + campGold + Number(result.goldReward || 0)) + '</b></span></div>';
-  h += '      <div class="dungeon-summary-row"><span><img class=ico-inline src=images/Icons/subtabs/shard_shop.png> ' + _t("Éclats") + '</span><span>+' + formatNumber(result.shardsGained) + '</span></div>';
+  h += '      <div class="dungeon-summary-row"><span><img class=ico-inline src=images/Icons/subtabs/shard_shop.webp> ' + _t("Éclats") + '</span><span>+' + formatNumber(result.shardsGained) + '</span></div>';
   // v3.436.2 : matériau avec sa vraie icône, part du campement comprise
   var special = Number(result.specialGained || 0) + Number(campLoot.stone || 0);
   if (special > 0 && result.specialName) {
@@ -419,14 +419,14 @@ function buildDungeonSummaryHTML(result) {
   // v3.436.2 (Seb) : tout le butin d'objets — campement, vagues, récompense de fin
   var objets = [].concat(campLoot.items || [], result.wavesItems || [], result.lootedItem ? [result.lootedItem] : []);
   if (objets.length) {
-    h += '      <div class="dungeon-summary-row dungeon-summary-loot"><span><img class=ico-inline src=images/Icons/dungeon/dungeon_guaranteed_loot.png> ' + _t("Butin") + '</span><span>' + objets.map(function (it) {
+    h += '      <div class="dungeon-summary-row dungeon-summary-loot"><span><img class=ico-inline src=images/Icons/dungeon/dungeon_guaranteed_loot.webp> ' + _t("Butin") + '</span><span>' + objets.map(function (it) {
       var col = (typeof RARITY_COLORS !== "undefined" && RARITY_COLORS[it.rarity]) || "inherit";
       return '<span style="color:' + col + '">' + esc(_td(it.name)) + '</span>';
     }).join(', ') + '</span></div>';
   }
   h += '    </div>';
   // v3.245.0 : les éclats se dépensent chez l'Enchanteresse
-  h += '    <div class="dungeon-story-meta"><img class=ico-inline src=images/Icons/subtabs/shard_shop.png> ' + _t("Les Éclats se dépensent chez l’Enchanteresse, au Village.") + '</div>';
+  h += '    <div class="dungeon-story-meta"><img class=ico-inline src=images/Icons/subtabs/shard_shop.webp> ' + _t("Les Éclats se dépensent chez l’Enchanteresse, au Village.") + '</div>';
   h += '    </div>';
   h += '    <div class="kwin-foot"><button class="kbtn primary" type="button" onclick="closeDungeonSummary()">' + _t("Continuer") + '</button></div>';
   h += '  </div>';

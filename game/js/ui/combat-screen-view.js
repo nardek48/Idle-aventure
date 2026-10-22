@@ -23,17 +23,17 @@
 (function () {
   /* ---------- Outils ---------- */
   var IC = {
-    gold: "images/Icons/gold_icon.png",
-    flee: "images/Icons/quests/flee.png",
-    back: "images/Icons/plots/hunting_blind.png",
-    grim: "images/Icons/codex/codex_lore.png",
-    tact: "images/Icons/combat_stats/stat_critical.png",
-    cont: "images/Icons/quests/continue.png",
-    stop: "images/Icons/system/pause_stop.png",
+    gold: "images/Icons/gold_icon.webp",
+    flee: "images/Icons/quests/flee.webp",
+    back: "images/Icons/plots/hunting_blind.webp",
+    grim: "images/Icons/codex/codex_lore.webp",
+    tact: "images/Icons/combat_stats/stat_critical.webp",
+    cont: "images/Icons/quests/continue.webp",
+    stop: "images/Icons/system/pause_stop.webp",
     attack: "images/Icons/special_attacks/attack3.webp",
-    ctxDungeon: "images/Icons/quests/mission_dungeon.png",
-    ctxMission: "images/Icons/quests/mission_combat.png",
-    ctxHunt: "images/Icons/quests/mission_hunt.png",
+    ctxDungeon: "images/Icons/quests/mission_dungeon.webp",
+    ctxMission: "images/Icons/quests/mission_combat.webp",
+    ctxHunt: "images/Icons/quests/mission_hunt.webp",
     st: "images/Icons/combat_status/"
   };
   /* Règle de Seb (18/09/2026) : une icône qui n'existe pas encore garde son vrai chemin et
@@ -254,10 +254,10 @@
     var h = solo ? '' : '<div class="cbx-foe-hp"><i style="width:' + pct.toFixed(1) + '%"></i></div>';
     var tele = e.downed ? "rising" : e.chargeTelegraphed ? "charge" : e.healTelegraphed ? "healIncoming" : e.silenceTelegraphed ? "silence" : e.shieldTelegraphed ? "shieldIncoming" : e.surgeTelegraphed ? "surge" : null;
     if (tele) h += '<button type="button" class="cbx-foe-tele" onclick="openCombatStatesSheet()"><span class="cbx-badge is-urgent">' + ico(stateDef(tele).icon) + '</span></button>';
-    if (e.dot && num(e.dot.rounds) > 0) h += '<button type="button" class="cbx-foe-dot" onclick="openCombatStatesSheet()">' + ico(IC.st + "arcane_burn.png") + '<b>' + num(e.dot.rounds) + '</b></button>';
+    if (e.dot && num(e.dot.rounds) > 0) h += '<button type="button" class="cbx-foe-dot" onclick="openCombatStatesSheet()">' + ico(IC.st + "arcane_burn.webp") + '<b>' + num(e.dot.rounds) + '</b></button>';
     var marks = "";
     if (e.asleep) marks += '<button type="button" class="cbx-dist-badge is-asleep" onclick="openCombatStatesSheet()">' + ico(CBX_STATES.asleep.icon) + '<b>' + num(e.wakeIn) + '</b></button>'; // v3.451.0 : réveil seul dans N rounds
-    if (num(e.engageIn) > 0) marks += '<button type="button" class="cbx-dist-badge" onclick="openCombatStatesSheet()">' + ico(IC.st + "enemy_approaching.png") + '<b>' + num(e.engageIn) + '</b></button>';
+    if (num(e.engageIn) > 0) marks += '<button type="button" class="cbx-dist-badge" onclick="openCombatStatesSheet()">' + ico(IC.st + "enemy_approaching.webp") + '<b>' + num(e.engageIn) + '</b></button>';
     if (isRanged(e)) marks += '<button type="button" class="cbx-dist-badge is-ranged" onclick="openCombatStatesSheet()">' + ico(CBX_STATES.ranged.icon) + '<span>' + _t("à distance") + '</span></button>';
     if (marks) h += '<div class="cbx-foe-marks">' + marks + '</div>';
     return h;
@@ -409,9 +409,9 @@
     var st = turnState(hero), silenced = num(game.silencedRounds) > 0, corr = worstCorruption();
     var defense = (window.ClassCombatManager && typeof ClassCombatManager.getActiveDefenseEffect === "function") ? ClassCombatManager.getActiveDefenseEffect() : null;
     var marks = "";
-    if (silenced) marks += '<i>' + ico(IC.st + "silenced.png") + '</i>';
-    if (corr) marks += '<i>' + ico(IC.st + "corruption.png") + '<b>' + corr + '</b></i>';
-    if (defense) marks += '<i>' + ico(IC.st + "shield_active.png") + '</i>';
+    if (silenced) marks += '<i>' + ico(IC.st + "silenced.webp") + '</i>';
+    if (corr) marks += '<i>' + ico(IC.st + "corruption.webp") + '<b>' + corr + '</b></i>';
+    if (defense) marks += '<i>' + ico(IC.st + "shield_active.webp") + '</i>';
     var res = (window.ClassCombatManager && typeof ClassCombatManager.ensureForCurrentClass === "function") ? ClassCombatManager.ensureForCurrentClass() : null;
     var resPct = res && res.max ? Math.max(0, Math.min(100, res.current / res.max * 100)) : 0;
     var celMax = (typeof CELERITY_GAUGE_MAX === "number") ? CELERITY_GAUGE_MAX : 100;
@@ -447,7 +447,7 @@
     // v3.458.2 (audit P26) : la chaîne en pastille sur le portrait, le nom garde toute la largeur
     h += '<div class="cbx-card-nm"><span>' + esc(_td(a.name || "")) + '</span></div>';
     h += '<div class="cbx-card-pt">' + ico((def && def.image) || "")
-      + (chained ? '<span class="cbx-pt-badges"><i class="is-chain">' + ico(IC.st + "chained.png") + '<b>' + num(a.chained.rounds) + '</b></i></span>' : '') + '</div>';
+      + (chained ? '<span class="cbx-pt-badges"><i class="is-chain">' + ico(IC.st + "chained.webp") + '<b>' + num(a.chained.rounds) + '</b></i></span>' : '') + '</div>';
     var cd = ko ? _t("K.O.") : chained ? "" : (num(a.cooldown) > 0 ? _t("{n} r", { n: num(a.cooldown) }) : _t("Prêt"));
     var cdCls = chained ? ' is-chained' : (!ko && !num(a.cooldown) ? ' is-ready' : '');
     h += '<div class="cbx-bars"><div class="cbx-bar' + (pct < 35 ? ' is-low' : '') + '"><i style="width:' + pct.toFixed(1) + '%"></i></div>'
@@ -482,7 +482,7 @@
 
   function actionIcon(action) {
     return (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[action.id])
-      || (action.type === "defense" ? "images/Icons/combat_stats/stat_defense.png" : "images/Icons/scene/node_discovery.png");
+      || (action.type === "defense" ? "images/Icons/combat_stats/stat_defense.webp" : "images/Icons/scene/node_discovery.webp");
   }
 
   /* Le conseil du Grimoire, avec SA RAISON : la condition de la règle qui s'applique. */
@@ -516,7 +516,7 @@
     var h = '<button type="button" class="cbx-skill' + (sugg ? ' is-suggested' : '') + (silenced ? ' is-silenced' : '') + (played ? ' is-played' : '') + (active ? ' is-active' : '')
       + (!affordable && !cd ? ' is-poor' : '') + '"' + (disabled && !small ? ' disabled' : '') + (small ? ' tabindex="-1"' : '')
       + ' onclick="CombatEngine.heroAction(\'' + slot + '\')" aria-label="' + esc(_td(action.label)) + '">' + ico(actionIcon(action));
-    if (silenced) h += '<span class="cbx-skill-lock">' + ico(IC.st + "silenced.png") + '</span>';
+    if (silenced) h += '<span class="cbx-skill-lock">' + ico(IC.st + "silenced.webp") + '</span>';
     else if (cd > 0) h += '<span class="cbx-skill-cd">' + cd + _t("r", "round abrégé, collé au nombre") + '</span>';
     else if (active) h += '<span class="cbx-on-badge">' + _t("ACTIF") + '</span>';
     if (!small && action.resourceCost) h += '<span class="cbx-cost-badge">' + action.resourceCost + '</span>';

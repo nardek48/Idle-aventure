@@ -11,7 +11,7 @@ function chooseMemoryOption(level, optionId) {
     showConfirmModal(
       _t("Reprendre ce choix ?"),
       _t("Changer d'avis coûte {n} or (tu en as {g}). La prochaine reprise coûtera trois fois plus.", { n: formatNumber(cost), g: formatNumber(game.gold || 0) }),
-      "images/Icons/gold_icon.png",
+      "images/Icons/gold_icon.webp",
       function () { MemoryManager.choose(level, optionId); }
     );
     return;
@@ -43,11 +43,11 @@ function buildMemoryLevelHTML(def, p) {
   var h = '<div class="mem-level' + (reached ? '' : ' is-locked') + (pending ? ' is-pending' : '') + '" id="mem-level-' + level + '">';
   h += '<div class="ksec mem-level-head"><span>' + _t("Niveau {n}", { n: level }) + ' <small>' + esc(_td(def.theme)) + (def.jalon ? ' · ' + _t("jalon") : '') + '</small></span></div>';
   if (!reached) {
-    h += '<div class="mem-level-lock"><img class="ico-inline" src="images/Icons/system/lock_closed.png" alt=""> ' + (worldLocked ? _t("S'ouvre dans un monde plus lointain.") : _t("Encore un peu d'Aether à rassembler.")) + '</div>';
+    h += '<div class="mem-level-lock"><img class="ico-inline" src="images/Icons/system/lock_closed.webp" alt=""> ' + (worldLocked ? _t("S'ouvre dans un monde plus lointain.") : _t("Encore un peu d'Aether à rassembler.")) + '</div>';
   } else if (pending) {
-    h += '<div class="mem-level-lock is-pending"><img class="ico-inline" src="images/Icons/aether_icon.png" alt=""> ' + (broken ? _t("La ligne ne tient plus : choisis à nouveau, sans frais.") : _t("Un choix t'attend ici.")) + '</div>';
+    h += '<div class="mem-level-lock is-pending"><img class="ico-inline" src="images/Icons/aether_icon.webp" alt=""> ' + (broken ? _t("La ligne ne tient plus : choisis à nouveau, sans frais.") : _t("Un choix t'attend ici.")) + '</div>';
   }
-  if (reached && MemoryManager.isFreeReprise(level)) h += '<div class="mem-level-lock is-pending"><img class="ico-inline" src="images/Icons/aether_icon.png" alt=""> ' + _t("Ysolt s'est recouchée : tu peux changer ce choix une fois, sans frais.") + '</div>'; // v3.455.0
+  if (reached && MemoryManager.isFreeReprise(level)) h += '<div class="mem-level-lock is-pending"><img class="ico-inline" src="images/Icons/aether_icon.webp" alt=""> ' + _t("Ysolt s'est recouchée : tu peux changer ce choix une fois, sans frais.") + '</div>'; // v3.455.0
   // v3.458.4 (audit C4) : un niveau déjà choisi se replie sur son choix ; un toucher le rouvre pour en changer
   var free = reached && MemoryManager.isFreeReprise(level);
   if (reached && chosen && !pending && !free && !memLevelOpen[level]) {
@@ -73,7 +73,7 @@ function buildMemoryLevelHTML(def, p) {
     h += '<span class="mem-option-desc">' + esc(_td(o.desc)) + '</span>';
     if (lineLocked) h += '<span class="mem-line-cond">' + esc(side === "garder" ? _t("S'ouvre si tu as choisi Garder aux niveaux {a}, {b}, {c}.", { a: level - 3, b: level - 2, c: level - 1 }) : _t("S'ouvre si tu as choisi Donner aux niveaux {a}, {b}, {c}.", { a: level - 3, b: level - 2, c: level - 1 })) + '</span>';
     h += '</span>';
-    if (isChosen) h += '<img class="mem-option-check" src="images/Icons/system/check_valid.png" alt="' + esc(_t("Choisi")) + '">';
+    if (isChosen) h += '<img class="mem-option-check" src="images/Icons/system/check_valid.webp" alt="' + esc(_t("Choisi")) + '">';
     h += (reached && !lineLocked) ? '</button>' : '</div>';
   });
   h += '</div></div>';
@@ -95,14 +95,14 @@ function buildAscensionHTML() {
   h += '<p class="mem-head-desc">' + _t("Ce que tu offres et ce que tu vis, l'Aether le retient. Offre les objets dont tu te sépares depuis ton sac ; tes grandes victoires comptent aussi.") + '</p>';
   h += buildMemoryGaugeHTML(p);
   // v3.458.3 (audit C4) : la pastille mène au premier choix en attente
-  if (pending.length) h += '<button type="button" class="mem-pending" onclick="memScrollToPending()"><img class="ico-inline" src="images/Icons/aether_icon.png" alt=""> ' + (pending.length > 1 ? _t("{n} choix t'attendent.", { n: pending.length }) : _t("Un choix t'attend.")) + ' ›</button>';
+  if (pending.length) h += '<button type="button" class="mem-pending" onclick="memScrollToPending()"><img class="ico-inline" src="images/Icons/aether_icon.webp" alt=""> ' + (pending.length > 1 ? _t("{n} choix t'attendent.", { n: pending.length }) : _t("Un choix t'attend.")) + ' ›</button>';
   // v3.458.4 (audit C4) : Garder, Donner et le jalon en une phrase
   h += '<p class="mem-head-note">' + _t("À partir du niveau 9, chaque niveau oppose Garder (prudence, réserves) à Donner (risquer, aller plus vite). Le jalon de chaque monde ajoute une ligne, ouverte si les trois niveaux d'avant sont du même côté.") + '</p>';
   h += '<p class="mem-head-note">' + _t("Reprendre un choix coûte de l'or : {n} pour la prochaine reprise, trois fois plus ensuite.", { n: formatNumber(MemoryManager.getRepriseCost()) }) + '</p>'; // v3.358.0 (D7)
   h += '</div>';
 
   (window.MEMORY_LEVELS || []).forEach(function (def) { h += buildMemoryLevelHTML(def, p); });
-  return '<div class="nb-page-frame nb-page-frame-fill kframe-page mem-page" data-kf-title="' + esc("images/Icons/aether_icon.png|" + _t("Mémoire")) + '">' + h + '</div>';
+  return '<div class="nb-page-frame nb-page-frame-fill kframe-page mem-page" data-kf-title="' + esc("images/Icons/aether_icon.webp|" + _t("Mémoire")) + '">' + h + '</div>';
 }
 window.buildAscensionHTML = buildAscensionHTML;
 

@@ -15,10 +15,10 @@ function buildPatrolLootHTML(loot, gold, done) {
   var h = '<div class="ret-gains">';
   Object.keys(loot || {}).forEach(function (k) {
     var d = (window.WAREHOUSE_RESOURCES || {})[k] || {};
-    h += '<span class="ret-gain' + (done ? ' is-done' : '') + '">' + renderIconOrEmojiHTML(d.icon || "images/Icons/system/warehouse_supplies.png", "ret-gain-ico", patrolResName(k))
+    h += '<span class="ret-gain' + (done ? ' is-done' : '') + '">' + renderIconOrEmojiHTML(d.icon || "images/Icons/system/warehouse_supplies.webp", "ret-gain-ico", patrolResName(k))
       + (done ? '+' : '≈ ') + formatNumber(loot[k]) + ' ' + esc(patrolResName(k)) + '</span>';
   });
-  if (gold) h += '<span class="ret-gain' + (done ? ' is-done' : '') + '">' + renderIconOrEmojiHTML("images/Icons/gold_icon.png", "ret-gain-ico", _t("Or")) + (done ? '+' : '≈ ') + _t("{n} or", { n: formatNumber(gold) }) + '</span>';
+  if (gold) h += '<span class="ret-gain' + (done ? ' is-done' : '') + '">' + renderIconOrEmojiHTML("images/Icons/gold_icon.webp", "ret-gain-ico", _t("Or")) + (done ? '+' : '≈ ') + _t("{n} or", { n: formatNumber(gold) }) + '</span>';
   return h + '</div>';
 }
 
@@ -71,7 +71,7 @@ function buildCompanionPatrolHTML(companionId) {
   else if (p) sub = _t("En route · retour dans {d}", { d: window.ResumeManager ? ResumeManager.formatAbsence(p.endsAt - Date.now()) : "" });
   else sub = _t("Se lance depuis Campement › Expéditions");
   return '<button type="button" class="exp-moved" onclick="closeHerosSheet();goToExpeditions(\'patrol\', \'' + companionId + '\')">'
-    + '<img src="images/Icons/quests/mission_exploration.png" alt=""><span><b>' + _t("Patrouille") + '</b><small>' + esc(sub) + '</small></span><i class="exp-chev">›</i></button>';
+    + '<img src="images/Icons/quests/mission_exploration.webp" alt=""><span><b>' + _t("Patrouille") + '</b><small>' + esc(sub) + '</small></span><i class="exp-chev">›</i></button>';
 }
 
 /* Départ depuis la feuille « Patrouille » (choix tenus dans patrolUi par ui/expeditions-view.js). */
@@ -130,10 +130,10 @@ function buildReturnPatrolsHTML() {
     if (!PatrolManager.isOnPatrol(id) && !res.relaunched) {
       body += '<button type="button" class="ret-link" onclick="returnRelaunchPatrol(\'' + id + '\')">' + _t("Repartir (même route, {h} h)", { h: res.hours }) + '</button>';
     } else if (res.relaunched) {
-      body += '<div class="ret-done"><img class="ico-inline" src="images/Icons/system/check_valid.png" alt=""> ' + (PATROL_COMPANION_FEMININE[id] ? _t("Repartie.") : _t("Reparti.")) + '</div>';
+      body += '<div class="ret-done"><img class="ico-inline" src="images/Icons/system/check_valid.webp" alt=""> ' + (PATROL_COMPANION_FEMININE[id] ? _t("Repartie.") : _t("Reparti.")) + '</div>';
     }
   });
-  return buildReturnSectionHTML("images/Icons/quests/mission_exploration.png", _t("Patrouilles"), body);
+  return buildReturnSectionHTML("images/Icons/quests/mission_exploration.webp", _t("Patrouilles"), body);
 }
 
 function returnCollectPatrols() {

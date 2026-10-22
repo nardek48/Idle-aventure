@@ -84,8 +84,8 @@ var PRODUCTION_PLOTS_BUILDINGS = {
     unlockCost: { resources: ["bois", "pierre"], base: { bois: 15, pierre: 10 } },
     upgradeCost: { resources: ["bois", "eau"], base: { bois: 8, eau: 6 } },
     improvementCost: {
-      fertile: { resources: ["bois", "eau"], cost: { bois: 20, eau: 15 }, label: "Terre enrichie", icon: "images/Icons/plots/enriched_soil.png", desc: "Rendement durablement amélioré." },
-      irrigated: { resources: ["pierre", "eau"], cost: { pierre: 18, eau: 22 }, label: "Sillon irrigué", icon: "images/Icons/plots/irrigated_furrow.png", desc: "Rendement durablement amélioré." }
+      fertile: { resources: ["bois", "eau"], cost: { bois: 20, eau: 15 }, label: "Terre enrichie", icon: "images/Icons/plots/enriched_soil.webp", desc: "Rendement durablement amélioré." },
+      irrigated: { resources: ["pierre", "eau"], cost: { pierre: 18, eau: 22 }, label: "Sillon irrigué", icon: "images/Icons/plots/irrigated_furrow.webp", desc: "Rendement durablement amélioré." }
     }
   },
   hunt: {
@@ -96,8 +96,8 @@ var PRODUCTION_PLOTS_BUILDINGS = {
     unlockCost: { resources: ["bois", "pierre"], base: { bois: 15, pierre: 10 } },
     upgradeCost: { resources: ["bois", "eau"], base: { bois: 8, eau: 6 } },
     improvementCost: {
-      fertile: { resources: ["bois", "eau"], cost: { bois: 20, eau: 15 }, label: "Pièges entretenus", icon: "images/Icons/plots/maintained_traps.png", desc: "Rendement durablement amélioré." },
-      irrigated: { resources: ["pierre", "eau"], cost: { pierre: 18, eau: 22 }, label: "Affût aménagé", icon: "images/Icons/plots/hunting_blind.png", desc: "Rendement durablement amélioré." }
+      fertile: { resources: ["bois", "eau"], cost: { bois: 20, eau: 15 }, label: "Pièges entretenus", icon: "images/Icons/plots/maintained_traps.webp", desc: "Rendement durablement amélioré." },
+      irrigated: { resources: ["pierre", "eau"], cost: { pierre: 18, eau: 22 }, label: "Affût aménagé", icon: "images/Icons/plots/hunting_blind.webp", desc: "Rendement durablement amélioré." }
     }
   },
   sawmill: {
@@ -107,8 +107,8 @@ var PRODUCTION_PLOTS_BUILDINGS = {
     unlockCost: { resources: ["fer", "pierre"], base: { fer: 15, pierre: 10 } },
     upgradeCost: { resources: ["fer", "pierre"], base: { fer: 8, pierre: 6 } },
     improvementCost: {
-      fertile: { resources: ["fer", "eau"], cost: { fer: 20, eau: 15 }, label: "Reboisement", icon: "images/Icons/plots/reforestation.png", desc: "Rendement durablement amélioré." },
-      irrigated: { resources: ["pierre", "eau"], cost: { pierre: 18, eau: 22 }, label: "Bois préservé", icon: "images/Icons/plots/preserved_wood.png", desc: "Rendement durablement amélioré." }
+      fertile: { resources: ["fer", "eau"], cost: { fer: 20, eau: 15 }, label: "Reboisement", icon: "images/Icons/plots/reforestation.webp", desc: "Rendement durablement amélioré." },
+      irrigated: { resources: ["pierre", "eau"], cost: { pierre: 18, eau: 22 }, label: "Bois préservé", icon: "images/Icons/plots/preserved_wood.webp", desc: "Rendement durablement amélioré." }
     }
   },
   mine: {
@@ -118,8 +118,8 @@ var PRODUCTION_PLOTS_BUILDINGS = {
     unlockCost: { resources: ["bois", "pierre"], base: { bois: 15, pierre: 10 } },
     upgradeCost: { resources: ["bois", "pierre"], base: { bois: 8, pierre: 6 } },
     improvementCost: {
-      fertile: { resources: ["bois", "eau"], cost: { bois: 20, eau: 15 }, label: "Galerie étayée", icon: "images/Icons/plots/braced_gallery.png", desc: "Rendement durablement amélioré." },
-      irrigated: { resources: ["pierre", "eau"], cost: { pierre: 18, eau: 22 }, label: "Filon dégagé", icon: "images/Icons/plots/cleared_ore_vein.png", desc: "Rendement durablement amélioré." }
+      fertile: { resources: ["bois", "eau"], cost: { bois: 20, eau: 15 }, label: "Galerie étayée", icon: "images/Icons/plots/braced_gallery.webp", desc: "Rendement durablement amélioré." },
+      irrigated: { resources: ["pierre", "eau"], cost: { pierre: 18, eau: 22 }, label: "Filon dégagé", icon: "images/Icons/plots/cleared_ore_vein.webp", desc: "Rendement durablement amélioré." }
     }
   },
   quarry: {
@@ -130,8 +130,8 @@ var PRODUCTION_PLOTS_BUILDINGS = {
     unlockCost: { resources: ["fer", "eau"], base: { fer: 15, eau: 10 } },
     upgradeCost: { resources: ["bois", "fer"], base: { bois: 8, fer: 6 } },
     improvementCost: {
-      fertile: { resources: ["bois", "eau"], cost: { bois: 20, eau: 15 }, label: "Veine prospectée", icon: "images/Icons/plots/prospected_vein.png", desc: "Rendement durablement amélioré." },
-      irrigated: { resources: ["fer", "eau"], cost: { fer: 18, eau: 22 }, label: "Galerie consolidée", icon: "images/Icons/plots/reinforced_gallery.png", desc: "Rendement durablement amélioré." }
+      fertile: { resources: ["bois", "eau"], cost: { bois: 20, eau: 15 }, label: "Veine prospectée", icon: "images/Icons/plots/prospected_vein.webp", desc: "Rendement durablement amélioré." },
+      irrigated: { resources: ["fer", "eau"], cost: { fer: 18, eau: 22 }, label: "Galerie consolidée", icon: "images/Icons/plots/reinforced_gallery.webp", desc: "Rendement durablement amélioré." }
     }
   },
   well: {
@@ -142,8 +142,8 @@ var PRODUCTION_PLOTS_BUILDINGS = {
     unlockCost: { resources: ["viande", "pierre"], base: { viande: 15, pierre: 10 } },
     upgradeCost: { resources: ["bois", "fer"], base: { bois: 8, fer: 6 } },
     improvementCost: {
-      fertile: { resources: ["bois", "fer"], cost: { bois: 20, fer: 15 }, label: "Bassin agrandi", icon: "images/Icons/plots/enlarged_basin.png", desc: "Rendement durablement amélioré." },
-      irrigated: { resources: ["pierre", "fer"], cost: { pierre: 18, fer: 22 }, label: "Pompe optimisée", icon: "images/Icons/plots/optimized_pump.png", desc: "Rendement durablement amélioré." }
+      fertile: { resources: ["bois", "fer"], cost: { bois: 20, fer: 15 }, label: "Bassin agrandi", icon: "images/Icons/plots/enlarged_basin.webp", desc: "Rendement durablement amélioré." },
+      irrigated: { resources: ["pierre", "fer"], cost: { pierre: 18, fer: 22 }, label: "Pompe optimisée", icon: "images/Icons/plots/optimized_pump.webp", desc: "Rendement durablement amélioré." }
     }
   }
 };

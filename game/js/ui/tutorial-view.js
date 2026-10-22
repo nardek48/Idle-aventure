@@ -21,7 +21,7 @@ function buildTutorialModalHTML(closeHandlerJs, tutorial) {
   // v3.400.0 (lot F-2) : fenêtre centrée du kit (.kwin)
   var h = '<div class="full-menu-overlay kwin-veil tutorial-overlay">';
   h += '  <div class="kwin dungeon-story-card tutorial-card">';
-  h += kWinHeadHTML({ icon: renderIconOrEmojiHTML(tutorial.icon || "images/Icons/codex/codex_lore.png", "dungeon-story-icon-img", ""), title: esc(_td(tutorial.title || "")) });
+  h += kWinHeadHTML({ icon: renderIconOrEmojiHTML(tutorial.icon || "images/Icons/codex/codex_lore.webp", "dungeon-story-icon-img", ""), title: esc(_td(tutorial.title || "")) });
   h += '    <div class="kwin-body tutorial-points">';
   (tutorial.points || []).forEach(function (p) {
     h += '<div class="tutorial-point">';
@@ -82,13 +82,13 @@ var GENERIC_TUTORIALS = {
      condition : affiché une seule fois, dès la toute première arrivée (y compris au boot). */
   camp_welcome: {
     tab: "campement",
-    icon: "images/Icons/plots/hunting_blind.png",
+    icon: "images/Icons/plots/hunting_blind.webp",
     title: "Le Campement",
     points: [
-      { icon: "images/Icons/plots/hunting_blind.png", text: "Le Campement est ton point de ralliement entre deux expéditions — c'est ici que tu gères tout ce qui n'est pas le combat." },
-      { icon: "images/Icons/combat_stats/stat_health.png", text: "Ta santé — hors combat, tu récupères 5 % de tes PV max par minute, même hors ligne. Suis ta barre de vie et la régénération en haut de l'écran." },
-      { icon: "images/Icons/quests/ration_reward.png", text: "Les rations soignent instantanément un % fixe de tes PV (35/60/100 % selon le type) : utile pour repartir vite sans attendre." },
-      { icon: "images/Icons/quests/quest_list.png", text: "Le tableau de missions — l'étape d'Histoire en cours (badge doré « Histoire ») est toujours en tête. Touche « Accepter », puis « Partir » pour ta prochaine quête : c'est elle qui te mènera au combat avec un vrai objectif." }
+      { icon: "images/Icons/plots/hunting_blind.webp", text: "Le Campement est ton point de ralliement entre deux expéditions — c'est ici que tu gères tout ce qui n'est pas le combat." },
+      { icon: "images/Icons/combat_stats/stat_health.webp", text: "Ta santé — hors combat, tu récupères 5 % de tes PV max par minute, même hors ligne. Suis ta barre de vie et la régénération en haut de l'écran." },
+      { icon: "images/Icons/quests/ration_reward.webp", text: "Les rations soignent instantanément un % fixe de tes PV (35/60/100 % selon le type) : utile pour repartir vite sans attendre." },
+      { icon: "images/Icons/quests/quest_list.webp", text: "Le tableau de missions — l'étape d'Histoire en cours (badge doré « Histoire ») est toujours en tête. Touche « Accepter », puis « Partir » pour ta prochaine quête : c'est elle qui te mènera au combat avec un vrai objectif." }
     ]
   },
   /* v3.213.1 (lot V-2) : premier plafond d'entraînement. Condition : une
@@ -101,13 +101,13 @@ var GENERIC_TUTORIALS = {
         && typeof VILLAGE_BUILDINGS.training.unlockCheck === "function"
         && VILLAGE_BUILDINGS.training.unlockCheck());
     },
-    icon: "images/Icons/combat_stats/stat_critical.png",
+    icon: "images/Icons/combat_stats/stat_critical.webp",
     title: "Le Terrain d'entraînement",
     points: [
-      { icon: "images/Icons/system/training_cap.png", text: "Tes caractéristiques butent à 20 : c'est la limite de l'entraînement de fortune du campement. Pour aller plus loin, il faut un vrai terrain." },
-      { icon: "images/Icons/workshops/masonry.png", text: "Le Terrain se bâtit ici, au Village, comme l'Atelier : des matériaux, puis un chantier qui prend un peu de temps." },
-      { icon: "images/Icons/combat_stats/stat_critical.png", text: "Chaque niveau du Terrain ouvre 10 niveaux de plus sur CHACUNE des cinq caractéristiques — jamais un total à répartir." },
-      { icon: "images/Icons/gold_icon.png", text: "L'entraînement lui-même se paie toujours en or, dans Héros → Entraînement. Le Terrain décide jusqu'où tu peux monter, pas combien ça coûte." }
+      { icon: "images/Icons/system/training_cap.webp", text: "Tes caractéristiques butent à 20 : c'est la limite de l'entraînement de fortune du campement. Pour aller plus loin, il faut un vrai terrain." },
+      { icon: "images/Icons/workshops/masonry.webp", text: "Le Terrain se bâtit ici, au Village, comme l'Atelier : des matériaux, puis un chantier qui prend un peu de temps." },
+      { icon: "images/Icons/combat_stats/stat_critical.webp", text: "Chaque niveau du Terrain ouvre 10 niveaux de plus sur CHACUNE des cinq caractéristiques — jamais un total à répartir." },
+      { icon: "images/Icons/gold_icon.webp", text: "L'entraînement lui-même se paie toujours en or, dans Héros → Entraînement. Le Terrain décide jusqu'où tu peux monter, pas combien ça coûte." }
     ]
   },
   village_production: {
@@ -115,14 +115,14 @@ var GENERIC_TUTORIALS = {
     // Condition d'affichage : seulement une fois la mission "Les fondations" accessible (La veine
     // instable terminée) — avant, le joueur n'a pas encore vraiment de quoi produire à comprendre.
     condition: function () { return !!(game.explorationProgression && (game.explorationProgression.unstableVeinDiscoveryCompleted || game.explorationProgression.quarryUnlocked)); }, // v3.124.0 (retrait ancien moteur) : lecture directe du flag, sans MiningManager
-    icon: "images/Icons/scene/scene_harvest.png",
+    icon: "images/Icons/scene/scene_harvest.webp",
     title: "Village & Production",
     points: [
-      { icon: "images/Icons/scene/scene_harvest.png", text: "Les parcelles produisent une ressource en continu, même hors ligne — mais chaque bâtiment a un stock local limité (« Plein dans Xm »)." },
-      { icon: "images/Icons/subtabs/inventory.png", text: "Clique sur « Récolter » pour transférer ce stock vers ton Entrepôt, qui a son propre plafond (plus grand)." },
-      { icon: "images/Icons/system/upgrade.png", text: "Améliorer une parcelle augmente sa vitesse de production et sa capacité de stock local." },
-      { icon: "images/Icons/quests/mission_construction.png", text: "Les Ateliers (comme la Cuisine de camp) transforment des ressources brutes (ex. viande + eau) en objets utiles (ex. rations) — file d'attente, continue même hors ligne." },
-      { icon: "images/Icons/system/warehouse_supplies.png", text: "Garde un œil sur ton Entrepôt : une ressource pleine ne se produit plus tant que tu ne l'as pas dépensée (l'Entrepôt ne rachète rien)." }
+      { icon: "images/Icons/scene/scene_harvest.webp", text: "Les parcelles produisent une ressource en continu, même hors ligne — mais chaque bâtiment a un stock local limité (« Plein dans Xm »)." },
+      { icon: "images/Icons/subtabs/inventory.webp", text: "Clique sur « Récolter » pour transférer ce stock vers ton Entrepôt, qui a son propre plafond (plus grand)." },
+      { icon: "images/Icons/system/upgrade.webp", text: "Améliorer une parcelle augmente sa vitesse de production et sa capacité de stock local." },
+      { icon: "images/Icons/quests/mission_construction.webp", text: "Les Ateliers (comme la Cuisine de camp) transforment des ressources brutes (ex. viande + eau) en objets utiles (ex. rations) — file d'attente, continue même hors ligne." },
+      { icon: "images/Icons/system/warehouse_supplies.webp", text: "Garde un œil sur ton Entrepôt : une ressource pleine ne se produit plus tant que tu ne l'as pas dépensée (l'Entrepôt ne rachète rien)." }
     ]
   },
 
@@ -138,13 +138,13 @@ var GENERIC_TUTORIALS = {
   memoire: {
     tab: "ascension",
     condition: function () { return !!(window.MemoryManager && MemoryManager.getLevel() >= 1); },
-    icon: "images/Icons/aether_icon.png",
+    icon: "images/Icons/aether_icon.webp",
     title: "La Mémoire",
     points: [
-      { icon: "images/Icons/aether_icon.png", text: "Ce que tu donnes, l'Aether le retient. Chaque objet offert depuis ton sac et chaque grande victoire remplissent la jauge ; un niveau ouvre un choix." },
-      { icon: "images/Icons/system/upgrade.png", text: "Choisis. Une seule amélioration par niveau. L'autre n'est pas perdue : elle reste là." },
-      { icon: "images/Icons/system/lock_closed.png", text: "Reprendre a un prix. Changer d'avis coûte de l'or, trois fois plus à chaque fois." },
-      { icon: "images/Icons/gold_icon.png", text: "Un objet acheté à l'échoppe ne porte aucun souvenir : il ne rend pas d'Aether." }
+      { icon: "images/Icons/aether_icon.webp", text: "Ce que tu donnes, l'Aether le retient. Chaque objet offert depuis ton sac et chaque grande victoire remplissent la jauge ; un niveau ouvre un choix." },
+      { icon: "images/Icons/system/upgrade.webp", text: "Choisis. Une seule amélioration par niveau. L'autre n'est pas perdue : elle reste là." },
+      { icon: "images/Icons/system/lock_closed.webp", text: "Reprendre a un prix. Changer d'avis coûte de l'or, trois fois plus à chaque fois." },
+      { icon: "images/Icons/gold_icon.webp", text: "Un objet acheté à l'échoppe ne porte aucun souvenir : il ne rend pas d'Aether." }
     ]
   },
 
@@ -153,13 +153,13 @@ var GENERIC_TUTORIALS = {
   patrols_intro: {
     tab: "more",
     condition: function () { return !!(window.PatrolManager && PatrolManager.isUnlocked()); },
-    icon: "images/Icons/quests/mission_exploration.png",
+    icon: "images/Icons/quests/mission_exploration.webp",
     title: "Les patrouilles",
     points: [
-      { icon: "images/Icons/quests/mission_exploration.png", text: "Un compagnon peut partir en patrouille 2, 4 ou 8 heures vers un secteur libéré de la carte, même quand tu ne joues pas." },
+      { icon: "images/Icons/quests/mission_exploration.webp", text: "Un compagnon peut partir en patrouille 2, 4 ou 8 heures vers un secteur libéré de la carte, même quand tu ne joues pas." },
       { icon: "images/Icons/resources/wood_icon.webp", text: "Il rapporte les matériaux du secteur, un peu d'or, parfois de quoi faire des rations — et une petite histoire." },
-      { icon: "images/Icons/system/hourglass_waiting.png", text: "Pendant ce temps, il ne combat pas avec toi. Tu peux le rappeler quand tu veux : il rapporte ce qu'il a déjà trouvé." },
-      { icon: "images/Icons/system/check_valid.png", text: "Aucun risque : une patrouille revient toujours. Réglage sur la fiche du compagnon (Héros › Compagnons)." }
+      { icon: "images/Icons/system/hourglass_waiting.webp", text: "Pendant ce temps, il ne combat pas avec toi. Tu peux le rappeler quand tu veux : il rapporte ce qu'il a déjà trouvé." },
+      { icon: "images/Icons/system/check_valid.webp", text: "Aucun risque : une patrouille revient toujours. Réglage sur la fiche du compagnon (Héros › Compagnons)." }
     ]
   },
   /* v3.429.12 : première préparation d'une petite aventure (besace, pactes). Pas les parcours
@@ -170,20 +170,20 @@ var GENERIC_TUTORIALS = {
       var run = game.sceneRun;
       return !!(run && run.pa2 && run.status === "pa2-prep" && !run.parcours);
     },
-    icon: "images/Icons/dungeon/dungeon_sacoche.png",
+    icon: "images/Icons/dungeon/dungeon_sacoche.webp",
     title: "Préparer une petite aventure",
     points: [
-      { icon: "images/Icons/dungeon/dungeon_sacoche.png", text: "La besace : touche une case pour y mettre des rations ou des objets. Chacun a un avantage (en vert) et souvent un prix (en rouge). Les rations que tu ne manges pas retournent à l'Entrepôt." },
-      { icon: "images/Icons/combat_stats/stat_health.png", text: "Tu pars avec tes PV actuels : en route, seules les rations de la besace, les sources et le feu de camp te soignent." },
-      { icon: "images/Icons/scene/pacts/pact_awake.png", text: "Les pactes ne sont pas obligatoires. Chacun rend la nuit plus dure et le retour plus riche : choisis-les quand tu t'en sens capable." },
-      { icon: "images/Icons/scene/node_threshold.png", text: "« Renoncer à cette aventure » te ramène sans rien perdre, tant que tu n'es pas encore parti." }
+      { icon: "images/Icons/dungeon/dungeon_sacoche.webp", text: "La besace : touche une case pour y mettre des rations ou des objets. Chacun a un avantage (en vert) et souvent un prix (en rouge). Les rations que tu ne manges pas retournent à l'Entrepôt." },
+      { icon: "images/Icons/combat_stats/stat_health.webp", text: "Tu pars avec tes PV actuels : en route, seules les rations de la besace, les sources et le feu de camp te soignent." },
+      { icon: "images/Icons/scene/pacts/pact_awake.webp", text: "Les pactes ne sont pas obligatoires. Chacun rend la nuit plus dure et le retour plus riche : choisis-les quand tu t'en sens capable." },
+      { icon: "images/Icons/scene/node_threshold.webp", text: "« Renoncer à cette aventure » te ramène sans rien perdre, tant que tu n'es pas encore parti." }
     ]
   },
   /* v3.435.0 (Ruines, RU12) : première descente dans le Labyrinthe aux leviers. Edda explique. */
   labyrinth_first: {
     tab: "scene",
     condition: function () { var run = game.sceneRun; return !!(run && run.lab && run.status === "lab-map"); },
-    icon: "images/Icons/quest_icons/exploration/labyrinthe.png",
+    icon: "images/Icons/quest_icons/exploration/labyrinthe.webp",
     title: "Le Labyrinthe aux leviers",
     points: [
       { icon: "images/Maps/labyrinthe/salle_1.webp", text: "Il fait noir : tu ne vois que ta salle et celles qui s'ouvrent à côté. Touche une salle voisine pour avancer. Chaque pas coûte du Souffle." },
@@ -194,15 +194,15 @@ var GENERIC_TUTORIALS = {
     ]
   },
   grimoire_rules: {
-    icon: "images/Icons/codex/codex_lore.png",
+    icon: "images/Icons/codex/codex_lore.webp",
     title: "Le Grimoire de tactiques",
     points: [
-      { icon: "images/Icons/codex/codex_lore.png", text: "Le Grimoire programme ton combat automatique : si une situation se présente, ton héros joue l'action que tu as choisie en priorité." },
-      { icon: "images/Icons/system/sort.png", text: "Les règles sont lues dans l'ordre, de haut en bas. La première qui s'applique l'emporte." },
-      { icon: "images/Icons/combat_stats/stat_speed.png", text: "Une action marquée « ⚡ Contre » annule complètement l'attaque adverse. C'est le meilleur appariement possible pour cette situation." },
-      { icon: "images/Icons/system/ascension.png", text: "S'il n'y a aucune règle applicable, ton héros continue de se battre normalement — le Grimoire s'ajoute au comportement automatique, il ne le remplace pas." },
-      { icon: "images/Icons/system/lock_closed.png", text: "En combat, ton héros met de côté un peu de ressource pour garantir ton contre le plus prioritaire : il jouera moins d'actions coûteuses en attendant." },
-      { icon: "images/Icons/quests/quest_resources.png", text: "De nouvelles règles se débloquent en atteignant de nouveaux mondes pour la première fois." }
+      { icon: "images/Icons/codex/codex_lore.webp", text: "Le Grimoire programme ton combat automatique : si une situation se présente, ton héros joue l'action que tu as choisie en priorité." },
+      { icon: "images/Icons/system/sort.webp", text: "Les règles sont lues dans l'ordre, de haut en bas. La première qui s'applique l'emporte." },
+      { icon: "images/Icons/combat_stats/stat_speed.webp", text: "Une action marquée « ⚡ Contre » annule complètement l'attaque adverse. C'est le meilleur appariement possible pour cette situation." },
+      { icon: "images/Icons/system/ascension.webp", text: "S'il n'y a aucune règle applicable, ton héros continue de se battre normalement — le Grimoire s'ajoute au comportement automatique, il ne le remplace pas." },
+      { icon: "images/Icons/system/lock_closed.webp", text: "En combat, ton héros met de côté un peu de ressource pour garantir ton contre le plus prioritaire : il jouera moins d'actions coûteuses en attendant." },
+      { icon: "images/Icons/quests/quest_resources.webp", text: "De nouvelles règles se débloquent en atteignant de nouveaux mondes pour la première fois." }
     ]
   }
 };

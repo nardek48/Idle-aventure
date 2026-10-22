@@ -5,7 +5,7 @@
    Dépenses suivies : bâtiments du village, reforges, compagnons, entraînement.
    Boutique, potions, enchantement et parcelles ont leur propre parcours : laissés de côté. */
 
-var OR_INVEST_ICON = "images/Icons/gold_icon.png";
+var OR_INVEST_ICON = "images/Icons/gold_icon.webp";
 var OR_INVEST_MIN_GOLD = 1000; // en dessous, pas de bulle : l'or se dépense de lui-même
 var orInvestSeen = {};          // dépenses déjà montrées (mémoire vive : un rechargement la vide)
 var orInvestShown = [];         // dépenses de la fenêtre ouverte : le toucher agit sur ce qui est vu

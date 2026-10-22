@@ -6,7 +6,7 @@ var CONSTRUCTION_BUILDINGS = {
     id: "workshop",
     name: "Atelier de Construction",
     desc: "Améliore l'Atelier pour augmenter le prix de vente de toutes les ressources de l'Entrepôt.",
-    icon: "images/Icons/construction_icon.png",
+    icon: "images/Icons/construction_icon.webp",
     maxLevel: 10,
 
     costTiers: [

@@ -26,7 +26,7 @@ window.toggleAchievementOld = toggleAchievementOld;
 
 function formatAchievementRewardHTML(ach) {
   var r = ach.reward || {}, parts = [];
-  if (r.gold) parts.push('<img class="ico-inline" src="images/Icons/gold_icon.png" alt=""> ' + _t("{n} or", { n: formatNumber(r.gold) }));
+  if (r.gold) parts.push('<img class="ico-inline" src="images/Icons/gold_icon.webp" alt=""> ' + _t("{n} or", { n: formatNumber(r.gold) }));
   return '<span class="hf-rew">' + parts.join(" · ") + (ach.title ? '<span class="hf-title-tag">' + _t("Titre") + '</span>' : '') + '</span>';
 }
 
@@ -51,7 +51,7 @@ function buildAchievementCardHTML(ach) {
     h += '<div class="hf-meta">' + formatAchievementRewardHTML(ach) + '<button type="button" class="hf-btn" onclick="AchievementManager.claim(\'' + esc(ach.id) + '\')">' + _t("Réclamer") + '</button></div>';
   } else if (claimed) {
     var at = AM.ensure().claimedAt[ach.id];
-    h += '<div class="hf-meta"><span class="hf-got"><img class="ico-inline" src="images/Icons/system/check_valid.png" alt=""> ' + (at ? _t("Obtenu le {d}", { d: formatAchievementDate(at) }) : _t("Obtenu")) + '</span>' + (ach.title ? '<span class="hf-title-tag">' + _t("Titre") + '</span>' : '') + '</div>';
+    h += '<div class="hf-meta"><span class="hf-got"><img class="ico-inline" src="images/Icons/system/check_valid.webp" alt=""> ' + (at ? _t("Obtenu le {d}", { d: formatAchievementDate(at) }) : _t("Obtenu")) + '</span>' + (ach.title ? '<span class="hf-title-tag">' + _t("Titre") + '</span>' : '') + '</div>';
   } else {
     if (target > 1) {
       h += '<div class="hf-bar"><i style="width:' + Math.round(100 * prog / target) + '%"></i></div>';
@@ -99,17 +99,17 @@ function buildTotalsStoryLabel() {
 
 function buildAchievementTotalsHTML() {
   var rows = [
-    ["images/Icons/system/hourglass_waiting.png", _t("Temps de jeu"), (typeof formatTime === "function") ? formatTime(game.playTime || 0) : String(Math.floor(game.playTime || 0)) + "s"],
-    ["images/Icons/combat_stats/stat_attack.png", _t("Ennemis vaincus"), formatNumber(game.totalKills || 0)],
-    ["images/Icons/gold_icon.png", _t("Or gagné"), formatNumber(game.totalGoldEarned || 0)],
-    ["images/Icons/combat_status/charge_incoming.png", _t("Dégâts"), formatNumber(game.totalDamageDealt || 0)],
-    ["images/Icons/quests/quest_resources.png", _t("Monde"), (WorldManager.worldIndex + 1) + " / " + WORLDS.length],
-    ["images/Icons/system/ascension.png", _t("Mémoire"), formatNumber(window.MemoryManager ? MemoryManager.getLevel() : 0)],
+    ["images/Icons/system/hourglass_waiting.webp", _t("Temps de jeu"), (typeof formatTime === "function") ? formatTime(game.playTime || 0) : String(Math.floor(game.playTime || 0)) + "s"],
+    ["images/Icons/combat_stats/stat_attack.webp", _t("Ennemis vaincus"), formatNumber(game.totalKills || 0)],
+    ["images/Icons/gold_icon.webp", _t("Or gagné"), formatNumber(game.totalGoldEarned || 0)],
+    ["images/Icons/combat_status/charge_incoming.webp", _t("Dégâts"), formatNumber(game.totalDamageDealt || 0)],
+    ["images/Icons/quests/quest_resources.webp", _t("Monde"), (WorldManager.worldIndex + 1) + " / " + WORLDS.length],
+    ["images/Icons/system/ascension.webp", _t("Mémoire"), formatNumber(window.MemoryManager ? MemoryManager.getLevel() : 0)],
     // v3.365.0 (lot J) : trois lignes de plus, sans nouveau compteur
-    ["images/Icons/scene/final_reward.png", _t("Hauts faits"), window.AchievementManager ? AchievementManager.getClaimedCount() + " / " + (window.ACHIEVEMENTS_DB || []).length : "—"],
-    ["images/Icons/system/ascension.png", _t("Aether gagné"), formatNumber(Math.floor(Number(game.totalAetherEarned || 0)))],
+    ["images/Icons/scene/final_reward.webp", _t("Hauts faits"), window.AchievementManager ? AchievementManager.getClaimedCount() + " / " + (window.ACHIEVEMENTS_DB || []).length : "—"],
+    ["images/Icons/system/ascension.webp", _t("Aether gagné"), formatNumber(Math.floor(Number(game.totalAetherEarned || 0)))],
     // v3.379.1 : l'Histoire en dernier = seule sur sa ligne (valeur longue, « Hist… » tronqué sur iPhone)
-    ["images/Icons/codex/codex_lore.png", _t("Histoire"), buildTotalsStoryLabel()]
+    ["images/Icons/codex/codex_lore.webp", _t("Histoire"), buildTotalsStoryLabel()]
   ];
   var h = '<div class="achievement-totals">';
   rows.forEach(function (r) {
@@ -161,7 +161,7 @@ function buildAchievementsHTML() {
     // v3.365.0 (lot J, demande Seb) : le Bilan de la partie est parti en tête du Journal (log-view.js)
   }
 
-  return '<div class="nb-page-frame kframe-page" data-kf-title="' + esc("images/Icons/scene/final_reward.png|" + _t("Hauts faits")) + '">' + h + '</div>';
+  return '<div class="nb-page-frame kframe-page" data-kf-title="' + esc("images/Icons/scene/final_reward.webp|" + _t("Hauts faits")) + '">' + h + '</div>';
 }
 
 /* ---------- Titre porté (H8) : feuille du bas ---------- */
@@ -180,13 +180,13 @@ function openAchievementTitleSheet() {
   var AM = AchievementManager, cur = AM.getTitle();
   // v3.399.0 (F-1) : feuille du kit (.ksheet) dans sa couche au-dessus du reste
   var h = '<div class="hf-sheet-bg"><div class="ksheet-backdrop" onclick="closeAchievementTitleSheet()"></div><div class="ksheet hf-sheet" role="dialog" aria-label="' + esc(_t("Choisir un titre")) + '">';
-  h += kSheetHeadHTML({ icon: '<img src="images/Icons/menu_icons/achivment_menu.png" alt="">', title: _t("Choisir un titre"), close: "closeAchievementTitleSheet()" });
+  h += kSheetHeadHTML({ icon: '<img src="images/Icons/menu_icons/achivment_menu.webp" alt="">', title: _t("Choisir un titre"), close: "closeAchievementTitleSheet()" });
   h += '<div class="ksheet-body">';
   h += '<button type="button" class="hf-opt' + (!cur ? ' is-on' : '') + '" onclick="pickAchievementTitle(-1)"><span>' + _t("Aucun titre") + '</span></button>';
   AM.getAllTitles().forEach(function (t, i) {
     var ok = AM.isTitleUnlocked(t);
     h += '<button type="button" class="hf-opt' + (cur === t.title ? ' is-on' : '') + (ok ? '' : ' is-locked') + '"' + (ok ? ' onclick="pickAchievementTitle(' + i + ')"' : ' disabled') + '>'
-      + '<span>' + (ok ? '' : '<img class="ico-inline" src="images/Icons/system/lock_closed.png" alt=""> ') + esc(_td(t.title)) + '</span><small>' + esc(t.from) + '</small></button>';
+      + '<span>' + (ok ? '' : '<img class="ico-inline" src="images/Icons/system/lock_closed.webp" alt=""> ') + esc(_td(t.title)) + '</span><small>' + esc(t.from) + '</small></button>';
   });
   h += '</div></div></div>';
   var root = getAchievementSheetRoot();

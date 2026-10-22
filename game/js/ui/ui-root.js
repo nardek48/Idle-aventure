@@ -146,7 +146,7 @@ function switchTab(tabName) {
       showConfirmModal(
         _t("Abandonner l'expédition ?"),
         _t("Tu perds la moitié du butin non sécurisé. Le reste sera rapporté au village."),
-        "images/Icons/system/warning.png",
+        "images/Icons/system/warning.webp",
         function () {
           if (window.SceneRunManager && typeof SceneRunManager.abandon === "function") SceneRunManager.abandon();
           switchTab(targetTab);

@@ -27,31 +27,31 @@ var pa2View = {
 };
 
 var PA2_ICONS = {
-  obstacle: "images/Icons/scene/node_obstacle.png",
-  combat: "images/Icons/scene/node_encounter.png",
-  source: "images/Icons/scene/node_clear_spring.png",
-  autel: "images/Icons/scene/node_forgotten_altar.png",
-  trouvaille: "images/Icons/scene/node_discovery.png",
-  evenement: "images/Icons/scene/node_event.png",
-  unknown: "images/Icons/scene/node_unknown.png",
-  camp: "images/Icons/camp/campfire.png",
-  seuil: "images/Icons/scene/node_threshold.png",
-  depart: "images/Icons/menu_icons/village_menu.png",
-  boss: "images/Icons/scene/dest/dest_cerf_racine.png",
-  clairiere: "images/Icons/scene/dest/dest_clairiere.png",
-  tertre: "images/Icons/scene/dest/dest_tertre.png",
-  power: "images/Icons/potions/potion_force.png",
-  precision: "images/Icons/potions/potion_precision.png",
-  endurance: "images/Icons/potions/potion_endurance.png",
-  ruse: "images/Icons/scene/ways/fight_trick.png",
-  flee: "images/Icons/quests/flee.png",
-  hp: "images/Icons/combat_stats/stat_health.png",
-  gold: "images/Icons/dungeon/dungeon_gold.png",
-  bag: "images/Icons/subtabs/inventory.png",
-  chest: "images/Icons/dungeon/dungeon_guaranteed_loot.png",
-  wound: "images/Icons/scene/ui/ui_wound.png",
-  hero: "images/Icons/scene/ui/ui_hero_marker.png",
-  title: "images/Icons/scene/path_easy.png"
+  obstacle: "images/Icons/scene/node_obstacle.webp",
+  combat: "images/Icons/scene/node_encounter.webp",
+  source: "images/Icons/scene/node_clear_spring.webp",
+  autel: "images/Icons/scene/node_forgotten_altar.webp",
+  trouvaille: "images/Icons/scene/node_discovery.webp",
+  evenement: "images/Icons/scene/node_event.webp",
+  unknown: "images/Icons/scene/node_unknown.webp",
+  camp: "images/Icons/camp/campfire.webp",
+  seuil: "images/Icons/scene/node_threshold.webp",
+  depart: "images/Icons/menu_icons/village_menu.webp",
+  boss: "images/Icons/scene/dest/dest_cerf_racine.webp",
+  clairiere: "images/Icons/scene/dest/dest_clairiere.webp",
+  tertre: "images/Icons/scene/dest/dest_tertre.webp",
+  power: "images/Icons/potions/potion_force.webp",
+  precision: "images/Icons/potions/potion_precision.webp",
+  endurance: "images/Icons/potions/potion_endurance.webp",
+  ruse: "images/Icons/scene/ways/fight_trick.webp",
+  flee: "images/Icons/quests/flee.webp",
+  hp: "images/Icons/combat_stats/stat_health.webp",
+  gold: "images/Icons/dungeon/dungeon_gold.webp",
+  bag: "images/Icons/subtabs/inventory.webp",
+  chest: "images/Icons/dungeon/dungeon_guaranteed_loot.webp",
+  wound: "images/Icons/scene/ui/ui_wound.webp",
+  hero: "images/Icons/scene/ui/ui_hero_marker.webp",
+  title: "images/Icons/scene/path_easy.webp"
 };
 
 var PA2_CRAN_WORD = { sur: _t("Sûr"), probable: _t("Probable"), risque: _t("Risqué"), desespere: _t("Désespéré") };
@@ -244,7 +244,7 @@ function buildPa2PrepHTML(run) {
 
     // v3.429.23 : comme l'entrée de donjon offerte — l'Histoire paie la place
     if (!par && SceneRunManager.isStoryPaFree(run.worldId, run.livingMap)) {
-      h += '<p class="pa2-note pa2-storyfree"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.png> <b>' + esc(_t("Expédition offerte")) + '</b> ' + esc(_t("— l'Histoire t'y mène, aucune place de la réserve consommée")) + '</p>';
+      h += '<p class="pa2-note pa2-storyfree"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.webp> <b>' + esc(_t("Expédition offerte")) + '</b> ' + esc(_t("— l'Histoire t'y mène, aucune place de la réserve consommée")) + '</p>';
     }
     if (!par) h += pa2TrophiesHTML(run);
 
@@ -659,7 +659,7 @@ function pa2AskAbandon() {
   var retour = Pa2Run.hasPact("retour", run);
   showConfirmModal(_t("Abandonner l'aventure ?"),
     retour ? _t("Pacte « Pas de retour » : tout le butin reste en route.") : _t("Tu perds la moitié du butin. Les rations non mangées retournent à l'Entrepôt."),
-    "images/Icons/system/warning.png", function () {
+    "images/Icons/system/warning.webp", function () {
       SceneRunManager.abandon();
       pa2View.sheet = null;
       pa2Rerender();
@@ -1031,7 +1031,7 @@ function pa2FightOutcome(run, n, r) {
   var h = '<div class="pa2-verdict is-ok">' + esc(n.type === "boss" ? _t("Le gardien s'effondre") : _t("Victoire")) + '</div><p class="pa2-result">+' + pa2Num(r.gain) + ' ' + esc(pa2Unit(run)) + '</p>';
   if (n.after) h += '<p class="pa2-echo">' + esc(_td(n.after)) + '</p>'; // parcours : la suite du combat
   if (n.type === "boss") h += '<p class="pa2-narr pa2-center">' + esc(_td(pa2Dests(run).boss.win)) + '</p>';
-  if (r.drop) h += '<p class="pa2-result is-drop"><img class="ico-inline" src="images/Icons/dungeon/dungeon_guaranteed_loot.png" alt=""> ' + esc(_t("Objet trouvé : {x} ({r})", { x: _td(r.drop.name), r: _td((window.RARITY_LABELS || {})[r.drop.rarity] || r.drop.rarity) })) + '</p>';
+  if (r.drop) h += '<p class="pa2-result is-drop"><img class="ico-inline" src="images/Icons/dungeon/dungeon_guaranteed_loot.webp" alt=""> ' + esc(_t("Objet trouvé : {x} ({r})", { x: _td(r.drop.name), r: _td((window.RARITY_LABELS || {})[r.drop.rarity] || r.drop.rarity) })) + '</p>';
   return h + pa2ContinueButton(run);
 }
 function pa2RoundsHTML(st, count) {

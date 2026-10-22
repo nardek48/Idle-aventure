@@ -6,7 +6,7 @@ var CLASSES = [
   {
     id: "knight",
     label: "Chevalier",
-    icon: "images/Icons/classes/class_knight.png",
+    icon: "images/Icons/classes/class_knight.webp",
     weaponType: "sword",
     weaponIcons: ["sword", "axe"],
     heroIds: ["knight", "chaosKnight"],
@@ -28,7 +28,7 @@ var CLASSES = [
   {
     id: "archer",
     label: "Rôdeur", // v3.429.10 : le nom de la classe partout ailleurs (création, CLAUDE.md)
-    icon: "images/Icons/classes/class_ranger.png",
+    icon: "images/Icons/classes/class_ranger.webp",
     weaponType: "bow",
     weaponIcons: ["bow"],
     heroIds: ["ranger", "chaosRanger"],
@@ -53,7 +53,7 @@ var CLASSES = [
   {
     id: "mage",
     label: "Mage",
-    icon: "images/Icons/classes/class_mage.png",
+    icon: "images/Icons/classes/class_mage.webp",
     weaponType: "magic",
     weaponIcons: ["staff"],
     heroIds: ["mage", "chaosMage"],

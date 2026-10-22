@@ -67,7 +67,7 @@ les classes de l'ancien thème pendant la migration progressive.
      Vigilance : aux petites tailles (92×28 dans les cartes d'achat),
      le cadre est nettement aplati — à contrôler en jeu ; export
      « plat » de l'asset possible plus tard si besoin. */
-  background: url('../images/UI/buttons/btn-rect-normal.png') center / 100% 100% no-repeat;
+  background: url('../images/UI/buttons/btn-rect-normal.webp') center / 100% 100% no-repeat;
   text-shadow: 0 1px 2px rgba(30, 15, 0, 0.75);
   cursor: pointer;
 }
@@ -90,7 +90,7 @@ les classes de l'ancien thème pendant la migration progressive.
 }
 
 .btn-buy:not(:disabled):active {
-  background-image: url('../images/UI/buttons/btn-rect-pressed.png');
+  background-image: url('../images/UI/buttons/btn-rect-pressed.webp');
   transform: translateY(1px);
 }
 
@@ -606,7 +606,7 @@ button.nb-entry-card {
 
   border: none;
   border-radius: 0;
-  background: url('../images/UI/buttons/btn-subtab-normal.png') center / 100% 100% no-repeat;
+  background: url('../images/UI/buttons/btn-subtab-normal.webp') center / 100% 100% no-repeat;
 
   color: #e8d9b5;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
@@ -632,7 +632,7 @@ button.nb-entry-card {
   aspect-ratio: 592 / 224;
   height: auto;
 
-  background: url('../images/UI/buttons/btn-subtab-selected.png') center / 100% 100% no-repeat;
+  background: url('../images/UI/buttons/btn-subtab-selected.webp') center / 100% 100% no-repeat;
   border-color: transparent;
   color: var(--c-brown-900);
   text-shadow: none;
@@ -660,7 +660,7 @@ button.nb-entry-card {
 
 /* =========================
    v2.83.27 : cadre de page générique (fond parchemin bordé,
-   images/Borders/ecrantext2.png) — À UTILISER pour le conteneur
+   images/Borders/ecrantext2.webp) — À UTILISER pour le conteneur
    PRINCIPAL d'un écran (le grand cadre qui remplit la zone sous le
    titre), PAS pour les petites cartes imbriquées à l'intérieur (une
    carte de quête, un item de Bestiaire, etc. gardent leurs propres
@@ -701,7 +701,7 @@ button.nb-entry-card {
   margin: 0 auto;
   padding: 14px 12px 20px;
   border-radius: var(--nb-radius-md);
-  background: url('../images/Borders/ecrantext2.png') center / 100% 100% no-repeat;
+  background: url('../images/Borders/ecrantext2.webp') center / 100% 100% no-repeat;
   box-sizing: border-box;
 }
 
@@ -1107,13 +1107,13 @@ button.nb-entry-card {
   height: 38px;
   padding: 0;
   border: 0;
-  background: url('../images/UI/buttons/btn-round-close.png') center / contain no-repeat;
+  background: url('../images/UI/buttons/btn-round-close.webp') center / contain no-repeat;
   cursor: pointer;
   transition: transform 0.08s ease;
 }
 
 .ksheet-x:active {
-  background-image: url('../images/UI/buttons/btn-round-close-pressed.png');
+  background-image: url('../images/UI/buttons/btn-round-close-pressed.webp');
   transform: scale(0.92);
 }
 

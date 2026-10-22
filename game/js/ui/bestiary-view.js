@@ -23,9 +23,9 @@ function setBestiaryCodexSubTab(tab) {
 window.setBestiaryCodexSubTab = setBestiaryCodexSubTab;
 
 var LIBRARY_SUBS = [
-  { key: "bestiary", icon: "images/Icons/subtabs/bestiary.png", label: _t("Bestiaire") },
-  { key: "codex", icon: "images/Icons/subtabs/codex.png", label: _t("Codex") },
-  { key: "tutorials", icon: "images/Icons/codex/codex_lore.png", label: _t("Tutoriels") }
+  { key: "bestiary", icon: "images/Icons/subtabs/bestiary.webp", label: _t("Bestiaire") },
+  { key: "codex", icon: "images/Icons/subtabs/codex.webp", label: _t("Codex") },
+  { key: "tutorials", icon: "images/Icons/codex/codex_lore.webp", label: _t("Tutoriels") }
 ];
 
 /* Rail du kit (.kseg.is-stack). Masqué s'il ne reste qu'un onglet (Bestiaire pas encore débloqué). */
@@ -240,9 +240,9 @@ function openCreatureSheet(id) {
     var c = estimateCreatureCombatStats(id, d, d.isBoss);
     if (c) {
       h += '<div class="nb-entry-meta-row bst-stats">';
-      h += '<span class="nb-entry-meta"><img class=ico-inline src=images/Icons/combat_stats/stat_health.png> ' + formatNumber(c.hp) + '</span>';
-      h += '<span class="nb-entry-meta"><img class=ico-inline src=images/Icons/combat_stats/stat_attack.png> ' + formatNumber(c.dmg) + '</span>';
-      h += '<span class="nb-entry-meta"><img class=ico-inline src=images/Icons/combat_stats/stat_critical.png> ' + Math.round(c.critChance) + '%</span>';
+      h += '<span class="nb-entry-meta"><img class=ico-inline src=images/Icons/combat_stats/stat_health.webp> ' + formatNumber(c.hp) + '</span>';
+      h += '<span class="nb-entry-meta"><img class=ico-inline src=images/Icons/combat_stats/stat_attack.webp> ' + formatNumber(c.dmg) + '</span>';
+      h += '<span class="nb-entry-meta"><img class=ico-inline src=images/Icons/combat_stats/stat_critical.webp> ' + Math.round(c.critChance) + '%</span>';
       h += '</div>';
     }
   }
@@ -315,9 +315,9 @@ function buildBestiaryEntryCardHTML(id) {
     var combat = estimateCreatureCombatStats(id, data, isBoss);
     if (combat) {
       h += '<div class="nb-entry-meta-row">';
-      h += '<span class="nb-entry-meta"><img class=ico-inline src=images/Icons/combat_stats/stat_health.png> ' + formatNumber(combat.hp) + '</span>';
-      h += '<span class="nb-entry-meta"><img class=ico-inline src=images/Icons/combat_stats/stat_attack.png> ' + formatNumber(combat.dmg) + '</span>';
-      h += '<span class="nb-entry-meta"><img class=ico-inline src=images/Icons/combat_stats/stat_critical.png> ' + Math.round(combat.critChance) + '%</span>';
+      h += '<span class="nb-entry-meta"><img class=ico-inline src=images/Icons/combat_stats/stat_health.webp> ' + formatNumber(combat.hp) + '</span>';
+      h += '<span class="nb-entry-meta"><img class=ico-inline src=images/Icons/combat_stats/stat_attack.webp> ' + formatNumber(combat.dmg) + '</span>';
+      h += '<span class="nb-entry-meta"><img class=ico-inline src=images/Icons/combat_stats/stat_critical.webp> ' + Math.round(combat.critChance) + '%</span>';
       h += '</div>';
     }
   } else {
@@ -403,7 +403,7 @@ function buildBestiaryTrophiesHTML() {
   if (!list.length) return "";
   var h = '<div class="nb-accordion-section' + (bestiaryTrophiesOpen ? ' is-expanded' : '') + '">';
   h += '<button type="button" class="nb-accordion-head' + (bestiaryTrophiesOpen ? ' is-expanded' : '') + '" onclick="toggleBestiaryTrophies()">'
-    + '<span class="nb-accordion-name">' + '<img class="ico-inline" src="images/Icons/menu_icons/achivment_menu.png" alt=""> ' + _t("Trophées") + '</span><span class="nb-accordion-count">' + list.length + '</span>'
+    + '<span class="nb-accordion-name">' + '<img class="ico-inline" src="images/Icons/menu_icons/achivment_menu.webp" alt=""> ' + _t("Trophées") + '</span><span class="nb-accordion-count">' + list.length + '</span>'
     + '<span class="nb-accordion-chevron">' + (bestiaryTrophiesOpen ? "▲" : "▼") + '</span></button>';
   if (bestiaryTrophiesOpen && typeof buildBossTrophyCardHTML === "function") {
     h += '<div class="nb-accordion-body bm-trophies">' + list.map(buildBossTrophyCardHTML).join("") + '</div>';
@@ -415,7 +415,7 @@ window.buildBestiaryTrophiesHTML = buildBestiaryTrophiesHTML;
 
 function buildBestiaryHTML() {
   var cur = libraryActiveSub();
-  var h = '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="' + esc("images/Icons/menu_icons/bestiaire_menu.png|" + _t("Bibliothèque")) + '">';
+  var h = '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="' + esc("images/Icons/menu_icons/bestiaire_menu.webp|" + _t("Bibliothèque")) + '">';
   h += buildBestiaryCodexSubTabBarHTML();
 
   if (cur === "codex") {

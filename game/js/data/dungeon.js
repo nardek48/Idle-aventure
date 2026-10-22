@@ -65,9 +65,9 @@ var DUNGEONS = [
     wavePremiumMult: 3.2,
     maxRarity: "common",
     specialResourceId: "seve_aeswyn", specialResourceAmount: 2,
-    icon: "images/Dungeons/donjon_poison/donjon_poison.jpg",
-    banner: "images/Dungeons/donjon_poison/donjon_poison_baniere.jpg",
-    combatMap: "../images/Dungeons/donjon_poison/donjon_poison.jpg",
+    icon: "images/Dungeons/donjon_poison/donjon_poison.webp",
+    banner: "images/Dungeons/donjon_poison/donjon_poison_baniere.webp",
+    combatMap: "../images/Dungeons/donjon_poison/donjon_poison.webp",
     desc: "Un antre reptilien tapi sous la roche, jusqu'au repaire du Basilic lui-même.",
     story: "Les premières salles sentent la terre humide et la mousse. Des bruits de pas résonnent au loin — rien de bien effrayant, pour l'instant.",
     // v3.438.0 : pool fixe, sans Troll ni Ronce (Bouclier, Silence) — 2 traits pour 2 règles, courbe B
@@ -120,7 +120,7 @@ var DUNGEONS = [
     maxRarity: "green",
     // v3.321.0 (décision Seb) : la matière brute de la Petite Aventure du monde, comme la Sève en Forêt
     specialResourceId: "verre_des_dunes", specialResourceAmount: 2,
-    icon: "images/Dungeons/Icone_base/palier2.jpg", banner: null, combatMap: null,
+    icon: "images/Dungeons/Icone_base/palier2.webp", banner: null, combatMap: null,
     desc: "Une cité que le sable a prise, salle après salle.",
     story: "Les couloirs se resserrent. Des ombres inhabituelles glissent entre les pierres, et l'air se charge d'une tension nouvelle.",
     /* v3.315.0 (W-4a2, acte III §5) : le pool du Désert, les quatre bêtes de l'usure.
@@ -166,7 +166,7 @@ var DUNGEONS = [
     maxRarity: "rare",
     // v3.430.0 (acte III) : la Pierre errante en fin de run, comme le Verre des dunes à la Cité
     specialResourceId: "pierre_errante", specialResourceAmount: 2,
-    icon: "images/Dungeons/Icone_base/palier3.jpg", banner: null, combatMap: null,
+    icon: "images/Dungeons/Icone_base/palier3.webp", banner: null, combatMap: null,
     desc: "Ce que les ruines gardent encore, elles le gardent avec méthode.",
     story: "Un froid ancien s'infiltre jusque dans les os. Ces lieux ne sont pas laissés à l'abandon — quelque chose les garde, avec méthode.",
     /* v3.430.0 (Ruines, acte III §2) : le pool des Ruines (squelette et zombie se relèvent,
@@ -202,7 +202,7 @@ var DUNGEONS = [
     maxRarity: "epic",
     // v3.455.0 (Crypte, acte III) : la Cire de sépulcre en fin de run
     specialResourceId: "cire_sepulcre", specialResourceAmount: 3,
-    icon: "images/Dungeons/Icone_base/palier4.jpg", banner: null, combatMap: null,
+    icon: "images/Dungeons/Icone_base/palier4.webp", banner: null, combatMap: null,
     desc: "Les os y sont rangés. Pas tous.",
     story: "Des couloirs bas, des niches pleines d'os rangés. Les crânes regardent tous dans le même sens.",
     /* v3.455.0 (Crypte, acte III, CR11) : le pool de la Crypte. Vague 8 : le Porte-couronne (frappé, il
@@ -236,7 +236,7 @@ var DUNGEONS = [
     worldId: "mountain", worldRequired: 4, worldPower: 4, difficultyMult: 22,
     maxRarity: "epic", // le légendaire ne tombe qu'à la Tour (décision 12.1)
     specialResourceId: null, specialResourceAmount: 0,
-    icon: "images/Dungeons/Icone_base/palier5.jpg", banner: null, combatMap: null,
+    icon: "images/Dungeons/Icone_base/palier5.webp", banner: null, combatMap: null,
     desc: "La montagne respire par ici. Chaud.",
     story: "Le seuil du dernier palier. Une puissance oubliée sommeille dans l'obscurité — et elle sait déjà que tu es arrivé.",
     enemyPool: null, eliteWaves: null,
@@ -264,19 +264,19 @@ var DUNGEONS = [
    Colosses et Traque agissent dans DungeonManager.buildWaveEnemy().
    unlock : null = libre ; "cleared" = disponible une fois le donjon terminé une fois. */
 var DUNGEON_MARKS = [
-  { id: "aff_colossus", name: "Colosses", icon: "images/Icons/afflictions/aff_colossus.png",
+  { id: "aff_colossus", name: "Colosses", icon: "images/Icons/afflictions/aff_colossus.webp",
     desc: "Boss 2× PV · +50 % d'or sur le boss", unlock: null,
     modifiers: { bossHpMult: 2, bossGoldBonusPct: 0.50 } },
-  { id: "aff_asceticism", name: "Ascétisme", icon: "images/Icons/afflictions/aff_asceticism.png",
+  { id: "aff_asceticism", name: "Ascétisme", icon: "images/Icons/afflictions/aff_asceticism.webp",
     desc: "Potions interdites · +15 % dégâts", unlock: null,
     modifiers: { tapMult: 0.15, forbidPotions: true } },
-  { id: "aff_fragility", name: "Fragilité", icon: "images/Icons/afflictions/aff_fragility.png",
+  { id: "aff_fragility", name: "Fragilité", icon: "images/Icons/afflictions/aff_fragility.webp",
     desc: "−30 % PV max · +30 % dégâts", unlock: null,
     modifiers: { heroMaxHpMult: 0.70, tapMult: 0.30 } },
-  { id: "aff_plague", name: "Fléau", icon: "images/Icons/afflictions/aff_plague.png",
+  { id: "aff_plague", name: "Fléau", icon: "images/Icons/afflictions/aff_plague.webp",
     desc: "Dégâts ennemis +30 % · +20 % or", unlock: "cleared",
     modifiers: { enemyPowerMult: 1.30, goldMult: 1.20 } },
-  { id: "aff_elite", name: "Traque", icon: "images/Icons/afflictions/aff_elite.png",
+  { id: "aff_elite", name: "Traque", icon: "images/Icons/afflictions/aff_elite.webp",
     desc: "Chaque vague est une élite · +20 % or", unlock: "cleared",
     modifiers: { forceAllBosses: true, goldMult: 1.20 } }
 ];
@@ -290,18 +290,18 @@ var DUNGEON_GENERIC_ELITE_MULT = { endurance: 2.4, power: 1.1 };
    moins de 10 % des revenus. Chaque article déclare un `effect` et un `perLevel`, lus par
    DungeonManager.getShardEffect() ; un article absent d'ici n'agit plus. Prix provisoires. */
 var DUNGEON_SHOP = [
-  { id: "d_sacoche", name: "Sacoche du donjon", icon: "images/Icons/dungeon/dungeon_sacoche.png",
+  { id: "d_sacoche", name: "Sacoche du donjon", icon: "images/Icons/dungeon/dungeon_sacoche.webp",
     desc: "+1 matériau de monde par run réussi, par niveau.",
     effect: "specialBonus", perLevel: 1, baseCost: 20, costMult: 1.5, maxLevel: 5 },
   /* v3.358.0 (D7) : les tickets disparaissent — la Clé de faille ouvre une sortie de plus par jour et
      par donjon (2 niveaux). Les niveaux achetés au-delà comptent pour 2. */
-  { id: "d_cle", name: "Clé de faille", icon: "images/Icons/dungeon/dungeon_cle.png",
+  { id: "d_cle", name: "Clé de faille", icon: "images/Icons/dungeon/dungeon_cle.webp",
     desc: "+1 sortie par jour dans chaque donjon, par niveau.",
     effect: "runsBonus", perLevel: 1, baseCost: 15, costMult: 1.4, maxLevel: 2 },
-  { id: "d_doigte", name: "Doigté de l'Enchanteresse", icon: "images/Icons/dungeon/dungeon_doigte.png",
+  { id: "d_doigte", name: "Doigté de l'Enchanteresse", icon: "images/Icons/dungeon/dungeon_doigte.webp",
     desc: "−1 Sève par relance d'affixe, par niveau (jamais moins d'une).",
     effect: "seveDiscount", perLevel: 1, baseCost: 30, costMult: 1.6, maxLevel: 3 },
-  { id: "d_eclaireur", name: "Carte de l'éclaireur", icon: "images/Icons/dungeon/dungeon_eclaireur.png",
+  { id: "d_eclaireur", name: "Carte de l'éclaireur", icon: "images/Icons/dungeon/dungeon_eclaireur.webp",
     desc: "+1 Petite Aventure par jour, par niveau.",
     effect: "paBonus", perLevel: 1, baseCost: 60, costMult: 2, maxLevel: 2 }
 ];

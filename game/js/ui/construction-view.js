@@ -6,7 +6,7 @@ var openConstructionId = null;
 
 function getConstructionCostMeta(key) {
   if (key === "gold") {
-    return { label: "Or", iconHTML: '<img class="construction-cost-icon" src="images/Icons/gold_icon.png" alt="">' };
+    return { label: "Or", iconHTML: '<img class="construction-cost-icon" src="images/Icons/gold_icon.webp" alt="">' };
   }
   var def = WAREHOUSE_RESOURCES[key];
   if (!def) return { label: key, iconHTML: "" };
@@ -18,7 +18,7 @@ function buildConstructionCostRowHTML(label, iconHTML, amount, ok) {
   h += iconHTML;
   h += '<span class="construction-cost-label">' + esc(label) + '</span>';
   h += '<span class="construction-cost-amount">' + formatNumber(amount) + '</span>';
-  h += '<span class="construction-cost-check">' + (ok ? '<img class=ico-inline src=images/Icons/system/check_valid.png>' : '<img class=ico-inline src=images/Icons/system/cross_error.png>') + '</span>';
+  h += '<span class="construction-cost-check">' + (ok ? '<img class=ico-inline src=images/Icons/system/check_valid.webp>' : '<img class=ico-inline src=images/Icons/system/cross_error.webp>') + '</span>';
   h += '</div>';
   return h;
 }
@@ -33,7 +33,7 @@ function buildConstructionModalHTML(id) {
 
   var h = '<div class="full-menu-overlay" onclick="if (event.target === this) closeConstructionModal();">';
   h += '  <div class="full-menu construction-popup-card">';
-  h += kSheetHeadHTML({ icon: '<img src="images/Icons/workshops/masonry.png" alt="">', title: esc(_td(def.name)), close: "closeConstructionModal()" });
+  h += kSheetHeadHTML({ icon: '<img src="images/Icons/workshops/masonry.webp" alt="">', title: esc(_td(def.name)), close: "closeConstructionModal()" });
   h += '  <div class="ksheet-body">';
   h += '    <div class="construction-popup-text">' + esc(_td(def.desc)) + '</div>';
   h += '    <div class="construction-popup-meta">' + _t("Niveau {a} / {b}", { a: level, b: VillageBuildingManager.getMaxLevel(id) }) + '</div>';

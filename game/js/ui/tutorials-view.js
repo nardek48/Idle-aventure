@@ -36,9 +36,9 @@ function buildTutorialReadingHTML(id) {
   if (!entry) return "";
   var tut = entry.tutorial;
 
-  var h = '<button class="codex-back-btn" type="button" onclick="closeTutorialReading()"><img class=ico-inline src=images/Icons/system/back.png> ' + _t("Retour aux Tutoriels") + '</button>';
+  var h = '<button class="codex-back-btn" type="button" onclick="closeTutorialReading()"><img class=ico-inline src=images/Icons/system/back.webp> ' + _t("Retour aux Tutoriels") + '</button>';
   h += '<div class="codex-reading-card">';
-  h += '<div class="codex-reading-icon">' + renderIconOrEmojiHTML(tut.icon || "images/Icons/codex/codex_lore.png", "codex-reading-icon-img", _td(tut.title || "")) + '</div>';
+  h += '<div class="codex-reading-icon">' + renderIconOrEmojiHTML(tut.icon || "images/Icons/codex/codex_lore.webp", "codex-reading-icon-img", _td(tut.title || "")) + '</div>';
   h += '<div class="codex-reading-title">' + esc(_td(tut.title || "")) + '</div>';
 
   h += '<div class="tutorial-points tutorial-points-read">';
@@ -64,7 +64,7 @@ function buildTutorialListItemHTML(entry) {
 
   var h = '<button type="button" class="nb-entry-card' + (!unlocked ? ' is-locked' : '') + '" onclick="selectTutorialEntry(\'' + esc(entry.id) + '\')">';
   h += '<div class="nb-entry-icon-col"><div class="nb-entry-icon-frame"><span class="nb-entry-icon-emoji">'
-    + (unlocked ? renderIconOrEmojiHTML(tut.icon || "images/Icons/codex/codex_lore.png", "nb-entry-icon-img", _td(tut.title || "")) : '<img class=ico-inline src=images/Icons/system/lock_closed.png>')
+    + (unlocked ? renderIconOrEmojiHTML(tut.icon || "images/Icons/codex/codex_lore.webp", "nb-entry-icon-img", _td(tut.title || "")) : '<img class=ico-inline src=images/Icons/system/lock_closed.webp>')
     + '</span></div></div>';
   h += '<div class="nb-entry-info-col">';
   h += '<div class="nb-entry-name">' + (unlocked ? esc(_td(tut.title || "")) : '???') + '</div>';

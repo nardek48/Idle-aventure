@@ -673,7 +673,7 @@ Deux contraintes mesurées à l'atelier :
 
 .cb-hero .combat-hero-mini-hp-bar.kgauge {
   aspect-ratio: 1086 / 163;
-  --kg-frame: url('../images/UI/gauges/gauge-dragon-claw-frame.png');
+  --kg-frame: url('../images/UI/gauges/gauge-dragon-claw-frame.webp');
   --kg-l: 11.2%;
   --kg-r: 11%;
   --kg-t: 35%;

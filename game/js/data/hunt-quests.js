@@ -97,7 +97,7 @@ var HUNT_QUESTS = {
     adventureIndex: 0,
     name: "Chasse en Forêt",
     story: "Le gibier ne manque pas à la Lisière, et ce qu'il traîne avec lui non plus. Une bête abattue sur cinq ne laisse rien ; les autres rapportent viande, blé, bois, fer, pierre ou eau pour l'Entrepôt. Une chasse peut se répéter indéfiniment.",
-    icon: "images/Icons/quests/ration_reward.png",
+    icon: "images/Icons/quests/ration_reward.webp",
     enemyFilter: ["wolf"], // v3.108.0 : le gibier, c'est le Loup (sorti du pool libre en 3.107.4) — plus de viande de slime
     resourceKey: "viande",
     /* v3.260.0 (décision Seb) : 80 % de butin par kill, la ressource tirée à parts égales parmi
@@ -172,7 +172,7 @@ var HUNT_QUESTS = {
     story: "Les bêtes du Cœur ne saignent pas comme les autres. Sous l'écorce de leur peau, "
       + "quelque chose de clair affleure et durcit à l'air. La Forêt leur a donné quelque chose ; "
       + "rien n'empêche de le reprendre.",
-    icon: "images/Icons/codex/world_forest.png",
+    icon: "images/Icons/codex/world_forest.webp",
     resourceKey: "seve_aeswyn",
     dropChancePct: 3,
     lotSize: 30
@@ -200,7 +200,7 @@ var HUNT_QUESTS = {
     name: "Battue en Forêt",
     story: "Aldric paie à la tête. Vingt bêtes, et la bourse s'ouvre — il ne demande ni laquelle, "
       + "ni pourquoi. La Forêt en a toujours vingt de plus.",
-    icon: "images/Icons/gold_icon.png",
+    icon: "images/Icons/gold_icon.webp",
     lotSize: 20,
     // 120 or = exactement le double de ce que rapportent déjà 20 kills en Lisière
     // (120 or bruts, ~3 min). Repères : amélioration de Force 45-122 or au niveau
@@ -225,7 +225,7 @@ var HUNT_QUESTS = {
     name: "Battue du Désert",
     story: "Le Veilleur ne paie pas, lui. Mais les caravanes qui passent encore la frange, si. "
       + "Vingt bêtes éloignées de la piste, et la bourse s'ouvre.",
-    icon: "images/Icons/gold_icon.png",
+    icon: "images/Icons/gold_icon.webp",
     lotSize: 20,
     rewardGold: 450
   }

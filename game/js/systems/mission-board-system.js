@@ -22,7 +22,7 @@ var EXPLORATION_BOARD_BLURBS = {
   fallowField: _t("Débloque les Champs (blé).")
 };
 
-var MISSION_TYPE_ICON = { combat: "images/Icons/quests/mission_combat.png", expedition: "images/Icons/quests/mission_exploration.png", chasse: "images/Icons/quests/mission_hunt.png", donjon: "images/Icons/quests/mission_dungeon.png", production: "images/Icons/quests/mission_construction.png" }; // v3.108.0 : production (Les fondations)
+var MISSION_TYPE_ICON = { combat: "images/Icons/quests/mission_combat.webp", expedition: "images/Icons/quests/mission_exploration.webp", chasse: "images/Icons/quests/mission_hunt.webp", donjon: "images/Icons/quests/mission_dungeon.webp", production: "images/Icons/quests/mission_construction.webp" }; // v3.108.0 : production (Les fondations)
 var MISSION_STATUS_LABEL = {
   locked: _t("Verrouillée"), available: _t("Disponible"), accepted: _t("Acceptée"),
   running: _t("En cours"), ready: _t("Objectif atteint"), claimable: _t("Prête à réclamer")
@@ -694,7 +694,7 @@ var MissionBoard = {
   },
 
   statusLabel: function (status) { return MISSION_STATUS_LABEL[status] || status; },
-  typeIcon: function (type) { return MISSION_TYPE_ICON[type] || "images/Icons/quests/quest_story.png"; }
+  typeIcon: function (type) { return MISSION_TYPE_ICON[type] || "images/Icons/quests/quest_story.webp"; }
 };
 
 window.MissionBoard = MissionBoard;

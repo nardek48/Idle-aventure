@@ -36,7 +36,7 @@ function buildCombatReportSlotCardHTML(slot, stats) {
 
   if (stats.countersSucceeded > 0 || stats.countersExpired > 0 || stats.countersMissed > 0) {
     var counterParts = [];
-    if (stats.countersSucceeded > 0) counterParts.push('<img class=ico-inline src=images/Icons/combat_stats/stat_speed.png> ' + crPl(stats.countersSucceeded, _t("{n} contre réussi", { n: stats.countersSucceeded }), _t("{n} contres réussis", { n: stats.countersSucceeded })));
+    if (stats.countersSucceeded > 0) counterParts.push('<img class=ico-inline src=images/Icons/combat_stats/stat_speed.webp> ' + crPl(stats.countersSucceeded, _t("{n} contre réussi", { n: stats.countersSucceeded }), _t("{n} contres réussis", { n: stats.countersSucceeded })));
     if (stats.countersExpired > 0) counterParts.push(crPl(stats.countersExpired, _t("{n} expiré sans contre", { n: stats.countersExpired }), _t("{n} expirés sans contre", { n: stats.countersExpired })));
     if (stats.countersMissed > 0) counterParts.push(crPl(stats.countersMissed, _t("{n} raté (mauvais timing)", { n: stats.countersMissed }), _t("{n} ratés (mauvais timing)", { n: stats.countersMissed })));
     h += '<p class="panel-sub combat-report-slot-line">' + escPreservingIcons(counterParts.join(' · ')) + '</p>';
@@ -69,10 +69,10 @@ function buildCombatReportArchetypeCardHTML(impact) {
   if (!impact) return "";
 
   var lines = [];
-  if (impact.enragedBonusDamageTaken > 0) lines.push('<img class=ico-inline src=images/Icons/combat_status/rage.png> ' + _t("~{n} dégâts bonus subis (Enragé)", { n: formatNumber(Math.floor(impact.enragedBonusDamageTaken)) }));
-  if (impact.vampiricHealStolen > 0) lines.push('<img class=ico-inline src=images/Icons/combat_status/vampiric.png> ' + _t("~{n} PV volés par l'ennemi (Vampirique)", { n: formatNumber(Math.floor(impact.vampiricHealStolen)) }));
-  if (impact.corruptedDamageLost > 0) lines.push('<img class=ico-inline src=images/Icons/combat_status/corruption.png> ' + _t("~{n} dégâts perdus (Corrompu)", { n: formatNumber(Math.floor(impact.corruptedDamageLost)) }));
-  if (impact.armoredDamageLost > 0) lines.push('<img class=ico-inline src=images/Icons/combat_status/armored.png> ' + _t("~{n} dégâts perdus (Blindé)", { n: formatNumber(Math.floor(impact.armoredDamageLost)) }));
+  if (impact.enragedBonusDamageTaken > 0) lines.push('<img class=ico-inline src=images/Icons/combat_status/rage.webp> ' + _t("~{n} dégâts bonus subis (Enragé)", { n: formatNumber(Math.floor(impact.enragedBonusDamageTaken)) }));
+  if (impact.vampiricHealStolen > 0) lines.push('<img class=ico-inline src=images/Icons/combat_status/vampiric.webp> ' + _t("~{n} PV volés par l'ennemi (Vampirique)", { n: formatNumber(Math.floor(impact.vampiricHealStolen)) }));
+  if (impact.corruptedDamageLost > 0) lines.push('<img class=ico-inline src=images/Icons/combat_status/corruption.webp> ' + _t("~{n} dégâts perdus (Corrompu)", { n: formatNumber(Math.floor(impact.corruptedDamageLost)) }));
+  if (impact.armoredDamageLost > 0) lines.push('<img class=ico-inline src=images/Icons/combat_status/armored.webp> ' + _t("~{n} dégâts perdus (Blindé)", { n: formatNumber(Math.floor(impact.armoredDamageLost)) }));
 
   if (!lines.length) return "";
 
@@ -106,11 +106,11 @@ function buildCombatReportBodyHTML() {
   var h = "";
   var summaryParts = [];
   var avgDps = (window.CombatReportManager && typeof CombatReportManager.getAverageDps === "function") ? CombatReportManager.getAverageDps() : 0;
-  if (avgDps > 0) summaryParts.push('<img class=ico-inline src=images/Icons/combat_stats/stat_attack.png> ' + _t("~{n} DPS moyen", { n: formatNumber(Math.round(avgDps)) }));
-  if (report.damageAvoidedTotal > 0) summaryParts.push('<img class=ico-inline src=images/Icons/combat_stats/stat_defense.png> ' + _t("~{n} dégâts évités", { n: formatNumber(Math.floor(report.damageAvoidedTotal)) }));
-  if (report.healPreventedTotal > 0) summaryParts.push('<img class=ico-inline src=images/Icons/combat_status/heal_incoming.png> ' + _t("~{n} PV de soin empêchés", { n: formatNumber(Math.floor(report.healPreventedTotal)) }));
-  if (report.shieldsRemovedCount > 0) summaryParts.push('<img class=ico-inline src=images/Icons/combat_stats/stat_speed.png> ' + crPl(report.shieldsRemovedCount, _t("{n} bouclier retiré", { n: report.shieldsRemovedCount }), _t("{n} boucliers retirés", { n: report.shieldsRemovedCount })));
-  if (report.silencesAvoidedCount > 0) summaryParts.push('<img class=ico-inline src=images/Icons/combat_status/silence_incoming.png> ' + crPl(report.silencesAvoidedCount, _t("{n} silence évité", { n: report.silencesAvoidedCount }), _t("{n} silences évités", { n: report.silencesAvoidedCount })));
+  if (avgDps > 0) summaryParts.push('<img class=ico-inline src=images/Icons/combat_stats/stat_attack.webp> ' + _t("~{n} DPS moyen", { n: formatNumber(Math.round(avgDps)) }));
+  if (report.damageAvoidedTotal > 0) summaryParts.push('<img class=ico-inline src=images/Icons/combat_stats/stat_defense.webp> ' + _t("~{n} dégâts évités", { n: formatNumber(Math.floor(report.damageAvoidedTotal)) }));
+  if (report.healPreventedTotal > 0) summaryParts.push('<img class=ico-inline src=images/Icons/combat_status/heal_incoming.webp> ' + _t("~{n} PV de soin empêchés", { n: formatNumber(Math.floor(report.healPreventedTotal)) }));
+  if (report.shieldsRemovedCount > 0) summaryParts.push('<img class=ico-inline src=images/Icons/combat_stats/stat_speed.webp> ' + crPl(report.shieldsRemovedCount, _t("{n} bouclier retiré", { n: report.shieldsRemovedCount }), _t("{n} boucliers retirés", { n: report.shieldsRemovedCount })));
+  if (report.silencesAvoidedCount > 0) summaryParts.push('<img class=ico-inline src=images/Icons/combat_status/silence_incoming.webp> ' + crPl(report.silencesAvoidedCount, _t("{n} silence évité", { n: report.silencesAvoidedCount }), _t("{n} silences évités", { n: report.silencesAvoidedCount })));
   if (summaryParts.length) {
     h += '<div class="combat-report-summary">' + summaryParts.map(function (p) { return escPreservingIcons(p); }).join('<br>') + '</div>';
   }
@@ -137,13 +137,13 @@ function buildCombatReportHTML(trigger, enemyName) {
   var h = '<div class="full-menu-overlay combat-report-overlay" onclick="if (event.target === this) closeCombatReport();">';
   h += '  <div class="full-menu combat-report-card">';
 
-  var icon = trigger === "defeat" ? "images/Icons/camp/hero_defeated.png" : trigger === "boss" ? "images/Icons/dungeon/boss_crown.png" : "images/Icons/subtabs/hero_stats.png";
+  var icon = trigger === "defeat" ? "images/Icons/camp/hero_defeated.webp" : trigger === "boss" ? "images/Icons/dungeon/boss_crown.webp" : "images/Icons/subtabs/hero_stats.webp";
   var title = trigger === "defeat" ? _t("Rapport de combat — défaite")
     : trigger === "boss" ? _t("Rapport de combat — boss vaincu")
     : _t("Rapport de combat");
   h += kSheetHeadHTML({ icon: renderIconOrEmojiHTML(icon, "", ""), title: esc(title), sub: enemyName ? esc(_td(enemyName)) : "", close: "closeCombatReport()" });
   h += '  <div class="ksheet-body">' + buildCombatReportBodyHTML() + '</div>';
-  h += '  <div class="ksheet-foot"><button class="kbtn danger combat-report-reset-btn" type="button" onclick="resetCombatReport()"><img class=ico-inline src=images/Icons/system/trash.png> ' + _t("Réinitialiser le rapport") + '</button></div>';
+  h += '  <div class="ksheet-foot"><button class="kbtn danger combat-report-reset-btn" type="button" onclick="resetCombatReport()"><img class=ico-inline src=images/Icons/system/trash.webp> ' + _t("Réinitialiser le rapport") + '</button></div>';
   h += '  </div>';
   h += '</div>';
   return h;
@@ -163,7 +163,7 @@ function resetCombatReport() {
   showConfirmModal(
     _t("Réinitialiser le rapport ?"),
     _t("Toutes les données accumulées (utilisations, contres, réservations) seront effacées. Cette action est irréversible."),
-    "images/Icons/system/trash.png",
+    "images/Icons/system/trash.webp",
     function () {
       if (window.CombatReportManager) CombatReportManager.resetManual();
       // v3.211.0 : le rapport a deux habillages. Si on l'a ouvert depuis la feuille

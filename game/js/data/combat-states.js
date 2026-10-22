@@ -26,37 +26,37 @@ var COMBAT_STATE_ICON = "images/Icons/combat_status/";
 var COMBAT_STATES = {
   /* --- Au prochain round --- */
   charge: {
-    famille: "alerte", nom: "Charge", icon: COMBAT_STATE_ICON + "charge_incoming.png",
+    famille: "alerte", nom: "Charge", icon: COMBAT_STATE_ICON + "charge_incoming.webp",
     mot: "Il charge !",
     desc: "Sa prochaine attaque frappe beaucoup plus fort.",
     hint: "Défense, ou une compétence qui contre la charge."
   },
   silence: {
-    famille: "alerte", nom: "Silence", icon: COMBAT_STATE_ICON + "silence_incoming.png",
+    famille: "alerte", nom: "Silence", icon: COMBAT_STATE_ICON + "silence_incoming.webp",
     mot: "Silence !",
     desc: "Il s'apprête à bloquer tes techniques.",
     hint: "Place ta grosse compétence maintenant, avant d'être muselé."
   },
   shieldIncoming: {
-    famille: "alerte", nom: "Bouclier", icon: COMBAT_STATE_ICON + "shield_incoming.png",
+    famille: "alerte", nom: "Bouclier", icon: COMBAT_STATE_ICON + "shield_incoming.webp",
     mot: "Il se protège !",
     desc: "Il va réduire de moitié les dégâts qu'il subit.",
     hint: "Garde tes gros coups pour après, ou brise le bouclier."
   },
   healIncoming: {
-    famille: "alerte", nom: "Soin", icon: COMBAT_STATE_ICON + "heal_incoming.png",
+    famille: "alerte", nom: "Soin", icon: COMBAT_STATE_ICON + "heal_incoming.webp",
     mot: "Il va se soigner !", teinte: "is-heal",
     desc: "Il récupère une partie de ses PV : ton travail est effacé.",
     hint: "Interromps-le — c'est le télégraphe qui coûte le plus cher."
   },
   doubleStrike: {
-    famille: "alerte", nom: "Double frappe", icon: COMBAT_STATE_ICON + "gauge_full.png",
+    famille: "alerte", nom: "Double frappe", icon: COMBAT_STATE_ICON + "gauge_full.webp",
     mot: "Deux frappes !",
     desc: "Sa jauge est pleine : il frappera deux fois au prochain tour.",
     hint: "Soigne-toi avant, ou défends."
   },
   approaching: {
-    famille: "alerte", nom: "Il approche", icon: COMBAT_STATE_ICON + "enemy_approaching.png",
+    famille: "alerte", nom: "Il approche", icon: COMBAT_STATE_ICON + "enemy_approaching.webp",
     mot: "Il approche",
     desc: "Il n'est pas encore au contact et ne frappe pas — mais il arrive lancé.",
     hint: "Tes tours les plus sûrs : frappe fort maintenant."
@@ -64,55 +64,55 @@ var COMBAT_STATES = {
 
   /* --- Porté par l'ennemi --- */
   enraged: {
-    famille: "enemy", nom: "Enragé", icon: COMBAT_STATE_ICON + "rage.png",
-    iconSuppressed: COMBAT_STATE_ICON + "rage_calmed.png",
+    famille: "enemy", nom: "Enragé", icon: COMBAT_STATE_ICON + "rage.webp",
+    iconSuppressed: COMBAT_STATE_ICON + "rage_calmed.webp",
     desc: "Plus il perd de PV, plus il frappe fort.",
     hint: "Finis-le vite plutôt que de l'user.",
     descSuppressed: "Sa rage est apaisée pour quelques rounds."
   },
   corrupted: {
-    famille: "enemy", nom: "Corrupteur", icon: COMBAT_STATE_ICON + "corruption.png",
+    famille: "enemy", nom: "Corrupteur", icon: COMBAT_STATE_ICON + "corruption.webp",
     desc: "Chaque coup qu'il te porte réduit tes dégâts, et ça se cumule.",
     hint: "Évite d'encaisser : chaque coup pris te diminue."
   },
   vampiric: {
-    famille: "enemy", nom: "Vampirique", icon: COMBAT_STATE_ICON + "vampiric.png",
+    famille: "enemy", nom: "Vampirique", icon: COMBAT_STATE_ICON + "vampiric.webp",
     desc: "Il se soigne à chaque coup qu'il te porte.",
     hint: "Le laisser frapper, c'est le soigner.",
     descSuppressed: "Son vol de vie est bloqué pour quelques rounds."
   },
   armored: {
-    famille: "enemy", nom: "Blindé", icon: COMBAT_STATE_ICON + "armored.png",
+    famille: "enemy", nom: "Blindé", icon: COMBAT_STATE_ICON + "armored.webp",
     desc: "Il subit en permanence un peu moins de dégâts.",
     hint: "Une compétence de suppression fissure son blindage.",
     descSuppressed: "Son blindage est fissuré pour quelques rounds."
   },
   shieldActive: {
-    famille: "enemy", nom: "Bouclier actif", icon: COMBAT_STATE_ICON + "shield_active.png",
+    famille: "enemy", nom: "Bouclier actif", icon: COMBAT_STATE_ICON + "shield_active.webp",
     desc: "−50 % sur les dégâts qu'il subit, pour quelques rounds.",
     hint: "Attends la fin plutôt que de gaspiller tes compétences coûteuses."
   },
 
   /* --- Posé par le héros --- */
   vulnerable: {
-    famille: "mine", nom: "Vulnérable", icon: COMBAT_STATE_ICON + "vulnerable.png",
+    famille: "mine", nom: "Vulnérable", icon: COMBAT_STATE_ICON + "vulnerable.webp",
     desc: "Il subit davantage de dégâts — c'est toi qui l'as ouvert.",
     hint: "Enchaîne tes plus gros coups tant que ça dure."
   },
   dot: {
-    famille: "mine", nom: "Brûlure arcanique", icon: COMBAT_STATE_ICON + "arcane_burn.png",
+    famille: "mine", nom: "Brûlure arcanique", icon: COMBAT_STATE_ICON + "arcane_burn.webp",
     desc: "Il perd des PV à chaque round, sans que tu aies à agir.",
     hint: "Inutile de la réappliquer tant qu'elle court."
   },
   countered: {
-    famille: "mine", nom: "Contré", icon: "images/Icons/combat_stats/stat_speed.png",
+    famille: "mine", nom: "Contré", icon: "images/Icons/combat_stats/stat_speed.webp",
     desc: "Tu as contré son attaque : elle n'a rien donné.",
     hint: ""
   },
 
   /* --- Subi par le héros --- */
   silenced: {
-    famille: "onme", nom: "Tu es silencié", icon: COMBAT_STATE_ICON + "silenced.png",
+    famille: "onme", nom: "Tu es silencié", icon: COMBAT_STATE_ICON + "silenced.webp",
     desc: "Tes techniques sont bloquées.",
     hint: "L'attaque de base et la Défense restent disponibles."
   }
@@ -136,36 +136,36 @@ window.COMBAT_STATES = COMBAT_STATES;
    Séparés de COMBAT_STATES pour ne rien changer à l'ancienne rangée ni à ses contrôles. */
 var COMBAT_STATES_SCREEN = {
   ranged: {
-    famille: "enemy", nom: "Tireur", icon: COMBAT_STATE_ICON + "ranged.png", // à générer (icône générique en attendant)
+    famille: "enemy", nom: "Tireur", icon: COMBAT_STATE_ICON + "ranged.webp", // à générer (icône générique en attendant)
     desc: "Il frappe de loin : il ne s'approche pas et touche dès le premier round.",
     hint: "Il ne viendra pas à toi : vise-le en premier si l'équipe souffre."
   },
   surge: {
-    famille: "alerte", nom: "Exaltation", icon: COMBAT_STATE_ICON + "arcane_burn.png", mot: "Il s'exalte !",
+    famille: "alerte", nom: "Exaltation", icon: COMBAT_STATE_ICON + "arcane_burn.webp", mot: "Il s'exalte !",
     desc: "Son trait d'élite va compter triple pendant quelques rounds.",
     hint: "Tiens bon ou abrège : le pic ne dure pas."
   },
   // v3.428.2 (Ruines) : la relève, enfin visible à l'écran
   rising: {
-    famille: "alerte", nom: "À terre", icon: COMBAT_STATE_ICON + "rising.png", mot: "Il se relève !",
+    famille: "alerte", nom: "À terre", icon: COMBAT_STATE_ICON + "rising.webp", mot: "Il se relève !",
     desc: "Il est tombé, mais il se relèvera au prochain round avec la moitié de ses PV. Une seule fois.",
     hint: "Frappe-le maintenant (touche-le, ou la règle « Un ennemi se relève ») : il reste à terre."
   },
   // v3.451.0 (Crypte, CR2) : les morts qui dorment. Icône à générer.
   asleep: {
-    famille: "enemy", nom: "Endormi", icon: COMBAT_STATE_ICON + "asleep.png",
+    famille: "enemy", nom: "Endormi", icon: COMBAT_STATE_ICON + "asleep.webp",
     desc: "Il dort : il ne joue pas, et le combat est gagné sans lui. Le chiffre compte les rounds avant qu'il se lève seul.",
     hint: "Laisse-le dormir, ou touche-le pour le réveiller : vaincu, il rapporte la moitié d'or en plus."
   },
   // v3.454.0 (Crypte, acte II) : l'appel du Nécromancien. Icône à générer.
   calling: {
-    famille: "alerte", nom: "Appel", icon: COMBAT_STATE_ICON + "calling.png", mot: "Il appelle !",
+    famille: "alerte", nom: "Appel", icon: COMBAT_STATE_ICON + "calling.webp", mot: "Il appelle !",
     desc: "Il dit un nom. Au tour suivant, un dormeur se lève, sans or en plus.",
     hint: "Tue-le avant : le réglage « Cible » sur « Le soutien » le vise d'abord."
   },
   // v3.456.0 (Crypte, acte IV) : il lève une chaîne. Icône de Seb (v3.456.1).
   chaining: {
-    famille: "alerte", nom: "Chaîne", icon: COMBAT_STATE_ICON + "chained.png", mot: "Une chaîne !",
+    famille: "alerte", nom: "Chaîne", icon: COMBAT_STATE_ICON + "chained.webp", mot: "Une chaîne !",
     desc: "Il lève une chaîne. Au tour suivant, un compagnon est enchaîné : il ne joue plus pendant 2 rounds.",
     hint: "Frappe fort celui qui la tient : elle cède plus tôt. Toi, il ne t'enchaîne pas."
   }

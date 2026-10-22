@@ -126,7 +126,7 @@ function toggleHeroStat(key) {
 var HEROS_STAT_ROWS = [
   {
     key: "power", upgradeId: "utrain_power", trainedKey: "power",
-    name: _t("Force"), icon: "./images/Icons/improvement_icons/power.png",
+    name: _t("Force"), icon: "./images/Icons/improvement_icons/power.webp",
     produces: _t("Dégâts de l'attaque de base"), unit: _t("ATK", "unité"),
     read: function () { return (typeof EquipmentManager !== "undefined") ? EquipmentManager.effectiveTapDamage() : 0; },
     fmt: function (v) { return _t("ATK", "unité") + " " + formatNumber(Math.round(v)); },
@@ -134,7 +134,7 @@ var HEROS_STAT_ROWS = [
   },
   {
     key: "endurance", upgradeId: "utrain_endurance", trainedKey: "endurance",
-    name: _t("Endurance"), icon: "./images/Icons/improvement_icons/endurance.png",
+    name: _t("Endurance"), icon: "./images/Icons/improvement_icons/endurance.webp",
     produces: _t("Points de vie"), unit: _t("PV", "unité"),
     read: function () { return Number(game.heroMaxHp || 0); },
     fmt: function (v) { return _t("PV", "unité") + " " + formatNumber(Math.round(v)); },
@@ -143,7 +143,7 @@ var HEROS_STAT_ROWS = [
   },
   {
     key: "celerity", upgradeId: "utrain_celerity", trainedKey: "celerity",
-    name: _t("Célérité"), icon: "./images/Icons/improvement_icons/celerity.png",
+    name: _t("Célérité"), icon: "./images/Icons/improvement_icons/celerity.webp",
     produces: _t("Vitesse de remplissage de la jauge"), unit: _t("VIT", "unité"),
     read: function () {
       return (window.CombatEngine && typeof CombatEngine.getTotalCelerity === "function")
@@ -154,7 +154,7 @@ var HEROS_STAT_ROWS = [
   },
   {
     key: "precision", upgradeId: "utrain_precision", trainedKey: "precision",
-    name: _t("Précision"), icon: "./images/Icons/improvement_icons/accuracy.png",
+    name: _t("Précision"), icon: "./images/Icons/improvement_icons/accuracy.webp",
     produces: _t("Chance de coup critique"), unit: _t("CRIT", "unité"),
     read: function () { return (typeof EquipmentManager !== "undefined") ? EquipmentManager.effectiveCritChance() : 0; },
     fmt: function (v) { return _t("CRIT", "unité") + " " + (Math.round(v * 10) / 10) + " %"; },
@@ -162,7 +162,7 @@ var HEROS_STAT_ROWS = [
   },
   {
     key: "will", upgradeId: "utrain_will", trainedKey: "will",
-    name: _t("Volonté"), icon: "./images/Icons/improvement_icons/will.png",
+    name: _t("Volonté"), icon: "./images/Icons/improvement_icons/will.webp",
     produces: _t("Puissance des coups critiques"), unit: _t("CRIT ×", "unité"),
     read: function () { return (typeof EquipmentManager !== "undefined") ? EquipmentManager.effectiveCritMult() : 0; },
     fmt: function (v) { return _t("CRIT ×", "unité") + " " + (Math.round(v * 100) / 100); },
@@ -405,9 +405,9 @@ function buildHeroStatCardHTML(row, buyAmount) {
     h += '<div class="pc-stat-card-buy is-locked">' + _t("Monde") + '<small>' + ((upgrade.unlockWorld || 0) + 1) + '</small></div>';
   } else if (gain) {
     h += '<button type="button" class="pc-stat-card-buy kbuy" onclick="buyUpgrade(\'' + esc(row.upgradeId) + '\', ' + buyAmount + ')">';
-    h += '<img src="images/Icons/gold_icon.png" alt="">' + formatNumber(gain.totalCost) + '<small>×' + gain.count + '</small></button>';
+    h += '<img src="images/Icons/gold_icon.webp" alt="">' + formatNumber(gain.totalCost) + '<small>×' + gain.count + '</small></button>';
   } else {
-    h += '<div class="pc-stat-card-buy kbuy is-poor"><img src="images/Icons/gold_icon.png" alt="">' + formatNumber(nextCost) + '</div>';
+    h += '<div class="pc-stat-card-buy kbuy is-poor"><img src="images/Icons/gold_icon.webp" alt="">' + formatNumber(nextCost) + '</div>';
   }
   h += '</div>';
 
@@ -438,7 +438,7 @@ function buildHeroStatCardHTML(row, buyAmount) {
       h += '</div>';
     }
     if (gain && Math.abs(gain.delta) >= 0.005) {
-      h += '<div class="pc-stat-next"><img class=ico-inline src=images/Icons/system/upgrade.png> ' + esc(_t("{x} pour {n} or", { x: row.fmtDelta(gain.delta), n: formatNumber(gain.totalCost) })) + '</div>';
+      h += '<div class="pc-stat-next"><img class=ico-inline src=images/Icons/system/upgrade.webp> ' + esc(_t("{x} pour {n} or", { x: row.fmtDelta(gain.delta), n: formatNumber(gain.totalCost) })) + '</div>';
     } else if (gain) {
       // Gain réel mais invisible après arrondi : on dit à partir de combien il
       // se verra, plutôt que d'afficher un "+0" décourageant.
@@ -471,7 +471,7 @@ function buildHerosAmeliorationHTML() {
   // v3.244.0 : le corps est rendu dans une feuille basse — plus de cadre de page.
   h += '<div class="pc-heros-train-section">';
 
-  h += '<div class="pc-stat-gold"><img src="images/Icons/gold_icon.png" alt=""> ' + formatNumber(game.gold || 0) + '</div>';
+  h += '<div class="pc-stat-gold"><img src="images/Icons/gold_icon.webp" alt=""> ' + formatNumber(game.gold || 0) + '</div>';
 
   // .shop-buy-toolbar : c'est ce conteneur qui porte l'état actif du bouton
   // (css/04-panel-village-shop.css). Conservé tel quel de l'ancien écran.
@@ -532,7 +532,7 @@ function buildHeroSkillCardHTML(action) {
   var isDefense = action.type === "defense";
   var remaining = (game.classCooldowns && typeof game.classCooldowns[id] === "number") ? game.classCooldowns[id] : 0;
   var icon = (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[id])
-    || (isDefense ? "images/Icons/combat_stats/stat_defense.png" : "images/Icons/scene/node_discovery.png");
+    || (isDefense ? "images/Icons/combat_stats/stat_defense.webp" : "images/Icons/scene/node_discovery.webp");
   var cost = Number(action.resourceCost || 0);
   var resLabel = "";
   if (typeof getClassForHero === "function") {
@@ -566,7 +566,7 @@ function buildHeroSkillCardHTML(action) {
     h += '<div class="pc-skill-desc">' + esc(getSkillDescText(ClassCombatManager.getCurrentClassId(), action)) + '</div>';
 
     h += '<div class="pc-skill-counters">';
-    h += '<div class="pc-skill-counters-lbl"><img class=ico-inline src=images/Icons/combat_stats/stat_speed.png> ' + _t("Utile contre") + '</div>';
+    h += '<div class="pc-skill-counters-lbl"><img class=ico-inline src=images/Icons/combat_stats/stat_speed.webp> ' + _t("Utile contre") + '</div>';
     // v3.208.0 : liste complète (counters + suppressions d'archétype portées par effects).
     // Avant, seul action.counters était lu — la moitié des contres n'était annoncée nulle part.
     var ids = (typeof getAllGrimoireCounterIds === "function")
@@ -632,15 +632,15 @@ function buildHerosStatsHTML() {
    le rail du kit EN HAUT (.kseg.is-stack, comme Village, Camp, Quêtes) et quatre onglets :
    Résumé · Équipement · Talents · Compagnons. Plus de barre de sous-onglets en bas.
    Compagnons redevient un onglet (il n'apparaît qu'une fois un compagnon recruté). */
-var HEROS_FRAME_ICON = "images/Icons/menu_icons/heroes_menu.png";
+var HEROS_FRAME_ICON = "images/Icons/menu_icons/heroes_menu.webp";
 
 function getHerosTabs() {
   var unlocked = function (t) { return typeof isTabUnlocked !== "function" || isTabUnlocked(t); };
-  var tabs = [["hero", "images/Icons/subtabs/hero_summary.png", _t("Résumé")]];
-  if (unlocked("equip")) tabs.push(["equip", "images/Icons/subtabs/equipment.png", _t("Équipement")]);
-  if (unlocked("talents")) tabs.push(["talents", "images/Icons/scene/node_discovery.png", _t("Talents")]);
+  var tabs = [["hero", "images/Icons/subtabs/hero_summary.webp", _t("Résumé")]];
+  if (unlocked("equip")) tabs.push(["equip", "images/Icons/subtabs/equipment.webp", _t("Équipement")]);
+  if (unlocked("talents")) tabs.push(["talents", "images/Icons/scene/node_discovery.webp", _t("Talents")]);
   if (unlocked("companions") && window.CompanionManager && CompanionManager.unlockedIds().length) {
-    tabs.push(["companions", "images/Icons/subtabs/hero_abilities.png", _t("Compagnons")]);
+    tabs.push(["companions", "images/Icons/subtabs/hero_abilities.webp", _t("Compagnons")]);
   }
   return tabs;
 }
@@ -730,10 +730,10 @@ function buildHerosHTML() {
    bas). Alimentées par renderPanel() à chaque rendu, vidées en quittant l'écran.
    ============================================================ */
 var HEROS_SHEETS = {
-  stats: { title: _t("Stats"), icon: "images/Icons/subtabs/hero_stats.png", build: function () { return buildHerosAmeliorationHTML(); } },
-  abilities: { title: _t("Capacités"), icon: "images/Icons/subtabs/hero_abilities.png", build: function () { return buildHerosStatsHTML(); } },
+  stats: { title: _t("Stats"), icon: "images/Icons/subtabs/hero_stats.webp", build: function () { return buildHerosAmeliorationHTML(); } },
+  abilities: { title: _t("Capacités"), icon: "images/Icons/subtabs/hero_abilities.webp", build: function () { return buildHerosStatsHTML(); } },
   // v3.327.0 : détail d'un talent (ui/talents-view.js, openTalentSheet)
-  talent: { title: _t("Talent"), icon: "images/Icons/scene/node_discovery.png", build: function () { return buildTalentSheetBodyHTML(); } }
+  talent: { title: _t("Talent"), icon: "images/Icons/scene/node_discovery.webp", build: function () { return buildTalentSheetBodyHTML(); } }
 };
 
 function buildHerosSheetHTML() {

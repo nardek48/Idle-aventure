@@ -81,8 +81,8 @@ var VILLAGE_BUILDINGS = {
   workshop: {
     id: "workshop",
     name: "Atelier de Construction",
-    icon: "images/Icons/workshops/masonry.png",
-    iconImg: "images/Icons/construction_icon.png",
+    icon: "images/Icons/workshops/masonry.webp",
+    iconImg: "images/Icons/construction_icon.webp",
     rank: 0,                 // pas de prérequis : c'est lui qui donne les rangs
     maxLevel: 10,
     implemented: true,
@@ -129,8 +129,8 @@ var VILLAGE_BUILDINGS = {
   training: {
     id: "training",
     name: "Terrain d'entraînement",
-    icon: "images/Icons/combat_stats/stat_critical.png",
-    iconImg: "images/Icons/village_buildings/training_grounds.png",
+    icon: "images/Icons/combat_stats/stat_critical.webp",
+    iconImg: "images/Icons/village_buildings/training_grounds.webp",
     rank: 1,
     /* v3.214.0 : 14 niveaux, soit le plafond historique de 150 par
        caractéristique. Les quatre derniers (11 à 14) exigent la Résine durcie,
@@ -183,8 +183,8 @@ var VILLAGE_BUILDINGS = {
   forge: {
     id: "forge",
     name: "Forge",
-    icon: "images/Icons/workshops/smithing_station.png",
-    iconImg: "images/Icons/village_buildings/village_forge.png",
+    icon: "images/Icons/workshops/smithing_station.webp",
+    iconImg: "images/Icons/village_buildings/village_forge.webp",
     rank: 2,
     /* Conception : 6 niveaux, un par monde. v3.289.0 : chacun ouvre 2 niveaux de
        reforge (5 avant, plafond qui ne mordait jamais — voir systems/forge-system.js).
@@ -253,8 +253,8 @@ var VILLAGE_BUILDINGS = {
   apothecary: {
     id: "apothecary",
     name: "Apothicaire",
-    icon: "images/Icons/village_buildings/apothecary.png",
-    iconImg: "images/Icons/village_buildings/apothecary.png",
+    icon: "images/Icons/village_buildings/apothecary.webp",
+    iconImg: "images/Icons/village_buildings/apothecary.webp",
     rank: 2,
     /* 6 niveaux. v3.291.0 : le niveau donne la CAPACITÉ (préparations par jour), les
        recettes se gagnent par commande dans la fiche (data/apothecary-recipes.js). */
@@ -290,8 +290,8 @@ var VILLAGE_BUILDINGS = {
   enchanter: {
     id: "enchanter",
     name: "Enchanteresse",
-    icon: "images/Icons/scene/node_discovery.png",
-    iconImg: "images/Icons/village_buildings/enchantress_tower.png",
+    icon: "images/Icons/scene/node_discovery.webp",
+    iconImg: "images/Icons/village_buildings/enchantress_tower.webp",
     rank: 2,
     maxLevel: 3,
     implemented: true,
@@ -331,8 +331,8 @@ var VILLAGE_BUILDINGS = {
   hall: {
     id: "hall",
     name: "Halle marchande",
-    icon: "images/Icons/subtabs/equipment_shop.png",
-    iconImg: "images/Icons/village_buildings/merchant_hall.png",
+    icon: "images/Icons/subtabs/equipment_shop.webp",
+    iconImg: "images/Icons/village_buildings/merchant_hall.webp",
     rank: 2,   // v3.418.0 (R3, décision Seb) : Atelier 2 — la Halle accueille la caravane (v3.419.0, caravan-system.js)
     /* 10 niveaux : 5 emplacements de vitrine gagnés (un tous les deux niveaux)
        et une remise croissante sur le renouvellement. */
@@ -372,8 +372,8 @@ var VILLAGE_BUILDINGS = {
   tavern: {
     id: "tavern",
     name: "Taverne",
-    icon: "images/Icons/village_buildings/tavern.png",
-    iconImg: "images/Icons/village_buildings/tavern.png",
+    icon: "images/Icons/village_buildings/tavern.webp",
+    iconImg: "images/Icons/village_buildings/tavern.webp",
     rank: 2,   // v3.418.0 (R1, décision Seb) : Atelier 2 (était Atelier 4, D12)
     /* 5 niveaux ; v3.418.0 : 2 contrats au niveau 1 puis +1 par niveau
        (TavernManager.getSlotCount) — chaque chantier se voit tout de suite sur le tableau. */
@@ -411,8 +411,8 @@ var VILLAGE_BUILDINGS = {
   warehouse: {
     id: "warehouse",
     name: "Entrepôt agrandi",
-    icon: "images/Icons/system/warehouse_supplies.png",
-    iconImg: "images/Icons/village_buildings/warehouse_expanded.png",
+    icon: "images/Icons/system/warehouse_supplies.webp",
+    iconImg: "images/Icons/village_buildings/warehouse_expanded.webp",
     rank: 3,   // v3.289.0 (D12) : Atelier 3
     maxLevel: 10,
     implemented: true,
@@ -444,8 +444,8 @@ var VILLAGE_BUILDINGS = {
   palisade: {
     id: "palisade",
     name: "Palissade",
-    icon: "images/Icons/combat_stats/stat_defense.png",
-    iconImg: "images/Icons/village_buildings/palisade.png",
+    icon: "images/Icons/combat_stats/stat_defense.webp",
+    iconImg: "images/Icons/village_buildings/palisade.webp",
     rank: 2,   // v3.289.0 (D12) : Atelier 2 — protège d'une mécanique qu'on découvre tôt
     /* v3.290.0 : les niveaux de la Forêt ont désormais leur propre palier (voir costTiers).
        v3.257.0 (Cartes Vivantes, C-3) : 10 niveaux, paliers de l'Entrepôt agrandi (décision

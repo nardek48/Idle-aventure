@@ -222,7 +222,7 @@ html body.combat-active #combat-speed-bar { display: none !important; }
 .cbx-num.is-big { font-size: 26px; color: rgba(248, 113, 113, 1); }
 .cbx-num.is-blocked { color: rgba(147, 197, 253, 1); font-size: 18px; }
 .cbx-num.is-gold { color: var(--cbx-gold); font-size: 18px; }
-.cbx-num.is-burn { font-size: 21px; color: rgba(251, 146, 60, 1); padding-left: 22px; background: url("../images/Icons/combat_status/arcane_burn.png") no-repeat left center / 20px 20px; }
+.cbx-num.is-burn { font-size: 21px; color: rgba(251, 146, 60, 1); padding-left: 22px; background: url("../images/Icons/combat_status/arcane_burn.webp") no-repeat left center / 20px 20px; }
 
 /* ---------- 3. Équipe ---------- */
 .cbx-team { flex: 0 0 auto; display: grid; gap: 6px; padding: 0 8px; }

@@ -129,7 +129,7 @@ function learnOpenTalent() {
 /* Écran autonome (ancien onglet « talents » de ui-root) : même contenu. */
 function buildTalentsHTML() {
   return '<div class="subtab-page"><div class="subtab-page-content">'
-    + '<div class="nb-page-frame kframe-page" data-kf-title="' + esc("images/Icons/scene/node_discovery.png|" + _t("Talents")) + '">'
+    + '<div class="nb-page-frame kframe-page" data-kf-title="' + esc("images/Icons/scene/node_discovery.webp|" + _t("Talents")) + '">'
     + buildTalentBoardHTML() + '</div></div></div>';
 }
 

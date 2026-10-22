@@ -15,7 +15,7 @@
    (createHeroInSlot dans systems/save-system.js appelle openHeroSelection()
    de façon synchrone — protégé, pas touché). Seul le rendu change.
 
-   Historique v3.22 (2 étapes), v3.29 (bandeau compétences, croix <img class=ico-inline src=images/Icons/system/close.png>),
+   Historique v3.22 (2 étapes), v3.29 (bandeau compétences, croix <img class=ico-inline src=images/Icons/system/close.webp>),
    v3.99.0 (flux écran titre). Détail : COMMENTAIRES_ORIGINAUX.md */
 
 var pendingHeroId = "";
@@ -227,7 +227,7 @@ function cancelHeroSelection() {
   if (typeof renderAll === "function") renderAll();
 }
 
-/* v3.29 : croix <img class=ico-inline src=images/Icons/system/close.png> — jamais affichée au tout premier lancement (rien où revenir).
+/* v3.29 : croix <img class=ico-inline src=images/Icons/system/close.webp> — jamais affichée au tout premier lancement (rien où revenir).
    v3.149.0 : aussi affichée quand la création vient de l'écran titre (retour au titre). */
 function buildHeroPickerCloseButtonHTML() {
   if (!window.pendingHeroCreationOrigin && !window.titleScreenSlotBeingCreated) return "";
@@ -263,7 +263,7 @@ function confirmHeroSelection() {
     ClassCombatManager.resetForNewHero();
   }
   game.playerName = name;
-  window.pendingHeroCreationOrigin = null; // v3.29 : création confirmée, la croix <img class=ico-inline src=images/Icons/system/close.png> n'a plus lieu d'être pour cet emplacement
+  window.pendingHeroCreationOrigin = null; // v3.29 : création confirmée, la croix <img class=ico-inline src=images/Icons/system/close.webp> n'a plus lieu d'être pour cet emplacement
 
   // v3.260.0 (décision Seb) : plus d'arme de départ à la création — la première arme est la
   // récompense de « Premier sang ».
@@ -401,7 +401,7 @@ function buildHeroStepHTML(selectedHero) {
   if (selectedClass && selectedClass.heroIds && selectedClass.heroIds.length >= 2) {
     var chaosHero = getHeroById(selectedClass.heroIds[1]);
     html += '<button type="button" class="hc-chaos-toggle' + (selectedIsChaos ? ' on' : '') + '" onclick="toggleHeroChaosVariant()">';
-    html += '  <span class="hc-chaos-toggle-box">' + (selectedIsChaos ? '<img class=ico-inline src=images/Icons/system/check_valid.png>' : '') + '</span>';
+    html += '  <span class="hc-chaos-toggle-box">' + (selectedIsChaos ? '<img class=ico-inline src=images/Icons/system/check_valid.webp>' : '') + '</span>';
     html += '  <span>' + _t("Variante du Chaos") + (chaosHero ? ' — ' + esc(_td(chaosHero.name)) : '') + '</span>';
     html += '</button>';
   }
@@ -409,11 +409,11 @@ function buildHeroStepHTML(selectedHero) {
   // Aperçu stats + bandeau compétences (v3.29), sous les colonnes.
   var stats = selectedHero ? getHeroPreviewStats(selectedHero) : { pv: 0, atk: 0, def: 0, vit: 0, crit: 0 };
   html += '<div class="hc-stats">';
-  html += '  <div class="hc-stat"><span class="hc-stat-icon"><img class="hc-stat-ico-img" src="images/Icons/combat_stats/stat_health.png" alt=""></span><span class="hc-stat-label">' + _t("PV", "unité") + '</span><strong>' + esc(formatNumber(stats.pv)) + '</strong></div>';
-  html += '  <div class="hc-stat"><span class="hc-stat-icon"><img class="hc-stat-ico-img" src="images/Icons/combat_stats/stat_attack.png" alt=""></span><span class="hc-stat-label">' + _t("ATK", "unité") + '</span><strong>' + esc(formatNumber(stats.atk)) + '</strong></div>';
-  html += '  <div class="hc-stat"><span class="hc-stat-icon"><img class="hc-stat-ico-img" src="images/Icons/combat_stats/stat_defense.png" alt=""></span><span class="hc-stat-label">' + _t("DEF", "unité") + '</span><strong>' + stats.def + '%</strong></div>';
-  html += '  <div class="hc-stat"><span class="hc-stat-icon"><img class="hc-stat-ico-img" src="images/Icons/combat_stats/stat_speed.png" alt=""></span><span class="hc-stat-label">' + _t("VIT", "unité") + '</span><strong>' + esc(formatNumber(stats.vit)) + '</strong></div>';
-  html += '  <div class="hc-stat"><span class="hc-stat-icon"><img class="hc-stat-ico-img" src="images/Icons/combat_stats/stat_critical.png" alt=""></span><span class="hc-stat-label">' + _t("CRIT", "unité") + '</span><strong>' + stats.crit + '%</strong></div>';
+  html += '  <div class="hc-stat"><span class="hc-stat-icon"><img class="hc-stat-ico-img" src="images/Icons/combat_stats/stat_health.webp" alt=""></span><span class="hc-stat-label">' + _t("PV", "unité") + '</span><strong>' + esc(formatNumber(stats.pv)) + '</strong></div>';
+  html += '  <div class="hc-stat"><span class="hc-stat-icon"><img class="hc-stat-ico-img" src="images/Icons/combat_stats/stat_attack.webp" alt=""></span><span class="hc-stat-label">' + _t("ATK", "unité") + '</span><strong>' + esc(formatNumber(stats.atk)) + '</strong></div>';
+  html += '  <div class="hc-stat"><span class="hc-stat-icon"><img class="hc-stat-ico-img" src="images/Icons/combat_stats/stat_defense.webp" alt=""></span><span class="hc-stat-label">' + _t("DEF", "unité") + '</span><strong>' + stats.def + '%</strong></div>';
+  html += '  <div class="hc-stat"><span class="hc-stat-icon"><img class="hc-stat-ico-img" src="images/Icons/combat_stats/stat_speed.webp" alt=""></span><span class="hc-stat-label">' + _t("VIT", "unité") + '</span><strong>' + esc(formatNumber(stats.vit)) + '</strong></div>';
+  html += '  <div class="hc-stat"><span class="hc-stat-icon"><img class="hc-stat-ico-img" src="images/Icons/combat_stats/stat_critical.webp" alt=""></span><span class="hc-stat-label">' + _t("CRIT", "unité") + '</span><strong>' + stats.crit + '%</strong></div>';
   html += '</div>';
 
   html += buildHeroAttackPreviewBandeauHTML(selectedHero);
@@ -429,7 +429,7 @@ function buildHeroAttackPreviewBandeauHTML(selectedHero) {
   if (!kit) return "";
 
   var html = '<button type="button" class="hc-skills-toggle" onclick="toggleHeroAttackPreview()">';
-  html += '<img class=ico-inline src=images/Icons/combat_stats/stat_attack.png> ' + _t("Compétences de classe") + ' <span class="hc-skills-chevron">' + (heroAttackPreviewExpanded ? '▴' : '▾') + '</span>';
+  html += '<img class=ico-inline src=images/Icons/combat_stats/stat_attack.webp> ' + _t("Compétences de classe") + ' <span class="hc-skills-chevron">' + (heroAttackPreviewExpanded ? '▴' : '▾') + '</span>';
   html += '</button>';
 
   if (heroAttackPreviewExpanded) {
@@ -438,7 +438,7 @@ function buildHeroAttackPreviewBandeauHTML(selectedHero) {
     slots.forEach(function (slot) {
       var action = kit.actions[slot];
       if (!action) return;
-      var icon = (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[action.id]) || (action.type === "defense" ? "images/Icons/combat_stats/stat_defense.png" : "images/Icons/scene/node_discovery.png");
+      var icon = (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[action.id]) || (action.type === "defense" ? "images/Icons/combat_stats/stat_defense.webp" : "images/Icons/scene/node_discovery.webp");
 
       html += '<div class="hc-skill-card">';
       html += '  <div class="hc-skill-icon-wrap">' + renderIconOrEmojiHTML(icon, "hc-skill-icon", _td(action.label)) + '</div>';

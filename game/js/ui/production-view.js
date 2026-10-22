@@ -141,7 +141,7 @@ function buildProductionDashCardHTML(id) {
   var flag = "";
   if (isFull && storeFull) flag = '<span class="prod-tile-rib is-full">' + _t("Plein") + '</span>';
   else if (isFull) flag = '<span class="prod-tile-rib is-ready">' + _t("Récolter") + '</span>';
-  else if (upgradable) flag = '<span class="prod-tile-rib is-up"><img class="ico-sys" src="images/Icons/system/upgrade.png" alt="">' + _t("zone") + '</span>';
+  else if (upgradable) flag = '<span class="prod-tile-rib is-up"><img class="ico-sys" src="images/Icons/system/upgrade.webp" alt="">' + _t("zone") + '</span>';
 
   var h = '<button type="button" class="production-dash-card prod-tile' + (isFull && storeFull ? ' is-full' : '') + '" onclick="openProductionBuildingDetail(\'' + id + '\')">';
   h += flag;
@@ -178,7 +178,7 @@ function buildProductionCostRowHTML(cost, afford) {
   if (!cost) return "";
   var h = '<span class="production-cost-row">';
   Object.keys(cost).forEach(function (key) {
-    var iconSrc = key === "gold" ? "images/Icons/gold_icon.png" : (WAREHOUSE_RESOURCES[key] ? WAREHOUSE_RESOURCES[key].icon : "");
+    var iconSrc = key === "gold" ? "images/Icons/gold_icon.webp" : (WAREHOUSE_RESOURCES[key] ? WAREHOUSE_RESOURCES[key].icon : "");
     var canAffordThis = afford[key] !== false;
     h += '<span class="production-cost-item' + (canAffordThis ? '' : ' is-missing') + '">';
     h += '<img class="btn-buy-icon" src="' + esc(iconSrc) + '" alt="">' + formatNumber(cost[key]);
@@ -226,7 +226,7 @@ function buildPlotCardHTML(buildingId, plot, index, nextIndex, cheapestIndex) {
     var rowOpen = ProductionPlotsSystem.isPlotRowOpen(index);
     classNames += " is-locked" + (index === nextIndex ? " is-next" : "");
     var h0 = '<button type="button" class="' + classNames + '"' + (rowOpen ? open : ' disabled') + '>';
-    h0 += '<span class="farm-plot-card-lock-icon"><img class=ico-inline src=images/Icons/system/lock_closed.png></span>';
+    h0 += '<span class="farm-plot-card-lock-icon"><img class=ico-inline src=images/Icons/system/lock_closed.webp></span>';
     h0 += '<span class="farm-plot-card-name">' + esc(zoneName) + '</span>';
     // v3.289.0 : une ligne par monde — la zone dit quel monde l'ouvre
     if (!rowOpen) h0 += '<span class="farm-plot-card-profile">' + esc(_td((WORLDS[WorldCaps.getRowOpeningIndex(Math.floor(index / 3))] || {}).name || '')) + '</span>'; // v3.437.2 : le monde qui ouvre la rangée
@@ -324,7 +324,7 @@ function buildZoneWindowHTML(buildingId, index) {
     h += '<p class="zone-win-txt">' + esc(_t("S'ouvre {lieu}", { lieu: ProductionPlotsSystem.getPlotRowOpening(index) })) + '</p>';
   } else if (locked) {
     var uc = getProductionPlotUnlockCost(buildingId, index);
-    h += buildZoneActionHTML({ main: true, onclick: "productionPlotUnlock('" + buildingId + "', " + index + ")", iconHTML: '<img class="zone-act-ico" src="images/Icons/system/lock_open.png" alt="">',
+    h += buildZoneActionHTML({ main: true, onclick: "productionPlotUnlock('" + buildingId + "', " + index + ")", iconHTML: '<img class="zone-act-ico" src="images/Icons/system/lock_open.webp" alt="">',
       label: _t("Défricher"), desc: _t("Rend cette zone exploitable."), cost: uc, canAfford: affordable(uc) });
   } else {
     var capacity = ProductionPlotsSystem.getPlotCapacity(index, plot);
@@ -341,7 +341,7 @@ function buildZoneWindowHTML(buildingId, index) {
       var up = getProductionPlotUpgradeCost(buildingId, plot.level, index);
       var rateNow = ProductionPlotsSystem.getPlotRatePerMin(index, plot, buildingId);
       var rateNext = ProductionPlotsSystem.getPlotRatePerMin(index, { level: plot.level + 1, fertile: plot.fertile, irrigated: plot.irrigated }, buildingId);
-      h += buildZoneActionHTML({ main: true, onclick: "productionPlotUpgrade('" + buildingId + "', " + index + ")", iconHTML: '<img class="zone-act-ico" src="images/Icons/system/upgrade.png" alt="">',
+      h += buildZoneActionHTML({ main: true, onclick: "productionPlotUpgrade('" + buildingId + "', " + index + ")", iconHTML: '<img class="zone-act-ico" src="images/Icons/system/upgrade.webp" alt="">',
         label: _t("Niveau {n}", { n: plot.level + 1 }), desc: _t("{x}/min : {a} → {b}", { x: resName, a: formatRatePerMin(rateNow), b: formatRatePerMin(rateNext) }), cost: up, canAfford: affordable(up) });
     }
     ["fertile", "irrigated"].forEach(function (kind) {
@@ -488,7 +488,7 @@ function buildProductionSheetHTML(buildingId) {
   h += '<div class="prod-sheet-store">' + esc(_t("Entrepôt : {a}", { a: formatNumber(Math.floor(WarehouseManager.getAmount(resKey))) + (cap !== Infinity ? ' / ' + formatNumber(cap) : '') })) + '</div>';
   h += '</div>';
   h += '<button class="kbtn primary prod-sheet-harvest-btn' + (hasStock ? '' : ' is-disabled') + '" id="prod-harvest-btn-' + buildingId + '" type="button" ' + (hasStock ? '' : 'disabled') + ' onclick="ProductionManager.harvest(\'' + buildingId + '\')">';
-  h += '<img class="btn-buy-icon" src="images/Icons/gold_icon.png" alt="">' + _t("Récolter") + (hasStock ? ' · ' + formatNumber(Math.floor(stock)) : '');
+  h += '<img class="btn-buy-icon" src="images/Icons/gold_icon.webp" alt="">' + _t("Récolter") + (hasStock ? ' · ' + formatNumber(Math.floor(stock)) : '');
   h += '</button>';
   h += '</div>';
   if (storeFull) h += '<div class="prod-sheet-warn">' + esc(_t("L'Entrepôt est plein de {x} : la récolte attendra. Ses ateliers en consomment.", { x: _td(resDef.name || "") })) + '</div>';
@@ -498,8 +498,8 @@ function buildProductionSheetHTML(buildingId) {
   // le nom de section porte un emoji en tête (données) : le rail a déjà son icône
   var label = PRODUCTION_PLOTS_BUILDINGS[buildingId] ? _td(PRODUCTION_PLOTS_BUILDINGS[buildingId].sectionLabel).replace(/^[^A-Za-zÀ-ÿ]+/, "") : _t("Zones");
   h += '<div class="kseg is-stack prod-sheet-tabs">';
-  if (shops.length) h += '<button type="button" class="' + (tab === "shops" ? 'is-on' : '') + '" onclick="setProductionSheetTab(\'shops\')"><img src="images/Icons/subtabs/workshops.png" alt=""><span>' + esc(_t("Ateliers · {n}", { n: shops.length })) + '</span></button>';
-  h += '<button type="button" class="' + (tab === "zones" ? 'is-on' : '') + '" onclick="setProductionSheetTab(\'zones\')"><img src="images/Icons/subtabs/production.png" alt=""><span>' + esc(label) + ' · ' + openCount + '/' + PRODUCTION_PLOTS_SHARED.totalPlots + '</span></button>';
+  if (shops.length) h += '<button type="button" class="' + (tab === "shops" ? 'is-on' : '') + '" onclick="setProductionSheetTab(\'shops\')"><img src="images/Icons/subtabs/workshops.webp" alt=""><span>' + esc(_t("Ateliers · {n}", { n: shops.length })) + '</span></button>';
+  h += '<button type="button" class="' + (tab === "zones" ? 'is-on' : '') + '" onclick="setProductionSheetTab(\'zones\')"><img src="images/Icons/subtabs/production.webp" alt=""><span>' + esc(label) + ' · ' + openCount + '/' + PRODUCTION_PLOTS_SHARED.totalPlots + '</span></button>';
   h += '</div>';
 
   if (tab === "shops") {
@@ -526,9 +526,9 @@ function getWorkshopsOfBuilding(buildingId) {
 window.getWorkshopsOfBuilding = getWorkshopsOfBuilding;
 
 /* ============================================================
-   Section "<img class=ico-inline src=images/Icons/system/settings.png> Production" — ateliers de craft locaux au bâtiment
+   Section "<img class=ico-inline src=images/Icons/system/settings.webp> Production" — ateliers de craft locaux au bâtiment
    (voir WorkshopsSystem, data/workshops.js). Toggle dépliable au même
-   niveau que "<img class=ico-inline src=images/Icons/scene/scene_harvest.png> Parcelles" etc., état indépendant par bâtiment.
+   niveau que "<img class=ico-inline src=images/Icons/scene/scene_harvest.webp> Parcelles" etc., état indépendant par bâtiment.
    ============================================================ */
 
 var selectedWorkshopRecipe = {}; // { [workshopId]: recipeId } — mémorise le choix de recette par atelier
@@ -551,13 +551,13 @@ function buildWorkshopUpgradeCompactHTML(workshopId) {
   var cost = WorkshopsSystem.getUpgradeCost(workshopId);
   var afford = WorkshopsSystem.getUpgradeAffordability(workshopId);
   var h = '<button class="wk-up' + (afford.all ? '' : ' is-disabled') + '" type="button" ' + (afford.all ? '' : 'disabled') + ' onclick="upgradeWorkshop(\'' + workshopId + '\')">';
-  h += '<img class=ico-inline src=images/Icons/system/upgrade.png> ' + buildProductionCostRowHTML(cost, afford);
+  h += '<img class=ico-inline src=images/Icons/system/upgrade.webp> ' + buildProductionCostRowHTML(cost, afford);
   h += '</button>';
   return h;
 }
 
 /* v3.192.0 : file en CASES (taille = niveau d'atelier) + entrée courante (nom ×N,
-   temps restant, barre fine) + <img class=ico-inline src=images/Icons/system/close.png> d'annulation sur les lots suivants. Conteneur
+   temps restant, barre fine) + <img class=ico-inline src=images/Icons/system/close.webp> d'annulation sur les lots suivants. Conteneur
    workshop-queue-{id} et ids prod-workshop-time-/bar- CONSERVÉS : le tick
    (updateDOM) et refreshWorkshopQueueDOM ci-dessous fonctionnent sans changement.
    Le calcul de pct reprend celui d'updateDOM (craftTimeMs brut × times). */
@@ -573,7 +573,7 @@ function buildWorkshopQueueHTML(workshopId) {
       var r = WorkshopsSystem.getRecipe(workshopId, entry.recipeId);
       var d = r ? (WAREHOUSE_RESOURCES[r.outputs[0].resourceId] || {}) : {};
       h += renderIconOrEmojiHTML(d.icon, "wk-slot-ico", _td(d.name));
-      if (q > 0) h += '<span class="wk-slot-x" onclick="cancelWorkshopCraft(\'' + workshopId + '\', \'' + esc(entry.id) + '\')" role="button" aria-label="' + esc(_t("Annuler")) + '"><img class=ico-inline src=images/Icons/system/close.png></span>';
+      if (q > 0) h += '<span class="wk-slot-x" onclick="cancelWorkshopCraft(\'' + workshopId + '\', \'' + esc(entry.id) + '\')" role="button" aria-label="' + esc(_t("Annuler")) + '"><img class=ico-inline src=images/Icons/system/close.webp></span>';
     }
     h += '</span>';
   }
@@ -724,7 +724,7 @@ function buildProdActionBarHTML() {
   var hasAnyStock = totalStock > 0;
 
   var h = '<button class="settings-btn primary production-harvest-all-kbtn' + (hasAnyStock ? '' : ' is-locked') + '" id="prod-harvest-all-btn" type="button" ' + (hasAnyStock ? '' : 'disabled') + ' onclick="ProductionManager.harvestAll()">';
-  h += '<img class="ico-btn" src="images/Icons/system/collect_all.png" alt=""> ' + _t("Tout récolter");
+  h += '<img class="ico-btn" src="images/Icons/system/collect_all.webp" alt=""> ' + _t("Tout récolter");
   h += '</button>';
   h += '<p class="production-dash-hint">' + _t("Touche un bâtiment pour ses ateliers et ses zones") + '</p>';
   return h;
@@ -762,7 +762,7 @@ function buildProductionLockedCardHTML(id) {
   var running = !!(run && run.templateId === questId && run.status !== "completed");
   var accepted = running || !!((game.explorationProgression || {}).boardAccepted || {})[questId];
   var h = '<button type="button" class="production-dash-card prod-tile is-locked" onclick="goToProductionUnlockQuest(\'' + id + '\')">';
-  h += '<span class="prod-tile-rib is-lock"><img class="ico-sys" src="images/Icons/system/lock_closed.png" alt="">' + _t("À débloquer") + '</span>';
+  h += '<span class="prod-tile-rib is-lock"><img class="ico-sys" src="images/Icons/system/lock_closed.webp" alt="">' + _t("À débloquer") + '</span>';
   h += renderIconOrEmojiHTML(def.buildingImage || resDef.icon, "prod-tile-img", _td(def.name));
   h += '<span class="production-dash-name">' + esc(_td(def.name)) + '</span>';
   h += '<span class="production-dash-lock-quest">' + esc(tpl.title ? _td(tpl.title) : questId) + '</span>';
@@ -872,11 +872,11 @@ function buildWorkshopTileHTML(w, backId) {
     rib = '<span class="wk-tile-rib is-idle">×' + formatNumber(n) + '</span>';
   }
   h += rib;
-  if (w.active && WorkshopsSystem.getAutoRecipeId(w.id)) h += '<span class="wk-tile-auto"><img class="ico-sys" src="images/Icons/system/auto_repeat.png" alt=""></span>';
+  if (w.active && WorkshopsSystem.getAutoRecipeId(w.id)) h += '<span class="wk-tile-auto"><img class="ico-sys" src="images/Icons/system/auto_repeat.webp" alt=""></span>';
   h += renderIconOrEmojiHTML(w.icon, "wk-tile-img", _td(w.name));
   h += '<span class="wk-tile-name">' + esc(_td(w.name)) + '</span>';
   if (state === "soon") {
-    h += '<span class="wk-tile-sub"><img class="ico-inline" src="images/Icons/system/lock_closed.png" alt=""> ' + _t("Bientôt") + '</span>';
+    h += '<span class="wk-tile-sub"><img class="ico-inline" src="images/Icons/system/lock_closed.webp" alt=""> ' + _t("Bientôt") + '</span>';
   } else {
     h += buildWorkshopRecipeIconsHTML(recipe);
     if (state === "run") {
@@ -911,11 +911,11 @@ function buildShopsViewHTML() {
   var stalled = countStalledWorkshops();
 
   var h = '<div class="wk-banner' + (stalled ? ' is-warn' : '') + '">';
-  h += '<img class="wk-banner-ico" src="images/Icons/subtabs/workshops.png" alt="">';
+  h += '<img class="wk-banner-ico" src="images/Icons/subtabs/workshops.webp" alt="">';
   h += '<span class="wk-banner-txt"><b>' + esc(_t("{a} en cours · {b} libres", { a: run, b: free })) + '</b>';
   h += stalled ? esc(_tn(stalled, "{n} atelier à l'arrêt — intrants ou réserve", "{n} ateliers à l'arrêt — intrants ou réserve")) : esc(_t("Touche un atelier pour fabriquer."));
   h += '</span>';
-  h += '<button class="kbtn wk-banner-btn" id="prod-queues-btn" type="button" onclick="openWorkshopSummaryModal()"><img src="images/Icons/quests/quest_list.png" alt="">' + _t("Files") + '</button>';
+  h += '<button class="kbtn wk-banner-btn" id="prod-queues-btn" type="button" onclick="openWorkshopSummaryModal()"><img src="images/Icons/quests/quest_list.webp" alt="">' + _t("Files") + '</button>';
   h += '</div>';
 
   Object.keys(PRODUCTION_BUILDINGS).forEach(function (bid) {
@@ -1041,7 +1041,7 @@ function buildWorkshopSheetHTML(workshopId) {
     w.recipes.forEach(function (r) {
       var od = WAREHOUSE_RESOURCES[r.outputs[0].resourceId] || {};
       h += '<button type="button" class="' + (r.id === recipe.id ? 'is-on' : '') + '" onclick="selectWorkshopRecipe(\'' + workshopId + '\', \'' + esc(r.id) + '\')">'
-        + renderIconOrEmojiHTML(od.icon, "", _td(od.name)) + esc(_td(od.name)) + (autoId === r.id ? ' <img class="ico-sys" src="images/Icons/system/auto_repeat.png" alt="">' : '') + '</button>';
+        + renderIconOrEmojiHTML(od.icon, "", _td(od.name)) + esc(_td(od.name)) + (autoId === r.id ? ' <img class="ico-sys" src="images/Icons/system/auto_repeat.webp" alt="">' : '') + '</button>';
     });
     h += '</div>';
   }

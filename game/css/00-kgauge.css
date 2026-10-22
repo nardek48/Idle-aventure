@@ -89,7 +89,7 @@
 /* ----- Les 6 cadres (ratio + fenêtre + image) ----- */
 .kgauge.kgauge-thin {
   aspect-ratio: 989 / 111;
-  --kg-frame: url('../images/UI/gauges/gauge-thin-frame.png');
+  --kg-frame: url('../images/UI/gauges/gauge-thin-frame.webp');
   --kg-l: 8.1%; --kg-r: 7.7%; --kg-t: 27%; --kg-b: 29.7%;
   --kg-tl: 4.1%; --kg-tr: 3.7%;
 }
@@ -100,28 +100,28 @@
 
 .kgauge.kgauge-elite {
   aspect-ratio: 1085 / 177;
-  --kg-frame: url('../images/UI/gauges/gauge-elite-frame.png');
+  --kg-frame: url('../images/UI/gauges/gauge-elite-frame.webp');
   --kg-l: 12.5%; --kg-r: 12.4%; --kg-t: 33.9%; --kg-b: 29.9%;
   --kg-tl: 8.5%; --kg-tr: 8.4%;
 }
 
 .kgauge.kgauge-boss {
   aspect-ratio: 1089 / 149;
-  --kg-frame: url('../images/UI/gauges/gauge-boss-frame.png');
+  --kg-frame: url('../images/UI/gauges/gauge-boss-frame.webp');
   --kg-l: 16.8%; --kg-r: 16.3%; --kg-t: 34.9%; --kg-b: 26.8%;
   --kg-tl: 12.8%; --kg-tr: 12.3%;
 }
 
 .kgauge.kgauge-dragon {
   aspect-ratio: 1091 / 215;
-  --kg-frame: url('../images/UI/gauges/gauge-dragon-frame.png');
+  --kg-frame: url('../images/UI/gauges/gauge-dragon-frame.webp');
   --kg-l: 21.6%; --kg-r: 10.5%; --kg-t: 38.6%; --kg-b: 31.2%;
   --kg-tl: 17.6%; --kg-tr: 6.5%;
 }
 
 .kgauge.kgauge-dragon-claw {
   aspect-ratio: 1086 / 163;
-  --kg-frame: url('../images/UI/gauges/gauge-dragon-claw-frame.png');
+  --kg-frame: url('../images/UI/gauges/gauge-dragon-claw-frame.webp');
   --kg-l: 11.2%; --kg-r: 11%; --kg-t: 35%; --kg-b: 26.4%;
   --kg-tl: 7.2%; --kg-tr: 7%;
 }

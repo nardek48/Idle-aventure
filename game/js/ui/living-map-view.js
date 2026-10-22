@@ -129,7 +129,7 @@ function startLivingMapSector(id, wake) { // v3.454.0 : wake — réveiller les 
   var cs = LivingMapManager.canStart(mapId, id);
   if (cs.ok && cs.content && cs.content.type === "elite" && typeof openSortiePrep === "function") {
     var el = (window.ELITE_DB || {})[cs.content.eliteId];
-    return openSortiePrep({ title: el ? _td(el.name) : "", icon: "images/Icons/quests/mission_combat.png", ctx: { type: "elite", id: cs.content.eliteId }, onGo: go });
+    return openSortiePrep({ title: el ? _td(el.name) : "", icon: "images/Icons/quests/mission_combat.webp", ctx: { type: "elite", id: cs.content.eliteId }, onGo: go });
   }
   go();
 }
@@ -709,7 +709,7 @@ function buildStoryChoiceModalHTML(chapterId) {
   if (!c) return "";
   var h = '<div class="full-menu-overlay kwin-veil tutorial-overlay">';
   h += '  <div class="kwin dungeon-story-card tutorial-card story-choice-card">';
-  h += kWinHeadHTML({ icon: '<img src="images/Icons/codex/codex_lore.png" alt="">', title: esc(_td(c.title || step.title)) }); // v3.400.0 (F-2)
+  h += kWinHeadHTML({ icon: '<img src="images/Icons/codex/codex_lore.webp" alt="">', title: esc(_td(c.title || step.title)) }); // v3.400.0 (F-2)
   h += '    <div class="kwin-body">';
   if (c.text) h += '    <p class="kwin-quote story-choice-text">' + esc(_td(c.text)) + '</p>';
   c.options.forEach(function (o) {

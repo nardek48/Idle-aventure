@@ -261,7 +261,7 @@ var STORY_QUESTS = {
     title: "Les Braises d'Aeswyn",
     subtitle: "Chapitre 1 — Forêt",
     endText: "Chapitre terminé — le Désert t'attend.", // v3.297.0 : texte de fin propre au chapitre
-    icon: "images/Icons/camp/campfire.png",
+    icon: "images/Icons/camp/campfire.webp",
     steps: [
       /* ---------- Acte I — Le feu et la lame ---------- */
       {
@@ -297,13 +297,13 @@ var STORY_QUESTS = {
         // pour le déclenchement, ui/tutorial-view.js pour le rendu.
         tutorial: {
           tab: "combat",
-          icon: "images/Icons/combat_stats/stat_attack.png",
+          icon: "images/Icons/combat_stats/stat_attack.webp",
           title: "Le combat",
           points: [
-            { icon: "images/Icons/combat_stats/stat_attack.png", text: "Attaque de base — frappe l'ennemi sans coûter de ressource. Toujours disponible." },
-            { icon: "images/Icons/scene/node_discovery.png", text: "Compétences (1/2/3) — coûtent de la ressource de ta classe (Rage, Concentration ou Mana selon ton héros), pour plus de dégâts ou un effet spécial." },
-            { icon: "images/Icons/combat_stats/stat_defense.png", text: "Défense — réduit ou évite le prochain coup. Utile quand ce bandeau apparaît sous la barre de vie de l'ennemi : il prépare une attaque plus forte.", preview: "charge" },
-            { icon: "images/Icons/combat_stats/stat_speed.png", text: "Jauge de célérité — se remplit à chaque round. Une fois pleine, tu frappes deux fois d'affilée." }
+            { icon: "images/Icons/combat_stats/stat_attack.webp", text: "Attaque de base — frappe l'ennemi sans coûter de ressource. Toujours disponible." },
+            { icon: "images/Icons/scene/node_discovery.webp", text: "Compétences (1/2/3) — coûtent de la ressource de ta classe (Rage, Concentration ou Mana selon ton héros), pour plus de dégâts ou un effet spécial." },
+            { icon: "images/Icons/combat_stats/stat_defense.webp", text: "Défense — réduit ou évite le prochain coup. Utile quand ce bandeau apparaît sous la barre de vie de l'ennemi : il prépare une attaque plus forte.", preview: "charge" },
+            { icon: "images/Icons/combat_stats/stat_speed.webp", text: "Jauge de célérité — se remplit à chaque round. Une fois pleine, tu frappes deux fois d'affilée." }
           ]
         },
         /* v3.293.0 (règle Seb) : les 5 victoires se jouent dans le run « Premier sang »
@@ -328,15 +328,15 @@ var STORY_QUESTS = {
         // v3.107.9 : chaque stat détaillée (décision Seb).
         tutorial: {
           tab: "more",
-          icon: "images/Icons/system/upgrade.png",
+          icon: "images/Icons/system/upgrade.webp",
           title: "L'Amélioration",
           points: [
-            { icon: "images/Icons/system/upgrade.png", text: "Chaque amélioration augmente une statistique de façon permanente contre de l'or. Le prix grimpe à chaque achat — étale tes investissements plutôt que de tout miser sur une seule stat." },
-            { icon: "images/Icons/improvement_icons/power.png", text: "Force — dégâts de ton attaque de base." },
-            { icon: "images/Icons/combat_stats/stat_critical.png", text: "Précision — chance de coup critique." },
-            { icon: "images/Icons/scene/node_discovery.png", text: "Volonté — dégâts bonus en cas de critique." },
-            { icon: "images/Icons/combat_stats/stat_health.png", text: "Endurance — PV maximum et une partie de ta défense." },
-            { icon: "images/Icons/combat_stats/stat_speed.png", text: "Célérité — remplit ta jauge de combat plus vite (frappe bonus plus fréquente)." }
+            { icon: "images/Icons/system/upgrade.webp", text: "Chaque amélioration augmente une statistique de façon permanente contre de l'or. Le prix grimpe à chaque achat — étale tes investissements plutôt que de tout miser sur une seule stat." },
+            { icon: "images/Icons/improvement_icons/power.webp", text: "Force — dégâts de ton attaque de base." },
+            { icon: "images/Icons/combat_stats/stat_critical.webp", text: "Précision — chance de coup critique." },
+            { icon: "images/Icons/scene/node_discovery.webp", text: "Volonté — dégâts bonus en cas de critique." },
+            { icon: "images/Icons/combat_stats/stat_health.webp", text: "Endurance — PV maximum et une partie de ta défense." },
+            { icon: "images/Icons/combat_stats/stat_speed.webp", text: "Célérité — remplit ta jauge de combat plus vite (frappe bonus plus fréquente)." }
           ]
         },
         // v3.109.0 : condition « niveau 2 » retirée — l'XP est par mission depuis P4 (15/étape Histoire), le niveau 2
@@ -361,12 +361,12 @@ var STORY_QUESTS = {
         // v3.107.9 : potions détaillées (décision Seb).
         tutorial: {
           tab: "shop",
-          icon: "images/Icons/subtabs/equipment_shop.png",
+          icon: "images/Icons/subtabs/equipment_shop.webp",
           title: "La Boutique",
           points: [
-            { icon: "images/Icons/subtabs/equipment_shop.png", text: "La Boutique vend des potions contre de l'or." },
-            { icon: "images/Icons/subtabs/potions.png", text: "Potions de soin : Mineure (35 % PV, 150 or) ou Majeure (60 % PV, 600 or). Utilisables en combat comme une action à part entière — elles consomment ton tour." },
-            { icon: "images/Icons/system/warning.png", text: "Maximum 2 potions par sortie — pense à te ménager pour la suite du combat." }
+            { icon: "images/Icons/subtabs/equipment_shop.webp", text: "La Boutique vend des potions contre de l'or." },
+            { icon: "images/Icons/subtabs/potions.webp", text: "Potions de soin : Mineure (35 % PV, 150 or) ou Majeure (60 % PV, 600 or). Utilisables en combat comme une action à part entière — elles consomment ton tour." },
+            { icon: "images/Icons/system/warning.webp", text: "Maximum 2 potions par sortie — pense à te ménager pour la suite du combat." }
           ]
         },
         // v3.107.1 : condition « 300 or gagné » retirée (décision Seb) — pur temps d'attente passive,
@@ -447,13 +447,13 @@ var STORY_QUESTS = {
         // pas sur l'écran de l'expédition elle-même — le craft doit se faire AVANT de lancer.
         tutorial: {
           tab: "village",
-          icon: "images/Icons/subtabs/inventory.png",
+          icon: "images/Icons/subtabs/inventory.webp",
           title: "Fabriquer une ration",
           points: [
-            { icon: "images/Icons/subtabs/inventory.png", text: "Cette expédition consomme une Petite ration — la source t'en a donné une. Les suivantes, il faudra les fabriquer." },
-            { icon: "images/Icons/quests/mission_construction.png", text: "Rends-toi au Village, dans l'atelier Cuisine de camp (bâtiment Chasse)." },
-            { icon: "images/Icons/quests/ration_reward.png", text: "Choisis la recette Petite ration (8 Viande + 4 Eau) et clique sur Fabriquer." },
-            { icon: "images/Icons/quests/quest_adventure.png", text: "Une fois la ration en stock, reviens sur ce tableau et lance l'expédition — elle la consommera automatiquement." }
+            { icon: "images/Icons/subtabs/inventory.webp", text: "Cette expédition consomme une Petite ration — la source t'en a donné une. Les suivantes, il faudra les fabriquer." },
+            { icon: "images/Icons/quests/mission_construction.webp", text: "Rends-toi au Village, dans l'atelier Cuisine de camp (bâtiment Chasse)." },
+            { icon: "images/Icons/quests/ration_reward.webp", text: "Choisis la recette Petite ration (8 Viande + 4 Eau) et clique sur Fabriquer." },
+            { icon: "images/Icons/quests/quest_adventure.webp", text: "Une fois la ration en stock, reviens sur ce tableau et lance l'expédition — elle la consommera automatiquement." }
           ]
         },
         // La ration est consommée par l'expédition : « en stock OU sentier terminé » évite un faux 0/1 après coup.
@@ -558,13 +558,13 @@ var STORY_QUESTS = {
         // v3.107.9 : talents détaillés, réversibilité vérifiée dans le code (respecTalents).
         tutorial: {
           tab: "talents",
-          icon: "images/Icons/quests/quest_side.png",
+          icon: "images/Icons/quests/quest_side.webp",
           title: "Les Talents",
           points: [
             // v3.327.0 : talents par classe (conception Talents v1.1)
-            { icon: "images/Icons/quests/quest_side.png", text: "Chaque niveau franchi te donne un point de talent. Chaque acte de l'Histoire fixe combien tu peux en placer : le surplus attend en réserve." },
-            { icon: "images/Icons/plots/preserved_wood.png", text: "Ton arbre est propre à ta classe : un tronc, puis deux voies qui changent ta façon de combattre. Au bout de chaque voie, une clé de voûte — tu n'en choisiras qu'une." },
-            { icon: "images/Icons/system/reset.png", text: "Rien n'est figé : la réinitialisation est gratuite, hors d'une sortie en cours. Essaie, compare, recommence." }
+            { icon: "images/Icons/quests/quest_side.webp", text: "Chaque niveau franchi te donne un point de talent. Chaque acte de l'Histoire fixe combien tu peux en placer : le surplus attend en réserve." },
+            { icon: "images/Icons/plots/preserved_wood.webp", text: "Ton arbre est propre à ta classe : un tronc, puis deux voies qui changent ta façon de combattre. Au bout de chaque voie, une clé de voûte — tu n'en choisiras qu'une." },
+            { icon: "images/Icons/system/reset.webp", text: "Rien n'est figé : la réinitialisation est gratuite, hors d'une sortie en cours. Essaie, compare, recommence." }
           ]
         },
         check: function (game) { return storyCountTalentsBought(game) >= 1; },
@@ -596,10 +596,10 @@ var STORY_QUESTS = {
         // v3.107.9 : Grimoire détaillé (nombre de règles vérifié dans le code).
         tutorial: {
           tab: "grimoire",
-          icon: "images/Icons/codex/codex_lore.png",
+          icon: "images/Icons/codex/codex_lore.webp",
           title: "Le Grimoire",
           points: [
-            { icon: "images/Icons/codex/codex_lore.png", text: "Le Grimoire automatise tes actions en combat selon des règles conditionnelles que tu définis (ex. « si une charge est annoncée → Défense »)." },
+            { icon: "images/Icons/codex/codex_lore.webp", text: "Le Grimoire automatise tes actions en combat selon des règles conditionnelles que tu définis (ex. « si une charge est annoncée → Défense »)." },
             { icon: "🎚️", text: "Tu commences avec 2 règles disponibles, et tu en débloqueras d'autres au fil de ta progression dans le jeu." },
             { icon: "🔀", text: "Bascule entre mode Tactique (manuel, tu joues chaque round) et mode Grimoire (automatique, tes règles décident) à tout moment depuis l'écran Combat." }
           ]
@@ -627,13 +627,13 @@ var STORY_QUESTS = {
         linkTo: { tab: "dungeon" },
         tutorial: {
           tab: "dungeon",
-          icon: "images/Icons/afflictions/aff_plague.png",
+          icon: "images/Icons/afflictions/aff_plague.webp",
           title: "Les Marques",
           points: [
-            { icon: "images/Icons/afflictions/aff_plague.png", text: "Une Marque est un handicap volontaire pour un run de donjon (boss plus dur, potions interdites, PV réduits...) en échange de récompenses plus riches." },
+            { icon: "images/Icons/afflictions/aff_plague.webp", text: "Une Marque est un handicap volontaire pour un run de donjon (boss plus dur, potions interdites, PV réduits...) en échange de récompenses plus riches." },
             { icon: "➕", text: "Jusqu'à 3 Marques par run. Chaque Marque ajoute +15 % aux récompenses et +2 matériau de monde, en plus de ses effets propres." },
-            { icon: "images/Icons/subtabs/dungeon.png", text: "Elles se choisissent à l'entrée du donjon, dans la feuille de lancement, et restent figées pour le run." },
-            { icon: "images/Icons/combat_stats/stat_attack.png", text: "Pour cette étape : entre dans la Tanière sous au moins une Marque et passe 5 vagues. L'entrée est offerte tant que l'étape est en cours." }
+            { icon: "images/Icons/subtabs/dungeon.webp", text: "Elles se choisissent à l'entrée du donjon, dans la feuille de lancement, et restent figées pour le run." },
+            { icon: "images/Icons/combat_stats/stat_attack.webp", text: "Pour cette étape : entre dans la Tanière sous au moins une Marque et passe 5 vagues. L'entrée est offerte tant que l'étape est en cours." }
           ]
         },
         killTarget: { label: "Sous la Marque", counter: function (g) { return storyCounter(g, "coeurKillsMarked"); }, target: 5, autoReturn: false },
@@ -691,12 +691,12 @@ var STORY_QUESTS = {
         },
         tutorial: {
           tab: "more",
-          icon: "images/Icons/subtabs/hero_summary.png",
+          icon: "images/Icons/subtabs/hero_summary.webp",
           title: "Les compagnons",
           points: [
-            { icon: "images/Icons/subtabs/hero_summary.png", text: "Un compagnon combat à tes côtés : il joue son action après la tienne, à chaque round. Deux au maximum peuvent t'accompagner." },
-            { icon: "images/Icons/combat_status/heal_incoming.png", text: "Wenna est un Soutien : elle soigne l'allié le plus bas en PV. Elle n'a ni équipement ni talents — elle s'améliore contre de l'or, dans Héros › Compagnons." },
-            { icon: "images/Icons/combat_stats/stat_attack.png", text: "Tu choisis pour chacun : Auto (il décide seul) ou Manuel. Un compagnon tombé à 0 PV est hors de combat jusqu'à la fin, et revient affaibli au combat suivant." }
+            { icon: "images/Icons/subtabs/hero_summary.webp", text: "Un compagnon combat à tes côtés : il joue son action après la tienne, à chaque round. Deux au maximum peuvent t'accompagner." },
+            { icon: "images/Icons/combat_status/heal_incoming.webp", text: "Wenna est un Soutien : elle soigne l'allié le plus bas en PV. Elle n'a ni équipement ni talents — elle s'améliore contre de l'or, dans Héros › Compagnons." },
+            { icon: "images/Icons/combat_stats/stat_attack.webp", text: "Tu choisis pour chacun : Auto (il décide seul) ou Manuel. Un compagnon tombé à 0 PV est hors de combat jusqu'à la fin, et revient affaibli au combat suivant." }
           ]
         },
         check: function (game) { return storyCounter(game, "companionWins") >= 3; },
@@ -738,12 +738,12 @@ var STORY_QUESTS = {
         },
         tutorial: {
           tab: "campement",
-          icon: "images/Icons/camp/campfire.png",
+          icon: "images/Icons/camp/campfire.webp",
           title: "Les braises d'Aeswyn",
           points: [
-            { icon: "images/Icons/scene/path_easy.png", text: "La Sève d'Aeswyn se trouve en Petite Aventure (carte de la Forêt) : parfois en route, surtout en atteignant une destination." },
-            { icon: "images/Icons/quests/ration_reward.png", text: "La Ration moyenne se cuisine à la Cuisine de camp (bâtiment Chasse) : 3 Viande séchée (Séchoir) + 1 Pain (Moulin puis Boulangerie du Champs)." },
-            { icon: "images/Icons/camp/campfire.png", text: "Quand tout est réuni, reviens au Campement : le bloc « Les braises » te laisse faire l'offrande." }
+            { icon: "images/Icons/scene/path_easy.webp", text: "La Sève d'Aeswyn se trouve en Petite Aventure (carte de la Forêt) : parfois en route, surtout en atteignant une destination." },
+            { icon: "images/Icons/quests/ration_reward.webp", text: "La Ration moyenne se cuisine à la Cuisine de camp (bâtiment Chasse) : 3 Viande séchée (Séchoir) + 1 Pain (Moulin puis Boulangerie du Champs)." },
+            { icon: "images/Icons/camp/campfire.webp", text: "Quand tout est réuni, reviens au Campement : le bloc « Les braises » te laisse faire l'offrande." }
           ]
         },
         check: function (game) {
@@ -847,7 +847,7 @@ STORY_QUESTS.desert = {
   requiresChapter: "forest",
   title: "Ce que le sable garde",
   subtitle: "Chapitre 2 — Désert",
-  icon: "images/Icons/codex/world_desert.png",
+  icon: "images/Icons/codex/world_desert.webp",
   endText: "Chapitre terminé — au nord, les pierres bougent.", // v3.363.0 (acte IV) : amorce des Ruines, monde 3 fermé
   steps: [
     /* ---------- Acte I — La surface ---------- */
@@ -906,13 +906,13 @@ STORY_QUESTS.desert = {
       linkTo: { section: "adventure", cardId: "adv_aq_desert_dunes" },
       tutorial: {
         tab: "combat",
-        icon: "images/Icons/combat_status/silence_incoming.png",
+        icon: "images/Icons/combat_status/silence_incoming.webp",
         title: "Le silence",
         points: [
-          { icon: "images/Icons/combat_status/silence_incoming.png", text: "Un ennemi Silencieux l'annonce sous sa barre de vie. S'il va au bout, tes compétences sont bloquées 2 rounds." },
-          { icon: "images/Icons/combat_stats/stat_defense.png", text: "Ta Défense, jouée au bon moment, l'en empêche. Dans le Grimoire, c'est la condition « L'ennemi va te réduire au silence »." },
-          { icon: "images/Icons/combat_stats/stat_attack.png", text: "Ton attaque de base, ta Défense et Wenna ne sont jamais réduites au silence." },
-          { icon: "images/Icons/combat_stats/stat_health.png", text: "Au Désert, les bêtes encaissent plus et frappent moins. Les combats sont longs : garde tes potions pour la fin." }
+          { icon: "images/Icons/combat_status/silence_incoming.webp", text: "Un ennemi Silencieux l'annonce sous sa barre de vie. S'il va au bout, tes compétences sont bloquées 2 rounds." },
+          { icon: "images/Icons/combat_stats/stat_defense.webp", text: "Ta Défense, jouée au bon moment, l'en empêche. Dans le Grimoire, c'est la condition « L'ennemi va te réduire au silence »." },
+          { icon: "images/Icons/combat_stats/stat_attack.webp", text: "Ton attaque de base, ta Défense et Wenna ne sont jamais réduites au silence." },
+          { icon: "images/Icons/combat_stats/stat_health.webp", text: "Au Désert, les bêtes encaissent plus et frappent moins. Les combats sont longs : garde tes potions pour la fin." }
         ]
       },
       check: function (game) { return storyAdvDone(game, "aq_desert_dunes"); },
@@ -951,12 +951,12 @@ STORY_QUESTS.desert = {
       },
       tutorial: {
         tab: "village",
-        icon: "images/Icons/workshops/water_reservoir.png",
+        icon: "images/Icons/workshops/water_reservoir.webp",
         title: "L'outre",
         points: [
-          { icon: "images/Icons/workshops/water_reservoir.png", text: "Le Réservoir est un atelier du Puits, au Village. Il transforme ton eau en Outres pleines." },
+          { icon: "images/Icons/workshops/water_reservoir.webp", text: "Le Réservoir est un atelier du Puits, au Village. Il transforme ton eau en Outres pleines." },
           { icon: "images/Icons/resources/outre_pleine_icon.webp", text: "Avant une Petite aventure du Désert, mets une Outre dans ta besace : elle te rendra du Souffle quand tu en manques." },
-          { icon: "images/Icons/scene/journey_long.png", text: "Au Désert, chaque pas coûte du Souffle et la gourde n'a qu'une gorgée. Sans Outre, tu passes quand même, mais tu arrives à sec." }
+          { icon: "images/Icons/scene/journey_long.webp", text: "Au Désert, chaque pas coûte du Souffle et la gourde n'a qu'une gorgée. Sans Outre, tu passes quand même, mais tu arrives à sec." }
         ]
       },
       check: function () { return storyDesertFlag("outreFilled") && storyDesertFlag("desertPaCompleted"); },
@@ -993,9 +993,9 @@ STORY_QUESTS.desert = {
         icon: "images/Icons/resources/verre_des_dunes_icon.webp",
         title: "L'Ensablement",
         points: [
-          { icon: "images/Icons/scene/node_obstacle.png", text: "La carte du Désert fonctionne comme celle de la Forêt. Tu libères un secteur en terminant son parcours." },
-          { icon: "images/Icons/scene/node_unknown.png", text: "Un parcours raté rend un secteur au sable. Sa récompense de secteur tenu est perdue jusqu'à ce que tu le reprennes." },
-          { icon: "images/Icons/scene/protective_amulet.png", text: "La Palissade d'Aeswyn freine l'Ensablement, comme elle freine la brume." }
+          { icon: "images/Icons/scene/node_obstacle.webp", text: "La carte du Désert fonctionne comme celle de la Forêt. Tu libères un secteur en terminant son parcours." },
+          { icon: "images/Icons/scene/node_unknown.webp", text: "Un parcours raté rend un secteur au sable. Sa récompense de secteur tenu est perdue jusqu'à ce que tu le reprennes." },
+          { icon: "images/Icons/scene/protective_amulet.webp", text: "La Palissade d'Aeswyn freine l'Ensablement, comme elle freine la brume." }
         ]
       },
       check: function () { return storyDesertSectorsFreed() >= 2; },
@@ -1030,12 +1030,12 @@ STORY_QUESTS.desert = {
       linkTo: { section: "map", cardId: "livingmap_desert:steles" },
       tutorial: {
         tab: "map",
-        icon: "images/Icons/codex/codex_lore.png",
+        icon: "images/Icons/codex/codex_lore.webp",
         title: "Un choix qui pèse",
         points: [
-          { icon: "images/Icons/codex/codex_lore.png", text: "Certains choix ne se reprennent pas." }, // v3.335.0 : l'Ascension n'existe plus
-          { icon: "images/Icons/scene/node_discovery.png", text: "Chacun des deux chemins apporte quelque chose que l'autre n'apporte pas." },
-          { icon: "images/Icons/scene/node_unknown.png", text: "Rien ne te dira si tu as bien choisi." }
+          { icon: "images/Icons/codex/codex_lore.webp", text: "Certains choix ne se reprennent pas." }, // v3.335.0 : l'Ascension n'existe plus
+          { icon: "images/Icons/scene/node_discovery.webp", text: "Chacun des deux chemins apporte quelque chose que l'autre n'apporte pas." },
+          { icon: "images/Icons/scene/node_unknown.webp", text: "Rien ne te dira si tu as bien choisi." }
         ]
       },
       choice: {
@@ -1197,11 +1197,11 @@ STORY_QUESTS.desert = {
       },
       tutorial: {
         tab: "more",
-        icon: "images/Icons/subtabs/hero_summary.png",
+        icon: "images/Icons/subtabs/hero_summary.webp",
         title: "À trois",
         points: [
-          { icon: "images/Icons/subtabs/hero_summary.png", text: "Maddoc se bat à tes côtés, comme Wenna. Sa voie décide de son rôle : devant, il attire les coups ; derrière, il frappe fort mais attire peu." },
-          { icon: "images/Icons/system/forward.png", text: "Tu peux changer de voie depuis sa fiche, dans Héros › Compagnons. Chaque changement coûte plus cher que le précédent. Ses améliorations sont conservées." }
+          { icon: "images/Icons/subtabs/hero_summary.webp", text: "Maddoc se bat à tes côtés, comme Wenna. Sa voie décide de son rôle : devant, il attire les coups ; derrière, il frappe fort mais attire peu." },
+          { icon: "images/Icons/system/forward.webp", text: "Tu peux changer de voie depuis sa fiche, dans Héros › Compagnons. Chaque changement coûte plus cher que le précédent. Ses améliorations sont conservées." }
         ]
       },
       check: function (game) { return !!(window.CompanionManager && CompanionManager.state("maddoc").voie) && storyAdvDone(game, "aq_desert_gouffre"); },
@@ -1243,13 +1243,13 @@ STORY_QUESTS.desert = {
       },
       tutorial: {
         tab: "village",
-        icon: "images/Icons/workshops/stonemason.png",
+        icon: "images/Icons/workshops/stonemason.webp",
         title: "Le Tailleur de pierre",
         points: [
-          { icon: "images/Icons/workshops/stonemason.png", text: "À la Carrière, le Tailleur de pierre chauffe le Verre des dunes avec de la Pierre. Il en sort du Verre trempé." },
+          { icon: "images/Icons/workshops/stonemason.webp", text: "À la Carrière, le Tailleur de pierre chauffe le Verre des dunes avec de la Pierre. Il en sort du Verre trempé." },
           { icon: "images/Icons/resources/verre_des_dunes_icon.webp", text: "Le Verre des dunes se trouve en Petite Aventure du Désert, et à la première libération des secteurs de la carte." },
           { icon: "images/Icons/resources/verre_trempe_icon.webp", text: "Le Verre trempé servira aux hauts paliers des bâtiments d'Aeswyn." },
-          { icon: "images/Icons/scene/node_discovery.png", text: "Libérer la verrerie ensevelie fait travailler le Tailleur 10 % plus vite." }
+          { icon: "images/Icons/scene/node_discovery.webp", text: "Libérer la verrerie ensevelie fait travailler le Tailleur 10 % plus vite." }
         ]
       },
       check: function () { return storyDesertFlag("verreTrempe"); },
@@ -1281,13 +1281,13 @@ STORY_QUESTS.desert = {
       linkTo: { section: "adventure", cardId: "adv_aq_desert_nuee" },
       tutorial: {
         tab: "combat",
-        icon: "images/Icons/combat_status/double_strike.png",
+        icon: "images/Icons/combat_status/double_strike.webp",
         title: "La nuée",
         points: [
-          { icon: "images/Icons/combat_status/double_strike.png", text: "Au Désert, certaines bêtes vont en groupe : les scarabées par trois, les guerriers des sables par deux." },
-          { icon: "images/Icons/combat_stats/stat_attack.png", text: "Touche un ennemi pour le cibler. Une nuée tue par le nombre de ses coups : chaque scarabée abattu en retire un." },
-          { icon: "images/Icons/quests/quest_list.png", text: "Dans cette quête, un groupe compte pour une seule rencontre." },
-          { icon: "images/Icons/codex/codex_lore.png", text: "Dans le Grimoire, la condition « Ils sont plusieurs » te permet de régler ton kit face à un groupe." }
+          { icon: "images/Icons/combat_status/double_strike.webp", text: "Au Désert, certaines bêtes vont en groupe : les scarabées par trois, les guerriers des sables par deux." },
+          { icon: "images/Icons/combat_stats/stat_attack.webp", text: "Touche un ennemi pour le cibler. Une nuée tue par le nombre de ses coups : chaque scarabée abattu en retire un." },
+          { icon: "images/Icons/quests/quest_list.webp", text: "Dans cette quête, un groupe compte pour une seule rencontre." },
+          { icon: "images/Icons/codex/codex_lore.webp", text: "Dans le Grimoire, la condition « Ils sont plusieurs » te permet de régler ton kit face à un groupe." }
         ]
       },
       check: function (game) { return storyAdvDone(game, "aq_desert_nuee"); },
@@ -1396,12 +1396,12 @@ STORY_QUESTS.desert = {
       linkTo: { tab: "dungeon" },
       tutorial: {
         tab: "dungeon",
-        icon: "images/Icons/subtabs/dungeon.png",
+        icon: "images/Icons/subtabs/dungeon.webp",
         title: "La Cité engloutie",
         points: [
-          { icon: "images/Icons/subtabs/dungeon.png", text: "Le donjon du Désert est bien plus dur que la Tanière. Ses vagues élites sont des gardes du royaume mort." },
-          { icon: "images/Icons/dungeon/dungeon_weapon.png", text: "On y trouve de l'équipement Inhabituel : c'est ici qu'on se prépare pour la suite." },
-          { icon: "images/Icons/dungeon/wave_record.png", text: "Tu n'as pas à aller jusqu'au bout maintenant. Ce qui dort sur la place peut attendre." }
+          { icon: "images/Icons/subtabs/dungeon.webp", text: "Le donjon du Désert est bien plus dur que la Tanière. Ses vagues élites sont des gardes du royaume mort." },
+          { icon: "images/Icons/dungeon/dungeon_weapon.webp", text: "On y trouve de l'équipement Inhabituel : c'est ici qu'on se prépare pour la suite." },
+          { icon: "images/Icons/dungeon/wave_record.webp", text: "Tu n'as pas à aller jusqu'au bout maintenant. Ce qui dort sur la place peut attendre." }
         ]
       },
       check: function (game) { return storyCiteWave5(game); },
@@ -1437,12 +1437,12 @@ STORY_QUESTS.desert = {
       linkTo: { tab: "equip" },
       tutorial: {
         tab: "equip",
-        icon: "images/Icons/workshops/smithing_station.png",
+        icon: "images/Icons/workshops/smithing_station.webp",
         title: "Le palier",
         points: [
-          { icon: "images/Icons/equipment_slots/slot_weapon.png", text: "Pour aller plus loin au Désert, il faut être équipé pour. Les trois compteurs de l'étape te disent où tu en es." },
-          { icon: "images/Icons/dungeon/dungeon_weapon.png", text: "L'arme de la Cité compte déjà. Les autres pièces Inhabituelles : élites de la Forêt, heaume du guet, donjon, boutique, butin des Petites Aventures." },
-          { icon: "images/Icons/workshops/smithing_station.png", text: "La Forge 2 reforge l'arme jusqu'au niveau 4. Le Verre trempé ouvre la Forge 3, pour aller plus loin ensuite. Le niveau de reforge reste à l'emplacement quand tu changes de pièce." }
+          { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Pour aller plus loin au Désert, il faut être équipé pour. Les trois compteurs de l'étape te disent où tu en es." },
+          { icon: "images/Icons/dungeon/dungeon_weapon.webp", text: "L'arme de la Cité compte déjà. Les autres pièces Inhabituelles : élites de la Forêt, heaume du guet, donjon, boutique, butin des Petites Aventures." },
+          { icon: "images/Icons/workshops/smithing_station.webp", text: "La Forge 2 reforge l'arme jusqu'au niveau 4. Le Verre trempé ouvre la Forge 3, pour aller plus loin ensuite. Le niveau de reforge reste à l'emplacement quand tu changes de pièce." }
         ]
       },
       check: function (game) {
@@ -1491,9 +1491,9 @@ STORY_QUESTS.desert = {
         icon: "images/Icons/resources/chitine_profondeurs_icon.webp",
         title: "Une bête qui revient",
         points: [
-          { icon: "images/Icons/scene/node_encounter.png", text: "Cette bête revient. Tu peux la combattre à nouveau, et son butin avec elle." },
+          { icon: "images/Icons/scene/node_encounter.webp", text: "Cette bête revient. Tu peux la combattre à nouveau, et son butin avec elle." },
           { icon: "images/Icons/resources/chitine_profondeurs_icon.webp", text: "Chaque victoire donne une Chitine des profondeurs : c'est ce qu'exigent les reforges 5 et 6, ouvertes par la Forge 3." },
-          { icon: "images/Icons/combat_stats/stat_attack.png", text: "Chaque victoire du jour rend la suivante plus dure. Le lendemain, elle repart à sa force de base." }
+          { icon: "images/Icons/combat_stats/stat_attack.webp", text: "Chaque victoire du jour rend la suivante plus dure. Le lendemain, elle repart à sa force de base." }
         ]
       },
       check: function () { return !!(window.LivingMapManager && LivingMapManager.isLiberated("desert", "bete_dune")); },
@@ -1604,11 +1604,11 @@ STORY_QUESTS.desert = {
       linkTo: { section: "adventure", cardId: "adv_aq_desert_trone" },
       tutorial: {
         tab: "combat",
-        icon: "images/Icons/combat_status/vampiric.png",
+        icon: "images/Icons/combat_status/vampiric.webp",
         title: "Le Desséché",
         points: [
-          { icon: "images/Icons/combat_status/vampiric.png", text: "Nezzam boit : ce qu'il t'arrache le soigne. Plus le combat dure, plus il tient." },
-          { icon: "images/Icons/combat_status/silence_incoming.png", text: "Ses changements s'annoncent dans le journal un round avant." }
+          { icon: "images/Icons/combat_status/vampiric.webp", text: "Nezzam boit : ce qu'il t'arrache le soigne. Plus le combat dure, plus il tient." },
+          { icon: "images/Icons/combat_status/silence_incoming.webp", text: "Ses changements s'annoncent dans le journal un round avant." }
         ]
       },
       check: function (game) { return storyAdvDone(game, "aq_desert_trone"); },
@@ -1723,7 +1723,7 @@ STORY_QUESTS.ruins = {
   requiresChapter: "desert",
   title: "La ville rangée",
   subtitle: "Chapitre 3 — Ruines",
-  icon: "images/Icons/codex/world_ruins.png",
+  icon: "images/Icons/codex/world_ruins.webp",
   endText: "Chapitre terminé — d'autres sont montés avant lui.", // v3.433.0 : amorce de la Crypte (Sarkel)
   steps: [
     /* ---------- Acte I — La route du nord ---------- */
@@ -1779,12 +1779,12 @@ STORY_QUESTS.ruins = {
       linkTo: { section: "adventure", cardId: "adv_aq_ruines_couloirs" },
       tutorial: {
         tab: "combat",
-        icon: "images/Icons/combat_status/rising.png",
+        icon: "images/Icons/combat_status/rising.webp",
         title: "La relève",
         points: [
-          { icon: "images/Icons/combat_status/rising.png", text: "Aux Ruines, certains ennemis ne restent pas à terre. Quand ils tombent, ils l'annoncent : ils se relèveront au round suivant." },
-          { icon: "images/Icons/combat_stats/stat_attack.png", text: "Frappe-les pendant ce round, et ils restent à terre. Sinon, ils reviennent avec la moitié de leurs PV." },
-          { icon: "images/Icons/combat_stats/stat_health.png", text: "Un ennemi ne se relève qu'une fois." },
+          { icon: "images/Icons/combat_status/rising.webp", text: "Aux Ruines, certains ennemis ne restent pas à terre. Quand ils tombent, ils l'annoncent : ils se relèveront au round suivant." },
+          { icon: "images/Icons/combat_stats/stat_attack.webp", text: "Frappe-les pendant ce round, et ils restent à terre. Sinon, ils reviennent avec la moitié de leurs PV." },
+          { icon: "images/Icons/combat_stats/stat_health.webp", text: "Un ennemi ne se relève qu'une fois." },
           { icon: "images/Icons/memory/grimoire_etendu.webp", text: "En Grimoire, ton héros n'achève pas seul un ennemi à terre : pose la règle « Un ennemi se relève »." }
         ]
       },
@@ -1846,12 +1846,12 @@ STORY_QUESTS.ruins = {
       },
       tutorial: {
         tab: "more",
-        icon: "images/Icons/subtabs/hero_summary.png",
+        icon: "images/Icons/subtabs/hero_summary.webp",
         title: "Deux sur trois",
         points: [
-          { icon: "images/Icons/subtabs/hero_summary.png", text: "Tu as maintenant trois compagnons, mais deux seulement t'accompagnent en combat. Choisis-les avant de partir, dans Héros › Compagnons." },
-          { icon: "images/Icons/camp/campfire.png", text: "Celui qui ne se bat pas garde le camp, et peut partir en patrouille." },
-          { icon: "images/Icons/companions/edda_dernier_trait.png", text: "Chacun a sa place : Wenna soigne, Maddoc tient ou frappe de loin, Edda achève ceux qui veulent se relever." }
+          { icon: "images/Icons/subtabs/hero_summary.webp", text: "Tu as maintenant trois compagnons, mais deux seulement t'accompagnent en combat. Choisis-les avant de partir, dans Héros › Compagnons." },
+          { icon: "images/Icons/camp/campfire.webp", text: "Celui qui ne se bat pas garde le camp, et peut partir en patrouille." },
+          { icon: "images/Icons/companions/edda_dernier_trait.webp", text: "Chacun a sa place : Wenna soigne, Maddoc tient ou frappe de loin, Edda achève ceux qui veulent se relever." }
         ]
       },
       check: function (game) { return storyEddaInParty() && storyAdvDone(game, "aq_ruines_edda"); },
@@ -1897,7 +1897,7 @@ STORY_QUESTS.ruins = {
         icon: "images/Icons/resources/pierre_errante_icon.webp",
         title: "Le Marché des Ruines",
         points: [
-          { icon: "images/Icons/village_buildings/merchant_hall.png", text: "La caravane de la Halle marchande peut maintenant partir vers le Marché des Ruines. Tu choisis le marché au départ, dans Campement › Expéditions." },
+          { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "La caravane de la Halle marchande peut maintenant partir vers le Marché des Ruines. Tu choisis le marché au départ, dans Campement › Expéditions." },
           { icon: "images/Icons/resources/pierre_errante_icon.webp", text: "Elle en rapporte de l'or et de la Pierre errante, la pierre des Ruines." }
         ]
       },
@@ -1981,11 +1981,11 @@ STORY_QUESTS.ruins = {
       linkTo: { section: "expedition", cardId: "petite_aventure_ruines" },
       tutorial: {
         tab: "scene",
-        icon: "images/Icons/scene/items/item_chalk.png",
+        icon: "images/Icons/scene/items/item_chalk.webp",
         title: "Les murs bougent",
         points: [
-          { icon: "images/Icons/scene/node_obstacle.png", text: "Aux Ruines, la nuit, les passages changent : un chemin devant toi peut se fermer, et un autre s'ouvrir." },
-          { icon: "images/Icons/scene/items/item_chalk.png", text: "La Craie d'Edda se met dans ta besace sans rien coûter : chaque trait empêche un mur de bouger près de toi." },
+          { icon: "images/Icons/scene/node_obstacle.webp", text: "Aux Ruines, la nuit, les passages changent : un chemin devant toi peut se fermer, et un autre s'ouvrir." },
+          { icon: "images/Icons/scene/items/item_chalk.webp", text: "La Craie d'Edda se met dans ta besace sans rien coûter : chaque trait empêche un mur de bouger près de toi." },
           { icon: "images/Icons/resources/pierre_errante_icon.webp", text: "La Pierre errante se trouve dans les trouvailles et aux destinations. Elle n'est jamais perdue." }
         ]
       },
@@ -2018,10 +2018,10 @@ STORY_QUESTS.ruins = {
         icon: "images/Icons/resources/pierre_errante_icon.webp",
         title: "Le chantier errant",
         points: [
-          { icon: "images/Icons/scene/node_obstacle.png", text: "La carte des Ruines fonctionne comme celle du Désert : tu libères un quartier en terminant sa Petite Aventure." },
-          { icon: "images/Icons/scene/node_unknown.png", text: "Chaque jour, la cité rebâtit un quartier : le chantier. Il change de place à minuit, et même un quartier libéré peut redevenir chantier." },
+          { icon: "images/Icons/scene/node_obstacle.webp", text: "La carte des Ruines fonctionne comme celle du Désert : tu libères un quartier en terminant sa Petite Aventure." },
+          { icon: "images/Icons/scene/node_unknown.webp", text: "Chaque jour, la cité rebâtit un quartier : le chantier. Il change de place à minuit, et même un quartier libéré peut redevenir chantier." },
           { icon: "images/Icons/resources/pierre_errante_icon.webp", text: "Libérer le chantier du jour rapporte des Pierres errantes. Un échec sur un quartier déjà libéré le fait retomber : c'est l'Éboulement." },
-          { icon: "images/Icons/scene/protective_amulet.png", text: "La Palissade d'Aeswyn freine l'Éboulement." }
+          { icon: "images/Icons/scene/protective_amulet.webp", text: "La Palissade d'Aeswyn freine l'Éboulement." }
         ]
       },
       check: function () { return storyRuinsSectorsFreed() >= 2; },
@@ -2053,13 +2053,13 @@ STORY_QUESTS.ruins = {
       linkTo: { section: "adventure", cardId: "adv_aq_ruines_batisseur" },
       tutorial: {
         tab: "combat",
-        icon: "images/Icons/combat_status/shield_incoming.png",
+        icon: "images/Icons/combat_status/shield_incoming.webp",
         title: "Le Bâtisseur",
         points: [
-          { icon: "images/Icons/combat_status/shield_incoming.png", text: "Le Bâtisseur frappe peu. Il annonce un mur, puis blinde un de ses alliés : tes coups sur lui passent mal pendant quelques rounds." },
+          { icon: "images/Icons/combat_status/shield_incoming.webp", text: "Le Bâtisseur frappe peu. Il annonce un mur, puis blinde un de ses alliés : tes coups sur lui passent mal pendant quelques rounds." },
           { icon: "images/Icons/memory/grimoire_etendu.webp", text: "Contre l'annonce, la même réponse qu'au bouclier : la condition « Bouclier au prochain tour » du Grimoire." },
-          { icon: "images/Icons/combat_stats/stat_attack.png", text: "Mieux : le tuer en premier. Dans le Grimoire, le réglage « Cible » sur « Le soutien » le vise d'abord." },
-          { icon: "images/Icons/camp/campfire.png", text: "Deux compagnons sur trois : Wenna soigne, Maddoc frappe de loin, Edda achève. Choisis selon ce qui t'attend." }
+          { icon: "images/Icons/combat_stats/stat_attack.webp", text: "Mieux : le tuer en premier. Dans le Grimoire, le réglage « Cible » sur « Le soutien » le vise d'abord." },
+          { icon: "images/Icons/camp/campfire.webp", text: "Deux compagnons sur trois : Wenna soigne, Maddoc frappe de loin, Edda achève. Choisis selon ce qui t'attend." }
         ]
       },
       check: function (game) { return storyAdvDone(game, "aq_ruines_batisseur"); },
@@ -2091,12 +2091,12 @@ STORY_QUESTS.ruins = {
       linkTo: { tab: "equip" },
       tutorial: {
         tab: "equip",
-        icon: "images/Icons/workshops/smithing_station.png",
+        icon: "images/Icons/workshops/smithing_station.webp",
         title: "Le premier palier",
         points: [
-          { icon: "images/Icons/equipment_slots/slot_weapon.png", text: "Pour aller plus loin aux Ruines, six emplacements sur sept doivent être au moins Inhabituels. L'arme du Fleuve compte." },
-          { icon: "images/Icons/dungeon/dungeon_weapon.png", text: "Les étapes de l'acte t'en ont donné trois. Les autres : échoppe, donjon, élites." },
-          { icon: "images/Icons/workshops/smithing_station.png", text: "La Forge reforge l'arme et l'armure jusqu'au niveau 4 avec ce que tu as déjà. Le niveau de reforge reste à l'emplacement." }
+          { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Pour aller plus loin aux Ruines, six emplacements sur sept doivent être au moins Inhabituels. L'arme du Fleuve compte." },
+          { icon: "images/Icons/dungeon/dungeon_weapon.webp", text: "Les étapes de l'acte t'en ont donné trois. Les autres : échoppe, donjon, élites." },
+          { icon: "images/Icons/workshops/smithing_station.webp", text: "La Forge reforge l'arme et l'armure jusqu'au niveau 4 avec ce que tu as déjà. Le niveau de reforge reste à l'emplacement." }
         ]
       },
       check: function (game) {
@@ -2196,13 +2196,13 @@ STORY_QUESTS.ruins = {
       linkTo: { tab: "dungeon" },
       tutorial: {
         tab: "dungeon",
-        icon: "images/Icons/camp/campfire.png",
+        icon: "images/Icons/camp/campfire.webp",
         title: "Le campement",
         points: [
-          { icon: "images/Icons/subtabs/dungeon.png", text: "Le Sanctuaire scellé se joue en deux étapes. Entre les deux, le campement : une halte, un seul choix." },
-          { icon: "images/Icons/combat_stats/stat_health.png", text: "Souffler : tu reprends une partie de tes PV. Changer de compagnon : deux sur trois, selon ce qui attend en bas." },
-          { icon: "images/Icons/camp/campfire.png", text: "Sortir : tu remontes avec le butin de la première étape. Il est à toi, quoi qu'il arrive ensuite." },
-          { icon: "images/Icons/dungeon/dungeon_guaranteed_loot.png", text: "Tomber dans la deuxième étape ne coûte que le butin de la deuxième étape." }
+          { icon: "images/Icons/subtabs/dungeon.webp", text: "Le Sanctuaire scellé se joue en deux étapes. Entre les deux, le campement : une halte, un seul choix." },
+          { icon: "images/Icons/combat_stats/stat_health.webp", text: "Souffler : tu reprends une partie de tes PV. Changer de compagnon : deux sur trois, selon ce qui attend en bas." },
+          { icon: "images/Icons/camp/campfire.webp", text: "Sortir : tu remontes avec le butin de la première étape. Il est à toi, quoi qu'il arrive ensuite." },
+          { icon: "images/Icons/dungeon/dungeon_guaranteed_loot.webp", text: "Tomber dans la deuxième étape ne coûte que le butin de la deuxième étape." }
         ]
       },
       check: function (game) { return storySanctuaireCamp(game); },
@@ -2236,10 +2236,10 @@ STORY_QUESTS.ruins = {
         icon: "images/Icons/resources/cle_de_voute_icon.webp",
         title: "Le palier Rare",
         points: [
-          { icon: "images/Icons/equipment_slots/slot_weapon.png", text: "Pour descendre au bout du Sanctuaire, quatre emplacements sur sept doivent être Rares. L'arme du Fleuve compte." },
+          { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Pour descendre au bout du Sanctuaire, quatre emplacements sur sept doivent être Rares. L'arme du Fleuve compte." },
           { icon: "images/Icons/resources/cle_de_voute_icon.webp", text: "La Clé de voûte se taille au Tailleur de pierre, avec des Pierres errantes. Elle construit la Forge 4." },
-          { icon: "images/Icons/workshops/smithing_station.png", text: "La Forge 4 ouvre la reforge jusqu'au niveau 8. Les derniers niveaux demandent aussi des Clés de voûte." },
-          { icon: "images/Icons/dungeon/dungeon_weapon.png", text: "Les pièces Rares viennent du Sanctuaire, de l'échoppe et des élites. Les étapes 11 et 12 t'en ont donné une chacune." }
+          { icon: "images/Icons/workshops/smithing_station.webp", text: "La Forge 4 ouvre la reforge jusqu'au niveau 8. Les derniers niveaux demandent aussi des Clés de voûte." },
+          { icon: "images/Icons/dungeon/dungeon_weapon.webp", text: "Les pièces Rares viennent du Sanctuaire, de l'échoppe et des élites. Les étapes 11 et 12 t'en ont donné une chacune." }
         ]
       },
       check: function (game) {
@@ -2361,10 +2361,10 @@ STORY_QUESTS.ruins = {
       linkTo: { section: "map", cardId: "livingmap_ruins" },
       tutorial: {
         tab: "map",
-        icon: "images/Icons/scene/node_unknown.png",
+        icon: "images/Icons/scene/node_unknown.webp",
         title: "Le Cœur",
         points: [
-          { icon: "images/Icons/scene/node_unknown.png", text: "Un quartier nouveau est apparu au centre de la carte des Ruines : le Cœur." },
+          { icon: "images/Icons/scene/node_unknown.webp", text: "Un quartier nouveau est apparu au centre de la carte des Ruines : le Cœur." },
           { icon: "images/Icons/resources/pierre_errante_icon.webp", text: "Il s'ouvre quand les trois quartiers qui le touchent sont libérés. Le chantier errant ne s'y pose pas." }
         ]
       },
@@ -2453,12 +2453,12 @@ STORY_QUESTS.ruins = {
       linkTo: { section: "adventure", cardId: "adv_aq_ruines_plan" },
       tutorial: {
         tab: "combat",
-        icon: "images/Icons/combat_status/rising.png",
+        icon: "images/Icons/combat_status/rising.webp",
         title: "Le Maître d'œuvre",
         points: [
-          { icon: "images/Icons/combat_status/rising.png", text: "Il se relève une fois, quoi qu'il arrive, avec la moitié de ses PV." },
+          { icon: "images/Icons/combat_status/rising.webp", text: "Il se relève une fois, quoi qu'il arrive, avec la moitié de ses PV." },
           { icon: "images/Icons/memory/grimoire_etendu.webp", text: "Relevé, il appelle deux bâtisseurs. Le réglage « Cible » sur « Le soutien » les vise d'abord." },
-          { icon: "images/Icons/combat_status/shield_incoming.png", text: "Sous les 30 %, il se blinde : la condition « Bouclier au prochain tour » du Grimoire." }
+          { icon: "images/Icons/combat_status/shield_incoming.webp", text: "Sous les 30 %, il se blinde : la condition « Bouclier au prochain tour » du Grimoire." }
         ]
       },
       check: function (game) { return storyAdvDone(game, "aq_ruines_plan"); },
@@ -2552,7 +2552,7 @@ STORY_QUESTS.crypt = {
   requiresChapter: "ruins",
   title: "Ceux qui sont montés", // provisoire
   subtitle: "Chapitre 4 — Crypte",
-  icon: "images/Icons/codex/world_crypt.png",
+  icon: "images/Icons/codex/world_crypt.webp",
   endText: "Chapitre terminé — plus haut, la roche est chaude.", // v3.456.0 : l'acte IV clôt le chapitre, amorce de la Montagne
   steps: [
     /* ---------- Acte I — La descente ---------- */
@@ -2607,13 +2607,13 @@ STORY_QUESTS.crypt = {
       linkTo: { section: "adventure", cardId: "adv_aq_crypte_sepulcres" },
       tutorial: {
         tab: "combat",
-        icon: "images/Icons/combat_status/asleep.png",
+        icon: "images/Icons/combat_status/asleep.webp",
         title: "Les morts qui dorment",
         points: [
-          { icon: "images/Icons/combat_status/asleep.png", text: "Dans la Crypte, certains morts dorment. Ils ne jouent pas, et ton camp ne les vise pas." },
-          { icon: "images/Icons/system/check_valid.png", text: "Le combat est gagné quand les éveillés sont tombés. Les dormeurs restent couchés." },
-          { icon: "images/Icons/gold_icon.png", text: "Touche un dormeur pour le viser : le frapper le réveille. Vaincu, il rapporte la moitié d'or en plus." },
-          { icon: "images/Icons/combat_status/enemy_approaching.png", text: "Un dormeur laissé se lève seul au bout de quelques rounds, sans or en plus. Le chiffre sous lui compte les rounds." },
+          { icon: "images/Icons/combat_status/asleep.webp", text: "Dans la Crypte, certains morts dorment. Ils ne jouent pas, et ton camp ne les vise pas." },
+          { icon: "images/Icons/system/check_valid.webp", text: "Le combat est gagné quand les éveillés sont tombés. Les dormeurs restent couchés." },
+          { icon: "images/Icons/gold_icon.webp", text: "Touche un dormeur pour le viser : le frapper le réveille. Vaincu, il rapporte la moitié d'or en plus." },
+          { icon: "images/Icons/combat_status/enemy_approaching.webp", text: "Un dormeur laissé se lève seul au bout de quelques rounds, sans or en plus. Le chiffre sous lui compte les rounds." },
           { icon: "images/Icons/memory/grimoire_etendu.webp", text: "Un coup de zone réveille tous les dormeurs. Dans le Grimoire, c'est la condition « Un ennemi dort »." }
         ]
       },
@@ -2674,11 +2674,11 @@ STORY_QUESTS.crypt = {
       },
       tutorial: {
         tab: "more",
-        icon: "images/Icons/subtabs/hero_summary.png",
+        icon: "images/Icons/subtabs/hero_summary.webp",
         title: "Deux sur quatre",
         points: [
-          { icon: "images/Icons/subtabs/hero_summary.png", text: "Tu as maintenant quatre compagnons. Deux seulement t'accompagnent en combat : choisis-les avant de partir, dans Héros › Compagnons." },
-          { icon: "images/Icons/companions/ysolt_pas_encore.png", text: "Ysolt garde le sommeil : une fois par combat, elle retarde le réveil d'un dormeur." }
+          { icon: "images/Icons/subtabs/hero_summary.webp", text: "Tu as maintenant quatre compagnons. Deux seulement t'accompagnent en combat : choisis-les avant de partir, dans Héros › Compagnons." },
+          { icon: "images/Icons/companions/ysolt_pas_encore.webp", text: "Ysolt garde le sommeil : une fois par combat, elle retarde le réveil d'un dormeur." }
         ]
       },
       check: function (game) { return storyYsoltInParty() && storyAdvDone(game, "aq_crypte_ysolt"); },
@@ -2722,7 +2722,7 @@ STORY_QUESTS.crypt = {
         icon: "images/Icons/resources/cire_sepulcre_icon.webp",
         title: "Le Marché de la Crypte",
         points: [
-          { icon: "images/Icons/village_buildings/merchant_hall.png", text: "La caravane de la Halle marchande peut maintenant partir vers le Marché de la Crypte. Tu choisis le marché au départ, dans Campement › Expéditions." },
+          { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "La caravane de la Halle marchande peut maintenant partir vers le Marché de la Crypte. Tu choisis le marché au départ, dans Campement › Expéditions." },
           { icon: "images/Icons/resources/cire_sepulcre_icon.webp", text: "Elle en rapporte de l'or et de la Cire de sépulcre." }
         ]
       },
@@ -2801,12 +2801,12 @@ STORY_QUESTS.crypt = {
       linkTo: { section: "expedition", cardId: "petite_aventure_crypte" },
       tutorial: {
         tab: "scene",
-        icon: "images/Icons/scene/items/item_lantern.png",
+        icon: "images/Icons/scene/items/item_lantern.webp",
         title: "L'obscurité",
         points: [
-          { icon: "images/Icons/scene/node_unknown.png", text: "Dans la Crypte, la Petite Aventure se fait dans le noir : tu ne vois que la rangée devant toi." },
-          { icon: "images/Icons/scene/items/item_lantern.png", text: "La Lanterne de Sarkel se met dans ta besace sans rien coûter. Allumée, elle montre deux rangées de plus pendant quelques pas." },
-          { icon: "images/Icons/combat_status/asleep.png", text: "Le gardien dort. Fais le tour, ou réveille-le pour son coffre : plus dur, plus riche." },
+          { icon: "images/Icons/scene/node_unknown.webp", text: "Dans la Crypte, la Petite Aventure se fait dans le noir : tu ne vois que la rangée devant toi." },
+          { icon: "images/Icons/scene/items/item_lantern.webp", text: "La Lanterne de Sarkel se met dans ta besace sans rien coûter. Allumée, elle montre deux rangées de plus pendant quelques pas." },
+          { icon: "images/Icons/combat_status/asleep.webp", text: "Le gardien dort. Fais le tour, ou réveille-le pour son coffre : plus dur, plus riche." },
           { icon: "images/Icons/resources/cire_sepulcre_icon.webp", text: "La Cire de sépulcre se trouve dans les trouvailles et aux destinations. Elle n'est jamais perdue." }
         ]
       },
@@ -2842,9 +2842,9 @@ STORY_QUESTS.crypt = {
         icon: "images/Icons/resources/cire_sepulcre_icon.webp",
         title: "Les gisants",
         points: [
-          { icon: "images/Icons/scene/node_obstacle.png", text: "La carte de la Crypte fonctionne comme celle des Ruines : tu libères un couloir en terminant sa Petite Aventure." },
-          { icon: "images/Icons/combat_status/asleep.png", text: "Chaque couloir a ses gisants. Avant de partir, tu choisis : les laisser (plus facile, rapporte moins) ou les réveiller (plus dur, plus de Cire de sépulcre)." },
-          { icon: "images/Icons/scene/node_unknown.png", text: "Un échec réveille le couloir : c'est Le réveil. Il reste hostile, et plus dur, jusqu'au lendemain." },
+          { icon: "images/Icons/scene/node_obstacle.webp", text: "La carte de la Crypte fonctionne comme celle des Ruines : tu libères un couloir en terminant sa Petite Aventure." },
+          { icon: "images/Icons/combat_status/asleep.webp", text: "Chaque couloir a ses gisants. Avant de partir, tu choisis : les laisser (plus facile, rapporte moins) ou les réveiller (plus dur, plus de Cire de sépulcre)." },
+          { icon: "images/Icons/scene/node_unknown.webp", text: "Un échec réveille le couloir : c'est Le réveil. Il reste hostile, et plus dur, jusqu'au lendemain." },
           { icon: "images/Icons/resources/cire_sepulcre_icon.webp", text: "Le Marché de la Crypte est sur la carte, à côté de la Veillée." }
         ]
       },
@@ -2878,12 +2878,12 @@ STORY_QUESTS.crypt = {
       linkTo: { section: "adventure", cardId: "adv_aq_crypte_appel" },
       tutorial: {
         tab: "combat",
-        icon: "images/Icons/combat_status/calling.png",
+        icon: "images/Icons/combat_status/calling.webp",
         title: "Celui qui appelle",
         points: [
-          { icon: "images/Icons/combat_status/calling.png", text: "Le Nécromancien annonce un appel, puis réveille un dormeur au tour suivant. Celui-là ne rapporte pas d'or en plus : ce n'est pas toi qui l'as réveillé." },
-          { icon: "images/Icons/combat_stats/stat_attack.png", text: "Le tuer en premier coupe l'appel. Dans le Grimoire, le réglage « Cible » sur « Le soutien » le vise d'abord." },
-          { icon: "images/Icons/camp/campfire.png", text: "Ysolt retarde un réveil, Wenna soigne, Maddoc frappe de loin, Edda achève. Deux sur quatre : choisis selon ce qui t'attend." }
+          { icon: "images/Icons/combat_status/calling.webp", text: "Le Nécromancien annonce un appel, puis réveille un dormeur au tour suivant. Celui-là ne rapporte pas d'or en plus : ce n'est pas toi qui l'as réveillé." },
+          { icon: "images/Icons/combat_stats/stat_attack.webp", text: "Le tuer en premier coupe l'appel. Dans le Grimoire, le réglage « Cible » sur « Le soutien » le vise d'abord." },
+          { icon: "images/Icons/camp/campfire.webp", text: "Ysolt retarde un réveil, Wenna soigne, Maddoc frappe de loin, Edda achève. Deux sur quatre : choisis selon ce qui t'attend." }
         ]
       },
       check: function (game) { return storyAdvDone(game, "aq_crypte_appel"); },
@@ -2914,11 +2914,11 @@ STORY_QUESTS.crypt = {
       linkTo: { tab: "equip" },
       tutorial: {
         tab: "equip",
-        icon: "images/Icons/equipment_slots/slot_weapon.png",
+        icon: "images/Icons/equipment_slots/slot_weapon.webp",
         title: "Le palier Rare",
         points: [
-          { icon: "images/Icons/equipment_slots/slot_weapon.png", text: "Pour aller plus loin dans la Crypte, tes sept emplacements doivent être au moins Rares. L'arme du Cœur, Épique, compte." },
-          { icon: "images/Icons/dungeon/dungeon_weapon.png", text: "Les étapes de l'acte t'en ont donné trois. Les autres : l'échoppe, le Sanctuaire scellé, les élites des Ruines." },
+          { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Pour aller plus loin dans la Crypte, tes sept emplacements doivent être au moins Rares. L'arme du Cœur, Épique, compte." },
+          { icon: "images/Icons/dungeon/dungeon_weapon.webp", text: "Les étapes de l'acte t'en ont donné trois. Les autres : l'échoppe, le Sanctuaire scellé, les élites des Ruines." },
           { icon: "images/Icons/resources/cle_de_voute_icon.webp", text: "L'arme se reforge jusqu'au niveau 8 à la Forge 4, avec des Clés de voûte." }
         ]
       },
@@ -3015,12 +3015,12 @@ STORY_QUESTS.crypt = {
       linkTo: { tab: "dungeon" },
       tutorial: {
         tab: "dungeon",
-        icon: "images/Dungeons/Icone_base/palier4.jpg",
+        icon: "images/Dungeons/Icone_base/palier4.webp",
         title: "L'Ossuaire",
         points: [
-          { icon: "images/Icons/camp/campfire.png", text: "L'Ossuaire se joue en deux étapes, comme le Sanctuaire scellé. Entre les deux, le campement : une halte, un seul choix." },
-          { icon: "images/Icons/combat_status/asleep.png", text: "Ici aussi, des morts dorment. Le Porte-couronne, frappé, en réveille un : tue-le vite, ou garde Ysolt près de toi." },
-          { icon: "images/Icons/dungeon/dungeon_weapon.png", text: "Les pièces Épiques sortent d'ici. L'arme du Cœur en est une." }
+          { icon: "images/Icons/camp/campfire.webp", text: "L'Ossuaire se joue en deux étapes, comme le Sanctuaire scellé. Entre les deux, le campement : une halte, un seul choix." },
+          { icon: "images/Icons/combat_status/asleep.webp", text: "Ici aussi, des morts dorment. Le Porte-couronne, frappé, en réveille un : tue-le vite, ou garde Ysolt près de toi." },
+          { icon: "images/Icons/dungeon/dungeon_weapon.webp", text: "Les pièces Épiques sortent d'ici. L'arme du Cœur en est une." }
         ]
       },
       check: function (game) { return !!(game && game.explorationProgression && game.explorationProgression.ossuaireCamp); },
@@ -3056,9 +3056,9 @@ STORY_QUESTS.crypt = {
         icon: "images/Icons/resources/cire_consacree_icon.webp",
         title: "Le palier Épique",
         points: [
-          { icon: "images/Icons/equipment_slots/slot_weapon.png", text: "Pour aller au bout de l'Ossuaire, il faut trois pièces Épiques. L'arme du Cœur en est une ; les étapes 11 et 12 t'en ont donné une chacune. La quête d'élite « La couronne de trop » en donne une de plus : un casque." },
+          { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Pour aller au bout de l'Ossuaire, il faut trois pièces Épiques. L'arme du Cœur en est une ; les étapes 11 et 12 t'en ont donné une chacune. La quête d'élite « La couronne de trop » en donne une de plus : un casque." },
           { icon: "images/Icons/resources/cire_consacree_icon.webp", text: "La Cire consacrée se coule à la Fonderie, avec de la Cire de sépulcre. Elle construit la Forge 5." },
-          { icon: "images/Icons/workshops/smithing_station.png", text: "La Forge 5 ouvre les reforges 9 et 10. Elles demandent aussi de la Cire consacrée." }
+          { icon: "images/Icons/workshops/smithing_station.webp", text: "La Forge 5 ouvre les reforges 9 et 10. Elles demandent aussi de la Cire consacrée." }
         ]
       },
       check: function (game) {
@@ -3157,12 +3157,12 @@ STORY_QUESTS.crypt = {
       linkTo: { tab: "dungeon" },
       tutorial: {
         tab: "dungeon",
-        icon: "images/Icons/combat_status/corruption.png",
+        icon: "images/Icons/combat_status/corruption.webp",
         title: "La Liche des sépulcres",
         points: [
-          { icon: "images/Icons/combat_status/asleep.png", text: "La Liche range les os. Elle couche deux morts à ses pieds, puis, à 60 % de ses PV, les réveille tous : garde de quoi les tenir." },
-          { icon: "images/Icons/combat_stats/stat_attack.png", text: "À 30 %, elle se recouche à moitié : elle ne frappe plus pendant deux rounds, mais elle se soigne. Frappe fort à ce moment-là." },
-          { icon: "images/Icons/combat_status/corruption.png", text: "Elle corrompt, comme les Corrupteurs : chaque coup reçu réduit un peu tes dégâts. Dans le Grimoire, la condition « L'ennemi est corrompu » t'aide à la tenir." }
+          { icon: "images/Icons/combat_status/asleep.webp", text: "La Liche range les os. Elle couche deux morts à ses pieds, puis, à 60 % de ses PV, les réveille tous : garde de quoi les tenir." },
+          { icon: "images/Icons/combat_stats/stat_attack.webp", text: "À 30 %, elle se recouche à moitié : elle ne frappe plus pendant deux rounds, mais elle se soigne. Frappe fort à ce moment-là." },
+          { icon: "images/Icons/combat_status/corruption.webp", text: "Elle corrompt, comme les Corrupteurs : chaque coup reçu réduit un peu tes dégâts. Dans le Grimoire, la condition « L'ennemi est corrompu » t'aide à la tenir." }
         ]
       },
       check: function (game) { return !!((game.dungeonTierCleared || {})[4]); },
@@ -3242,11 +3242,11 @@ STORY_QUESTS.crypt = {
       linkTo: { section: "adventure", cardId: "adv_aq_crypte_maillons" },
       tutorial: {
         tab: "combat",
-        icon: "images/Icons/combat_status/chained.png",
+        icon: "images/Icons/combat_status/chained.webp",
         title: "Les chaînes",
         points: [
-          { icon: "images/Icons/combat_status/chained.png", text: "Un ennemi qui lève une chaîne enchaînera un compagnon au tour suivant." },
-          { icon: "images/Icons/combat_stats/stat_attack.png", text: "Enchaîné, un compagnon ne joue plus. La chaîne cède au bout de 2 rounds, ou plus tôt si tu frappes fort celui qui la tient." },
+          { icon: "images/Icons/combat_status/chained.webp", text: "Un ennemi qui lève une chaîne enchaînera un compagnon au tour suivant." },
+          { icon: "images/Icons/combat_stats/stat_attack.webp", text: "Enchaîné, un compagnon ne joue plus. La chaîne cède au bout de 2 rounds, ou plus tôt si tu frappes fort celui qui la tient." },
           { icon: "images/Icons/memory/grimoire_etendu.webp", text: "Toi, il ne t'enchaîne pas. Dans le Grimoire, la condition « Un compagnon est enchaîné » t'aide à frapper au bon moment." }
         ]
       },
@@ -3278,12 +3278,12 @@ STORY_QUESTS.crypt = {
       linkTo: { section: "adventure", cardId: "adv_aq_crypte_retient" },
       tutorial: {
         tab: "combat",
-        icon: "images/Icons/combat_status/chained.png",
+        icon: "images/Icons/combat_status/chained.webp",
         title: "Celui qui retient",
         points: [
-          { icon: "images/Icons/combat_status/chained.png", text: "Tous les 3 rounds, il enchaîne un compagnon. Frappe-le fort pour faire céder la chaîne." },
-          { icon: "images/Icons/combat_status/asleep.png", text: "À 75, 50 et 25 % de ses PV, il tire : les dormeurs se lèvent, et d'autres arrivent. Garde de quoi les tenir." },
-          { icon: "images/Icons/combat_stats/stat_attack.png", text: "Sous les 25 %, sa chaîne prend tes deux compagnons à la fois." }
+          { icon: "images/Icons/combat_status/chained.webp", text: "Tous les 3 rounds, il enchaîne un compagnon. Frappe-le fort pour faire céder la chaîne." },
+          { icon: "images/Icons/combat_status/asleep.webp", text: "À 75, 50 et 25 % de ses PV, il tire : les dormeurs se lèvent, et d'autres arrivent. Garde de quoi les tenir." },
+          { icon: "images/Icons/combat_stats/stat_attack.webp", text: "Sous les 25 %, sa chaîne prend tes deux compagnons à la fois." }
         ]
       },
       check: function (game) { return storyAdvDone(game, "aq_crypte_retient"); },

@@ -13,6 +13,14 @@ function unpal(text) {
   } catch (e) {}
   return String(text).replace(/var\((--c-[a-z0-9-]+)\)/g, function (m, n) { return pal[n] || m; });
 }
+// Dimensions et canal alpha d'une image PNG ou WebP (VP8X, VP8L, VP8), lus dans l'en-tête
+function imgInfo(b) {
+  if (b.toString("ascii", 0, 4) !== "RIFF") return { w: b.readUInt32BE(16), h: b.readUInt32BE(20), a: b[25] === 6 };
+  var k = b.toString("ascii", 12, 16);
+  if (k === "VP8X") return { w: 1 + b.readUIntLE(24, 3), h: 1 + b.readUIntLE(27, 3), a: !!(b[20] & 0x10) };
+  if (k === "VP8L") { var v = b.readUInt32LE(21); return { w: 1 + (v & 0x3fff), h: 1 + ((v >> 14) & 0x3fff), a: !!((v >> 28) & 1) }; }
+  return { w: b.readUInt16LE(26) & 0x3fff, h: b.readUInt16LE(28) & 0x3fff, a: false };
+}
 var scripts = require("./index-scripts.js")(ROOT, /pwa\.js|boot\.js/);
 
 function el() {
@@ -365,7 +373,7 @@ g.CombatEngine.setCombatMode("tactique"); game.enemy.chargeTelegraphed = true; g
 /* v3.251.0 : la charge est passée dans le BANDEAU (avec le mot écrit), le silence subi
    reste dans la rangée d'états. */
 var htmlS = g.buildCombatAlertHTML() + g.buildCombatStatesHTML();
-ok(htmlS.indexOf("Il charge") !== -1 && htmlS.indexOf("silenced.png") !== -1, "barre de statuts en rounds");
+ok(htmlS.indexOf("Il charge") !== -1 && htmlS.indexOf("silenced.webp") !== -1, "barre de statuts en rounds");
 ok(typeof g.buildSettingsHTML() === "string" && g.buildSettingsHTML("jeu").indexOf("Mode de combat") !== -1, "Paramètres : sélecteur de mode (v3.408.0 : onglet Jeu)");
 g.ensureGrimoireRules && g.ensureGrimoireRules();
 ok(typeof g.buildGrimoireHTML() === "string" && g.buildGrimoireHTML().indexOf("grimoire-mode") !== -1, "Grimoire : sélecteur de mode de combat"); // v3.210.0 : remplace l'ancien bandeau « Mode Tactique actif »
@@ -908,7 +916,7 @@ g.CombatEngine.heroAction("basic");
 ok(game.enemy.engageIn === 0 && game.enemy.chargeTelegraphed === false, "impact de charge : la distance est fermée d'un coup");
 game.enemy.engageIn = 2;
 var sb = g.buildCombatAlertHTML();
-ok(sb.indexOf("enemy_approaching.png") !== -1, "barre de statut : approche annonc\u00e9e dans le bandeau (engageIn 2)");
+ok(sb.indexOf("enemy_approaching.webp") !== -1, "barre de statut : approche annonc\u00e9e dans le bandeau (engageIn 2)");
 game.enemy.engageIn = 0;
 ok(g.buildCombatStatesHTML().indexOf("enemy-status-approaching") === -1, "icône absente au contact");
 // parité simulateur : défauts, RPM décalé, Chevalier strictement inchangé
@@ -2449,7 +2457,7 @@ console.log("\n[UX-PROD] Tableau de bord Production v3.191.0 — routeur, vue At
   var cuisineHtml = run("openWorkshopId = 'cuisine_de_camp'; buildWorkshopSheetHTML('cuisine_de_camp')");
   ok((cuisineHtml.match(/selectWorkshopRecipe\('cuisine_de_camp'/g) || []).length >= 3, "Cuisine de camp : 3 recettes au choix");
   run("WorkshopsSystem.setAutoRecipe('cuisine_de_camp', WORKSHOPS_CONFIG.cuisine_de_camp.recipes[0].id);");
-  ok(run("buildWorkshopSheetHTML('cuisine_de_camp')").indexOf("auto_repeat.png") !== -1, "recette en Continu marquée");
+  ok(run("buildWorkshopSheetHTML('cuisine_de_camp')").indexOf("auto_repeat.webp") !== -1, "recette en Continu marquée");
   run("WorkshopsSystem.setAutoRecipe('cuisine_de_camp', null); openWorkshopId = null;");
 
   // 3. v3.414.0 (VUI-1) : le détail est une FEUILLE (ateliers + zones), plus une sous-page
@@ -3170,7 +3178,7 @@ console.log("\n[BATTUE] Farm d'or répétable en Forêt");
   g.toggleTutorialSection("generic");
   var opened = g.buildTutorialsHTML();
   ok(opened.indexOf(camp.tutorial.title) !== -1, "[TUTOS] section dépliée : titre déverrouillé visible");
-  ok(opened.indexOf("system/lock_closed.png") !== -1, "[TUTOS] les entrées non rencontrées sont affichées verrouillées");
+  ok(opened.indexOf("system/lock_closed.webp") !== -1, "[TUTOS] les entrées non rencontrées sont affichées verrouillées");
   ok(opened.indexOf("Pas encore rencontré.") !== -1, "[TUTOS] une entrée verrouillée le dit au lieu d'un vide");
 
   g.selectTutorialEntry(camp.id);
@@ -5743,7 +5751,7 @@ console.log("\n[53] v3.251.0 \u2014 \u00c9tats de combat (bandeau, rang\u00e9e, 
   /* Un archétype supprimé est grisé et change d'icône quand il en a une. */
   e.archetype = "enraged"; e.rageFreezeRounds = 2;
   var sup = g.buildCombatStatesHTML();
-  ok(sup.indexOf("is-suppressed") !== -1 && sup.indexOf("rage_calmed.png") !== -1,
+  ok(sup.indexOf("is-suppressed") !== -1 && sup.indexOf("rage_calmed.webp") !== -1,
     "rage apais\u00e9e : pastille gris\u00e9e et ic\u00f4ne d\u00e9di\u00e9e");
 
   /* --- Saturation : « +N » plut\u00f4t qu'une deuxi\u00e8me ligne --- */
@@ -7523,7 +7531,7 @@ console.log("\n[74] v3.273.0 — bandeau de combat v2 : rangée d'acteurs, cadre
   g.CombatEngine.heroAction("basic");   // ouvre une sortie
   var sortie = g.buildCombatSortieHTML();
   ok(sortie.indexOf("openSortieSheet()") !== -1, "le butin ouvre la feuille de sortie");
-  ok(sortie.indexOf("subtabs/potions.png") === -1, "les potions restantes ont quitté la rangée");
+  ok(sortie.indexOf("subtabs/potions.webp") === -1, "les potions restantes ont quitté la rangée");
   ok(typeof g.openSortieSheet === "function" && typeof g.closeSortieSheet === "function",
     "la feuille de sortie a ses deux fonctions");
   var ligne = g.buildSortieLineHTML("x.png", "Or", "12");
@@ -7658,7 +7666,7 @@ console.log("\n[76] v3.278.0 — la barre de PV du héros prend le cadre des com
     "la reprise vise bien la barre de PV du héros dans le cadre de combat");
   var bloc = css.slice(css.indexOf(".cb-hero .combat-hero-mini-hp-bar.kgauge"));
   bloc = bloc.slice(0, bloc.indexOf("}") + 1);
-  ok(bloc.indexOf("gauge-dragon-claw-frame.png") !== -1,
+  ok(bloc.indexOf("gauge-dragon-claw-frame.webp") !== -1,
     "elle emprunte le cadre en griffe de dragon, celui des compagnons");
   ok(bloc.indexOf("1086 / 163") !== -1, "avec le bon rapport de forme");
   ok(bloc.indexOf("#15803d") !== -1 && bloc.indexOf("#4ade80") !== -1,
@@ -11430,7 +11438,7 @@ console.log("\n[148] v3.372.0 — Multilangue, lot L-4 : Héros, Talents, Grimoi
   ok(g.buildAscensionHTML().indexOf("⟦Mémoire") !== -1, "pseudo-langue : Mémoire extraite");
   ok(g.buildTalentBoardHTML().indexOf("⟦Tronc⟧") !== -1, "pseudo-langue : arbre de talents extrait");
   /* Les titres de page (icône|titre) : l'icône reste hors de la clé traduite. */
-  ok(g.buildLogHTML().indexOf("codex_lore.png|⟦Journal⟧") !== -1, "titre de cadre : chemin d'icône hors de _t()");
+  ok(g.buildLogHTML().indexOf("codex_lore.webp|⟦Journal⟧") !== -1, "titre de cadre : chemin d'icône hors de _t()");
   I._lang = null;
   game.talents = {};
 })();
@@ -13140,7 +13148,7 @@ console.log("\n[180] v3.407.0 — Mémoire au kit, emoji remplacés par des icô
       rd("js/ui/" + f).split("\n").forEach(function (l, i) { var t = l.trim(); if (!/^(\/\/|\/\*|\*)/.test(t) && emo.test(l)) left.push(f + ":" + (i + 1)); });
     });
     ok(left.length === 0, "emoji de l'interface remplacés par des icônes du jeu" + (left.length ? " : " + left.join(", ") : ""));
-    ["images/Icons/memory/forme_du_roi.webp", "images/Icons/village_buildings/puits_du_roi.png", "images/Icons/system/hero_away.png", "images/Icons/system/training_cap.png"].forEach(function (f) {
+    ["images/Icons/memory/forme_du_roi.webp", "images/Icons/village_buildings/puits_du_roi.webp", "images/Icons/system/hero_away.webp", "images/Icons/system/training_cap.webp"].forEach(function (f) {
       ok(fs.existsSync(path.join(ROOT, f)), "icône présente : " + f);
     });
     ok(!fs.existsSync(path.join(ROOT, "js/systems/special-attack-system.js")) && !fs.existsSync(path.join(ROOT, "js/data/talents.js")), "code mort retiré (attaque spéciale, ancien arbre de talents)");
@@ -13377,8 +13385,8 @@ console.log("\n[188] v3.416.0 — Entrepôt : tuiles T3, liste déroulante, Ma s
     run("openWarehouseSheet('ble'); setVillageSubTab('production');");
     ok(run("selectedWarehouseKey") === null, "changer d'onglet referme la feuille de la ressource");
     /* Icônes de production et de l'Atelier (v3.416.0) */
-    var png = function (p) { var b = fs.readFileSync(path.join(ROOT, p)); return b.readUInt32BE(16) + "x" + b.readUInt32BE(20) + (b[25] === 6 ? " RGBA" : " ?"); };
-    ok(["farm", "hunt", "sawmill", "mine", "quarry", "well"].every(function (n) { return / RGBA$/.test(png("images/Production/" + n + ".png")); }) && / RGBA$/.test(png("images/Icons/construction_icon.png")), "illustrations des bâtiments de production et de l'Atelier : détourées (RGBA)");
+    var png = function (p) { var i = imgInfo(fs.readFileSync(path.join(ROOT, p))); return i.w + "x" + i.h + (i.a ? " RGBA" : " ?"); };
+    ok(["farm", "hunt", "sawmill", "mine", "quarry", "well"].every(function (n) { return / RGBA$/.test(png("images/Production/" + n + ".webp")); }) && / RGBA$/.test(png("images/Icons/construction_icon.webp")), "illustrations des bâtiments de production et de l'Atelier : détourées (RGBA)");
   } catch (err) {
     ok(false, "[188] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
@@ -13514,9 +13522,9 @@ console.log("\n[192] v3.420.0 — La caravane sur la carte vivante, icône de Se
     ok(run("game.activeTab") === "campement" && run("campTab") === "depart" && run("expSheet && expSheet.type") === "caravan", "goToCaravan : Campement › Expéditions, feuille Caravane ouverte (v3.426.0)");
     run("expSheet = null;");
     run("CaravanManager.unload(); CaravanManager._now = function () { return Date.now(); };");
-    var b = fs.readFileSync(path.join(ROOT, "images/Icons/village_buildings/caravan.png"));
-    ok(b[25] === 6 && b.readUInt32BE(16) === 256, "icône de la caravane : 256 px, détourée (RGBA)");
-    ok(fs.readFileSync(path.join(ROOT, "js/ui/caravan-view.js"), "utf8").indexOf("CARAVAN_ICON") > 0 && run("buildVillageBuildingSheetHTML('hall')").indexOf("caravan.png") !== -1, "l'icône remplace l'emoji dans la feuille");
+    var b = fs.readFileSync(path.join(ROOT, "images/Icons/village_buildings/caravan.webp"));
+    ok(imgInfo(b).a && imgInfo(b).w === 256, "icône de la caravane : 256 px, détourée (RGBA)");
+    ok(fs.readFileSync(path.join(ROOT, "js/ui/caravan-view.js"), "utf8").indexOf("CARAVAN_ICON") > 0 && run("buildVillageBuildingSheetHTML('hall')").indexOf("caravan.webp") !== -1, "l'icône remplace l'emoji dans la feuille");
   } catch (err) {
     ok(false, "[192] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
@@ -13772,7 +13780,7 @@ console.log("\n[198] v3.426.0 — Chantier Expéditions : Campement › Expédit
     run("LivingMapManager.__lib = LivingMapManager.isLiberated; LivingMapManager.isLiberated = function (m, s) { return (m === 'forest' && (s === 'gue' || s === 'arbremere')) || (m === 'desert' && s === 'puits_sec'); };");
     // --- l'onglet ---
     var camp = run("buildCampHTML('depart')");
-    ok(camp.indexOf("setCampTab('depart')") !== -1 && camp.indexOf("<span>Expéditions</span>") !== -1 && camp.indexOf("start_expedition.png") !== -1, "Campement : l'onglet « Départ » devient « Expéditions »");
+    ok(camp.indexOf("setCampTab('depart')") !== -1 && camp.indexOf("<span>Expéditions</span>") !== -1 && camp.indexOf("start_expedition.webp") !== -1, "Campement : l'onglet « Départ » devient « Expéditions »");
     ok(camp.indexOf("exp-sum") !== -1 && camp.indexOf("Prêts à partir") !== -1 && camp.indexOf("goToPotions()") !== -1 && camp.indexOf("switchTab('map')") !== -1, "tableau des départs : compteurs, « Prêts à partir », Carte et Potions en pied");
     ok(run("getExpeditionEntries().map(function (e) { return e.kind; }).join()") === "pa,patrol,patrol,dungeon", "entrées : Petites Aventures, deux compagnons, Donjon (pas de Halle, pas de caravane)");
     // --- patrouilles vers toute carte atteinte ---
@@ -15400,14 +15408,14 @@ console.log("\n[233] v3.448.9 — Erreurs rattrapées tracées, sauvegarde impos
 console.log("\n[234] v3.448.10 — Images allégées (icônes), texte de la Clé de voûte");
 (function () {
   function dims(f) { // largeur et hauteur d'un PNG, lues dans son en-tête IHDR
-    var b = fs.readFileSync(f); return [b.readUInt32BE(16), b.readUInt32BE(20)];
+    var i = imgInfo(fs.readFileSync(f)); return [i.w, i.h];
   }
   var trop = [];
   (function walk(d) {
     fs.readdirSync(d).forEach(function (n) {
       var p = path.join(d, n);
       if (fs.statSync(p).isDirectory()) return walk(p);
-      if (/\.png$/i.test(n)) { var wh = dims(p); if (Math.max(wh[0], wh[1]) > 400) trop.push(path.relative(ROOT, p) + " " + wh.join("×")); }
+      if (/\.(png|webp)$/i.test(n)) { var wh = dims(p); if (Math.max(wh[0], wh[1]) > 400) trop.push(path.relative(ROOT, p) + " " + wh.join("×")); }
     });
   })(path.join(ROOT, "images", "Icons"));
   ok(trop.length === 0, "aucune icône au-delà de 400 px (les lourdes ramenées à 384)" + (trop.length ? " — " + trop.slice(0, 5).join(", ") : ""));
@@ -16420,7 +16428,7 @@ console.log("\n[260] v3.458.2 — Lot 6b : ressource lisible, compagnons, paysag
     var cs = fs8.readFileSync(ROOT + "/js/ui/combat-screen-view.js", "utf8");
     ok(/cbx-res-txt/.test(cs) && /\.cbx-res \{ position: relative; height: 15px;/.test(css("03-combat-screen.css")), "combat : « Rage 34 / 100 » écrit dans la barre de 15 px");
     // P26
-    ok(/is-chain">' \+ ico\(IC\.st \+ "chained\.png"\)/.test(cs) && /cbx-bars-foot/.test(cs), "compagnon : la chaîne en pastille sur le portrait, la recharge sous la barre");
+    ok(/is-chain">' \+ ico\(IC\.st \+ "chained\.webp"\)/.test(cs) && /cbx-bars-foot/.test(cs), "compagnon : la chaîne en pastille sur le portrait, la recharge sous la barre");
     // P25
     ok(/@media \(orientation: landscape\) and \(max-height: 500px\) and \(pointer: coarse\)/.test(css("05-overlays.css")) && /rotate-veil/.test(fs8.readFileSync(ROOT + "/js/ui/ui-root.js", "utf8")), "paysage sur téléphone : voile « Tourne ton téléphone »");
     // P14

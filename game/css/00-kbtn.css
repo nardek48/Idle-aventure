@@ -35,7 +35,7 @@
   padding: 10px 18px;
 
   border: none;
-  background: url('../images/UI/buttons/btn-rect-normal.png') center / 100% 100% no-repeat;
+  background: url('../images/UI/buttons/btn-rect-normal.webp') center / 100% 100% no-repeat;
   box-shadow: none;
   color: var(--c-white-50-soft);
   text-shadow: 0 1px 2px rgba(30, 15, 0, 0.75);
@@ -51,7 +51,7 @@
 .kbtn:not(:disabled):active,
 .settings-btn:not(:disabled):active,
 .inv-toolbar-btn:not(:disabled):active {
-  background-image: url('../images/UI/buttons/btn-rect-pressed.png');
+  background-image: url('../images/UI/buttons/btn-rect-pressed.webp');
   transform: translateY(1px);
   box-shadow: none;
 }
@@ -130,10 +130,10 @@
 }
 
 .full-menu-close,
-.hc-close-btn { background-image: url('../images/UI/buttons/btn-round-close.png'); }
+.hc-close-btn { background-image: url('../images/UI/buttons/btn-round-close.webp'); }
 
 .full-menu-close:active,
-.hc-close-btn:active { background-image: url('../images/UI/buttons/btn-round-close-pressed.png'); }
+.hc-close-btn:active { background-image: url('../images/UI/buttons/btn-round-close-pressed.webp'); }
 
 /* =====================================================================
    v3.176.0 : badges et banderoles du kit (.kbadge) — ATELIER UNIQUEMENT.
@@ -178,7 +178,7 @@
 
 .kbadge-round {
   aspect-ratio: 152 / 165;
-  background-image: url('../images/UI/badges/badge-round.png');
+  background-image: url('../images/UI/badges/badge-round.webp');
   --kb-l: 20%; --kb-r: 20%; --kb-t: 32%; --kb-b: 36%;   /* centre 48 % (mesuré) */
   /* v3.183.0 (retour Seb, tickets Donjon) : texte NOIR sur la plaque,
      comme l'écu. */
@@ -188,7 +188,7 @@
 
 .kbadge-shield {
   aspect-ratio: 146 / 181;
-  background-image: url('../images/UI/badges/badge-shield.png');
+  background-image: url('../images/UI/badges/badge-shield.webp');
   --kb-l: 14%; --kb-r: 14%; --kb-t: 34%; --kb-b: 32%;   /* centre 51 % (plaque mesurée) */
   /* v3.179.0 (retour Seb) : texte NOIR sur la plaque de l'écu. */
   color: var(--c-brown-950-3);
@@ -247,7 +247,7 @@
 .kframe .kf-top::before,
 .kframe .kf-mid::before,
 .kframe .kf-bot::before {
-  background-image: url('../images/UI/textures/bg-moss-stone.png');
+  background-image: url('../images/UI/textures/bg-moss-stone.webp');
   background-size: 256px 256px;
   background-repeat: repeat;
 }
@@ -303,9 +303,9 @@
   pointer-events: none;
 }
 
-.kf-top::after { background-image: url('../images/UI/frames/page/Cadre_Haut.png'); }
-.kf-mid::after { background-image: url('../images/UI/frames/page/Cadre_Milieux.png'); }
-.kf-bot::after { background-image: url('../images/UI/frames/page/Cadre_Bas.png'); }
+.kf-top::after { background-image: url('../images/UI/frames/page/Cadre_Haut.webp'); }
+.kf-mid::after { background-image: url('../images/UI/frames/page/Cadre_Milieux.webp'); }
+.kf-bot::after { background-image: url('../images/UI/frames/page/Cadre_Bas.webp'); }
 
 /* v3.188.0 : source de milieu COURTE (asset Seb, 1604×371, rails
    alignés au pixel avec la longue) — pour les fenêtres basses, où la
@@ -351,7 +351,7 @@
 }
 
 .kfp-top-holder .kf-top::before {
-  background-image: url('../images/UI/textures/bg-moss-stone.png');
+  background-image: url('../images/UI/textures/bg-moss-stone.webp');
   background-size: 256px 256px;
   background-repeat: repeat;
 }

@@ -39,14 +39,14 @@ var WORKSHOP_LEVEL_CONFIG = {
 var WORKSHOPS_CONFIG = {
   // ===== Champs =====
   moulin: {
-    buildingId: "farm", name: "Moulin", icon: "images/Icons/workshops/grain_mill.png", active: true,
+    buildingId: "farm", name: "Moulin", icon: "images/Icons/workshops/grain_mill.webp", active: true,
     upgradeCostBase: { planche: 3, lingot: 2 },
     recipes: [
       { id: "farine", inputs: [{ resourceId: "ble", quantity: 5 }], outputs: [{ resourceId: "farine", quantity: 1 }], craftTimeMs: 3000 }
     ]
   },
   boulangerie: {
-    buildingId: "farm", name: "Boulangerie", icon: "images/Icons/workshops/bakery.png", active: true,
+    buildingId: "farm", name: "Boulangerie", icon: "images/Icons/workshops/bakery.webp", active: true,
     upgradeCostBase: { planche: 4, lingot: 3 },
     recipes: [
       { id: "pain", inputs: [{ resourceId: "farine", quantity: 3 }, { resourceId: "eau", quantity: 5 }], outputs: [{ resourceId: "pain", quantity: 1 }], craftTimeMs: 5000 }
@@ -55,14 +55,14 @@ var WORKSHOPS_CONFIG = {
 
   // ===== Chasse =====
   sechoir: {
-    buildingId: "hunt", name: "Séchoir", icon: "images/Icons/workshops/drying_rack.png", active: true,
+    buildingId: "hunt", name: "Séchoir", icon: "images/Icons/workshops/drying_rack.webp", active: true,
     upgradeCostBase: { planche: 3, lingot: 2 },
     recipes: [
       { id: "viande_sechee", inputs: [{ resourceId: "viande", quantity: 5 }], outputs: [{ resourceId: "viande_sechee", quantity: 1 }], craftTimeMs: 3000 }
     ]
   },
   cuisine_de_camp: {
-    buildingId: "hunt", name: "Cuisine de camp", icon: "images/Icons/workshops/camp_kitchen.png", active: true,
+    buildingId: "hunt", name: "Cuisine de camp", icon: "images/Icons/workshops/camp_kitchen.webp", active: true,
     upgradeCostBase: { planche: 4, lingot: 3 },
     // v3.107.13 : Ration moyenne restaurée sur viande séchée + pain (recette d'origine, retour arrière
     // du passage v3.106.0 sur viande+eau brutes — non voulu pour cette recette précise, décision Seb).
@@ -80,7 +80,7 @@ var WORKSHOPS_CONFIG = {
 
   // ===== Scierie =====
   scierie_fine: {
-    buildingId: "sawmill", name: "Scierie fine", icon: "images/Icons/workshops/fine_sawmill.png", active: true,
+    buildingId: "sawmill", name: "Scierie fine", icon: "images/Icons/workshops/fine_sawmill.webp", active: true,
     upgradeCostBase: { planche: 3, lingot: 2 },
     recipes: [
       { id: "planche", inputs: [{ resourceId: "bois", quantity: 5 }], outputs: [{ resourceId: "planche", quantity: 1 }], craftTimeMs: 3000 }
@@ -92,7 +92,7 @@ var WORKSHOPS_CONFIG = {
      C'est ce qui donne enfin une raison d'exister aux ateliers restés inactifs
      depuis la v3.98.0 — un par monde, activé avec son matériau. */
   menuiserie: {
-    buildingId: "sawmill", name: "Menuiserie", icon: "images/Icons/workshops/carpentry.png", active: true,
+    buildingId: "sawmill", name: "Menuiserie", icon: "images/Icons/workshops/carpentry.webp", active: true,
     upgradeCostBase: { planche: 4, lingot: 3 },
     recipes: [
       { id: "resine_durcie", inputs: [{ resourceId: "seve_aeswyn", quantity: 2 }, { resourceId: "planche", quantity: 3 }], outputs: [{ resourceId: "resine_durcie", quantity: 1 }], craftTimeMs: 9000 }
@@ -101,7 +101,7 @@ var WORKSHOPS_CONFIG = {
 
   // ===== Mine =====
   fonderie: {
-    buildingId: "mine", name: "Fonderie", icon: "images/Icons/workshops/smelter.png", active: true,
+    buildingId: "mine", name: "Fonderie", icon: "images/Icons/workshops/smelter.webp", active: true,
     upgradeCostBase: { planche: 3, lingot: 2 },
     recipes: [
       { id: "lingot", inputs: [{ resourceId: "fer", quantity: 5 }], outputs: [{ resourceId: "lingot", quantity: 1 }], craftTimeMs: 3000 },
@@ -113,7 +113,7 @@ var WORKSHOPS_CONFIG = {
   /* v3.221.0 (lot V-8) : troisième atelier de tier 2 activé, pour alimenter la
      reforge d'équipement du bâtiment Forge du village. */
   forge: {
-    buildingId: "mine", name: "Forge", icon: "images/Icons/workshops/smithing_station.png", active: true,
+    buildingId: "mine", name: "Forge", icon: "images/Icons/workshops/smithing_station.webp", active: true,
     upgradeCostBase: { planche: 4, lingot: 4 },
     recipes: [
       { id: "acier", inputs: [{ resourceId: "lingot", quantity: 3 }, { resourceId: "bois", quantity: 6 }], outputs: [{ resourceId: "acier", quantity: 1 }], craftTimeMs: 8000 }
@@ -123,7 +123,7 @@ var WORKSHOPS_CONFIG = {
   // ===== Carrière =====
   /* v3.312.0 (W-3c, acte II étape 9) : s'ouvre avec « Le verre des dunes ». Quantités provisoires. */
   tailleur_de_pierre: {
-    buildingId: "quarry", name: "Tailleur de pierre", icon: "images/Icons/workshops/stonemason.png",
+    buildingId: "quarry", name: "Tailleur de pierre", icon: "images/Icons/workshops/stonemason.webp",
     openAtStoryStep: "desert_09",
     upgradeCostBase: { planche: 4, lingot: 3 },
     recipes: [
@@ -138,7 +138,7 @@ var WORKSHOPS_CONFIG = {
      Désert. Le Bloc taillé absorbe la pierre et le fer qui débordaient, et remplace la moitié
      des planches dans les paliers du Désert (data/village-buildings.js). */
   maconnerie: {
-    buildingId: "quarry", name: "Maçonnerie", icon: "images/Icons/workshops/masonry.png",
+    buildingId: "quarry", name: "Maçonnerie", icon: "images/Icons/workshops/masonry.webp",
     openAtStoryStep: "desert_01",
     upgradeCostBase: { planche: 3, lingot: 2 },
     recipes: [
@@ -152,7 +152,7 @@ var WORKSHOPS_CONFIG = {
      s'ouvre avec l'étape « L'outre » du chapitre 2 (openAtStoryStep, lu par le getter
      `active` posé en bas de ce fichier) ; avant, il reste « Bientôt ». Quantités provisoires. */
   reservoir: {
-    buildingId: "well", name: "Réservoir", icon: "images/Icons/workshops/water_reservoir.png",
+    buildingId: "well", name: "Réservoir", icon: "images/Icons/workshops/water_reservoir.webp",
     openAtStoryStep: "desert_03",
     upgradeCostBase: { planche: 3, lingot: 2 },
     recipes: [
@@ -161,7 +161,7 @@ var WORKSHOPS_CONFIG = {
     ]
   },
   station_purification: {
-    buildingId: "well", name: "Station de purification", icon: "images/Icons/workshops/purification_station.png", active: true,
+    buildingId: "well", name: "Station de purification", icon: "images/Icons/workshops/purification_station.webp", active: true,
     upgradeCostBase: { planche: 3, lingot: 2 },
     recipes: [
       { id: "eau_purifiee", inputs: [{ resourceId: "eau", quantity: 4 }], outputs: [{ resourceId: "eau_purifiee", quantity: 1 }], craftTimeMs: 4000 }

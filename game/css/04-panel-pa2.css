@@ -67,7 +67,7 @@ body.pa2-night .pa2-link, body.pa2-night .pa2-note { color: var(--pa2-ink-dim); 
   border-radius: var(--pa2-radius);
   border: 1.5px solid var(--pa2-gold-dark);
   background-color: rgba(14, 11, 8, 0.86);
-  background-image: linear-gradient(rgba(14, 11, 8, 0.78), rgba(14, 11, 8, 0.86)), url('../images/UI/textures/bg-stone-tile.png');
+  background-image: linear-gradient(rgba(14, 11, 8, 0.78), rgba(14, 11, 8, 0.86)), url('../images/UI/textures/bg-stone-tile.webp');
   background-size: auto, 384px;
   box-shadow: 0 3px 0 rgba(0, 0, 0, 0.6), inset 0 0 30px rgba(0, 0, 0, 0.5);
 }
@@ -109,7 +109,7 @@ body.pa2-night .pa2-link, body.pa2-night .pa2-note { color: var(--pa2-ink-dim); 
   .pa2-bag .pa2-cell { aspect-ratio: auto; height: calc((100cqw - 20px) / 6); }
 }
 .pa2-cell { aspect-ratio: 1; position: relative; display: flex; align-items: center; justify-content: center; padding: 0; border: 0; cursor: pointer;
-  background: url('../images/UI/frames/frame-icon-simple.png') center / 100% 100% no-repeat; background-color: transparent; color: var(--pa2-ink-dim); font: inherit; }
+  background: url('../images/UI/frames/frame-icon-simple.webp') center / 100% 100% no-repeat; background-color: transparent; color: var(--pa2-ink-dim); font: inherit; }
 .pa2-cell img { width: 62%; height: 62%; object-fit: contain; }
 /* v3.394.0 (retour Seb) : l'objet tient dans une case ; ses autres places sont des cases
    bloquées — cadre éteint et hachures, sans image empruntée. */
@@ -249,16 +249,16 @@ body.pa2-full .pa2-scrim { background: rgba(5, 3, 2, 0.28); }
 .pa2-scrim { position: fixed; inset: 0; z-index: 250; display: flex; align-items: flex-end; justify-content: center; background: rgba(5, 3, 2, 0.55); animation: pa2-fade .2s; }
 .pa2-sheet { position: relative; width: 100%; max-width: 430px; max-height: 88%; overflow: auto; -webkit-overflow-scrolling: touch;
   padding: 18px 16px calc(20px + env(safe-area-inset-bottom, 0px)); border-radius: 20px 20px 0 0; border: 1.5px solid var(--pa2-gold-dark); border-bottom: 0;
-  background-color: var(--c-brown-950-soft); background-image: linear-gradient(rgba(16, 12, 9, .86), rgba(16, 12, 9, .94)), url('../images/UI/textures/bg-stone-tile.png'); background-size: auto, 384px;
+  background-color: var(--c-brown-950-soft); background-image: linear-gradient(rgba(16, 12, 9, .86), rgba(16, 12, 9, .94)), url('../images/UI/textures/bg-stone-tile.webp'); background-size: auto, 384px;
   box-shadow: 0 -20px 50px -18px rgba(240, 170, 62, .28); animation: pa2-rise .28s cubic-bezier(.2, .8, .2, 1); }
 .pa2-sheet.is-shake { animation: pa2-shake .35s; }
 .pa2-xclose { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; padding: 0; border: 0; cursor: pointer;
-  background: url('../images/UI/buttons/btn-round-close.png') center / contain no-repeat; }
+  background: url('../images/UI/buttons/btn-round-close.webp') center / contain no-repeat; }
 .pa2-sheet-head { display: flex; gap: 14px; align-items: center; margin-bottom: 12px; padding-right: 30px; }
 .pa2-sheet .pa2-narr { margin: 0 0 12px; }
 .pa2-sheet .kbtn { margin-bottom: 0; }
 .pa2-medal { position: relative; flex: none; width: 58px; height: 58px; display: flex; align-items: center; justify-content: center; }
-.pa2-medal::before { content: ""; position: absolute; inset: -6px; background: url('../images/UI/badges/badge-round.png') center / contain no-repeat; filter: brightness(.55) sepia(.2); }
+.pa2-medal::before { content: ""; position: absolute; inset: -6px; background: url('../images/UI/badges/badge-round.webp') center / contain no-repeat; filter: brightness(.55) sepia(.2); }
 .pa2-medal img { position: relative; width: 78%; height: 78%; object-fit: contain; }
 .pa2-medal.is-big { width: 84px; height: 84px; }
 .pa2-medal.is-huge { width: 120px; height: 120px; margin: 0 auto 6px; }
@@ -319,8 +319,8 @@ body.pa2-full .pa2-scrim { background: rgba(5, 3, 2, 0.28); }
 .pa2-foe { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; align-items: center; margin-bottom: 12px; padding-right: 20px; }
 .pa2-pic { width: 96px; height: 96px; position: relative; }
 .pa2-pic .pa2-foe-img { position: absolute; inset: 11%; width: 78%; height: 78%; object-fit: cover; border-radius: 6px; }
-.pa2-pic::after { content: ""; position: absolute; inset: 0; background: url('../images/UI/slots/slot-common.png') center / contain no-repeat; pointer-events: none; }
-.pa2-foe.is-boss .pa2-pic::after { background-image: url('../images/UI/slots/slot-legendary.png'); }
+.pa2-pic::after { content: ""; position: absolute; inset: 0; background: url('../images/UI/slots/slot-common.webp') center / contain no-repeat; pointer-events: none; }
+.pa2-foe.is-boss .pa2-pic::after { background-image: url('../images/UI/slots/slot-legendary.webp'); }
 .pa2-foe.is-boss .pa2-foe-img { object-fit: contain; }
 .pa2-pack { font-size: 14px; color: var(--pa2-danger); }
 .pa2-sim { font-size: 12px; color: var(--pa2-ink-dim); border-left: 2px solid var(--pa2-gold-deep); padding-left: 8px; margin: 0 0 12px; }
@@ -334,15 +334,15 @@ body.pa2-full .pa2-scrim { background: rgba(5, 3, 2, 0.28); }
 .pa2-card { width: 148px; height: 212px; position: relative; transform-style: preserve-3d; transition: transform .7s cubic-bezier(.2, .8, .2, 1); cursor: pointer; border: 0; background: transparent; padding: 0; font: inherit; color: inherit; }
 .pa2-card.is-flipped { transform: rotateY(180deg); }
 .pa2-face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 10px 10px 12px; text-align: center; gap: 4px; }
-.pa2-back { border: 2px solid var(--pa2-gold-dark); background-color: var(--c-brown-950-soft); background-image: linear-gradient(rgba(14, 11, 8, .55), rgba(14, 11, 8, .8)), url('../images/UI/textures/bg-stone-tile.png'); background-size: auto, 200px; justify-content: center; }
+.pa2-back { border: 2px solid var(--pa2-gold-dark); background-color: var(--c-brown-950-soft); background-image: linear-gradient(rgba(14, 11, 8, .55), rgba(14, 11, 8, .8)), url('../images/UI/textures/bg-stone-tile.webp'); background-size: auto, 200px; justify-content: center; }
 .pa2-back img { width: 70px; height: 70px; object-fit: contain; }
 .pa2-front { transform: rotateY(180deg); border: 2px solid var(--pa2-gold-deep); background: var(--c-brown-950-soft); }
 .pa2-slot { position: relative; width: 100px; height: 100px; flex: none; }
 .pa2-slot::after { content: ""; position: absolute; inset: 0; background: center / contain no-repeat; }
 .pa2-slot img { position: absolute; inset: 18%; width: 64%; height: 64%; object-fit: contain; }
-.pa2-card.is-com .pa2-slot::after { background-image: url('../images/UI/slots/slot-common.png'); }
-.pa2-card.is-rare .pa2-slot::after { background-image: url('../images/UI/slots/slot-rare.png'); }
-.pa2-card.is-leg .pa2-slot::after { background-image: url('../images/UI/slots/slot-legendary.png'); }
+.pa2-card.is-com .pa2-slot::after { background-image: url('../images/UI/slots/slot-common.webp'); }
+.pa2-card.is-rare .pa2-slot::after { background-image: url('../images/UI/slots/slot-rare.webp'); }
+.pa2-card.is-leg .pa2-slot::after { background-image: url('../images/UI/slots/slot-legendary.webp'); }
 .pa2-rar { font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
 .pa2-card.is-com .pa2-rar { color: var(--pa2-r-com); }
 .pa2-card.is-rare .pa2-rar { color: #7fb0ff; }

@@ -365,7 +365,7 @@ function labEndHTML(run) {
   if (e.record) h += '<span class="lab-end-record">' + esc(_t("Nouveau record : étage {n}", { n: e.floor })) + '</span>';
   h += '</div><p class="lab-quote lab-end-line">' + esc(line) + '</p>';
   h += '<div class="lab-end-loot"><div><img src="' + esc(res.icon || LABYRINTH_TILES.icon) + '" alt=""><b>' + stoneOf(kept) + '</b><span>' + esc(_t("Pierres errantes")) + '</span></div>';
-  h += '<div><img src="images/Icons/dungeon/dungeon_gold.png" alt=""><b>' + Math.floor(kept.gold || 0) + '</b><span>' + esc(_t("or")) + '</span></div></div>';
+  h += '<div><img src="images/Icons/dungeon/dungeon_gold.webp" alt=""><b>' + Math.floor(kept.gold || 0) + '</b><span>' + esc(_t("or")) + '</span></div></div>';
   if (how !== "remonte" && (stoneOf(lost) || lost.gold)) h += '<p class="lab-end-lost">' + esc(_t("Resté en bas : {s} Pierres errantes, {g} or.", { s: stoneOf(lost), g: Math.floor(lost.gold || 0) })) + '</p>';
   var rows = [[_t("Étage atteint"), e.floor], [_t("Record"), _t("étage {n}", { n: LabyrinthRun.bestFloor() })], [_t("Étages franchis"), Number(st.floors || 0)],
     [_t("Combats gagnés"), Number(st.fights || 0)], [_t("Ruses réussies"), Number(st.ruses || 0)], [_t("Rattrapé par le Contremaître"), Number(st.caught || 0)]];

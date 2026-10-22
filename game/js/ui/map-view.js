@@ -84,7 +84,7 @@ function buildMapNodeHTML(world, index) {
   var h = '<button type="button" class="' + classes.join(" ") + '" style="left:' + pos.x + '%;top:' + pos.y + '%;" onclick="tapMapWorld(' + index + ')">';
   h += '<span class="map-node-circle"><img src="' + esc(getWorldThumb(world)) + '" alt="' + esc(_td(world.name)) + '" draggable="false">';
   if (isCurrent) h += '<span class="map-node-badge">' + _t("Actuel") + '</span>';
-  if (!unlocked) h += '<span class="map-node-lock"><img class=ico-inline src=images/Icons/system/lock_closed.png></span>';
+  if (!unlocked) h += '<span class="map-node-lock"><img class=ico-inline src=images/Icons/system/lock_closed.webp></span>';
   h += '</span>';
   h += '<span class="map-node-name">' + esc(_td(world.name)) + '</span>';
   h += '</button>';

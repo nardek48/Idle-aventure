@@ -15,7 +15,7 @@ function returnResName(key) {
 
 function returnResIcon(key) {
   var def = (window.WAREHOUSE_RESOURCES || {})[key];
-  return def && def.icon ? def.icon : "images/Icons/system/warehouse_supplies.png";
+  return def && def.icon ? def.icon : "images/Icons/system/warehouse_supplies.webp";
 }
 
 function buildReturnGainHTML(key, amount, done) {
@@ -48,7 +48,7 @@ function buildReturnScreenHTML() {
   var s = st.summary;
   // v3.400.0 (lot F-2) : fenêtre centrée du kit (.kwin)
   var h = '<div class="kwin ret-card" role="dialog" aria-label="' + _t("Pendant ton absence") + '">';
-  h += kWinHeadHTML({ icon: '<img src="images/Icons/system/offline_progress.png" alt="">', title: _t("Pendant ton absence"),
+  h += kWinHeadHTML({ icon: '<img src="images/Icons/system/offline_progress.webp" alt="">', title: _t("Pendant ton absence"),
     sub: esc(_t("{d} d'absence.", { d: window.ResumeManager ? ResumeManager.formatAbsence(s.ms || 0) : "" })) });
   h += '<div class="kwin-body">';
   if (st.line) h += '<div class="kwin-quote ret-line">' + esc(_td(st.line)) + '</div>';
@@ -66,7 +66,7 @@ function buildReturnScreenHTML() {
       if (lk.length) vb += '<div class="ret-warn">' + _tn(lk.length > 1 ? 2 : left[lk[0]], "Entrepôt plein : {x} reste dans les zones.", "Entrepôt plein : {x} restent dans les zones.",
         { x: lk.map(function (k) { return formatNumber(left[k]) + ' ' + esc(returnResName(k)); }).join(", ") }) + '</div>';
     }
-    h += buildReturnSectionHTML("images/Icons/menu_icons/village_menu.png", st.harvested ? _t("Village · récolté") : _t("Village · à récolter"), vb);
+    h += buildReturnSectionHTML("images/Icons/menu_icons/village_menu.webp", st.harvested ? _t("Village · récolté") : _t("Village · à récolter"), vb);
   }
 
   // Ateliers et chantier
@@ -75,7 +75,7 @@ function buildReturnScreenHTML() {
     var ab = "";
     if (crafted.length) ab += '<div class="ret-gains">' + crafted.map(function (k) { return buildReturnGainHTML(k, s.crafted[k], true); }).join("") + '</div>';
     if (s.siteDone) ab += _t("Chantier terminé : <b>{x} niveau {n}</b>.", { x: esc(_td(s.siteDone.name)), n: s.siteDone.level });
-    h += buildReturnSectionHTML("images/Icons/construction_icon.png", _t("Ateliers et chantier"), ab);
+    h += buildReturnSectionHTML("images/Icons/construction_icon.webp", _t("Ateliers et chantier"), ab);
   }
 
   // Taverne
@@ -84,12 +84,12 @@ function buildReturnScreenHTML() {
     var tb;
     if (st.delivered) tb = _t("Contrats livrés : <b>+{n} or</b>.", { n: formatNumber(st.delivered) });
     else tb = (s.tavernNew ? _t("Nouveaux contrats.") + ' ' : '') + (ready.length ? '<b>' + _tn(ready.length, "{n} livrable maintenant.", "{n} livrables maintenant.") + '</b>' : _t("Rien de livrable pour l’instant."));
-    h += buildReturnSectionHTML("images/Icons/village_buildings/tavern.png", _t("Taverne"), tb);
+    h += buildReturnSectionHTML("images/Icons/village_buildings/tavern.webp", _t("Taverne"), tb);
   }
 
   // Héros
   if (s.hpGain > 0) {
-    h += buildReturnSectionHTML("images/Icons/camp/campfire.png", _t("Héros"),
+    h += buildReturnSectionHTML("images/Icons/camp/campfire.webp", _t("Héros"),
       _t("+{n} PV au coin du feu ({a} / {b}).", { n: formatNumber(s.hpGain), a: formatNumber(Math.floor(game.heroHp || 0)), b: formatNumber(game.heroMaxHp || 0) }));
   }
 
@@ -100,7 +100,7 @@ function buildReturnScreenHTML() {
   h += '<div class="ret-acts">';
   if (produced.length) {
     if (!st.harvested) h += '<button type="button" class="settings-btn primary" onclick="returnHarvestAll()">' + _t("Tout récolter") + '</button>';
-    else h += '<div class="ret-done"><img class="ico-inline" src="images/Icons/system/check_valid.png" alt=""> ' + _t("Récolte faite.") + '</div>';
+    else h += '<div class="ret-done"><img class="ico-inline" src="images/Icons/system/check_valid.webp" alt=""> ' + _t("Récolte faite.") + '</div>';
   }
   // v3.458.4 (audit C9) : manger sans repasser par le Campement — la plus petite ration qui remet à plein, sinon la plus grande
   var CM = window.CampManager;
@@ -118,7 +118,7 @@ function buildReturnScreenHTML() {
     h += '<button type="button" class="settings-btn" onclick="returnDeliverAll()"><span class="ret-btn-col"><span>'
       + _tn(ready.length, "Livrer {n} contrat · +{p} or", "Livrer {n} contrats · +{p} or", { p: formatNumber(pay) }) + '</span><small>' + esc(cost) + '</small></span></button>';
   } else if (st.delivered) {
-    h += '<div class="ret-done"><img class="ico-inline" src="images/Icons/system/check_valid.png" alt=""> ' + _t("Contrats livrés.") + '</div>';
+    h += '<div class="ret-done"><img class="ico-inline" src="images/Icons/system/check_valid.webp" alt=""> ' + _t("Contrats livrés.") + '</div>';
   }
   h += '</div>';
 
@@ -199,7 +199,7 @@ function renderReturnPending(on) {
     el.type = "button";
     el.className = "ret-pending";
     el.setAttribute("onclick", "returnPendingTap()");
-    el.innerHTML = '<img src="images/Icons/system/offline_progress.png" alt="">' + _t("Retour · après le combat");
+    el.innerHTML = '<img src="images/Icons/system/offline_progress.webp" alt="">' + _t("Retour · après le combat");
     document.body.appendChild(el);
   }
 }

@@ -13,40 +13,40 @@ var COMBAT_ITEM_CORRUPTION_PURGE_STACKS = 3;   // l'Encens purge dès 3 charges 
 var COMBAT_ITEMS = {
   baume_froid: {
     id: "baume_froid", name: "Baume froid", trait: "enraged",
-    icon: "images/Icons/combat_items/baume_froid.png",
+    icon: "images/Icons/combat_items/baume_froid.webp",
     desc: "Contre l'Enragé : sa rage retombe de 20 points et reste figée 4 rounds, de nouveau à chaque fois."
   },
   encens_amer: {
     id: "encens_amer", name: "Encens amer", trait: "corrupted",
-    icon: "images/Icons/combat_items/encens_amer.png",
+    icon: "images/Icons/combat_items/encens_amer.webp",
     desc: "Contre le Corrupteur : sa corruption est purgée dès 3 charges."
   },
   huile_de_lame: {
     id: "huile_de_lame", name: "Huile de lame", trait: "armored",
-    icon: "images/Icons/combat_items/huile_de_lame.png",
+    icon: "images/Icons/combat_items/huile_de_lame.webp",
     desc: "Contre le Blindé : son armure se fissure (−5 % au lieu de −10 %), de nouveau tous les 4 rounds."
   },
   sel_de_fer: {
     id: "sel_de_fer", name: "Sel de fer", trait: "vampiric",
-    icon: "images/Icons/combat_items/sel_de_fer.png",
+    icon: "images/Icons/combat_items/sel_de_fer.webp",
     desc: "Contre le Vampirique : son vol de vie est bloqué, de nouveau tous les 4 rounds."
   },
   /* v3.443.0 : contre les coups ANNONCÉS, l'objet atténue (soften) au lieu d'annuler : il s'ajoute
      à la règle du Grimoire, qui seule annule le coup (décision Seb, option B). */
   acide_mordant: {
     id: "acide_mordant", name: "Acide mordant", trait: "shielded", soften: true,
-    icon: "images/Icons/combat_items/acide_mordant.png",
+    icon: "images/Icons/combat_items/acide_mordant.webp",
     desc: "Contre le Bouclier : il ne tient qu'un round au lieu de deux et ne retient plus que 25 % des dégâts au lieu de 50 %. S'ajoute à ta règle du Grimoire."
   },
   pastille_de_miel: {
     id: "pastille_de_miel", name: "Pastille de miel", trait: "silenced", soften: true,
-    icon: "images/Icons/combat_items/pastille_de_miel.png",
+    icon: "images/Icons/combat_items/pastille_de_miel.webp",
     desc: "Contre le Silence : tes techniques ne sont bloquées qu'un round au lieu de deux (jamais moins d'un)."
   },
   /* v3.442.0 : objet à contrepartie (besace des Petites Aventures). Rendue si elle n'a pas servi. */
   fiole_noire: {
     id: "fiole_noire", name: "Fiole noire", trait: null, returnIfUnused: true,
-    icon: "images/Icons/scene/items/item_black_vial.png",   // la Fiole de la besace des Petites Aventures : même objet, même image
+    icon: "images/Icons/scene/items/item_black_vial.webp",   // la Fiole de la besace des Petites Aventures : même objet, même image
     desc: "À 0 PV, tu te relèves avec 40 % des PV, une fois par sortie.",
     con: "Si elle sert : butin de la sortie divisé par deux, or de fin de donjon aussi. Rendue si elle n'a pas servi."
   }

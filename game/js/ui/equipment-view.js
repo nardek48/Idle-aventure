@@ -39,9 +39,9 @@ window.setInventoryFilter = setInventoryFilter;
 
 function buildEquipSubTabBarHTML() {
   var h = '<div class="pc-subtab-bar">';
-  h += '<button type="button" class="pc-subtab-btn' + (activeEquipSubTab === "equipment" ? ' is-active' : '') + '" onclick="setEquipSubTab(\'equipment\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/equipment.png" alt=""><span>' + _t("Équipement") + '</span></button>';
-  h += '<button type="button" class="pc-subtab-btn' + (activeEquipSubTab === "inventory" ? ' is-active' : '') + '" onclick="setEquipSubTab(\'inventory\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/inventory.png" alt=""><span>' + _t("Inventaire") + '</span></button>';
-  h += '<button type="button" class="pc-subtab-btn' + (activeEquipSubTab === "shop" ? ' is-active' : '') + '" onclick="setEquipSubTab(\'shop\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/equipment_shop.png" alt=""><span>' + _t("Boutique") + '</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (activeEquipSubTab === "equipment" ? ' is-active' : '') + '" onclick="setEquipSubTab(\'equipment\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/equipment.webp" alt=""><span>' + _t("Équipement") + '</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (activeEquipSubTab === "inventory" ? ' is-active' : '') + '" onclick="setEquipSubTab(\'inventory\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/inventory.webp" alt=""><span>' + _t("Inventaire") + '</span></button>';
+  h += '<button type="button" class="pc-subtab-btn' + (activeEquipSubTab === "shop" ? ' is-active' : '') + '" onclick="setEquipSubTab(\'shop\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/equipment_shop.webp" alt=""><span>' + _t("Boutique") + '</span></button>';
   h += '</div>';
   return h;
 }
@@ -177,7 +177,7 @@ function buildCompatibleItemsListHTML(slot) {
 
   var equipped = game.equipped[slot];
   var h = '<div class="eq-compat-list">';
-  h += '<div class="ksec eq-compat-title"><img class=ico-inline src=images/Icons/subtabs/inventory.png> ' + _t("Dans le sac ({n})", { n: items.length }) + '</div>';
+  h += '<div class="ksec eq-compat-title"><img class=ico-inline src=images/Icons/subtabs/inventory.webp> ' + _t("Dans le sac ({n})", { n: items.length }) + '</div>';
 
   items.slice(0, 5).forEach(function (item) {
     var sum = getEquipmentCompareSummary(item, equipped);
@@ -283,7 +283,7 @@ window.equipFromCompareSheet = equipFromCompareSheet;
 function buildEquipDetailPanelHTML() {
   var slot = selectedEquipSlot;
   var label = _td(EQUIPMENT_SLOT_LABELS[slot] || slot);
-  var emoji = EQUIPMENT_SLOT_EMOJI[slot] || "images/Icons/equipment_slots/slot_unknown.png";
+  var emoji = EQUIPMENT_SLOT_EMOJI[slot] || "images/Icons/equipment_slots/slot_unknown.webp";
   var item = game.equipped[slot];
   var h = '<div class="eq-detail-panel">';
 
@@ -316,7 +316,7 @@ function buildCompactSetBonusHTML() {
 
   if (!active.length) {
     var h = '<div class="eq-detail-setbonus">';
-    h += '<span class="eq-detail-setbonus-icon"><img class=ico-inline src=images/Icons/equipment_slots/set_bonus.png></span>';
+    h += '<span class="eq-detail-setbonus-icon"><img class=ico-inline src=images/Icons/equipment_slots/set_bonus.webp></span>';
     h += '<span class="eq-detail-setbonus-text">' + _t("Bonus de set inactif") + '</span>';
     h += '</div>';
     return h;
@@ -325,7 +325,7 @@ function buildCompactSetBonusHTML() {
   var out = '';
   active.forEach(function (entry) {
     out += '<div class="eq-detail-setbonus is-active">';
-    out += '<span class="eq-detail-setbonus-icon"><img class=ico-inline src=images/Icons/equipment_slots/set_bonus.png></span>';
+    out += '<span class="eq-detail-setbonus-icon"><img class=ico-inline src=images/Icons/equipment_slots/set_bonus.webp></span>';
     out += '<span class="eq-detail-setbonus-text">' + esc(_td(entry.config.name)) + ' — ' + esc(_td(entry.config.text)) + '</span>';
     out += '</div>';
   });
@@ -394,7 +394,7 @@ function buildItemOriginHTML(item) {
   var idx = (typeof item.worldIndex === "number") ? item.worldIndex : 0;
   var world = (window.WORLDS && WORLDS[idx]) ? WORLDS[idx].name : null;
   if (!world) return "";
-  return '<div class="eq-detail-hint"><img class=ico-inline src=images/Icons/quests/quest_resources.png> ' + esc(_t("Trouvé en {w}", { w: _td(world) })) + '</div>';
+  return '<div class="eq-detail-hint"><img class=ico-inline src=images/Icons/quests/quest_resources.webp> ' + esc(_t("Trouvé en {w}", { w: _td(world) })) + '</div>';
 }
 window.buildItemOriginHTML = buildItemOriginHTML;
 
@@ -403,7 +403,7 @@ function buildUnifiedDetailPanelHTML(entries) {
   var h = '<div class="eq-detail-panel">';
 
   if (!entry) {
-    h += '<div class="eq-detail-icon eq-detail-icon-empty"><img class=ico-inline src=images/Icons/subtabs/inventory.png></div>';
+    h += '<div class="eq-detail-icon eq-detail-icon-empty"><img class=ico-inline src=images/Icons/subtabs/inventory.webp></div>';
     h += '<div class="eq-detail-name">' + _t("Aucun objet sélectionné") + '</div>';
     h += '<div class="eq-detail-hint">' + _t("Touche un objet dans le sac pour voir son détail ici.") + '</div>';
   } else if (entry.type === "equipment") {
@@ -424,7 +424,7 @@ function buildUnifiedDetailPanelHTML(entries) {
     h += '<div class="eq-detail-icon">' + renderIconOrEmojiHTML(ci.icon, "eq-detail-icon-img", _td(ci.name)) + '</div>';
     h += '<div class="eq-detail-name">' + esc(_td(ci.name)) + '</div>';
     h += '<div class="eq-detail-stat">' + esc(_td(ci.desc)) + (ci.con ? ' ' + esc(_td(ci.con)) : '') + '</div>';
-    h += '<div class="eq-detail-hint"><img class=ico-inline src=images/Icons/subtabs/inventory.png> ' + _t("Stock : {n}", { n: entry.stock }) + '</div>';
+    h += '<div class="eq-detail-hint"><img class=ico-inline src=images/Icons/subtabs/inventory.webp> ' + _t("Stock : {n}", { n: entry.stock }) + '</div>';
     h += '<div class="eq-detail-hint">' + _t("Se prépare à l'Apothicaire. S'emporte au départ, dans la préparation de sortie.") + '</div>';
   } else {
     var potion = entry.potion;
@@ -435,7 +435,7 @@ function buildUnifiedDetailPanelHTML(entries) {
     h += '<div class="eq-detail-icon">' + renderIconOrEmojiHTML(potion.icon, "eq-detail-icon-img", _td(potion.name)) + '</div>';
     h += '<div class="eq-detail-name">' + esc(_td(potion.name)) + '</div>';
     h += '<div class="eq-detail-stat">' + esc(descText) + '</div>';
-    h += '<div class="eq-detail-hint"><img class=ico-inline src=images/Icons/subtabs/inventory.png> ' + _t("Stock : {n}", { n: entry.stock }) + '</div>';
+    h += '<div class="eq-detail-hint"><img class=ico-inline src=images/Icons/subtabs/inventory.webp> ' + _t("Stock : {n}", { n: entry.stock }) + '</div>';
 
     if (entry.isHealing) {
       h += '<button class="btn-buy eq-detail-action" type="button" onclick="PotionManager.useHealingPotion(\'' + esc(potion.id) + '\')">' + _t("Utiliser") + '</button>';
@@ -452,7 +452,7 @@ function buildUnifiedDetailPanelHTML(entries) {
 function buildEquippedComparisonHTML(item) {
   var equipped = game.equipped ? game.equipped[item.slot] : null;
   var h = '<div class="eq-compare-box">';
-  h += '<div class="eq-compare-title"><img class=ico-inline src=images/Icons/system/auto_repeat.png> ' + _t("Actuellement équipé") + '</div>';
+  h += '<div class="eq-compare-title"><img class=ico-inline src=images/Icons/system/auto_repeat.webp> ' + _t("Actuellement équipé") + '</div>';
 
   if (!equipped) {
     h += '<div class="eq-compare-empty">' + _t("Rien d’équipé sur cet emplacement — équiper cet objet sera un pur gain.") + '</div>';
@@ -480,7 +480,7 @@ function buildEquipmentTabContentHTML(topHTML) {
   var h = '';
 
   h += '<div class="eq-layout">';
-  h += '<div class="eq-hero-card nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="' + esc("images/Icons/combat_stats/stat_defense.png|" + _t("Équipement")) + '">';
+  h += '<div class="eq-hero-card nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="' + esc("images/Icons/combat_stats/stat_defense.webp|" + _t("Équipement")) + '">';
   h += topHTML || '';
   h += '<div class="eq-hero-main eq-hero-main-slots-only">';
 
@@ -528,7 +528,7 @@ function buildInventoryCompactToolbarHTML() {
   var h = '<div class="inv-toolbar">';
 
   h += '<div class="inv-toolbar-sort-wrap">';
-  h += '<button class="inv-toolbar-btn" type="button" onclick="toggleInventorySortMenu()"><img class=ico-inline src=images/Icons/system/sort.png> ' + _t("Trier") + '</button>';
+  h += '<button class="inv-toolbar-btn" type="button" onclick="toggleInventorySortMenu()"><img class=ico-inline src=images/Icons/system/sort.webp> ' + _t("Trier") + '</button>';
   if (showInventorySortMenu) {
     h += '<div class="inv-sort-menu">';
     h += '<button type="button" onclick="applyInventorySort(\'rarity\')">' + _t("Rareté") + '</button>';
@@ -540,7 +540,7 @@ function buildInventoryCompactToolbarHTML() {
   // v3.242.0 (retour Seb) : le bouton n'affichait qu'une icône, réduite à 0 px par le
   // filet `img { font-size: 0 }` — il ne restait qu'une plaque bleue vide. Icône rétablie
   // (voir css/99-icon-assets.css) et libellé ajouté pour qu'il se lise sans ambiguïté.
-  h += '<button class="inv-toolbar-btn" type="button" onclick="openInventorySettings()"><img class=ico-inline src=images/Icons/system/auto_sell.png> ' + _t("Autovente") + '</button>';
+  h += '<button class="inv-toolbar-btn" type="button" onclick="openInventorySettings()"><img class=ico-inline src=images/Icons/system/auto_sell.webp> ' + _t("Autovente") + '</button>';
 
   h += '</div>';
   return h;
@@ -550,8 +550,8 @@ function buildInventoryFilterRowHTML() {
   // v3.401.0 (lot O-1) : filtres = pastilles du kit (.kchips), pas des onglets
   var h = '<div class="kchips inv-filter-row">';
   h += '<button type="button" class="' + (inventoryFilter === "all" ? 'is-on' : '') + '" onclick="setInventoryFilter(\'all\')">' + _t("Tout") + '</button>';
-  h += '<button type="button" class="' + (inventoryFilter === "equipment" ? 'is-on' : '') + '" onclick="setInventoryFilter(\'equipment\')"><img src="images/Icons/combat_stats/stat_defense.png" alt="">' + _t("Équipement") + '</button>';
-  h += '<button type="button" class="' + (inventoryFilter === "potions" ? 'is-on' : '') + '" onclick="setInventoryFilter(\'potions\')"><img src="images/Icons/subtabs/potions.png" alt="">' + _t("Consommables") + '</button>'; // v3.448.11 : potions et objets de combat
+  h += '<button type="button" class="' + (inventoryFilter === "equipment" ? 'is-on' : '') + '" onclick="setInventoryFilter(\'equipment\')"><img src="images/Icons/combat_stats/stat_defense.webp" alt="">' + _t("Équipement") + '</button>';
+  h += '<button type="button" class="' + (inventoryFilter === "potions" ? 'is-on' : '') + '" onclick="setInventoryFilter(\'potions\')"><img src="images/Icons/subtabs/potions.webp" alt="">' + _t("Consommables") + '</button>'; // v3.448.11 : potions et objets de combat
   h += '</div>';
   return h;
 }
@@ -563,13 +563,13 @@ function buildInventorySettingsHTML() {
   // v3.400.0 (lot F-2) : réglages = feuille du bas du kit (en-tête de pierre, croix, voile)
   var h = '<div class="full-menu-overlay" onclick="if (event.target === this) closeInventorySettings();">';
   h += '  <div class="full-menu inv-settings-sheet">';
-  h += kSheetHeadHTML({ icon: '<img src="images/Icons/system/auto_sell.png" alt="">', title: _t("Réglages du sac"), close: "closeInventorySettings()" });
+  h += kSheetHeadHTML({ icon: '<img src="images/Icons/system/auto_sell.webp" alt="">', title: _t("Réglages du sac"), close: "closeInventorySettings()" });
   h += '  <div class="ksheet-body">';
 
   h += '    <div class="auto-sell-toggle-row">';
   h += '      <button class="auto-sell-toggle' + (game.autoSellEquipment ? ' is-on' : '') + '" type="button" onclick="toggleAutoSellEquipment();openInventorySettings();">';
   h += '        <span class="auto-sell-switch"></span>';
-  h += '        <span class="auto-sell-label"><img class=ico-inline src=images/Icons/system/auto_sell.png> ' + (game.autoSellEquipment ? _t("Auto-offrande activée") : _t("Auto-offrande désactivée")) + '</span>';
+  h += '        <span class="auto-sell-label"><img class=ico-inline src=images/Icons/system/auto_sell.webp> ' + (game.autoSellEquipment ? _t("Auto-offrande activée") : _t("Auto-offrande désactivée")) + '</span>';
   h += '      </button>';
   h += '    </div>';
 
@@ -585,7 +585,7 @@ function buildInventorySettingsHTML() {
   h += '    <div class="inv-threshold-hint">' + _t("Le tri se fait sur la rareté seule : un objet de cette rareté part même si ses bonus sont excellents. Une arme d'élite n'est jamais offerte d'office.") + '</div>';
 
   h += '  </div>'; // ksheet-body
-  h += '  <div class="ksheet-foot"><button class="kbtn danger" type="button" onclick="confirmSellAllInventory()"><img class=ico-inline src=images/Icons/system/bulk_sell.png> ' + _t("Tout offrir") + '</button></div>';
+  h += '  <div class="ksheet-foot"><button class="kbtn danger" type="button" onclick="confirmSellAllInventory()"><img class=ico-inline src=images/Icons/system/bulk_sell.webp> ' + _t("Tout offrir") + '</button></div>';
 
   h += '  </div>';
   h += '</div>';
@@ -617,7 +617,7 @@ function confirmSellItem(uid, after) {
     value > 0
       ? _t("Tu donnes {x} à l'Aether, qui t'en rendra {n}. L'objet disparaît.", { x: itemName, n: formatNumber(value) })
       : _t("{x} a été acheté : il ne porte aucun souvenir et ne rendra pas d'Aether. L'objet disparaît.", { x: itemName }),
-    "images/Icons/system/ascension.png",
+    "images/Icons/system/ascension.webp",
     function () { EquipmentManager.sell(uid); if (typeof after === "function") after(); }
   );
 }
@@ -633,7 +633,7 @@ function confirmSellAllInventory() {
   showConfirmModal(
     _t("Tout offrir ?"),
     _t("Tu donnes les {n} objets de ton sac à l'Aether, pour {v} Aether environ. Les armes d'élite restent. Cette action est irréversible.", { n: count, v: formatNumber(totalValue) }),
-    "images/Icons/system/trash.png",
+    "images/Icons/system/trash.webp",
     function () { sellAllInventory(); }
   );
 }
@@ -662,7 +662,7 @@ function getOwnedPotionsList() {
 }
 
 function buildInventoryTabContentHTML(topHTML) {
-  var h = '<div class="eq-bag-panel nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="' + esc("images/Icons/subtabs/inventory.png|" + _t("Inventaire")) + '">';
+  var h = '<div class="eq-bag-panel nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="' + esc("images/Icons/subtabs/inventory.webp|" + _t("Inventaire")) + '">';
   h += topHTML || ''; // v3.244.0 : voir buildEquipmentTabContentHTML
 
   h += buildInventoryCompactToolbarHTML();
@@ -705,7 +705,7 @@ function buildEquipHTML() {
   if (activeEquipSubTab === "inventory") {
     h += buildInventoryTabContentHTML();
   } else if (activeEquipSubTab === "shop") {
-    h += '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="' + esc("images/Icons/subtabs/equipment_shop.png|" + _t("Boutique d’équipement")) + '">';
+    h += '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="' + esc("images/Icons/subtabs/equipment_shop.webp|" + _t("Boutique d’équipement")) + '">';
     h += (typeof buildEquipShopHTML === "function") ? buildEquipShopHTML() : "";
     h += '</div>';
   } else {

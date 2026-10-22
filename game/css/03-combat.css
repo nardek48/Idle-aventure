@@ -248,7 +248,7 @@
    Nom et compteur
    ========================= */
 /* v2.59 : cadre doré fourni par l'utilisateur
-   (images/Borders/nom-ennemi.png) — remplace le fond crème + bordure
+   (images/Borders/nom-ennemi.webp) — remplace le fond crème + bordure
    CSS. La boîte reste "inline-block" (largeur pilotée par le texte du
    nom), donc le ratio de l'image ne colle pas exactement à chaque nom
    (court comme "Slime" ou long comme "Araignée géante") ; le losange
@@ -264,7 +264,7 @@
   font-weight: 800;
   text-align: center;
   color: var(--nb-ink);
-  background: url('../images/Borders/nom-ennemi.png') center / 100% 100% no-repeat;
+  background: url('../images/Borders/nom-ennemi.webp') center / 100% 100% no-repeat;
   border: none;
   box-shadow: none;
   max-width: 85%;
@@ -728,7 +728,7 @@ img.combat-action-icon {
   width: 168px;
   height: 50px;
   border: none;
-  background: url('../images/Buttons/bouton-attaque.png') center / 100% 100% no-repeat;
+  background: url('../images/Buttons/bouton-attaque.webp') center / 100% 100% no-repeat;
   cursor: pointer;
   overflow: hidden; /* v3.34.3 : la jauge de cooldown respecte les coins de l'image */
 }

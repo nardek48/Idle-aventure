@@ -24,7 +24,7 @@ function buildHudHTML() {
     +     '<div class="kgauge kgauge-thin hud-gauge is-xp"><div class="kgauge-track"><div class="kgauge-fill" id="hud-xp-fill" style="width:0%"></div></div><div class="kgauge-text" id="hud-xp-text"></div></div>'
     +   '</div>'
     +   '<div class="hud-res">'
-    +     '<span class="hud-res-item"><img src="images/Icons/gold_icon.png" alt="' + _t("Or") + '"><span id="hud-gold">0</span></span>'
+    +     '<span class="hud-res-item"><img src="images/Icons/gold_icon.webp" alt="' + _t("Or") + '"><span id="hud-gold">0</span></span>'
     // v3.422.0 (Seb) : la ressource de la carte du monde quitte le bandeau, l'or reste seul
     +   '</div>'
     + '</div>'
@@ -62,11 +62,11 @@ window.hudHpShort = hudHpShort;
 
 function buildStatsBarHTML() {
   return ''
-    + '<div class="stat-item"><span class="stat-label"><img class=ico-inline src=images/Icons/combat_stats/stat_attack.png> ' + _t("Attaque") + '</span><span class="stat-value" id="stat-tap-dmg">1</span></div>'
-    + '<div class="stat-item"><span class="stat-label"><img class=ico-inline src=images/Icons/combat_stats/stat_speed.png> ' + _t("Célérité") + '</span><span class="stat-value" id="stat-auto-dps">0</span></div>'
-    + '<div class="stat-item"><span class="stat-label"><img class=ico-inline src=images/Icons/combat_stats/stat_critical.png> ' + _t("Critique") + '</span><span class="stat-value" id="stat-crit">5%</span></div>'
-    + '<div class="stat-item"><span class="stat-label"><img class=ico-inline src=images/Icons/combat_stats/stat_critical.png> ' + _t("Dégâts crit.") + '</span><span class="stat-value" id="stat-crit-percent">x2.00</span></div>'
-    + '<div class="stat-item"><span class="stat-label"><img class="stat-label-icon" src="images/Icons/gold_icon.png" alt="' + _t("Or") + '"> ' + _t("Or") + '</span><span class="stat-value" id="stat-gold-mult">x1.00</span></div>';
+    + '<div class="stat-item"><span class="stat-label"><img class=ico-inline src=images/Icons/combat_stats/stat_attack.webp> ' + _t("Attaque") + '</span><span class="stat-value" id="stat-tap-dmg">1</span></div>'
+    + '<div class="stat-item"><span class="stat-label"><img class=ico-inline src=images/Icons/combat_stats/stat_speed.webp> ' + _t("Célérité") + '</span><span class="stat-value" id="stat-auto-dps">0</span></div>'
+    + '<div class="stat-item"><span class="stat-label"><img class=ico-inline src=images/Icons/combat_stats/stat_critical.webp> ' + _t("Critique") + '</span><span class="stat-value" id="stat-crit">5%</span></div>'
+    + '<div class="stat-item"><span class="stat-label"><img class=ico-inline src=images/Icons/combat_stats/stat_critical.webp> ' + _t("Dégâts crit.") + '</span><span class="stat-value" id="stat-crit-percent">x2.00</span></div>'
+    + '<div class="stat-item"><span class="stat-label"><img class="stat-label-icon" src="images/Icons/gold_icon.webp" alt="' + _t("Or") + '"> ' + _t("Or") + '</span><span class="stat-value" id="stat-gold-mult">x1.00</span></div>';
 }
 
 function mountHudAndStatsBar() {

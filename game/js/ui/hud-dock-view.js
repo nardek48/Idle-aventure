@@ -14,8 +14,8 @@
    l'apparition, une seule fois : jamais d'animation en boucle (pas de pression).
    renderHud tourne à chaque image : le calque n'est réécrit que si son contenu change. */
 
-var HUD_DOCK_ICONS = { bag: "images/Icons/menu_icons/equip_menu.png", talent: "images/Icons/talents/up_icon.png",
-  dungeon: "images/Icons/subtabs/dungeon.png", pa: "images/Icons/scene/journey_long.png" };
+var HUD_DOCK_ICONS = { bag: "images/Icons/menu_icons/equip_menu.webp", talent: "images/Icons/talents/up_icon.webp",
+  dungeon: "images/Icons/subtabs/dungeon.webp", pa: "images/Icons/scene/journey_long.webp" };
 var HUD_DOCK_SITUATIONS = 3; // v3.405.0 : trois situations au plus, plus le fil rouge
 var hudDockLastKey = null;
 var hudDockSeen = null;   // bulles affichées au rendu précédent (null : premier rendu, pas de lueur)

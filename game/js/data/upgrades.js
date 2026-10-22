@@ -25,7 +25,7 @@ var UPGRADES = [
   {
     id: "utrain_power",
     name: "AMÉLIORATION DE FORCE",
-    icon: "./images/Icons/improvement_icons/power.png",
+    icon: "./images/Icons/improvement_icons/power.webp",
     desc: "Augmente les dégâts de ton attaque de base.",
     baseCost: 9,
     costStep: 0.055,   // v3.248.0 : courbe linéaire, base proportionnelle au gain
@@ -39,7 +39,7 @@ var UPGRADES = [
   {
     id: "utrain_celerity",
     name: "AMÉLIORATION DE CÉLÉRITÉ",
-    icon: "./images/Icons/improvement_icons/celerity.png",
+    icon: "./images/Icons/improvement_icons/celerity.webp",
     desc: "Augmente l'auto DPS.",
     baseCost: 5.5,     // v3.309.0 : 4 → 5,5, suit le coefficient du Rôdeur (0,09 → 0,12) pour garder l'iso-prix
     costStep: 0.055,   // v3.248.0 : courbe linéaire, base proportionnelle au gain
@@ -53,7 +53,7 @@ var UPGRADES = [
   {
     id: "utrain_precision",
     name: "AMÉLIORATION DE PRÉCISION",
-    icon: "./images/Icons/improvement_icons/accuracy.png",
+    icon: "./images/Icons/improvement_icons/accuracy.webp",
     desc: "Augmente la chance de critique.",
     baseCost: 7,
     costStep: 0.055,   // v3.248.0 : courbe linéaire, base proportionnelle au gain
@@ -67,7 +67,7 @@ var UPGRADES = [
   {
     id: "utrain_will",
     name: "AMÉLIORATION DE VOLONTÉ",
-    icon: "./images/Icons/improvement_icons/will.png",
+    icon: "./images/Icons/improvement_icons/will.webp",
     desc: "Améliore les critiques.",
     baseCost: 5,
     costStep: 0.055,   // v3.248.0 : courbe linéaire, base proportionnelle au gain
@@ -81,7 +81,7 @@ var UPGRADES = [
   {
     id: "utrain_endurance",
     name: "AMÉLIORATION D'ENDURANCE",
-    icon: "./images/Icons/improvement_icons/endurance.png",
+    icon: "./images/Icons/improvement_icons/endurance.webp",
     desc: "Augmente les PV du héros.",
     baseCost: 7,
     costStep: 0.055,   // v3.248.0 : courbe linéaire, base proportionnelle au gain

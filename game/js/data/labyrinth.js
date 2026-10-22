@@ -55,7 +55,7 @@ var LABYRINTH_TILES = {
   bossRoom: "images/Maps/labyrinthe/salle_gardien.webp",
   paper: "images/Maps/labyrinthe/papier.webp",
   bossPortrait: "images/Boss/gardien_du_plan.webp",
-  icon: "images/Icons/quest_icons/exploration/labyrinthe.png"
+  icon: "images/Icons/quest_icons/exploration/labyrinthe.webp"
 };
 
 var LABYRINTH_TEXTS = {

@@ -23,7 +23,7 @@ function getVillageCostMeta(key) {
   if (key === "gold") {
     return {
       label: _t("Or"),
-      iconHTML: '<img class="vb-cost-icon" src="images/Icons/gold_icon.png" alt="">'
+      iconHTML: '<img class="vb-cost-icon" src="images/Icons/gold_icon.webp" alt="">'
     };
   }
   var def = WAREHOUSE_RESOURCES[key];
@@ -82,7 +82,7 @@ function buildVillageCostListHTML(id) {
        + formatNumber(cost[key]) + '</span>';
     /* Une ressource d'un monde pas encore atteint n'est pas « manquante »,
        elle est introuvable : la loupe et non la croix, et on dit où. */
-    h += '<span class="vb-cost-check">' + (ok ? '<img class="ico-sys" src="images/Icons/system/check_valid.png" alt="">' : (unreachable ? '<img class="ico-sys" src="images/Icons/system/search_unknown.png" alt="">' : '<img class="ico-sys" src="images/Icons/system/cross_error.png" alt="">')) + '</span>';
+    h += '<span class="vb-cost-check">' + (ok ? '<img class="ico-sys" src="images/Icons/system/check_valid.webp" alt="">' : (unreachable ? '<img class="ico-sys" src="images/Icons/system/search_unknown.webp" alt="">' : '<img class="ico-sys" src="images/Icons/system/cross_error.webp" alt="">')) + '</span>';
     h += '</div>';
 
     if (!ok) {
@@ -148,7 +148,7 @@ function buildVillageBuildingSheetHTML(id) {
     if (typeof buildHallCaravanLinkHTML === "function") h += buildHallCaravanLinkHTML();
     h += '<div class="kseg vb-sheet-seg">';
     // v3.424.0 (chantier Héros, H-1, décision Seb) : la Boutique d'équipement s'installe à la Halle
-    h += '<button type="button" class="' + (hseg === "shop" ? 'is-on' : '') + '" onclick="setHallSheetSegment(\'shop\')"><img class="vb-seg-ico" src="images/Icons/subtabs/equipment_shop.png" alt="">' + _t("Échoppe") + '</button>';
+    h += '<button type="button" class="' + (hseg === "shop" ? 'is-on' : '') + '" onclick="setHallSheetSegment(\'shop\')"><img class="vb-seg-ico" src="images/Icons/subtabs/equipment_shop.webp" alt="">' + _t("Échoppe") + '</button>';
     h += '<button type="button" class="' + (hseg === "build" ? 'is-on' : '') + '" onclick="setHallSheetSegment(\'build\')">'
        + (maxed ? _t("Halle") : _t("Agrandir · niv. {n}", { n: level + 1 })) + '</button>';
     h += '</div>';
@@ -172,7 +172,7 @@ function buildVillageBuildingSheetHTML(id) {
      sans dire où s'en servir. */
   if (id === "training" && level > 0) {
     h += '<div class="vb-sheet-effect vb-sheet-link" onclick="goToHeroTraining()">'
-       + '<img class=ico-inline src=images/Icons/combat_stats/stat_critical.png> ' + _t("S'entraîner dans Héros → Entraînement ›") + '</div>';
+       + '<img class=ico-inline src=images/Icons/combat_stats/stat_critical.webp> ' + _t("S'entraîner dans Héros → Entraînement ›") + '</div>';
   }
 
   /* L'Apothicaire renvoie vers l'écran où l'on prépare, comme le Terrain
@@ -180,7 +180,7 @@ function buildVillageBuildingSheetHTML(id) {
      reste le lieu où l'on s'en sert. */
   if (id === "apothecary" && level > 0) {
     h += '<div class="vb-sheet-effect vb-sheet-link" onclick="goToPotions()">'
-       + '<img class=ico-inline src=images/Icons/subtabs/potions.png> ' + _t("Préparer dans Boutique → Potions ›") + '</div>';
+       + '<img class=ico-inline src=images/Icons/subtabs/potions.webp> ' + _t("Préparer dans Boutique → Potions ›") + '</div>';
     h += buildApothecaryOrdersHTML(); // v3.291.0 : les recettes se gagnent ici
   }
 
@@ -215,7 +215,7 @@ function buildVillageBuildingSheetHTML(id) {
   /* L'Entrepôt agrandi renvoie vers l'Entrepôt lui-même. */
   if (id === "warehouse" && level > 0) {
     h += '<div class="vb-sheet-effect vb-sheet-link" onclick="goToWarehouse()">'
-       + '<img class=ico-inline src=images/Icons/system/warehouse_supplies.png> ' + _t("Voir l'Entrepôt ›") + '</div>';
+       + '<img class=ico-inline src=images/Icons/system/warehouse_supplies.webp> ' + _t("Voir l'Entrepôt ›") + '</div>';
   }
 
   /* La Halle renvoie vers l'échoppe qu'elle agrandit — même principe que le
@@ -259,7 +259,7 @@ function buildVillageBuildingSheetHTML(id) {
     h += '<div class="vb-sheet-effect">' + _t("Niveau {n} :", { n: target }) + ' '
        + esc(VillageBuildingManager.getEffectLabel(id, target)) + '</div>';
     h += buildVillageCostListHTML(id);
-    h += '<div class="vb-sheet-timer"><img class=ico-inline src=images/Icons/system/hourglass_waiting.png> '
+    h += '<div class="vb-sheet-timer"><img class=ico-inline src=images/Icons/system/hourglass_waiting.webp> '
        + esc(_t("Durée du chantier : {d}", { d: formatTime(VillageBuildingManager.getNextBuildSeconds(id)) })) + '</div>';
 
     h += '<div class="vb-sheet-actions">';
@@ -285,7 +285,7 @@ function buildApothecaryOrdersHTML() {
   var h = '<div class="vb-sheet-effect"><strong>' + _t("Aujourd’hui :") + '</strong> '
      + _t("{a} / {b} préparations (Soin mineur libre)", { a: A.getDailyUsed(), b: A.getDailyCap() }) + '</div>';
   // v3.363.0 (acte IV) : le puits du roi, si la forme a été rapportée à Aeswyn
-  if (A.hasPuitsDuRoi()) h += '<div class="vb-sheet-effect"><img class="ico-inline" src="images/Icons/village_buildings/puits_du_roi.png" alt=""> '
+  if (A.hasPuitsDuRoi()) h += '<div class="vb-sheet-effect"><img class="ico-inline" src="images/Icons/village_buildings/puits_du_roi.webp" alt=""> '
      + '<strong>' + _t("Le puits du roi :") + '</strong> ' + _t("2 préparations de plus par jour, moitié moins d’eau purifiée.") + '</div>';
   h += '<div class="vb-sheet-effect"><strong>' + _t("Commandes") + '</strong> ' + _t("— livre une fois, la recette est acquise pour toujours.") + '</div>';
 
@@ -295,11 +295,11 @@ function buildApothecaryOrdersHTML() {
     var name = potion ? _td(potion.name) : r.potionId;
 
     if (A.isLearned(r.potionId)) {
-      h += '<div class="vb-sheet-effect"><img class="ico-inline" src="images/Icons/system/check_valid.png" alt=""> ' + esc(_t("{x} — recette acquise", { x: name })) + '</div>';
+      h += '<div class="vb-sheet-effect"><img class="ico-inline" src="images/Icons/system/check_valid.webp" alt=""> ' + esc(_t("{x} — recette acquise", { x: name })) + '</div>';
       return;
     }
     if (!A.isOrderOpen(r.potionId)) {
-      h += '<div class="vb-sheet-effect is-locked"><img class=ico-inline src=images/Icons/system/lock_closed.png> '
+      h += '<div class="vb-sheet-effect is-locked"><img class=ico-inline src=images/Icons/system/lock_closed.webp> '
          + esc(name) + ' — ' + esc(A.getLockReason(r.potionId)) + '</div>';
       return;
     }
@@ -399,9 +399,9 @@ function goToHeroTraining() {
   closeVillageBuildingSheet();
   if (typeof switchTab === "function") switchTab("more"); // onglet Personnage (voir ui-root.js)
   /* PIÈGE : les identifiants internes sont inversés par rapport aux libellés.
-     Le sous-onglet affiché « <img class=ico-inline src=images/Icons/subtabs/hero_stats.png> Stats » — celui qui porte les cartes de
+     Le sous-onglet affiché « <img class=ico-inline src=images/Icons/subtabs/hero_stats.webp> Stats » — celui qui porte les cartes de
      caractéristiques — s'appelle "amelioration" ; l'identifiant "stats" est
-     celui de « <img class=ico-inline src=images/Icons/combat_stats/stat_attack.png> Capacités ». Voir buildHerosSubTabBarHTML(). */
+     celui de « <img class=ico-inline src=images/Icons/combat_stats/stat_attack.webp> Capacités ». Voir buildHerosSubTabBarHTML(). */
   if (typeof setHerosSubTab === "function") setHerosSubTab("amelioration");
 }
 window.goToHeroTraining = goToHeroTraining;
@@ -420,7 +420,7 @@ function buildTavernContractsHTML() {
 
   var contracts = TavernManager.getContracts();
   var h = '<div class="tavern-board">';
-  h += '<div class="tavern-board-head"><img class=ico-inline src=images/Icons/quests/quest_story.png> ' + _t("Contrats du jour")
+  h += '<div class="tavern-board-head"><img class=ico-inline src=images/Icons/quests/quest_story.webp> ' + _t("Contrats du jour")
      + '<span class="tavern-board-timer">' + esc(_t("Renouvelés dans {d}", { d: formatTime(TavernManager.timeUntilRefresh()) })) + '</span></div>';
 
   if (!contracts.length) {
@@ -443,7 +443,7 @@ function buildTavernContractsHTML() {
 
     h += '<div class="tavern-contract-side">';
     h += '<div class="tavern-contract-reward">'
-       + '<img class="tavern-contract-gold" src="images/Icons/gold_icon.png" alt="">'
+       + '<img class="tavern-contract-gold" src="images/Icons/gold_icon.webp" alt="">'
        + formatNumber(TavernManager.getPayout(c)) + '</div>';
     if (c.done) {
       h += '<div class="tavern-contract-btn is-done">' + _t("Honoré") + '</div>';
@@ -484,7 +484,7 @@ function buildForgeBoardHTML() {
 
   var max = ForgeManager.getMaxLevel();
   var h = '<div class="forge-board">';
-  h += '<div class="forge-board-head"><img class=ico-inline src=images/Icons/workshops/smithing_station.png> ' + _t("Établi")
+  h += '<div class="forge-board-head"><img class=ico-inline src=images/Icons/workshops/smithing_station.webp> ' + _t("Établi")
      + '<span class="forge-board-max">' + _t("Niveau maximum : {n}", { n: max }) + '</span></div>';
   h += '<div class="forge-board-note">' + _t("Le niveau appartient à l'emplacement : changer de pièce ne fait rien perdre.") + '</div>';
 
@@ -574,7 +574,7 @@ function buildEnchantBoardHTML() {
     return _td((typeof RARITY_LABELS !== "undefined" && RARITY_LABELS[r]) || r);
   });
   var h = '<div class="forge-board">';
-  h += '<div class="forge-board-head"><img class=ico-inline src=images/Icons/scene/node_discovery.png> ' + _t("Établi")
+  h += '<div class="forge-board-head"><img class=ico-inline src=images/Icons/scene/node_discovery.webp> ' + _t("Établi")
      + '<span class="forge-board-max">' + (allowed.length ? esc(allowed.join(", ")) : _t("Aucune rareté")) + '</span></div>';
   h += '<div class="forge-board-note">' + _t("La ligne garde sa nature : seule sa valeur est relancée, et jamais vers le bas. Chaque relance de la même ligne coûte plus cher.") + '</div>';
 
@@ -657,7 +657,7 @@ function buildShardShopBoardHTML() {
   if (!window.DungeonManager || !window.DUNGEON_SHOP) return "";
   var shards = game.dungeonShards || 0;
   var h = '<div class="vb-shard-board">';
-  h += '<div class="vb-shard-count"><img class=ico-inline src=images/Icons/subtabs/shard_shop.png> ' + _t("{n} Éclats", { n: formatNumber(shards) }) + '</div>';
+  h += '<div class="vb-shard-count"><img class=ico-inline src=images/Icons/subtabs/shard_shop.webp> ' + _t("{n} Éclats", { n: formatNumber(shards) }) + '</div>';
   h += '<div class="vb-board-sub">' + _t("Payée en Éclats — gagnés en passant des vagues de donjon (1 par vague, +{b} si le boss tombe, +{e} par élite). Utilisables uniquement ici.", { b: DUNGEON_CONFIG.shardsBossBonus, e: DUNGEON_CONFIG.eliteShardsBonus || 0 }) + '</div>';
   h += '<div class="dungeon-shop-grid">';
   (DUNGEON_SHOP || []).forEach(function (item) {
@@ -676,7 +676,7 @@ function buildShardShopBoardHTML() {
     if (maxed) {
       h += '<button class="btn-buy kbuy is-maxed" type="button" disabled>' + _t("Max") + '</button>';
     } else {
-      h += '<button class="btn-buy kbuy' + (canBuy ? '' : ' cant-afford') + '" type="button" onclick="buyShardUpgradeFromSheet(\'' + esc(item.id) + '\')"><img src="images/Icons/subtabs/shard_shop.png" alt="">' + formatNumber(cost) + '</button>';
+      h += '<button class="btn-buy kbuy' + (canBuy ? '' : ' cant-afford') + '" type="button" onclick="buyShardUpgradeFromSheet(\'' + esc(item.id) + '\')"><img src="images/Icons/subtabs/shard_shop.webp" alt="">' + formatNumber(cost) + '</button>';
     }
     h += '</div>';
     h += '</div>';

@@ -60,14 +60,14 @@
    ressources de l'Entrepôt et autres icônes non classées par rareté. */
 .rframe.rframe-neutral {
   aspect-ratio: 329 / 335;
-  background-image: url('../images/UI/frames/frame-icon-simple.png');
+  background-image: url('../images/UI/frames/frame-icon-simple.webp');
 }
 
-.rframe.rarity-common { background-image: url('../images/UI/slots/slot-common.png'); }
-.rframe.rarity-green { background-image: url('../images/UI/slots/slot-green.png'); }
-.rframe.rarity-rare { background-image: url('../images/UI/slots/slot-rare.png'); }
-.rframe.rarity-epic { background-image: url('../images/UI/slots/slot-epic.png'); }
-.rframe.rarity-legendary { background-image: url('../images/UI/slots/slot-legendary.png'); }
+.rframe.rarity-common { background-image: url('../images/UI/slots/slot-common.webp'); }
+.rframe.rarity-green { background-image: url('../images/UI/slots/slot-green.webp'); }
+.rframe.rarity-rare { background-image: url('../images/UI/slots/slot-rare.webp'); }
+.rframe.rarity-epic { background-image: url('../images/UI/slots/slot-epic.webp'); }
+.rframe.rarity-legendary { background-image: url('../images/UI/slots/slot-legendary.webp'); }
 
 /* Icône-image posée par buildEquipmentIconHTML directement dans le
    .rframe (structure : .rframe.has-icon-img > img + fallback emoji).

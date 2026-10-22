@@ -22,7 +22,7 @@ var PA2_ITEMS = {
     icon: "images/Icons/resources/grande_ration_icon.webp",
     pro: "Rend tous les PV et efface une blessure.", con: "Prend la moitié de la besace." },
   gourde: { id: "gourde", name: "Gourde", size: 1, uses: 2, breath: 25,
-    icon: "images/Icons/scene/water_flask.png",
+    icon: "images/Icons/scene/water_flask.webp",
     pro: "Deux gorgées : +25 Souffle chacune." },
   // v3.387.0 (PA2-5, F2) : l'Outre du Désert, prise à l'Entrepôt. Puits sec tenu : +15 ; Outre de cuir (Mémoire) : ×1,5.
   outre: { id: "outre", resource: "outre_pleine", size: 1, uses: 1, breath: 40, worlds: ["desert"], bonusEffect: "outre_plus",
@@ -30,33 +30,33 @@ var PA2_ITEMS = {
     pro: "Une grande gorgée : +40 Souffle.", con: "Une seule gorgée." },
   // v3.429.0 (Ruines, U-6) : la Craie d'Edda, gratuite. Chaque trait empêche un mur de bouger à portée de vue.
   craie: { id: "craie", name: "Craie", size: 1, uses: 2, worlds: ["ruins"],
-    icon: "images/Icons/scene/items/item_chalk.png",
+    icon: "images/Icons/scene/items/item_chalk.webp",
     pro: "Deux traits : un mur qui bougerait près de toi reste en place.", con: "Ne sert qu'aux Ruines." },
   // v3.454.0 (Crypte, CR10) : la Lanterne de Sarkel, gratuite. Allumée, elle éclaire deux rangées de plus quelques pas.
   lanterne: { id: "lanterne", name: "Lanterne de Sarkel", size: 1, uses: 1, worlds: ["crypt"], light: true,
-    icon: "images/Icons/scene/items/item_lantern.png",
+    icon: "images/Icons/scene/items/item_lantern.webp",
     pro: "Allumée, elle montre deux rangées de plus pendant quelques pas.", con: "Une seule mèche." },
   corde: { id: "corde", name: "Corde", size: 1, uses: 1,
-    icon: "images/Icons/scene/rope.png",
+    icon: "images/Icons/scene/rope.webp",
     pro: "Réussite assurée sur un obstacle, voie précision.", con: "Une seule fois." },
   torche: { id: "torche", name: "Torche", size: 1,
-    icon: "images/Icons/scene/torch.png",
+    icon: "images/Icons/scene/torch.webp",
     pro: "Tu vois une rangée de plus devant toi.", con: "Sa lumière attire : combats +15 % de dégâts." },
   armure: { id: "armure", name: "Armure de voyage", size: 3,
-    icon: "images/Icons/scene/items/item_armor.png",
+    icon: "images/Icons/scene/items/item_armor.webp",
     pro: "Combats : −35 % de dégâts reçus.", con: "Chaque obstacle coûte +8 Souffle." },
   carte: { id: "carte", name: "Carte du braconnier", size: 1,
-    icon: "images/Icons/scene/items/item_poacher_map.png",
+    icon: "images/Icons/scene/items/item_poacher_map.webp",
     pro: "Chaque trouvaille : choisis 1 carte parmi 2.", con: "Il faut la payer : butin final −20 %." },
   fiole: { id: "fiole", name: "Fiole noire", size: 1,
-    icon: "images/Icons/scene/items/item_black_vial.png",
+    icon: "images/Icons/scene/items/item_black_vial.webp",
     pro: "À 0 PV, tu te relèves avec 40 % des PV.", con: "Si elle sert : butin final divisé par deux." },
   bois: { id: "bois", name: "Bois de cerf", size: 2, unlock: "boss",
-    icon: "images/Icons/scene/items/item_stag_antler.png",
+    icon: "images/Icons/scene/items/item_stag_antler.webp",
     pro: "+1 cran sur la voie force et en chargeant.",
     lockedHint: "Coffre d'expédition : abattre le gardien de la forêt." },
   veilleurs: { id: "veilleurs", name: "Lanterne des veilleurs", size: 1, unlock: "clairiere",
-    icon: "images/Icons/scene/items/item_watch_lantern.png",
+    icon: "images/Icons/scene/items/item_watch_lantern.webp",
     pro: "Toute la carte est visible, et les sources rendent +10.",
     lockedHint: "Coffre d'expédition : atteindre la Clairière aux lanternes." }
 };
@@ -64,13 +64,13 @@ var PA2_ITEM_ORDER = ["petite_ration", "ration", "grande_ration", "gourde", "out
 
 /* Pactes (V14, Q6) : malus choisis contre du butin final. */
 var PA2_PACTS = {
-  tarie:  { id: "tarie",  bonus: 0.25, icon: "images/Icons/scene/pacts/pact_dry.png",
+  tarie:  { id: "tarie",  bonus: 0.25, icon: "images/Icons/scene/pacts/pact_dry.webp",
     name: "Sources taries", desc: "Les sources ne rendent presque plus rien." },
-  enrage: { id: "enrage", bonus: 0.40, icon: "images/Icons/scene/pacts/pact_awake.png",
+  enrage: { id: "enrage", bonus: 0.40, icon: "images/Icons/scene/pacts/pact_awake.webp",
     name: "La bête est éveillée", desc: "Les combats de l'acte III et le gardien frappent 40 % plus fort." },
-  retour: { id: "retour", bonus: 0.30, icon: "images/Icons/scene/pacts/pact_no_return.png",
+  retour: { id: "retour", bonus: 0.30, icon: "images/Icons/scene/pacts/pact_no_return.webp",
     name: "Pas de retour", desc: "Tomber à 0 PV, c'est tout perdre (au lieu de la moitié)." },
-  lourd:  { id: "lourd",  bonus: 0.20, icon: "images/Icons/scene/pacts/pact_heavy.png",
+  lourd:  { id: "lourd",  bonus: 0.20, icon: "images/Icons/scene/pacts/pact_heavy.webp",
     name: "Pas lourd", desc: "Chaque pas coûte 4 Souffle." }
 };
 var PA2_PACT_ORDER = ["tarie", "enrage", "retour", "lourd"];
@@ -78,14 +78,14 @@ var PA2_PACT_ORDER = ["tarie", "enrage", "retour", "lourd"];
 /* Trouvailles (V13) : objets de RUN, perdus au retour. rar : com / rare / leg.
    eventOnly : ne sort que d'une rencontre (jamais d'un tirage). */
 var PA2_RELICS = {
-  seve:   { id: "seve",   rar: "com",  icon: "images/Icons/scene/relics/relic_seve.png",   name: "Sève vive",         fx: "Les sources rendent le double." },
-  braise: { id: "braise", rar: "com",  icon: "images/Icons/scene/relics/relic_braise.png", name: "Braise tenace",     fx: "Chaque pas rend 3 % des PV." },
-  plume:  { id: "plume",  rar: "com",  icon: "images/Icons/scene/relics/relic_plume.png",  name: "Plume de geai",     fx: "La voie précision ne coûte plus de Souffle." },
-  dent:   { id: "dent",   rar: "rare", icon: "images/Icons/scene/relics/relic_dent.png",   name: "Dent de loup",      fx: "Combats : −25 % de dégâts reçus." },
-  pierre: { id: "pierre", rar: "rare", icon: "images/Icons/scene/relics/relic_pierre.png", name: "Pierre qui chante", fx: "+1 cran sur la voie force." },
-  oeil:   { id: "oeil",   rar: "rare", icon: "images/Icons/scene/relics/relic_oeil.png",   name: "Œil de chouette",   fx: "Toute la carte se révèle." },
-  ronce:  { id: "ronce",  rar: "leg",  icon: "images/Icons/scene/relics/relic_ronce.png",  name: "Cœur de ronce",     fx: "Butin +30 %, mais chaque pas coûte 3 Souffle." },
-  fleche: { id: "fleche", rar: "leg",  icon: "images/Icons/scene/relics/relic_fleche.png", name: "Flèche du veneur",  fx: "+1 cran en force et pour ruser, combats −15 % de dégâts.", eventOnly: true }
+  seve:   { id: "seve",   rar: "com",  icon: "images/Icons/scene/relics/relic_seve.webp",   name: "Sève vive",         fx: "Les sources rendent le double." },
+  braise: { id: "braise", rar: "com",  icon: "images/Icons/scene/relics/relic_braise.webp", name: "Braise tenace",     fx: "Chaque pas rend 3 % des PV." },
+  plume:  { id: "plume",  rar: "com",  icon: "images/Icons/scene/relics/relic_plume.webp",  name: "Plume de geai",     fx: "La voie précision ne coûte plus de Souffle." },
+  dent:   { id: "dent",   rar: "rare", icon: "images/Icons/scene/relics/relic_dent.webp",   name: "Dent de loup",      fx: "Combats : −25 % de dégâts reçus." },
+  pierre: { id: "pierre", rar: "rare", icon: "images/Icons/scene/relics/relic_pierre.webp", name: "Pierre qui chante", fx: "+1 cran sur la voie force." },
+  oeil:   { id: "oeil",   rar: "rare", icon: "images/Icons/scene/relics/relic_oeil.webp",   name: "Œil de chouette",   fx: "Toute la carte se révèle." },
+  ronce:  { id: "ronce",  rar: "leg",  icon: "images/Icons/scene/relics/relic_ronce.webp",  name: "Cœur de ronce",     fx: "Butin +30 %, mais chaque pas coûte 3 Souffle." },
+  fleche: { id: "fleche", rar: "leg",  icon: "images/Icons/scene/relics/relic_fleche.webp", name: "Flèche du veneur",  fx: "+1 cran en force et pour ruser, combats −15 % de dégâts.", eventOnly: true }
 };
 var PA2_RELIC_RARITY_WEIGHTS = { com: 60, rare: 30, leg: 10 };
 
@@ -159,8 +159,8 @@ var PA2_GUARDIAN = {
 
 /* Approches de combat (V17, Q2). dmg : dégâts reçus ; loot : or gagné. Ruser = jet de précision. */
 var PA2_APPROACHES = {
-  charger: { id: "charger", dmg: 1.3, loot: 1.4, rounds: 2, icon: "images/Icons/combat_status/charge_incoming.png" },
-  tenir:   { id: "tenir",   dmg: 0.7, loot: 1.0, rounds: 3, icon: "images/Icons/combat_status/shield_active.png" }
+  charger: { id: "charger", dmg: 1.3, loot: 1.4, rounds: 2, icon: "images/Icons/combat_status/charge_incoming.webp" },
+  tenir:   { id: "tenir",   dmg: 0.7, loot: 1.0, rounds: 3, icon: "images/Icons/combat_status/shield_active.webp" }
 };
 
 /* Or, en multiples de l'or d'un ennemi de référence (G, indexé sur le niveau). Banc. */

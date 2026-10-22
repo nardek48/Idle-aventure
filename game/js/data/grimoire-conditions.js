@@ -7,67 +7,67 @@ var GRIMOIRE_CONDITIONS = {
     id: "chargeIncoming",
     label: "L'ennemi prépare une charge",
     description: "Un ennemi normal s'apprête à charger.",
-    icon: "images/Icons/combat_status/charge_incoming.png"
+    icon: "images/Icons/combat_status/charge_incoming.webp"
   },
   shieldIncoming: {
     id: "shieldIncoming",
     label: "L'ennemi invoque un bouclier",
     description: "Il va bientôt réduire les dégâts qu'il subit.",
-    icon: "images/Icons/combat_status/shield_incoming.png"
+    icon: "images/Icons/combat_status/shield_incoming.webp"
   },
   healIncoming: {
     id: "healIncoming",
     label: "Le boss va se soigner",
     description: "Le boss s'apprête à récupérer des PV.",
-    icon: "images/Icons/combat_status/heal_incoming.png"
+    icon: "images/Icons/combat_status/heal_incoming.webp"
   },
   eliteSurgeIncoming: {
     id: "eliteSurgeIncoming",
     label: "L'élite s'exalte",
     description: "Sa nature va compter triple pendant quelques rounds.",
-    icon: "images/Icons/combat_status/arcane_burn.png"
+    icon: "images/Icons/combat_status/arcane_burn.webp"
   },
   heroLowHp: {
     id: "heroLowHp",
     label: "Mes PV sont bas",
     description: "Tes PV sont bas.",
-    icon: "images/Icons/combat_status/heal_incoming.png"
+    icon: "images/Icons/combat_status/heal_incoming.webp"
   },
   enemyAttackIncoming: {
     id: "enemyAttackIncoming",
     label: "L'ennemi va frapper deux fois",
     description: "Sa jauge de célérité sera pleine au prochain tour : il enchaînera deux coups.",
-    icon: "images/Icons/combat_status/double_strike.png"
+    icon: "images/Icons/combat_status/double_strike.webp"
   },
   enemyEnraged: {
     id: "enemyEnraged",
     label: "L'ennemi est enragé",
     description: "Il devient plus dangereux à mesure qu'il perd des PV.",
-    icon: "images/Icons/combat_status/rage.png"
+    icon: "images/Icons/combat_status/rage.webp"
   },
   enemyCorrupted: {
     id: "enemyCorrupted",
     label: "L'ennemi est corrompu",
     description: "Chaque coup reçu réduit un peu tes dégâts.",
-    icon: "images/Icons/combat_status/corruption.png"
+    icon: "images/Icons/combat_status/corruption.webp"
   },
   enemySilenceIncoming: {
     id: "enemySilenceIncoming",
     label: "L'ennemi va te réduire au silence",
     description: "Un ennemi normal s'apprête à bloquer tes techniques.",
-    icon: "images/Icons/combat_status/silence_incoming.png"
+    icon: "images/Icons/combat_status/silence_incoming.webp"
   },
   enemyVampiric: {
     id: "enemyVampiric",
     label: "L'ennemi est vampirique",
     description: "Il se soigne à chaque coup qu'il te porte.",
-    icon: "images/Icons/combat_status/vampiric.png"
+    icon: "images/Icons/combat_status/vampiric.webp"
   },
   enemyArmored: {
     id: "enemyArmored",
     label: "L'ennemi est blindé",
     description: "Il subit un peu moins de dégâts en permanence.",
-    icon: "images/Icons/combat_status/armored.png"
+    icon: "images/Icons/combat_status/armored.webp"
   },
   /* v3.271.0 (L-5) — deux conditions de GROUPE. Elles pilotent TON kit face à ce qui
      arrive au groupe : le comportement du compagnon, lui, se règle sur sa fiche.
@@ -78,13 +78,13 @@ var GRIMOIRE_CONDITIONS = {
     id: "allyLowHp",
     label: "Un compagnon est en danger",
     description: "Un de tes compagnons est tombé sous 40 % de ses PV.",
-    icon: "images/Icons/combat_status/heal_incoming.png"
+    icon: "images/Icons/combat_status/heal_incoming.webp"
   },
   multipleEnemies: {
     id: "multipleEnemies",
     label: "Ils sont plusieurs",
     description: "Au moins deux ennemis sont encore debout.",
-    icon: "images/Icons/combat_status/double_strike.png"
+    icon: "images/Icons/combat_status/double_strike.webp"
   },
   /* v3.428.0 (Ruines, relève) : un ennemi est à terre et va se relever. L'action de la règle
      le vise (RiseSystem.aim) : une frappe l'achève. Icône à générer. */
@@ -92,7 +92,7 @@ var GRIMOIRE_CONDITIONS = {
     id: "enemyRising",
     label: "Un ennemi se relève",
     description: "Un ennemi est à terre et se relèvera au prochain round. Ton action le vise : une frappe l'achève.",
-    icon: "images/Icons/combat_status/rising.png"
+    icon: "images/Icons/combat_status/rising.webp"
   },
   /* v3.451.0 (Crypte, CR2) : un mort dort. L'action de la règle le vise (SleepSystem.aim) : le frapper
      le réveille, pour plus d'or. Sans règle, on le laisse dormir. Icône à générer. */
@@ -100,7 +100,7 @@ var GRIMOIRE_CONDITIONS = {
     id: "enemySleeping",
     label: "Un ennemi dort",
     description: "Un mort dort encore. Ton action le vise : le frapper le réveille, et vaincu il rapporte plus d'or. Sans cette règle, tu le laisses dormir.",
-    icon: "images/Icons/combat_status/asleep.png"
+    icon: "images/Icons/combat_status/asleep.webp"
   },
   /* v3.456.0 (Crypte, acte IV) : un compagnon est enchaîné. L'action de la règle vise celui qui
      tient la chaîne (SleepSystem.aim) : le frapper fort la fait céder. */
@@ -108,7 +108,7 @@ var GRIMOIRE_CONDITIONS = {
     id: "allyChained",
     label: "Un compagnon est enchaîné",
     description: "Un compagnon est enchaîné et ne joue plus. Ton action vise celui qui tient la chaîne : frappe-le fort pour la faire céder.",
-    icon: "images/Icons/combat_status/chained.png"
+    icon: "images/Icons/combat_status/chained.webp"
   }
 };
 

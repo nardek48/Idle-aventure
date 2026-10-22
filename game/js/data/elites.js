@@ -46,7 +46,7 @@ var ELITE_DB = {
     lore: "Ses yeux ont blanchi. Elle tisse toujours, mais plus rien ne se prend dans sa toile : "
       + "on dirait qu'elle attend autre chose. Quelqu'un est passé par ici avant toi.",
     image: "./images/Enemies/elite_fileuse.webp", // v3.348.0 : portrait propre (la base garde le sien)
-    questIcon: "./images/Icons/quest_icons/elite/elite1.png",
+    questIcon: "./images/Icons/quest_icons/elite/elite1.webp",
     /* v3.286.0 — ESCORTE. La Fileuse ne garde pas ses toiles seule : une araignée de sa
        couvée l'accompagne. Une étape d'élite demande « vaincre la Fileuse », pas « en tuer
        N » : l'escorte durcit la rencontre sans jamais rendre l'objectif moins cher — c'est
@@ -81,7 +81,7 @@ var ELITE_DB = {
     lore: "Elle a poussé sur de la cendre, et la cendre ne l'a pas quittée. Quand on la coupe, "
       + "elle chauffe au lieu de saigner.",
     image: "./images/Enemies/elite_ronce.webp", // v3.348.0 : portrait propre (la base garde le sien)
-    questIcon: "./images/Icons/quest_icons/elite/elite4.png",
+    questIcon: "./images/Icons/quest_icons/elite/elite4.webp",
     phases: null,
     repeatable: false
   },
@@ -131,7 +131,7 @@ var ELITE_DB = {
       + "dite il y a longtemps à quelqu'un qui n'est jamais revenu l'en délier.",
     // Icône propre, pas encore générée : jamais d'emprunt à une autre image (règle Seb 18/09/2026).
     image: "./images/Enemies/elite_serment.webp", // v3.348.0 : portrait propre (la base garde le sien)
-    questIcon: "./images/Icons/quest_icons/elite/elite_serment.png",
+    questIcon: "./images/Icons/quest_icons/elite/elite_serment.webp",
     phases: null,
     repeatable: false
   },
@@ -167,7 +167,7 @@ var ELITE_DB = {
       + "il boit d'abord, il frappe ensuite.",
     // Icône propre, pas encore générée : jamais d'emprunt (règle Seb 18/09/2026).
     image: "./images/Enemies/elite_dard.webp", // v3.348.0 : portrait propre (la base garde le sien)
-    questIcon: "./images/Icons/quest_icons/elite/elite_dard.png",
+    questIcon: "./images/Icons/quest_icons/elite/elite_dard.webp",
     winResource: { id: "chitine_profondeurs", amount: 1 },
     phases: null,
     repeatable: true
@@ -185,7 +185,7 @@ var ELITE_DB = {
     statMult: { endurance: 3, power: 3, celerity: 1.0 },
     lore: "Il ne pose plus de pierres. Il regarde où les autres les posent, et il corrige.",
     image: "./images/Enemies/elite_contremaitre.webp", // à générer : icône générique en attendant
-    questIcon: "./images/Icons/quest_icons/elite/elite_contremaitre.png",
+    questIcon: "./images/Icons/quest_icons/elite/elite_contremaitre.webp",
     escort: { members: ["batisseur", "skeleton"], hpMult: 0.3, goldMult: 0.3 },
     phases: null,
     repeatable: false
@@ -202,7 +202,7 @@ var ELITE_DB = {
     statMult: { endurance: 3.5, power: 4, celerity: 0.6 },
     lore: "Une masse de pierre qui a des bras. Elle ne dort pas. Elle attend qu'on passe devant.",
     image: "./images/Enemies/elite_golem.webp", // à générer : icône générique en attendant
-    questIcon: "./images/Icons/quest_icons/elite/elite_golem.png",
+    questIcon: "./images/Icons/quest_icons/elite/elite_golem.webp",
     escort: { members: ["zombie"], hpMult: 0.3, goldMult: 0.3 },
     phases: null,
     repeatable: false
@@ -220,7 +220,7 @@ var ELITE_DB = {
     statMult: { endurance: 3, power: 3, celerity: 1.0 },
     lore: "Il porte deux couronnes, l'une sur l'autre. La seconde n'est pas à lui. Il ne l'enlève pas.",
     image: "./images/Enemies/elite_porte_couronne.webp",
-    questIcon: "./images/Icons/quest_icons/elite/elite_porte_couronne.png",
+    questIcon: "./images/Icons/quest_icons/elite/elite_porte_couronne.webp",
     escort: { members: ["spectre", "wraith"], hpMult: 0.3, goldMult: 0.3 },
     phases: null,
     repeatable: false
@@ -237,7 +237,7 @@ var ELITE_DB = {
     statMult: { endurance: 3, power: 3.2, celerity: 1.0 },
     lore: "Elle pleure tous ceux qui ne dorment pas. Ça fait beaucoup.",
     image: "./images/Enemies/elite_pleureuse.webp",
-    questIcon: "./images/Icons/quest_icons/elite/elite_pleureuse.png",
+    questIcon: "./images/Icons/quest_icons/elite/elite_pleureuse.webp",
     escort: { members: ["spectre"], hpMult: 0.3, goldMult: 0.3 },
     phases: null,
     repeatable: false
@@ -255,7 +255,7 @@ var ELITE_DB = {
     lore: "Ce n'est pas un arbre qui a poussé. C'est quelque chose qui a pris la forme d'un arbre "
       + "pour qu'on cesse de le regarder. Le battement vient de dessous.",
     image: "./images/Enemies/elite_arbre_mere.webp", // v3.348.0 : portrait propre (la base garde le sien)
-    questIcon: "./images/Icons/quest_icons/elite/elite2.png",
+    questIcon: "./images/Icons/quest_icons/elite/elite2.webp",
     phases: null,
     repeatable: true
   }

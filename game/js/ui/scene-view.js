@@ -69,7 +69,7 @@ function buildSceneStartBlockHTML(block) {
     var need = Number(cost.amount || 0);
     var have = (window.WarehouseManager && WarehouseManager.getAmount) ? Number(WarehouseManager.getAmount(cost.resourceId) || 0) : 0;
     var name = def.name ? _td(def.name) : cost.resourceId;
-    h += '<div class="scene-landing-icon scene-cost-icon' + (have >= need ? ' is-ok' : '') + '">' + renderIconOrEmojiHTML(def.icon || "images/Icons/quests/ration_reward.png", "scene-cost-img", name) + '</div>';
+    h += '<div class="scene-landing-icon scene-cost-icon' + (have >= need ? ' is-ok' : '') + '">' + renderIconOrEmojiHTML(def.icon || "images/Icons/quests/ration_reward.webp", "scene-cost-img", name) + '</div>';
     if (have < need) {
       h += '<div class="scene-cost-title">' + esc(need - have > 1 ? _t("Il te manque {x} ×{n}", { n: need - have, x: name }) : _t("Il te manque une {x}", { x: name })) + '</div>';
       h += '<p class="scene-landing-text">' + esc(_t("{q} consomme {x} ×{n} au départ. Tu en as {h}.", { q: template.title ? _td(template.title) : _t("Cette expédition"), n: need, x: name, h: have })) + '</p>';
@@ -90,7 +90,7 @@ function buildSceneStartBlockHTML(block) {
       h += '<button class="settings-btn primary" type="button" onclick="retrySceneStart()">' + _t("Partir") + '</button>';
     }
   } else {
-    h += '<div class="scene-landing-icon"><img class=ico-inline src=images/Icons/system/warning.png></div>';
+    h += '<div class="scene-landing-icon"><img class=ico-inline src=images/Icons/system/warning.webp></div>';
     h += '<p class="scene-landing-text">' + esc(block.reason ? _td(block.reason) : _t("Départ impossible pour l’instant.")) + '</p>';
   }
   h += '<button class="settings-btn" type="button" onclick="leaveSceneStartBlock()">' + _t("Voir le tableau de missions") + '</button>';
@@ -123,7 +123,7 @@ function buildSceneLandingHTML() {
   if (sceneStartBlock) return buildSceneStartBlockHTML(sceneStartBlock); // v3.260.0
   var h = '<div class="panel-title">' + _t("Expédition") + '</div>';
   h += '<div class="scene-landing">';
-  h += '<div class="scene-landing-icon"><img class=ico-inline src=images/Icons/scene/scene_cavern.png></div>';
+  h += '<div class="scene-landing-icon"><img class=ico-inline src=images/Icons/scene/scene_cavern.webp></div>';
   h += '<p class="scene-landing-text">' + _t("Aucune expédition en cours, direction le tableau de missions.") + '</p>';
   h += '<button class="settings-btn primary" type="button" onclick="switchTab(\'quests\')">' + _t("Voir le tableau de missions") + '</button>';
   h += '</div>';

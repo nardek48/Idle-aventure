@@ -18,14 +18,14 @@ var FIL_ROUGE_HEAL_PCT = 0.60;      // en dessous, on propose de se soigner avan
 var FIL_ROUGE_PLOTS_RATIO = 0.5;    // au moins la moitié des zones ouvertes pleines
 
 var FIL_ROUGE_ICONS = {
-  claim: "images/Icons/quests/quest_complete.png",
-  memory: "images/Icons/aether_icon.png",
-  heal: "images/Icons/quests/ration_reward.png",
-  story: "images/Icons/quests/quest_story.png",
-  patrol: "images/Icons/quests/mission_exploration.png",
-  tavern: "images/Icons/village_buildings/tavern.png",
-  plots: "images/Icons/system/collect_all.png",
-  idle: "images/Icons/quests/quest_list.png"
+  claim: "images/Icons/quests/quest_complete.webp",
+  memory: "images/Icons/aether_icon.webp",
+  heal: "images/Icons/quests/ration_reward.webp",
+  story: "images/Icons/quests/quest_story.webp",
+  patrol: "images/Icons/quests/mission_exploration.webp",
+  tavern: "images/Icons/village_buildings/tavern.webp",
+  plots: "images/Icons/system/collect_all.webp",
+  idle: "images/Icons/quests/quest_list.webp"
 };
 
 var FilRouge = {
@@ -61,7 +61,7 @@ var FilRouge = {
     var n = AchievementManager.getAvailableToClaimCount();
     if (!n) return null;
     return {
-      id: "achievement", urgent: false, icon: "images/Icons/menu_icons/achivment_menu.png",
+      id: "achievement", urgent: false, icon: "images/Icons/menu_icons/achivment_menu.webp",
       title: n > 1 ? _t("{n} hauts faits à réclamer", { n: n }) : _t("Un haut fait à réclamer"),
       reason: _t("Récompense prête dans les Hauts faits."), goLabel: _t("Voir"),
       go: function () { if (typeof switchTab === "function") switchTab("achievements"); }
