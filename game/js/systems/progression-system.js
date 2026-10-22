@@ -166,7 +166,6 @@ var WorldManager = {
     meetsAscensionRequirement: function (index) {
     var w = WORLDS[index];
     if (!w) return false;
-    if (window.WorldQuestManager && !WorldQuestManager.isWorldUnlocked(index)) return false;
     if (window.AdventureQuestManager) {
       var precedingWorld = WORLDS[index - 1];
       if (precedingWorld && !AdventureQuestManager.isWorldTransitionUnlocked(precedingWorld.id)) return false;

@@ -350,7 +350,6 @@ var CaravanManager = {
   _unloadOne: function (c) {
     var gold = Math.max(0, Math.floor(Number(c.gold || 0)));
     game.gold = Number(game.gold || 0) + gold;
-    if (gold > 0 && window.QuestManager && typeof QuestManager.track === "function") QuestManager.track("goldEarned", gold);
     if (c.rare && WAREHOUSE_RESOURCES[c.rare.key]) WarehouseManager.addResource(c.rare.key, c.rare.n, true);
     if (c.item && typeof addLootToInventory === "function") addLootToInventory(c.item); // sac plein : l'objet est offert
     var loot = { trip: c.trip, world: c.world, gold: gold, rare: c.rare, item: c.item, units: this.getLoadUnits(c.cargo) };

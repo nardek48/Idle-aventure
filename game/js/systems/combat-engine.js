@@ -328,7 +328,6 @@ var CombatEngine = {
     if (this.inSortie()) { SortieManager.addGold(amount); return; }
     game.gold += amount;
     game.totalGoldEarned += amount;
-    if (window.QuestManager && typeof QuestManager.track === "function") QuestManager.track("goldEarned", amount);
   },
 
   /* v3.358.0 (D7, décision Seb 26/09/2026) : grantEssence retiré avec l'essence. */
@@ -588,7 +587,6 @@ var CombatEngine = {
 
     if (isCrit) {
       dmg = Math.floor(dmg * EquipmentManager.effectiveCritMult());
-      if (window.QuestManager && typeof QuestManager.track === "function") QuestManager.track("crits", 1);
       if (window.TalentManager) TalentManager.onHeroCrit(); // v3.327.0 : Tir mortel
     }
 
@@ -1796,7 +1794,6 @@ var CombatEngine = {
     if (window.SleepSystem) SleepSystem.onKill(enemy); // v3.451.0 (Crypte) : dernier éveillé, les dormeurs restent couchés
     if (window.CombatActors && CombatActors.enemies().length > 1) {
       CombatActors.removeEnemy(enemy);
-      if (window.QuestManager && typeof QuestManager.track === "function") QuestManager.track("kills", 1);
 
       /* Le kill doit compter pour la quête en cours — une meute de trois fait avancer un
          objectif de trois crans, pas d'un. On appelle donc le vrai système de run, en
@@ -1830,16 +1827,6 @@ var CombatEngine = {
       game._legFrenzyStacks = Math.min(10, Number(game._legFrenzyStacks || 0) + 1);
     }
     if (window.SortieManager) SortieManager.noteKill(enemy.isBoss);
-
-    if (window.QuestManager && typeof QuestManager.track === "function") {
-      QuestManager.track("kills", 1);
-      if (enemy.isBoss) QuestManager.track("bossKills", 1);
-
-      var masteryType = typeof getPlayerDamageType === "function" ? getPlayerDamageType() : null;
-      if (masteryType === "sword") QuestManager.track("swordKills", 1);
-      else if (masteryType === "bow") QuestManager.track("bowKills", 1);
-      else if (masteryType === "magic") QuestManager.track("magicKills", 1);
-    }
 
     showGoldPopup(goldGain);
     addLog(enemy.isBoss
@@ -1924,9 +1911,6 @@ var CombatEngine = {
         CombatEngine.grantGold(bonus);
         addLog("💰 " + _t("Trésor trouvé ! +{n} or", { n: bonus }), "event");
         showToast("💰 " + _t("+{n} or", { n: bonus }), 1400);
-        if (window.QuestManager && typeof QuestManager.track === "function") {
-          QuestManager.track("treasures", 1);
-        }
       },
       function () {
         // v3.436.1 (bug Seb) : 5 × l'or du kill ; l'ancien 5 % de la bourse faisait croître l'or de façon exponentielle

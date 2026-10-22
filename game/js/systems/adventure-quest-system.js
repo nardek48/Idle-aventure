@@ -129,8 +129,9 @@ var AdventureQuestManager = {
     if (Array.isArray(e.group) && e.group.length > 1) {
       q.enemyFilter = [e.group[0]];
       q.group = e.group;
-      q.groupHpMult = Number(e.groupHpMult || (e.group.length >= 3 ? 0.35 : 0.50)) * mult;
-      q.groupGoldMult = Number(e.groupGoldMult || e.groupHpMult || (e.group.length >= 3 ? 0.35 : 0.50));
+      var defaut = QuestEnemyManager.groupHpMultDefault(e.group.length);
+      q.groupHpMult = Number(e.groupHpMult || defaut) * mult;
+      q.groupGoldMult = Number(e.groupGoldMult || e.groupHpMult || defaut);
     } else {
       q.enemyFilter = [e.enemy || (e.group && e.group[0])];
       q.enemyHpMult = Number(e.hpMult || 1) * mult;

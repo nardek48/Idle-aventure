@@ -91,7 +91,6 @@ var AchievementManager = {
     if (!reward) return;
     if (reward.gold) {
       game.gold = Number(game.gold || 0) + reward.gold;
-      if (window.QuestManager && typeof QuestManager.track === "function") QuestManager.track("goldEarned", reward.gold);
       parts.push(_t("+{n} or", { n: formatNumber(reward.gold) }));
     }
   },

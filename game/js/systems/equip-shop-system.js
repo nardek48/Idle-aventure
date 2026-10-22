@@ -225,10 +225,6 @@ var EquipShopManager = {
     game.equipShopStock = this.generateStock();
     game.equipShopResetTime = Date.now() + EQUIP_SHOP_REFRESH_MS;
 
-    if (window.QuestManager && typeof QuestManager.track === "function") {
-      QuestManager.track("goldSpent", cost);
-    }
-
     addLog("🔄 " + _t("Échoppe renouvelée ({n} or)", { n: formatNumber(cost) }), "event");
     showToast(_t("🔄 Stock renouvelé !"), 1500);
     if (typeof renderAll === "function") renderAll();
@@ -269,10 +265,6 @@ var EquipShopManager = {
 
     game.gold -= price;
     item.bought = true;
-
-    if (window.QuestManager && typeof QuestManager.track === "function") {
-      QuestManager.track("goldSpent", price);
-    }
 
     addLog("🛒 " + _t("{x} acheté à l'échoppe ({n} or)", { x: _td(owned.name), n: formatNumber(price) }), "event");
     // v3.429.12 : emplacement vide -> l'objet est porté tout de suite (jamais d'échange avec un objet choisi)

@@ -189,10 +189,6 @@ var TavernManager = {
     c.done = true;
     if (window.AchievementManager) AchievementManager.onTavernDelivered(); // v3.338.0 : « Pilier de la Taverne »
 
-    if (window.QuestManager && typeof QuestManager.track === "function") {
-      QuestManager.track("goldEarned", payout);
-    }
-
     addLog("🍺 " + _t("Contrat honoré : {x} (+{n} or)", { x: _td(c.title), n: formatNumber(payout) }), "event");
     showToast(_t("+{n} or", { n: formatNumber(c.reward) }), 1400);
 

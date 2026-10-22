@@ -138,10 +138,6 @@ var WarehouseManager = {
     game.gold += goldGain;
     game.totalGoldEarned += goldGain;
 
-    if (window.QuestManager && typeof QuestManager.track === "function") {
-      QuestManager.track("goldEarned", goldGain);
-    }
-
     addLog(_t("{x} vendue ×{n} (+{g} or)", { x: _td(def.name), n: formatNumber(qty), g: formatNumber(goldGain) }), "event");
     showToast(_t("+{n} or", { n: formatNumber(goldGain) }), 1300);
 

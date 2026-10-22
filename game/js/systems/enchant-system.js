@@ -154,9 +154,6 @@ var EnchantManager = {
 
     game.gold -= cost.gold;
     WarehouseManager.removeResource("seve_aeswyn", cost.seve_aeswyn);
-    if (window.QuestManager && typeof QuestManager.track === "function") {
-      QuestManager.track("goldSpent", cost.gold);
-    }
 
     var factor = Math.pow(10, range.decimals);
     var rolled = Math.round(randFloat(range.min, range.max) * factor) / factor;

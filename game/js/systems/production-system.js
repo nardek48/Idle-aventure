@@ -578,10 +578,6 @@ var ProductionManager = {
 
     b.level += 1;
 
-    if (window.QuestManager && typeof QuestManager.track === "function") {
-      QuestManager.track("goldSpent", cost.gold);
-    }
-
     addLog(_t("{x} amélioré (niv. {n})", { x: _td(def.name), n: b.level }), "event");
     showToast(_t("{x} niv. {n}", { x: _td(def.name), n: b.level }), 1200);
 

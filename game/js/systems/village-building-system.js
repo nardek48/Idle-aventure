@@ -303,10 +303,6 @@ var VillageBuildingManager = {
       else WarehouseManager.removeResource(key, cost[key]);
     });
 
-    if (window.QuestManager && typeof QuestManager.track === "function" && cost.gold) {
-      QuestManager.track("goldSpent", cost.gold);
-    }
-
     var targetLevel = this.getLevel(id) + 1;
     var seconds = getVillageBuildSeconds(targetLevel);
     game.village.site = {

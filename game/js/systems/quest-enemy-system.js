@@ -21,89 +21,86 @@ var QuestEnemyManager = {
     var savedAdventureIndex = WorldManager.adventureIndex;
     var savedEnemyIndex = WorldManager.enemyIndex;
 
-    WorldManager.worldIndex = worldIdx;
-    WorldManager.adventureIndex = quest.adventureIndex;
-    /* v3.448.2 : heroRef de quête = héros de référence de l'ajustement D (fin de chapitre jouée sur
-       l'aventure 0, ex. le Trône de sable). Absent : la référence de l'aventure, comme avant. */
-    var quDef = (window.ADVENTURE_QUESTS && ADVENTURE_QUESTS[quest.id]) || quest;
-    var savedHeroRef = WorldManager._heroRefKey;
-    WorldManager._heroRefKey = quDef.heroRef || null;
-    var adventure = WorldManager.getAdventure();
-    var enemyCount = (adventure && adventure.enemyCount) || 1;
-    WorldManager.enemyIndex = forceBoss ? Math.max(0, enemyCount - 1) : 0;
+    /* v3.459.5 (audit P24) : le monde, l'aventure, le pool et le boss empruntés reviennent même
+       si la génération lève une erreur — sinon la sauvegarde suivante écrirait le monde de la quête. */
+    var savedPool = null, savedBoss = null, savedHeroRef = WorldManager._heroRefKey;
+    try {
+      WorldManager.worldIndex = worldIdx;
+      WorldManager.adventureIndex = quest.adventureIndex;
+      /* v3.448.2 : heroRef de quête = héros de référence de l'ajustement D (fin de chapitre jouée sur
+         l'aventure 0, ex. le Trône de sable). Absent : la référence de l'aventure, comme avant. */
+      var quDef = (window.ADVENTURE_QUESTS && ADVENTURE_QUESTS[quest.id]) || quest;
+      WorldManager._heroRefKey = quDef.heroRef || null;
+      var adventure = WorldManager.getAdventure();
+      var enemyCount = (adventure && adventure.enemyCount) || 1;
+      WorldManager.enemyIndex = forceBoss ? Math.max(0, enemyCount - 1) : 0;
 
-    // Filtre d'ennemis (décision Seb) : échange temporaire du pool de l'aventure, jamais le boss.
-    // v3.107.4 : enemyFilter définit DIRECTEMENT le pool cible (vérifié contre ENEMY_DB, pas contre
-    // le pool actuel de l'aventure) — un ennemi comme le Loup peut être filtré pour sa quête dédiée
-    // même s'il n'est plus dans le pool de base de la Lisière (réduit à slime/goblin/spider).
-    var savedPool = null;
-    if (!forceBoss && adventure && Array.isArray(quest.enemyFilter) && quest.enemyFilter.length) {
-      var valid = quest.enemyFilter.filter(function (id) { return !window.ENEMY_DB || !!ENEMY_DB[id]; });
-      if (valid.length) {
-        savedPool = adventure.enemyPool;
-        adventure.enemyPool = valid;
+      // Filtre d'ennemis (décision Seb) : échange temporaire du pool de l'aventure, jamais le boss.
+      // v3.107.4 : enemyFilter définit DIRECTEMENT le pool cible (vérifié contre ENEMY_DB, pas contre
+      // le pool actuel de l'aventure) — un ennemi comme le Loup peut être filtré pour sa quête dédiée
+      // même s'il n'est plus dans le pool de base de la Lisière (réduit à slime/goblin/spider).
+      if (!forceBoss && adventure && Array.isArray(quest.enemyFilter) && quest.enemyFilter.length) {
+        var valid = quest.enemyFilter.filter(function (id) { return !window.ENEMY_DB || !!ENEMY_DB[id]; });
+        if (valid.length) {
+          savedPool = adventure.enemyPool;
+          adventure.enemyPool = valid;
+        }
+        // valid vide (config incohérente, ex. faute de frappe/id inexistant) : on garde le pool complet plutôt que de planter.
       }
-      // valid vide (config incohérente, ex. faute de frappe/id inexistant) : on garde le pool complet plutôt que de planter.
-    }
 
-    /* v3.269.0 (L-3) — GROUPES. quest.group = liste de membres, chacun un id d'ennemi ou
-       { boss: true }. Absent : un seul ennemi, comportement d'avant à la ligne près.
-       Les PV de chaque membre suivent groupHpMult (mesuré : ×0,50 à deux, ×0,35 à trois),
-       son butin groupGoldMult — sans quoi une meute de trois rapporterait trois fois l'or
-       pour les points de vie d'un ennemi seul. */
-    if (!forceBoss && Array.isArray(quest.group) && quest.group.length > 1) {
-      var groupe = this.buildGroup(quest, adventure);
-      var selfG = this;
-      groupe.forEach(function (m) { selfG.applyPowerMult(quest, m); }); // v3.326.0
+      /* v3.269.0 (L-3) — GROUPES. quest.group = liste de membres, chacun un id d'ennemi ou
+         { boss: true }. Absent : un seul ennemi, comportement d'avant à la ligne près.
+         Les PV de chaque membre suivent groupHpMult (mesuré : ×0,50 à deux, ×0,35 à trois),
+         son butin groupGoldMult — sans quoi une meute de trois rapporterait trois fois l'or
+         pour les points de vie d'un ennemi seul. */
+      if (!forceBoss && Array.isArray(quest.group) && quest.group.length > 1) {
+        var groupe = this.buildGroup(quest, adventure);
+        var selfG = this;
+        groupe.forEach(function (m) { selfG.applyPowerMult(quest, m); }); // v3.326.0
+        return groupe;
+      }
+
+      /* v3.360.0 (acte IV, X-0) — bossId de QUÊTE : le boss déclaré par la quête remplace, le temps
+         d'une apparition, celui de l'aventure (même patron que enemyFilter). Nezzam reste ainsi unique :
+         rien d'autre au Désert ne le fait sortir. Absent = le boss de l'aventure, comme avant. */
+      var src = (window.ADVENTURE_QUESTS && ADVENTURE_QUESTS[quest.id]) || quest;
+      if (forceBoss && adventure && src.bossId && window.BOSS_DB && BOSS_DB[src.bossId]) {
+        savedBoss = adventure.boss;
+        adventure.boss = src.bossId;
+      }
+
+      var enemy = WorldManager.generateEnemy();
+
+      /* v3.360.0 — trait et phases du boss de quête, lus tels quels par combat-engine.js (archetype,
+         checkPhases). Copie des phases : l'état « phase jouée » vit sur l'ennemi, jamais dans la donnée. */
+      if (enemy && enemy.isBoss && src.bossId) {
+        if (src.bossArchetype) enemy.archetype = src.bossArchetype;
+        if (Array.isArray(src.bossPhases)) enemy.phases = JSON.parse(JSON.stringify(src.bossPhases));
+      }
+
+      /* v3.246.0 (retour Seb 15/09/2026) — enemyHpMult : PV de TOUS les ennemis de la quête
+         (normaux et boss). « Prouver sa valeur » est la 4e étape de l'Histoire : elle doit se
+         gagner avec l'équipement de départ, sans or à dépenser. Mesuré dans
+         sim/lisiere-quest-bench.js, profil sortie de tutoriel : à 1,0 l'échec est de 100 %
+         pour les trois classes ; à 0,4 (÷2,5) il tombe à 0 / 7 / 0 %. */
+      /* v3.263.0 : bossHpMult (optionnel) règle le boss à part ; absent, le boss suit enemyHpMult. */
+      var hpMult = Number(enemy && enemy.isBoss && quest.bossHpMult != null ? quest.bossHpMult : quest.enemyHpMult);
+      if (enemy && isFinite(hpMult) && hpMult > 0 && hpMult !== 1) {
+        enemy.hp = Math.max(1, Math.floor(enemy.maxHp * hpMult));
+        enemy.maxHp = enemy.hp;
+      }
+
+      this.applyPowerMult(quest, enemy); // v3.326.0
+
+      return enemy;
+    } finally {
+      if (savedBoss !== null) adventure.boss = savedBoss;
       if (savedPool) adventure.enemyPool = savedPool;
       WorldManager.worldIndex = savedWorldIndex;
       WorldManager.adventureIndex = savedAdventureIndex;
       WorldManager.enemyIndex = savedEnemyIndex;
       WorldManager._heroRefKey = savedHeroRef;
-      return groupe;
     }
-
-    /* v3.360.0 (acte IV, X-0) — bossId de QUÊTE : le boss déclaré par la quête remplace, le temps
-       d'une apparition, celui de l'aventure (même patron que enemyFilter). Nezzam reste ainsi unique :
-       rien d'autre au Désert ne le fait sortir. Absent = le boss de l'aventure, comme avant. */
-    var src = (window.ADVENTURE_QUESTS && ADVENTURE_QUESTS[quest.id]) || quest;
-    var savedBoss = null;
-    if (forceBoss && adventure && src.bossId && window.BOSS_DB && BOSS_DB[src.bossId]) {
-      savedBoss = adventure.boss;
-      adventure.boss = src.bossId;
-    }
-
-    var enemy = WorldManager.generateEnemy();
-    if (savedBoss !== null) adventure.boss = savedBoss;
-
-    /* v3.360.0 — trait et phases du boss de quête, lus tels quels par combat-engine.js (archetype,
-       checkPhases). Copie des phases : l'état « phase jouée » vit sur l'ennemi, jamais dans la donnée. */
-    if (enemy && enemy.isBoss && src.bossId) {
-      if (src.bossArchetype) enemy.archetype = src.bossArchetype;
-      if (Array.isArray(src.bossPhases)) enemy.phases = JSON.parse(JSON.stringify(src.bossPhases));
-    }
-
-    /* v3.246.0 (retour Seb 15/09/2026) — enemyHpMult : PV de TOUS les ennemis de la quête
-       (normaux et boss). « Prouver sa valeur » est la 4e étape de l'Histoire : elle doit se
-       gagner avec l'équipement de départ, sans or à dépenser. Mesuré dans
-       sim/lisiere-quest-bench.js, profil sortie de tutoriel : à 1,0 l'échec est de 100 %
-       pour les trois classes ; à 0,4 (÷2,5) il tombe à 0 / 7 / 0 %. */
-    /* v3.263.0 : bossHpMult (optionnel) règle le boss à part ; absent, le boss suit enemyHpMult. */
-    var hpMult = Number(enemy && enemy.isBoss && quest.bossHpMult != null ? quest.bossHpMult : quest.enemyHpMult);
-    if (enemy && isFinite(hpMult) && hpMult > 0 && hpMult !== 1) {
-      enemy.hp = Math.max(1, Math.floor(enemy.maxHp * hpMult));
-      enemy.maxHp = enemy.hp;
-    }
-
-    this.applyPowerMult(quest, enemy); // v3.326.0
-
-    if (savedPool) adventure.enemyPool = savedPool;
-    WorldManager.worldIndex = savedWorldIndex;
-    WorldManager.adventureIndex = savedAdventureIndex;
-    WorldManager.enemyIndex = savedEnemyIndex;
-    WorldManager._heroRefKey = savedHeroRef;
-
-    return enemy;
   },
 
   /* v3.326.0 (plan C-2) — enemyPowerMult : PUISSANCE (dégâts) de tous les ennemis de la quête,
@@ -158,12 +155,16 @@ QuestEnemyManager.respawnActiveRunEnemy = function () {
   return false;
 };
 
+/* v3.459.5 (audit O8) : PV d'un membre de groupe par défaut (mesuré : ×0,50 à deux, ×0,35 à trois).
+   Lu aussi par adventure-quest-system.js pour les rencontres scriptées. */
+QuestEnemyManager.groupHpMultDefault = function (n) { return n >= 3 ? 0.35 : 0.50; };
+
 /* Fabrique les membres d'un groupe. Chacun passe par le VRAI generateEnemy() : un membre
    de groupe est un ennemi ordinaire, seulement plus fragile et moins payant. */
 QuestEnemyManager.buildGroup = function (quest, adventure) {
   var membres = quest.group.slice(0, (typeof COMBAT_MAX_ENEMIES === "number" ? COMBAT_MAX_ENEMIES : 3));
   var hpMult = Number(quest.groupHpMult);
-  if (!isFinite(hpMult) || hpMult <= 0) hpMult = (membres.length >= 3) ? 0.35 : 0.50;
+  if (!isFinite(hpMult) || hpMult <= 0) hpMult = this.groupHpMultDefault(membres.length);
   var goldMult = Number(quest.groupGoldMult);
   if (!isFinite(goldMult) || goldMult <= 0) goldMult = hpMult;
 

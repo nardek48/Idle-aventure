@@ -199,7 +199,6 @@ var PatrolManager = {
     var g = Math.floor(Number(gold || 0));
     if (g > 0) {
       game.gold = Number(game.gold || 0) + g;
-      if (window.QuestManager && typeof QuestManager.track === "function") QuestManager.track("goldEarned", g);
     }
     return { loot: got, lost: lost, gold: g };
   },

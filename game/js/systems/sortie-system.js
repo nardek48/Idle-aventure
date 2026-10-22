@@ -205,7 +205,6 @@ var SortieManager = {
     if (loot.gold > 0) {
       game.gold += loot.gold;
       game.totalGoldEarned += loot.gold;
-      if (window.QuestManager && typeof QuestManager.track === "function") QuestManager.track("goldEarned", loot.gold);
     }
     loot.items.forEach(function (item) {
       if (typeof addDropToInventory === "function" && addDropToInventory(item)) {

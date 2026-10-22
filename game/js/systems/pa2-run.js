@@ -100,14 +100,6 @@ var Pa2Run = {
     var count = n.type === "boss" ? 1 : Math.max(1, Number(n.pack || 1)), id = foe && foe.id;
     game.totalKills = Number(game.totalKills || 0) + count;
     if (id) { game.killCounts = game.killCounts || {}; game.killCounts[id] = (game.killCounts[id] || 0) + count; }
-    if (window.QuestManager && typeof QuestManager.track === "function") {
-      QuestManager.track("kills", count);
-      if (n.type === "boss") QuestManager.track("bossKills", 1);
-      var type = typeof getPlayerDamageType === "function" ? getPlayerDamageType() : null;
-      if (type === "sword") QuestManager.track("swordKills", count);
-      else if (type === "bow") QuestManager.track("bowKills", count);
-      else if (type === "magic") QuestManager.track("magicKills", count);
-    }
   },
   // D2 : le gardien lâche un objet comme l'ancien boss final (50 % + bonus), dans le butin de sortie.
   _guardianDrop: function () {

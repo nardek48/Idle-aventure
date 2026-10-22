@@ -199,10 +199,6 @@ var ForgeManager = {
       else WarehouseManager.removeResource(key, cost[key]);
     });
 
-    if (window.QuestManager && typeof QuestManager.track === "function" && cost.gold) {
-      QuestManager.track("goldSpent", cost.gold);
-    }
-
     game.forge.levels[slot] = this.getLevel(slot) + 1;
 
     var label = (EQUIPMENT_SLOT_CONFIG[slot] && EQUIPMENT_SLOT_CONFIG[slot].label) ? _td(EQUIPMENT_SLOT_CONFIG[slot].label) : slot;

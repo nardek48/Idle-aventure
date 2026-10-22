@@ -59,10 +59,6 @@ function gameLoopStep() {
 
   game.playTime += dt;
 
-  if (window.QuestManager && typeof QuestManager.track === "function") {
-    QuestManager.track("combatTime", dt);
-  }
-
   var modalOpen = isBlockingModalOpen();
 
   var heroDowned = (game.heroHp || 0) <= 0;
@@ -104,10 +100,6 @@ function gameLoopStep() {
   }
 
   // v3.327.0 : « Intérêt composé » (or passif) retiré avec la branche Fortune (T4)
-
-  if (window.QuestManager && typeof QuestManager.checkReset === "function") {
-    QuestManager.checkReset();
-  }
 
   if (typeof renderHud === "function") renderHud();
   if (typeof renderEnemyHp === "function") renderEnemyHp();

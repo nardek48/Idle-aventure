@@ -16560,8 +16560,7 @@ console.log("\n[265] v3.459.5 — Globales fantômes (audit O3)");
 (function () {
   /* Un objet du jeu testé par window.X ou typeof X doit exister une fois tous les scripts chargés.
      Les API du navigateur et les globales posées plus tard (au clic, au boot) sont en liste blanche. */
-  var BLANCHE = ["Intl", "Image", "WeakMap",
-    "QuestManager", "WorldQuestManager", "QUEST_CONFIG"]; // ces trois-là : retirés au lot 9b
+  var BLANCHE = ["Intl", "Image", "WeakMap"]; // v3.459.6 : QuestManager, WorldQuestManager, QUEST_CONFIG retirés (lot 9b)
   var vus = {};
   scripts.forEach(function (s) {
     var t = fs.readFileSync(path.join(ROOT, s), "utf8"), re = /(?:window\.|typeof\s+)([A-Z][A-Za-z0-9_$]*)(?![A-Za-z0-9_$.])/g, m;
@@ -16569,6 +16568,33 @@ console.log("\n[265] v3.459.5 — Globales fantômes (audit O3)");
   });
   var fantomes = Object.keys(vus).filter(function (n) { return BLANCHE.indexOf(n) === -1 && typeof g[n] === "undefined"; });
   ok(fantomes.length === 0, "aucune globale fantôme" + (fantomes.length ? " — " + fantomes.join(", ") : ""));
+})();
+
+console.log("\n[266] v3.459.6 — Lot 9b : quêtes, sauvegarde, paliers (audit O3, O8, O10, P24)");
+(function () {
+  // P24 : une erreur pendant la génération rend quand même le monde et l'aventure empruntés
+  var W = g.WorldManager, orig = [W.worldIndex, W.adventureIndex, W.enemyIndex];
+  W.worldIndex = 2; W.adventureIndex = 1; W.enemyIndex = 3; // un autre monde que celui de la quête (Forêt)
+  var avant = [W.worldIndex, W.adventureIndex, W.enemyIndex], gen = W.generateEnemy, leve = false;
+  W.generateEnemy = function () { throw new Error("injectée"); };
+  try { g.QuestEnemyManager.spawnFor(g.HUNT_QUESTS.hq_forest_boar, false); } catch (e) { leve = true; }
+  W.generateEnemy = gen;
+  var apres = [W.worldIndex, W.adventureIndex, W.enemyIndex];
+  W.worldIndex = orig[0]; W.adventureIndex = orig[1]; W.enemyIndex = orig[2];
+  ok(leve && apres.join() === avant.join(), "spawnFor : erreur injectée, monde et aventure rendus");
+  ok(g.QuestEnemyManager.groupHpMultDefault(2) === 0.5 && g.QuestEnemyManager.groupHpMultDefault(3) === 0.35, "PV de groupe par défaut : ×0,50 à deux, ×0,35 à trois, en un seul endroit");
+  // O10 : l'export et l'import vivent dans l'interface, la sauvegarde ne les porte plus
+  var sav = fs.readFileSync(path.join(ROOT, "js/systems/save-system.js"), "utf8");
+  ok(typeof g.exportSaveToFile === "function" && typeof g.importSaveFromText === "function" && typeof g.applyImportedSave === "function" && sav.indexOf("function applyImportedSave") === -1,
+    "export et import dans ui/save-transfer-view.js, plus dans save-system.js");
+  ok(/save-transfer-view\.js/.test(fs.readFileSync(path.join(ROOT, "sw.js"), "utf8")), "le nouveau fichier est précaché par sw.js");
+  // O3 et O10 : plus d'appel à l'ancien QuestManager, plus d'essence morte
+  var src3 = ["js/systems/combat-engine.js", "js/main/game-loop.js", "js/systems/save-system.js", "js/systems/stats-system.js"].map(function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); }).join("\n");
+  ok(!/[^A-Za-z]QuestManager\./.test(src3) && src3.indexOf("essenceGlobalMult") === -1, "plus d'appel QuestManager ni d'essence morte dans les fichiers protégés");
+  ok(typeof g.StoryQuestManager.skipAll === "undefined", "StoryQuestManager.skipAll retiré (aucun appelant)");
+  // O8 : un seul relevé de palier
+  var p = g.storyPalier(g.game, "green"), d = g.storyPalierDesert(g.game);
+  ok(d.pieces === p.pieces && d.armeVerte === p.armeOk && d.reforge === p.arme && d.forge === p.forge, "storyPalierDesert lit storyPalier (noms d'origine gardés)");
 })();
 
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));

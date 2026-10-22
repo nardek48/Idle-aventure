@@ -523,12 +523,6 @@ var StoryQuestManager = {
     saveGame();
   },
 
-  /* Court-circuite le chapitre (bouton Paramètres « Débloquer tous les onglets »). */
-  skipAll: function () {
-    this.ensure();
-    Object.keys(STORY_QUESTS).forEach(function (id) { game.storyQuests[id].skipped = true; });
-  },
-
   /* Boot : garantit l'état et rattrape un objectif déjà atteint hors ligne (sans toast, le log suffit). */
   runRetroactiveCheck: function () {
     this.ensure();

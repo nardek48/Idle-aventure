@@ -85,10 +85,6 @@ var PotionManager = {
     game.gold -= cost;
     game.potionsOwned[id] = this.getStock(id) + 1;
 
-    if (window.QuestManager && typeof QuestManager.track === "function") {
-      QuestManager.track("goldSpent", cost);
-    }
-
     addLog("🧪 " + _t("{x} achetée (stock : {n})", { x: _td(potion.name), n: game.potionsOwned[id] }), "event");
     showToast(_td(potion.name) + " +1", 1300);
     if (typeof renderAll === "function") renderAll();

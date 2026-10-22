@@ -85,10 +85,6 @@ var StatsSystem = {
 
     game.bossGoldBonusPct = 0;
 
-    game.essenceRegen = 0;
-    game.bossEssenceMult = 1;
-    game.essenceGlobalMult = 1;
-
     (UPGRADES || []).forEach(function (u) {
       if (u && typeof u.apply === "function") {
         u.apply(game.upgrades[u.id] || 0);
@@ -161,7 +157,6 @@ var StatsSystem = {
 
     var bestiaryTotal = getTotalBestiaryBonus();
     game.goldMult += bestiaryTotal.goldBonus || 0;
-    game.essenceGlobalMult += bestiaryTotal.essenceBonus || 0;
 
     // v3.457.8 (P7, accord Seb) : maîtrise d'arme retirée — ses compteurs ne montaient plus depuis v3.116.0.
 
@@ -242,7 +237,6 @@ var StatsSystem = {
       if (afflictionMods.goldMult !== 1) game.goldMult *= afflictionMods.goldMult;
       if (stackRewardMult !== 1) {
         game.goldMult *= stackRewardMult;
-        game.essenceGlobalMult *= stackRewardMult;
       }
       if (afflictionMods.bossGoldBonusPct) game.bossGoldBonusPct += afflictionMods.bossGoldBonusPct;
       if (afflictionMods.bossEssenceBonusPct) game.bossEssenceBonusPct = (game.bossEssenceBonusPct || 0) + afflictionMods.bossEssenceBonusPct;
@@ -255,14 +249,12 @@ var StatsSystem = {
       : {};
     if (achievementBonus.goldMult) game.goldMult += achievementBonus.goldMult;
     if (achievementBonus.tapMult) game.tapMult += achievementBonus.tapMult;
-    if (achievementBonus.essenceGlobalMult) game.essenceGlobalMult += achievementBonus.essenceGlobalMult;
 
     var dungeonShopBonus = (window.DungeonManager && typeof DungeonManager.getShardShopBonuses === "function")
       ? DungeonManager.getShardShopBonuses()
       : {};
     if (dungeonShopBonus.power) game.tapMult += dungeonShopBonus.power;
     if (dungeonShopBonus.gold) game.goldMult += dungeonShopBonus.gold;
-    if (dungeonShopBonus.essence) game.essenceGlobalMult += dungeonShopBonus.essence;
     if (dungeonShopBonus.defense) {
       game.heroDefensePct = Math.min(HERO_DEFENSE_CAP, game.heroDefensePct + dungeonShopBonus.defense);
     }
