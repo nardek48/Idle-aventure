@@ -612,7 +612,7 @@ function buildEnchantBoardHTML() {
       }
       if (cost) {
         h += '<div class="forge-row-cost">';
-        [["gold", cost.gold], ["seve_aeswyn", cost.seve_aeswyn]].forEach(function (pair) {
+        [["gold", cost.gold]].forEach(function (pair) { // v3.459.10 : relance en or seul
           var meta = getVillageCostMeta(pair[0]);
           var have = (pair[0] === "gold") ? Number(game.gold || 0) : WarehouseManager.getAmount(pair[0]);
           h += '<span class="forge-cost-item' + (have >= pair[1] ? '' : ' is-missing') + '">'

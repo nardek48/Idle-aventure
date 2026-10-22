@@ -29,15 +29,12 @@ var ENCHANT_RARITY_BY_LEVEL = [
    deviendrait gratuite dès le Désert. Environ 8 % du prix d'achat de la pièce. */
 var ENCHANT_BASE_GOLD = { green: 80, rare: 200, epic: 700, legendary: 2800 };
 
-/* Sève d'Aeswyn de base, par rareté. La Sève ne s'achète pas : c'est elle, et
-   non l'or, qui limite vraiment le nombre de relances. */
-var ENCHANT_BASE_SEVE = { green: 1, rare: 2, epic: 3, legendary: 5 };
-
 /* Croissance du coût à chaque relance de la MÊME ligne. */
 var ENCHANT_COST_MULT = 1.55;
 
-/* Sève supplémentaire tous les N relances de la même ligne. */
-var ENCHANT_SEVE_STEP = 3;
+/* v3.459.10 (audit I2, décision Seb) : les relances se paient en or seul — la Sève reste à la
+   fin de jeu. Doigté de l'Enchanteresse (boutique d'Éclats) : −10 % d'or par niveau. */
+var ENCHANT_DOIGTE_PCT = 0.10;
 
 var EnchantManager = {
 
@@ -83,19 +80,16 @@ var EnchantManager = {
     var n = this.getRerollCount(item, index);
     var worldMult = (typeof getEquipShopWorldPriceMult === "function") ? getEquipShopWorldPriceMult() : 1;
     var gold = (ENCHANT_BASE_GOLD[item.rarity] || 80) * Math.pow(ENCHANT_COST_MULT, n) * worldMult;
-    var seve = (ENCHANT_BASE_SEVE[item.rarity] || 1) + Math.floor(n / ENCHANT_SEVE_STEP);
-    // v3.321.0 : Doigté de l'Enchanteresse (boutique d'Éclats), jamais sous une Sève
     if (window.DungeonManager && typeof DungeonManager.getShardEffect === "function") {
-      seve = Math.max(1, seve - DungeonManager.getShardEffect("seveDiscount"));
+      gold *= Math.max(0, 1 - ENCHANT_DOIGTE_PCT * DungeonManager.getShardEffect("enchantDiscount"));
     }
-    return { gold: Math.floor(gold), seve_aeswyn: seve };
+    return { gold: Math.floor(gold) };
   },
 
   canAfford: function (item, index) {
     var cost = this.getCost(item, index);
     if (!cost) return false;
-    return Number(game.gold || 0) >= cost.gold
-      && WarehouseManager.getAmount("seve_aeswyn") >= cost.seve_aeswyn;
+    return Number(game.gold || 0) >= cost.gold;
   },
 
   /* Raison de blocage lisible, jamais un simple faux : l'écran doit dire quoi faire. */
@@ -153,7 +147,6 @@ var EnchantManager = {
     this._rolling = true;
 
     game.gold -= cost.gold;
-    WarehouseManager.removeResource("seve_aeswyn", cost.seve_aeswyn);
 
     var factor = Math.pow(10, range.decimals);
     var rolled = Math.round(randFloat(range.min, range.max) * factor) / factor;
@@ -184,6 +177,6 @@ var EnchantManager = {
 
 window.ENCHANT_RARITY_BY_LEVEL = ENCHANT_RARITY_BY_LEVEL;
 window.ENCHANT_BASE_GOLD = ENCHANT_BASE_GOLD;
-window.ENCHANT_BASE_SEVE = ENCHANT_BASE_SEVE;
+window.ENCHANT_DOIGTE_PCT = ENCHANT_DOIGTE_PCT;
 window.ENCHANT_COST_MULT = ENCHANT_COST_MULT;
 window.EnchantManager = EnchantManager;

@@ -382,7 +382,7 @@ function depensesOr(g) {
         var r = E.getRange(it, i), c = E.getCost(it, i);
         if (!r || !c || r.max <= r.min) return;
         var part = (Number(a.value) - r.min) / (r.max - r.min);
-        if (part >= 0.85 || c.gold > g.game.gold * 0.1 || g.WarehouseManager.getAmount("seve_aeswyn") - c.seve_aeswyn < 20) return;
+        if (part >= 0.85 || c.gold > g.game.gold * 0.1 || g.WarehouseManager.getAmount("seve_aeswyn") - (c.seve_aeswyn || 0) < 20) return;
         if (E.getBlockReason(it, i)) return;
         if (!best || part < best.part) best = { it: it, i: i, part: part, gold: c.gold };
       });
@@ -1575,12 +1575,12 @@ function apresHistoire(h) {
       });
     });
     if (!best) break;
-    if (!obtain("seve_aeswyn", best.c.seve_aeswyn)) break;
+    if (best.c.seve_aeswyn && !obtain("seve_aeswyn", best.c.seve_aeswyn)) break; // v3.459.10 : relances en or seul
     if (E.getBlockReason(best.it, best.i)) break;
     E._rolling = false;
     if (!E.reroll(best.it, best.i)) break;
     E._rolling = false;
-    A.relances++; A.orRelances += best.c.gold; A.seve += best.c.seve_aeswyn;
+    A.relances++; A.orRelances += best.c.gold; A.seve += best.c.seve_aeswyn || 0;
   }
   A.apres = combatLine();
   if (!A.chantier) A.raison = "Enchanteresse " + V.getLevel("enchanter") + " : " + (V.getBlockReason("enchanter") || "?") + " " + JSON.stringify(V.getNextCost("enchanter")) + " · Sève " + g.WarehouseManager.getAmount("seve_aeswyn") + " · Résine " + g.WarehouseManager.getAmount("resine_durcie");

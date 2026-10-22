@@ -2620,7 +2620,7 @@ I18n.register("en", {
   "Carte de l'éclaireur": "Scout's Map",
   "+1 matériau de monde par run réussi, par niveau.": "+1 world material per successful run, per level.",
   "+1 sortie par jour dans chaque donjon, par niveau.": "+1 run per day in each dungeon, per level.",
-  "−1 Sève par relance d'affixe, par niveau (jamais moins d'une).": "−1 Sap per affix reroll, per level (never less than one).",
+  "−10 % d'or par relance d'affixe, par niveau.": "−10% gold per affix reroll, per level.",
   "+1 Petite Aventure par jour, par niveau.": "+1 Short Adventure per day, per level.",
 
   // BOSS_MOMENTS

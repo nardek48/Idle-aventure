@@ -4780,11 +4780,11 @@ console.log("\n[38b] v3.229.0 \u2014 Enchanteresse : relance de la valeur d'un b
 
   /* Coût : croissant sur la même ligne, indexé sur le monde. */
   var c0 = g.EnchantManager.getCost(item, 0);
-  ok(c0.gold === 200 && c0.seve_aeswyn === 2, "1re relance d'un Rare en For\u00eat : 200 or, 2 S\u00e8ve");
+  ok(c0.gold === 200 && c0.seve_aeswyn === undefined, "1re relance d'un Rare en For\u00eat : 200 or, sans S\u00e8ve (v3.459.10)");
   item.affixes[0].rerolls = 1;
   ok(g.EnchantManager.getCost(item, 0).gold === 310, "2e relance : \u00d71,55 (310 or)");
   item.affixes[0].rerolls = 3;
-  ok(g.EnchantManager.getCost(item, 0).seve_aeswyn === 3, "4e relance : +1 S\u00e8ve (palier de 3)");
+  ok(g.EnchantManager.getCost(item, 0).gold === 744 && g.EnchantManager.getCost(item, 0).seve_aeswyn === undefined, "4e relance : 744 or (\u00d71,55\u00b3), toujours sans S\u00e8ve");
   ok(g.EnchantManager.getCost(item, 1).gold === 200, "le compteur est par LIGNE : l'autre bonus reste au prix de d\u00e9part");
   item.affixes[0].rerolls = 0;
   g.game.worldsEverReached = { 0: true, 1: true };
@@ -9454,7 +9454,7 @@ console.log("\n[117] v3.321.0 — Boutique d'Éclats : plus de puissance, quatre
   game.dungeonShopLevels = { d_cle: 2 };
   ok(D.getRunsPerDay() === c0 + 2, "Clé 2 : +2 sorties par jour (" + c0 + " → " + D.getRunsPerDay() + ")");
 
-  /* Doigté : jamais sous une Sève */
+  /* Doigté (v3.459.10) : −10 % d'or par niveau, plus de Sève */
   var item = { rarity: "rare", affixes: [{ stat: "tapMult", value: 0.05 }] };
   var savedCan = g.EnchantManager.canRerollRarity;
   g.EnchantManager.canRerollRarity = function () { return true; }; // niveau de l'Enchanteresse hors sujet ici
@@ -9462,9 +9462,12 @@ console.log("\n[117] v3.321.0 — Boutique d'Éclats : plus de puissance, quatre
   var cost0 = g.EnchantManager.getCost(item, 0);
   game.dungeonShopLevels = { d_doigte: 3 };
   var cost3 = g.EnchantManager.getCost(item, 0);
-  ok(cost0.seve_aeswyn === 2 && cost3.seve_aeswyn === 1, "Doigté 3 : relance d'un Rare à 1 Sève au lieu de 2 (jamais sous 1)");
-  item.affixes[0].rerolls = 9; // 2 + 3 = 5 Sèves sans Doigté
-  ok(g.EnchantManager.getCost(item, 0).seve_aeswyn === 2, "10e relance du même affixe : 5 → 2 Sèves");
+  ok(Math.abs(cost3.gold - cost0.gold * 0.7) <= 1 && cost3.seve_aeswyn === undefined, "Doigté 3 : relance d'un Rare à " + cost3.gold + " or au lieu de " + cost0.gold + " (−30 %), sans Sève");
+  item.affixes[0].rerolls = 9;
+  var c9 = g.EnchantManager.getCost(item, 0).gold; game.dungeonShopLevels = {};
+  var c9sans = g.EnchantManager.getCost(item, 0).gold;
+  ok(Math.abs(c9 - c9sans * 0.7) <= 1, "10e relance du même affixe : −30 % aussi (" + c9sans + " → " + c9 + " or)");
+  ok(g.DUNGEON_SHOP.filter(function (x) { return x.id === "d_doigte"; })[0].effect === "enchantDiscount", "le Doigté porte l'effet sur l'or");
   g.EnchantManager.canRerollRarity = savedCan;
 
   /* Carte de l'éclaireur */
