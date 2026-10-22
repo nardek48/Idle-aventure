@@ -19,7 +19,7 @@
   position: relative;
   width: 100%;
   /* v2.90.16 : ratio calé sur MAP_PATH_VIEWBOX_H (179.17 pour 100 de
-     large) — ratio RÉEL de images/Map/world_map.jpg (2752/1536). */
+     large) — ratio RÉEL de images/Map/world_map.webp (2752/1536). */
   aspect-ratio: 100 / 179.17;
   border-radius: 10px;
   overflow: hidden;

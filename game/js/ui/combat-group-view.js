@@ -225,7 +225,7 @@ function buildCompanionActionsHTML(actor) {
 
   h += '<button type="button" class="cbg-act' + (choix && choix.slot === "basic" ? " is-picked" : "") + (conseil === "basic" ? " is-suggested" : "") + '"'
     + ' onclick="companionAction(\'basic\')" aria-label="' + _t("Attaque") + '">'
-    + '<img src="images/Icons/special_attacks/attack3.png" alt="">' + (conseil === "basic" ? tag : "") + '</button>';
+    + '<img src="images/Icons/special_attacks/attack3.webp" alt="">' + (conseil === "basic" ? tag : "") + '</button>';
 
   return '<div class="cbg-acts">' + h + '</div>';
 }

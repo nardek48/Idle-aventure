@@ -39,61 +39,61 @@ var MEMORY_VALUES = {
 };
 
 /* Les huit niveaux (conception v1.2 §5.3-5.4). `id` est la clé lue par MemoryManager.has().
-   Icônes : images/Icons/memory/<id>.png, à générer (icône générique en attendant, règle Seb). */
+   Icônes : images/Icons/memory/<id>.webp, à générer (icône générique en attendant, règle Seb). */
 var MEMORY_LEVELS = [
   { level: 1, theme: "Confort", options: [
-    { id: "sac_profond", name: "Sac profond", icon: "images/Icons/memory/sac_profond.png",
+    { id: "sac_profond", name: "Sac profond", icon: "images/Icons/memory/sac_profond.webp",
       desc: "Ton sac passe de 25 à 50 places." },
-    { id: "reserve_alchimiste", name: "Réserve d'alchimiste", icon: "images/Icons/memory/reserve_alchimiste.png",
+    { id: "reserve_alchimiste", name: "Réserve d'alchimiste", icon: "images/Icons/memory/reserve_alchimiste.webp",
       desc: "Tu peux garder jusqu'à 15 potions de chaque sorte au lieu de 9." }
   ] },
   { level: 2, theme: "Façon de jouer", options: [
-    { id: "grimoire_etendu", name: "Grimoire étendu", icon: "images/Icons/memory/grimoire_etendu.png",
+    { id: "grimoire_etendu", name: "Grimoire étendu", icon: "images/Icons/memory/grimoire_etendu.webp",
       desc: "Une règle active de plus dans le Grimoire." },
-    { id: "repos_camp", name: "Repos du camp", icon: "images/Icons/memory/repos_camp.png",
+    { id: "repos_camp", name: "Repos du camp", icon: "images/Icons/memory/repos_camp.webp",
       desc: "Tu récupères 50 % plus vite au Campement." }
   ] },
   /* v3.323.0 (décision Seb) : la Fiole de réserve quitte le niveau 3 — au banc elle portait le
      Chevalier de 67 à 92 % sur le sphinx. Elle ira aux Ruines (niveaux 9 à 12), où le calibrage
      la supposera acquise ; le crochet getSortiePotionCap() reste en place pour elle. */
   { level: 3, theme: "Entre deux combats", options: [
-    { id: "fidelite_wenna", name: "Fidélité de Wenna", icon: "images/Icons/memory/fidelite_wenna.png",
+    { id: "fidelite_wenna", name: "Fidélité de Wenna", icon: "images/Icons/memory/fidelite_wenna.webp",
       desc: "Après un KO, Wenna revient au combat suivant avec tous ses PV au lieu de 30 %." },
-    { id: "cuisine_campagne", name: "Cuisine de campagne", icon: "images/Icons/memory/cuisine_campagne.png",
+    { id: "cuisine_campagne", name: "Cuisine de campagne", icon: "images/Icons/memory/cuisine_campagne.webp",
       desc: "Les Petites rations soignent 25 % de plus au Campement (35 % → 43 % des PV)." }
   ] },
   { level: 4, theme: "La Mémoire", jalon: true, options: [
-    { id: "memoire_vive", name: "Mémoire vive", icon: "images/Icons/memory/memoire_vive.png",
+    { id: "memoire_vive", name: "Mémoire vive", icon: "images/Icons/memory/memoire_vive.webp",
       desc: "+25 % sur tout l'Aether que tu gagnes." },
-    { id: "echo_faille", name: "Écho de la faille", icon: "images/Icons/memory/echo_faille.png",
+    { id: "echo_faille", name: "Écho de la faille", icon: "images/Icons/memory/echo_faille.webp",
       desc: "+50 % d'Éclats à chaque run de donjon." },
-    { id: "recolte", name: "Récolte", icon: "images/Icons/memory/recolte.png",
+    { id: "recolte", name: "Récolte", icon: "images/Icons/memory/recolte.webp",
       desc: "+1 matériau de monde à chaque Petite Aventure réussie." }
   ] },
   { level: 5, theme: "La soif", options: [
-    { id: "seconde_gorgee", name: "Seconde gorgée", icon: "images/Icons/memory/seconde_gorgee.png",
+    { id: "seconde_gorgee", name: "Seconde gorgée", icon: "images/Icons/memory/seconde_gorgee.webp",
       desc: "Deux gorgées de gourde par run au Désert au lieu d'une." },
-    { id: "outre_cuir", name: "Outre de cuir", icon: "images/Icons/memory/outre_cuir.png",
+    { id: "outre_cuir", name: "Outre de cuir", icon: "images/Icons/memory/outre_cuir.webp",
       desc: "L'Outre pleine rend 50 % de Souffle en plus." }
   ] },
   { level: 6, theme: "Le marché", options: [
-    { id: "oeil_marchand", name: "Œil du marchand", icon: "images/Icons/memory/oeil_marchand.png",
+    { id: "oeil_marchand", name: "Œil du marchand", icon: "images/Icons/memory/oeil_marchand.webp",
       desc: "Actualiser la vitrine de l'échoppe coûte moitié prix." },
-    { id: "etal_garni", name: "Étal garni", icon: "images/Icons/memory/etal_garni.png",
+    { id: "etal_garni", name: "Étal garni", icon: "images/Icons/memory/etal_garni.webp",
       desc: "Un objet de plus dans la vitrine de l'échoppe." }
   ] },
   { level: 7, theme: "Maddoc", options: [
-    { id: "fidelite_maddoc", name: "Fidélité de Maddoc", icon: "images/Icons/memory/fidelite_maddoc.png",
+    { id: "fidelite_maddoc", name: "Fidélité de Maddoc", icon: "images/Icons/memory/fidelite_maddoc.webp",
       desc: "Après un KO, Maddoc revient au combat suivant avec tous ses PV au lieu de 30 %." },
-    { id: "voie_libre", name: "Voie libre", icon: "images/Icons/memory/voie_libre.png",
+    { id: "voie_libre", name: "Voie libre", icon: "images/Icons/memory/voie_libre.webp",
       desc: "Un changement de voie de Maddoc gratuit par jour. Les suivants gardent leur prix." }
   ] },
   { level: 8, theme: "Le verre et le fer", jalon: true, options: [
-    { id: "main_forgeron", name: "Main du forgeron", icon: "images/Icons/memory/main_forgeron.png",
+    { id: "main_forgeron", name: "Main du forgeron", icon: "images/Icons/memory/main_forgeron.webp",
       desc: "Les reforges coûtent 25 % d'or en moins." },
-    { id: "chitine_fendue", name: "Chitine fendue", icon: "images/Icons/memory/chitine_fendue.png",
+    { id: "chitine_fendue", name: "Chitine fendue", icon: "images/Icons/memory/chitine_fendue.webp",
       desc: "Une Chitine des profondeurs de plus à chaque victoire sur le Dard." },
-    { id: "regard_marchand", name: "Regard du marchand", icon: "images/Icons/memory/regard_marchand.png",
+    { id: "regard_marchand", name: "Regard du marchand", icon: "images/Icons/memory/regard_marchand.webp",
       desc: "Les objets Inhabituels peuvent occuper jusqu'à 40 % de la vitrine au lieu de 25 %." }
   ] },
   /* v3.453.0 : niveaux 9 à 16 (Ruines, Crypte), option C de Seb (16/10/2026) — chaque niveau oppose
@@ -101,60 +101,60 @@ var MEMORY_LEVELS = [
      les trois niveaux précédents du monde ont été pris du même côté ; ligne cassée = effet éteint,
      le jalon se rechoisit sans frais (MemoryManager.lineOpen, isLineBroken). */
   { level: 9, theme: "La relève", options: [
-    { id: "fiole_reserve", side: "garder", name: "Fiole de réserve", icon: "images/Icons/memory/fiole_reserve.png",
+    { id: "fiole_reserve", side: "garder", name: "Fiole de réserve", icon: "images/Icons/memory/fiole_reserve.webp",
       desc: "Une potion de soin de plus emportée en sortie." },
-    { id: "achever_net", side: "donner", name: "Achever net", icon: "images/Icons/memory/achever_net.png",
+    { id: "achever_net", side: "donner", name: "Achever net", icon: "images/Icons/memory/achever_net.webp",
       desc: "Un ennemi qui se relève ne revient qu'avec 25 % de ses PV au lieu de 50 %." }
   ] },
   { level: 10, theme: "Les murs", options: [
-    { id: "craie_epaisse", side: "garder", name: "Craie épaisse", icon: "images/Icons/memory/craie_epaisse.png",
+    { id: "craie_epaisse", side: "garder", name: "Craie épaisse", icon: "images/Icons/memory/craie_epaisse.webp",
       desc: "Un trait de Craie de plus par Petite Aventure." },
-    { id: "pierre_de_plus", side: "donner", name: "Pierre de plus", icon: "images/Icons/memory/pierre_de_plus.png",
+    { id: "pierre_de_plus", side: "donner", name: "Pierre de plus", icon: "images/Icons/memory/pierre_de_plus.webp",
       desc: "+1 Pierre errante à chaque destination atteinte aux Ruines." }
   ] },
   { level: 11, theme: "Edda", options: [
-    { id: "fidelite_edda", side: "garder", name: "Fidélité d'Edda", icon: "images/Icons/memory/fidelite_edda.png",
+    { id: "fidelite_edda", side: "garder", name: "Fidélité d'Edda", icon: "images/Icons/memory/fidelite_edda.webp",
       desc: "Après un KO, Edda revient au combat suivant avec tous ses PV." },
-    { id: "trait_sur", side: "donner", name: "Trait sûr", icon: "images/Icons/memory/trait_sur.png",
+    { id: "trait_sur", side: "donner", name: "Trait sûr", icon: "images/Icons/memory/trait_sur.webp",
       desc: "Le dernier trait se recharge en 1 round au lieu de 2." }
   ] },
   { level: 12, theme: "La pierre qui tient", jalon: true, options: [
-    { id: "cle_econome", side: "garder", name: "Clé économe", icon: "images/Icons/memory/cle_econome.png",
+    { id: "cle_econome", side: "garder", name: "Clé économe", icon: "images/Icons/memory/cle_econome.webp",
       desc: "La Forge 4 et les reforges 7 et 8 demandent une Clé de voûte de moins (jamais moins d'une)." },
-    { id: "taille_rapide", side: "donner", name: "Taille rapide", icon: "images/Icons/memory/taille_rapide.png",
+    { id: "taille_rapide", side: "donner", name: "Taille rapide", icon: "images/Icons/memory/taille_rapide.webp",
       desc: "Les Clés de voûte se taillent deux fois plus vite." },
-    { id: "ce_qui_reste", line: "garder", name: "Ce qui reste", icon: "images/Icons/memory/ce_qui_reste.png",
+    { id: "ce_qui_reste", line: "garder", name: "Ce qui reste", icon: "images/Icons/memory/ce_qui_reste.webp",
       desc: "Quand tu fuis une sortie, tu gardes 75 % du butin au lieu de 50 %." },
-    { id: "tout_ou_rien", line: "donner", name: "Tout ou rien", icon: "images/Icons/memory/tout_ou_rien.png",
+    { id: "tout_ou_rien", line: "donner", name: "Tout ou rien", icon: "images/Icons/memory/tout_ou_rien.webp",
       desc: "Le butin des sorties réussies augmente de 15 %." }
   ] },
   { level: 13, theme: "Le sommeil", options: [
-    { id: "sommeil_lourd", side: "garder", name: "Sommeil lourd", icon: "images/Icons/memory/sommeil_lourd.png",
+    { id: "sommeil_lourd", side: "garder", name: "Sommeil lourd", icon: "images/Icons/memory/sommeil_lourd.webp",
       desc: "Un dormeur se lève seul un round plus tard (4 à 6)." },
-    { id: "reveil_brutal", side: "donner", name: "Réveil brutal", icon: "images/Icons/memory/reveil_brutal.png",
+    { id: "reveil_brutal", side: "donner", name: "Réveil brutal", icon: "images/Icons/memory/reveil_brutal.webp",
       desc: "Un dormeur que tu réveilles prend 25 % de dégâts en plus à ce premier coup." }
   ] },
   { level: 14, theme: "La lanterne", options: [
-    { id: "meche_longue", side: "garder", name: "Mèche longue", icon: "images/Icons/memory/meche_longue.png",
+    { id: "meche_longue", side: "garder", name: "Mèche longue", icon: "images/Icons/memory/meche_longue.webp",
       desc: "La Lanterne de la Petite Aventure de la Crypte éclaire deux pas de plus." },
-    { id: "cire_chaude", side: "donner", name: "Cire chaude", icon: "images/Icons/memory/cire_chaude.png",
+    { id: "cire_chaude", side: "donner", name: "Cire chaude", icon: "images/Icons/memory/cire_chaude.webp",
       desc: "+1 Cire de sépulcre à chaque destination atteinte à la Crypte." }
   ] },
   // v3.455.0 : si Ysolt se recouche (choix « ysolt » = garder), ce niveau se reprend une fois sans frais
   { level: 15, theme: "Ysolt", freeRepriseOnChoice: { key: "ysolt", value: "garder" }, options: [
-    { id: "fidelite_ysolt", side: "garder", name: "Fidélité d'Ysolt", icon: "images/Icons/memory/fidelite_ysolt.png",
+    { id: "fidelite_ysolt", side: "garder", name: "Fidélité d'Ysolt", icon: "images/Icons/memory/fidelite_ysolt.webp",
       desc: "Après un KO, Ysolt revient au combat suivant avec tous ses PV." },
-    { id: "pas_encore_encore", side: "donner", name: "Pas encore, encore", icon: "images/Icons/memory/pas_encore_encore.png",
+    { id: "pas_encore_encore", side: "donner", name: "Pas encore, encore", icon: "images/Icons/memory/pas_encore_encore.webp",
       desc: "Pas encore repousse le réveil de 3 rounds au lieu de 2." }
   ] },
   { level: 16, theme: "Ceux qui sont montés", jalon: true, options: [
-    { id: "main_offrante", side: "garder", name: "Main offrante", icon: "images/Icons/memory/main_offrante.png",
+    { id: "main_offrante", side: "garder", name: "Main offrante", icon: "images/Icons/memory/main_offrante.webp",
       desc: "+50 % d'Aether pour les objets offerts." },
-    { id: "butin_des_morts", side: "donner", name: "Le butin des morts", icon: "images/Icons/memory/butin_des_morts.png",
+    { id: "butin_des_morts", side: "donner", name: "Le butin des morts", icon: "images/Icons/memory/butin_des_morts.webp",
       desc: "Un dormeur réveillé puis vaincu rapporte 25 % d'or en plus." },
-    { id: "personne_ne_se_leve", line: "garder", name: "Personne ne se lève", icon: "images/Icons/memory/personne_ne_se_leve.png",
+    { id: "personne_ne_se_leve", line: "garder", name: "Personne ne se lève", icon: "images/Icons/memory/personne_ne_se_leve.webp",
       desc: "Une fois par combat, le premier dormeur qui allait se lever seul se rendort." },
-    { id: "rien_ne_dort", line: "donner", name: "Rien ne dort pour rien", icon: "images/Icons/memory/rien_ne_dort.png",
+    { id: "rien_ne_dort", line: "donner", name: "Rien ne dort pour rien", icon: "images/Icons/memory/rien_ne_dort.webp",
       desc: "Un dormeur réveillé puis vaincu a 15 % de chances de laisser un objet." }
   ] }
 ];

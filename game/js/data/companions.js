@@ -29,7 +29,7 @@ var COMPANIONS_DB = {
   wenna: {
     id: "wenna",
     name: "Wenna",
-    image: "./images/Companions/wenna.png", // v3.349.0 : portrait dédié (ranger_f.png reste au héros rôdeur)
+    image: "./images/Companions/wenna.webp", // v3.349.0 : portrait dédié (ranger_f.png reste au héros rôdeur)
     role: "support",
     weaponType: "bow",
     /* makeRpgStats(power, endurance, celerity, precision, will) — voir data/enemies.js */
@@ -72,7 +72,7 @@ var COMPANIONS_DB = {
   maddoc: {
     id: "maddoc",
     name: "Maddoc",
-    image: "./images/Companions/maddoc.png", // v3.349.0 : portrait posé
+    image: "./images/Companions/maddoc.webp", // v3.349.0 : portrait posé
     weaponType: "sling",
     defaultVoie: "tronc",
     voies: {
@@ -130,7 +130,7 @@ var COMPANIONS_DB = {
 COMPANIONS_DB.edda = {
   id: "edda",
   name: "Edda",
-  image: "./images/Companions/edda.png",
+  image: "./images/Companions/edda.webp",
   role: "finisher",
   weaponType: "pick",
   base: { power: 46, endurance: 52, celerity: 40, precision: 44, will: 30 },
@@ -163,7 +163,7 @@ COMPANIONS_DB.edda = {
 COMPANIONS_DB.ysolt = {
   id: "ysolt",
   name: "Ysolt",
-  image: "./images/Companions/ysolt.png",
+  image: "./images/Companions/ysolt.webp",
   role: "keeper",
   weaponType: "bow",
   base: { power: 42, endurance: 48, celerity: 52, precision: 50, will: 40 },

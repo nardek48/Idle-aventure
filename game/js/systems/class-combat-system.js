@@ -4,21 +4,21 @@
    (exécutée par CombatEngine.tickRoundClock en mode Grimoire, suggérée en Tactique) ; onRoundEnd() = cooldowns + mana passif + défense. */
 var CLASS_ACTION_ICON_FALLBACK = {
   // v3.458.2 (audit C2) : images des attaques de base à faire ; l'icône générique en attendant
-  knight_basic: "./images/Icons/special_attacks/basic_knight.png",
-  archer_basic: "./images/Icons/special_attacks/basic_archer.png",
-  mage_arcane_bolt: "./images/Icons/special_attacks/basic_mage.png",
-  knight_heavy_strike: "./images/Icons/special_attacks/smashing_blow.png",
-  knight_guard_break: "./images/Icons/special_attacks/attack6.png",
-  knight_execute: "./images/Icons/special_attacks/attack10.png",
-  knight_guard: "./images/Icons/special_attacks/defensive_stance.png",
-  archer_precise_shot: "./images/Icons/special_attacks/attack3.png",
-  archer_volley: "./images/Icons/special_attacks/multishot.png",
-  archer_piercing_shot: "./images/Icons/special_attacks/attack4.png",
-  archer_evasion: "./images/Icons/special_attacks/attack11.png",
-  mage_arcane_blast: "./images/Icons/special_attacks/arcane_blast.png",
-  mage_arcane_burn: "./images/Icons/special_attacks/attack12.png",
-  mage_arcane_nova: "./images/Icons/special_attacks/cataclysm.png",
-  mage_arcane_barrier: "./images/Icons/special_attacks/chaos_fury.png"
+  knight_basic: "./images/Icons/special_attacks/basic_knight.webp",
+  archer_basic: "./images/Icons/special_attacks/basic_archer.webp",
+  mage_arcane_bolt: "./images/Icons/special_attacks/basic_mage.webp",
+  knight_heavy_strike: "./images/Icons/special_attacks/smashing_blow.webp",
+  knight_guard_break: "./images/Icons/special_attacks/attack6.webp",
+  knight_execute: "./images/Icons/special_attacks/attack10.webp",
+  knight_guard: "./images/Icons/special_attacks/defensive_stance.webp",
+  archer_precise_shot: "./images/Icons/special_attacks/attack3.webp",
+  archer_volley: "./images/Icons/special_attacks/multishot.webp",
+  archer_piercing_shot: "./images/Icons/special_attacks/attack4.webp",
+  archer_evasion: "./images/Icons/special_attacks/attack11.webp",
+  mage_arcane_blast: "./images/Icons/special_attacks/arcane_blast.webp",
+  mage_arcane_burn: "./images/Icons/special_attacks/attack12.webp",
+  mage_arcane_nova: "./images/Icons/special_attacks/cataclysm.webp",
+  mage_arcane_barrier: "./images/Icons/special_attacks/chaos_fury.webp"
 };
 
 var ARCHETYPE_EFFECT_TO_CONDITION_ID = {

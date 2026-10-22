@@ -13140,7 +13140,7 @@ console.log("\n[180] v3.407.0 — Mémoire au kit, emoji remplacés par des icô
       rd("js/ui/" + f).split("\n").forEach(function (l, i) { var t = l.trim(); if (!/^(\/\/|\/\*|\*)/.test(t) && emo.test(l)) left.push(f + ":" + (i + 1)); });
     });
     ok(left.length === 0, "emoji de l'interface remplacés par des icônes du jeu" + (left.length ? " : " + left.join(", ") : ""));
-    ["images/Icons/memory/forme_du_roi.png", "images/Icons/village_buildings/puits_du_roi.png", "images/Icons/system/hero_away.png", "images/Icons/system/training_cap.png"].forEach(function (f) {
+    ["images/Icons/memory/forme_du_roi.webp", "images/Icons/village_buildings/puits_du_roi.png", "images/Icons/system/hero_away.png", "images/Icons/system/training_cap.png"].forEach(function (f) {
       ok(fs.existsSync(path.join(ROOT, f)), "icône présente : " + f);
     });
     ok(!fs.existsSync(path.join(ROOT, "js/systems/special-attack-system.js")) && !fs.existsSync(path.join(ROOT, "js/data/talents.js")), "code mort retiré (attaque spéciale, ancien arbre de talents)");

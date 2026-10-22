@@ -1785,7 +1785,7 @@ STORY_QUESTS.ruins = {
           { icon: "images/Icons/combat_status/rising.png", text: "Aux Ruines, certains ennemis ne restent pas à terre. Quand ils tombent, ils l'annoncent : ils se relèveront au round suivant." },
           { icon: "images/Icons/combat_stats/stat_attack.png", text: "Frappe-les pendant ce round, et ils restent à terre. Sinon, ils reviennent avec la moitié de leurs PV." },
           { icon: "images/Icons/combat_stats/stat_health.png", text: "Un ennemi ne se relève qu'une fois." },
-          { icon: "images/Icons/memory/grimoire_etendu.png", text: "En Grimoire, ton héros n'achève pas seul un ennemi à terre : pose la règle « Un ennemi se relève »." }
+          { icon: "images/Icons/memory/grimoire_etendu.webp", text: "En Grimoire, ton héros n'achève pas seul un ennemi à terre : pose la règle « Un ennemi se relève »." }
         ]
       },
       check: function (game) { return storyAdvDone(game, "aq_ruines_couloirs"); },
@@ -2057,7 +2057,7 @@ STORY_QUESTS.ruins = {
         title: "Le Bâtisseur",
         points: [
           { icon: "images/Icons/combat_status/shield_incoming.png", text: "Le Bâtisseur frappe peu. Il annonce un mur, puis blinde un de ses alliés : tes coups sur lui passent mal pendant quelques rounds." },
-          { icon: "images/Icons/memory/grimoire_etendu.png", text: "Contre l'annonce, la même réponse qu'au bouclier : la condition « Bouclier au prochain tour » du Grimoire." },
+          { icon: "images/Icons/memory/grimoire_etendu.webp", text: "Contre l'annonce, la même réponse qu'au bouclier : la condition « Bouclier au prochain tour » du Grimoire." },
           { icon: "images/Icons/combat_stats/stat_attack.png", text: "Mieux : le tuer en premier. Dans le Grimoire, le réglage « Cible » sur « Le soutien » le vise d'abord." },
           { icon: "images/Icons/camp/campfire.png", text: "Deux compagnons sur trois : Wenna soigne, Maddoc frappe de loin, Edda achève. Choisis selon ce qui t'attend." }
         ]
@@ -2457,7 +2457,7 @@ STORY_QUESTS.ruins = {
         title: "Le Maître d'œuvre",
         points: [
           { icon: "images/Icons/combat_status/rising.png", text: "Il se relève une fois, quoi qu'il arrive, avec la moitié de ses PV." },
-          { icon: "images/Icons/memory/grimoire_etendu.png", text: "Relevé, il appelle deux bâtisseurs. Le réglage « Cible » sur « Le soutien » les vise d'abord." },
+          { icon: "images/Icons/memory/grimoire_etendu.webp", text: "Relevé, il appelle deux bâtisseurs. Le réglage « Cible » sur « Le soutien » les vise d'abord." },
           { icon: "images/Icons/combat_status/shield_incoming.png", text: "Sous les 30 %, il se blinde : la condition « Bouclier au prochain tour » du Grimoire." }
         ]
       },
@@ -2614,7 +2614,7 @@ STORY_QUESTS.crypt = {
           { icon: "images/Icons/system/check_valid.png", text: "Le combat est gagné quand les éveillés sont tombés. Les dormeurs restent couchés." },
           { icon: "images/Icons/gold_icon.png", text: "Touche un dormeur pour le viser : le frapper le réveille. Vaincu, il rapporte la moitié d'or en plus." },
           { icon: "images/Icons/combat_status/enemy_approaching.png", text: "Un dormeur laissé se lève seul au bout de quelques rounds, sans or en plus. Le chiffre sous lui compte les rounds." },
-          { icon: "images/Icons/memory/grimoire_etendu.png", text: "Un coup de zone réveille tous les dormeurs. Dans le Grimoire, c'est la condition « Un ennemi dort »." }
+          { icon: "images/Icons/memory/grimoire_etendu.webp", text: "Un coup de zone réveille tous les dormeurs. Dans le Grimoire, c'est la condition « Un ennemi dort »." }
         ]
       },
       check: function (game) { return storyAdvDone(game, "aq_crypte_sepulcres"); },
@@ -3247,7 +3247,7 @@ STORY_QUESTS.crypt = {
         points: [
           { icon: "images/Icons/combat_status/chained.png", text: "Un ennemi qui lève une chaîne enchaînera un compagnon au tour suivant." },
           { icon: "images/Icons/combat_stats/stat_attack.png", text: "Enchaîné, un compagnon ne joue plus. La chaîne cède au bout de 2 rounds, ou plus tôt si tu frappes fort celui qui la tient." },
-          { icon: "images/Icons/memory/grimoire_etendu.png", text: "Toi, il ne t'enchaîne pas. Dans le Grimoire, la condition « Un compagnon est enchaîné » t'aide à frapper au bon moment." }
+          { icon: "images/Icons/memory/grimoire_etendu.webp", text: "Toi, il ne t'enchaîne pas. Dans le Grimoire, la condition « Un compagnon est enchaîné » t'aide à frapper au bon moment." }
         ]
       },
       check: function (game) { return storyAdvDone(game, "aq_crypte_maillons"); },

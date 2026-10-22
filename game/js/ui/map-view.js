@@ -15,7 +15,7 @@ function getWorldProgressText(index) {
 }
 
 function getWorldThumb(world) {
-  return "images/Worlds/thumb_" + (world.assetKey || "forest") + ".png";
+  return "images/Worlds/thumb_" + (world.assetKey || "forest") + ".webp"; // v3.459.2 (audit O4)
 }
 
 /* v3.456.7 (liste de Seb) : toutes les créatures du monde, comme le Bestiaire (ennemis, élites, boss d'Histoire
@@ -100,7 +100,7 @@ function buildMapHTML() {
     if (lm) return lm;
   }
   var h = '<div class="map-path-frame">';
-  h += '<img class="map-path-bg" src="images/Map/world_map.jpg" alt="' + _t("Carte du monde") + '" draggable="false">';
+  h += '<img class="map-path-bg" src="images/Map/world_map.webp" alt="' + _t("Carte du monde") + '" draggable="false">';
   h += buildMapPathSvgHTML(WORLDS.length);
   WORLDS.forEach(function (world, index) {
     h += buildMapNodeHTML(world, index);

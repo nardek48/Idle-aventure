@@ -21,7 +21,7 @@ var PRODUCTION_CONFIG = {
 var PRODUCTION_BUILDINGS = {
   hunt: {
     id: "hunt", name: "Chasse", resourceKey: "viande",
-    icon: "images/Icons/resources/meat_icon.webp", buildingImage: "images/Production/hunt.png",
+    icon: "images/Icons/resources/meat_icon.webp", buildingImage: "images/Production/hunt.webp",
     desc: "Produit de la viande en continu.",
     costTiers: [
       { minLevel: 1, maxLevel: 15, resources: ["gold", "bois", "fer"], baseCost: { gold: 90, bois: 8, fer: 5 }, costMult: 1.45 }
@@ -29,7 +29,7 @@ var PRODUCTION_BUILDINGS = {
   },
   farm: {
     id: "farm", name: "Champs", resourceKey: "ble",
-    icon: "images/Icons/resources/wheat_icon.webp", buildingImage: "images/Production/farm.png",
+    icon: "images/Icons/resources/wheat_icon.webp", buildingImage: "images/Production/farm.webp",
     desc: "Produit du blé en continu.",
     costTiers: [
       { minLevel: 1, maxLevel: 15, resources: ["gold", "bois", "eau"], baseCost: { gold: 80, bois: 8, eau: 6 }, costMult: 1.45 }
@@ -37,7 +37,7 @@ var PRODUCTION_BUILDINGS = {
   },
   sawmill: {
     id: "sawmill", name: "Scierie", resourceKey: "bois",
-    icon: "images/Icons/resources/wood_icon.webp", buildingImage: "images/Production/sawmill.png",
+    icon: "images/Icons/resources/wood_icon.webp", buildingImage: "images/Production/sawmill.webp",
     desc: "Produit du bois en continu.",
     costTiers: [
       { minLevel: 1, maxLevel: 15, resources: ["gold", "fer", "pierre"], baseCost: { gold: 90, fer: 5, pierre: 8 }, costMult: 1.45 }
@@ -45,7 +45,7 @@ var PRODUCTION_BUILDINGS = {
   },
   mine: {
     id: "mine", name: "Mine", resourceKey: "fer",
-    icon: "images/Icons/resources/iron_icon.webp", buildingImage: "images/Production/mine.png",
+    icon: "images/Icons/resources/iron_icon.webp", buildingImage: "images/Production/mine.webp",
     desc: "Produit du fer en continu.",
     costTiers: [
       { minLevel: 1, maxLevel: 15, resources: ["gold", "bois", "pierre"], baseCost: { gold: 100, bois: 8, pierre: 8 }, costMult: 1.45 }
@@ -53,7 +53,7 @@ var PRODUCTION_BUILDINGS = {
   },
   quarry: {
     id: "quarry", name: "Carrière", resourceKey: "pierre",
-    icon: "images/Icons/resources/stone_icon.webp", buildingImage: "images/Production/quarry.png",
+    icon: "images/Icons/resources/stone_icon.webp", buildingImage: "images/Production/quarry.webp",
     desc: "Produit de la pierre en continu.",
     costTiers: [
       { minLevel: 1, maxLevel: 15, resources: ["gold", "bois", "fer"], baseCost: { gold: 90, bois: 8, fer: 5 }, costMult: 1.45 }
@@ -61,7 +61,7 @@ var PRODUCTION_BUILDINGS = {
   },
   well: {
     id: "well", name: "Puits", resourceKey: "eau",
-    icon: "images/Icons/resources/water_icon.webp", buildingImage: "images/Production/well.png",
+    icon: "images/Icons/resources/water_icon.webp", buildingImage: "images/Production/well.webp",
     desc: "Produit de l'eau en continu.",
     costTiers: [
       { minLevel: 1, maxLevel: 15, resources: ["gold", "pierre", "bois"], baseCost: { gold: 70, pierre: 6, bois: 8 }, costMult: 1.45 }

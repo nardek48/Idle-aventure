@@ -30,7 +30,7 @@
     tact: "images/Icons/combat_stats/stat_critical.png",
     cont: "images/Icons/quests/continue.png",
     stop: "images/Icons/system/pause_stop.png",
-    attack: "images/Icons/special_attacks/attack3.png",
+    attack: "images/Icons/special_attacks/attack3.webp",
     ctxDungeon: "images/Icons/quests/mission_dungeon.png",
     ctxMission: "images/Icons/quests/mission_combat.png",
     ctxHunt: "images/Icons/quests/mission_hunt.png",
