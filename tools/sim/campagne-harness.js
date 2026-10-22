@@ -1555,6 +1555,12 @@ function apresHistoire(h) {
     upgradeBuilding("enchanter", V.getLevel("enchanter") + 1);
   }
   A.chantier = V.getLevel("enchanter") >= cible;
+  A.avant = combatLine();
+  // plafond théorique : toutes les lignes des pièces portées au maximum de leur fourchette, puis retour
+  var sauve = [];
+  g.EQUIPMENT_SLOTS.forEach(function (sl) { var it = g.game.equipped[sl]; (it && it.affixes || []).forEach(function (a, i) { var r = E.getRange(it, i); if (r) { sauve.push([a, a.value]); a.value = r.max; } }); });
+  g.StatsSystem.recalcStats(); A.maximum = combatLine();
+  sauve.forEach(function (x) { x[0].value = x[1]; }); g.StatsSystem.recalcStats();
   while (A.chantier && CLOCK.offset - t0 < h * 3600e3) {
     var best = null;
     g.EQUIPMENT_SLOTS.forEach(function (sl) {
@@ -1576,9 +1582,11 @@ function apresHistoire(h) {
     E._rolling = false;
     A.relances++; A.orRelances += best.c.gold; A.seve += best.c.seve_aeswyn;
   }
+  A.apres = combatLine();
   if (!A.chantier) A.raison = "Enchanteresse " + V.getLevel("enchanter") + " : " + (V.getBlockReason("enchanter") || "?") + " " + JSON.stringify(V.getNextCost("enchanter")) + " · Sève " + g.WarehouseManager.getAmount("seve_aeswyn") + " · Résine " + g.WarehouseManager.getAmount("resine_durcie");
   A.h = (CLOCK.offset - t0) / 3600e3; A.or1 = Math.floor(g.game.gold); A.victoiresCarte = (STATS.carte ? STATS.carte.victoires : 0) - vic0;
   console.log("Après-Histoire (" + A.h.toFixed(1) + " h) : Enchanteresse " + (A.chantier ? "bâtie" : "non bâtie") + " · " + A.relances + " relances, " + A.orRelances + " or, " + A.seve + " Sève (" + A.victoiresCarte + " victoires d'Arbre-mère) · or " + A.or0 + " → " + A.or1 + (A.raison ? " · " + A.raison : ""));
+  console.log("  avant   : " + A.avant + "\n  après   : " + A.apres + "\n  maximum : " + A.maximum);
 }
 if (COMBATS) {
   console.log("Renforcement (lots de chasse joués pour débloquer) : " + JSON.stringify(STATS.grinds) + " · " + (STATS.grindMs / 3600e3).toFixed(1) + " h" + (Object.keys(STATS.grindNone).length ? " · rien à farmer pendant : " + JSON.stringify(STATS.grindNone) : ""));
