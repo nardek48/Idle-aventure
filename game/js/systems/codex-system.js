@@ -38,10 +38,6 @@ var CodexManager = {
     return (CODEX_ENTRIES || []).filter(function (e) { return self.isUnlocked(e); });
   },
 
-  getUnreadCount: function () {
-    var self = this;
-    return this.getUnlockedEntries().filter(function (e) { return !self.isRead(e.id); }).length;
-  }
 };
 
 window.CodexManager = CodexManager;

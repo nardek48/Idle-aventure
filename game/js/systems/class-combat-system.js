@@ -121,13 +121,6 @@ var ClassCombatManager = {
     if (window.TalentManager) TalentManager.afterChange(); // v3.327.0 : talents d'une autre classe retirés
   },
 
-    isCombatActive: function () {
-    if (game.activeTab !== "combat") return false;
-    if (typeof isBlockingModalOpen === "function" && isBlockingModalOpen()) return false;
-    if ((game.heroHp || 0) <= 0) return false;
-    return true;
-  },
-
     getAction: function (slot) {
     var classId = this.getCurrentClassId();
     if (!classId || typeof getClassAction !== "function") return null;

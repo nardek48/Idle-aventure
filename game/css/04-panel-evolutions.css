@@ -272,22 +272,8 @@ Maquette de référence : atelier-evolutions.html.
    retour réutilise les classes ret-* ci-dessus.
 ============================================================ */
 .pt-box { margin: 8px 0; padding: 8px 9px; border-radius: 11px; background: var(--c-cream-50-soft); border: 1px solid var(--c-bronze-250-soft); color: var(--c-brown-850-soft); }
-.pt-title { display: flex; align-items: center; gap: 6px; color: var(--c-brown-700-vivid); font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px; } /* v3.402.0 : surtitre du kit */
-.pt-title img { width: 20px; height: 20px; }
 .pt-line { font-size: 12px; line-height: 1.4; }
 .pt-hint { font-size: 12px; line-height: 1.35; color: var(--c-brown-650); margin: 3px 0; }
-.pt-select {
-  width: 100%;
-  font: inherit;
-  font-size: 12px;
-  padding: 6px 8px;
-  border-radius: 9px;
-  border: 1px solid var(--c-bronze-500);
-  background: var(--c-cream-100-soft);
-  color: var(--c-brown-850-soft);
-  margin: 2px 0 6px;
-}
-.pt-seg { margin-bottom: 4px; }
 .pt-box .kbtn { margin-top: 6px; }
 .pt-ret-row { font-size: 12px; margin-top: 3px; }
 .cp-patrol-note { font-size: 12px; font-weight: 700; color: var(--c-brown-700-soft); background: var(--c-cream-150-2); border: 1px dashed var(--c-bronze-500); border-radius: 999px; padding: 7px 12px; text-align: center; margin: 6px 0; }
@@ -321,6 +307,5 @@ Maquette de référence : atelier-evolutions.html.
   border: 1px solid var(--c-bronze-400-vivid); background: var(--c-brown-550-3); color: var(--c-cream-50);
 }
 .howto-close { font: inherit; font-size: 13px; background: none; border: none; color: var(--c-bronze-500-soft); cursor: pointer; padding: 4px 6px; }
-.farm-plot-action-btn.is-capped { cursor: pointer; }
 @media (prefers-reduced-motion: reduce) { .howto-toast { animation: none; } }
 .tt-sheet-howto { font-size: 12px; line-height: 1.4; color: var(--c-brown-750-soft); margin: -4px 0 10px; }

@@ -180,10 +180,6 @@ var ProductionManager = {
     return Math.floor(PRODUCTION_CONFIG.baseCapacity * (1 + PRODUCTION_CONFIG.capacityGrowthPerLevel * (level - 1)));
   },
 
-  isStockFull: function (id) {
-    return this.getStock(id) >= this.getCapacity(id);
-  },
-
   /* v3.95.0 : coût multi-ressources par bâtiment (voir getProductionBuildingCost dans
      production-buildings.js). Retourne { gold, <ressource1>, <ressource2> } — remplace
      l'ancien getCost() en or seul, appelé désormais getNextCost() par cohérence de nom
@@ -211,14 +207,6 @@ var ProductionManager = {
 
   isMaxLevel: function (id) {
     return this.getLevel(id) >= PRODUCTION_CONFIG.maxLevel;
-  },
-
-  getSecondsUntilFull: function (id) {
-    var stock = this.getStock(id);
-    var capacity = this.getCapacity(id);
-    var ratePerMin = this.getRatePerMin(id);
-    if (stock >= capacity || ratePerMin <= 0) return Infinity;
-    return ((capacity - stock) / ratePerMin) * 60;
   },
 
   tick: function (dt) {

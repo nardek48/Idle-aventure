@@ -95,11 +95,6 @@ var WorkshopUnlockManager = {
     return game.workshopUnlock.completed || game.workshopUnlock.currentStep >= 2;
   },
 
-  isWorkshopQuestPending: function () {
-    this.ensure();
-    return !game.workshopUnlock.completed && game.workshopUnlock.currentStep >= 2;
-  },
-
   getBannerText: function () {
     this.ensure();
     var wu = game.workshopUnlock;

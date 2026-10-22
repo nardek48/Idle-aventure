@@ -39,17 +39,7 @@ var SceneRunManager = {
       pa.since = pa.spent > 0 ? now : null;
       delete pa.day; delete pa.count;
     }
-    if (pa.spent > 0) {
-      if (typeof pa.since !== "number" || pa.since > now) pa.since = now;
-      var k = Math.floor((now - pa.since) / this.PETITE_AVENTURE_RECHARGE_MS);
-      if (k > 0) {
-        var back = Math.min(k, pa.spent);
-        pa.spent -= back;
-        pa.since += back * this.PETITE_AVENTURE_RECHARGE_MS;
-      }
-    }
-    if (pa.spent <= 0) pa.since = null;
-    return pa;
+    return reserveRecharge(pa, this.PETITE_AVENTURE_RECHARGE_MS, now);
   },
 
   /* Places dépensées et pas encore revenues (nom historique conservé : l'Admin et le tableau le lisent). */

@@ -144,3 +144,22 @@ if (typeof window !== "undefined" && typeof window.addEventListener === "functio
 window.MISSING_ICON_SRC = MISSING_ICON_SRC;
 window.MISSING_ICONS = MISSING_ICONS;
 window.onMissingImage = onMissingImage;
+
+/* v3.459.5 (audit O8) : horloge d'une réserve à places ({ spent, since }) — une place revient toutes
+   les ms depuis since. Partagée par les Petites Aventures et le Labyrinthe. */
+function reserveRecharge(s, ms, now) {
+  if (s.spent > 0) {
+    if (typeof s.since !== "number" || s.since > now) s.since = now;
+    var k = Math.floor((now - s.since) / ms);
+    if (k > 0) { var back = Math.min(k, s.spent); s.spent -= back; s.since += back * ms; }
+  }
+  if (!(s.spent > 0)) s.since = null; // spent négatif = places offertes (Admin) : gardé
+  return s;
+}
+// Dégâts d'un combat résolu d'un coup, répartis sur ses rounds (2 ou 3) : Parcours et Labyrinthe.
+function splitDamage(total, rounds) {
+  var shares = rounds === 2 ? [0.6, 0.4] : [0.45, 0.35, 0.2];
+  return shares.map(function (sh) { return Math.max(1, Math.round(total * sh)); });
+}
+window.reserveRecharge = reserveRecharge;
+window.splitDamage = splitDamage;

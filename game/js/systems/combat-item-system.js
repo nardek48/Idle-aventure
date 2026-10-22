@@ -43,12 +43,6 @@ var CombatItems = {
     return !!trait && this.holds(trait);
   },
 
-  itemForTrait: function (trait) {
-    var ids = this.carried();
-    for (var i = 0; i < ids.length; i++) if (COMBAT_ITEMS[ids[i]].trait === trait) return COMBAT_ITEMS[ids[i]];
-    return null;
-  },
-
   /* Au départ, une fois la sortie ouverte : prend les objets choisis (en stock, sans doublon, places max). */
   takeForSortie: function (ids) {
     if (!window.SortieManager || !SortieManager.isMission()) return [];

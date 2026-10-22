@@ -40,8 +40,6 @@ var RiseSystem = {
     return !!(e.rises || (def && def.rises));
   },
 
-  isDowned: function (e) { return !!(e && e.downed); },
-
   downedEnemies: function () {
     if (!window.CombatActors) return [];
     return CombatActors.enemies().filter(function (e) { return e && e.downed && Number(e.hp || 0) > 0; });

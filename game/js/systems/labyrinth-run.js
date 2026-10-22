@@ -22,13 +22,8 @@ var LabyrinthRun = {
     if (!game.explorationProgression) game.explorationProgression = {};
     var s = game.explorationProgression.labyrinth;
     if (!s || typeof s !== "object") s = game.explorationProgression.labyrinth = { spent: 0, since: null, best: 0, runs: 0 };
-    var now = Date.now(), ms = this.cfg().rechargeMs;
-    if (s.spent > 0) {
-      if (typeof s.since !== "number" || s.since > now) s.since = now;
-      var k = Math.floor((now - s.since) / ms);
-      if (k > 0) { var back = Math.min(k, s.spent); s.spent -= back; s.since += back * ms; }
-    }
-    if (!(s.spent > 0)) { s.spent = 0; s.since = null; }
+    reserveRecharge(s, this.cfg().rechargeMs, Date.now());
+    if (!(s.spent > 0)) s.spent = 0;
     return s;
   },
   reserveLeft: function () { return Math.max(0, this.cfg().reserve - this._state().spent); },
@@ -364,8 +359,6 @@ var LabyrinthRun = {
     this.finish("ko");
     return false;
   },
-  /* Le combat en attente (garde, Contremaître, Gardien) : { kind, li?, surprised? } ou null. */
-  pendingFight: function () { var run = this.getRun(); return run && run.status === LAB_STATUS.map ? (run.pending || null) : null; },
   /* Ouvre un combat : la garde d'un levier, ou le Gardien à l'escalier. */
   engage: function (kind, li) {
     var run = this.getRun(); if (!run || run.status !== LAB_STATUS.map) return { ok: false };
@@ -384,8 +377,8 @@ var LabyrinthRun = {
     if (p.surprised) est.hpLoss = Math.round(est.hpLoss * PA2_RULES.surprisedMult);
     var res = { kind: p.kind, approach: apId, surprised: !!p.surprised, li: p.li };
     run.pending = null;
-    if (!this._hit(run, est)) { res.ko = true; res.dmg = est.hpLoss; res.parts = this._parts(est.hpLoss, est.rounds); this._save(); return { ok: true, result: res }; }
-    res.dmg = est.hpLoss; res.parts = this._parts(est.hpLoss, est.rounds);
+    if (!this._hit(run, est)) { res.ko = true; res.dmg = est.hpLoss; res.parts = splitDamage(est.hpLoss, est.rounds); this._save(); return { ok: true, result: res }; }
+    res.dmg = est.hpLoss; res.parts = splitDamage(est.hpLoss, est.rounds);
     res.gain = est.gold; this._gain(run, 0, est.gold); this._stat(run, "fights");
     if (window.SortieManager) SortieManager.noteKill(p.kind === "boss");
     if (p.kind === "guard") { run.guardUp = false; run.guardFoe = null; run.note = { text: _t("Combat de garde gagné : PV −{n}.", { n: res.dmg }) }; }
@@ -393,10 +386,6 @@ var LabyrinthRun = {
     else { run.bossDown = true; this._gain(run, c.bossStones, 0); res.stones = c.bossStones; run.note = { text: _t("Le Gardien s'effondre en marches. +{n} Pierres errantes.", { n: c.bossStones }) }; }
     this._save();
     return { ok: true, result: res };
-  },
-  _parts: function (total, rounds) {
-    var shares = rounds === 2 ? [0.6, 0.4] : [0.45, 0.35, 0.2];
-    return shares.map(function (sh) { return Math.max(1, Math.round(total * sh)); });
   },
   /* La ruse (garde d'un levier) : réussie, on tire sans combattre ; ratée, du Souffle en moins et la garde frappe la première. */
   ruseChance: function (run) { var c = this.cfg(); run = run || this.getRun(); return Math.max(c.ruseMin, c.ruseBase - c.rusePerFloor * ((run ? run.floor : 1) - 1)); },

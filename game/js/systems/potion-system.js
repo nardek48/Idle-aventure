@@ -228,12 +228,6 @@ var PotionManager = {
     return 0;
   },
 
-  _legacyHealCooldownRemainingMs: function () {
-    this.ensureHealing();
-    var elapsed = Date.now() - (game.lastHealUse || 0);
-    return Math.max(0, HEALING_POTION_COOLDOWN_MS - elapsed);
-  },
-
   /* v3.102.0 (P2) : la potion est l'action « Objet » d'un round (elle consomme le tour, voir CombatEngine.heroAction) —
      plus de cooldown d'horloge. Retourne true si une potion a été bue. */
   useHealingPotion: function (id) {

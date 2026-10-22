@@ -41,10 +41,6 @@ var VillageQuestManager = {
     return Number(vq.craftCounts[resourceId] || 0);
   },
 
-  getQuest: function (questId) {
-    return (window.VILLAGE_QUESTS || []).find(function (q) { return q.id === questId; }) || null;
-  },
-
   isClaimed: function (questId) {
     var vq = this.ensure();
     return !!vq.claimed[questId];

@@ -34,8 +34,6 @@
 
 /* Le bandeau d'avertissement disait seulement d'aller basculer le mode
    ailleurs. L'interrupteur est ici, toujours visible, et indique le mode actif. */
-/* v3.401.0 (lot O-1) : le sélecteur de mode est le rail du kit (.kseg) ; il prend la largeur. */
-.grimoire-mode { flex: 1 1 auto; margin-bottom: 0; }
 /* v3.440.0 : le mode se lit ici, il se choisit à la préparation de sortie. */
 .grimoire-mode-now { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 8px; color: var(--nb-ink); font-size: 14px; font-weight: 800; }
 .grimoire-mode-now img { width: 26px; height: 26px; flex: none; object-fit: contain; }
@@ -594,10 +592,6 @@
   color: var(--nb-ink);
   font-size: 0.76rem;
   line-height: 1.35;
-}
-
-.grimoire-mode.is-locked {
-  opacity: 0.55;
 }
 
 /* v3.422.0 : retour vers la fenêtre « avant le combat » d'où l'on vient */

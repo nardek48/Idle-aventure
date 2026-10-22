@@ -131,8 +131,4 @@
 .combat-hero-mini-portrait.hf-tier-silver::after { box-shadow: 0 0 0 2px var(--c-blue-200), 0 0 8px rgba(201, 210, 218, 0.5); }
 .combat-hero-mini-portrait.hf-tier-gold::after { box-shadow: 0 0 0 2px var(--c-bronze-400-4), 0 0 12px rgba(240, 198, 74, 0.65); }
 /* H8 : titre porté dans le Résumé, liseré autour du portrait (le cadre garde la couleur de la classe) */
-.pc-sum-title { font-size: 12.5px; font-style: italic; color: var(--c-brown-700-vivid); margin: -2px 0 3px; }
-.pc-sum-portrait.hf-tier-bronze { outline: 2px solid var(--c-brown-550-2); outline-offset: 2px; }
-.pc-sum-portrait.hf-tier-silver { outline: 2px solid var(--c-blue-200); outline-offset: 2px; }
-.pc-sum-portrait.hf-tier-gold { outline: 2px solid var(--c-bronze-400-4); outline-offset: 2px; }
 .title-slot-heroic-title { font-style: italic; }

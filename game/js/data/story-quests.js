@@ -3425,13 +3425,25 @@ function storyMissingCostLines(cost, prefix) {
   return out;
 }
 
-/* ruines_13 : pièces Rares, puis le prochain niveau de Forge, puis la prochaine reforge de l'arme. */
-function storyPalierRuinesRareMissing(game) {
-  var p = storyPalierRuinesRare(game), P = STORY_PALIER_RUINES_RARE, out = [];
-  if (p.pieces < P.pieces) out.push({ text: _t("Pièces Rares : {a} / {b}", { a: p.pieces, b: P.pieces }),
-    where: _t("Le Sanctuaire scellé, l'échoppe de la Halle marchande et les élites des Ruines.") });
-  var V = window.VillageBuildingManager, F = window.ForgeManager;
-  if (p.forge < P.forge && V && typeof V.getNextCost === "function") {
+/* v3.459.5 (audit O8) : un seul relevé de palier pour les quatre étapes (Désert, Ruines ×2, Crypte).
+   Pièces portées au moins de la rareté demandée (l'arme comprise), Forge du Village, reforges. */
+function storyPalier(game, rarete) {
+  var portes = (game && game.equipped) || {}, order = window.RARITY_ORDER || [], rang = order.indexOf(rarete);
+  var pieces = 0, armeOk = false, F = window.ForgeManager, V = window.VillageBuildingManager;
+  (window.EQUIPMENT_SLOTS || []).forEach(function (slot) {
+    var it = portes[slot];
+    if (it && order.indexOf(it.rarity) >= rang) { pieces++; if (slot === "weapon") armeOk = true; }
+  });
+  var niv = function (k) { return (F && typeof F.getLevel === "function") ? F.getLevel(k) : 0; };
+  return { pieces: pieces, armeOk: armeOk, forge: (V && typeof V.getLevel === "function") ? V.getLevel("forge") : 0, arme: niv("weapon"), armure: niv("armor") };
+}
+
+/* Ce qui manque à un palier P ({ pieces, forge?, reforge }) : les pièces (ligne fournie par l'étape),
+   puis le prochain niveau de Forge, puis la prochaine reforge de l'arme. */
+function storyPalierManques(game, rarete, P, lignePieces) {
+  var p = storyPalier(game, rarete), out = [], V = window.VillageBuildingManager, F = window.ForgeManager;
+  if (p.pieces < P.pieces) out.push(lignePieces(p.pieces, P.pieces));
+  if (P.forge && p.forge < P.forge && V && typeof V.getNextCost === "function") {
     var fl = storyMissingCostLines(V.getNextCost("forge"), _t("Forge {n}", { n: p.forge + 1 }));
     out = out.concat(fl.length ? fl : [{ text: _t("Forge {n}", { n: p.forge + 1 }), where: _t("Tout est là : à construire au Village, Bâtiments.") }]);
   }
@@ -3445,21 +3457,14 @@ function storyPalierRuinesRareMissing(game) {
   }
   return out;
 }
-function storyPalierRuinesRare(game) {
-  var portes = (game && game.equipped) || {};
-  var order = window.RARITY_ORDER || ["common", "green", "rare", "epic", "legendary"], rang = order.indexOf("rare");
-  var pieces = 0;
-  (window.EQUIPMENT_SLOTS || []).forEach(function (slot) {
-    var it = portes[slot];
-    if (it && order.indexOf(it.rarity) >= rang) pieces++;
+
+/* ruines_13 : pièces Rares, Forge, reforge de l'arme. */
+function storyPalierRuinesRareMissing(game) {
+  return storyPalierManques(game, "rare", STORY_PALIER_RUINES_RARE, function (a, b) {
+    return { text: _t("Pièces Rares : {a} / {b}", { a: a, b: b }), where: _t("Le Sanctuaire scellé, l'échoppe de la Halle marchande et les élites des Ruines.") };
   });
-  var F = window.ForgeManager, V = window.VillageBuildingManager;
-  return {
-    pieces: pieces,
-    forge: (V && typeof V.getLevel === "function") ? V.getLevel("forge") : 0,
-    arme: (F && typeof F.getLevel === "function") ? F.getLevel("weapon") : 0
-  };
 }
+function storyPalierRuinesRare(game) { return storyPalier(game, "rare"); }
 
 /* v3.430.0 (Ruines, ruines_11) — la porte du Sanctuaire libérée au moins une fois. */
 function storyPorteSanctuaire() {
@@ -3483,29 +3488,11 @@ function storyCryptSectorFreed(id) {
 /* v3.455.0 (Crypte, crypte_13) — palier Épique partiel (CR7) : pièces Épiques portées (l'arme du Cœur
    compte), niveau de la Forge, reforge de l'arme. Lecture seule. Au banc. */
 var STORY_PALIER_CRYPTE_EPIQUE = { pieces: 3, forge: 5, reforge: 9 };
-function storyPalierCrypteEpique(game) {
-  var portes = (game && game.equipped) || {}, order = window.RARITY_ORDER || [], rang = order.indexOf("epic"), pieces = 0;
-  (window.EQUIPMENT_SLOTS || []).forEach(function (slot) { var it = portes[slot]; if (it && order.indexOf(it.rarity) >= rang) pieces++; });
-  var F = window.ForgeManager, V = window.VillageBuildingManager;
-  return { pieces: pieces, forge: (V && typeof V.getLevel === "function") ? V.getLevel("forge") : 0, arme: (F && typeof F.getLevel === "function") ? F.getLevel("weapon") : 0 };
-}
+function storyPalierCrypteEpique(game) { return storyPalier(game, "epic"); }
 function storyPalierCrypteEpiqueMissing(game) {
-  var p = storyPalierCrypteEpique(game), P = STORY_PALIER_CRYPTE_EPIQUE, out = [];
-  if (p.pieces < P.pieces) out.push({ text: _t("Pièces Épiques : {a} / {b}", { a: p.pieces, b: P.pieces }), where: _t("Les étapes 11 et 12, la quête d'élite « La couronne de trop » et l'Ossuaire.") });
-  var V = window.VillageBuildingManager, F = window.ForgeManager;
-  if (p.forge < P.forge && V && typeof V.getNextCost === "function") {
-    var fl = storyMissingCostLines(V.getNextCost("forge"), _t("Forge {n}", { n: p.forge + 1 }));
-    out = out.concat(fl.length ? fl : [{ text: _t("Forge {n}", { n: p.forge + 1 }), where: _t("Tout est là : à construire au Village, Bâtiments.") }]);
-  }
-  if (p.arme < P.reforge && F && typeof F.getCost === "function") {
-    var c = F.getCost("weapon"), lab = _t("Reforge {n} de l'arme", { n: p.arme + 1 });
-    if (!c) out.push({ text: lab, where: _t("Il faut d'abord la Forge {n}.", { n: p.forge + 1 }) });
-    else {
-      var rl = storyMissingCostLines(c, lab);
-      out = out.concat(rl.length ? rl : [{ text: lab, where: _t("Tout est là : à la Forge, Établi.") }]);
-    }
-  }
-  return out;
+  return storyPalierManques(game, "epic", STORY_PALIER_CRYPTE_EPIQUE, function (a, b) {
+    return { text: _t("Pièces Épiques : {a} / {b}", { a: a, b: b }), where: _t("Les étapes 11 et 12, la quête d'élite « La couronne de trop » et l'Ossuaire.") };
+  });
 }
 
 /* v3.456.0 (Crypte, acte IV) — répliques des étapes 16 à 19 selon le choix « ysolt » : Ysolt les dit
@@ -3649,18 +3636,9 @@ function storyCryptSectorsFreed() {
    l'Épique compte). Lecture par storyPalierRuinesRare (pièces au moins Rares, reforge de l'arme). Au banc. */
 var STORY_PALIER_CRYPTE_RARE = { pieces: 7, reforge: 8 };
 function storyPalierCrypteRareMissing(game) {
-  var p = storyPalierRuinesRare(game), P = STORY_PALIER_CRYPTE_RARE, out = [], F = window.ForgeManager;
-  if (p.pieces < P.pieces) out.push({ text: _t("Pièces Rares ou mieux : {a} / {b}", { a: p.pieces, b: P.pieces }),
-    where: _t("Le Sanctuaire scellé, l'échoppe de la Halle marchande et les élites des Ruines.") });
-  if (p.arme < P.reforge && F && typeof F.getCost === "function") {
-    var c = F.getCost("weapon"), lab = _t("Reforge {n} de l'arme", { n: p.arme + 1 });
-    if (!c) out.push({ text: lab, where: _t("Il faut d'abord la Forge {n}.", { n: p.forge + 1 }) });
-    else {
-      var rl = storyMissingCostLines(c, lab);
-      out = out.concat(rl.length ? rl : [{ text: lab, where: _t("Tout est là : à la Forge, Établi.") }]);
-    }
-  }
-  return out;
+  return storyPalierManques(game, "rare", STORY_PALIER_CRYPTE_RARE, function (a, b) {
+    return { text: _t("Pièces Rares ou mieux : {a} / {b}", { a: a, b: b }), where: _t("Le Sanctuaire scellé, l'échoppe de la Halle marchande et les élites des Ruines.") };
+  });
 }
 
 function storyRuinsSectorsFreed() {
@@ -3672,21 +3650,7 @@ function storyRuinsSectorsFreed() {
 /* v3.429.0 (Ruines, ruines_09) — premier palier (RU6) : emplacements au moins Inhabituels (l'arme du
    Fleuve compte), reforge de l'arme et de l'armure. Lecture seule, comme storyPalierDesert. */
 var STORY_PALIER_RUINES = { pieces: 6, reforge: 4 }; // banc (robot, 3 classes) : à 7, 0 à 109 h selon la chance de l'échoppe ; à 6, la variance tombe
-function storyPalierRuines(game) {
-  var portes = (game && game.equipped) || {};
-  var order = window.RARITY_ORDER || ["common", "green", "rare", "epic", "legendary"], rang = order.indexOf("green");
-  var pieces = 0;
-  (window.EQUIPMENT_SLOTS || []).forEach(function (slot) {
-    var it = portes[slot];
-    if (it && order.indexOf(it.rarity) >= rang) pieces++;
-  });
-  var F = window.ForgeManager;
-  return {
-    pieces: pieces,
-    arme: (F && typeof F.getLevel === "function") ? F.getLevel("weapon") : 0,
-    armure: (F && typeof F.getLevel === "function") ? F.getLevel("armor") : 0
-  };
-}
+function storyPalierRuines(game) { return storyPalier(game, "green"); }
 /* v3.436.5 (ruines_04) : la caravane existe-t-elle ? Elle part de la Halle marchande. */
 function storyCaravanReady() { return !!(window.CaravanManager && CaravanManager.isAvailable()); }
 window.storyCaravanReady = storyCaravanReady;
@@ -3716,6 +3680,8 @@ window.storyBatTake = storyBatTake;
 window.STORY_TABLE_NOMS_WAX = STORY_TABLE_NOMS_WAX;
 window.storyTableDesNoms = storyTableDesNoms;
 window.storyMissingCostLines = storyMissingCostLines;
+window.storyPalier = storyPalier;
+window.storyPalierManques = storyPalierManques;
 window.storyPalierRuinesRareMissing = storyPalierRuinesRareMissing;
 window.STORY_SALLE_TEXTS = STORY_SALLE_TEXTS;
 window.STORY_PLAN_TEXTS = STORY_PLAN_TEXTS;
@@ -3733,25 +3699,10 @@ var STORY_PALIER_PIECES = 3;   // emplacements Inhabituels sur 7, l'arme compris
 var STORY_PALIER_FORGE = 2;    // niveau du bâtiment Forge (ouvre la reforge jusqu'à 4)
 var STORY_PALIER_REFORGE = 4;  // niveau de reforge de l'arme — le maximum d'un bâtiment 2
 
-function storyPalierDesert(game) {
-  var portes = (game && game.equipped) || {};
-  var rang = (window.RARITY_ORDER || ["common", "green", "rare", "epic", "legendary"]).indexOf("green");
-  var pieces = 0, armeVerte = false;
-  (window.EQUIPMENT_SLOTS || []).forEach(function (slot) {
-    var it = portes[slot];
-    if (!it) return;
-    var r = (window.RARITY_ORDER || []).indexOf(it.rarity);
-    if (r >= rang) {
-      pieces++;
-      if (slot === "weapon") armeVerte = true;
-    }
-  });
-  return {
-    pieces: pieces,
-    armeVerte: armeVerte,
-    forge: (window.VillageBuildingManager && typeof VillageBuildingManager.getLevel === "function") ? VillageBuildingManager.getLevel("forge") : 0,
-    reforge: (window.ForgeManager && typeof ForgeManager.getLevel === "function") ? ForgeManager.getLevel("weapon") : 0
-  };
+function storyPalierDesert(game) { // noms d'origine gardés : armeVerte, reforge
+  var p = storyPalier(game, "green");
+  p.armeVerte = p.armeOk; p.reforge = p.arme;
+  return p;
 }
 
 /* v3.315.0 (W-4a2) : note au vol le passage de la vague 5 de la Cité engloutie (donjon 2), puis

@@ -8,7 +8,6 @@
 .farm-plot-improvement-img,
 .qb-tab-icon-img,
 .eq-orbit-slot-img,
-.pc-sum-class-ico,
 .active-affliction-img,
 .grimoire-rule-ico,
 .hc-stat-ico-img {
@@ -29,7 +28,6 @@
 img.vb-card-icon { width: 84px; height: 84px; object-fit: contain; } /* v3.414.0 : grandes vignettes */
 @media (max-width: 360px) { img.vb-card-icon { width: 68px; height: 68px; } }
 
-
 /* Améliorations de parcelle (pastilles sur la vignette). */
 .farm-plot-improvement-img { width: 17px; height: 17px; }
 
@@ -43,7 +41,6 @@ img.vb-card-icon { width: 84px; height: 84px; object-fit: contain; } /* v3.414.0
 .eq-orbit-slot-placeholder { font-size: 0; }
 
 /* Fiche héros et création. */
-.pc-sum-class-ico { width: 16px; height: 16px; margin-right: 3px; }
 .hc-stat-ico-img { width: 16px; height: 16px; }
 
 /* Afflictions et Grimoire. */
@@ -89,7 +86,6 @@ img.vb-card-icon { width: 84px; height: 84px; object-fit: contain; } /* v3.414.0
 /* ---- Correctifs de rendu (retour Seb) ---- */
 
 /* Icônes ajoutées par les correctifs. */
-.plot-act-ico { width: 16px; height: 16px; object-fit: contain; vertical-align: -3px; }
 .map-fallback-ico, .hc-confirm-class-ico, .workshop-sum-ico {
   width: 20px; height: 20px; object-fit: contain; vertical-align: middle;
 }

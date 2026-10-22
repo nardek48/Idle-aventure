@@ -906,8 +906,7 @@ var Pa2Run = {
     if (!n || !est) return { ok: false, reason: _t("Choix impossible") };
     var run = this.getRun(), spread = PA2_RULES.damageSpread;
     var total = est.unwinnable ? est.hpLoss : est.hpLoss * (1 - spread + this.rand() * 2 * spread) * (surprised ? PA2_RULES.surprisedMult : 1);
-    var shares = PA2_APPROACHES[apId].rounds === 2 ? [0.6, 0.4] : [0.45, 0.35, 0.2];
-    var parts = shares.map(function (s) { return Math.max(1, Math.round(total * s)); });
+    var parts = splitDamage(total, PA2_APPROACHES[apId].rounds);
     var res = { approach: apId, surprised: !!surprised, parts: parts, dmg: parts.reduce(function (a, b) { return a + b; }, 0) };
     if (!this._hurt(run, res.dmg)) { res.ko = true; return { ok: true, reason: null, result: res }; }
     res.gain = this._gold(run, est.gold / (this.hasRelic("ronce", run) ? PA2_RULES.ronceLoot : 1));

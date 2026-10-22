@@ -46,9 +46,6 @@ var CONSTRUCTION_BUILDINGS = {
       return result;
     },
 
-    bonusMultiplierAtLevel: function (level) {
-      return 1 + 0.03 * level;
-    }
   }
 };
 

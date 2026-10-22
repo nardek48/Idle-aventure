@@ -217,9 +217,6 @@ var CombatForecast = {
 
   /* v3.429.7 : usure d'une vague à plusieurs ennemis, tués l'un après l'autre (le plus faible
      d'abord) : tant qu'un ennemi est debout, il frappe. Un ennemi seul = getAttritionCost(e, 1). */
-  getGroupAttrition: function (list, fullParty) {
-    return this.getGroupFight(list, fullParty).cost;
-  },
 
   /* v3.429.15 : la même vague, avec sa durée en rounds (rythme des soins de compagnon). */
   getGroupFight: function (list, fullParty) {
@@ -441,9 +438,6 @@ var CombatForecast = {
 
   /* Pronostic pour un RUN entier (quête, chasse, donjon) : on regarde l'ennemi le plus dur
      annoncé — le boss s'il y en a un, sinon l'ennemi courant. */
-  forRun: function (enemy, options) {
-    return this.forEnemy(enemy, options);
-  },
 
   /* Ennemi de RÉFÉRENCE d'une mission : celui qui décide de l'issue. Pour une quête à étape
      bossKill, c'est le boss ; sinon l'ennemi ordinaire du pool. QuestEnemyManager.spawnFor

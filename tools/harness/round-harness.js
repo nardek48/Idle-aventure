@@ -52,7 +52,10 @@ var g = sandbox;
    d'avant (héros, compagnons, ennemis) : on le garde ici ; les contrôles de l'initiative le lèvent. */
 g.Initiative.legacy = true;
 var failures = 0, passes = 0;
-function ok(cond, msg) { if (cond) { passes++; console.log("  ✔ " + msg); } else { failures++; console.log("  ✘ " + msg); } }
+/* v3.459.5 (audit O9) : chaque ✘ porte sa section, et la fin du harnais les récapitule. */
+var section = "", echecs = [], _log = console.log;
+console.log = function (t) { var m = typeof t === "string" && /^\n(\[[^\]]+\])/.exec(t); if (m) section = m[1]; return _log.apply(console, arguments); };
+function ok(cond, msg) { if (cond) { passes++; console.log("  ✔ " + msg); } else { failures++; echecs.push(section + " " + msg); console.log("  ✘ " + section + " " + msg); } }
 function run(code) { return vm.runInContext(code, g); }
 /* v3.389.0 (chantier P) : joue un parcours (Pa2Run) jusqu'au bout. win : dés forcés au maximum. */
 function playParcours(win) {
@@ -1923,7 +1926,7 @@ ok(g.SceneCheckSystem.depthDifficulty(4, 0) === 4 && Math.abs(g.SceneCheckSystem
 ok(g.SceneCheckSystem.depthLootMultiplier(0) === 1 && Math.abs(g.SceneCheckSystem.depthLootMultiplier(5) - 2.5) < 1e-9, "depthLootMultiplier +30%/palier");
 
 /* v3.391.0 (lot P-3) : l'abandon et la garde de sortie, sur un parcours v2 (bosquet_silencieux, gratuit). */
-console.log("\n[S1] SceneRunManager.abandon() — sortie prématurée via le garde ui-root.js:switchTab");
+console.log("\n[S1b] SceneRunManager.abandon() — sortie prématurée via le garde ui-root.js:switchTab");
 run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
 g.SceneRunManager.startRun("bosquet_silencieux");
 ok(g.SceneRunManager.isRunActive() === true, "run actif avant abandon");
@@ -1934,7 +1937,7 @@ ok(g.game.sortie.active === false, "sortie clôturée par SortieManager.end('fle
 var doubleAbandon76 = g.SceneRunManager.abandon();
 ok(doubleAbandon76.ok === false, "abandon() refusé sur un run déjà 'completed' (idempotence)");
 
-console.log("\n[S1] ui-root.js:switchTab — garde anti-sortie pendant une expédition");
+console.log("\n[S1c] ui-root.js:switchTab — garde anti-sortie pendant une expédition");
 run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.unlockedTabs.scene = true; game.unlockedTabs.combat = true;");
 g.SceneRunManager.startRun("bosquet_silencieux");
 run("game.activeTab = 'scene';");
@@ -1971,19 +1974,19 @@ var s2dGuard = 0; playParcours(true); g.SceneRunManager.clearRun(); // v3.389.0 
 ok(g.game.explorationProgression.wellUnlocked === true, "source_tarie : wellUnlocked posé au succès");
 ok(g.WarehouseManager.getAmount("eau") > 0, "eau créditée");
 
-console.log("\n[S2b] MissionBoard — gate d'affichage de veine_instable (boardRequires ajouté, régression v3.118.0 évitée)");
+console.log("\n[S2bb] MissionBoard — gate d'affichage de veine_instable (boardRequires ajouté, régression v3.118.0 évitée)");
 run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
 ok(!g.MissionBoard.list().find(function (m) { return m.id === "scene_veine_instable"; }), "sans forgottenClearingUnlocked : Veine Instable absente du tableau");
 game.explorationProgression.forgottenClearingUnlocked = true;
 ok(!!g.MissionBoard.list().find(function (m) { return m.id === "scene_veine_instable"; }), "avec forgottenClearingUnlocked : Veine Instable apparaît");
 
-console.log("\n[S2b] StoryQuestManager.goToLink() — liens Histoire routés vers openSceneQuestEntry");
+console.log("\n[S2bc] StoryQuestManager.goToLink() — liens Histoire routés vers openSceneQuestEntry");
 run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.explorationProgression.forgottenClearingUnlocked = true; WarehouseManager.addResource('petite_ration', 2);");
 run("StoryQuestManager.ensure(); game.storyQuests.forest.currentStep = " + stepIdx("forest_09") + "; game.storyQuests.forest.accepted = true;"); // étape Veine Instable (linkTo scene_veine_instable)
 g.StoryQuestManager.goToLink("forest");
 ok(g.game.activeTab === "scene" && g.game.sceneRun && g.game.sceneRun.templateId === "veine_instable", "goToLink('forest') sur l'étape Veine Instable lance bien le scene-engine (linkTo.cardId mis à jour)");
 
-console.log("\n[S1] save-system.js — sceneRun aux 4 emplacements (buildSaveData/loadGame/hardReset/fullReset)");
+console.log("\n[S1d] save-system.js — sceneRun aux 4 emplacements (buildSaveData/loadGame/hardReset/fullReset)");
 run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.sceneRun = { id: 'test_persist', status: 'gate' };");
 var saved76 = run("buildSaveData()");
 ok(saved76.sceneRun && saved76.sceneRun.id === "test_persist", "buildSaveData inclut sceneRun");
@@ -2012,7 +2015,7 @@ ok(g.SceneRunManager.isQuestCompleted("sentier_obstrue") === true, "isQuestCompl
 var s2aRetry = g.SceneRunManager.startRun("sentier_obstrue");
 ok(s2aRetry.ok === false && /terminée/i.test(s2aRetry.reason), "non relançable une fois réussie");
 
-console.log("\n[S2a] bosquet_silencieux — gratuit (pas d'entryCost), déblocage Scierie");
+console.log("\n[S2ab] bosquet_silencieux — gratuit (pas d'entryCost), déblocage Scierie");
 run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
 ok(g.WarehouseManager.getAmount("petite_ration") === 0, "aucune ration en stock au départ (contrôle)");
 var s2bStart = g.SceneRunManager.startRun("bosquet_silencieux");
@@ -2021,7 +2024,7 @@ var s2bGuard = 0; playParcours(true); g.SceneRunManager.clearRun(); // v3.389.0 
 ok(g.game.explorationProgression.sawmillUnlocked === true, "sawmillUnlocked posé au succès");
 ok(g.ProductionManager.isBuildingUnlocked("sawmill") && !!g.game.production.sawmill, "Scierie débloquée + bucket initialisé (ProductionManager.unlockBuilding)");
 
-console.log("\n[S2a] terre_en_friche — échec en cours de route : perte partielle, run continue, pas de blocage net");
+console.log("\n[S2ac] terre_en_friche — échec en cours de route : perte partielle, run continue, pas de blocage net");
 run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
 g.game.explorationProgression.wellUnlocked = true; // prérequis de lancement
 g.WarehouseManager.addResource("petite_ration", 1);
@@ -2038,7 +2041,7 @@ ok(r2a.status === "pa2-map" && r2a.wounds >= 1, "après un échec (une blessure)
 ok(g.game.explorationProgression.farmUnlocked !== true, "farmUnlocked PAS encore posé (arrivée non atteinte)");
 g.SceneRunManager.abandon(); g.SceneRunManager.clearRun();
 
-console.log("\n[S2a] MissionBoard._sceneMissions() — gating d'affichage repris de boardRequires (EXPLORATION_QUESTS)");
+console.log("\n[S2ad] MissionBoard._sceneMissions() — gating d'affichage repris de boardRequires (EXPLORATION_QUESTS)");
 run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
 var s2aBoard1 = g.MissionBoard.list();
 ok(!s2aBoard1.find(function (m) { return m.id === "scene_sentier_obstrue"; }), "sans huntBuildingUnlocked : Sentier Obstrué absent (boardRequires repris tel quel)");
@@ -2055,7 +2058,7 @@ var s2aBoard3 = g.MissionBoard.list().find(function (m) { return m.id === "scene
 ok(s2aBoard3.status === "accepted" && typeof s2aBoard3.launch === "function", "après accept() : statut 'accepted', launch() présent");
 ok(!g.MissionBoard.list().find(function (m) { return m.id === "exploration_blockedPath"; }), "l'ancienne carte exploration_blockedPath n'apparaît plus (retirée de _explorationMissions)");
 
-console.log("\n[S2a] écran Quêtes complet — catégorie 'secondaires' inclut sourceKind 'scene' (QUEST_BOARD_CATEGORIES)");
+console.log("\n[S2ae] écran Quêtes complet — catégorie 'secondaires' inclut sourceKind 'scene' (QUEST_BOARD_CATEGORIES)");
 run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.explorationProgression.huntBuildingUnlocked = true;");
 run("setQuestCategory('secondaires');");
 var questsHtml76 = run("buildQuestsHTML()");
@@ -2118,7 +2121,7 @@ ok(detailHtml.indexOf("Sève d") !== -1, "la feuille affiche bien le nom de la r
 ok(detailHtml.indexOf("5 en stock") !== -1, "le stock affiché correspond (5)");
 ok(detailHtml.indexOf("Ne se vend pas") !== -1 && detailHtml.indexOf("Vendre") === -1, "pas d'option de vente (sellPrice: 0, ressource de collection)");
 
-console.log("\n[60] Cap de 3 quêtes actives simultanées + abandon (v3.131.0, retour Seb)");
+console.log("\n[60b] Cap de 3 quêtes actives simultanées + abandon (v3.131.0, retour Seb)");
 run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
 run("game.unlockedTabs.village = true; game.explorationProgression.huntBuildingUnlocked = true;");
 var m1 = g.MissionBoard.getById("scene_sentier_obstrue");
@@ -2186,7 +2189,7 @@ run("WarehouseManager.addResource('petite_ration', 1);");
 var paM = g.MissionBoard.getById("petite_aventure_foret");
 ok(!!paM && paM.status === "available", "point 6 : Petite Aventure reste 'available' malgré le cap (hors périmètre, cap journalier propre)");
 
-console.log("\n[61] Grimoire du Veilleur — 'Aller à la quête' mène au combat une fois une règle active (retour Seb)");
+console.log("\n[61b] Grimoire du Veilleur — 'Aller à la quête' mène au combat une fois une règle active (retour Seb)");
 run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.heroHp = game.heroMaxHp;");
 run("game.unlockedTabs.combat = true; game.unlockedTabs.grimoire = true;");
 run("StoryQuestManager.ensure();");
@@ -2849,11 +2852,6 @@ console.log("\n[UX-PROD] Tableau de bord Production v3.191.0 — routeur, vue At
     "pc-skill-counter": "pc-skill-card",
     "pc-skill-counter-none": "pc-skill-card",
     "pc-skill-rank": "pc-skill-card",
-    "pc-sum-portrait": "pc-sum-ident",
-    "pc-sum-class": "pc-sum-ident",
-    "pc-portrait-placeholder": "pc-sum-ident",
-    "pc-sum-bar": "pc-sum-jump",
-    "pc-sum-jump-kit": "pc-sum-jump",
     "ability-icon-wrap": "ability-card",
     "ability-cd": "ability-card",
     // v3.268.2 : descendants de .cp-card, enregistré lui (00-kframe-scope.css).
@@ -2890,7 +2888,7 @@ console.log("\n[UX-PROD] Tableau de bord Production v3.191.0 — routeur, vue At
   });
 
   // Les quatre conteneurs oubliés du chantier, nommément.
-  ["pc-stat-card", "pc-skill-card", "pc-sum-ident", "pc-sum-cell", "pc-sum-jump", "achievement-total", "cp-card"].forEach(function (cls) {
+  ["pc-stat-card", "pc-skill-card", "achievement-total", "cp-card"].forEach(function (cls) {
     ok(enregistres[cls] === true, "[ENCRE] ." + cls + " est enregistré");
   });
 })();
@@ -3089,7 +3087,7 @@ console.log("\n[BATTUE] Farm d'or répétable en Forêt");
    emplacements fixes de la tab-bar, catalogue de tutoriels.
    ============================================================================ */
 (function () {
-  console.log("\n[16] v3.208.0 : contres d'archétype visibles, onglets outils, tutoriels");
+  console.log("\n[16b] v3.208.0 : contres d'archétype visibles, onglets outils, tutoriels");
   freshCombat("knight");
 
   /* --- Contres : action.effects porte des contres que action.counters ignore --- */
@@ -3211,7 +3209,7 @@ console.log("\n[BATTUE] Farm d'or répétable en Forêt");
    de rareté du monde courant (WORLD_RARITY_UNLOCKS).
    ============================================================================ */
 (function () {
-  console.log("\n[17] v3.209.0 : palier de rareté de l'échoppe");
+  console.log("\n[17b] v3.209.0 : palier de rareté de l'échoppe");
   function neuf() { run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();"); }
 
   neuf();
@@ -3266,7 +3264,7 @@ console.log("\n[BATTUE] Farm d'or répétable en Forêt");
    badges d'état retirés, raccourci au Campement.
    ============================================================================ */
 (function () {
-  console.log("\n[18] v3.210.0 : refonte visuelle du Grimoire");
+  console.log("\n[18b] v3.210.0 : refonte visuelle du Grimoire");
   run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
   // L'onglet Grimoire est verrouillé sur une partie neuve (débloqué par une étape
   // Histoire). Sans lui, CombatEngine.setCombatMode('grimoire') refuse et la carte
@@ -3392,7 +3390,7 @@ console.log("\n[BATTUE] Farm d'or répétable en Forêt");
    combat en feuille basse (une seule source de contenu, deux habillages).
    ============================================================================ */
 (function () {
-  console.log("\n[19] v3.211.0 : aide au catalogue, Rapport en feuille");
+  console.log("\n[19b] v3.211.0 : aide au catalogue, Rapport en feuille");
   run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
   g.game.unlockedTabs.grimoire = true;
   g.game.activeTab = "grimoire"; // renderGrimoireSheet() referme la feuille hors de l'écran
@@ -3475,7 +3473,7 @@ console.log("\n[BATTUE] Farm d'or répétable en Forêt");
    pendant une sortie, retrait du code mort.
    ============================================================================ */
 (function () {
-  console.log("\n[20] v3.212.0 : feuille au-dessus du menu, verrou de sortie");
+  console.log("\n[20b] v3.212.0 : feuille au-dessus du menu, verrou de sortie");
   run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
   g.game.unlockedTabs.grimoire = true;
   g.game.activeTab = "grimoire";
@@ -3549,7 +3547,7 @@ console.log("\n[BATTUE] Farm d'or répétable en Forêt");
 })();
 
 
-console.log("\n[21] v3.213.0 (lot V-1) \u2014 Socle des b\u00e2timents du Village");
+console.log("\n[21b] v3.213.0 (lot V-1) \u2014 Socle des b\u00e2timents du Village");
 (function () {
   var M = g.VillageBuildingManager;
 
@@ -3682,7 +3680,7 @@ console.log("\n[21] v3.213.0 (lot V-1) \u2014 Socle des b\u00e2timents du Villag
   ok(html.indexOf("vb-card-lock") !== -1, "une carte verrouill\u00e9e porte sa condition (le mur n'est jamais silencieux)");
 })();
 
-console.log("\n[22] v3.213.1 (lot V-2) \u2014 Terrain d'entra\u00eenement et plafond");
+console.log("\n[22b] v3.213.1 (lot V-2) \u2014 Terrain d'entra\u00eenement et plafond");
 (function () {
   var M = g.VillageBuildingManager;
   var IDS = g.HEROS_TRAINING_UPGRADE_IDS;
@@ -3797,7 +3795,7 @@ console.log("\n[22] v3.213.1 (lot V-2) \u2014 Terrain d'entra\u00eenement et pla
   g.pendingTutorial = null;
 })();
 
-console.log("\n[23] v3.214.0 (lot V-3) \u2014 Mat\u00e9riau de monde et ateliers de tier 2");
+console.log("\n[23b] v3.214.0 (lot V-3) \u2014 Mat\u00e9riau de monde et ateliers de tier 2");
 (function () {
   var M = g.VillageBuildingManager;
 
@@ -3860,7 +3858,7 @@ console.log("\n[23] v3.214.0 (lot V-3) \u2014 Mat\u00e9riau de monde et ateliers
   delete g.WAREHOUSE_RESOURCES.__test_mat;
 })();
 
-console.log("\n[24] v3.215.0 (lot V-4) \u2014 Apothicaire : pr\u00e9parer au lieu d'acheter");
+console.log("\n[24b] v3.215.0 (lot V-4) \u2014 Apothicaire : pr\u00e9parer au lieu d'acheter");
 (function () {
   var M = g.VillageBuildingManager;
   var A = g.ApothecaryManager;
@@ -3948,7 +3946,7 @@ console.log("\n[24] v3.215.0 (lot V-4) \u2014 Apothicaire : pr\u00e9parer au lie
   g.game.worldsEverReached = mondesAvant; g.WorldManager.worldIndex = idxAvant; // état rendu aux sections suivantes
 })();
 
-console.log("\n[25] v3.216.0 (lot V-5) \u2014 Halle marchande : elle agrandit l'\u00e9choppe, elle ne la d\u00e9place pas");
+console.log("\n[25b] v3.216.0 (lot V-5) \u2014 Halle marchande : elle agrandit l'\u00e9choppe, elle ne la d\u00e9place pas");
 (function () {
   var M = g.VillageBuildingManager;
   var E = g.EquipShopManager;
@@ -4013,7 +4011,7 @@ console.log("\n[25] v3.216.0 (lot V-5) \u2014 Halle marchande : elle agrandit l'
     "avec Halle : l'\u00e9choppe annonce l'effet du b\u00e2timent");
 })();
 
-console.log("\n[26] v3.217.0 (lot V-6) \u2014 Taverne : contrats de livraison");
+console.log("\n[26b] v3.217.0 (lot V-6) \u2014 Taverne : contrats de livraison");
 (function () {
   var M = g.VillageBuildingManager;
   var T = g.TavernManager;
@@ -4108,7 +4106,7 @@ console.log("\n[26] v3.217.0 (lot V-6) \u2014 Taverne : contrats de livraison");
     "pas de tableau tant que la Taverne n'est pas b\u00e2tie");
 })();
 
-console.log("\n[27] v3.218.0 (lot V-7) \u2014 Entrep\u00f4t agrandi : un seul plafond, partout");
+console.log("\n[27b] v3.218.0 (lot V-7) \u2014 Entrep\u00f4t agrandi : un seul plafond, partout");
 (function () {
   var M = g.VillageBuildingManager;
   var W = g.WarehouseManager;
@@ -4176,7 +4174,7 @@ console.log("\n[27] v3.218.0 (lot V-7) \u2014 Entrep\u00f4t agrandi : un seul pl
   g.game.resources.planche = 0;
 })();
 
-console.log("\n[28] v3.219.0 \u2014 D\u00e9fense d\u00e9gressive et \u00e9chelle d'armure");
+console.log("\n[28b] v3.219.0 \u2014 D\u00e9fense d\u00e9gressive et \u00e9chelle d'armure");
 (function () {
   var IDS = g.HEROS_TRAINING_UPGRADE_IDS;
 
@@ -4235,7 +4233,7 @@ console.log("\n[28] v3.219.0 \u2014 D\u00e9fense d\u00e9gressive et \u00e9chelle
     "une armure l\u00e9gendaire tient dans la marge disponible, sans la gaspiller");
 })();
 
-console.log("\n[29] v3.220.0 \u2014 \u00c9chelle de monde sur l'\u00e9quipement");
+console.log("\n[29b] v3.220.0 \u2014 \u00c9chelle de monde sur l'\u00e9quipement");
 (function () {
   /* --- Seules les stats PLATES suivent la courbe ------------------------
      C'est le piège du chantier : la d\u00e9fense est plafonn\u00e9e \u00e0 60 %, et
@@ -4285,7 +4283,7 @@ console.log("\n[29] v3.220.0 \u2014 \u00c9chelle de monde sur l'\u00e9quipement"
 
 })();
 
-console.log("\n[30] v3.221.0 (lot V-8) \u2014 Forge : 30 niveaux = un cran de rarit\u00e9");
+console.log("\n[30b] v3.221.0 (lot V-8) \u2014 Forge : 30 niveaux = un cran de rarit\u00e9");
 (function () {
   var M = g.VillageBuildingManager;
   var F = g.ForgeManager;
@@ -4409,7 +4407,7 @@ console.log("\n[30] v3.221.0 (lot V-8) \u2014 Forge : 30 niveaux = un cran de ra
     "pas d'\u00e9tabli tant que la Forge n'est pas b\u00e2tie");
 })();
 
-console.log("\n[31] v3.222.0 \u2014 R\u00e9initialisation compl\u00e8te et retour aux pages d'accueil");
+console.log("\n[31b] v3.222.0 \u2014 R\u00e9initialisation compl\u00e8te et retour aux pages d'accueil");
 (function () {
 
   /* --- Un reset complet, lui, remet bien tout \u00e0 z\u00e9ro ------------------ */
@@ -4433,7 +4431,7 @@ console.log("\n[31] v3.222.0 \u2014 R\u00e9initialisation compl\u00e8te et retou
   ok(run("expandedHeroStat") === null, "Personnage : la carte d\u00e9pli\u00e9e se referme");
 })();
 
-console.log("\n[32] v3.223.0 \u2014 Donjons : plafond par monde et mat\u00e9riau de monde");
+console.log("\n[32b] v3.223.0 \u2014 Donjons : plafond par monde et mat\u00e9riau de monde");
 (function () {
   var D = g.DungeonManager;
   /* v3.300.0 : le Donjon II était fermé par la donnée (locked) jusqu'à W-4. v3.315.0 : c'est
@@ -4506,7 +4504,7 @@ console.log("\n[32] v3.223.0 \u2014 Donjons : plafond par monde et mat\u00e9riau
   } finally { d2.locked = d2Locked; d2.requiresStoryStep = d2Step; }
 })();
 
-console.log("\n[33] v3.224.0 \u2014 Stat principale par classe (D11-D13, option A)");
+console.log("\n[33b] v3.224.0 \u2014 Stat principale par classe (D11-D13, option A)");
 (function () {
   /* Règles déclarées : une par classe, coefficients figés au Lot 0. */
   ok(typeof g.getClassMainStat === "function" && typeof g.getHeroMainStat === "function", "getClassMainStat/getHeroMainStat exposés");
@@ -4562,7 +4560,7 @@ console.log("\n[33] v3.224.0 \u2014 Stat principale par classe (D11-D13, option 
   ok(g.getHeroStatFirstVisibleStep(g.getHeroStatRowView(rowCel)) === 1, "R\u00f4deur : le premier niveau de C\u00e9l\u00e9rit\u00e9 a un effet visible (VIT), la sonde le dit");
 })();
 
-console.log("\n[34] v3.225.0 \u2014 Affixes d'\u00e9quipement (Lot 1b : donn\u00e9es, g\u00e9n\u00e9ration, recalcStats, affichage)");
+console.log("\n[34b] v3.225.0 \u2014 Affixes d'\u00e9quipement (Lot 1b : donn\u00e9es, g\u00e9n\u00e9ration, recalcStats, affichage)");
 (function () {
   /* --- Tables --- */
   ok(g.AFFIX_COUNT_BY_RARITY.common.primary === 0 && g.AFFIX_COUNT_BY_RARITY.green.primary === 1 && g.AFFIX_COUNT_BY_RARITY.green.secondary === 0,
@@ -4678,7 +4676,7 @@ console.log("\n[34] v3.225.0 \u2014 Affixes d'\u00e9quipement (Lot 1b : donn\u00
   ok(noAffix === "", "objet sans affixe : aucune ligne, aucun bloc vide");
 })();
 
-console.log("\n[35] v3.226.0 \u2014 Comparaison ligne \u00e0 ligne (Lot 2, D6)");
+console.log("\n[35b] v3.226.0 \u2014 Comparaison ligne \u00e0 ligne (Lot 2, D6)");
 (function () {
   var cand = { uid: "c", slot: "gloves", name: "C", icon: "gants", rarity: "epic", stat: "tapMult", value: 0.6,
     affixes: [{ stat: "tapDmg", value: 20, tier: "P" }, { stat: "critChance", value: 4, tier: "P" }, { stat: "xpMult", value: 0.1, tier: "S" }] };
@@ -4717,7 +4715,7 @@ console.log("\n[35] v3.226.0 \u2014 Comparaison ligne \u00e0 ligne (Lot 2, D6)")
   ok(d1 === "+2.2%" && d2 === "+10%" && d3 === "+4%", "formatStatDelta : d\u00e9fense 1 d\u00e9cimale, PV max %, butin %");
 })();
 
-console.log("\n[36] v3.232.0 \u2014 Recalibrage For\u00eat (boss \u00d73,9, normaux \u00d71,8), mondes 1-5 compens\u00e9s");
+console.log("\n[36b] v3.232.0 \u2014 Recalibrage For\u00eat (boss \u00d73,9, normaux \u00d71,8), mondes 1-5 compens\u00e9s");
 (function () {
   var W = g.WORLD_MULT_BY_WORLD;
   ok(W.length === 6, "six mondes");
@@ -4743,14 +4741,14 @@ console.log("\n[36] v3.232.0 \u2014 Recalibrage For\u00eat (boss \u00d73,9, norm
   ok(Math.abs(g.ENEMY_PV_MULT / 3.33 - 1.80) < 0.01, "For\u00eat : ennemis normaux \u00d71,8");
 })();
 
-console.log("\n[37] v3.228.0 \u2014 Finitions (fiche R\u00e9sum\u00e9, aide autovente)");
+console.log("\n[37b] v3.228.0 \u2014 Finitions (fiche R\u00e9sum\u00e9, aide autovente)");
 (function () {
   run("fullResetState(); game.playerName='Test'; game.heroId='mage'; EquipmentManager.recalcStats();");
   var set = run("buildInventorySettingsHTML()");
   ok(set.indexOf("rareté seule") !== -1, "R\u00e9glages du sac : l'autovente pr\u00e9vient qu'elle ignore les affixes");
 })();
 
-console.log("\n[38] v3.229.0 \u2014 Enchanteresse : relance de la valeur d'un bonus (Lot 5)");
+console.log("\n[38b] v3.229.0 \u2014 Enchanteresse : relance de la valeur d'un bonus (Lot 5)");
 (function () {
   run("fullResetState(); game.playerName='Test'; game.heroId='knight';");
   function setLevel(n) { g.VillageBuildingManager.ensure(); g.game.village.buildings.enchanter = { level: n }; }
@@ -4857,7 +4855,7 @@ console.log("\n[38] v3.229.0 \u2014 Enchanteresse : relance de la valeur d'un bo
   ok(run("buildEnchantBoardHTML()").indexOf("Aucune pi\u00e8ce \u00e9quip\u00e9e ne porte de bonus") !== -1, "\u00e9tabli vide : message, pas une page blanche");
 })();
 
-console.log("\n[39] v3.230.0 \u2014 Pouvoirs l\u00e9gendaires : donn\u00e9es, tirage, lecture (Lot 4, partie A)");
+console.log("\n[39b] v3.230.0 \u2014 Pouvoirs l\u00e9gendaires : donn\u00e9es, tirage, lecture (Lot 4, partie A)");
 (function () {
   var slots = Object.keys(g.LEGENDARY_POWERS);
   ok(slots.length === 7, "une table par emplacement");
@@ -4905,7 +4903,7 @@ console.log("\n[39] v3.230.0 \u2014 Pouvoirs l\u00e9gendaires : donn\u00e9es, ti
   ok(run("buildEquipmentPowerHTML({ stat: 'tapDmg', value: 5 })") === "", "objet sans pouvoir : aucune ligne, aucun bloc vide");
 })();
 
-console.log("\n[40] v3.230.0 \u2014 Pouvoirs l\u00e9gendaires : effets c\u00e2bl\u00e9s (Lot 4, partie B)");
+console.log("\n[40b] v3.230.0 \u2014 Pouvoirs l\u00e9gendaires : effets c\u00e2bl\u00e9s (Lot 4, partie B)");
 (function () {
   /* Pose un légendaire portant `powerId` à l'emplacement voulu, puis un combat frais. */
   function withPower(slot, powerId, heroId) {
@@ -5053,7 +5051,7 @@ console.log("\n[40] v3.230.0 \u2014 Pouvoirs l\u00e9gendaires : effets c\u00e2bl
    maintenant de GAME_VERSION (core/constants.js) ; cette assertion garantit
    qu'il ne peut plus diverger du CACHE_VERSION de sw.js, seul numéro que le
    rituel de livraison bumpe à coup sûr. */
-console.log("\n[41] Verrou de version");
+console.log("\n[41b] Verrou de version");
 (function () {
   var swSrc = fs.readFileSync(path.join(ROOT, "sw.js"), "utf8");
   var m = swSrc.match(/CACHE_VERSION\s*=\s*"([^"]+)"/);
@@ -5071,7 +5069,7 @@ console.log("\n[41] Verrou de version");
    faisait gagner progressLabel dès qu'il existait et objectiveLabel — le seul
    champ qui dit quoi faire — était jeté : sur une quête de village le joueur
    ne voyait qu'un « 0/2 » nu. Les deux écrans sont couverts. */
-console.log("\n[42] Libellé d'objectif sur les cartes de mission");
+console.log("\n[42b] Libellé d'objectif sur les cartes de mission");
 (function () {
   var m = {
     id: "t", sourceKind: "village", title: "Quête test", blurb: "Du lore qui ne dit rien de la tâche.",
@@ -5114,7 +5112,7 @@ console.log("\n[42] Libellé d'objectif sur les cartes de mission");
    Périple (10 nœuds, 35 %), donc le risque ne payait pas. La table doit rester
    croissante avec la longueur du parcours, et l'ancienne forme plate doit encore
    être lue pour pouvoir revenir en arrière sans toucher au code. */
-console.log("\n[44] Chasse à la Sève");
+console.log("\n[44b] Chasse à la Sève");
 (function () {
   var q = g.HUNT_QUESTS.hq_forest_seve;
   ok(!!q, "la chasse hq_forest_seve existe");
@@ -5159,7 +5157,7 @@ console.log("\n[44] Chasse à la Sève");
    silence, et le jeu en a déjà un cas connu (vitalite_etheree.png). Ce bloc lit
    WAREHOUSE_RESOURCES et va voir sur le disque. */
 (function () {
-  console.log("\n[45] Icônes de ressources présentes sur le disque");
+  console.log("\n[45b] Icônes de ressources présentes sur le disque");
   var db = g.WAREHOUSE_RESOURCES || {};
   var ids = Object.keys(db);
   ok(ids.length > 0, "WAREHOUSE_RESOURCES chargée (" + ids.length + " ressources)");
@@ -5197,7 +5195,7 @@ console.log("\n[44] Chasse à la Sève");
    idempotent (il est appelé deux fois au démarrage, par le chargeur d'emplacement
    puis par init()). */
 (function () {
-  console.log("\n[46] Reprise après écart d'horloge");
+  console.log("\n[46b] Reprise après écart d'horloge");
 
   ok(!!g.ResumeManager, "ResumeManager chargé");
   ok(g.ResumeManager && g.ResumeManager.GAP_S === 2, "seuil d'écart à 2 s");
@@ -5274,7 +5272,7 @@ console.log("\n[44] Chasse à la Sève");
 
 /* [47] v3.245.0 — Refonte des Donjons (doc de conception v1.1). Un donjon par monde, Marques de run,
    élites de données aux vagues 5/10, boss identitaire à trait signature, Boutique d'éclats chez l'Enchanteresse. */
-console.log("\n[47] v3.245.0 \u2014 Refonte des Donjons");
+console.log("\n[47b] v3.245.0 \u2014 Refonte des Donjons");
 (function () {
   var D = g.DungeonManager;
   game = freshCombat("knight"); giveWeapon();
@@ -5379,7 +5377,7 @@ console.log("\n[47] v3.245.0 \u2014 Refonte des Donjons");
 
 /* [48] v3.246.0 — correctifs hors donjon (retours Seb 15/09/2026) : compteur de round par combat,
    reprise d'un run de quête après rechargement, PV des ennemis de « Prouver sa valeur ». */
-console.log("\n[48] v3.246.0 \u2014 Compteur de round, reprise de quête, PV de « Prouver sa valeur »");
+console.log("\n[48b] v3.246.0 \u2014 Compteur de round, reprise de quête, PV de « Prouver sa valeur »");
 (function () {
   /* --- 1. Le compteur R est celui du COMBAT, pas de la session --- */
   game = freshCombat("knight"); giveWeapon();
@@ -5447,7 +5445,7 @@ console.log("\n[48] v3.246.0 \u2014 Compteur de round, reprise de quête, PV de 
 })();
 
 /* [49] v3.247.0 — groupe A : vitrine de départ figée, pronostic de combat. */
-console.log("\n[49] v3.247.0 \u2014 Vitrine de d\u00e9part fig\u00e9e et pronostic de combat");
+console.log("\n[49b] v3.247.0 \u2014 Vitrine de d\u00e9part fig\u00e9e et pronostic de combat");
 (function () {
   /* --- Vitrine de d\u00e9part --- */
   game = freshCombat("knight");
@@ -5539,7 +5537,7 @@ console.log("\n[49] v3.247.0 \u2014 Vitrine de d\u00e9part fig\u00e9e et pronost
 
 /* [50] v3.248.0 — prix des entraînements : courbe linéaire, bases proportionnelles au gain,
    socle de plafond porté à 20 (décisions Seb 15/09/2026). */
-console.log("\n[50] v3.248.0 \u2014 Prix des entra\u00eenements et plafond de d\u00e9part");
+console.log("\n[50b] v3.248.0 \u2014 Prix des entra\u00eenements et plafond de d\u00e9part");
 (function () {
   game = freshCombat("knight");
   var IDS = g.HEROS_TRAINING_UPGRADE_IDS;
@@ -5600,7 +5598,7 @@ console.log("\n[50] v3.248.0 \u2014 Prix des entra\u00eenements et plafond de d\
 })();
 
 /* [51] v3.249.0 — arme offerte à la première étape, pronostic calibré au banc. */
-console.log("\n[51] v3.249.0 \u2014 Arme de d\u00e9part et pronostic calibr\u00e9");
+console.log("\n[51b] v3.249.0 \u2014 Arme de d\u00e9part et pronostic calibr\u00e9");
 (function () {
   /* --- L'arme est remise par forest_02 depuis v3.260.0 (forest_01 avant), d\u00e9clin\u00e9e par classe --- */
   var armes = {};
@@ -5669,7 +5667,7 @@ console.log("\n[51] v3.249.0 \u2014 Arme de d\u00e9part et pronostic calibr\u00e
 })();
 
 /* [52] v3.250.0 — la Boutique a de nouveau une porte (régression du lot Navigation N-1). */
-console.log("\n[52] v3.250.0 \u2014 Porte de la Boutique au Campement");
+console.log("\n[52b] v3.250.0 \u2014 Porte de la Boutique au Campement");
 (function () {
   game = freshCombat("knight");
   run("game.unlockedTabs.shop = false;");
@@ -5704,7 +5702,7 @@ console.log("\n[52] v3.250.0 \u2014 Porte de la Boutique au Campement");
 })();
 
 /* [53] v3.251.0 — états de combat : bandeau d'alerte, rangée, feuille d'explication. */
-console.log("\n[53] v3.251.0 \u2014 \u00c9tats de combat (bandeau, rang\u00e9e, feuille)");
+console.log("\n[53b] v3.251.0 \u2014 \u00c9tats de combat (bandeau, rang\u00e9e, feuille)");
 (function () {
   game = freshCombat("knight"); giveWeapon();
   run("CombatEngine.ensureState();");
@@ -5791,7 +5789,7 @@ console.log("\n[53] v3.251.0 \u2014 \u00c9tats de combat (bandeau, rang\u00e9e, 
 })();
 
 /* [54] v3.252.0 — lisibilité de l'équipement : liste du sac, bilan réel, feuille de comparaison. */
-console.log("\n[54] v3.252.0 \u2014 Lisibilit\u00e9 de l'\u00e9quipement");
+console.log("\n[54b] v3.252.0 \u2014 Lisibilit\u00e9 de l'\u00e9quipement");
 (function () {
   game = freshCombat("knight");
   run("game.worldsEverReached = { 0: true, 1: true, 2: true };");
@@ -5857,7 +5855,7 @@ console.log("\n[54] v3.252.0 \u2014 Lisibilit\u00e9 de l'\u00e9quipement");
 })();
 
 /* [55] v3.253.0 — D-3 : échelle des vagues de la Tanière (retour de jeu « un peu facile »). */
-console.log("\n[55] v3.253.0 \u2014 \u00c9chelle des vagues du donjon");
+console.log("\n[55b] v3.253.0 \u2014 \u00c9chelle des vagues du donjon");
 (function () {
   var D = g.DungeonManager;
   game = freshCombat("knight"); giveWeapon();
@@ -5907,7 +5905,7 @@ console.log("\n[55] v3.253.0 \u2014 \u00c9chelle des vagues du donjon");
 })();
 
 /* [56] v3.254.0 — D-4 : suppression des fichiers d'afflictions parqués. */
-console.log("\n[56] v3.254.0 \u2014 Suppression des afflictions parqu\u00e9es");
+console.log("\n[56b] v3.254.0 \u2014 Suppression des afflictions parqu\u00e9es");
 (function () {
   game = freshCombat("knight");
   ok(typeof g.AFFLICTIONS === "undefined", "data/afflictions.js supprim\u00e9 : AFFLICTIONS n'existe plus");
@@ -5942,7 +5940,7 @@ console.log("\n[56] v3.254.0 \u2014 Suppression des afflictions parqu\u00e9es");
 
 /* [57] v3.255.0 — Cartes Vivantes, lot C-1 : données de la Forêt, LivingMapManager, persistance.
    Rapport de conception v1.0, §10.3 (bloc prévu sous le numéro [47], pris depuis). */
-console.log("\n[57] v3.255.0 \u2014 Cartes Vivantes C-1 : donn\u00e9es, LivingMapManager, sauvegarde");
+console.log("\n[57b] v3.255.0 \u2014 Cartes Vivantes C-1 : donn\u00e9es, LivingMapManager, sauvegarde");
 (function () {
   var LM = g.LivingMapManager, M = "forest";
   var map = g.LIVING_MAPS && g.LIVING_MAPS.forest;
@@ -6095,7 +6093,7 @@ console.log("\n[57] v3.255.0 \u2014 Cartes Vivantes C-1 : donn\u00e9es, LivingMa
 })();
 
 /* [58] v3.256.0 — Cartes Vivantes, lot C-2 : Forêt jouable (vue, runs ciblés, combat d'élite, tableau). */
-console.log("\n[58] v3.256.0 \u2014 Cartes Vivantes C-2 : vue, runs cibl\u00e9s, \u00e9lite, tableau de missions");
+console.log("\n[58b] v3.256.0 \u2014 Cartes Vivantes C-2 : vue, runs cibl\u00e9s, \u00e9lite, tableau de missions");
 (function () {
   var LM = g.LivingMapManager, M = "forest";
   game = freshCombat("knight");
@@ -6224,7 +6222,7 @@ console.log("\n[58] v3.256.0 \u2014 Cartes Vivantes C-2 : vue, runs cibl\u00e9s,
 })();
 
 /* [59] v3.257.0 — Cartes Vivantes, lot C-3 : Palissade livrée, effets tenus branchés. */
-console.log("\n[59] v3.257.0 \u2014 Cartes Vivantes C-3 : Palissade, effets tenus");
+console.log("\n[59b] v3.257.0 \u2014 Cartes Vivantes C-3 : Palissade, effets tenus");
 (function () {
   var LM = g.LivingMapManager, M = "forest", VB = g.VillageBuildingManager;
   game = freshCombat("knight");
@@ -6319,7 +6317,7 @@ console.log("\n[59] v3.257.0 \u2014 Cartes Vivantes C-3 : Palissade, effets tenu
 })();
 
 /* [60] v3.258.0 — Cartes Vivantes, lot C-5 : l'Arbre-mère, élite répétable à frein interne. */
-console.log("\n[60] v3.258.0 \u2014 Cartes Vivantes C-5 : Arbre-m\u00e8re");
+console.log("\n[60c] v3.258.0 \u2014 Cartes Vivantes C-5 : Arbre-m\u00e8re");
 (function () {
   var LM = g.LivingMapManager, M = "forest";
   var def = g.ELITE_DB.arbre_mere;
@@ -6403,7 +6401,7 @@ console.log("\n[60] v3.258.0 \u2014 Cartes Vivantes C-5 : Arbre-m\u00e8re");
 })();
 
 /* [61] v3.259.0 — Cartes Vivantes, lot C-4 : « Ce que la brume reprend », introduction du Recouvrement. */
-console.log("\n[61] v3.259.0 \u2014 Cartes Vivantes C-4 : \u00e9tape d'Histoire du Recouvrement");
+console.log("\n[61c] v3.259.0 \u2014 Cartes Vivantes C-4 : \u00e9tape d'Histoire du Recouvrement");
 (function () {
   var chapitre = g.STORY_QUESTS.forest;
   var idx = chapitre.steps.findIndex(function (s) { return s.id === "forest_brume"; });
@@ -6473,7 +6471,7 @@ console.log("\n[61] v3.259.0 \u2014 Cartes Vivantes C-4 : \u00e9tape d'Histoire 
 })();
 
 /* [62] v3.260.0 — Retours de jeu de Seb (session de correction). */
-console.log("\n[62] v3.260.0 \u2014 Retours de jeu : Brume, Colporteur, arme, compteurs, chasse, Campement");
+console.log("\n[62b] v3.260.0 \u2014 Retours de jeu : Brume, Colporteur, arme, compteurs, chasse, Campement");
 (function () {
   var chapitre = g.STORY_QUESTS.forest;
   var idxOf = function (id) { return chapitre.steps.findIndex(function (s) { return s.id === id; }); };
@@ -6612,7 +6610,7 @@ ok(hq.dropChancePct === 50 && hq.resourcePool.length === 6, "Chasse en For\u00ea
 })();
 
 /* [63] v3.261.0 — Bandeau héros du combat, variante B (atelier-bandeau-combat.html). */
-console.log("\n[63] v3.261.0 \u2014 Bandeau h\u00e9ros du combat, variante B");
+console.log("\n[63b] v3.261.0 \u2014 Bandeau h\u00e9ros du combat, variante B");
 (function () {
   var css = require("fs").readFileSync(require("path").join(ROOT, "css/03-combat-v2.css"), "utf8");
   ok(/\.cb-hero\s*\{\s*grid-template-columns:\s*minmax\(0,\s*1fr\)/.test(css), "colonne du panneau born\u00e9e : un butin long n'\u00e9largit plus l'\u00e9cran");
@@ -6627,7 +6625,7 @@ console.log("\n[63] v3.261.0 \u2014 Bandeau h\u00e9ros du combat, variante B");
 })();
 
 /* [65] v3.263.0 — Retours de jeu, deuxième série. */
-console.log("\n[65] v3.263.0 \u2014 Ic\u00f4nes, vitrine, Roi des marais");
+console.log("\n[65b] v3.263.0 \u2014 Ic\u00f4nes, vitrine, Roi des marais");
 (function () {
   ok(g.buildTutorialPreviewHTML("inconnu") === "", "aper\u00e7u de tutoriel : un \u00e9tat inconnu ne rend rien");
   var boss = g.QuestEnemyManager.spawnFor({ worldId: "forest", adventureIndex: 0, enemyHpMult: 0.8 }, true);
@@ -6636,7 +6634,7 @@ console.log("\n[65] v3.263.0 \u2014 Ic\u00f4nes, vitrine, Roi des marais");
 })();
 
 /* [66] v3.264.0 — Battue avec le Village, Atelier niveau 1 allégé. */
-console.log("\n[66] v3.264.0 \u2014 Battue avec le Village, Atelier de Construction niveau 1");
+console.log("\n[66b] v3.264.0 \u2014 Battue avec le Village, Atelier de Construction niveau 1");
 (function () {
   game = freshCombat("knight"); giveWeapon();
   run("HuntQuestManager.ensureDefaults();");
@@ -6661,7 +6659,7 @@ console.log("\n[66] v3.264.0 \u2014 Battue avec le Village, Atelier de Construct
 })();
 
 /* [67] v3.265.0 — Avertissement PV bas, bâtiments manquants. */
-console.log("\n[67] v3.265.0 \u2014 Avertissement PV bas, b\u00e2timents manquants");
+console.log("\n[67b] v3.265.0 \u2014 Avertissement PV bas, b\u00e2timents manquants");
 (function () {
   /* --- PV bas : avertissement même sur un combat abordable --- */
   game = freshCombat("knight");
@@ -6711,7 +6709,7 @@ console.log("\n[67] v3.265.0 \u2014 Avertissement PV bas, b\u00e2timents manquan
 })();
 
 /* [64] v3.261.0 — Toutes les quêtes de combat repartent de 0. */
-console.log("\n[64] v3.261.0 \u2014 Qu\u00eates de combat : chaque d\u00e9part repart de 0");
+console.log("\n[64b] v3.261.0 \u2014 Qu\u00eates de combat : chaque d\u00e9part repart de 0");
 (function () {
   var chapitre = g.STORY_QUESTS.forest;
   var idxOf = function (id) { return chapitre.steps.findIndex(function (s) { return s.id === id; }); };
@@ -6755,7 +6753,7 @@ console.log("\n[64] v3.261.0 \u2014 Qu\u00eates de combat : chaque d\u00e9part r
   ok(/wave: 0/.test(String(g.DungeonManager.start)), "donjon : chaque run part de la vague 0");
 })();
 
-console.log("\n[68] v3.266.0 (L-0) — socle du combat de groupe : acteurs, alias game.enemy, héros-acteur");
+console.log("\n[68b] v3.266.0 (L-0) — socle du combat de groupe : acteurs, alias game.enemy, héros-acteur");
 (function () {
   var game = freshCombat("knight"); giveWeapon();
 
@@ -6855,7 +6853,7 @@ console.log("\n[68] v3.266.0 (L-0) — socle du combat de groupe : acteurs, alia
     "combat auto enchaîné en farm libre : kills comptés, toujours un seul ennemi dans le groupe");
 })();
 
-console.log("\n[69] v3.267.0 (L-1) — round de groupe : chaque ennemi joue, fin de round comptée une fois");
+console.log("\n[69b] v3.267.0 (L-1) — round de groupe : chaque ennemi joue, fin de round comptée une fois");
 (function () {
   function trio(hp) {
     return [
@@ -6928,7 +6926,7 @@ console.log("\n[69] v3.267.0 (L-1) — round de groupe : chaque ennemi joue, fin
     "endRound(e) conservé : un tick ennemi, un tick héros");
 })();
 
-console.log("\n[70] v3.268.0 (L-2) — Wenna : roster, tour du compagnon, menace, KO, sauvegarde, étape d'Histoire");
+console.log("\n[70b] v3.268.0 (L-2) — Wenna : roster, tour du compagnon, menace, KO, sauvegarde, étape d'Histoire");
 (function () {
   function W() { return g.CompanionManager; }
 
@@ -7122,7 +7120,7 @@ console.log("\n[70] v3.268.0 (L-2) — Wenna : roster, tour du compagnon, menace
   ok(g.CombatEngine.pickVictim() === g.CombatActors.heroActor(), "la frappe vise toujours le héros");
 })();
 
-console.log("\n[71] v3.269.0 (L-3) — groupes d'ennemis : composition, ordre, arrivée, butin, arène");
+console.log("\n[71b] v3.269.0 (L-3) — groupes d'ennemis : composition, ordre, arrivée, butin, arène");
 (function () {
   var q = g.ADVENTURE_QUESTS.hq_wolf_pack;
 
@@ -7262,7 +7260,7 @@ console.log("\n[71] v3.269.0 (L-3) — groupes d'ennemis : composition, ordre, a
     "le pronostic ne lit qu'un adversaire de référence");
 })();
 
-console.log("\n[72] v3.270.0 (L-4) — mode Manuel : file d'attente, actions du compagnon, cible du soin");
+console.log("\n[72b] v3.270.0 (L-4) — mode Manuel : file d'attente, actions du compagnon, cible du soin");
 (function () {
   /* v3.276.0 : hors mode Grimoire, un compagnon présent est manuel par construction. */
   function manuel() {
@@ -7396,7 +7394,7 @@ console.log("\n[72] v3.270.0 (L-4) — mode Manuel : file d'attente, actions du 
   run("CombatEngine.setCombatMode('tactique');");
 })();
 
-console.log("\n[73] v3.271.0 (L-5) — Grimoire de groupe et comportement du compagnon");
+console.log("\n[73b] v3.271.0 (L-5) — Grimoire de groupe et comportement du compagnon");
 (function () {
   /* --- Deux nouvelles cartes-conditions --- */
   ok(!!g.GRIMOIRE_CONDITIONS.allyLowHp && !!g.GRIMOIRE_CONDITIONS.multipleEnemies,
@@ -7505,7 +7503,7 @@ console.log("\n[73] v3.271.0 (L-5) — Grimoire de groupe et comportement du com
   g.sortiePrep = null;
 })();
 
-console.log("\n[74] v3.273.0 — bandeau de combat v2 : rangée d'acteurs, cadre qui suit, feuille de sortie");
+console.log("\n[74b] v3.273.0 — bandeau de combat v2 : rangée d'acteurs, cadre qui suit, feuille de sortie");
 (function () {
   var game = freshCombat("knight"); giveWeapon();
   g.CompanionManager.unlock("wenna");
@@ -7554,7 +7552,7 @@ console.log("\n[74] v3.273.0 — bandeau de combat v2 : rangée d'acteurs, cadre
   ok(g.buildCompanionBandHTML(wen).indexOf("Prêt") !== -1, "et « Prêt » sinon");
 })();
 
-console.log("\n[75] v3.276.0 — dégâts au clic, contrôle dicté par le mode, feuille du sac");
+console.log("\n[75b] v3.276.0 — dégâts au clic, contrôle dicté par le mode, feuille du sac");
 (function () {
   /* --- Le mode décide du contrôle, il n'y a plus d'interrupteur --- */
   var game = freshCombat("knight"); giveWeapon();
@@ -7657,7 +7655,7 @@ console.log("\n[75] v3.276.0 — dégâts au clic, contrôle dicté par le mode,
     "elle est distincte de celle des états de combat");
 })();
 
-console.log("\n[76] v3.278.0 — la barre de PV du héros prend le cadre des compagnons");
+console.log("\n[76b] v3.278.0 — la barre de PV du héros prend le cadre des compagnons");
 (function () {
   var css = "";
   try { css = unpal(require("fs").readFileSync(ROOT + "/css/03-combat-group.css", "utf8")); } catch (e) { css = ""; }
@@ -16558,5 +16556,21 @@ console.log("\n[264] v3.458.9 — Portraits des héros en WebP (audit O4, troisi
   }
 })();
 
+console.log("\n[265] v3.459.5 — Globales fantômes (audit O3)");
+(function () {
+  /* Un objet du jeu testé par window.X ou typeof X doit exister une fois tous les scripts chargés.
+     Les API du navigateur et les globales posées plus tard (au clic, au boot) sont en liste blanche. */
+  var BLANCHE = ["Intl", "Image", "WeakMap",
+    "QuestManager", "WorldQuestManager", "QUEST_CONFIG"]; // ces trois-là : retirés au lot 9b
+  var vus = {};
+  scripts.forEach(function (s) {
+    var t = fs.readFileSync(path.join(ROOT, s), "utf8"), re = /(?:window\.|typeof\s+)([A-Z][A-Za-z0-9_$]*)(?![A-Za-z0-9_$.])/g, m;
+    while ((m = re.exec(t))) (vus[m[1]] = vus[m[1]] || []).indexOf(s) === -1 && vus[m[1]].push(s);
+  });
+  var fantomes = Object.keys(vus).filter(function (n) { return BLANCHE.indexOf(n) === -1 && typeof g[n] === "undefined"; });
+  ok(fantomes.length === 0, "aucune globale fantôme" + (fantomes.length ? " — " + fantomes.join(", ") : ""));
+})();
+
+if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

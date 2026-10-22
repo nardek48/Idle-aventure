@@ -95,7 +95,6 @@ body.scene-active.lab-run .lab-page { position: fixed; inset: 0; z-index: 60; ma
 .lab-kfoot { flex: none; display: flex; flex-direction: column; gap: 8px; padding: 8px 16px 0; }
 .lab-quote { font-style: italic; color: #6b5a40; }
 .lab-cost { font-size: 12.5px; font-weight: 700; color: var(--c-brown-700-vivid); }
-.lab-portrait { display: block; width: 100%; height: auto; max-height: 34vh; object-fit: cover; border-radius: 12px; border: 2px solid var(--lab-gold); margin-bottom: 10px; }
 .lab-bigchart { padding: 6px; border-radius: 12px; border: 2px solid var(--lab-gold); background: var(--lab-paper) url("../images/Maps/labyrinthe/papier.webp") center / cover; }
 .lab-bigchart svg { display: block; width: 100%; height: auto; max-height: 52vh; }
 

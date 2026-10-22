@@ -410,7 +410,6 @@
 }
 
 /* v3.404.0 : le drapeau ne recouvre plus le nom du bâtiment */
-.production-dash-card.has-flag { padding-top: 22px; }
 
 .production-dash-name {
   font-size: 13px;
@@ -461,8 +460,6 @@
   box-shadow: inset 0 0 0 1px rgba(74, 107, 42, 0.4);
 }
 
-
-
 /* ============================================================
    v3.192.0 : carte atelier COMPACTE (maquette v4 validée) — préfixe wk-.
    Steppers : réutilisent warehouse-qty-stepper compact existants.
@@ -512,16 +509,6 @@
 .wk-up .btn-buy-icon {
   width: 12px;
   height: 12px;
-}
-
-.wk-recipe {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-wrap: wrap;
-  font-size: 12px;
-  font-weight: 700;
-  margin: 6px 0 4px;
 }
 
 /* --- file : cases + entrée courante --- */
@@ -673,8 +660,7 @@
 /* encre explicite : dans le kframe, la couleur héritée est l'or clair du décor —
    le nom et les quantités de recette devenaient invisibles sur la carte crème
    (constaté en Playwright v3.192.0). */
-.wk-recipe,
-.wk-current-label  {
+.wk-current-label {
   color: var(--nb-ink, var(--c-brown-850-soft));
 }
 

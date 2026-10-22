@@ -23,10 +23,6 @@ var EXPLORATION_BOARD_BLURBS = {
 };
 
 var MISSION_TYPE_ICON = { combat: "images/Icons/quests/mission_combat.webp", expedition: "images/Icons/quests/mission_exploration.webp", chasse: "images/Icons/quests/mission_hunt.webp", donjon: "images/Icons/quests/mission_dungeon.webp", production: "images/Icons/quests/mission_construction.webp" }; // v3.108.0 : production (Les fondations)
-var MISSION_STATUS_LABEL = {
-  locked: _t("Verrouillée"), available: _t("Disponible"), accepted: _t("Acceptée"),
-  running: _t("En cours"), ready: _t("Objectif atteint"), claimable: _t("Prête à réclamer")
-};
 
 /* v3.131.0 (retour Seb) : cap de 3 quêtes actives simultanées, toutes sources non-Histoire
    confondues (village/workshop/scene/adventure/hunt) — Donjon et Petite Aventure exclus
@@ -380,7 +376,7 @@ var MissionBoard = {
   /* ---------- Les fondations (v3.107.8, décision Seb) : sortie de la chaîne Histoire pour tourner
      en parallèle de « L'éveil des talents » (combat) — une piste production, une piste combat. */
   _workshopMissions: function () {
-    if (!window.WorkshopUnlockSystem && typeof game.workshopUnlock === "undefined") return [];
+    if (!window.WorkshopUnlockManager && typeof game.workshopUnlock === "undefined") return [];
     if (!(game.explorationProgression && (game.explorationProgression.unstableVeinDiscoveryCompleted || game.explorationProgression.quarryUnlocked))) return []; // dispo dès La veine instable terminée (v3.124.0 : lecture directe du flag, sans MiningManager)
     if (game.workshopFoundationsCompleted) return [];
     var self = this;
@@ -693,7 +689,6 @@ var MissionBoard = {
     return this.list({ allWorlds: true }).find(function (m) { return m.id === id; }) || null;
   },
 
-  statusLabel: function (status) { return MISSION_STATUS_LABEL[status] || status; },
   typeIcon: function (type) { return MISSION_TYPE_ICON[type] || "images/Icons/quests/quest_story.webp"; }
 };
 
