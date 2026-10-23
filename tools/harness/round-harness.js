@@ -9428,7 +9428,8 @@ console.log("\n[117] v3.321.0 — Boutique d'Éclats : plus de puissance, quatre
   D.ensure();
   var savedLevels = game.dungeonShopLevels;
   var ids = g.DUNGEON_SHOP.map(function (i) { return i.id; }).sort().join(",");
-  ok(ids === "d_cle,d_doigte,d_eclaireur,d_sacoche", "la boutique vend exactement les quatre articles retenus");
+  // v3.463.0 (N-O) : + les quatre articles des paliers de la Crypte
+  ok(ids === "d_butin,d_cle,d_doigte,d_eclaireur,d_main_sure,d_resonance,d_sacoche,d_second_souffle", "la boutique vend exactement les articles retenus (4 + 4 des paliers)");
   ok(g.DUNGEON_SHOP.every(function (i) { return i.effect && i.perLevel > 0 && i.maxLevel > 0; }), "chaque article déclare son effet");
 
   /* Un vieux niveau de Lame ou d'Armure n'agit plus. */
@@ -16805,6 +16806,49 @@ console.log("\n[275] v3.462.0 — Mode libre (N6) et or des vagues au niveau");
   prep(); game.dungeonRunsUsed = { 4: 3 }; D.start(4, [], 3, true);
   ok(game.dungeonRun.free === true && game.dungeonRun.level === 3, "avec un ticket d'Histoire en attente, le run libre reste libre (niveau 3)");
   D.finish(false, 0, "death"); D.isStoryTicketFree = free0;
+  SQ.isStepReached = reach;
+})();
+
+console.log("\n[276] v3.463.0 — Boutique d'Éclats à paliers (N-N, N-O)");
+(function () {
+  game = freshCombat("knight");
+  var D = g.DungeonManager, SQ = g.StoryQuestManager, reach = SQ.isStepReached, SH = g.DUNGEON_SHOP;
+  var it = function (id) { return SH.filter(function (x) { return x.id === id; })[0]; };
+  game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true };
+  SQ.isStepReached = function () { return true; };
+  game.dungeonTierCleared = { 1: true, 2: true, 3: true, 4: true };
+  var cout = function (id) { var x = it(id), c = []; for (var n = 0; n < x.maxLevel; n++) c.push(Math.floor(x.baseCost * Math.pow(x.costMult, n))); return c.join("/"); };
+  ok(cout("d_butin") === "80/120/180" && cout("d_main_sure") === "200/300" && cout("d_second_souffle") === "150/225" && cout("d_resonance") === "300/450/675", "prix : Butin 80/120/180, Main sûre 200/300, Second souffle 150/225, Résonance 300/450/675");
+  ok(it("d_sacoche").maxLevel === 6 && Math.floor(20 * Math.pow(1.5, 5)) === 151, "Sacoche : niveau 6 (151 Éclats)");
+  // verrous : Crypte 2 tenue
+  game.dungeonLevelBest = { 4: 2 }; game.dungeonShopLevels = { d_sacoche: 5 }; game.dungeonShards = 5000;
+  ok(D.getShardShopLock(it("d_butin")) === 3 && D.getShardShopLock(it("d_sacoche")) === 3 && D.getShardShopLock(it("d_resonance")) === 10, "Crypte 2 : Butin et Sacoche 6 attendent la Crypte 3, Résonance la Crypte 10");
+  ok(D.getShardShopLock(it("d_cle")) === 0, "les articles d'avant restent ouverts");
+  D.buyShardUpgrade("d_butin");
+  ok(D.getShardShopLevel("d_butin") === 0 && game.dungeonShards === 5000, "achat refusé sous le palier, Éclats intacts");
+  ok(/Palier : Ossuaire niveau 3/.test(g.buildShardShopBoardHTML()), "la fiche dit le palier");
+  game.dungeonLevelBest = { 4: 6 };
+  D.buyShardUpgrade("d_butin"); D.buyShardUpgrade("d_sacoche"); D.buyShardUpgrade("d_main_sure"); D.buyShardUpgrade("d_second_souffle");
+  ok(D.getShardShopLevel("d_butin") === 1 && D.getShardShopLevel("d_sacoche") === 6 && D.getShardShopLevel("d_main_sure") === 1 && D.getShardShopLevel("d_second_souffle") === 1 && game.dungeonShards === 5000 - 80 - 151 - 200 - 150, "Crypte 6 : achats des paliers 3 et 6 (Éclats " + game.dungeonShards + ")");
+  ok(D.getShardShopLock(it("d_resonance")) === 10, "Résonance toujours fermée à la Crypte 6");
+  // effets
+  var cry = D.getById(4);
+  ok(Math.abs(D.getLevelFloor(cry, 5) - 0.25) < 1e-9 && D.getLevelFloor(cry, 1) === 0, "Main sûre 1 : Crypte 5 = 25 % de plancher (au lieu de 20), rien au niveau 1");
+  ok(Math.abs(D.getCampHealPct(cry.camp) - 0.5) < 1e-9, "Second souffle 1 : campement 50 % de PV");
+  ok(D.getShardEffect("secondLootPct") === 15, "Butin de faille 1 : 15 % de second objet");
+  game.dungeonShopLevels.d_butin = 3; game.dungeonLevelBest = { 4: 10 }; game.dungeonShopLevels.d_resonance = 2;
+  // second objet : chance forcée à 100 % le temps du test
+  var ch = g.chance; g.chance = function () { return true; };
+  var pv = { check: g.ProvisionsManager.check, consume: g.ProvisionsManager.consume };
+  run("ProvisionsManager.check = function () { return null; }; ProvisionsManager.consume = function () {};");
+  game.inventory = []; game.heroHp = game.heroMaxHp; game.dungeonRunsUsed = {};
+  D.start(4, [], 1); game.dungeonRun.shardsEarned = 22; game.dungeonShards = 0;
+  D.finish(true, 15, "success");
+  g.chance = ch;
+  ok(game.inventory.length >= 2, "Butin de faille : deux objets de fin (" + game.inventory.length + ")");
+  g.ProvisionsManager.check = pv.check; g.ProvisionsManager.consume = pv.consume;
+  // bourse : 10 du boss + 20 % des 32 du run (les 22 posés à la main ne sont pas dans la bourse)
+  ok(game.dungeonShards === 10 + Math.floor(32 * 0.2), "Résonance 2 : +20 % des Éclats du run (" + game.dungeonShards + ")");
   SQ.isStepReached = reach;
 })();
 

@@ -1105,6 +1105,7 @@ function boutiqueEclats(g) {
     var item = (g.DUNGEON_SHOP || []).filter(function (x) { return x.id === id; })[0];
     for (var k = 0; item && k < 6; k++) {
       if (D.getShardShopLevel(id) >= item.maxLevel || Number(g.game.dungeonShards || 0) < D.getShardShopCost(item)) break;
+      if (D.getShardShopLock && D.getShardShopLock(item)) break; // v3.463.0 : palier de la Crypte pas atteint
       D.buyShardUpgrade(id);
       ST.achats.push(id + " " + D.getShardShopLevel(id) + " (" + CURRENT_STEP + ")");
     }

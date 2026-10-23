@@ -2624,6 +2624,15 @@ I18n.register("en", {
   "+1 sortie par jour dans chaque donjon, par niveau.": "+1 run per day in each dungeon, per level.",
   "−10 % d'or par relance d'affixe, par niveau.": "−10% gold per affix reroll, per level.",
   "+1 Petite Aventure par jour, par niveau.": "+1 Short Adventure per day, per level.",
+  "Butin de faille": "Rift Spoils",
+  "+15 % de chance d'un second objet en fin de run réussi, par niveau.": "+15% chance of a second item at the end of a cleared run, per level.",
+  "Main sûre": "Steady Hand",
+  "+5 % de plancher sur les objets « Touché par l'Aether », par niveau.": "+5% floor on Aether-touched items, per level.",
+  "Second souffle": "Second Wind",
+  "+10 % de PV rendus au campement des donjons, par niveau.": "+10% HP restored at dungeon camps, per level.",
+  "Résonance de la faille": "Rift Resonance",
+  "+10 % d'Éclats par run de donjon, par niveau.": "+10% Shards per dungeon run, per level.",
+  "Palier : {x} niveau {n}": "Tier: {x} level {n}",
 
   // BOSS_MOMENTS
   "Le roi des marais": "The Marsh King",

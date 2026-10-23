@@ -143,7 +143,9 @@ var DungeonManager = {
 
   // Plancher du tirage des objets à ce niveau (fraction de la fourchette)
   getLevelFloor: function (dungeon, level) {
-    return Math.min(DUNGEON_CONFIG.beyondFloorMax || 0, this.getLevelBeyond(dungeon, level) * (DUNGEON_CONFIG.beyondFloorPct || 0));
+    var beyond = this.getLevelBeyond(dungeon, level);
+    if (beyond > 0) beyond += this.getShardEffect("floorBonus"); // v3.463.0 : Main sûre, un cran de plus
+    return Math.min(DUNGEON_CONFIG.beyondFloorMax || 0, beyond * (DUNGEON_CONFIG.beyondFloorPct || 0));
   },
 
   // Or du run (vagues et fin) : +10 % par niveau au-delà du plafond (N-I), ÷ 4 en mode libre (N-H)
@@ -496,6 +498,11 @@ var DungeonManager = {
     return true;
   },
 
+  // PV rendus par « Souffler » : ceux du campement, + Second souffle (boutique d'Éclats, v3.463.0)
+  getCampHealPct: function (camp) {
+    return (Number(camp && camp.healPct) || 0.4) + this.getShardEffect("campHealPct");
+  },
+
   /* Compagnons qui peuvent descendre (débloqués, pas en patrouille). */
   campCandidates: function () {
     if (!window.CompanionManager) return [];
@@ -514,7 +521,7 @@ var DungeonManager = {
       return true;
     }
     if (action === "souffler") {
-      var pct = Number(camp.healPct) || 0.4;
+      var pct = this.getCampHealPct(camp);
       game.heroHp = Math.min(game.heroMaxHp || 1, Math.floor((game.heroHp || 0) + (game.heroMaxHp || 1) * pct));
       if (window.CompanionManager) CompanionManager.partyIds().forEach(function (id) {
         var st = CompanionManager.state(id), max = CompanionManager.maxHpOf(id);
@@ -714,7 +721,8 @@ var DungeonManager = {
     }
 
     // v3.461.0 (N-K) : Éclats du run +10 % par niveau au-delà du plafond, avant l'Écho de la faille
-    var levelShards = Math.floor(Number(game.dungeonRun.shardsEarned || 0) * beyond * (DUNGEON_CONFIG.beyondShardPct || 0));
+    var levelShards = Math.floor(Number(game.dungeonRun.shardsEarned || 0)
+      * (beyond * (DUNGEON_CONFIG.beyondShardPct || 0) + this.getShardEffect("shardBonusPct"))); // v3.463.0 : + Résonance
     if (levelShards > 0) {
       game.dungeonShards = Number(game.dungeonShards || 0) + levelShards;
       game.dungeonRun.shardsEarned = Number(game.dungeonRun.shardsEarned || 0) + levelShards;
@@ -745,6 +753,12 @@ var DungeonManager = {
     if (grantLoot && window.LootSystem && typeof LootSystem.rollDropAtRarity === "function") {
       var drop = LootSystem.rollDropAtRarity(lootRarity);
       if (drop && addDropToInventory(drop)) lootedItem = drop;
+    }
+    // v3.463.0 (N-O) : Butin de faille, second objet de fin sur un run réussi
+    var lootedItem2 = null;
+    if (success && grantLoot && window.LootSystem && chance(this.getShardEffect("secondLootPct"))) {
+      var drop2 = LootSystem.rollDropAtRarity(lootRarity);
+      if (drop2 && addDropToInventory(drop2)) lootedItem2 = drop2;
     }
 
     /* v3.223.0 (périmètre confirmé par Seb) : matériau de monde, seconde source
@@ -780,6 +794,7 @@ var DungeonManager = {
         ? "🏰 " + _t("{x} : terrassé à la vague {a}/{b} — aucune récompense, le butin reste dans le donjon.", { x: _td(tier.name), a: clearedWave + 1, b: wavesTotal })
         : "🏰 " + _t("{x} abandonné (vague {a}/{b}) : +{g} or (moitié)", { x: _td(tier.name), a: clearedWave, b: wavesTotal, g: formatNumber(goldReward) }));
     if (lootedItem) msg += " + " + _td(lootedItem.name);
+    if (lootedItem2) msg += " + " + _td(lootedItem2.name);
     if (specialGained > 0 && specialDef) msg += " + " + specialGained + " " + _td(specialDef.name);
 
     addLog(msg, success ? "boss" : "event");
@@ -807,6 +822,7 @@ var DungeonManager = {
         goldReward: goldReward,
         shardsGained: shardsGained,
         lootedItem: lootedItem,
+        lootedItem2: lootedItem2, // v3.463.0 : Butin de faille
         // v3.223.0 : matériau de monde gagné (0 si aucun), pour le rapport de fin
         specialGained: specialGained,
         specialName: specialInfo ? specialInfo.name : null,
@@ -831,6 +847,17 @@ var DungeonManager = {
     return Number(game.dungeonShopLevels[id] || 0);
   },
 
+  /* v3.463.0 (N-N) : niveau de la Crypte demandé pour le prochain niveau de l'article, 0 si ouvert. */
+  getShardShopLock: function (item) {
+    var next = this.getShardShopLevel(item.id) + 1;
+    var need = Number((item.palierLevels && item.palierLevels[next]) || item.palier || 0);
+    return need > 0 && this.getLevelBest(DUNGEON_CONFIG.shopPalierDungeonId || 4) < need ? need : 0;
+  },
+
+  getShardShopLockText: function (need) {
+    return _t("Palier : {x} niveau {n}", { n: need, x: _td(this.getById(DUNGEON_CONFIG.shopPalierDungeonId || 4).name) });
+  },
+
   getShardShopCost: function (item) {
     var level = this.getShardShopLevel(item.id);
     return Math.floor(item.baseCost * Math.pow(item.costMult, level));
@@ -843,6 +870,8 @@ var DungeonManager = {
 
     var level = this.getShardShopLevel(id);
     if (level >= item.maxLevel) return showToast(_t("Niveau maximum atteint"), 1200);
+    var lock = this.getShardShopLock(item);
+    if (lock) return showToast(this.getShardShopLockText(lock), 1600);
 
     var cost = this.getShardShopCost(item);
     if ((game.dungeonShards || 0) < cost) return showToast(_t("Pas assez d'Éclats"), 1000);
