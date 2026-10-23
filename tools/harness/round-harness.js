@@ -16900,6 +16900,16 @@ console.log("\n[277] v3.464.0 — Feuille de lancement : mode et niveau (atelier
   D.isStoryTicketFree = free0; SQ.isStepReached = reach;
 })();
 
+console.log("\n[278] v3.464.2 — Décor des donjons : le monde du donjon (retour Seb)");
+(function () {
+  var ok2 = g.DUNGEONS.every(function (d) {
+    if (d.id === 1) return /donjon_poison\.webp$/.test(d.combatMap);   // la Tanière garde le sien
+    var w = g.WORLDS.filter(function (x) { return x.id === d.worldId; })[0];
+    return !!w && d.combatMap === w.combatMap;
+  });
+  ok(ok2, "chaque donjon prend le décor de combat de son monde ; la Tanière garde le sien");
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

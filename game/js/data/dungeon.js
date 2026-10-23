@@ -142,7 +142,8 @@ var DUNGEONS = [
     levelSteps: [{ level: 5, dungeonId: 3 }, { level: 12, dungeonId: 4 }],
     // v3.321.0 (décision Seb) : la matière brute de la Petite Aventure du monde, comme la Sève en Forêt
     specialResourceId: "verre_des_dunes", specialResourceAmount: 2,
-    icon: "images/Dungeons/Icone_base/palier2.webp", banner: null, combatMap: null,
+    // v3.464.2 (retour Seb) : décor du monde du donjon (avant : celui du monde où se tient le héros)
+    icon: "images/Dungeons/Icone_base/palier2.webp", banner: null, combatMap: "../images/Maps/desert-combat.webp",
     desc: "Une cité que le sable a prise, salle après salle.",
     story: "Les couloirs se resserrent. Des ombres inhabituelles glissent entre les pierres, et l'air se charge d'une tension nouvelle.",
     /* v3.315.0 (W-4a2, acte III §5) : le pool du Désert, les quatre bêtes de l'usure.
@@ -191,7 +192,7 @@ var DUNGEONS = [
     levelSteps: [{ level: 8, dungeonId: 4 }],
     // v3.430.0 (acte III) : la Pierre errante en fin de run, comme le Verre des dunes à la Cité
     specialResourceId: "pierre_errante", specialResourceAmount: 2,
-    icon: "images/Dungeons/Icone_base/palier3.webp", banner: null, combatMap: null,
+    icon: "images/Dungeons/Icone_base/palier3.webp", banner: null, combatMap: "../images/Maps/ruins-combat.webp",
     desc: "Ce que les ruines gardent encore, elles le gardent avec méthode.",
     story: "Un froid ancien s'infiltre jusque dans les os. Ces lieux ne sont pas laissés à l'abandon — quelque chose les garde, avec méthode.",
     /* v3.430.0 (Ruines, acte III §2) : le pool des Ruines (squelette et zombie se relèvent,
@@ -227,7 +228,7 @@ var DUNGEONS = [
     maxRarity: "epic",
     // v3.455.0 (Crypte, acte III) : la Cire de sépulcre en fin de run
     specialResourceId: "cire_sepulcre", specialResourceAmount: 3,
-    icon: "images/Dungeons/Icone_base/palier4.webp", banner: null, combatMap: null,
+    icon: "images/Dungeons/Icone_base/palier4.webp", banner: null, combatMap: "../images/Maps/crypt-combat.webp",
     desc: "Les os y sont rangés. Pas tous.",
     story: "Des couloirs bas, des niches pleines d'os rangés. Les crânes regardent tous dans le même sens.",
     /* v3.455.0 (Crypte, acte III, CR11) : le pool de la Crypte. Vague 8 : le Porte-couronne (frappé, il
@@ -261,7 +262,7 @@ var DUNGEONS = [
     worldId: "mountain", worldRequired: 4, worldPower: 4, difficultyMult: 22,
     maxRarity: "epic", // le légendaire ne tombe qu'à la Tour (décision 12.1)
     specialResourceId: null, specialResourceAmount: 0,
-    icon: "images/Dungeons/Icone_base/palier5.webp", banner: null, combatMap: null,
+    icon: "images/Dungeons/Icone_base/palier5.webp", banner: null, combatMap: "../images/Maps/mountain-combat.webp",
     desc: "La montagne respire par ici. Chaud.",
     story: "Le seuil du dernier palier. Une puissance oubliée sommeille dans l'obscurité — et elle sait déjà que tu es arrivé.",
     enemyPool: null, eliteWaves: null,
@@ -274,7 +275,7 @@ var DUNGEONS = [
     worldId: "tower", worldRequired: 5, worldPower: 5, difficultyMult: 30,
     maxRarity: "legendary",
     specialResourceId: null, specialResourceAmount: 0,
-    icon: null, banner: null, combatMap: null,
+    icon: null, banner: null, combatMap: "../images/Maps/tower-combat.webp",
     desc: "Le sommet de la Tour, et ce qui s'y reflète.",
     story: "",
     enemyPool: null, eliteWaves: null,
