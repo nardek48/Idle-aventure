@@ -420,10 +420,13 @@ html.pc-mode .cbx-key-badge { display: block; }
 
 /* v3.451.0 (Crypte, CR2) : mort qui dort, rendu B « Brume » (atelier/morts-qui-dorment.html) :
    couleurs passées, flou léger, voile froid au sol ; le chiffre compte les rounds avant le réveil seul. */
-.cbx-foe.is-asleep .cbx-foe-img { filter: brightness(.7) saturate(.35) blur(1.2px); animation: cbxSleepSway 5s ease-in-out infinite; transition: filter .45s ease; }
+/* v3.461.1 (variante C, atelier/crypte-ombres.html) : le dormeur ignore l'assombrissement de profondeur et
+   pâlit au lieu de noircir ; profondeur + sommeil le réduisaient à une silhouette noire (nouvelles images). */
+.cbx-stage .cbx-foe.is-asleep { filter: none; }
+.cbx-foe.is-asleep .cbx-foe-img { filter: brightness(.85) contrast(.85) saturate(.35) blur(1px); animation: cbxSleepSway 5s ease-in-out infinite; transition: filter .45s ease; }
 .cbx-foe.is-asleep .cbx-foe-halo { opacity: 1; height: 30%; bottom: 0; animation: none; background: radial-gradient(ellipse at 50% 70%, rgba(159, 227, 230, .45), rgba(159, 227, 230, 0) 70%); }
 .cbx-dist-badge.is-asleep { border-color: rgba(159, 227, 230, .8); }
-.cbx-ini-p.is-asleep { filter: grayscale(1) brightness(.6); }
+.cbx-ini-p.is-asleep { filter: grayscale(1) brightness(.8); }
 @keyframes cbxSleepSway { 50% { transform: translateY(4px); } }
 @media (prefers-reduced-motion: reduce) { .cbx-foe.is-asleep .cbx-foe-img { animation: none; } }
 
