@@ -1105,6 +1105,7 @@ function boutiqueEclats(g) {
     var item = (g.DUNGEON_SHOP || []).filter(function (x) { return x.id === id; })[0];
     for (var k = 0; item && k < 6; k++) {
       if (D.getShardShopLevel(id) >= item.maxLevel || Number(g.game.dungeonShards || 0) < D.getShardShopCost(item)) break;
+      if (D.getShardShopLock && D.getShardShopLock(item)) break; // v3.463.0 : palier de la Crypte pas atteint
       D.buyShardUpgrade(id);
       ST.achats.push(id + " " + D.getShardShopLevel(id) + " (" + CURRENT_STEP + ")");
     }
@@ -1548,7 +1549,7 @@ if (APRES_H > 0) { try { apresHistoire(APRES_H); } catch (e) { ok(false, "après
 if (FAILLE) { try { failleBench(); } catch (e) { ok(false, "faille interrompue : " + e.message + " " + String(e.stack).split("\n")[1]); } }
 
 /* Un run de donjon au niveau L, héros remis à neuf : { ok, rounds, pvPerdus, or, eclats, vague }. */
-function failleRun(id, L) {
+function failleRun(id, L, libre) {   // libre (v3.462.0) : mode libre du moteur
   var g = G, D = g.DungeonManager;
   g.game.heroHp = g.game.heroMaxHp; refillPotions();
   g.game.dungeonRunsUsed = {}; g.game.dungeonTierCleared = { 1: true, 2: true, 3: true, 4: true };
@@ -1560,7 +1561,7 @@ function failleRun(id, L) {
   var boss0 = Number(g.game.dungeonBossClears || 0), or0 = g.game.gold + (g.game.sortie && g.game.sortie.loot ? Number(g.game.sortie.loot.gold || 0) : 0);
   var ec0 = Number(g.game.dungeonShards || 0), c0 = STATS.combatMs, f0 = STATS.fights.length;
   try {
-    D.start(id, [], L);
+    D.start(id, [], L, !!libre);
     if (!g.game.dungeonRun.active || g.game.dungeonRun.level !== L) { note("faille " + id + " N" + L + " : entrée refusée"); return null; }
     winCombat(400);
     flushTimers(g);
@@ -1588,7 +1589,11 @@ function failleBench() {
     while (L <= 80) { if (mesure(L) >= 0.5) { dernier = L; L += pas; } else break; }
     for (var n = dernier + 1; n < Math.min(L, 81); n++) { if (mesure(n) >= 0.5) dernier = n; else break; }   // affinage entre deux pas
     out[id] = { tenu: dernier, lignes: lignes };
-    console.log("  donjon " + id + " : niveau tenu (≥ 50 %) " + dernier + " · " + Object.keys(lignes).map(Number).sort(function (a, b) { return a - b; }).map(function (n) { var x = lignes[n]; return "N" + n + " " + x.ok + "/" + x.n + (x.ok ? " (" + x.rounds + " r, " + x.combatMin + " min, " + x.or + " or, " + x.eclats + " éc.)" : ""); }).join(" · "));
+    // v3.462.0 : le même niveau en mode libre (or ÷ 4, Éclats ÷ 2 attendus)
+    var lib = []; for (var q = 0; q < RUNS && dernier; q++) { var rl = failleRun(id, dernier, true); if (rl && rl.ok) lib.push(rl); }
+    out[id].libre = { n: lib.length, or: Math.round(lib.reduce(function (a, r) { return a + r.or; }, 0) / Math.max(1, lib.length)), eclats: Math.round(lib.reduce(function (a, r) { return a + r.eclats; }, 0) / Math.max(1, lib.length)) };
+    console.log("  donjon " + id + " : niveau tenu (≥ 50 %) " + dernier + " · " + Object.keys(lignes).map(Number).sort(function (a, b) { return a - b; }).map(function (n) { var x = lignes[n]; return "N" + n + " " + x.ok + "/" + x.n + (x.ok ? " (" + x.rounds + " r, " + x.combatMin + " min, " + x.or + " or, " + x.eclats + " éc.)" : ""); }).join(" · ")
+      + " · libre N" + dernier + " " + out[id].libre.n + " ok, " + out[id].libre.or + " or, " + out[id].libre.eclats + " éc.");
   });
 }
 

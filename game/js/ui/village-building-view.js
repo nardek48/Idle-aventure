@@ -664,17 +664,21 @@ function buildShardShopBoardHTML() {
     var level = DungeonManager.getShardShopLevel(item.id);
     var maxed = level >= item.maxLevel;
     var cost = DungeonManager.getShardShopCost(item);
-    var canBuy = !maxed && shards >= cost;
+    var lock = maxed ? 0 : DungeonManager.getShardShopLock(item); // v3.463.0 : palier de la Crypte
+    var canBuy = !maxed && !lock && shards >= cost;
     h += '<div class="nb-purchase-card' + (maxed ? ' is-maxed' : '') + '">';
     h += '<div class="nb-purchase-icon-col"><div class="nb-purchase-icon-slot">' + renderIconOrEmojiHTML(item.icon, "nb-purchase-icon", _td(item.name)) + '</div></div>';
     h += '<div class="nb-purchase-info-col">';
     h += '<div class="nb-purchase-name">' + esc(_td(item.name)) + '</div>';
     h += '<div class="nb-purchase-meta">' + _t("Niv. {a}/{b}", { a: level, b: item.maxLevel }) + '</div>';
     h += '<div class="nb-purchase-desc">' + esc(_td(item.desc)) + '</div>';
+    if (lock) h += '<div class="nb-purchase-meta">' + esc(DungeonManager.getShardShopLockText(lock)) + '</div>';
     h += '</div>';
     h += '<div class="nb-purchase-buy-col">';
     if (maxed) {
       h += '<button class="btn-buy kbuy is-maxed" type="button" disabled>' + _t("Max") + '</button>';
+    } else if (lock) {
+      h += '<button class="btn-buy kbuy cant-afford" type="button" disabled aria-label="' + esc(DungeonManager.getShardShopLockText(lock)) + '"><img src="images/Icons/system/lock_closed.webp" alt=""></button>';
     } else {
       h += '<button class="btn-buy kbuy' + (canBuy ? '' : ' cant-afford') + '" type="button" onclick="buyShardUpgradeFromSheet(\'' + esc(item.id) + '\')"><img src="images/Icons/subtabs/shard_shop.webp" alt="">' + formatNumber(cost) + '</button>';
     }

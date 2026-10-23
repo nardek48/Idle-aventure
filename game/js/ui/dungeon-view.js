@@ -283,7 +283,7 @@ function buildCampMemberHTML(img, name, hp, max, gain, fresh) {
 
 function buildDungeonCampSheetHTML() {
   var run = game.dungeonRun || {}, dungeon = DungeonManager.getById(run.dungeonId), camp = DungeonManager.getCamp(dungeon) || {};
-  var CM = window.CompanionManager, heal = campPick === "souffler", pct = Number(camp.healPct) || 0.4;
+  var CM = window.CompanionManager, heal = campPick === "souffler", pct = DungeonManager.getCampHealPct(camp); // v3.463.0 : + Second souffle
   var cand = DungeonManager.campCandidates(), now = CM ? CM.partyIds() : [];
   var canSwap = CM && cand.length > now.length;
   var shown = campPick === "changer" ? campParty : now;
@@ -417,7 +417,7 @@ function buildDungeonSummaryHTML(result) {
     h += '      <div class="dungeon-summary-row"><span>' + renderIconOrEmojiHTML(result.specialIcon, "ico-inline", _td(result.specialName)) + ' ' + esc(_td(result.specialName)) + '</span><span>+' + special + '</span></div>';
   }
   // v3.436.2 (Seb) : tout le butin d'objets — campement, vagues, récompense de fin
-  var objets = [].concat(campLoot.items || [], result.wavesItems || [], result.lootedItem ? [result.lootedItem] : []);
+  var objets = [].concat(campLoot.items || [], result.wavesItems || [], result.lootedItem ? [result.lootedItem] : [], result.lootedItem2 ? [result.lootedItem2] : []);
   if (objets.length) {
     h += '      <div class="dungeon-summary-row dungeon-summary-loot"><span><img class=ico-inline src=images/Icons/dungeon/dungeon_guaranteed_loot.webp> ' + _t("Butin") + '</span><span>' + objets.map(function (it) {
       var col = (typeof RARITY_COLORS !== "undefined" && RARITY_COLORS[it.rarity]) || "inherit";

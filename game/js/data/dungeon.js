@@ -30,6 +30,11 @@ var DUNGEON_CONFIG = {
   beyondShardPct: 0.10,
   beyondFloorPct: 0.05,
   beyondFloorMax: 0.80,
+  /* v3.462.0 (N-C, N-H) : mode libre (sorties illimitées, donjon déjà fini) : tout l'or du run ÷ 4,
+     Éclats ÷ 2, pas de ressource de monde ; 1 Ration moyenne par run (N-L, provisions-system.js). */
+  freeGoldMult: 0.25,
+  freeShardMult: 0.5,
+  shopPalierDungeonId: 4, // v3.463.0 (N-N) : la Crypte ouvre les paliers de la boutique d'Éclats
 
   shardsPerWaveCleared: 1,
   shardsBossBonus: 10,
@@ -312,7 +317,8 @@ var DUNGEON_GENERIC_ELITE_MULT = { endurance: 2.4, power: 1.1 };
 var DUNGEON_SHOP = [
   { id: "d_sacoche", name: "Sacoche du donjon", icon: "images/Icons/dungeon/dungeon_sacoche.webp",
     desc: "+1 matériau de monde par run réussi, par niveau.",
-    effect: "specialBonus", perLevel: 1, baseCost: 20, costMult: 1.5, maxLevel: 5 },
+    effect: "specialBonus", perLevel: 1, baseCost: 20, costMult: 1.5, maxLevel: 6,
+    palierLevels: { 6: 3 } }, // v3.463.0 (N-D, N-O) : le niveau 6, dernier, s'ouvre à la Crypte 3
   /* v3.358.0 (D7) : les tickets disparaissent — la Clé de faille ouvre une sortie de plus par jour et
      par donjon (2 niveaux). Les niveaux achetés au-delà comptent pour 2. */
   { id: "d_cle", name: "Clé de faille", icon: "images/Icons/dungeon/dungeon_cle.webp",
@@ -323,7 +329,21 @@ var DUNGEON_SHOP = [
     effect: "enchantDiscount", perLevel: 1, baseCost: 30, costMult: 1.6, maxLevel: 3 },
   { id: "d_eclaireur", name: "Carte de l'éclaireur", icon: "images/Icons/dungeon/dungeon_eclaireur.webp",
     desc: "+1 Petite Aventure par jour, par niveau.",
-    effect: "paBonus", perLevel: 1, baseCost: 60, costMult: 2, maxLevel: 2 }
+    effect: "paBonus", perLevel: 1, baseCost: 60, costMult: 2, maxLevel: 2 },
+  /* v3.463.0 (N-N, N-O) : paliers ouverts par le meilleur niveau de la Crypte (shopPalierDungeonId).
+     Icônes à faire : chemins gardés, l'icône générique s'affiche en attendant. Prix à juger en jeu. */
+  { id: "d_butin", name: "Butin de faille", icon: "images/Icons/dungeon/dungeon_butin.webp",
+    desc: "+15 % de chance d'un second objet en fin de run réussi, par niveau.",
+    effect: "secondLootPct", perLevel: 15, baseCost: 80, costMult: 1.5, maxLevel: 3, palier: 3 },
+  { id: "d_main_sure", name: "Main sûre", icon: "images/Icons/dungeon/dungeon_main_sure.webp",
+    desc: "+5 % de plancher sur les objets « Touché par l'Aether », par niveau.",
+    effect: "floorBonus", perLevel: 1, baseCost: 200, costMult: 1.5, maxLevel: 2, palier: 6 },
+  { id: "d_second_souffle", name: "Second souffle", icon: "images/Icons/dungeon/dungeon_second_souffle.webp",
+    desc: "+10 % de PV rendus au campement des donjons, par niveau.",
+    effect: "campHealPct", perLevel: 0.10, baseCost: 150, costMult: 1.5, maxLevel: 2, palier: 6 },
+  { id: "d_resonance", name: "Résonance de la faille", icon: "images/Icons/dungeon/dungeon_resonance.webp",
+    desc: "+10 % d'Éclats par run de donjon, par niveau.",
+    effect: "shardBonusPct", perLevel: 0.10, baseCost: 300, costMult: 1.5, maxLevel: 3, palier: 10 }
 ];
 
 window.DUNGEONS = DUNGEONS;
