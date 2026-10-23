@@ -1547,6 +1547,8 @@ try { run(); }
 catch (e) { ok(false, "interrompu : " + e.message + "\n" + String(e.stack).split("\n").slice(1, 4).join("\n")); }
 if (APRES_H > 0) { try { apresHistoire(APRES_H); } catch (e) { ok(false, "après-Histoire interrompu : " + e.message); } }
 if (FAILLE) { try { failleBench(); } catch (e) { ok(false, "faille interrompue : " + e.message + " " + String(e.stack).split("\n")[1]); } }
+// v3.463.0 : SAVE_OUT=<fichier> écrit la sauvegarde de fin de partie (héros de fin d'Histoire pour les ateliers)
+if (process.env.SAVE_OUT) { try { require("fs").writeFileSync(process.env.SAVE_OUT, JSON.stringify(G.buildSaveData())); } catch (e) { note("sauvegarde non écrite : " + e.message); } }
 
 /* Un run de donjon au niveau L, héros remis à neuf : { ok, rounds, pvPerdus, or, eclats, vague }. */
 function failleRun(id, L, libre) {   // libre (v3.462.0) : mode libre du moteur
