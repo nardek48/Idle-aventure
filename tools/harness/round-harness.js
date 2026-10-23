@@ -16601,6 +16601,29 @@ console.log("\n[270] v3.459.12 — Régler d'un coup (audit I4)");
   run("AdventureQuestManager.forfeit && AdventureQuestManager.forfeit();");
 })();
 
+console.log("\n[271] v3.459.13 — Le butin des vagues suit le donjon, plus le monde du héros");
+(function () {
+  game = freshCombat("knight");
+  game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true };
+  var W = g.WorldManager, w0 = W.worldIndex; W.worldIndex = 3;   // le héros est dans la Crypte
+  var rar = function (n, f) { var o = {}; for (var i = 0; i < n; i++) { var it = f(); o[it.rarity] = (o[it.rarity] || 0) + 1; } return o; };
+  game.dungeonRun = { active: true, wave: 3, dungeonId: 1, marks: [] };      // Tanière
+  var tan = rar(300, function () { return g.LootSystem.rollDrop(); });
+  ok(Object.keys(tan).join() === "common", "Tanière depuis la Crypte : que du Commun (" + JSON.stringify(tan) + ")");
+  var it = g.LootSystem.rollDrop();
+  ok(it.worldIndex === 0, "et l'objet a la puissance de la Forêt (monde " + it.worldIndex + ")");
+  ok(g.LootSystem.rollDropAtRarity("common").worldIndex === 0, "le butin de fin aussi");
+  var vit = rar(300, function () { return g.LootSystem.rollWorldDrop(); });
+  ok(Object.keys(vit).length > 1, "la vitrine et les caravanes gardent le butin du monde pendant le donjon (" + JSON.stringify(vit) + ")");
+  game.dungeonRun = { active: true, wave: 3, dungeonId: 4, marks: [] };      // Crypte des dormeurs
+  var cry = rar(400, function () { return g.LootSystem.rollDrop(); });
+  ok(!!cry.epic && !cry.legendary, "donjon de la Crypte : jusqu'à l'Épique, comme avant (" + JSON.stringify(cry) + ")");
+  game.dungeonRun = { active: false, wave: 0, dungeonId: 1, marks: [] };
+  var hors = rar(400, function () { return g.LootSystem.rollDrop(); });
+  ok(!!hors.epic, "hors donjon, rien ne change : le monde du héros (" + JSON.stringify(hors) + ")");
+  W.worldIndex = w0;
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

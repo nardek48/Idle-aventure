@@ -301,8 +301,8 @@ var CaravanManager = {
       var rk = this.getRareKey(world);
       if (rk) rare = { key: rk, n: CARAVAN_RARE_QTY[0] + Math.floor(Math.random() * (CARAVAN_RARE_QTY[1] - CARAVAN_RARE_QTY[0] + 1)) };
     }
-    if (t.itemChance > 0 && Math.random() < t.itemChance && window.LootSystem && typeof LootSystem.rollDrop === "function") {
-      item = LootSystem.rollDrop() || null;
+    if (t.itemChance > 0 && Math.random() < t.itemChance && window.LootSystem && typeof LootSystem.rollWorldDrop === "function") {
+      item = LootSystem.rollWorldDrop() || null;
     }
 
     var now = this._now();

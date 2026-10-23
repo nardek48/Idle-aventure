@@ -96,11 +96,36 @@ function getAllowedRarities() {
   return WORLD_RARITY_UNLOCKS[tierIndex] || ["common"];
 }
 
+/* v3.459.13 (retour Seb) : pendant un donjon, le butin des vagues suit le DONJON (sa rareté maximale
+   et son monde), plus le monde où se tient le héros — la Tanière faite depuis la Crypte lâchait de l'Épique. */
+function getDungeonDropContext() {
+  var run = game.dungeonRun;
+  if (!run || !run.active || !window.DungeonManager || typeof DungeonManager.getById !== "function") return null;
+  var d = DungeonManager.getById(run.dungeonId);
+  if (!d) return null;
+  var order = (typeof RARITY_ORDER !== "undefined" && RARITY_ORDER) || ["common", "green", "rare", "epic", "legendary"];
+  var world = Math.max(0, Number(d.worldPower || 0));
+  var cap = order.indexOf(d.maxRarity);
+  var allowed = (WORLD_RARITY_UNLOCKS[Math.min(world, WORLD_RARITY_UNLOCKS.length - 1)] || ["common"])
+    .filter(function (r) { return cap < 0 || order.indexOf(r) <= cap; });
+  return { allowed: allowed.length ? allowed : ["common"], world: world };
+}
+
 var LootSystem = {
+  /* Butin d'un combat : celui du donjon pendant un donjon, sinon celui du monde. */
   rollDrop: function () {
+    var ctx = getDungeonDropContext();
+    return this._roll(ctx ? ctx.allowed : getAllowedRarities(), ctx ? ctx.world : undefined);
+  },
+
+  /* Butin du monde, même pendant un donjon : vitrine de la Halle, caravanes. */
+  rollWorldDrop: function () {
+    return this._roll(getAllowedRarities(), undefined);
+  },
+
+  _roll: function (allowed, worldIndex) {
     var slot = EQUIPMENT_SLOTS[randInt(0, EQUIPMENT_SLOTS.length - 1)];
 
-    var allowed = getAllowedRarities();
     var weights = allowed.map(function (r) { return RARITY_DROP_RATES[r] || 0; });
     var totalWeight = weights.reduce(function (a, b) { return a + b; }, 0);
 
@@ -121,15 +146,17 @@ var LootSystem = {
       }
     }
 
-    return generateEquipmentItem(slot, rarity);
+    return generateEquipmentItem(slot, rarity, worldIndex);
   },
 
   rollDropAtRarity: function (rarity) {
     var slot = EQUIPMENT_SLOTS[randInt(0, EQUIPMENT_SLOTS.length - 1)];
-    return generateEquipmentItem(slot, rarity);
+    var ctx = getDungeonDropContext(); // fin de donjon : puissance du monde du donjon
+    return generateEquipmentItem(slot, rarity, ctx ? ctx.world : undefined);
   }
 };
 
+window.getDungeonDropContext = getDungeonDropContext;
 window.LootSystem = LootSystem;
 window.generateEquipmentItem = generateEquipmentItem;
 window.rollEquipmentAffixes = rollEquipmentAffixes;

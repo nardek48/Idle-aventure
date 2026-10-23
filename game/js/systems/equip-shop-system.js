@@ -125,8 +125,8 @@ var EquipShopManager = {
     var stock = [];
     var size = this.getShopSize();
     for (var i = 0; i < size; i++) {
-      var item = window.LootSystem && typeof LootSystem.rollDrop === "function"
-        ? LootSystem.rollDrop()
+      var item = window.LootSystem && typeof LootSystem.rollWorldDrop === "function"
+        ? LootSystem.rollWorldDrop()
         : null;
       if (!item) continue;
       stock.push(item);
@@ -198,7 +198,7 @@ var EquipShopManager = {
        ce qui serait une punition déguisée. */
     var size = this.getShopSize();
     while (game.equipShopStock.length < size) {
-      var extra = window.LootSystem && typeof LootSystem.rollDrop === "function" ? LootSystem.rollDrop() : null;
+      var extra = window.LootSystem && typeof LootSystem.rollWorldDrop === "function" ? LootSystem.rollWorldDrop() : null;
       if (!extra) break;
       extra.price = this.getPrice(extra);
       extra.bought = false;
