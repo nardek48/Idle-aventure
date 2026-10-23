@@ -332,7 +332,7 @@ var DUNGEON_SHOP = [
     desc: "+1 Petite Aventure par jour, par niveau.",
     effect: "paBonus", perLevel: 1, baseCost: 60, costMult: 2, maxLevel: 2 },
   /* v3.463.0 (N-N, N-O) : paliers ouverts par le meilleur niveau de la Crypte (shopPalierDungeonId).
-     Icônes à faire : chemins gardés, l'icône générique s'affiche en attendant. Prix à juger en jeu. */
+     Icônes livrées en v3.465.1. Prix à juger en jeu. */
   { id: "d_butin", name: "Butin de faille", icon: "images/Icons/dungeon/dungeon_butin.webp",
     desc: "+15 % de chance d'un second objet en fin de run réussi, par niveau.",
     effect: "secondLootPct", perLevel: 15, baseCost: 80, costMult: 1.5, maxLevel: 3, palier: 3 },
