@@ -280,7 +280,7 @@ function buildGrimoireRuleRowHTML(index, rule, kit, locked) {
   } else {
     h += '<span class="grimoire-rule-text">' + esc(_t("Si {x}", { x: getGrimoireConditionShortLabel(rule.conditionId) }))
       + ' <span class="grimoire-rule-arrow">→</span> ' + esc(_td(action.label))
-      + (isGrimoireRuleCounter(rule, kit) ? '<span class="grimoire-counter-tag"><img class=ico-inline src=images/Icons/combat_stats/stat_speed.webp> ' + _t("Contre") + '</span>' : '')
+      + (isGrimoireRuleCounter(rule, kit) ? '<span class="grimoire-counter-tag"><img class=ico-inline src=images/Icons/combat_status/counter.webp> ' + _t("Contre") + '</span>' : '')
       + '</span>';
   }
 
@@ -347,7 +347,7 @@ function buildGrimoireEditHTML(index, kit) {
     var isArchetypeCounter = !isTelegraphCounter && isGrimoireRuleCounter(rule, kit);
 
     if (isTelegraphCounter) {
-      h += '<div class="grimoire-verdict is-counter"><span><img class=ico-inline src=images/Icons/combat_stats/stat_speed.webp></span><span><strong>' + _t("Contre parfait.") + '</strong> '
+      h += '<div class="grimoire-verdict is-counter"><span><img class=ico-inline src=images/Icons/combat_status/counter.webp></span><span><strong>' + _t("Contre parfait.") + '</strong> '
         + _t("Cette action annulera complètement l'attaque adverse si elle est jouée à temps.") + '</span></div>';
     } else if (isArchetypeCounter) {
       h += '<div class="grimoire-verdict is-counter"><span><img class=ico-inline src=images/Icons/system/ascension.webp></span><span><strong>' + _t("Effet spécial.") + '</strong> '
@@ -361,7 +361,7 @@ function buildGrimoireEditHTML(index, kit) {
       .filter(function (conditionId) { return conditionId !== rule.conditionId; })
       .map(function (conditionId) { return _td(getGrimoireCondition(conditionId).label); });
     if (otherLabels.length) {
-      h += '<p class="grimoire-hint"><img class=ico-inline src=images/Icons/combat_stats/stat_speed.webp> ' + esc(_t("{x} contre aussi : {liste}.", { x: _td(action.label), liste: otherLabels.join(", ") })) + '</p>';
+      h += '<p class="grimoire-hint"><img class=ico-inline src=images/Icons/combat_status/counter.webp> ' + esc(_t("{x} contre aussi : {liste}.", { x: _td(action.label), liste: otherLabels.join(", ") })) + '</p>';
     }
   }
   h += '</div>';

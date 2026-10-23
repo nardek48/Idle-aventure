@@ -199,7 +199,7 @@ var GENERIC_TUTORIALS = {
     points: [
       { icon: "images/Icons/codex/codex_lore.webp", text: "Le Grimoire programme ton combat automatique : si une situation se présente, ton héros joue l'action que tu as choisie en priorité." },
       { icon: "images/Icons/system/sort.webp", text: "Les règles sont lues dans l'ordre, de haut en bas. La première qui s'applique l'emporte." },
-      { icon: "images/Icons/combat_stats/stat_speed.webp", text: "Une action marquée « ⚡ Contre » annule complètement l'attaque adverse. C'est le meilleur appariement possible pour cette situation." },
+      { icon: "images/Icons/combat_status/counter.webp", text: "Une action marquée « ⚡ Contre » annule complètement l'attaque adverse. C'est le meilleur appariement possible pour cette situation." },
       { icon: "images/Icons/system/ascension.webp", text: "S'il n'y a aucune règle applicable, ton héros continue de se battre normalement — le Grimoire s'ajoute au comportement automatique, il ne le remplace pas." },
       { icon: "images/Icons/system/lock_closed.webp", text: "En combat, ton héros met de côté un peu de ressource pour garantir ton contre le plus prioritaire : il jouera moins d'actions coûteuses en attendant." },
       { icon: "images/Icons/quests/quest_resources.webp", text: "De nouvelles règles se débloquent en atteignant de nouveaux mondes pour la première fois." }

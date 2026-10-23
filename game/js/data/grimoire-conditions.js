@@ -25,13 +25,13 @@ var GRIMOIRE_CONDITIONS = {
     id: "eliteSurgeIncoming",
     label: "L'élite s'exalte",
     description: "Sa nature va compter triple pendant quelques rounds.",
-    icon: "images/Icons/combat_status/arcane_burn.webp"
+    icon: "images/Icons/combat_status/elite_surge.webp"
   },
   heroLowHp: {
     id: "heroLowHp",
     label: "Mes PV sont bas",
     description: "Tes PV sont bas.",
-    icon: "images/Icons/combat_status/heal_incoming.webp"
+    icon: "images/Icons/combat_status/hero_low_hp.webp"
   },
   enemyAttackIncoming: {
     id: "enemyAttackIncoming",
@@ -78,13 +78,13 @@ var GRIMOIRE_CONDITIONS = {
     id: "allyLowHp",
     label: "Un compagnon est en danger",
     description: "Un de tes compagnons est tombé sous 40 % de ses PV.",
-    icon: "images/Icons/combat_status/heal_incoming.webp"
+    icon: "images/Icons/combat_status/ally_low_hp.webp"
   },
   multipleEnemies: {
     id: "multipleEnemies",
     label: "Ils sont plusieurs",
     description: "Au moins deux ennemis sont encore debout.",
-    icon: "images/Icons/combat_status/double_strike.webp"
+    icon: "images/Icons/combat_status/multiple_enemies.webp"
   },
   /* v3.428.0 (Ruines, relève) : un ennemi est à terre et va se relever. L'action de la règle
      le vise (RiseSystem.aim) : une frappe l'achève. Icône à générer. */

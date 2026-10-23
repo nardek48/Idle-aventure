@@ -237,7 +237,7 @@ function buildCampHTML(tab) {
     }).length;
     var gh = '<div class="camp-card camp-grimoire-card">';
     gh += '<div class="camp-grimoire-summary">' + _t("{a} / {b} règles actives", { a: activeRules.length, b: slotCount })
-      + (counterCount ? ' · <span class="camp-grimoire-counters"><img class=ico-inline src=images/Icons/combat_stats/stat_speed.webp> ' + _tn(counterCount, "{n} contre", "{n} contres") + '</span>' : '')
+      + (counterCount ? ' · <span class="camp-grimoire-counters"><img class=ico-inline src=images/Icons/combat_status/counter.webp> ' + _tn(counterCount, "{n} contre", "{n} contres") + '</span>' : '')
       + '</div>';
     gh += '<div class="camp-grimoire-mode">' + (game.combatMode === "grimoire"
       ? '<img class=ico-inline src=images/Icons/codex/codex_lore.webp> ' + _t("Mode Grimoire : tes règles jouent seules.")

@@ -38,7 +38,7 @@ var COMPANIONS_DB = {
     skill: {
       id: "wenna_bandage",
       name: "Pansement serré",
-      icon: "images/Icons/combat_status/heal_incoming.webp",
+      icon: "images/Icons/companions/wenna_bandage.webp",
       type: "heal",
       target: "ally_lowest",             // l'allié le plus bas en PV, héros compris
       value: 0.18,                       // % des PV max de la cible

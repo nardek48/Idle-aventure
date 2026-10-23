@@ -155,7 +155,7 @@ function buildHealingPotionCardHTML(potion) {
   h += '<div class="nb-purchase-info-col">';
   h += '<div class="nb-purchase-name">' + esc(_td(potion.name)) + '</div>';
   h += '<div class="nb-purchase-desc">' + _t("Restaure {p}% des PV max, à la demande depuis l’écran Combat.", { p: Math.round(potion.healPercent * 100) }) + '</div>';
-  h += '<div class="nb-purchase-meta"><img class=ico-inline src=images/Icons/combat_status/heal_incoming.webp> ' + _t("Stock : {n}", { n: stock }) + '</div>';
+  h += '<div class="nb-purchase-meta"><img class=ico-inline src=images/Icons/system/potion_heal.webp> ' + _t("Stock : {n}", { n: stock }) + '</div>';
   if (buyLeft !== Infinity) {
     h += '<div class="nb-purchase-meta">' + _t("Colporteur : {a} / {b} aujourd’hui", { a: buyLeft, b: potion.dailyBuyLimit }) + '</div>';
   }
@@ -172,7 +172,7 @@ function buildHealingPotionCardHTML(potion) {
 }
 
 function buildHealingPotionShopHTML() {
-  var h = '<div class="potion-section-label"><img class=ico-inline src=images/Icons/combat_status/heal_incoming.webp> ' + _t("Potions de soin (usage instantané)") + '</div>';
+  var h = '<div class="potion-section-label"><img class=ico-inline src=images/Icons/system/potion_heal.webp> ' + _t("Potions de soin (usage instantané)") + '</div>';
   h += '<div class="potion-grid">';
   (HEALING_POTIONS_DB || []).forEach(function (potion) {
     h += buildHealingPotionCardHTML(potion);

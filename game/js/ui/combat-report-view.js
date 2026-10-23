@@ -36,7 +36,7 @@ function buildCombatReportSlotCardHTML(slot, stats) {
 
   if (stats.countersSucceeded > 0 || stats.countersExpired > 0 || stats.countersMissed > 0) {
     var counterParts = [];
-    if (stats.countersSucceeded > 0) counterParts.push('<img class=ico-inline src=images/Icons/combat_stats/stat_speed.webp> ' + crPl(stats.countersSucceeded, _t("{n} contre réussi", { n: stats.countersSucceeded }), _t("{n} contres réussis", { n: stats.countersSucceeded })));
+    if (stats.countersSucceeded > 0) counterParts.push('<img class=ico-inline src=images/Icons/combat_status/counter.webp> ' + crPl(stats.countersSucceeded, _t("{n} contre réussi", { n: stats.countersSucceeded }), _t("{n} contres réussis", { n: stats.countersSucceeded })));
     if (stats.countersExpired > 0) counterParts.push(crPl(stats.countersExpired, _t("{n} expiré sans contre", { n: stats.countersExpired }), _t("{n} expirés sans contre", { n: stats.countersExpired })));
     if (stats.countersMissed > 0) counterParts.push(crPl(stats.countersMissed, _t("{n} raté (mauvais timing)", { n: stats.countersMissed }), _t("{n} ratés (mauvais timing)", { n: stats.countersMissed })));
     h += '<p class="panel-sub combat-report-slot-line">' + escPreservingIcons(counterParts.join(' · ')) + '</p>';

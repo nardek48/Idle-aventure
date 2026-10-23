@@ -695,7 +695,7 @@ var STORY_QUESTS = {
           title: "Les compagnons",
           points: [
             { icon: "images/Icons/subtabs/hero_summary.webp", text: "Un compagnon combat à tes côtés : il joue son action après la tienne, à chaque round. Deux au maximum peuvent t'accompagner." },
-            { icon: "images/Icons/combat_status/heal_incoming.webp", text: "Wenna est un Soutien : elle soigne l'allié le plus bas en PV. Elle n'a ni équipement ni talents — elle s'améliore contre de l'or, dans Héros › Compagnons." },
+            { icon: "images/Icons/companions/wenna_bandage.webp", text: "Wenna est un Soutien : elle soigne l'allié le plus bas en PV. Elle n'a ni équipement ni talents — elle s'améliore contre de l'or, dans Héros › Compagnons." },
             { icon: "images/Icons/combat_stats/stat_attack.webp", text: "Tu choisis pour chacun : Auto (il décide seul) ou Manuel. Un compagnon tombé à 0 PV est hors de combat jusqu'à la fin, et revient affaibli au combat suivant." }
           ]
         },
@@ -1281,10 +1281,10 @@ STORY_QUESTS.desert = {
       linkTo: { section: "adventure", cardId: "adv_aq_desert_nuee" },
       tutorial: {
         tab: "combat",
-        icon: "images/Icons/combat_status/double_strike.webp",
+        icon: "images/Icons/combat_status/multiple_enemies.webp",
         title: "La nuée",
         points: [
-          { icon: "images/Icons/combat_status/double_strike.webp", text: "Au Désert, certaines bêtes vont en groupe : les scarabées par trois, les guerriers des sables par deux." },
+          { icon: "images/Icons/combat_status/multiple_enemies.webp", text: "Au Désert, certaines bêtes vont en groupe : les scarabées par trois, les guerriers des sables par deux." },
           { icon: "images/Icons/combat_stats/stat_attack.webp", text: "Touche un ennemi pour le cibler. Une nuée tue par le nombre de ses coups : chaque scarabée abattu en retire un." },
           { icon: "images/Icons/quests/quest_list.webp", text: "Dans cette quête, un groupe compte pour une seule rencontre." },
           { icon: "images/Icons/codex/codex_lore.webp", text: "Dans le Grimoire, la condition « Ils sont plusieurs » te permet de régler ton kit face à un groupe." }

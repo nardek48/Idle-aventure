@@ -113,7 +113,7 @@ var WORKSHOPS_CONFIG = {
   /* v3.221.0 (lot V-8) : troisième atelier de tier 2 activé, pour alimenter la
      reforge d'équipement du bâtiment Forge du village. */
   forge: {
-    buildingId: "mine", name: "Forge", icon: "images/Icons/workshops/smithing_station.webp", active: true,
+    buildingId: "mine", name: "Forge", icon: "images/Icons/workshops/mine_smithy.webp", active: true,
     upgradeCostBase: { planche: 4, lingot: 4 },
     recipes: [
       { id: "acier", inputs: [{ resourceId: "lingot", quantity: 3 }, { resourceId: "bois", quantity: 6 }], outputs: [{ resourceId: "acier", quantity: 1 }], craftTimeMs: 8000 }

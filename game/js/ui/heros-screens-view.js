@@ -110,27 +110,27 @@
   /* v3.458.4 (audit C6) : tous les effets durables des choix d'Histoire, seulement la branche prise.
      Liste sans icône pour l'instant (décision Seb) : les images sont dans la liste à faire. */
   var STORY_TRAITS = [
-    { key: "roi", value: "soi", name: _t("La forme du roi"), desc: _t("Le silence ne te tient plus qu'un round.") },
-    { key: "roi", value: "aeswyn", name: _t("Le puits du roi"), desc: _t("L'Apothicaire prépare 2 potions de plus par jour, pour moitié moins d'eau.") },
-    { key: "noms", value: "laisser", name: _t("Les stèles debout"), desc: _t("Tant qu'elles sont libérées, les stèles freinent l'Ensablement de 10 % de plus.") },
-    { key: "serment", value: "laisser", name: _t("Le guet tenu"), desc: _t("Tant que la tour de guet est libérée, elle freine l'Ensablement de 10 % de plus.") },
-    { key: "seuil", value: "soi", name: _t("Le seuil"), desc: _t("Une fois par combat, tu te relèves avec le quart de tes PV.") },
-    { key: "seuil", value: "aeswyn", name: _t("Le seuil d'Aeswyn"), desc: _t("Les chantiers du village coûtent 10 % de matériaux en moins.") },
-    { key: "salle", value: "fermer", name: _t("La salle scellée"), desc: _t("Tant que la porte du Sanctuaire tient, elle freine l'Éboulement de 10 % de plus.") },
-    { key: "plan", value: "tomber", name: _t("La clé du Cœur"), desc: _t("Les chantiers en Clés de voûte en demandent une de moins.") },
-    { key: "plan", value: "finir", name: _t("La cité finie"), desc: _t("La carte des Ruines ne s'éboule plus, et le Cœur rapporte des Pierres errantes chaque jour.") },
-    { key: "portent", value: "soi", name: _t("Le dû des morts"), desc: _t("Un mort que tu réveilles puis vaincs rapporte trois quarts d'or en plus.") },
-    { key: "portent", value: "aeswyn", name: _t("La veillée d'Aeswyn"), desc: _t("Chaque mort que tu laisses dormir rapporte de la Cire de sépulcre au village.") },
-    { key: "ysolt", value: "donner", name: _t("Ysolt éveillée"), desc: _t("Pas encore sert deux fois par combat. Elle s'use un peu.") },
-    { key: "bat", value: "reveiller", name: _t("Les montés"), desc: _t("Dans les combats de boss et d'élite, un monté se lève à tes côtés.") },
-    { key: "bat", value: "laisser", name: _t("La table des noms"), desc: _t("Chez Orwen, chaque jour, de la Cire consacrée.") }
+    { key: "roi", value: "soi", icon: "images/Icons/memory/forme_du_roi.webp", name: _t("La forme du roi"), desc: _t("Le silence ne te tient plus qu'un round.") },
+    { key: "roi", value: "aeswyn", icon: "images/Icons/traits/puits_du_roi.webp", name: _t("Le puits du roi"), desc: _t("L'Apothicaire prépare 2 potions de plus par jour, pour moitié moins d'eau.") },
+    { key: "noms", value: "laisser", icon: "images/Icons/traits/steles_debout.webp", name: _t("Les stèles debout"), desc: _t("Tant qu'elles sont libérées, les stèles freinent l'Ensablement de 10 % de plus.") },
+    { key: "serment", value: "laisser", icon: "images/Icons/traits/guet_tenu.webp", name: _t("Le guet tenu"), desc: _t("Tant que la tour de guet est libérée, elle freine l'Ensablement de 10 % de plus.") },
+    { key: "seuil", value: "soi", icon: "images/Icons/traits/le_seuil.webp", name: _t("Le seuil"), desc: _t("Une fois par combat, tu te relèves avec le quart de tes PV.") },
+    { key: "seuil", value: "aeswyn", icon: "images/Icons/traits/seuil_aeswyn.webp", name: _t("Le seuil d'Aeswyn"), desc: _t("Les chantiers du village coûtent 10 % de matériaux en moins.") },
+    { key: "salle", value: "fermer", icon: "images/Icons/traits/salle_scellee.webp", name: _t("La salle scellée"), desc: _t("Tant que la porte du Sanctuaire tient, elle freine l'Éboulement de 10 % de plus.") },
+    { key: "plan", value: "tomber", icon: "images/Icons/traits/cle_du_coeur.webp", name: _t("La clé du Cœur"), desc: _t("Les chantiers en Clés de voûte en demandent une de moins.") },
+    { key: "plan", value: "finir", icon: "images/Icons/traits/cite_finie.webp", name: _t("La cité finie"), desc: _t("La carte des Ruines ne s'éboule plus, et le Cœur rapporte des Pierres errantes chaque jour.") },
+    { key: "portent", value: "soi", icon: "images/Icons/traits/du_des_morts.webp", name: _t("Le dû des morts"), desc: _t("Un mort que tu réveilles puis vaincs rapporte trois quarts d'or en plus.") },
+    { key: "portent", value: "aeswyn", icon: "images/Icons/traits/veillee_aeswyn.webp", name: _t("La veillée d'Aeswyn"), desc: _t("Chaque mort que tu laisses dormir rapporte de la Cire de sépulcre au village.") },
+    { key: "ysolt", value: "donner", icon: "images/Icons/traits/ysolt_eveillee.webp", name: _t("Ysolt éveillée"), desc: _t("Pas encore sert deux fois par combat. Elle s'use un peu.") },
+    { key: "bat", value: "reveiller", icon: "images/Icons/traits/les_montes.webp", name: _t("Les montés"), desc: _t("Dans les combats de boss et d'élite, un monté se lève à tes côtés.") },
+    { key: "bat", value: "laisser", icon: "images/Icons/traits/table_des_noms.webp", name: _t("La table des noms"), desc: _t("Chez Orwen, chaque jour, de la Cire consacrée.") }
   ];
   function traitsHTML() {
     var SQ = window.StoryQuestManager;
     var on = SQ ? STORY_TRAITS.filter(function (t) { return SQ.getChoice(t.key) === t.value; }) : [];
     if (!on.length) return "";
     return '<details class="hs-traits"><summary>' + _t("Ce que tu portes") + ' <small>' + on.length + '</small></summary>'
-      + on.map(function (t) { return '<div class="hs-trait"><span><b>' + esc(t.name) + '</b><small>' + esc(t.desc) + '</small></span></div>'; }).join("") + '</details>';
+      + on.map(function (t) { return '<div class="hs-trait">' + img(t.icon, "hs-trait-ico") + '<span><b>' + esc(t.name) + '</b><small>' + esc(t.desc) + '</small></span></div>'; }).join("") + '</details>'; // v3.466.0 : icônes livrées
   }
 
   function buildHerosResumeHTML() {

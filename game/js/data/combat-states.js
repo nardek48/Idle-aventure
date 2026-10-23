@@ -105,7 +105,7 @@ var COMBAT_STATES = {
     hint: "Inutile de la réappliquer tant qu'elle court."
   },
   countered: {
-    famille: "mine", nom: "Contré", icon: "images/Icons/combat_stats/stat_speed.webp",
+    famille: "mine", nom: "Contré", icon: "images/Icons/combat_status/counter.webp",
     desc: "Tu as contré son attaque : elle n'a rien donné.",
     hint: ""
   },
@@ -139,7 +139,7 @@ var COMBAT_STATES_SCREEN = {
     hint: "Il ne viendra pas à toi : vise-le en premier si l'équipe souffre."
   },
   surge: {
-    famille: "alerte", nom: "Exaltation", icon: COMBAT_STATE_ICON + "arcane_burn.webp", mot: "Il s'exalte !",
+    famille: "alerte", nom: "Exaltation", icon: COMBAT_STATE_ICON + "elite_surge.webp", mot: "Il s'exalte !",
     desc: "Son trait d'élite va compter triple pendant quelques rounds.",
     hint: "Tiens bon ou abrège : le pic ne dure pas."
   },

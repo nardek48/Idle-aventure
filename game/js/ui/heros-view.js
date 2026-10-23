@@ -566,7 +566,7 @@ function buildHeroSkillCardHTML(action) {
     h += '<div class="pc-skill-desc">' + esc(getSkillDescText(ClassCombatManager.getCurrentClassId(), action)) + '</div>';
 
     h += '<div class="pc-skill-counters">';
-    h += '<div class="pc-skill-counters-lbl"><img class=ico-inline src=images/Icons/combat_stats/stat_speed.webp> ' + _t("Utile contre") + '</div>';
+    h += '<div class="pc-skill-counters-lbl"><img class=ico-inline src=images/Icons/combat_status/counter.webp> ' + _t("Utile contre") + '</div>';
     // v3.208.0 : liste complète (counters + suppressions d'archétype portées par effects).
     // Avant, seul action.counters était lu — la moitié des contres n'était annoncée nulle part.
     var ids = (typeof getAllGrimoireCounterIds === "function")

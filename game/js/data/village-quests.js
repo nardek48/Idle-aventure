@@ -263,7 +263,7 @@ var VILLAGE_QUESTS = [
       title: "Améliorer un atelier",
       points: [
         { icon: "images/Icons/system/upgrade.webp", text: "Chaque atelier monte jusqu'au niveau 5, indépendamment des autres (le Moulin niveau 3 ne change rien à la Boulangerie)." },
-        { icon: "images/Icons/combat_stats/stat_speed.webp", text: "Chaque niveau accélère les crafts (-8 % de temps par niveau, jusqu'à -32 %) ET allonge la file d'attente : sa taille est égale au niveau de l'atelier." },
+        { icon: "images/Icons/workshops/craft_speed.webp", text: "Chaque niveau accélère les crafts (-8 % de temps par niveau, jusqu'à -32 %) ET allonge la file d'attente : sa taille est égale au niveau de l'atelier." },
         { icon: "images/Icons/plots/reinforced_gallery.webp", text: "Le coût se paie en planches et lingots, et grimpe de ×1,4 par niveau — comme les zones de production." },
         { icon: "images/Icons/combat_stats/stat_critical.webp", text: "Conseil : améliore d'abord l'atelier qui tourne le plus (souvent celui en mode Auto) — chaque pour cent de vitesse y rapporte davantage." }
       ]

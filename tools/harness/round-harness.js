@@ -16433,7 +16433,9 @@ console.log("\n[262] v3.458.4 — Lot 7b : une fenêtre de fin, Histoire, Mémoi
     ok(/class="mem-chosen"/.test(av) && /chaque niveau oppose Garder/.test(av), "Mémoire : niveaux choisis repliés, Garder / Donner expliqués");
     // C6
     var hs = fs10.readFileSync(ROOT + "/js/ui/heros-screens-view.js", "utf8");
-    ok((hs.match(/\{ key: "\w+", value: "\w+", name: _t\(/g) || []).length === 14 && !/hs-trait-ico/.test(hs.split("STORY_TRAITS")[1] || ""), "Ce que tu portes : 14 effets possibles, sans icône");
+    // v3.466.0 : les images des effets sont livrées, chaque effet porte la sienne
+    var icones = hs.match(/\{ key: "\w+", value: "\w+", icon: "images\/Icons\/[a-z_]+\/[a-z_]+\.webp", name: _t\(/g) || [];
+    ok(icones.length === 14 && /hs-trait-ico/.test(hs.split("STORY_TRAITS").slice(1).join("")) && icones.every(function (l) { return fs10.existsSync(ROOT + "/" + /icon: "([^"]+)"/.exec(l)[1]); }), "Ce que tu portes : 14 effets possibles, chacun avec son image (fichiers présents)");
     ok(/dont \{p\} % par tes choix/.test(fs10.readFileSync(ROOT + "/js/ui/living-map-view.js", "utf8")), "Palissade : la part des choix dite à part");
     // C9
     ok(/class="settings-btn ret-eat"/.test(fs10.readFileSync(ROOT + "/js/ui/return-view.js", "utf8")), "écran de retour : « Manger »");
