@@ -1553,25 +1553,19 @@ function failleRun(id, L) {
   g.game.heroHp = g.game.heroMaxHp; refillPotions();
   g.game.dungeonRunsUsed = {}; g.game.dungeonTierCleared = { 1: true, 2: true, 3: true, 4: true };
   ["petite_ration", "ration", "grande_ration"].forEach(function (k) { if (g.WarehouseManager.getAmount(k) < 10) g.WarehouseManager.addResource(k, 10, true); }); // vivres de sortie : hors mesure
-  var orig = D.buildWaveEnemy, mh = Math.pow(1 + FAILLE_PV, L - 1), mp = Math.pow(1 + FAILLE_DMG, L - 1);
-  D.buildWaveEnemy = function (w) {
-    var e = orig.call(this, w);
-    [].concat(e).forEach(function (x) {
-      if (!x) return;
-      x.hp = x.maxHp = Math.max(1, Math.floor(Number(x.maxHp || x.hp || 1) * mh));
-      if (x.stats) x.stats.power = Math.max(1, Math.floor(Number(x.stats.power || 0) * mp));
-    });
-    return e;
-  };
+  // v3.460.0 : niveaux du moteur ; FAILLE_PV / FAILLE_DMG surchargent les pourcentages des données
+  if (process.env.FAILLE_PV) g.DUNGEON_CONFIG.levelHpPct = FAILLE_PV;
+  if (process.env.FAILLE_DMG) g.DUNGEON_CONFIG.levelPowerPct = FAILLE_DMG;
+  g.game.dungeonLevelBest[id] = L - 1;
   var boss0 = Number(g.game.dungeonBossClears || 0), or0 = g.game.gold + (g.game.sortie && g.game.sortie.loot ? Number(g.game.sortie.loot.gold || 0) : 0);
   var ec0 = Number(g.game.dungeonShards || 0), c0 = STATS.combatMs, f0 = STATS.fights.length;
   try {
-    D.start(id, []);
-    if (!g.game.dungeonRun.active) { note("faille " + id + " N" + L + " : entrée refusée"); return null; }
+    D.start(id, [], L);
+    if (!g.game.dungeonRun.active || g.game.dungeonRun.level !== L) { note("faille " + id + " N" + L + " : entrée refusée"); return null; }
     winCombat(400);
     flushTimers(g);
     if (g.closeDungeonSummary) g.closeDungeonSummary();
-  } finally { D.buildWaveEnemy = orig; }
+  } finally { g.game.dungeonLevelBest[id] = 0; }
   var fights = STATS.fights.slice(f0), rounds = fights.reduce(function (a, f) { return a + (f.rounds || 0); }, 0);
   var r = { ok: Number(g.game.dungeonBossClears || 0) > boss0, rounds: rounds, combatH: (STATS.combatMs - c0) / 3600e3,
     or: Math.floor(g.game.gold - or0), eclats: Number(g.game.dungeonShards || 0) - ec0, vague: LAST_WAVE };

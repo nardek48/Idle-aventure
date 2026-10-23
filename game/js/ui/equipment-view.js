@@ -389,12 +389,14 @@ function buildUnifiedTileHTML(entry) {
    comme tel plutôt que de laisser un trou. */
 function buildItemOriginHTML(item) {
   if (!item) return "";
+  // v3.461.0 (N-E) : objet tiré au-delà du plafond d'un niveau de donjon
+  var aether = item.aether > 0 ? '<div class="eq-detail-hint">✦ ' + esc(_t("Touché par l'Aether · niveau {n}", { n: item.aether })) + '</div>' : "";
   var cfg = EQUIPMENT_SLOT_CONFIG[item.slot];
-  if (!cfg || !cfg.scalesWithWorld) return "";
+  if (!cfg || !cfg.scalesWithWorld) return aether;
   var idx = (typeof item.worldIndex === "number") ? item.worldIndex : 0;
   var world = (window.WORLDS && WORLDS[idx]) ? WORLDS[idx].name : null;
-  if (!world) return "";
-  return '<div class="eq-detail-hint"><img class=ico-inline src=images/Icons/quests/quest_resources.webp> ' + esc(_t("Trouvé en {w}", { w: _td(world) })) + '</div>';
+  if (!world) return aether;
+  return '<div class="eq-detail-hint"><img class=ico-inline src=images/Icons/quests/quest_resources.webp> ' + esc(_t("Trouvé en {w}", { w: _td(world) })) + '</div>' + aether;
 }
 window.buildItemOriginHTML = buildItemOriginHTML;
 

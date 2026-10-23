@@ -147,6 +147,7 @@ function createInitialGameState() {
     dungeonBossClears: 0,
     dungeonShards: 0,
     dungeonShopLevels: {},
+    dungeonLevelBest: {}, // v3.460.0 : meilleur niveau terminé, par donjon
 
     healingPotionsOwned: {},
     lastHealUse: 0,

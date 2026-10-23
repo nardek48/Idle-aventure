@@ -21,6 +21,7 @@ var DungeonManager = {
     if (typeof game.dungeonShards !== "number") game.dungeonShards = 0;
     if (!game.dungeonShopLevels || typeof game.dungeonShopLevels !== "object") game.dungeonShopLevels = {};
     if (!game.dungeonTierCleared || typeof game.dungeonTierCleared !== "object") game.dungeonTierCleared = {};
+    if (!game.dungeonLevelBest || typeof game.dungeonLevelBest !== "object") game.dungeonLevelBest = {}; // v3.460.0 : meilleur niveau terminé, par donjon
     /* v3.245.0 : partie sauvegardée AVANT la refonte, en cours sur forest_13 (acceptée) — l'étape ouvre désormais
        le Donjon (unlockTabs appliqué à l'acceptation, déjà passée) : on ouvre l'onglet ici, une fois. */
     if (window.StoryQuestManager && game.unlockedTabs && !game.unlockedTabs.dungeon
@@ -91,6 +92,66 @@ var DungeonManager = {
   // alias historiques
   getTierLockReason: function (id) { return this.getLockReason(id); },
   isTierUnlocked: function (id) { return this.isUnlocked(id); },
+
+  /* ---------- Niveaux (v3.460.0, Conception Niveaux de donjon v0.3) ---------- */
+  // Meilleur niveau terminé ; un donjon fini avant les niveaux compte pour le niveau 1
+  getLevelBest: function (dungeonId) {
+    this.ensure();
+    var id = Number(dungeonId);
+    return Math.max(Number(game.dungeonLevelBest[id] || 0), game.dungeonTierCleared[id] ? 1 : 0);
+  },
+
+  // Plus haut niveau jouable : un de plus que le meilleur terminé (N4, sans maximum)
+  getMaxLevel: function (dungeonId) {
+    return this.getLevelBest(dungeonId) + 1;
+  },
+
+  getRunLevel: function () {
+    var run = game.dungeonRun;
+    return Math.max(1, Math.floor(Number(run && run.level) || 1));
+  },
+
+  // Multiplicateurs composés du niveau (N-B) : PV et puissance des ennemis
+  getLevelMult: function (level) {
+    var n = Math.max(1, Math.floor(Number(level) || 1)) - 1;
+    return { hp: Math.pow(1 + (DUNGEON_CONFIG.levelHpPct || 0), n), power: Math.pow(1 + (DUNGEON_CONFIG.levelPowerPct || 0), n) };
+  },
+
+  /* Donjon dont le butin s'applique à ce niveau (N-A) : le dernier palier atteint dont le donjon
+     visé est débloqué, sinon le donjon lui-même. Donne la rareté maximale et le monde d'objet. */
+  getLevelLootSource: function (dungeon, level) {
+    var src = dungeon, self = this;
+    (dungeon && dungeon.levelSteps || []).forEach(function (st) {
+      if (level >= st.level && self.isUnlocked(st.dungeonId)) src = self.getById(st.dungeonId);
+    });
+    return src;
+  },
+
+  // Plafond : niveau du dernier palier dont le donjon visé est débloqué (1 si aucun)
+  getCapLevel: function (dungeon) {
+    var cap = 1, self = this;
+    (dungeon && dungeon.levelSteps || []).forEach(function (st) {
+      if (self.isUnlocked(st.dungeonId)) cap = Math.max(cap, st.level);
+    });
+    return cap;
+  },
+
+  // Niveaux au-delà du plafond : ils donnent or, Éclats et objets supérieurs (N-I, N-J, N-K)
+  getLevelBeyond: function (dungeon, level) {
+    return Math.max(0, Math.floor(Number(level) || 1) - this.getCapLevel(dungeon));
+  },
+
+  // Plancher du tirage des objets à ce niveau (fraction de la fourchette)
+  getLevelFloor: function (dungeon, level) {
+    return Math.min(DUNGEON_CONFIG.beyondFloorMax || 0, this.getLevelBeyond(dungeon, level) * (DUNGEON_CONFIG.beyondFloorPct || 0));
+  },
+
+  // Butin du run en cours (lu par getDungeonDropContext) ; null hors run
+  getRunDropSource: function () {
+    var run = game.dungeonRun;
+    if (!run || !run.active) return null;
+    return this.getLevelLootSource(this.getById(run.dungeonId), this.getRunLevel());
+  },
 
   /* ---------- Marques (v3.245.0) ---------- */
   getMark: function (markId) {
@@ -274,7 +335,18 @@ var DungeonManager = {
     }).filter(Boolean);
   },
 
+  // v3.460.0 : toute vague (élite, escorte, boss) passe ici, mise au niveau du run
   buildWaveEnemy: function (wave) {
+    var built = this.buildWaveEnemyBase(wave), m = this.getLevelMult(this.getRunLevel());
+    if (m.hp === 1 && m.power === 1) return built;
+    [].concat(built).forEach(function (e) {
+      e.hp = e.maxHp = Math.max(1, Math.floor(e.maxHp * m.hp));
+      if (e.stats) e.stats.power = Math.max(1, Math.floor((e.stats.power || 0) * m.power));
+    });
+    return built;
+  },
+
+  buildWaveEnemyBase: function (wave) {
     this.ensure();
     var dungeon = this.getById(game.dungeonRun.dungeonId);
     var isBossWave = wave > DUNGEON_CONFIG.waveCount;
@@ -478,8 +550,9 @@ var DungeonManager = {
     return !!(step && steps.indexOf(step.id) >= 0 && StoryQuestManager.isCurrentStepAccepted(chapterId));
   },
 
-  /* marks : tableau d'id de DUNGEON_MARKS choisis dans la feuille de lancement (figés pour le run). */
-  start: function (dungeonId, marks) {
+  /* marks : tableau d'id de DUNGEON_MARKS choisis dans la feuille de lancement (figés pour le run).
+     level (v3.460.0) : 1 par défaut, borné à getMaxLevel ; la sortie de l'Histoire se joue au niveau 1. */
+  start: function (dungeonId, marks, level) {
     this.ensure();
     this.checkTicketReset();
 
@@ -501,7 +574,8 @@ var DungeonManager = {
 
     if (!storyFree) game.dungeonRunsUsed[dungeon.id] = this.getRunsUsed(dungeon.id) + 1; // v3.358.0 (D7) : une sortie du jour ; celle de l'Histoire est offerte
     var runMarks = this.sanitizeMarks(marks, dungeon.id);
-    game.dungeonRun = { active: true, wave: 0, dungeonId: dungeon.id, marks: runMarks, shardsEarned: 0 };
+    var runLevel = storyFree ? 1 : Math.max(1, Math.min(this.getMaxLevel(dungeon.id), Math.floor(Number(level) || 1)));
+    game.dungeonRun = { active: true, wave: 0, dungeonId: dungeon.id, level: runLevel, marks: runMarks, shardsEarned: 0 };
     if (!game.dungeonTiersEntered || typeof game.dungeonTiersEntered !== "object") game.dungeonTiersEntered = {};
     game.dungeonTiersEntered[dungeon.id] = true;
     game.heroHp = game.heroMaxHp || 1;
@@ -585,17 +659,20 @@ var DungeonManager = {
     var wavesTotal = DUNGEON_CONFIG.waveCount;
     var progress = Math.max(0, Math.min(1, clearedWave / wavesTotal));
 
-    var worldBonus = (1 + Math.max(0, tier.worldPower || 0) * 0.5 + Math.sqrt(Math.max(1, tier.difficultyMult || 1)) * 0.4) * markMult;
+    var runLevel = this.getRunLevel(), beyond = this.getLevelBeyond(tier, runLevel); // v3.461.0 : or au-delà du plafond (N-I)
+    var worldBonus = (1 + Math.max(0, tier.worldPower || 0) * 0.5 + Math.sqrt(Math.max(1, tier.difficultyMult || 1)) * 0.4) * markMult
+      * (1 + beyond * (DUNGEON_CONFIG.beyondGoldPct || 0));
     var goldReward, grantLoot, lootRarity; // v3.358.0 (D7) : l'essence de fin est fondue dans l'or (fullClearGoldBase)
 
     var rarityOrder = (typeof RARITY_ORDER !== "undefined" && RARITY_ORDER) || ["common", "green", "rare", "epic", "legendary"];
-    var tierMaxIndex = Math.max(0, rarityOrder.indexOf(tier.maxRarity));
+    var lootSrc = this.getLevelLootSource(tier, runLevel); // v3.460.0 : rareté du niveau (N-A)
+    var tierMaxIndex = Math.max(0, rarityOrder.indexOf(lootSrc.maxRarity));
     var allowedForTier = rarityOrder.slice(0, tierMaxIndex + 1);
 
     if (success) {
       goldReward = Math.floor(DUNGEON_CONFIG.fullClearGoldBase * worldBonus);
       grantLoot = true;
-      lootRarity = tier.maxRarity;
+      lootRarity = lootSrc.maxRarity;
       game.dungeonBossClears = Number(game.dungeonBossClears || 0) + 1;
       game.dungeonShards = Number(game.dungeonShards || 0) + (DUNGEON_CONFIG.shardsBossBonus || 10);
       game.dungeonRun.shardsEarned = Number(game.dungeonRun.shardsEarned || 0) + (DUNGEON_CONFIG.shardsBossBonus || 10);
@@ -603,6 +680,7 @@ var DungeonManager = {
       if (!game.dungeonTierCleared || typeof game.dungeonTierCleared !== "object") game.dungeonTierCleared = {};
       var wasAlreadyCleared = !!game.dungeonTierCleared[tier.id];
       game.dungeonTierCleared[tier.id] = true;
+      game.dungeonLevelBest[tier.id] = Math.max(Number(game.dungeonLevelBest[tier.id] || 0), runLevel);
       if (!wasAlreadyCleared) {
         addLog("🔓 " + _t("{x} entièrement terminé — palier suivant débloqué !", { x: _td(tier.name) }), "event");
       }
@@ -620,6 +698,13 @@ var DungeonManager = {
       goldReward = Math.floor(DUNGEON_CONFIG.fullClearGoldBase * worldBonus * progress * 0.6 * fleeKeep);
       grantLoot = chance(DUNGEON_CONFIG.partialLootChance * fleeKeep);
       lootRarity = allowedForTier[randInt(0, allowedForTier.length - 1)];
+    }
+
+    // v3.461.0 (N-K) : Éclats du run +10 % par niveau au-delà du plafond, avant l'Écho de la faille
+    var levelShards = Math.floor(Number(game.dungeonRun.shardsEarned || 0) * beyond * (DUNGEON_CONFIG.beyondShardPct || 0));
+    if (levelShards > 0) {
+      game.dungeonShards = Number(game.dungeonShards || 0) + levelShards;
+      game.dungeonRun.shardsEarned = Number(game.dungeonRun.shardsEarned || 0) + levelShards;
     }
 
     /* v3.322.0 (Offrande) : Écho de la faille (Mémoire niveau 4) — +50 % des Éclats du run,

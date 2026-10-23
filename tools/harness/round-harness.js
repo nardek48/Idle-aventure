@@ -16624,6 +16624,117 @@ console.log("\n[271] v3.459.13 — Le butin des vagues suit le donjon, plus le m
   W.worldIndex = w0;
 })();
 
+console.log("\n[272] v3.460.0 — Niveaux de donjon : puissance, paliers de butin, niveau jouable, sauvegarde");
+(function () {
+  game = freshCombat("knight");
+  var D = g.DungeonManager, SQ = g.StoryQuestManager, reach = SQ.isStepReached;
+  game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true };
+  SQ.isStepReached = function () { return true; };   // verrous d'Histoire levés : seul le déblocage compte
+  game.dungeonTierCleared = { 1: true };               // Tanière finie : la Cité est ouverte, pas les Ruines
+  // puissance : la même vague au niveau 1 et au niveau 11
+  game.dungeonRun = { active: true, wave: 7, dungeonId: 1, level: 1, marks: [] };
+  var r = Math.random; Math.random = function () { return 0; };
+  var b1 = [].concat(D.buildWaveEnemy(7))[0], b16 = [].concat(D.buildWaveEnemy(16))[0];
+  game.dungeonRun.level = 11;
+  var n11 = [].concat(D.buildWaveEnemy(7))[0], n16 = [].concat(D.buildWaveEnemy(16))[0];
+  var e5 = D.buildWaveEnemy(5); // vague d'élite (avec escorte s'il y en a une)
+  game.dungeonRun.level = 1; var e5a = D.buildWaveEnemy(5);
+  Math.random = r;
+  var k = Math.pow(1.15, 10), kp = Math.pow(1.1, 10);
+  ok(Math.abs(n11.maxHp / b1.maxHp - k) < 0.02 && n11.hp === n11.maxHp, "niveau 11 : PV ×1,15^10 (" + b1.maxHp + " → " + n11.maxHp + ")");
+  ok(Math.abs(n11.stats.power / b1.stats.power - kp) < 0.05, "et puissance ×1,10^10 (" + b1.stats.power + " → " + n11.stats.power + ")");
+  ok(Math.abs(n16.maxHp / b16.maxHp - k) < 0.02, "le boss aussi (" + b16.maxHp + " → " + n16.maxHp + ")");
+  ok([].concat(e5).every(function (e, i) { return Math.abs(e.maxHp / [].concat(e5a)[i].maxHp - k) < 0.05; }), "l'élite et son escorte aussi (" + [].concat(e5).length + " ennemi(s))");
+  // paliers : rareté et monde suivent le donjon visé, s'il est débloqué
+  var src = function (id, L) { return D.getLevelLootSource(D.getById(id), L).id; };
+  ok(src(1, 9) === 1 && src(1, 10) === 2, "Tanière : butin de la Cité au niveau 10, pas au 9");
+  ok(src(1, 13) === 2 && src(1, 20) === 2, "Ruines pas débloquées : le palier Rare ne s'ouvre pas (reste Cité)");
+  game.dungeonTierCleared = { 1: true, 2: true, 3: true };
+  ok(src(1, 13) === 3 && src(1, 19) === 3 && src(1, 20) === 4, "tout débloqué : Rare au 13, Épique au 20");
+  ok(src(2, 4) === 2 && src(2, 5) === 3 && src(2, 12) === 4 && src(3, 7) === 3 && src(3, 8) === 4, "Cité Rare 5 / Épique 12, Ruines Épique 8");
+  game.worldsEverReached = { 0: true, 1: true, 2: true };
+  ok(src(1, 30) === 3, "monde de la Crypte jamais atteint : pas d'Épique, même au niveau 30");
+  game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true };
+  var rar = function (n) { var o = {}; for (var i = 0; i < n; i++) { var it = g.LootSystem.rollDrop(); o[it.rarity] = (o[it.rarity] || 0) + 1; } return o; };
+  game.dungeonRun = { active: true, wave: 3, dungeonId: 1, level: 20, marks: [] };
+  var hi = rar(400), it = g.LootSystem.rollDrop();
+  ok(!!hi.epic && !hi.legendary && it.worldIndex === 3, "Tanière 20 : vagues jusqu'à l'Épique, objets du monde de la Crypte (" + JSON.stringify(hi) + ")");
+  game.dungeonRun.level = 1;
+  ok(Object.keys(rar(200)).join() === "common", "Tanière 1 : que du Commun, comme avant");
+  // niveau jouable et enregistrement du meilleur
+  game.dungeonRun = { active: false, wave: 0, dungeonId: 1, marks: [] };
+  game.dungeonLevelBest = {};
+  ok(D.getLevelBest(1) === 1 && D.getMaxLevel(1) === 2 && D.getMaxLevel(4) === 1, "donjon fini avant les niveaux = niveau 1 tenu ; jamais fini = niveau 1 seul");
+  game.dungeonLevelBest = { 1: 6 };
+  game.heroHp = game.heroMaxHp; game.dungeonRunsUsed = {};
+  run("ProvisionsManager.check = function () { return null; }; ProvisionsManager.consume = function () {};");
+  D.start(1, [], 50);
+  ok(game.dungeonRun.active && game.dungeonRun.level === 7, "start borne le niveau au meilleur + 1 (demandé 50 → " + game.dungeonRun.level + ")");
+  game.dungeonRun.wave = 15; D.finish(true, 15, "success");
+  ok(game.dungeonLevelBest[1] === 7, "run réussi : meilleur niveau 7");
+  game.heroHp = game.heroMaxHp; D.start(1, []);
+  ok(game.dungeonRun.level === 1, "sans niveau demandé : niveau 1");
+  D.finish(false, 3, "death");
+  ok(game.dungeonLevelBest[1] === 7, "un échec ne baisse rien");
+  var free = D.isStoryTicketFree; D.isStoryTicketFree = function () { return true; };
+  game.heroHp = game.heroMaxHp; D.start(1, [], 5);
+  ok(game.dungeonRun.level === 1, "la sortie offerte par l'Histoire se joue au niveau 1");
+  D.finish(false, 0, "death"); D.isStoryTicketFree = free;
+  // sauvegarde
+  var d = g.buildSaveData();
+  ok(d.dungeonLevelBest && d.dungeonLevelBest[1] === 7, "buildSaveData garde dungeonLevelBest");
+  game.dungeonLevelBest = {}; g.restoreBaseState(d);
+  ok(game.dungeonLevelBest[1] === 7, "restoreBaseState le recharge");
+  run("fullResetState()");
+  ok(JSON.stringify(game.dungeonLevelBest) === "{}", "fullResetState le remet à zéro");
+  ok(JSON.stringify(g.createInitialGameState().dungeonLevelBest) === "{}", "createInitialGameState : {} par défaut");
+  SQ.isStepReached = reach;
+})();
+
+console.log("\n[273] v3.461.0 — Au-delà du plafond : or, Éclats, objets « Touché par l'Aether »");
+(function () {
+  game = freshCombat("knight");
+  var D = g.DungeonManager, SQ = g.StoryQuestManager, reach = SQ.isStepReached, C = g.DUNGEON_CONFIG;
+  game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true };
+  SQ.isStepReached = function () { return true; };
+  game.dungeonTierCleared = { 1: true };
+  ok(D.getCapLevel(D.getById(1)) === 10 && D.getLevelBeyond(D.getById(1), 12) === 2, "Tanière, seule la Cité débloquée : plafond 10, niveau 12 = 2 au-delà");
+  game.dungeonTierCleared = { 1: true, 2: true, 3: true };
+  ok(D.getCapLevel(D.getById(1)) === 20 && D.getLevelBeyond(D.getById(1), 12) === 0, "Crypte débloquée : le plafond passe à 20, le niveau 12 n'est plus au-delà");
+  var cry = D.getById(4);
+  ok(D.getCapLevel(cry) === 1 && D.getLevelBeyond(cry, 5) === 4, "Crypte : plafond 1, niveau 5 = 4 au-delà");
+  ok(Math.abs(D.getLevelFloor(cry, 5) - 0.20) < 1e-9 && D.getLevelFloor(cry, 17) === 0.8 && D.getLevelFloor(cry, 40) === 0.8 && D.getLevelFloor(cry, 1) === 0, "plancher : 20 % à la Crypte 5, 80 % au niveau 17 et au-delà, 0 au niveau 1");
+  // tirage au plancher : stat de base et bonus dans le haut de la fourchette
+  var bas = true, n = 0;
+  for (var i = 0; i < 200; i++) {
+    var it = g.generateEquipmentItem("weapon", "epic", 0, { floor: 0.8, level: 17 });
+    var rg = g.EQUIPMENT_SLOT_CONFIG.weapon.ranges.epic;
+    if (it.value < rg[0] + (rg[1] - rg[0]) * 0.8 - 0.5) bas = false;   // à l'arrondi près
+    (it.affixes || []).forEach(function (a) { var r = g.AFFIX_RANGES[a.stat].epic; n++; if (!g.AFFIX_RANGES[a.stat].flat && a.value < r[0] + (r[1] - r[0]) * 0.8 - 0.5 / Math.pow(10, g.AFFIX_RANGES[a.stat].decimals || 0)) bas = false; });
+  }
+  ok(bas && n > 0, "plancher 80 % : stat de base et bonus (" + n + ") tirés dans les 20 % du haut");
+  ok(it.aether === 17 && g.generateEquipmentItem("weapon", "epic", 0).aether === undefined, "l'objet porte aether: 17 ; un objet ordinaire n'en a pas");
+  game.dungeonRun = { active: true, wave: 3, dungeonId: 4, level: 5, marks: [] };
+  ok(g.LootSystem.rollDrop().aether === 5 && g.LootSystem.rollDropAtRarity("epic").aether === 5, "Crypte 5 : butin des vagues et de fin « niveau 5 »");
+  game.dungeonRun.level = 1;
+  ok(g.LootSystem.rollDrop().aether === undefined, "Crypte 1 : objet ordinaire");
+  game.dungeonRun = { active: false, wave: 0, dungeonId: 1, marks: [] };
+  var html = g.buildItemOriginHTML({ slot: "weapon", worldIndex: 3, aether: 7 });
+  ok(/Touché par l(&#39;|&#039;|')Aether · niveau 7/.test(html) && g.buildItemOriginHTML({ slot: "weapon", worldIndex: 3 }).indexOf("Aether") < 0, "fiche : « Touché par l'Aether · niveau 7 », rien sur un objet ordinaire");
+  // or et Éclats de fin : Crypte 5 = ×1,4 face à la Crypte 1
+  run("ProvisionsManager.check = function () { return null; }; ProvisionsManager.consume = function () {};");
+  var fin = function (L) {
+    game.heroHp = game.heroMaxHp; game.dungeonRunsUsed = {}; game.dungeonLevelBest = { 4: 10 };
+    D.start(4, [], L); game.dungeonRun.shardsEarned = 22;
+    var or0 = game.gold, ec0 = game.dungeonShards; D.finish(true, 15, "success");
+    return { or: game.gold - or0, ec: game.dungeonShards - ec0 };
+  };
+  var r1 = fin(1), r5 = fin(5);
+  ok(r1.or > 0 && Math.abs(r5.or / r1.or - 1.4) < 0.01, "or de fin : Crypte 5 = ×1,4 (" + r1.or + " → " + r5.or + ")");
+  ok(r5.ec - r1.ec === Math.floor((22 + r1.ec) * 0.4), "Éclats du run : +40 % au niveau 5 (" + r1.ec + " → " + r5.ec + ")");
+  SQ.isStepReached = reach;
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

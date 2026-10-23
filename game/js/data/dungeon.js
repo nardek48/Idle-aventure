@@ -20,6 +20,17 @@ var DUNGEON_CONFIG = {
   fullClearGoldBase: 700,   // v3.358.0 (D7) : 500 or + 40 essence × 5, l'essence fondue dans l'or
   partialLootChance: 40,
 
+  /* v3.460.0 (Niveaux de donjon, N-B) : par niveau au-dessus du 1, PV ×1,15 et puissance ×1,10,
+     composés. Mesuré au lot 0 (robot --faille) : Tanière tenue au niveau ~23, Crypte ~5. */
+  levelHpPct: 0.15,
+  levelPowerPct: 0.10,
+  /* Au-delà du plafond (niveau du dernier palier débloqué) : or de fin et Éclats +10 % par niveau
+     (N-I, N-K) ; plancher du tirage des objets +5 % de la fourchette par niveau, jusqu'à 80 % (N-J). */
+  beyondGoldPct: 0.10,
+  beyondShardPct: 0.10,
+  beyondFloorPct: 0.05,
+  beyondFloorMax: 0.80,
+
   shardsPerWaveCleared: 1,
   shardsBossBonus: 10,
 
@@ -64,6 +75,9 @@ var DUNGEONS = [
        42-48 % de PV, 0,6 à 1,9 potion, 100 % de réussite). */
     wavePremiumMult: 3.2,
     maxRarity: "common",
+    /* v3.460.0 (N-A) : au niveau dit, le butin devient celui du donjon visé (rareté et monde),
+       s'il est débloqué. Niveaux mesurés au lot 0 : celui où ce donjon devient aussi dur que l'autre. */
+    levelSteps: [{ level: 10, dungeonId: 2 }, { level: 13, dungeonId: 3 }, { level: 20, dungeonId: 4 }],
     specialResourceId: "seve_aeswyn", specialResourceAmount: 2,
     icon: "images/Dungeons/donjon_poison/donjon_poison.webp",
     banner: "images/Dungeons/donjon_poison/donjon_poison_baniere.webp",
@@ -118,6 +132,9 @@ var DUNGEONS = [
        Le Chevalier reste en retrait : chantier des arbres de talents par classe. */
     worldId: "desert", worldRequired: 1, worldPower: 1, difficultyMult: 2.6,
     maxRarity: "green",
+    /* v3.460.0 (N-A) : au niveau dit, le butin devient celui du donjon visé (rareté et monde),
+       s'il est débloqué. Niveaux mesurés au lot 0 : celui où ce donjon devient aussi dur que l'autre. */
+    levelSteps: [{ level: 5, dungeonId: 3 }, { level: 12, dungeonId: 4 }],
     // v3.321.0 (décision Seb) : la matière brute de la Petite Aventure du monde, comme la Sève en Forêt
     specialResourceId: "verre_des_dunes", specialResourceAmount: 2,
     icon: "images/Dungeons/Icone_base/palier2.webp", banner: null, combatMap: null,
@@ -164,6 +181,9 @@ var DUNGEONS = [
     name: "Sanctuaire scellé",
     worldId: "ruins", worldRequired: 2, worldPower: 2, difficultyMult: 6,
     maxRarity: "rare",
+    /* v3.460.0 (N-A) : au niveau dit, le butin devient celui du donjon visé (rareté et monde),
+       s'il est débloqué. Niveaux mesurés au lot 0 : celui où ce donjon devient aussi dur que l'autre. */
+    levelSteps: [{ level: 8, dungeonId: 4 }],
     // v3.430.0 (acte III) : la Pierre errante en fin de run, comme le Verre des dunes à la Cité
     specialResourceId: "pierre_errante", specialResourceAmount: 2,
     icon: "images/Dungeons/Icone_base/palier3.webp", banner: null, combatMap: null,

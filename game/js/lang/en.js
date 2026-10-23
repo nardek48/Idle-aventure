@@ -1088,6 +1088,7 @@ I18n.register("en", {
   "Équipe un objet depuis l’Inventaire pour remplir cet emplacement.": "Equip an item from the Inventory to fill this slot.",
   "Bonus de set inactif": "Set bonus inactive",
   "Trouvé en {w}": "Found in {w}",
+  "Touché par l'Aether · niveau {n}": "Aether-touched · level {n}",
   "Aucun objet sélectionné": "No item selected",
   "Touche un objet dans le sac pour voir son détail ici.": "Tap an item in the bag to see its details here.",
   "Offrir (+{n} Aether)": "Offer (+{n} Aether)",
