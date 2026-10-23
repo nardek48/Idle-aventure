@@ -101,7 +101,8 @@ function getAllowedRarities() {
 function getDungeonDropContext() {
   var run = game.dungeonRun;
   if (!run || !run.active || !window.DungeonManager || typeof DungeonManager.getById !== "function") return null;
-  var d = DungeonManager.getById(run.dungeonId);
+  // v3.460.0 : au niveau du run, le butin peut être celui d'un donjon plus avancé (paliers N-A)
+  var d = typeof DungeonManager.getRunDropSource === "function" ? DungeonManager.getRunDropSource() : DungeonManager.getById(run.dungeonId);
   if (!d) return null;
   var order = (typeof RARITY_ORDER !== "undefined" && RARITY_ORDER) || ["common", "green", "rare", "epic", "legendary"];
   var world = Math.max(0, Number(d.worldPower || 0));

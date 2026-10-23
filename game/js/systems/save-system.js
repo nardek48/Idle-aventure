@@ -444,6 +444,7 @@ function buildSaveData() {
     // v2.90.11 : dungeonTierCleared oublié lors de l'ajout du déblocage séquentiel (v2.90.9) — se perdait à chaque rechargement.
     // Détail : save-system_notes.md #21.
     dungeonTierCleared: game.dungeonTierCleared || {},
+    dungeonLevelBest: Object.assign({}, game.dungeonLevelBest || {}), // v3.460.0 : meilleur niveau terminé, par donjon
     healingPotionsOwned: game.healingPotionsOwned || {},
     potionsOwned: game.potionsOwned || {},
     lastHealUse: Number(game.lastHealUse || 0),
@@ -727,6 +728,7 @@ function restoreBaseState(d) {
   game.dungeonShopLevels = d.dungeonShopLevels && typeof d.dungeonShopLevels === "object" ? d.dungeonShopLevels : {};
   // v2.90.11 : voir buildSaveData() ci-dessus, même correctif.
   game.dungeonTierCleared = d.dungeonTierCleared && typeof d.dungeonTierCleared === "object" ? d.dungeonTierCleared : {};
+  game.dungeonLevelBest = d.dungeonLevelBest && typeof d.dungeonLevelBest === "object" ? Object.assign({}, d.dungeonLevelBest) : {}; // v3.460.0
   game.healingPotionsOwned = d.healingPotionsOwned && typeof d.healingPotionsOwned === "object" ? d.healingPotionsOwned : {};
   game.potionsOwned = d.potionsOwned && typeof d.potionsOwned === "object" ? d.potionsOwned : {};
   game.lastHealUse = Number(d.lastHealUse || 0);
@@ -1144,6 +1146,7 @@ function fullResetState() {
   // v2.90.11 : voir note dans buildSaveData() — repart bien à zéro
   // sur un reset complet, comme dungeonBossClears/dungeonShopLevels.
   game.dungeonTierCleared = {};
+  game.dungeonLevelBest = {}; // v3.460.0
   game.dungeonRunsUsed = {}; // v3.358.0 (D7) : partie neuve, sorties du jour intactes
   game.dungeonTicketResetTime = 0;
 
