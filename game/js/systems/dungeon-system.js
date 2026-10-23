@@ -146,6 +146,14 @@ var DungeonManager = {
     return Math.min(DUNGEON_CONFIG.beyondFloorMax || 0, this.getLevelBeyond(dungeon, level) * (DUNGEON_CONFIG.beyondFloorPct || 0));
   },
 
+  // Or du run (vagues et fin) : +10 % par niveau au-delà du plafond (N-I), ÷ 4 en mode libre (N-H)
+  getRunGoldMult: function () {
+    var run = game.dungeonRun;
+    if (!run || !run.active) return 1;
+    var beyond = this.getLevelBeyond(this.getById(run.dungeonId), this.getRunLevel());
+    return (1 + beyond * (DUNGEON_CONFIG.beyondGoldPct || 0)) * (run.free ? (DUNGEON_CONFIG.freeGoldMult || 1) : 1);
+  },
+
   // Butin du run en cours (lu par getDungeonDropContext) ; null hors run
   getRunDropSource: function () {
     var run = game.dungeonRun;
@@ -337,11 +345,12 @@ var DungeonManager = {
 
   // v3.460.0 : toute vague (élite, escorte, boss) passe ici, mise au niveau du run
   buildWaveEnemy: function (wave) {
-    var built = this.buildWaveEnemyBase(wave), m = this.getLevelMult(this.getRunLevel());
-    if (m.hp === 1 && m.power === 1) return built;
+    var built = this.buildWaveEnemyBase(wave), m = this.getLevelMult(this.getRunLevel()), gm = this.getRunGoldMult();
+    if (m.hp === 1 && m.power === 1 && gm === 1) return built;
     [].concat(built).forEach(function (e) {
       e.hp = e.maxHp = Math.max(1, Math.floor(e.maxHp * m.hp));
       if (e.stats) e.stats.power = Math.max(1, Math.floor((e.stats.power || 0) * m.power));
+      if (e.goldReward) e.goldReward = Math.max(1, Math.floor(e.goldReward * gm)); // v3.462.0 : l'or des vagues suit le run
     });
     return built;
   },
@@ -468,7 +477,7 @@ var DungeonManager = {
     run.camp = "pending";
     var kept = window.SortieManager ? SortieManager.secure() : { gold: 0, items: [], resources: {} };
     var stone = 0;
-    if (dungeon.specialResourceId && camp.stoneAmount > 0 && window.WarehouseManager && typeof WarehouseManager.addResource === "function") {
+    if (!run.free && dungeon.specialResourceId && camp.stoneAmount > 0 && window.WarehouseManager && typeof WarehouseManager.addResource === "function") {
       stone = WarehouseManager.addResource(dungeon.specialResourceId, Number(camp.stoneAmount), true) || 0;
     }
     run.campLoot = {
@@ -551,31 +560,35 @@ var DungeonManager = {
   },
 
   /* marks : tableau d'id de DUNGEON_MARKS choisis dans la feuille de lancement (figés pour le run).
-     level (v3.460.0) : 1 par défaut, borné à getMaxLevel ; la sortie de l'Histoire se joue au niveau 1. */
-  start: function (dungeonId, marks, level) {
+     level (v3.460.0) : 1 par défaut, borné à getMaxLevel ; la sortie de l'Histoire se joue au niveau 1.
+     free (v3.462.0, N6) : mode libre, hors quota du jour, pour un donjon déjà fini (N-M) ; jamais un ticket d'Histoire. */
+  start: function (dungeonId, marks, level, free) {
     this.ensure();
     this.checkTicketReset();
 
     var dungeon = this.getById(dungeonId);
     if (!this.isUnlocked(dungeon.id)) return showToast(_t("Donjon verrouillé"), 1200);
     if ((game.heroHp || 0) <= 0) return showToast(_t("Héros à terre — repose-toi au Campement d'abord"), 1600);
-    var storyFree = this.isStoryTicketFree(dungeon.id); // v3.136.0
-    if (!storyFree && this.getRunsLeft(dungeon.id) <= 0) return showToast(_t("Plus de sortie aujourd'hui dans ce donjon — renouvellement dans {d}", { d: this.timeUntilTicketReset() }), 1800);
+    var freeRun = !!free;
+    if (freeRun && !game.dungeonTierCleared[dungeon.id]) return showToast(_t("Mode libre : termine d'abord ce donjon une fois"), 1800);
+    var storyFree = !freeRun && this.isStoryTicketFree(dungeon.id); // v3.136.0
+    if (!storyFree && !freeRun && this.getRunsLeft(dungeon.id) <= 0) return showToast(_t("Plus de sortie aujourd'hui dans ce donjon — renouvellement dans {d}", { d: this.timeUntilTicketReset() }), 1800);
     if (game.dungeonRun.active) return showToast(_t("Donjon déjà en cours"), 1200);
     if (game.adventureQuestRun && game.adventureQuestRun.active) return showToast(_t("Termine ou abandonne ta quête en cours avant d'entrer en donjon"), 1600);
     if (game.huntRun && game.huntRun.active) return showToast(_t("Termine ou arrête ta chasse en cours avant d'entrer en donjon"), 1600);
     if (window.heroLockToast && heroLockToast()) return; // v3.307.0 : héros en expédition
     // v3.330.0 (E4) : vivres de sortie pour un donjon déjà fini une fois (jamais sur un ticket d'Histoire)
     if (window.ProvisionsManager) {
-      var noFood = ProvisionsManager.check("dungeon", dungeon);
+      var foodKind = freeRun ? "dungeonFree" : "dungeon"; // v3.462.0 (N-L) : Ration moyenne en mode libre
+      var noFood = ProvisionsManager.check(foodKind, dungeon);
       if (noFood) return showToast(noFood, 2200);
-      ProvisionsManager.consume("dungeon", dungeon);
+      ProvisionsManager.consume(foodKind, dungeon);
     }
 
-    if (!storyFree) game.dungeonRunsUsed[dungeon.id] = this.getRunsUsed(dungeon.id) + 1; // v3.358.0 (D7) : une sortie du jour ; celle de l'Histoire est offerte
+    if (!storyFree && !freeRun) game.dungeonRunsUsed[dungeon.id] = this.getRunsUsed(dungeon.id) + 1; // v3.358.0 (D7) : une sortie du jour ; celle de l'Histoire est offerte
     var runMarks = this.sanitizeMarks(marks, dungeon.id);
     var runLevel = storyFree ? 1 : Math.max(1, Math.min(this.getMaxLevel(dungeon.id), Math.floor(Number(level) || 1)));
-    game.dungeonRun = { active: true, wave: 0, dungeonId: dungeon.id, level: runLevel, marks: runMarks, shardsEarned: 0 };
+    game.dungeonRun = { active: true, wave: 0, dungeonId: dungeon.id, level: runLevel, free: freeRun, marks: runMarks, shardsEarned: 0 };
     if (!game.dungeonTiersEntered || typeof game.dungeonTiersEntered !== "object") game.dungeonTiersEntered = {};
     game.dungeonTiersEntered[dungeon.id] = true;
     game.heroHp = game.heroMaxHp || 1;
@@ -660,8 +673,8 @@ var DungeonManager = {
     var progress = Math.max(0, Math.min(1, clearedWave / wavesTotal));
 
     var runLevel = this.getRunLevel(), beyond = this.getLevelBeyond(tier, runLevel); // v3.461.0 : or au-delà du plafond (N-I)
-    var worldBonus = (1 + Math.max(0, tier.worldPower || 0) * 0.5 + Math.sqrt(Math.max(1, tier.difficultyMult || 1)) * 0.4) * markMult
-      * (1 + beyond * (DUNGEON_CONFIG.beyondGoldPct || 0));
+    var freeRun = !!game.dungeonRun.free, goldMult = this.getRunGoldMult(); // v3.462.0 : ÷ 4 en mode libre (N-H)
+    var worldBonus = (1 + Math.max(0, tier.worldPower || 0) * 0.5 + Math.sqrt(Math.max(1, tier.difficultyMult || 1)) * 0.4) * markMult * goldMult;
     var goldReward, grantLoot, lootRarity; // v3.358.0 (D7) : l'essence de fin est fondue dans l'or (fullClearGoldBase)
 
     var rarityOrder = (typeof RARITY_ORDER !== "undefined" && RARITY_ORDER) || ["common", "green", "rare", "epic", "legendary"];
@@ -716,6 +729,12 @@ var DungeonManager = {
         game.dungeonRun.shardsEarned = Number(game.dungeonRun.shardsEarned || 0) + echo;
       }
     }
+    // v3.462.0 (N-C) : mode libre, Éclats du run ÷ 2, en fin de calcul
+    if (freeRun) {
+      var cut = Number(game.dungeonRun.shardsEarned || 0) - Math.floor(Number(game.dungeonRun.shardsEarned || 0) * (DUNGEON_CONFIG.freeShardMult || 1));
+      game.dungeonShards = Math.max(0, Number(game.dungeonShards || 0) - cut);
+      game.dungeonRun.shardsEarned = Number(game.dungeonRun.shardsEarned || 0) - cut;
+    }
     if (success && window.MemoryManager) MemoryManager.souvenir("dungeonClear", _t("Souvenir : {x} terminé", { x: tier && tier.name ? _td(tier.name) : _t("donjon") }));
 
     goldReward = Math.floor(goldReward * fioleMult);
@@ -734,7 +753,7 @@ var DungeonManager = {
        WarehouseManager, seul point d'entrée des ressources. */
     var specialGained = 0;
     var specialDef = null;
-    if (success && tier.specialResourceId && tier.specialResourceAmount > 0
+    if (success && !freeRun && tier.specialResourceId && tier.specialResourceAmount > 0 // v3.462.0 (N6) : rien en mode libre
         && window.WarehouseManager && typeof WarehouseManager.addResource === "function") {
       specialDef = WAREHOUSE_RESOURCES[tier.specialResourceId] || null;
       if (specialDef) {

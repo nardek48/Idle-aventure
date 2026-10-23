@@ -1089,6 +1089,7 @@ I18n.register("en", {
   "Bonus de set inactif": "Set bonus inactive",
   "Trouvé en {w}": "Found in {w}",
   "Touché par l'Aether · niveau {n}": "Aether-touched · level {n}",
+  "Mode libre : termine d'abord ce donjon une fois": "Free mode: clear this dungeon once first",
   "Aucun objet sélectionné": "No item selected",
   "Touche un objet dans le sac pour voir son détail ici.": "Tap an item in the bag to see its details here.",
   "Offrir (+{n} Aether)": "Offer (+{n} Aether)",

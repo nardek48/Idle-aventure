@@ -30,6 +30,10 @@ var DUNGEON_CONFIG = {
   beyondShardPct: 0.10,
   beyondFloorPct: 0.05,
   beyondFloorMax: 0.80,
+  /* v3.462.0 (N-C, N-H) : mode libre (sorties illimitées, donjon déjà fini) : tout l'or du run ÷ 4,
+     Éclats ÷ 2, pas de ressource de monde ; 1 Ration moyenne par run (N-L, provisions-system.js). */
+  freeGoldMult: 0.25,
+  freeShardMult: 0.5,
 
   shardsPerWaveCleared: 1,
   shardsBossBonus: 10,

@@ -22,6 +22,7 @@ var ProvisionsManager = {
      { mapId, sectorId, worldId } pour une élite de carte. */
   getRequirement: function (kind, ref) {
     if (!ref) return null;
+    if (kind === "dungeonFree") return { resourceId: "ration", amount: 1 }; // v3.462.0 (N-L) : mode libre, tous les donjons
     var worldId = ref.worldId || "forest";
     var resourceId = PROVISIONS_BY_WORLD[worldId] || null;
     if (!resourceId) return null; // mondes suivants : à régler avec eux

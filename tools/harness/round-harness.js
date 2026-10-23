@@ -4486,7 +4486,7 @@ console.log("\n[32b] v3.223.0 \u2014 Donjons : plafond par monde et mat\u00e9ria
   /* La r\u00e9compense n'est cr\u00e9dit\u00e9e qu'\u00e0 la r\u00e9ussite compl\u00e8te : une fuite ou
      une mort n'en donne pas, comme pour le butin d'\u00e9quipement. */
   var src = String(g.DungeonManager.finish);
-  ok(src.indexOf("success && tier.specialResourceId") !== -1,
+  ok(src.indexOf("success && !freeRun && tier.specialResourceId") !== -1, // v3.462.0 : jamais en mode libre
     "le mat\u00e9riau n'est cr\u00e9dit\u00e9 qu'en cas de r\u00e9ussite");
   ok(src.indexOf("WarehouseManager.addResource") !== -1,
     "...et cr\u00e9dit\u00e9 par WarehouseManager, seul point d'entr\u00e9e des ressources");
@@ -5706,7 +5706,8 @@ console.log("\n[53b] v3.251.0 \u2014 \u00c9tats de combat (bandeau, rang\u00e9e,
 
   /* v3.459.7 (audit O13) : bandeau de la cible de combat-screen-view.js — puces d'alerte (avec le
      MOT), pastilles d'état sur le nom de la cible, feuille des états. */
-  function puces() { return (g.buildCbxTargetHTML().match(/class="cbx-chip /g) || []).length; }
+  // le cache de 500 ms de « Régler d'un coup » ne suit pas le combat : vidé à chaque lecture
+  function puces() { if (g.CombatQuick) g.CombatQuick.invalidate(); return (g.buildCbxTargetHTML().match(/class="cbx-chip /g) || []).length; }
   function pastilles() { return (g.buildCbxTargetHTML().match(/class="cbx-badge( is-sup)?"/g) || []).length; }
 
   /* --- Rien d'actif : ni puce ni pastille --- */
@@ -16667,6 +16668,7 @@ console.log("\n[272] v3.460.0 — Niveaux de donjon : puissance, paliers de buti
   ok(D.getLevelBest(1) === 1 && D.getMaxLevel(1) === 2 && D.getMaxLevel(4) === 1, "donjon fini avant les niveaux = niveau 1 tenu ; jamais fini = niveau 1 seul");
   game.dungeonLevelBest = { 1: 6 };
   game.heroHp = game.heroMaxHp; game.dungeonRunsUsed = {};
+  var pv = { check: g.ProvisionsManager.check, consume: g.ProvisionsManager.consume };
   run("ProvisionsManager.check = function () { return null; }; ProvisionsManager.consume = function () {};");
   D.start(1, [], 50);
   ok(game.dungeonRun.active && game.dungeonRun.level === 7, "start borne le niveau au meilleur + 1 (demandé 50 → " + game.dungeonRun.level + ")");
@@ -16688,7 +16690,7 @@ console.log("\n[272] v3.460.0 — Niveaux de donjon : puissance, paliers de buti
   run("fullResetState()");
   ok(JSON.stringify(game.dungeonLevelBest) === "{}", "fullResetState le remet à zéro");
   ok(JSON.stringify(g.createInitialGameState().dungeonLevelBest) === "{}", "createInitialGameState : {} par défaut");
-  SQ.isStepReached = reach;
+  SQ.isStepReached = reach; g.ProvisionsManager.check = pv.check; g.ProvisionsManager.consume = pv.consume;
 })();
 
 console.log("\n[273] v3.461.0 — Au-delà du plafond : or, Éclats, objets « Touché par l'Aether »");
@@ -16722,6 +16724,7 @@ console.log("\n[273] v3.461.0 — Au-delà du plafond : or, Éclats, objets « T
   var html = g.buildItemOriginHTML({ slot: "weapon", worldIndex: 3, aether: 7 });
   ok(/Touché par l(&#39;|&#039;|')Aether · niveau 7/.test(html) && g.buildItemOriginHTML({ slot: "weapon", worldIndex: 3 }).indexOf("Aether") < 0, "fiche : « Touché par l'Aether · niveau 7 », rien sur un objet ordinaire");
   // or et Éclats de fin : Crypte 5 = ×1,4 face à la Crypte 1
+  var pv = { check: g.ProvisionsManager.check, consume: g.ProvisionsManager.consume };
   run("ProvisionsManager.check = function () { return null; }; ProvisionsManager.consume = function () {};");
   var fin = function (L) {
     game.heroHp = game.heroMaxHp; game.dungeonRunsUsed = {}; game.dungeonLevelBest = { 4: 10 };
@@ -16732,7 +16735,7 @@ console.log("\n[273] v3.461.0 — Au-delà du plafond : or, Éclats, objets « T
   var r1 = fin(1), r5 = fin(5);
   ok(r1.or > 0 && Math.abs(r5.or / r1.or - 1.4) < 0.01, "or de fin : Crypte 5 = ×1,4 (" + r1.or + " → " + r5.or + ")");
   ok(r5.ec - r1.ec === Math.floor((22 + r1.ec) * 0.4), "Éclats du run : +40 % au niveau 5 (" + r1.ec + " → " + r5.ec + ")");
-  SQ.isStepReached = reach;
+  SQ.isStepReached = reach; g.ProvisionsManager.check = pv.check; g.ProvisionsManager.consume = pv.consume;
 })();
 
 console.log("\n[274] v3.461.2 — Vivres : Ration moyenne aux Ruines et à la Crypte (N-L)");
@@ -16750,6 +16753,59 @@ console.log("\n[274] v3.461.2 — Vivres : Ration moyenne aux Ruines et à la Cr
   ok(res(4) === "aucune", "première victoire à la Crypte : gratuite");
   ok(/Ruines/.test(g.WAREHOUSE_RESOURCES.ration.desc), "la description de la Ration moyenne cite les Ruines et la Crypte");
   SQ.isStepReached = reach; g.LivingMapManager.isLiberated = lib;
+})();
+
+console.log("\n[275] v3.462.0 — Mode libre (N6) et or des vagues au niveau");
+(function () {
+  game = freshCombat("knight");
+  var D = g.DungeonManager, SQ = g.StoryQuestManager, reach = SQ.isStepReached, W = g.WarehouseManager;
+  game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true };
+  SQ.isStepReached = function () { return true; };
+  var prep = function () { game.heroHp = game.heroMaxHp; game.dungeonLevelBest = { 4: 10 }; };
+  // accès : un donjon jamais fini refuse le mode libre
+  game.dungeonTierCleared = { 1: true, 2: true, 3: true };
+  prep(); D.start(4, [], 1, true);
+  ok(!game.dungeonRun.active, "Crypte jamais finie : mode libre refusé");
+  game.dungeonTierCleared = { 1: true, 2: true, 3: true, 4: true };
+  // vivres : 1 Ration moyenne, même à la Tanière ; refus sans ration
+  W.removeResource("ration", W.getAmount("ration"));
+  prep(); D.start(1, [], 1, true);
+  ok(!game.dungeonRun.active, "sans Ration moyenne : mode libre refusé");
+  ok((g.ProvisionsManager.getRequirement("dungeonFree", D.getById(1)) || {}).resourceId === "ration", "Tanière en libre : Ration moyenne (et non Petite ration)");
+  W.addResource("ration", 5, true);
+  game.dungeonRunsUsed = { 4: 3 };   // quota du jour épuisé
+  prep(); D.start(4, [], 1, true);
+  ok(game.dungeonRun.active && game.dungeonRun.free === true, "quota du jour épuisé : le mode libre part quand même");
+  ok(W.getAmount("ration") === 4 && game.dungeonRunsUsed[4] === 3, "1 Ration moyenne prélevée, quota du jour intact");
+  // or des vagues : ÷ 4 en libre, ×1,4 au niveau 5
+  var r = Math.random; Math.random = function () { return 0; };
+  var vg = [].concat(D.buildWaveEnemy(7))[0].goldReward;
+  game.dungeonRun.free = false; var vc = [].concat(D.buildWaveEnemy(7))[0].goldReward;
+  game.dungeonRun.level = 5; var v5 = [].concat(D.buildWaveEnemy(7))[0].goldReward;
+  Math.random = r;
+  ok(Math.abs(vg / vc - 0.25) < 0.02, "or d'un monstre de vague : ÷ 4 en libre (" + vc + " → " + vg + ")");
+  ok(Math.abs(v5 / vc - 1.4) < 0.02, "et ×1,4 à la Crypte 5 (" + vc + " → " + v5 + ")");
+  game.dungeonRun.free = true; game.dungeonRun.level = 1;
+  // fin de run libre : or ÷ 4, Éclats ÷ 2, pas de Cire de sépulcre
+  var fin = function (free) {
+    prep(); game.dungeonRunsUsed = {};
+    if (!game.dungeonRun.active) D.start(4, [], 1, free);
+    game.dungeonRun.shardsEarned = 22; game.dungeonShards += 22;
+    var or0 = game.gold, ec0 = game.dungeonShards, cire0 = W.getAmount(D.getById(4).specialResourceId);
+    D.finish(true, 15, "success");
+    return { or: game.gold - or0, ec: game.dungeonShards - ec0 + 22, cire: W.getAmount(D.getById(4).specialResourceId) - cire0 };
+  };
+  var fl = fin(true), cl = fin(false);
+  ok(cl.or > 0 && Math.abs(fl.or / cl.or - 0.25) < 0.01, "or de fin : ÷ 4 en libre (" + cl.or + " → " + fl.or + ")");
+  ok(fl.ec === Math.floor(cl.ec * 0.5), "Éclats du run : ÷ 2 en libre (" + cl.ec + " → " + fl.ec + ")");
+  ok(fl.cire === 0 && cl.cire > 0, "ressource de monde : aucune en libre (" + cl.cire + " en classique)");
+  ok(game.dungeonLevelBest[4] >= 1, "le meilleur niveau compte dans les deux modes");
+  // un ticket d'Histoire n'est jamais pris en mode libre
+  var free0 = D.isStoryTicketFree; D.isStoryTicketFree = function () { return true; };
+  prep(); game.dungeonRunsUsed = { 4: 3 }; D.start(4, [], 3, true);
+  ok(game.dungeonRun.free === true && game.dungeonRun.level === 3, "avec un ticket d'Histoire en attente, le run libre reste libre (niveau 3)");
+  D.finish(false, 0, "death"); D.isStoryTicketFree = free0;
+  SQ.isStepReached = reach;
 })();
 
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
