@@ -8,7 +8,9 @@ DEPOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__
 LOT, NEUF = sys.argv[1], os.path.abspath(sys.argv[2])
 PUB = sys.argv[sys.argv.index('--publication') + 1] if '--publication' in sys.argv else None
 CAP = os.path.join(DEPOT, 'captures', 'bestiaire-' + LOT)
-MONDES = {'forest': 'Forêt enchantée', 'desert': 'Désert oublié', 'ruins': 'Ruines anciennes', 'crypt': 'Crypte des dormeurs', 'mountain': 'Montagne brûlante', 'tower': 'Tour du sorcier'}
+# Nom court (titre) et nom avec article (en-tête) de chaque monde
+MONDES = {'forest': ('Forêt', 'de la Forêt enchantée'), 'desert': ('Désert', 'du Désert oublié'), 'ruins': ('Ruines', 'des Ruines anciennes'),
+          'crypt': ('Crypte', 'de la Crypte des dormeurs'), 'mountain': ('Montagne', 'de la Montagne brûlante'), 'tower': ('Tour', 'de la Tour du sorcier')}
 
 def b64(im, q=80):
     buf = io.BytesIO(); im.convert('RGB').save(buf, 'WEBP', quality=q, method=6)
@@ -20,7 +22,7 @@ conf = json.load(open(os.path.join(CAP, 'scenes.json')))
 # Trois sections : ennemis seuls, boss et élites (intro comprise), groupes
 scenes = {}
 for sc in conf['scenes']:
-    sec = 'groupe' if 'groupe' in sc else ('boss' if ('boss' in sc or 'elite' in sc) else 'seul')
+    sec = 'boss' if ('boss' in sc or 'elite' in sc or sc.get('bossQuete')) else ('groupe' if ('groupe' in sc or 'q' in sc) else 'seul')
     cap = sc.get('cap') or ('Seul en combat.' if sec == 'seul' else '')
     scenes[sc['k']] = {'nom': sc['nom'], 'cap': cap, 'sec': sec, 'actuel': shot('actuel_' + sc['k']), 'neuf': shot('neuf_' + sc['k'])}
     if sc.get('intro'):
@@ -35,7 +37,8 @@ for racine, _, fichiers in sorted(os.walk(os.path.join(NEUF, 'images'))):
         bruts.append({'chemin': rel, 'actuel': b64(Image.open(actuel).resize((420, 420), Image.LANCZOS), 82) if os.path.exists(actuel) else '',
                       'neuf': b64(Image.open(os.path.join(racine, f)).resize((420, 420), Image.LANCZOS), 82)})
 ver = open(os.path.join(DEPOT, 'game/js/core/constants.js')).read().split('GAME_VERSION')[1].split('"')[1]
-monde = MONDES.get(conf['monde'], conf['monde'])
+court, long = MONDES.get(conf['monde'], (conf['monde'], conf['monde']))
+note = conf.get('note') or ''
 
 corps = '''<title>Atelier images LOT_TITRE</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -73,6 +76,7 @@ figcaption { font: 600 12px var(--f-texte); color: var(--sourd); text-align: cen
 <div class="wrap" id="wrap">
   <h1>Atelier images LOT_MONDE</h1>
   <p class="intro">Captures du vrai jeu (vLOT_VER) à 390 × 844, Chevalier niveau 1. Seules les images fournies changent entre « Actuelle » et « Nouvelle ».</p>
+  LOT_NOTE
   <p class="lbl">Seuls</p>
   <div class="rail" id="rail-seul" role="group" aria-label="Ennemi seul"></div>
   <p class="lbl">Boss et élites</p>
@@ -121,7 +125,7 @@ document.getElementById("bruts").innerHTML = BRUTS.map(function (b) {
 rendre();
 </script>
 '''
-corps = (corps.replace('LOT_TITRE', monde.split(' ')[0]).replace('LOT_MONDE', 'de la ' + monde if monde.startswith(('Forêt', 'Crypte', 'Montagne', 'Tour')) else 'des ' + monde)
+corps = (corps.replace('LOT_TITRE', court).replace('LOT_MONDE', long).replace('LOT_NOTE', ('<p class="intro">' + note + '</p>') if note else '')
          .replace('LOT_VER', ver).replace('LOT_CLE', LOT)
          .replace('LOT_SCENES', json.dumps(scenes, ensure_ascii=False)).replace('LOT_BRUTS', json.dumps(bruts, ensure_ascii=False)))
 if PUB:
