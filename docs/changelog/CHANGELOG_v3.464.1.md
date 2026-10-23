@@ -24,4 +24,4 @@ Changements de rendu voulus (prompts validés) : le Dragon ancien passe du bleu-
 Comme pour la Crypte et la Forêt, les images vivent dans le cache durable du service worker : chez un joueur qui avait déjà l'ancienne image, la nouvelle s'affiche à la deuxième ouverture.
 
 ## Contrôles
-- round-harness 4628 OK, 0 échec (deux passes) ; boot (4), création du héros (44) OK.
+- round-harness 4628 OK, 0 échec (deux passes) ; boot (4), création du héros (44), parcours (139) OK.
