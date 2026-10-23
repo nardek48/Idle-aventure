@@ -10,9 +10,10 @@
    L'Histoire et les premières victoires restent gratuites : un joueur qui avance vite n'est
    jamais bloqué. Aux actes I et II de la Forêt, rien du tout (découverte du jeu).
    Forêt : Petite ration. Désert : Ration moyenne (recette revue, data/workshops.js).
+   v3.461.2 (N-L, Seb) : Ruines et Crypte aussi en Ration moyenne, le stock s'accumulait après le Désert.
    Les Petites Aventures gardent leur propre coût d'entrée (scene-templates.js, entryCost). */
 
-var PROVISIONS_BY_WORLD = { forest: "petite_ration", desert: "ration" };
+var PROVISIONS_BY_WORLD = { forest: "petite_ration", desert: "ration", ruins: "ration", crypt: "ration" };
 var PROVISIONS_FREE_UNTIL_STEP = "forest_crossing"; // acte III de la Forêt
 
 var ProvisionsManager = {

@@ -16735,6 +16735,23 @@ console.log("\n[273] v3.461.0 — Au-delà du plafond : or, Éclats, objets « T
   SQ.isStepReached = reach;
 })();
 
+console.log("\n[274] v3.461.2 — Vivres : Ration moyenne aux Ruines et à la Crypte (N-L)");
+(function () {
+  game = freshCombat("knight");
+  var P = g.ProvisionsManager, D = g.DungeonManager, SQ = g.StoryQuestManager, reach = SQ.isStepReached, lib = g.LivingMapManager.isLiberated;
+  SQ.isStepReached = function () { return true; };
+  g.LivingMapManager.isLiberated = function () { return true; };
+  game.dungeonTierCleared = { 1: true, 2: true, 3: true, 4: true };
+  var res = function (id) { return (P.getRequirement("dungeon", D.getById(id)) || {}).resourceId || "aucune"; };
+  ok(res(1) === "petite_ration" && res(2) === "ration", "Tanière : Petite ration, Cité : Ration moyenne (inchangé)");
+  ok(res(3) === "ration" && res(4) === "ration", "Ruines et Crypte rejouées : Ration moyenne");
+  ok((P.getRequirement("mapelite", { mapId: "crypt", sectorId: "x", worldId: "crypt" }) || {}).resourceId === "ration", "élite de carte de la Crypte rejouée : Ration moyenne");
+  game.dungeonTierCleared = { 1: true, 2: true, 3: true };
+  ok(res(4) === "aucune", "première victoire à la Crypte : gratuite");
+  ok(/Ruines/.test(g.WAREHOUSE_RESOURCES.ration.desc), "la description de la Ration moyenne cite les Ruines et la Crypte");
+  SQ.isStepReached = reach; g.LivingMapManager.isLiberated = lib;
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);
