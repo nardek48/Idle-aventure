@@ -61,6 +61,10 @@ var AVISE = ARGS.indexOf("--avise") >= 0;
 /* v3.459.10 (audit I2) : --apres <h> = après crypte_20, h heures simulées d'« après-Histoire » à l'Enchanteresse :
    chantier, puis Sève de la carte et relances des pièces Épiques ou mieux, tant que l'or suit. */
 var APRES_H = ARGS.indexOf("--apres") >= 0 ? Number(ARGS[ARGS.indexOf("--apres") + 1]) || 0 : 0;
+/* Lot 0 des niveaux de donjon (conception v0.2) : --faille = après l'Histoire, chaque donjon monté de
+   niveau en niveau (PV ×1,15ⁿ⁻¹, dégâts ×1,10ⁿ⁻¹, simulés dans le banc) jusqu'à l'échec. */
+var FAILLE = ARGS.indexOf("--faille") >= 0;
+var FAILLE_PV = Number(process.env.FAILLE_PV || 0.15), FAILLE_DMG = Number(process.env.FAILLE_DMG || 0.10);
 /* v3.428.0 : --jusqua <étape> arrête la campagne à l'entrée de cette étape (sauvegarde de test). */
 var JUSQUA = ARGS.indexOf("--jusqua") >= 0 ? ARGS[ARGS.indexOf("--jusqua") + 1] : null;
 var TALENTS_AVISES = {
@@ -1541,6 +1545,58 @@ function activateGrimoireRule(g) {
 try { run(); }
 catch (e) { ok(false, "interrompu : " + e.message + "\n" + String(e.stack).split("\n").slice(1, 4).join("\n")); }
 if (APRES_H > 0) { try { apresHistoire(APRES_H); } catch (e) { ok(false, "après-Histoire interrompu : " + e.message); } }
+if (FAILLE) { try { failleBench(); } catch (e) { ok(false, "faille interrompue : " + e.message + " " + String(e.stack).split("\n")[1]); } }
+
+/* Un run de donjon au niveau L, héros remis à neuf : { ok, rounds, pvPerdus, or, eclats, vague }. */
+function failleRun(id, L) {
+  var g = G, D = g.DungeonManager;
+  g.game.heroHp = g.game.heroMaxHp; refillPotions();
+  g.game.dungeonRunsUsed = {}; g.game.dungeonTierCleared = { 1: true, 2: true, 3: true, 4: true };
+  ["petite_ration", "ration", "grande_ration"].forEach(function (k) { if (g.WarehouseManager.getAmount(k) < 10) g.WarehouseManager.addResource(k, 10, true); }); // vivres de sortie : hors mesure
+  var orig = D.buildWaveEnemy, mh = Math.pow(1 + FAILLE_PV, L - 1), mp = Math.pow(1 + FAILLE_DMG, L - 1);
+  D.buildWaveEnemy = function (w) {
+    var e = orig.call(this, w);
+    [].concat(e).forEach(function (x) {
+      if (!x) return;
+      x.hp = x.maxHp = Math.max(1, Math.floor(Number(x.maxHp || x.hp || 1) * mh));
+      if (x.stats) x.stats.power = Math.max(1, Math.floor(Number(x.stats.power || 0) * mp));
+    });
+    return e;
+  };
+  var boss0 = Number(g.game.dungeonBossClears || 0), or0 = g.game.gold + (g.game.sortie && g.game.sortie.loot ? Number(g.game.sortie.loot.gold || 0) : 0);
+  var ec0 = Number(g.game.dungeonShards || 0), c0 = STATS.combatMs, f0 = STATS.fights.length;
+  try {
+    D.start(id, []);
+    if (!g.game.dungeonRun.active) { note("faille " + id + " N" + L + " : entrée refusée"); return null; }
+    winCombat(400);
+    flushTimers(g);
+    if (g.closeDungeonSummary) g.closeDungeonSummary();
+  } finally { D.buildWaveEnemy = orig; }
+  var fights = STATS.fights.slice(f0), rounds = fights.reduce(function (a, f) { return a + (f.rounds || 0); }, 0);
+  var r = { ok: Number(g.game.dungeonBossClears || 0) > boss0, rounds: rounds, combatH: (STATS.combatMs - c0) / 3600e3,
+    or: Math.floor(g.game.gold - or0), eclats: Number(g.game.dungeonShards || 0) - ec0, vague: LAST_WAVE };
+  return r;
+}
+
+function failleBench() {
+  var g = G, RUNS = Number(process.env.FAILLE_RUNS || 3), out = STATS.faille = {};
+  CURRENT_STEP = "faille";
+  console.log("Faille (PV +" + Math.round(FAILLE_PV * 100) + " %, dégâts +" + Math.round(FAILLE_DMG * 100) + " % par niveau) · " + combatLine().split(" · Forge")[0]);
+  [1, 2, 3, 4].forEach(function (id) {
+    var lignes = {}, L = 1, pas = 4, dernier = 0;
+    function mesure(n) {
+      var rs = []; for (var k = 0; k < RUNS; k++) { var r = failleRun(id, n); if (r) rs.push(r); }
+      var ok = rs.filter(function (r) { return r.ok; }).length;
+      var moy = function (f) { var v = rs.filter(function (r) { return r.ok; }); return v.length ? v.reduce(function (a, r) { return a + f(r); }, 0) / v.length : 0; };
+      lignes[n] = { ok: ok, n: rs.length, rounds: Math.round(moy(function (r) { return r.rounds; })), combatMin: Math.round(moy(function (r) { return r.combatH * 60; })), or: Math.round(moy(function (r) { return r.or; })), eclats: Math.round(moy(function (r) { return r.eclats; })) };
+      return ok / Math.max(1, rs.length);
+    }
+    while (L <= 80) { if (mesure(L) >= 0.5) { dernier = L; L += pas; } else break; }
+    for (var n = dernier + 1; n < Math.min(L, 81); n++) { if (mesure(n) >= 0.5) dernier = n; else break; }   // affinage entre deux pas
+    out[id] = { tenu: dernier, lignes: lignes };
+    console.log("  donjon " + id + " : niveau tenu (≥ 50 %) " + dernier + " · " + Object.keys(lignes).map(Number).sort(function (a, b) { return a - b; }).map(function (n) { var x = lignes[n]; return "N" + n + " " + x.ok + "/" + x.n + (x.ok ? " (" + x.rounds + " r, " + x.combatMin + " min, " + x.or + " or, " + x.eclats + " éc.)" : ""); }).join(" · "));
+  });
+}
 
 /* Après-Histoire (--apres) : l'or qui dort part-il à l'Enchanteresse quand on va chercher sa Sève ? */
 function apresHistoire(h) {
