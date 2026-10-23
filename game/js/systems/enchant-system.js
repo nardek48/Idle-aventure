@@ -36,6 +36,10 @@ var ENCHANT_COST_MULT = 1.55;
    fin de jeu. Doigté de l'Enchanteresse (boutique d'Éclats) : −10 % d'or par niveau. */
 var ENCHANT_DOIGTE_PCT = 0.10;
 
+/* v3.465.0 (conception Enchanteresse v0.1, E-B) : une transmutation vaut 2 relances de base,
+   puis ×1,55 par transmutation de la même ligne (compteur a.transmutes, à part des relances). */
+var ENCHANT_TRANSMUTE_BASE = 2;
+
 var EnchantManager = {
 
   getBuildingLevel: function () {
@@ -125,6 +129,76 @@ var EnchantManager = {
     return { min: range[0] * scale, max: range[1] * scale, decimals: rule.decimals || 0 };
   },
 
+  /* ---------- Transmutation (v3.465.0, E-A) : changer la stat d'une ligne ----------
+     Stats de son groupe (combat ou secondaire) absentes de la pièce ; la valeur garde sa place
+     dans la fourchette. Aucun état en sauvegarde : le compteur vit dans la ligne (a.transmutes). */
+  _rangeOf: function (item, stat) {
+    var rule = (typeof AFFIX_RANGES !== "undefined") ? AFFIX_RANGES[stat] : null;
+    if (!rule) return null;
+    var r = rule[item.rarity] || rule.green, scale = rule.flat ? getEquipWorldScale(Number(item.worldIndex) || 0) : 1;
+    return { min: r[0] * scale, max: r[1] * scale, decimals: rule.decimals || 0 };
+  },
+
+  getTransmuteOptions: function (item, index) {
+    var aff = item ? getItemAffixes(item) : [], a = aff[index];
+    var pools = (a && typeof AFFIX_POOLS !== "undefined") ? AFFIX_POOLS[item.slot] : null;
+    var cur = a ? this._rangeOf(item, a.stat) : null;
+    if (!pools || !cur) return [];
+    var taken = aff.map(function (x) { return x.stat; }).concat([item.stat]), self = this;
+    var p = cur.max > cur.min ? Math.max(0, Math.min(1, (Number(a.value) - cur.min) / (cur.max - cur.min))) : 1;
+    return (pools[a.tier === "S" ? "secondary" : "primary"] || []).filter(function (s) { return taken.indexOf(s) === -1; })
+      .map(function (s) {
+        var r = self._rangeOf(item, s);
+        if (!r) return null;
+        var f = Math.pow(10, r.decimals);
+        return { stat: s, value: Math.round((r.min + p * (r.max - r.min)) * f) / f };
+      }).filter(Boolean);
+  },
+
+  getTransmuteCount: function (item, index) {
+    var a = getItemAffixes(item)[index];
+    return (a && Number(a.transmutes)) || 0;
+  },
+
+  getTransmuteCost: function (item, index) {
+    if (!item || !this.canRerollRarity(item.rarity) || !getItemAffixes(item)[index]) return null;
+    var worldMult = (typeof getEquipShopWorldPriceMult === "function") ? getEquipShopWorldPriceMult() : 1;
+    var gold = (ENCHANT_BASE_GOLD[item.rarity] || 80) * ENCHANT_TRANSMUTE_BASE * Math.pow(ENCHANT_COST_MULT, this.getTransmuteCount(item, index)) * worldMult;
+    if (window.DungeonManager && typeof DungeonManager.getShardEffect === "function") {
+      gold *= Math.max(0, 1 - ENCHANT_DOIGTE_PCT * DungeonManager.getShardEffect("enchantDiscount"));
+    }
+    return { gold: Math.floor(gold) };
+  },
+
+  // Mêmes verrous que la relance, au prix de la transmutation ; null si possible
+  getTransmuteBlockReason: function (item, index) {
+    var reason = this.getBlockReason(item, index);
+    if (reason && reason !== _t("Ressources manquantes")) return reason;
+    if (!this.getTransmuteOptions(item, index).length) return _t("Aucune autre stat possible sur cette pièce");
+    var cost = this.getTransmuteCost(item, index);
+    if (!cost || Number(game.gold || 0) < cost.gold) return _t("Ressources manquantes");
+    return null;
+  },
+
+  transmute: function (item, index, stat) {
+    var reason = this.getTransmuteBlockReason(item, index);
+    if (reason) { showToast(reason, 1400); return false; }
+    var opt = this.getTransmuteOptions(item, index).filter(function (o) { return o.stat === stat; })[0];
+    if (!opt) return false;
+    var a = item.affixes[index], before = formatEquipmentStatValue(a.stat, a.value);
+    game.gold -= this.getTransmuteCost(item, index).gold;
+    a.stat = opt.stat;
+    a.value = opt.value;
+    a.transmutes = this.getTransmuteCount(item, index) + 1;
+    var after = formatEquipmentStatValue(a.stat, a.value);
+    addLog("✨ " + _t("{x} : {a} devient {b}.", { x: _td(item.name), a: before, b: after }), "event");
+    showToast("✨ " + after, 1300);
+    if (typeof StatsSystem !== "undefined") StatsSystem.recalcStats();
+    if (typeof renderAll === "function") renderAll();
+    saveGame();
+    return true;
+  },
+
   _rolling: false,
 
   /* Relance la ligne `index` de `item`. Renvoie true si la relance a eu lieu,
@@ -179,4 +253,5 @@ window.ENCHANT_RARITY_BY_LEVEL = ENCHANT_RARITY_BY_LEVEL;
 window.ENCHANT_BASE_GOLD = ENCHANT_BASE_GOLD;
 window.ENCHANT_DOIGTE_PCT = ENCHANT_DOIGTE_PCT;
 window.ENCHANT_COST_MULT = ENCHANT_COST_MULT;
+window.ENCHANT_TRANSMUTE_BASE = ENCHANT_TRANSMUTE_BASE;
 window.EnchantManager = EnchantManager;

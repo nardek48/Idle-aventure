@@ -16910,6 +16910,48 @@ console.log("\n[278] v3.464.2 — Décor des donjons : le monde du donjon (retou
   ok(ok2, "chaque donjon prend le décor de combat de son monde ; la Tanière garde le sien");
 })();
 
+console.log("\n[279] v3.465.0 — Enchanteresse : la transmutation (conception v0.1, atelier enchanteresse)");
+(function () {
+  game = freshCombat("knight");
+  var EM = g.EnchantManager;
+  run("VillageBuildingManager.ensure();");
+  game.village.buildings.enchanter = { level: 2 };
+  game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true };
+  game.dungeonShopLevels = {};
+  // arme Épique : base dégâts plats ; lignes multiplicateur (bas de fourchette) et expérience
+  var w = { uid: "t279", slot: "weapon", name: "Lame", rarity: "epic", stat: "tapDmg", value: 50, worldIndex: 3,
+    affixes: [{ stat: "tapMult", value: 0.25, tier: "P", rerolls: 2 }, { stat: "xpMult", value: 0.15, tier: "S" }] };
+  game.equipped.weapon = w;
+  var o0 = EM.getTransmuteOptions(w, 0), o1 = EM.getTransmuteOptions(w, 1);
+  ok(o0.map(function (o) { return o.stat; }).sort().join() === "critChance,critMult", "ligne combat : critique ou dégâts crit (ni la base ni la ligne déjà portée)");
+  ok(o0.filter(function (o) { return o.stat === "critChance"; })[0].value === 4 && o1.filter(function (o) { return o.stat === "goldMult"; })[0].value === 0.15, "la valeur garde sa place : bas de fourchette → 4 % critique ; haut → 15 % or");
+  ok(o1.map(function (o) { return o.stat; }).sort().join() === "dropChance,goldMult", "ligne secondaire : or ou butin");
+  ok(EM.getTransmuteCost(w, 0).gold === 35000, "prix : 2 relances de base, Épique en Crypte = 35 000 (" + EM.getTransmuteCost(w, 0).gold + ")");
+  game.gold = 200000;
+  ok(EM.transmute(w, 0, "critMult") === true && w.affixes[0].stat === "critMult" && w.affixes[0].value === 0.25 && w.affixes[0].transmutes === 1 && w.affixes[0].rerolls === 2 && game.gold === 165000,
+    "transmuter : la ligne devient dégâts crit (0,25), compteur 1, relances gardées, 35 000 or payés");
+  ok(EM.getTransmuteCost(w, 0).gold === Math.floor(35000 * 1.55), "la suivante coûte ×1,55 (" + EM.getTransmuteCost(w, 0).gold + ")");
+  ok(EM.getCost(w, 0).gold === Math.floor(700 * 25 * Math.pow(1.55, 2)), "le prix des relances de la ligne ne bouge pas");
+  ok(EM.transmute(w, 0, "tapDmg") === false && w.affixes[0].stat === "critMult", "la stat de base de la pièce est refusée");
+  game.dungeonShopLevels = { d_doigte: 1 };
+  ok(EM.getTransmuteCost(w, 1).gold === 31500, "Doigté 1 : −10 % (31 500)");
+  game.gold = 100;
+  ok(EM.getTransmuteBlockReason(w, 1) === "Ressources manquantes" && EM.transmute(w, 1, "goldMult") === false && w.affixes[1].stat === "xpMult", "sans l'or : refusé, rien ne change");
+  // pièce dont le groupe est plein : aucun choix
+  var a = { uid: "t279b", slot: "armor", name: "Cuirasse", rarity: "epic", stat: "defense", value: 0.04, worldIndex: 3,
+    affixes: [{ stat: "maxHpPct", value: 0.12, tier: "P" }, { stat: "autoDps", value: 25, tier: "P" }, { stat: "critChance", value: 5, tier: "P" }] };
+  ok(EM.getTransmuteOptions(a, 0).length === 0 && EM.getTransmuteBlockReason(a, 0) === "Aucune autre stat possible sur cette pièce", "groupe plein : « Aucune autre stat possible sur cette pièce »");
+  game.village.buildings.enchanter = { level: 1 };
+  ok(EM.getTransmuteBlockReason(w, 1) === "Niveau 2 requis", "Épique avec l'Enchanteresse 1 : « Niveau 2 requis »");
+  // écran
+  game.village.buildings.enchanter = { level: 2 }; game.gold = 200000;
+  g.setEnchanterSheetSegment("transmute");
+  var h = g.buildTransmuteBoardHTML();
+  ok(/ench-tr-chip/.test(h) && /askTransmuteAffix\('weapon',1,'goldMult'\)/.test(h), "onglet Transmuer : une puce par stat possible");
+  ok(/Relance et transmute les bonus/.test(g.VILLAGE_BUILDINGS.enchanter.effectLabel(2)) && /ou change sa nature/.test(g.VILLAGE_BUILDINGS.enchanter.desc), "textes du bâtiment mis à jour");
+  g.setEnchanterSheetSegment("relance");
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

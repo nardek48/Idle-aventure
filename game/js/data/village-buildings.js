@@ -308,7 +308,7 @@ var VILLAGE_BUILDINGS = {
     rank: 2,
     maxLevel: 3,
     implemented: true,
-    desc: "Relance la valeur d'un bonus sur une pièce équipée. Le bonus ne change jamais de nature, et la pièce ne peut pas empirer.",
+    desc: "Relance la valeur d'un bonus d'une pièce équipée, ou change sa nature. La pièce ne peut jamais empirer.", // v3.465.0 : transmutation
     costTiers: [
       {
         minLevel: 0, maxLevel: 0,
@@ -337,7 +337,7 @@ var VILLAGE_BUILDINGS = {
       var list = labels.slice(0, level).map(function (group) {
         return group.map(function (r) { return (RARITY_LABELS && RARITY_LABELS[r]) ? _td(RARITY_LABELS[r]) : r; }).join(", ");
       }).join(", ");
-      return _t("Relance les bonus : {liste}", { liste: list });
+      return _t("Relance et transmute les bonus : {liste}", { liste: list });
     }
   },
 

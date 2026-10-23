@@ -199,9 +199,10 @@ function buildVillageBuildingSheetHTML(id) {
     if (level <= 0) seg = "eclats";
     h += '<div class="kseg vb-sheet-seg">';
     h += '<button type="button"' + (level > 0 ? '' : ' disabled') + ' class="' + (seg === "relance" ? 'is-on' : '') + '" onclick="setEnchanterSheetSegment(\'relance\')">' + _t("Relance") + '</button>';
+    h += '<button type="button"' + (level > 0 ? '' : ' disabled') + ' class="' + (seg === "transmute" ? 'is-on' : '') + '" onclick="setEnchanterSheetSegment(\'transmute\')">' + _t("Transmuer") + '</button>'; // v3.465.0
     h += '<button type="button" class="' + (seg === "eclats" ? 'is-on' : '') + '" onclick="setEnchanterSheetSegment(\'eclats\')">' + _t("Éclats") + '<span class="kseg-count">' + formatNumber(game.dungeonShards || 0) + '</span></button>';
     h += '</div>';
-    h += (seg === "relance" && level > 0) ? buildEnchantBoardHTML() : buildShardShopBoardHTML();
+    h += (level > 0 && seg === "relance") ? buildEnchantBoardHTML() : (level > 0 && seg === "transmute") ? buildTransmuteBoardHTML() : buildShardShopBoardHTML();
   }
 
   /* La Taverne est le seul bâtiment dont la fiche porte du contenu jouable :
@@ -644,11 +645,67 @@ function buildEnchantBoardHTML() {
 }
 window.buildEnchantBoardHTML = buildEnchantBoardHTML;
 
+/* v3.465.0 (atelier/enchanteresse.html, validé le 23/10) : onglet Transmuer. Chaque bonus montre en
+   puces les stats qu'il peut devenir, valeur comprise ; une puce demande confirmation. */
+function buildTransmuteBoardHTML() {
+  if (!window.EnchantManager) return "";
+  var EM = EnchantManager, meta = getVillageCostMeta("gold");
+  var h = '<div class="forge-board">';
+  h += '<div class="forge-board-head"><img class=ico-inline src=images/Icons/scene/node_discovery.webp> ' + _t("Établi") + '<span class="forge-board-max">' + _t("Transmutation") + '</span></div>';
+  h += '<div class="forge-board-note">' + _t("Change la nature d'un bonus. La valeur garde sa place dans la fourchette : un bonus haut reste haut.") + '</div>';
+  var rows = 0;
+  EQUIPMENT_SLOTS.forEach(function (slot) {
+    var item = (game.equipped || {})[slot], aff = item ? getItemAffixes(item) : [];
+    if (!aff.length) return;
+    rows += 1;
+    var slotLabel = _td(EQUIPMENT_SLOT_LABELS[slot] || slot);
+    h += '<div class="ench-item"><div class="ench-item-name rarity-' + esc(item.rarity) + '">' + esc(_td(item.name))
+       + (slotLabel === _td(item.name) ? '' : ' <span class="forge-row-level">' + esc(slotLabel) + '</span>') + '</div>';
+    aff.forEach(function (a, i) {
+      var reason = EM.getTransmuteBlockReason(item, i), cost = EM.getTransmuteCost(item, i), n = EM.getTransmuteCount(item, i);
+      var opts = EM.getTransmuteOptions(item, i), poor = reason === _t("Ressources manquantes");
+      h += '<div class="forge-row"><div class="forge-row-main ench-tr-main">';
+      h += '<div class="forge-row-name">' + esc(formatEquipmentStatValue(a.stat, a.value))
+         + (n > 0 ? ' <span class="forge-row-level">' + _tn(n, "{n} transmutation", "{n} transmutations") + '</span>' : '') + '</div>';
+      if (reason && !poor) {
+        h += '<div class="ench-tr-none">' + esc(reason) + '</div>';
+      } else {
+        h += '<div class="forge-row-cost"><span class="forge-cost-item' + (poor ? ' is-missing' : '') + '">' + meta.iconHTML + formatNumber(cost.gold) + '</span></div>';
+        h += '<div class="ench-tr-chips">';
+        opts.forEach(function (o) {
+          h += '<button type="button" class="ench-tr-chip"' + (poor ? ' disabled' : '') + ' onclick="askTransmuteAffix(\'' + esc(slot) + '\',' + i + ',\'' + esc(o.stat) + '\')">'
+             + esc(formatEquipmentStatValue(o.stat, o.value)) + '</button>';
+        });
+        h += '</div>';
+      }
+      h += '</div></div>';
+    });
+    h += '</div>';
+  });
+  if (!rows) h += '<div class="forge-row-effect forge-row-empty">' + _t("Aucune pièce équipée ne porte de bonus. Les objets inhabituels et au-dessus en ont.") + '</div>';
+  h += '</div>';
+  return h;
+}
+window.buildTransmuteBoardHTML = buildTransmuteBoardHTML;
+
+function askTransmuteAffix(slot, index, stat) {
+  var item = (game.equipped || {})[slot], a = item && getItemAffixes(item)[index];
+  var o = a && EnchantManager.getTransmuteOptions(item, index).filter(function (x) { return x.stat === stat; })[0];
+  var cost = a && EnchantManager.getTransmuteCost(item, index);
+  if (!o || !cost) return;
+  showConfirmModal(_t("Transmuer ce bonus ?"),
+    _t("{a} devient {b}, pour {g} or. La ligne pourra être transmuée de nouveau, plus cher.", { a: formatEquipmentStatValue(a.stat, a.value), b: formatEquipmentStatValue(o.stat, o.value), g: formatNumber(cost.gold) }),
+    "images/Icons/scene/node_discovery.webp", function () {
+      if (EnchantManager.transmute(item, index, stat) && openVillageBuildingId === "enchanter") openVillageBuildingSheet("enchanter");
+    });
+}
+window.askTransmuteAffix = askTransmuteAffix;
+
 /* --- Boutique d'éclats (ex-sous-onglet Donjon > Boutique, v3.245.0) ------ */
 var enchanterSheetSegment = null; // variable de vue, non sauvegardée
 
 function setEnchanterSheetSegment(seg) {
-  enchanterSheetSegment = (seg === "eclats") ? "eclats" : "relance";
+  enchanterSheetSegment = (seg === "eclats" || seg === "transmute") ? seg : "relance";
   if (openVillageBuildingId === "enchanter") openVillageBuildingSheet("enchanter");
 }
 window.setEnchanterSheetSegment = setEnchanterSheetSegment;
