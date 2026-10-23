@@ -19,6 +19,7 @@ var pa2View = {
   sheet: null,          // { key, step, res, ... } : feuille ouverte
   hud: null,            // valeurs affichées pendant une animation (le moteur a déjà tout appliqué)
   fromKey: null,        // nœud quitté : le repère du héros glisse depuis lui
+  fromMid: false,       // v3.467.0 : il repart du milieu d'un sentier piégé
   keepScroll: null,
   cam: { w: 0, tx: 0, ty: 0, key: null }, // v3.394.0 : vue de la carte plein écran (key = run + carte)
   legend: false,
@@ -135,6 +136,7 @@ function pa2SyncViewRun(run) {
   pa2View.sheet = null;
   pa2View.hud = null;
   pa2View.fromKey = null;
+  pa2View.fromMid = false;
   pa2View.cam.key = null; // v3.394.0 : nouveau run, cadrage d'ouverture sur le héros
   pa2View.camSheet = 0;
   pa2View.legend = false;
@@ -168,13 +170,14 @@ function pa2AfterRender() {
   var body = document.body;
   if (!body || !body.classList) return;
   body.classList.toggle("pa2-run", onScene);
-  var onMap = onScene && (run.status === PA2_STATUS.map || run.status === PA2_STATUS.node || (run.status === PA2_STATUS.done && !!pa2View.sheet));
+  var onMap = onScene && (run.status === PA2_STATUS.map || run.status === PA2_STATUS.node || run.status === PA2_STATUS.trap || (run.status === PA2_STATUS.done && !!pa2View.sheet));
   body.classList.toggle("pa2-night", onMap);
   body.classList.toggle("pa2-full", onMap && !!document.getElementById("pa2-vp")); // v3.394.0 : carte plein écran
   if (!onScene) { pa2RemoveOverlay(); return; }
   pa2EnsureOverlay();
   pa2RenderLegend();
   if (run.status === PA2_STATUS.node && !pa2View.sheet && !pa2View.fromKey) pa2OpenSheet();
+  if (run.status === PA2_STATUS.trap && !pa2View.sheet && !pa2View.fromKey) pa2OpenTrapSheet();
   if (run.status === PA2_STATUS.prep) pa2RenderPicker();
   else if (!pa2View.sheet) pa2SetSheetHTML(null);
   var zone = document.querySelector("#panel-container .kfp-scrollzone");
@@ -431,6 +434,8 @@ function pa2HudHTML(run) {
     if (run.stock[id] > 0) chips += '<button type="button" class="pa2-chip" onclick="pa2Use(\'' + id + '\')" aria-label="' + esc(_t("Utiliser : {n}", { n: pa2ItemName(id) })) + '">' + pa2Img(PA2_ITEMS[id].icon) + '×' + run.stock[id] + '</button>';
   });
   if (run.stock.corde > 0) chips += '<span class="pa2-chip" title="' + esc(pa2ItemName("corde")) + '">' + pa2Img(PA2_ITEMS.corde.icon) + '×' + run.stock.corde + '</span>';
+  if (run.stock.trousse > 0) chips += '<span class="pa2-chip" title="' + esc(pa2ItemName("trousse")) + '">' + pa2Img(PA2_ITEMS.trousse.icon) + '×' + run.stock.trousse + '</span>';
+  chips = pa2FxChipsHTML(run) + chips; // v3.467.0 : effets des pièges en cours, en tête
   // v3.454.0 (Crypte) : la Lanterne, à allumer ; allumée, le nombre de pas qu'il lui reste
   if (Number(run.lanternLeft || 0) > 0) chips += '<span class="pa2-chip is-lit" title="' + esc(pa2ItemName("lanterne")) + '">' + pa2Img(PA2_ITEMS.lanterne.icon) + esc(_tn(run.lanternLeft, "{n} pas", "{n} pas")) + '</span>';
   else if (run.stock.lanterne > 0) chips += '<button type="button" class="pa2-chip" onclick="pa2Use(\'lanterne\')" aria-label="' + esc(_t("Allumer la Lanterne")) + '">' + pa2Img(PA2_ITEMS.lanterne.icon) + '×' + run.stock.lanterne + '</button>';
@@ -589,10 +594,20 @@ function pa2MapHTML(run) {
     nodes += '<button type="button" class="' + cls + '" style="left:' + (100 * d.x / W).toFixed(2) + '%;top:' + (100 * d.y / H).toFixed(2) + '%"' +
       (isOpen ? ' onclick="pa2Move(\'' + k + '\')"' : ' tabindex="-1"') + ' aria-label="' + esc(label) + '">' + pa2Img(PA2_ICONS[type] || PA2_ICONS.unknown) + '</button>';
   });
-  var from = pa2View.fromKey ? map.nodes[pa2View.fromKey] : cur;
+  // v3.467.0 (Pièges) : losange rouge au milieu des sentiers piégés en vue ; le héros arrêté au milieu.
+  var trapSvg = "", traps = "";
+  Object.keys(run.traps || {}).forEach(function (key) {
+    if (!Pa2Run.isTrapShown(key, run) || (run.trap && run.trap.key === key)) return;
+    var p = key.split(">"), A = map.nodes[p[0]], B = map.nodes[p[1]], m = pa2Mid(map, key), near = p[0] === run.at;
+    if (!near) trapSvg += '<line x1="' + A.x + '" y1="' + A.y + '" x2="' + B.x + '" y2="' + B.y + '" stroke="#e0806a" stroke-opacity=".55" stroke-width="' + (3 * K).toFixed(1) + '" stroke-dasharray="' + (2 * K).toFixed(1) + ' ' + (10 * K).toFixed(1) + '" stroke-linecap="round"/>';
+    traps += pa2TrapMarkHTML(run.traps[key].fx, m, W, H, !near);
+  });
+  if (run.trap) traps += pa2TrapMarkHTML(run.traps[run.trap.key].fx, pa2Mid(map, run.trap.key), W, H, false);
+  if (trapSvg) trapSvg = '<svg class="pa2-trap-svg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true">' + trapSvg + '</svg>';
+  var from = pa2View.fromKey ? (pa2View.fromMid ? pa2Mid(map, pa2View.fromKey + ">" + run.at) : map.nodes[pa2View.fromKey]) : (run.trap ? pa2Mid(map, run.trap.key) : cur);
   var marker = '<img class="pa2-hero-mark" id="pa2-hero-mark" src="' + esc(PA2_ICONS.hero) + '" alt="" style="left:' + (100 * from.x / W).toFixed(2) + '%;top:' + (100 * from.y / H).toFixed(2) + '%">';
   return '<div class="pa2-map" id="pa2-map">' +
-    (map.image ? '<img class="pa2-map-img" src="' + esc(map.image) + '" alt="">' : '<div class="pa2-map-img pa2-parchment"></div>') + svg + nodes + marker + '</div>';
+    (map.image ? '<img class="pa2-map-img" src="' + esc(map.image) + '" alt="">' : '<div class="pa2-map-img pa2-parchment"></div>') + svg + trapSvg + nodes + traps + marker + '</div>';
 }
 
 function pa2NodeLabel(run, n) {
@@ -608,9 +623,9 @@ function pa2NodeLabel(run, n) {
 // Le repère glisse du nœud quitté au nouveau, le sentier se trace, puis la feuille s'ouvre.
 function pa2AnimateMove() {
   var run = Pa2Run.getRun(), map = run ? Pa2Run.getMap(run) : null, mark = document.getElementById("pa2-hero-mark");
-  pa2View.fromKey = null;
+  pa2View.fromKey = null; pa2View.fromMid = false;
   if (!run || !map || !mark) return;
-  var cur = map.nodes[run.at];
+  var cur = run.trap ? pa2Mid(map, run.trap.key) : map.nodes[run.at]; // v3.467.0 : arrêt sur le piège
   pa2CamFollow(true); // la caméra suit le héros
   var edge = document.querySelector("#pa2-map .pa2-edge.is-drawing");
   if (edge) {
@@ -625,7 +640,11 @@ function pa2AnimateMove() {
       mark.style.top = (100 * cur.y / map.height).toFixed(2) + "%";
     });
   });
-  pa2Later(function () { if (Pa2Run.getRun() && Pa2Run.getRun().status === PA2_STATUS.node) pa2OpenSheet(); }, 700);
+  pa2Later(function () {
+    var r = Pa2Run.getRun();
+    if (r && r.status === PA2_STATUS.node) pa2OpenSheet();
+    else if (r && r.status === PA2_STATUS.trap) pa2OpenTrapSheet();
+  }, 700);
 }
 
 function pa2Move(key) {
@@ -666,12 +685,110 @@ function pa2AskAbandon() {
     });
 }
 
+/* ---------- Pièges (v3.467.0, atelier pieges-pa validé le 24/10/2026) ---------- */
+
+function pa2Mid(map, key) {
+  var p = key.split(">"), A = map.nodes[p[0]], B = map.nodes[p[1]];
+  return { x: (A.x + B.x) / 2, y: (A.y + B.y) / 2 };
+}
+// Losange rouge au milieu du sentier, avec l'icône de l'effet ; plus pâle quand il est plus loin.
+function pa2TrapMarkHTML(fx, m, W, H, far) {
+  var d = PA2_TRAP_FX[fx];
+  return '<span class="pa2-trap' + (far ? ' is-far' : '') + '" style="left:' + (100 * m.x / W).toFixed(2) + '%;top:' + (100 * m.y / H).toFixed(2) + '%" role="img" aria-label="' +
+    esc(_t("Piège : {x}", { x: _td(d.name) })) + '">' + pa2Img(d.icon) + '</span>';
+}
+// Pastilles rouges des effets en cours : nom et pas restants (l'Alarme dure jusqu'au combat).
+function pa2FxChipsHTML(run) {
+  var h = "";
+  PA2_TRAP_FX_ORDER.forEach(function (id) {
+    var left = Pa2Run.fxLeft(run, id), d = PA2_TRAP_FX[id];
+    if (!(left > 0)) return;
+    h += '<span class="pa2-chip is-fx" title="' + esc(_td(d.name) + " : " + _td(d.desc)) + '">' + pa2Img(d.icon) + esc(_td(d.name) + (d.steps ? " " + left : "")) + '</span>';
+  });
+  return h;
+}
+function pa2OpenTrapSheet() {
+  var run = Pa2Run.getRun();
+  if (!run || run.status !== PA2_STATUS.trap) return;
+  var r = run.trap && run.trap.result;
+  pa2View.sheet = { trap: true, step: r ? "result" : "intro", res: r || null, shown: !!r };
+  pa2RenderSheet();
+}
+function pa2TrapSheetBody(run, st) {
+  var td = Pa2Run.trapDef(run), fx = td.fxDef, h = "";
+  if (run.trap.unseen && st.step === "intro") h += '<p class="pa2-echo">' + esc(_t("Dans le noir, tu ne l'as pas vu. Ton pied est déjà dessus.")) + '</p>';
+  h += '<div class="pa2-sheet-head"><div class="pa2-medal is-trap">' + pa2Img(fx.icon) + '</div><div><div class="pa2-kicker">' +
+    esc(_t("Piège") + " · " + _td(fx.name).toLowerCase()) + '</div><h2 class="pa2-h2">' + esc(_td(td.name)) + '</h2></div></div>';
+  if (st.step === "intro") {
+    h += '<p class="pa2-narr">' + esc(_td(td.line)) + '</p>';
+    h += '<div class="pa2-fxline">' + pa2Img(fx.icon) + '<div><b>' + esc(_td(fx.name) + (fx.steps ? " · " + _tn(fx.steps, "{n} pas", "{n} pas") : "")) + '</b><span>' +
+      esc(_td(fx.desc) + ". " + _td(fx.cure)) + '</span></div></div>';
+    var o = Pa2Run.trapOptions();
+    h += '<div class="pa2-choices">';
+    h += '<button type="button" class="pa2-choice" onclick="pa2Trap(\'desamorcer\')">' + pa2Img(PA2_ICONS.precision) + '<span class="pa2-t">' + esc(_t("Désamorcer")) + '</span>' + pa2OddsHTML(o.disarm.cran) +
+      '<span class="pa2-s">' + pa2WhyHTML(o.disarm, run) + ' · <b class="pa2-breath">' + esc(_t("sans Souffle")) + '</b>. ' +
+      esc(_t("Raté : l'effet joue. De justesse : −{b} Souffle.", { b: PA2_TRAP_RULES.midBreath })) + '</span></button>';
+    if (o.kit > 0) h += '<button type="button" class="pa2-choice" onclick="pa2Trap(\'trousse\')">' + pa2Img(PA2_ITEMS.trousse.icon) + '<span class="pa2-t">' + esc(_t("Utiliser la trousse")) + '</span>' +
+      '<span class="pa2-odds o4"><span class="pa2-w">' + esc(_t("Assuré")) + '</span></span><span class="pa2-s">' + esc(_tn(o.kit, "il te reste {n} crochet", "il te reste {n} crochets", { n: o.kit })) + '</span></button>';
+    h += '<button type="button" class="pa2-choice" onclick="pa2Trap(\'subir\')">' + pa2Img(fx.icon) + '<span class="pa2-t">' + esc(_t("Subir")) + '</span><span class="pa2-cost is-red">' + esc(_td(fx.name)) + '</span>' +
+      '<span class="pa2-s">' + esc(_t("Pas de dé. Tu avances, l'effet joue.")) + '</span></button>';
+    h += '<button type="button" class="pa2-choice"' + (o.back.affordable ? '' : ' disabled') + ' onclick="pa2Trap(\'rebrousser\')">' + pa2Img(PA2_ICONS.flee) + '<span class="pa2-t">' + esc(_t("Rebrousser")) + '</span>' +
+      '<span class="pa2-cost">' + esc(_t("{n} Souffle", { n: o.back.cost })) + '</span><span class="pa2-s">' + esc(_t("Retour au point d'avant, un autre sentier. Le piège reste.")) +
+      (o.back.affordable ? '' : ' · ' + esc(_t("pas assez de Souffle"))) + '</span></button>';
+    h += '</div>';
+  } else {
+    var r = st.res;
+    if (r.choice === "desamorcer") h += pa2DieBlock(r.thr, r.cran, false).replace(pa2DieFace(1), pa2DieFace(st.shown ? r.roll : 1));
+    h += '<div id="pa2-outcome" class="' + (st.shown ? "" : "is-hidden") + '">' + pa2TrapOutcome(run, r, td) +
+      '<button type="button" class="kbtn primary" onclick="pa2TrapGo()">' + esc(_t("Continuer")) + '</button></div>';
+  }
+  return h;
+}
+function pa2TrapOutcome(run, r, td) {
+  var fx = td.fxDef, hit = r.kind === "ko" || r.kind === "endure", h;
+  if (r.kind === "ok") h = '<div class="pa2-verdict is-ok">' + esc(r.kit ? _t("Les crochets tiennent") : _t("Désamorcé")) + '</div><p class="pa2-result">' + esc(_t("Tu passes sans rien déclencher.")) + '</p>';
+  else if (r.kind === "mid") h = '<div class="pa2-verdict is-mid">' + esc(_t("De justesse")) + '</div><p class="pa2-result">' + esc(_t("Tu passes, épuisé. −{b} Souffle", { b: PA2_TRAP_RULES.midBreath })) + '</p>';
+  else h = '<div class="pa2-verdict is-ko">' + esc(r.kind === "ko" ? _t("Raté") : _t("Subi")) + '</div>';
+  if (hit) {
+    var what = r.fx === "besace" ? (r.lost ? _t("Perdu : {x}.", { x: pa2ItemName(r.lost) }) : _t("Ta besace était vide : rien de perdu."))
+      : _td(fx.desc) + (fx.steps ? ", " + _tn(fx.steps, "{n} pas", "{n} pas") : "") + ".";
+    h += '<p class="pa2-result">' + esc(_td(fx.name) + " : " + what) + '</p>';
+  }
+  return h;
+}
+function pa2Trap(choice) {
+  var run = Pa2Run.getRun();
+  pa2Snapshot(run);
+  var r = Pa2Run.resolveTrap(choice);
+  if (pa2Fail(r)) { pa2View.hud = null; return; }
+  if (choice === "rebrousser") { // retour sur le point de départ, la carte reprend
+    pa2View.hud = null; pa2View.sheet = null; pa2SetSheetHTML(null);
+    if (typeof showToast === "function") showToast(_t("Tu rebrousses chemin. −{n} Souffle", { n: PA2_TRAP_RULES.backBreath }), 1600);
+    pa2Rerender();
+    return;
+  }
+  pa2View.sheet = { trap: true, step: "result", res: r.result, shown: choice !== "desamorcer" };
+  pa2RenderSheet();
+  if (choice === "desamorcer") pa2RollDie(r.result.roll, function () { if (r.result.kind === "ok") pa2Buzz(30); pa2Reveal(Pa2Run.getRun() || run); });
+  else { pa2Reveal(run); pa2RefreshHud(); }
+}
+// Le pas reprend du milieu du sentier jusqu'au point visé.
+function pa2TrapGo() {
+  var run = Pa2Run.getRun(), from = run && run.trap ? run.trap.from : null;
+  var r = Pa2Run.trapContinue();
+  if (pa2Fail(r)) return;
+  pa2ClearTimers();
+  pa2View.sheet = null; pa2View.hud = null; pa2SetSheetHTML(null);
+  pa2View.fromKey = from; pa2View.fromMid = true;
+  pa2Rerender();
+}
+
 /* ---------- Légende (bouton rond, comme la carte du monde) ---------- */
 
 function pa2RenderLegend() {
   var box = document.getElementById("pa2-legendbox"), run = Pa2Run.getRun();
   if (!box) return;
-  if (!run || (run.status !== PA2_STATUS.map && run.status !== PA2_STATUS.node)) { box.innerHTML = ""; return; }
+  if (!run || (run.status !== PA2_STATUS.map && run.status !== PA2_STATUS.node && run.status !== PA2_STATUS.trap)) { box.innerHTML = ""; return; }
   var h = '<button type="button" class="lmx-btn pa2-legend-btn" onclick="pa2ToggleLegend()" aria-label="' + esc(_t("Légende")) + '" aria-expanded="' + !!pa2View.legend + '">?</button>';
   if (pa2View.legend) {
     var row = function (icon, label, sub) {
@@ -682,6 +799,7 @@ function pa2RenderLegend() {
       row(PA2_ICONS.source, _t("Source"), _t("PV et Souffle")) + row(PA2_ICONS.autel, _t("Autel"), _t("De l'or contre une plaie")) +
       row(PA2_ICONS.trouvaille, _t("Trouvaille"), _t("Un objet pour ce run")) + row(PA2_ICONS.evenement, _t("Rencontre"), _t("Un choix qui aura des suites")) +
       row(PA2_ICONS.camp, _t("Le camp"), _t("Fin de l'acte I")) + row(PA2_ICONS.seuil, _t("Le seuil"), _t("Fin de l'acte II")) +
+      row(PA2_TRAP_FX.venin.icon, _t("Piège"), _t("Losange rouge sur un sentier : son effet, à désamorcer ou à éviter")) +
       row(PA2_ICONS.boss, _t("Destinations"), _t("Trois fins possibles, au nord")) + '</div>';
   }
   box.innerHTML = h;
@@ -734,6 +852,7 @@ window.pa2CloseSheet = pa2CloseSheet;
 function pa2RenderSheet() {
   var run = Pa2Run.getRun(), st = pa2View.sheet;
   if (!run || !st) { pa2SetSheetHTML(null); return; }
+  if (st.trap) { var td = Pa2Run.trapDef(run); pa2SetSheetHTML(pa2TrapSheetBody(run, st), td ? _td(td.name) : "", false); return; }
   var n = Pa2Run.node(st.key, run);
   pa2SetSheetHTML(pa2SheetBody(run, n, st), pa2NodeLabel(run, n), false);
 }
@@ -768,6 +887,7 @@ function pa2ActKicker(n, what) {
 
 function pa2SheetBody(run, n, st) {
   var h = pa2EchoHTML(n, st) + (run.wallNote && st && st.step === "intro" ? '<p class="pa2-echo">' + esc(run.wallNote) + '</p>' : ""), dests = pa2Dests(run), hook = pa2Hook(run), R = PA2_RULES;
+  if (run.fxNote && st && st.step === "intro") h += '<p class="pa2-echo is-red">' + esc(run.fxNote) + '</p>'; // v3.467.0 : le Venin
   switch (n.type) {
     case "obstacle":
     case "tertre": {
@@ -810,6 +930,7 @@ function pa2SheetBody(run, n, st) {
       if (st.step === "intro" || st.step === "surprised") {
         h += pa2FoeHead(foe, boss ? _t("Destination · gardien") : (n.revenge ? _t("Combat · conséquence") : pa2ActKicker(n, _t("Combat"))), true);
         if (n.revenge) h += '<p class="pa2-sim is-red">' + esc(_t("Tu lui as pris son arc, plus tôt. Il frappe 30 % plus fort.")) + '</p>';
+        if (n.alarm) h += '<p class="pa2-sim is-red">' + esc(_t("L'alarme a sonné plus tôt : ils sont un de plus, et ils t'attendent.")) + '</p>';
         h += '<p class="pa2-sim">' + esc(_t("Résolu sur ton héros seul, niveau {l} : sans compagnons ni potions. Les dégâts annoncés sont ceux que tu prendras, à 15 % près.", { l: run.level })) + '</p>';
         h += '<div class="pa2-choices">';
         if (st.step === "surprised") {
@@ -822,7 +943,10 @@ function pa2SheetBody(run, n, st) {
             h += '<button type="button" class="pa2-choice" onclick="pa2PassGuardian()">' + pa2Img(PA2_ICONS.ruse) + '<span class="pa2-t">' + esc(_t("Faire le tour")) + '</span>' +
               '<span class="pa2-s">' + esc(_t("Il dort. Tu atteins la destination sans combat, mais son coffre reste sous lui.")) + '</span></button>';
           }
-          if (!boss) {
+          if (!boss && pv.ruseBlocked) { // v3.467.0 : l'Alarme a sonné, ils sont un de plus et t'attendent
+            h += '<button type="button" class="pa2-choice" disabled>' + pa2Img(PA2_ICONS.ruse) + '<span class="pa2-t">' + esc(_t("Ruser")) + '</span>' +
+              '<span class="pa2-cost is-red">' + esc(_td(PA2_TRAP_FX.alarme.name)) + '</span><span class="pa2-s">' + esc(_t("L'alarme a sonné : ils t'attendent.")) + '</span></button>';
+          } else if (!boss) {
             h += '<button type="button" class="pa2-choice" onclick="pa2Ruse()">' + pa2Img(PA2_ICONS.ruse) + '<span class="pa2-t">' + esc(_t("Ruser")) + '</span>' + pa2OddsHTML(pv.ruse.cran) +
               '<span class="pa2-s">' + pa2WhyHTML(pv.ruse, run) + '. ' + esc(_t("Réussi : pas de combat, un peu de butin. Raté : il frappe le premier.")) + '</span></button>';
             h += '<button type="button" class="pa2-choice"' + (pv.flee.affordable ? '' : ' disabled') + ' onclick="pa2Flee()">' + pa2Img(PA2_ICONS.flee) + '<span class="pa2-t">' + esc(_t("Fuir par les fourrés")) + '</span>' +

@@ -185,8 +185,11 @@ async function drivePa2(page, seek, maxSteps) {
     await page.evaluate(function () { if (typeof closeWorkshopCompletionPopup === "function") closeWorkshopCompletionPopup(); });
     var st = await page.evaluate(function () { var r = game.sceneRun; return r ? r.status : null; });
     if (!st || st === "completed") break;
-    if (!(await page.locator(".pa2-node.is-open").count())) break;
-    await tap(page, ".pa2-node.is-open");
+    // v3.467.0 : après un piège, la feuille du nœud est déjà ouverte (pas de sentier à toucher)
+    if (st === "pa2-map") {
+      if (!(await page.locator(".pa2-node.is-open").count())) break;
+      await tap(page, ".pa2-node.is-open");
+    }
     await page.waitForTimeout(900);
     if (seek && !seen) seen = await page.evaluate(function (t) { var o = document.getElementById("pa2-overlay"); return !!o && o.innerText.indexOf(t) >= 0; }, seek);
     // Un combat se fuit (héros sans équipement : l'estimation le dit mortel) ; ailleurs, le premier choix.
@@ -568,7 +571,8 @@ async function P7(browser, base) {
   // Quelques nœuds joués au doigt : un sentier doré, puis le premier choix de la feuille
   var avant = 0;
   for (var i = 0; i < 8 && avant <= 0; i++) {
-    await tap(page, ".pa2-node.is-open");
+    // v3.467.0 : après un piège, la feuille du nœud est déjà ouverte (pas de sentier à toucher)
+    if (await page.evaluate(function () { return game.sceneRun && game.sceneRun.status === "pa2-map"; })) await tap(page, ".pa2-node.is-open");
     await page.waitForTimeout(900);
     if (!(await visible(page, "#pa2-overlay .pa2-sheet", 2000))) break;
     var card = page.locator("#pa2-overlay .pa2-card");

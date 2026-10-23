@@ -598,6 +598,19 @@ function playScene(maxSteps) {
   return false;
 }
 
+/* v3.467.0 (Pièges) : le robot évite un sentier piégé quand il peut ; dessus, trousse, sinon désamorcer
+   (il ne coûte rien), rebrousser s'il a été pris au dépourvu et que le dé est mauvais. */
+function trapChoice(P, run) {
+  var o = P.trapOptions();
+  if (o.kit > 0) return "trousse";
+  if (o.disarm.thr >= 6 && run.trap.unseen && o.back.affordable && run.breath >= 60) return "rebrousser";
+  return "desamorcer";
+}
+function avoidTraps(P, run, mv) {
+  var free = mv.filter(function (k) { return !P.isTrapShown(run.at + ">" + k, run); });
+  return free.length ? free : mv;
+}
+
 /* v3.382.0 (PA2-1) : Petite Aventure v2 (la Forêt). Un pas du robot : besace raisonnable,
    route vers une destination, chaque nœud joué comme un joueur prudent (soin sous 40 %). */
 function playPa2Step(run) {
@@ -610,9 +623,13 @@ function playPa2Step(run) {
     return true;
   }
   ["grande_ration", "ration", "petite_ration"].forEach(function (id) { if (g.game.heroHp / max < 0.4 && run.stock[id] > 0) P.useItem(id); });
-  if (run.status === "pa2-map") {
+  if (run.status === "pa2-trap") {
+    var tc = trapChoice(P, run);
+    r = P.resolveTrap(tc);
+    if (r.ok && tc !== "rebrousser") r = P.trapContinue();
+  } else if (run.status === "pa2-map") {
     var gp = P.guardianPreview(), bossOk = gp && !gp.tenir.unwinnable && gp.tenir.hpLoss < g.game.heroHp * 0.8;
-    var mv = P.openMoves(), dest = mv.filter(function (k) { return P.node(k, run).row === 9 && (bossOk || P.node(k, run).type !== "boss"); });
+    var mv = avoidTraps(P, run, P.openMoves()), dest = mv.filter(function (k) { return P.node(k, run).row === 9 && (bossOk || P.node(k, run).type !== "boss"); });
     r = P.moveTo(dest.length ? dest[0] : mv[Math.floor(Math.random() * mv.length)]);
   } else {
     var n = P.node(run.at, run), t = n.type;
@@ -631,7 +648,7 @@ function playPa2Step(run) {
       else {
         var pv = P.combatPreview();
         if (pv.tenir.verdict === "mortel" && pv.flee.affordable) r = P.flee();
-        else if (pv.tenir.verdict === "mortel" && pv.ruse.thr <= 4) r = P.ruse();
+        else if (pv.tenir.verdict === "mortel" && pv.ruse.thr <= 4 && !pv.ruseBlocked) r = P.ruse();
         else r = P.fight(pv.charger.hpLoss < g.game.heroHp * 0.3 ? "charger" : "tenir");
       }
     } else if (t === "source") r = P.drink();

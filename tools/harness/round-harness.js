@@ -51,6 +51,10 @@ var g = sandbox;
 /* v3.447.0 : l'initiative tire l'ordre des tours aux dés. Les contrôles historiques supposent l'ordre
    d'avant (héros, compagnons, ennemis) : on le garde ici ; les contrôles de l'initiative le lèvent. */
 g.Initiative.legacy = true;
+/* v3.467.0 (Pièges) : les contrôles historiques des Petites Aventures supposent des sentiers sans piège ;
+   les pièges ne se posent que là où g.__traps est vrai (runs au hasard, section [281]). */
+g.__traps = false;
+(function () { var place = g.Pa2Run._placeTraps; g.Pa2Run._placeTraps = function (r) { return g.__traps ? place.call(this, r) : {}; }; })();
 var failures = 0, passes = 0;
 /* v3.459.5 (audit O9) : chaque ✘ porte sa section, et la fin du harnais les récapitule. */
 var section = "", echecs = [], _log = console.log;
@@ -72,6 +76,13 @@ function playParcours(win) {
     }
   } finally { P.rand = saved; }
   return r;
+}
+
+/* v3.467.0 (Pièges) : un robot arrêté sur un piège choisit au hasard (trousse d'abord), puis repart. */
+function playTrap(P) {
+  var o = P.trapOptions(), c = o.kit > 0 ? "trousse" : (Math.random() < 0.1 && o.back.affordable ? "rebrousser" : (Math.random() < 0.5 ? "desamorcer" : "subir"));
+  var r = P.resolveTrap(c);
+  return (r.ok && c !== "rebrousser") ? P.trapContinue() : r;
 }
 
 /* Nouvelle partie prête à combattre, sur l'onglet Combat, ennemi généré. */
@@ -11975,6 +11986,7 @@ console.log("\n[158] v3.381.0 — Petites Aventures v2 (PA2-0) : moteur sans éc
     ok(S.abandon().ok && runv.end.how === "cancel" && game.resources.petite_ration === pr1 && !g.SortieManager.isActive(), "renoncer en préparation ne coûte rien");
 
     /* 300 runs au hasard : tout run se termine, sans valeur absurde */
+    g.__traps = true; // v3.467.0 : les runs au hasard passent aussi les pièges
     var bad = 0, finished = 0, guardHit = 0;
     for (var k = 0; k < 300; k++) {
       prep(1 + (k % 13)); game.sceneRun = null;
@@ -11986,6 +11998,7 @@ console.log("\n[158] v3.381.0 — Petites Aventures v2 (PA2-0) : moteur sans éc
       var guard = 200;
       while (runv.status !== "completed" && guard-- > 0) {
         if (runv.status === "pa2-map") { var mv = P.openMoves(); P.moveTo(mv[Math.floor(Math.random() * mv.length)]); continue; }
+        if (runv.status === "pa2-trap") { if (!playTrap(P).ok) break; continue; }
         var n = P.node(runv.at), t = n.type, res = null;
         if (t === "obstacle" || t === "tertre") { var o = P.obstacleOptions().filter(function (x) { return x.affordable; }), rp = P.obstacleOptions().filter(function (x) { return x.rope; })[0]; res = o.length ? P.resolveObstacle(o[0].voie) : (rp ? P.resolveObstacle(rp.voie, true) : P.bruteForce()); }
         else if (t === "combat") { res = (runv.lastResult && runv.lastResult.surprised) ? P.fight("tenir", true) : P.fight(Math.random() < 0.5 ? "charger" : "tenir"); }
@@ -12002,6 +12015,7 @@ console.log("\n[158] v3.381.0 — Petites Aventures v2 (PA2-0) : moteur sans éc
       if (runv.status === "completed") finished++;
       if (!(game.heroHp >= 0) || !isFinite(runv.loot) || runv.breath < 0) bad++;
     }
+    g.__traps = false;
     ok(finished === 300 && bad === 0 && guardHit === 0, "300 runs au hasard : tous terminés, aucun blocage ni valeur absurde (" + finished + " / 300)");
   } finally {
     P.rand = savedRand;
@@ -12113,7 +12127,7 @@ console.log("\n[159] v3.382.0 — Petites Aventures v2 (PA2-1) : écrans (prépa
     Object.keys(g.PA2_PACTS).forEach(function (k) { dataIcons.push(g.PA2_PACTS[k].icon); });
     Object.keys(g.PA2_ICONS).forEach(function (k) { dataIcons.push(g.PA2_ICONS[k]); });
     // v3.454.0 : icônes demandées à Seb, affichées en icône générique en attendant (règle « icône manquante »)
-    var aFournir = [];
+    var aFournir = ["images/Icons/scene/items/item_lockpicks.webp"]; // v3.467.0 : la Trousse, à faire
     var absent = dataIcons.filter(function (s) { return !fs.existsSync(path.join(ROOT, s)) && aFournir.indexOf(s) < 0; });
     ok(absent.length === 0, "icônes du mode v2 : toutes présentes, hors celles à fournir (" + dataIcons.length + ")" + (absent.length ? " — manquent " + absent.join(", ") : ""));
   } catch (e) {
@@ -12377,6 +12391,7 @@ console.log("\n[163] v3.386.0 — Petites Aventures v2 (PA2-4) : deuxième carte
 
     /* 200 runs au hasard sur foret_2 */
     g.PA2_MAPS_BY_WORLD.forest = ["foret_2"];
+    g.__traps = true; // v3.467.0 : les runs au hasard passent aussi les pièges
     var bad = 0, finished = 0, dests = 0, evRow = 0, lens = [], why = "";
     // v3.429.1 : échec rare (~1 passe sur 150, non reproduit) : le message dira quel run a calé et pourquoi
     function noteRun(k, txt) { if (!why) why = " ; 1er run fautif n°" + k + " (niv. " + game.heroLevel + ") : " + txt; }
@@ -12392,6 +12407,7 @@ console.log("\n[163] v3.386.0 — Petites Aventures v2 (PA2-4) : deuxième carte
       var guard = 200, played = 0;
       while (r.status !== "completed" && guard-- > 0) {
         if (r.status === "pa2-map") { var mv = P.openMoves(); P.moveTo(mv[Math.floor(Math.random() * mv.length)]); played++; continue; }
+        if (r.status === "pa2-trap") { if (!playTrap(P).ok) break; continue; }
         var n = P.node(r.at), t = n.type, res = null;
         if (t === "obstacle" || t === "tertre") { var o = P.obstacleOptions().filter(function (x) { return x.affordable; }), rp = P.obstacleOptions().filter(function (x) { return x.rope; })[0]; res = o.length ? P.resolveObstacle(o[0].voie) : (rp ? P.resolveObstacle(rp.voie, true) : P.bruteForce()); }
         else if (t === "combat") { res = (r.lastResult && r.lastResult.surprised) ? P.fight("tenir", true) : P.fight("tenir"); }
@@ -12406,9 +12422,10 @@ console.log("\n[163] v3.386.0 — Petites Aventures v2 (PA2-4) : deuxième carte
       }
       if (guard <= 0) { bad++; noteRun(k, "200 actions sans fin, nœud " + r.at + ", statut " + r.status); }
       if (r.status === "completed") finished++;
-      if (r.end && r.end.dest) { dests++; lens.push(played); }
+      if (r.end && r.end.dest) { dests++; lens.push(r.path.length); } // v3.467.0 : un pas arrêté par un piège ne compte pas
       if (!(game.heroHp >= 0) || !isFinite(r.loot) || r.breath < 0) { bad++; noteRun(k, "valeur absurde : PV " + game.heroHp + ", butin " + r.loot + ", souffle " + r.breath); }
     }
+    g.__traps = false;
     ok(finished === 200 && bad === 0, "200 runs au hasard sur foret_2 : tous terminés, aucune valeur absurde (" + finished + " / 200" + why + ")");
     ok(evRow === 0, "la rencontre tombe dans l'acte I, avant le camp");
     ok(dests > 0 && lens.every(function (x) { return x === M.rows.dest + 1; }), "un run qui atteint sa destination traverse " + (M.rows.dest + 1) + " nœuds (" + dests + " destinations)");
@@ -12453,6 +12470,7 @@ console.log("\n[164] v3.387.0 — Petites Aventures v2 (PA2-5) : le Désert (car
     var guard = 200;
     while (r.status !== "completed" && guard-- > 0) {
       if (r.status === "pa2-map") { var mv = P.openMoves(); P.moveTo(pick ? pick(mv) : mv[Math.floor(Math.random() * mv.length)]); continue; }
+      if (r.status === "pa2-trap") { if (!playTrap(P).ok) break; continue; }
       var n = P.node(r.at), t = n.type, res = null;
       if (t === "obstacle" || t === "tertre") { var o = P.obstacleOptions().filter(function (x) { return x.affordable; }), rp = P.obstacleOptions().filter(function (x) { return x.rope; })[0]; res = o.length ? P.resolveObstacle(o[0].voie) : (rp ? P.resolveObstacle(rp.voie, true) : P.bruteForce()); }
       else if (t === "combat") res = (r.lastResult && r.lastResult.surprised) ? P.fight("tenir", true) : P.fight("tenir");
@@ -12532,6 +12550,7 @@ console.log("\n[164] v3.387.0 — Petites Aventures v2 (PA2-5) : le Désert (car
     ok(cl.ok && game.explorationProgression.desertPaCompleted === true && Number(game.resources.verre_des_dunes || 0) > verre0 && r.end.rare > 0, "destination atteinte : drapeau de l'étape « L'outre » et Verre des dunes");
     ok(!r.end.chest, "le Désert n'ouvre pas le coffre de la Forêt");
 
+    g.__traps = true; // v3.467.0 : les runs au hasard passent aussi les pièges
     /* 150 runs au hasard */
     var done = 0, bad = 0;
     for (var k = 0; k < 150; k++) {
@@ -12543,6 +12562,7 @@ console.log("\n[164] v3.387.0 — Petites Aventures v2 (PA2-5) : le Désert (car
       if (r.status === "completed") done++;
       if (!(game.heroHp >= 0) || !isFinite(r.loot) || r.breath < 0) { bad++; noteRun(k, "valeur absurde : PV " + game.heroHp + ", butin " + r.loot + ", souffle " + r.breath); }
     }
+    g.__traps = false;
     ok(done === 150 && bad === 0, "150 runs au hasard au Désert : tous terminés, aucune valeur absurde (" + done + " / 150)");
 
     /* Écrans */
@@ -16965,6 +16985,140 @@ console.log("\n[280] v3.466.1 — Sac du héros : plus de bouton Utiliser sur le
   var h2 = g.buildUnifiedDetailPanelHTML([buff]);
   ok(!/Utiliser|useHealingPotion|usePotion/.test(h1 + h2), "ni « Utiliser » ni appel de potion dans la fiche du sac");
   ok(/Se boit en combat/.test(h1) && /Se boit au départ, dans la préparation de sortie/.test(h2) && /sellPotion/.test(h1) && /sellPotion/.test(h2), "à la place, où se boit la potion ; Vendre reste");
+})();
+
+console.log("\n[281] v3.467.0 — Petites Aventures : pièges sur les sentiers (PG-A à PG-G)");
+(function () {
+  var S = g.SceneRunManager, P = g.Pa2Run, TR = g.PA2_TRAP_RULES, savedRand = P.rand, savedMaps = g.PA2_MAPS_BY_WORLD.forest.slice();
+  g.PA2_MAPS_BY_WORLD.forest = ["foret_1"];
+  g.__traps = true;
+  function prep() {
+    game = freshCombat("knight"); giveWeapon();
+    run("game.enemy = null; game.combat = null;");
+    S.ensureDefaults();
+    game.explorationProgression.petiteAventure = { spent: 0, since: null };
+    game.resources.petite_ration = 5; game.resources.ration = 2;
+    game.heroLevel = 6; game.heroHp = game.heroMaxHp; game.sceneRun = null;
+    if (g.SortieManager.isActive()) g.SortieManager.end("return");
+  }
+  // run sur foret_1, anneau imposé, pièges posés à la main (traps) après le départ
+  function go(ring, items, traps, tpl) {
+    prep(); S.startRun(tpl || "petite_aventure_foret");
+    var r = game.sceneRun; r.ring = ring || "sentier"; r.hookId = null;
+    (items || []).forEach(function (id) { P.addItem(id); });
+    P.depart();
+    if (traps) r.traps = traps;
+    return r;
+  }
+  try {
+    // Pose : nombre par acte selon l'anneau, une sortie libre, jamais sur un sentier unique
+    var M = g.PA2_MAPS.foret_1, okCount = true, okFree = true, okSingle = true, fxSeen = {};
+    ["sentier", "chemin", "periple"].forEach(function (ring, i) {
+      for (var k = 0; k < 40; k++) {
+        var r = go(ring), per = { 1: 0, 2: 0, 3: 0 }, from = {};
+        Object.keys(r.traps).forEach(function (key) {
+          var p = key.split(">"); per[r.nodes[p[1]].act]++; from[p[0]] = (from[p[0]] || 0) + 1; fxSeen[r.traps[key].fx] = (fxSeen[r.traps[key].fx] || 0) + 1;
+          if (M.links[p[0]].length < 2) okSingle = false;
+        });
+        [1, 2, 3].forEach(function (a) { if (per[a] > i + 1) okCount = false; });
+        Object.keys(from).forEach(function (a) { if (from[a] >= M.links[a].length) okFree = false; });
+      }
+    });
+    ok(okCount, "pièges par acte : au plus 1 (Sentier), 2 (Chemin), 3 (Périple)");
+    ok(okFree && okSingle, "un point garde toujours une sortie libre ; un sentier unique n'est jamais piégé");
+    ok(fxSeen.venin + fxSeen.entrave > fxSeen.alarme + fxSeen.aveugle, "Forêt : Venin et Entrave pèsent plus (" + JSON.stringify(fxSeen) + ")");
+    var rr = go("periple", [], null, "petite_aventure_ruines"), mv = {};
+    (g.PA2_MAPS[rr.mapId].shifts || []).forEach(function (sh) { mv[sh.from] = true; });
+    ok(Object.keys(rr.traps).every(function (k) { return !mv[k.split(">")[0]]; }), "Ruines : pas de piège au départ d'un mur qui bouge");
+
+    // Arrêt sur le piège, Rebrousser
+    var r = go("sentier", ["trousse", "petite_ration"], { "S>C0": { fx: "entrave", seen: false, done: false } });
+    ok(P.isTrapShown("S>C0", r) && !P.isTrapShown("S>L0", r), "le piège se voit sur un sentier ouvert");
+    var b0 = r.breath, m = P.moveTo("C0");
+    ok(m.ok && m.trap && r.status === "pa2-trap" && r.at === "S" && r.path.length === 0 && r.trap.to === "C0", "sentier piégé : arrêt au milieu, avant le pas");
+    var o = P.trapOptions();
+    ok(o.disarm && o.disarm.thr >= 2 && o.kit === 2 && o.back.cost === TR.backBreath, "options : désamorcer (dé), trousse (2 crochets), rebrousser (10 Souffle)");
+    ok(P.resolveTrap("rebrousser").ok && r.status === "pa2-map" && r.breath === b0 - TR.backBreath && !r.traps["S>C0"].done && r.at === "S", "Rebrousser : retour au point, −10 Souffle, le piège reste");
+    // Trousse : assuré, sans effet ; le pas reprend
+    P.moveTo("C0");
+    var t1 = P.resolveTrap("trousse");
+    ok(t1.ok && t1.result.kind === "ok" && r.stock.trousse === 1 && !r.fx.entrave && r.traps["S>C0"].done, "Trousse : désamorcé, un crochet de moins, aucun effet");
+    var b1 = r.breath;
+    ok(P.trapContinue().ok && r.at === "C0" && r.status === "pa2-node" && r.path.length === 1 && !P.isTrapShown("S>C0", r), "le pas reprend jusqu'au point ; le piège traversé disparaît");
+    ok(r.breath === b1 - g.PA2_WORLD_RULES.forest.stepBreath, "le pas du piège coûte la marche, comme un autre");
+    // Désamorcer : dé de précision, sans Souffle ; de justesse −10 ; raté = effet
+    r = go("sentier", [], { "S>C0": { fx: "entrave", seen: true, done: false } });
+    P.moveTo("C0"); var bb = r.breath;
+    P.rand = function () { return 0.999; }; var d1 = P.resolveTrap("desamorcer"); P.rand = savedRand;
+    ok(d1.result.kind === "ok" && r.breath === bb && !r.fx.entrave, "Désamorcer réussi : sans Souffle, aucun effet");
+    r = go("sentier", [], { "S>C0": { fx: "entrave", seen: true, done: false } });
+    P.moveTo("C0"); bb = r.breath; var thr = P.trapOptions().disarm.thr;
+    P.rand = function () { return (thr - 2 + 0.5) / 6; }; var d2 = P.resolveTrap("desamorcer"); P.rand = savedRand;
+    ok(thr > 2 ? (d2.result.kind === "mid" && r.breath === bb - TR.midBreath && !r.fx.entrave) : d2.result.kind !== "ko", "de justesse : on passe, −10 Souffle");
+    r = go("sentier", [], { "S>C0": { fx: "entrave", seen: true, done: false } });
+    P.moveTo("C0"); P.rand = function () { return 0; }; var d3 = P.resolveTrap("desamorcer"); P.rand = savedRand;
+    ok(d3.result.kind === "ko" && r.fx.entrave === TR.steps, "Désamorcer raté : l'effet joue");
+    // Entrave : +6 Souffle par pas, 3 pas, le pas du piège ne compte pas ; le repos la lève
+    P.trapContinue(); r.status = "pa2-map"; r.nodes.C0.done = true;
+    var e0 = r.breath; P.moveTo("C1");
+    ok(r.breath === e0 - g.PA2_WORLD_RULES.forest.stepBreath - TR.entraveBreath && r.fx.entrave === TR.steps - 1, "Entrave : +6 Souffle au pas suivant, un pas de moins");
+    r.fx.entrave = 2; r.nodes.CAMP.done = false; r.at = "CAMP"; r.status = "pa2-node"; P._prepareNode(r, r.nodes.CAMP);
+    P.placeAction("rest");
+    ok(!r.fx.entrave, "le repos au camp lève l'Entrave");
+    // Venin : −4 % par pas pendant 3 pas ; une ration le lève, même à PV pleins ; il peut achever
+    r = go("sentier", ["petite_ration"], { "S>C0": { fx: "venin", seen: true, done: false } });
+    P.moveTo("C0"); P.resolveTrap("subir"); P.trapContinue(); r.nodes.C0.done = true; r.status = "pa2-map";
+    var h0 = game.heroHp; P.moveTo("C1");
+    ok(r.fx.venin === 2 && h0 - game.heroHp === Math.round(game.heroMaxHp * TR.veninPct) && /venin/.test(r.fxNote), "Venin : −4 % des PV au pas suivant, la note le dit");
+    game.heroHp = game.heroMaxHp;
+    ok(P.useItem("petite_ration").ok && !r.fx.venin, "une ration lève le Venin, même à PV pleins");
+    r.fx.venin = 3; r.nodes.C1.done = true; r.status = "pa2-map"; game.heroHp = 2; P.moveTo(P.openMoves()[0]);
+    ok(r.status === "completed" && r.end.how === "ko", "le Venin peut achever le héros");
+    // Aveuglé : une rangée de vue en moins, annulé par la torche
+    r = go("sentier", [], {});
+    var far = Object.keys(r.nodes).filter(function (k) { return r.nodes[k].row === 1; })[0];
+    ok(P.isVisible(far, r), "sans effet : la rangée 1 se voit du départ");
+    r.fx.aveugle = 3;
+    ok(!P.isVisible(far, r), "Aveuglé : une rangée de moins");
+    r.bag.push("torche");
+    ok(P.isVisible(far, r), "la torche annule l'Aveuglement");
+    // Alarme : un ennemi de plus au prochain combat, pas de Ruse
+    r = go("sentier", [], {});
+    r.fx.alarme = 1; var c = r.nodes.C0; c.type = "combat"; c.done = false; r.at = "C0"; r.status = "pa2-node"; P._prepareNode(r, c);
+    ok(c.alarm && c.pack === g.PA2_ACTS[1].pack + 1 && !r.fx.alarme, "Alarme : un ennemi de plus au combat suivant, puis elle s'éteint");
+    ok(P.combatPreview().ruseBlocked && P.ruse().ok === false, "Alarme : Ruser est impossible");
+    // Besace percée : un objet perdu au hasard
+    r = go("sentier", ["gourde", "torche"], { "S>C0": { fx: "besace", seen: true, done: false } });
+    P.moveTo("C0"); var bs = P.resolveTrap("subir");
+    ok(bs.result.lost && (bs.result.lost === "gourde" ? r.stock.gourde === 1 : r.bag.indexOf("torche") < 0), "Besace percée : un objet perdu (" + bs.result.lost + ")");
+    // Crypte : dans le noir, le piège ne se voit qu'à la Lanterne ou une fois découvert
+    prep(); S.startRun("petite_aventure_crypte"); r = game.sceneRun; r.hookId = null; P.addItem("lanterne"); P.depart();
+    var ck = r.at + ">" + P.openMoves()[0]; r.traps = {}; r.traps[ck] = { fx: "alarme", seen: false, done: false };
+    ok(!P.isTrapShown(ck, r), "Crypte : piège invisible dans le noir");
+    P.useItem("lanterne");
+    ok(P.isTrapShown(ck, r), "Crypte : la Lanterne allumée le montre");
+    r.lanternLeft = 0; P.moveTo(ck.split(">")[1]);
+    ok(r.status === "pa2-trap" && r.trap.unseen === true && r.traps[ck].seen, "dans le noir, marcher dessus le découvre (la fiche le dit)");
+    r.lanternLeft = 0; r.trap.unseen = true; P.resolveTrap("rebrousser");
+    ok(P.isTrapShown(ck, r), "découvert : il reste visible après Rebrousser");
+    // Parcours : jamais de piège
+    ok(Object.keys(P._placeTraps({ parcours: true, map: {}, nodes: {} }) || {}).length === 0, "parcours : aucun piège");
+    // Écran : losange, fiche, pastilles
+    r = go("sentier", ["trousse"], { "S>C0": { fx: "venin", seen: true, done: false } });
+    run("switchTab('scene')");
+    var hm = g.buildSceneScreenHTML();
+    ok(/class="pa2-trap"/.test(hm), "carte : le losange rouge sur le sentier");
+    P.moveTo("C0"); g.pa2View.sheet = { trap: true, step: "intro" };
+    var hs = g.pa2TrapSheetBody(r, g.pa2View.sheet);
+    ok(/Ronces noires/.test(hs) && /pa2Trap\('desamorcer'\)/.test(hs) && /pa2Trap\('trousse'\)/.test(hs) && /pa2Trap\('subir'\)/.test(hs) && /pa2Trap\('rebrousser'\)/.test(hs), "fiche du piège : nom, Désamorcer, Trousse, Subir, Rebrousser");
+    P.resolveTrap("subir");
+    ok(/is-fx/.test(g.pa2HudHTML(r)) && /Venin 3/.test(g.pa2HudHTML(r)), "en-tête : pastille « Venin 3 »");
+    g.pa2View.sheet = null;
+    ok(g.PA2_ITEMS.corde.pro.indexOf("Pas sur les pièges") > 0 && g.PA2_ITEM_ORDER.indexOf("trousse") === g.PA2_ITEM_ORDER.indexOf("corde") + 1, "besace : la Trousse après la Corde, la Corde « pas sur les pièges »");
+  } finally {
+    P.rand = savedRand; g.__traps = false; g.PA2_MAPS_BY_WORLD.forest = savedMaps; game.sceneRun = null;
+    if (g.SortieManager.isActive()) g.SortieManager.end("return");
+  }
 })();
 
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));

@@ -38,7 +38,11 @@ var PA2_ITEMS = {
     pro: "Allumée, elle montre deux rangées de plus pendant quelques pas.", con: "Une seule mèche." },
   corde: { id: "corde", name: "Corde", size: 1, uses: 1,
     icon: "images/Icons/scene/rope.webp",
-    pro: "Réussite assurée sur un obstacle, voie précision.", con: "Une seule fois." },
+    pro: "Réussite assurée sur un obstacle, voie précision. Pas sur les pièges.", con: "Une seule fois." },
+  // v3.467.0 (Pièges, PG-D2) : la Trousse de crocheteur, gratuite. Un piège désamorcé à coup sûr.
+  trousse: { id: "trousse", name: "Trousse de crocheteur", size: 1, uses: 2,
+    icon: "images/Icons/scene/items/item_lockpicks.webp",
+    pro: "Deux crochets : un piège désamorcé à coup sûr, sans dé ni Souffle.", con: "Ne sert qu'aux pièges." },
   torche: { id: "torche", name: "Torche", size: 1,
     icon: "images/Icons/scene/torch.webp",
     pro: "Tu vois une rangée de plus devant toi.", con: "Sa lumière attire : combats +15 % de dégâts." },
@@ -60,7 +64,7 @@ var PA2_ITEMS = {
     pro: "Toute la carte est visible, et les sources rendent +10.",
     lockedHint: "Coffre d'expédition : atteindre la Clairière aux lanternes." }
 };
-var PA2_ITEM_ORDER = ["petite_ration", "ration", "grande_ration", "gourde", "outre", "craie", "lanterne", "corde", "torche", "armure", "carte", "fiole", "bois", "veilleurs"];
+var PA2_ITEM_ORDER = ["petite_ration", "ration", "grande_ration", "gourde", "outre", "craie", "lanterne", "corde", "trousse", "torche", "armure", "carte", "fiole", "bois", "veilleurs"];
 
 /* Pactes (V14, Q6) : malus choisis contre du butin final. */
 var PA2_PACTS = {
@@ -219,7 +223,69 @@ var PA2_WORLD_RULES = {
   forest: { stepBreath: 4 },                // v3.423.0 (B) : la marche essouffle aussi en Forêt
   desert: { stepBreath: 4, gourdeUses: 1 }, // v3.423.0 (B) : 3 -> 4
   ruins: { stepBreath: 4 },                 // v3.429.0 : pas de soif, des murs qui bougent (PA2_RULES.wallShiftPct)
-  crypt: { stepBreath: 4, sightRows: 1 }    // v3.454.0 (CR10) : l'obscurité, on ne voit que la rangée devant soi
+  crypt: { stepBreath: 4, sightRows: 1, trapsHidden: true } // v3.454.0 (CR10) : l'obscurité ; v3.467.0 : pièges vus seulement à la Lanterne
+};
+
+/* v3.467.0 (Pièges, conception PG-A à PG-G) : pièges posés sur les sentiers. perAct : pièges par acte
+   selon l'anneau (PG-G) ; un point garde toujours une sortie libre. Chiffres de départ, au banc. */
+var PA2_TRAP_RULES = {
+  perAct: { sentier: 1, chemin: 2, periple: 3 },
+  baseDifficulty: 4,  // désamorcer : dé de précision, comme un obstacle de base
+  midBreath: 10,      // « de justesse »
+  backBreath: 10,     // rebrousser
+  veninPct: 0.04, entraveBreath: 6, steps: 3
+};
+/* Les cinq effets (PG-C). steps : pas pendant lesquels l'effet dure (0 : immédiat ou jusqu'au combat). */
+var PA2_TRAP_FX = {
+  venin:   { id: "venin",   name: "Venin",         steps: 3, icon: "images/Icons/scene/traps/fx_venom.webp",
+    desc: "−4 % des PV à chaque pas", cure: "Une ration ou un autel le lèvent." },
+  alarme:  { id: "alarme",  name: "Alarme",        steps: 0, icon: "images/Icons/scene/traps/fx_alarm.webp",
+    desc: "Prochain combat : un ennemi de plus, pas de Ruse", cure: "Dure jusqu'au prochain combat." },
+  entrave: { id: "entrave", name: "Entrave",       steps: 3, icon: "images/Icons/scene/traps/fx_snare.webp",
+    desc: "+6 Souffle par pas", cure: "Le repos au camp ou au seuil la lève." },
+  aveugle: { id: "aveugle", name: "Aveuglé",       steps: 3, icon: "images/Icons/scene/traps/fx_blind.webp",
+    desc: "Une rangée de vue en moins", cure: "Une torche ou la Lanterne allumée l'annulent." },
+  besace:  { id: "besace",  name: "Besace percée", steps: 0, icon: "images/Icons/scene/traps/fx_torn_bag.webp",
+    desc: "Un objet de la besace perdu au hasard", cure: "Tout de suite." }
+};
+var PA2_TRAP_FX_ORDER = ["venin", "alarme", "entrave", "aveugle", "besace"];
+/* PG-E : les cinq effets partout, ceux du caractère du monde pèsent double. */
+var PA2_TRAP_WEIGHTS = {
+  forest: { venin: 2, alarme: 1, entrave: 2, aveugle: 1, besace: 1 },
+  desert: { venin: 1, alarme: 1, entrave: 2, aveugle: 2, besace: 1 },
+  ruins:  { venin: 1, alarme: 2, entrave: 1, aveugle: 1, besace: 2 },
+  crypt:  { venin: 1, alarme: 2, entrave: 1, aveugle: 2, besace: 1 }
+};
+/* PG-E : un piège par effet et par monde, textes validés par Seb le 23/10/2026. */
+var PA2_TRAPS = {
+  forest: {
+    venin:   { name: "Ronces noires",        line: "Des épines noires, luisantes, en travers du sentier." },
+    alarme:  { name: "Fil aux clochettes",   line: "Un fil entre deux troncs, des clochettes de bois au bout." },
+    entrave: { name: "Collet du braconnier", line: "Un nœud coulant, sous les feuilles. Il n'attend que ton pied." },
+    aveugle: { name: "Vesses-de-loup",       line: "Des champignons gros comme des poings. Ils éclatent en poussière." },
+    besace:  { name: "Branche taillée",      line: "Une branche taillée en pointe, à hauteur de sac." }
+  },
+  desert: {
+    venin:   { name: "Pierres à scorpions",  line: "Les pierres plates bougent quand on ne les regarde pas." },
+    alarme:  { name: "Jarres en équilibre",  line: "Des jarres empilées au milieu du passage. Un souffle les ferait tomber." },
+    entrave: { name: "Filet enfoui",         line: "Une corde de filet dépasse du sable. Le reste est dessous." },
+    aveugle: { name: "Vent de sable",        line: "Le vent tourne dans le défilé. Il porte du sable fin." },
+    besace:  { name: "Arête de roche",       line: "Une arête de roche, fine comme une lame, au ras de l'épaule." }
+  },
+  ruins: {
+    venin:   { name: "Niche aux aiguilles",  line: "Une niche à hauteur de main. Quelque chose brille au fond." },
+    alarme:  { name: "Dalle qui sonne",      line: "Une dalle plus claire que les autres. Sous elle, du vide, et une cloche." },
+    entrave: { name: "Gravats roulants",     line: "Des gravats ronds comme des billes, sur toute la largeur." },
+    aveugle: { name: "Mortier en poudre",    line: "Des sacs de mortier crevés. Un pas, et l'air devient blanc." },
+    besace:  { name: "Herse basse",          line: "Une herse à demi baissée. Il faut passer dessous, de côté." }
+  },
+  crypt: {
+    venin:   { name: "Poignée piquée",       line: "La seule porte a une poignée. Elle est hérissée de pointes fines." },
+    alarme:  { name: "Cloche des veilleurs", line: "Un fil court au ras du sol, jusqu'à une cloche. Ici, on réveille les morts." },
+    entrave: { name: "Linceuls tendus",      line: "Des linceuls tendus d'un mur à l'autre. Ils s'enroulent à ce qui passe." },
+    aveugle: { name: "Encens froid",         line: "De l'encens qui fume encore, épais, dans un couloir sans air." },
+    besace:  { name: "Marche creuse",        line: "Une marche sonne creux. Dessous, le noir, et rien pour retenir un sac." }
+  }
 };
 
 /* ---------- Textes ---------- */
@@ -589,6 +655,11 @@ var PA2_HOOKS_BY_WORLD = {
 
 window.PA2_BAG_SIZE = PA2_BAG_SIZE;
 window.PA2_WORLD_RULES = PA2_WORLD_RULES;
+window.PA2_TRAP_RULES = PA2_TRAP_RULES;
+window.PA2_TRAP_FX = PA2_TRAP_FX;
+window.PA2_TRAP_FX_ORDER = PA2_TRAP_FX_ORDER;
+window.PA2_TRAP_WEIGHTS = PA2_TRAP_WEIGHTS;
+window.PA2_TRAPS = PA2_TRAPS;
 window.PA2_PLACES_BY_WORLD = PA2_PLACES_BY_WORLD;
 window.PA2_ITEMS = PA2_ITEMS;
 window.PA2_ITEM_ORDER = PA2_ITEM_ORDER;

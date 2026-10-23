@@ -5,7 +5,7 @@
    run.pa2 = true. Statuts : pa2-prep (besace, pactes) -> pa2-map <-> pa2-node -> completed.
    Données : data/pa2-maps.js (tracés), data/pa2-content.js (contenu, réglages « banc »). */
 
-var PA2_STATUS = { prep: "pa2-prep", map: "pa2-map", node: "pa2-node", done: "completed" };
+var PA2_STATUS = { prep: "pa2-prep", map: "pa2-map", node: "pa2-node", trap: "pa2-trap", done: "completed" }; // v3.467.0 : arrêté sur un piège
 
 var Pa2Run = {
   /* ---------- Outils ---------- */
@@ -412,6 +412,8 @@ var Pa2Run = {
     var ref = self._spawn(run, null, false, self.goldBand(run));
     run.refGold = Math.max(1, Number((ref && ref.goldReward) || 1));
     run.nodes = this.generate(run);
+    run.traps = this._placeTraps(run); // v3.467.0 : pièges sur les sentiers
+    run.fx = {};
     run.at = this.getMap(run).start;
     run.path = [];
     if (!par && !storyFree) { SceneRunManager._consumePetiteAventureSlot(); run.paSlotDay = SceneRunManager._today(); } // offerte : pas de place prise, rien à rendre en cas d'échec
@@ -485,6 +487,7 @@ var Pa2Run = {
     var sight = this.worldRule(run, "sightRows"); // v3.454.0 (Crypte) : l'obscurité
     var reach = (sight != null ? sight : PA2_RULES.sightRows) + (this.hasItem("torche", run) ? 1 : 0)
       + (Number(run.lanternLeft || 0) > 0 ? PA2_RULES.lanternRows : 0); // la Lanterne allumée
+    if (this.fxLeft(run, "aveugle") > 0 && !this.hasItem("torche", run) && !(Number(run.lanternLeft || 0) > 0)) reach = Math.max(1, reach - 1); // v3.467.0 : Aveuglé
     return n.row > here.row && n.row <= here.row + reach;
   },
   // isShown(key) : le nœud apparaît sur la carte (V7) — parcouru, repère, ou visible devant soi.
@@ -542,12 +545,28 @@ var Pa2Run = {
   moveTo: function (key) {
     var run = this.getRun();
     if (this.openMoves().indexOf(key) < 0) return { ok: false, reason: _t("Ce chemin n'est pas praticable d'ici.") };
+    // v3.467.0 (Pièges) : un sentier piégé arrête le héros au milieu, avant le pas
+    var tk = run.at + ">" + key, tr = run.traps && run.traps[tk];
+    if (tr && !tr.done) {
+      run.trap = { key: tk, from: run.at, to: key, unseen: !this.isTrapShown(tk, run), result: null };
+      tr.seen = true;
+      run.status = PA2_STATUS.trap;
+      run.lastResult = null;
+      this._save();
+      return { ok: true, reason: null, trap: true };
+    }
+    return this._step(run, key, false);
+  },
+  // Le pas lui-même : Souffle de marche, effets en cours (sauf le pas du piège), nœud préparé.
+  _step: function (run, key, fromTrap) {
+    run.fxNote = null;
     run.path.push([run.at, key]);
     run.at = key;
     var step = (this.hasPact("lourd", run) ? PA2_RULES.heavyStep : 0) + (this.hasRelic("ronce", run) ? PA2_RULES.ronceStep : 0)
       + Number(this.worldRule(run, "stepBreath") || 0); // v3.387.0 : la soif du Désert
     if (step) run.breath = Math.max(0, run.breath - step);
     if (this.hasRelic("braise", run)) this._heal(game.heroMaxHp * PA2_RULES.braiseHealPct);
+    if (!fromTrap && !this._tickFx(run)) return { ok: true, reason: null, ko: true }; // le Venin peut achever
     this._prepareNode(run, this.node(key, run));
     run.wallNote = null;
     this._shiftWalls(run); // v3.429.0 (Ruines) : les murs bougent
@@ -598,6 +617,7 @@ var Pa2Run = {
           run.flags.assisted = true; n.assist = true; n.pack = Math.max(1, n.pack - 1); n.echo = hook.echo.assist;
         }
       }
+      if (run.fx && run.fx.alarme) { n.pack = Number(n.pack || 1) + 1; n.alarm = true; delete run.fx.alarme; } // v3.467.0 : l'Alarme
       n.diff = SceneCheckSystem.depthDifficulty(5, this._depth(n, run)) * this.ring(run).diffMult * Number(run.band.obstacleScale || 1) * this.heroScale(run).obstacle;
     } else if (t === "boss") {
       n.pack = 1;
@@ -675,7 +695,7 @@ var Pa2Run = {
   // Objets de besace utilisables à tout moment du run (rations, gourde).
   useItem: function (itemId) {
     var run = this.getRun(), it = PA2_ITEMS[itemId];
-    if (!run || (run.status !== PA2_STATUS.map && run.status !== PA2_STATUS.node) || !it || !(run.stock[itemId] > 0)) {
+    if (!run || (run.status !== PA2_STATUS.map && run.status !== PA2_STATUS.node && run.status !== PA2_STATUS.trap) || !it || !(run.stock[itemId] > 0)) {
       return { ok: false, reason: _t("Choix impossible") };
     }
     if (it.light) { // v3.454.0 (Crypte) : allumer la Lanterne ; Mèche longue (Mémoire 14) +2 pas
@@ -689,8 +709,10 @@ var Pa2Run = {
       amt = this.drinkAmount(itemId, amt);
       run.breath = Math.min(100, run.breath + amt);
     } else {
-      if (game.heroHp >= game.heroMaxHp && !(it.healsWound && run.wounds > 0)) return { ok: false, reason: _t("Tu es en pleine forme.") };
+      if (it.uses && !it.healPct) return { ok: false, reason: _t("Choix impossible") }; // corde, trousse, craie : pas à boire
+      if (game.heroHp >= game.heroMaxHp && !(it.healsWound && run.wounds > 0) && !(this.fxLeft(run, "venin") > 0)) return { ok: false, reason: _t("Tu es en pleine forme.") };
       this._heal(game.heroMaxHp * Number(it.healPct || 0));
+      if (run.fx) delete run.fx.venin; // v3.467.0 : une ration lève le Venin
       if (it.healsWound && run.wounds > 0) run.wounds -= 1;
     }
     run.stock[itemId] -= 1;
@@ -733,6 +755,140 @@ var Pa2Run = {
   _profiles: function (run) {
     var t = SceneEngine.getTemplate(run.templateId);
     return (t && t.optionProfiles) || SceneEngine.getNodeBank().optionProfiles;
+  },
+
+  /* ---------- Pièges (v3.467.0, conception PG-A à PG-G) ---------- */
+
+  fxLeft: function (run, id) { var f = (run || this.getRun() || {}).fx; return f ? Number(f[id] || 0) : 0; },
+  _walkedLink: function (run, key) { return run.path.some(function (e) { return e[0] + ">" + e[1] === key; }); },
+
+  /* Pose au départ : PA2_TRAP_RULES.perAct pièges par acte selon l'anneau, sur des sentiers dont le
+     point de départ a au moins deux sorties, et jamais toutes ; pas sur un point dont un mur bouge. */
+  _placeTraps: function (run) {
+    var map = this.getMap(run), traps = {}, self = this;
+    if (!map || !map.links || this.isParcours(run)) return traps;
+    var pa = (PA2_TRAP_RULES.perAct || {})[run.ring], per = pa != null ? Number(pa) : 1, moving = {};
+    (map.shifts || []).forEach(function (sh) { moving[sh.from] = true; });
+    var byAct = { 1: [], 2: [], 3: [] }, used = {};
+    Object.keys(map.links).forEach(function (a) {
+      var exits = map.links[a] || [];
+      if (exits.length < 2 || moving[a]) return;
+      exits.forEach(function (b) { var n = run.nodes[b]; if (n && byAct[n.act]) byAct[n.act].push([a, b]); });
+    });
+    var weights = PA2_TRAP_WEIGHTS[run.worldId] || PA2_TRAP_WEIGHTS.forest;
+    [1, 2, 3].forEach(function (act) {
+      var pool = byAct[act].slice(), placed = 0;
+      while (pool.length && placed < per) {
+        var l = pool.splice(Math.floor(self.rand() * pool.length), 1)[0];
+        if ((used[l[0]] || 0) >= map.links[l[0]].length - 1) continue; // une sortie reste libre
+        used[l[0]] = (used[l[0]] || 0) + 1;
+        traps[l[0] + ">" + l[1]] = { fx: self._weighted(weights), seen: false, done: false };
+        placed++;
+      }
+    });
+    return traps;
+  },
+  // Le piège se voit si son sentier est dans la vue (départ visible, arrivée visible devant soi) ;
+  // dans le noir (trapsHidden), seulement à la Lanterne allumée ou une fois découvert.
+  isTrapShown: function (key, run) {
+    run = run || this.getRun();
+    var t = run && run.traps ? run.traps[key] : null;
+    if (!t || t.done || this._walkedLink(run, key)) return false;
+    var p = key.split(">"), here = this.node(run.at, run), to = this.node(p[1], run);
+    if (!here || !to) return false;
+    var all = this.hasItem("veilleurs", run) || this.hasRelic("oeil", run);
+    if (this.worldRule(run, "trapsHidden") && !t.seen && !all && !(Number(run.lanternLeft || 0) > 0)) return false;
+    if (p[0] === run.at) return true;
+    return to.row > here.row && this.isShown(p[0], run) && this.isVisible(p[1], run);
+  },
+  trapAt: function (run) { run = run || this.getRun(); return run && run.trap ? run.trap : null; },
+  trapDef: function (run) {
+    run = run || this.getRun();
+    var tr = this.trapAt(run), t = tr && run.traps ? run.traps[tr.key] : null;
+    if (!t) return null;
+    var w = PA2_TRAPS[run.worldId] || PA2_TRAPS.forest;
+    return { fx: t.fx, fxDef: PA2_TRAP_FX[t.fx], name: w[t.fx].name, line: w[t.fx].line };
+  },
+  _trapCheck: function (run) {
+    var tr = this.trapAt(run), to = tr ? this.node(tr.to, run) : null;
+    if (!to) return null;
+    var diff = SceneCheckSystem.depthDifficulty(PA2_TRAP_RULES.baseDifficulty, this._depth(to, run)) * this.ring(run).diffMult
+      * Number(run.band.obstacleScale || 1) * this.heroScale(run).obstacle;
+    return this._check(run, "precision", diff, 0);
+  },
+  trapOptions: function () {
+    var run = this.getRun();
+    if (!run || run.status !== PA2_STATUS.trap || !run.trap || run.trap.result) return null;
+    var ck = this._trapCheck(run), back = PA2_TRAP_RULES.backBreath;
+    return { disarm: ck, kit: Number(run.stock.trousse || 0), back: { cost: back, affordable: run.breath >= back } };
+  },
+  /* Désamorcer (dé de précision, sans Souffle ; de justesse −10), trousse (assuré), subir, rebrousser. */
+  resolveTrap: function (choice) {
+    var run = this.getRun(), opts = this.trapOptions();
+    if (!opts) return { ok: false, reason: _t("Choix impossible") };
+    var t = run.traps[run.trap.key], res;
+    if (choice === "rebrousser") {
+      if (!opts.back.affordable) return { ok: false, reason: _t("Pas assez de Souffle pour cette approche") };
+      run.breath -= opts.back.cost;
+      run.trap = null;
+      run.status = PA2_STATUS.map;
+      run.lastResult = { kind: "back" };
+      this._save();
+      return { ok: true, reason: null, result: run.lastResult };
+    }
+    if (choice === "trousse") {
+      if (!(opts.kit > 0)) return { ok: false, reason: _t("Choix impossible") };
+      run.stock.trousse -= 1;
+      res = { kind: "ok", kit: true };
+    } else if (choice === "desamorcer") {
+      res = this.roll(opts.disarm.thr);
+      res.thr = opts.disarm.thr; res.cran = opts.disarm.cran;
+      if (res.kind === "mid") run.breath = Math.max(0, run.breath - PA2_TRAP_RULES.midBreath);
+    } else if (choice === "subir") {
+      res = { kind: "endure" };
+    } else return { ok: false, reason: _t("Choix impossible") };
+    res.choice = choice; res.fx = t.fx;
+    if (res.kind === "ko" || res.kind === "endure") this._applyTrapFx(run, t.fx, res);
+    t.done = true;
+    run.trap.result = res;
+    this._save();
+    return { ok: true, reason: null, result: res };
+  },
+  _applyTrapFx: function (run, fx, res) {
+    if (!run.fx) run.fx = {};
+    var def = PA2_TRAP_FX[fx];
+    if (fx === "alarme") run.fx.alarme = 1;
+    else if (fx === "besace") {
+      var pool = [];
+      Object.keys(run.stock || {}).forEach(function (id) { if (run.stock[id] > 0) pool.push(id); });
+      run.bag.forEach(function (id) { if (!PA2_ITEMS[id].uses && pool.indexOf(id) < 0) pool.push(id); }); // objets sans charges
+      var lost = pool.length ? this._pick(pool) : null;
+      if (lost && PA2_ITEMS[lost].uses) run.stock[lost] -= 1;
+      else if (lost) run.bag.splice(run.bag.indexOf(lost), 1);
+      res.lost = lost;
+    } else run.fx[fx] = Math.max(this.fxLeft(run, fx), Number(def.steps || 0));
+  },
+  // Après le piège : le pas reprend jusqu'au point visé (le pas du piège ne compte pas pour les effets).
+  trapContinue: function () {
+    var run = this.getRun();
+    if (!run || run.status !== PA2_STATUS.trap || !run.trap || !run.trap.result) return { ok: false, reason: _t("Choix impossible") };
+    var to = run.trap.to;
+    run.trap = null;
+    return this._step(run, to, true);
+  },
+  // Effets qui durent, à chaque pas : Venin (PV), Entrave (Souffle), Aveuglé (compte seulement).
+  _tickFx: function (run) {
+    var fx = run.fx, R = PA2_TRAP_RULES;
+    if (!fx) return true;
+    if (fx.entrave > 0) { run.breath = Math.max(0, run.breath - R.entraveBreath); fx.entrave -= 1; }
+    if (fx.aveugle > 0) fx.aveugle -= 1;
+    if (fx.venin > 0) {
+      fx.venin -= 1;
+      var dmg = Math.max(1, Math.round(game.heroMaxHp * R.veninPct));
+      run.fxNote = _t("Le venin te brûle : −{d} PV.", { d: dmg });
+      if (!this._hurt(run, dmg)) return false;
+    }
+    return true;
   },
 
   /* ---------- Obstacle (et tertre) ---------- */
@@ -887,6 +1043,7 @@ var Pa2Run = {
     var out = { boss: n.type === "boss", revenge: !!n.revenge, foeId: n.foeId || null, charger: this.combatEstimate("charger"), tenir: this.combatEstimate("tenir") };
     if (!out.boss) {
       out.ruse = this._check(run, "precision", n.diff, this.hasRelic("fleche", run) ? 1 : 0);
+      out.ruseBlocked = !!n.alarm; // v3.467.0 : l'Alarme a sonné
       out.flee = { cost: PA2_RULES.fleeBreath, affordable: run.breath >= PA2_RULES.fleeBreath };
     }
     return out;
@@ -934,6 +1091,7 @@ var Pa2Run = {
   ruse: function () {
     var n = this._current(["combat"]);
     if (!n) return { ok: false, reason: _t("Choix impossible") };
+    if (n.alarm) return { ok: false, reason: _t("L'alarme a sonné : ils t'attendent.") };
     var run = this.getRun(), ck = this._check(run, "precision", n.diff, this.hasRelic("fleche", run) ? 1 : 0);
     var res = this.roll(ck.thr);
     res.thr = ck.thr; res.cran = ck.cran; res.ruse = true;
@@ -990,6 +1148,7 @@ var Pa2Run = {
     if (!free && run.loot < cost) return { ok: false, reason: _t("Pas assez d'or.") };
     if (free) run.altarFreeUsed = true; else this._pay(run, cost);
     if (run.wounds > 0) run.wounds -= 1;
+    if (run.fx) delete run.fx.venin; // v3.467.0 : l'autel lève le Venin
     var healed = this._heal(game.heroMaxHp * PA2_RULES.altarHealPct);
     return this._done(run, n, { kind: "autel", accepted: true, cost: free ? 0 : cost, healed: healed });
   },
@@ -1111,12 +1270,14 @@ var Pa2Run = {
       var pct = camp ? R.campRestPct : R.seuilRestPct;
       res.healed = this._heal(game.heroMaxHp * pct);
       run.breath = Math.min(100, run.breath + Math.round(pct * 100));
+      if (run.fx) delete run.fx.entrave; // v3.467.0 : le repos lève l'Entrave
     } else if (action === "cook") {
       var rid = this._rationInStock(run);
       if (!rid) return { ok: false, reason: _t("Tu n'as plus de ration.") };
       run.stock[rid] -= 1;
       res.healed = this._heal(game.heroMaxHp * R.cookPct);
       if (run.wounds > 0) run.wounds -= 1;
+      if (run.fx) { delete run.fx.entrave; delete run.fx.venin; } // v3.467.0 : un repas au feu, ration comprise
     } else if (action === "listen") {
       run.reveal[camp ? 2 : 3] = true;
     } else if (action === "home") {

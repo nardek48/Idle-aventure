@@ -17,6 +17,8 @@ var RUINES = process.argv.indexOf("--ruines") > 0;        // v3.429.0 : la Petit
 var CRYPTE = process.argv.indexOf("--crypte") > 0;        // v3.454.0 : la Petite Aventure de la Crypte (obscurité, Lanterne, gardien qui dort)
 var REVEIL = process.argv.indexOf("--reveiller") > 0;     // v3.454.0 : gisants réveillés au départ (carte de la Crypte)
 var TPL = CRYPTE ? "petite_aventure_crypte" : RUINES ? "petite_aventure_ruines" : DESERT ? "petite_aventure_desert" : "petite_aventure_foret";
+var NO_TRAPS = process.argv.indexOf("--sans-pieges") > 0; // v3.467.0 : comparer avec et sans pièges
+var BLIND = process.argv.indexOf("--droit-devant") > 0;   // v3.467.0 : le joueur qui ne contourne pas les pièges
 var OVR = (process.argv.filter(function (a) { return a.indexOf("--ovr=") === 0; })[0] || "").slice(6); // réglages d'essai, JSON
 
 var src = fs.readFileSync(path.join(__dirname, "forecast-calibration-bench.js"), "utf8").replace(/\nmain\(\);\s*$/, "\n");
@@ -41,6 +43,8 @@ if (OVR) {
   if (o.map && o.tune) g.PA2_MAPS[o.map].tune = o.tune; // v3.386.0 : {"foeMult":0.9,"lootMult":1.1}
   if (o.ringDiff) ["sentier", "chemin", "periple"].forEach(function (r, i) { g.PA2_RINGS[r].diffMult = o.ringDiff[i]; });
 }
+
+if (NO_TRAPS) g.PA2_TRAP_RULES.perAct = { sentier: 0, chemin: 0, periple: 0 };
 
 /* Héros de référence : niveau et développement attendus à chaque étape (repères de campagne
    v3.365.0 : niveau 8 à l'arrivée au Désert, 12 à la fin du chapitre II). */
@@ -95,14 +99,22 @@ function playRun(c, stage) {
   if (CRYPTE && run.stock.lanterne > 0) P.useItem("lanterne"); // allumée au départ
   var max = g.game.heroMaxHp, seconds = SECONDS.prep, nodes = 0;
   var lossByAct = { 1: 0, 2: 0, 3: 0 }, guard = 200, koAt = null;
+  var traps = { met: 0, back: 0, hit: {}, placed: Object.keys(run.traps || {}).length };
   var target = ["BOSS", "CLAIRIERE", "TERTRE"][Math.floor(Math.random() * 3)];
   function eat() {
     if (g.game.heroHp / max >= 0.4) return;
     ["grande_ration", "ration", "petite_ration"].forEach(function (id) { if (g.game.heroHp / max < 0.4 && run.stock[id] > 0) P.useItem(id); });
   }
   while (run.status !== "completed" && guard-- > 0) {
+    if (run.status === "pa2-trap") {
+      var hpT = g.game.heroHp, tc = trapChoice(P, run), tr = P.resolveTrap(tc);
+      if (!tr.ok) break;
+      traps.met++; if (tr.result && tr.result.fx && (tr.result.kind === "ko" || tr.result.kind === "endure")) traps.hit[tr.result.fx] = (traps.hit[tr.result.fx] || 0) + 1;
+      if (tc !== "rebrousser") P.trapContinue(); else traps.back++;
+      seconds += SECONDS.move; continue;
+    }
     if (run.status === "pa2-map") {
-      var mv = P.openMoves();
+      var mv = avoidTraps(P, run, P.openMoves());
       var pickMove = mv[Math.floor(Math.random() * mv.length)];
       if (mv.indexOf(target) >= 0) pickMove = target;
       P.moveTo(pickMove); seconds += SECONDS.move; continue;
@@ -127,7 +139,7 @@ function playRun(c, stage) {
         ["grande_ration", "ration", "petite_ration"].forEach(function (id) { while (run.stock[id] > 0 && P.combatPreview().tenir.hpLoss * 1.2 >= g.game.heroHp && P.useItem(id).ok) { /* mange */ } });
         pv = P.combatPreview();
         if (pv.tenir.verdict === "mortel") {
-          if (pv.ruse.thr <= 4) res = P.ruse();
+          if (pv.ruse.thr <= 4 && !pv.ruseBlocked) res = P.ruse();
           else if (pv.flee.affordable) res = P.flee();
           else res = P.fight("tenir");
         } else res = P.fight(pv.charger.hpLoss < g.game.heroHp * 0.3 ? "charger" : "tenir");
@@ -164,9 +176,23 @@ function playRun(c, stage) {
   var kept = (end.summary && end.summary.kept) ? end.summary.kept.gold : 0;
   return {
     how: end.how || "stuck", dest: end.dest, target: target, koAt: koAt, gold: kept, eaten: pr0 - g.game.resources.petite_ration, seve: Number(run.rareFound || 0), // Sève du run seul (hors récompense de secteur)
-    nodes: nodes, seconds: seconds, shifts: Object.keys(run.walls || {}).length,
+    nodes: nodes, seconds: seconds, shifts: Object.keys(run.walls || {}).length, traps: traps,
     loss: { 1: lossByAct[1] / max, 2: lossByAct[2] / max, 3: lossByAct[3] / max }
   };
+}
+
+/* v3.467.0 (Pièges) : le robot évite un sentier piégé quand il peut ; dessus, trousse, sinon désamorcer
+   (il ne coûte rien), rebrousser s'il a été pris au dépourvu et que le dé est mauvais. */
+function trapChoice(P, run) {
+  var o = P.trapOptions();
+  if (o.kit > 0) return "trousse";
+  if (o.disarm.thr >= 6 && run.trap.unseen && o.back.affordable && run.breath >= 60) return "rebrousser";
+  return "desamorcer";
+}
+function avoidTraps(P, run, mv) {
+  if (BLIND) return mv;
+  var free = mv.filter(function (k) { return !P.isTrapShown(run.at + ">" + k, run); });
+  return free.length ? free : mv;
 }
 
 function pct(x) { return String(Math.round(x * 100)).padStart(3) + " %"; }
@@ -203,6 +229,7 @@ function main() {
 /* Une ligne : moyennes sur les 12 cellules (3 classes × 4 étapes), plus le pire KO. */
 function summary() {
   var t = { ko: 0, eaten: 0, gold: 0, seve: 0, sec: 0, n: 0, worst: 0, worstAt: "" };
+  var tp = { placed: 0, met: 0, back: 0, hit: {} };
   B.CLASSES.forEach(function (c) {
     STAGES.forEach(function (st) {
       var ko = 0;
@@ -211,6 +238,8 @@ function summary() {
         var x = playRun(c, st);
         if (x.how === "ko") ko++;
         t.eaten += x.eaten; t.gold += x.gold; t.seve += x.seve; t.sec += x.seconds; t.n++;
+        tp.placed += x.traps.placed; tp.met += x.traps.met; tp.back += x.traps.back;
+        Object.keys(x.traps.hit).forEach(function (k) { tp.hit[k] = (tp.hit[k] || 0) + x.traps.hit[k]; });
       }
       t.ko += ko;
       if (ko / RUNS > t.worst) { t.worst = ko / RUNS; t.worstAt = c.label + " " + st.id; }
@@ -218,6 +247,8 @@ function summary() {
   });
   console.log(RING + (NO_RATION ? " sans rations" : "") + " | KO " + pct(t.ko / t.n) + " (pire " + pct(t.worst) + " " + t.worstAt + ") | rations " + (t.eaten / t.n).toFixed(2) +
     " | or " + Math.round(t.gold / t.n) + " (" + (t.gold / t.sec * 60).toFixed(1) + "/min) | Sève " + (t.seve / t.n).toFixed(2) + " | " + (t.sec / t.n / 60).toFixed(1) + " min");
+  var hits = Object.keys(tp.hit).map(function (k) { return k + " " + (tp.hit[k] / t.n).toFixed(2); }).join(", ");
+  console.log("  pièges : " + (tp.placed / t.n).toFixed(1) + " posés, " + (tp.met / t.n).toFixed(2) + " rencontrés, " + (tp.back / t.n).toFixed(2) + " rebroussés par run | effets subis : " + (hits || "aucun"));
 }
 
 main();
