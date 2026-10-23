@@ -16852,6 +16852,54 @@ console.log("\n[276] v3.463.0 — Boutique d'Éclats à paliers (N-N, N-O)");
   SQ.isStepReached = reach;
 })();
 
+console.log("\n[277] v3.464.0 — Feuille de lancement : mode et niveau (atelier niveaux-donjon)");
+(function () {
+  game = freshCombat("knight");
+  var D = g.DungeonManager, SQ = g.StoryQuestManager, reach = SQ.isStepReached, free0 = D.isStoryTicketFree;
+  game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true };
+  SQ.isStepReached = function () { return true; };
+  D.isStoryTicketFree = function () { return false; };
+  game.dungeonTierCleared = { 1: true, 2: true, 3: true, 4: true };
+  game.dungeonLevelBest = { 4: 4, 1: 23 }; game.dungeonRunsUsed = {}; game.heroHp = game.heroMaxHp;
+  g.openDungeonSheet(4);
+  ok(run("pendingDungeonLevel") === 4 && run("pendingDungeonFree") === false, "la feuille s'ouvre au meilleur niveau tenu (4), en sortie du jour");
+  var h = g.buildDungeonSheetHTML(4);
+  ok(/class="dlvl"/.test(h) && /Touché par l'Aether : objets tirés au-dessus de 15 %/.test(h) && /Or et Éclats \+30 %/.test(h), "Ossuaire 4 : bloc du niveau, plancher 15 %, or et Éclats +30 %");
+  g.stepDungeonLevel(5);
+  ok(run("pendingDungeonLevel") === 5, "les flèches s'arrêtent au meilleur + 1 (5)");
+  g.setDungeonMode(true); h = g.buildDungeonSheetHTML(4);
+  ok(/Mode libre : sorties illimitées/.test(h) && /1 Ration moyenne/.test(h) && !/Cire de sépulcre <strong>/.test(h), "libre : sorties illimitées, Ration moyenne, pas de Cire dans les récompenses");
+  // départ : le niveau et le mode passent à start (préparation de sortie court-circuitée)
+  var prep = g.openSortiePrep, st = D.start, args = null;
+  g.openSortiePrep = function (o) { o.onGo(); }; D.start = function () { args = [].slice.call(arguments); };
+  g.confirmDungeonStart();
+  g.openSortiePrep = prep; D.start = st;
+  ok(args && args[0] === 4 && args[2] === 5 && args[3] === true, "Entrer : start(4, marques, 5, libre)");
+  // quota vide : la feuille s'ouvre en libre
+  game.dungeonRunsUsed = { 4: 99 };
+  g.openDungeonSheet(4);
+  ok(run("pendingDungeonId") === 4 && run("pendingDungeonFree") === true, "quota du jour vide : la feuille s'ouvre en libre");
+  g.closeDungeonSheet();
+  // Tanière 8 : le prochain palier est annoncé, l'en-tête suit le niveau
+  game.dungeonRunsUsed = {}; g.openDungeonSheet(1); g.stepDungeonLevel(8 - run("pendingDungeonLevel"));
+  h = g.buildDungeonSheetHTML(1);
+  ok(/Niveau 10 : butin <b[^>]*>Inhabituel<\/b> \(Cité engloutie\)/.test(h), "Tanière 8 : « Niveau 10 : butin Inhabituel (Cité engloutie) »");
+  g.stepDungeonLevel(12 - run("pendingDungeonLevel")); h = g.buildDungeonSheetHTML(1);
+  ok(/Inhabituel<\/span> max/.test(h), "Tanière 12 : l'en-tête dit « Inhabituel max »");
+  g.closeDungeonSheet();
+  // pronostic au niveau : plus dur au niveau 5 qu'au niveau 1
+  var bw = D.buildWaveEnemy, vus = {};
+  D.buildWaveEnemy = function (w) { vus[game.dungeonRun.level] = true; return bw.call(this, w); };
+  try { g.CombatForecast.forDungeon(4, [], 5); } finally { D.buildWaveEnemy = bw; }
+  ok(Object.keys(vus).join() === "5" && !game.dungeonRun.active, "pronostic : les vagues du niveau 5, puis le run fictif est rendu");
+  // sortie offerte par l'Histoire : pas de bloc, niveau 1
+  D.isStoryTicketFree = function () { return true; };
+  g.openDungeonSheet(4); h = g.buildDungeonSheetHTML(4);
+  ok(!/class="dlvl"/.test(h) && /Entrée offerte/.test(h), "sortie offerte par l'Histoire : ni mode ni niveau");
+  g.closeDungeonSheet();
+  D.isStoryTicketFree = free0; SQ.isStepReached = reach;
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

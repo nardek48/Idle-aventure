@@ -5,6 +5,8 @@
 
 var pendingDungeonId = null;   // donjon ouvert dans la feuille de lancement
 var pendingDungeonMarks = [];  // bascules de la feuille — copiées dans game.dungeonRun.marks au start() seulement
+var pendingDungeonLevel = 1;   // v3.464.0 : niveau choisi (atelier/niveaux-donjon.html, validé le 23/10)
+var pendingDungeonFree = false; // v3.464.0 : mode libre (sorties illimitées, 1 Ration moyenne)
 
 function buildDungeonActiveHTML() {
   var dungeon = DungeonManager.getById(game.dungeonRun.dungeonId);
@@ -139,15 +141,77 @@ function buildDungeonSceauLoreHTML(dungeonId) {
   return '<div class="dsheet-lore">« ' + esc(_td(entry.text)) + ' »</div>';
 }
 
+/* v3.464.0 (Niveaux de donjon, lot 5) : mode, niveau, et ce que le niveau rapporte. */
+function dungeonRarityHTML(r) {
+  var lab = (typeof RARITY_LABELS !== "undefined" && RARITY_LABELS[r]) ? _td(RARITY_LABELS[r]) : r;
+  var col = (typeof RARITY_COLORS !== "undefined" && RARITY_COLORS[r]) || "#9ca3af";
+  return '<b class="dsheet-rarity" style="color:' + col + '">' + esc(lab) + '</b>';
+}
+
+function buildDungeonLevelHTML(d) {
+  var D = DungeonManager, L = pendingDungeonLevel, max = D.getMaxLevel(d.id), best = D.getLevelBest(d.id);
+  var cleared = !!(game.dungeonTierCleared || {})[d.id], left = D.getRunsLeft(d.id), per = D.getRunsPerDay();
+  var pct = function (x) { return Math.round(x * 100); };
+  var h = '<div class="dlvl"><div class="kseg">';
+  h += '<button type="button" class="' + (!pendingDungeonFree ? 'is-on' : '') + '"' + (left <= 0 ? ' disabled' : '') + ' onclick="setDungeonMode(false)"><span>' + _t("Sortie du jour") + '</span><small>' + left + ' / ' + per + '</small></button>';
+  h += '<button type="button" class="' + (pendingDungeonFree ? 'is-on' : '') + '"' + (cleared ? '' : ' disabled') + ' onclick="setDungeonMode(true)"><span>' + _t("Mode libre") + '</span><small>' + (cleared ? _t("1 Ration moyenne") : _t("après une victoire")) + '</small></button>';
+  h += '</div><div class="dlvl-row">';
+  h += '<button type="button" class="dlvl-step" aria-label="' + _t("Niveau précédent") + '"' + (L <= 1 ? ' disabled' : '') + ' onclick="stepDungeonLevel(-1)">‹</button>';
+  h += '<div class="dlvl-num"><small>' + _t("Niveau") + '</small><strong>' + L + '</strong><small>' + (best ? _t("meilleur : {n}", { n: best }) : _t("jamais terminé")) + '</small></div>';
+  h += '<button type="button" class="dlvl-step" aria-label="' + _t("Niveau suivant") + '"' + (L >= max ? ' disabled' : '') + ' onclick="stepDungeonLevel(1)">›</button>';
+  h += '</div>';
+
+  var src = D.getLevelLootSource(d, L), m = D.getLevelMult(L), beyond = D.getLevelBeyond(d, L);
+  var w = (window.WORLDS || []).find(function (x) { return x.id === src.worldId; });
+  h += '<div class="dlvl-sum">';
+  h += '<span>' + _t("Butin :") + ' ' + dungeonRarityHTML(src.maxRarity) + (w ? ' · ' + esc(_td(w.name)) : '') + '</span>';
+  if (L > 1) h += '<span class="is-dim">' + _t("Monstres : PV +{a} %, dégâts +{b} %", { a: pct(m.hp - 1), b: pct(m.power - 1) }) + '</span>';
+  if (beyond > 0) {
+    h += '<span class="is-aether">✦ ' + _t("Touché par l'Aether : objets tirés au-dessus de {f} %", { f: pct(D.getLevelFloor(d, L)) }) + '</span>';
+    h += '<span>' + _t("Or et Éclats +{g} %", { g: pct(beyond * DUNGEON_CONFIG.beyondGoldPct) }) + '</span>';
+  } else {
+    var next = (d.levelSteps || []).filter(function (st) { return st.level > L; })[0];
+    if (next) {
+      var nd = D.getById(next.dungeonId);
+      h += '<span class="is-dim">' + (D.isUnlocked(next.dungeonId)
+        ? _t("Niveau {n} : butin {r} ({x})", { n: next.level, r: dungeonRarityHTML(nd.maxRarity), x: esc(_td(nd.name)) })
+        : _t("Niveau {n} : butin {r} ({x}, une fois ouvert)", { n: next.level, r: dungeonRarityHTML(nd.maxRarity), x: esc(_td(nd.name)) })) + '</span>';
+    } else {
+      h += '<span class="is-dim">' + _t("Au-delà du niveau {n} : or, Éclats et objets « Touché par l'Aether »", { n: D.getCapLevel(d) }) + '</span>';
+    }
+  }
+  if (pendingDungeonFree) {
+    var sp = d.specialResourceId && WAREHOUSE_RESOURCES[d.specialResourceId];
+    h += '<span class="is-dim">' + _t("Libre : or ÷ 4, Éclats ÷ 2") + (sp ? ', ' + _t("pas de {x}", { x: esc(_td(sp.name)) }) : '') + '</span>';
+  }
+  h += '</div></div>';
+  return h;
+}
+
+function setDungeonMode(free) {
+  pendingDungeonFree = !!free;
+  renderDungeonSheet();
+}
+window.setDungeonMode = setDungeonMode;
+
+function stepDungeonLevel(dl) {
+  if (pendingDungeonId == null) return;
+  pendingDungeonLevel = Math.max(1, Math.min(DungeonManager.getMaxLevel(pendingDungeonId), pendingDungeonLevel + dl));
+  renderDungeonSheet();
+}
+window.stepDungeonLevel = stepDungeonLevel;
+
 function buildDungeonSheetHTML(dungeonId) {
   var dungeon = DungeonManager.getById(dungeonId);
   var world = (window.WORLDS || []).find(function (w) { return w.id === dungeon.worldId; });
-  var rarityLabel = (typeof RARITY_LABELS !== "undefined" && RARITY_LABELS[dungeon.maxRarity]) ? _td(RARITY_LABELS[dungeon.maxRarity]) : dungeon.maxRarity;
-  var rarityColor = (typeof RARITY_COLORS !== "undefined" && RARITY_COLORS[dungeon.maxRarity]) || "#9ca3af";
+  var storyFree = typeof DungeonManager.isStoryTicketFree === "function" && DungeonManager.isStoryTicketFree(dungeon.id);
+  var level = storyFree ? 1 : pendingDungeonLevel, free = !storyFree && pendingDungeonFree; // la sortie de l'Histoire : niveau 1
+  var lootRarity = DungeonManager.getLevelLootSource(dungeon, level).maxRarity; // v3.464.0 : l'en-tête suit le niveau
+  var rarityLabel = (typeof RARITY_LABELS !== "undefined" && RARITY_LABELS[lootRarity]) ? _td(RARITY_LABELS[lootRarity]) : lootRarity;
+  var rarityColor = (typeof RARITY_COLORS !== "undefined" && RARITY_COLORS[lootRarity]) || "#9ca3af";
   var n = pendingDungeonMarks.length;
   var maxMarks = DUNGEON_CONFIG.maxMarks || 3;
   var mult = DungeonManager.getMarkRewardMult(n);
-  var storyFree = typeof DungeonManager.isStoryTicketFree === "function" && DungeonManager.isStoryTicketFree(dungeon.id);
 
   var h = '<div class="ksheet-backdrop" onclick="closeDungeonSheet()"></div>';
   h += '<div class="ksheet dungeon-sheet">';
@@ -158,6 +222,7 @@ function buildDungeonSheetHTML(dungeonId) {
     close: "closeDungeonSheet()"
   });
   h += '<div class="ksheet-body">';
+  if (!storyFree) h += buildDungeonLevelHTML(dungeon);
   if (dungeon.story) h += '<div class="dsheet-story">' + esc(_td(dungeon.story)) + '</div>';
   h += buildDungeonSceauLoreHTML(dungeon.id);
 
@@ -174,10 +239,10 @@ function buildDungeonSheetHTML(dungeonId) {
   /* Récompense projetée : la raison d'être des Marques, visible sans dérouler. */
   h += '<div class="dsheet-reward"><span>' + _t("Récompenses") + ' <strong>×' + mult.toFixed(2).replace(/0$/, "") + '</strong></span>';
   var specialDef = dungeon.specialResourceId ? WAREHOUSE_RESOURCES[dungeon.specialResourceId] : null;
-  if (specialDef && dungeon.specialResourceAmount > 0) {
+  if (specialDef && dungeon.specialResourceAmount > 0 && !free) {
     h += '<span>' + renderIconOrEmojiHTML(specialDef.icon, "dsheet-reward-icon", _td(specialDef.name)) + ' ' + esc(_td(specialDef.name)) + ' <strong>+' + DungeonManager.getSpecialAmount(dungeon, n) + '</strong></span>';
   } else {
-    h += '<span><img class=ico-inline src=images/Icons/subtabs/shard_shop.webp> ' + _t("Éclats") + ' <strong>+' + (DUNGEON_CONFIG.waveCount + DUNGEON_CONFIG.shardsBossBonus) + '</strong></span>';
+    h += '<span><img class=ico-inline src=images/Icons/subtabs/shard_shop.webp> ' + _t("Éclats") + ' <strong>' + (free ? '÷ 2' : '+' + (DUNGEON_CONFIG.waveCount + DUNGEON_CONFIG.shardsBossBonus)) + '</strong></span>';
   }
   h += '</div>';
 
@@ -185,7 +250,7 @@ function buildDungeonSheetHTML(dungeonId) {
      quinze vagues, entrée à PV pleins), puis le boss avec ce qui reste. */
   if (window.CombatForecast && typeof CombatForecast.forDungeon === "function") {
     try {
-      var f = CombatForecast.forDungeon(dungeon.id, pendingDungeonMarks);
+      var f = CombatForecast.forDungeon(dungeon.id, pendingDungeonMarks, level);
       if (f) h += buildCombatForecastLineHTML(f);
     } catch (e) { noteErreur("dungeon-view.buildDungeonSheetHTML", e); /* pronostic indisponible : la feuille reste utilisable */ }
   }
@@ -194,12 +259,14 @@ function buildDungeonSheetHTML(dungeonId) {
 
   if (storyFree) {
     h += '<div class="dsheet-ticket"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.webp> <strong>' + _t("Entrée offerte") + '</strong> ' + _t("— les braises te guident, aucune sortie du jour consommée") + '</div>';
+  } else if (free) {
+    h += '<div class="dsheet-ticket"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.webp> ' + _t("Mode libre : sorties illimitées") + '</div>';
   } else {
     h += '<div class="dsheet-ticket"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.webp> ' + _t("Sorties restantes :") + ' <strong>' + DungeonManager.getRunsLeft(dungeon.id) + ' / ' + DungeonManager.getRunsPerDay() + '</strong></div>';
   }
   // v3.330.1 : vivres de sortie (donjon déjà fini une fois)
   var dDef = (window.DUNGEONS || []).filter(function (x) { return x.id === Number(dungeonId); })[0];
-  if (window.ProvisionsManager && dDef) h += ProvisionsManager.buildLineHTML("dungeon", dDef);
+  if (window.ProvisionsManager && dDef) h += ProvisionsManager.buildLineHTML(free ? "dungeonFree" : "dungeon", dDef);
   h += '</div>'; // ksheet-body
   h += '<div class="ksheet-foot"><button type="button" class="kbtn primary" onclick="confirmDungeonStart()">' + _t("Entrer") + '</button></div>';
   h += '</div>';
@@ -215,9 +282,12 @@ function openDungeonSheet(dungeonId) {
   if (!DungeonManager.isUnlocked(dungeonId)) return showToast(_t("Donjon verrouillé"), 1200);
   if ((game.heroHp || 0) <= 0) return showToast(_t("Héros à terre — repose-toi au Campement d'abord"), 1600);
   var storyFree = typeof DungeonManager.isStoryTicketFree === "function" && DungeonManager.isStoryTicketFree(dungeonId);
-  if (!storyFree && DungeonManager.getRunsLeft(dungeonId) <= 0) return showToast(_t("Plus de sortie aujourd'hui dans ce donjon — renouvellement dans {d}", { d: DungeonManager.timeUntilTicketReset() }), 1800); // v3.358.0 (D7)
+  var cleared = !!(game.dungeonTierCleared || {})[Number(dungeonId)]; // v3.464.0 : quota vide, le mode libre reste ouvert
+  if (!storyFree && !cleared && DungeonManager.getRunsLeft(dungeonId) <= 0) return showToast(_t("Plus de sortie aujourd'hui dans ce donjon — renouvellement dans {d}", { d: DungeonManager.timeUntilTicketReset() }), 1800); // v3.358.0 (D7)
   pendingDungeonId = Number(dungeonId);
   pendingDungeonMarks = [];
+  pendingDungeonLevel = Math.max(1, Math.min(DungeonManager.getMaxLevel(dungeonId), DungeonManager.getLevelBest(dungeonId))); // le meilleur niveau tenu
+  pendingDungeonFree = !storyFree && DungeonManager.getRunsLeft(dungeonId) <= 0;
   renderDungeonSheet();
 }
 
@@ -240,13 +310,13 @@ function toggleDungeonMark(markId) {
 
 function confirmDungeonStart() {
   var id = pendingDungeonId;
-  var marks = pendingDungeonMarks.slice();
+  var marks = pendingDungeonMarks.slice(), level = pendingDungeonLevel, free = pendingDungeonFree;
   closeDungeonSheet();
   if (id == null) return;
   var d = DungeonManager.getById(id);
   // v3.440.0 : préparation de sortie avant le départ
   openSortiePrep({ title: d ? _td(d.name) : "", icon: (d && d.icon) || "images/Icons/quests/mission_dungeon.webp", ctx: { type: "dungeon", id: id },
-    onGo: function () { DungeonManager.start(id, marks); } });
+    onGo: function () { DungeonManager.start(id, marks, level, free); } });
 }
 
 /* ---------- Le campement (v3.430.0, RU13 — atelier/campement-sanctuaire.html, validé le 09/10) ----------

@@ -295,12 +295,12 @@ var CombatForecast = {
 
   /* v3.429.7 : pronostic d'un donjon ENTIER (tous les donjons) : usure des vagues, puis le boss
      avec ce qui reste. On entre à PV pleins (DungeonManager.start). Les Marques comptent. */
-  forDungeon: function (dungeonId, marks) {
+  forDungeon: function (dungeonId, marks, level) {   // level (v3.464.0) : niveau du donjon, 1 par défaut
     if (!window.DungeonManager || !window.DUNGEON_CONFIG) return null;
     var savedRun = game.dungeonRun, savedHp = game.heroHp, savedMax = game.heroMaxHp, out = null;
     var AM = window.AfflictionManager, baked = AM ? AM.getCombinedModifiers() : null; // déjà dans les stats si un run est en cours
     try {
-      game.dungeonRun = { active: true, wave: 0, dungeonId: Number(dungeonId), marks: (marks || []).slice() };
+      game.dungeonRun = { active: true, wave: 0, dungeonId: Number(dungeonId), level: Math.max(1, Number(level) || 1), marks: (marks || []).slice() };
       /* v3.429.16 : effets des Marques sur le héros, que recalcStats n'applique qu'une fois le run lancé.
          On ne compte que l'écart avec ce qui est déjà dans les stats. */
       if (AM && baked) {
