@@ -20,4 +20,4 @@ Fichiers PNG de Seb convertis en webp qualité 90, à leur taille d'origine (125
 Comme pour la Crypte (v3.461.1), les images vivent dans le cache durable du service worker : la nouvelle image s'affiche à la deuxième ouverture chez un joueur qui avait déjà l'ancienne.
 
 ## Contrôles
-- round-harness 4618 OK, 0 échec (deux passes) ; boot (4), création du héros (44) OK.
+- round-harness 4618 OK, 0 échec (deux passes) ; boot (4), création du héros (44), parcours (139) OK.
