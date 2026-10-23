@@ -16954,6 +16954,19 @@ console.log("\n[279] v3.465.0 — Enchanteresse : la transmutation (conception v
   g.setEnchanterSheetSegment("relance");
 })();
 
+console.log("\n[280] v3.466.1 — Sac du héros : plus de bouton Utiliser sur les potions (retour Seb)");
+(function () {
+  game = freshCombat("knight");
+  var heal = { key: "heal:potion_soin_mineur", type: "potion", isHealing: true, stock: 2, potion: { id: "potion_soin_mineur", name: "Petite potion", icon: "", healPercent: 0.3 } };
+  var buff = { key: "buff:x", type: "potion", isHealing: false, stock: 1, potion: { id: "potion_force", name: "Potion de force", icon: "", desc: "Force" } };
+  run("selectedInventoryKey = 'heal:potion_soin_mineur'");
+  var h1 = g.buildUnifiedDetailPanelHTML([heal]);
+  run("selectedInventoryKey = 'buff:x'");
+  var h2 = g.buildUnifiedDetailPanelHTML([buff]);
+  ok(!/Utiliser|useHealingPotion|usePotion/.test(h1 + h2), "ni « Utiliser » ni appel de potion dans la fiche du sac");
+  ok(/Se boit en combat/.test(h1) && /Se boit au départ, dans la préparation de sortie/.test(h2) && /sellPotion/.test(h1) && /sellPotion/.test(h2), "à la place, où se boit la potion ; Vendre reste");
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

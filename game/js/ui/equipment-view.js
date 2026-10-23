@@ -439,11 +439,10 @@ function buildUnifiedDetailPanelHTML(entries) {
     h += '<div class="eq-detail-stat">' + esc(descText) + '</div>';
     h += '<div class="eq-detail-hint"><img class=ico-inline src=images/Icons/subtabs/inventory.webp> ' + _t("Stock : {n}", { n: entry.stock }) + '</div>';
 
-    if (entry.isHealing) {
-      h += '<button class="btn-buy eq-detail-action" type="button" onclick="PotionManager.useHealingPotion(\'' + esc(potion.id) + '\')">' + _t("Utiliser") + '</button>';
-    } else {
-      h += '<button class="btn-buy eq-detail-action" type="button" onclick="PotionManager.usePotion(\'' + esc(potion.id) + '\')">' + _t("Utiliser") + '</button>';
-    }
+    // v3.466.1 (retour Seb) : plus de bouton Utiliser ici, les potions se prennent dans la préparation de sortie
+    h += '<div class="eq-detail-hint">' + (entry.isHealing
+      ? _t("Se boit en combat : la préparation de sortie dit combien tu en emportes.")
+      : _t("Se boit au départ, dans la préparation de sortie.")) + '</div>';
     h += '<button class="btn-buy is-sec eq-detail-action" type="button" onclick="PotionManager.sellPotion(\'' + esc(potion.id) + '\')">' + _t("Vendre") + '</button>';
   }
 
