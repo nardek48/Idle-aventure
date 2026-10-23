@@ -16691,6 +16691,50 @@ console.log("\n[272] v3.460.0 — Niveaux de donjon : puissance, paliers de buti
   SQ.isStepReached = reach;
 })();
 
+console.log("\n[273] v3.461.0 — Au-delà du plafond : or, Éclats, objets « Touché par l'Aether »");
+(function () {
+  game = freshCombat("knight");
+  var D = g.DungeonManager, SQ = g.StoryQuestManager, reach = SQ.isStepReached, C = g.DUNGEON_CONFIG;
+  game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true };
+  SQ.isStepReached = function () { return true; };
+  game.dungeonTierCleared = { 1: true };
+  ok(D.getCapLevel(D.getById(1)) === 10 && D.getLevelBeyond(D.getById(1), 12) === 2, "Tanière, seule la Cité débloquée : plafond 10, niveau 12 = 2 au-delà");
+  game.dungeonTierCleared = { 1: true, 2: true, 3: true };
+  ok(D.getCapLevel(D.getById(1)) === 20 && D.getLevelBeyond(D.getById(1), 12) === 0, "Crypte débloquée : le plafond passe à 20, le niveau 12 n'est plus au-delà");
+  var cry = D.getById(4);
+  ok(D.getCapLevel(cry) === 1 && D.getLevelBeyond(cry, 5) === 4, "Crypte : plafond 1, niveau 5 = 4 au-delà");
+  ok(Math.abs(D.getLevelFloor(cry, 5) - 0.20) < 1e-9 && D.getLevelFloor(cry, 17) === 0.8 && D.getLevelFloor(cry, 40) === 0.8 && D.getLevelFloor(cry, 1) === 0, "plancher : 20 % à la Crypte 5, 80 % au niveau 17 et au-delà, 0 au niveau 1");
+  // tirage au plancher : stat de base et bonus dans le haut de la fourchette
+  var bas = true, n = 0;
+  for (var i = 0; i < 200; i++) {
+    var it = g.generateEquipmentItem("weapon", "epic", 0, { floor: 0.8, level: 17 });
+    var rg = g.EQUIPMENT_SLOT_CONFIG.weapon.ranges.epic;
+    if (it.value < rg[0] + (rg[1] - rg[0]) * 0.8 - 0.5) bas = false;   // à l'arrondi près
+    (it.affixes || []).forEach(function (a) { var r = g.AFFIX_RANGES[a.stat].epic; n++; if (!g.AFFIX_RANGES[a.stat].flat && a.value < r[0] + (r[1] - r[0]) * 0.8 - 0.5 / Math.pow(10, g.AFFIX_RANGES[a.stat].decimals || 0)) bas = false; });
+  }
+  ok(bas && n > 0, "plancher 80 % : stat de base et bonus (" + n + ") tirés dans les 20 % du haut");
+  ok(it.aether === 17 && g.generateEquipmentItem("weapon", "epic", 0).aether === undefined, "l'objet porte aether: 17 ; un objet ordinaire n'en a pas");
+  game.dungeonRun = { active: true, wave: 3, dungeonId: 4, level: 5, marks: [] };
+  ok(g.LootSystem.rollDrop().aether === 5 && g.LootSystem.rollDropAtRarity("epic").aether === 5, "Crypte 5 : butin des vagues et de fin « niveau 5 »");
+  game.dungeonRun.level = 1;
+  ok(g.LootSystem.rollDrop().aether === undefined, "Crypte 1 : objet ordinaire");
+  game.dungeonRun = { active: false, wave: 0, dungeonId: 1, marks: [] };
+  var html = g.buildItemOriginHTML({ slot: "weapon", worldIndex: 3, aether: 7 });
+  ok(/Touché par l(&#39;|&#039;|')Aether · niveau 7/.test(html) && g.buildItemOriginHTML({ slot: "weapon", worldIndex: 3 }).indexOf("Aether") < 0, "fiche : « Touché par l'Aether · niveau 7 », rien sur un objet ordinaire");
+  // or et Éclats de fin : Crypte 5 = ×1,4 face à la Crypte 1
+  run("ProvisionsManager.check = function () { return null; }; ProvisionsManager.consume = function () {};");
+  var fin = function (L) {
+    game.heroHp = game.heroMaxHp; game.dungeonRunsUsed = {}; game.dungeonLevelBest = { 4: 10 };
+    D.start(4, [], L); game.dungeonRun.shardsEarned = 22;
+    var or0 = game.gold, ec0 = game.dungeonShards; D.finish(true, 15, "success");
+    return { or: game.gold - or0, ec: game.dungeonShards - ec0 };
+  };
+  var r1 = fin(1), r5 = fin(5);
+  ok(r1.or > 0 && Math.abs(r5.or / r1.or - 1.4) < 0.01, "or de fin : Crypte 5 = ×1,4 (" + r1.or + " → " + r5.or + ")");
+  ok(r5.ec - r1.ec === Math.floor((22 + r1.ec) * 0.4), "Éclats du run : +40 % au niveau 5 (" + r1.ec + " → " + r5.ec + ")");
+  SQ.isStepReached = reach;
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

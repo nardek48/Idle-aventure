@@ -127,6 +127,25 @@ var DungeonManager = {
     return src;
   },
 
+  // Plafond : niveau du dernier palier dont le donjon visé est débloqué (1 si aucun)
+  getCapLevel: function (dungeon) {
+    var cap = 1, self = this;
+    (dungeon && dungeon.levelSteps || []).forEach(function (st) {
+      if (self.isUnlocked(st.dungeonId)) cap = Math.max(cap, st.level);
+    });
+    return cap;
+  },
+
+  // Niveaux au-delà du plafond : ils donnent or, Éclats et objets supérieurs (N-I, N-J, N-K)
+  getLevelBeyond: function (dungeon, level) {
+    return Math.max(0, Math.floor(Number(level) || 1) - this.getCapLevel(dungeon));
+  },
+
+  // Plancher du tirage des objets à ce niveau (fraction de la fourchette)
+  getLevelFloor: function (dungeon, level) {
+    return Math.min(DUNGEON_CONFIG.beyondFloorMax || 0, this.getLevelBeyond(dungeon, level) * (DUNGEON_CONFIG.beyondFloorPct || 0));
+  },
+
   // Butin du run en cours (lu par getDungeonDropContext) ; null hors run
   getRunDropSource: function () {
     var run = game.dungeonRun;
@@ -640,11 +659,12 @@ var DungeonManager = {
     var wavesTotal = DUNGEON_CONFIG.waveCount;
     var progress = Math.max(0, Math.min(1, clearedWave / wavesTotal));
 
-    var worldBonus = (1 + Math.max(0, tier.worldPower || 0) * 0.5 + Math.sqrt(Math.max(1, tier.difficultyMult || 1)) * 0.4) * markMult;
+    var runLevel = this.getRunLevel(), beyond = this.getLevelBeyond(tier, runLevel); // v3.461.0 : or au-delà du plafond (N-I)
+    var worldBonus = (1 + Math.max(0, tier.worldPower || 0) * 0.5 + Math.sqrt(Math.max(1, tier.difficultyMult || 1)) * 0.4) * markMult
+      * (1 + beyond * (DUNGEON_CONFIG.beyondGoldPct || 0));
     var goldReward, grantLoot, lootRarity; // v3.358.0 (D7) : l'essence de fin est fondue dans l'or (fullClearGoldBase)
 
     var rarityOrder = (typeof RARITY_ORDER !== "undefined" && RARITY_ORDER) || ["common", "green", "rare", "epic", "legendary"];
-    var runLevel = this.getRunLevel();
     var lootSrc = this.getLevelLootSource(tier, runLevel); // v3.460.0 : rareté du niveau (N-A)
     var tierMaxIndex = Math.max(0, rarityOrder.indexOf(lootSrc.maxRarity));
     var allowedForTier = rarityOrder.slice(0, tierMaxIndex + 1);
@@ -678,6 +698,13 @@ var DungeonManager = {
       goldReward = Math.floor(DUNGEON_CONFIG.fullClearGoldBase * worldBonus * progress * 0.6 * fleeKeep);
       grantLoot = chance(DUNGEON_CONFIG.partialLootChance * fleeKeep);
       lootRarity = allowedForTier[randInt(0, allowedForTier.length - 1)];
+    }
+
+    // v3.461.0 (N-K) : Éclats du run +10 % par niveau au-delà du plafond, avant l'Écho de la faille
+    var levelShards = Math.floor(Number(game.dungeonRun.shardsEarned || 0) * beyond * (DUNGEON_CONFIG.beyondShardPct || 0));
+    if (levelShards > 0) {
+      game.dungeonShards = Number(game.dungeonShards || 0) + levelShards;
+      game.dungeonRun.shardsEarned = Number(game.dungeonRun.shardsEarned || 0) + levelShards;
     }
 
     /* v3.322.0 (Offrande) : Écho de la faille (Mémoire niveau 4) — +50 % des Éclats du run,

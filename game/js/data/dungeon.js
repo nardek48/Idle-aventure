@@ -24,6 +24,12 @@ var DUNGEON_CONFIG = {
      composés. Mesuré au lot 0 (robot --faille) : Tanière tenue au niveau ~23, Crypte ~5. */
   levelHpPct: 0.15,
   levelPowerPct: 0.10,
+  /* Au-delà du plafond (niveau du dernier palier débloqué) : or de fin et Éclats +10 % par niveau
+     (N-I, N-K) ; plancher du tirage des objets +5 % de la fourchette par niveau, jusqu'à 80 % (N-J). */
+  beyondGoldPct: 0.10,
+  beyondShardPct: 0.10,
+  beyondFloorPct: 0.05,
+  beyondFloorMax: 0.80,
 
   shardsPerWaveCleared: 1,
   shardsBossBonus: 10,

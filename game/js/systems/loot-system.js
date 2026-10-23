@@ -5,7 +5,8 @@
    AFFIX_RANGES, data/equipment.js). Sans remise, jamais la stat de base ; les plats
    suivent l'échelle de monde comme la stat de base. Renvoie [] pour un Commun ou un
    emplacement inconnu — jamais null. */
-function rollEquipmentAffixes(slot, baseStat, rarity, worldIndex) {
+// floor (v3.461.0, N-J) : plancher du tirage, fraction de la fourchette (objet « Touché par l'Aether »)
+function rollEquipmentAffixes(slot, baseStat, rarity, worldIndex, floor) {
   var out = [];
   var counts = (typeof AFFIX_COUNT_BY_RARITY !== "undefined") ? AFFIX_COUNT_BY_RARITY[rarity] : null;
   var pools = (typeof AFFIX_POOLS !== "undefined") ? AFFIX_POOLS[slot] : null;
@@ -19,7 +20,7 @@ function rollEquipmentAffixes(slot, baseStat, rarity, worldIndex) {
       var stat = pool.splice(randInt(0, pool.length - 1), 1)[0];
       var rule = AFFIX_RANGES[stat];
       var range = rule[rarity] || rule.green;
-      var raw = randFloat(range[0], range[1]);
+      var raw = randFloat(range[0] + (range[1] - range[0]) * (floor || 0), range[1]);
       if (rule.flat) raw = raw * getEquipWorldScale(world);
       var factor = Math.pow(10, rule.decimals || 0);
       out.push({ stat: stat, value: Math.round(raw * factor) / factor, tier: tier === "primary" ? "P" : "S" });
@@ -37,12 +38,14 @@ function rollLegendaryPower(slot, rarity) {
   return pool[randInt(0, pool.length - 1)].id;
 }
 
-function generateEquipmentItem(slot, rarity, worldIndex) {
+// aether (v3.461.0) : { floor, level } d'un niveau de donjon au-delà du plafond, sinon absent
+function generateEquipmentItem(slot, rarity, worldIndex, aether) {
   var config = EQUIPMENT_SLOT_CONFIG[slot];
   if (!config) return null;
 
+  var floor = aether && aether.floor > 0 ? Math.min(1, aether.floor) : 0;
   var range = config.ranges[rarity] || config.ranges.common;
-  var raw = randFloat(range[0], range[1]);
+  var raw = randFloat(range[0] + (range[1] - range[0]) * floor, range[1]);
 
   /* v3.220.0 : échelle de monde. L'objet est estampillé du monde où il tombe,
      et sa valeur est mise à l'échelle À LA GÉNÉRATION — pas à la lecture. Deux
@@ -69,7 +72,7 @@ function generateEquipmentItem(slot, rarity, worldIndex) {
   var namePool = (config.namesByIcon && config.namesByIcon[icon]) || config.names;
   var name = namePool[randInt(0, namePool.length - 1)];
 
-  return {
+  var item = {
     uid: "itm_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8),
     slot: slot,
     name: name,
@@ -81,9 +84,11 @@ function generateEquipmentItem(slot, rarity, worldIndex) {
        Un objet d'une sauvegarde antérieure n'en a pas — il est alors traité
        comme un objet de Forêt, ce qu'il est de fait. */
     worldIndex: world,
-    affixes: rollEquipmentAffixes(slot, config.stat, rarity, world), // v3.225.0
+    affixes: rollEquipmentAffixes(slot, config.stat, rarity, world, floor), // v3.225.0
     power: rollLegendaryPower(slot, rarity) // v3.230.0 : null hors Légendaire
   };
+  if (floor > 0) item.aether = Math.max(1, Math.floor(Number(aether.level) || 1)); // « Touché par l'Aether · niveau N »
+  return item;
 }
 
 function getAllowedRarities() {
@@ -109,14 +114,16 @@ function getDungeonDropContext() {
   var cap = order.indexOf(d.maxRarity);
   var allowed = (WORLD_RARITY_UNLOCKS[Math.min(world, WORLD_RARITY_UNLOCKS.length - 1)] || ["common"])
     .filter(function (r) { return cap < 0 || order.indexOf(r) <= cap; });
-  return { allowed: allowed.length ? allowed : ["common"], world: world };
+  var dm = DungeonManager, src = dm.getById(run.dungeonId), lvl = typeof dm.getRunLevel === "function" ? dm.getRunLevel() : 1;
+  var floor = typeof dm.getLevelFloor === "function" ? dm.getLevelFloor(src, lvl) : 0; // v3.461.0 (N-J)
+  return { allowed: allowed.length ? allowed : ["common"], world: world, aether: floor > 0 ? { floor: floor, level: lvl } : null };
 }
 
 var LootSystem = {
   /* Butin d'un combat : celui du donjon pendant un donjon, sinon celui du monde. */
   rollDrop: function () {
     var ctx = getDungeonDropContext();
-    return this._roll(ctx ? ctx.allowed : getAllowedRarities(), ctx ? ctx.world : undefined);
+    return this._roll(ctx ? ctx.allowed : getAllowedRarities(), ctx ? ctx.world : undefined, ctx ? ctx.aether : null);
   },
 
   /* Butin du monde, même pendant un donjon : vitrine de la Halle, caravanes. */
@@ -124,7 +131,7 @@ var LootSystem = {
     return this._roll(getAllowedRarities(), undefined);
   },
 
-  _roll: function (allowed, worldIndex) {
+  _roll: function (allowed, worldIndex, aether) {
     var slot = EQUIPMENT_SLOTS[randInt(0, EQUIPMENT_SLOTS.length - 1)];
 
     var weights = allowed.map(function (r) { return RARITY_DROP_RATES[r] || 0; });
@@ -147,13 +154,13 @@ var LootSystem = {
       }
     }
 
-    return generateEquipmentItem(slot, rarity, worldIndex);
+    return generateEquipmentItem(slot, rarity, worldIndex, aether);
   },
 
   rollDropAtRarity: function (rarity) {
     var slot = EQUIPMENT_SLOTS[randInt(0, EQUIPMENT_SLOTS.length - 1)];
     var ctx = getDungeonDropContext(); // fin de donjon : puissance du monde du donjon
-    return generateEquipmentItem(slot, rarity, ctx ? ctx.world : undefined);
+    return generateEquipmentItem(slot, rarity, ctx ? ctx.world : undefined, ctx ? ctx.aether : null);
   }
 };
 
