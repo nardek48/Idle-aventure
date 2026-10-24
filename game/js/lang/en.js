@@ -157,6 +157,7 @@ I18n.register("en", {
   "🛡️‍🩹 Blindage fissuré !": "🛡️‍🩹 Armour cracked!",
 
   // js/systems/combat-engine.js
+  "Énigme : {x} perd le fil de son geste.": "Riddle: {x} loses the thread of its move.",
   "CONTRÉ !": "COUNTERED!",
   "Plus de potion pour cette sortie ({n} max)": "No more potions for this run ({n} max)",
   "⚡ Frappe bonus (jauge de célérité pleine) !": "⚡ Bonus strike (celerity gauge full)!",
@@ -244,6 +245,7 @@ I18n.register("en", {
   "Ligne d'améliorations terminée": "Upgrade line complete",
 
   // js/systems/dungeon-system.js
+  "Objet unique : {x} !": "Unique item: {x}!",
   "Donjon verrouillé": "Dungeon locked",
   "Héros à terre — repose-toi au Campement d'abord": "Hero down — rest at Camp first",
   "Plus de sortie aujourd'hui dans ce donjon — renouvellement dans {d}": "No more runs in this dungeon today — resets in {d}",
@@ -1025,6 +1027,7 @@ I18n.register("en", {
   "Améliorer": "Upgrade",
 
   // js/ui/dungeon-view.js
+  "Objet unique": "Unique item",
   "Boss du donjon": "Dungeon boss",
   "Vague {a} / {b}": "Wave {a} / {b}",
   "Bats-toi dans l’onglet Combat. Si tes PV tombent à 0, la tentative s’arrête ici (récompense réduite selon les vagues passées).": "Fight in the Combat tab. If your HP drops to 0, the attempt ends here (reward reduced according to waves cleared).",
@@ -1932,6 +1935,18 @@ I18n.register("en", {
   "Collectionneur": "Collector",
   "Cœur ardent": "Burning Heart",
   "Mémoire des anciens": "Memory of the Ancients",
+  "Peau de mue": "Shed Skin",
+  "Énigme": "Riddle",
+  "Pas du Garde": "Warden's Stride",
+  "Sépulcre": "Sepulchre",
+  "Les cumuls de Corrupteur réduisent tes dégâts deux fois moins.": "Corruptor stacks reduce your damage half as much.",
+  "Dans chaque combat, le premier télégraphe ennemi échoue (Charge, Soin, Silence ou Bouclier).": "In each fight, the first enemy telegraph fails (Charge, Heal, Silence or Shield).",
+  "La rage des ennemis Enragés monte deux fois moins vite.": "Enraged enemies build rage half as fast.",
+  "Les soins ennemis sont réduits de moitié.": "Enemy healing is halved.",
+  "Écailles du Basilic": "Basilisk Scales",
+  "Amulette de l'énigme": "Amulet of the Riddle",
+  "Bottes du Garde scellé": "Boots of the Sealed Warden",
+  "Gants du fossoyeur": "Gravedigger's Gloves",
   "10 % de chance qu'une attaque de base frappe deux fois.": "10% chance for a basic attack to strike twice.",
   "Chaque ennemi vaincu rend 2 % des PV max.": "Each enemy defeated restores 2% of max HP.",
   "+5 % de défense pendant le round qui suit un coup reçu.": "+5% defence for the round after taking a hit.",

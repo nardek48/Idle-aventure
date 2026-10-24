@@ -112,9 +112,14 @@ function getArmoredEffectiveDamageReduction(enemy) {
 }
 
 /* enemy est optionnel : sans lui, comportement d'origine (pas d'exaltation). */
+// v3.470.0 : pouvoir d'unique de donjon porté (systems/equipment-system.js, chargé après ce fichier)
+function uniquePowerMult(powerId) {
+  return (typeof powerMultOf === "function") ? powerMultOf(powerId) : 1;
+}
+
 function getVampiricLifestealAmount(damageDealt, enemy) {
   var dmg = (typeof damageDealt === "number" && damageDealt > 0) ? damageDealt : 0;
-  return Math.max(0, Math.floor(dmg * VAMPIRIC_LIFESTEAL_PCT * getArchetypeIntensityMult(enemy)));
+  return Math.max(0, Math.floor(dmg * VAMPIRIC_LIFESTEAL_PCT * getArchetypeIntensityMult(enemy) * uniquePowerMult("dun_sepulcre"))); // v3.470.0 : Sépulcre
 }
 
 function getEnragedDamageMultiplier(pctHpLost, enemy) {
@@ -122,12 +127,12 @@ function getEnragedDamageMultiplier(pctHpLost, enemy) {
   var tier = Math.floor(pct * 10);
   var mult = getArchetypeIntensityMult(enemy);
   var bonus = Math.min(ENRAGED_DAMAGE_BONUS_CAP * mult, tier * ENRAGED_DAMAGE_BONUS_PER_10PCT_LOST * mult);
-  return 1 + bonus;
+  return 1 + bonus * uniquePowerMult("dun_garde"); // v3.470.0 : Pas du Garde, la rage monte moins vite
 }
 
 function getCorruptedDamageMultiplier(stackCount, enemy) {
   var stacks = (typeof stackCount === "number" && stackCount > 0) ? Math.min(CORRUPTED_MAX_STACKS, Math.floor(stackCount)) : 0;
-  return Math.max(0, 1 - stacks * CORRUPTED_DAMAGE_REDUCTION_PER_STACK * getArchetypeIntensityMult(enemy));
+  return Math.max(0, 1 - stacks * CORRUPTED_DAMAGE_REDUCTION_PER_STACK * getArchetypeIntensityMult(enemy) * uniquePowerMult("dun_mue")); // v3.470.0 : Peau de mue
 }
 
 window.ENRAGED_MIN_WORLD_INDEX = ENRAGED_MIN_WORLD_INDEX;

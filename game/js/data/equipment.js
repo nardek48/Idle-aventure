@@ -363,5 +363,19 @@ Object.keys(LEGENDARY_POWERS).forEach(function (slot) {
   });
 });
 
+/* v3.470.0 — POUVOIRS DES UNIQUES DE DONJON : un par boss, chacun répond à un trait ennemi.
+   mult : facteur appliqué à l'effet contré (getPowerMult) ; lus dans les mêmes index que les légendaires. */
+var DUNGEON_UNIQUE_POWERS = {
+  dun_mue: { label: "Peau de mue", desc: "Les cumuls de Corrupteur réduisent tes dégâts deux fois moins.", hook: "enemy-archetypes", mult: 0.5 },
+  dun_enigme: { label: "Énigme", desc: "Dans chaque combat, le premier télégraphe ennemi échoue (Charge, Soin, Silence ou Bouclier).", hook: "combat-engine" },
+  dun_garde: { label: "Pas du Garde", desc: "La rage des ennemis Enragés monte deux fois moins vite.", hook: "enemy-archetypes", mult: 0.5 },
+  dun_sepulcre: { label: "Sépulcre", desc: "Les soins ennemis sont réduits de moitié.", hook: "enemy-archetypes", mult: 0.5 }
+};
+Object.keys(DUNGEON_UNIQUE_POWERS).forEach(function (id) {
+  var p = DUNGEON_UNIQUE_POWERS[id];
+  LEGENDARY_POWER_BY_ID[id] = { id: id, label: p.label, desc: p.desc, hook: p.hook, mult: p.mult, dungeon: true };
+});
+
+window.DUNGEON_UNIQUE_POWERS = DUNGEON_UNIQUE_POWERS;
 window.LEGENDARY_POWERS = LEGENDARY_POWERS;
 window.LEGENDARY_POWER_BY_ID = LEGENDARY_POWER_BY_ID;

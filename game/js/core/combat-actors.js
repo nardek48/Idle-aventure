@@ -151,6 +151,7 @@ var CombatActors = {
     c.nextActorId = 1;
     c.targetLocked = false; // v3.428.0 : nouveau groupe, plus de cible au doigt
     c.heroRose = false;     // v3.428.0 : Le seuil, une fois par combat
+    c.enigmaUsed = false;   // v3.470.0 : Énigme (unique du Sphinx), une fois par combat
     for (var i = 0; i < arr.length; i++) {
       // Nouveau groupe = nouveaux identifiants : un objet réutilisé (harnais, respawn de run)
       // ne doit pas garder l'actorId d'un combat précédent.

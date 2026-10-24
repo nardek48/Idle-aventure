@@ -43,7 +43,11 @@ var DUNGEON_CONFIG = {
   maxMarks: 3,              // Marques actives au plus par run
   markStackBonus: 0.15,     // bonus d'or et de matériau par Marque active (1 + n × 0,15)
   specialPerMark: 2,        // matériau de monde supplémentaire par Marque (décision Seb 12.2 : +2)
-  eliteShardsBonus: 3       // éclats en plus pour une vague élite passée
+  eliteShardsBonus: 3,      // éclats en plus pour une vague élite passée
+
+  /* v3.470.0 : unique du boss (boss.unique) : chance par run réussi, mode libre compris, sans garantie
+     (décisions Seb). Valeurs tirées au butin du niveau. */
+  uniqueDropPct: 5
 };
 
 /* v3.245.0 — DUNGEON_TIERS est absorbé ici : chaque donjon EST le palier de son monde.
@@ -104,6 +108,7 @@ var DUNGEONS = [
     boss: {
       baseId: "slimeking", name: "Basilic", archetype: "corrupted",
       statMult: { endurance: 1.2, power: 1.5 }, image: "./images/Boss/basilic.webp", // v3.348.0
+      unique: { id: "ecailles_basilic", slot: "armor", name: "Écailles du Basilic", icon: "armor", power: "dun_mue" }, // v3.470.0
       phases: [
         /* Seb parlait de serpents : il n'y en a pas au bestiaire. On prend l'araignée,
            qui existe et tient le rôle dans un antre humide. Le jour où un serpent est
@@ -167,6 +172,7 @@ var DUNGEONS = [
          que la base est déjà un boss (104 d'endurance) : on ne le gonfle pas, on l'aiguise.
          L'écart entre classes sur un run long est un chantier à part (voir le changelog). */
       statMult: { endurance: 0.8, power: 1.6 }, image: null,
+      unique: { id: "amulette_enigme", slot: "amulet", name: "Amulette de l'énigme", icon: "amulet", power: "dun_enigme" }, // v3.470.0
       phases: [
         { atPct: 0.66, adds: ["sandwarrior", "sandwarrior"], addsHpMult: 0.18, addsPowerMult: 0.5,
           label: "il n'attend plus de réponse" },
@@ -212,6 +218,7 @@ var DUNGEONS = [
     // v3.438.2 : Blindé -> Enragé (le Blindé reste aux Gargouille, Contremaître, Golem)
     boss: { baseId: "skeletonlord", name: "Varrek, le Garde scellé", archetype: "enraged", rises: true,
       riseLine: "Varrek se relève. Personne ne lui a dit de rester à terre.",
+      unique: { id: "bottes_garde", slot: "boots", name: "Bottes du Garde scellé", icon: "bottes", power: "dun_garde" }, // v3.470.0
       statMult: { endurance: 0.6, power: 0.58 }, image: "./images/Boss/varrek.webp" }, // v3.438.2 : 0,72 -> 0,58, Enragé (Rare : 80 / 55 / 83 %)
     /* v3.429.2 : fermé dès l'arrivée aux Ruines, faute de contenu. v3.430.0 : verrou d'Histoire,
        comme la Cité — il s'ouvre à ruines_12 ; entrée offerte pendant les étapes 12 et 15. */
@@ -243,6 +250,7 @@ var DUNGEONS = [
        Portrait propre à fournir (icône générique : ne pas reprendre celui du Nécromancien). Au banc. */
     boss: { baseId: "necrosupreme", name: "Liche des sépulcres", archetype: "corrupted",
       statMult: { endurance: 0.82, power: 0.72 }, image: "./images/Boss/liche_sepulcres.webp",
+      unique: { id: "gants_fossoyeur", slot: "gloves", name: "Gants du fossoyeur", icon: "gants", power: "dun_sepulcre" }, // v3.470.0
       phases: [
         { atPct: 0.8, sleepAdds: ["spectre", "wraith"], addsHpMult: 0.18, addsPowerMult: 0.5, label: "elle couche deux morts à ses pieds" },
         { atPct: 0.6, wakeAll: true, label: "elle dérange ses lignes" },

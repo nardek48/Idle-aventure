@@ -91,13 +91,14 @@ var DATA_TEXT_FIELDS = {
   RARITY_LABELS: ["*"],
   RPG_STAT_LABELS: ["*"],
   LEGENDARY_POWERS: ["*.*.label", "*.*.desc"],
+  DUNGEON_UNIQUE_POWERS: ["*.label", "*.desc"], // v3.470.0
   LEGENDARY_POWER_BY_ID: ["*.label", "*.desc"],
   SET_BONUS_CONFIG: ["tiers.*.bonuses.*.name"],
   POTIONS_DB: ["*.name", "*.desc"],
   COMBAT_ITEMS: ["*.name", "*.desc", "*.con"], // v3.441.0 : objets de combat (v3.442.0 : contrepartie)
   HEALING_POTIONS_DB: ["*.name"],
   UPGRADES: ["*.name", "*.desc"],
-  DUNGEONS: ["*.name", "*.desc", "*.story", "*.lockedHint", "*.prepHint", "*.boss.name", "*.boss.phases.*.label", "*.boss.riseLine"],
+  DUNGEONS: ["*.name", "*.desc", "*.story", "*.lockedHint", "*.prepHint", "*.boss.name", "*.boss.phases.*.label", "*.boss.riseLine", "*.boss.unique.name"],
   DUNGEON_MARKS: ["*.name", "*.desc"],
   DUNGEON_SHOP: ["*.name", "*.desc"],
   MEMORY_LEVELS: ["*.theme", "*.options.*.name", "*.options.*.desc"],

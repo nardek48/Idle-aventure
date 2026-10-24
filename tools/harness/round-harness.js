@@ -3438,6 +3438,7 @@ console.log("\n[BATTUE] Farm d'or répétable en Forêt");
 
   /* --- Rapport : un seul corps, deux habillages --- */
   ok(typeof g.buildCombatReportBodyHTML === "function", "[RAPPORT] corps extrait et exporté");
+  g.CombatReportManager.resetManual(); // v3.470.0 : rapport vidé, sinon il hérite des dégâts des sections précédentes
   var corpsVide = g.buildCombatReportBodyHTML();
   ok(corpsVide.indexOf("Pas encore assez d'activité") !== -1 || corpsVide.indexOf("Aucune donnée") !== -1,
     "[RAPPORT] sans activité, le corps le dit (jamais vide)");
@@ -17531,6 +17532,67 @@ console.log("\n[288] v3.469.6 — Petites Aventures : le gardien ne prend que la
     ok(Math.abs(g3 / g1 - 1.375) < 0.01 && Math.abs(g2 / g1 - 1.15) < 0.01, "gardien : ×1,15 au Chemin, ×1,375 au Périple (" + (g2 / g1).toFixed(3) + ", " + (g3 / g1).toFixed(3) + ")");
     ok(Math.abs(c3 / c1 - g.PA2_RINGS.periple.foeMult) < 0.01, "les autres combats gardent le renfort entier (×1,75)");
   } finally { game.sceneRun = null; if (g.SortieManager.isActive()) g.SortieManager.end("return"); }
+})();
+
+console.log("\n[289] v3.470.0 — Donjons : un unique par boss, à pouvoir signature");
+(function () {
+  game = freshCombat("knight");
+  var D = g.DungeonManager, SQ = g.StoryQuestManager, reach = SQ.isStepReached, C = g.DUNGEON_CONFIG;
+  var attendus = { 1: "dun_mue", 2: "dun_enigme", 3: "dun_garde", 4: "dun_sepulcre" };
+  Object.keys(attendus).forEach(function (id) {
+    var u = D.getById(Number(id)).boss.unique, p = u && g.LEGENDARY_POWER_BY_ID[u.power];
+    ok(u && u.power === attendus[id] && p && p.label && p.desc && g.EQUIPMENT_SLOT_CONFIG[u.slot], "donjon " + id + " : unique « " + (u && u.name) + " », pouvoir " + attendus[id] + " décrit");
+  });
+  // pouvoirs : sans objet porté, aucun effet ; porté, l'effet contré est divisé par deux
+  var en = { archetype: "corrupted" };
+  var corr0 = g.getCorruptedDamageMultiplier(4, en), rage0 = g.getEnragedDamageMultiplier(0.8, en), vamp0 = g.getVampiricLifestealAmount(1000, en);
+  ok(g.powerMultOf("dun_mue") === 1, "powerMultOf : 1 sans l'objet");
+  game.equipped.armor = { uid: "t_mue", slot: "armor", name: "Écailles du Basilic", rarity: "common", stat: "defense", value: 0.01, affixes: [], power: "dun_mue", unique: true };
+  game.equipped.boots = { uid: "t_garde", slot: "boots", name: "Bottes du Garde scellé", rarity: "common", stat: "autoDps", value: 1, affixes: [], power: "dun_garde", unique: true };
+  game.equipped.gloves = { uid: "t_sep", slot: "gloves", name: "Gants du fossoyeur", rarity: "common", stat: "tapMult", value: 0.01, affixes: [], power: "dun_sepulcre", unique: true };
+  ok(Math.abs((1 - g.getCorruptedDamageMultiplier(4, en)) - (1 - corr0) / 2) < 1e-9, "Peau de mue : la perte de dégâts du Corrupteur est divisée par deux");
+  ok(Math.abs((g.getEnragedDamageMultiplier(0.8, en) - 1) - (rage0 - 1) / 2) < 1e-9, "Pas du Garde : le bonus de rage est divisé par deux");
+  ok(g.getVampiricLifestealAmount(1000, en) === Math.floor(vamp0 / 2) || g.getVampiricLifestealAmount(1000, en) === Math.floor(vamp0 * 0.5), "Sépulcre : le vol de vie est divisé par deux");
+  game.equipped.armor = null; game.equipped.boots = null; game.equipped.gloves = null;
+  // Énigme : le premier télégraphe du combat échoue, le second passe ; un nouveau combat la recharge
+  game.equipped.amulet = { uid: "t_eni", slot: "amulet", name: "Amulette de l'énigme", rarity: "common", stat: "critChance", value: 1, affixes: [], power: "dun_enigme", unique: true };
+  var e = { name: "Cible", hp: 100, maxHp: 100, isBoss: true, stats: { power: 10 } };
+  g.CombatActors.setEnemies([e]); game.enemy = e; g.CombatEngine.prepareEnemy(e);
+  g.CombatEngine.telegraphPattern(e, "charge");
+  ok(!e.chargeTelegraphed && e.chargeIn > 0 && e.counteredRounds > 0, "Énigme : la première charge échoue, son compte à rebours repart");
+  g.CombatEngine.telegraphPattern(e, "heal");
+  ok(e.healTelegraphed === true, "Énigme : le second télégraphe du combat passe");
+  var e2 = { name: "Cible 2", hp: 100, maxHp: 100, isBoss: true, stats: { power: 10 } };
+  g.CombatActors.setEnemies([e2]); game.enemy = e2; g.CombatEngine.prepareEnemy(e2);
+  g.CombatEngine.telegraphPattern(e2, "surge");
+  ok(e2.surgeTelegraphed === true, "Énigme : l'exaltation d'élite n'est jamais annulée");
+  g.CombatEngine.telegraphPattern(e2, "shield");
+  ok(!e2.shieldTelegraphed, "Énigme : rechargée au combat suivant (bouclier annulé)");
+  game.equipped.amulet = null;
+  // tirage en fin de run : réussite seulement (mode libre compris), à la rareté du butin de fin
+  var pv = { check: g.ProvisionsManager.check, consume: g.ProvisionsManager.consume }, pct = C.uniqueDropPct;
+  run("ProvisionsManager.check = function () { return null; }; ProvisionsManager.consume = function () {};");
+  SQ.isStepReached = function () { return true; };
+  game.worldsEverReached = { 0: true };
+  var fin = function (ok_, free) {
+    game.heroHp = game.heroMaxHp; game.dungeonRunsUsed = {}; game.inventory = []; game.dungeonTierCleared = { 1: true };
+    D.start(1, [], 1, !!free);
+    D.finish(ok_, ok_ ? 15 : 3, ok_ ? "success" : "flee");
+    return game.inventory.filter(function (it) { return it.dungeonUniqueId; });
+  };
+  C.uniqueDropPct = 100;
+  var got = fin(true);
+  ok(got.length === 1 && got[0].power === "dun_mue" && got[0].unique === true && got[0].name === "Écailles du Basilic" && got[0].slot === "armor" && got[0].rarity === "common", "réussite à 100 % : les Écailles du Basilic tombent (Commun à la Tanière 1, unique)");
+  ok(fin(false).length === 0, "fuite : pas d'unique");
+  ok(fin(true, true).length === 1, "mode libre : l'unique peut tomber aussi");
+  C.uniqueDropPct = 0;
+  ok(fin(true).length === 0, "à 0 % : rien");
+  C.uniqueDropPct = pct;
+  ok(pct === 5, "taux par défaut : 5 % par run réussi");
+  var html = g.buildDungeonSummaryHTML({ success: true, tierName: "Tanière du Basilic", clearedWave: 15, wavesTotal: 15, goldReward: 1, shardsGained: 1, lootedUnique: got[0] });
+  ok(html.indexOf("Objet unique") >= 0 && html.indexOf("Écailles du Basilic") >= 0 && html.indexOf("Peau de mue") >= 0, "rapport de fin : ligne « Objet unique » avec le pouvoir");
+  game.inventory = [];
+  SQ.isStepReached = reach; g.ProvisionsManager.check = pv.check; g.ProvisionsManager.consume = pv.consume;
 })();
 
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));

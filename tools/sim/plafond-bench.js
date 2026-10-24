@@ -28,6 +28,7 @@ var SUITE = false, PA_POWER = null, PA_HP = null, JOURNEE = false, BRAKE = 1;
 var VOIE_ARG = null, POINTS_ARG = null, NO_TAL_ARG = false;
 var CITE_ARG = null;
 var ORDRE_ANCIEN = false; // v3.447.0 : --ordre-ancien, sans initiative (héros, compagnons, ennemis), pour comparer
+var POUVOIRS = []; // v3.470.0 : --pouvoir id[,id], comme si l'objet qui le porte était équipé
 var OBJETS = []; // v3.441.0 : --objet id[,id], objets de combat emportés à chaque sortie (sans stock ni Apothicaire)
 var PRONO = false; // v3.429.7 : --pronostic, verdict de CombatForecast.forDungeon à côté de la mesure
 var FRAPPES = false; // v3.429.14 : --frappes, frappes et dégâts réels contre l'estimation
@@ -61,11 +62,16 @@ for (var ai = 3; ai < process.argv.length; ai++) {
   if (process.argv[ai] === "--cite") CITE_ARG = Number(process.argv[ai + 1]); // v3.356.0 : valeur d'essai de l'arme de la Cité
   if (process.argv[ai] === "--ordre-ancien") ORDRE_ANCIEN = true;
   if (process.argv[ai] === "--objet") OBJETS = String(process.argv[ai + 1]).split(",");
+  if (process.argv[ai] === "--pouvoir") POUVOIRS = String(process.argv[ai + 1]).split(","); // v3.470.0 : pouvoirs portés d'office (uniques de donjon)
 }
 var mod = { exports: {} };
 new Function("require", "process", "module", "__dirname", src + "\nmodule.exports = { g: g, run: run, seedRng: seedRng, setup: setup, CLASSES: CLASSES };")(
   require, { argv: [process.argv[0], "x", ROOT] }, mod, __dirname);
 var B = mod.exports, g = B.g;
+if (POUVOIRS.length) {
+  var hasPowerReel = g.hasLegendaryPower;
+  g.hasLegendaryPower = function (id) { return POUVOIRS.indexOf(id) >= 0 || hasPowerReel(id); };
+}
 
 if (CITE_ARG != null && g.ELITE_UNIQUE_LOOT.arme_cite) g.ELITE_UNIQUE_LOOT.arme_cite.value = CITE_ARG;
 SET_ELITES.forEach(function (spec) {

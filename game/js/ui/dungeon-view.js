@@ -487,6 +487,13 @@ function buildDungeonSummaryHTML(result) {
     h += '      <div class="dungeon-summary-row"><span>' + renderIconOrEmojiHTML(result.specialIcon, "ico-inline", _td(result.specialName)) + ' ' + esc(_td(result.specialName)) + '</span><span>+' + special + '</span></div>';
   }
   // v3.436.2 (Seb) : tout le butin d'objets — campement, vagues, récompense de fin
+  // v3.470.0 : l'unique du boss a sa ligne, avec son pouvoir
+  if (result.lootedUnique) {
+    var uq = result.lootedUnique, uqPow = (typeof getItemPower === "function") ? getItemPower(uq) : null;
+    var uqCol = (typeof RARITY_COLORS !== "undefined" && RARITY_COLORS[uq.rarity]) || "inherit";
+    h += '      <div class="dungeon-summary-row dungeon-summary-loot"><span>✦ ' + _t("Objet unique") + '</span><span><b style="color:' + uqCol + '">' + esc(_td(uq.name)) + '</b>'
+      + (uqPow ? ' · ' + esc(_td(uqPow.label)) : '') + '</span></div>';
+  }
   var objets = [].concat(campLoot.items || [], result.wavesItems || [], result.lootedItem ? [result.lootedItem] : [], result.lootedItem2 ? [result.lootedItem2] : []);
   if (objets.length) {
     h += '      <div class="dungeon-summary-row dungeon-summary-loot"><span><img class=ico-inline src=images/Icons/dungeon/dungeon_guaranteed_loot.webp> ' + _t("Butin") + '</span><span>' + objets.map(function (it) {

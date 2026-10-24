@@ -276,7 +276,7 @@ var SleepSystem = {
   /* Demi-sommeil : il ne frappe pas, il se soigne d'une part de ses PV max. */
   halfSleepTurn: function (e) {
     e.halfSleepRounds -= 1;
-    var soin = Math.floor(Number(e.maxHp || 0) * Number(e.halfSleepHeal || 0));
+    var soin = Math.floor(Number(e.maxHp || 0) * Number(e.halfSleepHeal || 0) * uniquePowerMult("dun_sepulcre")); // v3.470.0 : Sépulcre
     if (soin > 0) e.hp = Math.min(Number(e.maxHp || 0), Number(e.hp || 0) + soin);
     addLog("💤 " + _t("{x} se recouche à moitié et se soigne (+{n}).", { x: _td(e.name), n: formatNumber(soin) }), "event");
     if (typeof renderEnemyHp === "function") renderEnemyHp();

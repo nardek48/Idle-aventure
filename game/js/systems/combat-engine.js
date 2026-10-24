@@ -1041,6 +1041,8 @@ var CombatEngine = {
       surge: { flag: "surgeTelegraphed", cond: "eliteSurgeIncoming", log: "🔥 " + _t("{x} s'exalte !", { x: _td(e.name) }), toast: "🔥 " + _t("Exaltation au prochain tour !") }
     }[kind];
     if (!info) return;
+    // v3.470.0 : Énigme (unique du Sphinx) — le premier télégraphe du combat échoue, hors exaltation
+    if (kind !== "surge" && this.hasPower("dun_enigme") && this.tryEnigma(e, info.cond)) return;
     e[info.flag] = true;
     // v3.230.0 : Clairvoyance — un round de retenue, l'impact reste à sa date.
     if (this.hasPower("leg_clairvoyance")) e.patternHoldRounds = 1;
@@ -1052,6 +1054,21 @@ var CombatEngine = {
         CombatReportManager.logTelegraphSeen(s);
       });
     }
+  },
+
+  /* v3.470.0 : Énigme — une fois par combat, le télégraphe est annulé comme un contre (compte à rebours relancé). */
+  tryEnigma: function (e, conditionId) {
+    var c = window.CombatActors ? CombatActors.ensure() : null;
+    if (!c || c.enigmaUsed) return false;
+    c.enigmaUsed = true;
+    // même relance qu'un contre (rescheduleCounteredPattern), mais sur l'ennemi qui télégraphie
+    if (conditionId === "chargeIncoming") e.chargeIn = randInt(ENEMY_CHARGE_ROUNDS_MIN, ENEMY_CHARGE_ROUNDS_MAX);
+    else if (conditionId === "enemySilenceIncoming") e.silenceIn = randInt(ENEMY_CHARGE_ROUNDS_MIN, ENEMY_CHARGE_ROUNDS_MAX);
+    else if (conditionId === "shieldIncoming") e.shieldIn = randInt(BOSS_SHIELD_ROUNDS_MIN, BOSS_SHIELD_ROUNDS_MAX);
+    else if (conditionId === "healIncoming") e.healIn = BOSS_HEAL_ROUNDS;
+    e.counteredRounds = COUNTER_CONFIRMATION_ROUNDS;
+    addLog("❔ " + _t("Énigme : {x} perd le fil de son geste.", { x: _td(e.name) }), "event");
+    return true;
   },
 
   /* Après un contre réussi (ClassCombatManager) : le pattern est annulé et son compte à rebours repart. */
@@ -1142,7 +1159,7 @@ var CombatEngine = {
     }
     e.healTelegraphed = false;
     e.healIn = BOSS_HEAL_ROUNDS;
-    var healAmount = Math.max(1, Math.floor(Number(e.hp || 0) * BOSS_HEAL_PERCENT));
+    var healAmount = Math.max(1, Math.floor(Number(e.hp || 0) * BOSS_HEAL_PERCENT * uniquePowerMult("dun_sepulcre"))); // v3.470.0 : Sépulcre
     e.hp = Math.min(e.maxHp, e.hp + healAmount);
     addLog("💚 " + _t("{x} récupère {n} PV !", { x: _td(e.name), n: formatNumber(healAmount) }), "event");
     showToast("💚 " + _t("+{n} PV boss", { n: formatNumber(healAmount) }), 1200);

@@ -665,6 +665,25 @@ var DungeonManager = {
     this.finish(false, clearedWave, "flee");
   },
 
+  /* v3.470.0 : unique du boss (boss.unique) — tirage à uniqueDropPct, sans garantie (décision Seb).
+     Valeurs tirées comme un objet du niveau (plancher Aether compris) ; nom, icône et pouvoir fixes. */
+  rollBossUnique: function (dungeon, rarity) {
+    var def = dungeon && dungeon.boss && dungeon.boss.unique;
+    if (!def || !rarity || typeof generateEquipmentItem !== "function") return null;
+    if (!chance(Number(DUNGEON_CONFIG.uniqueDropPct || 0))) return null;
+    var ctx = (typeof getDungeonDropContext === "function") ? getDungeonDropContext() : null;
+    var item = generateEquipmentItem(def.slot, rarity, ctx ? ctx.world : undefined, ctx ? ctx.aether : null);
+    if (!item) return null;
+    item.name = def.name;
+    item.icon = def.icon || item.icon;
+    item.power = def.power;
+    item.unique = true; // jamais offert d'office, comme les uniques d'élite
+    item.dungeonUniqueId = def.id;
+    if (!addLootToInventory(item)) return null;
+    addLog("✦ " + _t("Objet unique : {x} !", { x: _td(item.name) }), "boss");
+    return item;
+  },
+
   /* outcome (échec) : "flee" = récompense partielle ÷ 2 ; "death" = aucune récompense partielle (v3.102.1, la mort coûte le butin) */
   finish: function (success, clearedWave, outcome) {
     this.ensure();
@@ -761,6 +780,9 @@ var DungeonManager = {
       if (drop2 && addDropToInventory(drop2)) lootedItem2 = drop2;
     }
 
+    // v3.470.0 : unique du boss, sur un run réussi (mode libre compris), à la rareté du butin de fin
+    var lootedUnique = success ? this.rollBossUnique(tier, lootRarity) : null;
+
     /* v3.223.0 (périmètre confirmé par Seb) : matériau de monde, seconde source
        à côté des Petites Aventures. Réservé à la RÉUSSITE complète — une fuite
        ou une mort n'en donne pas, comme pour le butin d'équipement. Écriture par
@@ -795,6 +817,7 @@ var DungeonManager = {
         : "🏰 " + _t("{x} abandonné (vague {a}/{b}) : +{g} or (moitié)", { x: _td(tier.name), a: clearedWave, b: wavesTotal, g: formatNumber(goldReward) }));
     if (lootedItem) msg += " + " + _td(lootedItem.name);
     if (lootedItem2) msg += " + " + _td(lootedItem2.name);
+    if (lootedUnique) msg += " + " + _td(lootedUnique.name);
     if (specialGained > 0 && specialDef) msg += " + " + specialGained + " " + _td(specialDef.name);
 
     addLog(msg, success ? "boss" : "event");
@@ -823,6 +846,7 @@ var DungeonManager = {
         shardsGained: shardsGained,
         lootedItem: lootedItem,
         lootedItem2: lootedItem2, // v3.463.0 : Butin de faille
+        lootedUnique: lootedUnique, // v3.470.0 : unique du boss
         // v3.223.0 : matériau de monde gagné (0 si aucun), pour le rapport de fin
         specialGained: specialGained,
         specialName: specialInfo ? specialInfo.name : null,

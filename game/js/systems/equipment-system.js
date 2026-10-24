@@ -51,6 +51,14 @@ function hasLegendaryPower(powerId) {
   return false;
 }
 
+/* v3.470.0 : facteur d'un pouvoir d'unique de donjon porté (mult de DUNGEON_UNIQUE_POWERS), 1 sinon.
+   Lu par les traits ennemis (data/enemy-archetypes.js), le soin de boss et le demi-sommeil. */
+function powerMultOf(powerId) {
+  if (typeof hasLegendaryPower !== "function" || !hasLegendaryPower(powerId)) return 1;
+  var p = (typeof LEGENDARY_POWER_BY_ID !== "undefined") ? LEGENDARY_POWER_BY_ID[powerId] : null;
+  return (p && typeof p.mult === "number") ? p.mult : 1;
+}
+
 var EQUIPMENT_ICON_PNG_TYPES = {
   amulet: true, armor: true, axe: true, bottes: true, bow: true, casque: true,
   gants: true, ring: true, robe: true, staff: true, sword: true
@@ -321,6 +329,7 @@ sortInventoryByType: function () {
 window.getItemAffixes = getItemAffixes;
 window.getEquipmentCompareLines = getEquipmentCompareLines;
 window.getItemPower = getItemPower;
+window.powerMultOf = powerMultOf;
 window.hasLegendaryPower = hasLegendaryPower;
 window.getEquipmentIconPath = getEquipmentIconPath;
 window.addLootToInventory = addLootToInventory;
