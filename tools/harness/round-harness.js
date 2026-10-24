@@ -17760,6 +17760,35 @@ console.log("\n[294] v3.473.0 — Combat épuré en Grimoire (atelier grimoire-e
   ok(/\.cbx\.is-epure \.cbx-strip \.cbx-pot \{ width: 40px; height: 40px; \}/.test(css) && /@media \(max-height: 680px\)/.test(css.slice(css.indexOf(".cbx.is-epure {"))), "CSS : potions gardées (40 px), section placée avant les petits écrans");
 })();
 
+console.log("\n[295] v3.474.0 — Donjons : une élite vaincue met le sac en sûreté (point 4)");
+(function () {
+  game = freshCombat("knight");
+  var D = g.DungeonManager, S = g.SortieManager, SQ = g.StoryQuestManager, reach = SQ.isStepReached;
+  var pv = { check: g.ProvisionsManager.check, consume: g.ProvisionsManager.consume };
+  run("ProvisionsManager.check = function () { return null; }; ProvisionsManager.consume = function () {};");
+  SQ.isStepReached = function () { return true; };
+  game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true };
+  game.heroHp = game.heroMaxHp; game.dungeonRunsUsed = {}; game.dungeonTierCleared = {};
+  D.start(1, []);
+  game.dungeonRun.halts = [];
+  var or0 = game.gold;
+  D.spawnWave(4); S.addGold(50); D.onEnemyKilled();
+  ok(!game.dungeonRun.eliteLoot && game.sortie.loot.gold === 50, "vague 4 (ordinaire) : le sac reste exposé");
+  S.addGold(100); D.onEnemyKilled(); // vague 5 = l'araignée marquée
+  ok(game.dungeonRun.eliteLoot && game.dungeonRun.eliteLoot.gold === 150 && game.sortie.loot.gold === 0 && game.gold - or0 === 150, "vague 5 (élite) : 150 or mis en sûreté et versés");
+  S.addGold(80);
+  D.onDefeat();
+  ok(game.gold - or0 === 150 && !game.dungeonRun.active, "mort ensuite : les 150 or restent, les 80 suivants sont perdus");
+  var html = g.buildDungeonSummaryHTML({ success: false, outcome: "death", tierName: "Tanière du Basilic", clearedWave: 6, wavesTotal: 15, goldReward: 0, shardsGained: 1, eliteLoot: { gold: 150, items: [] } });
+  ok(html.indexOf("En sûreté après les élites") >= 0 && html.indexOf("+150") >= 0, "rapport : ligne « En sûreté après les élites »");
+  // Sanctuaire : à la vague 8 (élite et campement), c'est le campement qui met en sûreté
+  game.heroHp = game.heroMaxHp; game.dungeonRunsUsed = {}; game.dungeonTierCleared = { 1: true, 2: true };
+  D.start(3, []); game.dungeonRun.halts = [];
+  ok(D.secureAfterElite(8) === false && D.secureAfterElite(12) === true, "Sanctuaire : vague 8 laissée au campement, vague 12 en sûreté");
+  D.forfeit();
+  SQ.isStepReached = reach; g.ProvisionsManager.check = pv.check; g.ProvisionsManager.consume = pv.consume;
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

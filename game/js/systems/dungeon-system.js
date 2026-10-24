@@ -588,6 +588,23 @@ var DungeonManager = {
     return true;
   },
 
+  /* v3.474.0 (point 4 du bilan, option A de Seb) : une élite de données vaincue met le butin des vagues en sûreté
+     (SortieManager.secure, comme le campement) : une mort ne coûte plus que ce qui a été gagné depuis. À la vague du
+     campement, c'est lui qui s'en charge (il l'affiche). Cumul dans run.eliteLoot, pour le rapport de fin. */
+  secureAfterElite: function (clearedWave) {
+    var run = game.dungeonRun, dungeon = this.getById(run.dungeonId), camp = this.getCamp(dungeon);
+    if (!dungeon.eliteWaves || !dungeon.eliteWaves[clearedWave] || !window.SortieManager) return false;
+    if (camp && Number(camp.afterWave) === clearedWave) return false;
+    var kept = SortieManager.secure() || {}, items = kept.items || [];
+    if (!run.eliteLoot) run.eliteLoot = { gold: 0, items: [] };
+    run.eliteLoot.gold += Number(kept.gold || 0);
+    items.forEach(function (it) { run.eliteLoot.items.push({ name: it.name, rarity: it.rarity }); });
+    if (Number(kept.gold || 0) > 0 || items.length) {
+      addLog("🛡️ " + _tn(items.length, "L'élite tombe : le butin des vagues est en sûreté (+{g} or, {n} objet).", "L'élite tombe : le butin des vagues est en sûreté (+{g} or, {n} objets).", { g: formatNumber(Number(kept.gold || 0)) }), "event");
+    }
+    return true;
+  },
+
   /* v3.136.0 (audit Forêt §3.4) : ticket OFFERT par l'Histoire sur le Donjon I tant que l'étape forest_14
      « La tanière du Basilic » est en cours (acceptée, non réclamée) — un échec ne bloque plus la chaîne
      principale 24 h, ni ne consomme une sortie du jour (v3.358.0). Sans effet sur les autres paliers. */
@@ -782,6 +799,7 @@ var DungeonManager = {
       this.finish(true, clearedWave);
       return;
     }
+    this.secureAfterElite(clearedWave); // v3.474.0 : point 4 du bilan, une élite vaincue met le sac en sûreté
 
     var nextWave = clearedWave + 1;
     // v3.430.0 (RU13) : le campement, halte après la vague de la première étape
@@ -853,6 +871,7 @@ var DungeonManager = {
     if (success && window.SortieManager) SortieManager.end("success");
     if (outcome === "camp" && window.SortieManager) SortieManager.end("return"); // v3.430.0 : rien à perdre, le sac de l'étape 1 est banqué
     var campLoot = game.dungeonRun.campLoot || null; // v3.430.0 : pour le rapport de fin
+    var eliteLoot = game.dungeonRun.eliteLoot || null; // v3.474.0 : mis en sûreté par les élites
     var wavesTotal = DUNGEON_CONFIG.waveCount;
     var progress = Math.max(0, Math.min(1, clearedWave / wavesTotal));
 
@@ -972,7 +991,9 @@ var DungeonManager = {
       : outcome === "camp"
         ? "🔥 " + _t("{x} : tu remontes du campement (vague {a}/{b}) : +{g} or", { x: _td(tier.name), a: clearedWave, b: wavesTotal, g: formatNumber(goldReward) })
       : (outcome === "death"
-        ? "🏰 " + _t("{x} : terrassé à la vague {a}/{b} — aucune récompense, le butin reste dans le donjon.", { x: _td(tier.name), a: clearedWave + 1, b: wavesTotal })
+        ? "🏰 " + (eliteLoot && (eliteLoot.gold > 0 || eliteLoot.items.length) // v3.474.0
+          ? _t("{x} : terrassé à la vague {a}/{b}. Le butin mis en sûreté par les élites est à toi ; le reste reste dans le donjon.", { x: _td(tier.name), a: clearedWave + 1, b: wavesTotal })
+          : _t("{x} : terrassé à la vague {a}/{b} — aucune récompense, le butin reste dans le donjon.", { x: _td(tier.name), a: clearedWave + 1, b: wavesTotal }))
         : "🏰 " + _t("{x} abandonné (vague {a}/{b}) : +{g} or (moitié)", { x: _td(tier.name), a: clearedWave, b: wavesTotal, g: formatNumber(goldReward) }));
     if (lootedItem) msg += " + " + _td(lootedItem.name);
     if (lootedItem2) msg += " + " + _td(lootedItem2.name);
@@ -1017,6 +1038,7 @@ var DungeonManager = {
         // v3.430.0 : sortie par le campement, et le butin de l'étape 1 mis en sûreté
         outcome: outcome || (success ? "success" : null),
         campLoot: campLoot,
+        eliteLoot: eliteLoot, // v3.474.0
         // v3.436.1 (bug Seb) : or et objets des vagues, banqués par SortieManager.end, absents du rapport jusqu'ici
         wavesGold: sortieKept ? Number(sortieKept.gold || 0) : 0,
         wavesItems: sortieKept ? (sortieKept.items || []).map(function (it) { return { name: it.name, rarity: it.rarity }; }) : []

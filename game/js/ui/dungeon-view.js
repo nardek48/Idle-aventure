@@ -568,9 +568,12 @@ function buildDungeonSummaryHTML(result) {
   }
   // v3.436.1 (bug Seb) : tout l'or reçu, dans l'ordre du run — vagues, campement, prime, total
   var wavesGold = Number(result.wavesGold || 0), campLoot = result.campLoot || {}, campGold = Number(campLoot.gold || 0);
+  var eliteLoot = result.eliteLoot || {}, eliteGold = Number(eliteLoot.gold || 0); // v3.474.0 : mis en sûreté par les élites
+  campGold += eliteGold; // compté avec le campement dans les totaux
   var goldIco = '<img class=ico-inline src=images/Icons/gold_icon.webp> ';
   if (wavesGold > 0) h += '      <div class="dungeon-summary-row"><span>' + goldIco + _t("Butin des vagues") + '</span><span>+' + formatNumber(wavesGold) + '</span></div>';
-  if (campGold > 0) h += '      <div class="dungeon-summary-row"><span><img class=ico-inline src=images/Icons/camp/campfire.webp> ' + _t("En sûreté au campement") + '</span><span>+' + formatNumber(campGold) + '</span></div>';
+  if (campGold - eliteGold > 0) h += '      <div class="dungeon-summary-row"><span><img class=ico-inline src=images/Icons/camp/campfire.webp> ' + _t("En sûreté au campement") + '</span><span>+' + formatNumber(campGold - eliteGold) + '</span></div>';
+  if (eliteGold > 0) h += '      <div class="dungeon-summary-row"><span>' + goldIco + _t("En sûreté après les élites") + '</span><span>+' + formatNumber(eliteGold) + '</span></div>';
   h += '      <div class="dungeon-summary-row"><span>' + goldIco + (wavesGold > 0 || campGold > 0 ? _t("Prime de fin") : _t("Or")) + '</span><span>+' + formatNumber(result.goldReward) + '</span></div>';
   if (wavesGold > 0 || campGold > 0) h += '      <div class="dungeon-summary-row"><span><b>' + _t("Total or") + '</b></span><span><b>+' + formatNumber(wavesGold + campGold + Number(result.goldReward || 0)) + '</b></span></div>';
   h += '      <div class="dungeon-summary-row"><span><img class=ico-inline src=images/Icons/subtabs/shard_shop.webp> ' + _t("Éclats") + '</span><span>+' + formatNumber(result.shardsGained) + '</span></div>';
@@ -587,7 +590,7 @@ function buildDungeonSummaryHTML(result) {
     h += '      <div class="dungeon-summary-row dungeon-summary-loot"><span>✦ ' + _t("Objet unique") + '</span><span><b style="color:' + uqCol + '">' + esc(_td(uq.name)) + '</b>'
       + (uqPow ? ' · ' + esc(_td(uqPow.label)) : '') + '</span></div>';
   }
-  var objets = [].concat(campLoot.items || [], result.wavesItems || [], result.lootedItem ? [result.lootedItem] : [], result.lootedItem2 ? [result.lootedItem2] : []);
+  var objets = [].concat(campLoot.items || [], eliteLoot.items || [], result.wavesItems || [], result.lootedItem ? [result.lootedItem] : [], result.lootedItem2 ? [result.lootedItem2] : []);
   if (objets.length) {
     h += '      <div class="dungeon-summary-row dungeon-summary-loot"><span><img class=ico-inline src=images/Icons/dungeon/dungeon_guaranteed_loot.webp> ' + _t("Butin") + '</span><span>' + objets.map(function (it) {
       var col = (typeof RARITY_COLORS !== "undefined" && RARITY_COLORS[it.rarity]) || "inherit";

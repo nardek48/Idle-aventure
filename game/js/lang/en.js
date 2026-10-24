@@ -240,6 +240,8 @@ I18n.register("en", {
   "Ligne d'améliorations terminée": "Upgrade line complete",
 
   // js/systems/dungeon-system.js
+  "L'élite tombe : le butin des vagues est en sûreté (+{g} or, {n} objet).||L'élite tombe : le butin des vagues est en sûreté (+{g} or, {n} objets).": ["The elite falls: the wave loot is safe (+{g} gold, {n} item).", "The elite falls: the wave loot is safe (+{g} gold, {n} items)."],
+  "{x} : terrassé à la vague {a}/{b}. Le butin mis en sûreté par les élites est à toi ; le reste reste dans le donjon.": "{x}: struck down at wave {a}/{b}. The loot secured by the elites is yours; the rest stays in the dungeon.",
   "Une halte : trois cartes t'attendent.": "A halt: three cards await you.",
   "Tu passes la halte.": "You walk past the halt.",
   "Halte : {x}.": "Halt: {x}.",
@@ -1025,6 +1027,7 @@ I18n.register("en", {
   "Améliorer": "Upgrade",
 
   // js/ui/dungeon-view.js
+  "En sûreté après les élites": "Secured after the elites",
   "Une halte": "A halt",
   "Après la vague {n} · halte {a} sur {b}": "After wave {n} · halt {a} of {b}",
   "Une salle oubliée, à l'écart du passage. Rien n'y bouge, sauf ce qu'on y a laissé.": "A forgotten room, off the main passage. Nothing moves in it, except what was left behind.",
