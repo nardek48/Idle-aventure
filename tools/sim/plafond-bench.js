@@ -72,6 +72,15 @@ var mod = { exports: {} };
 new Function("require", "process", "module", "__dirname", src + "\nmodule.exports = { g: g, run: run, seedRng: seedRng, setup: setup, CLASSES: CLASSES };")(
   require, { argv: [process.argv[0], "x", ROOT] }, mod, __dirname);
 var B = mod.exports, g = B.g;
+// Essai de banc (point 3) : « Charge » du Chevalier, l'ennemi sonné ESSAI_CHARGE rounds au début de chaque combat
+if (process.env.ESSAI_CHARGE) (function (X) {
+  var pe = X.CombatEngine.prepareEnemy;
+  X.CombatEngine.prepareEnemy = function (e) {
+    var neuf = e && !e._roundReady, r = pe.apply(this, arguments);
+    if (neuf && /knight/i.test(String(X.game.heroId))) e.engageIn = Math.max(Number(e.engageIn || 0), Number(process.env.ESSAI_CHARGE));
+    return r;
+  };
+})(g);
 if (GROUPE) g.DUNGEON_CONFIG.groupWave = { 2: { hp: GROUPE[0], power: GROUPE[1] }, 3: { hp: GROUPE[2], power: GROUPE[3] } };
 if (POUVOIRS.length) {
   var hasPowerReel = g.hasLegendaryPower;

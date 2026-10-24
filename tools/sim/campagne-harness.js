@@ -114,6 +114,15 @@ function launch() {
   sb.__timers = timers;
   vm.createContext(sb);
   SOURCES.forEach(function (s) { vm.runInContext(s.code, sb, { filename: s.name }); });
+  // Essai de banc (point 3) : « Charge » du Chevalier, l'ennemi sonné ESSAI_CHARGE rounds au début de chaque combat
+  if (process.env.ESSAI_CHARGE) (function (X) {
+    var pe = X.CombatEngine.prepareEnemy;
+    X.CombatEngine.prepareEnemy = function (e) {
+      var neuf = e && !e._roundReady, r = pe.apply(this, arguments);
+      if (neuf && /knight/i.test(String(X.game.heroId))) e.engageIn = Math.max(Number(e.engageIn || 0), Number(process.env.ESSAI_CHARGE));
+      return r;
+    };
+  })(sb);
   // v3.379.0 : compteurs du banc des potions (toutes les potions bues, or dépensé en potions de soin)
   var uh = sb.PotionManager.useHealingPotion, bh = sb.PotionManager.buyHealingPotion;
   sb.PotionManager.useHealingPotion = function () { var r = uh.apply(this, arguments); if (r === true) STATS.potionsBues = (STATS.potionsBues || 0) + 1; return r; };
