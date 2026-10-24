@@ -880,6 +880,17 @@
   /* Appelée à chaque image par la boucle (renderEnemyHp) : chaque bloc n'est réécrit que s'il a
      changé. Les commandes, elles, sont recalculées au plus 8 fois par seconde (le conseil du
      Grimoire évalue ses règles) — les actions les redessinent tout de suite par leurs propres appels. */
+  /* v3.473.0 : vue épurée en Grimoire (atelier grimoire-epure.html, préférence d'appareil grimEpure) ;
+     relue à chaque image, elle bascule dès le retour au combat après un changement dans les Paramètres. */
+  function isEpure() { return game.combatMode === "grimoire" && !!(window.Prefs && Prefs.get("grimEpure")); }
+  function applyEpure() {
+    var app = byId("cbx");
+    if (!app) return;
+    var on = isEpure(), group = on && allies().some(function (a) { return a && a.companionId; });
+    if (app.classList.contains("is-epure") !== on) app.classList.toggle("is-epure", on);
+    if (app.classList.contains("is-group") !== group) app.classList.toggle("is-group", group);
+  }
+
   var lastCmdAt = 0;
   function renderFrame(force) {
     if (!inCombatScreen()) { cbx.hidden = true; return; }
@@ -888,6 +899,7 @@
       cbx.hidden = false; force = true;
       if (typeof WeakMap === "function") { cbx.hp = new WeakMap(); cbx.tele = new WeakMap(); }
     }
+    applyEpure();
     setHtml(byId("cbx-top"), buildTopHTML());
     setHtml(byId("cbx-target"), buildTargetHTML());
     renderStage();
@@ -941,6 +953,7 @@
   window.cbxStatesOf = statesOf;
   window.cbxLayout = layout;
   window.cbxIsRanged = isRanged;
+  window.cbxIsEpure = isEpure;   // v3.473.0 : lu par le harnais
   window.cbxQuickFight = function () { if (window.CombatQuick) CombatQuick.resolve(); renderFrame(true); };
   // v3.459.7 (audit O13) : constructeurs lus par le harnais, à la place de ceux de l'ancienne couche
   window.cbxHeroCardHTML = heroCardHTML;

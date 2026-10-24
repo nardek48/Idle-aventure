@@ -62,6 +62,9 @@ function buildSettingsJeuHTML() {
       kSwitchHTML(Prefs.get("filRouge"), "setDisplayPref('filRouge', " + !Prefs.get("filRouge") + ")", _t("Fil rouge")));
     h += settingsRowHTML("images/Icons/dungeon/boss_crown.webp", _t("Mises en scène des boss"), _t("Carte d'entrée, changement de phase, coup final et trophée."),
       kSwitchHTML(Prefs.get("bossMoments"), "setDisplayPref('bossMoments', " + !Prefs.get("bossMoments") + ")", _t("Mises en scène des boss")));
+    // v3.473.0 : vue épurée du combat en Grimoire (atelier grimoire-epure.html)
+    h += settingsRowHTML("images/Icons/codex/codex_lore.webp", _t("Combat épuré en Grimoire"), _t("Seuls l'ennemi, tes PV, la règle jouée et les potions restent à l'écran."),
+      kSwitchHTML(Prefs.get("grimEpure"), "setDisplayPref('grimEpure', " + !Prefs.get("grimEpure") + ")", _t("Combat épuré en Grimoire")));
     h += '<p class="set-note">' + _t("Réglages propres à cet appareil.") + '</p>';
     h += '</div>';
   }

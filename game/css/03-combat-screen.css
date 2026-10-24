@@ -376,6 +376,35 @@ html.pc-mode .cbx-key-badge { display: block; }
 .cbx-st-who { font-weight: 600; opacity: .75; }
 .st-row-ico.is-round { border-radius: 50%; object-fit: cover; object-position: top; }
 
+/* ---------- 5. v3.473.0 : vue épurée en Grimoire (atelier grimoire-epure.html) ----------
+   Posée par combat-screen-view.js (applyEpure) en Grimoire, préférence grimEpure. On retire ce que le
+   joueur ne commande pas (initiative, compétences) ; l'équipe tient sur une ligne, les potions à côté. */
+.cbx.is-epure { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto minmax(0, 1fr) auto; }
+.cbx.is-epure > #cbx-top { grid-column: 1 / -1; grid-row: 1; }
+.cbx.is-epure > #cbx-arena { grid-column: 1 / -1; grid-row: 2; }
+.cbx.is-epure > #cbx-team { grid-column: 1; grid-row: 3; align-self: end; padding: 0 0 calc(8px + var(--safe-bottom, env(safe-area-inset-bottom, 0px))) 8px; }
+.cbx.is-epure > #cbx-cmd { grid-column: 2; grid-row: 3; align-self: end; padding-left: 6px; }
+.cbx.is-epure > #combat-sortie-sheet-root { grid-column: 1 / -1; grid-row: 4; }
+.cbx.is-epure #cbx-ini, .cbx.is-epure .cbx-strip-mid { display: none !important; }
+.cbx.is-epure .cbx-strip { display: flex; gap: 6px; padding: 0; background: none; border: 0; }
+.cbx.is-epure .cbx-strip .cbx-pot { width: 40px; height: 40px; }
+.cbx.is-epure.is-group .cbx-strip { flex-direction: column; }
+/* Héros sur une ligne : portrait, jauge de classe, PV (sans nom, niveau ni célérité). */
+.cbx.is-epure .cbx-card.is-hero { grid-template-columns: 34px minmax(0, 1fr); grid-template-rows: auto auto; row-gap: 3px; padding: 4px 7px; }
+.cbx.is-epure .cbx-card.is-hero .cbx-card-pt { width: 34px; height: 34px; grid-row: 1 / span 2; }
+.cbx.is-epure .cbx-card.is-hero .cbx-card-nm, .cbx.is-epure .cbx-card.is-hero .cbx-cel, .cbx.is-epure .cbx-lvl-badge { display: none; }
+.cbx.is-epure .cbx-card.is-hero .cbx-res { grid-column: 2; height: 14px; }
+.cbx.is-epure .cbx-card.is-hero .cbx-res-txt, .cbx.is-epure .cbx-card.is-hero .cbx-res-txt small { font-size: 12px; }
+.cbx.is-epure .cbx-card.is-hero .cbx-hpbar { grid-column: 2; height: 18px; }
+.cbx.is-epure .cbx-card.is-hero .cbx-hpbar span { font-size: 12px; }
+/* En groupe : le héros sur toute la ligne, les compagnons côte à côte dessous (portrait, PV, charges). */
+.cbx.is-epure .cbx-team.c2, .cbx.is-epure .cbx-team.c3 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; }
+.cbx.is-epure .cbx-team.c2 .cbx-card.is-hero, .cbx.is-epure .cbx-team.c3 .cbx-card.is-hero { grid-column: 1 / -1; }
+.cbx.is-epure .cbx-card:not(.is-hero) { grid-template-columns: 26px minmax(0, 1fr); padding: 3px 6px; column-gap: 5px; }
+.cbx.is-epure .cbx-card:not(.is-hero) .cbx-card-nm { display: none; }
+.cbx.is-epure .cbx-card:not(.is-hero) .cbx-card-pt { width: 26px; height: 26px; grid-row: auto; }
+.cbx.is-epure .cbx-card:not(.is-hero) .cbx-bars-foot { min-height: 0; }
+
 /* Petits écrans (iPhone SE) */
 @media (max-height: 680px) {
   .cbx-skill { width: min(54px, 15vw); }

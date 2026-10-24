@@ -1559,6 +1559,8 @@ I18n.register("en", {
   "Sauvegarde": "Save",
   "Le mode Grimoire se débloque avec la chaîne Histoire.": "Grimoire mode unlocks with the Story chain.",
   "Mises en scène des boss": "Boss scenes",
+  "Combat épuré en Grimoire": "Clean Grimoire combat",
+  "Seuls l'ennemi, tes PV, la règle jouée et les potions restent à l'écran.": "Only the enemy, your HP, the rule played and your potions stay on screen.",
   "Sauvegarde : locale navigateur.": "Save: local to this browser.",
   "Sauvegarde : indisponible.": "Save: unavailable.",
 

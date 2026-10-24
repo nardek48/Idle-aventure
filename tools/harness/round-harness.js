@@ -13115,7 +13115,7 @@ console.log("\n[181] v3.408.0 — Paramètres refondus (B · Rail, S1 · glissi�
     var p = g.buildSettingsHTML("partie"), j = g.buildSettingsHTML("jeu"), a = g.buildSettingsHTML("appareil");
     ok(/kseg is-stack set-tabs/.test(p) && (p.match(/setSettingsTab\('/g) || []).length === 3 && /Paramètres/.test(p), "trois onglets en rail : Partie, Jeu, Appareil ; titre « Paramètres »");
     ok(/settings-btn primary" onclick="saveGame\(\)"/.test(p) && /exportSaveToFile/.test(p) && /showImportTextModal/.test(p) && /settings-btn danger" onclick="resetGame\(\)"/.test(p), "Partie : sauvegarder, exporter/importer, codes, effacer en zone de danger");
-    ok(!/toggleAutoSkills\(/.test(j) && j.indexOf("Il se choisit au départ de chaque sortie.") !== -1 && (j.match(/class="kswitch/g) || []).length === 2 && j.indexOf('type="checkbox"') === -1, "Jeu : le mode se lit (préparation de sortie, v3.440.0), interrupteurs du kit, plus de case à cocher");
+    ok(!/toggleAutoSkills\(/.test(j) && j.indexOf("Il se choisit au départ de chaque sortie.") !== -1 && (j.match(/class="kswitch/g) || []).length === 3 && j.indexOf('type="checkbox"') === -1, "Jeu : le mode se lit (préparation de sortie, v3.440.0), interrupteurs du kit (3 depuis v3.473.0), plus de case à cocher");
     ok(/confirmLanguageChange\('en'\)/.test(a) && /switchTab\('admin'\)/.test(a) && a.indexOf("atelier-ui.html") === -1 && a.indexOf("switchTab('log')") === -1, "Appareil : langue, lien Admin ; ateliers morts et bouton Journal retirés");
   } catch (err) {
     ok(false, "[181] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
@@ -17739,6 +17739,25 @@ console.log("\n[293] v3.472.0 — Donjons : les haltes (1 à 3 par run, 3 cartes
   D.forfeit();
   game.inventory = [];
   SQ.isStepReached = reach; g.ProvisionsManager.check = pv.check; g.ProvisionsManager.consume = pv.consume;
+})();
+
+console.log("\n[294] v3.473.0 — Combat épuré en Grimoire (atelier grimoire-epure.html, option 1)");
+(function () {
+  var mode = game.combatMode, pref = g.Prefs.get("grimEpure");
+  ok(g.PREFS_DEFAULTS.grimEpure === true, "préférence d'appareil grimEpure, allumée par défaut");
+  game.combatMode = "grimoire"; g.Prefs.set("grimEpure", true);
+  ok(g.cbxIsEpure() === true, "Grimoire + préférence : vue épurée");
+  game.combatMode = "tactique";
+  ok(g.cbxIsEpure() === false, "Tactique : vue complète, quelle que soit la préférence");
+  game.combatMode = "grimoire"; g.Prefs.set("grimEpure", false);
+  ok(g.cbxIsEpure() === false, "préférence éteinte : vue complète en Grimoire");
+  ok(g.buildSettingsHTML("jeu").indexOf("Combat épuré en Grimoire") !== -1, "Paramètres › Jeu : interrupteur « Combat épuré en Grimoire »");
+  g.Prefs.set("grimEpure", pref); game.combatMode = mode;
+  var view = fs.readFileSync(path.join(ROOT, "js/ui/combat-screen-view.js"), "utf8");
+  ok(/function renderFrame\(force\) \{[\s\S]{0,400}applyEpure\(\);/.test(view) && /classList\.toggle\("is-group", group\)/.test(view), "la classe se pose à chaque image (bascule au retour sur le combat), groupe compris");
+  var css = fs.readFileSync(path.join(ROOT, "css/03-combat-screen.css"), "utf8");
+  ok(css.indexOf(".cbx.is-epure #cbx-ini, .cbx.is-epure .cbx-strip-mid { display: none !important; }") !== -1, "CSS : initiative et compétences retirées");
+  ok(/\.cbx\.is-epure \.cbx-strip \.cbx-pot \{ width: 40px; height: 40px; \}/.test(css) && /@media \(max-height: 680px\)/.test(css.slice(css.indexOf(".cbx.is-epure {"))), "CSS : potions gardées (40 px), section placée avant les petits écrans");
 })();
 
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
