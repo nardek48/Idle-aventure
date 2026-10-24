@@ -256,8 +256,11 @@ function buildDungeonSheetHTML(dungeonId) {
       if (f) h += buildCombatForecastLineHTML(f);
     } catch (e) { noteErreur("dungeon-view.buildDungeonSheetHTML", e); /* pronostic indisponible : la feuille reste utilisable */ }
   }
-  // v3.429.6 : conseil de préparation, tant que le donjon n'a jamais été vaincu
-  if (dungeon.prepHint && !(game.dungeonTierCleared || {})[dungeon.id]) h += '<div class="dsheet-ticket"><img class=ico-inline src=images/Icons/system/warning.webp> ' + esc(_td(dungeon.prepHint)) + '</div>';
+  // v3.429.6 : conseil de préparation, tant que le donjon n'a jamais été vaincu ; v3.475.0 : liste cochée (prepChecks)
+  if (!(game.dungeonTierCleared || {})[dungeon.id]) {
+    if (dungeon.prepChecks && dungeon.prepChecks.length) h += buildDungeonPrepHTML(dungeon);
+    else if (dungeon.prepHint) h += '<div class="dsheet-ticket"><img class=ico-inline src=images/Icons/system/warning.webp> ' + esc(_td(dungeon.prepHint)) + '</div>';
+  }
 
   if (storyFree) {
     h += '<div class="dsheet-ticket"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.webp> <strong>' + _t("Entrée offerte") + '</strong> ' + _t("— les braises te guident, aucune sortie du jour consommée") + '</div>';
@@ -455,6 +458,39 @@ function confirmCampAction() {
   if (!DungeonManager.campAction(pick, party)) { renderDungeonCampSheet(); return; }
   campPick = null;
   if (pick !== "sortir" && typeof switchTab === "function") switchTab("combat");
+}
+
+/* ---------- Préparation (v3.475.0, point 2 du bilan) ----------
+   Une ligne par condition, cochée selon la partie : l'arme ou l'armure d'une élite (quête d'élite réussie),
+   un bâtiment au niveau voulu. Ce qui manque dit où aller. */
+function dungeonPrepRows(dungeon) {
+  return (dungeon.prepChecks || []).map(function (c) {
+    if (c.kind === "elite") {
+      var def = (window.ELITE_UNIQUE_LOOT || {})[c.eliteId], elite = (window.ELITE_DB || {})[c.eliteId];
+      var cls = typeof getClassByHeroId === "function" ? getClassByHeroId(game.heroId) : null;
+      var entry = def && (def.item || (def.byClass && (def.byClass[cls ? cls.id : "knight"] || def.byClass.knight)));
+      var done = !!(game.adventureQuestsCompleted || {})[c.questId];
+      return { done: done, label: entry ? _td(entry.name) : c.eliteId,
+        sub: done ? _t("obtenu") : _t("à gagner contre {e}, dans Quêtes › Aventure", { e: elite ? _td(elite.name) : c.eliteId }) };
+    }
+    if (c.kind === "building") {
+      var b = (window.VILLAGE_BUILDINGS || {})[c.buildingId];
+      var lvl = window.VillageBuildingManager && typeof VillageBuildingManager.getLevel === "function" ? VillageBuildingManager.getLevel(c.buildingId) : 0;
+      return { done: lvl >= c.level, label: _t("{x} niveau {n}", { x: b ? _td(b.name) : c.buildingId, n: c.level }),
+        sub: lvl >= c.level ? _t("atteint") : _t("niveau actuel : {n}, au Village", { n: lvl }) };
+    }
+    return null;
+  }).filter(Boolean);
+}
+
+function buildDungeonPrepHTML(dungeon) {
+  var rows = dungeonPrepRows(dungeon), ready = rows.every(function (r) { return r.done; });
+  var h = '<div class="dprep"><div class="dprep-ttl">' + (ready ? _t("Préparation : tout est prêt") : _t("Préparation conseillée")) + '</div>';
+  rows.forEach(function (r) {
+    h += '<div class="dprep-row' + (r.done ? ' is-done' : '') + '"><span class="dprep-mark" aria-hidden="true">' + (r.done ? '✔' : '✗') + '</span>'
+      + '<span><b>' + esc(r.label) + '</b> · ' + esc(r.sub) + '</span></div>';
+  });
+  return h + '</div>';
 }
 
 /* ---------- La halte (v3.472.0, atelier/halte-donjon.html, validé par Seb) ----------

@@ -17789,6 +17789,25 @@ console.log("\n[295] v3.474.0 — Donjons : une élite vaincue met le sac en sû
   SQ.isStepReached = reach; g.ProvisionsManager.check = pv.check; g.ProvisionsManager.consume = pv.consume;
 })();
 
+console.log("\n[296] v3.475.0 — Tanière : préparation cochée sur la feuille de lancement (point 2)");
+(function () {
+  game = freshCombat("knight");
+  var D = g.DungeonManager, VB = g.VillageBuildingManager, getLvl = VB.getLevel, SQ = g.StoryQuestManager, reach = SQ.isStepReached;
+  SQ.isStepReached = function () { return true; };
+  game.dungeonTierCleared = {}; game.adventureQuestsCompleted = {};
+  VB.getLevel = function (id) { return id === "training" ? 2 : getLvl.apply(VB, arguments); };
+  var h = g.buildDungeonSheetHTML(1);
+  ok(h.indexOf("Préparation conseillée") >= 0 && (h.match(/✗/g) || []).length === 3 && h.indexOf("Fil-de-lame") >= 0 && h.indexOf("niveau actuel : 2") >= 0, "rien de prêt : trois lignes ✗, l'arme du Chevalier nommée, le Terrain au niveau 2");
+  ok(h.indexOf("presque indispensables") < 0, "la liste remplace le conseil en texte");
+  game.adventureQuestsCompleted = { eq_forest_spider: true, eq_forest_bramble: true };
+  VB.getLevel = function (id) { return id === "training" ? 4 : getLvl.apply(VB, arguments); };
+  h = g.buildDungeonSheetHTML(1);
+  ok(h.indexOf("Préparation : tout est prêt") >= 0 && (h.match(/✔/g) || []).length === 3, "tout prêt : trois ✔");
+  game.dungeonTierCleared = { 1: true };
+  ok(g.buildDungeonSheetHTML(1).indexOf("Préparation") < 0, "Tanière terminée : plus de liste");
+  VB.getLevel = getLvl; SQ.isStepReached = reach; game.dungeonTierCleared = {}; game.adventureQuestsCompleted = {};
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

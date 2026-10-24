@@ -445,6 +445,14 @@ body.dg-on-list .hud-dock { display: none !important; }
 .dhalt-foot { display: grid; gap: 6px; }
 .dhalt-pass { width: 100%; }
 .dhalt-prev { display: none; }
+/* v3.475.0 : préparation cochée (point 2 du bilan) */
+.dprep { margin: 6px 0 0; padding: 7px 10px; border: 1.5px solid var(--sheet-card-bd); border-radius: 12px; background: var(--sheet-card-bg); }
+.dprep-ttl { margin-bottom: 4px; font-size: 12px; font-weight: 800; letter-spacing: 0.4px; text-transform: uppercase; color: var(--c-brown-700-vivid); }
+.dprep-row { display: grid; grid-template-columns: 18px 1fr; gap: 6px; align-items: baseline; font-size: 12.5px; line-height: 1.35; color: var(--nb-ink-dim); }
+.dprep-row + .dprep-row { margin-top: 3px; }
+.dprep-row b { color: var(--nb-ink); }
+.dprep-mark { font-weight: 800; color: var(--c-red-600-soft); }
+.dprep-row.is-done .dprep-mark { color: var(--c-green-650-2); }
 .dungeon-active-boons { display: flex; flex-wrap: wrap; gap: 5px; margin: 6px 0; }
 .dungeon-active-boons span { padding: 1px 8px; border-radius: 99px; border: 1px solid var(--c-brown-550-3); font-size: 12px; font-weight: 700; }
 /* Petits écrans : sans la phrase d'ambiance, les trois cartes tiennent sans défiler */

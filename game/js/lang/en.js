@@ -1027,6 +1027,12 @@ I18n.register("en", {
   "Améliorer": "Upgrade",
 
   // js/ui/dungeon-view.js
+  "obtenu": "obtained",
+  "à gagner contre {e}, dans Quêtes › Aventure": "to win against {e}, in Quests › Adventure",
+  "{x} niveau {n}": "{x} level {n}",
+  "niveau actuel : {n}, au Village": "current level: {n}, in the Village",
+  "Préparation : tout est prêt": "Preparation: all set",
+  "Préparation conseillée": "Recommended preparation",
   "En sûreté après les élites": "Secured after the elites",
   "Une halte": "A halt",
   "Après la vague {n} · halte {a} sur {b}": "After wave {n} · halt {a} of {b}",

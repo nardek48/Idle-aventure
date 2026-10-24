@@ -139,6 +139,13 @@ var DUNGEONS = [
        (plafond-bench --only taniere --pronostic) : réel ~2× l'estimé quand le héros est juste. */
     forecastAttritionMult: 2,
     // v3.429.6 : la Tanière se prépare (banc plafond : 0 % sans les uniques des élites, 100 % avec)
+    /* v3.475.0 (point 2 du bilan, option A de Seb) : liste de préparation cochée sur la feuille de lancement,
+       tant que le donjon n'est pas terminé. Remplace le conseil en texte (prepHint, gardé en repli). */
+    prepChecks: [
+      { kind: "elite", questId: "eq_forest_spider", eliteId: "araignee_marquee" },
+      { kind: "elite", questId: "eq_forest_bramble", eliteId: "ronce_ardente" },
+      { kind: "building", buildingId: "training", level: 4 }
+    ],
     prepHint: "Conseil : les armes des deux élites de la Forêt (Quêtes › Aventure) et un Terrain d'entraînement au niveau 4 sont presque indispensables pour tenir les quinze vagues et le Basilic."
   },
   {
