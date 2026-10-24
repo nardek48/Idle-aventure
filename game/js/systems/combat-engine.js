@@ -263,6 +263,9 @@ var CombatEngine = {
     var heroDef = (window.HEROES_DB && game.heroId) ? HEROES_DB[game.heroId] : null;
     var heroRanged = !!(heroDef && heroDef.weaponType && heroDef.weaponType !== "sword");
     enemy.engageIn = (heroRanged && typeof getEnemyEngageRounds === "function") ? getEnemyEngageRounds(enemy.id, !!enemy.isBoss) : 0;
+    // v3.477.0 (accord Seb) : Charge du Chevalier — au corps à corps, l'ennemi reste sonné (même compteur que l'approche)
+    enemy.charged = !!(heroDef && !heroRanged && typeof KNIGHT_CHARGE_ROUNDS === "number" && KNIGHT_CHARGE_ROUNDS > 0);
+    if (enemy.charged) enemy.engageIn = KNIGHT_CHARGE_ROUNDS;
     enemy.rageFreezeRounds = 0;
     enemy.vampiricSuppressedRounds = 0;
     enemy.armorSuppressedRounds = 0;
@@ -966,7 +969,8 @@ var CombatEngine = {
     if (Number(e.engageIn || 0) > 0) {
       e.engageIn -= 1;
       e.gauge = Number(e.gauge || 0) + this.getEnemyGaugeGain(e);
-      if (e.engageIn > 0) addLog("👣 " + _tn(e.engageIn, "{x} avance vers toi… (contact dans {n} round)", "{x} avance vers toi… (contact dans {n} rounds)", { x: _td(e.name) }), "event");
+      if (e.charged) addLog("💫 " + (e.engageIn > 0 ? _t("{x} est encore sonné par ta charge.", { x: _td(e.name) }) : _t("{x} reprend ses esprits.", { x: _td(e.name) })), "event"); // v3.477.0
+      else if (e.engageIn > 0) addLog("👣 " + _tn(e.engageIn, "{x} avance vers toi… (contact dans {n} round)", "{x} avance vers toi… (contact dans {n} rounds)", { x: _td(e.name) }), "event");
       else addLog("👣 " + _t("{x} arrive au contact !", { x: _td(e.name) }), "event");
       this.tickEnemyTelegraphs(e);
       if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();

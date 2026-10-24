@@ -157,6 +157,8 @@ I18n.register("en", {
   "🛡️‍🩹 Blindage fissuré !": "🛡️‍🩹 Armour cracked!",
 
   // js/systems/combat-engine.js
+  "{x} est encore sonné par ta charge.": "{x} is still stunned by your charge.",
+  "{x} reprend ses esprits.": "{x} comes to its senses.",
   "Énigme : {x} perd le fil de son geste.": "Riddle: {x} loses the thread of its move.",
   "CONTRÉ !": "COUNTERED!",
   "Plus de potion pour cette sortie ({n} max)": "No more potions for this run ({n} max)",
@@ -1961,6 +1963,8 @@ I18n.register("en", {
   "Collectionneur": "Collector",
   "Cœur ardent": "Burning Heart",
   "Mémoire des anciens": "Memory of the Ancients",
+  "Sonné": "Stunned",
+  "Ta charge l'a sonné : il ne frappe pas tant que le compteur tourne.": "Your charge stunned it: it does not strike while the counter runs.",
   "Lame bénie": "Blessed Blade",
   "+10 % de dégâts jusqu'à la fin du run": "+10% damage until the end of the run",
   "Ennemis −10 % de PV jusqu'à la fin du run": "Enemies −10% HP until the end of the run",

@@ -127,6 +127,7 @@ console.log("\n[2] Un round : Attaque → riposte → fin de round");
 game = freshCombat("knight");
 game.enemy.archetype = null; // v3.104.1 (P5) : freshCombat peut tirer un Troll (shielded) ou une Ronce (silenced) ; ce test cible le pattern charge générique
 game.enemy.chargeIn = 99; // pas de télégraphe pendant ce test
+game.enemy.engageIn = 0; // v3.477.0 : Charge du Chevalier passée, l'ennemi riposte
 var eHp0 = game.enemy.hp, hHp0 = game.heroHp;
 ok(g.CombatEngine.heroAction("basic") === true, "heroAction('basic') joue le round");
 ok(game.combatRound.number === 1, "round n°1");
@@ -271,6 +272,7 @@ ok(game.silencedRounds === 0 && g.CombatEngine.heroAction("skill1") === true, "s
 
 console.log("\n[9] Double frappe ennemie (jauge) et condition Grimoire enemyAttackIncoming");
 game = freshCombat("knight"); giveWeapon(); game.enemy.hp = game.enemy.maxHp = 100000; game.heroHp = game.heroMaxHp = 100000; game.enemy.chargeIn = 99;
+game.enemy.engageIn = 0; // v3.477.0 : Charge du Chevalier passée
 game.enemy.stats.celerity = 60; game.enemy.gauge = 0; game.enemy.stats.precision = 0; game.heroDefensePct = 0;
 ok(g.CombatEngine.enemyDoubleStrikeNext() === false, "gauge 0 + 60 < 100 : pas de double frappe");
 var hpS1 = game.heroHp; g.CombatEngine.heroAction("basic"); var normalDmg = hpS1 - game.heroHp;
@@ -319,6 +321,7 @@ ok(game.combatRound.continueAttack === false && game.combatRound.number === n + 
 
 console.log("\n[12] Mort : PV 0, or intact, Campement ; en quête d'aventure aussi (plus de soin gratuit)");
 game = freshCombat("knight"); giveWeapon(); game.enemy.chargeIn = 99; game.enemy.hp = game.enemy.maxHp = 100000;
+game.enemy.engageIn = 0; // v3.477.0 : Charge du Chevalier passée
 game.heroHp = 1; var gold = game.gold;
 g.CombatEngine.heroAction("basic");
 ok(game.heroHp === 0 && game.gold === gold && game.activeTab === "campement" && game.combatRound.continueAttack === false, "terrassé : PV 0, or intact, retour Campement (le message de mort est consommé par la vue Campement)");
@@ -328,7 +331,7 @@ ok(game.adventureQuestRun.active === true && game.enemy._roundReady === true, "q
 game.enemy.chargeIn = 99; game.enemy.hp = game.enemy.maxHp = 100000; game.heroHp = 1;
 g.CombatEngine.heroAction("basic");
 ok(game.heroHp === 0 && game.adventureQuestRun.active === false && game.activeTab === "campement", "mort en quête : PV 0, quête interrompue, Campement");
-game = freshCombat("knight"); game.talents.t_essence_bloom = 2; giveWeapon(); game.enemy.chargeIn = 99; game.enemy.hp = game.enemy.maxHp = 100000; game.heroHp = 1;
+game = freshCombat("knight"); game.talents.t_essence_bloom = 2; giveWeapon(); game.enemy.chargeIn = 99; game.enemy.hp = game.enemy.maxHp = 100000; game.heroHp = 1; game.enemy.engageIn = 0; // v3.477.0
 g.CombatEngine.heroAction("basic");
 ok(game.heroHp === 0, "Sang-froid retiré (v3.327.0, T9) : un ancien identifiant ne relève plus le héros");
 
@@ -419,7 +422,7 @@ ok(game.activeTab === "campement" && !g.SortieManager.isActive() && game.gold ==
 game = freshCombat("knight"); giveWeapon(); game.enemy.chargeIn = 99; game.enemy.hp = 1; gold0 = game.gold;
 g.CombatEngine.heroAction("basic");
 var lostGold = game.sortie.loot.gold;
-game.enemy.chargeIn = 99; game.enemy.hp = game.enemy.maxHp = 100000; game.heroHp = 1;
+game.enemy.chargeIn = 99; game.enemy.hp = game.enemy.maxHp = 100000; game.heroHp = 1; game.enemy.engageIn = 0; // v3.477.0
 g.CombatEngine.heroAction("basic");
 ok(game.heroHp === 0 && !g.SortieManager.isActive() && game.gold === gold0 && game.lastSortieSummary.outcome === "death" && game.lastSortieSummary.lost.gold === lostGold, "mort : sortie close, butin perdu (" + lostGold + " or), bourse intacte");
 // onglet Campement pendant un farm = rentrer
@@ -476,7 +479,7 @@ game = freshCombat("knight"); giveWeapon(); game.dungeonRunsUsed = {}; gold0 = g
 g.DungeonManager.start(1);
 ok(g.SortieManager.isActive() && game.sortie.context === "dungeon", "donjon = sortie 'dungeon'");
 game.enemy.chargeIn = 99; game.enemy.hp = 1; g.CombatEngine.heroAction("basic"); // vague 1 nettoyée
-game.enemy.chargeIn = 99; game.enemy.hp = game.enemy.maxHp = 100000; game.heroHp = 1; g.CombatEngine.heroAction("basic");
+game.enemy.chargeIn = 99; game.enemy.hp = game.enemy.maxHp = 100000; game.heroHp = 1; game.enemy.engageIn = 0; g.CombatEngine.heroAction("basic"); // v3.477.0 : Charge passée
 ok(game.heroHp === 0 && game.dungeonRun.active === false && game.gold === gold0 && game.dungeonBestWave >= 1, "mort en donjon : aucune récompense partielle, meilleure vague conservée");
 game = freshCombat("knight"); giveWeapon(); game.dungeonRunsUsed = {}; gold0 = game.gold; g.DungeonManager.start(1);
 for (var w = 0; w < 5; w++) { game.enemy.chargeIn = 99; game.enemy.hp = 1; g.CombatEngine.heroAction("basic"); }
@@ -905,7 +908,7 @@ ok(g.getEnemyEngageRounds("spider", false) === 0 && g.getEnemyEngageRounds("gobl
 ok(g.getEnemyEngageRounds("slime", false) === 2 && g.getEnemyEngageRounds("wolf", false) === 2 && g.getEnemyEngageRounds("foresttroll", false) === 2, "slime/loup approchent en 2 (v3.206.0), Troll en 2");
 ok(g.getEnemyEngageRounds("foresttroll", true) === 2, "boss : toujours ENGAGE_BOSS_ROUNDS (la table des normaux est ignorée)");
 game = freshCombat("knight");
-ok(Number(game.enemy.engageIn || 0) === 0, "Chevalier (épée) : ennemi au contact direct (engageIn 0)");
+ok(Number(game.enemy.engageIn || 0) === g.KNIGHT_CHARGE_ROUNDS && game.enemy.charged === true, "Chevalier (épée) : ennemi au contact, sonné par la Charge (engageIn " + g.KNIGHT_CHARGE_ROUNDS + ", v3.477.0)");
 game = freshCombat("ranger");
 var engExpected = { slime: 2, wolf: 2, goblin: 0, spider: 0, foresttroll: 2, bramble: 0 }; // v3.206.0 : défaut 1 -> 2
 ok(game.enemy.engageIn === engExpected[game.enemy.id], "Rôdeur : engageIn selon la table (" + game.enemy.id + " -> " + game.enemy.engageIn + ")");
@@ -7185,7 +7188,7 @@ console.log("\n[71b] v3.269.0 (L-3) — groupes d'ennemis : composition, ordre, 
   game = freshCombat("knight"); giveWeapon();
   game.enemy = g.QuestEnemyManager.spawnFor(q, false);
   var engM = game.combat.enemies.map(function (e) { return e.engageIn; });
-  ok(engM[0] === 0 && engM[1] === 0, "héros au contact : personne n'a à approcher");
+  ok(engM[0] === 0 && engM[1] === 1 && game.combat.enemies.every(function (e) { return e.charged; }), "Chevalier : Charge, arrivée échelonnée 0/1 comme à distance (v3.477.0) (" + engM.join("/") + ")");
 
   /* --- Un membre qui tombe ne relance pas le monde --- */
   game = freshCombat("knight"); giveWeapon();
@@ -17834,6 +17837,22 @@ console.log("\n[297] v3.476.0 — Feuille de lancement réorganisée (point 5, a
   ok(h.indexOf("Un campement après la vague 8") >= 0, "Sanctuaire : le campement est annoncé");
   g.closeDungeonSheet();
   D.isStoryTicketFree = free0; SQ.isStepReached = reach; game.dungeonTierCleared = {}; game.dungeonLevelBest = {};
+})();
+
+console.log("\n[298] v3.477.0 — Charge du Chevalier (point 3 du bilan)");
+(function () {
+  game = freshCombat("knight"); giveWeapon();
+  var e = game.enemy;
+  ok(e.charged === true && e.engageIn === 1, "Chevalier : l'ennemi est sonné 1 round");
+  e.chargeIn = 99; e.hp = e.maxHp = 100000; var hp0 = game.heroHp;
+  g.CombatEngine.heroAction("basic");
+  ok(game.heroHp === hp0 && e.engageIn === 0, "round 1 : il ne frappe pas, puis reprend ses esprits");
+  g.CombatEngine.heroAction("basic");
+  ok(game.heroHp < hp0, "round 2 : il riposte");
+  ok(g.CombatForecast.getEngageRounds(e) === 1, "le pronostic compte la Charge (1 round)");
+  ok(g.COMBAT_STATES.stunned && g.COMBAT_STATES.stunned.nom === "Sonné", "état « Sonné » décrit");
+  game = freshCombat("ranger");
+  ok(!game.enemy.charged, "Rôdeur : pas de Charge (l'approche des classes à distance reste)");
 })();
 
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));

@@ -176,7 +176,8 @@ var CombatForecast = {
     if (!enemy || typeof getEnemyEngageRounds !== "function") return 0;
     var heroDef = (window.HEROES_DB && game.heroId) ? HEROES_DB[game.heroId] : null;
     var ranged = !!(heroDef && heroDef.weaponType && heroDef.weaponType !== "sword");
-    return ranged ? Math.max(0, Number(getEnemyEngageRounds(enemy.id, !!enemy.isBoss) || 0)) : 0;
+    if (!ranged) return heroDef && typeof KNIGHT_CHARGE_ROUNDS === "number" ? KNIGHT_CHARGE_ROUNDS : 0; // v3.477.0 : Charge du Chevalier
+    return Math.max(0, Number(getEnemyEngageRounds(enemy.id, !!enemy.isBoss) || 0));
   },
 
   /* Dégâts moyens que l'ennemi inflige par round, défense du héros déduite. */

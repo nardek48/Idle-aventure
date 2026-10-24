@@ -62,6 +62,13 @@ var COMBAT_STATES = {
     hint: "Tes tours les plus sûrs : frappe fort maintenant."
   },
 
+  stunned: { // v3.477.0 : Charge du Chevalier (icône à faire : générique en attendant)
+    famille: "alerte", nom: "Sonné", icon: COMBAT_STATE_ICON + "enemy_stunned.webp",
+    mot: "Sonné",
+    desc: "Ta charge l'a sonné : il ne frappe pas tant que le compteur tourne.",
+    hint: "Tes tours les plus sûrs : frappe fort maintenant."
+  },
+
   /* --- Porté par l'ennemi --- */
   enraged: {
     famille: "enemy", nom: "Enragé", icon: COMBAT_STATE_ICON + "rage.webp",

@@ -49,6 +49,9 @@ var FIXED_ENEMY_ARCHETYPES = {
 // immédiatement (l'ennemi attaque lui-même à distance) ; le Chevalier (épée) est toujours au contact direct.
 var ENGAGE_DEFAULT_ROUNDS = 2;
 var ENGAGE_BOSS_ROUNDS = 2;
+/* v3.477.0 (point 3 du bilan, accord Seb) : la Charge du Chevalier. Au corps à corps, il n'a pas les rounds
+   d'approche des classes à distance : l'ennemi reste sonné ce nombre de rounds (banc : Cité 47 -> 67 %, campagne 25 -> 22 h). */
+var KNIGHT_CHARGE_ROUNDS = 1;
 var ENEMY_ENGAGE_ROUNDS = {
   spider: 0,      // cracheuse
   goblin: 0,      // frondeur
@@ -159,6 +162,7 @@ window.getHeroSilenceRounds = getHeroSilenceRounds;
 window.FIXED_ENEMY_ARCHETYPES = FIXED_ENEMY_ARCHETYPES;
 window.ENGAGE_DEFAULT_ROUNDS = ENGAGE_DEFAULT_ROUNDS;
 window.ENGAGE_BOSS_ROUNDS = ENGAGE_BOSS_ROUNDS;
+window.KNIGHT_CHARGE_ROUNDS = KNIGHT_CHARGE_ROUNDS;
 window.ENEMY_ENGAGE_ROUNDS = ENEMY_ENGAGE_ROUNDS;
 window.getEnemyEngageRounds = getEnemyEngageRounds;
 window.decideEnemyArchetype = decideEnemyArchetype;

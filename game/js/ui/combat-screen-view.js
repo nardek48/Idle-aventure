@@ -138,7 +138,7 @@
     if (e.asleep) push("asleep");   // v3.451.0 (Crypte) : il dort
     if (e.callArmed) push("calling"); // v3.454.0 (Crypte) : l'appel du Nécromancien
     if (e.chainArmed) push("chaining"); // v3.456.0 (Crypte) : il lève une chaîne
-    if (num(e.engageIn) > 0) push("approaching", num(e.engageIn));
+    if (num(e.engageIn) > 0) push(e.charged ? "stunned" : "approaching", num(e.engageIn)); // v3.477.0 : Charge du Chevalier
     if (e.chargeTelegraphed) push("charge");
     if (e.silenceTelegraphed) push("silence");
     if (e.shieldTelegraphed) push("shieldIncoming");
@@ -181,7 +181,7 @@
     var chips = "", list = enemies();
     list.forEach(function (e) {
       statesOf(e, e === t).forEach(function (s) {
-        if (s.def.famille !== "alerte" || s.id === "approaching") return;
+        if (s.def.famille !== "alerte" || s.id === "approaching" || s.id === "stunned") return;
         var heal = s.id === "healIncoming", rise = s.id === "rising";
         chips += '<button type="button" class="cbx-chip is-urgent' + (heal ? ' is-heal' : '') + (rise ? ' is-rise' : '') + '" onclick="openCombatStatesSheet()">' + ico(stIcon(s))
           + (list.length > 1 && e !== t ? esc(_td(e.name || "")) + ' · ' : '') + esc(_td(s.def.mot || s.def.nom))
@@ -259,7 +259,7 @@
     if (e.dot && num(e.dot.rounds) > 0) h += '<button type="button" class="cbx-foe-dot" onclick="openCombatStatesSheet()">' + ico(IC.st + "arcane_burn.webp") + '<b>' + num(e.dot.rounds) + '</b></button>';
     var marks = "";
     if (e.asleep) marks += '<button type="button" class="cbx-dist-badge is-asleep" onclick="openCombatStatesSheet()">' + ico(CBX_STATES.asleep.icon) + '<b>' + num(e.wakeIn) + '</b></button>'; // v3.451.0 : réveil seul dans N rounds
-    if (num(e.engageIn) > 0) marks += '<button type="button" class="cbx-dist-badge" onclick="openCombatStatesSheet()">' + ico(IC.st + "enemy_approaching.webp") + '<b>' + num(e.engageIn) + '</b></button>';
+    if (num(e.engageIn) > 0) marks += '<button type="button" class="cbx-dist-badge" onclick="openCombatStatesSheet()">' + ico(IC.st + (e.charged ? "enemy_stunned.webp" : "enemy_approaching.webp")) + '<b>' + num(e.engageIn) + '</b></button>';
     if (isRanged(e)) marks += '<button type="button" class="cbx-dist-badge is-ranged" onclick="openCombatStatesSheet()">' + ico(CBX_STATES.ranged.icon) + '<span>' + _t("à distance") + '</span></button>';
     if (marks) h += '<div class="cbx-foe-marks">' + marks + '</div>';
     return h;
@@ -615,7 +615,7 @@
   function stRowHTML(st, who, alert) {
     var desc = (st.suppressed && st.def.descSuppressed) ? st.def.descSuppressed : st.def.desc;
     var fam = st.def.famille;
-    var n = st.n ? (st.n + ((fam === "mine" || fam === "onme" || st.id === "approaching") ? " " + _t("rd", "round abrégé") : "")) : "";
+    var n = st.n ? (st.n + ((fam === "mine" || fam === "onme" || st.id === "approaching" || st.id === "stunned") ? " " + _t("rd", "round abrégé") : "")) : "";
     if (st.id === "corrupted" && st.n) n = "×" + st.n;
     return '<div class="st-row' + (alert ? ' is-alert' : '') + '">' + ico(stIcon(st), "st-row-ico")
       + '<div class="st-row-body"><div class="st-row-name">' + esc(_td(st.def.nom)) + (who ? ' <span class="cbx-st-who">· ' + esc(who) + '</span>' : '') + '</div>'
