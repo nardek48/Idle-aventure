@@ -24,8 +24,8 @@ var DUNGEON_CONFIG = {
      composés. Mesuré au lot 0 (robot --faille) : Tanière tenue au niveau ~23, Crypte ~5. */
   levelHpPct: 0.15,
   levelPowerPct: 0.10,
-  /* Au-delà du plafond (niveau du dernier palier débloqué) : or de fin et Éclats +10 % par niveau
-     (N-I, N-K) ; plancher du tirage des objets +5 % de la fourchette par niveau, jusqu'à 80 % (N-J). */
+  /* Au-delà du plafond (niveau du dernier palier débloqué) : or et Éclats +10 % par niveau, en cumul depuis
+     v3.473.1 (N-I, N-K) ; plancher du tirage des objets +5 % de la fourchette par niveau, jusqu'à 80 % (N-J). */
   beyondGoldPct: 0.10,
   beyondShardPct: 0.10,
   beyondFloorPct: 0.05,
@@ -65,8 +65,9 @@ var DUNGEON_CONFIG = {
 
    worldRequired      index du monde à avoir atteint (plus haut jamais atteint, worldsEverReached)
    worldPower         échelle des vagues et pool d'ennemis (mondes 0..worldPower), inchangé
-   difficultyMult     inchangé pour la Forêt ; les mondes 2 à 6 seront rebasés sur l'échelle
-                      du monde quand leur monde sera travaillé (décision Seb 15/09/2026, rapport D-0 §5)
+   difficultyMult     réglé au banc pour chaque donjon ouvert (Tanière à l'Ossuaire), sur les cibles de
+                      l'Histoire ; l'écart entre mondes est voulu (point 6 du bilan, clos le 24/10/2026).
+                      Volcan et Sommet, fermés : à régler quand leur monde ouvrira
    eliteWaves         vague -> id de ELITE_DB ; null tant que le monde n'a pas ses élites
    boss               identité du boss final : baseId dans BOSS_DB, nom propre, trait signature
                       (archetype lu tel quel par combat-engine.js), statMult relatif, image optionnelle

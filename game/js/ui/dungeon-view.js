@@ -170,7 +170,7 @@ function buildDungeonLevelHTML(d) {
   if (L > 1) h += '<span class="is-dim">' + _t("Monstres : PV +{a} %, dégâts +{b} %", { a: pct(m.hp - 1), b: pct(m.power - 1) }) + '</span>';
   if (beyond > 0) {
     h += '<span class="is-aether">✦ ' + _t("Touché par l'Aether : objets tirés au-dessus de {f} %", { f: pct(D.getLevelFloor(d, L)) }) + '</span>';
-    h += '<span>' + _t("Or et Éclats +{g} %", { g: pct(beyond * DUNGEON_CONFIG.beyondGoldPct) }) + '</span>';
+    h += '<span>' + _t("Or et Éclats +{g} %", { g: pct(DungeonManager.getBeyondMult(DUNGEON_CONFIG.beyondGoldPct, beyond) - 1) }) + '</span>'; // v3.473.1 : en cumul
   } else {
     var next = (d.levelSteps || []).filter(function (st) { return st.level > L; })[0];
     if (next) {

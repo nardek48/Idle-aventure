@@ -148,12 +148,17 @@ var DungeonManager = {
     return Math.min(DUNGEON_CONFIG.beyondFloorMax || 0, beyond * (DUNGEON_CONFIG.beyondFloorPct || 0));
   },
 
-  // Or du run (vagues et fin) : +10 % par niveau au-delà du plafond (N-I), ÷ 4 en mode libre (N-H)
+  // v3.473.1 (point 7, choix Seb) : bonus au-delà du plafond EN CUMUL, comme la difficulté (1,10^n au lieu de 1 + 0,10 × n)
+  getBeyondMult: function (pct, beyond) {
+    return Math.pow(1 + (Number(pct) || 0), Math.max(0, Math.floor(Number(beyond) || 0)));
+  },
+
+  // Or du run (vagues et fin) : +10 % par niveau au-delà du plafond, en cumul (N-I), ÷ 4 en mode libre (N-H)
   getRunGoldMult: function () {
     var run = game.dungeonRun;
     if (!run || !run.active) return 1;
     var beyond = this.getLevelBeyond(this.getById(run.dungeonId), this.getRunLevel());
-    return (1 + beyond * (DUNGEON_CONFIG.beyondGoldPct || 0)) * (run.free ? (DUNGEON_CONFIG.freeGoldMult || 1) : 1);
+    return this.getBeyondMult(DUNGEON_CONFIG.beyondGoldPct, beyond) * (run.free ? (DUNGEON_CONFIG.freeGoldMult || 1) : 1);
   },
 
   // Butin du run en cours (lu par getDungeonDropContext) ; null hors run
@@ -895,7 +900,7 @@ var DungeonManager = {
 
     // v3.461.0 (N-K) : Éclats du run +10 % par niveau au-delà du plafond, avant l'Écho de la faille
     var levelShards = Math.floor(Number(game.dungeonRun.shardsEarned || 0)
-      * (beyond * (DUNGEON_CONFIG.beyondShardPct || 0) + this.getShardEffect("shardBonusPct"))); // v3.463.0 : + Résonance
+      * (this.getBeyondMult(DUNGEON_CONFIG.beyondShardPct, beyond) - 1 + this.getShardEffect("shardBonusPct"))); // v3.463.0 : + Résonance ; v3.473.1 : en cumul
     if (levelShards > 0) {
       game.dungeonShards = Number(game.dungeonShards || 0) + levelShards;
       game.dungeonRun.shardsEarned = Number(game.dungeonRun.shardsEarned || 0) + levelShards;

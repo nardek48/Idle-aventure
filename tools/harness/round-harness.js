@@ -16755,7 +16755,7 @@ console.log("\n[273] v3.461.0 — Au-delà du plafond : or, Éclats, objets « T
   game.dungeonRun = { active: false, wave: 0, dungeonId: 1, marks: [] };
   var html = g.buildItemOriginHTML({ slot: "weapon", worldIndex: 3, aether: 7 });
   ok(/Touché par l(&#39;|&#039;|')Aether · niveau 7/.test(html) && g.buildItemOriginHTML({ slot: "weapon", worldIndex: 3 }).indexOf("Aether") < 0, "fiche : « Touché par l'Aether · niveau 7 », rien sur un objet ordinaire");
-  // or et Éclats de fin : Crypte 5 = ×1,4 face à la Crypte 1
+  // or et Éclats de fin : Crypte 5 = ×1,1^4 (en cumul depuis v3.473.1) face à la Crypte 1
   var pv = { check: g.ProvisionsManager.check, consume: g.ProvisionsManager.consume };
   run("ProvisionsManager.check = function () { return null; }; ProvisionsManager.consume = function () {};");
   var fin = function (L) {
@@ -16765,8 +16765,8 @@ console.log("\n[273] v3.461.0 — Au-delà du plafond : or, Éclats, objets « T
     return { or: game.gold - or0, ec: game.dungeonShards - ec0 };
   };
   var r1 = fin(1), r5 = fin(5);
-  ok(r1.or > 0 && Math.abs(r5.or / r1.or - 1.4) < 0.01, "or de fin : Crypte 5 = ×1,4 (" + r1.or + " → " + r5.or + ")");
-  ok(r5.ec - r1.ec === Math.floor((22 + r1.ec) * 0.4), "Éclats du run : +40 % au niveau 5 (" + r1.ec + " → " + r5.ec + ")");
+  ok(r1.or > 0 && Math.abs(r5.or / r1.or - Math.pow(1.1, 4)) < 0.01, "or de fin : Crypte 5 = ×1,1^4 = ×1,46 (" + r1.or + " → " + r5.or + ")");
+  ok(r5.ec - r1.ec === Math.floor((22 + r1.ec) * (Math.pow(1.1, 4) - 1)), "Éclats du run : +46 % au niveau 5, en cumul (" + r1.ec + " → " + r5.ec + ")");
   SQ.isStepReached = reach; g.ProvisionsManager.check = pv.check; g.ProvisionsManager.consume = pv.consume;
 })();
 
@@ -16816,7 +16816,7 @@ console.log("\n[275] v3.462.0 — Mode libre (N6) et or des vagues au niveau");
   game.dungeonRun.level = 5; var v5 = [].concat(D.buildWaveEnemy(7))[0].goldReward;
   Math.random = r;
   ok(Math.abs(vg / vc - 0.25) < 0.02, "or d'un monstre de vague : ÷ 4 en libre (" + vc + " → " + vg + ")");
-  ok(Math.abs(v5 / vc - 1.4) < 0.02, "et ×1,4 à la Crypte 5 (" + vc + " → " + v5 + ")");
+  ok(Math.abs(v5 / vc - Math.pow(1.1, 4)) < 0.02, "et ×1,1^4 = ×1,46 à la Crypte 5, en cumul (" + vc + " → " + v5 + ")");
   game.dungeonRun.free = true; game.dungeonRun.level = 1;
   // fin de run libre : or ÷ 4, Éclats ÷ 2, pas de Cire de sépulcre
   var fin = function (free) {
@@ -16895,7 +16895,7 @@ console.log("\n[277] v3.464.0 — Feuille de lancement : mode et niveau (atelier
   g.openDungeonSheet(4);
   ok(run("pendingDungeonLevel") === 4 && run("pendingDungeonFree") === false, "la feuille s'ouvre au meilleur niveau tenu (4), en sortie du jour");
   var h = g.buildDungeonSheetHTML(4);
-  ok(/class="dlvl"/.test(h) && /Touché par l'Aether : objets tirés au-dessus de 15 %/.test(h) && /Or et Éclats \+30 %/.test(h), "Ossuaire 4 : bloc du niveau, plancher 15 %, or et Éclats +30 %");
+  ok(/class="dlvl"/.test(h) && /Touché par l'Aether : objets tirés au-dessus de 15 %/.test(h) && /Or et Éclats \+33 %/.test(h), "Ossuaire 4 : bloc du niveau, plancher 15 %, or et Éclats +33 % (1,1^3, en cumul)");
   g.stepDungeonLevel(5);
   ok(run("pendingDungeonLevel") === 5, "les flèches s'arrêtent au meilleur + 1 (5)");
   g.setDungeonMode(true); h = g.buildDungeonSheetHTML(4);
