@@ -1033,12 +1033,12 @@ var CombatEngine = {
 
   telegraphPattern: function (e, kind) {
     var info = {
-      charge: { flag: "chargeTelegraphed", cond: "chargeIncoming", log: "⚠️ " + _t("{x} prépare une charge !", { x: _td(e.name) }), toast: "⚠️ " + _t("Charge au prochain tour !") },
-      silence: { flag: "silenceTelegraphed", cond: "enemySilenceIncoming", log: "🔇 " + _t("{x} se prépare à te réduire au silence !", { x: _td(e.name) }), toast: "🔇 " + _t("Silence au prochain tour !") },
-      shield: { flag: "shieldTelegraphed", cond: "shieldIncoming", log: "🛡️ " + _t("{x} invoque un bouclier !", { x: _td(e.name) }), toast: "🛡️ " + _t("Bouclier au prochain tour !") },
-      heal: { flag: "healTelegraphed", cond: "healIncoming", log: "💚 " + _t("{x} se prépare à se soigner !", { x: _td(e.name) }), toast: "💚 " + _t("Soin au prochain tour !") },
+      charge: { flag: "chargeTelegraphed", cond: "chargeIncoming", log: "⚠️ " + _t("{x} prépare une charge !", { x: _td(e.name) }) },
+      silence: { flag: "silenceTelegraphed", cond: "enemySilenceIncoming", log: "🔇 " + _t("{x} se prépare à te réduire au silence !", { x: _td(e.name) }) },
+      shield: { flag: "shieldTelegraphed", cond: "shieldIncoming", log: "🛡️ " + _t("{x} invoque un bouclier !", { x: _td(e.name) }) },
+      heal: { flag: "healTelegraphed", cond: "healIncoming", log: "💚 " + _t("{x} se prépare à se soigner !", { x: _td(e.name) }) },
       // v3.204.0 (E4) : exaltation d'élite — son archétype va compter double.
-      surge: { flag: "surgeTelegraphed", cond: "eliteSurgeIncoming", log: "🔥 " + _t("{x} s'exalte !", { x: _td(e.name) }), toast: "🔥 " + _t("Exaltation au prochain tour !") }
+      surge: { flag: "surgeTelegraphed", cond: "eliteSurgeIncoming", log: "🔥 " + _t("{x} s'exalte !", { x: _td(e.name) }) }
     }[kind];
     if (!info) return;
     // v3.470.0 : Énigme (unique du Sphinx) — le premier télégraphe du combat échoue, hors exaltation
@@ -1046,8 +1046,7 @@ var CombatEngine = {
     e[info.flag] = true;
     // v3.230.0 : Clairvoyance — un round de retenue, l'impact reste à sa date.
     if (this.hasPower("leg_clairvoyance")) e.patternHoldRounds = 1;
-    addLog(info.log, "event");
-    showToast(info.toast, 1200);
+    addLog(info.log, "event"); // v3.470.1 (accord Seb) : plus de toast, le bandeau au-dessus de l'ennemi le dit déjà
     if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
     if (window.CombatReportManager) {
       getConfiguredCounterSlotsForCondition(info.cond).forEach(function (s) {

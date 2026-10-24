@@ -17595,6 +17595,17 @@ console.log("\n[289] v3.470.0 — Donjons : un unique par boss, à pouvoir signa
   SQ.isStepReached = reach; g.ProvisionsManager.check = pv.check; g.ProvisionsManager.consume = pv.consume;
 })();
 
+console.log("\n[290] v3.470.1 — Télégraphes : plus de toast, le bandeau suffit (retour Seb)");
+(function () {
+  game = freshCombat("knight");
+  var toast = g.showToast, n = 0, e = { name: "Cible", hp: 100, maxHp: 100, isBoss: true, stats: { power: 10 } };
+  g.CombatActors.setEnemies([e]); game.enemy = e; g.CombatEngine.prepareEnemy(e);
+  g.showToast = function () { n++; };
+  try { ["charge", "silence", "shield", "heal", "surge"].forEach(function (k) { g.CombatEngine.telegraphPattern(e, k); }); }
+  finally { g.showToast = toast; }
+  ok(n === 0 && e.chargeTelegraphed && e.healTelegraphed && e.surgeTelegraphed, "les cinq télégraphes se posent sans toast");
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);
