@@ -17253,7 +17253,7 @@ console.log("\n[283] v3.469.0 — Petites Aventures : condition du run (PG-B1a �
     r = go("forest", "brouillard"); combatAt(r); var ruB = P.combatPreview().ruse.bonus;
     r = go("forest", "pleine_lune"); var cL = combatAt(r), dmL = P._dmgMult(r, cL, "tenir");
     ok(ruB === ruC + 1, "brouillard : Ruser gagne un cran");
-    ok(Math.abs(dmL / dmC - 1.15) < 1e-9, "pleine lune : +15 % de dégâts reçus");
+    ok(Math.abs(dmL / dmC - 1.08) < 1e-9, "pleine lune : +8 % de dégâts reçus (v3.469.1)");
     r = go("desert", "fraiche"); var f1 = combatAt(r), p1 = f1.pack; var f2 = r.nodes[rowKey(r, 2)]; f2.type = "combat"; f2.done = false; r.at = f2.key; P._prepareNode(r, f2);
     ok(f1.condExtra && p1 === g.PA2_ACTS[1].pack + 1 && !f2.condExtra && f2.pack === g.PA2_ACTS[1].pack, "nuit fraîche : le premier combat de l'acte a un ennemi de plus, pas le suivant");
     // Sources, marche
@@ -17262,6 +17262,7 @@ console.log("\n[283] v3.469.0 — Petites Aventures : condition du run (PG-B1a �
     function stepCost(world, cond) { var r = go(world, cond); r.cuts = {}; r.traps = {}; var b = r.breath; P.moveTo(P.openMoves()[0]); return b - r.breath; }
     var base = g.PA2_WORLD_RULES.desert.stepBreath;
     ok(stepCost("desert", "canicule") === base + 2 && stepCost("desert", "fraiche") === base - 2, "canicule : +2 Souffle par pas ; nuit fraîche : −2");
+    ok(stepCost("crypt", "courants") === g.PA2_WORLD_RULES.crypt.stepBreath + 1, "courants d'air : +1 Souffle par pas (v3.469.1)");
     // Coupures et pièges en plus
     g.__traps = true;
     var cutsC = 0, cutsO = 0, maxT = 0, trap2 = false, alC = 0, alG = 0, totC = 0, totG = 0;

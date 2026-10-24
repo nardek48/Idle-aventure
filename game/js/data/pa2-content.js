@@ -257,7 +257,7 @@ var PA2_CONDITIONS = {
     braconniers: { name: "Nuit des braconniers", kicker: "nuit des braconniers", line: "Des collets neufs aux lisières. Quelqu'un chasse ce soir, et il laisse des choses derrière lui.",
       pro: "Trouvailles : une relique au choix parmi deux", con: "Un piège de plus par acte", tip: "trousse", fx: { relicDraw: 2, trapsPerAct: 1 } },
     pleine_lune: { name: "Pleine lune", kicker: "nuit de pleine lune", line: "La lune est pleine. On voit loin. Les bêtes aussi, et elles sont nerveuses.",
-      pro: "Une rangée de vue en plus", con: "Combats : +15 % de dégâts reçus", tip: "armure", fx: { sight: 1, combatDmg: 1.15 } }
+      pro: "Une rangée de vue en plus", con: "Combats : +8 % de dégâts reçus", tip: "armure", fx: { sight: 1, combatDmg: 1.08 } } // v3.469.1 : 15 -> 8 % (banc)
   },
   desert: {
     vent: { name: "Vent de sable", kicker: "nuit de vent de sable", line: "Le vent soulève le sable et découvre ce qu'il cachait. On voit à peine ses pieds.",
@@ -285,7 +285,7 @@ var PA2_CONDITIONS = {
     meches: { name: "Mèches humides", kicker: "nuit humide", line: "L'eau suinte de partout. Les mèches prennent mal, mais on ne manquera pas d'eau.",
       pro: "L'eau qui suinte rend le double", con: "La Lanterne brûle 2 pas de moins", tip: "torche", fx: { sourceMult: 2, lanternSteps: -2 } },
     courants: { name: "Courants d'air", kicker: "nuit des courants d'air", line: "Un courant d'air froid traverse les couloirs. Il fait bouger les fils tendus, et il fatigue.",
-      pro: "Les pièges cachés se voient sur les sentiers que tu peux prendre", con: "La marche coûte 2 Souffle de plus par pas", tip: "gourde", fx: { trapsNear: true, stepBreath: 2 } },
+      pro: "Les pièges cachés se voient sur les sentiers que tu peux prendre", con: "La marche coûte 1 Souffle de plus par pas", tip: "gourde", fx: { trapsNear: true, stepBreath: 1 } }, // v3.469.1 : 2 -> 1 (banc)
     veillee: { name: "Veillée", kicker: "nuit de veillée", line: "Quelqu'un veille les morts cette nuit. Les coupes sont pleines, et chaque cloche est prête à sonner.",
       pro: "Les alcôves sont gratuites", con: "Un piège de plus par acte, et plus souvent l'Alarme", tip: "trousse", fx: { altarFree: true, trapsPerAct: 1, alarmWeight: 2 } }
   }
