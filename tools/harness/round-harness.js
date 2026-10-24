@@ -17646,6 +17646,19 @@ console.log("\n[291] v3.471.0 — Donjons : vagues de groupe (option 1)");
   ok(C.groupWave[2].hp > 0 && C.groupWave[3].hp > 0 && C.groupWave[3].hp < C.groupWave[2].hp, "réglages groupWave par taille");
 })();
 
+console.log("\n[292] v3.471.1 — Gueule du volcan fermée tant que la Montagne n'est pas prête");
+(function () {
+  game = freshCombat("knight");
+  var D = g.DungeonManager;
+  game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true, 4: true, 5: true };
+  game.dungeonTierCleared = { 1: true, 2: true, 3: true, 4: true };
+  ok(D.getById(5).locked === true && D.getLockReason(5) === "data" && !D.isUnlocked(5), "monde 4 atteint, Ossuaire fini : la Gueule du volcan reste fermée");
+  ok(D.getById(6).locked === true && !D.isUnlocked(6), "le Sommet interdit aussi");
+  game.heroHp = game.heroMaxHp; game.dungeonRunsUsed = {};
+  D.start(5, []);
+  ok(!game.dungeonRun.active, "on ne peut pas y entrer");
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

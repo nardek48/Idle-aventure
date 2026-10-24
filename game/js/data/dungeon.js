@@ -283,7 +283,9 @@ var DUNGEONS = [
     story: "Le seuil du dernier palier. Une puissance oubliée sommeille dans l'obscurité — et elle sait déjà que tu es arrivé.",
     enemyPool: null, eliteWaves: null,
     boss: { baseId: "ancientdragon", name: "Wyrm de cendres", archetype: "enraged", statMult: { endurance: 1, power: 1 }, image: null },
-    locked: false
+    /* v3.471.1 (bilan des donjons, point 8) : fermé tant que la Montagne n'a ni pool, ni élites, ni boss calibré,
+       ni étape d'Histoire ; sinon il s'ouvrait seul à l'arrivée au monde 4. */
+    locked: true, lockedHint: "Pas encore disponible"
   },
   {
     id: 6, key: "tower",
