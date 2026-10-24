@@ -1062,7 +1062,9 @@ var Pa2Run = {
     var e = guard ? this._spawn(run, guard.foe, false) : this._spawn(run, boss ? null : n.foeId, boss);
     if (!e) return null;
     // Le gardien a ses propres multiplicateurs : régler les actes ne le touche pas.
-    var mult = (guard ? 1 : PA2_ACTS[boss ? 3 : n.act].foeMult * this.tune(run, "foeMult") * Number(n.foeMult || 1)) * this.ring(run).foeMult * Number(run.band.foeScale || 1);
+    var rf = this.ring(run).foeMult; // v3.469.6 (Périple, choix Seb) : le gardien ne prend que la moitié du renfort de l'anneau
+    if (guard) rf = 1 + (rf - 1) * Number(PA2_RULES.guardRingShare != null ? PA2_RULES.guardRingShare : 1);
+    var mult = (guard ? 1 : PA2_ACTS[boss ? 3 : n.act].foeMult * this.tune(run, "foeMult") * Number(n.foeMult || 1)) * rf * Number(run.band.foeScale || 1);
     e = JSON.parse(JSON.stringify(e));
     var hs = this.heroScale(run); // v3.423.0 (A)
     e.maxHp = Math.max(1, Math.round(Number(e.maxHp || 1) * mult * (guard ? guard.hpMult : 1) * hs.hp));

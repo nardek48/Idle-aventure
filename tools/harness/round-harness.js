@@ -17515,6 +17515,24 @@ console.log("\n[287] v3.469.5 — Petites Aventures : trois reliques par monde (
   }
 })();
 
+console.log("\n[288] v3.469.6 — Petites Aventures : le gardien ne prend que la moitié du renfort de l'anneau (Périple)");
+(function () {
+  var S = g.SceneRunManager, P = g.Pa2Run;
+  game = freshCombat("knight"); giveWeapon(); run("game.enemy = null; game.combat = null;");
+  S.ensureDefaults(); game.explorationProgression.petiteAventure = { spent: 0, since: null }; game.heroLevel = 12; game.sceneRun = null;
+  if (g.SortieManager.isActive()) g.SortieManager.end("return");
+  try {
+    S.startRun("petite_aventure_desert"); var r = game.sceneRun; P.depart();
+    var bk = Object.keys(r.nodes).filter(function (k) { return r.nodes[k].type === "boss"; })[0], bn = r.nodes[bk];
+    var cn = { key: "x", type: "combat", act: 3, row: 8, foeId: g.PA2_FOES.desert[3][0], pack: 1 };
+    r.ring = "sentier"; var g1 = P._foe(r, bn).maxHp, c1 = P._foe(r, cn).maxHp;
+    r.ring = "periple"; var g3 = P._foe(r, bn).maxHp, c3 = P._foe(r, cn).maxHp;
+    r.ring = "chemin"; var g2 = P._foe(r, bn).maxHp;
+    ok(Math.abs(g3 / g1 - 1.375) < 0.01 && Math.abs(g2 / g1 - 1.15) < 0.01, "gardien : ×1,15 au Chemin, ×1,375 au Périple (" + (g2 / g1).toFixed(3) + ", " + (g3 / g1).toFixed(3) + ")");
+    ok(Math.abs(c3 / c1 - g.PA2_RINGS.periple.foeMult) < 0.01, "les autres combats gardent le renfort entier (×1,75)");
+  } finally { game.sceneRun = null; if (g.SortieManager.isActive()) g.SortieManager.end("return"); }
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

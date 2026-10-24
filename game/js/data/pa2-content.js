@@ -251,6 +251,7 @@ var PA2_RULES = {
   fioleHpPct: 0.40,
   revengeMult: 1.3, enrageMult: 1.4, torchDmgMult: 1.15, armorDmgMult: 0.65, armorBreath: 8,
   dentMult: 0.75, flecheMult: 0.85, boisChargeMult: 0.85, epeeTenirMult: 0.8, ecailleStep: 1, natteRestMult: 2, ciergeSteps: 1, // v3.469.4
+  guardRingShare: 0.5, // v3.469.6 : gardien au Chemin ×1,15, au Périple ×1,375 (au lieu de ×1,30 et ×1,75), banc
   perleStep: 1, duneLoot: 1.25, duneSource: 0.5, marteauDmg: 1.15, mecheSteps: 3, cendreHeal: 2, // v3.469.5 : reliques des mondes
   surprisedMult: 1.2, heavyStep: 4, ronceStep: 3, ronceLoot: 1.3, braiseHealPct: 0.03,
   carteLoot: 0.8, fioleLoot: 0.5, damageSpread: 0.15, maxRounds: 60,
