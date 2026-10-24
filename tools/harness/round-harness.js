@@ -12133,7 +12133,8 @@ console.log("\n[159] v3.382.0 — Petites Aventures v2 (PA2-1) : écrans (prépa
     // v3.454.0 : icônes demandées à Seb, affichées en icône générique en attendant (règle « icône manquante »)
     var aFournir = ["images/Icons/scene/items/item_lockpicks.webp", // v3.467.0 : la Trousse, à faire
       "images/Icons/scene/items/item_worm_scale.webp", "images/Icons/scene/items/item_caravan_mat.webp", "images/Icons/scene/items/item_guardian_stone.webp", // v3.469.4 : coffre des autres mondes
-      "images/Icons/scene/items/item_well_stone.webp", "images/Icons/scene/items/item_sleeper_sword.webp", "images/Icons/scene/items/item_chapel_candle.webp"];
+      "images/Icons/scene/items/item_well_stone.webp", "images/Icons/scene/items/item_sleeper_sword.webp", "images/Icons/scene/items/item_chapel_candle.webp"]
+      .concat(["perle", "scarabee", "dune", "clou", "fil", "marteau", "meche", "cendre", "cloche"].map(function (id) { return "images/Icons/scene/relics/relic_" + id + ".webp"; })); // v3.469.5 : reliques des mondes
     var absent = dataIcons.filter(function (s) { return !fs.existsSync(path.join(ROOT, s)) && aFournir.indexOf(s) < 0; });
     ok(absent.length === 0, "icônes du mode v2 : toutes présentes, hors celles à fournir (" + dataIcons.length + ")" + (absent.length ? " — manquent " + absent.join(", ") : ""));
   } catch (e) {
@@ -17461,6 +17462,54 @@ console.log("\n[286] v3.469.4 — Petites Aventures : coffre d'expédition au D�
     ok(Math.abs(P._dmgMult(r, cC, "tenir") / mC - 0.8) < 1e-9 && P._dmgMult(r, cC, "charger") === mCh, "Épée du gisant : −20 % de dégâts en Tenant, pas en Chargeant");
     r = go("crypt", ["cierge"]); var res0 = {}; P._applyTrapFx(r, "venin", res0); P._applyTrapFx(r, "entrave", res0);
     ok(r.fx.venin === 1 && r.fx.entrave === 1, "Cierge : les effets des pièges ne durent qu'un pas");
+  } finally {
+    game.sceneRun = null; if (g.SortieManager.isActive()) g.SortieManager.end("return");
+  }
+})();
+
+console.log("\n[287] v3.469.5 — Petites Aventures : trois reliques par monde (PA-R2)");
+(function () {
+  var S = g.SceneRunManager, P = g.Pa2Run, R = g.PA2_RULES, RL = g.PA2_RELICS;
+  var TPL = { forest: "petite_aventure_foret", desert: "petite_aventure_desert", ruins: "petite_aventure_ruines", crypt: "petite_aventure_crypte" };
+  function prep() {
+    game = freshCombat("knight"); giveWeapon(); run("game.enemy = null; game.combat = null;");
+    S.ensureDefaults(); game.explorationProgression.petiteAventure = { spent: 0, since: null };
+    game.resources.petite_ration = 5; game.heroLevel = 12; game.heroHp = game.heroMaxHp; game.sceneRun = null;
+    if (g.SortieManager.isActive()) g.SortieManager.end("return");
+  }
+  function go(world, relics, items) { prep(); S.startRun(TPL[world]); var r = game.sceneRun; r.hookId = null; (items || []).forEach(function (id) { P.addItem(id); }); P.depart(); r.cuts = {}; r.traps = {}; r.relics = (relics || []).slice(); return r; }
+  try {
+    var byW = {}; Object.keys(RL).forEach(function (id) { if (RL[id].world) (byW[RL[id].world] = byW[RL[id].world] || []).push(RL[id].rar); });
+    ok(["desert", "ruins", "crypt"].every(function (w) { return (byW[w] || []).sort().join() === "com,leg,rare"; }), "trois reliques par monde : une commune, une rare, une légendaire");
+    var okW = true;
+    Object.keys(TPL).forEach(function (w) { var r = go(w); for (var k = 0; k < 60; k++) P.drawRelics(r, 3).forEach(function (id) { if (RL[id].world && RL[id].world !== w) okW = false; }); });
+    var seenD = {}; var rD = go("desert"); for (var k = 0; k < 300; k++) P.drawRelics(rD, 3).forEach(function (id) { seenD[id] = 1; });
+    ok(okW && seenD.perle && seenD.scarabee && seenD.dune, "une relique de monde ne se tire que dans son monde (et le Désert tire les siennes)");
+    var r = go("desert"), b = r.breath; P.moveTo(P.openMoves()[0]); var st0 = b - r.breath;
+    r = go("desert", ["perle"]); b = r.breath; P.moveTo(P.openMoves()[0]);
+    ok(b - r.breath === st0 - R.perleStep, "Perle de rosée : un Souffle de moins par pas");
+    r = go("desert"); var rb0 = P.ruseBonus(r); r = go("desert", ["scarabee"]); var rb1 = P.ruseBonus(r); r = go("crypt", ["cloche"]); var rb2 = P.ruseBonus(r);
+    ok(rb1 === rb0 + 1 && rb2 === rb0 + 2, "Œil de scarabée : Ruser +1 ; Cloche muette : +2");
+    r = go("desert"); var s0 = P.sourceAmount(r); r = go("desert", ["dune"]);
+    ok(P.sourceAmount(r) === Math.round(s0 * R.duneSource), "Cœur de dune : les points d'eau rendent la moitié");
+    r.status = "pa2-node"; P.finish("home");
+    ok(Math.abs(r.end.mult - R.duneLoot) < 1e-9, "Cœur de dune : butin final ×1,25");
+    r = go("ruins"); var tk = r.at + ">" + P.openMoves()[0]; r.traps[tk] = { fx: "venin", hidden: false, seen: true, done: false }; P.moveTo(tk.split(">")[1]); var d0 = P.trapOptions().disarm.bonus;
+    r = go("ruins", ["clou"]); r.traps[tk] = { fx: "venin", hidden: false, seen: true, done: false }; P.moveTo(tk.split(">")[1]);
+    ok(P.trapOptions().disarm.bonus === d0 + 1, "Clou de bâtisseur : désamorcer +1 cran");
+    r = go("ruins", ["fil"]); var savedRand = P.rand; P.rand = function () { return 0; }; var sh = P._shiftWalls(r); P.rand = savedRand;
+    ok(sh === null, "Fil d'Edda : les murs ne bougent plus");
+    function obstacleAt(r) { var o = r.nodes[Object.keys(r.nodes).filter(function (x) { return r.nodes[x].row === 1; })[0]]; o.type = "obstacle"; o.gabaritId = null; o.done = false; r.at = o.key; r.status = "pa2-node"; P._prepareNode(r, o); return o; }
+    r = go("ruins"); var o0 = obstacleAt(r), bz = P.obstacleOptions().map(function (o) { return o.bonus; }), cn = r.nodes[r.at], m0 = P._dmgMult(r, cn, "tenir");
+    r = go("ruins", ["marteau"]); var o1 = obstacleAt(r); o1.gabaritId = o0.gabaritId; o1.diff = o0.diff;
+    ok(P.obstacleOptions().every(function (o, i) { return o.bonus === bz[i] + 1; }) && Math.abs(P._dmgMult(r, cn, "tenir") / m0 - R.marteauDmg) < 1e-9, "Marteau du Contremaître : +1 cran sur toutes les voies, combats +15 %");
+    r = go("crypt", ["meche"], ["lanterne"]); P.useItem("lanterne"); var l1 = r.lanternLeft; r = go("crypt", [], ["lanterne"]); P.useItem("lanterne");
+    ok(l1 === r.lanternLeft + R.mecheSteps, "Mèche de Sarkel : la Lanterne brûle 3 pas de plus");
+    r = go("crypt", ["cendre"]); r.loot = 500; var a = r.nodes[Object.keys(r.nodes).filter(function (x) { return r.nodes[x].row === 1; })[0]]; a.type = "autel"; a.done = false; r.at = a.key; r.status = "pa2-node"; game.heroHp = 1;
+    var al = P.altar(true);
+    ok(P.altarCost(r) === 0 && al.ok && al.result.cost === 0 && al.result.healed === Math.round(game.heroMaxHp * R.altarHealPct * R.cendreHeal), "Cendre de veilleur : alcôves gratuites, soin double");
+    r = go("crypt", ["cloche"]); var res = {}; P._applyTrapFx(r, "alarme", res);
+    ok(!r.fx.alarme && res.muted, "Cloche muette : l'Alarme ne sonne pas");
   } finally {
     game.sceneRun = null; if (g.SortieManager.isActive()) g.SortieManager.end("return");
   }

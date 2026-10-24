@@ -31,7 +31,7 @@ var Pa2Run = {
   getMap: function (run) { run = run || this.getRun() || {}; return run.map || PA2_MAPS[run.mapId] || null; }, // parcours : tracé dans le run
   node: function (key, run) { run = run || this.getRun(); return (run && run.nodes) ? run.nodes[key] || null : null; },
   hasItem: function (id, run) { run = run || this.getRun(); return !!run && run.bag.indexOf(id) >= 0; },
-  hasRelic: function (id, run) { run = run || this.getRun(); return !!run && run.relics.indexOf(id) >= 0; },
+  hasRelic: function (id, run) { run = run || this.getRun(); return !!run && !!run.relics && run.relics.indexOf(id) >= 0; }, // v3.469.5 : run sans reliques (murs lus hors run)
   hasPact: function (id, run) { run = run || this.getRun(); return !!run && run.pacts.indexOf(id) >= 0; },
   ring: function (run) {
     run = run || this.getRun();
@@ -542,7 +542,7 @@ var Pa2Run = {
      La Craie (2 traits) l'empêche si le nœud est à portée de vue (PA2_RULES.wallChalkRows). */
   _shiftWalls: function (run) {
     var map = this.getMap(run), here = this.node(run.at, run), self = this;
-    if (!map || !map.shifts || !here || this.isParcours(run)) return null;
+    if (!map || !map.shifts || !here || this.isParcours(run) || this.hasRelic("fil", run)) return null; // v3.469.5 : Fil d'Edda
     if (this.rand() >= Number(PA2_RULES.wallShiftPct || 0) * Number(this.condFx(run, "wallShiftMult") || 1)) return null; // v3.469.0 : les murs s'agitent
     var cand = map.shifts.filter(function (sh) { var n = map.nodes[sh.from]; return n && n.row > here.row && !self._walked(run, sh.from); });
     if (!cand.length) return null;
@@ -586,7 +586,8 @@ var Pa2Run = {
     var step = (this.hasPact("lourd", run) ? PA2_RULES.heavyStep : 0) + (this.hasRelic("ronce", run) ? PA2_RULES.ronceStep : 0)
       + Number(this.worldRule(run, "stepBreath") || 0) // v3.387.0 : la soif du Désert
       + Number(this.condFx(run, "stepBreath") || 0) // v3.469.0 : canicule, nuit fraîche, courants d'air
-      - (this.hasItem("ecaille", run) ? PA2_RULES.ecailleStep : 0); // v3.469.4 : Écaille du Ver
+      - (this.hasItem("ecaille", run) ? PA2_RULES.ecailleStep : 0) // v3.469.4 : Écaille du Ver
+      - (this.hasRelic("perle", run) ? PA2_RULES.perleStep : 0); // v3.469.5 : Perle de rosée
     step = Math.max(0, step);
     if (step) run.breath = Math.max(0, run.breath - step);
     if (this.hasRelic("braise", run)) this._heal(game.heroMaxHp * PA2_RULES.braiseHealPct);
@@ -728,6 +729,7 @@ var Pa2Run = {
     if (it.light) { // v3.454.0 (Crypte) : allumer la Lanterne ; Mèche longue (Mémoire 14) +2 pas
       if (Number(run.lanternLeft || 0) > 0) return { ok: false, reason: _t("La Lanterne est déjà allumée.") };
       run.lanternLeft = Math.max(1, PA2_RULES.lanternSteps + Number(this.condFx(run, "lanternSteps") || 0)) + ((window.MemoryManager && MemoryManager.has("meche_longue")) ? 2 : 0) // v3.469.0 : mèches humides
+        + (this.hasRelic("meche", run) ? PA2_RULES.mecheSteps : 0) // v3.469.5 : Mèche de Sarkel
         + ((window.LivingMapManager && LivingMapManager.hasEffect("lanterne_plus")) ? 1 : 0); // l'obélisque tenu
     } else if (it.breath) {
       if (run.breath >= 100) return { ok: false, reason: _t("Ton Souffle est déjà plein.") };
@@ -890,7 +892,7 @@ var Pa2Run = {
     if (!to) return null;
     var diff = SceneCheckSystem.depthDifficulty(PA2_TRAP_RULES.baseDifficulty, this._depth(to, run)) * this.ring(run).diffMult
       * Number(run.band.obstacleScale || 1) * this.heroScale(run).obstacle;
-    return this._check(run, "precision", diff, this.hasItem("pierre_gardien", run) ? 1 : 0); // v3.469.4
+    return this._check(run, "precision", diff, (this.hasItem("pierre_gardien", run) ? 1 : 0) + (this.hasRelic("clou", run) ? 1 : 0)); // v3.469.4 ; v3.469.5 : Clou de bâtisseur
   },
   trapOptions: function () {
     var run = this.getRun();
@@ -934,7 +936,7 @@ var Pa2Run = {
   _applyTrapFx: function (run, fx, res) {
     if (!run.fx) run.fx = {};
     var def = PA2_TRAP_FX[fx];
-    if (fx === "alarme") run.fx.alarme = 1;
+    if (fx === "alarme") { if (!this.hasRelic("cloche", run)) run.fx.alarme = 1; else res.muted = true; } // v3.469.5 : Cloche muette
     else if (fx === "besace") {
       var pool = [];
       Object.keys(run.stock || {}).forEach(function (id) { if (run.stock[id] > 0) pool.push(id); });
@@ -981,6 +983,7 @@ var Pa2Run = {
       bonus += Number(self.condFx(run, "obstacleBonus") || 0); // v3.469.0 : poussière de chantier
       if (v === "endurance" && self.hasItem("ecaille", run)) bonus += 1;        // v3.469.4 : Écaille du Ver
       if (v === "precision" && self.hasItem("pierre_gardien", run)) bonus += 1; // v3.469.4 : Pierre taillée du gardien
+      if (self.hasRelic("marteau", run)) bonus += 1; // v3.469.5 : Marteau du Contremaître
       var ck = self._check(run, gab.options[v].stat, n.diff * p.diffMod, bonus);
       var cost = Number(p.breathCost || 0) + (self.hasItem("armure", run) ? PA2_RULES.armorBreath : 0);
       // v3.391.0 : Endurance du marcheur (pouvoir légendaire), câblée en v1 seulement jusque-là
@@ -1073,6 +1076,7 @@ var Pa2Run = {
     if (this.hasPact("enrage", run) && (n.type === "boss" || n.act === 3)) m *= R.enrageMult;
     if (this.hasItem("torche", run)) m *= R.torchDmgMult;
     m *= Number(this.condFx(run, "combatDmg") || 1); // v3.469.0 : pleine lune
+    if (this.hasRelic("marteau", run)) m *= R.marteauDmg; // v3.469.5 : Marteau du Contremaître
     if (this.hasItem("armure", run)) m *= R.armorDmgMult;
     if (this.hasRelic("dent", run)) m *= R.dentMult;
     if (this.hasRelic("fleche", run)) m *= R.flecheMult;
@@ -1124,7 +1128,7 @@ var Pa2Run = {
     if (!n) return null;
     var out = { boss: n.type === "boss", revenge: !!n.revenge, foeId: n.foeId || null, charger: this.combatEstimate("charger"), tenir: this.combatEstimate("tenir") };
     if (!out.boss) {
-      out.ruse = this._check(run, "precision", n.diff, (this.hasRelic("fleche", run) ? 1 : 0) + Number(this.condFx(run, "ruseBonus") || 0)); // v3.469.0 : brouillard
+      out.ruse = this._check(run, "precision", n.diff, this.ruseBonus(run)); // v3.469.0 : brouillard ; v3.469.5 : reliques
       out.ruseBlocked = !!n.alarm; // v3.467.0 : l'Alarme a sonné
       out.flee = { cost: PA2_RULES.fleeBreath, affordable: run.breath >= PA2_RULES.fleeBreath };
     }
@@ -1170,11 +1174,16 @@ var Pa2Run = {
     return { ok: true, reason: null, result: run.lastResult };
   },
 
+  // Crans de la Ruse : Flèche du veneur, brouillard, Œil de scarabée, Cloche muette (deux).
+  ruseBonus: function (run) {
+    return (this.hasRelic("fleche", run) ? 1 : 0) + Number(this.condFx(run, "ruseBonus") || 0)
+      + (this.hasRelic("scarabee", run) ? 1 : 0) + (this.hasRelic("cloche", run) ? 2 : 0);
+  },
   ruse: function () {
     var n = this._current(["combat"]);
     if (!n) return { ok: false, reason: _t("Choix impossible") };
     if (n.alarm) return { ok: false, reason: _t("L'alarme a sonné : ils t'attendent.") };
-    var run = this.getRun(), ck = this._check(run, "precision", n.diff, (this.hasRelic("fleche", run) ? 1 : 0) + Number(this.condFx(run, "ruseBonus") || 0));
+    var run = this.getRun(), ck = this._check(run, "precision", n.diff, this.ruseBonus(run));
     var res = this.roll(ck.thr);
     res.thr = ck.thr; res.cran = ck.cran; res.ruse = true;
     if (res.kind === "ko") { res.surprised = true; run.lastResult = res; this._save(); return { ok: true, reason: null, result: res }; }
@@ -1200,6 +1209,7 @@ var Pa2Run = {
     var R = PA2_RULES, amt = this.hasPact("tarie", run) ? R.sourceDry : R.sourceAmount;
     if (this.hasRelic("seve", run)) amt *= 2;
     amt *= Number(this.condFx(run, "sourceMult") || 1); // v3.469.0 : orage, canicule, mèches humides
+    if (this.hasRelic("dune", run)) amt = Math.round(amt * PA2_RULES.duneSource); // v3.469.5 : Cœur de dune
     if (this.hasItem("veilleurs", run)) amt += R.sourceLantern;
     return amt;
   },
@@ -1220,7 +1230,7 @@ var Pa2Run = {
   },
   // Q11 : Cercle des menhirs / Stèles tenus -> l'autel est gratuit une fois par run.
   _altarFree: function (run) {
-    if (this.condFx(run, "altarFree")) return true; // v3.469.0 : bâtisseurs, veillée
+    if (this.condFx(run, "altarFree") || this.hasRelic("cendre", run)) return true; // v3.469.0 : bâtisseurs, veillée ; v3.469.5 : Cendre de veilleur
     return !run.altarFreeUsed && !!window.LivingMapManager && LivingMapManager.hasEffect("autel_normale");
   },
   altar: function (accept) {
@@ -1233,12 +1243,12 @@ var Pa2Run = {
     if (free) run.altarFreeUsed = true; else this._pay(run, cost);
     if (run.wounds > 0) run.wounds -= 1;
     if (run.fx) delete run.fx.venin; // v3.467.0 : l'autel lève le Venin
-    var healed = this._heal(game.heroMaxHp * PA2_RULES.altarHealPct);
+    var healed = this._heal(game.heroMaxHp * PA2_RULES.altarHealPct * (this.hasRelic("cendre", run) ? PA2_RULES.cendreHeal : 1)); // v3.469.5
     return this._done(run, n, { kind: "autel", accepted: true, cost: free ? 0 : cost, healed: healed });
   },
 
   drawRelics: function (run, count) {
-    var pool = Object.keys(PA2_RELICS).filter(function (id) { return !PA2_RELICS[id].eventOnly && run.relics.indexOf(id) < 0; });
+    var pool = Object.keys(PA2_RELICS).filter(function (id) { var r = PA2_RELICS[id]; return !r.eventOnly && (!r.world || r.world === run.worldId) && run.relics.indexOf(id) < 0; }); // v3.469.5 : reliques du monde
     var out = [], self = this;
     while (out.length < count && pool.length) {
       var want = this._weighted(PA2_RELIC_RARITY_WEIGHTS);
@@ -1418,7 +1428,7 @@ var Pa2Run = {
       }
     }
     // Multiplicateur final de l'or : pactes, Carte du braconnier, Fiole noire.
-    var mult = this.pactMult(run) * Number(this.condFx(run, "lootMult") || 1); // v3.469.0 : pillards, guetteurs
+    var mult = this.pactMult(run) * Number(this.condFx(run, "lootMult") || 1) * (this.hasRelic("dune", run) ? PA2_RULES.duneLoot : 1); // v3.469.0 ; v3.469.5 : Cœur de dune
     if (this.hasItem("carte", run)) mult *= PA2_RULES.carteLoot;
     if (run.fioleUsed) mult *= PA2_RULES.fioleLoot;
     end.mult = mult;

@@ -786,6 +786,7 @@ function pa2TrapOutcome(run, r, td) {
   if (hit) {
     var what = r.fx === "besace" ? (r.lost ? _t("Perdu : {x}.", { x: pa2ItemName(r.lost) }) : _t("Ta besace était vide : rien de perdu."))
       : _td(fx.desc) + (fx.steps ? ", " + _tn(fx.steps, "{n} pas", "{n} pas") : "") + ".";
+    if (r.muted) what = _t("la Cloche muette l'étouffe, rien ne sonne."); // v3.469.5
     h += '<p class="pa2-result">' + esc(_td(fx.name) + " : " + what) + '</p>';
     if (r.wound) h += '<p class="pa2-result is-red">' + esc(_t("Et une blessure : −1 cran sur tous les dés.")) + '</p>';
   }

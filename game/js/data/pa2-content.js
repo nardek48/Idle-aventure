@@ -114,7 +114,17 @@ var PA2_RELICS = {
   pierre: { id: "pierre", rar: "rare", icon: "images/Icons/scene/relics/relic_pierre.webp", name: "Pierre qui chante", fx: "+1 cran sur la voie force." },
   oeil:   { id: "oeil",   rar: "rare", icon: "images/Icons/scene/relics/relic_oeil.webp",   name: "Œil de chouette",   fx: "Toute la carte se révèle." },
   ronce:  { id: "ronce",  rar: "leg",  icon: "images/Icons/scene/relics/relic_ronce.webp",  name: "Cœur de ronce",     fx: "Butin +30 %, mais chaque pas coûte 3 Souffle." },
-  fleche: { id: "fleche", rar: "leg",  icon: "images/Icons/scene/relics/relic_fleche.webp", name: "Flèche du veneur",  fx: "+1 cran en force et pour ruser, combats −15 % de dégâts.", eventOnly: true }
+  fleche: { id: "fleche", rar: "leg",  icon: "images/Icons/scene/relics/relic_fleche.webp", name: "Flèche du veneur",  fx: "+1 cran en force et pour ruser, combats −15 % de dégâts.", eventOnly: true },
+  // v3.469.5 (PA-R2) : trois reliques par monde, tirées seulement dans leur monde (world)
+  perle:    { id: "perle",    rar: "com",  world: "desert", icon: "images/Icons/scene/relics/relic_perle.webp",    name: "Perle de rosée",         fx: "La marche coûte 1 Souffle de moins par pas." },
+  scarabee: { id: "scarabee", rar: "rare", world: "desert", icon: "images/Icons/scene/relics/relic_scarabee.webp", name: "Œil de scarabée",        fx: "Ruser gagne un cran." },
+  dune:     { id: "dune",     rar: "leg",  world: "desert", icon: "images/Icons/scene/relics/relic_dune.webp",     name: "Cœur de dune",           fx: "Butin final +25 %, mais les points d'eau ne rendent que la moitié." },
+  clou:     { id: "clou",     rar: "com",  world: "ruins",  icon: "images/Icons/scene/relics/relic_clou.webp",     name: "Clou de bâtisseur",      fx: "Désamorcer un piège gagne un cran." },
+  fil:      { id: "fil",      rar: "rare", world: "ruins",  icon: "images/Icons/scene/relics/relic_fil.webp",      name: "Fil d'Edda",             fx: "Les murs ne bougent plus devant toi." },
+  marteau:  { id: "marteau",  rar: "leg",  world: "ruins",  icon: "images/Icons/scene/relics/relic_marteau.webp",  name: "Marteau du Contremaître", fx: "+1 cran sur toutes les voies d'obstacle, mais combats +15 % de dégâts reçus." },
+  meche:    { id: "meche",    rar: "com",  world: "crypt",  icon: "images/Icons/scene/relics/relic_meche.webp",    name: "Mèche de Sarkel",        fx: "La Lanterne brûle 3 pas de plus." },
+  cendre:   { id: "cendre",   rar: "rare", world: "crypt",  icon: "images/Icons/scene/relics/relic_cendre.webp",   name: "Cendre de veilleur",     fx: "Les alcôves sont gratuites et soignent le double." },
+  cloche:   { id: "cloche",   rar: "leg",  world: "crypt",  icon: "images/Icons/scene/relics/relic_cloche.webp",   name: "Cloche muette",          fx: "L'Alarme ne se déclenche jamais, et Ruser gagne deux crans." }
 };
 var PA2_RELIC_RARITY_WEIGHTS = { com: 60, rare: 30, leg: 10 };
 
@@ -241,6 +251,7 @@ var PA2_RULES = {
   fioleHpPct: 0.40,
   revengeMult: 1.3, enrageMult: 1.4, torchDmgMult: 1.15, armorDmgMult: 0.65, armorBreath: 8,
   dentMult: 0.75, flecheMult: 0.85, boisChargeMult: 0.85, epeeTenirMult: 0.8, ecailleStep: 1, natteRestMult: 2, ciergeSteps: 1, // v3.469.4
+  perleStep: 1, duneLoot: 1.25, duneSource: 0.5, marteauDmg: 1.15, mecheSteps: 3, cendreHeal: 2, // v3.469.5 : reliques des mondes
   surprisedMult: 1.2, heavyStep: 4, ronceStep: 3, ronceLoot: 1.3, braiseHealPct: 0.03,
   carteLoot: 0.8, fioleLoot: 0.5, damageSpread: 0.15, maxRounds: 60,
   wallShiftPct: 0.35, wallChalkRows: 2,  // v3.429.0 (Ruines) : un mur bouge après un pas ; la Craie tient à 2 rangées devant
