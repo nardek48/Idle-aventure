@@ -17350,6 +17350,68 @@ console.log("\n[284] v3.469.2 — Petites Aventures : fenêtres des nouveautés 
   }
 })();
 
+console.log("\n[285] v3.469.3 — Petites Aventures : deux accroches de plus aux Ruines et à la Crypte");
+(function () {
+  var S = g.SceneRunManager, P = g.Pa2Run, H = g.PA2_HOOKS;
+  var TPL = { ruins: "petite_aventure_ruines", crypt: "petite_aventure_crypte" };
+  function prep() {
+    game = freshCombat("knight"); giveWeapon(); run("game.enemy = null; game.combat = null;");
+    S.ensureDefaults(); game.explorationProgression.petiteAventure = { spent: 0, since: null };
+    game.resources.petite_ration = 5; game.heroLevel = 12; game.heroHp = game.heroMaxHp; game.sceneRun = null;
+    if (g.SortieManager.isActive()) g.SortieManager.end("return");
+  }
+  // run avec l'accroche imposée, arrêté sur la rencontre
+  function meet(world, hookId, items) {
+    prep(); S.startRun(TPL[world]); var r = game.sceneRun; r.hookId = hookId;
+    (items || []).forEach(function (id) { P.addItem(id); });
+    P.depart();
+    var ev = Object.keys(r.nodes).filter(function (k) { return r.nodes[k].type === "evenement"; })[0];
+    r.at = ev; r.status = "pa2-node"; r.nodes[ev].done = false; return r;
+  }
+  function campOf(r) { return Object.keys(r.nodes).filter(function (k) { return r.nodes[k].type === "camp"; })[0]; }
+  function combatAct2(r) { var k = Object.keys(r.nodes).filter(function (x) { return r.nodes[x].act === 2 && r.nodes[x].type !== "camp" && r.nodes[x].type !== "seuil"; })[0], n = r.nodes[k]; n.type = "combat"; n.done = false; delete n.echo; r.at = k; r.status = "pa2-node"; P._prepareNode(r, n); return n; }
+  try {
+    ok(g.PA2_HOOKS_BY_WORLD.ruins.join() === "carnet,batisseur,statue" && g.PA2_HOOKS_BY_WORLD.crypt.join() === "lampe,garcon,cloche", "trois accroches aux Ruines, trois à la Crypte");
+    ok(["batisseur", "statue"].every(function (h) { return H[h].worldId === "ruins"; }) && ["garcon", "cloche"].every(function (h) { return H[h].worldId === "crypt"; }), "chaque accroche est rangée dans son monde");
+    var seen = {}; for (var k = 0; k < 300; k++) seen[P._drawHook(g.PA2_HOOKS_BY_WORLD.crypt)] = 1;
+    ok(seen.lampe && seen.garcon && seen.cloche, "le tirage donne les trois accroches de la Crypte");
+    // Le bâtisseur : aidé, une pierre au premier combat de l'acte II ; passé, coffre −15 %
+    var r = meet("ruins", "batisseur", ["gourde"]), gd = r.stock.gourde;
+    ok(P.eventChoice("gourde").ok && r.stock.gourde === gd - 1, "bâtisseur : une gorgée de la gourde donnée");
+    var c = combatAct2(r);
+    ok(c.assist && c.pack === g.PA2_ACTS[2].pack - 1 && /truelle/.test(c.echo || ""), "bâtisseur aidé : un ennemi de moins à l'acte II, la truelle te salue");
+    r = meet("ruins", "batisseur"); P.eventChoice("passer");
+    ok(P.destGoldMult(r) === 0.85, "bâtisseur passé : coffre final −15 %");
+    // La statue : prendre = la marque ; une ration = la Pierre qui chante au camp
+    r = meet("ruins", "statue"); P.eventChoice("prendre");
+    ok(P._marked(r), "statue : prendre la pièce, c'est la marque");
+    r = meet("ruins", "statue", ["petite_ration"]); var pr = r.stock.petite_ration;
+    ok(P.eventChoice("offrir").ok && r.stock.petite_ration === pr - 1, "statue : la ration posée");
+    var cp = campOf(r); r.at = cp; r.status = "pa2-node"; r.nodes[cp].done = false; var res = P.placeAction("rest");
+    ok(res.ok && res.result.gift === "pierre" && r.relics.indexOf("pierre") >= 0, "statue : au camp, la Pierre qui chante");
+    // Le garçon : réveillé, l'Œil de chouette au camp
+    r = meet("crypt", "garcon"); var b0 = r.breath; P.eventChoice("reveiller");
+    cp = campOf(r); r.at = cp; r.status = "pa2-node"; r.nodes[cp].done = false; res = P.placeAction("rest");
+    ok(b0 - 15 <= r.breath && res.result.gift === "oeil", "garçon réveillé (15 Souffle) : au camp, l'Œil de chouette");
+    r = meet("crypt", "garcon"); P.eventChoice("laisser"); cp = campOf(r); r.at = cp; r.status = "pa2-node"; r.nodes[cp].done = false; res = P.placeAction("rest");
+    ok(!res.result.gift, "garçon laissé : pas de cadeau");
+    // La cloche : la Corde donnée, coffre +25 % ; sans Corde, impossible ; tenir = la marque
+    r = meet("crypt", "cloche");
+    ok(!P.canHookBranch("couper").ok, "cloche : sans Corde, impossible de la donner");
+    r = meet("crypt", "cloche", ["corde"]);
+    ok(P.eventChoice("couper").ok && r.stock.corde === 0 && P.destGoldMult(r) === 1.25, "cloche : la Corde donnée, coffre final +25 %");
+    r = meet("crypt", "cloche"); P.eventChoice("tenir");
+    ok(P._marked(r), "cloche : tenir la corde, c'est la marque");
+    // Écran : la rencontre affiche ses trois choix
+    r = meet("crypt", "cloche", ["corde"]); run("switchTab('scene')"); g.pa2View.sheet = { key: r.at, step: "intro" };
+    var hs = g.pa2SheetBody(r, r.nodes[r.at], g.pa2View.sheet);
+    ok(/La cloche/.test(hs) && /Tenir la corde/.test(hs) && /Lui donner ta Corde/.test(hs) && /Passer/.test(hs), "fiche de la rencontre : les trois choix");
+    g.pa2View.sheet = null;
+  } finally {
+    game.sceneRun = null; if (g.SortieManager.isActive()) g.SortieManager.end("return");
+  }
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

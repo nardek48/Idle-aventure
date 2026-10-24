@@ -701,11 +701,104 @@ PA2_HOOKS.lampe = {
     other: "Sur l'autel, une lampe éteinte. Personne ne l'a rallumée."
   }
 };
+/* v3.469.3 (bilan des Petites Aventures, point 2) : deux accroches de plus aux Ruines et à la Crypte. */
+PA2_HOOKS.batisseur = {
+  id: "batisseur", worldId: "ruins",
+  title: "Le bâtisseur égaré",
+  lede: "Un des bâtisseurs n'est pas rentré au chantier. Les autres disent qu'il a suivi une rue qui tournait.",
+  event: {
+    name: "Le bâtisseur",
+    text: "Un homme assis sur une pierre de taille, une truelle à la main. Il ne sait plus quelle rue mène au chantier. Il a soif.",
+    branches: {
+      gourde: { label: "Lui donner la gourde", cost: { stock: "gourde" }, text: "Il boit, puis il montre une rue du menton : « Pas celle-là. Celle d'hier. » Il repart vers le chantier." },
+      chemin: { label: "Lui montrer le chemin", cost: { breath: 20 }, text: "Tu le ramènes jusqu'à une rue qu'il reconnaît. Il pose une main sur un mur et ne dit plus rien. Il sait où il est." },
+      passer: { label: "Passer", text: "Tu passes. Derrière toi, il recommence à compter les pierres." }
+    }
+  },
+  assist: { branches: ["gourde", "chemin"] },
+  destGold: { passer: 0.85 },
+  echo: {
+    assist: "Une pierre de taille tombe d'un toit, pile sur l'un d'eux. En haut, une truelle te salue.",
+    dest: "Il manque une pierre au coffre. Quelqu'un l'a prise pour finir un mur."
+  },
+  clairiere: {
+    gourde: "Sur la margelle, une pierre neuve, taillée net. Une truelle y a gravé une marque.",
+    chemin: "Sur la margelle, une pierre neuve, taillée net. Une truelle y a gravé une marque.",
+    other: "Le puits est fermé d'une pierre neuve. Personne ne l'a descellée."
+  }
+};
+PA2_HOOKS.statue = {
+  id: "statue", worldId: "ruins",
+  title: "La statue au carrefour",
+  lede: "Les enfants disent qu'une statue des Ruines a changé de place. Edda dit qu'elles le font toutes, mais pas toujours vers nous.",
+  event: {
+    name: "La statue",
+    text: "Une statue sur un socle, au milieu d'un carrefour. Sa main tendue tient une pièce. Elle n'était pas là ce matin.",
+    branches: {
+      prendre: { label: "Prendre la pièce", text: "La pièce est froide et lourde. Quand tu relèves la tête, la statue te regarde." },
+      offrir: { label: "Poser une ration à ses pieds", cost: { ration: 1 }, text: "Tu poses la ration sur le socle. Il te semble que la main s'est refermée un peu." },
+      passer: { label: "Passer", text: "Tu passes. Au carrefour suivant, la même statue. Tu ne te retournes pas." }
+    }
+  },
+  mark: { branch: "prendre", dmgMult: 1.2 },
+  campGift: { text: "Sur un banc de la cour, une petite pierre qui chante quand le vent passe. Elle n'était pas là.", relic: "pierre", branches: ["offrir"] },
+  echo: { mark: "La pièce pèse dans ta poche. Ce qui vit dans les murs sait que tu l'as." },
+  clairiere: {
+    prendre: "Au milieu de la cour, la statue. Sa main est ouverte, tendue vers toi.",
+    offrir: "Au bord du puits, une ration posée, intacte. Quelqu'un te la rend.",
+    other: "Au milieu de la cour, un socle vide."
+  }
+};
+PA2_HOOKS.garcon = {
+  id: "garcon", worldId: "crypt",
+  title: "Le garçon aux mèches",
+  lede: "Le garçon qui allume les lampes pour Sarkel s'est endormi en bas. Sarkel dit qu'on ne réveille pas quelqu'un qui dort là-dessous. Pas sans raison.",
+  event: {
+    name: "Le garçon",
+    text: "Un garçon endormi contre un pilier, une mèche éteinte à la main. Autour de lui, les morts dorment aussi.",
+    branches: {
+      reveiller: { label: "Le réveiller doucement", cost: { breath: 15 }, text: "Il ouvre les yeux sans un bruit. Il a l'habitude. « Je rentre par la salle aux lampes », souffle-t-il, et il disparaît entre les piliers." },
+      laisser: { label: "Le laisser dormir", text: "Tu le laisses. Il sourit dans son sommeil, comme ceux d'à côté." }
+    }
+  },
+  campGift: { text: "À la salle aux lampes, le garçon t'attend, une mèche allumée. « Je connais les couloirs. » Il te les montre du doigt, un par un.", relic: "oeil", branches: ["reveiller"] },
+  echo: {},
+  clairiere: {
+    reveiller: "Dans la chapelle, les deux vasques brûlent avec des mèches neuves.",
+    other: "Dans la chapelle, une des deux vasques est éteinte."
+  }
+};
+PA2_HOOKS.cloche = {
+  id: "cloche", worldId: "crypt",
+  title: "La cloche sans sonneur",
+  lede: "Une cloche a sonné cette nuit, au fond de la Crypte. Il n'y a plus de sonneur depuis cent ans.",
+  event: {
+    name: "La cloche",
+    text: "Une petite cloche suspendue à une voûte basse. Sa corde bouge encore. Personne au bout.",
+    branches: {
+      tenir: { label: "Tenir la corde", cost: { breath: 10 }, text: "La corde tire, doucement, à intervalles réguliers. Quelque part, quelqu'un compte. Tu tiens bon." },
+      couper: { label: "Lui donner ta Corde", cost: { stock: "corde" }, text: "Tu noues ta Corde à la place de la sienne, serré, jusqu'au mur. La cloche ne bouge plus. Plus loin, quelque chose cesse d'attendre." },
+      passer: { label: "Passer", text: "Tu passes sous la voûte. La corde bouge encore quand tu te retournes." }
+    }
+  },
+  mark: { branch: "tenir", dmgMult: 1.2 },
+  destGold: { couper: 1.25 },
+  destRare: { couper: 1 },
+  echo: {
+    mark: "Tu entends encore la cloche, même loin d'elle. Ce qui dort l'entend aussi.",
+    dest: "Sous l'autel, de la cire et une petite cloche muette. On te remercie."
+  },
+  clairiere: {
+    tenir: "Dans la chapelle, une corde neuve pend d'une poutre. Elle ne bouge pas.",
+    couper: "Sur l'autel, un bout de ta Corde, noué serré, et de la cire posée dessus.",
+    other: "Une cloche se tait quand tu entres."
+  }
+};
 var PA2_HOOKS_BY_WORLD = {
   forest: ["chasseur", "gouffre", "pierre", "feu"],
   desert: ["maddoc", "caravane", "sentinelle"],
-  ruins: ["carnet"],
-  crypt: ["lampe"] // v3.454.0
+  ruins: ["carnet", "batisseur", "statue"], // v3.469.3 : deux de plus
+  crypt: ["lampe", "garcon", "cloche"]       // v3.454.0 ; v3.469.3 : deux de plus
 };
 
 window.PA2_BAG_SIZE = PA2_BAG_SIZE;
