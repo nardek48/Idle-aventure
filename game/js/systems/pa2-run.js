@@ -824,7 +824,7 @@ var Pa2Run = {
     var ck = this._trapCheck(run), back = PA2_TRAP_RULES.backBreath;
     return { disarm: ck, kit: Number(run.stock.trousse || 0), back: { cost: back, affordable: run.breath >= back } };
   },
-  /* Désamorcer (dé de précision, sans Souffle ; de justesse −10), trousse (assuré), subir, rebrousser. */
+  /* Désamorcer (dé de précision, sans Souffle ; de justesse −10 ; raté : l'effet et une blessure), trousse (assuré), subir, rebrousser. */
   resolveTrap: function (choice) {
     var run = this.getRun(), opts = this.trapOptions();
     if (!opts) return { ok: false, reason: _t("Choix impossible") };
@@ -851,6 +851,7 @@ var Pa2Run = {
     } else return { ok: false, reason: _t("Choix impossible") };
     res.choice = choice; res.fx = t.fx;
     if (res.kind === "ko" || res.kind === "endure") this._applyTrapFx(run, t.fx, res);
+    if (res.kind === "ko") { run.wounds += 1; res.wound = true; } // v3.467.2 (PG-D3) : raté, c'est pire que subir
     t.done = true;
     run.trap.result = res;
     this._save();

@@ -599,12 +599,12 @@ function playScene(maxSteps) {
 }
 
 /* v3.467.0 (Pièges) : le robot évite un sentier piégé quand il peut ; dessus, trousse, sinon désamorcer
-   (il ne coûte rien), rebrousser s'il a été pris au dépourvu et que le dé est mauvais. */
+   si le dé est bon, subir s'il est mauvais, rebrousser s'il a été pris au dépourvu. */
 function trapChoice(P, run) {
   var o = P.trapOptions();
   if (o.kit > 0) return "trousse";
   if (o.disarm.thr >= 6 && run.trap.unseen && o.back.affordable && run.breath >= 60) return "rebrousser";
-  return "desamorcer";
+  return o.disarm.thr <= 4 ? "desamorcer" : "subir"; // v3.467.2 : raté = effet et blessure ; dé mauvais, on subit
 }
 function avoidTraps(P, run, mv) {
   var free = mv.filter(function (k) { return !P.isTrapShown(run.at + ">" + k, run); });

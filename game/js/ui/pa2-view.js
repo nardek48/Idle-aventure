@@ -727,11 +727,11 @@ function pa2TrapSheetBody(run, st) {
     h += '<div class="pa2-choices">';
     h += '<button type="button" class="pa2-choice" onclick="pa2Trap(\'desamorcer\')">' + pa2Img(PA2_ICONS.precision) + '<span class="pa2-t">' + esc(_t("Désamorcer")) + '</span>' + pa2OddsHTML(o.disarm.cran) +
       '<span class="pa2-s">' + pa2WhyHTML(o.disarm, run) + ' · <b class="pa2-breath">' + esc(_t("sans Souffle")) + '</b>. ' +
-      esc(_t("Raté : l'effet joue. De justesse : −{b} Souffle.", { b: PA2_TRAP_RULES.midBreath })) + '</span></button>';
+      esc(_t("Raté : l'effet joue, et une blessure. De justesse : −{b} Souffle.", { b: PA2_TRAP_RULES.midBreath })) + '</span></button>';
     if (o.kit > 0) h += '<button type="button" class="pa2-choice" onclick="pa2Trap(\'trousse\')">' + pa2Img(PA2_ITEMS.trousse.icon) + '<span class="pa2-t">' + esc(_t("Utiliser la trousse")) + '</span>' +
       '<span class="pa2-odds o4"><span class="pa2-w">' + esc(_t("Assuré")) + '</span></span><span class="pa2-s">' + esc(_tn(o.kit, "il te reste {n} crochet", "il te reste {n} crochets", { n: o.kit })) + '</span></button>';
     h += '<button type="button" class="pa2-choice" onclick="pa2Trap(\'subir\')">' + pa2Img(fx.icon) + '<span class="pa2-t">' + esc(_t("Subir")) + '</span><span class="pa2-cost is-red">' + esc(_td(fx.name)) + '</span>' +
-      '<span class="pa2-s">' + esc(_t("Pas de dé. Tu avances, l'effet joue.")) + '</span></button>';
+      '<span class="pa2-s">' + esc(_t("Pas de dé, pas de blessure. Tu avances, l'effet joue.")) + '</span></button>';
     h += '<button type="button" class="pa2-choice"' + (o.back.affordable ? '' : ' disabled') + ' onclick="pa2Trap(\'rebrousser\')">' + pa2Img(PA2_ICONS.flee) + '<span class="pa2-t">' + esc(_t("Rebrousser")) + '</span>' +
       '<span class="pa2-cost">' + esc(_t("{n} Souffle", { n: o.back.cost })) + '</span><span class="pa2-s">' + esc(_t("Retour au point d'avant, un autre sentier. Le piège reste.")) +
       (o.back.affordable ? '' : ' · ' + esc(_t("pas assez de Souffle"))) + '</span></button>';
@@ -753,6 +753,7 @@ function pa2TrapOutcome(run, r, td) {
     var what = r.fx === "besace" ? (r.lost ? _t("Perdu : {x}.", { x: pa2ItemName(r.lost) }) : _t("Ta besace était vide : rien de perdu."))
       : _td(fx.desc) + (fx.steps ? ", " + _tn(fx.steps, "{n} pas", "{n} pas") : "") + ".";
     h += '<p class="pa2-result">' + esc(_td(fx.name) + " : " + what) + '</p>';
+    if (r.wound) h += '<p class="pa2-result is-red">' + esc(_t("Et une blessure : −1 cran sur tous les dés.")) + '</p>';
   }
   return h;
 }

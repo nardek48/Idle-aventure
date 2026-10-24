@@ -17056,8 +17056,8 @@ console.log("\n[281] v3.467.0 — Petites Aventures : pièges sur les sentiers (
     P.rand = function () { return (thr - 2 + 0.5) / 6; }; var d2 = P.resolveTrap("desamorcer"); P.rand = savedRand;
     ok(thr > 2 ? (d2.result.kind === "mid" && r.breath === bb - TR.midBreath && !r.fx.entrave) : d2.result.kind !== "ko", "de justesse : on passe, −10 Souffle");
     r = go("sentier", [], { "S>C0": { fx: "entrave", seen: true, done: false } });
-    P.moveTo("C0"); P.rand = function () { return 0; }; var d3 = P.resolveTrap("desamorcer"); P.rand = savedRand;
-    ok(d3.result.kind === "ko" && r.fx.entrave === TR.steps, "Désamorcer raté : l'effet joue");
+    P.moveTo("C0"); var w3 = r.wounds; P.rand = function () { return 0; }; var d3 = P.resolveTrap("desamorcer"); P.rand = savedRand;
+    ok(d3.result.kind === "ko" && r.fx.entrave === TR.steps && r.wounds === w3 + 1 && d3.result.wound, "Désamorcer raté : l'effet joue, et une blessure (v3.467.2)");
     // Entrave : +6 Souffle par pas, 3 pas, le pas du piège ne compte pas ; le repos la lève
     P.trapContinue(); r.status = "pa2-map"; r.nodes.C0.done = true;
     var e0 = r.breath; P.moveTo("C1");
@@ -17067,7 +17067,9 @@ console.log("\n[281] v3.467.0 — Petites Aventures : pièges sur les sentiers (
     ok(!r.fx.entrave, "le repos au camp lève l'Entrave");
     // Venin : −4 % par pas pendant 3 pas ; une ration le lève, même à PV pleins ; il peut achever
     r = go("sentier", ["petite_ration"], { "S>C0": { fx: "venin", seen: true, done: false } });
-    P.moveTo("C0"); P.resolveTrap("subir"); P.trapContinue(); r.nodes.C0.done = true; r.status = "pa2-map";
+    P.moveTo("C0"); var w4 = r.wounds; P.resolveTrap("subir");
+    ok(r.wounds === w4 && r.fx.venin === TR.steps, "Subir : l'effet joue, sans blessure");
+    P.trapContinue(); r.nodes.C0.done = true; r.status = "pa2-map";
     var h0 = game.heroHp; P.moveTo("C1");
     ok(r.fx.venin === 2 && h0 - game.heroHp === Math.round(game.heroMaxHp * TR.veninPct) && /venin/.test(r.fxNote), "Venin : −4 % des PV au pas suivant, la note le dit");
     game.heroHp = game.heroMaxHp;
