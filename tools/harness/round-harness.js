@@ -5361,11 +5361,12 @@ console.log("\n[47b] v3.245.0 \u2014 Refonte des Donjons");
   ok(game.heroMaxHp === (function () { var m = game.heroMaxHp; return m; })() && g.AfflictionManager.getActiveCount() === 0, "apr\u00e8s le run : aucune Marque active");
 
   /* --- Feuille de lancement --- */
-  var sheet = run("pendingDungeonMarks = ['aff_fragility']; buildDungeonSheetHTML(1)");
+  var sheet = run("pendingDungeonMarks = ['aff_fragility']; pendingDungeonMarksOpen = true; buildDungeonSheetHTML(1)"); // v3.476.0 : Marques repliées par défaut
   ok(sheet.indexOf("dmark is-on") !== -1 && sheet.indexOf("1 / 3") !== -1 && sheet.indexOf("+4") !== -1, "feuille : Fragilit\u00e9 activ\u00e9e, 1/3, S\u00e8ve +4 projet\u00e9e");
   ok(sheet.indexOf("Termine ce donjon une fois") === -1, "donjon termin\u00e9 : Traque et Fl\u00e9au propos\u00e9es");
   game.dungeonTierCleared = {};
   sheet = run("pendingDungeonMarks = []; buildDungeonSheetHTML(1)");
+  run("pendingDungeonMarksOpen = false;");
   ok((sheet.match(/dmark is-locked/g) || []).length === 2, "donjon jamais termin\u00e9 : deux Marques gris\u00e9es");
   var lobby = run("buildDungeonHTML()");
   ok(lobby.indexOf("pc-subtab-bar") === -1 && (lobby.match(/dungeon-tier-card is-full/g) || []).length === 6, "\u00e9cran Donjon : six cartes, plus de sous-onglets");
@@ -16899,7 +16900,7 @@ console.log("\n[277] v3.464.0 — Feuille de lancement : mode et niveau (atelier
   g.stepDungeonLevel(5);
   ok(run("pendingDungeonLevel") === 5, "les flèches s'arrêtent au meilleur + 1 (5)");
   g.setDungeonMode(true); h = g.buildDungeonSheetHTML(4);
-  ok(/Mode libre : sorties illimitées/.test(h) && /1 Ration moyenne/.test(h) && !/Cire de sépulcre <strong>/.test(h), "libre : sorties illimitées, Ration moyenne, pas de Cire dans les récompenses");
+  ok(/Libre : or ÷ 4, Éclats ÷ 2/.test(h) && /1 Ration moyenne/.test(h) && !/Cire de sépulcre <strong>/.test(h), "libre : « or ÷ 4, Éclats ÷ 2 », Ration moyenne, pas de Cire dans les récompenses"); // v3.476.0
   // départ : le niveau et le mode passent à start (préparation de sortie court-circuitée)
   var prep = g.openSortiePrep, st = D.start, args = null;
   g.openSortiePrep = function (o) { o.onGo(); }; D.start = function () { args = [].slice.call(arguments); };
@@ -17806,6 +17807,33 @@ console.log("\n[296] v3.475.0 — Tanière : préparation cochée sur la feuille
   game.dungeonTierCleared = { 1: true };
   ok(g.buildDungeonSheetHTML(1).indexOf("Préparation") < 0, "Tanière terminée : plus de liste");
   VB.getLevel = getLvl; SQ.isStepReached = reach; game.dungeonTierCleared = {}; game.adventureQuestsCompleted = {};
+})();
+
+console.log("\n[297] v3.476.0 — Feuille de lancement réorganisée (point 5, atelier feuille-lancement)");
+(function () {
+  game = freshCombat("knight");
+  var D = g.DungeonManager, SQ = g.StoryQuestManager, reach = SQ.isStepReached, free0 = D.isStoryTicketFree;
+  SQ.isStepReached = function () { return true; };
+  D.isStoryTicketFree = function () { return false; };
+  game.worldsEverReached = { 0: true, 1: true }; game.dungeonTierCleared = { 1: true }; game.dungeonLevelBest = { 1: 3 }; game.dungeonRunsUsed = {};
+  g.openDungeonSheet(1);
+  var h = g.buildDungeonSheetHTML(1);
+  ok(h.indexOf("À gagner") >= 0 && h.indexOf("Écailles du Basilic") >= 0 && h.indexOf("5 % par victoire") >= 0 && h.indexOf("Peau de mue") >= 0, "« À gagner » : l'unique du boss, son taux et son pouvoir");
+  ok(h.indexOf("Ce qui t'attend") >= 0 && h.indexOf("15 vagues, dont 4 en groupe") >= 0 && h.indexOf("élites aux vagues 5 et 10") >= 0 && h.indexOf("1 à 3 haltes") >= 0, "« Ce qui t'attend » : vagues de groupe, élites, haltes");
+  ok(h.indexOf('class="dmark') < 0 && /Marques<\/b><span>0 \/ 3 · ×1/.test(h), "Marques repliées, résumé 0 / 3");
+  ok(h.indexOf("dsheet-story") < 0 && h.indexOf("Sorties restantes") < 0, "récit replié, plus de « Sorties restantes » en double");
+  g.toggleDungeonFold("marks"); g.toggleDungeonFold("lore"); h = g.buildDungeonSheetHTML(1);
+  ok((h.match(/class="dmark[ "]/g) || []).length === 5 && h.indexOf("dsheet-story") >= 0, "ouvertes : les 5 Marques et le récit");
+  g.closeDungeonSheet(); g.openDungeonSheet(1);
+  ok(run("pendingDungeonMarksOpen") === false && run("pendingDungeonLoreOpen") === false, "à la réouverture, tout est replié");
+  g.closeDungeonSheet();
+  game.dungeonTierCleared = {}; g.openDungeonSheet(1); h = g.buildDungeonSheetHTML(1);
+  ok(h.indexOf("Des haltes, après une première victoire") >= 0, "jamais terminé : les haltes viendront après une victoire");
+  g.closeDungeonSheet();
+  game.dungeonTierCleared = { 1: true, 2: true }; game.dungeonLevelBest = {}; g.openDungeonSheet(3); h = g.buildDungeonSheetHTML(3);
+  ok(h.indexOf("Un campement après la vague 8") >= 0, "Sanctuaire : le campement est annoncé");
+  g.closeDungeonSheet();
+  D.isStoryTicketFree = free0; SQ.isStepReached = reach; game.dungeonTierCleared = {}; game.dungeonLevelBest = {};
 })();
 
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));

@@ -1027,6 +1027,14 @@ I18n.register("en", {
   "Améliorer": "Upgrade",
 
   // js/ui/dungeon-view.js
+  "À gagner": "To win",
+  "{n} % par victoire": "{n}% per victory",
+  "Ce qui t'attend": "What awaits you",
+  "{w} vagues, dont {n} en groupe": "{w} waves, {n} of them in groups",
+  "élites aux vagues {a} ; chacune met ton butin en sûreté": "elites at waves {a}; each one secures your loot",
+  "Un campement après la vague {n}": "A camp after wave {n}",
+  "1 à 3 haltes, trois cartes au choix (aucune ne soigne)": "1 to 3 halts, three cards to choose from (none heals)",
+  "Des haltes, après une première victoire": "Halts, after a first victory",
   "obtenu": "obtained",
   "à gagner contre {e}, dans Quêtes › Aventure": "to win against {e}, in Quests › Adventure",
   "{x} niveau {n}": "{x} level {n}",
@@ -1066,7 +1074,6 @@ I18n.register("en", {
   "Éclats": "Shards",
   "Entrée offerte": "Free entry",
   "— les braises te guident, aucune sortie du jour consommée": "— the embers guide you, no daily run used",
-  "Sorties restantes :": "Runs left:",
   "Entrer": "Enter",
   "{n} Marques au plus": "{n} Marks at most",
   "{x} : sortie terminée !": "{x}: run cleared!",
@@ -2714,7 +2721,6 @@ I18n.register("en", {
   "Au-delà du niveau {n} : or, Éclats et objets « Touché par l'Aether »": "Beyond level {n}: gold, Shards and Aether-touched items",
   "Libre : or ÷ 4, Éclats ÷ 2": "Free: gold ÷ 4, Shards ÷ 2",
   "pas de {x}": "no {x}",
-  "Mode libre : sorties illimitées": "Free mode: unlimited runs",
 
   // BOSS_MOMENTS
   "Le roi des marais": "The Marsh King",

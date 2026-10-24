@@ -386,6 +386,24 @@ body.dg-on-list .hud-dock { display: none !important; }
 .dlvl-sum b { font-weight: 800; }
 .dlvl-sum .is-dim { color: var(--nb-ink-dim); }
 .dlvl-sum .is-aether { color: var(--c-brown-700-vivid); font-weight: 700; }
+/* v3.476.0 (point 5 du bilan, atelier/feuille-lancement.html) : « À gagner », « Ce qui t'attend », replis */
+.dgain { margin: 8px 0 0; padding: 8px 10px; border-radius: var(--nb-radius-md); background: var(--nb-cream-alt); border: 1px solid var(--nb-frame-light); font-size: 12.5px; color: var(--nb-ink); }
+.dgain-ttl { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 4px; font-size: 12px; font-weight: 800; letter-spacing: 0.4px; text-transform: uppercase; color: var(--c-brown-700-vivid); }
+.dgain-ttl span + span { letter-spacing: 0; text-transform: none; color: var(--nb-ink-dim); }
+.dgain-ttl strong { color: var(--c-brown-700-vivid); }
+.dgain-row { display: grid; grid-template-columns: 22px 1fr; gap: 6px; align-items: start; line-height: 1.35; }
+.dgain-row + .dgain-row { margin-top: 4px; }
+.dgain-ico { width: 20px; height: 20px; margin-top: 1px; object-fit: contain; }
+.dgain-dot { width: 7px; height: 7px; margin: 6px 0 0 6px; border-radius: 50%; background: var(--c-bronze-500); }
+.dgain b { font-weight: 800; }
+.dgain .is-dim { color: var(--nb-ink-dim); }
+.dgain .is-aether { color: var(--c-brown-700-vivid); font-weight: 700; }
+.dsheet-fold { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 42px; margin: 8px 0 0; padding: 6px 10px; border: 1px solid var(--nb-frame-light); border-radius: var(--nb-radius-md); background: var(--nb-cream-alt); color: var(--nb-ink); font: inherit; text-align: left; cursor: pointer; }
+.dsheet-fold b { font-size: 12px; font-weight: 800; letter-spacing: 0.4px; text-transform: uppercase; color: var(--c-brown-700-vivid); }
+.dsheet-fold span { font-size: 12.5px; font-weight: 700; color: var(--nb-ink-dim); }
+.dsheet-fold i { font-style: normal; margin-left: 6px; }
+.dsheet-fold + .dmark { margin-top: 6px; }
+.dsheet-fold + .dsheet-story { margin-top: 8px; }
 .dsheet-ticket strong { color: var(--nb-ink); }
 .dsheet-ticket a { color: var(--nb-gold-dark, var(--c-brown-700-vivid)); font-weight: 800; }
 

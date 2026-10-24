@@ -7,6 +7,8 @@ var pendingDungeonId = null;   // donjon ouvert dans la feuille de lancement
 var pendingDungeonMarks = [];  // bascules de la feuille — copiées dans game.dungeonRun.marks au start() seulement
 var pendingDungeonLevel = 1;   // v3.464.0 : niveau choisi (atelier/niveaux-donjon.html, validé le 23/10)
 var pendingDungeonFree = false; // v3.464.0 : mode libre (sorties illimitées, 1 Ration moyenne)
+var pendingDungeonMarksOpen = false; // v3.476.0 : Marques repliées par défaut (point 5 du bilan)
+var pendingDungeonLoreOpen = false;  // v3.476.0 : récit et Sceau repliés
 
 function buildDungeonActiveHTML() {
   var dungeon = DungeonManager.getById(game.dungeonRun.dungeonId);
@@ -153,7 +155,6 @@ function dungeonRarityHTML(r) {
 function buildDungeonLevelHTML(d) {
   var D = DungeonManager, L = pendingDungeonLevel, max = D.getMaxLevel(d.id), best = D.getLevelBest(d.id);
   var cleared = !!(game.dungeonTierCleared || {})[d.id], left = D.getRunsLeft(d.id), per = D.getRunsPerDay();
-  var pct = function (x) { return Math.round(x * 100); };
   var h = '<div class="dlvl"><div class="kseg">';
   h += '<button type="button" class="' + (!pendingDungeonFree ? 'is-on' : '') + '"' + (left <= 0 ? ' disabled' : '') + ' onclick="setDungeonMode(false)"><span>' + _t("Sortie du jour") + '</span><small>' + left + ' / ' + per + '</small></button>';
   h += '<button type="button" class="' + (pendingDungeonFree ? 'is-on' : '') + '"' + (cleared ? '' : ' disabled') + ' onclick="setDungeonMode(true)"><span>' + _t("Mode libre") + '</span><small>' + (cleared ? _t("1 Ration moyenne") : _t("après une victoire")) + '</small></button>';
@@ -162,32 +163,62 @@ function buildDungeonLevelHTML(d) {
   h += '<div class="dlvl-num"><small>' + _t("Niveau") + '</small><strong>' + L + '</strong><small>' + (best ? _t("meilleur : {n}", { n: best }) : _t("jamais terminé")) + '</small></div>';
   h += '<button type="button" class="dlvl-step" aria-label="' + _t("Niveau suivant") + '"' + (L >= max ? ' disabled' : '') + ' onclick="stepDungeonLevel(1)">›</button>';
   h += '</div>';
+  h += '</div>';
+  return h;
+}
 
-  var src = D.getLevelLootSource(d, L), m = D.getLevelMult(L), beyond = D.getLevelBeyond(d, L);
+/* v3.476.0 (point 5 du bilan, atelier/feuille-lancement.html, validé par Seb) : « À gagner » regroupe tout le butin. */
+function buildDungeonGainHTML(d, L, free, nMarks) {
+  var D = DungeonManager, pct = function (x) { return Math.round(x * 100); };
+  var src = D.getLevelLootSource(d, L), beyond = D.getLevelBeyond(d, L), mult = D.getMarkRewardMult(nMarks);
   var w = (window.WORLDS || []).find(function (x) { return x.id === src.worldId; });
-  h += '<div class="dlvl-sum">';
-  h += '<span>' + _t("Butin :") + ' ' + dungeonRarityHTML(src.maxRarity) + (w ? ' · ' + esc(_td(w.name)) : '') + '</span>';
-  if (L > 1) h += '<span class="is-dim">' + _t("Monstres : PV +{a} %, dégâts +{b} %", { a: pct(m.hp - 1), b: pct(m.power - 1) }) + '</span>';
+  var row = function (ico, html) { return '<div class="dgain-row">' + (ico ? renderIconOrEmojiHTML(ico, "dgain-ico", "") : '<span class="dgain-dot" aria-hidden="true"></span>') + '<span>' + html + '</span></div>'; };
+  var h = '<div class="dgain"><div class="dgain-ttl"><span>' + _t("À gagner") + '</span><span>' + _t("Récompenses") + ' <strong>×' + mult.toFixed(2).replace(/0$/, "") + '</strong></span></div>';
+  h += row(null, _t("Butin :") + ' ' + dungeonRarityHTML(src.maxRarity) + (w ? ' · ' + esc(_td(w.name)) : ''));
+  var sp = d.specialResourceId && WAREHOUSE_RESOURCES[d.specialResourceId];
+  if (free) {
+    h += row("images/Icons/subtabs/shard_shop.webp", _t("Libre : or ÷ 4, Éclats ÷ 2") + (sp ? ', ' + _t("pas de {x}", { x: esc(_td(sp.name)) }) : ''));
+  } else {
+    var sh = DUNGEON_CONFIG.waveCount + DUNGEON_CONFIG.shardsBossBonus;
+    h += row(sp ? sp.icon : "images/Icons/subtabs/shard_shop.webp", (sp && d.specialResourceAmount > 0 ? esc(_td(sp.name)) + ' <strong>+' + D.getSpecialAmount(d, nMarks) + '</strong> · ' : '') + _t("Éclats") + ' <strong>+' + sh + '</strong>');
+  }
+  var u = d.boss && d.boss.unique, pw = u && window.LEGENDARY_POWER_BY_ID ? LEGENDARY_POWER_BY_ID[u.power] : null;
+  if (u) {
+    var uIco = typeof getEquipmentIconPath === "function" ? getEquipmentIconPath({ icon: u.icon, rarity: src.maxRarity }) : "";
+    h += row(uIco, '<b>' + esc(_td(u.name)) + '</b> · ' + _t("{n} % par victoire", { n: DUNGEON_CONFIG.uniqueDropPct })
+      + (pw ? '<br><span class="is-dim"><b>' + esc(_td(pw.label)) + '</b> · ' + esc(_td(pw.desc)) + '</span>' : ''));
+  }
   if (beyond > 0) {
-    h += '<span class="is-aether">✦ ' + _t("Touché par l'Aether : objets tirés au-dessus de {f} %", { f: pct(D.getLevelFloor(d, L)) }) + '</span>';
-    h += '<span>' + _t("Or et Éclats +{g} %", { g: pct(DungeonManager.getBeyondMult(DUNGEON_CONFIG.beyondGoldPct, beyond) - 1) }) + '</span>'; // v3.473.1 : en cumul
+    h += row("images/Icons/gold_icon.webp", _t("Or et Éclats +{g} %", { g: pct(D.getBeyondMult(DUNGEON_CONFIG.beyondGoldPct, beyond) - 1) })
+      + ' · <span class="is-aether">✦ ' + _t("Touché par l'Aether : objets tirés au-dessus de {f} %", { f: pct(D.getLevelFloor(d, L)) }) + '</span>'); // v3.473.1 : en cumul
   } else {
     var next = (d.levelSteps || []).filter(function (st) { return st.level > L; })[0];
     if (next) {
       var nd = D.getById(next.dungeonId);
-      h += '<span class="is-dim">' + (D.isUnlocked(next.dungeonId)
+      h += row(null, '<span class="is-dim">' + (D.isUnlocked(next.dungeonId)
         ? _t("Niveau {n} : butin {r} ({x})", { n: next.level, r: dungeonRarityHTML(nd.maxRarity), x: esc(_td(nd.name)) })
-        : _t("Niveau {n} : butin {r} ({x}, une fois ouvert)", { n: next.level, r: dungeonRarityHTML(nd.maxRarity), x: esc(_td(nd.name)) })) + '</span>';
-    } else {
-      h += '<span class="is-dim">' + _t("Au-delà du niveau {n} : or, Éclats et objets « Touché par l'Aether »", { n: D.getCapLevel(d) }) + '</span>';
+        : _t("Niveau {n} : butin {r} ({x}, une fois ouvert)", { n: next.level, r: dungeonRarityHTML(nd.maxRarity), x: esc(_td(nd.name)) })) + '</span>');
+    } else if (L > 1 || D.getLevelBest(d.id)) {
+      h += row(null, '<span class="is-dim">' + _t("Au-delà du niveau {n} : or, Éclats et objets « Touché par l'Aether »", { n: D.getCapLevel(d) }) + '</span>');
     }
   }
-  if (pendingDungeonFree) {
-    var sp = d.specialResourceId && WAREHOUSE_RESOURCES[d.specialResourceId];
-    h += '<span class="is-dim">' + _t("Libre : or ÷ 4, Éclats ÷ 2") + (sp ? ', ' + _t("pas de {x}", { x: esc(_td(sp.name)) }) : '') + '</span>';
-  }
-  h += '</div></div>';
-  return h;
+  return h + '</div>';
+}
+
+/* v3.476.0 : « Ce qui t'attend » — vagues de groupe, élites qui mettent le butin en sûreté, campement, haltes. */
+function buildDungeonAheadHTML(d, L, storyFree) {
+  var D = DungeonManager, pct = function (x) { return Math.round(x * 100); }, m = D.getLevelMult(L);
+  var groups = Object.keys(d.groupWaves || {}).length, elites = Object.keys(d.eliteWaves || {}).map(Number).sort(function (a, b) { return a - b; });
+  var camp = D.getCamp(d), cleared = !!(game.dungeonTierCleared || {})[d.id];
+  var row = function (html) { return '<div class="dgain-row"><span class="dgain-dot" aria-hidden="true"></span><span>' + html + '</span></div>'; };
+  var h = '<div class="dgain"><div class="dgain-ttl"><span>' + _t("Ce qui t'attend") + '</span></div>';
+  var line = _t("{w} vagues, dont {n} en groupe", { w: DUNGEON_CONFIG.waveCount, n: groups });
+  if (elites.length) line += ' · ' + _t("élites aux vagues {a} ; chacune met ton butin en sûreté", { a: elites.join(" " + _t("et") + " ") });
+  h += row(line);
+  if (camp) h += row(_t("Un campement après la vague {n}", { n: camp.afterWave }));
+  if (L > 1) h += row(_t("Monstres : PV +{a} %, dégâts +{b} %", { a: pct(m.hp - 1), b: pct(m.power - 1) }));
+  if ((d.haltSlots || []).length) h += row(cleared && !storyFree ? _t("1 à 3 haltes, trois cartes au choix (aucune ne soigne)") : _t("Des haltes, après une première victoire"));
+  return h + '</div>';
 }
 
 function setDungeonMode(free) {
@@ -224,30 +255,8 @@ function buildDungeonSheetHTML(dungeonId) {
     close: "closeDungeonSheet()"
   });
   h += '<div class="ksheet-body">';
+  // v3.476.0 (point 5) : ce qui décide d'abord (mode, niveau, pronostic), puis la préparation, le butin, la suite
   if (!storyFree) h += buildDungeonLevelHTML(dungeon);
-  if (dungeon.story) h += '<div class="dsheet-story">' + esc(_td(dungeon.story)) + '</div>';
-  h += buildDungeonSceauLoreHTML(dungeon.id);
-
-  h += '<div class="dsheet-marks-title"><span>' + _t("Marques") + '</span><span>' + n + ' / ' + maxMarks + '</span></div>';
-  (DUNGEON_MARKS || []).forEach(function (m) {
-    var on = pendingDungeonMarks.indexOf(m.id) !== -1;
-    var ok = DungeonManager.isMarkUnlocked(m.id, dungeon.id);
-    h += '<button type="button" class="dmark' + (on ? ' is-on' : '') + (ok ? '' : ' is-locked') + '" onclick="toggleDungeonMark(\'' + esc(m.id) + '\')">';
-    h += renderIconOrEmojiHTML(m.icon, "dmark-img", _td(m.name));
-    h += '<span class="dmark-body"><span class="dmark-name">' + esc(_td(m.name)) + '</span><br><span class="dmark-desc">' + (ok ? esc(_td(m.desc)) : _t("Termine ce donjon une fois")) + '</span></span>';
-    h += '<span class="dmark-state"></span></button>';
-  });
-
-  /* Récompense projetée : la raison d'être des Marques, visible sans dérouler. */
-  h += '<div class="dsheet-reward"><span>' + _t("Récompenses") + ' <strong>×' + mult.toFixed(2).replace(/0$/, "") + '</strong></span>';
-  var specialDef = dungeon.specialResourceId ? WAREHOUSE_RESOURCES[dungeon.specialResourceId] : null;
-  if (specialDef && dungeon.specialResourceAmount > 0 && !free) {
-    h += '<span>' + renderIconOrEmojiHTML(specialDef.icon, "dsheet-reward-icon", _td(specialDef.name)) + ' ' + esc(_td(specialDef.name)) + ' <strong>+' + DungeonManager.getSpecialAmount(dungeon, n) + '</strong></span>';
-  } else {
-    h += '<span><img class=ico-inline src=images/Icons/subtabs/shard_shop.webp> ' + _t("Éclats") + ' <strong>' + (free ? '÷ 2' : '+' + (DUNGEON_CONFIG.waveCount + DUNGEON_CONFIG.shardsBossBonus)) + '</strong></span>';
-  }
-  h += '</div>';
-
   /* v3.247.0 : pronostic du donjon, Marques comprises. v3.429.7 : le run ENTIER (usure des
      quinze vagues, entrée à PV pleins), puis le boss avec ce qui reste. */
   if (window.CombatForecast && typeof CombatForecast.forDungeon === "function") {
@@ -261,14 +270,29 @@ function buildDungeonSheetHTML(dungeonId) {
     if (dungeon.prepChecks && dungeon.prepChecks.length) h += buildDungeonPrepHTML(dungeon);
     else if (dungeon.prepHint) h += '<div class="dsheet-ticket"><img class=ico-inline src=images/Icons/system/warning.webp> ' + esc(_td(dungeon.prepHint)) + '</div>';
   }
+  h += buildDungeonGainHTML(dungeon, level, free, n);
+  h += buildDungeonAheadHTML(dungeon, level, storyFree);
 
-  if (storyFree) {
-    h += '<div class="dsheet-ticket"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.webp> <strong>' + _t("Entrée offerte") + '</strong> ' + _t("— les braises te guident, aucune sortie du jour consommée") + '</div>';
-  } else if (free) {
-    h += '<div class="dsheet-ticket"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.webp> ' + _t("Mode libre : sorties illimitées") + '</div>';
-  } else {
-    h += '<div class="dsheet-ticket"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.webp> ' + _t("Sorties restantes :") + ' <strong>' + DungeonManager.getRunsLeft(dungeon.id) + ' / ' + DungeonManager.getRunsPerDay() + '</strong></div>';
+  // Marques, repliées par défaut : le résumé dit combien et pour quel gain
+  h += '<button type="button" class="dsheet-fold" aria-expanded="' + pendingDungeonMarksOpen + '" onclick="toggleDungeonFold(\'marks\')"><b>' + _t("Marques") + '</b><span>'
+    + n + ' / ' + maxMarks + ' · ×' + mult.toFixed(2).replace(/0$/, "") + ' <i aria-hidden="true">' + (pendingDungeonMarksOpen ? '▲' : '▼') + '</i></span></button>';
+  if (pendingDungeonMarksOpen) (DUNGEON_MARKS || []).forEach(function (m) {
+    var on = pendingDungeonMarks.indexOf(m.id) !== -1;
+    var ok = DungeonManager.isMarkUnlocked(m.id, dungeon.id);
+    h += '<button type="button" class="dmark' + (on ? ' is-on' : '') + (ok ? '' : ' is-locked') + '" onclick="toggleDungeonMark(\'' + esc(m.id) + '\')">';
+    h += renderIconOrEmojiHTML(m.icon, "dmark-img", _td(m.name));
+    h += '<span class="dmark-body"><span class="dmark-name">' + esc(_td(m.name)) + '</span><br><span class="dmark-desc">' + (ok ? esc(_td(m.desc)) : _t("Termine ce donjon une fois")) + '</span></span>';
+    h += '<span class="dmark-state"></span></button>';
+  });
+
+  // Histoire : le récit et le Sceau, repliés
+  var lore = (dungeon.story ? '<div class="dsheet-story">' + esc(_td(dungeon.story)) + '</div>' : '') + buildDungeonSceauLoreHTML(dungeon.id);
+  if (lore) {
+    h += '<button type="button" class="dsheet-fold" aria-expanded="' + pendingDungeonLoreOpen + '" onclick="toggleDungeonFold(\'lore\')"><b>' + _t("Histoire") + '</b><span><i aria-hidden="true">' + (pendingDungeonLoreOpen ? '▲' : '▼') + '</i></span></button>';
+    if (pendingDungeonLoreOpen) h += lore;
   }
+
+  if (storyFree) h += '<div class="dsheet-ticket"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.webp> <strong>' + _t("Entrée offerte") + '</strong> ' + _t("— les braises te guident, aucune sortie du jour consommée") + '</div>';
   // v3.330.1 : vivres de sortie (donjon déjà fini une fois)
   var dDef = (window.DUNGEONS || []).filter(function (x) { return x.id === Number(dungeonId); })[0];
   if (window.ProvisionsManager && dDef) h += ProvisionsManager.buildLineHTML(free ? "dungeonFree" : "dungeon", dDef);
@@ -293,8 +317,16 @@ function openDungeonSheet(dungeonId) {
   pendingDungeonMarks = [];
   pendingDungeonLevel = Math.max(1, Math.min(DungeonManager.getMaxLevel(dungeonId), DungeonManager.getLevelBest(dungeonId))); // le meilleur niveau tenu
   pendingDungeonFree = !storyFree && DungeonManager.getRunsLeft(dungeonId) <= 0;
+  pendingDungeonMarksOpen = false; pendingDungeonLoreOpen = false; // v3.476.0
   renderDungeonSheet();
 }
+
+function toggleDungeonFold(which) {
+  if (which === "marks") pendingDungeonMarksOpen = !pendingDungeonMarksOpen;
+  else pendingDungeonLoreOpen = !pendingDungeonLoreOpen;
+  renderDungeonSheet();
+}
+window.toggleDungeonFold = toggleDungeonFold;
 
 function closeDungeonSheet() {
   pendingDungeonId = null;
