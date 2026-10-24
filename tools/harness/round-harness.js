@@ -56,6 +56,9 @@ g.Initiative.legacy = true;
 g.__traps = false;
 (function () { var place = g.Pa2Run._placeTraps; g.Pa2Run._placeTraps = function (r) { return g.__traps ? place.call(this, r) : {}; }; })();
 (function () { var place = g.Pa2Run._placeCuts; g.Pa2Run._placeCuts = function (r) { return g.__traps ? place.call(this, r) : {}; }; })();
+/* v3.469.0 : la condition du run reste « Nuit calme » sauf là où g.__cond est vrai (runs au hasard, [283]). */
+g.__cond = false;
+(function () { var draw = g.Pa2Run._drawCondition; g.Pa2Run._drawCondition = function (w) { return g.__cond ? draw.call(this, w) : "calme"; }; })();
 var failures = 0, passes = 0;
 /* v3.459.5 (audit O9) : chaque ✘ porte sa section, et la fin du harnais les récapitule. */
 var section = "", echecs = [], _log = console.log;
@@ -11987,7 +11990,7 @@ console.log("\n[158] v3.381.0 — Petites Aventures v2 (PA2-0) : moteur sans éc
     ok(S.abandon().ok && runv.end.how === "cancel" && game.resources.petite_ration === pr1 && !g.SortieManager.isActive(), "renoncer en préparation ne coûte rien");
 
     /* 300 runs au hasard : tout run se termine, sans valeur absurde */
-    g.__traps = true; // v3.467.0 : les runs au hasard passent aussi les pièges
+    g.__traps = true; g.__cond = true; // v3.467.0 : les runs au hasard passent aussi les pièges (v3.469.0 : et les conditions)
     var bad = 0, finished = 0, guardHit = 0;
     for (var k = 0; k < 300; k++) {
       prep(1 + (k % 13)); game.sceneRun = null;
@@ -12016,7 +12019,7 @@ console.log("\n[158] v3.381.0 — Petites Aventures v2 (PA2-0) : moteur sans éc
       if (runv.status === "completed") finished++;
       if (!(game.heroHp >= 0) || !isFinite(runv.loot) || runv.breath < 0) bad++;
     }
-    g.__traps = false;
+    g.__traps = false; g.__cond = false;
     ok(finished === 300 && bad === 0 && guardHit === 0, "300 runs au hasard : tous terminés, aucun blocage ni valeur absurde (" + finished + " / 300)");
   } finally {
     P.rand = savedRand;
@@ -12392,7 +12395,7 @@ console.log("\n[163] v3.386.0 — Petites Aventures v2 (PA2-4) : deuxième carte
 
     /* 200 runs au hasard sur foret_2 */
     g.PA2_MAPS_BY_WORLD.forest = ["foret_2"];
-    g.__traps = true; // v3.467.0 : les runs au hasard passent aussi les pièges
+    g.__traps = true; g.__cond = true; // v3.467.0 : les runs au hasard passent aussi les pièges (v3.469.0 : et les conditions)
     var bad = 0, finished = 0, dests = 0, evRow = 0, lens = [], why = "";
     // v3.429.1 : échec rare (~1 passe sur 150, non reproduit) : le message dira quel run a calé et pourquoi
     function noteRun(k, txt) { if (!why) why = " ; 1er run fautif n°" + k + " (niv. " + game.heroLevel + ") : " + txt; }
@@ -12426,7 +12429,7 @@ console.log("\n[163] v3.386.0 — Petites Aventures v2 (PA2-4) : deuxième carte
       if (r.end && r.end.dest) { dests++; lens.push(r.path.length); } // v3.467.0 : un pas arrêté par un piège ne compte pas
       if (!(game.heroHp >= 0) || !isFinite(r.loot) || r.breath < 0) { bad++; noteRun(k, "valeur absurde : PV " + game.heroHp + ", butin " + r.loot + ", souffle " + r.breath); }
     }
-    g.__traps = false;
+    g.__traps = false; g.__cond = false;
     ok(finished === 200 && bad === 0, "200 runs au hasard sur foret_2 : tous terminés, aucune valeur absurde (" + finished + " / 200" + why + ")");
     ok(evRow === 0, "la rencontre tombe dans l'acte I, avant le camp");
     ok(dests > 0 && lens.every(function (x) { return x === M.rows.dest + 1; }), "un run qui atteint sa destination traverse " + (M.rows.dest + 1) + " nœuds (" + dests + " destinations)");
@@ -12551,7 +12554,7 @@ console.log("\n[164] v3.387.0 — Petites Aventures v2 (PA2-5) : le Désert (car
     ok(cl.ok && game.explorationProgression.desertPaCompleted === true && Number(game.resources.verre_des_dunes || 0) > verre0 && r.end.rare > 0, "destination atteinte : drapeau de l'étape « L'outre » et Verre des dunes");
     ok(!r.end.chest, "le Désert n'ouvre pas le coffre de la Forêt");
 
-    g.__traps = true; // v3.467.0 : les runs au hasard passent aussi les pièges
+    g.__traps = true; g.__cond = true; // v3.467.0 : les runs au hasard passent aussi les pièges (v3.469.0 : et les conditions)
     /* 150 runs au hasard */
     var done = 0, bad = 0;
     for (var k = 0; k < 150; k++) {
@@ -12563,7 +12566,7 @@ console.log("\n[164] v3.387.0 — Petites Aventures v2 (PA2-5) : le Désert (car
       if (r.status === "completed") done++;
       if (!(game.heroHp >= 0) || !isFinite(r.loot) || r.breath < 0) { bad++; noteRun(k, "valeur absurde : PV " + game.heroHp + ", butin " + r.loot + ", souffle " + r.breath); }
     }
-    g.__traps = false;
+    g.__traps = false; g.__cond = false;
     ok(done === 150 && bad === 0, "150 runs au hasard au Désert : tous terminés, aucune valeur absurde (" + done + " / 150)");
 
     /* Écrans */
@@ -17191,6 +17194,121 @@ console.log("\n[282] v3.468.0 — Petites Aventures : sentiers coupés au dépar
     ok(Object.keys(P._placeCuts({ parcours: true, map: {}, nodes: {}, worldId: "forest" }) || {}).length === 0, "parcours : aucune coupure");
   } finally {
     g.__traps = false; g.PA2_MAPS_BY_WORLD.forest = savedMaps; game.sceneRun = null;
+    if (g.SortieManager.isActive()) g.SortieManager.end("return");
+  }
+})();
+
+console.log("\n[283] v3.469.0 — Petites Aventures : condition du run (PG-B1a à PG-B1c)");
+(function () {
+  var S = g.SceneRunManager, P = g.Pa2Run, savedMaps = g.PA2_MAPS_BY_WORLD.forest.slice(), savedRand = P.rand;
+  g.PA2_MAPS_BY_WORLD.forest = ["foret_1"];
+  var TPL = { forest: "petite_aventure_foret", desert: "petite_aventure_desert", ruins: "petite_aventure_ruines", crypt: "petite_aventure_crypte" };
+  function prep() {
+    game = freshCombat("knight"); giveWeapon();
+    run("game.enemy = null; game.combat = null;");
+    S.ensureDefaults();
+    game.explorationProgression.petiteAventure = { spent: 0, since: null };
+    game.resources.petite_ration = 5;
+    game.heroLevel = 6; game.heroHp = game.heroMaxHp; game.sceneRun = null;
+    if (g.SortieManager.isActive()) g.SortieManager.end("return");
+  }
+  function go(world, cond, items, traps) {
+    prep(); S.startRun(TPL[world]); var r = game.sceneRun; r.cond = cond; r.hookId = null;
+    (items || []).forEach(function (id) { P.addItem(id); });
+    P.depart(); return r;
+  }
+  function rowKey(r, row) { return Object.keys(r.nodes).filter(function (k) { return r.nodes[k].row === row; })[0]; }
+  try {
+    // Tirage : « Nuit calme » une fois sur cinq, sinon une des quatre du monde
+    g.__cond = true;
+    var okDraw = true, calm = 0, N = 400;
+    Object.keys(TPL).forEach(function (w) {
+      var seen = {};
+      for (var k = 0; k < N; k++) { var c = P._drawCondition(w); seen[c] = 1; if (c === "calme") calm++; else if (!g.PA2_CONDITIONS[w][c]) okDraw = false; }
+      if (Object.keys(g.PA2_CONDITIONS[w]).some(function (c) { return !seen[c]; })) okDraw = false;
+    });
+    ok(okDraw && calm / (4 * N) > 0.15 && calm / (4 * N) < 0.25, "tirage : quatre conditions par monde, Nuit calme une fois sur cinq (" + Math.round(100 * calm / (4 * N)) + " %)");
+    prep(); S.startRun("petite_aventure_foret");
+    ok(typeof game.sceneRun.cond === "string" && P.condition(game.sceneRun) !== null, "la condition est tirée au lancement, avant la préparation");
+    g.__cond = false;
+    // Écran : en-tête, panneau « Cette nuit », pastille en route
+    prep(); S.startRun("petite_aventure_foret"); var r = game.sceneRun; r.cond = "brouillard";
+    run("switchTab('scene')"); g.pa2View.prepStep = "bag";
+    var hp = g.buildPa2PrepHTML(r);
+    ok(/nuit de brouillard/.test(hp) && /pa2-cond/.test(hp) && /Ruser gagne un cran/.test(hp) && /Utile cette nuit : Torche/.test(hp), "préparation : « … · nuit de brouillard », panneau Cette nuit, avantage, inconvénient, objet utile");
+    r.cond = "calme"; hp = g.buildPa2PrepHTML(r);
+    ok(/nuit calme/.test(hp) && !/pa2-pro/.test(hp.split("pa2-cond")[1] || ""), "Nuit calme : la phrase seule");
+    r = go("forest", "brouillard");
+    ok(/is-cond/.test(g.pa2HudHTML(r)) && /Brouillard/.test(g.pa2HudHTML(r)), "en route : pastille « Brouillard » dans l'en-tête");
+    r = go("forest", "calme");
+    ok(!/is-cond/.test(g.pa2HudHTML(r)), "Nuit calme : pas de pastille");
+    // Vue : brouillard −1, pleine lune +1
+    r = go("forest", "calme"); var r1 = rowKey(r, 1), r2 = rowKey(r, 2), seeC = P.isVisible(r1, r) && !P.isVisible(r2, r);
+    r = go("forest", "brouillard"); var seeB = !P.isVisible(r1, r) && P.isVisible(rowKey(r, 0), r);
+    r = go("forest", "pleine_lune"); var seeL = P.isVisible(r2, r);
+    ok(seeC && seeB && seeL, "vue : brouillard une rangée de moins, pleine lune une de plus");
+    // Ruser, dégâts, premier combat
+    function combatAt(r) { var c = r.nodes[rowKey(r, 1)]; c.type = "combat"; c.done = false; r.at = c.key; r.status = "pa2-node"; P._prepareNode(r, c); return c; }
+    r = go("forest", "calme"); var cC = combatAt(r), ruC = P.combatPreview().ruse.bonus, dmC = P._dmgMult(r, cC, "tenir"), packC = cC.pack;
+    r = go("forest", "brouillard"); combatAt(r); var ruB = P.combatPreview().ruse.bonus;
+    r = go("forest", "pleine_lune"); var cL = combatAt(r), dmL = P._dmgMult(r, cL, "tenir");
+    ok(ruB === ruC + 1, "brouillard : Ruser gagne un cran");
+    ok(Math.abs(dmL / dmC - 1.15) < 1e-9, "pleine lune : +15 % de dégâts reçus");
+    r = go("desert", "fraiche"); var f1 = combatAt(r), p1 = f1.pack; var f2 = r.nodes[rowKey(r, 2)]; f2.type = "combat"; f2.done = false; r.at = f2.key; P._prepareNode(r, f2);
+    ok(f1.condExtra && p1 === g.PA2_ACTS[1].pack + 1 && !f2.condExtra && f2.pack === g.PA2_ACTS[1].pack, "nuit fraîche : le premier combat de l'acte a un ennemi de plus, pas le suivant");
+    // Sources, marche
+    r = go("forest", "calme"); var sC = P.sourceAmount(r); r = go("forest", "orage");
+    ok(P.sourceAmount(r) === sC * 2, "orage : les sources rendent le double");
+    function stepCost(world, cond) { var r = go(world, cond); r.cuts = {}; r.traps = {}; var b = r.breath; P.moveTo(P.openMoves()[0]); return b - r.breath; }
+    var base = g.PA2_WORLD_RULES.desert.stepBreath;
+    ok(stepCost("desert", "canicule") === base + 2 && stepCost("desert", "fraiche") === base - 2, "canicule : +2 Souffle par pas ; nuit fraîche : −2");
+    // Coupures et pièges en plus
+    g.__traps = true;
+    var cutsC = 0, cutsO = 0, maxT = 0, trap2 = false, alC = 0, alG = 0, totC = 0, totG = 0;
+    for (var k = 0; k < 25; k++) {
+      cutsC += Object.keys(go("forest", "calme").cuts).length; cutsO += Object.keys(go("forest", "orage").cuts).length;
+      r = go("forest", "braconniers"); r.ring = "sentier"; var per = { 1: 0, 2: 0, 3: 0 };
+      Object.keys(r.traps).forEach(function (t) { per[r.nodes[t.split(">")[1]].act]++; });
+      [1, 2, 3].forEach(function (a) { maxT = Math.max(maxT, per[a]); if (per[a] === 2) trap2 = true; });
+      r = go("ruins", "calme"); r.ring = "periple"; Object.keys(r.traps).forEach(function (t) { totC++; if (r.traps[t].fx === "alarme") alC++; });
+      r = go("ruins", "guetteurs"); Object.keys(r.traps).forEach(function (t) { totG++; if (r.traps[t].fx === "alarme") alG++; });
+    }
+    ok(cutsO / 25 >= cutsC / 25 + 1.5, "orage : deux sentiers coupés de plus (" + (cutsC / 25).toFixed(1) + " → " + (cutsO / 25).toFixed(1) + ")");
+    ok(trap2 && maxT <= 2, "braconniers : un piège de plus par acte (2 sur le Sentier)");
+    ok(alG / totG > alC / totC, "guetteurs : l'Alarme plus souvent (" + Math.round(100 * alC / totC) + " % → " + Math.round(100 * alG / totG) + " %)");
+    // Crypte : courants d'air, les pièges cachés se voient sur les sentiers ouverts
+    r = go("crypt", "courants"); var tk = r.at + ">" + P.openMoves()[0]; r.traps = {}; r.traps[tk] = { fx: "venin", hidden: true, seen: false, done: false };
+    ok(P.isTrapShown(tk, r), "courants d'air : le piège caché du sentier ouvert se voit");
+    g.__traps = false;
+    // Trouvaille, obstacles, niches
+    r = go("forest", "braconniers"); var t = r.nodes[rowKey(r, 1)]; t.type = "trouvaille"; t.done = false; r.at = t.key; r.status = "pa2-node"; P._prepareNode(r, t);
+    ok(t.draw.length === 2, "braconniers : une relique au choix parmi deux");
+    function obstacleAt(r) { var o = r.nodes[rowKey(r, 1)]; o.type = "obstacle"; o.gabaritId = null; o.done = false; r.at = o.key; r.status = "pa2-node"; P._prepareNode(r, o); return o; }
+    r = go("ruins", "calme"); var oC = obstacleAt(r), bC = P.obstacleOptions()[0].bonus;
+    r = go("ruins", "poussiere"); var oP = obstacleAt(r); oP.gabaritId = oC.gabaritId; oP.diff = oC.diff;
+    ok(P.obstacleOptions()[0].bonus === bC + 1, "poussière de chantier : obstacles un cran plus faciles");
+    P.rand = function () { return 0.999; };
+    r = go("desert", "calme"); var oD = obstacleAt(r), gid = oD.gabaritId, dif = oD.diff, gC = P.resolveObstacle(P.obstacleOptions()[0].voie).result.gain;
+    r = go("desert", "vent"); var oV = obstacleAt(r); oV.gabaritId = gid; oV.diff = dif; var gV = P.resolveObstacle(P.obstacleOptions()[0].voie).result.gain;
+    P.rand = savedRand;
+    ok(Math.abs(gV / gC - 1.3) < 0.05, "vent de sable : obstacles +30 % d'or (" + gC + " → " + gV + ")");
+    r = go("ruins", "batisseurs"); r.loot = 500;
+    ok(P.altarCost(r) === 0 && P._altarFree(r), "bâtisseurs : les niches sont gratuites");
+    // Craie, Lanterne
+    r = go("ruins", "murs");
+    ok(r.stock.craie === 1, "les murs s'agitent : un trait de Craie offert, même sans Craie dans la besace");
+    r = go("crypt", "meches", ["lanterne"]); P.useItem("lanterne"); var lM = r.lanternLeft;
+    r = go("crypt", "calme", ["lanterne"]); P.useItem("lanterne");
+    ok(lM === r.lanternLeft - 2, "mèches humides : la Lanterne brûle 2 pas de moins (" + r.lanternLeft + " → " + lM + ")");
+    // Butin final, Cire à la destination
+    r = go("desert", "pillards"); r.status = "pa2-node"; P.finish("home");
+    ok(Math.abs(r.end.mult - 1.2) < 1e-9, "pillards : butin final ×1,2");
+    function clairiere(cond) { var r = go("crypt", cond), k = Object.keys(r.nodes).filter(function (x) { return r.nodes[x].type === "clairiere"; })[0]; r.at = k; r.status = "pa2-node"; r.nodes[k].done = false; P.clairiere(); return r.end.rare; }
+    ok(clairiere("dormeurs") === clairiere("calme") + 1, "les dormeurs remuent : une Cire de plus à la destination");
+    // Parcours : jamais de condition
+    ok(P.condition({ parcours: true, cond: "brouillard", worldId: "forest" }) === null, "parcours : aucune condition");
+  } finally {
+    P.rand = savedRand; g.__cond = false; g.__traps = false; g.PA2_MAPS_BY_WORLD.forest = savedMaps; game.sceneRun = null;
     if (g.SortieManager.isActive()) g.SortieManager.end("return");
   }
 })();

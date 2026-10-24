@@ -131,6 +131,8 @@ var DATA_TEXT_FIELDS = {
   PA2_TRAP_FX: ["*.name", "*.desc", "*.cure"], // v3.467.0 (Pièges)
   PA2_TRAPS: ["*.*.name", "*.*.line"],
   PA2_CUTS: ["*.*.name"], // v3.468.0 (sentiers coupés)
+  PA2_CONDITIONS: ["*.*.name", "*.*.kicker", "*.*.line", "*.*.pro", "*.*.con"], // v3.469.0 (condition du run)
+  PA2_CONDITION_CALM: ["name", "kicker", "line"],
   PA2_HOOKS: ["*.title", "*.lede", "*.event.name", "*.event.text", "*.event.branches.*.label", "*.event.branches.*.text",
     "*.campGift.text", "*.revenge.name", "*.revenge.line", "*.clairiere.*", "*.echo.*"],
 

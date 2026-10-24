@@ -222,7 +222,8 @@ function buildPa2PrepHTML(run) {
 
   if (pa2View.prepStep === "bag") {
     h += '<div class="pa2-panel pa2-center">';
-    h += '<div class="pa2-kicker">' + esc(par ? pa2WorldName(run.worldId) : _t("{w} · de nuit", { w: pa2WorldName(run.worldId) })) + '</div>';
+    var cond = par ? null : Pa2Run.condition(run); // v3.469.0 : la nuit du run remplace « de nuit »
+    h += '<div class="pa2-kicker">' + esc(par ? pa2WorldName(run.worldId) : (cond ? pa2WorldName(run.worldId) + " · " + _td(cond.kicker) : _t("{w} · de nuit", { w: pa2WorldName(run.worldId) }))) + '</div>';
     if (hook) {
       h += '<h1 class="pa2-h1">' + esc(_td(hook.title)) + '</h1>';
       h += '<p class="pa2-narr pa2-dim">' + esc(_td(hook.lede)) + '</p>';
@@ -232,6 +233,7 @@ function buildPa2PrepHTML(run) {
     }
     h += '</div>';
 
+    if (cond) h += pa2CondPanelHTML(cond); // v3.469.0 (atelier conditions-run) : lu avant de remplir la besace
     // Le héros tel qu'il part : PV actuels (pas de soin gratuit), stats du jet.
     h += '<div class="pa2-panel pa2-hero">' + pa2Img(hero.image, "pa2-portrait", hero.name);
     h += '<div class="pa2-hero-info"><div class="pa2-kicker">' + esc(_t("{n}, niveau {l}", { n: hero.name, l: run.level })) + '</div>';
@@ -435,7 +437,7 @@ function pa2HudHTML(run) {
   });
   if (run.stock.corde > 0) chips += '<span class="pa2-chip" title="' + esc(pa2ItemName("corde")) + '">' + pa2Img(PA2_ITEMS.corde.icon) + '×' + run.stock.corde + '</span>';
   if (run.stock.trousse > 0) chips += '<span class="pa2-chip" title="' + esc(pa2ItemName("trousse")) + '">' + pa2Img(PA2_ITEMS.trousse.icon) + '×' + run.stock.trousse + '</span>';
-  chips = pa2FxChipsHTML(run) + chips; // v3.467.0 : effets des pièges en cours, en tête
+  chips = pa2CondChipHTML(run) + pa2FxChipsHTML(run) + chips; // v3.467.0 : effets des pièges en cours ; v3.469.0 : la condition, en tête
   // v3.454.0 (Crypte) : la Lanterne, à allumer ; allumée, le nombre de pas qu'il lui reste
   if (Number(run.lanternLeft || 0) > 0) chips += '<span class="pa2-chip is-lit" title="' + esc(pa2ItemName("lanterne")) + '">' + pa2Img(PA2_ITEMS.lanterne.icon) + esc(_tn(run.lanternLeft, "{n} pas", "{n} pas")) + '</span>';
   else if (run.stock.lanterne > 0) chips += '<button type="button" class="pa2-chip" onclick="pa2Use(\'lanterne\')" aria-label="' + esc(_t("Allumer la Lanterne")) + '">' + pa2Img(PA2_ITEMS.lanterne.icon) + '×' + run.stock.lanterne + '</button>';
@@ -715,6 +717,23 @@ function pa2FxChipsHTML(run) {
   });
   return h;
 }
+/* v3.469.0 (Condition du run, atelier conditions-run validé le 24/10/2026) */
+function pa2CondPanelHTML(cond) {
+  var h = '<div class="pa2-panel pa2-cond"><div class="pa2-cond-head"><div class="pa2-kicker">' + esc(_t("Cette nuit")) + '</div><h3 class="pa2-h3">' + esc(_td(cond.name)) + '</h3></div>';
+  h += '<p class="pa2-narr pa2-dim">' + esc(_td(cond.line)) + '</p>';
+  if (cond.pro) h += '<ul><li class="pa2-pro"><span>+</span><span>' + esc(_td(cond.pro)) + '</span></li><li class="pa2-con"><span>−</span><span>' + esc(_td(cond.con)) + '</span></li></ul>';
+  if (cond.tip) h += '<p class="pa2-small pa2-dim">' + esc(_t("Utile cette nuit : {x}", { x: pa2ItemName(cond.tip) })) + '</p>';
+  return h + '</div>';
+}
+function pa2CondChipHTML(run) {
+  var c = Pa2Run.condition(run);
+  if (!c || !c.pro) return "";
+  return '<button type="button" class="pa2-chip is-cond" onclick="pa2CondInfo()" aria-label="' + esc(_td(c.name)) + '">' + esc(_td(c.name)) + '</button>';
+}
+function pa2CondInfo() {
+  var c = Pa2Run.condition();
+  if (c && c.pro && typeof showToast === "function") showToast(_t("{n} : + {p} ; − {c}", { n: _td(c.name), p: _td(c.pro), c: _td(c.con) }), 2600);
+}
 function pa2CutInfo(key) {
   if (pa2Cam && pa2Cam.gesture.suppressClick) return; // fin d'un glissé : pas un tap
   var c = Pa2Run.cutDef(key);
@@ -946,6 +965,7 @@ function pa2SheetBody(run, n, st) {
         h += pa2FoeHead(foe, boss ? _t("Destination · gardien") : (n.revenge ? _t("Combat · conséquence") : pa2ActKicker(n, _t("Combat"))), true);
         if (n.revenge) h += '<p class="pa2-sim is-red">' + esc(_t("Tu lui as pris son arc, plus tôt. Il frappe 30 % plus fort.")) + '</p>';
         if (n.alarm) h += '<p class="pa2-sim is-red">' + esc(_t("L'alarme a sonné plus tôt : ils sont un de plus, et ils t'attendent.")) + '</p>';
+        if (n.condExtra) h += '<p class="pa2-sim is-red">' + esc(_t("Cette nuit, le premier combat de l'acte compte un ennemi de plus.")) + '</p>';
         h += '<p class="pa2-sim">' + esc(_t("Résolu sur ton héros seul, niveau {l} : sans compagnons ni potions. Les dégâts annoncés sont ceux que tu prendras, à 15 % près.", { l: run.level })) + '</p>';
         h += '<div class="pa2-choices">';
         if (st.step === "surprised") {

@@ -415,3 +415,10 @@ body.pa2-full .pa2-scrim { background: rgba(5, 3, 2, 0.28); }
 .pa2-cut img { width: 78%; height: 78%; object-fit: contain; filter: grayscale(.6); pointer-events: none; }
 .pa2-cut::after { content: ""; position: absolute; left: 12%; right: 12%; top: 50%; height: 2px; background: #b9b3ab; transform: rotate(-35deg); }
 .pa2-fs .pa2-cut { width: calc(6.4% * var(--nk, 1)); }
+
+/* v3.469.0 (Condition du run, atelier conditions-run) : panneau « Cette nuit » et pastille en route */
+.pa2-cond-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.pa2-cond ul { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 4px; font-size: 13.5px; font-weight: 700; }
+.pa2-cond li { display: grid; grid-template-columns: 18px 1fr; gap: 4px; }
+.pa2-cond .pa2-small { margin-top: 8px; }
+.pa2-chip.is-cond { padding: 0 9px; font-size: 12px; font-weight: 800; color: var(--pa2-gold); }

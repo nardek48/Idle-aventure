@@ -244,6 +244,52 @@ var PA2_CUTS = {
   ruins:  { rue: { name: "Rue effondrée", icon: "images/Icons/scene/cuts/cut_collapsed_street.webp" }, porte: { name: "Porte murée", icon: "images/Icons/scene/cuts/cut_walled_door.webp" } },
   crypt:  { grille: { name: "Grille tombée", icon: "images/Icons/scene/cuts/cut_gate.webp" }, voute: { name: "Voûte écroulée", icon: "images/Icons/scene/cuts/cut_collapse.webp" } }
 };
+/* v3.469.0 (Condition du run, PG-B1a à PG-B1c) : tirée au lancement, propre au monde, un avantage et un
+   inconvénient, annoncée sur la préparation. fx : réglages lus par Pa2Run (cond). « Nuit calme » une fois sur cinq. */
+var PA2_CONDITION_RULES = { calmPct: 0.2 };
+var PA2_CONDITION_CALM = { id: "calme", name: "Nuit calme", kicker: "nuit calme", line: "Rien de particulier cette nuit. C'est rare, ici.", fx: {} };
+var PA2_CONDITIONS = {
+  forest: {
+    brouillard: { name: "Brouillard", kicker: "nuit de brouillard", line: "Le brouillard monte du sol. On n'y voit pas loin, et eux non plus.",
+      pro: "Ruser gagne un cran", con: "Une rangée de vue en moins", tip: "torche", fx: { ruseBonus: 1, sight: -1 } },
+    orage: { name: "Orage", kicker: "nuit d'orage", line: "Il pleut depuis midi. Les ruisseaux débordent, et les sources aussi.",
+      pro: "Les sources rendent le double", con: "Deux sentiers coupés de plus", tip: "gourde", fx: { sourceMult: 2, extraCuts: 2 } },
+    braconniers: { name: "Nuit des braconniers", kicker: "nuit des braconniers", line: "Des collets neufs aux lisières. Quelqu'un chasse ce soir, et il laisse des choses derrière lui.",
+      pro: "Trouvailles : une relique au choix parmi deux", con: "Un piège de plus par acte", tip: "trousse", fx: { relicDraw: 2, trapsPerAct: 1 } },
+    pleine_lune: { name: "Pleine lune", kicker: "nuit de pleine lune", line: "La lune est pleine. On voit loin. Les bêtes aussi, et elles sont nerveuses.",
+      pro: "Une rangée de vue en plus", con: "Combats : +15 % de dégâts reçus", tip: "armure", fx: { sight: 1, combatDmg: 1.15 } }
+  },
+  desert: {
+    vent: { name: "Vent de sable", kicker: "nuit de vent de sable", line: "Le vent soulève le sable et découvre ce qu'il cachait. On voit à peine ses pieds.",
+      pro: "Obstacles : +30 % d'or", con: "Une rangée de vue en moins", tip: "torche", fx: { obstacleGold: 1.3, sight: -1 } },
+    canicule: { name: "Canicule", kicker: "nuit brûlante", line: "La chaleur ne tombe pas avec le soleil. Chaque pas coûte. Les points d'eau, eux, sont pleins.",
+      pro: "Les points d'eau rendent le double", con: "La marche coûte 2 Souffle de plus par pas", tip: "outre", fx: { sourceMult: 2, stepBreath: 2 } },
+    fraiche: { name: "Nuit fraîche", kicker: "nuit fraîche", line: "Pour une fois, la nuit est froide. On marche bien. Les pillards aussi sortent.",
+      pro: "La marche coûte 2 Souffle de moins par pas", con: "Premier combat de chaque acte : un ennemi de plus", tip: "armure", fx: { stepBreath: -2, firstCombatExtra: 1 } },
+    pillards: { name: "Pillards", kicker: "nuit des pillards", line: "Des feux sur les crêtes. Ils ont piégé les passes, et caché ce qu'ils ont pris.",
+      pro: "Butin final +20 %", con: "Un piège de plus par acte", tip: "trousse", fx: { lootMult: 1.2, trapsPerAct: 1 } }
+  },
+  ruins: {
+    murs: { name: "Les murs s'agitent", kicker: "nuit où les murs s'agitent", line: "Les murs ne tiennent pas en place ce soir. Edda t'a donné un bout de craie de plus.",
+      pro: "Un trait de Craie offert", con: "Les murs bougent presque deux fois plus souvent", tip: "craie", fx: { chalkBonus: 1, wallShiftMult: 1.8 } },
+    poussiere: { name: "Poussière de chantier", kicker: "nuit de poussière", line: "On a bâti toute la journée. La poussière n'est pas retombée, mais les pierres sont neuves et faciles.",
+      pro: "Obstacles : un cran plus faciles", con: "Une rangée de vue en moins", tip: "torche", fx: { obstacleBonus: 1, sight: -1 } },
+    batisseurs: { name: "Bâtisseurs au travail", kicker: "nuit des bâtisseurs", line: "Les bâtisseurs ont muré des portes. Ils ont aussi rempli les coupes des niches.",
+      pro: "Les niches sont gratuites", con: "Deux sentiers coupés de plus", tip: null, fx: { altarFree: true, extraCuts: 2 } },
+    guetteurs: { name: "Nuit des guetteurs", kicker: "nuit des guetteurs", line: "Des guetteurs sur les toits. Ils ont tendu des fils partout. Ce qu'ils gardent vaut la peine.",
+      pro: "Butin final +20 %", con: "Un piège de plus par acte, et plus souvent l'Alarme", tip: "trousse", fx: { lootMult: 1.2, trapsPerAct: 1, alarmWeight: 2 } }
+  },
+  crypt: {
+    dormeurs: { name: "Les dormeurs remuent", kicker: "nuit où les dormeurs remuent", line: "Les dormeurs se retournent dans leurs niches. Ceux qui se lèvent ont de la cire sur les doigts.",
+      pro: "Une Cire de sépulcre de plus à la destination", con: "Premier combat de chaque acte : un ennemi de plus", tip: "armure", fx: { rareDest: 1, firstCombatExtra: 1 } },
+    meches: { name: "Mèches humides", kicker: "nuit humide", line: "L'eau suinte de partout. Les mèches prennent mal, mais on ne manquera pas d'eau.",
+      pro: "L'eau qui suinte rend le double", con: "La Lanterne brûle 2 pas de moins", tip: "torche", fx: { sourceMult: 2, lanternSteps: -2 } },
+    courants: { name: "Courants d'air", kicker: "nuit des courants d'air", line: "Un courant d'air froid traverse les couloirs. Il fait bouger les fils tendus, et il fatigue.",
+      pro: "Les pièges cachés se voient sur les sentiers que tu peux prendre", con: "La marche coûte 2 Souffle de plus par pas", tip: "gourde", fx: { trapsNear: true, stepBreath: 2 } },
+    veillee: { name: "Veillée", kicker: "nuit de veillée", line: "Quelqu'un veille les morts cette nuit. Les coupes sont pleines, et chaque cloche est prête à sonner.",
+      pro: "Les alcôves sont gratuites", con: "Un piège de plus par acte, et plus souvent l'Alarme", tip: "trousse", fx: { altarFree: true, trapsPerAct: 1, alarmWeight: 2 } }
+  }
+};
 /* Les cinq effets (PG-C). steps : pas pendant lesquels l'effet dure (0 : immédiat ou jusqu'au combat). */
 var PA2_TRAP_FX = {
   venin:   { id: "venin",   name: "Venin",         steps: 3, icon: "images/Icons/scene/traps/fx_venom.webp",
@@ -667,6 +713,9 @@ window.PA2_WORLD_RULES = PA2_WORLD_RULES;
 window.PA2_TRAP_RULES = PA2_TRAP_RULES;
 window.PA2_CUT_RULES = PA2_CUT_RULES;
 window.PA2_CUTS = PA2_CUTS;
+window.PA2_CONDITION_RULES = PA2_CONDITION_RULES;
+window.PA2_CONDITION_CALM = PA2_CONDITION_CALM;
+window.PA2_CONDITIONS = PA2_CONDITIONS;
 window.PA2_TRAP_FX = PA2_TRAP_FX;
 window.PA2_TRAP_FX_ORDER = PA2_TRAP_FX_ORDER;
 window.PA2_TRAP_WEIGHTS = PA2_TRAP_WEIGHTS;

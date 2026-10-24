@@ -47,6 +47,9 @@ if (OVR) {
 
 if (NO_TRAPS) g.PA2_TRAP_RULES.perAct = { sentier: 0, chemin: 0, periple: 0 };
 if (process.argv.indexOf("--sans-coupes") > 0) { g.PA2_CUT_RULES.min = 0; g.PA2_CUT_RULES.max = 0; } // v3.468.0 : tracé intact
+if (process.argv.indexOf("--sans-conditions") > 0) g.PA2_CONDITION_RULES.calmPct = 1; // v3.469.0 : toujours Nuit calme
+var FORCE_COND = (process.argv.filter(function (x) { return x.indexOf("--condition=") === 0; })[0] || "").slice(12); // v3.469.0 : une condition imposée
+if (FORCE_COND) g.Pa2Run._drawCondition = function () { return FORCE_COND; };
 
 /* Héros de référence : niveau et développement attendus à chaque étape (repères de campagne
    v3.365.0 : niveau 8 à l'arrivée au Désert, 12 à la fin du chapitre II). */
