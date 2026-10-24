@@ -547,6 +547,7 @@ async function P7(browser, base) {
   ok(await page.evaluate(function () { return game.activeTab === "scene" && game.sceneRun && game.sceneRun.status === "pa2-prep"; }), "Petite Aventure v2 ouverte sur la préparation");
   await page.waitForTimeout(400);
   await dismissTutorials(page); // le tutoriel « Préparer une petite aventure » recouvre la besace
+  await page.waitForTimeout(400); await dismissTutorials(page); // v3.469.2 : puis « La nuit du run » quand la nuit a une condition
 
   // Besace : une case libre ouvre la liste, on y choisit une petite ration puis une gourde
   await tap(page, ".pa2-cell.is-free");
@@ -571,6 +572,7 @@ async function P7(browser, base) {
   // Quelques nœuds joués au doigt : un sentier doré, puis le premier choix de la feuille
   var avant = 0;
   for (var i = 0; i < 8 && avant <= 0; i++) {
+    await dismissTutorials(page); // v3.469.2 : « Pièges et sentiers coupés » au premier piège en vue
     // v3.467.0 : après un piège, la feuille du nœud est déjà ouverte (pas de sentier à toucher)
     if (await page.evaluate(function () { return game.sceneRun && game.sceneRun.status === "pa2-map"; })) await tap(page, ".pa2-node.is-open");
     await page.waitForTimeout(900);

@@ -17267,14 +17267,17 @@ console.log("\n[283] v3.469.0 — Petites Aventures : condition du run (PG-B1a �
     g.__traps = true;
     var cutsC = 0, cutsO = 0, maxT = 0, trap2 = false, alC = 0, alG = 0, totC = 0, totG = 0;
     for (var k = 0; k < 25; k++) {
-      cutsC += Object.keys(go("forest", "calme").cuts).length; cutsO += Object.keys(go("forest", "orage").cuts).length;
       r = go("forest", "braconniers"); r.ring = "sentier"; var per = { 1: 0, 2: 0, 3: 0 };
       Object.keys(r.traps).forEach(function (t) { per[r.nodes[t.split(">")[1]].act]++; });
       [1, 2, 3].forEach(function (a) { maxT = Math.max(maxT, per[a]); if (per[a] === 2) trap2 = true; });
-      r = go("ruins", "calme"); r.ring = "periple"; Object.keys(r.traps).forEach(function (t) { totC++; if (r.traps[t].fx === "alarme") alC++; });
-      r = go("ruins", "guetteurs"); Object.keys(r.traps).forEach(function (t) { totG++; if (r.traps[t].fx === "alarme") alG++; });
     }
-    ok(cutsO / 25 >= cutsC / 25 + 1.5, "orage : deux sentiers coupés de plus (" + (cutsC / 25).toFixed(1) + " → " + (cutsO / 25).toFixed(1) + ")");
+    // Alarme : la part tirée sur 4 000 pièges, sur les poids du monde (le petit nombre de runs faisait varier le test)
+    var W0 = g.PA2_TRAP_WEIGHTS.ruins; for (var q = 0; q < 4000; q++) { totC++; if (P._weighted(W0) === "alarme") alC++; }
+    r = go("ruins", "guetteurs"); var W1 = JSON.parse(JSON.stringify(W0)); W1.alarme *= P.condFx(r, "alarmWeight");
+    for (q = 0; q < 4000; q++) { totG++; if (P._weighted(W1) === "alarme") alG++; }
+    // tirage figé (rand = 0) : 3 coupures d'ordinaire, 5 par une nuit d'orage
+    P.rand = function () { return 0; }; cutsC = Object.keys(go("forest", "calme").cuts).length; cutsO = Object.keys(go("forest", "orage").cuts).length; P.rand = savedRand;
+    ok(cutsO === cutsC + 2, "orage : deux sentiers coupés de plus (" + cutsC + " → " + cutsO + ")");
     ok(trap2 && maxT <= 2, "braconniers : un piège de plus par acte (2 sur le Sentier)");
     ok(alG / totG > alC / totC, "guetteurs : l'Alarme plus souvent (" + Math.round(100 * alC / totC) + " % → " + Math.round(100 * alG / totG) + " %)");
     // Crypte : courants d'air, les pièges cachés se voient sur les sentiers ouverts
@@ -17310,6 +17313,39 @@ console.log("\n[283] v3.469.0 — Petites Aventures : condition du run (PG-B1a �
     ok(P.condition({ parcours: true, cond: "brouillard", worldId: "forest" }) === null, "parcours : aucune condition");
   } finally {
     P.rand = savedRand; g.__cond = false; g.__traps = false; g.PA2_MAPS_BY_WORLD.forest = savedMaps; game.sceneRun = null;
+    if (g.SortieManager.isActive()) g.SortieManager.end("return");
+  }
+})();
+
+console.log("\n[284] v3.469.2 — Petites Aventures : fenêtres des nouveautés au premier contact (PA-T1)");
+(function () {
+  var S = g.SceneRunManager, P = g.Pa2Run, T = g.GENERIC_TUTORIALS, savedMaps = g.PA2_MAPS_BY_WORLD.forest.slice();
+  g.PA2_MAPS_BY_WORLD.forest = ["foret_1"];
+  function prep() {
+    game = freshCombat("knight"); giveWeapon(); run("game.enemy = null; game.combat = null;");
+    S.ensureDefaults(); game.explorationProgression.petiteAventure = { spent: 0, since: null };
+    game.resources.petite_ration = 5; game.heroLevel = 6; game.heroHp = game.heroMaxHp; game.sceneRun = null;
+    if (g.SortieManager.isActive()) g.SortieManager.end("return");
+  }
+  try {
+    ok(T.pa2_night && T.pa2_night.tab === "scene" && T.pa2_night.points.length === 4 && T.pa2_traps && T.pa2_traps.points.length === 5, "deux fenêtres : « La nuit du run » (4 lignes), « Pièges et sentiers coupés » (5 lignes)");
+    prep(); S.startRun("petite_aventure_foret"); var r = game.sceneRun;
+    r.cond = "brouillard"; var n1 = T.pa2_night.condition();
+    r.cond = "calme"; var n2 = T.pa2_night.condition();
+    ok(n1 && !n2, "la nuit du run : à la préparation d'une nuit avec condition, pas d'une nuit calme");
+    ok(!T.pa2_traps.condition(), "pièges : rien en préparation");
+    P.depart(); r.traps = {}; r.cuts = {};
+    ok(!T.pa2_traps.condition(), "pièges : rien tant qu'aucun piège ni sentier coupé n'est en vue");
+    r.cuts = { "S>L0": "arbre" };
+    ok(T.pa2_traps.condition(), "un sentier coupé en vue : la fenêtre s'ouvre");
+    r.cuts = {}; r.traps = { "S>C0": { fx: "venin", hidden: true, seen: false, done: false } };
+    ok(!T.pa2_traps.condition(), "un piège caché, invisible : pas encore");
+    P.moveTo("C0");
+    ok(r.status === "pa2-trap" && T.pa2_traps.condition(), "marcher sur un piège caché : la fenêtre s'ouvre");
+    var src = require("fs").readFileSync(require("path").join(ROOT, "js/ui/pa2-view.js"), "utf8");
+    ok(/function pa2AfterRender\(\)[\s\S]*?maybeShowGenericTutorial\("scene"\)/.test(src), "la carte et la préparation cherchent ces fenêtres à chaque rendu");
+  } finally {
+    g.PA2_MAPS_BY_WORLD.forest = savedMaps; game.sceneRun = null;
     if (g.SortieManager.isActive()) g.SortieManager.end("return");
   }
 })();

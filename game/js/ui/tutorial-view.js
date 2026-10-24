@@ -179,6 +179,42 @@ var GENERIC_TUTORIALS = {
       { icon: "images/Icons/scene/node_threshold.webp", text: "« Renoncer à cette aventure » te ramène sans rien perdre, tant que tu n'es pas encore parti." }
     ]
   },
+  /* v3.469.2 (retour Seb, PA-T1) : la condition du run, à la première préparation qui en a une (pas une nuit calme). */
+  pa2_night: {
+    tab: "scene",
+    condition: function () {
+      var run = game.sceneRun, c = run && run.pa2 && run.status === "pa2-prep" && window.Pa2Run ? Pa2Run.condition(run) : null;
+      return !!(c && c.pro);
+    },
+    icon: "images/Icons/scene/path_easy.webp",
+    title: "La nuit du run",
+    points: [
+      { icon: "images/Icons/scene/path_easy.webp", text: "Chaque petite aventure a sa nuit : brouillard, orage, pillards… Elle est annoncée ici, avant que tu remplisses ta besace." },
+      { icon: "images/Icons/system/check_valid.webp", text: "En vert, ce qu'elle t'apporte ; en rouge, ce qu'elle te coûte. Les deux valent pour tout le run." },
+      { icon: "images/Icons/dungeon/dungeon_sacoche.webp", text: "« Utile cette nuit » nomme l'objet qui t'aidera le plus. Une nuit sur cinq est calme : rien ne change." },
+      { icon: "images/Icons/scene/ui/ui_hero_marker.webp", text: "En route, la pastille dorée en haut de l'écran te rappelle la nuit : touche-la." }
+    ]
+  },
+  /* v3.469.2 (PA-T1) : la première fois qu'un piège ou un sentier coupé apparaît sur la carte (ou qu'on marche sur un piège caché). */
+  pa2_traps: {
+    tab: "scene",
+    condition: function () {
+      var run = game.sceneRun, P = window.Pa2Run;
+      if (!run || !run.pa2 || run.parcours || !P) return false;
+      if (run.status === "pa2-trap") return true;
+      if (run.status !== "pa2-map" && run.status !== "pa2-node") return false;
+      return Object.keys(run.traps || {}).some(function (k) { return P.isTrapShown(k, run); }) || Object.keys(run.cuts || {}).some(function (k) { return P.isCutShown(k, run); });
+    },
+    icon: "images/Icons/scene/traps/fx_venom.webp",
+    title: "Pièges et sentiers coupés",
+    points: [
+      { icon: "images/Icons/scene/traps/fx_venom.webp", text: "Un losange rouge sur un sentier, c'est un piège. Son icône dit ce qu'il fait : venin, alarme, entrave, aveuglement ou besace percée." },
+      { icon: "images/Icons/scene/torch.webp", text: "Certains pièges sont cachés. La torche montre ceux des sentiers que tu peux prendre ; à la Crypte, la Lanterne allumée aussi." },
+      { icon: "images/Icons/scene/items/item_lockpicks.webp", text: "Sur un piège : Désamorcer (un dé ; raté, l'effet joue et tu es blessé), la Trousse (à coup sûr), Subir (l'effet, sans blessure) ou Rebrousser (10 Souffle)." },
+      { icon: "images/Icons/scene/traps/fx_snare.webp", text: "Les effets en cours s'affichent en rouge en haut de l'écran, avec les pas qu'il leur reste." },
+      { icon: "images/Icons/scene/cuts/cut_fallen_tree.webp", text: "Un rond gris barré : le sentier est coupé pour ce run. Il reste toujours un autre chemin." }
+    ]
+  },
   /* v3.435.0 (Ruines, RU12) : première descente dans le Labyrinthe aux leviers. Edda explique. */
   labyrinth_first: {
     tab: "scene",
@@ -239,6 +275,8 @@ function closeGenericTutorialModal(id) {
   var host = document.getElementById("tutorial-modal-root");
   if (host) host.innerHTML = "";
   if (typeof saveGame === "function") saveGame();
+  // v3.469.2 : en aventure, la fenêtre suivante (la nuit du run) vient tout de suite, pas au prochain geste
+  if (game.activeTab === "scene" && typeof maybeShowGenericTutorial === "function") maybeShowGenericTutorial("scene");
 }
 window.closeGenericTutorialModal = closeGenericTutorialModal;
 

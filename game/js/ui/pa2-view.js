@@ -180,6 +180,8 @@ function pa2AfterRender() {
   if (run.status === PA2_STATUS.trap && !pa2View.sheet && !pa2View.fromKey) pa2OpenTrapSheet();
   if (run.status === PA2_STATUS.prep) pa2RenderPicker();
   else if (!pa2View.sheet) pa2SetSheetHTML(null);
+  // v3.469.2 (PA-T1) : la nuit du run, les pièges et sentiers coupés s'expliquent au premier contact
+  if (typeof maybeShowGenericTutorial === "function") maybeShowGenericTutorial("scene");
   var zone = document.querySelector("#panel-container .kfp-scrollzone");
   if (zone && pa2View.keepScroll != null) zone.scrollTop = pa2View.keepScroll;
   if (document.getElementById("pa2-vp")) pa2CamAfterRender(run);

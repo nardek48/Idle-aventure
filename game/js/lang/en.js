@@ -6054,4 +6054,16 @@ I18n.register("en", {
   "Utile cette nuit : {x}": "Useful tonight: {x}",
   "{n} : + {p} ; − {c}": "{n}: + {p}; − {c}",
   "Cette nuit, le premier combat de l'acte compte un ennemi de plus.": "Tonight, the first fight of the act has one more enemy.",
+  // v3.469.2 : fenêtres des nouveautés des Petites Aventures
+  "La nuit du run": "The night of the run",
+  "Chaque petite aventure a sa nuit : brouillard, orage, pillards… Elle est annoncée ici, avant que tu remplisses ta besace.": "Every short adventure has its night: fog, storm, raiders… It's announced here, before you fill your satchel.",
+  "En vert, ce qu'elle t'apporte ; en rouge, ce qu'elle te coûte. Les deux valent pour tout le run.": "In green, what it gives you; in red, what it costs you. Both last for the whole run.",
+  "« Utile cette nuit » nomme l'objet qui t'aidera le plus. Une nuit sur cinq est calme : rien ne change.": "“Useful tonight” names the item that will help you most. One night in five is calm: nothing changes.",
+  "En route, la pastille dorée en haut de l'écran te rappelle la nuit : touche-la.": "On the way, the golden badge at the top of the screen reminds you of the night: tap it.",
+  "Pièges et sentiers coupés": "Traps and cut paths",
+  "Un losange rouge sur un sentier, c'est un piège. Son icône dit ce qu'il fait : venin, alarme, entrave, aveuglement ou besace percée.": "A red diamond on a path is a trap. Its icon tells what it does: venom, alarm, snare, blinding or torn satchel.",
+  "Certains pièges sont cachés. La torche montre ceux des sentiers que tu peux prendre ; à la Crypte, la Lanterne allumée aussi.": "Some traps are hidden. The torch shows those on the paths you can take; in the Crypt, so does the lit Lantern.",
+  "Sur un piège : Désamorcer (un dé ; raté, l'effet joue et tu es blessé), la Trousse (à coup sûr), Subir (l'effet, sans blessure) ou Rebrousser (10 Souffle).": "On a trap: Disarm (a die; on a failure, the effect applies and you're wounded), the Kit (for sure), Endure (the effect, no wound) or Turn back (10 Breath).",
+  "Les effets en cours s'affichent en rouge en haut de l'écran, avec les pas qu'il leur reste.": "Ongoing effects show in red at the top of the screen, with the steps they have left.",
+  "Un rond gris barré : le sentier est coupé pour ce run. Il reste toujours un autre chemin.": "A crossed grey circle: the path is cut for this run. There's always another way.",
 });
