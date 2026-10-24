@@ -51,7 +51,12 @@ var DUNGEON_CONFIG = {
 
   /* v3.471.0 : membres d'une vague de groupe (groupWaves du donjon), par taille : PV, puissance et or
      d'un ennemi de vague, multipliés. Une vague de groupe continue le combat (pas de relève des compagnons). Au banc. */
-  groupWave: { 2: { hp: 0.5, power: 0.45 }, 3: { hp: 0.35, power: 0.35 } }
+  groupWave: { 2: { hp: 0.5, power: 0.45 }, 3: { hp: 0.35, power: 0.35 } },
+
+  /* v3.472.0 (haltes, décisions Seb) : 1 à 3 haltes par run (poids ci-dessous), tirées parmi les haltSlots
+     du donjon, seulement sur un donjon déjà terminé et hors sortie de l'Histoire. 3 cartes, une ou passer. */
+  haltCountWeights: { 1: 25, 2: 50, 3: 25 },
+  haltCardCount: 3
 };
 
 /* v3.245.0 — DUNGEON_TIERS est absorbé ici : chaque donjon EST le palier de son monde.
@@ -101,6 +106,7 @@ var DUNGEONS = [
     enemyPool: ["slime", "goblin", "spider"],
     eliteWaves: { 5: "araignee_marquee", 10: "ronce_ardente" },
     groupWaves: { 3: 2, 7: 2, 12: 3, 14: 2 }, // v3.471.0 : vague -> nombre d'ennemis (décision Seb, option 1)
+    haltSlots: [4, 9, 13], // v3.472.0 : haltes possibles, après ces vagues (avant les élites 5 et 10, puis la fin)
     /* v3.288.0 — PHASES DU BASILIC (idée Seb). Deux seuils, pas plus : un combat de boss
        doit rester lisible. Chaque phase s'annonce dans le journal, et les renforts arrivent
        au round SUIVANT (engageIn), jamais par surprise.
@@ -162,6 +168,7 @@ var DUNGEONS = [
     enemyPool: ["scarab", "scorpion", "sandworm", "sandwarrior"],
     eliteWaves: { 5: "serment_armure", 10: "dard_profondeurs" }, // v3.317.0 (W-4c) : la vague 10 arrive
     groupWaves: { 3: 2, 7: 2, 12: 3, 14: 2 }, // v3.471.0
+    haltSlots: [4, 9, 13], // v3.472.0
     /* v3.319.0 (W-4d, décision Seb) — LE SPHINX remplace le « Sultan des sables », qui
        empruntait le Djinn des dunes (BOSS_DB). Deux seuils de phase, comme le Basilic,
        et la difficulté portée par les DÉGÂTS et les renforts, jamais par la seule barre de
@@ -213,6 +220,7 @@ var DUNGEONS = [
     enemyPool: ["skeleton", "zombie", "ghoul", "gargoyle"],
     eliteWaves: { 8: "contremaitre", 12: "golem" },
     groupWaves: { 3: 2, 6: 2, 10: 3, 14: 2 }, // v3.471.0
+    haltSlots: [4, 11, 13], // v3.472.0 : jamais au campement (après 8)
     /* v3.430.0 (RU13, validé le 09/10) — LE CAMPEMENT : halte dans le run après la vague
        afterWave. Le butin de l'étape 1 est mis en sûreté ; une action au choix (Souffler,
        Changer de compagnon, Sortir). storyFlag : noté pour l'étape ruines_12. */
@@ -251,6 +259,7 @@ var DUNGEONS = [
     enemyPool: ["spectre", "wraith", "necromancer", "deadknight"],
     eliteWaves: { 8: "porte_couronne", 12: "pleureuse" },
     groupWaves: { 3: 2, 6: 2, 10: 3, 14: 2 }, // v3.471.0 : les morts y dorment (règle de la Crypte, sleep-system)
+    haltSlots: [4, 11, 13], // v3.472.0
     camp: { afterWave: 8, healPct: 0.4, stoneAmount: 2, storyFlag: "ossuaireCamp" }, // la salle d'Ysolt
     /* LA LICHE DES SÉPULCRES (CR11) : Corrupteur. Phases (lues par CombatEngine.checkPhases, effets
        propres à la Crypte dans SleepSystem.onBossPhase) : 80 % elle couche deux morts à ses pieds ;
@@ -325,6 +334,28 @@ var DUNGEON_MARKS = [
     modifiers: { forceAllBosses: true, goldMult: 1.20 } }
 ];
 
+/* v3.472.0 — CARTES DE HALTE (atelier/halte-donjon.html, validé par Seb). Aucune ne soigne.
+   modifiers : canal des Marques (AfflictionManager), sans compter comme une Marque. enemyHpMult : PV de tous les
+   ennemis du run ; bossHpMult : PV du boss ; endGoldMult : or de fin ; shards : Éclats tout de suite ;
+   counterItem : objet de combat contre le trait du boss ; noUnique : pas d'objet unique. Icônes absentes : générique. */
+var DUNGEON_HALT_CARDS = [
+  { id: "lame", name: "Lame bénie", kind: "bonus", icon: "images/Icons/dungeon/halte_lame.webp",
+    gain: "+10 % de dégâts jusqu'à la fin du run", modifiers: { tapMult: 0.10 } },
+  { id: "rempart", name: "Rempart", kind: "bonus", icon: "images/Icons/dungeon/halte_rempart.webp",
+    gain: "Ennemis −10 % de PV jusqu'à la fin du run", enemyHpMult: 0.9 },
+  { id: "sang", name: "Pacte de sang", kind: "echange", icon: "images/Icons/dungeon/halte_pacte_sang.webp",
+    gain: "Or du run +30 %", cost: "Ennemis +25 % de PV", modifiers: { goldMult: 1.3 }, endGoldMult: 1.3, enemyHpMult: 1.25 },
+  { id: "dement", name: "Pacte du dément", kind: "echange", icon: "images/Icons/dungeon/halte_pacte_dement.webp",
+    gain: "+20 % de dégâts", cost: "Plus de potions jusqu'à la fin du run", modifiers: { tapMult: 0.20, forbidPotions: true } },
+  { id: "ratelier", name: "Râtelier", kind: "prep", icon: null,
+    gain: "Un objet de combat contre le trait du boss, pour ce run", counterItem: true },
+  { id: "coffre", name: "Coffre", kind: "butin", icon: "images/Icons/subtabs/shard_shop.webp",
+    gain: "+5 Éclats tout de suite", note: "Acquis même si tu tombes ensuite.", shards: 5 },
+  { id: "autel", name: "Autel brisé", kind: "echange", icon: "images/Icons/dungeon/halte_autel.webp",
+    gain: "Boss −15 % de PV", cost: "Pas d'objet unique sur ce run", bossHpMult: 0.85, noUnique: true }
+];
+var DUNGEON_HALT_KIND_LABELS = { bonus: "Bonus", echange: "Échange", prep: "Préparation", butin: "Butin" };
+
 /* Élite GÉNÉRIQUE de Traque pour un donjon sans élites de données : l'ennemi de la vague
    passe boss avec ces multiplicateurs relatifs (banc D-0 : 8–32 % d'échec seule en Forêt). */
 var DUNGEON_GENERIC_ELITE_MULT = { endurance: 2.4, power: 1.1 };
@@ -370,3 +401,5 @@ window.DUNGEON_CONFIG = DUNGEON_CONFIG;
 window.DUNGEON_MARKS = DUNGEON_MARKS;
 window.DUNGEON_GENERIC_ELITE_MULT = DUNGEON_GENERIC_ELITE_MULT;
 window.DUNGEON_SHOP = DUNGEON_SHOP;
+window.DUNGEON_HALT_CARDS = DUNGEON_HALT_CARDS;
+window.DUNGEON_HALT_KIND_LABELS = DUNGEON_HALT_KIND_LABELS;

@@ -48,7 +48,9 @@ var AfflictionManager = {
 
     if (!contextActive) return out; // hors run de donjon : neutre
 
-    this.getActiveList().forEach(function (a) {
+    // v3.472.0 : les cartes de halte passent par le même canal, sans compter comme des Marques (getActiveCount)
+    var boons = (window.DungeonManager && typeof DungeonManager.getRunBoons === "function") ? DungeonManager.getRunBoons() : [];
+    this.getActiveList().concat(boons).forEach(function (a) {
       var m = a.modifiers || {};
       if (m.tapMult) out.tapMult += m.tapMult;
       if (m.heroMaxHpMult != null) out.heroMaxHpMult *= m.heroMaxHpMult;

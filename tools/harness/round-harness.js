@@ -17659,6 +17659,88 @@ console.log("\n[292] v3.471.1 — Gueule du volcan fermée tant que la Montagne 
   ok(!game.dungeonRun.active, "on ne peut pas y entrer");
 })();
 
+console.log("\n[293] v3.472.0 — Donjons : les haltes (1 à 3 par run, 3 cartes ou passer, aucun soin)");
+(function () {
+  game = freshCombat("knight");
+  var D = g.DungeonManager, SQ = g.StoryQuestManager, reach = SQ.isStepReached, C = g.DUNGEON_CONFIG;
+  var pv = { check: g.ProvisionsManager.check, consume: g.ProvisionsManager.consume }, pct = C.uniqueDropPct;
+  run("ProvisionsManager.check = function () { return null; }; ProvisionsManager.consume = function () {};");
+  SQ.isStepReached = function () { return true; };
+  game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true };
+  // tirage des haltes : 1 à 3, parmi les emplacements, jamais au campement
+  var counts = {}, okSlots = true;
+  for (var i = 0; i < 300; i++) {
+    var hs = D.drawHalts(D.getById(3)); counts[hs.length] = (counts[hs.length] || 0) + 1;
+    hs.forEach(function (w) { if ([4, 11, 13].indexOf(w) < 0 || w === 8) okSlots = false; });
+  }
+  ok(counts[1] > 30 && counts[2] > 100 && counts[3] > 30 && !counts[0] && !counts[4] && okSlots, "1, 2 ou 3 haltes (≈ 25/50/25 %), sur les emplacements prévus : " + JSON.stringify(counts));
+  // pas de halte sur un donjon jamais terminé (Histoire intacte)
+  game.heroHp = game.heroMaxHp; game.dungeonRunsUsed = {}; game.dungeonTierCleared = {};
+  D.start(1, []);
+  ok(game.dungeonRun.active && game.dungeonRun.halts.length === 0, "Tanière jamais terminée : aucune halte");
+  D.forfeit();
+  // donjon terminé : haltes tirées ; on force une halte après la vague 4
+  var fresh = function () {
+    game.heroHp = game.heroMaxHp; game.dungeonRunsUsed = {}; game.dungeonTierCleared = { 1: true }; game.inventory = [];
+    D.start(1, []);
+    game.dungeonRun.halts = [4];
+    D.spawnWave(4);
+    [].concat(g.CombatActors.enemies()).forEach(function () {});
+    D.onEnemyKilled();
+  };
+  fresh();
+  var r = game.dungeonRun;
+  ok(r.halts && D.isHaltPending() && r.wave === 5 && r.haltDraw.length === 3 && new Set(r.haltDraw).size === 3, "après la vague 4 : halte en attente, vague 5 prête derrière, 3 cartes différentes");
+  var hp0 = game.heroHp = Math.floor(game.heroMaxHp / 2), tap0 = game.tapMult;
+  r.haltDraw = ["lame", "rempart", "coffre"];
+  ok(D.haltAction("autel") === false, "une carte hors du tirage est refusée");
+  ok(D.haltAction("lame") === true && !D.isHaltPending() && r.boons.indexOf("lame") === 0, "Lame bénie prise");
+  ok(Math.abs(game.tapMult - tap0 - 0.10) < 1e-9 && game.heroHp === hp0, "+10 % de dégâts, et aucun soin (PV inchangés)");
+  ok(g.AfflictionManager.getActiveCount() === 0, "une carte ne compte pas comme une Marque");
+  D.forfeit();
+  // passer
+  fresh(); var w = game.dungeonRun.wave;
+  ok(D.haltAction(null) === true && game.dungeonRun.boons.length === 0 && game.dungeonRun.wave === w, "Passer : rien de pris, la vague suivante reste");
+  D.forfeit();
+  // Pacte de sang : PV des ennemis ×1,25 ; Autel brisé : boss ×0,85 et pas d'unique
+  fresh(); var rnd = Math.random; Math.random = function () { return 0; };
+  var e8 = [].concat(D.buildWaveEnemy(8))[0].maxHp, b16 = [].concat(D.buildWaveEnemy(16))[0].maxHp;
+  game.dungeonRun.haltDraw = ["sang", "autel", "coffre"]; D.haltAction("sang");
+  var e8s = [].concat(D.buildWaveEnemy(8))[0].maxHp;
+  ok(Math.abs(e8s / e8 - 1.25) < 0.05, "Pacte de sang : ennemis +25 % de PV (" + e8 + " → " + e8s + ")");
+  game.dungeonRun.boons.push("autel");
+  var b16a = [].concat(D.buildWaveEnemy(16))[0].maxHp;
+  Math.random = rnd;
+  ok(Math.abs(b16a / b16 - 1.25 * 0.85) < 0.05, "Autel brisé : boss −15 % de PV, en plus du pacte (" + b16 + " → " + b16a + ")");
+  C.uniqueDropPct = 100;
+  ok(D.rollBossUnique(D.getById(1), "common") === null, "Autel brisé : pas d'objet unique, même à 100 %");
+  C.uniqueDropPct = pct;
+  D.forfeit();
+  // Coffre, Râtelier, Pacte du dément
+  fresh(); var sh0 = game.dungeonShards;
+  game.dungeonRun.haltDraw = ["coffre", "ratelier", "dement"]; D.haltAction("coffre");
+  ok(game.dungeonShards - sh0 === 5, "Coffre : +5 Éclats tout de suite");
+  game.dungeonRun.halt = "pending"; game.dungeonRun.haltDraw = ["ratelier", "dement", "lame"];
+  ok(D.getCounterItemId(D.getById(1)) === "encens_amer", "Râtelier à la Tanière : l'Encens amer (le Basilic est Corrupteur)");
+  D.haltAction("ratelier");
+  ok(game.sortie.items.indexOf("encens_amer") >= 0 && D.getCounterItemId(D.getById(1)) === null, "l'Encens amer est emporté, le Râtelier ne se propose plus");
+  game.dungeonRun.halt = "pending"; game.dungeonRun.haltDraw = ["dement", "lame", "rempart"];
+  D.haltAction("dement");
+  ok(g.AfflictionManager.arePotionsForbidden() === true, "Pacte du dément : plus de potions");
+  game.dungeonRun.halt = "pending";
+  ok(D.drawHaltCards().every(function (id) { return ["coffre", "ratelier", "dement"].indexOf(id) < 0; }), "une carte déjà prise ne revient pas");
+  game.dungeonRun.halt = null;
+  var html = g.buildDungeonSummaryHTML({ success: true, tierName: "Tanière du Basilic", clearedWave: 15, wavesTotal: 15, goldReward: 1, shardsGained: 1, boons: ["coffre", "dement"] });
+  ok(html.indexOf("Haltes") >= 0 && html.indexOf("Pacte du dément") >= 0, "rapport de fin : ligne « Haltes »");
+  game.dungeonRun.halt = "pending"; game.dungeonRun.haltDraw = ["lame", "rempart", "sang"];
+  var sheet = g.buildDungeonHaltSheetHTML();
+  ok(sheet.indexOf("Aucune halte ne soigne") >= 0 && sheet.indexOf("Passer") >= 0 && sheet.indexOf("Déjà pris sur ce run") >= 0, "feuille : règle, cartes déjà prises, Passer");
+  game.dungeonRun.halt = null;
+  D.forfeit();
+  game.inventory = [];
+  SQ.isStepReached = reach; g.ProvisionsManager.check = pv.check; g.ProvisionsManager.consume = pv.consume;
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

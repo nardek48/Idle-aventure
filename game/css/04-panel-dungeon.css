@@ -428,3 +428,29 @@ body.dg-on-list .hud-dock { display: none !important; }
 .dcamp-swap button img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; object-position: top; }
 .dcamp-swap button[aria-pressed="true"] { border-color: var(--c-brown-550-3); background: var(--c-cream-100-3); }
 .dcamp-next { margin: 4px 0 0; font-size: 13px; color: var(--nb-ink-dim); line-height: 1.35; }
+
+/* v3.472.0 : la halte (atelier/halte-donjon.html) — trois cartes, une à prendre, ou Passer */
+.dhalt-rule { margin: 0 0 8px; padding: 5px 9px; border-radius: 10px; background: var(--c-red-50); color: var(--c-red-600-soft); font-size: 12.5px; font-weight: 700; }
+.dhalt-taken { display: flex; align-items: center; gap: 8px; padding: 6px 9px; border: 1.5px solid var(--sheet-card-bd); border-radius: 12px; background: var(--sheet-card-bg); font-size: 12.5px; }
+.dhalt-taken .dhalt-ico { width: 26px; height: 26px; flex: none; }
+.dhalt-opt { position: relative; display: grid; grid-template-columns: 40px 1fr; gap: 1px 10px; margin-bottom: 7px; padding: 8px 10px; border: 2px solid var(--sheet-card-bd); border-radius: var(--nb-radius-md); background: var(--sheet-card-bg); cursor: pointer; }
+.dhalt-opt > .dhalt-ico { grid-row: 1 / 4; width: 40px; height: 40px; align-self: center; object-fit: contain; }
+.dhalt-opt > b { font-size: 14.5px; padding-right: 104px; }
+.dhalt-opt.is-on { border-color: var(--c-brown-550-3); background: var(--c-cream-100-3); box-shadow: 0 0 0 2px rgba(240, 198, 74, 0.45); }
+.dhalt-tag { position: absolute; top: 8px; right: 9px; padding: 1px 7px; border-radius: 99px; background: rgba(138, 92, 20, 0.14); color: var(--c-brown-700-vivid); font-size: 12px; font-weight: 800; letter-spacing: 0.3px; text-transform: uppercase; }
+.dhalt-tag.is-trade { background: var(--c-red-50); color: var(--c-red-600-soft); }
+.dhalt-l { grid-column: 2; font-size: 12.5px; line-height: 1.3; color: var(--nb-ink-dim); }
+.dhalt-l.is-gain { color: var(--c-green-650-2); font-weight: 700; }
+.dhalt-l.is-cost { color: var(--c-red-600-soft); font-weight: 700; }
+.dhalt-foot { display: grid; gap: 6px; }
+.dhalt-pass { width: 100%; }
+.dhalt-prev { display: none; }
+.dungeon-active-boons { display: flex; flex-wrap: wrap; gap: 5px; margin: 6px 0; }
+.dungeon-active-boons span { padding: 1px 8px; border-radius: 99px; border: 1px solid var(--c-brown-550-3); font-size: 12px; font-weight: 700; }
+/* Petits écrans : sans la phrase d'ambiance, les trois cartes tiennent sans défiler */
+@media (max-height: 640px) {
+  .dungeon-halt-sheet .dcamp-quote { display: none; }
+  .dungeon-halt-sheet .dhalt-l:not(.is-gain):not(.is-cost) { display: none; }
+  .dungeon-halt-sheet .dhalt-taken, .dungeon-halt-sheet .dhalt-taken-lbl { display: none; }
+  .dungeon-halt-sheet .dhalt-prev { display: inline; }
+}

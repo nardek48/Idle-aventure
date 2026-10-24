@@ -348,9 +348,12 @@ var DungeonManager = {
   // v3.460.0 : toute vague (élite, escorte, boss) passe ici, mise au niveau du run
   buildWaveEnemy: function (wave) {
     var built = this.buildWaveEnemyBase(wave), m = this.getLevelMult(this.getRunLevel()), gm = this.getRunGoldMult();
-    if (m.hp === 1 && m.power === 1 && gm === 1) return built;
-    [].concat(built).forEach(function (e) {
-      e.hp = e.maxHp = Math.max(1, Math.floor(e.maxHp * m.hp));
+    // v3.472.0 : PV des cartes de halte (Pacte de sang, Rempart ; Autel brisé sur le boss)
+    var bh = this.getBoonEnemyHpMult(false), bb = wave > DUNGEON_CONFIG.waveCount ? this.getBoonEnemyHpMult(true) : bh;
+    if (m.hp === 1 && m.power === 1 && gm === 1 && bh === 1 && bb === 1) return built;
+    [].concat(built).forEach(function (e, i) {
+      var hb = (i === 0 && e.isBoss && !e.isElite) ? bb : bh;
+      e.hp = e.maxHp = Math.max(1, Math.floor(e.maxHp * m.hp * hb));
       if (e.stats) e.stats.power = Math.max(1, Math.floor((e.stats.power || 0) * m.power));
       if (e.goldReward) e.goldReward = Math.max(1, Math.floor(e.goldReward * gm)); // v3.462.0 : l'or des vagues suit le run
     });
@@ -487,6 +490,7 @@ var DungeonManager = {
     if (typeof renderHud === "function") renderHud();
     // v3.430.0 : run rechargé à la halte (save-system respawne la vague) : la feuille du campement revient
     if (this.isCampPending() && typeof openDungeonCampSheet === "function") setTimeout(openDungeonCampSheet, 0);
+    if (this.isHaltPending() && typeof openDungeonHaltSheet === "function") setTimeout(openDungeonHaltSheet, 0); // v3.472.0
   },
 
   /* ---------- Le campement (v3.430.0, RU13 — Conception Ruines v1.4, validé le 09/10) ----------
@@ -597,6 +601,119 @@ var DungeonManager = {
     return !!(step && steps.indexOf(step.id) >= 0 && StoryQuestManager.isCurrentStepAccepted(chapterId));
   },
 
+  /* ---------- Les haltes (v3.472.0, atelier/halte-donjon.html, décisions Seb) ----------
+     1 à 3 haltes par run, tirées au lancement parmi les haltSlots du donjon. Après la vague, la vague suivante
+     attend derrière la feuille (comme le campement) ; on prend une carte ou on passe. Aucune ne soigne.
+     État dans game.dungeonRun (sauvegardé en entier) : halts, halt = "pending", haltDraw, boons. */
+  drawHalts: function (dungeon) {
+    var camp = this.getCamp(dungeon), slots = (dungeon && dungeon.haltSlots || []).filter(function (w) {
+      return w >= 1 && w < DUNGEON_CONFIG.waveCount && !(camp && Number(camp.afterWave) === w);
+    });
+    var weights = DUNGEON_CONFIG.haltCountWeights || {}, total = 0, roll, n = 0;
+    Object.keys(weights).forEach(function (k) { total += Number(weights[k] || 0); });
+    roll = Math.random() * total;
+    Object.keys(weights).some(function (k) { roll -= Number(weights[k] || 0); if (roll < 0) { n = Number(k); return true; } return false; });
+    var pool = slots.slice(), out = [];
+    while (out.length < Math.min(n, slots.length) && pool.length) out.push(pool.splice(randInt(0, pool.length - 1), 1)[0]);
+    return out.sort(function (a, b) { return a - b; });
+  },
+
+  isHaltPending: function () {
+    return !!(game.dungeonRun && game.dungeonRun.active && game.dungeonRun.halt === "pending");
+  },
+
+  getHaltCard: function (id) {
+    return (window.DUNGEON_HALT_CARDS || []).filter(function (c) { return c.id === id; })[0] || null;
+  },
+
+  // Cartes prises sur le run en cours (vide hors run)
+  getRunBoons: function () {
+    var run = game.dungeonRun, self = this;
+    if (!run || !run.active || !Array.isArray(run.boons)) return [];
+    return run.boons.map(function (id) { return self.getHaltCard(id); }).filter(Boolean);
+  },
+
+  getBoonProduct: function (field) {
+    return this.getRunBoons().reduce(function (p, c) { return p * (typeof c[field] === "number" ? c[field] : 1); }, 1);
+  },
+
+  getBoonEnemyHpMult: function (isBoss) {
+    return this.getBoonProduct("enemyHpMult") * (isBoss ? this.getBoonProduct("bossHpMult") : 1);
+  },
+
+  // Râtelier : l'objet de combat qui contre le trait du boss, s'il n'est pas déjà emporté
+  getCounterItemId: function (dungeon) {
+    var trait = dungeon && dungeon.boss && dungeon.boss.archetype;
+    if (!trait || !window.COMBAT_ITEMS || !window.CombatItems) return null;
+    if (CombatItems.holds(trait)) return null;
+    var ids = Object.keys(COMBAT_ITEMS).filter(function (id) { return COMBAT_ITEMS[id].trait === trait; });
+    return ids.length ? ids[0] : null;
+  },
+
+  // Trois cartes différentes, jamais une déjà prise ; le Râtelier seulement s'il a un objet à donner
+  drawHaltCards: function () {
+    var run = game.dungeonRun, dungeon = this.getById(run.dungeonId), self = this;
+    var pool = (window.DUNGEON_HALT_CARDS || []).filter(function (c) {
+      if ((run.boons || []).indexOf(c.id) !== -1) return false;
+      return !c.counterItem || !!self.getCounterItemId(dungeon);
+    }).map(function (c) { return c.id; });
+    var out = [];
+    while (out.length < Number(DUNGEON_CONFIG.haltCardCount || 3) && pool.length) out.push(pool.splice(randInt(0, pool.length - 1), 1)[0]);
+    return out;
+  },
+
+  /* Appelé par onEnemyKilled : true si une halte commence (la vague suivante attend derrière la feuille). */
+  reachHalt: function (clearedWave) {
+    var run = game.dungeonRun;
+    if (!Array.isArray(run.halts) || run.halts.indexOf(clearedWave) === -1 || run.halt) return false;
+    if (!Array.isArray(run.haltsDone)) run.haltsDone = [];
+    if (run.haltsDone.indexOf(clearedWave) !== -1) return false;
+    run.haltsDone.push(clearedWave);
+    run.haltDraw = this.drawHaltCards();
+    if (!run.haltDraw.length) return false;
+    run.halt = "pending";
+    addLog("🕯️ " + _t("Une halte : trois cartes t'attendent."), "event");
+    this.spawnWave(clearedWave + 1);   // la vague suivante attend ; la feuille bloque le combat
+    saveGame();
+    return true;
+  },
+
+  /* cardId : une carte du tirage, ou null pour passer. La vague en attente est refaite avec la carte. */
+  haltAction: function (cardId) {
+    if (!this.isHaltPending()) return false;
+    var run = game.dungeonRun, dungeon = this.getById(run.dungeonId);
+    var card = cardId ? this.getHaltCard(cardId) : null;
+    if (cardId && (!card || (run.haltDraw || []).indexOf(cardId) === -1)) return false;
+    run.halt = null;
+    run.haltDraw = [];
+    if (!card) {
+      addLog("🕯️ " + _t("Tu passes la halte."), "event");
+    } else {
+      run.boons.push(card.id);
+      if (card.shards > 0) {
+        game.dungeonShards = Number(game.dungeonShards || 0) + card.shards;
+        run.shardsEarned = Number(run.shardsEarned || 0) + card.shards;
+      }
+      var itemId = card.counterItem ? this.getCounterItemId(dungeon) : null;
+      if (itemId && game.sortie && game.sortie.active) {
+        if (!Array.isArray(game.sortie.items)) game.sortie.items = [];
+        game.sortie.items.push(itemId);
+        run.ratelierItem = itemId;
+      }
+      if (card.modifiers && window.StatsSystem && typeof StatsSystem.recalcStats === "function") {
+        var hp = game.heroHp;
+        StatsSystem.recalcStats();
+        game.heroHp = Math.min(game.heroMaxHp, hp); // aucune halte ne soigne
+      }
+      addLog("🕯️ " + _t("Halte : {x}.", { x: _td(card.name) }), "event");
+    }
+    this.spawnWave(run.wave); // la vague en attente, refaite avec la carte (PV des ennemis)
+    if (itemId && window.CombatItems) CombatItems.apply();
+    if (typeof renderAll === "function") renderAll();
+    saveGame();
+    return true;
+  },
+
   /* marks : tableau d'id de DUNGEON_MARKS choisis dans la feuille de lancement (figés pour le run).
      level (v3.460.0) : 1 par défaut, borné à getMaxLevel ; la sortie de l'Histoire se joue au niveau 1.
      free (v3.462.0, N6) : mode libre, hors quota du jour, pour un donjon déjà fini (N-M) ; jamais un ticket d'Histoire. */
@@ -626,7 +743,9 @@ var DungeonManager = {
     if (!storyFree && !freeRun) game.dungeonRunsUsed[dungeon.id] = this.getRunsUsed(dungeon.id) + 1; // v3.358.0 (D7) : une sortie du jour ; celle de l'Histoire est offerte
     var runMarks = this.sanitizeMarks(marks, dungeon.id);
     var runLevel = storyFree ? 1 : Math.max(1, Math.min(this.getMaxLevel(dungeon.id), Math.floor(Number(level) || 1)));
-    game.dungeonRun = { active: true, wave: 0, dungeonId: dungeon.id, level: runLevel, free: freeRun, marks: runMarks, shardsEarned: 0 };
+    // v3.472.0 : haltes tirées au lancement, seulement sur un donjon déjà terminé et hors sortie de l'Histoire (option 1 de Seb)
+    var halts = (!storyFree && game.dungeonTierCleared[dungeon.id]) ? this.drawHalts(dungeon) : [];
+    game.dungeonRun = { active: true, wave: 0, dungeonId: dungeon.id, level: runLevel, free: freeRun, marks: runMarks, shardsEarned: 0, halts: halts, boons: [] };
     if (!game.dungeonTiersEntered || typeof game.dungeonTiersEntered !== "object") game.dungeonTiersEntered = {};
     game.dungeonTiersEntered[dungeon.id] = true;
     game.heroHp = game.heroMaxHp || 1;
@@ -662,6 +781,7 @@ var DungeonManager = {
     var nextWave = clearedWave + 1;
     // v3.430.0 (RU13) : le campement, halte après la vague de la première étape
     if (this.reachCamp(clearedWave)) return;
+    if (this.reachHalt(clearedWave)) return; // v3.472.0 : une halte, trois cartes
     if (nextWave > DUNGEON_CONFIG.waveCount) {
       addLog(_t("🏰 Vagues terminées ! Le boss du donjon apparaît..."), "event");
       showToast(_t("👑 Le boss du donjon apparaît !"), 2000);
@@ -701,6 +821,7 @@ var DungeonManager = {
   rollBossUnique: function (dungeon, rarity) {
     var def = dungeon && dungeon.boss && dungeon.boss.unique;
     if (!def || !rarity || typeof generateEquipmentItem !== "function") return null;
+    if (this.getRunBoons().some(function (c) { return c.noUnique; })) return null; // v3.472.0 : Autel brisé
     if (!chance(Number(DUNGEON_CONFIG.uniqueDropPct || 0))) return null;
     var ctx = (typeof getDungeonDropContext === "function") ? getDungeonDropContext() : null;
     var item = generateEquipmentItem(def.slot, rarity, ctx ? ctx.world : undefined, ctx ? ctx.aether : null);
@@ -720,6 +841,7 @@ var DungeonManager = {
     this.ensure();
     var tier = this.getById(game.dungeonRun.dungeonId);
     var runMarks = (game.dungeonRun.marks || []).slice();
+    var runBoons = (game.dungeonRun.boons || []).slice(); // v3.472.0 : cartes de halte, pour le rapport
     var markMult = this.getMarkRewardMult(runMarks.length); // v3.245.0 : cumul des Marques, appliqué ici (or et matériau de fin ne passent pas par goldMult)
     // v3.449.2 : Fiole noire bue, or de fin ÷ 2 ; lue avant la clôture (l'abandon a déjà clos la sortie : son résumé)
     var fioleMult = !window.CombatItems ? 1 : CombatItems.lootMultOf(game.sortie && game.sortie.active ? game.sortie : game.lastSortieSummary);
@@ -731,7 +853,8 @@ var DungeonManager = {
 
     var runLevel = this.getRunLevel(), beyond = this.getLevelBeyond(tier, runLevel); // v3.461.0 : or au-delà du plafond (N-I)
     var freeRun = !!game.dungeonRun.free, goldMult = this.getRunGoldMult(); // v3.462.0 : ÷ 4 en mode libre (N-H)
-    var worldBonus = (1 + Math.max(0, tier.worldPower || 0) * 0.5 + Math.sqrt(Math.max(1, tier.difficultyMult || 1)) * 0.4) * markMult * goldMult;
+    var worldBonus = (1 + Math.max(0, tier.worldPower || 0) * 0.5 + Math.sqrt(Math.max(1, tier.difficultyMult || 1)) * 0.4) * markMult * goldMult
+      * this.getBoonProduct("endGoldMult"); // v3.472.0 : Pacte de sang
     var goldReward, grantLoot, lootRarity; // v3.358.0 (D7) : l'essence de fin est fondue dans l'or (fullClearGoldBase)
 
     var rarityOrder = (typeof RARITY_ORDER !== "undefined" && RARITY_ORDER) || ["common", "green", "rare", "epic", "legendary"];
@@ -885,6 +1008,7 @@ var DungeonManager = {
         // v3.245.0 : Marques du run et multiplicateur, pour la ligne « Marques ×1,45 » du rapport
         marks: runMarks,
         markMult: markMult,
+        boons: runBoons, // v3.472.0
         // v3.430.0 : sortie par le campement, et le butin de l'étape 1 mis en sûreté
         outcome: outcome || (success ? "success" : null),
         campLoot: campLoot,

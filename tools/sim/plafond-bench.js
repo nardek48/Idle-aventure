@@ -28,6 +28,7 @@ var SUITE = false, PA_POWER = null, PA_HP = null, JOURNEE = false, BRAKE = 1;
 var VOIE_ARG = null, POINTS_ARG = null, NO_TAL_ARG = false;
 var CITE_ARG = null;
 var ORDRE_ANCIEN = false; // v3.447.0 : --ordre-ancien, sans initiative (héros, compagnons, ennemis), pour comparer
+var HALTE = false; // v3.472.0 : --halte, donjon déjà terminé (haltes tirées), le robot prend la meilleure carte
 var GROUPE = null; // v3.471.0 : --groupe pv2,puiss2,pv3,puiss3 (DUNGEON_CONFIG.groupWave)
 var POUVOIRS = []; // v3.470.0 : --pouvoir id[,id], comme si l'objet qui le porte était équipé
 var OBJETS = []; // v3.441.0 : --objet id[,id], objets de combat emportés à chaque sortie (sans stock ni Apothicaire)
@@ -63,6 +64,7 @@ for (var ai = 3; ai < process.argv.length; ai++) {
   if (process.argv[ai] === "--cite") CITE_ARG = Number(process.argv[ai + 1]); // v3.356.0 : valeur d'essai de l'arme de la Cité
   if (process.argv[ai] === "--ordre-ancien") ORDRE_ANCIEN = true;
   if (process.argv[ai] === "--objet") OBJETS = String(process.argv[ai + 1]).split(",");
+  if (process.argv[ai] === "--halte") HALTE = true;
   if (process.argv[ai] === "--groupe") GROUPE = String(process.argv[ai + 1]).split(",").map(Number); // v3.471.0 : essai PV,puissance des groupes de 2 puis de 3
   if (process.argv[ai] === "--pouvoir") POUVOIRS = String(process.argv[ai + 1]).split(","); // v3.470.0 : pouvoirs portés d'office (uniques de donjon)
 }
@@ -334,6 +336,7 @@ function playDungeon(dungeonId) {
   var d = g.DUNGEONS.filter(function (x) { return x.id === dungeonId; })[0];
   var garde = d.requiresStoryStep;
   g.game.dungeonTierCleared = dungeonId > 1 ? { 1: true } : {};
+  if (HALTE) g.game.dungeonTierCleared[dungeonId] = true; // v3.472.0 : les haltes ne viennent que sur un donjon terminé
   g.DungeonManager.ensure();
   g.game.dungeonRunsUsed = {}; // v3.358.0 : sorties du jour remises à zéro
   d.requiresStoryStep = null;
@@ -346,6 +349,10 @@ function playDungeon(dungeonId) {
   var rounds = 0, guard = 4000, maxWave = 1, hpBoss = null, potBoss = null;
   var potDepart = Number(g.game.healingPotionsOwned.potion_soin_mineur || 0);
   while (g.game.dungeonRun.active && g.game.heroHp > 0 && guard-- > 0) {
+    if (HALTE && g.DungeonManager.isHaltPending()) { // v3.472.0 : bonus purs d'abord, puis préparation et butin, les pactes en dernier
+      var ordre = ["lame", "rempart", "ratelier", "coffre", "sang", "autel", "dement"], tir = g.game.dungeonRun.haltDraw || [];
+      g.DungeonManager.haltAction(ordre.filter(function (id) { return tir.indexOf(id) >= 0; })[0] || null);
+    }
     maxWave = Math.max(maxWave, g.game.dungeonRun.wave || 1);
     if (hpBoss === null && (g.game.dungeonRun.wave || 1) > g.DUNGEON_CONFIG.waveCount) { hpBoss = g.game.heroHp; potBoss = potDepart - Number(g.game.healingPotionsOwned.potion_soin_mineur || 0); }
     g.game.activeTab = "combat";

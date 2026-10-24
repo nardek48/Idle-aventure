@@ -25,6 +25,8 @@ function buildDungeonActiveHTML() {
     marks.forEach(function (m) { h += renderIconOrEmojiHTML(m.icon, "dungeon-active-mark-icon", _td(m.name)); });
     h += '<span>×' + DungeonManager.getMarkRewardMult(marks.length).toFixed(2).replace(/0$/, "") + '</span></div>';
   }
+  var boons = DungeonManager.getRunBoons(); // v3.472.0 : cartes prises aux haltes
+  if (boons.length) h += '<div class="dungeon-active-boons">' + boons.map(function (c) { return '<span>' + esc(_td(c.name)) + '</span>'; }).join("") + '</div>';
   h += '<p class="panel-sub">' + _t("Bats-toi dans l’onglet Combat. Si tes PV tombent à 0, la tentative s’arrête ici (récompense réduite selon les vagues passées).") + '</p>';
   h += '<button class="settings-btn danger" type="button" onclick="DungeonManager.forfeit()">' + _t("Abandonner la tentative") + '</button>';
   h += '</div>';
@@ -455,6 +457,92 @@ function confirmCampAction() {
   if (pick !== "sortir" && typeof switchTab === "function") switchTab("combat");
 }
 
+/* ---------- La halte (v3.472.0, atelier/halte-donjon.html, validé par Seb) ----------
+   Feuille sans croix : trois cartes, une à prendre, ou Passer. Le combat attend derrière (modale bloquante). */
+var haltPick = null;
+
+function openDungeonHaltSheet() {
+  if (!DungeonManager.isHaltPending()) return;
+  haltPick = null;
+  renderDungeonHaltSheet();
+}
+
+function renderDungeonHaltSheet() {
+  var host = document.getElementById("dungeon-modal-root");
+  if (!host) return;
+  if (!DungeonManager.isHaltPending()) { host.innerHTML = ""; return; }
+  host.innerHTML = buildDungeonHaltSheetHTML();
+}
+
+// Lignes d'une carte : gain ▲, coût ▼, note ; le Râtelier nomme l'objet qu'il donne
+function haltCardLines(card, dungeon) {
+  var h = '<span class="dhalt-l is-gain">▲ ' + esc(_td(card.gain)) + '</span>';
+  if (card.cost) h += '<span class="dhalt-l is-cost">▼ ' + esc(_td(card.cost)) + '</span>';
+  var item = card.counterItem && window.COMBAT_ITEMS ? COMBAT_ITEMS[DungeonManager.getCounterItemId(dungeon)] : null;
+  if (item) h += '<span class="dhalt-l">' + esc(_td(item.name)) + ' : ' + esc(_td(item.desc)) + '</span>';
+  else if (card.note) h += '<span class="dhalt-l">' + esc(_td(card.note)) + '</span>';
+  return h;
+}
+
+function haltCardIcon(card, dungeon) {
+  var item = card.counterItem && window.COMBAT_ITEMS ? COMBAT_ITEMS[DungeonManager.getCounterItemId(dungeon)] : null;
+  return renderIconOrEmojiHTML((item && item.icon) || card.icon || "images/Icons/dungeon/halte.webp", "dhalt-ico", _td(card.name));
+}
+
+function buildDungeonHaltSheetHTML() {
+  var run = game.dungeonRun || {}, dungeon = DungeonManager.getById(run.dungeonId);
+  var halts = run.halts || [], done = (run.haltsDone || []).length, wave = Math.max(0, Number(run.wave || 1) - 1);
+  var taken = DungeonManager.getRunBoons();
+  var h = '<div class="ksheet-backdrop"></div>';
+  h += '<div class="ksheet dungeon-halt-sheet">';
+  h += kSheetHeadHTML({
+    icon: renderIconOrEmojiHTML("images/Icons/dungeon/halte.webp", "", ""),
+    title: _t("Une halte"),
+    sub: _t("Après la vague {n} · halte {a} sur {b}", { n: wave, a: done, b: halts.length })
+      + (taken.length ? '<span class="dhalt-prev"> · ' + _t("déjà pris : {x}", { x: esc(taken.map(function (c) { return _td(c.name); }).join(", ")) }) + '</span>' : "")
+  });
+  h += '<div class="ksheet-body">';
+  h += '<p class="dcamp-quote">' + _t("Une salle oubliée, à l'écart du passage. Rien n'y bouge, sauf ce qu'on y a laissé.") + '</p>';
+  h += '<div class="dhalt-rule">' + _t("Aucune halte ne soigne : tes PV restent ceux de la vague {n}.", { n: wave }) + '</div>';
+  if (taken.length) {
+    h += '<div class="dcamp-lbl dhalt-taken-lbl">' + _t("Déjà pris sur ce run") + '</div>';
+    taken.forEach(function (c) { h += '<div class="dhalt-taken">' + haltCardIcon(c, dungeon) + '<span><b>' + esc(_td(c.name)) + '</b> · ' + esc(_td(c.gain)) + '</span></div>'; });
+  }
+  h += '<div class="dcamp-lbl">' + _t("Prends une carte, ou passe") + '</div>';
+  (run.haltDraw || []).forEach(function (id) {
+    var c = DungeonManager.getHaltCard(id);
+    if (!c) return;
+    var on = haltPick === id;
+    h += '<div class="dhalt-opt' + (on ? ' is-on' : '') + '" role="radio" tabindex="0" aria-checked="' + on + '" onclick="pickHaltCard(\'' + esc(id) + '\')">'
+      + haltCardIcon(c, dungeon) + '<b>' + esc(_td(c.name)) + '</b>'
+      + '<span class="dhalt-tag' + (c.kind === "echange" ? ' is-trade' : '') + '">' + esc(_td(DUNGEON_HALT_KIND_LABELS[c.kind] || "")) + '</span>'
+      + haltCardLines(c, dungeon) + '</div>';
+  });
+  h += '</div>';
+  var pick = haltPick && DungeonManager.getHaltCard(haltPick);
+  h += '<div class="ksheet-foot dhalt-foot"><button type="button" class="kbtn primary"' + (pick ? '' : ' disabled') + ' onclick="confirmHaltCard()">'
+    + (pick ? _t("Prendre « {x} »", { x: _td(pick.name) }) : _t("Choisis une carte")) + '</button>'
+    + '<button type="button" class="kbtn dhalt-pass" onclick="passHalt()">' + _t("Passer", "halte") + '</button></div>';
+  h += '</div>';
+  return h;
+}
+
+function pickHaltCard(id) {
+  haltPick = id;
+  renderDungeonHaltSheet();
+}
+
+function closeHaltAndFight(cardId) {
+  var host = document.getElementById("dungeon-modal-root");
+  if (host) host.innerHTML = "";
+  if (!DungeonManager.haltAction(cardId)) { renderDungeonHaltSheet(); return; }
+  haltPick = null;
+  if (typeof switchTab === "function") switchTab("combat");
+}
+
+function confirmHaltCard() { if (haltPick) closeHaltAndFight(haltPick); }
+function passHalt() { closeHaltAndFight(null); }
+
 /* ---------- Rapport de fin ---------- */
 function buildDungeonSummaryHTML(result) {
   var h = '<div class="full-menu-overlay kwin-veil">';
@@ -472,6 +560,11 @@ function buildDungeonSummaryHTML(result) {
   if (result.marks && result.marks.length) {
     var names = result.marks.map(function (id) { var m = DungeonManager.getMark(id); return m ? _td(m.name) : id; }).join(", ");
     h += '      <div class="dungeon-summary-row"><span>' + _t("Marques") + '</span><span>×' + Number(result.markMult || 1).toFixed(2).replace(/0$/, "") + ' · ' + esc(names) + '</span></div>';
+  }
+  // v3.472.0 : cartes prises aux haltes
+  if (result.boons && result.boons.length) {
+    var bn = result.boons.map(function (id) { var c = DungeonManager.getHaltCard(id); return c ? _td(c.name) : id; }).join(", ");
+    h += '      <div class="dungeon-summary-row"><span>' + _t("Haltes") + '</span><span>' + esc(bn) + '</span></div>';
   }
   // v3.436.1 (bug Seb) : tout l'or reçu, dans l'ordre du run — vagues, campement, prime, total
   var wavesGold = Number(result.wavesGold || 0), campLoot = result.campLoot || {}, campGold = Number(campLoot.gold || 0);
@@ -531,5 +624,9 @@ window.openDungeonCampSheet = openDungeonCampSheet;
 window.pickCampAction = pickCampAction;
 window.toggleCampCompanion = toggleCampCompanion;
 window.confirmCampAction = confirmCampAction;
+window.openDungeonHaltSheet = openDungeonHaltSheet;
+window.pickHaltCard = pickHaltCard;
+window.confirmHaltCard = confirmHaltCard;
+window.passHalt = passHalt;
 
 /* v3.358.0 (D7) : l'overlay d'achat de tickets est retiré avec l'essence. */
