@@ -596,6 +596,14 @@ function pa2MapHTML(run) {
   });
   // v3.467.0 (Pièges) : losange rouge au milieu des sentiers piégés en vue ; le héros arrêté au milieu.
   var trapSvg = "", traps = "";
+  // v3.468.0 (PG-A1b) : sentier coupé, rond gris barré au milieu, trait gris pâle
+  Object.keys(run.cuts || {}).forEach(function (key) {
+    if (!Pa2Run.isCutShown(key, run)) return;
+    var p = key.split(">"), A = map.nodes[p[0]], B = map.nodes[p[1]], m = pa2Mid(map, key), c = Pa2Run.cutDef(key, run);
+    trapSvg += '<line x1="' + A.x + '" y1="' + A.y + '" x2="' + B.x + '" y2="' + B.y + '" stroke="#a8a29a" stroke-opacity=".5" stroke-width="' + (3 * K).toFixed(1) + '" stroke-dasharray="' + (2 * K).toFixed(1) + ' ' + (10 * K).toFixed(1) + '" stroke-linecap="round"/>';
+    traps += '<button type="button" class="pa2-cut" style="left:' + (100 * m.x / W).toFixed(2) + '%;top:' + (100 * m.y / H).toFixed(2) + '%" onclick="pa2CutInfo(\'' + key + '\')" aria-label="' +
+      esc(_t("{x} : le sentier est coupé.", { x: _td(c.name) })) + '">' + pa2Img(c.icon) + '</button>';
+  });
   Object.keys(run.traps || {}).forEach(function (key) {
     if (!Pa2Run.isTrapShown(key, run) || (run.trap && run.trap.key === key)) return;
     var p = key.split(">"), A = map.nodes[p[0]], B = map.nodes[p[1]], m = pa2Mid(map, key), near = p[0] === run.at;
@@ -707,6 +715,11 @@ function pa2FxChipsHTML(run) {
   });
   return h;
 }
+function pa2CutInfo(key) {
+  if (pa2Cam && pa2Cam.gesture.suppressClick) return; // fin d'un glissé : pas un tap
+  var c = Pa2Run.cutDef(key);
+  if (c && typeof showToast === "function") showToast(_t("{x} : le sentier est coupé.", { x: _td(c.name) }), 1800);
+}
 function pa2OpenTrapSheet() {
   var run = Pa2Run.getRun();
   if (!run || run.status !== PA2_STATUS.trap) return;
@@ -801,6 +814,7 @@ function pa2RenderLegend() {
       row(PA2_ICONS.trouvaille, _t("Trouvaille"), _t("Un objet pour ce run")) + row(PA2_ICONS.evenement, _t("Rencontre"), _t("Un choix qui aura des suites")) +
       row(PA2_ICONS.camp, _t("Le camp"), _t("Fin de l'acte I")) + row(PA2_ICONS.seuil, _t("Le seuil"), _t("Fin de l'acte II")) +
       row(PA2_TRAP_FX.venin.icon, _t("Piège"), _t("Losange rouge sur un sentier : son effet, à désamorcer ou à éviter")) +
+      row(((PA2_CUTS[run.worldId] || PA2_CUTS.forest)[Object.keys(PA2_CUTS[run.worldId] || PA2_CUTS.forest)[0]]).icon, _t("Sentier coupé"), _t("Rond gris : le passage est fermé pour ce run")) +
       row(PA2_ICONS.boss, _t("Destinations"), _t("Trois fins possibles, au nord")) + '</div>';
   }
   box.innerHTML = h;

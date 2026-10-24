@@ -46,6 +46,7 @@ if (OVR) {
 }
 
 if (NO_TRAPS) g.PA2_TRAP_RULES.perAct = { sentier: 0, chemin: 0, periple: 0 };
+if (process.argv.indexOf("--sans-coupes") > 0) { g.PA2_CUT_RULES.min = 0; g.PA2_CUT_RULES.max = 0; } // v3.468.0 : tracé intact
 
 /* Héros de référence : niveau et développement attendus à chaque étape (repères de campagne
    v3.365.0 : niveau 8 à l'arrivée au Désert, 12 à la fin du chapitre II). */

@@ -130,6 +130,7 @@ var DATA_TEXT_FIELDS = {
   PA2_DESTS: ["*.*.name", "*.*.line", "*.*.win", "*.*.fail", "*.*.pass"], // v3.454.0 : pass (le gardien qui dort)
   PA2_TRAP_FX: ["*.name", "*.desc", "*.cure"], // v3.467.0 (Pièges)
   PA2_TRAPS: ["*.*.name", "*.*.line"],
+  PA2_CUTS: ["*.*.name"], // v3.468.0 (sentiers coupés)
   PA2_HOOKS: ["*.title", "*.lede", "*.event.name", "*.event.text", "*.event.branches.*.label", "*.event.branches.*.text",
     "*.campGift.text", "*.revenge.name", "*.revenge.line", "*.clairiere.*", "*.echo.*"],
 

@@ -412,6 +412,7 @@ var Pa2Run = {
     var ref = self._spawn(run, null, false, self.goldBand(run));
     run.refGold = Math.max(1, Number((ref && ref.goldReward) || 1));
     run.nodes = this.generate(run);
+    run.cuts = this._placeCuts(run);   // v3.468.0 : sentiers coupés, avant les pièges
     run.traps = this._placeTraps(run); // v3.467.0 : pièges sur les sentiers
     run.fx = {};
     run.at = this.getMap(run).start;
@@ -511,9 +512,12 @@ var Pa2Run = {
   links: function (run) {
     run = run || this.getRun();
     var base = (this.getMap(run) || {}).links || {};
-    if (!run || !run.walls) return base;
-    var out = {};
-    Object.keys(base).forEach(function (k) { out[k] = run.walls[k] || base[k]; });
+    if (!run || (!run.walls && !run.cuts)) return base;
+    var out = {}, cuts = run.cuts || {};
+    Object.keys(base).forEach(function (k) {
+      out[k] = (run.walls && run.walls[k]) || base[k];
+      if (run.cuts) out[k] = out[k].filter(function (b) { return !cuts[k + ">" + b]; }); // v3.468.0 : sentiers coupés
+    });
     return out;
   },
 
@@ -769,9 +773,9 @@ var Pa2Run = {
     if (!map || !map.links || this.isParcours(run)) return traps;
     var pa = (PA2_TRAP_RULES.perAct || {})[run.ring], per = pa != null ? Number(pa) : 1, moving = {};
     (map.shifts || []).forEach(function (sh) { moving[sh.from] = true; });
-    var byAct = { 1: [], 2: [], 3: [] }, used = {};
-    Object.keys(map.links).forEach(function (a) {
-      var exits = map.links[a] || [];
+    var byAct = { 1: [], 2: [], 3: [] }, used = {}, links = this.links(run); // v3.468.0 : sans les sentiers coupés
+    Object.keys(links).forEach(function (a) {
+      var exits = links[a] || [];
       if (exits.length < 2 || moving[a]) return;
       exits.forEach(function (b) { var n = run.nodes[b]; if (n && byAct[n.act]) byAct[n.act].push([a, b]); });
     });
@@ -780,7 +784,7 @@ var Pa2Run = {
       var pool = byAct[act].slice(), placed = 0;
       while (pool.length && placed < per) {
         var l = pool.splice(Math.floor(self.rand() * pool.length), 1)[0];
-        if ((used[l[0]] || 0) >= map.links[l[0]].length - 1) continue; // une sortie reste libre
+        if ((used[l[0]] || 0) >= links[l[0]].length - 1) continue; // une sortie reste libre
         used[l[0]] = (used[l[0]] || 0) + 1;
         var hidden = dark || self.rand() < Number(PA2_TRAP_RULES.hiddenPct || 0); // v3.467.1 : une part cachée
         traps[l[0] + ">" + l[1]] = { fx: self._weighted(weights), hidden: hidden, seen: false, done: false };
@@ -788,6 +792,49 @@ var Pa2Run = {
       }
     });
     return traps;
+  },
+  /* v3.468.0 (PG-A1) : 3 à 5 sentiers coupés au départ. Un point garde une sortie, les trois
+     destinations restent accessibles ; jamais au départ d'un point dont un mur bouge (Ruines). */
+  _placeCuts: function (run) {
+    var map = this.getMap(run), cuts = {}, self = this, R = PA2_CUT_RULES;
+    var kinds = Object.keys((window.PA2_CUTS || {})[run.worldId] || {});
+    if (!map || !map.links || this.isParcours(run) || !kinds.length) return cuts;
+    var moving = {};
+    (map.shifts || []).forEach(function (sh) { moving[sh.from] = true; });
+    var pool = [];
+    Object.keys(map.links).forEach(function (a) { if (!moving[a]) map.links[a].forEach(function (b) { pool.push(a + ">" + b); }); });
+    var want = this._int(R.min, R.max), dests = Object.keys(run.nodes).filter(function (k) { return self.isDest(run.nodes[k], run); });
+    while (pool.length && Object.keys(cuts).length < want) {
+      var key = pool.splice(Math.floor(this.rand() * pool.length), 1)[0], a = key.split(">")[0];
+      var left = map.links[a].filter(function (b) { return !cuts[a + ">" + b]; });
+      if (left.length < 2) continue; // le point garde une sortie
+      cuts[key] = this._pick(kinds);
+      if (!this._destsReachable(map, cuts, dests)) delete cuts[key];
+    }
+    return cuts;
+  },
+  _destsReachable: function (map, cuts, dests) {
+    var seen = {}, todo = [map.start];
+    seen[map.start] = true;
+    while (todo.length) {
+      var a = todo.pop();
+      (map.links[a] || []).forEach(function (b) { if (!cuts[a + ">" + b] && !seen[b]) { seen[b] = true; todo.push(b); } });
+    }
+    return dests.every(function (d) { return seen[d]; });
+  },
+  // Un sentier coupé se voit dès qu'il est dans la vue, même dans le noir (PG-A1b).
+  isCutShown: function (key, run) {
+    run = run || this.getRun();
+    if (!run || !run.cuts || !run.cuts[key]) return false;
+    var p = key.split(">"), here = this.node(run.at, run), to = this.node(p[1], run);
+    if (!here || !to) return false;
+    if (p[0] === run.at) return true;
+    return to.row > here.row && this.isShown(p[0], run) && this.isVisible(p[1], run);
+  },
+  cutDef: function (key, run) {
+    run = run || this.getRun();
+    var id = run && run.cuts ? run.cuts[key] : null, w = (window.PA2_CUTS || {})[run && run.worldId];
+    return id && w && w[id] ? w[id] : null;
   },
   // Le piège se voit si son sentier est dans la vue (départ visible, arrivée visible devant soi).
   // Caché (v3.467.1) : à la Lanterne allumée, à la torche sur un sentier qu'on peut prendre, ou une fois découvert.

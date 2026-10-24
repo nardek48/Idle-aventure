@@ -52,9 +52,10 @@ var g = sandbox;
    d'avant (héros, compagnons, ennemis) : on le garde ici ; les contrôles de l'initiative le lèvent. */
 g.Initiative.legacy = true;
 /* v3.467.0 (Pièges) : les contrôles historiques des Petites Aventures supposent des sentiers sans piège ;
-   les pièges ne se posent que là où g.__traps est vrai (runs au hasard, section [281]). */
+   les pièges (et, v3.468.0, les sentiers coupés) ne se posent que là où g.__traps est vrai (runs au hasard, [281], [282]). */
 g.__traps = false;
 (function () { var place = g.Pa2Run._placeTraps; g.Pa2Run._placeTraps = function (r) { return g.__traps ? place.call(this, r) : {}; }; })();
+(function () { var place = g.Pa2Run._placeCuts; g.Pa2Run._placeCuts = function (r) { return g.__traps ? place.call(this, r) : {}; }; })();
 var failures = 0, passes = 0;
 /* v3.459.5 (audit O9) : chaque ✘ porte sa section, et la fin du harnais les récapitule. */
 var section = "", echecs = [], _log = console.log;
@@ -17007,7 +17008,7 @@ console.log("\n[281] v3.467.0 — Petites Aventures : pièges sur les sentiers (
     var r = game.sceneRun; r.ring = ring || "sentier"; r.hookId = null;
     (items || []).forEach(function (id) { P.addItem(id); });
     P.depart();
-    if (traps) r.traps = traps;
+    if (traps) { r.traps = traps; r.cuts = {}; } // v3.468.0 : tracé intact quand le test pose ses pièges
     return r;
   }
   try {
@@ -17133,6 +17134,63 @@ console.log("\n[281] v3.467.0 — Petites Aventures : pièges sur les sentiers (
     ok(g.PA2_ITEMS.corde.pro.indexOf("Pas sur les pièges") > 0 && g.PA2_ITEM_ORDER.indexOf("trousse") === g.PA2_ITEM_ORDER.indexOf("corde") + 1, "besace : la Trousse après la Corde, la Corde « pas sur les pièges »");
   } finally {
     P.rand = savedRand; g.__traps = false; g.PA2_MAPS_BY_WORLD.forest = savedMaps; game.sceneRun = null;
+    if (g.SortieManager.isActive()) g.SortieManager.end("return");
+  }
+})();
+
+console.log("\n[282] v3.468.0 — Petites Aventures : sentiers coupés au départ (PG-A1, PG-A1b)");
+(function () {
+  var S = g.SceneRunManager, P = g.Pa2Run, CR = g.PA2_CUT_RULES, savedMaps = g.PA2_MAPS_BY_WORLD.forest.slice();
+  g.__traps = true;
+  function prep() {
+    game = freshCombat("knight"); giveWeapon();
+    run("game.enemy = null; game.combat = null;");
+    S.ensureDefaults();
+    game.explorationProgression.petiteAventure = { spent: 0, since: null };
+    game.resources.petite_ration = 5;
+    game.heroLevel = 6; game.heroHp = game.heroMaxHp; game.sceneRun = null;
+    if (g.SortieManager.isActive()) g.SortieManager.end("return");
+  }
+  function reach(r) { // destinations atteignables depuis le départ, sur le tracé du run
+    var L = P.links(r), M = P.getMap(r), seen = {}, todo = [M.start]; seen[M.start] = true;
+    while (todo.length) { var a = todo.pop(); (L[a] || []).forEach(function (b) { if (!seen[b]) { seen[b] = true; todo.push(b); } }); }
+    return Object.keys(r.nodes).filter(function (k) { return P.isDest(r.nodes[k], r); }).every(function (d) { return seen[d]; });
+  }
+  try {
+    var okN = true, okExit = true, okReach = true, okTrap = true, okWall = true, okKind = true, n = 0;
+    [["petite_aventure_foret", ["foret_1"]], ["petite_aventure_foret", ["foret_2"]], ["petite_aventure_desert"], ["petite_aventure_ruines"], ["petite_aventure_crypte"]].forEach(function (c) {
+      if (c[1]) g.PA2_MAPS_BY_WORLD.forest = c[1];
+      for (var k = 0; k < 30; k++) {
+        prep(); S.startRun(c[0]); var r = game.sceneRun; r.ring = "periple"; P.depart(); n++;
+        var keys = Object.keys(r.cuts), M = P.getMap(r), L = P.links(r), mv = {};
+        (M.shifts || []).forEach(function (sh) { mv[sh.from] = true; });
+        if (keys.length < CR.min || keys.length > CR.max) okN = false;
+        Object.keys(M.links).forEach(function (a) { if (!(L[a] || []).length) okExit = false; });
+        if (!reach(r)) okReach = false;
+        Object.keys(r.traps).forEach(function (t) { if (r.cuts[t]) okTrap = false; var a = t.split(">")[0]; if (!(L[a] || []).some(function (b) { return !r.traps[a + ">" + b]; })) okTrap = false; });
+        keys.forEach(function (key) { if (mv[key.split(">")[0]]) okWall = false; if (!P.cutDef(key, r)) okKind = false; });
+      }
+    });
+    g.PA2_MAPS_BY_WORLD.forest = savedMaps;
+    ok(okN, "3 à 5 sentiers coupés par run (" + n + " runs, cinq cartes)");
+    ok(okExit && okReach, "chaque point garde une sortie, les trois destinations restent accessibles");
+    ok(okTrap, "aucun piège sur un sentier coupé ; une sortie sans piège reste parmi les sentiers ouverts");
+    ok(okWall && okKind, "Ruines : rien au départ d'un mur qui bouge ; chaque coupure a son obstacle du monde");
+    // Tracé : le sentier coupé disparaît des sentiers possibles
+    g.PA2_MAPS_BY_WORLD.forest = ["foret_1"];
+    prep(); S.startRun("petite_aventure_foret"); var r = game.sceneRun; r.hookId = null; P.depart();
+    r.cuts = { "S>L0": "arbre" }; r.traps = {};
+    ok(P.openMoves().indexOf("L0") < 0 && P.openMoves().length === 2 && P.moveTo("L0").ok === false, "le sentier coupé n'est plus praticable");
+    ok(P.isCutShown("S>L0", r) && P.cutDef("S>L0", r).name === "Arbre abattu", "la coupure se voit du point de départ, avec son obstacle");
+    run("switchTab('scene')");
+    var hm = g.buildSceneScreenHTML();
+    ok(/class="pa2-cut"/.test(hm) && /pa2CutInfo\('S>L0'\)/.test(hm), "carte : rond gris au milieu du sentier coupé, qui se touche");
+    prep(); S.startRun("petite_aventure_crypte"); r = game.sceneRun; r.hookId = null; P.depart();
+    var ck = r.at + ">" + P.getMap(r).links[r.at][0]; r.cuts = {}; r.cuts[ck] = "grille";
+    ok(P.isCutShown(ck, r), "Crypte : une grille tombée se voit dans le noir");
+    ok(Object.keys(P._placeCuts({ parcours: true, map: {}, nodes: {}, worldId: "forest" }) || {}).length === 0, "parcours : aucune coupure");
+  } finally {
+    g.__traps = false; g.PA2_MAPS_BY_WORLD.forest = savedMaps; game.sceneRun = null;
     if (g.SortieManager.isActive()) g.SortieManager.end("return");
   }
 })();

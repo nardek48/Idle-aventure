@@ -236,6 +236,14 @@ var PA2_TRAP_RULES = {
   backBreath: 10,     // rebrousser
   veninPct: 0.04, entraveBreath: 6, steps: 3
 };
+/* v3.468.0 (Tracé qui change, PG-A1) : sentiers coupés au départ, par un obstacle du monde (PG-A1b). */
+var PA2_CUT_RULES = { min: 3, max: 5 };
+var PA2_CUTS = {
+  forest: { arbre: { name: "Arbre abattu", icon: "images/Icons/scene/cuts/cut_fallen_tree.webp" }, crue: { name: "Ruisseau en crue", icon: "images/Icons/scene/cuts/cut_flood.webp" } },
+  desert: { dune: { name: "Dune nouvelle", icon: "images/Icons/scene/cuts/cut_dune.webp" }, ravin: { name: "Ravin effondré", icon: "images/Icons/scene/cuts/cut_ravine.webp" } },
+  ruins:  { rue: { name: "Rue effondrée", icon: "images/Icons/scene/cuts/cut_collapsed_street.webp" }, porte: { name: "Porte murée", icon: "images/Icons/scene/cuts/cut_walled_door.webp" } },
+  crypt:  { grille: { name: "Grille tombée", icon: "images/Icons/scene/cuts/cut_gate.webp" }, voute: { name: "Voûte écroulée", icon: "images/Icons/scene/cuts/cut_collapse.webp" } }
+};
 /* Les cinq effets (PG-C). steps : pas pendant lesquels l'effet dure (0 : immédiat ou jusqu'au combat). */
 var PA2_TRAP_FX = {
   venin:   { id: "venin",   name: "Venin",         steps: 3, icon: "images/Icons/scene/traps/fx_venom.webp",
@@ -657,6 +665,8 @@ var PA2_HOOKS_BY_WORLD = {
 window.PA2_BAG_SIZE = PA2_BAG_SIZE;
 window.PA2_WORLD_RULES = PA2_WORLD_RULES;
 window.PA2_TRAP_RULES = PA2_TRAP_RULES;
+window.PA2_CUT_RULES = PA2_CUT_RULES;
+window.PA2_CUTS = PA2_CUTS;
 window.PA2_TRAP_FX = PA2_TRAP_FX;
 window.PA2_TRAP_FX_ORDER = PA2_TRAP_FX_ORDER;
 window.PA2_TRAP_WEIGHTS = PA2_TRAP_WEIGHTS;

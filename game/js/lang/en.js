@@ -5963,4 +5963,16 @@ I18n.register("en", {
   "Perdu : {x}.": "Lost: {x}.",
   "Ta besace était vide : rien de perdu.": "Your satchel was empty: nothing lost.",
   "Tu rebrousses chemin. −{n} Souffle": "You turn back. −{n} Breath",
+  // v3.468.0 : sentiers coupés
+  "Arbre abattu": "Fallen tree",
+  "Ruisseau en crue": "Flooded stream",
+  "Dune nouvelle": "New dune",
+  "Ravin effondré": "Collapsed ravine",
+  "Rue effondrée": "Collapsed street",
+  "Porte murée": "Walled-up door",
+  "Grille tombée": "Fallen gate",
+  "Voûte écroulée": "Caved-in vault",
+  "{x} : le sentier est coupé.": "{x}: the path is cut.",
+  "Sentier coupé": "Cut path",
+  "Rond gris : le passage est fermé pour ce run": "Grey circle: the way is closed for this run",
 });
