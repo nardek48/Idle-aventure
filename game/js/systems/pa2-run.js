@@ -775,21 +775,22 @@ var Pa2Run = {
       if (exits.length < 2 || moving[a]) return;
       exits.forEach(function (b) { var n = run.nodes[b]; if (n && byAct[n.act]) byAct[n.act].push([a, b]); });
     });
-    var weights = PA2_TRAP_WEIGHTS[run.worldId] || PA2_TRAP_WEIGHTS.forest;
+    var weights = PA2_TRAP_WEIGHTS[run.worldId] || PA2_TRAP_WEIGHTS.forest, dark = !!this.worldRule(run, "trapsHidden");
     [1, 2, 3].forEach(function (act) {
       var pool = byAct[act].slice(), placed = 0;
       while (pool.length && placed < per) {
         var l = pool.splice(Math.floor(self.rand() * pool.length), 1)[0];
         if ((used[l[0]] || 0) >= map.links[l[0]].length - 1) continue; // une sortie reste libre
         used[l[0]] = (used[l[0]] || 0) + 1;
-        traps[l[0] + ">" + l[1]] = { fx: self._weighted(weights), seen: false, done: false };
+        var hidden = dark || self.rand() < Number(PA2_TRAP_RULES.hiddenPct || 0); // v3.467.1 : une part cachée
+        traps[l[0] + ">" + l[1]] = { fx: self._weighted(weights), hidden: hidden, seen: false, done: false };
         placed++;
       }
     });
     return traps;
   },
-  // Le piège se voit si son sentier est dans la vue (départ visible, arrivée visible devant soi) ;
-  // dans le noir (trapsHidden), seulement à la Lanterne allumée ou une fois découvert.
+  // Le piège se voit si son sentier est dans la vue (départ visible, arrivée visible devant soi).
+  // Caché (v3.467.1) : à la Lanterne allumée, à la torche sur un sentier qu'on peut prendre, ou une fois découvert.
   isTrapShown: function (key, run) {
     run = run || this.getRun();
     var t = run && run.traps ? run.traps[key] : null;
@@ -797,7 +798,8 @@ var Pa2Run = {
     var p = key.split(">"), here = this.node(run.at, run), to = this.node(p[1], run);
     if (!here || !to) return false;
     var all = this.hasItem("veilleurs", run) || this.hasRelic("oeil", run);
-    if (this.worldRule(run, "trapsHidden") && !t.seen && !all && !(Number(run.lanternLeft || 0) > 0)) return false;
+    var hidden = t.hidden != null ? t.hidden : !!this.worldRule(run, "trapsHidden"); // run de la v3.467.0 : seule la Crypte cache
+    if (hidden && !t.seen && !all && !(Number(run.lanternLeft || 0) > 0)) return p[0] === run.at && this.hasItem("torche", run);
     if (p[0] === run.at) return true;
     return to.row > here.row && this.isShown(p[0], run) && this.isVisible(p[1], run);
   },

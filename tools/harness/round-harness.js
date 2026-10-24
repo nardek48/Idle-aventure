@@ -16987,7 +16987,7 @@ console.log("\n[280] v3.466.1 — Sac du héros : plus de bouton Utiliser sur le
   ok(/Se boit en combat/.test(h1) && /Se boit au départ, dans la préparation de sortie/.test(h2) && /sellPotion/.test(h1) && /sellPotion/.test(h2), "à la place, où se boit la potion ; Vendre reste");
 })();
 
-console.log("\n[281] v3.467.0 — Petites Aventures : pièges sur les sentiers (PG-A à PG-G)");
+console.log("\n[281] v3.467.0 — Petites Aventures : pièges sur les sentiers (PG-A à PG-G ; v3.467.1 : une part cachée)");
 (function () {
   var S = g.SceneRunManager, P = g.Pa2Run, TR = g.PA2_TRAP_RULES, savedRand = P.rand, savedMaps = g.PA2_MAPS_BY_WORLD.forest.slice();
   g.PA2_MAPS_BY_WORLD.forest = ["foret_1"];
@@ -17101,6 +17101,20 @@ console.log("\n[281] v3.467.0 — Petites Aventures : pièges sur les sentiers (
     ok(r.status === "pa2-trap" && r.trap.unseen === true && r.traps[ck].seen, "dans le noir, marcher dessus le découvre (la fiche le dit)");
     r.lanternLeft = 0; r.trap.unseen = true; P.resolveTrap("rebrousser");
     ok(P.isTrapShown(ck, r), "découvert : il reste visible après Rebrousser");
+    // v3.467.1 (retour Seb) : un piège sur deux caché hors de la Crypte ; la torche révèle ceux des sentiers ouverts
+    var hid = 0, tot = 0, cryptAll = true;
+    for (var q = 0; q < 30; q++) { var rq = go("periple"); Object.keys(rq.traps).forEach(function (k) { tot++; if (rq.traps[k].hidden) hid++; }); }
+    for (q = 0; q < 10; q++) { prep(); S.startRun("petite_aventure_crypte"); var rc = game.sceneRun; rc.ring = "periple"; P.depart(); Object.keys(rc.traps).forEach(function (k) { if (!rc.traps[k].hidden) cryptAll = false; }); }
+    ok(hid / tot > 0.35 && hid / tot < 0.65 && cryptAll, "Forêt : environ un piège sur deux caché (" + hid + " / " + tot + ") ; Crypte : tous");
+    r = go("sentier", [], { "S>C0": { fx: "venin", hidden: true, seen: false, done: false }, "C0>C1": { fx: "venin", hidden: true, seen: false, done: false } });
+    ok(!P.isTrapShown("S>C0", r), "piège caché : invisible sur la carte");
+    r.bag.push("torche");
+    ok(P.isTrapShown("S>C0", r) && !P.isTrapShown("C0>C1", r), "la torche révèle le piège caché d'un sentier qu'on peut prendre, pas plus loin");
+    r.bag.splice(r.bag.indexOf("torche"), 1); P.moveTo("C0");
+    g.pa2View.sheet = { trap: true, step: "intro" };
+    ok(r.trap.unseen && /as pas vu venir/.test(g.pa2TrapSheetBody(r, g.pa2View.sheet)), "caché : la fiche dit qu'on ne l'a pas vu venir");
+    g.pa2View.sheet = null;
+    ok(/pièges cachés/.test(g.PA2_ITEMS.torche.pro), "la Torche dit qu'elle montre les pièges cachés");
     // Parcours : jamais de piège
     ok(Object.keys(P._placeTraps({ parcours: true, map: {}, nodes: {} }) || {}).length === 0, "parcours : aucun piège");
     // Écran : losange, fiche, pastilles

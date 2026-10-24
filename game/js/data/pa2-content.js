@@ -45,7 +45,7 @@ var PA2_ITEMS = {
     pro: "Deux crochets : un piège désamorcé à coup sûr, sans dé ni Souffle.", con: "Ne sert qu'aux pièges." },
   torche: { id: "torche", name: "Torche", size: 1,
     icon: "images/Icons/scene/torch.webp",
-    pro: "Tu vois une rangée de plus devant toi.", con: "Sa lumière attire : combats +15 % de dégâts." },
+    pro: "Tu vois une rangée de plus devant toi, et les pièges cachés des sentiers que tu peux prendre.", con: "Sa lumière attire : combats +15 % de dégâts." }, // v3.467.1 : les pièges cachés
   armure: { id: "armure", name: "Armure de voyage", size: 3,
     icon: "images/Icons/scene/items/item_armor.webp",
     pro: "Combats : −35 % de dégâts reçus.", con: "Chaque obstacle coûte +8 Souffle." },
@@ -230,6 +230,7 @@ var PA2_WORLD_RULES = {
    selon l'anneau (PG-G) ; un point garde toujours une sortie libre. Chiffres de départ, au banc. */
 var PA2_TRAP_RULES = {
   perAct: { sentier: 1, chemin: 2, periple: 3 },
+  hiddenPct: 0.5,     // v3.467.1 (retour Seb) : un piège sur deux caché hors de la Crypte (là-bas, tous)
   baseDifficulty: 4,  // désamorcer : dé de précision, comme un obstacle de base
   midBreath: 10,      // « de justesse »
   backBreath: 10,     // rebrousser

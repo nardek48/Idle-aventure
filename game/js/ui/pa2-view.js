@@ -716,7 +716,7 @@ function pa2OpenTrapSheet() {
 }
 function pa2TrapSheetBody(run, st) {
   var td = Pa2Run.trapDef(run), fx = td.fxDef, h = "";
-  if (run.trap.unseen && st.step === "intro") h += '<p class="pa2-echo">' + esc(_t("Dans le noir, tu ne l'as pas vu. Ton pied est déjà dessus.")) + '</p>';
+  if (run.trap.unseen && st.step === "intro") h += '<p class="pa2-echo">' + esc(Pa2Run.worldRule(run, "trapsHidden") ? _t("Dans le noir, tu ne l'as pas vu. Ton pied est déjà dessus.") : _t("Tu ne l'as pas vu venir. Ton pied est déjà dessus.")) + '</p>';
   h += '<div class="pa2-sheet-head"><div class="pa2-medal is-trap">' + pa2Img(fx.icon) + '</div><div><div class="pa2-kicker">' +
     esc(_t("Piège") + " · " + _td(fx.name).toLowerCase()) + '</div><h2 class="pa2-h2">' + esc(_td(td.name)) + '</h2></div></div>';
   if (st.step === "intro") {

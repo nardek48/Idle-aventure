@@ -18,7 +18,8 @@ var CRYPTE = process.argv.indexOf("--crypte") > 0;        // v3.454.0 : la Petit
 var REVEIL = process.argv.indexOf("--reveiller") > 0;     // v3.454.0 : gisants réveillés au départ (carte de la Crypte)
 var TPL = CRYPTE ? "petite_aventure_crypte" : RUINES ? "petite_aventure_ruines" : DESERT ? "petite_aventure_desert" : "petite_aventure_foret";
 var NO_TRAPS = process.argv.indexOf("--sans-pieges") > 0; // v3.467.0 : comparer avec et sans pièges
-var BLIND = process.argv.indexOf("--droit-devant") > 0;   // v3.467.0 : le joueur qui ne contourne pas les pièges
+var BLIND = process.argv.indexOf("--droit-devant") > 0;
+var KIT = process.argv.indexOf("--trousse") > 0;          // v3.467.1 : la Trousse à la place de la torche   // v3.467.0 : le joueur qui ne contourne pas les pièges
 var OVR = (process.argv.filter(function (a) { return a.indexOf("--ovr=") === 0; })[0] || "").slice(6); // réglages d'essai, JSON
 
 var src = fs.readFileSync(path.join(__dirname, "forecast-calibration-bench.js"), "utf8").replace(/\nmain\(\);\s*$/, "\n");
@@ -90,7 +91,8 @@ function playRun(c, stage) {
     : { livingMap: { mapId: "forest", sectorId: RING === "chemin" ? "menhirs" : "portail" } };
   S.startRun(TPL, opts);
   var run = g.game.sceneRun;
-  (NO_RATION ? ["gourde", "corde", "torche"] : ["petite_ration", "petite_ration", "gourde", "corde", "torche"]).forEach(function (id) { P.addItem(id); });
+  var light = KIT ? "trousse" : "torche";
+  (NO_RATION ? ["gourde", "corde", light] : ["petite_ration", "petite_ration", "gourde", "corde", light]).forEach(function (id) { P.addItem(id); });
   if (DESERT) { g.game.resources.outre_pleine = 5; P.addItem("outre"); } // la place libre : l'Outre
   if (RUINES) P.addItem("craie"); // la place libre : la Craie d'Edda (gratuite)
   if (CRYPTE) P.addItem("lanterne"); // la place libre : la Lanterne de Sarkel (gratuite)
