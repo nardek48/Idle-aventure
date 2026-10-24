@@ -47,7 +47,11 @@ var DUNGEON_CONFIG = {
 
   /* v3.470.0 : unique du boss (boss.unique) : chance par run réussi, mode libre compris, sans garantie
      (décisions Seb). Valeurs tirées au butin du niveau. */
-  uniqueDropPct: 5
+  uniqueDropPct: 5,
+
+  /* v3.471.0 : membres d'une vague de groupe (groupWaves du donjon), par taille : PV, puissance et or
+     d'un ennemi de vague, multipliés. Une vague de groupe continue le combat (pas de relève des compagnons). Au banc. */
+  groupWave: { 2: { hp: 0.5, power: 0.45 }, 3: { hp: 0.35, power: 0.35 } }
 };
 
 /* v3.245.0 — DUNGEON_TIERS est absorbé ici : chaque donjon EST le palier de son monde.
@@ -96,6 +100,7 @@ var DUNGEONS = [
     // v3.438.0 : pool fixe, sans Troll ni Ronce (Bouclier, Silence) — 2 traits pour 2 règles, courbe B
     enemyPool: ["slime", "goblin", "spider"],
     eliteWaves: { 5: "araignee_marquee", 10: "ronce_ardente" },
+    groupWaves: { 3: 2, 7: 2, 12: 3, 14: 2 }, // v3.471.0 : vague -> nombre d'ennemis (décision Seb, option 1)
     /* v3.288.0 — PHASES DU BASILIC (idée Seb). Deux seuils, pas plus : un combat de boss
        doit rester lisible. Chaque phase s'annonce dans le journal, et les renforts arrivent
        au round SUIVANT (engageIn), jamais par surprise.
@@ -156,6 +161,7 @@ var DUNGEONS = [
        en est pleine. Vague 10 : le Dard des profondeurs — la même bête qu'à la dune (acte III §7). */
     enemyPool: ["scarab", "scorpion", "sandworm", "sandwarrior"],
     eliteWaves: { 5: "serment_armure", 10: "dard_profondeurs" }, // v3.317.0 (W-4c) : la vague 10 arrive
+    groupWaves: { 3: 2, 7: 2, 12: 3, 14: 2 }, // v3.471.0
     /* v3.319.0 (W-4d, décision Seb) — LE SPHINX remplace le « Sultan des sables », qui
        empruntait le Djinn des dunes (BOSS_DB). Deux seuils de phase, comme le Basilic,
        et la difficulté portée par les DÉGÂTS et les renforts, jamais par la seule barre de
@@ -206,6 +212,7 @@ var DUNGEONS = [
        le Golem, le même qu'à l'étape 14. */
     enemyPool: ["skeleton", "zombie", "ghoul", "gargoyle"],
     eliteWaves: { 8: "contremaitre", 12: "golem" },
+    groupWaves: { 3: 2, 6: 2, 10: 3, 14: 2 }, // v3.471.0
     /* v3.430.0 (RU13, validé le 09/10) — LE CAMPEMENT : halte dans le run après la vague
        afterWave. Le butin de l'étape 1 est mis en sûreté ; une action au choix (Souffler,
        Changer de compagnon, Sortir). storyFlag : noté pour l'étape ruines_12. */
@@ -243,6 +250,7 @@ var DUNGEONS = [
        qu'à l'étape 14. Les morts dorment dans les vagues de groupe (escortes), comme partout à la Crypte. */
     enemyPool: ["spectre", "wraith", "necromancer", "deadknight"],
     eliteWaves: { 8: "porte_couronne", 12: "pleureuse" },
+    groupWaves: { 3: 2, 6: 2, 10: 3, 14: 2 }, // v3.471.0 : les morts y dorment (règle de la Crypte, sleep-system)
     camp: { afterWave: 8, healPct: 0.4, stoneAmount: 2, storyFlag: "ossuaireCamp" }, // la salle d'Ysolt
     /* LA LICHE DES SÉPULCRES (CR11) : Corrupteur. Phases (lues par CombatEngine.checkPhases, effets
        propres à la Crypte dans SleepSystem.onBossPhase) : 80 % elle couche deux morts à ses pieds ;

@@ -748,7 +748,8 @@ console.log("\n[33] XP par mission : donjon (boss = 5), Histoire (15), farm excl
 game = freshCombat("knight"); giveWeapon(); game.dungeonRunsUsed = {};
 xp0 = game.heroXp;
 g.DungeonManager.start(1);
-for (var w = 0; w < g.DUNGEON_CONFIG.waveCount; w++) { game.enemy.chargeIn = 99; game.enemy.hp = 1; g.CombatEngine.heroAction("basic"); }
+// v3.471.0 : les vagues de groupe ont 2 ou 3 ennemis — on tue jusqu'au boss, pas 15 coups
+for (var w = 0; w < 60 && game.dungeonRun.active && game.dungeonRun.wave <= g.DUNGEON_CONFIG.waveCount; w++) { game.enemy.chargeIn = 99; game.enemy.hp = 1; g.CombatEngine.heroAction("basic"); }
 game.enemy.isBoss = true; game.enemy.chargeIn = 99; game.enemy.hp = 1;
 g.CombatEngine.heroAction("basic");
 ok(game.dungeonRun.active === false, "donjon terminé (15 vagues + boss)");
@@ -7963,8 +7964,8 @@ console.log("\n[85 bis] v3.288.0 — Donjon : élites escortées et phases du Ba
   ok(v5[1].maxHp < v5[0].maxHp, "et nettement plus fragile que son élite");
   ok(v5[1].maxHp > 1, "mais mise à l'échelle de la VAGUE, pas d'un ennemi de Lisière");
 
-  /* --- Une vague normale reste un ennemi seul --- */
-  var v7 = D.buildWaveEnemy(7);
+  /* --- Une vague normale reste un ennemi seul (v3.471.0 : la 8, la 7 est une vague de groupe) --- */
+  var v7 = D.buildWaveEnemy(8);
   ok(!Array.isArray(v7), "une vague ordinaire reste un seul ennemi");
 
   /* --- Le boss porte ses phases --- */
@@ -16664,11 +16665,11 @@ console.log("\n[272] v3.460.0 — Niveaux de donjon : puissance, paliers de buti
   SQ.isStepReached = function () { return true; };   // verrous d'Histoire levés : seul le déblocage compte
   game.dungeonTierCleared = { 1: true };               // Tanière finie : la Cité est ouverte, pas les Ruines
   // puissance : la même vague au niveau 1 et au niveau 11
-  game.dungeonRun = { active: true, wave: 7, dungeonId: 1, level: 1, marks: [] };
+  game.dungeonRun = { active: true, wave: 8, dungeonId: 1, level: 1, marks: [] }; // v3.471.0 : vague 8, seule
   var r = Math.random; Math.random = function () { return 0; };
-  var b1 = [].concat(D.buildWaveEnemy(7))[0], b16 = [].concat(D.buildWaveEnemy(16))[0];
+  var b1 = [].concat(D.buildWaveEnemy(8))[0], b16 = [].concat(D.buildWaveEnemy(16))[0];
   game.dungeonRun.level = 11;
-  var n11 = [].concat(D.buildWaveEnemy(7))[0], n16 = [].concat(D.buildWaveEnemy(16))[0];
+  var n11 = [].concat(D.buildWaveEnemy(8))[0], n16 = [].concat(D.buildWaveEnemy(16))[0];
   var e5 = D.buildWaveEnemy(5); // vague d'élite (avec escorte s'il y en a une)
   game.dungeonRun.level = 1; var e5a = D.buildWaveEnemy(5);
   Math.random = r;
@@ -17604,6 +17605,45 @@ console.log("\n[290] v3.470.1 — Télégraphes : plus de toast, le bandeau suff
   try { ["charge", "silence", "shield", "heal", "surge"].forEach(function (k) { g.CombatEngine.telegraphPattern(e, k); }); }
   finally { g.showToast = toast; }
   ok(n === 0 && e.chargeTelegraphed && e.healTelegraphed && e.surgeTelegraphed, "les cinq télégraphes se posent sans toast");
+})();
+
+console.log("\n[291] v3.471.0 — Donjons : vagues de groupe (option 1)");
+(function () {
+  game = freshCombat("knight");
+  var D = g.DungeonManager, C = g.DUNGEON_CONFIG;
+  var attendu = { 1: { 3: 2, 7: 2, 12: 3, 14: 2 }, 2: { 3: 2, 7: 2, 12: 3, 14: 2 }, 3: { 3: 2, 6: 2, 10: 3, 14: 2 }, 4: { 3: 2, 6: 2, 10: 3, 14: 2 } };
+  Object.keys(attendu).forEach(function (id) {
+    ok(JSON.stringify(D.getById(Number(id)).groupWaves) === JSON.stringify(attendu[id]), "donjon " + id + " : vagues de groupe " + JSON.stringify(attendu[id]));
+  });
+  [1, 2, 3, 4].forEach(function (id) {
+    var d = D.getById(id), clash = Object.keys(d.groupWaves).filter(function (w) { return d.eliteWaves[w] || (d.camp && Number(w) === d.camp.afterWave); });
+    ok(!clash.length, "donjon " + id + " : aucune vague de groupe sur une élite ou au campement");
+  });
+  game.dungeonRun = { active: true, wave: 3, dungeonId: 1, level: 1, marks: [] };
+  var solo = [].concat(D.buildWaveEnemyBase(4)), grp = D.buildWaveEnemyBase(3), trio = D.buildWaveEnemyBase(12);
+  ok(solo.length === 1 && Array.isArray(grp) && grp.length === 2 && trio.length === 3, "Tanière : vague 4 seule, vague 3 à deux, vague 12 à trois");
+  ok(grp.every(function (e) { return !e.isBoss && !e.isElite && e.hp > 0 && e.hp === e.maxHp; }), "les membres sont des ennemis de vague ordinaires");
+  var one = D.buildWaveEnemyBase(3, true);
+  ok(!Array.isArray(one), "noGroup : un seul ennemi même à la vague 3");
+  ok(Array.isArray(D.buildWaveEnemy(12)) && D.buildWaveEnemy(12).length === 3, "buildWaveEnemy garde le groupe (mise au niveau du run)");
+  game.dungeonRun.marks = ["aff_elite"];
+  var tq = D.buildWaveEnemyBase(3);
+  ok(!Array.isArray(tq) && tq.isBoss, "Traque : la vague 3 reste une élite seule");
+  // option 1 de Seb : une vague de groupe continue le combat, le compagnon KO reste KO
+  game.dungeonRun = { active: true, wave: 3, dungeonId: 1, level: 1, marks: [] };
+  ok(D.isGroupWaveNow() === true, "vague 3 de la Tanière : vague de groupe en cours");
+  game.dungeonRun.wave = 4;
+  ok(D.isGroupWaveNow() === false, "vague 4 : vague seule");
+  game.dungeonRun.wave = 3; game.dungeonRun.marks = ["aff_elite"];
+  ok(D.isGroupWaveNow() === false, "sous Traque, la vague 3 n'est pas un groupe");
+  game.dungeonRun.marks = [];
+  g.CompanionManager.unlock("wenna"); var stW = g.CompanionManager.state("wenna"); stW.present = true; g.CompanionManager.syncParty();
+  stW.hp = 0; g.CompanionManager.onCombatStart();
+  ok(stW.hp === 0, "vague de groupe : Wenna KO reste KO");
+  game.dungeonRun = { active: false, wave: 0, dungeonId: 1, marks: [] };
+  g.CompanionManager.onCombatStart();
+  ok(stW.hp > 0, "hors donjon, nouveau combat : Wenna revient");
+  ok(C.groupWave[2].hp > 0 && C.groupWave[3].hp > 0 && C.groupWave[3].hp < C.groupWave[2].hp, "réglages groupWave par taille");
 })();
 
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));

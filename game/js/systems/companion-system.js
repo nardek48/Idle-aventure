@@ -368,6 +368,11 @@ var CompanionManager = {
   /* Ouverture d'un combat : un compagnon KO revient avec des PV réduits (§4.4). */
   onCombatStart: function () {
     var self = this;
+    // v3.471.0 : vague de groupe d'un donjon = suite du combat, comme une vague seule (KO, recharges, charges gardés)
+    if (window.DungeonManager && typeof DungeonManager.isGroupWaveNow === "function" && DungeonManager.isGroupWaveNow()) {
+      if (window.CombatEngine && typeof CombatEngine.clearQueue === "function") CombatEngine.clearQueue();
+      return;
+    }
     this.partyIds().forEach(function (id) {
       var st = self.state(id);
       var max = self.maxHpOf(id);

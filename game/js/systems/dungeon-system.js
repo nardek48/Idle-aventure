@@ -357,7 +357,8 @@ var DungeonManager = {
     return built;
   },
 
-  buildWaveEnemyBase: function (wave) {
+  // noGroup (v3.471.0) : un seul ennemi, même sur une vague de groupe (membres de buildGroupWave)
+  buildWaveEnemyBase: function (wave, noGroup) {
     this.ensure();
     var dungeon = this.getById(game.dungeonRun.dungeonId);
     var isBossWave = wave > DUNGEON_CONFIG.waveCount;
@@ -372,6 +373,10 @@ var DungeonManager = {
       var elite = this.buildEliteWave(dungeon.eliteWaves[wave], dungeon, wave);
       if (elite) return elite;
     }
+
+    /* v3.471.0 (décision Seb, option 1) : vague de groupe (groupWaves). Sous Traque, chaque vague reste une élite seule. */
+    var groupN = (!isBossWave && !noGroup && !traque && dungeon.groupWaves) ? Math.floor(Number(dungeon.groupWaves[wave]) || 0) : 0;
+    if (groupN >= 2) return this.buildGroupWave(wave, groupN);
 
     var id, data, bossDef = null, statMult = { endurance: 1, power: 1 };
 
@@ -445,6 +450,32 @@ var DungeonManager = {
     }
 
     return enemy;
+  },
+
+  /* v3.471.0 (option 1 de Seb) : la vague en cours est-elle une vague de groupe ? Elle continue alors le
+     combat (companion-system : pas de relève, recharges et charges gardées), comme une vague seule. */
+  isGroupWaveNow: function () {
+    var run = game.dungeonRun;
+    if (!run || !run.active || !(Number(run.wave) > 1)) return false;
+    var d = this.getById(run.dungeonId);
+    return !!(d && d.groupWaves && Number(d.groupWaves[run.wave]) >= 2 && !this.hasRunMark("aff_elite"));
+  },
+
+  /* v3.471.0 : n ennemis de vague tirés dans le pool (mélangés), PV, puissance et or réduits
+     (DUNGEON_CONFIG.groupWave) pour une usure proche d'une vague seule. */
+  buildGroupWave: function (wave, n) {
+    var max = (typeof COMBAT_MAX_ENEMIES === "number") ? COMBAT_MAX_ENEMIES : 3;
+    n = Math.min(n, max);
+    var mult = (DUNGEON_CONFIG.groupWave || {})[n] || { hp: 1 / n, power: 1 / n };
+    var out = [];
+    for (var i = 0; i < n; i++) {
+      var e = this.buildWaveEnemyBase(wave, true);
+      e.hp = e.maxHp = Math.max(1, Math.floor(e.maxHp * mult.hp));
+      if (e.stats) e.stats.power = Math.max(1, Math.floor((e.stats.power || 0) * mult.power));
+      e.goldReward = Math.max(1, Math.floor((e.goldReward || 0) * mult.hp));
+      out.push(e);
+    }
+    return out;
   },
 
   spawnWave: function (wave) {
