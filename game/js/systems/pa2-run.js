@@ -585,7 +585,8 @@ var Pa2Run = {
     run.at = key;
     var step = (this.hasPact("lourd", run) ? PA2_RULES.heavyStep : 0) + (this.hasRelic("ronce", run) ? PA2_RULES.ronceStep : 0)
       + Number(this.worldRule(run, "stepBreath") || 0) // v3.387.0 : la soif du Désert
-      + Number(this.condFx(run, "stepBreath") || 0); // v3.469.0 : canicule, nuit fraîche, courants d'air
+      + Number(this.condFx(run, "stepBreath") || 0) // v3.469.0 : canicule, nuit fraîche, courants d'air
+      - (this.hasItem("ecaille", run) ? PA2_RULES.ecailleStep : 0); // v3.469.4 : Écaille du Ver
     step = Math.max(0, step);
     if (step) run.breath = Math.max(0, run.breath - step);
     if (this.hasRelic("braise", run)) this._heal(game.heroMaxHp * PA2_RULES.braiseHealPct);
@@ -871,6 +872,7 @@ var Pa2Run = {
     if (!here || !to) return false;
     var all = this.hasItem("veilleurs", run) || this.hasRelic("oeil", run);
     var hidden = t.hidden != null ? t.hidden : !!this.worldRule(run, "trapsHidden"); // run de la v3.467.0 : seule la Crypte cache
+    if (this.hasItem("pierre_puits", run)) hidden = false; // v3.469.4 : Pierre du puits, toute la vue
     if (hidden && !t.seen && !all && !(Number(run.lanternLeft || 0) > 0)) return p[0] === run.at && (this.hasItem("torche", run) || !!this.condFx(run, "trapsNear"));
     if (p[0] === run.at) return true;
     return to.row > here.row && this.isShown(p[0], run) && this.isVisible(p[1], run);
@@ -888,7 +890,7 @@ var Pa2Run = {
     if (!to) return null;
     var diff = SceneCheckSystem.depthDifficulty(PA2_TRAP_RULES.baseDifficulty, this._depth(to, run)) * this.ring(run).diffMult
       * Number(run.band.obstacleScale || 1) * this.heroScale(run).obstacle;
-    return this._check(run, "precision", diff, 0);
+    return this._check(run, "precision", diff, this.hasItem("pierre_gardien", run) ? 1 : 0); // v3.469.4
   },
   trapOptions: function () {
     var run = this.getRun();
@@ -941,7 +943,7 @@ var Pa2Run = {
       if (lost && PA2_ITEMS[lost].uses) run.stock[lost] -= 1;
       else if (lost) run.bag.splice(run.bag.indexOf(lost), 1);
       res.lost = lost;
-    } else run.fx[fx] = Math.max(this.fxLeft(run, fx), Number(def.steps || 0));
+    } else run.fx[fx] = Math.max(this.fxLeft(run, fx), this.hasItem("cierge", run) ? PA2_RULES.ciergeSteps : Number(def.steps || 0)); // v3.469.4 : Cierge
   },
   // Après le piège : le pas reprend jusqu'au point visé (le pas du piège ne compte pas pour les effets).
   trapContinue: function () {
@@ -977,6 +979,8 @@ var Pa2Run = {
       var bonus = 0;
       if (v === "power") bonus += (self.hasRelic("pierre", run) ? 1 : 0) + (self.hasRelic("fleche", run) ? 1 : 0) + (self.hasItem("bois", run) ? 1 : 0);
       bonus += Number(self.condFx(run, "obstacleBonus") || 0); // v3.469.0 : poussière de chantier
+      if (v === "endurance" && self.hasItem("ecaille", run)) bonus += 1;        // v3.469.4 : Écaille du Ver
+      if (v === "precision" && self.hasItem("pierre_gardien", run)) bonus += 1; // v3.469.4 : Pierre taillée du gardien
       var ck = self._check(run, gab.options[v].stat, n.diff * p.diffMod, bonus);
       var cost = Number(p.breathCost || 0) + (self.hasItem("armure", run) ? PA2_RULES.armorBreath : 0);
       // v3.391.0 : Endurance du marcheur (pouvoir légendaire), câblée en v1 seulement jusque-là
@@ -1073,6 +1077,7 @@ var Pa2Run = {
     if (this.hasRelic("dent", run)) m *= R.dentMult;
     if (this.hasRelic("fleche", run)) m *= R.flecheMult;
     if (apId === "charger" && this.hasItem("bois", run)) m *= R.boisChargeMult;
+    if (apId === "tenir" && this.hasItem("epee_gisant", run)) m *= R.epeeTenirMult; // v3.469.4 : Épée du gisant
     if (this._marked(run)) m *= Number(this._hook(run).mark.dmgMult || 1);
     return m;
   },
@@ -1346,7 +1351,7 @@ var Pa2Run = {
       res.gift = hook.campGift.relic;
     }
     if (action === "rest") {
-      var pct = camp ? R.campRestPct : R.seuilRestPct;
+      var pct = (camp ? R.campRestPct : R.seuilRestPct) * (this.hasItem("natte", run) ? R.natteRestMult : 1); // v3.469.4 : Natte de caravane
       res.healed = this._heal(game.heroMaxHp * pct);
       run.breath = Math.min(100, run.breath + Math.round(pct * 100));
       if (run.fx) delete run.fx.entrave; // v3.467.0 : le repos lève l'Entrave

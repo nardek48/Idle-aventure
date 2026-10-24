@@ -62,9 +62,34 @@ var PA2_ITEMS = {
   veilleurs: { id: "veilleurs", name: "Lanterne des veilleurs", size: 1, unlock: "clairiere",
     icon: "images/Icons/scene/items/item_watch_lantern.webp",
     pro: "Toute la carte est visible, et les sources rendent +10.",
-    lockedHint: "Coffre d'expédition : atteindre la Clairière aux lanternes." }
+    lockedHint: "Coffre d'expédition : atteindre la Clairière aux lanternes." },
+  // v3.469.4 (PA-R1) : le coffre d'expédition des autres mondes, deux objets chacun (gardien, clairière)
+  ecaille: { id: "ecaille", name: "Écaille du Ver", size: 2, unlock: "boss",
+    icon: "images/Icons/scene/items/item_worm_scale.webp",
+    pro: "+1 cran sur la voie endurance, et la marche coûte 1 Souffle de moins par pas.",
+    lockedHint: "Coffre d'expédition : abattre le Ver du plateau." },
+  natte: { id: "natte", name: "Natte de caravane", size: 1, unlock: "clairiere",
+    icon: "images/Icons/scene/items/item_caravan_mat.webp",
+    pro: "Se reposer au camp ou au seuil rend le double (PV et Souffle).",
+    lockedHint: "Coffre d'expédition : atteindre le campement des tentes." },
+  pierre_gardien: { id: "pierre_gardien", name: "Pierre taillée du gardien", size: 2, unlock: "boss",
+    icon: "images/Icons/scene/items/item_guardian_stone.webp",
+    pro: "+1 cran sur la voie précision, et pour désamorcer un piège.",
+    lockedHint: "Coffre d'expédition : abattre le gardien de la porte." },
+  pierre_puits: { id: "pierre_puits", name: "Pierre du puits", size: 1, unlock: "clairiere",
+    icon: "images/Icons/scene/items/item_well_stone.webp",
+    pro: "Les pièges cachés se voient dans toute ta vue.",
+    lockedHint: "Coffre d'expédition : atteindre la cour au puits." },
+  epee_gisant: { id: "epee_gisant", name: "Épée du gisant", size: 2, unlock: "boss",
+    icon: "images/Icons/scene/items/item_sleeper_sword.webp",
+    pro: "Combats : en Tenant, −20 % de dégâts reçus.",
+    lockedHint: "Coffre d'expédition : combattre le gardien couché." },
+  cierge: { id: "cierge", name: "Cierge de la chapelle", size: 1, unlock: "clairiere",
+    icon: "images/Icons/scene/items/item_chapel_candle.webp",
+    pro: "Les effets des pièges ne durent qu'un pas au lieu de trois.",
+    lockedHint: "Coffre d'expédition : atteindre la chapelle de l'ouest." }
 };
-var PA2_ITEM_ORDER = ["petite_ration", "ration", "grande_ration", "gourde", "outre", "craie", "lanterne", "corde", "trousse", "torche", "armure", "carte", "fiole", "bois", "veilleurs"];
+var PA2_ITEM_ORDER = ["petite_ration", "ration", "grande_ration", "gourde", "outre", "craie", "lanterne", "corde", "trousse", "torche", "armure", "carte", "fiole", "bois", "veilleurs", "ecaille", "natte", "pierre_gardien", "pierre_puits", "epee_gisant", "cierge"];
 
 /* Pactes (V14, Q6) : malus choisis contre du butin final. */
 var PA2_PACTS = {
@@ -194,7 +219,12 @@ var PA2_MEMORY_DEST_RARE = { ruins: "pierre_de_plus", crypt: "cire_chaude" };
 
 /* Coffre d'expédition : destination -> objet débloqué (V12, Q8). */
 /* v3.387.0 : par monde. Le Désert n'a pas encore ses objets (il faudrait leurs icônes). */
-var PA2_CHEST_REWARDS = { forest: { boss: "bois", clairiere: "veilleurs" } };
+var PA2_CHEST_REWARDS = {
+  forest: { boss: "bois", clairiere: "veilleurs" },
+  desert: { boss: "ecaille", clairiere: "natte" },           // v3.469.4 (PA-R1)
+  ruins: { boss: "pierre_gardien", clairiere: "pierre_puits" },
+  crypt: { boss: "epee_gisant", clairiere: "cierge" }        // gardien couché : seulement s'il est combattu
+};
 
 /* Réglages divers. Banc. */
 var PA2_RULES = {
@@ -210,7 +240,7 @@ var PA2_RULES = {
   campRestPct: 0.10, seuilRestPct: 0.06, cookPct: 0.70, // v3.383.0 (C2) : 30/20 -> 15/10 ; v3.423.0 (C) : 10/6, les rations comptent
   fioleHpPct: 0.40,
   revengeMult: 1.3, enrageMult: 1.4, torchDmgMult: 1.15, armorDmgMult: 0.65, armorBreath: 8,
-  dentMult: 0.75, flecheMult: 0.85, boisChargeMult: 0.85,
+  dentMult: 0.75, flecheMult: 0.85, boisChargeMult: 0.85, epeeTenirMult: 0.8, ecailleStep: 1, natteRestMult: 2, ciergeSteps: 1, // v3.469.4
   surprisedMult: 1.2, heavyStep: 4, ronceStep: 3, ronceLoot: 1.3, braiseHealPct: 0.03,
   carteLoot: 0.8, fioleLoot: 0.5, damageSpread: 0.15, maxRounds: 60,
   wallShiftPct: 0.35, wallChalkRows: 2,  // v3.429.0 (Ruines) : un mur bouge après un pas ; la Craie tient à 2 rangées devant

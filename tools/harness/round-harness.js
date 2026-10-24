@@ -12131,7 +12131,9 @@ console.log("\n[159] v3.382.0 — Petites Aventures v2 (PA2-1) : écrans (prépa
     Object.keys(g.PA2_PACTS).forEach(function (k) { dataIcons.push(g.PA2_PACTS[k].icon); });
     Object.keys(g.PA2_ICONS).forEach(function (k) { dataIcons.push(g.PA2_ICONS[k]); });
     // v3.454.0 : icônes demandées à Seb, affichées en icône générique en attendant (règle « icône manquante »)
-    var aFournir = ["images/Icons/scene/items/item_lockpicks.webp"]; // v3.467.0 : la Trousse, à faire
+    var aFournir = ["images/Icons/scene/items/item_lockpicks.webp", // v3.467.0 : la Trousse, à faire
+      "images/Icons/scene/items/item_worm_scale.webp", "images/Icons/scene/items/item_caravan_mat.webp", "images/Icons/scene/items/item_guardian_stone.webp", // v3.469.4 : coffre des autres mondes
+      "images/Icons/scene/items/item_well_stone.webp", "images/Icons/scene/items/item_sleeper_sword.webp", "images/Icons/scene/items/item_chapel_candle.webp"];
     var absent = dataIcons.filter(function (s) { return !fs.existsSync(path.join(ROOT, s)) && aFournir.indexOf(s) < 0; });
     ok(absent.length === 0, "icônes du mode v2 : toutes présentes, hors celles à fournir (" + dataIcons.length + ")" + (absent.length ? " — manquent " + absent.join(", ") : ""));
   } catch (e) {
@@ -12552,7 +12554,7 @@ console.log("\n[164] v3.387.0 — Petites Aventures v2 (PA2-5) : le Désert (car
     r.at = "CLAIRIERE"; r.status = "pa2-node"; r.nodes.CLAIRIERE.done = false;
     var cl = P.clairiere();
     ok(cl.ok && game.explorationProgression.desertPaCompleted === true && Number(game.resources.verre_des_dunes || 0) > verre0 && r.end.rare > 0, "destination atteinte : drapeau de l'étape « L'outre » et Verre des dunes");
-    ok(!r.end.chest, "le Désert n'ouvre pas le coffre de la Forêt");
+    ok(r.end.chest && r.end.chest.item === "natte", "le Désert ouvre son propre coffre (la Natte de caravane), pas celui de la Forêt (v3.469.4)");
 
     g.__traps = true; g.__cond = true; // v3.467.0 : les runs au hasard passent aussi les pièges (v3.469.0 : et les conditions)
     /* 150 runs au hasard */
@@ -17407,6 +17409,58 @@ console.log("\n[285] v3.469.3 — Petites Aventures : deux accroches de plus aux
     var hs = g.pa2SheetBody(r, r.nodes[r.at], g.pa2View.sheet);
     ok(/La cloche/.test(hs) && /Tenir la corde/.test(hs) && /Lui donner ta Corde/.test(hs) && /Passer/.test(hs), "fiche de la rencontre : les trois choix");
     g.pa2View.sheet = null;
+  } finally {
+    game.sceneRun = null; if (g.SortieManager.isActive()) g.SortieManager.end("return");
+  }
+})();
+
+console.log("\n[286] v3.469.4 — Petites Aventures : coffre d'expédition au Désert, aux Ruines et à la Crypte (PA-R1)");
+(function () {
+  var S = g.SceneRunManager, P = g.Pa2Run, R = g.PA2_RULES, C = g.PA2_CHEST_REWARDS;
+  var TPL = { desert: "petite_aventure_desert", ruins: "petite_aventure_ruines", crypt: "petite_aventure_crypte" };
+  function prep() {
+    game = freshCombat("knight"); giveWeapon(); run("game.enemy = null; game.combat = null;");
+    S.ensureDefaults(); game.explorationProgression.petiteAventure = { spent: 0, since: null };
+    game.resources.petite_ration = 5; game.heroLevel = 12; game.heroHp = game.heroMaxHp; game.sceneRun = null;
+    if (g.SortieManager.isActive()) g.SortieManager.end("return");
+  }
+  function go(world, items) {
+    prep(); game.expeditionChest = { unlocked: {} }; (items || []).forEach(function (id) { game.expeditionChest.unlocked[id] = true; });
+    S.startRun(TPL[world]); var r = game.sceneRun; r.hookId = null; (items || []).forEach(function (id) { P.addItem(id); }); P.depart(); r.cuts = {}; r.traps = {}; return r;
+  }
+  function destKey(r, type) { return Object.keys(r.nodes).filter(function (k) { return r.nodes[k].type === type; })[0]; }
+  try {
+    ok(C.desert.boss === "ecaille" && C.desert.clairiere === "natte" && C.ruins.boss === "pierre_gardien" && C.ruins.clairiere === "pierre_puits" && C.crypt.boss === "epee_gisant" && C.crypt.clairiere === "cierge", "deux objets par monde, au gardien et à la clairière");
+    prep(); game.expeditionChest = { unlocked: {} }; S.startRun("petite_aventure_desert");
+    ok(P.addItem("ecaille").ok === false && /Ver du plateau/.test(P.canAdd("ecaille").reason), "verrouillé : la besace dit où le gagner");
+    // Déblocage : clairière du Désert, gardien de la Crypte combattu ou contourné
+    var r = go("desert"); var k = destKey(r, "clairiere"); r.at = k; r.status = "pa2-node"; r.nodes[k].done = false; P.clairiere();
+    ok(r.end.chest && r.end.chest.item === "natte" && game.expeditionChest.unlocked.natte, "clairière du Désert atteinte : la Natte de caravane entre au coffre");
+    r = go("crypt"); k = destKey(r, "boss"); r.at = k; r.status = "pa2-node"; r.nodes[k].done = false; P.passGuardian();
+    ok(!r.end.chest && !game.expeditionChest.unlocked.epee_gisant, "gardien couché contourné : pas d'Épée");
+    r = go("crypt"); k = destKey(r, "boss"); r.at = k; r.status = "pa2-node"; r.nodes[k].done = false; r.flags.bossDown = true; P.finish("dest"); // comme après la victoire de fight()
+    ok(r.end && r.end.chest && r.end.chest.item === "epee_gisant", "gardien couché combattu : l'Épée du gisant");
+    // Effets
+    function obstacleAt(r) { var o = r.nodes[Object.keys(r.nodes).filter(function (x) { return r.nodes[x].row === 1; })[0]]; o.type = "obstacle"; o.gabaritId = null; o.done = false; r.at = o.key; r.status = "pa2-node"; P._prepareNode(r, o); return o; }
+    function bonusOf(r, v) { var o = P.obstacleOptions().filter(function (x) { return x.voie === v; })[0]; return o ? o.bonus : null; }
+    r = go("desert"); var o0 = obstacleAt(r), gid = o0.gabaritId, dif = o0.diff, e0 = bonusOf(r, "endurance"), p0 = bonusOf(r, "precision");
+    r = go("desert", ["ecaille"]); var o1 = obstacleAt(r); o1.gabaritId = gid; o1.diff = dif;
+    ok(e0 != null && bonusOf(r, "endurance") === e0 + 1, "Écaille du Ver : +1 cran sur la voie endurance");
+    r = go("desert", ["ecaille"]); var b = r.breath; P.moveTo(P.openMoves()[0]);
+    ok(b - r.breath === g.PA2_WORLD_RULES.desert.stepBreath - R.ecailleStep, "Écaille du Ver : la marche coûte 1 Souffle de moins");
+    r = go("ruins", ["pierre_gardien"]); var o2 = obstacleAt(r); o2.gabaritId = gid; o2.diff = dif;
+    ok(p0 != null && bonusOf(r, "precision") === p0 + 1, "Pierre taillée : +1 cran sur la voie précision");
+    r.traps = {}; r.traps[r.at + ">" + P.links(r)[r.at][0]] = { fx: "venin", hidden: false, seen: true, done: false }; r.status = "pa2-map"; r.nodes[r.at].done = true; P.moveTo(P.links(r)[r.at][0]);
+    ok(P.trapOptions().disarm.bonus >= 1, "Pierre taillée : +1 cran pour désamorcer");
+    function camp(world, items) { var r = go(world, items), k = destKey(r, "camp"); r.at = k; r.status = "pa2-node"; r.nodes[k].done = false; r.breath = 10; game.heroHp = 1; P.placeAction("rest"); return r.breath; }
+    ok(camp("desert", ["natte"]) - 10 === 2 * (camp("desert") - 10), "Natte de caravane : le repos au camp rend le double de Souffle");
+    r = go("ruins", ["pierre_puits"]); var tk = r.at + ">" + P.openMoves()[0]; r.traps = {}; r.traps[tk] = { fx: "venin", hidden: true, seen: false, done: false };
+    ok(P.isTrapShown(tk, r), "Pierre du puits : le piège caché se voit");
+    r = go("crypt"); var cC = r.nodes[destKey(r, "boss")], mC = P._dmgMult(r, cC, "tenir"), mCh = P._dmgMult(r, cC, "charger");
+    r = go("crypt", ["epee_gisant"]);
+    ok(Math.abs(P._dmgMult(r, cC, "tenir") / mC - 0.8) < 1e-9 && P._dmgMult(r, cC, "charger") === mCh, "Épée du gisant : −20 % de dégâts en Tenant, pas en Chargeant");
+    r = go("crypt", ["cierge"]); var res0 = {}; P._applyTrapFx(r, "venin", res0); P._applyTrapFx(r, "entrave", res0);
+    ok(r.fx.venin === 1 && r.fx.entrave === 1, "Cierge : les effets des pièges ne durent qu'un pas");
   } finally {
     game.sceneRun = null; if (g.SortieManager.isActive()) g.SortieManager.end("return");
   }

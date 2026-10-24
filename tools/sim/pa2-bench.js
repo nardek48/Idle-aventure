@@ -19,7 +19,8 @@ var REVEIL = process.argv.indexOf("--reveiller") > 0;     // v3.454.0 : gisants 
 var TPL = CRYPTE ? "petite_aventure_crypte" : RUINES ? "petite_aventure_ruines" : DESERT ? "petite_aventure_desert" : "petite_aventure_foret";
 var NO_TRAPS = process.argv.indexOf("--sans-pieges") > 0; // v3.467.0 : comparer avec et sans pièges
 var BLIND = process.argv.indexOf("--droit-devant") > 0;
-var KIT = process.argv.indexOf("--trousse") > 0;          // v3.467.1 : la Trousse à la place de la torche   // v3.467.0 : le joueur qui ne contourne pas les pièges
+var KIT = process.argv.indexOf("--trousse") > 0;
+var OBJ = (process.argv.filter(function (x) { return x.indexOf("--objet=") === 0; })[0] || "").slice(8); // v3.469.4 : un objet du coffre à la place de la torche          // v3.467.1 : la Trousse à la place de la torche   // v3.467.0 : le joueur qui ne contourne pas les pièges
 var OVR = (process.argv.filter(function (a) { return a.indexOf("--ovr=") === 0; })[0] || "").slice(6); // réglages d'essai, JSON
 
 var src = fs.readFileSync(path.join(__dirname, "forecast-calibration-bench.js"), "utf8").replace(/\nmain\(\);\s*$/, "\n");
@@ -47,6 +48,7 @@ if (OVR) {
 
 if (NO_TRAPS) g.PA2_TRAP_RULES.perAct = { sentier: 0, chemin: 0, periple: 0 };
 if (process.argv.indexOf("--sans-coupes") > 0) { g.PA2_CUT_RULES.min = 0; g.PA2_CUT_RULES.max = 0; } // v3.468.0 : tracé intact
+if (OBJ) g.Pa2Run.isUnlocked = function () { return true; }; // objet du coffre : débloqué pour le banc
 if (process.argv.indexOf("--sans-conditions") > 0) g.PA2_CONDITION_RULES.calmPct = 1; // v3.469.0 : toujours Nuit calme
 var FORCE_COND = (process.argv.filter(function (x) { return x.indexOf("--condition=") === 0; })[0] || "").slice(12); // v3.469.0 : une condition imposée
 if (FORCE_COND) g.Pa2Run._drawCondition = function () { return FORCE_COND; };
@@ -95,7 +97,7 @@ function playRun(c, stage) {
     : { livingMap: { mapId: "forest", sectorId: RING === "chemin" ? "menhirs" : "portail" } };
   S.startRun(TPL, opts);
   var run = g.game.sceneRun;
-  var light = KIT ? "trousse" : "torche";
+  var light = OBJ || (KIT ? "trousse" : "torche");
   (NO_RATION ? ["gourde", "corde", light] : ["petite_ration", "petite_ration", "gourde", "corde", light]).forEach(function (id) { P.addItem(id); });
   if (DESERT) { g.game.resources.outre_pleine = 5; P.addItem("outre"); } // la place libre : l'Outre
   if (RUINES) P.addItem("craie"); // la place libre : la Craie d'Edda (gratuite)
