@@ -34,7 +34,7 @@ var PRODUCTION_PLOTS_SHARED = {
       desc: "Fort débit, petite réserve — à récolter souvent.",
       baseRatePerMin: 0.70,
       rateGrowthPerLevel: 1.78,
-      baseCapacity: 15,
+      baseCapacity: 45, // v3.478.0 (refonte F1, RE-1) : réserve ×3, de 45 min à 2-3 h avant l'arrêt
       capacityGrowthPerLevel: 1.35
     },
     equilibree: {
@@ -42,7 +42,7 @@ var PRODUCTION_PLOTS_SHARED = {
       desc: "Compromis entre débit et réserve.",
       baseRatePerMin: 0.50,
       rateGrowthPerLevel: 1.78,
-      baseCapacity: 30,
+      baseCapacity: 90,
       capacityGrowthPerLevel: 1.45
     },
     lente: {
@@ -50,7 +50,7 @@ var PRODUCTION_PLOTS_SHARED = {
       desc: "Faible débit, grande réserve — la plus longue à remplir.",
       baseRatePerMin: 0.35,
       rateGrowthPerLevel: 1.78,
-      baseCapacity: 60,
+      baseCapacity: 180,
       capacityGrowthPerLevel: 1.55
     }
   },

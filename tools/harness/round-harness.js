@@ -17855,6 +17855,16 @@ console.log("\n[298] v3.477.0 — Charge du Chevalier (point 3 du bilan)");
   ok(!game.enemy.charged, "Rôdeur : pas de Charge (l'approche des classes à distance reste)");
 })();
 
+console.log("\n[299] v3.478.0 — Refonte de l'économie, lot F1 : réserve des zones ×3 (RE-1)");
+(function () {
+  var P = g.PRODUCTION_PLOTS_SHARED.profiles, PPS = g.ProductionPlotsSystem;
+  ok(P.rapide.baseCapacity === 45 && P.equilibree.baseCapacity === 90 && P.lente.baseCapacity === 180, "réserves de base 45 / 90 / 180 (×3)");
+  ok(P.rapide.baseRatePerMin === 0.70 && P.equilibree.baseRatePerMin === 0.50 && P.lente.baseRatePerMin === 0.35, "débits inchangés (E5)");
+  var cap = 0, rate = 0;
+  [0, 1, 2].forEach(function (i) { cap += PPS.getPlotCapacity(i, { level: 3 }); rate += PPS.getPlotRatePerMin(i, { level: 3 }, "sawmill"); });
+  ok(cap === 703 && cap / rate > 140, "Forêt, Scierie 3 zones niv. 3 : réserve " + cap + ", plus de 2 h 20 avant l'arrêt (" + Math.round(cap / rate) + " min)");
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);
