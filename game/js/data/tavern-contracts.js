@@ -42,10 +42,8 @@ var TAVERN_CONTRACT_TEMPLATES = [
 
   /* --- Ressources fabriquées --- */
   { id: "planche", resourceId: "planche", min: 10, max: 25, tier: 2, title: "Planches pour l'appentis" },
-  { id: "farine", resourceId: "farine", min: 10, max: 24, tier: 2, title: "Sacs pour le moulin" },
   { id: "lingot", resourceId: "lingot", min: 8, max: 18, tier: 3, title: "Commande du forgeron" },
   { id: "pain", resourceId: "pain", min: 6, max: 15, tier: 3, title: "Fournée pour la route" },
-  { id: "viande_sechee", resourceId: "viande_sechee", min: 6, max: 15, tier: 3, title: "Vivres de chasse" },
   { id: "ration", resourceId: "ration", min: 3, max: 8, tier: 4, title: "Paquetage d'expédition" }
 ];
 

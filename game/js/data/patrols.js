@@ -32,10 +32,10 @@ var PATROL_UPGRADE_BONUS = 0.05;                       // P8 : +5 % par amélior
 var PATROL_JITTER = 0.10;                              // ±10 % à chaque départ
 var PATROL_RATION_CHANCE_PER_H = 0.03;                 // P5 : ingrédients de rations, rarement
 var PATROL_RATION_LOOT = {
-  forest: { viande_sechee: 2 },
-  desert: { viande_sechee: 3, pain: 1 },               // une ration moyenne (E4)
-  ruins: { viande_sechee: 3, pain: 1 },                // v3.457.3 : comme le Désert
-  crypt: { viande_sechee: 3, pain: 1 }
+  forest: { viande: 10 },                              // v3.484.0 (lot S) : viande brute, plus de Viande séchée
+  desert: { viande: 15, pain: 1 },                     // une ration moyenne (E4)
+  ruins: { viande: 15, pain: 1 },                      // v3.457.3 : comme le Désert
+  crypt: { viande: 15, pain: 1 }
 };
 /* P6 : chance de récit rare = base par heure, +bonus pour la nuit complète (8 h). */
 var PATROL_RARE_PER_H = 0.02;

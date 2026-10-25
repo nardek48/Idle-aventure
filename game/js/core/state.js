@@ -179,7 +179,7 @@ function createInitialGameState() {
 
     worldsEverReached: {},
 
-    resources: { viande: 0, eau: 0, ble: 0, bois: 0, fer: 0, pierre: 0, planche: 0, lingot: 0, farine: 0, pain: 0, ration: 3, petite_ration: 0, grande_ration: 0 }, // v3.107.3 : 3 rations de départ (source réelle d'un nouveau slot — corrige v3.106.0/v3.107.1/v3.107.2, qui avaient patché le mauvais endroit)
+    resources: { viande: 0, eau: 0, ble: 0, bois: 0, fer: 0, pierre: 0, planche: 0, lingot: 0, pain: 0, ration: 3, petite_ration: 0, grande_ration: 0 }, // v3.107.3 : 3 rations de départ (source réelle d'un nouveau slot — corrige v3.106.0/v3.107.1/v3.107.2, qui avaient patché le mauvais endroit)
     adventureQuestProgress: {},
     adventureQuestsCompleted: {},
     adventureQuestRun: { active: false, questId: null },

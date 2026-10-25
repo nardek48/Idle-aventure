@@ -122,7 +122,7 @@ var ApothecaryManager = {
   /* ---------- v3.363.0 (acte IV) : le puits du roi ---------- */
 
   /* Choix « roi » = rapporter la forme à Aeswyn : +2 préparations par jour, moitié moins
-     d'eau purifiée dans chaque recette (arrondi au-dessus). Aucun état propre : le choix fait foi. */
+     d’eau (Eau du Puits depuis v3.484.0) dans chaque recette (arrondi au-dessus). Aucun état propre : le choix fait foi. */
   hasPuitsDuRoi: function () {
     return !!(window.StoryQuestManager && typeof StoryQuestManager.getChoice === "function"
       && StoryQuestManager.getChoice("roi") === "aeswyn");
@@ -134,7 +134,7 @@ var ApothecaryManager = {
     if (!recipe) return {};
     var out = {}, puits = this.hasPuitsDuRoi();
     Object.keys(recipe.inputs).forEach(function (k) {
-      out[k] = (puits && k === "eau_purifiee") ? Math.ceil(recipe.inputs[k] / 2) : recipe.inputs[k];
+      out[k] = (puits && k === "eau") ? Math.ceil(recipe.inputs[k] / 2) : recipe.inputs[k];
     });
     return out;
   },

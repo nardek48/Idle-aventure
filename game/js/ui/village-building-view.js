@@ -287,7 +287,7 @@ function buildApothecaryOrdersHTML() {
      + _t("{a} / {b} préparations (Soin mineur libre)", { a: A.getDailyUsed(), b: A.getDailyCap() }) + '</div>';
   // v3.363.0 (acte IV) : le puits du roi, si la forme a été rapportée à Aeswyn
   if (A.hasPuitsDuRoi()) h += '<div class="vb-sheet-effect"><img class="ico-inline" src="images/Icons/village_buildings/puits_du_roi.webp" alt=""> '
-     + '<strong>' + _t("Le puits du roi :") + '</strong> ' + _t("2 préparations de plus par jour, moitié moins d’eau purifiée.") + '</div>';
+     + '<strong>' + _t("Le puits du roi :") + '</strong> ' + _t("2 préparations de plus par jour, moitié moins d’eau.") + '</div>';
   h += '<div class="vb-sheet-effect"><strong>' + _t("Commandes") + '</strong> ' + _t("— livre une fois, la recette est acquise pour toujours.") + '</div>';
 
   (APOTHECARY_RECIPES || []).forEach(function (r) {

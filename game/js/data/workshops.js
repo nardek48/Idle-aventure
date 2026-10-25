@@ -11,8 +11,8 @@
 
    v3.98.6 : niveau d'atelier (1 à 5), remplace le "niveau fixe" de v3.98.0 — décisions
    validées avec Seb :
-   - Niveau INDÉPENDANT par atelier (Moulin et Boulangerie n'ont pas le même niveau,
-     même s'ils sont tous deux dans "farm").
+   - Niveau INDÉPENDANT par atelier (Scierie fine et Menuiserie n'ont pas le même niveau,
+     même si elles sont toutes deux dans "sawmill").
    - Chaque niveau améliore 2 choses à la fois :
      · Vitesse : craftTimeMs effectif = base × (1 - WORKSHOP_LEVEL_CONFIG.speedBonusPerLevel
        × (niveau-1)), linéaire, -8%/niveau -> -32% au niveau max (5).
@@ -37,30 +37,18 @@ var WORKSHOP_LEVEL_CONFIG = {
 };
 
 var WORKSHOPS_CONFIG = {
+  /* v3.484.0 (refonte de l'économie, lot S, RE-8) : Moulin, Séchoir et Station de purification retirés ;
+     le Pain, la Ration moyenne et l'Outre prennent l'équivalent brut (Farine = 5 Blés, Viande séchée = 5 Viandes, Eau purifiée = 4 Eaux). */
   // ===== Champs =====
-  moulin: {
-    buildingId: "farm", name: "Moulin", icon: "images/Icons/workshops/grain_mill.webp", active: true,
-    upgradeCostBase: { planche: 3, lingot: 2 },
-    recipes: [
-      { id: "farine", inputs: [{ resourceId: "ble", quantity: 5 }], outputs: [{ resourceId: "farine", quantity: 1 }], craftTimeMs: 3000 }
-    ]
-  },
   boulangerie: {
     buildingId: "farm", name: "Boulangerie", icon: "images/Icons/workshops/bakery.webp", active: true,
     upgradeCostBase: { planche: 4, lingot: 3 },
     recipes: [
-      { id: "pain", inputs: [{ resourceId: "farine", quantity: 3 }, { resourceId: "eau", quantity: 5 }], outputs: [{ resourceId: "pain", quantity: 1 }], craftTimeMs: 5000 }
+      { id: "pain", inputs: [{ resourceId: "ble", quantity: 15 }, { resourceId: "eau", quantity: 5 }], outputs: [{ resourceId: "pain", quantity: 1 }], craftTimeMs: 5000 }
     ]
   },
 
   // ===== Chasse =====
-  sechoir: {
-    buildingId: "hunt", name: "Séchoir", icon: "images/Icons/workshops/drying_rack.webp", active: true,
-    upgradeCostBase: { planche: 3, lingot: 2 },
-    recipes: [
-      { id: "viande_sechee", inputs: [{ resourceId: "viande", quantity: 5 }], outputs: [{ resourceId: "viande_sechee", quantity: 1 }], craftTimeMs: 3000 }
-    ]
-  },
   cuisine_de_camp: {
     buildingId: "hunt", name: "Cuisine de camp", icon: "images/Icons/workshops/camp_kitchen.webp", active: true,
     upgradeCostBase: { planche: 4, lingot: 3 },
@@ -69,8 +57,8 @@ var WORKSHOPS_CONFIG = {
     // Petite ration reste sur viande+eau brutes (accessible dès le début de l'Acte II, décision confirmée).
     recipes: [
       { id: "petite_ration", inputs: [{ resourceId: "viande", quantity: 8 }, { resourceId: "eau", quantity: 4 }], outputs: [{ resourceId: "petite_ration", quantity: 1 }], craftTimeMs: 3000 },
-      // v3.330.0 (E4) : 10 -> 3 viandes séchées — la ration moyenne devient les vivres du Désert
-      { id: "ration", inputs: [{ resourceId: "viande_sechee", quantity: 3 }, { resourceId: "pain", quantity: 1 }], outputs: [{ resourceId: "ration", quantity: 1 }], craftTimeMs: 8000 },
+      // v3.330.0 (E4) : la ration moyenne devient les vivres du Désert ; v3.484.0 (lot S) : 15 viandes au lieu de 3 viandes séchées
+      { id: "ration", inputs: [{ resourceId: "viande", quantity: 15 }, { resourceId: "pain", quantity: 1 }], outputs: [{ resourceId: "ration", quantity: 1 }], craftTimeMs: 8000 },
       // v3.137.0 (option B validée Seb) : Grande ration = Ration moyenne + 3 Sève d'Aeswyn — escalade
       // visible sur la chaîne plutôt qu'un doublon des intrants de la Ration moyenne (option A).
       // Premier débouché de craft de la Sève (jusqu'ici uniquement l'offrande forest_15, ponctuelle).
@@ -156,15 +144,8 @@ var WORKSHOPS_CONFIG = {
     openAtStoryStep: "desert_03",
     upgradeCostBase: { planche: 3, lingot: 2 },
     recipes: [
-      { id: "outre_pleine", inputs: [{ resourceId: "eau_purifiee", quantity: 4 }, { resourceId: "viande", quantity: 2 }],
+      { id: "outre_pleine", inputs: [{ resourceId: "eau", quantity: 16 }, { resourceId: "viande", quantity: 2 }],
         outputs: [{ resourceId: "outre_pleine", quantity: 1 }], craftTimeMs: 20000, firstCraftFlag: "outreFilled" }
-    ]
-  },
-  station_purification: {
-    buildingId: "well", name: "Station de purification", icon: "images/Icons/workshops/purification_station.webp", active: true,
-    upgradeCostBase: { planche: 3, lingot: 2 },
-    recipes: [
-      { id: "eau_purifiee", inputs: [{ resourceId: "eau", quantity: 4 }], outputs: [{ resourceId: "eau_purifiee", quantity: 1 }], craftTimeMs: 4000 }
     ]
   }
 };

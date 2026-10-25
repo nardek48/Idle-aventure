@@ -67,7 +67,7 @@ var SCENARIOS = {
   A3: { label: "Taverne : quantités des contrats ×2", tavernQty: 2 },
   A4: { label: "A1 + Taverne ×2", noExclude: true, tavernQty: 2 },
   A5: { label: "A1 + capacité des caravanes ×2", noExclude: true, capMult: 2 },
-  S1: { label: "lot S : plus de contrats de farine ni de viande séchée", dropTemplates: ["farine", "viande_sechee"] },
+  S1: { label: "lot S : plus de contrats de farine ni de viande séchée (fait en v3.484.0 : identique à A0)", dropTemplates: ["farine", "viande_sechee"] },
   Z1: { label: "aujourd'hui, avec l'ancienne réserve des zones (avant v3.478.0)", zoneCap: 1 / 3 }
 };
 

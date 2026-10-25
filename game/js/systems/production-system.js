@@ -226,7 +226,7 @@ var ProductionManager = {
     });
 
     // v3.98.0 : ateliers de craft locaux (voir WorkshopsSystem) — un atelier ne tourne
-    // que si son bâtiment parent est débloqué (ex. Séchoir ne tick pas tant que la Chasse
+    // que si son bâtiment parent est débloqué (ex. Cuisine de camp ne tick pas tant que la Chasse
     // elle-même est verrouillée).
     Object.keys(WORKSHOPS_CONFIG).forEach(function (workshopId) {
       var workshopDef = WORKSHOPS_CONFIG[workshopId];

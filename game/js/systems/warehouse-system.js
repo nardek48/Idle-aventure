@@ -5,12 +5,63 @@
    (voir WorkshopsSystem, systems/workshops-system.js). v3.412.0 : game.craftQueue retiré.
    Détail : COMMENTAIRES_ORIGINAUX.md */
 
+/* v3.484.0 (refonte de l'économie, lot S, RE-8) : ressources retirées -> équivalent brut.
+   Sert aux stocks et files d'atelier des anciennes sauvegardes, et aux butins encore en route. */
+var WAREHOUSE_LEGACY_RESOURCES = {
+  farine: { ble: 5 },
+  viande_sechee: { viande: 5 },
+  eau_purifiee: { eau: 4 }
+};
+/* Ateliers retirés au même lot : produit de leur recette unique (×1) et coût d'amélioration de base. */
+var WAREHOUSE_LEGACY_WORKSHOPS = {
+  moulin: { buildingId: "farm", product: "farine" },
+  sechoir: { buildingId: "hunt", product: "viande_sechee" },
+  station_purification: { buildingId: "well", product: "eau_purifiee" }
+};
+var WAREHOUSE_LEGACY_WORKSHOP_UPGRADE_BASE = { planche: 3, lingot: 2 };
+
 var WarehouseManager = {
   ensure: function () {
     if (!game.resources || typeof game.resources !== "object") game.resources = {};
+    this._migrateLegacy();
     if (typeof WAREHOUSE_RESOURCES === "undefined") return;
     Object.keys(WAREHOUSE_RESOURCES).forEach(function (key) {
       if (typeof game.resources[key] !== "number") game.resources[key] = 0;
+    });
+  },
+
+  /* v3.484.0 (lot S) : convertit sans plafond (déjà acquis) les stocks des ressources retirées,
+     les lots en file des ateliers retirés et leurs niveaux payés, puis efface les clés. Idempotent. */
+  _migrateLegacy: function () {
+    var res = game.resources;
+    var credit = function (key, n) { res[key] = Number(res[key] || 0) + Math.floor(n); };
+    var creditLegacy = function (legacyKey, n) {
+      var eq = WAREHOUSE_LEGACY_RESOURCES[legacyKey];
+      Object.keys(eq).forEach(function (k) { credit(k, eq[k] * n); });
+    };
+    Object.keys(WAREHOUSE_LEGACY_RESOURCES).forEach(function (key) {
+      if (!(key in res)) return;
+      var n = Math.floor(Number(res[key] || 0));
+      delete res[key];
+      if (n > 0) creditLegacy(key, n);
+    });
+    if (!game.production || typeof game.production !== "object") return;
+    Object.keys(WAREHOUSE_LEGACY_WORKSHOPS).forEach(function (id) {
+      var info = WAREHOUSE_LEGACY_WORKSHOPS[id];
+      var bucket = game.production[info.buildingId];
+      var ws = bucket && bucket.workshops && bucket.workshops[id];
+      if (!ws) return;
+      (Array.isArray(ws.queue) ? ws.queue : []).forEach(function (job) {
+        var times = Math.floor(Number(job && job.times || 0));
+        if (times > 0) creditLegacy(info.product, times);
+      });
+      var mult = (typeof WORKSHOP_LEVEL_CONFIG !== "undefined") ? WORKSHOP_LEVEL_CONFIG.upgradeCostMultPerLevel : 1.4;
+      for (var lv = 1; lv < Math.floor(Number(ws.level || 1)); lv++) {
+        Object.keys(WAREHOUSE_LEGACY_WORKSHOP_UPGRADE_BASE).forEach(function (k) {
+          credit(k, WAREHOUSE_LEGACY_WORKSHOP_UPGRADE_BASE[k] * Math.pow(mult, lv - 1));
+        });
+      }
+      delete bucket.workshops[id];
     });
   },
 
@@ -54,6 +105,12 @@ var WarehouseManager = {
     this.ensure();
     amount = Math.floor(Number(amount || 0));
     if (amount <= 0) return 0;
+    // v3.484.0 (lot S) : un butin parti avant la mise à jour arrive en équivalent brut
+    if (WAREHOUSE_LEGACY_RESOURCES[key]) {
+      var eq = WAREHOUSE_LEGACY_RESOURCES[key], total = 0, self = this;
+      Object.keys(eq).forEach(function (k) { total += self.addResource(k, eq[k] * amount, silent); });
+      return total;
+    }
     if (typeof WAREHOUSE_RESOURCES === "undefined" || !WAREHOUSE_RESOURCES[key]) return 0;
 
     var def = WAREHOUSE_RESOURCES[key];

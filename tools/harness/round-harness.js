@@ -1430,11 +1430,11 @@ var cuisineRecipes = g.WORKSHOPS_CONFIG.cuisine_de_camp.recipes;
 var petiteRecipe = cuisineRecipes.find(function (r) { return r.id === "petite_ration"; });
 var rationRecipe = cuisineRecipes.find(function (r) { return r.id === "ration"; });
 ok(petiteRecipe.inputs.length === 2 && petiteRecipe.inputs[0].resourceId === "viande" && petiteRecipe.inputs[0].quantity === 8 && petiteRecipe.inputs[1].resourceId === "eau" && petiteRecipe.inputs[1].quantity === 4, "Petite ration inchangée : 8 Viande + 4 Eau brutes");
-ok(rationRecipe.inputs.length === 2 && rationRecipe.inputs[0].resourceId === "viande_sechee" && rationRecipe.inputs[0].quantity === 3 /* v3.330.0 (E4) : 10 -> 3 */ && rationRecipe.inputs[1].resourceId === "pain" && rationRecipe.inputs[1].quantity === 1, "Ration moyenne : 3 Viande séchée + 1 Pain (v3.330.0)");
+ok(rationRecipe.inputs.length === 2 && rationRecipe.inputs[0].resourceId === "viande" && rationRecipe.inputs[0].quantity === 15 /* v3.484.0 (lot S) : 3 viandes séchées -> 15 viandes */ && rationRecipe.inputs[1].resourceId === "pain" && rationRecipe.inputs[1].quantity === 1, "Ration moyenne : 15 Viande + 1 Pain (v3.484.0)");
 
 console.log("\n[67] v3.108.0 — lot 3 : cohérence textes/données Forêt, chasse au Loup, regen coupée en quête, reset sortie");
 ok(g.STORY_QUESTS.forest.steps.length === 17, "chaîne Histoire : 17 étapes (en-tête de story-quests.js aligné)");
-ok(g.WAREHOUSE_RESOURCES.ration.desc.indexOf("Viandes séchées") !== -1 && g.WAREHOUSE_RESOURCES.ration.desc.indexOf("Pain") !== -1, "Ration moyenne : description alignée sur la recette réelle (Viande séchée + Pain)");
+ok(g.WAREHOUSE_RESOURCES.ration.desc.indexOf("15 Viandes + 1 Pain") !== -1, "Ration moyenne : description alignée sur la recette réelle (15 Viandes + 1 Pain)");
 ok(g.HUNT_QUESTS.hq_forest_boar.enemyFilter.length === 1 && g.HUNT_QUESTS.hq_forest_boar.enemyFilter[0] === "wolf", "Chasse en Forêt : enemyFilter [wolf]");
 game = freshCombat("knight");
 run("WorldManager.worldIndex = 0; WorldManager.adventureIndex = 0; WorldManager.enemyIndex = 3;");
@@ -1697,7 +1697,7 @@ var gold72 = game.gold; /* v3.358.0 (D7) : l'ancienne essence (10) est fondue da
 ok(g.VillageQuestManager.claim("farm_improvement") === true && game.gold === gold72 + 300, "quête 3 réclamée (+300 or)");
 // v3.112.0 (Lot C) : la chaîne continue avec les quêtes d'atelier — la 4e devient courante.
 var vqNext = g.VillageQuestManager.getCurrentQuest();
-ok(!!vqNext && vqNext.id === "workshop_first_flour", "les 3 quêtes Champs réclamées : la chaîne enchaîne sur les ateliers (Lot C)");
+ok(!!vqNext && vqNext.id === "workshop_first_bread", "les 3 quêtes Champs réclamées : la chaîne enchaîne sur les ateliers (Lot C)");
 
 // --- Popups pédagogiques : marquage une-seule-fois, persistance dans le bon bloc ---
 game = freshCombat("knight");
@@ -1710,7 +1710,7 @@ ok(g.VillageQuestManager.isTutorialSeen(vqT.id) === true && game.explorationProg
 ok(typeof g.maybeShowVillageQuestTutorial === "function" && typeof g.closeVillageQuestTutorialModal === "function", "déclencheur et fermeture exposés (branchés dans switchTab)");
 
 console.log("\n[73] v3.112.0 — Lot C : quêtes d'atelier, compteur générique de crafts, pause sur prérequis");
-// --- Reprise de la chaîne après le Lot B : la quête 4 (Farine) devient courante ---
+// --- Reprise de la chaîne après le Lot B : la quête 4 (Pain ; v3.484.0, lot S : Farine retirée) devient courante ---
 game = freshCombat("knight");
 game.explorationProgression.farmUnlocked = true;
 run("ProductionManager.unlockBuilding('farm');");
@@ -1719,33 +1719,29 @@ run("ProductionManager.unlockBuilding('farm');");
   g.VillageQuestManager.ensure().claimed[id] = true;
 });
 var wq1 = g.VillageQuestManager.getCurrentQuest();
-ok(!!wq1 && wq1.id === "workshop_first_flour", "après les 3 quêtes Champs : « La première mouture » devient courante");
+ok(!!wq1 && wq1.id === "workshop_first_bread", "après les 3 quêtes Champs : « Le pain d'Aeswyn » devient courante");
 var wqCard = g.MissionBoard.list().find(function (m) { return m.sourceKind === "village"; });
 ok(!!wqCard && wqCard.status === "available" && wqCard.progressLabel === "0/1", "carte au tableau (0/1)");
 
-// --- Compteur générique : un vrai craft au Moulin (tick réel) incrémente et complète ---
-g.WarehouseManager.addResource("ble", 50);
-var enq = g.WorkshopsSystem.enqueueCraft("moulin", "farine", 1);
-ok(enq === true, "lot de farine mis en file au Moulin (vraie API, 5 blé déduits)");
-run("WorkshopsSystem.tickWorkshop('moulin', 10);"); // 10 s > 3 s de craft -> lot terminé
-ok(g.VillageQuestManager.getCraftCount("farine") === 1, "hook de complétion : compteur farine = 1 (tick réel)");
-ok(g.WarehouseManager.getAmount("farine") === 1, "farine créditée normalement (hook non intrusif)");
+// --- Compteur générique : un vrai craft à la Boulangerie (tick réel) incrémente et complète ---
+g.WarehouseManager.addResource("ble", 50); g.WarehouseManager.addResource("eau", 20);
+var enq = g.WorkshopsSystem.enqueueCraft("boulangerie", "pain", 1);
+ok(enq === true && g.WarehouseManager.getAmount("ble") === 35 && g.WarehouseManager.getAmount("eau") === 15, "lot de pain mis en file (vraie API, 15 blé + 5 eau déduits)");
+run("WorkshopsSystem.tickWorkshop('boulangerie', 60);"); // 60 s > temps de craft -> lot terminé
+ok(g.VillageQuestManager.getCraftCount("pain") === 1, "hook de complétion : compteur pain = 1 (tick réel)");
+ok(g.WarehouseManager.getAmount("pain") === 1, "pain crédité normalement (hook non intrusif)");
 wqCard = g.MissionBoard.list().find(function (m) { return m.sourceKind === "village"; });
 ok(!!wqCard && wqCard.status === "claimable", "carte réclamable");
-g.WarehouseManager.removeResource("farine", 1); // consommer la farine ne fait PAS reculer la quête
-ok(g.VillageQuestManager.isQuestReady(wq1) === true, "compteur cumulatif : consommer la farine ne fait pas reculer l'objectif");
-ok(g.VillageQuestManager.claim("workshop_first_flour") === true, "quête Farine réclamée");
+g.WarehouseManager.removeResource("pain", 1); // consommer le pain ne fait PAS reculer la quête
+ok(g.VillageQuestManager.isQuestReady(wq1) === true, "compteur cumulatif : consommer le pain ne fait pas reculer l'objectif");
 
-// --- Pain : rattrapage hors ligne = même hook ---
-var wq2 = g.VillageQuestManager.getCurrentQuest();
-ok(!!wq2 && wq2.id === "workshop_first_bread", "quête suivante : Le pain d'Aeswyn");
-g.WarehouseManager.addResource("farine", 3); g.WarehouseManager.addResource("eau", 10);
+// --- Rattrapage hors ligne = même hook ---
 var enqPain = g.WorkshopsSystem.enqueueCraft("boulangerie", "pain", 1);
-ok(enqPain === true, "lot de pain mis en file");
+ok(enqPain === true, "second lot de pain mis en file");
 // simule une fermeture du jeu : lastTick dans le passé, puis rattrapage hors ligne
 run("game.production.farm.workshops.boulangerie.lastTick = Date.now() - 60000;");
 run("WorkshopsSystem.catchUpOffline('boulangerie');");
-ok(g.VillageQuestManager.getCraftCount("pain") === 1, "hook aussi branché dans catchUpOffline (pain compté hors ligne)");
+ok(g.VillageQuestManager.getCraftCount("pain") === 2, "hook aussi branché dans catchUpOffline (pain compté hors ligne)");
 ok(g.VillageQuestManager.claim("workshop_first_bread") === true, "quête Pain réclamée");
 
 // --- Planche+Lingot : chaîne EN PAUSE tant que Scierie/Mine manquent ---
@@ -1776,11 +1772,11 @@ var wq4 = g.VillageQuestManager.getCurrentQuest();
 ok(!!wq4 && wq4.id === "workshop_level_two", "dernière quête : L'atelier bien huilé");
 ok(g.VillageQuestManager.isQuestReady(wq4) === false, "aucun atelier niveau 2 : pas encore prête");
 g.WarehouseManager.addResource("planche", 10); g.WarehouseManager.addResource("lingot", 10);
-var upW = g.WorkshopsSystem.upgradeWorkshop("moulin");
-ok(upW.ok === true, "Moulin amélioré niveau 2 (vraie API, coût planche+lingot)");
+var upW = g.WorkshopsSystem.upgradeWorkshop("boulangerie");
+ok(upW.ok === true, "Boulangerie améliorée niveau 2 (vraie API, coût planche+lingot)");
 var gold73 = game.gold;
 ok(g.VillageQuestManager.claim("workshop_level_two") === true && game.gold === gold73 + 375, "quête réclamée (+375 or, v3.358.0 : essence fondue)");
-ok(g.VillageQuestManager.getCurrentQuest() === null, "chaîne des 7 quêtes entièrement terminée");
+ok(g.VillageQuestManager.getCurrentQuest() === null, "chaîne des 6 quêtes entièrement terminée (v3.484.0 : Farine retirée)");
 ok(!g.MissionBoard.list().find(function (m) { return m.sourceKind === "village"; }), "plus aucune carte village au tableau");
 
 console.log("\n[74] v3.113.0 \u2014 Village hors-ligne supprim\u00e9, OfflineManager = r\u00e9sum\u00e9 Production");
@@ -2442,35 +2438,36 @@ console.log("\n[UX-PROD] Tableau de bord Production v3.191.0 — routeur, vue At
   // 2. v3.415.0 (VUI-2) : onglet Ateliers en vignettes ; tout le pilotage passe par la feuille d'atelier
   var shopsHtml = run("buildShopsViewHTML()");
   ok(shopsHtml.indexOf("wk-banner") !== -1 && shopsHtml.indexOf("prod-queues-btn") !== -1, "bandeau d'état + bouton Files présents");
-  ok(shopsHtml.indexOf("wk-group") !== -1 && shopsHtml.indexOf('id="wk-tile-moulin"') !== -1, "vignettes groupées par bâtiment");
-  ok(shopsHtml.indexOf("openWorkshopSheet('moulin')") !== -1, "toucher une vignette ouvre la feuille de l'atelier");
+  ok(shopsHtml.indexOf("wk-group") !== -1 && shopsHtml.indexOf('id="wk-tile-boulangerie"') !== -1, "vignettes groupées par bâtiment");
+  ok(shopsHtml.indexOf("openWorkshopSheet('boulangerie')") !== -1, "toucher une vignette ouvre la feuille de l'atelier");
   var etatFonderie = run("WORKSHOPS_CONFIG.fonderie.active");
   run("WORKSHOPS_CONFIG.fonderie.active = false;");
   ok(run("buildShopsViewHTML()").indexOf("wk-tile is-soon") !== -1, "un atelier à venir : vignette grisée « Bientôt »");
   run("WORKSHOPS_CONFIG.fonderie.active = " + (etatFonderie ? "true" : "false") + ";");
-  // v3.191.1 : CÂBLAGE réel (bug Seb — config brute sans id) : avec du Blé, la feuille du Moulin propose Fabriquer sur SON id
-  run("game.resources.ble = 25; openWorkshopId = 'moulin'; selectedWorkshopRecipe.moulin = 'farine'; workshopCraftQty.moulin = 1;");
-  var wkHtml = run("buildWorkshopSheetHTML('moulin')");
-  ok(wkHtml.indexOf("confirmCraftWorkshop('moulin')") !== -1, "feuille du Moulin : Fabriquer câblé sur son id (Blé en stock)");
+  // v3.191.1 : CÂBLAGE réel (bug Seb — config brute sans id) : avec Blé et Eau, la feuille de la Boulangerie propose Fabriquer sur SON id
+  run("game.resources.ble = 75; game.resources.eau = 25; openWorkshopId = 'boulangerie'; selectedWorkshopRecipe.boulangerie = 'pain'; workshopCraftQty.boulangerie = 1;");
+  var wkHtml = run("buildWorkshopSheetHTML('boulangerie')");
+  ok(wkHtml.indexOf("confirmCraftWorkshop('boulangerie')") !== -1, "feuille de la Boulangerie : Fabriquer câblé sur son id (Blé et Eau en stock)");
   ok(wkHtml.indexOf("undefined") === -1 && run("buildShopsViewHTML()").indexOf("undefined") === -1, "aucun id undefined (vignettes, feuille)");
-  ok(wkHtml.indexOf("wk-queue") !== -1 && wkHtml.indexOf("workshop-queue-moulin") !== -1, "file en cases, conteneur workshop-queue- conservé (refreshWorkshopQueueDOM)");
+  ok(wkHtml.indexOf("wk-queue") !== -1 && wkHtml.indexOf("workshop-queue-boulangerie") !== -1, "file en cases, conteneur workshop-queue- conservé (refreshWorkshopQueueDOM)");
   ok(wkHtml.indexOf("wk-up") !== -1, "amélioration dans la feuille (bouton compact, coût seul)");
-  ok((wkHtml.match(/setWorkshopCraftQty\('moulin', /g) || []).length === 4 && wkHtml.indexOf("Max (5)") !== -1, "quantité en pastilles ×1, ×5, ×10, Max (5 lots possibles)");
-  run("WorkshopsSystem.setAutoRecipe('moulin', WORKSHOPS_CONFIG.moulin.recipes[0].id);");
-  var wkAuto = run("buildWorkshopSheetHTML('moulin')");
-  ok(wkAuto.indexOf("confirmCraftWorkshop('moulin')") === -1 && wkAuto.indexOf("setWorkshopAutoQty('moulin'") !== -1, "Continu actif : Fabriquer masqué, quantité du lot automatique à la place");
-  run("WorkshopsSystem.setAutoRecipe('moulin', null);");
-  ok(run("buildWorkshopSheetHTML('moulin')").indexOf("confirmCraftWorkshop('moulin')") !== -1, "Continu coupé : Fabriquer de retour");
-  run("WorkshopsSystem.enqueueCraft('moulin', 'farine', 2);");
-  var wkQueued = run("buildWorkshopSheetHTML('moulin')");
-  ok(wkQueued.indexOf("wk-slot is-filled") !== -1 && wkQueued.indexOf("prod-workshop-time-moulin") !== -1 && wkQueued.indexOf("prod-workshop-bar-moulin") !== -1, "lot en file : case remplie + ids temps/barre conservés (feuille)");
+  ok((wkHtml.match(/setWorkshopCraftQty\('boulangerie', /g) || []).length === 4 && wkHtml.indexOf("Max (5)") !== -1, "quantité en pastilles ×1, ×5, ×10, Max (5 lots possibles)");
+  run("WorkshopsSystem.setAutoRecipe('boulangerie', WORKSHOPS_CONFIG.boulangerie.recipes[0].id);");
+  var wkAuto = run("buildWorkshopSheetHTML('boulangerie')");
+  ok(wkAuto.indexOf("confirmCraftWorkshop('boulangerie')") === -1 && wkAuto.indexOf("setWorkshopAutoQty('boulangerie'") !== -1, "Continu actif : Fabriquer masqué, quantité du lot automatique à la place");
+  run("WorkshopsSystem.setAutoRecipe('boulangerie', null);");
+  ok(run("buildWorkshopSheetHTML('boulangerie')").indexOf("confirmCraftWorkshop('boulangerie')") !== -1, "Continu coupé : Fabriquer de retour");
+  run("WorkshopsSystem.enqueueCraft('boulangerie', 'pain', 2);");
+  var wkQueued = run("buildWorkshopSheetHTML('boulangerie')");
+  ok(wkQueued.indexOf("wk-slot is-filled") !== -1 && wkQueued.indexOf("prod-workshop-time-boulangerie") !== -1 && wkQueued.indexOf("prod-workshop-bar-boulangerie") !== -1, "lot en file : case remplie + ids temps/barre conservés (feuille)");
   var tileQueued = run("buildShopsViewHTML()");
-  ok(tileQueued.indexOf("wk-tile is-run") !== -1 && tileQueued.indexOf("wk-tile-bar-moulin") !== -1 && tileQueued.indexOf("prod-workshop-bar-moulin") === -1, "vignette « En cours » avec sa barre, à ids propres (pas de doublon)");
-  run("WorkshopsSystem.tickWorkshop('moulin', 60000);"); // vider la file (2 lots x 3 s)
-  run("game.resources.ble = 0; game.resources.farine = 0;");
-  // la Boulangerie sans Farine dit qui la fabrique
-  var boul = run("openWorkshopId = 'boulangerie'; buildWorkshopSheetHTML('boulangerie')");
-  ok(boul.indexOf("goToResourceProducer('workshop', 'moulin')") !== -1, "intrant manquant : bouton vers l'atelier qui le fabrique (Moulin)");
+  ok(tileQueued.indexOf("wk-tile is-run") !== -1 && tileQueued.indexOf("wk-tile-bar-boulangerie") !== -1 && tileQueued.indexOf("prod-workshop-bar-boulangerie") === -1, "vignette « En cours » avec sa barre, à ids propres (pas de doublon)");
+  run("WorkshopsSystem.tickWorkshop('boulangerie', 60000);"); // vider la file (2 lots x 5 s)
+  run("game.resources.ble = 0; game.resources.eau = 0; game.resources.pain = 0; game.resources.viande = 50;");
+  // la Ration sans Pain dit qui le fabrique (v3.484.0 : la Farine du Moulin est retirée)
+  var boul = run("openWorkshopId = 'cuisine_de_camp'; selectedWorkshopRecipe.cuisine_de_camp = 'ration'; buildWorkshopSheetHTML('cuisine_de_camp')");
+  ok(boul.indexOf("goToResourceProducer('workshop', 'boulangerie')") !== -1, "intrant manquant : bouton vers l'atelier qui le fabrique (Boulangerie)");
+  run("delete selectedWorkshopRecipe.cuisine_de_camp; game.resources.viande = 0;");
   // recettes multiples (Cuisine de camp, 3 recettes) : pastilles de recette
   var cuisineHtml = run("openWorkshopId = 'cuisine_de_camp'; buildWorkshopSheetHTML('cuisine_de_camp')");
   ok((cuisineHtml.match(/selectWorkshopRecipe\('cuisine_de_camp'/g) || []).length >= 3, "Cuisine de camp : 3 recettes au choix");
@@ -2493,8 +2490,8 @@ console.log("\n[UX-PROD] Tableau de bord Production v3.191.0 — routeur, vue At
   run("productionZoneWin = null;");
   run("productionSheetTab = 'shops';");
   var sheetShops = run("buildProductionSheetHTML('farm')");
-  ok(sheetShops.indexOf("wk-grid") !== -1 && sheetShops.indexOf("openWorkshopSheet('moulin', 'farm')") !== -1, "onglet Ateliers : vignettes, et la feuille d'atelier saura revenir aux Champs");
-  ok(sheetShops.indexOf("wk-tile-boulangerie") !== -1 && sheetShops.indexOf("wk-tile-sechoir") === -1, "seulement ceux de ce bâtiment (Moulin, Boulangerie)");
+  ok(sheetShops.indexOf("wk-grid") !== -1 && sheetShops.indexOf("openWorkshopSheet('boulangerie', 'farm')") !== -1, "onglet Ateliers : vignettes, et la feuille d'atelier saura revenir aux Champs");
+  ok(sheetShops.indexOf("wk-tile-boulangerie") !== -1 && sheetShops.indexOf("wk-tile-cuisine_de_camp") === -1, "seulement ceux de ce bâtiment (Boulangerie)");
   // le cadre du Village garde son titre ; le rail dit où l'on est
   run("activeVillageSubTab = 'production'; productionDetailBuildingId = null;");
   var vh = run("buildVillageHTML()");
@@ -2507,13 +2504,13 @@ console.log("\n[UX-PROD] Tableau de bord Production v3.191.0 — routeur, vue At
 
   // 5. ateliers à l'arrêt : auto activé + rien à produire -> compté ; auto coupé -> pas compté
   run("game.resources.ble = 0;");
-  run("WorkshopsSystem.setAutoRecipe('moulin', WORKSHOPS_CONFIG.moulin.recipes[0].id);");
-  ok(run("WorkshopsSystem.getAutoRecipeId('moulin')") === run("WORKSHOPS_CONFIG.moulin.recipes[0].id"), "auto activé sur le Moulin (précondition)");
-  ok(run("countStalledWorkshops()") >= 1, "Moulin auto sans Blé compté à l'arrêt");
-  run("WorkshopsSystem.setAutoRecipe('moulin', null);");
+  run("WorkshopsSystem.setAutoRecipe('boulangerie', WORKSHOPS_CONFIG.boulangerie.recipes[0].id);");
+  ok(run("WorkshopsSystem.getAutoRecipeId('boulangerie')") === run("WORKSHOPS_CONFIG.boulangerie.recipes[0].id"), "auto activé sur la Boulangerie (précondition)");
+  ok(run("countStalledWorkshops()") >= 1, "Boulangerie auto sans Blé compté à l'arrêt");
+  run("WorkshopsSystem.setAutoRecipe('boulangerie', null);");
   var stalledAfter = run("countStalledWorkshops()");
   run("var _s = " + stalledAfter + ";");
-  ok(run("WorkshopsSystem.getAutoRecipeId('moulin')") === null, "auto coupé sur le Moulin");
+  ok(run("WorkshopsSystem.getAutoRecipeId('boulangerie')") === null, "auto coupé sur la Boulangerie");
 
   // remise à neutre pour d'éventuelles sections futures
   run("productionViewTab = 'prod'; productionDetailBuildingId = null; activeVillageSubTab = 'production';");
@@ -3874,12 +3871,9 @@ console.log("\n[24b] v3.215.0 (lot V-4) \u2014 Apothicaire : pr\u00e9parer au li
   var M = g.VillageBuildingManager;
   var A = g.ApothecaryManager;
 
-  /* --- Eau purifi\u00e9e et Station de purification ------------------------ */
-  var eau = g.WAREHOUSE_RESOURCES.eau_purifiee;
-  ok(!!eau && Number(eau.sellPrice || 0) === 0, "Eau purifi\u00e9e d\u00e9clar\u00e9e et invendable (intrant, pas revenu)");
-  var st = g.WORKSHOPS_CONFIG.station_purification;
-  ok(st.active === true && st.recipes[0].outputs[0].resourceId === "eau_purifiee",
-    "Station de purification activ\u00e9e, elle filtre l'eau du Puits");
+  /* --- v3.484.0 (lot S) : Eau purifi\u00e9e et Station de purification retir\u00e9es -- */
+  ok(!g.WAREHOUSE_RESOURCES.eau_purifiee && !g.WORKSHOPS_CONFIG.station_purification,
+    "plus d'Eau purifi\u00e9e ni de Station : les pr\u00e9parations partent de l'Eau du Puits");
   ok(g.WORKSHOPS_CONFIG.reservoir.active === false,
     "le R\u00e9servoir reste inactif : pas de recette invent\u00e9e pour faire nombre");
 
@@ -3908,19 +3902,19 @@ console.log("\n[24b] v3.215.0 (lot V-4) \u2014 Apothicaire : pr\u00e9parer au li
   });
   var orAvant = g.game.gold;
   var soinAvant = g.PotionManager.getHealingStock("potion_soin_mineur");
-  var eauAvant = g.WarehouseManager.getAmount("eau_purifiee");
+  var eauAvant = g.WarehouseManager.getAmount("eau");
   ok(A.craft("potion_soin_mineur") === true, "pr\u00e9paration r\u00e9ussie");
   ok(g.PotionManager.getHealingStock("potion_soin_mineur") === soinAvant + 1, "la potion entre en stock");
   ok(g.game.gold === orAvant, "aucune pi\u00e8ce d'or d\u00e9pens\u00e9e : c'est l'autre voie");
-  ok(g.WarehouseManager.getAmount("eau_purifiee") === eauAvant - recette.inputs.eau_purifiee,
+  ok(g.WarehouseManager.getAmount("eau") === eauAvant - recette.inputs.eau,
     "les ressources sont bien d\u00e9bit\u00e9es");
 
   /* --- Sans les ressources, rien ne se passe ---------------------------- */
-  g.WarehouseManager.removeResource("eau_purifiee", g.WarehouseManager.getAmount("eau_purifiee"));
+  g.WarehouseManager.removeResource("eau", g.WarehouseManager.getAmount("eau"));
   var soinAvant2 = g.PotionManager.getHealingStock("potion_soin_mineur");
   ok(A.craft("potion_soin_mineur") === false && g.PotionManager.getHealingStock("potion_soin_mineur") === soinAvant2,
-    "sans Eau purifi\u00e9e : refus\u00e9, et rien n'est cr\u00e9\u00e9");
-  ok(A.getMissingInput("potion_soin_mineur") === "eau_purifiee", "...et la fiche sait quoi nommer");
+    "sans Eau : refus\u00e9, et rien n'est cr\u00e9\u00e9");
+  ok(A.getMissingInput("potion_soin_mineur") === "eau", "...et la fiche sait quoi nommer");
 
   /* --- Une recette non ouverte reste refus\u00e9e -------------------------- */
   g.game.village.buildings.apothecary.level = 1;
@@ -5084,16 +5078,16 @@ console.log("\n[42b] Libellé d'objectif sur les cartes de mission");
 (function () {
   var m = {
     id: "t", sourceKind: "village", title: "Quête test", blurb: "Du lore qui ne dit rien de la tâche.",
-    type: "production", place: "", objectiveLabel: "Fabriquer 1 Farine au Moulin",
+    type: "production", place: "", objectiveLabel: "Fabriquer 1 Pain à la Boulangerie",
     progressLabel: "0/2", rewardSummary: "", badge: "contract", status: "accepted", isMain: false,
     launch: function () {}, abandon: function () {}
   };
   var camp = g.buildCampMissionCardHTML(m);
-  ok(camp.indexOf("Fabriquer 1 Farine au Moulin") !== -1, "Campement : l'objectif est affiché");
+  ok(camp.indexOf("Fabriquer 1 Pain à la Boulangerie") !== -1, "Campement : l'objectif est affiché");
   ok(camp.indexOf("0/2") !== -1, "Campement : le compteur est conservé");
 
   var board = g.buildQuestBoardCardHTML(m);
-  ok(board.indexOf("Fabriquer 1 Farine au Moulin") !== -1, "Quêtes : l'objectif est affiché");
+  ok(board.indexOf("Fabriquer 1 Pain à la Boulangerie") !== -1, "Quêtes : l'objectif est affiché");
   ok(board.indexOf("0/2") !== -1, "Quêtes : le compteur est conservé");
 
   /* Sans objectiveLabel, on retombe sur le compteur seul plutôt que sur du vide. */
@@ -8654,7 +8648,7 @@ console.log("\n[98] v3.303.0 — Réservoir, Outre pleine, objets payés et obje
     ok(W.active === false, "étape 2 en cours : toujours fermé");
     game.storyQuests.desert.currentStep = steps.findIndex(function (x) { return x.id === "desert_03"; });
     ok(W.active === true, "étape « L'outre » atteinte : le Réservoir s'ouvre");
-    run("ProductionManager.unlockBuilding && ProductionManager.unlockBuilding('well'); WarehouseManager.addResource('eau_purifiee', 8, true); WarehouseManager.addResource('viande', 4, true);");
+    run("ProductionManager.unlockBuilding && ProductionManager.unlockBuilding('well'); WarehouseManager.addResource('eau', 32, true); WarehouseManager.addResource('viande', 4, true);");
     var queued = g.WorkshopsSystem.enqueueCraft("reservoir", "outre_pleine", 1);
     ok(queued === true, "une Outre mise en fabrication");
     g.WorkshopsSystem.tickWorkshop("reservoir", 20000);
@@ -10066,7 +10060,7 @@ console.log("\n[125] v3.330.0 — Plafond de stock brut, niveaux d'Histoire, Blo
     ok(P.getRequirement("dungeon", cite) === null, "E4 : un ticket d'Histoire reste gratuit");
     g.DungeonManager.isStoryTicketFree = sft;
     var rr = g.WORKSHOPS_CONFIG.cuisine_de_camp.recipes.filter(function (r) { return r.id === "ration"; })[0];
-    ok(rr.inputs[0].quantity === 3, "E4 : ration moyenne = 3 viandes séchées + 1 pain");
+    ok(rr.inputs[0].resourceId === "viande" && rr.inputs[0].quantity === 15, "E4 : ration moyenne = 15 viandes + 1 pain (v3.484.0, lot S)");
 
     // --- E6 : plus de vente, la Taverne seul débouché ---
     g.game.gold = 100; g.game.resources.ble = 100;
@@ -10419,16 +10413,16 @@ console.log("\n[129] v3.334.0 — Patrouilles : départ, groupe, retour, rappel,
     // Rappel au prorata (P2)
     g.game.resources.bois = 0;
     PM.start("wenna", "gue", 8);
-    var p3 = PM.get("wenna"); p3.loot = { bois: 400, viande_sechee: 2 }; p3.gold = 100;
+    var p3 = PM.get("wenna"); p3.loot = { bois: 400, viande: 10 }; p3.gold = 100;
     p3.startedAt = Date.now() - 2 * 3600e3; p3.endsAt = p3.startedAt + 8 * 3600e3;
     var r3 = PM.recall("wenna");
-    ok(r3.recalled && Math.abs(r3.loot.bois - 100) <= 1 && Math.abs(r3.gold - 25) <= 1 && !r3.loot.viande_sechee && !r3.story, "P2 : rappel après 2 h sur 8 -> un quart du butin, sans ration ni récit");
+    ok(r3.recalled && Math.abs(r3.loot.bois - 100) <= 1 && Math.abs(r3.gold - 25) <= 1 && !r3.loot.viande && !r3.story, "P2 : rappel après 2 h sur 8 -> un quart du butin, sans ration ni récit");
 
     // Tirage : ingrédients de rations rares, récit rare plus probable sur 8 h
     var withRation = 0, rare8 = 0, rare2 = 0, N = 400;
     for (var k = 0; k < N; k++) {
       var t8 = PM.roll("wenna", "forest", "gue", 8), t2 = PM.roll("wenna", "forest", "gue", 2);
-      if (t8.loot.viande_sechee) withRation++;
+      if (t8.loot.viande) withRation++; // v3.484.0 (lot S) : 10 viandes brutes (le Gué ne donne pas de viande)
       if (t8.story.rare) rare8++;
       if (t2.story.rare) rare2++;
     }
@@ -10538,20 +10532,20 @@ console.log("\n[135] v3.355.0 — Portrait propre, conseil du compagnon, place d
   game = freshCombat("knight");
   game.explorationProgression.farmUnlocked = true;
   run("ProductionManager.unlockBuilding('farm');");
-  g.WarehouseManager.addResource("ble", 50, true);
+  g.WarehouseManager.addResource("ble", 50, true); g.WarehouseManager.addResource("eau", 20, true);
   var W = g.WarehouseManager, rm = 0, rf = 0, RM = W.removeResource, RF = W.refundResource;
   W.removeResource = function () { rm++; return RM.apply(this, arguments); };
   W.refundResource = function () { rf++; return RF.apply(this, arguments); };
   var MQ = g.WorkshopsSystem.getMaxQueueLength;
   g.WorkshopsSystem.getMaxQueueLength = function () { return 3; };   // deux lots en file : seul le second s'annule
   try {
-    g.WorkshopsSystem.enqueueCraft("moulin", "farine", 1);
-    g.WorkshopsSystem.enqueueCraft("moulin", "farine", 1);
+    g.WorkshopsSystem.enqueueCraft("boulangerie", "pain", 1);
+    g.WorkshopsSystem.enqueueCraft("boulangerie", "pain", 1);
     var avant = W.getAmount("ble");
-    var q = g.WorkshopsSystem.getQueue("moulin");
-    g.WorkshopsSystem.cancelCraft("moulin", q[1].id);
-    ok(rm === 2, "la mise en file débite par WarehouseManager.removeResource (" + rm + ")");
-    ok(rf === 1 && W.getAmount("ble") === avant + 5, "l'annulation rembourse par WarehouseManager.refundResource (+5 blé)");
+    var q = g.WorkshopsSystem.getQueue("boulangerie");
+    g.WorkshopsSystem.cancelCraft("boulangerie", q[1].id);
+    ok(rm === 4, "la mise en file débite par WarehouseManager.removeResource (" + rm + ", 2 lots × 2 intrants)");
+    ok(rf === 2 && W.getAmount("ble") === avant + 15, "l'annulation rembourse par WarehouseManager.refundResource (+15 blé, +5 eau)");
   } finally { W.removeResource = RM; W.refundResource = RF; g.WorkshopsSystem.getMaxQueueLength = MQ; }
   var wsrc = require("fs").readFileSync(ROOT + "/js/systems/workshops-system.js", "utf8");
   ok(!/game\.resources\[[^\]]+\]\s*=/.test(wsrc), "workshops-system.js n'écrit plus directement dans game.resources");
@@ -11165,9 +11159,9 @@ console.log("\n[141] v3.363.0 — Acte IV, étape 18 : ce qui reste du roi, fin 
   st = setup("mage");
   run("VillageBuildingManager.ensure && VillageBuildingManager.ensure();");
   var cap0 = A.getDailyCap(3);
-  var eau0 = A.getInputs("potion_soin_majeur").eau_purifiee;
+  var eau0 = A.getInputs("potion_soin_majeur").eau;
   ok(g.storyMakeChoice("desert", "aeswyn") === true && A.hasPuitsDuRoi(), "rapporter la forme : le puits du roi");
-  ok(A.getDailyCap(3) === cap0 + 2 && A.getInputs("potion_soin_majeur").eau_purifiee === Math.ceil(eau0 / 2) && g.getHeroSilenceRounds() === 2, "Apothicaire : +2 préparations, moitié moins d'eau ; le silence reste à 2");
+  ok(A.getDailyCap(3) === cap0 + 2 && A.getInputs("potion_soin_majeur").eau === Math.ceil(eau0 / 2) && g.getHeroSilenceRounds() === 2, "Apothicaire : +2 préparations, moitié moins d'eau ; le silence reste à 2");
   ok(S.getRegister().aeswyn >= 1 && S.getRegister().soi === 0, "registre : Aeswyn");
   run("window.__openQC = openQuestCompletePopup; window.openQuestCompletePopup = function (c) { window.__qc = c; };");
   S.claimStep("desert"); popup = g.__qc;
@@ -13249,7 +13243,7 @@ console.log("\n[186] v3.414.0 — Village : rail à quatre onglets, vignettes, f
     run("openProductionBuildingDetail('hunt');");
     ok(run("productionDetailBuildingId") === "hunt" && run("productionSheetTab") === "shops", "toucher une vignette ouvre la feuille, onglet Ateliers");
     var sh = run("buildProductionSheetHTML('hunt')");
-    ok(sh.indexOf("wk-tile-sechoir") !== -1 && sh.indexOf("wk-tile-moulin") === -1, "feuille : seulement les ateliers de ce bâtiment");
+    ok(sh.indexOf("wk-tile-cuisine_de_camp") !== -1 && sh.indexOf("wk-tile-boulangerie") === -1, "feuille : seulement les ateliers de ce bâtiment");
     ok(sh.indexOf('id="prod-harvest-btn-hunt"') !== -1 && sh.indexOf('id="prod-sheet-bar-hunt"') !== -1 && sh.indexOf('id="prod-bar-hunt"') === -1, "feuille : récolte et jauge à ids propres (pas de doublon avec la vignette)");
     run("setProductionSheetTab('zones');");
     ok(run("buildProductionSheetHTML('hunt')").indexOf("farm-plots-grid") !== -1, "onglet Zones : la grille 3×3");
@@ -13268,16 +13262,16 @@ console.log("\n[186] v3.414.0 — Village : rail à quatre onglets, vignettes, f
 console.log("\n[187] v3.415.0 — Ateliers en vignettes : feuille d'atelier, retour au bâtiment, code mort");
 (function () {
   try {
-    run("openWorkshopSheet('moulin', 'farm');");
-    ok(run("openWorkshopId") === "moulin" && run("workshopSheetBackId") === "farm", "feuille d'atelier ouverte depuis les Champs : elle s'en souvient");
-    ok(run("buildWorkshopSheetHTML('moulin')").indexOf("backToProductionSheet()") !== -1, "lien « ‹ Champs » présent");
+    run("openWorkshopSheet('boulangerie', 'farm');");
+    ok(run("openWorkshopId") === "boulangerie" && run("workshopSheetBackId") === "farm", "feuille d'atelier ouverte depuis les Champs : elle s'en souvient");
+    ok(run("buildWorkshopSheetHTML('boulangerie')").indexOf("backToProductionSheet()") !== -1, "lien « ‹ Champs » présent");
     run("backToProductionSheet();");
     ok(run("openWorkshopId") === null && run("productionDetailBuildingId") === "farm" && run("productionSheetTab") === "shops", "retour : feuille des Champs, onglet Ateliers");
-    run("openWorkshopSheet('moulin');");
-    ok(run("buildWorkshopSheetHTML('moulin')").indexOf("backToProductionSheet()") === -1, "ouverte depuis l'onglet Ateliers : pas de lien de retour");
+    run("openWorkshopSheet('boulangerie');");
+    ok(run("buildWorkshopSheetHTML('boulangerie')").indexOf("backToProductionSheet()") === -1, "ouverte depuis l'onglet Ateliers : pas de lien de retour");
     run("setVillageSubTab('buildings');");
     ok(run("openWorkshopId") === null && run("productionDetailBuildingId") === null, "changer d'onglet referme la feuille d'atelier");
-    ok(run("findResourceProducer('farine').id") === "moulin" && run("findResourceProducer('ble').kind") === "building", "qui produit quoi : la Farine au Moulin, le Blé aux Champs");
+    ok(run("findResourceProducer('pain').id") === "boulangerie" && run("findResourceProducer('ble').kind") === "building", "qui produit quoi : le Pain à la Boulangerie, le Blé aux Champs");
     ok(["buildWorkshopCardHTML", "adjustWorkshopCraftQty", "adjustWorkshopAutoQty", "buildWorkshopMissingInputHTML"].every(function (n) { return typeof g[n] === "undefined"; }), "anciennes cartes d'atelier et leurs pas-à-pas retirés");
     var css = fs.readFileSync(path.join(ROOT, "css/04-panel-production.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
     ok(!/\.(workshop-card|wk-head|wk-foot|wk-pill|production-detail|production-switch|production-status-banner)(?![\w-])/.test(css), "CSS : règles des anciennes cartes et de l'ancienne sous-page retirées");
@@ -13320,7 +13314,7 @@ console.log("\n[188] v3.416.0 — Entrepôt : tuiles T3, liste déroulante, Ma s
     /* Feuille d'une ressource */
     var ble = run("buildWarehouseSheetHTML('ble')");
     ok(ble.indexOf("wh-cap-warn") !== -1 && ble.indexOf("warehouseGoTo('building', 'farm')") !== -1, "Blé : « Au plafond », et d'où ça vient : les Champs");
-    ok(ble.indexOf("warehouseGoTo('workshop', 'moulin')") !== -1, "où ça part : le Moulin");
+    ok(ble.indexOf("warehouseGoTo('workshop', 'boulangerie')") !== -1, "où ça part : la Boulangerie");
     ok(ble.indexOf("stepWarehouseReserve('ble', -10)") !== -1 && ble.indexOf("stepWarehouseReserve('ble', 10)") !== -1 && ble.indexOf("wh-resv-n") !== -1, "réserve protégée : − / + par 10 et nombre saisissable");
     run("stepWarehouseReserve('ble', 10);");
     ok(run("ResourceReserveManager.getReserve('ble')") === 110, "+10 sur la réserve (100 → 110)");
@@ -14785,7 +14779,7 @@ console.log("\n[215] v3.441.0 — Objets de combat : préparations de l'Apothica
     g.game.village.buildings = g.game.village.buildings || {}; g.game.village.buildings.apothecary = { level: 2 };
     if (A.getLevel() !== 2 && g.VillageBuildingManager && g.VillageBuildingManager.ensure) { g.VillageBuildingManager.ensure(); g.game.village.buildings.apothecary.level = 2; }
     A.ensureState().learned.baume_froid = true;
-    W.addResource("eau_purifiee", 50, true); W.addResource("ble", 50, true);
+    W.addResource("eau", 200, true); W.addResource("ble", 50, true);
     var used0 = A.getDailyUsed();
     ok(A.craft("baume_froid") === true && W.getAmount("baume_froid") === 1 && A.getDailyUsed() === used0 + 1, "préparer un Baume froid : +1 à l'Entrepôt, une préparation du jour");
     ok(CI.slotCount() === 1, "Apothicaire niveau 2 : une place");
@@ -17981,6 +17975,47 @@ console.log("\n[304] v3.483.0 — Refonte de l'économie F6 : textes et commenta
   ok(src("js/systems/tavern-system.js").indexOf('formatNumber(payout) }), 1400)') !== -1, "Taverne : la notification affiche l'or réellement versé");
   ok(src("js/systems/combat-item-system.js").indexOf("rendue à l'Entrepôt") !== -1 && src("js/systems/combat-item-system.js").indexOf("rangée dans le Sac") === -1, "Fiole noire : « rendue à l'Entrepôt »");
   ok(src("js/systems/enchant-system.js").indexOf("Ressources manquantes") === -1 && src("js/ui/village-building-view.js").indexOf('poor = reason === _t("Pas assez d\'or")') !== -1, "Enchanteresse : « Pas assez d'or », et la vue le reconnaît");
+})();
+
+console.log("\n[305] v3.484.0 — Refonte de l'économie, lot S (RE-8) : Farine, Viande séchée et Eau purifiée retirées");
+(function () {
+  var R = g.WAREHOUSE_RESOURCES, WC = g.WORKSHOPS_CONFIG, W = g.WarehouseManager;
+  var gone = ["farine", "viande_sechee", "eau_purifiee"];
+  ok(gone.every(function (k) { return !R[k]; }) && ["moulin", "sechoir", "station_purification"].every(function (k) { return !WC[k]; }), "3 ressources et 3 ateliers retirés");
+  var inp = function (w, id) { var o = {}; WC[w].recipes.filter(function (r) { return r.id === id; })[0].inputs.forEach(function (i) { o[i.resourceId] = i.quantity; }); return o; };
+  var pain = inp("boulangerie", "pain"), ration = inp("cuisine_de_camp", "ration"), outre = inp("reservoir", "outre_pleine");
+  ok(pain.ble === 15 && pain.eau === 5 && ration.viande === 15 && ration.pain === 1 && outre.eau === 16 && outre.viande === 2, "recettes à l'équivalent brut : Pain 15 blé + 5 eau, Ration 15 viandes + 1 pain, Outre 16 eau + 2 viandes");
+  // plus aucune référence aux clés retirées dans les données qui consomment ou versent
+  var refs = JSON.stringify([Object.keys(WC).map(function (w) { return WC[w].recipes; }), g.APOTHECARY_RECIPES, g.TAVERN_CONTRACT_TEMPLATES, g.PATROL_RATION_LOOT]);
+  ok(gone.every(function (k) { return refs.indexOf('"' + k + '"') === -1; }), "ateliers, Apothicaire, Taverne, patrouilles : aucune clé retirée");
+  ok(g.PATROL_RATION_LOOT.forest.viande === 10 && g.PATROL_RATION_LOOT.desert.viande === 15 && g.PATROL_RATION_LOOT.desert.pain === 1, "patrouilles : 10 viandes en Forêt, 15 viandes + 1 pain ensuite");
+  var soin = g.APOTHECARY_RECIPES[0];
+  ok(soin.inputs.eau === 12 && soin.inputs.ble === 4, "Apothicaire : Soin mineur à 12 eau + 4 blé (3 Eaux purifiées × 4)");
+  var gc = g.StoryQuestManager.getChoice; g.StoryQuestManager.getChoice = function (k) { return k === "roi" ? "aeswyn" : null; };
+  ok(g.ApothecaryManager.getInputs("potion_soin_mineur").eau === 6, "puits du roi : moitié moins d'eau (12 -> 6)");
+  g.StoryQuestManager.getChoice = gc;
+  // chaîne du Village : la Boulangerie suit directement les quêtes des Champs
+  var vq = g.VILLAGE_QUESTS.map(function (q) { return q.id; });
+  ok(vq.indexOf("workshop_first_flour") === -1 && vq.indexOf("workshop_first_bread") === vq.indexOf("farm_improvement") + 1, "quêtes du Village : « La première mouture » retirée, le Pain suit les Champs");
+  var tuto = g.VILLAGE_QUESTS[vq.indexOf("workshop_first_bread")].tutorial;
+  ok(tuto.points.length === 6 && JSON.stringify(tuto).indexOf("Moulin") === -1 && JSON.stringify(tuto).indexOf("file d'attente") !== -1, "tutoriel des ateliers repris sur le Pain, sans Moulin");
+  ok(!("farine" in g.createInitialGameState().resources), "nouvelle partie : pas de Farine");
+  // ancienne sauvegarde : stocks et files convertis sans plafond, clés effacées, une seule fois
+  game = freshCombat("knight");
+  game.explorationProgression.farmUnlocked = true;
+  run("ProductionManager.unlockBuilding('farm');");
+  ["ble", "viande", "eau", "planche", "lingot"].forEach(function (k) { game.resources[k] = 0; });
+  game.resources.farine = 3; game.resources.viande_sechee = 2; game.resources.eau_purifiee = 5;
+  game.production.farm.workshops = game.production.farm.workshops || {};
+  game.production.farm.workshops.moulin = { queue: [{ recipeId: "farine", times: 2 }, { recipeId: "farine", times: 1 }], level: 3, lastTick: Date.now(), autoRecipeId: "farine" };
+  W.ensure();
+  ok(!("farine" in game.resources) && !("viande_sechee" in game.resources) && !("eau_purifiee" in game.resources) && !game.production.farm.workshops.moulin, "ancienne sauvegarde : clés et Moulin effacés");
+  ok(game.resources.ble === 30 && game.resources.viande === 10 && game.resources.eau === 20, "stocks convertis : 3 farines + 3 lots en file = 30 blé, 2 viandes séchées = 10 viandes, 5 eaux purifiées = 20 eau");
+  ok(game.resources.planche === 7 && game.resources.lingot === 4, "Moulin niveau 3 : ses 2 améliorations rendues (7 planches, 4 lingots)");
+  W.ensure();
+  ok(game.resources.ble === 30 && game.resources.planche === 7, "conversion idempotente");
+  // butin parti avant la mise à jour (patrouille, sortie) : arrive en équivalent brut
+  ok(W.addResource("viande_sechee", 2, true) === 10 && game.resources.viande === 20 && !("viande_sechee" in game.resources), "butin en route : 2 viandes séchées -> 10 viandes");
 })();
 
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));

@@ -17,17 +17,13 @@ var RAW_STOCK_BASE = 500;
 
 var WAREHOUSE_RESOURCES = {
   viande: { id: "viande", name: "Viande", icon: "images/Icons/resources/meat_icon.webp", desc: "Butin de chasse, obtenu en Forêt ou au bâtiment Chasse.", sellPrice: 2, tier: "raw" },
-  viande_sechee: { id: "viande_sechee", name: "Viande séchée", icon: "images/Icons/resources/meat_icon.webp", desc: "Séchée au Séchoir (atelier de Chasse) à partir de Viande.", sellPrice: 8, tier: "crafted", cap: 999 },
   ble: { id: "ble", name: "Blé", icon: "images/Icons/resources/wheat_icon.webp", desc: "Récolté au bâtiment Champs.", sellPrice: 1, tier: "raw" },
   bois: { id: "bois", name: "Bois", icon: "images/Icons/resources/wood_icon.webp", desc: "Coupé à la Scierie. Sert aux zones de production, aux planches et aux fondations du village.", sellPrice: 1, tier: "raw" },
   fer: { id: "fer", name: "Fer", icon: "images/Icons/resources/iron_icon.webp", desc: "Extrait à la Mine. Sert aux zones de production et aux lingots de la Fonderie.", sellPrice: 3, tier: "raw" },
   pierre: { id: "pierre", name: "Pierre", icon: "images/Icons/resources/stone_icon.webp", desc: "Extraite à la Carrière. Sert aux zones de production, aux sillons irrigués et aux fondations du village.", sellPrice: 1, tier: "raw" },
   eau: { id: "eau", name: "Eau", icon: "images/Icons/resources/water_icon.webp", desc: "Puisée au Puits — ressource la moins chère du village.", sellPrice: 1, tier: "raw" },
-  /* v3.215.0 (lot V-4) : intrant unique de l'Apothicaire. Purifiée au Puits,
-     elle donne enfin un débouché à un bâtiment de production qui n'en avait
-     qu'un très faible (l'eau brute ne servait qu'au pain et aux petites
-     rations). Invendable : c'est un intrant, pas un revenu. */
-  eau_purifiee: { id: "eau_purifiee", name: "Eau purifiée", icon: "images/Icons/resources/water_icon.webp", desc: "Eau filtrée à la Station de purification (atelier du Puits). Base de toutes les préparations de l'Apothicaire.", sellPrice: 0, tier: "crafted", cap: 999, sourceHint: "Se filtre à la Station de purification (Puits)" },
+  /* v3.484.0 (refonte de l'économie, lot S, RE-8) : Farine, Viande séchée et Eau purifiée retirées ;
+     leurs recettes prennent l'équivalent brut (WAREHOUSE_LEGACY_RESOURCES, systems/warehouse-system.js). */
   planche: { id: "planche", name: "Planche", icon: "images/Icons/resources/plank_icon.webp", desc: "Fabriquée à partir de Bois.", sellPrice: 7, tier: "crafted", cap: 999 },
   lingot: { id: "lingot", name: "Lingot", icon: "images/Icons/resources/ingot_icon.webp", desc: "Fabriqué à partir de Fer.", sellPrice: 10, tier: "crafted", cap: 999 },
   /* v3.330.0 (E3) : Bloc taillé, Maçonnerie de la Carrière (ouverte au Désert). Invendable. */
@@ -36,10 +32,9 @@ var WAREHOUSE_RESOURCES = {
      activé (Forge de la Mine), et premier débouché du Lingot en dehors de la
      construction. Invendable : c'est un intrant. */
   acier: { id: "acier", name: "Acier", icon: "images/Icons/resources/acier_icon.webp", desc: "Lingot retravaillé à la Forge de la Mine. Sert à reforger l'équipement.", sellPrice: 0, tier: "crafted", cap: 999, sourceHint: "Se forge à la Forge (Mine), à partir de Lingot" },
-  farine: { id: "farine", name: "Farine", icon: "images/Icons/resources/flour_icon.webp", desc: "Moulue à partir de Blé.", sellPrice: 7, tier: "crafted", cap: 999 },
   // v3.137.0 : desc corrigée — la Boulangerie (Champs), pas l'Atelier de Construction, cuit le Pain.
-  pain: { id: "pain", name: "Pain", icon: "images/Icons/resources/bread_icon.webp", desc: "Cuit à la Boulangerie (Champs) à partir d'Eau et de Farine.", sellPrice: 19, tier: "crafted", cap: 999 },
-  ration: { id: "ration", name: "Ration moyenne", icon: "images/Icons/resources/ration_icon.webp", desc: "Repas au Campement : restaure 60 % des PV max de toute l'équipe. Vivres pour repartir au Désert, aux Ruines et à la Crypte (chasse, donjon, élite rejouée). Cuisine de camp : 3 Viandes séchées + 1 Pain.", sellPrice: 36, tier: "crafted", cap: 999, healPct: 0.60 },
+  pain: { id: "pain", name: "Pain", icon: "images/Icons/resources/bread_icon.webp", desc: "Cuit à la Boulangerie (Champs) à partir de Blé et d'Eau.", sellPrice: 19, tier: "crafted", cap: 999 },
+  ration: { id: "ration", name: "Ration moyenne", icon: "images/Icons/resources/ration_icon.webp", desc: "Repas au Campement : restaure 60 % des PV max de toute l'équipe. Vivres pour repartir au Désert, aux Ruines et à la Crypte (chasse, donjon, élite rejouée). Cuisine de camp : 15 Viandes + 1 Pain.", sellPrice: 36, tier: "crafted", cap: 999, healPct: 0.60 },
   petite_ration: { id: "petite_ration", name: "Petite ration", icon: "images/Icons/resources/petite_ration_icon.webp", desc: "Repas au Campement : restaure 35 % des PV max de toute l'équipe. Vivres pour repartir en Forêt (chasse, donjon, élite rejouée). Crafté à la Cuisine de camp à partir de Viande et d'Eau.", sellPrice: 18, tier: "crafted", cap: 999, healPct: 0.35 },
   // v3.137.0 : recette de craft ajoutée (Cuisine de camp : Ration moyenne + 3 Sève d'Aeswyn) — desc mise à jour.
   /* v3.303.0 (W-2, Désert D3) : l'Outre pleine, fabriquée au Réservoir du Puits. Emportée dans

@@ -115,43 +115,12 @@ var VILLAGE_QUESTS = [
   },
 
   /* ================= v3.112.0 (Lot C) — quêtes d'atelier =================
-     Suite de la même chaîne séquentielle : du blé aux recettes (Moulin -> Boulangerie),
+     Suite de la même chaîne séquentielle : du blé aux recettes (Boulangerie ; v3.484.0, lot S : Moulin retiré),
      puis les matériaux de craft (Scierie fine + Fonderie), puis l'amélioration d'un
      atelier. Les checks de craft lisent le compteur cumulatif
      explorationProgression.villageQuests.craftCounts (alimenté par WorkshopsSystem,
      tick + hors-ligne) : fabriquer suffit, consommer ensuite ne fait jamais reculer. */
 
-  {
-    id: "workshop_first_flour",
-    title: "La première mouture",
-    icon: "images/Icons/system/settings.webp",
-    buildingId: "farm",
-    section: "resource",
-    category: "side",
-    narrative: {
-      objective: "Le blé s'entasse mais il ne se mange pas cru. Le Moulin du Champs attend sa première meule — porte-lui cinq gerbes, et rapporte de la farine.",
-      completion: "La meule a tourné. Une farine grossière. Aldric dit que c'est la seule chose ici qui n'a pas changé — cinq gerbes, une farine." // v3.197.0 (bible B §2.1)
-    },
-    objectiveLabel: "Fabriquer 1 Farine au Moulin",
-    check: function () {
-      return VillageQuestManager.getCraftCount("farine") >= 1;
-    },
-    progress: function () {
-      return Math.min(VillageQuestManager.getCraftCount("farine"), 1) + "/1";
-    },
-    reward: { gold: 150, resources: { ble: 10 } },
-    tutorial: {
-      tab: "village",
-      icon: "images/Icons/system/settings.webp",
-      title: "Les ateliers : transformer les ressources",
-      points: [
-        { icon: "images/Icons/quests/mission_construction.webp", text: "Chaque bâtiment possède ses ateliers (le Moulin et la Boulangerie pour le Champs). Un atelier transforme des ressources brutes en produits via des recettes." },
-        { icon: "images/Icons/system/import.webp", text: "Les intrants (ex. 5 blé) sont déduits de l'Entrepôt dès que tu lances le craft — le produit est crédité à la FIN du temps de fabrication." },
-        { icon: "images/Icons/system/hourglass_waiting.webp", text: "Chaque atelier a sa propre file d'attente : tu peux empiler plusieurs lots, ils s'enchaînent tout seuls — même hors ligne." },
-        { icon: "images/Icons/system/settings.webp", text: "Ouvre le Champs et lance ta première mouture au Moulin : 5 blé donnent 1 farine." }
-      ]
-    }
-  },
   {
     id: "workshop_first_bread",
     title: "Le pain d'Aeswyn",
@@ -160,7 +129,7 @@ var VILLAGE_QUESTS = [
     section: "resource",
     category: "side",
     narrative: {
-      objective: "Farine du Moulin, eau du Puits : la Boulangerie a tout ce qu'il faut pour rallumer son four. Le premier pain d'Aeswyn depuis l'incendie — les anciens en parleront longtemps.",
+      objective: "Blé du Champs, eau du Puits : la Boulangerie a tout ce qu'il faut pour rallumer son four. Le premier pain d'Aeswyn depuis l'incendie — les anciens en parleront longtemps.",
       completion: "L'odeur a traversé tout le village. Un seul pain, et déjà on fait la file devant la Boulangerie. Orwen en a pris un morceau et l'a mis de côté, sans dire pour qui." // v3.197.0 (bible B) : graine — le pain pour la braise
     },
     objectiveLabel: "Fabriquer 1 Pain à la Boulangerie",
@@ -174,12 +143,14 @@ var VILLAGE_QUESTS = [
     tutorial: {
       tab: "village",
       icon: "images/Icons/quests/ration_reward.webp",
-      title: "Les chaînes de recettes",
+      title: "Les ateliers : transformer les ressources",
       points: [
-        { icon: "🔗", text: "Les recettes s'enchaînent : le blé devient farine (Moulin), la farine devient pain (Boulangerie, 3 farine + 5 eau). Plus loin, le pain entre dans la Ration de la Cuisine de camp." },
-        { icon: "🧾", text: "Une recette peut demander PLUSIEURS ingrédients, venus de bâtiments différents — garde un œil sur l'Entrepôt avant de lancer un lot." },
-        { icon: "images/Icons/system/auto_repeat.webp", text: "Le mode Auto d'une recette relance un lot dès que les ingrédients sont là (une seule recette auto par atelier) — parfait pour la farine pendant que tu joues ailleurs." },
-        { icon: "images/Icons/quests/ration_reward.webp", text: "Fais moudre assez de farine, puis lance ton premier pain à la Boulangerie." }
+        { icon: "images/Icons/quests/mission_construction.webp", text: "Chaque bâtiment possède ses ateliers (la Boulangerie pour le Champs). Un atelier transforme des ressources brutes en produits via des recettes." },
+        { icon: "🧾", text: "Une recette peut demander PLUSIEURS ingrédients, venus de bâtiments différents : le pain prend 15 blé du Champs et 5 eau du Puits. Plus loin, il entre dans la Ration de la Cuisine de camp." },
+        { icon: "images/Icons/system/import.webp", text: "Les intrants sont déduits de l'Entrepôt dès que tu lances le craft — le produit est crédité à la FIN du temps de fabrication." },
+        { icon: "images/Icons/system/hourglass_waiting.webp", text: "Chaque atelier a sa propre file d'attente : tu peux empiler plusieurs lots, ils s'enchaînent tout seuls — même hors ligne." },
+        { icon: "images/Icons/system/auto_repeat.webp", text: "Le mode Auto d'une recette relance un lot dès que les ingrédients sont là (une seule recette auto par atelier) — parfait pendant que tu joues ailleurs." },
+        { icon: "images/Icons/quests/ration_reward.webp", text: "Ouvre le Champs et lance ton premier pain à la Boulangerie." }
       ]
     }
   },
@@ -262,7 +233,7 @@ var VILLAGE_QUESTS = [
       icon: "images/Icons/system/wrench_settings.webp",
       title: "Améliorer un atelier",
       points: [
-        { icon: "images/Icons/system/upgrade.webp", text: "Chaque atelier monte jusqu'au niveau 5, indépendamment des autres (le Moulin niveau 3 ne change rien à la Boulangerie)." },
+        { icon: "images/Icons/system/upgrade.webp", text: "Chaque atelier monte jusqu'au niveau 5, indépendamment des autres (la Scierie fine niveau 3 ne change rien à la Menuiserie)." },
         { icon: "images/Icons/workshops/craft_speed.webp", text: "Chaque niveau accélère les crafts (-8 % de temps par niveau, jusqu'à -32 %) ET allonge la file d'attente : sa taille est égale au niveau de l'atelier." },
         { icon: "images/Icons/plots/reinforced_gallery.webp", text: "Le coût se paie en planches et lingots, et grimpe de ×1,4 par niveau — comme les zones de production." },
         { icon: "images/Icons/combat_stats/stat_critical.webp", text: "Conseil : améliore d'abord l'atelier qui tourne le plus (souvent celui en mode Auto) — chaque pour cent de vitesse y rapporte davantage." }

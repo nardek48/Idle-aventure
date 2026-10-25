@@ -13,9 +13,9 @@
    l'écran Production devient un routeur à 3 sous-vues :
    - "prod"  : tableau de bord — barre "Tout récolter" + 6 cartes bâtiment compactes
                (2 colonnes). La ROUTINE (récolter, surveiller) vit ici, en 1 tap.
-   - "shops" : vue Ateliers AGRÉGÉE — les 12 ateliers de tous les bâtiments sur un seul
+   - "shops" : vue Ateliers AGRÉGÉE — tous les ateliers des bâtiments sur un seul
                écran (les chaînes de craft traversent les bâtiments : la Boulangerie mange
-               la Farine du Moulin et l'Eau du Puits). Bandeau d'état en tête, amélioration
+               le Blé du Champs et l'Eau du Puits). Bandeau d'état en tête, amélioration
                DANS la carte (décision Seb), chaînage auto existant (v3.98.13) inchangé.
    - détail  : zones SEULES d'un bâtiment (les ateliers sont partis dans la vue agrégée) +
                actions groupées ("Améliorer la − chère" signalée sur la grille, "Défricher
@@ -825,7 +825,7 @@ function getWorkshopTileState(w) {
 }
 window.getWorkshopTileState = getWorkshopTileState;
 
-/* Recette en icônes : « 5 [blé] → 1 [farine] », l'intrant manquant en rouge. */
+/* Recette en icônes : « 15 [blé] + 5 [eau] → 1 [pain] », l'intrant manquant en rouge. */
 function buildWorkshopRecipeIconsHTML(recipe) {
   var h = '<span class="wk-tile-recipe">';
   recipe.inputs.forEach(function (input, i) {
