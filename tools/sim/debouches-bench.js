@@ -67,6 +67,7 @@ var SCENARIOS = {
   A3: { label: "Taverne : quantités des contrats ×2", tavernQty: 2 },
   A4: { label: "A1 + Taverne ×2", noExclude: true, tavernQty: 2 },
   A5: { label: "A1 + capacité des caravanes ×2", noExclude: true, capMult: 2 },
+  S1: { label: "lot S : plus de contrats de farine ni de viande séchée", dropTemplates: ["farine", "viande_sechee"] },
   Z1: { label: "aujourd'hui, avec l'ancienne réserve des zones (avant v3.478.0)", zoneCap: 1 / 3 }
 };
 
@@ -102,6 +103,7 @@ function campaign(world, visits, scen, days) {
   if (scen.keep != null) vm.runInContext("CARAVAN_KEEP_SHARE = " + scen.keep + ";", g);
   if (scen.zoneCap) Object.keys(g.PRODUCTION_PLOTS_SHARED.profiles).forEach(function (k) { g.PRODUCTION_PLOTS_SHARED.profiles[k].baseCapacity *= scen.zoneCap; });
   if (scen.capMult) Object.keys(g.CARAVAN_TRIPS).forEach(function (t) { g.CARAVAN_TRIPS[t].units *= scen.capMult; });
+  if (scen.dropTemplates) { var keepT = g.TAVERN_CONTRACT_TEMPLATES.filter(function (t) { return scen.dropTemplates.indexOf(t.resourceId) === -1; }); g.TAVERN_CONTRACT_TEMPLATES.length = 0; keepT.forEach(function (t) { g.TAVERN_CONTRACT_TEMPLATES.push(t); }); }
   if (scen.tavernQty) g.TAVERN_CONTRACT_TEMPLATES.forEach(function (t) { t.min *= scen.tavernQty; t.max *= scen.tavernQty; });
 
   var W = g.WarehouseManager, C = g.CaravanManager, T = g.TavernManager;
