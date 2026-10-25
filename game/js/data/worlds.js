@@ -207,7 +207,10 @@ var HERO_SCALING_REFS = {
   joueurDesert2: { dmg: 371, ehp: 971 },  // Désert, fin du chapitre (desert_18)
   /* v3.450.0 (Crypte, lot C-0) : fin des Ruines (ruines_20), campagne --combats --avise, v3.449.2.
      Chevalier 657 / 1724, Rôdeur 903 / 1573, Mage 1050 / 1549. */
-  joueurRuines:  { dmg: 870, ehp: 1615 }
+  joueurRuines:  { dmg: 870, ehp: 1615 },
+  /* v3.486.0 (Montagne, lot M-0) : fin de la Crypte (crypte_20), campagne --combats --avise, v3.485.0.
+     Chevalier 2548 / 2520, Rôdeur 3123 / 2046, Mage 3947 / 1930. */
+  joueurCrypte:  { dmg: 3206, ehp: 2165 }
 };
 /* D : les mondes. « Un peu » (Seb) : exp 0,5, et une marge de 15 % au-dessus du joueur
    appliqué de fin de segment : le robot de campagne ne voit aucune différence (mesuré : avec
@@ -221,7 +224,8 @@ var WORLD_HERO_SCALING = {
   /* v3.428.0 (Ruines, U-1) : le héros de fin du chapitre II. Gardé par décision de Seb du 09/10/2026 :
      tous les bancs des Ruines ont été faits avec cette référence. */
   refByWorld: { forest: ["joueurForet", "joueurForet"], desert: ["joueurDesert1", "joueurDesert2"], ruins: ["joueurDesert2", "joueurDesert2"],
-    crypt: ["joueurRuines", "joueurRuines"] } // v3.450.0 : le héros de fin des Ruines
+    crypt: ["joueurRuines", "joueurRuines"], // v3.450.0 : le héros de fin des Ruines
+    mountain: ["joueurCrypte", "joueurCrypte"] } // v3.486.0 : le héros de fin de la Crypte
 };
 window.HERO_SCALING_REFS = HERO_SCALING_REFS;
 window.WORLD_HERO_SCALING = WORLD_HERO_SCALING;

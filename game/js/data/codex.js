@@ -28,7 +28,7 @@ var CODEX_ENTRIES = [
     isUnlocked: function () { return !!(game.worldsEverReached && game.worldsEverReached[3]); } },
 
   { id: "world_mountain", title: "La Montagne", icon: "images/Icons/codex/world_mountain.webp", category: "world",
-    text: "L'air se raréfie, le froid mord, et l'Aether devient visible : de longues veines bleutées courent dans la roche, comme des racines de lumière. Les créatures de la Montagne sont les premières à sembler façonnées par l'Aether plutôt que simplement corrompues par lui — plus grandes, plus anciennes qu'elles ne devraient l'être. C'est ici que l'on comprend que l'Aether n'est pas seulement une malédiction : c'est aussi une matière première.",
+    text: "La roche est chaude sous la main, et la lave éclaire les pentes. L'Aether devient visible : de longues veines bleutées courent dans la roche, comme des racines de lumière. Les créatures de la Montagne sont les premières à sembler façonnées par l'Aether plutôt que simplement corrompues par lui — plus grandes, plus anciennes qu'elles ne devraient l'être. C'est ici que l'on comprend que l'Aether n'est pas seulement une malédiction : c'est aussi une matière première.",
     isUnlocked: function () { return !!(game.worldsEverReached && game.worldsEverReached[4]); } },
 
   { id: "world_tower", title: "La Tour", icon: "images/Icons/codex/world_tower.webp", category: "world",

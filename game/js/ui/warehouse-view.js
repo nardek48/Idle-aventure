@@ -124,7 +124,7 @@ function getWarehouseOtherUses(key) {
     out.push({ icon: "images/Icons/village_buildings/merchant_hall.webp", text: _t("Caravane de la Halle (au-delà de la moitié du plafond)") });
   }
   // v3.481.0 (RE-4) : Verre trempé, Clé de voûte et Cire consacrée servent aussi aux reforges
-  if (["acier", "resine_durcie", "chitine_profondeurs", "verre_trempe", "cle_de_voute", "cire_consacree"].indexOf(key) !== -1) {
+  if (["acier", "resine_durcie", "chitine_profondeurs", "verre_trempe", "cle_de_voute", "cire_consacree", "obsidienne_taillee"].indexOf(key) !== -1) {
     out.push({ icon: "images/Icons/village_buildings/village_forge.webp", text: _t("Forge : reforge de l'équipement") });
   }
   var def = WAREHOUSE_RESOURCES[key] || {};

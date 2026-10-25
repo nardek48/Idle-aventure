@@ -51,6 +51,15 @@ var WORLD_CAPS = [
     zoneLevel: 5,
     workshopLevel: 3,
     petiteAventureCap: 4
+  },
+  /* 4 — Montagne brûlante. v3.486.0 (Conception Montagne MT8, lot M-0) : écrit avant d'ouvrir le monde.
+     Provisoire, égal à la Crypte ; la Forge 6 (Obsidienne taillée) vient avec l'acte III, les autres crans au banc. */
+  {
+    village: { workshop: 8, training: 13, hall: 10, warehouse: 8, palisade: 8, tavern: 6, apothecary: 6, forge: 5, enchanter: 2 },
+    zoneRows: 3,
+    zoneLevel: 5,
+    workshopLevel: 3,
+    petiteAventureCap: 4
   }
 ];
 
@@ -72,7 +81,8 @@ var TRAINING_CAP_BY_ACT = [
   { worldIndex: 2, stepId: "ruines_11", act: "III", terrain: 11 },    // v3.431.0 : 130
   { worldIndex: 3, stepId: "crypte_01", act: "I", terrain: 11 },      // v3.450.0 : Crypte, acte I — inchangé
   { worldIndex: 3, stepId: "crypte_06", act: "II", terrain: 12 },     // v3.456.2 (lot C-6) : 140, le profil des bancs de l'acte II
-  { worldIndex: 3, stepId: "crypte_11", act: "III", terrain: 13 }     // v3.456.2 : 150, celui des actes III et IV
+  { worldIndex: 3, stepId: "crypte_11", act: "III", terrain: 13 },    // v3.456.2 : 150, celui des actes III et IV
+  { worldIndex: 4, stepId: "montagne_01", act: "I", terrain: 13 }     // v3.486.0 : Montagne, acte I — inchangé (crans au banc)
 ];
 
 /* v3.327.0 (conception Talents v1.1, T2 option B) — PLAFOND DE POINTS DE TALENT PAR ACTE.
@@ -89,7 +99,8 @@ var TALENT_CAP_BY_ACT = [
   { worldIndex: 2, stepId: "ruines_11", act: "III", points: 13 },     // v3.431.0
   { worldIndex: 3, stepId: "crypte_01", act: "I", points: 15 },       // v3.453.0 : Crypte, acte I — +2 pour le Commandement (13 → 18 sur la Crypte)
   { worldIndex: 3, stepId: "crypte_06", act: "II", points: 17 },       // v3.454.0 : Crypte, acte II
-  { worldIndex: 3, stepId: "crypte_11", act: "III", points: 18 }       // v3.455.0 : Crypte, acte III — fin de la montée 13 → 18
+  { worldIndex: 3, stepId: "crypte_11", act: "III", points: 18 },      // v3.455.0 : Crypte, acte III — fin de la montée 13 → 18
+  { worldIndex: 4, stepId: "montagne_01", act: "I", points: 18 }      // v3.486.0 : Montagne, acte I — inchangé (crans au banc)
 ];
 
 /* « de la Forêt enchantée », « du Désert oublié » : pour « l'acte II du Désert oublié ».

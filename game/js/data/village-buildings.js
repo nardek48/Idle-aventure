@@ -212,7 +212,7 @@ var VILLAGE_BUILDINGS = {
        coûte du Verre trempé (étape 9) et ouvre la reforge jusqu'au niveau 6 — c'est le
        deuxième compteur du palier de l'étape 13. Les niveaux 4 à 6 attendent les mondes
        suivants, comme avant. */
-    maxLevel: 5, // v3.431.0 : la Forge 4 à la Clé de voûte ; v3.455.0 : la Forge 5 à la Cire consacrée (plafond par monde : world-caps.js)
+    maxLevel: 5, // v3.431.0 : la Forge 4 à la Clé de voûte ; v3.455.0 : la Forge 5 à la Cire consacrée ; v3.486.0 : palier 6 (Obsidienne) posé, ouvert à l'acte III de la Montagne (plafond par monde : world-caps.js)
     implemented: true,
     desc: "Reforge une pièce d'équipement. Le niveau appartient à l'emplacement, pas à l'objet : changer de pièce ne fait rien perdre.",
     costTiers: [
@@ -251,6 +251,14 @@ var VILLAGE_BUILDINGS = {
         minLevel: 4, maxLevel: 4,
         resources: ["gold", "pierre", "acier", "cire_consacree"],
         baseCost: { gold: 11000, pierre: 400, acier: 100, cire_consacree: 3 },
+        costMult: 1.50
+      },
+      /* v3.486.0 (Montagne, M-0) : palier de la Montagne, la Forge 6 à l'Obsidienne taillée (acte III, MT7).
+         Le plafond du monde reste à 5 jusque-là. Provisoire, au banc. */
+      {
+        minLevel: 5, maxLevel: 5,
+        resources: ["gold", "pierre", "acier", "obsidienne_taillee"],
+        baseCost: { gold: 15000, pierre: 520, acier: 130, obsidienne_taillee: 3 },
         costMult: 1.50
       }
     ],

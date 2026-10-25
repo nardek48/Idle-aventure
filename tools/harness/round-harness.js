@@ -3589,7 +3589,7 @@ console.log("\n[21b] v3.213.0 (lot V-1) \u2014 Socle des b\u00e2timents du Villa
   ok(costsMatch, "co\u00fbts de l'Atelier inchang\u00e9s depuis la v3.212.0 sur les paliers 0-7 (sauf le niveau 1, all\u00e9g\u00e9 en v3.264.0)");
 
   g.game.village.buildings.workshop.level = 8;
-  var reachedAvant = g.game.worldsEverReached; g.game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true, 4: true }; // v3.450.0 : au-delà de la table (la Crypte plafonne l'Atelier à 8)
+  var reachedAvant = g.game.worldsEverReached; g.game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true, 4: true, 5: true }; // v3.486.0 : au-delà de la table, la Tour (Crypte et Montagne plafonnent l'Atelier à 8)
   var haut = M.getNextCost("workshop");
   g.game.worldsEverReached = reachedAvant;
   ok(!!haut && haut.resine_durcie > 0,
@@ -9732,7 +9732,7 @@ console.log("\n[120] v3.325.0 — Plafond du Terrain d'entraînement par acte");
   pose(F.length, 0, { 0: true, 1: true });
   game.village.buildings.training.level = 9;
   ok(VB.getMaxLevel("training") === 9 && VB.isMaxLevel("training"), "Terrain 9 déjà construit à l'acte I : rien n'est repris, pas de niveau au-delà");
-  pose(0, 0, { 0: true, 1: true, 2: true, 3: true, 4: true }); // v3.450.0 : la Crypte a son entrée, la Montagne non
+  pose(0, 0, { 0: true, 1: true, 2: true, 3: true, 4: true, 5: true }); // v3.486.0 : la Montagne a son entrée, la Tour non
   ok(WC.getTrainingActCap() === Infinity, "monde sans entrée d'acte : aucun plafond d'acte");
   game.storyQuests.forest.skipped = true; game.worldsEverReached = { 0: true };
   ok(WC.getVillageCap("training") === 4, "chapitre de la Forêt court-circuité : Forêt au complet (4)");
@@ -18060,6 +18060,45 @@ console.log("\n[307] v3.485.0 — Textes en dur, rations des patrouilles à part
   ok(bm.indexOf('_t("change de rythme")') !== -1, "phase de boss sans libellé : « change de rythme » traduit");
   var sv = fs.readFileSync(path.join(ROOT, "js/systems/save-system.js"), "utf8");
   ok(sv.indexOf("farine: 0") === -1 && sv.indexOf("resources.farine") === -1, "sauvegarde : plus de Farine recréée");
+})();
+
+console.log("\n[308] v3.486.0 — Montagne, lot M-0 : socle et passage entre les mondes");
+(function () {
+  var reachedAvant = game.worldsEverReached, wiAvant = g.WorldManager.worldIndex, advAvant = g.WorldManager.adventureIndex;
+  try {
+    var e4 = g.WORLD_CAPS[4];
+    ok(!!e4 && e4.zoneRows === 3 && e4.village.forge === 5 && e4.petiteAventureCap === 4, "WORLD_CAPS[4] écrit avant d'ouvrir le monde (égal à la Crypte, Forge 6 à l'acte III)");
+    ok(g.TRAINING_CAP_BY_ACT.some(function (a) { return a.worldIndex === 4 && a.stepId === "montagne_01"; })
+      && g.TALENT_CAP_BY_ACT.some(function (a) { return a.worldIndex === 4 && a.stepId === "montagne_01"; }), "Terrain et talents : entrée d'acte I à la Montagne");
+    var R = g.WAREHOUSE_RESOURCES;
+    ok(R.cendre_vive && R.cendre_vive.worldIndex === 4 && R.cendre_vive.tier === "special" && R.obsidienne_taillee && R.obsidienne_taillee.tier === "crafted", "Cendre vive et Obsidienne taillée : matériaux du monde 5");
+    var ref = g.WORLD_HERO_SCALING.refByWorld.mountain, J = g.HERO_SCALING_REFS.joueurCrypte;
+    ok(ref && ref[0] === "joueurCrypte" && J && J.dmg > g.HERO_SCALING_REFS.joueurRuines.dmg, "ajustement au héros : référence de fin de la Crypte (" + (J && J.dmg) + " / " + (J && J.ehp) + ")");
+    var codex = g.CODEX_ENTRIES ? g.CODEX_ENTRIES.filter(function (c) { return c.id === "world_mountain"; })[0] : null;
+    var src = fs.readFileSync(path.join(ROOT, "js/data/codex.js"), "utf8");
+    ok(src.indexOf("le froid mord") === -1 && src.indexOf("la lave éclaire les pentes") !== -1, "codex de la Montagne : un monde de feu (plus de froid)");
+    // Forge : la bande 11-12 demande l'Obsidienne, la Cire s'arrête aux 9-10 puis continue d'une unité
+    var FM = g.ForgeManager, maxAvant = FM.getMaxLevel, lvAvant = FM.getLevel;
+    FM.getMaxLevel = function () { return 12; };
+    FM.getLevel = function () { return 10; };
+    var c11 = FM.getCost("armor");
+    FM.getLevel = function () { return 8; };
+    var c9 = FM.getCost("armor");
+    FM.getMaxLevel = maxAvant; FM.getLevel = lvAvant;
+    ok(c11.obsidienne_taillee === 1 && c11.cire_consacree === 1 && c9.cire_consacree === 1 && !c9.obsidienne_taillee, "reforge 11 : 1 Obsidienne taillée (+1 Cire) ; reforge 9 : Cire seule");
+    var tier6 = g.VillageBuildingManager.getLevelCost ? g.VillageBuildingManager.getLevelCost("forge", 5) : null; // coût du niveau 5 au niveau 6
+    ok(g.VILLAGE_BUILDINGS.forge.maxLevel === 5 && tier6 && tier6.obsidienne_taillee === 3, "Forge 6 : palier à l'Obsidienne posé, plafond du bâtiment encore à 5");
+    // Le passage : arrivée, monde posé, plafonds de la Montagne, Gueule du volcan fermée, voyage retour
+    game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true };
+    ok(g.WorldTravel.arrive("mountain", 0) === true && g.WorldManager.worldIndex === 4 && game.worldsEverReached[4] === true, "arrivée : la Montagne devient le monde de résidence, notée atteinte");
+    ok(g.WorldCaps.getReachedWorldIndex() === 4 && g.WorldCaps.getZoneRows() === 3, "plafonds lus sur la Montagne");
+    ok(g.DungeonManager.isUnlocked(5) === false, "la Gueule du volcan reste fermée à l'arrivée");
+    ok(g.WorldTravel.canTravelTo("crypt") && (g.WorldTravel.travelTo("crypt"), g.WorldManager.worldIndex === 3), "voyage retour vers la Crypte");
+  } catch (err) {
+    ok(false, "[308] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  } finally {
+    game.worldsEverReached = reachedAvant; g.WorldManager.worldIndex = wiAvant; g.WorldManager.adventureIndex = advAvant;
+  }
 })();
 
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
