@@ -14613,7 +14613,7 @@ console.log("\n[210] v3.434.0 — Ruines : le Labyrinthe aux leviers (livraison 
     game.heroHp = 1; L._hit(game.sceneRun, { hpLoss: 50, unwinnable: false });
     ok(game.sceneRun.status === "completed" && game.sceneRun.end.how === "ko", "PV à 0 : on tombe");
     ok(g.WarehouseManager.getAmount("pierre_errante") - pe === 2, "tomber ne garde que la moitié du sac");
-    ok(L.reserveLeft() === 2, "un échec subi rend la descente (comme une Petite Aventure)");
+    ok(L.reserveLeft() === 1, "v3.482.0 (RE-5) : tomber avec un sac plein ne rend plus la descente");
     run("leaveSceneScreen()");
     /* --- Abandon par l'onglet, réserve vide, tableau --- */
     game.heroHp = game.heroMaxHp;
@@ -17926,6 +17926,50 @@ console.log("\n[302] v3.481.0 — Refonte de l'économie RE-4 : les matériaux d
   ok(h9.cle_de_voute === 3 && h10.cle_de_voute === 4 && h9.gold === 11453 && h10.gold === 16263 && !h8.cle_de_voute, "Halle 9 et 10 (Crypte) : 3 et 4 Clés, les autres coûts inchangés ; Halle 8 sans Clé");
   ok(g.WAREHOUSE_RESOURCES.verre_trempe.desc.indexOf("reforges 7 à 10") !== -1 && g.WAREHOUSE_RESOURCES.cle_de_voute.desc.indexOf("Halle 9 et 10") !== -1, "descriptions du Verre trempé et de la Clé à jour");
   g.StoryQuestManager.getChoice = sc;
+})();
+
+console.log("\n[303] v3.482.0 — Refonte de l'économie RE-5 : fin des sources sans limite");
+(function () {
+  game = freshCombat("knight");
+  var SQ = g.StoryQuestManager, D = g.DungeonManager, keep = { cur: SQ.getCurrentStep, acc: SQ.isCurrentStepAccepted, ready: SQ.isCurrentStepReady };
+  // 1. Donjon offert par l'Histoire : jusqu'à ce que l'étape soit réussie
+  var done = false;
+  SQ.getCurrentStep = function (c) { return c === "forest" ? { id: "forest_14" } : null; };
+  SQ.isCurrentStepAccepted = function () { return true; };
+  SQ.isCurrentStepReady = function () { return done; };
+  var free1 = D.isStoryTicketFree(1); done = true; var free2 = D.isStoryTicketFree(1);
+  ok(free1 === true && free2 === false, "Tanière offerte pendant l'étape, plus une fois l'étape réussie (à réclamer)");
+  SQ.getCurrentStep = keep.cur; SQ.isCurrentStepAccepted = keep.acc; SQ.isCurrentStepReady = keep.ready;
+  // 2. Petite Aventure perdue par KO : la place n'est rendue que sans trouvaille
+  var S = g.SceneRunManager, P = g.Pa2Run;
+  function koRun(found) {
+    game.sceneRun = null; game.heroHp = game.heroMaxHp;
+    S.startRun("petite_aventure_foret"); P.depart();
+    game.sceneRun.rareFound = found; P.finish("ko");
+    var spent = Number(game.explorationProgression.petiteAventure.spent || 0);
+    S.clearRun(); return spent;
+  }
+  game.explorationProgression.petiteAventure = { spent: 0, since: null };
+  ok(koRun(0) === 0, "KO sans trouvaille : la place est rendue (D6)");
+  ok(koRun(1) === 1, "KO après une trouvaille : la place reste dépensée");
+  // 3. Labyrinthe : la descente n'est rendue que si le sac est vide (testé en [210]) ; ici, le sac vide
+  var L = g.LabyrinthRun, reach = SQ.isStepReached;
+  SQ.isStepReached = function (id) { return id === L.cfg().requiresStoryStep ? true : reach.call(SQ, id); };
+  game.explorationProgression.labyrinth = null; game.sceneRun = null; game.heroHp = game.heroMaxHp; game.resources.petite_ration = 5;
+  var r = L.start();
+  if (r && r.ok) { game.sceneRun.stones = 0; game.sceneRun.gold = 0; L.finish("souffle"); }
+  ok(r && r.ok && L.reserveLeft() === 3, "Labyrinthe : à court de Souffle avec un sac vide, la descente est rendue");
+  game.sceneRun = null; SQ.isStepReached = reach;
+  // 5. Veillée d'Aeswyn : rien en mode libre
+  var gc = SQ.getChoice; SQ.getChoice = function (k) { return k === "portent" ? "aeswyn" : null; };
+  var w0 = g.WarehouseManager.getAmount("cire_sepulcre");
+  game.dungeonRun = { active: true, free: true };
+  var q1 = g.SleepSystem.aeswynVigil(3);
+  game.dungeonRun = { active: true, free: false };
+  var q2 = g.SleepSystem.aeswynVigil(3);
+  game.dungeonRun = { active: false };
+  ok(q1 === 0 && q2 === 3 && g.WarehouseManager.getAmount("cire_sepulcre") - w0 === 3, "Veillée : pas de Cire en mode libre, +1 par dormeur ailleurs");
+  SQ.getChoice = gc;
 })();
 
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));

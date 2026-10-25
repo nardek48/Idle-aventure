@@ -473,8 +473,10 @@ var LabyrinthRun = {
     var summary = window.SortieManager ? SortieManager.end(how === "remonte" ? "success" : "flee") : null;
     run.end = { how: how, floor: run.floor, summary: summary, record: run.floor > Number(run.bestBefore || 0), stats: run.stats || {} };
     if (how === "ko" || how === "souffle") {
-      // Comme une Petite Aventure (D6) : un échec subi rend la descente ; tombé = bandeau du Campement
-      var st = this._state(); if (st.spent > 0) st.spent -= 1; if (!(st.spent > 0)) st.since = null;
+      // Comme une Petite Aventure (D6) : un échec subi rend la descente ; tombé = bandeau du Campement.
+      // v3.482.0 (RE-5) : seulement si le sac est vide — sinon la moitié gardée se paierait d'aucune descente
+      var st = this._state(), empty = !(run.stones > 0) && !(run.gold > 0);
+      if (empty) { if (st.spent > 0) st.spent -= 1; if (!(st.spent > 0)) st.since = null; }
       if (how === "ko") game.justDied = true;
       this._log("💀 " + _t("Edda te ramène à la surface. La moitié du sac reste en bas."));
     } else this._log("🗝️ " + _t("Labyrinthe : remonté de l'étage {n}.", { n: run.floor }));

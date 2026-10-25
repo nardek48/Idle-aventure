@@ -357,6 +357,7 @@ var SleepSystem = {
   /* v3.452.0 (crypte_05, La veillée d'Aeswyn) : chaque dormeur laissé rapporte de la Cire au village. */
   aeswynVigil: function (n) {
     if (!n || !window.StoryQuestManager || StoryQuestManager.getChoice("portent") !== "aeswyn" || !window.WarehouseManager) return 0;
+    if (game.dungeonRun && game.dungeonRun.active && game.dungeonRun.free) return 0; // v3.482.0 (RE-5) : rien en mode libre, comme le matériau du donjon (N6)
     var q = n * SLEEP_VIGIL_WAX;
     WarehouseManager.addResource("cire_sepulcre", q, true);
     addLog("🕯️ " + _t("La veillée d'Aeswyn : +{n} Cire de sépulcre.", { n: q }), "event");

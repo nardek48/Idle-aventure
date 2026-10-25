@@ -1442,7 +1442,9 @@ var Pa2Run = {
     run.end = end;
     var outcome = how === "ko" ? (this.hasPact("retour", run) ? "death" : "flee") : "success";
     if (how === "ko") {
-      if (!par) SceneRunManager._refundPetiteAventureSlot(run);
+      // v3.482.0 (RE-5) : la place n'est rendue que si le run n'a rien trouvé (D6 sans boucle de trouvailles)
+      if (!par && !(run.rareFound > 0)) SceneRunManager._refundPetiteAventureSlot(run);
+      else if (!par) this._log("🎒 " + _t("Tu as rapporté des trouvailles : la place de la réserve reste dépensée."));
       game.justDied = true; // comme une mort en v1 : bandeau du Campement
       this._log("💀 " + _t("On te ramène. Une part de ce que tu portais reste en route."));
     } else if (how === "home") this._log("🔥 " + _t("Retour au feu avant la nuit profonde. Le butin est sauf."));

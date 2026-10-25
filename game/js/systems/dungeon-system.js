@@ -620,7 +620,8 @@ var DungeonManager = {
     if (!steps || !steps.length) return false;
     var chapterId = d.storyChapterId || "forest";
     var step = StoryQuestManager.getCurrentStep(chapterId);
-    return !!(step && steps.indexOf(step.id) >= 0 && StoryQuestManager.isCurrentStepAccepted(chapterId));
+    // v3.482.0 (refonte de l'économie RE-5, accord Seb) : offert jusqu'à ce que l'étape soit réussie, plus de boucle gratuite ensuite
+    return !!(step && steps.indexOf(step.id) >= 0 && StoryQuestManager.isCurrentStepAccepted(chapterId) && !StoryQuestManager.isCurrentStepReady(chapterId));
   },
 
   /* ---------- Les haltes (v3.472.0, atelier/halte-donjon.html, décisions Seb) ----------

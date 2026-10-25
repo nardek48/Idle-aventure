@@ -4341,6 +4341,8 @@ I18n.register("en", {
   // v3.479.0 (refonte de l'économie RE-2) : actions par rangée de zones
   "Touche une zone pour la régler à part.": "Tap a zone to manage it on its own.",
   "Rangée {n}": "Row {n}",
+  // v3.482.0 (refonte de l'économie RE-5)
+  "Tu as rapporté des trouvailles : la place de la réserve reste dépensée.": "You brought back finds: the reserve slot stays spent.",
   "niv. {a} à {b}": "lvl {a} to {b}",
   "à défricher": "to clear",
   "au maximum": "maxed",
