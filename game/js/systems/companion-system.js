@@ -608,7 +608,7 @@ var CompanionManager = {
 
     /* v3.488.0 (Montagne) — Coup de pioche (Sarkel) : il taille la veine à la place du héros (Cendre et chaleur, pas la lame). */
     if (skill.type === "cutVein") {
-      if (!window.VeinSystem || !VeinSystem.cut(false)) return false;
+      if (!window.VeinSystem || !VeinSystem.cut(false, actor.companionId)) return false;
       actor.cooldown = Number(skill.cooldown || 0);
       if (typeof actor.charges === "number") actor.charges = Math.max(0, actor.charges - 1);
       if (typeof addLog === "function") addLog("🪨 " + _t("{x} — {s} : la veine est taillée.", { x: _td(def.name), s: _td(skill.name) }), "event");

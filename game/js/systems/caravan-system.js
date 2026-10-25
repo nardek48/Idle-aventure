@@ -45,10 +45,10 @@ var CARAVAN_EXCLUDED = []; // v3.480.0 (refonte de l'économie RE-3) : le Bois e
 var CARAVAN_CAPACITY_PER_LEVEL = 0.10;   // +10 % par niveau de Halle au-delà du premier
 var CARAVAN_KEEP_SHARE = 0.5;            // la moitié basse du plafond ne part jamais
 /* Matériau rare rapporté par le trajet Long : celui du monde du marché choisi (v3.426.0). */
-var CARAVAN_RARE_BY_WORLD = { 0: "seve_aeswyn", 1: "verre_des_dunes", 2: "pierre_errante", 3: "cire_sepulcre" }; // v3.452.0 : la Crypte
+var CARAVAN_RARE_BY_WORLD = { 0: "seve_aeswyn", 1: "verre_des_dunes", 2: "pierre_errante", 3: "cire_sepulcre", 4: "cendre_vive" }; // v3.452.0 : la Crypte ; v3.489.0 : la Montagne
 /* v3.428.0 (Ruines, étape ruines_04) : marchés SANS carte vivante. Les Ruines n'ont pas encore
    de carte (lot U-5) : leur marché s'ouvre par l'Histoire. mapId sert d'identifiant de marché. */
-var CARAVAN_WORLD_MARKETS = { ruins: { requiresStoryStep: "ruines_04" }, crypt: { requiresStoryStep: "crypte_04" } }; // v3.452.0 : Marché de la Crypte (crypte_04)
+var CARAVAN_WORLD_MARKETS = { ruins: { requiresStoryStep: "ruines_04" }, crypt: { requiresStoryStep: "crypte_04" }, mountain: { requiresStoryStep: "montagne_07" } }; // v3.452.0 : Marché de la Crypte (crypte_04) ; v3.489.0 : de la Montagne
 var CARAVAN_RARE_QTY = [2, 3];
 var CARAVAN_HALL_PER_EXTRA = 3;          // v3.457.0 : une caravane de plus tous les 3 niveaux de Halle
 

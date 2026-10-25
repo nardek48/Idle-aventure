@@ -42,6 +42,12 @@ var Pa2Run = {
      rendent le secteur plus dur. Lu sur la carte vivante (gisants.wakeMult, hostileMult). */
   gisantsMult: function (run) {
     var lm = run && run.livingMap, map = lm && window.LIVING_MAPS ? LIVING_MAPS[lm.mapId] : null, g = map && map.gisants;
+    if (map && map.veins) { // v3.489.0 (Montagne, MT9) : la chaleur du secteur, puis La coulée du jour
+      var LMm = window.LivingMapManager, v = map.veins;
+      var mv = 1 + Number(v.heatStep || 0) * (LMm && LMm.heatOf ? LMm.heatOf(lm.mapId, lm.sectorId) : 0);
+      if (LMm && LMm.isHostile && LMm.isHostile(lm.mapId, lm.sectorId)) mv *= Number(v.hostileMult || 1);
+      return mv;
+    }
     if (!g) return 1;
     var m = lm.wake ? Number(g.wakeMult || 1) : 1;
     if (window.LivingMapManager && LivingMapManager.isHostile && LivingMapManager.isHostile(lm.mapId, lm.sectorId)) m *= Number(g.hostileMult || 1);
@@ -425,6 +431,7 @@ var Pa2Run = {
     if (run.stock.corde && window.LivingMapManager && LivingMapManager.hasEffect("corde_plus")) {
       run.stock.corde += Number(LivingMapManager.getEffectValue("ropeBonus", 1));
     }
+    if (run.stock.pierre_froide && window.MemoryManager && MemoryManager.has("pierre_profonde")) run.stock.pierre_froide += Number(MemoryManager.V("pierre_profonde_uses")); // v3.489.0 : Pierre profonde (Mémoire 18)
     var ref = self._spawn(run, null, false, self.goldBand(run));
     run.refGold = Math.max(1, Number((ref && ref.goldReward) || 1));
     run.nodes = this.generate(run);
@@ -433,6 +440,8 @@ var Pa2Run = {
     run.fx = {};
     run.at = this.getMap(run).start;
     run.path = [];
+    // v3.489.0 (Montagne, MT10) : la ligne de lave part derrière le départ ; elle avance à chaque pas
+    if (this.worldRule(run, "lava") && !par) { run.lavaRow = this.node(run.at, run).row - Number(PA2_RULES.lavaStartBehind || 1) + Number(this.condFx(run, "lavaStart") || 0); run.lavaSteps = 0; }
     if (!par && !storyFree) { SceneRunManager._consumePetiteAventureSlot(); run.paSlotDay = SceneRunManager._today(); } // offerte : pas de place prise, rien à rendre en cas d'échec
     run.storyFree = storyFree;
     if (window.SortieManager) SortieManager.start("scene");
@@ -472,6 +481,11 @@ var Pa2Run = {
     };
     [1, 2, 3].forEach(function (a) { ensure(a, "combat"); ensure(a, "trouvaille"); });
     ensure(2, "source");
+    // v3.489.0 (Montagne, MT10) : une veine du chemin par acte, et des cases qui brûlent déjà
+    if (this.worldRule(run, "lava") && !this.isParcours(run)) {
+      [1, 2, 3].forEach(function (a) { ensure(a, "veine"); });
+      free.forEach(function (n) { if (n.row >= 1 && n.type !== "veine" && self.rand() < Number(PA2_RULES.burningPct || 0)) n.burning = true; });
+    }
     if (this.isParcours(run)) this._parcoursSteps(run, nodes);
     return nodes;
   },
@@ -518,6 +532,43 @@ var Pa2Run = {
     return n.row > here.row && this.isVisible(key, run);
   },
   _walked: function (run, key) { return run.path.some(function (e) { return e[1] === key; }); },
+  /* v3.489.0 (Montagne) : brûlures d'une case (0 : sûre). Case brûlante : 1 ; sous la lave : 1 à 3 selon la
+     profondeur. Le camp, le seuil, le départ et les destinations ne brûlent jamais. */
+  burnLevel: function (key, run) {
+    run = run || this.getRun();
+    var n = this.node(key, run);
+    if (!n || !this.worldRule(run, "lava") || n.type === "camp" || n.type === "seuil" || n.type === "depart" || this.isDest(n, run)) return 0;
+    var lava = run.lavaRow != null && n.row <= run.lavaRow ? Math.min(3, run.lavaRow - n.row + 1) : 0;
+    return Math.max(lava, n.burning ? 1 : 0);
+  },
+  burnCost: function (level, run) {
+    if (!level) return 0;
+    var c = level * Number(PA2_RULES.burnBreath || 0) - (this.hasRelic("obsidienne", run) ? Number(PA2_RULES.obsidienneBurn || 0) : 0);
+    if (this.hasItem("eclat_trieur", run)) c = Math.ceil(c / 2);
+    return Math.max(0, c);
+  },
+  // Le pas fait avancer la lave (Galet de la source : un pas sur deux) ; au camp et au seuil, on la distance.
+  _advanceLava: function (run, n) {
+    if (run.lavaRow == null) return;
+    run.lavaSteps = Number(run.lavaSteps || 0) + 1;
+    if (!this.hasItem("galet_source", run) || run.lavaSteps % Number(PA2_RULES.galetEvery || 2) === 0) run.lavaRow += 1;
+    if (n && (n.type === "camp" || n.type === "seuil")) run.lavaRow = Math.min(run.lavaRow, n.row - Number(PA2_RULES.lavaStartBehind || 1));
+  },
+  // Entrer sur une case qui brûle : la Pierre froide d'abord, sinon du Souffle.
+  _burn: function (run, key) {
+    run.burnNote = null;
+    var lv = this.burnLevel(key, run);
+    if (!lv) return;
+    if (Number(run.stock.pierre_froide || 0) > 0) {
+      run.stock.pierre_froide -= 1;
+      run.burnNote = _t("Le sol brûle. Tu poses la Pierre froide, et tu passes.");
+    } else {
+      var cost = this.burnCost(lv, run);
+      run.breath = Math.max(0, run.breath - cost);
+      run.burnNote = _t("Le sol brûle sous tes pieds : −{n} Souffle.", { n: cost });
+    }
+    this._log("🔥 " + run.burnNote);
+  },
   openMoves: function () {
     var run = this.getRun();
     if (!run || run.status !== PA2_STATUS.map) return [];
@@ -592,6 +643,8 @@ var Pa2Run = {
     if (step) run.breath = Math.max(0, run.breath - step);
     if (this.hasRelic("braise", run)) this._heal(game.heroMaxHp * PA2_RULES.braiseHealPct);
     if (!fromTrap && !this._tickFx(run)) return { ok: true, reason: null, ko: true }; // le Venin peut achever
+    this._advanceLava(run, this.node(key, run)); // v3.489.0 (Montagne) : la lave avance, puis le sol brûle peut-être
+    this._burn(run, key);
     this._prepareNode(run, this.node(key, run));
     run.wallNote = null;
     this._shiftWalls(run); // v3.429.0 (Ruines) : les murs bougent
@@ -979,7 +1032,7 @@ var Pa2Run = {
     return ["power", "precision", "endurance"].filter(function (v) { return gab.options[v]; }).map(function (v) {
       var p = prof[v] || { diffMod: 1, lootMod: 1, breathCost: 0 };
       var bonus = 0;
-      if (v === "power") bonus += (self.hasRelic("pierre", run) ? 1 : 0) + (self.hasRelic("fleche", run) ? 1 : 0) + (self.hasItem("bois", run) ? 1 : 0);
+      if (v === "power") bonus += (self.hasRelic("pierre", run) ? 1 : 0) + (self.hasRelic("fleche", run) ? 1 : 0) + (self.hasItem("bois", run) ? 1 : 0) + (self.hasItem("eclat_trieur", run) ? 1 : 0); // v3.489.0
       bonus += Number(self.condFx(run, "obstacleBonus") || 0); // v3.469.0 : poussière de chantier
       if (v === "endurance" && self.hasItem("ecaille", run)) bonus += 1;        // v3.469.4 : Écaille du Ver
       if (v === "precision" && self.hasItem("pierre_gardien", run)) bonus += 1; // v3.469.4 : Pierre taillée du gardien
@@ -1165,7 +1218,28 @@ var Pa2Run = {
   canPassGuardian: function () {
     var n = this._current(["boss"]), run = this.getRun();
     var g = n && window.PA2_GUARDIAN ? PA2_GUARDIAN[run.worldId] : null;
-    return !!(g && g.sleeps);
+    return !!(g && (g.sleeps || (g.sorts && !this.cutCount(run)))); // v3.489.0 (Montagne) : rien taillé, le trieur laisse passer
+  },
+  guardianSorts: function (run) { run = run || this.getRun(); var g = run && window.PA2_GUARDIAN ? PA2_GUARDIAN[run.worldId] : null; return !!(g && g.sorts); },
+
+  /* ---------- v3.489.0 (Montagne, MT10) : les veines du chemin ---------- */
+  cutCount: function (run) { run = run || this.getRun(); return Number((run && run.flags && run.flags.veinsCut) || 0); },
+  veinAsh: function (run) {
+    var r = PA2_RULES.veinAsh || [1, 1];
+    return { min: r[0] + Number(this.condFx(run, "veinAsh") || 0) + (this.hasRelic("braise_vive", run) ? 1 : 0),
+      max: r[1] + Number(this.condFx(run, "veinAsh") || 0) + (this.hasRelic("braise_vive", run) ? 1 : 0) };
+  },
+  cutVein: function (take) {
+    var n = this._current(["veine"]), run = this.getRun();
+    if (!n) return { ok: false, reason: _t("Choix impossible") };
+    if (!take) return this._done(run, n, { kind: "vein", take: false });
+    var a = this.veinAsh(run), ash = this._creditRare(run, this._int(a.min, a.max));
+    run.flags.veinsCut = this.cutCount(run) + 1;
+    if (run.lavaRow != null) run.lavaRow += 1 + (this.hasRelic("braise_vive", run) ? 1 : 0);
+    var res = { kind: "vein", take: true, ash: ash };
+    if (this.hasRelic("soufflet", run)) { res.breath = Number(PA2_RULES.soufflet || 0); run.breath = Math.min(100, run.breath + res.breath); }
+    this._log("🪨 " + _t("Tu tailles la veine : +{n} {x}. La lave avance.", { n: ash, x: this._rareName(run) }));
+    return this._done(run, n, res);
   },
   passGuardian: function () {
     if (!this.canPassGuardian()) return { ok: false, reason: _t("Choix impossible") };
@@ -1413,8 +1487,9 @@ var Pa2Run = {
       var amt = rare ? Number(rare.dest[this.ring(run).ring] || 0) : 0;
       if (window.MemoryManager && MemoryManager.has("recolte")) amt += 1; // Récolte (Q11)
       if (window.MemoryManager && MemoryManager.has(PA2_MEMORY_DEST_RARE[run.worldId])) amt += 1; // v3.453.0 : Pierre de plus, Cire chaude (Mémoire 10, 14)
-      var gis = run.livingMap && run.livingMap.wake && window.LIVING_MAPS && LIVING_MAPS[run.livingMap.mapId] && LIVING_MAPS[run.livingMap.mapId].gisants;
-      if (gis) amt += Number(gis.wakeRare || 0); // v3.454.0 (Crypte) : gisants réveillés, plus de Cire
+      var lmap = run.livingMap && run.livingMap.wake && window.LIVING_MAPS && LIVING_MAPS[run.livingMap.mapId];
+      if (lmap && lmap.gisants) amt += Number(lmap.gisants.wakeRare || 0); // v3.454.0 (Crypte) : gisants réveillés, plus de Cire
+      if (lmap && lmap.veins) amt += Number(lmap.veins.cutRare || 0);      // v3.489.0 (Montagne) : la veine du secteur taillée
       amt += Number(this.condFx(run, "rareDest") || 0); // v3.469.0 : les dormeurs remuent
       var hk = this._hook(run);
       if (hk && hk.destRare && hk.destRare[this.hookBranch(run)]) amt += Number(hk.destRare[this.hookBranch(run)]); // le feu nourri

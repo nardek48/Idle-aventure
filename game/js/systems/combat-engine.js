@@ -927,6 +927,7 @@ var CombatEngine = {
     if ((game.heroHp || 0) <= 0) return;
     if (window.RiseSystem && RiseSystem.onEnemyTurn(e)) return; // v3.428.0 (Ruines) : à terre, il ne frappe pas
     if (window.SleepSystem && SleepSystem.onEnemyTurn(e)) return; // v3.451.0 (Crypte) : il dort, il ne joue pas
+    if (window.VeinSystem) VeinSystem.onEnemyTurn(e); // v3.489.0 (Montagne) : le tri, annoncé puis frappé
     this.prepareEnemy(e);
     e.roundsAlive += 1;
 
@@ -1194,7 +1195,9 @@ var CombatEngine = {
     /* v3.268.0 (L-2) : la frappe choisit sa victime parmi les alliés vivants. Sans
        compagnon présent, pickVictim() renvoie toujours le héros et la suite de cette
        fonction est celle d'avant, ligne pour ligne. */
-    var victim = this.pickVictim();
+    var sorted = window.VeinSystem ? VeinSystem.takeSort(e) : null; // v3.489.0 (Montagne) : le tri vise celui qui a taillé
+    if (sorted) dmgMult = (dmgMult || 1) * sorted.mult;
+    var victim = sorted ? sorted.actor : this.pickVictim();
     if (victim && window.CombatActors && !CombatActors.isHero(victim)) {
       return this.enemyStrikeCompanion(e, victim, dmgMult, isPatternOrBonus);
     }

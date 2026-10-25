@@ -349,7 +349,8 @@ function buildLivingMapHTML(mapId) {
      sont remplacés sans nouveau rendu. Seule la trame du Recouvrement reste en CSS, nette. */
   var bakeKey = livingMapBakeKey(map, fogIds, coverIds);
   var baked = LIVING_MAP_BAKE.key === bakeKey ? LIVING_MAP_BAKE.url : null;
-  h += '<div class="lm-layer lm-base" id="lm-base" style="background-image:url(\'' + esc(baked || map.asset) + '\')"></div>';
+  // v3.489.0 : dégradé de secours sous l'image (carte pas encore livrée)
+  h += '<div class="lm-layer lm-base" id="lm-base" style="background-image:url(\'' + esc(baked || map.asset) + '\'), linear-gradient(170deg, #3a2418, #120a07)"></div>';
   if (!baked) livingMapBake(map, fogIds, coverIds, bakeKey);
   if (coverIds.length && baked) {
     var mt = livingMapMask(map, coverIds);
@@ -683,8 +684,18 @@ function buildLivingMapPanelHTML(mapId, running) {
     }
     // v3.378.0 : traits connus de l'élite (mode Grimoire, élite déjà vaincue)
     var gis = !isElite && LM.getMap(mapId) && LM.getMap(mapId).gisants; // v3.454.0 (Crypte) : les gisants
+    var vns = !isElite && LM.getMap(mapId) && LM.getMap(mapId).veins;   // v3.489.0 (Montagne) : la veine du secteur
     if (gis && LM.isHostile(mapId, d.id)) h += '<p class="lm-panel-wall">' + esc(_t("Le réveil : ce couloir reste hostile jusqu'à demain. Plus dur, pas plus riche.")) + '</p>';
-    if (cs.ok && gis) {
+    if (vns && LM.isHostile(mapId, d.id)) h += '<p class="lm-panel-wall">' + esc(_t("La coulée : ce secteur reste sous la lave jusqu'à demain. Plus dur, pas plus riche.")) + '</p>';
+    if (vns) {
+      var heat = LM.heatOf(mapId, d.id);
+      h += '<p class="lm-panel-line"><b>' + _t("Chaleur :") + '</b> ' + esc(heat ? _t("{n} / {m} — ses combats +{p} %, un cran retombe chaque jour.", { n: heat, m: vns.heatMax, p: Math.round(heat * vns.heatStep * 100) }) : _t("aucune, la pente est froide.")) + '</p>';
+    }
+    if (cs.ok && vns) {
+      h += '<button class="settings-btn primary" type="button" onclick="startLivingMapSector(\'' + d.id + '\', false)">' + esc(_t("Laisser la veine")) + '</button>';
+      h += '<button class="settings-btn" type="button" onclick="startLivingMapSector(\'' + d.id + '\', true)">' + esc(_t("Tailler la veine")) + '</button>';
+      h += '<p class="lm-panel-note">' + esc(_t("Taillée : +{n} {x} à la destination, et le secteur chauffe d'un cran.", { n: vns.cutRare, x: _td(LM.getRewardResourceName(mapId)) })) + '</p>';
+    } else if (cs.ok && gis) {
       h += '<button class="settings-btn primary" type="button" onclick="startLivingMapSector(\'' + d.id + '\', false)">' + esc(_t("Laisser dormir")) + '</button>';
       h += '<button class="settings-btn" type="button" onclick="startLivingMapSector(\'' + d.id + '\', true)">' + esc(_t("Réveiller les gisants")) + '</button>';
       h += '<p class="lm-panel-note">' + esc(_t("Réveillés : plus dur, +{n} {x} à la destination.", { n: gis.wakeRare, x: _td(LM.getRewardResourceName(mapId)) })) + '</p>';

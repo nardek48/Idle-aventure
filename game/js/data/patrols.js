@@ -23,7 +23,8 @@ var PATROL_RATES = {
   /* v3.457.3 (audit P1, décision Seb du 20/10) : banc étendu. Ruines : plafonds du Désert, mêmes taux ;
      Crypte : 187 / 21 pour ~15 % des matériaux et 8 % de l'or (deux compagnons hors du groupe). */
   ruins: { matPerHour: 125, goldPerHour: 18 },
-  crypt: { matPerHour: 190, goldPerHour: 21 }
+  crypt: { matPerHour: 190, goldPerHour: 21 },
+  mountain: { matPerHour: 260, goldPerHour: 24 } // v3.489.0 : dans le prolongement (Crypte ×1,37), au banc
 };
 
 var PATROL_SPLIT = { main: 0.7, second: 0.3 };        // ressource dominante du secteur / seconde
@@ -35,7 +36,8 @@ var PATROL_RATION_LOOT = {
   forest: { viande: 10 },                              // v3.484.0 (lot S) : viande brute, plus de Viande séchée
   desert: { viande: 15, pain: 1 },                     // une ration moyenne (E4)
   ruins: { viande: 15, pain: 1 },                      // v3.457.3 : comme le Désert
-  crypt: { viande: 15, pain: 1 }
+  crypt: { viande: 15, pain: 1 },
+  mountain: { viande: 15, pain: 1 } // v3.489.0
 };
 /* P6 : chance de récit rare = base par heure, +bonus pour la nuit complète (8 h). */
 var PATROL_RARE_PER_H = 0.02;
@@ -68,6 +70,12 @@ var PATROL_SECTORS = {
     obelisque: ["pierre", "fer"], tombes: ["pierre", "bois"], etais: ["bois", "fer"],
     crane: ["pierre", "viande"], nef: ["pierre", "bois"], source: ["eau", "ble"],
     cotes: ["viande", "pierre"], temple: ["fer", "pierre"]
+  },
+  mountain: { // v3.489.0 (Montagne)
+    pente_grise: ["pierre", "fer"], ruisseaux: ["fer", "pierre"], paroi_noire: ["pierre", "fer"],
+    eboulis: ["pierre", "bois"], nid: ["viande", "pierre"], champ_basalte: ["pierre", "fer"],
+    fumerolles: ["eau", "pierre"], coulee_morte: ["fer", "pierre"], forge_froide: ["fer", "pierre"],
+    lac_de_lave: ["fer", "eau"], antre: ["pierre", "fer"]
   }
 };
 
@@ -108,6 +116,14 @@ var PATROL_STORIES = {
         "Les sacs sont pleins. À {secteur}, la cire coulait le long des murs, comme si quelqu'un venait d'allumer."
       ],
       rare: ["À {secteur}, un gisant avait les mains ouvertes. Hier, elles étaient jointes. J'en suis sûre."]
+    },
+    mountain: { // v3.489.0
+      common: [
+        "Il fait trop chaud à {secteur}. J'ai rempli les sacs quand même. Je ne veux plus jamais avoir chaud.",
+        "À {secteur}, une bête m'a regardée passer. Elle ne m'a rien fait. Elle regardait mes mains.",
+        "Les sacs sont pleins. À {secteur}, la cendre est tombée toute la journée, comme de la neige tiède."
+      ],
+      rare: ["À {secteur}, un petit façonné m'a suivie jusqu'au bord. Il s'est arrêté là où la roche refroidit."]
     }
   },
   maddoc: {
@@ -142,6 +158,14 @@ var PATROL_STORIES = {
         "J'ai compté les tombes de {secteur}. Une de plus qu'hier. Je n'ai pas recompté."
       ],
       rare: ["À {secteur}, une chaîne traînait par terre, attachée à rien. Elle était tiède."]
+    },
+    mountain: { // v3.489.0
+      common: [
+        "{secteur}. Chaud comme chez nous à midi. Ma jambe, elle, aime bien.",
+        "À {secteur}, la roche bat. Je n'aime pas ce qui bat sans cœur.",
+        "J'ai ramassé ce qui traînait à {secteur}. Les golems m'ont laissé faire. Je ne sais pas pourquoi."
+      ],
+      rare: ["À {secteur}, un golem assis, immobile. Il avait une pioche dans la main. Pas la sienne."]
     }
   },
   // v3.457.3 : Edda et Ysolt, dans les mondes où elles ont une raison d'être (option B)
@@ -153,6 +177,25 @@ var PATROL_STORIES = {
         "On m'a vue à {secteur}. Personne ne l'a dit, mais une fenêtre s'est fermée."
       ],
       rare: ["À {secteur}, un mur portait mon trait de craie. Je ne suis jamais passée par là."]
+    },
+    mountain: { // v3.489.0
+      common: [
+        "{secteur} a coulé de trois pas depuis hier. Je l'ai noté. Ici, ça descend.",
+        "J'ai tracé {secteur}. La lave efface le bas de mes traits pendant que je dessine.",
+        "Les veines de {secteur} battent ensemble. Je ne sais pas comment le dessiner."
+      ],
+      rare: ["À {secteur}, une colonne de basalte portait une marque droite, nette. Pas un outil d'ici."]
+    }
+  },
+  // v3.489.0 (Montagne) : les quatre qui montent ; Ysolt, si elle est restée, rentre avec le narrateur
+  sarkel: {
+    mountain: {
+      common: [
+        "{secteur}. J'ai rapporté ce qui se ramasse. Ce qui se taille, je le garde pour plus tard.",
+        "À {secteur}, j'ai frappé la roche. Elle a rendu un bruit que je ne connais pas.",
+        "Les sacs sont pleins. À {secteur}, personne n'achète rien. Ça repose."
+      ],
+      rare: ["À {secteur}, une coupe dans la roche, comme au Replat. Plus petite. Plus vieille, je crois."]
     }
   },
   ysolt: {

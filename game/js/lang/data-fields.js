@@ -133,7 +133,7 @@ var DATA_TEXT_FIELDS = {
   PA2_PLACES: ["*.name", "*.text"],
   PA2_RINGS: ["*.label"], // v3.388.0 : noms des anneaux (carte vivante)
   PA2_PLACES_BY_WORLD: ["*.*.name", "*.*.text"], // v3.387.0 (PA2-5)
-  PA2_DESTS: ["*.*.name", "*.*.line", "*.*.win", "*.*.fail", "*.*.pass"], // v3.454.0 : pass (le gardien qui dort)
+  PA2_DESTS: ["*.*.name", "*.*.line", "*.*.win", "*.*.fail", "*.*.pass", "*.*.sorted"], // v3.454.0 : pass (le gardien qui dort) ; v3.489.0 : sorted (le trieur)
   PA2_TRAP_FX: ["*.name", "*.desc", "*.cure"], // v3.467.0 (Pièges)
   PA2_TRAPS: ["*.*.name", "*.*.line"],
   PA2_CUTS: ["*.*.name"], // v3.468.0 (sentiers coupés)

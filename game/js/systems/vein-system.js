@@ -19,6 +19,8 @@ var VEIN_BLADE_PER_CUT_SOI = 0.20; // choix `veine` = « soi » (La veine dans l
 var VEIN_HEAT_PER_CUT = 0.10;    // chaleur : +10 % de puissance des façonnés par cran (retour d'atelier)
 var VEIN_ASH_PER_CUT = 1;        // Cendre vive par taille
 var VEIN_ASH_WELL = 1;           // choix `veine` = « aeswyn » (Le puits chaud) : une de plus par taille, au banc
+var VEIN_SORT_MULT = 1.5;        // v3.489.0 (acte II, montagne_08) : le tri du Démon mineur, +50 % sur celui qui a taillé (au banc)
+var VEIN_SORT_STEP = "montagne_08"; // le tri s'apprend à cette étape (tutoriel)
 
 var VeinSystem = {
 
@@ -51,11 +53,14 @@ var VeinSystem = {
   },
   bladePerCut: function () { return this.choice() === "soi" ? VEIN_BLADE_PER_CUT_SOI : VEIN_BLADE_PER_CUT; },
 
-  /* Tailler : par le héros (son action du tour), ou par un compagnon (Sarkel, lot M-2 : pas de lame). */
-  cut: function (byHero) {
+  /* Tailler : par le héros (son action du tour), ou par un compagnon (Sarkel, lot M-2 : pas de lame).
+     v3.489.0 : on retient qui a taillé en dernier (le tri du Démon mineur) ; companionId pour un compagnon. */
+  cut: function (byHero, companionId) {
     if (!this.canCut()) return false;
     this.state.cuts += 1;
     if (byHero) this.state.heroCuts += 1;
+    this.state.lastCutter = byHero ? "hero" : (companionId || "sarkel");
+    if (!byHero && this._mem("pioche_sure")) this.state.bonusAsh = Number(this.state.bonusAsh || 0) + Number(this._memV("pioche_sure_ash", 1)); // v3.489.0 : Mémoire 19
     if (window.AchievementManager) AchievementManager.bump("veinsCut", 1); // compteur cumulé (objectif de montagne_04, hauts faits)
     if (typeof addLog === "function") {
       addLog("🪨 " + (byHero
@@ -66,10 +71,51 @@ var VeinSystem = {
     return true;
   },
 
-  /* Multiplicateur des dégâts du héros (attaque de base et compétences). */
-  bladeMult: function () { return this.state ? 1 + this.state.heroCuts * this.bladePerCut() : 1; },
-  /* Multiplicateur des frappes ennemies (les façonnés, tous les ennemis de la Montagne). */
-  heatMult: function () { return this.state ? 1 + this.state.cuts * VEIN_HEAT_PER_CUT : 1; },
+  _mem: function (id) { return !!(window.MemoryManager && MemoryManager.has(id)); },
+  _memV: function (k, d) { return (window.MemoryManager && typeof MemoryManager.V === "function") ? MemoryManager.V(k) : d; },
+  /* Multiplicateur des dégâts du héros (attaque de base et compétences). Taille franche (Mémoire 17) : +10 % à la première. */
+  bladeMult: function () {
+    if (!this.state) return 1;
+    return 1 + this.state.heroCuts * this.bladePerCut() + (this.state.heroCuts > 0 && this._mem("taille_franche") ? Number(this._memV("taille_franche_blade", 0.10)) : 0);
+  },
+  /* Multiplicateur des frappes ennemies (les façonnés, tous les ennemis de la Montagne). Peau de basalte (Mémoire 17) : +7 %. */
+  heatMult: function () { return this.state ? 1 + this.state.cuts * (this._mem("peau_basalte") ? Number(this._memV("peau_basalte_heat", 0.07)) : VEIN_HEAT_PER_CUT) : 1; },
+
+  /* v3.489.0 (Montagne, acte II) — LE TRI. Un ennemi qui porte `sorts` (le Démon mineur) annonce le tri
+     s'il y a eu une taille, puis, à son tour suivant, frappe celui qui a taillé en dernier, +50 %.
+     Garde de enemyTurn ; takeSort est lu par enemyStrike (victime et multiplicateur), une seule fois. */
+  sorterDef: function (e) { return (e && window.ENEMY_DB && ENEMY_DB[e.id]) || null; },
+  sortTarget: function () {
+    var who = this.state && this.state.lastCutter;
+    if (!who || !window.CombatActors) return null;
+    var list = CombatActors.aliveAllies();
+    for (var i = 0; i < list.length; i++) {
+      var a = list[i];
+      if (who === "hero" ? CombatActors.isHero(a) : a.companionId === who) return a;
+    }
+    return null;
+  },
+  onEnemyTurn: function (e) {
+    var def = this.sorterDef(e);
+    if (!def || !def.sorts || !this.state || !e || Number(e.hp || 0) <= 0 || e.downed) return;
+    if (!window.StoryQuestManager || !StoryQuestManager.isStepReached(VEIN_SORT_STEP)) return;
+    var t = this.sortTarget();
+    if (!t) { e.sortArmed = false; return; }
+    if (!e.sortArmed) {
+      e.sortArmed = true;
+      if (typeof addLog === "function") addLog("👁️ " + _t("{x} regarde les mains de {y}.", { x: _td(e.name), y: CombatActors.isHero(t) ? _t("toi") : _td(t.name || "") }), "event");
+      return;
+    }
+    e.sortArmed = false;
+    e._sortNow = true; // la frappe de ce tour vise celui qui a taillé
+    if (typeof addLog === "function") addLog("👁️ " + _t("{x} trie : il frappe celui qui a pris.", { x: _td(e.name) }), "event");
+  },
+  takeSort: function (e) {
+    if (!e || !e._sortNow) return null;
+    e._sortNow = false;
+    var t = this.sortTarget();
+    return t ? { actor: t, mult: VEIN_SORT_MULT } : null;
+  },
 
   /* Garde de killEnemy : le combat est gagné, la Cendre taillée est versée. */
   onVictory: function () {
@@ -77,7 +123,7 @@ var VeinSystem = {
     this.state = null;
     if (!st || !st.cuts || !window.WarehouseManager) return 0;
     if (game.dungeonRun && game.dungeonRun.active && game.dungeonRun.free) return 0; // RE-5 : rien en mode libre
-    var n = st.cuts * VEIN_ASH_PER_CUT + (this.choice() === "aeswyn" ? st.cuts * VEIN_ASH_WELL : 0);
+    var n = st.cuts * VEIN_ASH_PER_CUT + (this.choice() === "aeswyn" ? st.cuts * VEIN_ASH_WELL : 0) + Number(st.bonusAsh || 0);
     WarehouseManager.addResource("cendre_vive", n, true);
     if (typeof addLog === "function") addLog("🪨 " + _t("Cendre vive : +{n} (veine taillée).", { n: n }), "event");
     return n;

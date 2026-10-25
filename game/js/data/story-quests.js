@@ -129,7 +129,13 @@ var STORY_REWARDS = {
   montagne_02: { gold: 13000 },
   montagne_03: { gold: 13500 },
   montagne_04: { gold: 14000, resources: { cendre_vive: 4 } }, // l'éclat que Brannoc garde sur l'établi, et d'autres
-  montagne_05: { gold: 15000 }
+  montagne_05: { gold: 15000 },
+  // v3.489.0 (Montagne, acte II, provisoire : au banc) : une pièce Épique de la Montagne aux étapes 6 à 8, pour le palier de montagne_09
+  montagne_06: { gold: 16000, resources: { cendre_vive: 3 }, equipmentRarity: "epic", equipmentCount: 1, equipmentFill: true, equipmentFillWorld: 4 },
+  montagne_07: { gold: 16500, equipmentRarity: "epic", equipmentCount: 1, equipmentFill: true, equipmentFillWorld: 4 },
+  montagne_08: { gold: 17000, resources: { cendre_vive: 3 }, equipmentRarity: "epic", equipmentCount: 1, equipmentFill: true, equipmentFillWorld: 4 },
+  montagne_09: { gold: 17500 },
+  montagne_10: { gold: 19000, resources: { cendre_vive: 5 } }
 };
 
 /* Libellés des onglets débloqués (clé = game.unlockedTabs), pour l'affichage « Débloque : … ». */
@@ -3773,6 +3779,24 @@ function storyVeineBranch() {
   return (window.StoryQuestManager && StoryQuestManager.getChoice("veine") === "aeswyn") ? "aeswyn" : "soi";
 }
 
+/* v3.489.0 (montagne_09) — palier Épique de la Montagne (décision Seb du 25/10, option A) : seuls les
+   Épiques de monde 4 ou plus comptent ; l'arme reforgée à 10 (Forge 5). Au banc : repli 4 sur 7. */
+var STORY_PALIER_MONTAGNE = { pieces: 5, reforge: 10, worldIndex: 4 };
+function storyPalierMontagne(game) {
+  var p = storyPalier(game, "epic"), portes = (game && game.equipped) || {}, order = window.RARITY_ORDER || [], rang = order.indexOf("epic");
+  p.pieces = (window.EQUIPMENT_SLOTS || []).filter(function (slot) {
+    var it = portes[slot];
+    return it && order.indexOf(it.rarity) >= rang && Number(it.worldIndex || 0) >= STORY_PALIER_MONTAGNE.worldIndex;
+  }).length;
+  return p;
+}
+function storyPalierMontagneMissing(game) {
+  var p = storyPalierMontagne(game), out = [];
+  if (p.pieces < STORY_PALIER_MONTAGNE.pieces) out.push({ text: _t("Pièces Épiques de la Montagne : {a} / {b}", { a: p.pieces, b: STORY_PALIER_MONTAGNE.pieces }), where: _t("Les étapes 6 à 8, l'échoppe de la Halle marchande et les élites de la carte de la Montagne.") });
+  // la reforge : même lecture que les autres paliers (pièces déjà comptées ci-dessus)
+  return out.concat(storyPalierManques(game, "epic", { pieces: 0, reforge: STORY_PALIER_MONTAGNE.reforge }, function () { return null; }).filter(Boolean));
+}
+
 /* « Deux sur cinq » : Sarkel et un seul des autres (composition, hors registre). Ysolt seulement si elle est restée. */
 var STORY_PIOCHE_OPTIONS = [
   { value: "wenna", label: "Wenna", desc: "Wenna et Sarkel se battent à tes côtés." },
@@ -4003,9 +4027,208 @@ STORY_QUESTS.mountain = {
       },
       check: function () { return !!(window.StoryQuestManager && StoryQuestManager.getChoice("veine")); },
       progress: function () { return "Choix " + ((window.StoryQuestManager && StoryQuestManager.getChoice("veine")) ? "1/1" : "0/1"); }
+    },
+    /* ---------- Acte II — Ce qui trie (document « Montagne — Acte II » v1.0, validé le 25/10/2026) ---------- */
+    /* Étape 6 (§3) : première Petite Aventure de la Montagne — le sol qui brûle, la Pierre froide, les veines
+       du chemin, le gardien qui trie. */
+    {
+      id: "montagne_06",
+      title: "La Pierre froide",
+      act: "Acte II — Ce qui trie",
+      narrative: {
+        objective: "Au Replat, Sarkel a posé une pierre noire sur la toile. Il la retourne avec deux doigts. Elle ne chauffe pas.",
+        completion: "Au retour, la Pierre froide est tiède. Sarkel la remet dans le ruisseau, le temps qu'elle refroidisse. Dans la besace, des éclats de Cendre vive, encore chauds.",
+        dialogue: [
+          { who: "Sarkel", text: "Elle était dans le ruisseau de lave. Elle en est sortie froide." },
+          { who: "Edda", text: "Ça n'existe pas." },
+          { who: "Sarkel", text: "Elle existe. Je l'ai dans la main." },
+          { who: "Maddoc", text: "À quoi elle sert ?" },
+          { who: "Sarkel", text: "Plus haut, le sol brûle par endroits. Tu poses la pierre, tu passes. Pas longtemps." }
+        ],
+        completionDialogue: [
+          { who: "Wenna", text: "Il y en avait un, au bout. Il nous a regardés passer." },
+          { who: "Edda", text: "Il regardait nos mains." }
+        ]
+      },
+      objectiveLabel: "Atteindre une destination en Petite aventure de la Montagne",
+      storyPa: { worldId: "mountain", untilFlag: "mountainPaCompleted" },
+      unlockTabs: [],
+      reward: STORY_REWARDS.montagne_06,
+      linkTo: { section: "expedition", cardId: "petite_aventure_montagne" },
+      tutorial: {
+        tab: "scene",
+        icon: "images/Icons/scene/items/item_cold_stone.webp",
+        title: "Le sol qui brûle",
+        points: [
+          { icon: "images/Icons/scene/node_vein.webp", text: "À la Montagne, certaines cases du parcours brûlent. Y marcher coûte du Souffle. À chaque pas, la lave avance d'une rangée." },
+          { icon: "images/Icons/scene/items/item_cold_stone.webp", text: "La Pierre froide de Sarkel se met dans ta besace sans rien coûter. Posée, elle te fait traverser une case brûlante sans dommage, quelques fois par parcours." },
+          { icon: "images/Icons/resources/cendre_vive_icon.webp", text: "Des veines affleurent en chemin. Les tailler rapporte de la Cendre vive, mais la lave avance plus vite." },
+          { icon: "images/Icons/combat_status/sorting.webp", text: "Au bout, le gardien trie. Tu n'as rien taillé : il te laisse passer. Tu as taillé : il se bat pour son coffre." }
+        ]
+      },
+      check: function () { return storyDesertFlag("mountainPaCompleted"); },
+      progress: function () { return "Petite aventure " + (storyDesertFlag("mountainPaCompleted") ? "1/1" : "0/1"); }
+    },
+    /* Étape 7 (§4) : la carte de la Montagne s'ouvre (opensAtStoryStep) ; les veines des secteurs, « La coulée »,
+       le Marché de la Montagne (CARAVAN_WORLD_MARKETS). */
+    {
+      id: "montagne_07",
+      title: "Chaque pente a sa veine",
+      act: "Acte II — Ce qui trie",
+      narrative: {
+        objective: "Edda a étalé sa carte sur la pierre plate. Elle a dessiné le Replat, la coupe, et deux chemins. Le reste est blanc.",
+        completion: "Deux secteurs. Sur la carte d'Edda, un trait bleu dans chacun. Dans l'un, elle a ajouté une croix.",
+        dialogue: [
+          { who: "Edda", text: "Ici, ça ne bouge pas comme aux Ruines. Ça coule." },
+          { who: "Sarkel", text: "Chaque pente a sa veine. Je les ai vues d'en bas." },
+          { who: "Maddoc", text: "On les taille toutes ?" },
+          { who: "Sarkel", text: "Si tu la tailles, la pente chauffe. Elle s'en souvient." }
+        ],
+        completionDialogue: [
+          { who: "Wenna", text: "Pourquoi la croix ?" },
+          { who: "Edda", text: "Là, on a reculé. Le lendemain, la lave avait recouvert le chemin. Le surlendemain, plus rien." },
+          { who: "Edda", text: "Je ne l'efface pas." }
+        ]
+      },
+      objectiveLabel: "Libérer 2 secteurs de la carte de la Montagne",
+      storyPa: { worldId: "mountain" },
+      unlockTabs: [],
+      reward: STORY_REWARDS.montagne_07,
+      linkTo: { section: "map", cardId: "livingmap_mountain" },
+      tutorial: {
+        tab: "map",
+        icon: "images/Icons/resources/cendre_vive_icon.webp",
+        title: "Les veines de la carte",
+        points: [
+          { icon: "images/Icons/menu_icons/map_menu.webp", text: "La carte de la Montagne fonctionne comme celle de la Crypte : tu libères un secteur en terminant sa Petite Aventure." },
+          { icon: "images/Icons/combat_actions/vein_cut.webp", text: "Chaque secteur a sa veine. Avant de partir, tu choisis : la tailler (plus de Cendre vive, mais le secteur chauffe et ses combats sont plus durs ensuite) ou la laisser (plus facile, rapporte moins)." },
+          { icon: "images/Icons/combat_status/vein_heat.webp", text: "Un échec recouvre le secteur de lave : c'est La coulée. Il reste plus dur jusqu'au lendemain." },
+          { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "Le Marché de la Montagne est sur la carte, à côté du Replat. La caravane en rapporte de l'or et de la Cendre vive." }
+        ]
+      },
+      check: function () { return storyMountainSectorsFreed() >= 2; },
+      progress: function () { return "Secteurs libérés " + Math.min(2, storyMountainSectorsFreed()) + "/2"; }
+    },
+    /* Étape 8 (§5) : le tri du Démon mineur (VeinSystem.onEnemyTurn, actif dès cette étape) ; réglage « Cible ». */
+    {
+      id: "montagne_08",
+      title: "Ce qui trie",
+      act: "Acte II — Ce qui trie",
+      narrative: {
+        objective: "À l'Antre du volcan, les façonnés ne se jettent pas sur le premier venu. Ils regardent. Puis ils choisissent.",
+        completion: "Cinq rencontres. Sarkel a une brûlure sur l'avant-bras. Il ne la cache pas. Il ne la montre pas non plus.",
+        dialogue: [
+          { who: "Maddoc", text: "Celui-là m'a laissé passer. Il est allé droit sur Sarkel." },
+          { who: "Sarkel", text: "J'avais taillé." },
+          { who: "Edda", text: "Ils savent qui a pris." },
+          { who: "Wenna", text: "Alors on ne prend rien ?" },
+          { who: "Sarkel", text: "Alors on choisit qui prend." }
+        ],
+        completionDialogue: [
+          { who: "Wenna", text: "Ils t'en veulent." },
+          { who: "Sarkel", text: "Non. Ils trient. Ce n'est pas pareil." }
+        ]
+      },
+      objectiveLabel: "Terminer « Ce qui trie » : 5 rencontres à l'Antre du volcan",
+      unlockTabs: [],
+      reward: STORY_REWARDS.montagne_08,
+      linkTo: { section: "adventure", cardId: "adv_aq_montagne_tri" },
+      tutorial: {
+        tab: "combat",
+        icon: "images/Icons/combat_status/sorting.webp",
+        title: "Le tri",
+        points: [
+          { icon: "images/Icons/combat_status/sorting.webp", text: "Le Démon mineur annonce le tri, puis frappe plus fort celui qui a taillé la veine dans ce combat. Si personne n'a taillé, il frappe comme les autres." },
+          { icon: "images/Icons/memory/grimoire_etendu.webp", text: "Le tuer en premier coupe le tri. Dans le Grimoire, le réglage « Cible » sur « Le soutien » le vise d'abord." },
+          { icon: "images/Icons/companions/sarkel_coup_de_pioche.webp", text: "Tailler attire ses coups sur toi. Laisser Sarkel tailler les attire sur lui." }
+        ]
+      },
+      check: function (game) { return storyAdvDone(game, "aq_montagne_tri"); },
+      progress: function (game) { return "Rencontres " + storyAdvProgress(game, "aq_montagne_tri", "rencontres_tri", 5) + "/5"; }
+    },
+    /* Étape 9 (§6) : palier Épique de la Montagne (MT7, décision Seb du 25/10 : option A) — 5 emplacements avec un
+       Épique de la Montagne, arme à 10. */
+    {
+      id: "montagne_09",
+      title: "Ce qui tient au feu",
+      act: "Acte II — Ce qui trie",
+      narrative: {
+        objective: "Au Replat, Maddoc pose sa lame à côté d'un éclat de Cendre vive. La lame a l'air plus petite.",
+        completion: "Cinq pièces qui tiennent au feu. À Aeswyn, Brannoc les regarde une à une, sans rien dire. Puis il pose l'éclat de Cendre vive à côté, sur l'établi.",
+        dialogue: [
+          { who: "Maddoc", text: "Ce qu'on porte, ça vient d'en bas. Ici, ça ne tiendra pas." },
+          { who: "Sarkel", text: "En bas, je vendais. Ici, je cherche encore ce qui vaut." },
+          { who: "Edda", text: "Ce qui tient au feu." }
+        ],
+        completionDialogue: [
+          { who: "Brannoc", text: "Encore un peu, et je saurai quoi en faire." }
+        ]
+      },
+      objectiveLabel: "5 emplacements avec un Épique de la Montagne, arme reforgée à 10",
+      unlockTabs: [],
+      reward: STORY_REWARDS.montagne_09,
+      linkTo: { tab: "equip" },
+      tutorial: {
+        tab: "equip",
+        icon: "images/Icons/equipment_slots/slot_weapon.webp",
+        title: "Le palier Épique",
+        points: [
+          { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Pour aller plus loin dans la Montagne, cinq de tes sept emplacements doivent porter une pièce Épique de la Montagne. Celles d'en bas ne comptent pas." },
+          { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "Les étapes de l'acte t'en ont donné trois. Les autres : l'échoppe de la Halle marchande et les élites de la carte de la Montagne." },
+          { icon: "images/Icons/workshops/smithing_station.webp", text: "L'arme se reforge jusqu'au niveau 10 à la Forge 5." }
+        ]
+      },
+      check: function (game) {
+        var p = storyPalierMontagne(game), P = STORY_PALIER_MONTAGNE;
+        return p.pieces >= P.pieces && p.arme >= P.reforge;
+      },
+      progress: function (game) {
+        var p = storyPalierMontagne(game), P = STORY_PALIER_MONTAGNE;
+        return "Épiques de la Montagne " + Math.min(p.pieces, P.pieces) + "/" + P.pieces + " · Reforge de l'arme " + Math.min(p.arme, P.reforge) + "/" + P.reforge;
+      },
+      missing: function (game) { return storyPalierMontagneMissing(game); }
+    },
+    /* Étape 10 (§7) : fin de l'acte II — l'ouvrage inachevé (le choix 14) et la Gueule du volcan (acte III). */
+    {
+      id: "montagne_10",
+      title: "L'ouvrage",
+      act: "Acte II — Ce qui trie",
+      narrative: {
+        objective: "Au fond de l'Antre, la roche s'ouvre sur une salle ronde. Au milieu, une forme. Un golem, à moitié sorti de la paroi. Une jambe, un bras, pas de tête.",
+        completion: "Quatre rencontres. Derrière la salle ronde, une pente descend vers une lumière orange. L'air y est trop chaud pour respirer longtemps.",
+        dialogue: [
+          { who: "Edda", text: "Il n'est pas fini." },
+          { who: "Maddoc", text: "Tant mieux." },
+          { who: "Sarkel", text: "Quelqu'un l'a commencé. Quelqu'un va revenir le finir." },
+          { who: "Wenna", text: "Qui ?" },
+          { who: null, text: "Sarkel ne répond pas. Il regarde les veines autour de la forme. Elles battent toutes ensemble." }
+        ],
+        completionDialogue: [
+          { who: "Sarkel", text: "La gueule. Le feu vient de là." },
+          { who: "Edda", text: "Et l'ouvrage ?" },
+          { who: "Sarkel", text: "Il attend. Comme nous." }
+        ]
+      },
+      objectiveLabel: "Terminer « L'ouvrage » : 4 rencontres",
+      unlockTabs: [],
+      reward: STORY_REWARDS.montagne_10,
+      linkTo: { section: "adventure", cardId: "adv_aq_montagne_ouvrage" },
+      check: function (game) { return storyAdvDone(game, "aq_montagne_ouvrage"); },
+      progress: function (game) { return "Rencontres " + storyAdvProgress(game, "aq_montagne_ouvrage", "rencontres_ouvrage", 4) + "/4"; }
     }
   ]
 };
+
+/* v3.489.0 (montagne_07) : secteurs de la carte de la Montagne libérés au moins une fois. */
+function storyMountainSectorsFreed() {
+  var lm = window.LivingMapManager, map = lm && lm.getMap("mountain");
+  if (!map) return 0;
+  return map.sectors.filter(function (d) { var st = lm.getState("mountain", d.id); return !!(st && st.liberatedCount > 0); }).length;
+}
+window.storyMountainSectorsFreed = storyMountainSectorsFreed;
+window.STORY_PALIER_MONTAGNE = STORY_PALIER_MONTAGNE;
+window.storyPalierMontagne = storyPalierMontagne;
+window.storyPalierMontagneMissing = storyPalierMontagneMissing;
 
 window.storySarkelInParty = storySarkelInParty;
 window.storyVeinsCut = storyVeinsCut;

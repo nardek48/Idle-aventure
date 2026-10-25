@@ -132,6 +132,7 @@ var LivingMapManager = {
         s.firstRewardClaimed = !!s.firstRewardClaimed;
         s.liberatedCount = Math.max(0, Math.floor(Number(s.liberatedCount || 0)));
         if (typeof s.hostileDay !== "string") delete s.hostileDay; // v3.454.0 (Crypte) : « Le réveil » du jour
+        if (typeof s.heat !== "number" || typeof s.heatDay !== "string") { delete s.heat; delete s.heatDay; } // v3.489.0 (Montagne) : la chaleur
         /* v3.258.0 (C-5) : compteur du jour d'une élite répétable, sur son secteur seulement. */
         var c = map.sectors[j].content;
         if (c && c.type === "elite" && c.repeatable) {
@@ -299,8 +300,23 @@ var LivingMapManager = {
 
   /* v3.454.0 (Crypte, CR9) — « Le réveil » : un couloir raté reste hostile (plus dur) jusqu'au lendemain. */
   isHostile: function (mapId, sectorId) {
-    var map = this.getMap(mapId), s = map && map.gisants ? this.getState(mapId, sectorId) : null;
+    var map = this.getMap(mapId), s = map && (map.gisants || map.veins) ? this.getState(mapId, sectorId) : null; // v3.489.0 : La coulée
     return !!(s && s.hostileDay && s.hostileDay === this._todayKey());
+  },
+
+  /* v3.489.0 (Montagne, MT9) — chaleur d'un secteur (0 à heatMax) : +1 par veine taillée au départ,
+     −1 par jour civil écoulé depuis la dernière taille. Rien n'est recalculé en tâche de fond. */
+  heatOf: function (mapId, sectorId) {
+    var map = this.getMap(mapId), s = map && map.veins ? this.getState(mapId, sectorId) : null;
+    if (!s || !s.heat || !s.heatDay) return 0;
+    var days = Math.max(0, Math.round((Date.parse(this._todayKey()) - Date.parse(s.heatDay)) / 86400000));
+    return Math.max(0, s.heat - (isFinite(days) ? days : 0));
+  },
+  _cutVein: function (mapId, sectorId) {
+    var map = this.getMap(mapId), s = this.getState(mapId, sectorId);
+    if (!map || !map.veins || !s) return;
+    s.heat = Math.min(Number(map.veins.heatMax || 3), this.heatOf(mapId, sectorId) + 1);
+    s.heatDay = this._todayKey();
   },
 
   isChantier: function (mapId, sectorId) {
@@ -468,9 +484,10 @@ var LivingMapManager = {
     if (!cs.ok) return cs;
     if (cs.content && cs.content.type === "elite") return this.startEliteFight(mapId, sectorId, cs.content);
     if (!window.SceneRunManager || typeof SceneRunManager.startRun !== "function") return { ok: false, reason: _t("Expéditions indisponibles") };
-    var map = this.getMap(mapId), wake = !!(opts && opts.wake && map && map.gisants);
+    var map = this.getMap(mapId), wake = !!(opts && opts.wake && map && (map.gisants || map.veins)); // v3.489.0 : tailler la veine
     var r = SceneRunManager.startRun(cs.content.templateId, { livingMap: { mapId: mapId, sectorId: sectorId, wake: wake } });
     if (!r.ok) return { ok: false, reason: r.reason };
+    if (wake && map.veins) this._cutVein(mapId, sectorId); // le secteur chauffe dès la taille
     if (typeof switchTab === "function") switchTab("scene");
     return { ok: true, reason: "" };
   },
@@ -567,6 +584,13 @@ var LivingMapManager = {
         report.message += ", +" + report.repeatResource.amount + " " + (rDef ? _td(rDef.name) : report.repeatResource.id);
       }
       report.message += ". " + _t("Victoire {n} du jour : la prochaine sera plus dure (+{p} %).", { n: wins, p: Math.round(Number(re.brakePerWin || 0) * wins * 100) });
+      /* v3.489.0 (Montagne) : une élite peut lâcher une pièce (ELITE_DB.winDrop), au monde du combat. */
+      var wd = eliteDef && eliteDef.winDrop;
+      if (wd && this._rand() * 100 < Number(wd.chancePct || 0) && typeof generateEquipmentItem === "function" && typeof addLootToInventory === "function") {
+        var slots = window.EQUIPMENT_SLOTS || [], wi = (window.WorldManager ? Number(WorldManager.worldIndex || 0) : 0);
+        var it = generateEquipmentItem(slots[Math.floor(this._rand() * slots.length)], wd.rarity, wi);
+        if (it && addLootToInventory(it)) { report.drop = it.name; report.message += " " + _t("Objet trouvé : {x}.", { x: _td(it.name) }); }
+      }
     }
     this._afterFight(f, report, "success");
     return true;
@@ -619,7 +643,7 @@ var LivingMapManager = {
     var s = this.getState(mapId, sectorId);
 
     if (result === "success") {
-      if (this.isHostile(mapId, sectorId) && window.AchievementManager) AchievementManager.flag("retakenCrypt"); // v3.456.6 : Le réveil, repris
+      if (this.isHostile(mapId, sectorId) && window.AchievementManager) AchievementManager.flag(this.getMap(mapId).veins ? "retakenMountain" : "retakenCrypt"); // v3.456.6 : Le réveil, repris ; v3.489.0 : La coulée
       delete s.hostileDay; // v3.454.0 : le couloir repris se recouche
       var chantierDuJour = this.isChantier(mapId, sectorId); // v3.429.0 : lu avant la libération
       s.state = "libere";
@@ -657,7 +681,9 @@ var LivingMapManager = {
     if (result === "fail" && this.getMap(mapId).noRegress) { // v3.454.0 (Crypte) : Le réveil, rien n'est repris
       s.hostileDay = this._todayKey();
       report.hostile = true;
-      report.message = _t("Échec devant {x}.", { x: _td(def.name) }) + " " + _t("Le réveil : {x} reste hostile jusqu'à demain. Rien n'est perdu.", { x: _td(def.name) });
+      report.message = _t("Échec devant {x}.", { x: _td(def.name) }) + " " + (this.getMap(mapId).veins
+        ? _t("La coulée : {x} reste sous la lave jusqu'à demain. Rien n'est perdu.", { x: _td(def.name) }) // v3.489.0 (Montagne)
+        : _t("Le réveil : {x} reste hostile jusqu'à demain. Rien n'est perdu.", { x: _td(def.name) }));
       if (typeof addLog === "function") addLog(_t("Carte : {x}", { x: report.message }), "event");
       return report;
     }

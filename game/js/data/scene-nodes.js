@@ -204,6 +204,34 @@ var SCENE_NODES = {
         endurance: { stat: "endurance", label: "Faire le tour par l'éboulis" }
       }
     },
+    /* v3.489.0 (Montagne, lot M-3) — gabarits de la Petite Aventure de la Montagne. */
+    eboulis_chaud: {
+      id: "eboulis_chaud", biome: "mountain", name: "L'éboulis chaud",
+      baseDifficulty: 5,
+      options: {
+        power: { stat: "power", label: "Écarter les pierres qui fument" },
+        precision: { stat: "precision", label: "Poser le pied sur les pierres froides" },
+        endurance: { stat: "endurance", label: "Attendre que la pente se calme" }
+      }
+    },
+    croute_de_lave: {
+      id: "croute_de_lave", biome: "mountain", name: "La croûte noire",
+      baseDifficulty: 5,
+      options: {
+        power: { stat: "power", label: "Traverser d'un élan" },
+        precision: { stat: "precision", label: "Marcher là où la croûte est épaisse" },
+        endurance: { stat: "endurance", label: "Avancer à quatre pattes, le poids réparti" }
+      }
+    },
+    fente_scellee: {
+      id: "fente_scellee", biome: "mountain", name: "La fente fermée",
+      baseDifficulty: 6,
+      options: {
+        power: { stat: "power", label: "Forcer la fente" },
+        precision: { stat: "precision", label: "Trouver où la roche cède" },
+        endurance: { stat: "endurance", label: "Creuser autour, longtemps" }
+      }
+    },
     porte_basse: {
       id: "porte_basse", biome: "crypt", name: "La porte basse",
       baseDifficulty: 6,

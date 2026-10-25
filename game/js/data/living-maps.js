@@ -425,6 +425,83 @@ var LIVING_MAPS = {
     // v3.456.0 (crypte_16) : la chaîne de la Liche, des côtes à la porte murée, tracée à partir de l'étape
     chainTrace: { requiresStoryStep: "crypte_16", sectors: ["cotes", "cercle", "maisons", "porte_muree"] },
     landmarks: []
+  },
+
+  /* v3.489.0 (Montagne, lot M-3, MT9) — LES VEINES DE LA CARTE. Chaque secteur a sa veine : la tailler
+     (plus de Cendre vive ; le secteur chauffe d'un cran, ses combats plus durs, un cran retombe par jour)
+     ou la laisser. Échec : « La coulée », le secteur sous la lave jusqu'au lendemain. Visuel à fournir par
+     Seb : positions provisoires, à recaler sur l'image. Deux élites répétables (le nid, la forge froide). */
+  mountain: {
+    id: "mountain",
+    worldId: "mountain",
+    name: "Montagne brûlante",
+    asset: "images/Maps/montagne.webp",
+    opensAtStoryStep: "montagne_07",
+    rewardResourceId: "cendre_vive",
+    veins: { cutRare: 2, heatStep: 0.10, heatMax: 3, hostileMult: 1.25 },
+    noRegress: true,
+    words: {
+      cover: "la coulée", coverCap: "La coulée", coveredState: "Sous la lave",
+      home: "le Replat", fogLore: "La fumée cache la pente. On ne sait pas ce qui s'y tient.",
+      openElsewhere: "La Montagne attend encore ailleurs",
+      homeTitle: "Le Replat tient.",
+      homeLore: "Le camp de Sarkel, contre la paroi coupée. Les pentes de l'anneau 1 sont toujours à portée.",
+      intro: "Touche un secteur pour voir ce qu'on en sait. Avant de partir, choisis : laisser sa veine, ou la tailler.",
+      runLoot: "Cendre du run seule",
+      mapBlurb: "Choisis un secteur sur la carte de la Montagne : chacun a sa veine."
+    },
+    village: { x: 50, y: 86, name: "Le Replat" },
+    caravanMarket: { x: 37, y: 86 },          // le Marché de la Montagne, à côté du Replat (MT8)
+    sectors: [
+      /* Anneau 1 — autour du Replat */
+      { id: "pente_grise", name: "La pente grise", x: 50, y: 60, ring: 1, neighbors: ["ruisseaux", "paroi_noire", "nid", "champ_basalte"],
+        content: { type: "expedition", templateId: "petite_aventure_montagne", pools: { obstacle: ["lacets_de_cendre", "eboulis_chaud"] } },
+        heldEffect: null,
+        lore: "Une pente de cendre grise, toute droite. Les traces de pas s'y effacent dans l'heure." },
+      { id: "ruisseaux", name: "Les deux ruisseaux", x: 22, y: 72, ring: 1, neighbors: ["pente_grise", "eboulis", "nid"],
+        content: { type: "expedition", templateId: "petite_aventure_montagne", pools: { obstacle: ["pierres_plates", "croute_de_lave"] } },
+        heldEffect: null,
+        lore: "Deux ruisseaux de lave, côte à côte. Entre eux, une bande de roche où l'on peut marcher." },
+      { id: "paroi_noire", name: "La paroi noire", x: 78, y: 70, ring: 1, neighbors: ["pente_grise", "champ_basalte", "fumerolles"],
+        content: { type: "expedition", templateId: "petite_aventure_montagne", pools: { obstacle: ["paroi_coupee", "lacets_de_cendre"] } },
+        heldEffect: null,
+        lore: "La paroi continue après le Replat. Plus loin, elle n'est plus coupée." },
+      /* Anneau 2 */
+      { id: "eboulis", name: "L'éboulis chaud", x: 14, y: 48, ring: 2, neighbors: ["ruisseaux", "nid", "coulee_morte"],
+        content: { type: "expedition", templateId: "petite_aventure_montagne", pools: { obstacle: ["eboulis_chaud", "croute_de_lave"] } },
+        heldEffect: null,
+        lore: "Des pierres tombées d'en haut, encore chaudes. Il en tombe d'autres, de temps en temps." },
+      { id: "nid", name: "Le nid", x: 36, y: 40, ring: 2, neighbors: ["ruisseaux", "eboulis", "pente_grise", "forge_froide", "coulee_morte"],
+        content: { type: "elite", eliteId: "mere_dragonnets", repeatable: true },
+        heldEffect: null,
+        lore: "Un creux dans la roche, tapissé de coquilles noires. Quelque chose y couve encore." },
+      { id: "champ_basalte", name: "Le champ de basalte", x: 62, y: 44, ring: 2, neighbors: ["pente_grise", "paroi_noire", "fumerolles", "forge_froide", "lac_de_lave"],
+        content: { type: "expedition", templateId: "petite_aventure_montagne", pools: { obstacle: ["croute_de_lave", "paroi_coupee"] } },
+        heldEffect: null,
+        lore: "Des colonnes de basalte, toutes à la même hauteur, comme taillées. Personne ne les a taillées." },
+      { id: "fumerolles", name: "Les fumerolles", x: 86, y: 46, ring: 2, neighbors: ["paroi_noire", "champ_basalte", "lac_de_lave", "antre"],
+        content: { type: "expedition", templateId: "petite_aventure_montagne", pools: { obstacle: ["eboulis_chaud", "lacets_de_cendre"] } },
+        heldEffect: null,
+        lore: "Des trous dans le sol qui soufflent de la vapeur. Ils soufflent l'un après l'autre, dans l'ordre." },
+      /* Anneau 3 */
+      { id: "coulee_morte", name: "La coulée morte", x: 20, y: 22, ring: 3, neighbors: ["eboulis", "nid", "forge_froide"], labelTop: true,
+        content: { type: "expedition", templateId: "petite_aventure_montagne", pools: { obstacle: ["croute_de_lave", "pierres_plates"] } },
+        heldEffect: null,
+        lore: "Une coulée qui a refroidi en route. Elle garde la forme d'une vague." },
+      { id: "forge_froide", name: "La forge froide", x: 46, y: 16, ring: 3, neighbors: ["coulee_morte", "nid", "champ_basalte", "lac_de_lave"], labelTop: true,
+        content: { type: "elite", eliteId: "vieux_golem", repeatable: true },
+        heldEffect: null,
+        lore: "Un cercle de pierres noires, une enclume au milieu. L'enclume est froide. Celui qui la garde ne l'est pas." },
+      { id: "lac_de_lave", name: "Le lac de lave", x: 70, y: 20, ring: 3, neighbors: ["forge_froide", "champ_basalte", "fumerolles", "antre"], labelTop: true,
+        content: { type: "expedition", templateId: "petite_aventure_montagne", pools: { obstacle: ["pierres_plates", "eboulis_chaud"] } },
+        heldEffect: null,
+        lore: "Un lac qui bouge lentement, d'un bord à l'autre. Des îles noires flottent dessus." },
+      { id: "antre", name: "L'entrée de l'Antre", x: 88, y: 10, ring: 3, neighbors: ["lac_de_lave", "fumerolles"], labelTop: true,
+        content: { type: "expedition", templateId: "petite_aventure_montagne", pools: { obstacle: ["paroi_coupee", "croute_de_lave"] } },
+        heldEffect: null,
+        lore: "Une bouche dans la montagne. L'air qui en sort est plus chaud que le soleil." }
+    ],
+    landmarks: []
   }
 };
 window.LIVING_MAPS = LIVING_MAPS;

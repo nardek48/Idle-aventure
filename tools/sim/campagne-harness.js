@@ -667,6 +667,7 @@ function playPa2Step(run) {
     else if (t === "evenement") r = P.eventChoice(P.hookBranches().filter(function (b) { return b.ok; })[0].id);
     else if (t === "camp" || t === "seuil") r = P.placeAction(g.game.heroHp / max < 0.5 && P._rationInStock(run) ? "cook" : "rest");
     else if (t === "clairiere") r = P.clairiere();
+    else if (t === "veine") r = P.cutVein(!!process.env.TAILLER_PA); // v3.489.0 (Montagne) : laissées par défaut
     else { note("Petite Aventure v2 : nœud inconnu " + t); return false; }
   }
   if (!r.ok) { note("Petite Aventure v2 : " + r.reason); return false; }
@@ -1059,7 +1060,7 @@ function run() {
       CURRENT_STEP = step.id;
       // v3.423.0 : TRACE_FORCE=1 relève la force du héros à chaque étape (référence des ajustements de difficulté)
       if (process.env.TRACE_FORCE) console.log("  [force] " + step.id + " monde " + G.WorldManager.worldIndex + " aventure " + G.WorldManager.adventureIndex + " niv. " + G.game.heroLevel + " dmg " + Math.round(G.CombatForecast.getHeroDamagePerRound()) + " ehp " + Math.round(G.CombatForecast.getHeroEffectiveHp ? G.CombatForecast.getHeroEffectiveHp() : G.game.heroMaxHp));
-      if (COMBATS && /^(desert_12|desert_15|desert_17|forest_14|forest_15|ruines_01|ruines_02|ruines_03|ruines_11|ruines_13|ruines_15|ruines_19|crypte_01|crypte_02|crypte_03|crypte_06|crypte_12|crypte_14|crypte_16|crypte_19|montagne_01|montagne_02|montagne_03|montagne_04)$/.test(step.id)) { STATS.profils[step.id] = combatLine(); console.log("  ◦ héros à l'entrée de " + step.id + " : " + STATS.profils[step.id]); if (process.env.TRACE_FORGE) console.log("     forge armure : " + G.ForgeManager.getBlockReason("armor") + " " + JSON.stringify(G.ForgeManager.getCost("armor")) + " or " + Math.floor(G.game.gold)); }
+      if (COMBATS && /^(desert_12|desert_15|desert_17|forest_14|forest_15|ruines_01|ruines_02|ruines_03|ruines_11|ruines_13|ruines_15|ruines_19|crypte_01|crypte_02|crypte_03|crypte_06|crypte_12|crypte_14|crypte_16|crypte_19|montagne_01|montagne_02|montagne_03|montagne_04|montagne_06|montagne_08|montagne_10)$/.test(step.id)) { STATS.profils[step.id] = combatLine(); console.log("  ◦ héros à l'entrée de " + step.id + " : " + STATS.profils[step.id]); if (process.env.TRACE_FORGE) console.log("     forge armure : " + G.ForgeManager.getBlockReason("armor") + " " + JSON.stringify(G.ForgeManager.getCost("armor")) + " or " + Math.floor(G.game.gold)); }
       var t0s = { h: CLOCK.offset, c: STATS.combatMs, s: STATS.healMs, d: STATS.deaths, j: DAYS_WAITED, e: (STATS.secteurs.desert || {}).essais || 0 };
       var snap0 = snapTemps();
       G.StoryQuestManager.acceptStep(cid);
@@ -1277,9 +1278,10 @@ function reforgeTo(slot, target) {
 }
 
 /* N emplacements d'une rareté au moins (dont l'arme si demandé) : sac, puis échoppe, puis farm. */
-function gearRarity(rarity, n, needWeapon) {
+function gearRarity(rarity, n, needWeapon, minWorld) {
   var g = G, ORD = g.RARITY_ORDER, min = ORD.indexOf(rarity);
-  function good(it) { return it && ORD.indexOf(it.rarity) >= min && (it.slot !== "weapon" || g.isWeaponIconAllowedForCurrentHero(it.icon)); }
+  // v3.489.0 (Montagne) : minWorld — seules les pièces de ce monde ou plus comptent (palier de montagne_09)
+  function good(it) { return it && ORD.indexOf(it.rarity) >= min && (!minWorld || Number(it.worldIndex || 0) >= minWorld) && (it.slot !== "weapon" || g.isWeaponIconAllowedForCurrentHero(it.icon)); }
   var vus = { armes: 0, armesVertes: 0, armesVertesClasse: 0 };
   function compte(list, ou) { (list || []).forEach(function (it) { if (it && it.slot === "weapon" && !it._vu) { it._vu = 1; vus.armes++; if (ORD.indexOf(it.rarity) >= min) { vus.armesVertes++; if (g.isWeaponIconAllowedForCurrentHero(it.icon)) { vus.armesVertesClasse++; (vus.detail = vus.detail || []).push(ou + (it.price ? " " + it.price + " or (bourse " + Math.floor(g.game.gold) + ")" : "")); } } } }); }
   function done() {
@@ -1322,6 +1324,8 @@ function gearRarity(rarity, n, needWeapon) {
     }
     // v3.433.0 : le Rare se trouve au Sanctuaire (butin de fin de run, et sac de la sortie)
     if (rarity === "rare" && g.DungeonManager.isUnlocked(3)) { if (COMBATS) healUp(); if (playDungeonOnce(3, false) === null) farmOnce(); }
+    // v3.489.0 (Montagne) : les élites de la carte (Épique de la Montagne au hasard de la victoire)
+    else if (minWorld === 4) { var el = ["nid", "forge_froide"][k % 2]; if (!freeSectorAgain("mountain", el)) farmOnce(); }
     else farmOnce();
     if (process.env.TRACE_OR) console.log("      [or] " + Math.floor(orAvant) + " → " + Math.floor(g.game.gold) + " (farm) · équipé " + g.EQUIPMENT_SLOTS.map(function (s) { var it = g.game.equipped[s]; return s + ":" + (it ? it.rarity : "-"); }).join(",") + " · vitrine " + (g.game.equipShopStock || []).map(function (it) { return it.slot + "/" + it.rarity + "/" + it.price + (it.bought ? "✓" : ""); }).join(" ") + " · sac " + (g.game.inventory || []).length);
     wait(2 * 3600e3, "échoppe");   // le joueur repasse à l'échoppe quelques heures plus tard
@@ -1446,6 +1450,21 @@ var SOLVERS = {
     var val = ARGS.indexOf("--rapporter") >= 0 ? "aeswyn" : "soi";
     if (!g.storyMakeChoice("mountain", val)) note("choix refusé (veine)");
   },
+  // v3.489.0 (Montagne, acte II)
+  montagne_06: function (g) { playExpedition("petite_aventure_montagne", function () { return g.storyDesertFlag("mountainPaCompleted"); }); },
+  montagne_07: function (g) { for (var i = 0; i < 6 && g.storyMountainSectorsFreed() < 2; i++) freeSector("mountain"); },
+  montagne_08: function (g) { playAdventure("aq_montagne_tri"); },
+  montagne_09: function (g) {
+    var P = g.STORY_PALIER_MONTAGNE;
+    function part(nom, fn) {
+      var t0 = CLOCK.offset, o0 = g.game.gold, farm0 = STATS.grindMs;
+      fn();
+      (STATS.m09 = STATS.m09 || []).push({ part: nom, h: (CLOCK.offset - t0) / 3600e3, farmH: (STATS.grindMs - farm0) / 3600e3, orAvant: Math.floor(o0), orApres: Math.floor(g.game.gold) });
+    }
+    part(P.pieces + " Épiques de la Montagne", function () { gearRarity("epic", P.pieces, false, 4); });
+    part("reforge arme " + P.reforge, function () { reforgeTo("weapon", P.reforge); });
+  },
+  montagne_10: function (g) { playAdventure("aq_montagne_ouvrage"); },
   // v3.456.0 (Crypte, actes II à IV, lot C-6)
   crypte_06: function (g) { playExpedition("petite_aventure_crypte", function () { return g.storyDesertFlag("cryptPaCompleted"); }); },
   crypte_07: function (g) { for (var i = 0; i < 6 && g.storyCryptSectorsFreed() < 2; i++) freeSector("crypt"); },
@@ -1695,8 +1714,8 @@ if (COMBATS) {
   Object.keys(STATS.goldFarm).forEach(function (k) { var f = STATS.goldFarm[k]; console.log("Farm " + k + " : " + f.lots + " lots, " + Math.round(f.or / Math.max(1, f.lots)) + " or par lot, " + Math.round(f.or / Math.max(0.01, f.h)) + " or par heure (soin compris), " + f.morts + " morts"); });
   if (STATS.r13 && STATS.r13.length) console.log("ruines_13 : " + STATS.r13.map(function (d) { return d.part + " " + d.h.toFixed(0) + " h (farm " + d.farmH.toFixed(0) + " h, or " + d.orAvant + " → " + d.orApres + ")"; }).join(" · ") + " · Pierres errantes cherchées : " + (STATS.pierreH || 0).toFixed(0) + " h · campements : " + (STATS.camps || 0));
   if (STATS.obtainH) console.log("Temps d'obtention (h) : " + Object.keys(STATS.obtainH).filter(function (k) { return STATS.obtainH[k] >= 1; }).map(function (k) { return k + " " + STATS.obtainH[k].toFixed(0); }).join(" · "));
-  ["c09", "c13"].forEach(function (k) { // v3.456.0 : paliers Rare et Épique de la Crypte
-    if (STATS[k] && STATS[k].length) console.log("crypte_" + k.slice(1) + " : " + STATS[k].map(function (d) { return d.part + " " + d.h.toFixed(0) + " h (farm " + d.farmH.toFixed(0) + " h, or " + d.orAvant + " → " + d.orApres + ")"; }).join(" · ") + (k === "c13" ? " · Cire de sépulcre cherchée : " + (STATS.cireH || 0).toFixed(0) + " h" : ""));
+  ["c09", "c13", "m09"].forEach(function (k) { // v3.456.0 : paliers Rare et Épique de la Crypte ; v3.489.0 : Montagne
+    if (STATS[k] && STATS[k].length) console.log((k[0] === "m" ? "montagne_" : "crypte_") + k.slice(1) + " : " + STATS[k].map(function (d) { return d.part + " " + d.h.toFixed(0) + " h (farm " + d.farmH.toFixed(0) + " h, or " + d.orAvant + " → " + d.orApres + ")"; }).join(" · ") + (k === "c13" ? " · Cire de sépulcre cherchée : " + (STATS.cireH || 0).toFixed(0) + " h" : ""));
   });
   if (STATS.r09 && STATS.r09.length) console.log("ruines_09 : " + STATS.r09.map(function (d) { return d.part + " " + d.h.toFixed(0) + " h (farm " + d.farmH.toFixed(0) + " h, or " + d.orAvant + " → " + d.orApres + ")"; }).join(" · "));
   if (STATS.d13.length) console.log("desert_13 : " + STATS.d13.map(function (d) { return d.part + " " + d.h.toFixed(0) + " h (farm " + d.farmH.toFixed(0) + " h, Inhabituels portés au départ " + d.verts0 + ", or " + d.orAvant + " → " + d.orApres + ")"; }).join(" · "));

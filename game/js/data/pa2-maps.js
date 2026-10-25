@@ -284,6 +284,56 @@ var PA2_MAPS = {
       TERTRE: { row: 7, x: 720, y: 210, type: "tertre" }
     },
     links: RUINES_PA_LINKS
+  },
+  /* v3.489.0 (Montagne, MT10) : deux pentes de cendre. Images à fournir par Seb (848 × 1264) : en attendant,
+     le fond parchemin et des places provisoires (celles de la Crypte), à relever sur les images. */
+  montagne_1: {
+    id: "montagne_1",
+    worldId: "mountain",
+    image: "images/Maps/pa2/montagne_1.webp",
+    width: 848,
+    height: 1264,
+    start: "S",
+    rows: { camp: 2, seuil: 5, dest: 7 },
+    tune: { foeMult: 0.7 }, // banc
+    nodes: {
+      S: { row: -1, x: 425, y: 1180, type: "depart" },
+      L0: { row: 0, x: 150, y: 960 }, C0: { row: 0, x: 430, y: 940 }, R0: { row: 0, x: 630, y: 975 },
+      L1: { row: 1, x: 115, y: 820 }, R1: { row: 1, x: 720, y: 850 },
+      CAMP: { row: 2, x: 430, y: 800, type: "camp" },
+      L3: { row: 3, x: 120, y: 640 }, C3: { row: 3, x: 330, y: 660 }, R3: { row: 3, x: 580, y: 680 },
+      L4: { row: 4, x: 130, y: 470 }, R4: { row: 4, x: 680, y: 580 },
+      SEUIL: { row: 5, x: 420, y: 530, type: "seuil" },
+      L6: { row: 6, x: 290, y: 400 }, C6: { row: 6, x: 515, y: 315 }, R6: { row: 6, x: 690, y: 280 },
+      BOSS: { row: 7, x: 420, y: 125, type: "boss" },
+      CLAIRIERE: { row: 7, x: 140, y: 150, type: "clairiere" },
+      TERTRE: { row: 7, x: 660, y: 150, type: "tertre" }
+    },
+    links: RUINES_PA_LINKS
+  },
+  montagne_2: {
+    id: "montagne_2",
+    worldId: "mountain",
+    image: "images/Maps/pa2/montagne_2.webp",
+    width: 848,
+    height: 1264,
+    start: "S",
+    rows: { camp: 2, seuil: 5, dest: 7 },
+    tune: { foeMult: 0.7 },
+    nodes: {
+      S: { row: -1, x: 425, y: 1170, type: "depart" },
+      L0: { row: 0, x: 190, y: 980 }, C0: { row: 0, x: 430, y: 1060 }, R0: { row: 0, x: 680, y: 1040 },
+      L1: { row: 1, x: 110, y: 860 }, R1: { row: 1, x: 650, y: 850 },
+      CAMP: { row: 2, x: 430, y: 800, type: "camp" },
+      L3: { row: 3, x: 130, y: 650 }, C3: { row: 3, x: 330, y: 710 }, R3: { row: 3, x: 720, y: 620 },
+      L4: { row: 4, x: 90, y: 470 }, R4: { row: 4, x: 740, y: 450 },
+      SEUIL: { row: 5, x: 440, y: 540, type: "seuil" },
+      L6: { row: 6, x: 150, y: 310 }, C6: { row: 6, x: 530, y: 410 }, R6: { row: 6, x: 660, y: 300 },
+      BOSS: { row: 7, x: 440, y: 120, type: "boss" },
+      CLAIRIERE: { row: 7, x: 150, y: 130, type: "clairiere" },
+      TERTRE: { row: 7, x: 720, y: 210, type: "tertre" }
+    },
+    links: RUINES_PA_LINKS
   }
 };
 
@@ -292,7 +342,8 @@ var PA2_MAPS_BY_WORLD = {
   forest: ["foret_1", "foret_2"], // v3.386.0 : tirée au lancement, comme l'accroche
   desert: ["desert_1"],            // v3.387.0 (PA2-5)
   ruins: ["ruines_1", "ruines_2"], // v3.429.0 (U-6)
-  crypt: ["crypte_1", "crypte_2"]  // v3.454.0
+  crypt: ["crypte_1", "crypte_2"],  // v3.454.0
+  mountain: ["montagne_1", "montagne_2"] // v3.489.0 (places provisoires)
 };
 
 /* v3.390.0 (chantier P, lot P-2) : fonds illustrés des parcours (images de Seb du 29/09/2026).

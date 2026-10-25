@@ -508,6 +508,20 @@ var SCENE_TEMPLATES = {
     icon: "images/Icons/scene/path_easy.webp",
     boardRequires: { tabUnlocked: "village", storyStep: "crypte_06" },
     successFlag: "cryptPaCompleted"
+  },
+
+  /* v3.489.0 (Montagne, lot M-3, MT10) — la Petite Aventure de la Montagne : le sol qui brûle, la Pierre
+     froide de Sarkel, les veines du chemin, le gardien qui trie. Ouverte avec l'étape montagne_06. */
+  petite_aventure_montagne: {
+    id: "petite_aventure_montagne",
+    mode: "pa2",
+    worldId: "mountain",
+    adventureIndex: 0,
+    title: "Petite aventure — Montagne",
+    departLabel: "Monter dans la cendre",
+    icon: "images/Icons/scene/path_easy.webp",
+    boardRequires: { tabUnlocked: "village", storyStep: "montagne_06" },
+    successFlag: "mountainPaCompleted"
   }
 };
 

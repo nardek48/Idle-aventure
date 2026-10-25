@@ -228,6 +228,7 @@ var ENEMY_DB = {
     name: "Démon mineur",
     asset: "minordemon",
     image: "./images/Enemies/minordemon.webp",
+    support: true, sorts: true, // v3.489.0 (Montagne, acte II) : le tri — il frappe celui qui a taillé (vein-system.js)
     resists: ["magic"],
     weak: ["sword"],
     stats: makeRpgStats(36, 30, 32, 28, 40)

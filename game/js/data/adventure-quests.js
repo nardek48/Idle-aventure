@@ -857,6 +857,64 @@ var ADVENTURE_QUESTS = {
     reward: {}
   },
 
+  /* v3.489.0 (Montagne, acte II étape 8) — « Ce qui trie » : cinq rencontres à l'Antre du volcan, des démons
+     mineurs escortés (le tri : VeinSystem.onEnemyTurn, actif dès cette étape). Cible : aucun mort, 25 à 35 %
+     des PV en laissant les veines, 3 à 5 rounds. Multiplicateurs au banc. */
+  aq_montagne_tri: {
+    id: "aq_montagne_tri",
+    type: "kill",
+    section: "adventure",
+    difficulty: "medium",
+    progressionStage: "world_mid",
+    category: "side",
+    worldId: "mountain",
+    adventureIndex: 1,
+    encounters: [
+      { group: ["minordemon", "dragonling"], groupHpMult: 0.55 },
+      { group: ["minordemon", "lavagolem", "ifrit"], groupHpMult: 0.35 },
+      { group: ["ifrit", "minordemon"], groupHpMult: 0.55 },
+      { group: ["lavagolem", "minordemon", "dragonling"], groupHpMult: 0.35 },
+      { group: ["minordemon", "minordemon"], groupHpMult: 0.55 }
+    ],
+    encounterHpMult: 1.6,
+    enemyPowerMult: 6,
+    name: "Ce qui trie",
+    story: "À l'Antre du volcan, les façonnés ne se jettent pas sur le premier venu. Ils regardent tes mains.",
+    icon: "./images/Icons/quest_icons/exploration/exploration4.webp",
+    steps: [
+      { id: "rencontres_tri", type: "encounter", worldId: "mountain", target: 5, desc: "Vaincre {target} rencontres à l'Antre du volcan" }
+    ],
+    reward: {}
+  },
+
+  /* v3.489.0 (Montagne, acte II étape 10) — « L'ouvrage » : quatre rencontres au profil du palier Épique,
+     des golems et des démons qui trient. Même cible. Multiplicateurs au banc. */
+  aq_montagne_ouvrage: {
+    id: "aq_montagne_ouvrage",
+    type: "kill",
+    section: "adventure",
+    difficulty: "medium",
+    progressionStage: "world_mid",
+    category: "side",
+    worldId: "mountain",
+    adventureIndex: 1,
+    encounters: [
+      { group: ["lavagolem", "minordemon"], groupHpMult: 0.55 },
+      { group: ["ifrit", "lavagolem", "minordemon"], groupHpMult: 0.35 },
+      { group: ["lavagolem", "lavagolem"], groupHpMult: 0.55 },
+      { group: ["minordemon", "ifrit", "lavagolem"], groupHpMult: 0.35 }
+    ],
+    encounterHpMult: 1.7,
+    enemyPowerMult: 6.5,
+    name: "L'ouvrage",
+    story: "Au fond de l'Antre, une salle ronde. Au milieu, un golem à moitié sorti de la paroi. Les veines autour battent ensemble.",
+    icon: "./images/Icons/quest_icons/exploration/exploration1.webp",
+    steps: [
+      { id: "rencontres_ouvrage", type: "encounter", worldId: "mountain", target: 4, desc: "Vaincre {target} rencontres dans la salle ronde" }
+    ],
+    reward: {}
+  },
+
   aq_ruines_plan: {
     id: "aq_ruines_plan",
     type: "kill",

@@ -87,9 +87,21 @@ var PA2_ITEMS = {
   cierge: { id: "cierge", name: "Cierge de la chapelle", size: 1, unlock: "clairiere",
     icon: "images/Icons/scene/items/item_chapel_candle.webp",
     pro: "Les effets des pièges ne durent qu'un pas au lieu de trois.",
-    lockedHint: "Coffre d'expédition : atteindre la chapelle de l'ouest." }
+    lockedHint: "Coffre d'expédition : atteindre la chapelle de l'ouest." },
+  // v3.489.0 (Montagne, MT10) : la Pierre froide de Sarkel, gratuite ; le coffre de la Montagne (gardien qui trie, source chaude)
+  pierre_froide: { id: "pierre_froide", name: "Pierre froide", size: 1, uses: 2, worlds: ["mountain"], coldStone: true,
+    icon: "images/Icons/scene/items/item_cold_stone.webp",
+    pro: "Posée, elle te fait traverser une case brûlante sans dommage. Deux fois par parcours.", con: "Ne sert qu'à la Montagne." },
+  eclat_trieur: { id: "eclat_trieur", name: "Éclat du trieur", size: 2, unlock: "boss",
+    icon: "images/Icons/scene/items/item_sorter_shard.webp",
+    pro: "+1 cran sur la voie force, et les cases brûlantes coûtent moitié moins de Souffle.",
+    lockedHint: "Coffre d'expédition : combattre le gardien qui trie." },
+  galet_source: { id: "galet_source", name: "Galet de la source", size: 1, unlock: "clairiere",
+    icon: "images/Icons/scene/items/item_spring_pebble.webp",
+    pro: "La lave avance moins vite : une rangée tous les deux pas.",
+    lockedHint: "Coffre d'expédition : atteindre la source chaude." }
 };
-var PA2_ITEM_ORDER = ["petite_ration", "ration", "grande_ration", "gourde", "outre", "craie", "lanterne", "corde", "trousse", "torche", "armure", "carte", "fiole", "bois", "veilleurs", "ecaille", "natte", "pierre_gardien", "pierre_puits", "epee_gisant", "cierge"];
+var PA2_ITEM_ORDER = ["petite_ration", "ration", "grande_ration", "gourde", "outre", "craie", "lanterne", "corde", "trousse", "torche", "armure", "carte", "fiole", "bois", "veilleurs", "ecaille", "natte", "pierre_gardien", "pierre_puits", "epee_gisant", "cierge", "pierre_froide", "eclat_trieur", "galet_source"];
 
 /* Pactes (V14, Q6) : malus choisis contre du butin final. */
 var PA2_PACTS = {
@@ -124,7 +136,11 @@ var PA2_RELICS = {
   marteau:  { id: "marteau",  rar: "leg",  world: "ruins",  icon: "images/Icons/scene/relics/relic_marteau.webp",  name: "Marteau du Contremaître", fx: "+1 cran sur toutes les voies d'obstacle, mais combats +15 % de dégâts reçus." },
   meche:    { id: "meche",    rar: "com",  world: "crypt",  icon: "images/Icons/scene/relics/relic_meche.webp",    name: "Mèche de Sarkel",        fx: "La Lanterne brûle 3 pas de plus." },
   cendre:   { id: "cendre",   rar: "rare", world: "crypt",  icon: "images/Icons/scene/relics/relic_cendre.webp",   name: "Cendre de veilleur",     fx: "Les alcôves sont gratuites et soignent le double." },
-  cloche:   { id: "cloche",   rar: "leg",  world: "crypt",  icon: "images/Icons/scene/relics/relic_cloche.webp",   name: "Cloche muette",          fx: "L'Alarme ne se déclenche jamais, et Ruser gagne deux crans." }
+  cloche:   { id: "cloche",   rar: "leg",  world: "crypt",  icon: "images/Icons/scene/relics/relic_cloche.webp",   name: "Cloche muette",          fx: "L'Alarme ne se déclenche jamais, et Ruser gagne deux crans." },
+  // v3.489.0 (Montagne)
+  obsidienne: { id: "obsidienne", rar: "com", world: "mountain", icon: "images/Icons/scene/relics/relic_obsidian.webp",      name: "Éclat d'obsidienne", fx: "Les cases brûlantes coûtent 5 Souffle de moins." },
+  soufflet:   { id: "soufflet",   rar: "rare", world: "mountain", icon: "images/Icons/scene/relics/relic_bellows.webp",      name: "Petit soufflet",     fx: "Chaque veine taillée rend 10 Souffle." },
+  braise_vive:{ id: "braise_vive", rar: "leg", world: "mountain", icon: "images/Icons/scene/relics/relic_ember_heart.webp",  name: "Cœur de braise",     fx: "Chaque veine taillée rapporte une Cendre vive de plus, mais la lave avance d'une rangée de plus." }
 };
 var PA2_RELIC_RARITY_WEIGHTS = { com: 60, rare: 30, leg: 10 };
 
@@ -165,7 +181,8 @@ var PA2_LEVEL_BANDS = [
   // v3.429.0 (Ruines) : tranche PLANCHER de la carte des Ruines seulement (levelBand) — minLevel hors
   // d'atteinte pour ne pas changer les Petites Aventures de la Forêt et du Désert d'un héros avancé
   { minLevel: 99, worldId: "ruins", adventureIndex: 0, obstacleScale: 3.3, heroRef: "joueurDesert2" },
-  { minLevel: 99, worldId: "crypt", adventureIndex: 0, obstacleScale: 3.9, heroRef: "joueurRuines" } // v3.454.0 (Crypte) : plancher de la carte, au banc
+  { minLevel: 99, worldId: "crypt", adventureIndex: 0, obstacleScale: 3.9, heroRef: "joueurRuines" }, // v3.454.0 (Crypte) : plancher de la carte, au banc
+  { minLevel: 99, worldId: "mountain", adventureIndex: 0, obstacleScale: 4.5, heroRef: "joueurCrypte" } // v3.489.0 (Montagne) : plancher, au banc
 ];
 
 /* v3.423.0 (chantier Difficulté, A, décision Seb) : la tranche donne les ennemis et les obstacles
@@ -183,9 +200,10 @@ var PA2_OBSTACLES = {
   forest: ["eboulis", "gouffre", "porte_scellee", "paroi", "riviere", "racines"],
   desert: ["sables_mouvants", "dune", "dalle_scellee", "puits_effondre", "vent_de_face", "dalles_ensablees"], // v3.387.0
   ruins: ["route_de_pierre", "rue_qui_tourne", "mur_neuf", "escalier_sans_fin", "dalle_qui_glisse"], // v3.429.0
-  crypt: ["allee_des_gisants", "grille_basse", "couloir_noir", "cire_au_sol", "dalle_qui_glisse"] // v3.454.0
+  crypt: ["allee_des_gisants", "grille_basse", "couloir_noir", "cire_au_sol", "dalle_qui_glisse"], // v3.454.0
+  mountain: ["lacets_de_cendre", "pierres_plates", "eboulis_chaud", "croute_de_lave", "paroi_coupee"] // v3.489.0
 };
-var PA2_OBSTACLE_TERTRE = { baseDifficulty: 7, gabaritId: "porte_scellee", byWorld: { desert: "dalle_scellee", ruins: "porte_qui_attend", crypt: "porte_basse" } };
+var PA2_OBSTACLE_TERTRE = { baseDifficulty: 7, gabaritId: "porte_scellee", byWorld: { desert: "dalle_scellee", ruins: "porte_qui_attend", crypt: "porte_basse", mountain: "fente_scellee" } };
 
 /* Gardien de la destination « combat » (v3.383.0, PA2-3) : un ennemi d'acte III renforcé,
    indexé sur la tranche de niveau comme les autres. Multiplicateurs calés au banc. */
@@ -193,7 +211,8 @@ var PA2_GUARDIAN = {
   forest: { foe: "foresttroll", hpMult: 5, powMult: 2.2 },
   desert: { foe: "sandworm", hpMult: 4.25, powMult: 1.9 }, // v3.387.0 (F4) : le Ver du plateau, adouci de 15 %
   ruins: { foe: "skeleton", hpMult: 6.4, powMult: 1.9 },   // v3.429.0 : le gardien se relève une fois (PV ×1,5, combat par approche)
-  crypt: { foe: "deadknight", hpMult: 4.3, powMult: 1.9, sleeps: true } // v3.454.0 (CR10) : il dort ; on fait le tour ou on le réveille (au banc)
+  crypt: { foe: "deadknight", hpMult: 4.3, powMult: 1.9, sleeps: true }, // v3.454.0 (CR10) : il dort ; on fait le tour ou on le réveille (au banc)
+  mountain: { foe: "lavagolem", hpMult: 4.3, powMult: 1.9, sorts: true }  // v3.489.0 (MT10) : il trie ; rien taillé, il laisse passer (au banc)
 };
 
 /* Approches de combat (V17, Q2). dmg : dégâts reçus ; loot : or gagné. Ruser = jet de précision. */
@@ -221,11 +240,12 @@ var PA2_RARE = {
   forest: { resourceId: "seve_aeswyn", findChancePct: 25, dest: { 1: 2, 2: 3, 3: 4 } },
   desert: { resourceId: "verre_des_dunes", findChancePct: 25, dest: { 1: 2, 2: 3, 3: 4 } }, // v3.387.0
   ruins: { resourceId: "pierre_errante", findChancePct: 25, dest: { 1: 2, 2: 3, 3: 4 } }, // v3.429.0
-  crypt: { resourceId: "cire_sepulcre", findChancePct: 25, dest: { 1: 2, 2: 3, 3: 4 } }   // v3.454.0
+  crypt: { resourceId: "cire_sepulcre", findChancePct: 25, dest: { 1: 2, 2: 3, 3: 4 } },   // v3.454.0
+  mountain: { resourceId: "cendre_vive", findChancePct: 25, dest: { 1: 2, 2: 3, 3: 4 } }    // v3.489.0
 };
 
 /* v3.453.0 : choix de Mémoire qui ajoutent 1 matériau rare par destination atteinte, par monde. */
-var PA2_MEMORY_DEST_RARE = { ruins: "pierre_de_plus", crypt: "cire_chaude" };
+var PA2_MEMORY_DEST_RARE = { ruins: "pierre_de_plus", crypt: "cire_chaude", mountain: "cendre_au_pas" }; // v3.489.0 : Cendre au pas (Mémoire 18)
 
 /* Coffre d'expédition : destination -> objet débloqué (V12, Q8). */
 /* v3.387.0 : par monde ; v3.469.4 : un coffre dans chaque monde. */
@@ -233,7 +253,8 @@ var PA2_CHEST_REWARDS = {
   forest: { boss: "bois", clairiere: "veilleurs" },
   desert: { boss: "ecaille", clairiere: "natte" },           // v3.469.4 (PA-R1)
   ruins: { boss: "pierre_gardien", clairiere: "pierre_puits" },
-  crypt: { boss: "epee_gisant", clairiere: "cierge" }        // gardien couché : seulement s'il est combattu
+  crypt: { boss: "epee_gisant", clairiere: "cierge" },       // gardien couché : seulement s'il est combattu
+  mountain: { boss: "eclat_trieur", clairiere: "galet_source" } // v3.489.0 : le trieur, seulement s'il est combattu
 };
 
 /* Réglages divers. Banc. */
@@ -256,7 +277,9 @@ var PA2_RULES = {
   surprisedMult: 1.2, heavyStep: 4, ronceStep: 3, ronceLoot: 1.3, braiseHealPct: 0.03,
   carteLoot: 0.8, fioleLoot: 0.5, damageSpread: 0.15, maxRounds: 60,
   wallShiftPct: 0.35, wallChalkRows: 2,  // v3.429.0 (Ruines) : un mur bouge après un pas ; la Craie tient à 2 rangées devant
-  lanternRows: 2, lanternSteps: 3        // v3.454.0 (Crypte) : la Lanterne, deux rangées de plus pendant 3 pas (Mèche longue : +2 pas)
+  lanternRows: 2, lanternSteps: 3,       // v3.454.0 (Crypte) : la Lanterne, deux rangées de plus pendant 3 pas (Mèche longue : +2 pas)
+  // v3.489.0 (Montagne, MT10) : le sol qui brûle (Souffle par case brûlante), la ligne de lave, les veines du chemin
+  burnBreath: 10, burningPct: 0.25, lavaStartBehind: 1, veinAsh: [1, 2], obsidienneBurn: 5, soufflet: 10, galetEvery: 2
 };
 
 /* v3.387.0 (PA2-5, F2) : la soif du Désert. stepBreath : Souffle perdu à chaque pas ;
@@ -265,7 +288,8 @@ var PA2_WORLD_RULES = {
   forest: { stepBreath: 4 },                // v3.423.0 (B) : la marche essouffle aussi en Forêt
   desert: { stepBreath: 4, gourdeUses: 1 }, // v3.423.0 (B) : 3 -> 4
   ruins: { stepBreath: 4 },                 // v3.429.0 : pas de soif, des murs qui bougent (PA2_RULES.wallShiftPct)
-  crypt: { stepBreath: 4, sightRows: 1, trapsHidden: true } // v3.454.0 (CR10) : l'obscurité ; v3.467.0 : pièges vus seulement à la Lanterne
+  crypt: { stepBreath: 4, sightRows: 1, trapsHidden: true }, // v3.454.0 (CR10) : l'obscurité ; v3.467.0 : pièges vus seulement à la Lanterne
+  mountain: { stepBreath: 4, lava: true }                     // v3.489.0 (MT10) : le sol qui brûle, la lave qui avance
 };
 
 /* v3.467.0 (Pièges, conception PG-A à PG-G) : pièges posés sur les sentiers. perAct : pièges par acte
@@ -284,7 +308,8 @@ var PA2_CUTS = {
   forest: { arbre: { name: "Arbre abattu", icon: "images/Icons/scene/cuts/cut_fallen_tree.webp" }, crue: { name: "Ruisseau en crue", icon: "images/Icons/scene/cuts/cut_flood.webp" } },
   desert: { dune: { name: "Dune nouvelle", icon: "images/Icons/scene/cuts/cut_dune.webp" }, ravin: { name: "Ravin effondré", icon: "images/Icons/scene/cuts/cut_ravine.webp" } },
   ruins:  { rue: { name: "Rue effondrée", icon: "images/Icons/scene/cuts/cut_collapsed_street.webp" }, porte: { name: "Porte murée", icon: "images/Icons/scene/cuts/cut_walled_door.webp" } },
-  crypt:  { grille: { name: "Grille tombée", icon: "images/Icons/scene/cuts/cut_gate.webp" }, voute: { name: "Voûte écroulée", icon: "images/Icons/scene/cuts/cut_collapse.webp" } }
+  crypt:  { grille: { name: "Grille tombée", icon: "images/Icons/scene/cuts/cut_gate.webp" }, voute: { name: "Voûte écroulée", icon: "images/Icons/scene/cuts/cut_collapse.webp" } },
+  mountain: { coulee: { name: "Coulée fraîche", icon: "images/Icons/scene/cuts/cut_lava_flow.webp" }, crevasse: { name: "Crevasse fumante", icon: "images/Icons/scene/cuts/cut_steaming_crevasse.webp" } } // v3.489.0
 };
 /* v3.469.0 (Condition du run, PG-B1a à PG-B1c) : tirée au lancement, propre au monde, un avantage et un
    inconvénient, annoncée sur la préparation. fx : réglages lus par Pa2Run (cond). « Nuit calme » une fois sur cinq. */
@@ -330,6 +355,16 @@ var PA2_CONDITIONS = {
       pro: "Les pièges cachés se voient sur les sentiers que tu peux prendre", con: "La marche coûte 1 Souffle de plus par pas", tip: "gourde", fx: { trapsNear: true, stepBreath: 1 } }, // v3.469.1 : 2 -> 1 (banc)
     veillee: { name: "Veillée", kicker: "nuit de veillée", line: "Quelqu'un veille les morts cette nuit. Les coupes sont pleines, et chaque cloche est prête à sonner.",
       pro: "Les alcôves sont gratuites", con: "Un piège de plus par acte, et plus souvent l'Alarme", tip: "trousse", fx: { altarFree: true, trapsPerAct: 1, alarmWeight: 2 } }
+  },
+  mountain: { // v3.489.0 (Montagne)
+    grondement: { name: "La montagne gronde", kicker: "nuit où la montagne gronde", line: "La montagne gronde depuis le soir. La lave monte plus vite, et elle pousse les veines au jour.",
+      pro: "Les veines taillées rapportent une Cendre vive de plus", con: "La lave part une rangée plus près", tip: "pierre_froide", fx: { veinAsh: 1, lavaStart: 1 } },
+    fumees: { name: "Fumées", kicker: "nuit de fumées", line: "Des fumées sortent de partout. On n'y voit pas loin, et eux non plus.",
+      pro: "Ruser gagne un cran", con: "Une rangée de vue en moins", tip: "torche", fx: { ruseBonus: 1, sight: -1 } },
+    pluie_cendre: { name: "Pluie de cendre", kicker: "nuit de pluie de cendre", line: "Il tombe de la cendre, fine et tiède. Elle colle aux pieds, mais les sources débordent.",
+      pro: "Les sources rendent le double", con: "La marche coûte 1 Souffle de plus par pas", tip: "gourde", fx: { sourceMult: 2, stepBreath: 1 } },
+    faconnes: { name: "Nuit des façonnés", kicker: "nuit des façonnés", line: "Les façonnés sont sortis ce soir. Ils trient tout ce qui monte, et ce qu'ils gardent vaut la peine.",
+      pro: "Butin final +20 %", con: "Premier combat de chaque acte : un ennemi de plus", tip: "armure", fx: { lootMult: 1.2, firstCombatExtra: 1 } }
   }
 };
 /* Les cinq effets (PG-C). steps : pas pendant lesquels l'effet dure (0 : immédiat ou jusqu'au combat). */
@@ -351,7 +386,8 @@ var PA2_TRAP_WEIGHTS = {
   forest: { venin: 2, alarme: 1, entrave: 2, aveugle: 1, besace: 1 },
   desert: { venin: 1, alarme: 1, entrave: 2, aveugle: 2, besace: 1 },
   ruins:  { venin: 1, alarme: 2, entrave: 1, aveugle: 1, besace: 2 },
-  crypt:  { venin: 1, alarme: 2, entrave: 1, aveugle: 2, besace: 1 }
+  crypt:  { venin: 1, alarme: 2, entrave: 1, aveugle: 2, besace: 1 },
+  mountain: { venin: 1, alarme: 1, entrave: 2, aveugle: 2, besace: 1 } // v3.489.0
 };
 /* PG-E : un piège par effet et par monde, textes validés par Seb le 23/10/2026. */
 var PA2_TRAPS = {
@@ -382,6 +418,13 @@ var PA2_TRAPS = {
     entrave: { name: "Linceuls tendus",      line: "Des linceuls tendus d'un mur à l'autre. Ils s'enroulent à ce qui passe." },
     aveugle: { name: "Encens froid",         line: "De l'encens qui fume encore, épais, dans un couloir sans air." },
     besace:  { name: "Marche creuse",        line: "Une marche sonne creux. Dessous, le noir, et rien pour retenir un sac." }
+  },
+  mountain: { // v3.489.0 (Montagne)
+    venin:   { name: "Épines de verre",      line: "Des éclats de verre noir plantés dans la cendre, la pointe en l'air." },
+    alarme:  { name: "Pierres en équilibre", line: "Des pierres posées en équilibre au-dessus du sentier. Un pas de trop, et toute la pente l'entend." },
+    entrave: { name: "Cendre profonde",      line: "La cendre est plus épaisse ici. Elle avale la jambe jusqu'au genou." },
+    aveugle: { name: "Jet de vapeur",        line: "Une fissure siffle dans la roche. Elle crache de la vapeur brûlante, puis se tait." },
+    besace:  { name: "Lame de basalte",      line: "Une arête de basalte, coupante comme du verre, au ras du sac." }
   }
 };
 
@@ -392,7 +435,8 @@ var PA2_FOES = {
   forest: { 1: ["wolf", "goblin"], 2: ["spider", "bramble"], 3: ["foresttroll", "bramble"] },
   desert: { 1: ["scarab"], 2: ["sandwarrior", "scarab"], 3: ["sandworm", "sandwarrior"] }, // v3.387.0 (F4)
   ruins: { 1: ["skeleton", "zombie"], 2: ["ghoul", "skeleton"], 3: ["gargoyle", "batisseur"] }, // v3.429.0
-  crypt: { 1: ["spectre", "wraith"], 2: ["wraith", "necromancer"], 3: ["deadknight", "necromancer"] } // v3.454.0
+  crypt: { 1: ["spectre", "wraith"], 2: ["wraith", "necromancer"], 3: ["deadknight", "necromancer"] }, // v3.454.0
+  mountain: { 1: ["dragonling", "minordemon"], 2: ["lavagolem", "dragonling"], 3: ["ifrit", "lavagolem"] } // v3.489.0
 };
 var PA2_FOE_LINES = {
   wolf: "Deux yeux dans la fougère. Puis quatre.",
@@ -413,7 +457,12 @@ var PA2_FOE_LINES = {
   spectre: "Une forme pâle au bout du couloir. Elle ne marche pas : elle se rapproche.",
   wraith: "La lumière baisse d'un coup. Quelque chose est passé devant.",
   necromancer: "Une voix dit un nom, doucement. Pas le tien.",
-  deadknight: "Un chevalier couché en travers du passage. Il se lève sans un bruit d'armure."
+  deadknight: "Un chevalier couché en travers du passage. Il se lève sans un bruit d'armure.",
+  // v3.489.0 (Montagne)
+  dragonling: "Un battement d'ailes au-dessus de la cendre. Puis un autre, plus près.",
+  lavagolem: "Un rocher au bord du sentier se redresse. Il est plus grand debout.",
+  minordemon: "Il ne t'attaque pas tout de suite. Il regarde tes mains.",
+  ifrit: "Une flamme sans bois, au milieu du chemin. Elle a des yeux."
 };
 
 /* Obstacles : une phrase d'ambiance par gabarit (bible narrative §4.3). */
@@ -450,7 +499,13 @@ var PA2_OBSTACLE_LINES = {
   allee_des_gisants: "Des gisants en travers de l'allée, de mur à mur. Il faut passer entre eux.",
   grille_basse: "Une grille à hauteur de genou. De l'autre côté, le couloir continue.",
   couloir_noir: "Un couloir sans lampe. La lumière s'arrête au premier pas.",
-  cire_au_sol: "De la cire sur tout le sol, épaisse, encore molle. Elle garde la forme des pas."
+  cire_au_sol: "De la cire sur tout le sol, épaisse, encore molle. Elle garde la forme des pas.",
+  // v3.489.0 (Montagne)
+  lacets_de_cendre: "Le chemin tourne sur lui-même dans la cendre. On voit le sommet à chaque tournant, et jamais plus près.",
+  pierres_plates: "Un ruisseau de lave, et des pierres plates posées dessus. Certaines bougent.",
+  paroi_coupee: "Une paroi noire, coupée net. Le bord est lisse comme du verre.",
+  eboulis_chaud: "Des pierres tombées de la pente, encore chaudes. Elles fument quand on les touche.",
+  croute_de_lave: "Une croûte noire sur de la lave qui coule encore dessous. Elle craque sous le pied."
 };
 
 /* Lieux sans choix de voie (bible narrative §4.5). */
@@ -492,6 +547,16 @@ var PA2_PLACES_BY_WORLD = {
     trouvaille: { name: "Une trouvaille", text: "Quelque chose posé au bord d'une alcôve, à portée de main. Pas pour toi, mais tu es là." },
     camp: { name: "La salle aux lampes", text: "Une salle basse, trois lampes contre le mur. Sarkel est passé par ici." },
     seuil: { name: "Le seuil", text: "Une grille ouverte. De l'autre côté, il fait plus froid. Ce qui t'attend là-bas dort encore." }
+  },
+  mountain: { // v3.489.0 (Montagne) ; veine : le nœud des veines du chemin
+    source: { name: "Une source chaude", text: "De l'eau qui sort de la roche, trop chaude pour la main. Un peu plus loin, elle se boit tiède." },
+    sourceDry: { name: "Une source chaude", text: "Un filet de vapeur et quelques gouttes. Il faut attendre pour une gorgée." },
+    autel: { name: "Une coupe dans la roche", text: "Une coupe taillée dans le basalte, une braise au fond. Elle demande {cost} or. Elle rend une plaie." },
+    autelFree: { name: "Une coupe dans la roche", text: "Une coupe taillée dans le basalte. Elle est déjà pleine. Elle ne demande rien." },
+    trouvaille: { name: "Une trouvaille", text: "Quelque chose posé sur une pierre plate, à l'abri de la cendre. Pas pour toi, mais tu es là." },
+    camp: { name: "Le surplomb", text: "Un surplomb de roche, à l'abri du vent chaud. Sarkel y a laissé une toile." },
+    seuil: { name: "Le seuil", text: "Une arche de basalte, tordue comme une racine. De l'autre côté, la roche est plus chaude. Ce qui t'attend là-bas trie déjà." },
+    veine: { name: "Une veine", text: "Une veine bleue affleure entre deux pierres. Elle bat. Elle ne sait pas que tu es là." }
   }
 };
 
@@ -533,6 +598,17 @@ var PA2_DESTS = {
     tertre: { name: "La rotonde", line: "Une rotonde sous une coupole, un sarcophage au milieu. Une porte basse le ferme.",
       win: "La porte a cédé. Dans le sarcophage, personne. Il reste ce qu'il gardait.",
       fail: "La porte a tenu. Tu repars avec ce que tu portais. Derrière toi, quelqu'un se retourne dans son sommeil." }
+  },
+  mountain: { // v3.489.0 : le trieur, la source chaude, la paroi fermée
+    boss: { name: "Le trieur", line: "Au sommet, un golem de lave plus grand que les autres, assis sur un coffre. Il regarde tes mains.",
+      win: "Il s'effondre en blocs qui fument. Le coffre est là, chaud au toucher.",
+      pass: "Il regarde tes mains. Elles sont vides. Il se lève, et il te laisse passer. Le coffre reste sous lui.",
+      sorted: "Il regarde tes mains. Il a vu la Cendre. Il se lève pour son coffre." },
+    clairiere: { name: "La source chaude", line: "Une source chaude dans un creux de basalte, à l'abri. Rien ne trie ici.",
+      win: "Au bord de l'eau, un galet poli, frais malgré la chaleur." },
+    tertre: { name: "La paroi fermée", line: "Une paroi coupée droit, comme au Replat. Au milieu, une fente, fermée de l'intérieur.",
+      win: "La fente a cédé. Derrière, une niche taillée net. Il reste ce qu'elle gardait.",
+      fail: "La fente a tenu. Tu repars avec ce que tu portais. La roche autour est un peu plus chaude." }
   }
 };
 
@@ -836,11 +912,55 @@ PA2_HOOKS.cloche = {
     other: "Une cloche se tait quand tu entres."
   }
 };
+/* v3.489.0 (Montagne) : deux accroches. Sarkel ne donne jamais rien : la pioche rapportée marque le héros. */
+PA2_HOOKS.pioche = {
+  id: "pioche", worldId: "mountain",
+  title: "La pioche plantée",
+  lede: "Sarkel est rentré sans sa vieille pioche. Il dit qu'il l'a laissée plantée dans une veine, pour la marquer, et qu'il ne remontera pas la chercher.",
+  event: {
+    name: "La pioche",
+    text: "Une vieille pioche plantée dans la roche, le manche usé. Autour du fer, une veine bat plus vite que les autres.",
+    branches: {
+      arracher: { label: "L'arracher pour Sarkel", cost: { breath: 15 }, text: "Tu tires. Le fer sort d'un coup. Derrière lui, la veine se referme, comme une plaie." },
+      laisser: { label: "La laisser plantée", text: "Tu la laisses. La veine continue de battre autour du fer." }
+    }
+  },
+  mark: { branch: "arracher", dmgMult: 1.2 },
+  destRare: { arracher: 1 },
+  echo: {
+    mark: "Tu portes un fer qui a touché la veine. Ce qui trie le sait.",
+    dest: "Sur le fer de la pioche, de la Cendre vive est restée collée."
+  },
+  clairiere: {
+    arracher: "Au bord de la source, une marque de pioche dans la roche, fraîche.",
+    other: "Au bord de la source, une veine bat sous l'eau."
+  }
+};
+PA2_HOOKS.forme = {
+  id: "forme", worldId: "mountain",
+  title: "La petite forme",
+  lede: "Edda dit qu'une forme vous suit depuis le Replat, à distance. Elle ne s'approche pas. Elle compte.",
+  event: {
+    name: "La petite forme",
+    text: "Une forme assise dans la cendre, au bord du sentier. Un façonné, petit, à moitié fini. Il te regarde passer.",
+    branches: {
+      ration: { label: "Lui laisser une ration", cost: { ration: 1 }, text: "Il ne mange pas. Il prend la ration et la tient, comme on tient une chose qu'on ne connaît pas." },
+      passer: { label: "Passer", text: "Tu passes. Il se lève, et il te suit, à distance." }
+    }
+  },
+  campGift: { text: "Au surplomb, la ration est posée sur une pierre, intacte. À côté, un éclat d'obsidienne, poli.", relic: "obsidienne", branches: ["ration"] },
+  echo: {},
+  clairiere: {
+    ration: "Au bord de la source, la petite forme est assise. Elle tient encore la ration.",
+    other: "Au bord de la source, des traces dans la cendre. Petites."
+  }
+};
 var PA2_HOOKS_BY_WORLD = {
   forest: ["chasseur", "gouffre", "pierre", "feu"],
   desert: ["maddoc", "caravane", "sentinelle"],
   ruins: ["carnet", "batisseur", "statue"], // v3.469.3 : deux de plus
-  crypt: ["lampe", "garcon", "cloche"]       // v3.454.0 ; v3.469.3 : deux de plus
+  crypt: ["lampe", "garcon", "cloche"],      // v3.454.0 ; v3.469.3 : deux de plus
+  mountain: ["pioche", "forme"]              // v3.489.0
 };
 
 window.PA2_BAG_SIZE = PA2_BAG_SIZE;

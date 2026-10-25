@@ -18,7 +18,7 @@ var MEMORY_SOUVENIRS = {
 /* Coût de chaque niveau (O11), mesuré au banc : Forêt 5/8/11/14, Désert 20/25/30/35.
    v3.453.0 : règle O16 (sim/offrande-bench.js, N = 14 runs du donjon du monde) — Ruines 35/44/52/62,
    Crypte 77/99/116/138 (provisoire : seul l'acte I existe, ses aventures sont comptées comme aux Ruines). */
-var MEMORY_LEVEL_COSTS = [5, 8, 11, 14, 20, 25, 30, 35, 35, 44, 52, 62, 77, 99, 116, 138];
+var MEMORY_LEVEL_COSTS = [5, 8, 11, 14, 20, 25, 30, 35, 35, 44, 52, 62, 77, 99, 116, 138, 160, 190, 225]; // v3.489.0 : Montagne 17 à 19 (provisoire, au banc ; le 20 vient avec l'acte IV)
 var MEMORY_LEVELS_PER_WORLD = 4;        // O6 : plafond par monde atteint
 var MEMORY_REPRISE_BASE_COST = 500;     // O5 : reprise d'un choix, ×3 à chaque fois ; v3.358.0 : en or (10 Aether × AETHER_GOLD_RATE)
 var MEMORY_REPRISE_MULT = 3;
@@ -35,7 +35,12 @@ var MEMORY_VALUES = {
   pas_encore_rounds: 3,       // Pas encore : 3 rounds au lieu de 2
   main_offrante_mult: 1.5,    // Offrande : +50 % d'Aether
   butin_des_morts: 0.25,      // dormeur réveillé puis vaincu : +25 % d'or (s'ajoute au choix « portent »)
-  rien_ne_dort_pct: 15        // dormeur réveillé puis vaincu : 15 % de chances d'un objet
+  rien_ne_dort_pct: 15,       // dormeur réveillé puis vaincu : 15 % de chances d'un objet
+  // v3.489.0 (Montagne, MT12) : niveaux 17 à 19, au banc
+  peau_basalte_heat: 0.07,    // chaque cran de chaleur : +7 % aux façonnés au lieu de +10 %
+  taille_franche_blade: 0.10, // première taille du combat : +10 % de lame en plus
+  pierre_profonde_uses: 2,    // la Pierre froide sert deux fois de plus
+  pioche_sure_ash: 1          // Coup de pioche : une Cendre vive de plus
 };
 
 /* Les huit niveaux (conception v1.2 §5.3-5.4). `id` est la clé lue par MemoryManager.has().
@@ -156,6 +161,25 @@ var MEMORY_LEVELS = [
       desc: "Une fois par combat, le premier dormeur qui allait se lever seul se rendort." },
     { id: "rien_ne_dort", line: "donner", name: "Rien ne dort pour rien", icon: "images/Icons/memory/rien_ne_dort.webp",
       desc: "Un dormeur réveillé puis vaincu a 15 % de chances de laisser un objet." }
+  ] },
+  /* v3.489.0 (Montagne, acte II, MT12) : niveaux 17 à 19, Garder / Donner. Le jalon 20 vient avec l'acte IV. */
+  { level: 17, theme: "La veine", options: [
+    { id: "peau_basalte", side: "garder", name: "Peau de basalte", icon: "images/Icons/memory/peau_basalte.webp",
+      desc: "Chaque cran de chaleur ne donne que +7 % aux façonnés, au lieu de +10 %." },
+    { id: "taille_franche", side: "donner", name: "Taille franche", icon: "images/Icons/memory/taille_franche.webp",
+      desc: "Ta première taille de chaque combat donne +10 % de lame en plus." }
+  ] },
+  { level: 18, theme: "La Pierre froide", options: [
+    { id: "pierre_profonde", side: "garder", name: "Pierre profonde", icon: "images/Icons/memory/pierre_profonde.webp",
+      desc: "La Pierre froide sert deux fois de plus par parcours." },
+    { id: "cendre_au_pas", side: "donner", name: "Cendre au pas", icon: "images/Icons/memory/cendre_au_pas.webp",
+      desc: "+1 Cendre vive à chaque destination atteinte à la Montagne." }
+  ] },
+  { level: 19, theme: "Sarkel", options: [
+    { id: "fidelite_sarkel", side: "garder", name: "Fidélité de Sarkel", icon: "images/Icons/memory/fidelite_sarkel.webp",
+      desc: "Après un KO, Sarkel revient au combat suivant avec tous ses PV." },
+    { id: "pioche_sure", side: "donner", name: "Pioche sûre", icon: "images/Icons/memory/pioche_sure.webp",
+      desc: "Coup de pioche verse 2 Cendres vives au lieu d'une." }
   ] }
 ];
 

@@ -503,7 +503,8 @@ var StoryQuestManager = {
            SOUS la rareté donnée (hors arme : son type dépend de la classe), sinon tirage habituel. */
         if (reward.equipmentFill && typeof generateEquipmentItem === "function") {
           var ord = window.RARITY_ORDER || [], need = ord.indexOf(reward.equipmentRarity), eq = game.equipped || {};
-          var trous = (window.EQUIPMENT_SLOTS || []).filter(function (sl) { return sl !== "weapon" && (!eq[sl] || ord.indexOf(eq[sl].rarity) < need); });
+          var fw = Number(reward.equipmentFillWorld || 0); // v3.489.0 (Montagne) : une pièce du monde manque aussi
+          var trous = (window.EQUIPMENT_SLOTS || []).filter(function (sl) { return sl !== "weapon" && (!eq[sl] || ord.indexOf(eq[sl].rarity) < need || Number(eq[sl].worldIndex || 0) < fw); });
           if (trous.length) item = generateEquipmentItem(trous[Math.floor(Math.random() * trous.length)], reward.equipmentRarity);
         }
         if (!item) item = (window.LootSystem && typeof LootSystem.rollDropAtRarity === "function") ? LootSystem.rollDropAtRarity(reward.equipmentRarity) : null;

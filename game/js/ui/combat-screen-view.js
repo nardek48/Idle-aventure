@@ -137,6 +137,7 @@
     if (e.downed) push("rising");   // v3.428.2 : à terre, il se relèvera
     if (e.asleep) push("asleep");   // v3.451.0 (Crypte) : il dort
     if (e.callArmed) push("calling"); // v3.454.0 (Crypte) : l'appel du Nécromancien
+    if (e.sortArmed) push("sorting"); // v3.489.0 (Montagne) : le tri du Démon mineur
     if (e.chainArmed) push("chaining"); // v3.456.0 (Crypte) : il lève une chaîne
     if (num(e.engageIn) > 0) push(e.charged ? "stunned" : "approaching", num(e.engageIn)); // v3.477.0 : Charge du Chevalier
     if (e.chargeTelegraphed) push("charge");

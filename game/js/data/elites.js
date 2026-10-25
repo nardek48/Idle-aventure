@@ -243,6 +243,38 @@ var ELITE_DB = {
     repeatable: false
   },
 
+  /* v3.489.0 (Montagne, acte II) — deux élites répétables de la carte, sur les fiches de base (décision Seb
+     du 25/10 : leur image est celle de la base, exception signalée). Chaque victoire : de la Cendre vive,
+     et une chance d'une pièce Épique de la Montagne (winDrop), pour le palier de montagne_09. Au banc. */
+  vieux_golem: {
+    id: "vieux_golem",
+    baseId: "lavagolem",
+    name: "Le Vieux Golem",
+    archetype: "armored",
+    statMult: { endurance: 0.9, power: 3.6, celerity: 0.6 }, // banc (sauvegardes de fin de Crypte, 8 combats) : 100 %, 8 à 10 rounds, 27 à 34 % des PV perdus
+    lore: "Il est plus vieux que la pente. Sa lave a refroidi par endroits, et il continue quand même.",
+    image: "./images/Enemies/lavagolem.webp", // exception : l'image de sa base (Seb, 25/10)
+    questIcon: "./images/Icons/quest_icons/elite/elite2.webp",
+    escort: { members: ["dragonling"], hpMult: 0.3, goldMult: 0.3 },
+    phases: null,
+    repeatable: true,
+    winDrop: { rarity: "epic", chancePct: 35 }
+  },
+  mere_dragonnets: {
+    id: "mere_dragonnets",
+    baseId: "dragonling",
+    name: "La Mère des dragonnets",
+    archetype: "enraged",
+    statMult: { endurance: 1.5, power: 2.6, celerity: 1.2 }, // banc : 100 %, 6 à 10 rounds, 33 à 60 % des PV perdus (Enragée)
+    lore: "Elle ne quitte pas son nid. Ceux qui en sortent volent mal, au début.",
+    image: "./images/Enemies/dragonling.webp", // exception : l'image de sa base (Seb, 25/10)
+    questIcon: "./images/Icons/quest_icons/elite/elite2.webp",
+    escort: { members: ["dragonling", "dragonling"], hpMult: 0.3, goldMult: 0.3 },
+    phases: null,
+    repeatable: true,
+    winDrop: { rarity: "epic", chancePct: 35 }
+  },
+
   arbre_mere: {
     id: "arbre_mere",
     baseId: "foresttroll",

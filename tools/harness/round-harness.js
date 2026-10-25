@@ -12129,7 +12129,9 @@ console.log("\n[159] v3.382.0 — Petites Aventures v2 (PA2-1) : écrans (prépa
     var aFournir = ["images/Icons/scene/items/item_lockpicks.webp", // v3.467.0 : la Trousse, à faire
       "images/Icons/scene/items/item_worm_scale.webp", "images/Icons/scene/items/item_caravan_mat.webp", "images/Icons/scene/items/item_guardian_stone.webp", // v3.469.4 : coffre des autres mondes
       "images/Icons/scene/items/item_well_stone.webp", "images/Icons/scene/items/item_sleeper_sword.webp", "images/Icons/scene/items/item_chapel_candle.webp"]
-      .concat(["perle", "scarabee", "dune", "clou", "fil", "marteau", "meche", "cendre", "cloche"].map(function (id) { return "images/Icons/scene/relics/relic_" + id + ".webp"; })); // v3.469.5 : reliques des mondes
+      .concat(["perle", "scarabee", "dune", "clou", "fil", "marteau", "meche", "cendre", "cloche"].map(function (id) { return "images/Icons/scene/relics/relic_" + id + ".webp"; })) // v3.469.5 : reliques des mondes
+      .concat(["images/Icons/scene/items/item_cold_stone.webp", "images/Icons/scene/items/item_sorter_shard.webp", "images/Icons/scene/items/item_spring_pebble.webp", // v3.489.0 : la Montagne
+        "images/Icons/scene/relics/relic_obsidian.webp", "images/Icons/scene/relics/relic_bellows.webp", "images/Icons/scene/relics/relic_ember_heart.webp", "images/Icons/scene/node_vein.webp"]);
     var absent = dataIcons.filter(function (s) { return !fs.existsSync(path.join(ROOT, s)) && aFournir.indexOf(s) < 0; });
     ok(absent.length === 0, "icônes du mode v2 : toutes présentes, hors celles à fournir (" + dataIcons.length + ")" + (absent.length ? " — manquent " + absent.join(", ") : ""));
   } catch (e) {
@@ -15624,7 +15626,7 @@ console.log("\n[241] v3.453.0 — Voie du Commandement et Mémoire 9 à 16 (Gard
     ok(Math.abs(TM.heroDamageMult({ id: "x" }, G.enemy) - 1) < 1e-9 && G._relaisReady, "Relais : une compétence du héros ne le consomme pas");
     ok(Math.abs(TM.heroDamageMult(null, G.enemy) - 1.4) < 1e-9 && Math.abs(TM.heroDamageMult(null, G.enemy) - 1) < 1e-9, "Relais : +40 % sur l'attaque de base suivante, une fois");
     // --- Mémoire : niveaux, coûts, ligne ---
-    ok(g.MEMORY_LEVEL_COSTS.length === 16 && g.MEMORY_LEVELS.length === 16, "16 niveaux et 16 coûts");
+    ok(g.MEMORY_LEVEL_COSTS.length === g.MEMORY_LEVELS.length && g.MEMORY_LEVELS.length >= 16, "16 niveaux et 16 coûts (v3.489.0 : 19 avec la Montagne)");
     G.worldsEverReached = { 0: true, 1: true, 2: true };
     ok(MM.getCap() === 12, "Ruines : plafond 12");
     G.worldsEverReached[3] = true;
@@ -18189,7 +18191,7 @@ console.log("\n[310] v3.488.0 — Montagne, lot M-2 : acte I « La montée », S
   var gc = SQ.getChoice, gcs = SQ.getCurrentStep, wiAvant = g.WorldManager.worldIndex, xc = g.TalentManager.companionExtraCharges, iu = CM.isUnlocked;
   try {
     var ch = g.STORY_QUESTS.mountain;
-    ok(ch && ch.requiresChapter === "crypt" && ch.worldId === "mountain" && ch.steps.map(function (s) { return s.id; }).join() === "montagne_01,montagne_02,montagne_03,montagne_04,montagne_05", "chapitre V : l'acte I en cinq étapes, ouvert par la fin de la Crypte");
+    ok(ch && ch.requiresChapter === "crypt" && ch.worldId === "mountain" && ch.steps.map(function (s) { return s.id; }).slice(0, 5).join() === "montagne_01,montagne_02,montagne_03,montagne_04,montagne_05", "chapitre V : l'acte I en cinq étapes, ouvert par la fin de la Crypte");
     ok(Object.keys(g.STORY_QUESTS).indexOf("mountain") === Object.keys(g.STORY_QUESTS).indexOf("crypt") + 1, "le chapitre V suit la Crypte");
     var t = g.SceneEngine.getTemplate("traversee_montagne"), st = t && t.parcours.steps;
     ok(t && t.worldId === "mountain" && t.travelOnSuccess.worldId === "mountain" && t.travelOnSuccess.adventureIndex === 0 && t.unlockOnSuccess.unlockFlag === "mountainReached" && t.unlockOnSuccess.completionFlag === "mountainCrossingCompleted", "la montée : passage vers la Montagne, monde posé à l'arrivée");
@@ -18247,6 +18249,96 @@ console.log("\n[310] v3.488.0 — Montagne, lot M-2 : acte I « La montée », S
     ok(false, "[310] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   } finally {
     SQ.getChoice = gc; SQ.getCurrentStep = gcs; g.WorldManager.worldIndex = wiAvant; g.TalentManager.companionExtraCharges = xc; CM.isUnlocked = iu;
+  }
+})();
+
+console.log("\n[311] v3.489.0 — Montagne, lot M-3 : acte II « Ce qui trie »");
+(function () {
+  var S = g.SceneRunManager, P = g.Pa2Run, LM = g.LivingMapManager, SQ = g.StoryQuestManager, V = g.VeinSystem, CE = g.CombatEngine, MM = g.MemoryManager;
+  var wiAvant = g.WorldManager.worldIndex, sr = SQ.isStepReached, mh = MM.has, gc = SQ.getChoice;
+  try {
+    var ch = g.STORY_QUESTS.mountain;
+    ok(ch.steps.map(function (st) { return st.id; }).slice(5, 10).join() === "montagne_06,montagne_07,montagne_08,montagne_09,montagne_10", "acte II : cinq étapes, montagne_06 à montagne_10");
+    ok(g.PA2_MAPS_BY_WORLD.mountain.join() === "montagne_1,montagne_2" && g.SCENE_TEMPLATES.petite_aventure_montagne.boardRequires.storyStep === "montagne_06" && g.PA2_RARE.mountain.resourceId === "cendre_vive", "Petite Aventure de la Montagne : deux cartes, ouverte à montagne_06, Cendre vive au butin");
+    // Un run : la lave, la Pierre froide, les veines du chemin, le gardien qui trie
+    game = freshCombat("knight"); giveWeapon();
+    run("game.enemy = null; game.combat = null;");
+    S.ensureDefaults();
+    game.explorationProgression.petiteAventure = { spent: 0, since: null };
+    game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true, 4: true };
+    var r = S.startRun("petite_aventure_montagne"), r0 = game.sceneRun;
+    ok(r.ok && r0.worldId === "mountain" && r0.band.worldId === "mountain", "départ à la Montagne : tranche plancher de la Montagne");
+    ok(P.addItem("pierre_froide").ok && P.depart().ok && r0.stock.pierre_froide === 2 && r0.lavaRow === -2, "la Pierre froide se prend gratuitement (2), la lave part deux rangées sous la première");
+    var veines = Object.keys(r0.nodes).filter(function (k) { return r0.nodes[k].type === "veine"; });
+    ok(veines.length >= 2, "des veines sur le chemin (" + veines.length + ")");
+    // une veine taillée : Cendre, la lave avance, le trieur ne laisse plus passer
+    var c0 = g.WarehouseManager.getAmount("cendre_vive"), lv0 = r0.lavaRow;
+    r0.at = veines[0]; r0.status = "pa2-node";
+    ok(P.cutVein(true).ok && g.WarehouseManager.getAmount("cendre_vive") > c0 && r0.lavaRow === lv0 + 1 && P.cutCount(r0) === 1, "tailler la veine : de la Cendre vive, la lave avance d'une rangée");
+    // sol qui brûle : une case sous la lave coûte du Souffle, la Pierre froide l'évite
+    var nk = Object.keys(r0.nodes).filter(function (k) { var n = r0.nodes[k]; return n.row === 1 && /obstacle|combat|trouvaille|autel|source|veine/.test(n.type); })[0];
+    r0.lavaRow = 1;
+    ok(P.burnLevel(nk, r0) === 1 && P.burnCost(1, r0) === g.PA2_RULES.burnBreath, "case sous la lave : brûle (" + g.PA2_RULES.burnBreath + " Souffle)");
+    r0.breath = 100; P._burn(r0, nk);
+    ok(r0.stock.pierre_froide === 1 && r0.breath === 100, "la Pierre froide passe la case sans dommage");
+    r0.stock.pierre_froide = 0; P._burn(r0, nk);
+    ok(r0.breath === 100 - g.PA2_RULES.burnBreath, "sans Pierre : −" + g.PA2_RULES.burnBreath + " Souffle");
+    var camp = Object.keys(r0.nodes).filter(function (k) { return r0.nodes[k].type === "camp"; })[0];
+    r0.lavaRow = 9; ok(P.burnLevel(camp, r0) === 0, "le camp ne brûle jamais");
+    P._advanceLava(r0, r0.nodes[camp]); ok(r0.lavaRow === r0.nodes[camp].row - 1, "au camp, on distance la lave");
+    var boss = Object.keys(r0.nodes).filter(function (k) { return r0.nodes[k].type === "boss"; })[0];
+    r0.at = boss; r0.status = "pa2-node";
+    ok(P.guardianSorts(r0) && !P.canPassGuardian(), "veine taillée : le trieur se bat pour son coffre");
+    r0.flags.veinsCut = 0;
+    ok(P.canPassGuardian() && P.passGuardian().ok && r0.flags.guardianPassed && r0.end && r0.end.dest === "boss", "rien taillé : il laisse passer, destination atteinte sans combat");
+    // La carte vivante : veines, chaleur, La coulée
+    var map = g.LIVING_MAPS.mountain, bad = [];
+    map.sectors.forEach(function (d) { d.neighbors.forEach(function (nb) { var o = LM.getSectorDef("mountain", nb); if (!o || o.neighbors.indexOf(d.id) < 0) bad.push(d.id + ">" + nb); }); });
+    ok(map.sectors.length === 11 && !bad.length && map.opensAtStoryStep === "montagne_07" && map.village.name === "Le Replat", "carte de la Montagne : 11 secteurs, voisins réciproques, le Replat, ouverte à montagne_07");
+    LM.ensureDefaults();
+    LM._cutVein("mountain", "pente_grise"); LM._cutVein("mountain", "pente_grise");
+    ok(LM.heatOf("mountain", "pente_grise") === 2, "deux veines taillées : chaleur 2");
+    LM.getState("mountain", "pente_grise").heatDay = new Date(Date.now() - 86400000).toDateString();
+    ok(LM.heatOf("mountain", "pente_grise") === 1, "un jour plus tard : la chaleur retombe d'un cran");
+    var rep = LM.onRunEnd("mountain", "ruisseaux", "fail");
+    ok(rep.hostile && LM.isHostile("mountain", "ruisseaux") && /coulée/.test(rep.message), "La coulée : secteur sous la lave jusqu'au lendemain, rien n'est repris");
+    var fake = { livingMap: { mapId: "mountain", sectorId: "pente_grise", wake: true }, ring: "sentier" };
+    ok(Math.abs(P.gisantsMult(fake) - 1.1) < 1e-9, "secteur à la chaleur 1 : combats ×1,1");
+    ok(g.CARAVAN_RARE_BY_WORLD[4] === "cendre_vive" && g.CARAVAN_WORLD_MARKETS.mountain.requiresStoryStep === "montagne_07" && map.caravanMarket, "Marché de la Montagne : Cendre vive, ouvert à montagne_07, sur la carte");
+    ok(g.ELITE_DB.vieux_golem.winDrop.rarity === "epic" && g.ELITE_DB.mere_dragonnets.repeatable, "deux élites répétables, une chance d'Épique à chaque victoire");
+    // Le tri du Démon mineur
+    game = freshCombat("knight");
+    g.WorldManager.worldIndex = 4;
+    SQ.isStepReached = function (id) { return id === "montagne_08" ? true : sr.call(SQ, id); };
+    SQ.getChoice = function () { return null; };
+    var mk = function (id) { var d = g.ENEMY_DB[id]; return { id: id, name: d.name, isBoss: false, archetype: null, hp: 1e6, maxHp: 1e6, stats: d.stats, resists: [], weak: [], goldReward: 20 }; };
+    CE.spawnGroup([mk("minordemon"), mk("lavagolem")]);
+    var dem = g.CombatActors.enemies().filter(function (e) { return e.id === "minordemon"; })[0];
+    V.onEnemyTurn(dem);
+    ok(!dem.sortArmed, "personne n'a taillé : pas de tri");
+    V.cut(true); V.onEnemyTurn(dem);
+    ok(dem.sortArmed, "le héros taille : le Démon mineur annonce le tri");
+    V.onEnemyTurn(dem); var t = V.takeSort(dem);
+    ok(t && g.CombatActors.isHero(t.actor) && t.mult === 1.5 && !V.takeSort(dem), "au tour suivant : il frappe celui qui a taillé, +50 %, une fois");
+    ok(g.ENEMY_DB.minordemon.support && g.COMBAT_STATES_SCREEN.sorting, "il est un soutien (réglage « Cible ») ; l'état « Tri » s'affiche");
+    var src = fs.readFileSync(path.join(ROOT, "js/systems/combat-engine.js"), "utf8");
+    ok(/VeinSystem\.takeSort\(e\)/.test(src) && /VeinSystem\.onEnemyTurn\(e\)/.test(src), "combat-engine.js : le tri est branché sur la frappe ennemie");
+    // Le palier : seuls les Épiques de la Montagne comptent
+    game.equipped = {};
+    g.EQUIPMENT_SLOTS.forEach(function (sl, i) { game.equipped[sl] = { slot: sl, rarity: "epic", worldIndex: i < 4 ? 4 : 3 }; });
+    ok(g.storyPalierMontagne(game).pieces === 4 && g.STORY_PALIER_MONTAGNE.pieces === 5, "palier : 4 Épiques de la Montagne sur 7 portés, il en faut 5 (ceux d'en bas ne comptent pas)");
+    // La Mémoire 17 à 19
+    ok(g.MEMORY_LEVELS.filter(function (l) { return l.level >= 17 && l.level <= 19; }).length === 3 && g.MEMORY_LEVEL_COSTS.length === 19, "Mémoire 17 à 19 écrite, coûts dans la courbe");
+    MM.has = function (id) { return id === "peau_basalte" || id === "taille_franche" || id === "pioche_sure"; };
+    CE.spawnGroup([mk("ifrit")]); V.cut(true);
+    ok(Math.abs(V.heatMult() - 1.07) < 1e-9 && Math.abs(V.bladeMult() - 1.25) < 1e-9, "Peau de basalte (+7 %) et Taille franche (+10 % à la première taille)");
+    V.cut(false, "sarkel");
+    var a0 = g.WarehouseManager.getAmount("cendre_vive"); game.enemy.hp = 1; CE.killEnemy(game.enemy);
+    ok(g.WarehouseManager.getAmount("cendre_vive") - a0 === 3, "Pioche sûre : la taille de Sarkel verse une Cendre de plus");
+  } catch (err) {
+    ok(false, "[311] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  } finally {
+    SQ.isStepReached = sr; MM.has = mh; SQ.getChoice = gc; g.WorldManager.worldIndex = wiAvant;
   }
 })();
 

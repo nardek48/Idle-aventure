@@ -52,7 +52,8 @@ var PA2_ICONS = {
   chest: "images/Icons/dungeon/dungeon_guaranteed_loot.webp",
   wound: "images/Icons/scene/ui/ui_wound.webp",
   hero: "images/Icons/scene/ui/ui_hero_marker.webp",
-  title: "images/Icons/scene/path_easy.webp"
+  title: "images/Icons/scene/path_easy.webp",
+  veine: "images/Icons/scene/node_vein.webp" // v3.489.0 (Montagne) : à générer, icône générique en attendant
 };
 
 var PA2_CRAN_WORD = { sur: _t("Sûr"), probable: _t("Probable"), risque: _t("Risqué"), desespere: _t("Désespéré") };
@@ -439,6 +440,7 @@ function pa2HudHTML(run) {
   });
   if (run.stock.corde > 0) chips += '<span class="pa2-chip" title="' + esc(pa2ItemName("corde")) + '">' + pa2Img(PA2_ITEMS.corde.icon) + '×' + run.stock.corde + '</span>';
   if (run.stock.trousse > 0) chips += '<span class="pa2-chip" title="' + esc(pa2ItemName("trousse")) + '">' + pa2Img(PA2_ITEMS.trousse.icon) + '×' + run.stock.trousse + '</span>';
+  if (run.stock.pierre_froide > 0) chips += '<span class="pa2-chip" title="' + esc(pa2ItemName("pierre_froide")) + '">' + pa2Img(PA2_ITEMS.pierre_froide.icon) + '×' + run.stock.pierre_froide + '</span>'; // v3.489.0
   chips = pa2CondChipHTML(run) + pa2FxChipsHTML(run) + chips; // v3.467.0 : effets des pièges en cours ; v3.469.0 : la condition, en tête
   // v3.454.0 (Crypte) : la Lanterne, à allumer ; allumée, le nombre de pas qu'il lui reste
   if (Number(run.lanternLeft || 0) > 0) chips += '<span class="pa2-chip is-lit" title="' + esc(pa2ItemName("lanterne")) + '">' + pa2Img(PA2_ITEMS.lanterne.icon) + esc(_tn(run.lanternLeft, "{n} pas", "{n} pas")) + '</span>';
@@ -573,6 +575,11 @@ function pa2MapHTML(run) {
   var veil = run.parcours ? (map.image ? '.45' : '0') : (here && here.act === 3 ? '.9' : '.84'); // parcours : le chemin se voit en entier
   svg += '<rect x="0" y="0" width="' + W + '" height="' + H + '" fill="#050302" opacity="' + veil + '" mask="url(#pa2-fog)"/>';
   svg += '<circle cx="' + cur.x + '" cy="' + cur.y + '" r="' + Math.round(light * 0.8) + '" fill="url(#pa2-glow)"/>';
+  // v3.489.0 (Montagne) : le sol qui brûle, une lueur de lave sous chaque case brûlante en vue
+  if (run.lavaRow != null || run.nodes) Object.keys(map.nodes).forEach(function (k) {
+    var lv = Pa2Run.burnLevel(k, run), d = map.nodes[k];
+    if (lv && Pa2Run.isShown(k, run)) svg += '<circle cx="' + d.x + '" cy="' + d.y + '" r="' + Math.round((44 + 10 * lv) * K) + '" fill="#ff5a1f" opacity="' + (0.22 + 0.1 * lv).toFixed(2) + '"/>';
+  });
   // Seuls les sentiers possibles (pointillés dorés) et la trace parcourue sont dessinés.
   var runLinks = Pa2Run.links(run); // v3.429.0 : les murs qui ont bougé
   Object.keys(runLinks).forEach(function (a) {
@@ -593,7 +600,7 @@ function pa2MapHTML(run) {
     var d = map.nodes[k], n = Pa2Run.node(k, run), isOpen = open.indexOf(k) >= 0, isCur = k === run.at;
     var vis = Pa2Run.isVisible(k, run), type = vis ? n.type : "unknown";
     var cls = "pa2-node t-" + type + (Pa2Run.isDest(n, run) ? " is-dest" : "") + (n.type === "camp" || n.type === "seuil" || n.type === "depart" ? " is-mark" : "") +
-      (isOpen ? " is-open" : "") + (isCur ? " is-cur" : "") + (n.done && !isCur ? " is-done" : "");
+      (isOpen ? " is-open" : "") + (isCur ? " is-cur" : "") + (n.done && !isCur ? " is-done" : "") + (Pa2Run.burnLevel(k, run) ? " is-burning" : "");
     var label = vis ? pa2NodeLabel(run, n) : _t("Inconnu");
     nodes += '<button type="button" class="' + cls + '" style="left:' + (100 * d.x / W).toFixed(2) + '%;top:' + (100 * d.y / H).toFixed(2) + '%"' +
       (isOpen ? ' onclick="pa2Move(\'' + k + '\')"' : ' tabindex="-1"') + ' aria-label="' + esc(label) + '">' + pa2Img(PA2_ICONS[type] || PA2_ICONS.unknown) + '</button>';
@@ -618,15 +625,16 @@ function pa2MapHTML(run) {
   if (trapSvg) trapSvg = '<svg class="pa2-trap-svg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true">' + trapSvg + '</svg>';
   var from = pa2View.fromKey ? (pa2View.fromMid ? pa2Mid(map, pa2View.fromKey + ">" + run.at) : map.nodes[pa2View.fromKey]) : (run.trap ? pa2Mid(map, run.trap.key) : cur);
   var marker = '<img class="pa2-hero-mark" id="pa2-hero-mark" src="' + esc(PA2_ICONS.hero) + '" alt="" style="left:' + (100 * from.x / W).toFixed(2) + '%;top:' + (100 * from.y / H).toFixed(2) + '%">';
+  // v3.489.0 : image pas encore livrée (Montagne) -> le fond parchemin
   return '<div class="pa2-map" id="pa2-map">' +
-    (map.image ? '<img class="pa2-map-img" src="' + esc(map.image) + '" alt="">' : '<div class="pa2-map-img pa2-parchment"></div>') + svg + trapSvg + nodes + traps + marker + '</div>';
+    (map.image ? '<img class="pa2-map-img" src="' + esc(map.image) + '" alt="" onerror="this.removeAttribute(\'src\');this.classList.add(\'pa2-img-missing\')">' : '<div class="pa2-map-img pa2-parchment"></div>') + svg + trapSvg + nodes + traps + marker + '</div>';
 }
 
 function pa2NodeLabel(run, n) {
   var d = pa2Dests(run);
   var names = {
     obstacle: _t("Obstacle"), combat: _t("Combat"), source: _t("Source"), autel: _t("Autel"), trouvaille: _t("Trouvaille"),
-    evenement: _t("Rencontre"), camp: _t("Le camp"), seuil: _t("Le seuil"), depart: _t("Le village")
+    evenement: _t("Rencontre"), camp: _t("Le camp"), seuil: _t("Le seuil"), depart: _t("Le village"), veine: _t("Veine")
   };
   if (d[n.type]) return _td(d[n.type].name);
   return names[n.type] || "";
@@ -925,6 +933,7 @@ function pa2ActKicker(n, what) {
 function pa2SheetBody(run, n, st) {
   var h = pa2EchoHTML(n, st) + (run.wallNote && st && st.step === "intro" ? '<p class="pa2-echo">' + esc(run.wallNote) + '</p>' : ""), dests = pa2Dests(run), hook = pa2Hook(run), R = PA2_RULES;
   if (run.fxNote && st && st.step === "intro") h += '<p class="pa2-echo is-red">' + esc(run.fxNote) + '</p>'; // v3.467.0 : le Venin
+  if (run.burnNote && st && st.step === "intro") h += '<p class="pa2-echo is-red">' + esc(run.burnNote) + '</p>'; // v3.489.0 : le sol qui brûle
   switch (n.type) {
     case "obstacle":
     case "tertre": {
@@ -977,9 +986,14 @@ function pa2SheetBody(run, n, st) {
           h += pa2ApproachButton("tenir", sur, loss, true);
         } else {
           ["charger", "tenir"].forEach(function (id) { h += pa2ApproachButton(id, pv[id], pv[id].hpLoss, false); });
-          if (boss && Pa2Run.canPassGuardian()) { // v3.454.0 (Crypte) : le gardien dort
+          if (boss && Pa2Run.canPassGuardian() && Pa2Run.guardianSorts(run)) { // v3.489.0 (Montagne) : le trieur, mains vides
+            h += '<button type="button" class="pa2-choice" onclick="pa2PassGuardian()">' + pa2Img(PA2_ICONS.ruse) + '<span class="pa2-t">' + esc(_t("Montrer tes mains vides")) + '</span>' +
+              '<span class="pa2-s">' + esc(_t("Tu n'as rien taillé. Il te laisse passer, mais son coffre reste sous lui.")) + '</span></button>';
+          } else if (boss && Pa2Run.canPassGuardian()) { // v3.454.0 (Crypte) : le gardien dort
             h += '<button type="button" class="pa2-choice" onclick="pa2PassGuardian()">' + pa2Img(PA2_ICONS.ruse) + '<span class="pa2-t">' + esc(_t("Faire le tour")) + '</span>' +
               '<span class="pa2-s">' + esc(_t("Il dort. Tu atteins la destination sans combat, mais son coffre reste sous lui.")) + '</span></button>';
+          } else if (boss && Pa2Run.guardianSorts(run) && dests.boss.sorted) {
+            h += '<p class="pa2-sim is-red">' + esc(_td(dests.boss.sorted)) + '</p>';
           }
           if (!boss && pv.ruseBlocked) { // v3.467.0 : l'Alarme a sonné, ils sont un de plus et t'attendent
             h += '<button type="button" class="pa2-choice" disabled>' + pa2Img(PA2_ICONS.ruse) + '<span class="pa2-t">' + esc(_t("Ruser")) + '</span>' +
@@ -1001,6 +1015,17 @@ function pa2SheetBody(run, n, st) {
         h += '<div class="pa2-rounds" id="pa2-rounds">' + (st.shown ? pa2RoundsHTML(st, st.res.parts.length) : "") + '</div>';
         h += '<div id="pa2-outcome" class="' + (st.shown ? "" : "is-hidden") + '">' + pa2FightOutcome(run, n, st.res) + '</div>';
       }
+      break;
+    }
+
+    case "veine": { // v3.489.0 (Montagne, MT10) : les veines du chemin
+      var vp = Pa2Run.place(run, "veine"), va = Pa2Run.veinAsh(run);
+      h += pa2Head(run, n, _td(vp.name), pa2ActKicker(n, _t("Veine")));
+      h += '<p class="pa2-narr">' + esc(_td(vp.text)) + '</p><div class="pa2-choices">';
+      h += '<button type="button" class="pa2-choice" onclick="pa2Vein(true)">' + pa2Img(PA2_ICONS.veine) + '<span class="pa2-t">' + esc(_t("La tailler")) + '</span>' +
+        '<span class="pa2-cost is-gold">' + esc(_t("+{a} à {b} {x}", { a: va.min, b: va.max, x: pa2RareName(run.worldId) })) + '</span>' +
+        '<span class="pa2-s">' + esc(_t("La lave avance d'une rangée. Au bout, le gardien saura que tu as pris.")) + '</span></button>';
+      h += '<button type="button" class="pa2-choice is-noicon" onclick="pa2Vein(false)"><span class="pa2-t">' + esc(_t("La laisser")) + '</span><span class="pa2-s">' + esc(_t("Rien ne change. Tu passes.")) + '</span></button></div>';
       break;
     }
 
@@ -1338,6 +1363,7 @@ function pa2Quick(fn, toast) {
   return r;
 }
 function pa2Drink() { if (pa2Quick(function () { return Pa2Run.drink(); })) pa2CloseSheet(); }
+function pa2Vein(take) { if (pa2Quick(function () { return Pa2Run.cutVein(take); })) pa2CloseSheet(); } // v3.489.0
 function pa2Altar(accept) { if (pa2Quick(function () { return Pa2Run.altar(accept); })) pa2CloseSheet(); }
 
 function pa2Flip() {
@@ -1399,8 +1425,8 @@ function buildPa2EndHTML(run) {
   } else if (e.how === "abandon") {
     title = _t("Tu fais demi-tour");
     text = _t("Tu rentres sans finir. Une part du butin reste en route.");
-  } else if (e.dest === "boss" && run.flags.guardianPassed) { // v3.454.0 (Crypte) : on a fait le tour
-    icon = PA2_ICONS.boss; title = _t("{n} dort encore", { n: _td(dests.boss.name) }); text = _td(dests.boss.pass || "");
+  } else if (e.dest === "boss" && run.flags.guardianPassed) { // v3.454.0 (Crypte) : on a fait le tour ; v3.489.0 : le trieur laisse passer
+    icon = PA2_ICONS.boss; title = Pa2Run.guardianSorts(run) ? _t("{n} te laisse passer", { n: _td(dests.boss.name) }) : _t("{n} dort encore", { n: _td(dests.boss.name) }); text = _td(dests.boss.pass || "");
   } else if (e.dest === "boss") {
     icon = PA2_ICONS.boss; title = _t("{n} est tombé", { n: _td(dests.boss.name) }); text = _td(dests.boss.win);
   } else if (e.dest === "clairiere") {
