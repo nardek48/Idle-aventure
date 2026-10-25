@@ -663,7 +663,7 @@ function buildTransmuteBoardHTML() {
        + (slotLabel === _td(item.name) ? '' : ' <span class="forge-row-level">' + esc(slotLabel) + '</span>') + '</div>';
     aff.forEach(function (a, i) {
       var reason = EM.getTransmuteBlockReason(item, i), cost = EM.getTransmuteCost(item, i), n = EM.getTransmuteCount(item, i);
-      var opts = EM.getTransmuteOptions(item, i), poor = reason === _t("Ressources manquantes");
+      var opts = EM.getTransmuteOptions(item, i), poor = reason === _t("Pas assez d'or"); // v3.483.0 : le blocage de l'or s'appelle ainsi
       h += '<div class="forge-row"><div class="forge-row-main ench-tr-main">';
       h += '<div class="forge-row-name">' + esc(formatEquipmentStatValue(a.stat, a.value))
          + (n > 0 ? ' <span class="forge-row-level">' + _tn(n, "{n} transmutation", "{n} transmutations") + '</span>' : '') + '</div>';

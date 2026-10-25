@@ -2,7 +2,7 @@
 /* data/tavern-contracts.js — v3.217.0 (lot V-6) : contrats de livraison de la Taverne.
 
    CE QUE C'EST : un débouché pour le surplus de Production. Le joueur livre des
-   ressources, il est payé mieux qu'en les vendant à l'Entrepôt. C'est le seul
+   ressources contre de l'or (l'Entrepôt ne rachète plus rien depuis la v3.330.0). C'est le seul
    endroit du jeu où produire beaucoup d'une même chose rapporte plus que la
    vente au détail.
 

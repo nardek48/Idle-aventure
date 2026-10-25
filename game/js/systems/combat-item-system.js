@@ -146,7 +146,7 @@ CombatItems.onSortieEnd = function (s) {
     var it = COMBAT_ITEMS[id];
     if (!it || !it.returnIfUnused || (id === "fiole_noire" && s.fioleUsed)) return;
     WarehouseManager.addResource(id, 1, true);
-    addLog("🎒 " + _t("{x} n'a pas servi : rangée dans le Sac.", { x: _td(it.name) }), "event");
+    addLog("🎒 " + _t("{x} n'a pas servi : rendue à l'Entrepôt.", { x: _td(it.name) }), "event");
   });
 };
 

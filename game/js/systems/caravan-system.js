@@ -44,7 +44,7 @@ var CARAVAN_TRIP_ORDER = ["court", "moyen", "long"];
 var CARAVAN_EXCLUDED = []; // v3.480.0 (refonte de l'économie RE-3) : le Bois et le Fer partent aussi ; la moitié du plafond reste au village
 var CARAVAN_CAPACITY_PER_LEVEL = 0.10;   // +10 % par niveau de Halle au-delà du premier
 var CARAVAN_KEEP_SHARE = 0.5;            // la moitié basse du plafond ne part jamais
-/* Matériau rare rapporté par le trajet Long : celui du monde où l'on se trouve au départ. */
+/* Matériau rare rapporté par le trajet Long : celui du monde du marché choisi (v3.426.0). */
 var CARAVAN_RARE_BY_WORLD = { 0: "seve_aeswyn", 1: "verre_des_dunes", 2: "pierre_errante", 3: "cire_sepulcre" }; // v3.452.0 : la Crypte
 /* v3.428.0 (Ruines, étape ruines_04) : marchés SANS carte vivante. Les Ruines n'ont pas encore
    de carte (lot U-5) : leur marché s'ouvre par l'Histoire. mapId sert d'identifiant de marché. */

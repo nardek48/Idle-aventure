@@ -228,7 +228,7 @@ var PA2_RARE = {
 var PA2_MEMORY_DEST_RARE = { ruins: "pierre_de_plus", crypt: "cire_chaude" };
 
 /* Coffre d'expédition : destination -> objet débloqué (V12, Q8). */
-/* v3.387.0 : par monde. Le Désert n'a pas encore ses objets (il faudrait leurs icônes). */
+/* v3.387.0 : par monde ; v3.469.4 : un coffre dans chaque monde. */
 var PA2_CHEST_REWARDS = {
   forest: { boss: "bois", clairiere: "veilleurs" },
   desert: { boss: "ecaille", clairiere: "natte" },           // v3.469.4 (PA-R1)

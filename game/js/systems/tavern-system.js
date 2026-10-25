@@ -8,9 +8,8 @@
    reste affiché barré jusqu'au renouvellement : le joueur voit ce qu'il a déjà
    fait, plutôt qu'une ligne qui s'évapore.
 
-   Nombre de contrats simultanés = 1 + niveau/2, soit 1 à 5. C'est le seul effet
-   du bâtiment : la Taverne ne change pas la valeur des contrats, elle en donne
-   davantage à la fois.
+   Nombre de contrats simultanés = niveau + 1, soit 2 à 7 (v3.418.0) ; la Taverne 6
+   paie aussi les contrats 15 % de plus (v3.456.9).
 
    Toute écriture de ressource passe par WarehouseManager. */
 
@@ -190,7 +189,7 @@ var TavernManager = {
     if (window.AchievementManager) AchievementManager.onTavernDelivered(); // v3.338.0 : « Pilier de la Taverne »
 
     addLog("🍺 " + _t("Contrat honoré : {x} (+{n} or)", { x: _td(c.title), n: formatNumber(payout) }), "event");
-    showToast(_t("+{n} or", { n: formatNumber(c.reward) }), 1400);
+    showToast(_t("+{n} or", { n: formatNumber(payout) }), 1400); // v3.483.0 (audit) : l'or réellement versé (Campement tenu compris)
 
     if (typeof renderAll === "function") renderAll();
     saveGame();

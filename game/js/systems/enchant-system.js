@@ -112,7 +112,7 @@ var EnchantManager = {
       var need = this.getRequiredLevel(item.rarity);
       return need ? _t("Niveau {n} requis", { n: need }) : _t("Aucun bonus");
     }
-    if (!this.canAfford(item, index)) return _t("Ressources manquantes");
+    if (!this.canAfford(item, index)) return _t("Pas assez d'or"); // v3.483.0 (audit) : la relance se paie en or seul
     return null;
   },
 
@@ -173,10 +173,10 @@ var EnchantManager = {
   // Mêmes verrous que la relance, au prix de la transmutation ; null si possible
   getTransmuteBlockReason: function (item, index) {
     var reason = this.getBlockReason(item, index);
-    if (reason && reason !== _t("Ressources manquantes")) return reason;
+    if (reason && reason !== _t("Pas assez d'or")) return reason;
     if (!this.getTransmuteOptions(item, index).length) return _t("Aucune autre stat possible sur cette pièce");
     var cost = this.getTransmuteCost(item, index);
-    if (!cost || Number(game.gold || 0) < cost.gold) return _t("Ressources manquantes");
+    if (!cost || Number(game.gold || 0) < cost.gold) return _t("Pas assez d'or");
     return null;
   },
 

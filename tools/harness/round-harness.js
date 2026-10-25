@@ -4811,7 +4811,7 @@ console.log("\n[38b] v3.229.0 \u2014 Enchanteresse : relance de la valeur d'un b
   ok(g.EnchantManager.getBlockReason(item, 0) === "Enchanteresse non construite", "blocage : non construite");
   setLevel(1);
   g.game.gold = 0;
-  ok(g.EnchantManager.getBlockReason(item, 0) === "Ressources manquantes", "blocage : ressources");
+  ok(g.EnchantManager.getBlockReason(item, 0) === "Pas assez d'or", "blocage : l'or (v3.483.0 : « Pas assez d'or », la relance se paie en or seul)");
   ok(g.EnchantManager.getBlockReason(item, 9) === "Aucun bonus", "blocage : ligne inexistante, jamais d'erreur");
   var epic = { slot: "ring", rarity: "epic", worldIndex: 0, affixes: [{ stat: "tapDmg", value: 10, tier: "P" }] };
   ok(g.EnchantManager.getBlockReason(epic, 0) === "Niveau 2 requis", "blocage : dit QUEL niveau ouvre cette raret\u00e9");
@@ -16966,7 +16966,7 @@ console.log("\n[279] v3.465.0 — Enchanteresse : la transmutation (conception v
   game.dungeonShopLevels = { d_doigte: 1 };
   ok(EM.getTransmuteCost(w, 1).gold === 31500, "Doigté 1 : −10 % (31 500)");
   game.gold = 100;
-  ok(EM.getTransmuteBlockReason(w, 1) === "Ressources manquantes" && EM.transmute(w, 1, "goldMult") === false && w.affixes[1].stat === "xpMult", "sans l'or : refusé, rien ne change");
+  ok(EM.getTransmuteBlockReason(w, 1) === "Pas assez d'or" && EM.transmute(w, 1, "goldMult") === false && w.affixes[1].stat === "xpMult", "sans l'or : refusé, rien ne change");
   // pièce dont le groupe est plein : aucun choix
   var a = { uid: "t279b", slot: "armor", name: "Cuirasse", rarity: "epic", stat: "defense", value: 0.04, worldIndex: 3,
     affixes: [{ stat: "maxHpPct", value: 0.12, tier: "P" }, { stat: "autoDps", value: 25, tier: "P" }, { stat: "critChance", value: 5, tier: "P" }] };
@@ -17970,6 +17970,17 @@ console.log("\n[303] v3.482.0 — Refonte de l'économie RE-5 : fin des sources 
   game.dungeonRun = { active: false };
   ok(q1 === 0 && q2 === 3 && g.WarehouseManager.getAmount("cire_sepulcre") - w0 === 3, "Veillée : pas de Cire en mode libre, +1 par dormeur ailleurs");
   SQ.getChoice = gc;
+})();
+
+console.log("\n[304] v3.483.0 — Refonte de l'économie F6 : textes et commentaires de l'audit");
+(function () {
+  var R = g.WAREHOUSE_RESOURCES;
+  ok(R.seve_aeswyn.sourceHint.indexOf("Ce que les bêtes ont bu") !== -1 && R.verre_des_dunes.sourceHint.indexOf("Dard des profondeurs") !== -1
+    && R.pierre_errante.sourceHint.indexOf("Labyrinthe") !== -1 && R.cire_sepulcre.sourceHint.indexOf("Ossuaire") !== -1, "« où trouver » : chasse à la Sève, Dard, Labyrinthe, Ossuaire cités");
+  var src = function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); };
+  ok(src("js/systems/tavern-system.js").indexOf('formatNumber(payout) }), 1400)') !== -1, "Taverne : la notification affiche l'or réellement versé");
+  ok(src("js/systems/combat-item-system.js").indexOf("rendue à l'Entrepôt") !== -1 && src("js/systems/combat-item-system.js").indexOf("rangée dans le Sac") === -1, "Fiole noire : « rendue à l'Entrepôt »");
+  ok(src("js/systems/enchant-system.js").indexOf("Ressources manquantes") === -1 && src("js/ui/village-building-view.js").indexOf('poor = reason === _t("Pas assez d\'or")') !== -1, "Enchanteresse : « Pas assez d'or », et la vue le reconnaît");
 })();
 
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));

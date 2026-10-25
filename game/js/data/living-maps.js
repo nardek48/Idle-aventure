@@ -27,7 +27,7 @@
 var LIVING_MAP_RULES = {
   /* §6.2 : l'anneau fixe la difficulté — ids de PA2_RINGS (data/pa2-content.js). */
   ringIntensity: { 1: "sentier", 2: "chemin", 3: "periple" },
-  /* §4.4 : Sève d'Aeswyn à la première libération, jamais aux reprises. À confirmer au banc (sim/map-bench.js). */
+  /* §4.4 : ressource rare de la carte à la première libération, jamais aux reprises (Sève en Forêt). */
   firstReward: { 1: 5, 2: 8, 3: 12 },
   seveResourceId: "seve_aeswyn",
   /* Arbre-mère (C-5) : élite répétable à frein interne. Chaque victoire du jour durcit la
