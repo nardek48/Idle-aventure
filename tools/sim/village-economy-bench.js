@@ -108,7 +108,7 @@ function buildSandbox() {
 
 /* ---------- Grille actée (D11/D12, Conception Désert v1.3 §11) ---------- */
 var FOREST_CAPS = { workshop: 4, training: 4, hall: 4, warehouse: 3, palisade: 3, tavern: 2, apothecary: 2, forge: 0, enchanter: 0 };
-var FOREST_RANKS = { training: 1, apothecary: 2, forge: 2, enchanter: 2, palisade: 2, warehouse: 3, hall: 2, tavern: 2 }; // v3.474.0 : rangs du jeu (Halle et Taverne à 2 depuis v3.418.0)
+var FOREST_RANKS = { training: 1, apothecary: 2, forge: 2, enchanter: 2, palisade: 2, warehouse: 3, hall: 2, tavern: 2 }; // 25/10/2026 (refonte de l'économie) : rangs du jeu (Halle et Taverne à 2 depuis v3.418.0)
 var PROD_IDS = ["sawmill", "quarry", "mine", "well", "farm", "hunt"];
 
 /* Minutes de jeu ACTIF à partir desquelles chaque porte s'ouvre (hypothèse à
@@ -175,7 +175,7 @@ function campaign(scen, prof) {
   run("VILLAGE_RANK_THRESHOLDS = [1, 2, 3, 4];");
   Object.keys(FOREST_CAPS).forEach(function (id) { g.VILLAGE_BUILDINGS[id].maxLevel = FOREST_CAPS[id]; });
   Object.keys(FOREST_RANKS).forEach(function (id) { g.VILLAGE_BUILDINGS[id].rank = FOREST_RANKS[id]; });
-  // v3.474.0 : sans Histoire jouée, le plafond du Terrain par acte (v3.325.0) bloquait le Terrain à 0 ; on prend celui de la Forêt
+  // 25/10/2026 : sans Histoire jouée, le plafond du Terrain par acte (v3.325.0) bloquait le Terrain à 0 ; on prend celui de la Forêt
   g.WorldCaps.getTrainingActCap = function () { return FOREST_CAPS.training; };
   // Paliers de coût remplacés en entier (calibrage) : { id: [costTiers...] }
   Object.keys(scen.tiers || {}).forEach(function (id) { g.VILLAGE_BUILDINGS[id].costTiers = JSON.parse(JSON.stringify(scen.tiers[id])); });
