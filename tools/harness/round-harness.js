@@ -3829,19 +3829,19 @@ console.log("\n[23b] v3.214.0 (lot V-3) \u2014 Mat\u00e9riau de monde et atelier
   g.game.village.buildings.workshop.level = 1; // rang 1 : sinon c'est le rang qui bloque, pas les matériaux
   g.game.village.buildings.training.level = 10;
   var cout = M.getNextCost("training");
-  ok(!!cout && cout.resine_durcie > 0, "le 11e niveau du Terrain exige la R\u00e9sine durcie");
+  ok(!!cout && cout.verre_trempe > 0, "le 11e niveau du Terrain exige un mat\u00e9riau de monde (v3.481.0 : le Verre trempé, la Résine avant)");
 
-  g.WarehouseManager.removeResource("resine_durcie", g.WarehouseManager.getAmount("resine_durcie"));
+  g.WarehouseManager.removeResource("verre_trempe", g.WarehouseManager.getAmount("verre_trempe"));
   g.game.gold = 10000000;
   g.WarehouseManager.addResource("planche", 100000);
   g.WarehouseManager.addResource("pierre", 100000);
   g.WarehouseManager.addResource("lingot", 100000);
   ok(M.getAffordability("training").all === false,
-    "sans R\u00e9sine, l'or et les mat\u00e9riaux courants ne suffisent plus");
+    "sans Verre trempé, l'or et les mat\u00e9riaux courants ne suffisent plus");
   ok(M.getBlockReason("training") === "Mat\u00e9riaux manquants", "...et le chantier le dit");
 
-  g.WarehouseManager.addResource("resine_durcie", 999);
-  ok(M.getAffordability("training").all === true, "avec la R\u00e9sine, le chantier repart");
+  g.WarehouseManager.addResource("verre_trempe", 999);
+  ok(M.getAffordability("training").all === true, "avec le Verre trempé, le chantier repart");
 
   /* --- Le Terrain va d\u00e9sormais jusqu'au plafond historique ------------ */
   ok(g.VILLAGE_BUILDINGS.training.maxLevel === 14, "Terrain port\u00e9 \u00e0 14 niveaux");
@@ -6241,7 +6241,7 @@ console.log("\n[59b] v3.257.0 \u2014 Cartes Vivantes C-3 : Palissade, effets ten
   /* Bâtiment : livré, paliers de l'Entrepôt agrandi, rang 4. */
   var def = g.VILLAGE_BUILDINGS.palisade;
   /* v3.290.0 : palier propre pour les trois niveaux de la For\u00eat, puis les anciens paliers. */
-  ok(def.implemented === true && def.maxLevel === 10 && def.costTiers.length === 3, "Palissade livrée : 10 niveaux, trois paliers");
+  ok(def.implemented === true && def.maxLevel === 10 && def.costTiers.length === 4, "Palissade livrée : 10 niveaux, quatre paliers (v3.481.0 : le Verre trempé dès le niveau 8)");
   ok(def.costTiers[0].maxLevel === 2 && def.costTiers[0].baseCost.gold === 250 && def.costTiers[0].costMult === 1.70,
     "niveaux 1-3 (For\u00eat) : palier propre, 250 or \u00d71,7 (v3.290.0)");
   ok(VB.getBlockReason("palisade") === "Atelier niveau 2", "sous le rang 2 : le mur nomme l'Atelier 2 (v3.289.0, D12)");
@@ -15865,7 +15865,7 @@ console.log("\n[243] v3.455.0 — Crypte, lot C-4 : acte III (Ossuaire, Porte-co
     game.forge.levels.weapon = 8;
     ok(!st13.check(game) && g.storyPalierCrypteEpiqueMissing(game).length >= 1, "arme à 8 : il manque, et on sait quoi");
     var c9 = g.ForgeManager.getCost("weapon");
-    ok(c9 && c9.cire_consacree === 1 && !c9.cle_de_voute, "reforge 9 : Cire consacrée, plus de Clé de voûte");
+    ok(c9 && c9.cire_consacree === 1 && c9.cle_de_voute === 1 && c9.verre_trempe === 2, "reforge 9 : Cire consacrée, et (v3.481.0, RE-4) 1 Clé de voûte et 2 Verres trempés");
     game.forge.levels.weapon = 6;
     var c7 = g.ForgeManager.getCost("weapon");
     ok(c7 && c7.cle_de_voute >= 1 && !c7.cire_consacree, "reforge 7 : toujours la Clé de voûte");
@@ -16555,7 +16555,7 @@ console.log("\n[267] v3.459.8 — Terrain 12-13 en Cire de sépulcre (audit P11)
 (function () {
   var V = g.VillageBuildingManager;
   var c11 = V.getLevelCost("training", 10), c12 = V.getLevelCost("training", 11), c13 = V.getLevelCost("training", 12), c14 = V.getLevelCost("training", 13);
-  ok(c11.resine_durcie === 6 && !c11.cire_sepulcre, "Terrain 11 (Ruines) : toujours 6 Résine");
+  ok(c11.verre_trempe === 6 && !c11.resine_durcie && !c11.cire_sepulcre, "Terrain 11 (Ruines) : 6 Verres trempés (v3.481.0, RE-4 ; 6 Résine avant)");
   ok(c12.cire_sepulcre === 6 && c13.cire_sepulcre === 8 && !c12.resine_durcie && !c13.resine_durcie, "Terrain 12 et 13 (Crypte) : 6 puis 8 Cire de sépulcre, plus de Résine");
   ok(c12.gold === 2030 && c13.gold === 2943 && c13.pierre === 315 && c13.lingot === 84, "les autres coûts sont ceux d'avant");
   ok(c14.resine_durcie === 18 && c14.gold === 4268, "Terrain 14 (pas encore ouvert) : coût d'avant");
@@ -16567,7 +16567,7 @@ console.log("\n[268] v3.459.9 — Crypte : Halle 10 et Entrepôt 8 (audit I3)");
   ok(cap.hall === 10 && cap.warehouse === 8, "Crypte : Halle jusqu'à 10, Entrepôt jusqu'à 8");
   var e8 = V.getLevelCost("warehouse", 7), e7 = V.getLevelCost("warehouse", 6), e9 = V.getLevelCost("warehouse", 8);
   ok(e8.cire_sepulcre === 5 && !e8.resine_durcie && e8.gold === 10082 && e8.pierre === 262 && e8.lingot === 60, "Entrepôt 8 : 5 Cire de sépulcre au lieu de la Résine, le reste inchangé");
-  ok(e7.resine_durcie === 4 && e9.resine_durcie === 8 && e9.gold === 14316, "Entrepôt 7 et 9 : coûts d'avant");
+  ok(e7.verre_trempe === 4 && !e7.resine_durcie && e9.resine_durcie === 8 && e9.gold === 14316, "Entrepôt 7 : 4 Verres trempés (v3.481.0, RE-4) ; Entrepôt 9 : coût d'avant");
   var h10 = V.getLevelCost("hall", 9);
   ok(h10.gold === 16263 && !h10.resine_durcie && !h10.cire_sepulcre, "Halle 10 : or et matériaux ordinaires (16 263 or)");
 })();
@@ -17899,6 +17899,33 @@ console.log("\n[301] v3.480.0 — Refonte de l'économie RE-3 : la caravane pren
   ok(run("CaravanManager.get()").gold === 1000, "or du trajet Long : 250 Bois à 1 or + 250 Fer à 3 or");
   ok(fs.readFileSync(path.join(ROOT, "js/ui/caravan-view.js"), "utf8").indexOf("Le Bois et le Fer restent au village") === -1, "la fiche ne dit plus que le Bois et le Fer restent au village");
   g.CaravanManager._now = now0;
+})();
+
+console.log("\n[302] v3.481.0 — Refonte de l'économie RE-4 : les matériaux de monde servent dans les mondes suivants");
+(function () {
+  run("fullResetState(); game.playerName='T'; game.heroId='knight';");
+  var F = g.ForgeManager, V = g.VillageBuildingManager, sc = g.StoryQuestManager.getChoice;
+  g.StoryQuestManager.getChoice = function () { return null; };
+  run("VillageBuildingManager.ensure(); game.village.buildings.forge.level = 5; game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true };");
+  g.game.forge = { levels: {} };
+  var want = { 7: [1, 0], 8: [2, 0], 9: [2, 1], 10: [3, 2] }, okF = true;
+  Object.keys(want).forEach(function (t) {
+    g.game.forge.levels.ring = Number(t) - 1;
+    var c = F.getCost("ring");
+    var cle = (c && c.cle_de_voute) || 0, band = Number(t) <= 8 ? Number(t) - 6 : 0;
+    if (!c || c.verre_trempe !== want[t][0] || cle !== band + want[t][1]) okF = false;
+  });
+  ok(okF, "reforges 7 à 10 : Verre trempé 1 / 2 / 2 / 3, Clé de voûte de la bande (7-8) puis 1 / 2 (9-10)");
+  g.game.forge.levels.ring = 5;
+  var c6 = F.getCost("ring");
+  ok(c6 && !c6.verre_trempe && !c6.cle_de_voute && c6.chitine_profondeurs === 2, "reforge 6 : inchangée (Chitine)");
+  ok(V.getLevelCost("training", 10).verre_trempe === 6 && V.getLevelCost("enchanter", 1).verre_trempe === 5
+    && V.getLevelCost("warehouse", 6).verre_trempe === 4 && V.getLevelCost("palisade", 7).verre_trempe === 6, "Ruines : Terrain 11, Enchanteresse 2, Entrepôt 7, Palissade 8 au Verre trempé (6 / 5 / 4 / 6)");
+  ok(V.getLevelCost("warehouse", 5).resine_durcie === 3 && V.getLevelCost("palisade", 6).resine_durcie === 4, "Désert : Entrepôt 6 et Palissade 7 gardent la Résine");
+  var h9 = V.getLevelCost("hall", 8), h10 = V.getLevelCost("hall", 9), h8 = V.getLevelCost("hall", 7);
+  ok(h9.cle_de_voute === 3 && h10.cle_de_voute === 4 && h9.gold === 11453 && h10.gold === 16263 && !h8.cle_de_voute, "Halle 9 et 10 (Crypte) : 3 et 4 Clés, les autres coûts inchangés ; Halle 8 sans Clé");
+  ok(g.WAREHOUSE_RESOURCES.verre_trempe.desc.indexOf("reforges 7 à 10") !== -1 && g.WAREHOUSE_RESOURCES.cle_de_voute.desc.indexOf("Halle 9 et 10") !== -1, "descriptions du Verre trempé et de la Clé à jour");
+  g.StoryQuestManager.getChoice = sc;
 })();
 
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));

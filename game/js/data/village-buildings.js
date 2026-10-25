@@ -169,8 +169,8 @@ var VILLAGE_BUILDINGS = {
          v3.459.8 (audit P11) : Terrain 12 et 13 (Crypte) en Cire de sépulcre, mêmes autres coûts. */
       {
         minLevel: 10, maxLevel: 10,
-        resources: ["gold", "planche", "pierre", "lingot", "resine_durcie"],
-        baseCost: { gold: 1400, planche: 120, pierre: 150, lingot: 40, resine_durcie: 6 },
+        resources: ["gold", "planche", "pierre", "lingot", "verre_trempe"],
+        baseCost: { gold: 1400, planche: 120, pierre: 150, lingot: 40, verre_trempe: 6 }, // v3.481.0 (RE-4) : Verre trempé du Désert à la place de la Résine
         costMult: 1.45
       },
       {
@@ -318,8 +318,8 @@ var VILLAGE_BUILDINGS = {
       },
       {
         minLevel: 1, maxLevel: 1,
-        resources: ["gold", "planche", "pierre", "seve_aeswyn", "resine_durcie"],
-        baseCost: { gold: 3000, planche: 80, pierre: 95, seve_aeswyn: 14, resine_durcie: 5 },
+        resources: ["gold", "planche", "pierre", "seve_aeswyn", "verre_trempe"],
+        baseCost: { gold: 3000, planche: 80, pierre: 95, seve_aeswyn: 14, verre_trempe: 5 }, // v3.481.0 (RE-4) : Verre trempé à la place de la Résine
         costMult: 1.45
       },
       /* v3.289.0 : palier provisoire du niveau 3, inatteignable avant la Tour. À refaire
@@ -362,9 +362,16 @@ var VILLAGE_BUILDINGS = {
         costMult: 1.38
       },
       {
-        minLevel: 5, maxLevel: 9,
+        minLevel: 5, maxLevel: 7,
         resources: ["gold", "planche", "bloc", "pierre", "lingot"],
         baseCost: { gold: 4000, planche: 45, bloc: 45, pierre: 110, lingot: 24 }, // v3.330.0 (E3) : moitié des planches en blocs
+        costMult: 1.42
+      },
+      /* v3.481.0 (refonte RE-4) : Halle 9 et 10 (Crypte), 3 et 4 Clés de voûte ; bases = palier d'avant ×1,42³, mêmes arrondis. */
+      {
+        minLevel: 8, maxLevel: 9,
+        resources: ["gold", "planche", "bloc", "pierre", "lingot", "cle_de_voute"],
+        baseCost: { gold: 11453.152, planche: 128.84796, bloc: 128.84796, pierre: 314.96168, lingot: 68.718912, cle_de_voute: 3 },
         costMult: 1.42
       }
     ],
@@ -439,9 +446,16 @@ var VILLAGE_BUILDINGS = {
         costMult: 1.38
       },
       {
-        minLevel: 5, maxLevel: 6,
+        minLevel: 5, maxLevel: 5,
         resources: ["gold", "planche", "bloc", "pierre", "lingot", "resine_durcie"],
         baseCost: { gold: 5000, planche: 55, bloc: 55, pierre: 130, lingot: 30, resine_durcie: 3 }, // v3.330.0 (E3) : moitié des planches en blocs
+        costMult: 1.42
+      },
+      /* v3.481.0 (refonte RE-4) : l'Entrepôt 7 (Ruines) au Verre trempé ; bases = palier d'avant ×1,42, mêmes arrondis. */
+      {
+        minLevel: 6, maxLevel: 6,
+        resources: ["gold", "planche", "bloc", "pierre", "lingot", "verre_trempe"],
+        baseCost: { gold: 7100, planche: 78.1, bloc: 78.1, pierre: 184.6, lingot: 42.6, verre_trempe: 4.26 },
         costMult: 1.42
       },
       /* v3.459.9 (audit I3) : l'Entrepôt 8 (Crypte) en Cire de sépulcre ; bases = palier d'avant ×1,42^n, mêmes arrondis. */
@@ -501,9 +515,16 @@ var VILLAGE_BUILDINGS = {
         costMult: 1.38
       },
       {
-        minLevel: 5, maxLevel: 9,
+        minLevel: 5, maxLevel: 6,
         resources: ["gold", "planche", "bloc", "pierre", "lingot", "resine_durcie"],
         baseCost: { gold: 5000, planche: 55, bloc: 55, pierre: 130, lingot: 30, resine_durcie: 3 }, // v3.330.0 (E3) : moitié des planches en blocs
+        costMult: 1.42
+      },
+      /* v3.481.0 (refonte RE-4) : la Palissade 8 (Ruines) et au-delà au Verre trempé ; bases = palier d'avant ×1,42², mêmes arrondis. */
+      {
+        minLevel: 7, maxLevel: 9,
+        resources: ["gold", "planche", "bloc", "pierre", "lingot", "verre_trempe"],
+        baseCost: { gold: 10082, planche: 110.902, bloc: 110.902, pierre: 262.132, lingot: 60.492, verre_trempe: 6.0492 },
         costMult: 1.42
       }
     ],

@@ -147,6 +147,10 @@ var ForgeManager = {
       if (cost.cle_de_voute <= 0) delete cost.cle_de_voute;
     }
     if (cost.cle_de_voute > 1 && window.MemoryManager && MemoryManager.has("cle_econome")) cost.cle_de_voute -= 1; // v3.453.0 : Clé économe (Mémoire 12), jamais moins d'une
+    /* v3.481.0 (refonte de l'économie RE-4) : comme la Résine, les matériaux des mondes suivants continuent
+       au-delà de leur bande — Verre trempé aux reforges 7 à 10 (1/2/2/3), Clé de voûte aux 9 et 10 (1/2). */
+    if (target > seuil * 3) cost.verre_trempe = Math.floor((target - seuil * 3) / 2) + 1;
+    if (target > seuil * 4) cost.cle_de_voute = (cost.cle_de_voute || 0) + Math.floor((target - seuil * 4) / 2) + 1;
     // v3.330.0 (E2) : reforges de l'arme exigées par l'Histoire -> or et matériaux du monde seulement
     if (this.isStoryReforge(slot, target) && typeof stripStoryMaterials === "function") cost = stripStoryMaterials(cost).cost;
     return cost;

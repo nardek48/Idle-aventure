@@ -2110,7 +2110,7 @@ I18n.register("en", {
   "Résine runique rare de la Forêt. Sert à cuisiner la Grande ration et, durcie à la Menuiserie, à bâtir les hauts paliers du village.": "Rare runic resin from the Forest. Used to cook the Large ration and, hardened at the Joinery, to build the village's high tiers.",
   "Sable fondu par la foudre, lisse comme de l'eau. Trouvé en Petite Aventure du Désert.": "Sand melted by lightning, smooth as water. Found on Desert Short Adventures.",
   "Une plaque arrachée au dard de la bête. Elle ne chauffe pas : elle boit le feu. On s'en sert pour les dernières reforges.": "A plate torn from the beast's sting. It doesn't heat up: it drinks the fire. Used for the last reforges.",
-  "Verre des dunes chauffé deux fois au Tailleur de pierre. Il coupe le fer. Matériau des hauts paliers du village, au Désert.": "Dune glass heated twice at the Stonecutter. It cuts iron. Material for the village's high tiers, in the Desert.",
+  "Verre des dunes chauffé deux fois au Tailleur de pierre. Il coupe le fer. Matériau de la Forge 3, des hauts paliers des Ruines et des reforges 7 à 10.": "Dune glass heated twice at the Stonecutter. It cuts iron. Material for Forge 3, the high tiers of the Ruins and reforges 7 to 10.",
   "Sève d'Aeswyn durcie à la Menuiserie. Matériau de construction des hauts paliers du village, en Forêt enchantée.": "Aeswyn Sap hardened at the Joinery. Building material for the village's high tiers, in the Enchanted Forest.",
   "Se filtre à la Station de purification (Puits)": "Filtered at the Purification Station (Well)",
   "Se taille à la Maçonnerie (Carrière), avec de la Pierre et du Fer": "Cut at the Masonry (Quarry), from Stone and Iron",
@@ -4932,7 +4932,7 @@ I18n.register("en", {
   "Tu prends ce qu'elle gardait. Elle ne se fermera plus.": "You take what it kept. It will never close again.",
   "Le sceau de la salle": "The Room's Seal",
   "Varrek se relève. Personne ne lui a dit de rester à terre.": "Varrek gets back up. Nobody told him to stay down.",
-  "Une pierre taillée en coin, plus large en haut qu'en bas. Elle tient une arche à elle seule. Matériau de la Forge 4 et des dernières reforges.": "A wedge-cut stone, wider at the top than at the bottom. It holds up an arch on its own. Material for Forge 4 and the last reforges.",
+  "Une pierre taillée en coin, plus large en haut qu'en bas. Elle tient une arche à elle seule. Matériau de la Forge 4, de la Halle 9 et 10 et des reforges 7 à 10.": "A wedge-cut stone, wider at the top than at the bottom. It holds up an arch on its own. Material for Forge 4, Market Hall 9 and 10 and reforges 7 to 10.",
   "Se taille au Tailleur de pierre (Carrière), à partir de Pierres errantes et de Pierre": "Cut at the Stonemason (Quarry), from Wandering Stones and Stone",
   // v3.432.0 — Ruines, acte IV (livraison 1) : étapes 16-18, le Cœur, Vers le Cœur, Le dernier trait
   "Dans le Cœur, ils sont des dizaines. Des bâtisseurs, chacun avec sa pierre. Ils se battent contre ce qui n'est pas dans le plan.": "In the Heart, there are dozens of them. Builders, each with his stone. They fight whatever isn't in the plan.",
