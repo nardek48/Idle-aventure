@@ -59,6 +59,8 @@ function evaluateGrimoireCondition(conditionId, combatContext) {
       return !!ctx.enemySleeping; // v3.451.0 (Crypte)
     case "allyChained":
       return !!ctx.allyChained; // v3.456.0 (Crypte, acte IV)
+    case "veinIntact":
+      return !!ctx.veinIntact; // v3.487.0 (Montagne)
     default:
       return false;
   }
@@ -93,8 +95,9 @@ function chooseGrimoireAction(rules, kit, resourceState, cooldownState, combatCo
 
     if (!evaluateGrimoireCondition(rule.conditionId, combatContext)) continue;
 
-    var action = kit.actions[rule.actionSlot];
+    var action = (typeof getGrimoireActionDef === "function") ? getGrimoireActionDef(kit, rule.actionSlot) : kit.actions[rule.actionSlot]; // v3.487.0 : « Tailler » hors kit
     if (!action) continue;
+    if (rule.actionSlot === "vein" && !(window.VeinSystem && VeinSystem.canCut())) continue;
 
     if (canUseAction(resourceState, cooldownState, action, combatContext)) {
       return { actionSlot: rule.actionSlot, matchedConditionId: rule.conditionId };
@@ -105,7 +108,7 @@ function chooseGrimoireAction(rules, kit, resourceState, cooldownState, combatCo
 
 window.chooseGrimoireAction = chooseGrimoireAction;
 
-var GRIMOIRE_ASSIGNABLE_SLOTS = ["skill1", "skill2", "skill3", "defense"];
+var GRIMOIRE_ASSIGNABLE_SLOTS = ["skill1", "skill2", "skill3", "defense", "vein"]; // v3.487.0 : « Tailler » (Montagne)
 
 function sanitizeGrimoireRules(rawRules, kit) {
   if (!rawRules || !Array.isArray(rawRules)) return [];
@@ -120,7 +123,7 @@ function sanitizeGrimoireRules(rawRules, kit) {
     var actionSlot = null;
     if (typeof rule.actionSlot === "string"
       && GRIMOIRE_ASSIGNABLE_SLOTS.indexOf(rule.actionSlot) !== -1
-      && (!kit || !kit.actions || kit.actions[rule.actionSlot])) {
+      && (!kit || !kit.actions || (typeof getGrimoireActionDef === "function" ? getGrimoireActionDef(kit, rule.actionSlot) : kit.actions[rule.actionSlot]))) {
       actionSlot = rule.actionSlot;
     }
 
@@ -170,6 +173,7 @@ function isConditionPossibleForEnemy(conditionId, enemy) {
   if (conditionId === "enemyRising") return !!(window.RiseSystem && RiseSystem.canRise(enemy)); // v3.428.0
   if (conditionId === "enemySleeping") return !!(window.SleepSystem && SleepSystem.sleepers().length); // v3.451.0
   if (conditionId === "allyChained") return !!(window.SleepSystem && SleepSystem.anyChained()); // v3.456.0
+  if (conditionId === "veinIntact") return !!(window.VeinSystem && VeinSystem.active()); // v3.487.0
 
   return false;
 }

@@ -18101,6 +18101,86 @@ console.log("\n[308] v3.486.0 — Montagne, lot M-0 : socle et passage entre les
   }
 })();
 
+console.log("\n[309] v3.487.0 — Montagne, lot M-1 : les veines");
+(function () {
+  var CE = g.CombatEngine, V = g.VeinSystem, W = g.WarehouseManager, SQ = g.StoryQuestManager;
+  var wiAvant = g.WorldManager.worldIndex, gc = SQ.getChoice, crit = g.EquipmentManager.effectiveCritChance, tap = g.EquipmentManager.effectiveTapDamage;
+  try {
+    game = freshCombat("knight");
+    var mk = function (id) { var d = g.ENEMY_DB[id]; return { id: id, name: d.name, isBoss: false, archetype: null, hp: 1e6, maxHp: 1e6, stats: d.stats, resists: [], weak: [], goldReward: 20 }; };
+    // Hors de la Montagne : pas de veine, l'action est refusée
+    g.WorldManager.worldIndex = 3;
+    CE.spawnGroup([mk("spectre"), mk("wraith")]);
+    ok(!V.active() && CE.performHeroAction("vein") === false, "hors de la Montagne : pas de veine, « Tailler » refusé");
+    // À la Montagne : une veine par combat, intacte
+    g.WorldManager.worldIndex = 4;
+    SQ.getChoice = function () { return null; };
+    CE.spawnGroup([mk("lavagolem"), mk("dragonling")]);
+    ok(V.active() && V.intact() && V.cutsLeft() === 3 && V.heatMult() === 1 && V.bladeMult() === 1, "à la Montagne : une veine intacte, trois tailles possibles");
+    ok(g.ClassCombatManager.getAction("vein") === g.VEIN_ACTION && g.VEIN_ACTION.label === "Tailler", "l'action « Tailler » se lit comme une action de combat");
+    // La lame : +15 % sur l'attaque du héros
+    g.EquipmentManager.effectiveCritChance = function () { return 0; };
+    g.EquipmentManager.effectiveTapDamage = function () { return 100000; }; // grands nombres : les arrondis ne faussent pas le rapport
+    var foe = game.enemy, h0 = foe.hp;
+    CE.playerAttack(false); var d0 = h0 - foe.hp;
+    var cnt0 = Number(g.AchievementManager.ensure().counters.veinsCut || 0);
+    ok(CE.performHeroAction("vein") === true && V.cuts() === 1 && !V.intact(), "tailler remplace le coup : une taille");
+    var h1 = foe.hp; CE.playerAttack(false); var d1 = h1 - foe.hp;
+    ok(Math.abs(d1 / d0 - 1.15) < 0.02, "la lame : +15 % de dégâts après une taille (" + d0 + " → " + d1 + ")");
+    ok(Math.abs(V.heatMult() - 1.10) < 1e-9, "la chaleur : +10 % aux façonnés par cran");
+    var cnt1 = Number(g.AchievementManager.ensure().counters.veinsCut || 0);
+    ok(cnt1 === cnt0 + 1, "chaque taille compte dans le compteur cumulé (objectif de montagne_04)");
+    var src = fs.readFileSync(path.join(ROOT, "js/systems/combat-engine.js"), "utf8");
+    ok(/enemyStrike: function[\s\S]{0,400}VeinSystem\.heatMult\(\)/.test(src), "la chaleur s'applique à la frappe ennemie (héros comme compagnons)");
+    // Trois tailles au plus
+    V.cut(true); V.cut(true);
+    ok(V.cutsLeft() === 0 && V.cut(true) === false && Math.abs(V.bladeMult() - 1.45) < 1e-9, "trois tailles au plus (lame +45 %, chaleur +30 %)");
+    // Victoire : la Cendre est versée
+    var c0 = W.getAmount("cendre_vive");
+    g.CombatActors.enemies().slice().forEach(function (e) { e.hp = 1; CE.killEnemy(e); });
+    ok(W.getAmount("cendre_vive") - c0 === 3 && V.cuts() === 0, "combat gagné : +3 Cendre vive ; le combat suivant a sa veine, intacte (" + (W.getAmount("cendre_vive") - c0) + ")");
+    // Défaite ou fuite : un nouveau combat repart de zéro, rien n'est versé
+    CE.spawnGroup([mk("ifrit")]); V.cut(true);
+    var c1 = W.getAmount("cendre_vive");
+    CE.spawnGroup([mk("ifrit")]);
+    ok(V.cuts() === 0 && W.getAmount("cendre_vive") === c1, "combat quitté sans victoire : la Cendre taillée est perdue, la veine suivante est intacte");
+    // Les choix de l'étape 5 : la lame +20 % (soi), le puits chaud (aeswyn)
+    SQ.getChoice = function (k) { return k === "veine" ? "soi" : null; };
+    V.cut(true);
+    ok(Math.abs(V.bladeMult() - 1.20) < 1e-9, "choix « soi » (La veine dans la lame) : +20 % par taille");
+    SQ.getChoice = function (k) { return k === "veine" ? "aeswyn" : null; };
+    var c2 = W.getAmount("cendre_vive");
+    game.enemy.hp = 1; CE.killEnemy(game.enemy);
+    ok(W.getAmount("cendre_vive") - c2 === 2, "choix « aeswyn » (Le puits chaud) : une Cendre de plus par taille");
+    // Mode libre du donjon : rien (RE-5)
+    CE.spawnGroup([mk("ifrit")]); V.cut(true);
+    var c3 = W.getAmount("cendre_vive"), dr = game.dungeonRun;
+    game.dungeonRun = { active: true, free: true };
+    game.enemy.hp = 1; CE.killEnemy(game.enemy);
+    game.dungeonRun = dr;
+    ok(W.getAmount("cendre_vive") === c3, "mode libre du donjon : pas de Cendre (comme la Cire)");
+    // Grimoire : « Veine intacte » → « Tailler »
+    SQ.getChoice = function () { return null; };
+    CE.spawnGroup([mk("lavagolem"), mk("dragonling")]);
+    var kit = g.getClassSkills("knight"), rules = g.sanitizeGrimoireRules([{ conditionId: "veinIntact", actionSlot: "vein" }], kit);
+    ok(rules[0].conditionId === "veinIntact" && rules[0].actionSlot === "vein", "Grimoire : la règle « Veine intacte → Tailler » se garde");
+    ok(g.isConditionPossibleForEnemy("veinIntact", game.enemy) === true, "Grimoire : « Veine intacte » est proposée à la Montagne");
+    var ctx = g.ClassCombatManager.getGrimoireCombatContext();
+    var pick = g.chooseGrimoireAction(rules, kit, g.ClassCombatManager.ensureForCurrentClass(), game.classCooldowns || {}, ctx);
+    ok(pick && pick.actionSlot === "vein", "veine intacte : le Grimoire taille");
+    V.cut(true);
+    ctx = g.ClassCombatManager.getGrimoireCombatContext();
+    ok(g.chooseGrimoireAction(rules, kit, g.ClassCombatManager.ensureForCurrentClass(), game.classCooldowns || {}, ctx) === null, "veine entamée : la règle ne joue plus (une taille par combat)");
+    ok(g.EQUIP_WORLD_SCALE[4] === 6, "échelle d'équipement de la Montagne : ×6 (décision de Seb)");
+    var sw = fs.readFileSync(path.join(ROOT, "sw.js"), "utf8"), idx = fs.readFileSync(path.join(ROOT, "index.html"), "utf8");
+    ok(sw.indexOf("./js/systems/vein-system.js") !== -1 && idx.indexOf("js/systems/vein-system.js") !== -1, "vein-system.js chargé et précaché par le service worker");
+  } catch (err) {
+    ok(false, "[309] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  } finally {
+    SQ.getChoice = gc; g.EquipmentManager.effectiveCritChance = crit; g.EquipmentManager.effectiveTapDamage = tap; g.WorldManager.worldIndex = wiAvant;
+  }
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

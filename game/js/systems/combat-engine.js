@@ -343,7 +343,7 @@ var CombatEngine = {
   },
 
   /* ---------- Un round complet ---------- */
-  /* slot : "basic" | "skill1".."skill3" | "defense" | "potion" (arg = id de potion). source "auto" = Grimoire/Continuer.
+  /* slot : "basic" | "skill1".."skill3" | "defense" | "potion" (arg = id de potion) | "vein" (Montagne). source "auto" = Grimoire/Continuer.
      Retourne true si le round a été joué (l'action était valide). */
   heroAction: function (slot, arg, source) {
     if (!this.isHeroTurnAvailable()) return false;
@@ -524,6 +524,7 @@ var CombatEngine = {
       if (action && action.type === "damage") this.afterOffensiveAction();
       return true;
     }
+    if (slot === "vein") return !!(window.VeinSystem && VeinSystem.cut(true)); // v3.487.0 (Montagne) : tailler remplace le coup
     if (slot === "potion") {
       if (!window.PotionManager || typeof PotionManager.useHealingPotion !== "function") return false;
       if (window.SortieManager && !SortieManager.canUsePotion()) {
@@ -576,6 +577,7 @@ var CombatEngine = {
       : 1;
 
     var talentMult = window.TalentManager ? TalentManager.heroDamageMult(null, game.enemy) : 1; // v3.327.0 : Surtension
+    if (window.VeinSystem) talentMult *= VeinSystem.bladeMult(); // v3.487.0 (Montagne) : la lame de la veine
     var dmg = Math.max(1, Math.floor(EquipmentManager.effectiveTapDamage() * classBasicMult * (extraMult || 1) * talentMult));
     var critChance = Math.max(0, EquipmentManager.effectiveCritChance() - getEnemyWillCritPenalty());
     var isCrit = chance(critChance);
@@ -1187,6 +1189,7 @@ var CombatEngine = {
     if (!e || !e.stats) return;
     if ((game.heroHp || 0) <= 0) return;
     this.prepareEnemy(e);
+    if (window.VeinSystem) dmgMult = (dmgMult || 1) * VeinSystem.heatMult(); // v3.487.0 (Montagne) : la chaleur porte les façonnés
 
     /* v3.268.0 (L-2) : la frappe choisit sa victime parmi les alliés vivants. Sans
        compagnon présent, pickVictim() renvoie toujours le héros et la suite de cette
@@ -1596,6 +1599,7 @@ var CombatEngine = {
     }
 
     if (window.SleepSystem) SleepSystem.onGroupSpawn(prepared); // v3.451.0 (Crypte) : les morts qui dorment
+    if (window.VeinSystem) VeinSystem.onCombatStart(); // v3.487.0 (Montagne) : une veine par combat
     if (window.CombatActors) CombatActors.setEnemies(prepared);
     else game.enemy = prepared[0];
 
@@ -1847,6 +1851,7 @@ var CombatEngine = {
       game._legFrenzyStacks = Math.min(10, Number(game._legFrenzyStacks || 0) + 1);
     }
     if (window.SortieManager) SortieManager.noteKill(enemy.isBoss);
+    if (window.VeinSystem) VeinSystem.onVictory(); // v3.487.0 (Montagne) : combat gagné, la Cendre taillée est versée
 
     showGoldPopup(goldGain);
     addLog(enemy.isBoss

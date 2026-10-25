@@ -109,10 +109,18 @@ var GRIMOIRE_CONDITIONS = {
     label: "Un compagnon est enchaîné",
     description: "Un compagnon est enchaîné et ne joue plus. Ton action vise celui qui tient la chaîne : frappe-le fort pour la faire céder.",
     icon: "images/Icons/combat_status/chained.webp"
+  },
+  /* v3.487.0 (Montagne, MT2) : la veine du combat n'a pas encore été taillée. Pensée pour l'action
+     « Tailler » (une taille au premier round). Icône à générer. */
+  veinIntact: {
+    id: "veinIntact",
+    label: "Veine intacte",
+    description: "Une veine affleure et personne ne l'a encore taillée. Avec l'action Tailler : une taille, une Cendre vive, et ta lame plus forte, contre un cran de chaleur.",
+    icon: "images/Icons/combat_status/vein_intact.webp"
   }
 };
 
-var GRIMOIRE_CONDITION_ORDER = ["chargeIncoming", "shieldIncoming", "healIncoming", "eliteSurgeIncoming", "heroLowHp", "allyLowHp", "multipleEnemies", "enemyRising", "enemySleeping", "allyChained", "enemyAttackIncoming", "enemyEnraged", "enemyCorrupted", "enemySilenceIncoming", "enemyVampiric", "enemyArmored"];
+var GRIMOIRE_CONDITION_ORDER = ["chargeIncoming", "shieldIncoming", "healIncoming", "eliteSurgeIncoming", "heroLowHp", "allyLowHp", "multipleEnemies", "enemyRising", "enemySleeping", "allyChained", "veinIntact", "enemyAttackIncoming", "enemyEnraged", "enemyCorrupted", "enemySilenceIncoming", "enemyVampiric", "enemyArmored"];
 
 /* v3.428.0 (Ruines, Conception §4.4 point 3) — réglage « Cible » du Grimoire (systems/rise-system.js). */
 var GRIMOIRE_TARGET_POLICIES = [

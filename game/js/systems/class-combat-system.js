@@ -3,6 +3,7 @@
    v3.102.0 (P2) : tout en ROUNDS. useSkill() = une action de round ; chooseRoundAction() = décision Grimoire/repli
    (exécutée par CombatEngine.tickRoundClock en mode Grimoire, suggérée en Tactique) ; onRoundEnd() = cooldowns + mana passif + défense. */
 var CLASS_ACTION_ICON_FALLBACK = {
+  vein_cut: "images/Icons/combat_actions/vein_cut.webp", // v3.487.0 (Montagne) : Tailler, icône à générer
   // v3.458.2 (audit C2) : images des attaques de base, livrées en v3.465.2
   knight_basic: "./images/Icons/special_attacks/basic_knight.webp",
   archer_basic: "./images/Icons/special_attacks/basic_archer.webp",
@@ -122,6 +123,7 @@ var ClassCombatManager = {
   },
 
     getAction: function (slot) {
+    if (slot === "vein") return (window.VeinSystem && VeinSystem.active()) ? VEIN_ACTION : null; // v3.487.0 (Montagne)
     var classId = this.getCurrentClassId();
     if (!classId || typeof getClassAction !== "function") return null;
     return getClassAction(classId, slot);
@@ -160,6 +162,7 @@ var ClassCombatManager = {
     base.enemyRising = !!(window.RiseSystem && RiseSystem.downedEnemies().length); // v3.428.0 (Ruines)
     base.enemySleeping = !!(window.SleepSystem && SleepSystem.sleepers().length); // v3.451.0 (Crypte)
     base.allyChained = !!(window.SleepSystem && SleepSystem.anyChained()); // v3.456.0 (Crypte, acte IV)
+    base.veinIntact = !!(window.VeinSystem && VeinSystem.intact()); // v3.487.0 (Montagne)
     base.allyLowestHpPercent = null;
     if (window.CombatActors) {
       CombatActors.aliveAllies().forEach(function (a) {
@@ -335,6 +338,7 @@ var ClassCombatManager = {
       if (!game.enemy || game.enemy !== target) break; // v3.102.0 : l'ennemi est mort, les coups restants sont perdus
       var dmg = baseDamage * Number(action.damageMultiplier || 1);
       if (window.TalentManager) dmg *= TalentManager.heroDamageMult(action, target); // v3.327.0 : Surtension, Incendie
+      if (window.VeinSystem) dmg *= VeinSystem.bladeMult(); // v3.487.0 (Montagne) : la lame de la veine
       var critChance = Math.max(0, EquipmentManager.effectiveCritChance() + Number(action.critBonus || 0) - getEnemyWillCritPenalty());
       var isCrit = chance(critChance);
       if (isCrit) dmg = dmg * EquipmentManager.effectiveCritMult();

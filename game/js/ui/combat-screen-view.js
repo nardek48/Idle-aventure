@@ -321,6 +321,40 @@
       el._cbxSlain = true;
       slay(el);
     });
+    renderVein(stage);
+  }
+
+  /* v3.487.0 (Montagne, lot M-1) : la veine au sol, rendu « Fissure » (atelier/veines.html). Toucher la veine
+     la taille (ton action du tour) ; la chaleur fait rougeoyer les façonnés, un cran par taille. */
+  function renderVein(stage) {
+    var V = window.VeinSystem, on = !!(V && V.active()), heat = on ? V.cuts() : 0;
+    for (var k = 1; k <= 3; k++) stage.classList.toggle("is-heat" + k, heat === k);
+    var el = stage.querySelector(".cbx-vein");
+    if (!on) { if (el) el.remove(); return; }
+    var spent = !V.canCut();
+    var heroDone = isManual() && engine().pendingOf(actorsApi().heroActor());
+    var dis = spent || !isManualOrSolo() || num(game.heroHp) <= 0 || waitingTurn() || heroDone;
+    var left = V.cutsLeft();
+    var lbl = spent ? _t("Veine épuisée") : (heat ? _t("Tailler · encore {n}", { n: left }) : _t("Tailler la veine"));
+    var chip = heat ? _t("Chaleur +{h} % · lame +{b} %", { h: Math.round(V.heatMult() * 100 - 100), b: Math.round(V.bladeMult() * 100 - 100) }) : "";
+    var key = [dis, lbl, chip].join("|");
+    if (!el) {
+      el = document.createElement("button");
+      el.type = "button";
+      el.className = "cbx-vein";
+      el.setAttribute("onclick", "CombatEngine.heroAction('vein')");
+      el.setAttribute("aria-label", _t("Tailler la veine"));
+      el.innerHTML = '<svg class="cbx-vein-art" viewBox="0 0 154 66" aria-hidden="true"><path d="M6 52 L30 44 L44 50 L62 34 L78 40 L96 24 L112 30 L130 16 L148 20"/>'
+        + '<path class="is-thin" d="M62 34 L58 18 M96 24 L104 46 M44 50 L40 62"/></svg><span class="cbx-vein-lbl"></span><span class="cbx-vein-chip"></span>';
+      stage.appendChild(el);
+    }
+    if (el._cbxKey === key) return;
+    el._cbxKey = key;
+    el.disabled = dis;
+    el.classList.toggle("is-spent", spent);
+    var l = el.querySelector(".cbx-vein-lbl"), c = el.querySelector(".cbx-vein-chip");
+    if (l) l.textContent = lbl;
+    if (c) { c.textContent = chip; c.hidden = !chip; }
   }
 
   /* ---------- Coup de grâce (v3.444.0, variante B validée par Seb : atelier/coup-de-grace.html) ----------

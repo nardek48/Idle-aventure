@@ -194,8 +194,10 @@ function buildGrimoireActionOptionsHTML(kit, selectedSlot, conditionId) {
   if (!kit || !kit.actions) return h;
 
   GRIMOIRE_ASSIGNABLE_SLOTS.forEach(function (slot) {
-    var action = kit.actions[slot];
+    var action = getGrimoireActionDef(kit, slot);
     if (!action) return;
+    // v3.487.0 : « Tailler » ne se propose qu'une fois la Montagne atteinte (ou s'il est déjà choisi)
+    if (slot === "vein" && selectedSlot !== "vein" && !(game.worldsEverReached && game.worldsEverReached[4])) return;
     // v3.208.0 : le <img class=ico-inline src=images/Icons/combat_stats/stat_speed.webp> ne s'allumait que sur action.counters — une action qui contre par
     // suppression d'archétype (Frappe lourde vs corrompu, Brise-garde vs blindé) paraissait
     // neutre dans la liste. getAllGrimoireCounterIds() couvre les deux canaux.
@@ -232,7 +234,8 @@ var GRIMOIRE_CONDITION_SHORT_LABELS = {
   enemyArmored: _t("l'ennemi est blindé", "grimoire court"),
   enemyRising: _t("un ennemi se relève", "grimoire court"), // v3.428.0 (Ruines)
   enemySleeping: _t("un ennemi dort", "grimoire court"), // v3.451.0 (Crypte)
-  allyChained: _t("un compagnon est enchaîné", "grimoire court") // v3.456.0 (Crypte, acte IV)
+  allyChained: _t("un compagnon est enchaîné", "grimoire court"), // v3.456.0 (Crypte, acte IV)
+  veinIntact: _t("la veine est intacte", "grimoire court") // v3.487.0 (Montagne)
 };
 
 function getGrimoireConditionShortLabel(conditionId) {
@@ -245,14 +248,14 @@ function getGrimoireConditionShortLabel(conditionId) {
    canaux (télégraphe + suppression d'archétype), cf. getAllGrimoireCounterIds. */
 function isGrimoireRuleCounter(rule, kit) {
   if (!rule || !rule.conditionId || !rule.actionSlot) return false;
-  var action = (kit && kit.actions) ? kit.actions[rule.actionSlot] : null;
+  var action = getGrimoireActionDef(kit, rule.actionSlot);
   if (!action || typeof getAllGrimoireCounterIds !== "function") return false;
   return getAllGrimoireCounterIds(action).indexOf(rule.conditionId) !== -1;
 }
 
 function buildGrimoireRuleRowHTML(index, rule, kit, locked) {
   var cond = getGrimoireCondition(rule.conditionId);
-  var action = (kit && kit.actions && rule.actionSlot) ? kit.actions[rule.actionSlot] : null;
+  var action = getGrimoireActionDef(kit, rule.actionSlot); // v3.487.0 : « Tailler » hors kit
   var configured = !!(cond && action);
 
   var cls = "grimoire-rule-row";
@@ -300,7 +303,7 @@ function buildGrimoireEditHTML(index, kit) {
   if (!rule) return "";
 
   var cond = getGrimoireCondition(rule.conditionId);
-  var action = (kit && kit.actions && rule.actionSlot) ? kit.actions[rule.actionSlot] : null;
+  var action = getGrimoireActionDef(kit, rule.actionSlot); // v3.487.0 : « Tailler » hors kit
   var unlockedCount = (typeof getGrimoireSlotCount === "function") ? getGrimoireSlotCount(game.worldsEverReached) : GRIMOIRE_SLOT_COUNT;
 
   var h = '<button type="button" class="grimoire-back-btn" onclick="closeGrimoireRule()"><img class=ico-inline src=images/Icons/system/back.webp> ' + _t("Règle {a} sur {b}", { a: index + 1, b: unlockedCount }) + '</button>';

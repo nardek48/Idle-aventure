@@ -87,7 +87,7 @@ var SET_BONUS_CONFIG = {
    de dégâts et d'or — ne doivent JAMAIS être mises à l'échelle : la défense est
    plafonnée à 60 %, et multiplier un multiplicateur n'a pas de sens. C'est le
    piège principal de ce chantier. */
-var EQUIP_WORLD_SCALE = [1, 1.4, 2.2, 4, 10, 18];
+var EQUIP_WORLD_SCALE = [1, 1.4, 2.2, 4, 6, 18]; // v3.487.0 (Montagne, MT7) : 10 -> 6, décision Seb après mesure (Épique complet : +95 % de dégâts en fin de Crypte)
 
 function getEquipWorldScale(worldIndex) {
   var i = Math.max(0, Math.min(EQUIP_WORLD_SCALE.length - 1, Math.floor(Number(worldIndex) || 0)));
