@@ -374,6 +374,12 @@ var PA2_PARCOURS_IMAGES = {
     image: "images/Maps/parcours/montagne_montee.webp", width: 1024, height: 1536, start: [512, 1415],
     tracks: { route: [[512, 1290], [560, 1170], [590, 950], [455, 830], [512, 610], [512, 450], [512, 250]] }
   },
+  /* v3.491.0 (Montagne, acte IV) : le sentier du dessus. Image à fournir par Seb ; piste provisoire (celle de
+     la chaîne, cinq paliers), à relever sur l'image quand elle arrivera. */
+  montagne_sommet: {
+    image: "images/Maps/parcours/montagne_sommet.webp", width: 1024, height: 1536, start: [513, 1490],
+    tracks: { route: [[523, 1440], [512, 1260], [533, 1090], [524, 950], [519, 790], [535, 620], [528, 480], [522, 320], [516, 180]] }
+  },
   /* v3.433.1 (Ruines, acte IV) : image de Seb (09/10/2026) ; piste relevée sur le trait violet, de la
      porte basse à l'arche du Cœur. Paliers : la rue qui tourne, la place aux ossements, la brèche du
      mur, les toits aux gargouilles, l'arche. */

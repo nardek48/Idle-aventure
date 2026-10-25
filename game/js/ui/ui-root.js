@@ -107,6 +107,7 @@ function switchTab(tabName) {
     tabName = "campement";
   }
   if (typeof storyTableDesNoms === "function") storyTableDesNoms(); // v3.456.0 : la table des noms, une fois par jour
+  if (typeof storyPuitsVeineMere === "function") storyPuitsVeineMere(); // v3.491.0 : le puits de la veine-mère, une fois par jour
 
   // v3.244.0 (chantier Navigation) : Équipement et Talents vivent désormais DANS Héros.
   // Les anciens raccourcis (pastille sac du HUD, bouton du Résumé, toast de butin, quêtes)

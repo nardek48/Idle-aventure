@@ -1856,7 +1856,7 @@ var CombatEngine = {
       game._legFrenzyStacks = Math.min(10, Number(game._legFrenzyStacks || 0) + 1);
     }
     if (window.SortieManager) SortieManager.noteKill(enemy.isBoss);
-    if (window.VeinSystem) VeinSystem.onVictory(); // v3.487.0 (Montagne) : combat gagné, la Cendre taillée est versée
+    if (window.VeinSystem) VeinSystem.onVictory(enemy); // v3.487.0 (Montagne) : la Cendre taillée est versée ; v3.491.0 : le dernier tombé
 
     showGoldPopup(goldGain);
     addLog(enemy.isBoss

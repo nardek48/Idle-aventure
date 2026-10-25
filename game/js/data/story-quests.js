@@ -141,7 +141,13 @@ var STORY_REWARDS = {
   montagne_12: { gold: 21000, equipmentRarity: "epic", equipmentCount: 1, equipmentSlot: "weapon" }, // l'arme posée sur l'enclume (campagne : 120 à 180 h d'échoppe sans elle)
   montagne_13: { gold: 22000, resources: { obsidienne_taillee: 2 } },
   montagne_14: { gold: 23000, resources: { cendre_vive: 3 } },
-  montagne_15: { gold: 25000, resources: { obsidienne_taillee: 4 } }
+  montagne_15: { gold: 25000, resources: { obsidienne_taillee: 4 } },
+  // v3.491.0 (acte IV, provisoire, au banc)
+  montagne_16: { gold: 26000, resources: { cendre_vive: 4 } },
+  montagne_17: { gold: 27000, resources: { obsidienne_taillee: 2 } },
+  montagne_18: { gold: 28000, resources: { cendre_vive: 4 } },
+  montagne_19: { gold: 30000, resources: { obsidienne_taillee: 4 } },
+  montagne_20: { gold: 32000, uniqueLoot: "fil_bleu" } // Le fil bleu, Épique, dans les deux branches
 };
 
 /* Libellés des onglets débloqués (clé = game.unlockedTabs), pour l'affichage « Débloque : … ». */
@@ -225,7 +231,8 @@ var STORY_CHOICE_AXES = {
   ysolt: { garder: ["garder"], donner: ["donner"] },                // v3.455.0 (Crypte, acte III étape 14) : ce qu'elle garde
   bat: { reveiller: ["donner", "soi"], laisser: ["garder", "aeswyn"] }, // v3.456.0 (Crypte, acte IV étape 20) : ce qui bat (CR4)
   veine: { soi: ["soi", "chaos"], aeswyn: ["aeswyn"] },               // v3.488.0 (Montagne, acte I étape 5) : la première veine
-  ouvrage: { donner: ["donner"], garder: ["garder"] }                 // v3.490.0 (Montagne, acte III étape 14) : l'ouvrage inachevé
+  ouvrage: { donner: ["donner"], garder: ["garder"] },                // v3.490.0 (Montagne, acte III étape 14) : l'ouvrage inachevé
+  droit: { prendre: ["garder", "aeswyn"], laisser: ["donner", "soi"] } // v3.491.0 (Montagne, acte IV étape 20) : le droit de prendre
 };
 
 /* v3.293.0 (règle Seb 18/09/2026) : storyResetLisiere, storyLisiereCrossingProgress et
@@ -3827,7 +3834,7 @@ STORY_QUESTS.mountain = {
   title: "Ce qui ne fond pas", // provisoire
   subtitle: "Chapitre 5 — Montagne",
   icon: "images/Icons/codex/world_mountain.webp",
-  endText: "La suite de l'histoire arrive bientôt…", // v3.488.0 : acte I seul
+  endText: "Il reste la Tour. Elle te prendra le reste.", // v3.491.0 : fin du chapitre V (Orwen, récit de référence)
   steps: [
     /* ---------- Acte I — La montée ---------- */
     /* Étape 1 (doc §3) : le passage entre les mondes, parcours v2 de quatre paliers ; le monde est posé à
@@ -4412,6 +4419,154 @@ STORY_QUESTS.mountain = {
       },
       check: function (game) { return !!((game.dungeonTierCleared || {})[5]); },
       progress: function (game) { return "Wyrm vaincu " + ((game.dungeonTierCleared || {})[5] ? "1/1" : "0/1"); }
+    },
+    /* ---------- Acte IV — Le droit de prendre (document « Montagne — Acte IV » v1.0, validé par délégation le 25/10/2026) ---------- */
+    /* Étape 16 (§3) : tenir l'anneau 3 de la carte (les quatre secteurs du haut, une fois chacun). */
+    {
+      id: "montagne_16",
+      title: "Ce qui respire",
+      act: "Acte IV — Le droit de prendre",
+      narrative: {
+        objective: "Au Replat, la toile de Sarkel bat. Il n'y a pas de vent. C'est la montagne qui souffle, en haut, lentement, comme quelqu'un qui dort.",
+        completion: "Le haut de la carte est tenu. Edda trace un dernier trait, du lac jusqu'au bord de la feuille, et s'arrête. Au-dessus, la feuille est blanche.",
+        dialogue: [
+          { who: "Edda", text: "Ça vient de tout en haut. Au-dessus de la Gueule." },
+          { who: "Maddoc", text: "On y monte comment ?" },
+          { who: "Edda", text: "On tient tout le haut d'abord. Sinon, on monte avec la lave dans le dos." }
+        ],
+        completionDialogue: [
+          { who: "Sarkel", text: "Le sentier part de la coupe. Je l'ai vu d'en bas." }
+        ]
+      },
+      objectiveLabel: "Libérer les quatre secteurs du haut de la carte de la Montagne",
+      unlockTabs: [],
+      reward: STORY_REWARDS.montagne_16,
+      linkTo: { section: "map", cardId: "livingmap_mountain" },
+      check: function () { return storyMountainRing3Freed() >= STORY_MONTAGNE_ANNEAU3.length; },
+      progress: function () { return "Secteurs du haut " + storyMountainRing3Freed() + "/" + STORY_MONTAGNE_ANNEAU3.length; }
+    },
+    /* Étape 17 (§4) : le sentier du dessus (parcours de cinq paliers), de la coupe du lac au plateau du nid. */
+    {
+      id: "montagne_17",
+      title: "Le sentier du dessus",
+      act: "Acte IV — Le droit de prendre",
+      narrative: {
+        objective: "Derrière le lac, la coupe. Une paroi tranchée net, de haut en bas, plus droite que tout ce que la montagne a fait seule. Un sentier part de son pied et monte.",
+        completion: "Le sentier s'arrête au bord du plateau. Le souffle s'arrête aussi. Puis il reprend, plus lent.",
+        dialogue: [
+          { who: "Sarkel", text: "C'est lui. Le vieux. Il est passé par là." },
+          { who: "Wenna", text: "Pour aller où ?" },
+          { who: "Sarkel", text: "En haut. Et il est redescendu avec quelque chose." }
+        ],
+        completionDialogue: [
+          { who: "Maddoc", text: "Il nous a entendus." },
+          { who: "Sarkel", text: "Il nous entend depuis la Gueule." }
+        ]
+      },
+      objectiveLabel: "Monter « Le sentier du dessus »",
+      unlockTabs: [],
+      reward: STORY_REWARDS.montagne_17,
+      linkTo: { section: "expedition", cardId: "scene_sentier_du_dessus" },
+      check: function () { return storyDesertFlag("sentierDessusDone"); },
+      progress: function () { return "Sentier " + (storyDesertFlag("sentierDessusDone") ? "1/1" : "0/1"); }
+    },
+    /* Étape 18 (§5) : « Ceux qu'il a triés », quatre rencontres sur le plateau du nid. */
+    {
+      id: "montagne_18",
+      title: "Ceux qu'il a triés",
+      act: "Acte IV — Le droit de prendre",
+      narrative: {
+        objective: "Sur le plateau, des façonnés. Pas en ligne, pas en garde : posés là, chacun à sa place, comme des outils rangés.",
+        completion: "Le dernier façonné tombe. Au fond du plateau, une aile se déplie, lentement. Elle cache la moitié du ciel.",
+        dialogue: [
+          { who: "Edda", text: "Ils attendent quoi ?" },
+          { who: "Sarkel", text: "Qu'on prenne. Ou qu'on laisse. Ils sont là pour voir." }
+        ],
+        completionDialogue: [
+          { who: "Wenna", text: "Il est grand." },
+          { who: "Sarkel", text: "Il est vieux. C'est pire." }
+        ]
+      },
+      objectiveLabel: "Terminer « Ceux qu'il a triés » : 4 rencontres",
+      unlockTabs: [],
+      reward: STORY_REWARDS.montagne_18,
+      linkTo: { section: "adventure", cardId: "adv_aq_montagne_tries" },
+      check: function (game) { return storyAdvDone(game, "aq_montagne_tries"); },
+      progress: function (game) { return "Rencontres " + storyAdvProgress(game, "aq_montagne_tries", "rencontres_tries", 4) + "/4"; }
+    },
+    /* Étape 19 (§6) : le Dragon ancien (MT6), celui qui trie. Deux rencontres, puis lui. */
+    {
+      id: "montagne_19",
+      title: "Le Dragon ancien",
+      act: "Acte IV — Le droit de prendre",
+      narrative: {
+        objective: "Le Dragon ancien ne se lève pas. Il tourne la tête. Ses yeux passent sur chacun, et s'arrêtent sur les mains.",
+        completion: "Le Dragon ancien pose la tête sur la pierre. Il ne meurt pas. Il respire, plus lentement. Sous lui, au milieu des veines, une seule bat plus fort que les autres. Grosse comme un bras.",
+        dialogue: [
+          { who: "Le Dragon ancien", text: "Vous avez pris." },
+          { who: "Sarkel", text: "Un peu." },
+          { who: "Le Dragon ancien", text: "Un peu, c'est déjà prendre." },
+          { who: null, text: "Sous lui, la roche est pleine de veines. Elles battent toutes au même rythme que son souffle." }
+        ],
+        completionDialogue: [
+          { who: "Le Dragon ancien", text: "Celle-là, c'est la mère. Prends-la, ou laisse-la. Je ne trierai plus." }
+        ]
+      },
+      objectiveLabel: "Terminer « Le Dragon ancien » : 2 rencontres, puis le Dragon ancien",
+      unlockTabs: [],
+      reward: STORY_REWARDS.montagne_19,
+      linkTo: { section: "adventure", cardId: "adv_aq_montagne_dragon" },
+      tutorial: {
+        tab: "combat",
+        icon: "images/Boss/Lord_Dragon.webp",
+        title: "Le Dragon ancien",
+        points: [
+          { icon: "images/Icons/combat_status/sorting.webp", text: "Il trie : il frappe celui qui a taillé, 50 % plus fort." },
+          { icon: "images/Icons/combat_status/vein_heat.webp", text: "À 75, 50 et 25 % de ses PV, la chaleur monte d'un cran, en plus des tailles." },
+          { icon: "images/Icons/combat_status/rage.webp", text: "À 50 %, deux dragonnets descendent du nid. Sous 25 %, il enrage." }
+        ]
+      },
+      check: function (game) { return storyAdvDone(game, "aq_montagne_dragon"); },
+      progress: function (game) {
+        return "Rencontres " + storyAdvProgress(game, "aq_montagne_dragon", "rencontres_dragon", 2) + "/2 · Dragon ancien " + (storyAdvDone(game, "aq_montagne_dragon") ? "1/1" : "0/1");
+      }
+    },
+    /* Étape 20 (§7) : le troisième choix pesant de la Montagne, clé « droit » (MT4). Prendre (Garder + Aeswyn) :
+       le puits de la veine-mère ; Laisser (Donner + Soi) : la Montagne apprend de toi. Le fil bleu dans les deux. */
+    {
+      id: "montagne_20",
+      title: "Le droit de prendre",
+      act: "Acte IV — Le droit de prendre",
+      narrative: {
+        objective: "La veine-mère bat sous la main du Dragon. Sarkel tient la pioche droite. Il attend.",
+        get completion() { return STORY_DROIT_TEXTS[storyDroitBranch()].completion; },
+        dialogue: [
+          { who: "Sarkel", text: "Je la taille, si tu veux. Je sais la tenir, maintenant." }
+        ],
+        get completionDialogue() {
+          return STORY_DROIT_TEXTS[storyDroitBranch()].dialogue.concat([{ who: null, text: STORY_DROIT_TEXTS.suite.text }], STORY_DROIT_TEXTS.suite.dialogue);
+        }
+      },
+      objectiveLabel: "Décider de la veine-mère",
+      unlockTabs: [],
+      reward: STORY_REWARDS.montagne_20,
+      choice: {
+        key: "droit", onStoryCard: true,
+        buttonLabel: "Décider",
+        title: "Le droit de prendre",
+        text: "La veine-mère bat sous la main du Dragon. Sarkel tient la pioche droite. Il attend. Personne ne choisira pour toi.",
+        options: [
+          { value: "prendre", label: "La prendre pour Aeswyn", desc: "Sarkel la taille. Au puits d'Aeswyn, l'eau prendra un goût de pierre chaude, et le puits rendra de la Cendre vive chaque jour." },
+          { value: "laisser", label: "La laisser à la Montagne", desc: "Tu la laisses. La Montagne apprend de toi : à la Montagne, chaque cran de chaleur te porte aussi, +5 % à tes coups." }
+        ],
+        apply: function (value) {
+          if (typeof addLog !== "function") return;
+          if (value === "prendre") addLog(_t("La veine-mère : au puits d'Aeswyn, chaque jour, {n} Cendres vives.", { n: STORY_PUITS_MERE_ASH }), "event");
+          else addLog(_t("Ce que la Montagne apprend : à la Montagne, chaque cran de chaleur donne +5 % à tes coups."), "event");
+        }
+      },
+      check: function () { return !!(window.StoryQuestManager && StoryQuestManager.getChoice("droit")); },
+      progress: function () { return "Choix " + ((window.StoryQuestManager && StoryQuestManager.getChoice("droit")) ? "1/1" : "0/1"); }
     }
   ]
 };
@@ -4457,6 +4612,47 @@ window.storyPalierMontagneCompletMissing = storyPalierMontagneCompletMissing;
 window.STORY_OUVRAGE_MATIERE = STORY_OUVRAGE_MATIERE;
 window.STORY_OUVRAGE_TEXTS = STORY_OUVRAGE_TEXTS;
 window.storyOuvrageBranch = storyOuvrageBranch;
+
+/* v3.491.0 (Montagne, acte IV) — montagne_16 : les quatre secteurs du haut, libérés une fois chacun. */
+var STORY_MONTAGNE_ANNEAU3 = ["coulee_morte", "forge_froide", "lac_de_lave", "antre"];
+function storyMountainRing3Freed() {
+  return STORY_MONTAGNE_ANNEAU3.filter(function (id) { return storyMountainSectorFreed(id); }).length;
+}
+/* montagne_20, Prendre — LE PUITS DE LA VEINE-MÈRE : chaque jour civil, de la Cendre vive à l'Entrepôt,
+   comme la table des noms de la Crypte. Jour noté dans explorationProgression (déjà sauvegardé). Au banc. */
+var STORY_PUITS_MERE_ASH = 3;
+function storyPuitsVeineMere() {
+  if (!window.StoryQuestManager || StoryQuestManager.getChoice("droit") !== "prendre" || !window.WarehouseManager) return 0;
+  var ep = game.explorationProgression || (game.explorationProgression = {}), today = new Date().toDateString();
+  if (ep.puitsMereDay === today) return 0;
+  ep.puitsMereDay = today;
+  WarehouseManager.addResource("cendre_vive", STORY_PUITS_MERE_ASH, true);
+  if (typeof addLog === "function") addLog("🪨 " + _t("Le puits de la veine-mère : +{n} Cendres vives.", { n: STORY_PUITS_MERE_ASH }), "event");
+  return STORY_PUITS_MERE_ASH;
+}
+var STORY_DROIT_TEXTS = {
+  prendre: {
+    completion: "La pioche entre une fois. La veine-mère se détache, lourde, tiède. Elle bat encore dans tes bras jusqu'à Aeswyn. Orwen la regarde descendre dans le puits.",
+    dialogue: [{ who: "Orwen", text: "Elle est chaude." }, { who: "Sarkel", text: "Je l'ai tenue droite." }]
+  },
+  laisser: {
+    completion: "Tu retires la main. La veine-mère bat plus fort, une fois, comme pour répondre. Le Dragon ferme les yeux.",
+    dialogue: [{ who: "Le Dragon ancien", text: "Toi, tu ne prends pas. Elle s'en souviendra." }, { who: "Sarkel", text: "Moi aussi." }]
+  },
+  suite: {
+    text: "À Aeswyn, le soir, Orwen regarde vers l'est. Au-dessus des toits, loin, une tour. Personne ne l'avait vue avant. Elle était peut-être là.",
+    dialogue: [{ who: "Orwen", text: "Il reste la Tour." }, { who: "Orwen", text: "Elle te prendra le reste." }]
+  }
+};
+function storyDroitBranch() {
+  return (window.StoryQuestManager && StoryQuestManager.getChoice("droit") === "laisser") ? "laisser" : "prendre";
+}
+window.STORY_MONTAGNE_ANNEAU3 = STORY_MONTAGNE_ANNEAU3;
+window.storyMountainRing3Freed = storyMountainRing3Freed;
+window.STORY_PUITS_MERE_ASH = STORY_PUITS_MERE_ASH;
+window.storyPuitsVeineMere = storyPuitsVeineMere;
+window.STORY_DROIT_TEXTS = STORY_DROIT_TEXTS;
+window.storyDroitBranch = storyDroitBranch;
 window.STORY_PALIER_MONTAGNE = STORY_PALIER_MONTAGNE;
 window.storyPalierMontagne = storyPalierMontagne;
 window.storyPalierMontagneMissing = storyPalierMontagneMissing;

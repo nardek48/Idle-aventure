@@ -16460,8 +16460,9 @@ console.log("\n[262] v3.458.4 — Lot 7b : une fenêtre de fin, Histoire, Mémoi
     // v3.466.0 : les images des effets sont livrées, chaque effet porte la sienne
     var icones = hs.match(/\{ key: "\w+", value: "\w+", icon: "images\/Icons\/[a-z_]+\/[a-z_]+\.webp", name: _t\(/g) || [];
     // v3.488.0 : les deux effets du choix « veine » (Montagne) attendent leur image (icône générique en attendant)
-    var attendues = ["images/Icons/traits/veine_dans_la_lame.webp", "images/Icons/traits/puits_chaud.webp"];
-    ok(icones.length === 16 && /hs-trait-ico/.test(hs.split("STORY_TRAITS").slice(1).join("")) && icones.every(function (l) { var f = /icon: "([^"]+)"/.exec(l)[1]; return attendues.indexOf(f) !== -1 || fs10.existsSync(ROOT + "/" + f); }), "Ce que tu portes : 16 effets possibles, chacun avec son image (fichiers présents, sauf les deux de la Montagne à venir)");
+    // v3.491.0 : trois de plus (ouvrage achevé, veine-mère, ce que la Montagne apprend)
+    var attendues = ["images/Icons/traits/veine_dans_la_lame.webp", "images/Icons/traits/puits_chaud.webp", "images/Icons/traits/ouvrage_acheve.webp", "images/Icons/traits/veine_mere.webp", "images/Icons/traits/montagne_apprend.webp"];
+    ok(icones.length === 19 && /hs-trait-ico/.test(hs.split("STORY_TRAITS").slice(1).join("")) && icones.every(function (l) { var f = /icon: "([^"]+)"/.exec(l)[1]; return attendues.indexOf(f) !== -1 || fs10.existsSync(ROOT + "/" + f); }), "Ce que tu portes : 19 effets possibles, chacun avec son image (fichiers présents, sauf les cinq de la Montagne à venir)");
     ok(/dont \{p\} % par tes choix/.test(fs10.readFileSync(ROOT + "/js/ui/living-map-view.js", "utf8")), "Palissade : la part des choix dite à part");
     // C9
     ok(/class="settings-btn ret-eat"/.test(fs10.readFileSync(ROOT + "/js/ui/return-view.js", "utf8")), "écran de retour : « Manger »");
@@ -18328,7 +18329,7 @@ console.log("\n[311] v3.489.0 — Montagne, lot M-3 : acte II « Ce qui trie »"
     g.EQUIPMENT_SLOTS.forEach(function (sl, i) { game.equipped[sl] = { slot: sl, rarity: "epic", worldIndex: i < 4 ? 4 : 3 }; });
     ok(g.storyPalierMontagne(game).pieces === 4 && g.STORY_PALIER_MONTAGNE.pieces === 5, "palier : 4 Épiques de la Montagne sur 7 portés, il en faut 5 (ceux d'en bas ne comptent pas)");
     // La Mémoire 17 à 19
-    ok(g.MEMORY_LEVELS.filter(function (l) { return l.level >= 17 && l.level <= 19; }).length === 3 && g.MEMORY_LEVEL_COSTS.length === 19, "Mémoire 17 à 19 écrite, coûts dans la courbe");
+    ok(g.MEMORY_LEVELS.filter(function (l) { return l.level >= 17 && l.level <= 19; }).length === 3 && g.MEMORY_LEVEL_COSTS.length >= 19, "Mémoire 17 à 19 écrite, coûts dans la courbe");
     MM.has = function (id) { return id === "peau_basalte" || id === "taille_franche" || id === "pioche_sure"; };
     CE.spawnGroup([mk("ifrit")]); V.cut(true);
     ok(Math.abs(V.heatMult() - 1.07) < 1e-9 && Math.abs(V.bladeMult() - 1.25) < 1e-9, "Peau de basalte (+7 %) et Taille franche (+10 % à la première taille)");
@@ -18426,6 +18427,65 @@ console.log("\n[312] v3.490.0 — Montagne, lot M-4 : acte III « La Gueule »")
     ok(false, "[312] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   } finally {
     SQ.isStepReached = sr; SQ.getChoice = gc; g.WorldManager.worldIndex = wiAvant; game.dungeonRun = runAvant; V.state = null;
+  }
+})();
+
+console.log("\n[313] v3.491.0 — Montagne, lot M-5 : acte IV « Le droit de prendre »");
+(function () {
+  var SQ = g.StoryQuestManager, V = g.VeinSystem, CE = g.CombatEngine, MM = g.MemoryManager;
+  var wiAvant = g.WorldManager.worldIndex, sr = SQ.isStepReached, gc = SQ.getChoice, mh = MM.has;
+  try {
+    var ch = g.STORY_QUESTS.mountain;
+    ok(ch.steps.length === 20 && ch.steps.map(function (st) { return st.id; }).slice(15).join() === "montagne_16,montagne_17,montagne_18,montagne_19,montagne_20", "acte IV : cinq étapes, le chapitre V en a vingt");
+    var s20 = ch.steps[19];
+    ok(s20.choice.key === "droit" && g.STORY_CHOICE_AXES.droit.prendre.join() === "garder,aeswyn" && g.STORY_CHOICE_AXES.droit.laisser.join() === "donner,soi", "étape 20 : le choix « droit », Garder + Aeswyn / Donner + Soi");
+    ok(g.STORY_REWARDS.montagne_20.uniqueLoot === "fil_bleu" && g.ELITE_UNIQUE_LOOT.fil_bleu.rarity === "epic" && g.ELITE_UNIQUE_LOOT.fil_bleu.worldIndex === 4, "Le fil bleu, Épique de la Montagne, dans les deux branches");
+    ok(/Tour/.test(ch.endText), "fin du chapitre : l'amorce de la Tour");
+    ok(g.SCENE_TEMPLATES.sentier_du_dessus.mode === "parcours" && g.SCENE_TEMPLATES.sentier_du_dessus.parcours.steps.length === 5 && g.PA2_PARCOURS_IMAGES.montagne_sommet && g.SCENE_TEMPLATES.sentier_du_dessus.parcours.steps.every(function (x) { return x.type !== "obstacle" || g.SCENE_NODES.obstacles[x.gabaritId]; }), "le sentier du dessus : parcours de cinq paliers, gabarits et piste déclarés");
+    var qd = g.ADVENTURE_QUESTS.aq_montagne_dragon;
+    ok(qd.bossId === "ancientdragon" && qd.bossPhases[0].sorts && qd.bossPhases.filter(function (p) { return p.heat === 1; }).length === 3, "le Dragon ancien : il trie, et la chaleur monte à chacune de ses trois phases");
+    // Le Dragon trie
+    game = freshCombat("knight");
+    g.WorldManager.worldIndex = 4;
+    SQ.isStepReached = function (id) { return id === "montagne_08" || sr.call(SQ, id); };
+    SQ.getChoice = function () { return null; };
+    var dr = { id: "ancientdragon", name: "Dragon ancien", isBoss: true, archetype: null, hp: 1e6, maxHp: 1e6, stats: g.BOSS_DB.ancientdragon.stats, resists: [], weak: [], goldReward: 1000 };
+    CE.spawnGroup([dr]);
+    var de = g.CombatActors.enemies()[0];
+    V.onBossPhase(de, qd.bossPhases[0]); V.onBossPhase(de, qd.bossPhases[1]);
+    V.cut(true); V.onEnemyTurn(de); V.onEnemyTurn(de);
+    var t = V.takeSort(de);
+    ok(t && g.CombatActors.isHero(t.actor) && V.heatLevel() === 2, "il trie celui qui a taillé ; chaleur : la taille et sa phase");
+    // Le choix « laisser » : la chaleur porte aussi le héros
+    var b0 = V.bladeMult();
+    SQ.getChoice = function (k) { return k === "droit" ? "laisser" : null; };
+    ok(Math.abs(V.bladeMult() - b0 - 0.10) < 1e-9, "Laisser : chaque cran de chaleur donne +5 % aux coups du héros");
+    // Le choix « prendre » : le puits, une fois par jour
+    SQ.getChoice = function (k) { return k === "droit" ? "prendre" : null; };
+    game.explorationProgression.puitsMereDay = null;
+    var a0 = g.WarehouseManager.getAmount("cendre_vive");
+    ok(g.storyPuitsVeineMere() === 3 && g.storyPuitsVeineMere() === 0 && g.WarehouseManager.getAmount("cendre_vive") - a0 === 3, "Prendre : le puits verse 3 Cendres vives, une fois par jour");
+    // La Mémoire 20
+    var l20 = g.MEMORY_LEVELS.filter(function (l) { return l.level === 20; })[0];
+    ok(l20 && l20.jalon && l20.options.length === 4 && g.MEMORY_LEVEL_COSTS.length === 20, "Mémoire 20 : jalon à quatre options, coût dans la courbe");
+    SQ.getChoice = function () { return null; };
+    MM.has = function (id) { return id === "froid_pierre" || id === "lame_vive" || id === "rien_ne_se_perd" || id === "ce_qui_a_ete_pris"; };
+    CE.spawnGroup([{ id: "lavagolem", name: "Golem", isBoss: false, hp: 1e6, maxHp: 1e6, stats: g.ENEMY_DB.lavagolem.stats, resists: [], weak: [], goldReward: 5 }]);
+    V.cut(true);
+    ok(V.heatLevel() === 0 && Math.abs(V.bladeMult() - 1.20) < 1e-9, "Le froid de la pierre : le premier cran ne compte pas ; Lame vive : +5 % par taille");
+    var c1 = g.WarehouseManager.getAmount("cendre_vive");
+    CE.spawnGroup([{ id: "lavagolem", name: "Golem", isBoss: false, hp: 10, maxHp: 10, stats: g.ENEMY_DB.lavagolem.stats, resists: [], weak: [], goldReward: 5 }]);
+    ok(g.WarehouseManager.getAmount("cendre_vive") - c1 === 1, "Rien ne se perd : la Cendre d'un combat perdu est versée au combat suivant");
+    V.cut(true);
+    var or0 = game.gold;
+    V.onVictory({ isBoss: true, goldReward: 400 });
+    ok(game.gold - or0 === 100, "Ce qui a été pris : boss vaincu après une taille, +25 % d'or");
+    var src = fs.readFileSync(path.join(ROOT, "js/systems/combat-engine.js"), "utf8");
+    ok(/VeinSystem\.onVictory\(enemy\)/.test(src), "combat-engine.js : le dernier tombé est passé aux veines");
+  } catch (err) {
+    ok(false, "[313] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  } finally {
+    SQ.isStepReached = sr; SQ.getChoice = gc; MM.has = mh; g.WorldManager.worldIndex = wiAvant; V.state = null;
   }
 })();
 

@@ -312,6 +312,33 @@ var SCENE_TEMPLATES = {
     travelOnSuccess: { worldId: "mountain", adventureIndex: 0 }
   },
 
+  /* v3.491.0 (Montagne, acte IV étape 17) — LE SENTIER DU DESSUS : de la coupe du lac au plateau du nid.
+     Cinq paliers, journal fixe. Fond à fournir par Seb (piste provisoire). Au banc. */
+  sentier_du_dessus: {
+    id: "sentier_du_dessus",
+    worldId: "mountain",
+    adventureIndex: 1,
+    mode: "parcours",
+    title: "Le sentier du dessus",
+    departLabel: "Monter le sentier",
+    icon: "images/Icons/codex/world_mountain.webp",
+    parcours: {
+      image: "montagne_sommet", track: "route", points: [0, 2, 4, 6, 8], bag: 3,
+      steps: [
+        { type: "obstacle", gabaritId: "paroi_coupee", text: "Le sentier longe la coupe. La paroi est lisse comme une lame. On y voit son reflet, en orange." },
+        { type: "combat", foe: "dragonling", pack: 3, act: 3, text: "Des dragonnets sur une corniche. Ils ne bougent pas. Ils regardent vos mains, puis ils descendent.",
+          after: "Le dernier tombe dans la pente. Les autres corniches restent vides." },
+        { type: "source", fullBreath: true, text: "Une source chaude, dans un creux. L'eau a un goût de pierre. On boit quand même." },
+        { type: "combat", foe: "lavagolem", pack: 2, act: 3, text: "Deux golems, debout de chaque côté du sentier. Ils ne gardent rien. Ils trient.",
+          after: "Ils s'assoient, l'un après l'autre, et ne bougent plus." },
+        { type: "obstacle", gabaritId: "eboulis_chaud", text: "Le plateau du nid. Des écailles grandes comme des boucliers, partout. Au fond, quelque chose respire." }
+      ]
+    },
+    entryCost: { resourceId: "ration", amount: 1 },
+    lootResource: "gold",
+    unlockOnSuccess: { buildingId: null, unlockFlag: null, completionFlag: "sentierDessusDone" }
+  },
+
   traversee_ruines: {
     id: "traversee_ruines",
     worldId: "ruins",

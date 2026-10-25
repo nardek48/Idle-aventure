@@ -21,7 +21,8 @@ var VEIN_ASH_PER_CUT = 1;        // Cendre vive par taille
 var VEIN_ASH_WELL = 1;           // choix `veine` = « aeswyn » (Le puits chaud) : une de plus par taille, au banc
 var VEIN_SORT_MULT = 1.5;        // v3.489.0 (acte II, montagne_08) : le tri du Démon mineur, +50 % sur celui qui a taillé (au banc)
 var VEIN_SORT_STEP = "montagne_08"; // le tri s'apprend à cette étape (tutoriel)
-var VEIN_DIVE_ALL_MULT = 0.8;    // v3.490.0 (acte III) : le Wyrm ressort de la lave, chaque allié frappé à ×0,8 (au banc)
+var VEIN_DIVE_ALL_MULT = 0.8;
+var VEIN_DROIT_HEAT_BLADE = 0.05; // v3.491.0 (acte IV, choix « droit » = laisser) : chaque cran de chaleur porte aussi le héros, à la Montagne    // v3.490.0 (acte III) : le Wyrm ressort de la lave, chaque allié frappé à ×0,8 (au banc)
 
 var VeinSystem = {
 
@@ -46,6 +47,7 @@ var VeinSystem = {
 
   /* Garde de spawnGroup : une veine par combat de la Montagne (par vague dans la Gueule). */
   onCombatStart: function () {
+    if (this.state && this.state.cuts && this._mem("rien_ne_se_perd")) this.payout(this.state); // v3.491.0 : Mémoire 20, combat perdu ou fui
     this.state = this.worldHasVeins() ? { cuts: 0, heroCuts: 0, heat: 0 } : null;
     if (this.state && typeof addLog === "function") addLog("🪨 " + _t("Une veine affleure entre les pierres. Elle bat."), "event");
     if (this.state && this.mawFinished()) {
@@ -65,7 +67,11 @@ var VeinSystem = {
   choice: function () {
     return (window.StoryQuestManager && typeof StoryQuestManager.getChoice === "function") ? StoryQuestManager.getChoice("veine") : null;
   },
-  bladePerCut: function () { return this.choice() === "soi" ? VEIN_BLADE_PER_CUT_SOI : VEIN_BLADE_PER_CUT; },
+  bladePerCut: function () {
+    return (this.choice() === "soi" ? VEIN_BLADE_PER_CUT_SOI : VEIN_BLADE_PER_CUT) + (this._mem("lame_vive") ? Number(this._memV("lame_vive_blade", 0.05)) : 0); // v3.491.0 : Lame vive
+  },
+  /* v3.491.0 : choix « droit » (montagne_20) = laisser — la Montagne apprend de toi. */
+  mountainLearns: function () { return !!(window.StoryQuestManager && StoryQuestManager.getChoice("droit") === "laisser"); },
 
   /* Tailler : par le héros (son action du tour), ou par un compagnon (Sarkel, lot M-2 : pas de lame).
      v3.489.0 : on retient qui a taillé en dernier (le tri du Démon mineur) ; companionId pour un compagnon. */
@@ -91,17 +97,22 @@ var VeinSystem = {
   /* Multiplicateur des dégâts du héros (attaque de base et compétences). Taille franche (Mémoire 17) : +10 % à la première. */
   bladeMult: function () {
     if (!this.state) return 1;
-    return 1 + this.state.heroCuts * this.bladePerCut() + (this.state.heroCuts > 0 && this._mem("taille_franche") ? Number(this._memV("taille_franche_blade", 0.10)) : 0);
+    return 1 + this.state.heroCuts * this.bladePerCut() + (this.state.heroCuts > 0 && this._mem("taille_franche") ? Number(this._memV("taille_franche_blade", 0.10)) : 0)
+      + (this.mountainLearns() ? this.heatLevel() * VEIN_DROIT_HEAT_BLADE : 0);
   },
   /* Multiplicateur des frappes ennemies (les façonnés, tous les ennemis de la Montagne). Peau de basalte (Mémoire 17) : +7 %. */
   heatMult: function () {
     if (!this.state) return 1;
     var cran = (this._mem("peau_basalte") ? Number(this._memV("peau_basalte_heat", 0.07)) : VEIN_HEAT_PER_CUT)
       * ((typeof uniquePowerMult === "function") ? uniquePowerMult("dun_braise") : 1); // v3.490.0 : Heaume du Wyrm
-    return 1 + (this.state.cuts + Number(this.state.heat || 0)) * cran;
+    return 1 + this.heatLevel() * cran;
   },
-  /* Crans de chaleur du combat : tailles et crans ajoutés (Wyrm, ouvrage achevé). */
-  heatLevel: function () { return this.state ? this.state.cuts + Number(this.state.heat || 0) : 0; },
+  /* Crans de chaleur du combat : tailles et crans ajoutés (Wyrm, ouvrage achevé). Le froid de la pierre (Mémoire 20) : le premier ne compte pas. */
+  heatLevel: function () {
+    if (!this.state) return 0;
+    var n = this.state.cuts + Number(this.state.heat || 0);
+    return this._mem("froid_pierre") ? Math.max(0, n - 1) : n;
+  },
   addHeat: function (n) {
     if (!this.state) return; // pas de veine, pas de chaleur
     this.state.heat = Number(this.state.heat || 0) + n;
@@ -134,7 +145,7 @@ var VeinSystem = {
   },
   sortTurn: function (e) {
     var def = this.sorterDef(e);
-    if (!def || !def.sorts || !this.state || !e || Number(e.hp || 0) <= 0 || e.downed) return;
+    if (!((def && def.sorts) || (e && e.sorts)) || !this.state || !e || Number(e.hp || 0) <= 0 || e.downed) return; // v3.491.0 : e.sorts, le Dragon ancien
     if (!window.StoryQuestManager || !StoryQuestManager.isStepReached(VEIN_SORT_STEP)) return;
     var t = this.sortTarget();
     if (!t) { e.sortArmed = false; return; }
@@ -227,6 +238,7 @@ var VeinSystem = {
       if (typeof addLog === "function") addLog("🔥 " + _t("La chaleur monte de {n} crans.", { n: Number(ph.heat) }), "event");
     }
     if (ph.dive) e.diving = true; // sous la lave jusqu'à son prochain tour : on ne le touche pas
+    if (ph.sorts) e.sorts = true; // v3.491.0 : le Dragon ancien trie
   },
   /* Lu par dealDamage : sous la lave, aucun coup ne porte. */
   blocksHit: function (foe) { return !!(foe && foe.diving && Number(foe.hp || 0) > 0); },
@@ -243,10 +255,19 @@ var VeinSystem = {
     return true;
   },
 
-  /* Garde de killEnemy : le combat est gagné, la Cendre taillée est versée. */
-  onVictory: function () {
+  /* Garde de killEnemy : le combat est gagné, la Cendre taillée est versée. v3.491.0 : enemy, le dernier tombé
+     (Mémoire 20, « Ce qui a été pris » : boss ou élite de la Montagne vaincu après une taille, +25 % d'or). */
+  onVictory: function (enemy) {
     var st = this.state;
     this.state = null;
+    if (st && st.cuts && enemy && (enemy.isBoss || enemy.isElite) && this._mem("ce_qui_a_ete_pris") && window.CombatEngine) {
+      var bonus = Math.floor(Number(enemy.goldReward || 0) * Number(this._memV("ce_qui_a_ete_pris_gold", 0.25)));
+      if (bonus > 0) { CombatEngine.grantGold(bonus); if (typeof addLog === "function") addLog("🪨 " + _t("Ce qui a été pris : +{n} or.", { n: formatNumber(bonus) }), "event"); }
+    }
+    return this.payout(st);
+  },
+  /* La Cendre taillée d'un combat, versée à l'Entrepôt. */
+  payout: function (st) {
     if (!st || !st.cuts || !window.WarehouseManager) return 0;
     if (game.dungeonRun && game.dungeonRun.active && game.dungeonRun.free) return 0; // RE-5 : rien en mode libre
     var n = st.cuts * VEIN_ASH_PER_CUT + (this.choice() === "aeswyn" ? st.cuts * VEIN_ASH_WELL : 0) + Number(st.bonusAsh || 0)

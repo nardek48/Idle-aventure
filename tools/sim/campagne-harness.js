@@ -1502,6 +1502,15 @@ var SOLVERS = {
     if (!g.storyMakeChoice("mountain", val)) note("choix refusé (ouvrage)");
   },
   montagne_15: function (g) { if (!(g.game.dungeonTierCleared || {})[5]) playDungeon(5, false); },
+  // v3.491.0 (Montagne, acte IV, lot M-5)
+  montagne_16: function (g) { g.STORY_MONTAGNE_ANNEAU3.forEach(function (id) { if (!g.storyMountainSectorFreed(id)) freeSector("mountain", id); }); },
+  montagne_17: function (g) { playExpedition("sentier_du_dessus", function () { return g.storyDesertFlag("sentierDessusDone"); }); },
+  montagne_18: function (g) { playAdventure("aq_montagne_tries"); },
+  montagne_19: function (g) { playAdventure("aq_montagne_dragon"); },
+  montagne_20: function (g) {
+    var val = ARGS.indexOf("--laisser-veine") >= 0 ? "laisser" : "prendre";
+    if (!g.storyMakeChoice("mountain", val)) note("choix refusé (droit)");
+  },
   // v3.456.0 (Crypte, actes II à IV, lot C-6)
   crypte_06: function (g) { playExpedition("petite_aventure_crypte", function () { return g.storyDesertFlag("cryptPaCompleted"); }); },
   crypte_07: function (g) { for (var i = 0; i < 6 && g.storyCryptSectorsFreed() < 2; i++) freeSector("crypt"); },

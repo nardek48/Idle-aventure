@@ -942,6 +942,76 @@ var ADVENTURE_QUESTS = {
     reward: {}
   },
 
+  /* v3.491.0 (Montagne, acte IV étape 18) — « Ceux qu'il a triés » : quatre rencontres sur le plateau du nid,
+     au profil de l'Épique complet. Au banc. */
+  aq_montagne_tries: {
+    id: "aq_montagne_tries",
+    type: "kill",
+    section: "adventure",
+    difficulty: "hard",
+    progressionStage: "world_end",
+    category: "side",
+    worldId: "mountain",
+    adventureIndex: 1,
+    requiresStoryStep: "montagne_18",
+    encounters: [
+      { group: ["dragonling", "dragonling", "minordemon"], groupHpMult: 0.35 },
+      { group: ["lavagolem", "ifrit"], groupHpMult: 0.55 },
+      { group: ["ifrit", "minordemon", "dragonling"], groupHpMult: 0.35 },
+      { group: ["lavagolem", "lavagolem", "minordemon"], groupHpMult: 0.35 }
+    ],
+    encounterHpMult: 1.8,
+    enemyPowerMult: 6.5, // banc : 80 / 100 / 90 %, 30 à 59 % des PV (Ch. / Rô. / Ma.)
+    name: "Ceux qu'il a triés",
+    story: "Sur le plateau, des façonnés, chacun à sa place, comme des outils rangés.",
+    icon: "./images/Icons/quest_icons/exploration/exploration3.webp",
+    steps: [
+      { id: "rencontres_tries", type: "encounter", worldId: "mountain", target: 4, desc: "Vaincre {target} rencontres sur le plateau du nid" }
+    ],
+    reward: {}
+  },
+
+  /* v3.491.0 (Montagne, acte IV étape 19) — « Le Dragon ancien » : deux rencontres, puis le Dragon ancien (MT6).
+     Il trie dès l'entrée ; la chaleur monte d'un cran à 75, 50 et 25 % ; deux dragonnets à 50 % ; la rage sous 25 %.
+     Effets lus par VeinSystem.onBossPhase (heat, sorts). Au banc. */
+  aq_montagne_dragon: {
+    id: "aq_montagne_dragon",
+    type: "kill",
+    section: "adventure",
+    difficulty: "hard",
+    progressionStage: "world_end",
+    category: "side",
+    worldId: "mountain",
+    adventureIndex: 1,
+    requiresStoryStep: "montagne_19",
+    encounters: [
+      { group: ["dragonling", "lavagolem", "ifrit"], groupHpMult: 0.35 },
+      { group: ["minordemon", "ifrit"], groupHpMult: 0.55 }
+    ],
+    encounterHpMult: 1.8,
+    enemyPowerMult: 6.5,
+    bossId: "ancientdragon",
+    // banc (montagne-acte3-bench --quetes, sauvegardes de fin de chapitre, 10 runs, Ch. / Rô. / Ma.) : 2,1 / 0,85 -> 60 / 100 / 10 % ;
+    // 1,8 / 0,75 -> 100 / 100 / 50 % ; 1,6 / 0,65 -> 100 / 100 / 80 %. Retenu entre les deux, pour le Mage.
+    bossHpMult: 1.7,
+    bossPowerMult: 0.7,
+    bossPhases: [
+      { atPct: 1, sorts: true, label: "il regarde vos mains", line: "Ses yeux passent sur chacun, et s'arrêtent sur les mains." },
+      { atPct: 0.75, heat: 1, label: "la roche chauffe", line: "Sous lui, les veines battent plus vite." },
+      { atPct: 0.5, heat: 1, adds: ["dragonling", "dragonling"], addsHpMult: 0.15, addsPowerMult: 0.45, label: "deux dragonnets descendent du nid", line: "Deux dragonnets descendent du nid. Ils se posent à côté de lui." },
+      { atPct: 0.25, heat: 1, archetype: "enraged", label: "il se lève", line: "Il se lève enfin. Il est plus grand que le nid." }
+    ],
+    bossLog: "Le Dragon ancien ne se lève pas. Il tourne la tête.",
+    name: "Le Dragon ancien",
+    story: "Au fond du plateau, une aile se déplie. Elle cache la moitié du ciel.",
+    icon: "./images/Icons/quest_icons/exploration/exploration3.webp",
+    steps: [
+      { id: "rencontres_dragon", type: "encounter", worldId: "mountain", target: 2, desc: "Vaincre {target} rencontres au bord du nid" },
+      { id: "boss_dragon", type: "bossKill", bossId: "ancientdragon", target: 1, desc: "Vaincre le Dragon ancien" }
+    ],
+    reward: {}
+  },
+
   aq_ruines_plan: {
     id: "aq_ruines_plan",
     type: "kill",

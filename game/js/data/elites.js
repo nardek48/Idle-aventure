@@ -494,6 +494,18 @@ var ELITE_UNIQUE_LOOT = {
     item: { name: "Le maillon", icon: "ring" }
   },
 
+  /* v3.491.0 (Montagne, montagne_20) — LE FIL BLEU : un éclat d'Obsidienne poli, un fil de veine dedans. Cadeau
+     de fin de chapitre dans les deux branches, comme Le maillon. Bas de la fourchette Épique de l'amulette (8 à 13). */
+  fil_bleu: {
+    slot: "amulet",
+    stat: "critChance",
+    rarity: "epic",
+    value: 9,
+    worldIndex: 4,
+    affixes: [{ stat: "maxHpPct", value: 0.10, tier: "P" }, { stat: "goldMult", value: 0.10, tier: "S" }],
+    item: { name: "Le fil bleu", icon: "amulet" }
+  },
+
   ronce_ardente: {
     slot: "armor",
     stat: "defense",

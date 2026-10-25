@@ -17,6 +17,8 @@ var DIFF5 = opt("--diff") ? Number(opt("--diff")) : null;
 var WYRM = opt("--boss") ? opt("--boss").split(",").map(Number) : null;
 var QUETE = opt("--quete") ? opt("--quete").split(",").map(Number) : null;
 var SANS_POTION = ARGV.indexOf("--sans-potion") >= 0;
+var QUETES = opt("--quetes") ? opt("--quetes").split(",") : null; // v3.491.0 : quêtes seules (acte IV : aq_montagne_tries, aq_montagne_dragon)
+var QBOSS = opt("--qboss") ? opt("--qboss").split(",").map(Number) : null; // essai bossHpMult,bossPowerMult (aq_montagne_dragon)
 if (!SAVES.length) { console.log("--save <fichier> attendu (sauvegarde de campagne)"); process.exit(1); }
 
 var extra = function () {
@@ -53,6 +55,29 @@ var extra = function () {
     }
     return { camp: camp, hpCamp: hpCamp, boss: hpBoss !== null, hpBoss: hpBoss, ok: Number(g.game.dungeonBossClears || 0) > boss0, rounds: rounds,
       hp: Math.max(0, g.game.heroHp) / g.game.heroMaxHp };
+  }
+  if (QUETES) {
+    if (QBOSS) { g.ADVENTURE_QUESTS.aq_montagne_dragon.bossHpMult = QBOSS[0]; g.ADVENTURE_QUESTS.aq_montagne_dragon.bossPowerMult = QBOSS[1]; }
+    var txt = SAVES.map(function (f) { return fs.readFileSync(f, "utf8"); });
+    QUETES.forEach(function (qid) {
+      console.log(qid + (QBOSS ? " · essai boss PV ×" + QBOSS[0] + " puissance ×" + QBOSS[1] : "") + (QUETE ? " · essai rencontres PV ×" + QUETE[0] + " puissance ×" + QUETE[1] : ""));
+      if (QUETE) { g.ADVENTURE_QUESTS[qid].encounterHpMult = QUETE[0]; g.ADVENTURE_QUESTS[qid].enemyPowerMult = QUETE[1]; }
+      txt.forEach(function (t, k) {
+        var cls = JSON.parse(t).heroId || path.basename(SAVES[k]), n = 0, ok = 0, hp = 0;
+        for (var i = 0; i < RUNS; i++) {
+          charge(t, 93000 + i);
+          g.game.adventureQuestsCompleted = {}; g.game.adventureQuestProgress = {};
+          var garde = g.ADVENTURE_QUESTS[qid].requiresStoryStep; g.ADVENTURE_QUESTS[qid].requiresStoryStep = null;
+          var r = playQuest(qid);
+          g.ADVENTURE_QUESTS[qid].requiresStoryStep = garde;
+          if (!r) continue;
+          n++;
+          if (r.ok) { ok++; hp += Math.max(0, g.game.heroHp) / g.game.heroMaxHp; }
+        }
+        console.log("   " + String(cls).padEnd(8) + " réussite " + String(Math.round(100 * ok / Math.max(1, n))).padStart(3) + " %   PV restants " + String(Math.round(100 * (ok ? hp / ok : 0))).padStart(3) + " %   (" + n + " runs)");
+      });
+    });
+    return;
   }
   console.log("GUEULE DU VOLCAN — " + RUNS + " runs par sauvegarde, Grimoire, " + (SANS_POTION ? "SANS potion" : "potions de la sauvegarde")
     + (DIFF5 ? " · essai difficultyMult " + DIFF5 : " · difficultyMult " + d.difficultyMult) + (WYRM ? " · essai Wyrm p" + WYRM[0] + " e" + WYRM[1] : ""));

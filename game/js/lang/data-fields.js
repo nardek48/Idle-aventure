@@ -31,6 +31,7 @@ var DATA_TEXT_FIELDS = {
   STORY_PORTENT_TEXTS: ["*.completion", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.452.0 (Crypte) : les deux branches du choix « portent »
   STORY_VEINE_TEXTS: ["*.completion", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.488.0 (Montagne) : les deux branches du choix « veine »
   STORY_OUVRAGE_TEXTS: ["*.completion", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.490.0 (Montagne) : les deux branches du choix « ouvrage »
+  STORY_DROIT_TEXTS: ["*.completion", "*.text", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.491.0 (Montagne) : le choix « droit » et la fin du chapitre
   STORY_PIOCHE_OPTIONS: ["*.label", "*.desc"], // v3.488.0 (Montagne, montagne_03) : « Deux sur cinq »
   STORY_DEUX_SUR_CINQ: [""],                   // v3.488.0 : le tutoriel, quatre ou cinq compagnons
   STORY_YSOLT_TEXTS: ["*.completion", "*.edda15", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.455.0 (Crypte) : les deux branches du choix « ysolt »

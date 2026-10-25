@@ -18,7 +18,7 @@ var MEMORY_SOUVENIRS = {
 /* Coût de chaque niveau (O11), mesuré au banc : Forêt 5/8/11/14, Désert 20/25/30/35.
    v3.453.0 : règle O16 (sim/offrande-bench.js, N = 14 runs du donjon du monde) — Ruines 35/44/52/62,
    Crypte 77/99/116/138 (provisoire : seul l'acte I existe, ses aventures sont comptées comme aux Ruines). */
-var MEMORY_LEVEL_COSTS = [5, 8, 11, 14, 20, 25, 30, 35, 35, 44, 52, 62, 77, 99, 116, 138, 160, 190, 225]; // v3.489.0 : Montagne 17 à 19 (provisoire, au banc ; le 20 vient avec l'acte IV)
+var MEMORY_LEVEL_COSTS = [5, 8, 11, 14, 20, 25, 30, 35, 35, 44, 52, 62, 77, 99, 116, 138, 160, 190, 225, 265]; // v3.489.0 : Montagne 17 à 19 ; v3.491.0 : le jalon 20 (provisoires, au banc)
 var MEMORY_LEVELS_PER_WORLD = 4;        // O6 : plafond par monde atteint
 var MEMORY_REPRISE_BASE_COST = 500;     // O5 : reprise d'un choix, ×3 à chaque fois ; v3.358.0 : en or (10 Aether × AETHER_GOLD_RATE)
 var MEMORY_REPRISE_MULT = 3;
@@ -40,7 +40,9 @@ var MEMORY_VALUES = {
   peau_basalte_heat: 0.07,    // chaque cran de chaleur : +7 % aux façonnés au lieu de +10 %
   taille_franche_blade: 0.10, // première taille du combat : +10 % de lame en plus
   pierre_profonde_uses: 2,    // la Pierre froide sert deux fois de plus
-  pioche_sure_ash: 1          // Coup de pioche : une Cendre vive de plus
+  pioche_sure_ash: 1,         // Coup de pioche : une Cendre vive de plus
+  lame_vive_blade: 0.05,         // v3.491.0 (Mémoire 20) : Lame vive, +5 % de lame par taille du héros
+  ce_qui_a_ete_pris_gold: 0.25   // v3.491.0 : Ce qui a été pris, +25 % d'or sur un boss ou une élite après une taille
 };
 
 /* Les huit niveaux (conception v1.2 §5.3-5.4). `id` est la clé lue par MemoryManager.has().
@@ -180,6 +182,17 @@ var MEMORY_LEVELS = [
       desc: "Après un KO, Sarkel revient au combat suivant avec tous ses PV." },
     { id: "pioche_sure", side: "donner", name: "Pioche sûre", icon: "images/Icons/memory/pioche_sure.webp",
       desc: "Coup de pioche verse 2 Cendres vives au lieu d'une." }
+  ] },
+  /* v3.491.0 (Montagne, acte IV, MT12) : le jalon 20, quatre options sur le modèle du 16. */
+  { level: 20, theme: "Le droit de prendre", jalon: true, options: [
+    { id: "rien_ne_se_perd", side: "garder", name: "Rien ne se perd", icon: "images/Icons/memory/rien_ne_se_perd.webp",
+      desc: "La Cendre taillée est versée même si le combat est perdu." },
+    { id: "lame_vive", side: "donner", name: "Lame vive", icon: "images/Icons/memory/lame_vive.webp",
+      desc: "Chaque taille du héros donne +5 % de lame de plus." },
+    { id: "froid_pierre", line: "garder", name: "Le froid de la pierre", icon: "images/Icons/memory/froid_pierre.webp",
+      desc: "Le premier cran de chaleur de chaque combat ne compte pas." },
+    { id: "ce_qui_a_ete_pris", line: "donner", name: "Ce qui a été pris", icon: "images/Icons/memory/ce_qui_a_ete_pris.webp",
+      desc: "Un boss ou une élite de la Montagne vaincu après une taille rapporte 25 % d'or de plus." }
   ] }
 ];
 
