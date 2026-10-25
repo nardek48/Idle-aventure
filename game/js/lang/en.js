@@ -684,7 +684,6 @@ I18n.register("en", {
   "Voir la Halle marchande": "See the Market Hall",
   "Trajet {x} · {n} unités vendues": "{x} trip · {n} units sold",
   "Décharger": "Unload",
-  "Le Bois et le Fer restent au village.": "Wood and Iron stay in the village.",
   "Caravane": "Caravan",
   "Halle": "Hall",
   "Agrandir · niv. {n}": "Expand · lv. {n}",

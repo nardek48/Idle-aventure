@@ -13398,12 +13398,12 @@ console.log("\n[191] v3.419.0 — La Caravane de la Halle marchande (R3, version
     ok(run("CARAVAN_TRIPS.court.valuePct === 0.6 && CARAVAN_TRIPS.moyen.valuePct === 0.8 && CARAVAN_TRIPS.long.valuePct === 1 && CARAVAN_TRIPS.long.seconds === 28800"), "60 / 80 / 100 % de la valeur (v3.421.0), Long 8 h");
     ok(run("CaravanManager.isTripOpen('moyen', 1) && !CaravanManager.isTripOpen('long', 2) && CaravanManager.isTripOpen('long', 3)"), "Court et Moyen dès la Halle 1, Long à la Halle 3");
     ok(run("CaravanManager.getCapacity('court', 1)") === 150 && run("CaravanManager.getCapacity('moyen', 5)") === 560 && run("CaravanManager.getCapacity('long', 10)") === 1520, "+10 % de capacité par niveau : Moyen 560 au niveau 5, Long 1 520 au niveau 10");
-    ok(run("CaravanManager.getEligibleKeys().sort().join(',')") === "ble,eau,pierre,viande", "seules les matières brutes partent, ni Bois ni Fer (v3.421.0)");
-    /* Stock : Blé, Viande, Bois au plafond (500) ; Eau 300 ; Pierre 100 ; Fer 0 ; réserve de Viande 400 */
-    run("['ble','viande','bois'].forEach(function (k) { game.resources[k] = 500; }); game.resources.eau = 300; game.resources.pierre = 100; game.resources.fer = 0; ResourceReserveManager.setReserve('viande', 400); ResourceReserveManager.setReserve('bois', 0); ResourceReserveManager.setReserve('ble', 0);");
+    ok(run("CaravanManager.getEligibleKeys().sort().join(',')") === "ble,bois,eau,fer,pierre,viande", "seules les matières brutes partent, Bois et Fer compris (v3.480.0, RE-3)");
+    /* Stock : Blé, Viande, Bois au plafond (500) ; Eau 300 ; Pierre 100 ; Fer 0 ; réserve de Viande 400, du Bois 500 */
+    run("['ble','viande','bois'].forEach(function (k) { game.resources[k] = 500; }); game.resources.eau = 300; game.resources.pierre = 100; game.resources.fer = 0; ResourceReserveManager.setReserve('viande', 400); ResourceReserveManager.setReserve('bois', 500); ResourceReserveManager.setReserve('ble', 0);");
     ok(run("CaravanManager.getSpare('ble')") === 250 && run("CaravanManager.getSpare('viande')") === 100 && run("CaravanManager.getSpare('pierre')") === 0, "part libre : au-dessus de la moitié du plafond et de la réserve (Blé 250, Viande 100, Pierre 0)");
     var court = run("CaravanManager.computeLoad('court')");
-    ok(court.ble === 75 && court.viande === 75 && !court.bois && !court.eau, "Court : les ressources au plafond d'abord, à parts égales ; le Bois au plafond reste");
+    ok(court.ble === 75 && court.viande === 75 && !court.bois && !court.eau, "Court : les ressources au plafond d'abord, à parts égales ; le Bois, protégé par sa réserve, reste");
     var moyen = run("CaravanManager.computeLoad('moyen')");
     ok(run("CaravanManager.getLoadUnits(" + JSON.stringify(moyen) + ")") === 400 && moyen.viande === 100 && moyen.ble === 250 && moyen.eau === 50 && !moyen.bois, "Moyen : la Viande s'arrête à sa réserve, le Blé à la moitié du plafond, l'Eau complète");
     ok(run("CaravanManager.getBlockReason('long')") !== "" && run("CaravanManager.getBlockReason('moyen')") === "", "Long refusé à la Halle 1, Moyen possible");
@@ -13411,7 +13411,7 @@ console.log("\n[191] v3.419.0 — La Caravane de la Halle marchande (R3, version
     run("CaravanManager._now = function () { return 1000000; }; CaravanManager.depart('moyen');");
     var c = run("CaravanManager.get()");
     ok(c && c.trip === "moyen" && c.endsAt === 1000000 + 4 * 3600 * 1000 && c.gold === 400, "départ : trajet, retour dans 4 h, 400 or (300 Blé et Eau à 1 or, 100 Viande à 2 or, × 80 %)");
-    ok(run("game.resources.ble") >= 250 && run("game.resources.bois") === 500 && run("game.resources.viande") === 400, "jamais sous la moitié du plafond ni sous la réserve ; le Bois n'est pas touché");
+    ok(run("game.resources.ble") >= 250 && run("game.resources.bois") === 500 && run("game.resources.viande") === 400, "jamais sous la moitié du plafond ni sous la réserve ; le Bois protégé n'est pas touché");
     ok(run("CaravanManager.getBlockReason('court')") !== "" && run("CaravanManager.depart('court')") === false, "une seule caravane à la fois");
     ok(run("buildSaveData()").village.caravans[0].trip === "moyen", "la caravane est dans la sauvegarde (game.village)");
     // v3.426.0 (chantier Expéditions) : la Caravane vit dans Campement › Expéditions ; la Halle garde un renvoi.
@@ -17885,6 +17885,20 @@ console.log("\n[300] v3.479.0 — Refonte de l'économie RE-2 : zones de product
   var css = fs.readFileSync(path.join(ROOT, "css/04-panel-production.css"), "utf8");
   ok(/\.farm-plot-card \.farm-plot-card-name, \.farm-plot-card \.farm-plot-card-profile \{ max-width: 100%; overflow: hidden; text-overflow: ellipsis; \}/.test(css), "320 px : nom et monde d'une zone verrouillée coupés par « … »");
   g.game.worldsEverReached = reached; g.WorldManager.worldIndex = wi;
+})();
+
+console.log("\n[301] v3.480.0 — Refonte de l'économie RE-3 : la caravane prend aussi le Bois et le Fer");
+(function () {
+  run("fullResetState(); game.playerName='T'; game.heroId='knight'; VillageBuildingManager.ensure(); game.village.buildings.hall.level = 3; game.village.buildings.warehouse.level = 0; WorldManager.worldIndex = 1;");
+  run("['bois','fer','pierre','eau','ble','viande'].forEach(function (k) { game.resources[k] = 0; ResourceReserveManager.setReserve(k, 0); }); game.resources.bois = 500; game.resources.fer = 500;");
+  var load = run("CaravanManager.computeLoad('long')");
+  ok(load.bois === 250 && load.fer === 250, "Bois et Fer au plafond : la caravane emporte ce qui dépasse la moitié (250 chacun)");
+  var now0 = g.CaravanManager._now;
+  run("CaravanManager._now = function () { return 1000000; }; CaravanManager.depart('long');");
+  ok(run("game.resources.bois") === 250 && run("game.resources.fer") === 250, "la moitié du plafond reste au village pour les planches et les lingots");
+  ok(run("CaravanManager.get()").gold === 1000, "or du trajet Long : 250 Bois à 1 or + 250 Fer à 3 or");
+  ok(fs.readFileSync(path.join(ROOT, "js/ui/caravan-view.js"), "utf8").indexOf("Le Bois et le Fer restent au village") === -1, "la fiche ne dit plus que le Bois et le Fer restent au village");
+  g.CaravanManager._now = now0;
 })();
 
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));

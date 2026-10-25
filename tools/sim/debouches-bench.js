@@ -61,7 +61,7 @@ var RECIPE = { planche: { bois: 5 }, lingot: { fer: 5 }, farine: { ble: 5 }, via
 var PREFIX = ["forest", "desert", "ruines", "crypte"];
 
 var SCENARIOS = {
-  A0: { label: "aujourd'hui" },
+  A0: { label: "aujourd'hui (v3.480.0 : Bois et Fer en caravane, comme A1)" },
   A1: { label: "caravane : bois et fer acceptés", noExclude: true },
   A2: { label: "A1 + la caravane garde le quart du plafond (au lieu de la moitié)", noExclude: true, keep: 0.25 },
   A3: { label: "Taverne : quantités des contrats ×2", tavernQty: 2 },

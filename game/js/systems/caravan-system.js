@@ -13,8 +13,8 @@
      - Court et Moyen dès la Halle niveau 1, Long au niveau 3 ;
      - +10 % de capacité par niveau de Halle au-delà du premier (×1,9 au niveau 10) ;
      - v3.421.0 (vérification de campagne, décision Seb « B ») : valeurs baissées
-       (80/100/120 → 60/80/100 %), et ni Bois ni Fer — ils ne sont pas des surplus
-       (99 % et 84 % déjà consommés) : les vendre ralentissait les constructions ;
+       (80/100/120 → 60/80/100 %), et ni Bois ni Fer (v3.480.0 : de nouveau acceptés, refonte de
+       l'économie RE-3 : en fin de monde, ils n'avaient plus aucun débouché que la Taverne) ;
      - chargement automatique (C1) : seules les matières brutes partent, et seulement
        ce qui dépasse la MOITIÉ du plafond et la réserve protégée de l'Entrepôt.
        Les ressources au plafond passent d'abord, à parts égales ;
@@ -41,7 +41,7 @@ var CARAVAN_TRIPS = {
 };
 var CARAVAN_TRIP_ORDER = ["court", "moyen", "long"];
 /* v3.421.0 : matières brutes que la caravane n'emporte jamais (planches, lingots, blocs en dépendent). */
-var CARAVAN_EXCLUDED = ["bois", "fer"];
+var CARAVAN_EXCLUDED = []; // v3.480.0 (refonte de l'économie RE-3) : le Bois et le Fer partent aussi ; la moitié du plafond reste au village
 var CARAVAN_CAPACITY_PER_LEVEL = 0.10;   // +10 % par niveau de Halle au-delà du premier
 var CARAVAN_KEEP_SHARE = 0.5;            // la moitié basse du plafond ne part jamais
 /* Matériau rare rapporté par le trajet Long : celui du monde où l'on se trouve au départ. */
@@ -112,7 +112,7 @@ var CaravanManager = {
     return t ? Math.floor(t.units * this.getCapacityMult(level) + 1e-9) : 0;
   },
 
-  /* Ressources que la caravane peut emporter : les matières brutes plafonnées, hors Bois et Fer. */
+  /* Ressources que la caravane peut emporter : les matières brutes plafonnées (hors CARAVAN_EXCLUDED). */
   getEligibleKeys: function () {
     return Object.keys(WAREHOUSE_RESOURCES).filter(function (k) {
       var d = WAREHOUSE_RESOURCES[k];

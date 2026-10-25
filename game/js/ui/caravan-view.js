@@ -149,7 +149,7 @@ function buildCaravanDepartHTML() {
   } else {
     h += '<div class="car-empty">' + _t("Rien à vendre : aucune matière brute ne dépasse la moitié de son plafond.") + '</div>';
   }
-  h += '<p class="car-why">' + _t("La caravane prend d'abord ce qui est au plafond, à parts égales. Elle laisse toujours la moitié du plafond et la réserve protégée de l'Entrepôt.") + ' ' + _t("Le Bois et le Fer restent au village.") + '</p></div>';
+  h += '<p class="car-why">' + _t("La caravane prend d'abord ce qui est au plafond, à parts égales. Elle laisse toujours la moitié du plafond et la réserve protégée de l'Entrepôt.") + '</p></div>';
 
   var reason = CaravanManager.getBlockReason(sel, caravanMarketWorld());
   h += '<div class="car-go"><button type="button" class="kbtn primary"' + (reason ? ' disabled' : ' onclick="departCaravanFromSheet()"') + '>'
