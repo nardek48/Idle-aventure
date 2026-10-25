@@ -253,6 +253,64 @@ var ProductionPlotsSystem = {
 
   /* Active l'amélioration fertile/irriguée sur la zone d'index `plotIndex`, pour le
      bâtiment `buildingId` (payante, cumulable, non réversible). */
+  /* v3.479.0 (refonte de l'économie RE-2, atelier zones-par-rangee.html) : actions par RANGÉE de la
+     grille 3×3 (une rangée par monde). Le coût est la somme de celui des zones ; tout ou rien. */
+  getRowState: function (buildingId, row) {
+    var self = this, plots = this.getPlots(buildingId), cfg = PRODUCTION_PLOTS_BUILDINGS[buildingId];
+    var idx = [row * 3, row * 3 + 1, row * 3 + 2];
+    var st = { row: row, open: [], locked: [], upNow: [], minLevel: null, lvMin: 0, lvMax: 0, unlockCost: {}, upCost: {}, impCost: {}, impN: 0, rowOpen: this.isPlotRowOpen(row * 3) };
+    function add(target, cost) { Object.keys(cost || {}).forEach(function (k) { target[k] = (target[k] || 0) + cost[k]; }); }
+    idx.forEach(function (i) { (plots[i].state === "open" ? st.open : st.locked).push(i); });
+    var up = st.open.filter(function (i) { return !self.isPlotMaxLevel(plots[i]); });
+    if (up.length) st.minLevel = Math.min.apply(null, up.map(function (i) { return plots[i].level; }));
+    st.upNow = up.filter(function (i) { return plots[i].level === st.minLevel; });
+    if (st.open.length) {
+      var lv = st.open.map(function (i) { return plots[i].level; });
+      st.lvMin = Math.min.apply(null, lv); st.lvMax = Math.max.apply(null, lv);
+    }
+    st.locked.forEach(function (i) { add(st.unlockCost, getProductionPlotUnlockCost(buildingId, i)); });
+    st.upNow.forEach(function (i) { add(st.upCost, getProductionPlotUpgradeCost(buildingId, plots[i].level, i)); });
+    st.open.forEach(function (i) {
+      ["fertile", "irrigated"].forEach(function (k) { if (!plots[i][k]) { add(st.impCost, cfg.improvementCost[k].cost); st.impN++; } });
+    });
+    return st;
+  },
+  _payAll: function (cost) {
+    var ok = Object.keys(cost).every(function (k) { return WarehouseManager.getAmount(k) >= cost[k]; });
+    if (ok) Object.keys(cost).forEach(function (k) { WarehouseManager.removeResource(k, cost[k]); });
+    return ok;
+  },
+  _rowDone: function (text) {
+    addLog("🗺️ " + text, "event");
+    if (typeof renderPanel === "function") renderPanel();
+    if (typeof saveGame === "function") saveGame();
+    return { ok: true, reason: null, text: text };
+  },
+  unlockRow: function (buildingId, row) {
+    var st = this.getRowState(buildingId, row), plots = this.getPlots(buildingId);
+    if (!st.rowOpen) return { ok: false, reason: _t("S'ouvre {lieu}", { lieu: this.getPlotRowOpening(row * 3) }) };
+    if (!st.locked.length) return { ok: false, reason: _t("Rangée déjà défrichée") };
+    if (!this._payAll(st.unlockCost)) return { ok: false, reason: _t("Ressources insuffisantes") };
+    st.locked.forEach(function (i) { plots[i].state = "open"; plots[i].lastTick = Date.now(); });
+    var def = PRODUCTION_BUILDINGS[buildingId];
+    return this._rowDone(_tn(st.locked.length, "{x} : rangée {r}, {n} zone défrichée", "{x} : rangée {r}, {n} zones défrichées", { x: def ? _td(def.name) : buildingId, r: row + 1 }));
+  },
+  upgradeRow: function (buildingId, row) {
+    var st = this.getRowState(buildingId, row), plots = this.getPlots(buildingId);
+    if (!st.upNow.length) return { ok: false, reason: _t("Rangée au maximum de ce monde") };
+    if (!this._payAll(st.upCost)) return { ok: false, reason: _t("Ressources insuffisantes") };
+    st.upNow.forEach(function (i) { plots[i].level += 1; });
+    var def = PRODUCTION_BUILDINGS[buildingId];
+    return this._rowDone(_t("{x} : rangée {r} au niveau {l}", { x: def ? _td(def.name) : buildingId, r: row + 1, l: st.minLevel + 1 }));
+  },
+  improveRow: function (buildingId, row) {
+    var st = this.getRowState(buildingId, row), plots = this.getPlots(buildingId);
+    if (!st.impN) return { ok: false, reason: _t("Déjà appliquée") };
+    if (!this._payAll(st.impCost)) return { ok: false, reason: _t("Ressources insuffisantes") };
+    st.open.forEach(function (i) { plots[i].fertile = true; plots[i].irrigated = true; });
+    var def = PRODUCTION_BUILDINGS[buildingId];
+    return this._rowDone(_t("{x} : rangée {r} améliorée", { x: def ? _td(def.name) : buildingId, r: row + 1 }));
+  },
   toggleImprovement: function (buildingId, plotIndex, kind) {
     if (kind !== "fertile" && kind !== "irrigated") return { ok: false, reason: _t("Amélioration invalide") };
     var plots = this.getPlots(buildingId);

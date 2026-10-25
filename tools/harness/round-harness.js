@@ -2482,14 +2482,14 @@ console.log("\n[UX-PROD] Tableau de bord Production v3.191.0 — routeur, vue At
   run("productionDetailBuildingId = 'farm'; productionSheetTab = 'zones';");
   var detailHtml = run("buildProductionSheetHTML('farm')");
   ok(detailHtml.indexOf("prod-sheet") !== -1 && detailHtml.indexOf("farm-plots-grid") !== -1, "feuille, onglet Zones = grille de zones");
-  ok(detailHtml.indexOf("production-group-actions") !== -1 && detailHtml.indexOf("Défricher une zone") === -1, "sous la grille : un seul bouton fixe (Défricher passe par la zone signalée)");
+  ok(detailHtml.indexOf("prod-rows") !== -1 && detailHtml.indexOf("Rangée 1") !== -1 && detailHtml.indexOf("Défricher une zone") === -1, "sous la grille : une barre par rangée ouverte (v3.479.0)");
   ok(detailHtml.indexOf("wk-tile") === -1, "onglet Zones : aucun atelier");
   ok(detailHtml.indexOf("closeProductionBuildingDetail()") !== -1, "la feuille se ferme par sa croix");
   // v3.417.0 (atelier zones Z2) : plus de sélection — toucher une zone ouvre sa fenêtre ; le bouton du bas ne bouge plus
   ok(detailHtml.indexOf("openZoneWindow('farm', 0)") !== -1 && detailHtml.indexOf("selectProductionPlot") === -1, "toucher une zone ouvre sa fenêtre (plus de sélection)");
   run("productionZoneWin = { b: 'farm', i: 0 };");
   var detailSel = run("buildProductionSheetHTML('farm')");
-  ok(detailSel.indexOf("zone-win") !== -1 && detailSel.indexOf("production-group-actions") !== -1, "fenêtre ouverte par-dessus, le bouton « La moins chère » reste en place");
+  ok(detailSel.indexOf("zone-win") !== -1 && detailSel.indexOf("prod-rows") !== -1, "fenêtre ouverte par-dessus, les barres de rangée restent en place");
   run("productionZoneWin = null;");
   run("productionSheetTab = 'shops';");
   var sheetShops = run("buildProductionSheetHTML('farm')");
@@ -2501,14 +2501,9 @@ console.log("\n[UX-PROD] Tableau de bord Production v3.191.0 — routeur, vue At
   ok(vh.indexOf('|Village"') !== -1 && /village-tab is-on[^>]*setVillageSubTab\('production'\)/.test(vh), "cadre « Village », onglet Production allumé");
   run("activeVillageSubTab = 'buildings';");
 
-  // 4. "la − chère" : construit 2 zones ouvertes, vérifie le choix du coût total minimal
+  // 4. v3.479.0 (RE-2) : plus de « la − chère » ; la grille ne signale que la zone à défricher
   run("var _p = ProductionPlotsSystem.getPlots('farm'); _p[0].state='open'; _p[0].level=3; _p[1].state='open'; _p[1].level=1;");
-  var expected = run(
-    "(function(){ var c0=getProductionPlotUpgradeCost('farm',3,0), c1=getProductionPlotUpgradeCost('farm',1,1);" +
-    "var t0=0,t1=0; Object.keys(c0).forEach(function(k){t0+=c0[k];}); Object.keys(c1).forEach(function(k){t1+=c1[k];});" +
-    "return t0<t1?0:1; })()");
-  ok(run("getCheapestUpgradablePlot('farm')") === expected, "getCheapestUpgradablePlot choisit le coût total minimal (attendu : zone " + expected + ")");
-  ok(run("buildPlotsPanelHTML('farm')").indexOf("is-cheapest") !== -1, "zone la − chère signalée sur la grille");
+  ok(run("buildPlotsPanelHTML('farm')").indexOf("is-cheapest") === -1 && typeof g.getCheapestUpgradablePlot === "undefined", "plus de zone « la − chère » sur la grille");
 
   // 5. ateliers à l'arrêt : auto activé + rien à produire -> compté ; auto coupé -> pas compté
   run("game.resources.ble = 0;");
@@ -17863,6 +17858,33 @@ console.log("\n[299] v3.478.0 — Refonte de l'économie, lot F1 : réserve des 
   var cap = 0, rate = 0;
   [0, 1, 2].forEach(function (i) { cap += PPS.getPlotCapacity(i, { level: 3 }); rate += PPS.getPlotRatePerMin(i, { level: 3 }, "sawmill"); });
   ok(cap === 703 && cap / rate > 140, "Forêt, Scierie 3 zones niv. 3 : réserve " + cap + ", plus de 2 h 20 avant l'arrêt (" + Math.round(cap / rate) + " min)");
+})();
+
+console.log("\n[300] v3.479.0 — Refonte de l'économie RE-2 : zones de production par rangée");
+(function () {
+  run("fullResetState(); game.playerName='T'; game.heroId='knight';");
+  var PPS = g.ProductionPlotsSystem, W = g.WarehouseManager, reached = g.game.worldsEverReached, wi = g.WorldManager.worldIndex;
+  g.game.worldsEverReached = { 0: true, 1: true }; g.WorldManager.worldIndex = 1;
+  var plots = PPS.getPlots("sawmill");
+  plots.forEach(function (p, i) { p.state = i < 2 ? "open" : "locked"; p.level = i === 0 ? 3 : 1; p.fertile = false; p.irrigated = false; p.stock = 0; });
+  ["bois", "fer", "pierre", "eau", "viande", "ble"].forEach(function (k) { g.game.resources[k] = 5000; });
+  var st = PPS.getRowState("sawmill", 0);
+  ok(st.locked.length === 1 && st.upNow.length === 1 && st.minLevel === 1 && st.impN === 4, "rangée 1 : 1 zone à défricher, la zone la plus basse à monter, 4 améliorations");
+  var fer = W.getAmount("fer"), want = g.getProductionPlotUnlockCost("sawmill", 2).fer;
+  ok(PPS.unlockRow("sawmill", 0).ok && plots[2].state === "open" && fer - W.getAmount("fer") === want, "Défricher : la zone ouvre, coût de la zone payé");
+  ok(PPS.upgradeRow("sawmill", 0).ok && plots[1].level === 2 && plots[2].level === 2 && plots[0].level === 3, "Monter : les zones les plus basses (1 → 2), la plus haute attend");
+  var n = 0; while (PPS.upgradeRow("sawmill", 0).ok && n < 9) n++;
+  ok(n === 3 && plots[0].level === 5 && plots[1].level === 5 && plots[2].level === 5, "à égalité, la rangée monte ensemble (3 achats de 2 à 5) et s'arrête au plafond du monde");
+  ok(PPS.improveRow("sawmill", 0).ok && [0, 1, 2].every(function (i) { return plots[i].fertile && plots[i].irrigated; }) && !PPS.improveRow("sawmill", 0).ok, "Améliorer : les deux améliorations sur les 3 zones, une seule fois");
+  g.game.resources.fer = 0; var before = JSON.stringify(plots.slice(3, 6));
+  ok(!PPS.unlockRow("sawmill", 1).ok && JSON.stringify(plots.slice(3, 6)) === before, "sans les ressources : rien n'est payé ni ouvert (tout ou rien)");
+  g.game.resources.fer = 5000;
+  ok(!PPS.unlockRow("sawmill", 2).ok && plots[6].state === "locked", "la rangée de la Crypte reste fermée au Désert");
+  var html = g.buildZoneGroupActionsHTML("sawmill");
+  ok(html.indexOf("Rangée 1") !== -1 && html.indexOf("au maximum") !== -1 && html.indexOf("Rangée 2") !== -1 && html.indexOf("Rangée 3") === -1 && html.indexOf("productionRowAction('sawmill', 1, 'unlock')") !== -1, "barres : rangée 1 au maximum sur une ligne, rangée 2 à défricher, pas de rangée 3 au Désert");
+  var css = fs.readFileSync(path.join(ROOT, "css/04-panel-production.css"), "utf8");
+  ok(/\.farm-plot-card \.farm-plot-card-name, \.farm-plot-card \.farm-plot-card-profile \{ max-width: 100%; overflow: hidden; text-overflow: ellipsis; \}/.test(css), "320 px : nom et monde d'une zone verrouillée coupés par « … »");
+  g.game.worldsEverReached = reached; g.WorldManager.worldIndex = wi;
 })();
 
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));

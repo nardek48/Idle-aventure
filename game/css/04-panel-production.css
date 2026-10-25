@@ -439,26 +439,17 @@
 /* Retour rond : assets du kit, LONGHANDS uniquement (jamais background: raccourci sur
    un composant à image — leçon v3.183, voir Guide UI §5). */
 
-/* Actions groupées : boutons du kit empilés ; le coût compact passe à la ligne dans le
-   bouton (production-cost-row hérite du blanc du kbtn, is-missing #ffb4b4 déjà calibré
-   pour texte clair — voir v3.96.0 plus haut). */
-.production-group-actions {
-  display: flex;
-  flex-direction: column;
-  margin-top: 6px;
-}
-
-.production-group-btn .production-cost-row {
-  margin-left: 6px;
-}
-
-/* Zone "la − chère" : liseré vert + drapeau, en écho au bouton groupé. Prime sur le
-   liseré de sélection si les deux s'appliquent (déclaré après .is-selected). */
-.farm-plot-card.is-cheapest {
-  position: relative; /* ancre du drapeau ::after (absent de .farm-plot-card de base) */
-  border-color: var(--c-green-700-soft);
-  box-shadow: inset 0 0 0 1px rgba(74, 107, 42, 0.4);
-}
+/* v3.479.0 (refonte de l'économie RE-2) : une barre par rangée sous la grille. Le coût passe sous
+   le libellé ; une rangée finie tient sur une ligne. */
+.prod-rows { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.prod-row { border: 1px solid var(--nb-frame); border-radius: var(--nb-radius-sm); background: var(--nb-cream-alt); padding: 7px 8px; display: flex; flex-direction: column; gap: 6px; }
+.prod-row.is-done { background: none; padding: 5px 8px; }
+.prod-row-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 13px; }
+.prod-row-head span { font-size: 12px; color: var(--c-brown-750-2); text-align: right; }
+.prod-row-acts { display: flex; flex-wrap: wrap; gap: 6px; }
+.prod-rows .kbtn.prod-row-btn { flex: 1 1 120px; margin: 0; min-height: 44px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 4px 6px; }
+.prod-row-btn .prod-row-lbl { font-size: 13px; white-space: nowrap; }
+.prod-row-btn .production-cost-row { margin: 0; font-size: 12px; flex-wrap: wrap; justify-content: center; }
 
 /* ============================================================
    v3.192.0 : carte atelier COMPACTE (maquette v4 validée) — préfixe wk-.
@@ -898,26 +889,11 @@
    v3.417.0 (atelier zones Z2, choix Seb) : grille sans sélection,
    fenêtre d'actions d'une zone, un seul bouton fixe sous la grille.
    ===================================================================== */
-.farm-plot-card.is-cheapest { margin-top: 8px; }
-.farm-plot-card-cheap {
-  position: absolute;
-  top: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  height: 20px;
-  padding: 0 7px;
-  border-radius: 10px;
-  background: var(--c-green-650-2);
-  color: var(--c-white-50-soft);
-  font-size: 12px;
-  font-weight: 800;
-  line-height: 20px;
-  white-space: nowrap;
-}
+/* v3.479.0 : le nom et le monde d'une zone verrouillée débordaient de leur carte à 320 px. */
+.farm-plot-card .farm-plot-card-name, .farm-plot-card .farm-plot-card-profile { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 .farm-plot-card.is-locked:disabled { cursor: default; }
 .farm-plot-card.is-locked.is-next { border-style: solid; border-color: var(--c-brown-550-3); background: var(--c-cream-100-3); }
 .farm-plot-card.is-locked.is-next .farm-plot-card-profile { color: var(--c-brown-700-vivid); font-weight: 800; }
-.production-group-actions .kbtn.production-group-btn { margin: 0; }
 .production-group-hint { margin: 8px 0 0; font-size: 12px; text-align: center; color: var(--c-brown-750-2); }
 
 /* Fenêtre d'une zone (.kwin du kit) */

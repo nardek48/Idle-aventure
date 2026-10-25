@@ -1458,7 +1458,6 @@ I18n.register("en", {
   "Plafond de ce monde (niv. {n})": "This world's cap (lvl {n})",
   "Niveau max": "Max level",
   "+{p}% {x}, permanent.": "+{p}% {x}, permanent.",
-  "« {x} » améliorée": "“{x}” upgraded",
   "Zones": "Zones",
   "Bientôt": "Soon",
   "{d}/lot": "{d}/batch",
@@ -4335,14 +4334,22 @@ I18n.register("en", {
   "{n} ressource à zéro masquée||{n} ressources à zéro masquées": ["{n} resource at zero hidden", "{n} resources at zero hidden"],
 
   // v3.417.0 : zones de production — fenêtre d'une zone, un seul bouton fixe
-  "↑ la − chère": "↑ cheapest",
   "Zone à défricher": "Zone to clear",
   "{x} · niveau {n}": "{x} · level {n}",
   "Touche pour savoir où s'ouvre la suite.": "Tap to see where the next level opens.",
   "{x}/min : {a} → {b}": "{x}/min: {a} → {b}",
   "Installé": "Installed",
-  "↑ La moins chère": "↑ Cheapest",
-  "Touche une zone pour ses actions.": "Tap a zone for its actions.",
+  // v3.479.0 (refonte de l'économie RE-2) : actions par rangée de zones
+  "Touche une zone pour la régler à part.": "Tap a zone to manage it on its own.",
+  "Rangée {n}": "Row {n}",
+  "niv. {a} à {b}": "lvl {a} to {b}",
+  "à défricher": "to clear",
+  "au maximum": "maxed",
+  "Rangée déjà défrichée": "Row already cleared",
+  "Rangée au maximum de ce monde": "Row at this world's maximum",
+  "{x} : rangée {r}, {n} zone défrichée||{x} : rangée {r}, {n} zones défrichées": ["{x}: row {r}, {n} zone cleared", "{x}: row {r}, {n} zones cleared"],
+  "{x} : rangée {r} au niveau {l}": "{x}: row {r} at level {l}",
+  "{x} : rangée {r} améliorée": "{x}: row {r} upgraded",
   // v3.422.0
   "Débit": "Output",
   "{n} {x}/min": "{n} {x}/min",
