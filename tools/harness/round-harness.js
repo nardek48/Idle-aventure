@@ -18018,6 +18018,15 @@ console.log("\n[305] v3.484.0 — Refonte de l'économie, lot S (RE-8) : Farine,
   ok(W.addResource("viande_sechee", 2, true) === 10 && game.resources.viande === 20 && !("viande_sechee" in game.resources), "butin en route : 2 viandes séchées -> 10 viandes");
 })();
 
+console.log("\n[306] v3.484.1 — Suites du lot S : récompense du Pain, images retirées, compteur de récolte à 320 px");
+(function () {
+  var bread = g.VILLAGE_QUESTS.filter(function (q) { return q.id === "workshop_first_bread"; })[0];
+  ok(bread.reward.gold === 350 && bread.reward.resources.eau === 10 && bread.reward.resources.ble === 10, "« Le pain d'Aeswyn » reprend la récompense de « La première mouture » (350 or, 10 eau, 10 blé)");
+  ok(["images/Icons/resources/flour_icon.webp", "images/Icons/workshops/grain_mill.webp", "images/Icons/workshops/drying_rack.webp", "images/Icons/workshops/purification_station.webp"].every(function (f) { return !fs.existsSync(path.join(ROOT, f)); }), "4 images du lot S supprimées");
+  var css = fs.readFileSync(path.join(ROOT, "css/04-panel-production.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+  ok(/\.prod-sheet-harvest \{[^}]*flex-wrap: wrap/.test(css) && /\.prod-sheet-harvest-mid \{[^}]*min-width: 110px/.test(css) && /\.prod-sheet-harvest-mid \.kgauge-text \{ white-space: nowrap; \}/.test(css), "feuille de production : le bouton Récolter passe dessous quand la place manque, le compteur reste sur une ligne");
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

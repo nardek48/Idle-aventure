@@ -719,6 +719,7 @@
 .prod-sheet .prod-sheet-icon { width: 54px; height: 50px; object-fit: contain; }
 .prod-sheet-harvest {
   display: flex;
+  flex-wrap: wrap; /* v3.484.1 : à 320 px le bouton passe dessous, sinon le compteur tenait sur 52 px et passait sur deux lignes */
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
@@ -728,9 +729,10 @@
   background: var(--sheet-card-bg, var(--c-cream-100-soft));
 }
 .prod-sheet-res { width: 34px; height: 34px; object-fit: contain; flex: none; }
-.prod-sheet-harvest-mid { flex: 1 1 auto; min-width: 0; }
+.prod-sheet-harvest-mid { flex: 1 1 auto; min-width: 110px; }
+.prod-sheet-harvest-mid .kgauge-text { white-space: nowrap; }
 .prod-sheet-store { font-size: 12px; color: var(--c-brown-750-2); margin-top: 3px; }
-.kbtn.prod-sheet-harvest-btn { flex: none; width: auto; min-width: 0; margin: 0; padding: 6px 14px; white-space: nowrap; }
+.kbtn.prod-sheet-harvest-btn { flex: none; width: auto; min-width: 0; margin: 0 0 0 auto; padding: 6px 14px; white-space: nowrap; }
 .prod-sheet-warn {
   padding: 8px 10px;
   margin: 0 0 10px;

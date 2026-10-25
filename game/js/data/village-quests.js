@@ -139,7 +139,7 @@ var VILLAGE_QUESTS = [
     progress: function () {
       return Math.min(VillageQuestManager.getCraftCount("pain"), 1) + "/1";
     },
-    reward: { gold: 200, resources: { eau: 10 } },
+    reward: { gold: 350, resources: { eau: 10, ble: 10 } }, // v3.484.1 : + la récompense de « La première mouture » (retirée)
     tutorial: {
       tab: "village",
       icon: "images/Icons/quests/ration_reward.webp",
