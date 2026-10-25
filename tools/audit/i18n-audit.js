@@ -14,12 +14,17 @@
      node tools/audit/i18n-audit.js . --skeleton out.js   squelette à traduire (entrées manquantes, valeur "")
      node tools/audit/i18n-audit.js . --lang en           autre dictionnaire (js/lang/<lang>.js)
      node tools/audit/i18n-audit.js . --json out.json     tous les textes relevés (clé, sorte, fichiers, traduit)
+     node tools/audit/i18n-audit.js . --hardcoded         liste des textes français en dur (écrans du joueur), un par ligne
    Code de sortie 1 si orphelins, paramètres différents ou appels non littéraux. */
 
 var fs = require("fs"), path = require("path"), vm = require("vm");
 var ROOT = require("../chemins.js").jeu(process.argv[2]);
 var ARGS = process.argv.slice(3);
 var DETAIL = ARGS.indexOf("--detail") >= 0;
+/* Textes voulus en français : nom de la langue, bascule de langue affichée dans la langue visée. */
+var HC_INTENTIONAL = ["Français", "Passer en français ?", "Le jeu va redémarrer. Ta progression est sauvegardée avant."];
+/* v3.485.0 : --hardcoded garde chaque texte relevé (fichier courant dans HC_FILE) pour la liste détaillée. */
+var HC_LIST = ARGS.indexOf("--hardcoded") >= 0 ? [] : null, HC_FILE = "";
 var LANG = ARGS.indexOf("--lang") >= 0 ? ARGS[ARGS.indexOf("--lang") + 1] : "en";
 var SKELETON = ARGS.indexOf("--skeleton") >= 0 ? ARGS[ARGS.indexOf("--skeleton") + 1] : null;
 var CTX_SEP = "|", PLURAL_SEP = "||";
@@ -65,6 +70,7 @@ jsFiles.forEach(function (f) {
   while ((m = RE_TN.exec(src))) { n++; var one = lit(m[1]), other = lit(m[2]); add(one + PLURAL_SEP + other, file, "tn", [one, other]); }
   var calls = (src.match(RE_T_ANY) || []).length - (/core[\\/]i18n\.js$/.test(f) ? (src.match(RE_T_ANY) || []).length : 0);
   if (calls > n) nonLiteral.push(file + " : " + (calls - n) + " appel(s) sans texte littéral");
+  HC_FILE = file;
   hardcoded[file] = countHardcoded(src);
 });
 
@@ -81,10 +87,12 @@ DATA.collect(dataSb, REG.DATA_TEXT_FIELDS).forEach(function (x) {
   if (DATA.looksLikeText(x.value)) add(x.value, "data:" + x.global, "data", [x.value]);
 });
 Object.keys(hardcoded).forEach(function (f) { if (/^js\/data\//.test(f)) hardcoded[f] = 0; });
+if (HC_LIST) HC_LIST = HC_LIST.filter(function (x) { return !/^js\/data\//.test(x[0]) && (REG.DATA_TEXT_SOURCES || []).indexOf(x[0]) < 0; });
 /* Fichiers de code qui portent une table de texte déclarée (DATA_TEXT_SOURCES) : ces chaînes-là sont couvertes. */
 var registered = {};
 DATA.collect(dataSb, REG.DATA_TEXT_FIELDS).forEach(function (x) { registered[x.value] = true; });
 (REG.DATA_TEXT_SOURCES || []).forEach(function (f) {
+  HC_FILE = f;
   if (hardcoded.hasOwnProperty(f)) hardcoded[f] = countHardcoded(stripComments(fs.readFileSync(path.join(ROOT, f), "utf8")), registered);
 });
 dataUncovered.forEach(function (x) { hardcoded[x.file] = (hardcoded[x.file] || 0) + 1; });
@@ -108,19 +116,41 @@ keys.forEach(function (k) {
 var orphans = Object.keys(dict).filter(function (k) { return !found.hasOwnProperty(k); });
 
 /* Heuristique « texte français en dur » : chaînes à mots français hors _t(), texte entre balises compris. */
+/* v3.485.0 : retire les appels entiers, parenthèses imbriquées comprises (l'ancienne expression
+   s'arrêtait à un niveau et comptait ~80 textes déjà traduits). Chaînes sautées pendant le comptage. */
+function stripCalls(src, re) {
+  var out = "", last = 0, m;
+  re.lastIndex = 0;
+  while ((m = re.exec(src))) {
+    var i = m.index + m[0].length, depth = 1, q = null;
+    for (; i < src.length && depth > 0; i++) {
+      var c = src[i];
+      if (q) { if (c === "\\") i++; else if (c === q) q = null; }
+      else if (c === '"' || c === "'" || c === "`") q = c;
+      else if (c === "(") depth++;
+      else if (c === ")") depth--;
+    }
+    out += src.slice(last, m.index) + " ";
+    last = i; re.lastIndex = i;
+  }
+  return out + src.slice(last);
+}
 function countHardcoded(src, skip) {
-  var s = src.replace(/\b_tn?\((?:[^()]|\([^()]*\))*\)/g, " ");
+  // _t/_tn traduits ; console.* et TouchDebug.note : messages de développement, jamais vus du joueur
+  var s = stripCalls(src, /\b(?:_tn?|console\.(?:log|warn|error|info)|TouchDebug\.note)\(/g);
   var re = /("(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*')/g, m, n = 0;
   function fr(t) {
     t = t.trim();
-    return /[A-Za-zÀ-ÿ]{3,}/.test(t) && !/^[\w\-./#:%]+$/.test(t)
-      && (/[À-ÿ]/.test(t) || /\b(le|la|les|de|du|des|un|une|et|pour|sur|dans|avec|pas|est|ton|ta|tes)\b/i.test(t) || /^[A-ZÀ-Ý][a-zà-ÿ]+( [a-zà-ÿ]+)*[ .!?:…]*$/.test(t));
+    // À-ÖØ-öø-ÿ : lettres accentuées, sans × ni ÷ (v3.485.0 : « ×n » comptait pour du français)
+    return /[A-Za-zÀ-ÖØ-öø-ÿ]{3,}/.test(t) && !/^[\w\-./#:%]+$/.test(t)
+      && (/[À-ÖØ-öø-ÿ]/.test(t) || /\b(le|la|les|de|du|des|un|une|et|pour|sur|dans|avec|pas|est|ton|ta|tes)\b/i.test(t) || /^[A-ZÀ-Ý][a-zà-ÿ]+( [a-zà-ÿ]+)*[ .!?:…]*$/.test(t));
   }
   while ((m = re.exec(s))) {
     var v = m[1].slice(1, -1);
+    if (HC_INTENTIONAL.indexOf(v) >= 0) continue;
     if (skip) { try { if (skip[lit(m[1])]) continue; } catch (e) { /* littéral non évaluable */ } }
-    if (/<[a-z\/]/i.test(v)) (v.match(/>([^<>]+)</g) || []).forEach(function (x) { if (fr(x.slice(1, -1))) n++; });
-    else if (fr(v)) n++;
+    if (/<[a-z\/]/i.test(v)) (v.match(/>([^<>]+)</g) || []).forEach(function (x) { if (fr(x.slice(1, -1))) { n++; if (HC_LIST) HC_LIST.push([HC_FILE, x.slice(1, -1)]); } });
+    else if (fr(v)) { n++; if (HC_LIST) HC_LIST.push([HC_FILE, v]); }
   }
   return n;
 }
@@ -147,6 +177,11 @@ if (DETAIL) {
   if (missing.length) { console.log("\nMANQUANTS"); missing.forEach(function (k) { console.log("  " + JSON.stringify(k) + "  (" + Object.keys(found[k].files).join(", ") + ")"); }); }
   if (dataUncovered.length) { console.log("\nDONNÉES HORS REGISTRE"); dataUncovered.forEach(function (x) { console.log("  " + x.global + "." + x.path + "  " + JSON.stringify(x.value.slice(0, 60)) + "  (" + x.file + ")"); }); }
   if (orphans.length) { console.log("\nORPHELINS"); orphans.forEach(function (k) { console.log("  " + JSON.stringify(k)); }); }
+}
+if (HC_LIST) {
+  console.log("\nEN DUR (écrans du joueur)");
+  HC_LIST.filter(function (x) { return DEV_SCREENS.indexOf(x[0]) < 0; }).forEach(function (x) { console.log("  " + x[0] + "  " + JSON.stringify(x[1].slice(0, 90))); });
+  dataUncovered.forEach(function (x) { console.log("  " + x.file + "  " + x.global + "." + x.path + "  " + JSON.stringify(x.value.slice(0, 90))); });
 }
 if (badParams.length) { console.log("\n{PARAMÈTRES} DIFFÉRENTS"); badParams.forEach(function (x) { console.log("  " + x); }); }
 if (nonLiteral.length) { console.log("\nNON LITTÉRAUX"); nonLiteral.forEach(function (x) { console.log("  " + x); }); }

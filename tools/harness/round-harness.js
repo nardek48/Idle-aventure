@@ -10413,7 +10413,7 @@ console.log("\n[129] v3.334.0 — Patrouilles : départ, groupe, retour, rappel,
     // Rappel au prorata (P2)
     g.game.resources.bois = 0;
     PM.start("wenna", "gue", 8);
-    var p3 = PM.get("wenna"); p3.loot = { bois: 400, viande: 10 }; p3.gold = 100;
+    var p3 = PM.get("wenna"); p3.loot = { bois: 400 }; p3.ration = { viande: 10 }; p3.gold = 100;
     p3.startedAt = Date.now() - 2 * 3600e3; p3.endsAt = p3.startedAt + 8 * 3600e3;
     var r3 = PM.recall("wenna");
     ok(r3.recalled && Math.abs(r3.loot.bois - 100) <= 1 && Math.abs(r3.gold - 25) <= 1 && !r3.loot.viande && !r3.story, "P2 : rappel après 2 h sur 8 -> un quart du butin, sans ration ni récit");
@@ -10422,7 +10422,7 @@ console.log("\n[129] v3.334.0 — Patrouilles : départ, groupe, retour, rappel,
     var withRation = 0, rare8 = 0, rare2 = 0, N = 400;
     for (var k = 0; k < N; k++) {
       var t8 = PM.roll("wenna", "forest", "gue", 8), t2 = PM.roll("wenna", "forest", "gue", 2);
-      if (t8.loot.viande) withRation++; // v3.484.0 (lot S) : 10 viandes brutes (le Gué ne donne pas de viande)
+      if (t8.ration.viande) withRation++; // v3.485.0 : ingrédients de rations à part du butin
       if (t8.story.rare) rare8++;
       if (t2.story.rare) rare2++;
     }
@@ -18025,6 +18025,41 @@ console.log("\n[306] v3.484.1 — Suites du lot S : récompense du Pain, images 
   ok(["images/Icons/resources/flour_icon.webp", "images/Icons/workshops/grain_mill.webp", "images/Icons/workshops/drying_rack.webp", "images/Icons/workshops/purification_station.webp"].every(function (f) { return !fs.existsSync(path.join(ROOT, f)); }), "4 images du lot S supprimées");
   var css = fs.readFileSync(path.join(ROOT, "css/04-panel-production.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
   ok(/\.prod-sheet-harvest \{[^}]*flex-wrap: wrap/.test(css) && /\.prod-sheet-harvest-mid \{[^}]*min-width: 110px/.test(css) && /\.prod-sheet-harvest-mid \.kgauge-text \{ white-space: nowrap; \}/.test(css), "feuille de production : le bouton Récolter passe dessous quand la place manque, le compteur reste sur une ligne");
+})();
+
+console.log("\n[307] v3.485.0 — Textes en dur, rations des patrouilles à part, ménage de la sauvegarde");
+(function () {
+  game = freshCombat("knight");
+  var PM = g.PatrolManager, H = 3600e3, now = Date.now();
+  // rations à part : un secteur qui donne déjà de la viande ne les mêle plus au butin
+  var est = PM.estimate("wenna", "forest", "camp", 8);
+  var t = PM.roll("wenna", "forest", "camp", 8, function () { return 0; });
+  ok(t.ration.viande === 10 && t.loot.viande === Math.floor(est.loot.viande * 0.9), "tirage : 10 viandes de rations à part, butin du Campement intact");
+  var mk = function (loot, ration, ends) { PM.ensure().wenna = { mapId: "forest", sectorId: "camp", hours: 8, startedAt: now - 2 * H, endsAt: ends, loot: loot, ration: ration, gold: 0, story: { rare: false, index: 0 } }; };
+  game.resources.viande = 0;
+  mk({ viande: 100 }, { viande: 10 }, now + 6 * H);
+  var rc = PM.recall("wenna");
+  ok(rc.recalled && rc.loot.viande === 25 && game.resources.viande === 25, "rappel après 2 h sur 8 au Campement : le quart du butin, sans les rations (25 viandes)");
+  game.resources.viande = 0;
+  mk({ viande: 100 }, { viande: 10 }, now - 1000);
+  var cl = PM.collect("wenna");
+  ok(cl && cl.loot.viande === 110 && game.resources.viande === 110, "patrouille finie : butin et rations versés (110 viandes)");
+  // patrouille partie avant v3.484.0 : la Viande séchée en route devient de la viande au chargement
+  var rs = PM.restore({ wenna: { mapId: "forest", sectorId: "gue", hours: 8, startedAt: now, endsAt: now + H, loot: { bois: 5, viande_sechee: 2 }, gold: 0 } });
+  ok(rs.wenna.loot.bois === 5 && rs.wenna.loot.viande === 10 && !rs.wenna.loot.viande_sechee && typeof rs.wenna.ration === "object", "chargement : 2 viandes séchées en route -> 10 viandes (plus de butin perdu)");
+  delete PM.ensure().wenna;
+  // carte vivante : journal lisible
+  var logs = [], AL = g.addLog; g.addLog = function (m) { logs.push(m); };
+  try {
+    var LM = g.LivingMapManager, st = LM.getState("forest", "gue"), def = LM.getSectorDef("forest", "gue");
+    st.state = "libere";
+    ok(LM.setState("forest", "gue", "recouvert", "test") === true && logs.length === 1 && logs[0] === "Carte : " + def.name + " — " + LM.getWords("forest").coveredState + "." && logs[0].indexOf("gue") === -1,
+      "carte vivante : le journal dit le nom du secteur et son état (« " + logs[0] + " »), plus les identifiants");
+  } finally { g.addLog = AL; }
+  var bm = fs.readFileSync(path.join(ROOT, "js/systems/boss-moment-system.js"), "utf8");
+  ok(bm.indexOf('_t("change de rythme")') !== -1, "phase de boss sans libellé : « change de rythme » traduit");
+  var sv = fs.readFileSync(path.join(ROOT, "js/systems/save-system.js"), "utf8");
+  ok(sv.indexOf("farine: 0") === -1 && sv.indexOf("resources.farine") === -1, "sauvegarde : plus de Farine recréée");
 })();
 
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));

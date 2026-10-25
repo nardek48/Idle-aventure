@@ -1284,6 +1284,8 @@ I18n.register("en", {
   "Voilé, trop loin": "Veiled, too far",
   "libère d'abord un voisin": "free a neighbour first",
   "Libéré": "Freed",
+  "Carte : {s} — {e}.": "Map: {s} — {e}.",
+  "change de rythme": "changes pace",
   "son effet s'applique": "its effect applies",
   "effet perdu, à reprendre": "effect lost, to take back",
   "Tenu par la Palissade": "Held by the Palisade",

@@ -291,7 +291,7 @@ var LivingMapManager = {
     var pool = held.length ? held : open.filter(function (d) { return self.isReachable(mapId, d.id) && !self.isLiberated(mapId, d.id); });
     if (!pool.length) { lm.chantier = { day: today, sectorId: null, done: true }; return lm.chantier; }
     var pick = pool[Math.min(pool.length - 1, Math.floor(this._rand() * pool.length))];
-    if (this.isLiberated(mapId, pick.id)) this.regress(mapId, pick.id, "chantier du jour");
+    if (this.isLiberated(mapId, pick.id)) this.regress(mapId, pick.id, "chantier-du-jour");
     lm.chantier = { day: today, sectorId: pick.id, done: false };
     if (typeof addLog === "function") addLog("🧱 " + _t("Cette nuit, la ville a rebâti {x}.", { x: _td(pick.name) }), "event");
     return lm.chantier;
@@ -748,7 +748,7 @@ var LivingMapManager = {
   /* ---------- Accroche narrative (§11) ---------- */
 
   /* setState(mapId, sectorId, state, reason) : un choix pesant peut libérer, recouvrir ou
-     protéger un secteur sans passer par un run. Raison journalisée. Pas de Sève ici. */
+     protéger un secteur sans passer par un run. Pas de Sève ici. `reason` : pour le code (le journal dit nom et état). */
   setState: function (mapId, sectorId, state, reason) {
     var s = this.getState(mapId, sectorId);
     if (!s || this.STATES.indexOf(state) < 0) return false;
@@ -756,7 +756,10 @@ var LivingMapManager = {
     if (state === "libere" && s.state !== "libere") s.liberatedCount += 1;
     if (state === "libere" && s.state === "recouvert" && window.AchievementManager) AchievementManager.onSectorRetaken(mapId); // v3.338.0
     s.state = state;
-    if (typeof addLog === "function") addLog("Carte : " + sectorId + " -> " + state + " (" + (reason || "sans raison") + ")", "event");
+    // v3.485.0 : journal lisible (nom du secteur, état traduit) au lieu des identifiants bruts
+    var def = this.getSectorDef(mapId, sectorId);
+    var label = state === "libere" ? _t("Libéré") : state === "voile" ? _t("Voilé") : _td(this.getWords(mapId).coveredState);
+    if (typeof addLog === "function") addLog(_t("Carte : {s} — {e}.", { s: def ? _td(def.name) : sectorId, e: label }), "event");
     return true;
   }
 };

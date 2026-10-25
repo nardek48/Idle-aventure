@@ -112,15 +112,17 @@ var PatrolManager = {
     var est = this.estimate(companionId, mapId, sectorId, hours);
     var self = this, loot = {};
     Object.keys(est.loot).forEach(function (k) { loot[k] = self._jitter(est.loot[k], rng); });
+    // v3.485.0 : ingrédients de rations à part du butin (un rappel ne les verse pas, même si le secteur donne déjà de la viande)
+    var ration = {};
     if (rng() < Math.min(0.9, PATROL_RATION_CHANCE_PER_H * hours)) {
       var extra = (PATROL_RATION_LOOT && PATROL_RATION_LOOT[mapId]) || {};
-      Object.keys(extra).forEach(function (k) { loot[k] = (loot[k] || 0) + extra[k]; });
+      Object.keys(extra).forEach(function (k) { ration[k] = extra[k]; });
     }
     var rareChance = PATROL_RARE_PER_H * hours + (hours >= 8 ? PATROL_RARE_NIGHT_BONUS : 0);
     var rare = rng() < rareChance;
     var pool = this._storyPool(companionId, mapId);
     var list = rare ? pool.rare : pool.common;
-    return { loot: loot, gold: this._jitter(est.gold, rng), story: { rare: rare && list.length > 0, index: list.length ? Math.floor(rng() * list.length) : 0 } };
+    return { loot: loot, ration: ration, gold: this._jitter(est.gold, rng), story: { rare: rare && list.length > 0, index: list.length ? Math.floor(rng() * list.length) : 0 } };
   },
 
   _storyPool: function (companionId, mapId) {
@@ -161,7 +163,7 @@ var PatrolManager = {
     this.ensure()[companionId] = {
       mapId: dest.mapId, sectorId: sectorId, hours: Number(hours),
       startedAt: now, endsAt: now + Number(hours) * 3600e3,
-      loot: r.loot, gold: r.gold, story: r.story
+      loot: r.loot, ration: r.ration, gold: r.gold, story: r.story
     };
     if (window.AchievementManager) AchievementManager.onPatrolStarted(); // v3.338.0 : « Le camp est vide »
     var def = getCompanionDef(companionId);
@@ -208,7 +210,9 @@ var PatrolManager = {
     var p = this.get(companionId);
     if (!p || Date.now() < p.endsAt) return null;
     var story = this.storyText(companionId, p);
-    var res = this._credit(p.loot, p.gold);
+    var all = {};
+    [p.loot, p.ration].forEach(function (o) { Object.keys(o || {}).forEach(function (k) { all[k] = (all[k] || 0) + o[k]; }); });
+    var res = this._credit(all, p.gold);
     res.story = story;
     res.sectorId = p.sectorId; res.hours = p.hours; res.mapId = p.mapId;
     if (window.AchievementManager) AchievementManager.onPatrolCollected(p); // v3.338.0 (pas au rappel : patrouille inachevée)
@@ -234,7 +238,7 @@ var PatrolManager = {
     var est = this.estimate(companionId, p.mapId, p.sectorId, p.hours);
     var loot = {};
     Object.keys(p.loot).forEach(function (k) {
-      if (!est.loot[k]) return; // ingrédients de rations : seulement au bout de la patrouille
+      if (!est.loot[k]) return; // ingrédients de rations d'avant v3.485.0 (mêlés au butin) : seulement au bout de la patrouille
       loot[k] = Math.floor(p.loot[k] * frac);
     });
     var res = this._credit(loot, Math.floor(p.gold * frac));
@@ -269,15 +273,25 @@ var PatrolManager = {
   /* Chargement : ne garde que des patrouilles bien formées, de compagnons connus. */
   restore: function (raw) {
     var out = {};
+    // v3.485.0 : ressources retirées (lot S, v3.484.0) -> équivalent brut, au lieu d'être perdues
+    var cleanLoot = function (src) {
+      var loot = {}, legacy = window.WAREHOUSE_LEGACY_RESOURCES || {};
+      Object.keys(src || {}).forEach(function (k) {
+        var n = Math.floor(Number(src[k] || 0));
+        if (n <= 0) return;
+        var eq = legacy[k] || null;
+        if (eq) Object.keys(eq).forEach(function (r) { loot[r] = (loot[r] || 0) + eq[r] * n; });
+        else if ((window.WAREHOUSE_RESOURCES || {})[k]) loot[k] = (loot[k] || 0) + n;
+      });
+      return loot;
+    };
     if (raw && typeof raw === "object" && !Array.isArray(raw)) {
       Object.keys(raw).forEach(function (id) {
         var p = raw[id];
         if (!p || typeof p !== "object" || !(window.COMPANIONS_DB && COMPANIONS_DB[id])) return;
         if (typeof p.sectorId !== "string" || typeof p.mapId !== "string" || !(Number(p.endsAt) > 0)) return;
-        var loot = {};
-        Object.keys(p.loot || {}).forEach(function (k) { var n = Math.floor(Number(p.loot[k] || 0)); if (n > 0 && (window.WAREHOUSE_RESOURCES || {})[k]) loot[k] = n; });
         out[id] = { mapId: p.mapId, sectorId: p.sectorId, hours: Number(p.hours || 0), startedAt: Number(p.startedAt || 0), endsAt: Number(p.endsAt),
-          loot: loot, gold: Math.max(0, Math.floor(Number(p.gold || 0))),
+          loot: cleanLoot(p.loot), ration: cleanLoot(p.ration), gold: Math.max(0, Math.floor(Number(p.gold || 0))),
           story: { rare: !!(p.story && p.story.rare), index: Math.max(0, Math.floor(Number((p.story && p.story.index) || 0))) } };
       });
     }

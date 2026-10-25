@@ -92,7 +92,7 @@ var BossMomentManager = {
     var m = this.getMoment(enemy);
     if (typeof showBossPhase === "function") {
       // v3.360.0 : une phase peut porter sa propre ligne (ph.line) ; sinon la réplique commune du boss.
-      showBossPhase(enemy, (ph && ph.label) || "change de rythme", (ph && ph.line) || m.phase, this.isFullMoment(enemy));
+      showBossPhase(enemy, (ph && ph.label) || _t("change de rythme"), (ph && ph.line) || m.phase, this.isFullMoment(enemy));
     }
   },
 

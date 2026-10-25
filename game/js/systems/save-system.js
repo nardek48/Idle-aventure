@@ -488,8 +488,8 @@ function buildSaveData() {
     worldsEverReached: game.worldsEverReached || {},
     // v3.0 : système Quêtes/Ressources/Territoire (voir data/adventure-quests.js).
     // v3.35 : planche/lingot (artisanat tier 1, voir data/recipes.js) ajoutés ici.
-    // v3.36 : pierre (brute, Carrière) / farine (tier 1, Blé→Farine) ajoutées ici.
-    resources: game.resources || { viande: 0, ble: 0, bois: 0, fer: 0, pierre: 0, eau: 0, planche: 0, lingot: 0, farine: 0, pain: 0, ration: 0, petite_ration: 0 },
+    // v3.36 : pierre (brute, Carrière) ajoutée ici ; v3.485.0 : farine retirée (lot S, v3.484.0).
+    resources: game.resources || { viande: 0, ble: 0, bois: 0, fer: 0, pierre: 0, eau: 0, planche: 0, lingot: 0, pain: 0, ration: 0, petite_ration: 0 },
     adventureQuestProgress: game.adventureQuestProgress || {},
     adventureQuestsCompleted: game.adventureQuestsCompleted || {},
     adventureQuestRun: game.adventureQuestRun || { active: false, questId: null },
@@ -813,7 +813,7 @@ function restoreBaseState(d) {
   else game.achievementStats = (d.achievementStats && typeof d.achievementStats === "object") ? d.achievementStats : null;
   game.worldsEverReached = d.worldsEverReached && typeof d.worldsEverReached === "object" ? d.worldsEverReached : {};
   // v3.0 : système Quêtes/Ressources/Territoire (voir data/adventure-quests.js).
-  game.resources = d.resources && typeof d.resources === "object" ? d.resources : { viande: 0, ble: 0, bois: 0, fer: 0, pierre: 0, eau: 0, planche: 0, lingot: 0, farine: 0, pain: 0, ration: 0, petite_ration: 0, grande_ration: 0 };
+  game.resources = d.resources && typeof d.resources === "object" ? d.resources : { viande: 0, ble: 0, bois: 0, fer: 0, pierre: 0, eau: 0, planche: 0, lingot: 0, pain: 0, ration: 0, petite_ration: 0, grande_ration: 0 };
   if (typeof game.resources.grande_ration !== "number") game.resources.grande_ration = 0; // v3.106.0 : migration saves antérieures
   if (typeof game.resources.viande !== "number") game.resources.viande = 0;
   if (typeof game.resources.ble !== "number") game.resources.ble = 0;
@@ -822,11 +822,9 @@ function restoreBaseState(d) {
   // v3.35 : artisanat tier 1 (voir data/recipes.js).
   if (typeof game.resources.planche !== "number") game.resources.planche = 0;
   if (typeof game.resources.lingot !== "number") game.resources.lingot = 0;
-  // v3.36 : Pierre (Carrière) / Farine (tier 1, Blé→Farine) — une
-  // ancienne sauvegarde n'a ni l'une ni l'autre, doit charger à 0
-  // sans planter (critère de validation explicite de Seb).
+  // v3.36 : Pierre (Carrière) — une ancienne sauvegarde n'en a pas, doit charger à 0
+  // sans planter (critère de validation explicite de Seb). La Farine (v3.484.0) est convertie par WarehouseManager.
   if (typeof game.resources.pierre !== "number") game.resources.pierre = 0;
-  if (typeof game.resources.farine !== "number") game.resources.farine = 0;
   game.adventureQuestProgress = d.adventureQuestProgress && typeof d.adventureQuestProgress === "object" ? d.adventureQuestProgress : {};
   game.adventureQuestsCompleted = d.adventureQuestsCompleted && typeof d.adventureQuestsCompleted === "object" ? d.adventureQuestsCompleted : {};
   game.adventureQuestRun = d.adventureQuestRun && typeof d.adventureQuestRun === "object" ? d.adventureQuestRun : { active: false, questId: null };
@@ -1153,8 +1151,8 @@ function fullResetState() {
   game.worldsEverReached = {};
   // v3.0 : système Quêtes/Ressources/Territoire — repart bien à zéro sur un reset complet.
   // v3.35 : planche/lingot repartent aussi à zéro (artisanat tier 1).
-  // v3.36 : pierre/farine idem.
-  game.resources = { viande: 0, ble: 0, bois: 0, fer: 0, pierre: 0, eau: 0, planche: 0, lingot: 0, farine: 0, pain: 0, ration: 3, petite_ration: 0, grande_ration: 0 }; // v3.107.1 : 3 rations de départ (4 -> 3, décision Seb après test)
+  // v3.36 : pierre idem (v3.485.0 : farine retirée).
+  game.resources = { viande: 0, ble: 0, bois: 0, fer: 0, pierre: 0, eau: 0, planche: 0, lingot: 0, pain: 0, ration: 3, petite_ration: 0, grande_ration: 0 }; // v3.107.1 : 3 rations de départ (4 -> 3, décision Seb après test)
   game.adventureQuestProgress = {};
   game.adventureQuestsCompleted = {};
   game.huntStats = {}; // v3.30
