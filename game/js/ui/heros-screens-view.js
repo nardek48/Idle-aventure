@@ -123,7 +123,10 @@
     { key: "portent", value: "aeswyn", icon: "images/Icons/traits/veillee_aeswyn.webp", name: _t("La veillée d'Aeswyn"), desc: _t("Chaque mort que tu laisses dormir rapporte de la Cire de sépulcre au village.") },
     { key: "ysolt", value: "donner", icon: "images/Icons/traits/ysolt_eveillee.webp", name: _t("Ysolt éveillée"), desc: _t("Pas encore sert deux fois par combat. Elle s'use un peu.") },
     { key: "bat", value: "reveiller", icon: "images/Icons/traits/les_montes.webp", name: _t("Les montés"), desc: _t("Dans les combats de boss et d'élite, un monté se lève à tes côtés.") },
-    { key: "bat", value: "laisser", icon: "images/Icons/traits/table_des_noms.webp", name: _t("La table des noms"), desc: _t("Chez Orwen, chaque jour, de la Cire consacrée.") }
+    { key: "bat", value: "laisser", icon: "images/Icons/traits/table_des_noms.webp", name: _t("La table des noms"), desc: _t("Chez Orwen, chaque jour, de la Cire consacrée.") },
+    // v3.488.0 (Montagne, montagne_05) : icônes à générer
+    { key: "veine", value: "soi", icon: "images/Icons/traits/veine_dans_la_lame.webp", name: _t("La veine dans la lame"), desc: _t("À la Montagne, chaque taille donne +20 % à ta lame au lieu de +15 %.") },
+    { key: "veine", value: "aeswyn", icon: "images/Icons/traits/puits_chaud.webp", name: _t("Le puits chaud"), desc: _t("Chaque veine que tu tailles en combat verse une Cendre vive de plus à l'Entrepôt.") }
   ];
   function traitsHTML() {
     var SQ = window.StoryQuestManager;

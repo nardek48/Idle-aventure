@@ -168,6 +168,14 @@ var CompanionManager = {
         return false;
       }
     }
+    // v3.488.0 (Montagne, montagne_03 et 04) : Sarkel reste du groupe tant que ses étapes ne sont pas réclamées
+    if (!present && companionId === "sarkel" && window.StoryQuestManager) {
+      var curM = StoryQuestManager.getCurrentStep("mountain");
+      if (curM && (curM.id === "montagne_03" || curM.id === "montagne_04")) { // et sa quête « Ça ne fond pas »
+        if (typeof showToast === "function") showToast(_t("Sarkel doit t'accompagner pour cette étape"), 1600);
+        return false;
+      }
+    }
     if (present && this.partyIds().length >= COMPANION_MAX_PRESENT && !st.present) {
       if (typeof showToast === "function") showToast(_t("Deux compagnons au maximum"), 1400);
       return false;
@@ -362,6 +370,7 @@ var CompanionManager = {
     var n = (def && def.skill && typeof def.skill.charges === "number") ? def.skill.charges : 0;
     var cm = n > 0 ? this.choiceModsOf(companionId) : null;
     if (cm && cm.extraCharges) n += Number(cm.extraCharges); // v3.455.0 : Ysolt reste, Pas encore deux fois
+    if (def.skill.type === "cutVein") return n; // v3.488.0 : Coup de pioche, une fois par combat (MT5), sans la charge en plus
     return n > 0 && window.TalentManager && TalentManager.companionExtraCharges ? n + TalentManager.companionExtraCharges() : n; // v3.453.0 : Une charge de plus
   },
 
@@ -419,6 +428,8 @@ var CompanionManager = {
         if (def.skill && def.skill.type === "finish" && !(window.RiseSystem && RiseSystem.downedEnemies().length)) continue;
         // v3.452.0 (Crypte) : « Pas encore » seulement quand un dormeur va se lever
         if (def.skill && def.skill.type === "delaySleep" && !this._sleeperAboutToWake(def.skill)) continue;
+        // v3.488.0 (Montagne) : « Coup de pioche » seulement quand la veine peut encore être taillée
+        if (def.skill && def.skill.type === "cutVein" && !(window.VeinSystem && VeinSystem.canCut())) continue;
         return "skill";
       }
       if (policy[i] === "basic") return "basic";
@@ -592,6 +603,15 @@ var CompanionManager = {
       actor.cooldown = Number(skill.cooldown || 0);
       if (typeof actor.charges === "number") actor.charges = Math.max(0, actor.charges - 1);
       if (typeof addLog === "function") addLog("🌫️ " + _t("{x} — {s} : {y} dort encore.", { x: _td(def.name), s: _td(skill.name), y: dort.name ? _td(dort.name) : _t("l'ennemi") }), "event");
+      return true;
+    }
+
+    /* v3.488.0 (Montagne) — Coup de pioche (Sarkel) : il taille la veine à la place du héros (Cendre et chaleur, pas la lame). */
+    if (skill.type === "cutVein") {
+      if (!window.VeinSystem || !VeinSystem.cut(false)) return false;
+      actor.cooldown = Number(skill.cooldown || 0);
+      if (typeof actor.charges === "number") actor.charges = Math.max(0, actor.charges - 1);
+      if (typeof addLog === "function") addLog("🪨 " + _t("{x} — {s} : la veine est taillée.", { x: _td(def.name), s: _td(skill.name) }), "event");
       return true;
     }
 

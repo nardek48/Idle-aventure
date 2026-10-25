@@ -16457,7 +16457,9 @@ console.log("\n[262] v3.458.4 — Lot 7b : une fenêtre de fin, Histoire, Mémoi
     var hs = fs10.readFileSync(ROOT + "/js/ui/heros-screens-view.js", "utf8");
     // v3.466.0 : les images des effets sont livrées, chaque effet porte la sienne
     var icones = hs.match(/\{ key: "\w+", value: "\w+", icon: "images\/Icons\/[a-z_]+\/[a-z_]+\.webp", name: _t\(/g) || [];
-    ok(icones.length === 14 && /hs-trait-ico/.test(hs.split("STORY_TRAITS").slice(1).join("")) && icones.every(function (l) { return fs10.existsSync(ROOT + "/" + /icon: "([^"]+)"/.exec(l)[1]); }), "Ce que tu portes : 14 effets possibles, chacun avec son image (fichiers présents)");
+    // v3.488.0 : les deux effets du choix « veine » (Montagne) attendent leur image (icône générique en attendant)
+    var attendues = ["images/Icons/traits/veine_dans_la_lame.webp", "images/Icons/traits/puits_chaud.webp"];
+    ok(icones.length === 16 && /hs-trait-ico/.test(hs.split("STORY_TRAITS").slice(1).join("")) && icones.every(function (l) { var f = /icon: "([^"]+)"/.exec(l)[1]; return attendues.indexOf(f) !== -1 || fs10.existsSync(ROOT + "/" + f); }), "Ce que tu portes : 16 effets possibles, chacun avec son image (fichiers présents, sauf les deux de la Montagne à venir)");
     ok(/dont \{p\} % par tes choix/.test(fs10.readFileSync(ROOT + "/js/ui/living-map-view.js", "utf8")), "Palissade : la part des choix dite à part");
     // C9
     ok(/class="settings-btn ret-eat"/.test(fs10.readFileSync(ROOT + "/js/ui/return-view.js", "utf8")), "écran de retour : « Manger »");
@@ -18178,6 +18180,73 @@ console.log("\n[309] v3.487.0 — Montagne, lot M-1 : les veines");
     ok(false, "[309] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   } finally {
     SQ.getChoice = gc; g.EquipmentManager.effectiveCritChance = crit; g.EquipmentManager.effectiveTapDamage = tap; g.WorldManager.worldIndex = wiAvant;
+  }
+})();
+
+console.log("\n[310] v3.488.0 — Montagne, lot M-2 : acte I « La montée », Sarkel");
+(function () {
+  var SQ = g.StoryQuestManager, CM = g.CompanionManager, CE = g.CombatEngine, V = g.VeinSystem, AM = g.AchievementManager;
+  var gc = SQ.getChoice, gcs = SQ.getCurrentStep, wiAvant = g.WorldManager.worldIndex, xc = g.TalentManager.companionExtraCharges, iu = CM.isUnlocked;
+  try {
+    var ch = g.STORY_QUESTS.mountain;
+    ok(ch && ch.requiresChapter === "crypt" && ch.worldId === "mountain" && ch.steps.map(function (s) { return s.id; }).join() === "montagne_01,montagne_02,montagne_03,montagne_04,montagne_05", "chapitre V : l'acte I en cinq étapes, ouvert par la fin de la Crypte");
+    ok(Object.keys(g.STORY_QUESTS).indexOf("mountain") === Object.keys(g.STORY_QUESTS).indexOf("crypt") + 1, "le chapitre V suit la Crypte");
+    var t = g.SceneEngine.getTemplate("traversee_montagne"), st = t && t.parcours.steps;
+    ok(t && t.worldId === "mountain" && t.travelOnSuccess.worldId === "mountain" && t.travelOnSuccess.adventureIndex === 0 && t.unlockOnSuccess.unlockFlag === "mountainReached" && t.unlockOnSuccess.completionFlag === "mountainCrossingCompleted", "la montée : passage vers la Montagne, monde posé à l'arrivée");
+    ok(t.entryCost.resourceId === "ration" && t.entryCost.amount === 2 && st.length === 4 && st[2].type === "combat" && st[2].pack === 3 && /ligne bleue/.test(st[2].text), "deux Rations moyennes, quatre paliers ; au palier 3, trois façonnés et la veine dans le texte");
+    ok(st.every(function (x) { return x.type !== "obstacle" || g.SCENE_NODES.obstacles[x.gabaritId]; }) && g.PA2_PARCOURS_IMAGES[t.parcours.image] && g.PA2_PARCOURS_IMAGES[t.parcours.image].tracks.route.length >= 7, "gabarits de la montée et piste du fond (montagne_montee) déclarés");
+    var qp = g.ADVENTURE_QUESTS.aq_montagne_pentes, qs = g.ADVENTURE_QUESTS.aq_montagne_sarkel, qv = g.ADVENTURE_QUESTS.aq_montagne_veines;
+    ok(qp.encounters.length === 5 && qs.encounters.length === 4 && qv.encounters.length === 5 && [qp, qs, qv].every(function (q) { return q.worldId === "mountain"; }) && qs.requiresParty === "sarkel" && qv.requiresParty === "sarkel", "quêtes : Pentes 5 rencontres ; Sarkel 4 et « Ça ne fond pas » 5, avec lui");
+    // Sarkel et Coup de pioche
+    var sk = g.COMPANIONS_DB.sarkel;
+    ok(sk && sk.role === "cutter" && sk.skill.type === "cutVein" && sk.skill.charges === 1 && sk.unlockedBy === "montagne_03" && g.COMPANION_ROLE_LABELS.cutter === "Celui qui taille", "Sarkel : Celui qui taille, Coup de pioche une fois par combat");
+    g.TalentManager.companionExtraCharges = function () { return 1; };
+    ok(CM.chargesMax("sarkel") === 1 && CM.chargesMax("wenna") === 4, "« Une charge de plus » ne double pas Coup de pioche (Wenna, elle, en a 4)");
+    g.TalentManager.companionExtraCharges = xc;
+    game = freshCombat("knight");
+    g.WorldManager.worldIndex = 4;
+    SQ.getChoice = function () { return null; };
+    var mk = function (id) { var d = g.ENEMY_DB[id]; return { id: id, name: d.name, isBoss: false, archetype: null, hp: 1e5, maxHp: 1e5, stats: d.stats, resists: [], weak: [], goldReward: 20 }; };
+    CE.spawnGroup([mk("lavagolem"), mk("dragonling")]);
+    var actor = { companionId: "sarkel", charges: 1, cooldown: 0, damage: 10 };
+    ok(CM.chooseAction(actor) === "skill" && CM.useSkill(actor, sk) === true && V.cuts() === 1 && V.bladeMult() === 1 && Math.abs(V.heatMult() - 1.1) < 1e-9 && actor.charges === 0, "Coup de pioche : la veine taillée, la chaleur monte, la lame reste au héros");
+    V.cut(true); V.cut(true);
+    ok(CM.chooseAction({ companionId: "sarkel", charges: 1, cooldown: 0 }) === "basic", "veine épuisée : Sarkel frappe");
+    // Sarkel reste du groupe pendant ses étapes
+    CM.unlock("sarkel"); CM.state("sarkel").present = true; CM.refreshParty();
+    SQ.getCurrentStep = function (c) { return c === "mountain" ? { id: "montagne_04" } : gcs.call(SQ, c); };
+    ok(CM.setPresent("sarkel", false) === false && CM.state("sarkel").present, "Sarkel ne quitte pas le groupe pendant montagne_03 et 04");
+    SQ.getCurrentStep = gcs;
+    // « Deux sur cinq » : Ysolt seulement si elle est restée ; le tutoriel dit le vrai nombre
+    var s3 = ch.steps[2];
+    CM.isUnlocked = function (id) { return id !== "ysolt"; };
+    ok(s3.choice.options.map(function (o) { return o.value; }).join() === "wenna,maddoc,edda" && s3.choice.noRecord, "Deux sur cinq : Ysolt partie, trois choix (hors registre)");
+    CM.isUnlocked = iu;
+    ["wenna", "maddoc", "edda"].forEach(function (id) { CM.unlock(id); });
+    s3.choice.apply("edda");
+    ok(g.storySarkelInParty() && CM.partyIds().indexOf("edda") !== -1 && CM.partyIds().length === 2, "le choix met Sarkel et Edda au combat");
+    ok(/(quatre|cinq) compagnons/.test(s3.tutorial.points[0].text), "tutoriel « Deux sur cinq » : le nombre de compagnons en toutes lettres");
+    // montagne_04 : veines comptées depuis l'acceptation ; la quête se rouvre sous la cible
+    var cnt = AM.ensure().counters; cnt.veinsCut = 12;
+    var sm = game.storyQuests.mountain || (game.storyQuests.mountain = { counters: {} }); sm.counters = sm.counters || {};
+    ch.steps[3].onAccept(game, sm);
+    cnt.veinsCut = 15;
+    ok(g.storyVeinsCut(game) === 3 && ch.steps[3].check(game) === false, "montagne_04 : 3 veines depuis l'acceptation, pas encore 5");
+    game.adventureQuestsCompleted.aq_montagne_veines = true;
+    ch.steps[3].check(game);
+    ok(!game.adventureQuestsCompleted.aq_montagne_veines, "quête finie sous la cible : « Ça ne fond pas » se rouvre");
+    cnt.veinsCut = 17;
+    ok(ch.steps[3].check(game) === true, "cinq veines (toi ou Sarkel) : l'étape est prête");
+    // Le choix « veine »
+    ok(g.STORY_CHOICE_AXES.veine && g.STORY_CHOICE_AXES.veine.soi.join() === "soi,chaos" && g.STORY_CHOICE_AXES.veine.aeswyn.join() === "aeswyn", "choix « veine » : axe Soi / Aeswyn");
+    SQ.getChoice = function (k) { return k === "veine" ? "aeswyn" : null; };
+    ok(/puits/.test(ch.steps[4].narrative.completion) && ch.steps[4].narrative.completionDialogue[0].who === "Brannoc", "complétion selon la branche (Le puits chaud)");
+    ok(ch.endText && g.STORY_REWARDS.montagne_04.resources.cendre_vive > 0, "fin d'acte : la suite arrive ; montagne_04 rapporte de la Cendre vive");
+    ok(g.PATROL_COMPANION_FEMININE.sarkel === false, "patrouilles : Sarkel accordé au masculin");
+  } catch (err) {
+    ok(false, "[310] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  } finally {
+    SQ.getChoice = gc; SQ.getCurrentStep = gcs; g.WorldManager.worldIndex = wiAvant; g.TalentManager.companionExtraCharges = xc; CM.isUnlocked = iu;
   }
 })();
 

@@ -193,6 +193,37 @@ COMPANIONS_DB.ysolt = {
   }
 };
 
+/* v3.488.0 (Montagne, acte I étape 3, MT5) — SARKEL, le colporteur. Il frappe peu ; il taille. Rôle :
+   Celui qui taille — Coup de pioche taille la veine une fois par combat (VeinSystem.cut(false)) : la
+   Cendre et la chaleur, pas la lame. Stats et prix provisoires, au banc. Portrait à fournir par Seb. */
+COMPANIONS_DB.sarkel = {
+  id: "sarkel",
+  name: "Sarkel",
+  image: "./images/Companions/sarkel.webp",
+  role: "cutter",
+  weaponType: "pick",
+  base: { power: 34, endurance: 54, celerity: 36, precision: 40, will: 38 },
+  threatMult: 0.9,
+  skill: {
+    id: "sarkel_coup_de_pioche",
+    name: "Coup de pioche",
+    icon: "images/Icons/companions/sarkel_coup_de_pioche.webp", // à générer
+    type: "cutVein",
+    cooldown: 0, charges: 1,             // une fois par combat (MT5)
+    desc: "Une fois par combat, il taille la veine à ta place : +1 Cendre vive, sans perdre ton coup. La chaleur monte."
+  },
+  autoPolicy: ["skill", "basic"],
+  upgrades: { costs: [1920, 3840, 7200, 12000, 20000], statPct: 0.06 }, // prix de la Montagne, provisoires
+  unlockedBy: "montagne_03",
+  lines: {
+    join: "Je tiens la pioche, vous tenez le reste.",
+    skill: "Bouge. Je taille.",
+    ko: "Sarkel tombe sur sa pioche. Il ne la lâche pas.",
+    bossIntro: "Celui-là, personne ne me l'a vendu.",
+    bossWin: "Je ne sais pas ce qu'il vaut. Je le saurai."
+  }
+};
+
 /* v3.311.0 : changement de voie (D4b) — 2 000 or, ×3 à chaque changement. Le premier choix
    (étape 8) est gratuit. */
 var VOIE_CHANGE_BASE_COST = 2000;
@@ -239,7 +270,8 @@ var COMPANION_ROLE_LABELS = {
   guard: "Garde",
   support: "Soutien",
   finisher: "Achever", // v3.428.0 (Ruines) : Edda
-  keeper: "Garder le sommeil" // v3.452.0 (Crypte) : Ysolt
+  keeper: "Garder le sommeil", // v3.452.0 (Crypte) : Ysolt
+  cutter: "Celui qui taille"   // v3.488.0 (Montagne) : Sarkel
 };
 
 var _companionVoieCache = {}; // fiche fusionnée par « id:voie », identité stable

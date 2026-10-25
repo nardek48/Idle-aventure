@@ -656,6 +656,7 @@ function playPa2Step(run) {
       else if (run.lastResult && run.lastResult.surprised) r = P.fight("tenir", true);
       else {
         var pv = P.combatPreview();
+        if (process.env.TRACE_PA2) console.log("      [pa2 combat] " + pv.foeId + " · tenir " + pv.tenir.hpLoss + " (" + pv.tenir.verdict + ") · charger " + pv.charger.hpLoss + " · PV " + Math.round(g.game.heroHp) + "/" + max); // v3.488.0
         if (pv.tenir.verdict === "mortel" && pv.flee.affordable) r = P.flee();
         else if (pv.tenir.verdict === "mortel" && pv.ruse.thr <= 4 && !pv.ruseBlocked) r = P.ruse();
         else r = P.fight(pv.charger.hpLoss < g.game.heroHp * 0.3 ? "charger" : "tenir");
@@ -807,7 +808,7 @@ function playExpedition(templateId, flag) {
     if (!r.ok) { note(templateId + " : départ refusé — " + r.reason); return false; }
     var fini = playScene();
     var fin = g.game.sceneRun || {};
-    if (COMBATS && /crypte/.test(templateId)) console.log("  ◦ fin de " + templateId + " : PV " + Math.round(100 * g.game.heroHp / g.game.heroMaxHp) + " %"); // v3.452.0 : cible 25 à 35 %
+    if (COMBATS && /crypte|montagne/.test(templateId)) console.log("  ◦ fin de " + templateId + " : PV " + Math.round(100 * g.game.heroHp / g.game.heroMaxHp) + " %"); // v3.452.0 : cible 25 à 35 %
     if (!fini && g.SceneRunManager.isRunActive()) g.SceneRunManager.abandon();
     if (!flag || flag()) return true;
     var pourquoi = LAST_END ? LAST_END + " — " : "";
@@ -982,7 +983,7 @@ function choiceStep(g, step) {
   if (c.mapId && !g.LivingMapManager.isLiberated(c.mapId, c.sectorId)) freeSector(c.mapId, c.sectorId);
   var val = c.options[0].value;
   if (c.options.some(function (o) { return o.value === SERMENT; })) val = SERMENT;
-  if (!g.storyMakeChoice(step.chapterId || (c.mapId === "desert" || /desert/.test(step.id) ? "desert" : (/ruines/.test(step.id) ? "ruins" : (/crypte/.test(step.id) ? "crypt" : "forest"))), val)) note("choix refusé (" + c.key + ")");
+  if (!g.storyMakeChoice(step.chapterId || (c.mapId === "desert" || /desert/.test(step.id) ? "desert" : (/ruines/.test(step.id) ? "ruins" : (/crypte/.test(step.id) ? "crypt" : (/montagne/.test(step.id) ? "mountain" : "forest")))), val)) note("choix refusé (" + c.key + ")");
 }
 
 /* Le secteur qui porte la descente au Temple. */
@@ -1013,7 +1014,7 @@ function playAdventure(id) {
     var fin = winCombat(80);
     flushTimers(g);
     // v3.452.0 (Crypte) : PV restants et potions bues à la fin du run (cible : 25 à 35 % des PV, sans mort)
-    if (COMBATS && /crypte/.test(id) && g.game.adventureQuestsCompleted[id]) {
+    if (COMBATS && /crypte|montagne/.test(id) && g.game.adventureQuestsCompleted[id]) {
       var sm = g.game.lastSortieSummary || {};
       console.log("  ◦ fin de " + id + " : PV " + Math.round(100 * g.game.heroHp / g.game.heroMaxHp) + " %, potions " + (sm.potionsUsed || 0) + ", essai " + (essai + 1));
     }
@@ -1039,9 +1040,11 @@ function run() {
   flushTimers(G);
   if (typeof G.init === "function" && !G.game.lastSave) { /* init déjà passé par la confirmation */ }
   ok(G.game.playerName === "Robot" && G.game.heroId, "héros créé (" + G.game.heroId + ")");
+  // v3.488.0 : SAVE_IN=<fichier> reprend une sauvegarde (SAVE_OUT d'une campagne) ; les chapitres finis sont passés
+  if (process.env.SAVE_IN) { G.restoreBaseState(JSON.parse(require("fs").readFileSync(process.env.SAVE_IN, "utf8"))); ok(true, "sauvegarde reprise : " + process.env.SAVE_IN); }
   G.saveGame();
 
-  var chapters = ["forest", "desert", "ruins", "crypt"]; // v3.428.0 : chapitre III ; v3.433.0 : ses 20 étapes ; v3.452.0 : Crypte, acte I
+  var chapters = ["forest", "desert", "ruins", "crypt", "mountain"]; // v3.428.0 : chapitre III ; v3.433.0 : ses 20 étapes ; v3.452.0 : Crypte, acte I ; v3.488.0 : Montagne, acte I
   var t0 = Date.now();
   for (var c = 0; c < chapters.length; c++) {
     var cid = chapters[c];
@@ -1056,7 +1059,7 @@ function run() {
       CURRENT_STEP = step.id;
       // v3.423.0 : TRACE_FORCE=1 relève la force du héros à chaque étape (référence des ajustements de difficulté)
       if (process.env.TRACE_FORCE) console.log("  [force] " + step.id + " monde " + G.WorldManager.worldIndex + " aventure " + G.WorldManager.adventureIndex + " niv. " + G.game.heroLevel + " dmg " + Math.round(G.CombatForecast.getHeroDamagePerRound()) + " ehp " + Math.round(G.CombatForecast.getHeroEffectiveHp ? G.CombatForecast.getHeroEffectiveHp() : G.game.heroMaxHp));
-      if (COMBATS && /^(desert_12|desert_15|desert_17|forest_14|forest_15|ruines_01|ruines_02|ruines_03|ruines_11|ruines_13|ruines_15|ruines_19|crypte_01|crypte_02|crypte_03|crypte_06|crypte_12|crypte_14|crypte_16|crypte_19)$/.test(step.id)) { STATS.profils[step.id] = combatLine(); console.log("  ◦ héros à l'entrée de " + step.id + " : " + STATS.profils[step.id]); if (process.env.TRACE_FORGE) console.log("     forge armure : " + G.ForgeManager.getBlockReason("armor") + " " + JSON.stringify(G.ForgeManager.getCost("armor")) + " or " + Math.floor(G.game.gold)); }
+      if (COMBATS && /^(desert_12|desert_15|desert_17|forest_14|forest_15|ruines_01|ruines_02|ruines_03|ruines_11|ruines_13|ruines_15|ruines_19|crypte_01|crypte_02|crypte_03|crypte_06|crypte_12|crypte_14|crypte_16|crypte_19|montagne_01|montagne_02|montagne_03|montagne_04)$/.test(step.id)) { STATS.profils[step.id] = combatLine(); console.log("  ◦ héros à l'entrée de " + step.id + " : " + STATS.profils[step.id]); if (process.env.TRACE_FORGE) console.log("     forge armure : " + G.ForgeManager.getBlockReason("armor") + " " + JSON.stringify(G.ForgeManager.getCost("armor")) + " or " + Math.floor(G.game.gold)); }
       var t0s = { h: CLOCK.offset, c: STATS.combatMs, s: STATS.healMs, d: STATS.deaths, j: DAYS_WAITED, e: (STATS.secteurs.desert || {}).essais || 0 };
       var snap0 = snapTemps();
       G.StoryQuestManager.acceptStep(cid);
@@ -1426,6 +1429,22 @@ var SOLVERS = {
   crypte_05: function (g) {
     var val = ARGS.indexOf("--rapporter") >= 0 ? "aeswyn" : "soi";
     if (!g.storyMakeChoice("crypt", val)) note("choix refusé (portent)");
+  },
+  // v3.488.0 (Montagne, acte I) ; --rapporter : le choix « aeswyn »
+  montagne_01: function (g) { playExpedition("traversee_montagne", function () { return g.storyDesertFlag("mountainCrossingCompleted"); }); },
+  montagne_02: function (g) { playAdventure("aq_montagne_pentes"); },
+  montagne_03: function (g, step) {
+    choiceStep(g, step);
+    if (!g.storySarkelInParty()) note("Sarkel n'est pas du groupe : " + JSON.stringify(g.CompanionManager.partyIds()));
+    playAdventure("aq_montagne_sarkel");
+  },
+  montagne_04: function (g) {
+    for (var i = 0; i < 4 && g.storyVeinsCut(g.game) < g.STORY_VEINES_CIBLE; i++) { playAdventure("aq_montagne_veines"); g.StoryQuestManager._checkNow(true); }
+    if (COMBATS) console.log("  ◦ veines taillées à montagne_04 : " + g.storyVeinsCut(g.game) + " (" + (i) + " passage(s) de la quête)");
+  },
+  montagne_05: function (g) {
+    var val = ARGS.indexOf("--rapporter") >= 0 ? "aeswyn" : "soi";
+    if (!g.storyMakeChoice("mountain", val)) note("choix refusé (veine)");
   },
   // v3.456.0 (Crypte, actes II à IV, lot C-6)
   crypte_06: function (g) { playExpedition("petite_aventure_crypte", function () { return g.storyDesertFlag("cryptPaCompleted"); }); },

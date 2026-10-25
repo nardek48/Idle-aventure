@@ -763,6 +763,100 @@ var ADVENTURE_QUESTS = {
     reward: {}
   },
 
+  /* v3.488.0 (Montagne, acte I étape 2) — « Ce qui affleure » : cinq rencontres aux Pentes de cendres,
+     une veine dans chacune (VeinSystem, toute rencontre de la Montagne). Cible du banc (doc Montagne
+     acte I §4) : aucun mort, l'étape finie avec 25 à 35 % des PV en laissant les veines. */
+  aq_montagne_pentes: {
+    id: "aq_montagne_pentes",
+    type: "kill",
+    section: "adventure",
+    difficulty: "medium",
+    progressionStage: "world_start",
+    category: "side",
+    worldId: "mountain",
+    adventureIndex: 0,
+    encounters: [
+      { group: ["dragonling", "dragonling"], groupHpMult: 0.55 },
+      { enemy: "lavagolem" },
+      { group: ["minordemon", "ifrit"], groupHpMult: 0.55 },
+      { group: ["lavagolem", "dragonling"], groupHpMult: 0.55 },
+      { group: ["ifrit", "ifrit"], groupHpMult: 0.55 }
+    ],
+    // banc (montagne-acte1-bench, sauvegardes de fin de Crypte, 12 runs, sans potion, veines laissées) :
+    // 100 / 92 / 92 % de réussite, 4,9 / 3,5 / 4,2 rounds par combat, 41 / 53 / 36 % des PV (Ch. / Rô. / Ma.)
+    encounterHpMult: 1.6,
+    enemyPowerMult: 8,
+    name: "Ce qui affleure",
+    story: "Aux Pentes de cendres, une veine bat dans la roche. Les bêtes d'ici se tiennent autour.",
+    icon: "./images/Icons/quest_icons/exploration/exploration1.webp",
+    steps: [
+      { id: "rencontres_pentes", type: "encounter", worldId: "mountain", target: 5, desc: "Vaincre {target} rencontres aux Pentes de cendres" }
+    ],
+    reward: {}
+  },
+
+  /* v3.488.0 (Montagne, acte I étape 3) — « Celui qui taille » : quatre rencontres avec Sarkel dans le
+     groupe (requiresParty) ; Coup de pioche taille la veine une fois par combat. Même cible que l'étape 2. */
+  aq_montagne_sarkel: {
+    id: "aq_montagne_sarkel",
+    type: "kill",
+    section: "adventure",
+    difficulty: "medium",
+    progressionStage: "world_start",
+    category: "side",
+    worldId: "mountain",
+    adventureIndex: 0,
+    requiresParty: "sarkel",
+    encounters: [
+      { group: ["lavagolem", "minordemon", "dragonling"], groupHpMult: 0.35 },
+      { group: ["ifrit", "dragonling"], groupHpMult: 0.55 },
+      { group: ["lavagolem", "ifrit"], groupHpMult: 0.55 },
+      { group: ["minordemon", "minordemon", "ifrit"], groupHpMult: 0.35 }
+    ],
+    // banc (12 runs, sans potion) : avec Sarkel et Wenna 100 / 100 / 75 %, 53 / 60 / 30 % des PV ; avec Sarkel et
+    // Maddoc 100 %, 62 / 66 / 31 %. 3,2 à 4,8 rounds. Sarkel n'a ni soin ni garde : plus dur, le Mage tombe.
+    encounterHpMult: 1.5,
+    enemyPowerMult: 4,
+    name: "Celui qui taille",
+    story: "Sarkel tient la pioche à deux mains, plus bas. Il taille entre deux coups des autres.",
+    icon: "./images/Icons/quest_icons/exploration/exploration4.webp",
+    steps: [
+      { id: "rencontres_sarkel", type: "encounter", worldId: "mountain", target: 4, desc: "Vaincre {target} rencontres avec Sarkel" }
+    ],
+    reward: {}
+  },
+
+  /* v3.488.0 (Montagne, acte I étape 4) — « Ça ne fond pas » : cinq rencontres avec Sarkel, pour tailler cinq
+     veines (décision Seb du 25/10, option A). Finie sous la cible, elle se rouvre (storyVeinesRelance). */
+  aq_montagne_veines: {
+    id: "aq_montagne_veines",
+    type: "kill",
+    section: "adventure",
+    difficulty: "medium",
+    progressionStage: "world_start",
+    category: "side",
+    worldId: "mountain",
+    adventureIndex: 0,
+    requiresParty: "sarkel",
+    encounters: [
+      { group: ["dragonling", "minordemon"], groupHpMult: 0.55 },
+      { group: ["lavagolem", "ifrit"], groupHpMult: 0.55 },
+      { group: ["ifrit", "ifrit", "dragonling"], groupHpMult: 0.35 },
+      { group: ["lavagolem", "dragonling"], groupHpMult: 0.55 },
+      { group: ["minordemon", "ifrit", "lavagolem"], groupHpMult: 0.35 }
+    ],
+    // banc (12 runs, Sarkel et Wenna, sans potion) : 100 / 92 / 92 %, 53 / 58 / 19 % des PV, 4,7 à 5 veines taillées
+    encounterHpMult: 1.5,
+    enemyPowerMult: 4,
+    name: "Ça ne fond pas",
+    story: "Des éclats noirs, avec une ligne bleue dedans. Il en faut plus : Brannoc voudra voir.",
+    icon: "./images/Icons/quest_icons/exploration/exploration3.webp",
+    steps: [
+      { id: "rencontres_veines", type: "encounter", worldId: "mountain", target: 5, desc: "Vaincre {target} rencontres avec Sarkel, en taillant les veines" }
+    ],
+    reward: {}
+  },
+
   aq_ruines_plan: {
     id: "aq_ruines_plan",
     type: "kill",

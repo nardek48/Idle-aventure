@@ -29,6 +29,9 @@ var DATA_TEXT_FIELDS = {
   GRIMOIRE_TARGET_POLICIES: ["*.label", "*.desc"], // v3.428.0 (Ruines)
   STORY_SEUIL_TEXTS: ["*.completion", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.428.0 (Ruines) : les deux branches du choix « seuil »
   STORY_PORTENT_TEXTS: ["*.completion", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.452.0 (Crypte) : les deux branches du choix « portent »
+  STORY_VEINE_TEXTS: ["*.completion", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.488.0 (Montagne) : les deux branches du choix « veine »
+  STORY_PIOCHE_OPTIONS: ["*.label", "*.desc"], // v3.488.0 (Montagne, montagne_03) : « Deux sur cinq »
+  STORY_DEUX_SUR_CINQ: [""],                   // v3.488.0 : le tutoriel, quatre ou cinq compagnons
   STORY_YSOLT_TEXTS: ["*.completion", "*.edda15", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.455.0 (Crypte) : les deux branches du choix « ysolt »
   STORY_CHAINE_YS: ["*.donner", "*.garder"], // v3.456.0 (Crypte, acte IV) : répliques selon le choix « ysolt »
   STORY_BAT_TEXTS: ["*.completion", "*.aeswyn", "*.text", "*.*.*.text", "*.*.*.who", "*.aeswynDialogue.*.text", "*.aeswynDialogue.*.who", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.456.0 : le choix « bat »

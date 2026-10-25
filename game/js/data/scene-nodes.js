@@ -176,6 +176,34 @@ var SCENE_NODES = {
         endurance: { stat: "endurance", label: "Avancer lentement" }
       }
     },
+    /* v3.488.0 (Montagne, lot M-2) — gabarits de la montée (traversee_montagne). */
+    lacets_de_cendre: {
+      id: "lacets_de_cendre", biome: "mountain", name: "Le chemin en lacets",
+      baseDifficulty: 5,
+      options: {
+        power: { stat: "power", label: "Couper droit par la pente" },
+        precision: { stat: "precision", label: "Mettre les pieds dans les traces" },
+        endurance: { stat: "endurance", label: "Prendre chaque lacet" }
+      }
+    },
+    pierres_plates: {
+      id: "pierres_plates", biome: "mountain", name: "Les pierres plates",
+      baseDifficulty: 5,
+      options: {
+        power: { stat: "power", label: "Sauter par-dessus la lave" },
+        precision: { stat: "precision", label: "Compter les pierres plates" },
+        endurance: { stat: "endurance", label: "Remonter jusqu'au passage étroit" }
+      }
+    },
+    paroi_coupee: {
+      id: "paroi_coupee", biome: "mountain", name: "La paroi coupée",
+      baseDifficulty: 4,
+      options: {
+        power: { stat: "power", label: "Se hisser sur le replat" },
+        precision: { stat: "precision", label: "Suivre la coupe du regard" },
+        endurance: { stat: "endurance", label: "Faire le tour par l'éboulis" }
+      }
+    },
     porte_basse: {
       id: "porte_basse", biome: "crypt", name: "La porte basse",
       baseDifficulty: 6,

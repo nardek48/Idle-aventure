@@ -282,6 +282,36 @@ var SCENE_TEMPLATES = {
     travelOnSuccess: { worldId: "crypt", adventureIndex: 0 }
   },
 
+  /* v3.488.0 (Montagne, acte I étape 1, texte validé par Seb le 25/10) — LA MONTÉE. Passage de la
+     Crypte à la Montagne, monde posé à l'arrivée. Deux Rations moyennes. Pas de source (comme la descente, rien
+     n'est rendu après le combat). Palier 3 : trois façonnés ;
+     la veine est dans le texte (décision Seb du 25/10, option A : le combat de parcours se joue par approche). */
+  traversee_montagne: {
+    id: "traversee_montagne",
+    worldId: "mountain",
+    adventureIndex: 0,
+    mode: "parcours",
+    title: "La roche est chaude",
+    departLabel: "Monter",
+    icon: "images/Icons/codex/world_mountain.webp",
+    parcours: {
+      image: "montagne_montee", track: "route", points: [0, 2, 4, 6],
+      steps: [
+        { type: "obstacle", gabaritId: "lacets_de_cendre", text: "Les dernières marches de la Crypte. Au-dessus, de la cendre grise, et un chemin qui tourne sur lui-même." },
+        { type: "obstacle", gabaritId: "pierres_plates", text: "Deux ruisseaux de lave coupent la route. Sarkel compte les pierres plates, et passe le premier. Il ne regarde pas en bas." },
+        // banc (campagne --combats --avise, sauvegardes de fin de Crypte, 3 parties par classe) : à ×1,7, 20-25 / 36-44 / 1-5 %
+        // des PV à l'arrivée (Ch. / Rô. / Ma.) ; à ×1,5, 46-54 / 34-48 / 25-41 %. Retenu ×1,5 : le Mage n'arrive plus à 1 %.
+        { type: "combat", foe: "dragonling", pack: 3, foeMult: 1.5, text: "Trois formes dans la cendre. Elles sont grandes. Elles ne sont ni blessées ni malades. Entre elles, une ligne bleue court dans la roche.",
+          after: "La ligne bleue bat encore. Sarkel la regarde longtemps, la pioche sur l'épaule." },
+        { type: "obstacle", gabaritId: "paroi_coupee", text: "Un replat, contre une paroi noire. Une partie de la paroi est coupée droit, net, comme au couteau." }
+      ]
+    },
+    entryCost: { resourceId: "ration", amount: 2 },
+    lootResource: "gold",
+    unlockOnSuccess: { buildingId: null, unlockFlag: "mountainReached", completionFlag: "mountainCrossingCompleted" },
+    travelOnSuccess: { worldId: "mountain", adventureIndex: 0 }
+  },
+
   traversee_ruines: {
     id: "traversee_ruines",
     worldId: "ruins",

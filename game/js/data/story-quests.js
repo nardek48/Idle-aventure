@@ -123,7 +123,13 @@ var STORY_REWARDS = {
   crypte_17: { gold: 9600 },
   crypte_18: { gold: 9800, resources: { cire_consacree: 2 } },
   crypte_19: { gold: 10500, resources: { cire_consacree: 3 } },
-  crypte_20: { gold: 12000, uniqueLoot: "maillon_wenna" } // Le maillon, Épique, de Wenna (dans les deux branches)
+  crypte_20: { gold: 12000, uniqueLoot: "maillon_wenna" }, // Le maillon, Épique, de Wenna (dans les deux branches)
+  // v3.488.0 (Montagne, acte I, provisoire : au banc)
+  montagne_01: { gold: 12500 },
+  montagne_02: { gold: 13000 },
+  montagne_03: { gold: 13500 },
+  montagne_04: { gold: 14000, resources: { cendre_vive: 4 } }, // l'éclat que Brannoc garde sur l'établi, et d'autres
+  montagne_05: { gold: 15000 }
 };
 
 /* Libellés des onglets débloqués (clé = game.unlockedTabs), pour l'affichage « Débloque : … ». */
@@ -205,7 +211,8 @@ var STORY_CHOICE_AXES = {
   plan: { finir: ["donner", "soi"], tomber: ["garder", "aeswyn"] }, // v3.433.0 (Ruines, acte IV étape 20) : le plan, option A du 09/10
   portent: { soi: ["soi", "chaos"], aeswyn: ["aeswyn"] },           // v3.452.0 (Crypte, acte I étape 5) : ce que portent les morts
   ysolt: { garder: ["garder"], donner: ["donner"] },                // v3.455.0 (Crypte, acte III étape 14) : ce qu'elle garde
-  bat: { reveiller: ["donner", "soi"], laisser: ["garder", "aeswyn"] } // v3.456.0 (Crypte, acte IV étape 20) : ce qui bat (CR4)
+  bat: { reveiller: ["donner", "soi"], laisser: ["garder", "aeswyn"] }, // v3.456.0 (Crypte, acte IV étape 20) : ce qui bat (CR4)
+  veine: { soi: ["soi", "chaos"], aeswyn: ["aeswyn"] }                // v3.488.0 (Montagne, acte I étape 5) : la première veine
 };
 
 /* v3.293.0 (règle Seb 18/09/2026) : storyResetLisiere, storyLisiereCrossingProgress et
@@ -3714,6 +3721,301 @@ function storyCiteWave5(game) {
   if (run && run.active && Number(run.dungeonId) === 2 && Number(run.wave) > 5) game.explorationProgression.citeVague5 = true;
   return !!game.explorationProgression.citeVague5;
 }
+
+/* ======================= CHAPITRE V — LA MONTAGNE BRÛLANTE (Conception Montagne v1.0) =======================
+   v3.488.0 (lot M-2) : acte I « La montée », document Aethervale_Montagne_Acte_I v1.0, validé par Seb
+   le 25/10/2026. Ysolt n'a aucune réplique (elle peut être partie). Les actes II à IV viennent avec M-3 à M-5. */
+
+/* v3.488.0 (montagne_03) : Sarkel est dans le groupe de combat. */
+function storySarkelInParty() {
+  return !!(window.CompanionManager && CompanionManager.partyIds().indexOf("sarkel") !== -1);
+}
+
+/* v3.488.0 (montagne_04) : veines taillées depuis l'acceptation de l'étape (toi ou Sarkel). Le compteur
+   cumulé des Hauts faits ne recule pas ; la base est notée à l'acceptation (counters.veinsBase). */
+var STORY_VEINES_CIBLE = 5;
+function storyVeinsCut(game) {
+  var st = (game.storyQuests || {}).mountain, base = ((st && st.counters) || {}).veinsBase;
+  if (typeof base !== "number") return 0; // étape pas encore acceptée
+  var c = window.AchievementManager ? Number((AchievementManager.ensure().counters || {}).veinsCut || 0) : 0;
+  return Math.max(0, c - base);
+}
+/* Quête finie sous la cible (Sarkel tombé, veines laissées) : elle se rouvre, décision Seb du 25/10 (option A). */
+function storyVeinesRelance(game) {
+  var id = "aq_montagne_veines";
+  if (!storyAdvDone(game, id) || storyVeinsCut(game) >= STORY_VEINES_CIBLE) return false;
+  delete game.adventureQuestsCompleted[id];
+  var p = (game.adventureQuestProgress || {})[id];
+  if (p) Object.keys(p).forEach(function (k) { p[k] = 0; });
+  if (typeof addLog === "function") addLog("🪨 " + _t("Sarkel : « Il en faut plus. » La quête « Ça ne fond pas » se rouvre."), "event");
+  return true;
+}
+
+/* v3.488.0 (montagne_05) : textes des deux branches du choix « veine ». */
+var STORY_VEINE_TEXTS = {
+  soi: {
+    completion: "Tu tailles. La veine se détache de la roche et redevient pierre dans ta main, sauf une ligne, qui bat. Ta lame est plus chaude, après.",
+    dialogue: [
+      { who: "Sarkel", text: "Toi, tu prends." },
+      { who: null, text: "Il ne dit pas si c'est bien." }
+    ]
+  },
+  aeswyn: {
+    completion: "Tu tailles. Tu ne gardes rien. À Aeswyn, le soir, tu poses la veine au fond du puits. L'eau prend un goût de pierre chaude.",
+    dialogue: [
+      { who: "Brannoc", text: "Jamais bu mieux." },
+      { who: "Aldric", text: "C'est de l'eau." },
+      { who: null, text: "Wenna note dans son carnet : veine, une, dans le puits. Elle souligne." }
+    ]
+  }
+};
+function storyVeineBranch() {
+  return (window.StoryQuestManager && StoryQuestManager.getChoice("veine") === "aeswyn") ? "aeswyn" : "soi";
+}
+
+/* « Deux sur cinq » : Sarkel et un seul des autres (composition, hors registre). Ysolt seulement si elle est restée. */
+var STORY_PIOCHE_OPTIONS = [
+  { value: "wenna", label: "Wenna", desc: "Wenna et Sarkel se battent à tes côtés." },
+  { value: "maddoc", label: "Maddoc", desc: "Maddoc et Sarkel se battent à tes côtés." },
+  { value: "edda", label: "Edda", desc: "Edda et Sarkel se battent à tes côtés." },
+  { value: "ysolt", label: "Ysolt", desc: "Ysolt et Sarkel se battent à tes côtés." }
+];
+/* Le tutoriel dit le vrai nombre : quatre si Ysolt est partie (choix « ysolt » de la Crypte). */
+var STORY_DEUX_SUR_CINQ = [
+  "Tu as maintenant quatre compagnons. Deux seulement t'accompagnent en combat : choisis-les avant de partir, dans Héros › Compagnons.",
+  "Tu as maintenant cinq compagnons. Deux seulement t'accompagnent en combat : choisis-les avant de partir, dans Héros › Compagnons."
+];
+function storyCompanionCount() {
+  return window.CompanionManager ? CompanionManager.unlockedIds().length : 0;
+}
+
+STORY_QUESTS.mountain = {
+  id: "mountain",
+  worldId: "mountain",
+  requiresChapter: "crypt",
+  title: "Ce qui ne fond pas", // provisoire
+  subtitle: "Chapitre 5 — Montagne",
+  icon: "images/Icons/codex/world_mountain.webp",
+  endText: "La suite de l'histoire arrive bientôt…", // v3.488.0 : acte I seul
+  steps: [
+    /* ---------- Acte I — La montée ---------- */
+    /* Étape 1 (doc §3) : le passage entre les mondes, parcours v2 de quatre paliers ; le monde est posé à
+       l'arrivée (travelOnSuccess). Deux Rations moyennes : Sarkel ne fait pas payer le chemin. */
+    {
+      id: "montagne_01",
+      title: "La roche est chaude",
+      act: "Acte I — La montée",
+      narrative: {
+        objective: "En haut de l'escalier de la Crypte, le chemin continue. Il monte. Sarkel a laissé ses lampes en bas. Il porte une pioche neuve, et il la porte mal.",
+        completion: "Sarkel pose la main sur la coupe. Il la suit du doigt, de haut en bas. Puis il pose sa pioche contre la paroi, à côté.",
+        dialogue: [
+          { who: "Maddoc", text: "Tu sais t'en servir ?" },
+          { who: "Sarkel", text: "Je sais ce qu'elle a coûté." },
+          { who: "Wenna", text: "Il fait chaud." },
+          { who: "Sarkel", text: "Plus haut, c'est pire. Les routes du sud, à côté, c'est de l'ombre." }
+        ],
+        completionDialogue: [
+          { who: "Edda", text: "Ce n'est pas la lave qui a fait ça." },
+          { who: "Sarkel", text: "Non." },
+          { who: "Wenna", text: "Qui, alors ?" },
+          { who: "Sarkel", text: "Quelqu'un qui savait tenir une pioche." },
+          { who: null, text: "Il n'en dit pas plus." }
+        ]
+      },
+      objectiveLabel: "Monter à la Montagne (coût : 2 Rations moyennes)",
+      unlockTabs: [],
+      reward: STORY_REWARDS.montagne_01,
+      linkTo: { section: "expedition", cardId: "scene_traversee_montagne" },
+      check: function () { return storyDesertFlag("mountainCrossingCompleted"); },
+      progress: function () { return "Montée " + (storyDesertFlag("mountainCrossingCompleted") ? "1/1" : "0/1"); }
+    },
+    /* Étape 2 (doc §4) : les veines. Cinq rencontres aux Pentes de cendres, une veine dans chacune. */
+    {
+      id: "montagne_02",
+      title: "Ce qui affleure",
+      act: "Acte I — La montée",
+      narrative: {
+        objective: "Au Replat, Sarkel a tendu une toile contre le vent chaud. La pioche est posée à côté de lui. Il ne l'a pas encore levée.",
+        completion: "Cinq rencontres. À chaque fois, une veine dans la roche, entre les pierres. Les bêtes d'ici ne la gardent pas. Elles se tiennent autour.",
+        dialogue: [
+          { who: "Maddoc", text: "Hier, la ligne bleue. Elle bougeait." },
+          { who: "Edda", text: "Elle ne bougeait pas. Elle battait." },
+          { who: "Wenna", text: "Comme quoi ?" },
+          { who: "Edda", text: "Comme quelque chose qui n'a pas fini." }
+        ],
+        completionDialogue: [
+          { who: "Maddoc", text: "Elles ne sont pas malades, celles-là. Pas comme en bas." },
+          { who: "Edda", text: "Elles ne sont pas malades. Elles sont faites." }
+        ]
+      },
+      objectiveLabel: "Terminer « Ce qui affleure » : 5 rencontres",
+      unlockTabs: [],
+      reward: STORY_REWARDS.montagne_02,
+      linkTo: { section: "adventure", cardId: "adv_aq_montagne_pentes" },
+      tutorial: {
+        tab: "combat",
+        icon: "images/Icons/combat_status/vein_intact.webp",
+        title: "Les veines",
+        points: [
+          { icon: "images/Icons/combat_status/vein_intact.webp", text: "À la Montagne, une veine affleure dans chaque combat. Ce n'est pas un ennemi : ton camp ne la vise jamais." },
+          { icon: "images/Icons/combat_actions/vein_cut.webp", text: "Tailler la veine remplace ton coup : +1 Cendre vive, et ta lame frappe 15 % plus fort jusqu'à la fin du combat." },
+          { icon: "images/Icons/combat_status/vein_heat.webp", text: "Chaque taille fait monter la chaleur : les façonnés gagnent 10 % de puissance par cran. Trois tailles au plus." },
+          { icon: "images/Icons/memory/grimoire_etendu.webp", text: "La laisser, c'est un combat normal. Dans le Grimoire : la condition « Veine intacte » et l'action « Tailler »." }
+        ]
+      },
+      check: function (game) { return storyAdvDone(game, "aq_montagne_pentes"); },
+      progress: function (game) { return "Rencontres " + storyAdvProgress(game, "aq_montagne_pentes", "rencontres_pentes", 5) + "/5"; }
+    },
+    /* Étape 3 (doc §5) : Sarkel rejoint. « Deux sur cinq » : Sarkel et un seul des autres (composition,
+       hors registre). Sarkel ne quitte pas le groupe tant que l'étape n'est pas réclamée. */
+    {
+      id: "montagne_03",
+      title: "Celui qui taille",
+      act: "Acte I — La montée",
+      narrative: {
+        objective: "Au matin, Sarkel lève la pioche. Il frappe la paroi, à côté de la coupe. La pioche rebondit. Rien ne tombe.",
+        completion: "Sarkel taille entre deux coups des autres. Mal, puis moins mal. Il ramasse chaque éclat, le pèse dans sa main, le met dans une poche.",
+        dialogue: [
+          { who: "Maddoc", text: "Pas comme ça." },
+          { who: "Sarkel", text: "Tu sais, toi ?" },
+          { who: "Maddoc", text: "Je sais tenir une barre. C'est pareil. Les deux mains. Plus bas." },
+          { who: null, text: "Sarkel recommence. Un éclat tombe." },
+          { who: "Sarkel", text: "Bon. Je viens avec vous. Je tiens la pioche, vous tenez le reste." }
+        ],
+        completionDialogue: [
+          { who: "Wenna", text: "Tu les vendras ?" },
+          { who: "Sarkel", text: "Je ne sais pas encore à qui." },
+          { who: "Sarkel", text: "C'est la première fois que je ne sais pas." }
+        ]
+      },
+      objectiveLabel: "Choisir qui accompagne Sarkel, puis 4 rencontres avec lui",
+      unlockTabs: [],
+      reward: STORY_REWARDS.montagne_03,
+      linkTo: { section: "adventure", cardId: "adv_aq_montagne_sarkel" },
+      onAccept: function () {
+        if (!window.CompanionManager) return;
+        CompanionManager.unlock("sarkel");
+      },
+      choice: {
+        key: "pioche", onStoryCard: true, noRecord: true,
+        buttonLabel: "Choisir qui l'accompagne",
+        title: "Deux sur cinq",
+        text: "Sarkel vient avec toi. Une seule autre place au combat : qui la prend ?",
+        get options() {
+          return STORY_PIOCHE_OPTIONS.filter(function (o) { return window.CompanionManager && CompanionManager.isUnlocked(o.value); });
+        },
+        isDone: function () { return storySarkelInParty(); },
+        apply: function (value) {
+          if (!window.CompanionManager) return;
+          STORY_PIOCHE_OPTIONS.forEach(function (o) {
+            var st = CompanionManager.state(o.value);
+            if (st) st.present = (o.value === value);
+          });
+          var sk = CompanionManager.state("sarkel");
+          if (sk) sk.present = true;
+          CompanionManager.refreshParty();
+        }
+      },
+      tutorial: {
+        tab: "more",
+        icon: "images/Icons/subtabs/hero_summary.webp",
+        title: "Deux sur cinq",
+        points: [
+          { icon: "images/Icons/subtabs/hero_summary.webp", get text() { return STORY_DEUX_SUR_CINQ[storyCompanionCount() === 4 ? 0 : 1]; } },
+          { icon: "images/Icons/companions/sarkel_coup_de_pioche.webp", text: "Sarkel taille : une fois par combat, il taille la veine à ta place. Tu gagnes la Cendre sans perdre ton coup, mais la chaleur monte." }
+        ]
+      },
+      check: function (game) { return storySarkelInParty() && storyAdvDone(game, "aq_montagne_sarkel"); },
+      progress: function (game) {
+        return "Sarkel avec toi " + (storySarkelInParty() ? "1/1" : "0/1") + " · Rencontres " + storyAdvProgress(game, "aq_montagne_sarkel", "rencontres_sarkel", 4) + "/4";
+      }
+    },
+    /* Étape 4 (doc §6) : tailler cinq veines (toi ou Sarkel), comptées depuis l'acceptation, dans la quête
+       « Ça ne fond pas » (décision Seb du 25/10, option A), qui se rouvre tant que la cible n'est pas atteinte. */
+    {
+      id: "montagne_04",
+      title: "Ça ne fond pas",
+      act: "Acte I — La montée",
+      narrative: {
+        objective: "Sarkel a vidé ses poches sur une pierre plate. Des éclats noirs, avec une ligne bleue dedans. Ils sont chauds. Ils le restent.",
+        completion: "À Aeswyn, Brannoc met un éclat dans le four de la Forge. Il souffle toute la soirée. Au matin, l'éclat est là, entier, plus chaud que le four.",
+        dialogue: [
+          { who: "Sarkel", text: "Il en faut plus. Brannoc voudra voir." },
+          { who: "Wenna", text: "Pour quoi faire ?" },
+          { who: "Sarkel", text: "Pour savoir ce que ça vaut. Moi, je ne sais pas." }
+        ],
+        completionDialogue: [
+          { who: "Brannoc", text: "Ça ne fond pas." },
+          { who: "Aldric", text: "Alors ça ne sert à rien." },
+          { who: "Brannoc", text: "Ça ne fond pas avec mon feu." },
+          { who: null, text: "Il garde l'éclat sur l'établi. Il le regarde souvent." }
+        ]
+      },
+      objectiveLabel: "Tailler 5 veines à la Montagne (toi ou Sarkel), dans « Ça ne fond pas »",
+      unlockTabs: [],
+      reward: STORY_REWARDS.montagne_04,
+      linkTo: { section: "adventure", cardId: "adv_aq_montagne_veines" },
+      onAccept: function (game, st) {
+        var c = window.AchievementManager ? Number((AchievementManager.ensure().counters || {}).veinsCut || 0) : 0;
+        if (st && st.counters) st.counters.veinsBase = c;
+      },
+      check: function (game) {
+        if (storyVeinsCut(game) >= STORY_VEINES_CIBLE) return true;
+        storyVeinesRelance(game);
+        return false;
+      },
+      progress: function (game) { return "Veines taillées " + Math.min(STORY_VEINES_CIBLE, storyVeinsCut(game)) + "/" + STORY_VEINES_CIBLE; }
+    },
+    /* Étape 5 (doc §7) : premier choix pesant de la Montagne, clé « veine », axe Soi / Aeswyn.
+       Soi -> La veine dans la lame (+20 % de lame par taille, VeinSystem.bladePerCut).
+       Aeswyn -> Le puits chaud (une Cendre vive de plus par taille, VeinSystem.onVictory). */
+    {
+      id: "montagne_05",
+      title: "La première veine",
+      act: "Acte I — La montée",
+      narrative: {
+        objective: "Au-dessus des Pentes de cendres, la roche s'ouvre. Une veine plus large que les autres sort de la paroi et redevient pierre un peu plus loin. Elle bat lentement. Elle ne sait pas que tu es là.",
+        get completion() { return STORY_VEINE_TEXTS[storyVeineBranch()].completion; },
+        dialogue: [
+          { who: "Sarkel", text: "Celle-là, je ne la touche pas. Elle n'est pas pour moi." },
+          { who: "Maddoc", text: "Avec ça dans une lame, on ne craint plus grand-chose." },
+          { who: "Wenna", text: "Ou on la porte au village. Dans le puits, elle chaufferait l'eau tout l'hiver." }
+        ],
+        get completionDialogue() { return STORY_VEINE_TEXTS[storyVeineBranch()].dialogue; }
+      },
+      objectiveLabel: "Décider de la première veine",
+      unlockTabs: [],
+      reward: STORY_REWARDS.montagne_05,
+      choice: {
+        key: "veine", onStoryCard: true,
+        buttonLabel: "Décider",
+        title: "La première veine",
+        text: "Sarkel ne la touche pas. Maddoc pense à la lame, Wenna au puits. Personne ne choisira pour toi.",
+        options: [
+          { value: "soi", label: "La tailler pour ta lame", desc: "Ta lame la gardera. À la Montagne, chaque taille te rend plus fort." },
+          { value: "aeswyn", label: "La porter au puits d'Aeswyn", desc: "Elle chauffera l'eau du village. Chaque veine que tu tailles rapportera plus." }
+        ],
+        apply: function (value) {
+          if (typeof addLog !== "function") return;
+          if (value === "soi") addLog(_t("La veine dans la lame : à la Montagne, chaque taille donne +20 % à ta lame."), "event");
+          else addLog(_t("Le puits chaud : chaque veine que tu tailles en combat verse une Cendre vive de plus à l'Entrepôt."), "event");
+        }
+      },
+      check: function () { return !!(window.StoryQuestManager && StoryQuestManager.getChoice("veine")); },
+      progress: function () { return "Choix " + ((window.StoryQuestManager && StoryQuestManager.getChoice("veine")) ? "1/1" : "0/1"); }
+    }
+  ]
+};
+
+window.storySarkelInParty = storySarkelInParty;
+window.storyVeinsCut = storyVeinsCut;
+window.storyVeinesRelance = storyVeinesRelance;
+window.STORY_VEINES_CIBLE = STORY_VEINES_CIBLE;
+window.STORY_VEINE_TEXTS = STORY_VEINE_TEXTS;
+window.storyVeineBranch = storyVeineBranch;
+window.STORY_PIOCHE_OPTIONS = STORY_PIOCHE_OPTIONS;
+window.storyCompanionCount = storyCompanionCount;
+window.STORY_DEUX_SUR_CINQ = STORY_DEUX_SUR_CINQ;
 
 window.STORY_REWARDS = STORY_REWARDS;
 window.STORY_STARTER_WEAPON = STORY_STARTER_WEAPON;

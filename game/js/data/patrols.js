@@ -71,7 +71,7 @@ var PATROL_SECTORS = {
   }
 };
 
-var PATROL_COMPANION_FEMININE = { wenna: true, maddoc: false, edda: true, ysolt: true }; // v3.457.3 : Edda et Ysolt
+var PATROL_COMPANION_FEMININE = { wenna: true, maddoc: false, edda: true, ysolt: true, sarkel: false }; // v3.457.3 : Edda et Ysolt ; v3.488.0 : Sarkel
 
 /* P6 — récits de retour, dans la voix du compagnon : 3 communs + 1 rare par monde.
    {secteur} est remplacé par le nom du secteur. Textes PROVISOIRES, à relire selon la bible. */
