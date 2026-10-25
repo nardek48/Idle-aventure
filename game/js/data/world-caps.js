@@ -53,9 +53,11 @@ var WORLD_CAPS = [
     petiteAventureCap: 4
   },
   /* 4 — Montagne brûlante. v3.486.0 (Conception Montagne MT8, lot M-0) : écrit avant d'ouvrir le monde.
-     Provisoire, égal à la Crypte ; la Forge 6 (Obsidienne taillée) vient avec l'acte III, les autres crans au banc. */
+     Provisoire, égal à la Crypte ; la Forge 6 (Obsidienne taillée) vient avec l'acte III, les autres crans au banc.
+     v3.490.0 : Forge 6, ouverte seulement à forgeActStep (un cran de moins avant). */
   {
-    village: { workshop: 8, training: 13, hall: 10, warehouse: 8, palisade: 8, tavern: 6, apothecary: 6, forge: 5, enchanter: 2 },
+    village: { workshop: 8, training: 13, hall: 10, warehouse: 8, palisade: 8, tavern: 6, apothecary: 6, forge: 6, enchanter: 2 },
+    forgeActStep: "montagne_11",
     zoneRows: 3,
     zoneLevel: 5,
     workshopLevel: 3,
@@ -151,6 +153,7 @@ var WorldCaps = {
     var e = this.getEntry();
     var cap = (!e || !e.village || typeof e.village[id] !== "number") ? Infinity : e.village[id];
     if (id === "training") cap = Math.min(cap, this.getTrainingActCap()); // v3.325.0
+    if (id === "forge" && e && e.forgeActStep && isFinite(cap) && !(window.StoryQuestManager && StoryQuestManager.isStepReached(e.forgeActStep))) cap -= 1; // v3.490.0 : Forge 6 à l'acte III
     return cap;
   },
 

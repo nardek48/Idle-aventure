@@ -21,23 +21,37 @@ var VEIN_ASH_PER_CUT = 1;        // Cendre vive par taille
 var VEIN_ASH_WELL = 1;           // choix `veine` = « aeswyn » (Le puits chaud) : une de plus par taille, au banc
 var VEIN_SORT_MULT = 1.5;        // v3.489.0 (acte II, montagne_08) : le tri du Démon mineur, +50 % sur celui qui a taillé (au banc)
 var VEIN_SORT_STEP = "montagne_08"; // le tri s'apprend à cette étape (tutoriel)
+var VEIN_DIVE_ALL_MULT = 0.8;    // v3.490.0 (acte III) : le Wyrm ressort de la lave, chaque allié frappé à ×0,8 (au banc)
 
 var VeinSystem = {
 
-  state: null,   // { cuts, heroCuts } le temps d'un combat ; null hors de la Montagne
+  state: null,   // { cuts, heroCuts, heat } le temps d'un combat ; null hors de la Montagne
 
-  /* Règle du monde : seule la Montagne a des veines. Pas dans les donjons (la Faille est ailleurs) :
-     la Gueule du volcan branchera ses vagues avec l'acte III (lot M-4, MT11). */
+  /* Règle du monde : seule la Montagne a des veines. Au donjon, seule la Gueule du volcan (v3.490.0, MT11). */
+  inMaw: function () {
+    var run = game.dungeonRun;
+    if (!run || !run.active || !window.DungeonManager) return false;
+    var d = DungeonManager.getById(run.dungeonId);
+    return !!(d && d.worldId === "mountain");
+  },
   worldHasVeins: function () {
-    if (game.dungeonRun && game.dungeonRun.active) return false;
+    if (game.dungeonRun && game.dungeonRun.active) return this.inMaw();
     var w = (typeof WORLDS !== "undefined" && window.WorldManager) ? WORLDS[WorldManager.worldIndex] : null;
     return !!(w && w.id === "mountain");
   },
+  /* v3.490.0 : choix « ouvrage » (montagne_14) = donner : la Gueule plus chaude et plus riche. */
+  mawFinished: function () {
+    return this.inMaw() && !!(window.StoryQuestManager && StoryQuestManager.getChoice("ouvrage") === "donner");
+  },
 
-  /* Garde de spawnGroup : une veine par combat de la Montagne. */
+  /* Garde de spawnGroup : une veine par combat de la Montagne (par vague dans la Gueule). */
   onCombatStart: function () {
-    this.state = this.worldHasVeins() ? { cuts: 0, heroCuts: 0 } : null;
+    this.state = this.worldHasVeins() ? { cuts: 0, heroCuts: 0, heat: 0 } : null;
     if (this.state && typeof addLog === "function") addLog("🪨 " + _t("Une veine affleure entre les pierres. Elle bat."), "event");
+    if (this.state && this.mawFinished()) {
+      this.state.heat = 1;
+      if (typeof addLog === "function") addLog("🔥 " + _t("L'ouvrage achevé chauffe la Gueule : un cran de chaleur dès le départ."), "event");
+    }
     return !!this.state;
   },
 
@@ -62,6 +76,7 @@ var VeinSystem = {
     this.state.lastCutter = byHero ? "hero" : (companionId || "sarkel");
     if (!byHero && this._mem("pioche_sure")) this.state.bonusAsh = Number(this.state.bonusAsh || 0) + Number(this._memV("pioche_sure_ash", 1)); // v3.489.0 : Mémoire 19
     if (window.AchievementManager) AchievementManager.bump("veinsCut", 1); // compteur cumulé (objectif de montagne_04, hauts faits)
+    this.growShells();
     if (typeof addLog === "function") {
       addLog("🪨 " + (byHero
         ? _t("Tu tailles la veine : lame +{b} %, chaleur +{h} %.", { b: Math.round(this.bladeMult() * 100 - 100), h: Math.round(this.heatMult() * 100 - 100) })
@@ -79,12 +94,26 @@ var VeinSystem = {
     return 1 + this.state.heroCuts * this.bladePerCut() + (this.state.heroCuts > 0 && this._mem("taille_franche") ? Number(this._memV("taille_franche_blade", 0.10)) : 0);
   },
   /* Multiplicateur des frappes ennemies (les façonnés, tous les ennemis de la Montagne). Peau de basalte (Mémoire 17) : +7 %. */
-  heatMult: function () { return this.state ? 1 + this.state.cuts * (this._mem("peau_basalte") ? Number(this._memV("peau_basalte_heat", 0.07)) : VEIN_HEAT_PER_CUT) : 1; },
+  heatMult: function () {
+    if (!this.state) return 1;
+    var cran = (this._mem("peau_basalte") ? Number(this._memV("peau_basalte_heat", 0.07)) : VEIN_HEAT_PER_CUT)
+      * ((typeof uniquePowerMult === "function") ? uniquePowerMult("dun_braise") : 1); // v3.490.0 : Heaume du Wyrm
+    return 1 + (this.state.cuts + Number(this.state.heat || 0)) * cran;
+  },
+  /* Crans de chaleur du combat : tailles et crans ajoutés (Wyrm, ouvrage achevé). */
+  heatLevel: function () { return this.state ? this.state.cuts + Number(this.state.heat || 0) : 0; },
+  addHeat: function (n) {
+    if (!this.state) return; // pas de veine, pas de chaleur
+    this.state.heat = Number(this.state.heat || 0) + n;
+  },
 
   /* v3.489.0 (Montagne, acte II) — LE TRI. Un ennemi qui porte `sorts` (le Démon mineur) annonce le tri
      s'il y a eu une taille, puis, à son tour suivant, frappe celui qui a taillé en dernier, +50 %.
      Garde de enemyTurn ; takeSort est lu par enemyStrike (victime et multiplicateur), une seule fois. */
-  sorterDef: function (e) { return (e && window.ENEMY_DB && ENEMY_DB[e.id]) || null; },
+  sorterDef: function (e) {
+    if (e && e.isElite && window.ELITE_DB && ELITE_DB[e.id]) return ELITE_DB[e.id]; // v3.490.0 : l'Ifrit qui trie
+    return (e && window.ENEMY_DB && ENEMY_DB[e.id]) || null;
+  },
   sortTarget: function () {
     var who = this.state && this.state.lastCutter;
     if (!who || !window.CombatActors) return null;
@@ -95,7 +124,15 @@ var VeinSystem = {
     }
     return null;
   },
+  /* Garde de enemyTurn : true si l'ennemi ne joue pas son tour ordinaire (le Wyrm qui ressort). */
   onEnemyTurn: function (e) {
+    if (!e || Number(e.hp || 0) <= 0) return false;
+    if (this.tickBurns(e)) return true;
+    if (e.diving) return this.surface(e);
+    this.sortTurn(e);
+    return false;
+  },
+  sortTurn: function (e) {
     var def = this.sorterDef(e);
     if (!def || !def.sorts || !this.state || !e || Number(e.hp || 0) <= 0 || e.downed) return;
     if (!window.StoryQuestManager || !StoryQuestManager.isStepReached(VEIN_SORT_STEP)) return;
@@ -111,10 +148,99 @@ var VeinSystem = {
     if (typeof addLog === "function") addLog("👁️ " + _t("{x} trie : il frappe celui qui a pris.", { x: _td(e.name) }), "event");
   },
   takeSort: function (e) {
+    if (e && e._forceHero && window.CombatActors) { e._forceHero = false; return { actor: CombatActors.heroActor(), mult: 1 }; }
     if (!e || !e._sortNow) return null;
     e._sortNow = false;
     var t = this.sortTarget();
+    if (t) this.ignite(e, t);
     return t ? { actor: t, mult: VEIN_SORT_MULT } : null;
+  },
+
+  /* v3.490.0 (Montagne, acte III) — LA GUEULE DU VOLCAN (MT11). Tout vit sur l'ennemi, le temps du combat. */
+  eliteDef: function (e) { return (e && e.isElite && window.ELITE_DB && ELITE_DB[e.id]) || null; },
+  /* Le Golem-forge : chaque taille lui ajoute une carapace (part de ses PV max), mangée avant ses PV. */
+  growShells: function () {
+    if (!window.CombatActors) return;
+    var self = this;
+    CombatActors.aliveEnemies().forEach(function (e) {
+      var def = self.eliteDef(e);
+      if (!def || !def.forgeShell) return;
+      var n = Math.max(1, Math.floor(Number(e.maxHp || 0) * Number(def.forgeShell)));
+      e.shell = Number(e.shell || 0) + n;
+      if (typeof addLog === "function") addLog("🪨 " + _t("{x} se couvre d'une carapace de Cendre (+{n}).", { x: _td(e.name), n: formatNumber(n) }), "event");
+    });
+  },
+  /* Lu par dealDamage, avant les PV : renvoie les dégâts qui passent la carapace. */
+  absorb: function (foe, dmg) {
+    if (!foe || !(Number(foe.shell || 0) > 0) || !(dmg > 0)) return dmg;
+    var pris = Math.min(Number(foe.shell), dmg);
+    foe.shell = Number(foe.shell) - pris;
+    if (foe.shell <= 0 && typeof addLog === "function") addLog("🪨 " + _t("La carapace de {x} éclate.", { x: _td(foe.name) }), "event");
+    return dmg - pris;
+  },
+  /* L'Ifrit qui trie : celui qu'il frappe en triant brûle (def.burns : rounds, part des PV max par round). */
+  ignite: function (e, actor) {
+    var def = this.eliteDef(e);
+    if (!def || !def.burns || !actor) return;
+    e.burns = (e.burns || []).filter(function (b) { return b.actor !== actor; });
+    e.burns.push({ actor: actor, rounds: Number(def.burns.rounds || 2), pct: Number(def.burns.pct || 0.03) });
+    if (typeof addLog === "function") addLog("🔥 " + (window.CombatActors && CombatActors.isHero(actor) ? _t("Tu prends feu.") : _t("{x} prend feu.", { x: _td(actor.name || "") })), "event");
+  },
+  /* Au tour de l'Ifrit : chaque brûlure mord, puis s'use. true si le héros tombe (le tour s'arrête). */
+  tickBurns: function (e) {
+    if (!e || !Array.isArray(e.burns) || !e.burns.length || !window.CombatActors) return false;
+    var heroDown = false;
+    e.burns.forEach(function (b) {
+      var a = b.actor, hero = CombatActors.isHero(a);
+      var max = hero ? Number(game.heroMaxHp || 0) : Number(a.maxHp || 0);
+      var n = Math.max(1, Math.floor(max * b.pct));
+      b.rounds -= 1;
+      if (hero) {
+        if ((game.heroHp || 0) <= 0) return;
+        game.heroHp = Math.max(0, Number(game.heroHp || 0) - n);
+        if (typeof addLog === "function") addLog("🔥 " + _t("Tu brûles (-{n} PV).", { n: formatNumber(n) }), "event");
+        if (typeof renderHeroHp === "function") renderHeroHp();
+        if (game.heroHp <= 0) heroDown = true;
+      } else if (Number(a.hp || 0) > 0) {
+        a.hp = Math.max(0, Number(a.hp || 0) - n);
+        if (typeof addLog === "function") addLog("🔥 " + _t("{x} brûle (-{n} PV).", { x: _td(a.name || ""), n: formatNumber(n) }), "event");
+        if (a.hp <= 0 && window.CompanionManager) CompanionManager.noteKo(a);
+      }
+    });
+    e.burns = e.burns.filter(function (b) { return b.rounds > 0; });
+    if (heroDown && window.CombatEngine) { CombatEngine.onHeroDefeated(); return true; }
+    return false;
+  },
+  heroBurnRounds: function () {
+    if (!window.CombatActors) return 0;
+    var hero = CombatActors.heroActor(), n = 0;
+    CombatActors.aliveEnemies().forEach(function (e) {
+      (e.burns || []).forEach(function (b) { if (b.actor === hero) n = Math.max(n, b.rounds); });
+    });
+    return n;
+  },
+  /* Phases du Wyrm de cendres, appelées par BossMomentManager.onPhase : chaleur d'un coup, puis plongée. */
+  onBossPhase: function (e, ph) {
+    if (!e || !ph) return;
+    if (ph.heat) {
+      this.addHeat(Number(ph.heat));
+      if (typeof addLog === "function") addLog("🔥 " + _t("La chaleur monte de {n} crans.", { n: Number(ph.heat) }), "event");
+    }
+    if (ph.dive) e.diving = true; // sous la lave jusqu'à son prochain tour : on ne le touche pas
+  },
+  /* Lu par dealDamage : sous la lave, aucun coup ne porte. */
+  blocksHit: function (foe) { return !!(foe && foe.diving && Number(foe.hp || 0) > 0); },
+  /* Il ressort : il frappe chaque allié vivant (×0,8, chaleur comprise), puis son tour s'arrête. */
+  surface: function (e) {
+    e.diving = false;
+    if (typeof addLog === "function") addLog("🌋 " + _t("{x} jaillit de la lave et frappe tout le groupe !", { x: _td(e.name) }), "event");
+    if (!window.CombatEngine || !window.CombatActors) return true;
+    var mult = VEIN_DIVE_ALL_MULT;
+    CombatActors.aliveAllies().forEach(function (a) {
+      if (!CombatActors.isHero(a) && Number(a.hp || 0) > 0) CombatEngine.enemyStrikeCompanion(e, a, mult * VeinSystem.heatMult(), true);
+    });
+    if ((game.heroHp || 0) > 0) { e._forceHero = true; CombatEngine.enemyStrike(mult, true); e._forceHero = false; }
+    return true;
   },
 
   /* Garde de killEnemy : le combat est gagné, la Cendre taillée est versée. */
@@ -123,7 +249,8 @@ var VeinSystem = {
     this.state = null;
     if (!st || !st.cuts || !window.WarehouseManager) return 0;
     if (game.dungeonRun && game.dungeonRun.active && game.dungeonRun.free) return 0; // RE-5 : rien en mode libre
-    var n = st.cuts * VEIN_ASH_PER_CUT + (this.choice() === "aeswyn" ? st.cuts * VEIN_ASH_WELL : 0) + Number(st.bonusAsh || 0);
+    var n = st.cuts * VEIN_ASH_PER_CUT + (this.choice() === "aeswyn" ? st.cuts * VEIN_ASH_WELL : 0) + Number(st.bonusAsh || 0)
+      + (this.mawFinished() ? st.cuts : 0); // v3.490.0 : l'ouvrage achevé, une Cendre de plus par taille dans la Gueule
     WarehouseManager.addResource("cendre_vive", n, true);
     if (typeof addLog === "function") addLog("🪨 " + _t("Cendre vive : +{n} (veine taillée).", { n: n }), "event");
     return n;

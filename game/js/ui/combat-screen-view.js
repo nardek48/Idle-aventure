@@ -138,6 +138,8 @@
     if (e.asleep) push("asleep");   // v3.451.0 (Crypte) : il dort
     if (e.callArmed) push("calling"); // v3.454.0 (Crypte) : l'appel du Nécromancien
     if (e.sortArmed) push("sorting"); // v3.489.0 (Montagne) : le tri du Démon mineur
+    if (e.diving) push("diving"); // v3.490.0 (Montagne) : le Wyrm sous la lave
+    if (num(e.shell) > 0) push("shell"); // v3.490.0 : la carapace du Golem-forge
     if (e.chainArmed) push("chaining"); // v3.456.0 (Crypte) : il lève une chaîne
     if (num(e.engageIn) > 0) push(e.charged ? "stunned" : "approaching", num(e.engageIn)); // v3.477.0 : Charge du Chevalier
     if (e.chargeTelegraphed) push("charge");
@@ -667,6 +669,8 @@
       statesOf(e, e === t).forEach(function (st) { var f = st.def.famille; if (groups[f]) groups[f].push(stRowHTML(st, who, f === "alerte")); });
     });
     if (num(game.silencedRounds) > 0 && stateDef("silenced")) groups.onme.push(stRowHTML({ id: "silenced", def: stateDef("silenced"), n: num(game.silencedRounds) }, "", false));
+    var burn = window.VeinSystem ? VeinSystem.heroBurnRounds() : 0; // v3.490.0 (Montagne) : la brûlure de l'Ifrit
+    if (burn > 0 && stateDef("burning")) groups.onme.push(stRowHTML({ id: "burning", def: stateDef("burning"), n: burn }, "", false));
 
     var h = '<div class="ksheet-backdrop" onclick="closeCombatStatesSheet()"></div><div class="ksheet cbx-states-sheet">';
     h += kSheetHeadHTML({ title: _t("États du combat"), sub: _t("Ce qui pèse sur ce combat, et quoi en faire."), close: "closeCombatStatesSheet()" });

@@ -294,15 +294,35 @@ var DUNGEONS = [
     name: "Gueule du volcan",
     worldId: "mountain", worldRequired: 4, worldPower: 4, difficultyMult: 22,
     maxRarity: "epic", // le légendaire ne tombe qu'à la Tour (décision 12.1)
-    specialResourceId: null, specialResourceAmount: 0,
+    // v3.490.0 (Montagne, acte III) : la Cendre vive en fin de run ; une veine à chaque vague (vein-system)
+    specialResourceId: "cendre_vive", specialResourceAmount: 3,
     icon: "images/Dungeons/Icone_base/palier5.webp", banner: null, combatMap: "../images/Maps/mountain-combat.webp",
     desc: "La montagne respire par ici. Chaud.",
-    story: "Le seuil du dernier palier. Une puissance oubliée sommeille dans l'obscurité — et elle sait déjà que tu es arrivé.",
-    enemyPool: null, eliteWaves: null,
-    boss: { baseId: "ancientdragon", name: "Wyrm de cendres", archetype: "enraged", statMult: { endurance: 1, power: 1 }, image: null },
-    /* v3.471.1 (bilan des donjons, point 8) : fermé tant que la Montagne n'a ni pool, ni élites, ni boss calibré,
-       ni étape d'Histoire ; sinon il s'ouvrait seul à l'arrivée au monde 4. */
-    locked: true, lockedHint: "Pas encore disponible"
+    story: "Un couloir de basalte descend en spirale. La lumière vient d'en bas. Les murs sont tièdes, puis chauds, puis on ne les touche plus.",
+    /* v3.490.0 (MT11) : le pool de la Montagne. Vague 8 : le Golem-forge (une carapace par taille) ; vague 12 :
+       l'Ifrit qui trie (il brûle celui qui a taillé). Campement après la vague 8 : la forge à mi-chemin. */
+    enemyPool: ["lavagolem", "dragonling", "minordemon", "ifrit"],
+    eliteWaves: { 8: "golem_forge", 12: "ifrit_trieur" },
+    groupWaves: { 3: 2, 6: 2, 10: 3, 14: 2 },
+    haltSlots: [4, 11, 13],
+    camp: { afterWave: 8, healPct: 0.4, stoneAmount: 2, storyFlag: "gueuleCamp" },
+    /* LE WYRM DE CENDRES (MT11) : Enragé. Phases (VeinSystem.onBossPhase) : 60 % la chaleur +2 crans ;
+       30 % il plonge un round sous la lave (intouchable), puis ressort en frappant tout le groupe.
+       Banc (montagne-acte3-bench, sauvegardes de campagne, 8-10 runs) : à 1 / 1, 0 / 100 / 0 % (Ch. / Rô. / Ma.) ;
+       0,8 / 0,7 -> 63 / 100 / 63 % ; 0,75 / 0,62 -> 90 / 100 / 100 %. Retenu entre les deux. */
+    boss: { baseId: "ancientdragon", name: "Wyrm de cendres", archetype: "enraged",
+      statMult: { endurance: 0.78, power: 0.66 }, image: "./images/Boss/wyrm_cendres.webp",
+      unique: { id: "heaume_wyrm", slot: "helmet", name: "Heaume du Wyrm", icon: "casque", power: "dun_braise" },
+      phases: [
+        { atPct: 0.6, heat: 2, label: "il secoue le lac" },
+        { atPct: 0.3, dive: true, label: "il plonge sous la lave" }
+      ] },
+    /* v3.471.1 : fermé tant que la Montagne n'avait pas son contenu. v3.490.0 : verrou d'Histoire, comme l'Ossuaire. */
+    locked: false,
+    requiresStoryStep: "montagne_12",
+    storyChapterId: "mountain",
+    storyFreeSteps: ["montagne_12", "montagne_15"],
+    lockedHint: "La Gueule du volcan est encore trop chaude."
   },
   {
     id: 6, key: "tower",

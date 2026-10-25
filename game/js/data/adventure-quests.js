@@ -915,6 +915,33 @@ var ADVENTURE_QUESTS = {
     reward: {}
   },
 
+  /* v3.490.0 (Montagne, acte III étape 14) — « L'ouvrage inachevé » : trois rencontres de façonnés qui montent
+     vers la salle ronde, au profil de l'Épique complet (montagne_13). Puis le choix « ouvrage ». Au banc. */
+  aq_montagne_salle_ronde: {
+    id: "aq_montagne_salle_ronde",
+    type: "kill",
+    section: "adventure",
+    difficulty: "hard",
+    progressionStage: "world_end",
+    category: "side",
+    worldId: "mountain",
+    adventureIndex: 1,
+    encounters: [
+      { group: ["lavagolem", "minordemon", "dragonling"], groupHpMult: 0.35 },
+      { group: ["ifrit", "lavagolem"], groupHpMult: 0.55 },
+      { group: ["minordemon", "ifrit", "lavagolem"], groupHpMult: 0.35 }
+    ],
+    encounterHpMult: 1.8,
+    enemyPowerMult: 6.5, // banc : à 7,5, 100 / 100 / 63 % ; à 6,5, 90 / 100 / 80 %, 46 à 72 % des PV (Ch. / Rô. / Ma.)
+    name: "L'ouvrage inachevé",
+    story: "Dans la salle ronde, le golem inachevé a bougé. Des façonnés montent de la Gueule. Ils portent de la Cendre.",
+    icon: "./images/Icons/quest_icons/exploration/exploration3.webp",
+    steps: [
+      { id: "rencontres_salle_ronde", type: "encounter", worldId: "mountain", target: 3, desc: "Vaincre {target} rencontres dans la salle ronde" }
+    ],
+    reward: {}
+  },
+
   aq_ruines_plan: {
     id: "aq_ruines_plan",
     type: "kill",

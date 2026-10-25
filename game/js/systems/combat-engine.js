@@ -927,7 +927,7 @@ var CombatEngine = {
     if ((game.heroHp || 0) <= 0) return;
     if (window.RiseSystem && RiseSystem.onEnemyTurn(e)) return; // v3.428.0 (Ruines) : à terre, il ne frappe pas
     if (window.SleepSystem && SleepSystem.onEnemyTurn(e)) return; // v3.451.0 (Crypte) : il dort, il ne joue pas
-    if (window.VeinSystem) VeinSystem.onEnemyTurn(e); // v3.489.0 (Montagne) : le tri, annoncé puis frappé
+    if (window.VeinSystem && VeinSystem.onEnemyTurn(e)) return; // v3.489.0 (Montagne) : le tri ; v3.490.0 : brûlure, le Wyrm qui ressort
     this.prepareEnemy(e);
     e.roundsAlive += 1;
 
@@ -1696,6 +1696,7 @@ var CombatEngine = {
     var foe = target || game.enemy;
     if (!foe) return;
     if (window.RiseSystem && RiseSystem.blocksHit(foe)) return; // v3.428.3 (Ruines) : à terre, seule une décision l'achève
+    if (window.VeinSystem && VeinSystem.blocksHit(foe)) return; // v3.490.0 (Montagne) : le Wyrm sous la lave
     if (window.SleepSystem) SleepSystem.onHit(foe); // v3.451.0 (Crypte) : le frapper le réveille
     this.prepareEnemy(foe);
 
@@ -1722,6 +1723,7 @@ var CombatEngine = {
       if (window.CombatReportManager) CombatReportManager.logArchetypeImpact("armoredDamageLost", preArmoredDmg - dmg);
     }
 
+    if (window.VeinSystem) dmg = VeinSystem.absorb(foe, dmg); // v3.490.0 (Montagne) : la carapace du Golem-forge
     foe.hp -= dmg;
     // v3.268.0 (L-2) : la menace va à l'allié qui vient de frapper. Sans cette ligne,
     // seuls les compagnons en accumulaient et le héros, coincé au plancher, ne recevait

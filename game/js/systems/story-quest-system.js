@@ -501,7 +501,8 @@ var StoryQuestManager = {
         var item = null;
         /* v3.429.0 (Ruines, palier de l'acte II) : equipmentFill — la pièce va à un emplacement porté
            SOUS la rareté donnée (hors arme : son type dépend de la classe), sinon tirage habituel. */
-        if (reward.equipmentFill && typeof generateEquipmentItem === "function") {
+        if (reward.equipmentSlot && typeof generateEquipmentItem === "function") item = generateEquipmentItem(reward.equipmentSlot, reward.equipmentRarity); // v3.490.0 : l'arme de la Gueule (son type suit la classe)
+        if (!item && reward.equipmentFill && typeof generateEquipmentItem === "function") {
           var ord = window.RARITY_ORDER || [], need = ord.indexOf(reward.equipmentRarity), eq = game.equipped || {};
           var fw = Number(reward.equipmentFillWorld || 0); // v3.489.0 (Montagne) : une pièce du monde manque aussi
           var trous = (window.EQUIPMENT_SLOTS || []).filter(function (sl) { return sl !== "weapon" && (!eq[sl] || ord.indexOf(eq[sl].rarity) < need || Number(eq[sl].worldIndex || 0) < fw); });

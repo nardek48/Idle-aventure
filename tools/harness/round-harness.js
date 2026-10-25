@@ -4487,8 +4487,8 @@ console.log("\n[32b] v3.223.0 \u2014 Donjons : plafond par monde et mat\u00e9ria
 
   var sansMateriau = (g.DUNGEONS || []).filter(function (t) { return !t.specialResourceId; });
   // v3.321.0 : la Cité engloutie rapporte du Verre des dunes ; v3.430.0 : le Sanctuaire, de la Pierre errante — trois à venir
-  ok(sansMateriau.length === 2 && D.getById(2).specialResourceId === "verre_des_dunes" && D.getById(3).specialResourceId === "pierre_errante" && D.getById(4).specialResourceId === "cire_sepulcre",
-    "la Cit\u00e9 rapporte du Verre des dunes, le Sanctuaire de la Pierre errante, l'Ossuaire de la Cire ; les deux suivants attendent le leur"); // v3.455.0
+  ok(sansMateriau.length === 1 && D.getById(2).specialResourceId === "verre_des_dunes" && D.getById(3).specialResourceId === "pierre_errante" && D.getById(4).specialResourceId === "cire_sepulcre" && D.getById(5).specialResourceId === "cendre_vive",
+    "la Cit\u00e9 rapporte du Verre des dunes, le Sanctuaire de la Pierre errante, l'Ossuaire de la Cire, la Gueule de la Cendre vive ; le Sommet attend le sien"); // v3.490.0
   var tousDeclares = (g.DUNGEONS || []).every(function (t) { return typeof t.worldRequired === "number"; });
   ok(tousDeclares, "chaque donjon d\u00e9clare son monde requis");
 
@@ -14305,7 +14305,7 @@ console.log("\n[207] v3.431.0 — Ruines, acte III (livraison 2) : Clé de voût
     var rec = g.WORKSHOPS_CONFIG.tailleur_de_pierre.recipes.filter(function (r) { return r.id === "cle_de_voute"; })[0];
     ok(rec && rec.inputs[0].resourceId === "pierre_errante" && rec.outputs[0].resourceId === "cle_de_voute", "taillée au Tailleur de pierre, à partir de Pierres errantes");
     var F = g.VILLAGE_BUILDINGS.forge, t4 = g.VillageBuildingManager.getCostTierForLevel(F, 3);
-    ok(F.maxLevel === 5 && t4 && t4.baseCost.cle_de_voute === 3 && g.WORLD_CAPS[2].village.forge === 4 && g.WORLD_CAPS[1].village.forge === 3, "Forge 4 aux Ruines, payée en Clés de voûte ; 3 au Désert (v3.455.0 : 5 à la Crypte)");
+    ok(F.maxLevel >= 5 && t4 && t4.baseCost.cle_de_voute === 3 && g.WORLD_CAPS[2].village.forge === 4 && g.WORLD_CAPS[1].village.forge === 3, "Forge 4 aux Ruines, payée en Clés de voûte ; 3 au Désert (v3.455.0 : 5 à la Crypte)");
     ok(g.isStoryVillageLevel("forge", 4), "la Forge 4 est un niveau d'Histoire (matériaux communs fournis)");
     g.VillageBuildingManager.ensure();
     game.village.buildings.forge = { level: 4 };
@@ -15865,7 +15865,7 @@ console.log("\n[243] v3.455.0 — Crypte, lot C-4 : acte III (Ossuaire, Porte-co
     game.forge.levels.weapon = 6;
     var c7 = g.ForgeManager.getCost("weapon");
     ok(c7 && c7.cle_de_voute >= 1 && !c7.cire_consacree, "reforge 7 : toujours la Clé de voûte");
-    ok(g.VILLAGE_BUILDINGS.forge.maxLevel === 5 && g.WORLD_CAPS[3].village.forge === 5, "Forge 5, plafond de la Crypte");
+    ok(g.VILLAGE_BUILDINGS.forge.maxLevel >= 5 && g.WORLD_CAPS[3].village.forge === 5, "Forge 5, plafond de la Crypte (v3.490.0 : bâtiment à 6 pour la Montagne)");
     ok(g.WORKSHOPS && JSON.stringify(g.WORKSHOPS).indexOf("cire_consacree") >= 0 || fs.readFileSync(path.join(ROOT, "js/data/workshops.js"), "utf8").indexOf('id: "cire_consacree"') >= 0, "recette de la Cire consacrée à la Fonderie");
     var aq = g.ADVENTURE_QUESTS.aq_crypte_pleureuse;
     ok(aq && aq.eliteId === "pleureuse" && aq.requiresStoryStep === "crypte_14" && aq.requiresParty === "ysolt", "quête de la Pleureuse : à crypte_14, avec Ysolt");
@@ -17649,7 +17649,7 @@ console.log("\n[292] v3.471.1 — Gueule du volcan fermée tant que la Montagne 
   var D = g.DungeonManager;
   game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true, 4: true, 5: true };
   game.dungeonTierCleared = { 1: true, 2: true, 3: true, 4: true };
-  ok(D.getById(5).locked === true && D.getLockReason(5) === "data" && !D.isUnlocked(5), "monde 4 atteint, Ossuaire fini : la Gueule du volcan reste fermée");
+  ok(D.getById(5).locked === false && D.getById(5).requiresStoryStep === "montagne_12" && D.getLockReason(5) === "data" && !D.isUnlocked(5), "monde 4 atteint, Ossuaire fini : la Gueule du volcan reste fermée avant montagne_12 (v3.490.0)");
   ok(D.getById(6).locked === true && !D.isUnlocked(6), "le Sommet interdit aussi");
   game.heroHp = game.heroMaxHp; game.dungeonRunsUsed = {};
   D.start(5, []);
@@ -18071,7 +18071,7 @@ console.log("\n[308] v3.486.0 — Montagne, lot M-0 : socle et passage entre les
   var reachedAvant = game.worldsEverReached, wiAvant = g.WorldManager.worldIndex, advAvant = g.WorldManager.adventureIndex;
   try {
     var e4 = g.WORLD_CAPS[4];
-    ok(!!e4 && e4.zoneRows === 3 && e4.village.forge === 5 && e4.petiteAventureCap === 4, "WORLD_CAPS[4] écrit avant d'ouvrir le monde (égal à la Crypte, Forge 6 à l'acte III)");
+    ok(!!e4 && e4.zoneRows === 3 && e4.village.forge === 6 && e4.forgeActStep === "montagne_11" && e4.petiteAventureCap === 4, "WORLD_CAPS[4] écrit avant d'ouvrir le monde (égal à la Crypte, Forge 6 à l'acte III)");
     ok(g.TRAINING_CAP_BY_ACT.some(function (a) { return a.worldIndex === 4 && a.stepId === "montagne_01"; })
       && g.TALENT_CAP_BY_ACT.some(function (a) { return a.worldIndex === 4 && a.stepId === "montagne_01"; }), "Terrain et talents : entrée d'acte I à la Montagne");
     var R = g.WAREHOUSE_RESOURCES;
@@ -18091,7 +18091,7 @@ console.log("\n[308] v3.486.0 — Montagne, lot M-0 : socle et passage entre les
     FM.getMaxLevel = maxAvant; FM.getLevel = lvAvant;
     ok(c11.obsidienne_taillee === 1 && c11.cire_consacree === 1 && c9.cire_consacree === 1 && !c9.obsidienne_taillee, "reforge 11 : 1 Obsidienne taillée (+1 Cire) ; reforge 9 : Cire seule");
     var tier6 = g.VillageBuildingManager.getLevelCost ? g.VillageBuildingManager.getLevelCost("forge", 5) : null; // coût du niveau 5 au niveau 6
-    ok(g.VILLAGE_BUILDINGS.forge.maxLevel === 5 && tier6 && tier6.obsidienne_taillee === 3, "Forge 6 : palier à l'Obsidienne posé, plafond du bâtiment encore à 5");
+    ok(g.VILLAGE_BUILDINGS.forge.maxLevel === 6 && tier6 && tier6.obsidienne_taillee === 3, "Forge 6 : palier à l'Obsidienne posé, bâtiment à 6 (v3.490.0)");
     // Le passage : arrivée, monde posé, plafonds de la Montagne, Gueule du volcan fermée, voyage retour
     game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true };
     ok(g.WorldTravel.arrive("mountain", 0) === true && g.WorldManager.worldIndex === 4 && game.worldsEverReached[4] === true, "arrivée : la Montagne devient le monde de résidence, notée atteinte");
@@ -18339,6 +18339,93 @@ console.log("\n[311] v3.489.0 — Montagne, lot M-3 : acte II « Ce qui trie »"
     ok(false, "[311] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   } finally {
     SQ.isStepReached = sr; MM.has = mh; SQ.getChoice = gc; g.WorldManager.worldIndex = wiAvant;
+  }
+})();
+
+console.log("\n[312] v3.490.0 — Montagne, lot M-4 : acte III « La Gueule »");
+(function () {
+  var SQ = g.StoryQuestManager, V = g.VeinSystem, CE = g.CombatEngine, D = g.DungeonManager, EM = g.EliteManager;
+  var wiAvant = g.WorldManager.worldIndex, sr = SQ.isStepReached, gc = SQ.getChoice, runAvant = game.dungeonRun;
+  try {
+    var ch = g.STORY_QUESTS.mountain;
+    ok(ch.steps.map(function (st) { return st.id; }).slice(10, 15).join() === "montagne_11,montagne_12,montagne_13,montagne_14,montagne_15", "acte III : cinq étapes, montagne_11 à montagne_15");
+    var s14 = ch.steps[13];
+    ok(s14.choice && s14.choice.key === "ouvrage" && s14.choice.options.map(function (o) { return o.value; }).join() === "donner,garder" && g.STORY_CHOICE_AXES.ouvrage.donner[0] === "donner", "étape 14 : le choix « ouvrage », Donner / Garder, au registre des axes");
+    // La Gueule du volcan : ouverte à montagne_12, pool, élites, campement
+    var d5 = D.getById(5);
+    ok(!d5.locked && d5.requiresStoryStep === "montagne_12" && d5.eliteWaves[8] === "golem_forge" && d5.eliteWaves[12] === "ifrit_trieur" && d5.camp.storyFlag === "gueuleCamp", "Gueule du volcan : ouverte à montagne_12, Golem-forge (8), Ifrit qui trie (12), campement");
+    ok(d5.boss.phases.length === 2 && d5.boss.phases[0].heat === 2 && d5.boss.phases[1].dive && d5.boss.unique.power === "dun_braise" && g.DUNGEON_UNIQUE_POWERS.dun_braise, "le Wyrm : deux phases (chaleur, plongée), unique « Pas de braise »");
+    // Forge 6 : seulement à l'acte III
+    game = freshCombat("knight");
+    game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true, 4: true };
+    SQ.isStepReached = function () { return false; };
+    var avant = g.WorldCaps.getVillageCap("forge");
+    SQ.isStepReached = function (id) { return id === "montagne_11" || sr.call(SQ, id); };
+    ok(avant === 5 && g.WorldCaps.getVillageCap("forge") === 6, "Forge 6 : 5 avant montagne_11, 6 après");
+    var f6 = g.VillageBuildingManager.getLevelCost("forge", 5);
+    ok(f6 && f6.pierre <= 500, "Forge 6 : " + (f6 && f6.pierre) + " Pierre, tient dans l'Entrepôt de la Montagne (500)");
+    var rec = g.WORKSHOPS_CONFIG.fonderie.recipes.filter(function (r) { return r.id === "obsidienne_taillee"; })[0];
+    ok(rec && rec.inputs[0].resourceId === "cendre_vive" && rec.outputs[0].resourceId === "obsidienne_taillee", "l'Obsidienne taillée se fait à la Fonderie, avec de la Cendre vive");
+    // Les veines dans la Gueule
+    g.WorldManager.worldIndex = 4;
+    SQ.isStepReached = function (id) { return id === "montagne_08" || id === "montagne_12" || sr.call(SQ, id); };
+    SQ.getChoice = function () { return null; };
+    game.dungeonRun = { active: true, dungeonId: 5, wave: 8 };
+    ok(V.worldHasVeins(), "une veine à chaque vague de la Gueule");
+    game.dungeonRun.dungeonId = 4;
+    ok(!V.worldHasVeins(), "pas de veine dans l'Ossuaire");
+    game.dungeonRun.dungeonId = 5;
+    // Le Golem-forge : une carapace par taille
+    var gf = EM.build("golem_forge", 1, { noMilestone: true });
+    gf.hp = gf.maxHp = 10000;
+    CE.spawnGroup([gf]);
+    var gfe = g.CombatActors.enemies()[0];
+    V.cut(true);
+    ok(gfe.shell === 800, "le Golem-forge prend une carapace de 8 % de ses PV à la taille (" + gfe.shell + ")");
+    ok(V.absorb(gfe, 500) === 0 && gfe.shell === 300 && V.absorb(gfe, 500) === 200 && gfe.shell === 0, "la carapace mange les coups avant les PV");
+    // L'Ifrit qui trie : il frappe celui qui a taillé, et le fait brûler
+    var ifr = EM.build("ifrit_trieur", 1, { noMilestone: true });
+    ifr.hp = ifr.maxHp = 10000;
+    CE.spawnGroup([ifr]);
+    var ie = g.CombatActors.enemies()[0];
+    V.cut(true); V.onEnemyTurn(ie); V.onEnemyTurn(ie);
+    var t = V.takeSort(ie);
+    ok(t && g.CombatActors.isHero(t.actor) && ie.burns.length === 1 && V.heroBurnRounds() === 2, "l'Ifrit trie : il vise le héros, qui brûle deux rounds");
+    game.heroHp = game.heroMaxHp;
+    V.onEnemyTurn(ie);
+    ok(game.heroHp === game.heroMaxHp - Math.floor(game.heroMaxHp * 0.03) && V.heroBurnRounds() === 1, "à son tour, la brûlure mord (3 % des PV max)");
+    // Le Wyrm de cendres : chaleur +2, puis la plongée
+    var wy = { id: "ancientdragon", name: "Wyrm de cendres", isBoss: true, archetype: "enraged", hp: 100000, maxHp: 100000, stats: g.BOSS_DB.ancientdragon.stats, resists: [], weak: [], goldReward: 10 };
+    CE.spawnGroup([wy]);
+    var we = g.CombatActors.enemies()[0], h0 = V.heatLevel();
+    V.onBossPhase(we, d5.boss.phases[0]);
+    ok(V.heatLevel() === h0 + 2, "60 % : la chaleur monte de deux crans");
+    V.onBossPhase(we, d5.boss.phases[1]);
+    var hp0 = we.hp; CE.dealDamage(5000, false, false, true, we);
+    ok(we.diving && we.hp === hp0, "30 % : sous la lave, il ne prend aucun coup");
+    game.heroHp = game.heroMaxHp;
+    ok(V.onEnemyTurn(we) === true && !we.diving && game.heroHp < game.heroMaxHp, "à son tour, il jaillit et frappe le groupe (héros compris)");
+    // L'ouvrage achevé : un cran de chaleur au départ, une Cendre de plus par taille
+    SQ.getChoice = function (k) { return k === "ouvrage" ? "donner" : null; };
+    CE.spawnGroup([{ id: "lavagolem", name: "Golem", isBoss: false, hp: 10, maxHp: 10, stats: g.ENEMY_DB.lavagolem.stats, resists: [], weak: [], goldReward: 5 }]);
+    ok(V.heatLevel() === 1, "ouvrage achevé : chaque vague commence avec un cran de chaleur");
+    V.cut(true);
+    game.dungeonRun.free = false;
+    var a0 = g.WarehouseManager.getAmount("cendre_vive"), n = V.onVictory();
+    ok(n === 2 && g.WarehouseManager.getAmount("cendre_vive") - a0 === 2, "ouvrage achevé : une taille rapporte deux Cendres vives dans la Gueule");
+    // Le palier de montagne_13 : 7 sur 7, Forge 6, arme à 11
+    game.equipped = {};
+    g.EQUIPMENT_SLOTS.forEach(function (sl, i) { game.equipped[sl] = { slot: sl, rarity: "epic", worldIndex: i < 6 ? 4 : 3 }; });
+    var m = g.storyPalierMontagneCompletMissing(game);
+    ok(g.STORY_PALIER_MONTAGNE_COMPLET.pieces === 7 && g.storyPalierMontagne(game).pieces === 6 && m.length >= 1 && /6 \/ 7/.test(m[0].text), "palier de l'étape 13 : 6 sur 7, « ce qui manque » le dit");
+    ok(g.STORY_REWARDS.montagne_12.equipmentSlot === "weapon" && /reward\.equipmentSlot/.test(fs.readFileSync(path.join(ROOT, "js/systems/story-quest-system.js"), "utf8")), "étape 12 : une arme Épique de la Montagne (equipmentSlot), à la classe du héros");
+    var src = fs.readFileSync(path.join(ROOT, "js/systems/combat-engine.js"), "utf8");
+    ok(/VeinSystem\.blocksHit\(foe\)/.test(src) && /VeinSystem\.absorb\(foe, dmg\)/.test(src) && /VeinSystem\.onEnemyTurn\(e\)\) return/.test(src), "combat-engine.js : plongée, carapace et tour du Wyrm branchés");
+    ok(g.COMBAT_STATES_SCREEN.shell && g.COMBAT_STATES_SCREEN.diving && g.COMBAT_STATES_SCREEN.burning, "trois états à l'écran : Carapace, Sous la lave, Tu brûles");
+  } catch (err) {
+    ok(false, "[312] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  } finally {
+    SQ.isStepReached = sr; SQ.getChoice = gc; g.WorldManager.worldIndex = wiAvant; game.dungeonRun = runAvant; V.state = null;
   }
 })();
 

@@ -168,6 +168,22 @@ var COMBAT_STATES_SCREEN = {
     desc: "Il dit un nom. Au tour suivant, un dormeur se lève, sans or en plus.",
     hint: "Tue-le avant : le réglage « Cible » sur « Le soutien » le vise d'abord."
   },
+  // v3.490.0 (Montagne, acte III) : la carapace du Golem-forge, la plongée du Wyrm, la brûlure de l'Ifrit. Icônes à générer.
+  shell: {
+    famille: "enemy", nom: "Carapace", icon: COMBAT_STATE_ICON + "shell.webp",
+    desc: "Une croûte de Cendre absorbe les coups avant ses PV. Elle grossit à chaque taille de la veine.",
+    hint: "Laisse la veine tant qu'il est debout."
+  },
+  diving: {
+    famille: "alerte", nom: "Sous la lave", icon: COMBAT_STATE_ICON + "diving.webp", mot: "Il va jaillir !",
+    desc: "Sous la lave, on ne peut pas le toucher. À son tour, il ressort et frappe tout le groupe.",
+    hint: "Garde ta Défense pour ce moment."
+  },
+  burning: {
+    famille: "onme", nom: "Tu brûles", icon: COMBAT_STATE_ICON + "burning.webp",
+    desc: "Tu perds une part de tes PV à chaque tour de celui qui t'a mis le feu.",
+    hint: "Le tuer éteint le feu."
+  },
   // v3.489.0 (Montagne, acte II) : le tri du Démon mineur. Icône à générer.
   sorting: {
     famille: "alerte", nom: "Tri", icon: COMBAT_STATE_ICON + "sorting.webp", mot: "Il trie !",

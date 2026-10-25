@@ -718,6 +718,7 @@ function obtainIn(res, qty, depth) {
   // 0 bis. v3.433.0 : la Pierre errante (chantier du jour, Sanctuaire, Petite Aventure des Ruines)
   if (res === "pierre_errante") return obtainPierre(qty);
   if (res === "cire_sepulcre") return obtainCire(qty); // v3.456.0 (lot C-6)
+  if (res === "cendre_vive") return obtainCendre(qty); // v3.490.0 (lot M-4)
   // 1. une zone de production la donne ?
   var bid = Object.keys(g.PRODUCTION_BUILDINGS).filter(function (id) { return g.PRODUCTION_BUILDINGS[id].resourceKey === res; })[0];
   if (bid) {
@@ -784,6 +785,19 @@ function obtainCire(qty) {
   }
   STATS.cireH = (STATS.cireH || 0) + (CLOCK.offset - t0) / 3600e3;
   if (have() < qty) note("cire_sepulcre : " + have() + " / " + qty);
+  return have() >= qty;
+}
+
+/* v3.490.0 (Montagne, lot M-4) : la Cendre vive — la Gueule si elle est ouverte, sinon la Petite Aventure de la Montagne. */
+function obtainCendre(qty) {
+  var g = G, have = function () { return g.WarehouseManager.getAmount("cendre_vive"); };
+  var t0 = CLOCK.offset;
+  for (var k = 0; k < 60 && have() < qty; k++) {
+    if (g.DungeonManager.isUnlocked(5)) { if (COMBATS) healUp(); if (playDungeonOnce(5, false) === null) wait(3600e3, "cendre vive"); continue; }
+    if (!playExpedition("petite_aventure_montagne", null)) wait(3600e3, "cendre vive");
+  }
+  STATS.cendreH = (STATS.cendreH || 0) + (CLOCK.offset - t0) / 3600e3;
+  if (have() < qty) note("cendre_vive : " + have() + " / " + qty);
   return have() >= qty;
 }
 
@@ -1226,11 +1240,13 @@ function ensureGold(n) {
 
 function ensureCost(cost) {
   var g = G, ok = true;
-  Object.keys(cost || {}).forEach(function (k) {
-    if (k === "gold") return;
-    var have = g.WarehouseManager.getAmount(k);
-    if (have < cost[k] && !obtain(k, cost[k])) ok = false;
-  });
+  // v3.490.0 : deux passes — fabriquer l'un peut manger l'autre (l'Obsidienne mange l'Acier de la Forge 6)
+  for (var passe = 0; passe < 3; passe++) {
+    ok = true;
+    var manque = Object.keys(cost || {}).filter(function (k) { return k !== "gold" && g.WarehouseManager.getAmount(k) < cost[k]; });
+    if (!manque.length) break;
+    manque.forEach(function (k) { if (g.WarehouseManager.getAmount(k) < cost[k] && !obtain(k, cost[k])) ok = false; });
+  }
   if (cost && cost.gold && !ensureGold(cost.gold)) ok = false;
   return ok;
 }
@@ -1312,7 +1328,8 @@ function gearRarity(rarity, n, needWeapon, minWorld) {
     var orAvant = g.game.gold;
     /* Un joueur fait d'abord ses sorties du jour dans les donjons qui donnent cette rareté (un run
        complet en garantit une pièce) ; l'échoppe et le farm ne viennent qu'ensuite. */
-    var dj = [4, 3, 2].filter(function (id) { var t = g.DungeonManager.getById(id); return t && g.DungeonManager.isUnlocked(id) && g.DungeonManager.hasRunLeft(id) && ORD.indexOf(t.maxRarity) >= min; })[0];
+    // v3.490.0 : la Gueule du volcan d'abord ; avec minWorld, seuls les donjons de ce monde comptent
+    var dj = [5, 4, 3, 2].filter(function (id) { var t = g.DungeonManager.getById(id); return t && g.DungeonManager.isUnlocked(id) && g.DungeonManager.hasRunLeft(id) && ORD.indexOf(t.maxRarity) >= min && (!minWorld || t.worldPower >= minWorld); })[0];
     if (dj) {
       var vivres = g.ProvisionsManager && g.ProvisionsManager.getRequirement("dungeon", g.DungeonManager.getById(dj));
       if (vivres) obtain(vivres.resourceId, vivres.amount);   // vivres de sortie, comme le dit le refus
@@ -1465,6 +1482,26 @@ var SOLVERS = {
     part("reforge arme " + P.reforge, function () { reforgeTo("weapon", P.reforge); });
   },
   montagne_10: function (g) { playAdventure("aq_montagne_ouvrage"); },
+  // v3.490.0 (Montagne, acte III, lot M-4)
+  montagne_11: function (g) { freeSector("mountain", "antre"); },
+  montagne_12: function (g) { playDungeon(5, false, function () { return !!(g.game.explorationProgression || {}).gueuleCamp; }); },
+  montagne_13: function (g) {
+    var P = g.STORY_PALIER_MONTAGNE_COMPLET;
+    function part(nom, fn) {
+      var t0 = CLOCK.offset, o0 = g.game.gold, farm0 = STATS.grindMs;
+      fn();
+      (STATS.m13 = STATS.m13 || []).push({ part: nom, h: (CLOCK.offset - t0) / 3600e3, farmH: (STATS.grindMs - farm0) / 3600e3, orAvant: Math.floor(o0), orApres: Math.floor(g.game.gold) });
+    }
+    part(P.pieces + " Épiques de la Montagne", function () { gearRarity("epic", P.pieces, true, 4); });
+    part("Forge " + P.forge, function () { upgradeBuilding("forge", P.forge); });
+    part("reforge arme " + P.reforge, function () { reforgeTo("weapon", P.reforge); });
+  },
+  montagne_14: function (g) {
+    playAdventure("aq_montagne_salle_ronde");
+    var val = ARGS.indexOf("--ouvrage-garder") >= 0 ? "garder" : "donner";
+    if (!g.storyMakeChoice("mountain", val)) note("choix refusé (ouvrage)");
+  },
+  montagne_15: function (g) { if (!(g.game.dungeonTierCleared || {})[5]) playDungeon(5, false); },
   // v3.456.0 (Crypte, actes II à IV, lot C-6)
   crypte_06: function (g) { playExpedition("petite_aventure_crypte", function () { return g.storyDesertFlag("cryptPaCompleted"); }); },
   crypte_07: function (g) { for (var i = 0; i < 6 && g.storyCryptSectorsFreed() < 2; i++) freeSector("crypt"); },
@@ -1714,7 +1751,7 @@ if (COMBATS) {
   Object.keys(STATS.goldFarm).forEach(function (k) { var f = STATS.goldFarm[k]; console.log("Farm " + k + " : " + f.lots + " lots, " + Math.round(f.or / Math.max(1, f.lots)) + " or par lot, " + Math.round(f.or / Math.max(0.01, f.h)) + " or par heure (soin compris), " + f.morts + " morts"); });
   if (STATS.r13 && STATS.r13.length) console.log("ruines_13 : " + STATS.r13.map(function (d) { return d.part + " " + d.h.toFixed(0) + " h (farm " + d.farmH.toFixed(0) + " h, or " + d.orAvant + " → " + d.orApres + ")"; }).join(" · ") + " · Pierres errantes cherchées : " + (STATS.pierreH || 0).toFixed(0) + " h · campements : " + (STATS.camps || 0));
   if (STATS.obtainH) console.log("Temps d'obtention (h) : " + Object.keys(STATS.obtainH).filter(function (k) { return STATS.obtainH[k] >= 1; }).map(function (k) { return k + " " + STATS.obtainH[k].toFixed(0); }).join(" · "));
-  ["c09", "c13", "m09"].forEach(function (k) { // v3.456.0 : paliers Rare et Épique de la Crypte ; v3.489.0 : Montagne
+  ["c09", "c13", "m09", "m13"].forEach(function (k) { // v3.456.0 : paliers Rare et Épique de la Crypte ; v3.489.0 : Montagne
     if (STATS[k] && STATS[k].length) console.log((k[0] === "m" ? "montagne_" : "crypte_") + k.slice(1) + " : " + STATS[k].map(function (d) { return d.part + " " + d.h.toFixed(0) + " h (farm " + d.farmH.toFixed(0) + " h, or " + d.orAvant + " → " + d.orApres + ")"; }).join(" · ") + (k === "c13" ? " · Cire de sépulcre cherchée : " + (STATS.cireH || 0).toFixed(0) + " h" : ""));
   });
   if (STATS.r09 && STATS.r09.length) console.log("ruines_09 : " + STATS.r09.map(function (d) { return d.part + " " + d.h.toFixed(0) + " h (farm " + d.farmH.toFixed(0) + " h, or " + d.orAvant + " → " + d.orApres + ")"; }).join(" · "));

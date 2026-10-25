@@ -243,6 +243,41 @@ var ELITE_DB = {
     repeatable: false
   },
 
+  /* v3.490.0 (Montagne, acte III, MT11) — LE GOLEM-FORGE, vague élite 8 de la Gueule du volcan. Chaque taille
+     (héros ou Sarkel) lui ajoute une carapace de 8 % de ses PV max, mangée avant ses PV (VeinSystem). Au banc. */
+  golem_forge: {
+    id: "golem_forge",
+    baseId: "lavagolem",
+    name: "Le Golem-forge",
+    archetype: "armored",
+    forgeShell: 0.08,
+    statMult: { endurance: 3, power: 3, celerity: 0.7 },
+    lore: "Il forge d'autres comme lui. Il s'arrête au milieu du geste quand on entre, et reprend quand on part.",
+    image: "./images/Enemies/elite_golem_forge.webp",
+    questIcon: "./images/Icons/quest_icons/elite/elite_golem_forge.webp",
+    escort: { members: ["dragonling"], hpMult: 0.3, goldMult: 0.3 },
+    phases: null,
+    repeatable: false
+  },
+
+  /* v3.490.0 (Montagne, acte III, MT11) — L'IFRIT QUI TRIE, vague élite 12 de la Gueule. Il trie comme le Démon
+     mineur ; celui qu'il frappe en triant brûle deux rounds (3 % de ses PV max à chaque tour de l'Ifrit). Au banc. */
+  ifrit_trieur: {
+    id: "ifrit_trieur",
+    baseId: "ifrit",
+    name: "L'Ifrit qui trie",
+    archetype: "enraged",
+    sorts: true,
+    burns: { rounds: 2, pct: 0.03 },
+    statMult: { endurance: 2.8, power: 3.2, celerity: 1.1 },
+    lore: "Il ne regarde pas les visages. Il regarde les mains, puis il choisit.",
+    image: "./images/Enemies/elite_ifrit_trieur.webp",
+    questIcon: "./images/Icons/quest_icons/elite/elite_ifrit_trieur.webp",
+    escort: { members: ["minordemon"], hpMult: 0.3, goldMult: 0.3 },
+    phases: null,
+    repeatable: false
+  },
+
   /* v3.489.0 (Montagne, acte II) — deux élites répétables de la carte, sur les fiches de base (décision Seb
      du 25/10 : leur image est celle de la base, exception signalée). Chaque victoire : de la Cendre vive,
      et une chance d'une pièce Épique de la Montagne (winDrop), pour le palier de montagne_09. Au banc. */

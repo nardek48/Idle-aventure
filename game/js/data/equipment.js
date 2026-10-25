@@ -369,7 +369,8 @@ var DUNGEON_UNIQUE_POWERS = {
   dun_mue: { label: "Peau de mue", desc: "Les cumuls de Corrupteur réduisent tes dégâts deux fois moins.", hook: "enemy-archetypes", mult: 0.5 },
   dun_enigme: { label: "Énigme", desc: "Dans chaque combat, le premier télégraphe ennemi échoue (Charge, Soin, Silence ou Bouclier).", hook: "combat-engine" },
   dun_garde: { label: "Pas du Garde", desc: "La rage des ennemis Enragés monte deux fois moins vite.", hook: "enemy-archetypes", mult: 0.5 },
-  dun_sepulcre: { label: "Sépulcre", desc: "Les soins ennemis sont réduits de moitié.", hook: "enemy-archetypes", mult: 0.5 }
+  dun_sepulcre: { label: "Sépulcre", desc: "Les soins ennemis sont réduits de moitié.", hook: "enemy-archetypes", mult: 0.5 },
+  dun_braise: { label: "Pas de braise", desc: "Chaque cran de chaleur porte les ennemis 30 % de moins.", hook: "vein-system", mult: 0.7 } // v3.490.0 : Wyrm de cendres
 };
 Object.keys(DUNGEON_UNIQUE_POWERS).forEach(function (id) {
   var p = DUNGEON_UNIQUE_POWERS[id];

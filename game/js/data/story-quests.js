@@ -135,7 +135,13 @@ var STORY_REWARDS = {
   montagne_07: { gold: 16500, equipmentRarity: "epic", equipmentCount: 1, equipmentFill: true, equipmentFillWorld: 4 },
   montagne_08: { gold: 17000, resources: { cendre_vive: 3 }, equipmentRarity: "epic", equipmentCount: 1, equipmentFill: true, equipmentFillWorld: 4 },
   montagne_09: { gold: 17500 },
-  montagne_10: { gold: 19000, resources: { cendre_vive: 5 } }
+  montagne_10: { gold: 19000, resources: { cendre_vive: 5 } },
+  // v3.490.0 (acte III, provisoire, au banc) : deux Épiques de la Montagne, puis l'Obsidienne pour la Forge 6 et les reforges
+  montagne_11: { gold: 20000, resources: { cendre_vive: 4 }, equipmentRarity: "epic", equipmentCount: 1, equipmentFill: true, equipmentFillWorld: 4 },
+  montagne_12: { gold: 21000, equipmentRarity: "epic", equipmentCount: 1, equipmentSlot: "weapon" }, // l'arme posée sur l'enclume (campagne : 120 à 180 h d'échoppe sans elle)
+  montagne_13: { gold: 22000, resources: { obsidienne_taillee: 2 } },
+  montagne_14: { gold: 23000, resources: { cendre_vive: 3 } },
+  montagne_15: { gold: 25000, resources: { obsidienne_taillee: 4 } }
 };
 
 /* Libellés des onglets débloqués (clé = game.unlockedTabs), pour l'affichage « Débloque : … ». */
@@ -218,7 +224,8 @@ var STORY_CHOICE_AXES = {
   portent: { soi: ["soi", "chaos"], aeswyn: ["aeswyn"] },           // v3.452.0 (Crypte, acte I étape 5) : ce que portent les morts
   ysolt: { garder: ["garder"], donner: ["donner"] },                // v3.455.0 (Crypte, acte III étape 14) : ce qu'elle garde
   bat: { reveiller: ["donner", "soi"], laisser: ["garder", "aeswyn"] }, // v3.456.0 (Crypte, acte IV étape 20) : ce qui bat (CR4)
-  veine: { soi: ["soi", "chaos"], aeswyn: ["aeswyn"] }                // v3.488.0 (Montagne, acte I étape 5) : la première veine
+  veine: { soi: ["soi", "chaos"], aeswyn: ["aeswyn"] },               // v3.488.0 (Montagne, acte I étape 5) : la première veine
+  ouvrage: { donner: ["donner"], garder: ["garder"] }                 // v3.490.0 (Montagne, acte III étape 14) : l'ouvrage inachevé
 };
 
 /* v3.293.0 (règle Seb 18/09/2026) : storyResetLisiere, storyLisiereCrossingProgress et
@@ -4215,6 +4222,196 @@ STORY_QUESTS.mountain = {
       linkTo: { section: "adventure", cardId: "adv_aq_montagne_ouvrage" },
       check: function (game) { return storyAdvDone(game, "aq_montagne_ouvrage"); },
       progress: function (game) { return "Rencontres " + storyAdvProgress(game, "aq_montagne_ouvrage", "rencontres_ouvrage", 4) + "/4"; }
+    },
+    /* ---------- Acte III — La Gueule (document « Montagne — Acte III » v1.0, validé par délégation le 25/10/2026) ---------- */
+    /* Étape 11 (§3) : l'entrée de l'Antre sur la carte ; la Forge 6 s'ouvre (WORLD_CAPS.forgeActStep), Brannoc taille la Cendre. */
+    {
+      id: "montagne_11",
+      title: "La bouche",
+      act: "Acte III — La Gueule",
+      narrative: {
+        objective: "La pente derrière la salle ronde ne descend pas : elle tourne. Elle ressort à l'air libre, tout en haut de la carte d'Edda, devant une bouche dans la montagne.",
+        completion: "À Aeswyn, Brannoc a posé la Cendre vive sur l'enclume. Il ne la chauffe plus. Il la frappe au burin, d'un coup sec. Elle se fend net, noire et lisse, avec un fil bleu dedans.",
+        dialogue: [
+          { who: "Edda", text: "Elle est sur ma carte depuis le début. Je croyais que c'était une tache." },
+          { who: "Sarkel", text: "C'est par là que la montagne respire." },
+          { who: "Maddoc", text: "Et nous, on respire comment, là-dedans ?" },
+          { who: "Sarkel", text: "Vite." }
+        ],
+        completionDialogue: [
+          { who: "Brannoc", text: "Elle ne fond pas. Elle se taille. Comme la pierre." },
+          { who: "Brannoc", text: "Apporte-m'en. Je te fais une forge qui tient au feu." }
+        ]
+      },
+      objectiveLabel: "Libérer « L'entrée de l'Antre » sur la carte de la Montagne",
+      unlockTabs: [],
+      reward: STORY_REWARDS.montagne_11,
+      linkTo: { section: "map", cardId: "livingmap_mountain" },
+      check: function () { return storyMountainSectorFreed("antre"); },
+      progress: function () { return "Entrée de l'Antre " + (storyMountainSectorFreed("antre") ? "1/1" : "0/1"); }
+    },
+    /* Étape 12 (§4) : la Gueule du volcan (donjon 5) s'ouvre ; le campement après le Golem-forge (vague 8). */
+    {
+      id: "montagne_12",
+      title: "La Gueule du volcan",
+      act: "Acte III — La Gueule",
+      narrative: {
+        objective: "Derrière la bouche, un couloir de basalte descend en spirale. La lumière vient d'en bas. Les murs sont tièdes, puis chauds, puis on ne les touche plus.",
+        completion: "Le Golem-forge s'arrête au milieu d'un geste. Derrière lui, une enclume, un soufflet, une rigole de lave tiède. Tu t'assois sur l'enclume. Elle est à la bonne hauteur.",
+        dialogue: [
+          { who: "Wenna", text: "On va jusqu'en bas ?" },
+          { who: "Sarkel", text: "À mi-chemin, il y a une forge. Pas la nôtre. On pourra s'y poser." },
+          { who: "Edda", text: "Tu es déjà descendu ?" },
+          { who: "Sarkel", text: "Jusqu'à la forge. Pas plus. Quelqu'un y travaillait." }
+        ],
+        completionDialogue: [
+          { who: "Maddoc", text: "Il forgeait quoi ?" },
+          { who: "Sarkel", text: "D'autres comme lui." }
+        ]
+      },
+      objectiveLabel: "Atteindre le campement de la Gueule du volcan (vaincre le Golem-forge dans un même run)",
+      unlockTabs: [],
+      reward: STORY_REWARDS.montagne_12,
+      linkTo: { tab: "dungeon" },
+      tutorial: {
+        tab: "dungeon",
+        icon: "images/Dungeons/Icone_base/palier5.webp",
+        title: "La Gueule du volcan",
+        points: [
+          { icon: "images/Icons/camp/campfire.webp", text: "La Gueule se joue en deux étapes, comme l'Ossuaire. Entre les deux, le campement de la forge." },
+          { icon: "images/Icons/combat_status/shell.webp", text: "Une veine affleure à chaque vague. La chaleur repart de zéro à la vague suivante. Le Golem-forge se fait une carapace à chaque taille : laisse la veine tant qu'il est debout." },
+          { icon: "images/Icons/combat_status/burning.webp", text: "L'Ifrit qui trie frappe celui qui a taillé, et le fait brûler deux rounds. Le tuer éteint le feu." }
+        ]
+      },
+      check: function (game) { return !!(game && game.explorationProgression && game.explorationProgression.gueuleCamp); },
+      progress: function (game) { return "Campement " + ((game && game.explorationProgression && game.explorationProgression.gueuleCamp) ? "1/1" : "0/1"); }
+    },
+    /* Étape 13 (§5) : l'Épique complet (MT7) — 7 sur 7 de la Montagne, Forge 6, arme reforgée à 11. */
+    {
+      id: "montagne_13",
+      title: "Ce qui ne fond pas",
+      act: "Acte III — La Gueule",
+      narrative: {
+        objective: "Brannoc a monté la Forge 6 contre la vieille. Le foyer est en Obsidienne taillée. Le feu y brûle bleu.",
+        completion: "Sept pièces qui tiennent au feu. Tu tends le bras au-dessus de la rigole de lave. La manche ne fume pas.",
+        dialogue: [
+          { who: "Brannoc", text: "Celle-là, la Cendre ne la mange pas." },
+          { who: "Maddoc", text: "Et nous ?" },
+          { who: "Brannoc", text: "Vous, il faut tout refaire. Tout." }
+        ],
+        completionDialogue: [
+          { who: "Sarkel", text: "En bas, ça se vendrait cher." },
+          { who: "Edda", text: "Ici, ça sert." }
+        ]
+      },
+      objectiveLabel: "7 emplacements avec un Épique de la Montagne, Forge 6, arme reforgée à 11",
+      unlockTabs: [],
+      reward: STORY_REWARDS.montagne_13,
+      linkTo: { tab: "equip" },
+      tutorial: {
+        tab: "equip",
+        icon: "images/Icons/resources/obsidienne_taillee_icon.webp",
+        title: "L'Épique complet",
+        points: [
+          { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Pour descendre au bout de la Gueule, tes sept emplacements doivent porter une pièce Épique de la Montagne." },
+          { icon: "images/Icons/resources/obsidienne_taillee_icon.webp", text: "L'Obsidienne taillée se fait à la Fonderie, avec de la Cendre vive. Elle construit la Forge 6." },
+          { icon: "images/Icons/workshops/smithing_station.webp", text: "La Forge 6 ouvre les reforges 11 et 12. Elles demandent aussi de l'Obsidienne taillée." }
+        ]
+      },
+      check: function (game) {
+        var p = storyPalierMontagne(game), P = STORY_PALIER_MONTAGNE_COMPLET;
+        return p.pieces >= P.pieces && p.forge >= P.forge && p.arme >= P.reforge;
+      },
+      progress: function (game) {
+        var p = storyPalierMontagne(game), P = STORY_PALIER_MONTAGNE_COMPLET;
+        return "Épiques de la Montagne " + Math.min(p.pieces, P.pieces) + "/" + P.pieces + " · Forge " + Math.min(p.forge, P.forge) + "/" + P.forge
+          + " · Reforge de l'arme " + Math.min(p.arme, P.reforge) + "/" + P.reforge;
+      },
+      missing: function (game) { return storyPalierMontagneCompletMissing(game); }
+    },
+    /* Étape 14 (§6) : la salle ronde (3 rencontres), puis le deuxième choix pesant (clé « ouvrage », Garder / Donner).
+       Donner -> la Gueule plus chaude et plus riche (VeinSystem.mawFinished). Garder -> sa matière, tout de suite. */
+    {
+      id: "montagne_14",
+      title: "L'ouvrage inachevé",
+      act: "Acte III — La Gueule",
+      narrative: {
+        objective: "Dans la salle ronde, le golem inachevé a bougé. Pas beaucoup. Un doigt de plus est sorti de la paroi. Des façonnés montent de la Gueule, l'un après l'autre. Ils portent de la Cendre.",
+        get completion() { return STORY_OUVRAGE_TEXTS[storyOuvrageBranch()].completion; },
+        dialogue: [
+          { who: "Wenna", text: "Ils viennent le finir." },
+          { who: "Sarkel", text: "Ou ils viennent voir si on le finit." },
+          { who: "Edda", text: "Ça change quoi ?" },
+          { who: "Sarkel", text: "Tout." }
+        ],
+        get completionDialogue() { return STORY_OUVRAGE_TEXTS[storyOuvrageBranch()].dialogue; }
+      },
+      objectiveLabel: "Terminer « L'ouvrage inachevé » (3 rencontres), puis décider",
+      unlockTabs: [],
+      reward: STORY_REWARDS.montagne_14,
+      linkTo: { section: "adventure", cardId: "adv_aq_montagne_salle_ronde" },
+      choice: {
+        key: "ouvrage", onStoryCard: true,
+        buttonLabel: "Décider",
+        title: "L'ouvrage inachevé",
+        text: "Les façonnés sont tombés. Devant le golem, la Cendre qu'ils portaient fait un tas, encore chaude. Les veines de la salle battent toutes ensemble, et le golem attend. Il a un bras, une jambe, pas de tête.",
+        options: [
+          { value: "donner", label: "L'achever", desc: "Tu poses la Cendre dans la paroi. La Gueule devient plus chaude et plus riche : un cran de chaleur à chaque vague, une Cendre vive de plus par taille." },
+          { value: "garder", label: "Le défaire", desc: "Tu reprends sa matière : 4 Obsidiennes taillées et 10 Cendres vives, tout de suite. La Gueule ne change pas." }
+        ],
+        ready: function () { return storyAdvDone(game, "aq_montagne_salle_ronde"); },
+        apply: function (value) {
+          if (value === "garder") {
+            if (window.WarehouseManager) {
+              WarehouseManager.addResource("obsidienne_taillee", STORY_OUVRAGE_MATIERE.obsidienne_taillee, true);
+              WarehouseManager.addResource("cendre_vive", STORY_OUVRAGE_MATIERE.cendre_vive, true);
+            }
+            if (typeof addLog === "function") addLog(_t("Le golem défait : +{o} Obsidiennes taillées, +{c} Cendres vives.", { o: STORY_OUVRAGE_MATIERE.obsidienne_taillee, c: STORY_OUVRAGE_MATIERE.cendre_vive }), "event");
+          } else if (typeof addLog === "function") addLog(_t("L'ouvrage achevé : dans la Gueule, chaque vague commence avec un cran de chaleur, et chaque taille rapporte une Cendre vive de plus."), "event");
+        }
+      },
+      check: function () { return !!(window.StoryQuestManager && StoryQuestManager.getChoice("ouvrage")); },
+      progress: function (game) {
+        var chosen = !!(window.StoryQuestManager && StoryQuestManager.getChoice("ouvrage"));
+        return "Rencontres " + storyAdvProgress(game, "aq_montagne_salle_ronde", "rencontres_salle_ronde", 3) + "/3 · Choix " + (chosen ? "1/1" : "0/1");
+      }
+    },
+    /* Étape 15 (§7) : le Wyrm de cendres, au bout de la Gueule (donjon 5 terminé). */
+    {
+      id: "montagne_15",
+      title: "Le Wyrm de cendres",
+      act: "Acte III — La Gueule",
+      narrative: {
+        objective: "Au fond de la Gueule, un lac de lave. Il bouge contre le courant. Quelque chose de long nage dessous, en rond.",
+        completion: "Le Wyrm s'enfonce dans la lave et ne remonte pas. Le lac se calme. De l'autre côté, une paroi, et dans la paroi, une coupe. Plus grande que celle du Replat. Au-dessus, très haut, quelque chose respire. Pas le volcan.",
+        dialogue: [
+          { who: "Maddoc", text: "C'est lui, le gardien ?" },
+          { who: "Sarkel", text: "Il ne garde rien. Il trie ce qui tombe dans le lac." },
+          { who: "Wenna", text: "Et nous, on va tomber dans le lac ?" },
+          { who: "Sarkel", text: "Pas tous." }
+        ],
+        completionDialogue: [
+          { who: "Edda", text: "C'est la même main." },
+          { who: "Sarkel", text: "Non. La même, mais plus tard." },
+          { who: null, text: "Au-dessus, la respiration s'arrête. Elle a entendu." }
+        ]
+      },
+      objectiveLabel: "Vaincre le Wyrm de cendres, au bout de la Gueule du volcan",
+      unlockTabs: [],
+      reward: STORY_REWARDS.montagne_15,
+      linkTo: { tab: "dungeon" },
+      tutorial: {
+        tab: "dungeon",
+        icon: "images/Boss/wyrm_cendres.webp",
+        title: "Le Wyrm de cendres",
+        points: [
+          { icon: "images/Icons/combat_status/rage.webp", text: "Le Wyrm est Enragé : il frappe plus fort à mesure qu'il perd ses PV." },
+          { icon: "images/Icons/combat_status/burning.webp", text: "À 60 % de ses PV, il secoue le lac : la chaleur monte de deux crans d'un coup." },
+          { icon: "images/Icons/combat_status/diving.webp", text: "À 30 %, il plonge un round sous la lave : on ne peut pas le toucher. Il ressort en frappant tout le groupe. Garde ta Défense pour ce moment." }
+        ]
+      },
+      check: function (game) { return !!((game.dungeonTierCleared || {})[5]); },
+      progress: function (game) { return "Wyrm vaincu " + ((game.dungeonTierCleared || {})[5] ? "1/1" : "0/1"); }
     }
   ]
 };
@@ -4226,6 +4423,40 @@ function storyMountainSectorsFreed() {
   return map.sectors.filter(function (d) { var st = lm.getState("mountain", d.id); return !!(st && st.liberatedCount > 0); }).length;
 }
 window.storyMountainSectorsFreed = storyMountainSectorsFreed;
+
+/* v3.490.0 (Montagne, acte III) — secteur de la carte libéré une fois (montagne_11), comme à la Crypte. */
+function storyMountainSectorFreed(id) {
+  var lm = window.LivingMapManager, st = lm && lm.getState("mountain", id);
+  return !!(st && st.liberatedCount > 0);
+}
+/* Palier de montagne_13 (MT7) : l'Épique complet, mêmes pièces comptées qu'à montagne_09. Au banc : repli 6 sur 7. */
+var STORY_PALIER_MONTAGNE_COMPLET = { pieces: 7, forge: 6, reforge: 11 };
+function storyPalierMontagneCompletMissing(game) {
+  var p = storyPalierMontagne(game), P = STORY_PALIER_MONTAGNE_COMPLET, out = [];
+  if (p.pieces < P.pieces) out.push({ text: _t("Pièces Épiques de la Montagne : {a} / {b}", { a: p.pieces, b: P.pieces }), where: _t("La Gueule du volcan, les élites de la carte de la Montagne et l'échoppe de la Halle marchande.") });
+  return out.concat(storyPalierManques(game, "epic", { pieces: 0, forge: P.forge, reforge: P.reforge }, function () { return null; }).filter(Boolean));
+}
+/* montagne_14 : le choix « ouvrage ». Garder (le défaire) verse sa matière tout de suite. */
+var STORY_OUVRAGE_MATIERE = { obsidienne_taillee: 4, cendre_vive: 10 };
+var STORY_OUVRAGE_TEXTS = {
+  donner: {
+    completion: "Le golem tourne la tête qu'il n'a pas. Puis il rentre dans la paroi, lentement, et la roche se referme sur lui. En bas, la Gueule gronde.",
+    dialogue: [{ who: "Sarkel", text: "Il est fini. Il est à elle, maintenant." }]
+  },
+  garder: {
+    completion: "La pioche de Sarkel entre dans l'épaule du golem comme dans du pain. Il tombe en morceaux noirs et lisses. Les veines de la salle s'éteignent une à une.",
+    dialogue: [{ who: "Sarkel", text: "Je l'ai tenue droite, cette fois." }]
+  }
+};
+function storyOuvrageBranch() {
+  return (window.StoryQuestManager && StoryQuestManager.getChoice("ouvrage") === "garder") ? "garder" : "donner";
+}
+window.storyMountainSectorFreed = storyMountainSectorFreed;
+window.STORY_PALIER_MONTAGNE_COMPLET = STORY_PALIER_MONTAGNE_COMPLET;
+window.storyPalierMontagneCompletMissing = storyPalierMontagneCompletMissing;
+window.STORY_OUVRAGE_MATIERE = STORY_OUVRAGE_MATIERE;
+window.STORY_OUVRAGE_TEXTS = STORY_OUVRAGE_TEXTS;
+window.storyOuvrageBranch = storyOuvrageBranch;
 window.STORY_PALIER_MONTAGNE = STORY_PALIER_MONTAGNE;
 window.storyPalierMontagne = storyPalierMontagne;
 window.storyPalierMontagneMissing = storyPalierMontagneMissing;
