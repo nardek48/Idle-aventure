@@ -10706,7 +10706,7 @@ console.log("\n[133] v3.338.0 — Hauts faits : catalogue, rattrapage, paliers, 
   var byCat = function (c) { return DB.filter(function (a) { return a.category === c; }); };
 
   // --- Catalogue (H1, H2, H5) ---
-  ok(DB.length === 64, "catalogue : 64 hauts faits, Ruines et Crypte compris (v3.456.6) (" + DB.length + ")");
+  ok(DB.length === 74, "catalogue : 74 hauts faits, Ruines, Crypte et Montagne compris (v3.492.0) (" + DB.length + ")");
   ok(byCat("forest").length === 10 && byCat("forest").filter(function (a) { return a.hidden; }).length === 2, "Forêt : 8 + 2 cachés");
   ok(byCat("desert").length === 11 && byCat("desert").filter(function (a) { return a.hidden; }).length === 3, "Désert : 8 + 3 cachés (v3.362.0 : « Pas une goutte »)");
   ok(["grimoire", "village", "companions"].every(function (c) { return byCat(c).length === 5; }) && byCat("collection").length === 8, "transversales : 5, 5, 5 et Collection 8");
@@ -18326,8 +18326,8 @@ console.log("\n[311] v3.489.0 — Montagne, lot M-3 : acte II « Ce qui trie »"
     ok(/VeinSystem\.takeSort\(e\)/.test(src) && /VeinSystem\.onEnemyTurn\(e\)/.test(src), "combat-engine.js : le tri est branché sur la frappe ennemie");
     // Le palier : seuls les Épiques de la Montagne comptent
     game.equipped = {};
-    g.EQUIPMENT_SLOTS.forEach(function (sl, i) { game.equipped[sl] = { slot: sl, rarity: "epic", worldIndex: i < 4 ? 4 : 3 }; });
-    ok(g.storyPalierMontagne(game).pieces === 4 && g.STORY_PALIER_MONTAGNE.pieces === 5, "palier : 4 Épiques de la Montagne sur 7 portés, il en faut 5 (ceux d'en bas ne comptent pas)");
+    g.EQUIPMENT_SLOTS.forEach(function (sl, i) { game.equipped[sl] = { slot: sl, rarity: "epic", worldIndex: i < 3 ? 4 : 3 }; });
+    ok(g.storyPalierMontagne(game).pieces === 3 && g.STORY_PALIER_MONTAGNE.pieces === 4, "palier : 3 Épiques de la Montagne sur 7 portés, il en faut 4 (ceux d'en bas ne comptent pas ; v3.492.0 : repli 5 -> 4)");
     // La Mémoire 17 à 19
     ok(g.MEMORY_LEVELS.filter(function (l) { return l.level >= 17 && l.level <= 19; }).length === 3 && g.MEMORY_LEVEL_COSTS.length >= 19, "Mémoire 17 à 19 écrite, coûts dans la courbe");
     MM.has = function (id) { return id === "peau_basalte" || id === "taille_franche" || id === "pioche_sure"; };
@@ -18486,6 +18486,34 @@ console.log("\n[313] v3.491.0 — Montagne, lot M-5 : acte IV « Le droit de pre
     ok(false, "[313] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   } finally {
     SQ.isStepReached = sr; SQ.getChoice = gc; MM.has = mh; g.WorldManager.worldIndex = wiAvant; V.state = null;
+  }
+})();
+
+console.log("\n[314] v3.492.0 — Montagne, lot M-6 : hauts faits");
+(function () {
+  var V = g.VeinSystem, CE = g.CombatEngine, AM = g.AchievementManager, wiAvant = g.WorldManager.worldIndex;
+  try {
+    var mt = g.ACHIEVEMENTS_DB.filter(function (a) { return a.category === "mountain"; });
+    var cat = g.ACHIEVEMENT_CATEGORIES.filter(function (c) { return c.id === "mountain"; })[0];
+    ok(mt.length === 10 && cat && cat.world === 4 && cat.tiers.join() === "3,6,8" && mt.filter(function (a) { return a.hidden; }).length === 2, "Montagne : 10 hauts faits (2 cachés), paliers 3 / 6 / 8");
+    game = freshCombat("knight");
+    g.WorldManager.worldIndex = 4;
+    var c0 = g.achCounter("veinsLeft");
+    CE.spawnGroup([{ id: "lavagolem", name: "Golem", isBoss: false, hp: 10, maxHp: 10, stats: g.ENEMY_DB.lavagolem.stats, resists: [], weak: [], goldReward: 5 }]);
+    V.onVictory({ id: "lavagolem" });
+    ok(g.achCounter("veinsLeft") === c0 + 1, "combat de la Montagne gagné sans tailler : « Ce qu'on laisse » avance");
+    game.adventureQuestRun = { active: true, questId: "aq_montagne_dragon" };
+    CE.spawnGroup([{ id: "ancientdragon", name: "Dragon ancien", isBoss: true, hp: 10, maxHp: 10, stats: g.BOSS_DB.ancientdragon.stats, resists: [], weak: [], goldReward: 5 }]);
+    V.onVictory({ id: "ancientdragon", isBoss: true });
+    ok(g.achCounter("dragonNoCut") === 1, "le Dragon ancien vaincu sans taille : « Les mains vides »");
+    var lms = fs.readFileSync(path.join(ROOT, "js/systems/living-map-system.js"), "utf8");
+    ok(/var trous = slots\.filter/.test(lms) && /trous\.length \? trous : slots/.test(lms), "élites de la carte : la pièce lâchée va d'abord à un emplacement sans Épique du monde");
+    AM.onRunSuccess("mountain");
+    ok(g.achCounter("runMountain") >= 1, "Petite Aventure de la Montagne menée au bout : compteur runMountain");
+  } catch (err) {
+    ok(false, "[314] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  } finally {
+    g.WorldManager.worldIndex = wiAvant; V.state = null; game.adventureQuestRun = null;
   }
 })();
 

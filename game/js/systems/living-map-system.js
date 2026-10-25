@@ -588,7 +588,11 @@ var LivingMapManager = {
       var wd = eliteDef && eliteDef.winDrop;
       if (wd && this._rand() * 100 < Number(wd.chancePct || 0) && typeof generateEquipmentItem === "function" && typeof addLootToInventory === "function") {
         var slots = window.EQUIPMENT_SLOTS || [], wi = (window.WorldManager ? Number(WorldManager.worldIndex || 0) : 0);
-        var it = generateEquipmentItem(slots[Math.floor(this._rand() * slots.length)], wd.rarity, wi);
+        // v3.492.0 (campagne : 56 h d'échoppe au palier de montagne_09) : la pièce va d'abord à un emplacement qui n'en a pas encore
+        var ord = window.RARITY_ORDER || [], eq = game.equipped || {}, need = ord.indexOf(wd.rarity);
+        var trous = slots.filter(function (sl) { return sl !== "weapon" && !(eq[sl] && ord.indexOf(eq[sl].rarity) >= need && Number(eq[sl].worldIndex || 0) >= wi); });
+        var pool = trous.length ? trous : slots;
+        var it = generateEquipmentItem(pool[Math.floor(this._rand() * pool.length)], wd.rarity, wi);
         if (it && addLootToInventory(it)) { report.drop = it.name; report.message += " " + _t("Objet trouvé : {x}.", { x: _td(it.name) }); }
       }
     }

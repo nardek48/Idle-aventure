@@ -3795,7 +3795,8 @@ function storyVeineBranch() {
 
 /* v3.489.0 (montagne_09) — palier Épique de la Montagne (décision Seb du 25/10, option A) : seuls les
    Épiques de monde 4 ou plus comptent ; l'arme reforgée à 10 (Forge 5). Au banc : repli 4 sur 7. */
-var STORY_PALIER_MONTAGNE = { pieces: 5, reforge: 10, worldIndex: 4 };
+// v3.492.0 (lot M-6, repli prévu par le doc) : 5 -> 4 pièces ; campagne à 5 : 10 / 34 / 36 h (Ch. / Rô. / Ma.), presque tout à l'échoppe
+var STORY_PALIER_MONTAGNE = { pieces: 4, reforge: 10, worldIndex: 4 };
 function storyPalierMontagne(game) {
   var p = storyPalier(game, "epic"), portes = (game && game.equipped) || {}, order = window.RARITY_ORDER || [], rang = order.indexOf("epic");
   p.pieces = (window.EQUIPMENT_SLOTS || []).filter(function (slot) {
@@ -4178,7 +4179,7 @@ STORY_QUESTS.mountain = {
           { who: "Brannoc", text: "Encore un peu, et je saurai quoi en faire." }
         ]
       },
-      objectiveLabel: "5 emplacements avec un Épique de la Montagne, arme reforgée à 10",
+      objectiveLabel: "4 emplacements avec un Épique de la Montagne, arme reforgée à 10",
       unlockTabs: [],
       reward: STORY_REWARDS.montagne_09,
       linkTo: { tab: "equip" },
@@ -4187,8 +4188,8 @@ STORY_QUESTS.mountain = {
         icon: "images/Icons/equipment_slots/slot_weapon.webp",
         title: "Le palier Épique",
         points: [
-          { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Pour aller plus loin dans la Montagne, cinq de tes sept emplacements doivent porter une pièce Épique de la Montagne. Celles d'en bas ne comptent pas." },
-          { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "Les étapes de l'acte t'en ont donné trois. Les autres : l'échoppe de la Halle marchande et les élites de la carte de la Montagne." },
+          { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Pour aller plus loin dans la Montagne, quatre de tes sept emplacements doivent porter une pièce Épique de la Montagne. Celles d'en bas ne comptent pas." },
+          { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "Les étapes de l'acte t'en ont donné trois. La quatrième : l'échoppe de la Halle marchande, ou les élites de la carte de la Montagne." },
           { icon: "images/Icons/workshops/smithing_station.webp", text: "L'arme se reforge jusqu'au niveau 10 à la Forge 5." }
         ]
       },

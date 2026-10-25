@@ -260,6 +260,10 @@ var VeinSystem = {
   onVictory: function (enemy) {
     var st = this.state;
     this.state = null;
+    if (st && !st.cuts && window.AchievementManager) { // v3.492.0 : hauts faits de la Montagne
+      AchievementManager.bump("veinsLeft", 1);
+      if (enemy && enemy.isBoss && enemy.id === "ancientdragon" && game.adventureQuestRun && game.adventureQuestRun.active) AchievementManager.flag("dragonNoCut");
+    }
     if (st && st.cuts && enemy && (enemy.isBoss || enemy.isElite) && this._mem("ce_qui_a_ete_pris") && window.CombatEngine) {
       var bonus = Math.floor(Number(enemy.goldReward || 0) * Number(this._memV("ce_qui_a_ete_pris_gold", 0.25)));
       if (bonus > 0) { CombatEngine.grantGold(bonus); if (typeof addLog === "function") addLog("🪨 " + _t("Ce qui a été pris : +{n} or.", { n: formatNumber(bonus) }), "event"); }

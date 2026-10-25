@@ -298,6 +298,7 @@ var AchievementManager = {
     else if (idx === 1) this.bump("runDesert");
     else if (idx === 2) this.bump("runRuins"); // v3.456.6
     else if (idx === 3) this.bump("runCrypt");
+    else if (idx === 4) this.bump("runMountain"); // v3.492.0
   },
 
   /* patrol-system.js */
