@@ -128,3 +128,12 @@
   border-radius: 50%;
   object-fit: cover;
 }
+
+/* v3.492.13 (L2, atelier pastille-monde, choix Seb) : pastille du monde d'origine d'un objet, coin haut gauche
+   (le badge de comparaison tient le coin opposé). Cerclée d'or : l'objet a l'affinité de monde (+10 %). */
+.has-wpip { position: relative; }
+.wpip { position: absolute; z-index: 2; top: 2%; left: 2%; width: clamp(18px, 30%, 26px); aspect-ratio: 1; border-radius: 50%;
+  background: var(--c-brown-950-3, #1d140b); border: 1.5px solid var(--c-bronze-500, #b98a4a); box-shadow: 0 1px 3px rgba(0, 0, 0, .55); pointer-events: none; }
+span.wpip > img.wpip-img { position: absolute; inset: 1px; width: calc(100% - 2px); height: calc(100% - 2px); object-fit: contain; }
+.wpip.is-here { border-color: #f0c64a; box-shadow: 0 0 0 2px rgba(240, 198, 74, .35), 0 0 8px rgba(240, 198, 74, .8); }
+.wh-tile .wpip { top: 4px; left: 4px; width: 24px; }

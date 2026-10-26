@@ -51,6 +51,15 @@ function refreshTabBarVisibility() {
 window.isTabUnlocked = isTabUnlocked;
 window.refreshTabBarVisibility = refreshTabBarVisibility;
 
+/* v3.492.13 (L2, atelier pastille-monde, choix Seb) : pastille du monde d'origine, coin haut gauche ;
+   cerclée d'or quand l'objet a l'affinité de monde (son monde est celui où se tient le héros). */
+function buildItemWorldPipHTML(item) {
+  var w = item && window.WORLDS ? WORLDS[typeof item.worldIndex === "number" ? item.worldIndex : 0] : null;
+  if (!w) return "";
+  var ici = typeof getItemAffinityMult === "function" && getItemAffinityMult(item) > 1;
+  return '<span class="wpip' + (ici ? ' is-here' : '') + '" title="' + esc(_td(w.name)) + '"><img class="wpip-img" src="images/Icons/codex/world_' + esc(w.id) + '.webp" alt=""></span>';
+}
+
 function buildEquipmentIconHTML(item, cssClass) {
   var cls = cssClass || "";
   if (!item) return '<div class="' + cls + '">' + renderIcon("equipment", "") + '</div>';
@@ -59,14 +68,17 @@ function buildEquipmentIconHTML(item, cssClass) {
   var fallbackEmoji = renderIcon("equipment", item.icon);
   var rarityClass = item.rarity ? (" rarity-" + item.rarity) : "";
 
-  if (!path) return '<div class="' + cls + rarityClass + '">' + fallbackEmoji + '</div>';
+  if (!path) return '<div class="' + cls + rarityClass + ' has-wpip">' + fallbackEmoji + buildItemWorldPipHTML(item) + '</div>';
 
-  return '<div class="' + cls + rarityClass + ' has-icon-img">'
+  return '<div class="' + cls + rarityClass + ' has-icon-img has-wpip">'
     + '<img src="' + esc(path) + '" alt="" '
     + 'onerror="this.parentElement.classList.remove(\'has-icon-img\'); this.remove();">'
     + '<span class="icon-img-fallback">' + fallbackEmoji + '</span>'
+    + buildItemWorldPipHTML(item)
     + '</div>';
 }
+
+window.buildItemWorldPipHTML = buildItemWorldPipHTML;
 
 function getHeroByGameId(heroId) {
   if (typeof HEROES_DB === "undefined") return null;

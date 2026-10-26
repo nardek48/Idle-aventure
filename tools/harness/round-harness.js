@@ -18586,6 +18586,30 @@ console.log("\n[316] v3.492.12 — affinité de monde (P1) : +10 % aux objets de
   }
 })();
 
+console.log("\n[317] v3.492.13 — pastille du monde sur l'icône des objets (L2, variante D)");
+(function () {
+  var wiAvant = g.WorldManager.worldIndex;
+  try {
+    var m4 = { uid: "p4", slot: "helmet", name: "T", icon: "casque", rarity: "epic", stat: "critMult", value: 0.6, worldIndex: 4, affixes: [] };
+    var m3 = Object.assign({}, m4, { uid: "p3", worldIndex: 3 });
+    g.WorldManager.worldIndex = 4;
+    var h4 = g.buildEquipmentIconHTML(m4, "x"), h3 = g.buildEquipmentIconHTML(m3, "x");
+    ok(/codex\/world_mountain\.webp/.test(h4) && /class="wpip is-here"/.test(h4) && /codex\/world_crypt\.webp/.test(h3) && /class="wpip"/.test(h3),
+      "icône d'objet : pastille du monde d'origine ; cerclée d'or (is-here) pour la pièce qui a l'affinité");
+    g.WorldManager.worldIndex = 3;
+    ok(!/is-here/.test(g.buildEquipmentIconHTML(m4, "x")), "hors de son monde : la pastille reste, sans le cercle d'or");
+    ok(/world_forest/.test(g.buildItemWorldPipHTML({ slot: "ring" })) && g.buildEquipmentIconHTML(null, "x").indexOf("wpip") === -1,
+      "objet sans monde (ancienne sauvegarde) : Forêt ; emplacement vide : pas de pastille");
+    var hs = fs.readFileSync(path.join(ROOT, "js/ui/heros-screens-view.js"), "utf8"), css = fs.readFileSync(path.join(ROOT, "css/00-rframe.css"), "utf8");
+    ok(/cmpBadge\(cmpState\(it\)\) \+ buildItemWorldPipHTML\(it\)/.test(hs) && /\.wpip\.is-here/.test(css), "tuiles du Sac : la pastille est posée ; le style du cercle d'or existe");
+    ok(/\+126 dégâts par coup/.test(g.formatEquipmentStatValue("tapDmg", 125.6)), "dégâts plats affichés en entier (affinité comprise)");
+  } catch (err) {
+    ok(false, "[317] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  } finally {
+    g.WorldManager.worldIndex = wiAvant;
+  }
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

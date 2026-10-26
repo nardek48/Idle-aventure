@@ -54,12 +54,12 @@ function formatEquipmentStat(item) {
 
 /* v3.225.0 : texte d'une stat quelle que soit sa source (stat de base ou affixe). */
 function formatEquipmentStatValue(stat, value) {
-  if (stat === "tapDmg") return _t("+{n} dégâts par coup", { n: formatNumber(value) });
+  if (stat === "tapDmg") return _t("+{n} dégâts par coup", { n: formatNumber(Math.round(value)) }); // v3.492.13 : entier, affinité comprise
   if (stat === "tapMult") return _t("+{n}% dégâts", { n: Math.round(value * 100) });
   if (stat === "goldMult") return _t("+{n}% or", { n: Math.round(value * 100) });
   if (stat === "critChance") return _t("+{n}% critique", { n: formatNumber(value) });
   if (stat === "critMult") return _t("+{n}x dégâts crit", { n: formatNumber(value) });
-  if (stat === "autoDps") return _t("+{n} célérité", { n: formatNumber(value) });
+  if (stat === "autoDps") return _t("+{n} célérité", { n: formatNumber(Math.round(value)) });
   if (stat === "defense") return _t("+{n}% défense", { n: Math.round(value * 1000) / 10 });
   if (stat === "maxHpPct") return _t("+{n}% PV max", { n: Math.round(value * 100) });
   if (stat === "xpMult") return _t("+{n}% expérience", { n: Math.round(value * 100) });
@@ -106,7 +106,7 @@ function formatStatDelta(stat, delta) {
   if (stat === "defense") return sign + (Math.round(delta * 1000) / 10) + "%"; // v3.226.0 : 1 décimale, les affixes de défense en ont 3
   if (stat === "critMult") return sign + formatNumber(delta) + "x";
   if (stat === "critChance" || stat === "dropChance") return sign + formatNumber(delta) + "%";
-  return sign + formatNumber(delta);
+  return sign + formatNumber(stat === "tapDmg" || stat === "autoDps" ? Math.round(delta) : delta); // v3.492.13 : entier
 }
 
 /* v3.230.0 : ligne de pouvoir d'un objet légendaire — sans delta, ce n'est pas

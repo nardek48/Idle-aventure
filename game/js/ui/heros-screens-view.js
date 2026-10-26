@@ -274,7 +274,7 @@
     var it = e.item, p = (typeof getEquipmentIconPath === "function") ? getEquipmentIconPath(it) : "";
     return '<button type="button" class="wh-tile hs-btile rarity-' + esc(it.rarity) + '" onclick="herosOpenItem(\'' + esc(e.key) + '\')">'
       + (p ? '<img class="hs-btile-img" src="' + esc(p) + '" alt="">' : '<span class="hs-btile-img">' + renderIcon("equipment", it.icon) + '</span>')
-      + cmpBadge(cmpState(it))
+      + cmpBadge(cmpState(it)) + buildItemWorldPipHTML(it) // v3.492.13 (L2) : pastille du monde
       + '<span class="wh-tile-band"><span class="wh-tile-name rarity-' + esc(it.rarity) + '">' + esc(_td(it.name)) + '</span></span></button>';
   }
 
