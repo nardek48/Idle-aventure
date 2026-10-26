@@ -125,6 +125,7 @@ function buildSortiePrepHTML() {
   } else var tune = '';
 
   h += buildSortiePrepTeamHTML(grim, "mates");
+  h += buildSortiePrepAgainHTML();   // v3.449.0 : « Comme la dernière fois » ; v3.492.16 (Seb) : sorti du pli « Réglages »
   // v3.458.4 (audit C14) : le reste se replie sous « Réglages », résumé sur une ligne ; ordre de v3.446.1 gardé
   var open = !!sortiePrep.tuneOpen;
   h += '<button type="button" class="sp-fold' + (open ? ' is-open' : '') + '" onclick="sortiePrepFold()"><span><b>' + _t("Réglages") + '</b><small>'
@@ -132,7 +133,6 @@ function buildSortiePrepHTML() {
   if (open) {
     h += tune;
     h += buildSortiePrepTeamHTML(grim, "sets");
-    h += buildSortiePrepAgainHTML();   // v3.449.0 : « Comme la dernière fois »
     h += buildSortiePrepItemsHTML(grim);
     h += buildSortiePrepPotionsHTML();
   }

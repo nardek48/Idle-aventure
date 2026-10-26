@@ -18682,6 +18682,24 @@ console.log("\n[319] v3.492.15 — objets de combat de la Montagne : Leurre de c
   }
 })();
 
+console.log("\n[320] v3.492.16 — « Comme la dernière fois » hors du pli « Réglages »");
+(function () {
+  try {
+    game = freshCombat("knight");
+    var G = g.game; G.lastSortiePrep = { buffs: [], items: ["leurre_de_cendre"] };
+    g.sortiePrep = { opts: { title: "x", ctx: null, onGo: function () {} }, preset: null, buffs: {}, items: [], pick: -1, tuneOpen: false };
+    var h = g.buildSortiePrepHTML(), a = h.indexOf("sortiePrepAgain()"), f = h.indexOf("sortiePrepFold()");
+    ok(a !== -1 && f !== -1 && a < f, "pli fermé : le bouton est visible, au-dessus de « Réglages »");
+    g.sortiePrep.tuneOpen = true;
+    h = g.buildSortiePrepHTML();
+    ok(h.split("sortiePrepAgain()").length - 1 === 1, "pli ouvert : le bouton n'apparaît qu'une fois");
+    G.lastSortiePrep = null; g.sortiePrep.tuneOpen = false;
+    ok(g.buildSortiePrepHTML().indexOf("sortiePrepAgain()") === -1, "sans sortie précédente avec potion ou objet : pas de bouton");
+  } catch (err) {
+    ok(false, "[320] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);
