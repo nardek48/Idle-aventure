@@ -375,11 +375,12 @@ var PA2_PARCOURS_IMAGES = {
     image: "images/Maps/parcours/montagne_montee.webp", width: 1024, height: 1536, start: [505, 1320],
     tracks: { route: [[446, 1150], [584, 1050], [506, 860], [466, 700], [530, 560], [587, 400], [500, 215]] }
   },
-  /* v3.491.0 (Montagne, acte IV) : le sentier du dessus. Image à fournir par Seb ; piste provisoire (celle de
-     la chaîne, cinq paliers), à relever sur l'image quand elle arrivera. */
+  /* v3.491.0 (Montagne, acte IV) : le sentier du dessus. v3.492.8 : image de Seb (26/10/2026) ; piste relevée sur le
+     trait bleu, du lac à l'aile. Paliers (points 0, 2, 4, 6, 8) : le haut de la coupe, les dragonnets, la source,
+     les deux golems, le plateau aux écailles. */
   montagne_sommet: {
-    image: "images/Maps/parcours/montagne_sommet.webp", width: 1024, height: 1536, start: [513, 1490],
-    tracks: { route: [[523, 1440], [512, 1260], [533, 1090], [524, 950], [519, 790], [535, 620], [528, 480], [522, 320], [516, 180]] }
+    image: "images/Maps/parcours/montagne_sommet.webp", width: 1024, height: 1536, start: [511, 1418],
+    tracks: { route: [[511, 1081], [502, 960], [498, 827], [532, 700], [526, 575], [545, 440], [522, 315], [527, 235], [526, 165]] }
   },
   /* v3.433.1 (Ruines, acte IV) : image de Seb (09/10/2026) ; piste relevée sur le trait violet, de la
      porte basse à l'arche du Cœur. Paliers : la rue qui tourne, la place aux ossements, la brèche du
