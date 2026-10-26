@@ -12126,12 +12126,9 @@ console.log("\n[159] v3.382.0 — Petites Aventures v2 (PA2-1) : écrans (prépa
     Object.keys(g.PA2_PACTS).forEach(function (k) { dataIcons.push(g.PA2_PACTS[k].icon); });
     Object.keys(g.PA2_ICONS).forEach(function (k) { dataIcons.push(g.PA2_ICONS[k]); });
     // v3.454.0 : icônes demandées à Seb, affichées en icône générique en attendant (règle « icône manquante »)
-    var aFournir = ["images/Icons/scene/items/item_lockpicks.webp", // v3.467.0 : la Trousse, à faire
-      "images/Icons/scene/items/item_worm_scale.webp", "images/Icons/scene/items/item_caravan_mat.webp", "images/Icons/scene/items/item_guardian_stone.webp", // v3.469.4 : coffre des autres mondes
-      "images/Icons/scene/items/item_well_stone.webp", "images/Icons/scene/items/item_sleeper_sword.webp", "images/Icons/scene/items/item_chapel_candle.webp"]
-      .concat(["perle", "scarabee", "dune", "clou", "fil", "marteau", "meche", "cendre", "cloche"].map(function (id) { return "images/Icons/scene/relics/relic_" + id + ".webp"; })) // v3.469.5 : reliques des mondes
-      .concat(["images/Icons/scene/items/item_cold_stone.webp", "images/Icons/scene/items/item_sorter_shard.webp", "images/Icons/scene/items/item_spring_pebble.webp", // v3.489.0 : la Montagne
-        "images/Icons/scene/relics/relic_obsidian.webp", "images/Icons/scene/relics/relic_bellows.webp", "images/Icons/scene/relics/relic_ember_heart.webp", "images/Icons/scene/node_vein.webp"]);
+    // v3.492.1 : les icônes des Pièges, du coffre et des reliques des mondes sont livrées ; restent celles de la Montagne
+    var aFournir = ["images/Icons/scene/items/item_cold_stone.webp", "images/Icons/scene/items/item_sorter_shard.webp", "images/Icons/scene/items/item_spring_pebble.webp", // v3.489.0 : la Montagne
+        "images/Icons/scene/relics/relic_obsidian.webp", "images/Icons/scene/relics/relic_bellows.webp", "images/Icons/scene/relics/relic_ember_heart.webp", "images/Icons/scene/node_vein.webp"];
     var absent = dataIcons.filter(function (s) { return !fs.existsSync(path.join(ROOT, s)) && aFournir.indexOf(s) < 0; });
     ok(absent.length === 0, "icônes du mode v2 : toutes présentes, hors celles à fournir (" + dataIcons.length + ")" + (absent.length ? " — manquent " + absent.join(", ") : ""));
   } catch (e) {
