@@ -55,6 +55,31 @@ var PA2_ICONS = {
   title: "images/Icons/scene/path_easy.webp",
   veine: "images/Icons/scene/node_vein.webp" // v3.489.0 (Montagne) : à générer, icône générique en attendant
 };
+/* v3.492.3 (décision Seb du 24/10, images livrées le 26/10) : icônes propres à chaque monde. Un monde bascule
+   d'un bloc ; sans entrée (la Montagne), les icônes de la Forêt. Le Désert garde la Rencontre commune (sa scène). */
+var PA2_ICONS_BY_WORLD = {
+  forest: { evenement: "images/Icons/scene/forest/node_event.webp" },
+  desert: {
+    obstacle: "images/Icons/scene/desert/node_obstacle.webp", source: "images/Icons/scene/desert/node_spring.webp",
+    autel: "images/Icons/scene/desert/node_altar.webp", camp: "images/Icons/scene/desert/node_camp.webp", seuil: "images/Icons/scene/desert/node_threshold.webp",
+    boss: "images/Icons/scene/dest/dest_desert_boss.webp", clairiere: "images/Icons/scene/dest/dest_desert_clairiere.webp", tertre: "images/Icons/scene/dest/dest_desert_tertre.webp"
+  },
+  ruins: {
+    evenement: "images/Icons/scene/ruins/node_event.webp", obstacle: "images/Icons/scene/ruins/node_obstacle.webp", source: "images/Icons/scene/ruins/node_spring.webp",
+    autel: "images/Icons/scene/ruins/node_altar.webp", camp: "images/Icons/scene/ruins/node_camp.webp", seuil: "images/Icons/scene/ruins/node_threshold.webp",
+    boss: "images/Icons/scene/dest/dest_ruins_boss.webp", clairiere: "images/Icons/scene/dest/dest_ruins_clairiere.webp", tertre: "images/Icons/scene/dest/dest_ruins_tertre.webp"
+  },
+  crypt: {
+    evenement: "images/Icons/scene/crypt/node_event.webp", obstacle: "images/Icons/scene/crypt/node_obstacle.webp", source: "images/Icons/scene/crypt/node_spring.webp",
+    autel: "images/Icons/scene/crypt/node_altar.webp", camp: "images/Icons/scene/crypt/node_camp.webp", seuil: "images/Icons/scene/crypt/node_threshold.webp",
+    boss: "images/Icons/scene/dest/dest_crypt_boss.webp", clairiere: "images/Icons/scene/dest/dest_crypt_clairiere.webp", tertre: "images/Icons/scene/dest/dest_crypt_tertre.webp"
+  }
+};
+/* Icône d'un point ou d'une destination, au monde du run. */
+function pa2Ico(key, run) {
+  var w = run && run.worldId, o = PA2_ICONS_BY_WORLD[w] || PA2_ICONS_BY_WORLD.forest;
+  return o[key] || PA2_ICONS[key];
+}
 
 var PA2_CRAN_WORD = { sur: _t("Sûr"), probable: _t("Probable"), risque: _t("Risqué"), desespere: _t("Désespéré") };
 var PA2_CRAN_LEVEL = { sur: 4, probable: 3, risque: 2, desespere: 1 };
@@ -308,7 +333,7 @@ function pa2TrophiesHTML(run) {
   var h = '<div class="pa2-panel"><div class="pa2-kicker">' + esc(_t("Trophées — {w}", { w: pa2WorldName(run.worldId) })) + '</div><div class="pa2-trophies">';
   ["boss", "clairiere", "tertre"].forEach(function (d) {
     var n = Number(t.dests[d] || 0);
-    h += '<div class="pa2-troph' + (n ? '' : ' is-empty') + '">' + pa2Img(PA2_ICONS[d], "", _td(dests[d].name)) + '<b>×' + n + '</b><span>' + esc(_td(dests[d].name)) + '</span></div>';
+    h += '<div class="pa2-troph' + (n ? '' : ' is-empty') + '">' + pa2Img(pa2Ico(d, run), "", _td(dests[d].name)) + '<b>×' + n + '</b><span>' + esc(_td(dests[d].name)) + '</span></div>';
   });
   h += '</div><div class="pa2-bag-meta"><span>' + esc(_tn(t.success, "{n} destination atteinte", "{n} destinations atteintes", { n: t.success })) + '</span>' +
     '<span>' + esc(_tn(Number(st.bestPacts || 0), "Record : {n} pacte tenu", "Record : {n} pactes tenus", { n: Number(st.bestPacts || 0) })) + '</span></div></div>';
@@ -603,7 +628,7 @@ function pa2MapHTML(run) {
       (isOpen ? " is-open" : "") + (isCur ? " is-cur" : "") + (n.done && !isCur ? " is-done" : "") + (Pa2Run.burnLevel(k, run) ? " is-burning" : "");
     var label = vis ? pa2NodeLabel(run, n) : _t("Inconnu");
     nodes += '<button type="button" class="' + cls + '" style="left:' + (100 * d.x / W).toFixed(2) + '%;top:' + (100 * d.y / H).toFixed(2) + '%"' +
-      (isOpen ? ' onclick="pa2Move(\'' + k + '\')"' : ' tabindex="-1"') + ' aria-label="' + esc(label) + '">' + pa2Img(PA2_ICONS[type] || PA2_ICONS.unknown) + '</button>';
+      (isOpen ? ' onclick="pa2Move(\'' + k + '\')"' : ' tabindex="-1"') + ' aria-label="' + esc(label) + '">' + pa2Img(pa2Ico(type, run) || PA2_ICONS.unknown) + '</button>';
   });
   // v3.467.0 (Pièges) : losange rouge au milieu des sentiers piégés en vue ; le héros arrêté au milieu.
   var trapSvg = "", traps = "";
@@ -839,13 +864,13 @@ function pa2RenderLegend() {
       return '<div class="pa2-legend-row"><span class="pa2-disc">' + pa2Img(icon) + '</span><span>' + esc(label) + '<small>' + esc(sub) + '</small></span></div>';
     };
     h += '<div class="pa2-legend" role="dialog" aria-label="' + esc(_t("Légende")) + '"><h5>' + esc(_t("Légende")) + '</h5>' +
-      row(PA2_ICONS.obstacle, _t("Obstacle"), _t("Trois voies, un jet de dé")) + row(PA2_ICONS.combat, _t("Combat"), _t("Charger, Tenir, Ruser ou Fuir")) +
-      row(PA2_ICONS.source, _t("Source"), _t("PV et Souffle")) + row(PA2_ICONS.autel, _t("Autel"), _t("De l'or contre une plaie")) +
-      row(PA2_ICONS.trouvaille, _t("Trouvaille"), _t("Un objet pour ce run")) + row(PA2_ICONS.evenement, _t("Rencontre"), _t("Un choix qui aura des suites")) +
-      row(PA2_ICONS.camp, _t("Le camp"), _t("Fin de l'acte I")) + row(PA2_ICONS.seuil, _t("Le seuil"), _t("Fin de l'acte II")) +
+      row(pa2Ico("obstacle", run), _t("Obstacle"), _t("Trois voies, un jet de dé")) + row(PA2_ICONS.combat, _t("Combat"), _t("Charger, Tenir, Ruser ou Fuir")) +
+      row(pa2Ico("source", run), _t("Source"), _t("PV et Souffle")) + row(pa2Ico("autel", run), _t("Autel"), _t("De l'or contre une plaie")) +
+      row(PA2_ICONS.trouvaille, _t("Trouvaille"), _t("Un objet pour ce run")) + row(pa2Ico("evenement", run), _t("Rencontre"), _t("Un choix qui aura des suites")) +
+      row(pa2Ico("camp", run), _t("Le camp"), _t("Fin de l'acte I")) + row(pa2Ico("seuil", run), _t("Le seuil"), _t("Fin de l'acte II")) +
       row(PA2_TRAP_FX.venin.icon, _t("Piège"), _t("Losange rouge sur un sentier : son effet, à désamorcer ou à éviter")) +
       row(((PA2_CUTS[run.worldId] || PA2_CUTS.forest)[Object.keys(PA2_CUTS[run.worldId] || PA2_CUTS.forest)[0]]).icon, _t("Sentier coupé"), _t("Rond gris : le passage est fermé pour ce run")) +
-      row(PA2_ICONS.boss, _t("Destinations"), _t("Trois fins possibles, au nord")) + '</div>';
+      row(pa2Ico("boss", run), _t("Destinations"), _t("Trois fins possibles, au nord")) + '</div>';
   }
   box.innerHTML = h;
 }
@@ -904,7 +929,7 @@ function pa2RenderSheet() {
 
 function pa2Head(run, n, title, kicker, big) {
   var dest = Pa2Run.isDest(n, run);
-  return '<div class="pa2-sheet-head"><div class="pa2-medal' + (dest ? ' is-dest is-big' : (big ? ' is-big' : '')) + '">' + pa2Img(PA2_ICONS[n.type] || PA2_ICONS.unknown) + '</div><div><div class="pa2-kicker">' + esc(kicker) + '</div><h2 class="pa2-h2">' + esc(title) + '</h2></div></div>';
+  return '<div class="pa2-sheet-head"><div class="pa2-medal' + (dest ? ' is-dest is-big' : (big ? ' is-big' : '')) + '">' + pa2Img(pa2Ico(n.type, run) || PA2_ICONS.unknown) + '</div><div><div class="pa2-kicker">' + esc(kicker) + '</div><h2 class="pa2-h2">' + esc(title) + '</h2></div></div>';
 }
 function pa2OddsHTML(cran) {
   return '<span class="pa2-odds o' + PA2_CRAN_LEVEL[cran] + '"><span class="pa2-cran"><i></i><i></i><i></i><i></i></span><span class="pa2-w">' + esc(PA2_CRAN_WORD[cran]) + '</span></span>';
@@ -1142,7 +1167,7 @@ function pa2GuardianHint(run) {
   if (!gp || !gp.tenir) return "";
   var t = gp.tenir, verdict = t.unwinnable ? "mortel" : Pa2Run.verdictOf(t.hpLoss);
   var cost = PA2_VERDICT_WORD[verdict] + (t.unwinnable ? "" : " · ~" + pa2Num(t.hpLoss) + " " + _t("PV"));
-  return '<div class="pa2-panel pa2-trophy pa2-guardian">' + pa2Img(PA2_ICONS.boss) + '<div><div class="pa2-kicker">' + esc(_t("Au nord : {n}", { n: _td(pa2Dests(run).boss.name) })) + '</div>' +
+  return '<div class="pa2-panel pa2-trophy pa2-guardian">' + pa2Img(pa2Ico("boss", run)) + '<div><div class="pa2-kicker">' + esc(_t("Au nord : {n}", { n: _td(pa2Dests(run).boss.name) })) + '</div>' +
     '<div class="pa2-small">' + esc(_t("En tenant, aujourd'hui : {c}.", { c: cost })) + ' ' + esc(_t("Les deux autres destinations ne demandent pas de combat.")) + '</div></div></div>';
 }
 
@@ -1157,7 +1182,7 @@ function pa2FoeInfo(run, n, pv) {
   if (n.type === "boss") {
     // v3.423.1 (retour Seb) : hors Forêt, le portrait est celui du gardien du monde (le Ver au Désert), plus le cerf
     var gd = (window.PA2_GUARDIAN && PA2_GUARDIAN[run.worldId]) || null, gimg = (run.worldId !== "forest" && gd && window.ENEMY_DB && ENEMY_DB[gd.foe]) ? ENEMY_DB[gd.foe].image : null;
-    return { name: _td(dests.boss.name), line: _td(dests.boss.line), image: gimg || PA2_ICONS.boss, boss: true, pack: 1 };
+    return { name: _td(dests.boss.name), line: _td(dests.boss.line), image: gimg || pa2Ico("boss", run), boss: true, pack: 1 };
   }
   var db = (window.ENEMY_DB && ENEMY_DB[n.foeId]) || {};
   if (n.revenge && hook) return { name: _td(hook.revenge.name), line: _td(hook.revenge.line), image: db.image || PA2_ICONS.combat, boss: false, pack: 1 };
@@ -1426,13 +1451,13 @@ function buildPa2EndHTML(run) {
     title = _t("Tu fais demi-tour");
     text = _t("Tu rentres sans finir. Une part du butin reste en route.");
   } else if (e.dest === "boss" && run.flags.guardianPassed) { // v3.454.0 (Crypte) : on a fait le tour ; v3.489.0 : le trieur laisse passer
-    icon = PA2_ICONS.boss; title = Pa2Run.guardianSorts(run) ? _t("{n} te laisse passer", { n: _td(dests.boss.name) }) : _t("{n} dort encore", { n: _td(dests.boss.name) }); text = _td(dests.boss.pass || "");
+    icon = pa2Ico("boss", run); title = Pa2Run.guardianSorts(run) ? _t("{n} te laisse passer", { n: _td(dests.boss.name) }) : _t("{n} dort encore", { n: _td(dests.boss.name) }); text = _td(dests.boss.pass || "");
   } else if (e.dest === "boss") {
-    icon = PA2_ICONS.boss; title = _t("{n} est tombé", { n: _td(dests.boss.name) }); text = _td(dests.boss.win);
+    icon = pa2Ico("boss", run); title = _t("{n} est tombé", { n: _td(dests.boss.name) }); text = _td(dests.boss.win);
   } else if (e.dest === "clairiere") {
-    icon = PA2_ICONS.clairiere; title = _td(dests.clairiere.name); text = _td(dests.clairiere.win);
+    icon = pa2Ico("clairiere", run); title = _td(dests.clairiere.name); text = _td(dests.clairiere.win);
   } else {
-    icon = PA2_ICONS.tertre;
+    icon = pa2Ico("tertre", run);
     var opened = !!run.flags.tertreOpened;
     title = opened ? _td(dests.tertre.name) : _t("Le Tertre reste scellé");
     text = _td(opened ? dests.tertre.win : dests.tertre.fail);

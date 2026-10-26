@@ -18503,6 +18503,11 @@ console.log("\n[314] v3.492.0 — Montagne, lot M-6 : hauts faits");
     CE.spawnGroup([{ id: "ancientdragon", name: "Dragon ancien", isBoss: true, hp: 10, maxHp: 10, stats: g.BOSS_DB.ancientdragon.stats, resists: [], weak: [], goldReward: 5 }]);
     V.onVictory({ id: "ancientdragon", isBoss: true });
     ok(g.achCounter("dragonNoCut") === 1, "le Dragon ancien vaincu sans taille : « Les mains vides »");
+    var parMonde = [];
+    Object.keys(g.PA2_ICONS_BY_WORLD).forEach(function (w) { Object.keys(g.PA2_ICONS_BY_WORLD[w]).forEach(function (k) { parMonde.push(g.PA2_ICONS_BY_WORLD[w][k]); }); });
+    ok(parMonde.length === 27 && parMonde.every(function (f) { return fs.existsSync(path.join(ROOT, f)); }) && g.pa2Ico("camp", { worldId: "crypt" }) === g.PA2_ICONS_BY_WORLD.crypt.camp
+      && g.pa2Ico("evenement", { worldId: "desert" }) === g.PA2_ICONS.evenement && g.pa2Ico("evenement", { worldId: "mountain" }) === g.PA2_ICONS_BY_WORLD.forest.evenement,
+      "Petites Aventures : 27 icônes propres aux mondes, présentes ; le Désert garde la Rencontre commune, la Montagne prend la Forêt (v3.492.3)");
     var kb = fs.readFileSync(path.join(ROOT, "css/00-kbtn.css"), "utf8"), kbr = /\.kf-back \{[^}]*\}/.exec(kb);
     ok(kbr && /pointer-events: auto/.test(kbr[0]) && /\.kf-bot \{[^}]*pointer-events: none/.test(kb), "retour « ‹ » du bandeau : il reçoit le toucher (le bandeau, lui, le laisse passer) (v3.492.2)");
     var lms = fs.readFileSync(path.join(ROOT, "js/systems/living-map-system.js"), "utf8");
