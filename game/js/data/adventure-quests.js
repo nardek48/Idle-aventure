@@ -784,7 +784,7 @@ var ADVENTURE_QUESTS = {
     ],
     // banc (montagne-acte1-bench, sauvegardes de fin de Crypte, 12 runs, sans potion, veines laissées) :
     // 100 / 92 / 92 % de réussite, 4,9 / 3,5 / 4,2 rounds par combat, 41 / 53 / 36 % des PV (Ch. / Rô. / Ma.)
-    encounterHpMult: 1.6,
+    encounterHpMult: 2.24, // audit P5 (26/10) : 1,6 → 2,24, combats plus longs
     enemyPowerMult: 8,
     name: "Ce qui affleure",
     story: "Aux Pentes de cendres, une veine bat dans la roche. Les bêtes d'ici se tiennent autour.",
@@ -815,7 +815,7 @@ var ADVENTURE_QUESTS = {
     ],
     // banc (12 runs, sans potion) : avec Sarkel et Wenna 100 / 100 / 75 %, 53 / 60 / 30 % des PV ; avec Sarkel et
     // Maddoc 100 %, 62 / 66 / 31 %. 3,2 à 4,8 rounds. Sarkel n'a ni soin ni garde : plus dur, le Mage tombe.
-    encounterHpMult: 1.5,
+    encounterHpMult: 2.1, // audit P5 (26/10) : 1,5 → 2,1, combats plus longs
     enemyPowerMult: 4,
     name: "Celui qui taille",
     story: "Sarkel tient la pioche à deux mains, plus bas. Il taille entre deux coups des autres.",
@@ -846,7 +846,7 @@ var ADVENTURE_QUESTS = {
       { group: ["minordemon", "ifrit", "lavagolem"], groupHpMult: 0.35 }
     ],
     // banc (12 runs, Sarkel et Wenna, sans potion) : 100 / 92 / 92 %, 53 / 58 / 19 % des PV, 4,7 à 5 veines taillées
-    encounterHpMult: 1.5,
+    encounterHpMult: 2.1, // audit P5 (26/10) : 1,5 → 2,1, combats plus longs
     enemyPowerMult: 4,
     name: "Ça ne fond pas",
     story: "Des éclats noirs, avec une ligne bleue dedans. Il en faut plus : Brannoc voudra voir.",
