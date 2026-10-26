@@ -415,7 +415,7 @@
   }
 
   function buildHerosCompanionListHTML() {
-    var h = '<div class="cp-intro">' + _t("Deux compagnons au maximum peuvent partir avec toi. Ils jouent après toi à chaque round.") + '</div>';
+    var h = '<div class="cp-intro">' + _t("Deux compagnons au maximum peuvent partir avec toi. Ils jouent après toi à chaque round.") + '</div><div class="hs-comp-list">';  // v3.502.0 (GE-1) : enveloppe pour la grille du format large
     CompanionManager.unlockedIds().forEach(function (id) {
       var def = getCompanionDef(id), st = CompanionManager.state(id), stats = CompanionManager.statsOf(id), hp = CompanionManager.hpOf(id), s = companionStatus(id);
       var pct = stats.maxHp > 0 ? Math.max(0, Math.min(100, hp / stats.maxHp * 100)) : 0;
@@ -430,7 +430,7 @@
       }
       h += '</div>';
     });
-    return h;
+    return h + '</div>';
   }
 
   /* =========================================================
