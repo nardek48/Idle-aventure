@@ -6,7 +6,7 @@
 <title>Pastille de monde</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
-/* Atelier v3.492.13 (L2) : pastille de monde sur l'icône des objets. Disposition : barre de choix collante, puis les
+/* Atelier v3.492.13 (L2) : pastille de monde sur l'icône des objets ; variante D (icône + aura) proposée par Seb. Disposition : barre de choix collante, puis les
    quatre endroits où l'objet se montre (Sac, Équipé, échoppe, fiche), à la taille du jeu. Couleurs = jetons du jeu. */
 :root {
   --page: #1c140c; --parch: #e9d7b0; --frame: #6b4a22; --ink: #2e2214; --brown: #8a5c14; --bronze: #b98a4a;
@@ -83,6 +83,10 @@ section { min-width: 0; }
 .sheet .pw, .card .pw { top: -4px; left: -4px; }
 .sheet .pw.v-icone, .sheet .pw.v-ici { width: 18px; height: 18px; }
 .sheet .pw.v-point { width: 10px; height: 10px; }
+/* D : l'objet du monde où se tient le héros a une aura d'or autour de son cadre (affinité +10 %) */
+.tile.aura { border-color: var(--gold-a); box-shadow: inset 0 0 14px rgba(160, 90, 230, .55), 0 0 0 2px var(--gold-a), 0 0 10px 2px rgba(240, 198, 74, .85); }
+.slot .ico.aura, .card .ico.aura, .sheet .ico.aura { border-color: var(--gold-a); box-shadow: 0 0 0 2px var(--gold-a), 0 0 12px 3px rgba(240, 198, 74, .85); }
+.aura-ex { display: inline-block; width: 22px; height: 22px; border-radius: 6px; background: radial-gradient(var(--tile-a), var(--tile-b)); box-shadow: 0 0 0 2px var(--gold-a), 0 0 8px 2px rgba(240, 198, 74, .85); }
 .legend .pw { position: relative; top: 0; left: 0; display: inline-block; flex: none; }
 .verdict { margin: 0; padding: 10px 12px; border-radius: 12px; background: #f6ecd8; border: 1.5px dashed var(--bronze); font-size: 13px; }
 .verdict b { color: var(--frame); }
@@ -92,6 +96,7 @@ section { min-width: 0; }
 <body>
 <div class="bar">
   <div class="row" role="group" aria-label="Variante"><b>Pastille</b>
+    <button type="button" id="v-aura" data-v="aura">D · Icône + aura</button>
     <button type="button" id="v-icone" data-v="icone">A · Icône</button>
     <button type="button" id="v-point" data-v="point">B · Couleur</button>
     <button type="button" id="v-ici" data-v="ici">C · Ton monde</button>
@@ -138,39 +143,43 @@ var SHOP = [
 var TEXTES = {
   icone: "<b>A · Icône du monde</b> sur chaque objet, quel que soit son monde. Toujours lisible, mais six petits dessins de plus dans un sac plein.",
   point: "<b>B · Point de couleur</b> sur chaque objet : une couleur par monde. Très discret ; il faut apprendre les couleurs (légende ci-dessous).",
+  aura: "<b>D · Icône + aura</b> (idée de Seb) : l'icône du monde sur chaque objet, et une aura d'or autour des pièces du monde où tu te tiens, celles qui ont l'affinité (+10 %).",
   ici: "<b>C · Ton monde seulement</b> : seule la pièce du monde où tu te tiens porte la pastille, cerclée d'or. C'est aussi celle qui a l'affinité (+10 %). Les autres restent nues.",
   aucune: "<b>Sans pastille</b> : le jeu aujourd'hui. Heaume, Cuirasse, Bague… rien ne dit d'où ils viennent."
 };
-var etat = { v: "ici", m: 4 };
-try { var s = JSON.parse(localStorage.getItem("pastille-monde") || "{}"); if (s.v) etat.v = s.v; if (s.m) etat.m = s.m; } catch (e) {}
+var etat = { v: "aura", m: 4 };
+try { var s = JSON.parse(localStorage.getItem("pastille-monde-d") || "{}"); if (s.v) etat.v = s.v; if (s.m) etat.m = s.m; } catch (e) {}
 
 function pastille(w) {
   var M = MONDES[w];
-  if (etat.v === "icone") return '<span class="pw v-icone" title="' + M.nom + '"><img src="' + WORLD_IMG[M.id] + '" alt=""></span>';
+  if (etat.v === "icone" || etat.v === "aura") return '<span class="pw v-icone" title="' + M.nom + '"><img src="' + WORLD_IMG[M.id] + '" alt=""></span>';
   if (etat.v === "point") return '<span class="pw v-point" style="background:' + M.c + '" title="' + M.nom + '"></span>';
   if (etat.v === "ici" && w === etat.m && w >= 4) return '<span class="pw v-ici" title="' + M.nom + ' · +10 % ici"><img src="' + WORLD_IMG[M.id] + '" alt=""></span>';
   return "";
 }
+// D : aura sur le cadre de l'objet du monde courant (Montagne et après, comme l'affinité)
+function aura(w) { return etat.v === "aura" && w === etat.m && w >= 4 ? " aura" : ""; }
 function rendre() {
   document.getElementById("intro").innerHTML = TEXTES[etat.v];
   var leg = "";
-  if (etat.v === "icone" || etat.v === "point") MONDES.forEach(function (M, w) { leg += "<span>" + pastille(w) + M.nom + "</span>"; });
+  if (etat.v === "icone" || etat.v === "point" || etat.v === "aura") MONDES.forEach(function (M, w) { leg += "<span>" + pastille(w) + M.nom + "</span>"; });
   if (etat.v === "ici") leg = "<span>" + (etat.m >= 4 ? pastille(etat.m) + "De ton monde : +10 % ici" : "En Crypte, aucune pièce n'a d'affinité : rien n'est marqué") + "</span>";
+  if (etat.v === "aura") leg += "<span>" + (etat.m >= 4 ? '<i class="aura-ex"></i>Aura : de ton monde, +10 % ici' : "En Crypte, aucune aura : pas d'affinité") + "</span>";
   document.getElementById("legend").innerHTML = leg;
   document.getElementById("sac").innerHTML = SAC.map(function (o) {
-    return '<div class="tile ' + o.r + '"><img class="it" src="' + ICO[o.i] + '" alt="">' + pastille(o.w) + '<i class="cmp ' + o.cmp + '">' + (o.cmp === "up" ? "▲" : o.cmp === "down" ? "▼" : "≈") + '</i><div class="band"><span>' + o.n + '</span></div></div>';
+    return '<div class="tile ' + o.r + aura(o.w) + '"><img class="it" src="' + ICO[o.i] + '" alt="">' + pastille(o.w) + '<i class="cmp ' + o.cmp + '">' + (o.cmp === "up" ? "▲" : o.cmp === "down" ? "▼" : "≈") + '</i><div class="band"><span>' + o.n + '</span></div></div>';
   }).join("");
   document.getElementById("eq").innerHTML = EQ.map(function (o) {
-    return '<div class="slot"><div class="ico"><img class="it" src="' + ICO[o.i] + '" alt="">' + pastille(o.w) + (o.cmp ? '<i class="cmp ' + o.cmp + '">' + (o.cmp === "up" ? "▲" : "≈") + '</i>' : "") + '</div><small>' + o.s + '</small></div>';
+    return '<div class="slot"><div class="ico' + aura(o.w) + '"><img class="it" src="' + ICO[o.i] + '" alt="">' + pastille(o.w) + (o.cmp ? '<i class="cmp ' + o.cmp + '">' + (o.cmp === "up" ? "▲" : "≈") + '</i>' : "") + '</div><small>' + o.s + '</small></div>';
   }).join("");
   document.getElementById("shop").innerHTML = SHOP.map(function (o) {
-    return '<div class="card"><div class="ico"><img class="it" src="' + ICO[o.i] + '" alt="">' + pastille(o.w) + '</div><div><div class="name epic">' + o.n + '</div><div class="meta">Épique · ' + MONDES[o.w].nom + '</div><div class="lines">' + o.l + '</div></div><span class="price">' + o.p + '</span></div>';
+    return '<div class="card"><div class="ico' + aura(o.w) + '"><img class="it" src="' + ICO[o.i] + '" alt="">' + pastille(o.w) + '</div><div><div class="name epic">' + o.n + '</div><div class="meta">Épique · ' + MONDES[o.w].nom + '</div><div class="lines">' + o.l + '</div></div><span class="price">' + o.p + '</span></div>';
   }).join("");
-  document.getElementById("sheet").innerHTML = '<div class="sheet"><div class="ico"><img class="it" src="' + ICO.casque_epic + '" alt="">' + pastille(4) + '</div><div><b>Heaume</b><small>Casque · comparé à Heaume (Crypte)</small></div></div>';
-  document.getElementById("verdict").innerHTML = "<b>Recommandation : C.</b> Dans la Montagne, il marque exactement les pièces qui comptent (affinité +10 %, palier de l'Histoire) sans charger le reste du sac. Arrivé à la Tour, ce seront les pièces de la Tour.";
+  document.getElementById("sheet").innerHTML = '<div class="sheet"><div class="ico' + aura(4) + '"><img class="it" src="' + ICO.casque_epic + '" alt="">' + pastille(4) + '</div><div><b>Heaume</b><small>Casque · comparé à Heaume (Crypte)</small></div></div>';
+  document.getElementById("verdict").innerHTML = "<b>Retenue : D.</b> Chaque objet dit d'où il vient (icône du monde, coin haut gauche) ; les pièces de ton monde, celles qui ont l'affinité (+10 %), brillent en plus d'une aura d'or. Bascule « Crypte » : l'aura disparaît, les icônes restent.";
   document.querySelectorAll("[data-v]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-v") === etat.v)); });
   document.querySelectorAll("[data-m]").forEach(function (b) { b.setAttribute("aria-pressed", String(Number(b.getAttribute("data-m")) === etat.m)); });
-  try { localStorage.setItem("pastille-monde", JSON.stringify(etat)); } catch (e) {}
+  try { localStorage.setItem("pastille-monde-d", JSON.stringify(etat)); } catch (e) {}
 }
 document.querySelectorAll("[data-v]").forEach(function (b) { b.onclick = function () { etat.v = b.getAttribute("data-v"); rendre(); }; });
 document.querySelectorAll("[data-m]").forEach(function (b) { b.onclick = function () { etat.m = Number(b.getAttribute("data-m")); rendre(); }; });
