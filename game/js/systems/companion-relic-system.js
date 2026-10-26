@@ -3,7 +3,7 @@
    paliers 5/15/25, 6 familles, atelier atelier/reliques-compagnons.html variante A).
 
    - Source : les patrouilles. Chaque heure de patrouille terminée donne 4 % de chance, et 24 h cumulées sans relique
-     en garantissent une (game.companionRelics.pity). Famille au hasard, monde = celui du secteur patrouillé.
+     en garantissent une (game.companionRelics.pity). La première patrouille terminée en rapporte toujours une (audit P4). Famille au hasard, monde = celui du secteur patrouillé.
    - Force = rang du monde (Forêt 1 … Montagne 5). Une relique n'est portée que par un compagnon à la fois, une seule
      relique par famille sur un même compagnon.
    - État : game.companionRelics = { inv: [{ id, f, w }], next, pity } ; ce que porte un compagnon : state(id).relics. */
@@ -106,7 +106,8 @@ var CompanionRelics = {
     var R = this.ensure(), h = Math.max(0, Number(hours || 0));
     var chance = 1 - Math.pow(1 - COMPANION_RELIC_CHANCE_PER_H, h);
     R.pity += h;
-    if (!(rng() < chance || R.pity >= COMPANION_RELIC_PITY_H)) return null;
+    // audit P4 (26/10) : la toute première patrouille terminée rapporte une relique (next n'a jamais avancé)
+    if (!(R.next === 1 || rng() < chance || R.pity >= COMPANION_RELIC_PITY_H)) return null;
     R.pity = 0;
     var w = 0;
     if (typeof WORLDS !== "undefined") WORLDS.forEach(function (x, i) { if (x.id === mapId) w = i; });

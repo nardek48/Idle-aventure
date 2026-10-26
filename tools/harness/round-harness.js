@@ -18927,6 +18927,9 @@ console.log("\n[327] Chantier du héros, H4 — reliques des compagnons");
     CM.state("wenna").upgrades = 15; ok(CR.slotsOpen("wenna") === 2, "palier 15 : 2 emplacements");
     CM.state("wenna").upgrades = 25; ok(CR.slotsOpen("wenna") === 3, "palier 25 : 3 emplacements");
     // tirage de patrouille : chance, pitié, monde
+    var rp = CR.rollPatrol(2, "forest", function () { return 0.99; });
+    ok(rp && rp.w === 0 && game.companionRelics.pity === 0, "audit P4 : la première patrouille terminée rapporte une relique, même sans chance");
+    game.companionRelics.inv = [];
     var r0 = CR.rollPatrol(8, "forest", function () { return 0.99; });
     ok(r0 === null && game.companionRelics.pity === 8, "8 h sans chance : rien, pitié 8 h");
     var r1 = CR.rollPatrol(16, "mountain", function () { return 0.99; });
