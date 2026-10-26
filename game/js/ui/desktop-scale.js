@@ -17,8 +17,8 @@ var DESKTOP_REF_HEIGHT = 720;      // hauteur « utile » visée pour la colonne
 var DESKTOP_COLUMN_W = 390;        // largeur de la colonne mobile (#hud, #game-area)
 var DESKTOP_ZOOM_MAX = 2.4;
 var DESKTOP_ZOOM_STEP = 0.05;
-var WIDE_W = 1180;                 // largeur de la fenêtre au format tablette, en px de jeu
-var WIDE_REF_HEIGHT = 780;         // hauteur visée pour cette fenêtre sur PC
+var WIDE_W = 1440;                 // largeur de la fenêtre au format tablette, en px de jeu (v3.503.0 : 1 180 → 1 440, place de la Chronique)
+var WIDE_REF_HEIGHT = 900;         // hauteur visée pour cette fenêtre sur PC (v3.503.0 : 780 → 900)
 var TABLET_MIN_SIDE = 700;         // petit côté minimal d'une tablette (un téléphone n'y arrive pas)
 var TABLET_WIDE_MIN_W = 900;       // largeur minimale pour le format tablette sans zoom
 

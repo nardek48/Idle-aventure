@@ -14,11 +14,12 @@
                          (format tablette, menu à gauche) ; lu par ui/desktop-scale.js
      grimEpure    true   v3.473.0 : combat épuré en Grimoire (atelier grimoire-epure.html), Paramètres › Jeu
      journalTest  false  v3.437.0 : journal de test (main/journal-test.js), activé dans Paramètres › Appareil
+     chronique    true   v3.503.0 (grand écran) : Chronique ouverte à droite du format large (ui/chronique-view.js)
      lang         "fr"   v3.368.0 : langue du jeu (core/i18n.js) ; texte, lu par getValue/setValue.
                          v3.376.0 : absente au premier lancement, elle est fixée par I18n.firstLang() (D3) */
 
 var PREFS_STORAGE_KEY = "aethervale_prefs";
-var PREFS_DEFAULTS = { filRouge: true, bossMoments: true, installHint: true, logTotals: true, lang: "fr", tabletPortrait: "zoom", journalTest: false, grimEpure: true };
+var PREFS_DEFAULTS = { filRouge: true, bossMoments: true, installHint: true, logTotals: true, lang: "fr", tabletPortrait: "zoom", journalTest: false, grimEpure: true, chronique: true };
 
 var Prefs = {
   _cache: null,

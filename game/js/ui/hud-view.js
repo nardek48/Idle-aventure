@@ -23,8 +23,11 @@ function buildHudHTML() {
     +     '<div class="kgauge kgauge-thin hud-gauge is-hp" id="hud-hp"><div class="kgauge-track"><div class="kgauge-fill" id="hud-hp-fill" style="width:100%"></div></div><div class="kgauge-text" id="hud-hp-text"></div></div>'
     +     '<div class="kgauge kgauge-thin hud-gauge is-xp"><div class="kgauge-track"><div class="kgauge-fill" id="hud-xp-fill" style="width:0%"></div></div><div class="kgauge-text" id="hud-xp-text"></div></div>'
     +   '</div>'
+    // v3.503.0 (grand écran, GE-2) : lieu dans l'Histoire et 4 ressources, montrés au format large seulement
+    +   '<div class="hud-where" id="hud-where"><img id="hud-where-ico" alt=""><span class="hud-where-txt"><strong id="hud-where-t"></strong><small id="hud-where-s"></small></span></div>'
     +   '<div class="hud-res">'
     +     '<span class="hud-res-item"><img src="images/Icons/gold_icon.webp" alt="' + _t("Or") + '"><span id="hud-gold">0</span></span>'
+    +     [0, 1, 2, 3].map(function (i) { return '<span class="hud-res-item hud-res-x" id="hud-rx-' + i + '"><img alt=""><span></span></span>'; }).join("")
     // v3.422.0 (Seb) : la ressource de la carte du monde quitte le bandeau, l'or reste seul
     +   '</div>'
     + '</div>'
@@ -88,6 +91,38 @@ function renderHud() {
   renderHeroHp();
   if (now - hudDockAt >= 250 && typeof renderHudDock === "function") { hudDockAt = now; renderHudDock(); } // v3.396.0 : fil rouge, sac, talents
   renderHudAchievementTier(); // v3.338.0 (H4)
+  if (now - hudWideAt >= 1000) { hudWideAt = now; renderHudWide(); } // v3.503.0 (grand écran)
+  if (window.Chronique && document.documentElement.classList.contains("wide-mode")) { if (!Chronique.el) Chronique.mount(); else Chronique.render(false); }
+}
+
+/* v3.503.0 (grand écran, GE-2) : bandeau du format large — où l'on en est dans l'Histoire, et le Bois,
+   la Pierre, le Fer et le matériau du monde où se tient le héros. Le téléphone ne les affiche pas. */
+var hudWideAt = 0;
+var HUD_WORLD_MATERIAL = { forest: "seve_aeswyn", desert: "verre_des_dunes", ruins: "pierre_errante", crypt: "cire_sepulcre", mountain: "cendre_vive" };
+function renderHudWide() {
+  if (!document.documentElement.classList.contains("wide-mode")) return;
+  var world = window.WorldManager ? WorldManager.getWorld() : null;
+  var SQ = window.StoryQuestManager, cid = SQ && SQ.activeChapterIds ? SQ.activeChapterIds()[0] : null;
+  var ch = cid && window.STORY_QUESTS ? STORY_QUESTS[cid] : null, step = ch ? SQ.getCurrentStep(cid) : null;
+  hudSet("hud-where-t", "text", world ? _td(world.name) : "");
+  var sub = ch ? _td(ch.title) + (step ? " · " + _t("étape {a} / {b}", { a: ch.steps.indexOf(step) + 1, b: ch.steps.length }) : "") : "";
+  hudSet("hud-where-s", "text", sub);
+  hudSet("hud-where-ico", "src", (ch && ch.icon) || "images/Icons/camp/campfire.webp");
+  if (!window.WarehouseManager || !window.WAREHOUSE_RESOURCES) return;
+  var keys = ["bois", "pierre", "fer", world && HUD_WORLD_MATERIAL[world.id]];
+  keys.forEach(function (k, i) {
+    var el = document.getElementById("hud-rx-" + i), def = k && WAREHOUSE_RESOURCES[k];
+    if (!el) return;
+    hudSet("hud-rx-" + i, "display", def ? "" : "none");
+    if (!def) return;
+    var n = Math.floor(WarehouseManager.getAmount(k) || 0), cap = WarehouseManager.getCap(k);
+    var key = k + "|" + n + "|" + cap;
+    if (el.dataset.k === key) return;
+    el.dataset.k = key;
+    el.querySelector("img").src = def.icon;
+    el.querySelector("span").textContent = hudNum(n);
+    el.title = _td(def.name) + " · " + hudNum(n) + (cap ? " / " + hudNum(cap) : "");
+  });
 }
 
 /* v3.396.0 : bandeau — chaque texte n'est réécrit que s'il change (renderHud tourne à chaque image). */

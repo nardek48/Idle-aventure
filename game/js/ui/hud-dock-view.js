@@ -39,7 +39,7 @@ function hudDockItems() {
   if (n > 0) out.push({ k: "talent", icon: HUD_DOCK_ICONS.talent, badge: n > 1 ? String(n) : "",
     tip: _tn(n, "Un point de talent à placer", "{n} points de talent à placer", { n: n }), go: "switchTab('talents')" });
   // v3.405.0 : petite aventure du jour, puis sorties de donjon restantes (pas sur leur propre écran)
-  var tab = typeof currentTab === "string" ? currentTab : "";
+  var tab = (window.game && game.activeTab) || "" /* v3.503.0 : currentTab n'existait pas */;
   var lazy = hudDockLazy();
   var pa = lazy.pa;
   if (pa && tab !== "scene") out.push({ k: "pa", icon: HUD_DOCK_ICONS.pa, badge: "",
@@ -56,7 +56,7 @@ function hudDockItems() {
    (ou aussitôt après un changement d'onglet). */
 var hudDockLazyCache = null;
 function hudDockLazy() {
-  var now = Date.now(), tab = typeof currentTab === "string" ? currentTab : "";
+  var now = Date.now(), tab = (window.game && game.activeTab) || "" /* v3.503.0 : currentTab n'existait pas */;
   var c = hudDockLazyCache;
   if (c && c.tab === tab && now - c.at < 1000) return c;
   hudDockLazyCache = { at: now, tab: tab, pa: hudDockPaMission(), dungeon: hudDockDungeonRunsLeft() };

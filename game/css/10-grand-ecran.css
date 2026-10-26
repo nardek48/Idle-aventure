@@ -1,0 +1,145 @@
+/* =========================================================
+   10-grand-ecran.css — v3.503.0 (grand écran, lots GE-2 et GE-3 ; atelier atelier/grand-ecran.html,
+   compte rendu systemes/grand-ecran/ du dépôt Documentation). Format large seulement (html.wide-mode) :
+   rail complet, bandeau enrichi, Chronique à droite. Le téléphone ne lit aucune de ces règles.
+   ========================================================= */
+
+:root { --wide-chron: 320px; }
+html.chron-min { --wide-chron: 56px; }
+
+/* ---------- La fenêtre : rail, page, Chronique ---------- */
+html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) {
+  grid-template-columns: var(--wide-rail) minmax(0, calc(min(var(--wide-w), 100vw / var(--pc-zoom, 1)) - var(--wide-rail) - var(--wide-chron))) var(--wide-chron);
+}
+#chronique { display: none; }
+html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) > #chronique {
+  grid-column: 3;
+  grid-row: 2;
+  position: relative;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  margin: 14px 10px 10px 0;
+  border: 1px solid var(--c-brown-700-vivid);
+  border-radius: 14px;
+  color: var(--c-cream-100-2);
+  background: linear-gradient(rgba(16, 12, 8, 0.8), rgba(16, 12, 8, 0.92)), url('../images/UI/textures/bg-stone-tile.webp') 0 0 / 256px, var(--c-brown-900-soft);
+  box-shadow: inset 0 0 0 1px rgba(226, 177, 74, 0.25), 0 8px 18px -6px var(--c-black-950);
+}
+/* Repliée mais ouverte par-dessus la page (fenêtre étroite) */
+html.wide-mode.chron-over body:not(.combat-active):not(.scene-active):not(.living-map-active) > #chronique {
+  grid-column: 2 / 4;
+  justify-self: end;
+  width: 320px;
+  z-index: 70;
+  box-shadow: inset 0 0 0 1px rgba(226, 177, 74, 0.25), -14px 0 30px rgba(0, 0, 0, 0.6);
+}
+/* Les bulles « à faire » passent dans la Chronique */
+html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) .hud-dock { display: none !important; }
+
+/* ---------- Rail de gauche : 5 écrans, puis Hauts faits, Bibliothèque, Journal, Paramètres ---------- */
+html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) #tab-bar { max-height: 100%; overflow-y: auto; scrollbar-width: none; }
+html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) #tab-bar-row { gap: 6px; }
+html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) .tab-btn.tab-wide { display: flex !important; }
+html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) .tab-btn[data-tab="menu"] { display: none !important; }
+html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) .tab-sep {
+  display: block !important;
+  height: 1px;
+  margin: 2px 10px;
+  background: linear-gradient(90deg, transparent, var(--c-brown-550-3), transparent);
+}
+/* Entrées secondaires : sans case, icône et libellé plus petits */
+html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) .tab-btn.tab-mini { aspect-ratio: auto; height: 50px; border-radius: 10px; }
+html.wide-mode .tab-btn.tab-mini .tab-icon-frame,
+html.wide-mode .tab-btn.tab-mini.active .tab-icon-frame { background: none; flex-direction: column; gap: 2px; }
+html.wide-mode .tab-btn.tab-mini.active { background: rgba(108, 192, 245, 0.14); box-shadow: inset 0 0 0 1px rgba(108, 192, 245, 0.45); }
+html.wide-mode #tab-bar .tab-btn.tab-mini .tab-icon-img { width: 28px; height: 28px; margin: 0; }
+html.wide-mode .tab-btn.tab-mini .tab-label { position: static; font-size: 12px; font-weight: 600; }
+html.wide-mode .tab-btn:hover .tab-label { color: var(--c-cream-100-3); }
+
+/* ---------- Bandeau : où l'on en est, et 4 ressources (survol : le détail) ---------- */
+.hud-where, .hud-res-x { display: none; }
+html.wide-mode .hud-where {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+html.wide-mode .hud-where img { width: 30px; height: 30px; object-fit: contain; }
+html.wide-mode .hud-where-txt { min-width: 0; display: flex; flex-direction: column; line-height: 1.2; }
+html.wide-mode .hud-where-txt strong { font-size: 14px; font-weight: 800; letter-spacing: 0.04em; color: var(--c-cream-150-vivid); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html.wide-mode .hud-where-txt small { font-size: 12px; color: var(--c-bronze-350); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html.wide-mode .hud-gauges { flex: 0 1 300px; }
+html.wide-mode .hud-res { margin-left: 0; gap: 6px; }
+html.wide-mode .hud-res-item { padding: 4px 9px 4px 5px; border-radius: 999px; background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(226, 177, 74, 0.25); }
+html.wide-mode .hud-res-x { display: flex; font-size: 13px; }
+html.wide-mode .hud-res-x img { width: 20px; height: 20px; }
+
+/* ---------- Chronique ---------- */
+.chr-h { flex: none; display: flex; align-items: center; justify-content: space-between; padding: 10px 12px 6px; }
+.chr-h strong { font-size: 13px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--c-bronze-400-4); }
+.chr-x {
+  width: 30px; height: 30px; padding: 0;
+  border-radius: 8px; border: 1px solid rgba(226, 177, 74, 0.35);
+  background: rgba(0, 0, 0, 0.3); color: var(--c-bronze-350);
+  font: 700 16px/1 system-ui, sans-serif; cursor: pointer;
+}
+html.chron-min:not(.chron-over) .chr-h { justify-content: center; padding: 10px 0 6px; }
+html.chron-min:not(.chron-over) .chr-h strong { display: none; }
+.chr-body { flex: 1; min-height: 0; overflow-y: auto; padding: 0 12px 12px; scrollbar-width: thin; scrollbar-color: rgba(226, 177, 74, 0.35) transparent; }
+.chr-s { padding: 10px 0; border-top: 1px solid rgba(226, 177, 74, 0.2); }
+.chr-s:first-child { border-top: 0; padding-top: 2px; }
+.chr-s h4 {
+  margin: 0 0 8px; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--c-bronze-350);
+}
+.chr-s h4 a { letter-spacing: 0; text-transform: none; color: var(--c-bronze-400-4); font-weight: 600; cursor: pointer; }
+.chr-count { min-width: 20px; padding: 0 6px; border-radius: 10px; background: rgba(255, 255, 255, 0.08); color: var(--c-cream-100-2); font-size: 11px; text-align: center; letter-spacing: 0; }
+.chr-empty { margin: 0; font-size: 12.5px; color: var(--c-bronze-350); }
+.chr-obj {
+  width: 100%; display: flex; flex-direction: column; gap: 3px; padding: 10px 12px;
+  border-radius: 12px; border: 0; text-align: left; cursor: pointer;
+  background: var(--sheet-body-bg); color: var(--c-brown-850-soft);
+  box-shadow: 0 0 0 1px var(--c-brown-550-3);
+}
+.chr-obj small { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--nb-ink-dim); }
+.chr-obj b { font-size: 15px; color: var(--c-brown-850-2); }
+.chr-obj span { font-size: 12.5px; color: var(--c-brown-750-2); }
+.chr-obj em { align-self: flex-start; margin-top: 3px; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--c-brown-550-3); font-size: 12px; font-weight: 700; font-style: normal; color: var(--nb-gold-deep); }
+.chr-todo { display: flex; flex-direction: column; gap: 4px; }
+.chr-td {
+  display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; gap: 10px; align-items: center;
+  padding: 5px 8px; border-radius: 10px; border: 1px solid transparent; background: rgba(255, 255, 255, 0.03);
+  color: var(--c-cream-100-2); font: inherit; font-size: 13px; line-height: 1.25; text-align: left; cursor: pointer;
+}
+.chr-td img { width: 26px; height: 26px; object-fit: contain; }
+.chr-td i { font-style: normal; color: var(--c-bronze-350); }
+.chr-td:hover { background: rgba(255, 255, 255, 0.07); border-color: rgba(226, 177, 74, 0.3); }
+.chr-td.is-urgent { border-color: rgba(224, 83, 63, 0.6); background: rgba(179, 38, 30, 0.12); }
+.chr-badge { min-width: 19px; height: 19px; padding: 0 5px; border-radius: 10px; background: var(--c-red-600); border: 1.5px solid var(--c-cream-100-vivid); color: var(--c-white-50-soft); font-size: 11px; font-weight: 800; line-height: 16px; text-align: center; }
+.chr-prod { display: flex; flex-direction: column; gap: 5px; }
+.chr-pr { display: grid; grid-template-columns: 20px 68px minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 12.5px; }
+.chr-pr img { width: 20px; height: 20px; object-fit: contain; }
+.chr-pr em { font-style: normal; font-weight: 700; font-size: 12px; color: var(--c-bronze-350); font-variant-numeric: tabular-nums; }
+.chr-bar { height: 7px; border-radius: 4px; background: rgba(0, 0, 0, 0.45); overflow: hidden; }
+.chr-bar i { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--c-green-650-2), var(--c-green-400)); }
+.chr-bar.is-full i { background: linear-gradient(90deg, var(--c-brown-550-3), var(--c-bronze-400-4)); }
+.chr-harvest {
+  width: 100%; margin-top: 10px; min-height: 34px; display: flex; align-items: center; justify-content: center; gap: 6px;
+  border: 0; border-radius: 10px; cursor: pointer; font: inherit; font-size: 13px; font-weight: 800; color: var(--c-brown-850-2);
+  background: linear-gradient(var(--c-bronze-250), var(--c-bronze-400-4) 45%, var(--c-bronze-450));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 2px 0 var(--nb-gold-deep);
+}
+.chr-harvest img { width: 20px; height: 20px; }
+.chr-harvest:disabled { opacity: 0.45; cursor: default; }
+.chr-log { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 7px; }
+.chr-log li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; font-size: 12.5px; line-height: 1.35; }
+.chr-log time { font-size: 12px; color: rgba(201, 180, 140, 0.75); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.chr-strip { display: flex; flex-direction: column; align-items: center; gap: 10px; padding-top: 6px; }
+.chr-strip button { position: relative; width: 40px; height: 40px; padding: 4px; border-radius: 10px; border: 1px solid rgba(226, 177, 74, 0.3); background: rgba(0, 0, 0, 0.3); cursor: pointer; }
+.chr-strip img { width: 100%; height: 100%; object-fit: contain; }
+.chr-strip .chr-badge { position: absolute; top: -6px; right: -7px; }
+@media (prefers-reduced-motion: no-preference) { .chr-td, .chr-x { transition: background-color 0.15s, border-color 0.15s; } }

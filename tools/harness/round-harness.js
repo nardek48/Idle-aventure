@@ -13062,7 +13062,7 @@ console.log("\n[179] v3.406.0 — Format tablette (mode PC niveau B, prototype)"
     var fs = require("fs"), path = require("path");
     var rd = function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); };
     var ds = rd("js/ui/desktop-scale.js"), css = rd("css/09-wide.css"), idx = rd("index.html"), sw = rd("sw.js");
-    ok(/WIDE_W = 1180/.test(ds) && /classList\.toggle\("wide-mode", mode === "wide"\)/.test(ds), "fenêtre de 1 180 px, classe wide-mode");
+    ok(/WIDE_W = 1440/.test(ds) && /classList\.toggle\("wide-mode", mode === "wide"\)/.test(ds), "fenêtre de 1 440 px (v3.503.0, avant 1 180), classe wide-mode");
     ok(/if \(DesktopScale\.isDesktop\(\)\) return "wide"/.test(ds) && /w >= TABLET_WIDE_MIN_W \? "wide" : "column"/.test(ds) && /portraitChoice\(\) === "rail" \? "wide" : "column"/.test(ds),
       "PC et tablette en paysage : format tablette ; tablette en portrait : selon le réglage");
     ok(idx.indexOf("css/09-wide.css") > idx.indexOf("css/08-desktop.css") && sw.indexOf("./css/09-wide.css") > 0, "09-wide.css chargé après 08-desktop.css et précaché");
@@ -18961,6 +18961,35 @@ console.log("\n[327] Chantier du héros, H4 — reliques des compagnons");
     ok(g.game.companionRelics.inv.length === 0, "fullResetState vide les reliques");
   } catch (err) {
     ok(false, "[327] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[328] v3.503.0 — Grand écran GE-2 et GE-3 : rail complet, bandeau enrichi, Chronique");
+(function () {
+  try {
+    var fs = require("fs"), path = require("path");
+    var rd = function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); };
+    var idx = rd("index.html"), sw = rd("sw.js"), css = rd("css/10-grand-ecran.css");
+    ok(idx.indexOf("css/10-grand-ecran.css") > idx.indexOf("css/09-wide.css") && sw.indexOf("./css/10-grand-ecran.css") > 0, "10-grand-ecran.css chargé après 09-wide.css et précaché");
+    ok(idx.indexOf("js/ui/chronique-view.js") > idx.indexOf("js/ui/hud-dock-view.js") && sw.indexOf("./js/ui/chronique-view.js") > 0, "chronique-view.js chargé après le dock et précaché");
+    ["map", "achievements", "tutorials", "log", "settings"].forEach(function (t) {
+      ok(new RegExp('class="tab-btn tab-wide[^"]*" data-tab="' + t + '"').test(idx), "rail du format large : entrée " + t);
+    });
+    ok(/\.tab-btn\.tab-wide, \.tab-sep \{ display: none !important; \}/.test(rd("css/02-layout.css")), "téléphone : entrées du rail cachées");
+    ok(/^#chronique \{ display: none; \}/m.test(css) && /^\.hud-where, \.hud-res-x \{ display: none; \}/m.test(css), "téléphone : ni Chronique, ni bandeau enrichi");
+    ok(g.PREFS_DEFAULTS && g.PREFS_DEFAULTS.chronique === true, "Chronique ouverte par défaut (préférence de l'appareil)");
+    var hud = g.buildHudHTML();
+    ok(hud.indexOf('id="hud-where"') > 0 && (hud.match(/hud-res-x/g) || []).length === 4, "bandeau : « où j'en suis » et 4 ressources");
+    var C = g.Chronique;
+    ok(typeof C.render === "function" && typeof g.chroniqueKeydown === "function", "Chronique et raccourcis exposés");
+    var td = C.todoHTML();
+    ok(/chr-s/.test(td) && (C.todoItems().length ? /chr-td/.test(td) : /chr-empty/.test(td)), "à faire : les bulles du dock, ou « Rien d'urgent. »");
+    ok(typeof C.objectiveHTML() === "string" && typeof C.villageHTML() === "string", "objectif et village rendus sans erreur");
+    g.gameLog = [{ text: "Essai", type: "loot", at: Date.now() - 125 * 60000 }];
+    ok(/<li class="is-loot"><span>Essai<\/span><time>2 h<\/time><\/li>/.test(C.journalHTML()), "journal : texte et âge (2 h)");
+    ok(g.CHRON_KEYS["1"] === "campement" && g.CHRON_KEYS["5"] === "map", "raccourcis 1 à 5 : Campement … Carte");
+  } catch (err) {
+    ok(false, "[328] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
 })();
 

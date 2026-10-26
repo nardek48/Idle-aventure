@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.502.0"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.503.0"; // <- à incrémenter à CHAQUE livraison
 var CACHE_NAME = "quest-idle-" + CACHE_VERSION;
 var IMAGE_CACHE = "aethervale-images"; // v3.457.4 : hors du préfixe quest-idle-, jamais vidé par "activate"
 var imagesRevalidated = {};             // URL déjà revérifiées depuis le démarrage de ce service worker
@@ -95,6 +95,7 @@ var PRECACHE_APP_SHELL = [
   "./css/07-responsive.css",
   "./css/08-desktop.css",
   "./css/09-wide.css",
+  "./css/10-grand-ecran.css", // v3.503.0 : NOUVEAU fichier (grand écran)
   "./css/99-icon-assets.css",
   "./js/core/constants.js",
   "./js/core/combat-actors.js",
@@ -211,6 +212,7 @@ var PRECACHE_APP_SHELL = [
   "./js/ui/fil-rouge-view.js",
   "./js/ui/or-a-investir-view.js", // v3.429.24 : NOUVEAU fichier (bulle « or à investir »)
   "./js/ui/hud-dock-view.js", // v3.396.0 : NOUVEAU fichier (bulles de raccourci du HUD)
+  "./js/ui/chronique-view.js", // v3.503.0 : NOUVEAU fichier (Chronique du grand écran)
   "./js/ui/return-view.js",
   "./js/ui/boss-moment-view.js",
   "./js/ui/patrol-view.js",

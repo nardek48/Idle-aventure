@@ -12,7 +12,7 @@
    ========================================================= */
 
 :root {
-  --wide-w: 1180px;       /* largeur de la fenêtre */
+  --wide-w: 1440px;       /* largeur de la fenêtre (v3.503.0 : 1 180 → 1 440, ui/desktop-scale.js WIDE_W) */
   --wide-rail: 104px;     /* largeur du menu de gauche */
   --kfh: 62px;            /* hauteur du cap du cadre (celle du téléphone) */
 }
