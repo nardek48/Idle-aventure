@@ -19,6 +19,9 @@ var ENC = opt("--enc") ? opt("--enc").split(",").map(Number) : null;
 var ENC2 = opt("--enc2") ? opt("--enc2").split(",").map(Number) : null;
 var ENC3 = opt("--enc3") ? opt("--enc3").split(",").map(Number) : null;
 var TAILLER = ARGV.indexOf("--tailler") >= 0;
+// audit P5 (26/10) : --set q:pv,puissance[;q:pv,puissance] (essai sur n'importe quelle quête) ; --quete q : ce seul cas
+var SET = opt("--set") ? opt("--set").split(";").map(function (x) { var p = x.split(":"); return [p[0], p[1].split(",").map(Number)]; }) : [];
+var SEULE = opt("--quete");
 if (!SAVES.length) { console.log("--save <fichier> attendu (sauvegarde de fin de Crypte)"); process.exit(1); }
 
 var extra = function () {
@@ -26,6 +29,7 @@ var extra = function () {
     if (!x[1]) return;
     g.ADVENTURE_QUESTS[x[0]].encounterHpMult = x[1][0]; g.ADVENTURE_QUESTS[x[0]].enemyPowerMult = x[1][1];
   });
+  SET.forEach(function (x) { g.ADVENTURE_QUESTS[x[0]].encounterHpMult = x[1][0]; g.ADVENTURE_QUESTS[x[0]].enemyPowerMult = x[1][1]; });
   function party(ids) {
     Object.keys(g.COMPANIONS_DB).forEach(function (id) { var st = g.CompanionManager.state(id); if (st) st.present = ids.indexOf(id) !== -1; });
     g.CompanionManager.refreshParty();
@@ -35,8 +39,10 @@ var extra = function () {
     { label: "Étape 2 · Ce qui affleure (Wenna, Maddoc)", q: "aq_montagne_pentes", party: ["wenna", "maddoc"] },
     { label: "Étape 3 · Celui qui taille (Sarkel, Wenna)", q: "aq_montagne_sarkel", party: ["sarkel", "wenna"] },
     { label: "Étape 3 · Celui qui taille (Sarkel, Maddoc)", q: "aq_montagne_sarkel", party: ["sarkel", "maddoc"] },
-    { label: "Étape 4 · Ça ne fond pas (Sarkel, Wenna)", q: "aq_montagne_veines", party: ["sarkel", "wenna"] }
-  ];
+    { label: "Étape 4 · Ça ne fond pas (Sarkel, Wenna)", q: "aq_montagne_veines", party: ["sarkel", "wenna"] },
+    { label: "Étape 8 · acte II, Tri (Sarkel, Wenna)", q: "aq_montagne_tri", party: ["sarkel", "wenna"], acte2: true },
+    { label: "Étape 10 · acte II, Ouvrage (Sarkel, Wenna)", q: "aq_montagne_ouvrage", party: ["sarkel", "wenna"], acte2: true }
+  ].filter(function (ct) { return SEULE ? ct.q === SEULE : !ct.acte2; });
   function mesure(ct, saveTxt) {
     var n = 0, ok = 0, rounds = 0, hp = 0, v = 0;
     for (var i = 0; i < RUNS; i++) {
@@ -62,7 +68,7 @@ var extra = function () {
   }
 
   console.log("MONTAGNE, ACTE I — " + RUNS + " runs par sauvegarde, SANS potion, Grimoire" + (TAILLER ? " + « Veine intacte → Tailler »" : " (veines laissées)")
-    + ((ENC || ENC2 || ENC3) ? " · essai " + JSON.stringify({ e2: ENC, e3: ENC2, e4: ENC3 }) : " · réglage du jeu"));
+    + (SET.length ? " · essai " + JSON.stringify(SET) : "") + ((ENC || ENC2 || ENC3) ? " · essai " + JSON.stringify({ e2: ENC, e3: ENC2, e4: ENC3 }) : " · réglage du jeu"));
   console.log("Cibles : aucun mort, 25 à 35 % des PV restants en fin d'étape, 3 à 5 rounds par combat.\n");
   var textes = SAVES.map(function (f) { return fs.readFileSync(f, "utf8"); });
   CAS.forEach(function (ct) {

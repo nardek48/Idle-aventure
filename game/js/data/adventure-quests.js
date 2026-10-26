@@ -784,7 +784,7 @@ var ADVENTURE_QUESTS = {
     ],
     // banc (montagne-acte1-bench, sauvegardes de fin de Crypte, 12 runs, sans potion, veines laissées) :
     // 100 / 92 / 92 % de réussite, 4,9 / 3,5 / 4,2 rounds par combat, 41 / 53 / 36 % des PV (Ch. / Rô. / Ma.)
-    encounterHpMult: 1.6,
+    encounterHpMult: 2.24, // audit P5 (26/10) : 1,6 → 2,24, combats plus longs
     enemyPowerMult: 8,
     name: "Ce qui affleure",
     story: "Aux Pentes de cendres, une veine bat dans la roche. Les bêtes d'ici se tiennent autour.",
@@ -815,7 +815,7 @@ var ADVENTURE_QUESTS = {
     ],
     // banc (12 runs, sans potion) : avec Sarkel et Wenna 100 / 100 / 75 %, 53 / 60 / 30 % des PV ; avec Sarkel et
     // Maddoc 100 %, 62 / 66 / 31 %. 3,2 à 4,8 rounds. Sarkel n'a ni soin ni garde : plus dur, le Mage tombe.
-    encounterHpMult: 1.5,
+    encounterHpMult: 2.1, // audit P5 (26/10) : 1,5 → 2,1, combats plus longs
     enemyPowerMult: 4,
     name: "Celui qui taille",
     story: "Sarkel tient la pioche à deux mains, plus bas. Il taille entre deux coups des autres.",
@@ -846,7 +846,7 @@ var ADVENTURE_QUESTS = {
       { group: ["minordemon", "ifrit", "lavagolem"], groupHpMult: 0.35 }
     ],
     // banc (12 runs, Sarkel et Wenna, sans potion) : 100 / 92 / 92 %, 53 / 58 / 19 % des PV, 4,7 à 5 veines taillées
-    encounterHpMult: 1.5,
+    encounterHpMult: 2.1, // audit P5 (26/10) : 1,5 → 2,1, combats plus longs
     enemyPowerMult: 4,
     name: "Ça ne fond pas",
     story: "Des éclats noirs, avec une ligne bleue dedans. Il en faut plus : Brannoc voudra voir.",
@@ -931,8 +931,8 @@ var ADVENTURE_QUESTS = {
       { group: ["ifrit", "lavagolem"], groupHpMult: 0.55 },
       { group: ["minordemon", "ifrit", "lavagolem"], groupHpMult: 0.35 }
     ],
-    encounterHpMult: 2.6, // H1 (R1) : 1,8 → 2,6
-    enemyPowerMult: 6.5, // banc : à 7,5, 100 / 100 / 63 % ; à 6,5, 90 / 100 / 80 %, 46 à 72 % des PV (Ch. / Rô. / Ma.)
+    encounterHpMult: 3.1, // H1 (R1) : 1,8 → 2,6 ; audit P1 (26/10) : → 3,1
+    enemyPowerMult: 7, // audit P1 : 6,5 → 7. Avant : à 7,5, 100 / 100 / 63 % ; à 6,5, 90 / 100 / 80 %, 46 à 72 % des PV (Ch. / Rô. / Ma.)
     name: "L'ouvrage inachevé",
     story: "Dans la salle ronde, le golem inachevé a bougé. Des façonnés montent de la Gueule. Ils portent de la Cendre.",
     icon: "./images/Icons/quest_icons/exploration/exploration3.webp",
@@ -960,8 +960,8 @@ var ADVENTURE_QUESTS = {
       { group: ["ifrit", "minordemon", "dragonling"], groupHpMult: 0.35 },
       { group: ["lavagolem", "lavagolem", "minordemon"], groupHpMult: 0.35 }
     ],
-    encounterHpMult: 2.6, // H1 (R1) : 1,8 → 2,6
-    enemyPowerMult: 6.5, // banc : 80 / 100 / 90 %, 30 à 59 % des PV (Ch. / Rô. / Ma.)
+    encounterHpMult: 3.1, // H1 (R1) : 1,8 → 2,6 ; audit P1 (26/10) : → 3,1
+    enemyPowerMult: 7, // audit P1 : 6,5 → 7. Avant : 80 / 100 / 90 %, 30 à 59 % des PV (Ch. / Rô. / Ma.)
     name: "Ceux qu'il a triés",
     story: "Sur le plateau, des façonnés, chacun à sa place, comme des outils rangés.",
     icon: "./images/Icons/quest_icons/exploration/exploration3.webp",
@@ -988,12 +988,12 @@ var ADVENTURE_QUESTS = {
       { group: ["dragonling", "lavagolem", "ifrit"], groupHpMult: 0.35 },
       { group: ["minordemon", "ifrit"], groupHpMult: 0.55 }
     ],
-    encounterHpMult: 2.6, // H1 (R1) : 1,8 → 2,6
-    enemyPowerMult: 6.5,
+    encounterHpMult: 3.1, // H1 (R1) : 1,8 → 2,6 ; audit P1 (26/10) : → 3,1
+    enemyPowerMult: 7, // audit P1 : 6,5 → 7
     bossId: "ancientdragon",
     // banc (montagne-acte3-bench --quetes, sauvegardes de fin de chapitre, 10 runs, Ch. / Rô. / Ma.) : 2,1 / 0,85 -> 60 / 100 / 10 % ;
     // 1,8 / 0,75 -> 100 / 100 / 50 % ; 1,6 / 0,65 -> 100 / 100 / 80 %. Retenu entre les deux, pour le Mage.
-    bossHpMult: 2.5, // H1 (R1) : 1,7 → 2,5
+    bossHpMult: 3.5, // H1 (R1) : 1,7 → 2,5 ; audit P1 : → 3,5
     bossPowerMult: 0.75, // H1 (R1) : 0,7 → 0,75
     bossPhases: [
       { atPct: 1, sorts: true, label: "il regarde vos mains", line: "Ses yeux passent sur chacun, et s'arrêtent sur les mains." },

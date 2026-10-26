@@ -769,8 +769,9 @@ function renderHerosSheet(isHerosTab) {
   if (!isHerosTab || !herosOpenSheet) { root.innerHTML = ""; return; }
   // Un achat de stat re-rend tout : on garde la position de lecture de la feuille.
   var body = root.querySelector(".ksheet-body");
-  var keep = body ? body.scrollTop : 0;
+  var keep = body && root.getAttribute("data-sheet") === herosOpenSheet ? body.scrollTop : 0; // autre feuille : on repart en haut
   root.innerHTML = buildHerosSheetHTML();
+  root.setAttribute("data-sheet", herosOpenSheet);
   body = root.querySelector(".ksheet-body");
   if (body && keep) body.scrollTop = keep;
 }

@@ -100,6 +100,7 @@ var DATA_TEXT_FIELDS = {
   LEGENDARY_POWER_BY_ID: ["*.label", "*.desc"],
   SET_BONUS_CONFIG: ["tiers.*.bonuses.*.name"],
   POTIONS_DB: ["*.name", "*.desc"],
+  COMPANION_RELIC_FAMILIES: ["*.name"], // H4 : reliques des compagnons
   COMBAT_ITEMS: ["*.name", "*.desc", "*.con"], // v3.441.0 : objets de combat (v3.442.0 : contrepartie)
   HEALING_POTIONS_DB: ["*.name"],
   UPGRADES: ["*.name", "*.desc"],

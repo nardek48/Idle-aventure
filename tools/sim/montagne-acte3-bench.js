@@ -3,7 +3,7 @@
    (Golem-forge, campement, Ifrit qui trie, Wyrm de cendres) et la quête de l'étape 14, sur le vrai moteur.
    Le héros est celui d'une vraie sauvegarde (SAVE_OUT de campagne-harness.js), groupe et potions compris.
 
-   Cibles (Conception, MT7) : le Wyrm 65-80 % par classe, Rôdeur ≥ 60 % ; la quête sans mort, 25-35 % des PV.
+   Cibles (Conception, MT7 révisé le 26/10, audit P2) : avec potions, 25 à 40 % des PV restants et moins de 10 % de défaites.
 
    USAGE : node tools/sim/montagne-acte3-bench.js . --save a.json[,b.json] [--runs N] [--diff x] [--boss p,e]
            [--quete pv,puissance] [--sans-potion]
@@ -31,6 +31,17 @@ var ENTR = opt("--entrainement") !== null ? Number(opt("--entrainement")) : null
 // recharge −1 dès le rang `cd` (0 = jamais), coût −cout par rang (0) ; appliqué après les talents
 var RANG = opt("--rang") ? opt("--rang").split(",").map(Number) : null;
 var TALENTS_MAX = ARGV.indexOf("--talents-max") >= 0; // H3 : chaque talent possédé monté à son rang maximum
+var COMP_UPG = opt("--comp-upg") !== null ? Number(opt("--comp-upg")) : null; // H4 : améliorations de tous les compagnons posées à N (+6 % par cran)
+var COMP_PCT = opt("--comp-pct") !== null ? Number(opt("--comp-pct")) : null; // H4 : plancher des compagnons, part du coup moyen du héros
+var VICTIMES = ARGV.indexOf("--victimes") >= 0; // H4 : qui encaisse les coups ennemis (héros ou compagnon)
+var REL_FLOOR = opt("--rel-floor") !== null ? Number(opt("--rel-floor")) : null; // H4 (V1) : plancher de menace relatif
+var COMP_VIG = opt("--comp-vig") !== null ? Number(opt("--comp-vig")) : null; // H4 (V1) : N paliers de Vigueur en plus aux compagnons
+var WENNA_SOIN = opt("--wenna-soin") !== null ? Number(opt("--wenna-soin")) : null; // H4 partie C : soin de Wenna (part des PV max)
+// audit d'équilibrage (26/10) : --sans h1,h2,cpr,cpf,rel : levier coupé sur la sauvegarde (entraînement ≤ 150, rangs des sorts,
+// rangs des compagnons, plancher de dégâts des compagnons, reliques)
+var SANS = opt("--sans") ? opt("--sans").split(",") : [];
+var RELIQUES = opt("--reliques") ? opt("--reliques").split(",") : null; // H4 reliques : ces familles (rang 5, Montagne) sur chaque compagnon débloqué
+var COMP_RANG = opt("--comp-rang") !== null ? Number(opt("--comp-rang")) : null; // H4 partie C : rang de compétence de tous les compagnons ; affiche la Cendre vive par sortie
 // v3.492.15 (fiche objets de combat) : --plafond heal,surge,shell,sort,burn — la mécanique entièrement annulée (borne haute d'un objet)
 var PLAFOND = opt("--plafond") ? opt("--plafond").split(",") : [];
 var SANS_REGLE = opt("--sans-regle") ? opt("--sans-regle").split(",") : []; // retire ces conditions du Grimoire (joueur sans la règle)
@@ -75,11 +86,37 @@ var extra = function () {
     };
     console.log("RANG " + RANG.join(",") + " sur les trois techniques");
   }
+  if (COMP_PCT !== null) { g.COMPANION_HERO_DMG_PCT = COMP_PCT; console.log("PLANCHER COMPAGNONS : " + COMP_PCT); }
+  if (VICTIMES) {
+    var pv0 = g.CombatEngine.pickVictim.bind(g.CombatEngine), VIC = {};
+    g.CombatEngine.pickVictim = function () { var v = pv0(); var k = v && v.companionId ? v.companionId : "héros"; VIC[k] = (VIC[k] || 0) + 1; return v; };
+    process.on("exit", function () { var t = 0; Object.keys(VIC).forEach(function (k) { t += VIC[k]; });
+      console.log("VICTIMES : " + Object.keys(VIC).map(function (k) { return k + " " + Math.round(100 * VIC[k] / t) + " %"; }).join(" · ") + " (" + t + " coups)"); });
+  }
+  if (REL_FLOOR !== null) { g.THREAT_REL_FLOOR = REL_FLOOR; console.log("PLANCHER DE MENACE : " + REL_FLOOR); }
+  if (WENNA_SOIN !== null) { g.COMPANIONS_DB.wenna.skill.value = WENNA_SOIN; console.log("SOIN DE WENNA : " + WENNA_SOIN); }
   function charge(saveTxt, seed) {
     B.seedRng(seed);
     g.restoreBaseState(JSON.parse(saveTxt));
     kit(seed); B.seedRng(seed);
     if (TALENTS_MAX) { g.TalentManager.getNodes().forEach(function (e) { if (g.TalentManager.has(e.node.id)) g.game.talents[e.node.id] = g.TalentManager.maxRank(e.node); }); g.StatsSystem.recalcStats(); }
+    if (COMP_VIG !== null) { Object.keys(g.game.companions || {}).forEach(function (k) { var st = g.game.companions[k]; st.upgrades += COMP_VIG; st.vigueur = (st.vigueur || 0) + COMP_VIG; }); g.CompanionManager.healAll(); }
+    if (COMP_RANG !== null) Object.keys(g.game.companions || {}).forEach(function (k) { g.game.companions[k].skillRank = COMP_RANG; });
+    if (COMP_UPG !== null) { Object.keys(g.game.companions || {}).forEach(function (k) { g.game.companions[k].upgrades = COMP_UPG; }); g.CompanionManager.healAll(); }
+    if (SANS.indexOf("h1") >= 0) g.HEROS_TRAINING_UPGRADE_IDS.forEach(function (id) { var v = Math.min(150, g.game.upgrades[id] || 0); g.game.upgrades[id] = v; g.UPGRADES.filter(function (u) { return u.id === id; })[0].apply(v); });
+    if (SANS.indexOf("h2") >= 0) { g.game.skillRanks = {}; if (g.SkillRanks) g.SkillRanks._cache.src = null; }
+    if (SANS.indexOf("cpr") >= 0) Object.keys(g.game.companions || {}).forEach(function (k) { g.game.companions[k].skillRank = 0; });
+    if (SANS.indexOf("rel") >= 0) Object.keys(g.game.companions || {}).forEach(function (k) { g.game.companions[k].relics = [null, null, null]; });
+    if (SANS.indexOf("cpf") >= 0) g.COMPANION_HERO_DMG_PCT = 0;
+    if (SANS.length) g.CompanionManager.healAll();
+    if (RELIQUES) {
+      g.game.companionRelics = { inv: [], next: 1, pity: 0 };
+      Object.keys(g.game.companions || {}).forEach(function (k) {
+        g.game.companions[k].relics = [null, null, null];
+        RELIQUES.forEach(function (f, i) { var id = g.game.companionRelics.next++; g.game.companionRelics.inv.push({ id: id, f: f, w: 4 }); g.CompanionRelics.equip(k, i, id); });
+      });
+      g.CompanionManager.healAll();
+    }
     if (ENTR !== null) g.HEROS_TRAINING_UPGRADE_IDS.forEach(function (id) { g.game.upgrades[id] = ENTR; g.UPGRADES.filter(function (u) { return u.id === id; })[0].apply(ENTR); });
     g.ensureGrimoireRules();
     B.run("game.combatMode = 'grimoire'; EquipmentManager.recalcStats(); game.heroHp = game.heroMaxHp; CompanionManager.healAll();");
@@ -93,8 +130,12 @@ var extra = function () {
     g.game.dungeonTierCleared = cleared; g.game.dungeonRunsUsed = {};
     if (g.game.dungeonRun) g.game.dungeonRun.active = false;
     var boss0 = Number(g.game.dungeonBossClears || 0);
+    var ash0 = g.WarehouseManager.getAmount("cendre_vive");
+    process.__ash = process.__ash || { n: 0, sum: 0 };
+    if (COMP_RANG !== null && !process.__ashHook) { process.__ashHook = true; process.on("exit", function () { console.log("CENDRE VIVE par sortie (fin de sortie, campement compris) : " + (process.__ash.sum / Math.max(1, process.__ash.n)).toFixed(2) + " sur " + process.__ash.n + " sorties"); }); }
     g.DungeonManager.start(5, []);
     if (!g.game.dungeonRun.active) return null;
+    setTimeout(function () {}, 0);
     var rounds = 0, guard = 8000, camp = false, hpCamp = null, hpBoss = null, pot0 = JSON.stringify(g.game.healingPotionsOwned || {});
     while (g.game.dungeonRun.active && g.game.heroHp > 0 && guard-- > 0) {
       if (g.DungeonManager.isCampPending()) {
@@ -108,6 +149,7 @@ var extra = function () {
       if (!autoRound()) break;
       rounds++;
     }
+    process.__ash.n += 1; process.__ash.sum += g.WarehouseManager.getAmount("cendre_vive") - ash0;
     return { camp: camp, hpCamp: hpCamp, boss: hpBoss !== null, hpBoss: hpBoss, ok: Number(g.game.dungeonBossClears || 0) > boss0, rounds: rounds,
       hp: Math.max(0, g.game.heroHp) / g.game.heroMaxHp };
   }
@@ -152,7 +194,7 @@ var extra = function () {
   }
   console.log("GUEULE DU VOLCAN — " + RUNS + " runs par sauvegarde, Grimoire, " + (SANS_POTION ? "SANS potion" : "potions de la sauvegarde")
     + (DIFF5 ? " · essai difficultyMult " + DIFF5 : " · difficultyMult " + d.difficultyMult) + (WYRM ? " · essai Wyrm p" + WYRM[0] + " e" + WYRM[1] : ""));
-  console.log("Cible : le Wyrm 65-80 % par classe, Rôdeur ≥ 60 %.\n");
+  console.log("Cible (MT7, 26/10) : avec potions, 25 à 40 % des PV restants, moins de 10 % de défaites.\n");
   var textes = SAVES.map(function (f) { return fs.readFileSync(f, "utf8"); });
   textes.forEach(function (t, k) {
     var cls = JSON.parse(t).heroId || path.basename(SAVES[k]);

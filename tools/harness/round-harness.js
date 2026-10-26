@@ -18834,6 +18834,136 @@ console.log("\n[324] Chantier du héros, H3 — rangs de talents (5 nœuds par c
   }
 })();
 
+console.log("\n[325] Chantier du héros, H4 — compagnons : plancher 10 % du héros, entraînement Ardeur / Vigueur, remise à zéro");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
+    var game = g.game, CM = g.CompanionManager;
+    ok(g.COMPANION_HERO_DMG_PCT === 0.10 && g.COMPANION_TRAINING_PCT === 0.08, "plancher 10 %, palier +8 %");
+    // prix : la grille d'avant pour les 5 premiers paliers, puis le bloc du monde suivant
+    ok(g.getCompanionUpgradeCost("wenna", 0) === 60 && g.getCompanionUpgradeCost("wenna", 4) === 900 && g.getCompanionUpgradeCost("wenna", 5) === 240 && g.getCompanionUpgradeCost("wenna", 24) === 20000, "Wenna : 60 → 900 en Forêt, puis 240 au 6e palier (Désert), 20 000 au 25e");
+    ok(g.getCompanionUpgradeCost("sarkel", 0) === 1920, "Sarkel : grille de la Montagne dès le 1er palier");
+    // bonus : équilibré, Ardeur, Vigueur
+    var b = g.getCompanionTrainingBonus("wenna", 8, 2, 1);
+    ok(b.eq === 5 && Math.abs(b.dmg - 1.46) < 1e-9 && Math.abs(b.hp - 1.38) < 1e-9, "5 équilibrés + 2 Ardeur + 1 Vigueur : dégâts ×1,46, PV ×1,38");
+    // longueur de ligne selon le monde atteint
+    var st = CM.state("wenna"); st.unlocked = true;
+    game.worldsEverReached = { 0: true }; ok(CM.trainingMax("wenna") === 5, "Forêt : 5 paliers");
+    game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true, 4: true }; ok(CM.trainingMax("wenna") === 25 && CM.trainingMax("sarkel") === 5, "Montagne : Wenna 25, Sarkel 5");
+    // achat au choix
+    st.upgrades = 5; st.ardeur = 0; st.vigueur = 0; game.gold = 1000;
+    ok(CM.buyUpgrade("wenna", "vigueur") && st.upgrades === 6 && st.vigueur === 1 && game.gold === 760, "6e palier en Vigueur, 240 or");
+    ok(CM.buyUpgrade("wenna") && st.ardeur === 1 && game.gold === 280, "7e palier en Ardeur par défaut, 480 or");
+    // remise à zéro : rend l'or des paliers choisis, garde les équilibrés
+    ok(CM.resetTraining("wenna") === 720 && st.upgrades === 5 && st.ardeur === 0 && st.vigueur === 0 && game.gold === 1000, "remise à zéro : 720 or rendus, 5 équilibrés gardés");
+    ok(CM.resetTraining("wenna") === false, "rien à rendre : refus");
+    // plancher indexé sur le héros
+    st.upgrades = 0; var base = g.getCompanionStats("wenna", 4, 0, 0, 0).damage, floor = CM.heroDamageFloor("wenna");
+    ok(CM.statsOf("wenna").damage === Math.max(base, floor) || g.WorldManager.worldIndex !== 4, "dégâts = max(statistiques, 10 % du coup moyen du héros)");
+    // sauvegarde
+    st.upgrades = 7; st.ardeur = 1; st.vigueur = 1;
+    var sv = g.buildSaveData();
+    ok(sv.companions.wenna.ardeur === 1 && sv.companions.wenna.vigueur === 1 && sv.companions.wenna.upgrades === 7, "buildSaveData garde Ardeur et Vigueur");
+    g.restoreBaseState(JSON.parse(JSON.stringify(sv)));
+    var r = g.CompanionManager.state("wenna");
+    ok(r.upgrades === 7 && r.ardeur === 1 && r.vigueur === 1, "restoreBaseState les rend (7 paliers, au-delà des 5 d'avant)");
+    // V1 : plancher de menace relatif, la Vigueur attire les coups
+    ok(g.THREAT_REL_FLOOR === 0.15 && g.COMPANION_VIGUEUR_THREAT === 0.10, "plancher de menace 15 % du héros, +10 % de menace par palier de Vigueur");
+    r.unlocked = true; r.vigueur = 3; r.upgrades = Math.max(r.upgrades, 3);
+    var act = g.CompanionManager.buildActor("wenna");
+    ok(Math.abs(act.threatMult - 0.7 * 1.3) < 1e-9, "Wenna, 3 paliers de Vigueur : menace ×0,7 × 1,3");
+    var hero = g.CombatActors.heroActor(), rnd = Math.random, n = 0;
+    g.CombatActors.ensure(); var c = g.CombatActors.ensure();
+    c.allies.length = 0; c.allies.push(hero); act.hp = 100; c.allies.push(act);
+    hero.threat = 1000; act.threat = 0;
+    try { Math.random = function () { return 0.99; }; n = g.CombatEngine.pickVictim() === act ? 1 : 0; } finally { Math.random = rnd; }
+    ok(n === 1, "menace nulle : le compagnon reste dans le tirage grâce au plancher (15 % × 1 000 × 0,91 ≈ 137 sur 1 137)");
+  } catch (err) {
+    ok(false, "[325] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[326] Chantier du héros, H4 partie C — rangs des compétences des compagnons");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
+    var game = g.game, CM = g.CompanionManager;
+    ["wenna", "maddoc", "edda", "ysolt", "sarkel"].forEach(function (id) { CM.state(id).unlocked = true; });
+    var tot = 0; g.COMPANION_SKILL_RANK_PRICES.forEach(function (p) { tot += p.gold; });
+    ok(tot === 65500, "un compagnon de 0 à 5 : 65 500 or (moitié des sorts du héros)");
+    var v = function (id, r) { return CM.skillOf(id, r); };
+    ok(v("wenna", 0).value === 0.18 && v("wenna", 5).value === 0.28, "Wenna : soin 18 → 28 %");
+    CM.state("maddoc").voie = "tronc"; ok(v("maddoc", 5).value === 0.22, "Maddoc, le tronc : Planté 12 → 22 %");
+    CM.state("maddoc").voie = "affut"; ok(v("maddoc", 5).value === 3.5, "Maddoc, l'affût : Tir ajusté ×2,5 → ×3,5");
+    ok(v("edda", 5).value === 2, "Edda : ×1,5 → ×2");
+    ok(v("ysolt", 2).charges === 1 && v("ysolt", 3).charges === 2, "Ysolt : une charge de plus au rang 3");
+    ok(!v("sarkel", 2).bonusAsh && v("sarkel", 3).bonusAsh === 1 && v("sarkel", 4).charges === 1 && v("sarkel", 5).charges === 2, "Sarkel : +1 Cendre au rang 3, 2e taille au rang 5");
+    ok(g.COMPANIONS_DB.wenna.skill.value === 0.18, "la donnée d'origine n'est jamais modifiée");
+    CM.state("ysolt").skillRank = 3; ok(CM.chargesMax("ysolt") === 2, "chargesMax lit le rang (Ysolt rang 3 : 2)");
+    // achat, monde, sauvegarde
+    game.worldsEverReached = { 0: true }; game.gold = 1000;
+    ok(CM.skillRankStatus("wenna") === "short", "Forêt : rang 1 ouvert, sans Résine");
+    g.WarehouseManager.addResource("resine_durcie", 2, true);
+    ok(CM.buySkillRank("wenna") && CM.skillRank("wenna") === 1 && game.gold === 500, "rang 1 : 500 or et 2 Résines");
+    ok(CM.skillRankStatus("wenna") === "lock", "rang 2 fermé tant que le Désert n'est pas atteint");
+    var sv = g.buildSaveData();
+    ok(sv.companions.wenna.skillRank === 1 && sv.companions.ysolt.skillRank === 3, "buildSaveData garde les rangs");
+    g.restoreBaseState(JSON.parse(JSON.stringify(sv)));
+    ok(g.CompanionManager.skillRank("wenna") === 1 && g.CompanionManager.skillRank("ysolt") === 3, "restoreBaseState les rend");
+  } catch (err) {
+    ok(false, "[326] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[327] Chantier du héros, H4 — reliques des compagnons");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
+    var game = g.game, CM = g.CompanionManager, CR = g.CompanionRelics;
+    ["wenna", "maddoc"].forEach(function (id) { CM.state(id).unlocked = true; CM.state(id).present = true; });
+    ok(Array.isArray(game.companionRelics.inv) && game.companionRelics.pity === 0, "état par défaut : inventaire vide, pitié 0");
+    // emplacements aux paliers 5 / 15 / 25
+    CM.state("wenna").upgrades = 4; ok(CR.slotsOpen("wenna") === 0, "palier 4 : aucun emplacement");
+    CM.state("wenna").upgrades = 15; ok(CR.slotsOpen("wenna") === 2, "palier 15 : 2 emplacements");
+    CM.state("wenna").upgrades = 25; ok(CR.slotsOpen("wenna") === 3, "palier 25 : 3 emplacements");
+    // tirage de patrouille : chance, pitié, monde
+    var rp = CR.rollPatrol(2, "forest", function () { return 0.99; });
+    ok(rp && rp.w === 0 && game.companionRelics.pity === 0, "audit P4 : la première patrouille terminée rapporte une relique, même sans chance");
+    game.companionRelics.inv = [];
+    var r0 = CR.rollPatrol(8, "forest", function () { return 0.99; });
+    ok(r0 === null && game.companionRelics.pity === 8, "8 h sans chance : rien, pitié 8 h");
+    var r1 = CR.rollPatrol(16, "mountain", function () { return 0.99; });
+    ok(r1 && r1.w === 4 && CR.rank(r1) === 5 && game.companionRelics.pity === 0, "24 h cumulées : relique garantie, monde de la patrouille (Montagne, rang 5)");
+    var p1 = 1 - Math.pow(0.96, 1); ok(Math.abs(p1 - 0.04) < 1e-9, "1 h : 4 % de chance");
+    // effets
+    var inv = game.companionRelics.inv;
+    inv.push({ id: 50, f: "croc", w: 4 }, { id: 51, f: "ecorce", w: 4 }, { id: 52, f: "croc", w: 0 }, { id: 53, f: "sablier", w: 4 }, { id: 54, f: "talisman", w: 2 });
+    var d0 = CM.statsOf("wenna").damage, h0 = CM.statsOf("wenna").maxHp;
+    ok(CR.equip("wenna", 0, 50) && CR.equip("wenna", 1, 51), "Croc et Écorce équipés");
+    ok(!CR.equip("wenna", 2, 52), "une seule relique par famille sur un compagnon");
+    ok(CM.statsOf("wenna").damage === Math.floor(d0 * 1.15) || Math.abs(CM.statsOf("wenna").damage - d0 * 1.15) <= 1, "Croc rang 5 : +15 % de dégâts");
+    ok(Math.abs(CM.statsOf("wenna").maxHp - h0 * 1.15) <= 1, "Écorce rang 5 : +15 % de PV");
+    ok(CR.equip("wenna", 2, 53) && CM.skillOf("wenna").cooldown === g.COMPANIONS_DB.wenna.skill.cooldown - 2, "Sablier rang 5 : recharge −2");
+    ok(g.COMPANIONS_DB.wenna.skill.cooldown === 4, "la donnée d'origine n'est jamais modifiée");
+    CM.state("maddoc").upgrades = 5;
+    ok(CR.equip("maddoc", 0, 50) && CR.wornBy(50) === "maddoc" && CR.worn("wenna")[0] === null, "équiper une relique portée la retire à l'autre compagnon");
+    ok(CR.equip("maddoc", 0, 54) && Math.abs(CR.heroDamageBonus() - 0.03) < 1e-9, "Talisman rang 3 d'un compagnon présent : héros +3 %");
+    CM.state("maddoc").present = false; ok(CR.heroDamageBonus() === 0, "compagnon absent : Talisman sans effet");
+    CM.state("wenna").upgrades = 4; ok(CR.active("wenna").length === 0 && CM.skillOf("wenna").cooldown === 4, "emplacement fermé : relique inactive");
+    CM.state("wenna").upgrades = 25;
+    ok(CR.unequip("wenna", 2) && CR.worn("wenna")[2] === null, "retirer une relique");
+    // sauvegarde
+    var sv = g.buildSaveData();
+    ok(sv.companionRelics && sv.companionRelics.inv.length === inv.length && sv.companions.wenna.relics[1] === 51, "buildSaveData garde l'inventaire et les emplacements");
+    g.restoreBaseState(JSON.parse(JSON.stringify(sv)));
+    ok(g.CompanionRelics.byId(51) && g.CompanionRelics.wornBy(51) === "wenna" && g.game.companionRelics.next === sv.companionRelics.next, "restoreBaseState les rend");
+    run("fullResetState();");
+    ok(g.game.companionRelics.inv.length === 0, "fullResetState vide les reliques");
+  } catch (err) {
+    ok(false, "[327] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

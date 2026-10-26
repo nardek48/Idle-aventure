@@ -89,6 +89,7 @@ var COUNTER_CONFIRMATION_ROUNDS = 1;
    reçues par le héros lorsqu'un compagnon l'accompagne. */
 var THREAT_DECAY = 0.7;
 var THREAT_FLOOR = 0.15;
+var THREAT_REL_FLOOR = 0.15; // H4 (accord Seb, 15 %) : part minimale d'un compagnon, relative à la menace du héros (× sa menace propre)
 var COMPANION_FLAT_DEFENSE = 0.10;   // un compagnon n'a pas d'équipement : réduction plate
 
 var COMBAT_MODES = ["tactique", "grimoire"];
@@ -856,10 +857,12 @@ var CombatEngine = {
     if (list.length <= 1) return hero;           // aucun compagnon : chemin historique
 
     var total = 0, weights = [];
+    var heroW = Math.max(THREAT_FLOOR, Number(hero.threat || 0) * Number(hero.threatMult || 1)); // H4 : base du plancher relatif
     for (var i = 0; i < list.length; i++) {
       var a = list[i];
       var w = (Number(a.threat || 0) * Number(a.threatMult || 1));
       w = Math.max(THREAT_FLOOR, w);
+      if (a !== hero && THREAT_REL_FLOOR > 0) w = Math.max(w, THREAT_REL_FLOOR * heroW * Number(a.threatMult || 1));
       weights.push(w);
       total += w;
     }
@@ -1982,4 +1985,5 @@ window.ENEMY_POWER_DMG_COEF = ENEMY_POWER_DMG_COEF;
 window.COMBAT_MODES = COMBAT_MODES;
 window.THREAT_DECAY = THREAT_DECAY;          // v3.268.0 (L-2)
 window.THREAT_FLOOR = THREAT_FLOOR;
+window.THREAT_REL_FLOOR = THREAT_REL_FLOOR; // H4
 window.COMPANION_FLAT_DEFENSE = COMPANION_FLAT_DEFENSE;
