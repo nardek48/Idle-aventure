@@ -43,6 +43,18 @@ var COMBAT_ITEMS = {
     icon: "images/Icons/combat_items/pastille_de_miel.webp",
     desc: "Contre le Silence : tes techniques ne sont bloquées qu'un round au lieu de deux (jamais moins d'un)."
   },
+  /* v3.492.15 (fiche « Objets de combat de la Montagne » v0.1, décision Seb du 26/10) : pour qui taille les veines.
+     Le Tri et la Carapace n'ont pas de règle du Grimoire : l'objet les atténue (systems/vein-system.js). */
+  leurre_de_cendre: {
+    id: "leurre_de_cendre", name: "Leurre de cendre", trait: "sorting", soften: true,
+    icon: "images/Icons/combat_items/leurre_de_cendre.webp",
+    desc: "Contre le Tri : celui qui a taillé n'est plus frappé qu'à ×1,2 au lieu de ×1,5."
+  },
+  coin_obsidienne: {
+    id: "coin_obsidienne", name: "Coin d'obsidienne", trait: "shell", soften: true,
+    icon: "images/Icons/combat_items/coin_obsidienne.webp",
+    desc: "Contre la Carapace : chaque taille ne lui ajoute plus que 4 % de ses PV max au lieu de 8 %."
+  },
   /* v3.442.0 : objet à contrepartie (besace des Petites Aventures). Rendue si elle n'a pas servi. */
   fiole_noire: {
     id: "fiole_noire", name: "Fiole noire", trait: null, returnIfUnused: true,
@@ -51,7 +63,9 @@ var COMBAT_ITEMS = {
     con: "Si elle sert : butin de la sortie divisé par deux, or de fin de donjon aussi. Rendue si elle n'a pas servi."
   }
 };
-var COMBAT_ITEM_ORDER = ["baume_froid", "encens_amer", "huile_de_lame", "sel_de_fer", "acide_mordant", "pastille_de_miel", "fiole_noire"];
+var COMBAT_ITEM_ORDER = ["baume_froid", "encens_amer", "huile_de_lame", "sel_de_fer", "acide_mordant", "pastille_de_miel", "leurre_de_cendre", "coin_obsidienne", "fiole_noire"];
+var COMBAT_ITEM_LURE_SORT_MULT = 1.2;     // v3.492.15 : Leurre de cendre, le tri à ×1,2 au lieu de VEIN_SORT_MULT (×1,5) (au banc)
+var COMBAT_ITEM_WEDGE_SHELL_PCT = 0.04;   // v3.492.15 : Coin d'obsidienne, carapace par taille au lieu de forgeShell (8 %) (au banc)
 var COMBAT_ITEM_FIOLE_HP_PCT = 0.40;
 var COMBAT_ITEM_FIOLE_LOOT_MULT = 0.5;   // v3.449.2 : aussi sur l'or de fin de donjon (dungeon-system.js)
 var COMBAT_ITEM_ACID_SHIELD_REDUCTION = 0.25; // v3.449.2 : bouclier rongé par l'Acide (option A1), au lieu de BOSS_SHIELD_REDUCTION
@@ -69,3 +83,5 @@ window.COMBAT_ITEM_SECOND_SLOT_APOTHECARY_LEVEL = COMBAT_ITEM_SECOND_SLOT_APOTHE
 window.COMBAT_ITEM_CORRUPTION_PURGE_STACKS = COMBAT_ITEM_CORRUPTION_PURGE_STACKS;
 window.COMBAT_ITEM_FIOLE_HP_PCT = COMBAT_ITEM_FIOLE_HP_PCT;
 window.COMBAT_ITEM_FIOLE_LOOT_MULT = COMBAT_ITEM_FIOLE_LOOT_MULT;
+window.COMBAT_ITEM_LURE_SORT_MULT = COMBAT_ITEM_LURE_SORT_MULT;
+window.COMBAT_ITEM_WEDGE_SHELL_PCT = COMBAT_ITEM_WEDGE_SHELL_PCT;

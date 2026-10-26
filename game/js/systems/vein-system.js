@@ -164,7 +164,8 @@ var VeinSystem = {
     e._sortNow = false;
     var t = this.sortTarget();
     if (t) this.ignite(e, t);
-    return t ? { actor: t, mult: VEIN_SORT_MULT } : null;
+    var lure = window.CombatItems && CombatItems.holds("sorting"); // v3.492.15 : Leurre de cendre
+    return t ? { actor: t, mult: lure ? COMBAT_ITEM_LURE_SORT_MULT : VEIN_SORT_MULT } : null;
   },
 
   /* v3.490.0 (Montagne, acte III) — LA GUEULE DU VOLCAN (MT11). Tout vit sur l'ennemi, le temps du combat. */
@@ -176,7 +177,8 @@ var VeinSystem = {
     CombatActors.aliveEnemies().forEach(function (e) {
       var def = self.eliteDef(e);
       if (!def || !def.forgeShell) return;
-      var n = Math.max(1, Math.floor(Number(e.maxHp || 0) * Number(def.forgeShell)));
+      var pct = (window.CombatItems && CombatItems.holds("shell")) ? Math.min(Number(def.forgeShell), COMBAT_ITEM_WEDGE_SHELL_PCT) : Number(def.forgeShell); // v3.492.15 : Coin d'obsidienne
+      var n = Math.max(1, Math.floor(Number(e.maxHp || 0) * pct));
       e.shell = Number(e.shell || 0) + n;
       if (typeof addLog === "function") addLog("🪨 " + _t("{x} se couvre d'une carapace de Cendre (+{n}).", { x: _td(e.name), n: formatNumber(n) }), "event");
     });

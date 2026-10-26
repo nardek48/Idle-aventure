@@ -28,7 +28,8 @@ var P1_STATS = ARGV.indexOf("--stats") >= 0;
 // v3.492.15 (fiche objets de combat) : --plafond heal,surge,shell,sort,burn — la mécanique entièrement annulée (borne haute d'un objet)
 var PLAFOND = opt("--plafond") ? opt("--plafond").split(",") : [];
 var SANS_REGLE = opt("--sans-regle") ? opt("--sans-regle").split(",") : []; // retire ces conditions du Grimoire (joueur sans la règle)
-var TAILLER = ARGV.indexOf("--tailler") >= 0; // le héros taille : règle « Veine intacte → Tailler » en tête du Grimoire
+var TAILLER = ARGV.indexOf("--tailler") >= 0;
+var OBJETS = opt("--objet") ? opt("--objet").split(",") : []; // v3.492.15 : objets de combat emportés (sortie de mission simulée) // le héros taille : règle « Veine intacte → Tailler » en tête du Grimoire
 if (!SAVES.length) { console.log("--save <fichier> attendu (sauvegarde de campagne)"); process.exit(1); }
 
 var extra = function () {
@@ -59,6 +60,7 @@ var extra = function () {
     g.ensureGrimoireRules();
     B.run("game.combatMode = 'grimoire'; EquipmentManager.recalcStats(); game.heroHp = game.heroMaxHp; CompanionManager.healAll();");
     if (SANS_POTION) g.game.healingPotionsOwned = {};
+    if (OBJETS.length) g.CombatItems.carried = function () { return OBJETS.slice(); };
     if (SANS_REGLE.length) g.game.grimoireRules = (g.game.grimoireRules || []).filter(function (r) { return !r || SANS_REGLE.indexOf(r.conditionId) === -1; });
     if (TAILLER) g.game.grimoireRules = [{ conditionId: "veinIntact", actionSlot: "vein" }].concat((g.game.grimoireRules || []).filter(function (r) { return r && r.conditionId; })).slice(0, 6);
   }

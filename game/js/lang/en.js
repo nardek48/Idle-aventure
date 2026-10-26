@@ -6856,6 +6856,11 @@ I18n.register("en", {
   "Ni règle ni objet n'y répond : à toi de le gérer en combat.": "No rule or item answers it: handle it yourself in combat.",
   "Des morts qui dorment": "Sleeping dead",
   "Les Nécromanciens": "The Necromancers",
+  // v3.492.15 : objets de combat de la Montagne
+  "Leurre de cendre": "Ash Lure",
+  "Contre le Tri : celui qui a taillé n'est plus frappé qu'à ×1,2 au lieu de ×1,5.": "Against Sorting: whoever cut is now struck at only ×1.2 instead of ×1.5.",
+  "Coin d'obsidienne": "Obsidian Wedge",
+  "Contre la Carapace : chaque taille ne lui ajoute plus que 4 % de ses PV max au lieu de 8 %.": "Against Shell: each cut now adds only 4% of its max HP instead of 8%.",
   "Renforts": "Reinforcements",
   "Se relève": "Gets back up",
   "Dormeurs": "Sleepers",

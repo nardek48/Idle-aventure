@@ -14769,8 +14769,8 @@ console.log("\n[215] v3.441.0 — Objets de combat : préparations de l'Apothica
   var CI = g.CombatItems, A = g.ApothecaryManager, W = g.WarehouseManager;
   try {
     game = freshCombat("knight");
-    ok(g.COMBAT_ITEM_ORDER.length === 7 && g.COMBAT_ITEM_ORDER.every(function (id) { return g.WAREHOUSE_RESOURCES[id] && g.WAREHOUSE_RESOURCES[id].tier === "crafted" && A.getRecipe(id) && A.getRecipe(id).kind === "item"; }),
-      "7 objets (v3.442.0 : Fiole noire ; v3.443.0 : Acide, Pastille) : rangés à l'Entrepôt (fabriqués) et préparés à l'Apothicaire");
+    ok(g.COMBAT_ITEM_ORDER.length === 9 && g.COMBAT_ITEM_ORDER.every(function (id) { return g.WAREHOUSE_RESOURCES[id] && g.WAREHOUSE_RESOURCES[id].tier === "crafted" && A.getRecipe(id) && A.getRecipe(id).kind === "item"; }),
+      "9 objets (v3.442.0 : Fiole noire ; v3.443.0 : Acide, Pastille ; v3.492.15 : Leurre, Coin) : rangés à l'Entrepôt (fabriqués) et préparés à l'Apothicaire");
     ok(A.getRecipe("baume_froid").worldIndex === 0 && A.getRecipe("huile_de_lame").worldIndex === 1 && A.getRecipe("sel_de_fer").worldIndex === 2, "recettes ouvertes avec le monde de leur trait");
     var CV = g.CaravanSystem || g.CaravanManager;
     ok(g.WAREHOUSE_RESOURCES.huile_de_lame.sellPrice === 0 && !!CV && CV.getEligibleKeys().indexOf("huile_de_lame") === -1, "ni caravane ni vente");
@@ -18639,6 +18639,46 @@ console.log("\n[318] v3.492.14 — préparation : soin, bouclier et exaltation a
     ok(card({ type: "dungeon", id: 5 }).indexOf("Soin") === -1, "jamais vaincu : rien n'est montré (règle d'origine inchangée)");
   } catch (err) {
     ok(false, "[318] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[319] v3.492.15 — objets de combat de la Montagne : Leurre de cendre (Tri), Coin d'obsidienne (Carapace)");
+(function () {
+  var V = g.VeinSystem, CI = g.CombatItems, carried0 = CI.carried, sortTarget0 = V.sortTarget, wi0 = g.WorldManager.worldIndex, step0 = g.StoryQuestManager.isStepReached;
+  try {
+    game = freshCombat("knight");
+    var A = g.ApothecaryManager, L = A.getRecipe("leurre_de_cendre"), C = A.getRecipe("coin_obsidienne");
+    ok(L && L.worldIndex === 4 && L.inputs.cendre_vive === 2 && L.order.cendre_vive === 8 && C && C.worldIndex === 4 && C.inputs.obsidienne_taillee === 1 && C.order.obsidienne_taillee === 4,
+      "recettes : commande à la Montagne, Cendre vive (Leurre) et Obsidienne taillée (Coin)");
+    ok(g.COMBAT_ITEMS.leurre_de_cendre.trait === "sorting" && g.COMBAT_ITEMS.coin_obsidienne.trait === "shell" && g.COMBAT_ITEMS.leurre_de_cendre.soften && g.COMBAT_ITEMS.coin_obsidienne.soften,
+      "ils atténuent (soften) le Tri et la Carapace, les traits annoncés par la préparation");
+    // Tri : multiplicateur lu par takeSort
+    g.StoryQuestManager.isStepReached = function () { return true; };
+    var cible = { name: "Héros" };
+    V.sortTarget = function () { return cible; };
+    var dem = { id: "minordemon", name: "Démon", _sortNow: true, hp: 10 };
+    CI.carried = function () { return []; };
+    var sans = V.takeSort(dem); dem._sortNow = true;
+    CI.carried = function () { return ["leurre_de_cendre"]; };
+    var avec = V.takeSort(dem);
+    ok(sans && sans.mult === 1.5 && avec && avec.mult === 1.2, "Tri : ×1,5 sans objet, ×1,2 avec le Leurre de cendre");
+    // Carapace : growShells
+    var golem = { id: "golem_forge", isElite: true, name: "Golem-forge", hp: 1000, maxHp: 1000, shell: 0 };
+    var vivants = g.CombatActors.aliveEnemies; g.CombatActors.aliveEnemies = function () { return [golem]; };
+    CI.carried = function () { return []; }; V.growShells(); var s8 = golem.shell; golem.shell = 0;
+    CI.carried = function () { return ["coin_obsidienne"]; }; V.growShells(); var s4 = golem.shell;
+    g.CombatActors.aliveEnemies = vivants;
+    ok(s8 === 80 && s4 === 40, "Carapace : +8 % des PV max par taille sans objet, +4 % avec le Coin d'obsidienne");
+    // préparation : l'objet répond à la ligne
+    var G = g.game; G.unlockedTabs.grimoire = true; G.grimoireRules = []; G.combatMode = "grimoire";
+    G.killCounts = {}; Object.keys(g.ENEMY_DB).concat(Object.keys(g.ELITE_DB)).forEach(function (id) { G.killCounts[id] = 1; }); G.dungeonTierCleared = { 5: true };
+    g.sortiePrep = { opts: { ctx: { type: "dungeon", id: 5 } }, preset: null, buffs: {}, items: ["leurre_de_cendre", "coin_obsidienne"], pick: -1 };
+    var h = g.buildSortiePrepTraitsHTML(true);
+    ok(/Tri<\/b>[^]*?Leurre de cendre l(&#39;|')att\u00e9nue/.test(h) && /Carapace<\/b>[^]*?Coin d(&#39;|')obsidienne l(&#39;|')att\u00e9nue/.test(h), "préparation de la Gueule : « Leurre de cendre l'atténue », « Coin d'obsidienne l'atténue »");
+  } catch (err) {
+    ok(false, "[319] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  } finally {
+    CI.carried = carried0; g.WorldManager.worldIndex = wi0; g.StoryQuestManager.isStepReached = step0; V.sortTarget = sortTarget0;
   }
 })();
 

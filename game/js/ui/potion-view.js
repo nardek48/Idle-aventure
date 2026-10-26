@@ -124,8 +124,8 @@ function buildCombatItemShopHTML() {
   var h = '<div class="potion-section-label"><img class=ico-inline src=images/Icons/village_buildings/apothecary.webp> ' + _t("Préparations de combat") + '</div>';
   h += '<div class="potion-grid">';
   COMBAT_ITEM_ORDER.forEach(function (id) {
-    var it = COMBAT_ITEMS[id], def = (typeof ENEMY_TRAIT_DEFS !== "undefined") ? ENEMY_TRAIT_DEFS[it.trait] : null;
-    var st = def ? (window.COMBAT_STATES || {})[def.state] || {} : {};
+    var it = COMBAT_ITEMS[id];
+    var st = (it.trait && typeof enemyTraitLook === "function") ? enemyTraitLook(it.trait) : {}; // v3.492.15 : les deux registres d'états
     var c = '<div class="nb-purchase-card">';
     c += '<div class="nb-purchase-icon-col"><div class="nb-purchase-icon-slot">' + renderIconOrEmojiHTML(it.icon, "nb-purchase-icon", _td(it.name)) + '</div></div>';
     c += '<div class="nb-purchase-info-col">';

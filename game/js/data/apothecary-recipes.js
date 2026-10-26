@@ -84,6 +84,9 @@ var APOTHECARY_RECIPES = [
   { potionId: "acide_mordant", kind: "item", inputs: { eau: 32, pierre: 12 }, order: { pierre: 80, eau: 120 }, worldIndex: 0, capped: true },
   { potionId: "pastille_de_miel", kind: "item", inputs: { eau: 32, ble: 60 }, order: { ble: 400, eau: 120 }, worldIndex: 0, capped: true },
   // v3.442.0 : la Fiole noire, au Désert (mur de Nezzam) ; la Chitine la rend rare, elle revient si elle n'a pas servi
+  // v3.492.15 : la Montagne, pour qui taille ; payés en Cendre vive et en Obsidienne taillée (fiche v0.1)
+  { potionId: "leurre_de_cendre", kind: "item", inputs: { eau: 48, cendre_vive: 2 }, order: { cendre_vive: 8, eau: 240 }, worldIndex: 4, capped: true },
+  { potionId: "coin_obsidienne", kind: "item", inputs: { eau: 48, obsidienne_taillee: 1 }, order: { obsidienne_taillee: 4, eau: 240 }, worldIndex: 4, capped: true },
   { potionId: "fiole_noire", kind: "item", inputs: { eau: 48, chitine_profondeurs: 2 }, order: { chitine_profondeurs: 6, eau: 240 }, worldIndex: 1, capped: true }
 ];
 
