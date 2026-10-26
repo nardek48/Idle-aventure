@@ -234,3 +234,62 @@ html.wide-mode #panel-container .kf-mid .kgauge:not(.kgauge-thin) { max-width: 3
 /* ---------- Écrans plein cadre (PC et tablette) : ce qui se lit garde une largeur de tablette étroite ---------- */
 html.pc-mode .lmx-sheet { width: min(480px, 100%); margin: 0 auto; }
 html.wide-mode .eq-hero-main > :not(.eq-hero-right) { flex: 1 1 auto; min-width: 0; }
+
+/* =========================================================
+   v3.502.0 (lot GE-1, grand écran) : corrections mesurées au pixel (audit du 26/10/2026,
+   systemes/grand-ecran/ du dépôt Documentation). Le téléphone ne lit toujours aucune de ces règles.
+   ========================================================= */
+
+/* G3 : bulles « à faire » en ligne dans le bandeau. Empilées sous le menu, elles le
+   recouvraient sous 900 px de haut (24 px à 1440 × 900, 35 px à 1366 × 768). */
+html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) .hud-dock {
+  top: calc(var(--safe-top) + 6px);
+  bottom: auto;
+  left: auto;
+  right: calc(50% - min(var(--wide-w), 100vw / var(--pc-zoom, 1)) / 2 + 140px);
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) .hud-bub-tip,
+html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) .hud-bub.is-quiet .hud-bub-tip {
+  left: 50%;
+  right: auto;
+  top: calc(100% + 10px);
+  transform: translateX(-50%);
+}
+/* En ligne, les libellés montrés ensemble à l'apparition se chevauchaient : au survol seulement (le rebond signale la nouvelle bulle) */
+html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) .hud-bub.show-tip .hud-bub-tip { opacity: 0; }
+html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) .hud-bub:hover .hud-bub-tip,
+html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) .hud-bub:focus-visible .hud-bub-tip { opacity: 1; }
+
+/* G1 : largeur de lecture du récit des quêtes (jusqu'à 196 caractères par ligne en 1920 × 1080) */
+html.wide-mode #panel-container .story-step-text { max-width: 60ch; }
+
+/* G4 : médaillon du héros entier (la bannière de 1 141 px n'en montrait que 21 %, le haut des cheveux) */
+html.wide-mode #panel-container .hs-banner {
+  height: 240px;
+  background: radial-gradient(ellipse at 120px 50%, rgba(255, 224, 160, 0.22), transparent 55%), linear-gradient(90deg, rgba(42, 26, 8, 0.92), rgba(42, 26, 8, 0.72));
+}
+html.wide-mode #panel-container .hs-banner-img { inset: 10px auto 10px 16px; width: 220px; height: 220px; object-fit: contain; object-position: 50% 50%; }
+html.wide-mode #panel-container .hs-banner-txt {
+  left: 256px; top: 0; right: auto; width: min(520px, calc(100% - 276px));
+  display: flex; flex-direction: column; justify-content: center; padding: 16px 20px; background: none;
+}
+
+/* G5 : silhouette d'Équipement à taille fixe (elle suivait la largeur : torse seul, emplacements loin du corps) */
+html.wide-mode #panel-container .hs-eq { width: 380px; max-width: 100%; margin-left: auto; margin-right: auto; }
+
+/* G6 : arbre de Talents dans une colonne (le fond s'étirait, le bas de l'arbre passait sous la fiche) */
+html.wide-mode #panel-container .hst-seg,
+html.wide-mode #panel-container .hst-bar,
+html.wide-mode #panel-container .hst-tree,
+html.wide-mode #panel-container .hst-cmd,
+html.wide-mode #panel-container .hst-detail { max-width: 520px; margin-left: auto; margin-right: auto; }
+
+/* G7 : compagnons en grille (cartes pleine largeur, interrupteur d'environ 1 000 px) */
+html.wide-mode #panel-container .hs-comp-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 10px; align-items: start; }
+html.wide-mode #panel-container .hs-comp-list > .hs-comp { margin-top: 0; }
+
+/* G8 : carte du monde à sa largeur (étirée, elle ne montrait que 2 mondes sur 6) */
+html.wide-mode #panel-container .map-path-frame { width: min(100%, 540px); margin-left: auto; margin-right: auto; }
