@@ -276,3 +276,36 @@ seules les classes propres aux compagnons sont définies ici.
 .cp-train-price img { width: 14px; height: 14px; }
 .cp-train-lock { font-size: 12px; font-weight: 700; color: var(--nb-ink-dim); padding: 6px 8px; border: 1px dashed var(--nb-ink-dim); border-radius: 8px; }
 .cp-train-reset { justify-self: center; min-height: 36px; padding: 4px 14px; border-radius: 10px; border: 1.5px solid var(--nb-frame); background: transparent; color: var(--nb-gold-deep); font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
+
+/* H4 reliques (atelier reliques-compagnons.html, variante A) : 3 emplacements dans la fiche, choix en feuille du bas. */
+.cp-relics { display: grid; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--nb-frame-light); color: var(--nb-ink); }
+.cp-relics-h { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 13px; }
+.cp-relics-h span { white-space: nowrap; }
+.cp-relics-h b { font-variant-numeric: tabular-nums; }
+.cp-relics-h small { font-size: 12px; color: var(--nb-ink-dim); text-align: right; }
+.cp-relic-slots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.cp-relic-slot {
+  display: grid; justify-items: center; align-content: start; gap: 4px; min-height: 112px; padding: 8px 4px; border-radius: 12px;
+  border: 1.5px solid var(--nb-frame); background: rgba(228, 207, 160, 0.45); font: inherit; color: inherit; text-align: center; cursor: pointer;
+}
+.cp-relic-slot b { font-size: 12px; line-height: 1.15; }
+.cp-relic-slot small { font-size: 12px; font-weight: 800; color: var(--nb-green-text); font-variant-numeric: tabular-nums; }
+.cp-relic-slot.is-empty { border-style: dashed; background: transparent; color: var(--nb-gold-deep); }
+.cp-relic-slot.is-lock { border-style: dashed; background: transparent; color: var(--nb-ink-dim); cursor: default; opacity: 0.75; }
+.cp-relic-plus { width: 50px; height: 50px; border-radius: 12px; border: 2px dashed currentColor; display: grid; place-items: center; font-size: 22px; font-weight: 900; }
+.cp-relic-ico { position: relative; width: 50px; height: 50px; flex: none; }
+.cp-relic-ico.is-small { width: 44px; height: 44px; }
+.cp-relic-img { width: 100%; height: 100%; object-fit: contain; }
+.cp-relic-ico .wpip { top: -5px; left: -5px; width: 22px; }
+.cp-relic-pick-h { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; color: var(--nb-ink); }
+.cp-relic-back { min-height: 36px; padding: 4px 12px; border-radius: 10px; border: 1.5px solid var(--nb-frame); background: transparent; color: var(--nb-gold-deep); font: inherit; font-weight: 800; cursor: pointer; }
+.cp-relic-list { display: grid; gap: 6px; }
+.cp-relic-row { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 6px 8px; border-radius: 10px; border: 1px solid var(--nb-frame-light); background: var(--c-cream-50); color: var(--nb-ink); }
+.cp-relic-txt { min-width: 0; }
+.cp-relic-txt b { display: block; font-size: 13px; }
+.cp-relic-txt small { display: block; font-size: 12px; color: var(--nb-ink-dim); }
+.cp-relic-txt small.is-fx { color: var(--nb-green-text); font-weight: 800; }
+.cp-relic-btn { min-height: 40px; padding: 4px 12px; border-radius: 20px; border: 2px solid var(--nb-gold-dark); background: linear-gradient(var(--c-bronze-400-vivid), var(--nb-gold-dark)); color: var(--nb-ink); font: inherit; font-size: 13px; font-weight: 900; white-space: nowrap; cursor: pointer; }
+.cp-relic-btn:disabled { filter: grayscale(0.85); opacity: 0.55; cursor: not-allowed; }
+.cp-relic-btn.is-ghost { background: transparent; color: var(--nb-gold-deep); }
+.cp-relic-lock { width: 24px; height: 24px; object-fit: contain; }

@@ -67,10 +67,83 @@ function buildCompanionCardHTML(companionId) {
   /* v3.271.0 (L-5) puis v3.440.0 : le comportement de soin se règle à la préparation de sortie. */
 
   h += buildCompanionTrainingHTML(companionId, st, stats);
+  if (window.CompanionRelics) h += buildCompanionRelicsHTML(companionId); // H4 reliques (atelier reliques-compagnons.html, variante A)
 
   h += '</div>';
   return h;
 }
+
+/* H4 reliques : icône (carré générique tant que l'image manque) et pastille du monde d'origine, sans aura d'affinité. */
+function companionRelicIconHTML(relic, cls) {
+  var w = window.WORLDS ? WORLDS[relic.w] : null;
+  return '<span class="' + cls + '"><img class="cp-relic-img" src="' + esc(CompanionRelics.icon(relic)) + '" alt="">'
+    + (w ? '<span class="wpip" title="' + esc(_td(w.name)) + '"><img class="wpip-img" src="images/Icons/codex/world_' + esc(w.id) + '.webp" alt=""></span>' : '') + '</span>';
+}
+
+function buildCompanionRelicsHTML(companionId) {
+  var CR = CompanionRelics, open = CR.slotsOpen(companionId), worn = CR.worn(companionId), n = 0;
+  var cells = "";
+  for (var k = 0; k < 3; k++) {
+    if (k >= open) { cells += '<div class="cp-relic-slot is-lock"><span class="cp-relic-plus"><img class="cp-relic-lock" src="images/Icons/system/lock_closed.webp" alt=""></span><b>' + esc(_t("Palier {n}", { n: COMPANION_RELIC_SLOTS_AT[k] })) + '</b></div>'; continue; } // « Palier 25 » seul : le bloc Entraînement est juste au-dessus
+    var r = worn[k] != null ? CR.byId(worn[k]) : null;
+    if (!r) { cells += '<button type="button" class="cp-relic-slot is-empty" onclick="companionPickRelic(\'' + companionId + '\', ' + k + ')"><span class="cp-relic-plus">+</span><b>' + esc(_t("Équiper")) + '</b></button>'; continue; }
+    n++;
+    cells += '<button type="button" class="cp-relic-slot" onclick="companionPickRelic(\'' + companionId + '\', ' + k + ')">' + companionRelicIconHTML(r, "cp-relic-ico")
+      + '<b>' + esc(CR.name(r)) + '</b><small>' + esc(CR.effectText(r)) + '</small></button>';
+  }
+  return '<div class="cp-relics"><div class="cp-relics-h"><span>' + _t("Reliques") + ' <b>' + n + ' / ' + open + '</b></span><small>'
+    + esc(_t("une par famille · rapportées de patrouille")) + '</small></div><div class="cp-relic-slots">' + cells + '</div></div>';
+}
+
+/* Feuille « Choisir une relique » (variante A) : l'inventaire, relique par relique. */
+var companionRelicPick = null; // { id, slot }
+function companionPickRelic(companionId, slot) {
+  companionRelicPick = { id: companionId, slot: slot };
+  if (typeof openHerosSheet === "function") openHerosSheet("relic");
+}
+function buildCompanionRelicPickHTML() {
+  var p = companionRelicPick, CR = window.CompanionRelics;
+  if (!p || !CR) return "";
+  var def = getCompanionDef(p.id), worn = CR.worn(p.id), R = CR.ensure();
+  var fams = worn.filter(function (x, k) { return x != null && k !== p.slot; }).map(function (x) { var r = CR.byId(x); return r ? r.f : null; });
+  var list = R.inv.slice().sort(function (a, b) { return COMPANION_RELIC_ORDER.indexOf(a.f) - COMPANION_RELIC_ORDER.indexOf(b.f) || b.w - a.w; });
+  var h = '<div class="hs-sheet"><div class="cp-relic-pick-h"><b>' + esc(_t("Emplacement {n} · {x}", { n: p.slot + 1, x: _td(def.name) })) + '</b>'
+    + '<button type="button" class="cp-relic-back" onclick="herosOpenCompanion(\'' + p.id + '\')">‹ ' + esc(_td(def.name)) + '</button></div>';
+  if (!list.length) return h + '<div class="pc-empty">' + esc(_t("Aucune relique pour l'instant. Les compagnons en rapportent de patrouille.")) + '</div></div>';
+  h += '<div class="cp-relic-list">';
+  list.forEach(function (r) {
+    var by = CR.wornBy(r.id), here = by === p.id, idx = worn.indexOf(r.id), famPrise = !here && fams.indexOf(r.f) >= 0;
+    var sub = here ? _t("Portée ici") : by ? _t("Portée par {x}", { x: _td(getCompanionDef(by).name) }) : _t("Libre");
+    var btn = here ? '<button type="button" class="cp-relic-btn is-ghost" onclick="companionUnequipRelic(\'' + p.id + '\', ' + idx + ')">' + esc(_t("Retirer")) + '</button>'
+      : famPrise ? '<button type="button" class="cp-relic-btn" disabled>' + esc(_t("Famille prise")) + '</button>'
+      : '<button type="button" class="cp-relic-btn" onclick="companionEquipRelic(\'' + p.id + '\', ' + p.slot + ', ' + r.id + ')">' + esc(_t("Équiper")) + '</button>';
+    h += '<div class="cp-relic-row">' + companionRelicIconHTML(r, "cp-relic-ico is-small") + '<span class="cp-relic-txt"><b>' + esc(CR.name(r)) + '</b><small class="is-fx">'
+      + esc(CR.effectText(r)) + '</small><small>' + esc(sub) + '</small></span>' + btn + '</div>';
+  });
+  return h + '</div></div>';
+}
+function companionEquipRelic(companionId, slot, relicId) {
+  var r = CompanionRelics.byId(relicId), other = CompanionRelics.wornBy(relicId);
+  if (!CompanionRelics.equip(companionId, slot, relicId)) return;
+  if (typeof showToast === "function") showToast(other && other !== companionId
+    ? _t("{x} équipée (retirée à {y})", { x: CompanionRelics.name(r), y: _td(getCompanionDef(other).name) })
+    : _t("{x} équipée", { x: CompanionRelics.name(r) }), 1400);
+  companionBackToRelics(companionId);
+}
+/* Retour à la fiche du compagnon, sur le bloc des reliques. */
+function companionBackToRelics(companionId) {
+  if (typeof herosOpenCompanion !== "function") return;
+  herosOpenCompanion(companionId);
+  var b = document.querySelector("#heros-sheet-root .ksheet-body"), el = b && b.querySelector(".cp-relics");
+  if (el) b.scrollTop = Math.max(0, el.offsetTop - b.offsetTop - 12);
+}
+function companionUnequipRelic(companionId, slot) {
+  if (CompanionRelics.unequip(companionId, slot)) companionBackToRelics(companionId); // comme après « Équiper »
+}
+window.companionPickRelic = companionPickRelic;
+window.buildCompanionRelicPickHTML = buildCompanionRelicPickHTML;
+window.companionEquipRelic = companionEquipRelic;
+window.companionUnequipRelic = companionUnequipRelic;
 
 /* H4 partie C : rang de la compétence signature — pastilles, effet au rang, puis le rang suivant (même bloc que les sorts du héros). */
 /* Description de la compétence avec la valeur du rang (« 18 % » → « 24 % », « 2,5 fois » → « 3,1 fois »). */

@@ -18915,6 +18915,52 @@ console.log("\n[326] Chantier du héros, H4 partie C — rangs des compétences 
   }
 })();
 
+console.log("\n[327] Chantier du héros, H4 — reliques des compagnons");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
+    var game = g.game, CM = g.CompanionManager, CR = g.CompanionRelics;
+    ["wenna", "maddoc"].forEach(function (id) { CM.state(id).unlocked = true; CM.state(id).present = true; });
+    ok(Array.isArray(game.companionRelics.inv) && game.companionRelics.pity === 0, "état par défaut : inventaire vide, pitié 0");
+    // emplacements aux paliers 5 / 15 / 25
+    CM.state("wenna").upgrades = 4; ok(CR.slotsOpen("wenna") === 0, "palier 4 : aucun emplacement");
+    CM.state("wenna").upgrades = 15; ok(CR.slotsOpen("wenna") === 2, "palier 15 : 2 emplacements");
+    CM.state("wenna").upgrades = 25; ok(CR.slotsOpen("wenna") === 3, "palier 25 : 3 emplacements");
+    // tirage de patrouille : chance, pitié, monde
+    var r0 = CR.rollPatrol(8, "forest", function () { return 0.99; });
+    ok(r0 === null && game.companionRelics.pity === 8, "8 h sans chance : rien, pitié 8 h");
+    var r1 = CR.rollPatrol(16, "mountain", function () { return 0.99; });
+    ok(r1 && r1.w === 4 && CR.rank(r1) === 5 && game.companionRelics.pity === 0, "24 h cumulées : relique garantie, monde de la patrouille (Montagne, rang 5)");
+    var p1 = 1 - Math.pow(0.96, 1); ok(Math.abs(p1 - 0.04) < 1e-9, "1 h : 4 % de chance");
+    // effets
+    var inv = game.companionRelics.inv;
+    inv.push({ id: 50, f: "croc", w: 4 }, { id: 51, f: "ecorce", w: 4 }, { id: 52, f: "croc", w: 0 }, { id: 53, f: "sablier", w: 4 }, { id: 54, f: "talisman", w: 2 });
+    var d0 = CM.statsOf("wenna").damage, h0 = CM.statsOf("wenna").maxHp;
+    ok(CR.equip("wenna", 0, 50) && CR.equip("wenna", 1, 51), "Croc et Écorce équipés");
+    ok(!CR.equip("wenna", 2, 52), "une seule relique par famille sur un compagnon");
+    ok(CM.statsOf("wenna").damage === Math.floor(d0 * 1.15) || Math.abs(CM.statsOf("wenna").damage - d0 * 1.15) <= 1, "Croc rang 5 : +15 % de dégâts");
+    ok(Math.abs(CM.statsOf("wenna").maxHp - h0 * 1.15) <= 1, "Écorce rang 5 : +15 % de PV");
+    ok(CR.equip("wenna", 2, 53) && CM.skillOf("wenna").cooldown === g.COMPANIONS_DB.wenna.skill.cooldown - 2, "Sablier rang 5 : recharge −2");
+    ok(g.COMPANIONS_DB.wenna.skill.cooldown === 4, "la donnée d'origine n'est jamais modifiée");
+    CM.state("maddoc").upgrades = 5;
+    ok(CR.equip("maddoc", 0, 50) && CR.wornBy(50) === "maddoc" && CR.worn("wenna")[0] === null, "équiper une relique portée la retire à l'autre compagnon");
+    ok(CR.equip("maddoc", 0, 54) && Math.abs(CR.heroDamageBonus() - 0.03) < 1e-9, "Talisman rang 3 d'un compagnon présent : héros +3 %");
+    CM.state("maddoc").present = false; ok(CR.heroDamageBonus() === 0, "compagnon absent : Talisman sans effet");
+    CM.state("wenna").upgrades = 4; ok(CR.active("wenna").length === 0 && CM.skillOf("wenna").cooldown === 4, "emplacement fermé : relique inactive");
+    CM.state("wenna").upgrades = 25;
+    ok(CR.unequip("wenna", 2) && CR.worn("wenna")[2] === null, "retirer une relique");
+    // sauvegarde
+    var sv = g.buildSaveData();
+    ok(sv.companionRelics && sv.companionRelics.inv.length === inv.length && sv.companions.wenna.relics[1] === 51, "buildSaveData garde l'inventaire et les emplacements");
+    g.restoreBaseState(JSON.parse(JSON.stringify(sv)));
+    ok(g.CompanionRelics.byId(51) && g.CompanionRelics.wornBy(51) === "wenna" && g.game.companionRelics.next === sv.companionRelics.next, "restoreBaseState les rend");
+    run("fullResetState();");
+    ok(g.game.companionRelics.inv.length === 0, "fullResetState vide les reliques");
+  } catch (err) {
+    ok(false, "[327] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

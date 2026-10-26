@@ -92,7 +92,8 @@ var PatrolManager = {
     var def = this.getSectorDef(mapId, sectorId);
     var ring = def ? (PATROL_RING_MULT[def.ring] || 1) : 1;
     var st = window.CompanionManager ? CompanionManager.state(companionId) : null;
-    var upg = 1 + PATROL_UPGRADE_BONUS * Number((st && st.upgrades) || 0);
+    var upg = (1 + PATROL_UPGRADE_BONUS * Number((st && st.upgrades) || 0))
+      * (1 + (window.CompanionRelics ? CompanionRelics.sum(companionId, "patrolPct") : 0)); // H4 reliques : Besace
     var mat = rate.matPerHour * hours * ring * upg;
     var res = this.sectorResources(mapId, sectorId);
     var out = { loot: {}, gold: Math.floor(rate.goldPerHour * hours * upg) };
@@ -214,6 +215,7 @@ var PatrolManager = {
     [p.loot, p.ration].forEach(function (o) { Object.keys(o || {}).forEach(function (k) { all[k] = (all[k] || 0) + o[k]; }); });
     var res = this._credit(all, p.gold);
     res.story = story;
+    res.relic = window.CompanionRelics ? CompanionRelics.rollPatrol(p.hours, p.mapId) : null; // H4 reliques (R1) : seulement au bout de la patrouille
     res.sectorId = p.sectorId; res.hours = p.hours; res.mapId = p.mapId;
     if (window.AchievementManager) AchievementManager.onPatrolCollected(p); // v3.338.0 (pas au rappel : patrouille inachevée)
     delete this.ensure()[companionId];
@@ -259,6 +261,7 @@ var PatrolManager = {
       return "+" + formatNumber(res.loot[k]) + " " + (d ? _td(d.name) : k);
     });
     if (res.gold) parts.push(_t("+{n} or", { n: formatNumber(res.gold) }));
+    if (res.relic && window.CompanionRelics) parts.push(_t("une relique : {x}", { x: CompanionRelics.name(res.relic) })); // H4 reliques
     return parts.length ? parts.join(", ") : _t("rien");
   },
 

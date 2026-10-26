@@ -38,6 +38,21 @@ var COMPANION_SKILL_RANK_PRICES = [
   { gold: 500, mat: "resine_durcie", qty: 2 }, { gold: 2500, mat: "verre_trempe", qty: 2 }, { gold: 7500, mat: "cle_de_voute", qty: 2 },
   { gold: 15000, mat: "cire_consacree", qty: 2 }, { gold: 40000, mat: "obsidienne_taillee", qty: 2 }
 ];
+/* H4 reliques (décisions Seb 26/10 : R1, paliers 5/15/25, 6 familles) ; logique : systems/companion-relic-system.js. */
+var COMPANION_RELIC_SLOTS_AT = [5, 15, 25];     // paliers d'entraînement qui ouvrent les 3 emplacements
+var COMPANION_RELIC_CHANCE_PER_H = 0.04;
+var COMPANION_RELIC_PITY_H = 24;
+var COMPANION_RELIC_DIR = "images/Icons/companions/relics/";
+var COMPANION_RELIC_FAMILIES = {
+  croc: { name: "Croc", dmgPct: 0.03 },          // +3 % de dégâts par rang de monde
+  ecorce: { name: "Écorce", hpPct: 0.03 },       // +3 % de PV
+  sceau: { name: "Sceau", threatPct: 0.06 },     // +6 % de menace
+  sablier: { name: "Sablier", cdAt5: 2, cd: 1 }, // recharge −1 (−2 au rang 5)
+  talisman: { name: "Talisman", heroPct: 0.01 }, // le héros +1 % de dégâts quand ce compagnon est présent
+  besace: { name: "Besace", patrolPct: 0.05 }    // +5 % de butin de patrouille
+};
+var COMPANION_RELIC_ORDER = ["croc", "ecorce", "sceau", "sablier", "talisman", "besace"];
+
 var COMPANION_SKILL_RANKS = {
   wenna: { value: 0.02 },                              // soin 18 → 28 %
   maddoc: { taunt: { value: 0.02 }, strike: { value: 0.2 } }, // Planté 12 → 22 % ; Tir ajusté ×2,5 → ×3,5 (selon la voie)
@@ -385,6 +400,12 @@ window.COMPANION_HERO_DMG_PCT = COMPANION_HERO_DMG_PCT;
 window.COMPANION_TRAINING_PCT = COMPANION_TRAINING_PCT;
 window.COMPANION_VIGUEUR_THREAT = COMPANION_VIGUEUR_THREAT;
 window.COMPANION_SKILL_RANK_MAX = COMPANION_SKILL_RANK_MAX;
+window.COMPANION_RELIC_SLOTS_AT = COMPANION_RELIC_SLOTS_AT;
+window.COMPANION_RELIC_FAMILIES = COMPANION_RELIC_FAMILIES;
+window.COMPANION_RELIC_ORDER = COMPANION_RELIC_ORDER;
+window.COMPANION_RELIC_CHANCE_PER_H = COMPANION_RELIC_CHANCE_PER_H;
+window.COMPANION_RELIC_PITY_H = COMPANION_RELIC_PITY_H;
+window.COMPANION_RELIC_DIR = COMPANION_RELIC_DIR;
 window.COMPANION_SKILL_RANK_PRICES = COMPANION_SKILL_RANK_PRICES;
 window.COMPANION_SKILL_RANKS = COMPANION_SKILL_RANKS;
 window.COMPANION_JOIN_WORLD = COMPANION_JOIN_WORLD;

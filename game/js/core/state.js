@@ -104,6 +104,7 @@ function createInitialGameState() {
     shopBuyAmount: 1,
     talents: {},
     skillRanks: {}, // H2 (chantier du héros) : { id d'action : rang 1 à 5 }
+    companionRelics: { inv: [], next: 1, pity: 0 }, // H4 : reliques des compagnons (inventaire, prochain id, heures sans relique)
     talentsV2: true, // v3.327.0 : talents par classe ; false seulement sur une ancienne sauvegarde
     enemy: null,
     // v3.266.0 (L-0) : état du combat de groupe (acteurs, cible collante).

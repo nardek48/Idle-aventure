@@ -37,6 +37,7 @@ var VICTIMES = ARGV.indexOf("--victimes") >= 0; // H4 : qui encaisse les coups e
 var REL_FLOOR = opt("--rel-floor") !== null ? Number(opt("--rel-floor")) : null; // H4 (V1) : plancher de menace relatif
 var COMP_VIG = opt("--comp-vig") !== null ? Number(opt("--comp-vig")) : null; // H4 (V1) : N paliers de Vigueur en plus aux compagnons
 var WENNA_SOIN = opt("--wenna-soin") !== null ? Number(opt("--wenna-soin")) : null; // H4 partie C : soin de Wenna (part des PV max)
+var RELIQUES = opt("--reliques") ? opt("--reliques").split(",") : null; // H4 reliques : ces familles (rang 5, Montagne) sur chaque compagnon débloqué
 var COMP_RANG = opt("--comp-rang") !== null ? Number(opt("--comp-rang")) : null; // H4 partie C : rang de compétence de tous les compagnons ; affiche la Cendre vive par sortie
 // v3.492.15 (fiche objets de combat) : --plafond heal,surge,shell,sort,burn — la mécanique entièrement annulée (borne haute d'un objet)
 var PLAFOND = opt("--plafond") ? opt("--plafond").split(",") : [];
@@ -99,6 +100,14 @@ var extra = function () {
     if (COMP_VIG !== null) { Object.keys(g.game.companions || {}).forEach(function (k) { var st = g.game.companions[k]; st.upgrades += COMP_VIG; st.vigueur = (st.vigueur || 0) + COMP_VIG; }); g.CompanionManager.healAll(); }
     if (COMP_RANG !== null) Object.keys(g.game.companions || {}).forEach(function (k) { g.game.companions[k].skillRank = COMP_RANG; });
     if (COMP_UPG !== null) { Object.keys(g.game.companions || {}).forEach(function (k) { g.game.companions[k].upgrades = COMP_UPG; }); g.CompanionManager.healAll(); }
+    if (RELIQUES) {
+      g.game.companionRelics = { inv: [], next: 1, pity: 0 };
+      Object.keys(g.game.companions || {}).forEach(function (k) {
+        g.game.companions[k].relics = [null, null, null];
+        RELIQUES.forEach(function (f, i) { var id = g.game.companionRelics.next++; g.game.companionRelics.inv.push({ id: id, f: f, w: 4 }); g.CompanionRelics.equip(k, i, id); });
+      });
+      g.CompanionManager.healAll();
+    }
     if (ENTR !== null) g.HEROS_TRAINING_UPGRADE_IDS.forEach(function (id) { g.game.upgrades[id] = ENTR; g.UPGRADES.filter(function (u) { return u.id === id; })[0].apply(ENTR); });
     g.ensureGrimoireRules();
     B.run("game.combatMode = 'grimoire'; EquipmentManager.recalcStats(); game.heroHp = game.heroMaxHp; CompanionManager.healAll();");

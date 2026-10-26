@@ -243,6 +243,10 @@ var CompanionManager = {
       s.damage = Math.floor(s.damage * TalentManager.companionDamageMult());
     }
     if (s && COMPANION_HERO_DMG_PCT > 0) s.damage = Math.max(s.damage, this.heroDamageFloor(companionId)); // H4 : plancher indexé sur le héros
+    if (s && window.CompanionRelics) { // H4 reliques : Croc (dégâts), Écorce (PV)
+      s.damage = Math.floor(s.damage * (1 + CompanionRelics.sum(companionId, "dmgPct")));
+      s.maxHp = Math.floor(s.maxHp * (1 + CompanionRelics.sum(companionId, "hpPct")));
+    }
     var cm = s ? this.choiceModsOf(companionId) : null;
     if (cm && cm.hpMult) s.maxHp = Math.max(1, Math.floor(s.maxHp * cm.hpMult)); // v3.455.0 : Ysolt s'use
     return s;
@@ -342,7 +346,8 @@ var CompanionManager = {
       name: def.name,
       image: def.image,
       threat: 0,
-      threatMult: (def.threatMult || 1) * (1 + COMPANION_VIGUEUR_THREAT * Number(st.vigueur || 0)), // H4 (V1) : la Vigueur attire les coups
+      threatMult: (def.threatMult || 1) * (1 + COMPANION_VIGUEUR_THREAT * Number(st.vigueur || 0))
+        * (1 + (window.CompanionRelics ? CompanionRelics.sum(companionId, "threatPct") : 0)), // H4 (V1) : la Vigueur attire les coups ; Sceau
       damage: stats.damage,
       cooldown: 0,
       charges: this.chargesMax(companionId),
@@ -674,8 +679,10 @@ var CompanionManager = {
   skillOf: function (companionId, rank) {
     var def = getCompanionDef(companionId); if (!def || !def.skill) return null;
     var r = typeof rank === "number" ? rank : this.skillRank(companionId), R = COMPANION_SKILL_RANKS[companionId];
-    if (!r || !R) return def.skill;
-    var sk = Object.assign({}, def.skill), rule = R[sk.type] || R;
+    var cut = window.CompanionRelics ? CompanionRelics.cooldownCut(companionId) : 0; // H4 reliques : Sablier
+    if ((!r || !R) && !(cut && def.skill.cooldown > 1)) return def.skill;
+    var sk = Object.assign({}, def.skill), rule = (R && (R[sk.type] || R)) || {};
+    if (cut && sk.cooldown > 1) sk.cooldown = Math.max(1, sk.cooldown - cut);
     if (typeof rule.value === "number" && typeof sk.value === "number") sk.value = Math.round((sk.value + rule.value * r) * 1000) / 1000;
     if (rule.chargeAt && r >= rule.chargeAt) sk.charges = Number(sk.charges || 0) + 1;
     if (rule.ashAt && r >= rule.ashAt) sk.bonusAsh = 1;
@@ -778,6 +785,7 @@ var CompanionManager = {
         ardeur: Number(st.ardeur || 0),      // H4
         vigueur: Number(st.vigueur || 0),
         skillRank: Number(st.skillRank || 0), // H4 partie C
+        relics: Array.isArray(st.relics) ? st.relics.slice(0, 3) : [null, null, null], // H4 reliques
         control: st.control === "manual" ? "manual" : "auto",
         present: !!st.present,
         hp: (typeof st.hp === "number" && isFinite(st.hp)) ? st.hp : null,
@@ -804,6 +812,8 @@ var CompanionManager = {
       st.ardeur = Math.max(0, Math.min(st.upgrades, Number(d.ardeur || 0)));
       st.vigueur = Math.max(0, Math.min(st.upgrades - st.ardeur, Number(d.vigueur || 0)));
       st.skillRank = Math.max(0, Math.min(COMPANION_SKILL_RANK_MAX, Math.floor(Number(d.skillRank || 0))));
+      st.relics = (Array.isArray(d.relics) ? d.relics : []).slice(0, 3).map(function (x) { return typeof x === "number" ? x : null; });
+      while (st.relics.length < 3) st.relics.push(null);
       st.control = d.control === "manual" ? "manual" : "auto";
       st.present = !!d.present;
       st.hp = (typeof d.hp === "number" && isFinite(d.hp)) ? d.hp : null;
