@@ -3,7 +3,7 @@
    (Golem-forge, campement, Ifrit qui trie, Wyrm de cendres) et la quête de l'étape 14, sur le vrai moteur.
    Le héros est celui d'une vraie sauvegarde (SAVE_OUT de campagne-harness.js), groupe et potions compris.
 
-   Cibles (Conception, MT7) : le Wyrm 65-80 % par classe, Rôdeur ≥ 60 % ; la quête sans mort, 25-35 % des PV.
+   Cibles (Conception, MT7 révisé le 26/10, audit P2) : avec potions, 25 à 40 % des PV restants et moins de 10 % de défaites.
 
    USAGE : node tools/sim/montagne-acte3-bench.js . --save a.json[,b.json] [--runs N] [--diff x] [--boss p,e]
            [--quete pv,puissance] [--sans-potion]
@@ -194,7 +194,7 @@ var extra = function () {
   }
   console.log("GUEULE DU VOLCAN — " + RUNS + " runs par sauvegarde, Grimoire, " + (SANS_POTION ? "SANS potion" : "potions de la sauvegarde")
     + (DIFF5 ? " · essai difficultyMult " + DIFF5 : " · difficultyMult " + d.difficultyMult) + (WYRM ? " · essai Wyrm p" + WYRM[0] + " e" + WYRM[1] : ""));
-  console.log("Cible : le Wyrm 65-80 % par classe, Rôdeur ≥ 60 %.\n");
+  console.log("Cible (MT7, 26/10) : avec potions, 25 à 40 % des PV restants, moins de 10 % de défaites.\n");
   var textes = SAVES.map(function (f) { return fs.readFileSync(f, "utf8"); });
   textes.forEach(function (t, k) {
     var cls = JSON.parse(t).heroId || path.basename(SAVES[k]);
