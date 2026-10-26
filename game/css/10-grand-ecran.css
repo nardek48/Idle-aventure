@@ -8,11 +8,11 @@
 html.chron-min { --wide-chron: 56px; }
 
 /* ---------- La fenêtre : rail, page, Chronique ---------- */
-html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) {
+html.wide-mode body:not(.lab-run) {
   grid-template-columns: var(--wide-rail) minmax(0, calc(min(var(--wide-w), 100vw / var(--pc-zoom, 1)) - var(--wide-rail) - var(--wide-chron))) var(--wide-chron);
 }
 #chronique { display: none; }
-html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) > #chronique {
+html.wide-mode body:not(.lab-run) > #chronique {
   grid-column: 3;
   grid-row: 2;
   position: relative;
@@ -28,7 +28,7 @@ html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-activ
   box-shadow: inset 0 0 0 1px rgba(226, 177, 74, 0.25), 0 8px 18px -6px var(--c-black-950);
 }
 /* Repliée mais ouverte par-dessus la page (fenêtre étroite) */
-html.wide-mode.chron-over body:not(.combat-active):not(.scene-active):not(.living-map-active) > #chronique {
+html.wide-mode.chron-over body:not(.lab-run) > #chronique {
   grid-column: 2 / 4;
   justify-self: end;
   width: 320px;
@@ -36,21 +36,21 @@ html.wide-mode.chron-over body:not(.combat-active):not(.scene-active):not(.livin
   box-shadow: inset 0 0 0 1px rgba(226, 177, 74, 0.25), -14px 0 30px rgba(0, 0, 0, 0.6);
 }
 /* Les bulles « à faire » passent dans la Chronique */
-html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) .hud-dock { display: none !important; }
+html.wide-mode body:not(.lab-run) .hud-dock { display: none !important; }
 
 /* ---------- Rail de gauche : 5 écrans, puis Hauts faits, Bibliothèque, Journal, Paramètres ---------- */
-html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) #tab-bar { max-height: 100%; overflow-y: auto; scrollbar-width: none; }
-html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) #tab-bar-row { gap: 6px; }
-html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) .tab-btn.tab-wide { display: flex !important; }
-html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) .tab-btn[data-tab="menu"] { display: none !important; }
-html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) .tab-sep {
+html.wide-mode body:not(.lab-run) #tab-bar { max-height: 100%; overflow-y: auto; scrollbar-width: none; }
+html.wide-mode body:not(.lab-run) #tab-bar-row { gap: 6px; }
+html.wide-mode body:not(.lab-run) .tab-btn.tab-wide { display: flex !important; }
+html.wide-mode body:not(.lab-run) .tab-btn[data-tab="menu"] { display: none !important; }
+html.wide-mode body:not(.lab-run) .tab-sep {
   display: block !important;
   height: 1px;
   margin: 2px 10px;
   background: linear-gradient(90deg, transparent, var(--c-brown-550-3), transparent);
 }
 /* Entrées secondaires : sans case, icône et libellé plus petits */
-html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) .tab-btn.tab-mini { aspect-ratio: auto; height: 50px; border-radius: 10px; }
+html.wide-mode body:not(.lab-run) .tab-btn.tab-mini { aspect-ratio: auto; height: 50px; border-radius: 10px; }
 html.wide-mode .tab-btn.tab-mini .tab-icon-frame,
 html.wide-mode .tab-btn.tab-mini.active .tab-icon-frame { background: none; flex-direction: column; gap: 2px; }
 html.wide-mode .tab-btn.tab-mini.active { background: rgba(108, 192, 245, 0.14); box-shadow: inset 0 0 0 1px rgba(108, 192, 245, 0.45); }
@@ -148,14 +148,14 @@ html.chron-min:not(.chron-over) .chr-h strong { display: none; }
    v3.504.0 (lot GE-4) : les feuilles du bas deviennent la fiche de droite (sans voile, la page reste
    visible) ; le Résumé du Héros passe en trois colonnes. Combat et scènes gardent leurs feuilles (GE-5).
    ========================================================= */
-html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) {
+html.wide-mode body:not(.lab-run) {
   --ge-drawer-right: calc(50% - min(var(--wide-w), 100vw / var(--pc-zoom, 1)) / 2 + 10px);
   --ge-drawer-top: calc(var(--safe-top) + 84px);
 }
-html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) .ksheet-backdrop,
-html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) .full-menu-overlay:has(> .full-menu) { background: transparent; }
-html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) .ksheet,
-html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) .full-menu-overlay > .full-menu {
+html.wide-mode body:not(.lab-run) .ksheet-backdrop,
+html.wide-mode body:not(.lab-run) .full-menu-overlay:has(> .full-menu) { background: transparent; }
+html.wide-mode body:not(.lab-run) .ksheet,
+html.wide-mode body:not(.lab-run) .full-menu-overlay > .full-menu {
   position: fixed;
   top: var(--ge-drawer-top);
   bottom: calc(var(--safe-bottom) + 10px);
@@ -170,10 +170,10 @@ html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-activ
   box-shadow: 0 0 0 1px var(--c-brown-550-3), -16px 0 36px rgba(0, 0, 0, 0.55);
 }
 /* Une fiche courte n'occupe que sa hauteur */
-html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) .ksheet.hf-sheet { bottom: auto; max-height: calc(100vh / var(--pc-zoom, 1) - 104px) !important; }
+html.wide-mode body:not(.lab-run) .ksheet.hf-sheet { bottom: auto; max-height: calc(100vh / var(--pc-zoom, 1) - 104px) !important; }
 @media (prefers-reduced-motion: no-preference) {
-  html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) .ksheet,
-  html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) .full-menu-overlay > .full-menu { animation: ge-drawer-in 0.2s ease-out; }
+  html.wide-mode body:not(.lab-run) .ksheet,
+  html.wide-mode body:not(.lab-run) .full-menu-overlay > .full-menu { animation: ge-drawer-in 0.2s ease-out; }
 }
 @keyframes ge-drawer-in { from { transform: translateX(24px); opacity: 0; } }
 html.wide-mode .ksheet .ksheet-handle,
@@ -202,3 +202,58 @@ html.wide-mode #panel-container .hs-wide3 .hs-tiles .hs-tile { grid-template-col
 html.wide-mode #panel-container .hs-wide3 .hs-tiles .hs-tile-top { grid-row: auto; }
 html.wide-mode #panel-container .hs-wide3 .hs-tiles .hs-tile-line,
 html.wide-mode #panel-container .hs-wide3 .hs-tiles .hs-tile-sub { padding-left: 34px; }
+
+/* =========================================================
+   v3.505.0 (lot GE-5) : combat, Petites aventures et carte vivante dans la fenêtre (bandeau, rail,
+   Chronique). En combat et en Petite aventure on ne navigue pas (comme au téléphone) : le rail et le
+   bandeau restent visibles mais inactifs. Le labyrinthe garde son plein écran.
+   ========================================================= */
+html.wide-mode body:is(.combat-active, .scene-active, .living-map-active):not(.lab-run) > #hud { display: flex; }
+html.wide-mode body:is(.combat-active, .scene-active, .living-map-active):not(.lab-run) > #tab-bar { display: block; }
+html.wide-mode body:is(.combat-active, .scene-active):not(.lab-run) > #hud,
+html.wide-mode body:is(.combat-active, .scene-active):not(.lab-run) > #tab-bar { pointer-events: none; }
+html.wide-mode body:is(.combat-active, .scene-active):not(.lab-run) > #tab-bar { opacity: 0.45; filter: saturate(0.5); }
+
+/* Arène : la colonne de combat (pensée pour 390 px) au centre, sur le fond du monde en hauteur ;
+   les côtés montrent le même fond, flouté. Un fond « -wide » (paysage) le remplace dès qu'il existe. */
+html.wide-mode body.combat-active:not(.lab-run) > #game-area {
+  position: relative;
+  justify-self: center;
+  width: min(100%, 560px);
+  margin: 10px 0;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px var(--c-brown-700-vivid), 0 12px 30px rgba(0, 0, 0, 0.6);
+  background: var(--world-combat-map, none) 50% 50% / cover no-repeat, var(--c-black-950);
+}
+html.wide-mode body.combat-active:not(.lab-run)::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;                      /* sous le bandeau, le rail, l'arène et la Chronique (positionnés, plus loin) */
+  background: var(--ge-arena-wide, var(--world-combat-map, none)) 50% 50% / cover no-repeat;
+  filter: blur(var(--ge-arena-blur, 14px)) brightness(0.55);
+  transform: scale(1.06);
+  pointer-events: none;
+}
+html.wide-mode.ge-arena-wide body.combat-active:not(.lab-run) { --ge-arena-blur: 0px; }
+
+/* Petite aventure : sa page garde une largeur de lecture, centrée */
+html.wide-mode body.scene-active:not(.lab-run) > #panel-container { padding: 10px 14px; }
+html.wide-mode body.scene-active:not(.lab-run) > #panel-container > * { max-width: 640px; margin-left: auto; margin-right: auto; }
+
+/* Chronique de combat */
+.chr-rule .cbx-rule-line { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; font-size: 13px; }
+.chr-rule img { width: 22px; height: 22px; object-fit: contain; }
+.chr-states .st-group-title { margin: 8px 0 4px; font-size: 12px; font-weight: 700; color: var(--c-bronze-400-4); }
+.chr-states .st-row { margin: 0; border: 0; border-radius: 0; background: none; box-shadow: none; display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 8px; align-items: start; padding: 5px 0; font-size: 12.5px; }
+.chr-states .st-row-ico { width: 28px; height: 28px; object-fit: contain; }
+.chr-states .st-row-name, .chr-states .st-row-n { font-weight: 700; color: var(--c-cream-100-2); }
+.chr-states .st-row-desc, .chr-states .st-row-hint { color: var(--c-cream-200); font-size: 12px; }
+.chr-states .st-row.is-alert { background: none; }
+.chr-states .st-row.is-alert .st-row-name { color: var(--c-red-400); }
+.chr-states .st-row-hint { color: var(--c-bronze-400-4); }
+.chr-states .st-empty { font-size: 12.5px; color: var(--c-bronze-350); }
+.chr-loot { display: flex; gap: 14px; font-size: 14px; font-weight: 700; }
+.chr-loot span { display: inline-flex; align-items: center; gap: 6px; }
+.chr-loot img { width: 20px; height: 20px; }

@@ -13066,7 +13066,7 @@ console.log("\n[179] v3.406.0 — Format tablette (mode PC niveau B, prototype)"
     ok(/if \(DesktopScale\.isDesktop\(\)\) return "wide"/.test(ds) && /w >= TABLET_WIDE_MIN_W \? "wide" : "column"/.test(ds) && /portraitChoice\(\) === "rail" \? "wide" : "column"/.test(ds),
       "PC et tablette en paysage : format tablette ; tablette en portrait : selon le réglage");
     ok(idx.indexOf("css/09-wide.css") > idx.indexOf("css/08-desktop.css") && sw.indexOf("./css/09-wide.css") > 0, "09-wide.css chargé après 08-desktop.css et précaché");
-    ok(/body:not\(\.combat-active\):not\(\.scene-active\):not\(\.living-map-active\)/.test(css), "combat, petite aventure et carte vivante restent en colonne");
+    ok(/body:not\(\.lab-run\) \{/.test(css), "v3.505.0 : combat, petite aventure et carte vivante dans la fenêtre ; le labyrinthe garde son plein écran");
     ok(/#tab-bar-row \{[^}]*flex-direction: column/.test(css), "menu en colonne à gauche");
     ok(/"kf-orn"/.test(rd("js/ui/kframe-decorator.js")) && /\.kf-orn \{ display: none; \}/.test(rd("css/00-kbtn.css")), "cap du cadre : ornement central séparé, caché au téléphone");
     var bad = [];
@@ -19012,6 +19012,26 @@ console.log("\n[329] v3.504.0 — Grand écran GE-4 : fiches à droite, Héros e
     ok(!/\d\.\d %/.test(phone), "Résumé : critique à la française (virgule)");
   } catch (err) {
     ok(false, "[329] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[330] v3.505.0 — Grand écran GE-5 : combat, Petite aventure et carte vivante dans la coque");
+(function () {
+  try {
+    var fs = require("fs"), path = require("path");
+    var css = fs.readFileSync(path.join(ROOT, "css/10-grand-ecran.css"), "utf8");
+    ok(/body:is\(\.combat-active, \.scene-active\):not\(\.lab-run\) > #tab-bar \{ pointer-events: none;/.test(css.replace(/,\n/g, ", ")) || /body:is\(\.combat-active, \.scene-active\):not\(\.lab-run\) > #tab-bar \{ opacity/.test(css), "combat et Petite aventure : rail visible mais inactif (on ne navigue pas)");
+    ok(/body\.combat-active:not\(\.lab-run\) > #game-area \{[^}]*width: min\(100%, 560px\)/.test(css), "arène : colonne de combat de 560 px au plus, centrée");
+    ok(/--ge-arena-wide/.test(css) && /-wide\.webp/.test(fs.readFileSync(path.join(ROOT, "js/ui/chronique-view.js"), "utf8")), "fond d'arène en paysage (-wide.webp) pris s'il existe");
+    ok(typeof g.buildCbxStatesBodyHTML === "function" && g.buildCbxStatesSheetHTML().indexOf('<div class="ksheet-body">') > 0, "États du combat : le corps sert à la feuille et à la Chronique");
+    var C = g.Chronique;
+    g.gameLog = [{ text: "Avant", type: "event", at: 1000 }, { text: "Coup", type: "combat", at: 5000 }];
+    var j = C.journalHTML(2000);
+    ok(j.indexOf("Coup") > 0 && j.indexOf("Avant") < 0 && j.indexOf("Journal du combat") > 0, "journal du combat : seulement depuis le début du combat");
+    g.gameLog = [];
+    ok(C.journalHTML(2000).indexOf("Le combat commence.") > 0, "journal du combat vide : « Le combat commence. »");
+  } catch (err) {
+    ok(false, "[330] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
 })();
 

@@ -26,6 +26,10 @@ I18n.register("en", {
   "À accepter": "To accept",
   "à l'instant": "just now",
   "étape {a} / {b}": "step {a} / {b}",
+  // v3.505.0 : Chronique de combat
+  "Aucune règle n'a encore joué.": "No rule has fired yet.",
+  "Journal du combat": "Combat log",
+  "Le combat commence.": "The fight begins.",
   "onglet|Carte": "Map",
   "onglet|Hauts faits": "Feats",
   "onglet|Bibliothèque": "Library",

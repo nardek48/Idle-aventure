@@ -3,6 +3,7 @@
    la Chronique, colonne de droite du format large (html.wide-mode) : objectif d'Histoire, « à faire »
    (les bulles du dock, en clair), le village qui produit et le journal. Repliée en bande sous 1 280 px
    de fenêtre ou à la demande (préférence « chronique »). Raccourcis clavier de la coque : 1 à 5, C.
+   v3.505.0 (GE-5) : en combat, elle suit le combat (Grimoire, états, butin, journal depuis son début).
    Le téléphone ne la voit jamais (css/10-grand-ecran.css). */
 
 var CHRON_MIN_W = 1280;           // fenêtre (px de jeu) sous laquelle la Chronique se replie d'office
@@ -60,13 +61,67 @@ var Chronique = {
     if (!force && now - this.at < 500) return;
     this.at = now;
     var min = document.documentElement.classList.contains("chron-min") && !this.over;
-    var html = this.headHTML(min) + (min ? this.stripHTML() : '<div class="chr-body">' + this.objectiveHTML() + this.todoHTML() + this.villageHTML() + this.journalHTML() + '</div>');
+    var fight = this.inCombat();
+    var html = this.headHTML(min) + (min ? this.stripHTML(fight) : '<div class="chr-body">'
+      + (fight ? this.grimoireHTML() + this.statesHTML() + this.lootHTML() + this.journalHTML(this.fightAt) : this.objectiveHTML() + this.todoHTML() + this.villageHTML() + this.journalHTML()) + '</div>');
     if (html === this.last) return;
     var body = this.el.querySelector(".chr-body"), top = body ? body.scrollTop : 0;
     this.last = html;
     this.el.innerHTML = html;
     body = this.el.querySelector(".chr-body");
     if (body) body.scrollTop = top;
+  },
+
+  /* v3.505.0 (GE-5) : en combat, la Chronique suit le combat (Grimoire, états, butin, journal depuis le début) */
+  fightAt: 0,
+  inCombat: function () {
+    var on = document.body.classList.contains("combat-active");
+    if (on && !this.fightAt) { this.fightAt = Date.now(); if (window.cbxState) cbxState.lastRule = ""; }
+    if (!on) this.fightAt = 0;
+    if (on) this.arenaWide();
+    return on;
+  },
+
+  /* Fond d'arène en paysage (« monde-combat-wide.webp », liste des images à créer) : pris s'il se charge,
+     sinon le fond en hauteur reste au centre, doublé et flouté sur les côtés (css/10-grand-ecran.css). */
+  wideOk: {},
+  arenaWide: function () {
+    var root = document.documentElement, m = /url\("?([^")]+\.webp)"?\)/.exec(root.style.getPropertyValue("--world-combat-map") || "");
+    var url = m ? m[1].replace(/\.webp$/, "-wide.webp") : "", self = this;
+    var apply = function () {
+      var ok = !!url && self.wideOk[url] === true;
+      root.classList.toggle("ge-arena-wide", ok);
+      if (ok) root.style.setProperty("--ge-arena-wide", 'url("' + url + '")'); else root.style.removeProperty("--ge-arena-wide");
+    };
+    if (url && !(url in this.wideOk) && typeof Image === "function") {
+      this.wideOk[url] = null;
+      var img = new Image();
+      img.onload = function () { self.wideOk[url] = true; apply(); };
+      img.onerror = function () { self.wideOk[url] = false; apply(); };
+      img.src = url;
+    }
+    apply();
+  },
+
+  grimoireHTML: function () {
+    if (game.combatMode !== "grimoire") return "";
+    var rule = window.cbxState && cbxState.lastRule;
+    return '<section class="chr-s"><h4>' + esc(_t("Le Grimoire")) + '</h4>'
+      + (rule ? '<div class="chr-rule">' + rule + '</div>' : '<p class="chr-empty">' + esc(_t("Aucune règle n'a encore joué.")) + '</p>') + '</section>';
+  },
+
+  statesHTML: function () {
+    if (typeof buildCbxStatesBodyHTML !== "function") return "";
+    return '<section class="chr-s chr-states"><h4>' + esc(_t("États du combat")) + '</h4>' + buildCbxStatesBodyHTML() + '</section>';
+  },
+
+  lootHTML: function () {
+    var S = window.SortieManager ? SortieManager.ensure() : null;
+    if (!S || !S.active) return "";
+    var loot = S.loot || {}, items = loot.items || [];
+    return '<section class="chr-s"><h4>' + esc(_t("Butin de la sortie")) + '</h4><div class="chr-loot">'
+      + '<span><img src="images/Icons/gold_icon.webp" alt="">' + esc(formatNumber(Math.floor(Number(loot.gold) || 0))) + '</span>'
+      + (items.length ? '<span>' + esc(_tn(items.length, "{n} objet", "{n} objets")) + '</span>' : '') + '</div></section>';
   },
 
   headHTML: function (min) {
@@ -83,15 +138,15 @@ var Chronique = {
     return out;
   },
 
-  stripHTML: function () {
-    var n = this.todoItems().length;
+  stripHTML: function (fight) {
+    var n = fight ? 0 : this.todoItems().length;
     var b = function (ico, tip, badge) {
       return '<button type="button" onclick="Chronique.openOver()" title="' + esc(tip) + '"><img src="' + ico + '" alt="">' + (badge ? '<span class="chr-badge">' + badge + '</span>' : '') + '</button>';
     };
     return '<div class="chr-strip">'
-      + b("images/Icons/quests/quest_story.webp", _t("Objectif"), "")
-      + b("images/Icons/quests/quest_list.webp", _t("À faire"), n ? String(n) : "")
-      + b("images/Icons/menu_icons/village_menu.webp", _t("Le village"), "")
+      + (fight ? "" : b("images/Icons/quests/quest_story.webp", _t("Objectif"), "")
+        + b("images/Icons/quests/quest_list.webp", _t("À faire"), n ? String(n) : "")
+        + b("images/Icons/menu_icons/village_menu.webp", _t("Le village"), ""))
       + b("images/Icons/menu_icons/journal_menu.webp", _t("Journal"), "")
       + '</div>';
   },
@@ -141,15 +196,16 @@ var Chronique = {
       + '<button type="button" class="chr-harvest"' + (stock > 0 ? '' : ' disabled') + ' onclick="ProductionManager.harvestAll()"><img src="images/Icons/system/collect_all.webp" alt="">' + esc(_t("Tout récolter")) + '</button></section>';
   },
 
-  journalHTML: function () {
-    var log = (window.gameLog || []).slice(0, 6);
-    if (!log.length) return "";
+  // since : en combat, seulement les lignes écrites depuis son début (12 au plus)
+  journalHTML: function (since) {
+    var log = (window.gameLog || []).filter(function (e) { return !since || (e.at || 0) >= since; }).slice(0, since ? 12 : 6);
+    if (!log.length) return since ? '<section class="chr-s"><h4>' + esc(_t("Journal du combat")) + '</h4><p class="chr-empty">' + esc(_t("Le combat commence.")) + '</p></section>' : "";
     var now = Date.now();
     var age = function (t) {
       var m = Math.floor((now - (t || now)) / 60000);
       return m < 1 ? _t("à l'instant") : m < 60 ? _t("{n} min", { n: m }) : _t("{h} h", { h: Math.floor(m / 60) });
     };
-    var h = '<section class="chr-s"><h4>' + esc(_t("Journal")) + '<a onclick="switchTab(\'log\')">' + esc(_t("Tout")) + ' ›</a></h4><ul class="chr-log">';
+    var h = '<section class="chr-s"><h4>' + esc(since ? _t("Journal du combat") : _t("Journal")) + (since ? '' : '<a onclick="switchTab(\'log\')">' + esc(_t("Tout")) + ' ›</a>') + '</h4><ul class="chr-log">';
     log.forEach(function (e) { h += '<li class="is-' + esc(e.type || "event") + '"><span>' + esc(_td(e.text)) + '</span><time>' + esc(age(e.at)) + '</time></li>'; });
     return h + '</ul></section>';
   }
