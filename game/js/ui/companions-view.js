@@ -41,8 +41,8 @@ function buildCompanionCardHTML(companionId) {
 
   h += '<div class="cp-skill">';
   h += '<img class="cp-skill-ico" src="' + esc(def.skill.icon) + '" alt="">';
-  h += '<div><b>' + esc(_td(def.skill.name)) + '</b><div class="cp-skill-desc">' + esc(_td(def.skill.desc))
-    + ' ' + esc(_t("Recharge : {n} rounds.", { n: def.skill.cooldown })) + '</div></div>';
+  h += '<div><b>' + esc(_td(def.skill.name)) + '</b><div class="cp-skill-desc">' + esc(companionSkillDescRanked(companionId, def))
+    + ' ' + esc(_t("Recharge : {n} rounds.", { n: def.skill.cooldown })) + '</div>' + buildCompanionSkillRankHTML(companionId) + '</div>';
   h += '</div>';
 
   /* v3.334.0 (P2) : en patrouille, on le dit. v3.440.0 : « Avec toi / Au camp » se choisit à la
@@ -71,6 +71,48 @@ function buildCompanionCardHTML(companionId) {
   h += '</div>';
   return h;
 }
+
+/* H4 partie C : rang de la compétence signature — pastilles, effet au rang, puis le rang suivant (même bloc que les sorts du héros). */
+/* Description de la compétence avec la valeur du rang (« 18 % » → « 24 % », « 2,5 fois » → « 3,1 fois »). */
+function companionSkillDescRanked(companionId, def) {
+  var txt = _td(def.skill.desc), sk = CompanionManager.skillOf(companionId), v0 = def.skill.value;
+  if (!sk || typeof v0 !== "number" || sk.value === v0) return txt;
+  if (sk.type === "heal" || sk.type === "taunt") return txt.replace(new RegExp(Math.round(v0 * 100) + "(\\s?|\u00a0)%"), Math.round(sk.value * 100) + "$1%");
+  var f = function (v, sep) { return (Math.round(v * 10) / 10).toFixed(1).replace(".", sep).replace(sep + "0", ""); };
+  return txt.replace(f(v0, ","), f(sk.value, ",")).replace(f(v0, "."), f(sk.value, "."));
+}
+
+function companionSkillEffectLines(companionId, a, b) {
+  var A = CompanionManager.skillOf(companionId, a), B = CompanionManager.skillOf(companionId, b), out = [];
+  var mult = function (v) { var s = (Math.round(v * 10) / 10).toFixed(1); return (window.I18n && I18n.lang && I18n.lang() === "en") ? s : s.replace(".", ","); };
+  if (A.value !== B.value) out.push(A.type === "heal" || A.type === "taunt"
+    ? _t("Soin {a} % → {b} %", { a: Math.round(A.value * 100), b: Math.round(B.value * 100) })
+    : _t("Frappe ×{a} → ×{b}", { a: mult(A.value), b: mult(B.value) }));
+  if (Number(A.charges || 0) !== Number(B.charges || 0)) out.push(_t("Par combat : {a} → {b}", { a: A.charges, b: B.charges }));
+  if (!A.bonusAsh && B.bonusAsh) out.push(_t("+1 Cendre vive à la 1re taille"));
+  return out;
+}
+
+function buildCompanionSkillRankHTML(companionId) {
+  var CM = CompanionManager, r = CM.skillRank(companionId), max = CM.skillRankMax(), st = CM.skillRankStatus(companionId);
+  var h = '<span class="pc-skill-rk"><span class="pc-skill-pips" aria-hidden="true">';
+  for (var i = 1; i <= COMPANION_SKILL_RANK_MAX; i++) h += '<i class="' + (i <= r ? "is-on" : (i > max ? "is-lock" : "")) + '"></i>';
+  h += '</span>' + esc(_t("Rang {n}/{m}", { n: r, m: COMPANION_SKILL_RANK_MAX })) + '</span>';
+  if (st === "max") return h + '<div class="pc-skill-max">★ ' + esc(_t("Rang maximum")) + '</div>';
+  if (st === "lock") return h + '<div class="pc-skill-lock">' + esc(_t("Rang {n} : {w}.", { n: r + 1, w: _t("s'ouvre {w}", { w: WorldCaps.withPrep(r) }) })) + '</div>';
+  var p = COMPANION_SKILL_RANK_PRICES[r], def = (typeof WAREHOUSE_RESOURCES !== "undefined" && WAREHOUSE_RESOURCES[p.mat]) || {};
+  var stock = window.WarehouseManager ? WarehouseManager.getAmount(p.mat) : 0, lines = companionSkillEffectLines(companionId, r, r + 1);
+  h += '<div class="pc-skill-next"><span class="pc-skill-next-t">' + esc(_t("Rang {a} → {b}", { a: r, b: r + 1 })) + '</span>';
+  h += '<span class="pc-skill-next-v">' + (lines.length ? lines.map(esc).join('<br>') : esc(_t("Prépare le rang suivant"))) + '</span>';
+  h += '<span class="pc-skill-cost"><span class="pc-skill-chip' + (Number(game.gold || 0) >= p.gold ? '' : ' is-short') + '"><img src="images/Icons/gold_icon.webp" alt="">' + esc(_t("{n} or", { n: formatNumber(p.gold) })) + '</span>';
+  h += '<span class="pc-skill-chip' + (stock >= p.qty ? '' : ' is-short') + '">' + renderIconOrEmojiHTML(def.icon || "", "pc-skill-chip-img", "") + p.qty + ' ' + esc(_td(def.name || p.mat)) + ' <small>(' + formatNumber(stock) + ')</small></span></span>';
+  h += '<button type="button" class="kbtn" onclick="companionBuySkillRank(\'' + companionId + '\')"' + (st === "ok" ? '' : ' disabled') + '>' + esc(_t("Monter au rang {n}", { n: r + 1 })) + '</button></div>';
+  return h;
+}
+
+function companionBuySkillRank(companionId) { if (window.CompanionManager) CompanionManager.buySkillRank(companionId); }
+window.companionBuySkillRank = companionBuySkillRank;
+window.buildCompanionSkillRankHTML = buildCompanionSkillRankHTML;
 
 /* H4 (chantier du héros, atelier compagnons-ardeur.html variante A) : entraînement réparti. Une case par palier (or = équilibré,
    rouge = Ardeur, vert = Vigueur, pointillé = monde pas atteint), deux boutons d'achat, et la remise à zéro qui rend l'or. */

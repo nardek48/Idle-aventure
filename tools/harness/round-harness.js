@@ -18883,6 +18883,38 @@ console.log("\n[325] Chantier du héros, H4 — compagnons : plancher 10 % du h�
   }
 })();
 
+console.log("\n[326] Chantier du héros, H4 partie C — rangs des compétences des compagnons");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
+    var game = g.game, CM = g.CompanionManager;
+    ["wenna", "maddoc", "edda", "ysolt", "sarkel"].forEach(function (id) { CM.state(id).unlocked = true; });
+    var tot = 0; g.COMPANION_SKILL_RANK_PRICES.forEach(function (p) { tot += p.gold; });
+    ok(tot === 65500, "un compagnon de 0 à 5 : 65 500 or (moitié des sorts du héros)");
+    var v = function (id, r) { return CM.skillOf(id, r); };
+    ok(v("wenna", 0).value === 0.18 && v("wenna", 5).value === 0.28, "Wenna : soin 18 → 28 %");
+    CM.state("maddoc").voie = "tronc"; ok(v("maddoc", 5).value === 0.22, "Maddoc, le tronc : Planté 12 → 22 %");
+    CM.state("maddoc").voie = "affut"; ok(v("maddoc", 5).value === 3.5, "Maddoc, l'affût : Tir ajusté ×2,5 → ×3,5");
+    ok(v("edda", 5).value === 2, "Edda : ×1,5 → ×2");
+    ok(v("ysolt", 2).charges === 1 && v("ysolt", 3).charges === 2, "Ysolt : une charge de plus au rang 3");
+    ok(!v("sarkel", 2).bonusAsh && v("sarkel", 3).bonusAsh === 1 && v("sarkel", 4).charges === 1 && v("sarkel", 5).charges === 2, "Sarkel : +1 Cendre au rang 3, 2e taille au rang 5");
+    ok(g.COMPANIONS_DB.wenna.skill.value === 0.18, "la donnée d'origine n'est jamais modifiée");
+    CM.state("ysolt").skillRank = 3; ok(CM.chargesMax("ysolt") === 2, "chargesMax lit le rang (Ysolt rang 3 : 2)");
+    // achat, monde, sauvegarde
+    game.worldsEverReached = { 0: true }; game.gold = 1000;
+    ok(CM.skillRankStatus("wenna") === "short", "Forêt : rang 1 ouvert, sans Résine");
+    g.WarehouseManager.addResource("resine_durcie", 2, true);
+    ok(CM.buySkillRank("wenna") && CM.skillRank("wenna") === 1 && game.gold === 500, "rang 1 : 500 or et 2 Résines");
+    ok(CM.skillRankStatus("wenna") === "lock", "rang 2 fermé tant que le Désert n'est pas atteint");
+    var sv = g.buildSaveData();
+    ok(sv.companions.wenna.skillRank === 1 && sv.companions.ysolt.skillRank === 3, "buildSaveData garde les rangs");
+    g.restoreBaseState(JSON.parse(JSON.stringify(sv)));
+    ok(g.CompanionManager.skillRank("wenna") === 1 && g.CompanionManager.skillRank("ysolt") === 3, "restoreBaseState les rend");
+  } catch (err) {
+    ok(false, "[326] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

@@ -33,6 +33,7 @@ var CompanionManager = {
     // H4 : paliers Ardeur / Vigueur, compris dans upgrades (le reste est « équilibré »)
     if (typeof st.ardeur !== "number" || st.ardeur < 0) st.ardeur = 0;
     if (typeof st.vigueur !== "number" || st.vigueur < 0) st.vigueur = 0;
+    if (typeof st.skillRank !== "number" || st.skillRank < 0) st.skillRank = 0; // H4 partie C : rang de la compétence
     if (st.ardeur + st.vigueur > st.upgrades) { st.ardeur = Math.min(st.ardeur, st.upgrades); st.vigueur = Math.min(st.vigueur, st.upgrades - st.ardeur); }
     if (st.control !== "manual") st.control = "auto";
     if (typeof st.present !== "boolean") st.present = false;
@@ -380,7 +381,8 @@ var CompanionManager = {
      (qui, lui, tient le rythme à l'intérieur d'un même combat). */
   chargesMax: function (companionId) {
     var def = getCompanionDef(companionId);
-    var n = (def && def.skill && typeof def.skill.charges === "number") ? def.skill.charges : 0;
+    var sk = this.skillOf(companionId); // H4 partie C : charges du rang (Ysolt, Sarkel)
+    var n = (sk && typeof sk.charges === "number") ? sk.charges : 0;
     var cm = n > 0 ? this.choiceModsOf(companionId) : null;
     if (cm && cm.extraCharges) n += Number(cm.extraCharges); // v3.455.0 : Ysolt reste, Pas encore deux fois
     if (def.skill.type === "cutVein") return n; // v3.488.0 : Coup de pioche, une fois par combat (MT5), sans la charge en plus
@@ -560,7 +562,7 @@ var CompanionManager = {
   /* forcedTargetId (mode Manuel) : la cible choisie au popup. Sans elle, l'allié le plus
      bas — c'est-à-dire ce que le mode Auto ferait. */
   useSkill: function (actor, def, forcedTargetId) {
-    var skill = def.skill;
+    var skill = this.skillOf(actor.companionId) || def.skill; // H4 partie C : compétence au rang
     if (!skill) return false;
 
     if (skill.type === "heal") {
@@ -621,7 +623,9 @@ var CompanionManager = {
 
     /* v3.488.0 (Montagne) — Coup de pioche (Sarkel) : il taille la veine à la place du héros (Cendre et chaleur, pas la lame). */
     if (skill.type === "cutVein") {
+      var premiere = actor.charges === this.chargesMax(actor.companionId); // S1 (décision Seb) : la Cendre en plus sur la 1re taille du combat seulement
       if (!window.VeinSystem || !VeinSystem.cut(false, actor.companionId)) return false;
+      if (skill.bonusAsh && premiere && VeinSystem.state) VeinSystem.state.bonusAsh = Number(VeinSystem.state.bonusAsh || 0) + skill.bonusAsh; // H4 partie C : Sarkel rang 3
       actor.cooldown = Number(skill.cooldown || 0);
       if (typeof actor.charges === "number") actor.charges = Math.max(0, actor.charges - 1);
       if (typeof addLog === "function") addLog("🪨 " + _t("{x} — {s} : la veine est taillée.", { x: _td(def.name), s: _td(skill.name) }), "event");
@@ -662,6 +666,49 @@ var CompanionManager = {
   },
 
   /* ---------- Améliorations ---------- */
+
+  /* ---------- H4 partie C : rangs de la compétence signature ---------- */
+
+  skillRank: function (companionId) { var st = this.state(companionId); return st ? Math.min(COMPANION_SKILL_RANK_MAX, Math.floor(st.skillRank || 0)) : 0; },
+  /* Compétence au rang courant (copie) ; le rang 0 rend la donnée telle quelle. */
+  skillOf: function (companionId, rank) {
+    var def = getCompanionDef(companionId); if (!def || !def.skill) return null;
+    var r = typeof rank === "number" ? rank : this.skillRank(companionId), R = COMPANION_SKILL_RANKS[companionId];
+    if (!r || !R) return def.skill;
+    var sk = Object.assign({}, def.skill), rule = R[sk.type] || R;
+    if (typeof rule.value === "number" && typeof sk.value === "number") sk.value = Math.round((sk.value + rule.value * r) * 1000) / 1000;
+    if (rule.chargeAt && r >= rule.chargeAt) sk.charges = Number(sk.charges || 0) + 1;
+    if (rule.ashAt && r >= rule.ashAt) sk.bonusAsh = 1;
+    return sk;
+  },
+  skillRankMax: function () {
+    var w = (window.WorldCaps && typeof WorldCaps.getReachedWorldIndex === "function") ? WorldCaps.getReachedWorldIndex() : this.worldIndex();
+    return Math.max(1, Math.min(COMPANION_SKILL_RANK_MAX, Number(w || 0) + 1));
+  },
+  /* "max" | "lock" | "short" | "ok" (comme les sorts du héros). */
+  skillRankStatus: function (companionId) {
+    var r = this.skillRank(companionId);
+    if (r >= COMPANION_SKILL_RANK_MAX) return "max";
+    if (r + 1 > this.skillRankMax()) return "lock";
+    var p = COMPANION_SKILL_RANK_PRICES[r], mat = window.WarehouseManager ? WarehouseManager.getAmount(p.mat) : 0;
+    return (Number(game.gold || 0) >= p.gold && mat >= p.qty) ? "ok" : "short";
+  },
+  buySkillRank: function (companionId) {
+    if (window.heroLockToast && heroLockToast()) return false;
+    var st = this.state(companionId); if (!st || !st.unlocked) return false;
+    var s = this.skillRankStatus(companionId), r = this.skillRank(companionId);
+    if (s !== "ok") { if (s === "short" && typeof showToast === "function") showToast(_t("Pas assez de ressources pour ce rang"), 1400); return false; }
+    var p = COMPANION_SKILL_RANK_PRICES[r];
+    if (!WarehouseManager.removeResource(p.mat, p.qty)) return false;
+    game.gold = Number(game.gold || 0) - p.gold;
+    st.skillRank = r + 1;
+    var def = getCompanionDef(companionId), nom = _td(def.skill.name);
+    if (typeof addLog === "function") addLog("📈 " + _t("{x} passe au rang {n}.", { x: nom, n: r + 1 }), "event");
+    if (typeof showToast === "function") showToast(_t("{x} : rang {n}", { x: nom, n: r + 1 }), 1400);
+    if (typeof saveGame === "function") saveGame();
+    if (typeof renderAll === "function") renderAll();
+    return true;
+  },
 
   /* H4 : longueur de la ligne = 5 paliers par monde atteint depuis l'arrivée (jamais sous ce qui est déjà acquis). */
   trainingMax: function (companionId) {
@@ -730,6 +777,7 @@ var CompanionManager = {
         upgrades: Number(st.upgrades || 0),
         ardeur: Number(st.ardeur || 0),      // H4
         vigueur: Number(st.vigueur || 0),
+        skillRank: Number(st.skillRank || 0), // H4 partie C
         control: st.control === "manual" ? "manual" : "auto",
         present: !!st.present,
         hp: (typeof st.hp === "number" && isFinite(st.hp)) ? st.hp : null,
@@ -755,6 +803,7 @@ var CompanionManager = {
       st.upgrades = Math.max(0, Math.min(COMPANION_TRAINING_HARD_MAX, Number(d.upgrades || 0))); // H4 : ligne allongée par monde
       st.ardeur = Math.max(0, Math.min(st.upgrades, Number(d.ardeur || 0)));
       st.vigueur = Math.max(0, Math.min(st.upgrades - st.ardeur, Number(d.vigueur || 0)));
+      st.skillRank = Math.max(0, Math.min(COMPANION_SKILL_RANK_MAX, Math.floor(Number(d.skillRank || 0))));
       st.control = d.control === "manual" ? "manual" : "auto";
       st.present = !!d.present;
       st.hp = (typeof d.hp === "number" && isFinite(d.hp)) ? d.hp : null;

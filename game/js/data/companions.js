@@ -30,7 +30,21 @@ var COMPANION_HERO_DMG_PCT = 0.10; // décision Seb (26/10) : 10 %, la Forêt ne
 /* H4 : entraînement réparti. Chaque palier acheté donne +8 % au choix (Ardeur = dégâts, Vigueur = PV) ; les paliers d'avant
    (et les cadeaux) restent « équilibrés » (+6 % aux deux). Ligne : 5 paliers par monde atteint depuis l'arrivée du compagnon. */
 var COMPANION_TRAINING_PCT = 0.08;
-var COMPANION_VIGUEUR_THREAT = 0.10; // H4 (V1) : chaque palier de Vigueur attire 10 % de coups en plus
+var COMPANION_VIGUEUR_THREAT = 0.10;
+/* H4 partie C (décision Seb 26/10, C-a) : rangs 1 à 5 de la compétence signature. Rang r ouvert par le monde r−1 (comme les
+   sorts du héros), prix moitié de H2 : or + 2 matériaux du monde. Effets : `value` + perRank × rang, ou un cran à un rang donné. */
+var COMPANION_SKILL_RANK_MAX = 5;
+var COMPANION_SKILL_RANK_PRICES = [
+  { gold: 500, mat: "resine_durcie", qty: 2 }, { gold: 2500, mat: "verre_trempe", qty: 2 }, { gold: 7500, mat: "cle_de_voute", qty: 2 },
+  { gold: 15000, mat: "cire_consacree", qty: 2 }, { gold: 40000, mat: "obsidienne_taillee", qty: 2 }
+];
+var COMPANION_SKILL_RANKS = {
+  wenna: { value: 0.02 },                              // soin 18 → 28 %
+  maddoc: { taunt: { value: 0.02 }, strike: { value: 0.2 } }, // Planté 12 → 22 % ; Tir ajusté ×2,5 → ×3,5 (selon la voie)
+  edda: { value: 0.1 },                                // Le dernier trait ×1,5 → ×2
+  ysolt: { chargeAt: 3 },                              // +1 charge au rang 3
+  sarkel: { ashAt: 3, chargeAt: 5 }                    // +1 Cendre vive (1re taille du combat) au rang 3, 2e taille au rang 5 (S1)
+}; // H4 (V1) : chaque palier de Vigueur attire 10 % de coups en plus
 var COMPANION_TRAINING_PER_WORLD = 5;
 var COMPANION_TRAINING_HARD_MAX = 30;
 var COMPANION_JOIN_WORLD = { wenna: 0, maddoc: 1, edda: 2, ysolt: 3, sarkel: 4 };
@@ -370,6 +384,9 @@ window.COMPANION_MAX_PRESENT = COMPANION_MAX_PRESENT;
 window.COMPANION_HERO_DMG_PCT = COMPANION_HERO_DMG_PCT;
 window.COMPANION_TRAINING_PCT = COMPANION_TRAINING_PCT;
 window.COMPANION_VIGUEUR_THREAT = COMPANION_VIGUEUR_THREAT;
+window.COMPANION_SKILL_RANK_MAX = COMPANION_SKILL_RANK_MAX;
+window.COMPANION_SKILL_RANK_PRICES = COMPANION_SKILL_RANK_PRICES;
+window.COMPANION_SKILL_RANKS = COMPANION_SKILL_RANKS;
 window.COMPANION_JOIN_WORLD = COMPANION_JOIN_WORLD;
 window.getCompanionTrainingBonus = getCompanionTrainingBonus;
 window.getCompanionDef = getCompanionDef;

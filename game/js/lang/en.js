@@ -1240,6 +1240,13 @@ I18n.register("en", {
   "{n} r restants": "{n} r left",
   "Utile contre": "Useful against",
   "Aucune situation particulière : c'est une technique de dégâts brute, à jouer quand rien d'autre ne presse.": "No particular situation: it's a raw damage technique, to play when nothing else is pressing.",
+  // H4 partie C : rangs des compétences des compagnons
+  "Soin {a} % → {b} %": "Heal {a}% → {b}%",
+  "Frappe ×{a} → ×{b}": "Strike ×{a} → ×{b}",
+  "Par combat : {a} → {b}": "Per fight: {a} → {b}",
+  "+1 Cendre vive à la 1re taille": "+1 Living Ash on the first cut",
+  "Rang maximum": "Maximum rank",
+  "Prépare le rang suivant": "Prepares the next rank",
   // H4 (chantier du héros) : entraînement des compagnons réparti
   "{x} : entraînement à répartir de nouveau (+{n} or).": "{x}: training to spread again (+{n} gold).",
   "+{p} % par palier, au choix": "+{p}% per step, your pick",

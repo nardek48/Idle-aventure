@@ -36,6 +36,8 @@ var COMP_PCT = opt("--comp-pct") !== null ? Number(opt("--comp-pct")) : null; //
 var VICTIMES = ARGV.indexOf("--victimes") >= 0; // H4 : qui encaisse les coups ennemis (héros ou compagnon)
 var REL_FLOOR = opt("--rel-floor") !== null ? Number(opt("--rel-floor")) : null; // H4 (V1) : plancher de menace relatif
 var COMP_VIG = opt("--comp-vig") !== null ? Number(opt("--comp-vig")) : null; // H4 (V1) : N paliers de Vigueur en plus aux compagnons
+var WENNA_SOIN = opt("--wenna-soin") !== null ? Number(opt("--wenna-soin")) : null; // H4 partie C : soin de Wenna (part des PV max)
+var COMP_RANG = opt("--comp-rang") !== null ? Number(opt("--comp-rang")) : null; // H4 partie C : rang de compétence de tous les compagnons ; affiche la Cendre vive par sortie
 // v3.492.15 (fiche objets de combat) : --plafond heal,surge,shell,sort,burn — la mécanique entièrement annulée (borne haute d'un objet)
 var PLAFOND = opt("--plafond") ? opt("--plafond").split(",") : [];
 var SANS_REGLE = opt("--sans-regle") ? opt("--sans-regle").split(",") : []; // retire ces conditions du Grimoire (joueur sans la règle)
@@ -88,12 +90,14 @@ var extra = function () {
       console.log("VICTIMES : " + Object.keys(VIC).map(function (k) { return k + " " + Math.round(100 * VIC[k] / t) + " %"; }).join(" · ") + " (" + t + " coups)"); });
   }
   if (REL_FLOOR !== null) { g.THREAT_REL_FLOOR = REL_FLOOR; console.log("PLANCHER DE MENACE : " + REL_FLOOR); }
+  if (WENNA_SOIN !== null) { g.COMPANIONS_DB.wenna.skill.value = WENNA_SOIN; console.log("SOIN DE WENNA : " + WENNA_SOIN); }
   function charge(saveTxt, seed) {
     B.seedRng(seed);
     g.restoreBaseState(JSON.parse(saveTxt));
     kit(seed); B.seedRng(seed);
     if (TALENTS_MAX) { g.TalentManager.getNodes().forEach(function (e) { if (g.TalentManager.has(e.node.id)) g.game.talents[e.node.id] = g.TalentManager.maxRank(e.node); }); g.StatsSystem.recalcStats(); }
     if (COMP_VIG !== null) { Object.keys(g.game.companions || {}).forEach(function (k) { var st = g.game.companions[k]; st.upgrades += COMP_VIG; st.vigueur = (st.vigueur || 0) + COMP_VIG; }); g.CompanionManager.healAll(); }
+    if (COMP_RANG !== null) Object.keys(g.game.companions || {}).forEach(function (k) { g.game.companions[k].skillRank = COMP_RANG; });
     if (COMP_UPG !== null) { Object.keys(g.game.companions || {}).forEach(function (k) { g.game.companions[k].upgrades = COMP_UPG; }); g.CompanionManager.healAll(); }
     if (ENTR !== null) g.HEROS_TRAINING_UPGRADE_IDS.forEach(function (id) { g.game.upgrades[id] = ENTR; g.UPGRADES.filter(function (u) { return u.id === id; })[0].apply(ENTR); });
     g.ensureGrimoireRules();
@@ -108,8 +112,12 @@ var extra = function () {
     g.game.dungeonTierCleared = cleared; g.game.dungeonRunsUsed = {};
     if (g.game.dungeonRun) g.game.dungeonRun.active = false;
     var boss0 = Number(g.game.dungeonBossClears || 0);
+    var ash0 = g.WarehouseManager.getAmount("cendre_vive");
+    process.__ash = process.__ash || { n: 0, sum: 0 };
+    if (COMP_RANG !== null && !process.__ashHook) { process.__ashHook = true; process.on("exit", function () { console.log("CENDRE VIVE par sortie (fin de sortie, campement compris) : " + (process.__ash.sum / Math.max(1, process.__ash.n)).toFixed(2) + " sur " + process.__ash.n + " sorties"); }); }
     g.DungeonManager.start(5, []);
     if (!g.game.dungeonRun.active) return null;
+    setTimeout(function () {}, 0);
     var rounds = 0, guard = 8000, camp = false, hpCamp = null, hpBoss = null, pot0 = JSON.stringify(g.game.healingPotionsOwned || {});
     while (g.game.dungeonRun.active && g.game.heroHp > 0 && guard-- > 0) {
       if (g.DungeonManager.isCampPending()) {
@@ -123,6 +131,7 @@ var extra = function () {
       if (!autoRound()) break;
       rounds++;
     }
+    process.__ash.n += 1; process.__ash.sum += g.WarehouseManager.getAmount("cendre_vive") - ash0;
     return { camp: camp, hpCamp: hpCamp, boss: hpBoss !== null, hpBoss: hpBoss, ok: Number(g.game.dungeonBossClears || 0) > boss0, rounds: rounds,
       hp: Math.max(0, g.game.heroHp) / g.game.heroMaxHp };
   }
