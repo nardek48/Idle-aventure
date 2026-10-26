@@ -292,7 +292,7 @@ var DUNGEONS = [
   {
     id: 5, key: "mountain",
     name: "Gueule du volcan",
-    worldId: "mountain", worldRequired: 4, worldPower: 4, difficultyMult: 30, // H1 (R1) : 22 → 30, combats plus longs avec l'entraînement à 170
+    worldId: "mountain", worldRequired: 4, worldPower: 4, difficultyMult: 38, // H1 (R1) : 22 → 30 ; audit P1 (26/10) : 30 → 38, combats plus longs (Wyrm à l'acte III, entraînement 170)
     maxRarity: "epic", // le légendaire ne tombe qu'à la Tour (décision 12.1)
     // v3.490.0 (Montagne, acte III) : la Cendre vive en fin de run ; une veine à chaque vague (vein-system)
     specialResourceId: "cendre_vive", specialResourceAmount: 3,
@@ -311,7 +311,7 @@ var DUNGEONS = [
        Banc (montagne-acte3-bench, sauvegardes de campagne, 8-10 runs) : à 1 / 1, 0 / 100 / 0 % (Ch. / Rô. / Ma.) ;
        0,8 / 0,7 -> 63 / 100 / 63 % ; 0,75 / 0,62 -> 90 / 100 / 100 %. Retenu entre les deux. */
     boss: { baseId: "ancientdragon", name: "Wyrm de cendres", archetype: "enraged",
-      statMult: { endurance: 0.78, power: 0.66 }, image: "./images/Boss/wyrm_cendres.webp",
+      statMult: { endurance: 0.94, power: 0.66 }, image: "./images/Boss/wyrm_cendres.webp", // audit P1 : endurance 0,78 → 0,94 (puissance +15 % : mur à l'acte III)
       unique: { id: "heaume_wyrm", slot: "helmet", name: "Heaume du Wyrm", icon: "casque", power: "dun_braise" },
       phases: [
         { atPct: 0.6, heat: 2, label: "il secoue le lac" },
