@@ -11601,7 +11601,8 @@ console.log("\n[154] v3.378.0 (v3.446.0 : à la préparation de sortie) — « C
   G.killCounts.nezzam = 1;
   h = card(trone);
   ok(h.indexOf("Vampirique") !== -1 && h.indexOf("Silence") === -1, "Nezzam vaincu : « Vampirique » ; sa phase de silence reste une surprise");
-  ok(h.split("sp-trait ").length - 1 === 2, "scarabée et ver des sables (silence tiré au hasard) : aucun trait affiché");
+  ok(h.split("sp-trait ").length - 1 === 4 && /Soin<\/b> · [^<]*Nezzam/.test(h) && /Bouclier<\/b> · [^<]*Nezzam/.test(h),
+    "scarabée et ver des sables (silence tiré au hasard) : aucun trait ; Nezzam : Soin et Bouclier de boss (v3.492.14)");
 
   // Donjon : élites et boss seulement ; boss connu une fois le donjon terminé
   G.killCounts = { serment_armure: 1, sandwarrior: 4 };
@@ -11620,7 +11621,8 @@ console.log("\n[154] v3.378.0 (v3.446.0 : à la préparation de sortie) — « C
   ok(/Bouclier<\/b> · [^<]*B\u00e2tisseur/.test(h), "Sanctuaire : le B\u00e2tisseur de l'escorte affiche le Bouclier");
   ok(/Vampirique<\/b> · [^<]*Goule/.test(h) && /Enrag\u00e9<\/b> · [^<]*Varrek/.test(h) && h.indexOf("Blind\u00e9") !== -1,
     "Sanctuaire : Goule Vampirique, Varrek Enrag\u00e9, Blind\u00e9 conserv\u00e9");
-  ok(h.split("sp-trait ").length - 1 === 4, "Sanctuaire : 4 traits (3 r\u00e8gles actives au monde 2)");
+  ok(h.split("sp-trait ").length - 1 === 7 && /Exaltation<\/b>/.test(h) && /Se rel\u00e8ve<\/b> · [^<]*Varrek/.test(h),
+    "Sanctuaire : 7 traits, dont l'Exaltation des \u00e9lites et Varrek qui se rel\u00e8ve (v3.492.14)");
   G.killCounts = kcAvant; G.dungeonTierCleared = dtcAvant;
   ok(card({ type: "elite", id: "serment_armure" }).indexOf("Blindé") !== -1, "élite de la carte : trait affiché");
 
@@ -18607,6 +18609,36 @@ console.log("\n[317] v3.492.13 — pastille du monde sur l'icône des objets (L2
     ok(false, "[317] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   } finally {
     g.WorldManager.worldIndex = wiAvant;
+  }
+})();
+
+console.log("\n[318] v3.492.14 — préparation : soin, bouclier et exaltation annoncés, mécaniques des mondes comprises");
+(function () {
+  try {
+    game = freshCombat("knight");
+    var G = g.game;
+    G.unlockedTabs.grimoire = true; G.grimoireRules = []; G.grimoirePresets = []; G.combatMode = "grimoire";
+    G.killCounts = {}; Object.keys(g.ENEMY_DB).concat(Object.keys(g.ELITE_DB), Object.keys(g.BOSS_DB)).forEach(function (id) { G.killCounts[id] = 1; });
+    G.dungeonTierCleared = { 5: true };
+    var card = function (ctx) { g.sortiePrep = { opts: { ctx: ctx }, preset: null, buffs: {}, items: [], pick: -1 }; return g.buildSortiePrepTraitsHTML(true); };
+    var keys = function (ctx) { return g.getEnemyTraitsPreview(ctx).traits.map(function (t) { return t.trait; }); };
+    var h = card({ type: "dungeon", id: 5 }), k = keys({ type: "dungeon", id: 5 });
+    ok(/Soin<\/b> · [^<]*Wyrm/.test(h) && /Bouclier<\/b> · [^<]*Golem-forge/.test(h) && /Exaltation<\/b> · [^<]*Ifrit/.test(h),
+      "Gueule : le Soin du Wyrm, le Bouclier et l'Exaltation des élites");
+    ok(/Tri<\/b> · [^<]*D\u00e9mon mineur/.test(h) && /Carapace<\/b> · [^<]*Golem-forge/.test(h) && /Br\u00fblure<\/b> · [^<]*Ifrit/.test(h),
+      "Gueule : Tri (Démon mineur compris), Carapace, Brûlure");
+    ok(k.indexOf("heat") === -1 && k.indexOf("diving") === -1, "Gueule : la chaleur et la plongée du Wyrm restent une surprise de phase (décision v3.378.0)");
+    var tri = (h.match(/<div class="sp-trait [^"]*"><img[^>]*><span><b>Tri<\/b>[\s\S]*?<\/div>/) || [""])[0];
+    ok(/is-free/.test(tri) && /Ni r\u00e8gle ni objet/.test(tri) && tri.indexOf("sortiePrepEditRules") === -1, "mécanique sans règle de Grimoire : « Ni règle ni objet », sans raccourci vers une règle impossible");
+    ok(k.indexOf("shielded") !== -1, "Acide mordant : le Bouclier des boss et des élites compte, plus d'étiquette « Aucun Bouclier connu » en donjon");
+    var kd = keys({ type: "adventure", id: "aq_montagne_dragon" });
+    ok(kd.indexOf("heal") !== -1 && kd.indexOf("shielded") !== -1 && kd.indexOf("adds") === -1 && kd.indexOf("enraged") === -1, "Dragon ancien : Soin et Bouclier ; ses renforts et sa rage de phase restent une surprise");
+    var ko = keys({ type: "adventure", id: "aq_crypte_appel" });
+    ok(ko.indexOf("calling") !== -1 && ko.indexOf("asleep") !== -1, "L'appel du Nécromancien : Appel et Dormeurs annoncés");
+    G.killCounts = {}; G.dungeonTierCleared = {};
+    ok(card({ type: "dungeon", id: 5 }).indexOf("Soin") === -1, "jamais vaincu : rien n'est montré (règle d'origine inchangée)");
+  } catch (err) {
+    ok(false, "[318] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
 })();
 

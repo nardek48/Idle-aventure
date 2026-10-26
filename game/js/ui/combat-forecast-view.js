@@ -147,16 +147,38 @@ window.launchWithForecast = launchWithForecast;
    Aucun encart si aucun trait n'est connu. Lecture seule des données : aucun fichier protégé.
    ===================================================================== */
 
-/* Trait → condition du Grimoire qui le vise, et état de combat qui le décrit (nom, icône, conseil). */
+/* Trait → condition du Grimoire qui le vise, et état de combat qui le décrit (nom, icône, conseil).
+   v3.492.14 (audit des télégraphes, décision Seb) : aussi le soin et le bouclier des boss, l'exaltation des élites et
+   les mécaniques des mondes. cond null : aucune règle n'y répond. nom : quand l'état de combat n'a pas le bon mot. */
 var ENEMY_TRAIT_DEFS = {
   shielded:  { cond: "shieldIncoming",       state: "shieldIncoming" },
+  heal:      { cond: "healIncoming",         state: "healIncoming" },
+  surge:     { cond: "eliteSurgeIncoming",   state: "surge" },
   silenced:  { cond: "enemySilenceIncoming", state: "silence" },
   armored:   { cond: "enemyArmored",         state: "armored" },
   enraged:   { cond: "enemyEnraged",         state: "enraged" },
   vampiric:  { cond: "enemyVampiric",        state: "vampiric" },
-  corrupted: { cond: "enemyCorrupted",       state: "corrupted" }
+  corrupted: { cond: "enemyCorrupted",       state: "corrupted" },
+  adds:      { cond: "multipleEnemies",      state: null, nom: _t("Renforts"), icon: "images/Icons/combat_status/multiple_enemies.webp" },
+  calling:   { cond: "multipleEnemies",      state: "calling" },
+  rising:    { cond: "enemyRising",          state: "rising", nom: _t("Se relève") },
+  asleep:    { cond: "enemySleeping",        state: "asleep", nom: _t("Dormeurs") },
+  chaining:  { cond: "allyChained",          state: "chaining", nom: _t("Chaînes") },
+  sorting:   { cond: null,                   state: "sorting" },
+  shell:     { cond: null,                   state: "shell" },
+  burning:   { cond: null,                   state: "burning", nom: _t("Brûlure") },
+  heat:      { cond: null,                   state: null, nom: _t("Chaleur"), icon: "images/Icons/combat_status/vein_heat.webp" },
+  diving:    { cond: null,                   state: "diving", nom: _t("Plongée") }
 };
-var ENEMY_TRAIT_ORDER = ["shielded", "silenced", "armored", "enraged", "vampiric", "corrupted"];
+var ENEMY_TRAIT_ORDER = ["heal", "shielded", "surge", "silenced", "armored", "enraged", "vampiric", "corrupted",
+  "adds", "calling", "rising", "asleep", "chaining", "sorting", "shell", "burning", "heat", "diving"];
+/* Nom et icône d'un trait (état de combat, ou nom/icône propres). */
+function enemyTraitLook(trait) {
+  var def = ENEMY_TRAIT_DEFS[trait] || {};
+  var st = def.state ? (window.COMBAT_STATES || {})[def.state] || (window.COMBAT_STATES_SCREEN || {})[def.state] || {} : {}; // les deux registres d'états
+  return { nom: def.nom || st.nom || trait, icon: def.icon || st.icon || "" };
+}
+window.enemyTraitLook = enemyTraitLook;
 
 function etKilled(id) {
   return !!(game.killCounts && Number(game.killCounts[id] || 0) > 0);
@@ -183,7 +205,7 @@ function etQuestCreatures(quest) {
   if (!ids.length) etAdventurePool(quest.worldId, quest.adventureIndex).forEach(add);
   var out = ids.map(function (id) { return { kind: "enemy", id: id }; });
   if (quest.eliteId) etPushElite(out, quest.eliteId);
-  if (quest.bossId) out.push({ kind: "boss", id: quest.bossId, archetype: quest.bossArchetype || null });
+  if (quest.bossId) out.push({ kind: "boss", id: quest.bossId, archetype: quest.bossArchetype || null, phases: quest.bossPhases || null });
   return out;
 }
 
@@ -204,25 +226,27 @@ function etCreaturesFor(ctx) {
     var d = (window.DUNGEONS || []).filter(function (x) { return x.id === Number(ctx.id); })[0];
     if (!d) return [];
     var out = [];
+    /* v3.492.14 : en donjon, une vague ne se relève pas et n'appelle pas (dungeon-system.js) ; elle trie dans la Gueule. */
     etDungeonPool(d).forEach(function (id) {
-      if (window.FIXED_ENEMY_ARCHETYPES && FIXED_ENEMY_ARCHETYPES[id]) out.push({ kind: "enemy", id: id });
+      var def = window.ENEMY_DB && ENEMY_DB[id];
+      if ((window.FIXED_ENEMY_ARCHETYPES && FIXED_ENEMY_ARCHETYPES[id]) || (d.worldId === "mountain" && def && def.sorts)) out.push({ kind: "enemy", id: id, inDungeon: true });
     });
     Object.keys(d.eliteWaves || {}).forEach(function (w) {
       var eid = d.eliteWaves[w];
-      if (!out.some(function (x) { return x.id === eid; })) etPushElite(out, eid);
+      if (!out.some(function (x) { return x.id === eid; })) etPushElite(out, eid, true);
     });
-    if (d.boss) out.push({ kind: "dungeonBoss", id: d.id, name: d.boss.name, archetype: d.boss.archetype || null });
+    if (d.boss) out.push({ kind: "dungeonBoss", id: d.id, name: d.boss.name, archetype: d.boss.archetype || null, phases: d.boss.phases || null, rises: !!d.boss.rises });
     return out;
   }
   return [];
 }
 
 /* v3.438.2 : une élite et son escorte (le Bâtisseur du Contremaître porte le Bouclier). */
-function etPushElite(out, eliteId) {
+function etPushElite(out, eliteId, inDungeon) {
   out.push({ kind: "elite", id: eliteId });
   var el = window.ELITE_DB && ELITE_DB[eliteId];
   ((el && el.escort && el.escort.members) || []).forEach(function (id) {
-    if (!out.some(function (x) { return x.kind === "enemy" && x.id === id; })) out.push({ kind: "enemy", id: id });
+    if (!out.some(function (x) { return x.kind === "enemy" && x.id === id; })) out.push({ kind: "enemy", id: id, inDungeon: !!inDungeon });
   });
 }
 
@@ -238,25 +262,49 @@ function etDungeonPool(d) {
   return pool;
 }
 
-/* Nom, trait fixe et « déjà vaincu » d'une créature. */
+/* Nom, traits et « déjà vaincu » d'une créature. v3.492.14 : tous ses traits, comme le moteur les joue
+   (combat-engine.js : un boss se soigne et se protège, une élite se protège et s'exalte). */
+// Les phases (renforts, chaleur, plongée, trait qui change…) restent une surprise : décision v3.378.0, inchangée.
+function etBossTraits(archetype) {
+  var t = ["heal", "shielded"];
+  if (archetype) t.push(archetype);
+  return t;
+}
 function etDescribe(c) {
   if (c.kind === "enemy") {
     var e = window.ENEMY_DB && ENEMY_DB[c.id];
-    var fixed = (typeof FIXED_ENEMY_ARCHETYPES !== "undefined" && FIXED_ENEMY_ARCHETYPES[c.id]) || null;
-    return { name: e ? e.name : c.id, trait: fixed, met: etKilled(c.id) };
+    var fixed = (typeof FIXED_ENEMY_ARCHETYPES !== "undefined" && FIXED_ENEMY_ARCHETYPES[c.id]) || null, t = fixed ? [fixed] : [];
+    if (e && e.sorts) t.push("sorting");
+    if (e && e.rises && !c.inDungeon) t.push("rising");
+    if (e && e.calls && !c.inDungeon) t.push("calling");
+    return { name: e ? e.name : c.id, traits: t, met: etKilled(c.id) };
   }
   if (c.kind === "elite") {
-    var el = window.ELITE_DB && ELITE_DB[c.id];
-    return { name: el ? el.name : c.id, trait: el ? (el.archetype || null) : null, met: etKilled(c.id) };
+    var el = window.ELITE_DB && ELITE_DB[c.id], te = ["shielded", "surge"];
+    if (el && el.archetype) te.push(el.archetype);
+    if (el && el.sorts) te.push("sorting");
+    if (el && el.forgeShell) te.push("shell");
+    if (el && el.burns) te.push("burning");
+    return { name: el ? el.name : c.id, traits: te, met: etKilled(c.id) };
   }
   if (c.kind === "boss") {
     var b = window.BOSS_DB && BOSS_DB[c.id];
-    return { name: b ? b.name : c.id, trait: c.archetype, met: etKilled(c.id) };
+    return { name: b ? b.name : c.id, traits: etBossTraits(c.archetype, c.phases), met: etKilled(c.id) };
   }
   if (c.kind === "dungeonBoss") {
-    return { name: c.name || "Boss", trait: c.archetype, met: !!(game.dungeonTierCleared && game.dungeonTierCleared[c.id]) };
+    return { name: c.name || "Boss", traits: etBossTraits(c.archetype, c.phases).concat(c.rises ? ["rising"] : []), met: !!(game.dungeonTierCleared && game.dungeonTierCleared[c.id]) };
   }
-  return { name: c.id, trait: null, met: false };
+  return { name: c.id, traits: [], met: false };
+}
+
+/* Mécaniques posées par la quête elle-même, sur ses rencontres (morts qui dorment, chaînes des Nécromanciens). */
+function etQuestTraits(ctx) {
+  var q = ctx && (ctx.type === "adventure" || ctx.type === "hunt") ? (ctx.type === "adventure" ? window.ADVENTURE_QUESTS : window.HUNT_QUESTS || {})[ctx.id] : null;
+  var out = [];
+  if (!q) return out;
+  if ((q.encounters || []).some(function (e) { return e && e.sleepers; })) out.push({ trait: "asleep", name: _t("Des morts qui dorment") });
+  if (q.chains) out.push({ trait: "chaining", name: _t("Les Nécromanciens") });
+  return out;
 }
 
 /* Règles réellement actives (les premières, selon les emplacements débloqués). */
@@ -289,9 +337,13 @@ function getEnemyTraitsPreview(ctx) {
     seen[key] = true;
     var d = etDescribe(c);
     if (!d.met) { unmet++; return; }
-    if (!d.trait || !ENEMY_TRAIT_DEFS[d.trait]) return;
-    (traits[d.trait] = traits[d.trait] || []).push(d.name);
+    d.traits.forEach(function (t) {
+      if (!ENEMY_TRAIT_DEFS[t]) return;
+      traits[t] = traits[t] || [];
+      if (traits[t].indexOf(d.name) === -1) traits[t].push(d.name);
+    });
   });
+  etQuestTraits(ctx).forEach(function (x) { (traits[x.trait] = traits[x.trait] || []).push(x.name); });
   var list = ENEMY_TRAIT_ORDER.filter(function (t) { return traits[t]; }).map(function (t) { return { trait: t, names: traits[t] }; });
   return { traits: list, unmet: unmet };
 }

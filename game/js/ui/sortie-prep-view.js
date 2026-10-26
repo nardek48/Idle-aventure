@@ -237,9 +237,7 @@ function buildSortiePrepTeamHTML(grim, part) {
 /* v3.441.0 — OBJETS DE COMBAT : les traits connus de la sortie et ce qui y répond (règle, objet, rien),
    puis les places. Un objet tient un trait tout seul ; il est retiré de l'Entrepôt au départ. */
 function sortiePrepTraitName(trait) {
-  var def = (typeof ENEMY_TRAIT_DEFS !== "undefined") ? ENEMY_TRAIT_DEFS[trait] : null;
-  var st = def ? (window.COMBAT_STATES || {})[def.state] : null;
-  return st && st.nom ? _td(st.nom) : trait;
+  return typeof enemyTraitLook === "function" ? _td(enemyTraitLook(trait).nom) : trait; // v3.492.14
 }
 
 function sortiePrepTraitsPreview() {
@@ -254,15 +252,17 @@ function buildSortiePrepTraitsHTML(grim) {
   var kit = (typeof getGrimoireCurrentKit === "function") ? getGrimoireCurrentKit() : null, chosen = sortiePrep.items;
   var h = '<div class="sp-sec"><div class="sp-title">' + _t("Ce que tu vas affronter") + '</div>';
   prev.traits.forEach(function (t) {
-    var def = ENEMY_TRAIT_DEFS[t.trait], st = (window.COMBAT_STATES || {})[def.state] || {};
+    var def = ENEMY_TRAIT_DEFS[t.trait], st = enemyTraitLook(t.trait); // v3.492.14 : nom et icône, état de combat ou propres
     var item = chosen.filter(function (id) { return id && COMBAT_ITEMS[id] && COMBAT_ITEMS[id].trait === t.trait; })[0];
-    var r = grim ? etRuleResponse(def.cond, sortiePrepRules(), kit) : { status: "none" };
-    var cls = item ? "is-item" : (r.status === "counter" ? "is-rule" : (grim ? "is-none" : "is-free"));
+    var r = grim && def.cond ? etRuleResponse(def.cond, sortiePrepRules(), kit) : { status: "none" };
+    var sansRegle = !def.cond && !item; // aucune règle du Grimoire ne vise cette mécanique
+    var cls = item ? "is-item" : (r.status === "counter" ? "is-rule" : (grim && !sansRegle ? "is-none" : "is-free"));
     var resp = item ? (COMBAT_ITEMS[item].soften ? _t("{o} l'atténue.", { o: _td(COMBAT_ITEMS[item].name) }) : _t("{o} le tient.", { o: _td(COMBAT_ITEMS[item].name) }))
       : r.status === "counter" ? _t("Ta règle « {r} » le contre.", { r: etRuleLabel(r.rule, kit) })
       : r.status === "react" ? _t("Ta règle « {r} » réagit, sans le contrer.", { r: etRuleLabel(r.rule, kit) })
+      : sansRegle ? _t("Ni règle ni objet n'y répond : à toi de le gérer en combat.")
       : grim ? _t("Aucune règle ni objet ne répond.") : _t("À toi de le contrer en combat.");
-    h += '<div class="sp-trait ' + cls + '"><img src="' + esc(st.icon || "") + '" alt=""><span><b>' + esc(_td(st.nom || t.trait)) + '</b> · '
+    h += '<div class="sp-trait ' + cls + '"><img src="' + esc(st.icon || "") + '" alt=""><span><b>' + esc(_td(st.nom)) + '</b> · '
       + esc(t.names.map(function (n) { return _td(n); }).join(", ")) + '<em>' + esc(resp) + '</em></span>'
       + (cls === "is-none" ? '<button type="button" class="sp-trait-fix" onclick="sortiePrepEditRules()">' + _t("Règle") + ' ›</button>' : '') + '</div>';
   });
@@ -279,7 +279,7 @@ function buildSortiePrepItemsHTML(grim) {
   var h = '<div class="sp-sec"><div class="sp-title">' + _t("Objets") + '<small>' + chosen.filter(Boolean).length + ' / ' + slots + '</small></div>';
   var prev = sortiePrepTraitsPreview(), kit = (typeof getGrimoireCurrentKit === "function") ? getGrimoireCurrentKit() : null;
   var counters = {};
-  if (grim) prev.traits.forEach(function (t) { if (etRuleResponse(ENEMY_TRAIT_DEFS[t.trait].cond, sortiePrepRules(), kit).status === "counter") counters[t.trait] = true; });
+  if (grim) prev.traits.forEach(function (t) { var c = ENEMY_TRAIT_DEFS[t.trait].cond; if (c && etRuleResponse(c, sortiePrepRules(), kit).status === "counter") counters[t.trait] = true; });
 
   // Les places
   var known = {};

@@ -6852,4 +6852,15 @@ I18n.register("en", {
   // v3.492.12 : affinité de monde (P1)
   "Affinité : +{n} % ici, dans son monde": "Affinity: +{n}% here, in its world",
   "Affinité : +{n} % en {w}": "Affinity: +{n}% in {w}",
+  // v3.492.14 : préparation, mécaniques sans règle du Grimoire
+  "Ni règle ni objet n'y répond : à toi de le gérer en combat.": "No rule or item answers it: handle it yourself in combat.",
+  "Des morts qui dorment": "Sleeping dead",
+  "Les Nécromanciens": "The Necromancers",
+  "Renforts": "Reinforcements",
+  "Se relève": "Gets back up",
+  "Dormeurs": "Sleepers",
+  "Chaînes": "Chains",
+  "Brûlure": "Burn",
+  "Chaleur": "Heat",
+  "Plongée": "Dive",
 });
