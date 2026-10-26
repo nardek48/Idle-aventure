@@ -85,6 +85,7 @@
   <link rel="stylesheet" href="./css/07-responsive.css">
   <link rel="stylesheet" href="./css/08-desktop.css"> <!-- v3.367.0 : mode PC (grand écran) -->
   <link rel="stylesheet" href="./css/09-wide.css"> <!-- v3.406.0 : format tablette (PC, tablette) -->
+  <link rel="stylesheet" href="./css/10-grand-ecran.css"> <!-- v3.503.0 : grand écran (rail complet, bandeau, Chronique) -->
   <link rel="stylesheet" href="./css/99-icon-assets.css">
 
 </head>
@@ -127,6 +128,44 @@
       <div class="tab-icon-frame">
         <img src="./images/Icons/menu_icons/heroes_menu.webp" alt="" class="tab-icon-img">
         <span class="tab-label" data-i18n="onglet">Héros</span>
+      </div>
+    </button>
+
+    <!-- v3.503.0 (grand écran, GE-2) : entrées du rail de gauche, cachées sur téléphone (css/02-layout.css) -->
+    <button class="tab-btn tab-wide" data-tab="map" onclick="switchTab('map')">
+      <div class="tab-icon-frame">
+        <img src="./images/Icons/menu_icons/map_menu.webp" alt="" class="tab-icon-img">
+        <span class="tab-label" data-i18n="onglet">Carte</span>
+      </div>
+    </button>
+
+    <span class="tab-sep tab-wide" aria-hidden="true"></span>
+
+    <button class="tab-btn tab-wide tab-mini" data-tab="achievements" onclick="switchTab('achievements')">
+      <div class="tab-icon-frame">
+        <img src="./images/Icons/menu_icons/achivment_menu.webp" alt="" class="tab-icon-img">
+        <span class="tab-label" data-i18n="onglet">Hauts faits</span>
+      </div>
+    </button>
+
+    <button class="tab-btn tab-wide tab-mini" data-tab="tutorials" onclick="switchTab('tutorials')">
+      <div class="tab-icon-frame">
+        <img src="./images/Icons/menu_icons/bestiaire_menu.webp" alt="" class="tab-icon-img">
+        <span class="tab-label" data-i18n="onglet">Bibliothèque</span>
+      </div>
+    </button>
+
+    <button class="tab-btn tab-wide tab-mini" data-tab="log" onclick="switchTab('log')">
+      <div class="tab-icon-frame">
+        <img src="./images/Icons/menu_icons/journal_menu.webp" alt="" class="tab-icon-img">
+        <span class="tab-label" data-i18n="onglet">Journal</span>
+      </div>
+    </button>
+
+    <button class="tab-btn tab-wide tab-mini" data-tab="settings" onclick="switchTab('settings')">
+      <div class="tab-icon-frame">
+        <img src="./images/Icons/menu_icons/settings_menu.webp" alt="" class="tab-icon-img">
+        <span class="tab-label" data-i18n="onglet">Paramètres</span>
       </div>
     </button>
 
@@ -379,6 +418,7 @@
 <script src="js/ui/fil-rouge-view.js"></script> <!-- v3.332.0 -->
 <script src="js/ui/or-a-investir-view.js"></script> <!-- v3.429.24 : bulle « or à investir » -->
 <script src="js/ui/hud-dock-view.js"></script> <!-- v3.396.0 (HUD-1) : bulles de raccourci (fil rouge, sac, talents) -->
+<script src="js/ui/chronique-view.js"></script> <!-- v3.503.0 (GE-3) : Chronique, colonne de droite du format large -->
 <script src="js/ui/return-view.js"></script> <!-- v3.332.0 -->
 <script src="js/ui/boss-moment-view.js"></script> <!-- v3.333.0 -->
 <script src="js/ui/patrol-view.js"></script> <!-- v3.334.0 -->

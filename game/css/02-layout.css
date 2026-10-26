@@ -441,6 +441,9 @@ body.toast-shown .hud-bub .hud-bub-tip { opacity: 0; }
    left 4.43% / right 4.04% / top 27.81% / bottom 8.86% du bandeau.
    Maquette validée par Seb avant intégration (menu_bas_maquette.html).
    ========================= */
+/* v3.503.0 (grand écran) : entrées du rail de gauche (Carte, Hauts faits…), propres au format large (css/09-wide.css) */
+.tab-btn.tab-wide, .tab-sep { display: none !important; }
+
 #tab-bar {
   position: relative; /* ancre #tab-bar-row (position:absolute) — sans ça, la rangée de boutons se positionnait par rapport à un ancêtre plus haut dans l'arbre (probablement body), d'où le flottement au milieu de l'écran constaté */
   flex-shrink: 0;

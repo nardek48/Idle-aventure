@@ -197,7 +197,9 @@ function switchTab(tabName) {
   var combatMode = tabName === "combat";
 
   // v3.458.1 (audit C8) : un écran sans bouton allume l'onglet qui le contient ; à défaut, Menu
-  var directBtn = document.querySelector('.tab-btn[data-tab="' + (TAB_PARENT[tabName] || tabName) + '"]');
+  // v3.503.0 (grand écran) : un bouton propre et visible (rail du format large) passe avant le parent
+  var ownBtn = document.querySelector('.tab-btn[data-tab="' + tabName + '"]');
+  var directBtn = ownBtn && ownBtn.offsetParent !== null ? ownBtn : document.querySelector('.tab-btn[data-tab="' + (TAB_PARENT[tabName] || tabName) + '"]');
   if (directBtn) {
     directBtn.classList.add("active");
   } else {
