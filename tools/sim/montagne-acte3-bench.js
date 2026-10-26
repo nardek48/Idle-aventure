@@ -25,6 +25,10 @@ var QBOSS = opt("--qboss") ? opt("--qboss").split(",").map(Number) : null; // es
 var P1_AFF = opt("--affinite") !== null ? Number(opt("--affinite")) : null;
 var P1_KIT = opt("--kit");
 var P1_STATS = ARGV.indexOf("--stats") >= 0;
+// v3.492.15 (fiche objets de combat) : --plafond heal,surge,shell,sort,burn — la mécanique entièrement annulée (borne haute d'un objet)
+var PLAFOND = opt("--plafond") ? opt("--plafond").split(",") : [];
+var SANS_REGLE = opt("--sans-regle") ? opt("--sans-regle").split(",") : []; // retire ces conditions du Grimoire (joueur sans la règle)
+var TAILLER = ARGV.indexOf("--tailler") >= 0; // le héros taille : règle « Veine intacte → Tailler » en tête du Grimoire
 if (!SAVES.length) { console.log("--save <fichier> attendu (sauvegarde de campagne)"); process.exit(1); }
 
 var extra = function () {
@@ -34,6 +38,12 @@ var extra = function () {
   if (QUETE) { g.ADVENTURE_QUESTS.aq_montagne_salle_ronde.encounterHpMult = QUETE[0]; g.ADVENTURE_QUESTS.aq_montagne_salle_ronde.enemyPowerMult = QUETE[1]; }
   // v3.492.12 : l'affinité est dans le jeu ; --affinite en change seulement le bonus
   if (P1_AFF !== null) g.EQUIP_WORLD_AFFINITY.bonus = P1_AFF;
+  if (PLAFOND.indexOf("heal") >= 0) g.BOSS_HEAL_PERCENT = 0;
+  if (PLAFOND.indexOf("surge") >= 0) g.ELITE_SURGE_INTENSITY_MULT = 1;
+  if (PLAFOND.indexOf("sort") >= 0) g.VEIN_SORT_MULT = 1;
+  if (PLAFOND.indexOf("shell") >= 0) Object.keys(g.ELITE_DB).forEach(function (k) { if (g.ELITE_DB[k].forgeShell) g.ELITE_DB[k].forgeShell = 0; });
+  if (PLAFOND.indexOf("burn") >= 0) Object.keys(g.ELITE_DB).forEach(function (k) { if (g.ELITE_DB[k].burns) g.ELITE_DB[k].burns.pct = 1e-9; /* 0 reprendrait la valeur par défaut */ });
+  if (PLAFOND.length) console.log("PLAFOND : " + PLAFOND.join(", ") + " annulé(s)");
   function kit(seed) {
     if (!P1_KIT) return;
     g.EQUIPMENT_SLOTS.forEach(function (slot, i) {
@@ -49,6 +59,8 @@ var extra = function () {
     g.ensureGrimoireRules();
     B.run("game.combatMode = 'grimoire'; EquipmentManager.recalcStats(); game.heroHp = game.heroMaxHp; CompanionManager.healAll();");
     if (SANS_POTION) g.game.healingPotionsOwned = {};
+    if (SANS_REGLE.length) g.game.grimoireRules = (g.game.grimoireRules || []).filter(function (r) { return !r || SANS_REGLE.indexOf(r.conditionId) === -1; });
+    if (TAILLER) g.game.grimoireRules = [{ conditionId: "veinIntact", actionSlot: "vein" }].concat((g.game.grimoireRules || []).filter(function (r) { return r && r.conditionId; })).slice(0, 6);
   }
   function gueule() {
     var cleared = Object.assign({}, g.game.dungeonTierCleared); delete cleared[5];
