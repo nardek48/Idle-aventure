@@ -6,7 +6,10 @@
    Cibles (Conception, MT7) : le Wyrm 65-80 % par classe, Rôdeur ≥ 60 % ; la quête sans mort, 25-35 % des PV.
 
    USAGE : node tools/sim/montagne-acte3-bench.js . --save a.json[,b.json] [--runs N] [--diff x] [--boss p,e]
-           [--quete pv,puissance] [--sans-potion] */
+           [--quete pv,puissance] [--sans-potion]
+           v3.492.12 (mesure P1, « affinité de monde ») : [--affinite x] [--kit crypte|montagne] [--stats]
+             --affinite x : un objet du monde où se bat le héros (Montagne et après) gagne x (0,15 = +15 %) sur sa base et ses affixes.
+             --kit : 7 Épiques retirés au même tirage ; arme et bottes de la Montagne, les 5 autres de la Crypte ou de la Montagne. */
 var fs = require("fs"), path = require("path");
 var base = fs.readFileSync(path.join(__dirname, "plafond-bench.js"), "utf8");
 base = base.slice(0, base.indexOf('console.log("COMBATS DE L\'HISTOIRE'));
@@ -19,6 +22,9 @@ var QUETE = opt("--quete") ? opt("--quete").split(",").map(Number) : null;
 var SANS_POTION = ARGV.indexOf("--sans-potion") >= 0;
 var QUETES = opt("--quetes") ? opt("--quetes").split(",") : null; // v3.491.0 : quêtes seules (acte IV : aq_montagne_tries, aq_montagne_dragon)
 var QBOSS = opt("--qboss") ? opt("--qboss").split(",").map(Number) : null; // essai bossHpMult,bossPowerMult (aq_montagne_dragon)
+var P1_AFF = opt("--affinite") ? Number(opt("--affinite")) : 0;
+var P1_KIT = opt("--kit");
+var P1_STATS = ARGV.indexOf("--stats") >= 0;
 if (!SAVES.length) { console.log("--save <fichier> attendu (sauvegarde de campagne)"); process.exit(1); }
 
 var extra = function () {
@@ -26,9 +32,25 @@ var extra = function () {
   if (DIFF5) d.difficultyMult = DIFF5;
   if (WYRM) { d.boss.statMult.power = WYRM[0]; d.boss.statMult.endurance = WYRM[1]; }
   if (QUETE) { g.ADVENTURE_QUESTS.aq_montagne_salle_ronde.encounterHpMult = QUETE[0]; g.ADVENTURE_QUESTS.aq_montagne_salle_ronde.enemyPowerMult = QUETE[1]; }
+  // P1 simulée : la valeur lue d'un objet du monde courant (Montagne et après) est multipliée par 1 + P1_AFF
+  if (P1_AFF) {
+    var aff = function (it) { var w = Number(it && it.worldIndex || 0); return w >= 4 && w === Number(g.WorldManager.worldIndex || 0) ? 1 + P1_AFF : 1; };
+    var fv = g.ForgeManager.getForgedValue, ga = g.getItemAffixes;
+    g.ForgeManager.getForgedValue = function (it) { return fv.call(g.ForgeManager, it) * aff(it); };
+    g.getItemAffixes = function (it) { var k = aff(it); return ga(it).map(function (a) { return Object.assign({}, a, { value: a.value * k }); }); };
+  }
+  function kit(seed) {
+    if (!P1_KIT) return;
+    g.EQUIPMENT_SLOTS.forEach(function (slot, i) {
+      B.seedRng(seed * 31 + i); // même tirage pour les deux kits : seul le monde change
+      var w = (slot === "weapon" || slot === "boots" || P1_KIT === "montagne") ? 4 : 3;
+      g.game.equipped[slot] = g.generateEquipmentItem(slot, "epic", w);
+    });
+  }
   function charge(saveTxt, seed) {
     B.seedRng(seed);
     g.restoreBaseState(JSON.parse(saveTxt));
+    kit(seed); B.seedRng(seed);
     g.ensureGrimoireRules();
     B.run("game.combatMode = 'grimoire'; EquipmentManager.recalcStats(); game.heroHp = game.heroMaxHp; CompanionManager.healAll();");
     if (SANS_POTION) g.game.healingPotionsOwned = {};
@@ -55,6 +77,22 @@ var extra = function () {
     }
     return { camp: camp, hpCamp: hpCamp, boss: hpBoss !== null, hpBoss: hpBoss, ok: Number(g.game.dungeonBossClears || 0) > boss0, rounds: rounds,
       hp: Math.max(0, g.game.heroHp) / g.game.heroMaxHp };
+  }
+  if (P1_STATS) {
+    console.log("P1_STATS DU HÉROS — kit " + (P1_KIT || "de la sauvegarde") + " · affinité +" + Math.round(P1_AFF * 100) + " % · moyenne sur " + RUNS + " tirages");
+    SAVES.forEach(function (f) {
+      var t = fs.readFileSync(f, "utf8"), cls = JSON.parse(t).heroId || path.basename(f), m = { flat: 0, mult: 0, cc: 0, cm: 0, def: 0, hp: 0, cel: 0 };
+      for (var i = 0; i < RUNS; i++) {
+        charge(t, 94000 + i); var G = g.game;
+        m.flat += G.equipFlatTapBonus; m.mult += G.tapMult; m.cc += G.critChance; m.cm += G.critMult; m.def += G.heroDefensePct; m.hp += G.heroMaxHp; m.cel += G.bonusCelerity;
+      }
+      Object.keys(m).forEach(function (k) { m[k] /= RUNS; });
+      // coup moyen relatif : (dégâts plats) × multiplicateur × espérance de critique (base 1 ignorée)
+      var coup = m.flat * m.mult * (1 + Math.min(100, m.cc) / 100 * (m.cm - 1));
+      console.log("   " + String(cls).padEnd(8) + " plats " + Math.round(m.flat) + " · mult ×" + m.mult.toFixed(2) + " · crit " + m.cc.toFixed(1) + " % ×" + m.cm.toFixed(2)
+        + " · coup moyen " + Math.round(coup) + " · défense " + (100 * m.def).toFixed(1) + " % · PV " + Math.round(m.hp) + " · célérité " + Math.round(m.cel));
+    });
+    return;
   }
   if (QUETES) {
     if (QBOSS) { g.ADVENTURE_QUESTS.aq_montagne_dragon.bossHpMult = QBOSS[0]; g.ADVENTURE_QUESTS.aq_montagne_dragon.bossPowerMult = QBOSS[1]; }
