@@ -31,6 +31,11 @@ var ENTR = opt("--entrainement") !== null ? Number(opt("--entrainement")) : null
 // recharge −1 dès le rang `cd` (0 = jamais), coût −cout par rang (0) ; appliqué après les talents
 var RANG = opt("--rang") ? opt("--rang").split(",").map(Number) : null;
 var TALENTS_MAX = ARGV.indexOf("--talents-max") >= 0; // H3 : chaque talent possédé monté à son rang maximum
+var COMP_UPG = opt("--comp-upg") !== null ? Number(opt("--comp-upg")) : null; // H4 : améliorations de tous les compagnons posées à N (+6 % par cran)
+var COMP_PCT = opt("--comp-pct") !== null ? Number(opt("--comp-pct")) : null; // H4 : plancher des compagnons, part du coup moyen du héros
+var VICTIMES = ARGV.indexOf("--victimes") >= 0; // H4 : qui encaisse les coups ennemis (héros ou compagnon)
+var REL_FLOOR = opt("--rel-floor") !== null ? Number(opt("--rel-floor")) : null; // H4 (V1) : plancher de menace relatif
+var COMP_VIG = opt("--comp-vig") !== null ? Number(opt("--comp-vig")) : null; // H4 (V1) : N paliers de Vigueur en plus aux compagnons
 // v3.492.15 (fiche objets de combat) : --plafond heal,surge,shell,sort,burn — la mécanique entièrement annulée (borne haute d'un objet)
 var PLAFOND = opt("--plafond") ? opt("--plafond").split(",") : [];
 var SANS_REGLE = opt("--sans-regle") ? opt("--sans-regle").split(",") : []; // retire ces conditions du Grimoire (joueur sans la règle)
@@ -75,11 +80,21 @@ var extra = function () {
     };
     console.log("RANG " + RANG.join(",") + " sur les trois techniques");
   }
+  if (COMP_PCT !== null) { g.COMPANION_HERO_DMG_PCT = COMP_PCT; console.log("PLANCHER COMPAGNONS : " + COMP_PCT); }
+  if (VICTIMES) {
+    var pv0 = g.CombatEngine.pickVictim.bind(g.CombatEngine), VIC = {};
+    g.CombatEngine.pickVictim = function () { var v = pv0(); var k = v && v.companionId ? v.companionId : "héros"; VIC[k] = (VIC[k] || 0) + 1; return v; };
+    process.on("exit", function () { var t = 0; Object.keys(VIC).forEach(function (k) { t += VIC[k]; });
+      console.log("VICTIMES : " + Object.keys(VIC).map(function (k) { return k + " " + Math.round(100 * VIC[k] / t) + " %"; }).join(" · ") + " (" + t + " coups)"); });
+  }
+  if (REL_FLOOR !== null) { g.THREAT_REL_FLOOR = REL_FLOOR; console.log("PLANCHER DE MENACE : " + REL_FLOOR); }
   function charge(saveTxt, seed) {
     B.seedRng(seed);
     g.restoreBaseState(JSON.parse(saveTxt));
     kit(seed); B.seedRng(seed);
     if (TALENTS_MAX) { g.TalentManager.getNodes().forEach(function (e) { if (g.TalentManager.has(e.node.id)) g.game.talents[e.node.id] = g.TalentManager.maxRank(e.node); }); g.StatsSystem.recalcStats(); }
+    if (COMP_VIG !== null) { Object.keys(g.game.companions || {}).forEach(function (k) { var st = g.game.companions[k]; st.upgrades += COMP_VIG; st.vigueur = (st.vigueur || 0) + COMP_VIG; }); g.CompanionManager.healAll(); }
+    if (COMP_UPG !== null) { Object.keys(g.game.companions || {}).forEach(function (k) { g.game.companions[k].upgrades = COMP_UPG; }); g.CompanionManager.healAll(); }
     if (ENTR !== null) g.HEROS_TRAINING_UPGRADE_IDS.forEach(function (id) { g.game.upgrades[id] = ENTR; g.UPGRADES.filter(function (u) { return u.id === id; })[0].apply(ENTR); });
     g.ensureGrimoireRules();
     B.run("game.combatMode = 'grimoire'; EquipmentManager.recalcStats(); game.heroHp = game.heroMaxHp; CompanionManager.healAll();");

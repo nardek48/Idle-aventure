@@ -66,23 +66,57 @@ function buildCompanionCardHTML(companionId) {
 
   /* v3.271.0 (L-5) puis v3.440.0 : le comportement de soin se règle à la préparation de sortie. */
 
-  var maxUp = getCompanionMaxUpgrades(companionId);
-  var cost = getCompanionUpgradeCost(companionId, st.upgrades);
-  h += '<div class="cp-upgrade">';
-  h += '<div class="cp-upgrade-label">' + _t("Entraînement") + ' <b>' + st.upgrades + ' / ' + maxUp + '</b>';
-  h += '<span class="cp-upgrade-hint">' + _t("+{p} % à toutes ses stats par palier", { p: Math.round((def.upgrades.statPct || 0) * 100) }) + '</span></div>';
-  if (cost == null) {
-    h += '<div class="cp-upgrade-done">' + _t("Terminé") + '</div>';
-  } else {
-    var afford = (game.gold || 0) >= cost;
-    h += '<button type="button" class="kbtn' + (afford ? '' : ' is-disabled') + '" onclick="companionBuyUpgrade(\'' + companionId + '\')"'
-      + (afford ? '' : ' disabled') + '>' + _t("{n} or", { n: formatNumber(cost) }) + '</button>';
-  }
-  h += '</div>';
+  h += buildCompanionTrainingHTML(companionId, st, stats);
 
   h += '</div>';
   return h;
 }
+
+/* H4 (chantier du héros, atelier compagnons-ardeur.html variante A) : entraînement réparti. Une case par palier (or = équilibré,
+   rouge = Ardeur, vert = Vigueur, pointillé = monde pas atteint), deux boutons d'achat, et la remise à zéro qui rend l'or. */
+function buildCompanionTrainingHTML(companionId, st, stats) {
+  var CM = CompanionManager, max = CM.trainingMax(companionId), cost = CM.nextTrainingCost(companionId);
+  var b = getCompanionTrainingBonus(companionId, st.upgrades, st.ardeur, st.vigueur), pct = Math.round(COMPANION_TRAINING_PCT * 100);
+  var def = getCompanionDef(companionId), eqPct = Math.round(((def.upgrades && def.upgrades.statPct) || 0) * 100);
+  var h = '<div class="cp-train"><div class="cp-train-h"><span>' + _t("Entraînement") + ' <b>' + st.upgrades + ' / ' + max + '</b></span><small>' + esc(_t("+{p} % par palier, au choix", { p: pct })) + '</small></div>';
+  var cells = Math.ceil((max + COMPANION_TRAINING_PER_WORLD) / 10) * 10, seq = [];
+  for (var i = 0; i < b.eq; i++) seq.push("is-eq");
+  for (i = 0; i < st.ardeur; i++) seq.push("is-ar");
+  for (i = 0; i < st.vigueur; i++) seq.push("is-vi");
+  h += '<div class="cp-train-pips" aria-hidden="true">';
+  for (i = 0; i < cells; i++) h += '<i class="' + (seq[i] || (i >= max ? "is-lock" : "")) + '"></i>';
+  h += '</div><div class="cp-train-legend">';
+  if (b.eq) h += '<span><i class="is-eq"></i>' + esc(_t("Équilibré ×{n}", { n: b.eq })) + ' <b>' + esc(_t("+{p} % aux deux", { p: eqPct * b.eq })) + '</b></span>';
+  h += '<span><i class="is-ar"></i>' + esc(_t("Ardeur ×{n}", { n: st.ardeur })) + ' <b>' + esc(_t("+{p} % dégâts", { p: pct * st.ardeur })) + '</b></span>';
+  h += '<span><i class="is-vi"></i>' + esc(_t("Vigueur ×{n}", { n: st.vigueur })) + ' <b>' + esc(_t("+{p} % PV", { p: pct * st.vigueur })) + '</b></span></div>';
+  if (cost == null) {
+    var w = (typeof WORLDS !== "undefined") ? WORLDS[(COMPANION_JOIN_WORLD[companionId] || 0) + max / COMPANION_TRAINING_PER_WORLD] : null;
+    h += '<div class="cp-train-lock">' + esc(w ? _t("Paliers {a} à {b} : s'ouvrent {w}.", { a: max + 1, b: max + COMPANION_TRAINING_PER_WORLD, w: WorldCaps.withPrep(WORLDS.indexOf(w)) }) : _t("Entraînement complet.")) + '</div>';
+  } else {
+    var ok = Number(game.gold || 0) >= cost;
+    var nextAr = getCompanionTrainingBonus(companionId, st.upgrades + 1, st.ardeur + 1, st.vigueur), nextVi = getCompanionTrainingBonus(companionId, st.upgrades + 1, st.ardeur, st.vigueur + 1);
+    var price = '<span class="cp-train-price"><img src="images/Icons/gold_icon.webp" alt="">' + formatNumber(cost) + '</span>';
+    h += '<div class="cp-train-two">'
+      + '<button type="button" class="cp-train-pick is-ar" onclick="companionBuyUpgrade(\'' + companionId + '\', \'ardeur\')"' + (ok ? '' : ' disabled') + '><b>' + _t("Ardeur") + '</b><small>'
+      + esc(_t("Dégâts {a} → {b}", { a: formatNumber(stats.damage), b: formatNumber(Math.floor(stats.damage * nextAr.dmg / b.dmg)) })) + '</small>' + price + '</button>'
+      + '<button type="button" class="cp-train-pick is-vi" onclick="companionBuyUpgrade(\'' + companionId + '\', \'vigueur\')"' + (ok ? '' : ' disabled') + '><b>' + _t("Vigueur") + '</b><small>'
+      + esc(_t("PV {a} → {b}", { a: formatNumber(stats.maxHp), b: formatNumber(Math.floor(stats.maxHp * nextVi.hp / b.hp)) })) + '</small>' + price + '</button></div>';
+  }
+  if (st.ardeur + st.vigueur) h += '<button type="button" class="cp-train-reset" onclick="companionResetTraining(\'' + companionId + '\')">↺ ' + _t("Répartir de nouveau") + '</button>';
+  return h + '</div>';
+}
+
+function companionResetTraining(companionId) {
+  if (!window.CompanionManager) return;
+  var st = CompanionManager.state(companionId), def = getCompanionDef(companionId);
+  var go = function () { CompanionManager.resetTraining(companionId); };
+  if (typeof showConfirmModal === "function") {
+    showConfirmModal(_t("Répartir de nouveau ?"), _t("Les {n} paliers Ardeur et Vigueur de {x} sont rendus en or. Les paliers équilibrés restent.", { n: st.ardeur + st.vigueur, x: _td(def.name) }),
+      "images/Icons/system/auto_repeat.webp", go);
+  } else go();
+}
+window.companionResetTraining = companionResetTraining;
+window.buildCompanionTrainingHTML = buildCompanionTrainingHTML;
 
 /* v3.311.0 : bloc « Voie » d'un compagnon à voies. Tant que la voie n'est pas choisie
    (étape 8 acceptée, écran de choix pas encore passé), la carte renvoie à l'Histoire. */
@@ -132,9 +166,9 @@ function companionSetPresent(companionId, present) {
   if (typeof renderAll === "function") renderAll();
 }
 
-function companionBuyUpgrade(companionId) {
+function companionBuyUpgrade(companionId, kind) {
   if (!window.CompanionManager) return;
-  CompanionManager.buyUpgrade(companionId);
+  CompanionManager.buyUpgrade(companionId, kind); // H4 : "ardeur" ou "vigueur"
 }
 
 window.buildCompanionCardHTML = buildCompanionCardHTML;

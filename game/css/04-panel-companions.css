@@ -246,3 +246,33 @@ seules les classes propres aux compagnons sont définies ici.
 .cp-voie-other { flex-direction: column; align-items: stretch; gap: 6px; font-size: 13px; }
 .cp-voie-other > span { min-width: 0; }
 .cp-voie-other .kbtn { align-self: stretch; }
+
+/* H4 (chantier du héros) : entraînement réparti, Ardeur (dégâts) ou Vigueur (PV) — atelier compagnons-ardeur.html, variante A. */
+.cp-train { display: grid; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--nb-frame-light); color: var(--nb-ink); }
+.cp-train-h { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 13px; }
+.cp-train-h b { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.cp-train-h small { font-size: 12px; color: var(--nb-ink-dim); text-align: right; }
+.cp-train-pips { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 3px; }
+.cp-train-pips i, .cp-train-legend i { display: block; height: 10px; border-radius: 3px; border: 1px solid var(--nb-ink-dim); }
+.cp-train-legend i { display: inline-block; width: 10px; }
+.cp-train .is-eq { background: var(--c-bronze-400-vivid); border-color: var(--nb-gold-deep); }
+.cp-train .is-ar { background: var(--c-red-600-soft); border-color: var(--c-red-650); }
+.cp-train .is-vi { background: var(--c-green-700-soft); border-color: var(--c-green-750-soft); }
+.cp-train-pips i.is-lock { border-style: dashed; opacity: 0.45; }
+.cp-train-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: var(--nb-ink-dim); font-variant-numeric: tabular-nums; }
+.cp-train-legend span { display: inline-flex; align-items: center; gap: 4px; }
+.cp-train-legend b { color: var(--nb-ink); }
+.cp-train-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.cp-train-pick {
+  display: grid; gap: 2px; justify-items: center; min-height: 64px; padding: 8px 6px; border-radius: 12px; border: 2px solid;
+  font: inherit; text-align: center; cursor: pointer;
+}
+.cp-train-pick b { font-size: 14px; }
+.cp-train-pick small { font-size: 12px; font-variant-numeric: tabular-nums; }
+.cp-train-pick.is-ar { border-color: var(--c-red-600-soft); background: rgba(163, 59, 42, 0.12); color: var(--c-red-650); }
+.cp-train-pick.is-vi { border-color: var(--c-green-700-soft); background: rgba(74, 107, 42, 0.12); color: var(--c-green-750-soft); }
+.cp-train-pick:disabled { filter: grayscale(0.8); opacity: 0.55; cursor: not-allowed; }
+.cp-train-price { display: inline-flex; align-items: center; gap: 3px; font-size: 12px; font-weight: 800; color: var(--nb-ink); font-variant-numeric: tabular-nums; }
+.cp-train-price img { width: 14px; height: 14px; }
+.cp-train-lock { font-size: 12px; font-weight: 700; color: var(--nb-ink-dim); padding: 6px 8px; border: 1px dashed var(--nb-ink-dim); border-radius: 8px; }
+.cp-train-reset { justify-self: center; min-height: 36px; padding: 4px 14px; border-radius: 10px; border: 1.5px solid var(--nb-frame); background: transparent; color: var(--nb-gold-deep); font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }

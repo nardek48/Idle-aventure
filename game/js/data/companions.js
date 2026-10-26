@@ -23,7 +23,19 @@
 var COMPANION_POWER_DMG_COEF = 0.20;   // dégâts par frappe = power × coef × échelle de monde
 var COMPANION_HP_COEF = 4.2;           // PV max = endurance × coef × échelle de monde
 var COMPANION_KO_RETURN_PCT = 0.30;    // PV au combat suivant après un KO (§4.4)
-var COMPANION_MAX_PRESENT = 2;         // le héros + 2 compagnons = plafond de 3 alliés
+var COMPANION_MAX_PRESENT = 2;
+/* H4 (chantier du héros) : plancher de dégâts d'un compagnon = part du coup moyen du héros (critiques comprises),
+   pour qu'il suive l'entraînement, les rangs et l'équipement du héros. 0 = sans plancher (réglé au banc). */
+var COMPANION_HERO_DMG_PCT = 0.10; // décision Seb (26/10) : 10 %, la Forêt ne bouge pas
+/* H4 : entraînement réparti. Chaque palier acheté donne +8 % au choix (Ardeur = dégâts, Vigueur = PV) ; les paliers d'avant
+   (et les cadeaux) restent « équilibrés » (+6 % aux deux). Ligne : 5 paliers par monde atteint depuis l'arrivée du compagnon. */
+var COMPANION_TRAINING_PCT = 0.08;
+var COMPANION_VIGUEUR_THREAT = 0.10; // H4 (V1) : chaque palier de Vigueur attire 10 % de coups en plus
+var COMPANION_TRAINING_PER_WORLD = 5;
+var COMPANION_TRAINING_HARD_MAX = 30;
+var COMPANION_JOIN_WORLD = { wenna: 0, maddoc: 1, edda: 2, ysolt: 3, sarkel: 4 };
+/* Prix d'un bloc de 5 paliers selon le monde qui l'ouvre : la grille des compagnons de ce monde. */
+var COMPANION_TRAINING_PRICES = [[60, 120, 240, 480, 900], [240, 480, 960, 1920, 3600], [480, 960, 1920, 3840, 7200], [960, 1920, 3840, 7200, 12000], [1920, 3840, 7200, 12000, 20000]];         // le héros + 2 compagnons = plafond de 3 alliés
 
 var COMPANIONS_DB = {
   wenna: {
@@ -303,30 +315,41 @@ function getVoieChangeCost(changes) {
 
 /* Stats effectives d'un compagnon à un monde donné, améliorations comprises.
    Aucune lecture de game.* ici : donnée pure, testable seule. */
-function getCompanionStats(companionId, worldIndex, upgradeCount) {
+function getCompanionStats(companionId, worldIndex, upgradeCount, ardeur, vigueur) {
   var def = getCompanionDef(companionId);
   if (!def) return null;
 
   var scale = (typeof getEquipWorldScale === "function") ? getEquipWorldScale(worldIndex) : 1;
-  var statPct = (def.upgrades && def.upgrades.statPct) || 0;
-  var bonus = 1 + statPct * Math.max(0, Number(upgradeCount || 0));
+  var b = getCompanionTrainingBonus(companionId, upgradeCount, ardeur, vigueur); // H4 : équilibré + Ardeur / Vigueur
 
   return {
-    maxHp: Math.max(1, Math.floor(def.base.endurance * COMPANION_HP_COEF * scale * bonus)),
-    damage: Math.max(1, Math.floor(def.base.power * COMPANION_POWER_DMG_COEF * scale * bonus)),
+    maxHp: Math.max(1, Math.floor(def.base.endurance * COMPANION_HP_COEF * scale * b.hp)),
+    damage: Math.max(1, Math.floor(def.base.power * COMPANION_POWER_DMG_COEF * scale * b.dmg)),
     celerity: def.base.celerity,
     precision: def.base.precision,
     will: def.base.will
   };
 }
 
-/* Coût du prochain palier d'amélioration, null si la ligne est terminée. */
+/* H4 : multiplicateurs d'entraînement. Équilibrés = paliers ni Ardeur ni Vigueur (+statPct aux deux). */
+function getCompanionTrainingBonus(companionId, upgradeCount, ardeur, vigueur) {
+  var def = getCompanionDef(companionId), statPct = (def && def.upgrades && def.upgrades.statPct) || 0;
+  var ar = Math.max(0, Number(ardeur || 0)), vi = Math.max(0, Number(vigueur || 0));
+  var eq = Math.max(0, Number(upgradeCount || 0) - ar - vi);
+  return { eq: eq, dmg: 1 + statPct * eq + COMPANION_TRAINING_PCT * ar, hp: 1 + statPct * eq + COMPANION_TRAINING_PCT * vi };
+}
+
+/* Prix du palier d'indice `upgradeCount` (0 = le premier) : bloc de 5 du monde d'arrivée + n° du bloc.
+   H4 : la ligne s'allonge par monde ; la limite (monde atteint) est vérifiée par CompanionManager. */
 function getCompanionUpgradeCost(companionId, upgradeCount) {
   var def = getCompanionDef(companionId);
-  if (!def || !def.upgrades || !def.upgrades.costs) return null;
+  if (!def) return null;
   var i = Math.max(0, Number(upgradeCount || 0));
-  if (i >= def.upgrades.costs.length) return null;
-  return def.upgrades.costs[i];
+  if (i >= COMPANION_TRAINING_HARD_MAX) return null;
+  var join = COMPANION_JOIN_WORLD[companionId] || 0, w = join + Math.floor(i / COMPANION_TRAINING_PER_WORLD);
+  var row = COMPANION_TRAINING_PRICES[Math.min(w, COMPANION_TRAINING_PRICES.length - 1)];
+  var mult = Math.pow(2, Math.max(0, w - (COMPANION_TRAINING_PRICES.length - 1))); // au-delà de la Montagne : ×2 par monde (provisoire)
+  return row[i % COMPANION_TRAINING_PER_WORLD] * mult;
 }
 
 function getCompanionMaxUpgrades(companionId) {
@@ -344,6 +367,11 @@ window.COMPANION_POWER_DMG_COEF = COMPANION_POWER_DMG_COEF;
 window.COMPANION_HP_COEF = COMPANION_HP_COEF;
 window.COMPANION_KO_RETURN_PCT = COMPANION_KO_RETURN_PCT;
 window.COMPANION_MAX_PRESENT = COMPANION_MAX_PRESENT;
+window.COMPANION_HERO_DMG_PCT = COMPANION_HERO_DMG_PCT;
+window.COMPANION_TRAINING_PCT = COMPANION_TRAINING_PCT;
+window.COMPANION_VIGUEUR_THREAT = COMPANION_VIGUEUR_THREAT;
+window.COMPANION_JOIN_WORLD = COMPANION_JOIN_WORLD;
+window.getCompanionTrainingBonus = getCompanionTrainingBonus;
 window.getCompanionDef = getCompanionDef;
 window.getVoieChangeCost = getVoieChangeCost;
 window.VOIE_CHANGE_BASE_COST = VOIE_CHANGE_BASE_COST;

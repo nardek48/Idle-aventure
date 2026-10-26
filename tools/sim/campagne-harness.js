@@ -340,7 +340,7 @@ function developVillage() {
   if (g.CompanionManager) ["wenna", "maddoc"].forEach(function (cid) {
     var st = g.CompanionManager.state(cid);
     if (!st || !st.unlocked) return;
-    var cc = g.getCompanionUpgradeCost(cid, st.upgrades);
+    var cc = g.CompanionManager.nextTrainingCost ? g.CompanionManager.nextTrainingCost(cid) : g.getCompanionUpgradeCost(cid, st.upgrades); // H4 : ligne par monde
     if (cc != null && cc <= g.game.gold * 0.3 && g.CompanionManager.buyUpgrade(cid)) STATS.village.push(cid + " +" + st.upgrades + " (" + CURRENT_STEP + ")");
   });
   /* --zones : le joueur défriche et monte ses zones de production avec ce qu'il a en stock,

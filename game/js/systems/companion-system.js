@@ -30,6 +30,10 @@ var CompanionManager = {
     var st = all[companionId];
     if (typeof st.unlocked !== "boolean") st.unlocked = false;
     if (typeof st.upgrades !== "number" || st.upgrades < 0) st.upgrades = 0;
+    // H4 : paliers Ardeur / Vigueur, compris dans upgrades (le reste est « équilibré »)
+    if (typeof st.ardeur !== "number" || st.ardeur < 0) st.ardeur = 0;
+    if (typeof st.vigueur !== "number" || st.vigueur < 0) st.vigueur = 0;
+    if (st.ardeur + st.vigueur > st.upgrades) { st.ardeur = Math.min(st.ardeur, st.upgrades); st.vigueur = Math.min(st.vigueur, st.upgrades - st.ardeur); }
     if (st.control !== "manual") st.control = "auto";
     if (typeof st.present !== "boolean") st.present = false;
     // v3.271.0 (L-5) : réglages de comportement (mode Auto). Valeurs sûres pour une save d'avant.
@@ -232,14 +236,23 @@ var CompanionManager = {
 
   statsOf: function (companionId) {
     var st = this.state(companionId);
-    var s = getCompanionStats(companionId, this.worldIndex(), st ? st.upgrades : 0);
+    var s = getCompanionStats(companionId, this.worldIndex(), st ? st.upgrades : 0, st ? st.ardeur : 0, st ? st.vigueur : 0);
     if (s && window.TalentManager && TalentManager.companionHpMult) { // v3.453.0 : Commandement (Serrez les rangs, À mon signal)
       s.maxHp = Math.floor(s.maxHp * TalentManager.companionHpMult());
       s.damage = Math.floor(s.damage * TalentManager.companionDamageMult());
     }
+    if (s && COMPANION_HERO_DMG_PCT > 0) s.damage = Math.max(s.damage, this.heroDamageFloor(companionId)); // H4 : plancher indexé sur le héros
     var cm = s ? this.choiceModsOf(companionId) : null;
     if (cm && cm.hpMult) s.maxHp = Math.max(1, Math.floor(s.maxHp * cm.hpMult)); // v3.455.0 : Ysolt s'use
     return s;
+  },
+
+  /* H4 : coup moyen du héros (critiques comprises) × COMPANION_HERO_DMG_PCT, améliorations du compagnon comprises. */
+  heroDamageFloor: function (companionId) {
+    var SS = window.StatsSystem; if (!SS || typeof SS.effectiveTapDamage !== "function") return 0;
+    var cc = Math.min(100, Math.max(0, Number(SS.effectiveCritChance() || 0))) / 100, cm = Number(SS.effectiveCritMult() || 1);
+    var st = this.state(companionId), b = getCompanionTrainingBonus(companionId, st ? st.upgrades : 0, st ? st.ardeur : 0, st ? st.vigueur : 0);
+    return Math.floor(Number(SS.effectiveTapDamage() || 0) * (1 + cc * (cm - 1)) * COMPANION_HERO_DMG_PCT * b.dmg);
   },
 
   maxHpOf: function (companionId) {
@@ -328,7 +341,7 @@ var CompanionManager = {
       name: def.name,
       image: def.image,
       threat: 0,
-      threatMult: def.threatMult || 1,
+      threatMult: (def.threatMult || 1) * (1 + COMPANION_VIGUEUR_THREAT * Number(st.vigueur || 0)), // H4 (V1) : la Vigueur attire les coups
       damage: stats.damage,
       cooldown: 0,
       charges: this.chargesMax(companionId),
@@ -650,11 +663,41 @@ var CompanionManager = {
 
   /* ---------- Améliorations ---------- */
 
-  buyUpgrade: function (companionId) {
+  /* H4 : longueur de la ligne = 5 paliers par monde atteint depuis l'arrivée (jamais sous ce qui est déjà acquis). */
+  trainingMax: function (companionId) {
+    var st = this.state(companionId), join = COMPANION_JOIN_WORLD[companionId] || 0;
+    var w = (window.WorldCaps && typeof WorldCaps.getReachedWorldIndex === "function") ? WorldCaps.getReachedWorldIndex() : this.worldIndex();
+    var max = Math.min(COMPANION_TRAINING_HARD_MAX, COMPANION_TRAINING_PER_WORLD * Math.max(1, w - join + 1));
+    return Math.max(max, st ? st.upgrades : 0);
+  },
+  /* Prix du prochain palier, null si la ligne du monde atteint est pleine. */
+  nextTrainingCost: function (companionId) {
+    var st = this.state(companionId);
+    if (!st || st.upgrades >= this.trainingMax(companionId)) return null;
+    return getCompanionUpgradeCost(companionId, st.upgrades);
+  },
+  /* H4 : rend l'or des paliers Ardeur et Vigueur (les derniers achetés) ; les paliers équilibrés restent. */
+  resetTraining: function (companionId) {
+    if (window.heroLockToast && heroLockToast()) return false;
+    var st = this.state(companionId);
+    if (!st || !(st.ardeur + st.vigueur)) return false;
+    var eq = st.upgrades - st.ardeur - st.vigueur, refund = 0;
+    for (var i = eq; i < st.upgrades; i++) refund += Number(getCompanionUpgradeCost(companionId, i) || 0);
+    game.gold = Number(game.gold || 0) + refund;
+    st.upgrades = eq; st.ardeur = 0; st.vigueur = 0;
+    st.hp = Math.min(Number(st.hp || 0), this.maxHpOf(companionId));
+    if (typeof addLog === "function") addLog("↺ " + _t("{x} : entraînement à répartir de nouveau (+{n} or).", { x: _td(getCompanionDef(companionId).name), n: formatNumber(refund) }), "event");
+    if (typeof saveGame === "function") saveGame();
+    if (typeof renderAll === "function") renderAll();
+    return refund;
+  },
+
+  /* kind : "ardeur" (dégâts, par défaut) ou "vigueur" (PV) — H4. */
+  buyUpgrade: function (companionId, kind) {
     if (window.heroLockToast && heroLockToast()) return false; // v3.307.0 : héros en expédition
     var st = this.state(companionId);
     if (!st || !st.unlocked) return false;
-    var cost = getCompanionUpgradeCost(companionId, st.upgrades);
+    var cost = this.nextTrainingCost(companionId);
     if (cost == null) {
       if (typeof showToast === "function") showToast(_t("Ligne d'améliorations terminée"), 1400);
       return false;
@@ -665,6 +708,7 @@ var CompanionManager = {
     }
     game.gold -= cost;
     st.upgrades += 1;
+    if (kind === "vigueur") st.vigueur += 1; else st.ardeur += 1;
     // Les PV max montent avec l'amélioration : on offre le gain plutôt que de laisser
     // un compagnon « amélioré » apparaître blessé.
     st.hp = this.maxHpOf(companionId);
@@ -684,6 +728,8 @@ var CompanionManager = {
       out[id] = {
         unlocked: !!st.unlocked,
         upgrades: Number(st.upgrades || 0),
+        ardeur: Number(st.ardeur || 0),      // H4
+        vigueur: Number(st.vigueur || 0),
         control: st.control === "manual" ? "manual" : "auto",
         present: !!st.present,
         hp: (typeof st.hp === "number" && isFinite(st.hp)) ? st.hp : null,
@@ -706,7 +752,9 @@ var CompanionManager = {
       var d = data[id] || {};
       var st = self.state(id);
       st.unlocked = !!d.unlocked;
-      st.upgrades = Math.max(0, Math.min(getCompanionMaxUpgrades(id), Number(d.upgrades || 0)));
+      st.upgrades = Math.max(0, Math.min(COMPANION_TRAINING_HARD_MAX, Number(d.upgrades || 0))); // H4 : ligne allongée par monde
+      st.ardeur = Math.max(0, Math.min(st.upgrades, Number(d.ardeur || 0)));
+      st.vigueur = Math.max(0, Math.min(st.upgrades - st.ardeur, Number(d.vigueur || 0)));
       st.control = d.control === "manual" ? "manual" : "auto";
       st.present = !!d.present;
       st.hp = (typeof d.hp === "number" && isFinite(d.hp)) ? d.hp : null;

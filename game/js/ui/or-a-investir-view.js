@@ -49,11 +49,11 @@ function orInvestCompanions() {
   var out = [];
   CompanionManager.unlockedIds().forEach(function (cid) {
     var st = CompanionManager.state(cid), def = typeof getCompanionDef === "function" ? getCompanionDef(cid) : null;
-    var cost = st ? getCompanionUpgradeCost(cid, st.upgrades) : null;
+    var cost = st ? CompanionManager.nextTrainingCost(cid) : null; // H4 : ligne allongée par monde
     if (cost == null || Number(game.gold || 0) < cost) return;
-    var pct = def && def.upgrades && def.upgrades.statPct ? Math.round(def.upgrades.statPct * 100) : 0;
+    var pct = Math.round(COMPANION_TRAINING_PCT * 100); // H4 : palier au choix (Ardeur ou Vigueur)
     out.push({ id: "c:" + cid + ":" + (st.upgrades + 1), rank: 4, gold: cost, icon: def ? def.image : OR_INVEST_ICON,
-      title: _t("{x} niv. {n}", { x: def ? _td(def.name) : cid, n: st.upgrades + 2 }), sub: pct ? _t("+{n} % à ses stats", { n: pct }) : "",
+      title: _t("{x} niv. {n}", { x: def ? _td(def.name) : cid, n: st.upgrades + 2 }), sub: pct ? _t("+{n} % dégâts ou PV, au choix", { n: pct }) : "",
       cost: { gold: cost }, go: function () { orInvestGoHeros("companions"); } });
   });
   return out;
