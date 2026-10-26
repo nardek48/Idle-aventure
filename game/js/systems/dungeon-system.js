@@ -808,7 +808,6 @@ var DungeonManager = {
     if (this.reachHalt(clearedWave)) return; // v3.472.0 : une halte, trois cartes
     if (nextWave > DUNGEON_CONFIG.waveCount) {
       addLog(_t("🏰 Vagues terminées ! Le boss du donjon apparaît..."), "event");
-      showToast(_t("👑 Le boss du donjon apparaît !"), 2000);
     }
     this.spawnWave(nextWave);
   },

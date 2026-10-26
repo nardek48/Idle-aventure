@@ -18700,6 +18700,31 @@ console.log("\n[320] v3.492.16 — « Comme la dernière fois » hors du pli « 
   }
 })();
 
+console.log("\n[321] v3.492.17 — Combat : plus de toast quand le journal le dit déjà (retour Seb)");
+(function () {
+  var toast = g.showToast, n = 0;
+  try {
+    game = freshCombat("knight");
+    var e = { name: "Cible", hp: 50, maxHp: 100, isBoss: true, stats: { power: 10 } };
+    g.CombatActors.setEnemies([e]); game.enemy = e; g.CombatEngine.prepareEnemy(e);
+    g.showToast = function () { n++; };
+    g.CombatEngine.resolveSilenceCast(); g.CombatEngine.resolveBossHeal();
+    e.archetype = "enraged"; g.ClassCombatManager.applyEnemyRageSuppression();
+    e.archetype = "corrupted"; e.corruptedStacks = 2; g.ClassCombatManager.applyEnemyCorruptionPurge();
+    e.archetype = "vampiric"; g.ClassCombatManager.applyVampiricLifestealSuppression();
+    e.archetype = "armored"; g.ClassCombatManager.applyArmorSuppression();
+    ok(n === 0 && e.rageFreezeRounds > 0 && e.corruptedStacks === 0 && e.vampiricSuppressedRounds > 0 && e.armorSuppressedRounds > 0, "silence, soin du boss et 4 effets de classe : appliqués sans toast");
+  } catch (err) {
+    ok(false, "[321] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  } finally { g.showToast = toast; }
+  // les 12 textes retirés ne passent plus par showToast nulle part dans le jeu
+  var src = ["systems/combat-engine.js", "systems/class-combat-system.js", "systems/rise-system.js", "systems/combat-item-system.js", "systems/dungeon-system.js"]
+    .map(function (f) { return fs.readFileSync(path.join(ROOT, "js", f), "utf8"); }).join("\n");
+  var restes = ["Silencié !", "PV boss", "Second souffle !", "Contré !", "Rage apaisée", "Corruption purgée", "Vol de vie bloqué", "Blindage fissuré", "se relève !\", { x", "Le seuil : tu te relèves\"", "Fiole noire : tu te relèves\"", "boss du donjon apparaît !"]
+    .filter(function (t) { return src.split("\n").some(function (l) { return l.indexOf("showToast") !== -1 && l.indexOf(t) !== -1; }); });
+  ok(!restes.length, "aucun des 12 toasts de combat ne subsiste" + (restes.length ? " : " + restes.join(", ") : ""));
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

@@ -1138,7 +1138,6 @@ var CombatEngine = {
     game.silencedRounds = (typeof getHeroSilenceRounds === "function") ? getHeroSilenceRounds()
       : ((typeof SILENCE_DURATION_ROUNDS === "number") ? SILENCE_DURATION_ROUNDS : 2);
     addLog("🔇 " + _tn(game.silencedRounds, "Silence ! Tes techniques sont bloquées {n} round.", "Silence ! Tes techniques sont bloquées {n} rounds."), "event");
-    showToast(_t("🔇 Silencié !"), 1400);
     if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
   },
 
@@ -1168,7 +1167,6 @@ var CombatEngine = {
     var healAmount = Math.max(1, Math.floor(Number(e.hp || 0) * BOSS_HEAL_PERCENT * uniquePowerMult("dun_sepulcre"))); // v3.470.0 : Sépulcre
     e.hp = Math.min(e.maxHp, e.hp + healAmount);
     addLog("💚 " + _t("{x} récupère {n} PV !", { x: _td(e.name), n: formatNumber(healAmount) }), "event");
-    showToast("💚 " + _t("+{n} PV boss", { n: formatNumber(healAmount) }), 1200);
     if (typeof renderEnemyHp === "function") renderEnemyHp();
     if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
   },
@@ -1249,7 +1247,6 @@ var CombatEngine = {
       dmg = Math.max(0, hpBefore - 1);
       game._legSecondWindUsed = true;
       addLog(_t("💨 Second souffle : tu tiens debout avec 1 PV !"), "event");
-      showToast(_t("💨 Second souffle !"), 1600);
     }
     game.heroHp = Math.max(0, hpBefore - dmg);
     if (dmg > 0) {

@@ -83,7 +83,6 @@ var RiseSystem = {
     addLog("🦴 " + _t("{x} se relève !", { x: _td(e.name) }), "event");
     if (e.riseLine) addLog(_td(e.riseLine), "event"); // v3.431.0 : ligne propre (Varrek)
     this.onBossRisen(e);
-    if (typeof showToast === "function") showToast("🦴 " + _t("{x} se relève !", { x: _td(e.name) }), 1200);
     if (typeof renderEnemyHp === "function") renderEnemyHp();
     return true;   // le round de la relève, il ne frappe pas encore
   },
@@ -144,7 +143,6 @@ var RiseSystem = {
     c.heroRose = true;
     game.heroHp = Math.max(1, Math.floor(Number(game.heroMaxHp || 1) * HERO_RISE_HP_PCT));
     addLog("🪨 " + _t("Le seuil : tu tombes, et tu te relèves."), "event");
-    if (typeof showToast === "function") showToast("🪨 " + _t("Le seuil : tu te relèves"), 1400);
     if (typeof renderHeroHp === "function") renderHeroHp();
     return true;
   },

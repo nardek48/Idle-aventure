@@ -129,7 +129,6 @@ CombatItems.tryFiole = function () {
   s.fioleUsed = true;
   game.heroHp = Math.max(1, Math.floor(Number(game.heroMaxHp || 1) * COMBAT_ITEM_FIOLE_HP_PCT));
   addLog("⚗️ " + _t("Fiole noire : tu te relèves. Le butin de la sortie sera divisé par deux."), "event");
-  if (typeof showToast === "function") showToast("⚗️ " + _t("Fiole noire : tu te relèves"), 1600);
   if (typeof renderHeroHp === "function") renderHeroHp();
   return true;
 };
