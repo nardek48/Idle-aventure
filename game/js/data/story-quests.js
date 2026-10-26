@@ -3805,9 +3805,30 @@ function storyPalierMontagne(game) {
   }).length;
   return p;
 }
+/* v3.492.11 (L3, retour Seb) : un objet compte pour le palier de la Montagne (Épique ou mieux, du monde 5) ;
+   les emplacements qui n'en portent pas encore, et leurs noms pour « Ce qui manque ». */
+function storyItemCompteMontagne(it) {
+  var order = window.RARITY_ORDER || [];
+  return !!it && order.indexOf(it.rarity) >= order.indexOf("epic") && Number(it.worldIndex || 0) >= STORY_PALIER_MONTAGNE.worldIndex;
+}
+function storyMontagneTrous(game) {
+  var portes = (game && game.equipped) || {};
+  return (window.EQUIPMENT_SLOTS || []).filter(function (slot) { return !storyItemCompteMontagne(portes[slot]); });
+}
+function storyMontagneTrousTexte(game) {
+  var noms = storyMontagneTrous(game).map(function (slot) { return _td((window.EQUIPMENT_SLOT_LABELS || {})[slot] || slot); });
+  return noms.length ? _t("Sans pièce de la Montagne : {s}.", { s: noms.join(", ") }) + " " : "";
+}
+/* Palier en cours (étapes 9 et 13, acceptées) : l'objet comblerait-il un emplacement ? equipped : il est porté. */
+function storyItemComptePourPalier(it, equipped) {
+  var M = window.StoryQuestManager, step = M && typeof M.getCurrentStep === "function" ? M.getCurrentStep("mountain") : null;
+  if (!step || (step.id !== "montagne_09" && step.id !== "montagne_13") || !M.isCurrentStepAccepted("mountain")) return false;
+  if (!storyItemCompteMontagne(it)) return false;
+  return equipped ? true : storyMontagneTrous(game).indexOf(it.slot) !== -1;
+}
 function storyPalierMontagneMissing(game) {
   var p = storyPalierMontagne(game), out = [];
-  if (p.pieces < STORY_PALIER_MONTAGNE.pieces) out.push({ text: _t("Pièces Épiques de la Montagne : {a} / {b}", { a: p.pieces, b: STORY_PALIER_MONTAGNE.pieces }), where: _t("Les étapes 6 à 8, l'échoppe de la Halle marchande et les élites de la carte de la Montagne.") });
+  if (p.pieces < STORY_PALIER_MONTAGNE.pieces) out.push({ text: _t("Pièces Épiques de la Montagne : {a} / {b}", { a: p.pieces, b: STORY_PALIER_MONTAGNE.pieces }), where: storyMontagneTrousTexte(game) + _t("Les étapes 6 à 8, l'échoppe de la Halle marchande et les élites de la carte de la Montagne.") });
   // la reforge : même lecture que les autres paliers (pièces déjà comptées ci-dessus)
   return out.concat(storyPalierManques(game, "epic", { pieces: 0, reforge: STORY_PALIER_MONTAGNE.reforge }, function () { return null; }).filter(Boolean));
 }
@@ -4589,7 +4610,7 @@ function storyMountainSectorFreed(id) {
 var STORY_PALIER_MONTAGNE_COMPLET = { pieces: 7, forge: 6, reforge: 11 };
 function storyPalierMontagneCompletMissing(game) {
   var p = storyPalierMontagne(game), P = STORY_PALIER_MONTAGNE_COMPLET, out = [];
-  if (p.pieces < P.pieces) out.push({ text: _t("Pièces Épiques de la Montagne : {a} / {b}", { a: p.pieces, b: P.pieces }), where: _t("La Gueule du volcan, les élites de la carte de la Montagne et l'échoppe de la Halle marchande.") });
+  if (p.pieces < P.pieces) out.push({ text: _t("Pièces Épiques de la Montagne : {a} / {b}", { a: p.pieces, b: P.pieces }), where: storyMontagneTrousTexte(game) + _t("La Gueule du volcan, les élites de la carte de la Montagne et l'échoppe de la Halle marchande.") });
   return out.concat(storyPalierManques(game, "epic", { pieces: 0, forge: P.forge, reforge: P.reforge }, function () { return null; }).filter(Boolean));
 }
 /* montagne_14 : le choix « ouvrage ». Garder (le défaire) verse sa matière tout de suite. */
@@ -4657,6 +4678,9 @@ window.storyDroitBranch = storyDroitBranch;
 window.STORY_PALIER_MONTAGNE = STORY_PALIER_MONTAGNE;
 window.storyPalierMontagne = storyPalierMontagne;
 window.storyPalierMontagneMissing = storyPalierMontagneMissing;
+window.storyItemCompteMontagne = storyItemCompteMontagne;
+window.storyMontagneTrous = storyMontagneTrous;
+window.storyItemComptePourPalier = storyItemComptePourPalier;
 
 window.storySarkelInParty = storySarkelInParty;
 window.storyVeinsCut = storyVeinsCut;

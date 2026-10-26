@@ -256,6 +256,7 @@ function buildEquipCompareSheetHTML(uid) {
   var power = buildEquipmentPowerHTML(item);
   if (power) h += '<div class="eqs-power">' + power + '</div>';
   h += buildItemOriginHTML(item);
+  h += buildItemStoryCountHTML(item, false);
   h += '</div>';
   h += '<div class="ksheet-foot"><button type="button" class="kbtn primary" onclick="equipFromCompareSheet(\'' + esc(uid) + '\')">' + _t("Équiper") + '</button></div>';
   h += '</div>';
@@ -294,6 +295,7 @@ function buildEquipDetailPanelHTML() {
     h += buildEquipmentAffixLinesHTML(item);
     h += buildEquipmentPowerHTML(item); // v3.230.0
     h += buildItemOriginHTML(item);
+    h += buildItemStoryCountHTML(item, true);
     h += '<button class="btn-buy is-sec eq-detail-action" type="button" onclick="EquipmentManager.unequip(\'' + esc(slot) + '\')">' + _t("Déséquiper") + '</button>';
   } else {
     h += '<div class="eq-detail-icon eq-detail-icon-empty">' + renderIconOrEmojiHTML(emoji, "eq-detail-empty-img", "") + '</div>';
@@ -391,14 +393,20 @@ function buildItemOriginHTML(item) {
   if (!item) return "";
   // v3.461.0 (N-E) : objet tiré au-delà du plafond d'un niveau de donjon
   var aether = item.aether > 0 ? '<div class="eq-detail-hint">✦ ' + esc(_t("Touché par l'Aether · niveau {n}", { n: item.aether })) + '</div>' : "";
-  var cfg = EQUIPMENT_SLOT_CONFIG[item.slot];
-  if (!cfg || !cfg.scalesWithWorld) return aether;
+  // v3.492.11 (L1, retour Seb) : sur les 7 emplacements, plus seulement ceux qui suivent l'échelle de monde
   var idx = (typeof item.worldIndex === "number") ? item.worldIndex : 0;
   var world = (window.WORLDS && WORLDS[idx]) ? WORLDS[idx].name : null;
   if (!world) return aether;
   return '<div class="eq-detail-hint"><img class=ico-inline src=images/Icons/quests/quest_resources.webp> ' + esc(_t("Trouvé en {w}", { w: _td(world) })) + '</div>' + aether;
 }
 window.buildItemOriginHTML = buildItemOriginHTML;
+
+/* v3.492.11 (L3) : pendant le palier de la Montagne, l'objet qui comble un emplacement (ou qui compte, s'il est porté). */
+function buildItemStoryCountHTML(item, equipped) {
+  if (typeof storyItemComptePourPalier !== "function" || !storyItemComptePourPalier(item, equipped)) return "";
+  return '<div class="eq-detail-hint eq-story-count"><img class=ico-inline src=images/Icons/system/check_valid.webp> ' + esc(_t("Compte pour l'Histoire")) + '</div>';
+}
+window.buildItemStoryCountHTML = buildItemStoryCountHTML;
 
 function buildUnifiedDetailPanelHTML(entries) {
   var entry = entries.find(function (e) { return e.key === selectedInventoryKey; });
@@ -415,6 +423,7 @@ function buildUnifiedDetailPanelHTML(entries) {
     h += buildEquipmentCompareLinesHTML(item, game.equipped ? game.equipped[item.slot] : null); // v3.226.0 : delta par ligne
     h += buildEquipmentPowerHTML(item); // v3.230.0
     h += buildItemOriginHTML(item);
+    h += buildItemStoryCountHTML(item, false);
     h += '<button class="btn-buy eq-detail-action" type="button" onclick="EquipmentManager.equip(\'' + esc(item.uid) + '\')">' + _t("Équiper") + '</button>';
     // v3.322.0 (O2) : la vente devient l'Offrande ; la valeur s'affiche, 0 compris (O9)
     var offerVal = window.MemoryManager ? Math.floor(MemoryManager.rollOfferingValue(item)) : 0; // v3.453.0 : Main offrante comprise

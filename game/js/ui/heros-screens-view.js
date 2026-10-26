@@ -193,6 +193,14 @@
       + mark + '<small>' + esc(slotLabel(slot)) + '</small></button>';
   }
 
+  // v3.492.11 (L1, L3) : le monde d'origine en une ligne courte ; coche si la pièce compte pour le palier de la Montagne
+  function origineCourte(it) {
+    var w = (window.WORLDS || [])[typeof it.worldIndex === "number" ? it.worldIndex : 0];
+    if (!w) return "";
+    var compte = typeof storyItemComptePourPalier === "function" && storyItemComptePourPalier(it, true);
+    return '<span class="hs-edetail-orig">' + esc(_td(w.name)) + (compte ? ' <img class=ico-inline src=images/Icons/system/check_valid.webp alt="' + esc(_t("Compte pour l'Histoire")) + '">' : '') + '</span>';
+  }
+
   // Détail de l'emplacement choisi : panneau collé en bas, par-dessus la silhouette, comme celui des
   // Talents (v3.426.2, retour Seb). Icône à gauche, texte au milieu, actions à droite.
   function slotDetailHTML() {
@@ -200,7 +208,8 @@
     var h = '<div class="hs-edetail">'
       + (it ? buildEquipmentIconHTML(it, "hs-edetail-ico rframe") : '<span class="hs-edetail-ico is-empty">' + renderIconOrEmojiHTML(EQUIPMENT_SLOT_EMOJI[slot], "", "") + '</span>')
       + '<div class="hs-edetail-head"><small>' + esc(slotLabel(slot)) + '</small>';
-    if (it) h += '<b class="rarity-' + esc(it.rarity) + '">' + esc(_td(it.name)) + '</b><span>' + esc(formatEquipmentStat(it)) + '</span>' + buildEquipmentAffixLinesHTML(it);
+    if (it) h += '<b class="rarity-' + esc(it.rarity) + '">' + esc(_td(it.name)) + '</b><span>' + esc(formatEquipmentStat(it)) + '</span>' + buildEquipmentAffixLinesHTML(it)
+      + origineCourte(it); // v3.492.11 (L1, L3)
     else h += '<b>' + _t("Emplacement vide") + '</b>';
     h += '</div><div class="hs-edetail-act">';
     if (it) h += '<button type="button" class="kbtn is-sec" onclick="EquipmentManager.unequip(\'' + slot + '\')">' + _t("Déséquiper") + '</button>';

@@ -6846,4 +6846,7 @@ I18n.register("en", {
   "La lave recouvre. Elle se retire aussi.": "The lava covers. It also withdraws.",
   "Montagne": "Mountain",
   "Qui sait ce qui tient au feu": "Who Knows What Holds in the Fire",
+  // v3.492.11 : les pièces de la Montagne, plus lisibles
+  "Sans pièce de la Montagne : {s}.": "No Mountain piece on: {s}.",
+  "Compte pour l'Histoire": "Counts for the Story",
 });

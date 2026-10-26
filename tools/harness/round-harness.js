@@ -4283,8 +4283,8 @@ console.log("\n[29b] v3.220.0 \u2014 \u00c9chelle de monde sur l'\u00e9quipement
   var vieux = { uid: "old", slot: "weapon", name: "x", icon: "sword", rarity: "rare", stat: "tapDmg", value: 40 };
   ok(String(g.buildItemOriginHTML(vieux)).indexOf("For\u00eat") !== -1,
     "un objet d'avant cette version s'affiche comme venant de For\u00eat, sans trou ni erreur");
-  ok(g.buildItemOriginHTML({ slot: "armor", worldIndex: 3 }) === "",
-    "aucune provenance affich\u00e9e sur un emplacement qui ne suit pas l'\u00e9chelle");
+  ok(/Crypte/.test(g.buildItemOriginHTML({ slot: "armor", worldIndex: 3 })),
+    "provenance affich\u00e9e aussi sur un emplacement qui ne suit pas l'\u00e9chelle (v3.492.11, L1 : d\u00e9cision Seb)");
 
 })();
 
@@ -18520,6 +18520,35 @@ console.log("\n[314] v3.492.0 — Montagne, lot M-6 : hauts faits");
     ok(false, "[314] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   } finally {
     g.WorldManager.worldIndex = wiAvant; V.state = null; game.adventureQuestRun = null;
+  }
+})();
+
+console.log("\n[315] v3.492.11 — pièces de la Montagne lisibles (L1, L3)");
+(function () {
+  var SQ = g.StoryQuestManager, cs = SQ.getCurrentStep, ia = SQ.isCurrentStepAccepted;
+  try {
+    game = freshCombat("knight");
+    var mk = function (slot, rarity, w) { return { uid: "t_" + slot + w, slot: slot, name: "Test", rarity: rarity, stat: "defense", value: 0.1, worldIndex: w, affixes: [] }; };
+    ok(/Montagne br[ûu]lante/.test(g.buildItemOriginHTML(mk("armor", "epic", 4))) && /Crypte/.test(g.buildItemOriginHTML(mk("helmet", "epic", 3))),
+      "L1 : « Trouvé en … » aussi sur les emplacements qui ne suivent pas l'échelle de monde (armure, casque)");
+    ok(g.storyItemCompteMontagne(mk("ring", "epic", 4)) && g.storyItemCompteMontagne(mk("ring", "legendary", 4)) && !g.storyItemCompteMontagne(mk("ring", "epic", 3)) && !g.storyItemCompteMontagne(mk("ring", "rare", 4)),
+      "une pièce compte : Épique ou mieux, de la Montagne");
+    game.equipped = { weapon: mk("weapon", "epic", 4), armor: mk("armor", "epic", 4), helmet: mk("helmet", "epic", 3), gloves: null, boots: mk("boots", "epic", 4), ring: mk("ring", "rare", 4), amulet: mk("amulet", "epic", 2) };
+    ok(g.storyMontagneTrous(game).join() === "helmet,gloves,ring,amulet", "emplacements sans pièce de la Montagne : casque, gants, anneau, amulette (3 sur 7 comptent)");
+    var manque = g.storyPalierMontagneMissing(game)[0];
+    ok(manque && /Casque/.test(manque.where) && /Gants/.test(manque.where) && /Anneau/.test(manque.where) && !/Armure/.test(manque.where), "L3 : « Ce qui manque » nomme les emplacements à combler");
+    ok(g.buildItemStoryCountHTML(mk("helmet", "epic", 4), false) === "", "hors palier : pas de mention « Compte pour l'Histoire »");
+    SQ.getCurrentStep = function (c) { return c === "mountain" ? { id: "montagne_09" } : null; };
+    SQ.isCurrentStepAccepted = function () { return true; };
+    ok(/Compte pour l(&#39;|')Histoire/.test(g.buildItemStoryCountHTML(mk("helmet", "epic", 4), false)) && g.buildItemStoryCountHTML(mk("armor", "epic", 4), false) === ""
+      && g.buildItemStoryCountHTML(mk("helmet", "epic", 3), false) === "" && /Compte pour l(&#39;|')Histoire/.test(g.buildItemStoryCountHTML(game.equipped.armor, true)),
+      "palier en cours : l'objet qui comble un emplacement est marqué ; pas celui d'un emplacement déjà compté, ni celui de la Crypte ; le porté qui compte l'est");
+    var shop = g.buildEquipShopCardHTML(Object.assign(mk("helmet", "epic", 4), { price: 10 }));
+    ok(/Épique · Montagne br[ûu]lante/.test(shop) && /Compte pour l(&#39;|')Histoire/.test(shop), "L1 + L3 : la carte de l'échoppe montre le monde et la mention");
+  } catch (err) {
+    ok(false, "[315] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  } finally {
+    SQ.getCurrentStep = cs; SQ.isCurrentStepAccepted = ia;
   }
 })();
 

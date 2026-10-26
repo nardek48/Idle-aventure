@@ -10,13 +10,16 @@ function buildEquipShopCardHTML(item) {
   h += '<div class="nb-purchase-icon-col"><div class="nb-purchase-icon-slot">' + buildEquipmentIconHTML(item, "nb-purchase-icon rframe") + '</div></div>';
   h += '<div class="nb-purchase-info-col">';
   h += '<div class="nb-purchase-name rarity-' + esc(item.rarity) + '">' + esc(_td(item.name)) + '</div>';
-  h += '<div class="nb-purchase-meta">' + esc(rarityLabel) + '</div>';
+  // v3.492.11 (L1) : le monde d'origine à côté de la rareté
+  var monde = (window.WORLDS || [])[typeof item.worldIndex === "number" ? item.worldIndex : 0];
+  h += '<div class="nb-purchase-meta">' + esc(rarityLabel) + (monde ? ' · ' + esc(_td(monde.name)) : '') + '</div>';
   if (typeof buildEquipmentCompareLinesHTML === "function") {
     h += buildEquipmentCompareLinesHTML(item, game.equipped ? game.equipped[item.slot] : null); // v3.226.0 : delta par ligne face à l'équipé
   } else {
     h += '<div class="nb-purchase-desc">' + esc(statText) + '</div>';
   }
   if (typeof buildEquipmentPowerHTML === "function") h += buildEquipmentPowerHTML(item); // v3.230.0
+  if (typeof buildItemStoryCountHTML === "function") h += buildItemStoryCountHTML(item, false); // v3.492.11 (L3)
   h += '</div>';
 
   h += '<div class="nb-purchase-buy-col">';
