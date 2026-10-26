@@ -143,7 +143,7 @@ var SHOP = [
 var TEXTES = {
   icone: "<b>A · Icône du monde</b> sur chaque objet, quel que soit son monde. Toujours lisible, mais six petits dessins de plus dans un sac plein.",
   point: "<b>B · Point de couleur</b> sur chaque objet : une couleur par monde. Très discret ; il faut apprendre les couleurs (légende ci-dessous).",
-  aura: "<b>D · Icône + aura</b> (idée de Seb) : l'icône du monde sur chaque objet, et une aura d'or autour des pièces du monde où tu te tiens, celles qui ont l'affinité (+10 %).",
+  aura: "<b>D · Icône + aura</b> (idée de Seb) : l'icône du monde sur chaque objet ; celle des pièces du monde où tu te tiens est cerclée d'or et rayonne, comme en C. Ce sont les pièces qui ont l'affinité (+10 %).",
   ici: "<b>C · Ton monde seulement</b> : seule la pièce du monde où tu te tiens porte la pastille, cerclée d'or. C'est aussi celle qui a l'affinité (+10 %). Les autres restent nues.",
   aucune: "<b>Sans pastille</b> : le jeu aujourd'hui. Heaume, Cuirasse, Bague… rien ne dit d'où ils viennent."
 };
@@ -152,19 +152,21 @@ try { var s = JSON.parse(localStorage.getItem("pastille-monde-d") || "{}"); if (
 
 function pastille(w) {
   var M = MONDES[w];
-  if (etat.v === "icone" || etat.v === "aura") return '<span class="pw v-icone" title="' + M.nom + '"><img src="' + WORLD_IMG[M.id] + '" alt=""></span>';
+  if (etat.v === "aura") return '<span class="pw ' + (w === etat.m && w >= 4 ? 'v-ici' : 'v-icone') + '" title="' + M.nom + (w === etat.m && w >= 4 ? ' · +10 % ici' : '') + '"><img src="' + WORLD_IMG[M.id] + '" alt=""></span>';
+  if (etat.v === "icone") return '<span class="pw v-icone" title="' + M.nom + '"><img src="' + WORLD_IMG[M.id] + '" alt=""></span>';
   if (etat.v === "point") return '<span class="pw v-point" style="background:' + M.c + '" title="' + M.nom + '"></span>';
   if (etat.v === "ici" && w === etat.m && w >= 4) return '<span class="pw v-ici" title="' + M.nom + ' · +10 % ici"><img src="' + WORLD_IMG[M.id] + '" alt=""></span>';
   return "";
 }
 // D : aura sur le cadre de l'objet du monde courant (Montagne et après, comme l'affinité)
-function aura(w) { return etat.v === "aura" && w === etat.m && w >= 4 ? " aura" : ""; }
+function aura(w) { return ""; } // v2 (retour Seb) : l'aura est sur la pastille, plus autour de l'objet
 function rendre() {
   document.getElementById("intro").innerHTML = TEXTES[etat.v];
   var leg = "";
-  if (etat.v === "icone" || etat.v === "point" || etat.v === "aura") MONDES.forEach(function (M, w) { leg += "<span>" + pastille(w) + M.nom + "</span>"; });
+  // légende : l'icône simple de chaque monde (le cercle d'or a sa propre ligne)
+  if (etat.v === "icone" || etat.v === "point" || etat.v === "aura") MONDES.forEach(function (M, w) { leg += "<span>" + (etat.v === "aura" ? '<span class="pw v-icone"><img src="' + WORLD_IMG[M.id] + '" alt=""></span>' : pastille(w)) + M.nom + "</span>"; });
   if (etat.v === "ici") leg = "<span>" + (etat.m >= 4 ? pastille(etat.m) + "De ton monde : +10 % ici" : "En Crypte, aucune pièce n'a d'affinité : rien n'est marqué") + "</span>";
-  if (etat.v === "aura") leg += "<span>" + (etat.m >= 4 ? '<i class="aura-ex"></i>Aura : de ton monde, +10 % ici' : "En Crypte, aucune aura : pas d'affinité") + "</span>";
+  if (etat.v === "aura") leg += "<span>" + (etat.m >= 4 ? '<span class="pw v-ici"><img src="' + WORLD_IMG.mountain + '" alt=""></span>Cerclée d\'or : de ton monde, +10 % ici' : "En Crypte, aucune pastille cerclée d'or : pas d'affinité") + "</span>";
   document.getElementById("legend").innerHTML = leg;
   document.getElementById("sac").innerHTML = SAC.map(function (o) {
     return '<div class="tile ' + o.r + aura(o.w) + '"><img class="it" src="' + ICO[o.i] + '" alt="">' + pastille(o.w) + '<i class="cmp ' + o.cmp + '">' + (o.cmp === "up" ? "▲" : o.cmp === "down" ? "▼" : "≈") + '</i><div class="band"><span>' + o.n + '</span></div></div>';
@@ -176,7 +178,7 @@ function rendre() {
     return '<div class="card"><div class="ico' + aura(o.w) + '"><img class="it" src="' + ICO[o.i] + '" alt="">' + pastille(o.w) + '</div><div><div class="name epic">' + o.n + '</div><div class="meta">Épique · ' + MONDES[o.w].nom + '</div><div class="lines">' + o.l + '</div></div><span class="price">' + o.p + '</span></div>';
   }).join("");
   document.getElementById("sheet").innerHTML = '<div class="sheet"><div class="ico' + aura(4) + '"><img class="it" src="' + ICO.casque_epic + '" alt="">' + pastille(4) + '</div><div><b>Heaume</b><small>Casque · comparé à Heaume (Crypte)</small></div></div>';
-  document.getElementById("verdict").innerHTML = "<b>Retenue : D.</b> Chaque objet dit d'où il vient (icône du monde, coin haut gauche) ; les pièces de ton monde, celles qui ont l'affinité (+10 %), brillent en plus d'une aura d'or. Bascule « Crypte » : l'aura disparaît, les icônes restent.";
+  document.getElementById("verdict").innerHTML = "<b>Retenue : D.</b> Chaque objet dit d'où il vient (icône du monde, coin haut gauche). Sur les pièces de ton monde, celles qui ont l'affinité (+10 %), cette icône est cerclée d'or et rayonne. Bascule « Crypte » : plus aucun cercle d'or, les icônes restent.";
   document.querySelectorAll("[data-v]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-v") === etat.v)); });
   document.querySelectorAll("[data-m]").forEach(function (b) { b.setAttribute("aria-pressed", String(Number(b.getAttribute("data-m")) === etat.m)); });
   try { localStorage.setItem("pastille-monde-d", JSON.stringify(etat)); } catch (e) {}
