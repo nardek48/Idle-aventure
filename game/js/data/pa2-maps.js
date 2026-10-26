@@ -368,11 +368,12 @@ var PA2_PARCOURS_IMAGES = {
     image: "images/Maps/parcours/crypte_descente.webp", width: 1024, height: 1536, start: [512, 1415],
     tracks: { route: [[512, 1290], [560, 1170], [590, 950], [455, 830], [512, 610], [512, 450], [512, 250]] }
   },
-  /* v3.488.0 (Montagne, acte I) : la montée. Image à fournir par Seb ; piste provisoire (celle de la
-     descente), à relever sur l'image quand elle arrivera. */
+  /* v3.488.0 (Montagne, acte I) : la montée. v3.492.4 : image de Seb (26/10/2026) ; piste relevée sur le trait bleu,
+     de l'escalier de la Crypte à la paroi coupée. Paliers (points 0, 2, 4, 6) : les lacets, le premier ruisseau
+     de lave et ses pierres plates, le second gué (les trois formes), la paroi. */
   montagne_montee: {
-    image: "images/Maps/parcours/montagne_montee.webp", width: 1024, height: 1536, start: [512, 1415],
-    tracks: { route: [[512, 1290], [560, 1170], [590, 950], [455, 830], [512, 610], [512, 450], [512, 250]] }
+    image: "images/Maps/parcours/montagne_montee.webp", width: 1024, height: 1536, start: [505, 1320],
+    tracks: { route: [[446, 1150], [584, 1050], [506, 860], [466, 700], [530, 560], [587, 400], [500, 215]] }
   },
   /* v3.491.0 (Montagne, acte IV) : le sentier du dessus. Image à fournir par Seb ; piste provisoire (celle de
      la chaîne, cinq paliers), à relever sur l'image quand elle arrivera. */
