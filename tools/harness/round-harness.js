@@ -18503,6 +18503,8 @@ console.log("\n[314] v3.492.0 — Montagne, lot M-6 : hauts faits");
     CE.spawnGroup([{ id: "ancientdragon", name: "Dragon ancien", isBoss: true, hp: 10, maxHp: 10, stats: g.BOSS_DB.ancientdragon.stats, resists: [], weak: [], goldReward: 5 }]);
     V.onVictory({ id: "ancientdragon", isBoss: true });
     ok(g.achCounter("dragonNoCut") === 1, "le Dragon ancien vaincu sans taille : « Les mains vides »");
+    var kb = fs.readFileSync(path.join(ROOT, "css/00-kbtn.css"), "utf8"), kbr = /\.kf-back \{[^}]*\}/.exec(kb);
+    ok(kbr && /pointer-events: auto/.test(kbr[0]) && /\.kf-bot \{[^}]*pointer-events: none/.test(kb), "retour « ‹ » du bandeau : il reçoit le toucher (le bandeau, lui, le laisse passer) (v3.492.2)");
     var lms = fs.readFileSync(path.join(ROOT, "js/systems/living-map-system.js"), "utf8");
     ok(/var trous = slots\.filter/.test(lms) && /trous\.length \? trous : slots/.test(lms), "élites de la carte : la pièce lâchée va d'abord à un emplacement sans Épique du monde");
     AM.onRunSuccess("mountain");

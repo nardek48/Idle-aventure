@@ -489,5 +489,6 @@
 .kf-back { position: absolute; left: 6%; top: 58%; transform: translateY(-50%); z-index: 3; width: 36px; height: 36px; border-radius: 50%;
   display: grid; place-items: center; padding: 0 0 3px; font: 900 24px/1 inherit; color: var(--c-cream-50);
   background: radial-gradient(circle at 50% 35%, var(--c-brown-700), var(--c-brown-950-vivid)); border: 2px solid var(--c-bronze-500);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, .5); cursor: pointer; }
+  box-shadow: 0 2px 4px rgba(0, 0, 0, .5); cursor: pointer;
+  pointer-events: auto; } /* v3.492.2 : le bandeau .kf-top est en pointer-events: none, hérité : le retour ne recevait aucun toucher */
 .kf-back:focus-visible { outline: 2px solid var(--c-cream-50); outline-offset: 2px; }
