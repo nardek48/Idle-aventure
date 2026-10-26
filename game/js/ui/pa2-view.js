@@ -55,8 +55,8 @@ var PA2_ICONS = {
   title: "images/Icons/scene/path_easy.webp",
   veine: "images/Icons/scene/node_vein.webp" // v3.489.0 (Montagne) : à générer, icône générique en attendant
 };
-/* v3.492.3 (décision Seb du 24/10, images livrées le 26/10) : icônes propres à chaque monde. Un monde bascule
-   d'un bloc ; sans entrée (la Montagne), les icônes de la Forêt. Le Désert garde la Rencontre commune (sa scène). */
+/* v3.492.3 (décision Seb du 24/10, images livrées le 26/10) : icônes propres à chaque monde. Un monde sans entrée
+   prend la Forêt. Le Désert et la Montagne (v3.492.10, ses trois fins) gardent les autres icônes communes. */
 var PA2_ICONS_BY_WORLD = {
   forest: { evenement: "images/Icons/scene/forest/node_event.webp" },
   desert: {
@@ -73,6 +73,9 @@ var PA2_ICONS_BY_WORLD = {
     evenement: "images/Icons/scene/crypt/node_event.webp", obstacle: "images/Icons/scene/crypt/node_obstacle.webp", source: "images/Icons/scene/crypt/node_spring.webp",
     autel: "images/Icons/scene/crypt/node_altar.webp", camp: "images/Icons/scene/crypt/node_camp.webp", seuil: "images/Icons/scene/crypt/node_threshold.webp",
     boss: "images/Icons/scene/dest/dest_crypt_boss.webp", clairiere: "images/Icons/scene/dest/dest_crypt_clairiere.webp", tertre: "images/Icons/scene/dest/dest_crypt_tertre.webp"
+  },
+  mountain: { // v3.492.10 : ses trois fins ; les autres points gardent les icônes communes
+    boss: "images/Icons/scene/dest/dest_mountain_boss.webp", clairiere: "images/Icons/scene/dest/dest_mountain_clairiere.webp", tertre: "images/Icons/scene/dest/dest_mountain_tertre.webp"
   }
 };
 /* Icône d'un point ou d'une destination, au monde du run. */

@@ -377,7 +377,7 @@ var DUNGEON_HALT_CARDS = [
     gain: "+20 % de dégâts", cost: "Plus de potions jusqu'à la fin du run", modifiers: { tapMult: 0.20, forbidPotions: true } },
   { id: "ratelier", name: "Râtelier", kind: "prep", icon: null,
     gain: "Un objet de combat contre le trait du boss, pour ce run", counterItem: true },
-  { id: "coffre", name: "Coffre", kind: "butin", icon: "images/Icons/subtabs/shard_shop.webp",
+  { id: "coffre", name: "Coffre", kind: "butin", icon: "images/Icons/dungeon/halte_coffre.webp", // v3.492.10 : icône propre
     gain: "+5 Éclats tout de suite", note: "Acquis même si tu tombes ensuite.", shards: 5 },
   { id: "autel", name: "Autel brisé", kind: "echange", icon: "images/Icons/dungeon/halte_autel.webp",
     gain: "Boss −15 % de PV", cost: "Pas d'objet unique sur ce run", bossHpMult: 0.85, noUnique: true }
