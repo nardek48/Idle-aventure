@@ -283,15 +283,11 @@
   border: 1px dashed var(--nb-frame); border-radius: 8px; padding: 6px 8px;
 }
 
-/* Emplacement réservé : aucun système d'amélioration n'existe encore, la
-   ligne est inerte et l'annonce clairement plutôt que de laisser croire à
-   un bouton. */
-.pc-skill-rank {
-  display: flex; align-items: center; gap: 7px;
-  margin-top: 8px; padding: 6px 8px;
-  border: 1px dashed var(--nb-ink-dim); border-radius: 8px;
-  background: rgba(228, 207, 160, 0.35); color: var(--nb-ink-dim);
-  font-size: 12px; font-weight: 700;
+/* H2 (chantier du héros) : rangs des sorts, atelier rangs-sorts.html variante A. Pastilles sous le nom,
+   flèche verte sur l'icône quand un rang s'achète, bloc « rang suivant » dans la carte dépliée. */
+.pc-skill-rk {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; margin-top: 3px;
+  font-size: 12px; font-weight: 700; color: var(--nb-ink-dim); white-space: nowrap; font-variant-numeric: tabular-nums;
 }
 .pc-skill-pips { display: flex; gap: 3px; flex: 0 0 auto; }
 .pc-skill-pips i {
@@ -299,6 +295,35 @@
   border: 1px solid var(--nb-ink-dim); background: transparent;
 }
 .pc-skill-pips i.is-on { background: var(--nb-gold-dark); border-color: var(--nb-gold-deep); }
+.pc-skill-pips i.is-lock { border-style: dashed; opacity: 0.55; }
+.pc-skill-ico { position: relative; overflow: visible; }
+.pc-skill-up {
+  position: absolute; top: -6px; right: -6px; width: 16px; height: 16px; border-radius: 50%;
+  background: var(--nb-green-text); color: var(--c-white-50-soft); font-size: 12px; font-weight: 900; line-height: 16px; text-align: center;
+  box-shadow: 0 0 0 1.5px var(--nb-cream);
+}
+.pc-skill-next {
+  display: grid; gap: 6px; margin-top: 8px; padding: 8px;
+  border: 1px solid var(--nb-frame); border-radius: 8px; background: var(--nb-cream);
+}
+.pc-skill-next-t { font-size: 12px; font-weight: 800; }
+.pc-skill-next-v { font-size: 13px; font-variant-numeric: tabular-nums; }
+.pc-skill-next-v b { color: var(--nb-green-text); }
+.pc-skill-cost { display: flex; flex-wrap: wrap; gap: 6px; }
+.pc-skill-chip {
+  display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px 2px 4px; border-radius: 999px;
+  border: 1px solid var(--nb-frame-light); background: var(--nb-cream-alt);
+  font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums;
+}
+.pc-skill-chip img, .pc-skill-chip-img { width: 18px; height: 18px; object-fit: contain; }
+.pc-skill-chip small { font-weight: 700; color: var(--nb-ink-dim); }
+.pc-skill-chip.is-short, .pc-skill-chip.is-short small { border-color: var(--c-red-600-soft); color: var(--c-red-650); }
+.pc-skill-next .kbtn { margin-bottom: 0; }
+.pc-skill-lock {
+  margin-top: 8px; padding: 6px 8px; border: 1px dashed var(--nb-ink-dim); border-radius: 8px;
+  background: rgba(228, 207, 160, 0.35); color: var(--nb-ink-dim); font-size: 12px; font-weight: 700;
+}
+.pc-skill-max { margin-top: 8px; font-size: 12px; font-weight: 800; color: var(--nb-gold-deep); }
 
 /* v3.203.1 : styles du carrousel d'emplacements et de l'aperçu d'attaque
    retirés. Les deux blocs ont été supprimés de la vue en v3.202.0 et plus

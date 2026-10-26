@@ -334,7 +334,8 @@ function getClassSkills(classId) {
   var kit = window.CLASS_SKILLS[classId];
   if (!kit) return null;
   // v3.327.0 : les talents de classe réécrivent le kit à la lecture (data/talent-trees.js)
-  if (window.TalentManager && typeof TalentManager.modKit === "function") return TalentManager.modKit(classId, kit);
+  if (window.TalentManager && typeof TalentManager.modKit === "function") kit = TalentManager.modKit(classId, kit);
+  if (window.SkillRanks) kit = SkillRanks.apply(classId, kit); // H2 : rangs des sorts, après les talents
   return kit;
 }
 
@@ -358,6 +359,7 @@ function getSkillDescText(classId, action) {
   var txt = _td(action.description || "");
   var cost = Number(action.resourceCost || 0);
   if (cost > 0) txt = txt.replace(/(Coûte|Costs) \d+/, "$1 " + cost);
+  if (action.rankDesc) txt = txt.replace(action.rankDesc.from, action.rankDesc.to); // H2 : la valeur classée dans le texte
   if (action.slot !== "basic") return txt;
   var res = getClassResource(classId), g = res && res.generation, lbl = res ? _td(res.label) : "";
   if (!g) return txt;

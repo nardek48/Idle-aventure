@@ -2813,7 +2813,7 @@ console.log("\n[UX-PROD] Tableau de bord Production v3.191.0 — routeur, vue At
     "var c = getGrimoireCondition(a.counters[0]); return c ? esc(c.label) : ''; })()");
   ok(!counterLabel || capOpen.indexOf(counterLabel) !== -1,
     "[CAP] le contre affiché est bien la carte-condition du Grimoire (« " + counterLabel + " »)");
-  ok(capOpen.indexOf("à venir") !== -1, "[CAP] l'emplacement réservé à l'amélioration est présent et annoncé comme tel");
+  ok(capOpen.indexOf("pc-skill-next") !== -1 || capOpen.indexOf("pc-skill-lock") !== -1, "[CAP] H2 : le rang suivant du sort est proposé dans la carte (l'emplacement réservé a pris vie)");
 
   // une capacité sans contre le dit au lieu de laisser un vide
   var noCounterId = run("(function () { var a = ClassCombatManager.getAction('skill3'); return a ? a.id : ''; })()");
@@ -2858,7 +2858,8 @@ console.log("\n[UX-PROD] Tableau de bord Production v3.191.0 — routeur, vue At
     "pc-skill-tag": "pc-skill-card",
     "pc-skill-counter": "pc-skill-card",
     "pc-skill-counter-none": "pc-skill-card",
-    "pc-skill-rank": "pc-skill-card",
+    "pc-skill-next": "pc-skill-card",   // H2 : rangs des sorts
+    "pc-skill-chip": "pc-skill-card",
     "ability-icon-wrap": "ability-card",
     "ability-cd": "ability-card",
     // v3.268.2 : descendants de .cp-card, enregistré lui (00-kframe-scope.css).
@@ -18752,6 +18753,46 @@ console.log("\n[322] Chantier du héros, H1 — entraînement au-delà de 150 (�
     sm.currentStep = idx("montagne_16"); ok(WC.getVillageCap("training") === 18, "Montagne, acte IV : Terrain 18 (200)");
   } catch (err) {
     ok(false, "[322] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[323] Chantier du héros, H2 — rangs des sorts (+8 % de dégâts, +2 points de défense, prix par monde)");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
+    var game = g.game, SR = g.SkillRanks;
+    ok(JSON.stringify(game.skillRanks) === "{}" && SR.maxRank() === 1, "partie neuve : aucun rang, rang 1 au plus (Forêt)");
+    ok(g.getClassAction("knight", "skill1").damageMultiplier === 1.65, "sans rang : le kit tel quel (Frappe lourde 165 %)");
+    game.skillRanks = { knight_heavy_strike: 3, knight_guard: 2 };
+    var a = g.getClassAction("knight", "skill1"), d = g.getClassAction("knight", "defense");
+    ok(a.damageMultiplier === 2.046 && a.rank === 3, "Frappe lourde rang 3 : 165 % × 1,24 = 204,6 %");
+    ok(g.getSkillDescText("knight", a).indexOf("205%") !== -1, "la description montre la valeur classée (205 %)");
+    ok(d.effects.filter(function (e) { return e.type === "damageReduction"; })[0].value === 0.54, "Garde rang 2 : 50 % + 2 × 2 points = 54 %");
+    game.talents = { k_mur: 1 };
+    var dm = g.getClassAction("knight", "defense").effects.filter(function (e) { return e.type === "damageReduction"; })[0].value;
+    ok(dm === 0.69, "après les talents : Mur (65 %) + 2 rangs = 69 %");
+    game.talents = {};
+    // prix, monde, achat
+    game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true };
+    game.skillRanks = { knight_execute: 4 };
+    ok(SR.maxRank() === 4 && SR.status("knight_execute") === "lock", "Crypte atteinte : rang 4 au plus, le 5 est fermé");
+    game.worldsEverReached[4] = true; game.gold = 100000;
+    ok(SR.status("knight_execute") === "short", "Montagne : rang 5 ouvert, mais pas d'Obsidienne");
+    g.WarehouseManager.addResource("obsidienne_taillee", 3, true);
+    ok(SR.status("knight_execute") === "ok" && SR.buy("knight_execute") === true, "achat du rang 5");
+    ok(SR.get("knight_execute") === 5 && game.gold === 20000 && g.WarehouseManager.getAmount("obsidienne_taillee") === 0, "rang 5 payé 80 000 or et 3 Obsidiennes taillées");
+    ok(SR.status("knight_execute") === "max" && SR.buy("knight_execute") === false, "rang maximum : plus d'achat");
+    var tot = 0; g.SKILL_RANK_PRICES.forEach(function (p) { tot += p.gold; });
+    ok(tot === 131000, "un sort de 0 à 5 : 131 000 or");
+    // sauvegarde
+    var sv = g.buildSaveData();
+    ok(sv.skillRanks && sv.skillRanks.knight_execute === 5, "buildSaveData garde les rangs");
+    run("fullResetState();");
+    ok(JSON.stringify(g.game.skillRanks) === "{}", "fullResetState les efface");
+    g.restoreBaseState(JSON.parse(JSON.stringify(sv)));
+    ok(g.game.skillRanks.knight_execute === 5, "restoreBaseState les rend");
+  } catch (err) {
+    ok(false, "[323] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
 })();
 

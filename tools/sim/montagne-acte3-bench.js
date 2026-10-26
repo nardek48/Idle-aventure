@@ -27,6 +27,9 @@ var P1_AFF = opt("--affinite") !== null ? Number(opt("--affinite")) : null;
 var P1_KIT = opt("--kit");
 var P1_STATS = ARGV.indexOf("--stats") >= 0;
 var ENTR = opt("--entrainement") !== null ? Number(opt("--entrainement")) : null; // chantier du héros (H1) : les 5 entraînements posés à N
+// chantier du héros (H2) : --rang N[,dmg,cd,cout] — rang N sur les 3 techniques : dégâts +dmg par rang (0,08),
+// recharge −1 dès le rang `cd` (0 = jamais), coût −cout par rang (0) ; appliqué après les talents
+var RANG = opt("--rang") ? opt("--rang").split(",").map(Number) : null;
 // v3.492.15 (fiche objets de combat) : --plafond heal,surge,shell,sort,burn — la mécanique entièrement annulée (borne haute d'un objet)
 var PLAFOND = opt("--plafond") ? opt("--plafond").split(",") : [];
 var SANS_REGLE = opt("--sans-regle") ? opt("--sans-regle").split(",") : []; // retire ces conditions du Grimoire (joueur sans la règle)
@@ -54,6 +57,22 @@ var extra = function () {
       var w = (slot === "weapon" || slot === "boots" || P1_KIT === "montagne") ? 4 : 3;
       g.game.equipped[slot] = g.generateEquipmentItem(slot, "epic", w);
     });
+  }
+  if (RANG) {
+    var modKit0 = g.TalentManager.modKit.bind(g.TalentManager), rcache = {};
+    g.TalentManager.modKit = function (cid, kit) {
+      var k = modKit0(cid, kit); if (!k) return k;
+      var key = cid + "|" + JSON.stringify(g.game.talents || {}); if (rcache[key]) return rcache[key];
+      var out = JSON.parse(JSON.stringify(k)), n = RANG[0], dmg = RANG[1] != null ? RANG[1] : 0.08, cd = RANG[2] || 0, cout = RANG[3] || 0;
+      ["skill1", "skill2", "skill3"].forEach(function (sl) {
+        var a = out.actions[sl]; if (!a) return;
+        if (a.damageMultiplier) a.damageMultiplier *= 1 + dmg * n;
+        if (cd && n >= cd && a.cooldownRounds > 1) a.cooldownRounds -= 1;
+        if (cout) a.resourceCost = Math.round(a.resourceCost * (1 - cout * n));
+      });
+      rcache = {}; rcache[key] = out; return out;
+    };
+    console.log("RANG " + RANG.join(",") + " sur les trois techniques");
   }
   function charge(saveTxt, seed) {
     B.seedRng(seed);

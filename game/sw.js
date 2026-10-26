@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.493.0"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.494.0"; // <- à incrémenter à CHAQUE livraison
 var CACHE_NAME = "quest-idle-" + CACHE_VERSION;
 var IMAGE_CACHE = "aethervale-images"; // v3.457.4 : hors du préfixe quest-idle-, jamais vidé par "activate"
 var imagesRevalidated = {};             // URL déjà revérifiées depuis le démarrage de ce service worker
@@ -178,6 +178,7 @@ var PRECACHE_APP_SHELL = [
   "./js/systems/potion-system.js",
   "./js/systems/progression-system.js",
   "./js/systems/talent-system.js",
+  "./js/systems/skill-rank-system.js",
   "./js/systems/world-travel-system.js",
   "./js/systems/save-system.js",
   "./js/systems/stats-system.js",
