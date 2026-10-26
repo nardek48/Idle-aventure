@@ -48,7 +48,8 @@ function buildEquipSubTabBarHTML() {
 
 function formatEquipmentStat(item) {
   if (!item) return "";
-  return formatEquipmentStatValue(item.stat, Number(item.value || 0));
+  var ka = typeof getItemAffinityMult === "function" ? getItemAffinityMult(item) : 1; // v3.492.12 (P1) : valeur lue par le moteur
+  return formatEquipmentStatValue(item.stat, Number(item.value || 0) * ka);
 }
 
 /* v3.225.0 : texte d'une stat quelle que soit sa source (stat de base ou affixe). */
@@ -75,12 +76,13 @@ function buildEquipmentAffixLinesHTML(item) {
   /* v3.252.0 : primaire et secondaire ne se distinguaient que par un italique atténué —
      invisible en pratique. Une puce pleine / creuse porte la différence, et le libellé
      l'explicite pour qui ne connaît pas encore le vocabulaire. */
+  var ka = typeof getItemAffinityMult === "function" ? getItemAffinityMult(item) : 1; // v3.492.12 (P1)
   var h = '<div class="eq-affix-lines">';
   affixes.forEach(function (a) {
     var sec = a.tier === "S";
     h += '<div class="eq-affix-line' + (sec ? ' is-secondary' : '') + '">';
     h += '<span class="eq-affix-dot" aria-hidden="true"></span>';
-    h += '<span class="eq-affix-txt">' + esc(formatEquipmentStatValue(a.stat, a.value)) + '</span>';
+    h += '<span class="eq-affix-txt">' + esc(formatEquipmentStatValue(a.stat, a.value * ka)) + '</span>';
     h += '</div>';
   });
   h += '</div>';
@@ -397,7 +399,13 @@ function buildItemOriginHTML(item) {
   var idx = (typeof item.worldIndex === "number") ? item.worldIndex : 0;
   var world = (window.WORLDS && WORLDS[idx]) ? WORLDS[idx].name : null;
   if (!world) return aether;
-  return '<div class="eq-detail-hint"><img class=ico-inline src=images/Icons/quests/quest_resources.webp> ' + esc(_t("Trouvé en {w}", { w: _td(world) })) + '</div>' + aether;
+  // v3.492.12 (P1) : l'affinité de monde, active ou non selon où se tient le héros
+  var A = window.EQUIP_WORLD_AFFINITY, aff = "";
+  if (A && idx >= A.fromWorld) {
+    var n = Math.round(A.bonus * 100), actif = typeof getItemAffinityMult === "function" && getItemAffinityMult(item) > 1;
+    aff = '<div class="eq-detail-hint">✦ ' + esc(actif ? _t("Affinité : +{n} % ici, dans son monde", { n: n }) : _t("Affinité : +{n} % en {w}", { n: n, w: _td(world) })) + '</div>';
+  }
+  return '<div class="eq-detail-hint"><img class=ico-inline src=images/Icons/quests/quest_resources.webp> ' + esc(_t("Trouvé en {w}", { w: _td(world) })) + '</div>' + aff + aether;
 }
 window.buildItemOriginHTML = buildItemOriginHTML;
 

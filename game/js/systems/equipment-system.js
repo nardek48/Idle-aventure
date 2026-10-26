@@ -21,11 +21,14 @@ function getEquipmentCompareLines(candidate, equipped) {
     if (!byStat[stat]) { byStat[stat] = { stat: stat, tier: tier, candValue: 0, equipValue: 0, onlyEquipped: false }; lines.push(byStat[stat]); }
     return byStat[stat];
   }
-  line(candidate.stat, "B").candValue += Number(candidate.value) || 0;
-  getItemAffixes(candidate).forEach(function (a) { line(a.stat, a.tier === "S" ? "S" : "P").candValue += a.value; });
+  // v3.492.12 (P1) : chaque objet avec son affinité de monde, comme le moteur la lit
+  var ka = typeof getItemAffinityMult === "function" ? getItemAffinityMult(candidate) : 1;
+  line(candidate.stat, "B").candValue += (Number(candidate.value) || 0) * ka;
+  getItemAffixes(candidate).forEach(function (a) { line(a.stat, a.tier === "S" ? "S" : "P").candValue += a.value * ka; });
   if (equipped) {
-    var eqBase = line(equipped.stat, "B"); eqBase.equipValue += Number(equipped.value) || 0;
-    getItemAffixes(equipped).forEach(function (a) { line(a.stat, a.tier === "S" ? "S" : "P").equipValue += a.value; });
+    var ke = typeof getItemAffinityMult === "function" ? getItemAffinityMult(equipped) : 1;
+    var eqBase = line(equipped.stat, "B"); eqBase.equipValue += (Number(equipped.value) || 0) * ke;
+    getItemAffixes(equipped).forEach(function (a) { line(a.stat, a.tier === "S" ? "S" : "P").equipValue += a.value * ke; });
   }
   lines.forEach(function (l) {
     l.onlyEquipped = l.candValue === 0 && l.equipValue !== 0;

@@ -198,7 +198,8 @@
     var w = (window.WORLDS || [])[typeof it.worldIndex === "number" ? it.worldIndex : 0];
     if (!w) return "";
     var compte = typeof storyItemComptePourPalier === "function" && storyItemComptePourPalier(it, true);
-    return '<span class="hs-edetail-orig">' + esc(_td(w.name)) + (compte ? ' <img class=ico-inline src=images/Icons/system/check_valid.webp alt="' + esc(_t("Compte pour l'Histoire")) + '">' : '') + '</span>';
+    var A = window.EQUIP_WORLD_AFFINITY, actif = A && typeof getItemAffinityMult === "function" && getItemAffinityMult(it) > 1; // v3.492.12 (P1)
+    return '<span class="hs-edetail-orig">' + esc(_td(w.name)) + (actif ? ' · +' + Math.round(A.bonus * 100) + ' %' : '') + (compte ? ' <img class=ico-inline src=images/Icons/system/check_valid.webp alt="' + esc(_t("Compte pour l'Histoire")) + '">' : '') + '</span>';
   }
 
   // Détail de l'emplacement choisi : panneau collé en bas, par-dessus la silhouette, comme celui des

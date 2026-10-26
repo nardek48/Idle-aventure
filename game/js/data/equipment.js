@@ -89,6 +89,14 @@ var SET_BONUS_CONFIG = {
    piège principal de ce chantier. */
 var EQUIP_WORLD_SCALE = [1, 1.4, 2.2, 4, 6, 18]; // v3.487.0 (Montagne, MT7) : 10 -> 6, décision Seb après mesure (Épique complet : +95 % de dégâts en fin de Crypte)
 
+/* v3.492.12 (P1, décision Seb du 26/10 après banc) : affinité de monde. Un objet de la Montagne ou d'après vaut
+   +10 % (base et affixes) quand le héros est dans son monde ; les mondes d'avant ne changent pas. */
+var EQUIP_WORLD_AFFINITY = { fromWorld: 4, bonus: 0.10 };
+function getItemAffinityMult(item) {
+  var w = Number((item && item.worldIndex) || 0), ici = window.WorldManager ? Number(WorldManager.worldIndex || 0) : 0;
+  return (w >= EQUIP_WORLD_AFFINITY.fromWorld && w === ici) ? 1 + EQUIP_WORLD_AFFINITY.bonus : 1;
+}
+
 function getEquipWorldScale(worldIndex) {
   var i = Math.max(0, Math.min(EQUIP_WORLD_SCALE.length - 1, Math.floor(Number(worldIndex) || 0)));
   return EQUIP_WORLD_SCALE[i];
@@ -259,6 +267,8 @@ var EQUIP_SHOP_STARTER = [
 window.EQUIP_SHOP_STARTER = EQUIP_SHOP_STARTER;
 window.EQUIP_WORLD_SCALE = EQUIP_WORLD_SCALE;
 window.getEquipWorldScale = getEquipWorldScale;
+window.EQUIP_WORLD_AFFINITY = EQUIP_WORLD_AFFINITY;
+window.getItemAffinityMult = getItemAffinityMult;
 window.EQUIPMENT_SLOTS = EQUIPMENT_SLOTS;
 window.EQUIPMENT_SLOT_LABELS = EQUIPMENT_SLOT_LABELS;
 window.EQUIPMENT_SLOT_EMOJI = EQUIPMENT_SLOT_EMOJI;

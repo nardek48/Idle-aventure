@@ -18552,6 +18552,40 @@ console.log("\n[315] v3.492.11 — pièces de la Montagne lisibles (L1, L3)");
   }
 })();
 
+console.log("\n[316] v3.492.12 — affinité de monde (P1) : +10 % aux objets de la Montagne, dans la Montagne");
+(function () {
+  var wiAvant = g.WorldManager.worldIndex;
+  try {
+    game = freshCombat("knight");
+    var mk = function (slot, stat, value, w, affixes) { return { uid: "a_" + slot + w, slot: slot, name: "Test", rarity: "epic", stat: stat, value: value, worldIndex: w, affixes: affixes || [] }; };
+    var A = g.EQUIP_WORLD_AFFINITY, m4 = mk("armor", "defense", 0.1, 4), m3 = mk("armor", "defense", 0.1, 3);
+    g.WorldManager.worldIndex = 4;
+    ok(A.fromWorld === 4 && A.bonus === 0.10 && g.getItemAffinityMult(m4) === 1.1 && g.getItemAffinityMult(m3) === 1 && g.getItemAffinityMult(mk("armor", "defense", 0.1, 5)) === 1,
+      "affinité : +10 % pour un objet de la Montagne dans la Montagne ; rien pour la Crypte, rien pour un autre monde");
+    g.WorldManager.worldIndex = 3;
+    ok(g.getItemAffinityMult(m4) === 1, "hors de son monde, l'objet de la Montagne n'a pas d'affinité");
+    // le moteur : défense de l'armure et affixe, portés dans et hors de la Montagne
+    game.equipped = { weapon: null, armor: mk("armor", "defense", 0.1, 4, [{ stat: "critChance", value: 5, tier: "P" }]), helmet: null, gloves: null, boots: null, ring: null, amulet: null };
+    g.WorldManager.worldIndex = 3; g.StatsSystem.recalcStats(); var d3 = game.equipDefensePct, c3 = game.critChance;
+    g.WorldManager.worldIndex = 4; g.StatsSystem.recalcStats(); var d4 = game.equipDefensePct, c4 = game.critChance;
+    ok(Math.abs(d4 - d3 - 0.01) < 1e-9 && Math.abs(c4 - c3 - 0.5) < 1e-9, "stats-system : la base (+0,01 de défense) et l'affixe (+0,5 % de critique) suivent l'affinité");
+    var ts = fs.readFileSync(path.join(ROOT, "js/systems/world-travel-system.js"), "utf8");
+    ok(/StatsSystem\.recalcStats\(\)/.test(ts.slice(ts.indexOf("arrive:"), ts.indexOf("isBusy:"))), "voyage : les stats sont recalculées à l'arrivée (l'affinité suit le héros)");
+    // la comparaison et l'affichage lisent la même valeur que le moteur
+    g.WorldManager.worldIndex = 4;
+    var l = g.getEquipmentCompareLines(mk("armor", "defense", 0.1, 4), mk("armor", "defense", 0.1, 3))[0];
+    ok(l && Math.abs(l.delta - 0.01) < 1e-9, "comparaison : à valeur tirée égale, la pièce de la Montagne gagne +10 % dans la Montagne");
+    ok(/11% défense/.test(g.formatEquipmentStat(m4)) && /10% défense/.test(g.formatEquipmentStat(m3)), "affichage : la valeur montrée est celle lue par le moteur");
+    ok(/Affinit/.test(g.buildItemOriginHTML(m4)) && /ici/.test(g.buildItemOriginHTML(m4)) && !/Affinit/.test(g.buildItemOriginHTML(m3)), "fiche : la ligne d'affinité (active ici) sur la pièce de la Montagne, pas sur celle de la Crypte");
+    g.WorldManager.worldIndex = 3;
+    ok(/Affinit/.test(g.buildItemOriginHTML(m4)) && !/ici/.test(g.buildItemOriginHTML(m4)), "fiche hors de la Montagne : l'affinité est annoncée pour son monde, pas active");
+  } catch (err) {
+    ok(false, "[316] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  } finally {
+    g.WorldManager.worldIndex = wiAvant;
+  }
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

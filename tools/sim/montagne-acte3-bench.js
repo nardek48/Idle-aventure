@@ -8,7 +8,7 @@
    USAGE : node tools/sim/montagne-acte3-bench.js . --save a.json[,b.json] [--runs N] [--diff x] [--boss p,e]
            [--quete pv,puissance] [--sans-potion]
            v3.492.12 (mesure P1, « affinité de monde ») : [--affinite x] [--kit crypte|montagne] [--stats]
-             --affinite x : un objet du monde où se bat le héros (Montagne et après) gagne x (0,15 = +15 %) sur sa base et ses affixes.
+             --affinite x : remplace le bonus d'affinité de monde du jeu (EQUIP_WORLD_AFFINITY, +10 % depuis v3.492.12) ; 0 = sans.
              --kit : 7 Épiques retirés au même tirage ; arme et bottes de la Montagne, les 5 autres de la Crypte ou de la Montagne. */
 var fs = require("fs"), path = require("path");
 var base = fs.readFileSync(path.join(__dirname, "plafond-bench.js"), "utf8");
@@ -22,7 +22,7 @@ var QUETE = opt("--quete") ? opt("--quete").split(",").map(Number) : null;
 var SANS_POTION = ARGV.indexOf("--sans-potion") >= 0;
 var QUETES = opt("--quetes") ? opt("--quetes").split(",") : null; // v3.491.0 : quêtes seules (acte IV : aq_montagne_tries, aq_montagne_dragon)
 var QBOSS = opt("--qboss") ? opt("--qboss").split(",").map(Number) : null; // essai bossHpMult,bossPowerMult (aq_montagne_dragon)
-var P1_AFF = opt("--affinite") ? Number(opt("--affinite")) : 0;
+var P1_AFF = opt("--affinite") !== null ? Number(opt("--affinite")) : null;
 var P1_KIT = opt("--kit");
 var P1_STATS = ARGV.indexOf("--stats") >= 0;
 if (!SAVES.length) { console.log("--save <fichier> attendu (sauvegarde de campagne)"); process.exit(1); }
@@ -32,13 +32,8 @@ var extra = function () {
   if (DIFF5) d.difficultyMult = DIFF5;
   if (WYRM) { d.boss.statMult.power = WYRM[0]; d.boss.statMult.endurance = WYRM[1]; }
   if (QUETE) { g.ADVENTURE_QUESTS.aq_montagne_salle_ronde.encounterHpMult = QUETE[0]; g.ADVENTURE_QUESTS.aq_montagne_salle_ronde.enemyPowerMult = QUETE[1]; }
-  // P1 simulée : la valeur lue d'un objet du monde courant (Montagne et après) est multipliée par 1 + P1_AFF
-  if (P1_AFF) {
-    var aff = function (it) { var w = Number(it && it.worldIndex || 0); return w >= 4 && w === Number(g.WorldManager.worldIndex || 0) ? 1 + P1_AFF : 1; };
-    var fv = g.ForgeManager.getForgedValue, ga = g.getItemAffixes;
-    g.ForgeManager.getForgedValue = function (it) { return fv.call(g.ForgeManager, it) * aff(it); };
-    g.getItemAffixes = function (it) { var k = aff(it); return ga(it).map(function (a) { return Object.assign({}, a, { value: a.value * k }); }); };
-  }
+  // v3.492.12 : l'affinité est dans le jeu ; --affinite en change seulement le bonus
+  if (P1_AFF !== null) g.EQUIP_WORLD_AFFINITY.bonus = P1_AFF;
   function kit(seed) {
     if (!P1_KIT) return;
     g.EQUIPMENT_SLOTS.forEach(function (slot, i) {
@@ -79,7 +74,7 @@ var extra = function () {
       hp: Math.max(0, g.game.heroHp) / g.game.heroMaxHp };
   }
   if (P1_STATS) {
-    console.log("P1_STATS DU HÉROS — kit " + (P1_KIT || "de la sauvegarde") + " · affinité +" + Math.round(P1_AFF * 100) + " % · moyenne sur " + RUNS + " tirages");
+    console.log("P1_STATS DU HÉROS — kit " + (P1_KIT || "de la sauvegarde") + " · affinité +" + Math.round(g.EQUIP_WORLD_AFFINITY.bonus * 100) + " % · moyenne sur " + RUNS + " tirages");
     SAVES.forEach(function (f) {
       var t = fs.readFileSync(f, "utf8"), cls = JSON.parse(t).heroId || path.basename(f), m = { flat: 0, mult: 0, cc: 0, cm: 0, def: 0, hp: 0, cel: 0 };
       for (var i = 0; i < RUNS; i++) {

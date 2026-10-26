@@ -31,6 +31,7 @@ var WorldTravel = {
     if (typeof WorldManager.markWorldReached === "function") WorldManager.markWorldReached(idx);
     if (window.EliteManager && typeof EliteManager.growUniques === "function") EliteManager.growUniques(); // v3.456.5 : l'arme du Cœur grandit
     if (typeof WorldManager.applyWorldTheme === "function") WorldManager.applyWorldTheme();
+    if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") StatsSystem.recalcStats(); // v3.492.12 : l'affinité de monde suit le héros
     if (typeof addLog === "function") addLog("🗺️ " + (first ? _t("Nouveau monde : {x}.", { x: _td(world.name) }) : _t("Tu rejoins {x}.", { x: _td(world.name) })), "zone");
     if (typeof saveGame === "function") saveGame();
     return true;

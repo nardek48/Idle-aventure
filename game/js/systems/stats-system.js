@@ -174,9 +174,10 @@ var StatsSystem = {
         ? ForgeManager.getForgedValue(item)
         : item.value;
 
-      applyEquipmentStat(item.stat, value);
+      var aff = typeof getItemAffinityMult === "function" ? getItemAffinityMult(item) : 1; // v3.492.12 (P1, accord Seb) : affinité de monde
+      applyEquipmentStat(item.stat, value * aff);
       /* v3.225.0 (périmètre confirmé par Seb) : affixes, valeur de tirage, jamais forgés (D14). */
-      (typeof getItemAffixes === "function" ? getItemAffixes(item) : []).forEach(function (a) { applyEquipmentStat(a.stat, a.value); });
+      (typeof getItemAffixes === "function" ? getItemAffixes(item) : []).forEach(function (a) { applyEquipmentStat(a.stat, a.value * aff); });
     });
     game.equipDropChancePct = Math.min(typeof EQUIP_DROP_CHANCE_CAP === "number" ? EQUIP_DROP_CHANCE_CAP : 25, game.equipDropChancePct);
     if (game.equipMaxHpPct > 0) game.heroMaxHp = Math.max(1, Math.floor(game.heroMaxHp * (1 + game.equipMaxHpPct)));

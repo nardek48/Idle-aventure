@@ -6849,4 +6849,7 @@ I18n.register("en", {
   // v3.492.11 : les pièces de la Montagne, plus lisibles
   "Sans pièce de la Montagne : {s}.": "No Mountain piece on: {s}.",
   "Compte pour l'Histoire": "Counts for the Story",
+  // v3.492.12 : affinité de monde (P1)
+  "Affinité : +{n} % ici, dans son monde": "Affinity: +{n}% here, in its world",
+  "Affinité : +{n} % en {w}": "Affinity: +{n}% in {w}",
 });
