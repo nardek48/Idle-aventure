@@ -143,3 +143,62 @@ html.chron-min:not(.chron-over) .chr-h strong { display: none; }
 .chr-strip img { width: 100%; height: 100%; object-fit: contain; }
 .chr-strip .chr-badge { position: absolute; top: -6px; right: -7px; }
 @media (prefers-reduced-motion: no-preference) { .chr-td, .chr-x { transition: background-color 0.15s, border-color 0.15s; } }
+
+/* =========================================================
+   v3.504.0 (lot GE-4) : les feuilles du bas deviennent la fiche de droite (sans voile, la page reste
+   visible) ; le Résumé du Héros passe en trois colonnes. Combat et scènes gardent leurs feuilles (GE-5).
+   ========================================================= */
+html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) {
+  --ge-drawer-right: calc(50% - min(var(--wide-w), 100vw / var(--pc-zoom, 1)) / 2 + 10px);
+  --ge-drawer-top: calc(var(--safe-top) + 84px);
+}
+html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) .ksheet-backdrop,
+html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) .full-menu-overlay:has(> .full-menu) { background: transparent; }
+html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) .ksheet,
+html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) .full-menu-overlay > .full-menu {
+  position: fixed;
+  top: var(--ge-drawer-top);
+  bottom: calc(var(--safe-bottom) + 10px);
+  left: auto;
+  right: var(--ge-drawer-right);
+  width: 440px;
+  max-width: calc(100vw / var(--pc-zoom, 1) - 20px);
+  max-height: none !important;
+  margin: 0;
+  padding-bottom: 14px;
+  border-radius: var(--sheet-radius);
+  box-shadow: 0 0 0 1px var(--c-brown-550-3), -16px 0 36px rgba(0, 0, 0, 0.55);
+}
+/* Une fiche courte n'occupe que sa hauteur */
+html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) .ksheet.hf-sheet { bottom: auto; max-height: calc(100vh / var(--pc-zoom, 1) - 104px) !important; }
+@media (prefers-reduced-motion: no-preference) {
+  html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) .ksheet,
+  html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) .full-menu-overlay > .full-menu { animation: ge-drawer-in 0.2s ease-out; }
+}
+@keyframes ge-drawer-in { from { transform: translateX(24px); opacity: 0; } }
+html.wide-mode .ksheet .ksheet-handle,
+html.wide-mode .full-menu .ksheet-handle { display: none; }
+
+/* ---------- Héros › Résumé : le héros | son équipement | ses chiffres ---------- */
+html.wide-mode #panel-container .hs-wide3 {
+  display: grid;
+  grid-template-columns: minmax(220px, 260px) minmax(300px, 380px) minmax(260px, 1fr);
+  gap: 14px;
+  align-items: start;
+  justify-content: center;
+}
+html.wide-mode #panel-container .hs-col { min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+html.wide-mode #panel-container .hs-wide3 .hs-banner { background-image: radial-gradient(ellipse at 50% 35%, rgba(255, 224, 160, 0.22), transparent 60%), linear-gradient(rgba(42, 26, 8, 0.92), rgba(42, 26, 8, 0.78)); height: auto; padding: 16px 12px 14px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+html.wide-mode #panel-container .hs-wide3 .hs-banner-img { position: static; width: 200px; height: 200px; }
+html.wide-mode #panel-container .hs-wide3 .hs-banner-txt { position: static; width: 100%; padding: 8px 0 0; background: none; }
+html.wide-mode #panel-container .hs-wide3 .hs-roster-btn { margin-top: 0; }
+html.wide-mode #panel-container .hs-wide3 .hs-eq { width: 100%; height: 470px; }
+html.wide-mode #panel-container .hs-wide3 .hs-sets { margin-top: -2px; }
+html.wide-mode #panel-container .hs-wide3 .hs-kstrip { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 4px; margin: 0; padding: 10px 6px; position: relative; }
+html.wide-mode #panel-container .hs-wide3 .hs-kstrip .hs-chev { position: absolute; top: 6px; right: 8px; }
+html.wide-mode #panel-container .hs-wide3 .hs-kstat img { width: 26px; height: 26px; }
+html.wide-mode #panel-container .hs-wide3 .hs-kstat b { font-size: 17px; }
+html.wide-mode #panel-container .hs-wide3 .hs-tiles .hs-tile { grid-template-columns: 1fr; row-gap: 2px; }
+html.wide-mode #panel-container .hs-wide3 .hs-tiles .hs-tile-top { grid-row: auto; }
+html.wide-mode #panel-container .hs-wide3 .hs-tiles .hs-tile-line,
+html.wide-mode #panel-container .hs-wide3 .hs-tiles .hs-tile-sub { padding-left: 34px; }

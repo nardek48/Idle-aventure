@@ -106,7 +106,7 @@
     var c = combatValues();
     var k = function (ico, lbl, val) { return '<span class="hs-kstat">' + img("images/Icons/combat_stats/" + ico + ".webp") + '<b>' + val + '</b><small>' + esc(lbl) + '</small></span>'; };
     return '<button type="button" class="hs-kstrip" onclick="openHerosSheet(\'stats\')">'
-      + k("stat_health", _t("PV"), num(c.hp)) + k("stat_attack", _t("Attaque"), num(c.atk)) + k("stat_defense", _t("Défense"), c.def + " %") + k("stat_critical", _t("Critique"), c.crit + " %")
+      + k("stat_health", _t("PV"), num(c.hp)) + k("stat_attack", _t("Attaque"), num(c.atk)) + k("stat_defense", _t("Défense"), c.def + " %") + k("stat_critical", _t("Critique"), num(c.crit) + " %")
       + '<i class="hs-chev">›</i></button>';
   }
 
@@ -144,11 +144,17 @@
   }
 
   function buildHerosResumeHTML() {
-    var h = bannerHTML() + kpiStripHTML() + '<div class="hs-tiles">' + heroTiles() + '</div>' + traitsHTML();
     // Changer de héros : un vrai bouton en bas (une icône dans la bannière était trop petite).
-    h += '<button type="button" class="hs-roster-btn" onclick="openHeroSlotsScreen()">' + img("images/Icons/subtabs/hero_roster.webp")
+    var roster = '<button type="button" class="hs-roster-btn" onclick="openHeroSlotsScreen()">' + img("images/Icons/subtabs/hero_roster.webp")
       + '<span><b>' + _t("Mes héros") + '</b><small>' + _t("Changer de héros ou en créer un") + '</small></span><i class="hs-chev">›</i></button>';
-    return h;
+    // v3.504.0 (grand écran, GE-4) : trois colonnes, le héros, son équipement, ses chiffres
+    if (document.documentElement.classList.contains("wide-mode")) {
+      return '<div class="hs-wide3"><div class="hs-col">' + bannerHTML() + roster + '</div>'
+        + '<div class="hs-col"><div class="hs-eq" style="background-image:url(' + silhouette() + ')">' + SLOTS.map(function (sl) { return slotBtn(sl, "herosOpenSlotSheet"); }).join("") + '</div>'
+        + '<div class="hs-sets">' + setLineHTML() + '</div></div>'
+        + '<div class="hs-col">' + kpiStripHTML() + '<div class="hs-tiles">' + heroTiles() + '</div>' + traitsHTML() + '</div></div>';
+    }
+    return bannerHTML() + kpiStripHTML() + '<div class="hs-tiles">' + heroTiles() + '</div>' + traitsHTML() + roster;
   }
 
   /* =========================================================
@@ -188,10 +194,11 @@
     return active.map(function (e) { return '<div class="hs-set">' + ico + '<b>' + esc(_td(e.config.name)) + '</b> · ' + esc(_td(e.config.text)) + '</div>'; }).join("");
   }
 
-  function slotBtn(slot) {
+  // fn : action du clic (le Résumé du grand écran ouvre directement la fiche de l'emplacement)
+  function slotBtn(slot, fn) {
     var it = game.equipped ? game.equipped[slot] : null;
     var mark = countInBag(slot, "up") ? cmpBadge("up", "hs-slot-cmp") : (countInBag(slot, "mix") ? cmpBadge("mix", "hs-slot-cmp") : "");
-    return '<button type="button" class="hs-eslot pin-' + slot + (selectedEquipSlot === slot ? ' is-sel' : '') + '" data-slot="' + slot + '" onclick="herosPickSlot(\'' + slot + '\')">'
+    return '<button type="button" class="hs-eslot pin-' + slot + (!fn && selectedEquipSlot === slot ? ' is-sel' : '') + '" data-slot="' + slot + '" onclick="' + (fn || "herosPickSlot") + '(\'' + slot + '\')">'
       + (it ? buildEquipmentIconHTML(it, "hs-eslot-ico rframe") : '<span class="hs-eslot-ico is-empty">' + renderIconOrEmojiHTML(EQUIPMENT_SLOT_EMOJI[slot], "", "") + '</span>')
       + mark + '<small>' + esc(slotLabel(slot)) + '</small></button>';
   }

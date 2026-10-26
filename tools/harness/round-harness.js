@@ -18993,6 +18993,28 @@ console.log("\n[328] v3.503.0 — Grand écran GE-2 et GE-3 : rail complet, band
   }
 })();
 
+console.log("\n[329] v3.504.0 — Grand écran GE-4 : fiches à droite, Héros en trois colonnes");
+(function () {
+  try {
+    var fs = require("fs"), path = require("path");
+    var css = fs.readFileSync(path.join(ROOT, "css/10-grand-ecran.css"), "utf8");
+    ok(/\.full-menu-overlay > \.full-menu \{[^}]*position: fixed;[^}]*right: var\(--ge-drawer-right\)/.test(css) && /\.ksheet-backdrop,[^{]*\{ background: transparent; \}/.test(css), "feuilles et menus : fiche de droite, sans voile");
+    // classList simulé du bac à sable : « wide-mode » posé à la main le temps du test
+    var cl = g.document.documentElement.classList, contains0 = cl.contains, wideOn = false;
+    cl.contains = function (c) { return c === "wide-mode" ? wideOn : false; };
+    var phone = g.buildHerosResumeHTML();
+    ok(phone.indexOf("hs-wide3") < 0 && phone.indexOf("hs-roster-btn") > 0, "téléphone : Résumé inchangé (une colonne)");
+    wideOn = true;
+    var wide = g.buildHerosResumeHTML();
+    cl.contains = contains0;
+    ok((wide.match(/class="hs-col"/g) || []).length === 3 && /hs-banner[\s\S]*hs-eq[\s\S]*hs-kstrip/.test(wide), "grand écran : héros, équipement, chiffres en trois colonnes");
+    ok(/onclick="herosOpenSlotSheet\('weapon'\)"/.test(wide), "grand écran : un emplacement ouvre directement sa fiche");
+    ok(!/\d\.\d %/.test(phone), "Résumé : critique à la française (virgule)");
+  } catch (err) {
+    ok(false, "[329] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);
