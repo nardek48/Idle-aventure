@@ -132,11 +132,8 @@ var VILLAGE_BUILDINGS = {
     icon: "images/Icons/combat_stats/stat_critical.webp",
     iconImg: "images/Icons/village_buildings/training_grounds.webp",
     rank: 1,
-    /* v3.214.0 : 14 niveaux, soit le plafond historique de 150 par
-       caractéristique. Les quatre derniers (11 à 14) exigent la Résine durcie,
-       donc d'avoir farmé la Forêt en Petite Aventure — c'est le premier
-       plafond par monde du jeu. */
-    maxLevel: 14,
+    /* v3.214.0 : 14 niveaux pour 150 par caractéristique ; H1 (chantier du héros) : 18 niveaux, 200. */
+    maxLevel: 18, // H1 (chantier du héros) : 14 à 18 en Obsidienne taillée, 160 à 200
     implemented: true,
     lockLabel: "Atteins 20 dans une caractéristique",
     desc: "Chaque niveau ouvre 10 niveaux d'entraînement supplémentaires sur chacune des cinq caractéristiques. L'entraînement lui-même se paie en or, dans Héros → Entraînement.",
@@ -179,17 +176,19 @@ var VILLAGE_BUILDINGS = {
         baseCost: { gold: 2030, planche: 174, pierre: 217.5, lingot: 58, cire_sepulcre: 6 }, // 217,5 : mêmes arrondis qu'avant
         costMult: 1.45
       },
+      /* H1 (chantier du héros) : Terrain 14 à 18 (palier lu sur le niveau actuel, 13 à 17), Montagne actes III et IV.
+         Remplace le palier en Résine, inutile depuis le socle à 20 (v3.248.0) et jamais ouvert. */
       {
-        minLevel: 13, maxLevel: 13,
-        resources: ["gold", "planche", "pierre", "lingot", "resine_durcie"],
-        baseCost: { gold: 4268, planche: 365, pierre: 457, lingot: 121, resine_durcie: 18 },
-        costMult: 1.45
+        minLevel: 13, maxLevel: 17,
+        resources: ["gold", "planche", "pierre", "acier", "obsidienne_taillee"],
+        baseCost: { gold: 10000, planche: 300, pierre: 400, acier: 80, obsidienne_taillee: 3 },
+        costMult: 1.2
       }
     ],
     effectLabel: function (level) {
       // v3.248.0 : le socle sans bâtiment est passé à 20 (voir getTrainingCapLevels)
       var base = (typeof TRAINING_BASE_CAP === "number") ? TRAINING_BASE_CAP : 20;
-      return _t("Plafond d'entraînement : {n} par caractéristique", { n: Math.min(150, base + 10 * level) });
+      return _t("Plafond d'entraînement : {n} par caractéristique", { n: Math.min(window.TRAINING_HARD_CAP || 150, base + 10 * level) }); // H1 : 200
     }
   },
 

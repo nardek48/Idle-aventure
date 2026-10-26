@@ -9,6 +9,7 @@
            [--quete pv,puissance] [--sans-potion]
            v3.492.12 (mesure P1, « affinité de monde ») : [--affinite x] [--kit crypte|montagne] [--stats]
              --affinite x : remplace le bonus d'affinité de monde du jeu (EQUIP_WORLD_AFFINITY, +10 % depuis v3.492.12) ; 0 = sans.
+             --entrainement N (chantier du héros, H1) : les cinq entraînements posés à N (au-delà du plafond).
              --kit : 7 Épiques retirés au même tirage ; arme et bottes de la Montagne, les 5 autres de la Crypte ou de la Montagne. */
 var fs = require("fs"), path = require("path");
 var base = fs.readFileSync(path.join(__dirname, "plafond-bench.js"), "utf8");
@@ -25,6 +26,7 @@ var QBOSS = opt("--qboss") ? opt("--qboss").split(",").map(Number) : null; // es
 var P1_AFF = opt("--affinite") !== null ? Number(opt("--affinite")) : null;
 var P1_KIT = opt("--kit");
 var P1_STATS = ARGV.indexOf("--stats") >= 0;
+var ENTR = opt("--entrainement") !== null ? Number(opt("--entrainement")) : null; // chantier du héros (H1) : les 5 entraînements posés à N
 // v3.492.15 (fiche objets de combat) : --plafond heal,surge,shell,sort,burn — la mécanique entièrement annulée (borne haute d'un objet)
 var PLAFOND = opt("--plafond") ? opt("--plafond").split(",") : [];
 var SANS_REGLE = opt("--sans-regle") ? opt("--sans-regle").split(",") : []; // retire ces conditions du Grimoire (joueur sans la règle)
@@ -57,6 +59,7 @@ var extra = function () {
     B.seedRng(seed);
     g.restoreBaseState(JSON.parse(saveTxt));
     kit(seed); B.seedRng(seed);
+    if (ENTR !== null) g.HEROS_TRAINING_UPGRADE_IDS.forEach(function (id) { g.game.upgrades[id] = ENTR; g.UPGRADES.filter(function (u) { return u.id === id; })[0].apply(ENTR); });
     g.ensureGrimoireRules();
     B.run("game.combatMode = 'grimoire'; EquipmentManager.recalcStats(); game.heroHp = game.heroMaxHp; CompanionManager.healAll();");
     if (SANS_POTION) g.game.healingPotionsOwned = {};

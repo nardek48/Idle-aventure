@@ -290,9 +290,17 @@ function getUpgradeCost(upgrade, atLevel) {
      premier, ce qui vidait l'entraînement de son intérêt face à l'équipement. Les autres
      améliorations (bourses, contrats) gardent costMult. */
   if (typeof upgrade.costStep === "number" && upgrade.costStep >= 0) {
-    return Math.floor(upgrade.baseCost * (1 + upgrade.costStep * level));
+    return Math.floor(upgrade.baseCost * (1 + upgrade.costStep * level) * getTrainingPriceMult(upgrade, level));
   }
   return Math.floor(upgrade.baseCost * Math.pow(upgrade.costMult, level));
+}
+
+/* H1 (chantier du héros) : multiplicateur de tranche d'un entraînement au niveau `level` (×15 au-delà de 150). */
+function getTrainingPriceMult(upgrade, level) {
+  if (!upgrade || !isTrainingUpgradeId(upgrade.id) || typeof TRAINING_PRICE_TRANCHES === "undefined") return 1;
+  var mult = 1;
+  TRAINING_PRICE_TRANCHES.forEach(function (t) { if (level >= t.from) mult = t.mult; });
+  return mult;
 }
 
 /* v3.213.1 (lot V-2) — PLAFOND D'ENTRAÎNEMENT porté par le Terrain.
@@ -306,8 +314,8 @@ function getUpgradeCost(upgrade, atLevel) {
    - le plafond ne descend JAMAIS en dessous du niveau déjà acquis. Une
      partie d'avant cette version garde tout ce qu'elle a payé, même si le
      Terrain migré ouvre moins (voir VillageBuildingManager.migrateTraining).
-   - il ne dépasse jamais upgrade.maxLevel (150) : le plafond historique
-     reste le dernier mot.
+   - il ne dépasse jamais upgrade.maxLevel (TRAINING_HARD_CAP, 200 depuis H1) :
+     le plafond absolu reste le dernier mot.
 
    Les autres améliorations (bourses, contrats) ne sont pas concernées. */
 /* v3.248.0 (décision Seb) : le PREMIER palier passe de 10 à 20 — sans Terrain, l'or devenait
@@ -318,7 +326,8 @@ function getTrainingCapLevels() {
   var level = (window.VillageBuildingManager && typeof VillageBuildingManager.getLevel === "function")
     ? VillageBuildingManager.getLevel("training")
     : 0;
-  return Math.min(150, TRAINING_BASE_CAP + 10 * level); // 150 reste le plafond historique
+  var hard = (typeof TRAINING_HARD_CAP === "number") ? TRAINING_HARD_CAP : 150; // H1 : 200
+  return Math.min(hard, TRAINING_BASE_CAP + 10 * level);
 }
 
 function isTrainingUpgradeId(id) {
@@ -337,6 +346,7 @@ function getUpgradeCap(upgrade) {
 }
 window.TRAINING_BASE_CAP = TRAINING_BASE_CAP;
 window.getTrainingCapLevels = getTrainingCapLevels;
+window.getTrainingPriceMult = getTrainingPriceMult;
 window.isTrainingUpgradeId = isTrainingUpgradeId;
 window.getUpgradeCap = getUpgradeCap;
 

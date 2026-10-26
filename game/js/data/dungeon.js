@@ -292,7 +292,7 @@ var DUNGEONS = [
   {
     id: 5, key: "mountain",
     name: "Gueule du volcan",
-    worldId: "mountain", worldRequired: 4, worldPower: 4, difficultyMult: 22,
+    worldId: "mountain", worldRequired: 4, worldPower: 4, difficultyMult: 30, // H1 (R1) : 22 → 30, combats plus longs avec l'entraînement à 170
     maxRarity: "epic", // le légendaire ne tombe qu'à la Tour (décision 12.1)
     // v3.490.0 (Montagne, acte III) : la Cendre vive en fin de run ; une veine à chaque vague (vein-system)
     specialResourceId: "cendre_vive", specialResourceAmount: 3,

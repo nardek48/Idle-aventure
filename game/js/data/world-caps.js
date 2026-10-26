@@ -56,7 +56,7 @@ var WORLD_CAPS = [
      Provisoire, égal à la Crypte ; la Forge 6 (Obsidienne taillée) vient avec l'acte III, les autres crans au banc.
      v3.490.0 : Forge 6, ouverte seulement à forgeActStep (un cran de moins avant). */
   {
-    village: { workshop: 8, training: 13, hall: 10, warehouse: 8, palisade: 8, tavern: 6, apothecary: 6, forge: 6, enchanter: 2 },
+    village: { workshop: 8, training: 18, hall: 10, warehouse: 8, palisade: 8, tavern: 6, apothecary: 6, forge: 6, enchanter: 2 }, // H1 : Terrain 18 (acte IV)
     forgeActStep: "montagne_11",
     zoneRows: 3,
     zoneLevel: 5,
@@ -84,7 +84,9 @@ var TRAINING_CAP_BY_ACT = [
   { worldIndex: 3, stepId: "crypte_01", act: "I", terrain: 11 },      // v3.450.0 : Crypte, acte I — inchangé
   { worldIndex: 3, stepId: "crypte_06", act: "II", terrain: 12 },     // v3.456.2 (lot C-6) : 140, le profil des bancs de l'acte II
   { worldIndex: 3, stepId: "crypte_11", act: "III", terrain: 13 },    // v3.456.2 : 150, celui des actes III et IV
-  { worldIndex: 4, stepId: "montagne_01", act: "I", terrain: 13 }     // v3.486.0 : Montagne, acte I — inchangé (crans au banc)
+  { worldIndex: 4, stepId: "montagne_01", act: "I", terrain: 13 },    // v3.486.0 : Montagne, acte I — inchangé (crans au banc)
+  { worldIndex: 4, stepId: "montagne_11", act: "III", terrain: 15 },   // H1 (chantier du héros) : 170
+  { worldIndex: 4, stepId: "montagne_16", act: "IV", terrain: 18 }     // H1 : 200, le plafond absolu
 ];
 
 /* v3.327.0 (conception Talents v1.1, T2 option B) — PLAFOND DE POINTS DE TALENT PAR ACTE.

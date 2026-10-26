@@ -21,6 +21,11 @@
    Endurance et Précision ne produisent pas de dégâts directs : elles gardent un prix médian.
    La Précision (chance de critique, aucun effet mesurable en dégâts ou PV) reste à
    réexaminer avec son propre banc — point ouvert O11. */
+/* Chantier du héros, lot H1 (décisions Seb 26/10/2026) : le plafond absolu passe à 200 (Terrain 18, acte IV
+   de la Montagne) et chaque niveau au-delà de 150 coûte ×15 ; les niveaux 1 à 150 gardent le prix v3.248.0. */
+var TRAINING_HARD_CAP = 200;
+var TRAINING_PRICE_TRANCHES = [{ from: 150, mult: 15 }]; // niveau acheté >= from : prix × mult
+
 var UPGRADES = [
   {
     id: "utrain_power",
@@ -30,7 +35,7 @@ var UPGRADES = [
     baseCost: 9,
     costStep: 0.055,   // v3.248.0 : courbe linéaire, base proportionnelle au gain
 
-    maxLevel: 150,
+    maxLevel: TRAINING_HARD_CAP,
     unlockWorld: 0,
     apply: function(lvl) {
       game.trainedStats.power = lvl;
@@ -44,7 +49,7 @@ var UPGRADES = [
     baseCost: 5.5,     // v3.309.0 : 4 → 5,5, suit le coefficient du Rôdeur (0,09 → 0,12) pour garder l'iso-prix
     costStep: 0.055,   // v3.248.0 : courbe linéaire, base proportionnelle au gain
 
-    maxLevel: 150, // v3.308.0 : plafond commun aux cinq entraînements
+    maxLevel: TRAINING_HARD_CAP, // v3.308.0 : plafond commun ; H1 : 200
     unlockWorld: 0,
     apply: function(lvl) {
       game.trainedStats.celerity = lvl;
@@ -58,7 +63,7 @@ var UPGRADES = [
     baseCost: 7,
     costStep: 0.055,   // v3.248.0 : courbe linéaire, base proportionnelle au gain
 
-    maxLevel: 150, // v3.308.0 : plafond commun aux cinq entraînements
+    maxLevel: TRAINING_HARD_CAP, // v3.308.0 : plafond commun ; H1 : 200
     unlockWorld: 0,
     apply: function(lvl) {
       game.trainedStats.precision = lvl;
@@ -72,7 +77,7 @@ var UPGRADES = [
     baseCost: 5,
     costStep: 0.055,   // v3.248.0 : courbe linéaire, base proportionnelle au gain
 
-    maxLevel: 150, // v3.308.0 : plafond commun aux cinq entraînements
+    maxLevel: TRAINING_HARD_CAP, // v3.308.0 : plafond commun ; H1 : 200
     unlockWorld: 0,
     apply: function(lvl) {
       game.trainedStats.will = lvl;
@@ -86,7 +91,7 @@ var UPGRADES = [
     baseCost: 7,
     costStep: 0.055,   // v3.248.0 : courbe linéaire, base proportionnelle au gain
 
-    maxLevel: 150,
+    maxLevel: TRAINING_HARD_CAP,
     unlockWorld: 0,
     apply: function(lvl) {
       game.trainedStats.endurance = lvl;
@@ -100,3 +105,5 @@ var UPGRADES = [
 
 /* v3.355.0 : AETHER_SHOP et son achat retirés (boutique vide depuis la v3.322.0, remplacée par
    la Mémoire). v3.412.0 : game.aetherUpgrades n’est plus lu ni écrit. */
+window.TRAINING_HARD_CAP = TRAINING_HARD_CAP;
+window.TRAINING_PRICE_TRANCHES = TRAINING_PRICE_TRANCHES;

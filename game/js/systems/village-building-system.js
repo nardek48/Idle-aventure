@@ -86,7 +86,7 @@ var VillageBuildingManager = {
     });
     if (highest <= 10) return; // rien d'acquis au-delà de l'entraînement de fortune
 
-    var level = Math.min(VILLAGE_BUILDINGS.training.maxLevel, Math.ceil(highest / 10) - 1);
+    var level = Math.min(13, Math.ceil(highest / 10) - 1); // H1 : 13 = l'ancien plafond (150), les niveaux 14+ se paient
     if (level <= 0) return;
 
     game.village.buildings.training.level = level;

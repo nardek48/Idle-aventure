@@ -42,7 +42,7 @@
   // Ce que dit la tuile Entraînement : la vraie situation, pas un pourcentage du maximum absolu.
   function trainingStatus() {
     var ids = window.HEROS_TRAINING_UPGRADE_IDS || [];
-    var cap = (typeof getTrainingCapLevels === "function") ? getTrainingCapLevels() : 150;
+    var cap = (typeof getTrainingCapLevels === "function") ? getTrainingCapLevels() : (window.TRAINING_HARD_CAP || 150);
     var terrain = window.VillageBuildingManager ? VillageBuildingManager.getLevel("training") : 0;
     var left = 0;
     ids.forEach(function (id) { left += Math.max(0, cap - Number((game.upgrades || {})[id] || 0)); });
@@ -50,7 +50,7 @@
     var prog = (typeof getHeroTrainingProgress === "function") ? getHeroTrainingProgress() : null;
     if (prog && prog.total > 0 && prog.left === 0) return { tone: "done", line: _t("Tout est entraîné au maximum"), sub: _t("Maximum absolu atteint") };
     if (left > 0) return { tone: "go", line: _tn(left, "{n} niveau à acheter", "{n} niveaux à acheter"), sub: _t("Plafond {c} · Terrain niv. {t}", { c: cap, t: terrain }) };
-    if (cap >= 150) return { tone: "done", line: _t("Tout est entraîné au maximum"), sub: _t("Maximum absolu atteint") };
+    if (cap >= (window.TRAINING_HARD_CAP || 150)) return { tone: "done", line: _t("Tout est entraîné au maximum"), sub: _t("Maximum absolu atteint") };
     return { tone: "wall", line: _t("Plafond atteint ({c})", { c: cap }), sub: _t("Terrain niv. {a} → niv. {b} : +10", { a: terrain, b: terrain + 1 }) };
   }
 

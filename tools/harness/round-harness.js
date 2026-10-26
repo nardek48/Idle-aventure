@@ -2784,13 +2784,13 @@ console.log("\n[UX-PROD] Tableau de bord Production v3.191.0 — routeur, vue At
   ok(srcsVides.length === 0, "[STATS] aucune source listée quand aucune ne contribue");
 
   // plafond
-  run("game.upgrades.utrain_precision = 150; StatsSystem.recalcStats();"); // v3.308.0 : plafond commun 150
+  run("game.upgrades.utrain_precision = 200; StatsSystem.recalcStats();"); // v3.308.0 : plafond commun ; H1 : 200
   var stCap = run("buildHerosSheetHTML()");
   /* v3.213.1 : deux murs, deux mots. « Maximum » = plafond absolu d'upgrades.js
      (Précision plafonne à 60), rien ne le lèvera ; « Terrain » = plafond du
      bâtiment, levable par un chantier. */
   ok(stCap.indexOf("Maximum") !== -1, "[STATS] une stat au maximum absolu le dit au lieu d'afficher un prix");
-  ok(stCap.indexOf("is-training-wall") === -1 || run("game.upgrades.utrain_precision") < 150,
+  ok(stCap.indexOf("is-training-wall") === -1 || run("game.upgrades.utrain_precision") < 200,
     "[STATS] le maximum absolu n'est pas confondu avec le mur du Terrain");
 
   // ---------- sous-onglet Capacités ----------
@@ -3764,7 +3764,7 @@ console.log("\n[22b] v3.213.1 (lot V-2) \u2014 Terrain d'entra\u00eenement et pl
   g.game.village.buildings.training.level = 0;
   g.game.upgrades.utrain_power = 150;
   M.migrateTraining();
-  ok(M.getLevel("training") === 14, "entra\u00eenement maximal : Terrain au niveau 14 (plafond 150)");
+  ok(M.getLevel("training") === 13, "entra\u00eenement maximal : Terrain au niveau 13 (plafond 150 ; H1 : les niveaux 14+ se paient)");
   ok(g.getUpgradeCap(power) === 150, "...et la caract\u00e9ristique maximale reste \u00e0 150, jamais rabot\u00e9e");
 
   /* --- Porte d'entr\u00e9e du b\u00e2timent : le mur lui-m\u00eame ------------------ */
@@ -3841,9 +3841,9 @@ console.log("\n[23b] v3.214.0 (lot V-3) \u2014 Mat\u00e9riau de monde et atelier
   ok(M.getAffordability("training").all === true, "avec le Verre trempé, le chantier repart");
 
   /* --- Le Terrain va d\u00e9sormais jusqu'au plafond historique ------------ */
-  ok(g.VILLAGE_BUILDINGS.training.maxLevel === 14, "Terrain port\u00e9 \u00e0 14 niveaux");
-  g.game.village.buildings.training.level = 14;
-  ok(g.getTrainingCapLevels() === 150, "Terrain au maximum : plafond d'entra\u00eenement 150 (born\u00e9)");
+  ok(g.VILLAGE_BUILDINGS.training.maxLevel === 18, "Terrain port\u00e9 \u00e0 18 niveaux (H1)");
+  g.game.village.buildings.training.level = 18;
+  ok(g.getTrainingCapLevels() === 200, "Terrain au maximum : plafond d'entra\u00eenement 200 (H1)");
   g.game.village.buildings.training.level = 13;
   ok(g.getTrainingCapLevels() === 150, "v3.248.0 : le socle \u00e0 20 fait atteindre 150 d\u00e8s le niveau 13 \u2014 le 14e n'ouvre plus rien");
 
@@ -5587,8 +5587,8 @@ console.log("\n[50b] v3.248.0 \u2014 Prix des entra\u00eenements et plafond de d
   ok(g.TRAINING_BASE_CAP === 20 && g.getTrainingCapLevels() === 20, "socle sans b\u00e2timent : 20 niveaux");
   run("game.village.buildings.training.level = 3;");
   ok(g.getTrainingCapLevels() === 50, "Terrain niveau 3 : 20 + 3 \u00d7 10 = 50");
-  run("game.village.buildings.training.level = 14;");
-  ok(g.getTrainingCapLevels() === 150, "born\u00e9 \u00e0 150, le plafond historique");
+  run("game.village.buildings.training.level = 19;");
+  ok(g.getTrainingCapLevels() === 200, "born\u00e9 \u00e0 200, le plafond absolu (H1)");
 
   /* Le plafond ne fait jamais redescendre : une partie en cours garde ses niveaux. */
   run("game.village.buildings.training.level = 0; game.upgrades.utrain_power = 63;");
@@ -8908,7 +8908,7 @@ console.log("\n[105] v3.308.0 — boutique (25 % de rareté du sommet) et plafon
 (function () {
   run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
   var ids = ["utrain_power", "utrain_endurance", "utrain_celerity", "utrain_precision", "utrain_will"];
-  ok(ids.every(function (id) { return g.UPGRADES.filter(function (u) { return u.id === id; })[0].maxLevel === 150; }), "les cinq entraînements plafonnent à 150");
+  ok(ids.every(function (id) { return g.UPGRADES.filter(function (u) { return u.id === id; })[0].maxLevel === 200; }), "les cinq entraînements plafonnent à 200 (H1)");
   ok(g.EquipShopManager.getTopRarityCap(6) === 1 && g.EquipShopManager.getTopRarityCap(8) === 2 && g.EquipShopManager.getTopRarityCap(11) === 2 && g.EquipShopManager.getTopRarityCap(3) === 1, "plafond : 1 sur 6, 2 sur 8 à 11, minimum 1");
   game = g.game; game.equipShopStarterServed = true;
   var saveW = g.WorldManager.worldIndex;
@@ -16555,7 +16555,7 @@ console.log("\n[267] v3.459.8 — Terrain 12-13 en Cire de sépulcre (audit P11)
   ok(c11.verre_trempe === 6 && !c11.resine_durcie && !c11.cire_sepulcre, "Terrain 11 (Ruines) : 6 Verres trempés (v3.481.0, RE-4 ; 6 Résine avant)");
   ok(c12.cire_sepulcre === 6 && c13.cire_sepulcre === 8 && !c12.resine_durcie && !c13.resine_durcie, "Terrain 12 et 13 (Crypte) : 6 puis 8 Cire de sépulcre, plus de Résine");
   ok(c12.gold === 2030 && c13.gold === 2943 && c13.pierre === 315 && c13.lingot === 84, "les autres coûts sont ceux d'avant");
-  ok(c14.resine_durcie === 18 && c14.gold === 4268, "Terrain 14 (pas encore ouvert) : coût d'avant");
+  ok(!c14.resine_durcie && c14.obsidienne_taillee === 3 && c14.gold === 10000, "Terrain 14 (H1) : Obsidienne taillée, plus de Résine");
 })();
 
 console.log("\n[268] v3.459.9 — Crypte : Halle 10 et Entrepôt 8 (audit I3)");
@@ -18723,6 +18723,36 @@ console.log("\n[321] v3.492.17 — Combat : plus de toast quand le journal le di
   var restes = ["Silencié !", "PV boss", "Second souffle !", "Contré !", "Rage apaisée", "Corruption purgée", "Vol de vie bloqué", "Blindage fissuré", "se relève !\", { x", "Le seuil : tu te relèves\"", "Fiole noire : tu te relèves\"", "boss du donjon apparaît !"]
     .filter(function (t) { return src.split("\n").some(function (l) { return l.indexOf("showToast") !== -1 && l.indexOf(t) !== -1; }); });
   ok(!restes.length, "aucun des 12 toasts de combat ne subsiste" + (restes.length ? " : " + restes.join(", ") : ""));
+})();
+
+console.log("\n[322] Chantier du héros, H1 — entraînement au-delà de 150 (×15, Terrain 14 à 18, 170 puis 200)");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
+    var game = g.game, WC = g.WorldCaps, VB = g.VillageBuildingManager;
+    var force = g.UPGRADES.filter(function (u) { return u.id === "utrain_power"; })[0];
+    ok(g.TRAINING_HARD_CAP === 200 && force.maxLevel === 200, "plafond absolu : 200");
+    ok(g.getUpgradeCost(force, 149) === 82 && g.getUpgradeCost(force, 150) === 1248, "Force : niveau 150 à 82 or (inchangé), 151 à 1 248 (×15)");
+    var t = 0; g.HEROS_TRAINING_UPGRADE_IDS.forEach(function (id) { var u = g.UPGRADES.filter(function (x) { return x.id === id; })[0]; for (var l = 150; l < 200; l++) t += g.getUpgradeCost(u, l); });
+    ok(t === 266142, "les cinq statistiques de 150 à 200 : 266 142 or");
+    VB.ensure();
+    game.village.buildings.training.level = 15; ok(g.getTrainingCapLevels() === 170, "Terrain 15 : 170");
+    game.village.buildings.training.level = 18; ok(g.getTrainingCapLevels() === 200, "Terrain 18 : 200");
+    var c = VB.getLevelCost("training", 17);
+    ok(c.obsidienne_taillee === 6 && c.gold === 20736 && !c.lingot, "Terrain 18 : 20 736 or et 6 Obsidiennes taillées");
+    // paliers par acte de la Montagne
+    var M = g.STORY_QUESTS.mountain.steps;
+    function idx(id) { return M.findIndex(function (st) { return st.id === id; }); }
+    g.StoryQuestManager.ensure();
+    game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true, 4: true }; game.village.buildings.training.level = 13;
+    Object.keys(g.STORY_QUESTS).forEach(function (k) { if (k !== "mountain") g.StoryQuestManager.getState(k).skipped = true; }); // chapitre ouvert
+    var sm = g.StoryQuestManager.getState("mountain");
+    sm.currentStep = idx("montagne_06"); ok(WC.getVillageCap("training") === 13, "Montagne, acte II : Terrain 13 (150)");
+    sm.currentStep = idx("montagne_11"); ok(WC.getVillageCap("training") === 15, "Montagne, acte III : Terrain 15 (170)");
+    sm.currentStep = idx("montagne_16"); ok(WC.getVillageCap("training") === 18, "Montagne, acte IV : Terrain 18 (200)");
+  } catch (err) {
+    ok(false, "[322] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
 })();
 
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
