@@ -86,7 +86,7 @@ var TalentManager = {
   },
   pathSpent: function (path) {
     var self = this;
-    return path.nodes.reduce(function (s, n) { return s + (n.key ? 0 : self.rank(n.id)); }, 0);
+    return path.nodes.reduce(function (s, n) { return s + (n.key || !self.has(n.id) ? 0 : 1); }, 0); // H3 : des nœuds, pas des rangs
   },
 
   /* Raison du refus d'un achat, ou null. `closed` = clé fermée par l'autre clé. */
@@ -227,7 +227,8 @@ var TalentManager = {
     if (!kit || classId !== this.getClassId() || !game.talents) return kit;
     var self = this, mods = [];
     this.getNodes(classId).forEach(function (e) {
-      if (self.has(e.node.id) && e.node.mods) mods = mods.concat(e.node.mods);
+      var r = self.rank(e.node.id); // H3 : un `set` en tableau donne la valeur du rang
+      if (r && e.node.mods) e.node.mods.forEach(function (m) { mods.push(Array.isArray(m.set) ? { path: m.path, set: m.set[Math.min(r, m.set.length) - 1] } : m); });
     });
     if (!mods.length) return kit;
     var key = classId + "|" + Object.keys(game.talents).sort().map(function (k) { return k + game.talents[k]; }).join(",");
@@ -281,7 +282,11 @@ var TalentManager = {
   },
 
   /* ---------- Crochets ---------- */
-  V: function (k) { return Number((window.TALENT_VALUES || {})[k] || 0); },
+  V: function (k, id) { // H3 : une valeur en tableau se lit au rang du talent `id` (k par défaut)
+    var v = (window.TALENT_VALUES || {})[k];
+    if (Array.isArray(v)) v = v[Math.max(1, Math.min(this.rank(id || k), v.length)) - 1];
+    return Number(v || 0);
+  },
 
   addResource: function (amount) {
     var st = game.classResource;
@@ -314,7 +319,7 @@ var TalentManager = {
     }
     var alive = ctx.enemy && Number(ctx.enemy.hp || 0) > 0 && (game.heroHp || 0) > 0;
     if (alive && ctx.defenseType === "damageReduction" && ctx.blocked > 0 && this.has("k_riposte")) {
-      var back = Math.floor(ctx.blocked * this.V("k_riposte_pct"));
+      var back = Math.floor(ctx.blocked * this.V("k_riposte_pct", "k_riposte"));
       if (back > 0 && window.CombatEngine) {
         addLog("🛡️ " + _t("Riposte : {n} dégâts renvoyés", { n: formatNumber(back) }), "normal");
         CombatEngine.dealDamage(back, false, false, true, ctx.enemy);

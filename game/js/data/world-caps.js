@@ -104,7 +104,10 @@ var TALENT_CAP_BY_ACT = [
   { worldIndex: 3, stepId: "crypte_01", act: "I", points: 15 },       // v3.453.0 : Crypte, acte I — +2 pour le Commandement (13 → 18 sur la Crypte)
   { worldIndex: 3, stepId: "crypte_06", act: "II", points: 17 },       // v3.454.0 : Crypte, acte II
   { worldIndex: 3, stepId: "crypte_11", act: "III", points: 18 },      // v3.455.0 : Crypte, acte III — fin de la montée 13 → 18
-  { worldIndex: 4, stepId: "montagne_01", act: "I", points: 18 }      // v3.486.0 : Montagne, acte I — inchangé (crans au banc)
+  { worldIndex: 4, stepId: "montagne_01", act: "I", points: 18 },     // v3.486.0 : Montagne, acte I — inchangé (crans au banc)
+  { worldIndex: 4, stepId: "montagne_06", act: "II", points: 20 },    // H3 (chantier du héros) : rangs des talents, 18 → 23
+  { worldIndex: 4, stepId: "montagne_11", act: "III", points: 21 },
+  { worldIndex: 4, stepId: "montagne_16", act: "IV", points: 23 }
 ];
 
 /* « de la Forêt enchantée », « du Désert oublié » : pour « l'acte II du Désert oublié ».

@@ -30,6 +30,7 @@ var ENTR = opt("--entrainement") !== null ? Number(opt("--entrainement")) : null
 // chantier du héros (H2) : --rang N[,dmg,cd,cout] — rang N sur les 3 techniques : dégâts +dmg par rang (0,08),
 // recharge −1 dès le rang `cd` (0 = jamais), coût −cout par rang (0) ; appliqué après les talents
 var RANG = opt("--rang") ? opt("--rang").split(",").map(Number) : null;
+var TALENTS_MAX = ARGV.indexOf("--talents-max") >= 0; // H3 : chaque talent possédé monté à son rang maximum
 // v3.492.15 (fiche objets de combat) : --plafond heal,surge,shell,sort,burn — la mécanique entièrement annulée (borne haute d'un objet)
 var PLAFOND = opt("--plafond") ? opt("--plafond").split(",") : [];
 var SANS_REGLE = opt("--sans-regle") ? opt("--sans-regle").split(",") : []; // retire ces conditions du Grimoire (joueur sans la règle)
@@ -78,6 +79,7 @@ var extra = function () {
     B.seedRng(seed);
     g.restoreBaseState(JSON.parse(saveTxt));
     kit(seed); B.seedRng(seed);
+    if (TALENTS_MAX) { g.TalentManager.getNodes().forEach(function (e) { if (g.TalentManager.has(e.node.id)) g.game.talents[e.node.id] = g.TalentManager.maxRank(e.node); }); g.StatsSystem.recalcStats(); }
     if (ENTR !== null) g.HEROS_TRAINING_UPGRADE_IDS.forEach(function (id) { g.game.upgrades[id] = ENTR; g.UPGRADES.filter(function (u) { return u.id === id; })[0].apply(ENTR); });
     g.ensureGrimoireRules();
     B.run("game.combatMode = 'grimoire'; EquipmentManager.recalcStats(); game.heroHp = game.heroMaxHp; CompanionManager.healAll();");

@@ -9805,7 +9805,7 @@ console.log("\n[122] v3.327.0 — Talents par classe : points plafonnés par act
     game.talents = {};
     ok(/tronc/.test(TM.blockReason("k_elan")), "voies fermées tant que le tronc n'a pas 2 points");
     ok(TM.buy("k_cuirasse") && TM.buy("k_cuirasse"), "Cuirasse : deux rangs");
-    ok(TM.rank("k_cuirasse") === 2 && /maximum/.test(TM.blockReason("k_cuirasse")), "rang maximum atteint à 2");
+    ok(TM.rank("k_cuirasse") === 2 && TM.maxRank(TM.find("k_cuirasse").node) === 3, "Cuirasse au rang 2, un 3e rang possible (H3)");
     ok(TM.buy("k_curee"), "voie ouverte à 2 points de tronc, ordre libre (Curée d'abord)");
     ok(/Demande 3/.test(TM.blockReason("k_sentence")), "la clé demande 3 nœuds de sa voie");
     TM.buy("k_elan"); TM.buy("k_brise_os");
@@ -18793,6 +18793,44 @@ console.log("\n[323] Chantier du héros, H2 — rangs des sorts (+8 % de dégât
     ok(g.game.skillRanks.knight_execute === 5, "restoreBaseState les rend");
   } catch (err) {
     ok(false, "[323] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
+console.log("\n[324] Chantier du héros, H3 — rangs de talents (5 nœuds par classe, plafond 23 à la Montagne)");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
+    var game = g.game, TM = g.TalentManager, WC = g.WorldCaps;
+    var attendus = { knight: ["k_cuirasse", "k_mur", "k_riposte", "k_brise_os", "k_soif_bourreau"],
+      archer: ["a_oeil_vif", "a_coup_au_but", "a_perforation", "a_transe", "a_nuee_fleches"],
+      mage: ["m_peau_arcane", "m_braises_tenaces", "m_incendie", "m_barriere_vive", "m_surtension"] };
+    Object.keys(attendus).forEach(function (c) {
+      var n = 0; TM.getNodes(c).forEach(function (e) { if (e.zone !== "command") n += TM.maxRank(e.node); });
+      ok(n === 19, c + " : 19 rangs dans l'arbre de classe, 18 utilisables (clés exclusives) + 5 du Commandement = 23");
+      ok(attendus[c].every(function (id) { var e = TM.find(id, c); return e && TM.maxRank(e.node) === (/cuirasse|oeil_vif|peau_arcane/.test(id) ? 3 : 2); }), c + " : les 5 nœuds H3 ont leur rang de plus");
+    });
+    // valeurs par rang : mods en tableau et crochets
+    game.talents = { k_mur: 1 };
+    var red = function () { return g.getClassAction("knight", "defense").effects.filter(function (e) { return e.type === "damageReduction"; })[0].value; };
+    ok(red() === 0.65, "Mur rang 1 : 65 %");
+    game.talents.k_mur = 2; ok(red() === 0.70, "Mur rang 2 : 70 %");
+    game.talents = { k_riposte: 1 }; ok(TM.V("k_riposte_pct", "k_riposte") === 0.30, "Riposte rang 1 : 30 %");
+    game.talents.k_riposte = 2; ok(TM.V("k_riposte_pct", "k_riposte") === 0.45, "Riposte rang 2 : 45 %");
+    game.talents = { k_soif_bourreau: 2 }; ok(TM.V("k_soif_bourreau") === 30, "Soif du bourreau rang 2 : +30 Rage");
+    // la porte de la clé compte des nœuds, pas des rangs
+    game.talents = { k_sang_chaud: 1, k_cuirasse: 1, k_mur: 2, k_rancune: 1 };
+    ok(TM.pathSpent(TM.find("k_mur").path) === 2, "Rempart : Mur au rang 2 + Rancune = 2 nœuds");
+    // plafond de la Montagne
+    Object.keys(g.STORY_QUESTS).forEach(function (k) { if (k !== "mountain") g.StoryQuestManager.getState(k).skipped = true; });
+    game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true, 4: true };
+    var M = g.STORY_QUESTS.mountain.steps, sm = g.StoryQuestManager.getState("mountain");
+    var idx = function (id) { return M.findIndex(function (st) { return st.id === id; }); };
+    sm.currentStep = idx("montagne_01"); ok(TM.cap() === 18, "Montagne, acte I : 18 points");
+    sm.currentStep = idx("montagne_06"); ok(TM.cap() === 20, "acte II : 20");
+    sm.currentStep = idx("montagne_11"); ok(TM.cap() === 21, "acte III : 21");
+    sm.currentStep = idx("montagne_16"); ok(TM.cap() === 23, "acte IV : 23");
+  } catch (err) {
+    ok(false, "[324] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
 })();
 
