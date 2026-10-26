@@ -6,8 +6,8 @@
      - le HUD en bandeau sur toute la largeur de la fenêtre ;
      - le menu (barre du bas) en colonne à gauche ;
      - la page à droite, sur toute la largeur restante.
-   Le combat, la carte vivante et les Petites aventures restent en colonne de téléphone :
-   toutes les règles portent sur body:not(...) pour ne jamais les toucher.
+   v3.505.0 (grand écran, GE-5) : le combat, la carte vivante et les Petites aventures entrent dans
+   la fenêtre (css/10-grand-ecran.css) ; seul le labyrinthe garde son plein écran (body:not(.lab-run)).
    Le téléphone ne lit aucune de ces règles.
    ========================================================= */
 
@@ -18,7 +18,7 @@
 }
 
 /* ---------- La fenêtre : grille HUD / menu / page ---------- */
-html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) {
+html.wide-mode body:not(.lab-run) {
   display: grid;
   grid-template-columns: var(--wide-rail) minmax(0, calc(min(var(--wide-w), 100vw / var(--pc-zoom, 1)) - var(--wide-rail)));
   grid-template-rows: auto minmax(0, 1fr);
@@ -41,26 +41,26 @@ html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-activ
   background-repeat: no-repeat;
 }
 
-html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) > #hud {
+html.wide-mode body:not(.lab-run) > #hud {
   grid-column: 1 / -1;
   grid-row: 1;
   width: 100%;
 }
-html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) > #tab-bar {
+html.wide-mode body:not(.lab-run) > #tab-bar {
   grid-column: 1;
   grid-row: 2;
 }
-html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) > #panel-container,
-html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) > #game-area,
-html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) > #stats-bar,
-html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) > #combat-speed-bar {
+html.wide-mode body:not(.lab-run) > #panel-container,
+html.wide-mode body:not(.lab-run) > #game-area,
+html.wide-mode body:not(.lab-run) > #stats-bar,
+html.wide-mode body:not(.lab-run) > #combat-speed-bar {
   grid-column: 2;
   grid-row: 2;
   max-width: none;
   width: 100%;
   min-height: 0;
 }
-html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) > #panel-container {
+html.wide-mode body:not(.lab-run) > #panel-container {
   padding: 10px 14px 10px 10px;
 }
 
@@ -72,7 +72,7 @@ html.wide-mode .hud-res-item { font-size: 15px; }
 html.wide-mode .hud-res-item img { width: 22px; height: 22px; }
 
 /* ---------- Menu à gauche : la barre du bas devient une colonne ---------- */
-html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) #tab-bar {
+html.wide-mode body:not(.lab-run) #tab-bar {
   width: auto;
   aspect-ratio: auto;
   align-self: start;
@@ -83,13 +83,13 @@ html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-activ
   background: linear-gradient(rgba(16, 12, 8, 0.78), rgba(16, 12, 8, 0.9)), url('../images/UI/textures/bg-stone-tile.webp') 0 0 / 256px;
   box-shadow: inset 0 0 0 1px rgba(226, 177, 74, 0.25), 0 8px 18px -6px var(--c-black-950);
 }
-html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) #tab-bar-row {
+html.wide-mode body:not(.lab-run) #tab-bar-row {
   position: static;
   flex-direction: column;
   gap: 8px;
   padding: 10px 8px;
 }
-html.wide-mode body:not(.combat-active):not(.scene-active):not(.living-map-active) .tab-btn {
+html.wide-mode body:not(.lab-run) .tab-btn {
   flex: 0 0 auto;
   width: 100%;
   aspect-ratio: 1 / 0.94;

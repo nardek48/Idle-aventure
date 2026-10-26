@@ -661,7 +661,14 @@
       + (n ? '<div class="st-row-n">' + n + '</div>' : '') + '</div>';
   }
 
+  // v3.505.0 (grand écran, GE-5) : le corps sert aussi à la Chronique de combat (ui/chronique-view.js)
   function buildStatesSheetHTML() {
+    return '<div class="ksheet-backdrop" onclick="closeCombatStatesSheet()"></div><div class="ksheet cbx-states-sheet">'
+      + kSheetHeadHTML({ title: _t("États du combat"), sub: _t("Ce qui pèse sur ce combat, et quoi en faire."), close: "closeCombatStatesSheet()" })
+      + '<div class="ksheet-body">' + buildStatesBodyHTML() + '</div></div>';
+  }
+
+  function buildStatesBodyHTML() {
     var groups = { alerte: [], enemy: [], mine: [], onme: [] };
     var list = enemies(), t = target();
     list.forEach(function (e) {
@@ -672,10 +679,7 @@
     var burn = window.VeinSystem ? VeinSystem.heroBurnRounds() : 0; // v3.490.0 (Montagne) : la brûlure de l'Ifrit
     if (burn > 0 && stateDef("burning")) groups.onme.push(stRowHTML({ id: "burning", def: stateDef("burning"), n: burn }, "", false));
 
-    var h = '<div class="ksheet-backdrop" onclick="closeCombatStatesSheet()"></div><div class="ksheet cbx-states-sheet">';
-    h += kSheetHeadHTML({ title: _t("États du combat"), sub: _t("Ce qui pèse sur ce combat, et quoi en faire."), close: "closeCombatStatesSheet()" });
-    h += '<div class="ksheet-body">';
-    var empty = true;
+    var h = "", empty = true;
     var preps = (typeof getRunPreparations === "function") ? getRunPreparations() : [];
     if (preps.length) {
       empty = false;
@@ -704,7 +708,7 @@
       });
     }
     if (empty) h += '<div class="st-empty">' + _t("Rien de particulier pour l’instant.") + '</div>';
-    return h + '</div></div>';
+    return h;
   }
 
   function openStates() {
@@ -833,7 +837,7 @@
     var el = byId("cbx-rule");
     var notes = cbx.notes.splice(0, cbx.notes.length).slice(0, 2);
     if (!el || !notes.length) return;
-    el.innerHTML = notes.map(function (l) {
+    el.innerHTML = cbx.lastRule = notes.map(function (l) {
       var c = condInfo(l.cond);
       return '<div class="cbx-rule-line">' + (l.who ? ico(l.who, "is-who") : '')
         + (c ? '<span class="cbx-rule-if">' + _t("Si") + '</span>' + ico(c.icon) + '<span class="cbx-rule-c">' + esc(c.label) + '</span>' : '<span class="cbx-rule-if">' + _t("Par défaut") + '</span>')
@@ -986,6 +990,7 @@
   window.renderHeroHp = function () { if (typeof oldRenderHeroHp === "function") oldRenderHeroHp(); renderTeam(); };
   window.openCombatStatesSheet = openStates;
   window.buildCbxStatesSheetHTML = buildStatesSheetHTML;
+  window.buildCbxStatesBodyHTML = buildStatesBodyHTML;
   window.buildCbxTargetHTML = buildTargetHTML;
   window.buildCbxCmdHTML = buildCmdHTML;
   window.buildCbxTopHTML = buildTopHTML;
