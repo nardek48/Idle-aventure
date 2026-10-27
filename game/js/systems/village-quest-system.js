@@ -161,7 +161,8 @@ var MilestoneManager = {
       case "building": return window.VillageBuildingManager ? VillageBuildingManager.getLevel(m.arg) : 0;
       case "counter": {
         var st = window.AchievementManager ? AchievementManager.ensure() : null;
-        return st ? Number(st.counters[m.arg] || 0) : 0;
+        var n = st ? Number(st.counters[m.arg] || 0) : 0;
+        return Math.max(n, this.legacyCount(m.arg));
       }
       case "spellRankMax": case "spellRankMin": {
         if (!SR) return 0;
@@ -176,6 +177,13 @@ var MilestoneManager = {
       case "relicsOnOne": return CM && CR ? CM.unlockedIds().reduce(function (s, id) { return Math.max(s, CR.active(id).length); }, 0) : 0;
       case "trainingMax": return (window.HEROS_TRAINING_UPGRADE_IDS || []).reduce(function (s, id) { return Math.max(s, Number((game.upgrades || {})[id] || 0)); }, 0);
     }
+    return 0;
+  },
+  /* Parties d'avant v3.509.0 : traces déjà sauvegardées (date de préparation, marchés des Ruines et de la Crypte). */
+  legacyCount: function (key) {
+    var v = game.village || {}, ep = game.explorationProgression || {};
+    if (key === "apothecaryCrafts") return v.apothecary && v.apothecary.dailyKey ? 1 : 0;
+    if (key === "caravansBack") return ep.ruinsMarketDone || ep.cryptMarketDone ? 1 : 0;
     return 0;
   },
   progress: function (m) { return Math.min(m.target, Math.floor(this.measure(m))); },

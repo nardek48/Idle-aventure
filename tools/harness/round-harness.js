@@ -19107,6 +19107,11 @@ console.log("\n[331] v3.509.0 — jalons du village et du héros (onglet Seconda
     ok(!MM.isClaimed(m.id), "remise à zéro : jalon effacé");
     g.restoreBaseState(sv);
     ok(MM.isClaimed(m.id), "rechargement : jalon toujours réclamé");
+    var ap = L.filter(function (x) { return x.id === "ms_d_apothicaire"; })[0], cv = L.filter(function (x) { return x.id === "ms_r_caravane"; })[0];
+    run("fullResetState();");
+    ok(MM.measure(ap) === 0 && MM.measure(cv) === 0, "partie neuve : ni préparation ni caravane");
+    game = g.game; game.village.apothecary = { learned: {}, dailyKey: "Mon Oct 26 2026", dailyCount: 2 }; game.explorationProgression.ruinsMarketDone = true;
+    ok(MM.measure(ap) === 1 && MM.measure(cv) === 1, "ancienne partie : préparation et caravane déjà faites reconnues (v3.509.1)");
   } catch (err) { ok(false, "[331] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
