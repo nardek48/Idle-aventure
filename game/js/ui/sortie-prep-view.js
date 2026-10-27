@@ -33,14 +33,31 @@ function sortiePrepHasChoice() {
   return sortiePrepGrimoireOpen() || mates > 0 || sortiePrepBuffList().length > 0 || items > 0;
 }
 
-/* opts : { title, sub, icon, ctx, onGo }. onGo lance la sortie une fois la feuille validée ;
-   ctx (comme « Ce que tu vas affronter » : { type, id }) sert à dire quels objets servent ici. */
+/* v3.512.0 (décision Seb, atelier/pv-bas-depart.html) : PV bas au départ contre une élite ou un boss. */
+var SORTIE_LOW_HP_PCT = 0.70;
+
+/* Sortie qui mène à une élite ou un boss : donjon, élite de carte, quête d'élite ou à boss (jamais la chasse). */
+function sortieHasStrongFoe(ctx) {
+  if (!ctx) return false;
+  if (ctx.type === "dungeon" || ctx.type === "elite") return true;
+  var q = (ctx.type === "adventure" && window.ADVENTURE_QUESTS) ? ADVENTURE_QUESTS[ctx.id] : null;
+  return !!q && (q.type === "elite" || (q.steps || []).some(function (s) { return s.type === "bossKill" || s.type === "eliteKill"; }));
+}
+
+function sortieLowHp(opts) {
+  return sortieHasStrongFoe(opts && opts.ctx) && (game.heroHp || 0) / (game.heroMaxHp || 1) < SORTIE_LOW_HP_PCT;
+}
+
+/* opts : { title, sub, icon, ctx, food, onGo }. onGo lance la sortie une fois la feuille validée ;
+   ctx (comme « Ce que tu vas affronter » : { type, id }) sert à dire quels objets servent ici ;
+   food ({ kind, ref } de ProvisionsManager) garde les vivres du départ hors des rations à manger. */
 function openSortiePrep(opts) {
   opts = opts || {};
   if (typeof opts.onGo !== "function") return;
-  if (!sortiePrepHasChoice()) return opts.onGo();
+  var bare = !sortiePrepHasChoice();
+  if (bare && !sortieLowHp(opts)) return opts.onGo();
   if (!sortiePrepGrimoireOpen() && game.combatMode === "grimoire" && window.CombatEngine) CombatEngine.setCombatMode("tactique");
-  sortiePrep = { opts: opts, preset: null, buffs: {}, items: [], pick: -1 };
+  sortiePrep = { opts: opts, preset: null, buffs: {}, items: [], pick: -1, bare: bare };   // bare : feuille réduite à l'alerte PV
   renderSortiePrep();
 }
 
@@ -78,6 +95,11 @@ function buildSortiePrepHTML() {
     close: "closeSortiePrep()"
   });
   h += '<div class="ksheet-body">';
+
+  var lowHp = sortieLowHp(o);
+  if (lowHp) h += buildSortiePrepLowHpHTML();   // v3.512.0 : avant tout le reste
+  else if (sortiePrep.bare) h += buildSortiePrepHpOkHTML();   // ration mangée : la feuille réduite ne reste pas vide
+  if (sortiePrep.bare) return h + '</div>' + buildSortiePrepFootHTML(lowHp);
 
   h += buildSortiePrepTraitsHTML(grim);   // v3.446.1 : la menace d'abord (décision Seb), la préparation ensuite
 
@@ -138,11 +160,82 @@ function buildSortiePrepHTML() {
   }
 
   h += '</div>';
-  h += '<div class="ksheet-foot sp-foot">';
+  return h + buildSortiePrepFootHTML(lowHp);
+}
+
+/* Pied de feuille ; PV bas : « Partir à X % » en rouge (kbtn danger), on peut toujours partir. */
+function buildSortiePrepFootHTML(lowHp) {
+  var pct = Math.floor((game.heroHp || 0) / (game.heroMaxHp || 1) * 100);
+  var h = '<div class="ksheet-foot sp-foot">';
   h += '<button type="button" class="kbtn" onclick="closeSortiePrep()">' + _t("Renoncer") + '</button>';
-  h += '<button type="button" class="kbtn primary" onclick="confirmSortiePrep()">' + _t("Partir") + '</button>';
-  h += '</div></div>';
-  return h;
+  h += lowHp
+    ? '<button type="button" class="kbtn danger" onclick="confirmSortiePrep()">' + _t("Partir à {n} %", { n: pct }) + '</button>'
+    : '<button type="button" class="kbtn primary" onclick="confirmSortiePrep()">' + _t("Partir") + '</button>';
+  return h + '</div></div>';
+}
+
+/* Rations mangeables d'ici, vivres du départ mis de côté ; soin réel (Cuisine de campagne comprise). */
+function sortiePrepRations() {
+  if (!window.CampManager) return [];
+  var food = sortiePrep.opts.food;
+  var req = (food && window.ProvisionsManager) ? ProvisionsManager.getRequirement(food.kind, food.ref) : null;
+  return CampManager.getRationOptions().map(function (r) {
+    r.free = Math.floor(r.amount) - (req && req.resourceId === r.id ? req.amount : 0);
+    if (r.id === "petite_ration" && window.MemoryManager && MemoryManager.has("cuisine_campagne")) {
+      r.healPct *= (typeof MEMORY_CUISINE_PETITE_RATION_MULT === "number" ? MEMORY_CUISINE_PETITE_RATION_MULT : 1.25);
+    }
+    return r;
+  }).filter(function (r) { return r.free > 0 && r.healPct > 0; });
+}
+
+/* Encart « PV bas » : jauge avec le seuil, rappel des potions, ration ou Feu de camp. */
+function buildSortiePrepLowHpHTML() {
+  var pct = Math.floor((game.heroHp || 0) / (game.heroMaxHp || 1) * 100);
+  var ctx = sortiePrep.opts.ctx || {}, elite = ctx.type === "elite" || (ctx.type === "adventure" && sortieIsEliteQuest(ctx.id));
+  var h = '<div class="sp-lowhp">';
+  h += '<div class="sp-lowhp-t"><img src="images/Icons/system/warning.webp" alt="">'
+    + (elite ? _t("PV bas pour une élite") : _t("PV bas pour un boss")) + '</div>';
+  h += sortiePrepHpGaugeHTML(false);
+  var cap = (typeof getSortiePotionCap === "function") ? getSortiePotionCap() : 2;
+  h += '<p>' + _t("Tu pars avec {n} % de tes PV. Ils ne remontent pas d'eux-mêmes pendant la sortie : {p} potions de soin au plus.", { n: pct, p: cap }) + '</p>';
+  h += '<div class="sp-lowhp-acts">';
+  var rations = sortiePrepRations();
+  rations.forEach(function (r) {
+    var gain = Math.min(100 - pct, Math.round(r.healPct * 100));
+    h += '<button type="button" class="sp-lowhp-act" onclick="sortiePrepEat(\'' + r.id + '\')"><img src="' + esc(((window.WAREHOUSE_RESOURCES || {})[r.id] || {}).icon || "") + '" alt="">'
+      + '<span>' + esc(_t("Manger : {x}", { x: _td(r.name) })) + '<small>' + _t("En stock : {n}", { n: r.free }) + '</small></span><em>+' + gain + ' %</em></button>';
+  });
+  if (!rations.length) h += '<div class="sp-lowhp-none">' + _t("Aucune ration à manger · Cuisine de camp") + '</div>';
+  h += '<button type="button" class="sp-lowhp-act" onclick="sortiePrepRest()"><img src="images/Icons/camp/campfire.webp" alt="">'
+    + '<span>' + _t("Se reposer au Feu de camp") + '<small>' + _t("PV au maximum dans {d}", { d: formatTime(Math.ceil(CampManager.getMinutesToFull() * 60)) }) + '</small></span></button>';
+  return h + '</div></div>';
+}
+
+/* Jauge seule, en vert : le seuil est passé, on peut partir. */
+function sortiePrepHpGaugeHTML(ok) {
+  var max = game.heroMaxHp || 1, hp = Math.floor(game.heroHp || 0), pct = Math.floor(hp / max * 100);
+  return '<div class="sp-lowhp-gauge' + (ok ? ' is-ok' : '') + '"><i style="width:' + pct + '%"></i><u style="left:' + Math.round(SORTIE_LOW_HP_PCT * 100) + '%"></u>'
+    + '<span>' + formatNumber(hp) + ' / ' + formatNumber(max) + ' ' + _t("PV") + ' · ' + pct + ' %</span></div>';
+}
+
+function buildSortiePrepHpOkHTML() {
+  return '<div class="sp-lowhp is-ok"><div class="sp-lowhp-t"><img src="images/Icons/system/check_valid.webp" alt="">' + _t("PV suffisants pour partir") + '</div>'
+    + sortiePrepHpGaugeHTML(true) + '</div>';
+}
+
+function sortieIsEliteQuest(id) {
+  var q = window.ADVENTURE_QUESTS ? ADVENTURE_QUESTS[id] : null;
+  return !!q && q.type === "elite";
+}
+
+/* La ration se mange sans quitter la feuille ; l'encart disparaît une fois le seuil passé. */
+function sortiePrepEat(id) {
+  if (window.CampManager && CampManager.eatRation(id)) renderSortiePrep();
+}
+
+function sortiePrepRest() {
+  closeSortiePrep();
+  if (typeof switchTab === "function") switchTab("campement");
 }
 
 /* v3.445.0 : les règles avec lesquelles on part (celles du preset choisi, sinon les actuelles), en lecture ;
@@ -442,6 +535,8 @@ function confirmSortiePrep() {
 window.openSortiePrep = openSortiePrep;
 window.closeSortiePrep = closeSortiePrep;
 window.confirmSortiePrep = confirmSortiePrep;
+window.sortiePrepEat = sortiePrepEat;
+window.sortiePrepRest = sortiePrepRest;
 window.sortiePrepHasChoice = sortiePrepHasChoice;
 window.sortiePrepMode = sortiePrepMode;
 window.sortiePrepPreset = sortiePrepPreset;

@@ -7002,5 +7002,15 @@ I18n.register("en", {
   "Une nouvelle chaque jour.": "A new one every day.",
   "Les sorties se renouvellent chaque jour.": "Runs refresh every day.",
   "Aller au donjon": "Go to the dungeon",
+  // v3.512.0 : PV bas au départ (feuille de sortie)
+  "Partir à {n} %": "Set out at {n} %",
+  "PV bas pour une élite": "Low HP for an elite",
+  "PV bas pour un boss": "Low HP for a boss",
+  "Tu pars avec {n} % de tes PV. Ils ne remontent pas d'eux-mêmes pendant la sortie : {p} potions de soin au plus.": "You set out with {n} % of your HP. They don't come back on their own during the outing: {p} healing potions at most.",
+  "En stock : {n}": "In stock: {n}",
+  "Aucune ration à manger · Cuisine de camp": "No ration to eat · Camp kitchen",
+  "Se reposer au Feu de camp": "Rest at the Campfire",
+  "PV au maximum dans {d}": "Full HP in {d}",
+  "PV suffisants pour partir": "Enough HP to set out",
 
 });

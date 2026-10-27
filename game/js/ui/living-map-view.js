@@ -129,7 +129,8 @@ function startLivingMapSector(id, wake) { // v3.454.0 : wake — réveiller les 
   var cs = LivingMapManager.canStart(mapId, id);
   if (cs.ok && cs.content && cs.content.type === "elite" && typeof openSortiePrep === "function") {
     var el = (window.ELITE_DB || {})[cs.content.eliteId];
-    return openSortiePrep({ title: el ? _td(el.name) : "", icon: "images/Icons/quests/mission_combat.webp", ctx: { type: "elite", id: cs.content.eliteId }, onGo: go });
+    return openSortiePrep({ title: el ? _td(el.name) : "", icon: "images/Icons/quests/mission_combat.webp", ctx: { type: "elite", id: cs.content.eliteId },
+      food: { kind: "mapelite", ref: { mapId: mapId, sectorId: id, worldId: (LivingMapManager.getMap(mapId) || {}).worldId } }, onGo: go }); // v3.512.0
   }
   go();
 }

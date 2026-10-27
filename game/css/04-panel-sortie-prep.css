@@ -195,3 +195,25 @@
 .sp-fold b { font-size: 14px; }
 .sp-fold small { font-size: 12px; font-weight: 700; color: var(--c-brown-750-2); }
 .sp-fold i { font-style: normal; color: var(--c-brown-750-2); }
+
+/* v3.512.0 (décision Seb, atelier/pv-bas-depart.html) : PV bas avant une élite ou un boss, en tête de feuille. */
+.sp-lowhp { margin: 4px 0 12px; padding: 10px 12px; border: 1.5px solid var(--c-red-550); border-radius: 14px; background-color: rgba(192, 57, 43, 0.1); color: var(--sheet-ink); }
+.sp-lowhp-t { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 800; color: var(--c-red-600); }
+.sp-lowhp-t img { width: 22px; height: 22px; }
+.sp-lowhp-gauge { position: relative; height: 22px; margin: 8px 0 6px; border-radius: 11px; background-color: rgba(40, 24, 12, 0.75); overflow: hidden; }
+.sp-lowhp-gauge i { position: absolute; top: 0; bottom: 0; left: 0; background: linear-gradient(90deg, var(--c-red-600), var(--c-red-450)); }
+/* Trait du seuil : en dessous, l'alerte s'affiche */
+.sp-lowhp-gauge u { position: absolute; top: 0; bottom: 0; width: 2px; background-color: rgba(244, 233, 208, 0.6); }
+.sp-lowhp-gauge span { position: relative; display: block; line-height: 22px; text-align: center; font-size: 12.5px; font-weight: 800; color: var(--c-cream-100-2); text-shadow: 0 1px 2px #000; }
+.sp-lowhp p { margin: 4px 0 0; font-size: 13px; }
+.sp-lowhp-acts { display: grid; gap: 6px; margin-top: 10px; }
+.sp-lowhp-act { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 6px 10px; border: 1px solid var(--c-bronze-500); border-radius: 12px;
+  background: var(--c-cream-100-3); font: inherit; color: var(--c-brown-850-2); text-align: left; cursor: pointer; }
+.sp-lowhp-act img { flex: none; width: 30px; height: 30px; object-fit: contain; }
+.sp-lowhp-act span { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; font-size: 14px; font-weight: 800; }
+.sp-lowhp-act small { font-size: 12px; font-weight: 700; color: var(--c-brown-750-2); }
+.sp-lowhp-act em { font-style: normal; font-size: 13px; font-weight: 800; color: var(--c-green-650-2); }
+.sp-lowhp-none { font-size: 12.5px; font-style: italic; color: var(--sheet-ink-dim); }
+.sp-lowhp.is-ok { border-color: var(--c-green-650-2); background-color: rgba(47, 138, 70, 0.1); }
+.sp-lowhp.is-ok .sp-lowhp-t { color: var(--c-green-650-2); }
+.sp-lowhp-gauge.is-ok i { background: linear-gradient(90deg, var(--c-green-650-2), var(--c-green-450)); }
