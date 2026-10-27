@@ -1219,10 +1219,14 @@ function bilanMonde(cid) {
   (g.HEROS_TRAINING_UPGRADE_IDS || []).forEach(function (id) { b.entr[id.replace("utrain_", "")] = ups[id] || 0; });
   CM.unlockedIds().forEach(function (id) { var st = CM.state(id); b.compagnons[id] = { upg: st.upgrades, rang: st.skillRank || 0, groupe: CM.partyIds().indexOf(id) >= 0, reliques: g.CompanionRelics ? g.CompanionRelics.active(id).map(function (r) { return r.f + r.w; }).join(",") : "" }; });
   b.orMonde = prev ? b.orGagne - prev.orGagne : b.orGagne;
+  var PS = g.ProductionPlotsSystem, zl = [], prod = 0;
+  PS.getManagedBuildingIds().forEach(function (bid) { prod += PS.getTotalRatePerMin(bid) * 60; PS.getPlots(bid).forEach(function (p) { if (p.state === "open") zl.push(p.level); }); });
+  b.zones = { ouvertes: zl.length, niveauMoyen: zl.length ? Math.round(10 * zl.reduce(function (s2, x) { return s2 + x; }, 0) / zl.length) / 10 : 0, prodParH: Math.round(prod),
+    stocks: ["bois", "pierre", "fer", "eau", "ble", "viande"].map(function (k) { return k + " " + Math.floor(g.WarehouseManager.getAmount(k)) + "/" + g.WarehouseManager.getCap(k); }).join(" ") };
   b.gain = Math.round(STATS.flux.gain); b.perte = Math.round(STATS.flux.perte);
   b.gainMonde = prev ? b.gain - prev.gain : b.gain; b.perteMonde = prev ? b.perte - prev.perte : b.perte;
   STATS.mondes.push(b);
-  console.log("  ◆ BILAN " + cid + " : " + b.h.toFixed(1) + " h, niv. " + b.niv + ", or " + b.or + " (entré " + b.gainMonde + ", sorti " + b.perteMonde + "), entraînement " + JSON.stringify(b.entr) + ", rangs de sorts " + b.rangsSorts + ", talents " + b.talents + ", compagnons " + JSON.stringify(b.compagnons) + ", reliques " + b.reliques + ", forge " + JSON.stringify(b.forge) + ", équipement " + b.equip + ", morts " + b.morts + ", murs " + b.murs + ", dépenses chantier " + JSON.stringify(b.depenses));
+  console.log("  ◆ BILAN " + cid + " : " + b.h.toFixed(1) + " h, niv. " + b.niv + ", or " + b.or + " (entré " + b.gainMonde + ", sorti " + b.perteMonde + "), entraînement " + JSON.stringify(b.entr) + ", rangs de sorts " + b.rangsSorts + ", talents " + b.talents + ", compagnons " + JSON.stringify(b.compagnons) + ", reliques " + b.reliques + ", forge " + JSON.stringify(b.forge) + ", équipement " + b.equip + ", morts " + b.morts + ", murs " + b.murs + ", zones " + JSON.stringify(b.zones) + ", dépenses chantier " + JSON.stringify(b.depenses));
 }
 
 /* Retour au jour civil suivant (le frein des élites répétables retombe). */

@@ -23,7 +23,11 @@
    (décision validée avec Seb — même mécanique, mêmes formules, mêmes montants). */
 var PRODUCTION_PLOTS_SHARED = {
   totalPlots: 9,
-  plotMaxLevel: 5,
+  plotMaxLevel: 20, // relevé 2 (Seb, 27/10) : 5 → 20, plafond par monde dans world-caps.js (5/8/11/14/17, Tour 20)
+  /* Relevé 2 : débit et réserve LINÉAIRES, +70 % du niveau 1 par niveau (la réserve suit : même temps de
+     remplissage). rateGrowthPerLevel (×1,78) ne sert plus qu'à convertir les anciennes zones (modèle 1). */
+  linearPerLevel: 0.7,
+  model: 2,
   profilePattern: ["rapide", "equilibree", "lente", "rapide", "equilibree", "lente", "rapide", "equilibree", "lente"],
   /* v3.98.12 : multiplicateur de coût d'amélioration par LIGNE de la grille 3×3
      (Math.floor(plotIndex / 3) -> 0, 1 ou 2), voir getProductionPlotUpgradeCost. */
@@ -61,7 +65,7 @@ var PRODUCTION_PLOTS_SHARED = {
   /* Multiplicateurs de croissance de coût, communs aux 6 bâtiments — seules les
      ressources et montants de base varient (voir PRODUCTION_PLOTS_BUILDINGS). */
   unlockCostMultPerPlot: 1.55,
-  upgradeCostMultPerLevel: 1.40
+  upgradeCostMultPerLevel: 1.15 // relevé 2 : 1,40 → 1,15 (20 niveaux)
 };
 
 /* Config PAR BÂTIMENT : nom de section affiché, thème des icônes de zone, et ressources

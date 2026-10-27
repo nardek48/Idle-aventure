@@ -8063,16 +8063,16 @@ console.log("\n[86] v3.289.0 — Plafonds par monde du village et de la producti
   var refus = P.unlockPlot("sawmill", 3);
   ok(refus.ok === false && refus.reason === "S'ouvre au Désert oublié", "défricher une zone du Désert est refusé, avec le monde nommé");
   ok(P.unlockPlot("sawmill", 1).ok === true, "une zone de la Forêt se défriche normalement");
-  plots[0].level = 3;
+  plots[0].level = 5; // relevé 2 : Forêt 5
   var r = P.upgradePlot("sawmill", 0);
-  ok(r.ok === false && plots[0].level === 3 && P.isPlotLevelWorldCapped(plots[0]), "zone au niveau 3 en Forêt : plafond du monde");
+  ok(r.ok === false && plots[0].level === 5 && P.isPlotLevelWorldCapped(plots[0]), "zone au niveau 5 en Forêt : plafond du monde");
   /* Partie d'avant le plafond : une zone du Désert déjà ouverte au niveau 5 continue de produire. */
   var avant = P.getTotalRatePerMin("sawmill");
-  plots[5].state = "open"; plots[5].level = 5; plots[5].lastTick = Date.now();
+  plots[5].state = "open"; plots[5].level = 8; plots[5].lastTick = Date.now();
   ok(P.getTotalRatePerMin("sawmill") > avant && P.getOpenPlotsCount("sawmill") === 3,
     "une zone déjà ouverte au-delà du plafond reste ouverte et produit");
   monde(1);
-  ok(P.isPlotRowOpen(5) && !P.isPlotRowOpen(6) && P.getPlotLevelCap() === 5, "Désert : deux lignes, zones au niveau 5");
+  ok(P.isPlotRowOpen(5) && !P.isPlotRowOpen(6) && P.getPlotLevelCap() === 8, "Désert : deux lignes, zones au niveau 8 (relevé 2)");
   monde(0);
 
   /* --- Ateliers : 2 en Forêt --- */
@@ -10675,8 +10675,8 @@ console.log("\n[131] v3.336.0 — Refus « Pour y arriver » (F-2)");
     ok((src.indexOf('showHowToToast("Entrepôt plein", "warehouseFull"') !== -1 || src.indexOf('showHowToToast(_t("Entrepôt plein"), "warehouseFull"') !== -1) && /* v3.371.0 : texte passé par _t() */ src.indexOf('"warehouseFull", { resourceId: fullRes }') !== -1, "3 : récolte simple et « Tout récolter » branchées");
 
     // 4. Zone au plafond du monde : où s'ouvre le niveau suivant
-    var h4 = FR.howTo("zoneCap", { level: 3 });
-    ok(/Niveau 4/.test(h4.text) && h4.text.indexOf(g.WORLDS[1].name) !== -1, "4 : zone niv. 3 en Forêt -> « Niveau 4 … s'ouvre " + g.WorldCaps.withPrep(1) + " »");
+    var h4 = FR.howTo("zoneCap", { level: 5 }); // relevé 2 : la Forêt plafonne au niveau 5
+    ok(/Niveau 6/.test(h4.text) && h4.text.indexOf(g.WORLDS[1].name) !== -1, "4 : zone niv. 5 en Forêt -> « Niveau 6 … s'ouvre " + g.WorldCaps.withPrep(1) + " »");
     var pv = require("fs").readFileSync(ROOT + "/js/ui/production-view.js", "utf8");
     ok(pv.indexOf("'zoneCap'") !== -1 || pv.indexOf("\\'zoneCap\\'") !== -1 || (pv.indexOf('"zoneCap"') !== -1 && pv.indexOf("productionZoneCapHowTo(") !== -1), "4 : le bouton « Plafond de ce monde » se touche");
 
@@ -17863,7 +17863,7 @@ console.log("\n[299] v3.478.0 — Refonte de l'économie, lot F1 : réserve des 
   ok(P.rapide.baseRatePerMin === 0.70 && P.equilibree.baseRatePerMin === 0.50 && P.lente.baseRatePerMin === 0.35, "débits inchangés (E5)");
   var cap = 0, rate = 0;
   [0, 1, 2].forEach(function (i) { cap += PPS.getPlotCapacity(i, { level: 3 }); rate += PPS.getPlotRatePerMin(i, { level: 3 }, "sawmill"); });
-  ok(cap === 703 && cap / rate > 140, "Forêt, Scierie 3 zones niv. 3 : réserve " + cap + ", plus de 2 h 20 avant l'arrêt (" + Math.round(cap / rate) + " min)");
+  ok(cap === 756 && cap / rate > 140, "Forêt, Scierie 3 zones niv. 3 : réserve " + cap + ", plus de 2 h 20 avant l'arrêt (" + Math.round(cap / rate) + " min)"); // relevé 2 : réserve linéaire
 })();
 
 console.log("\n[300] v3.479.0 — Refonte de l'économie RE-2 : zones de production par rangée");
@@ -17880,7 +17880,7 @@ console.log("\n[300] v3.479.0 — Refonte de l'économie RE-2 : zones de product
   ok(PPS.unlockRow("sawmill", 0).ok && plots[2].state === "open" && fer - W.getAmount("fer") === want, "Défricher : la zone ouvre, coût de la zone payé");
   ok(PPS.upgradeRow("sawmill", 0).ok && plots[1].level === 2 && plots[2].level === 2 && plots[0].level === 3, "Monter : les zones les plus basses (1 → 2), la plus haute attend");
   var n = 0; while (PPS.upgradeRow("sawmill", 0).ok && n < 9) n++;
-  ok(n === 3 && plots[0].level === 5 && plots[1].level === 5 && plots[2].level === 5, "à égalité, la rangée monte ensemble (3 achats de 2 à 5) et s'arrête au plafond du monde");
+  ok(n === 6 && plots[0].level === 8 && plots[1].level === 8 && plots[2].level === 8, "à égalité, la rangée monte ensemble (6 achats de 2 à 8, Désert) et s'arrête au plafond du monde"); // relevé 2
   ok(PPS.improveRow("sawmill", 0).ok && [0, 1, 2].every(function (i) { return plots[i].fertile && plots[i].irrigated; }) && !PPS.improveRow("sawmill", 0).ok, "Améliorer : les deux améliorations sur les 3 zones, une seule fois");
   g.game.resources.fer = 0; var before = JSON.stringify(plots.slice(3, 6));
   ok(!PPS.unlockRow("sawmill", 1).ok && JSON.stringify(plots.slice(3, 6)) === before, "sans les ressources : rien n'est payé ni ouvert (tout ou rien)");
@@ -19041,6 +19041,28 @@ console.log("\n[330] v3.505.0 — Grand écran GE-5 : combat, Petite aventure et
   } catch (err) {
     ok(false, "[330] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
+})();
+
+console.log("\n[328] Relevé 2 (27/10) — zones de production à 20 niveaux, débit linéaire, migration b");
+(function () {
+  try {
+    var PPS = g.ProductionPlotsSystem, S = g.PRODUCTION_PLOTS_SHARED;
+    ok(S.plotMaxLevel === 20 && S.upgradeCostMultPerLevel === 1.15 && S.linearPerLevel === 0.7, "20 niveaux, +70 % par niveau, coût ×1,15");
+    ok(g.WORLD_CAPS.map(function (w) { return w.zoneLevel; }).join(",") === "5,8,11,14,17", "plafonds de monde 5 / 8 / 11 / 14 / 17");
+    var r1 = PPS.getPlotRatePerMin(0, { level: 1 }), r8 = PPS.getPlotRatePerMin(0, { level: 8 });
+    ok(Math.abs(r8 / r1 - 5.9) < 1e-9, "niveau 8 : 5,9 fois le niveau 1");
+    ok(Math.abs(PPS.getPlotCapacity(0, { level: 8 }) / PPS.getPlotRatePerMin(0, { level: 8 }) - PPS.getPlotCapacity(0, { level: 1 }) / r1) < 1, "la réserve suit le débit : même temps de remplissage à tout niveau");
+    var map = [1, 2, 3, 4, 5].map(function (L) { return PPS.migrateLevel(L); });
+    ok(map.join(",") === "1,3,5,8,14", "migration b : niveaux 1-5 de l'ancien modèle → 1 / 3 / 5 / 8 / 14");
+    ok([1, 2, 3, 4, 5].every(function (L) { return PPS.levelMult(PPS.migrateLevel(L)) >= Math.pow(1.78, L - 1) - 1e-9; }), "migration b : jamais moins de production qu'avant");
+    // ancienne sauvegarde : seau sans modèle, zones au niveau 5
+    g.game.production = { sawmill: { plots: [] } };
+    for (var i = 0; i < 9; i++) g.game.production.sawmill.plots.push({ state: i < 3 ? "open" : "locked", level: i < 3 ? 5 : 1, fertile: false, irrigated: false, stock: 0, lastTick: Date.now() });
+    var pl = PPS.getPlots("sawmill");
+    ok(pl[0].level === 14 && pl[3].level === 1 && g.game.production.sawmill.model === 2, "ancienne partie : zones 5 → 14, zones fermées intactes, modèle 2 noté");
+    PPS.getPlots("sawmill");
+    ok(pl[0].level === 14, "la conversion ne se refait pas");
+  } catch (err) { ok(false, "[328] exception : " + err.message); }
 })();
 
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));

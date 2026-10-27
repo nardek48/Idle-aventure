@@ -18,7 +18,7 @@ var WORLD_CAPS = [
   {
     village: { workshop: 4, training: 4, hall: 4, warehouse: 3, palisade: 3, tavern: 2, apothecary: 2, forge: 0, enchanter: 0 },
     zoneRows: 1,      // lignes de la grille 3×3 ouvrables (1 ligne = 3 zones)
-    zoneLevel: 3,     // niveau max d'une zone
+    zoneLevel: 5,     // niveau max d'une zone ; relevé 2 (27/10) : 3 → 5
     workshopLevel: 2, // niveau max d'un atelier (« L'atelier bien huilé » exige 2)
     petiteAventureCap: 3 // v3.298.0 (D10) : Petites Aventures par jour civil, partagées entre canevas
   },
@@ -27,7 +27,7 @@ var WORLD_CAPS = [
     // v3.316.0 (W-4b) : forge 2 -> 3, le palier de l'étape 13 se paie en Verre trempé.
     village: { workshop: 7, training: 9, hall: 7, warehouse: 6, palisade: 7, tavern: 5, apothecary: 6, forge: 3, enchanter: 1 },
     zoneRows: 2,
-    zoneLevel: 5,
+    zoneLevel: 8, // relevé 2 (27/10) : 5 → 8
     workshopLevel: 3,
     petiteAventureCap: 4 // D10 : 4 au Désert — une seconde ressource exclusive (Verre des dunes)
   },
@@ -38,7 +38,7 @@ var WORLD_CAPS = [
   {
     village: { workshop: 8, training: 11, hall: 8, warehouse: 7, palisade: 8, tavern: 5, apothecary: 6, forge: 4, enchanter: 2 }, // v3.431.0 (acte III) : Terrain 11, Forge 4
     zoneRows: 2,      // pas de 3e rangée aux Ruines (RU7, tranché par Seb le 09/10/2026)
-    zoneLevel: 5,
+    zoneLevel: 11, // relevé 2 (27/10) : 5 → 11
     workshopLevel: 3,
     petiteAventureCap: 4
   },
@@ -48,7 +48,7 @@ var WORLD_CAPS = [
   {
     village: { workshop: 8, training: 13, hall: 10, warehouse: 12, palisade: 8, tavern: 6, apothecary: 6, forge: 5, enchanter: 2 }, // v3.456.2 : Terrain 13 ; v3.456.9 : Taverne 6 ; v3.459.9 (audit I3) : Halle 10, Entrepôt 8 ; option B (27/10) : Entrepôt 12
     zoneRows: 3,
-    zoneLevel: 5,
+    zoneLevel: 14, // relevé 2 (27/10) : 5 → 14
     workshopLevel: 3,
     petiteAventureCap: 4
   },
@@ -59,7 +59,7 @@ var WORLD_CAPS = [
     village: { workshop: 8, training: 18, hall: 10, warehouse: 16, palisade: 8, tavern: 6, apothecary: 6, forge: 6, enchanter: 2 }, // H1 : Terrain 18 (acte IV) ; option B (27/10) : Entrepôt 16
     forgeActStep: "montagne_11",
     zoneRows: 3,
-    zoneLevel: 5,
+    zoneLevel: 17, // relevé 2 (27/10) : 5 → 17
     workshopLevel: 3,
     petiteAventureCap: 4
   }

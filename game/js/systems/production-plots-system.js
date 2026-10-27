@@ -50,6 +50,12 @@ var ProductionPlotsSystem = {
       }
     }
 
+    // relevé 2 (27/10) : zones de l'ancien modèle (5 niveaux, ×1,78) converties une fois, production gardée
+    if (bucket.model !== PRODUCTION_PLOTS_SHARED.model) {
+      if (!needsReset) { var self = this; bucket.plots.forEach(function (p) { if (p && p.level > 1) p.level = self.migrateLevel(p.level); }); }
+      bucket.model = PRODUCTION_PLOTS_SHARED.model;
+    }
+
     // nettoie tout champ résiduel de l'ancien système à niveau de bâtiment unique
     if (typeof bucket.level !== "undefined") delete bucket.level;
     if (typeof bucket.pendingUpgradeChoice !== "undefined") delete bucket.pendingUpgradeChoice;
@@ -71,7 +77,7 @@ var ProductionPlotsSystem = {
   getPlotRatePerMin: function (plotIndex, plot, buildingId) {
     var profile = this.getProfile(plotIndex);
     var cfg = buildingId ? PRODUCTION_PLOTS_BUILDINGS[buildingId] : null;
-    var rate = profile.baseRatePerMin * Math.pow(profile.rateGrowthPerLevel, plot.level - 1) * ((cfg && cfg.rateMult) || 1);
+    var rate = profile.baseRatePerMin * this.levelMult(plot.level) * ((cfg && cfg.rateMult) || 1); // relevé 2 : linéaire
     /* v3.422.0 : le bonus de carte vivante (Puits, Scierie +10 %) s'applique ICI, à la zone.
        Avant, seul l'affichage du total (ProductionManager.getRatePerMin) le comptait : depuis
        la v3.97.0, les 6 bâtiments passent par les zones et le bonus n'était jamais produit. */
@@ -84,9 +90,20 @@ var ProductionPlotsSystem = {
     return rate * bonus;
   },
 
+  /* Relevé 2 (27/10) : multiplicateur du niveau, 1 + 0,7 × (niveau − 1). */
+  levelMult: function (level) { return 1 + PRODUCTION_PLOTS_SHARED.linearPerLevel * (Math.max(1, Number(level) || 1) - 1); },
+
+  /* Migration b (Seb, 27/10) : niveau du modèle 2 qui produit au moins autant que l'ancien niveau (×1,78 par niveau).
+     Peut dépasser le plafond du monde : la production acquise est gardée. */
+  migrateLevel: function (oldLevel) {
+    var target = Math.pow(PRODUCTION_PLOTS_SHARED.profiles.rapide.rateGrowthPerLevel, Math.max(1, Number(oldLevel) || 1) - 1);
+    var L = 1; while (L < PRODUCTION_PLOTS_SHARED.plotMaxLevel && this.levelMult(L) < target - 1e-9) L++;
+    return L;
+  },
+
   getPlotCapacity: function (plotIndex, plot) {
     var profile = this.getProfile(plotIndex);
-    return Math.floor(profile.baseCapacity * Math.pow(profile.capacityGrowthPerLevel, plot.level - 1));
+    return Math.floor(profile.baseCapacity * this.levelMult(plot.level)); // relevé 2 : la réserve suit le débit
   },
 
   /* v3.289.0 : niveau max EFFECTIF d'une zone = min(max propre, plafond du monde
