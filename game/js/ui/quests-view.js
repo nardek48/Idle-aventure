@@ -73,6 +73,8 @@ function buildQuestCategoryTabsHTML(missions) {
       return cat.kinds.indexOf(m.sourceKind) !== -1 && (m.status === "claimable" || m.status === "ready");
     });
   });
+  // v3.509.0 : un jalon à réclamer allume la pastille de « Secondaires »
+  if (window.MilestoneManager && MilestoneManager.readyCount() > 0) claimableByCat.secondaires = true;
   // La chaîne Histoire (hors MissionBoard côté onglet) compte aussi pour la pastille Histoire.
   if (window.StoryQuestManager && typeof StoryQuestManager.getClaimableCount === "function" && StoryQuestManager.getClaimableCount() > 0) {
     claimableByCat.histoire = true;
@@ -213,10 +215,12 @@ function buildQuestsGeneralSubTabHTML() {
 
   var storyHTML = (cat.key === "histoire") ? buildStoryChainHTML() : "";
   h += storyHTML;
+  var msHTML = (cat.key === "secondaires" && typeof buildMilestonesHTML === "function") ? buildMilestonesHTML() : ""; // v3.509.0 : jalons en tête
+  h += msHTML;
 
   if (catMissions.length) {
     h += '<div class="quest-board-list">' + catMissions.map(buildQuestBoardCardHTML).join("") + '</div>';
-  } else if (!storyHTML) {
+  } else if (!storyHTML && !msHTML) {
     h += '<div class="eq-empty">' + esc(cat.emptyText) + '</div>';
   }
 
@@ -1053,3 +1057,95 @@ window.buildCompletedQuestCardsHTML = buildCompletedQuestCardsHTML;
 window.buildQuestCardsGroupedBySectionHTML = buildQuestCardsGroupedBySectionHTML;
 window.buildSceneQuestCompletedDetailHTML = buildSceneQuestCompletedDetailHTML; // v3.124.0 (retrait ancien moteur)
 
+/* ---------- v3.509.0 (option A, atelier jalons-village-heros.html variante B) : jalons du village et du héros ---------- */
+var milestoneViewWorld = null; // monde affiché ; null = le monde où tu es
+
+function milestoneShownWorld() {
+  var M = MilestoneManager, cur = window.WorldManager ? Number(WorldManager.worldIndex || 0) : 0;
+  var w = milestoneViewWorld != null ? milestoneViewWorld : cur;
+  return Math.max(0, Math.min(w, M.reachedWorld(), MILESTONE_REWARD_BY_WORLD.length - 1));
+}
+
+function buildMilestoneRowHTML(m) {
+  var M = MilestoneManager, done = M.isClaimed(m.id), ready = M.isReady(m), a = M.progress(m), R = M.reward(m);
+  var res = window.WAREHOUSE_RESOURCES && WAREHOUSE_RESOURCES[R.mat];
+  var h = '<div class="ms-row' + (ready ? " is-ready" : "") + (done ? " is-done" : "") + '">' + renderIconOrEmojiHTML(m.icon, "ms-row-ico", _td(m.title));
+  h += '<div class="ms-row-tx"><b>' + esc(_td(m.title)) + '</b>';
+  if (m.book && !done) h += '<button type="button" class="ms-book" onclick="openMilestoneBook(\'' + m.book + '\')">📖 ' + esc(_t("Comment ça marche")) + '</button>';
+  if (!done) h += '<div class="ms-pg"><div class="ms-bar"><i style="width:' + Math.round(100 * a / m.target) + '%"></i></div><span>' + a + ' / ' + m.target + '</span></div>';
+  h += '</div><div class="ms-ft"><div class="ms-rw"><span class="ms-chip">' + renderIconOrEmojiHTML("images/Icons/gold_icon.webp", "ms-chip-ico", _t("or")) + formatNumber(R.gold) + '</span>'
+    + '<span class="ms-chip">' + (res ? renderIconOrEmojiHTML(res.icon, "ms-chip-ico", _td(res.name)) : "") + esc("1 " + (res ? _td(res.name) : R.mat)) + '</span></div>';
+  if (done) h += '<span class="ms-ok" aria-label="' + esc(_t("Réclamé")) + '">✓</span>';
+  else if (ready) h += '<button type="button" class="settings-btn primary ms-btn is-claim" onclick="milestoneClaim(\'' + m.id + '\')">' + _t("Réclamer") + '</button>';
+  else h += '<button type="button" class="settings-btn ms-btn" onclick="milestoneGo(\'' + m.id + '\')">' + _t("J'y vais") + '</button>';
+  return h + '</div></div>';
+}
+
+function buildMilestonesHTML() {
+  if (!window.MilestoneManager || !window.VILLAGE_MILESTONES) return "";
+  var M = MilestoneManager, w = milestoneShownWorld(), list = M.ofWorld(w);
+  if (!list.length) return "";
+  var W = window.WORLDS ? WORLDS[w] : null, done = list.filter(function (m) { return M.isClaimed(m.id); }).length;
+  var h = '<section class="ms-block"><div class="ms-head">' + renderIconOrEmojiHTML("images/Icons/codex/world_" + (W ? W.id : "forest") + ".webp", "ms-head-ico", W ? _td(W.name) : "")
+    + '<div class="ms-head-tx"><b>' + esc(_t("Jalons · {x}", { x: W ? _td(W.name) : "" })) + '</b><small>' + esc(_t("Village et héros · une récompense chacun")) + '</small></div>'
+    + '<span class="ms-count">' + done + ' / ' + list.length + '</span></div>';
+  h += '<div class="ms-bar"><i style="width:' + Math.round(100 * done / list.length) + '%"></i></div>';
+  [["v", _t("Village")], ["h", _t("Héros")]].forEach(function (g) {
+    h += '<div class="ms-grp">' + esc(g[1]) + '</div>';
+    list.filter(function (m) { return m.g === g[0]; }).forEach(function (m) { h += buildMilestoneRowHTML(m); });
+  });
+  h += '</section>';
+  for (var o = 0; o <= M.reachedWorld() && o < MILESTONE_REWARD_BY_WORLD.length; o++) {
+    if (o === w) continue;
+    var n = M.openCount(o), WO = window.WORLDS ? WORLDS[o] : null;
+    if (!n || !WO) continue;
+    h += '<button type="button" class="ms-other" onclick="milestoneShowWorld(' + o + ')"><span>' + renderIconOrEmojiHTML("images/Icons/codex/world_" + WO.id + ".webp", "ms-other-ico", _td(WO.name))
+      + esc(_tn(n, "{x} : {n} jalon encore ouvert", "{x} : {n} jalons encore ouverts", { x: _td(WO.name) })) + '</span><span aria-hidden="true">›</span></button>';
+  }
+  return h;
+}
+
+function milestoneShowWorld(w) { milestoneViewWorld = w; if (typeof renderPanel === "function") renderPanel(); }
+function milestoneClaim(id) {
+  if (window.MilestoneManager && MilestoneManager.claim(id)) {
+    if (window.FilRouge) FilRouge.invalidate();
+    if (typeof renderAll === "function") renderAll(); else if (typeof renderPanel === "function") renderPanel();
+  }
+}
+/* « J'y vais » : l'écran où l'on agit. */
+function milestoneGo(id) {
+  var m = (window.VILLAGE_MILESTONES || []).filter(function (x) { return x.id === id; })[0];
+  if (!m) return;
+  var go = m.go || "";
+  if (go === "production") { switchTab("village"); if (typeof setVillageSubTab === "function") setVillageSubTab("production"); return; }
+  if (go.indexOf("b:") === 0 && typeof orInvestGoBuilding === "function") { orInvestGoBuilding(go.slice(2)); return; }
+  if (go === "training" && typeof orInvestGoHeros === "function") { orInvestGoHeros("amelioration"); return; }
+  if (go === "skills" && window.SkillRanks && typeof orInvestGoSkill === "function") {
+    var acts = SkillRanks.kitActions().slice().sort(function (a, b) { return SkillRanks.get(a.id) - SkillRanks.get(b.id); });
+    if (acts.length) { orInvestGoSkill(acts[0].id); return; }
+  }
+  switchTab("more");
+  if (typeof setHerosSubTab === "function") setHerosSubTab("companions");
+  var cid = go.indexOf("c:") === 0 ? go.slice(2) : null;
+  if (cid && window.CompanionManager && CompanionManager.isUnlocked(cid) && typeof herosOpenCompanion === "function") herosOpenCompanion(cid);
+}
+/* Fiche « comment ça marche » (fenêtre du kit). */
+function openMilestoneBook(key) {
+  var B = window.MILESTONE_BOOKS && MILESTONE_BOOKS[key];
+  if (!B) return;
+  var h = '<div class="kwin-veil" onclick="if(event.target===this)closeMilestoneBook()"><div class="kwin ms-book-win">';
+  h += kWinHeadHTML({ icon: renderIconOrEmojiHTML(B.icon, "fr-row-ico", _td(B.title)), title: esc(_td(B.title)), close: "closeMilestoneBook()" });
+  h += '<div class="kwin-body ms-tips">';
+  B.tips.forEach(function (t) { h += '<div class="ms-tip">' + renderIconOrEmojiHTML(t[0], "ms-tip-ico", "") + '<span>' + esc(_td(t[1])) + '</span></div>'; });
+  h += '</div><div class="kwin-foot"><button type="button" class="kbtn primary" onclick="closeMilestoneBook()">' + esc(_t("Compris")) + '</button></div></div></div>';
+  var root = document.getElementById("milestone-book-root");
+  if (!root && document.body) { root = document.createElement("div"); root.id = "milestone-book-root"; document.body.appendChild(root); }
+  if (root) root.innerHTML = h;
+}
+function closeMilestoneBook() { var root = document.getElementById("milestone-book-root"); if (root) root.innerHTML = ""; }
+window.buildMilestonesHTML = buildMilestonesHTML;
+window.milestoneShowWorld = milestoneShowWorld;
+window.milestoneClaim = milestoneClaim;
+window.milestoneGo = milestoneGo;
+window.openMilestoneBook = openMilestoneBook;
+window.closeMilestoneBook = closeMilestoneBook;

@@ -60,6 +60,8 @@ var DATA_TEXT_FIELDS = {
   STORY_STARTER_WEAPON: ["byClass.*.name"],
   STORY_TAB_LABELS: ["*"],
   STORY_MADDOC_GREETING: ["*"],
+  VILLAGE_MILESTONES: ["*.title"], // v3.509.0
+  MILESTONE_BOOKS: ["*.title", "*.tips.*.1"],
   VILLAGE_QUESTS: ["*.title", "*.objectiveLabel", "*.narrative.objective", "*.narrative.completion", "*.tutorial.title", "*.tutorial.points.*.text"],
   WORKSHOP_UNLOCK_STEPS: ["*.label", "*.lockedHint", "*.narrative.objective", "*.narrative.completion"],
   TAVERN_CONTRACT_TEMPLATES: ["*.title"],
@@ -165,7 +167,9 @@ var DATA_TEXT_IGNORED = {
   STORY_QUESTS: ["*.steps.*.linkTo.cardId"],
   PA2_MAPS: ["**"],                   // v3.381.0 : identifiants de nœuds des tracés (« CAMP », « SEUIL »…)
   RUINES_PA_LINKS: ["**"],            // v3.429.0 : tracé partagé des deux cartes des Ruines
-  RUINES_PA_SHIFTS: ["**"]            // v3.429.0 : bascules « les murs bougent »
+  RUINES_PA_SHIFTS: ["**"],           // v3.429.0 : bascules « les murs bougent »
+  VILLAGE_MILESTONES: ["*.go", "*.kind", "*.arg", "*.book", "*.g", "*.id", "*.icon"], // v3.509.0 : champs techniques des jalons
+  MILESTONE_BOOKS: ["*.icon", "*.tips.*.0"]
 };
 
 if (typeof module !== "undefined") module.exports = { DATA_TEXT_FIELDS: DATA_TEXT_FIELDS, DATA_TEXT_IGNORED: DATA_TEXT_IGNORED, DATA_TEXT_SOURCES: DATA_TEXT_SOURCES };

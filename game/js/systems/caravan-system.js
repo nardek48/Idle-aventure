@@ -337,6 +337,7 @@ var CaravanManager = {
     var back = this.list().filter(function (c) { return (typeof world !== "number" || c.world === world) && now >= c.endsAt; });
     if (!back.length) return null;
     var loots = back.map(function (c) { return self._unloadOne(c); });
+    if (window.AchievementManager) AchievementManager.bump("caravansBack", loots.length); // v3.509.0 : jalon « une caravane rentrée »
     if (typeof saveGame === "function") saveGame();
     if (loots.length === 1) return loots[0];
     return loots.reduce(function (a, l) {

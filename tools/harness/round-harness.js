@@ -19039,7 +19039,7 @@ console.log("\n[330] v3.505.0 — Grand écran GE-5 : combat, Petite aventure et
     g.gameLog = [];
     ok(C.journalHTML(2000).indexOf("Le combat commence.") > 0, "journal du combat vide : « Le combat commence. »");
   } catch (err) {
-    ok(false, "[330] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+    ok(false, "[331] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
 })();
 
@@ -19084,6 +19084,30 @@ console.log("\n[329] v3.508.0 (lot C) — bulle d'or : rangs des sorts et des co
     CM.state("wenna").relics = [1, null, null];
     ok(!g.FilRouge._relic(), "relique déjà portée : rien");
   } catch (err) { ok(false, "[329] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[331] v3.509.0 — jalons du village et du héros (onglet Secondaires)");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
+    var game = g.game, MM = g.MilestoneManager, L = g.VILLAGE_MILESTONES;
+    ok(L.length === 30 && [0, 1, 2, 3, 4].every(function (w) { return L.filter(function (m) { return m.w === w; }).length === 6; }), "30 jalons, 6 par monde");
+    ok(L.every(function (m) { return !m.book || g.MILESTONE_BOOKS[m.book]; }), "chaque fiche « Comment ça marche » existe");
+    ok(MM.ofWorld(1).length === 0 && MM.ofWorld(0).length === 6, "seuls les mondes atteints montrent leurs jalons");
+    var m = L.filter(function (x) { return x.id === "ms_f_taverne"; })[0];
+    ok(!MM.isReady(m) && !MM.claim(m.id), "contrat non livré : pas réclamable");
+    g.AchievementManager.bump("tavernDelivered");
+    ok(MM.isReady(m) && MM.readyCount() >= 1, "contrat livré : jalon prêt, compté dans la pastille");
+    var or0 = game.gold, mat0 = g.WarehouseManager.getAmount("resine_durcie");
+    ok(MM.claim(m.id) && game.gold === or0 + 250, "réclamer : +250 or (Forêt)");
+    ok(g.WarehouseManager.getAmount("resine_durcie") === mat0 + 1, "réclamer : +1 Résine durcie");
+    ok(MM.isClaimed(m.id) && !MM.claim(m.id) && game.explorationProgression.villageQuests.milestones.ms_f_taverne === true, "réclamé une fois, noté dans villageQuests (sauvegardé)");
+    var sv = JSON.parse(JSON.stringify(g.buildSaveData()));
+    run("fullResetState();");
+    ok(!MM.isClaimed(m.id), "remise à zéro : jalon effacé");
+    g.restoreBaseState(sv);
+    ok(MM.isClaimed(m.id), "rechargement : jalon toujours réclamé");
+  } catch (err) { ok(false, "[331] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));

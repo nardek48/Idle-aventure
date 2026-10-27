@@ -639,3 +639,35 @@
 .story-done-head small { font-size: 12px; color: var(--nb-ink-dim); font-weight: 700; }
 .story-done-head i { font-style: normal; font-size: 14px; color: var(--nb-ink-dim); }
 .story-chain.is-done .story-claimed-list { padding: 0 12px 10px; }
+
+/* v3.509.0 : jalons du village et du héros, en tête de « Secondaires » (atelier jalons-village-heros.html, variante B) */
+.ms-block { display: grid; gap: 8px; padding: 12px; margin-bottom: 12px; border-radius: 16px; background: var(--nb-cream); border: 1px solid var(--nb-frame-light); box-shadow: 0 2px 6px rgba(60, 35, 10, .18); color: var(--nb-ink); }
+.ms-head { display: flex; align-items: center; gap: 10px; }
+.ms-head-ico { width: 40px; height: 40px; border-radius: 10px; flex: none; }
+.ms-head-tx { flex: 1; min-width: 0; }
+.ms-head-tx b { display: block; font-size: 15px; }
+.ms-head-tx small { font-size: 12px; color: var(--nb-ink-dim); }
+.ms-count { font-weight: 800; font-size: 14px; color: var(--nb-gold-deep); font-variant-numeric: tabular-nums; }
+.ms-bar { height: 8px; border-radius: 6px; background: var(--nb-cream-deep); overflow: hidden; }
+.ms-bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--c-bronze-400-vivid), var(--nb-frame)); }
+.ms-grp { margin-top: 2px; font-size: 12px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; color: var(--nb-gold-deep); }
+.ms-row { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 6px 10px; align-items: center; padding: 8px; border-radius: 12px; background: var(--nb-cream-alt); border: 1px solid var(--nb-frame-light); }
+.ms-row.is-ready { border-color: var(--nb-green-text); box-shadow: inset 0 0 0 1px var(--nb-green-text); }
+.ms-row.is-done { opacity: .6; }
+.ms-row-ico { width: 40px; height: 40px; border-radius: 8px; object-fit: cover; }
+.ms-row-tx { min-width: 0; display: grid; gap: 3px; }
+.ms-row-tx b { font-size: 13.5px; line-height: 1.2; }
+.ms-book { justify-self: start; padding: 0; border: 0; background: none; font: inherit; font-size: 12px; font-weight: 800; color: var(--nb-gold-deep); text-decoration: underline; cursor: pointer; }
+.ms-pg { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--nb-ink-dim); font-variant-numeric: tabular-nums; }
+.ms-pg .ms-bar { flex: 1; height: 6px; }
+.ms-rw { display: flex; flex-wrap: wrap; gap: 4px; flex: 1 1 150px; min-width: 0; }
+.ms-ft { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; } /* récompense + bouton sur toute la largeur : tient à 320 px */
+.ms-chip { display: inline-flex; white-space: nowrap; align-items: center; gap: 3px; padding: 1px 7px 1px 3px; border-radius: 999px; background: var(--nb-cream); border: 1px solid var(--nb-frame-light); font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.ms-chip-ico { width: 16px; height: 16px; }
+.ms-btn { flex: none; margin-left: auto; width: auto; min-height: 40px; padding: 4px 12px; white-space: nowrap; }
+.ms-ok { padding: 0 8px; font-size: 18px; font-weight: 900; color: var(--nb-green-text); }
+.ms-other { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; margin-bottom: 12px; padding: 10px 12px; border-radius: 12px; border: 1.5px dashed var(--nb-frame); background: transparent; color: var(--nb-ink); font: inherit; font-size: 13px; font-weight: 700; text-align: left; cursor: pointer; }
+.ms-other-ico { width: 22px; height: 22px; margin-right: 6px; vertical-align: middle; }
+.ms-tips { display: grid; gap: 8px; }
+.ms-tip { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px; align-items: start; padding: 10px; border-radius: 12px; background: var(--nb-cream); border: 1px solid var(--nb-frame-light); font-size: 13.5px; text-align: left; color: var(--nb-ink); }
+.ms-tip-ico { width: 26px; height: 26px; }

@@ -259,6 +259,7 @@ var ApothecaryManager = {
     if (recipe.kind === "item") addLog("⚗️ " + _t("Préparation de combat : {x}.", { x: _td(potion.name) }), "event");
     else addLog("⚗️ " + _t("{x} préparée à l'Apothicaire.", { x: _td(potion.name) }), "event");
     showToast(_td(potion.name) + " +1", 1300);
+    if (window.AchievementManager) AchievementManager.bump("apothecaryCrafts"); // v3.509.0 : jalon « une préparation »
 
     if (typeof renderAll === "function") renderAll();
     saveGame();
