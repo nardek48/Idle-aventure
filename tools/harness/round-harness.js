@@ -1393,7 +1393,7 @@ g.switchTab("campement");
 ok(game.genericTutorialsSeen.camp_welcome !== true, "pas encore marqué vu tant que la modale n'a pas été fermée");
 g.closeGenericTutorialModal("camp_welcome");
 ok(game.genericTutorialsSeen.camp_welcome === true, "fermeture : camp_welcome marqué comme vu");
-ok(g.STORY_QUESTS.forest.steps[2].tutorial && g.STORY_QUESTS.forest.steps[2].tutorial.points.length === 6, "forest_03 : 6 points (intro + 5 stats)");
+ok(g.STORY_QUESTS.forest.steps[2].tutorial && g.STORY_QUESTS.forest.steps[2].tutorial.points.length === 7, "forest_03 : 7 points (intro + stat principale + 5 stats)");
 ok(g.STORY_QUESTS.forest.steps[3].tutorial && g.STORY_QUESTS.forest.steps[3].tutorial.tab === "shop", "forest_04 : tutorial déclaré, cible shop");
 var idx11 = g.STORY_QUESTS.forest.steps.findIndex(function (s) { return s.id === "forest_11"; });
 var idx12 = g.STORY_QUESTS.forest.steps.findIndex(function (s) { return s.id === "forest_12"; });
@@ -6553,9 +6553,9 @@ console.log("\n[62b] v3.260.0 \u2014 Retours de jeu : Brume, Colporteur, arme, c
   run("StoryQuestManager.ensure(); StoryQuestManager.acceptStep('forest'); StoryQuestManager.claimStep('forest');");
   game.killCounts = { slime: 12 };
   run("StoryQuestManager.acceptStep('forest');");
-  ok(s02.progress(game) === "Kills 0/5" && s02.check(game) === false, "Premier sang : des kills hors run ne remplissent rien");
+  ok(s02.progress(game) === "Ennemis 0/5" && s02.check(game) === false, "Premier sang : des kills hors run ne remplissent rien");
   game.adventureQuestsCompleted.aq_story_premier_sang = true;
-  ok(s02.check(game) === true && s02.progress(game) === "Kills 5/5", "run termin\u00e9 : objectif rempli");
+  ok(s02.check(game) === true && s02.progress(game) === "Ennemis 5/5", "run termin\u00e9 : objectif rempli");
   game.storyQuests.forest.currentStep = idxOf("forest_13"); game.storyQuests.forest.accepted = false;
   game.storyQuests.forest.counters.coeurKillsMarked = 3;
   run("StoryQuestManager.acceptStep('forest');");
@@ -17928,7 +17928,7 @@ console.log("\n[302] v3.481.0 — Refonte de l'économie RE-4 : les matériaux d
   ok(V.getLevelCost("warehouse", 5).resine_durcie === 3 && V.getLevelCost("palisade", 6).resine_durcie === 4, "Désert : Entrepôt 6 et Palissade 7 gardent la Résine");
   var h9 = V.getLevelCost("hall", 8), h10 = V.getLevelCost("hall", 9), h8 = V.getLevelCost("hall", 7);
   ok(h9.cle_de_voute === 3 && h10.cle_de_voute === 4 && h9.gold === 11453 && h10.gold === 16263 && !h8.cle_de_voute, "Halle 9 et 10 (Crypte) : 3 et 4 Clés, les autres coûts inchangés ; Halle 8 sans Clé");
-  ok(g.WAREHOUSE_RESOURCES.verre_trempe.desc.indexOf("reforges 7 à 10") !== -1 && g.WAREHOUSE_RESOURCES.cle_de_voute.desc.indexOf("Halle 9 et 10") !== -1, "descriptions du Verre trempé et de la Clé à jour");
+  ok(g.WAREHOUSE_RESOURCES.verre_trempe.desc.indexOf("reforges 7 à 12") !== -1 && g.WAREHOUSE_RESOURCES.cle_de_voute.desc.indexOf("Halle 9 et 10") !== -1, "descriptions du Verre trempé et de la Clé à jour");
   g.StoryQuestManager.getChoice = sc;
 })();
 
@@ -19235,6 +19235,32 @@ console.log("\n[337] v3.516.0 — correctifs de l'audit, lot 0 : feu de camp, ic
     ok(!ids.length || !g.buildVillageBuildingCardHTML || html.indexOf(g._t("Construire")) < 0, "village : pas de ruban « Construire » sur un chantier impayable");
     ok(g.getVillageSubTabBadges().buildings === 0, "village : pastille Bâtiments à 0 quand rien n'est payable");
   } catch (err) { ok(false, "[337] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[338] v3.517.0 — correctifs de l'audit, lot 1 : textes factuels");
+(function () {
+  try {
+    var st = function (id) { var r = null; Object.keys(g.STORY_QUESTS).forEach(function (c) { (g.STORY_QUESTS[c].steps || []).forEach(function (s) { if (s.id === id) r = s; }); }); return r; };
+    var f14 = st("forest_14"), f02 = st("forest_02");
+    ok(!/ticket|marques/i.test(f14.narrative.objective) && /Basilic/.test(f14.objectiveLabel), "forest_14 : ni ticket ni « marques », l'objectif nomme le Basilic");
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight';");
+    ok(/^Basilic /.test(f14.progress(g.game)) && /^Ennemis /.test(f02.progress(g.game)), "progressions nommées (« Basilic 0/1 », « Ennemis 0/5 »)");
+    var res = g.WAREHOUSE_RESOURCES, chasse = Object.keys(res).filter(function (k) { return /\(chasse/.test(res[k].desc || ""); });
+    ok(chasse.length === 0, "ressources : plus de « chasse » dans les vivres (" + chasse.join(", ") + ")");
+    ok(/reforges 5 et 6/.test(res.chitine_profondeurs.desc) && /7 à 12/.test(res.verre_trempe.desc) && /7 à 12/.test(res.cle_de_voute.desc), "Chitine 5-6, Verre trempé et Clé de voûte 7 à 12 (forge-system)");
+    ok(/Fonderie/.test(res.cire_consacree.sourceHint) && /Marché de la Montagne/.test(res.cendre_vive.sourceHint), "Cire consacrée : la Fonderie ; Cendre vive : la caravane longue");
+    var pa = g.DUNGEON_SHOP.filter(function (x) { return /Petite Aventure/.test(x.desc || ""); });
+    ok(pa.length && pa.every(function (x) { return /en réserve/.test(x.desc); }), "boutique du donjon : la place de Petite Aventure va en réserve (pas « par jour »)");
+    var vq = JSON.stringify(g.VILLAGE_QUESTS.map(function (q) { return q.tutorial || null; }));
+    ok(vq.indexOf("×" + String(g.PRODUCTION_PLOTS_SHARED.upgradeCostMultPerLevel).replace(".", ",") + ")") >= 0 && vq.indexOf("(×1,4)") < 0, "zones : le coût annoncé suit upgradeCostMultPerLevel (×1,15)");
+    ok(vq.indexOf("jusqu'à -32 %") < 0 && vq.indexOf("comme les zones de production") < 0 && (g.WORLD_CAPS || [])[0] && g.WORLD_CAPS[0].workshopLevel === 2, "ateliers : niveau 2 en Forêt, plus de −32 % ni « comme les zones »");
+    var ce = (g.MEMORY_LEVELS || []).reduce(function (a, l) { return a.concat(l.options || l.choices || []); }, []).filter(function (o) { return o.id === "cle_econome"; })[0];
+    ok(!ce || (/reforge 8/.test(ce.desc) && !/reforges 7 et 8/.test(ce.desc)), "Clé économe : la description suit le moteur (reforge 8, pas la 7)");
+    ok(!/Taverne/.test(g.buildWarehouseSheetHTML("petite_ration")), "Entrepôt : la Petite ration ne cite pas la Taverne (aucun contrat)");
+    ok(/Taverne/.test(g.buildWarehouseSheetHTML("bois")), "Entrepôt : le Bois cite la Taverne (contrat « Charpente à refaire »)");
+    var m09 = JSON.stringify(st("montagne_09").tutorial.points);
+    ok(m09.indexOf("élites") < m09.indexOf("échoppe"), "montagne_09 : les élites avant l'échoppe");
+  } catch (err) { ok(false, "[338] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));

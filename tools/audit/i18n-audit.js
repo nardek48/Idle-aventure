@@ -165,6 +165,16 @@ console.log("Textes traduisibles relevés : " + keys.length + " (" + keys.filter
 console.log("Orphelins (dans le dictionnaire, plus dans le jeu) : " + orphans.length);
 console.log("{paramètres} différents : " + badParams.length);
 console.log("Appels non littéraux : " + nonLiteral.length);
+/* v3.517.0 (audit QUE-8) : motifs à relire, sans échec (accord neutre du héros, chasses retirées, « lame » hors MT2). */
+var WATCH = [
+  ["accord masculin du héros", /\btu (?:es|étais|seras) (?:[a-zà-ÿ]+(?:é|i|u)|prêt|seul|vivant)s?\b(?!e)/],
+  ["vivant", /\bvivants?\b/],
+  ["chasse retirée (minuscule : hors bâtiment Chasse)", /\b(?:chasses?|battues?)\b/],
+  ["ta lame (nom de mécanique à la Montagne)", /\bta lame\b/]
+];
+var watchHits = [];
+keys.forEach(function (k) { WATCH.forEach(function (w) { if (w[1].test(k)) watchHits.push(w[0] + " : " + k.slice(0, 110)); }); });
+console.log("Motifs à relire (information) : " + watchHits.length);
 /* v3.422.0 (décision Seb) : les écrans de développement (Admin, bac à sable, débogage) ne sont
    jamais vus par le joueur. Ils restent en français et sortent de l'estimation (comptés à part). */
 var DEV_SCREENS = ["js/ui/admin-view.js", "js/ui/combat-round-sandbox-view.js", "js/ui/debug-touch-view.js"];
@@ -177,6 +187,7 @@ if (DETAIL) {
   if (missing.length) { console.log("\nMANQUANTS"); missing.forEach(function (k) { console.log("  " + JSON.stringify(k) + "  (" + Object.keys(found[k].files).join(", ") + ")"); }); }
   if (dataUncovered.length) { console.log("\nDONNÉES HORS REGISTRE"); dataUncovered.forEach(function (x) { console.log("  " + x.global + "." + x.path + "  " + JSON.stringify(x.value.slice(0, 60)) + "  (" + x.file + ")"); }); }
   if (orphans.length) { console.log("\nORPHELINS"); orphans.forEach(function (k) { console.log("  " + JSON.stringify(k)); }); }
+  if (watchHits.length) { console.log("\nMOTIFS À RELIRE"); watchHits.forEach(function (x) { console.log("  " + x); }); }
 }
 if (HC_LIST) {
   console.log("\nEN DUR (écrans du joueur)");

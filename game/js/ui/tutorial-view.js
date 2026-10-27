@@ -86,7 +86,7 @@ var GENERIC_TUTORIALS = {
     title: "Le Campement",
     points: [
       { icon: "images/Icons/plots/hunting_blind.webp", text: "Le Campement est ton point de ralliement entre deux expéditions — c'est ici que tu gères tout ce qui n'est pas le combat." },
-      { icon: "images/Icons/combat_stats/stat_health.webp", text: "Ta santé — hors combat, tu récupères 5 % de tes PV max par minute, même hors ligne. Suis ta barre de vie et la régénération en haut de l'écran." },
+      { icon: "images/Icons/combat_stats/stat_health.webp", text: "Ta santé — hors combat et hors sortie (expédition, donjon, Petite Aventure), tu récupères 5 % de tes PV max par minute, même hors ligne. Suis ta barre de vie et la régénération en haut de l'écran." },
       { icon: "images/Icons/quests/ration_reward.webp", text: "Les rations soignent instantanément un % fixe de tes PV (35/60/100 % selon le type) : utile pour repartir vite sans attendre." },
       { icon: "images/Icons/quests/quest_list.webp", text: "Le tableau de missions — l'étape d'Histoire en cours (badge doré « Histoire ») est toujours en tête. Touche « Accepter », puis « Partir » pour ta prochaine quête : c'est elle qui te mènera au combat avec un vrai objectif." }
     ]
@@ -119,7 +119,7 @@ var GENERIC_TUTORIALS = {
     title: "Village & Production",
     points: [
       { icon: "images/Icons/scene/scene_harvest.webp", text: "Les parcelles produisent une ressource en continu, même hors ligne — mais chaque bâtiment a un stock local limité (« Plein dans Xm »)." },
-      { icon: "images/Icons/subtabs/inventory.webp", text: "Clique sur « Récolter » pour transférer ce stock vers ton Entrepôt, qui a son propre plafond (plus grand)." },
+      { icon: "images/Icons/subtabs/inventory.webp", text: "Touche « Récolter » pour transférer ce stock vers ton Entrepôt, qui a son propre plafond (plus grand)." },
       { icon: "images/Icons/system/upgrade.webp", text: "Améliorer une parcelle augmente sa vitesse de production et sa capacité de stock local." },
       { icon: "images/Icons/quests/mission_construction.webp", text: "Les Ateliers (comme la Cuisine de camp) transforment des ressources brutes (ex. viande + eau) en objets utiles (ex. rations) — file d'attente, continue même hors ligne." },
       { icon: "images/Icons/system/warehouse_supplies.webp", text: "Garde un œil sur ton Entrepôt : une ressource pleine ne se produit plus tant que tu ne l'as pas dépensée (l'Entrepôt ne rachète rien)." }
@@ -210,7 +210,7 @@ var GENERIC_TUTORIALS = {
     points: [
       { icon: "images/Icons/scene/traps/fx_venom.webp", text: "Un losange rouge sur un sentier, c'est un piège. Son icône dit ce qu'il fait : venin, alarme, entrave, aveuglement ou besace percée." },
       { icon: "images/Icons/scene/torch.webp", text: "Certains pièges sont cachés. La torche montre ceux des sentiers que tu peux prendre ; à la Crypte, la Lanterne allumée aussi." },
-      { icon: "images/Icons/scene/items/item_lockpicks.webp", text: "Sur un piège : Désamorcer (un dé ; raté, l'effet joue et tu es blessé), la Trousse (à coup sûr), Subir (l'effet, sans blessure) ou Rebrousser (10 Souffle)." },
+      { icon: "images/Icons/scene/items/item_lockpicks.webp", text: "Sur un piège : Désamorcer (un dé ; raté, l'effet joue et te blesse), la Trousse (à coup sûr), Subir (l'effet, sans blessure) ou Rebrousser (10 Souffle)." },
       { icon: "images/Icons/scene/traps/fx_snare.webp", text: "Les effets en cours s'affichent en rouge en haut de l'écran, avec les pas qu'il leur reste." },
       { icon: "images/Icons/scene/cuts/cut_fallen_tree.webp", text: "Un rond gris barré : le sentier est coupé pour ce run. Il reste toujours un autre chemin." }
     ]

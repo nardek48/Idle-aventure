@@ -78,8 +78,8 @@ var WarehouseManager = {
      unique, un atelier pourrait fabriquer vers un plafond que l'Entrepôt
      refuserait ensuite, et le lot serait perdu.
 
-     Les ressources sans `cap` (matières brutes) restent illimitées : le
-     bâtiment ne leur apporte rien et ne doit pas leur en inventer un. */
+     Matières brutes sans `cap` : plafond de base RAW_STOCK_BASE (v3.330.0, E1),
+     plus le bonus du bâtiment, comme les fabriquées. */
   getCap: function (key) {
     var def = (typeof WAREHOUSE_RESOURCES !== "undefined") ? WAREHOUSE_RESOURCES[key] : null;
     if (!def) return Infinity;

@@ -406,7 +406,7 @@ var DUNGEON_SHOP = [
     desc: "−10 % d'or par relance d'affixe, par niveau.",
     effect: "enchantDiscount", perLevel: 1, baseCost: 30, costMult: 1.6, maxLevel: 3 },
   { id: "d_eclaireur", name: "Carte de l'éclaireur", icon: "images/Icons/dungeon/dungeon_eclaireur.webp",
-    desc: "+1 Petite Aventure par jour, par niveau.",
+    desc: "+1 place de Petite Aventure en réserve, par niveau.",
     effect: "paBonus", perLevel: 1, baseCost: 60, costMult: 2, maxLevel: 2 },
   /* v3.463.0 (N-N, N-O) : paliers ouverts par le meilleur niveau de la Crypte (shopPalierDungeonId).
      Icônes livrées en v3.465.1. Prix à juger en jeu. */

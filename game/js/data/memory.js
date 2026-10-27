@@ -127,7 +127,7 @@ var MEMORY_LEVELS = [
   ] },
   { level: 12, theme: "La pierre qui tient", jalon: true, options: [
     { id: "cle_econome", side: "garder", name: "Clé économe", icon: "images/Icons/memory/cle_econome.webp",
-      desc: "La Forge 4 et les reforges 7 et 8 demandent une Clé de voûte de moins (jamais moins d'une)." },
+      desc: "La Forge 4, la Halle 9 et 10 et la reforge 8 demandent une Clé de voûte de moins (jamais moins d'une ; sur la reforge, ne s'ajoute pas à la clé du Cœur)." },
     { id: "taille_rapide", side: "donner", name: "Taille rapide", icon: "images/Icons/memory/taille_rapide.webp",
       desc: "Les Clés de voûte se taillent deux fois plus vite." },
     { id: "ce_qui_reste", line: "garder", name: "Ce qui reste", icon: "images/Icons/memory/ce_qui_reste.webp",

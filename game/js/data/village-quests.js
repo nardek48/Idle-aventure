@@ -41,10 +41,10 @@ var VILLAGE_QUESTS = [
       icon: "images/Icons/plots/enriched_soil.webp",
       title: "Agrandir un bâtiment : les zones",
       points: [
-        { icon: "images/Icons/quests/quest_resources.webp", text: "Chaque bâtiment de production possède 9 zones (les « Parcelles » pour le Champs). Seule la première est ouverte au départ — les autres se débloquent contre des ressources." },
+        { icon: "images/Icons/quests/quest_resources.webp", text: "Chaque bâtiment de production possède 9 zones (les « Parcelles » pour le Champs). Seule la première est ouverte au départ. En Forêt, tu peux en ouvrir 3 contre des ressources ; les autres s'ouvrent dans les mondes suivants." },
         { icon: "images/Icons/scene/scene_harvest.webp", text: "Chaque zone ouverte produit en continu, indépendamment des autres, avec son propre stock local — plus de zones, plus de blé à chaque récolte." },
         { icon: "⚖️", text: "Les zones ont des profils différents (rapide, équilibrée, lente) : une zone lente produit moins vite mais stocke davantage — pratique si tu récoltes rarement." },
-        { icon: "images/Icons/workshops/fine_sawmill.webp", text: "Le déblocage du Champ Béni coûte du bois et de la pierre : la Scierie et la Carrière alimentent le Champs — chaque bâtiment nourrit les autres." }
+        { icon: "images/Icons/workshops/fine_sawmill.webp", text: "Le déblocage du Champ Béni coûte du bois et de la pierre : la Scierie et la Carrière (ouverte par l'expédition de la Veine instable) alimentent le Champs — chaque bâtiment nourrit les autres." }
       ]
     }
   },
@@ -74,9 +74,9 @@ var VILLAGE_QUESTS = [
       icon: "images/Icons/system/upgrade.webp",
       title: "Améliorer une zone : les niveaux",
       points: [
-        { icon: "images/Icons/system/upgrade.webp", text: "Chaque zone ouverte peut monter jusqu'au niveau 5. Chaque niveau augmente à la fois sa vitesse de production et sa capacité de stock local." },
+        { icon: "images/Icons/system/upgrade.webp", text: "Chaque zone ouverte peut monter de niveau : jusqu'au 5 en Forêt, et le plafond monte à chaque monde. Chaque niveau augmente à la fois sa vitesse de production et sa capacité de stock local." },
         { icon: "images/Icons/scene/node_clear_spring.webp", text: "Pour le Champs, l'amélioration coûte du bois et de l'eau — le Puits n'est pas là que pour les rations." },
-        { icon: "📈", text: "Le coût grimpe à chaque niveau (×1,4) : monter une zone au niveau 2 est bon marché, la mener au niveau 5 est un vrai investissement." },
+        { icon: "📈", text: "Le coût grimpe un peu à chaque niveau (×1,15)." },
         { icon: "images/Icons/combat_stats/stat_critical.webp", text: "Conseil : améliore d'abord la zone que tu récoltes le plus souvent — c'est elle qui convertit le mieux chaque ressource dépensée." }
       ]
     }
@@ -233,9 +233,9 @@ var VILLAGE_QUESTS = [
       icon: "images/Icons/system/wrench_settings.webp",
       title: "Améliorer un atelier",
       points: [
-        { icon: "images/Icons/system/upgrade.webp", text: "Chaque atelier monte jusqu'au niveau 5, indépendamment des autres (la Scierie fine niveau 3 ne change rien à la Menuiserie)." },
-        { icon: "images/Icons/workshops/craft_speed.webp", text: "Chaque niveau accélère les crafts (-8 % de temps par niveau, jusqu'à -32 %) ET allonge la file d'attente : sa taille est égale au niveau de l'atelier." },
-        { icon: "images/Icons/plots/reinforced_gallery.webp", text: "Le coût se paie en planches et lingots, et grimpe de ×1,4 par niveau — comme les zones de production." },
+        { icon: "images/Icons/system/upgrade.webp", text: "Chaque atelier monte de niveau (2 en Forêt, 3 dans les mondes suivants), indépendamment des autres (la Scierie fine niveau 3 ne change rien à la Menuiserie)." },
+        { icon: "images/Icons/workshops/craft_speed.webp", text: "Chaque niveau accélère les crafts (-8 % de temps par niveau) ET allonge la file d'attente : sa taille est égale au niveau de l'atelier." },
+        { icon: "images/Icons/plots/reinforced_gallery.webp", text: "Le coût se paie en planches et lingots, et grimpe de ×1,4 par niveau." },
         { icon: "images/Icons/combat_stats/stat_critical.webp", text: "Conseil : améliore d'abord l'atelier qui tourne le plus (souvent celui en mode Auto) — chaque pour cent de vitesse y rapporte davantage." }
       ]
     }

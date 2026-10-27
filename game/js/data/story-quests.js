@@ -329,15 +329,15 @@ var STORY_QUESTS = {
           points: [
             { icon: "images/Icons/combat_stats/stat_attack.webp", text: "Attaque de base — frappe l'ennemi sans coûter de ressource. Toujours disponible." },
             { icon: "images/Icons/scene/node_discovery.webp", text: "Compétences (1/2/3) — coûtent de la ressource de ta classe (Rage, Concentration ou Mana selon ton héros), pour plus de dégâts ou un effet spécial." },
-            { icon: "images/Icons/combat_stats/stat_defense.webp", text: "Défense — réduit ou évite le prochain coup. Utile quand ce bandeau apparaît sous la barre de vie de l'ennemi : il prépare une attaque plus forte.", preview: "charge" },
-            { icon: "images/Icons/combat_stats/stat_speed.webp", text: "Jauge de célérité — se remplit à chaque round. Une fois pleine, tu frappes deux fois d'affilée." }
+            { icon: "images/Icons/combat_stats/stat_defense.webp", text: "Défense (Garde, Esquive ou Barrière arcanique selon ta classe) — réduit ou évite le prochain coup. Utile quand ce bandeau apparaît sous la barre de vie de l'ennemi : il prépare une attaque plus forte.", preview: "charge" },
+            { icon: "images/Icons/combat_stats/stat_speed.webp", text: "Jauge de célérité — se remplit quand tu frappes (attaque ou compétence de dégâts). Une fois pleine, tu frappes deux fois d'affilée." }
           ]
         },
         /* v3.293.0 (règle Seb) : les 5 victoires se jouent dans le run « Premier sang »
            (data/adventure-quests.js), plus sur l'onglet Combat nu. Mêmes ennemis. */
         check: function (game) { return storyAdvDone(game, "aq_story_premier_sang"); },
         progress: function (game) {
-          return "Kills " + storyAdvProgress(game, "aq_story_premier_sang", "kills_premier_sang", 5) + "/5";
+          return "Ennemis " + storyAdvProgress(game, "aq_story_premier_sang", "kills_premier_sang", 5) + "/5";
         }
       },
       {
@@ -359,6 +359,7 @@ var STORY_QUESTS = {
           title: "L'Amélioration",
           points: [
             { icon: "images/Icons/system/upgrade.webp", text: "Chaque amélioration augmente une statistique de façon permanente contre de l'or. Le prix grimpe à chaque achat — étale tes investissements plutôt que de tout miser sur une seule stat." },
+            { icon: "images/Icons/combat_stats/stat_attack.webp", text: "Ta stat principale, marquée à l'écran, fait l'essentiel de tes dégâts : Force pour le Chevalier, Célérité pour le Rôdeur, Volonté pour le Mage." },
             { icon: "images/Icons/improvement_icons/power.webp", text: "Force — dégâts de ton attaque de base." },
             { icon: "images/Icons/combat_stats/stat_critical.webp", text: "Précision — chance de coup critique." },
             { icon: "images/Icons/scene/node_discovery.webp", text: "Volonté — dégâts bonus en cas de critique." },
@@ -416,7 +417,7 @@ var STORY_QUESTS = {
         reward: STORY_REWARDS.forest_05,
         linkTo: { section: "adventure", cardId: "adv_aq_forest_expedition" },
         check: function (game) { return !!(game.adventureQuestsCompleted || {}).aq_forest_expedition; },
-        progress: function (game) { return (game.adventureQuestsCompleted || {}).aq_forest_expedition ? "1/1" : "0/1"; }
+        progress: function (game) { return "Prouver sa valeur " + ((game.adventureQuestsCompleted || {}).aq_forest_expedition ? "1/1" : "0/1"); }
       },
       /* ---------- Acte II — Le campement devient village ---------- */
       {
@@ -451,7 +452,7 @@ var STORY_QUESTS = {
         reward: STORY_REWARDS.forest_07,
         linkTo: { section: "expedition", cardId: "scene_source_tarie" }, // v3.123.0 (Lot S2b) : migrée vers le scene-engine
         check: function () { return storyExplorationDone("driedSpring"); },
-        progress: function () { return storyExplorationDone("driedSpring") ? "1/1" : "0/1"; }
+        progress: function () { return "Source " + (storyExplorationDone("driedSpring") ? "1/1" : "0/1"); }
       },
       {
         id: "forest_08",
@@ -479,7 +480,7 @@ var STORY_QUESTS = {
           points: [
             { icon: "images/Icons/subtabs/inventory.webp", text: "Cette expédition consomme une Petite ration — la source t'en a donné une. Les suivantes, il faudra les fabriquer." },
             { icon: "images/Icons/quests/mission_construction.webp", text: "Rends-toi au Village, dans l'atelier Cuisine de camp (bâtiment Chasse)." },
-            { icon: "images/Icons/quests/ration_reward.webp", text: "Choisis la recette Petite ration (8 Viande + 4 Eau) et clique sur Fabriquer." },
+            { icon: "images/Icons/quests/ration_reward.webp", text: "Choisis la recette Petite ration (8 Viande + 4 Eau) et touche Fabriquer." },
             { icon: "images/Icons/quests/quest_adventure.webp", text: "Une fois la ration en stock, reviens sur ce tableau et lance l'expédition — elle la consommera automatiquement." }
           ]
         },
@@ -503,7 +504,7 @@ var STORY_QUESTS = {
         reward: STORY_REWARDS.forest_09,
         linkTo: { section: "expedition", cardId: "scene_veine_instable" }, // v3.123.0 (Lot S2b) : migrée vers le scene-engine
         check: function () { return storyExplorationDone("unstableVein"); },
-        progress: function () { return storyExplorationDone("unstableVein") ? "1/1" : "0/1"; }
+        progress: function () { return "Veine " + (storyExplorationDone("unstableVein") ? "1/1" : "0/1"); }
       },
       /* v3.259.0 (Cartes Vivantes, lot C-4) : introduction du Recouvrement par les anciens.
          v3.260.0 (retour de jeu Seb) : déplacée après « La veine instable », en fin d'Acte II.
@@ -675,16 +676,16 @@ var STORY_QUESTS = {
         title: "La tanière du Basilic",
         act: "Acte III — Le héros s'affirme",
         narrative: {
-          objective: "Sous les racines, une tanière. Les marques n'y ont pas cours — seule ta lame compte. Prends un ticket, et redescends vivant.",
+          objective: "Sous les racines, une tanière. Seule ta force y compte. Va jusqu'au Basilic, et remonte en un seul morceau.",
           completion: "Le Basilic recule. Ses éclats ouvriront des portes que l'or ne peut pas."
         },
-        objectiveLabel: "Vaincre le Donjon I",
+        objectiveLabel: "Vaincre le Basilic au bout de la Tanière",
         hint: "Conseil : les armes des deux élites de la Forêt (Quêtes › Aventure) et un Terrain d'entraînement au niveau 4 sont presque indispensables pour tenir les quinze vagues et le Basilic.", // v3.429.6 : même conseil que la feuille de lancement
         unlockTabs: ["dungeon"],
         reward: STORY_REWARDS.forest_14,
         linkTo: { tab: "dungeon" },
         check: function (game) { return !!((game.dungeonTierCleared || {})[1]); },
-        progress: function (game) { return (game.dungeonTierCleared || {})[1] ? "1/1" : "0/1"; }
+        progress: function (game) { return "Basilic " + ((game.dungeonTierCleared || {})[1] ? "1/1" : "0/1"); }
       },
 
       /* v3.268.0 (L-2) — premier compagnon. Même forme que forest_12 (le Grimoire) :
@@ -706,7 +707,7 @@ var STORY_QUESTS = {
             { who: null, text: "Orwen met un morceau de pain de côté. Deux, cette fois." }
           ]
         },
-        objectiveLabel: "Remporter 3 combats avec Wenna à tes côtés (élite, donjon ou carte)",
+        objectiveLabel: "Mener 3 combats avec Wenna à tes côtés (élite, donjon ou carte)",
         unlockTabs: ["companions"],
         reward: STORY_REWARDS.forest_wenna,
         linkTo: { section: "adventure" }, // v3.293.0 : le tableau des missions, plus l'onglet Combat nu
@@ -1544,7 +1545,7 @@ STORY_QUESTS.desert = {
         dialogue: [
           { who: "Maddoc", text: "Elles savent que tu y vas." },
           { who: "Wenna", text: "Et lui ?" },
-          { who: "Le Veilleur", text: "Lui le sait depuis que tu es entré. Il pose une question à ceux qui arrivent. Une seule." },
+          { who: "Le Veilleur", text: "Lui le sait depuis ton arrivée. Il pose une question à ceux qui arrivent. Une seule." },
           { who: "Wenna", text: "Laquelle ?" },
           { who: "Le Veilleur", text: "Il la choisit en te regardant." }
         ],
@@ -1925,7 +1926,7 @@ STORY_QUESTS.ruins = {
         title: "Le Marché des Ruines",
         points: [
           { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "La caravane de la Halle marchande peut maintenant partir vers le Marché des Ruines. Tu choisis le marché au départ, dans Campement › Expéditions." },
-          { icon: "images/Icons/resources/pierre_errante_icon.webp", text: "Elle en rapporte de l'or et de la Pierre errante, la pierre des Ruines." }
+          { icon: "images/Icons/resources/pierre_errante_icon.webp", text: "Elle en rapporte de l'or. Au trajet Long (Halle 3), parfois de la Pierre errante, la pierre des Ruines." }
         ]
       },
       check: function () { return storyDesertFlag("ruinsMarketDone"); },
@@ -2724,7 +2725,7 @@ STORY_QUESTS.crypt = {
         dialogue: [
           { who: "Sarkel", text: "Ici, je ne vends rien. Les morts n'achètent pas." },
           { who: "Sarkel", text: "Mais ils laissent quelque chose quand on leur laisse quelque chose." },
-          { who: "Sarkel", text: "Envoie-moi une caravane d'Aeswyn. Du pain, surtout." },
+          { who: "Sarkel", text: "Envoie-moi une caravane d'Aeswyn. Du blé, surtout. On en fera du pain." },
           { who: "Ysolt", text: "Le pain, ils s'en souviennent." }
         ],
         completionDialogue: [
@@ -2750,7 +2751,7 @@ STORY_QUESTS.crypt = {
         title: "Le Marché de la Crypte",
         points: [
           { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "La caravane de la Halle marchande peut maintenant partir vers le Marché de la Crypte. Tu choisis le marché au départ, dans Campement › Expéditions." },
-          { icon: "images/Icons/resources/cire_sepulcre_icon.webp", text: "Elle en rapporte de l'or et de la Cire de sépulcre." }
+          { icon: "images/Icons/resources/cire_sepulcre_icon.webp", text: "Elle en rapporte de l'or. Au trajet Long (Halle 3), parfois de la Cire de sépulcre." }
         ]
       },
       check: function () { return storyDesertFlag("cryptMarketDone"); },
@@ -3828,7 +3829,7 @@ function storyItemComptePourPalier(it, equipped) {
 }
 function storyPalierMontagneMissing(game) {
   var p = storyPalierMontagne(game), out = [];
-  if (p.pieces < STORY_PALIER_MONTAGNE.pieces) out.push({ text: _t("Pièces Épiques de la Montagne : {a} / {b}", { a: p.pieces, b: STORY_PALIER_MONTAGNE.pieces }), where: storyMontagneTrousTexte(game) + _t("Les étapes 6 à 8, l'échoppe de la Halle marchande et les élites de la carte de la Montagne.") });
+  if (p.pieces < STORY_PALIER_MONTAGNE.pieces) out.push({ text: _t("Pièces Épiques de la Montagne : {a} / {b}", { a: p.pieces, b: STORY_PALIER_MONTAGNE.pieces }), where: storyMontagneTrousTexte(game) + _t("Les étapes 6 à 8, les élites de la carte de la Montagne (35 % par victoire) et l'échoppe de la Halle marchande.") });
   // la reforge : même lecture que les autres paliers (pièces déjà comptées ci-dessus)
   return out.concat(storyPalierManques(game, "epic", { pieces: 0, reforge: STORY_PALIER_MONTAGNE.reforge }, function () { return null; }).filter(Boolean));
 }
@@ -4139,7 +4140,7 @@ STORY_QUESTS.mountain = {
           { icon: "images/Icons/menu_icons/map_menu.webp", text: "La carte de la Montagne fonctionne comme celle de la Crypte : tu libères un secteur en terminant sa Petite Aventure." },
           { icon: "images/Icons/combat_actions/vein_cut.webp", text: "Chaque secteur a sa veine. Avant de partir, tu choisis : la tailler (plus de Cendre vive, mais le secteur chauffe et ses combats sont plus durs ensuite) ou la laisser (plus facile, rapporte moins)." },
           { icon: "images/Icons/combat_status/vein_heat.webp", text: "Un échec recouvre le secteur de lave : c'est La coulée. Il reste plus dur jusqu'au lendemain." },
-          { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "Le Marché de la Montagne est sur la carte, à côté du Replat. La caravane en rapporte de l'or et de la Cendre vive." }
+          { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "Le Marché de la Montagne est sur la carte, à côté du Replat. La caravane en rapporte de l'or. Au trajet Long (Halle 3), parfois de la Cendre vive." }
         ]
       },
       check: function () { return storyMountainSectorsFreed() >= 2; },
@@ -4210,7 +4211,7 @@ STORY_QUESTS.mountain = {
         title: "Le palier Épique",
         points: [
           { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Pour aller plus loin dans la Montagne, quatre de tes sept emplacements doivent porter une pièce Épique de la Montagne. Celles d'en bas ne comptent pas." },
-          { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "Les étapes de l'acte t'en ont donné trois. La quatrième : l'échoppe de la Halle marchande, ou les élites de la carte de la Montagne." },
+          { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "Les étapes de l'acte t'en ont donné trois. La quatrième : les élites de la carte de la Montagne, 35 % de chance par victoire. L'échoppe de la Halle marchande en vend aussi, à prix fort." },
           { icon: "images/Icons/workshops/smithing_station.webp", text: "L'arme se reforge jusqu'au niveau 10 à la Forge 5." }
         ]
       },

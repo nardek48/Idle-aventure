@@ -453,8 +453,11 @@ function buildWarehouseSheetHTML(key) {
 
   // Valeur de référence (Taverne) — v3.330.0 (E6) : plus de vente
   var refValue = Number(def.sellPrice || 0);
+  // v3.517.0 (audit) : la Taverne n'est citée que si un de ses contrats demande cette ressource
+  var inTavern = typeof TAVERN_CONTRACT_TEMPLATES !== "undefined" && TAVERN_CONTRACT_TEMPLATES.some(function (t) { return t.resourceId === key; });
   h += '<p class="wh-ref">' + (refValue > 0
-    ? esc(_t("Valeur de référence : {n} or. Se livre à la Taverne, dans ses contrats.", { n: formatNumber(refValue) }))
+    ? esc(inTavern ? _t("Valeur de référence : {n} or. Se livre à la Taverne, dans ses contrats.", { n: formatNumber(refValue) })
+      : _t("Valeur de référence : {n} or.", { n: formatNumber(refValue) }))
     : esc(_t("Ne se vend pas : sert aux constructions et aux ateliers."))) + '</p>';
 
   h += '</div></div></div>';
