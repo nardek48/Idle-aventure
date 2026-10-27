@@ -389,7 +389,7 @@ var TalentManager = {
     }
     if (action && action.id === "mage_arcane_nova" && foe && foe.dot && this.has("m_incendie")) m *= 1 + this.V("m_incendie");
     if (!action && game._relaisReady) { delete game._relaisReady; if (this.has("c_relais")) m *= 1 + this.V("c_relais"); } // Relais : consommé par l'attaque de base
-    if (window.CompanionRelics) m *= 1 + CompanionRelics.heroDamageBonus(); // H4 reliques : Talisman des compagnons présents
+    if (window.CompanionRelics) m *= 1 + CompanionRelics.heroDamageBonus(); // H4 reliques : Emblème des compagnons présents
     return m;
   },
 

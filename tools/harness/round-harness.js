@@ -19157,6 +19157,32 @@ console.log("\n[333] v3.511.0 — chasses et battues retirées, onglet Chasse re
   } catch (err) { ok(false, "[333] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[334] v3.512.0 — une relique de compagnon dans la vitrine de l'échoppe");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
+    var game = g.game, S = g.EquipShopManager, CR = g.CompanionRelics, CM = g.CompanionManager;
+    game.equipShopStarterServed = true; game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true };
+    CM.state("wenna").unlocked = true; CM.state("wenna").present = true; CM.state("wenna").upgrades = 0;
+    ok(!S.generateStock().some(function (x) { return x.kind === "relic"; }), "aucun emplacement de relique ouvert : pas de relique en vitrine");
+    CM.state("wenna").upgrades = 5;
+    var st = S.generateStock(), rel = st.filter(function (x) { return x.kind === "relic"; });
+    ok(rel.length === 1 && st.length === S.getShopSize() && st[1] === rel[0], "une relique, à la 2e place, la vitrine garde sa taille");
+    ok(rel[0].w === 3 && rel[0].price === 1000 * g.getEquipShopWorldPriceMult() && rel[0].rarity === undefined, "rang du monde le plus loin (Crypte), prix 1 000 × le monde, sans rareté d'équipement");
+    game.equipShopStock = st; game.equipShopResetTime = Date.now() + 3600e3; game.worldsEverReached = { 0: true };
+    ok(!S.hasOutOfTierStock(), "retour en Forêt : la relique ne force pas un renouvellement");
+    var n0 = CR.ensure().inv.length; game.gold = rel[0].price + 5;
+    S.buy(rel[0].uid);
+    ok(CR.ensure().inv.length === n0 + 1 && rel[0].bought && game.gold === 5, "achat : relique dans l'inventaire, or débité, carte achetée");
+    var r = CR.ensure().inv[CR.ensure().inv.length - 1];
+    ok(r.f === rel[0].f && r.w === 3, "même famille et même monde que l'offre");
+    ok(CR.rarity({ w: 0 }) === "common" && CR.rarity({ w: 1 }) === "green" && CR.rarity({ w: 3 }) === "epic" && CR.rarity({ w: 4 }) === "epic" && CR.rarity({ w: 5 }) === "legendary", "couleur du monde : commun, vert… violet (Crypte, Montagne), orange (Tour)");
+    ok(g.COMPANION_RELIC_FAMILIES.talisman.name === "Emblème", "la relique « Talisman » s'appelle Emblème (l'équipement garde son Talisman)");
+    var html = g.buildEquipShopCardHTML(Object.assign({}, rel[0], { bought: false }));
+    ok(/shop-relic rarity-epic/.test(html) && /shop-relic-ribbon/.test(html) && /shop-relic-chip/.test(html), "carte : ruban, couleur du monde, pastille par compagnon");
+  } catch (err) { ok(false, "[334] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

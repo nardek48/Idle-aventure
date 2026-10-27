@@ -89,7 +89,7 @@ function buildCompanionRelicsHTML(companionId) {
     if (!r) { cells += '<button type="button" class="cp-relic-slot is-empty" onclick="companionPickRelic(\'' + companionId + '\', ' + k + ')"><span class="cp-relic-plus">+</span><b>' + esc(_t("Équiper")) + '</b></button>'; continue; }
     n++;
     cells += '<button type="button" class="cp-relic-slot" onclick="companionPickRelic(\'' + companionId + '\', ' + k + ')">' + companionRelicIconHTML(r, "cp-relic-ico")
-      + '<b>' + esc(CR.name(r)) + '</b><small>' + esc(CR.effectText(r)) + '</small></button>';
+      + '<b class="rarity-' + CR.rarity(r) + '">' + esc(CR.name(r)) + '</b><small>' + esc(CR.effectText(r)) + '</small></button>';
   }
   return '<div class="cp-relics"><div class="cp-relics-h"><span>' + _t("Reliques") + ' <b>' + n + ' / ' + open + '</b></span><small>'
     + esc(_t("une par famille · rapportées de patrouille")) + '</small></div><div class="cp-relic-slots">' + cells + '</div></div>';
@@ -117,7 +117,7 @@ function buildCompanionRelicPickHTML() {
     var btn = here ? '<button type="button" class="cp-relic-btn is-ghost" onclick="companionUnequipRelic(\'' + p.id + '\', ' + idx + ')">' + esc(_t("Retirer")) + '</button>'
       : famPrise ? '<button type="button" class="cp-relic-btn" disabled>' + esc(_t("Famille prise")) + '</button>'
       : '<button type="button" class="cp-relic-btn" onclick="companionEquipRelic(\'' + p.id + '\', ' + p.slot + ', ' + r.id + ')">' + esc(_t("Équiper")) + '</button>';
-    h += '<div class="cp-relic-row">' + companionRelicIconHTML(r, "cp-relic-ico is-small") + '<span class="cp-relic-txt"><b>' + esc(CR.name(r)) + '</b><small class="is-fx">'
+    h += '<div class="cp-relic-row">' + companionRelicIconHTML(r, "cp-relic-ico is-small") + '<span class="cp-relic-txt"><b class="rarity-' + CR.rarity(r) + '">' + esc(CR.name(r)) + '</b><small class="is-fx">'
       + esc(CR.effectText(r)) + '</small><small>' + esc(sub) + '</small></span>' + btn + '</div>';
   });
   return h + '</div></div>';

@@ -35,6 +35,10 @@ var EQUIP_SHOP_PRICES = {
    les prix. S'applique aussi au refresh manuel. Les potions ne sont PAS concernées. */
 var EQUIP_SHOP_WORLD_PRICE_MULT = [1, 4, 10, 25, 90, 200];
 
+/* v3.512.0 (option A, Seb 27/10) : une relique de compagnon parmi les places de la vitrine, famille au hasard,
+   rang du monde le plus loin atteint. Prix : 1 000 × le multiplicateur du monde (banc : 2 500 n'était jamais payable). */
+var EQUIP_SHOP_RELIC_BASE_PRICE = 1000;
+
 function getEquipShopWorldPriceMult() {
   var maxWorld = 0;
   if (game.worldsEverReached && typeof game.worldsEverReached === "object") {
@@ -134,7 +138,23 @@ var EquipShopManager = {
     this._capTopRarity(stock, size);
     var self = this;
     stock.forEach(function (it) { it.price = self.getPrice(it); it.bought = false; });
+    var relic = this._relicOffer();
+    if (relic) { if (stock.length > 1) stock[1] = relic; else stock.push(relic); } // 2e place : visible sans défiler
     return stock;
+  },
+
+  /* v3.512.0 : l'offre de relique (sans champ rarity : hasOutOfTierStock et _capTopRarity l'ignorent).
+     Seulement si un compagnon a déjà un emplacement ouvert, sinon la place reste à l'équipement. */
+  _relicOffer: function () {
+    if (!window.CompanionRelics || !window.CompanionManager || typeof CompanionManager.unlockedIds !== "function") return null;
+    if (!CompanionManager.unlockedIds().some(function (id) { return CompanionRelics.slotsOpen(id) > 0; })) return null;
+    var w = 0;
+    Object.keys(game.worldsEverReached || {}).forEach(function (k) { if (game.worldsEverReached[k]) w = Math.max(w, Number(k)); });
+    return {
+      uid: "shoprel_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 6),
+      kind: "relic", f: COMPANION_RELIC_ORDER[Math.floor(Math.random() * COMPANION_RELIC_ORDER.length)], w: w,
+      price: Math.floor(EQUIP_SHOP_RELIC_BASE_PRICE * getEquipShopWorldPriceMult()), bought: false
+    };
   },
 
   /* v3.308.0 : nombre maximal d'objets de la rareté du sommet pour une vitrine de `size`. */
@@ -250,6 +270,7 @@ var EquipShopManager = {
     // le prochain renouvellement (6h ou manuel) appliquera le nouveau multiplicateur.
     var price = typeof item.price === "number" ? item.price : this.getPrice(item);
     if ((game.gold || 0) < price) return showToast(_t("Pas assez d'or"), 1000);
+    if (item.kind === "relic") return this._buyRelic(item, price);
 
     var owned = Object.assign({}, item);
     delete owned.price;
@@ -275,6 +296,20 @@ var EquipShopManager = {
     showToast(worn ? _t("Équipé : {x}", { x: _td(owned.name) }) : _td(owned.name), 1500);
     if (typeof renderAll === "function") renderAll();
     saveGame();
+  },
+
+  /* v3.512.0 : la relique rejoint l'inventaire des reliques ; elle s'équipe dans la fiche du compagnon. */
+  _buyRelic: function (item, price) {
+    if (!window.CompanionRelics) return false;
+    var r = CompanionRelics.grant(item.f, item.w);
+    game.gold -= price;
+    item.bought = true;
+    addLog("🛒 " + _t("{x} achetée à l'échoppe ({n} or)", { x: CompanionRelics.name(r), n: formatNumber(price) }), "event");
+    showToast(_t("{x} : à équiper dans la fiche d'un compagnon", { x: CompanionRelics.name(r) }), 1800);
+    if (window.FilRouge) FilRouge.invalidate();
+    if (typeof renderAll === "function") renderAll();
+    saveGame();
+    return true;
   }
 };
 

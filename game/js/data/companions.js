@@ -48,7 +48,7 @@ var COMPANION_RELIC_FAMILIES = {
   ecorce: { name: "Écorce", hpPct: 0.03 },       // +3 % de PV
   sceau: { name: "Sceau", threatPct: 0.06 },     // +6 % de menace
   sablier: { name: "Sablier", cdAt5: 2, cd: 1 }, // recharge −1 (−2 au rang 5)
-  talisman: { name: "Talisman", heroPct: 0.01 }, // le héros +1 % de dégâts quand ce compagnon est présent
+  talisman: { name: "Emblème", heroPct: 0.01 }, // le héros +1 % ; v3.512.0 : « Emblème » (l'équipement a déjà un Talisman), id inchangé
   besace: { name: "Besace", patrolPct: 0.05 }    // +5 % de butin de patrouille
 };
 var COMPANION_RELIC_ORDER = ["croc", "ecorce", "sceau", "sablier", "talisman", "besace"];
