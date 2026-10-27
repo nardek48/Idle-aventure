@@ -106,25 +106,49 @@ var MissionBoard = {
       /* v3.429.2 (bug Seb) : un choix en attente (« Décider ») ne se fait que sur la carte d'étape
          de Quêtes › Histoire — le bouton y mène, avant tout lien de l'étape. */
       var cardChoice = status === "accepted" && typeof storyPendingCardChoice === "function" ? storyPendingCardChoice(chapterId) : null;
+      // v3.518.0 (audit QUE-5) : une offrande faisable sur la carte d'étape (l'Outre du Veilleur) se fait d'ici
+      var offer = status === "accepted" && !cardChoice ? StoryQuestManager.getOfferingInfo(chapterId, "story") : null;
       if (cardChoice) {
-        m.launch = function () { if (typeof openQuestsAt === "function") openQuestsAt("worldexpedition"); };
+        m.launch = function () { if (typeof openStoryStepActions === "function") openStoryStepActions(chapterId); else if (typeof openQuestsAt === "function") openQuestsAt("worldexpedition"); };
         m.launchLabel = cardChoice.choice.buttonLabel ? _td(cardChoice.choice.buttonLabel) : _t("Choisir");
-      } else if (status === "accepted" && step.linkTo) m.launch = function () { MissionBoard.launchStoryLink(chapterId, step.linkTo); };
+      } else if (offer && offer.canOffer) {
+        m.launch = function () { StoryQuestManager.offerToEmbers(chapterId); };
+        m.launchLabel = _td(offer.step.offeringUi.buttonLabel);
+      } else if (status === "accepted" && step.linkTo) {
+        m.launch = function () { MissionBoard.launchStoryLink(chapterId, step.linkTo); };
+        m.launchLabel = MissionBoard.storyLinkLabel(step.linkTo); // v3.518.0 (QUE-11) : le verbe de la destination
+      }
       out.push(m);
     });
     return out;
   },
 
-  /* v3.458.3 (audit C1) : « Partir » d'une étape liée à une quête d'aventure ou de chasse lance cette
-     quête comme sa propre carte (fenêtre « Commencer », pronostic, préparation), sans le détour par
-     Quêtes où elle redemandait « Accepter ». Sinon (onglet, carte, donjon…) : le lien d'origine. */
+  /* v3.458.3 (audit C1) : « Partir » d'une étape liée à une quête d'aventure lance cette quête comme sa
+     propre carte (fenêtre « Commencer », pronostic, préparation), sans le détour par Quêtes. v3.518.0 (audit
+     QUE-1 à 3) : aussi les Petites Aventures et le donjon du monde ; un `tab` en fonction est évalué. */
   launchStoryLink: function (chapterId, linkTo) {
-    var cardId = String((linkTo && !linkTo.tab && !linkTo.beforeGo && linkTo.cardId) || "");
-    var id = cardId.indexOf("adv_hq_") === 0 ? "hunt_" + cardId.slice(4) : (cardId.indexOf("adv_aq_") === 0 ? cardId : "");
-    var target = id ? this.getById(id) : null;
-    if (target && target.status === "available" && target.accept && typeof campMissionAction === "function") return campMissionAction(id, "accept");
-    if (target && target.status === "running" && target.launch) return target.launch();
-    StoryQuestManager.goToLink(chapterId);
+    linkTo = linkTo || {};
+    var tab = typeof linkTo.tab === "function" ? linkTo.tab(game) : linkTo.tab;
+    var cardId = String((!tab && !linkTo.beforeGo && linkTo.cardId) || "");
+    var target = /^(adv_|petite_aventure_)/.test(cardId) ? this.getById(cardId) : null;
+    var dungeon = tab === "dungeon" && !linkTo.afterGo ? (window.DUNGEONS || []).find(function (d) { return d.worldId === chapterId; }) : null;
+    if (target && target.status === "available" && target.accept && typeof campMissionAction === "function") campMissionAction(cardId, "accept");
+    else if (target && target.status === "running" && target.launch) target.launch();
+    else if (dungeon && typeof openDungeonSheet === "function" && window.DungeonManager && DungeonManager.isUnlocked(dungeon.id)) {
+      if (typeof switchTab === "function") switchTab("dungeon");
+      openDungeonSheet(dungeon.id);
+    } else StoryQuestManager.goToLink(chapterId);
+    // v3.518.0 (audit TUT-4) : un tutoriel d'étape jamais vu, que l'arrivée n'a pas ouvert, s'ouvre ici
+    if (typeof showStepTutorialAfterGo === "function") showStepTutorialAfterGo(chapterId);
+  },
+
+  /* v3.518.0 (audit QUE-11) : le verbe du bouton selon la destination de l'étape ; null = « Partir ». */
+  storyLinkLabel: function (linkTo) {
+    if (!linkTo) return null;
+    if (linkTo.label) return _td(linkTo.label);
+    var tab = typeof linkTo.tab === "function" ? linkTo.tab(game) : linkTo.tab;
+    var verbs = { equip: _t("S'équiper"), talents: _t("Voir les talents"), shop: _t("Aller à la boutique"), more: _t("S'entraîner"), grimoire: _t("Ouvrir le Grimoire"), village: _t("Aller au village") };
+    return (tab && verbs[tab]) || null;
   },
 
   /* ---------- Quêtes d'aventure (kill/transition scopées à une aventure) ---------- */

@@ -178,6 +178,9 @@ var FilRouge = {
           if (typeof m.accept === "function") m.accept();
           self.invalidate();
           if (typeof renderAll === "function") renderAll();
+          // v3.518.0 (audit ERG-8) : la bulle reste ouverte sur la suite (« Y aller »), sans rouvrir le fil rouge
+          var next = self.get();
+          if (next && next.id === "story" && typeof openFilRougeBubble === "function") openFilRougeBubble();
         }
       };
     }
@@ -185,7 +188,7 @@ var FilRouge = {
       id: "story", urgent: false, icon: FIL_ROUGE_ICONS.story,
       title: m.title,
       reason: m.blurb || m.objectiveLabel || "",
-      goLabel: _t("Y aller"),
+      goLabel: m.launchLabel || _t("Y aller"), // v3.518.0 : « Donner l'Outre », « S'équiper »…
       go: function () {
         if (typeof m.launch === "function") m.launch();
         else if (typeof switchTab === "function") switchTab("quests");
@@ -284,6 +287,7 @@ var FilRouge = {
       reason: _tn(c.full, "{n} zone pleine sur {m} : elles ne produisent plus.", "{n} zones pleines sur {m} : elles ne produisent plus.", { m: c.open }),
       goLabel: _t("Récolter"),
       go: function () {
+        if (window.ProductionManager && typeof ProductionManager.harvestAll === "function") ProductionManager.harvestAll(); // v3.518.0 (audit ERG-8) : récolte vraiment
         if (typeof switchTab === "function") switchTab("village");
         if (typeof setVillageSubTab === "function") setVillageSubTab("production");
       }

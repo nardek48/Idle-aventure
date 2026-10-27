@@ -56,6 +56,17 @@ function maybeShowStepTutorial(chapterId, tabName) {
 }
 window.maybeShowStepTutorial = maybeShowStepTutorial;
 
+/* v3.518.0 (audit TUT-4) : après « Partir », le tutoriel d'étape jamais vu s'ouvre là où l'on arrive.
+   Combat et Scène exclus : ils s'ouvrent plus tard d'eux-mêmes, au bon écran. */
+function showStepTutorialAfterGo(chapterId) {
+  var host = document.getElementById("tutorial-modal-root");
+  if (pendingTutorial || !host || host.innerHTML || !window.StoryQuestManager) return;
+  var step = StoryQuestManager.getCurrentStep(chapterId);
+  if (!step || !step.tutorial || step.tutorial.tab === "combat" || step.tutorial.tab === "scene") return;
+  maybeShowStepTutorial(chapterId, step.tutorial.tab);
+}
+window.showStepTutorialAfterGo = showStepTutorialAfterGo;
+
 function closeTutorialModal(chapterId) {
   if (window.StoryQuestManager) {
     var step = StoryQuestManager.getCurrentStep(chapterId);

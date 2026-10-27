@@ -1,5 +1,6 @@
 "use strict";
 /* tools/audit/fenetres-quetes.js — v3.512.0 : les fenêtres des quêtes s'ouvrent-elles au bon moment ?
+   v3.518.0 : et le « Partir » du Camp de chaque étape ouvre-t-il une fenêtre, une feuille ou le bon écran ?
    Le vrai index.html dans Chromium (390 px). Une partie neuve (Chevalier) avance l'Histoire étape par étape
    (adminForceStoryStep, sans le mode muet) et, à chaque étape, vérifie À L'ÉCRAN :
      - tutoriel d'étape : pas avant l'acceptation ; après, à l'arrivée sur son onglet (onglet ouvert ?) ;
@@ -100,8 +101,36 @@ var PAGE = function () {
         }
         o.dialogue = found ? "vu" : "absent";
       }
-      // 4. Tutoriel APRÈS l'acceptation, à l'arrivée sur son onglet
-      if (tut) {
+      // 4a. v3.518.0 : le vrai « Partir » du Camp, et ce qu'il ouvre (fenêtre, feuille ou écran)
+      switchTab("campement");
+      if (tut && __F.modal("tutorial-modal-root").indexOf(_td(tut.title)) >= 0) o.tutCamp = true;   // tutoriel du Camp : à l'arrivée
+      __F.closeAll();
+      var mis = MissionBoard.getById("story_" + ch);
+      if (mis && mis.launch) {
+        game.heroHp = game.heroMaxHp;
+        var roots = ["adventure-quest-modal-root", "dungeon-modal-root", "forecast-modal-root", "exp-sheet-root", "tutorial-modal-root", "map-modal-root", "village-modal-root", "heros-sheet-root", "grimoire-sheet-root", "cycle-modal-root"];
+        campMissionAction("story_" + ch, "launch");
+        var ouverts = roots.filter(function (r) { var h = document.getElementById(r); return h && h.innerText.trim(); });
+        o.partir = { label: mis.launchLabel || "Partir", tab: game.activeTab, fen: ouverts };
+        if (tut && __F.modal("tutorial-modal-root").indexOf(_td(tut.title)) >= 0) o.tutDepart = true;
+        var cid = String((step.linkTo && step.linkTo.cardId) || ""), choix = typeof storyPendingCardChoice === "function" && storyPendingCardChoice(ch);
+        if (game.activeTab === "quests" && /^(adv_|petite_aventure_)/.test(cid) && !choix) o.notes.push("Partir : détour par Quêtes (" + cid + ")");
+        var dg = (window.DUNGEONS || []).filter(function (d) { return d.worldId === ch; })[0], verrou = dg && DungeonManager.getLockReason(dg.id);
+        if (game.activeTab === "dungeon" && ouverts.indexOf("dungeon-modal-root") < 0) {
+          if (verrou) o.forcee = "donjon verrouillé par la progression forcée (" + verrou + ")"; else o.notes.push("Partir : liste des donjons sans feuille");
+        }
+        if (game.activeTab === "campement" && !ouverts.length) o.notes.push("Partir : rien ne s'ouvre");
+        __F.closeAll();   // le tutoriel se ferme par « Compris », comme le joueur
+        roots.forEach(function (r) { var h = document.getElementById(r); if (h) h.innerHTML = ""; });
+        // une expédition part dès « Partir » : on la défait sans rien rapporter, pour la suite du balayage
+        if (window.Pa2Run && game.sceneRun && game.sceneRun.pa2) { try { Pa2Run.abandon(); } catch (e) { /* déjà close */ } }
+        if (window.SceneRunManager && SceneRunManager.getRun()) SceneRunManager.clearRun();
+        if (typeof sceneStartBlock !== "undefined") sceneStartBlock = null;
+        switchTab("campement"); __F.closeAll();
+      }
+      // 4. Tutoriel APRÈS l'acceptation, à l'arrivée sur son onglet (déjà vu au départ : rien à refaire)
+      if (tut && (o.tutDepart || o.tutCamp)) { o.tutTab = tut.tab; o.tutUnlocked = true; o.tut = "vu"; o.tutOu = o.tutCamp ? "au Camp" : "au départ"; }
+      else if (tut) {
         o.tutTab = tut.tab; o.tutUnlocked = isTabUnlocked(tut.tab);
         var qid = tut.tab === "combat" && step.linkTo && String(step.linkTo.cardId || "").indexOf("adv_aq_") === 0 ? String(step.linkTo.cardId).slice(4) : null;
         switchTab(__F.neutral(tut.tab)); __F.closeAll();
@@ -157,6 +186,10 @@ var PAGE = function () {
   }
   var all = await p.evaluate(function () { return Object.keys(GENERIC_TUTORIALS).map(function (k) { return { id: k, tab: GENERIC_TUTORIALS[k].tab || "(sans onglet)", seen: !!(game.genericTutorialsSeen || {})[k] }; }); });
   var tuts = rows.filter(function (r) { return r.tutTab; });
+  var parts = rows.filter(function (r) { return r.partir; });
+  console.log("« Partir » : " + parts.length + " étapes · fenêtre ouverte : " + parts.filter(function (r) { return r.partir.fen.length; }).length
+    + " · tutoriels montrés au départ : " + rows.filter(function (r) { return r.tutDepart; }).map(function (r) { return r.id; }).join(", "));
+  rows.filter(function (r) { return r.forcee; }).forEach(function (r) { console.log("  (non jugé) " + r.id + " : " + r.forcee); });
   console.log("Étapes parcourues : " + rows.length + " · tutoriels d'étape : " + tuts.filter(function (r) { return r.tut === "vu"; }).length + "/" + tuts.length
     + " · fenêtres de fin vues : " + rows.filter(function (r) { return r.fin === "vu"; }).length + "/" + rows.length
     + " · dialogues d'ouverture vus : " + rows.filter(function (r) { return r.dialogue === "vu"; }).length + "/" + rows.filter(function (r) { return r.dialogue; }).length);

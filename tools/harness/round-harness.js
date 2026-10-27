@@ -16414,8 +16414,8 @@ console.log("\n[261] v3.458.3 — Lot 7a : Partir lance la quête, Mémoire sur 
     run("campMissionAction = window.campMissionAction; StoryQuestManager.goToLink = function () { window._lienPris = (window._lienPris || 0) + 1; };");
     run("MissionBoard.getById('story_forest').launch();");
     ok(appel === "adv_aq_story_premier_sang:accept" && !run("window._lienPris"), "Partir : la quête liée s'ouvre directement (" + appel + ")");
-    // un lien d'onglet (donjon) garde le chemin d'origine
-    run("MissionBoard.launchStoryLink('forest', { tab: 'dungeon' });");
+    // un lien d'onglet (équipement) garde le chemin d'origine ; le donjon ouvre sa feuille depuis v3.518.0 ([339])
+    run("MissionBoard.launchStoryLink('forest', { tab: 'equip' });");
     ok(run("window._lienPris") === 1, "lien vers un onglet : chemin d'origine");
     run("campMissionAction = _cma; window.campMissionAction = _cma; StoryQuestManager.goToLink = _gtl; window._lienPris = 0;");
     // C4
@@ -19261,6 +19261,61 @@ console.log("\n[338] v3.517.0 — correctifs de l'audit, lot 1 : textes factuels
     var m09 = JSON.stringify(st("montagne_09").tutorial.points);
     ok(m09.indexOf("élites") < m09.indexOf("échoppe"), "montagne_09 : les élites avant l'échoppe");
   } catch (err) { ok(false, "[338] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[339] v3.518.0 — correctifs de l'audit, lot 2 : routage de « Partir »");
+(function () {
+  try {
+    game = freshCombat("knight");
+    run("StoryQuestManager.ensure();");
+    var calls = [];
+    run("var _cma9 = campMissionAction, _gtl9 = StoryQuestManager.goToLink, _ods9 = window.openDungeonSheet, _st9 = switchTab, _gbi9 = MissionBoard.getById, _iu9 = DungeonManager.isUnlocked;");
+    g.campMissionAction = function (id, a) { calls.push("cma:" + id + ":" + a); };
+    g._lien9 = function () { calls.push("lien"); };
+    g._sheet9 = function (id) { calls.push("sheet:" + id); };
+    run("campMissionAction = window.campMissionAction; StoryQuestManager.goToLink = window._lien9; openDungeonSheet = window._sheet9; switchTab = function () {}; DungeonManager.isUnlocked = function () { return true; };");
+    // QUE-2 : la Meute affamée (adv_hq_) part directement, sans conversion en chasse
+    var st = game.storyQuests.forest, i06 = g.STORY_QUESTS.forest.steps.findIndex(function (x) { return x.id === "forest_06"; });
+    st.currentStep = i06; st.accepted = false; run("StoryQuestManager.acceptStep('forest');");
+    calls = []; run("MissionBoard.getById('story_forest').launch();");
+    ok(calls[0] === "cma:adv_hq_wolf_pack:accept", "forest_06 : « Partir » ouvre la Meute affamée (" + calls.join(",") + ")");
+    var mb = run("MissionBoard"), src = require("fs").readFileSync(ROOT + "/js/systems/mission-board-system.js", "utf8");
+    ok(!/"hunt_" \+ cardId/.test(src), "plus de conversion adv_hq_ → hunt_ (chasses retirées)");
+    // QUE-2 : la fin de la Meute ferme l'étape d'une seule fenêtre
+    game.adventureQuestsCompleted = game.adventureQuestsCompleted || {}; game.adventureQuestsCompleted.hq_wolf_pack = true;
+    ok(run("storyStepClosedBy({ title: _t('Quête terminée !'), text: ADVENTURE_QUESTS.hq_wolf_pack.name })") === "forest", "fin de la Meute : l'étape se réclame avec la quête");
+    // QUE-1 : une Petite Aventure d'Histoire part de sa mission ; un tab en fonction est évalué (forest_15)
+    run("MissionBoard.getById = function (id) { return /^petite_aventure_|^adv_aq_x/.test(id) ? { id: id, status: 'available', accept: function () {} } : _gbi9.call(MissionBoard, id); };");
+    calls = []; run("MissionBoard.launchStoryLink('ruins', { section: 'expedition', cardId: 'petite_aventure_ruines' });");
+    ok(calls[0] === "cma:petite_aventure_ruines:accept", "Petite Aventure d'Histoire : départ direct (" + calls.join(",") + ")");
+    calls = []; run("MissionBoard.launchStoryLink('forest', { tab: function () { return null; }, section: 'adventure', cardId: 'adv_aq_x' });");
+    ok(calls[0] === "cma:adv_aq_x:accept", "tab en fonction sans onglet : la quête liée part directement");
+    // QUE-3 : le donjon du monde de l'étape s'ouvre sur sa feuille
+    var dm = (g.DUNGEONS || []).filter(function (d) { return d.worldId === "mountain"; })[0];
+    calls = []; run("MissionBoard.launchStoryLink('mountain', { tab: 'dungeon' });");
+    ok(dm && calls[0] === "sheet:" + dm.id, "donjon d'Histoire : la feuille de la Gueule du volcan (" + calls.join(",") + ")");
+    // QUE-11 : verbe selon la destination
+    ok(mb.storyLinkLabel({ tab: "equip" }) === g._t("S'équiper") && mb.storyLinkLabel({ tab: "village", label: "Aller au Réservoir" }) === g._t("Aller au Réservoir") && mb.storyLinkLabel({ tab: "dungeon" }) === null, "libellés : « S'équiper », le label des données, « Partir » pour le donjon");
+    run("campMissionAction = _cma9; window.campMissionAction = _cma9; StoryQuestManager.goToLink = _gtl9; openDungeonSheet = _ods9; switchTab = _st9; MissionBoard.getById = _gbi9; DungeonManager.isUnlocked = _iu9;");
+    // QUE-5 : desert_07, l'Outre en poche → « Donner l'Outre » au Camp
+    var d7 = g.STORY_QUESTS.desert.steps.findIndex(function (x) { return x.id === "desert_07"; }), sd = game.storyQuests.desert;
+    if (sd) {
+      game.storyQuests.forest.currentStep = g.STORY_QUESTS.forest.steps.length; // Forêt finie : le Désert s'ouvre
+      sd.currentStep = d7; sd.accepted = true; sd.counters = sd.counters || {}; sd.counters.outreGiven = 0;
+      g.WarehouseManager.addResource("outre_pleine", 2);
+      var m7 = g.MissionBoard.getById("story_desert");
+      ok(m7 && m7.launchLabel === g._td(g.STORY_QUESTS.desert.steps[d7].offeringUi.buttonLabel), "desert_07 : le Camp propose « Donner l'Outre » (" + (m7 && m7.launchLabel) + ")");
+      if (m7 && m7.launch) m7.launch();
+      ok(Number(sd.counters.outreGiven || 0) >= 1, "desert_07 : l'Outre est donnée depuis le Camp");
+    } else ok(false, "chapitre du Désert absent");
+    // TUT-4 : le tutoriel d'étape après « Partir » (Combat et Scène exclus)
+    var tv = require("fs").readFileSync(ROOT + "/js/ui/tutorial-view.js", "utf8");
+    ok(typeof g.showStepTutorialAfterGo === "function" && /tab === "combat" \|\| step\.tutorial\.tab === "scene"/.test(tv) && /showStepTutorialAfterGo\(chapterId\)/.test(src), "tutoriel d'étape montré après « Partir » (hors Combat et Scène)");
+    // QUE-4 et ERG-8
+    var qv = require("fs").readFileSync(ROOT + "/js/ui/quests-view.js", "utf8"), fr = require("fs").readFileSync(ROOT + "/js/systems/fil-rouge-system.js", "utf8");
+    ok(/MissionBoard\.launchStoryLink\(/.test(qv) && !/onclick="StoryQuestManager\.goToLink/.test(qv) && typeof g.openStoryStepActions === "function", "Quêtes › Histoire : même départ qu'au Camp, défilé jusqu'au choix");
+    ok(/ProductionManager\.harvestAll\(\)/.test(fr) && /next\.id === "story" && typeof openFilRougeBubble/.test(fr), "fil rouge : « Récolter » récolte, « Accepter » garde la bulle ouverte");
+  } catch (err) { ok(false, "[339] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));

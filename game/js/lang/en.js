@@ -3774,6 +3774,11 @@ I18n.register("en", {
   "Tu donnes une Outre pleine au Veilleur. Elle passe sous la porte.": "You give a Full waterskin to the Watcher. It goes under the door.",
   "Aller au Réservoir": "Go to the Reservoir",
   "Aller aux Ateliers": "Go to the Workshops",
+  "S'équiper": "Gear up",
+  "Aller à la boutique": "Go to the shop",
+  "S'entraîner": "Train",
+  "Ouvrir le Grimoire": "Open the Grimoire",
+  "Aller au village": "Go to the village",
 
   // STORY_MADDOC_GREETING
   "Toi. La gourde. Je te dois une eau. Je paie en marchant devant.": "You. The flask. I owe you water. I pay by walking in front.",

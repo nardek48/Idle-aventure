@@ -653,7 +653,7 @@ function buildStoryCurrentStepHTML(chapterId, chapter, step, index) {
   if (unlockText) h += '<div class="story-step-unlock"><img class=ico-inline src=images/Icons/system/lock_open.webp> ' + esc(_t("Débloque : {x}", { x: unlockText })) + '</div>';
   h += '<div class="map-quest-reward"><span class="map-quest-reward-label">' + _t("Récompense") + '</span><span class="map-quest-reward-value">' + esc(buildStoryStepRewardText(step.reward)) + '</span></div>';
 
-  h += '<div class="story-step-actions">';
+  h += '<div class="story-step-actions" data-story-actions="' + esc(chapterId) + '">';
   if (!accepted) {
     h += '<button class="settings-btn primary" type="button" onclick="StoryQuestManager.acceptStep(\'' + esc(chapterId) + '\')">' + _t("Accepter") + '</button>';
   } else if (ready) {
@@ -669,7 +669,8 @@ function buildStoryCurrentStepHTML(chapterId, chapter, step, index) {
       if (!offer.canOffer) h += '<div class="story-step-progress">' + esc(_td(offer.step.offeringUi.lackToast)) + '</div>';
     }
     if (step.linkTo && !(offer && offer.canOffer)) {
-      h += '<button class="settings-btn" type="button" onclick="StoryQuestManager.goToLink(\'' + esc(chapterId) + '\')"><img class=ico-inline src=images/Icons/system/forward.webp> ' + esc(step.linkTo.label ? _td(step.linkTo.label) : _t("Aller à la quête")) + '</button>';
+      // v3.518.0 (audit QUE-4) : même départ que « Partir » au Camp (une quête d'aventure ne se réaccepte plus)
+      h += '<button class="settings-btn" type="button" onclick="MissionBoard.launchStoryLink(\'' + esc(chapterId) + '\', StoryQuestManager.getCurrentStep(\'' + esc(chapterId) + '\').linkTo)"><img class=ico-inline src=images/Icons/system/forward.webp> ' + esc(MissionBoard.storyLinkLabel(step.linkTo) || _t("Aller à la quête")) + '</button>';
     }
   }
   h += '</div>';
@@ -764,6 +765,16 @@ function openQuestsAt(sectionKey, cardId) {
   }
   questsHighlightId = null;
 }
+/* v3.518.0 (audit QUE-4) : Quêtes › Histoire, défilé jusqu'aux boutons de l'étape en cours (un choix à faire). */
+function openStoryStepActions(chapterId) {
+  openQuestsAt("worldexpedition");
+  // après le rendu qui suit l'action du Camp (renderPanel), sinon le défilé vise un nœud remplacé
+  setTimeout(function () {
+    var el = document.querySelector && document.querySelector('[data-story-actions="' + chapterId + '"]');
+    if (el && el.scrollIntoView) el.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, 60);
+}
+window.openStoryStepActions = openStoryStepActions;
 window.buildStoryChainHTML = buildStoryChainHTML;
 window.openQuestsAt = openQuestsAt;
 
@@ -922,7 +933,7 @@ function storyStepClosedBy(config) {
   var found = null;
   Object.keys(STORY_QUESTS).forEach(function (ch) {
     var step = StoryQuestManager.getCurrentStep(ch), id = step && step.linkTo && String(step.linkTo.cardId || "");
-    if (found || !id || id.indexOf("adv_aq_") !== 0) return;
+    if (found || !id || id.indexOf("adv_") !== 0) return; // v3.518.0 (audit QUE-2) : adv_hq_ aussi (la Meute affamée)
     var q = ADVENTURE_QUESTS[id.slice(4)];
     if (q && q.name === config.text && StoryQuestManager.isCurrentStepAccepted(ch) && StoryQuestManager.isCurrentStepReady(ch)) found = ch;
   });
