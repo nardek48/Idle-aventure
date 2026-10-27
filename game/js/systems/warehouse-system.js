@@ -89,7 +89,7 @@ var WarehouseManager = {
     if (base === null) return Infinity;
 
     var bonus = (window.VillageBuildingManager && typeof VillageBuildingManager.getLevel === "function")
-      ? VillageBuildingManager.getLevel("warehouse") * WAREHOUSE_CAP_PER_LEVEL
+      ? getWarehouseCapBonus(VillageBuildingManager.getLevel("warehouse")) // option B : +500 au-delà du 10
       : 0;
     return base + bonus;
   },

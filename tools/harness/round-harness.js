@@ -4126,7 +4126,15 @@ console.log("\n[27b] v3.218.0 (lot V-7) \u2014 Entrep\u00f4t agrandi : un seul p
   g.game.village.buildings.warehouse.level = 4;
   ok(W.getCap("planche") === base + 4 * par, "niveau 4 : +" + (4 * par));
   g.game.village.buildings.warehouse.level = 10;
-  ok(W.getCap("planche") === base + 10 * par, "niveau 10 : plafond maximal");
+  ok(W.getCap("planche") === base + 10 * par, "niveau 10 : +2 500");
+  // option B (Seb, 27/10) : +500 par niveau au-delà du 10, 20 niveaux
+  g.game.village.buildings.warehouse.level = 16;
+  ok(W.getCap("bois") === 6000 && W.getCap("planche") === base + 5500, "niveau 16 (Montagne) : 6 000 brutes, +5 500 aux fabriquées");
+  g.game.village.buildings.warehouse.level = 20;
+  ok(g.VILLAGE_BUILDINGS.warehouse.maxLevel === 20 && W.getCap("bois") === 8000, "niveau 20 : 8 000 brutes");
+  var hc = M.getLevelCost("warehouse", 15);
+  ok(hc && hc.obsidienne_taillee >= 1 && hc.pierre <= g.RAW_STOCK_BASE + g.getWarehouseCapBonus(15), "15 → 16 : Obsidienne, et la Pierre tient dans le plafond du niveau 15");
+  g.game.village.buildings.warehouse.level = 10;
 
   /* --- Les mati\u00e8res brutes ne sont pas concern\u00e9es -------------------- */
   // v3.330.0 (E1) : les mati\u00e8res brutes plafonnent aussi, base 500
@@ -16562,7 +16570,7 @@ console.log("\n[267] v3.459.8 — Terrain 12-13 en Cire de sépulcre (audit P11)
 console.log("\n[268] v3.459.9 — Crypte : Halle 10 et Entrepôt 8 (audit I3)");
 (function () {
   var V = g.VillageBuildingManager, cap = g.WORLD_CAPS[3].village;
-  ok(cap.hall === 10 && cap.warehouse === 8, "Crypte : Halle jusqu'à 10, Entrepôt jusqu'à 8");
+  ok(cap.hall === 10 && cap.warehouse === 12, "Crypte : Halle jusqu'à 10, Entrepôt jusqu'à 12 (option B)");
   var e8 = V.getLevelCost("warehouse", 7), e7 = V.getLevelCost("warehouse", 6), e9 = V.getLevelCost("warehouse", 8);
   ok(e8.cire_sepulcre === 5 && !e8.resine_durcie && e8.gold === 10082 && e8.pierre === 262 && e8.lingot === 60, "Entrepôt 8 : 5 Cire de sépulcre au lieu de la Résine, le reste inchangé");
   ok(e7.verre_trempe === 4 && !e7.resine_durcie && e9.resine_durcie === 8 && e9.gold === 14316, "Entrepôt 7 : 4 Verres trempés (v3.481.0, RE-4) ; Entrepôt 9 : coût d'avant");

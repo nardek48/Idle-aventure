@@ -707,7 +707,7 @@ async function P10(browser, base) {
   await dismissTutorials(page);
   await page.evaluate(function () { openFullMenu(); });
   await page.waitForTimeout(300);
-  var item = page.locator("[onclick*=\"settings\"]", { hasText: "Paramètres" });
+  var item = page.locator("[onclick*=\"settings\"]:visible", { hasText: "Paramètres" }); // v3.506.0 : l'onglet du grand écran, caché sur téléphone, passait devant
   if (await item.count()) await item.first().click(); else await page.evaluate(function () { switchTab("settings"); });
   await page.waitForTimeout(300);
   // v3.408.0 : Paramètres en trois onglets ; les mises en scène sont dans « Jeu », en interrupteur

@@ -441,7 +441,7 @@ var VILLAGE_BUILDINGS = {
     icon: "images/Icons/system/warehouse_supplies.webp",
     iconImg: "images/Icons/village_buildings/warehouse_expanded.webp",
     rank: 3,   // v3.289.0 (D12) : Atelier 3
-    maxLevel: 10,
+    maxLevel: 20, // option B (Seb, 27/10) : 10 → 20 ; Crypte 12, Montagne 16, Tour 20 (world-caps.js)
     implemented: true,
     desc: "Relève le plafond de stockage des ressources de l'Entrepôt, matières brutes comprises.",
     costTiers: [
@@ -477,14 +477,28 @@ var VILLAGE_BUILDINGS = {
         resources: ["gold", "planche", "bloc", "pierre", "lingot", "resine_durcie"],
         baseCost: { gold: 14316.44, planche: 157.48084, bloc: 157.48084, pierre: 372.22744, lingot: 85.89864, resine_durcie: 8.589864 },
         costMult: 1.42
+      },
+      /* Option B (27/10) : pente ×1,2 au-delà du 10 (×1,42 rendait les niveaux 13-16 hors de prix). Crypte : Cire consacrée. */
+      {
+        minLevel: 10, maxLevel: 11,
+        resources: ["gold", "planche", "bloc", "pierre", "lingot", "cire_consacree"],
+        baseCost: { gold: 25000, planche: 320, bloc: 320, pierre: 750, lingot: 175, cire_consacree: 4 },
+        costMult: 1.2
+      },
+      /* Montagne : Obsidienne taillée. Les niveaux 16 à 19 (Tour) gardent ce palier en attendant son matériau. */
+      {
+        minLevel: 12, maxLevel: 19,
+        resources: ["gold", "planche", "bloc", "pierre", "lingot", "obsidienne_taillee"],
+        baseCost: { gold: 36000, planche: 460, bloc: 460, pierre: 1080, lingot: 250, obsidienne_taillee: 3 },
+        costMult: 1.2
       }
     ],
     effectLabel: function (level) {
-      var par = (typeof WAREHOUSE_CAP_PER_LEVEL === "number") ? WAREHOUSE_CAP_PER_LEVEL : 250;
+      var bonus = (typeof getWarehouseCapBonus === "function") ? getWarehouseCapBonus(level) : level * 250; // option B : +500 au-delà du 10
       var base = 999, raw = (typeof RAW_STOCK_BASE === "number") ? RAW_STOCK_BASE : 500;
       // v3.330.0 (E1) : le bâtiment relève aussi le plafond des ressources brutes
-      return _t("Plafond : ressources brutes {a}, fabriquées {b}", { a: raw + level * par, b: base + level * par })
-        + (level > 0 ? " (+" + (level * par) + ")" : "");
+      return _t("Plafond : ressources brutes {a}, fabriquées {b}", { a: raw + bonus, b: base + bonus })
+        + (level > 0 ? " (+" + bonus + ")" : "");
     }
   },
 

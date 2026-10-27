@@ -46,7 +46,7 @@ var WORLD_CAPS = [
      Provisoire, égal aux Ruines ; seule la 3e rangée de zones s'ouvre. Les crans des actes II-III au banc.
      v3.455.0 (acte III) : Forge 5, à la Cire consacrée (reforges 9 et 10). */
   {
-    village: { workshop: 8, training: 13, hall: 10, warehouse: 8, palisade: 8, tavern: 6, apothecary: 6, forge: 5, enchanter: 2 }, // v3.456.2 : Terrain 13 ; v3.456.9 : Taverne 6 ; v3.459.9 (audit I3) : Halle 10, Entrepôt 8
+    village: { workshop: 8, training: 13, hall: 10, warehouse: 12, palisade: 8, tavern: 6, apothecary: 6, forge: 5, enchanter: 2 }, // v3.456.2 : Terrain 13 ; v3.456.9 : Taverne 6 ; v3.459.9 (audit I3) : Halle 10, Entrepôt 8 ; option B (27/10) : Entrepôt 12
     zoneRows: 3,
     zoneLevel: 5,
     workshopLevel: 3,
@@ -56,7 +56,7 @@ var WORLD_CAPS = [
      Provisoire, égal à la Crypte ; la Forge 6 (Obsidienne taillée) vient avec l'acte III, les autres crans au banc.
      v3.490.0 : Forge 6, ouverte seulement à forgeActStep (un cran de moins avant). */
   {
-    village: { workshop: 8, training: 18, hall: 10, warehouse: 8, palisade: 8, tavern: 6, apothecary: 6, forge: 6, enchanter: 2 }, // H1 : Terrain 18 (acte IV)
+    village: { workshop: 8, training: 18, hall: 10, warehouse: 16, palisade: 8, tavern: 6, apothecary: 6, forge: 6, enchanter: 2 }, // H1 : Terrain 18 (acte IV) ; option B (27/10) : Entrepôt 16
     forgeActStep: "montagne_11",
     zoneRows: 3,
     zoneLevel: 5,

@@ -9,6 +9,12 @@
 /* v3.218.0 (lot V-7) : chaque niveau de l'« Entrepôt agrandi » ajoute ceci au
    plafond de CHAQUE ressource fabriquée. 999 → 3 499 au niveau 10. */
 var WAREHOUSE_CAP_PER_LEVEL = 250;
+/* Option B (Seb, 27/10) : au-delà du niveau 10, chaque niveau ajoute 500 (6 000 brutes à l'Entrepôt 16, Montagne). */
+var WAREHOUSE_CAP_HIGH_FROM = 10, WAREHOUSE_CAP_PER_LEVEL_HIGH = 500;
+function getWarehouseCapBonus(level) {
+  var n = Math.max(0, Math.floor(Number(level) || 0)), low = Math.min(n, WAREHOUSE_CAP_HIGH_FROM);
+  return low * WAREHOUSE_CAP_PER_LEVEL + (n - low) * WAREHOUSE_CAP_PER_LEVEL_HIGH;
+}
 
 /* v3.330.0 (économie du village, décision E1 de Seb) : les ressources BRUTES plafonnent aussi.
    500 de base, + WAREHOUSE_CAP_PER_LEVEL par niveau d'Entrepôt (1 250 au plafond de la Forêt,
@@ -235,6 +241,9 @@ var RATION_IDS = ["petite_ration", "ration", "grande_ration"];
 
 window.WAREHOUSE_RESOURCES = WAREHOUSE_RESOURCES;
 window.WAREHOUSE_CAP_PER_LEVEL = WAREHOUSE_CAP_PER_LEVEL;
+window.WAREHOUSE_CAP_HIGH_FROM = WAREHOUSE_CAP_HIGH_FROM;
+window.WAREHOUSE_CAP_PER_LEVEL_HIGH = WAREHOUSE_CAP_PER_LEVEL_HIGH;
+window.getWarehouseCapBonus = getWarehouseCapBonus;
 window.RAW_STOCK_BASE = RAW_STOCK_BASE;
 window.HUNT_QUESTS = HUNT_QUESTS;
 window.RATION_IDS = RATION_IDS;
