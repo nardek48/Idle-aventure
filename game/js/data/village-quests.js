@@ -301,7 +301,7 @@ var MILESTONE_BOOKS = {
   reliques: { title: "Patrouilles et reliques", icon: "images/Icons/quests/mission_exploration.webp", tips: [
     ["images/Icons/quests/mission_exploration.webp", "Un compagnon resté au camp peut partir en patrouille (2, 4 ou 8 h). Ta première patrouille terminée rapporte toujours une relique."],
     ["images/Icons/codex/world_forest.webp", "La relique vient du monde patrouillé : plus le monde est loin, plus elle est forte (rang 1 à 5)."],
-    ["images/Companions/wenna.webp", "Fiche du compagnon › Reliques, une par famille : Croc (dégâts), Écorce (PV), Sceau (menace), Sablier (recharge), Talisman (dégâts du héros), Besace (butin)."]] },
+    ["images/Companions/wenna.webp", "Fiche du compagnon › Reliques, une par famille : Croc (dégâts), Écorce (PV), Sceau (menace), Sablier (recharge), Emblème (dégâts du héros), Besace (butin)."]] },
   apothicaire: { title: "L'Apothicaire", icon: "images/Icons/village_buildings/apothecary.webp", tips: [
     ["images/Icons/village_buildings/apothecary.webp", "L'Apothicaire prépare des potions et des objets de combat avec tes ressources, à côté de l'achat en or."],
     ["images/Icons/system/hourglass_waiting.webp", "Il fait 4 préparations par jour, 2 de plus par niveau."]] },

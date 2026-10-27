@@ -2,6 +2,7 @@
 /* ui/equip-shop-view.js — sous-onglet Équipement de la Boutique (voir shop-view.js pour la bascule d'onglets). Détail : COMMENTAIRES_ORIGINAUX.md */
 
 function buildEquipShopCardHTML(item) {
+  if (item && item.kind === "relic") return buildRelicShopCardHTML(item); // v3.512.0
   var statText = typeof formatEquipmentStat === "function" ? formatEquipmentStat(item) : "";
   var rarityLabel = (typeof RARITY_LABELS !== "undefined" && RARITY_LABELS[item.rarity]) ? _td(RARITY_LABELS[item.rarity]) : item.rarity;
   var canBuy = !item.bought && (game.gold || 0) >= item.price;
@@ -32,6 +33,36 @@ function buildEquipShopCardHTML(item) {
 
   h += '</div>';
   return h;
+}
+
+/* v3.512.0 (atelier reliques-echoppe.html, variante B) : carte marquée « Relique », couleur du monde,
+   une pastille par compagnon qui a un emplacement ouvert (libre, mieux, ou rien à gagner). */
+function relicShopFit(cid, item) {
+  var CR = CompanionRelics, open = CR.slotsOpen(cid);
+  if (open <= 0) return null;
+  var same = CR.active(cid).filter(function (r) { return r.f === item.f; })[0];
+  if (same) return same.w < item.w ? "up" : "no";
+  return CR.worn(cid).slice(0, open).some(function (x) { return x == null || !CR.byId(x); }) ? "free" : "no";
+}
+function buildRelicShopCardHTML(item) {
+  var CR = CompanionRelics, r = { f: item.f, w: item.w }, rar = CR.rarity(r), rank = CR.rank(r), monde = (window.WORLDS || [])[item.w];
+  var canBuy = !item.bought && (game.gold || 0) >= item.price;
+  var h = '<div class="nb-purchase-card shop-relic rarity-' + rar + (item.bought ? ' is-bought' : '') + '"><span class="shop-relic-ribbon">' + esc(_t("Relique")) + '</span>';
+  h += '<div class="nb-purchase-icon-col"><div class="nb-purchase-icon-slot shop-relic-ico"><img class="cp-relic-img" src="' + esc(CR.icon(r)) + '" alt=""><span class="shop-relic-rank">' + rank + '</span></div></div>';
+  h += '<div class="nb-purchase-info-col"><div class="nb-purchase-name rarity-' + rar + '">' + esc(CR.name(r)) + '</div>';
+  h += '<div class="nb-purchase-meta">' + esc(_t("Rang {n}", { n: rank })) + (monde ? ' · ' + esc(_td(monde.name)) : '') + '</div>';
+  h += '<div class="shop-relic-fx">' + esc(CR.effectText(r)) + '</div><div class="shop-relic-rule">' + esc(_t("Une par famille sur un même compagnon")) + '</div></div>';
+  h += '<div class="nb-purchase-buy-col">' + (item.bought
+    ? '<button class="btn-buy kbuy is-bought" type="button" disabled>' + _t("Acheté") + '</button>'
+    : '<button class="btn-buy kbuy' + (canBuy ? '' : ' cant-afford') + '" type="button" onclick="equipShopBuy(\'' + esc(item.uid) + '\')"><img class="btn-buy-icon" src="images/Icons/gold_icon.webp" alt="">' + formatNumber(item.price) + '</button>') + '</div>';
+  var chips = (window.CompanionManager ? CompanionManager.unlockedIds() : []).map(function (cid) {
+    var fit = relicShopFit(cid, item), def = typeof getCompanionDef === "function" ? getCompanionDef(cid) : null;
+    if (!fit || !def) return "";
+    var label = fit === "free" ? _t("libre") : fit === "up" ? "↑ " + _t("mieux") : "—";
+    return '<span class="shop-relic-chip is-' + fit + '"><img src="' + esc(def.image || "") + '" alt="">' + esc(_td(def.name)) + ' ' + esc(label) + '</span>';
+  }).join("");
+  h += '<div class="shop-relic-party">' + (chips || '<span class="shop-relic-none">' + esc(_t("Aucun compagnon n'a encore d'emplacement ouvert")) + '</span>') + '</div>';
+  return h + '</div>';
 }
 
 function buildEquipShopHTML() {

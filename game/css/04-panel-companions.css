@@ -309,3 +309,8 @@ seules les classes propres aux compagnons sont définies ici.
 .cp-relic-btn:disabled { filter: grayscale(0.85); opacity: 0.55; cursor: not-allowed; }
 .cp-relic-btn.is-ghost { background: transparent; color: var(--nb-gold-deep); }
 .cp-relic-lock { width: 24px; height: 24px; object-fit: contain; }
+/* v3.512.0 : nom de relique à la couleur de son monde, comme l'équipement. */
+.cp-relic-slot b.rarity-green, .cp-relic-txt b.rarity-green { color: var(--rarity-green); }
+.cp-relic-slot b.rarity-rare, .cp-relic-txt b.rarity-rare { color: var(--rarity-rare); }
+.cp-relic-slot b.rarity-epic, .cp-relic-txt b.rarity-epic { color: var(--rarity-epic); }
+.cp-relic-slot b.rarity-legendary, .cp-relic-txt b.rarity-legendary { color: var(--rarity-legendary); }

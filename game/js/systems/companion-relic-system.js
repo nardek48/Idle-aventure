@@ -24,6 +24,17 @@ var CompanionRelics = {
   },
   byId: function (id) { return this.ensure().inv.filter(function (x) { return x.id === id; })[0] || null; },
   rank: function (relic) { return Math.max(1, Math.min(5, Number(relic.w || 0) + 1)); },
+  /* v3.512.0 (Seb 27/10) : la couleur suit le monde, comme l'équipement (rareté la plus haute du monde). */
+  rarity: function (relic) {
+    var u = window.WORLD_RARITY_UNLOCKS || [["common"]], row = u[Math.max(0, Math.min(Number(relic.w || 0), u.length - 1))];
+    return row[row.length - 1];
+  },
+  /* Ajoute une relique à l'inventaire (patrouille ou échoppe) et la rend. */
+  grant: function (f, w) {
+    var R = this.ensure(), relic = { id: R.next++, f: f, w: Math.max(0, Number(w || 0)) };
+    R.inv.push(relic);
+    return relic;
+  },
   icon: function (relic) { return COMPANION_RELIC_DIR + "relic_" + relic.f + ".webp"; },
   name: function (relic) { return I18n.fill(COMPANION_RELIC_OF[Math.min(relic.w, COMPANION_RELIC_OF.length - 1)] || "{f}", { f: _td(COMPANION_RELIC_FAMILIES[relic.f].name) }); },
   effectText: function (relic) {
@@ -67,7 +78,7 @@ var CompanionRelics = {
     this.active(companionId).forEach(function (x) { var F = COMPANION_RELIC_FAMILIES[x.f]; if (F.cd) cut = Math.max(cut, self.rank(x) >= 5 ? F.cdAt5 : F.cd); });
     return cut;
   },
-  /* Talisman : bonus du héros, compagnons présents seulement. */
+  /* Emblème (id « talisman ») : bonus du héros, compagnons présents seulement. */
   heroDamageBonus: function () {
     if (!window.CompanionManager || typeof CompanionManager.partyIds !== "function") return 0;
     var self = this;
@@ -111,9 +122,7 @@ var CompanionRelics = {
     R.pity = 0;
     var w = 0;
     if (typeof WORLDS !== "undefined") WORLDS.forEach(function (x, i) { if (x.id === mapId) w = i; });
-    var relic = { id: R.next++, f: COMPANION_RELIC_ORDER[Math.floor(rng() * COMPANION_RELIC_ORDER.length)], w: w };
-    R.inv.push(relic);
-    return relic;
+    return this.grant(COMPANION_RELIC_ORDER[Math.floor(rng() * COMPANION_RELIC_ORDER.length)], w);
   }
 };
 

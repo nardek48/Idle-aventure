@@ -399,7 +399,28 @@ function developVillage() {
    moins de 15 % de la bourse (au-delà de 20 000 or) ; relances de l'Enchanteresse sur les pièces portées
    Épiques ou mieux, ligne sous 85 % de sa fourchette, avec l'or (au plus 10 % de la bourse) et la Sève
    au-delà de 20 en stock : la Sève reste aux chantiers. */
+/* v3.512.0 (--relique-echoppe) : le robot achète la relique de la vitrine si elle coûte au plus 30 % de la bourse
+   et améliore un emplacement ouvert d'un compagnon du groupe (libre, ou même famille plus faible). */
+var RELIQUE_ECHOPPE = ARGS.indexOf("--relique-echoppe") >= 0;
+function reliqueEchoppe(g) {
+  var CR = g.CompanionRelics, CM = g.CompanionManager, S = g.EquipShopManager;
+  if (!RELIQUE_ECHOPPE || !CR || !S) return;
+  S.checkRefresh();
+  var it = (g.game.equipShopStock || []).filter(function (x) { return x.kind === "relic" && !x.bought; })[0];
+  if (!it) return;
+  var RS = STATS.relEch = STATS.relEch || { cher: 0, inutile: 0, achats: 0 };
+  if (it.price > g.game.gold * 0.3) { RS.cher++; return; }
+  var utile = CM.partyIds().some(function (cid) {
+    var open = CR.slotsOpen(cid), same = CR.active(cid).filter(function (r) { return r.f === it.f; })[0];
+    if (open <= 0) return false;
+    if (same) return same.w < it.w;
+    return CR.worn(cid).slice(0, open).some(function (x) { return x == null || !CR.byId(x); });
+  });
+  if (!utile) { RS.inutile++; return; }
+  if (S.buy(it.uid) && it.bought) { RS.achats++; dep("reliquesEchoppe", it.price); dep("reliquesEchoppeNb", 1); equiperReliques(g); }
+}
 function depensesOr(g) {
+  reliqueEchoppe(g);
   var S = g.EquipShopManager, ST = STATS.depenses = STATS.depenses || { vitrine: 0, vitrineOr: 0, relances: 0, relancesOr: 0 };
   if (S && g.game.gold > 20000 && typeof S.getManualRefreshCost === "function") {
     var rc = Number(S.getManualRefreshCost() || 0);

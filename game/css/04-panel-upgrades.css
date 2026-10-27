@@ -103,3 +103,23 @@
 /* Remplissage de la barre */
 
 /* Texte centré dans la barre */
+
+/* v3.512.0 (atelier reliques-echoppe.html, variante B) : relique en vitrine, couleur du monde (rareté du sommet). */
+.shop-relic { --rel: var(--nb-ink-dim); position: relative; flex-wrap: wrap; padding-top: 24px; }
+.shop-relic.rarity-green { --rel: var(--rarity-green); }
+.shop-relic.rarity-rare { --rel: var(--rarity-rare); }
+.shop-relic.rarity-epic { --rel: var(--rarity-epic); }
+.shop-relic.rarity-legendary { --rel: var(--rarity-legendary); }
+.shop-relic { border-color: var(--rel); background: linear-gradient(color-mix(in srgb, var(--rel) 12%, var(--c-cream-100-soft)), var(--c-cream-100-soft) 50%); }
+.shop-relic-ribbon { position: absolute; top: -1px; left: 12px; padding: 2px 9px; border-radius: 0 0 8px 8px; background: var(--rel); color: #fff; font-size: 12px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; }
+.shop-relic-ico { position: relative; }
+.shop-relic-ico .cp-relic-img { width: 44px; height: 44px; border-radius: 10px; border: 2px solid var(--rel); object-fit: cover; }
+.shop-relic-rank { position: absolute; left: -6px; top: -6px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: var(--rel); color: #fff; font-size: 12px; font-weight: 800; line-height: 20px; text-align: center; }
+.shop-relic-fx { font-size: 13px; font-weight: 800; color: var(--nb-ink); }
+.shop-relic-rule { font-size: 12px; color: var(--nb-ink-dim); }
+.shop-relic-party { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 6px; }
+.shop-relic-chip { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px 2px 2px; border-radius: 999px; border: 1px solid var(--nb-frame-light); background: var(--c-cream-100-soft); font-size: 12px; font-weight: 700; color: var(--nb-ink-dim); }
+.shop-relic-chip img { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; }
+.shop-relic-chip.is-free, .shop-relic-chip.is-up { border-color: var(--nb-green-text); color: var(--nb-green-text); }
+.shop-relic-none { font-size: 12px; color: var(--nb-ink-dim); }
+.shop-relic .nb-purchase-name { white-space: normal; overflow: visible; text-overflow: clip; } /* nom long (« Écorce de la Montagne ») : passe à la ligne à 320 px */

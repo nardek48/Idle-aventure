@@ -12,7 +12,7 @@ var ARGS = process.argv.slice(3);
 function arg(name, def) { var i = ARGS.indexOf(name); return i >= 0 ? ARGS[i + 1] : def; }
 var N = Number(arg("--n", 4));
 var CLASSES = arg("--classes", "knight,ranger,mage").split(",");
-var PASS = ["--combats", "--attendre-camp", "--tactique", "--compagnons-malins", "--investi", "--laisser", "--farm-reforges"].filter(function (f) { return ARGS.indexOf(f) >= 0; });
+var PASS = ["--combats", "--attendre-camp", "--tactique", "--compagnons-malins", "--investi", "--laisser", "--farm-reforges", "--relique-echoppe"].filter(function (f) { return ARGS.indexOf(f) >= 0; });
 if (ARGS.indexOf("--apres") >= 0) PASS.push("--apres", ARGS[ARGS.indexOf("--apres") + 1]); // v3.459.10 : après-Histoire (heures)
 if (ARGS.indexOf("--faille") >= 0) PASS.push("--faille"); // lot 0 des niveaux de donjon
 var OUT = require("../chemins.js").captures(arg("--sortie", "campagne-lot")); // v3.456.0 : --sortie pour deux lots en parallèle
