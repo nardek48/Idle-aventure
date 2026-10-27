@@ -706,7 +706,7 @@ var STORY_QUESTS = {
             { who: null, text: "Orwen met un morceau de pain de côté. Deux, cette fois." }
           ]
         },
-        objectiveLabel: "Remporter 3 combats avec Wenna à tes côtés (chasse, élite, donjon ou carte)",
+        objectiveLabel: "Remporter 3 combats avec Wenna à tes côtés (élite, donjon ou carte)",
         unlockTabs: ["companions"],
         reward: STORY_REWARDS.forest_wenna,
         linkTo: { section: "adventure" }, // v3.293.0 : le tableau des missions, plus l'onglet Combat nu

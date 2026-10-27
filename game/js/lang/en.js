@@ -1560,7 +1560,6 @@ I18n.register("en", {
   "Aucune quête d'histoire pour le moment.": "No story quest for now.",
   "Secondaires": "Side quests",
   "Aucune quête secondaire disponible pour le moment.": "No side quest available for now.",
-  "Aucune chasse disponible pour le moment.": "No hunt available for now.",
   "Aventure": "Adventure",
   "Aucune aventure disponible pour le moment.": "No adventure available for now.",
   "Facile": "Easy",
@@ -2180,7 +2179,7 @@ I18n.register("en", {
   "Chitine des profondeurs": "Deep chitin",
   "Verre trempé": "Tempered glass",
   "Résine durcie": "Hardened resin",
-  "Butin de chasse, obtenu en Forêt ou au bâtiment Chasse.": "Hunting loot, found in the Forest or at the Hunting Lodge.",
+  "Produite au bâtiment Chasse ; les patrouilles en rapportent aussi.": "Produced at the Hunting Lodge; patrols bring some back too.",
   "Récolté au bâtiment Champs.": "Harvested at the Fields.",
   "Coupé à la Scierie. Sert aux zones de production, aux planches et aux fondations du village.": "Cut at the Sawmill. Used for production zones, planks and the village's foundations.",
   "Extrait à la Mine. Sert aux zones de production et aux lingots de la Fonderie.": "Mined at the Mine. Used for production zones and the Foundry's ingots.",
@@ -2974,13 +2973,6 @@ I18n.register("en", {
   "Vaincre la Ronce qui se souvient": "Defeat the Bramble That Remembers",
 
   // HUNT_QUESTS
-  "Chasse en Forêt": "Forest Hunt",
-  "Ce que les bêtes ont bu": "What the Beasts Drank",
-  "Battue en Forêt": "Forest Beat",
-  "Battue du Désert": "Desert Beat",
-  "Le gibier ne manque pas à la Lisière, et ce qu'il traîne avec lui non plus. Une bête abattue sur cinq ne laisse rien ; les autres rapportent viande, blé, bois, fer, pierre ou eau pour l'Entrepôt. Une chasse peut se répéter indéfiniment.": "There's no shortage of game at the Forest Edge, nor of what it drags along with it. One beast in five leaves nothing; the others bring back meat, wheat, wood, iron, stone or water for the Warehouse. A hunt can be repeated endlessly.",
-  "Les bêtes du Cœur ne saignent pas comme les autres. Sous l'écorce de leur peau, quelque chose de clair affleure et durcit à l'air. La Forêt leur a donné quelque chose ; rien n'empêche de le reprendre.": "The beasts of the Heart don't bleed like the others. Under the bark of their hide, something clear rises and hardens in the air. The Forest gave them something; nothing stops you from taking it back.",
-  "Aldric paie à la tête. Vingt bêtes, et la bourse s'ouvre — il ne demande ni laquelle, ni pourquoi. La Forêt en a toujours vingt de plus.": "Aldric pays by the head. Twenty beasts, and the purse opens — he doesn't ask which, or why. The Forest always has twenty more.",
 
   // LIVING_MAPS
   "Aeswyn": "Aeswyn",
@@ -3356,7 +3348,7 @@ I18n.register("en", {
   "Activer 1 règle du Grimoire et terminer « Tenir le Cœur » (10 victoires d'affilée)": "Activate 1 Grimoire rule and complete “Hold the Heart” (10 wins in a row)",
   "Entrer dans la Tanière du Basilic sous au moins une Marque et passer 5 vagues dans le même run": "Enter the Basilisk's Den under at least one Mark and clear 5 waves in the same run",
   "Vaincre le Donjon I": "Defeat Dungeon I",
-  "Remporter 3 combats avec Wenna à tes côtés (chasse, élite, donjon ou carte)": "Win 3 fights with Wenna at your side (hunt, elite, dungeon or map)",
+  "Remporter 3 combats avec Wenna à tes côtés (élite, donjon ou carte)": "Win 3 fights with Wenna at your side (elite, dungeon or map)",
   "Terminer « Le Cœur de la Forêt » (Seigneur de guerre orc) et offrir aux braises 3 Sève d'Aeswyn + 1 Ration moyenne": "Complete “The Heart of the Forest” (Orc Warlord) and offer the embers 3 Aeswyn Sap + 1 Medium ration",
   "Aeswyn n'est plus qu'un cercle de cendres. Le feu tient encore. Il te faudra une lame pour tenir la nuit.": "Aeswyn is nothing but a circle of ashes now. The fire is still holding. You'll need a blade to last the night.",
   "Les bêtes viennent flairer les braises. Écarte-les, et garde ce qu'elles laissent.": "The beasts come sniffing at the embers. Drive them off, and keep what they leave behind.",
@@ -3492,7 +3484,6 @@ I18n.register("en", {
   "Vaincre Nezzam le Desséché": "Defeat Nezzam the Withered",
 
   // HUNT_QUESTS
-  "Le Veilleur ne paie pas, lui. Mais les caravanes qui passent encore la frange, si. Vingt bêtes éloignées de la piste, et la bourse s'ouvre.": "The Watcher doesn't pay. But the caravans that still cross the fringe do. Twenty beasts driven off the trail, and the purse opens.",
 
   // STORY_QUESTS
   "Ce que le sable garde": "What the Sand Keeps",
@@ -4005,7 +3996,6 @@ I18n.register("en", {
   "{n}, niveau {l}": "{n}, level {l}",
   "{a} / {b} PV": "{a} / {b} HP",
   "{a} / {b} XP": "{a} / {b} XP", // v3.396.0 : jauge d'XP du HUD
-  "Un point de talent à placer||{n} points de talent à placer": ["One talent point to spend", "{n} talent points to spend"], // v3.396.0 : bulle Talents
   "{n} objet dans le sac||{n} objets dans le sac": ["{n} item in the bag", "{n} items in the bag"], // v3.396.0 : bulle Sac
   "Tu pars avec tes PV actuels. Les rations de la besace soignent en route.": "You set out with your current HP. The rations in your satchel heal you on the way.",
   "Case libre : ajouter un objet": "Free slot: add an item",
@@ -5955,7 +5945,7 @@ I18n.register("en", {
   "Une erreur du jeu a empêché de charger ta partie. Elle reste intacte : rien ne sera écrit dessus pendant cette session. Recharge la page après la prochaine mise à jour.": "A game error prevented your save from loading. It is untouched: nothing will be written to it during this session. Reload the page after the next update.",
   "Le frein retombe à minuit, dans {d}.": "The brake drops at midnight, in {d}.",
   "La Halle en permet plus : chaque nouveau marché ouvert ajoutera une caravane.": "The Hall allows more: each new market that opens will add a caravan.",
-  "L'Arbre-mère, carte de la Forêt (+2 par victoire, rejouable) · la Tanière du Basilic (+2 par Marque) · la chasse « Ce que les bêtes ont bu » (Cœur de la forêt) · Petites Aventures de la Forêt · caravane longue au marché de la Forêt": "The Mother Tree, Forest map (+2 per win, replayable) · the Basilisk's Den (+2 per Mark) · the hunt “What the Beasts Drank” (Heart of the Forest) · Forest Short Adventures · long caravan to the Forest market",
+  "L'Arbre-mère, carte de la Forêt (+2 par victoire, rejouable) · la Tanière du Basilic (+2 par Marque) · Petites Aventures de la Forêt · caravane longue au marché de la Forêt": "The Mother Tree, Forest map (+2 per win, replayable) · the Basilisk's Den (+2 per Mark) · Forest Short Adventures · long caravan to the Forest market",
   "Le Dard des profondeurs, carte du Désert (+2 par victoire, rejouable) · la Cité engloutie (+2 par Marque) · Petites Aventures du Désert · caravane longue au marché du Désert": "The Deep Sting, Desert map (+2 per win, replayable) · the Sunken City (+2 per Mark) · Desert Short Adventures · long caravan to the Desert market",
   // v3.458.2 (lot 6b) : ressource de classe, carte vivante, voile paysage
   "Chaque attaque de base rend {x} : {p} % des dégâts infligés, {m} au plus.": "Each basic attack gives {x}: {p}% of the damage dealt, {m} at most.",
@@ -7008,5 +6998,9 @@ I18n.register("en", {
   "Un rang coûte de l'or et 2 matériaux du monde. Comme les sorts du héros, le rang 2 s'ouvre au Désert, le 3 aux Ruines.": "A rank costs gold and 2 world materials. As with the hero's spells, rank 2 opens in the Desert, rank 3 in the Ruins.",
   "La Halle marchande envoie des caravanes vers les marchés des mondes déjà libérés : trajet court (1 h), moyen (4 h) ou long (8 h).": "The Market Hall sends caravans to the markets of worlds already freed: short trip (1 h), medium (4 h) or long (8 h).",
   "Au retour, elle rapporte de l'or et des ressources du monde visité ; le trajet long peut ramener une rareté.": "On return, it brings gold and resources from the world visited; the long trip can bring back a rarity.",
+  // v3.510.0 : petite aventure et donjon dans le fil rouge
+  "Une nouvelle chaque jour.": "A new one every day.",
+  "Les sorties se renouvellent chaque jour.": "Runs refresh every day.",
+  "Aller au donjon": "Go to the dungeon",
 
 });

@@ -14,9 +14,8 @@
    l'apparition, une seule fois : jamais d'animation en boucle (pas de pression).
    renderHud tourne à chaque image : le calque n'est réécrit que si son contenu change. */
 
-var HUD_DOCK_ICONS = { bag: "images/Icons/menu_icons/equip_menu.webp", talent: "images/Icons/talents/up_icon.webp",
-  dungeon: "images/Icons/subtabs/dungeon.webp", pa: "images/Icons/scene/journey_long.webp" };
-var HUD_DOCK_SITUATIONS = 3; // v3.405.0 : trois situations au plus, plus le fil rouge
+var HUD_DOCK_ICONS = { bag: "images/Icons/menu_icons/equip_menu.webp" };
+var HUD_DOCK_SITUATIONS = 3; // v3.405.0 : trois situations au plus, plus le fil rouge (v3.510.0 : il ne reste que le sac)
 var hudDockLastKey = null;
 var hudDockSeen = null;   // bulles affichées au rendu précédent (null : premier rendu, pas de lueur)
 var hudDockFilId = null;  // proposition du fil rouge au rendu précédent
@@ -30,67 +29,15 @@ function mountHudDock() {
 }
 window.mountHudDock = mountHudDock;
 
-/* Situations actives, la plus importante d'abord. */
+/* Situations actives, la plus importante d'abord.
+   v3.510.0 (option B, Seb 27/10) : talents, petite aventure et donjon passent par le fil rouge ; reste le sac. */
 function hudDockItems() {
   var out = [];
-  // v3.437.1 : pas de bulle avant que l'Histoire ouvre les talents (forest_11) : switchTab la refuserait
-  var talentsOpen = typeof isTabUnlocked !== "function" || isTabUnlocked("talents");
-  var n = (talentsOpen && typeof getTalentsAvailableCount === "function") ? Number(getTalentsAvailableCount() || 0) : 0;
-  if (n > 0) out.push({ k: "talent", icon: HUD_DOCK_ICONS.talent, badge: n > 1 ? String(n) : "",
-    tip: _tn(n, "Un point de talent à placer", "{n} points de talent à placer", { n: n }), go: "switchTab('talents')" });
-  // v3.405.0 : petite aventure du jour, puis sorties de donjon restantes (pas sur leur propre écran)
-  var tab = (window.game && game.activeTab) || "" /* v3.503.0 : currentTab n'existait pas */;
-  var lazy = hudDockLazy();
-  var pa = lazy.pa;
-  if (pa && tab !== "scene") out.push({ k: "pa", icon: HUD_DOCK_ICONS.pa, badge: "",
-    tip: pa.status === "running" ? _t("Ta petite aventure t'attend") : _t("Une petite aventure est disponible"), go: "openPaFromHud()" });
-  var d = lazy.dungeon;
-  if (d > 0 && tab !== "dungeon") out.push({ k: "dungeon", icon: HUD_DOCK_ICONS.dungeon, badge: String(d),
-    tip: _tn(d, "Une sortie de donjon disponible", "{n} sorties de donjon disponibles", { n: d }), go: "switchTab('dungeon')" });
   var c = Array.isArray(game.inventory) ? game.inventory.length : 0;
   if (c > 0) out.push({ k: "bag", icon: HUD_DOCK_ICONS.bag, badge: c > 99 ? "99+" : String(c),
     tip: _tn(c, "{n} objet dans le sac", "{n} objets dans le sac", { n: c }), go: "openBagFromHud()" });
   return out;
 }
-/* Le dock est recalculé à chaque image : donjons et petite aventure ne le sont qu'une fois par seconde
-   (ou aussitôt après un changement d'onglet). */
-var hudDockLazyCache = null;
-function hudDockLazy() {
-  var now = Date.now(), tab = (window.game && game.activeTab) || "" /* v3.503.0 : currentTab n'existait pas */;
-  var c = hudDockLazyCache;
-  if (c && c.tab === tab && now - c.at < 1000) return c;
-  hudDockLazyCache = { at: now, tab: tab, pa: hudDockPaMission(), dungeon: hudDockDungeonRunsLeft() };
-  return hudDockLazyCache;
-}
-window.hudDockLazyReset = function () { hudDockLazyCache = null; };
-
-/* Sorties du jour restantes, tous donjons débloqués confondus (0 si l'onglet Donjon est fermé). */
-function hudDockDungeonRunsLeft() {
-  if (!window.DungeonManager || !Array.isArray(window.DUNGEONS)) return 0;
-  if (typeof isTabUnlocked === "function" && !isTabUnlocked("dungeon")) return 0;
-  var n = 0;
-  DUNGEONS.forEach(function (dg) {
-    if (dg && DungeonManager.isUnlocked(dg.id)) n += Number(DungeonManager.getRunsLeft(dg.id) || 0);
-  });
-  return n;
-}
-/* Petite aventure à proposer : celle en cours d'abord, sinon une disponible aujourd'hui. */
-function hudDockPaMission() {
-  if (!window.MissionBoard || typeof MissionBoard._petiteAventureMissions !== "function") return null;
-  var list = MissionBoard._petiteAventureMissions(), avail = null;
-  for (var i = 0; i < list.length; i++) {
-    if (list[i].status === "running") return list[i];
-    if (!avail && list[i].status === "available" && !MissionBoard._isOtherWorld(list[i], MissionBoard._currentWorldId())) avail = list[i];
-  }
-  return avail;
-}
-function openPaFromHud() {
-  var m = hudDockPaMission();
-  if (!m) return;
-  var fn = m.launch || m.accept;
-  if (typeof fn === "function") fn();
-}
-window.openPaFromHud = openPaFromHud;
 
 function hudDockFil() {
   if ((window.Prefs && !Prefs.get("filRouge")) || !window.FilRouge) return null;

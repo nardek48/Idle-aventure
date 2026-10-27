@@ -291,7 +291,7 @@ function heroSnapshot() {
     + ", équipement " + g.EQUIPMENT_SLOTS.map(function (sl) { return eq[sl] ? eq[sl].rarity.charAt(0) : "-"; }).join("")
     + ", talents " + g.TalentManager.spent() + "/" + g.TalentManager.earned() + " (plafond " + g.TalentManager.cap() + ")" + ", potions " + JSON.stringify(g.game.healingPotionsOwned || {}) + ", Terrain " + g.VillageBuildingManager.getLevel("training") + ", Forge " + g.VillageBuildingManager.getLevel("forge") + " (arme +" + g.ForgeManager.getLevel("weapon") + ")";
 }
-/* B : bloqué, un joueur va se renforcer ailleurs : une battue (or), sinon une chasse, puis
+/* B : bloqué, un joueur va se renforcer ailleurs : une battue (or), sinon une chasse, puis (v3.511.0) le donjon, puis
    il repasse à l'échoppe et à l'entraînement. Rien d'autre n'est répétable à volonté. */
 function grindOnce(raison) { var ctx0 = CTX; CTX = "farm"; try { return grindOnceIn(raison); } finally { CTX = ctx0; } }
 function grindOnceIn(raison) {
@@ -299,7 +299,7 @@ function grindOnceIn(raison) {
   if (!COMBATS) return false;
   var dispo = (g.MissionBoard._huntMissions() || []).filter(function (m) { return m.status === "available"; }).map(function (m) { return m.questId; });
   var id = dispo.indexOf("hq_desert_battue") >= 0 ? "hq_desert_battue" : (dispo.indexOf("hq_forest_battue") >= 0 ? "hq_forest_battue" : dispo[0]);
-  if (!id) { STATS.grindNone[raison] = (STATS.grindNone[raison] || 0) + 1; return false; }
+  if (!id) return grindDungeon(raison); // v3.511.0 : plus de chasse dans le jeu, le joueur se renforce au donjon
   healUp();
   var t0 = CLOCK.offset, xp0 = g.game.heroLevel, or0 = g.game.gold;
   var q = g.HUNT_QUESTS[id];
@@ -318,6 +318,22 @@ function grindOnceIn(raison) {
   STATS.grinds[raison] = (STATS.grinds[raison] || 0) + 1;
   STATS.grindMs += CLOCK.offset - t0;
   var gf = STATS.goldFarm[id] = STATS.goldFarm[id] || { lots: 0, or: 0, h: 0, morts: 0 };
+  gf.lots++; gf.or += g.game.gold - or0; gf.h += (CLOCK.offset - t0) / 3600e3; if (DEFEATED) gf.morts++;
+  entretien();
+  return true;
+}
+/* v3.511.0 : sans chasse, une sortie du donjon débloqué le plus loin (déjà fini si possible, sinon le premier). */
+function grindDungeon(raison) {
+  var g = G, D = g.DungeonManager, L = (g.DUNGEONS || []).filter(function (d) { return D.isUnlocked(d.id); });
+  var done = L.filter(function (d) { return (g.game.dungeonTierCleared || {})[d.id]; });
+  var dg = done.length ? done[done.length - 1] : L[0];
+  if (!dg) { STATS.grindNone[raison] = (STATS.grindNone[raison] || 0) + 1; return false; }
+  var t0 = CLOCK.offset, or0 = g.game.gold, key = "donjon " + dg.id;
+  healUp();
+  if (playDungeonOnce(dg.id, false) === null) { STATS.grindNone[raison] = (STATS.grindNone[raison] || 0) + 1; return false; }
+  STATS.grinds[raison] = (STATS.grinds[raison] || 0) + 1;
+  STATS.grindMs += CLOCK.offset - t0;
+  var gf = STATS.goldFarm[key] = STATS.goldFarm[key] || { lots: 0, or: 0, h: 0, morts: 0 };
   gf.lots++; gf.or += g.game.gold - or0; gf.h += (CLOCK.offset - t0) / 3600e3; if (DEFEATED) gf.morts++;
   entretien();
   return true;
@@ -1723,7 +1739,7 @@ var SOLVERS = {
     if (!g.storyMakeChoice("desert", val)) note("choix refusé (roi)");
   },
   forest_wenna: function (g) {
-    // trois combats avec Wenna : l'Arbre-mère se rejoue, sinon une quête de chasse
+    // trois combats avec Wenna : une sortie de donjon (v3.511.0, plus de chasse), sinon l'Arbre-mère
     if (!g.CompanionManager.partyIds().length) note("Wenna n'est pas dans le groupe : " + JSON.stringify(g.CompanionManager.state("wenna")));
     for (var i = 0; i < 6 && g.storyCounter(g.game, "companionWins") < 3; i++) {
       if (!(COMBATS && grindOnce("forest_wenna")) && !freeSectorAgain("forest", "arbremere")) break;
