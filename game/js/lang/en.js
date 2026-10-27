@@ -6940,4 +6940,15 @@ I18n.register("en", {
   "Brûlure": "Burn",
   "Chaleur": "Heat",
   "Plongée": "Dive",
+  // v3.508.0 (lot C) : bulle d'or et fil rouge
+  "Un talent t'attend dans l'arbre de ta classe.": "A talent is waiting in your class tree.",
+  "Voir les talents": "See talents",
+  "Une relique à équiper": "A relic to equip",
+  "{x} a un emplacement libre.": "{x} has a free slot.",
+  "Monter une zone de production": "Upgrade a production zone",
+  "{x} peut passer au niveau {n}.": "{x} can reach level {n}.",
+  "{n} point de talent à dépenser||{n} points de talent à dépenser": ["{n} talent point to spend", "{n} talent points to spend"],
+  "Rang de sort": "Spell rank",
+  "{x} : compétence rang {n}": "{x}: skill rank {n}",
+
 });

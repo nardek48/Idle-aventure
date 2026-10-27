@@ -2,7 +2,7 @@
 /* ui/or-a-investir-view.js — v3.429.24 (option A, atelier/or-a-investir.html validé par Seb) :
    bulle dorée du dock quand une dépense d'or est payable TOUT DE SUITE (or + matériaux).
    Elle se tait une fois ouverte et ne revient que pour une NOUVELLE dépense payable.
-   Dépenses suivies : bâtiments du village, reforges, compagnons, entraînement.
+   Dépenses suivies : bâtiments du village, reforges, compagnons, entraînement ; v3.508.0 : rangs des sorts et des compagnons.
    Boutique, potions, enchantement et parcelles ont leur propre parcours : laissés de côté. */
 
 var OR_INVEST_ICON = "images/Icons/gold_icon.webp";
@@ -59,6 +59,37 @@ function orInvestCompanions() {
   return out;
 }
 
+/* v3.508.0 (lot C) : rangs des sorts payables (H2), ouverts sur la fiche Capacités au sort concerné. */
+function orInvestSkillRanks() {
+  if (!window.SkillRanks || orInvestHeroBusy()) return [];
+  var out = [];
+  SkillRanks.kitActions().forEach(function (a) {
+    if (SkillRanks.status(a.id) !== "ok") return;
+    var r = SkillRanks.get(a.id), cost = SkillRanks.nextCost(a.id), c = { gold: cost.gold };
+    c[cost.mat] = cost.qty;
+    out.push({ id: "s:" + a.id + ":" + (r + 1), rank: 3, gold: cost.gold,
+      icon: (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[a.id]) || (a.type === "defense" ? "images/Icons/combat_stats/stat_defense.webp" : "images/Icons/scene/node_discovery.webp"),
+      title: _t("{x} : rang {n}", { x: _td(a.label || a.id), n: r + 1 }), sub: _t("Rang de sort"), cost: c,
+      go: function () { orInvestGoSkill(a.id); } });
+  });
+  return out;
+}
+
+/* v3.508.0 (lot C) : rangs de compétence des compagnons payables (H4 partie C). */
+function orInvestCompanionRanks() {
+  if (!window.CompanionManager || typeof CompanionManager.skillRankStatus !== "function" || orInvestHeroBusy()) return [];
+  var out = [];
+  CompanionManager.unlockedIds().forEach(function (cid) {
+    if (CompanionManager.skillRankStatus(cid) !== "ok") return;
+    var r = CompanionManager.skillRank(cid), p = COMPANION_SKILL_RANK_PRICES[r], def = typeof getCompanionDef === "function" ? getCompanionDef(cid) : null, c = { gold: p.gold };
+    c[p.mat] = p.qty;
+    out.push({ id: "cr:" + cid + ":" + (r + 1), rank: 4, gold: p.gold, icon: def ? def.image : OR_INVEST_ICON,
+      title: _t("{x} : compétence rang {n}", { x: def ? _td(def.name) : cid, n: r + 1 }), sub: def && def.skill ? _td(def.skill.name || "") : "", cost: c,
+      go: function () { orInvestGoHeros("companions"); if (typeof herosOpenCompanion === "function") herosOpenCompanion(cid); } });
+  });
+  return out;
+}
+
 /* Entraînement : une seule ligne, la caractéristique la moins chère sous le plafond du Terrain. */
 function orInvestTraining() {
   if (!Array.isArray(window.UPGRADES) || typeof getUpgradeCost !== "function" || orInvestHeroBusy()) return [];
@@ -78,7 +109,7 @@ function orInvestTraining() {
 
 /* Toutes les dépenses payables, la meilleure d'abord. */
 function orInvestList() {
-  var list = [].concat(orInvestBuildings(), orInvestReforges(), orInvestCompanions(), orInvestTraining());
+  var list = [].concat(orInvestBuildings(), orInvestReforges(), orInvestSkillRanks(), orInvestCompanions(), orInvestCompanionRanks(), orInvestTraining());
   list.sort(function (a, b) { return (a.rank - b.rank) || (a.gold - b.gold); });
   return list;
 }
@@ -191,6 +222,12 @@ function orInvestGoBuilding(id) {
 function orInvestGoHeros(sub) {
   if (typeof switchTab === "function") switchTab("more"); // onglet Personnage (voir goToHeroTraining)
   if (typeof setHerosSubTab === "function") setHerosSubTab(sub);
+}
+function orInvestGoSkill(actionId) {
+  if (typeof switchTab === "function") switchTab("more");
+  if (typeof openHerosSheet === "function") openHerosSheet("abilities");
+  if (typeof expandedHeroSkill !== "undefined") expandedHeroSkill = actionId; // la carte du sort ouverte sur son rang
+  if (typeof renderPanel === "function") renderPanel();
 }
 function orInvestGoProducer(resKey) {
   var prod = typeof findResourceProducer === "function" ? findResourceProducer(resKey) : null;

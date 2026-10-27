@@ -19065,6 +19065,27 @@ console.log("\n[328] Relevé 2 (27/10) — zones de production à 20 niveaux, d�
   } catch (err) { ok(false, "[328] exception : " + err.message); }
 })();
 
+console.log("\n[329] v3.508.0 (lot C) — bulle d'or : rangs des sorts et des compagnons ; fil rouge : talents, relique, zone");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
+    var game = g.game, CM = g.CompanionManager;
+    game.gold = 50000; g.WarehouseManager.addResource("resine_durcie", 10, true); game.worldsEverReached = { 0: true };
+    CM.state("wenna").unlocked = true; CM.state("wenna").present = true;
+    var ids = g.orInvestList().map(function (x) { return x.id; });
+    ok(ids.some(function (i) { return /^s:/.test(i); }), "bulle d'or : un rang de sort payable apparaît");
+    ok(ids.indexOf("cr:wenna:1") !== -1, "bulle d'or : le rang 1 de Wenna apparaît");
+    g.WarehouseManager.removeResource("resine_durcie", 10);
+    ok(!g.orInvestList().some(function (x) { return /^s:|^cr:/.test(x.id); }), "sans Résine : ni rang de sort ni rang de compagnon");
+    game.companionRelics = { inv: [{ id: 1, f: "croc", w: 0 }], next: 2, pity: 0 }; CM.state("wenna").upgrades = 5; CM.state("wenna").relics = [null, null, null];
+    g.FilRouge.invalidate();
+    var fr = g.FilRouge._relic();
+    ok(fr && fr.id === "relic", "fil rouge : une relique libre et un emplacement ouvert → « Une relique à équiper »");
+    CM.state("wenna").relics = [1, null, null];
+    ok(!g.FilRouge._relic(), "relique déjà portée : rien");
+  } catch (err) { ok(false, "[329] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

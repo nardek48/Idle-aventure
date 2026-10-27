@@ -80,7 +80,7 @@ var FilRouge = {
      toujours présente : le fil rouge a toujours quelque chose à dire. */
   all: function () {
     var out = [];
-    var checks = [this._claim, this._memory, this._heal, this._story, this._patrol, this._tavern, this._plots, this._apres];
+    var checks = [this._claim, this._memory, this._heal, this._story, this._patrol, this._tavern, this._plots, this._talents, this._relic, this._zoneUp, this._apres]; // v3.508.0 : talents, relique, zone
     for (var i = 0; i < checks.length; i++) {
       var r = null;
       try { r = checks[i].call(this); } catch (e) { r = null; } // une source cassée ne doit pas éteindre le fil
@@ -236,6 +236,72 @@ var FilRouge = {
       title: _t("Récolter le village"),
       reason: _tn(c.full, "{n} zone pleine sur {m} : elles ne produisent plus.", "{n} zones pleines sur {m} : elles ne produisent plus.", { m: c.open }),
       goLabel: _t("Récolter"),
+      go: function () {
+        if (typeof switchTab === "function") switchTab("village");
+        if (typeof setVillageSubTab === "function") setVillageSubTab("production");
+      }
+    };
+  },
+
+  /* 7 ter. v3.508.0 (lot C) : des points de talent qu'un talent achetable peut prendre. */
+  _talents: function () {
+    var T = window.TalentManager;
+    if (!T || typeof T.available !== "function" || T.available() <= 0) return null;
+    var any = (T.getNodes() || []).some(function (e) { var n = e.node || e; return T.canBuy(n.id); });
+    if (!any) return null;
+    var n = T.available();
+    return {
+      id: "talents", urgent: false, icon: FIL_ROUGE_ICONS.idle,
+      title: _tn(n, "{n} point de talent à dépenser", "{n} points de talent à dépenser"),
+      reason: _t("Un talent t'attend dans l'arbre de ta classe."), goLabel: _t("Voir les talents"),
+      go: function () { if (typeof switchTab === "function") switchTab("more"); if (typeof setHerosSubTab === "function") setHerosSubTab("talents"); }
+    };
+  },
+
+  /* 7 quater. v3.508.0 (lot C) : une relique libre et un emplacement vide chez un compagnon du groupe. */
+  _relic: function () {
+    var CR = window.CompanionRelics, CM = window.CompanionManager;
+    if (!CR || !CM) return null;
+    var libres = CR.ensure().inv.filter(function (r) { return !CR.wornBy(r.id); });
+    if (!libres.length) return null;
+    var cid = CM.partyIds().concat(CM.unlockedIds()).filter(function (id) {
+      var w = CR.worn(id), open = CR.slotsOpen(id), fams = w.map(function (x) { var r = x != null ? CR.byId(x) : null; return r ? r.f : null; });
+      return w.slice(0, open).some(function (x) { return x == null; }) && libres.some(function (r) { return fams.indexOf(r.f) < 0; });
+    })[0];
+    if (!cid) return null;
+    var def = typeof getCompanionDef === "function" ? getCompanionDef(cid) : null;
+    return {
+      id: "relic", urgent: false, icon: FIL_ROUGE_ICONS.patrol,
+      title: _t("Une relique à équiper"),
+      reason: _t("{x} a un emplacement libre.", { x: def ? _td(def.name) : cid }), goLabel: _t("Équiper"),
+      go: function () {
+        if (typeof switchTab === "function") switchTab("more");
+        if (typeof setHerosSubTab === "function") setHerosSubTab("companions");
+        if (typeof herosOpenCompanion === "function") herosOpenCompanion(cid);
+      }
+    };
+  },
+
+  /* 7 quinquies. v3.508.0 (lot C) : une zone de production qu'on peut monter tout de suite (20 niveaux). */
+  _zoneUp: function () {
+    var P = window.ProductionPlotsSystem;
+    if (!P || typeof getProductionPlotUpgradeCost !== "function" || !window.WarehouseManager) return null;
+    if (typeof isTabUnlocked === "function" && !isTabUnlocked("village")) return null;
+    var found = null;
+    P.getManagedBuildingIds().some(function (bid) {
+      return P.getPlots(bid).some(function (pl, i) {
+        if (pl.state !== "open" || P.isPlotMaxLevel(pl)) return false;
+        var c = getProductionPlotUpgradeCost(bid, pl.level, i);
+        if (!c || !Object.keys(c).every(function (k) { return WarehouseManager.getAmount(k) >= c[k]; })) return false;
+        found = { bid: bid, name: typeof getProductionZoneName === "function" ? getProductionZoneName(bid, i) : bid, level: pl.level };
+        return true;
+      });
+    });
+    if (!found) return null;
+    return {
+      id: "zoneUp", urgent: false, icon: FIL_ROUGE_ICONS.plots,
+      title: _t("Monter une zone de production"),
+      reason: _t("{x} peut passer au niveau {n}.", { x: _td(found.name), n: found.level + 1 }), goLabel: _t("Production"),
       go: function () {
         if (typeof switchTab === "function") switchTab("village");
         if (typeof setVillageSubTab === "function") setVillageSubTab("production");
