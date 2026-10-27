@@ -48,6 +48,9 @@ scripts.forEach(function (s) {
 console.log("Chargé " + scripts.length + " scripts");
 
 var g = sandbox;
+/* v3.511.0 : le jeu n'a plus de chasse ; le moteur reste testé avec les anciennes (hunt-fixture.js). */
+var HUNT_SHIPPED = Object.keys(g.HUNT_QUESTS || {}).length;
+Object.assign(g.HUNT_QUESTS, require("./hunt-fixture.js"));
 /* v3.447.0 : l'initiative tire l'ordre des tours aux dés. Les contrôles historiques supposent l'ordre
    d'avant (héros, compagnons, ennemis) : on le garde ici ; les contrôles de l'initiative le lèvent. */
 g.Initiative.legacy = true;
@@ -17976,8 +17979,8 @@ console.log("\n[303] v3.482.0 — Refonte de l'économie RE-5 : fin des sources 
 console.log("\n[304] v3.483.0 — Refonte de l'économie F6 : textes et commentaires de l'audit");
 (function () {
   var R = g.WAREHOUSE_RESOURCES;
-  ok(R.seve_aeswyn.sourceHint.indexOf("Ce que les bêtes ont bu") !== -1 && R.verre_des_dunes.sourceHint.indexOf("Dard des profondeurs") !== -1
-    && R.pierre_errante.sourceHint.indexOf("Labyrinthe") !== -1 && R.cire_sepulcre.sourceHint.indexOf("Ossuaire") !== -1, "« où trouver » : chasse à la Sève, Dard, Labyrinthe, Ossuaire cités");
+  ok(R.seve_aeswyn.sourceHint.indexOf("Arbre-mère") !== -1 && R.seve_aeswyn.sourceHint.indexOf("chasse") === -1 && R.verre_des_dunes.sourceHint.indexOf("Dard des profondeurs") !== -1
+    && R.pierre_errante.sourceHint.indexOf("Labyrinthe") !== -1 && R.cire_sepulcre.sourceHint.indexOf("Ossuaire") !== -1, "« où trouver » : Arbre-mère (v3.511.0 : plus de chasse), Dard, Labyrinthe, Ossuaire cités");
   var src = function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); };
   ok(src("js/systems/tavern-system.js").indexOf('formatNumber(payout) }), 1400)') !== -1, "Taverne : la notification affiche l'or réellement versé");
   ok(src("js/systems/combat-item-system.js").indexOf("rendue à l'Entrepôt") !== -1 && src("js/systems/combat-item-system.js").indexOf("rangée dans le Sac") === -1, "Fiole noire : « rendue à l'Entrepôt »");
@@ -19139,6 +19142,19 @@ console.log("\n[332] v3.510.0 — petite aventure et donjon dans le fil rouge, p
     FR._achievement = ach0; FR.all = all0; FR.invalidate();
     FR._dungeonRunsLeft = rl0; FR._paMission = pm0;
   } catch (err) { ok(false, "[332] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[333] v3.511.0 — chasses et battues retirées, onglet Chasse retiré");
+(function () {
+  try {
+    ok(HUNT_SHIPPED === 0, "le jeu ne livre plus aucune chasse (HUNT_QUESTS vide)");
+    ok(g.QUEST_CATEGORIES ? !g.QUEST_CATEGORIES.some(function (c) { return c.key === "chasse"; }) : !/key: "chasse"/.test(require("fs").readFileSync(require("path").join(ROOT, "js/ui/quests-view.js"), "utf8")), "onglet Quêtes : plus de catégorie Chasse");
+    var R = g.WAREHOUSE_RESOURCES;
+    ok(R.seve_aeswyn.sourceHint.indexOf("chasse") === -1 && R.viande.desc.indexOf("Chasse") !== -1, "Sève : plus de chasse citée ; Viande : bâtiment Chasse et patrouilles");
+    var keep = {}; Object.keys(g.HUNT_QUESTS).forEach(function (k) { keep[k] = g.HUNT_QUESTS[k]; delete g.HUNT_QUESTS[k]; });
+    ok(g.MissionBoard._huntMissions().length === 0, "tableau de missions : aucune chasse proposée");
+    Object.keys(keep).forEach(function (k) { g.HUNT_QUESTS[k] = keep[k]; });
+  } catch (err) { ok(false, "[333] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
