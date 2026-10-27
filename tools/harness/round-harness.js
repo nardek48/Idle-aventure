@@ -12783,21 +12783,15 @@ console.log("\n[169] v3.396.0 — HUD-1 : bandeau « C · Ornée » et bulles de
     ok(ks(g.hudDockOrder(F(false), [T, B, R, X])) === "fil,plots,bag,talent", "au calme : fil rouge + trois situations au plus (v3.405.0)");
     ok(ks(g.hudDockOrder(null, [B])) === "bag", "fil rouge désactivé dans les préférences : pas de bulle");
 
-    /* Situations : sac comme avant (nombre d'objets), talents quand un point est à placer */
+    /* Situations : sac comme avant (nombre d'objets). v3.510.0 : talents, petite aventure et donjon passent au fil rouge */
     var game = freshCombat("knight");
     game.inventory = [];
-    var tc0 = g.getTalentsAvailableCount;
-    g.getTalentsAvailableCount = function () { return 0; };
-    if (g.hudDockLazyReset) g.hudDockLazyReset();
     ok(g.hudDockItems().length === 0, "rien à faire : aucune bulle hors fil rouge");
     game.inventory = [{}, {}, {}];
+    var tc0 = g.getTalentsAvailableCount;
     g.getTalentsAvailableCount = function () { return 2; };
-    // v3.437.1 : pas de bulle talent tant que l'Histoire n'a pas ouvert l'onglet (forest_11)
-    game.unlockedTabs = Object.assign({}, game.unlockedTabs, { talents: false });
-    ok(g.hudDockItems().map(function (x) { return x.k; }).join(",") === "bag", "talents fermés (avant forest_11) : pas de bulle talent, même avec des points");
-    game.unlockedTabs.talents = true;
     var it = g.hudDockItems();
-    ok(it.length === 2 && it[0].k === "talent" && it[0].badge === "2" && it[1].k === "bag" && it[1].badge === "3", "talents (2 points) puis sac (3 objets), avec leurs nombres");
+    ok(it.length === 1 && it[0].k === "bag" && it[0].badge === "3", "v3.510.0 : seul le sac reste en bulle (3 objets), même avec des points de talent");
     g.getTalentsAvailableCount = tc0;
 
     /* v3.429.24 : bulle « or à investir » — seulement pour une dépense payable, et une seule fois */
@@ -13057,8 +13051,9 @@ console.log("\n[178] v3.405.0 — HUD des Petites Aventures, Bibliothèque, bull
     ok(/tab: "tutorials", label: _t\("Bibliothèque"\)/.test(menu) && menu.indexOf('tab: "bestiary"') === -1, "Menu : une seule porte « Bibliothèque »");
     g.setBestiaryCodexSubTab("bestiary");
     var dv = rd("js/ui/hud-dock-view.js");
-    ok(/HUD_DOCK_SITUATIONS = 3/.test(dv) && /k: "dungeon"/.test(dv) && /k: "pa"/.test(dv), "bulles : Donjon et Petite aventure, trois situations au plus");
-    ok(typeof g.hudDockDungeonRunsLeft === "function" || /function hudDockDungeonRunsLeft/.test(dv), "bulle Donjon : sorties restantes de tous les donjons débloqués");
+    var frs = rd("js/systems/fil-rouge-system.js");
+    ok(!/k: "dungeon"/.test(dv) && !/k: "pa"/.test(dv) && /_pa: function/.test(frs) && /_dungeon: function/.test(frs), "v3.510.0 : Donjon et Petite aventure passent du dock au fil rouge");
+    ok(typeof g.FilRouge._dungeonRunsLeft === "function", "fil rouge : sorties restantes de tous les donjons débloqués");
   } catch (err) {
     ok(false, "[178] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
@@ -19113,6 +19108,37 @@ console.log("\n[331] v3.509.0 — jalons du village et du héros (onglet Seconda
     game = g.game; game.village.apothecary = { learned: {}, dailyKey: "Mon Oct 26 2026", dailyCount: 2 }; game.explorationProgression.ruinsMarketDone = true;
     ok(MM.measure(ap) === 1 && MM.measure(cv) === 1, "ancienne partie : préparation et caravane déjà faites reconnues (v3.509.1)");
   } catch (err) { ok(false, "[331] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[332] v3.510.0 — petite aventure et donjon dans le fil rouge, plus de bulles talents / PA / donjon");
+(function () {
+  try {
+    var FR = g.FilRouge, src = require("fs").readFileSync(require("path").join(ROOT, "js/systems/fil-rouge-system.js"), "utf8");
+    ok(/this\._tavern, this\._pa, this\._dungeon, this\._plots/.test(src), "ordre : après la Taverne, avant les zones pleines");
+    var rl0 = FR._dungeonRunsLeft, pm0 = FR._paMission;
+    FR._dungeonRunsLeft = function () { return 3; };
+    FR._paMission = function () { return { status: "available" }; };
+    g.game.activeTab = "village";
+    var d = FR._dungeon(), pa = FR._pa();
+    ok(d && d.id === "dungeon" && /3/.test(d.title) && pa && pa.id === "pa", "3 sorties et une petite aventure : deux propositions");
+    ok(FR.all().some(function (x) { return x.id === "dungeon"; }) && FR.all().some(function (x) { return x.id === "pa"; }), "elles entrent dans la liste du fil rouge");
+    g.game.activeTab = "dungeon";
+    ok(!FR._dungeon(), "sur l'écran Donjon : pas de proposition donjon");
+    g.game.activeTab = "scene";
+    ok(!FR._pa(), "pendant la petite aventure : pas de proposition");
+    FR._dungeonRunsLeft = function () { return 0; }; FR._paMission = function () { return null; };
+    g.game.activeTab = "village";
+    ok(!FR._dungeon() && !FR._pa(), "rien de disponible : rien");
+    FR._dungeonRunsLeft = function () { return 2; }; FR._paMission = function () { return { status: "available" }; };
+    var ach0 = FR._achievement, all0 = FR.all;
+    FR._achievement = function () { return { id: "achievement", title: "x" }; };
+    FR.all = function () { return [{ id: "claim" }, { id: "story" }, { id: "pa" }, { id: "dungeon" }]; };
+    FR.invalidate();
+    var al = FR.also().map(function (x) { return x.id; }).join(",");
+    ok(al === "story,pa,achievement", "« Aussi » : les deux suivantes puis le haut fait en 3e place (" + al + ")");
+    FR._achievement = ach0; FR.all = all0; FR.invalidate();
+    FR._dungeonRunsLeft = rl0; FR._paMission = pm0;
+  } catch (err) { ok(false, "[332] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));

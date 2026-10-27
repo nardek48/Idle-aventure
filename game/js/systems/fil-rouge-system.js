@@ -29,7 +29,9 @@ var FIL_ROUGE_ICONS = {
   forge: "images/Icons/workshops/smithing_station.webp",
   enchant: "images/Icons/village_buildings/enchantress_tower.webp",
   bestiary: "images/Icons/subtabs/bestiary.webp",
-  achievement: "images/Icons/menu_icons/achivment_menu.webp"
+  achievement: "images/Icons/menu_icons/achivment_menu.webp",
+  pa: "images/Icons/scene/journey_long.webp",          // v3.510.0 : ex-bulles du dock
+  dungeon: "images/Icons/subtabs/dungeon.webp"
 };
 
 var FilRouge = {
@@ -51,12 +53,12 @@ var FilRouge = {
 
   /* Les deux propositions suivantes, pour la ligne « Aussi » de la bulle.
      v3.338.0 (H10) : un haut fait à réclamer n'est JAMAIS la proposition principale ; il prend
-     la dernière place de « Aussi » s'il n'y est pas déjà. */
+     la dernière place de « Aussi » s'il n'y est pas déjà (v3.510.0 : une 3e place, sans remplacer la 2e). */
   also: function () {
     this.get();
     var list = this._alsoCached.slice();
     var ach = this._achievement();
-    if (ach) { if (list.length >= 2) list[1] = ach; else list.push(ach); }
+    if (ach) list.push(ach); // v3.510.0 (option A, Seb 27/10) : 3e place, les deux suivantes restent visibles
     return list;
   },
 
@@ -80,7 +82,7 @@ var FilRouge = {
      toujours présente : le fil rouge a toujours quelque chose à dire. */
   all: function () {
     var out = [];
-    var checks = [this._claim, this._memory, this._heal, this._story, this._patrol, this._tavern, this._plots, this._talents, this._relic, this._zoneUp, this._apres]; // v3.508.0 : talents, relique, zone
+    var checks = [this._claim, this._memory, this._heal, this._story, this._patrol, this._tavern, this._pa, this._dungeon, this._plots, this._talents, this._relic, this._zoneUp, this._apres]; // v3.508.0 : talents, relique, zone ; v3.510.0 : petite aventure, donjon
     for (var i = 0; i < checks.length; i++) {
       var r = null;
       try { r = checks[i].call(this); } catch (e) { r = null; } // une source cassée ne doit pas éteindre le fil
@@ -224,6 +226,51 @@ var FilRouge = {
         if (typeof openVillageBuildingSheet === "function") openVillageBuildingSheet("tavern");
       }
     };
+  },
+
+  /* 6 bis. v3.510.0 (option B du 27/10) : la petite aventure du jour, ex-bulle du dock (pas sur son écran). */
+  _pa: function () {
+    if (((window.game && game.activeTab) || "") === "scene") return null;
+    var m = this._paMission();
+    if (!m) return null;
+    var run = m.status === "running";
+    return {
+      id: "pa", urgent: false, icon: FIL_ROUGE_ICONS.pa,
+      title: run ? _t("Ta petite aventure t'attend") : _t("Une petite aventure est disponible"),
+      reason: _t("Une nouvelle chaque jour."), goLabel: run ? _t("Reprendre") : _t("Partir"),
+      go: function () { var x = FilRouge._paMission(), fn = x && (x.launch || x.accept); if (typeof fn === "function") fn(); }
+    };
+  },
+  /* Celle en cours d'abord, sinon une disponible aujourd'hui dans le monde courant. */
+  _paMission: function () {
+    if (!window.MissionBoard || typeof MissionBoard._petiteAventureMissions !== "function") return null;
+    var list = MissionBoard._petiteAventureMissions(), avail = null;
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].status === "running") return list[i];
+      if (!avail && list[i].status === "available" && !MissionBoard._isOtherWorld(list[i], MissionBoard._currentWorldId())) avail = list[i];
+    }
+    return avail;
+  },
+
+  /* 6 ter. v3.510.0 : sorties de donjon du jour restantes, ex-bulle du dock (pas sur l'écran Donjon). */
+  _dungeon: function () {
+    if (((window.game && game.activeTab) || "") === "dungeon") return null;
+    var d = this._dungeonRunsLeft();
+    if (d <= 0) return null;
+    return {
+      id: "dungeon", urgent: false, icon: FIL_ROUGE_ICONS.dungeon,
+      title: _tn(d, "Une sortie de donjon disponible", "{n} sorties de donjon disponibles", { n: d }),
+      reason: _t("Les sorties se renouvellent chaque jour."), goLabel: _t("Aller au donjon"),
+      go: function () { if (typeof switchTab === "function") switchTab("dungeon"); }
+    };
+  },
+  /* Tous donjons débloqués confondus ; 0 si l'onglet Donjon est fermé. */
+  _dungeonRunsLeft: function () {
+    if (!window.DungeonManager || !Array.isArray(window.DUNGEONS)) return 0;
+    if (typeof isTabUnlocked === "function" && !isTabUnlocked("dungeon")) return 0;
+    var n = 0;
+    DUNGEONS.forEach(function (dg) { if (dg && DungeonManager.isUnlocked(dg.id)) n += Number(DungeonManager.getRunsLeft(dg.id) || 0); });
+    return n;
   },
 
   /* 7. La moitié des zones ouvertes sont pleines. */

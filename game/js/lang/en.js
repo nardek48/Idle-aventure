@@ -4005,7 +4005,6 @@ I18n.register("en", {
   "{n}, niveau {l}": "{n}, level {l}",
   "{a} / {b} PV": "{a} / {b} HP",
   "{a} / {b} XP": "{a} / {b} XP", // v3.396.0 : jauge d'XP du HUD
-  "Un point de talent à placer||{n} points de talent à placer": ["One talent point to spend", "{n} talent points to spend"], // v3.396.0 : bulle Talents
   "{n} objet dans le sac||{n} objets dans le sac": ["{n} item in the bag", "{n} items in the bag"], // v3.396.0 : bulle Sac
   "Tu pars avec tes PV actuels. Les rations de la besace soignent en route.": "You set out with your current HP. The rations in your satchel heal you on the way.",
   "Case libre : ajouter un objet": "Free slot: add an item",
@@ -7008,5 +7007,9 @@ I18n.register("en", {
   "Un rang coûte de l'or et 2 matériaux du monde. Comme les sorts du héros, le rang 2 s'ouvre au Désert, le 3 aux Ruines.": "A rank costs gold and 2 world materials. As with the hero's spells, rank 2 opens in the Desert, rank 3 in the Ruins.",
   "La Halle marchande envoie des caravanes vers les marchés des mondes déjà libérés : trajet court (1 h), moyen (4 h) ou long (8 h).": "The Market Hall sends caravans to the markets of worlds already freed: short trip (1 h), medium (4 h) or long (8 h).",
   "Au retour, elle rapporte de l'or et des ressources du monde visité ; le trajet long peut ramener une rareté.": "On return, it brings gold and resources from the world visited; the long trip can bring back a rarity.",
+  // v3.510.0 : petite aventure et donjon dans le fil rouge
+  "Une nouvelle chaque jour.": "A new one every day.",
+  "Les sorties se renouvellent chaque jour.": "Runs refresh every day.",
+  "Aller au donjon": "Go to the dungeon",
 
 });

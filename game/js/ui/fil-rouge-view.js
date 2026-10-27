@@ -54,7 +54,7 @@ function closeFilRougeBubble() {
   if (root) root.innerHTML = "";
 }
 
-/* 0 = proposition principale ; 1, 2 = les « Aussi ». */
+/* 0 = proposition principale ; 1 à 3 = les « Aussi ». */
 function filRougeGo(index) {
   var a = filRougeShown[index || 0];
   filRougeShown = [];
