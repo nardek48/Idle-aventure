@@ -1522,7 +1522,11 @@ var Pa2Run = {
       else if (!par) this._log("🎒 " + _t("Tu as rapporté des trouvailles : la place de la réserve reste dépensée."));
       game.justDied = true; // comme une mort en v1 : bandeau du Campement
       this._log("💀 " + _t("On te ramène. Une part de ce que tu portais reste en route."));
-    } else if (how === "home") this._log("🔥 " + _t("Retour au feu avant la nuit profonde. Le butin est sauf."));
+    } else if (how === "home") {
+      this._log("🔥 " + _t("Retour au feu avant la nuit profonde. Le butin est sauf."));
+      // v3.519.0 (option A de Seb) : sortie offerte rentrée avant le but, la place est prise après coup (plus de boucle gratuite)
+      if (!par && run.storyFree) this._takeStorySlot(run);
+    }
     else if (how === "parcours") this._log("🏁 " + _t("{t} : parcours terminé.", { t: _td((SceneEngine.getTemplate(run.templateId) || {}).title || "") }));
     else if (dest) this._log("🏁 " + _t("Petite Aventure : {d} atteint.", { d: _td(((PA2_DESTS[run.worldId] || PA2_DESTS.forest)[dest.type] || {}).name || "") }));
     if (end.rare > 0 || run.rareFound > 0) this._log("✨ " + _t("Trouvaille : +{n} {x}", { n: run.rareFound, x: this._rareName(run) }));
@@ -1535,6 +1539,14 @@ var Pa2Run = {
     if (!par) this._recordTrophy(run, end);
     this._save();
     return end;
+  },
+  /* v3.519.0 (option A de Seb) : une sortie offerte par l'Histoire qui rentre ou s'arrête sans atteindre son but
+     prend sa place dans la réserve, comme une sortie ordinaire. Le KO reste gratuit (vrai échec, moitié du butin). */
+  _takeStorySlot: function (run) {
+    if (run.paSlotDay) return;
+    SceneRunManager._consumePetiteAventureSlot();
+    run.paSlotDay = SceneRunManager._today();
+    this._log("🎒 " + _t("Retour avant le but : la sortie offerte prend sa place dans la réserve."));
   },
   _refundStock: function (run) {
     if (!window.WarehouseManager) return;
@@ -1556,6 +1568,7 @@ var Pa2Run = {
       return { ok: true, reason: null, summary: null };
     }
     this._refundStock(run);
+    if (!this.isParcours(run) && run.storyFree) this._takeStorySlot(run); // v3.519.0 : abandon d'une sortie offerte, idem
     run.status = PA2_STATUS.done;
     run.end = { how: "abandon" };
     var summary = window.SortieManager ? SortieManager.end("flee") : null;

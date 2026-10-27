@@ -280,7 +280,7 @@ function buildPa2PrepHTML(run) {
 
     // v3.429.23 : comme l'entrée de donjon offerte — l'Histoire paie la place
     if (!par && SceneRunManager.isStoryPaFree(run.worldId, run.livingMap)) {
-      h += '<p class="pa2-note pa2-storyfree"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.webp> <b>' + esc(_t("Expédition offerte")) + '</b> ' + esc(_t("— l'Histoire t'y mène, aucune place de la réserve consommée")) + '</p>';
+      h += '<p class="pa2-note pa2-storyfree"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.webp> <b>' + esc(_t("Expédition offerte")) + '</b> ' + esc(_t("— l'Histoire t'y mène : aucune place prise, sauf si tu rentres avant le but")) + '</p>';
     }
     if (!par) h += pa2TrophiesHTML(run);
 

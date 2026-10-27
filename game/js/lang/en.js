@@ -4142,7 +4142,8 @@ I18n.register("en", {
   "Entrer dans le désert": "Enter the desert",
   // v3.429.23 : Petite aventure offerte par l'Histoire
   "Expédition offerte": "Free expedition",
-  "— l'Histoire t'y mène, aucune place de la réserve consommée": "— the Story leads you there, no slot used from your reserve",
+  "— l'Histoire t'y mène : aucune place prise, sauf si tu rentres avant le but": "— the Story leads you there: no slot used, unless you head home before the goal",
+  "Retour avant le but : la sortie offerte prend sa place dans la réserve.": "Back before the goal: the free outing now takes its slot in your reserve.",
   "Offerte par l'Histoire": "Free, from the Story",
   "Entrer dans les ruines": "Enter the ruins",
   "Écouter le désert": "Listen to the desert",

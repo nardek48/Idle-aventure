@@ -19353,6 +19353,22 @@ console.log("\n[340] v3.519.0 — lot 4 (règles des mondes) et correctifs en fi
     SQ.isCurrentStepReady = readyS; SQ.isCurrentStepAccepted = accS; SQ.getCurrentStep = stepS; SQ.activeChapterIds = actS; g.LivingMapManager.isLiberated = libS;
     ok(offert === true && apres === false, "Petite aventure offerte tant que l'étape n'est pas réussie, plus ensuite (comme le donjon, RE-5)");
     ok(/getContentFor\(map\.id, d\.id\) \|\| \{\}\)\.type === "expedition"/.test(src("js/systems/scene-run-system.js")), "carte du tableau : seule une expédition à libérer compte comme offerte");
+    // option A de Seb : une sortie offerte rentrée au camp avant le but prend sa place après coup
+    (function () {
+      var gm = freshCombat("knight"); gm.heroLevel = 60; g.EquipmentManager.recalcStats(); gm.heroHp = gm.heroMaxHp;
+      gm.unlockedTabs.village = true; gm.unlockedTabs.scene = true; SQ.ensure();
+      Object.keys(g.STORY_QUESTS).forEach(function (c) { var stc = SQ.getState(c); if (c === "mountain") { stc.currentStep = g.STORY_QUESTS.mountain.steps.indexOf(m16); stc.accepted = true; } else stc.currentStep = g.STORY_QUESTS[c].steps.length; });
+      var LMx = g.LivingMapManager, mp = LMx.getMapForWorld("mountain"), cible = null;
+      mp.sectors.forEach(function (d) { var cs = LMx.canStart(mp.id, d.id); if (!cible && LMx.isReachable(mp.id, d.id) && !LMx.isLiberated(mp.id, d.id) && cs.content && cs.content.type === "expedition") cible = d.id; });
+      var pa = SR._paState(); pa.spent = 99; pa.since = Date.now();
+      var swT = g.switchTab; g.switchTab = function () {};
+      var r1 = cible && LMx.start(mp.id, cible), runv = gm.sceneRun, dep = r1 && r1.ok ? g.Pa2Run.depart() : null;
+      var camp = runv && runv.nodes && Object.keys(runv.nodes).filter(function (k) { return runv.nodes[k].type === "camp" || runv.nodes[k].type === "seuil"; })[0];
+      if (camp) { runv.at = camp; runv.status = "pa2-node"; runv.nodes[camp].done = false; }
+      var h = camp ? g.Pa2Run.placeAction("home") : null;
+      g.switchTab = swT;
+      ok(!!(dep && dep.ok && runv.storyFree && h && h.ok && SR._paState().spent === 100), "Petite aventure offerte rentrée avant le but : sa place est prise (réserve " + SR._paState().spent + ", 99 avant)");
+    })();
     // SUI-8 : compteurs de la maîtrise d'arme retirés des valeurs par défaut
     ok(["swordKills", "bowKills", "magicKills"].every(function (k) { return !(k in g.DEFAULT_QUEST_PROGRESS); }), "compteurs morts swordKills, bowKills, magicKills retirés (une vieille sauvegarde les garde, sans effet)");
   } catch (err) { ok(false, "[340] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
