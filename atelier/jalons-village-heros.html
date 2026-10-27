@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Jalons du village et du héros</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Atelier « Jalons » (option A de Seb du 27/10 : 6 jalons par monde, 3 village + 3 héros, récompense ~10 % du revenu du monde).
+   Variante A : 5e onglet « Jalons » au tableau des quêtes. Variante B : bloc « Jalons du monde » en tête de « Secondaires ». Jetons du jeu. */
+:root {
+  --page: #1c140c; --parch: #e9d7b0; --frame-dark: #6b4a22; --bronze: #b98a4a;
+  --nb-cream: #f6ecd9; --nb-cream-alt: #efe0c2; --nb-cream-deep: #e4cfa0; --nb-frame: #c27f1f; --nb-frame-light: #dcc79c;
+  --nb-ink: #3a2c1a; --nb-ink-dim: #6b5d45; --nb-gold-deep: #7c5114; --nb-green-text: #1e7236; --nb-green: #3f9d5a;
+  --cream-text: #f3e6c4; --gold-a: #f0c64a; --gold-b: #c27f1f; --blue-a: #2a5aa8; --blue-b: #173a74; --shade: rgba(20, 12, 4, .55);
+  --f-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html { background: var(--page); }
+body { margin: 0; background: var(--page); color: var(--nb-ink); font: 14px/1.35 var(--f-ui); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--page); }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; display: grid; gap: 6px; padding-block: 8px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); background: var(--page); color: var(--cream-text); }
+.row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.row > b { font-size: 12px; letter-spacing: .4px; text-transform: uppercase; color: var(--bronze); min-width: 64px; }
+.bar button { min-height: 36px; padding: 4px 11px; border-radius: 10px; border: 1.5px solid var(--bronze); background: transparent; color: var(--cream-text); font: 700 13px var(--f-ui); cursor: pointer; }
+.bar button[aria-pressed="true"] { background: linear-gradient(var(--gold-a), var(--gold-b)); color: var(--nb-ink); border-color: var(--gold-a); }
+button:focus-visible { outline: 2px solid var(--gold-a); outline-offset: 2px; }
+main { display: grid; gap: 12px; padding-block: 12px 32px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  background: var(--parch); border-top: 3px solid var(--frame-dark); min-height: 100vh; }
+.intro { margin: 0; font-size: 13px; color: var(--nb-gold-deep); max-width: 62ch; }
+.intro b { color: var(--nb-ink); }
+
+/* Onglets du tableau des quêtes (comme le jeu) */
+.qtabs { display: grid; gap: 4px; padding: 6px; border-radius: 16px; background: var(--nb-cream-deep); border: 1px solid var(--nb-frame-light); }
+.qtabs.n4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.qtabs.n5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.qtab { position: relative; display: grid; justify-items: center; gap: 2px; padding: 6px 2px; border-radius: 12px; border: 0; background: transparent; font: 700 12px var(--f-ui); color: var(--nb-ink-dim); cursor: pointer; min-width: 0; }
+.qtab img { width: 30px; height: 30px; }
+.qtab span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qtab.on { background: linear-gradient(#f6d27a, #e2a94a); color: var(--nb-ink); box-shadow: 0 2px 4px rgba(60, 35, 10, .25); }
+.qtab .dot { position: absolute; top: 3px; right: 8px; width: 10px; height: 10px; border-radius: 50%; background: #d93a2b; border: 1.5px solid #fff3; }
+
+/* Bloc des jalons */
+.jl { background: var(--nb-cream); border: 1px solid var(--nb-frame-light); border-radius: 16px; box-shadow: 0 2px 6px rgba(60, 35, 10, .18); padding: 12px; display: grid; gap: 10px; }
+.jl-h { display: flex; align-items: center; gap: 10px; }
+.jl-h img { width: 40px; height: 40px; border-radius: 10px; }
+.jl-h .t { flex: 1; min-width: 0; }
+.jl-h b { display: block; font-size: 15px; }
+.jl-h small { color: var(--nb-ink-dim); font-size: 12px; }
+.jl-h .n { font: 800 14px var(--f-ui); color: var(--nb-gold-deep); font-variant-numeric: tabular-nums; }
+.jl-bar { height: 8px; border-radius: 6px; background: var(--nb-cream-deep); overflow: hidden; }
+.jl-bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--gold-b), var(--gold-a)); }
+.jl-grp { font-size: 11.5px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; color: var(--frame-dark); margin-top: 2px; }
+.jr { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px; border-radius: 12px; background: var(--nb-cream-alt); border: 1px solid var(--nb-frame-light); }
+.jr > img { width: 40px; height: 40px; border-radius: 8px; object-fit: cover; }
+.jr .tx { min-width: 0; display: grid; gap: 3px; }
+.jr .tx b { font-size: 13.5px; line-height: 1.2; }
+.jr .tx .book { font-size: 12px; color: var(--blue-a); font-weight: 800; background: none; border: 0; padding: 0; text-align: left; cursor: pointer; font-family: inherit; }
+.jr .pg { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--nb-ink-dim); font-variant-numeric: tabular-nums; }
+.jr .pg .jl-bar { flex: 1; height: 6px; }
+.jr .rw { display: flex; flex-wrap: wrap; gap: 4px; }
+.chip { display: inline-flex; align-items: center; gap: 3px; padding: 1px 7px 1px 3px; border-radius: 999px; background: var(--nb-cream); border: 1px solid var(--nb-frame-light); font: 700 12px var(--f-ui); font-variant-numeric: tabular-nums; }
+.chip img { width: 16px; height: 16px; }
+.btn { min-height: 40px; padding: 4px 12px; border-radius: 12px; border: 2px solid #0e2550; background: linear-gradient(var(--blue-a), var(--blue-b)); color: #f6d27a; font: 800 13px var(--f-ui); cursor: pointer; white-space: nowrap; }
+.btn.claim { border-color: #7c5114; background: linear-gradient(#f6d27a, #e2a94a); color: var(--nb-ink); }
+.jr.ready { border-color: var(--nb-green); box-shadow: inset 0 0 0 1px var(--nb-green); }
+.jr.done { opacity: .6; }
+.jr.done .ok { font: 900 18px var(--f-ui); color: var(--nb-green-text); padding: 0 8px; }
+.older { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border-radius: 12px; border: 1.5px dashed var(--nb-frame); background: transparent; font: 700 13px var(--f-ui); color: var(--nb-ink); width: 100%; cursor: pointer; }
+.older img { width: 22px; height: 22px; vertical-align: middle; margin-right: 6px; }
+.other { background: var(--nb-cream); border: 1px solid var(--nb-frame-light); border-radius: 16px; padding: 12px; display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 12px; opacity: .85; }
+.other img { width: 52px; height: 60px; }
+.other b { font-size: 15px; }
+.other p { margin: 2px 0 0; font-size: 13px; color: var(--nb-ink-dim); }
+
+/* Fiche « comment ça marche » */
+.veil { position: fixed; inset: 0; z-index: 50; background: var(--shade); display: grid; place-items: end center; }
+.veil[hidden] { display: none; }
+.sheet { width: min(100%, 480px); max-height: 85vh; overflow: auto; background: var(--parch); border-radius: 18px 18px 0 0; border-top: 3px solid var(--frame-dark);
+  padding: 16px max(16px, env(safe-area-inset-left, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 10px; }
+.sheet h3 { margin: 0; display: flex; align-items: center; gap: 10px; font-size: 17px; }
+.sheet h3 img { width: 40px; height: 40px; }
+.tip { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px; align-items: start; background: var(--nb-cream); border: 1px solid var(--nb-frame-light); border-radius: 12px; padding: 10px; font-size: 13.5px; }
+.tip img { width: 26px; height: 26px; }
+.sheet .btn { justify-self: stretch; min-height: 46px; font-size: 15px; }
+.note { font-size: 12px; color: var(--nb-ink-dim); }
+</style>
+</head>
+<body>
+<div class="bar">
+  <div class="row"><b>Variante</b><button type="button" data-v="A" aria-pressed="false">A · 5e onglet</button><button type="button" data-v="B" aria-pressed="true">B · dans Secondaires</button></div>
+  <div class="row"><b>Monde</b><button type="button" data-w="0" aria-pressed="false">Forêt</button><button type="button" data-w="4" aria-pressed="true">Montagne</button></div>
+</div>
+<main id="main"></main>
+<div class="veil" id="veil" hidden onclick="if(event.target===this)closeSheet()"><div class="sheet" id="sheet"></div></div>
+
+<script>
+"use strict";
+// Données d'atelier : la liste validée par Seb (27/10), états simulés. Les images viennent du jeu.
+var IMG = "../game/images/";
+function src(p) { return IMG + p; } // la copie autonome (Artifact) remplace cette fonction
+var WORLDS = [
+  { id: "forest", name: "Forêt enchantée", gold: 250, mat: "resine_durcie", matName: "Résine durcie", icon: "Icons/codex/world_forest.webp", jalons: [
+    { g: "v", t: "Trois zones au niveau 3", a: 2, b: 3, icon: "Production/farm.webp" },
+    { g: "v", t: "Entrepôt niveau 2", a: 2, b: 2, icon: "Icons/village_buildings/warehouse_expanded.webp" },
+    { g: "v", t: "Livrer un contrat à la Taverne", a: 0, b: 1, icon: "Icons/village_buildings/tavern.webp" },
+    { g: "h", t: "Premier rang d'un sort", a: 1, b: 1, icon: "Icons/special_attacks/smashing_blow.webp", book: "rangs", done: true },
+    { g: "h", t: "Wenna au palier 5", a: 3, b: 5, icon: "Companions/wenna.webp", book: "ardeur" },
+    { g: "h", t: "Équiper une relique", a: 0, b: 1, icon: "Icons/quests/mission_exploration.webp", book: "reliques" }
+  ] },
+  { id: "desert", name: "Désert oublié", gold: 600, mat: "verre_trempe", matName: "Verre trempé", icon: "Icons/codex/world_desert.webp", jalons: [] },
+  { id: "ruins", name: "Ruines anciennes", gold: 1500, mat: "cle_de_voute", matName: "Clé de voûte", icon: "Icons/codex/world_ruins.webp", jalons: [] },
+  { id: "crypt", name: "Crypte des dormeurs", gold: 4000, mat: "cire_consacree", matName: "Cire consacrée", icon: "Icons/codex/world_crypt.webp", jalons: [] },
+  { id: "mountain", name: "Montagne brûlante", gold: 12000, mat: "obsidienne_taillee", matName: "Obsidienne taillée", icon: "Icons/codex/world_mountain.webp", jalons: [
+    { g: "v", t: "Trois zones au niveau 14", a: 1, b: 3, icon: "Production/mine.webp" },
+    { g: "v", t: "Entrepôt niveau 14", a: 14, b: 14, icon: "Icons/village_buildings/warehouse_expanded.webp" },
+    { g: "v", t: "Terrain d'entraînement niveau 18", a: 16, b: 18, icon: "Icons/village_buildings/training_grounds.webp" },
+    { g: "h", t: "Un sort au rang 5", a: 4, b: 5, icon: "Icons/special_attacks/smashing_blow.webp" },
+    { g: "h", t: "Compétence de Sarkel au rang 3", a: 3, b: 3, icon: "Companions/sarkel.webp", done: true },
+    { g: "h", t: "Trois reliques sur un même compagnon", a: 2, b: 3, icon: "Companions/wenna.webp" }
+  ] }
+];
+var BOOKS = {
+  rangs: { t: "Les rangs des sorts", icon: "Icons/special_attacks/smashing_blow.webp", tips: [
+    ["Icons/subtabs/hero_abilities.webp", "Héros › Capacités : chaque sort monte du rang 0 au rang 5. Un rang = +8 % de dégâts (ou +2 points pour la défense)."],
+    ["Icons/resources/resine_durcie_icon.webp", "Un rang coûte de l'or et un matériau du monde. Le rang 2 s'ouvre au Désert, le 3 aux Ruines, et ainsi de suite."],
+    ["Icons/gold_icon.webp", "La bulle d'or te signale un rang payable : « J'y vais » ouvre le bon sort."]] },
+  ardeur: { t: "Entraîner un compagnon", icon: "Companions/wenna.webp", tips: [
+    ["Icons/subtabs/hero_roster.webp", "Héros › Compagnons : chaque palier donne +8 % au choix, en Ardeur (dégâts) ou en Vigueur (PV, et il attire davantage les coups)."],
+    ["Icons/system/lock_open.webp", "Les paliers 5, 15 et 25 ouvrent les trois emplacements de relique."],
+    ["Icons/gold_icon.webp", "« Répartir de nouveau » rend l'or et remet les paliers à choisir."]] },
+  reliques: { t: "Patrouilles et reliques", icon: "Icons/quests/mission_exploration.webp", tips: [
+    ["Icons/quests/mission_exploration.webp", "Un compagnon resté au camp peut partir en patrouille (2, 4 ou 8 h). Ta première patrouille terminée rapporte toujours une relique."],
+    ["Icons/codex/world_forest.webp", "La relique vient du monde patrouillé : plus le monde est loin, plus elle est forte (rang 1 à 5)."],
+    ["Companions/wenna.webp", "Fiche du compagnon › Reliques : une par famille. Croc (dégâts), Écorce (PV), Sceau (menace), Sablier (recharge), Talisman (dégâts du héros), Besace (butin)."]] }
+};
+var state = { v: "B", w: 4 };
+
+function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+function fmt(n) { return n >= 10000 ? (n / 1000) + " k" : String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " "); }
+
+function rowHTML(j, W) {
+  var ready = !j.done && j.a >= j.b, pct = Math.min(100, Math.round(100 * j.a / j.b));
+  var h = '<div class="jr' + (ready ? " ready" : "") + (j.done ? " done" : "") + '"><img src="' + src(j.icon) + '" alt="">';
+  h += '<div class="tx"><b>' + esc(j.t) + '</b>';
+  if (j.book && !j.done) h += '<button type="button" class="book" onclick="openSheet(\'' + j.book + '\')">📖 Comment ça marche</button>';
+  if (!j.done) h += '<div class="pg"><div class="jl-bar"><i style="width:' + pct + '%"></i></div>' + j.a + ' / ' + j.b + '</div>';
+  h += '<div class="rw"><span class="chip"><img src="' + src('Icons/gold_icon.webp') + '" alt="">' + fmt(W.gold) + '</span><span class="chip"><img src="' + src('Icons/resources/' + W.mat + '_icon.webp') + '" alt="">1 ' + esc(W.matName) + '</span></div></div>';
+  h += j.done ? '<span class="ok" aria-label="Réclamé">✓</span>' : ready ? '<button type="button" class="btn claim">Réclamer</button>' : '<button type="button" class="btn">J\'y vais</button>';
+  return h + '</div>';
+}
+
+function blockHTML() {
+  var W = WORLDS[state.w], J = W.jalons, done = J.filter(function (j) { return j.done; }).length;
+  var h = '<section class="jl"><div class="jl-h"><img src="' + src(W.icon) + '" alt=""><div class="t"><b>Jalons · ' + esc(W.name) + '</b><small>Village et héros · une récompense chacun</small></div><span class="n">' + done + ' / ' + J.length + '</span></div>';
+  h += '<div class="jl-bar"><i style="width:' + Math.round(100 * done / J.length) + '%"></i></div>';
+  h += '<div class="jl-grp">Village</div>';
+  J.filter(function (j) { return j.g === "v"; }).forEach(function (j) { h += rowHTML(j, W); });
+  h += '<div class="jl-grp">Héros</div>';
+  J.filter(function (j) { return j.g === "h"; }).forEach(function (j) { h += rowHTML(j, W); });
+  h += '</section>';
+  if (state.w > 0) h += '<button type="button" class="older"><span><img src="' + src('Icons/codex/world_forest.webp') + '" alt="">Forêt enchantée : 2 jalons encore ouverts</span><span>›</span></button>';
+  return h;
+}
+
+function render() {
+  var h = '<p class="intro"><b>Variante ' + state.v + '.</b> ' + (state.v === "A"
+    ? "Un 5e onglet « Jalons » : les jalons du monde, à part des quêtes de combat. Les onglets se serrent à 320 px."
+    : "En tête de « Secondaires », un bloc « Jalons du monde » ; les quêtes secondaires restent dessous. Les 4 onglets ne bougent pas.") + '</p>';
+  if (state.v === "A") {
+    h += '<nav class="qtabs n5"><button class="qtab" type="button"><img src="' + src('Icons/quests/quest_story.webp') + '" alt=""><span>Histoire</span></button>'
+      + '<button class="qtab" type="button"><img src="' + src('Icons/quests/quest_side.webp') + '" alt=""><span>Secondaires</span></button>'
+      + '<button class="qtab on" type="button"><img src="' + src('Icons/quests/village_quest.webp') + '" alt=""><span>Jalons</span><i class="dot"></i></button>'
+      + '<button class="qtab" type="button"><img src="' + src('Icons/quests/quest_hunt.webp') + '" alt=""><span>Chasse</span></button>'
+      + '<button class="qtab" type="button"><img src="' + src('Icons/quests/quest_adventure.webp') + '" alt=""><span>Aventure</span></button></nav>';
+    h += blockHTML();
+  } else {
+    h += '<nav class="qtabs n4"><button class="qtab" type="button"><img src="' + src('Icons/quests/quest_story.webp') + '" alt=""><span>Histoire</span></button>'
+      + '<button class="qtab on" type="button"><img src="' + src('Icons/quests/quest_side.webp') + '" alt=""><span>Secondaires</span><i class="dot"></i></button>'
+      + '<button class="qtab" type="button"><img src="' + src('Icons/quests/quest_hunt.webp') + '" alt=""><span>Chasse</span></button>'
+      + '<button class="qtab" type="button"><img src="' + src('Icons/quests/quest_adventure.webp') + '" alt=""><span>Aventure</span></button></nav>';
+    h += blockHTML();
+    h += '<div class="other"><img src="' + src('Icons/quests/quest_adventure.webp') + '" alt=""><div><b>Petite aventure — ' + esc(WORLDS[state.w].name.split(" ")[0]) + '</b><p>Les quêtes secondaires continuent ici, sous les jalons.</p></div></div>';
+  }
+  h += '<p class="note">Récompense : environ 10 % de l\'or que rapporte le monde, plus 1 matériau du monde par jalon. Un jalon réclamé reste visible, coché, jusqu\'à la fin du monde. « J\'y vais » ouvre l\'écran où l\'on agit (zones, bâtiment, Capacités, fiche du compagnon).</p>';
+  document.getElementById("main").innerHTML = h;
+}
+
+function openSheet(k) {
+  var B = BOOKS[k];
+  var h = '<h3><img src="' + src(B.icon) + '" alt="">' + esc(B.t) + '</h3>';
+  B.tips.forEach(function (t) { h += '<div class="tip"><img src="' + src(t[0]) + '" alt=""><span>' + esc(t[1]) + '</span></div>'; });
+  h += '<button type="button" class="btn" onclick="closeSheet()">Compris</button>';
+  document.getElementById("sheet").innerHTML = h;
+  document.getElementById("veil").hidden = false;
+}
+function closeSheet() { document.getElementById("veil").hidden = true; }
+
+document.querySelectorAll(".bar button").forEach(function (b) {
+  b.addEventListener("click", function () {
+    if (b.dataset.v) { state.v = b.dataset.v; document.querySelectorAll("[data-v]").forEach(function (x) { x.setAttribute("aria-pressed", x === b); }); }
+    if (b.dataset.w) { state.w = Number(b.dataset.w); document.querySelectorAll("[data-w]").forEach(function (x) { x.setAttribute("aria-pressed", x === b); }); }
+    render();
+  });
+});
+render();
+</script>
+</body>
+</html>
