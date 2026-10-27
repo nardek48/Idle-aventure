@@ -68,7 +68,7 @@ function campMissionAction(missionId, action) {
     var go = run;
     var dCtx = { type: "dungeon", id: Number(String(m.id).replace("dungeon_", "")) };
     run = function () { openSortiePrep({ title: m.title, icon: "images/Icons/quests/mission_dungeon.webp", ctx: dCtx,
-      food: { kind: "dungeon", ref: window.DungeonManager ? DungeonManager.getById(dCtx.id) : null }, onGo: go }); }; // v3.512.0
+      food: { kind: "dungeon", ref: window.DungeonManager ? DungeonManager.getById(dCtx.id) : null }, onGo: go }); }; // v3.513.0
   }
   /* v3.247.0 : avant de PARTIR (accept), on montre le pronostic si le combat est risqué ou
      pire, avec possibilité d'annuler. Les autres actions (réclamer, abandonner) passent direct. */

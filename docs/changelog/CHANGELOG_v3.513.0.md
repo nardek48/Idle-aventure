@@ -1,4 +1,4 @@
-# v3.512.0 — Alerte « PV bas » avant une élite ou un boss
+# v3.513.0 — Alerte « PV bas » avant une élite ou un boss
 
 Décision de Seb du 27/10 (option A, seuil 70 %), prototype `atelier/pv-bas-depart.html`. Cas réel : mort contre la Fileuse aux yeux blancs, partie à 16 / 400 PV (4 %) ; le jeu ne bloquait qu'à 0 PV.
 

@@ -33,7 +33,7 @@ function sortiePrepHasChoice() {
   return sortiePrepGrimoireOpen() || mates > 0 || sortiePrepBuffList().length > 0 || items > 0;
 }
 
-/* v3.512.0 (décision Seb, atelier/pv-bas-depart.html) : PV bas au départ contre une élite ou un boss. */
+/* v3.513.0 (décision Seb, atelier/pv-bas-depart.html) : PV bas au départ contre une élite ou un boss. */
 var SORTIE_LOW_HP_PCT = 0.70;
 
 /* Sortie qui mène à une élite ou un boss : donjon, élite de carte, quête d'élite ou à boss (jamais la chasse). */
@@ -97,7 +97,7 @@ function buildSortiePrepHTML() {
   h += '<div class="ksheet-body">';
 
   var lowHp = sortieLowHp(o);
-  if (lowHp) h += buildSortiePrepLowHpHTML();   // v3.512.0 : avant tout le reste
+  if (lowHp) h += buildSortiePrepLowHpHTML();   // v3.513.0 : avant tout le reste
   else if (sortiePrep.bare) h += buildSortiePrepHpOkHTML();   // ration mangée : la feuille réduite ne reste pas vide
   if (sortiePrep.bare) return h + '</div>' + buildSortiePrepFootHTML(lowHp);
 

@@ -196,7 +196,7 @@
 .sp-fold small { font-size: 12px; font-weight: 700; color: var(--c-brown-750-2); }
 .sp-fold i { font-style: normal; color: var(--c-brown-750-2); }
 
-/* v3.512.0 (décision Seb, atelier/pv-bas-depart.html) : PV bas avant une élite ou un boss, en tête de feuille. */
+/* v3.513.0 (décision Seb, atelier/pv-bas-depart.html) : PV bas avant une élite ou un boss, en tête de feuille. */
 .sp-lowhp { margin: 4px 0 12px; padding: 10px 12px; border: 1.5px solid var(--c-red-550); border-radius: 14px; background-color: rgba(192, 57, 43, 0.1); color: var(--sheet-ink); }
 .sp-lowhp-t { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 800; color: var(--c-red-600); }
 .sp-lowhp-t img { width: 22px; height: 22px; }

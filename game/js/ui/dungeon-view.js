@@ -353,7 +353,7 @@ function confirmDungeonStart() {
   var d = DungeonManager.getById(id);
   // v3.440.0 : préparation de sortie avant le départ
   openSortiePrep({ title: d ? _td(d.name) : "", icon: (d && d.icon) || "images/Icons/quests/mission_dungeon.webp", ctx: { type: "dungeon", id: id },
-    food: { kind: free ? "dungeonFree" : "dungeon", ref: d }, // v3.512.0 : vivres gardés hors des rations à manger
+    food: { kind: free ? "dungeonFree" : "dungeon", ref: d }, // v3.513.0 : vivres gardés hors des rations à manger
     onGo: function () { DungeonManager.start(id, marks, level, free); } });
 }
 

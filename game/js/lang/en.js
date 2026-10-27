@@ -7002,7 +7002,7 @@ I18n.register("en", {
   "Une nouvelle chaque jour.": "A new one every day.",
   "Les sorties se renouvellent chaque jour.": "Runs refresh every day.",
   "Aller au donjon": "Go to the dungeon",
-  // v3.512.0 : PV bas au départ (feuille de sortie)
+  // v3.513.0 : PV bas au départ (feuille de sortie)
   "Partir à {n} %": "Set out at {n} %",
   "PV bas pour une élite": "Low HP for an elite",
   "PV bas pour un boss": "Low HP for a boss",
