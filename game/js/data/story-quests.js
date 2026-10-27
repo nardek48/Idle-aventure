@@ -1081,6 +1081,7 @@ STORY_QUESTS.desert = {
         apply: function (value) {
           if (value !== "deterrer") return;
           game.gold = Number(game.gold || 0) + STORY_NOMS_GOLD;
+          game.totalGoldEarned = Number(game.totalGoldEarned || 0) + STORY_NOMS_GOLD; // v3.519.0 (audit RES-8)
           if (window.LivingMapManager) LivingMapManager.setState("desert", "steles", "recouvert", "noms déterrés");
           if (typeof addLog === "function") addLog("Les noms sont dans ton sac. +" + STORY_NOMS_GOLD + " or.", "event");
         }
@@ -3216,6 +3217,7 @@ STORY_QUESTS.crypt = {
       },
       objectiveLabel: "Libérer Le cercle tracé, Les maisons des morts et La porte murée (carte de la Crypte)",
       unlockTabs: [],
+      storyPa: { worldId: "crypt" }, // v3.519.0 (audit DUR-5) : Petite aventure offerte par l'Histoire, oubliée
       reward: STORY_REWARDS.crypte_16,
       linkTo: { section: "map", cardId: "livingmap_crypt" },
       check: function () { return storyChainSectors() >= STORY_CHAIN_SECTORS.length; },
@@ -4275,6 +4277,7 @@ STORY_QUESTS.mountain = {
       },
       objectiveLabel: "Libérer « L'entrée de l'Antre » sur la carte de la Montagne",
       unlockTabs: [],
+      storyPa: { worldId: "mountain" }, // v3.519.0 (audit DUR-5) : Petite aventure offerte par l'Histoire, oubliée
       reward: STORY_REWARDS.montagne_11,
       linkTo: { section: "map", cardId: "livingmap_mountain" },
       check: function () { return storyMountainSectorFreed("antre"); },
@@ -4463,6 +4466,7 @@ STORY_QUESTS.mountain = {
       },
       objectiveLabel: "Libérer les quatre secteurs du haut de la carte de la Montagne",
       unlockTabs: [],
+      storyPa: { worldId: "mountain" }, // v3.519.0 (audit DUR-5) : Petite aventure offerte par l'Histoire, oubliée
       reward: STORY_REWARDS.montagne_16,
       linkTo: { section: "map", cardId: "livingmap_mountain" },
       check: function () { return storyMountainRing3Freed() >= STORY_MONTAGNE_ANNEAU3.length; },

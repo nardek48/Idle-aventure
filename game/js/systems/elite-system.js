@@ -262,7 +262,7 @@ var EliteManager = {
     // v3.322.0 (Souvenirs) : élite d'aventure vaincue
     if (window.MemoryManager) {
       var eDef = (window.ELITE_DB || {})[eliteId];
-      MemoryManager.souvenir("elite", _t("Souvenir : {x} vaincue", { x: eDef ? _td(eDef.name) : _t("élite") }));
+      MemoryManager.souvenir("elite", _t("Souvenir de victoire : {x}", { x: eDef ? _td(eDef.name) : _t("élite") }));
     }
     var loot = this.buildUniqueLoot(eliteId);
     if (loot && typeof addLootToInventory === "function") {

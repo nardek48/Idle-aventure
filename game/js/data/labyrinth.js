@@ -9,7 +9,7 @@ var LABYRINTH_CONFIG = {
   requiresStoryStep: "ruines_11",    // ouvert une fois l'étape 10 franchie
   reserve: 3,                        // descentes en réserve ; une revient toutes les rechargeMs
   rechargeMs: 4 * 3600e3,
-  entryCost: { resourceId: "petite_ration", amount: 1 },
+  entryCost: { resourceId: "ration", amount: 1 }, // v3.519.0 (audit SUI-9) : les vivres des Ruines (N-L), plus la Petite ration de la Forêt
 
   /* Étages : grille qui grandit avec la profondeur, escalier à une distance cible */
   sizeBase: { w: 5, h: 6 }, sizeMax: { w: 6, h: 8 },

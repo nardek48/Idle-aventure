@@ -3,7 +3,8 @@
    option a de Seb, 24/09/2026).
 
    Une ration pour partir, seulement pour les sorties qu'on REFAIT :
-     - chasse : dès qu'un lot de cette chasse a déjà été bouclé (game.huntStats) ;
+     - chasse : dès qu'un lot de cette chasse a déjà été bouclé (game.huntStats). Aucune chasse
+       en jeu depuis v3.511.0 : branche gardée pour le moteur et le harnais (hunt-fixture.js) ;
      - run de donjon : dès que ce donjon a déjà été fini une fois (game.dungeonTierCleared),
        sauf ticket d'Histoire (DungeonManager.isStoryTicketFree) ;
      - élite de carte : dès que son secteur est libéré (combat rejoué).
@@ -13,13 +14,13 @@
    v3.461.2 (N-L, Seb) : Ruines et Crypte aussi en Ration moyenne, le stock s'accumulait après le Désert.
    Les Petites Aventures gardent leur propre coût d'entrée (scene-templates.js, entryCost). */
 
-var PROVISIONS_BY_WORLD = { forest: "petite_ration", desert: "ration", ruins: "ration", crypt: "ration" };
+var PROVISIONS_BY_WORLD = { forest: "petite_ration", desert: "ration", ruins: "ration", crypt: "ration", mountain: "ration" }; // v3.519.0 (audit SUI-2, option A) : la Montagne aussi
 var PROVISIONS_FREE_UNTIL_STEP = "forest_crossing"; // acte III de la Forêt
 
 var ProvisionsManager = {
   /* Ration demandée pour cette sortie, ou null si elle est gratuite.
-     kind : "hunt" | "dungeon" | "mapelite" ; ref : l'objet de données (chasse, donjon) ou
-     { mapId, sectorId, worldId } pour une élite de carte. */
+     kind : "dungeon" | "dungeonFree" | "mapelite" | "hunt" (aucune chasse en jeu depuis v3.511.0) ;
+     ref : l'objet de données (donjon, chasse) ou { mapId, sectorId, worldId } pour une élite de carte. */
   getRequirement: function (kind, ref) {
     if (!ref) return null;
     if (kind === "dungeonFree") return { resourceId: "ration", amount: 1 }; // v3.462.0 (N-L) : mode libre, tous les donjons
@@ -63,7 +64,7 @@ var ProvisionsManager = {
   },
 
   /* v3.330.1 : ligne d'écran « Vivres : 1 Petite ration (en stock : 3) », vide si la sortie
-     est gratuite. Posée sur la fiche de chasse, la feuille de donjon et le panneau de carte. */
+     est gratuite. Posée sur la feuille de donjon et le panneau de carte (fiche de chasse inaccessible depuis v3.511.0). */
   buildLineHTML: function (kind, ref) {
     var req = this.getRequirement(kind, ref);
     if (!req) return "";

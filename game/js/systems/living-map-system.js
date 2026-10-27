@@ -556,7 +556,7 @@ var LivingMapManager = {
     // v3.322.0 (Souvenirs) : élite de carte vaincue, première victoire comme reprise
     if (window.MemoryManager) {
       var eDefS = window.ELITE_DB && ELITE_DB[f.eliteId];
-      MemoryManager.souvenir("elite", _t("Souvenir : {x} vaincue", { x: eDefS ? _td(eDefS.name) : _t("élite") }));
+      MemoryManager.souvenir("elite", _t("Souvenir de victoire : {x}", { x: eDefS ? _td(eDefS.name) : _t("élite") }));
     }
     /* v3.258.0 (C-5) : élite répétable — Sève par victoire, et la suivante sera plus dure. */
     if (this.isRepeatable(f.mapId, f.sectorId)) {

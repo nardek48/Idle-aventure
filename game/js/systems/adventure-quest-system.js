@@ -242,7 +242,7 @@ var AdventureQuestManager = {
       } else if (step.type === "bossKill" && enemy.isBoss && step.bossId === enemy.id) {
         if (progress[step.id] < step.target) {
           progress[step.id] += 1;
-          if (window.MemoryManager) MemoryManager.souvenir("adventureBoss", _t("Souvenir : {x} vaincu", { x: _td(enemy.name) })); // v3.322.0
+          if (window.MemoryManager) MemoryManager.souvenir("adventureBoss", _t("Souvenir de victoire : {x}", { x: _td(enemy.name) })); // v3.322.0
         }
       } else if (step.type === "eliteKill" && enemy.isElite && step.eliteId === enemy.id) {
         // v3.205.0 (E5)
@@ -278,7 +278,7 @@ var AdventureQuestManager = {
       }
 
       addLog("📜 " + _t("Quête terminée : {x} (+{n} or)", { x: _td(quest.name), n: formatNumber(reward.gold || 0) }), "event");
-      showToast("📜 " + _t("{x} terminée !", { x: _td(quest.name) }), 2200);
+      showToast("📜 " + _t("{x} : quête terminée !", { x: _td(quest.name) }), 2200);
 
       if (typeof openQuestCompletePopup === "function") {
         var rewardRows = [];

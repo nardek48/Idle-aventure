@@ -975,7 +975,7 @@ var CombatEngine = {
     if (Number(e.engageIn || 0) > 0) {
       e.engageIn -= 1;
       e.gauge = Number(e.gauge || 0) + this.getEnemyGaugeGain(e);
-      if (e.charged) addLog("💫 " + (e.engageIn > 0 ? _t("{x} est encore sonné par ta charge.", { x: _td(e.name) }) : _t("{x} reprend ses esprits.", { x: _td(e.name) })), "event"); // v3.477.0
+      if (e.charged) addLog("💫 " + (e.engageIn > 0 ? _t("{x} reste sous le choc de ta charge.", { x: _td(e.name) }) : _t("{x} reprend ses esprits.", { x: _td(e.name) })), "event"); // v3.477.0
       else if (e.engageIn > 0) addLog("👣 " + _tn(e.engageIn, "{x} avance vers toi… (contact dans {n} round)", "{x} avance vers toi… (contact dans {n} rounds)", { x: _td(e.name) }), "event");
       else addLog("👣 " + _t("{x} arrive au contact !", { x: _td(e.name) }), "event");
       this.tickEnemyTelegraphs(e);
@@ -1677,8 +1677,8 @@ var CombatEngine = {
       }
     }
 
-    addLog(_t("💀 Tu as été terrassé ! Retour au campement : mange ou laisse le feu te remettre debout."), "event");
-    showToast(_t("💀 Terrassé !"), 1800);
+    addLog(_t("💀 Tu tombes ! Retour au campement : mange ou laisse le feu te remettre debout."), "event");
+    showToast(_t("💀 À terre !"), 1800);
     vibrate([80, 40, 80]);
 
     game.justDied = true;

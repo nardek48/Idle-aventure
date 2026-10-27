@@ -12851,7 +12851,7 @@ console.log("\n[171] v3.398.0 — Socle S-2 : plus aucun texte de lecture sous 1
     ok(under.length === 0, "texte de lecture : 12 px au moins partout" + (under.length ? " (" + under.slice(0, 3).join(" | ") + ")" : ""));
     ok(tooSmall.length === 0, "compteurs, niveaux et jauges : 10 px au moins" + (tooSmall.length ? " (" + tooSmall.slice(0, 3).join(" | ") + ")" : ""));
     var ce = fs.readFileSync(path.join(ROOT, "js/systems/combat-engine.js"), "utf8");
-    ok(ce.indexOf("Tu as été terrassé ! Retour au campement") > 0 && ce.indexOf("Vous avez été terrassé") < 0, "message de mort au tutoiement (combat-engine.js, accord de Seb)");
+    ok(ce.indexOf("Tu tombes ! Retour au campement") > 0 && ce.indexOf("Vous avez été terrassé") < 0, "message de mort au tutoiement (combat-engine.js, accord de Seb)");
   } catch (err) {
     ok(false, "[171] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
@@ -14551,7 +14551,7 @@ console.log("\n[210] v3.434.0 — Ruines : le Labyrinthe aux leviers (livraison 
   try {
     var game = freshCombat("knight");
     var C = g.LABYRINTH_CONFIG;
-    ok(C && C.reserve === 3 && C.requiresStoryStep === "ruines_11" && C.entryCost.resourceId === "petite_ration", "réglages : 3 descentes, après l'étape 10, 1 Petite ration");
+    ok(C && C.reserve === 3 && C.requiresStoryStep === "ruines_11" && C.entryCost.resourceId === "ration", "réglages : 3 descentes, après l'étape 10, 1 Ration moyenne (v3.519.0, audit SUI-9)");
     ok(!L.isUnlocked(), "fermé tant que l'étape 10 n'est pas franchie");
     /* --- Génération : tous les étages tirés sont jouables --- */
     var bad = 0, sizes = {}, okLev = true;
@@ -14569,11 +14569,11 @@ console.log("\n[210] v3.434.0 — Ruines : le Labyrinthe aux leviers (livraison 
     SQ.isStepReached = function (id) { return id === "ruines_11" ? true : savedReach.call(SQ, id); };
     ok(L.isUnlocked(), "ouvert une fois l'étape 10 franchie");
     game.sceneRun = null; game.explorationProgression.labyrinth = null;
-    g.WarehouseManager.addResource("petite_ration", 3);
-    var ra = g.WarehouseManager.getAmount("petite_ration");
+    g.WarehouseManager.addResource("ration", 3);
+    var ra = g.WarehouseManager.getAmount("ration");
     var r = L.start();
     ok(r.ok && game.sceneRun && game.sceneRun.lab && game.sceneRun.floor === 1, "départ : un run « lab » à l'étage 1");
-    ok(g.WarehouseManager.getAmount("petite_ration") === ra - 1 && L.reserveLeft() === 2, "le départ coûte 1 Petite ration et une descente");
+    ok(g.WarehouseManager.getAmount("ration") === ra - 1 && L.reserveLeft() === 2, "le départ coûte 1 Ration moyenne et une descente");
     ok(g.SceneRunManager.getRun() === game.sceneRun && g.SceneRunManager.isHeroEngaged(), "le run n'est pas pris pour un ancien run ; le héros est engagé");
     ok(g.Pa2Run.getRun() === null, "les Petites Aventures ne le voient pas");
     ok(/lab-root/.test(run("buildSceneScreenHTML()")), "l'onglet « scene » affiche le labyrinthe");
@@ -14659,7 +14659,7 @@ console.log("\n[212] v3.436.0 — Labyrinthe : combats comme les Petites Aventur
     var game = freshCombat("knight"), C = g.LABYRINTH_CONFIG;
     SQ.isStepReached = function (id) { return id === "ruines_11" ? true : savedReach.call(SQ, id); };
     game.sceneRun = null; game.explorationProgression.labyrinth = null;
-    g.WarehouseManager.addResource("petite_ration", 3);
+    g.WarehouseManager.addResource("ration", 3); // v3.519.0 : le Labyrinthe prend la Ration moyenne
     ok(L.start().ok, "départ");
     var run1 = game.sceneRun;
     var ec = L.estimate("guard", "charger"), et = L.estimate("guard", "tenir");
@@ -17959,7 +17959,7 @@ console.log("\n[303] v3.482.0 — Refonte de l'économie RE-5 : fin des sources 
   // 3. Labyrinthe : la descente n'est rendue que si le sac est vide (testé en [210]) ; ici, le sac vide
   var L = g.LabyrinthRun, reach = SQ.isStepReached;
   SQ.isStepReached = function (id) { return id === L.cfg().requiresStoryStep ? true : reach.call(SQ, id); };
-  game.explorationProgression.labyrinth = null; game.sceneRun = null; game.heroHp = game.heroMaxHp; game.resources.petite_ration = 5;
+  game.explorationProgression.labyrinth = null; game.sceneRun = null; game.heroHp = game.heroMaxHp; game.resources.petite_ration = 5; g.WarehouseManager.addResource("ration", 5);
   var r = L.start();
   if (r && r.ok) { game.sceneRun.stones = 0; game.sceneRun.gold = 0; L.finish("souffle"); }
   ok(r && r.ok && L.reserveLeft() === 3, "Labyrinthe : à court de Souffle avec un sac vide, la descente est rendue");
@@ -19316,6 +19316,46 @@ console.log("\n[339] v3.518.0 — correctifs de l'audit, lot 2 : routage de « P
     ok(/MissionBoard\.launchStoryLink\(/.test(qv) && !/onclick="StoryQuestManager\.goToLink/.test(qv) && typeof g.openStoryStepActions === "function", "Quêtes › Histoire : même départ qu'au Camp, défilé jusqu'au choix");
     ok(/ProductionManager\.harvestAll\(\)/.test(fr) && /next\.id === "story" && typeof openFilRougeBubble/.test(fr), "fil rouge : « Récolter » récolte, « Accepter » garde la bulle ouverte");
   } catch (err) { ok(false, "[339] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[340] v3.519.0 — lot 4 (règles des mondes) et correctifs en fichiers protégés (accord de Seb)");
+(function () {
+  try {
+    var fs = require("fs"), path = require("path");
+    // SUI-2 : une entrée de vivres par monde qui a un chapitre d'Histoire
+    var sansVivres = Object.keys(g.STORY_QUESTS).filter(function (w) { return !g.PROVISIONS_BY_WORLD[w]; });
+    ok(!sansVivres.length && g.PROVISIONS_BY_WORLD.mountain === "ration", "vivres : chaque monde ouvert a les siens, la Montagne en Ration moyenne (" + sansVivres.join(", ") + ")");
+    // DUR-5 : chaque étape « libérer un secteur » offre sa Petite aventure
+    var sansPa = [];
+    Object.keys(g.STORY_QUESTS).forEach(function (c) { (g.STORY_QUESTS[c].steps || []).forEach(function (st) { if (st.linkTo && st.linkTo.section === "map" && !st.storyPa) sansPa.push(st.id); }); });
+    ok(!sansPa.length, "étapes de carte : toutes portent storyPa (" + sansPa.join(", ") + ")");
+    ok(g.LABYRINTH_CONFIG.entryCost.resourceId === "ration", "Labyrinthe : 1 Ration moyenne, les vivres des Ruines (SUI-9)");
+    // RES-8 : l'or des récompenses compte dans « Or gagné »
+    var game = freshCombat("knight"), t0 = Number(game.totalGoldEarned || 0);
+    g.StoryQuestManager._grantReward({ gold: 1234 });
+    ok(Number(game.totalGoldEarned) - t0 === 1234, "Or gagné : la récompense d'Histoire (et des jalons, des quêtes du village) est comptée");
+    var src = function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); };
+    ok(["js/systems/tavern-system.js", "js/systems/caravan-system.js", "js/systems/patrol-system.js", "js/systems/achievement-system.js"].every(function (f) { return /totalGoldEarned = Number\(game\.totalGoldEarned \|\| 0\) \+/.test(src(f)); }), "Or gagné : Taverne, caravanes, patrouilles et hauts faits comptés");
+    ok(!/totalGoldEarned/.test(src("js/systems/potion-system.js")), "Or gagné : la revente de potion (demi-remboursement) n'est pas comptée");
+    // SUI-5 : plus d'accord masculin du héros dans le bilan de donjon et le message de mort
+    var genre = ["js/systems/dungeon-system.js", "js/systems/combat-engine.js"].filter(function (f) { return /_t\("[^"]*(terrassé|Terrassé|abandonné \()/.test(src(f)); });
+    ok(!genre.length, "tournures neutres : « tu tombes », « sortie abandonnée », « À terre » (" + genre.join(", ") + ")");
+    ok(!/_t\("[^"]*\{x\} (vaincue?|terminée? !|amélioré|est encore sonné)/.test(["js/systems/adventure-quest-system.js", "js/systems/elite-system.js", "js/systems/living-map-system.js", "js/systems/production-system.js", "js/systems/workshops-system.js", "js/systems/dungeon-system.js", "js/systems/combat-engine.js"].map(src).join("\n")), "accords de {x} : plus de nom accordé au hasard (élite, quête, donjon, atelier)");
+    // revue : une étape « libérer un secteur » réussie n'offre plus de Petite aventure ; une élite n'en est pas une
+    var SR = g.SceneRunManager, SQ = g.StoryQuestManager, readyS = SQ.isCurrentStepReady, accS = SQ.isCurrentStepAccepted, stepS = SQ.getCurrentStep, actS = SQ.activeChapterIds, libS = g.LivingMapManager.isLiberated;
+    var m16 = g.STORY_QUESTS.mountain.steps.filter(function (x) { return x.id === "montagne_16"; })[0];
+    SQ.activeChapterIds = function () { return ["mountain"]; }; SQ.getCurrentStep = function () { return m16; }; SQ.isCurrentStepAccepted = function () { return true; };
+    g.LivingMapManager.isLiberated = function () { return false; };
+    SQ.isCurrentStepReady = function () { return false; };
+    var offert = SR.isStoryPaFree("mountain", { mapId: "mountain", sectorId: "coulee_morte" });
+    SQ.isCurrentStepReady = function () { return true; };
+    var apres = SR.isStoryPaFree("mountain", { mapId: "mountain", sectorId: "coulee_morte" });
+    SQ.isCurrentStepReady = readyS; SQ.isCurrentStepAccepted = accS; SQ.getCurrentStep = stepS; SQ.activeChapterIds = actS; g.LivingMapManager.isLiberated = libS;
+    ok(offert === true && apres === false, "Petite aventure offerte tant que l'étape n'est pas réussie, plus ensuite (comme le donjon, RE-5)");
+    ok(/getContentFor\(map\.id, d\.id\) \|\| \{\}\)\.type === "expedition"/.test(src("js/systems/scene-run-system.js")), "carte du tableau : seule une expédition à libérer compte comme offerte");
+    // SUI-8 : compteurs de la maîtrise d'arme retirés des valeurs par défaut
+    ok(["swordKills", "bowKills", "magicKills"].every(function (k) { return !(k in g.DEFAULT_QUEST_PROGRESS); }), "compteurs morts swordKills, bowKills, magicKills retirés (une vieille sauvegarde les garde, sans effet)");
+  } catch (err) { ok(false, "[340] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));

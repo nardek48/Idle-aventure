@@ -91,6 +91,7 @@ var AchievementManager = {
     if (!reward) return;
     if (reward.gold) {
       game.gold = Number(game.gold || 0) + reward.gold;
+      game.totalGoldEarned = Number(game.totalGoldEarned || 0) + Number(reward.gold); // v3.519.0 (audit RES-8)
       parts.push(_t("+{n} or", { n: formatNumber(reward.gold) }));
     }
   },

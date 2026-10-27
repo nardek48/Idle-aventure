@@ -689,7 +689,7 @@ function playPa2Step(run) {
   if (run.status === "pa2-prep") {
     ["petite_ration", "petite_ration", "gourde", "corde", "torche"].forEach(function (id) { P.addItem(id); });
     r = P.depart();
-    if (!r.ok && /héros est à terre/.test(r.reason || "")) { if (COMBATS) healUp(1); else g.game.heroHp = max; r = P.depart(); }
+    if (!r.ok && /es à terre/.test(r.reason || "")) { if (COMBATS) healUp(1); else g.game.heroHp = max; r = P.depart(); }
     if (!r.ok) { note("Petite Aventure v2 : départ refusé — " + r.reason); return false; }
     return true;
   }
@@ -1050,10 +1050,10 @@ function freeSectorAgain(mapId, sectorId) {
     r = LM.start(mapId, sectorId);
   }
   if (!r.ok) { note(sectorId + " rejoué : " + r.reason); return false; }
-  winCombat();
+  var gagne = winCombat();
   // v3.429.0 : combat d'élite pas fini (élite trop forte pour ce farm) : le joueur fuit, sinon la carte reste bloquée
   if (LM.getFight()) { if (g.SortieManager && g.SortieManager.flee) g.SortieManager.flee(); if (LM.getFight()) LM.abandonFight(); return false; }
-  return true;
+  return gagne !== false; // audit (27/10) : une mort n'est plus comptée comme une victoire (élite retentée le jour même)
 }
 
 /* v3.428.0 (ruines_04) : une caravane Courte au Marché des Ruines, attendue puis déchargée.

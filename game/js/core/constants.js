@@ -6,7 +6,7 @@
    dur dans title-screen-view.js et figé à v3.151.0 depuis 81 livraisons.
    DOIT rester égal au CACHE_VERSION de sw.js — le harnais le vérifie et
    échoue si les deux divergent. */
-var GAME_VERSION = "3.518.0";
+var GAME_VERSION = "3.519.0";
 window.GAME_VERSION = GAME_VERSION;
 
 /* v3.358.0 (D7, décision Seb 26/09/2026) : l'essence et le solde d'Aether disparaissent.
@@ -24,9 +24,6 @@ var DEFAULT_QUEST_PROGRESS = {
   goldEarned: 0,
   goldSpent: 0,
   crits: 0,
-  swordKills: 0,
-  bowKills: 0,
-  magicKills: 0,
   combatTime: 0,
   forestChaptersDone: 0,
   ruinsChaptersDone: 0

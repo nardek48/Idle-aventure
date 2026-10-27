@@ -202,6 +202,7 @@ var PatrolManager = {
     var g = Math.floor(Number(gold || 0));
     if (g > 0) {
       game.gold = Number(game.gold || 0) + g;
+      game.totalGoldEarned = Number(game.totalGoldEarned || 0) + g; // v3.519.0 (audit RES-8)
     }
     return { loot: got, lost: lost, gold: g };
   },

@@ -899,7 +899,7 @@ var DungeonManager = {
       game.dungeonTierCleared[tier.id] = true;
       game.dungeonLevelBest[tier.id] = Math.max(Number(game.dungeonLevelBest[tier.id] || 0), runLevel);
       if (!wasAlreadyCleared) {
-        addLog("🔓 " + _t("{x} entièrement terminé — palier suivant débloqué !", { x: _td(tier.name) }), "event");
+        addLog("🔓 " + _t("{x} : première victoire — palier suivant débloqué !", { x: _td(tier.name) }), "event");
       }
     } else if (outcome === "death") {
       goldReward = 0;
@@ -940,7 +940,7 @@ var DungeonManager = {
       game.dungeonShards = Math.max(0, Number(game.dungeonShards || 0) - cut);
       game.dungeonRun.shardsEarned = Number(game.dungeonRun.shardsEarned || 0) - cut;
     }
-    if (success && window.MemoryManager) MemoryManager.souvenir("dungeonClear", _t("Souvenir : {x} terminé", { x: tier && tier.name ? _td(tier.name) : _t("donjon") }));
+    if (success && window.MemoryManager) MemoryManager.souvenir("dungeonClear", _t("Souvenir : {x}, sortie terminée", { x: tier && tier.name ? _td(tier.name) : _t("donjon") }));
 
     goldReward = Math.floor(goldReward * fioleMult);
     game.gold += goldReward;
@@ -992,9 +992,9 @@ var DungeonManager = {
         ? "🔥 " + _t("{x} : tu remontes du campement (vague {a}/{b}) : +{g} or", { x: _td(tier.name), a: clearedWave, b: wavesTotal, g: formatNumber(goldReward) })
       : (outcome === "death"
         ? "🏰 " + (eliteLoot && (eliteLoot.gold > 0 || eliteLoot.items.length) // v3.474.0
-          ? _t("{x} : terrassé à la vague {a}/{b}. Le butin mis en sûreté par les élites est à toi ; le reste reste dans le donjon.", { x: _td(tier.name), a: clearedWave + 1, b: wavesTotal })
-          : _t("{x} : terrassé à la vague {a}/{b} — aucune récompense, le butin reste dans le donjon.", { x: _td(tier.name), a: clearedWave + 1, b: wavesTotal }))
-        : "🏰 " + _t("{x} abandonné (vague {a}/{b}) : +{g} or (moitié)", { x: _td(tier.name), a: clearedWave, b: wavesTotal, g: formatNumber(goldReward) }));
+          ? _t("{x} : tu tombes à la vague {a}/{b}. Le butin mis en sûreté par les élites est à toi ; le reste reste dans le donjon.", { x: _td(tier.name), a: clearedWave + 1, b: wavesTotal })
+          : _t("{x} : tu tombes à la vague {a}/{b} — aucune récompense, le butin reste dans le donjon.", { x: _td(tier.name), a: clearedWave + 1, b: wavesTotal }))
+        : "🏰 " + _t("{x} : sortie abandonnée (vague {a}/{b}) : +{g} or (moitié)", { x: _td(tier.name), a: clearedWave, b: wavesTotal, g: formatNumber(goldReward) }));
     if (lootedItem) msg += " + " + _td(lootedItem.name);
     if (lootedItem2) msg += " + " + _td(lootedItem2.name);
     if (lootedUnique) msg += " + " + _td(lootedUnique.name);
@@ -1089,7 +1089,7 @@ var DungeonManager = {
       StatsSystem.recalcStats();
     }
 
-    addLog("🔷 " + _t("{x} amélioré (niveau {n})", { x: _td(item.name), n: level + 1 }), "event");
+    addLog("🔷 " + _t("Amélioration : {x} (niveau {n})", { x: _td(item.name), n: level + 1 }), "event");
     showToast(_td(item.name) + " +1", 1500);
     if (typeof renderAll === "function") renderAll();
     saveGame();

@@ -433,6 +433,7 @@ var StoryQuestManager = {
     if (typeof grantHeroXp === "function") grantHeroXp(15, "story");
     if (reward.gold) {
       game.gold += Number(reward.gold);
+      game.totalGoldEarned = Number(game.totalGoldEarned || 0) + Number(reward.gold); // v3.519.0 (audit RES-8) : Histoire, quêtes du village, jalons comptés dans « Or gagné »
       rows.push({ label: "Or", value: formatNumber(reward.gold) });
     }
     if (reward.healingPotion && reward.healingPotion.id) {

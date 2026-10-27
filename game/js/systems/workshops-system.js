@@ -246,7 +246,7 @@ var WorkshopsSystem = {
     var workshop = this.ensureWorkshop(def.buildingId, workshopId);
     workshop.level += 1;
 
-    addLog("⚙️ " + _t("{x} amélioré (niv. {n})", { x: _td(def.name), n: workshop.level }), "event");
+    addLog("⚙️ " + _t("Amélioration : {x} (niv. {n})", { x: _td(def.name), n: workshop.level }), "event");
     if (typeof showToast === "function") showToast(_t("{x} niv. {n}", { x: _td(def.name), n: workshop.level }), 1200);
 
     if (typeof renderPanel === "function") renderPanel();

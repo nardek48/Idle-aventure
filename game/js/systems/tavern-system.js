@@ -185,6 +185,7 @@ var TavernManager = {
     var payout = this.getPayout(c); // v3.257.0 (C-3) : Campement tenu -> +10 %
     WarehouseManager.removeResource(c.resourceId, c.quantity);
     game.gold = Number(game.gold || 0) + payout;
+    game.totalGoldEarned = Number(game.totalGoldEarned || 0) + payout; // v3.519.0 (audit RES-8)
     c.done = true;
     if (window.AchievementManager) AchievementManager.onTavernDelivered(); // v3.338.0 : « Pilier de la Taverne »
 

@@ -403,7 +403,7 @@ var Pa2Run = {
     var par = this.isParcours(run);
     var storyFree = !par && SceneRunManager.isStoryPaFree(run.worldId, run.livingMap); // v3.429.23 : offerte par l'Histoire
     if (!par && !storyFree && !SceneRunManager.canStartPetiteAventureToday()) return { ok: false, reason: SceneRunManager.petiteAventureWaitLabel() };
-    if (!(Number(game.heroHp || 0) > 0)) return { ok: false, reason: _t("Ton héros est à terre : soigne-le au Campement avant de partir.") };
+    if (!(Number(game.heroHp || 0) > 0)) return { ok: false, reason: _t("Tu es à terre : soigne-toi au Campement avant de partir.") };
     var taken = {}, self = this, fail = null;
     run.bag.forEach(function (id) {
       var it = PA2_ITEMS[id];

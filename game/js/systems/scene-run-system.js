@@ -76,6 +76,7 @@ var SceneRunManager = {
     for (var i = 0; i < ids.length; i++) {
       var step = StoryQuestManager.getCurrentStep(ids[i]), sp = step && step.storyPa;
       if (!sp || sp.worldId !== worldId || !StoryQuestManager.isCurrentStepAccepted(ids[i])) continue;
+      if (StoryQuestManager.isCurrentStepReady(ids[i])) continue; // v3.519.0 (revue) : étape réussie, plus d'offre (comme le donjon, RE-5)
       if (sp.untilFlag) { if (!(game.explorationProgression && game.explorationProgression[sp.untilFlag])) return true; continue; }
       if (lm && window.LivingMapManager && !LivingMapManager.isLiberated(lm.mapId, lm.sectorId)) return true;
     }
@@ -90,7 +91,8 @@ var SceneRunManager = {
     if (!map || !map.sectors) return false;
     for (var i = 0; i < map.sectors.length; i++) {
       var d = map.sectors[i];
-      if (LM.isReachable(map.id, d.id) && !LM.isLiberated(map.id, d.id) && this.isStoryPaFree(worldId, { mapId: map.id, sectorId: d.id })) return true;
+      // v3.519.0 (revue) : seul un secteur d'expédition offre une Petite aventure, pas une élite à libérer
+      if (LM.isReachable(map.id, d.id) && !LM.isLiberated(map.id, d.id) && (LM.getContentFor(map.id, d.id) || {}).type === "expedition" && this.isStoryPaFree(worldId, { mapId: map.id, sectorId: d.id })) return true;
     }
     return false;
   },
