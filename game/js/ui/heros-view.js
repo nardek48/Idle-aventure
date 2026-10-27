@@ -17,6 +17,10 @@ function setHerosSubTab(tab) {
   if (tab === "stats") { openHerosSheet("abilities"); return; }
   setHerosSubTabSilent(tab);
   if (typeof renderPanel === "function") renderPanel();
+  // v3.514.0 : arrivée par Héros sur Équipement ou Talents : le tutoriel d'étape qui vise ce sous-onglet
+  if ((tab === "equip" || tab === "talents") && typeof maybeShowStepTutorial === "function" && window.StoryQuestManager) {
+    StoryQuestManager.activeChapterIds().forEach(function (id) { maybeShowStepTutorial(id, tab); });
+  }
 }
 
 /* Positionne le sous-onglet sans rendre — pour switchTab('equip'/'talents') (ui-root.js). */

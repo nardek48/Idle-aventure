@@ -19183,6 +19183,24 @@ console.log("\n[334] v3.512.0 — une relique de compagnon dans la vitrine de l'
   } catch (err) { ok(false, "[334] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[335] v3.514.0 — tutoriels d'étape « equip » et « talents » : par un lien et par Héros");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
+    var vus = [], m0 = g.maybeShowStepTutorial, a0 = g.StoryQuestManager.activeChapterIds;
+    g.maybeShowStepTutorial = function (ch, tab) { vus.push(tab); };
+    g.StoryQuestManager.activeChapterIds = function () { return ["desert"]; };
+    g.game.unlockedTabs = Object.assign({}, g.game.unlockedTabs, { more: true, equip: true, talents: true });
+    g.switchTab("equip");
+    ok(vus.indexOf("equip") >= 0 && vus.indexOf("more") >= 0, "lien vers l'Équipement : le tutoriel est cherché sous « equip » (et « more »)");
+    vus = []; g.setHerosSubTab("talents");
+    ok(vus.indexOf("talents") >= 0, "sous-onglet Talents ouvert depuis Héros : le tutoriel est cherché");
+    vus = []; g.setHerosSubTab("companions");
+    ok(vus.length === 0, "autre sous-onglet : rien");
+    g.maybeShowStepTutorial = m0; g.StoryQuestManager.activeChapterIds = a0;
+  } catch (err) { ok(false, "[335] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

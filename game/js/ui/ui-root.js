@@ -125,6 +125,7 @@ function switchTab(tabName) {
   // Les anciens raccourcis (pastille sac du HUD, bouton du Résumé, toast de butin, quêtes)
   // continuent d'appeler switchTab('equip') / ('talents') : on les y conduit, sous-onglet
   // déjà positionné. Le verrou d'Histoire a été vérifié juste au-dessus sur le nom d'origine.
+  var askedTab = tabName; // v3.514.0 : le tutoriel d'étape vise « equip »/« talents », pas « more »
   if (tabName === "equip" || tabName === "talents") {
     if (typeof setHerosSubTabSilent === "function") setHerosSubTabSilent(tabName);
     tabName = "more";
@@ -237,7 +238,7 @@ function switchTab(tabName) {
   // v3.107.7 : popup pédagogique par étape Histoire, à la première arrivée sur l'onglet concerné.
   // v3.297.0 (W-1a) : tutoriel de l'étape en cours de chaque chapitre actif
   if (typeof maybeShowStepTutorial === "function" && window.StoryQuestManager && typeof StoryQuestManager.activeChapterIds === "function") {
-    StoryQuestManager.activeChapterIds().forEach(function (id) { maybeShowStepTutorial(id, tabName); });
+    StoryQuestManager.activeChapterIds().forEach(function (id) { maybeShowStepTutorial(id, tabName); if (askedTab !== tabName) maybeShowStepTutorial(id, askedTab); });
   }
   // v3.107.9 : popup pédagogique générique (non lié à une étape Histoire, ex. Village/Production).
   if (typeof maybeShowGenericTutorial === "function") maybeShowGenericTutorial(tabName);
