@@ -69,7 +69,8 @@ function buildSceneStartBlockHTML(block) {
     var need = Number(cost.amount || 0);
     var have = (window.WarehouseManager && WarehouseManager.getAmount) ? Number(WarehouseManager.getAmount(cost.resourceId) || 0) : 0;
     var name = def.name ? _td(def.name) : cost.resourceId;
-    h += '<div class="scene-landing-icon scene-cost-icon' + (have >= need ? ' is-ok' : '') + '">' + renderIconOrEmojiHTML(def.icon || "images/Icons/quests/ration_reward.webp", "scene-cost-img", name) + '</div>';
+    // v3.520.0 (audit ERG-5) : la ressource manquante et ses ingrédients ouvrent leur fiche de l'Entrepôt
+    h += '<div class="scene-landing-icon scene-cost-icon' + (have >= need ? ' is-ok' : ' res-go') + '"' + (have >= need ? '' : resGoAttr(cost.resourceId)) + '>' + renderIconOrEmojiHTML(def.icon || "images/Icons/quests/ration_reward.webp", "scene-cost-img", name) + '</div>';
     if (have < need) {
       h += '<div class="scene-cost-title">' + esc(need - have > 1 ? _t("Il te manque {x} ×{n}", { n: need - have, x: name }) : _t("Il te manque une {x}", { x: name })) + '</div>';
       h += '<p class="scene-landing-text">' + esc(_t("{q} consomme {x} ×{n} au départ. Tu en as {h}.", { q: template.title ? _td(template.title) : _t("Cette expédition"), n: need, x: name, h: have })) + '</p>';
@@ -79,7 +80,7 @@ function buildSceneStartBlockHTML(block) {
         recipe.inputs.forEach(function (inp) {
           var rd = (window.WAREHOUSE_RESOURCES || {})[inp.resourceId] || {};
           var got = (window.WarehouseManager && WarehouseManager.getAmount) ? Number(WarehouseManager.getAmount(inp.resourceId) || 0) : 0;
-          h += '<span class="scene-cost-input' + (got >= inp.quantity ? '' : ' is-missing') + '">' + renderIconOrEmojiHTML(rd.icon || "", "scene-cost-input-img", rd.name ? _td(rd.name) : inp.resourceId) + formatNumber(got) + '/' + formatNumber(inp.quantity) + '</span>';
+          h += '<span class="scene-cost-input' + (got >= inp.quantity ? '' : ' is-missing res-go') + '"' + (got >= inp.quantity ? '' : resGoAttr(inp.resourceId)) + '>' + renderIconOrEmojiHTML(rd.icon || "", "scene-cost-input-img", rd.name ? _td(rd.name) : inp.resourceId) + formatNumber(got) + '/' + formatNumber(inp.quantity) + '</span>';
         });
         h += '</div>';
         h += '<button class="settings-btn primary" type="button" onclick="goToSceneCostWorkshop()">' + _t("Préparer aux Ateliers") + '</button>';

@@ -19374,6 +19374,40 @@ console.log("\n[340] v3.519.0 — lot 4 (règles des mondes) et correctifs en fi
   } catch (err) { ok(false, "[340] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[341] v3.520.0 — correctifs de l'audit, lot 5 : fiches et coûts");
+(function () {
+  try {
+    var game = freshCombat("knight");
+    var depNeuf = g.getWarehouseOtherUses("ration").map(function (u) { return u.text; }).join(" | ");
+    ok(/Départ : La traversée/.test(depNeuf) && !/couchés/.test(depNeuf), "départs : seulement ceux des mondes atteints (héros neuf : la traversée du Désert)");
+    game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true, 4: true }; // RES-3 : départs des mondes atteints
+    var uses = function (k) { return g.getWorkshopsConsuming(k).length + g.getWarehouseOtherUses(k).length; };
+    var txt = function (k) { return g.getWarehouseOtherUses(k).map(function (u) { return u.text; }).join(" | "); };
+    // RES-3 : chaque ressource a au moins un débouché lu dans les données
+    var sans = Object.keys(g.WAREHOUSE_RESOURCES).filter(function (k) { return !uses(k); });
+    console.log("    (sans débouché : " + (sans.join(", ") || "aucune") + ")");
+    ok(!sans.length, "Entrepôt : aucune ressource sans débouché (« Rien pour l'instant »)");
+    ok(/Traversée|Départ/.test(txt("outre_pleine")) && /Besace/.test(txt("outre_pleine")), "Outre pleine : départ de la traversée et besace (" + txt("outre_pleine") + ")");
+    ok(/Vivres pour rejouer/.test(txt("ration")) && /mode libre/.test(txt("ration")) && /Départ : .+[^,] et \d+ autres/.test(txt("ration")), "Ration moyenne : vivres de sortie, mode libre, départs (liste courte)");
+    ok(/Objet de combat/.test(txt("baume_froid")), "objets de combat de l'Apothicaire : leur usage est dit");
+    ok(/Rangs des capacités/.test(txt("resine_durcie")) && /Rangs des compagnons/.test(txt("resine_durcie")), "Résine durcie : rangs du héros et des compagnons");
+    ok(g.buildWarehouseSheetHTML("resine_durcie").indexOf(g._t("Ne se vend pas.")) >= 0 && g.buildWarehouseSheetHTML("resine_durcie").indexOf("sert aux constructions et aux ateliers") < 0, "phrase du bas : plus de « sert aux constructions et aux ateliers »");
+    // RES-9 : un coût au-delà du plafond de l'Entrepôt le dit
+    var PPS = g.ProductionPlotsSystem, cap = g.WarehouseManager.getCap("bois");
+    var reason = PPS.overCapReason({ gold: 10, bois: cap + 164 }, "unlock");
+    ok(reason && reason.indexOf(g._t("Il faut {n} {x}, mais l'Entrepôt n'en garde que {c}. Monte l'Entrepôt, ou défriche zone par zone.", { x: g._td(g.WAREHOUSE_RESOURCES.bois.name), n: g.formatNumber(cap + 164), c: g.formatNumber(cap) })) === 0 && PPS.overCapReason({ bois: 1 }, "unlock") === null, "rangée trop chère pour le plafond : la raison le dit (RES-9)");
+    game.resources.bois = cap + 200; // stock d'avant le plafond (remboursement) : au-delà du plafond
+    ok(PPS.overCap({ bois: cap + 164 }) === null, "stock déjà au-delà du plafond : la rangée reste payable (revue)");
+    // ERG-5 : l'écran de départ refusé ouvre la fiche de la ressource, et « ‹ » y ramène
+    var sv = require("fs").readFileSync(require("path").join(ROOT, "js/ui/scene-view.js"), "utf8");
+    ok(/scene-cost-input' \+ \(got >= inp\.quantity \? '' : ' is-missing res-go'\)/.test(sv) && /resGoAttr\(cost\.resourceId\)/.test(sv), "départ refusé : ressource et ingrédients manquants touchables (ERG-5)");
+    run("sceneStartBlock = { templateId: 'sentier_obstrue', reason: 'x' };"); game.activeTab = "scene";
+    var back = g.resourceBackContext();
+    run("sceneStartBlock = null;");
+    ok(back && back.label === g._t("Expédition"), "fiche ouverte depuis le départ refusé : « ‹ Expédition »");
+  } catch (err) { ok(false, "[341] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

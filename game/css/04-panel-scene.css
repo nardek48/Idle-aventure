@@ -84,3 +84,5 @@
   height: 22px;
   object-fit: contain;
 }
+/* v3.520.0 (revue ERG-5) : la zone touchable se limite à l'icône, contour rouge lisible sur crème */
+.scene-cost-icon.res-go { width: max-content; margin: 0 auto 10px; padding: 4px; color: var(--ink-missing); }

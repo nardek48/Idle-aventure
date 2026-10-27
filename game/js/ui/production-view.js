@@ -425,6 +425,9 @@ function buildZoneGroupActionsHTML(buildingId) {
     h += '<div class="prod-row' + (acts ? '' : ' is-done') + '"><div class="prod-row-head"><b>' + _t("Rangée {n}", { n: r + 1 }) + '</b><span>'
       + esc(_td(world)) + ' · ' + lv + (acts ? '' : ' · ' + _t("au maximum")) + '</span></div>';
     if (acts) h += '<div class="prod-row-acts">' + acts + '</div>';
+    // v3.520.0 (audit RES-9) : un bouton jamais payable dit pourquoi (le coût dépasse le plafond de l'Entrepôt)
+    var trop = (st.locked.length && PPS.overCapReason(st.unlockCost, "unlock")) || (st.upNow.length && PPS.overCapReason(st.upCost, "upgrade"));
+    if (trop) h += '<p class="production-group-hint prod-row-overcap">' + esc(trop) + '</p>';
     h += '</div>';
   }
   h += '<p class="production-group-hint">' + _t("Touche une zone pour la régler à part.") + '</p>';

@@ -292,6 +292,18 @@ var ProductionPlotsSystem = {
     });
     return st;
   },
+  /* v3.520.0 (audit RES-9) : la première ressource dont le coût dépasse le plafond de l'Entrepôt, ou null. */
+  overCap: function (cost) {
+    var k = Object.keys(cost || {}).filter(function (r) { return r !== "gold" && Number(cost[r]) > WarehouseManager.getCap(r) && WarehouseManager.getAmount(r) < Number(cost[r]); })[0]; // un stock déjà au-delà du plafond suffit
+    return k ? { key: k, need: Number(cost[k]), cap: WarehouseManager.getCap(k) } : null;
+  },
+  overCapReason: function (cost, kind) {
+    var o = this.overCap(cost), d = o && WAREHOUSE_RESOURCES[o.key];
+    if (!o) return null;
+    var p = { x: d ? _td(d.name) : o.key, n: formatNumber(o.need), c: formatNumber(o.cap) };
+    return kind === "unlock" ? _t("Il faut {n} {x}, mais l'Entrepôt n'en garde que {c}. Monte l'Entrepôt, ou défriche zone par zone.", p)
+      : _t("Il faut {n} {x}, mais l'Entrepôt n'en garde que {c}. Monte l'Entrepôt, ou monte les zones une par une.", p);
+  },
   _payAll: function (cost) {
     var ok = Object.keys(cost).every(function (k) { return WarehouseManager.getAmount(k) >= cost[k]; });
     if (ok) Object.keys(cost).forEach(function (k) { WarehouseManager.removeResource(k, cost[k]); });
@@ -307,6 +319,7 @@ var ProductionPlotsSystem = {
     var st = this.getRowState(buildingId, row), plots = this.getPlots(buildingId);
     if (!st.rowOpen) return { ok: false, reason: _t("S'ouvre {lieu}", { lieu: this.getPlotRowOpening(row * 3) }) };
     if (!st.locked.length) return { ok: false, reason: _t("Rangée déjà défrichée") };
+    if (this.overCap(st.unlockCost)) return { ok: false, reason: this.overCapReason(st.unlockCost, "unlock") };
     if (!this._payAll(st.unlockCost)) return { ok: false, reason: _t("Ressources insuffisantes") };
     st.locked.forEach(function (i) { plots[i].state = "open"; plots[i].lastTick = Date.now(); });
     var def = PRODUCTION_BUILDINGS[buildingId];
@@ -315,6 +328,7 @@ var ProductionPlotsSystem = {
   upgradeRow: function (buildingId, row) {
     var st = this.getRowState(buildingId, row), plots = this.getPlots(buildingId);
     if (!st.upNow.length) return { ok: false, reason: _t("Rangée au maximum de ce monde") };
+    if (this.overCap(st.upCost)) return { ok: false, reason: this.overCapReason(st.upCost, "upgrade") };
     if (!this._payAll(st.upCost)) return { ok: false, reason: _t("Ressources insuffisantes") };
     st.upNow.forEach(function (i) { plots[i].level += 1; });
     var def = PRODUCTION_BUILDINGS[buildingId];

@@ -897,6 +897,8 @@
 .farm-plot-card.is-locked.is-next { border-style: solid; border-color: var(--c-brown-550-3); background: var(--c-cream-100-3); }
 .farm-plot-card.is-locked.is-next .farm-plot-card-profile { color: var(--c-brown-700-vivid); font-weight: 800; }
 .production-group-hint { margin: 8px 0 0; font-size: 12px; text-align: center; color: var(--c-brown-750-2); }
+/* v3.520.0 (audit RES-9) : rangée jamais payable, le plafond de l'Entrepôt est en cause */
+.prod-row-overcap { margin: 6px 0 0; text-align: left; color: var(--ink-missing); font-weight: 700; }
 
 /* Fenêtre d'une zone (.kwin du kit) */
 .zone-win .kwin-body { padding: 4px 14px 0; }

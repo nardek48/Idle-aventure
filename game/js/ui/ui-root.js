@@ -382,6 +382,8 @@ function renderPanel() {
     default:
       container.innerHTML = "";
   }
+  // v3.520.0 (revue) : une feuille d'atelier, de bâtiment ou de l'Entrepôt ouverte hors du Village (refus d'expédition, Héros) se redessine aussi
+  if (game.activeTab !== "village" && typeof refreshProductionSheet === "function") refreshProductionSheet();
 
   // v3.131.0 (retour Seb, mobile) : neutralise le padding-bottom du panel pour les écrans à
   // sous-onglets (.subtab-page) — voir css/02-layout.css #panel-container.has-subtab-page,

@@ -129,6 +129,24 @@ function getWarehouseOtherUses(key) {
   }
   var def = WAREHOUSE_RESOURCES[key] || {};
   if (def.healPct) out.push({ icon: "images/Icons/quests/village_quest.webp", text: _t("Campement : repas (+{p} % PV)", { p: Math.round(def.healPct * 100) }) });
+  /* v3.520.0 (audit RES-3) : rangs, vivres de sortie, départs d'expédition et besace, lus dans les données */
+  if ((window.SKILL_RANK_PRICES || []).some(function (p) { return p.mat === key; })) out.push({ icon: "images/Icons/system/upgrade.webp", text: _t("Rangs des capacités du héros (Héros › Capacités)") });
+  if ((window.COMPANION_SKILL_RANK_PRICES || []).some(function (p) { return p.mat === key; })) out.push({ icon: "images/Icons/system/upgrade.webp", text: _t("Rangs des compagnons (Héros › Compagnons)") });
+  var vivres = Object.keys(window.PROVISIONS_BY_WORLD || {}).filter(function (w) { return PROVISIONS_BY_WORLD[w] === key; })
+    .map(function (w) { var wd = (window.WORLDS || []).filter(function (x) { return x.id === w; })[0]; return wd ? _td(wd.name) : w; });
+  if (vivres.length) out.push({ icon: "images/Icons/quests/ration_reward.webp", text: _t("Vivres pour rejouer un donjon ou une élite : {x}", { x: vivres.join(", ") }) + (key === "ration" ? " · " + _t("mode libre des donjons") : "") });
+  // départs des mondes atteints, le plus récent d'abord (une traversée part du monde d'avant sa destination)
+  var atteint = (window.WorldCaps && typeof WorldCaps.getReachedWorldIndex === "function") ? WorldCaps.getReachedWorldIndex() : 0;
+  var wIdx = function (w) { return (window.WORLDS || []).map(function (x) { return x.id; }).indexOf(w); };
+  var departs = [];
+  Object.keys(window.SCENE_TEMPLATES || {}).forEach(function (id) { var t = SCENE_TEMPLATES[id], c = t && t.entryCost; if (c && c.resourceId === key) departs.push({ w: wIdx(t.worldId) - (t.travelOnSuccess ? 1 : 0), x: _td(t.title || id) }); });
+  if (window.LABYRINTH_CONFIG && LABYRINTH_CONFIG.entryCost && LABYRINTH_CONFIG.entryCost.resourceId === key) departs.push({ w: wIdx(LABYRINTH_CONFIG.worldId), x: _t("Labyrinthe") });
+  departs = departs.map(function (d, i) { d.i = i; return d; }).filter(function (d) { return d.w <= atteint; })
+    .sort(function (a, b) { return (b.w - a.w) || (a.i - b.i); }).map(function (d) { return d.x; });
+  var depTxt = departs.length > 4 ? departs.slice(0, 3).join(", ") + " " + _tn(departs.length - 3, "et {n} autre", "et {n} autres") : departs.join(", "); // liste courte à 320 px
+  if (departs.length) out.push({ icon: "images/Icons/quests/start_expedition.webp", text: _t("Départ : {x}", { x: depTxt }) });
+  if (Object.keys(window.PA2_ITEMS || {}).some(function (id) { return PA2_ITEMS[id].resource === key; })) out.push({ icon: "images/Icons/subtabs/inventory.webp", text: _t("Besace des Petites Aventures") });
+  if (window.COMBAT_ITEMS && COMBAT_ITEMS[key]) out.push({ icon: COMBAT_ITEMS[key].icon, text: _t("Objet de combat : emporté à la préparation d'une sortie") });
   return out;
 }
 
@@ -273,6 +291,8 @@ function resourceBackContext() {
     var vid = openVillageBuildingId;
     return { label: _td(VILLAGE_BUILDINGS[vid].name), fn: function () { openVillageBuildingSheet(vid); } };
   }
+  // v3.520.0 (audit ERG-5) : l'écran de départ refusé d'une expédition reste dessous
+  if (typeof sceneStartBlock !== "undefined" && sceneStartBlock && game.activeTab === "scene") return { label: _t("Expédition"), fn: function () {} };
   if (typeof herosOpenSheet !== "undefined" && herosOpenSheet && window.HEROS_SHEETS && HEROS_SHEETS[herosOpenSheet]) {
     return { label: _td(HEROS_SHEETS[herosOpenSheet].title), fn: function () {} }; // la feuille de Héros est restée dessous
   }
@@ -426,6 +446,11 @@ function buildWarehouseSheetHTML(key) {
     h += buildWarehouseWorkshopLineHTML(wid); srcCount++;
   });
   if (!srcCount) h += '<div class="wh-line is-text"><span class="wh-line-t"><small>' + esc(def.sourceHint ? _td(def.sourceHint) : _t("Butin : expéditions, Petites Aventures et élites.")) + '</small></span></div>';
+  // v3.520.0 (audit RES-3) : les patrouilles des compagnons rapportent aussi des matières brutes et des vivres
+  var patrouille = !!(window.PatrolManager && typeof PatrolManager.isUnlocked === "function" && PatrolManager.isUnlocked())
+    && (PatrolManager.getDestinations().some(function (d) { return d.main === key || d.second === key; })
+      || PatrolManager.reachedMapIds().some(function (m) { return (window.PATROL_RATION_LOOT || {})[m] && PATROL_RATION_LOOT[m][key]; }));
+  if (patrouille) h += '<div class="wh-line is-text"><img class="wh-line-ico" src="images/Icons/quests/mission_exploration.webp" alt=""><span class="wh-line-t"><small>' + esc(_t("Patrouilles des compagnons")) + '</small></span></div>';
 
   // Où ça part
   h += '<div class="ksec"><span>' + _t("Où ça part") + '</span></div>';
@@ -435,7 +460,7 @@ function buildWarehouseSheetHTML(key) {
     h += buildWarehouseWorkshopLineHTML(wid); uses++;
   });
   getWarehouseOtherUses(key).forEach(function (u) {
-    h += '<div class="wh-line is-text"><img class="wh-line-ico" src="' + u.icon + '" alt=""><span class="wh-line-t"><small>' + esc(u.text) + '</small></span></div>'; uses++;
+    h += '<div class="wh-line is-text">' + renderIconOrEmojiHTML(u.icon, "wh-line-ico", "") + '<span class="wh-line-t"><small>' + esc(u.text) + '</small></span></div>'; uses++;
   });
   if (!uses) h += '<div class="wh-line is-text"><span class="wh-line-t"><small>' + _t("Rien pour l'instant : elle servira plus tard.") + '</small></span></div>';
 
@@ -458,7 +483,7 @@ function buildWarehouseSheetHTML(key) {
   h += '<p class="wh-ref">' + (refValue > 0
     ? esc(inTavern ? _t("Valeur de référence : {n} or. Se livre à la Taverne, dans ses contrats.", { n: formatNumber(refValue) })
       : _t("Valeur de référence : {n} or.", { n: formatNumber(refValue) }))
-    : esc(_t("Ne se vend pas : sert aux constructions et aux ateliers."))) + '</p>';
+    : esc(_t("Ne se vend pas."))) + '</p>'; // v3.520.0 : les usages sont listés plus haut (rangs, reforges…)
 
   h += '</div></div></div>';
   return h;
