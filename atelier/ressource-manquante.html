@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ressource manquante</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Atelier « Ressource manquante → Entrepôt » (option B de Seb du 27/10 : tous les coûts du jeu).
+   Toucher une ressource qui manque ouvre sa fiche Entrepôt (« D'où ça vient »), avec un retour vers l'écran d'origine.
+   Variante A : ligne/pastille entière touchable, « › » et lien « Où en trouver ». Variante B : petit bouton loupe « Où ? ». */
+:root {
+  --page: #1c140c; --parch: #e9d7b0; --bronze: #b98a4a; --cream: #f6ecd9; --cream-alt: #efe0c2; --frame-light: #dcc79c;
+  --ink: #3a2c1a; --ink-dim: #6b5d45; --gold-deep: #7c5114; --red: #c0392b; --green: #1e7236; --sheet-head: #2a2016;
+  --cream-text: #f3e6c4; --gold-a: #f0c64a; --gold-b: #c27f1f;
+  --f-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html { background: var(--page); }
+body { margin: 0; background: var(--page); color: var(--ink); font: 14px/1.35 var(--f-ui); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--page); }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; display: grid; gap: 6px; padding-block: 8px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); background: var(--page); color: var(--cream-text); }
+.row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.row > b { font-size: 12px; letter-spacing: .4px; text-transform: uppercase; color: var(--bronze); min-width: 64px; }
+.bar button { min-height: 36px; padding: 4px 10px; border-radius: 10px; border: 1.5px solid var(--bronze); background: transparent; color: var(--cream-text); font: 700 13px var(--f-ui); cursor: pointer; }
+.bar button[aria-pressed="true"] { background: linear-gradient(var(--gold-a), var(--gold-b)); color: var(--ink); border-color: var(--gold-a); }
+button:focus-visible { outline: 2px solid var(--gold-a); outline-offset: 2px; }
+main { display: grid; justify-items: center; padding-block: 12px 40px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.phone { width: 100%; max-width: var(--w, 390px); border-radius: 18px; overflow: hidden; background: var(--parch); }
+.hint { color: var(--cream-text); font-size: 12.5px; text-align: center; margin: 0 0 10px; max-width: var(--w, 390px); }
+
+/* En-tête de feuille (kSheetHead) */
+.sh { display: flex; align-items: center; gap: 10px; padding: 14px 14px 12px; background: var(--sheet-head); color: var(--cream-text); border-bottom: 2px solid var(--gold-b); }
+.sh img { width: 40px; height: 40px; border-radius: 10px; background: var(--cream); padding: 3px; }
+.sh b { display: block; font-size: 18px; } .sh small { font-size: 13px; opacity: .85; }
+.back { min-height: 36px; padding: 4px 10px; border-radius: 999px; border: 1.5px solid var(--gold-b); background: transparent; color: var(--gold-a); font: 800 13px var(--f-ui); white-space: nowrap; cursor: pointer; }
+.backbar { padding: 10px 14px 0; background: var(--sheet-head); }
+.body { padding: 12px 14px 18px; display: grid; gap: 10px; }
+.p { margin: 0; font-size: 14px; }
+
+/* Lignes de coût d'un chantier (vb-cost-row) */
+.cost { background: var(--cream-alt); border-radius: 12px; padding: 4px 10px; }
+.cr { display: flex; align-items: center; gap: 10px; min-height: 40px; border-bottom: 1px dashed var(--frame-light); font-size: 14px; width: 100%; background: none; border-left: 0; border-right: 0; border-top: 0; font-family: inherit; color: inherit; text-align: left; padding: 0; }
+.cr:last-child { border-bottom: 0; }
+.cr img.i { width: 24px; height: 24px; }
+.cr .l { flex: 1; } .cr .a { font-weight: 800; } .cr.miss .a { color: var(--red); }
+.cr .k { width: 20px; text-align: center; font-weight: 900; } .cr .k.ok { color: var(--green); } .cr .k.no { color: var(--red); }
+.cr.tap { cursor: pointer; } .cr .chev { font-size: 20px; font-weight: 900; color: var(--gold-deep); margin-left: 2px; }
+.where { font-size: 12.5px; color: var(--ink-dim); padding: 0 0 6px 34px; }
+.where.link { color: var(--gold-deep); font-weight: 800; text-decoration: underline; cursor: pointer; background: none; border: 0; font-family: inherit; text-align: left; }
+.who { min-height: 32px; padding: 2px 10px; border-radius: 999px; border: 1.5px solid var(--gold-b); background: var(--cream); color: var(--gold-deep); font: 800 12.5px var(--f-ui); display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+.who img { width: 16px; height: 16px; }
+.btn-main { justify-self: center; min-height: 44px; padding: 8px 26px; border-radius: 12px; border: 2px solid var(--gold-b); background: linear-gradient(#3b6fb6, #23497f); color: var(--gold-a); font: 800 16px var(--f-ui); opacity: .7; }
+
+/* Pastilles de coût (zones, Forge, ateliers, rangs) */
+.cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.card { background: var(--cream); border-radius: 14px; border: 1px solid var(--frame-light); padding: 10px; text-align: center; display: grid; gap: 4px; justify-items: center; }
+.card img.b { width: 64px; height: 64px; object-fit: contain; }
+.card b { font-size: 15px; }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
+.chip { display: inline-flex; align-items: center; gap: 2px; font-weight: 800; font-size: 14px; padding: 2px 4px; border-radius: 8px; border: 0; background: none; font-family: inherit; color: var(--ink); }
+.chip img { width: 20px; height: 20px; } .chip.miss { color: var(--red); }
+.chip.tapA { border: 1.5px dashed var(--red); background: #fbe9e4; cursor: pointer; }
+.chip .q { display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; background: var(--gold-b); color: #fff; font-size: 11px; font-weight: 900; margin-left: 2px; }
+.small { font-size: 12.5px; color: var(--ink-dim); } .small.red { color: var(--red); font-weight: 800; }
+
+/* Fiche Entrepôt */
+.gauge { height: 26px; border-radius: 13px; background: #2f3542; color: #fff; font-weight: 800; font-size: 13px; display: grid; place-items: center; }
+.sec { text-align: center; font-weight: 800; color: var(--ink); font-size: 16px; }
+.wl { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; border: 1.5px solid var(--bronze); background: var(--cream); }
+.wl img { width: 48px; height: 48px; object-fit: contain; } .wl .t { flex: 1; } .wl small { color: var(--ink-dim); display: block; }
+.pill { padding: 3px 10px; border-radius: 999px; font-weight: 800; font-size: 13px; color: #fff; background: var(--gold-deep); } .pill.blk { background: var(--red); }
+.toast { position: sticky; bottom: 8px; margin: 0 auto; width: fit-content; padding: 6px 12px; border-radius: 10px; background: rgba(0,0,0,.75); color: #fff; font-size: 12.5px; }
+</style>
+</head>
+<body>
+<div class="bar">
+  <div class="row"><b>Variante</b><button data-k="v" data-v="A">A · ligne touchable</button><button data-k="v" data-v="B">B · bouton « Où ? »</button></div>
+  <div class="row"><b>Écran</b><button data-k="scr" data-v="chantier">Chantier du village</button><button data-k="scr" data-v="pastilles">Pastilles (zones, Forge, rangs)</button><button data-k="scr" data-v="fiche">Fiche Entrepôt</button></div>
+  <div class="row"><b>Largeur</b><button data-k="px" data-v="320">320 px</button><button data-k="px" data-v="390">390 px</button></div>
+</div>
+<main><p class="hint" id="hint"></p><div class="phone" id="phone"></div></main>
+<script>
+"use strict";
+var IMG = "../game/images/";
+function src(p) { return IMG + p; }
+var MISSING = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect x="4" y="4" width="56" height="56" rx="10" fill="#efe0c2" stroke="#8a7a5c" stroke-width="3" stroke-dasharray="7 5"/><text x="32" y="43" text-anchor="middle" font-family="Georgia,serif" font-size="30" fill="#8a7a5c">?</text></svg>');
+window.addEventListener("error", function (e) { var t = e.target; if (t && t.tagName === "IMG" && !t.dataset.miss) { t.dataset.miss = 1; t.src = MISSING; } }, true);
+
+var S = { v: "A", scr: "chantier", px: 390, from: null, res: "planche" };
+var RES = {
+  planche: { name: "Planche", icon: "Icons/resources/plank_icon.webp", stock: "0 / 999", desc: "Fabriquée à partir de Bois.",
+    src: [["Icons/workshops/fine_sawmill.webp", "Scierie fine", "Scierie", "Libre", ""]] },
+  seve_aeswyn: { name: "Sève d'Aeswyn", icon: "Icons/resources/seve_aeswyn_icon.webp", stock: "1 en stock", desc: "Résine runique rare de la Forêt.",
+    src: null, hint: "L'Arbre-mère, carte de la Forêt (+2 par victoire, rejouable) · la Tanière du Basilic (+2 par Marque) · Petites Aventures de la Forêt · caravane longue au marché de la Forêt" }
+};
+function openRes(key, from) { S.res = key; S.from = from; S.scr = "fiche"; render(); }
+function back() { S.scr = S.from || "chantier"; S.from = null; render(); }
+
+function head(icon, title, sub, backLabel) {
+  return (backLabel ? '<div class="backbar"><button class="back" type="button" onclick="back()">‹ ' + backLabel + '</button></div>' : '') + '<div class="sh"><img src="' + src(icon) + '" alt=""><div><b>' + title + '</b><small>' + sub + '</small></div></div>';
+}
+function chantier() {
+  var A = S.v === "A";
+  var h = head("Icons/construction_icon.webp", "Atelier de Construction", "Niveau 2 / 8");
+  h += '<div class="body"><p class="p">Niveau 3 : +9 % sur les contrats de la Taverne</p><div class="cost">';
+  h += '<div class="cr"><img class="i" src="' + src("Icons/gold_icon.webp") + '" alt=""><span class="l">Or</span><span class="a">45</span><span class="k ok">✓</span></div>';
+  if (A) {
+    h += '<button type="button" class="cr miss tap" onclick="openRes(\'planche\',\'chantier\')"><img class="i" src="' + src(RES.planche.icon) + '" alt=""><span class="l">Planche</span><span class="a">0 / 18</span><span class="k no">✗</span><span class="chev">›</span></button>';
+    h += '<button type="button" class="where link" onclick="openRes(\'planche\',\'chantier\')">Où en trouver : Scierie fine (Scierie) ›</button>';
+  } else {
+    h += '<div class="cr miss"><img class="i" src="' + src(RES.planche.icon) + '" alt=""><span class="l">Planche</span><span class="a">0 / 18</span><button type="button" class="who" onclick="openRes(\'planche\',\'chantier\')"><img src="' + src("Icons/system/search_unknown.webp") + '" alt="">Où ?</button></div>';
+    h += '<div class="where">Se fabrique à la Scierie fine (Scierie).</div>';
+  }
+  h += '<div class="cr"><img class="i" src="' + src("Icons/resources/stone_icon.webp") + '" alt=""><span class="l">Pierre</span><span class="a">27</span><span class="k ok">✓</span></div>';
+  h += '</div><span class="small">⏳ Durée du chantier : 1m 30s</span><span class="btn-main">Matériaux manquants</span></div>';
+  return h;
+}
+function chip(n, icon, miss, key) {
+  if (!miss) return '<span class="chip">' + n + '<img src="' + src(icon) + '" alt=""></span>';
+  if (S.v === "A") return '<button type="button" class="chip miss tapA" onclick="openRes(\'' + key + '\',\'pastilles\')">' + n + '<img src="' + src(icon) + '" alt=""></button>';
+  return '<span class="chip miss">' + n + '<img src="' + src(icon) + '" alt=""><button type="button" class="chip" style="padding:0" onclick="openRes(\'' + key + '\',\'pastilles\')" aria-label="Où en trouver"><span class="q">?</span></button></span>';
+}
+function pastilles() {
+  var h = head("Production/sawmill.webp", "Scierie", "+47/min · 9/9 zones");
+  h += '<div class="body"><div class="cards">';
+  h += '<div class="card"><img class="b" src="' + src("Icons/workshops/fine_sawmill.webp") + '" alt=""><b>Scierie fine</b><div class="chips">' + chip(5, "Icons/resources/wood_icon.webp", false) + '→' + chip(1, RES.planche.icon, false) + '</div><span class="small">Libre</span></div>';
+  h += '<div class="card"><img class="b" src="' + src("Icons/workshops/carpentry.webp") + '" alt=""><b>Menuiserie</b><div class="chips">' + chip(2, RES.seve_aeswyn.icon, true, "seve_aeswyn") + '+' + chip(3, RES.planche.icon, false) + '→' + chip(1, "Icons/resources/resine_durcie_icon.webp", false) + '</div>'
+    + (S.v === "A" ? '<button type="button" class="where link" style="padding:0" onclick="openRes(\'seve_aeswyn\',\'pastilles\')">manque Sève d\'Aeswyn ›</button>' : '<span class="small red">manque Sève d\'Aeswyn</span>') + '</div>';
+  h += '</div><p class="small" style="text-align:center">Même geste partout où un coût s\'affiche en pastilles : zones, Forge, ateliers, Apothicaire, Taverne, rangs des sorts et des compagnons, Enchanteresse.</p></div>';
+  return h;
+}
+function fiche() {
+  var R = RES[S.res], from = S.from === "pastilles" ? "Scierie" : S.from === "chantier" ? "Atelier de Construction" : null;
+  var h = head(R.icon, R.name, R.stock, from);
+  h += '<div class="body"><p class="p">' + R.desc + '</p><div class="gauge">' + R.stock + '</div><div class="sec">D\'où ça vient</div>';
+  if (R.src) R.src.forEach(function (s) { h += '<div class="wl"><img src="' + src(s[0]) + '" alt=""><span class="t"><b>' + s[1] + '</b><small>' + s[2] + '</small></span><span class="pill">' + s[3] + '</span><b>›</b></div>'; });
+  else h += '<div class="wl" style="border-style:dashed"><span class="t"><small>' + R.hint + '</small></span></div>';
+  h += '<div class="sec">Où ça part</div><div class="wl" style="border-style:dashed"><span class="t"><small>Constructions : Atelier de Construction, Forge…</small></span></div>';
+  if (!from) h += '<p class="small" style="text-align:center">Ouverte depuis l\'Entrepôt : pas de bouton retour (comme aujourd\'hui).</p>';
+  return h + '</div>';
+}
+function render() {
+  document.documentElement.style.setProperty("--w", S.px + "px");
+  document.querySelectorAll(".bar button").forEach(function (b) { b.setAttribute("aria-pressed", String(S[b.dataset.k]) === b.dataset.v); });
+  document.getElementById("hint").textContent = S.scr === "fiche" ? (S.from ? "Le bouton « ‹ » ramène à l'écran d'origine, sans rien perdre." : "") : "Touche la ressource en rouge.";
+  document.getElementById("phone").innerHTML = S.scr === "chantier" ? chantier() : S.scr === "pastilles" ? pastilles() : fiche();
+}
+document.querySelector(".bar").addEventListener("click", function (e) {
+  var b = e.target.closest("button"); if (!b) return;
+  S[b.dataset.k] = /^\d+$/.test(b.dataset.v) ? Number(b.dataset.v) : b.dataset.v;
+  if (b.dataset.k === "scr") S.from = null;
+  render();
+});
+render();
+</script>
+</body>
+</html>
