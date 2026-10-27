@@ -793,3 +793,12 @@
 .car-lt small { font-size: 12px; font-weight: 600; line-height: 1.2; color: var(--c-bronze-200); }
 .car-lt.is-rare { background: linear-gradient(#3b2a6b, #1f1640); box-shadow: 0 0 0 2px #9b7bff; }
 .car-lt.is-item { background: linear-gradient(#173d24, #0e2617); box-shadow: 0 0 0 2px #4fbf6b; }
+
+/* v3.515.0 (atelier ressource-manquante.html, variante A) : une ressource qui manque se touche et ouvre sa fiche Entrepôt. */
+.res-go { cursor: pointer; }
+.res-go:not(.vb-cost-row) { outline: 1.5px dashed currentColor; outline-offset: 1px; border-radius: 6px; background-color: rgba(192, 57, 43, .08); }
+.vb-cost-row.res-go { min-height: 40px; }
+.res-go-chev { margin-left: 4px; font-size: 18px; font-weight: 900; line-height: 1; color: var(--nb-gold-deep); }
+.res-go-link { cursor: pointer; color: var(--nb-gold-deep); font-weight: 800; text-decoration: underline; }
+.wh-backbar { padding: 10px 14px 0; }
+.wh-back { min-height: 36px; padding: 4px 12px; border-radius: 999px; border: 1.5px solid var(--nb-frame); background: transparent; color: var(--nb-gold-deep); font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }

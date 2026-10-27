@@ -72,7 +72,7 @@ function buildVillageCostListHTML(id) {
     var have = (key === "gold") ? Number(game.gold || 0) : WarehouseManager.getAmount(key);
     var unreachable = !ok && isVillageResourceUnreachable(key);
 
-    h += '<div class="vb-cost-row' + (ok ? '' : (unreachable ? ' is-unreachable' : ' is-missing')) + '">';
+    h += '<div class="vb-cost-row' + (ok ? '' : (unreachable ? ' is-unreachable' : ' is-missing') + (key === "gold" ? '' : ' res-go')) + '"' + (ok ? '' : resGoAttr(key)) + '>';
     h += meta.iconHTML;
     h += '<span class="vb-cost-label">' + esc(_td(meta.label)) + '</span>';
     /* On affiche le COÛT ; l'avoir n'apparaît que s'il manque quelque
@@ -83,11 +83,13 @@ function buildVillageCostListHTML(id) {
     /* Une ressource d'un monde pas encore atteint n'est pas « manquante »,
        elle est introuvable : la loupe et non la croix, et on dit où. */
     h += '<span class="vb-cost-check">' + (ok ? '<img class="ico-sys" src="images/Icons/system/check_valid.webp" alt="">' : (unreachable ? '<img class="ico-sys" src="images/Icons/system/search_unknown.webp" alt="">' : '<img class="ico-sys" src="images/Icons/system/cross_error.webp" alt="">')) + '</span>';
+    if (!ok && key !== "gold") h += '<span class="res-go-chev" aria-hidden="true">›</span>';
     h += '</div>';
 
     if (!ok) {
       var hint = getVillageResourceHint(key);
-      if (hint) h += '<div class="vb-cost-where">' + esc(hint) + '</div>';
+      if (hint) h += key === "gold" ? '<div class="vb-cost-where">' + esc(hint) + '</div>'
+        : '<div class="vb-cost-where res-go-link"' + resGoAttr(key) + '>' + esc(_t("Où en trouver : {x}", { x: hint })) + ' ›</div>';
     }
   });
   h += '</div>';
@@ -118,7 +120,12 @@ function getVillageResourceHint(key) {
   if (isVillageResourceUnreachable(key)) {
     return def.worldName ? _t("Se trouve en {w}.", { w: _td(def.worldName) }) : _t("Pas encore accessible.");
   }
-  return _td(def.sourceHint || "");
+  if (def.sourceHint) return _td(def.sourceHint);
+  var prod = typeof findResourceProducer === "function" ? findResourceProducer(key) : null; // v3.515.0
+  if (!prod) return "";
+  if (prod.kind === "building") return prod.name;
+  var w = WORKSHOPS_CONFIG[prod.id], b = w && PRODUCTION_BUILDINGS[w.buildingId];
+  return b ? _t("{x} ({y})", { x: prod.name, y: _td(b.name) }) : prod.name;
 }
 window.getVillageResourceHint = getVillageResourceHint;
 
@@ -311,9 +318,9 @@ function buildApothecaryOrdersHTML() {
       var meta = getVillageCostMeta(k);
       var have = WarehouseManager.getAmount(k);
       var ok = have >= r.order[k];
-      h += '<div class="vb-cost-row' + (ok ? '' : ' is-missing') + '">' + meta.iconHTML
+      h += '<div class="vb-cost-row' + (ok ? '' : ' is-missing res-go') + '"' + (ok ? '' : resGoAttr(k)) + '>' + meta.iconHTML
          + '<span class="vb-cost-label">' + esc(_td(meta.label)) + '</span>'
-         + '<span class="vb-cost-amount">' + (ok ? '' : formatNumber(Math.floor(have)) + ' / ') + formatNumber(r.order[k]) + '</span></div>';
+         + '<span class="vb-cost-amount">' + (ok ? '' : formatNumber(Math.floor(have)) + ' / ') + formatNumber(r.order[k]) + '</span>' + (ok ? '' : '<span class="res-go-chev" aria-hidden="true">›</span>') + '</div>';
     });
     h += '</div>';
     var can = A.canDeliver(r.potionId);
@@ -438,8 +445,8 @@ function buildTavernContractsHTML() {
     h += '<div class="tavern-contract-title">' + esc(_td(c.title)) + '</div>';
     h += '<div class="tavern-contract-need">';
     h += renderIconOrEmojiHTML(def.icon, "tavern-contract-icon", _td(def.name));
-    h += '<span class="' + (enough || c.done ? '' : 'is-missing') + '">'
-       + formatNumber(Math.floor(have)) + ' / ' + formatNumber(c.quantity) + ' ' + esc(_td(def.name)) + '</span>';
+    h += '<span class="' + (enough || c.done ? '' : 'is-missing res-go') + '"' + (enough || c.done ? '' : resGoAttr(c.resourceId)) + '>'
+       + formatNumber(Math.floor(have)) + ' / ' + formatNumber(c.quantity) + ' ' + esc(_td(def.name)) + (enough || c.done ? '' : ' ›') + '</span>';
     h += '</div></div>';
 
     h += '<div class="tavern-contract-side">';
@@ -527,7 +534,7 @@ function buildForgeBoardHTML() {
         var meta = getVillageCostMeta(key);
         var have = (key === "gold") ? Number(game.gold || 0) : WarehouseManager.getAmount(key);
         var ok = have >= cost[key];
-        h += '<span class="forge-cost-item' + (ok ? '' : ' is-missing') + '">'
+        h += '<span class="forge-cost-item' + (ok ? '' : ' is-missing' + (key === "gold" ? '' : ' res-go')) + '"' + (ok ? '' : resGoAttr(key)) + '>'
            + meta.iconHTML + formatNumber(cost[key]) + '</span>';
         if (!ok && key !== "gold" && !provenancesVues[key]) { provenancesVues[key] = true; manquants.push(key); }
       });
@@ -535,7 +542,7 @@ function buildForgeBoardHTML() {
       // v3.448.6 : où trouver chaque matériau qui manque (comme sur les chantiers du village)
       manquants.forEach(function (key) {
         var hint = getVillageResourceHint(key);
-        if (hint) h += '<div class="vb-cost-where forge-row-where">' + esc(_td(getVillageCostMeta(key).label)) + ' : ' + esc(hint) + '</div>';
+        if (hint) h += '<div class="vb-cost-where forge-row-where res-go-link"' + resGoAttr(key) + '>' + esc(_td(getVillageCostMeta(key).label)) + ' : ' + esc(hint) + ' ›</div>';
       });
     }
     h += '</div>';

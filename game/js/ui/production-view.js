@@ -180,7 +180,7 @@ function buildProductionCostRowHTML(cost, afford) {
   Object.keys(cost).forEach(function (key) {
     var iconSrc = key === "gold" ? "images/Icons/gold_icon.webp" : (WAREHOUSE_RESOURCES[key] ? WAREHOUSE_RESOURCES[key].icon : "");
     var canAffordThis = afford[key] !== false;
-    h += '<span class="production-cost-item' + (canAffordThis ? '' : ' is-missing') + '">';
+    h += '<span class="production-cost-item' + (canAffordThis ? '' : ' is-missing' + (key === "gold" ? '' : ' res-go')) + '"' + (canAffordThis ? '' : resGoAttr(key)) + '>';
     h += '<img class="btn-buy-icon" src="' + esc(iconSrc) + '" alt="">' + formatNumber(cost[key]);
     h += '</span>';
   });
@@ -368,7 +368,7 @@ function buildPlotCostRowHTML(cost) {
   Object.keys(cost).forEach(function (key) {
     var iconSrc = WAREHOUSE_RESOURCES[key] ? WAREHOUSE_RESOURCES[key].icon : "";
     var canAffordThis = WarehouseManager.getAmount(key) >= cost[key];
-    h += '<span class="production-cost-item' + (canAffordThis ? '' : ' is-missing') + '">';
+    h += '<span class="production-cost-item' + (canAffordThis ? '' : ' is-missing res-go') + '"' + (canAffordThis ? '' : resGoAttr(key)) + '>';
     h += '<img class="btn-buy-icon" src="' + esc(iconSrc) + '" alt="">' + formatNumber(cost[key]);
     h += '</span>';
   });
@@ -832,7 +832,7 @@ function buildWorkshopRecipeIconsHTML(recipe) {
     var d = WAREHOUSE_RESOURCES[input.resourceId] || {};
     var miss = WarehouseManager.getAmount(input.resourceId) < input.quantity;
     if (i) h += '<span class="wk-tile-op">+</span>';
-    h += '<span class="' + (miss ? 'is-miss' : '') + '">' + formatNumber(input.quantity) + renderIconOrEmojiHTML(d.icon, "wk-tile-ico", _td(d.name)) + '</span>';
+    h += '<span class="' + (miss ? 'is-miss res-go' : '') + '"' + (miss ? resGoAttr(input.resourceId) : '') + '>' + formatNumber(input.quantity) + renderIconOrEmojiHTML(d.icon, "wk-tile-ico", _td(d.name)) + '</span>';
   });
   var out = WAREHOUSE_RESOURCES[recipe.outputs[0].resourceId] || {};
   h += '<span class="wk-tile-op">→</span><span>' + formatNumber(recipe.outputs[0].quantity) + renderIconOrEmojiHTML(out.icon, "wk-tile-ico", _td(out.name)) + '</span>';
@@ -877,7 +877,8 @@ function buildWorkshopTileHTML(w, backId) {
     } else if (state === "block" || state === "stalled") {
       var miss = getWorkshopMissingInput(recipe);
       var md = miss ? (WAREHOUSE_RESOURCES[miss.resourceId] || {}) : null;
-      h += '<span class="wk-tile-sub is-miss">' + (md ? esc(_t("manque {x}", { x: _td(md.name) })) : esc(_t("Réserve protégée"))) + '</span>';
+      h += md ? '<span class="wk-tile-sub is-miss res-go-link"' + resGoAttr(miss.resourceId) + '>' + esc(_t("manque {x}", { x: _td(md.name) })) + ' ›</span>'
+        : '<span class="wk-tile-sub is-miss">' + esc(_t("Réserve protégée")) + '</span>';
     } else {
       h += '<span class="wk-tile-sub">' + _t("Libre") + '</span>';
     }
@@ -1040,7 +1041,7 @@ function buildWorkshopSheetHTML(workshopId) {
     var d = WAREHOUSE_RESOURCES[input.resourceId] || {};
     var have = WarehouseManager.getAmount(input.resourceId);
     if (i) h += '<span class="wk-bigrec-op">+</span>';
-    h += '<span class="wk-bigrec-ing' + (have < input.quantity ? ' is-miss' : '') + '">' + renderIconOrEmojiHTML(d.icon, "", _td(d.name))
+    h += '<span class="wk-bigrec-ing' + (have < input.quantity ? ' is-miss res-go' : '') + '"' + (have < input.quantity ? resGoAttr(input.resourceId) : '') + '>' + renderIconOrEmojiHTML(d.icon, "", _td(d.name))
       + '<b>' + formatNumber(input.quantity) + ' ' + esc(_td(d.name)) + '</b><small>' + esc(_t("stock {n}", { n: formatNumber(Math.floor(have)) })) + '</small></span>';
   });
   var out = WAREHOUSE_RESOURCES[recipe.outputs[0].resourceId] || {};

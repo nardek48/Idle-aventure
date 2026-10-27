@@ -178,7 +178,7 @@ function buildCompanionSkillRankHTML(companionId) {
   h += '<div class="pc-skill-next"><span class="pc-skill-next-t">' + esc(_t("Rang {a} → {b}", { a: r, b: r + 1 })) + '</span>';
   h += '<span class="pc-skill-next-v">' + (lines.length ? lines.map(esc).join('<br>') : esc(_t("Prépare le rang suivant"))) + '</span>';
   h += '<span class="pc-skill-cost"><span class="pc-skill-chip' + (Number(game.gold || 0) >= p.gold ? '' : ' is-short') + '"><img src="images/Icons/gold_icon.webp" alt="">' + esc(_t("{n} or", { n: formatNumber(p.gold) })) + '</span>';
-  h += '<span class="pc-skill-chip' + (stock >= p.qty ? '' : ' is-short') + '">' + renderIconOrEmojiHTML(def.icon || "", "pc-skill-chip-img", "") + p.qty + ' ' + esc(_td(def.name || p.mat)) + ' <small>(' + formatNumber(stock) + ')</small></span></span>';
+  h += '<span class="pc-skill-chip' + (stock >= p.qty ? '' : ' is-short res-go') + '"' + (stock >= p.qty ? '' : resGoAttr(p.mat)) + '>' + renderIconOrEmojiHTML(def.icon || "", "pc-skill-chip-img", "") + p.qty + ' ' + esc(_td(def.name || p.mat)) + ' <small>(' + formatNumber(stock) + ')</small></span></span>';
   h += '<button type="button" class="kbtn" onclick="companionBuySkillRank(\'' + companionId + '\')"' + (st === "ok" ? '' : ' disabled') + '>' + esc(_t("Monter au rang {n}", { n: r + 1 })) + '</button></div>';
   return h;
 }

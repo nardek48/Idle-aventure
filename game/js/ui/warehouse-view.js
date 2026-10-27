@@ -250,6 +250,46 @@ function dismissWarehouseNoSaleNote() {
 }
 window.dismissWarehouseNoSaleNote = dismissWarehouseNoSaleNote;
 
+/* ---------- v3.515.0 (atelier ressource-manquante.html, variante A) : ressource manquante → fiche ----------
+   Toucher une ressource qui manque dans un coût ouvre sa fiche (« D'où ça vient ») ; « ‹ » rouvre l'écran d'origine,
+   reconnu à son état : atelier, bâtiment de production, bâtiment du village, ou feuille de Héros (restée dessous). */
+var warehouseBack = null; // { label, fn }
+function resGoAttr(key) {
+  if (!key || key === "gold" || !WAREHOUSE_RESOURCES[key]) return "";
+  return ' role="button" tabindex="0" onclick="event.stopPropagation();openResourceFromCost(\'' + esc(key) + '\')"';
+}
+window.resGoAttr = resGoAttr;
+function resourceBackContext() {
+  if (typeof openWorkshopId !== "undefined" && openWorkshopId && WORKSHOPS_CONFIG[openWorkshopId]) {
+    var wid = openWorkshopId, back = typeof workshopSheetBackId !== "undefined" ? workshopSheetBackId : null;
+    return { label: _td(WORKSHOPS_CONFIG[wid].name), fn: function () { openWorkshopSheet(wid, back); } };
+  }
+  if (typeof productionDetailBuildingId !== "undefined" && productionDetailBuildingId && PRODUCTION_BUILDINGS[productionDetailBuildingId]) {
+    var bid = productionDetailBuildingId;
+    return { label: _td(PRODUCTION_BUILDINGS[bid].name), fn: function () { openProductionBuildingDetail(bid); } };
+  }
+  var host = document.getElementById("village-modal-root");
+  if (typeof openVillageBuildingId !== "undefined" && openVillageBuildingId && host && host.innerHTML && window.VILLAGE_BUILDINGS && VILLAGE_BUILDINGS[openVillageBuildingId]) {
+    var vid = openVillageBuildingId;
+    return { label: _td(VILLAGE_BUILDINGS[vid].name), fn: function () { openVillageBuildingSheet(vid); } };
+  }
+  if (typeof herosOpenSheet !== "undefined" && herosOpenSheet && window.HEROS_SHEETS && HEROS_SHEETS[herosOpenSheet]) {
+    return { label: _td(HEROS_SHEETS[herosOpenSheet].title), fn: function () {} }; // la feuille de Héros est restée dessous
+  }
+  return null;
+}
+function openResourceFromCost(key) {
+  if (!WAREHOUSE_RESOURCES[key]) return;
+  openWarehouseSheet(key, resourceBackContext());
+}
+window.openResourceFromCost = openResourceFromCost;
+function warehouseGoBack() {
+  var b = warehouseBack;
+  closeWarehouseSheet();
+  if (b && typeof b.fn === "function") b.fn();
+}
+window.warehouseGoBack = warehouseGoBack;
+
 /* ---------- Feuille d'une ressource ---------- */
 /* v3.98.13 : réserve protégée — le chaînage AUTOMATIQUE des ateliers ne la consomme jamais. */
 function commitWarehouseReserve(key, rawValue) {
@@ -265,8 +305,9 @@ function stepWarehouseReserve(key, delta) {
 }
 window.stepWarehouseReserve = stepWarehouseReserve;
 
-function openWarehouseSheet(key) {
+function openWarehouseSheet(key, back) {
   if (!WAREHOUSE_RESOURCES[key]) return;
+  warehouseBack = back || null; // v3.515.0 : « ‹ » vers l'écran d'où l'on vient (coût touché), sinon rien
   selectedWarehouseKey = key;
   warehousePickerOpen = false;
   warehouseMenuOpen = false;
@@ -278,6 +319,7 @@ window.openWarehouseSheet = openWarehouseSheet;
 
 function closeWarehouseSheet() {
   selectedWarehouseKey = null;
+  warehouseBack = null;
   warehousePickerOpen = false;
   if (typeof document === "undefined") return;
   var host = document.getElementById("village-modal-root");
@@ -293,6 +335,7 @@ window.closeWarehouseSheetFromBackdrop = closeWarehouseSheetFromBackdrop;
 /* Depuis la feuille d'une ressource vers un bâtiment ou un atelier : une seule feuille à la fois. */
 function warehouseGoTo(kind, id) {
   selectedWarehouseKey = null;
+  warehouseBack = null;
   if (kind === "building") openProductionBuildingDetail(id);
   else openWorkshopSheet(id);
 }
@@ -344,6 +387,7 @@ function buildWarehouseSheetHTML(key) {
 
   var h = '<div class="full-menu-overlay" onclick="closeWarehouseSheetFromBackdrop(event)">';
   h += '<div class="full-menu vb-sheet-card wh-sheet" onclick="event.stopPropagation()">';
+  if (warehouseBack) h += '<div class="wh-backbar"><button type="button" class="wh-back" onclick="warehouseGoBack()">‹ ' + esc(warehouseBack.label) + '</button></div>';
   h += kSheetHeadHTML({
     icon: renderIconOrEmojiHTML(def.icon, "vb-sheet-icon", _td(def.name)),
     title: esc(_td(def.name)),

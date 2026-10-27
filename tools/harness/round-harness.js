@@ -19201,6 +19201,20 @@ console.log("\n[335] v3.514.0 — tutoriels d'étape « equip » et « talents �
   } catch (err) { ok(false, "[335] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[336] v3.515.0 — une ressource qui manque ouvre sa fiche Entrepôt, « ‹ » ramène à l'écran d'origine");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
+    ok(g.resGoAttr("gold") === "" && /openResourceFromCost\('planche'\)/.test(g.resGoAttr("planche")) && /stopPropagation/.test(g.resGoAttr("planche")), "l'or ne se touche pas ; une ressource ouvre sa fiche sans déclencher le bouton qui la contient");
+    ok(g.getVillageResourceHint("planche").indexOf(g._td(g.WORKSHOPS_CONFIG.scierie_fine.name)) >= 0, "Planche (sans texte de provenance) : l'atelier qui la fabrique est nommé");
+    ok(g.getVillageResourceHint("seve_aeswyn") === g._td(g.WAREHOUSE_RESOURCES.seve_aeswyn.sourceHint), "Sève : son texte de provenance reste");
+    var vb = rd0("js/ui/village-building-view.js"), pv = rd0("js/ui/production-view.js");
+    ok((vb.match(/resGoAttr\(/g) || []).length >= 6 && (pv.match(/resGoAttr\(/g) || []).length >= 5 && /resGoAttr\(/.test(rd0("js/ui/potion-view.js")) && /resGoAttr\(/.test(rd0("js/ui/heros-view.js")) && /resGoAttr\(/.test(rd0("js/ui/companions-view.js")),
+      "le geste est posé sur tous les coûts : chantiers, Apothicaire, Taverne, Forge, zones, ateliers, préparations, rangs");
+  } catch (err) { ok(false, "[336] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  function rd0(f) { return require("fs").readFileSync(require("path").join(ROOT, f), "utf8"); }
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

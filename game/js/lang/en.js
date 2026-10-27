@@ -7022,5 +7022,8 @@ I18n.register("en", {
   "Se reposer au Feu de camp": "Rest at the Campfire",
   "PV au maximum dans {d}": "Full HP in {d}",
   "PV suffisants pour partir": "Enough HP to set out",
+  // v3.515.0 : ressource manquante → fiche Entrepôt
+  "Où en trouver : {x}": "Where to find it: {x}",
+  "{x} ({y})": "{x} ({y})",
 
 });

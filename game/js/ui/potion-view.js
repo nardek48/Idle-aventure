@@ -29,7 +29,7 @@ function buildApothecaryCraftRowHTML(potionId) {
     var def = WAREHOUSE_RESOURCES[key];
     var have = WarehouseManager.getAmount(key);
     var enough = have >= inputs[key];
-    h += '<span class="potion-craft-item' + (enough ? '' : ' is-missing') + '">';
+    h += '<span class="potion-craft-item' + (enough ? '' : ' is-missing res-go') + '"' + (enough ? '' : resGoAttr(key)) + '>';
     h += renderIconOrEmojiHTML(def ? def.icon : "", "potion-craft-icon", def ? _td(def.name) : key);
     h += formatNumber(inputs[key]);
     h += '</span>';
