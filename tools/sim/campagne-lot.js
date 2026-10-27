@@ -3,6 +3,7 @@
    agrège les résultats : murs, temps par étape, qui tue, boss et élites, farm, obstacles.
 
    USAGE : node tools/sim/campagne-lot.js . [--n 4] [--combats] [--attendre-camp] [--tactique] [--classes knight,ranger,mage]
+           [--chantier] [--avise] [--forge-max] [--seuil-soin 0.7] [--sortie dossier]
    Les fichiers de chaque partie sont écrits dans captures/campagne-lot/ (JSON + sortie texte).
    Compter environ 1 min par partie en --combats, 2 s sans. */
 
@@ -12,7 +13,9 @@ var ARGS = process.argv.slice(3);
 function arg(name, def) { var i = ARGS.indexOf(name); return i >= 0 ? ARGS[i + 1] : def; }
 var N = Number(arg("--n", 4));
 var CLASSES = arg("--classes", "knight,ranger,mage").split(",");
-var PASS = ["--combats", "--attendre-camp", "--tactique", "--compagnons-malins", "--investi", "--laisser", "--farm-reforges", "--relique-echoppe"].filter(function (f) { return ARGS.indexOf(f) >= 0; });
+// audit (27/10, DUR-6) : --chantier et --avise transmis ; --forge-max (ancien --investi, toujours accepté)
+var PASS = ["--combats", "--attendre-camp", "--tactique", "--compagnons-malins", "--forge-max", "--investi", "--laisser", "--farm-reforges", "--relique-echoppe", "--chantier", "--avise"].filter(function (f) { return ARGS.indexOf(f) >= 0; });
+if (ARGS.indexOf("--seuil-soin") >= 0) PASS.push("--seuil-soin", ARGS[ARGS.indexOf("--seuil-soin") + 1]); // DUR-13
 if (ARGS.indexOf("--apres") >= 0) PASS.push("--apres", ARGS[ARGS.indexOf("--apres") + 1]); // v3.459.10 : après-Histoire (heures)
 if (ARGS.indexOf("--faille") >= 0) PASS.push("--faille"); // lot 0 des niveaux de donjon
 var OUT = require("../chemins.js").captures(arg("--sortie", "campagne-lot")); // v3.456.0 : --sortie pour deux lots en parallèle
@@ -33,12 +36,14 @@ CLASSES.forEach(function (c) {
   }
 });
 
-function med(a) { a = a.slice().sort(function (x, y) { return x - y; }); return a.length ? a[Math.floor(a.length / 2)] : 0; }
+// audit (27/10, DUR-2) : vraie médiane (moyenne des deux valeurs centrales si n est pair), quantiles interpolés
+function quant(a, q) { a = a.slice().sort(function (x, y) { return x - y; }); if (!a.length) return 0; var i = (a.length - 1) * q, lo = Math.floor(i); return a[lo] + (a[Math.min(lo + 1, a.length - 1)] - a[lo]) * (i - lo); }
+function med(a) { return quant(a, 0.5); }
 function pct(a, b) { return b ? Math.round(a / b * 100) + " %" : "—"; }
 
 console.log("\n== " + runs.length + " parties" + (PASS.length ? " (" + PASS.join(" ") + ")" : ""));
 var tot = runs.map(function (j) { return j.totalH; });
-console.log("Temps simulé : médiane " + med(tot).toFixed(0) + " h (de " + Math.min.apply(null, tot).toFixed(0) + " à " + Math.max.apply(null, tot).toFixed(0) + " h)");
+console.log("Temps simulé (" + tot.length + " parties) : médiane " + med(tot).toFixed(1) + " h · p25–p75 " + quant(tot, 0.25).toFixed(1) + "–" + quant(tot, 0.75).toFixed(1) + " h (de " + Math.min.apply(null, tot).toFixed(0) + " à " + Math.max.apply(null, tot).toFixed(0) + " h)");
 // Temps actif = combats seuls, à comparer au « Temps de jeu » du journal (le reste avance hors ligne)
 var act = runs.map(function (j) { return j.stats.combatMs / 3600e3; });
 if (PASS.indexOf("--combats") >= 0 && act.length) console.log("Temps actif estimé (combats) : médiane " + med(act).toFixed(1) + " h (de " + Math.min.apply(null, act).toFixed(1) + " à " + Math.max.apply(null, act).toFixed(1) + " h)");

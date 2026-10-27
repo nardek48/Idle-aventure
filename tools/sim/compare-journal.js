@@ -39,7 +39,7 @@ lignes.forEach(function (l) {
 });
 
 /* Le banc : médianes par étape, même classe. */
-function med(a) { a = a.slice().sort(function (x, y) { return x - y; }); return a.length ? a[Math.floor(a.length / 2)] : null; }
+function med(a) { a = a.slice().sort(function (x, y) { return x - y; }); var n = a.length; return n ? (n % 2 ? a[(n - 1) / 2] : (a[n / 2 - 1] + a[n / 2]) / 2) : null; } // audit (27/10, DUR-2) : n pair
 var banc = {}, nBanc = 0;
 if (fs.existsSync(LOT)) fs.readdirSync(LOT).filter(function (f) { return /\.json$/.test(f); }).forEach(function (f) {
   var r = JSON.parse(fs.readFileSync(path.join(LOT, f), "utf8"));

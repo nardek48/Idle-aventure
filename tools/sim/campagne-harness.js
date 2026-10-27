@@ -41,7 +41,8 @@ var COMBATS = ARGS.indexOf("--combats") >= 0;   // option B : vrais combats, rou
 var POLICY = ARGS.indexOf("--tactique") >= 0 ? "attentif" : "grimoire";   // B : Grimoire dès qu'il est ouvert (défaut), ou --tactique : le bouton mis en avant, à chaque round
 var SERMENT = ARGS.indexOf("--laisser") >= 0 ? "laisser" : "relever";   // desert_11 : relever le Serment (heaume) par défaut
 var ELITES_SECONDAIRES = ARGS.indexOf("--sans-elites") < 0;           // les quêtes d'élite du tableau (butin unique)
-var INVESTI = ARGS.indexOf("--investi") >= 0;   // B : le joueur bâtit la Forge dès qu'elle ouvre et reforge tout
+var INVESTI = ARGS.indexOf("--forge-max") >= 0 || ARGS.indexOf("--investi") >= 0;   // B : Forge bâtie dès qu'elle ouvre et tout reforgé ; audit (27/10, DUR-6) : nom « forge-max », --investi reste un alias
+var SEUIL_SOIN = ARGS.indexOf("--seuil-soin") >= 0 ? Number(ARGS[ARGS.indexOf("--seuil-soin") + 1]) || 0.95 : 0.95;   // audit (27/10, DUR-13) : seuil de soin avant une sortie (0,7 = l'alerte du jeu)
 var FARM_REFORGES = ARGS.indexOf("--farm-reforges") >= 0;   // ancien comportement : farmer les matériaux de toutes les reforges
 var ZONES = ARGS.indexOf("--sans-zones") < 0;  // le joueur monte ses zones de production (Mine, Scierie…) ; --sans-zones pour l'ancien profil
 var ARME_DESERT = ARGS.indexOf("--arme-desert") >= 0;   // ESSAI (hors jeu) : une arme Inhabituelle du Désert offerte à desert_12
@@ -198,6 +199,14 @@ function wait(ms, kind) {
 
 function harvest() { if (G.ProductionManager.harvestAll) G.ProductionManager.harvestAll(); }
 
+/* audit (27/10, DUR-8) : après un échec, le joueur se soigne et repart, sans heure fixe d'attente.
+   Sans --combats, une minute symbolique (le robot ne perd pas de PV). */
+function apresEchec() {
+  var t0 = CLOCK.offset;
+  if (COMBATS) healUp(1); else wait(60e3, "échec à rejouer");
+  STATS.apresEchecH = (STATS.apresEchecH || 0) + (CLOCK.offset - t0) / 3600e3;
+}
+
 /* Gagne le combat en cours, ennemi par ennemi, par le vrai moteur (killEnemy). */
 /* ---------- Option B : un combat joué round par round par le vrai moteur ----------
    Mode Grimoire (le choix d'action est celui du joueur absent), vitesse ×1. Le seul geste
@@ -330,7 +339,7 @@ function grindDungeon(raison) {
   if (!dg) { STATS.grindNone[raison] = (STATS.grindNone[raison] || 0) + 1; return false; }
   var t0 = CLOCK.offset, or0 = g.game.gold, key = "donjon " + dg.id;
   healUp();
-  if (playDungeonOnce(dg.id, false) === null) { STATS.grindNone[raison] = (STATS.grindNone[raison] || 0) + 1; return false; }
+  if (playDungeonOnce(dg.id, false, true) === null) { STATS.grindNone[raison] = (STATS.grindNone[raison] || 0) + 1; return false; }
   STATS.grinds[raison] = (STATS.grinds[raison] || 0) + 1;
   STATS.grindMs += CLOCK.offset - t0;
   var gf = STATS.goldFarm[key] = STATS.goldFarm[key] || { lots: 0, or: 0, h: 0, morts: 0 };
@@ -355,6 +364,7 @@ function developVillage() {
      plafond du monde, si le chantier coûte moins de 50 % de la bourse. */
   if (INVESTI) {
     var wf = V.getBlockReason("forge"), cf = V.getNextCost("forge");
+    if (V.getLevel("forge") >= 4 && !g.StoryQuestManager.isStepReached("crypte_13")) cf = null; // audit (27/10, DUR-6) : palier de l'Histoire
     if (cf && (!wf || wf === "Matériaux manquants" || /^Atelier niveau/.test(wf)) && Number(cf.gold || 0) <= g.game.gold * 0.5) {
       if (upgradeBuilding("forge", V.getLevel("forge") + 1)) STATS.village.push("Forge " + V.getLevel("forge") + " (" + CURRENT_STEP + ")");
     }
@@ -468,6 +478,7 @@ function caravanes(g) {
   var garde = (reached[2] && !ep.ruinsMarketDone) || (reached[3] && !ep.cryptMarketDone) ? 1 : 0;
   C.getMarkets().forEach(function (m) {
     if (C.list().length >= C.getMaxCaravans() - garde) return;
+    if ((m.world === 2 && !ep.ruinsMarketDone) || (m.world === 3 && !ep.cryptMarketDone)) return; // audit (27/10, DUR-7) : l'étape envoie sa Courte
     if (C.getBlockReason(trip, m.world)) return;
     harvest();
     if (C.depart(trip, m.world)) ST.departs++;
@@ -498,7 +509,7 @@ function healUp(seuil) {
   var g = G;
   if (!SAVING) refillPotions();
   if (g.game.dungeonRun && g.game.dungeonRun.active) return;   // pas de feu de camp en plein donjon (l'onglet figeait le run)
-  if ((g.game.heroHp || 0) >= (g.game.heroMaxHp || 1) * (seuil || 0.95)) return;
+  if ((g.game.heroHp || 0) >= (g.game.heroMaxHp || 1) * (seuil || SEUIL_SOIN)) return;
   g.game.activeTab = "campement";
   g.CampManager.applyRegen(false);
   if (RATIONS_CAMP) mangerAuCamp();
@@ -614,7 +625,8 @@ function entretien() {
     }
   });
   developVillage();
-  if (CHANTIER) chantierHeros(g);
+  reclamerVillage(g);  // audit (27/10, QUE-12) : quêtes du village et jalons réclamés dès qu'ils sont prêts
+  if (CHANTIER) chantierHeros(g); else rangsDuStock(g); // audit (27/10, RES-4) : rangs achetés avec le stock
   depensesOr(g);       // v3.457.3 (audit I2) : vitrine et Enchanteresse quand l'or s'entasse
   boutiqueEclats(g);   // v3.457.3 : Éclats du donjon (5 sorties par jour, Sacoche)
   caravanes(g);        // v3.457.3 : les caravanes partent vers chaque marché libre
@@ -755,9 +767,15 @@ function obtainIn(res, qty, depth) {
     for (var k = 0; k < 60 && have() < qty; k++) {
       var gagnes = LMc.getDailyWins(CARTE[res][0], CARTE[res][1]);
       if (process.env.TRACE_CARTE) console.log("      [carte] " + res + " " + CURRENT_STEP + " victoires du jour " + gagnes + " · frein " + LMc.getBrakeMult(CARTE[res][0], CARTE[res][1]).toFixed(2) + " · " + new RealDate(FakeDate.now()).toDateString());
-      if (freeSectorAgain(CARTE[res][0], CARTE[res][1])) { ca.victoires++; continue; }
-      if (gagnes <= 0) break;   // perdu sans frein : l'élite est trop forte, pas une question d'attente
-      if (sortieDonjonPour(res)) continue; // v3.457.3 (audit P11) : un ticket de donjon avant d'attendre le lendemain
+      // audit (27/10, SUI-1) : les sorties du jour au donjon d'abord (2 + 2 par Marque), l'élite ensuite
+      if (sortieDonjonPour(res)) continue;
+      // audit (27/10, COM-2) : une élite perdue aujourd'hui n'est pas retentée avant le lendemain
+      if (!perdueAujourdhui(CARTE[res][0], CARTE[res][1])) {
+        if (freeSectorAgain(CARTE[res][0], CARTE[res][1])) { ca.victoires++; continue; }
+        if (gagnes <= 0) break;   // perdu sans frein : l'élite est trop forte, pas une question d'attente
+        notePerdue(CARTE[res][0], CARTE[res][1]);
+        continue;
+      }
       if (SANS_LENDEMAIN) break; // v3.457.1 : une reforge facultative n'attend pas le lendemain (le joueur continue l'Histoire)
       ca.parJour.push(gagnes);
       attendreLendemain();
@@ -803,7 +821,7 @@ function obtainIn(res, qty, depth) {
     var okIng = recipe.inputs.every(function (inp) { return obtain(inp.resourceId, inp.quantity * fois, depth + 1); });
     if (!okIng) { note(res + " : ingrédients introuvables (" + wid + ")"); return false; }
     if (!g.WorkshopsSystem.enqueueCraft(wid, recipe.id, fois)) {
-      if (!g.WorkshopsSystem.enqueueCraft(wid, recipe.id, 1)) { note(res + " : l'atelier " + wid + " refuse la fabrication (verrouillé ?)"); return false; }
+      if (!g.WorkshopsSystem.enqueueCraft(wid, recipe.id, 1)) { var WS = g.WorkshopsSystem; note(res + " : l'atelier " + wid + " refuse la fabrication à " + CURRENT_STEP + " (ouvert " + !!g.WORKSHOPS_CONFIG[wid].active + ", file " + WS.getQueue(wid).length + "/" + WS.getMaxQueueLength(wid) + ", lots possibles " + WS.getMaxCraftTimes(wid, recipe.id) + ", " + recipe.inputs.map(function (i) { return i.resourceId + " " + g.WarehouseManager.getAmount(i.resourceId) + "/" + i.quantity; }).join(", ") + ", plafond " + res + " " + g.WarehouseManager.getAmount(res) + "/" + g.WarehouseManager.getCap(res) + ")"); return false; }
     }
     // attendre le temps réel de la file (les recettes durent quelques secondes), pas des paliers de 10 min
     for (var t = 0; t < 48 && g.WorkshopsSystem.getQueue(wid).length; t++) {
@@ -824,6 +842,7 @@ function obtainPierre(qty) {
     var c = LM.getChantier && LM.getChantier("ruins");
     if (c && c.sectorId && !c.done && LM.canStart("ruins", c.sectorId).ok) { freeSector("ruins", c.sectorId); continue; }
     if (g.DungeonManager.isUnlocked(3)) { if (COMBATS) healUp(); if (playDungeonOnce(3, false) === null) wait(3600e3, "pierre errante"); continue; }
+    if (!paAuTableau("petite_aventure_ruines")) { note("pierre errante : ni donjon ni Petite Aventure au tableau (petite_aventure_ruines)"); break; } // audit (27/10) : boardRequires
     if (!playExpedition("petite_aventure_ruines", null)) wait(3600e3, "pierre errante");
   }
   STATS.pierreH = (STATS.pierreH || 0) + (CLOCK.offset - t0) / 3600e3;
@@ -837,6 +856,7 @@ function obtainCire(qty) {
   var t0 = CLOCK.offset;
   for (var k = 0; k < 60 && have() < qty; k++) {
     if (g.DungeonManager.isUnlocked(4)) { if (COMBATS) healUp(); if (playDungeonOnce(4, false) === null) wait(3600e3, "cire de sépulcre"); continue; }
+    if (!paAuTableau("petite_aventure_crypte")) { note("cire de sépulcre : ni donjon ni Petite Aventure au tableau (petite_aventure_crypte)"); break; } // audit (27/10) : boardRequires
     if (!playExpedition("petite_aventure_crypte", null)) wait(3600e3, "cire de sépulcre");
   }
   STATS.cireH = (STATS.cireH || 0) + (CLOCK.offset - t0) / 3600e3;
@@ -850,12 +870,16 @@ function obtainCendre(qty) {
   var t0 = CLOCK.offset;
   for (var k = 0; k < 60 && have() < qty; k++) {
     if (g.DungeonManager.isUnlocked(5)) { if (COMBATS) healUp(); if (playDungeonOnce(5, false) === null) wait(3600e3, "cendre vive"); continue; }
+    if (!paAuTableau("petite_aventure_montagne")) { note("cendre vive : ni donjon ni Petite Aventure au tableau (petite_aventure_montagne)"); break; } // audit (27/10) : boardRequires
     if (!playExpedition("petite_aventure_montagne", null)) wait(3600e3, "cendre vive");
   }
   STATS.cendreH = (STATS.cendreH || 0) + (CLOCK.offset - t0) / 3600e3;
   if (have() < qty) note("cendre_vive : " + have() + " / " + qty);
   return have() >= qty;
 }
+
+/* audit (27/10) : une Petite Aventure se lance du tableau, donc seulement une fois visible (boardRequires). */
+function paAuTableau(templateId) { return !!(G.MissionBoard && G.MissionBoard.getById(templateId)); }
 
 /* v3.456.0 : mettre un compagnon dans le groupe (en retirant le premier autre si le groupe est plein). */
 function withCompanion(g, id) {
@@ -876,7 +900,7 @@ function playExpedition(templateId, flag) {
     if (cost && !obtain(cost.resourceId, Number(cost.amount || 1))) { note(templateId + " : coût d'entrée introuvable (" + cost.resourceId + ")"); return false; }
     LAST_END = null;
     var r = g.SceneRunManager.startRun(templateId);
-    if (!r.ok && CAP_RE.test(r.reason || "")) { waitCap(); essai--; continue; } // v3.366.0 : recharge, plus le lendemain
+    if (!r.ok && CAP_RE.test(r.reason || "")) { if (SANS_LENDEMAIN) return false; waitCap(); essai--; continue; } // v3.366.0 : recharge ; audit (27/10, DUR-6) : pas d'attente pour un achat facultatif
     if (!r.ok) { note(templateId + " : départ refusé — " + r.reason); return false; }
     var fini = playScene();
     var fin = g.game.sceneRun || {};
@@ -888,7 +912,7 @@ function playExpedition(templateId, flag) {
     pourquoi += ", profondeur " + fin.depth + "/" + ((fin.card || []).length) + ", Souffle " + fin.breath;
     STATS.expeditionFails.push(templateId + " (" + pourquoi + ")");
     note(templateId + " : essai " + (essai + 1) + " sans succès — " + pourquoi);
-    wait(3600e3, "échec à rejouer");
+    apresEchec();
   }
   return !!(flag && flag());
 }
@@ -932,7 +956,7 @@ function freeSector(mapId, sectorId) {
     if (!cs.ok && /PV/.test(cs.reason || "")) { if (COMBATS) healUp(1); else g.game.heroHp = g.game.heroMaxHp; }
     if (COMBATS) healUp();
     var r = LM.start(mapId, cible);
-    if (!r.ok && CAP_RE.test(r.reason || "")) { waitCap(); r = LM.start(mapId, cible); }
+    if (!r.ok && CAP_RE.test(r.reason || "")) { if (SANS_LENDEMAIN) return false; waitCap(); r = LM.start(mapId, cible); }
     if (!r.ok && /Petite ration/.test(r.reason || "")) { obtain("petite_ration", 1); r = LM.start(mapId, cible); }
     if (!r.ok) { note("secteur " + cible + " : " + r.reason); wait(3600e3, "échec à rejouer"); continue; }
     LAST_END = null;
@@ -952,7 +976,7 @@ function freeSector(mapId, sectorId) {
         if (matiere && sortieDonjonPour(matiere)) return false;
         if (SANS_LENDEMAIN) return false; // achat facultatif : pas d'attente du lendemain (le joueur continue l'Histoire)
         attendreLendemain();
-      } else wait(3600e3, "échec à rejouer");
+      } else apresEchec();
     }
   }
   return LM.isLiberated(mapId, cible);
@@ -973,8 +997,8 @@ function playDungeon(id, withMark, goal) {
   }
   return goal();
 }
-function playDungeonOnce(id, withMark) {
-  var g = G, D = g.DungeonManager;
+function playDungeonOnce(id, withMark, libreOk) {
+  var g = G, D = g.DungeonManager, libre = false;
   if (!D.isUnlocked(id)) { note("donjon " + id + " verrouillé : " + D.getLockReason(id)); return null; }
   var marks = [];
   if (withMark) {
@@ -984,14 +1008,19 @@ function playDungeonOnce(id, withMark) {
     if (!marks.length) note("donjon " + id + " : aucune Marque disponible");
   }
   /* v3.358.0 (D7) : plus de tickets. Sorties du jour épuisées : on attend le renouvellement. */
-  if (!D.hasRunLeft(id)) {
+  // audit (27/10, DUR-4) : farm d'or sur un donjon déjà fini, sorties prises : le mode libre (Ration moyenne), pas le lendemain
+  if (!D.hasRunLeft(id) && libreOk && (g.game.dungeonTierCleared || {})[id] && !D.isStoryTicketFree(id)) {
+    var vl = g.ProvisionsManager && g.ProvisionsManager.getRequirement("dungeonFree", D.getById(id));
+    if (!vl || obtain(vl.resourceId, vl.amount)) { libre = true; STATS.donjonLibre = (STATS.donjonLibre || 0) + 1; }
+  }
+  if (!D.hasRunLeft(id) && !libre) {
     var attente = Math.max(60e3, (g.game.dungeonTicketResetTime || 0) - FakeDate.now() + 1000);
     wait(attente, "donjon"); D.checkTicketReset(); STATS.attenteDonjonH = (STATS.attenteDonjonH || 0) + attente / 3600e3;
   }
   // audit (26/10) : les vivres de sortie d'un donjon déjà fini (les runs de matériau les oubliaient)
-  var viv = g.ProvisionsManager && D.getById(id) && g.ProvisionsManager.check("dungeon", D.getById(id)) && g.ProvisionsManager.getRequirement("dungeon", D.getById(id));
+  var viv = !libre && g.ProvisionsManager && D.getById(id) && g.ProvisionsManager.check("dungeon", D.getById(id)) && g.ProvisionsManager.getRequirement("dungeon", D.getById(id));
   if (viv) obtain(viv.resourceId, viv.amount);
-  D.start(id, marks);
+  if (libre) D.start(id, [], 1, true); else D.start(id, marks);
   if (!g.game.dungeonRun.active) { note("donjon " + id + " : entrée refusée (sorties restantes " + D.getRunsLeft(id) + ", PV " + Math.floor(g.game.heroHp) + ", verrou " + (g.heroLockReason ? g.heroLockReason() : "") + ", quête " + !!(g.game.adventureQuestRun && g.game.adventureQuestRun.active) + ", chasse " + !!(g.game.huntRun && g.game.huntRun.active) + ")"); return null; }
   winCombat(200);
   flushTimers(g);
@@ -1216,6 +1245,37 @@ function chantierHeros(g) {
   patrouilles(g);
   equiperReliques(g);
 }
+/* audit (27/10, QUE-12) : comme un joueur qui suit le tableau, il réclame la quête du village et les jalons prêts. */
+function reclamerVillage(g) {
+  var VQ = g.VillageQuestManager, M = g.MilestoneManager, RV = STATS.villageRec = STATS.villageRec || { quetes: [], jalons: [], or: 0 };
+  var or0 = g.game.gold;
+  for (var k = 0; VQ && k < 12; k++) {
+    var q = VQ.getCurrentQuest();
+    if (!q || !VQ.isQuestAvailable(q) || !VQ.isQuestReady(q) || !VQ.claim(q.id)) break;
+    RV.quetes.push(q.id + " (" + CURRENT_STEP + ")");
+    if (g.closeQuestCompletePopup) g.closeQuestCompletePopup();
+  }
+  if (M) for (var w = 0; w <= M.reachedWorld(); w++) M.ofWorld(w).forEach(function (m) { if (M.isReady(m) && M.claim(m.id)) RV.jalons.push(m.id + " (" + CURRENT_STEP + ")"); });
+  RV.or += Math.max(0, g.game.gold - or0);
+}
+/* audit (27/10, RES-4) : profil courant, rangs des sorts (20 % de la bourse) et des compétences du groupe (10 %),
+   seulement avec le matériau déjà en stock : il ne farme pas pour un rang (--chantier, lui, le fait). */
+function rangsDuStock(g) {
+  var SR = g.SkillRanks, CM = g.CompanionManager, WM = g.WarehouseManager;
+  if (SAVING) return;
+  if (SR) for (var k = 0; k < 8; k++) {
+    var a = SR.kitActions().filter(function (x) { return SR.status(x.id) === "ok"; }).sort(function (x, y) { return SR.get(x.id) - SR.get(y.id); })[0];
+    var p = a && SR.nextCost(a.id);
+    if (!p || p.gold > g.game.gold * 0.2 || !SR.buy(a.id)) break;
+    dep("rangsSorts", p.gold);
+  }
+  if (CM && CM.buySkillRank) CM.partyIds().forEach(function (cid) {
+    var stt = CM.skillRankStatus(cid); if (stt === "max" || stt === "lock") return;
+    var pc = g.COMPANION_SKILL_RANK_PRICES[CM.skillRank(cid)];
+    if (!pc || pc.gold > g.game.gold * 0.1 || WM.getAmount(pc.mat) < pc.qty || !CM.buySkillRank(cid)) return;
+    dep("rangsCompagnons", pc.gold);
+  });
+}
 function patrouilles(g) {
   var P = g.PatrolManager, CM = g.CompanionManager;
   if (!P || !P.isUnlocked()) return;
@@ -1305,6 +1365,11 @@ function boutiqueEclats(g) {
 }
 
 var SANS_LENDEMAIN = 0; // > 0 : achat facultatif en cours, le matériau du monde se prend sans attendre le jour suivant
+/* audit (27/10, COM-2) : élites perdues dans la journée civile (clé carte:secteur -> jour). */
+var PERDUES = {};
+function jourCivil() { var d = new RealDate(FakeDate.now()); return d.getFullYear() + "-" + d.getMonth() + "-" + d.getDate(); }
+function notePerdue(mapId, sectorId) { PERDUES[mapId + ":" + sectorId] = jourCivil(); }
+function perdueAujourdhui(mapId, sectorId) { return PERDUES[mapId + ":" + sectorId] === jourCivil(); }
 function attendreLendemain() {
   var ca = STATS.carte = STATS.carte || { victoires: 0, lendemains: 0, parJour: [] }; ca.lendemains++;
   var now = FakeDate.now(), d = new RealDate(now);
@@ -1371,10 +1436,14 @@ function farmOnceIn() {
   });
   if (!cibles.length) { if (COMBATS && grindOnce("farm")) return true; note("aucune élite répétable pour farmer"); return false; }
   STATS.farms++;
-  var c = cibles[0];
+  // audit (27/10, COM-2) : une élite perdue aujourd'hui n'est pas retentée avant le lendemain
+  var libres = cibles.filter(function (x) { return !perdueAujourdhui(x[0], x[1]); });
+  if (!libres.length) { if (COMBATS && grindOnce("farm")) return true; attendreLendemain(); return false; }
+  var c = libres[0];
   var ok = freeSectorAgain(c[0], c[1]);
+  if (!ok) notePerdue(c[0], c[1]);
   if (!ok && COMBATS && grindOnce("farm")) return true; // v3.429.0 : l'élite résiste, on farme ailleurs
-  if (!ok) wait(3600e3, "échec à rejouer");
+  if (!ok) apresEchec();
   return ok;
 }
 
@@ -1491,7 +1560,16 @@ function gearRarity(rarity, n, needWeapon, minWorld) {
     // v3.433.0 : le Rare se trouve au Sanctuaire (butin de fin de run, et sac de la sortie)
     if (rarity === "rare" && g.DungeonManager.isUnlocked(3)) { if (COMBATS) healUp(); if (playDungeonOnce(3, false) === null) farmOnce(); }
     // v3.489.0 (Montagne) : les élites de la carte (Épique de la Montagne au hasard de la victoire)
-    else if (minWorld === 4) { var el = ["nid", "forge_froide"][k % 2]; if (!freeSectorAgain("mountain", el)) farmOnce(); }
+    else if (minWorld === 4) {
+      /* audit (27/10, DUR-3, COM-2) : élites de la carte enchaînées avec le soin réel, sans les 2 h d'échoppe ;
+         le lendemain quand les deux sont perdues ou que leur frein dépasse ×2 (4 victoires du jour). */
+      var LMg = g.LivingMapManager, els = ["nid", "forge_froide"].filter(function (x) { return !perdueAujourdhui("mountain", x) && LMg.getBrakeMult("mountain", x) <= 2; });
+      if (!els.length) { attendreLendemain(); continue; }
+      var el = els[k % els.length];
+      if (!freeSectorAgain("mountain", el)) { notePerdue("mountain", el); if (LMg.getDailyWins("mountain", el) <= 0) farmOnce(); }
+      if (COMBATS) healUp();
+      continue;
+    }
     else farmOnce();
     if (process.env.TRACE_OR) console.log("      [or] " + Math.floor(orAvant) + " → " + Math.floor(g.game.gold) + " (farm) · équipé " + g.EQUIPMENT_SLOTS.map(function (s) { var it = g.game.equipped[s]; return s + ":" + (it ? it.rarity : "-"); }).join(",") + " · vitrine " + (g.game.equipShopStock || []).map(function (it) { return it.slot + "/" + it.rarity + "/" + it.price + (it.bought ? "✓" : ""); }).join(" ") + " · sac " + (g.game.inventory || []).length);
     wait(2 * 3600e3, "échoppe");   // le joueur repasse à l'échoppe quelques heures plus tard
@@ -1553,7 +1631,8 @@ var SOLVERS = {
   desert_06: function (g, step) { freeSector("desert", (step.link && step.link.sectorId) || templeSector(g)); },
   desert_07: function (g) { offer(g, "desert"); },
   desert_08: function (g, step) { choiceStep(g, step); playAdventure("aq_desert_gouffre"); },
-  desert_09: function (g) { obtain("verre_trempe", 1); },
+  // audit (27/10) : un jalon du Désert donne déjà un Verre trempé ; l'étape demande d'en FABRIQUER un (firstCraftFlag)
+  desert_09: function (g) { if (!g.storyDesertFlag("verreTrempe")) obtain("verre_trempe", g.WarehouseManager.getAmount("verre_trempe") + 1); },
   desert_10: function (g) { playAdventure("aq_desert_nuee"); },
   desert_11: choiceStep,
   desert_12: function (g) { playDungeon(2, false, function () { return g.storyCiteWave5(g.game); }); },
@@ -1745,7 +1824,7 @@ var SOLVERS = {
     var d = g.LivingMapManager.getSectorDef("ruins", "coeur");
     for (var i = 0; i < 8 && g.storyCoeurVoisins() < 3; i++) {
       var id = d.neighbors.filter(function (n) { return !g.LivingMapManager.isLiberated("ruins", n); })[0];
-      if (!id || !freeSector("ruins", id)) wait(3600e3, "échec à rejouer");
+      if (!id) wait(3600e3, "échec à rejouer"); else if (!freeSector("ruins", id)) apresEchec();
     }
   },
   ruines_17: function (g) { playExpedition("vers_le_coeur", function () { return g.storyDesertFlag("versLeCoeurDone"); }); },
