@@ -40,7 +40,7 @@
      s'affiche en générique (ici : un « ? » doré), pour qu'il repère les manquantes. */
   var GENERIC = "data:image/svg+xml;utf8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="#3b2a12" stroke="#e8bf5a" stroke-width="2"/><text x="16" y="22" font-size="17" font-weight="900" text-anchor="middle" fill="#e8bf5a" font-family="sans-serif">?</text></svg>');
   function ico(src, cls) {
-    return '<img' + (cls ? ' class="' + cls + '"' : '') + ' src="' + esc(src || "") + '" alt="" onerror="this.onerror=null;this.dataset.missing=this.src;this.src=\'' + GENERIC + '\'">';
+    return '<img' + (cls ? ' class="' + cls + '"' : '') + ' src="' + esc(src || "") + '" alt="" onerror="this.onerror=null;this.dataset.missing=this.src;if(window.MISSING_ICONS&&MISSING_ICONS.indexOf(this.src)<0)MISSING_ICONS.push(this.src);this.src=\'' + GENERIC + '\'">'; // v3.516.0 (IMA-11) : consignée comme ailleurs
   }
   function byId(id) { return (typeof document !== "undefined" && document.getElementById) ? document.getElementById(id) : null; }
   function num(v) { return Number(v || 0); }

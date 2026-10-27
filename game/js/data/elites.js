@@ -184,7 +184,7 @@ var ELITE_DB = {
     archetype: "armored",
     statMult: { endurance: 3, power: 3, celerity: 1.0 },
     lore: "Il ne pose plus de pierres. Il regarde où les autres les posent, et il corrige.",
-    image: "./images/Enemies/elite_contremaitre.webp", // à générer : icône générique en attendant
+    image: "./images/Enemies/elite_contremaitre.webp", // image livrée
     questIcon: "./images/Icons/quest_icons/elite/elite_contremaitre.webp",
     escort: { members: ["batisseur", "skeleton"], hpMult: 0.3, goldMult: 0.3 },
     phases: null,
@@ -201,7 +201,7 @@ var ELITE_DB = {
     archetype: "armored",
     statMult: { endurance: 3.5, power: 4, celerity: 0.6 },
     lore: "Une masse de pierre qui a des bras. Elle ne dort pas. Elle attend qu'on passe devant.",
-    image: "./images/Enemies/elite_golem.webp", // à générer : icône générique en attendant
+    image: "./images/Enemies/elite_golem.webp", // image livrée
     questIcon: "./images/Icons/quest_icons/elite/elite_golem.webp",
     escort: { members: ["zombie"], hpMult: 0.3, goldMult: 0.3 },
     phases: null,

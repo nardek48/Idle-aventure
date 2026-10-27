@@ -7,6 +7,7 @@ var CAMP_REGEN_PCT_PER_MIN = 0.05;
 /* v3.457.7 (P10, choix Seb) : plus de plafond hors ligne — rechargement et reprise après veille soignent pareil. */
 
 var CampManager = {
+  _frac: {}, // fraction de PV en attente par membre (« hero », id de compagnon), en mémoire seulement
   ensureDefaults: function () {
     if (typeof game.campRegenLastAt !== "number" || game.campRegenLastAt <= 0) game.campRegenLastAt = Date.now();
   },
@@ -34,29 +35,34 @@ var CampManager = {
   },
 
   /* Accrual paresseux : appelé par renderHud (chaque tick) et au boot (offline : journal, quel que soit l'onglet).
-     Le repère est avancé hors régénération (pas de temps de combat accumulé), conservé tant que le soin arrondit à 0. */
+     Le repère est avancé à chaque appel ; la part de PV pas encore entière attend dans _frac (v3.516.0). */
   applyRegen: function (offline) {
     this.ensureDefaults();
     var now = Date.now();
-    var lastAt = game.campRegenLastAt;
-    var elapsedMin = Math.max(0, now - lastAt) / 60000;
+    var elapsedMin = Math.max(0, now - game.campRegenLastAt) / 60000;
     game.campRegenLastAt = now;
     if (elapsedMin <= 0) return 0;
     // Hors ligne : le joueur était absent, on régénère quel que soit l'onglet restauré (sauf run en cours).
     if (offline ? this._hasActiveRun() : !this.isRegenActive()) return 0;
 
     // v3.448.0 : le feu soigne aussi les compagnons restés au camp (même rythme)
-    var self = this, pctMin = this.getRegenPctPerMin();
-    var gain = function (cur, max) { return Math.floor(Math.max(0, Math.min(max * pctMin * elapsedMin, max - cur))); };
+    // v3.516.0 (audit TUT-1) : la fraction de PV non rendue est gardée par membre ; l'arrondi par appel perdait 4 à 40 %
+    var self = this, pctMin = this.getRegenPctPerMin(), fr = this._frac;
+    var gain = function (key, cur, max) {
+      var missing = Math.max(0, max - cur);
+      if (missing <= 0) { fr[key] = 0; return 0; }
+      var exact = max * pctMin * elapsedMin + (fr[key] || 0), g = Math.min(Math.floor(exact), Math.floor(missing));
+      fr[key] = g >= Math.floor(missing) ? 0 : exact - g;
+      return g;
+    };
     var maxHp = game.heroMaxHp || 1;
     var hp = game.heroHp != null ? game.heroHp : maxHp;
-    var heal = gain(hp, maxHp), total = heal;
+    var heal = gain("hero", hp, maxHp), total = heal;
     this.campCompanionIds().forEach(function (id) {
-      var max = CompanionManager.maxHpOf(id), cur = CompanionManager.hpOf(id), g = gain(cur, max);
+      var max = CompanionManager.maxHpOf(id), cur = CompanionManager.hpOf(id), g = gain(id, cur, max);
       if (g > 0) { CompanionManager.state(id).hp = cur + g; total += g; }
     });
-    // v3.429.3 : soin < 1 PV (appel à chaque image) -> le temps s'accumule au lieu d'être perdu
-    if (total <= 0) { if (!this.teamFull()) game.campRegenLastAt = lastAt; return 0; }
+    if (total <= 0) return 0;
 
     game.heroHp = hp + heal;
     if (offline && heal > 0) addLog("🔥 " + _t("Régénération au camp pendant ton absence : +{n} PV.", { n: formatNumber(heal) }), "event");

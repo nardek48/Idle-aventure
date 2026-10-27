@@ -299,7 +299,7 @@
 .vb-cost-icon { flex: 0 0 auto; width: 18px; height: 18px; object-fit: contain; }
 .vb-cost-label { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .vb-cost-amount { font-weight: 800; }
-.vb-cost-row.is-missing .vb-cost-amount { color: var(--danger); }
+.vb-cost-row.is-missing .vb-cost-amount { color: var(--ink-missing); }
 /* Ressource d'un monde pas encore atteint : ni rouge ni verte. Elle n'est pas
    « manquante », elle est ailleurs — et la ligne d'indice dit où. */
 .vb-cost-row.is-unreachable .vb-cost-amount { color: var(--nb-ink-dim); }
@@ -349,7 +349,7 @@
 .potion-craft-label { font-weight: 800; flex: 0 0 auto; }
 .potion-craft-inputs { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex: 1 1 auto; min-width: 0; }
 .potion-craft-item { display: inline-flex; align-items: center; gap: 3px; font-weight: 700; }
-.potion-craft-item.is-missing { color: var(--danger); }
+.potion-craft-item.is-missing { color: var(--ink-missing); }
 .potion-craft-icon { width: 16px; height: 16px; object-fit: contain; }
 .potion-craft-locked { font-size: 12px; font-weight: 700; color: var(--nb-ink-dim); flex: 0 0 auto; }
 .potion-craft-btn { flex: 0 0 auto; }
@@ -503,7 +503,7 @@
 
 .forge-row-cost { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
 .forge-cost-item { display: inline-flex; align-items: center; gap: 3px; font-size: 12px; font-weight: 700; color: var(--nb-ink); }
-.forge-cost-item.is-missing { color: var(--danger); }
+.forge-cost-item.is-missing { color: var(--ink-missing); }
 .forge-cost-item .vb-cost-icon { width: 14px; height: 14px; }
 
 /* v3.229.0 : établi de l'Enchanteresse — une pièce, puis ses lignes de bonus. */

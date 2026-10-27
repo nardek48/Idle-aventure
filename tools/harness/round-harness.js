@@ -19215,6 +19215,28 @@ console.log("\n[336] v3.515.0 — une ressource qui manque ouvre sa fiche Entrep
   function rd0(f) { return require("fs").readFileSync(require("path").join(ROOT, f), "utf8"); }
 })();
 
+console.log("\n[337] v3.516.0 — correctifs de l'audit, lot 0 : feu de camp, icône du donjon, « Construire », bulle du fil rouge");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
+    var game = g.game, CM = g.CampManager;
+    game.activeTab = "campement"; game.heroMaxHp = 1000; game.heroHp = 100; CM._frac = {};
+    for (var i = 0; i < 60; i++) { game.campRegenLastAt = Date.now() - 1000; CM.applyRegen(false); }
+    ok(game.heroHp - 100 >= 49 && game.heroHp - 100 <= 50, "feu de camp : 60 appels d'une seconde à 1 000 PV rendent 5 % (" + (game.heroHp - 100) + " PV, 30 avant)");
+    game.heroHp = 1000; game.campRegenLastAt = Date.now() - 1000; CM.applyRegen(false);
+    ok(!CM._frac.hero, "PV au maximum : plus de fraction en attente");
+    var dv = require("fs").readFileSync(require("path").join(ROOT, "js/ui/dungeon-view.js"), "utf8");
+    ok(/final_reward\.webp/.test(dv) && !/final_reward\.png/.test(dv), "fin de donjon : l'icône existe (.webp)");
+    var hd = require("fs").readFileSync(require("path").join(ROOT, "js/ui/hud-dock-view.js"), "utf8");
+    ok(/\(it\.tip \|\| ""\)/.test(hd), "dock : la bulle se redessine quand le titre du fil rouge change");
+    var vb = g.VillageBuildingManager, ids = (g.VILLAGE_BUILDING_ORDER || []).filter(function (id) { return vb.getCardState(id) === "ready"; });
+    game.gold = 0; Object.keys(g.WAREHOUSE_RESOURCES).forEach(function (k) { g.WarehouseManager.removeResource(k, g.WarehouseManager.getAmount(k)); });
+    var html = ids.map(function (id) { return g.buildVillageBuildingCardHTML ? g.buildVillageBuildingCardHTML(id) : ""; }).join("");
+    ok(!ids.length || !g.buildVillageBuildingCardHTML || html.indexOf(g._t("Construire")) < 0, "village : pas de ruban « Construire » sur un chantier impayable");
+    ok(g.getVillageSubTabBadges().buildings === 0, "village : pastille Bâtiments à 0 quand rien n'est payable");
+  } catch (err) { ok(false, "[337] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

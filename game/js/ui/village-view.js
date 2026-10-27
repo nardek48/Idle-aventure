@@ -69,7 +69,7 @@ function getVillageSubTabBadges() {
     (window.VILLAGE_BUILDING_ORDER || []).forEach(function (id) {
       var st = VillageBuildingManager.getCardState(id);
       if (id === "workshop" && window.WorkshopUnlockManager && typeof WorkshopUnlockManager.isWorkshopVisible === "function" && !WorkshopUnlockManager.isWorkshopVisible()) return;
-      if (st === "ready" || (st === "built" && VillageBuildingManager.getAffordability(id).all)) b.buildings++;
+      if ((st === "ready" || st === "built") && VillageBuildingManager.getAffordability(id).all) b.buildings++; // v3.516.0 (ERG-3) : payable seulement
     });
     if (VillageBuildingManager.getSite()) b.buildings = 0; // un seul chantier à la fois : rien à lancer
     if (window.CaravanManager && CaravanManager.isBack()) b.buildings++; // v3.419.0 : caravane à décharger
@@ -187,7 +187,8 @@ function buildVillageBuildingCardHTML(id) {
     + (locked ? ' disabled' : ' onclick="openVillageBuildingSheet(\'' + id + '\')"') + '>';
 
   if (level > 0) h += '<span class="vb-card-lvl">' + level + '/' + VillageBuildingManager.getMaxLevel(id) + '</span>';
-  if (state === "ready") h += '<span class="vb-card-flag">' + _t("Construire") + '</span>';
+  var payable = state === "ready" && VillageBuildingManager.getAffordability(id).all; // v3.516.0 (ERG-3)
+  if (payable) h += '<span class="vb-card-flag">' + _t("Construire") + '</span>';
   else if (state === "site") h += '<span class="vb-card-flag">' + _t("Chantier") + '</span>';
   // v3.419.0 (E-2) : la caravane rentrée attend sur la tuile de la Halle
   else if (carBack) h += '<span class="vb-card-flag is-good"><img class="vb-flag-ico" src="images/Icons/village_buildings/caravan.webp" alt=""> ' + _t("De retour") + '</span>';
@@ -221,7 +222,7 @@ function buildVillageBuildingCardHTML(id) {
     h += '<div class="vb-card-status">' + (afford.all ? '<img class=ico-inline src=images/Icons/system/upgrade.webp> ' + _t("Améliorable") : _t("Matériaux manquants")) + '</div>';
 
   } else { /* ready */
-    h += '<div class="vb-card-status">' + (level > 0 ? _t("Chantier possible") : _t("Non construit · chantier possible")) + '</div>';
+    h += '<div class="vb-card-status">' + (!payable ? _t("Matériaux manquants") : level > 0 ? _t("Chantier possible") : _t("Non construit · chantier possible")) + '</div>';
   }
 
   h += '</button>';

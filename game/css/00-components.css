@@ -235,9 +235,11 @@ img.nb-purchase-icon {
   font-weight: 700;
   line-height: 1.3;
   color: var(--nb-ink);
-  white-space: nowrap;
+  /* v3.516.0 (INT-6) : deux lignes au plus au lieu d'un nom coupé (potions à 320 px) */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .nb-purchase-name.rarity-common { color: var(--rarity-common); }

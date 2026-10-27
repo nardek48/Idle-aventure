@@ -141,7 +141,7 @@ window.COMBAT_STATES = COMBAT_STATES;
    Séparés de COMBAT_STATES pour ne rien changer à l'ancienne rangée ni à ses contrôles. */
 var COMBAT_STATES_SCREEN = {
   ranged: {
-    famille: "enemy", nom: "Tireur", icon: COMBAT_STATE_ICON + "ranged.webp", // à générer (icône générique en attendant)
+    famille: "enemy", nom: "Tireur", icon: COMBAT_STATE_ICON + "ranged.webp",
     desc: "Il frappe de loin : il ne s'approche pas et touche dès le premier round.",
     hint: "Il ne viendra pas à toi : vise-le en premier si l'équipe souffre."
   },
@@ -156,19 +156,19 @@ var COMBAT_STATES_SCREEN = {
     desc: "Il est tombé, mais il se relèvera au prochain round avec la moitié de ses PV. Une seule fois.",
     hint: "Frappe-le maintenant (touche-le, ou la règle « Un ennemi se relève ») : il reste à terre."
   },
-  // v3.451.0 (Crypte, CR2) : les morts qui dorment. Icône à générer.
+  // v3.451.0 (Crypte, CR2) : les morts qui dorment.
   asleep: {
     famille: "enemy", nom: "Endormi", icon: COMBAT_STATE_ICON + "asleep.webp",
     desc: "Il dort : il ne joue pas, et le combat est gagné sans lui. Le chiffre compte les rounds avant qu'il se lève seul.",
     hint: "Laisse-le dormir, ou touche-le pour le réveiller : vaincu, il rapporte la moitié d'or en plus."
   },
-  // v3.454.0 (Crypte, acte II) : l'appel du Nécromancien. Icône à générer.
+  // v3.454.0 (Crypte, acte II) : l'appel du Nécromancien.
   calling: {
     famille: "alerte", nom: "Appel", icon: COMBAT_STATE_ICON + "calling.webp", mot: "Il appelle !",
     desc: "Il dit un nom. Au tour suivant, un dormeur se lève, sans or en plus.",
     hint: "Tue-le avant : le réglage « Cible » sur « Le soutien » le vise d'abord."
   },
-  // v3.490.0 (Montagne, acte III) : la carapace du Golem-forge, la plongée du Wyrm, la brûlure de l'Ifrit. Icônes à générer.
+  // v3.490.0 (Montagne, acte III) : la carapace du Golem-forge, la plongée du Wyrm, la brûlure de l'Ifrit.
   shell: {
     famille: "enemy", nom: "Carapace", icon: COMBAT_STATE_ICON + "shell.webp",
     desc: "Une croûte de Cendre absorbe les coups avant ses PV. Elle grossit à chaque taille de la veine.",
@@ -184,7 +184,7 @@ var COMBAT_STATES_SCREEN = {
     desc: "Tu perds une part de tes PV à chaque tour de celui qui t'a mis le feu.",
     hint: "Le tuer éteint le feu."
   },
-  // v3.489.0 (Montagne, acte II) : le tri du Démon mineur. Icône à générer.
+  // v3.489.0 (Montagne, acte II) : le tri du Démon mineur.
   sorting: {
     famille: "alerte", nom: "Tri", icon: COMBAT_STATE_ICON + "sorting.webp", mot: "Il trie !",
     desc: "Il regarde les mains de celui qui a taillé la veine. Au tour suivant, il le frappe, 50 % plus fort.",

@@ -342,10 +342,12 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
 .camp-health-card .camp-help-btn { width: 24px; height: 24px; font-size: 0.8rem; }
 
 .camp-ration-row { display: flex; justify-content: center; gap: 12px; margin-top: 10px; }
+@media (max-width: 359px) { .camp-ration-row { gap: 8px; } }
 .camp-ration-ib {
   position: relative;
-  flex: 0 0 auto;
-  width: 84px;
+  flex: 1 1 0;      /* v3.516.0 (INT-10) : les 3 rations tiennent dans leur carte à 320 px */
+  max-width: 84px;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;

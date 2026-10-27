@@ -25,14 +25,13 @@
      la Fonderie paient en partie avec leur propre extrant (Planche/Lingot) — pas un
      problème pour Seb, contrairement à la règle "jamais la propre PRODUCTION BRUTE du
      bâtiment" qui s'applique elle aux zones (bois/blé/etc.), pas aux ressources craftées.
-   - Multiplicateur de coût par niveau ×1.40, identique à PRODUCTION_PLOTS_SHARED.
-     upgradeCostMultPerLevel (cohérence avec le système de zones déjà en place).
+   - Multiplicateur de coût par niveau ×1.40 (les zones sont passées à ×1.15 en v3.507 : courbes distinctes).
    Détail : COMMENTAIRES_ORIGINAUX.md */
 
 var WORKSHOP_LEVEL_CONFIG = {
   maxLevel: 5,
   speedBonusPerLevel: 0.08,       // -8%/niveau, linéaire, sur craftTimeMs
-  upgradeCostMultPerLevel: 1.40,  // identique à PRODUCTION_PLOTS_SHARED, même courbe
+  upgradeCostMultPerLevel: 1.40,  // propre aux ateliers (zones : ×1.15 depuis v3.507)
   upgradeCost: { resources: ["planche", "lingot"] }
 };
 

@@ -67,7 +67,7 @@ var DUNGEON_CONFIG = {
    worldPower         échelle des vagues et pool d'ennemis (mondes 0..worldPower), inchangé
    difficultyMult     réglé au banc pour chaque donjon ouvert (Tanière à l'Ossuaire), sur les cibles de
                       l'Histoire ; l'écart entre mondes est voulu (point 6 du bilan, clos le 24/10/2026).
-                      Volcan et Sommet, fermés : à régler quand leur monde ouvrira
+                      Gueule du volcan réglée au banc avec la Montagne (audit P1) ; Sommet, fermé : à régler quand la Tour ouvrira
    eliteWaves         vague -> id de ELITE_DB ; null tant que le monde n'a pas ses élites
    boss               identité du boss final : baseId dans BOSS_DB, nom propre, trait signature
                       (archetype lu tel quel par combat-engine.js), statMult relatif, image optionnelle

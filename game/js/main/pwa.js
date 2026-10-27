@@ -88,10 +88,18 @@ function showPwaUpdateBanner() {
     return;
   }
   el.classList.add("show");
+  // v3.516.0 (audit ERG-4) : un combat lancé après l'affichage masque la bannière ; elle revient quand le héros est libre
+  if (!pwaUpdateTimer) pwaUpdateTimer = setInterval(function () {
+    if (!pwaHeroEngaged() || pwaUpdateDismissed) return;
+    clearInterval(pwaUpdateTimer); pwaUpdateTimer = null;
+    el.classList.remove("show");
+    showPwaUpdateBanner();
+  }, 1000);
 }
 
 function dismissPwaUpdateBanner() {
   pwaUpdateDismissed = true;
+  if (pwaUpdateTimer) { clearInterval(pwaUpdateTimer); pwaUpdateTimer = null; }
   var el = document.getElementById("pwa-update-banner");
   if (el) el.classList.remove("show");
 }

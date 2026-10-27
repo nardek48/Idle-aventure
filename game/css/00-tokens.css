@@ -145,6 +145,7 @@
      ========================= */
   --text: var(--c-cream-100-2);            /* Texte principal (fond de nuit) — v3.409.0 : crème du kit (avant : gris violet de Quest Idle #e2dce8) */
   --danger: var(--c-red-400);          /* Couleur d’erreur / danger */
+  --ink-missing: var(--c-red-650);     /* v3.516.0 (audit INT-7) : quantité qui manque, sur fond clair (6,4:1) */
   --crit: var(--c-bronze-450-vivid);            /* Couleur critique / mise en avant */
 
   /* =========================
