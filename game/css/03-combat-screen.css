@@ -325,6 +325,8 @@ html body.combat-active #combat-speed-bar { display: none !important; }
 .cbx-advice img { flex: 0 0 auto; width: 16px; height: 16px; }
 .cbx-advice img.is-book { width: 18px; height: 18px; }
 .cbx-advice b { color: var(--cbx-gold); }
+.cbx-advice.is-tip { justify-content: center; } /* v3.529.0 (TUT-5) : ressource pleine, rappel en pastille lisible sur le décor */
+.cbx-advice.is-tip > span { color: var(--cbx-gold); font-weight: 700; white-space: normal; background: rgba(12, 8, 4, .78); border: 1px solid rgba(240, 198, 74, .55); border-radius: 999px; padding: 3px 10px; }
 .cbx-skills { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; justify-items: center; }
 .cbx-skill { position: relative; width: min(64px, 17vw); aspect-ratio: 1; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer; }
 .cbx-skill > img { width: 100%; height: 100%; border-radius: 50%; display: block; }

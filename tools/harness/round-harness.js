@@ -19557,6 +19557,23 @@ console.log("\n[347] v3.528.0 — Aide de la carte vivante de la Forêt (audit T
   } catch (err) { ok(false, "[347] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[348] v3.529.0 — Astuce de combat : ressource de classe pleine (audit TUT-5, option C)");
+(function () {
+  try {
+    var game = freshCombat("knight"), CCM = g.ClassCombatManager, res = CCM.ensureForCurrentClass(), mode = game.combatMode;
+    game.combatMode = "tactique"; res.current = res.max;
+    var full = g.defeatResourceTipHTML();
+    ok(/cr-tip/.test(full) && /Rage/.test(full) && /class_knight\.webp/.test(full), "défaite avec la Rage pleine : astuce en tête du rapport, à l'icône de la classe");
+    res.current = res.max - 1;
+    ok(g.defeatResourceTipHTML() === "", "ressource pas pleine : pas d'astuce");
+    res.current = res.max; game.combatMode = "grimoire";
+    ok(g.defeatResourceTipHTML() === "", "mode Grimoire (le joueur ne touche pas les compétences) : pas d'astuce");
+    game.combatMode = mode;
+    var src = fs.readFileSync(path.join(ROOT, "js/ui/combat-screen-view.js"), "utf8");
+    ok(/function fullResourceTip\(adv\)/.test(src) && /combatRound\.number\) < 3/.test(src), "en combat : la ligne « pleine : touche la compétence dorée » attend le round 3");
+  } catch (err) { ok(false, "[348] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

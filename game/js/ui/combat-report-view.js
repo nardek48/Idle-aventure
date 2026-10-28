@@ -132,6 +132,16 @@ function buildCombatReportBodyHTML() {
 
 window.buildCombatReportBodyHTML = buildCombatReportBodyHTML;
 
+/* v3.529.0 (audit TUT-5) : défaite en Tactique avec la ressource de classe pleine → une astuce en tête du rapport. */
+function defeatResourceTipHTML() {
+  if (game.combatMode === "grimoire" || !window.ClassCombatManager) return "";
+  var res = ClassCombatManager.ensureForCurrentClass(), cls = ClassCombatManager.getCurrentClassId();
+  var def = (typeof getClassResource === "function") ? getClassResource(cls) : null;
+  if (!res || !def || !(res.max > 0) || res.current < res.max) return "";
+  return '<div class="cr-tip"><img src="images/Icons/classes/class_' + (cls === "archer" ? "ranger" : esc(cls)) + '.webp" alt=""><span><b>' + _t("Astuce") + '</b>'
+    + esc(_t("Ta {r} était pleine au moment de la défaite. Dépense-la sur les compétences, sous ton héros : la dorée est conseillée.", { r: _td(def.label) })) + '</span></div>';
+}
+
 function buildCombatReportHTML(trigger, enemyName) {
   // v3.400.0 (lot F-2) : feuille du bas du kit (en-tête de pierre, croix, voile)
   var h = '<div class="full-menu-overlay combat-report-overlay" onclick="if (event.target === this) closeCombatReport();">';
@@ -142,7 +152,7 @@ function buildCombatReportHTML(trigger, enemyName) {
     : trigger === "boss" ? _t("Rapport de combat — boss vaincu")
     : _t("Rapport de combat");
   h += kSheetHeadHTML({ icon: renderIconOrEmojiHTML(icon, "", ""), title: esc(title), sub: enemyName ? esc(_td(enemyName)) : "", close: "closeCombatReport()" });
-  h += '  <div class="ksheet-body">' + buildCombatReportBodyHTML() + '</div>';
+  h += '  <div class="ksheet-body">' + (trigger === "defeat" ? defeatResourceTipHTML() : "") + buildCombatReportBodyHTML() + '</div>';
   h += '  <div class="ksheet-foot"><button class="kbtn danger combat-report-reset-btn" type="button" onclick="resetCombatReport()"><img class=ico-inline src=images/Icons/system/trash.webp> ' + _t("Réinitialiser le rapport") + '</button></div>';
   h += '  </div>';
   h += '</div>';

@@ -3732,6 +3732,10 @@ I18n.register("en", {
   "La carte du Désert fonctionne comme celle de la Forêt. Tu libères un secteur en terminant son parcours.": "The Desert map works like the Forest one. You free a sector by completing its run.",
   "Un parcours raté rend un secteur au sable. Sa récompense de secteur tenu est perdue jusqu'à ce que tu le reprennes.": "A failed run gives a sector back to the sand. Its held-sector reward is lost until you take it back.",
   "La Palissade d'Aeswyn freine l'Ensablement, comme elle freine la brume.": "Aeswyn's Palisade slows the Sandfall, just as it slows the mist.",
+  // v3.529.0 (TUT-5) : astuce de combat (ressource pleine)
+  "{r} pleine : touche la compétence dorée": "{r} full: tap the golden skill",
+  "Astuce": "Tip",
+  "Ta {r} était pleine au moment de la défaite. Dépense-la sur les compétences, sous ton héros : la dorée est conseillée.": "Your {r} was full when you were defeated. Spend it on the skills under your hero: the golden one is recommended.",
   // v3.528.0 (TUT-9) : aide de la carte vivante de la Forêt
   "La brume reprend": "The Mist Takes Back",
   "La carte est découpée en secteurs autour d'Aeswyn. Tu libères un secteur en terminant sa Petite Aventure. Seuls ceux qui touchent le foyer ou un secteur libéré sont atteignables.": "The map is split into sectors around Aeswyn. You free a sector by completing its Little Adventure. Only the ones touching the hearth or a freed sector can be reached.",

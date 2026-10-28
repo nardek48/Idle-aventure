@@ -563,6 +563,18 @@
     return h + '</button>';
   }
   /* v3.447.0 : en jeu réel, pendant le tour des autres, tes boutons attendent. */
+  /* v3.529.0 (audit TUT-5) : ressource de classe pleine au round 3 ou plus, compétence conseillée jouable,
+     à ton tour en Tactique : la ligne du conseil rappelle de s'en servir. */
+  function fullResourceTip(adv) {
+    if (!adv || adv.slot === "basic" || !isManualOrSolo() || waitingTurn()) return "";
+    if (num(game.combatRound && game.combatRound.number) < 3 || num(game.silencedRounds) > 0) return "";
+    if (isManual() && engine().pendingOf(actorsApi().heroActor())) return "";
+    var res = ClassCombatManager.ensureForCurrentClass(), action = ClassCombatManager.getAction(adv.slot);
+    if (!res || !(res.max > 0) || res.current < res.max || !action) return "";
+    if (game.classCooldowns && num(game.classCooldowns[action.id]) > 0) return "";
+    var def = (typeof getClassResource === "function") ? getClassResource(ClassCombatManager.getCurrentClassId()) : null;
+    return def ? _t("{r} pleine : touche la compétence dorée", { r: _td(def.label) }) : "";
+  }
   function waitingTurn() {
     var E = engine();
     return !!(E && E.paced && typeof E.currentStop === "function" && !E.currentStop());
@@ -624,7 +636,9 @@
       h += companionActionsHTML(sel);
     } else {
       var adv = (!cont && !downed) ? heroAdvice() : null;
-      if (adv) {
+      var tip = fullResourceTip(adv);
+      if (tip) h += '<div class="cbx-advice is-tip">' + ico(adv.icon) + '<span>' + esc(tip) + '</span></div>';
+      else if (adv) {
         var c = condInfo(adv.cond);
         h += '<div class="cbx-advice">' + ico(IC.grim, "is-book") + '<span>' + (c ? ico(c.icon) + esc(c.label) : _t("Par défaut")) + ' <b>→</b> ' + ico(adv.icon) + '<b>' + esc(adv.label) + '</b></span></div>';
       }

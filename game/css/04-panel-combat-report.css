@@ -56,3 +56,8 @@
 /* v3.168.0 : aligné sur la variante danger du kit (css/00-kbtn.css,
    qui cible aussi cette classe) — la bordure rouge n'existe plus
    (border:none sur le composant). */
+
+/* v3.529.0 (TUT-5) : astuce en tête du rapport de défaite (ressource de classe pleine) */
+.cr-tip { display: grid; grid-template-columns: 36px 1fr; gap: 10px; align-items: start; background: var(--nb-cream); border: 1px solid var(--nb-frame-light); border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; color: var(--nb-ink); font-size: 14px; line-height: 1.35; }
+.cr-tip img { width: 36px; height: 36px; }
+.cr-tip b { display: block; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--c-brown-700-vivid); }
