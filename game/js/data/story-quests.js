@@ -3831,7 +3831,7 @@ function storyItemComptePourPalier(it, equipped) {
 }
 function storyPalierMontagneMissing(game) {
   var p = storyPalierMontagne(game), out = [];
-  if (p.pieces < STORY_PALIER_MONTAGNE.pieces) out.push({ text: _t("Pièces Épiques de la Montagne : {a} / {b}", { a: p.pieces, b: STORY_PALIER_MONTAGNE.pieces }), where: storyMontagneTrousTexte(game) + _t("Les étapes 6 à 8, les élites de la carte de la Montagne (35 % par victoire) et l'échoppe de la Halle marchande.") });
+  if (p.pieces < STORY_PALIER_MONTAGNE.pieces) out.push({ text: _t("Pièces Épiques de la Montagne : {a} / {b}", { a: p.pieces, b: STORY_PALIER_MONTAGNE.pieces }), where: storyMontagneTrousTexte(game) + _t("Les étapes 6 à 8, les élites de la carte de la Montagne (35 % par victoire, la 3e victoire sans pièce en donne une) et l'échoppe de la Halle marchande.") });
   // la reforge : même lecture que les autres paliers (pièces déjà comptées ci-dessus)
   return out.concat(storyPalierManques(game, "epic", { pieces: 0, reforge: STORY_PALIER_MONTAGNE.reforge }, function () { return null; }).filter(Boolean));
 }
@@ -4141,7 +4141,7 @@ STORY_QUESTS.mountain = {
         points: [
           { icon: "images/Icons/menu_icons/map_menu.webp", text: "La carte de la Montagne fonctionne comme celle de la Crypte : tu libères un secteur en terminant sa Petite Aventure." },
           { icon: "images/Icons/combat_actions/vein_cut.webp", text: "Chaque secteur a sa veine. Avant de partir, tu choisis : la tailler (plus de Cendre vive, mais le secteur chauffe et ses combats sont plus durs ensuite) ou la laisser (plus facile, rapporte moins)." },
-          { icon: "images/Icons/combat_status/vein_heat.webp", text: "Un échec recouvre le secteur de lave : c'est La coulée. Il reste plus dur jusqu'au lendemain." },
+          { icon: "images/Icons/combat_status/vein_heat.webp", text: "Une Petite Aventure ratée recouvre le secteur de lave : c'est La coulée. Il reste plus dur jusqu'au lendemain. Une élite perdue, elle, se retente le jour même." },
           { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "Le Marché de la Montagne est sur la carte, à côté du Replat. La caravane en rapporte de l'or. Au trajet Long (Halle 3), parfois de la Cendre vive." }
         ]
       },
@@ -4193,7 +4193,7 @@ STORY_QUESTS.mountain = {
       act: "Acte II — Ce qui trie",
       narrative: {
         objective: "Au Replat, Maddoc pose sa lame à côté d'un éclat de Cendre vive. La lame a l'air plus petite.",
-        completion: "Cinq pièces qui tiennent au feu. À Aeswyn, Brannoc les regarde une à une, sans rien dire. Puis il pose l'éclat de Cendre vive à côté, sur l'établi.",
+        completion: "Quatre pièces qui tiennent au feu. À Aeswyn, Brannoc les regarde une à une, sans rien dire. Puis il pose l'éclat de Cendre vive à côté, sur l'établi.",
         dialogue: [
           { who: "Maddoc", text: "Ce qu'on porte, ça vient d'en bas. Ici, ça ne tiendra pas." },
           { who: "Sarkel", text: "En bas, je vendais. Ici, je cherche encore ce qui vaut." },
@@ -4213,7 +4213,7 @@ STORY_QUESTS.mountain = {
         title: "Le palier Épique",
         points: [
           { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Pour aller plus loin dans la Montagne, quatre de tes sept emplacements doivent porter une pièce Épique de la Montagne. Celles d'en bas ne comptent pas." },
-          { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "Les étapes de l'acte t'en ont donné trois. La quatrième : les élites de la carte de la Montagne, 35 % de chance par victoire. L'échoppe de la Halle marchande en vend aussi, à prix fort." },
+          { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "Les étapes de l'acte t'en ont donné trois. La quatrième : les élites de la carte de la Montagne, 35 % de chance par victoire, et jamais plus de deux victoires de suite sans pièce. L'échoppe de la Halle marchande en vend aussi, à prix fort." },
           { icon: "images/Icons/workshops/smithing_station.webp", text: "L'arme se reforge jusqu'au niveau 10 à la Forge 5." }
         ]
       },

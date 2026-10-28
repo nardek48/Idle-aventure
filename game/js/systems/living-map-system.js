@@ -125,6 +125,7 @@ var LivingMapManager = {
       var map = LIVING_MAPS[ids[i]];
       if (!lm[map.id] || typeof lm[map.id] !== "object") lm[map.id] = { sectors: {} };
       if (!lm[map.id].sectors || typeof lm[map.id].sectors !== "object") lm[map.id].sectors = {};
+      if (lm[map.id].dropDry != null) lm[map.id].dropDry = Math.max(0, Math.floor(Number(lm[map.id].dropDry) || 0)); // lot 6 : victoires d'élite sans pièce
       for (var j = 0; j < map.sectors.length; j++) {
         var s = lm[map.id].sectors[map.sectors[j].id];
         if (!s || typeof s !== "object") s = lm[map.id].sectors[map.sectors[j].id] = {};
@@ -585,9 +586,14 @@ var LivingMapManager = {
       }
       report.message += ". " + _t("Victoire {n} du jour : la prochaine sera plus dure (+{p} %).", { n: wins, p: Math.round(Number(re.brakePerWin || 0) * wins * 100) });
       /* v3.489.0 (Montagne) : une élite peut lâcher une pièce (ELITE_DB.winDrop), au monde du combat. */
-      var wd = eliteDef && eliteDef.winDrop;
-      if (wd && this._rand() * 100 < Number(wd.chancePct || 0) && typeof generateEquipmentItem === "function" && typeof addLootToInventory === "function") {
-        var slots = window.EQUIPMENT_SLOTS || [], wi = (window.WorldManager ? Number(WorldManager.worldIndex || 0) : 0);
+      var wd = eliteDef && eliteDef.winDrop, lmSt = game.livingMaps[f.mapId] || {}, sec = Math.max(0, Math.floor(Number(lmSt.dropDry || 0)));
+      // lot 6 (Seb, option A) : compteur de victoires sans pièce, commun aux élites de la carte ; au seuil, la pièce tombe
+      var tombe = !!wd && (this._rand() * 100 < Number(wd.chancePct || 0) || (Number(wd.pityAfter || 0) > 0 && sec >= Number(wd.pityAfter)));
+      if (wd) lmSt.dropDry = tombe ? 0 : sec + 1;
+      if (tombe && typeof generateEquipmentItem === "function" && typeof addLootToInventory === "function") {
+        // lot 6 (revue) : la pièce est du monde de la carte, même si le héros réside ailleurs (voyage libre)
+        var mw = (window.WorldTravel && this.getMap(f.mapId)) ? WorldTravel.indexOf(this.getMap(f.mapId).worldId) : -1;
+        var slots = window.EQUIPMENT_SLOTS || [], wi = mw >= 0 ? mw : (window.WorldManager ? Number(WorldManager.worldIndex || 0) : 0);
         // v3.492.0 (campagne : 56 h d'échoppe au palier de montagne_09) : la pièce va d'abord à un emplacement qui n'en a pas encore
         var ord = window.RARITY_ORDER || [], eq = game.equipped || {}, need = ord.indexOf(wd.rarity);
         var trous = slots.filter(function (sl) { return sl !== "weapon" && !(eq[sl] && ord.indexOf(eq[sl].rarity) >= need && Number(eq[sl].worldIndex || 0) >= wi); });
@@ -683,9 +689,11 @@ var LivingMapManager = {
     }
 
     if (result === "fail" && this.getMap(mapId).noRegress) { // v3.454.0 (Crypte) : Le réveil, rien n'est repris
-      s.hostileDay = this._todayKey();
-      report.hostile = true;
-      report.message = _t("Échec devant {x}.", { x: _td(def.name) }) + " " + (this.getMap(mapId).veins
+      // lot 6 : une élite n'est pas freinée par le réveil ni la coulée (lus par les Petites Aventures seules)
+      if (!this.isRepeatable(mapId, sectorId)) { s.hostileDay = this._todayKey(); report.hostile = true; }
+      report.message = _t("Échec devant {x}.", { x: _td(def.name) }) + " " + (this.isRepeatable(mapId, sectorId)
+        ? _t("Soigne-toi, puis retente quand tu veux.")
+        : this.getMap(mapId).veins
         ? _t("La coulée : {x} reste sous la lave jusqu'à demain. Rien n'est perdu.", { x: _td(def.name) }) // v3.489.0 (Montagne)
         : _t("Le réveil : {x} reste hostile jusqu'à demain. Rien n'est perdu.", { x: _td(def.name) }));
       if (typeof addLog === "function") addLog(_t("Carte : {x}", { x: report.message }), "event");

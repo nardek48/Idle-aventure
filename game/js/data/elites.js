@@ -293,7 +293,7 @@ var ELITE_DB = {
     escort: { members: ["dragonling"], hpMult: 0.3, goldMult: 0.3 },
     phases: null,
     repeatable: true,
-    winDrop: { rarity: "epic", chancePct: 35 }
+    winDrop: { rarity: "epic", chancePct: 35, pityAfter: 2 } // lot 6 (Seb, option A) : après 2 victoires sans pièce, la 3e en donne une
   },
   mere_dragonnets: {
     id: "mere_dragonnets",
@@ -307,7 +307,7 @@ var ELITE_DB = {
     escort: { members: ["dragonling", "dragonling"], hpMult: 0.3, goldMult: 0.3 },
     phases: null,
     repeatable: true,
-    winDrop: { rarity: "epic", chancePct: 35 }
+    winDrop: { rarity: "epic", chancePct: 35, pityAfter: 2 }
   },
 
   arbre_mere: {

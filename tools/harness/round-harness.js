@@ -19408,6 +19408,43 @@ console.log("\n[341] v3.520.0 — correctifs de l'audit, lot 5 : fiches et coût
   } catch (err) { ok(false, "[341] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[342] v3.521.0 — lot 6 : élites de la Montagne (garantie), Dragon, textes");
+(function () {
+  try {
+    var game = freshCombat("knight");
+    g.WorldManager.worldIndex = 4;
+    var LM = g.LivingMapManager; LM.ensureDefaults();
+    var r0 = LM._rand; LM._rand = function () { return 0.99; }; // aucune chance ne passe : seule la garantie fait tomber la pièce
+    var gagne = function (sec, el) {
+      game.livingMaps.fight = { mapId: "mountain", sectorId: sec, eliteId: el };
+      var n0 = (game.inventory || []).length;
+      LM.onFightWon({ id: el });
+      return (game.inventory || []).length > n0;
+    };
+    var suite = [gagne("nid", "mere_dragonnets"), gagne("forge_froide", "vieux_golem"), gagne("nid", "mere_dragonnets"), gagne("nid", "mere_dragonnets")];
+    LM._rand = r0;
+    ok(suite.join() === "false,false,true,false", "garantie : 2 victoires sans pièce, la 3e en donne une, puis le compteur repart (" + suite.join() + ")");
+    ok(game.livingMaps.mountain.dropDry === 1 && g.ELITE_DB.vieux_golem.winDrop.pityAfter === 2 && g.ELITE_DB.mere_dragonnets.winDrop.pityAfter === 2, "compteur commun aux deux élites de la carte, rangé dans l'état de la carte");
+    // revue : héros revenu résider à la Crypte (voyage libre), la pièce reste de la Montagne et compte
+    g.WorldManager.worldIndex = 3; LM._rand = function () { return 0.99; };
+    var avant = (game.inventory || []).length; gagne("nid", "mere_dragonnets"); gagne("nid", "mere_dragonnets");
+    var piece = (game.inventory || [])[avant + 0] || null; LM._rand = r0; g.WorldManager.worldIndex = 4;
+    ok(piece && piece.worldIndex === 4 && g.storyItemCompteMontagne(piece), "pièce d'élite tirée au monde de la carte, même résidant à la Crypte : elle compte pour le palier");
+    var sv = JSON.parse(JSON.stringify(g.buildSaveData()));
+    game.livingMaps.mountain.dropDry = 0;
+    g.restoreBaseState(sv); LM.ensureDefaults();
+    ok(g.game.livingMaps.mountain.dropDry === 0, "compteur sauvegardé avec la carte, relu au chargement");
+    // défaite contre une élite : pas de coulée, le texte le dit
+    game = g.game;
+    var rep = LM.onRunEnd("mountain", "nid", "fail");
+    ok(!rep.hostile && !LM.isHostile("mountain", "nid") && rep.message.indexOf(g._t("Soigne-toi, puis retente quand tu veux.")) >= 0 && !/lave/.test(rep.message), "élite perdue : ni coulée ni « jusqu'à demain », on peut retenter");
+    var rep2 = LM.onRunEnd("mountain", "ruisseaux", "fail");
+    ok(rep2.hostile && /coulée/.test(rep2.message), "Petite Aventure perdue : la coulée reste");
+    ok(g.ADVENTURE_QUESTS.aq_montagne_dragon.bossPowerMult === 0.94, "Dragon ancien : puissance ×0,94 (+25 %, Seb)");
+    ok(/^Quatre pièces/.test(g.STORY_QUESTS.mountain.steps.filter(function (x) { return x.id === "montagne_09"; })[0].narrative.completion), "fin de montagne_09 : « Quatre pièces » (palier de 4)");
+  } catch (err) { ok(false, "[342] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);
