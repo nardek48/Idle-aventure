@@ -1,0 +1,67 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Arbre-mère en fin de partie</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Banc PLA-4 : une colonne, trois options, rendus réels du jeu (Chromium). */
+:root { --fond:#16110b; --carte:#231a11; --encre:#f1e6cf; --sourd:#bba98a; --or:#e3b04f; --trait:#4a3a28; color-scheme: dark; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--fond); color:var(--encre); font:16px/1.5 system-ui,-apple-system,sans-serif; }
+main { max-width:760px; margin:0 auto; padding-block:20px 48px; padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px)); display:grid; gap:18px; }
+h1 { font:700 24px/1.2 Georgia,serif; color:var(--or); margin:0; text-wrap:balance; }
+h2 { font:700 18px Georgia,serif; color:var(--or); margin:0; }
+p,ul,ol { margin:0; } .sourd { color:var(--sourd); }
+section { background:var(--carte); border:1px solid var(--trait); border-radius:14px; padding:16px; display:grid; gap:12px; min-width:0; }
+section.reco { border-color:var(--or); }
+.badge { display:inline-block; font-size:13px; font-weight:700; color:#1d1408; background:var(--or); border-radius:999px; padding:2px 10px; margin-left:6px; vertical-align:middle; }
+.figs { display:flex; gap:12px; overflow-x:auto; padding-bottom:4px; }
+figure { margin:0; flex:0 0 auto; display:grid; gap:4px; }
+figure img { display:block; max-width:none; border-radius:10px; border:1px solid var(--trait); }
+figcaption { font-size:13px; color:var(--sourd); }
+li { margin-block:4px; }
+code { font-size:14px; overflow-wrap:anywhere; }
+table { border-collapse:collapse; width:100%; font-size:14px; } .tbl { overflow-x:auto; } td,th { border-top:1px solid var(--trait); padding:6px 4px; text-align:left; vertical-align:top; }
+</style>
+</head><body>
+<main>
+<h1>L'Arbre-mère en fin de partie</h1>
+<p class="sourd">Audit PLA-4. Le robot refait l'Arbre-mère, l'élite répétable de la Forêt, environ 60 fois par partie : presque tout à la Crypte et à la Montagne. Ces combats servent à produire la Sève, et la Résine qui en sort sert aux reforges. Il gagne toujours (0 mort), et « Régler d'un coup » exclut les élites (règle I4). Mesures sur le vrai moteur, v3.531.0, 6 campagnes complètes par lot au robot (3 classes × 2 tirages).</p>
+
+<section class="reco"><h2>A · Sève par victoire selon le monde atteint<span class="badge">Recommandée</span></h2>
+<p>+1 Sève par monde d'avance sur celui de la carte : 2 en Forêt, 3 au Désert, 4 aux Ruines, 5 à la Crypte, 6 à la Montagne. Même règle pour le Dard des profondeurs, au Verre des dunes, sur la carte du Désert.</p>
+<div class="tbl"><table>
+<tr><th></th><th>Aujourd'hui</th><th>Option A</th></tr>
+<tr><td>Combats d'Arbre-mère par partie (médiane)</td><td>63 (42 à 72)</td><td><b>24</b> (16 à 27)</td></tr>
+<tr><td>Dont Ruines / Crypte / Montagne (somme des 6 parties)</td><td>25 / 154 / 186</td><td>13 / 50 / 75</td></tr>
+<tr><td>Durée de la partie (médiane)</td><td>21,3 h</td><td>19,7 h</td></tr>
+<tr><td>Reforges en fin de partie</td><td>arme 12, armure 12, le reste 4–5</td><td>identiques</td></tr>
+<tr><td>Équipement final</td><td>épique partout</td><td>identique</td></tr>
+<tr><td>Morts contre l'Arbre-mère</td><td>0</td><td>0</td></tr>
+</table></div>
+<table><tr><th>Coût</th><td>Quelques lignes dans <code>systems/living-map-system.js</code> (non protégé). Le panneau de la carte (« Chaque victoire : +2 Sève ») doit afficher le vrai nombre. Aucun état sauvegardé, rien ne change dans les reforges (décision RE-4 gardée). Niveau final : 22 au lieu de 23 pour certains, faute de ces combats.</td></tr></table>
+</section>
+
+<section><h2>B · « Régler d'un coup » pour une élite répétable d'un monde passé</h2>
+<p>Ouvre le bouton aux élites répétables d'un monde déjà dépassé quand le pronostic les juge « Sans danger » (frein du jour compris) et que l'usure prévue reste sous 25 % des PV, comme pour un combat ordinaire. Les combats restent à faire, mais chacun se règle en un toucher. C'est une modification de la règle I4 (ni boss ni élite).</p>
+<div class="tbl"><table>
+<tr><th>Sauvegarde</th><th>Victoires du jour « Sans danger » (frein +25 % par victoire)</th></tr>
+<tr><td>Chevalier, à l'entrée des Ruines</td><td>2 sur 9</td></tr>
+<tr><td>Chevalier, à l'entrée de la Crypte</td><td>6 sur 9 (le Dard : 1)</td></tr>
+<tr><td>Chevalier, à l'entrée de la Montagne</td><td>9 sur 9 (le Dard : 4)</td></tr>
+<tr><td>Mage, à l'entrée des Ruines</td><td>3 sur 9</td></tr>
+<tr><td>Mage, à l'entrée de la Crypte</td><td>8 sur 9 (le Dard : 1)</td></tr>
+<tr><td>Mage, à l'entrée de la Montagne</td><td>9 sur 9 (le Dard : 6)</td></tr>
+</table></div>
+<p>Plus on avance, plus la série « Sans danger » s'allonge : avec B, l'essentiel des combats de Crypte et de Montagne se règle d'un toucher.</p>
+<table><tr><th>Coût</th><td><code>CombatQuick._check</code> dans <code>systems/combat-forecast-system.js</code> (non protégé). Aucun état sauvegardé.</td></tr></table>
+</section>
+
+<section><h2>A + B</h2>
+<p>Environ 24 combats au lieu de 63, et la plupart se règlent d'un toucher.</p>
+</section>
+
+<section><h2>Sans changement</h2>
+<p>Une soixantaine de combats sans enjeu en fin de partie, joués un par un.</p>
+</section>
+</main>
+
+</body></html>
