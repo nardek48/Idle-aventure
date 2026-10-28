@@ -19601,6 +19601,21 @@ console.log("\n[350] v3.531.0 — Pastille « ! » sur l'onglet Camp (audit TUT-
   } catch (err) { ok(false, "[350] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[351] v3.532.0 — Sève par victoire selon le monde atteint (audit PLA-4, option A)");
+(function () {
+  try {
+    var LM = g.LivingMapManager, saved = g.game.worldsEverReached, wi = g.WorldManager.worldIndex;
+    function at(w) { var r = {}; for (var i = 0; i <= w; i++) r[i] = true; g.game.worldsEverReached = r; g.WorldManager.worldIndex = w; }
+    at(0); var f0 = LM.getRepeatSevePerWin("forest");
+    at(4); var f4 = LM.getRepeatSevePerWin("forest"), d4 = LM.getRepeatSevePerWin("desert"), m4 = LM.getRepeatSevePerWin("mountain");
+    at(2); var f2 = LM.getRepeatSevePerWin("forest");
+    ok(f0 === 2 && f2 === 4 && f4 === 6, "Arbre-mère : 2 Sève en Forêt, 4 aux Ruines, 6 à la Montagne (" + [f0, f2, f4].join("/") + ")");
+    ok(d4 === 5 && m4 === 2, "Dard du Désert : +1 par monde d'avance (5 à la Montagne) ; élites de la Montagne : 2 (" + d4 + "/" + m4 + ")");
+    ok(g.LIVING_MAP_RULES.repeatableElite.sevePerWorldAhead === 1, "règle en donnée : sevePerWorldAhead = 1");
+    g.game.worldsEverReached = saved; g.WorldManager.worldIndex = wi;
+  } catch (err) { ok(false, "[351] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

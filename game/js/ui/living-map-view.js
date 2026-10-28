@@ -661,8 +661,8 @@ function buildLivingMapPanelHTML(mapId, running) {
   else if (!repeatable) h += '<p class="lm-panel-line"><b>' + _t("Rejeu :") + '</b> ' + esc(_t("Petite Aventure ordinaire, {x}.", { x: _td(W.runLoot) })) + '</p>';
   if (repeatable && known) {
     // v3.258.0 (C-5) : élite répétable — Sève par victoire, frein du jour affiché avant de partir.
-    var re = LM.getRules().repeatableElite || {}, wins = LM.getDailyWins(mapId, d.id);
-    h += '<p class="lm-panel-line"><b>' + _t("Chaque victoire :") + '</b> ' + esc(_t("+{n} {x}. Chaque combat rejoué prend ses vivres (ci-dessous), hors cap des Petites Aventures. Fuir ou tomber reste un échec.", { n: Number(re.sevePerWin || 0), x: _td(rName) })) + '</p>';
+    var wins = LM.getDailyWins(mapId, d.id);
+    h += '<p class="lm-panel-line"><b>' + _t("Chaque victoire :") + '</b> ' + esc(_t("+{n} {x}. Chaque combat rejoué prend ses vivres (ci-dessous), hors cap des Petites Aventures. Fuir ou tomber reste un échec.", { n: LM.getRepeatSevePerWin(mapId), x: _td(rName) })) + '</p>';
     h += '<p class="lm-panel-line"><b>' + _t("Aujourd'hui :") + '</b> ' + _tn(wins, "{n} victoire", "{n} victoires") + ' · ' + (wins ? _t("prochain combat +{p} % PV et dégâts", { p: Math.round((LM.getBrakeMult(mapId, d.id) - 1) * 100) }) : _t("prochain combat à sa force de base")) + '</p>';
     // v3.457.5 (audit P18) : le frein retombe au jour civil — on dit quand
     if (wins) { var minuit = new Date(); minuit.setHours(24, 0, 0, 0); h += '<p class="lm-panel-line">' + esc(_t("Le frein retombe à minuit, dans {d}.", { d: formatTime(Math.max(60, Math.round((minuit.getTime() - Date.now()) / 1000))) })) + '</p>'; }

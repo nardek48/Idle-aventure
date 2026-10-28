@@ -351,6 +351,14 @@ var LivingMapManager = {
   },
 
   /* Multiplicateur de frein du PROCHAIN combat : 1 + pas × victoires du jour. */
+  /* v3.532.0 (audit PLA-4 A) : ressource par victoire d'élite répétable, +sevePerWorldAhead par monde atteint au-delà de la carte. */
+  getRepeatSevePerWin: function (mapId) {
+    var re = this.getRules().repeatableElite || {}, base = Number(re.sevePerWin || 0);
+    var map = this.getMap(mapId), mw = (map && window.WorldTravel) ? WorldTravel.indexOf(map.worldId) : 0;
+    var rw = (window.WorldCaps && typeof WorldCaps.getReachedWorldIndex === "function") ? WorldCaps.getReachedWorldIndex() : mw;
+    return base > 0 ? base + Number(re.sevePerWorldAhead || 0) * Math.max(0, rw - Math.max(0, mw)) : base;
+  },
+
   getBrakeMult: function (mapId, sectorId) {
     if (!this.isRepeatable(mapId, sectorId)) return 1;
     var per = Number((this.getRules().repeatableElite || {}).brakePerWin || 0);
@@ -563,7 +571,7 @@ var LivingMapManager = {
     if (this.isRepeatable(f.mapId, f.sectorId)) {
       var rules = this.getRules(), re = rules.repeatableElite || {};
       var wins = this._addDailyWin(f.mapId, f.sectorId);
-      var seve = Number(re.sevePerWin || 0);
+      var seve = this.getRepeatSevePerWin(f.mapId);
       if (seve > 0 && window.WarehouseManager && typeof WarehouseManager.addResource === "function") {
         WarehouseManager.addResource(this.getRewardResourceId(f.mapId), seve, true); // v3.305.0 : ressource de la carte
       }
