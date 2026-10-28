@@ -39,6 +39,7 @@ var DEFEAT_GOLD_PENALTY = 0; // v3.101.0 (P3-lite) : la mort ne coûte plus d'or
 
 var ROUND_INTERVAL_MS = 1500;         // tempo du mode Grimoire / « Continuer l'attaque » (× vitesse de combat)
 var CELERITY_GAUGE_MAX = 100;
+var DOUBLE_STRIKE_DANGER_PCT = 0.20; // v3.524.0 (audit COM-6, accord Seb) : deux frappes sous 20 % des PV ne s'annoncent pas
 var CELERITY_GAUGE_PER_ACTION = 1.0;  // jauge héros += célérité × coef par action offensive
 /* v3.243.0 (bug Seb : « la jauge se remplit très vite, on a tout le temps des doubles
    attaques à partir d'un certain niveau »). La célérité vient surtout des bottes, dont la
@@ -1186,6 +1187,28 @@ var CombatEngine = {
     return (Number(e.gauge || 0) + this.getEnemyGaugeGain(e)) >= CELERITY_GAUGE_MAX;
   },
 
+  /* v3.524.0 (audit COM-6, accord Seb) : la double frappe qui compte, pour la puce et « Continuer l'attaque ».
+     Une annonce qui remplace la frappe l'annule ; sinon deux frappes ≥ 20 % des PV (rage et chaleur comprises). */
+  enemyDoubleStrikeDangerous: function () {
+    var e = game.enemy;
+    if (!this.enemyDoubleStrikeNext() || !e.stats) return false;
+    var hold = Number(e.patternHoldRounds || 0) > 0; // Clairvoyance : l'annonce attend, la frappe tombe
+    if (!hold && (e.chargeTelegraphed || e.silenceTelegraphed)) return false; // bouclier ou soin contrés : la frappe revient (revue)
+    var power = Number(e.stats.power || 0);
+    if (window.AfflictionManager && typeof AfflictionManager.getCombinedModifiers === "function") power *= AfflictionManager.getCombinedModifiers().enemyPowerMult;
+    var base = Math.max(1, Math.floor(power * ENEMY_POWER_DMG_COEF * (e.isBoss ? BOSS_DMG_MULT : 1)));
+    var heat = window.VeinSystem ? VeinSystem.heatMult() : 1, sort = 1;
+    if (e.sortArmed && window.VeinSystem && window.CombatActors && CombatActors.isHero(VeinSystem.sortTarget())) { // le tri vise le héros : 1re frappe ×1,5
+      sort = (window.CombatItems && CombatItems.holds("sorting")) ? COMBAT_ITEM_LURE_SORT_MULT : VEIN_SORT_MULT;
+    }
+    // l'exaltation annoncée tombe avant la frappe : la rage sera triplée (revue)
+    var surge = (e.isBoss && e.surgeTelegraphed && !hold) ? ELITE_SURGE_DURATION_ROUNDS : Math.max(0, Number(e.surgeRounds || 0) - 1);
+    var rage = (e.archetype === "enraged" && typeof getEnragedDamageMultiplier === "function") ? getEnragedDamageMultiplier(this.getEnragedEffectivePctHpLost(), { surgeRounds: surge }) : 1;
+    var def = 1 - Math.min(0.6, Number(game.heroDefensePct || 0));
+    var hit = function (m) { var d = Math.max(1, Math.floor(base * m)); if (rage !== 1) d = Math.max(1, Math.floor(d * rage)); return Math.max(1, Math.floor(d * def)); };
+    return hit(heat * sort) + hit(heat) >= DOUBLE_STRIKE_DANGER_PCT * Math.max(1, Number(game.heroHp || 0));
+  },
+
   enemyStrike: function (dmgMult, isPatternOrBonus) {
     var e = game.enemy;
     if (!e || !e.stats) return;
@@ -1522,7 +1545,7 @@ var CombatEngine = {
       var f = group[i];
       if (f && (f.chargeTelegraphed || f.silenceTelegraphed || f.shieldTelegraphed || f.healTelegraphed)) return true;
     }
-    if (this.enemyDoubleStrikeNext()) return true;
+    if (this.enemyDoubleStrikeDangerous()) return true; // v3.524.0 (COM-6) : comme la puce
     return false;
   },
 
@@ -1975,6 +1998,7 @@ window.getEnemyWillCritPenalty = getEnemyWillCritPenalty;
 window.getConfiguredCounterSlotsForCondition = getConfiguredCounterSlotsForCondition;
 window.ROUND_INTERVAL_MS = ROUND_INTERVAL_MS;
 window.CELERITY_GAUGE_MAX = CELERITY_GAUGE_MAX;
+window.DOUBLE_STRIKE_DANGER_PCT = DOUBLE_STRIKE_DANGER_PCT;
 window.CELERITY_SOFT_CAP_K = CELERITY_SOFT_CAP_K; // v3.243.0
 window.BOSS_DMG_MULT = BOSS_DMG_MULT;
 window.ELITE_SURGE_ROUNDS_MIN = ELITE_SURGE_ROUNDS_MIN;

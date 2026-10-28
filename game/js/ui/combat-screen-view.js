@@ -147,7 +147,7 @@
     if (e.shieldTelegraphed) push("shieldIncoming");
     if (e.healTelegraphed) push("healIncoming");
     if (e.surgeTelegraphed) push("surge");
-    if (isTarget && engine() && typeof CombatEngine.enemyDoubleStrikeNext === "function" && CombatEngine.enemyDoubleStrikeNext()) push("doubleStrike");
+    if (isTarget && engine() && typeof CombatEngine.enemyDoubleStrikeDangerous === "function" && CombatEngine.enemyDoubleStrikeDangerous()) push("doubleStrike"); // v3.524.0 (COM-6)
     if (isRanged(e)) push("ranged");
     if (e.archetype === "enraged") push("enraged", null, num(e.rageFreezeRounds) > 0);
     if (e.archetype === "corrupted") push("corrupted", num(e.corruptedStacks));

@@ -19483,6 +19483,38 @@ console.log("\n[343] v3.523.0 — lot 7 : pronostic des élites");
   } catch (err) { ok(false, "[343] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[344] v3.524.0 — « Deux frappes ! » qui compte (audit COM-6, accord Seb)");
+(function () {
+  try {
+    var game = freshCombat("knight"), CE = g.CombatEngine;
+    game.enemy.engageIn = 0; game.enemy.chargeIn = 99; game.enemy.stats.celerity = 60; game.enemy.gauge = 60; game.heroDefensePct = 0;
+    game.enemy.archetype = null; game.heroHp = game.heroMaxHp = 100000; game.enemy.stats.power = 100;
+    ok(CE.enemyDoubleStrikeNext() === true && g.evaluateGrimoireCondition("enemyAttackIncoming", g.ClassCombatManager.getGrimoireCombatContext()) === true && CE.enemyDoubleStrikeDangerous() === false && CE.shouldStopContinueAttack() === false, "jauge pleine, deux frappes légères : ni puce ni arrêt de « Continuer l'attaque » (la condition Grimoire reste vraie)");
+    game.heroHp = game.heroMaxHp = 400; // PV pleins : seul l'arrêt de la double frappe peut jouer (revue)
+    ok(CE.enemyDoubleStrikeDangerous() === true && CE.shouldStopContinueAttack() === true, "deux frappes ≥ 20 % des PV : la puce s'allume et « Continuer l'attaque » s'arrête");
+    game.enemy.chargeTelegraphed = true;
+    ok(CE.enemyDoubleStrikeDangerous() === false, "une charge annoncée remplace la frappe : pas de puce « Deux frappes ! » en plus");
+    game.enemy.patternHoldRounds = 1;
+    ok(CE.enemyDoubleStrikeDangerous() === true, "Clairvoyance : la charge attend, la double frappe tombe : la puce revient");
+    game.enemy.chargeTelegraphed = false; game.enemy.patternHoldRounds = 0;
+    game.enemy.shieldTelegraphed = true;
+    ok(CE.enemyDoubleStrikeDangerous() === true, "bouclier annoncé : la puce reste (contré, la double frappe revient) (revue)");
+    game.enemy.shieldTelegraphed = false;
+    // exaltation annoncée d'une élite enragée : la frappe tombera exaltée (revue)
+    var e = game.enemy; e.isBoss = true; e.archetype = "enraged"; e.hp = Math.floor(e.maxHp * 0.2); e.surgeTelegraphed = false; e.surgeRounds = 0;
+    var pv = 50; while (pv < 1e8) { game.heroHp = game.heroMaxHp = pv; if (!CE.enemyDoubleStrikeDangerous()) break; pv = Math.ceil(pv * 1.1); }
+    var sans = CE.enemyDoubleStrikeDangerous(); e.surgeTelegraphed = true; var avec = CE.enemyDoubleStrikeDangerous(); e.surgeTelegraphed = false;
+    ok(!sans && avec, "exaltation annoncée : la rage triplée compte, la puce s'allume (" + pv + " PV)");
+    // tri de la Montagne : la 1re frappe ×1,5 sur le héros qui a taillé (revue)
+    e.isBoss = false; e.archetype = null; e.hp = e.maxHp; var vs0 = g.VeinSystem.state;
+    g.VeinSystem.state = { cuts: 1, heroCuts: 1, heat: 0, lastCutter: "hero" }; e.sortArmed = false;
+    pv = 50; while (pv < 1e8) { game.heroHp = game.heroMaxHp = pv; if (!CE.enemyDoubleStrikeDangerous()) break; pv = Math.ceil(pv * 1.05); }
+    sans = CE.enemyDoubleStrikeDangerous(); e.sortArmed = true; avec = CE.enemyDoubleStrikeDangerous(); e.sortArmed = false; g.VeinSystem.state = vs0;
+    ok(!sans && avec, "tri armé sur le héros : la première frappe ×1,5 compte (" + pv + " PV)");
+    ok(g.DOUBLE_STRIKE_DANGER_PCT === 0.2, "seuil de la double frappe : 20 % des PV actuels");
+  } catch (err) { ok(false, "[344] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);
