@@ -33,7 +33,7 @@ Chaque usage a son propre chemin. L'icône générique s'affiche en attendant l'
 - « Établi » de la Forge : `workshops/workbench.webp` (était le coffre « trouvaille »).
 - Jalons et livret des rangs des sorts : `special_attacks/spell_ranks.webp` (était la compétence du Chevalier).
 - Stats Force, Précision et Endurance des Petites Aventures : les icônes de stat de la fiche du héros (`improvement_icons/*`), à la place des potions. Pas d'image nouvelle.
-- Non touchés : les tutoriels (règle d'onboarding) et le repli des actions de classe sans icône (jamais atteint en jeu).
+- Non touchés : les tutoriels (règle d'onboarding) et le repli des actions de classe sans icône (cas de secours, non vérifié en jeu).
 
 ## Contrôles
 - Round : 5 337 OK, 0 échec, sur deux passes. Harnais [346].
