@@ -19574,6 +19574,23 @@ console.log("\n[348] v3.529.0 — Astuce de combat : ressource de classe pleine 
   } catch (err) { ok(false, "[348] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[349] v3.530.0 — Fenêtre de l'Atelier à la visite du Village (audit TUT-12, option C)");
+(function () {
+  try {
+    var tab = g.game.activeTab, S = g.WORKSHOP_UNLOCK_STEPS;
+    g.workshopPendingPopup = null;
+    g.game.activeTab = "campement";
+    g.showWorkshopStepCompletionPopup(S[0], S[1]);
+    ok(g.workshopPendingPopup && g.workshopPendingPopup.step === S[0] && g.workshopPendingPopup.next === S[1], "étape validée hors du Village : la fenêtre attend");
+    g.flushWorkshopPendingPopup();
+    ok(g.workshopPendingPopup !== null, "toujours hors du Village : elle attend encore");
+    g.game.activeTab = "village";
+    g.flushWorkshopPendingPopup();
+    ok(g.workshopPendingPopup === null && !g.workshopPendingTimer, "au Village, sans autre fenêtre : elle s'ouvre, et l'attente s'arrête");
+    g.game.activeTab = tab;
+  } catch (err) { ok(false, "[349] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);
