@@ -129,7 +129,7 @@ function startLivingMapSector(id, wake) { // v3.454.0 : wake — réveiller les 
   var cs = LivingMapManager.canStart(mapId, id);
   if (cs.ok && cs.content && cs.content.type === "elite" && typeof openSortiePrep === "function") {
     var el = (window.ELITE_DB || {})[cs.content.eliteId];
-    return openSortiePrep({ title: el ? _td(el.name) : "", icon: "images/Icons/quests/mission_combat.webp", ctx: { type: "elite", id: cs.content.eliteId },
+    return openSortiePrep({ title: el ? _td(el.name) : "", icon: "images/Icons/quests/mission_combat.webp", ctx: { type: "elite", id: cs.content.eliteId, mapId: mapId, sectorId: id },
       food: { kind: "mapelite", ref: { mapId: mapId, sectorId: id, worldId: (LivingMapManager.getMap(mapId) || {}).worldId } }, onGo: go }); // v3.513.0
   }
   go();
@@ -137,6 +137,13 @@ function startLivingMapSector(id, wake) { // v3.454.0 : wake — réveiller les 
 window.startLivingMapSector = startLivingMapSector;
 
 /* ---------- Helpers de rendu ---------- */
+
+/* v3.523.0 (audit PLA-3) : verdict du prochain combat d'élite, frein du jour compris. */
+function lmEliteForecastHTML(mapId, sectorId, eliteId) {
+  if (!window.CombatForecast || typeof CombatForecast.forMapElite !== "function" || typeof buildCombatForecastLineHTML !== "function") return "";
+  try { return buildCombatForecastLineHTML(CombatForecast.forMapElite(mapId, sectorId, eliteId)); }
+  catch (e) { if (typeof noteErreur === "function") noteErreur("living-map-view.lmEliteForecastHTML", e); return ""; }
+}
 
 function livingMapIntensityLabel(intensityId) {
   var it = window.PA2_RINGS && PA2_RINGS[intensityId]; // v3.388.0 : nom de l'anneau
@@ -683,6 +690,7 @@ function buildLivingMapPanelHTML(mapId, running) {
       var lmap = LM.getMap(mapId);
       h += ProvisionsManager.buildLineHTML("mapelite", { mapId: mapId, sectorId: d.id, worldId: lmap ? lmap.worldId : "forest" });
     }
+    if (isElite && known) h += lmEliteForecastHTML(mapId, d.id, content.eliteId); // v3.523.0 : le danger avant de partir
     // v3.378.0 : traits connus de l'élite (mode Grimoire, élite déjà vaincue)
     var gis = !isElite && LM.getMap(mapId) && LM.getMap(mapId).gisants; // v3.454.0 (Crypte) : les gisants
     var vns = !isElite && LM.getMap(mapId) && LM.getMap(mapId).veins;   // v3.489.0 (Montagne) : la veine du secteur

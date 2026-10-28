@@ -34,16 +34,20 @@ function getForecastLevelClass(f) {
   return f ? ("is-" + f.id) : "";
 }
 
-/* Ligne compacte : verdict + estimation de rounds. */
-function buildCombatForecastLineHTML(f) {
+/* Ligne compacte : verdict + estimation de rounds. v3.523.0 : opts.who (nom de l'adversaire), opts.brake (frein du jour). */
+function buildCombatForecastLineHTML(f, opts) {
   if (!f || !window.CombatForecast) return "";
+  opts = opts || {};
   var def = CombatForecast.getLevelDef(f.id);
+  var who = opts.who && f.enemyName ? esc(_td(f.enemyName)) + ' · ' : '';
   var h = '<div class="cf-line ' + getForecastLevelClass(f) + '">';
   h += '<span class="cf-line-verdict">' + esc(_td(def.label)) + '</span>';
   if (f.unwinnable) {
-    h += '<span class="cf-line-detail">' + _t("il se soigne plus vite que tu ne frappes") + '</span>';
+    h += '<span class="cf-line-detail">' + who + _t("il se soigne plus vite que tu ne frappes") + '</span>';
   } else if (f.roundsToKill) {
-    h += '<span class="cf-line-detail">' + _t("~{a} rounds pour le vaincre, ~{b} pour tomber", { a: f.roundsToKill, b: f.roundsToDie }) + '</span>';
+    // v3.523.0 (revue) : tournure neutre (élites au féminin) et pluriel géré
+    h += '<span class="cf-line-detail">' + who + _tn(f.roundsToKill, "~{a} round pour en venir à bout, ~{b} pour tomber", "~{a} rounds pour en venir à bout, ~{b} pour tomber", { a: f.roundsToKill, b: f.roundsToDie })
+      + (opts.brake && f.brakeMult > 1 ? ' · ' + _t("frein du jour compris (+{p} %)", { p: Math.round((f.brakeMult - 1) * 100) }) : '') + '</span>';
   }
   h += '</div>';
   return h;

@@ -81,12 +81,12 @@ var EliteManager = {
     };
   },
 
-  /* Spawn dans le combat courant. worldId/adventureIndex viennent de la quête. */
-  spawn: function (eliteId, worldId, adventureIndex, opts) {
+  /* v3.523.0 (audit COM-1) : l'élite telle que spawn la construit, sans entrer en combat ni rien tirer
+     au hasard. Le pronostic passe opts.escort = { members: [] } : l'élite à sa force de duel. */
+  make: function (eliteId, worldId, adventureIndex, opts) {
     if (!window.WORLDS) return null;
     var worldIndex = WORLDS.findIndex(function (w) { return w.id === worldId; });
     if (worldIndex === -1) worldIndex = 0;
-
     /* v3.286.0 — L'escorte est une propriété de l'ÉLITE (data/elites.js) : « la Fileuse ne
        garde pas ses toiles seule » vaut partout où elle apparaît. opts.escort reste
        possible pour un appel qui voudrait forcer autre chose. */
@@ -115,7 +115,17 @@ var EliteManager = {
     } finally {
       if (multSauve) def.statMult = multSauve;
     }
+    return enemy || null;
+  },
+
+  /* Spawn dans le combat courant. worldId/adventureIndex viennent de la quête. */
+  spawn: function (eliteId, worldId, adventureIndex, opts) {
+    var enemy = this.make(eliteId, worldId, adventureIndex, opts);
     if (!enemy) return null;
+    var worldIndex = WORLDS.findIndex(function (w) { return w.id === worldId; });
+    if (worldIndex === -1) worldIndex = 0;
+    var def = (window.ELITE_DB || {})[eliteId] || null;
+    var specEscorte = (opts && opts.escort) || (def && def.escort) || null;
 
     /* v3.286.0 — ESCORTE D'ÉLITE (demande Seb : « on n'est pas obligé de toujours mettre
        2 ou 3 »). Une élite peut venir accompagnée : la Fileuse ne garde pas ses toiles

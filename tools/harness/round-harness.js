@@ -19445,6 +19445,44 @@ console.log("\n[342] v3.521.0 — lot 6 : élites de la Montagne (garantie), Dra
   } catch (err) { ok(false, "[342] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[343] v3.523.0 — lot 7 : pronostic des élites");
+(function () {
+  try {
+    var game = freshCombat("knight");
+    var E = g.EliteManager, CF = g.CombatForecast, LM = g.LivingMapManager;
+    var avant = game.enemy, m = E.make("araignee_marquee", "forest", 0);
+    ok(m && m.isElite && game.enemy === avant && g.ELITE_DB.araignee_marquee.statMult.power === 1.55, "make : l'élite est construite sans entrer en combat, multiplicateurs remis");
+    var s = E.spawn("araignee_marquee", "forest", 0);
+    ok(s && s.maxHp === m.maxHp && s.stats.power === m.stats.power, "make et spawn donnent la même élite (multiplicateurs d'escorte compris)");
+    var ref = CF.getReferenceEnemy({ sourceKind: "adventure", questId: "aq_ruines_golem" });
+    ok(ref && ref.isElite && ref.id === "golem", "quête d'élite : le pronostic juge l'élite, plus un ennemi ordinaire");
+    var dard = E.make("dard_profondeurs", "desert", 0), base = CF.getEnemyDamagePerRound(dard), f = CF.forEnemy(dard);
+    ok(Math.abs(f.enemyDamagePerRound - Math.round(base * 2.0)) <= 1 && CF.getEliteDmgMult({ isElite: false, archetype: "enraged" }) === 1 && CF.getEliteDmgMult({ isElite: true, archetype: "armored" }) === 1.2 && CF.getEliteDmgMult({ isElite: true, archetype: "vampiric" }) === 1,
+      "rage et exaltation : ×2,0 sur l'élite enragée, ×1,2 blindée, rien hors élite");
+    var hd = CF.getForecastHeroDamage() + CF.getPartyBonus(false).dmg;
+    ok(Math.abs(f.heroDamagePerRound - Math.round(hd * 0.88)) <= 1 && Math.abs(CF.forEnemy(Object.assign({}, dard, { isElite: false })).heroDamagePerRound - Math.round(hd)) <= 1, "bouclier d'élite : dégâts du héros ×0,88 contre une élite, inchangés sinon");
+    ok(CF.getEnemyDamagePerRound(dard) === base, "dégâts estimés inchangés hors pronostic (Petites Aventures, Labyrinthe, usure des vagues)");
+    LM.ensureDefaults();
+    var st = LM.getState("desert", "bete_dune"); st.state = "libere"; st.dailyKey = LM._todayKey(); st.dailyWins = 2;
+    var fm = CF.forMapElite("desert", "bete_dune", "dard_profondeurs");
+    ok(fm && fm.brakeMult === 1.5 && fm.enemyName === g.ELITE_DB.dard_profondeurs.name && fm.enemyHp > dard.maxHp * 1.45, "élite de carte : verdict au frein du jour (×1,5, PV compris)");
+    var line = g.buildCombatForecastLineHTML(fm, { who: true, brake: true });
+    ok(line.indexOf("cf-line") >= 0 && line.indexOf(g._t("frein du jour compris (+{p} %)", { p: 50 })) >= 0, "ligne du verdict : le frein du jour est dit");
+    g.sortiePrep = { opts: { title: "t", ctx: { type: "elite", id: "dard_profondeurs", mapId: "desert", sectorId: "bete_dune" }, onGo: function () {} }, preset: null, buffs: {}, items: [], pick: -1 };
+    ok(g.buildSortiePrepHTML().indexOf("cf-line") >= 0, "préparation d'une élite de carte : le verdict s'affiche");
+    g.sortiePrep = { opts: { title: "t", ctx: { type: "adventure", id: "aq_ruines_golem" }, onGo: function () {} }, preset: null, buffs: {}, items: [], pick: -1 };
+    ok(g.buildSortiePrepHTML().indexOf("cf-line") < 0, "préparation d'une quête d'élite : pas de doublon avec la fenêtre du tableau (revue)");
+    var fil = CF.getReferenceEnemy({ sourceKind: "adventure", questId: "eq_forest_spider" }), duel = E.make("araignee_marquee", "forest", g.ADVENTURE_QUESTS.eq_forest_spider.adventureIndex, { escort: { members: [] } });
+    ok(fil && fil.maxHp === duel.maxHp && fil.maxHp > E.make("araignee_marquee", "forest", g.ADVENTURE_QUESTS.eq_forest_spider.adventureIndex).maxHp, "Fileuse : le pronostic la juge à sa force de duel, l'escorte n'étant pas jouée (revue)");
+    ok(/~1 round pour en venir à bout/.test(g.buildCombatForecastLineHTML({ id: "trivial", roundsToKill: 1, roundsToDie: 9 })), "ligne du verdict : tournure neutre, singulier géré (revue)");
+    g.sortiePrep = null;
+    st.revealed = true;
+    run("livingMapOpenId = 'desert'; livingMapSelected = 'bete_dune';");
+    var known = LM.isNameRevealed("desert", "bete_dune");
+    ok(!known || run("buildLivingMapPanelHTML('desert', null)").indexOf("cf-line") >= 0, "panneau de l'élite connue : le verdict s'affiche (" + (known ? "nom connu" : "nom voilé") + ")");
+  } catch (err) { ok(false, "[343] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

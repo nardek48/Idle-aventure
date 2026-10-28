@@ -101,6 +101,7 @@ function buildSortiePrepHTML() {
   else if (sortiePrep.bare) h += buildSortiePrepHpOkHTML();   // ration mangée : la feuille réduite ne reste pas vide
   if (sortiePrep.bare) return h + '</div>' + buildSortiePrepFootHTML(lowHp);
 
+  h += buildSortiePrepForecastHTML();   // v3.523.0 : le verdict de l'élite, frein du jour compris
   h += buildSortiePrepTraitsHTML(grim);   // v3.446.1 : la menace d'abord (décision Seb), la préparation ensuite
 
   /* Mode, figé jusqu'au retour au Campement */
@@ -331,6 +332,17 @@ function buildSortiePrepTeamHTML(grim, part) {
    puis les places. Un objet tient un trait tout seul ; il est retiré de l'Entrepôt au départ. */
 function sortiePrepTraitName(trait) {
   return typeof enemyTraitLook === "function" ? _td(enemyTraitLook(trait).nom) : trait; // v3.492.14
+}
+
+/* v3.523.0 (audit PLA-3) : verdict d'une élite de carte, frein du jour compris. Une quête d'élite a déjà la fenêtre
+   du tableau (launchWithForecast), le donjon sa feuille : pas de doublon ici. */
+function buildSortiePrepForecastHTML() {
+  var ctx = sortiePrep.opts.ctx || {}, f = null;
+  if (!window.CombatForecast || typeof buildCombatForecastLineHTML !== "function") return "";
+  try {
+    if (ctx.type === "elite" && ctx.mapId) f = CombatForecast.forMapElite(ctx.mapId, ctx.sectorId, ctx.id);
+  } catch (e) { if (typeof noteErreur === "function") noteErreur("sortie-prep-view.buildSortiePrepForecastHTML", e); f = null; }
+  return f ? '<div class="sp-sec">' + buildCombatForecastLineHTML(f, { brake: true }) + '</div>' : ""; // le titre nomme déjà l'élite
 }
 
 function sortiePrepTraitsPreview() {

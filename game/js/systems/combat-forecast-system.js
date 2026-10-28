@@ -39,6 +39,12 @@ var FORECAST_RATIO_THRESHOLDS = {
    contre 0,57 à 0,89 à distance. 0,7 le recale sur les classes à distance, sur qui les seuils sont calés. */
 var FORECAST_CLASS_DMG_MULT = { knight: 0.7 };
 
+/* v3.523.0 (audit COM-1) : dégâts réels d'une ÉLITE évaluée / estimés, par archétype (rage triplée par
+   l'exaltation, blindage), et son bouclier (−50 % sur 20 à 25 % des rounds) sur les dégâts du héros. Calés au
+   banc : 189 cases de 20 combats, verdicts hors bande 55 → 32. Pronostic seul : ni vagues, ni boss, ni jeu. */
+var FORECAST_ELITE_DMG_MULT = { enraged: 2.0, armored: 1.2, shielded: 1.2 };
+var FORECAST_ELITE_HERO_DMG_MULT = 0.88;
+
 /* v3.429.15 : part des soins de compagnon modélisés qui compte. Au banc, le héros boit ses potions
    avant de passer sous le seuil de Wenna : soins réels 0,3 à 0,8 du modèle pour le Chevalier. */
 var FORECAST_COMPANION_HEAL_MULT = 0.75;
@@ -191,6 +197,13 @@ var CombatForecast = {
     return Math.max(1, raw * (1 - def));
   },
 
+  /* v3.523.0 : facteur d'archétype d'une élite évaluée (FORECAST_ELITE_DMG_MULT), 1 sinon. */
+  getEliteDmgMult: function (enemy) {
+    if (!enemy || !enemy.isElite) return 1;
+    var k = Number(FORECAST_ELITE_DMG_MULT[enemy.archetype]);
+    return k > 0 ? k : 1;
+  },
+
   /* Le soin d'un boss impose un plancher de dégâts : sous ce seuil, ses PV remontent plus
      vite qu'ils ne descendent. On y ajoute la marge du bouclier (−50 % pendant 2 rounds
      sur un cycle de 4 à 6), soit environ +25 %. Renvoie 0 si l'ennemi ne se soigne pas. */
@@ -337,8 +350,8 @@ var CombatForecast = {
     if (!enemy) return null;
 
     var party = this.getPartyBonus(!!options.fullParty); // v3.429.9
-    var heroDmg = this.getForecastHeroDamage() + party.dmg;
-    var enemyDmg = this.getEnemyDamagePerRound(enemy);
+    var heroDmg = (this.getForecastHeroDamage() + party.dmg) * (enemy.isElite ? FORECAST_ELITE_HERO_DMG_MULT : 1); // v3.523.0 : bouclier d'élite
+    var enemyDmg = this.getEnemyDamagePerRound(enemy) * this.getEliteDmgMult(enemy); // v3.523.0 : rage et exaltation
     var heroHp = Number(game.heroHp != null ? game.heroHp : (game.heroMaxHp || 1));
     var heroMaxHp = Number(game.heroMaxHp || 1);
     var enemyHp = Number(enemy.maxHp || 0);
@@ -448,6 +461,13 @@ var CombatForecast = {
     if (mission.sourceKind === "adventure") {
       var aq = (window.ADVENTURE_QUESTS || {})[mission.questId];
       if (!aq) return null;
+      // v3.523.0 (audit) : une quête d'élite est jugée sur l'élite, construite comme au départ (adventure-quest-system.js:167)
+      if (aq.type === "elite" && aq.eliteId && window.EliteManager && typeof EliteManager.make === "function"
+        && (aq.steps || []).some(function (st) { return st.type === "eliteKill"; })) {
+        // force de duel : la baisse prévue pour l'escorte ne vaut qu'avec l'escorte, que le pronostic ne joue pas (revue)
+        var elite = EliteManager.make(aq.eliteId, aq.worldId, aq.adventureIndex, { statMult: aq.eliteStatMult || null, escort: { members: [] } });
+        if (elite) return elite;
+      }
       var hasBoss = (aq.steps || []).some(function (st) { return st.type === "bossKill"; });
       // v3.311.0 : rencontres scriptées -> la rencontre en cours sert de référence.
       // v3.429.9 : sauf si la quête finit sur un boss (le trône de sable) : c'est lui qui décide.
@@ -522,9 +542,21 @@ var CombatForecast = {
       }
     }
     return out;
+  },
+
+  /* v3.523.0 (audit PLA-3) : pronostic d'une élite de carte, avec le frein du jour (comme living-map-system.js:516). */
+  forMapElite: function (mapId, sectorId, eliteId) {
+    if (!window.LivingMapManager || !window.EliteManager || typeof EliteManager.make !== "function") return null;
+    var map = LivingMapManager.getMap(mapId), brake = LivingMapManager.getBrakeMult(mapId, sectorId);
+    var elite = EliteManager.make(eliteId, map ? map.worldId : "forest", 0, { brakeMult: brake, escort: { members: [] } }); // force de duel
+    var out = elite ? this.forEnemy(elite) : null;
+    if (out) { out.enemyName = elite.name; out.brakeMult = brake; }
+    return out;
   }
 };
 
+window.FORECAST_ELITE_DMG_MULT = FORECAST_ELITE_DMG_MULT;
+window.FORECAST_ELITE_HERO_DMG_MULT = FORECAST_ELITE_HERO_DMG_MULT;
 window.FORECAST_RATIO_THRESHOLDS = FORECAST_RATIO_THRESHOLDS;
 window.FORECAST_CLASS_DMG_MULT = FORECAST_CLASS_DMG_MULT;
 window.FORECAST_COMPANION_HEAL_MULT = FORECAST_COMPANION_HEAL_MULT;
