@@ -13296,7 +13296,7 @@ console.log("\n[188] v3.416.0 — Entrepôt : tuiles T3, liste déroulante, Ma s
     run("Prefs._cache = {}; Prefs._save({}); game.resources.ble = WarehouseManager.getCap('ble'); game.resources.bois = 120; game.resources.planche = 0; game.resources.seve_aeswyn = 3;");
     ok(run("getWarehouseFilter()") === "all" && run("warehouseShowsZeros()") === false && run("Object.keys(getWarehouseHidden()).length") === 0, "défauts : Tout, zéros masqués, sélection vide");
     var h = run("buildWarehouseHTML()");
-    ok(h.indexOf("wh-tile is-full") !== -1 && h.indexOf("wh-warn") !== -1, "Blé au plafond : tuile au liseré rouge et avertissement");
+    ok(h.indexOf("wh-tile is-full") !== -1 && (h.indexOf("wh-warn") !== -1) === !!run("warehouseOpenDemand().ble"), "Blé au plafond : tuile au liseré rouge ; avertissement seulement si un coût ouvert le demande (v3.533.0, RES-2)");
     ok(h.indexOf("openWarehouseSheet('bois')") !== -1 && h.indexOf("openWarehouseSheet('planche')") === -1, "ressource à zéro masquée par défaut (Planche), Bois affiché");
     ok(h.indexOf("wh-zero-note") !== -1, "une ligne dit combien de ressources à zéro sont masquées");
     ok(h.indexOf("wh-tile-bar") !== -1 && h.indexOf("wh-tile-n") !== -1, "tuile T3 : nombre sur le bandeau, filet du plafond pour les bruts");
@@ -19614,6 +19614,16 @@ console.log("\n[351] v3.532.0 — Sève par victoire selon le monde atteint (aud
     ok(g.LIVING_MAP_RULES.repeatableElite.sevePerWorldAhead === 1, "règle en donnée : sevePerWorldAhead = 1");
     g.game.worldsEverReached = saved; g.WorldManager.worldIndex = wi;
   } catch (err) { ok(false, "[351] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[352] v3.533.0 — Alerte « au plafond » des seules ressources demandées (audit RES-2, option A)");
+(function () {
+  try {
+    var d = g.warehouseOpenDemand();
+    ok(d && typeof d === "object" && !("gold" in d), "warehouseOpenDemand : un ensemble de ressources, sans l'or");
+    var src = fs.readFileSync(path.join(ROOT, "js/ui/warehouse-view.js"), "utf8");
+    ok(/isWarehouseFull\(k\) && demand\[k\]/.test(src), "l'alerte ne compte que les ressources pleines qu'un coût ouvert demande");
+  } catch (err) { ok(false, "[352] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));

@@ -72,6 +72,28 @@ function isWarehouseFull(key) {
   return WarehouseManager.getCap(key) !== Infinity && WarehouseManager.getFreeSpace(key) <= 0;
 }
 
+/* v3.533.0 (audit RES-2, option A de Seb) : ressources qu'un coût encore ouvert demande (prochain niveau d'un
+   bâtiment ou d'un bâtiment de production, rangées de zones). L'alerte « au plafond » ne compte que celles-là. */
+function warehouseOpenDemand() {
+  var need = {};
+  function add(c) { Object.keys(c || {}).forEach(function (k) { if (k !== "gold" && Number(c[k]) > 0) need[k] = true; }); }
+  if (window.VillageBuildingManager && window.VILLAGE_BUILDINGS) Object.keys(VILLAGE_BUILDINGS).forEach(function (id) {
+    var def = VILLAGE_BUILDINGS[id];
+    if (typeof def.unlockCheck === "function" && !def.unlockCheck()) return;
+    add(VillageBuildingManager.getNextCost(id));
+  });
+  if (window.ProductionManager && window.PRODUCTION_BUILDINGS) Object.keys(PRODUCTION_BUILDINGS).forEach(function (id) {
+    if (!ProductionManager.isBuildingUnlocked(id)) return;
+    add(ProductionManager.getNextCost(id));
+    if (!window.ProductionPlotsSystem || !ProductionPlotsSystem.isManaged(id)) return;
+    for (var row = 0; row < 3; row++) {
+      var st = ProductionPlotsSystem.getRowState(id, row);
+      if (st.rowOpen) { add(st.unlockCost); add(st.upCost); add(st.impCost); }
+    }
+  });
+  return need;
+}
+
 /* Ateliers dont une recette donne cette ressource. */
 function getWorkshopsProducing(key) {
   return Object.keys(WORKSHOPS_CONFIG).filter(function (wid) {
@@ -232,7 +254,7 @@ function buildWarehouseHTML() {
        + '<div class="warehouse-note-text"><strong>' + _t("Le tavernier") + '</strong> : « ' + _t("L’Entrepôt ne rachète plus rien. Ce qu’il te reste, porte-le-moi : mes contrats paient mieux, et on sait ce qu’on te demande.") + ' »</div>'
        + '<button type="button" class="settings-btn" onclick="dismissWarehouseNoSaleNote()">' + _t("Compris") + '</button></div>';
   }
-  var nFull = all.filter(isWarehouseFull).length;
+  var demand = warehouseOpenDemand(), nFull = all.filter(function (k) { return isWarehouseFull(k) && demand[k]; }).length;
   if (nFull) h += '<div class="wh-warn">' + esc(_tn(nFull, "{n} ressource au plafond : sa production est à l'arrêt.", "{n} ressources au plafond : leur production est à l'arrêt.")) + '</div>';
 
   h += buildWarehouseFilterRowHTML(all);
