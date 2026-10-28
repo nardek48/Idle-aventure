@@ -1,0 +1,65 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Village au plafond</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Banc RES-2 : une colonne, trois options, rendus réels du jeu (Chromium). */
+:root { --fond:#16110b; --carte:#231a11; --encre:#f1e6cf; --sourd:#bba98a; --or:#e3b04f; --trait:#4a3a28; color-scheme: dark; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--fond); color:var(--encre); font:16px/1.5 system-ui,-apple-system,sans-serif; }
+main { max-width:760px; margin:0 auto; padding-block:20px 48px; padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px)); display:grid; gap:18px; }
+h1 { font:700 24px/1.2 Georgia,serif; color:var(--or); margin:0; text-wrap:balance; }
+h2 { font:700 18px Georgia,serif; color:var(--or); margin:0; }
+p,ul,ol { margin:0; } .sourd { color:var(--sourd); }
+section { background:var(--carte); border:1px solid var(--trait); border-radius:14px; padding:16px; display:grid; gap:12px; min-width:0; }
+section.reco { border-color:var(--or); }
+.badge { display:inline-block; font-size:13px; font-weight:700; color:#1d1408; background:var(--or); border-radius:999px; padding:2px 10px; margin-left:6px; vertical-align:middle; }
+.figs { display:flex; gap:12px; overflow-x:auto; padding-bottom:4px; }
+figure { margin:0; flex:0 0 auto; display:grid; gap:4px; }
+figure img { display:block; max-width:none; border-radius:10px; border:1px solid var(--trait); }
+figcaption { font-size:13px; color:var(--sourd); }
+li { margin-block:4px; }
+code { font-size:14px; overflow-wrap:anywhere; }
+table { border-collapse:collapse; width:100%; font-size:14px; } .tbl { overflow-x:auto; } td,th { border-top:1px solid var(--trait); padding:6px 4px; text-align:left; vertical-align:top; }
+</style>
+</head><body>
+<main>
+<h1>Le village au plafond</h1>
+<p class="sourd">Audit RES-2. En fin de partie, l'Entrepôt est plein en permanence. L'écran Entrepôt affiche « 6 ressources au plafond : leur production est à l'arrêt », et chaque retour de patrouille dit « Entrepôt plein : … perdus ». Mesures sur le vrai moteur, v3.532.0.</p>
+
+<section><h2>Ce que mesure le banc des débouchés (Montagne, 4 passages par jour)</h2>
+<div class="tbl"><table>
+<tr><th>Par jour</th><th>Valeur</th></tr>
+<tr><td>Production théorique des zones</td><td>535 960</td></tr>
+<tr><td>Récolté par le joueur</td><td>11 943 (2 %)</td></tr>
+<tr><td>Rapporté par les patrouilles</td><td>4 801</td></tr>
+<tr><td>Perdu au retour des patrouilles</td><td>7 159</td></tr>
+<tr><td>Temps passé au plafond, pour chacune des 6 matières brutes</td><td>100 %</td></tr>
+</table></div>
+<p>Le village produit 40 fois ce qu'il peut stocker. Ce n'est pas un manque de débouchés à combler de quelques unités : c'est la règle RE-3, acceptée (la caravane laisse la moitié du plafond au village).</p>
+</section>
+
+<section class="reco"><h2>A · L'alerte « au plafond » seulement si un coût ouvert demande la ressource<span class="badge">Recommandée</span></h2>
+<p>La ligne de l'Entrepôt ne compte plus que les ressources au plafond qu'un coût encore ouvert demande : prochain niveau d'un bâtiment, d'un bâtiment de production, ouverture, montée ou amélioration d'une rangée de zones. Les autres sont simplement pleines, sans alarme.</p>
+<div class="tbl"><table>
+<tr><th>Fin de partie au robot, matières brutes au plafond</th><th>Alerte aujourd'hui</th><th>Avec A</th></tr>
+<tr><td>Chevalier</td><td>6 ressources</td><td>4 (Bois, Pierre, Fer, Eau : les zones en veulent encore)</td></tr>
+<tr><td>Mage</td><td>6 ressources</td><td>4 (mêmes ressources)</td></tr>
+<tr><td>Village et zones finis</td><td>6 ressources</td><td>0</td></tr>
+</table></div>
+<table><tr><th>Coût</th><td><code>ui/warehouse-view.js</code> : un relevé des coûts ouverts (fonctions déjà présentes dans les systèmes du village et des zones). Aucun état sauvegardé.</td></tr></table>
+</section>
+
+<section><h2>B · Le surplus d'une patrouille reste en charrette</h2>
+<p>Au lieu d'être perdu, ce qui dépasse attend dans une charrette et se décharge quand la place revient. Au banc, la place ne revient jamais : les 6 matières brutes sont au plafond 100 % du temps, et les zones remplissent tout de suite ce qui se libère. La charrette grossirait donc sans jamais se vider. Le message « perdus » deviendrait « en charrette », pour aucun gain réel. Déconseillé.</p>
+</section>
+
+<section><h2>C · Rouvrir des niveaux du village payés en matières brutes (question)</h2>
+<p>Ouvrir à la Montagne des niveaux déjà codés mais jamais proposés (Atelier 9-10, Palissade 9-10, ateliers 4-5), payés en matières brutes et en Obsidienne. C'est la seule piste qui donne un vrai débouché, mais elle rouvre en partie la décision RE-3 (pas d'usage permanent des matières brutes). Je ne la prépare que si tu me le demandes explicitement.</p>
+</section>
+
+<section><h2>D · Accepter un village « fini »</h2>
+<p>Ne rien changer. L'alerte reste vraie : la production est bien à l'arrêt.</p>
+</section>
+</main>
+
+</body></html>
