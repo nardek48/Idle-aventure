@@ -296,7 +296,7 @@ function buildBestiaryEntryCardHTML(id) {
   h += '<div class="nb-entry-icon-col"><div class="nb-entry-icon-frame">';
   var imagePath = data.image || "";
   if (imagePath) {
-    h += '<img src="' + esc(imagePath) + '" alt="' + esc(data.name ? _td(data.name) : _t("Créature")) + '">';
+    h += '<img ' + portraitThumbSrcAttrs(imagePath) + ' alt="' + esc(data.name ? _td(data.name) : _t("Créature")) + '">'; // vignette (IMA-2)
   } else {
     h += '<span class="nb-entry-icon-emoji">' + renderIcon(isBoss ? "bosses" : "enemies", data.asset || "") + '</span>';
   }

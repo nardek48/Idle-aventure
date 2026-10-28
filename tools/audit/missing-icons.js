@@ -60,6 +60,15 @@ fichiers.forEach(function (f) {
   Object.keys(sb).forEach(function (k) { if (/^[A-Z][A-Z0-9_]+$/.test(k)) fouille(sb[k], 0); });
 })();
 
+/* v3.527.0 (audit IMA-2) : chaque portrait d'ennemi a sa vignette de 256 px (bestiaire, carte). */
+["Enemies", "Boss"].forEach(function (d) {
+  var dir = path.join(ROOT, "images", d);
+  fs.readdirSync(dir).filter(function (f) { return /\.webp$/.test(f); }).forEach(function (f) {
+    var v = "images/" + d + "/vignettes/" + f;
+    if (!fs.existsSync(path.join(ROOT, v))) manquants[v] = ["vignette de images/" + d + "/" + f + " (256 px, à tirer du portrait)"];
+  });
+});
+
 var cles = Object.keys(manquants).sort();
 console.log(cles.length ? cles.length + " image(s) absente(s) :\n" : "Aucune image absente.");
 cles.forEach(function (k) { console.log("  " + k + "   <- " + manquants[k].join(", ")); });

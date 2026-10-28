@@ -46,7 +46,6 @@ var ELITE_DB = {
     lore: "Ses yeux ont blanchi. Elle tisse toujours, mais plus rien ne se prend dans sa toile : "
       + "on dirait qu'elle attend autre chose. Quelqu'un est passé par ici avant toi.",
     image: "./images/Enemies/elite_fileuse.webp", // v3.348.0 : portrait propre (la base garde le sien)
-    questIcon: "./images/Icons/quest_icons/elite/elite1.webp",
     /* v3.286.0 — ESCORTE. La Fileuse ne garde pas ses toiles seule : une araignée de sa
        couvée l'accompagne. Une étape d'élite demande « vaincre la Fileuse », pas « en tuer
        N » : l'escorte durcit la rencontre sans jamais rendre l'objectif moins cher — c'est
@@ -81,7 +80,6 @@ var ELITE_DB = {
     lore: "Elle a poussé sur de la cendre, et la cendre ne l'a pas quittée. Quand on la coupe, "
       + "elle chauffe au lieu de saigner.",
     image: "./images/Enemies/elite_ronce.webp", // v3.348.0 : portrait propre (la base garde le sien)
-    questIcon: "./images/Icons/quest_icons/elite/elite4.webp",
     phases: null,
     repeatable: false
   },
@@ -131,7 +129,6 @@ var ELITE_DB = {
       + "dite il y a longtemps à quelqu'un qui n'est jamais revenu l'en délier.",
     // Icône propre, pas encore générée : jamais d'emprunt à une autre image (règle Seb 18/09/2026).
     image: "./images/Enemies/elite_serment.webp", // v3.348.0 : portrait propre (la base garde le sien)
-    questIcon: "./images/Icons/quest_icons/elite/elite_serment.webp",
     phases: null,
     repeatable: false
   },
@@ -167,7 +164,6 @@ var ELITE_DB = {
       + "il boit d'abord, il frappe ensuite.",
     // Icône propre, pas encore générée : jamais d'emprunt (règle Seb 18/09/2026).
     image: "./images/Enemies/elite_dard.webp", // v3.348.0 : portrait propre (la base garde le sien)
-    questIcon: "./images/Icons/quest_icons/elite/elite_dard.webp",
     winResource: { id: "chitine_profondeurs", amount: 1 },
     phases: null,
     repeatable: true
@@ -185,7 +181,6 @@ var ELITE_DB = {
     statMult: { endurance: 3, power: 3, celerity: 1.0 },
     lore: "Il ne pose plus de pierres. Il regarde où les autres les posent, et il corrige.",
     image: "./images/Enemies/elite_contremaitre.webp", // image livrée
-    questIcon: "./images/Icons/quest_icons/elite/elite_contremaitre.webp",
     escort: { members: ["batisseur", "skeleton"], hpMult: 0.3, goldMult: 0.3 },
     phases: null,
     repeatable: false
@@ -202,7 +197,6 @@ var ELITE_DB = {
     statMult: { endurance: 3.5, power: 4, celerity: 0.6 },
     lore: "Une masse de pierre qui a des bras. Elle ne dort pas. Elle attend qu'on passe devant.",
     image: "./images/Enemies/elite_golem.webp", // image livrée
-    questIcon: "./images/Icons/quest_icons/elite/elite_golem.webp",
     escort: { members: ["zombie"], hpMult: 0.3, goldMult: 0.3 },
     phases: null,
     repeatable: false
@@ -220,7 +214,6 @@ var ELITE_DB = {
     statMult: { endurance: 3, power: 3, celerity: 1.0 },
     lore: "Il porte deux couronnes, l'une sur l'autre. La seconde n'est pas à lui. Il ne l'enlève pas.",
     image: "./images/Enemies/elite_porte_couronne.webp",
-    questIcon: "./images/Icons/quest_icons/elite/elite_porte_couronne.webp",
     escort: { members: ["spectre", "wraith"], hpMult: 0.3, goldMult: 0.3 },
     phases: null,
     repeatable: false
@@ -237,7 +230,6 @@ var ELITE_DB = {
     statMult: { endurance: 3, power: 3.2, celerity: 1.0 },
     lore: "Elle pleure tous ceux qui ne dorment pas. Ça fait beaucoup.",
     image: "./images/Enemies/elite_pleureuse.webp",
-    questIcon: "./images/Icons/quest_icons/elite/elite_pleureuse.webp",
     escort: { members: ["spectre"], hpMult: 0.3, goldMult: 0.3 },
     phases: null,
     repeatable: false
@@ -254,7 +246,6 @@ var ELITE_DB = {
     statMult: { endurance: 3, power: 3, celerity: 0.7 },
     lore: "Il forge d'autres comme lui. Il s'arrête au milieu du geste quand on entre, et reprend quand on part.",
     image: "./images/Enemies/elite_golem_forge.webp",
-    questIcon: "./images/Icons/quest_icons/elite/elite_golem_forge.webp",
     escort: { members: ["dragonling"], hpMult: 0.3, goldMult: 0.3 },
     phases: null,
     repeatable: false
@@ -272,7 +263,6 @@ var ELITE_DB = {
     statMult: { endurance: 2.8, power: 3.2, celerity: 1.1 },
     lore: "Il ne regarde pas les visages. Il regarde les mains, puis il choisit.",
     image: "./images/Enemies/elite_ifrit_trieur.webp",
-    questIcon: "./images/Icons/quest_icons/elite/elite_ifrit_trieur.webp",
     escort: { members: ["minordemon"], hpMult: 0.3, goldMult: 0.3 },
     phases: null,
     repeatable: false
@@ -289,7 +279,6 @@ var ELITE_DB = {
     statMult: { endurance: 0.9, power: 3.6, celerity: 0.6 }, // banc (sauvegardes de fin de Crypte, 8 combats) : 100 %, 8 à 10 rounds, 27 à 34 % des PV perdus
     lore: "Il est plus vieux que la pente. Sa lave a refroidi par endroits, et il continue quand même.",
     image: "./images/Enemies/lavagolem.webp", // exception : l'image de sa base (Seb, 25/10)
-    questIcon: "./images/Icons/quest_icons/elite/elite2.webp",
     escort: { members: ["dragonling"], hpMult: 0.3, goldMult: 0.3 },
     phases: null,
     repeatable: true,
@@ -303,7 +292,6 @@ var ELITE_DB = {
     statMult: { endurance: 1.5, power: 2.6, celerity: 1.2 }, // banc : 100 %, 6 à 10 rounds, 33 à 60 % des PV perdus (Enragée)
     lore: "Elle ne quitte pas son nid. Ceux qui en sortent volent mal, au début.",
     image: "./images/Enemies/dragonling.webp", // exception : l'image de sa base (Seb, 25/10)
-    questIcon: "./images/Icons/quest_icons/elite/elite2.webp",
     escort: { members: ["dragonling", "dragonling"], hpMult: 0.3, goldMult: 0.3 },
     phases: null,
     repeatable: true,
@@ -322,7 +310,6 @@ var ELITE_DB = {
     lore: "Ce n'est pas un arbre qui a poussé. C'est quelque chose qui a pris la forme d'un arbre "
       + "pour qu'on cesse de le regarder. Le battement vient de dessous.",
     image: "./images/Enemies/elite_arbre_mere.webp", // v3.348.0 : portrait propre (la base garde le sien)
-    questIcon: "./images/Icons/quest_icons/elite/elite2.webp",
     phases: null,
     repeatable: true
   }

@@ -582,7 +582,7 @@ function buildEnchantBoardHTML() {
     return _td((typeof RARITY_LABELS !== "undefined" && RARITY_LABELS[r]) || r);
   });
   var h = '<div class="forge-board">';
-  h += '<div class="forge-board-head"><img class=ico-inline src=images/Icons/scene/node_discovery.webp> ' + _t("Établi")
+  h += '<div class="forge-board-head"><img class=ico-inline src=images/Icons/workshops/workbench.webp> ' + _t("Établi")
      + '<span class="forge-board-max">' + (allowed.length ? esc(allowed.join(", ")) : _t("Aucune rareté")) + '</span></div>';
   h += '<div class="forge-board-note">' + _t("La ligne garde sa nature : seule sa valeur est relancée, et jamais vers le bas. Chaque relance de la même ligne coûte plus cher.") + '</div>';
 
@@ -658,7 +658,7 @@ function buildTransmuteBoardHTML() {
   if (!window.EnchantManager) return "";
   var EM = EnchantManager, meta = getVillageCostMeta("gold");
   var h = '<div class="forge-board">';
-  h += '<div class="forge-board-head"><img class=ico-inline src=images/Icons/scene/node_discovery.webp> ' + _t("Établi") + '<span class="forge-board-max">' + _t("Transmutation") + '</span></div>';
+  h += '<div class="forge-board-head"><img class=ico-inline src=images/Icons/workshops/workbench.webp> ' + _t("Établi") + '<span class="forge-board-max">' + _t("Transmutation") + '</span></div>';
   h += '<div class="forge-board-note">' + _t("Change la nature d'un bonus. La valeur garde sa place dans la fourchette : un bonus haut reste haut.") + '</div>';
   var rows = 0;
   EQUIPMENT_SLOTS.forEach(function (slot) {
@@ -702,7 +702,7 @@ function askTransmuteAffix(slot, index, stat) {
   if (!o || !cost) return;
   showConfirmModal(_t("Transmuer ce bonus ?"),
     _t("{a} devient {b}, pour {g} or. La ligne pourra être transmuée de nouveau, plus cher.", { a: formatEquipmentStatValue(a.stat, a.value), b: formatEquipmentStatValue(o.stat, o.value), g: formatNumber(cost.gold) }),
-    "images/Icons/scene/node_discovery.webp", function () {
+    "images/Icons/workshops/workbench.webp", function () {
       if (EnchantManager.transmute(item, index, stat) && openVillageBuildingId === "enchanter") openVillageBuildingSheet("enchanter");
     });
 }

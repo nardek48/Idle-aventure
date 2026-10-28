@@ -25,7 +25,7 @@
   var IC = {
     gold: "images/Icons/gold_icon.webp",
     flee: "images/Icons/quests/flee.webp",
-    back: "images/Icons/plots/hunting_blind.webp",
+    back: "images/Icons/system/return_camp.webp", // v3.527.0 (IMA-5) : propre à « Rentrer » (était l'Affût aménagé)
     grim: "images/Icons/codex/codex_lore.webp",
     tact: "images/Icons/combat_stats/stat_critical.webp",
     cont: "images/Icons/quests/continue.webp",
@@ -33,7 +33,7 @@
     attack: "images/Icons/special_attacks/attack3.webp",
     ctxDungeon: "images/Icons/quests/mission_dungeon.webp",
     ctxMission: "images/Icons/quests/mission_combat.webp",
-    ctxHunt: "images/Icons/quests/mission_hunt.webp",
+    ctxHunt: "images/Icons/quests/ctx_exploration.webp", // v3.527.0 (IMA-5) : contexte « Exploration » (était l'image des chasses)
     st: "images/Icons/combat_status/"
   };
   /* Règle de Seb (18/09/2026) : une icône qui n'existe pas encore garde son vrai chemin et

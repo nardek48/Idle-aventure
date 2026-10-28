@@ -19530,6 +19530,21 @@ console.log("\n[345] v3.525.0 — Lisibilité et petits écrans (audit, lot 8)")
   } catch (err) { ok(false, "[345] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[346] v3.527.0 — Images : vignettes, fichiers morts, usages séparés (audit, lot 9)");
+(function () {
+  try {
+    var img = path.join(ROOT, "images"), sans = [];
+    ["Enemies", "Boss"].forEach(function (d) { fs.readdirSync(path.join(img, d)).filter(function (f) { return /\.webp$/.test(f); }).forEach(function (f) { if (!fs.existsSync(path.join(img, d, "vignettes", f))) sans.push(d + "/" + f); }); });
+    // vignette absente : le jeu affiche le portrait entier ; missing-icons.js la liste, sans bloquer la publication
+    if (sans.length) console.log("  ℹ vignettes à tirer : " + sans.join(", "));
+    ok(g.portraitThumb("./images/Enemies/wolf.webp") === "./images/Enemies/vignettes/wolf.webp" && g.portraitThumb("images/Icons/x.webp") === "images/Icons/x.webp", "IMA-2 : vignette pour les seuls portraits Enemies/ et Boss/");
+    ok(Object.keys(g.ELITE_DB).every(function (k) { return !("questIcon" in g.ELITE_DB[k]); }), "IMA-7 : plus de champ questIcon (jamais lu)");
+    var js = ["ui/combat-screen-view.js", "ui/heros-view.js", "ui/village-building-view.js", "ui/pa2-view.js", "data/village-quests.js"].map(function (f) { return fs.readFileSync(path.join(ROOT, "js", f), "utf8"); }).join("\n");
+    ok(js.indexOf("plots/hunting_blind.webp") === -1 && js.indexOf("quests/mission_hunt.webp") === -1 && js.indexOf("potions/potion_force.webp") === -1, "IMA-5 : « Rentrer », l'Exploration et les stats de Petite Aventure n'empruntent plus d'image");
+    ok(js.indexOf("special_attacks/smashing_blow.webp") === -1 && /subtabs\/talents\.webp/.test(js) && /subtabs\/companions\.webp/.test(js) && /workshops\/workbench\.webp/.test(js), "IMA-5 : Talents, Compagnons, Établi et rangs des sorts ont leur chemin propre");
+  } catch (err) { ok(false, "[346] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

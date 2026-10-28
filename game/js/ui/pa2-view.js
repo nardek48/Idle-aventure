@@ -41,9 +41,9 @@ var PA2_ICONS = {
   boss: "images/Icons/scene/dest/dest_cerf_racine.webp",
   clairiere: "images/Icons/scene/dest/dest_clairiere.webp",
   tertre: "images/Icons/scene/dest/dest_tertre.webp",
-  power: "images/Icons/potions/potion_force.webp",
-  precision: "images/Icons/potions/potion_precision.webp",
-  endurance: "images/Icons/potions/potion_endurance.webp",
+  power: "images/Icons/improvement_icons/power.webp", // v3.527.0 (IMA-5) : les icônes de stat de la fiche du héros
+  precision: "images/Icons/improvement_icons/accuracy.webp",
+  endurance: "images/Icons/improvement_icons/endurance.webp",
   ruse: "images/Icons/scene/ways/fight_trick.webp",
   flee: "images/Icons/quests/flee.webp",
   hp: "images/Icons/combat_stats/stat_health.webp",

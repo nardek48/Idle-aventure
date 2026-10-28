@@ -301,7 +301,7 @@ window.adminApplyCycleCount = adminApplyCycleCount;
 function buildAdminCompanionsHTML() {
   if (!window.CompanionManager || !window.COMPANIONS_DB) return "";
   var h = '<div class="panel-card admin-card">';
-  h += '<h3><img class=ico-inline src=images/Icons/subtabs/hero_abilities.webp> Compagnons</h3>';
+  h += '<h3><img class=ico-inline src=images/Icons/subtabs/companions.webp> Compagnons</h3>';
   var lignes = Object.keys(COMPANIONS_DB).map(function (id) {
     var st = CompanionManager.state(id), def = getCompanionDef(id);
     var etat = st && st.unlocked ? "recruté" + (st.voie ? " (" + COMPANIONS_DB[id].voies[st.voie].label + ")" : "") : "non recruté";
@@ -309,7 +309,7 @@ function buildAdminCompanionsHTML() {
   });
   h += '<p class="panel-sub">' + lignes.join(" · ") + '</p>';
   h += '<p class="panel-sub">Recrute les compagnons manquants et ouvre Héros › Compagnons. Une voie sans choix prend la voie par défaut, modifiable ensuite dans sa fiche.</p>';
-  h += '<button class="settings-btn admin-btn" onclick="adminRecruitCompanions()"><img class=ico-inline src=images/Icons/subtabs/hero_abilities.webp> Recruter les compagnons</button>';
+  h += '<button class="settings-btn admin-btn" onclick="adminRecruitCompanions()"><img class=ico-inline src=images/Icons/subtabs/companions.webp> Recruter les compagnons</button>';
   h += '</div>';
   return h;
 }

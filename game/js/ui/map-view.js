@@ -150,7 +150,7 @@ function buildWorldPopupHTML(index) {
       }
       h += '<button type="button" class="map-monster-chip' + (m.isBoss ? " is-boss" : "") + (m.isElite ? " is-elite" : "") + (m.isNew ? " is-new" : "") + (m.image ? " has-icon-img" : "") + '" title="' + esc(_td(m.name)) + '"' + tap + '>';
       if (m.image) {
-        h += '<img src="' + esc(m.image) + '" alt="' + esc(_td(m.name)) + '" onerror="this.parentElement.classList.remove(\'has-icon-img\'); this.remove();">';
+        h += '<img ' + portraitThumbSrcAttrs(m.image) + ' alt="' + esc(_td(m.name)) + '" onerror="this.parentElement.classList.remove(\'has-icon-img\'); this.remove();">';
         h += '<span class="icon-img-fallback">' + renderIconOrEmojiHTML(m.icon, "map-fallback-ico", "") + '</span>';
       } else {
         h += m.icon;

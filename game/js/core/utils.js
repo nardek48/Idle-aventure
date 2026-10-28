@@ -130,7 +130,14 @@ var MISSING_ICONS = []; // chemins réellement tombés en jeu (diagnostic, sans 
 
 function onMissingImage(e) {
   var img = e && e.target;
-  if (!img || img.tagName !== "IMG" || img.getAttribute("onerror") || img.getAttribute("data-missing-icon")) return;
+  if (!img || img.tagName !== "IMG") return;
+  var full = img.getAttribute("data-full"); // v3.527.0 : vignette absente → le portrait entier, avant tout autre repli
+  if (full && (img.getAttribute("src") || "").indexOf("/vignettes/") !== -1) {
+    if (MISSING_ICONS.indexOf(img.getAttribute("src")) === -1) MISSING_ICONS.push(img.getAttribute("src"));
+    if (e.stopPropagation) e.stopPropagation();
+    img.removeAttribute("data-full"); img.src = full; return;
+  }
+  if (img.getAttribute("onerror") || img.getAttribute("data-missing-icon")) return;
   var src = img.getAttribute("src") || "";
   if (!src || src.indexOf("data:") === 0) return;
   if (MISSING_ICONS.indexOf(src) === -1) MISSING_ICONS.push(src);
@@ -141,6 +148,15 @@ function onMissingImage(e) {
 if (typeof window !== "undefined" && typeof window.addEventListener === "function") {
   window.addEventListener("error", onMissingImage, true);
 }
+/* v3.527.0 (audit IMA-2) : portraits d'ennemis en petit (bestiaire, carte) → vignette de 256 px,
+   assez pour le zoom du PC et de la tablette ; le portrait entier sert de repli. */
+function portraitThumb(src) { return String(src || "").replace(/(images\/(?:Enemies|Boss)\/)([^\/]+\.webp)$/, "$1vignettes/$2"); }
+function portraitThumbSrcAttrs(src) {
+  var t = portraitThumb(src);
+  return 'src="' + esc(t) + '"' + (t !== String(src || "") ? ' data-full="' + esc(src) + '"' : '');
+}
+window.portraitThumb = portraitThumb;
+window.portraitThumbSrcAttrs = portraitThumbSrcAttrs;
 window.MISSING_ICON_SRC = MISSING_ICON_SRC;
 window.MISSING_ICONS = MISSING_ICONS;
 window.onMissingImage = onMissingImage;

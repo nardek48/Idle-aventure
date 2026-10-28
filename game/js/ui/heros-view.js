@@ -659,9 +659,9 @@ function getHerosTabs() {
   var unlocked = function (t) { return typeof isTabUnlocked !== "function" || isTabUnlocked(t); };
   var tabs = [["hero", "images/Icons/subtabs/hero_summary.webp", _t("Résumé")]];
   if (unlocked("equip")) tabs.push(["equip", "images/Icons/subtabs/equipment.webp", _t("Équipement")]);
-  if (unlocked("talents")) tabs.push(["talents", "images/Icons/scene/node_discovery.webp", _t("Talents")]);
+  if (unlocked("talents")) tabs.push(["talents", "images/Icons/subtabs/talents.webp", _t("Talents")]); // v3.527.0 (IMA-5)
   if (unlocked("companions") && window.CompanionManager && CompanionManager.unlockedIds().length) {
-    tabs.push(["companions", "images/Icons/subtabs/hero_abilities.webp", _t("Compagnons")]);
+    tabs.push(["companions", "images/Icons/subtabs/companions.webp", _t("Compagnons")]); // v3.527.0 (IMA-5)
   }
   return tabs;
 }
@@ -754,7 +754,7 @@ var HEROS_SHEETS = {
   stats: { title: _t("Stats"), icon: "images/Icons/subtabs/hero_stats.webp", build: function () { return buildHerosAmeliorationHTML(); } },
   abilities: { title: _t("Capacités"), icon: "images/Icons/subtabs/hero_abilities.webp", build: function () { return buildHerosStatsHTML(); } },
   // v3.327.0 : détail d'un talent (ui/talents-view.js, openTalentSheet)
-  talent: { title: _t("Talent"), icon: "images/Icons/scene/node_discovery.webp", build: function () { return buildTalentSheetBodyHTML(); } }
+  talent: { title: _t("Talent"), icon: "images/Icons/subtabs/talents.webp", build: function () { return buildTalentSheetBodyHTML(); } }
 };
 
 function buildHerosSheetHTML() {

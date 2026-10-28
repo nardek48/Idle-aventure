@@ -470,9 +470,9 @@
   };
   window.herosItemEquip = herosItemEquip;
   window.herosItemOffer = herosItemOffer;
-  HEROS_SHEETS.companion = { title: _t("Compagnon"), icon: "images/Icons/subtabs/hero_abilities.webp", build: function () {
+  HEROS_SHEETS.companion = { title: _t("Compagnon"), icon: "images/Icons/subtabs/companions.webp", build: function () {
     return '<div class="hs-sheet">' + (openCompanionId ? buildCompanionCardHTML(openCompanionId) : "") + '</div>'; } };
-  HEROS_SHEETS.relic = { title: _t("Reliques"), icon: "images/Icons/subtabs/hero_abilities.webp", build: function () { return buildCompanionRelicPickHTML(); } }; // H4 reliques
+  HEROS_SHEETS.relic = { title: _t("Reliques"), icon: "images/Icons/subtabs/companions.webp", build: function () { return buildCompanionRelicPickHTML(); } }; // H4 reliques
 
   /* ---------- Exports ---------- */
   window.buildHerosResumeHTML = buildHerosResumeHTML;

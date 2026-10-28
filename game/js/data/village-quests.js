@@ -256,41 +256,41 @@ var VILLAGE_MILESTONES = [
   { id: "ms_f_zones", w: 0, g: "v", title: "Trois zones au niveau 3", kind: "zonesAtLevel", arg: 3, target: 3, icon: "images/Production/farm.webp", go: "production" },
   { id: "ms_f_entrepot", w: 0, g: "v", title: "Entrepôt niveau 2", kind: "building", arg: "warehouse", target: 2, icon: "images/Icons/village_buildings/warehouse_expanded.webp", go: "b:warehouse" },
   { id: "ms_f_taverne", w: 0, g: "v", title: "Livrer un contrat à la Taverne", kind: "counter", arg: "tavernDelivered", target: 1, icon: "images/Icons/village_buildings/tavern.webp", go: "b:tavern" },
-  { id: "ms_f_rang", w: 0, g: "h", title: "Premier rang d'un sort", kind: "spellRankMax", target: 1, icon: "images/Icons/special_attacks/smashing_blow.webp", go: "skills", book: "rangs" },
+  { id: "ms_f_rang", w: 0, g: "h", title: "Premier rang d'un sort", kind: "spellRankMax", target: 1, icon: "images/Icons/special_attacks/spell_ranks.webp", go: "skills", book: "rangs" },
   { id: "ms_f_wenna", w: 0, g: "h", title: "Wenna au palier 5", kind: "companionUpg", arg: "wenna", target: 5, icon: "images/Companions/wenna.webp", go: "c:wenna", book: "ardeur" },
   { id: "ms_f_relique", w: 0, g: "h", title: "Équiper une relique", kind: "relicsWorn", target: 1, icon: "images/Icons/quests/mission_exploration.webp", go: "c:wenna", book: "reliques" },
   // Désert
   { id: "ms_d_zones", w: 1, g: "v", title: "Six zones au niveau 5", kind: "zonesAtLevel", arg: 5, target: 6, icon: "images/Production/sawmill.webp", go: "production" },
   { id: "ms_d_entrepot", w: 1, g: "v", title: "Entrepôt niveau 5", kind: "building", arg: "warehouse", target: 5, icon: "images/Icons/village_buildings/warehouse_expanded.webp", go: "b:warehouse" },
   { id: "ms_d_apothicaire", w: 1, g: "v", title: "Apothicaire : une préparation", kind: "counter", arg: "apothecaryCrafts", target: 1, icon: "images/Icons/village_buildings/apothecary.webp", go: "b:apothecary", book: "apothicaire" },
-  { id: "ms_d_rang", w: 1, g: "h", title: "Un sort au rang 2", kind: "spellRankMax", target: 2, icon: "images/Icons/special_attacks/smashing_blow.webp", go: "skills" },
+  { id: "ms_d_rang", w: 1, g: "h", title: "Un sort au rang 2", kind: "spellRankMax", target: 2, icon: "images/Icons/special_attacks/spell_ranks.webp", go: "skills" },
   { id: "ms_d_wenna", w: 1, g: "h", title: "Compétence de Wenna au rang 2", kind: "companionRank", arg: "wenna", target: 2, icon: "images/Companions/wenna.webp", go: "c:wenna", book: "competence" },
   { id: "ms_d_maddoc", w: 1, g: "h", title: "Maddoc au palier 5", kind: "companionUpg", arg: "maddoc", target: 5, icon: "images/Companions/maddoc.webp", go: "c:maddoc" },
   // Ruines
   { id: "ms_r_zones", w: 2, g: "v", title: "Six zones au niveau 8", kind: "zonesAtLevel", arg: 8, target: 6, icon: "images/Production/quarry.webp", go: "production" },
   { id: "ms_r_caravane", w: 2, g: "v", title: "Une caravane rentrée", kind: "counter", arg: "caravansBack", target: 1, icon: "images/Icons/village_buildings/caravan.webp", go: "b:hall", book: "caravane" },
   { id: "ms_r_terrain", w: 2, g: "v", title: "Terrain d'entraînement niveau 10", kind: "building", arg: "training", target: 10, icon: "images/Icons/village_buildings/training_grounds.webp", go: "b:training" },
-  { id: "ms_r_rangs", w: 2, g: "h", title: "Les quatre sorts au rang 2", kind: "spellRankMin", target: 2, icon: "images/Icons/special_attacks/smashing_blow.webp", go: "skills" },
+  { id: "ms_r_rangs", w: 2, g: "h", title: "Les quatre sorts au rang 2", kind: "spellRankMin", target: 2, icon: "images/Icons/special_attacks/spell_ranks.webp", go: "skills" },
   { id: "ms_r_edda", w: 2, g: "h", title: "Edda au palier 5", kind: "companionUpg", arg: "edda", target: 5, icon: "images/Companions/edda.webp", go: "c:edda" },
   { id: "ms_r_reliques", w: 2, g: "h", title: "Deux reliques équipées", kind: "relicsWorn", target: 2, icon: "images/Icons/quests/mission_exploration.webp", go: "c:wenna" },
   // Crypte
   { id: "ms_c_zones", w: 3, g: "v", title: "Neuf zones ouvertes dans un bâtiment", kind: "zonesOpenMax", target: 9, icon: "images/Production/mine.webp", go: "production" },
   { id: "ms_c_entrepot", w: 3, g: "v", title: "Entrepôt niveau 10", kind: "building", arg: "warehouse", target: 10, icon: "images/Icons/village_buildings/warehouse_expanded.webp", go: "b:warehouse" },
   { id: "ms_c_taverne", w: 3, g: "v", title: "Taverne niveau 6", kind: "building", arg: "tavern", target: 6, icon: "images/Icons/village_buildings/tavern.webp", go: "b:tavern" },
-  { id: "ms_c_rang", w: 3, g: "h", title: "Un sort au rang 4", kind: "spellRankMax", target: 4, icon: "images/Icons/special_attacks/smashing_blow.webp", go: "skills" },
+  { id: "ms_c_rang", w: 3, g: "h", title: "Un sort au rang 4", kind: "spellRankMax", target: 4, icon: "images/Icons/special_attacks/spell_ranks.webp", go: "skills" },
   { id: "ms_c_palier", w: 3, g: "h", title: "Un compagnon au palier 15", kind: "companionUpgMax", target: 15, icon: "images/Companions/ysolt.webp", go: "companions" },
   { id: "ms_c_entrainement", w: 3, g: "h", title: "Une caractéristique entraînée à 150", kind: "trainingMax", target: 150, icon: "images/Icons/village_buildings/training_grounds.webp", go: "training" },
   // Montagne
   { id: "ms_m_zones", w: 4, g: "v", title: "Trois zones au niveau 14", kind: "zonesAtLevel", arg: 14, target: 3, icon: "images/Production/well.webp", go: "production" },
   { id: "ms_m_entrepot", w: 4, g: "v", title: "Entrepôt niveau 14", kind: "building", arg: "warehouse", target: 14, icon: "images/Icons/village_buildings/warehouse_expanded.webp", go: "b:warehouse" },
   { id: "ms_m_terrain", w: 4, g: "v", title: "Terrain d'entraînement niveau 18", kind: "building", arg: "training", target: 18, icon: "images/Icons/village_buildings/training_grounds.webp", go: "b:training" },
-  { id: "ms_m_rang", w: 4, g: "h", title: "Un sort au rang 5", kind: "spellRankMax", target: 5, icon: "images/Icons/special_attacks/smashing_blow.webp", go: "skills" },
+  { id: "ms_m_rang", w: 4, g: "h", title: "Un sort au rang 5", kind: "spellRankMax", target: 5, icon: "images/Icons/special_attacks/spell_ranks.webp", go: "skills" },
   { id: "ms_m_sarkel", w: 4, g: "h", title: "Compétence de Sarkel au rang 3", kind: "companionRank", arg: "sarkel", target: 3, icon: "images/Companions/sarkel.webp", go: "c:sarkel" },
   { id: "ms_m_reliques", w: 4, g: "h", title: "Trois reliques sur un même compagnon", kind: "relicsOnOne", target: 3, icon: "images/Icons/quests/mission_exploration.webp", go: "companions" }
 ];
 /* Fiches « comment ça marche » (premier jalon d'un système). */
 var MILESTONE_BOOKS = {
-  rangs: { title: "Les rangs des sorts", icon: "images/Icons/special_attacks/smashing_blow.webp", tips: [
+  rangs: { title: "Les rangs des sorts", icon: "images/Icons/special_attacks/spell_ranks.webp", tips: [
     ["images/Icons/subtabs/hero_abilities.webp", "Héros › Capacités : chaque sort monte du rang 0 au rang 5. Un rang donne +8 % de dégâts (+2 points pour la défense)."],
     ["images/Icons/resources/resine_durcie_icon.webp", "Un rang coûte de l'or et un matériau du monde. Le rang 2 s'ouvre au Désert, le 3 aux Ruines, et ainsi de suite."],
     ["images/Icons/gold_icon.webp", "La bulle d'or te signale un rang payable : « J'y vais » ouvre le bon sort."]] },
