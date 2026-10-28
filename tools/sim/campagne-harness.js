@@ -84,14 +84,19 @@ var SOURCES = SCRIPTS.map(function (s) { return { name: s, code: fs.readFileSync
 
 /* ---------- Horloge simulée ---------- */
 
-var CLOCK = { offset: 0 };
+var CLOCK = { offset: 0, base: 0 };
 var RealDate = Date;
+/* lot 6 : départ fixe (1er octobre, 8 h, ou --heure H) : la durée d'un « lendemain » ne dépend plus de l'heure du lancement.
+   Avec SAVE_IN, l'horloge reprend à l'heure de la sauvegarde (--heure ne s'applique pas). */
+var I_HEURE = ARGS.indexOf("--heure"), HEURE_DEPART = I_HEURE >= 0 ? Number(ARGS[I_HEURE + 1]) : 8;
+if (I_HEURE >= 0 && !(isFinite(HEURE_DEPART) && HEURE_DEPART >= 0 && HEURE_DEPART < 24)) { console.error("--heure H attendu (0 à 23), reçu : " + ARGS[I_HEURE + 1]); process.exit(2); }
+CLOCK.base = new RealDate(2026, 9, 1, HEURE_DEPART, 0, 0).getTime() - RealDate.now();
 function FakeDate() {
   var a = Array.prototype.slice.call(arguments);
-  if (!(this instanceof FakeDate)) return new RealDate(RealDate.now() + CLOCK.offset).toString();
-  return a.length ? new (Function.prototype.bind.apply(RealDate, [null].concat(a)))() : new RealDate(RealDate.now() + CLOCK.offset);
+  if (!(this instanceof FakeDate)) return new RealDate(FakeDate.now()).toString();
+  return a.length ? new (Function.prototype.bind.apply(RealDate, [null].concat(a)))() : new RealDate(FakeDate.now());
 }
-FakeDate.now = function () { return RealDate.now() + CLOCK.offset; };
+FakeDate.now = function () { return RealDate.now() + CLOCK.base + CLOCK.offset; };
 FakeDate.parse = RealDate.parse; FakeDate.UTC = RealDate.UTC;
 FakeDate.prototype = RealDate.prototype;
 
@@ -507,7 +512,7 @@ function refillPotions() {
 /* Soigner avant de repartir : repas au feu de camp (le temps passe), comme un joueur qui attend. */
 function healUp(seuil) {
   var g = G;
-  if (!SAVING) refillPotions();
+  if (!SAVING || G.game.gold >= 50000) refillPotions();   // lot 6 : avec de l'or en réserve, le joueur rachète ses potions même en épargnant
   if (g.game.dungeonRun && g.game.dungeonRun.active) return;   // pas de feu de camp en plein donjon (l'onglet figeait le run)
   if ((g.game.heroHp || 0) >= (g.game.heroMaxHp || 1) * (seuil || SEUIL_SOIN)) return;
   g.game.activeTab = "campement";
@@ -590,6 +595,8 @@ function entretien() {
   (g.game.inventory || []).slice().forEach(function (it) {
     if (!it || !it.slot || it.type === "potion") return;
     if (it.slot === "weapon" && !g.isWeaponIconAllowedForCurrentHero(it.icon)) return;
+    // lot 6 : une pièce qui compte pour le palier de la Montagne ne cède pas sa place à une pièce qui n'y compte pas
+    if (g.storyItemCompteMontagne && g.storyItemCompteMontagne(g.game.equipped[it.slot]) && !g.storyItemCompteMontagne(it)) return;
     if (score(it) > score(g.game.equipped[it.slot])) g.EquipmentManager.equip(it.uid);
   });
   if (g.TalentManager) {
@@ -1145,7 +1152,13 @@ function run() {
   if (typeof G.init === "function" && !G.game.lastSave) { /* init déjà passé par la confirmation */ }
   ok(G.game.playerName === "Robot" && G.game.heroId, "héros créé (" + G.game.heroId + ")");
   // v3.488.0 : SAVE_IN=<fichier> reprend une sauvegarde (SAVE_OUT d'une campagne) ; les chapitres finis sont passés
-  if (process.env.SAVE_IN) { G.restoreBaseState(JSON.parse(require("fs").readFileSync(process.env.SAVE_IN, "utf8"))); ok(true, "sauvegarde reprise : " + process.env.SAVE_IN); }
+  if (process.env.SAVE_IN) {
+    var sauvee = JSON.parse(require("fs").readFileSync(process.env.SAVE_IN, "utf8"));
+    var tSauve = Number(sauvee.savedAt || sauvee.lastOnline || 0);   // lot 6 : l'horloge reprend à la sauvegarde, aucune minuterie dans le futur
+    if (tSauve > 0) CLOCK.base = tSauve - RealDate.now() - CLOCK.offset;
+    G.restoreBaseState(sauvee);
+    ok(true, "sauvegarde reprise : " + process.env.SAVE_IN);
+  }
   espionOr();
   G.saveGame();
 
@@ -1167,7 +1180,7 @@ function run() {
       CURRENT_STEP = step.id;
       // v3.423.0 : TRACE_FORCE=1 relève la force du héros à chaque étape (référence des ajustements de difficulté)
       if (process.env.TRACE_FORCE) console.log("  [force] " + step.id + " monde " + G.WorldManager.worldIndex + " aventure " + G.WorldManager.adventureIndex + " niv. " + G.game.heroLevel + " dmg " + Math.round(G.CombatForecast.getHeroDamagePerRound()) + " ehp " + Math.round(G.CombatForecast.getHeroEffectiveHp ? G.CombatForecast.getHeroEffectiveHp() : G.game.heroMaxHp));
-      if (COMBATS && /^(desert_12|desert_15|desert_17|forest_14|forest_15|ruines_01|ruines_02|ruines_03|ruines_11|ruines_13|ruines_15|ruines_19|crypte_01|crypte_02|crypte_03|crypte_06|crypte_12|crypte_14|crypte_16|crypte_19|montagne_01|montagne_02|montagne_03|montagne_04|montagne_06|montagne_08|montagne_10)$/.test(step.id)) { STATS.profils[step.id] = combatLine(); console.log("  ◦ héros à l'entrée de " + step.id + " : " + STATS.profils[step.id]); if (process.env.TRACE_FORGE) console.log("     forge armure : " + G.ForgeManager.getBlockReason("armor") + " " + JSON.stringify(G.ForgeManager.getCost("armor")) + " or " + Math.floor(G.game.gold)); }
+      if (COMBATS && /^(desert_12|desert_15|desert_17|forest_14|forest_15|ruines_01|ruines_02|ruines_03|ruines_11|ruines_13|ruines_15|ruines_19|crypte_01|crypte_02|crypte_03|crypte_06|crypte_12|crypte_14|crypte_16|crypte_19|montagne_01|montagne_02|montagne_03|montagne_04|montagne_06|montagne_08|montagne_10|montagne_12|montagne_13)$/.test(step.id)) { STATS.profils[step.id] = combatLine(); console.log("  ◦ héros à l'entrée de " + step.id + " : " + STATS.profils[step.id]); if (process.env.TRACE_FORGE) console.log("     forge armure : " + G.ForgeManager.getBlockReason("armor") + " " + JSON.stringify(G.ForgeManager.getCost("armor")) + " or " + Math.floor(G.game.gold)); }
       var t0s = { h: CLOCK.offset, c: STATS.combatMs, s: STATS.healMs, d: STATS.deaths, j: DAYS_WAITED, e: (STATS.secteurs.desert || {}).essais || 0 };
       var snap0 = snapTemps();
       G.StoryQuestManager.acceptStep(cid);
@@ -1368,8 +1381,9 @@ var SANS_LENDEMAIN = 0; // > 0 : achat facultatif en cours, le matériau du mond
 /* audit (27/10, COM-2) : élites perdues dans la journée civile (clé carte:secteur -> jour). */
 var PERDUES = {};
 function jourCivil() { var d = new RealDate(FakeDate.now()); return d.getFullYear() + "-" + d.getMonth() + "-" + d.getDate(); }
-function notePerdue(mapId, sectorId) { PERDUES[mapId + ":" + sectorId] = jourCivil(); }
-function perdueAujourdhui(mapId, sectorId) { return PERDUES[mapId + ":" + sectorId] === jourCivil(); }
+function notePerdue(mapId, sectorId) { var k = mapId + ":" + sectorId + ":" + jourCivil(); PERDUES[k] = (PERDUES[k] || 0) + 1; }
+/* lot 6 : à la Montagne, le frein ne monte pas sur une défaite : une élite perdue se retente une fois après le soin. */
+function perdueAujourdhui(mapId, sectorId, reprises) { return (PERDUES[mapId + ":" + sectorId + ":" + jourCivil()] || 0) > (reprises || 0); }
 function attendreLendemain() {
   var ca = STATS.carte = STATS.carte || { victoires: 0, lendemains: 0, parJour: [] }; ca.lendemains++;
   var now = FakeDate.now(), d = new RealDate(now);
@@ -1562,8 +1576,8 @@ function gearRarity(rarity, n, needWeapon, minWorld) {
     // v3.489.0 (Montagne) : les élites de la carte (Épique de la Montagne au hasard de la victoire)
     else if (minWorld === 4) {
       /* audit (27/10, DUR-3, COM-2) : élites de la carte enchaînées avec le soin réel, sans les 2 h d'échoppe ;
-         le lendemain quand les deux sont perdues ou que leur frein dépasse ×2 (4 victoires du jour). */
-      var LMg = g.LivingMapManager, els = ["nid", "forge_froide"].filter(function (x) { return !perdueAujourdhui("mountain", x) && LMg.getBrakeMult("mountain", x) <= 2; });
+         le lendemain quand les deux sont perdues deux fois (lot 6 : une reprise) ou que leur frein dépasse ×2 (5 victoires du jour). */
+      var LMg = g.LivingMapManager, els = ["nid", "forge_froide"].filter(function (x) { return !perdueAujourdhui("mountain", x, 1) && LMg.getBrakeMult("mountain", x) <= 2; });
       if (!els.length) { attendreLendemain(); continue; }
       var el = els[k % els.length];
       if (!freeSectorAgain("mountain", el)) { notePerdue("mountain", el); if (LMg.getDailyWins("mountain", el) <= 0) farmOnce(); }
