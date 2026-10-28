@@ -53,7 +53,7 @@ var PA2_ICONS = {
   wound: "images/Icons/scene/ui/ui_wound.webp",
   hero: "images/Icons/scene/ui/ui_hero_marker.webp",
   title: "images/Icons/scene/path_easy.webp",
-  veine: "images/Icons/scene/node_vein.webp" // v3.489.0 (Montagne) : à générer, icône générique en attendant
+  veine: "images/Icons/scene/node_vein.webp" // v3.489.0 (Montagne)
 };
 /* v3.492.3 (décision Seb du 24/10, images livrées le 26/10) : icônes propres à chaque monde. Un monde sans entrée
    prend la Forêt. Le Désert et la Montagne (v3.492.10, ses trois fins) gardent les autres icônes communes. */

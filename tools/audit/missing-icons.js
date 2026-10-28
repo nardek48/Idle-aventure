@@ -103,11 +103,24 @@ function passeChromium(savePath) {
     ecran = "fiches de l'Entrepôt";
     await p.evaluate(function () { switchTab("village"); setVillageSubTab("entrepot"); Object.keys(WAREHOUSE_RESOURCES).forEach(function (k) { try { openWarehouseSheet(k); } catch (x) {} }); });
     await p.waitForTimeout(400);
+    // v3.526.0 (audit IMA-4) : chemins construits à l'exécution, appelés directement (reliques, équipement, mondes, talents)
+    var construits = await p.evaluate(function () {
+      var o = {}, sl = function (x) { return String(x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z]/g, ""); };
+      try { COMPANION_RELIC_ORDER.forEach(function (f) { o[CompanionRelics.icon({ f: f, w: 0 })] = "relique " + f; }); } catch (x) {}
+      try { Object.keys(EQUIPMENT_ICON_PNG_TYPES).forEach(function (t) { ["common", "green", "rare", "epic", "legendary"].forEach(function (r) { o[getEquipmentIconPath({ icon: t, rarity: r })] = "équipement " + t; }); }); } catch (x) {}
+      try { (window.WORLDS || []).forEach(function (w) { o[getWorldThumb(w)] = "vignette " + w.id; o["images/Icons/codex/world_" + w.id + ".webp"] = "pastille " + w.id; }); } catch (x) {}
+      try { Object.keys(TALENT_TREES).forEach(function (c) { (TALENT_TREES[c].paths || []).forEach(function (q) { o["images/UI/talents/emb_" + sl(q.name) + ".webp"] = "emblème " + q.name; }); }); } catch (x) {}
+      return o;
+    });
+    Object.keys(construits).forEach(function (k) {
+      var rel = String(k).replace(/^(\.{0,2}\/)+/, "");
+      if (/^images\//.test(rel) && !fs.existsSync(path.join(ROOT, rel))) (absents[rel] = absents[rel] || []).push("constructeur : " + construits[k]);
+    });
     var jeu = await p.evaluate(function () { return (window.MISSING_ICONS || []).slice(); });
     jeu.forEach(function (k) { k = k.replace(/^(\.{0,2}\/)+/, ""); (absents[k] = absents[k] || []).indexOf("MISSING_ICONS") < 0 && absents[k].push("MISSING_ICONS"); });
     var ks = Object.keys(absents).filter(function (k) { return !manquants[k]; }).sort();
     var deja = Object.keys(absents).length - ks.length;
-    console.log("\nPasse Chromium (" + (save ? path.basename(savePath) : "partie neuve") + ", " + ECRANS.length + " écrans, " + deja + " absente(s) déjà listée(s) revue(s) en 404) : " + (ks.length ? ks.length + " image(s) absente(s) en plus :" : "aucune image absente en plus."));
+    console.log("\nPasse Chromium (" + (save ? path.basename(savePath) : "partie neuve") + ", " + ECRANS.length + " écrans, " + Object.keys(construits).length + " chemins construits, " + deja + " absente(s) déjà listée(s) revue(s) en 404) : " + (ks.length ? ks.length + " image(s) absente(s) en plus :" : "aucune image absente en plus."));
     ks.forEach(function (k) { console.log("  " + k + "   <- " + absents[k].join(", ")); });
     await b.close(); srv.close();
   })().catch(function (e) { console.error(e); process.exit(1); });
