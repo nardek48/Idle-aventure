@@ -27,7 +27,7 @@ var JournalTest = {
 
   /* Une ligne : heure réelle, temps de jeu (s), héros, type, données. Ne lève jamais d'erreur vers le jeu. */
   log: function (type, data) {
-    if (!this.isOn() || !window.game) return;
+    if (!this.isOn() || !window.game || !game.heroId) return; // v3.522.0 : au boot, l'état vide n'est pas encore la partie
     try {
       var lines = this._load();
       lines.push({ t: Date.now(), pt: Math.round(Number(game.playTime || 0)), h: game.heroId || "", type: type, d: data || {} });
@@ -43,7 +43,7 @@ var JournalTest = {
 
   /* L'état du héros, de quoi situer la partie face au banc. */
   snapshot: function (reason) {
-    var g = window.game; if (!g) return;
+    var g = window.game; if (!g || !g.heroId) return;
     var steps = {};
     try {
       if (window.StoryQuestManager) Object.keys(window.STORY_QUESTS || {}).forEach(function (cid) {
@@ -67,6 +67,13 @@ var JournalTest = {
     this._lastSnapPt = Number(g.playTime || 0);
   },
 
+  /* v3.522.0 : mort notée par un crochet, avant que la sortie ne se ferme (le tick la verrait au Campement). */
+  logDeath: function (where) {
+    if (!where) return;
+    this.log("mort", where);
+    this._lastHp = 0; // le tick ne la note pas une seconde fois
+  },
+
   /* Où se trouvait le héros : sert au contexte d'une mort. */
   _where: function () {
     var g = window.game, e = g.enemy;
@@ -87,7 +94,7 @@ var JournalTest = {
     var g = window.game;
     if (this._lastSnapPt < 0 || Number(g.playTime || 0) - this._lastSnapPt >= JOURNAL_TEST_SNAP_S) this.snapshot("temps");
     var hp = Number(g.heroHp || 0);
-    if (this._lastHp !== null && this._lastHp > 0 && hp <= 0) this.log("mort", this._where());
+    if (this._lastHp !== null && this._lastHp > 0 && hp <= 0) this.log("mort", this._where()); // repli : mort hors des crochets
     this._lastHp = hp;
     if (++this._tickCount % 10 === 0) this.flush();
   },
@@ -161,13 +168,31 @@ function initJournalTest() {
     function (e) { e = e || g().enemy; return e && (e.isBoss || e.isElite) ? { nom: e.name || e.id, boss: !!e.isBoss, elite: !!e.isElite } : null; },
     function (r, a, ctx) { if (ctx) { ctx.pvPct = Math.round(100 * Number(g().heroHp || 0) / Math.max(1, Number(g().heroMaxHp || 1))); J.log("victoire", ctx); } });
 
+  // v3.522.0 : la mort au moment où elle tombe (contexte encore ouvert) ; le Seuil et la Fiole noire relèvent : rien
+  journalWrap(window.CombatEngine, "onHeroDefeated",
+    function () { return J._where(); },
+    function (r, a, where) { if (Number(g().heroHp || 0) <= 0) J.logDeath(where); });
+  journalWrap(window.Pa2Run, "_hurt",
+    function (run) {
+      var n = Pa2Run.node(run && run.at, run), w = J._where();
+      w.expedition = run ? run.templateId || true : w.expedition;
+      w.ennemi = n && n.type === "boss" ? "boss" : (n && n.foeId) || null; // Petite Aventure : pas de game.enemy
+      w.boss = !!(n && n.type === "boss");
+      return w;
+    },
+    function (r, a, where) { if (r === false) J.logDeath(where); });
+
   journalWrap(window.LivingMapManager, "onRunEnd", null,
     function (r, a) { J.log("carte", { carte: a[0], secteur: a[1], issue: a[2] }); });
   journalWrap(window.SceneRunManager, "startRun", null,
     function (r, a) { if (r && r.ok) J.log("expedition", { id: a[0] }); });
 
   journalWrap(window.EquipShopManager, "buy",
-    function (uid) { var it = (g().equipShopStock || []).filter(function (x) { return x.uid === uid; })[0]; return it ? { emplacement: it.slot, rarete: it.rarity, prix: it.price } : null; },
+    function (uid) {
+      var it = (g().equipShopStock || []).filter(function (x) { return x.uid === uid; })[0];
+      if (!it) return null;
+      return it.kind === "relic" ? { relique: it.f, monde: it.w, prix: it.price } : { emplacement: it.slot, rarete: it.rarity, prix: it.price }; // v3.522.0
+    },
     function (r, a, it) { var s = (g().equipShopStock || []).filter(function (x) { return x.uid === a[0]; })[0]; if (it && s && s.bought) J.log("achat", it); });
   journalWrap(window.ForgeManager, "reforge",
     function (slot) { return ForgeManager.getLevel(slot); },
