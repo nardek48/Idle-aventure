@@ -42,7 +42,8 @@ function buildDungeonCardHTML(dungeon) {
   var unlocked = reason === null;
   var heroDowned = (game.heroHp || 0) <= 0;
   var rarityLabel = (typeof RARITY_LABELS !== "undefined" && RARITY_LABELS[dungeon.maxRarity]) ? _td(RARITY_LABELS[dungeon.maxRarity]) : dungeon.maxRarity;
-  var rarityColor = (typeof RARITY_COLORS !== "undefined" && RARITY_COLORS[dungeon.maxRarity]) || "#9ca3af";
+  // INT-1 (v3.525.0) : encre de rareté, lisible sur la carte crème (la teinte vive reste pour la pierre)
+  var rarityColor = "var(--rarity-" + (typeof RARITY_COLORS !== "undefined" && RARITY_COLORS[dungeon.maxRarity] ? dungeon.maxRarity : "common") + "-ink)";
   var world = (window.WORLDS || []).find(function (w) { return w.id === dungeon.worldId; });
 
   var imageHTML = dungeon.icon
@@ -148,7 +149,7 @@ function buildDungeonSceauLoreHTML(dungeonId) {
 /* v3.464.0 (Niveaux de donjon, lot 5) : mode, niveau, et ce que le niveau rapporte. */
 function dungeonRarityHTML(r) {
   var lab = (typeof RARITY_LABELS !== "undefined" && RARITY_LABELS[r]) ? _td(RARITY_LABELS[r]) : r;
-  var col = (typeof RARITY_COLORS !== "undefined" && RARITY_COLORS[r]) || "#9ca3af";
+  var col = "var(--rarity-" + (typeof RARITY_COLORS !== "undefined" && RARITY_COLORS[r] ? r : "common") + "-ink)"; // INT-1 : corps crème, encre
   return '<b class="dsheet-rarity" style="color:' + col + '">' + esc(lab) + '</b>';
 }
 

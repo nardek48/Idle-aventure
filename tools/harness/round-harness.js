@@ -15249,7 +15249,7 @@ console.log("\n[229] v3.448.5 — Lisibilité : contrastes, textes à 12 px, zon
   var cb = css("03-combat-screen.css");
   ok(!/\.cbx-(turn-badge|lvl-badge|cost-badge)[^}]*font-size: 10px/.test(cb) && !/cbx-cd-count \{ font-size: 10px/.test(cb), "badges de combat : plus de texte à 10 px");
   ok(/\.cbx-card:not\(\.is-hero\) \.cbx-card-nm \{ grid-column: 1 \/ -1; \}/.test(cb), "v3.458.2 : le nom du compagnon a toute la largeur, « Prêt » passe sous la barre");
-  ok(/\.kf-back::after \{\s*content: ""; position: absolute;[^}]*width: max\(100%, 44px\); height: max\(100%, 44px\)/.test(css("00-components.css")), "zones de toucher de 44 px sur les petits boutons");
+  ok(/\.kf-back::after[^{]*\{\s*content: ""; position: absolute;[^}]*width: max\(100%, 44px\); height: max\(100%, 44px\)/.test(css("00-components.css")), "zones de toucher de 44 px sur les petits boutons");
 })();
 
 /* [230] v3.448.6 — le palier Rare (ruines_13) dit ce qui manque et où le trouver ; l'établi de la Forge
@@ -19513,6 +19513,21 @@ console.log("\n[344] v3.524.0 — « Deux frappes ! » qui compte (audit COM-6, 
     ok(!sans && avec, "tri armé sur le héros : la première frappe ×1,5 compte (" + pv + " PV)");
     ok(g.DOUBLE_STRIKE_DANGER_PCT === 0.2, "seuil de la double frappe : 20 % des PV actuels");
   } catch (err) { ok(false, "[344] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[345] v3.525.0 — Lisibilité et petits écrans (audit, lot 8)");
+(function () {
+  try {
+    var rd = function (f) { return fs.readFileSync(path.join(ROOT, "css", f), "utf8"); };
+    var tok = rd("00-tokens.css");
+    ok(["common", "green", "rare", "epic", "legendary"].every(function (r) { return tok.indexOf("--rarity-" + r + "-ink:") !== -1; }) && /--rarity-green-ink:\s*#166534/.test(tok), "INT-1 : jetons d'encre de rareté posés, vert d'inhabituel #166534");
+    ok(run("dungeonRarityHTML('rare')").indexOf("var(--rarity-rare-ink)") !== -1 && run("dungeonRarityHTML('inconnue')").indexOf("var(--rarity-common-ink)") !== -1, "INT-1 : « Butin : … » de la fiche de donjon en encre (rareté inconnue : encre commune)");
+    ok(run("buildDungeonCardHTML(DungeonManager.getById(1))").indexOf("var(--rarity-") !== -1, "INT-1 : rareté maximale de la carte de donjon en encre");
+    var cbx = rd("03-combat-screen.css");
+    ok(cbx.indexOf(":where(.cbx) button") !== -1 && !/(^|[^(])\.cbx button\s*\{/m.test(cbx), "COM-4 : le reset des boutons du combat ne passe plus devant leurs classes");
+    var camp = rd("04-panel-camp.css");
+    ok(/@media \(max-width: 600px\) and \(max-height: 700px\)/.test(camp), "ERG-6 : tête compacte du Camp sur téléphone bas");
+  } catch (err) { ok(false, "[345] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));

@@ -118,6 +118,10 @@ body.hs-on-heros .hud-dock { display: none !important; }
 .hs-comp-st.is-go { background: var(--c-green-650-2); color: var(--c-white-50-soft); }
 .hs-comp-hp { margin: 8px 0 6px; }
 .hs-sheet .eq-detail-panel { width: 100%; max-width: none; }
+/* INT-1 : liste « Dans le sac » sur une carte crème, comme la carte du dessus (noms en encre de rareté) */
+.hs-sheet .eq-compat-list { padding: 6px 5px 2px; background: var(--nb-cream); border: 1px solid var(--nb-frame-light); border-radius: var(--nb-radius-md); }
+.hs-sheet .eq-compat-row { gap: 6px; }
+.hs-sheet .eq-compat-equip-btn { padding: 4px 8px; }
 .hs-capbanner { display: flex; align-items: center; gap: 8px; margin: 8px 0; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--c-brown-600); background: rgba(184, 116, 42, .08); font-size: 13px; color: var(--c-brown-800-3); }
 .hs-capbanner b { color: var(--c-brown-750-3); }
 .hs-capbanner button { margin-left: auto; flex: 0 0 auto; padding: 5px 10px; border-radius: 9px; border: 1px solid var(--c-brown-600); background: var(--c-cream-50); font-weight: 700; color: var(--c-brown-750-3); }
@@ -146,7 +150,7 @@ body.hs-on-heros .hud-dock { display: none !important; }
 .hs-eq .pin-gloves { left: 15%; top: 45%; }
 .hs-eq .pin-ring   { left: 84%; top: 57%; }
 .hs-eq .pin-boots  { left: 50%; top: 87%; }
-.hs-btile-img { position: absolute; top: 6%; left: 14%; width: 72%; height: 72%; object-fit: contain; display: flex; align-items: center; justify-content: center; font-size: 30px; }
+.hs-btile-img { position: absolute; top: 5%; left: 14%; width: 72%; height: 60%; object-fit: contain; display: flex; align-items: center; justify-content: center; font-size: 30px; }
 .hs-cmp { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 3px; border-radius: 10px; font: 900 12px/1 system-ui; font-style: normal; color: var(--c-white-50-soft); border: 1px solid rgba(0, 0, 0, .35); }
 .hs-btile .hs-cmp { position: absolute; top: 4px; right: 4px; }
 .hs-cmp.is-up { background: var(--c-green-650-2); }
@@ -190,8 +194,8 @@ body.hs-on-heros .hud-dock { display: none !important; }
 .hst-chain { position: absolute; left: 50%; bottom: 6px; width: 30px; height: 50px; transform: translateX(-50%) rotate(-50deg); object-fit: contain; }
 .hst-tree .hst-pips i { background: var(--c-brown-550-soft); }
 /* v3.453.0 : sélecteur « Classe · Commandement » et colonne du Commandement (atelier talents-commandement) ; v3.453.1 : fond parchemin, titre en brun */
-.hst-seg { display: flex; gap: 4px; padding: 3px; margin: 0 0 8px; border-radius: 12px; background: rgba(60, 40, 15, .14); }
-.hst-seg button { flex: 1 1 0; min-height: 40px; border: 0; border-radius: 9px; background: none; font: inherit; font-weight: 800; font-size: 13px; color: var(--c-brown-800-3); }
+.hst-seg { display: flex; gap: 4px; padding: 3px; margin: 0 0 8px; border-radius: 12px; background: rgba(60, 40, 15, .08); } /* INT-4 : voile allégé (0,14 avant) */
+.hst-seg button { flex: 1 1 0; min-height: 40px; border: 0; border-radius: 9px; background: none; font: inherit; font-weight: 800; font-size: 13px; color: var(--nb-ink); }
 .hst-seg button[aria-pressed="true"] { background: linear-gradient(var(--c-bronze-400-4), var(--c-brown-550-3)); color: var(--c-brown-850-3); box-shadow: 0 2px 0 var(--c-brown-750-3); }
 .hst-seg button:disabled { opacity: .55; }
 .hst-seg button small { display: block; font-size: 12px; font-weight: 700; }   /* v3.458.2 (audit P14) : sans transparence, 3,4 → 5,2:1 */

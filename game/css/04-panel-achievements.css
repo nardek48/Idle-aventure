@@ -71,14 +71,15 @@
    Conteneurs clairs enregistrés dans 00-kframe-scope.css : .hf-top, .hf-tiers,
    .hf-card, .hf-old-h (règle [ENCRE]).
 ============================================================ */
-.hf-top { display: flex; align-items: center; gap: 8px; background: var(--c-cream-100-soft); border: 1px solid var(--c-bronze-250-soft); border-radius: 12px; padding: 8px 10px; color: var(--c-brown-850-soft); margin-bottom: 8px; }
+.hf-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; row-gap: 6px; background: var(--c-cream-100-soft); border: 1px solid var(--c-bronze-250-soft); border-radius: 12px; padding: 8px 10px; color: var(--c-brown-850-soft); margin-bottom: 8px; } /* retour à la ligne : « Tout réclamer » n'écrase plus le titre porté */
 .hf-count { flex: 0 0 auto; font-size: 18px; font-weight: 900; color: var(--c-brown-700-soft); line-height: 1; white-space: nowrap; }
 .hf-count small { display: block; font-size: 12px; font-weight: 800; color: var(--c-brown-800-vivid); letter-spacing: 0.3px; text-transform: uppercase; margin-top: 3px; }
-.hf-title-btn { flex: 1 1 auto; min-width: 0; min-height: 44px; text-align: left; font: inherit; background: #eddcb9; border: 1px dashed var(--c-bronze-500); border-radius: 10px; padding: 5px 8px; cursor: pointer; color: var(--c-brown-850-soft); }
+.hf-title-btn { flex: 1 1 auto; min-width: 120px; min-height: 44px; text-align: left; font: inherit; background: #eddcb9; border: 1px dashed var(--c-bronze-500); border-radius: 10px; padding: 5px 8px; cursor: pointer; color: var(--c-brown-850-soft); }
 .hf-title-btn small { display: block; font-size: 12px; font-weight: 900; color: var(--c-brown-800-vivid); text-transform: uppercase; letter-spacing: 0.3px; }
 .hf-title-btn b { font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
 /* v3.402.0 (lot B-1) : bouton principal du kit (.kbtn.primary), en taille compacte */
-.hf-claim-all.kbtn { flex: 0 0 auto; width: auto; min-height: 40px; margin: 0; padding: 6px 12px; font-size: 12px; }
+.hf-claim-all.kbtn { flex: 1 1 auto; max-width: none; width: auto; min-height: 40px; margin: 0; padding: 6px 12px; font-size: 12px; }
+html.wide-mode .hf-claim-all.kbtn { flex: 0 0 auto; max-width: 260px; } /* format large : rien ne passe à la ligne, le bouton garde le plafond du kit */
 
 /* v3.401.0 (lot O-1) : catégories = pastilles du kit (.kchips, css/00-components.css) */
 .hf-tiers { background: var(--c-cream-100-soft); border: 1px solid var(--c-bronze-250-soft); border-radius: 12px; padding: 9px 10px 8px; color: var(--c-brown-850-soft); margin-bottom: 8px; }
@@ -107,7 +108,7 @@
 .hf-bar > i { display: block; height: 100%; background: #6b9a3a; }
 .hf-meta { display: flex; justify-content: space-between; align-items: center; gap: 6px; margin-top: 4px; font-size: 12px; color: var(--c-brown-650); }
 .hf-rew { font-weight: 800; color: var(--c-brown-700-vivid); }
-.hf-btn { font: inherit; font-size: 12px; font-weight: 800; padding: 5px 10px; border-radius: 9px; cursor: pointer; border: 1px solid var(--c-brown-700-vivid); background: var(--c-brown-550-3); color: var(--c-cream-50); }
+.hf-btn { font: inherit; font-size: 12px; font-weight: 800; padding: 5px 10px; border-radius: 9px; cursor: pointer; border: 1px solid var(--c-brown-750-3); background: var(--nb-gold-deep); color: #fff; } /* INT-8 : fond sombre, texte blanc lisible */
 .hf-got { font-weight: 800; color: var(--c-green-750-vivid); }
 .hf-title-tag { display: inline-block; font-size: 12px; font-weight: 900; color: var(--c-brown-750-vivid); background: #f6e3a8; border-radius: 6px; padding: 0 5px; margin-left: 4px; vertical-align: 1px; }
 
@@ -123,7 +124,10 @@
 .hf-opt { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; font: inherit; text-align: left; padding: 9px 10px; margin-bottom: 5px; border-radius: 10px; border: 1px solid var(--c-bronze-250-soft); background: var(--c-cream-50-soft); color: var(--c-brown-850-soft); cursor: pointer; }
 .hf-opt.is-on { border: 1.5px solid var(--c-brown-550-3); background: var(--c-cream-100-3); }
 .hf-opt small { color: var(--c-brown-650); font-size: 12px; text-align: right; }
-.hf-opt.is-locked { opacity: 0.5; cursor: default; }
+.hf-opt.is-locked { cursor: default; background: var(--c-cream-150-soft); border-style: dashed; } /* INT-3 : plus d'opacité, la condition reste lisible */
+.hf-opt.is-locked > span { color: var(--nb-ink-dim); }
+.hf-opt.is-locked img { filter: grayscale(1); opacity: .6; }
+.hf-opt.is-locked small { color: var(--c-brown-750-2); font-weight: 700; }
 
 /* H4 : liseré du palier du monde courant autour du portrait du HUD */
 .combat-hero-mini-portrait[class*="hf-tier-"]::after { content: ""; position: absolute; inset: 2%; border-radius: 50%; pointer-events: none; }

@@ -126,6 +126,8 @@ les classes de l'ancien thème pendant la migration progressive.
 .nb-purchase-card:not(.affordable):not(.locked):not(.is-bought):not(.is-maxed) {
   opacity: 0.8;
 }
+/* INT-1 : à l'échoppe de la Halle, carte non payable à pleine opacité pour garder les encres lisibles */
+.vb-hall-shop .nb-purchase-card:not(.affordable):not(.locked):not(.is-bought):not(.is-maxed) { opacity: 1; }
 
 /* Carte verrouillée (palier/monde non débloqué), déjà achetée ou au
    niveau max : plus estompée, pas d'ambiguïté avec "pas assez cher" */
@@ -242,11 +244,12 @@ img.nb-purchase-icon {
   overflow: hidden;
 }
 
-.nb-purchase-name.rarity-common { color: var(--rarity-common); }
-.nb-purchase-name.rarity-green { color: var(--rarity-green); }
-.nb-purchase-name.rarity-rare { color: var(--rarity-rare); }
-.nb-purchase-name.rarity-epic { color: var(--rarity-epic); }
-.nb-purchase-name.rarity-legendary { color: var(--rarity-legendary); }
+/* INT-1 : noms en encre de rareté, lisibles sur la carte claire */
+.nb-purchase-name.rarity-common { color: var(--rarity-common-ink); }
+.nb-purchase-name.rarity-green { color: var(--rarity-green-ink); }
+.nb-purchase-name.rarity-rare { color: var(--rarity-rare-ink); }
+.nb-purchase-name.rarity-epic { color: var(--rarity-epic-ink); }
+.nb-purchase-name.rarity-legendary { color: var(--rarity-legendary-ink); }
 
 .nb-purchase-desc {
   margin-top: 1px;
@@ -716,6 +719,7 @@ button.nb-entry-card {
 
 .nb-accordion-head {
   width: 100%;
+  min-height: 44px; /* zone de toucher */
   display: flex;
   align-items: center;
   gap: 8px;
@@ -836,7 +840,7 @@ button.nb-entry-card {
   padding: 3px;
   border: 1px solid rgba(138, 92, 20, 0.45);
   border-radius: 14px;
-  background-color: rgba(58, 44, 26, 0.18);
+  background-color: rgba(58, 44, 26, 0.10); /* INT-4 : voile allégé (0,18 avant), les onglets inactifs restent lisibles */
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.35);
 }
 
@@ -853,7 +857,7 @@ button.nb-entry-card {
   border: 1px solid transparent;
   border-radius: 11px;
   background: transparent;
-  color: var(--c-brown-750-soft);
+  color: var(--nb-ink); /* INT-4 : encre pleine sur l'onglet inactif */
   font-family: inherit;
   font-size: 13px;
   font-weight: 800;
@@ -887,7 +891,6 @@ button.nb-entry-card {
 .kseg button .kseg-count {
   margin-left: 3px;
   font-weight: 800;
-  opacity: 0.75;
 }
 
 .kseg-dot {
@@ -1077,10 +1080,12 @@ button.nb-entry-card {
 
 /* v3.448.5 : surface de toucher portée à 44 px sur les petits boutons, sans changer leur taille visible.
    Pseudo-élément ::after transparent, centré sur le bouton (vérifié : aucun ne prend le toucher d'un voisin). */
-.camp-help-btn, .cbx-pill, .cbx-dist-badge, .cbx-badges, .qb-completed-link, .exp-act, .klink, .tavern-contract-btn, .kf-back { position: relative; }
-/* v3.458.2 (audit P27) : + alertes du combat, « Livrer » de la Taverne, retour « ‹ » du bandeau */
+.camp-help-btn, .cbx-pill, .cbx-dist-badge, .cbx-badges, .qb-completed-link, .exp-act, .klink, .tavern-contract-btn, .kf-back, .hf-btn, .sp-trait-fix { position: relative; }
+/* v3.458.2 (audit P27) : + alertes du combat, « Livrer » de la Taverne, retour « ‹ » du bandeau.
+   Lot 8 : + « Réclamer » des Hauts faits et « Règle › » de la préparation de sortie */
 .camp-help-btn::after, .ksheet-x::after, .cbx-pill::after, .cbx-dist-badge::after, .cbx-badges::after,
-.qb-completed-link::after, .hud-bub::after, .exp-act::after, .klink::after, .cbx-chip::after, .tavern-contract-btn::after, .kf-back::after {
+.qb-completed-link::after, .hud-bub::after, .exp-act::after, .klink::after, .cbx-chip::after, .tavern-contract-btn::after, .kf-back::after,
+.hf-btn::after, .sp-trait-fix::after {
   content: ""; position: absolute; left: 50%; top: 50%; width: max(100%, 44px); height: max(100%, 44px); transform: translate(-50%, -50%);
 }
 

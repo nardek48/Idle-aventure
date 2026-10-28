@@ -160,6 +160,12 @@
   --rarity-rare: var(--c-blue-400);       /* Objet rare */
   --rarity-epic: #a855f7;       /* Objet épique */
   --rarity-legendary: var(--c-bronze-500-vivid);  /* Objet légendaire */
+  /* INT-1 : encres de rareté pour le texte sur fond clair ; les teintes vives restent pour cadres, halos et pierre */
+  --rarity-common-ink: #5b5f66;
+  --rarity-green-ink: #166534;
+  --rarity-rare-ink: #1d4ed8;
+  --rarity-epic-ink: #7e22ce;
+  --rarity-legendary-ink: #92400e;
 
   /* =========================
      Safe areas mobile

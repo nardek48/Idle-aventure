@@ -106,10 +106,12 @@
 
 /* v3.512.0 (atelier reliques-echoppe.html, variante B) : relique en vitrine, couleur du monde (rareté du sommet). */
 .shop-relic { --rel: var(--nb-ink-dim); position: relative; flex-wrap: wrap; padding-top: 24px; }
-.shop-relic.rarity-green { --rel: var(--rarity-green); }
-.shop-relic.rarity-rare { --rel: var(--rarity-rare); }
-.shop-relic.rarity-epic { --rel: var(--rarity-epic); }
-.shop-relic.rarity-legendary { --rel: var(--rarity-legendary); }
+/* INT-1 : encre de rareté (ruban, cadre, rang et teinte de fond suivent) */
+.shop-relic.rarity-common { --rel: var(--rarity-common-ink); }
+.shop-relic.rarity-green { --rel: var(--rarity-green-ink); }
+.shop-relic.rarity-rare { --rel: var(--rarity-rare-ink); }
+.shop-relic.rarity-epic { --rel: var(--rarity-epic-ink); }
+.shop-relic.rarity-legendary { --rel: var(--rarity-legendary-ink); }
 .shop-relic { border-color: var(--rel); background: linear-gradient(color-mix(in srgb, var(--rel) 12%, var(--c-cream-100-soft)), var(--c-cream-100-soft) 50%); }
 .shop-relic-ribbon { position: absolute; top: -1px; left: 12px; padding: 2px 9px; border-radius: 0 0 8px 8px; background: var(--rel); color: #fff; font-size: 12px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; }
 .shop-relic-ico { position: relative; }

@@ -66,6 +66,8 @@
 }
 .kswitch.is-on { background: linear-gradient(var(--c-bronze-400-4), var(--c-brown-550-3)); }
 .kswitch.is-on::after { left: 24px; }
+/* Zone de toucher de 44 px, sans changer la taille visible (::after sert au curseur) */
+.kswitch::before { content: ""; position: absolute; left: 50%; top: 50%; width: max(100%, 44px); height: max(100%, 44px); transform: translate(-50%, -50%); }
 
 /* =========================
    Réduction des animations

@@ -180,11 +180,14 @@
 /* --- Emplacement verrouillé --- */
 .grimoire-rule-row.is-locked {
   background-color: var(--nb-cream-deep);
-  opacity: 0.55;
+  border-style: dashed; /* INT-3 : plus d'opacité sur la ligne, la condition reste lisible */
   box-shadow: none;
 }
 
 .grimoire-rule-row.is-locked .grimoire-rule-icon { filter: grayscale(1); }
+.grimoire-rule-row.is-locked .grimoire-rule-icon, .grimoire-rule-row.is-locked .grimoire-rule-order { opacity: .55; }
+.grimoire-rule-row.is-locked .grimoire-rule-text { color: var(--c-brown-750-soft); } /* --nb-ink-dim : 4,4:1 seulement sur --nb-cream-deep */
+.grimoire-rule-row.is-locked .grimoire-rule-sub { opacity: 1; color: var(--c-brown-750-2); font-weight: 700; } /* condition de déblocage */
 .grimoire-rule-row.is-locked .grimoire-rule-chevron { visibility: hidden; }
 
 /* v3.402.0 (lot B-1) : titre de section du kit (.ksec, css/00-components.css). */

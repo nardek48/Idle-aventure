@@ -35,7 +35,8 @@
 html body.combat-active #game-area { padding: 0; justify-content: stretch; align-items: stretch; }
 html body.combat-active #combat-speed-bar { display: none !important; }
 .cbx-hidden { display: none !important; }
-.cbx button { font: inherit; color: inherit; -webkit-appearance: none; appearance: none; -webkit-tap-highlight-color: transparent; }
+/* COM-4 : :where() ramène la remise à zéro à (0,0,1), sinon elle écrase les styles des boutons du combat */
+:where(.cbx) button { font: inherit; color: inherit; -webkit-appearance: none; appearance: none; -webkit-tap-highlight-color: transparent; }
 .cbx img { -webkit-user-drag: none; }
 
 /* ---------- 1. Barre du haut : lieu · progression · butin · Fuir ---------- */
@@ -44,11 +45,14 @@ html body.combat-active #combat-speed-bar { display: none !important; }
   padding: calc(6px + var(--safe-top, env(safe-area-inset-top, 0px))) 8px 6px;
   background: linear-gradient(180deg, rgba(12, 8, 3, .92), rgba(12, 8, 3, .6));
   border-bottom: 1px solid var(--cbx-line);
+  position: relative; z-index: 37; /* COM-9 : devant .cbx-target (35) et .cbx-ini (36), zones de 44 px des pastilles comprises */
 }
 .cbx-ctx { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 7px; }
 .cbx-ctx > img { flex: 0 0 auto; width: 28px; height: 28px; border-radius: 7px; object-fit: cover; border: 1px solid var(--cbx-line); }
 .cbx-ctx-txt { min-width: 0; }
-.cbx-ctx-txt b { display: block; font-size: 13px; font-weight: 800; color: var(--cbx-gold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cbx-ctx-txt b { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-height: 1.1; overflow-wrap: anywhere; font-size: 13px; font-weight: 800; color: var(--cbx-gold); white-space: normal; overflow: hidden; text-overflow: ellipsis; } /* titre de quête sur 2 lignes au plus */
+/* Sous 360 px : titre en 12 px, l'icône de contexte lui laisse sa place */
+@media (max-width: 359px) { .cbx-ctx > img { display: none; } .cbx-ctx-txt b { font-size: 12px; } }
 .cbx-ctx-txt small { display: block; font-size: 12px; color: var(--cbx-ink-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cbx-pill {
   flex: 0 0 auto; display: inline-flex; align-items: center; gap: 5px; height: 30px; padding: 0 10px;

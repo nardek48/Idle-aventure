@@ -510,10 +510,11 @@
 .ench-item { padding: 4px 0 2px; }
 .ench-item + .ench-item { border-top: 1px solid var(--nb-frame-light); margin-top: 4px; }
 .ench-item-name { font-size: 12px; font-weight: 800; color: var(--nb-ink); }
-.ench-item-name.rarity-green { color: var(--rarity-green); }
-.ench-item-name.rarity-rare { color: var(--rarity-rare); }
-.ench-item-name.rarity-epic { color: var(--rarity-epic); }
-.ench-item-name.rarity-legendary { color: var(--rarity-legendary); }
+/* INT-1 : encre de rareté, lisible sur fond clair */
+.ench-item-name.rarity-green { color: var(--rarity-green-ink); }
+.ench-item-name.rarity-rare { color: var(--rarity-rare-ink); }
+.ench-item-name.rarity-epic { color: var(--rarity-epic-ink); }
+.ench-item-name.rarity-legendary { color: var(--rarity-legendary-ink); }
 .ench-item .forge-row { padding: 4px 0; }
 .ench-item .forge-row + .forge-row { border-top: 1px dashed var(--nb-frame-light); }
 /* v3.465.0 : onglet Transmuer, une puce par stat possible (atelier/enchanteresse.html) */
@@ -650,7 +651,7 @@
   display: block;
   width: 100%;
   min-width: 0;
-  aspect-ratio: 1;
+  aspect-ratio: 5 / 6; /* un peu plus haute que large : place pour un nom sur 3 lignes */
   padding: 0;
   border: 1px solid var(--c-brown-700-vivid);
   border-radius: 12px;
@@ -659,10 +660,10 @@
   font: inherit;
   cursor: pointer;
 }
-.wh-tile-img { position: absolute; top: 2%; left: 8%; width: 84%; height: 76%; object-fit: contain; }
-.wh-tile-band { position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; padding: 3px 4px 6px; background: linear-gradient(rgba(10, 6, 2, 0), rgba(10, 6, 2, 0.92) 40%); }
+.wh-tile-img { position: absolute; top: 2%; left: 8%; width: 84%; height: 63%; object-fit: contain; }
+.wh-tile-band { position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; padding: 3px 2px 6px; background: linear-gradient(rgba(10, 6, 2, 0), rgba(10, 6, 2, 0.92) 40%); }
 .wh-tile-n { font-size: 16px; font-weight: 900; line-height: 1; color: var(--c-white-50-soft); -webkit-text-stroke: 3px var(--c-brown-950-3); paint-order: stroke fill; letter-spacing: -0.02em; }
-.wh-tile-name { max-width: 100%; font-size: 12px; font-weight: 700; line-height: 1.1; color: #e8d8b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wh-tile-name { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; max-width: 100%; font-size: 12px; font-weight: 700; line-height: 1.1; letter-spacing: -0.02em; text-align: center; color: #e8d8b8; white-space: normal; -webkit-hyphens: auto; hyphens: auto; overflow: hidden; text-overflow: ellipsis; } /* nom entier sur 3 lignes au plus */
 .wh-tile-bar { position: absolute; left: 10%; right: 10%; bottom: 2px; height: 3px; border-radius: 2px; background: rgba(0, 0, 0, 0.45); overflow: hidden; }
 .wh-tile-bar > span { display: block; height: 100%; background: var(--c-bronze-400-4); }
 .wh-tile.is-full { border-color: var(--c-red-450); box-shadow: 0 0 0 2px rgba(192, 57, 43, 0.5); }
@@ -800,5 +801,12 @@
 .vb-cost-row.res-go { min-height: 40px; }
 .res-go-chev { margin-left: 4px; font-size: 18px; font-weight: 900; line-height: 1; color: var(--nb-gold-deep); }
 .res-go-link { cursor: pointer; color: var(--nb-gold-deep); font-weight: 800; text-decoration: underline; }
+/* Zones de toucher de 44 px : pastilles de la Forge, et « Où en trouver › » sous la ligne de sa ressource (le « + » écarte le lien Acier de la Forge) */
+.forge-cost-item.res-go { position: relative; }
+.forge-cost-item.res-go::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 44px; transform: translateY(-50%); }
+.forge-row-cost { row-gap: 15px; } /* coût sur 2 lignes : la zone d'une rangée ne couvre plus les pastilles de l'autre */
+.forge-row-where { position: relative; z-index: 1; } /* « Acier : … › » reste devant les zones des pastilles */
+.vb-cost-row.res-go + .vb-cost-where.res-go-link { position: relative; }
+.vb-cost-row.res-go + .vb-cost-where.res-go-link::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: max(100%, 44px); }
 .wh-backbar { padding: 10px 14px 0; }
 .wh-back { min-height: 36px; padding: 4px 12px; border-radius: 999px; border: 1.5px solid var(--nb-frame); background: transparent; color: var(--nb-gold-deep); font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
