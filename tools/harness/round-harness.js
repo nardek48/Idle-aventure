@@ -19591,6 +19591,16 @@ console.log("\n[349] v3.530.0 — Fenêtre de l'Atelier à la visite du Village 
   } catch (err) { ok(false, "[349] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[350] v3.531.0 — Pastille « ! » sur l'onglet Camp (audit TUT-13, option A)");
+(function () {
+  try {
+    ok(typeof g.refreshTabClaimBadge === "function", "refreshTabClaimBadge exposée");
+    var src = fs.readFileSync(path.join(ROOT, "js/ui/hud-dock-view.js"), "utf8");
+    ok(/refreshTabClaimBadge\(fil\);/.test(src) && /fil\.id === "claim"\) && game\.activeTab !== "campement"/.test(src), "la pastille suit la proposition « Réclamer » du fil rouge, éteinte sur le Camp");
+    ok(/\.tab-claim-badge \{/.test(fs.readFileSync(path.join(ROOT, "css/02-layout.css"), "utf8")), "style de la pastille dans 02-layout.css");
+  } catch (err) { ok(false, "[350] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

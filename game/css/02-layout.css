@@ -510,6 +510,9 @@ body.toast-shown .hud-bub .hud-bub-tip { opacity: 0; }
   background: url('../images/Icons/menu_icons/tab-slot-inactive.webp') center / 100% 100% no-repeat;
 }
 
+/* v3.531.0 (TUT-13) : récompense à réclamer, sur l'onglet Camp ; même pastille que la bulle du fil rouge */
+.tab-claim-badge { position: absolute; top: 2px; right: 8%; z-index: 2; min-width: 19px; height: 19px; padding: 0 5px; border-radius: 10px; background: var(--c-red-600); border: 1.5px solid var(--c-cream-100-vivid); color: var(--c-white-50-soft); font-size: 11px; font-weight: 800; line-height: 16px; text-align: center; pointer-events: none; }
+
 .tab-btn.active .tab-icon-frame {
   background-image: url('../images/Icons/menu_icons/tab-slot-active.webp');
 }

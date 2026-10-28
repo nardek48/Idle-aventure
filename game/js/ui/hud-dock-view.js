@@ -65,10 +65,23 @@ function hudDockBubbleHTML(it, isNew) {
     '<span class="hud-bub-tip">' + esc(it.tip) + '</span></button>';
 }
 
+/* v3.531.0 (audit TUT-13, option A) : récompense à réclamer → pastille « ! » sur l'onglet Camp, là où la bulle
+   du fil rouge réclame en un toucher. Éteinte sur le Camp lui-même (la bulle y est visible). */
+function refreshTabClaimBadge(fil) {
+  var on = !!(fil && fil.id === "claim") && game.activeTab !== "campement";
+  var frame = document.querySelector('.tab-btn[data-tab="campement"] .tab-icon-frame');
+  if (!frame) return;
+  var b = frame.querySelector(".tab-claim-badge");
+  if (on && !b) frame.insertAdjacentHTML("beforeend", '<span class="tab-claim-badge" aria-hidden="true">!</span>');
+  else if (!on && b) b.remove();
+}
+window.refreshTabClaimBadge = refreshTabClaimBadge;
+
 function renderHudDock() {
   var root = document.getElementById("hud-dock");
   if (!root) { mountHudDock(); root = document.getElementById("hud-dock"); if (!root) return; }
   var fil = hudDockFil(), list = hudDockOrder(fil, hudDockItems());
+  refreshTabClaimBadge(fil);
   // v3.429.24 : l'or à investir, en plus des trois situations, tout en haut (loin du pouce)
   var or = typeof hudDockOr === "function" ? hudDockOr() : null;
   if (or) list.unshift(or);
