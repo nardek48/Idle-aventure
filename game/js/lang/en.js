@@ -3732,6 +3732,12 @@ I18n.register("en", {
   "La carte du Désert fonctionne comme celle de la Forêt. Tu libères un secteur en terminant son parcours.": "The Desert map works like the Forest one. You free a sector by completing its run.",
   "Un parcours raté rend un secteur au sable. Sa récompense de secteur tenu est perdue jusqu'à ce que tu le reprennes.": "A failed run gives a sector back to the sand. Its held-sector reward is lost until you take it back.",
   "La Palissade d'Aeswyn freine l'Ensablement, comme elle freine la brume.": "Aeswyn's Palisade slows the Sandfall, just as it slows the mist.",
+  // v3.528.0 (TUT-9) : aide de la carte vivante de la Forêt
+  "La brume reprend": "The Mist Takes Back",
+  "La carte est découpée en secteurs autour d'Aeswyn. Tu libères un secteur en terminant sa Petite Aventure. Seuls ceux qui touchent le foyer ou un secteur libéré sont atteignables.": "The map is split into sectors around Aeswyn. You free a sector by completing its Little Adventure. Only the ones touching the hearth or a freed sector can be reached.",
+  "Un, deux ou trois points : l'anneau du secteur. Plus il est loin du foyer, plus le parcours est dur, et plus la première libération rapporte de Sève (5, 8 ou 12).": "One, two or three dots: the sector's ring. The farther from the hearth, the harder the run, and the more Sap the first liberation gives (5, 8 or 12).",
+  "Un secteur libéré donne souvent un effet (Puits +10 %, une corde de plus…). Si une Petite Aventure de la carte échoue, la brume reprend un secteur libéré voisin : c'est le Recouvrement. L'effet revient quand tu le reprends.": "A freed sector often gives an effect (Well +10%, one more rope use…). If a Little Adventure on the map fails, the mist takes back a freed neighbouring sector: that's the Reclaiming. The effect returns when you retake it.",
+  "La Palissade d'Aeswyn freine le Recouvrement et, dès le niveau 3, tient les secteurs proches du foyer. Le bouton « ? » de la carte rappelle chaque pastille.": "Aeswyn's Palisade slows the Reclaiming and, from level 3, holds the sectors closest to the hearth. The \"?\" button on the map explains every marker.",
   "Certains choix ne se reprennent pas.": "Some choices can't be taken back.",
   "Chacun des deux chemins apporte quelque chose que l'autre n'apporte pas.": "Each of the two paths brings something the other doesn't.",
   "Rien ne te dira si tu as bien choisi.": "Nothing will tell you whether you chose well.",

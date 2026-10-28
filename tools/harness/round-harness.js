@@ -19545,6 +19545,18 @@ console.log("\n[346] v3.527.0 — Images : vignettes, fichiers morts, usages sé
   } catch (err) { ok(false, "[346] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[347] v3.528.0 — Aide de la carte vivante de la Forêt (audit TUT-9, option A)");
+(function () {
+  try {
+    var st = g.STORY_QUESTS.forest.steps.filter(function (x) { return x.id === "forest_brume"; })[0];
+    var t = st && st.tutorial;
+    ok(t && t.tab === "map" && t.title === "La brume reprend" && t.points.length === 4, "forest_brume : fenêtre « La brume reprend » à l'arrivée sur la carte, 4 points");
+    ok(t && /Recouvrement/.test(t.points[2].text) && /Palissade/.test(t.points[3].text) && /5, 8 ou 12/.test(t.points[1].text), "les règles citées : anneaux et Sève, Recouvrement, Palissade");
+    var fr = g.LIVING_MAP_RULES.firstReward, pal = g.LIVING_MAP_RULES.palisade.holdRingLevels;
+    ok(fr[1] === 5 && fr[2] === 8 && fr[3] === 12 && pal[1] === 3, "le texte suit les règles (Sève 5/8/12, anneau 1 tenu au niveau 3 de la Palissade)");
+  } catch (err) { ok(false, "[347] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

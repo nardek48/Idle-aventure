@@ -532,6 +532,18 @@ var STORY_QUESTS = {
           ]
         },
         objectiveLabel: "Libérer un secteur de la carte de la Forêt",
+        // v3.528.0 (audit TUT-9, option A de Seb) : les règles de la carte vivante, une fois, à l'arrivée sur la carte
+        tutorial: {
+          tab: "map",
+          icon: "images/Icons/resources/seve_aeswyn_icon.webp",
+          title: "La brume reprend",
+          points: [
+            { icon: "images/Icons/scene/node_obstacle.webp", text: "La carte est découpée en secteurs autour d'Aeswyn. Tu libères un secteur en terminant sa Petite Aventure. Seuls ceux qui touchent le foyer ou un secteur libéré sont atteignables." },
+            { icon: "images/Icons/resources/seve_aeswyn_icon.webp", text: "Un, deux ou trois points : l'anneau du secteur. Plus il est loin du foyer, plus le parcours est dur, et plus la première libération rapporte de Sève (5, 8 ou 12)." },
+            { icon: "images/Icons/scene/node_unknown.webp", text: "Un secteur libéré donne souvent un effet (Puits +10 %, une corde de plus…). Si une Petite Aventure de la carte échoue, la brume reprend un secteur libéré voisin : c'est le Recouvrement. L'effet revient quand tu le reprends." },
+            { icon: "images/Icons/scene/protective_amulet.webp", text: "La Palissade d'Aeswyn freine le Recouvrement et, dès le niveau 3, tient les secteurs proches du foyer. Le bouton « ? » de la carte rappelle chaque pastille." }
+          ]
+        },
         storyPa: { worldId: "forest" }, // v3.429.23 : Petite aventure offerte par l'Histoire (SceneRunManager.isStoryPaFree)
         unlockTabs: [],
         reward: STORY_REWARDS.forest_brume,
