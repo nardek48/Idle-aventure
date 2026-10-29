@@ -1934,7 +1934,7 @@ function failleBench() {
   var g = G, RUNS = Number(process.env.FAILLE_RUNS || 3), out = STATS.faille = {};
   CURRENT_STEP = "faille";
   console.log("Faille (PV +" + Math.round(FAILLE_PV * 100) + " %, dégâts +" + Math.round(FAILLE_DMG * 100) + " % par niveau) · " + combatLine().split(" · Forge")[0]);
-  [1, 2, 3, 4].forEach(function (id) {
+  [1, 2, 3, 4, 5].forEach(function (id) {
     var lignes = {}, L = 1, pas = 4, dernier = 0;
     function mesure(n) {
       var rs = []; for (var k = 0; k < RUNS; k++) { var r = failleRun(id, n); if (r) rs.push(r); }
