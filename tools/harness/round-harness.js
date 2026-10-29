@@ -1871,7 +1871,7 @@ var pow76 = g.POTIONS_DB.find(function (p) { return p.id === "potion_power"; });
 var aeth76 = g.POTIONS_DB.find(function (p) { return p.id === "elixir_aether"; });
 ok(pow76.perRun === true && pow76.cost === 120, "Potion de Force : perRun, 120 or");
 ok(!aeth76, "\u00c9lixir d'Aether retir\u00e9 (v3.322.0, il ne servait qu'\u00e0 l'Ascension)");
-ok(g.HEALING_POTIONS_DB[1].cost === 600 && g.HEALING_POTIONS_DB[1].dailyBuyLimit === 10, "Soin majeur : 600 or, 10 achats par jour (v3.291.0)");
+ok(g.HEALING_POTIONS_DB[1].cost === 600 && g.HEALING_POTIONS_DB[1].dailyBuyLimit === 15, "Soin majeur : 600 or, 15 achats par jour (v3.560.0, retour Seb : 10 -> 15)");
 
 // --- Migration legacy : timestamp futur -> arm\u00e9e, timestamp pass\u00e9 -> purg\u00e9 ---
 game.activePotions = { potion_power: Date.now() + 60000, potion_celerity: 123 };
@@ -8033,12 +8033,12 @@ console.log("\n[86] v3.289.0 — Plafonds par monde du village et de la producti
 
   /* --- Village : plafonds de la Forêt --- */
   // v3.325.0 : le Terrain suit aussi l'acte — partie neuve = acte I de la Forêt, Terrain 0 (section [120])
-  var attendu = { workshop: 4, training: 0, hall: 4, warehouse: 3, palisade: 3, tavern: 2, apothecary: 2, forge: 0, enchanter: 0 };
+  var attendu = { workshop: 4, training: 0, hall: 4, warehouse: 3, palisade: 3, tavern: 2, apothecary: 3, forge: 0, enchanter: 0 }; // v3.560.0 : Apothicaire 3 en Forêt
   var tous = Object.keys(attendu).every(function (id) {
     g.game.village.buildings[id].level = 0;
     return M.getMaxLevel(id) === attendu[id];
   });
-  ok(tous, "Forêt, acte I : Atelier 4, Terrain 0 (acte), Halle 4, Entrepôt 3, Palissade 3, Taverne 2, Apothicaire 2, Forge et Enchanteresse 0");
+  ok(tous, "Forêt, acte I : Atelier 4, Terrain 0 (acte), Halle 4, Entrepôt 3, Palissade 3, Taverne 2, Apothicaire 3, Forge et Enchanteresse 0");
   g.game.village.buildings.workshop.level = 4;
   ok(M.getCardState("forge") === "locked" && M.getBlockReason("forge") === "S'ouvre au Désert oublié",
     "Forge fermée en Forêt, et la carte dit où elle s'ouvre");
@@ -8169,15 +8169,15 @@ console.log("\n[87] v3.291.0 — Apothicaire : commandes et plafond quotidien");
   A.ensureState().dailyKey = "un autre jour";
   ok(A.getDailyRemaining() === 6 && A.craft("potion_soin_majeur") === true, "le lendemain (jour civil), le compteur repart");
 
-  /* --- Achat : 600 or, 10 par jour --- */
+  /* --- Achat : 600 or, 15 par jour (v3.560.0) --- */
   g.game.gold = 100000;
   var stock0 = P.getHealingStock("potion_soin_majeur");
-  for (var j = 0; j < 12; j++) P.buyHealingPotion("potion_soin_majeur");
-  ok(P.getHealingStock("potion_soin_majeur") === stock0 + 10 && g.game.gold === 100000 - 6000 * Math.pow(1 + g.POTION_CYCLE_PRICE_GROWTH, Number(g.game.cycleCount || 0)),
-    "Soin majeur : 10 achats à 600 or, les 2 suivants refusés");
+  for (var j = 0; j < 17; j++) P.buyHealingPotion("potion_soin_majeur");
+  ok(P.getHealingStock("potion_soin_majeur") === stock0 + 15 && g.game.gold === 100000 - 9000 * Math.pow(1 + g.POTION_CYCLE_PRICE_GROWTH, Number(g.game.cycleCount || 0)),
+    "Soin majeur : 15 achats à 600 or, les 2 suivants refusés");
   ok(P.getHealingBuyRemaining("potion_soin_mineur") === Infinity, "Soin mineur : achat sans limite");
   g.game.village.potionShop.dayKey = "un autre jour";
-  ok(P.getHealingBuyRemaining("potion_soin_majeur") === 10, "le lendemain, le colporteur est réapprovisionné");
+  ok(P.getHealingBuyRemaining("potion_soin_majeur") === 15, "le lendemain, le colporteur est réapprovisionné");
 
   /* --- Nouvelle partie : construire ne donne aucune recette --- */
   run("fullResetState(); game.playerName='Test'; game.heroId='knight';");
@@ -20112,6 +20112,18 @@ console.log("\n[374] v3.559.0 — Grand écran, option C : arène pleine largeur
   } catch (err) {
     ok(false, "[374] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
+})();
+
+console.log("\n[375] v3.560.0 — Potions majeures : colporteur 15 par jour, Apothicaire jusqu'au niveau 10 (retour Seb, point 8, option N)");
+(function () {
+  try {
+    var A = g.ApothecaryManager, VB = g.VILLAGE_BUILDINGS.apothecary, M = g.VillageBuildingManager;
+    ok(VB.maxLevel === 10 && g.WORLD_CAPS.map(function (w) { return w.village.apothecary; }).join() === "3,7,8,9,10", "Apothicaire : niveau max 10, plafonds par monde 3 / 7 / 8 / 9 / 10");
+    ok([1, 3, 7, 8, 9, 10].map(function (l) { return A.getDailyCap(l) - (A.hasPuitsDuRoi() ? 2 : 0); }).join() === "4,8,16,18,20,22", "préparations par jour : 4 au niveau 1, +2 par niveau (8 en Forêt, 16 au Désert … 22 à la Montagne)");
+    var c = M.getLevelCost("apothecary", 9);
+    ok(c && c.gold === 6776 && c.lingot === 105 && c.bloc === 225, "niveau 10 : la courbe continue (6 776 or, 225 blocs, 105 lingots)");
+    ok(g.HEALING_POTIONS_DB.filter(function (p) { return p.id === "potion_soin_majeur"; })[0].dailyBuyLimit === 15, "colporteur : 15 majeures par jour");
+  } catch (err) { ok(false, "[375] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
 Promise.all(ATTENTES).then(function () {

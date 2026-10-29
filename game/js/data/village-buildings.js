@@ -276,9 +276,9 @@ var VILLAGE_BUILDINGS = {
     icon: "images/Icons/village_buildings/apothecary.webp",
     iconImg: "images/Icons/village_buildings/apothecary.webp",
     rank: 2,
-    /* 6 niveaux. v3.291.0 : le niveau donne la CAPACITÉ (préparations par jour), les
+    /* 10 niveaux (v3.560.0, retour Seb, point 8 : 6 -> 10, un de plus par monde). v3.291.0 : le niveau donne la CAPACITÉ (préparations par jour), les
        recettes se gagnent par commande dans la fiche (data/apothecary-recipes.js). */
-    maxLevel: 6,
+    maxLevel: 10,
     implemented: true,
     desc: "Prépare les potions avec des ressources plutôt qu'avec de l'or. Les recettes se gagnent en livrant ses commandes ; chaque niveau permet plus de préparations par jour.",
     costTiers: [
@@ -289,10 +289,10 @@ var VILLAGE_BUILDINGS = {
         costMult: 1.35
       },
       {
-        minLevel: 3, maxLevel: 5,
+        minLevel: 3, maxLevel: 9,
         resources: ["gold", "planche", "bloc", "pierre", "lingot"],
         baseCost: { gold: 900, planche: 30, bloc: 30, pierre: 70, lingot: 14 }, // v3.330.0 (E3) : moitié des planches en blocs
-        costMult: 1.40
+        costMult: 1.40 // v3.560.0 : la courbe continue jusqu'au niveau 10 (palier 3 à 9)
       }
     ],
     effectLabel: function (level) {

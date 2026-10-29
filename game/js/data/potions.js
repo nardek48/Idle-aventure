@@ -92,7 +92,7 @@ var HEALING_POTIONS_DB = [
     /* v3.291.0 (décision Seb) : 400 -> 600 et 10 achats par jour civil. Pousse vers la
        préparation à l'Apothicaire, qui reste la voie bon marché. */
     cost: 600,
-    dailyBuyLimit: 10
+    dailyBuyLimit: 15 // v3.560.0 (retour Seb, point 8) : 10 -> 15, le colporteur était à court dès le Désert
   }
 ];
 

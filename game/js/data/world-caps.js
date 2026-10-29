@@ -13,10 +13,11 @@
 
    Lu par : VillageBuildingManager, ProductionPlotsSystem, WorkshopsSystem. */
 
+/* v3.560.0 (retour Seb, point 8, option N) : Apothicaire 3 / 7 / 8 / 9 / 10, +2 préparations par niveau. */
 var WORLD_CAPS = [
   /* 0 — Forêt enchantée */
   {
-    village: { workshop: 4, training: 4, hall: 4, warehouse: 3, palisade: 3, tavern: 2, apothecary: 2, forge: 0, enchanter: 0 },
+    village: { workshop: 4, training: 4, hall: 4, warehouse: 3, palisade: 3, tavern: 2, apothecary: 3, forge: 0, enchanter: 0 },
     zoneRows: 1,      // lignes de la grille 3×3 ouvrables (1 ligne = 3 zones)
     zoneLevel: 5,     // niveau max d'une zone ; relevé 2 (27/10) : 3 → 5
     workshopLevel: 2, // niveau max d'un atelier (« L'atelier bien huilé » exige 2)
@@ -25,7 +26,7 @@ var WORLD_CAPS = [
   /* 1 — Désert oublié */
   {
     // v3.316.0 (W-4b) : forge 2 -> 3, le palier de l'étape 13 se paie en Verre trempé.
-    village: { workshop: 7, training: 9, hall: 7, warehouse: 6, palisade: 7, tavern: 5, apothecary: 6, forge: 3, enchanter: 1 },
+    village: { workshop: 7, training: 9, hall: 7, warehouse: 6, palisade: 7, tavern: 5, apothecary: 7, forge: 3, enchanter: 1 },
     zoneRows: 2,
     zoneLevel: 8, // relevé 2 (27/10) : 5 → 8
     workshopLevel: 3,
@@ -36,7 +37,7 @@ var WORLD_CAPS = [
      d'acte), Palissade 8 (l'Éboulement), Atelier, Halle, Entrepôt, Enchanteur 2. La Forge 4 et les
      niveaux payés en Clé de voûte viennent avec l'acte III. */
   {
-    village: { workshop: 8, training: 11, hall: 8, warehouse: 7, palisade: 8, tavern: 5, apothecary: 6, forge: 4, enchanter: 2 }, // v3.431.0 (acte III) : Terrain 11, Forge 4
+    village: { workshop: 8, training: 11, hall: 8, warehouse: 7, palisade: 8, tavern: 5, apothecary: 8, forge: 4, enchanter: 2 }, // v3.431.0 (acte III) : Terrain 11, Forge 4
     zoneRows: 2,      // pas de 3e rangée aux Ruines (RU7, tranché par Seb le 09/10/2026)
     zoneLevel: 11, // relevé 2 (27/10) : 5 → 11
     workshopLevel: 3,
@@ -46,7 +47,7 @@ var WORLD_CAPS = [
      Provisoire, égal aux Ruines ; seule la 3e rangée de zones s'ouvre. Les crans des actes II-III au banc.
      v3.455.0 (acte III) : Forge 5, à la Cire consacrée (reforges 9 et 10). */
   {
-    village: { workshop: 8, training: 13, hall: 10, warehouse: 12, palisade: 8, tavern: 6, apothecary: 6, forge: 5, enchanter: 2 }, // v3.456.2 : Terrain 13 ; v3.456.9 : Taverne 6 ; v3.459.9 (audit I3) : Halle 10, Entrepôt 8 ; option B (27/10) : Entrepôt 12
+    village: { workshop: 8, training: 13, hall: 10, warehouse: 12, palisade: 8, tavern: 6, apothecary: 9, forge: 5, enchanter: 2 }, // v3.456.2 : Terrain 13 ; v3.456.9 : Taverne 6 ; v3.459.9 (audit I3) : Halle 10, Entrepôt 8 ; option B (27/10) : Entrepôt 12
     forgeActStep: "crypte_13", // v3.543.0 (audit PLA-7) : la Forge 5 s'ouvre avec sa Cire consacrée et son aide, à l'acte III
     zoneRows: 3,
     zoneLevel: 14, // relevé 2 (27/10) : 5 → 14
@@ -57,7 +58,7 @@ var WORLD_CAPS = [
      Provisoire, égal à la Crypte ; la Forge 6 (Obsidienne taillée) vient avec l'acte III, les autres crans au banc.
      v3.490.0 : Forge 6, ouverte seulement à forgeActStep (un cran de moins avant). */
   {
-    village: { workshop: 8, training: 18, hall: 10, warehouse: 16, palisade: 8, tavern: 6, apothecary: 6, forge: 6, enchanter: 2 }, // H1 : Terrain 18 (acte IV) ; option B (27/10) : Entrepôt 16
+    village: { workshop: 8, training: 18, hall: 10, warehouse: 16, palisade: 8, tavern: 6, apothecary: 10, forge: 6, enchanter: 2 }, // H1 : Terrain 18 (acte IV) ; option B (27/10) : Entrepôt 16
     forgeActStep: "montagne_11",
     zoneRows: 3,
     zoneLevel: 17, // relevé 2 (27/10) : 5 → 17
