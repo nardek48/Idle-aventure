@@ -572,6 +572,43 @@ function reforgeSlot(slot) {
 }
 window.reforgeSlot = reforgeSlot;
 
+/* v3.542.0 (audit CMP-2, option 1B) : ce que vaut une relance avant de payer. Gain moyen (la valeur ne baisse
+   jamais : E[max(v, x)] − v, x uniforme sur la fourchette) et effet sur le héros si le bonus monte au maximum. */
+function enchantHeroSnapshot() {
+  var S = StatsSystem;
+  return { pv: Math.floor(game.heroMaxHp || 0), atk: Math.round(S.effectiveTapDamage()), vit: Math.round(CombatEngine.getTotalCelerity()),
+    def: Math.round((game.heroDefensePct || 0) * 1000) / 10, crit: Math.round(S.effectiveCritChance() * 10) / 10, critx: Math.round(S.effectiveCritMult() * 100) / 100 };
+}
+/* Recalcule le héros avec la ligne posée à `value`, puis remet tout en place (PV courants compris). */
+function enchantHeroDelta(affix, value) {
+  if (!window.StatsSystem || !window.CombatEngine) return null;
+  var before = enchantHeroSnapshot(), old = affix.value, hp = game.heroHp, after = null;
+  try {
+    affix.value = value; StatsSystem.recalcStats(); after = enchantHeroSnapshot();
+  } catch (e) { noteErreur("enchantHeroDelta", e); }
+  finally { affix.value = old; StatsSystem.recalcStats(); game.heroHp = Math.min(hp, game.heroMaxHp); }
+  if (!after) return null;
+  var parts = [], fmt = function (x) { return formatNumber(Math.round(x * 100) / 100); };
+  if (after.pv > before.pv) parts.push(_t("+{n} PV", { n: fmt(after.pv - before.pv) }));
+  if (after.atk > before.atk) parts.push(_t("+{n} ATK", { n: fmt(after.atk - before.atk) }));
+  if (after.vit > before.vit) parts.push(_t("+{n} de célérité", { n: fmt(after.vit - before.vit) }));
+  if (after.def > before.def) parts.push(_t("+{n} % de défense", { n: fmt(after.def - before.def) }));
+  if (after.crit > before.crit) parts.push(_t("+{n} % de critique", { n: fmt(after.crit - before.crit) }));
+  if (after.critx > before.critx) parts.push(_t("+{n} aux dégâts critiques", { n: "×" + fmt(after.critx - before.critx) }));
+  return parts.join(" · ");
+}
+function enchantGainHTML(item, index, affix, range) {
+  var v = Number(affix.value) || 0, lo = range.min, hi = range.max, f = Math.pow(10, range.decimals);
+  var mean = hi > lo ? (v <= lo ? (lo + hi) / 2 - v : (hi - v) * (hi - v) / (2 * (hi - lo))) : 0;
+  mean = Math.round(mean * f) / f;
+  var h = '<div class="forge-row-effect ench-gain">';
+  var txt = mean > 0 ? formatEquipmentStatValue(affix.stat, mean) : "";
+  h += esc(txt && !/\+0(?![.,\d])/.test(txt) ? _t("Une relance, en moyenne : {x}", { x: txt }) : _t("Une relance, en moyenne : presque rien"));
+  var hero = enchantHeroDelta(affix, hi);
+  if (hero) h += '<br>' + esc(_t("Au maximum, ton héros gagne {x}", { x: hero }));
+  return h + '</div>';
+}
+
 /* --- Établi de l'Enchanteresse (rendu DANS la fiche) --------------------- */
 /* Ne liste que les pièces ÉQUIPÉES qui portent des bonus : une grille de tout
    l'inventaire serait illisible dans une fiche, et on enchante ce qu'on porte. */
@@ -618,6 +655,7 @@ function buildEnchantBoardHTML() {
            + esc(_t("Maximum possible : {x}", { x: formatEquipmentStatValue(a.stat, Math.round(range.max * Math.pow(10, range.decimals)) / Math.pow(10, range.decimals)) }))
            + '</div>';
       }
+      if (range && Number(a.value) < range.max) h += enchantGainHTML(item, index, a, range); // v3.542.0 (CMP-2, 1B)
       if (cost) {
         h += '<div class="forge-row-cost">';
         [["gold", cost.gold]].forEach(function (pair) { // v3.459.10 : relance en or seul

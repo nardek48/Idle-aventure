@@ -7088,4 +7088,13 @@ I18n.register("en", {
   // v3.540.0 : la veine conseillée par l'étape (CMP-1)
   "Objectif de l'étape": "Step objective",
 
+  // v3.542.0 : Enchanteresse, ce que vaut une relance (CMP-2)
+  "+{n} ATK": "+{n} ATK",
+  "+{n} de célérité": "+{n} celerity",
+  "+{n} % de défense": "+{n} % defense",
+  "+{n} aux dégâts critiques": "+{n} crit damage",
+  "Une relance, en moyenne : {x}": "One reroll, on average: {x}",
+  "Une relance, en moyenne : presque rien": "One reroll, on average: next to nothing",
+  "Au maximum, ton héros gagne {x}": "At the maximum, your hero gains {x}",
+
 });

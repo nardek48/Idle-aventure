@@ -498,6 +498,8 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* v3.542.0 (CMP-2) : ce que vaut une relance, sur plusieurs lignes au besoin */
+.forge-row-effect.ench-gain { white-space: normal; overflow: visible; }
 .forge-row-empty { font-style: italic; }
 .forge-row-gain { color: #1f7a3d; font-weight: 800; }
 

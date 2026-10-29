@@ -19783,6 +19783,18 @@ console.log("\n[359] v3.541.0 — La veine suit le monde de la quête, pas le mo
   g.WorldManager.worldIndex = wi; G.adventureQuestRun = run; G.dungeonRun = dr;
 })();
 
+console.log("\n[360] v3.542.0 — Enchanteresse : ce que vaut une relance (audit CMP-2, option 1B)");
+(function () {
+  try {
+    var src = fs.readFileSync(path.join(ROOT, "js/ui/village-building-view.js"), "utf8");
+    ok(typeof g.enchantGainHTML === "function" && typeof g.enchantHeroDelta === "function", "enchantGainHTML et enchantHeroDelta définies");
+    ok(/\(hi - v\) \* \(hi - v\) \/ \(2 \* \(hi - lo\)\)/.test(src), "gain moyen d'une relance qui ne baisse jamais : (max − v)² / 2 (max − min)");
+    var G = g.game, hp = G.heroHp, it = { stat: "maxHpPct", value: 0 };
+    var d = g.enchantHeroDelta({ stat: "maxHpPct", value: 0 }, 0.5);
+    ok(G.heroHp === hp, "le calcul remet le héros en place (PV courants inchangés)");
+  } catch (err) { ok(false, "[360] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);
