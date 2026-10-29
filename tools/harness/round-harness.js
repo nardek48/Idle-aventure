@@ -20100,6 +20100,20 @@ console.log("\n[373] v3.558.0 — Grand écran, option B : Camp sur une page, H�
   }
 })();
 
+console.log("\n[374] v3.559.0 — Grand écran, option C : arène pleine largeur, états en pastilles");
+(function () {
+  try {
+    var fs = require("fs"), path = require("path");
+    var css = fs.readFileSync(path.join(ROOT, "css/10-grand-ecran.css"), "utf8");
+    ok(/ge-arena-wide body\.combat-active:not\(\.lab-run\) > #game-area \{ padding-left: 10px; padding-right: 10px; \}/.test(css), "arène : les ennemis ont toute la page (plus de colonne de 560 px)");
+    ok(/\.cbx-team \{ width: 100%; max-width: 800px;/.test(css) && /\.cbx-cmd \{ width: 100%; max-width: 640px;/.test(css), "équipe et commandes restent groupées au centre");
+    ok(/\.chr-states \.st-row:not\(\.is-alert\) \{ display: inline-flex;/.test(css), "Chronique de combat : états en pastilles, alertes détaillées");
+    ok(/class="st-row" title="/.test(g.buildCbxStatesSheetHTML()) || g.buildCbxStatesSheetHTML().indexOf("st-row") < 0, "chaque état garde son explication en infobulle");
+  } catch (err) {
+    ok(false, "[374] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

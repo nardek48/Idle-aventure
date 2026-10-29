@@ -671,7 +671,8 @@
     var fam = st.def.famille;
     var n = st.n ? (st.n + ((fam === "mine" || fam === "onme" || st.id === "approaching" || st.id === "stunned") ? " " + _t("rd", "round abrégé") : "")) : "";
     if (st.id === "corrupted" && st.n) n = "×" + st.n;
-    return '<div class="st-row' + (alert ? ' is-alert' : '') + '">' + ico(stIcon(st), "st-row-ico")
+    // v3.559.0 : l'explication en infobulle (la Chronique du grand écran montre les états en pastilles)
+    return '<div class="st-row' + (alert ? ' is-alert' : '') + '" title="' + esc(_td(desc || "") + (st.def.hint && !st.suppressed ? " " + _td(st.def.hint) : "")) + '">' + ico(stIcon(st), "st-row-ico")
       + '<div class="st-row-body"><div class="st-row-name">' + esc(_td(st.def.nom)) + (who ? ' <span class="cbx-st-who">· ' + esc(who) + '</span>' : '') + '</div>'
       + '<div class="st-row-desc">' + esc(_td(desc || "")) + '</div>'
       + (st.def.hint && !st.suppressed ? '<div class="st-row-hint">' + esc(_td(st.def.hint)) + '</div>' : '') + '</div>'
