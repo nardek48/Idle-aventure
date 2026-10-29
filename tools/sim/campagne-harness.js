@@ -46,7 +46,8 @@ var SEUIL_SOIN = ARGS.indexOf("--seuil-soin") >= 0 ? Number(ARGS[ARGS.indexOf("-
 var FARM_REFORGES = ARGS.indexOf("--farm-reforges") >= 0;   // ancien comportement : farmer les matériaux de toutes les reforges
 var ZONES = ARGS.indexOf("--sans-zones") < 0;  // le joueur monte ses zones de production (Mine, Scierie…) ; --sans-zones pour l'ancien profil
 var ARME_DESERT = ARGS.indexOf("--arme-desert") >= 0;   // ESSAI (hors jeu) : une arme Inhabituelle du Désert offerte à desert_12
-var COMPAGNONS_MALINS = ARGS.indexOf("--compagnons-malins") >= 0;   // --tactique : les compagnons jouent leur choix automatique
+// --tactique : les compagnons suivent le conseil mis en avant (doré), comme le joueur attentif ; --compagnons-attaque : attaque seule
+var COMPAGNONS_MALINS = ARGS.indexOf("--compagnons-attaque") < 0;   // banc CMP-1 du 29/10 : l'attaque seule faisait 2 fois plus de morts
 // v3.379.0 : banc de la potion automatique — --potion-auto jamais|tard|normal|tot (réglage du Grimoire),
 // --sans-potion-main : le joueur absent ne touche jamais la potion (sinon : potion à la main sous 30 %)
 var POTION_AUTO = ARGS.indexOf("--potion-auto") >= 0 ? ARGS[ARGS.indexOf("--potion-auto") + 1] : null;
