@@ -82,12 +82,14 @@ var Chronique = {
     return on;
   },
 
-  /* Fond d'arène en paysage (« monde-combat-wide.webp », liste des images à créer) : pris s'il se charge,
-     sinon le fond en hauteur reste au centre, doublé et flouté sur les côtés (css/10-grand-ecran.css). */
+  /* Fond d'arène en paysage (« monde-combat-wide.webp ») : pris s'il se charge, l'arène prend alors toute la
+     page ; sinon le fond en hauteur reste au centre, doublé et flouté sur les côtés (css/10-grand-ecran.css). */
   wideOk: {},
   arenaWide: function () {
     var root = document.documentElement, m = /url\("?([^")]+\.webp)"?\)/.exec(root.style.getPropertyValue("--world-combat-map") || "");
-    var url = m ? m[1].replace(/\.webp$/, "-wide.webp") : "", self = this;
+    // Les chemins du fond sont relatifs à css/ (« ../images/… ») : on les résout depuis ce dossier (v3.552.0)
+    var url = "", self = this;
+    if (m) { try { url = new URL(m[1].replace(/\.webp$/, "-wide.webp"), new URL("css/", document.baseURI)).href; } catch (e) { url = ""; } }
     var apply = function () {
       var ok = !!url && self.wideOk[url] === true;
       root.classList.toggle("ge-arena-wide", ok);
