@@ -19809,6 +19809,20 @@ console.log("\n[361] v3.543.0 — Forge 5 de la Crypte ouverte à crypte_13 (aud
   WC.getReachedWorldIndex = rw; SQ.isStepReached = sr;
 })();
 
+console.log("\n[362] v3.544.0 — Or du Labyrinthe selon le monde atteint (audit CMP-3, option B)");
+(function () {
+  var WC = g.WorldCaps, rw = WC.getReachedWorldIndex, LR = g.LabyrinthRun;
+  try {
+    WC.getReachedWorldIndex = function () { return 2; };
+    var r2 = { floor: 3 }, m2 = LR.goldMult(r2), s2 = LR.stairsGain(r2).gold;
+    WC.getReachedWorldIndex = function () { return 4; };
+    var r4 = { floor: 3 }, m4 = LR.goldMult(r4), s4 = LR.stairsGain(r4).gold;
+    ok(m2 === 1 && s2 === 450 && m4 > 1 && s4 === Math.round(450 * m4), "Ruines ×1 (escalier ét. 3 : 450 or) ; Montagne ×" + m4 + " (" + s4 + " or) ; les Pierres ne changent pas");
+    ok(LR.stairsGain(r4).stones === LR.stairsGain(r2).stones, "Pierres errantes identiques quel que soit le monde");
+  } catch (err) { ok(false, "[362] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  WC.getReachedWorldIndex = rw;
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

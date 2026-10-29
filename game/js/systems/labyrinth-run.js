@@ -243,7 +243,7 @@ var LabyrinthRun = {
     run.note = { text: _t("Une source, sous une dalle fendue. Souffle +{n}, PV +{p} %.", { n: c.springBreath, p: Math.round(c.springHealPct * 100) }) };
   },
   _chest: function (run) {
-    var c = this.cfg(), s = c.chestStones + Math.floor(run.floor / 2) * c.chestStonesPerTwoFloors, g = c.chestGoldPerFloor * run.floor;
+    var c = this.cfg(), s = c.chestStones + Math.floor(run.floor / 2) * c.chestStonesPerTwoFloors, g = Math.round(c.chestGoldPerFloor * run.floor * this.goldMult(run));
     run.chestTaken = true; this._gain(run, s, g);
     run.note = { text: _t("Un coffre oublié : +{s} Pierres errantes, +{g} or.", { s: s, g: g }) };
   },
@@ -336,6 +336,25 @@ var LabyrinthRun = {
     if (!run.refGold) { var e = this._spawn("skeleton", false); run.refGold = Math.max(1, Number((e && e.goldReward) || 1)); }
     return run.refGold;
   },
+  /* v3.544.0 (audit CMP-3, option B) : l'or suit le monde atteint, comme la Sève (PLA-4). Rapport entre l'or
+     d'un ennemi du premier lieu du monde atteint et celui du squelette des Ruines ; jamais moins de 1. */
+  goldMult: function (run) {
+    run = run || this.getRun();
+    if (!run) return 1;
+    if (!run.goldMult) {
+      var wi = (window.WorldCaps && typeof WorldCaps.getReachedWorldIndex === "function") ? WorldCaps.getReachedWorldIndex() : this._worldIdx();
+      var w = (window.WORLDS || [])[wi], m = 1;
+      if (w && wi > this._worldIdx()) {
+        var W = window.WorldManager, was = W ? W._heroScaleOff : false, e;
+        if (W) W._heroScaleOff = true;
+        try { e = QuestEnemyManager.spawnFor({ worldId: w.id, adventureIndex: 0 }, false); } finally { if (W) W._heroScaleOff = was; }
+        e = Array.isArray(e) ? e[0] : e;
+        m = Math.max(1, Number((e && e.goldReward) || 0) / this._refGold(run));
+      }
+      run.goldMult = Math.round(m * 100) / 100;
+    }
+    return run.goldMult;
+  },
   /* Estimation affichée avant le choix = celle appliquée (au tirage de ±15 % près). apId : "charger" ou "tenir". */
   estimate: function (kind, apId) {
     var run = this.getRun(); if (!run) return null;
@@ -345,7 +364,7 @@ var LabyrinthRun = {
     var net = heroDmg - CombatForecast.getHealThreshold(e), rounds = net > 0 ? Math.ceil(e.maxHp / net) : Infinity;
     var unwinnable = !(rounds <= PA2_RULES.maxRounds), pack = kind === "guard" ? c.guardPack : 1;
     var hpLoss = unwinnable ? Number(game.heroHp || 0) : Math.max(1, Math.round(rounds * foeDmg * pack * Number(ap.dmg || 1)));
-    var gold = Math.round(this._refGold(run) * Number((c.combatGold || {})[kind] || 1.7) * pack * Number(ap.loot || 1));
+    var gold = Math.round(this._refGold(run) * Number((c.combatGold || {})[kind] || 1.7) * pack * Number(ap.loot || 1) * this.goldMult(run));
     return { kind: kind, approach: ap.id, foeName: e.name, foeImage: e.image || null, pack: pack, hpLoss: hpLoss, unwinnable: unwinnable, gold: gold,
       rounds: Number(ap.rounds || 3), verdict: window.Pa2Run ? Pa2Run.verdictOf(hpLoss) : "" };
   },
@@ -446,7 +465,7 @@ var LabyrinthRun = {
 
   /* ---------- L'escalier : le Gardien, puis descendre ou remonter ---------- */
 
-  stairsGain: function (run) { var c = this.cfg(); return { stones: c.stairsStones + c.stairsStonesPerFloor * run.floor, gold: c.stairsGoldPerFloor * run.floor }; },
+  stairsGain: function (run) { var c = this.cfg(); return { stones: c.stairsStones + c.stairsStonesPerFloor * run.floor, gold: Math.round(c.stairsGoldPerFloor * run.floor * this.goldMult(run)) }; },
   fightBoss: function (apId) {   // raccourci (bancs, harnais)
     if (!this.engage("boss").ok) return { ok: false };
     var r = this.fight(apId || "tenir");
