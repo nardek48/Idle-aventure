@@ -199,6 +199,54 @@ var LivingMapManager = {
     return best;
   },
 
+  /* v3.548.0 (retour Seb) : secteurs non libérés sur un plus court chemin du village (ou du déjà
+     libéré) vers l'objectif le plus proche. Entrer dans un secteur coûte 1, 0 s'il est libéré ; sens d'isReachable. */
+  getStoryPath: function (mapId, targets) {
+    var map = this.getMap(mapId), self = this;
+    if (!map || !targets || !targets.length) return [];
+    var secs = map.sectors, INF = Infinity, ids = secs.map(function (d) { return d.id; });
+    var lib = {}, cost = {}, passe = {};
+    secs.forEach(function (d) {
+      lib[d.id] = self.isLiberated(mapId, d.id);
+      cost[d.id] = lib[d.id] ? 0 : 1;
+      // fermé par l'Histoire, ou « tous les voisins » (le Cœur) : traversé seulement s'il est déjà libéré
+      passe[d.id] = lib[d.id] || !((d.requiresStoryStep && !self.isStoryStepReached(d.requiresStoryStep)) || d.requiresAllNeighbors);
+    });
+    // dS : coût du village jusqu'à d inclus (point fixe, cartes de 9 à 15 secteurs)
+    var dS = {}, chg = true;
+    ids.forEach(function (id) { dS[id] = INF; });
+    while (chg) {
+      chg = false;
+      secs.forEach(function (d) {
+        if (!passe[d.id]) return;
+        var best = d.ring === 1 ? 0 : INF;
+        d.neighbors.forEach(function (n) { if (dS[n] < best) best = dS[n]; });
+        if (best + cost[d.id] < dS[d.id]) { dS[d.id] = best + cost[d.id]; chg = true; }
+      });
+    }
+    // plusieurs objectifs : seul le plus proche ouvre son chemin, le suivant après lui
+    var proche = INF, out = [];
+    targets.forEach(function (t) { if (!lib[t] && dS[t] < proche) proche = dS[t]; });
+    targets.forEach(function (t) {
+      if (lib[t] || dS[t] !== proche) return;
+      // dT : coût de d (exclu) jusqu'à t inclus ; on entre dans x depuis n si n est un voisin déclaré de x
+      var dT = {}, c2 = true;
+      ids.forEach(function (id) { dT[id] = INF; });
+      dT[t] = 0;
+      while (c2) {
+        c2 = false;
+        secs.forEach(function (x) {
+          if (!passe[x.id] || !(dT[x.id] < INF)) return;
+          x.neighbors.forEach(function (n) { if (cost[x.id] + dT[x.id] < dT[n]) { dT[n] = cost[x.id] + dT[x.id]; c2 = true; } });
+        });
+      }
+      ids.forEach(function (id) {
+        if (!lib[id] && dS[id] + dT[id] === dS[t] && out.indexOf(id) < 0) out.push(id);
+      });
+    });
+    return out;
+  },
+
   /* Niveau de Palissade (C-3). Sans bâtiment ni système : 0. */
   getPalisadeLevel: function () {
     var pal = this.getRules().palisade || {};

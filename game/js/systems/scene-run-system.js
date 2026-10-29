@@ -67,7 +67,7 @@ var SceneRunManager = {
      comme l'entrée de donjon offerte. L'étape en cours porte storyPa { worldId, untilFlag? } :
      - untilFlag : offerte dans ce monde tant que la destination demandée n'est pas atteinte ;
      - sinon : offerte vers un secteur de la carte de ce monde pas encore libéré (rejouer un secteur
-       libéré reste payant : pas de butin à volonté pendant l'étape). */
+       libéré reste payant : pas de butin à volonté pendant l'étape) ; avec targets, sur le chemin seul (v3.548.0). */
   isStoryPaFree: function (worldId, livingMap) {
     if (!window.StoryQuestManager || typeof StoryQuestManager.activeChapterIds !== "function") return false;
     var lm = livingMap && livingMap.mapId ? livingMap : null;
@@ -78,9 +78,19 @@ var SceneRunManager = {
       if (!sp || sp.worldId !== worldId || !StoryQuestManager.isCurrentStepAccepted(ids[i])) continue;
       if (StoryQuestManager.isCurrentStepReady(ids[i])) continue; // v3.519.0 (revue) : étape réussie, plus d'offre (comme le donjon, RE-5)
       if (sp.untilFlag) { if (!(game.explorationProgression && game.explorationProgression[sp.untilFlag])) return true; continue; }
-      if (lm && window.LivingMapManager && !LivingMapManager.isLiberated(lm.mapId, lm.sectorId)) return true;
+      if (!lm || !window.LivingMapManager || LivingMapManager.isLiberated(lm.mapId, lm.sectorId)) continue;
+      var cibles = this.storyPaTargets(sp);
+      if (!cibles || LivingMapManager.getStoryPath(lm.mapId, cibles).indexOf(lm.sectorId) >= 0) return true; // v3.548.0 : le chemin seul
     }
     return false;
+  },
+
+  /* v3.548.0 (retour Seb) : objectifs d'une étape (storyPa.targets, liste ou fonction), null si elle
+     demande « N secteurs au choix » : alors tout secteur non libéré reste offert jusqu'à la réussite. */
+  storyPaTargets: function (sp) {
+    var t = sp && sp.targets;
+    if (typeof t === "function") t = t();
+    return (t && t.length) ? t : null;
   },
 
   /* v3.429.23 : la carte « Petite aventure » du tableau : un départ offert existe-t-il dans ce monde ?

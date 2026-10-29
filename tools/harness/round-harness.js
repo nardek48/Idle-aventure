@@ -19871,6 +19871,53 @@ console.log("\n[364] v3.547.0 — Le service worker purge les images disparues (
   }).catch(function (e) { ok(false, "[364] exception : " + e.message); }));
 })();
 
+console.log("\n[365] v3.548.0 — Petite aventure offerte par l'Histoire : le chemin vers l'objectif seul (retour Seb)");
+(function () {
+  var SR = g.SceneRunManager, SQ = g.StoryQuestManager, LM = g.LivingMapManager;
+  var sv = { ready: SQ.isCurrentStepReady, acc: SQ.isCurrentStepAccepted, step: SQ.getCurrentStep, act: SQ.activeChapterIds, lib: LM.isLiberated, reach: LM.isStoryStepReached };
+  try {
+    LM.isStoryStepReached = function () { return true; }; // l'étape en cours a ouvert les secteurs qu'elle vise
+    var libres = {}, etape = null;
+    LM.isLiberated = function (m, id) { return !!libres[m + "/" + id]; };
+    SQ.activeChapterIds = function () { return ["x"]; }; SQ.getCurrentStep = function () { return etape; };
+    SQ.isCurrentStepAccepted = function () { return true; }; SQ.isCurrentStepReady = function () { return false; };
+    var pas = function (id) { var r = null; Object.keys(g.STORY_QUESTS).forEach(function (c) { g.STORY_QUESTS[c].steps.forEach(function (s) { if (s.id === id) r = s; }); }); return r; };
+    var chemin = function (id) { etape = pas(id); return LM.getStoryPath(etape.storyPa.worldId, SR.storyPaTargets(etape.storyPa)).sort(); };
+    var bilan = ["desert_05", "desert_06", "desert_11", "desert_14", "ruines_11", "ruines_16", "crypte_11", "crypte_16", "montagne_11", "montagne_16"].map(function (id) {
+      var c = chemin(id); ok(c.length > 0 && SR.storyPaTargets(etape.storyPa).some(function (t) { return c.indexOf(t) >= 0; }), id + " : chemin non vide, vers un objectif (" + c.join(", ") + ")");
+      return id + " " + c.length;
+    });
+    console.log("  carte vierge : " + bilan.join(" · "));
+    // libérations offertes jusqu'au bout : on prend chaque fois le premier secteur offert et atteignable
+    var gratuites = function (id) {
+      libres = {}; etape = pas(id); var w = etape.storyPa.worldId, n = 0, c;
+      while ((c = chemin(id).filter(function (s) { return LM.isReachable(w, s); })).length && n < 30) { libres[w + "/" + c[0]] = true; n++; }
+      libres = {}; return n;
+    };
+    var reel = ["desert_06", "desert_14", "crypte_11", "crypte_16", "montagne_16"].map(function (id) { return id + " " + gratuites(id) + "/" + g.LIVING_MAPS[pas(id).storyPa.worldId].sectors.length; });
+    console.log("  libérations offertes jusqu'à l'objectif : " + reel.join(" · "));
+    ok(gratuites("desert_06") === 3 && gratuites("crypte_11") === 3 && gratuites("montagne_16") <= 7, "un chemin, pas la carte (" + reel.join(", ") + ")");
+    libres["mountain/antre"] = true; libres["mountain/fumerolles"] = true; libres["mountain/paroi_noire"] = true;
+    ok(chemin("montagne_16").indexOf("antre") < 0 && chemin("montagne_16").length > 0, "montagne_16 : un objectif libéré, le chemin passe au suivant (" + chemin("montagne_16").join(", ") + ")");
+    libres = {};
+    etape = pas("crypte_11");
+    var hors = g.LIVING_MAPS.crypt.sectors.filter(function (d) { return chemin("crypte_11").indexOf(d.id) < 0 && d.ring === 1; })[0];
+    ok(!!hors && SR.isStoryPaFree("crypt", { mapId: "crypt", sectorId: hors.id }) === false, "crypte_11 : un secteur hors du chemin (" + (hors && hors.id) + ") se paie");
+    ok(SR.isStoryPaFree("crypt", { mapId: "crypt", sectorId: "cotes" }) === true, "crypte_11 : l'objectif reste offert");
+    var d6 = chemin("desert_06");
+    ok(d6.indexOf("verrerie") >= 0 && d6.indexOf("marche_sel") >= 0, "desert_06 : les deux chemins (verrerie, marché de sel) sont offerts (" + d6.join(", ") + ")");
+    libres["desert/verrerie"] = true;
+    var d6b = chemin("desert_06");
+    ok(d6b.indexOf("marche_sel") < 0 && d6b.length < d6.length, "desert_06 : la verrerie libérée raccourcit le chemin (" + d6b.join(", ") + ")");
+    libres = {};
+    etape = pas("ruines_07");
+    ok(!SR.storyPaTargets(etape.storyPa) && g.LIVING_MAPS.ruins.sectors.every(function (d) { return SR.isStoryPaFree("ruins", { mapId: "ruins", sectorId: d.id }); }), "ruines_07 (2 quartiers au choix) : tout quartier non libéré reste offert");
+    libres["crypt/cotes"] = true; etape = pas("crypte_11");
+    ok(chemin("crypte_11").length === 0, "objectif libéré : plus de chemin offert");
+  } catch (err) { ok(false, "[365] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  SQ.isCurrentStepReady = sv.ready; SQ.isCurrentStepAccepted = sv.acc; SQ.getCurrentStep = sv.step; SQ.activeChapterIds = sv.act; LM.isLiberated = sv.lib; LM.isStoryStepReached = sv.reach;
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

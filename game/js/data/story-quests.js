@@ -1064,7 +1064,7 @@ STORY_QUESTS.desert = {
         ]
       },
       objectiveLabel: "Aller aux stèles penchées (carte du Désert) et choisir",
-      storyPa: { worldId: "desert" }, // v3.429.23 : Petite aventure offerte par l'Histoire (SceneRunManager.isStoryPaFree)
+      storyPa: { worldId: "desert", targets: ["steles"] }, // v3.429.23 : Petite aventure offerte par l'Histoire (SceneRunManager.isStoryPaFree)
       unlockTabs: [],
       reward: STORY_REWARDS.desert_05,
       linkTo: { section: "map", cardId: "livingmap_desert:steles" },
@@ -1130,7 +1130,7 @@ STORY_QUESTS.desert = {
         ]
       },
       objectiveLabel: "Libérer la porte du Temple (carte du Désert, par la verrerie ou le marché de sel)",
-      storyPa: { worldId: "desert" }, // v3.429.23 : Petite aventure offerte par l'Histoire (SceneRunManager.isStoryPaFree)
+      storyPa: { worldId: "desert", targets: ["porte_temple"] }, // v3.429.23 : Petite aventure offerte par l'Histoire (SceneRunManager.isStoryPaFree)
       unlockTabs: [],
       reward: STORY_REWARDS.desert_06,
       linkTo: { section: "map", cardId: "livingmap_desert:porte_temple" },
@@ -1370,7 +1370,7 @@ STORY_QUESTS.desert = {
         }
       },
       objectiveLabel: "Libérer la tour de guet (carte du Désert), puis choisir",
-      storyPa: { worldId: "desert" }, // v3.429.23 : Petite aventure offerte par l'Histoire (SceneRunManager.isStoryPaFree)
+      storyPa: { worldId: "desert", targets: ["tour_guet"] }, // v3.429.23 : Petite aventure offerte par l'Histoire (SceneRunManager.isStoryPaFree)
       unlockTabs: [],
       reward: STORY_REWARDS.desert_11,
       linkTo: { section: "map", cardId: "livingmap_desert:tour_guet" },
@@ -1523,7 +1523,7 @@ STORY_QUESTS.desert = {
         ]
       },
       objectiveLabel: "Libérer la bête sous la dune (carte du Désert)",
-      storyPa: { worldId: "desert" }, // v3.429.23 : Petite aventure offerte par l'Histoire (SceneRunManager.isStoryPaFree)
+      storyPa: { worldId: "desert", targets: ["bete_dune"] }, // v3.429.23 : Petite aventure offerte par l'Histoire (SceneRunManager.isStoryPaFree)
       unlockTabs: [],
       reward: STORY_REWARDS.desert_14,
       linkTo: { section: "map", cardId: "livingmap_desert:bete_dune" },
@@ -2204,7 +2204,7 @@ STORY_QUESTS.ruins = {
         ]
       },
       objectiveLabel: "Libérer « La porte du Sanctuaire » (carte des Ruines)",
-      storyPa: { worldId: "ruins" }, // v3.436.4 : Petite aventure offerte par l'Histoire, oubliée à l'acte III
+      storyPa: { worldId: "ruins", targets: ["porte_sanctuaire"] }, // v3.436.4 : Petite aventure offerte par l'Histoire, oubliée à l'acte III
       unlockTabs: [],
       reward: STORY_REWARDS.ruines_11,
       linkTo: { section: "map", cardId: "livingmap_ruins" },
@@ -2396,7 +2396,7 @@ STORY_QUESTS.ruins = {
         ]
       },
       objectiveLabel: "Tenir les 3 quartiers qui touchent le Cœur (carte des Ruines)",
-      storyPa: { worldId: "ruins" }, // v3.436.4 : Petite aventure offerte par l'Histoire, oubliée à l'acte IV
+      storyPa: { worldId: "ruins", targets: ["place_etals", "rue_tourne", "couloirs"] }, // v3.436.4 : Petite aventure offerte par l'Histoire, oubliée à l'acte IV
       unlockTabs: [],
       reward: STORY_REWARDS.ruines_16,
       linkTo: { section: "map", cardId: "livingmap_ruins" },
@@ -3024,7 +3024,7 @@ STORY_QUESTS.crypt = {
         ]
       },
       objectiveLabel: "Libérer « Les côtes » sur la carte de la Crypte",
-      storyPa: { worldId: "crypt" },
+      storyPa: { worldId: "crypt", targets: ["cotes"] },
       unlockTabs: [],
       reward: STORY_REWARDS.crypte_11,
       linkTo: { section: "map", cardId: "livingmap_crypt" },
@@ -3229,7 +3229,7 @@ STORY_QUESTS.crypt = {
       },
       objectiveLabel: "Libérer Le cercle tracé, Les maisons des morts et La porte murée (carte de la Crypte)",
       unlockTabs: [],
-      storyPa: { worldId: "crypt" }, // v3.519.0 (audit DUR-5) : Petite aventure offerte par l'Histoire, oubliée
+      storyPa: { worldId: "crypt", targets: function () { return STORY_CHAIN_SECTORS; } }, // v3.519.0 (audit DUR-5) : Petite aventure offerte par l'Histoire, oubliée
       reward: STORY_REWARDS.crypte_16,
       linkTo: { section: "map", cardId: "livingmap_crypt" },
       check: function () { return storyChainSectors() >= STORY_CHAIN_SECTORS.length; },
@@ -4305,7 +4305,7 @@ STORY_QUESTS.mountain = {
       },
       objectiveLabel: "Libérer « L'entrée de l'Antre » sur la carte de la Montagne",
       unlockTabs: [],
-      storyPa: { worldId: "mountain" }, // v3.519.0 (audit DUR-5) : Petite aventure offerte par l'Histoire, oubliée
+      storyPa: { worldId: "mountain", targets: ["antre"] }, // v3.519.0 (audit DUR-5) : Petite aventure offerte par l'Histoire, oubliée
       reward: STORY_REWARDS.montagne_11,
       linkTo: { section: "map", cardId: "livingmap_mountain" },
       check: function () { return storyMountainSectorFreed("antre"); },
@@ -4494,7 +4494,7 @@ STORY_QUESTS.mountain = {
       },
       objectiveLabel: "Libérer les quatre secteurs du haut de la carte de la Montagne",
       unlockTabs: [],
-      storyPa: { worldId: "mountain" }, // v3.519.0 (audit DUR-5) : Petite aventure offerte par l'Histoire, oubliée
+      storyPa: { worldId: "mountain", targets: function () { return STORY_MONTAGNE_ANNEAU3; } }, // v3.519.0 (audit DUR-5) : Petite aventure offerte par l'Histoire, oubliée
       reward: STORY_REWARDS.montagne_16,
       linkTo: { section: "map", cardId: "livingmap_mountain" },
       check: function () { return storyMountainRing3Freed() >= STORY_MONTAGNE_ANNEAU3.length; },
