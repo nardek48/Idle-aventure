@@ -58,7 +58,7 @@ var RAW = ["bois", "fer", "pierre", "eau", "ble", "viande"];
 /* Brut nécessaire par unité de produit fabriqué (data/workshops.js). */
 var RECIPE = { planche: { bois: 5 }, lingot: { fer: 5 }, farine: { ble: 5 }, viande_sechee: { viande: 5 },
   pain: { ble: 15, eau: 5 }, ration: { viande: 15, ble: 15, eau: 5 } };
-var PREFIX = ["forest", "desert", "ruines", "crypte"];
+var PREFIX = ["forest", "desert", "ruines", "crypte", "montagne"]; // v3.560.0 : la Montagne aussi
 
 var SCENARIOS = {
   A0: { label: "aujourd'hui (v3.480.0 : Bois et Fer en caravane, comme A1)" },
@@ -114,7 +114,7 @@ function campaign(world, visits, scen, days) {
   var gold = { tavern: 0, caravan: 0 }, measuring = false;
 
   // Patrouilles : 2 compagnons en continu, 8 h, ressource dominante en rotation
-  var rate = g.PATROL_RATES[["forest", "desert", "ruins", "crypt"][world]].matPerHour * g.PATROL_RING_MULT[2] * (1 + 5 * g.PATROL_UPGRADE_BONUS);
+  var rate = g.PATROL_RATES[["forest", "desert", "ruins", "crypt", "mountain"][world]].matPerHour * g.PATROL_RING_MULT[2] * (1 + 5 * g.PATROL_UPGRADE_BONUS);
   var patrolTurn = 0, patrolEnd = null;
   /* Le butin d'une patrouille ne rentre qu'au passage du joueur (PatrolManager.collect), qui relance aussitôt. */
   function patrolCollect() {
@@ -204,7 +204,7 @@ worlds.forEach(function (world) {
   Object.keys(SCENARIOS).forEach(function (sk) {
     if (only && only !== sk) return;
     var r = campaign(world, visits, SCENARIOS[sk], days), D = r.days;
-    console.log("\n== " + ["Forêt", "Désert", "Ruines", "Crypte"][world] + " · " + visits + " passages par jour · " + sk + " — " + SCENARIOS[sk].label
+    console.log("\n== " + ["Forêt", "Désert", "Ruines", "Crypte", "Montagne"][world] + " · " + visits + " passages par jour · " + sk + " — " + SCENARIOS[sk].label
       + "  (Entrepôt " + r.cap + ", " + r.tavernSlots + " contrats, " + r.markets + " marché(s) pour " + r.caravans + " caravane(s))");
     console.log("   ressource  zones/j (théorie)   patrouilles/j  perdu/j  vivres/j  Taverne/j  caravane/j  au plafond");
     RAW.forEach(function (k) {
