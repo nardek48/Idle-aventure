@@ -417,3 +417,30 @@ html.wide-mode #panel-container .pw .prod-tile.is-sel { background: var(--c-crea
 html.wide-mode #panel-container .pw-sheet { position: sticky; top: 0; min-width: 0; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden; background: var(--sheet-body-bg); color: var(--sheet-ink); box-shadow: 0 0 0 1px var(--c-bronze-450), 0 10px 26px rgba(0, 0, 0, 0.45); --nb-ink: var(--c-brown-850-soft); --nb-ink-dim: var(--c-brown-650-soft); }
 html.wide-mode #panel-container .pw-sheet .ksheet-handle { display: none; }
 html.wide-mode #panel-container .pw-sheet .ksheet-body { overflow: visible; padding: 14px 14px 16px; }
+
+/* =========================================================
+   v3.558.0 (option B, Camp et Héros) : le Camp sur une seule page (feu et Grimoire | missions et
+   expéditions), le Résumé du Héros complété (capacités et compagnons), comme la maquette.
+   ========================================================= */
+html.wide-mode .camp-page > .kf-mid:has(> .cw) { column-count: auto; }
+html.wide-mode #panel-container .cw { display: grid; grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr); gap: 16px; align-items: start; }
+html.wide-mode #panel-container .cw-col { min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+html.wide-mode #panel-container .cw-col > .camp-card { margin: 0; }
+html.wide-mode #panel-container .cw-h,
+html.wide-mode #panel-container .hs-wh { margin: 4px 0 -2px; font: 700 13px var(--f-title); letter-spacing: 0.1em; text-transform: uppercase; color: var(--nb-gold-deep); }
+html.wide-mode #panel-container .hs-wh small { font: 600 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; letter-spacing: 0; text-transform: none; color: var(--nb-ink-dim); margin-left: 6px; }
+html.wide-mode #panel-container .hs-bag-btn { align-self: flex-end; width: auto; min-width: 0; margin: 0; padding-left: 18px; padding-right: 18px; }
+html.wide-mode #panel-container .hs-wskills { width: 100%; display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 12px; border: 1px solid var(--c-bronze-400-2); background: rgba(255, 250, 240, 0.7); color: var(--c-brown-850-3); text-align: left; cursor: pointer; }
+html.wide-mode #panel-container .hs-wsk { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 0 10px; align-items: center; }
+html.wide-mode #panel-container .hs-wsk-ico { grid-row: span 2; width: 34px; height: 34px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 1.5px var(--c-brown-850-3); }
+html.wide-mode #panel-container .hs-wsk b { font-size: 13.5px; }
+html.wide-mode #panel-container .hs-wsk small { grid-column: 2; font-size: 12px; color: var(--nb-ink-dim); }
+html.wide-mode #panel-container .hs-wsk em { grid-row: 1 / span 2; grid-column: 3; font-style: normal; font-size: 12px; font-weight: 800; color: var(--nb-gold-deep); white-space: nowrap; }
+html.wide-mode #panel-container .hs-wsk em.is-go { color: var(--c-green-650-2); }
+html.wide-mode #panel-container .hs-wcomp { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; }
+html.wide-mode #panel-container .hs-wc { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px; border-radius: 12px; border: 1px solid var(--c-bronze-400-2); background: rgba(255, 250, 240, 0.7); color: var(--c-brown-850-3); cursor: pointer; }
+html.wide-mode #panel-container .hs-wc-img { width: 46px; height: 46px; border-radius: 50%; object-fit: cover; object-position: top; box-shadow: 0 0 0 2px var(--c-bronze-450); }
+html.wide-mode #panel-container .hs-wc b { font-size: 13px; }
+html.wide-mode #panel-container .hs-wc small { font-size: 12px; color: var(--nb-ink-dim); }
+html.wide-mode #panel-container .hs-wc-bar { width: 100%; height: 6px; border-radius: 3px; background: rgba(58, 44, 26, 0.18); overflow: hidden; }
+html.wide-mode #panel-container .hs-wc-bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--c-green-650-2), var(--c-green-400)); }

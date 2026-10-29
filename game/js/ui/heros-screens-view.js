@@ -74,13 +74,14 @@
       + (o.sub ? '<span class="hs-tile-sub">' + o.sub + '</span>' : '') + '</button>';
   }
 
-  function heroTiles() {
+  // noAbilities : grand écran, où les capacités ont leur propre liste (v3.558.0)
+  function heroTiles(noAbilities) {
     var tr = trainingStatus();
     var t = tileHTML({ icon: "images/Icons/subtabs/hero_stats.webp", title: _t("Entraînement"), line: esc(tr.line), sub: esc(tr.sub), tone: tr.tone, onclick: "openHerosSheet('stats')" });
     // H2 : rangs des sorts sur la tuile (total, et rangs achetables en vert)
     var SR = window.SkillRanks, nb = SR ? SR.buyableCount() : 0;
     var cap = SR ? _t("Rangs {n}/{m}", { n: SR.total(), m: SR.kitActions().length * SKILL_RANK_MAX }) + (nb ? " · " + _t("{n} à acheter", { n: nb }) : "") : _t("Quand s'en servir");
-    t += tileHTML({ icon: "images/Icons/subtabs/hero_abilities.webp", title: _t("Capacités"), line: '<span class="hs-icons">' + skillIcons() + '</span>', sub: esc(cap), tone: nb ? "go" : "plain", badge: nb || 0, onclick: "openHerosSheet('abilities')" });
+    if (!noAbilities) t += tileHTML({ icon: "images/Icons/subtabs/hero_abilities.webp", title: _t("Capacités"), line: '<span class="hs-icons">' + skillIcons() + '</span>', sub: esc(cap), tone: nb ? "go" : "plain", badge: nb || 0, onclick: "openHerosSheet('abilities')" });
     if (typeof isTabUnlocked !== "function" || isTabUnlocked("ascension")) {
       var mp = window.MemoryManager ? MemoryManager.getProgress() : { level: 0 };
       var pend = window.MemoryManager ? MemoryManager.getPendingLevels().length : 0;
@@ -143,16 +144,51 @@
       + on.map(function (t) { return '<div class="hs-trait">' + img(t.icon, "hs-trait-ico") + '<span><b>' + esc(t.name) + '</b><small>' + esc(t.desc) + '</small></span></div>'; }).join("") + '</details>'; // v3.466.0 : icônes livrées
   }
 
+  // Grand écran : les capacités du kit, avec leur rang (la fiche Capacités s'ouvre au toucher)
+  function wideSkillsHTML() {
+    var SR = window.SkillRanks;
+    if (!SR) return "";
+    var acts = SR.kitActions();
+    if (!acts.length) return "";
+    var h = '<h4 class="hs-wh">' + esc(_t("Capacités")) + ' <small>' + esc(_t("Rangs {n}/{m}", { n: SR.total(), m: acts.length * SKILL_RANK_MAX })) + '</small></h4><button type="button" class="hs-wskills" onclick="openHerosSheet(\'abilities\')">';
+    acts.forEach(function (a) {
+      var icon = (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[a.id]) || "images/Icons/scene/node_discovery.webp";
+      var cd = Number(a.cooldownRounds || 0);
+      h += '<span class="hs-wsk">' + renderIconOrEmojiHTML(icon, "hs-wsk-ico", "") + '<b>' + esc(a.label ? _td(a.label) : a.id) + '</b>'
+        + '<small>' + esc(cd ? _tn(cd, "recharge {n} round", "recharge {n} rounds") : _t("défense")) + '</small>'
+        + '<em' + (SR.status(a.id) === "ok" ? ' class="is-go"' : '') + '>' + esc(_t("rang {a} / {b}", { a: SR.get(a.id), b: SR.maxRank() })) + '</em></span>';
+    });
+    return h + '</button>';
+  }
+
+  // Grand écran : les compagnons qui partent avec le héros (portrait, compétence, PV)
+  function wideCompanionsHTML() {
+    var CM = window.CompanionManager;
+    if (!CM || (typeof isTabUnlocked === "function" && !isTabUnlocked("companions") && !CM.partyIds().length)) return "";
+    var ids = CM.partyIds();
+    if (!ids.length) return "";
+    var h = '<h4 class="hs-wh">' + esc(_t("Compagnons")) + ' <small>' + esc(_t("{n} avec toi", { n: ids.length })) + '</small></h4><div class="hs-wcomp">';
+    ids.forEach(function (id) {
+      var def = getCompanionDef(id), mx = Math.max(1, CM.maxHpOf(id)), cur = CM.hpOf(id);
+      h += '<button type="button" class="hs-wc" onclick="setHerosSubTab(\'companions\')">' + renderIconOrEmojiHTML(def.image, "hs-wc-img", "") + '<b>' + esc(_td(def.name)) + '</b>'
+        + (def.skill ? '<small>' + esc(_td(def.skill.name)) + '</small>' : '') + '<span class="hs-wc-bar"><i style="width:' + Math.round(100 * Math.max(0, Math.min(1, cur / mx))) + '%"></i></span></button>';
+    });
+    return h + '</div>';
+  }
+
   function buildHerosResumeHTML() {
     // Changer de héros : un vrai bouton en bas (une icône dans la bannière était trop petite).
     var roster = '<button type="button" class="hs-roster-btn" onclick="openHeroSlotsScreen()">' + img("images/Icons/subtabs/hero_roster.webp")
       + '<span><b>' + _t("Mes héros") + '</b><small>' + _t("Changer de héros ou en créer un") + '</small></span><i class="hs-chev">›</i></button>';
     // v3.504.0 (grand écran, GE-4) : trois colonnes, le héros, son équipement, ses chiffres
+    // v3.558.0 (option B) : comme la maquette — héros et ses tuiles | équipement | stats, capacités, compagnons
     if (document.documentElement.classList.contains("wide-mode")) {
-      return '<div class="hs-wide3"><div class="hs-col">' + bannerHTML() + roster + '</div>'
-        + '<div class="hs-col"><div class="hs-eq" style="background-image:url(' + silhouette() + ')">' + SLOTS.map(function (sl) { return slotBtn(sl, "herosOpenSlotSheet"); }).join("") + '</div>'
-        + '<div class="hs-sets">' + setLineHTML() + '</div></div>'
-        + '<div class="hs-col">' + kpiStripHTML() + '<div class="hs-tiles">' + heroTiles() + '</div>' + traitsHTML() + '</div></div>';
+      var bag = Array.isArray(game.inventory) ? game.inventory.length : 0;
+      return '<div class="hs-wide3"><div class="hs-col">' + bannerHTML() + '<div class="hs-tiles">' + heroTiles(true) + '</div>' + traitsHTML() + roster + '</div>'
+        + '<div class="hs-col"><h4 class="hs-wh">' + esc(_t("Équipement")) + '</h4><div class="hs-eq" style="background-image:url(' + silhouette() + ')">' + SLOTS.map(function (sl) { return slotBtn(sl, "herosOpenSlotSheet"); }).join("") + '</div>'
+        + '<div class="hs-sets">' + setLineHTML() + '</div>'
+        + '<button type="button" class="kbtn hs-bag-btn" onclick="setHerosSubTab(\'equip\');setEquipSubTab(\'inventory\')">' + esc(_t("Sac · {n}", { n: bag })) + '</button></div>'
+        + '<div class="hs-col"><h4 class="hs-wh">' + esc(_t("Stats")) + '</h4>' + kpiStripHTML() + wideSkillsHTML() + wideCompanionsHTML() + '</div></div>';
     }
     return bannerHTML() + kpiStripHTML() + '<div class="hs-tiles">' + heroTiles() + '</div>' + traitsHTML() + roster;
   }

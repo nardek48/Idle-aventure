@@ -20080,6 +20080,26 @@ console.log("\n[372] v3.557.0 — Grand écran, option B : Village, fiche du bâ
   }
 })();
 
+console.log("\n[373] v3.558.0 — Grand écran, option B : Camp sur une page, Héros complété");
+(function () {
+  try {
+    var cl = g.document.documentElement.classList, c0 = cl.contains, wide = false;
+    cl.contains = function (c) { return c === "wide-mode" ? wide : false; };
+    var phone = g.buildCampHTML();
+    ok(phone.indexOf('class="cw"') < 0, "téléphone : Camp inchangé (onglets)");
+    wide = true;
+    var w = g.buildCampHTML();
+    ok(w.indexOf('<div class="cw"><div class="cw-col">') > 0 && w.indexOf("camp-tabs") < 0 && w.indexOf("camp-health-card") < w.indexOf("camp-missions-card"), "grand écran : Camp sur une page, feu à gauche, missions à droite, sans onglets");
+    ok(g.buildCampHTML("grimoire").indexOf('class="cw"') < 0, "un onglet demandé (harnais) garde l'affichage du téléphone");
+    var r = g.buildHerosResumeHTML();
+    ok(r.indexOf("hs-wskills") > 0 || g.SkillRanks.kitActions().length === 0, "Résumé large : liste des capacités avec leur rang");
+    ok(r.indexOf("hs-bag-btn") > 0 && (r.match(/class="hs-wh"/g) || []).length >= 2, "Résumé large : titres de colonne et bouton du sac");
+    cl.contains = c0;
+  } catch (err) {
+    ok(false, "[373] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");
