@@ -387,6 +387,27 @@ function buildLivingMapHTML(mapId) {
   }
   h += '</svg>';
 
+  /* v3.549.0 (retour Seb, point 5, style A) : le chemin offert par l'Histoire, du déjà libéré (ou du
+     foyer) jusqu'à l'objectif ; pas de trait d'objectif à objectif. */
+  var focus = LM.getStoryFocus ? LM.getStoryFocus(mapId) : null;
+  if (focus && focus.path.length) {
+    var fp = focus.path, segs = [];
+    fp.forEach(function (id) {
+      var d = LM.getSectorDef(mapId, id);
+      d.neighbors.forEach(function (n) { if (fp.indexOf(n) >= 0 && n < id && !(focus.targets.indexOf(n) >= 0 && focus.targets.indexOf(id) >= 0)) segs.push([n, id]); });
+      if (LM.isReachable(mapId, id)) {
+        var lib = d.neighbors.filter(function (n) { return LM.isLiberated(mapId, n); })[0];
+        segs.push([lib || "village", id]);
+      }
+    });
+    h += '<svg class="lm-story-trace" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">';
+    segs.forEach(function (sg) {
+      var a = sg[0] === "village" ? map.village : LM.getSectorDef(mapId, sg[0]), z = LM.getSectorDef(mapId, sg[1]);
+      h += '<path d="M' + a.x + ' ' + a.y + ' L' + z.x + ' ' + z.y + '" vector-effect="non-scaling-stroke"></path>';
+    });
+    h += '</svg>';
+  }
+
   /* Village */
   h += '<button type="button" class="lm-node is-village' + (livingMapSelected === "village" ? " is-selected" : "") + '" style="left:' + map.village.x + '%;top:' + map.village.y + '%;" onclick="event.stopPropagation();lmxTapSector(\'village\')">';
   h += '<span class="lm-node-disc">★</span><span class="lm-node-name">' + esc(_td(map.village.name)) + '</span></button>';
@@ -416,10 +437,16 @@ function buildLivingMapHTML(mapId) {
     if (running === d.id) cls += " is-running";
     if (d.x > 84) cls += " is-edge-r"; else if (d.x < 14) cls += " is-edge-l";
     if (d.labelTop) cls += " is-label-top";
+    var cible = !!(focus && focus.targets.indexOf(d.id) >= 0 && focus.path.indexOf(d.id) >= 0); // v3.549.0 : objectif ouvert
+    if (cible) cls += " is-story-cible";
+    var gain = lmEliteGainIcon(mapId, d); // v3.549.0 (point 6) : élite signalée, même voilée
+    if (gain !== null) cls += " is-elite";
     h += '<button type="button" class="' + cls + '" style="left:' + d.x + '%;top:' + d.y + '%;" onclick="event.stopPropagation();lmxTapSector(\'' + d.id + '\')">';
     h += '<span class="lm-node-disc">' + (s.state === "voile" ? "?" : lmRingDots(d.ring)) + '</span>'; // v3.458.2 (audit C10) : l'anneau, pas un numéro
     h += '<span class="lm-node-name">' + esc(_td(d.name)) + '</span>';
     if (chantier) h += '<img class="lm-node-chantier" src="images/Icons/resources/pierre_errante_icon.webp" alt="">';
+    if (cible) h += '<span class="lm-story-flag" aria-label="' + _t("Objectif de l'Histoire") + '"></span>';
+    if (gain !== null) h += '<span class="lm-elite-gain' + (d.content.repeatable ? " is-repete" : "") + '" style="background-image:url(\'' + esc(gain) + '\')" aria-label="' + _t("Élite") + '"></span>';
     h += '</button>';
   });
 
@@ -483,6 +510,19 @@ function lmRingDots(ring) {
 }
 
 /* Légende : les sept états, avec leur vraie pastille. */
+/* v3.549.0 (retour Seb, point 6) : ce que donne l'élite d'un secteur (ressource de victoire, pièce
+   Épique, sinon la ressource de la carte), ou null. Une élite unique déjà battue n'est plus signalée. */
+function lmEliteGainIcon(mapId, d) {
+  var c = d && d.content, LM = LivingMapManager;
+  if (!c || c.type !== "elite" || (!c.repeatable && LM.isLiberated(mapId, d.id))) return null;
+  var e = (window.ELITE_DB && ELITE_DB[c.eliteId]) || {}, R = window.WAREHOUSE_RESOURCES || {};
+  if (e.winResource && R[e.winResource.id]) return R[e.winResource.id].icon;
+  if (e.winDrop) return "images/Icons/equipment_icon/armor_epic.webp";
+  var m = LM.getMap(mapId);
+  return (m && R[m.rewardResourceId] && R[m.rewardResourceId].icon) || ""; // pastille vide plutôt qu'une image empruntée
+}
+window.lmEliteGainIcon = lmEliteGainIcon;
+
 function buildLivingMapLegendHTML() {
   function node(cls, glyph) { return '<span class="lm-node ' + cls + '"><span class="lm-node-disc">' + glyph + '</span></span>'; }
   function row(n, label, sub) { return '<div class="lmx-legend-row">' + n + '<span>' + label + (sub ? '<small>' + sub + '</small>' : '') + '</span></div>'; }
@@ -495,6 +535,8 @@ function buildLivingMapLegendHTML() {
   h += row(node("is-recouvert", lmRingDots(2)), esc(_td(livingMapWords().coveredState)), _t("effet perdu, à reprendre")); // v3.305.0
   h += row(node("is-libere is-protege", lmRingDots(1)), _t("Tenu par la Palissade"), _t("un échec ne le reprend pas")); // v3.335.0
   h += row(node("is-libere is-running", lmRingDots(3)), _t("Expédition en cours"), "");
+  h += row('<span class="lm-node is-voile is-story-cible"><span class="lm-node-disc">?</span><span class="lm-story-flag"></span></span>', _t("Objectif de l'Histoire"), _t("le trait doré : le chemin offert")); // v3.549.0
+  h += row('<span class="lm-node is-voile is-elite"><span class="lm-node-disc">?</span><span class="lm-elite-gain is-repete" style="background-image:url(\'images/Icons/resources/seve_aeswyn_icon.webp\')"></span></span>', _t("Élite"), _t("la pastille : ce qu'elle donne, ↻ se rejoue"));
   return h + '</div>';
 }
 

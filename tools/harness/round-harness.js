@@ -8209,7 +8209,7 @@ console.log("\n[88] v3.292.0 — Carte vivante plein écran");
   ok(!/lmx-legend"/.test(html), "légende repliée par défaut");
   run("lmxToggleLegend()");
   html = run("buildMapHTML()");
-  ok(/lmx-legend"/.test(html) && (html.match(/lmx-legend-row/g) || []).length === 8, "légende ouverte : sept états et les points de l'anneau (v3.458.2)");
+  ok(/lmx-legend"/.test(html) && (html.match(/lmx-legend-row/g) || []).length === 10, "légende ouverte : sept états, les points de l'anneau, l'objectif et l'élite (v3.549.0)");
   run("lmxToggleLegend()");
   run("selectLivingMapSector('gue')");
   html = run("buildMapHTML()");
@@ -19915,6 +19915,30 @@ console.log("\n[365] v3.548.0 — Petite aventure offerte par l'Histoire : le ch
     libres["crypt/cotes"] = true; etape = pas("crypte_11");
     ok(chemin("crypte_11").length === 0, "objectif libéré : plus de chemin offert");
   } catch (err) { ok(false, "[365] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  SQ.isCurrentStepReady = sv.ready; SQ.isCurrentStepAccepted = sv.acc; SQ.getCurrentStep = sv.step; SQ.activeChapterIds = sv.act; LM.isLiberated = sv.lib; LM.isStoryStepReached = sv.reach;
+})();
+
+console.log("\n[366] v3.549.0 — Carte vivante : objectif de l'Histoire, chemin doré, élites signalées (retour Seb, style A)");
+(function () {
+  var SQ = g.StoryQuestManager, LM = g.LivingMapManager;
+  var sv = { ready: SQ.isCurrentStepReady, acc: SQ.isCurrentStepAccepted, step: SQ.getCurrentStep, act: SQ.activeChapterIds, lib: LM.isLiberated, reach: LM.isStoryStepReached };
+  try {
+    var d14 = g.STORY_QUESTS.desert.steps.filter(function (s) { return s.id === "desert_14"; })[0], accepte = true;
+    LM.isLiberated = function (m, id) { return m === "desert" && ["puits_sec", "caravane", "steles", "scarabees", "tour_guet", "marche_sel", "porte_temple"].indexOf(id) >= 0; };
+    LM.isStoryStepReached = function () { return true; };
+    SQ.activeChapterIds = function () { return ["desert"]; }; SQ.getCurrentStep = function () { return d14; };
+    SQ.isCurrentStepAccepted = function () { return accepte; }; SQ.isCurrentStepReady = function () { return false; };
+    var f = LM.getStoryFocus("desert");
+    ok(f && f.targets.join() === "bete_dune" && f.path.indexOf("bete_dune") >= 0, "desert_14 : objectif la bête sous la dune, sur le chemin (" + (f && f.path.join(", ")) + ")");
+    var html = run("buildLivingMapHTML('desert')");
+    ok(/lm-story-trace/.test(html) && (html.match(/class="lm-story-flag"/g) || []).length === 1, "le tracé doré et un seul parchemin d'objectif");
+    ok(/lm-elite-gain is-repete" style="background-image:url\('images\/Icons\/resources\/chitine_profondeurs_icon\.webp'\)/.test(html), "le Dard : pastille Chitine, ↻ (élite répétable)");
+    ok(!/lmxTapSector\('tour_guet'\)[^>]*>[^]*?lm-elite-gain[^]*?<\/button>/.test(html.split("lmxTapSector('tour_guet')")[1] ? "lmxTapSector('tour_guet')" + html.split("lmxTapSector('tour_guet')")[1].split("</button>")[0] + "</button>" : ""), "le Serment déjà battu (élite unique) n'est plus signalé");
+    ok(g.lmEliteGainIcon("mountain", g.LIVING_MAPS.mountain.sectors.filter(function (d) { return d.id === "nid"; })[0]) === "images/Icons/equipment_icon/armor_epic.webp", "élite de la Montagne : pastille pièce Épique (même voilée)");
+    accepte = false;
+    html = run("buildLivingMapHTML('desert')");
+    ok(!/lm-story-trace|class="lm-story-flag"/.test(html) && /lm-elite-gain/.test(html), "étape pas acceptée : ni tracé ni objectif, les élites restent signalées");
+  } catch (err) { ok(false, "[366] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   SQ.isCurrentStepReady = sv.ready; SQ.isCurrentStepAccepted = sv.acc; SQ.getCurrentStep = sv.step; SQ.activeChapterIds = sv.act; LM.isLiberated = sv.lib; LM.isStoryStepReached = sv.reach;
 })();
 

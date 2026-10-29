@@ -199,6 +199,22 @@ var LivingMapManager = {
     return best;
   },
 
+  /* v3.549.0 (retour Seb, point 5) : l'étape d'Histoire en cours qui vise des secteurs de cette carte,
+     { targets, path } (objectifs non libérés, chemin offert), ou null. Mêmes conditions que l'offre gratuite. */
+  getStoryFocus: function (mapId) {
+    var map = this.getMap(mapId), SQ = window.StoryQuestManager, SR = window.SceneRunManager;
+    if (!map || !SQ || !SR || typeof SQ.activeChapterIds !== "function" || typeof SR.storyPaTargets !== "function") return null;
+    var ids = SQ.activeChapterIds(), self = this;
+    for (var i = 0; i < ids.length; i++) {
+      var step = SQ.getCurrentStep(ids[i]), sp = step && step.storyPa;
+      if (!sp || sp.worldId !== map.worldId || !SQ.isCurrentStepAccepted(ids[i]) || SQ.isCurrentStepReady(ids[i])) continue;
+      var t = SR.storyPaTargets(sp);
+      if (!t) continue;
+      return { targets: t.filter(function (id) { return !self.isLiberated(mapId, id); }), path: this.getStoryPath(mapId, t) };
+    }
+    return null;
+  },
+
   /* v3.548.0 (retour Seb) : secteurs non libérés sur un plus court chemin du village (ou du déjà
      libéré) vers l'objectif le plus proche. Entrer dans un secteur coûte 1, 0 s'il est libéré ; sens d'isReachable. */
   getStoryPath: function (mapId, targets) {
