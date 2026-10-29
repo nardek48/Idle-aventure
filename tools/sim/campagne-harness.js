@@ -1088,6 +1088,13 @@ function caravaneMarcheRuines(g, world, flagKey) {
     // v3.457.3 : caravanes multiples — on suit celle de CE marché ; une place prise ailleurs se libère au retour
     if (C.isBack(m.world)) { C.unload(m.world); continue; }
     if (C.get(m.world)) { wait(Math.max(60e3, C.getSecondsLeft(m.world) * 1000 + 1000), "caravane"); continue; }
+    // v3.551.0 : la caravane d'essai (10 min, à vide, hors places) que l'Histoire offre
+    if (C.isStoryTripFor && C.isStoryTripFor(m.world) && !C.getBlockReason("essai", m.world)) {
+      C.depart("essai", m.world);
+      wait(Math.max(60e3, C.getSecondsLeft(m.world) * 1000 + 1000), "caravane");
+      if (C.isBack(m.world)) C.unload(m.world);
+      continue;
+    }
     harvest();   // un joueur récolte avant de charger : la caravane ne prend que le surplus de l'Entrepôt
     var why = C.getBlockReason("court", m.world);
     if (why && C.isBack()) { C.unload(); why = C.getBlockReason("court", m.world); }

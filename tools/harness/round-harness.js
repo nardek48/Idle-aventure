@@ -19957,6 +19957,37 @@ console.log("\n[367] v3.550.0 — Élites qui se rejouent aux Ruines (Golem, pi�
   } catch (err) { ok(false, "[367] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[368] v3.551.0 — Caravane d'essai de l'Histoire : 10 min, à vide, hors places (retour Seb, point 2)");
+(function () {
+  var C = g.CaravanManager, game = g.game, sv = { now: C._now, mk: C.getMarkets, av: C.isAvailable, max: C.getMaxCaravans, ep: game.explorationProgression, cars: (game.village || {}).caravans };
+  try {
+    var T = 1e9;
+    C._now = function () { return T; };
+    C.getMarkets = function () { return [{ mapId: "ruins", world: 2, name: "Ruines" }, { mapId: "desert", world: 1, name: "Désert" }]; };
+    C.isAvailable = function () { return true; };
+    C.getMaxCaravans = function () { return 1; };
+    game.explorationProgression = {}; C.ensure(); game.village.caravans = [{ trip: "long", world: 1, startedAt: T - 1000, endsAt: T + 3600e3, cargo: { ble: 10 }, gold: 50 }];
+    ok(!C.hasFreeSlot() && C.isStoryTripFor(2) && C.getBlockReason("essai", 2) === "", "toutes les places prises : la caravane d'essai part quand même");
+    ok(C.getBlockReason("essai", 1) !== "" && !C.isStoryTripFor(3), "pas d'essai vers un marché que l'Histoire ne demande pas");
+    var stock = g.WarehouseManager.getAmount("ble");
+    ok(C.depart("essai", 2) === true && g.WarehouseManager.getAmount("ble") === stock, "départ à vide : rien ne quitte l'Entrepôt");
+    var c = C.get(2);
+    ok(c && c.endsAt - c.startedAt === 600e3 && c.gold === 0 && !c.rare && !c.item, "10 minutes, sans gain");
+    ok(C._regularCount() === 1 && !C.hasFreeSlot(), "elle ne prend pas de place (la caravane du Désert reste la seule comptée)");
+    ok(/Caravane en route, de retour dans 10m/.test(g.storyMarketCaravanProgress(2, "Caravane du Marché des Ruines", false)), "ruines_04 : « de retour dans 10m » (" + g.storyMarketCaravanProgress(2, "X", false) + ")");
+    T += 600e3;
+    var l = C.unload(2);
+    ok(l && l.gold === 0 && game.explorationProgression.ruinsMarketDone === true && !C.isStoryTripFor(2), "retour : déchargée, l'étape est faite, plus d'essai");
+    ok(C.getBlockReason("essai", 2) !== "", "l'essai ne se rejoue pas");
+    var html = g.buildCaravanHTML ? g.buildCaravanHTML() : run("buildCaravanHTML()");
+    ok(!/data-car="essai"/.test(html), "feuille : plus de bloc d'essai une fois l'étape faite");
+    game.explorationProgression = {};
+    html = run("buildCaravanHTML()");
+    ok(/data-car="essai" data-world="2"/.test(html) && /departStoryCaravan\(2\)/.test(html), "feuille : le bloc « Caravane d'essai » vers le Marché des Ruines");
+  } catch (err) { ok(false, "[368] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  C._now = sv.now; C.getMarkets = sv.mk; C.isAvailable = sv.av; C.getMaxCaravans = sv.max; game.explorationProgression = sv.ep || {}; game.village.caravans = sv.cars || [];
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");
