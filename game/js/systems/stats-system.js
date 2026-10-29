@@ -250,6 +250,7 @@ var StatsSystem = {
       : {};
     if (achievementBonus.goldMult) game.goldMult += achievementBonus.goldMult;
     if (achievementBonus.tapMult) game.tapMult += achievementBonus.tapMult;
+    if (window.GrandOuvrage) game.goldMult += GrandOuvrage.getGoldBonus(); // v3.561.0 (accord Seb) : +1 % d'or par palier du Grand Ouvrage
 
     var dungeonShopBonus = (window.DungeonManager && typeof DungeonManager.getShardShopBonuses === "function")
       ? DungeonManager.getShardShopBonuses()

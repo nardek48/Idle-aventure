@@ -159,9 +159,9 @@ var TavernManager = {
   getPayout: function (c) {
     var base = Number(c && c.reward || 0);
     if (window.LivingMapManager && LivingMapManager.hasEffect("contrats_plus")) {
-      return Math.floor(base * Number(LivingMapManager.getEffectValue("contractMult", 1.10)));
+      base = Math.floor(base * Number(LivingMapManager.getEffectValue("contractMult", 1.10)));
     }
-    return base;
+    return window.GrandOuvrage ? GrandOuvrage.applyGold(base) : base; // v3.561.0 : le Grand Ouvrage
   },
 
   deliver: function (id) {

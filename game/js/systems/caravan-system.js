@@ -368,6 +368,7 @@ var CaravanManager = {
 
   _unloadOne: function (c) {
     var gold = Math.max(0, Math.floor(Number(c.gold || 0)));
+    if (window.GrandOuvrage) gold = GrandOuvrage.applyGold(gold); // v3.561.0 : le bonus du Grand Ouvrage, au déchargement
     game.gold = Number(game.gold || 0) + gold;
     game.totalGoldEarned = Number(game.totalGoldEarned || 0) + gold; // v3.519.0 (audit RES-8)
     if (c.rare && WAREHOUSE_RESOURCES[c.rare.key]) WarehouseManager.addResource(c.rare.key, c.rare.n, true);

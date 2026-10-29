@@ -10718,10 +10718,10 @@ console.log("\n[133] v3.338.0 — Hauts faits : catalogue, rattrapage, paliers, 
   var byCat = function (c) { return DB.filter(function (a) { return a.category === c; }); };
 
   // --- Catalogue (H1, H2, H5) ---
-  ok(DB.length === 74, "catalogue : 74 hauts faits, Ruines, Crypte et Montagne compris (v3.492.0) (" + DB.length + ")");
+  ok(DB.length === 79, "catalogue : 79 hauts faits, Ruines, Crypte et Montagne compris (v3.561.0 : +5 du Grand Ouvrage) (" + DB.length + ")");
   ok(byCat("forest").length === 10 && byCat("forest").filter(function (a) { return a.hidden; }).length === 2, "Forêt : 8 + 2 cachés");
   ok(byCat("desert").length === 11 && byCat("desert").filter(function (a) { return a.hidden; }).length === 3, "Désert : 8 + 3 cachés (v3.362.0 : « Pas une goutte »)");
-  ok(["grimoire", "village", "companions"].every(function (c) { return byCat(c).length === 5; }) && byCat("collection").length === 8, "transversales : 5, 5, 5 et Collection 8");
+  ok(["grimoire", "companions"].every(function (c) { return byCat(c).length === 5; }) && byCat("village").length === 10 && byCat("collection").length === 8, "transversales : 5, Village 10 (dont 5 du Grand Ouvrage), 5 et Collection 8");
   var ids = {}; var dup = DB.some(function (a) { if (ids[a.id]) return true; ids[a.id] = 1; return false; });
   ok(!dup && DB.every(function (a) { return a.icon && typeof a.track === "function" && a.reward && (a.reward.gold || a.reward.essence) && g.ACHIEVEMENT_CATEGORY_LABELS[a.category]; }), "identifiants uniques, icône, suivi, récompense, catégorie connue");
   ok(["ach_ascend_1", "ach_bestiary_100", "ach_equip_legendary"].every(function (id) { return !!AM.getById(id); }), "H2 : Mémoire, Bestiaire et objets gardés (mêmes identifiants)");
@@ -20124,6 +20124,49 @@ console.log("\n[375] v3.560.0 — Potions majeures : colporteur 15 par jour, Apo
     ok(c && c.gold === 6776 && c.lingot === 105 && c.bloc === 225, "niveau 10 : la courbe continue (6 776 or, 225 blocs, 105 lingots)");
     ok(g.HEALING_POTIONS_DB.filter(function (p) { return p.id === "potion_soin_majeur"; })[0].dailyBuyLimit === 15, "colporteur : 15 majeures par jour");
   } catch (err) { ok(false, "[375] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[376] v3.561.0 — Le Grand Ouvrage : verser le surplus, +1 % d'or par palier, un haut fait tous les 5 (retour Seb, point 9)");
+(function () {
+  var GO = g.GrandOuvrage, W = g.WarehouseManager, sv = { wr: game.worldsEverReached, vil: game.village && game.village.grandOuvrage };
+  try {
+    game.worldsEverReached = { 0: true, 1: true };
+    ok(!GO.isOpen() && g.buildGrandOuvrageCardHTML() === "", "fermé avant les Ruines : pas de carte au Village");
+    game.worldsEverReached = { 0: true, 1: true, 2: true };
+    game.village.grandOuvrage = { points: 0 };
+    ok(GO.isOpen() && /Le Grand Ouvrage/.test(g.buildGrandOuvrageCardHTML()), "ouvert aux Ruines : la carte en tête du Village");
+    ok(GO.getValue("bois") === 1 && GO.getValue("planche") === 5 && GO.getValue("bloc") === 8 && GO.getValue("pierre_errante") === 25 && GO.getValue("cle_de_voute") === 85,
+      "valeur : brute 1, planche 5, bloc 8, matériau de monde 25, Clé de voûte 85 (" + ["planche", "bloc", "pain", "acier", "ration", "cle_de_voute"].map(function (k) { return k + " " + GO.getValue(k); }).join(", ") + ")");
+    ok(GO.getTierCost(1) === 2000 && GO.getTierCost(10) === Math.round(2000 * Math.pow(1.12, 9)), "palier n : 2 000 × 1,12^(n−1)");
+    var p = GO.getProgress(2000 + 2240 + 100);
+    ok(p.tier === 2 && p.into === 100 && p.cost === 2509, "progression : 2 paliers, 100 points dans le 3e (coût 2 509)");
+    // le surplus : au-dessus de la moitié du plafond et de la réserve
+    var cap = W.getCap("bois");
+    W.addResource("bois", cap, true);
+    var s0 = GO.getSurplus("bois");
+    ok(s0 === Math.floor(W.getAmount("bois") - Math.max(Math.ceil(cap / 2), Number(g.ResourceReserveManager.getReserve("bois") || 0))) && s0 > 0, "surplus du bois : ce qui dépasse la moitié du plafond et la réserve (" + s0 + ")");
+    ok(GO.getSurplus("planche") === 0 && GO.getSurplus("pierre_errante") === 0, "« Verser le surplus » ne prend que les matières brutes");
+    var avant = W.getAmount("bois"); game.village.grandOuvrage.points = 2000 - 10;
+    var r = GO.pour({ bois: 20 });
+    ok(r && r.points === 20 && r.tiersGained === 1 && GO.getTier() === 1 && W.getAmount("bois") === avant - 20, "verser 20 bois à 10 points du palier : palier 1, l'Entrepôt baisse d'autant");
+    ok(Math.abs(GO.getGoldBonus() - 0.01) < 1e-9 && GO.applyGold(1000) === 1010, "+1 % d'or au palier 1");
+    g.EquipmentManager.recalcStats();
+    var gm = game.goldMult; game.village.grandOuvrage.points = 0; g.EquipmentManager.recalcStats();
+    ok(Math.abs(gm - game.goldMult - 0.01) < 1e-9, "or des combats : goldMult +0,01 par palier (stats-system)");
+    game.village.grandOuvrage.points = 2000;
+    ok(g.TavernManager.getPayout({ reward: 1000 }) === 1010, "Taverne : contrat payé avec le bonus");
+    ok(/GrandOuvrage\.applyGold\(gold\)/.test(fs.readFileSync(path.join(ROOT, "js/systems/caravan-system.js"), "utf8")), "caravane : l'or du déchargement passe par le bonus");
+    ok(GO.pour({ bois: 0 }) === null && GO.pour({ inconnu: 5 }) === null, "rien versé : rien ne change");
+    var hf = g.ACHIEVEMENTS_DB.filter(function (a) { return /^hf_vil_ouvrage_/.test(a.id); });
+    ok(hf.length === 5 && hf.map(function (a) { return a.target; }).join() === "5,10,15,20,25" && hf.every(function (a) { return a.category === "village"; }), "hauts faits : paliers 5, 10, 15, 20, 25 (Village)");
+    game.village.grandOuvrage.points = 0; for (var n = 1; n <= 5; n++) game.village.grandOuvrage.points += GO.getTierCost(n);
+    ok(hf[0].track() === 5, "palier 5 atteint : « Première arche » complet");
+    var html = g.buildGrandOuvrageSheetHTML();
+    ok(/Verser le surplus/.test(html) && /Choisir quoi verser/.test(html) && /\+5 % d(&#39;|')or/.test(html), "fiche B : bonus, jauge, « Verser le surplus », « Choisir quoi verser »");
+    ok(/grand-ouvrage-system\.js/.test(fs.readFileSync(path.join(ROOT, "sw.js"), "utf8")) && /grand-ouvrage-view\.js/.test(fs.readFileSync(path.join(ROOT, "sw.js"), "utf8")), "sw.js : les deux nouveaux fichiers précachés");
+  } catch (err) { ok(false, "[376] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  game.worldsEverReached = sv.wr; if (game.village) game.village.grandOuvrage = sv.vil || { points: 0 };
+  if (g.EquipmentManager) g.EquipmentManager.recalcStats();
 })();
 
 Promise.all(ATTENTES).then(function () {

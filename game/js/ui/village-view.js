@@ -245,6 +245,7 @@ function buildVillageMainSubTabHTML() {
   if (banner) h += '<div class="vb-chain-banner">' + esc(banner) + '</div>';
 
   h += '<div class="vb-grid">';
+  if (typeof buildGrandOuvrageCardHTML === "function") h += buildGrandOuvrageCardHTML(); // v3.561.0 : le Grand Ouvrage, en tête dès les Ruines
   VILLAGE_BUILDING_ORDER.forEach(function (id) {
     h += buildVillageBuildingCardHTML(id);
   });

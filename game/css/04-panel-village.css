@@ -812,3 +812,23 @@
 .vb-cost-row.res-go + .vb-cost-where.res-go-link::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: max(100%, 44px); }
 .wh-backbar { padding: 10px 14px 0; }
 .wh-back { min-height: 36px; padding: 4px 12px; border-radius: 999px; border: 1.5px solid var(--nb-frame); background: transparent; color: var(--nb-gold-deep); font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
+
+/* v3.561.0 (retour Seb, point 9) : le Grand Ouvrage, carte et fiche B (atelier grand-ouvrage.html) */
+.go-bonus { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; padding: 8px 10px; border: 1px solid var(--c-bronze-500); border-radius: 12px; background: var(--c-cream-50-soft); font-weight: 700; color: var(--c-brown-850-soft); }
+.go-bonus img { width: 22px; height: 22px; }
+.go-bonus small { display: block; font-weight: 600; color: var(--c-brown-700-soft); }
+.go-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 12px 0 4px; font-weight: 700; color: var(--c-brown-850-soft); }
+.go-head small { font-weight: 600; color: var(--c-brown-700-soft); }
+.go-go { margin-top: 12px; }
+.go-go .kbtn { width: 100%; max-width: none; margin: 0; min-height: 52px; flex-direction: column; gap: 2px; }
+.go-go .kbtn small { font-size: 12px; font-weight: 600; opacity: .9; }
+.go-more { display: block; margin: 10px 0 0; padding: 6px 0; border: 0; background: none; font: inherit; font-size: 13px; font-weight: 700; color: var(--c-brown-750-2); text-decoration: underline; cursor: pointer; }
+.go-list { margin: 8px 0 0; display: grid; gap: 6px; }
+.go-row { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto auto; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid var(--c-bronze-500); border-radius: 10px; background: var(--c-cream-50-soft); font-size: 13px; font-weight: 700; color: var(--c-brown-850-soft); }
+.go-row .go-row-ico { width: 26px; height: 26px; }
+.go-row small { display: block; font-weight: 600; color: var(--c-brown-700-soft); font-size: 12px; }
+.go-pts { font-size: 12px; color: var(--c-brown-700-soft); white-space: nowrap; }
+.go-step { display: flex; gap: 4px; }
+.go-step button { min-width: 36px; min-height: 36px; border-radius: 8px; border: 1px solid var(--c-bronze-500); background: var(--c-cream-100-soft); font-weight: 700; color: var(--c-brown-850-soft); }
+.go-next { margin: 10px 0 0; font-size: 12px; color: var(--c-brown-750-2); }
+.go-toast { margin: 0 0 10px; padding: 8px 10px; border-radius: 12px; background: var(--c-green-800, #1d3a26); color: #d6f5df; font-weight: 700; font-size: 13px; text-align: center; }

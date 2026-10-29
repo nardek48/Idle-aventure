@@ -246,6 +246,18 @@ var ACHIEVEMENTS_DB = [
       return Object.keys(lv).some(function (k) { return Number(lv[k]) > 0; }) ? 1 : 0;
     }, reward: { gold: 300 } },
 
+  /* v3.561.0 (retour Seb, point 9) : un haut fait tous les 5 paliers du Grand Ouvrage (icônes à faire : générique d'ici là). */
+  { id: "hf_vil_ouvrage_5", category: "village", name: "Première arche", desc: "Atteindre le palier 5 du Grand Ouvrage.",
+    target: 5, track: function () { return window.GrandOuvrage ? GrandOuvrage.getTier() : 0; }, reward: { gold: 500 } },
+  { id: "hf_vil_ouvrage_10", category: "village", name: "L'arche tient", desc: "Atteindre le palier 10 du Grand Ouvrage.",
+    target: 10, track: function () { return window.GrandOuvrage ? GrandOuvrage.getTier() : 0; }, reward: { gold: 1000 } },
+  { id: "hf_vil_ouvrage_15", category: "village", name: "Une voûte au village", desc: "Atteindre le palier 15 du Grand Ouvrage.",
+    target: 15, track: function () { return window.GrandOuvrage ? GrandOuvrage.getTier() : 0; }, reward: { gold: 2000 } },
+  { id: "hf_vil_ouvrage_20", category: "village", name: "L'Ouvrage d'Edda", desc: "Atteindre le palier 20 du Grand Ouvrage.",
+    target: 20, track: function () { return window.GrandOuvrage ? GrandOuvrage.getTier() : 0; }, reward: { gold: 4000 } },
+  { id: "hf_vil_ouvrage_25", category: "village", name: "Plus rien ne se perd", desc: "Atteindre le palier 25 du Grand Ouvrage.",
+    target: 25, track: function () { return window.GrandOuvrage ? GrandOuvrage.getTier() : 0; }, reward: { gold: 8000 } },
+
   /* ===================== Compagnons ===================== */
   { id: "hf_comp_wenna_max", category: "companions", name: "Wenna, à son meilleur", desc: "Wenna au maximum de ses améliorations.",
     target: 5, track: function () { var s = achCompanion("wenna"); return s ? Number(s.upgrades || 0) : 0; },

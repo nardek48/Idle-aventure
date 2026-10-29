@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.560.0"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.561.0"; // <- à incrémenter à CHAQUE livraison
 var CACHE_NAME = "quest-idle-" + CACHE_VERSION;
 var IMAGE_CACHE = "aethervale-images"; // v3.457.4 : hors du préfixe quest-idle- ; v3.547.0 : images disparues purgées (purgeMissingImages)
 var imagesRevalidated = {};             // URL déjà revérifiées depuis le démarrage de ce service worker
@@ -168,6 +168,8 @@ var PRECACHE_APP_SHELL = [
   "./js/systems/equip-shop-system.js",
   "./js/systems/caravan-system.js", // v3.421.0 (E-2) : NOUVEAU fichier
   "./js/ui/caravan-view.js", // v3.421.0 (E-2) : NOUVEAU fichier
+  "./js/systems/grand-ouvrage-system.js", // v3.561.0 : NOUVEAU fichier (le Grand Ouvrage)
+  "./js/ui/grand-ouvrage-view.js", // v3.561.0 : NOUVEAU fichier
   "./js/systems/enchant-system.js",
   "./js/systems/equipment-system.js",
   "./js/systems/loot-system.js",
