@@ -472,7 +472,10 @@ function renderGrimoireSheet(isGrimoireTab) {
     host.innerHTML = "";
     return;
   }
+  var keep = host.getAttribute("data-sheet") === String(grimoireOpenSheet) ? getSheetScroll(host) : 0; // v3.563.0 : même feuille, même position
   host.innerHTML = buildGrimoireSheetHTML();
+  host.setAttribute("data-sheet", String(grimoireOpenSheet));
+  setSheetScroll(host, keep);
 }
 window.renderGrimoireSheet = renderGrimoireSheet;
 

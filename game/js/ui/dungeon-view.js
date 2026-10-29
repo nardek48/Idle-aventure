@@ -305,7 +305,10 @@ function buildDungeonSheetHTML(dungeonId) {
 
 function renderDungeonSheet() {
   var host = document.getElementById("dungeon-modal-root");
-  if (host && pendingDungeonId != null) host.innerHTML = buildDungeonSheetHTML(pendingDungeonId);
+  if (!host || pendingDungeonId == null) return;
+  var keep = getSheetScroll(host); // v3.563.0 : choisir une Marque ne ramène pas en haut
+  host.innerHTML = buildDungeonSheetHTML(pendingDungeonId);
+  setSheetScroll(host, keep);
 }
 
 function openDungeonSheet(dungeonId) {
@@ -375,7 +378,9 @@ function renderDungeonCampSheet() {
   var host = document.getElementById("dungeon-modal-root");
   if (!host) return;
   if (!DungeonManager.isCampPending()) { host.innerHTML = ""; return; }
+  var keep = getSheetScroll(host); // v3.563.0
   host.innerHTML = buildDungeonCampSheetHTML();
+  setSheetScroll(host, keep);
 }
 
 function campPct(hp, max) { return Math.max(0, Math.min(100, Math.round(Number(hp || 0) / Math.max(1, Number(max || 1)) * 100))); }
@@ -541,7 +546,9 @@ function renderDungeonHaltSheet() {
   var host = document.getElementById("dungeon-modal-root");
   if (!host) return;
   if (!DungeonManager.isHaltPending()) { host.innerHTML = ""; return; }
+  var keep = getSheetScroll(host); // v3.563.0
   host.innerHTML = buildDungeonHaltSheetHTML();
+  setSheetScroll(host, keep);
 }
 
 // Lignes d'une carte : gain ▲, coût ▼, note ; le Râtelier nomme l'objet qu'il donne

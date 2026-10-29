@@ -248,10 +248,9 @@ var expSheet = null; // null | { type: "patrol" | "caravan", id }
     var root = document.getElementById("exp-sheet-root");
     if (!root) return;
     if (!expSheet || game.activeTab !== "campement") { root.innerHTML = ""; return; }
-    var body = root.querySelector(".ksheet-body"), keep = body ? body.scrollTop : 0;
+    var keep = getSheetScroll(root); // v3.563.0 : la feuille (.full-menu) garde sa position
     root.innerHTML = buildExpeditionsSheetHTML();
-    body = root.querySelector(".ksheet-body");
-    if (body && keep) body.scrollTop = keep;
+    setSheetScroll(root, keep);
   }
   function openExpeditionsSheet(type, id) { expSheet = { type: type, id: id || null }; renderExpeditionsSheet(); }
   function closeExpeditionsSheet() { expSheet = null; renderExpeditionsSheet(); }

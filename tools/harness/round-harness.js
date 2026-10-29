@@ -20188,6 +20188,19 @@ console.log("\n[377] v3.562.0 — Difficulté de la Crypte et de la Montagne : e
   } catch (err) { ok(false, "[377] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[378] v3.563.0 — Une feuille redessinée garde sa position de défilement (retour Seb)");
+(function () {
+  try {
+    var src = function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); };
+    ok(typeof g.getSheetScroll === "function" && typeof g.setSheetScroll === "function" && /\.full-menu, \.ksheet-body/.test(src("js/ui/modal.js")), "aide commune : on lit et remet la position de .full-menu (ce qui défile) et de .ksheet-body");
+    var fichiers = ["js/ui/production-view.js", "js/ui/warehouse-view.js", "js/ui/expeditions-view.js", "js/ui/grand-ouvrage-view.js", "js/ui/village-building-view.js", "js/ui/heros-view.js", "js/ui/grimoire-view.js", "js/ui/dungeon-view.js"];
+    var sans = fichiers.filter(function (f) { return !/getSheetScroll\(/.test(src(f)) || !/setSheetScroll\(/.test(src(f)); });
+    ok(!sans.length, "les feuilles redessinées passent par l'aide : production, ateliers, Entrepôt, expéditions, Grand Ouvrage, bâtiments, Héros, Grimoire, donjon (" + sans.join(", ") + ")");
+    var vieux = fichiers.filter(function (f) { return /ksheet-body"\);?\s*\n?\s*var (top|keep) = [^;]*\.scrollTop/.test(src(f)); });
+    ok(!vieux.length, "plus de lecture de .ksheet-body.scrollTop seule (elle valait toujours 0) (" + vieux.join(", ") + ")");
+  } catch (err) { ok(false, "[378] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

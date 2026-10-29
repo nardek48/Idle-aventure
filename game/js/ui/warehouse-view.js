@@ -389,11 +389,9 @@ function renderWarehouseSheet(keepScroll) {
   if (!host) return;
   var html = warehousePickerOpen ? buildWarehousePickerHTML() : (selectedWarehouseKey ? buildWarehouseSheetHTML(selectedWarehouseKey) : "");
   if (!html) return;
-  var body = host.querySelector(".wh-sheet .ksheet-body");
-  var top = (keepScroll && body) ? body.scrollTop : 0;
+  var top = keepScroll ? getSheetScroll(host) : 0; // v3.563.0
   host.innerHTML = html;
-  var nb = host.querySelector(".wh-sheet .ksheet-body");
-  if (nb && top) nb.scrollTop = top;
+  setSheetScroll(host, top);
 }
 
 /* Appelée à chaque rendu du Village : redessine la feuille de l'Entrepôt ouverte. Rend vrai si elle l'a fait. */

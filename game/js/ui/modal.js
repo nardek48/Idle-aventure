@@ -101,6 +101,21 @@ function kSheetHeadHTML(o) {
 }
 window.kSheetHeadHTML = kSheetHeadHTML;
 
+/* v3.563.0 (retour Seb) : position de défilement d'une feuille qu'on redessine. Ce qui défile est la
+   feuille (.full-menu), pas .ksheet-body : on lit le plus grand des deux et on remet la valeur sur les deux. */
+function getSheetScroll(root) {
+  if (!root || !root.querySelectorAll) return 0;
+  var top = 0;
+  root.querySelectorAll(".full-menu, .ksheet-body").forEach(function (el) { top = Math.max(top, el.scrollTop || 0); });
+  return top;
+}
+function setSheetScroll(root, top) {
+  if (!root || !root.querySelectorAll || !top) return;
+  root.querySelectorAll(".full-menu, .ksheet-body").forEach(function (el) { el.scrollTop = top; });
+}
+window.getSheetScroll = getSheetScroll;
+window.setSheetScroll = setSheetScroll;
+
 /* v3.400.0 (lot F-2) : en-tête des fenêtres centrées (.kwin). Même pierre que les feuilles,
    centré : grande icône, titre, sous-titre. La croix est facultative : une fenêtre qui attend
    une réponse (confirmation, choix, fin de quête) se ferme par ses propres boutons.

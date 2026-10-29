@@ -109,11 +109,9 @@ function renderProductionSheet(keepScroll) {
   if (!host) return;
   var id = productionDetailBuildingId;
   if (!id || !PRODUCTION_BUILDINGS[id]) return;
-  var body = host.querySelector(".prod-sheet .ksheet-body");
-  var top = (keepScroll && body) ? body.scrollTop : 0;
+  var top = keepScroll ? getSheetScroll(host) : 0; // v3.563.0 : la feuille garde sa position
   host.innerHTML = buildProductionSheetHTML(id);
-  var nb = host.querySelector(".prod-sheet .ksheet-body");
-  if (nb && top) nb.scrollTop = top;
+  setSheetScroll(host, top);
 }
 function refreshProductionSheet() {
   if (typeof document === "undefined") return;
@@ -998,11 +996,9 @@ function renderWorkshopSheet(keepScroll) {
   if (typeof document === "undefined" || !openWorkshopId) return;
   var host = document.getElementById("village-modal-root");
   if (!host) return;
-  var body = host.querySelector(".wk-sheet .ksheet-body");
-  var top = (keepScroll && body) ? body.scrollTop : 0;
+  var top = keepScroll ? getSheetScroll(host) : 0; // v3.563.0
   host.innerHTML = buildWorkshopSheetHTML(openWorkshopId);
-  var nb = host.querySelector(".wk-sheet .ksheet-body");
-  if (nb && top) nb.scrollTop = top;
+  setSheetScroll(host, top);
 }
 
 /* Qui produit une ressource ? Un bâtiment (sa ressource brute) ou un atelier (sa recette). */

@@ -349,14 +349,18 @@ function openVillageBuildingSheet(id) {
   if (typeof openWorkshopId !== "undefined") openWorkshopId = null; // v3.415.0 : la feuille d'atelier aussi
   if (typeof selectedWarehouseKey !== "undefined") { selectedWarehouseKey = null; warehousePickerOpen = false; } // v3.416.0
   var host = document.getElementById("village-modal-root");
-  if (host) host.innerHTML = buildVillageBuildingSheetHTML(id);
+  if (!host) return;
+  var top = (host.querySelector(".vb-sheet-card") && host.dataset.vb === id) ? getSheetScroll(host) : 0; // v3.563.0 : même fiche redessinée -> même position
+  host.innerHTML = buildVillageBuildingSheetHTML(id);
+  host.dataset.vb = id; delete host.dataset.go;
+  setSheetScroll(host, top);
 }
 window.openVillageBuildingSheet = openVillageBuildingSheet;
 
 function closeVillageBuildingSheet() {
   openVillageBuildingId = null;
   var host = document.getElementById("village-modal-root");
-  if (host) host.innerHTML = "";
+  if (host) { host.innerHTML = ""; delete host.dataset.vb; }
 }
 window.closeVillageBuildingSheet = closeVillageBuildingSheet;
 

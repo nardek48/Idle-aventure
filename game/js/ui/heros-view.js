@@ -772,12 +772,10 @@ function renderHerosSheet(isHerosTab) {
   if (!root) return;
   if (!isHerosTab || !herosOpenSheet) { root.innerHTML = ""; return; }
   // Un achat de stat re-rend tout : on garde la position de lecture de la feuille.
-  var body = root.querySelector(".ksheet-body");
-  var keep = body && root.getAttribute("data-sheet") === herosOpenSheet ? body.scrollTop : 0; // autre feuille : on repart en haut
+  var keep = root.getAttribute("data-sheet") === herosOpenSheet ? getSheetScroll(root) : 0; // autre feuille : on repart en haut ; v3.563.0 : la feuille défile, pas son corps
   root.innerHTML = buildHerosSheetHTML();
   root.setAttribute("data-sheet", herosOpenSheet);
-  body = root.querySelector(".ksheet-body");
-  if (body && keep) body.scrollTop = keep;
+  setSheetScroll(root, keep);
 }
 
 function openHerosSheet(name) {

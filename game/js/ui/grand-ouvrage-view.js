@@ -103,14 +103,17 @@ window.pourGrandOuvragePick = pourGrandOuvragePick;
 
 function rerenderGrandOuvrageSheet() {
   var host = document.getElementById("village-modal-root");
-  if (host && host.dataset.go === "1") host.innerHTML = buildGrandOuvrageSheetHTML();
+  if (!host || host.dataset.go !== "1") return;
+  var top = getSheetScroll(host); // v3.563.0 : verser ne ramène pas en haut
+  host.innerHTML = buildGrandOuvrageSheetHTML();
+  setSheetScroll(host, top);
 }
 
 function openGrandOuvrageSheet() {
   grandOuvrageFlash = ""; grandOuvragePick = {};
   var host = document.getElementById("village-modal-root");
   if (!host) return;
-  host.dataset.go = "1";
+  host.dataset.go = "1"; delete host.dataset.vb;
   host.innerHTML = buildGrandOuvrageSheetHTML();
 }
 window.openGrandOuvrageSheet = openGrandOuvrageSheet;
