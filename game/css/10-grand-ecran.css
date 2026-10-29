@@ -406,3 +406,14 @@ html.wide-mode #panel-container .mw-world b { font-size: 13.5px; }
 html.wide-mode #panel-container .mw-world small { font-size: 12px; color: var(--nb-ink-dim); }
 html.wide-mode #panel-container .mw-world.is-sel { background: var(--c-cream-50-soft); border-color: var(--nb-gold-deep); box-shadow: 0 0 0 1px var(--nb-gold-deep); }
 html.wide-mode #panel-container .mw-world.is-locked img { filter: grayscale(1) brightness(0.6); }
+
+/* =========================================================
+   v3.557.0 (option B, Village) : grille de production à gauche, fiche du bâtiment choisi ancrée à droite.
+   ========================================================= */
+html.wide-mode #panel-container .pw { display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, 420px); gap: 16px; align-items: start; }
+html.wide-mode #panel-container .pw-left { min-width: 0; }
+html.wide-mode #panel-container .pw .production-dash-grid { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
+html.wide-mode #panel-container .pw .prod-tile.is-sel { background: var(--c-cream-50-soft); box-shadow: 0 0 0 2px var(--nb-gold-deep), 0 6px 16px rgba(90, 60, 20, 0.25); }
+html.wide-mode #panel-container .pw-sheet { position: sticky; top: 0; min-width: 0; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden; background: var(--sheet-body-bg); color: var(--sheet-ink); box-shadow: 0 0 0 1px var(--c-bronze-450), 0 10px 26px rgba(0, 0, 0, 0.45); --nb-ink: var(--c-brown-850-soft); --nb-ink-dim: var(--c-brown-650-soft); }
+html.wide-mode #panel-container .pw-sheet .ksheet-handle { display: none; }
+html.wide-mode #panel-container .pw-sheet .ksheet-body { overflow: visible; padding: 14px 14px 16px; }
