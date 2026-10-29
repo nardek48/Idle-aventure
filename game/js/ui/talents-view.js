@@ -138,3 +138,79 @@ window.buildTalentBoardHTML = buildTalentBoardHTML;
 window.buildTalentSheetBodyHTML = buildTalentSheetBodyHTML;
 window.openTalentSheet = openTalentSheet;
 window.learnOpenTalent = learnOpenTalent;
+
+/* v3.535.0 (audit PLA-11, option A) : carte « Niveau N », ouverte au calme (hors écran de combat,
+   aucune autre fenêtre). Le message de progression-system.js (protégé, non modifié) reste tel quel. */
+var levelCardPending = null; // { from, to } en mémoire seulement : un niveau gagné avant de quitter ne rouvre rien
+var levelCardTimer = null;
+
+/* Note un passage de niveau ; rien avant les talents (forest_11), pour laisser le tutoriel de la Forêt intact. */
+function queueLevelCard(from, to) {
+  if (!(to > from) || typeof isTabUnlocked !== "function" || !isTabUnlocked("talents")) return;
+  levelCardPending = { from: levelCardPending ? levelCardPending.from : from, to: to };
+  if (!levelCardTimer && typeof setInterval === "function") levelCardTimer = setInterval(flushLevelCard, 700);
+}
+
+function levelCardCalm() {
+  if (game.activeTab === "combat") return false;
+  return !(typeof workshopOtherWindowOpen === "function" && workshopOtherWindowOpen());
+}
+
+function flushLevelCard() {
+  if (!levelCardPending) { if (levelCardTimer) { clearInterval(levelCardTimer); levelCardTimer = null; } return; }
+  if (!levelCardCalm()) return;
+  var host = document.getElementById("talent-modal-root");
+  if (!host) return;
+  var p = levelCardPending;
+  levelCardPending = null;
+  if (levelCardTimer) { clearInterval(levelCardTimer); levelCardTimer = null; }
+  host.innerHTML = buildLevelCardHTML(p.to - p.from);
+}
+
+function buildLevelCardHTML(gained) {
+  var TM = window.TalentManager, lvl = Number(game.heroLevel || 1);
+  var av = TM ? TM.available() : 0, cap = TM ? TM.cap() : Infinity, res = !av && TM && TM.reserve() > 0;
+  var pt = document.getElementById("hud-pt-img"), img = pt && pt.getAttribute("src");
+  var h = '<div class="full-menu-overlay kwin-veil"><div class="kwin dungeon-story-card is-success level-card">';
+  h += kWinHeadHTML({ icon: img ? '<img class="level-card-ico" src="' + esc(img) + '" alt="">' : renderIconOrEmojiHTML("images/Icons/subtabs/talents.webp", "dungeon-story-icon-img", ""),
+    title: esc(_t("Niveau {n}", { n: lvl })), sub: esc(_t("{x} monte d'un niveau", { x: game.playerName || _t("Le héros") })) });
+  h += '<div class="kwin-body">';
+  if (res) {
+    h += '<p class="level-card-big">' + esc(_tn(gained, "+{n} point de talent en réserve", "+{n} points de talent en réserve")) + '</p>';
+    h += '<p class="level-card-sub">' + esc(_tn(gained, "Le plafond de l'acte est atteint ({c} points). Ce point servira quand le plafond montera, à un prochain acte de l'Histoire.",
+      "Le plafond de l'acte est atteint ({c} points). Ces points serviront quand le plafond montera, à un prochain acte de l'Histoire.", { c: cap })) + '</p>';
+  } else {
+    h += '<p class="level-card-big">' + esc(_tn(gained, "+{n} point de talent", "+{n} points de talent")) + '</p>';
+    h += '<p class="level-card-sub">' + esc(_tn(av, "{n} point à placer", "{n} points à placer") + " · " + _t("le prochain au niveau {n}", { n: lvl + 1 })) + '</p>';
+  }
+  h += '</div><div class="kwin-foot">';
+  if (res || !av) h += '<button class="kbtn primary" type="button" onclick="closeLevelCard()">' + esc(_t("Continuer")) + '</button>';
+  else h += '<button class="kbtn primary" type="button" onclick="closeLevelCard(true)">' + esc(_tn(av, "Placer le point", "Placer les points")) + '</button>'
+    + '<button class="kbtn" type="button" onclick="closeLevelCard()">' + esc(_t("Plus tard")) + '</button>';
+  return h + '</div></div></div>';
+}
+
+function closeLevelCard(toTalents) {
+  var host = document.getElementById("talent-modal-root");
+  if (host) host.innerHTML = "";
+  if (!toTalents) return;
+  if (typeof switchTab === "function") switchTab("more");
+  if (typeof setHerosSubTab === "function") setHerosSubTab("talents");
+}
+
+/* Écoute de grantHeroXp sans toucher progression-system.js : l'appel est enveloppé, son effet inchangé. */
+if (typeof grantHeroXp === "function" && !grantHeroXp.levelCardWrapped) {
+  (function (orig) {
+    var wrapped = function () {
+      var before = Number(game.heroLevel || 1), r = orig.apply(this, arguments);
+      if (r > 0) queueLevelCard(before, Number(game.heroLevel || 1));
+      return r;
+    };
+    wrapped.levelCardWrapped = true;
+    window.grantHeroXp = grantHeroXp = wrapped;
+  })(grantHeroXp);
+}
+window.queueLevelCard = queueLevelCard;
+window.flushLevelCard = flushLevelCard;
+window.buildLevelCardHTML = buildLevelCardHTML;
+window.closeLevelCard = closeLevelCard;

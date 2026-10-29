@@ -7066,4 +7066,14 @@ I18n.register("en", {
   "Fin de l'Histoire, pour l'instant": "End of the Story, for now",
   "Revoir le bilan": "See the summary again",
 
+  // v3.535.0 : carte « Niveau N » (PLA-11)
+  "{x} monte d'un niveau": "{x} levels up",
+  "Le héros": "The hero",
+  "+{n} point de talent||+{n} points de talent": ["+{n} talent point", "+{n} talent points"],
+  "+{n} point de talent en réserve||+{n} points de talent en réserve": ["+{n} talent point in reserve", "+{n} talent points in reserve"],
+  "Le plafond de l'acte est atteint ({c} points). Ce point servira quand le plafond montera, à un prochain acte de l'Histoire.||Le plafond de l'acte est atteint ({c} points). Ces points serviront quand le plafond montera, à un prochain acte de l'Histoire.": ["The act's cap is reached ({c} points). This point will be usable when the cap rises, in a later act of the Story.", "The act's cap is reached ({c} points). These points will be usable when the cap rises, in a later act of the Story."],
+  "{n} point à placer||{n} points à placer": ["{n} point to place", "{n} points to place"],
+  "le prochain au niveau {n}": "the next at level {n}",
+  "Placer le point||Placer les points": ["Place the point", "Place the points"],
+
 });

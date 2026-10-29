@@ -19658,6 +19658,39 @@ console.log("\n[353] v3.534.0 — Bilan de fin de l'Histoire (audit PLA-9, optio
   g.game.storyQuests = JSON.parse(sauve);
 })();
 
+console.log("\n[354] v3.535.0 — Carte « Niveau N » au calme (audit PLA-11, option A)");
+(function () {
+  var G = g.game, sauve = { lvl: G.heroLevel, xp: G.heroXp, next: G.heroXpToNext, tab: G.activeTab, tal: G.unlockedTabs.talents };
+  try {
+    ok(g.grantHeroXp.levelCardWrapped === true, "grantHeroXp enveloppée depuis ui/talents-view.js (progression-system.js non modifié)");
+    g.levelCardPending = null;
+    G.unlockedTabs.talents = false;
+    var r = g.grantHeroXp(G.heroXpToNext - G.heroXp);
+    ok(r === 1 && g.levelCardPending === null, "talents pas encore ouverts (tutoriel de la Forêt) : pas de carte");
+    G.unlockedTabs.talents = true;
+    var a = G.heroLevel;
+    g.grantHeroXp(G.heroXpToNext - G.heroXp); g.grantHeroXp(G.heroXpToNext - G.heroXp);
+    ok(g.levelCardPending && g.levelCardPending.from === a && g.levelCardPending.to === a + 2, "deux niveaux d'affilée : une seule carte, du premier au dernier");
+    g.grantHeroXp(1);
+    ok(g.levelCardPending.to === a + 2, "de l'XP sans niveau ne change rien");
+    G.activeTab = "combat"; g.flushLevelCard();
+    ok(g.levelCardPending !== null, "sur l'écran de combat : la carte attend");
+    var TM = g.TalentManager, av = TM.available, rs = TM.reserve;
+    TM.available = function () { return 2; }; TM.reserve = function () { return 0; };
+    var h1 = g.buildLevelCardHTML(2);
+    TM.available = function () { return 0; }; TM.reserve = function () { return 1; };
+    var h2 = g.buildLevelCardHTML(1);
+    TM.available = av; TM.reserve = rs;
+    ok(/\+2 points de talent/.test(h1) && /closeLevelCard\(true\)/.test(h1) && /Plus tard/.test(h1), "point à placer : « Placer les points » et « Plus tard »");
+    ok(/en réserve/.test(h2) && /Le plafond de l/.test(h2) && !/closeLevelCard\(true\)/.test(h2), "plafond atteint : point en réserve, la raison, « Continuer » seul");
+    var src = fs.readFileSync(path.join(ROOT, "js/systems/progression-system.js"), "utf8");
+    ok(src.indexOf("queueLevelCard") === -1 && src.indexOf("showToast(_t(\"Niveau {n} ! {x}\"") !== -1, "le message de 1,8 s de progression-system.js reste tel quel");
+  } catch (err) { ok(false, "[354] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  g.levelCardPending = null;
+  G.heroLevel = sauve.lvl; G.heroXp = sauve.xp; G.heroXpToNext = sauve.next; G.activeTab = sauve.tab; G.unlockedTabs.talents = sauve.tal;
+  if (g.TalentManager && g.TalentManager.sync) g.TalentManager.sync();
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

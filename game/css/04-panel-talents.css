@@ -107,3 +107,8 @@
   background: var(--c-brown-550-3); border: 1px solid var(--c-brown-700-vivid); color: var(--c-cream-50);
 }
 .tt-go:disabled { background: var(--c-bronze-250-soft); border-color: var(--c-bronze-500); color: var(--c-brown-550-soft); }
+
+/* v3.535.0 (audit PLA-11) : carte « Niveau N », ouverte au calme après un passage de niveau. */
+.level-card-ico { width: 64px; height: 64px; border-radius: 50%; border: 3px solid var(--nb-gold-deep); object-fit: cover; }
+.level-card-big { margin: 0 0 6px; font-size: 15px; font-weight: 800; color: var(--nb-ink); }
+.level-card-sub { margin: 0 0 12px; font-size: 13px; color: var(--sheet-ink-dim); }
