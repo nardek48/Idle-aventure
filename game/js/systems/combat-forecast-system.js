@@ -145,7 +145,10 @@ var CombatForecast = {
   getHeroScale: function (refKey, cfg) {
     var ref = window.HERO_SCALING_REFS ? HERO_SCALING_REFS[refKey] : null;
     if (!ref || !cfg) return { hp: 1, power: 1 };
-    var margin = Number(cfg.margin || 1), exp = Number(cfg.exp || 0), cap = Number(cfg.cap || 1);
+    // v3.562.0 (retour Seb, point 1, option A) : réglage propre au monde (cfg.byWorld), Crypte et Montagne
+    var wid = (window.WorldManager && window.WORLDS && WORLDS[WorldManager.worldIndex]) ? WORLDS[WorldManager.worldIndex].id : null;
+    var bw = (cfg.byWorld && wid && cfg.byWorld[wid]) || {};
+    var margin = Number(bw.margin || cfg.margin || 1), exp = Number(bw.exp != null ? bw.exp : (cfg.exp || 0)), cap = Number(bw.cap || cfg.cap || 1);
     var f = function (ratio) { return Math.min(cap, Math.max(1, Math.pow(Math.max(0, ratio) / margin, exp))); };
     /* v3.448.7 : PV effectifs ramenés au gabarit de la classe (cfg.classEhpGabarit) : le Chevalier encaisse
        mieux par nature, il n'est plus frappé plus fort pour cela (décision de Seb du 12/10, option B). */

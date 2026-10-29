@@ -136,6 +136,10 @@ function launch() {
   })(sb);
   // Essai (option B du bonus « % dégâts ») : tapMult multiplie aussi le plat d'équipement ;
   // ESSAI_TAPMULT_ECHELLE réduit la part du bonus (0,5 = bonus divisés par deux)
+  // v3.562.0 (point 1, B) : ESSAI_B=pv,puissance (Crypte et Montagne) surcharge WORLD_HERO_SCALING.questEnemyByWorld ; off = coupé
+  if (process.env.ESSAI_B) { if (process.env.ESSAI_B === "off") delete sb.WORLD_HERO_SCALING.questEnemyByWorld; else { var bv = process.env.ESSAI_B.split(",").map(Number); ["crypt", "mountain"].forEach(function (w) { sb.WORLD_HERO_SCALING.questEnemyByWorld[w] = { hp: bv[0], power: bv[1] }; }); } }
+  // v3.562.0 (point 1) : ESSAI_HS=exp,marge (Crypte et Montagne) ; ESSAI_HS=off coupe le réglage par monde
+  if (process.env.ESSAI_HS) { if (process.env.ESSAI_HS === "off") delete sb.WORLD_HERO_SCALING.byWorld; else { var hsv = process.env.ESSAI_HS.split(",").map(Number); ["crypt", "mountain"].forEach(function (w) { sb.WORLD_HERO_SCALING.byWorld[w] = { exp: hsv[0], margin: hsv[1] }; }); } }
   if (process.env.ESSAI_TAPMULT_TOTAL) (function (X) {
     var k = Number(process.env.ESSAI_TAPMULT_ECHELLE || 1);
     X.EquipmentManager.effectiveTapDamage = function () {

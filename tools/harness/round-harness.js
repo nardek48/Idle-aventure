@@ -13567,8 +13567,8 @@ console.log("\n[194] v3.423.0 — Difficulté : les ennemis suivent un peu la fo
     ok(eB.maxHp > eA.maxHp * 1.7 && eB.stats.power > eA.stats.power * 1.2 && eB.goldReward === eA.goldReward, "l'ennemi du monde a plus de PV et de Puissance, pas plus d'or");
     run("game.cycleCount = 1;"); var hc = run("WorldManager.getHeroScale()"); run("game.cycleCount = 0;");
     ok(hc.hp === 1 && hc.power === 1, "dans les Cycles : pas d'ajustement (les Cycles ont le leur)");
-    run("WorldManager.worldIndex = 3;"); var hr = run("WorldManager.getHeroScale()"); run("WorldManager.worldIndex = 1;");
-    var hrRef = run("CombatForecast.getHeroScale('joueurRuines', WORLD_HERO_SCALING)");
+    run("WorldManager.worldIndex = 3;"); var hr = run("WorldManager.getHeroScale()");
+    var hrRef = run("CombatForecast.getHeroScale('joueurRuines', WORLD_HERO_SCALING)"); run("WorldManager.worldIndex = 1;"); // v3.562.0 : réglage de la Crypte (byWorld)
     ok(hr.hp === hrRef.hp && hr.power === hrRef.power, "Crypte : ajustement sur la référence de fin des Ruines (joueurRuines)"); // v3.450.0
     run("WorldManager.worldIndex = 4;"); var hm = run("WorldManager.getHeroScale()"); run("WorldManager.worldIndex = 1;");
     ok(hm.hp === 1 && hm.power === 1, "Montagne : pas encore de référence, pas d'ajustement");
@@ -20167,6 +20167,25 @@ console.log("\n[376] v3.561.0 — Le Grand Ouvrage : verser le surplus, +1 % d'o
   } catch (err) { ok(false, "[376] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   game.worldsEverReached = sv.wr; if (game.village) game.village.grandOuvrage = sv.vil || { points: 0 };
   if (g.EquipmentManager) g.EquipmentManager.recalcStats();
+})();
+
+console.log("\n[377] v3.562.0 — Difficulté de la Crypte et de la Montagne : ennemis qui suivent le héros (A), ennemis ordinaires des quêtes plus forts (B)");
+(function () {
+  var Q = g.QuestEnemyManager, H = g.WORLD_HERO_SCALING;
+  try {
+    ok(H.byWorld.crypt.exp === 0.75 && H.byWorld.crypt.margin === 1.05 && H.byWorld.mountain.exp === 0.75 && !H.byWorld.desert, "A : Crypte et Montagne seulement (suivi 0,75, marge 5 %)");
+    ok(H.questEnemyByWorld.crypt.hp === 1.2 && H.questEnemyByWorld.crypt.power === 1.4 && H.questEnemyByWorld.mountain.hp === 1.1 && H.questEnemyByWorld.mountain.power === 1.2, "B : Crypte +20 % PV / +40 % puissance, Montagne +10 % / +20 %");
+    var qc = Object.keys(g.ADVENTURE_QUESTS).filter(function (id) { return g.ADVENTURE_QUESTS[id].worldId === "crypt"; })[0];
+    var qd = Object.keys(g.ADVENTURE_QUESTS).filter(function (id) { return g.ADVENTURE_QUESTS[id].worldId === "desert"; })[0];
+    var mk = function (boss) { return { isBoss: boss, hp: 100, maxHp: 100, stats: { power: 50 } }; };
+    var e = mk(false); Q.applyWorldMult({ id: qc }, e);
+    var b = mk(true); Q.applyWorldMult({ id: qc }, b);
+    var d = mk(false); Q.applyWorldMult({ id: qd }, d);
+    ok(e.maxHp === 120 && e.hp === 120 && e.stats.power === 70, "ennemi ordinaire d'une quête de la Crypte : 120 PV, puissance 70");
+    ok(b.maxHp === 100 && b.stats.power === 50, "boss ou élite : inchangé");
+    ok(d.maxHp === 100 && d.stats.power === 50, "quête du Désert : inchangée");
+    ok(/selfG\.applyWorldMult\(quest, m\)/.test(fs.readFileSync(path.join(ROOT, "js/systems/quest-enemy-system.js"), "utf8")), "les groupes aussi");
+  } catch (err) { ok(false, "[377] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
 Promise.all(ATTENTES).then(function () {

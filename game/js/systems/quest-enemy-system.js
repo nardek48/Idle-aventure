@@ -56,7 +56,7 @@ var QuestEnemyManager = {
       if (!forceBoss && Array.isArray(quest.group) && quest.group.length > 1) {
         var groupe = this.buildGroup(quest, adventure);
         var selfG = this;
-        groupe.forEach(function (m) { selfG.applyPowerMult(quest, m); }); // v3.326.0
+        groupe.forEach(function (m) { selfG.applyPowerMult(quest, m); selfG.applyWorldMult(quest, m); }); // v3.326.0 ; v3.562.0
         return groupe;
       }
 
@@ -91,6 +91,7 @@ var QuestEnemyManager = {
       }
 
       this.applyPowerMult(quest, enemy); // v3.326.0
+      this.applyWorldMult(quest, enemy); // v3.562.0 (accord Seb) : Crypte et Montagne durcies
 
       return enemy;
     } finally {
@@ -124,6 +125,18 @@ var QuestEnemyManager = {
     var cls = (tab && typeof getClassByHeroId === "function") ? getClassByHeroId(game.heroId) : null;
     var g = cls ? Number(tab[cls.id]) : 1;
     return (isFinite(g) && g > 0) ? g : 1;
+  },
+
+  /* v3.562.0 (retour Seb, point 1, option B) : PV et puissance des ennemis ordinaires (ni boss ni élite)
+     des quêtes d'un monde, lus dans WORLD_HERO_SCALING.questEnemyByWorld. */
+  applyWorldMult: function (quest, enemy) {
+    if (!enemy || enemy.isBoss) return;
+    var tab = window.WORLD_HERO_SCALING && WORLD_HERO_SCALING.questEnemyByWorld;
+    var d = (window.ADVENTURE_QUESTS && quest && ADVENTURE_QUESTS[quest.id]) || quest || {};
+    var m = tab && d.worldId ? tab[d.worldId] : null;
+    if (!m) return;
+    if (Number(m.hp) > 0 && m.hp !== 1) { enemy.maxHp = Math.max(1, Math.floor(enemy.maxHp * m.hp)); enemy.hp = enemy.maxHp; }
+    if (enemy.stats && Number(m.power) > 0 && m.power !== 1) enemy.stats.power = Math.floor(enemy.stats.power * m.power);
   },
 
   applyPowerMult: function (quest, enemy) {

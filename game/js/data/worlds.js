@@ -221,6 +221,12 @@ var WORLD_HERO_SCALING = {
   /* v3.448.7 : gabarit de PV effectifs par classe (la puissance ennemie suit PV effectifs ÷ gabarit).
      Chevalier ÷1,3, calé au banc : Nuée 53 → 88 %, Trône 70 → 100 % ; Rôdeur et Mage inchangés. */
   classEhpGabarit: { knight: 1.3 },
+  /* v3.562.0 (retour Seb, point 1, option A) : à la Crypte et à la Montagne, les ennemis suivent davantage
+     un héros en avance (marge 15 % -> 5 %, suivi 0,5 -> 0,75). Au banc. */
+  byWorld: { crypt: { exp: 0.75, margin: 1.05 }, mountain: { exp: 0.75, margin: 1.05 } },
+  /* v3.562.0 (option B) : ennemis ORDINAIRES des quêtes (ni boss ni élite), PV et puissance, par monde.
+     Banc (12 campagnes) : Crypte 6-10 % des PV par combat ; la Montagne plus douce (B1 y faisait 15-20 morts). */
+  questEnemyByWorld: { crypt: { hp: 1.2, power: 1.4 }, mountain: { hp: 1.1, power: 1.2 } },
   /* v3.428.0 (Ruines, U-1) : le héros de fin du chapitre II. Gardé par décision de Seb du 09/10/2026 :
      tous les bancs des Ruines ont été faits avec cette référence. */
   refByWorld: { forest: ["joueurForet", "joueurForet"], desert: ["joueurDesert1", "joueurDesert2"], ruins: ["joueurDesert2", "joueurDesert2"],
