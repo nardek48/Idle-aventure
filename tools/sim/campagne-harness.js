@@ -253,8 +253,10 @@ function fightCombat(maxKills) {
         var cs = COMPAGNONS_MALINS ? g.CompanionManager.chooseAction(acteur) : "basic";
         if (!CE.heroAction(cs)) CE.heroAction("basic");
       } else {
+        // audit CMP-1 : le joueur qui lit l'objectif « Tailler N veines » touche le bouton de la veine (intacte)
+        var veinStep = g.StoryQuestManager.getCurrentStep("mountain"), wantVein = veinStep && /veine/i.test(veinStep.objectiveLabel || "") && g.VeinSystem && g.VeinSystem.intact();
         var act = CE.suggestAction();
-        if (!(act && act !== "basic" && CE.heroAction(act))) CE.heroAction("basic");
+        if (!(wantVein && CE.heroAction("vein")) && !(act && act !== "basic" && CE.heroAction(act))) CE.heroAction("basic");
       }
     }
     CLOCK.offset += step; STATS.combatMs += step; rec.rounds++;
