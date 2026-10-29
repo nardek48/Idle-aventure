@@ -37,6 +37,9 @@ var VeinSystem = {
   },
   worldHasVeins: function () {
     if (game.dungeonRun && game.dungeonRun.active) return this.inMaw();
+    // v3.541.0 (Seb) : une quête d'aventure se bat dans SON monde, même si le héros réside ailleurs
+    var run = game.adventureQuestRun, q = run && run.active && typeof ADVENTURE_QUESTS !== "undefined" ? ADVENTURE_QUESTS[run.questId] : null;
+    if (q && q.worldId) return q.worldId === "mountain";
     var w = (typeof WORLDS !== "undefined" && window.WorldManager) ? WORLDS[WorldManager.worldIndex] : null;
     return !!(w && w.id === "mountain");
   },

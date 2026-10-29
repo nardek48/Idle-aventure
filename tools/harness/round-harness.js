@@ -19763,6 +19763,26 @@ console.log("\n[358] v3.540.0 — Tactique : la veine conseillée à montagne_04
   SQ.getCurrentStep = gs; SQ.isCurrentStepAccepted = acc; V.intact = intact;
 })();
 
+console.log("\n[359] v3.541.0 — La veine suit le monde de la quête, pas le monde de résidence (Seb)");
+(function () {
+  var G = g.game, wi = g.WorldManager.worldIndex, run = G.adventureQuestRun, dr = G.dungeonRun;
+  try {
+    var V = g.VeinSystem, idx = function (id) { return g.WORLDS.findIndex(function (w) { return w.id === id; }); };
+    G.dungeonRun = { active: false, wave: 0, dungeonId: 1, marks: [] };
+    g.WorldManager.worldIndex = idx("forest");
+    G.adventureQuestRun = { active: true, questId: "aq_montagne_veines" };
+    var a = V.worldHasVeins();
+    g.WorldManager.worldIndex = idx("mountain");
+    var fq = Object.keys(g.ADVENTURE_QUESTS).filter(function (k) { return g.ADVENTURE_QUESTS[k].worldId === "forest"; })[0];
+    G.adventureQuestRun = { active: true, questId: fq };
+    var b = V.worldHasVeins();
+    G.adventureQuestRun = { active: false, questId: null };
+    var c = V.worldHasVeins();
+    ok(a === true && b === false && c === true, "quête de la Montagne en résidant en Forêt : veines ; quête de la Forêt en résidant à la Montagne : aucune ; hors quête : le monde de résidence");
+  } catch (err) { ok(false, "[359] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  g.WorldManager.worldIndex = wi; G.adventureQuestRun = run; G.dungeonRun = dr;
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);
