@@ -7085,4 +7085,7 @@ I18n.register("en", {
   "Grande": "Large",
   "« Grande » agrandit les pages, les feuilles et les fenêtres de 12 %. Réglage propre à cet appareil.": "“Large” enlarges pages, sheets and windows by 12 %. Setting for this device only.",
 
+  // v3.540.0 : la veine conseillée par l'étape (CMP-1)
+  "Objectif de l'étape": "Step objective",
+
 });

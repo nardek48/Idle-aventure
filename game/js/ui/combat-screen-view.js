@@ -340,7 +340,8 @@
     var left = V.cutsLeft();
     var lbl = spent ? _t("Veine épuisée") : (heat ? _t("Tailler · encore {n}", { n: left }) : _t("Tailler la veine"));
     var chip = heat ? _t("Chaleur +{h} % · lame +{b} %", { h: Math.round(V.heatMult() * 100 - 100), b: Math.round(V.bladeMult() * 100 - 100) }) : "";
-    var key = [dis, lbl, chip].join("|");
+    var sugg = !dis && engine().suggestAction() === "vein"; // v3.540.0 (CMP-1) : la veine conseillée par l'étape
+    var key = [dis, lbl, chip, sugg].join("|");
     if (!el) {
       el = document.createElement("button");
       el.type = "button";
@@ -355,6 +356,7 @@
     el._cbxKey = key;
     el.disabled = dis;
     el.classList.toggle("is-spent", spent);
+    el.classList.toggle("is-suggested", sugg);
     var l = el.querySelector(".cbx-vein-lbl"), c = el.querySelector(".cbx-vein-chip");
     if (l) l.textContent = lbl;
     if (c) { c.textContent = chip; c.hidden = !chip; }
@@ -529,6 +531,7 @@
     if (!window.ClassCombatManager || typeof ClassCombatManager.chooseRoundAction !== "function" || !game.enemy) return null;
     var d = ClassCombatManager.chooseRoundAction(false);
     var slot = (d && d.slot) || "basic";
+    if (slot === "vein") return { slot: slot, cond: null, story: true, label: _t("Tailler la veine"), icon: IC.st + "vein_intact.webp" }; // v3.540.0 (CMP-1)
     var action = slot !== "basic" ? ClassCombatManager.getAction(slot) : null;
     return { slot: slot, cond: d ? d.matchedConditionId : null, label: action ? _td(action.label) : _t("Attaque"), icon: action ? actionIcon(action) : IC.attack };
   }
@@ -640,7 +643,7 @@
       if (tip) h += '<div class="cbx-advice is-tip">' + ico(adv.icon) + '<span>' + esc(tip) + '</span></div>';
       else if (adv) {
         var c = condInfo(adv.cond);
-        h += '<div class="cbx-advice">' + ico(IC.grim, "is-book") + '<span>' + (c ? ico(c.icon) + esc(c.label) : _t("Par défaut")) + ' <b>→</b> ' + ico(adv.icon) + '<b>' + esc(adv.label) + '</b></span></div>';
+        h += '<div class="cbx-advice">' + ico(IC.grim, "is-book") + '<span>' + (c ? ico(c.icon) + esc(c.label) : adv.story ? esc(_t("Objectif de l'étape")) : _t("Par défaut")) + ' <b>→</b> ' + ico(adv.icon) + '<b>' + esc(adv.label) + '</b></span></div>';
       }
       h += '<div class="cbx-skills">';
       SLOTS.forEach(function (s) { h += skillButtonHTML(s, adv, false); });

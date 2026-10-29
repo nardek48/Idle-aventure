@@ -19741,6 +19741,28 @@ console.log("\n[357] v3.539.0 — Donjon sans soin gratuit ; jalons des compagno
   G.dungeonRun = JSON.parse(sv.run); G.dungeonRunsUsed = JSON.parse(sv.used); G.heroHp = sv.hp;
 })();
 
+console.log("\n[358] v3.540.0 — Tactique : la veine conseillée à montagne_04 (audit CMP-1, option B)");
+(function () {
+  var CCM = g.ClassCombatManager, SQ = g.StoryQuestManager, V = g.VeinSystem;
+  var gs = SQ.getCurrentStep, acc = SQ.isCurrentStepAccepted, intact = V.intact;
+  try {
+    freshCombat();
+    var steps = g.STORY_QUESTS.mountain.steps, m04 = steps.filter(function (x) { return x.id === "montagne_04"; })[0], m05 = steps.filter(function (x) { return x.id === "montagne_05"; })[0];
+    SQ.isCurrentStepAccepted = function () { return true; };
+    V.intact = function () { return true; };
+    SQ.getCurrentStep = function (c) { return c === "mountain" ? m04 : null; };
+    var a = CCM.chooseRoundAction(false), b = CCM.chooseRoundAction(true);
+    ok(a && a.slot === "vein" && (!b || b.slot !== "vein"), "montagne_04, veine intacte : la suggestion du Tactique est la veine, jamais le Grimoire");
+    V.intact = function () { return false; };
+    var c = CCM.chooseRoundAction(false);
+    V.intact = function () { return true; };
+    SQ.getCurrentStep = function (cid) { return cid === "mountain" ? m05 : null; };
+    var d = CCM.chooseRoundAction(false);
+    ok((!c || c.slot !== "vein") && (!d || d.slot !== "vein"), "veine déjà taillée, ou autre étape (« Décider de la première veine ») : pas de veine conseillée");
+  } catch (err) { ok(false, "[358] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  SQ.getCurrentStep = gs; SQ.isCurrentStepAccepted = acc; V.intact = intact;
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

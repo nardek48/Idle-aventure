@@ -581,9 +581,18 @@ var ClassCombatManager = {
 
     /* Décision de round de l'auto-pilote : règle du Grimoire applicable d'abord, sinon repli par défaut (avec réserve).
      Retourne { slot, matchedConditionId } ou null (= Attaque). forExecution=false : suggestion sans effet de bord. */
+  /* v3.540.0 : l'étape d'Histoire en cours demande de tailler des veines, et la veine de ce combat est intacte. */
+  storyWantsVein: function () {
+    if (!window.VeinSystem || !VeinSystem.intact() || !window.StoryQuestManager) return false;
+    var step = StoryQuestManager.getCurrentStep("mountain");
+    return !!(step && StoryQuestManager.isCurrentStepAccepted("mountain") && /Tailler \d+ veines/.test(step.objectiveLabel || ""));
+  },
+
   chooseRoundAction: function (forExecution) {
     if (!game.enemy) return null;
     if ((game.heroHp || 0) <= 0) return null;
+    // v3.540.0 (audit CMP-1, option B) : en Tactique, l'étape « Tailler N veines » met la veine intacte en avant
+    if (!forExecution && this.storyWantsVein()) return { slot: "vein", matchedConditionId: null, story: true };
 
     var classId = this.getCurrentClassId();
     if (!classId || typeof getClassSkills !== "function") return null;

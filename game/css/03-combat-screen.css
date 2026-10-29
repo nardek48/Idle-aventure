@@ -522,6 +522,7 @@ html.pc-mode .cbx-key-badge { display: block; }
 .cbx-vein-chip { position: relative; padding: 1px 8px; border-radius: 9px; font-size: 12px; font-weight: 700; white-space: nowrap;
   color: #ffd9b8; background: rgba(40, 14, 6, .82); border: 1px solid rgba(255, 140, 60, .55); }
 .cbx-vein:disabled { cursor: default; }
+.cbx-vein.is-suggested .cbx-vein-lbl { box-shadow: 0 0 0 2px var(--cbx-gold), 0 0 14px rgba(232, 191, 90, .8); } /* v3.540.0 (CMP-1) */
 .cbx-vein:disabled:not(.is-spent) .cbx-vein-lbl { opacity: .8; }
 .cbx-vein.is-spent .cbx-vein-art { filter: grayscale(1) brightness(.5); }
 .cbx-vein.is-spent .cbx-vein-art path { animation: none; }
