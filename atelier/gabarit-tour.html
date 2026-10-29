@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gabarit de la Tour</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Atelier QUE-15 : une colonne, trois options, rendus réels du jeu (Chromium). */
+:root { --fond:#16110b; --carte:#231a11; --encre:#f1e6cf; --sourd:#bba98a; --or:#e3b04f; --trait:#4a3a28; color-scheme: dark; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--fond); color:var(--encre); font:16px/1.5 system-ui,-apple-system,sans-serif; }
+main { max-width:760px; margin:0 auto; padding-block:20px 48px; padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px)); display:grid; gap:18px; }
+h1 { font:700 24px/1.2 Georgia,serif; color:var(--or); margin:0; text-wrap:balance; }
+h2 { font:700 18px Georgia,serif; color:var(--or); margin:0; }
+p,ul,ol { margin:0; } .sourd { color:var(--sourd); }
+section { background:var(--carte); border:1px solid var(--trait); border-radius:14px; padding:16px; display:grid; gap:12px; min-width:0; }
+section.reco { border-color:var(--or); }
+.badge { display:inline-block; font-size:13px; font-weight:700; color:#1d1408; background:var(--or); border-radius:999px; padding:2px 10px; margin-left:6px; vertical-align:middle; }
+.figs { display:flex; gap:12px; overflow-x:auto; padding-bottom:4px; }
+figure { margin:0; flex:0 0 auto; display:grid; gap:4px; }
+figure img { display:block; max-width:none; border-radius:10px; border:1px solid var(--trait); }
+figcaption { font-size:13px; color:var(--sourd); }
+li { margin-block:4px; }
+code { font-size:14px; overflow-wrap:anywhere; }
+table { border-collapse:collapse; width:100%; font-size:14px; } td,th { border-top:1px solid var(--trait); padding:6px 4px; text-align:left; vertical-align:top; }
+.tab { overflow-x:auto; max-width:100%; }
+.g { border-collapse:separate; border-spacing:3px; width:auto; } .g th { font-size:12px; color:var(--sourd); border:0; padding:2px; text-align:center; }
+.g th.rn { text-align:right; white-space:nowrap; padding-right:6px; font-size:13px; color:var(--encre); }
+.g td { width:26px; height:26px; border:0; border-radius:5px; padding:0; text-align:center; color:#fff; font-weight:800; }
+.leg { display:flex; flex-wrap:wrap; gap:6px 14px; font-size:13px; color:var(--sourd); } .leg i { display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:5px; vertical-align:-1px; }
+</style></head><body>
+<main>
+<h1>Le gabarit des actes, pour la Tour</h1>
+<p class="sourd">Audit QUE-15. C'est une décision de conception pour le prochain chapitre (la Tour), sans rien changer aux chapitres livrés. La règle « 4 actes, 20 étapes » de la Montagne (MT3) reste close.</p>
+
+<section><h2>Ce que montre le vrai code</h2>
+<p>Les 95 étapes d'Histoire, classées par type, position par position :</p>
+<div class="tab"><table class="g"><tr><th></th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>11</th><th>12</th><th>13</th><th>14</th><th>15</th><th>16</th><th>17</th><th>18</th><th>19</th><th>20</th></tr><tr><th class="rn">Désert</th><td style="background:#6b7280" title="Voyage (coût)"></td><td style="background:#b45309" title="Rencontres"></td><td style="background:#be185d" title="Petite aventure"></td><td style="background:#15803d" title="Carte vivante"></td><td style="background:#7e22ce" title="Décider"></td><td style="background:#15803d" title="Carte vivante"></td><td style="background:#4d7c0f" title="Logistique du monde"></td><td style="background:#0e7490" title="Compagnon et choix"></td><td style="background:#4d7c0f" title="Logistique du monde"></td><td style="background:#b45309" title="Rencontres"></td><td style="background:#15803d" title="Carte vivante"></td><td style="background:#9a3412" title="Donjon : campement"></td><td style="background:#1d4ed8" title="Palier d'équipement"></td><td style="background:#15803d" title="Carte vivante"></td><td style="background:#991b1b" title="Boss de donjon"></td><td style="background:#6b7280" title="Voyage (coût)"></td><td style="background:#57101a" title="Quête et boss final"></td><td style="background:#7e22ce" title="Décider"></td></tr><tr><th class="rn">Ruines</th><td style="background:#6b7280" title="Voyage (coût)"></td><td style="background:#b45309" title="Rencontres"></td><td style="background:#0e7490" title="Compagnon et choix"></td><td style="background:#4d7c0f" title="Logistique du monde"></td><td style="background:#7e22ce" title="Décider"></td><td style="background:#be185d" title="Petite aventure"></td><td style="background:#15803d" title="Carte vivante"></td><td style="background:#b45309" title="Rencontres"></td><td style="background:#1d4ed8" title="Palier d'équipement"></td><td style="background:#b45309" title="Rencontres"></td><td style="background:#15803d" title="Carte vivante"></td><td style="background:#9a3412" title="Donjon : campement"></td><td style="background:#1d4ed8" title="Palier d'équipement"></td><td style="background:#b45309" title="Rencontres"></td><td style="background:#991b1b" title="Boss de donjon"></td><td style="background:#15803d" title="Carte vivante"></td><td style="background:#6b7280" title="Voyage (coût)"></td><td style="background:#b45309" title="Rencontres"></td><td style="background:#57101a" title="Quête et boss final"></td><td style="background:#7e22ce" title="Décider"></td></tr><tr><th class="rn">Crypte</th><td style="background:#6b7280" title="Voyage (coût)"></td><td style="background:#b45309" title="Rencontres"></td><td style="background:#0e7490" title="Compagnon et choix"></td><td style="background:#4d7c0f" title="Logistique du monde"></td><td style="background:#7e22ce" title="Décider"></td><td style="background:#be185d" title="Petite aventure"></td><td style="background:#15803d" title="Carte vivante"></td><td style="background:#b45309" title="Rencontres"></td><td style="background:#1d4ed8" title="Palier d'équipement"></td><td style="background:#b45309" title="Rencontres"></td><td style="background:#15803d" title="Carte vivante"></td><td style="background:#9a3412" title="Donjon : campement"></td><td style="background:#1d4ed8" title="Palier d'équipement"></td><td style="background:#b45309" title="Rencontres"></td><td style="background:#991b1b" title="Boss de donjon"></td><td style="background:#15803d" title="Carte vivante"></td><td style="background:#6b7280" title="Voyage (coût)"></td><td style="background:#b45309" title="Rencontres"></td><td style="background:#57101a" title="Quête et boss final"></td><td style="background:#7e22ce" title="Décider"></td></tr><tr><th class="rn">Montagne</th><td style="background:#6b7280" title="Voyage (coût)"></td><td style="background:#b45309" title="Rencontres"></td><td style="background:#0e7490" title="Compagnon et choix"></td><td style="background:#4d7c0f" title="Logistique du monde"></td><td style="background:#7e22ce" title="Décider"></td><td style="background:#be185d" title="Petite aventure"></td><td style="background:#15803d" title="Carte vivante"></td><td style="background:#b45309" title="Rencontres"></td><td style="background:#1d4ed8" title="Palier d'équipement"></td><td style="background:#b45309" title="Rencontres"></td><td style="background:#15803d" title="Carte vivante"></td><td style="background:#9a3412" title="Donjon : campement"></td><td style="background:#1d4ed8" title="Palier d'équipement"></td><td style="background:#b45309" title="Rencontres"></td><td style="background:#991b1b" title="Boss de donjon"></td><td style="background:#15803d" title="Carte vivante"></td><td style="background:#6b7280" title="Voyage (coût)"></td><td style="background:#b45309" title="Rencontres"></td><td style="background:#57101a" title="Quête et boss final"></td><td style="background:#7e22ce" title="Décider"></td></tr></table></div>
+<div class="leg"><span><i style="background:#6b7280"></i>Voyage (coût)</span><span><i style="background:#b45309"></i>Rencontres</span><span><i style="background:#0e7490"></i>Compagnon et choix</span><span><i style="background:#4d7c0f"></i>Logistique du monde</span><span><i style="background:#7e22ce"></i>Décider</span><span><i style="background:#be185d"></i>Petite aventure</span><span><i style="background:#15803d"></i>Carte vivante</span><span><i style="background:#1d4ed8"></i>Palier d'équipement</span><span><i style="background:#9a3412"></i>Donjon : campement</span><span><i style="background:#991b1b"></i>Boss de donjon</span><span><i style="background:#57101a"></i>Quête et boss final</span></div>
+<ul>
+<li><b>Ruines, Crypte et Montagne ont le même gabarit</b>. Les seuls écarts se lisent dans le texte : à la Montagne, la logistique de l'étape 4 devient « tailler 5 veines », et le voyage de l'étape 17 un sentier à monter.</li>
+<li>Le Désert, plus ancien, est encore varié (18 étapes) : la carte vivante dès les étapes 4 et 6, puis le Veilleur et une fabrication en acte II.</li>
+<li>32 des 35 quêtes d'Aventure sont des étapes d'Histoire, et 28 ont pour seul objectif « Vaincre N rencontres ». Aucune quête autonome au Désert, aux Ruines ni à la Montagne.</li>
+</ul>
+</section>
+
+<section><h2>Des variantes d'objectif que le jeu sait déjà faire</h2>
+<div class="tab"><table>
+<tr><th>Variante</th><th>Déjà utilisée</th></tr>
+<tr><td>« D'une traite » : sans repos entre les combats</td><td>forest_crossing, desert_02</td></tr>
+<tr><td>« N victoires d'affilée »</td><td>forest_12, « Tenir le Cœur »</td></tr>
+<tr><td>« Sous une Marque, N vagues dans le même run »</td><td>forest_13</td></tr>
+<tr><td>« Tenir N secteurs » de la carte vivante</td><td>ruines_16</td></tr>
+<tr><td>Mécanique du monde (« tailler 5 veines »)</td><td>montagne_04</td></tr>
+<tr><td>Combats avec un compagnon précis</td><td>forest_wenna</td></tr>
+<tr><td>Donner un objet à un personnage</td><td>desert_07, l'outre au Veilleur</td></tr>
+<tr><td>Fabriquer un objet</td><td>desert_09, le Verre trempé</td></tr>
+</table></div>
+<p class="sourd">Pas encore dans le jeu : l'escorte (un compagnon à garder en vie) et le temps limité. L'une comme l'autre demanderait de toucher au moteur de combat (protégé) ou un nouveau système.</p>
+</section>
+
+<section class="reco"><h2>A · Même taille, ordre varié, objectifs déjà connus<span class="badge">Recommandée</span></h2>
+<p>La Tour garde 4 actes et 20 étapes, mais :</p>
+<ul>
+<li>l'ordre change : par exemple un palier dès l'acte I, un donjon plus tôt, un boss au milieu du chapitre ;</li>
+<li>les étapes « N rencontres » prennent une contrainte déjà connue du jeu (d'une traite, d'affilée, sous une Marque, sans potion, tenir des secteurs) ;</li>
+<li>2 quêtes autonomes s'ajoutent dans l'onglet Aventure, hors de l'Histoire ;</li>
+<li>le dernier choix reste « la Question », comme le veut la Bible.</li>
+</ul>
+<p class="sourd">Exemple d'ordre, à écrire avec toi au moment de la conception. Un point marque une étape avec une contrainte.</p>
+<div class="tab"><table class="g"><tr><th></th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>11</th><th>12</th><th>13</th><th>14</th><th>15</th><th>16</th><th>17</th><th>18</th><th>19</th><th>20</th></tr><tr><th class="rn">Montagne</th><td style="background:#6b7280" title="Voyage (coût)"></td><td style="background:#b45309" title="Rencontres"></td><td style="background:#0e7490" title="Compagnon et choix"></td><td style="background:#4d7c0f" title="Logistique du monde"></td><td style="background:#7e22ce" title="Décider"></td><td style="background:#be185d" title="Petite aventure"></td><td style="background:#15803d" title="Carte vivante"></td><td style="background:#b45309" title="Rencontres"></td><td style="background:#1d4ed8" title="Palier d'équipement"></td><td style="background:#b45309" title="Rencontres"></td><td style="background:#15803d" title="Carte vivante"></td><td style="background:#9a3412" title="Donjon : campement"></td><td style="background:#1d4ed8" title="Palier d'équipement"></td><td style="background:#b45309" title="Rencontres"></td><td style="background:#991b1b" title="Boss de donjon"></td><td style="background:#15803d" title="Carte vivante"></td><td style="background:#6b7280" title="Voyage (coût)"></td><td style="background:#b45309" title="Rencontres"></td><td style="background:#57101a" title="Quête et boss final"></td><td style="background:#7e22ce" title="Décider"></td></tr><tr><th class="rn">Tour (exemple A)</th><td style="background:#6b7280" title="Voyage (coût)"></td><td style="background:#1d4ed8" title="Palier d'équipement"></td><td style="background:#b45309" title="Rencontres · d'une traite">•</td><td style="background:#15803d" title="Carte vivante · tenir 2 secteurs">•</td><td style="background:#7e22ce" title="Décider"></td><td style="background:#9a3412" title="Donjon : campement"></td><td style="background:#0e7490" title="Compagnon et choix"></td><td style="background:#be185d" title="Petite aventure"></td><td style="background:#b45309" title="Rencontres · d'affilée">•</td><td style="background:#991b1b" title="Boss de donjon"></td><td style="background:#4d7c0f" title="Logistique du monde"></td><td style="background:#15803d" title="Carte vivante"></td><td style="background:#b45309" title="Rencontres · sous une Marque">•</td><td style="background:#1d4ed8" title="Palier d'équipement"></td><td style="background:#7e22ce" title="Décider"></td><td style="background:#6b7280" title="Voyage (coût)"></td><td style="background:#b45309" title="Rencontres · sans potion">•</td><td style="background:#9a3412" title="Donjon : campement"></td><td style="background:#57101a" title="Quête et boss final"></td><td style="background:#7e22ce" title="Décider · la Question">•</td></tr></table></div>
+<table><tr><th>Coût</th><td>Rien à coder maintenant : une règle à poser dans le document de conception de la Tour. Au moment de coder, chaque variante réutilise un mécanisme existant ; chacune sera vérifiée à la conception, banc à l'appui.</td></tr></table>
+</section>
+
+<section><h2>B · A, plus un vrai type nouveau</h2>
+<p>A, avec en plus une escorte ou un objectif en temps limité. Cela renouvelle davantage, mais demande soit de toucher au moteur de combat (protégé), soit un nouveau système, à mesurer au banc. Effort M à L.</p>
+</section>
+
+<section><h2>C · Garder le gabarit tel quel</h2>
+<p>Le même ordre qu'aux Ruines, à la Crypte et à la Montagne. C'est le plus rapide, et il est éprouvé au robot, mais le rythme est connu d'avance au 6e monde.</p>
+</section>
+</main>
+
+</body></html>
