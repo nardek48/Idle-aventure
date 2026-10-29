@@ -1909,7 +1909,7 @@ if (process.env.SAVE_OUT) { try { require("fs").writeFileSync(process.env.SAVE_O
 function failleRun(id, L, libre) {   // libre (v3.462.0) : mode libre du moteur
   var g = G, D = g.DungeonManager;
   g.game.heroHp = g.game.heroMaxHp; refillPotions();
-  g.game.dungeonRunsUsed = {}; g.game.dungeonTierCleared = { 1: true, 2: true, 3: true, 4: true };
+  g.game.dungeonRunsUsed = {}; g.game.dungeonTierCleared = { 1: true, 2: true, 3: true, 4: true, 5: true };
   ["petite_ration", "ration", "grande_ration"].forEach(function (k) { if (g.WarehouseManager.getAmount(k) < 10) g.WarehouseManager.addResource(k, 10, true); }); // vivres de sortie : hors mesure
   // v3.460.0 : niveaux du moteur ; FAILLE_PV / FAILLE_DMG surchargent les pourcentages des données
   if (process.env.FAILLE_PV) g.DUNGEON_CONFIG.levelHpPct = FAILLE_PV;
