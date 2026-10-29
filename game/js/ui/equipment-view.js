@@ -55,7 +55,7 @@ function formatEquipmentStat(item) {
 /* v3.225.0 : texte d'une stat quelle que soit sa source (stat de base ou affixe). */
 function formatEquipmentStatValue(stat, value) {
   if (stat === "tapDmg") return _t("+{n} dégâts par coup", { n: formatNumber(Math.round(value)) }); // v3.492.13 : entier, affinité comprise
-  if (stat === "tapMult") return _t("+{n}% dégâts", { n: Math.round(value * 100) });
+  if (stat === "tapMult") return _t("+{n}% dégâts de base", { n: Math.round(value * 100) }); // v3.546.0 : ne multiplie que la Force, pas le plat de l'arme
   if (stat === "goldMult") return _t("+{n}% or", { n: Math.round(value * 100) });
   if (stat === "critChance") return _t("+{n}% critique", { n: formatNumber(value) });
   if (stat === "critMult") return _t("+{n}x dégâts crit", { n: formatNumber(value) });

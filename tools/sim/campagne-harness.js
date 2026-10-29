@@ -134,6 +134,15 @@ function launch() {
       return r;
     };
   })(sb);
+  // Essai (option B du bonus « % dégâts ») : tapMult multiplie aussi le plat d'équipement ;
+  // ESSAI_TAPMULT_ECHELLE réduit la part du bonus (0,5 = bonus divisés par deux)
+  if (process.env.ESSAI_TAPMULT_TOTAL) (function (X) {
+    var k = Number(process.env.ESSAI_TAPMULT_ECHELLE || 1);
+    X.EquipmentManager.effectiveTapDamage = function () {
+      var m = 1 + (Number(X.game.tapMult || 1) - 1) * k;
+      return Math.max(1, Math.floor((X.game.tapDamage + Math.floor(X.game.equipFlatTapBonus || 0)) * m));
+    };
+  })(sb);
   // v3.379.0 : compteurs du banc des potions (toutes les potions bues, or dépensé en potions de soin)
   var uh = sb.PotionManager.useHealingPotion, bh = sb.PotionManager.buyHealingPotion;
   sb.PotionManager.useHealingPotion = function () { var r = uh.apply(this, arguments); if (r === true) STATS.potionsBues = (STATS.potionsBues || 0) + 1; return r; };

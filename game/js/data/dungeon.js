@@ -349,10 +349,10 @@ var DUNGEON_MARKS = [
     desc: "Boss 2× PV · +50 % d'or sur le boss", unlock: null,
     modifiers: { bossHpMult: 2, bossGoldBonusPct: 0.50 } },
   { id: "aff_asceticism", name: "Ascétisme", icon: "images/Icons/afflictions/aff_asceticism.webp",
-    desc: "Potions interdites · +15 % dégâts", unlock: null,
+    desc: "Potions interdites · +15 % dégâts de base", unlock: null,
     modifiers: { tapMult: 0.15, forbidPotions: true } },
   { id: "aff_fragility", name: "Fragilité", icon: "images/Icons/afflictions/aff_fragility.webp",
-    desc: "−30 % PV max · +30 % dégâts", unlock: null,
+    desc: "−30 % PV max · +30 % dégâts de base", unlock: null,
     modifiers: { heroMaxHpMult: 0.70, tapMult: 0.30 } },
   { id: "aff_plague", name: "Fléau", icon: "images/Icons/afflictions/aff_plague.webp",
     desc: "Dégâts ennemis +30 % · +20 % or", unlock: "cleared",
@@ -368,13 +368,13 @@ var DUNGEON_MARKS = [
    counterItem : objet de combat contre le trait du boss ; noUnique : pas d'objet unique. Icônes absentes : générique. */
 var DUNGEON_HALT_CARDS = [
   { id: "lame", name: "Lame bénie", kind: "bonus", icon: "images/Icons/dungeon/halte_lame.webp",
-    gain: "+10 % de dégâts jusqu'à la fin du run", modifiers: { tapMult: 0.10 } },
+    gain: "+10 % de dégâts de base jusqu'à la fin du run", modifiers: { tapMult: 0.10 } },
   { id: "rempart", name: "Rempart", kind: "bonus", icon: "images/Icons/dungeon/halte_rempart.webp",
     gain: "Ennemis −10 % de PV jusqu'à la fin du run", enemyHpMult: 0.9 },
   { id: "sang", name: "Pacte de sang", kind: "echange", icon: "images/Icons/dungeon/halte_pacte_sang.webp",
     gain: "Or du run +30 %", cost: "Ennemis +25 % de PV", modifiers: { goldMult: 1.3 }, endGoldMult: 1.3, enemyHpMult: 1.25 },
   { id: "dement", name: "Pacte du dément", kind: "echange", icon: "images/Icons/dungeon/halte_pacte_dement.webp",
-    gain: "+20 % de dégâts", cost: "Plus de potions jusqu'à la fin du run", modifiers: { tapMult: 0.20, forbidPotions: true } },
+    gain: "+20 % de dégâts de base", cost: "Plus de potions jusqu'à la fin du run", modifiers: { tapMult: 0.20, forbidPotions: true } },
   { id: "ratelier", name: "Râtelier", kind: "prep", icon: null,
     gain: "Un objet de combat contre le trait du boss, pour ce run", counterItem: true },
   { id: "coffre", name: "Coffre", kind: "butin", icon: "images/Icons/dungeon/halte_coffre.webp", // v3.492.10 : icône propre
