@@ -26,6 +26,10 @@ I18n.register("en", {
   "À accepter": "To accept",
   "à l'instant": "just now",
   "étape {a} / {b}": "step {a} / {b}",
+  // v3.553.0 : bandeau du grand écran
+  "Campement d'Aeswyn": "Aeswyn Camp",
+  "{n} bâtiment de production||{n} bâtiments de production": ["{n} production building", "{n} production buildings"],
+  "{n} mondes · {k} ouverts": "{n} worlds · {k} open",
   // v3.505.0 : Chronique de combat
   "Aucune règle n'a encore joué.": "No rule has fired yet.",
   "Journal du combat": "Combat log",

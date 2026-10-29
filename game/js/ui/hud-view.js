@@ -19,6 +19,8 @@ function buildHudHTML() {
     +     '<img id="hud-pt-img" class="hud-pt-img" src="" alt="" style="display:none">'
     +     '<span class="hud-pt-lvl" id="hud-pt-lvl">' + _t("Niv. {n}", { n: 1 }) + '</span>'
     +   '</button>'
+    // v3.553.0 (grand écran, option A) : nom et classe du héros, format large seulement
+    +   '<span class="hud-name"><strong id="hud-name-t"></strong><small id="hud-name-s"></small></span>'
     +   '<div class="hud-gauges">'
     +     '<div class="kgauge kgauge-thin hud-gauge is-hp" id="hud-hp"><div class="kgauge-track"><div class="kgauge-fill" id="hud-hp-fill" style="width:100%"></div></div><div class="kgauge-text" id="hud-hp-text"></div></div>'
     +     '<div class="kgauge kgauge-thin hud-gauge is-xp"><div class="kgauge-track"><div class="kgauge-fill" id="hud-xp-fill" style="width:0%"></div></div><div class="kgauge-text" id="hud-xp-text"></div></div>'
@@ -28,6 +30,7 @@ function buildHudHTML() {
     +   '<div class="hud-res">'
     +     '<span class="hud-res-item"><img src="images/Icons/gold_icon.webp" alt="' + _t("Or") + '"><span id="hud-gold">0</span></span>'
     +     [0, 1, 2, 3].map(function (i) { return '<span class="hud-res-item hud-res-x" id="hud-rx-' + i + '"><img alt=""><span></span></span>'; }).join("")
+    +     '<button type="button" class="hud-res-item hud-wh" onclick="hudOpenWarehouse()">' + _t("Entrepôt") + ' ›</button>'
     // v3.422.0 (Seb) : la ressource de la carte du monde quitte le bandeau, l'or reste seul
     +   '</div>'
     + '</div>'
@@ -91,23 +94,27 @@ function renderHud() {
   renderHeroHp();
   if (now - hudDockAt >= 250 && typeof renderHudDock === "function") { hudDockAt = now; renderHudDock(); } // v3.396.0 : fil rouge, sac, talents
   renderHudAchievementTier(); // v3.338.0 (H4)
-  if (now - hudWideAt >= 1000) { hudWideAt = now; renderHudWide(); } // v3.503.0 (grand écran)
+  if (now - hudWideAt >= 1000 || hudWideTab !== game.activeTab) { hudWideAt = now; hudWideTab = game.activeTab; renderHudWide(); } // v3.503.0 (v3.553.0 : tout de suite au changement d'écran)
   if (window.Chronique && document.documentElement.classList.contains("wide-mode")) { if (!Chronique.el) Chronique.mount(); else Chronique.render(false); }
 }
 
 /* v3.503.0 (grand écran, GE-2) : bandeau du format large — où l'on en est dans l'Histoire, et le Bois,
    la Pierre, le Fer et le matériau du monde où se tient le héros. Le téléphone ne les affiche pas. */
-var hudWideAt = 0;
+var hudWideAt = 0; var hudWideTab = "";
 var HUD_WORLD_MATERIAL = { forest: "seve_aeswyn", desert: "verre_des_dunes", ruins: "pierre_errante", crypt: "cire_sepulcre", mountain: "cendre_vive" };
 function renderHudWide() {
   if (!document.documentElement.classList.contains("wide-mode")) return;
   var world = window.WorldManager ? WorldManager.getWorld() : null;
   var SQ = window.StoryQuestManager, cid = SQ && SQ.activeChapterIds ? SQ.activeChapterIds()[0] : null;
   var ch = cid && window.STORY_QUESTS ? STORY_QUESTS[cid] : null, step = ch ? SQ.getCurrentStep(cid) : null;
-  hudSet("hud-where-t", "text", world ? _td(world.name) : "");
   var sub = ch ? _td(ch.title) + (step ? " · " + _t("étape {a} / {b}", { a: ch.steps.indexOf(step) + 1, b: ch.steps.length }) : "") : "";
-  hudSet("hud-where-s", "text", sub);
-  hudSet("hud-where-ico", "src", (ch && ch.icon) || "images/Icons/camp/campfire.webp");
+  var where = hudWhere(world, ch, sub);
+  hudSet("hud-where-t", "text", where[0]);
+  hudSet("hud-where-s", "text", where[1]);
+  hudSet("hud-where-ico", "src", where[2] || (ch && ch.icon) || "images/Icons/camp/campfire.webp");
+  var hero = typeof getSelectedHero === "function" ? getSelectedHero() : null, cls = hero && typeof getClassForHero === "function" ? getClassForHero(hero) : null;
+  hudSet("hud-name-t", "text", game.playerName || "");
+  hudSet("hud-name-s", "text", cls ? _td(cls.label) : "");
   if (!window.WarehouseManager || !window.WAREHOUSE_RESOURCES) return;
   var keys = ["bois", "pierre", "fer", world && HUD_WORLD_MATERIAL[world.id]];
   keys.forEach(function (k, i) {
@@ -124,6 +131,37 @@ function renderHudWide() {
     el.title = _td(def.name) + " · " + hudNum(n) + (cap ? " / " + hudNum(cap) : "");
   });
 }
+
+/* v3.553.0 (option A) : le titre du bandeau suit l'écran ouvert (maquette atelier/grand-ecran.html) ;
+   renvoie [titre, sous-titre, icône]. Hors des 5 écrans : le monde et l'étape d'Histoire. */
+function hudWhere(world, ch, sub) {
+  var tab = (window.game && game.activeTab) || "", wn = world ? _td(world.name) : "";
+  var ico = function (t) { var im = document.querySelector('.tab-btn[data-tab="' + t + '"] img'); return im ? im.getAttribute("src") : ""; };
+  if (tab === "campement") return [_t("Campement d'Aeswyn"), wn + (sub ? " · " + sub : ""), ico("campement")];
+  if (tab === "quests" && ch) return [_td(ch.title), wn + " · " + sub.split(" · ").slice(1).join(" · "), ico("quests")];
+  if (tab === "village") {
+    var n = 0;
+    if (window.PRODUCTION_BUILDINGS && window.ProductionManager) Object.keys(PRODUCTION_BUILDINGS).forEach(function (id) { if (ProductionManager.isBuildingUnlocked(id)) n++; });
+    return [_t("Le village"), _tn(n, "{n} bâtiment de production", "{n} bâtiments de production"), ico("village")];
+  }
+  if (tab === "more") {
+    var mem = window.MemoryManager ? MemoryManager.getProgress().level : 0;
+    return [(game.playerName || _t("Héros")), _t("Niveau {n}", { n: Number(game.heroLevel || 1) }) + (mem ? " · " + _t("Mémoire {n}", { n: mem }) : ""), ico("more")];
+  }
+  if (tab === "map" && window.WORLDS) {
+    var k = Math.min(WORLDS.length, (window.WorldManager ? WorldManager.worldIndex : 0) + 1);
+    return [_t("Carte du monde"), _t("{n} mondes · {k} ouverts", { n: WORLDS.length, k: k }), ico("map")];
+  }
+  return [wn, sub, ""];
+}
+
+// Bouton « Entrepôt » du bandeau : Village › Entrepôt
+function hudOpenWarehouse() {
+  if (typeof isTabUnlocked === "function" && !isTabUnlocked("village")) return;
+  switchTab("village");
+  if (typeof setVillageSubTab === "function") setVillageSubTab("entrepot");
+}
+window.hudOpenWarehouse = hudOpenWarehouse;
 
 /* v3.396.0 : bandeau — chaque texte n'est réécrit que s'il change (renderHud tourne à chaque image). */
 var hudBandLast = {};

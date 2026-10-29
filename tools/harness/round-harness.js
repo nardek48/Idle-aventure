@@ -19992,6 +19992,26 @@ console.log("\n[368] v3.551.0 — Caravane d'essai de l'Histoire : 10 min, à vi
   C._now = sv.now; C.getMarkets = sv.mk; C.isAvailable = sv.av; C.getMaxCaravans = sv.max; game.explorationProgression = sv.ep || {}; game.village.caravans = sv.cars || [];
 })();
 
+console.log("\n[369] v3.553.0 — Grand écran, option A : polices, coque d'un seul tenant, bandeau");
+(function () {
+  try {
+    var fs = require("fs"), path = require("path");
+    var css = fs.readFileSync(path.join(ROOT, "css/10-grand-ecran.css"), "utf8"), sw = fs.readFileSync(path.join(ROOT, "sw.js"), "utf8");
+    ["cinzel-latin-700-normal", "alegreya-latin-400-normal", "alegreya-latin-400-italic"].forEach(function (f) {
+      ok(fs.existsSync(path.join(ROOT, "fonts/" + f + ".woff2")) && sw.indexOf("./fonts/" + f + ".woff2") > 0 && css.indexOf("../fonts/" + f + ".woff2") > 0, "police hébergée, précachée et déclarée : " + f);
+    });
+    ok(/^html\.wide-mode \{ --f-title: "Cinzel"/m.test(css), "polices réservées au format large (le téléphone garde la police du système)");
+    ok(/^\.hud-name, \.hud-wh \{ display: none; \}/m.test(css), "téléphone : ni nom ni bouton Entrepôt dans le bandeau");
+    var hud = g.buildHudHTML();
+    ok(hud.indexOf('id="hud-name-t"') > 0 && hud.indexOf("hudOpenWarehouse()") > 0, "bandeau : nom du héros et bouton Entrepôt");
+    g.game.activeTab = "village";
+    ok(g.hudWhere(null, null, "")[0] === "Le village", "titre du bandeau propre à l'écran (Village)");
+    g.game.activeTab = "campement";
+  } catch (err) {
+    ok(false, "[369] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");
