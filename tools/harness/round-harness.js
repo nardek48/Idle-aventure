@@ -20038,6 +20038,25 @@ console.log("\n[370] v3.555.0 — Grand écran, option B : Quêtes en liste et d
   }
 })();
 
+console.log("\n[371] v3.556.0 — Grand écran, option B : Carte et fiche du monde");
+(function () {
+  try {
+    var cl = g.document.documentElement.classList, c0 = cl.contains, wide = false;
+    cl.contains = function (c) { return c === "wide-mode" ? wide : false; };
+    var phone = g.buildMapHTML();
+    ok(phone.indexOf('class="mw"') < 0 && phone.indexOf("map-path-frame") > 0, "téléphone : carte du monde inchangée");
+    wide = true;
+    var w = g.buildMapHTML();
+    ok(w.indexOf('<div class="mw"><div class="mw-map">') === 0 && w.indexOf("mw-sheet") > 0 && (w.match(/class="mw-world[ "]/g) || []).length === g.WORLDS.length, "grand écran : carte à gauche, fiche du monde et les mondes à droite");
+    run("selectMapWorldWide(0);");
+    ok(g.buildMapHTML().indexOf(">" + g.WORLDS[0].name + "</h2>") > 0, "toucher un monde le choisit (sa fiche s'affiche)");
+    run("selectMapWorldWide(-1);");
+    cl.contains = c0;
+  } catch (err) {
+    ok(false, "[371] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");
