@@ -19823,6 +19823,56 @@ console.log("\n[362] v3.544.0 — Or du Labyrinthe selon le monde atteint (audit
   WC.getReachedWorldIndex = rw;
 })();
 
-if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
-console.log("\n" + passes + " OK, " + failures + " échec(s)");
-process.exit(failures ? 1 : 0);
+console.log("\n[363] v3.547.0 — crypte_04 et ruines_04 disent où en est la caravane (audit QUE-10)");
+(function () {
+  var C = g.CaravanManager, sv = { list: C.list, max: C.getMaxCaravans, now: C._now };
+  try {
+    var T = 1e9, cars = [];
+    C._now = function () { return T; };
+    C.list = function () { return cars.slice().sort(function (a, b) { return a.endsAt - b.endsAt; }); };
+    C.getMaxCaravans = function () { return 1; };
+    var P = function () { return g.storyMarketCaravanProgress(3, "Caravane du Marché de la Crypte", false); };
+    ok(P() === "Caravane du Marché de la Crypte 0/1", "aucune caravane, place libre : « 0/1 »");
+    cars = [{ world: 3, startedAt: T - 1000, endsAt: T + 7800e3 }];
+    ok(/de retour dans 2h 10m/.test(P()), "caravane de la Crypte en route : « de retour dans 2h 10m » (" + P() + ")");
+    cars = [{ world: 3, startedAt: T - 9000, endsAt: T - 1 }];
+    ok(/décharge-la/.test(P()), "caravane de la Crypte rentrée : décharger");
+    cars = [{ world: 1, startedAt: T - 1000, endsAt: T + 3600e3 }];
+    ok(/la prochaine rentre dans 1h 0m/.test(P()), "place prise par le Désert : retour de la prochaine (" + P() + ")");
+    ok(g.storyMarketCaravanProgress(3, "X", true) === "X 1/1", "étape faite : « 1/1 »");
+  } catch (err) { ok(false, "[363] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  C.list = sv.list; C.getMaxCaravans = sv.max; C._now = sv.now;
+})();
+
+var ATTENTES = []; // contrôles asynchrones, attendus avant le bilan
+console.log("\n[364] v3.547.0 — Le service worker purge les images disparues (audit IMA-10)");
+(function () {
+  var vmx = require("vm"), src = require("fs").readFileSync(ROOT + "/sw.js", "utf8");
+  var store = {}, cache = {
+    match: function (k) { var u = typeof k === "string" ? k : k.url; return Promise.resolve(store[u] ? { text: function () { return Promise.resolve(store[u]); } } : undefined); },
+    keys: function () { return Promise.resolve(Object.keys(store).map(function (u) { return { url: u }; })); },
+    delete: function (k) { delete store[k.url || k]; return Promise.resolve(true); },
+    put: function (k, r) { store[k] = r._body; return Promise.resolve(); }
+  };
+  var heads = 0, sb = {
+    self: { addEventListener: function () {}, clients: {} }, caches: { open: function () { return Promise.resolve(cache); } },
+    fetch: function (u, o) { heads++; return Promise.resolve({ status: /fantome/.test(u) ? 404 : (/reseau/.test(u) ? 500 : 200) }); },
+    Response: function (b) { this._body = b; }, Date: Date, Promise: Promise, String: String, Number: Number
+  };
+  vmx.createContext(sb); vmx.runInContext(src, sb);
+  store = { "https://x/images/a.webp": "1", "https://x/images/fantome.webp": "1", "https://x/images/reseau.webp": "1" };
+  ATTENTES.push(sb.purgeMissingImages().then(function () {
+    ok(!store["https://x/images/fantome.webp"] && store["https://x/images/a.webp"] && store["https://x/images/reseau.webp"], "image en 404 retirée ; image présente et erreur serveur gardées");
+    ok(store["./__image-purge-stamp"] && heads === 3, "date de purge notée (" + heads + " requêtes)");
+    heads = 0; store["https://x/images/fantome.webp"] = "1";
+    return sb.purgeMissingImages();
+  }).then(function () {
+    ok(heads === 0 && store["https://x/images/fantome.webp"], "deuxième activation dans la semaine : aucune requête");
+  }).catch(function (e) { ok(false, "[364] exception : " + e.message); }));
+})();
+
+Promise.all(ATTENTES).then(function () {
+  if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
+  console.log("\n" + passes + " OK, " + failures + " échec(s)");
+  process.exit(failures ? 1 : 0);
+});

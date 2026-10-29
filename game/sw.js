@@ -45,9 +45,9 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.546.0"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.547.0"; // <- à incrémenter à CHAQUE livraison
 var CACHE_NAME = "quest-idle-" + CACHE_VERSION;
-var IMAGE_CACHE = "aethervale-images"; // v3.457.4 : hors du préfixe quest-idle-, jamais vidé par "activate"
+var IMAGE_CACHE = "aethervale-images"; // v3.457.4 : hors du préfixe quest-idle- ; v3.547.0 : images disparues purgées (purgeMissingImages)
 var imagesRevalidated = {};             // URL déjà revérifiées depuis le démarrage de ce service worker
 
 var PRECACHE_APP_SHELL = [
@@ -356,7 +356,34 @@ self.addEventListener("activate", function (event) {
       });
     })
   );
+  purgeMissingImages(); // hors waitUntil : ne retarde pas l'activation
 });
+
+/* v3.547.0 (audit IMA-10) : au plus une fois par semaine, retire du cache d'images celles que
+   le serveur ne connaît plus (404). Une erreur réseau ne retire rien. */
+var IMAGE_PURGE_STAMP = "./__image-purge-stamp";
+function purgeMissingImages() {
+  return caches.open(IMAGE_CACHE).then(function (imgCache) {
+    return imgCache.match(IMAGE_PURGE_STAMP).then(function (stamp) {
+      return stamp ? stamp.text() : "0";
+    }).then(function (last) {
+      if (Date.now() - Number(last || 0) < 7 * 86400e3) return null;
+      return imgCache.keys().then(function (keys) {
+        keys = keys.filter(function (k) { return k.url.indexOf("__image-purge-stamp") < 0; });
+        var next = function () { // 4 requêtes HEAD à la fois, pour ne pas saturer le téléphone
+          var k = keys.shift();
+          if (!k) return null;
+          return fetch(k.url, { method: "HEAD", cache: "no-cache" }).then(function (r) {
+            if (r && r.status === 404) return imgCache.delete(k);
+          }).catch(function () {}).then(next);
+        };
+        return Promise.all([next(), next(), next(), next()]);
+      }).then(function () {
+        return imgCache.put(IMAGE_PURGE_STAMP, new Response(String(Date.now())));
+      });
+    });
+  }).catch(function () {});
+}
 
 /* ============================================================
    Fetch : cache-first partout en même origine.
@@ -385,6 +412,7 @@ self.addEventListener("fetch", function (event) {
         var refresh = function () {
           return fetch(req, { cache: "no-cache" }).then(function (response) {
             if (response && response.status === 200 && response.type === "basic") imgCache.put(req, response.clone());
+            else if (response && response.status === 404) imgCache.delete(req); // image retirée du jeu (IMA-10)
             return response;
           });
         };

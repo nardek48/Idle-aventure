@@ -1945,7 +1945,7 @@ STORY_QUESTS.ruins = {
       check: function () { return storyDesertFlag("ruinsMarketDone"); },
       progress: function () {
         if (!storyCaravanReady()) return "Bâtis d'abord la Halle marchande (Village › Bâtiments)"; // v3.436.5
-        return "Caravane du Marché des Ruines " + (storyDesertFlag("ruinsMarketDone") ? "1/1" : "0/1");
+        return storyMarketCaravanProgress(2, "Caravane du Marché des Ruines", storyDesertFlag("ruinsMarketDone"));
       }
     },
     /* Étape 5 (doc §7) : premier choix pesant des Ruines, clé « seuil », axe Soi / Aeswyn.
@@ -2770,7 +2770,7 @@ STORY_QUESTS.crypt = {
       check: function () { return storyDesertFlag("cryptMarketDone"); },
       progress: function () {
         if (!storyCaravanReady()) return "Bâtis d'abord la Halle marchande (Village › Bâtiments)";
-        return "Caravane du Marché de la Crypte " + (storyDesertFlag("cryptMarketDone") ? "1/1" : "0/1");
+        return storyMarketCaravanProgress(3, "Caravane du Marché de la Crypte", storyDesertFlag("cryptMarketDone"));
       }
     },
     /* Étape 5 (doc §7) : premier choix pesant de la Crypte, clé « portent », axe Soi / Aeswyn.
@@ -3696,6 +3696,22 @@ function storyPalierRuines(game) { return storyPalier(game, "green"); }
 /* v3.436.5 (ruines_04) : la caravane existe-t-elle ? Elle part de la Halle marchande. */
 function storyCaravanReady() { return !!(window.CaravanManager && CaravanManager.isAvailable()); }
 window.storyCaravanReady = storyCaravanReady;
+/* v3.547.0 (audit QUE-10) : ruines_04 et crypte_04 disent où en est la caravane du marché,
+   et quand une place se libère si toutes sont parties ailleurs. */
+function storyMarketCaravanProgress(world, label, done) {
+  var C = window.CaravanManager;
+  if (done || !C) return label + (done ? " 1/1" : " 0/1");
+  if (C.get(world)) {
+    if (C.isBack(world)) return _t("Caravane rentrée : décharge-la dans Campement › Expéditions");
+    return _t("Caravane en route, de retour dans {t}", { t: formatTime(C.getSecondsLeft(world)) });
+  }
+  if (!C.hasFreeSlot()) {
+    var first = C.get();
+    if (C.isBack(first.world)) return _t("Toutes les caravanes sont parties : décharge celle qui est rentrée pour en libérer une");
+    return _t("Toutes les caravanes sont parties : la prochaine rentre dans {t}", { t: formatTime(C.getSecondsLeft(first.world)) });
+  }
+  return label + " 0/1";
+}
 window.storyPalierRuines = storyPalierRuines;
 window.storyRuinsSectorsFreed = storyRuinsSectorsFreed;
 window.storyPorteSanctuaire = storyPorteSanctuaire;
