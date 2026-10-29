@@ -247,6 +247,16 @@ function buildCampHTML(tab) {
     gh += '</div>';
     tabsHTML.grimoire = gh;
   }
+  // v3.558.0 (grand écran, option B) : une seule page, sans onglets — le feu et le Grimoire à gauche,
+  // les missions et les expéditions à droite (maquette atelier/grand-ecran.html). Le téléphone ne change pas.
+  if (!tab && document.documentElement.classList.contains("wide-mode")) {
+    var titled = function (t, x) { return x ? '<h3 class="cw-h">' + esc(t) + '</h3>' + x : ""; };
+    var healthEnd = h.lastIndexOf('<div class="camp-card camp-health-card">');
+    var head = h.slice(0, healthEnd), health = h.slice(healthEnd);
+    campShownTab = "missions";
+    return head + '<div class="cw"><div class="cw-col">' + titled(_t("Le feu de camp"), health) + eh + titled(_t("Grimoire"), tabsHTML.grimoire || "") + '</div>'
+      + '<div class="cw-col">' + titled(_t("Missions"), tabsHTML.missions) + titled(_t("Expéditions"), tabsHTML.depart || "") + '</div></div></div>';
+  }
   var order = CAMP_TABS.filter(function (t) { return !!tabsHTML[t.key]; });
   var want = tab || campTab;
   var cur = tabsHTML[want] ? want : order[0].key;

@@ -44,6 +44,11 @@ I18n.register("en", {
   "Donjon · pas encore ouvert": "Dungeon · not open yet",
   "Ouvrir la carte vivante": "Open the living map",
   "{n} secteurs · {k} libérés": "{n} sectors · {k} freed",
+  // v3.558.0 : Camp et Héros sur grand écran
+  "Sac · {n}": "Bag · {n}",
+  "recharge {n} round||recharge {n} rounds": ["cooldown {n} round", "cooldown {n} rounds"],
+  "défense": "defence",
+  "{n} avec toi": "{n} with you",
   "Donjon · {n} sortie aujourd'hui||Donjon · {n} sorties aujourd'hui": ["Dungeon · {n} run today", "Dungeon · {n} runs today"],
   // v3.505.0 : Chronique de combat
   "Aucune règle n'a encore joué.": "No rule has fired yet.",
