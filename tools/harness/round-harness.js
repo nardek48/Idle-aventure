@@ -19795,6 +19795,20 @@ console.log("\n[360] v3.542.0 — Enchanteresse : ce que vaut une relance (audit
   } catch (err) { ok(false, "[360] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[361] v3.543.0 — Forge 5 de la Crypte ouverte à crypte_13 (audit PLA-7)");
+(function () {
+  var WC = g.WorldCaps, SQ = g.StoryQuestManager, rw = WC.getReachedWorldIndex, sr = SQ.isStepReached;
+  try {
+    WC.getReachedWorldIndex = function () { return 3; };
+    SQ.isStepReached = function (id) { return id !== "crypte_13"; };
+    var avant = WC.getVillageCap("forge");
+    SQ.isStepReached = function () { return true; };
+    var apres = WC.getVillageCap("forge");
+    ok(avant === 4 && apres === 5, "Crypte : Forge 4 avant crypte_13, Forge 5 à crypte_13 (" + avant + " → " + apres + ")");
+  } catch (err) { ok(false, "[361] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  WC.getReachedWorldIndex = rw; SQ.isStepReached = sr;
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

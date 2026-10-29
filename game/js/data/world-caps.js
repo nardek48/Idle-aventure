@@ -47,6 +47,7 @@ var WORLD_CAPS = [
      v3.455.0 (acte III) : Forge 5, à la Cire consacrée (reforges 9 et 10). */
   {
     village: { workshop: 8, training: 13, hall: 10, warehouse: 12, palisade: 8, tavern: 6, apothecary: 6, forge: 5, enchanter: 2 }, // v3.456.2 : Terrain 13 ; v3.456.9 : Taverne 6 ; v3.459.9 (audit I3) : Halle 10, Entrepôt 8 ; option B (27/10) : Entrepôt 12
+    forgeActStep: "crypte_13", // v3.543.0 (audit PLA-7) : la Forge 5 s'ouvre avec sa Cire consacrée et son aide, à l'acte III
     zoneRows: 3,
     zoneLevel: 14, // relevé 2 (27/10) : 5 → 14
     workshopLevel: 3,
