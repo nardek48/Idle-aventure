@@ -37,8 +37,13 @@
 var CARAVAN_TRIPS = {
   court: { id: "court", name: "Court", seconds: 3600,      units: 150, valuePct: 0.60, rareChance: 0,    itemChance: 0,    minHall: 1 },
   moyen: { id: "moyen", name: "Moyen", seconds: 4 * 3600,  units: 400, valuePct: 0.80, rareChance: 0,    itemChance: 0,    minHall: 1 },
-  long:  { id: "long",  name: "Long",  seconds: 8 * 3600,  units: 800, valuePct: 1.00, rareChance: 0.25, itemChance: 0.10, minHall: 3 }
+  long:  { id: "long",  name: "Long",  seconds: 8 * 3600,  units: 800, valuePct: 1.00, rareChance: 0.25, itemChance: 0.10, minHall: 3 },
+  /* v3.551.0 (retour Seb, point 2) : la caravane d'essai que l'Histoire demande (ruines_04, crypte_04) :
+     10 min, vide, sans gain, sans prendre de place. Hors CARAVAN_TRIP_ORDER : jamais proposée ailleurs. */
+  essai: { id: "essai", name: "Essai", seconds: 600,       units: 0,   valuePct: 0,    rareChance: 0,    itemChance: 0,    minHall: 1, story: true }
 };
+/* v3.551.0 : marchés où l'Histoire demande une caravane, et le drapeau que pose son retour. */
+var CARAVAN_STORY_FLAGS = { 2: "ruinsMarketDone", 3: "cryptMarketDone" };
 var CARAVAN_TRIP_ORDER = ["court", "moyen", "long"];
 /* v3.421.0 : matières brutes que la caravane n'emporte jamais (planches, lingots, blocs en dépendent). */
 var CARAVAN_EXCLUDED = []; // v3.480.0 (refonte de l'économie RE-3) : le Bois et le Fer partent aussi ; la moitié du plafond reste au village
@@ -94,7 +99,14 @@ var CaravanManager = {
     var max = (window.VILLAGE_BUILDINGS && VILLAGE_BUILDINGS.hall) ? VILLAGE_BUILDINGS.hall.maxLevel : 10;
     return next <= max ? next : null;
   },
-  hasFreeSlot: function () { return this.list().length < this.getMaxCaravans(); },
+  hasFreeSlot: function () { return this._regularCount() < this.getMaxCaravans(); },
+  /* v3.551.0 : caravanes qui prennent une place (la caravane d'essai n'en prend pas). */
+  _regularCount: function () { return this.list().filter(function (c) { return !(CARAVAN_TRIPS[c.trip] || {}).story; }).length; },
+  /* v3.551.0 : la caravane d'essai est-elle offerte vers ce marché ? (l'Histoire l'attend, pas encore faite) */
+  isStoryTripFor: function (world) {
+    var flag = CARAVAN_STORY_FLAGS[world], ep = game.explorationProgression || {};
+    return !!flag && !ep[flag] && this.isAvailable() && this.getMarkets().some(function (m) { return m.world === world; });
+  },
 
   isTripOpen: function (tripId, level) {
     var t = CARAVAN_TRIPS[tripId];
@@ -275,8 +287,13 @@ var CaravanManager = {
   /* Raison d'un refus, ou "" si le départ est possible. */
   getBlockReason: function (tripId, world) {
     if (!this.isAvailable()) return _t("Construis la Halle marchande");
+    var t0 = CARAVAN_TRIPS[tripId];
+    if (t0 && t0.story) { // v3.551.0 : la caravane d'essai, hors places et sans chargement
+      if (typeof world !== "number" || !this.isStoryTripFor(world)) return _t("Trajet inconnu");
+      return this.get(world) ? _t("Une caravane est déjà sur ce marché") : "";
+    }
     var max = this.getMaxCaravans();
-    if (this.list().length >= max) return max > 1 ? _t("Toutes les caravanes sont parties") : _t("La caravane est déjà partie");
+    if (this._regularCount() >= max) return max > 1 ? _t("Toutes les caravanes sont parties") : _t("La caravane est déjà partie");
     if (typeof world === "number" && this.get(world)) return _t("Une caravane est déjà sur ce marché");
     var t = CARAVAN_TRIPS[tripId];
     if (!t) return _t("Trajet inconnu");
@@ -290,11 +307,11 @@ var CaravanManager = {
     var world = (typeof worldIndex === "number" && window.WORLDS && WORLDS[worldIndex]) ? worldIndex : (window.WorldManager ? Number(WorldManager.worldIndex || 0) : 0);
     if (this.getBlockReason(tripId, world)) return false;
     var t = CARAVAN_TRIPS[tripId];
-    var load = this.computeLoad(tripId);
+    var load = t.story ? {} : this.computeLoad(tripId); // v3.551.0 : l'essai part à vide
     Object.keys(load).forEach(function (k) {
       if (!WarehouseManager.removeResource(k, load[k])) delete load[k];
     });
-    if (this.getLoadUnits(load) <= 0) return false;
+    if (!t.story && this.getLoadUnits(load) <= 0) return false;
 
     var rare = null, item = null;
     if (t.rareChance > 0 && Math.random() < t.rareChance) {
@@ -312,7 +329,8 @@ var CaravanManager = {
       cargo: load, gold: this.getLoadGold(load, tripId), rare: rare, item: item, notified: false
     });
     if (typeof addLog === "function") {
-      addLog("🐪 " + _t("La caravane part : {n} unités, retour dans {d}", { n: formatNumber(this.getLoadUnits(load)), d: formatTime(t.seconds) }), "event");
+      addLog("🐪 " + (t.story ? _t("La caravane d'essai part, à vide : retour dans {d}", { d: formatTime(t.seconds) })
+        : _t("La caravane part : {n} unités, retour dans {d}", { n: formatNumber(this.getLoadUnits(load)), d: formatTime(t.seconds) })), "event");
     }
     if (typeof saveGame === "function") saveGame();
     return true;
@@ -379,3 +397,4 @@ window.CaravanManager = CaravanManager;
 window.CARAVAN_TRIPS = CARAVAN_TRIPS;
 window.CARAVAN_WORLD_MARKETS = CARAVAN_WORLD_MARKETS;
 window.CARAVAN_TRIP_ORDER = CARAVAN_TRIP_ORDER;
+window.CARAVAN_STORY_FLAGS = CARAVAN_STORY_FLAGS;

@@ -55,7 +55,7 @@ function rerenderCaravanSheet() {
 /* Noms des trajets, en toutes lettres pour l'audit de traduction. */
 function caravanTripLabel(t) {
   var id = t && t.id;
-  return id === "court" ? _t("Court") : id === "long" ? _t("Long") : _t("Moyen");
+  return id === "court" ? _t("Court") : id === "long" ? _t("Long") : id === "essai" ? _t("Essai") : _t("Moyen");
 }
 
 function caravanRareIcon() {
@@ -176,7 +176,8 @@ function buildCaravanRouteHTML(c) {
   h += '<div class="car-eta"><img class="ico-sys" src="images/Icons/system/hourglass_waiting.webp" alt="">'
     + '<span class="car-eta-t"><small>' + esc(_t("Trajet {x} · retour dans", { x: caravanTripLabel(t).toLowerCase() })) + '</small>'
     + '<b id="car-left-' + w + '">' + esc(formatTime(CaravanManager.getSecondsLeft(w))) + '</b></span>'
-    + '<span class="car-chip">≈ ' + caravanGoldHTML(c.gold) + '</span></div>';
+    + (t.story ? '' : '<span class="car-chip">≈ ' + caravanGoldHTML(c.gold) + '</span>') + '</div>';
+  if (t.story) return h + '<p class="car-why">' + _t("Caravane d'essai : elle part à vide pour ouvrir le marché, et ne prend pas de place.") + '</p>'; // v3.551.0
   h += buildCaravanChancesHTML(t, c);
   // v3.457.5 (audit P17) : une caravane par marché — on annonce celles qui peuvent vraiment partir
   var max = Math.min(CaravanManager.getMaxCaravans(), Math.max(1, CaravanManager.getMarkets().length));
@@ -188,6 +189,8 @@ function buildCaravanRouteHTML(c) {
 function buildCaravanBackHTML(c) {
   var t = CARAVAN_TRIPS[c.trip];
   var h = caravanMarketHeadHTML(c) + '<div class="car-back"><h4>' + _t("La caravane est rentrée !") + '</h4>';
+  if (t.story) return h + '<span class="car-why">' + esc(_t("Caravane d'essai : le marché est ouvert. Les prochaines partiront chargées.")) + '</span>' // v3.551.0
+    + '<button type="button" class="kbtn primary" onclick="unloadCaravanFromSheet(' + c.world + ')">' + _t("Décharger") + '</button></div>';
   h += '<span class="car-why">' + esc(_t("Trajet {x} · {n} unités vendues", { x: caravanTripLabel(t).toLowerCase(), n: formatNumber(CaravanManager.getLoadUnits(c.cargo)) })) + '</span>';
   h += '<div class="car-loot">';
   h += '<span class="car-lt"><img src="images/Icons/gold_icon.webp" alt="">' + formatNumber(c.gold) + '<small>' + _t("or") + '</small></span>';
@@ -219,6 +222,7 @@ function buildCaravanHTML() {
     h += now >= c.endsAt ? '<div class="car" data-car="back" data-world="' + c.world + '">' + buildCaravanBackHTML(c) + '</div>'
       : '<div class="car" data-car="route" data-world="' + c.world + '">' + buildCaravanRouteHTML(c) + '</div>';
   });
+  h += buildCaravanStoryHTML(); // v3.551.0 : la caravane d'essai que l'Histoire attend, hors places
   if (CaravanManager.hasFreeSlot()) {
     if (getCaravanSelectedMarket()) h += '<div class="car" data-car="depart">' + buildCaravanDepartHTML() + '</div>';
     else h += '<p class="car-why car-note">' + esc(_t("Chaque marché ouvert a déjà sa caravane.")) + '</p>';
@@ -229,6 +233,27 @@ function buildCaravanHTML() {
   return h;
 }
 window.buildCaravanHTML = buildCaravanHTML;
+
+/* v3.551.0 (retour Seb, point 2) : départ de la caravane d'essai (10 min, à vide) vers le marché
+   que l'Histoire attend ; elle ne prend pas de place et son retour valide l'étape. */
+function buildCaravanStoryHTML() {
+  var h = "";
+  Object.keys(CARAVAN_STORY_FLAGS).forEach(function (k) {
+    var w = Number(k);
+    if (!CaravanManager.isStoryTripFor(w) || CaravanManager.get(w)) return;
+    h += '<div class="car" data-car="essai" data-world="' + w + '"><div class="car-h6">' + esc(_t("Marché · {x}", { x: _td(WORLDS[w].name) })) + '</div>'
+      + '<p class="car-why">' + esc(_t("L'Histoire t'envoie ouvrir ce marché. La caravane d'essai part à vide et revient vite : rien à charger, rien à attendre longtemps.")) + '</p>'
+      + '<div class="car-go"><button type="button" class="kbtn primary" onclick="departStoryCaravan(' + w + ')"><span>'
+      + esc(_t("Caravane d'essai · {d}", { d: formatTime(CARAVAN_TRIPS.essai.seconds) })) + '</span></button></div></div>';
+  });
+  return h;
+}
+window.buildCaravanStoryHTML = buildCaravanStoryHTML;
+
+function departStoryCaravan(world) {
+  if (CaravanManager.depart("essai", world)) rerenderCaravanSheet();
+}
+window.departStoryCaravan = departStoryCaravan;
 
 /* v3.436.5 : fiche de la Halle marchande au Village (coût, prérequis), depuis la feuille ou l'Histoire. */
 function goToCaravanHall() {

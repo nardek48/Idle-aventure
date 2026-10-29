@@ -1938,7 +1938,7 @@ STORY_QUESTS.ruins = {
         icon: "images/Icons/resources/pierre_errante_icon.webp",
         title: "Le Marché des Ruines",
         points: [
-          { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "La caravane de la Halle marchande peut maintenant partir vers le Marché des Ruines. Tu choisis le marché au départ, dans Campement › Expéditions." },
+          { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "La caravane de la Halle marchande peut maintenant partir vers le Marché des Ruines, dans Campement › Expéditions. La première est une caravane d'essai : elle part à vide, revient en 10 minutes et ne prend pas de place." }, // v3.551.0
           { icon: "images/Icons/resources/pierre_errante_icon.webp", text: "Elle en rapporte de l'or. Au trajet Long (Halle 3), parfois de la Pierre errante, la pierre des Ruines." }
         ]
       },
@@ -2763,7 +2763,7 @@ STORY_QUESTS.crypt = {
         icon: "images/Icons/resources/cire_sepulcre_icon.webp",
         title: "Le Marché de la Crypte",
         points: [
-          { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "La caravane de la Halle marchande peut maintenant partir vers le Marché de la Crypte. Tu choisis le marché au départ, dans Campement › Expéditions." },
+          { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "La caravane de la Halle marchande peut maintenant partir vers le Marché de la Crypte, dans Campement › Expéditions. La première est une caravane d'essai : elle part à vide, revient en 10 minutes et ne prend pas de place." }, // v3.551.0
           { icon: "images/Icons/resources/cire_sepulcre_icon.webp", text: "Elle en rapporte de l'or. Au trajet Long (Halle 3), parfois de la Cire de sépulcre." }
         ]
       },
@@ -3705,6 +3705,7 @@ function storyMarketCaravanProgress(world, label, done) {
     if (C.isBack(world)) return _t("Caravane rentrée : décharge-la dans Campement › Expéditions");
     return _t("Caravane en route, de retour dans {t}", { t: formatTime(C.getSecondsLeft(world)) });
   }
+  if (typeof C.isStoryTripFor === "function" && C.isStoryTripFor(world)) return _t("Caravane d'essai prête : 10 minutes, depuis Campement › Expéditions"); // v3.551.0
   if (!C.hasFreeSlot()) {
     var first = C.get();
     if (C.isBack(first.world)) return _t("Toutes les caravanes sont parties : décharge celle qui est rentrée pour en libérer une");
