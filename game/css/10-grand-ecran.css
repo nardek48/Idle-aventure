@@ -263,3 +263,64 @@ html.wide-mode body.scene-active:not(.lab-run) > #panel-container > * { max-widt
 .chr-loot { display: flex; gap: 14px; font-size: 14px; font-weight: 700; }
 .chr-loot span { display: inline-flex; align-items: center; gap: 6px; }
 .chr-loot img { width: 20px; height: 20px; }
+
+/* =========================================================
+   v3.553.0 (option A, habillage de la maquette atelier/grand-ecran.html) : polices Cinzel et Alegreya
+   (fonts/, licence OFL, hébergées par le jeu pour le hors ligne), coque en pierre d'un seul tenant,
+   bandeau avec le nom du héros, le titre de l'écran et l'Entrepôt. Format large seulement.
+   ========================================================= */
+@font-face { font-family: "Cinzel"; src: url("../fonts/cinzel-latin-700-normal.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: "Alegreya"; src: url("../fonts/alegreya-latin-400-normal.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "Alegreya"; src: url("../fonts/alegreya-latin-400-italic.woff2") format("woff2"); font-weight: 400; font-style: italic; font-display: swap; }
+html.wide-mode { --f-title: "Cinzel", Georgia, "Times New Roman", serif; --f-story: "Alegreya", Georgia, "Times New Roman", serif; }
+
+/* Titres en Cinzel (graisse unique 700, pas de gras simulé) */
+html.wide-mode #panel-container .kf-title,
+html.wide-mode .ksheet-ttl,
+html.wide-mode #panel-container .ksec,
+html.wide-mode #panel-container .hs-name,
+html.wide-mode #panel-container .story-step-title,
+html.wide-mode .hud-name strong,
+html.wide-mode .hud-where-txt strong,
+html.wide-mode .chr-h strong,
+html.wide-mode .chr-obj b,
+html.wide-mode .cbx-tname b { font-family: var(--f-title); font-weight: 700; letter-spacing: 0.04em; }
+html.wide-mode #panel-container .ksec { letter-spacing: 0.06em; }
+html.wide-mode .ksheet-ttl small { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; letter-spacing: 0; }
+/* Récit des étapes d'Histoire en Alegreya italique */
+html.wide-mode #panel-container .story-step-text { font-family: var(--f-story); font-style: italic; font-size: 16px; line-height: 1.5; }
+
+/* Coque : un seul bloc de pierre (le décor du monde ne passe plus entre les colonnes) */
+html.wide-mode body:not(.lab-run) {
+  background: linear-gradient(rgba(10, 8, 6, 0.72), rgba(10, 8, 6, 0.82)), url('../images/UI/textures/bg-moss-stone.webp') center / 512px, var(--c-brown-900-soft);
+}
+html.wide-mode body:not(.lab-run) #tab-bar {
+  align-self: stretch;
+  height: auto;
+  max-height: none;
+  margin: 0;
+  border: 0;
+  border-right: 1px solid rgba(226, 177, 74, 0.3);
+  border-radius: 0;
+  box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.6);
+  background: linear-gradient(rgba(16, 12, 8, 0.74), rgba(16, 12, 8, 0.88)), url('../images/UI/textures/bg-stone-tile.webp') 0 0 / 256px;
+}
+html.wide-mode body:not(.lab-run) > #chronique,
+html.wide-mode.chron-over body:not(.lab-run) > #chronique {
+  margin: 0;
+  border: 0;
+  border-left: 1px solid rgba(226, 177, 74, 0.3);
+  border-radius: 0;
+  box-shadow: inset 1px 0 0 rgba(0, 0, 0, 0.6);
+  background: linear-gradient(rgba(16, 12, 8, 0.74), rgba(16, 12, 8, 0.88)), url('../images/UI/textures/bg-stone-tile.webp') 0 0 / 256px, var(--c-brown-900-soft);
+}
+html.wide-mode.chron-over body:not(.lab-run) > #chronique { box-shadow: -14px 0 30px rgba(0, 0, 0, 0.6); }
+
+/* Bandeau : nom et classe à côté du portrait, bouton Entrepôt au bout des ressources */
+.hud-name, .hud-wh { display: none; }
+html.wide-mode .hud-name { display: flex; flex-direction: column; flex: none; line-height: 1.15; min-width: 0; max-width: 140px; }
+html.wide-mode .hud-name strong { font-size: 15px; color: var(--c-cream-150-vivid); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html.wide-mode .hud-name small { font-size: 12px; color: var(--c-bronze-350); white-space: nowrap; }
+html.wide-mode .hud-gauges { flex: 0 1 230px; }
+html.wide-mode .hud-wh { display: flex; padding: 4px 12px; color: var(--c-bronze-350); font: 600 13px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; cursor: pointer; }
+html.wide-mode .hud-wh:hover { color: var(--c-cream-100-3); }

@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.552.0"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.553.0"; // <- à incrémenter à CHAQUE livraison
 var CACHE_NAME = "quest-idle-" + CACHE_VERSION;
 var IMAGE_CACHE = "aethervale-images"; // v3.457.4 : hors du préfixe quest-idle- ; v3.547.0 : images disparues purgées (purgeMissingImages)
 var imagesRevalidated = {};             // URL déjà revérifiées depuis le démarrage de ce service worker
@@ -96,6 +96,9 @@ var PRECACHE_APP_SHELL = [
   "./css/08-desktop.css",
   "./css/09-wide.css",
   "./css/10-grand-ecran.css", // v3.503.0 : NOUVEAU fichier (grand écran)
+  "./fonts/cinzel-latin-700-normal.woff2", // v3.553.0 : NOUVEAU fichier (police des titres, grand écran)
+  "./fonts/alegreya-latin-400-normal.woff2", // v3.553.0 : NOUVEAU fichier (police du récit)
+  "./fonts/alegreya-latin-400-italic.woff2", // v3.553.0 : NOUVEAU fichier (police du récit, italique)
   "./css/99-icon-assets.css",
   "./js/core/constants.js",
   "./js/core/combat-actors.js",
