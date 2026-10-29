@@ -236,7 +236,13 @@ html.wide-mode body.combat-active:not(.lab-run)::before {
   transform: scale(1.06);
   pointer-events: none;
 }
-html.wide-mode.ge-arena-wide body.combat-active:not(.lab-run) { --ge-arena-blur: 0px; }
+/* v3.552.0 : avec un fond paysage, l'arène prend toute la page ; les commandes du combat restent sur 560 px au centre */
+html.wide-mode.ge-arena-wide body.combat-active:not(.lab-run) > #game-area {
+  width: 100%;
+  padding-left: max(10px, calc((100% - 560px) / 2));
+  padding-right: max(10px, calc((100% - 560px) / 2));
+  background: linear-gradient(rgba(0, 0, 0, 0.35), transparent 22%, transparent 62%, rgba(0, 0, 0, 0.8)), var(--ge-arena-wide) 50% 62% / cover no-repeat, var(--c-black-950);
+}
 
 /* Petite aventure : sa page garde une largeur de lecture, centrée */
 html.wide-mode body.scene-active:not(.lab-run) > #panel-container { padding: 10px 14px; }

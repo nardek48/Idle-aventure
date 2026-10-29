@@ -19029,6 +19029,10 @@ console.log("\n[330] v3.505.0 — Grand écran GE-5 : combat, Petite aventure et
     ok(/body:is\(\.combat-active, \.scene-active\):not\(\.lab-run\) > #tab-bar \{ pointer-events: none;/.test(css.replace(/,\n/g, ", ")) || /body:is\(\.combat-active, \.scene-active\):not\(\.lab-run\) > #tab-bar \{ opacity/.test(css), "combat et Petite aventure : rail visible mais inactif (on ne navigue pas)");
     ok(/body\.combat-active:not\(\.lab-run\) > #game-area \{[^}]*width: min\(100%, 560px\)/.test(css), "arène : colonne de combat de 560 px au plus, centrée");
     ok(/--ge-arena-wide/.test(css) && /-wide\.webp/.test(fs.readFileSync(path.join(ROOT, "js/ui/chronique-view.js"), "utf8")), "fond d'arène en paysage (-wide.webp) pris s'il existe");
+    ok(/new URL\("css\/", document\.baseURI\)/.test(fs.readFileSync(path.join(ROOT, "js/ui/chronique-view.js"), "utf8")) && /ge-arena-wide body\.combat-active:not\(\.lab-run\) > #game-area \{[^}]*width: 100%/.test(css), "v3.552.0 : fonds paysage trouvés (chemin depuis css/), arène sur toute la page");
+    ["Maps/forest-combat-wide", "Maps/desert-combat-wide", "Maps/ruins-combat-wide", "Maps/crypt-combat-wide", "Maps/mountain-combat-wide", "Maps/tower-combat-wide", "Dungeons/donjon_poison/donjon_poison-wide"].forEach(function (f) {
+      ok(fs.existsSync(path.join(ROOT, "images/" + f + ".webp")), "fond paysage présent : " + f);
+    });
     ok(typeof g.buildCbxStatesBodyHTML === "function" && g.buildCbxStatesSheetHTML().indexOf('<div class="ksheet-body">') > 0, "États du combat : le corps sert à la feuille et à la Chronique");
     var C = g.Chronique;
     g.gameLog = [{ text: "Avant", type: "event", at: 1000 }, { text: "Coup", type: "combat", at: 5000 }];
