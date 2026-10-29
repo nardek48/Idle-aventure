@@ -20057,6 +20057,29 @@ console.log("\n[371] v3.556.0 — Grand écran, option B : Carte et fiche du mon
   }
 })();
 
+console.log("\n[372] v3.557.0 — Grand écran, option B : Village, fiche du bâtiment ancrée");
+(function () {
+  try {
+    var cl = g.document.documentElement.classList, c0 = cl.contains, wide = false;
+    cl.contains = function (c) { return c === "wide-mode" ? wide : false; };
+    run("switchTab('village'); setVillageSubTab('production');");
+    var phone = g.buildProdDashboardHTML();
+    ok(phone.indexOf('class="pw"') < 0 && phone.indexOf("production-dash-grid") >= 0, "téléphone : grille de production inchangée (feuille du bas)");
+    wide = true;
+    var tab0 = g.game.activeTab; g.game.activeTab = "village"; // le village est fermé dans cette partie de test
+    var PM = g.ProductionManager, unl0 = PM.isBuildingUnlocked; PM.isBuildingUnlocked = function () { return true; };
+    var w = g.buildProdDashboardHTML();
+    PM.isBuildingUnlocked = unl0; g.game.activeTab = tab0;
+    ok(w.indexOf('<div class="pw"><div class="pw-left">') === 0 && w.indexOf('class="pw-sheet vb-sheet-card prod-sheet"') > 0, "grand écran : grille à gauche, fiche ancrée à droite");
+    ok(/prod-tile is-sel/.test(w) && w.indexOf("ksheet-x") < 0, "un bâtiment choisi d'office, fiche sans croix (elle reste ouverte)");
+    wide = false;
+    run("closeProductionSheet(true);");
+    cl.contains = c0;
+  } catch (err) {
+    ok(false, "[372] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

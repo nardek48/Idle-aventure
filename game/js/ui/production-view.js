@@ -81,8 +81,30 @@ window.setProductionSheetTab = setProductionSheetTab;
 
 /* (Re)dessine la feuille ouverte. keepScroll : appelée à chaque renderPanel() du Village,
    elle garde la position de défilement du corps de feuille. */
+/* v3.557.0 (grand écran, option B) : sur grand écran, la fiche du bâtiment est ancrée à droite de la
+   grille de Production (dans la page, toujours ouverte) au lieu d'une feuille ; le téléphone ne change pas. */
+function productionSheetDocked() {
+  return typeof document !== "undefined" && document.documentElement.classList.contains("wide-mode")
+    && window.game && game.activeTab === "village" && typeof activeVillageSubTab !== "undefined" && activeVillageSubTab === "production";
+}
+window.productionSheetDocked = productionSheetDocked;
+
+// Bâtiment montré par la fiche ancrée : celui ouvert, sinon le premier bâtiment débloqué
+function productionDockedId() {
+  if (productionDetailBuildingId && PRODUCTION_BUILDINGS[productionDetailBuildingId] && ProductionManager.isBuildingUnlocked(productionDetailBuildingId)) return productionDetailBuildingId;
+  var ids = Object.keys(PRODUCTION_BUILDINGS).filter(function (id) { return ProductionManager.isBuildingUnlocked(id); });
+  productionDetailBuildingId = ids[0] || null;
+  return productionDetailBuildingId;
+}
+
 function renderProductionSheet(keepScroll) {
   if (typeof document === "undefined") return;
+  if (productionSheetDocked()) { // la fiche est dans la page : on redessine la page
+    var mh = document.getElementById("village-modal-root");
+    if (mh && mh.querySelector(".prod-sheet")) mh.innerHTML = "";
+    if (typeof renderPanel === "function") renderPanel();
+    return;
+  }
   var host = document.getElementById("village-modal-root");
   if (!host) return;
   var id = productionDetailBuildingId;
@@ -98,6 +120,7 @@ function refreshProductionSheet() {
   if (typeof refreshWarehouseSheets === "function" && refreshWarehouseSheets()) return; // v3.416.0 : feuille de l'Entrepôt
   if (openWorkshopId) { renderWorkshopSheet(true); return; } // v3.415.0 : la feuille d'atelier, si elle est ouverte
   if (!productionDetailBuildingId) return;
+  if (productionSheetDocked()) { if (typeof renderPanel === "function") renderPanel(); return; } // v3.557.0 : fiche ancrée
   var host = document.getElementById("village-modal-root");
   if (host && host.querySelector(".prod-sheet")) renderProductionSheet(true);
 }
@@ -460,13 +483,14 @@ function buildProductionSheetHTML(buildingId) {
   var storeFull = WarehouseManager.getFreeSpace(resKey) <= 0;
   var shops = getWorkshopsOfBuilding(buildingId);
 
-  var h = '<div class="full-menu-overlay" onclick="closeProductionSheetFromBackdrop(event)">';
-  h += '<div class="full-menu vb-sheet-card prod-sheet" onclick="event.stopPropagation()">';
+  var docked = productionSheetDocked();
+  var h = docked ? '<div class="pw-sheet vb-sheet-card prod-sheet">' : '<div class="full-menu-overlay" onclick="closeProductionSheetFromBackdrop(event)">';
+  if (!docked) h += '<div class="full-menu vb-sheet-card prod-sheet" onclick="event.stopPropagation()">';
   h += kSheetHeadHTML({
     icon: renderIconOrEmojiHTML(def.buildingImage || resDef.icon, "vb-sheet-icon prod-sheet-icon", _td(def.name)),
     title: esc(_td(def.name)),
     sub: esc(_t("+{n}/min · {a}/{b} zones", { n: formatNumber(ProductionManager.getRatePerMin(buildingId)), a: openCount, b: PRODUCTION_PLOTS_SHARED.totalPlots })),
-    close: "closeProductionBuildingDetail()"
+    close: docked ? "" : "closeProductionBuildingDetail()"
   });
   h += '<div class="ksheet-body">';
 
@@ -502,7 +526,7 @@ function buildProductionSheetHTML(buildingId) {
     h += buildZoneGroupActionsHTML(buildingId);
   }
 
-  h += '</div></div></div>';
+  h += docked ? '</div></div>' : '</div></div></div>';
   // v3.417.0 : fenêtre d'une zone, par-dessus la feuille
   if (productionZoneWin && productionZoneWin.b === buildingId && tab === "zones") h += buildZoneWindowHTML(buildingId, productionZoneWin.i);
   return h;
@@ -772,11 +796,19 @@ window.goToProductionUnlockQuest = goToProductionUnlockQuest;
 window.buildProductionLockedCardHTML = buildProductionLockedCardHTML;
 
 function buildProdDashboardHTML() {
+  if (productionSheetDocked()) { // v3.557.0 : grille à gauche, fiche du bâtiment choisi à droite
+    var sel = productionDockedId();
+    return '<div class="pw"><div class="pw-left">' + buildProdDashboardInnerHTML(sel) + '</div>' + (sel ? buildProductionSheetHTML(sel) : '') + '</div>';
+  }
+  return buildProdDashboardInnerHTML(null);
+}
+
+function buildProdDashboardInnerHTML(sel) {
   var h = buildProdActionBarHTML();
   h += '<div class="production-dash-grid">';
   Object.keys(PRODUCTION_BUILDINGS).forEach(function (id) {
     if (!ProductionManager.isBuildingUnlocked(id)) return; // v3.92.0 : Carrière verrouillée -> invisible
-    h += buildProductionDashCardHTML(id);
+    h += sel === id ? buildProductionDashCardHTML(id).replace('class="production-dash-card prod-tile', 'class="production-dash-card prod-tile is-sel') : buildProductionDashCardHTML(id);
   });
   if (areStoryBuildingUnlocksDone()) { // v3.265.0 : les bâtiments restants, en fin de grille
     Object.keys(PRODUCTION_BUILDINGS).forEach(function (id) {

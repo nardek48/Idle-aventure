@@ -265,7 +265,8 @@ function buildVillageHTML() {
 
   h += '</div>';
   // La feuille d'un bâtiment de production vit hors du panneau : on la rafraîchit avec lui.
-  if (typeof refreshProductionSheet === "function") refreshProductionSheet();
+  // v3.557.0 : sur grand écran, elle est dans la page (déjà rendue) : rien à rafraîchir.
+  if (typeof refreshProductionSheet === "function" && !(typeof productionSheetDocked === "function" && productionSheetDocked())) refreshProductionSheet();
   return h;
 }
 
