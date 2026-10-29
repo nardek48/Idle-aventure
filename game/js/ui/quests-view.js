@@ -28,6 +28,7 @@ var QUEST_BOARD_CATEGORIES = [
 
 function setQuestCategory(key) {
   activeQuestCategory = key;
+  if (key === "histoire" && typeof questsWideSel !== "undefined") questsWideSel = ""; // v3.555.0 : grand écran, retour au chapitre en cours
   activeQuestsFilter = "active";
   if (typeof renderPanel === "function") renderPanel();
 }
@@ -198,6 +199,8 @@ function buildActiveQuestCapIndicatorHTML() {
    suivie des questlines de monde ; les autres onglets listent leurs missions en cartes bannière. */
 function buildQuestsGeneralSubTabHTML() {
   var missions = window.MissionBoard ? MissionBoard.list() : []; // v3.301.0 : filtré sur le monde où tu es
+  // v3.555.0 (grand écran, option B) : liste à gauche, quête choisie à droite ; le téléphone ne change pas
+  if (activeQuestsFilter !== "completed" && document.documentElement.classList.contains("wide-mode")) return buildQuestsWideHTML(missions);
   var h = '';
   h += buildQuestCategoryTabsHTML(missions);
   h += buildActiveQuestCapIndicatorHTML();
@@ -228,6 +231,121 @@ function buildQuestsGeneralSubTabHTML() {
   h += '<div class="qb-completed-bar"><button class="qb-completed-link" type="button" onclick="setQuestsFilter(\'completed\')">' + _t("Voir les quêtes terminées") + ' ▸</button></div>';
   return h;
 }
+
+/* =========================================================
+   v3.555.0 (grand écran, option B, maquette atelier/grand-ecran.html) : Quêtes en deux colonnes.
+   À gauche, toutes les quêtes groupées (filtre Toutes / Histoire / Secondaires / Aventure) ;
+   à droite, la quête choisie : chapitre d'Histoire (actes, étape en cours, étapes terminées),
+   mission du tableau, ou jalons. Réutilise les blocs du téléphone (étape, carte de mission).
+   ========================================================= */
+var questsWideFilter = "toutes";   // toutes | histoire | secondaires | aventure
+var questsWideSel = "";            // "story:<chapitre>" | "m:<mission>" | "ms" (jalons)
+
+function setQuestsWideFilter(f) { questsWideFilter = f; if (typeof renderPanel === "function") renderPanel(); }
+function selectQuestWide(key) { questsWideSel = key; if (typeof renderPanel === "function") renderPanel(); }
+window.setQuestsWideFilter = setQuestsWideFilter;
+window.selectQuestWide = selectQuestWide;
+
+// Les entrées de la liste, par catégorie : { key, icon, title, sub, right, done }
+function questsWideEntries(missions) {
+  var out = { histoire: [], secondaires: [], aventure: [] };
+  if (window.StoryQuestManager && window.STORY_QUESTS) {
+    var cur = [], done = [];
+    Object.keys(STORY_QUESTS).forEach(function (cid, i) {
+      var ch = STORY_QUESTS[cid], st = StoryQuestManager.getState(cid);
+      if (st.skipped || !StoryQuestManager.isChapterOpen(cid)) return;
+      var n = ch.steps.filter(function (x) { return !!st.claimedSteps[x.id]; }).length, fini = StoryQuestManager.isChapterCompleted(cid);
+      var w = window.WORLDS ? WORLDS.filter(function (x) { return x.id === ch.worldId; })[0] : null;
+      (fini ? done : cur).push({ key: "story:" + cid, icon: "images/Worlds/thumb_" + (ch.worldId || "forest") + ".webp", title: _td(ch.title),
+        sub: fini ? (ch.endText ? _td(ch.endText) : _t("Chapitre terminé")) : (w ? _td(w.name) + " · " : "") + _t("chapitre {n}", { n: i + 1 }),
+        right: fini ? "✓" : n + " / " + ch.steps.length, done: fini });
+    });
+    out.histoire = cur.concat(done);
+  }
+  missions.forEach(function (m) {
+    if (m.sourceKind === "story") return;
+    var cat = QUEST_BOARD_CATEGORIES.filter(function (c) { return c.kinds.indexOf(m.sourceKind) !== -1; })[0];
+    if (!cat || !out[cat.key]) return;
+    out[cat.key].push({ key: "m:" + m.id, icon: MissionBoard.typeIcon(m.type), title: _td(m.title),
+      sub: m.progressLabel || (m.blurb ? _td(m.blurb) : (m.objectiveLabel || "")), right: m.claim ? "!" : (m.status === "running" || m.status === "accepted") ? "›" : "", m: m });
+  });
+  if (window.MilestoneManager && typeof buildMilestonesHTML === "function" && buildMilestonesHTML()) {
+    var nb = MilestoneManager.readyCount();
+    out.secondaires.unshift({ key: "ms", icon: "images/Icons/quests/quest_side.webp", title: _t("Jalons"), sub: _t("Village et héros · une récompense chacun"), right: nb ? "!" : "" });
+  }
+  return out;
+}
+
+function questsWideItemHTML(e, sel) {
+  return '<button type="button" class="qw-item' + (e.key === sel ? ' is-sel' : '') + (e.done ? ' is-done' : '') + '" onclick="selectQuestWide(\'' + esc(e.key) + '\')">'
+    + renderIconOrEmojiHTML(e.icon, "qw-item-ico", "") + '<span class="qw-item-tx"><b>' + esc(e.title) + '</b>' + (e.sub ? '<small>' + esc(e.sub) + '</small>' : '') + '</span>'
+    + (e.right ? '<i class="qw-item-r' + (e.right === "!" ? ' is-alert' : '') + '">' + esc(e.right) + '</i>' : '') + '</button>';
+}
+
+// Chapitre d'Histoire : en-tête, actes, étape en cours (bloc du téléphone), étapes terminées
+function questsWideStoryHTML(cid) {
+  var ch = STORY_QUESTS[cid], st = StoryQuestManager.getState(cid), num = Object.keys(STORY_QUESTS).indexOf(cid) + 1;
+  var w = window.WORLDS ? WORLDS.filter(function (x) { return x.id === ch.worldId; })[0] : null;
+  var cur = StoryQuestManager.getCurrentStep(cid), claimed = ch.steps.filter(function (x) { return !!st.claimedSteps[x.id]; });
+  var h = '<div class="qw-chap">' + renderIconOrEmojiHTML("images/Worlds/thumb_" + (ch.worldId || "forest") + ".webp", "qw-chap-img", "")
+    + '<div class="qw-chap-tx"><small>' + esc(_t("Chapitre {n}", { n: num }) + (w ? " · " + _td(w.name) : "")) + '</small><h2>' + esc(_td(ch.title)) + '</h2>'
+    + (ch.subtitle ? '<span>' + esc(_td(ch.subtitle)) + '</span>' : '') + '</div><b class="qw-chap-n">' + claimed.length + ' / ' + ch.steps.length + '</b></div>';
+  // Actes : un segment par étape, groupés sous le nom de l'acte
+  var acts = [];
+  ch.steps.forEach(function (x) {
+    var a = x.act ? _td(x.act) : "";
+    if (!acts.length || acts[acts.length - 1].name !== a) acts.push({ name: a, steps: [] });
+    acts[acts.length - 1].steps.push(x);
+  });
+  if (acts.length > 1 || acts[0].name) {
+    h += '<div class="qw-acts">';
+    acts.forEach(function (a) {
+      var on = cur && a.steps.indexOf(cur) !== -1;
+      h += '<div class="qw-act' + (on ? ' is-on' : '') + '" style="flex:' + a.steps.length + '"><small>' + esc(a.name) + '</small><span>'
+        + a.steps.map(function (x) { return '<i class="' + (st.claimedSteps[x.id] ? 'is-done' : x === cur ? 'is-cur' : '') + '"></i>'; }).join("") + '</span></div>';
+    });
+    h += '</div>';
+  }
+  if (cur) h += buildStoryCurrentStepHTML(cid, ch, cur, st.currentStep);
+  else h += '<div class="story-step story-step-end">' + (StoryQuestManager.isChapterCompleted(cid) ? (ch.endText ? _td(ch.endText) : _t("Chapitre terminé.")) : _t("La suite de l'histoire arrive bientôt…")) + '</div>';
+  if (claimed.length) {
+    h += '<section class="qw-done"><h4>' + esc(_t("Étapes terminées")) + ' <small>' + claimed.length + '</small></h4><div class="qw-done-list">';
+    claimed.forEach(function (x) { h += buildStoryClaimedStepHTML(cid, x, ch.steps.indexOf(x)); });
+    h += '</div></section>';
+  }
+  return h;
+}
+
+function buildQuestsWideHTML(missions) {
+  var E = questsWideEntries(missions), all = E.histoire.concat(E.secondaires, E.aventure);
+  // Choix par défaut : le chapitre en cours, sinon la première quête de la liste
+  if (!all.some(function (e) { return e.key === questsWideSel; })) {
+    var firstStory = E.histoire.filter(function (e) { return !e.done; })[0];
+    questsWideSel = firstStory ? firstStory.key : (all[0] ? all[0].key : "");
+  }
+  var cats = [["toutes", _t("Toutes"), ""], ["histoire", _t("Histoire", "catégorie"), "images/Icons/quests/quest_story.webp"], ["secondaires", _t("Secondaires"), "images/Icons/quests/quest_side.webp"], ["aventure", _t("Aventure"), "images/Icons/quests/quest_adventure.webp"]];
+  var h = '<div class="qw"><div class="qw-list"><div class="qw-filters">';
+  cats.forEach(function (c) {
+    h += '<button type="button" class="qw-chip' + (questsWideFilter === c[0] ? ' is-on' : '') + '" onclick="setQuestsWideFilter(\'' + c[0] + '\')">' + (c[2] ? renderIconOrEmojiHTML(c[2], "qw-chip-ico", "") : "") + esc(c[1]) + '</button>';
+  });
+  h += '</div>' + buildActiveQuestCapIndicatorHTML();
+  QUEST_BOARD_CATEGORIES.forEach(function (cat) {
+    if (questsWideFilter !== "toutes" && questsWideFilter !== cat.key) return;
+    h += '<h4 class="qw-grp">' + esc(cat.label) + '</h4>';
+    h += E[cat.key] && E[cat.key].length ? E[cat.key].map(function (e) { return questsWideItemHTML(e, questsWideSel); }).join("") : '<p class="qw-empty">' + esc(cat.emptyText) + '</p>';
+    h += buildOtherWorldQuestsHTML(cat.kinds);
+  });
+  h += '<div class="qb-completed-bar"><button class="qb-completed-link" type="button" onclick="setQuestsFilter(\'completed\')">' + _t("Voir les quêtes terminées") + ' ▸</button></div>';
+  h += '</div><div class="qw-detail">';
+  if (questsWideSel.indexOf("story:") === 0) h += questsWideStoryHTML(questsWideSel.slice(6));
+  else if (questsWideSel === "ms") h += buildMilestonesHTML();
+  else {
+    var m = missions.filter(function (x) { return "m:" + x.id === questsWideSel; })[0];
+    h += m ? '<div class="quest-board-list">' + buildQuestBoardCardHTML(m) + '</div>' : '<div class="eq-empty">' + esc(_t("Choisis une quête dans la liste.")) + '</div>';
+  }
+  return h + '</div></div>';
+}
+window.buildQuestsWideHTML = buildQuestsWideHTML;
 
 /* v3.301.0 (W-2b) : quêtes proposées dans un autre monde, masquées du tableau — dites en une
    ligne par monde, avec le bouton pour y aller. Rien si le voyage est impossible. */

@@ -30,6 +30,14 @@ I18n.register("en", {
   "Campement d'Aeswyn": "Aeswyn Camp",
   "{n} bâtiment de production||{n} bâtiments de production": ["{n} production building", "{n} production buildings"],
   "{n} mondes · {k} ouverts": "{n} worlds · {k} open",
+  // v3.555.0 : Quêtes sur grand écran
+  "Chapitre terminé": "Chapter complete",
+  "Chapitre {n}": "Chapter {n}",
+  "chapitre {n}": "chapter {n}",
+  "Choisis une quête dans la liste.": "Pick a quest from the list.",
+  "Jalons": "Milestones",
+  "Toutes": "All",
+  "Étapes terminées": "Completed steps",
   // v3.505.0 : Chronique de combat
   "Aucune règle n'a encore joué.": "No rule has fired yet.",
   "Journal du combat": "Combat log",

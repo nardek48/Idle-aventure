@@ -20013,6 +20013,31 @@ console.log("\n[369] v3.553.0 — Grand écran, option A : polices, coque d'un s
   }
 })();
 
+console.log("\n[370] v3.555.0 — Grand écran, option B : Quêtes en liste et détail");
+(function () {
+  try {
+    var cl = g.document.documentElement.classList, c0 = cl.contains, wide = false;
+    cl.contains = function (c) { return c === "wide-mode" ? wide : false; };
+    run("switchTab('quests'); setQuestCategory('histoire');");
+    var phone = g.buildQuestsGeneralSubTabHTML();
+    ok(phone.indexOf('class="qw"') < 0 && phone.indexOf("qb-tabs") > 0, "téléphone : Quêtes inchangé (onglets et cartes)");
+    wide = true;
+    var w = g.buildQuestsGeneralSubTabHTML();
+    ok(w.indexOf('<div class="qw">') === 0 && w.indexOf("qw-list") > 0 && w.indexOf("qw-detail") > 0, "grand écran : liste à gauche, détail à droite");
+    ok(/qw-item is-sel/.test(w) && /onclick="selectQuestWide\('story:/.test(w), "le chapitre d'Histoire en cours est choisi d'office");
+    run("setQuestsWideFilter('secondaires');");
+    var s2 = g.buildQuestsGeneralSubTabHTML();
+    ok(s2.indexOf('>Histoire</h4>') < 0, "filtre Secondaires : le groupe Histoire disparaît");
+    run("setQuestsWideFilter('toutes');");
+    run("setQuestsFilter('completed');");
+    ok(g.buildQuestsGeneralSubTabHTML().indexOf('class="qw"') < 0, "quêtes terminées : l'affichage du téléphone, en pleine largeur");
+    run("setQuestsFilter('active');");
+    cl.contains = c0;
+  } catch (err) {
+    ok(false, "[370] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");
