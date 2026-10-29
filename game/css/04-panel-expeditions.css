@@ -5,7 +5,7 @@
 body.exp-on-board .hud-dock { display: none !important; }
 /* Résumé en tête : trois compteurs */
 .exp-sum { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 0 0 10px; }
-.exp-sum span { display: flex; flex-direction: column; align-items: center; padding: 6px 4px; border-radius: 12px; border: 1px solid var(--c-bronze-400-2); background: var(--c-cream-50); font-size: 12px; color: var(--c-brown-800-3); text-align: center; line-height: 1.15; }
+.exp-sum span { display: flex; flex-direction: column; align-items: center; padding: 6px 4px; border-radius: 12px; border: 1px solid var(--c-bronze-400-2); background: var(--c-cream-50-soft); font-size: 12px; color: var(--c-brown-800-3); text-align: center; line-height: 1.15; }
 .exp-sum b { font-size: 20px; line-height: 1.1; }
 .exp-sum .is-collect b { color: var(--c-green-650-soft); }
 .exp-sum .is-ready b { color: var(--c-brown-700-vivid); }
@@ -16,7 +16,7 @@ body.exp-on-board .hud-dock { display: none !important; }
 
 /* Une ligne */
 .exp-list { display: flex; flex-direction: column; gap: 6px; }
-.exp-row { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 12px; border: 1px solid var(--c-bronze-350); background: var(--c-cream-50); color: var(--c-brown-850-3); cursor: pointer; }
+.exp-row { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 12px; border: 1px solid var(--c-bronze-350); background: var(--c-cream-50-soft); color: var(--c-brown-850-3); cursor: pointer; }
 .exp-row.is-collect { border-color: var(--c-green-650-2); box-shadow: inset 4px 0 0 var(--c-green-650-2); background: var(--c-cream-50-soft); }
 .exp-row.is-ready { box-shadow: inset 4px 0 0 var(--c-brown-550-3); }
 .exp-row.is-away { box-shadow: inset 4px 0 0 #2d5d8a; }
@@ -24,7 +24,7 @@ body.exp-on-board .hud-dock { display: none !important; }
 .exp-row-ico { position: relative; flex: 0 0 auto; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
 .exp-row-ico img { width: 100%; height: 100%; object-fit: contain; }
 .exp-row-ico.is-portrait > img:first-child { border-radius: 50%; object-fit: cover; border: 2px solid var(--c-bronze-450); }
-.exp-row-sub { position: absolute; right: -4px; bottom: -4px; width: 20px !important; height: 20px !important; border-radius: 50%; background: var(--c-cream-50); padding: 1px; }
+.exp-row-sub { position: absolute; right: -4px; bottom: -4px; width: 20px !important; height: 20px !important; border-radius: 50%; background: var(--c-cream-50-soft); padding: 1px; }
 .exp-row-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 .exp-row-txt b { font-size: 15px; line-height: 1.15; }
 .exp-row-txt small { font-size: 12px; color: var(--c-brown-700-soft); line-height: 1.25; }
@@ -40,7 +40,7 @@ body.exp-on-board .hud-dock { display: none !important; }
 
 /* Pied : Carte et Potions */
 .exp-foot { display: grid; grid-template-columns: auto auto; gap: 6px; margin-top: 4px; }
-.exp-door { display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: 12px; border: 1px solid var(--c-bronze-400-2); background: var(--c-cream-50); color: var(--c-brown-850-3); text-align: left; }
+.exp-door { display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: 12px; border: 1px solid var(--c-bronze-400-2); background: var(--c-cream-50-soft); color: var(--c-brown-850-3); text-align: left; }
 .exp-door img { width: 30px; height: 30px; object-fit: contain; }
 .exp-door span { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .exp-door b { font-size: 14px; }
@@ -50,7 +50,7 @@ body.exp-on-board .hud-dock { display: none !important; }
 .kseg-dot.is-green { background: var(--c-green-650-2); }
 
 /* Fiche du compagnon : renvoi vers les Expéditions */
-.exp-moved { display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 10px; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--c-bronze-400-2); background: var(--c-cream-50); color: var(--c-brown-850-3); text-align: left; }
+.exp-moved { display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 10px; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--c-bronze-400-2); background: var(--c-cream-50-soft); color: var(--c-brown-850-3); text-align: left; }
 .exp-moved img { width: 30px; height: 30px; object-fit: contain; }
 .exp-moved span { flex: 1; display: flex; flex-direction: column; }
 .exp-moved small { font-size: 12px; color: var(--c-brown-700-soft); }
@@ -60,7 +60,7 @@ body.exp-on-board .hud-dock { display: none !important; }
 .exp-pick-lbl { flex: 0 0 56px; font-size: 13px; font-weight: 800; color: var(--c-brown-800-3); }
 .exp-seg { flex: 1; margin: 0; }
 .exp-dests { display: flex; flex-direction: column; gap: 6px; margin: 4px 0 10px; }
-.exp-dest { display: flex; flex-direction: column; gap: 4px; width: 100%; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--c-bronze-350); background: var(--c-cream-50); color: var(--c-brown-850-3); text-align: left; }
+.exp-dest { display: flex; flex-direction: column; gap: 4px; width: 100%; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--c-bronze-350); background: var(--c-cream-50-soft); color: var(--c-brown-850-3); text-align: left; }
 .exp-dest.is-on { border: 2px solid var(--c-brown-550-3); background: var(--c-cream-100-3); box-shadow: 0 0 0 2px rgba(200, 144, 30, .25); }
 .exp-dest-head { display: flex; align-items: center; gap: 8px; }
 .exp-dest-head b { font-size: 15px; }

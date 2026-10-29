@@ -160,7 +160,7 @@ span.pa2-chip { cursor: default; }
 .pa2-relics { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
 
 /* --- Carte : illustration + voile SVG + nœuds HTML --- */
-.pa2-map { position: relative; width: 100%; border-radius: var(--pa2-radius); overflow: hidden; border: 1.5px solid var(--pa2-gold-dark); background: var(--c-brown-950-2); box-shadow: 0 12px 30px -12px var(--c-black-950); }
+.pa2-map { position: relative; width: 100%; border-radius: var(--pa2-radius); overflow: hidden; border: 1.5px solid var(--pa2-gold-dark); background: var(--c-black-950); box-shadow: 0 12px 30px -12px var(--c-black-950); }
 .pa2-map-img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: fill; filter: brightness(.82); }
 /* v3.389.0 (chantier P) : fond d'un parcours sans illustration — parchemin du kit, grain et bords brunis. */
 /* v3.489.0 : .pa2-img-missing, l'image de carte pas encore livrée (Montagne) prend le même parchemin */
@@ -193,7 +193,7 @@ span.pa2-chip { cursor: default; }
    Même principe que la carte vivante : le panneau perd ses marges et ne défile plus, la carte
    remplit l'écran (« Couvrant »), l'en-tête flotte dessus. Caméra : ui/map-camera.js. */
 body.pa2-full #panel-container { padding: 0; overflow: hidden; max-width: none; }
-.pa2-fs { position: absolute; inset: 0; overflow: hidden; background-color: var(--c-brown-950-2); }
+.pa2-fs { position: absolute; inset: 0; overflow: hidden; background-color: var(--c-black-950); }
 .pa2-vp { position: absolute; inset: 0; overflow: hidden; touch-action: none; -webkit-user-select: none; user-select: none; }
 /* touch-action ne s'hérite pas : sans cette règle, le navigateur reprend le pincement. */
 .pa2-vp * { touch-action: none; }

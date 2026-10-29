@@ -50,7 +50,7 @@
   justify-content: center;
   overflow: hidden;
   /* v3.403.0 (lot L-1) : la même illustration que l'écran titre, assombrie : plus de saut */
-  background: var(--c-brown-950-3);
+  background: var(--c-brown-900-soft);
 }
 
 #pwa-boot-gate.show {
@@ -440,7 +440,7 @@
 #rotate-veil { display: none; }
 @media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
   #rotate-veil { position: fixed; inset: 0; z-index: 10001; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
-    padding: 24px; text-align: center; background: var(--c-brown-950-vivid); color: var(--c-cream-50); }
+    padding: 24px; text-align: center; background: var(--c-brown-950-vivid); color: var(--c-cream-50-soft); }
   #rotate-veil i { width: 34px; height: 58px; border: 3px solid currentColor; border-radius: 8px; box-shadow: inset 0 -6px 0 -3px currentColor; animation: rvTurn 2.4s ease-in-out infinite; }
   #rotate-veil b { font-size: 20px; font-weight: 900; }
   #rotate-veil span { font-size: 15px; opacity: .9; max-width: 34ch; }

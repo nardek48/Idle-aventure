@@ -56,8 +56,6 @@
   --c-brown-850-vivid: #4a2f06; /* 2 */
   --c-brown-900: #2a1a08; /* 11 */
   --c-brown-900-soft: #1b1510; /* 10 */
-  --c-brown-950-2: #0b0806; /* 3 */
-  --c-brown-950-3: #1a1006; /* 7 */
   --c-brown-950-soft: #120e0a; /* 7 */
   --c-brown-950-vivid: #241a00; /* 3 */
   --c-cream-100-2: #f4e9d0; /* 13 */
@@ -65,11 +63,8 @@
   --c-cream-100-soft: #f6ecd9; /* 25 */
   --c-cream-100-vivid: #fff3d6; /* 10 */
   --c-cream-150-2: #efe0c2; /* 11 */
-  --c-cream-150-3: #f3e6c4; /* 8 */
-  --c-cream-150-soft: #efe4cc; /* 6 */
   --c-cream-150-vivid: #ffe9b0; /* 18 */
   --c-cream-200: #f3e0b0; /* 6 */
-  --c-cream-50: #fff8e8; /* 9 */
   --c-cream-50-soft: #fbf3e4; /* 23 */
   --c-gold-550: #c9a227; /* 7 */
   --c-gold-650: #9a7a14; /* 3 */
@@ -79,8 +74,6 @@
   --c-green-500: #8ab54a; /* 2 */
   --c-green-600: #2f9e44; /* 4 */
   --c-green-650-2: #2f8a46; /* 16 */
-  --c-green-650-3: #2f8f4e; /* 2 */
-  --c-green-650-4: #23843f; /* 3 */
   --c-green-650-soft: #2f7d32; /* 2 */
   --c-green-650-vivid: #16a34a; /* 6 */
   --c-green-700: #15803d; /* 5 */
@@ -122,7 +115,7 @@
   /* =========================
      Couleurs de fond
      ========================= */
-  --bg-dark: var(--c-brown-950-2);         /* Fond global — v3.397.0 : brun-noir de la pierre de nuit (avant : violet de Quest Idle) */
+  --bg-dark: var(--c-black-950);         /* Fond global — v3.397.0 : brun-noir de la pierre de nuit (avant : violet de Quest Idle) */
 
   /* =========================
      Couleurs spéciales / magie / ressources

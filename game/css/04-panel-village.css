@@ -220,7 +220,7 @@
 .vb-card.is-ready, .vb-card.is-site { padding-top: 22px; }
 
 /* Verrouillé : lisible, jamais invisible — la condition est écrite sur la carte. */
-.vb-card.is-locked { background: linear-gradient(var(--c-cream-150-soft), var(--c-bronze-200)); cursor: default; }
+.vb-card.is-locked { background: linear-gradient(var(--c-cream-100-2), var(--c-bronze-200)); cursor: default; }
 .vb-card.is-locked .vb-card-icon { filter: grayscale(1) brightness(0.85); opacity: 0.6; }
 .vb-card.is-locked .vb-card-name { color: var(--nb-ink-dim); }
 .vb-card-lock {
@@ -601,7 +601,7 @@
   padding: 5px 12px;
   border: 1.5px solid var(--c-bronze-500);
   border-radius: 12px;
-  background: linear-gradient(var(--c-white-50), var(--c-cream-150-3));
+  background: linear-gradient(var(--c-white-50), var(--c-cream-150-2));
   color: var(--c-brown-850-2);
   font: inherit;
   font-size: 14px;
@@ -664,7 +664,7 @@
 }
 .wh-tile-img { position: absolute; top: 2%; left: 8%; width: 84%; height: 63%; object-fit: contain; }
 .wh-tile-band { position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; padding: 3px 2px 6px; background: linear-gradient(rgba(10, 6, 2, 0), rgba(10, 6, 2, 0.92) 40%); }
-.wh-tile-n { font-size: 16px; font-weight: 900; line-height: 1; color: var(--c-white-50-soft); -webkit-text-stroke: 3px var(--c-brown-950-3); paint-order: stroke fill; letter-spacing: -0.02em; }
+.wh-tile-n { font-size: 16px; font-weight: 900; line-height: 1; color: var(--c-white-50-soft); -webkit-text-stroke: 3px var(--c-brown-900-soft); paint-order: stroke fill; letter-spacing: -0.02em; }
 .wh-tile-name { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; max-width: 100%; font-size: 12px; font-weight: 700; line-height: 1.1; letter-spacing: -0.02em; text-align: center; color: #e8d8b8; white-space: normal; -webkit-hyphens: auto; hyphens: auto; overflow: hidden; text-overflow: ellipsis; } /* nom entier sur 3 lignes au plus */
 .wh-tile-bar { position: absolute; left: 10%; right: 10%; bottom: 2px; height: 3px; border-radius: 2px; background: rgba(0, 0, 0, 0.45); overflow: hidden; }
 .wh-tile-bar > span { display: block; height: 100%; background: var(--c-bronze-400-4); }
@@ -697,7 +697,7 @@
 .wh-pill.is-soon { background: var(--c-brown-750-soft); color: var(--c-cream-100-2); }
 .wh-resv { padding: 10px 12px; margin: 0 0 10px; border: 1px solid var(--c-bronze-500); border-radius: 12px; background: var(--sheet-card-bg, var(--c-cream-100-soft)); }
 .wh-resv-row { display: flex; align-items: center; justify-content: center; gap: 16px; }
-.wh-step { width: 44px; height: 44px; border-radius: 50%; border: 1.5px solid var(--c-brown-700-vivid); background: var(--c-cream-50); color: var(--c-brown-850-2); font: inherit; font-size: 22px; font-weight: 800; line-height: 1; }
+.wh-step { width: 44px; height: 44px; border-radius: 50%; border: 1.5px solid var(--c-brown-700-vivid); background: var(--c-cream-50-soft); color: var(--c-brown-850-2); font: inherit; font-size: 22px; font-weight: 800; line-height: 1; }
 .wh-step:disabled { opacity: 0.4; }
 .wh-resv-n { width: 90px; height: 44px; border: 1.5px solid var(--c-bronze-500); border-radius: 10px; background: var(--c-white-50); color: var(--c-brown-850-2); font: inherit; font-size: 22px; font-weight: 800; text-align: center; }
 .wh-resv-hint { margin: 8px 0 0; font-size: 12px; line-height: 1.35; text-align: center; color: var(--c-brown-750-2); }
@@ -710,7 +710,7 @@
 .wh-pk { position: relative; padding: 0; aspect-ratio: 1; border: 2px solid var(--c-green-650-2); border-radius: 12px; background: var(--c-cream-50-soft); }
 .wh-pk img { width: 86%; height: 86%; margin-top: 7%; object-fit: contain; }
 .wh-pk::after { content: "✓"; position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: var(--c-green-650-2); color: var(--c-white-50-soft); font-size: 12px; font-weight: 800; line-height: 20px; text-align: center; }
-.wh-pk.is-off { border-color: var(--c-bronze-350); background: var(--c-cream-150-soft); }
+.wh-pk.is-off { border-color: var(--c-bronze-350); background: var(--c-cream-100-2); }
 .wh-pk.is-off img { filter: grayscale(1); opacity: 0.4; }
 .wh-pk.is-off::after { content: ""; background: var(--c-bronze-350); }
 .wh-pk small { position: absolute; left: -2px; right: -2px; bottom: -17px; font-size: 12px; line-height: 1; color: var(--c-brown-750-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -748,7 +748,7 @@
 
 /* Chances du trajet Long */
 .car-hope { display: flex; gap: 6px; margin: 8px 0 0; }
-.car-hope span { flex: 1; display: flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 10px; background: var(--c-cream-150-soft); font-size: 12px; color: var(--c-brown-750-2); }
+.car-hope span { flex: 1; display: flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 10px; background: var(--c-cream-100-2); font-size: 12px; color: var(--c-brown-750-2); }
 .car-hope img { width: 22px; height: 22px; object-fit: contain; }
 
 /* Chargement */

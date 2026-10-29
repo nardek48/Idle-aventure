@@ -85,7 +85,7 @@ html.pc-mode .title-screen-overlay {
   background:
     linear-gradient(rgba(20, 12, 4, 0.62), rgba(20, 12, 4, 0.62)),
     url("../images/TitleScreen/title_background_new.webp") center / cover no-repeat,
-    var(--c-brown-950-3);
+    var(--c-brown-900-soft);
 }
 html.pc-mode .title-screen-stage {
   box-shadow: 0 0 60px rgba(0, 0, 0, 0.75);

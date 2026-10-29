@@ -104,7 +104,7 @@
 .tt-go {
   width: 100%; font: inherit; font-size: 13px; font-weight: 800;
   padding: 10px; border-radius: 11px; cursor: pointer; margin-top: 4px;
-  background: var(--c-brown-550-3); border: 1px solid var(--c-brown-700-vivid); color: var(--c-cream-50);
+  background: var(--c-brown-550-3); border: 1px solid var(--c-brown-700-vivid); color: var(--c-cream-50-soft);
 }
 .tt-go:disabled { background: var(--c-bronze-250-soft); border-color: var(--c-bronze-500); color: var(--c-brown-550-soft); }
 

@@ -229,7 +229,7 @@ button.map-monster-chip { padding: 0; cursor: pointer; font: inherit; } /* v3.45
 
 .map-popup-status.status-done {
   background: rgba(74, 222, 128, 0.15);
-  color: var(--c-green-650-3);
+  color: var(--c-green-650-2);
 }
 
 .map-popup-status.status-locked {

@@ -300,7 +300,7 @@ seules les classes propres aux compagnons sont définies ici.
 .cp-relic-pick-h { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; color: var(--nb-ink); }
 .cp-relic-back { min-height: 36px; padding: 4px 12px; border-radius: 10px; border: 1.5px solid var(--nb-frame); background: transparent; color: var(--nb-gold-deep); font: inherit; font-weight: 800; cursor: pointer; }
 .cp-relic-list { display: grid; gap: 6px; }
-.cp-relic-row { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 6px 8px; border-radius: 10px; border: 1px solid var(--nb-frame-light); background: var(--c-cream-50); color: var(--nb-ink); }
+.cp-relic-row { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 6px 8px; border-radius: 10px; border: 1px solid var(--nb-frame-light); background: var(--c-cream-50-soft); color: var(--nb-ink); }
 .cp-relic-txt { min-width: 0; }
 .cp-relic-txt b { display: block; font-size: 13px; }
 .cp-relic-txt small { display: block; font-size: 12px; color: var(--nb-ink-dim); }

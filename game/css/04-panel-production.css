@@ -690,7 +690,7 @@
 .prod-tile-meta .ico-inline { width: 16px; height: 16px; }
 .prod-tile-meta.is-store-full { color: var(--c-red-600); font-weight: 800; }
 .production-dash-card.prod-tile.is-full { border-color: var(--c-red-550); box-shadow: 0 0 0 2px rgba(192, 57, 43, 0.25); }
-.production-dash-card.prod-tile.is-locked { border-style: dashed; background: linear-gradient(var(--c-cream-150-soft), var(--c-bronze-200)); }
+.production-dash-card.prod-tile.is-locked { border-style: dashed; background: linear-gradient(var(--c-cream-100-2), var(--c-bronze-200)); }
 .prod-tile.is-locked .prod-tile-img { filter: grayscale(1); opacity: 0.6; }
 
 /* Ruban d'état, en haut à droite */
@@ -843,12 +843,12 @@
 .wk-tile-rib.is-run { background: var(--c-green-650-2); color: var(--c-white-50-soft); }
 .wk-tile-rib.is-idle { background: var(--c-brown-700-vivid); color: var(--c-white-50-soft); }
 .wk-tile-rib.is-block { background: var(--c-red-600); color: var(--c-white-50-soft); }
-.wk-tile-auto { position: absolute; top: 32px; right: 8px; width: 22px; height: 22px; border-radius: 50%; background: var(--c-cream-50); border: 1px solid var(--c-brown-550-3); display: flex; align-items: center; justify-content: center; }
+.wk-tile-auto { position: absolute; top: 32px; right: 8px; width: 22px; height: 22px; border-radius: 50%; background: var(--c-cream-50-soft); border: 1px solid var(--c-brown-550-3); display: flex; align-items: center; justify-content: center; }
 .wk-tile-auto .ico-sys { width: 14px; height: 14px; }
 .wk-tile.is-run { border-color: var(--c-green-650-2); box-shadow: 0 0 0 2px rgba(47, 138, 70, 0.3); }
 .wk-tile.is-stalled { border-color: var(--c-red-600); }
 .wk-tile.is-block .wk-tile-img { filter: grayscale(0.6) drop-shadow(0 4px 3px rgba(40, 25, 10, 0.3)); opacity: 0.85; }
-.wk-tile.is-soon { cursor: default; background: linear-gradient(var(--c-cream-150-soft), var(--c-bronze-200)); }
+.wk-tile.is-soon { cursor: default; background: linear-gradient(var(--c-cream-100-2), var(--c-bronze-200)); }
 .wk-tile.is-soon .wk-tile-img { filter: grayscale(1); opacity: 0.5; }
 .prod-sheet .wk-tile { min-height: 140px; }
 .prod-sheet .wk-tile-img { width: 62px; height: 62px; }
@@ -880,7 +880,7 @@
 .wk-act-lbl { font-size: 13px; font-weight: 800; color: var(--c-brown-850-2); }
 .wk-act-hint { margin: 8px 0 0; font-size: 12px; line-height: 1.35; color: var(--c-brown-750-2); }
 .wk-qty { display: flex; gap: 6px; margin: 10px 0; }
-.wk-qty button { flex: 1 1 0; min-width: 0; min-height: 38px; padding: 4px 2px; border: 1px solid var(--c-brown-700-vivid); border-radius: 10px; background: var(--c-cream-50); color: var(--c-brown-850-2); font: inherit; font-size: 14px; font-weight: 800; white-space: nowrap; }
+.wk-qty button { flex: 1 1 0; min-width: 0; min-height: 38px; padding: 4px 2px; border: 1px solid var(--c-brown-700-vivid); border-radius: 10px; background: var(--c-cream-50-soft); color: var(--c-brown-850-2); font: inherit; font-size: 14px; font-weight: 800; white-space: nowrap; }
 .wk-qty button.is-on { background: linear-gradient(var(--c-bronze-400-4), var(--c-brown-550-3)); color: var(--c-brown-900-soft); }
 .wk-qty button:disabled { opacity: 0.4; }
 .kbtn.wk-craft { margin: 0; }

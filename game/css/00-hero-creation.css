@@ -15,7 +15,7 @@
   inset: 0;
   z-index: 3001;
   overflow: hidden;
-  background: var(--c-brown-950-3);
+  background: var(--c-brown-900-soft);
 }
 
 .hc-bg {
