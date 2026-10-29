@@ -131,13 +131,13 @@ var STORY_REWARDS = {
   montagne_04: { gold: 14000, resources: { cendre_vive: 4 } }, // l'éclat que Brannoc garde sur l'établi, et d'autres
   montagne_05: { gold: 15000 },
   // v3.489.0 (Montagne, acte II, provisoire : au banc) : une pièce Épique de la Montagne aux étapes 6 à 8, pour le palier de montagne_09
-  montagne_06: { gold: 16000, resources: { cendre_vive: 3 }, equipmentRarity: "epic", equipmentCount: 1, equipmentFill: true, equipmentFillWorld: 4 },
-  montagne_07: { gold: 16500, equipmentRarity: "epic", equipmentCount: 1, equipmentFill: true, equipmentFillWorld: 4 },
-  montagne_08: { gold: 17000, resources: { cendre_vive: 3 }, equipmentRarity: "epic", equipmentCount: 1, equipmentFill: true, equipmentFillWorld: 4 },
+  montagne_06: { gold: 16000, resources: { cendre_vive: 3 }, equipmentRarity: "epic", equipmentCount: 1, equipmentFill: true },
+  montagne_07: { gold: 16500, equipmentRarity: "epic", equipmentCount: 1, equipmentFill: true },
+  montagne_08: { gold: 17000, resources: { cendre_vive: 3 }, equipmentRarity: "epic", equipmentCount: 1, equipmentFill: true },
   montagne_09: { gold: 17500 },
   montagne_10: { gold: 19000, resources: { cendre_vive: 5 } },
   // v3.490.0 (acte III, provisoire, au banc) : deux Épiques de la Montagne, puis l'Obsidienne pour la Forge 6 et les reforges
-  montagne_11: { gold: 20000, resources: { cendre_vive: 4 }, equipmentRarity: "epic", equipmentCount: 1, equipmentFill: true, equipmentFillWorld: 4 },
+  montagne_11: { gold: 20000, resources: { cendre_vive: 4 }, equipmentRarity: "epic", equipmentCount: 1, equipmentFill: true },
   montagne_12: { gold: 21000, equipmentRarity: "epic", equipmentCount: 1, equipmentSlot: "weapon" }, // l'arme posée sur l'enclume (campagne : 120 à 180 h d'échoppe sans elle)
   montagne_13: { gold: 22000, resources: { obsidienne_taillee: 2 } },
   montagne_14: { gold: 23000, resources: { cendre_vive: 3 } },
@@ -3828,7 +3828,8 @@ function storyVeineBranch() {
 /* v3.489.0 (montagne_09) — palier Épique de la Montagne (décision Seb du 25/10, option A) : seuls les
    Épiques de monde 4 ou plus comptent ; l'arme reforgée à 10 (Forge 5). Au banc : repli 4 sur 7. */
 // v3.492.0 (lot M-6, repli prévu par le doc) : 5 -> 4 pièces ; campagne à 5 : 10 / 34 / 36 h (Ch. / Rô. / Ma.), presque tout à l'échoppe
-var STORY_PALIER_MONTAGNE = { pieces: 4, reforge: 10, worldIndex: 4 };
+// v3.552.0 (retour Seb, point 3) : un Épique de n'importe quel monde compte (worldIndex 0)
+var STORY_PALIER_MONTAGNE = { pieces: 4, reforge: 10, worldIndex: 0 };
 function storyPalierMontagne(game) {
   var p = storyPalier(game, "epic"), portes = (game && game.equipped) || {}, order = window.RARITY_ORDER || [], rang = order.indexOf("epic");
   p.pieces = (window.EQUIPMENT_SLOTS || []).filter(function (slot) {
@@ -3837,7 +3838,7 @@ function storyPalierMontagne(game) {
   }).length;
   return p;
 }
-/* v3.492.11 (L3, retour Seb) : un objet compte pour le palier de la Montagne (Épique ou mieux, du monde 5) ;
+/* v3.492.11 (L3, retour Seb) : un objet compte pour le palier de la Montagne (Épique ou mieux ; v3.552.0 : de tout monde) ;
    les emplacements qui n'en portent pas encore, et leurs noms pour « Ce qui manque ». */
 function storyItemCompteMontagne(it) {
   var order = window.RARITY_ORDER || [];
@@ -3849,7 +3850,7 @@ function storyMontagneTrous(game) {
 }
 function storyMontagneTrousTexte(game) {
   var noms = storyMontagneTrous(game).map(function (slot) { return _td((window.EQUIPMENT_SLOT_LABELS || {})[slot] || slot); });
-  return noms.length ? _t("Sans pièce de la Montagne : {s}.", { s: noms.join(", ") }) + " " : "";
+  return noms.length ? _t("Sans pièce Épique : {s}.", { s: noms.join(", ") }) + " " : "";
 }
 /* Palier en cours (étapes 9 et 13, acceptées) : l'objet comblerait-il un emplacement ? equipped : il est porté. */
 function storyItemComptePourPalier(it, equipped) {
@@ -3860,7 +3861,7 @@ function storyItemComptePourPalier(it, equipped) {
 }
 function storyPalierMontagneMissing(game) {
   var p = storyPalierMontagne(game), out = [];
-  if (p.pieces < STORY_PALIER_MONTAGNE.pieces) out.push({ text: _t("Pièces Épiques de la Montagne : {a} / {b}", { a: p.pieces, b: STORY_PALIER_MONTAGNE.pieces }), where: storyMontagneTrousTexte(game) + _t("Les étapes 6 à 8, les élites de la carte de la Montagne (35 % par victoire, la 3e victoire sans pièce en donne une) et l'échoppe de la Halle marchande.") });
+  if (p.pieces < STORY_PALIER_MONTAGNE.pieces) out.push({ text: _t("Pièces Épiques : {a} / {b}", { a: p.pieces, b: STORY_PALIER_MONTAGNE.pieces }), where: storyMontagneTrousTexte(game) + _t("Les étapes 6 à 8, les élites de la carte de la Montagne (35 % par victoire, la 3e victoire sans pièce en donne une) et l'échoppe de la Halle marchande.") });
   // la reforge : même lecture que les autres paliers (pièces déjà comptées ci-dessus)
   return out.concat(storyPalierManques(game, "epic", { pieces: 0, reforge: STORY_PALIER_MONTAGNE.reforge }, function () { return null; }).filter(Boolean));
 }
@@ -4232,7 +4233,7 @@ STORY_QUESTS.mountain = {
           { who: "Brannoc", text: "Encore un peu, et je saurai quoi en faire." }
         ]
       },
-      objectiveLabel: "4 emplacements avec un Épique de la Montagne, arme reforgée à 10",
+      objectiveLabel: "4 emplacements avec une pièce Épique, arme reforgée à 10",
       unlockTabs: [],
       reward: STORY_REWARDS.montagne_09,
       linkTo: { tab: "equip" },
@@ -4241,8 +4242,8 @@ STORY_QUESTS.mountain = {
         icon: "images/Icons/equipment_slots/slot_weapon.webp",
         title: "Le palier Épique",
         points: [
-          { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Pour aller plus loin dans la Montagne, quatre de tes sept emplacements doivent porter une pièce Épique de la Montagne. Celles d'en bas ne comptent pas." },
-          { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "Les étapes de l'acte t'en ont donné trois. La quatrième : les élites de la carte de la Montagne, 35 % de chance par victoire, et jamais plus de deux victoires de suite sans pièce. L'échoppe de la Halle marchande en vend aussi, à prix fort." },
+          { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Pour aller plus loin dans la Montagne, quatre de tes sept emplacements doivent porter une pièce Épique, de n'importe quel monde." }, // v3.552.0
+          { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "Les étapes de l'acte t'en ont donné trois, et celles de la Crypte comptent aussi. Sinon : les élites de la carte de la Montagne, 35 % de chance par victoire, et jamais plus de deux victoires de suite sans pièce." }, // v3.552.0
           { icon: "images/Icons/workshops/smithing_station.webp", text: "L'arme se reforge jusqu'au niveau 10 à la Forge 5." }
         ]
       },
@@ -4252,7 +4253,7 @@ STORY_QUESTS.mountain = {
       },
       progress: function (game) {
         var p = storyPalierMontagne(game), P = STORY_PALIER_MONTAGNE;
-        return "Épiques de la Montagne " + Math.min(p.pieces, P.pieces) + "/" + P.pieces + " · Reforge de l'arme " + Math.min(p.arme, P.reforge) + "/" + P.reforge;
+        return "Pièces Épiques " + Math.min(p.pieces, P.pieces) + "/" + P.pieces + " · Reforge de l'arme " + Math.min(p.arme, P.reforge) + "/" + P.reforge;
       },
       missing: function (game) { return storyPalierMontagneMissing(game); }
     },
@@ -4366,7 +4367,7 @@ STORY_QUESTS.mountain = {
           { who: "Edda", text: "Ici, ça sert." }
         ]
       },
-      objectiveLabel: "7 emplacements avec un Épique de la Montagne, Forge 6, arme reforgée à 11",
+      objectiveLabel: "7 emplacements avec une pièce Épique, Forge 6, arme reforgée à 11",
       unlockTabs: [],
       reward: STORY_REWARDS.montagne_13,
       linkTo: { tab: "equip" },
@@ -4375,7 +4376,7 @@ STORY_QUESTS.mountain = {
         icon: "images/Icons/resources/obsidienne_taillee_icon.webp",
         title: "L'Épique complet",
         points: [
-          { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Pour descendre au bout de la Gueule, tes sept emplacements doivent porter une pièce Épique de la Montagne." },
+          { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Pour descendre au bout de la Gueule, tes sept emplacements doivent porter une pièce Épique, de n'importe quel monde." }, // v3.552.0
           { icon: "images/Icons/resources/obsidienne_taillee_icon.webp", text: "L'Obsidienne taillée se fait à la Fonderie, avec de la Cendre vive. Elle construit la Forge 6." },
           { icon: "images/Icons/workshops/smithing_station.webp", text: "La Forge 6 ouvre les reforges 11 et 12. Elles demandent aussi de l'Obsidienne taillée." }
         ]
@@ -4386,7 +4387,7 @@ STORY_QUESTS.mountain = {
       },
       progress: function (game) {
         var p = storyPalierMontagne(game), P = STORY_PALIER_MONTAGNE_COMPLET;
-        return "Épiques de la Montagne " + Math.min(p.pieces, P.pieces) + "/" + P.pieces + " · Forge " + Math.min(p.forge, P.forge) + "/" + P.forge
+        return "Pièces Épiques " + Math.min(p.pieces, P.pieces) + "/" + P.pieces + " · Forge " + Math.min(p.forge, P.forge) + "/" + P.forge
           + " · Reforge de l'arme " + Math.min(p.arme, P.reforge) + "/" + P.reforge;
       },
       missing: function (game) { return storyPalierMontagneCompletMissing(game); }
@@ -4644,7 +4645,7 @@ function storyMountainSectorFreed(id) {
 var STORY_PALIER_MONTAGNE_COMPLET = { pieces: 7, forge: 6, reforge: 11 };
 function storyPalierMontagneCompletMissing(game) {
   var p = storyPalierMontagne(game), P = STORY_PALIER_MONTAGNE_COMPLET, out = [];
-  if (p.pieces < P.pieces) out.push({ text: _t("Pièces Épiques de la Montagne : {a} / {b}", { a: p.pieces, b: P.pieces }), where: storyMontagneTrousTexte(game) + _t("La Gueule du volcan, les élites de la carte de la Montagne et l'échoppe de la Halle marchande.") });
+  if (p.pieces < P.pieces) out.push({ text: _t("Pièces Épiques : {a} / {b}", { a: p.pieces, b: P.pieces }), where: storyMontagneTrousTexte(game) + _t("La Gueule du volcan, les élites de la carte de la Montagne et l'échoppe de la Halle marchande.") });
   return out.concat(storyPalierManques(game, "epic", { pieces: 0, forge: P.forge, reforge: P.reforge }, function () { return null; }).filter(Boolean));
 }
 /* montagne_14 : le choix « ouvrage ». Garder (le défaire) verse sa matière tout de suite. */

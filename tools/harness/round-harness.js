@@ -18329,10 +18329,10 @@ console.log("\n[311] v3.489.0 — Montagne, lot M-3 : acte II « Ce qui trie »"
     ok(g.ENEMY_DB.minordemon.support && g.COMBAT_STATES_SCREEN.sorting, "il est un soutien (réglage « Cible ») ; l'état « Tri » s'affiche");
     var src = fs.readFileSync(path.join(ROOT, "js/systems/combat-engine.js"), "utf8");
     ok(/VeinSystem\.takeSort\(e\)/.test(src) && /VeinSystem\.onEnemyTurn\(e\)/.test(src), "combat-engine.js : le tri est branché sur la frappe ennemie");
-    // Le palier : seuls les Épiques de la Montagne comptent
+    // Le palier : v3.552.0 (retour Seb, point 3) : un Épique de n'importe quel monde compte, un Rare non
     game.equipped = {};
-    g.EQUIPMENT_SLOTS.forEach(function (sl, i) { game.equipped[sl] = { slot: sl, rarity: "epic", worldIndex: i < 3 ? 4 : 3 }; });
-    ok(g.storyPalierMontagne(game).pieces === 3 && g.STORY_PALIER_MONTAGNE.pieces === 4, "palier : 3 Épiques de la Montagne sur 7 portés, il en faut 4 (ceux d'en bas ne comptent pas ; v3.492.0 : repli 5 -> 4)");
+    g.EQUIPMENT_SLOTS.forEach(function (sl, i) { game.equipped[sl] = { slot: sl, rarity: i < 3 ? "epic" : "rare", worldIndex: i === 0 ? 4 : 3 }; });
+    ok(g.storyPalierMontagne(game).pieces === 3 && g.STORY_PALIER_MONTAGNE.pieces === 4, "palier : 3 Épiques sur 7 (dont 2 de la Crypte, qui comptent), il en faut 4 ; les Rares ne comptent pas");
     // La Mémoire 17 à 19
     ok(g.MEMORY_LEVELS.filter(function (l) { return l.level >= 17 && l.level <= 19; }).length === 3 && g.MEMORY_LEVEL_COSTS.length >= 19, "Mémoire 17 à 19 écrite, coûts dans la courbe");
     MM.has = function (id) { return id === "peau_basalte" || id === "taille_franche" || id === "pioche_sure"; };
@@ -18421,7 +18421,7 @@ console.log("\n[312] v3.490.0 — Montagne, lot M-4 : acte III « La Gueule »")
     ok(n === 2 && g.WarehouseManager.getAmount("cendre_vive") - a0 === 2, "ouvrage achevé : une taille rapporte deux Cendres vives dans la Gueule");
     // Le palier de montagne_13 : 7 sur 7, Forge 6, arme à 11
     game.equipped = {};
-    g.EQUIPMENT_SLOTS.forEach(function (sl, i) { game.equipped[sl] = { slot: sl, rarity: "epic", worldIndex: i < 6 ? 4 : 3 }; });
+    g.EQUIPMENT_SLOTS.forEach(function (sl, i) { game.equipped[sl] = { slot: sl, rarity: i < 6 ? "epic" : "rare", worldIndex: i < 3 ? 4 : 3 }; }); // v3.552.0 : tout monde
     var m = g.storyPalierMontagneCompletMissing(game);
     ok(g.STORY_PALIER_MONTAGNE_COMPLET.pieces === 7 && g.storyPalierMontagne(game).pieces === 6 && m.length >= 1 && /6 \/ 7/.test(m[0].text), "palier de l'étape 13 : 6 sur 7, « ce qui manque » le dit");
     ok(g.STORY_REWARDS.montagne_12.equipmentSlot === "weapon" && /reward\.equipmentSlot/.test(fs.readFileSync(path.join(ROOT, "js/systems/story-quest-system.js"), "utf8")), "étape 12 : une arme Épique de la Montagne (equipmentSlot), à la classe du héros");
@@ -18540,19 +18540,20 @@ console.log("\n[315] v3.492.11 — pièces de la Montagne lisibles (L1, L3)");
     var mk = function (slot, rarity, w) { return { uid: "t_" + slot + w, slot: slot, name: "Test", rarity: rarity, stat: "defense", value: 0.1, worldIndex: w, affixes: [] }; };
     ok(/Montagne br[ûu]lante/.test(g.buildItemOriginHTML(mk("armor", "epic", 4))) && /Crypte/.test(g.buildItemOriginHTML(mk("helmet", "epic", 3))),
       "L1 : « Trouvé en … » aussi sur les emplacements qui ne suivent pas l'échelle de monde (armure, casque)");
-    ok(g.storyItemCompteMontagne(mk("ring", "epic", 4)) && g.storyItemCompteMontagne(mk("ring", "legendary", 4)) && !g.storyItemCompteMontagne(mk("ring", "epic", 3)) && !g.storyItemCompteMontagne(mk("ring", "rare", 4)),
-      "une pièce compte : Épique ou mieux, de la Montagne");
+    ok(g.storyItemCompteMontagne(mk("ring", "epic", 4)) && g.storyItemCompteMontagne(mk("ring", "legendary", 4)) && g.storyItemCompteMontagne(mk("ring", "epic", 3)) && !g.storyItemCompteMontagne(mk("ring", "rare", 4)),
+      "une pièce compte : Épique ou mieux, de n'importe quel monde (v3.552.0)");
     game.equipped = { weapon: mk("weapon", "epic", 4), armor: mk("armor", "epic", 4), helmet: mk("helmet", "epic", 3), gloves: null, boots: mk("boots", "epic", 4), ring: mk("ring", "rare", 4), amulet: mk("amulet", "epic", 2) };
-    ok(g.storyMontagneTrous(game).join() === "helmet,gloves,ring,amulet", "emplacements sans pièce de la Montagne : casque, gants, anneau, amulette (3 sur 7 comptent)");
+    ok(g.storyMontagneTrous(game).join() === "gloves,ring", "emplacements sans pièce Épique : gants, anneau (le casque et l'amulette d'en bas comptent)");
     var manque = g.storyPalierMontagneMissing(game)[0];
-    ok(manque && /Casque/.test(manque.where) && /Gants/.test(manque.where) && /Anneau/.test(manque.where) && !/Armure/.test(manque.where), "L3 : « Ce qui manque » nomme les emplacements à combler");
-    ok(g.buildItemStoryCountHTML(mk("helmet", "epic", 4), false) === "", "hors palier : pas de mention « Compte pour l'Histoire »");
+    var trousTxt = g.storyMontagneTrousTexte(game);
+    ok(/Gants/.test(trousTxt) && /Anneau/.test(trousTxt) && !/Casque/.test(trousTxt) && /Sans pièce Épique/.test(trousTxt), "L3 : « Ce qui manque » nomme les emplacements à combler (" + trousTxt.trim() + ")");
+    ok(g.buildItemStoryCountHTML(mk("gloves", "epic", 4), false) === "", "hors palier : pas de mention « Compte pour l'Histoire »");
     SQ.getCurrentStep = function (c) { return c === "mountain" ? { id: "montagne_09" } : null; };
     SQ.isCurrentStepAccepted = function () { return true; };
-    ok(/Compte pour l(&#39;|')Histoire/.test(g.buildItemStoryCountHTML(mk("helmet", "epic", 4), false)) && g.buildItemStoryCountHTML(mk("armor", "epic", 4), false) === ""
-      && g.buildItemStoryCountHTML(mk("helmet", "epic", 3), false) === "" && /Compte pour l(&#39;|')Histoire/.test(g.buildItemStoryCountHTML(game.equipped.armor, true)),
-      "palier en cours : l'objet qui comble un emplacement est marqué ; pas celui d'un emplacement déjà compté, ni celui de la Crypte ; le porté qui compte l'est");
-    var shop = g.buildEquipShopCardHTML(Object.assign(mk("helmet", "epic", 4), { price: 10 }));
+    ok(/Compte pour l(&#39;|')Histoire/.test(g.buildItemStoryCountHTML(mk("gloves", "epic", 4), false)) && g.buildItemStoryCountHTML(mk("armor", "epic", 4), false) === ""
+      && /Compte pour l(&#39;|')Histoire/.test(g.buildItemStoryCountHTML(mk("gloves", "epic", 3), false)) && /Compte pour l(&#39;|')Histoire/.test(g.buildItemStoryCountHTML(game.equipped.armor, true)),
+      "palier en cours : l'objet qui comble un emplacement est marqué, celui de la Crypte aussi ; pas celui d'un emplacement déjà compté ; le porté qui compte l'est");
+    var shop = g.buildEquipShopCardHTML(Object.assign(mk("gloves", "epic", 4), { price: 10 }));
     ok(/Épique · Montagne br[ûu]lante/.test(shop) && /Compte pour l(&#39;|')Histoire/.test(shop), "L1 + L3 : la carte de l'échoppe montre le monde et la mention");
   } catch (err) {
     ok(false, "[315] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
@@ -19263,7 +19264,7 @@ console.log("\n[338] v3.517.0 — correctifs de l'audit, lot 1 : textes factuels
     ok(!/Taverne/.test(g.buildWarehouseSheetHTML("petite_ration")), "Entrepôt : la Petite ration ne cite pas la Taverne (aucun contrat)");
     ok(/Taverne/.test(g.buildWarehouseSheetHTML("bois")), "Entrepôt : le Bois cite la Taverne (contrat « Charpente à refaire »)");
     var m09 = JSON.stringify(st("montagne_09").tutorial.points);
-    ok(m09.indexOf("élites") < m09.indexOf("échoppe"), "montagne_09 : les élites avant l'échoppe");
+    ok(m09.indexOf("élites") >= 0 && /n'importe quel monde/.test(m09) && /Crypte comptent/.test(m09), "montagne_09 : un Épique de tout monde, les élites (v3.552.0)");
   } catch (err) { ok(false, "[338] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
