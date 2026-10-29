@@ -90,6 +90,20 @@ function buildSettingsAppareilHTML() {
   // v3.359.0 : installer le jeu sur l'appareil (main/pwa.js)
   if (typeof buildPwaSettingsCardHTML === "function") h += buildPwaSettingsCardHTML();
 
+  // v3.538.0 (audit ERG-11, option A) : taille du texte, propre à l'appareil
+  if (window.DesktopScale && typeof DesktopScale.textBig === "function") {
+    var big = DesktopScale.textBig();
+    h += '<div class="set-card">';
+    h += '<div class="kkick">' + _t("Taille du texte") + '</div>';
+    h += '<div class="kseg set-seg">';
+    [["normal", _t("Normale"), !big], ["grand", _t("Grande"), big]].forEach(function (o) {
+      h += '<button type="button" class="' + (o[2] ? 'is-on' : '') + '" onclick="DesktopScale.setTextSize(\'' + o[0] + '\')"><span>' + esc(o[1]) + '</span></button>';
+    });
+    h += '</div>';
+    h += '<p>' + _t("« Grande » agrandit les pages, les feuilles et les fenêtres de 12 %. Réglage propre à cet appareil.") + '</p>';
+    h += '</div>';
+  }
+
   // v3.406.0 (format tablette) : tablette tenue en portrait — carte visible seulement sur une tablette
   if (window.DesktopScale && DesktopScale.isTablet()) {
     var pch = DesktopScale.portraitChoice();

@@ -20,3 +20,9 @@
   }
 }
 
+
+/* v3.538.0 (audit ERG-11, option A) : réglage « Texte grand », +12 % sur les pages, feuilles et fenêtres.
+   Le bandeau, la barre du bas, les bulles et l'écran de combat (#game-area) gardent leur taille. */
+html.text-big #panel-container,
+html.text-big [id$="-modal-root"],
+html.text-big [id$="-sheet-root"] { zoom: 1.12; }

@@ -7079,4 +7079,10 @@ I18n.register("en", {
   // v3.536.0 : retour d'Android (ERG-7)
   "Retour encore une fois pour quitter": "Press back again to quit",
 
+  // v3.538.0 : taille du texte (ERG-11)
+  "Taille du texte": "Text size",
+  "Normale": "Normal",
+  "Grande": "Large",
+  "« Grande » agrandit les pages, les feuilles et les fenêtres de 12 %. Réglage propre à cet appareil.": "“Large” enlarges pages, sheets and windows by 12 %. Setting for this device only.",
+
 });

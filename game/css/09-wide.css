@@ -172,7 +172,7 @@ html.wide-mode #panel-container .kf-bot::after {
 /* marges intérieures : celles du téléphone (6,5 % de 390 ≈ 25 px), pas 6,5 % de 1 000 px */
 html.wide-mode #panel-container .nb-page-frame.kframe > .kf-mid { padding: 8px 28px 10px; }
 html.wide-mode #panel-container .nb-page-frame.kframe.kframe-page > .kf-mid { padding-bottom: 22px; }
-html.wide-mode #panel-container .kf-title { left: 20%; right: 20%; font-size: 16px; }
+html.wide-mode #panel-container .kf-title { left: 20%; right: 20%; } /* v3.538.0 : 18 px comme sur téléphone */
 
 /* ---------- Feuilles et menus : largeur d'une tablette étroite, centrés ---------- */
 html.wide-mode .ksheet,

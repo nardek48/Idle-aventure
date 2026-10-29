@@ -76,6 +76,7 @@ var DesktopScale = {
     root.classList.toggle("pc-mode", mode !== "phone");
     root.classList.toggle("wide-mode", mode === "wide");
     root.style.setProperty("--pc-zoom", String(z));
+    root.classList.toggle("text-big", DesktopScale.textBig()); // v3.538.0 (ERG-11) : réglage « Texte grand »
     // Le HUD et la page se redessinent pour leur nouvelle disposition (mesures, bulles)
     if (changed && typeof renderPanel === "function" && window.game) { try { renderPanel(); } catch (e) { noteErreur("desktop-scale.apply", e); } }
   },
@@ -83,6 +84,16 @@ var DesktopScale = {
   /* Réglage de la tablette en portrait (Paramètres › Affichage) */
   setPortraitChoice: function (v) {
     if (window.Prefs && typeof Prefs.setValue === "function") Prefs.setValue("tabletPortrait", v === "rail" ? "rail" : "zoom");
+    DesktopScale.apply();
+    if (typeof renderPanel === "function") renderPanel();
+  },
+
+  /* v3.538.0 (audit ERG-11, option A) : taille du texte, Paramètres › Appareil. */
+  textBig: function () {
+    return !!(window.Prefs && typeof Prefs.getValue === "function" && Prefs.getValue("textSize") === "grand");
+  },
+  setTextSize: function (v) {
+    if (window.Prefs && typeof Prefs.setValue === "function") Prefs.setValue("textSize", v === "grand" ? "grand" : "normal");
     DesktopScale.apply();
     if (typeof renderPanel === "function") renderPanel();
   },

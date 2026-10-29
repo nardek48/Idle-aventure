@@ -19703,6 +19703,17 @@ console.log("\n[355] v3.536.0 — Retour d'Android et Échap (audit ERG-7, optio
   } catch (err) { ok(false, "[355] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[356] v3.538.0 — « Texte grand » et titre de page à 18 px (audit ERG-11 A, INT-11 B)");
+(function () {
+  try {
+    ok(g.PREFS_DEFAULTS.textSize === "normal" && g.DesktopScale.textBig() === false, "réglage « Texte » : normal par défaut, propre à l'appareil (Prefs, hors sauvegarde)");
+    var css = fs.readFileSync(path.join(ROOT, "css/07-responsive.css"), "utf8");
+    ok(/html\.text-big #panel-container,\s*html\.text-big \[id\$="-modal-root"\],\s*html\.text-big \[id\$="-sheet-root"\] \{ zoom: 1\.12; \}/.test(css), "« Grande » : +12 % sur les pages, feuilles et fenêtres (pas le combat ni le bandeau)");
+    ok(/\.kf-title \{[^}]*font-size: 18px/.test(fs.readFileSync(path.join(ROOT, "css/00-kbtn.css"), "utf8")) && !/\.kf-title \{[^}]*font-size: 16px/.test(fs.readFileSync(path.join(ROOT, "css/09-wide.css"), "utf8")), "titre de page à 18 px, aussi au format large");
+    ok(/DesktopScale\.setTextSize/.test(fs.readFileSync(path.join(ROOT, "js/ui/settings-view.js"), "utf8")), "le réglage est dans les Paramètres");
+  } catch (err) { ok(false, "[356] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);
