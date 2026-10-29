@@ -438,3 +438,71 @@ window.renderPanel = renderPanel;
     + esc(_t("Aethervale se joue en hauteur : en paysage, le combat n'a pas la place de s'afficher.")) + '</span>';
   document.body.appendChild(v);
 })();
+
+/* v3.536.0 (audit ERG-7, option A) : retour d'Android et Échap. Le retour ferme le calque du dessus
+   (sa croix), ramène au Camp, puis quitte au second retour ; une fenêtre sans croix attend sa réponse. */
+var backNavArmed = false, backNavWarned = 0;
+
+/* Garde d'historique, reposée au toucher : Chrome saute les entrées posées sans geste de l'utilisateur. */
+function backNavArm() {
+  if (backNavArmed || typeof history === "undefined" || typeof history.pushState !== "function") return;
+  try { history.pushState({ aethGarde: 1 }, ""); backNavArmed = true; } catch (e) { noteErreur("backNavArm", e); }
+}
+
+function backNavVisible(el) {
+  if (!el || !el.getClientRects || !el.getClientRects().length) return false;
+  return getComputedStyle(el).visibility !== "hidden";
+}
+
+/* Plus grand z-index de l'élément et de ses parents : sert à trouver le calque du dessus. */
+function backNavZ(el) {
+  var best = 0;
+  for (var e = el; e && e !== document.body; e = e.parentElement) {
+    var v = parseInt(getComputedStyle(e).zIndex, 10);
+    if (!isNaN(v) && v > best) best = v;
+  }
+  return best;
+}
+
+/* Ferme le calque du dessus : "closed", "blocked" (fenêtre sans croix) ou "none". */
+function backNavCloseTop() {
+  var c = document.getElementById("confirm-modal");
+  if (c && c.classList.contains("show")) { closeConfirmModal(false); return "closed"; }
+  var o = document.getElementById("offline-modal");
+  if (o && o.classList.contains("show")) { closeOfflineModal(); return "closed"; }
+  var list = Array.prototype.filter.call(document.querySelectorAll(".ksheet-x, .kwin-veil, .full-menu-overlay, .ksheet-backdrop, .hc-overlay, .title-screen-overlay"), backNavVisible);
+  if (!list.length) return "none";
+  // À z-index égal, le dernier dans la page est dessus (une croix suit son voile).
+  var top = list.reduce(function (a, b) { return backNavZ(b) >= backNavZ(a) ? b : a; });
+  if (!top.classList.contains("ksheet-x")) return "blocked";
+  top.click();
+  return "closed";
+}
+
+function backNavOnPop() {
+  backNavArmed = false;
+  var r = backNavCloseTop();
+  if (r === "none") {
+    if (game.activeTab !== "campement" && typeof isTabUnlocked === "function" && isTabUnlocked("campement")) switchTab("campement");
+    else {
+      // Pas de garde reposée : le retour suivant quitte (sauf si un toucher la repose entre-temps).
+      if (Date.now() - backNavWarned >= 2000 && typeof showToast === "function") showToast(_t("Retour encore une fois pour quitter"), 2000);
+      backNavWarned = Date.now();
+      return;
+    }
+  }
+  backNavArm();
+}
+
+if (typeof window !== "undefined" && window.addEventListener && typeof document !== "undefined") {
+  window.addEventListener("popstate", backNavOnPop);
+  document.addEventListener("pointerdown", backNavArm, true);
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape" || (window.Chronique && Chronique.over)) return; // la Chronique a sa propre Échap
+    var a = document.activeElement, tag = a ? a.tagName : "";
+    if (tag === "INPUT" || tag === "TEXTAREA") return;
+    backNavCloseTop();
+  });
+}
+window.backNavCloseTop = backNavCloseTop;
+window.backNavOnPop = backNavOnPop;

@@ -19691,6 +19691,18 @@ console.log("\n[354] v3.535.0 — Carte « Niveau N » au calme (audit PLA-11, o
   if (g.TalentManager && g.TalentManager.sync) g.TalentManager.sync();
 })();
 
+console.log("\n[355] v3.536.0 — Retour d'Android et Échap (audit ERG-7, option A)");
+(function () {
+  try {
+    ok(typeof g.backNavCloseTop === "function" && typeof g.backNavOnPop === "function", "backNavCloseTop et backNavOnPop exposées");
+    var src = fs.readFileSync(path.join(ROOT, "js/ui/ui-root.js"), "utf8");
+    ok(/addEventListener\("popstate", backNavOnPop\)/.test(src) && /addEventListener\("pointerdown", backNavArm, true\)/.test(src), "garde d'historique : posée au toucher, consommée par le retour");
+    ok(/e\.key !== "Escape"/.test(src) && /Chronique\.over/.test(src), "Échap ferme le calque du dessus (la Chronique garde la sienne)");
+    ok(/classList\.contains\("ksheet-x"\)\) return "blocked"/.test(src), "une fenêtre sans croix attend sa réponse : le retour ne la ferme pas");
+    ok(/switchTab\("campement"\)/.test(src) && /Retour encore une fois pour quitter/.test(src), "rien d'ouvert : retour au Camp, puis message avant de quitter");
+  } catch (err) { ok(false, "[355] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

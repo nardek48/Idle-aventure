@@ -7076,4 +7076,7 @@ I18n.register("en", {
   "le prochain au niveau {n}": "the next at level {n}",
   "Placer le point||Placer les points": ["Place the point", "Place the points"],
 
+  // v3.536.0 : retour d'Android (ERG-7)
+  "Retour encore une fois pour quitter": "Press back again to quit",
+
 });
