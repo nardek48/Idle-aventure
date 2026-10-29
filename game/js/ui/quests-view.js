@@ -722,8 +722,84 @@ function buildStoryChainHTML() {
     h += '</div>';
   });
 
+  if (!completedMode && storyAllDone()) h = buildStoryEndCardHTML() + h; // v3.534.0 (PLA-9) : carte du bilan en tête
   return h + done;
 }
+
+/* v3.534.0 (audit PLA-9) : fin de l'Histoire. Tous les chapitres terminés : bilan et choix notés,
+   sans axe ni score (Bible : le registre ne s'affiche jamais en nombres). */
+function storyAllDone() {
+  var ids = Object.keys(STORY_QUESTS);
+  return ids.length > 0 && ids.every(function (id) { return StoryQuestManager.isChapterCompleted(id); });
+}
+
+/* Les choix pesants notés, par chapitre (les choix de compagnons, noRecord, ne sont pas notés). */
+function storyEndChoices() {
+  var out = [];
+  Object.keys(STORY_QUESTS).forEach(function (cid) {
+    var ch = STORY_QUESTS[cid], list = [];
+    ch.steps.forEach(function (s) {
+      var c = s.choice, v = c && !c.noRecord ? StoryQuestManager.getChoice(c.key) : null;
+      var o = v == null ? null : (c.options || []).filter(function (x) { return x.value === v; })[0];
+      if (o) list.push({ label: c.title, value: o.label });
+    });
+    if (list.length) out.push({ chapter: ch.subtitle || ch.title, rows: list });
+  });
+  return out;
+}
+
+function storyEndRowsHTML(rows, cls) {
+  return '<div class="dungeon-summary-rewards' + (cls ? ' ' + cls : '') + '">' + rows.map(function (r) {
+    return '<div class="dungeon-summary-row"><span>' + esc(_td(r.label)) + '</span><span>' + esc(_td(r.value)) + '</span></div>';
+  }).join("") + '</div>';
+}
+
+function buildStoryEndHTML() {
+  var ids = Object.keys(STORY_QUESTS), steps = 0;
+  ids.forEach(function (id) { steps += Object.keys(StoryQuestManager.getState(id).claimedSteps || {}).length; });
+  var db = typeof ACHIEVEMENTS_DB !== "undefined" ? ACHIEVEMENTS_DB : [];
+  var hf = window.AchievementManager ? db.filter(function (a) { return AchievementManager.isClaimed(a.id); }).length : 0;
+  var rows = [
+    { label: _t("Temps de jeu"), value: formatTime(game.playTime || 0) },
+    { label: _t("Étapes d'Histoire"), value: formatNumber(steps) },
+    { label: _t("Ennemis vaincus"), value: formatNumber(game.totalKills || 0) },
+    { label: _t("Hauts faits"), value: hf + " / " + db.length }
+  ];
+  var h = '<div class="full-menu-overlay kwin-veil"><div class="kwin dungeon-story-card is-success story-end-win">';
+  h += kWinHeadHTML({ icon: renderIconOrEmojiHTML("images/Icons/quests/quest_story.webp", "dungeon-story-icon-img", ""),
+    title: esc(_t("Fin du chapitre {n}", { n: ids.length })), sub: esc(_t("L'Histoire s'arrête ici, pour l'instant")) });
+  h += '<div class="kwin-body"><div class="kwin-quote dungeon-story-text">' + esc(_t("La Tour sera le prochain chapitre. Elle n'est pas encore ouverte.")) + '</div>';
+  h += storyEndRowsHTML(rows);
+  var choix = storyEndChoices();
+  if (choix.length) {
+    h += '<div class="story-end-h">' + esc(_t("Tes choix")) + '</div>';
+    choix.forEach(function (g) { h += '<div class="story-end-ch">' + esc(_td(g.chapter)) + '</div>' + storyEndRowsHTML(g.rows, "story-end-rows"); });
+  }
+  h += '<p class="story-end-note">' + esc(_t("Ce bilan reste dans Quêtes › Histoire. Au Camp, le fil rouge propose la suite.")) + '</p></div>';
+  h += '<div class="kwin-foot"><button class="kbtn primary" type="button" onclick="closeQuestCompletePopup()">' + esc(_t("Continuer")) + '</button></div></div></div>';
+  return h;
+}
+
+function openStoryEndPopup() {
+  var host = document.getElementById("adventure-quest-modal-root");
+  if (host && storyAllDone()) host.innerHTML = buildStoryEndHTML();
+}
+
+/* Carte en tête de Quêtes › Histoire, une fois l'Histoire finie. */
+function buildStoryEndCardHTML() {
+  return '<div class="story-end-card"><b>' + esc(_t("Fin de l'Histoire, pour l'instant")) + '</b><p>' + esc(_t("La Tour sera le prochain chapitre. Elle n'est pas encore ouverte.")) + '</p>'
+    + '<button class="story-end-link" type="button" onclick="openStoryEndPopup()">' + esc(_t("Revoir le bilan")) + ' ▸</button></div>';
+}
+
+/* La fenêtre de la dernière étape du dernier chapitre ouvre le bilan à sa fermeture (une fois : l'étape ne se réclame qu'une fois). */
+function storyEndChain(config) {
+  var ids = Object.keys(STORY_QUESTS), last = STORY_QUESTS[ids[ids.length - 1]].steps.slice(-1)[0];
+  if (!config.closeOnclick && config.dialogue && last && config.title === last.title && storyAllDone()) config.closeOnclick = "openStoryEndPopup()";
+}
+window.storyAllDone = storyAllDone;
+window.storyEndChoices = storyEndChoices;
+window.buildStoryEndHTML = buildStoryEndHTML;
+window.openStoryEndPopup = openStoryEndPopup;
 
 /* v3.458.4 (audit C3) : chapitre terminé replié en une ligne ; le toucher déplie ses étapes. */
 function buildStoryDoneChapterHTML(chapterId, chapter, st) {
@@ -949,6 +1025,7 @@ function openQuestCompletePopup(config) {
   }
   if (storyMergeRows) { config.rewardRows = storyMergeRows.concat(config.rewardRows || []); config.questDone = true; storyMergeRows = null; }
   applyQuestUnlockSideEffects();
+  if (window.StoryQuestManager && window.STORY_QUESTS) storyEndChain(config);
   var boss = document.getElementById("cycle-modal-root");
   if (boss && boss.innerHTML) { pendingQuestCompleteConfig = config; return; }
   var host = document.getElementById("adventure-quest-modal-root");

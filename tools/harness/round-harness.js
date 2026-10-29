@@ -19626,6 +19626,38 @@ console.log("\n[352] v3.533.0 — Alerte « au plafond » des seules ressources 
   } catch (err) { ok(false, "[352] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[353] v3.534.0 — Bilan de fin de l'Histoire (audit PLA-9, option A)");
+(function () {
+  var sauve = JSON.stringify(g.game.storyQuests);
+  try {
+    var SQ = g.STORY_QUESTS, ids = Object.keys(SQ), notes = 0;
+    g.StoryQuestManager.ensure();
+    ids.forEach(function (id) {
+      var st = g.game.storyQuests[id];
+      st.currentStep = SQ[id].steps.length; st.skipped = false;
+      SQ[id].steps.forEach(function (s) {
+        st.claimedSteps[s.id] = true;
+        if (s.choice && !s.choice.noRecord) { st.choices[s.choice.key] = s.choice.options[0].value; notes++; }
+      });
+    });
+    ok(g.storyAllDone() === true, "storyAllDone : vrai quand tous les chapitres sont terminés");
+    var ch = g.storyEndChoices(), n = 0;
+    ch.forEach(function (x) { n += x.rows.length; });
+    ok(notes === 12 && n === 12, "12 choix pesants notés, tous au bilan (" + n + "), les choix de compagnons exclus");
+    var h = g.buildStoryEndHTML();
+    ok(h.indexOf("Fin du chapitre " + ids.length) !== -1 && (h.match(/dungeon-summary-row/g) || []).length === 16, "fenêtre : titre du dernier chapitre, 4 lignes de bilan et 12 choix");
+    ok(!/Donner|Garder|registre/.test(h.replace(/<span>[^<]*<\/span>/g, "")), "aucun axe ni registre affiché hors des textes de choix");
+    var last = SQ[ids[ids.length - 1]].steps.slice(-1)[0];
+    var c1 = { title: last.title, dialogue: [{ who: null, text: "x" }] }, c2 = { title: "Autre", dialogue: [] }, c3 = { title: last.title, dialogue: [], closeOnclick: "f()" };
+    [c1, c2, c3].forEach(function (c) { g.storyEndChain(c); });
+    ok(c1.closeOnclick === "openStoryEndPopup()" && !c2.closeOnclick && c3.closeOnclick === "f()", "seule la fenêtre de la dernière étape ouvre le bilan à sa fermeture");
+    ok(g.buildStoryChainHTML().indexOf("story-end-card") !== -1, "carte « Revoir le bilan » en tête de Quêtes › Histoire");
+    g.game.storyQuests = JSON.parse(sauve);
+    ok(g.storyAllDone() === false && g.buildStoryChainHTML().indexOf("story-end-card") === -1, "Histoire en cours : ni bilan ni carte");
+  } catch (err) { ok(false, "[353] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  g.game.storyQuests = JSON.parse(sauve);
+})();
+
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

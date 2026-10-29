@@ -7056,4 +7056,14 @@ I18n.register("en", {
   "Où en trouver : {x}": "Where to find it: {x}",
   "{x} ({y})": "{x} ({y})",
 
+  // v3.534.0 : bilan de fin de l'Histoire (PLA-9)
+  "Étapes d'Histoire": "Story steps",
+  "Fin du chapitre {n}": "End of chapter {n}",
+  "L'Histoire s'arrête ici, pour l'instant": "The Story stops here, for now",
+  "La Tour sera le prochain chapitre. Elle n'est pas encore ouverte.": "The Tower will be the next chapter. It isn't open yet.",
+  "Tes choix": "Your choices",
+  "Ce bilan reste dans Quêtes › Histoire. Au Camp, le fil rouge propose la suite.": "This summary stays in Quests › Story. At the Camp, Next step suggests what comes next.",
+  "Fin de l'Histoire, pour l'instant": "End of the Story, for now",
+  "Revoir le bilan": "See the summary again",
+
 });

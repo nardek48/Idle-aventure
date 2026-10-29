@@ -671,3 +671,13 @@
 .ms-tips { display: grid; gap: 8px; }
 .ms-tip { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px; align-items: start; padding: 10px; border-radius: 12px; background: var(--nb-cream); border: 1px solid var(--nb-frame-light); font-size: 13.5px; text-align: left; color: var(--nb-ink); }
 .ms-tip-ico { width: 26px; height: 26px; }
+
+/* v3.534.0 (audit PLA-9) : bilan de fin de l'Histoire (fenêtre) et sa carte en tête de Quêtes › Histoire. */
+.story-end-h { margin: 6px 0 8px; font-size: 14px; font-weight: 800; color: var(--nb-gold-deep); }
+.story-end-ch { margin: 0 0 4px; text-align: left; font-size: 12px; font-weight: 700; color: var(--sheet-ink-dim); }
+.story-end-rows .dungeon-summary-row > span:last-child { margin-left: 12px; text-align: right; }
+.story-end-note { margin: 0 0 6px; font-size: 12px; color: var(--sheet-ink-dim); }
+.story-end-card { display: grid; gap: 8px; margin: 0 0 12px; padding: 12px 14px; border: 2px solid var(--nb-gold-deep); border-radius: 14px; background: var(--sheet-card-bg); color: var(--nb-ink); }
+.story-end-card b { font-size: 16px; }
+.story-end-card p { margin: 0; font-size: 13px; color: var(--sheet-ink-dim); }
+.story-end-link { justify-self: start; padding: 4px 0; border: 0; background: none; font-size: 14px; font-weight: 700; color: var(--nb-gold-deep); text-decoration: underline; }
