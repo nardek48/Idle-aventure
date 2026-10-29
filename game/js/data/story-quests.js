@@ -4225,7 +4225,7 @@ STORY_QUESTS.mountain = {
         objective: "Au Replat, Maddoc pose sa lame à côté d'un éclat de Cendre vive. La lame a l'air plus petite.",
         completion: "Quatre pièces qui tiennent au feu. À Aeswyn, Brannoc les regarde une à une, sans rien dire. Puis il pose l'éclat de Cendre vive à côté, sur l'établi.",
         dialogue: [
-          { who: "Maddoc", text: "Ce qu'on porte, ça vient d'en bas. Ici, ça ne tiendra pas." },
+          { who: "Maddoc", text: "Ce qu'on porte de tout-venant ne tiendra pas, ici. Il faut le meilleur qu'on a, d'où qu'il vienne." }, // v3.564.0 : un Épique de tout monde compte (point 3)
           { who: "Sarkel", text: "En bas, je vendais. Ici, je cherche encore ce qui vaut." },
           { who: "Edda", text: "Ce qui tient au feu." }
         ],

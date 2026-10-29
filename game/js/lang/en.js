@@ -6579,7 +6579,7 @@ I18n.register("en", {
   "Ils savent qui a pris.": "They know who took.",
   "Alors on ne prend rien ?": "So we take nothing?",
   "Alors on choisit qui prend.": "So we choose who takes.",
-  "Ce qu'on porte, ça vient d'en bas. Ici, ça ne tiendra pas.": "What we wear comes from down below. Up here, it won't hold.",
+  "Ce qu'on porte de tout-venant ne tiendra pas, ici. Il faut le meilleur qu'on a, d'où qu'il vienne.": "Ordinary gear won't hold up here. We need the best we've got, wherever it comes from.",
   "En bas, je vendais. Ici, je cherche encore ce qui vaut.": "Down below, I sold. Up here, I'm still looking for what's worth something.",
   "Ce qui tient au feu.": "What holds in the fire.",
   "Il n'est pas fini.": "It isn't finished.",
