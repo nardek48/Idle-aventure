@@ -311,7 +311,7 @@ var LIVING_MAPS = {
         effectLostOnChoice: { key: "plan", value: "tomber" }, // v3.433.0 : en éboulis si la cité tombe
         lore: "Une falaise taillée en marches. Les blocs qui en sortent sont déjà à la bonne taille." },
       { id: "tour_garde", name: "La tour de garde", x: 17.6, y: 72.3, ring: 3, neighbors: ["cimetiere", "maisons_basses", "porte_sanctuaire"],
-        content: { type: "expedition", templateId: "petite_aventure_ruines", pools: { obstacle: ["escalier_sans_fin", "mur_neuf"] } },
+        content: { type: "elite", eliteId: "golem_tour", repeatable: true }, // v3.550.0 (retour Seb, point 7) : élite qui se rejoue, pièce Rare
         heldEffect: null,
         lore: "Une tour qui regarde la ville, pas la plaine. On gardait quelque chose à l'intérieur." },
       { id: "echafaudages", name: "Le chantier aux échafaudages", x: 79.1, y: 67.4, ring: 3, neighbors: ["puits_range", "pont", "porte_sanctuaire"],
@@ -408,7 +408,7 @@ var LIVING_MAPS = {
         heldEffect: null,
         lore: "Une entrée taillée en crâne. Dedans, des lueurs violettes. Ysolt n'y va pas." },
       { id: "nef", name: "La nef", x: 22, y: 12, ring: 3, neighbors: ["tombes", "crane", "source"], labelTop: true,
-        content: { type: "expedition", templateId: "petite_aventure_crypte", pools: { obstacle: ["allee_des_gisants", "grille_basse"] } },
+        content: { type: "elite", eliteId: "pleureuse_nef", repeatable: true }, // v3.550.0 (retour Seb, point 7) : élite qui se rejoue, pièce Épique
         heldEffect: null,
         lore: "Une église sous la terre, plus haute qu'aucune maison d'Aeswyn. Elle n'a pas de fidèles. Elle a des dormeurs." },
       { id: "source", name: "La source verte", x: 51, y: 10, ring: 3, neighbors: ["obelisque", "nef", "temple"], labelTop: true,

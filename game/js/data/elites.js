@@ -298,6 +298,37 @@ var ELITE_DB = {
     winDrop: { rarity: "epic", chancePct: 35, pityAfter: 2 }
   },
 
+  /* v3.550.0 (retour Seb, point 7, option A) — élites qui se rejouent sur les cartes des Ruines et de la Crypte,
+     reprises des élites d'Histoire (nom et portrait). Pièce du palier du monde à 35 %, la 3e victoire sans pièce
+     en donne une (comme la Montagne). Force au banc (campagne-harness, BANC_ELITE). */
+  golem_tour: {
+    id: "golem_tour",
+    baseId: "gargoyle",
+    name: "Le Golem",
+    archetype: "armored",
+    statMult: { endurance: 1.4, power: 4, celerity: 0.6 }, // banc (milieu des Ruines, 3 classes) : 100 %, 8 à 10 rounds, 28 à 30 % des PV, 3-4 victoires par jour
+    lore: "Il a trouvé une tour à sa taille. Il ne la garde pas : il attend qu'on monte.",
+    image: "./images/Enemies/elite_golem.webp",
+    escort: { members: ["zombie"], hpMult: 0.3, goldMult: 0.3 },
+    phases: null,
+    repeatable: true,
+    winDrop: { rarity: "rare", chancePct: 35, pityAfter: 2 }
+  },
+  pleureuse_nef: {
+    id: "pleureuse_nef",
+    baseId: "wraith",
+    name: "La Pleureuse",
+    archetype: "vampiric",
+    lulls: true,
+    statMult: { endurance: 3, power: 3.2, celerity: 1.0 }, // banc (milieu de la Crypte, 3 classes) : 100 %, 7 à 10 rounds, 44 à 50 % des PV, 2-3 victoires par jour
+    lore: "Dans la nef, ses pleurs reviennent en écho. Elle en pleure deux fois plus.",
+    image: "./images/Enemies/elite_pleureuse.webp",
+    escort: { members: ["spectre"], hpMult: 0.3, goldMult: 0.3 },
+    phases: null,
+    repeatable: true,
+    winDrop: { rarity: "epic", chancePct: 35, pityAfter: 2 }
+  },
+
   arbre_mere: {
     id: "arbre_mere",
     baseId: "foresttroll",

@@ -4975,6 +4975,7 @@ I18n.register("en", {
   "Le Golem": "The Golem",
   "Il ne pose plus de pierres. Il regarde où les autres les posent, et il corrige.": "He doesn't lay stones any more. He watches where the others lay them, and he corrects.",
   "Une masse de pierre qui a des bras. Elle ne dort pas. Elle attend qu'on passe devant.": "A mass of stone with arms. It doesn't sleep. It waits for someone to walk past.",
+  "Il a trouvé une tour à sa taille. Il ne la garde pas : il attend qu'on monte.": "It found a tower its own size. It isn't guarding it: it waits for someone to climb.",
   "Varrek, le Garde scellé": "Varrek, the Sealed Guard",
   // v3.431.0 — Ruines, acte III (livraison 2) : étapes 13-15, Clé de voûte, Forge 4, choix « salle », Varrek
   "Sur la table, un anneau de pierre noire. ({x})": "On the table, a ring of black stone. ({x})",
@@ -5735,6 +5736,7 @@ I18n.register("en", {
   "Elle reste avec toi. Elle s'use, un peu, à chaque combat.": "She stays with you. She wears down, a little, with every fight.",
   "Le Porte-couronne": "The Crown-Bearer",
   "La Pleureuse": "The Weeper",
+  "Dans la nef, ses pleurs reviennent en écho. Elle en pleure deux fois plus.": "In the nave, her sobs come back as echoes. She weeps twice as hard.",
   "Il porte deux couronnes, l'une sur l'autre. La seconde n'est pas à lui. Il ne l'enlève pas.": "He wears two crowns, one on top of the other. The second isn't his. He doesn't take it off.",
   "Le carquois d'Ysolt": "Ysolt's Quiver",
   "Des couloirs bas, des niches pleines d'os rangés. Les crânes regardent tous dans le même sens.": "Low corridors, niches full of sorted bones. The skulls all face the same way.",

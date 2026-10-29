@@ -19942,6 +19942,21 @@ console.log("\n[366] v3.549.0 — Carte vivante : objectif de l'Histoire, chemin
   SQ.isCurrentStepReady = sv.ready; SQ.isCurrentStepAccepted = sv.acc; SQ.getCurrentStep = sv.step; SQ.activeChapterIds = sv.act; LM.isLiberated = sv.lib; LM.isStoryStepReached = sv.reach;
 })();
 
+console.log("\n[367] v3.550.0 — Élites qui se rejouent aux Ruines (Golem, pièce Rare) et à la Crypte (Pleureuse, pièce Épique)");
+(function () {
+  try {
+    var LM = g.LivingMapManager, sec = function (m, id) { return g.LIVING_MAPS[m].sectors.filter(function (d) { return d.id === id; })[0]; };
+    [["ruins", "tour_garde", "golem_tour", "rare"], ["crypt", "nef", "pleureuse_nef", "epic"]].forEach(function (x) {
+      var d = sec(x[0], x[1]), e = g.ELITE_DB[x[2]];
+      ok(d.content.type === "elite" && d.content.eliteId === x[2] && d.content.repeatable === true && LM.isRepeatable(x[0], x[1]), x[1] + " : " + x[2] + " se rejoue");
+      ok(e && e.repeatable && e.winDrop && e.winDrop.rarity === x[3] && e.winDrop.chancePct === 35 && e.winDrop.pityAfter === 2, x[2] + " : pièce " + x[3] + " à 35 %, la 3e victoire sans pièce en donne une");
+      ok(fs.existsSync(path.join(ROOT, e.image.replace(/^\.\//, ""))), x[2] + " : portrait présent (" + e.image + ")");
+      ok(g.lmEliteGainIcon(x[0], d) === "images/Icons/equipment_icon/armor_" + x[3] + ".webp", x[2] + " : pastille de la carte = pièce " + x[3]);
+    });
+    ok(g.LIVING_MAPS.ruins.plan.tomber.collapse.indexOf("tour_garde") < 0, "la tour de garde ne s'effondre pas (branche « tomber »)");
+  } catch (err) { ok(false, "[367] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

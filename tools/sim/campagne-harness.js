@@ -1914,6 +1914,28 @@ if (FAILLE) { try { failleBench(); } catch (e) { ok(false, "faille interrompue :
 // v3.463.0 : SAVE_OUT=<fichier> écrit la sauvegarde de fin de partie (héros de fin d'Histoire pour les ateliers)
 if (process.env.SAVE_OUT) { try { require("fs").writeFileSync(process.env.SAVE_OUT, JSON.stringify(G.buildSaveData())); } catch (e) { note("sauvegarde non écrite : " + e.message); } }
 
+/* v3.550.0 (retour Seb, point 7) : BANC_ELITE=carte:secteur:N, après --jusqua. N combats à force de base (compteur du
+   jour remis à zéro), puis une série dans la journée. ESSAI_ELITE=id:endurance,puissance surcharge la donnée. */
+if (process.env.BANC_ELITE) { try { bancElite(); } catch (e) { ok(false, "banc d'élite interrompu : " + e.message + " " + String(e.stack).split("\n")[1]); } }
+function bancElite() {
+  var g = G, LM = g.LivingMapManager, a = process.env.BANC_ELITE.split(":"), mid = a[0], sid = a[1], N = Number(a[2] || 20);
+  if (process.env.ESSAI_ELITE) { var e = process.env.ESSAI_ELITE.split(":"), v = e[1].split(",").map(Number); g.ELITE_DB[e[0]].statMult.endurance = v[0]; g.ELITE_DB[e[0]].statMult.power = v[1]; }
+  CURRENT_STEP = "banc-elite";
+  if (!LM.isLiberated(mid, sid) && !freeSector(mid, sid)) { console.log("BANC " + sid + " : secteur non libéré"); return; }
+  var etat = function () { return g.game.livingMaps[mid].sectors[sid]; };
+  var combat = function () {
+    var f0 = STATS.fights.length, gagne = freeSectorAgain(mid, sid), fs = STATS.fights.slice(f0), dern = fs[fs.length - 1] || {};
+    return { ok: gagne, rounds: fs.reduce(function (x, f) { return x + (f.rounds || 0); }, 0), pv: dern.hpLost || 0 };
+  };
+  var rs = [];
+  for (var i = 0; i < N; i++) { etat().dailyWins = 0; rs.push(combat()); }
+  var gagnes = rs.filter(function (r) { return r.ok; }), moy = function (f) { return gagnes.length ? gagnes.reduce(function (x, r) { return x + f(r); }, 0) / gagnes.length : 0; };
+  var serie = 0; etat().dailyWins = 0;
+  for (var k = 0; k < 8; k++) { if (!combat().ok) break; serie++; }
+  console.log("BANC " + CLASSE + " " + sid + " (niv. " + g.game.heroLevel + ", " + combatLine().split(" · Forge")[0] + ") : " + gagnes.length + "/" + N + " victoires, "
+    + moy(function (r) { return r.rounds; }).toFixed(1) + " rounds, " + Math.round(moy(function (r) { return r.pv; }) * 100) + " % des PV perdus ; série du jour : " + serie + " victoire(s) avant la première défaite (8 max)");
+}
+
 /* Un run de donjon au niveau L, héros remis à neuf : { ok, rounds, pvPerdus, or, eclats, vague }. */
 function failleRun(id, L, libre) {   // libre (v3.462.0) : mode libre du moteur
   var g = G, D = g.DungeonManager;

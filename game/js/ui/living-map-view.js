@@ -517,7 +517,7 @@ function lmEliteGainIcon(mapId, d) {
   if (!c || c.type !== "elite" || (!c.repeatable && LM.isLiberated(mapId, d.id))) return null;
   var e = (window.ELITE_DB && ELITE_DB[c.eliteId]) || {}, R = window.WAREHOUSE_RESOURCES || {};
   if (e.winResource && R[e.winResource.id]) return R[e.winResource.id].icon;
-  if (e.winDrop) return "images/Icons/equipment_icon/armor_epic.webp";
+  if (e.winDrop) return "images/Icons/equipment_icon/armor_" + e.winDrop.rarity + ".webp"; // pièce Rare ou Épique
   var m = LM.getMap(mapId);
   return (m && R[m.rewardResourceId] && R[m.rewardResourceId].icon) || ""; // pastille vide plutôt qu'une image empruntée
 }
