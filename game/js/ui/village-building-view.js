@@ -168,7 +168,7 @@ function buildVillageBuildingSheetHTML(id) {
 
   h += '<div class="vb-sheet-text">' + esc(_td(def.desc)) + '</div>';
 
-  if (level > 0) {
+  if (level > 0 && id !== "apothecary") { // v3.565.0 : l'Apothicaire dit la même chose dans « Aujourd'hui »
     h += '<div class="vb-sheet-effect"><strong>' + _t("Effet actuel :") + '</strong> '
        + esc(VillageBuildingManager.getEffectLabel(id, level)) + '</div>';
   }
@@ -287,6 +287,8 @@ function buildVillageBuildingSheetHTML(id) {
 /* v3.291.0 : commandes de l'Apothicaire, dans sa fiche (décision Seb). Une recette
    acquise est cochée, une commande ouverte montre ses ingrédients et « Livrer », une
    commande d'un monde pas encore atteint dit où elle s'ouvre. */
+var apothecaryLearnedOpen = false; // v3.565.0 : « N recettes acquises » déplié
+
 function buildApothecaryOrdersHTML() {
   var A = window.ApothecaryManager;
   if (!A) return "";
@@ -295,17 +297,24 @@ function buildApothecaryOrdersHTML() {
   // v3.363.0 (acte IV) : le puits du roi, si la forme a été rapportée à Aeswyn
   if (A.hasPuitsDuRoi()) h += '<div class="vb-sheet-effect"><img class="ico-inline" src="images/Icons/village_buildings/puits_du_roi.webp" alt=""> '
      + '<strong>' + _t("Le puits du roi :") + '</strong> ' + _t("2 préparations de plus par jour, moitié moins d’eau.") + '</div>';
-  h += '<div class="vb-sheet-effect"><strong>' + _t("Commandes") + '</strong> ' + _t("— livre une fois, la recette est acquise pour toujours.") + '</div>';
+  /* v3.565.0 (retour Seb, option A) : les recettes acquises tiennent en une ligne repliée ; seules
+     les commandes encore à livrer restent en entier. */
+  var recettes = (APOTHECARY_RECIPES || []).filter(function (r) { return !r.known; });
+  var acquises = recettes.filter(function (r) { return A.isLearned(r.potionId); });
+  if (acquises.length) {
+    h += '<details class="vb-learned"' + (apothecaryLearnedOpen ? ' open' : '') + ' ontoggle="apothecaryLearnedOpen = this.open">'
+       + '<summary class="vb-sheet-effect"><img class="ico-inline" src="images/Icons/system/check_valid.webp" alt=""> '
+       + esc(_tn(acquises.length, "{n} recette acquise", "{n} recettes acquises", { n: acquises.length })) + '<span class="vb-learned-chev" aria-hidden="true">›</span></summary><div class="vb-learned-list">';
+    acquises.forEach(function (r) { var po = A._getPotion(r); h += '<span class="vb-learned-chip">' + esc(po ? _td(po.name) : r.potionId) + '</span>'; });
+    h += '</div></details>';
+  }
+  if (acquises.length < recettes.length) h += '<div class="vb-sheet-effect"><strong>' + _t("Commandes") + '</strong> ' + _t("— livre une fois, la recette est acquise pour toujours.") + '</div>';
 
-  (APOTHECARY_RECIPES || []).forEach(function (r) {
-    if (r.known) return;
+  recettes.forEach(function (r) {
     var potion = A._getPotion(r);
     var name = potion ? _td(potion.name) : r.potionId;
 
-    if (A.isLearned(r.potionId)) {
-      h += '<div class="vb-sheet-effect"><img class="ico-inline" src="images/Icons/system/check_valid.webp" alt=""> ' + esc(_t("{x} — recette acquise", { x: name })) + '</div>';
-      return;
-    }
+    if (A.isLearned(r.potionId)) return; // dans la ligne repliée
     if (!A.isOrderOpen(r.potionId)) {
       h += '<div class="vb-sheet-effect is-locked"><img class=ico-inline src=images/Icons/system/lock_closed.webp> '
          + esc(name) + ' — ' + esc(A.getLockReason(r.potionId)) + '</div>';

@@ -832,3 +832,11 @@
 .go-step button { min-width: 36px; min-height: 36px; border-radius: 8px; border: 1px solid var(--c-bronze-500); background: var(--c-cream-100-soft); font-weight: 700; color: var(--c-brown-850-soft); }
 .go-next { margin: 10px 0 0; font-size: 12px; color: var(--c-brown-750-2); }
 .go-toast { margin: 0 0 10px; padding: 8px 10px; border-radius: 12px; background: var(--c-green-800, #1d3a26); color: #d6f5df; font-weight: 700; font-size: 13px; text-align: center; }
+
+/* v3.565.0 (retour Seb) : Apothicaire, les recettes acquises repliées en une ligne */
+.vb-learned > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+.vb-learned > summary::-webkit-details-marker { display: none; }
+.vb-learned-chev { margin-left: auto; font-weight: 700; transition: transform .15s; }
+.vb-learned[open] .vb-learned-chev { transform: rotate(90deg); }
+.vb-learned-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 10px; }
+.vb-learned-chip { padding: 4px 10px; border-radius: 999px; border: 1px solid var(--c-bronze-500); background: var(--c-cream-50-soft); font-size: 13px; font-weight: 600; color: var(--c-brown-850-soft); }

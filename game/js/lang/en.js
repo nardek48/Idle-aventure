@@ -1941,7 +1941,7 @@ I18n.register("en", {
   "2 préparations de plus par jour, moitié moins d’eau.": "2 more brews per day, half the water.",
   "Commandes": "Orders",
   "— livre une fois, la recette est acquise pour toujours.": "— deliver once, the recipe is yours for good.",
-  "{x} — recette acquise": "{x} — recipe learned",
+  "{n} recette acquise||{n} recettes acquises": ["{n} recipe learned", "{n} recipes learned"],
   "Livrer la commande": "Deliver the order",
   "Fin dans {d}": "Done in {d}",
   "Contrats du jour": "Today's contracts",
