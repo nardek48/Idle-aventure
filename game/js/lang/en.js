@@ -38,6 +38,13 @@ I18n.register("en", {
   "Jalons": "Milestones",
   "Toutes": "All",
   "Étapes terminées": "Completed steps",
+  // v3.556.0 : Carte sur grand écran
+  "Carte vivante": "Living map",
+  "Ce monde s'ouvre en traversant le précédent.": "This world opens once you cross the previous one.",
+  "Donjon · pas encore ouvert": "Dungeon · not open yet",
+  "Ouvrir la carte vivante": "Open the living map",
+  "{n} secteurs · {k} libérés": "{n} sectors · {k} freed",
+  "Donjon · {n} sortie aujourd'hui||Donjon · {n} sorties aujourd'hui": ["Dungeon · {n} run today", "Dungeon · {n} runs today"],
   // v3.505.0 : Chronique de combat
   "Aucune règle n'a encore joué.": "No rule has fired yet.",
   "Journal du combat": "Combat log",

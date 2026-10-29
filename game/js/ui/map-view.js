@@ -106,8 +106,86 @@ function buildMapHTML() {
     h += buildMapNodeHTML(world, index);
   });
   h += '</div>';
+  // v3.556.0 (grand écran, option B) : la carte à gauche, la fiche du monde choisi à droite
+  if (document.documentElement.classList.contains("wide-mode")) return '<div class="mw"><div class="mw-map">' + h + '</div>' + buildMapWideSheetHTML() + '</div>';
   return h;
 }
+
+/* =========================================================
+   v3.556.0 (grand écran, option B, maquette atelier/grand-ecran.html) : fiche du monde à droite de la
+   carte. Toucher un monde le choisit ; la carte vivante, la Petite aventure et le donjon se lancent
+   d'ici. Les données sont celles de la fiche du téléphone (buildWorldPopupHTML).
+   ========================================================= */
+var mapWideSel = -1;  // monde choisi (-1 : le monde où tu es)
+function selectMapWorldWide(index) { mapWideSel = index; if (typeof renderPanel === "function") renderPanel(); }
+window.selectMapWorldWide = selectMapWorldWide;
+
+function mapWideCard(icon, title, text, action) {
+  return '<div class="mw-card"><div class="mw-card-h">' + renderIconOrEmojiHTML(icon, "mw-card-ico", "") + '<b>' + esc(title) + '</b></div>'
+    + '<p>' + esc(text) + '</p>' + (action ? '<div class="mw-card-act">' + action + '</div>' : '') + '</div>';
+}
+
+function buildMapWideSheetHTML() {
+  var cur = WorldManager.worldIndex || 0, idx = mapWideSel >= 0 && mapWideSel < WORLDS.length ? mapWideSel : cur;
+  var world = WORLDS[idx], isCurrent = idx === cur, reached = isWorldUnlocked(idx);
+  var lm = window.LivingMapManager ? LivingMapManager.getMapForWorld(world.id) : null;
+  var h = '<div class="mw-sheet"><div class="mw-head"><img class="mw-head-img" src="' + esc(getWorldThumb(world)) + '" alt="">'
+    + '<div class="mw-head-tx"><h2>' + esc(_td(world.name)) + '</h2><span class="mw-status is-' + (isCurrent ? "current" : reached ? "done" : "locked") + '">' + esc(getWorldProgressText(idx)) + '</span>';
+  var adv = isCurrent ? world.adventures[WorldManager.adventureIndex || 0] : null;
+  if (adv) h += '<small>' + esc(_t("Aventure actuelle :") + " " + _td(adv.name)) + '</small>';
+  h += '<div class="mw-head-act">';
+  if (lm && reached) h += '<button class="kbtn primary" type="button" onclick="openLivingMap(\'' + esc(lm.id) + '\')">' + _t("Ouvrir la carte vivante") + '</button>';
+  if (reached && !isCurrent && window.WorldTravel) {
+    var refusal = WorldTravel.refusalReason(world.id);
+    h += '<button class="kbtn" type="button"' + (refusal ? ' disabled title="' + esc(refusal) + '"' : ' onclick="travelToWorldFromUI(\'' + esc(world.id) + '\')"') + '>' + _t("Y voyager") + '</button>';
+  }
+  h += '</div></div></div>';
+  if (!reached) return h + '<p class="mw-locked">' + esc(_t("Ce monde s'ouvre en traversant le précédent.")) + '</p>' + buildMapWideWorldsHTML(idx) + '</div>';
+
+  // Cartes : carte vivante, Petite aventure, donjon (le monde où tu es pour les départs)
+  var cards = "";
+  if (lm) {
+    var sm = LivingMapManager.getSummary(lm.id);
+    cards += mapWideCard("images/Icons/menu_icons/map_menu.webp", _t("Carte vivante"), _t("{n} secteurs · {k} libérés", { n: sm.total, k: sm.libere }),
+      '<span class="mw-bar"><i style="width:' + (sm.total ? Math.round(100 * sm.libere / sm.total) : 0) + '%"></i></span>');
+  }
+  if (isCurrent && window.MissionBoard) {
+    var pa = MissionBoard.list().filter(function (m) { return m.isPetiteAventure; })[0];
+    if (pa) cards += mapWideCard(MissionBoard.typeIcon(pa.type), _t("Petite aventure"), pa.blurb ? _td(pa.blurb) : (pa.objectiveLabel || ""), buildQuestBoardActionHTML(pa));
+  }
+  (window.DUNGEONS || []).forEach(function (d) {
+    if (d.worldId !== world.id || (d.locked && !d.requiresStoryStep)) return;
+    var open = DungeonManager.isUnlocked(d.id), left = open ? DungeonManager.getRunsLeft(d.id) : 0;
+    cards += mapWideCard("images/Icons/dungeon/dungeon_guaranteed_loot.webp", _td(d.name),
+      open ? _tn(left, "Donjon · {n} sortie aujourd'hui", "Donjon · {n} sorties aujourd'hui") : _t("Donjon · pas encore ouvert"),
+      open && isCurrent ? '<button class="settings-btn" type="button" onclick="openDungeonSheet(' + Number(d.id) + ')">' + _t("Entrer") + '</button>' : "");
+  });
+  if (cards) h += '<div class="mw-cards">' + cards + '</div>';
+  h += buildWorldLoreExcerptHTML(idx);
+  var monsters = getWorldMonsterList(world);
+  if (monsters.length) {
+    h += '<h4 class="mw-h">' + esc(_t("Créatures rencontrées : {a} / {b}", { a: monsters.filter(function (m) { return m.met; }).length, b: monsters.length })) + '</h4><div class="map-monster-row">';
+    monsters.forEach(function (m) {
+      var tap = ' onclick="openCreatureSheet(\'' + esc(m.id) + '\')"';
+      if (!m.met) { h += '<button type="button" class="map-monster-chip is-unknown' + (m.isBoss ? " is-boss" : "") + (m.isElite ? " is-elite" : "") + '"' + tap + '>?</button>'; return; }
+      h += '<button type="button" class="map-monster-chip' + (m.isBoss ? " is-boss" : "") + (m.isElite ? " is-elite" : "") + (m.image ? " has-icon-img" : "") + '" title="' + esc(_td(m.name)) + '"' + tap + '>'
+        + (m.image ? '<img ' + portraitThumbSrcAttrs(m.image) + ' alt="' + esc(_td(m.name)) + '">' : m.icon) + '</button>';
+    });
+    h += '</div>';
+  }
+  return h + buildMapWideWorldsHTML(idx) + '</div>';
+}
+
+// « Les mondes » : les six, pour passer de l'un à l'autre sans revenir à la carte
+function buildMapWideWorldsHTML(sel) {
+  var h = '<h4 class="mw-h">' + esc(_t("Les mondes")) + '</h4><div class="mw-worlds">';
+  WORLDS.forEach(function (w, i) {
+    h += '<button type="button" class="mw-world' + (i === sel ? ' is-sel' : '') + (isWorldUnlocked(i) ? '' : ' is-locked') + '" onclick="selectMapWorldWide(' + i + ')">'
+      + '<img src="' + esc(getWorldThumb(w)) + '" alt=""><span><b>' + esc(_td(w.name)) + '</b><small>' + esc(getWorldProgressText(i)) + '</small></span></button>';
+  });
+  return h + '</div>';
+}
+window.buildMapWideSheetHTML = buildMapWideSheetHTML;
 
 function buildWorldPopupHTML(index) {
   var world = WORLDS[index];
@@ -220,6 +298,8 @@ function buildWorldPopupHTML(index) {
    carte garde sa popup. Depuis la carte vivante elle-même, « Le monde » rouvre la popup. */
 function tapMapWorld(index) {
   var world = WORLDS[index];
+  // v3.556.0 : sur grand écran, toucher un monde le choisit (sa fiche est à droite de la carte)
+  if (document.documentElement.classList.contains("wide-mode") && !(typeof isLivingMapOpen === "function" && isLivingMapOpen())) { selectMapWorldWide(index); return; }
   // v3.301.0 (W-2b) : un monde atteint mais quitté ouvre sa fiche, avec le bouton de voyage
   if (world && index !== (WorldManager.worldIndex || 0) && isWorldUnlocked(index)) { openWorldPopup(index); return; }
   if (world && window.LivingMapManager && LivingMapManager.getMapForWorld(world.id)
