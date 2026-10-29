@@ -771,11 +771,10 @@ var DungeonManager = {
     game.dungeonRun = { active: true, wave: 0, dungeonId: dungeon.id, level: runLevel, free: freeRun, marks: runMarks, shardsEarned: 0, halts: halts, boons: [] };
     if (!game.dungeonTiersEntered || typeof game.dungeonTiersEntered !== "object") game.dungeonTiersEntered = {};
     game.dungeonTiersEntered[dungeon.id] = true;
-    game.heroHp = game.heroMaxHp || 1;
     // v3.102.1 : le donjon est une sortie. SortieManager.start recalcule les stats : les Marques héros (Fragilité,
     // Ascétisme, Fléau) s'appliquent ici via AfflictionManager, dont la source est désormais dungeonRun.marks.
     if (window.SortieManager) { SortieManager.end("return"); SortieManager.start("dungeon"); }
-    game.heroHp = game.heroMaxHp || 1; // on entre à PV pleins, après le recalc des Marques
+    // v3.539.0 (Seb) : plus de soin gratuit à l'entrée ; on entre avec ses PV (même proportion après les Marques)
     addLog("🏰 " + (runMarks.length
       ? _tn(runMarks.length, "Entrée dans {x} sous {n} Marque !", "Entrée dans {x} sous {n} Marques !", { x: _td(dungeon.name) })
       : _t("Entrée dans {x} !", { x: _td(dungeon.name) })), "event");

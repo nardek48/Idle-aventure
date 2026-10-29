@@ -139,10 +139,18 @@ var MilestoneManager = {
     var w = (window.WorldCaps && typeof WorldCaps.getReachedWorldIndex === "function") ? WorldCaps.getReachedWorldIndex() : 0;
     return Math.max(0, Number(w || 0));
   },
-  /* Jalons d'un monde (atteint seulement). */
+  /* Jalons d'un monde (atteint seulement). v3.539.0 (Seb) : un jalon de compagnon attend que ce compagnon
+     ait rejoint le groupe, un jalon de relique qu'il y ait un compagnon. */
   ofWorld: function (w) {
     if (w > this.reachedWorld()) return [];
-    return VILLAGE_MILESTONES.filter(function (m) { return m.w === w; });
+    var CM = window.CompanionManager;
+    return VILLAGE_MILESTONES.filter(function (m) {
+      if (m.w !== w) return false;
+      if (!CM) return true;
+      if ((m.kind === "companionUpg" || m.kind === "companionRank") && m.arg) return CM.isUnlocked(m.arg);
+      if (/^(relicsWorn|relicsOnOne|companionUpgMax)$/.test(m.kind)) return CM.unlockedIds().length > 0;
+      return true;
+    });
   },
   /* Valeur courante d'un jalon. Chaque lecture est défensive : un système absent compte 0. */
   measure: function (m) {

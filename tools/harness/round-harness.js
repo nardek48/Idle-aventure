@@ -19091,7 +19091,7 @@ console.log("\n[331] v3.509.0 — jalons du village et du héros (onglet Seconda
     var game = g.game, MM = g.MilestoneManager, L = g.VILLAGE_MILESTONES;
     ok(L.length === 30 && [0, 1, 2, 3, 4].every(function (w) { return L.filter(function (m) { return m.w === w; }).length === 6; }), "30 jalons, 6 par monde");
     ok(L.every(function (m) { return !m.book || g.MILESTONE_BOOKS[m.book]; }), "chaque fiche « Comment ça marche » existe");
-    ok(MM.ofWorld(1).length === 0 && MM.ofWorld(0).length === 6, "seuls les mondes atteints montrent leurs jalons");
+    ok(MM.ofWorld(1).length === 0 && MM.ofWorld(0).length === 4, "seuls les mondes atteints montrent leurs jalons (v3.539.0 : sans compagnon, 4 en Forêt)");
     var m = L.filter(function (x) { return x.id === "ms_f_taverne"; })[0];
     ok(!MM.isReady(m) && !MM.claim(m.id), "contrat non livré : pas réclamable");
     g.AchievementManager.bump("tavernDelivered");
@@ -19712,6 +19712,33 @@ console.log("\n[356] v3.538.0 — « Texte grand » et titre de page à 18 px (a
     ok(/\.kf-title \{[^}]*font-size: 18px/.test(fs.readFileSync(path.join(ROOT, "css/00-kbtn.css"), "utf8")) && !/\.kf-title \{[^}]*font-size: 16px/.test(fs.readFileSync(path.join(ROOT, "css/09-wide.css"), "utf8")), "titre de page à 18 px, aussi au format large");
     ok(/DesktopScale\.setTextSize/.test(fs.readFileSync(path.join(ROOT, "js/ui/settings-view.js"), "utf8")), "le réglage est dans les Paramètres");
   } catch (err) { ok(false, "[356] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[357] v3.539.0 — Donjon sans soin gratuit ; jalons des compagnons après leur arrivée (Seb)");
+(function () {
+  var G = g.game, sv = { run: JSON.stringify(G.dungeonRun), used: JSON.stringify(G.dungeonRunsUsed || {}), hp: G.heroHp };
+  try {
+    var src = fs.readFileSync(path.join(ROOT, "js/systems/dungeon-system.js"), "utf8");
+    var start = src.slice(src.indexOf("  start: function (dungeonId"), src.indexOf("  onEnemyKilled"));
+    ok(start.indexOf("game.heroHp = game.heroMaxHp") === -1, "DungeonManager.start ne remet plus les PV à 100 %");
+    if (G.dungeonRun.active) run("DungeonManager.forfeit();");
+    G.dungeonRunsUsed = {};
+    G.heroHp = Math.floor(G.heroMaxHp * 0.5);
+    g.DungeonManager.start(1, []);
+    var ratio = G.heroHp / G.heroMaxHp;
+    ok(G.dungeonRun.active && ratio > 0.45 && ratio < 0.55, "entrée à 50 % : le héros reste à 50 % (" + Math.round(100 * ratio) + " %)");
+    run("DungeonManager.forfeit();");
+    var CM = g.CompanionManager, isU = CM.isUnlocked, ids = CM.unlockedIds, M = g.MilestoneManager, rw = M.reachedWorld;
+    M.reachedWorld = function () { return 4; };
+    CM.isUnlocked = function () { return false; }; CM.unlockedIds = function () { return []; };
+    var cach = M.ofWorld(0).map(function (m) { return m.id; }).concat(M.ofWorld(1).map(function (m) { return m.id; }));
+    CM.isUnlocked = function (id) { return id === "wenna"; }; CM.unlockedIds = function () { return ["wenna"]; };
+    var avecW = M.ofWorld(1).map(function (m) { return m.id; });
+    CM.isUnlocked = isU; CM.unlockedIds = ids; M.reachedWorld = rw;
+    ok(cach.indexOf("ms_f_wenna") === -1 && cach.indexOf("ms_f_relique") === -1 && cach.indexOf("ms_d_maddoc") === -1 && cach.indexOf("ms_f_zones") !== -1, "sans compagnon : jalons de compagnon et de relique cachés, les autres restent");
+    ok(avecW.indexOf("ms_d_wenna") !== -1 && avecW.indexOf("ms_d_maddoc") === -1, "Wenna là, Maddoc pas encore : seul le jalon de Wenna s'affiche");
+  } catch (err) { ok(false, "[357] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  G.dungeonRun = JSON.parse(sv.run); G.dungeonRunsUsed = JSON.parse(sv.used); G.heroHp = sv.hp;
 })();
 
 if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
