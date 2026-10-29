@@ -621,7 +621,6 @@ I18n.register("en", {
 
   // js/systems/stats-system.js
   "+{n} dégâts d'Attaque": "+{n} Attack damage",
-  "+{n}% dégâts": "+{n}% damage",
   "+{n}% dégâts de base": "+{n}% base damage",
   "+{n}% or": "+{n}% gold",
   "+{n}% critique": "+{n}% critical",

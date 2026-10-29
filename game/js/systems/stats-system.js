@@ -39,7 +39,7 @@ function formatSetBonusEffect(effect) {
   var parts = [];
 
   if (effect.tapDamage != null) parts.push(_t("+{n} dégâts d'Attaque", { n: formatNumber(effect.tapDamage) }));
-  if (effect.tapMult != null) parts.push(_t("+{n}% dégâts", { n: Math.round(effect.tapMult * 100) }));
+  if (effect.tapMult != null) parts.push(_t("+{n}% dégâts de base", { n: Math.round(effect.tapMult * 100) })); // v3.546.0 : libellé honnête (accord Seb)
   if (effect.goldMult != null) parts.push(_t("+{n}% or", { n: Math.round(effect.goldMult * 100) }));
   if (effect.critChance != null) parts.push(_t("+{n}% critique", { n: formatNumber(effect.critChance) }));
   if (effect.critMult != null) parts.push(_t("+{n}x dégâts crit", { n: formatNumber(effect.critMult) }));
