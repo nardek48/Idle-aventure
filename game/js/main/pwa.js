@@ -109,6 +109,89 @@ function reloadForPwaUpdate() {
 }
 
 /* ---------------------------------------------------------------------------
+   v3.591.0 (demande de Seb) : chercher une mise à jour, ou la forcer — à l'accueil et dans
+   Paramètres › Partie. La sauvegarde vit dans localStorage : vider le cache du jeu n'y touche pas.
+   - check() : demande au navigateur de relire sw.js ; nouvelle version -> installation puis
+     redémarrage dès qu'elle prend la main ; sinon « tu as la dernière version ».
+   - force() : sauvegarde, vide les caches du jeu, retire le service worker et relance :
+     tout est retéléchargé (dernier recours si une version reste bloquée).
+   Les messages s'écrivent dans la carte (.pwa-upd-msg) : un toast passerait sous l'accueil.
+--------------------------------------------------------------------------- */
+var PwaUpdate = {
+  busy: false,
+
+  say: function (text) {
+    var list = document.querySelectorAll(".pwa-upd-msg");
+    for (var i = 0; i < list.length; i++) list[i].textContent = text;
+  },
+
+  /* Sauvegarde avant de relancer, seulement si une partie est chargée (accueil : rien à écrire) */
+  saveFirst: function () {
+    try { if (typeof saveGame === "function" && window.game && game.heroId) saveGame(); } catch (e) { noteErreur("pwa.saveFirst", e); }
+  },
+
+  restart: function () {
+    this.saveFirst();
+    setTimeout(function () { window.location.reload(); }, 600);
+  },
+
+  check: function () {
+    var self = this;
+    if (self.busy) return;
+    if (!("serviceWorker" in navigator)) { self.say(_t("Ce navigateur charge toujours la dernière version : recharge la page.")); return; }
+    if (navigator.onLine === false) { self.say(_t("Pas de connexion : réessaie quand tu seras en ligne.")); return; }
+    self.busy = true;
+    self.say(_t("Recherche d'une mise à jour…"));
+    navigator.serviceWorker.getRegistration().then(function (reg) {
+      if (!reg) { self.busy = false; self.say(_t("Aucune version installée sur cet appareil : recharge la page.")); return; }
+      return reg.update().then(function () {
+        var next = reg.installing || reg.waiting;
+        if (!next) { self.busy = false; self.say(_t("Tu as la dernière version (v{v}).", { v: GAME_VERSION })); return; }
+        self.say(_t("Nouvelle version trouvée : installation…"));
+        // sw.js s'active seul (skipWaiting) : on relance quand il prend la main, au plus tard après 15 s
+        var done = false, go = function () { if (done) return; done = true; self.say(_t("Le jeu redémarre…")); self.restart(); };
+        navigator.serviceWorker.addEventListener("controllerchange", go, { once: true });
+        setTimeout(go, 15000);
+      });
+    }).catch(function () {
+      self.busy = false;
+      self.say(_t("Impossible de joindre le serveur : réessaie plus tard."));
+    });
+  },
+
+  force: function () {
+    var self = this;
+    if (self.busy) return;
+    if (navigator.onLine === false) { self.say(_t("Pas de connexion : réessaie quand tu seras en ligne.")); return; }
+    self.busy = true;
+    self.say(_t("Mise à jour forcée : le jeu redémarre…"));
+    self.saveFirst();
+    var clearCaches = (window.caches && caches.keys) ? caches.keys().then(function (names) {
+      return Promise.all(names.filter(function (n) { return n.indexOf("quest-idle") === 0; }).map(function (n) { return caches.delete(n); }));
+    }) : Promise.resolve();
+    var dropWorker = ("serviceWorker" in navigator) ? navigator.serviceWorker.getRegistrations().then(function (regs) {
+      return Promise.all(regs.map(function (r) { return r.unregister(); }));
+    }) : Promise.resolve();
+    Promise.all([clearCaches, dropWorker]).catch(function (e) { noteErreur("pwa.force", e); }).then(function () {
+      setTimeout(function () { window.location.reload(); }, 400);
+    });
+  }
+};
+window.PwaUpdate = PwaUpdate;
+
+/* Carte « Mises à jour » : Paramètres › Partie et feuille des Paramètres de l'accueil */
+function buildPwaUpdateCardHTML() {
+  var h = '<div class="set-card">';
+  h += '<div class="kkick">' + _t("Mises à jour") + '</div>';
+  h += '<p>' + _t("Version installée : v{v}. Le jeu se met à jour seul ; si une version tarde à arriver, cherche-la ici.", { v: (typeof GAME_VERSION === "string" ? GAME_VERSION : "?") }) + '</p>';
+  h += '<div class="set-pair"><button type="button" class="settings-btn" onclick="PwaUpdate.check()"><img class=ico-inline src=images/Icons/system/reset.webp> ' + _t("Chercher") + '</button>';
+  h += '<button type="button" class="settings-btn" onclick="PwaUpdate.force()"><img class=ico-inline src=images/Icons/system/warning.webp> ' + _t("Forcer") + '</button></div>';
+  h += '<p class="set-note pwa-upd-msg" role="status" aria-live="polite">' + _t("« Forcer » vide le cache du jeu et retélécharge tout. Ta sauvegarde n'est pas touchée.") + '</p>';
+  return h + '</div>';
+}
+window.buildPwaUpdateCardHTML = buildPwaUpdateCardHTML;
+
+/* ---------------------------------------------------------------------------
    v3.359.0 : installation du jeu sur l'appareil (repris de Sirop & Cie).
    - Chrome, Edge, Android : le navigateur signale l'installation possible par
      « beforeinstallprompt ». On met l'événement de côté et on affiche NOTRE bouton ;

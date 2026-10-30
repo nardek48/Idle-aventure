@@ -20527,6 +20527,30 @@ console.log("\n[391] v3.587.0 — Petites Aventures : la carte de nuit garde son
   } catch (err) { ok(false, "[391] exception : " + err.message); }
 })();
 
+console.log("\n[388] v3.591.0 — Accueil : Paramètres (import vers un emplacement libre), mises à jour à l'accueil et dans Paramètres › Partie");
+(function () {
+  try {
+    // pwa.js n'est pas chargé par le harnais (ligne 24) : la carte est lue dans sa source, son appel dans Paramètres
+    var pwaSrc = require("fs").readFileSync(ROOT + "/js/main/pwa.js", "utf8"), setSrc = require("fs").readFileSync(ROOT + "/js/ui/settings-view.js", "utf8");
+    ok(/function buildPwaUpdateCardHTML/.test(pwaSrc) && /PwaUpdate\.check\(\)/.test(pwaSrc) && /PwaUpdate\.force\(\)/.test(pwaSrc) && /buildPwaUpdateCardHTML\(\)/.test(setSrc), "Paramètres › Partie : carte « Mises à jour » (chercher, forcer)");
+    ok(/caches\.delete/.test(pwaSrc) && /unregister\(\)/.test(pwaSrc) && /saveFirst/.test(pwaSrc), "forcer : sauvegarde, vide le cache du jeu, retire le service worker");
+    var app = g.buildSettingsAppareilHTML("title");
+    ok(/Langue/.test(app) && /I18n\.setLang/.test(app) && !/Journal de test/.test(app) && !/switchTab\(\\?'admin/.test(app), "accueil : réglages de l'appareil, sans journal de test ni Admin, langue sans fenêtre");
+    ok(typeof g.openTitleSettingsSheet === "function" && typeof g.importSaveToFreeSlots === "function", "feuille des Paramètres de l'accueil et import vers un emplacement libre présents");
+    // import : un héros dans l'emplacement 1, le fichier en apporte un autre -> emplacement 2, le 1 intact
+    var store = g.localStorage, keep = {}, n = g.MAX_HERO_SLOTS || 6, msgs = [];
+    for (var i = 1; i <= n; i++) { keep[i] = store.getItem(g.getSlotKey(i)); store.removeItem(g.getSlotKey(i)); }
+    var saved = game.saveSupported; game.saveSupported = true;
+    store.setItem(g.getSlotKey(1), JSON.stringify({ playerName: "Aelis", heroId: "knight", gold: 1, equipped: {}, talents: {} }));
+    var sayKeep = g.titleSettingsSay; g.titleSettingsSay = function (t) { msgs.push(t); };
+    g.importSaveToFreeSlots({ aethervaleMultiSave: true, slots: { 1: { playerName: "Bran", heroId: "ranger", gold: 2, equipped: {}, talents: {} } } }, true, false);
+    var s1 = JSON.parse(store.getItem(g.getSlotKey(1)) || "{}"), s2 = JSON.parse(store.getItem(g.getSlotKey(2)) || "{}");
+    ok(s1.playerName === "Aelis" && s2.playerName === "Bran" && /importé/.test(msgs[0] || ""), "import depuis l'accueil : emplacement libre, le héros existant n'est pas écrasé");
+    g.titleSettingsSay = sayKeep; game.saveSupported = saved;
+    for (var j = 1; j <= n; j++) { if (keep[j] === null || keep[j] === undefined) store.removeItem(g.getSlotKey(j)); else store.setItem(g.getSlotKey(j), keep[j]); }
+  } catch (err) { ok(false, "[388] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

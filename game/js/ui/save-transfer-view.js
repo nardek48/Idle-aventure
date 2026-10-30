@@ -143,6 +143,8 @@ function looksLikeMultiSave(d) {
 function applyImportedSave(data) {
   var isMulti = looksLikeMultiSave(data);
   var isSingle = !isMulti && looksLikeQuestIdleSave(data);
+  // v3.591.0 : depuis l'accueil, chaque héros importé prend un emplacement libre (rien n'est écrasé)
+  if (typeof titleScreenIsOpen === "function" && titleScreenIsOpen()) return importSaveToFreeSlots(data, isMulti, isSingle);
 
   if (!isMulti && !isSingle) {
     showToast(_t("❌ Fichier invalide (pas une sauvegarde Aethervale)"), 2200);
@@ -222,6 +224,29 @@ function applyImportedSave(data) {
     doImport();
   }
 }
+
+/* v3.591.0 : import depuis l'accueil (feuille des Paramètres). Chaque héros du fichier est écrit dans le
+   premier emplacement libre ; aucun emplacement occupé n'est touché. Message dans la feuille (titleSettingsSay). */
+function importSaveToFreeSlots(data, isMulti, isSingle) {
+  var say = typeof titleSettingsSay === "function" ? titleSettingsSay : function (t) { showToast(t, 2200); };
+  if (!isMulti && !isSingle) { say(_t("❌ Fichier invalide (pas une sauvegarde Aethervale)")); return; }
+  var heroes = isMulti ? Object.keys(data.slots).map(function (k) { return data.slots[k]; }).filter(Boolean) : [data];
+  var maxSlots = window.MAX_HERO_SLOTS || 3, written = 0, next = 1;
+  heroes.forEach(function (hero) {
+    while (next <= maxSlots && HeroSlotManager.hasSlot(next)) next++;
+    if (next > maxSlots) return;
+    try {
+      localStorage.setItem(getSlotKey(next), JSON.stringify(hero));
+      dropSlotBackup(getSlotKey(next));
+      written++; next++;
+    } catch (e) { noteErreur("save-transfer.importSaveToFreeSlots", e); }
+  });
+  if (!written) { say(_t("Plus d'emplacement libre : supprime une partie avant d'importer.")); return; }
+  var left = heroes.length - written;
+  say(left ? _t("{n} héros importé(s) ; {m} sans place libre.", { n: written, m: left }) : _tn(written, "{n} héros importé : il t'attend dans « Charger ».", "{n} héros importés : ils t'attendent dans « Charger »."));
+  if (typeof renderTitleScreen === "function") renderTitleScreen();
+}
+window.importSaveToFreeSlots = importSaveToFreeSlots;
 
 /* Lit le fichier choisi via l'input caché (voir index.html) et tente
    de l'importer comme sauvegarde. */

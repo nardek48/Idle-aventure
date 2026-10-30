@@ -217,3 +217,16 @@
 .pwa-install-btn-title:active { transform: translateX(-50%) scale(0.97); }
 .pwa-install-btn-title .ico-inline { width: 16px; height: 16px; border-radius: 4px; }
 /* v3.571.0 : règle « 100lvh » de l'appli installée remplacée en v3.572.0 par la vraie hauteur d'écran (css/01-base.css). */
+
+/* v3.591.0 : roue des Paramètres de l'accueil et sa feuille (atelier accueil-parametres.html) */
+.ts-gear { position: absolute; z-index: 5; top: calc(var(--safe-top, env(safe-area-inset-top, 0px)) + 12px); right: 12px; width: 44px; height: 44px; border-radius: 50%;
+  display: grid; place-items: center; padding: 0; cursor: pointer;
+  background: radial-gradient(circle at 50% 40%, rgba(48, 36, 22, 0.95), rgba(16, 11, 6, 0.95)); border: 2px solid rgba(214, 160, 60, 0.85); box-shadow: 0 3px 10px rgba(0, 0, 0, 0.6); }
+.ts-gear img { width: 26px; height: 26px; object-fit: contain; }
+.ts-gear:focus-visible { outline: 2px solid var(--c-bronze-300-soft); outline-offset: 2px; }
+html.wide-mode .ts-gear { top: 18px; right: 22px; width: 48px; height: 48px; }
+#title-settings-root { position: relative; z-index: 9200; } /* au-dessus de l'accueil (9000) et de sa confirmation (9100), sous le voile de démarrage (9999) */
+.ts-set-sheet .ksheet-body { display: grid; gap: 10px; }
+.ts-set-sheet .ts-paste { display: grid; gap: 8px; margin-top: 8px; }
+.ts-set-sheet .ts-paste .settings-btn { margin: 0 auto; }
+.ts-set-sheet .ts-set-msg:empty { display: none; }
