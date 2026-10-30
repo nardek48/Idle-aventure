@@ -174,7 +174,8 @@ button:focus-visible { outline: 2px solid var(--bronze); outline-offset: 2px; }
     }
   }
 
-  function charger(v) { if (v && typeof v === "object") { etat.ordre = v.ordre || {}; etat.fait = v.fait || {}; } }
+  // Copie profonde : les données de la base sont figées, on ne peut pas les modifier sur place
+  function charger(v) { if (v && typeof v === "object") { v = JSON.parse(JSON.stringify(v)); etat.ordre = v.ordre || {}; etat.fait = v.fait || {}; } }
 
   function modeLocal() {
     ref = null;
