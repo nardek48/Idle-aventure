@@ -20240,6 +20240,19 @@ console.log("\n[379] v3.570.0 — Le prologue (option B, atelier atelier/prologu
   } catch (err) { ok(false, "[379] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[380] v3.576.0 — Petites Aventures, lot 1 : caméra sans sauts, zoom de départ");
+(function () {
+  try {
+    var src = fs.readFileSync(path.join(ROOT, "js/ui/pa2-view.js"), "utf8");
+    ok(g.PA2_ZOOM_START === 1.4 && g.PA2_ZOOM_START <= g.PA2_ZOOM_MAX, "la carte s'ouvre à ×1,4 (choix de Seb), sous le zoom maximum ×2");
+    ok(/if \(pa2CamHeroHidden\(\)\) pa2CamFollow\(true\)/.test(src), "une feuille ouverte ne recentre que si elle cache le héros");
+    ok(/pa2CamSheetH\(\) \|\| \(pa2View\.sheet \? \(pa2View\.camSheet \|\| 0\) : 0\)/.test(src), "pendant un rendu, la feuille ouverte compte encore dans les bornes");
+    ok(/pa2View\.camDrawn = shown/.test(src) && /pa2CamShownXY/.test(src), "un rendu pendant un glissement repart de la position affichée");
+    ok(typeof g.pa2CamKeepMoves === "function" && typeof g.pa2CamRevealMoves === "function", "les points accessibles restent visibles (parcours aux étapes espacées)");
+    ok(g.PA2_FOLLOW_Y > 0.2 && g.PA2_FOLLOW_Y < 0.5, "le héros suivi est placé au-dessus du milieu de l'écran");
+  } catch (err) { ok(false, "[380] exception : " + err.message); }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");
