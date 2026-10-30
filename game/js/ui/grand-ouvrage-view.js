@@ -3,7 +3,7 @@
    Grand Ouvrage en tête des bâtiments du Village, et sa fiche (bonus, jauge, « Verser le surplus »,
    « Choisir quoi verser » dépliable). Logique : systems/grand-ouvrage-system.js. */
 
-var GRAND_OUVRAGE_ICON = "images/Icons/village_buildings/grand_ouvrage.webp"; // à faire : l'icône générique s'affiche d'ici là
+var GRAND_OUVRAGE_ICON = "images/Icons/village_buildings/grand_ouvrage.webp"; // v3.566.0 : image livrée
 var grandOuvrageListOpen = false;   // « Choisir quoi verser » déplié
 var grandOuvragePick = {};          // quantités choisies à la main, { key: n }
 var grandOuvrageFlash = "";         // bandeau après un palier franchi

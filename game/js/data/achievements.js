@@ -246,7 +246,7 @@ var ACHIEVEMENTS_DB = [
       return Object.keys(lv).some(function (k) { return Number(lv[k]) > 0; }) ? 1 : 0;
     }, reward: { gold: 300 } },
 
-  /* v3.561.0 (retour Seb, point 9) : un haut fait tous les 5 paliers du Grand Ouvrage (icônes à faire : générique d'ici là). */
+  /* v3.561.0 (retour Seb, point 9) : un haut fait tous les 5 paliers du Grand Ouvrage (icônes en v3.566.0). */
   { id: "hf_vil_ouvrage_5", category: "village", name: "Première arche", desc: "Atteindre le palier 5 du Grand Ouvrage.",
     target: 5, track: function () { return window.GrandOuvrage ? GrandOuvrage.getTier() : 0; }, reward: { gold: 500 } },
   { id: "hf_vil_ouvrage_10", category: "village", name: "L'arche tient", desc: "Atteindre le palier 10 du Grand Ouvrage.",
