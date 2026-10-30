@@ -500,9 +500,12 @@ function pa2RefreshHud() {
 function buildPa2MapScreenHTML(run) {
   var n = Pa2Run.node(run.at, run), v = pa2View.cam, map = Pa2Run.getMap(run);
   var keep = v.key === pa2CamKey(run) && v.w;
+  // v3.576.0 : un rendu pendant un glissement repart de la position affichée, pas de l'arrivée
+  var shown = keep ? pa2CamShownXY() : null;
+  pa2View.camDrawn = shown || { tx: v.tx, ty: v.ty };
   var h = '<div class="pa2-fs pa2-page" id="pa2-fs">';
   h += '<div class="pa2-vp" id="pa2-vp"><div class="pa2-stage" id="pa2-stage" style="' + (keep
-    ? 'width:' + v.w + 'px;height:' + (v.w * map.height / map.width) + 'px;transform:translate3d(' + v.tx + 'px,' + v.ty + 'px,0);--nk:' + pa2CamNk()
+    ? 'width:' + v.w + 'px;height:' + (v.w * map.height / map.width) + 'px;transform:translate3d(' + pa2View.camDrawn.tx + 'px,' + pa2View.camDrawn.ty + 'px,0);--nk:' + pa2CamNk()
     : 'visibility:hidden') + '">' + pa2MapHTML(run) + '</div></div>';
   h += pa2HudHTML(run);
   // Consigne : seulement avant le premier pas, elle s'efface d'elle-même.
@@ -520,6 +523,7 @@ function buildPa2MapScreenHTML(run) {
 /* ---------- Caméra de la carte (moteur commun, ui/map-camera.js) ---------- */
 
 var PA2_ZOOM_MAX = 2;       // choix de Seb (atelier) : ×2 par rapport au cadrage Couvrant
+var PA2_ZOOM_START = 1.4;   // v3.576.0 (retour Seb) : la carte s'ouvre zoomée, on ne voit pas tout d'un coup
 var PA2_NODE_GROW = 0.4;    // choix de Seb (atelier) : les repères grossissent peu (taille ∝ zoom^0,4)
 
 var pa2Cam = window.MapCamera ? MapCamera.create({
@@ -527,12 +531,21 @@ var pa2Cam = window.MapCamera ? MapCamera.create({
   ratio: function () { var m = window.Pa2Run && Pa2Run.getMap(); return m ? m.height / m.width : 1; },
   zoomMax: function () { return PA2_ZOOM_MAX; },
   topSlack: function () { return pa2View.camTop || 0; },
-  bottomSlack: function () { return pa2CamSheetH(); },
+  bottomSlack: function () { return pa2CamSheetH() || (pa2View.sheet ? (pa2View.camSheet || 0) : 0); }, // v3.576.0 : pendant un rendu, la feuille ouverte compte encore
   onSettle: function () { pa2CamOffscreen(); },
   onReset: function () { pa2CamFollow(true); },
   onResize: function (st) { st.style.setProperty("--nk", pa2CamNk()); }
 }) : null;
 
+// Translation affichée de la scène (animation en cours comprise), ou null.
+function pa2CamShownXY() {
+  var st = document.getElementById ? document.getElementById("pa2-stage") : null;
+  if (!st || typeof getComputedStyle !== "function") return null;
+  var m = /matrix\(([^)]+)\)/.exec(getComputedStyle(st).transform || "");
+  if (!m) return null;
+  var p = m[1].split(",").map(Number);
+  return p.length === 6 && isFinite(p[4]) && isFinite(p[5]) ? { tx: p[4], ty: p[5] } : null;
+}
 function pa2CamKey(run) { return run.id + "|" + (run.mapId || (run.map && run.map.image) || ""); }
 // Compensation de taille des repères : 1 en Couvrant, (Couvrant / largeur)^0,6 en zoomant.
 function pa2CamNk() { var c = pa2Cam ? pa2Cam.coverW() : 0, w = pa2View.cam.w; return c && w ? Math.pow(c / w, 1 - PA2_NODE_GROW).toFixed(3) : "1"; }
@@ -552,14 +565,47 @@ function pa2CamAfterRender(run) {
   if (!pa2Cam) return;
   pa2CamTop();
   var v = pa2View.cam, key = pa2CamKey(run);
-  if (v.key !== key || !v.w) { v.key = key; pa2Cam.resetCover(); pa2CamFollow(false); }
-  else pa2Cam.refit();
+  if (v.key !== key || !v.w) { v.key = key; pa2Cam.resetCover(); v.w = Math.min(pa2Cam.maxW(), v.w * PA2_ZOOM_START); pa2CamFollow(false); return; }
+  // v3.576.0 : la carte revient dans ses bornes en glissant (une feuille fermée), jamais d'un saut
+  var d0 = pa2View.camDrawn || { tx: v.tx, ty: v.ty }, st = document.getElementById("pa2-stage");
+  v.w = Math.max(pa2Cam.coverW(), Math.min(pa2Cam.maxW(), v.w));
+  pa2Cam.clamp(); pa2CamRevealMoves();
+  if (st && st.getBoundingClientRect) st.getBoundingClientRect(); // position de départ prise en compte avant l'animation
+  pa2Cam.apply(Math.abs(d0.tx - v.tx) + Math.abs(d0.ty - v.ty) > 1);
 }
-// Centre le nœud du héros dans la zone utile (sous l'en-tête, au-dessus de la feuille).
+// Place le nœud du héros dans la zone utile (sous l'en-tête, au-dessus de la feuille).
+// v3.576.0 : sans feuille, vers 40 % de la hauteur, pour qu'une feuille qui s'ouvre le cache rarement.
+var PA2_FOLLOW_Y = 0.4;
 function pa2CamFollow(anim) {
-  var run = Pa2Run.getRun(); if (!pa2Cam || !run || !document.getElementById("pa2-vp")) return;
-  var map = Pa2Run.getMap(run), d = map.nodes[run.at];
-  if (d) pa2Cam.centerOn(d.x / map.width, d.y / map.height, anim);
+  var run = Pa2Run.getRun(), vp = document.getElementById("pa2-vp"); if (!pa2Cam || !run || !vp) return;
+  var map = Pa2Run.getMap(run), d = map.nodes[run.at], v = pa2View.cam; if (!d) return;
+  var T = pa2Cam.top(), H = vp.clientHeight - pa2Cam.bottom(), W = vp.clientWidth, f = pa2View.sheet ? 0.5 : PA2_FOLLOW_Y;
+  v.tx = W / 2 - v.w * d.x / map.width;
+  v.ty = T + (H - T) * f - v.w * d.y / map.width;
+  if (!pa2View.sheet) pa2CamKeepMoves(run, map, d, T, H, W);
+  pa2Cam.clamp(); pa2Cam.apply(anim);
+}
+// Les points où l'on peut aller restent visibles (sentiers très espacés des parcours), sans perdre le héros.
+function pa2CamKeepMoves(run, map, d, T, H, W) {
+  var v = pa2View.cam, k = v.w / map.width, M = 44; // marge autour d'un repère, en px
+  Pa2Run.openMoves().forEach(function (key) {
+    var q = map.nodes[key]; if (!q) return;
+    var sy = v.ty + k * q.y, sx = v.tx + k * q.x;
+    if (sy < T + M) v.ty = Math.min(v.ty + (T + M - sy), H - M - k * d.y);
+    else if (sy > H - M) v.ty = Math.max(v.ty - (sy - H + M), T + M - k * d.y);
+    if (sx < M) v.tx = Math.min(v.tx + (M - sx), W - M - k * d.x);
+    else if (sx > W - M) v.tx = Math.max(v.tx - (sx - W + M), M - k * d.x);
+  });
+}
+// Feuille fermée, de retour sur la carte : décalage minimal si un point accessible est hors de vue.
+function pa2CamRevealMoves() {
+  var run = Pa2Run.getRun(), vp = document.getElementById("pa2-vp");
+  if (!pa2Cam || !run || !vp || pa2View.sheet || run.status !== PA2_STATUS.map) return false;
+  var map = Pa2Run.getMap(run), d = map.nodes[run.at]; if (!d) return false;
+  var v = pa2View.cam, ox = v.tx, oy = v.ty;
+  pa2CamKeepMoves(run, map, d, pa2Cam.top(), vp.clientHeight - pa2Cam.bottom(), vp.clientWidth);
+  pa2Cam.clamp();
+  return Math.abs(ox - v.tx) + Math.abs(oy - v.ty) > 1;
 }
 window.pa2CamFollow = pa2CamFollow;
 // Héros hors de la zone utile : pastille au bord, flèche vers lui.
@@ -893,15 +939,23 @@ function pa2SetSheetHTML(inner, label, closable) {
   box.innerHTML = '<div class="pa2-scrim"' + (closable ? ' onclick="if(event.target===this)pa2ClosePicker()"' : '') + '><div class="pa2-sheet" role="dialog" aria-modal="true" aria-label="' + esc(label || "") + '">' + body + '</div></div>';
 }
 
-/* v3.394.0 : la feuille ouverte (ou changée de taille) réduit la zone utile ; le nœud du héros
-   est ramené au-dessus d'elle. Feuille fermée : la carte reprend toute la hauteur. */
+/* v3.394.0 : la feuille ouverte (ou changée de taille) réduit la zone utile.
+   v3.576.0 (retour Seb, « la carte va dans tous les sens ») : on ne recentre que si la feuille
+   cache le héros ; feuille fermée, la carte glisse doucement dans ses bornes au lieu de sauter. */
+function pa2CamHeroHidden() {
+  var run = Pa2Run.getRun(), vp = document.getElementById("pa2-vp"); if (!run || !vp) return false;
+  var map = Pa2Run.getMap(run), d = map.nodes[run.at], v = pa2View.cam; if (!d || !v.w) return false;
+  var sy = v.ty + v.w * d.y / map.width, H = vp.clientHeight - pa2CamSheetH(), T = pa2View.camTop || 0;
+  return sy > H - 48 || sy < T + 24;
+}
 function pa2CamSheetChanged() {
   if (!pa2Cam || !document.getElementById("pa2-vp")) return;
   var go = function () {
     var h = pa2CamSheetH();
     if (Math.abs(h - (pa2View.camSheet || 0)) < 2) return;
     pa2View.camSheet = h;
-    if (h) pa2CamFollow(true); else pa2Cam.refit();
+    if (h) { if (pa2CamHeroHidden()) pa2CamFollow(true); }
+    else { pa2Cam.clamp(); pa2CamRevealMoves(); pa2Cam.apply(true); }
   };
   if (typeof requestAnimationFrame === "function") requestAnimationFrame(go); else go();
 }
