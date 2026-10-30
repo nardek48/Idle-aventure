@@ -45,6 +45,13 @@ I18n.register("en", {
   "Rebâti planche après planche": "Rebuilt plank by plank",
   "Le terrain d'entraînement": "The training ground",
   "Se préparer avant de repartir": "Get ready before setting out again",
+  // v3.583.0 : bandeaux des pages du menu
+  "La bibliothèque": "The library",
+  "Bêtes et savoirs du voyage": "Beasts and lore from the road",
+  "Le journal": "The journal",
+  "La chronique du voyage": "The chronicle of the journey",
+  "Les hauts faits": "The great deeds",
+  "Le mur des trophées": "The trophy wall",
   "{n} bâtiment de production||{n} bâtiments de production": ["{n} production building", "{n} production buildings"],
   "{n} mondes · {k} ouverts": "{n} worlds · {k} open",
   // v3.555.0 : Quêtes sur grand écran
