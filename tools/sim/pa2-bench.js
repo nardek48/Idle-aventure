@@ -44,6 +44,7 @@ if (OVR) {
   if (o.ringFoe) ["sentier", "chemin", "periple"].forEach(function (r, i) { g.PA2_RINGS[r].foeMult = o.ringFoe[i]; });
   if (o.map) g.PA2_MAPS_BY_WORLD.forest = [o.map]; // v3.386.0 : banc sur une carte donnée (foret_1, foret_2)
   if (o.map && o.tune) g.PA2_MAPS[o.map].tune = o.tune; // v3.386.0 : {"foeMult":0.9,"lootMult":1.1}
+  if (o.d20) Object.assign(g.PA2_D20, o.d20); // v3.578.0 : coût de la relance
   if (o.rules) Object.assign(g.PA2_RULES, o.rules); // v3.578.0 : réglages de PA2_RULES
   if (o.walk != null) Object.keys(g.PA2_WORLD_RULES).forEach(function (w) { g.PA2_WORLD_RULES[w].stepBreath = o.walk; });
   if (o.epuise) { var ck0 = g.Pa2Run._check; g.Pa2Run._check = function (run, stat, ctx) { // prototype : Souffle bas, malus au jet
@@ -112,7 +113,7 @@ function playRun(c, stage) {
   P.depart();
   if (CRYPTE && run.stock.lanterne > 0) P.useItem("lanterne"); // allumée au départ
   var max = g.game.heroMaxHp, seconds = SECONDS.prep, nodes = 0;
-  var br = { min: 100, brute: 0, gourde0: run.stock.gourde || 0, rest: 0, cook: 0, healRest: 0, healCook: 0, src: 0, srcBr: 0 }; // v3.578.0 : lot 3
+  var br = { insist: 0, min: 100, brute: 0, gourde0: run.stock.gourde || 0, rest: 0, cook: 0, healRest: 0, healCook: 0, src: 0, srcBr: 0 }; // v3.578.0 : lot 3
   var lossByAct = { 1: 0, 2: 0, 3: 0 }, guard = 200, koAt = null;
   var traps = { met: 0, back: 0, hit: {}, placed: Object.keys(run.traps || {}).length };
   var target = ["BOSS", "CLAIRIERE", "TERTRE"][Math.floor(Math.random() * 3)];
@@ -120,11 +121,20 @@ function playRun(c, stage) {
     if (g.game.heroHp / max >= 0.4) return;
     ["grande_ration", "ration", "petite_ration"].forEach(function (id) { if (g.game.heroHp / max < 0.4 && run.stock[id] > 0) P.useItem(id); });
   }
+  function insistOrKeep() { // v3.578.0 (lot 3) : raté, on insiste si on peut ; de justesse, s'il reste du Souffle
+    var r = run.pending.res;
+    if (r.kind === "ko" && !P.canInsist(run) && run.stock.gourde > 0) P.useItem("gourde"); // la gourde, pour avoir de quoi insister
+    var go = r.kind === "ko" ? P.canInsist(run) : run.breath >= 45;
+    br.insist += go ? 1 : 0;
+    return P.insist(!go);
+  }
   while (run.status !== "completed" && guard-- > 0) {
+    if (run.pending) { if (!insistOrKeep().ok) break; continue; }
     if (run.status === "pa2-trap") {
       var hpT = g.game.heroHp, tc = trapChoice(P, run), tr = P.resolveTrap(tc);
       if (!tr.ok) break;
       traps.met++; if (tr.result && tr.result.fx && (tr.result.kind === "ko" || tr.result.kind === "endure")) traps.hit[tr.result.fx] = (traps.hit[tr.result.fx] || 0) + 1;
+      if (run.pending) insistOrKeep();
       if (tc !== "rebrousser") P.trapContinue(); else traps.back++;
       seconds += SECONDS.move; continue;
     }
@@ -255,7 +265,7 @@ function summary() {
         B.seedRng(90000 + r);
         var x = playRun(c, st);
         if (x.how === "ko") ko++;
-        t.eaten += x.eaten; t.brMin = (t.brMin || 0) + x.br.min; t.brEnd = (t.brEnd || 0) + x.brEnd; t.brute = (t.brute || 0) + x.br.brute; t.gourde = (t.gourde || 0) + x.gourdeUsed; t.rest = (t.rest || 0) + x.br.rest; t.cook = (t.cook || 0) + x.br.cook; t.healRest = (t.healRest || 0) + x.br.healRest; t.healCook = (t.healCook || 0) + x.br.healCook; t.under30 = (t.under30 || 0) + (x.br.min < 30 ? 1 : 0); t.gold += x.gold; t.seve += x.seve; t.sec += x.seconds; t.n++;
+        t.eaten += x.eaten; t.brMin = (t.brMin || 0) + x.br.min; t.brEnd = (t.brEnd || 0) + x.brEnd; t.brute = (t.brute || 0) + x.br.brute; t.gourde = (t.gourde || 0) + x.gourdeUsed; t.rest = (t.rest || 0) + x.br.rest; t.cook = (t.cook || 0) + x.br.cook; t.healRest = (t.healRest || 0) + x.br.healRest; t.healCook = (t.healCook || 0) + x.br.healCook; t.under30 = (t.under30 || 0) + (x.br.min < 30 ? 1 : 0); t.insist = (t.insist || 0) + x.br.insist; t.gold += x.gold; t.seve += x.seve; t.sec += x.seconds; t.n++;
         tp.placed += x.traps.placed; tp.met += x.traps.met; tp.back += x.traps.back;
         Object.keys(x.traps.hit).forEach(function (k) { tp.hit[k] = (tp.hit[k] || 0) + x.traps.hit[k]; });
       }
@@ -265,7 +275,7 @@ function summary() {
   });
   console.log(RING + (NO_RATION ? " sans rations" : "") + " | KO " + pct(t.ko / t.n) + " (pire " + pct(t.worst) + " " + t.worstAt + ") | rations " + (t.eaten / t.n).toFixed(2) +
     " | or " + Math.round(t.gold / t.n) + " (" + (t.gold / t.sec * 60).toFixed(1) + "/min) | Sève " + (t.seve / t.n).toFixed(2) + " | " + (t.sec / t.n / 60).toFixed(1) + " min");
-  console.log("  Souffle : plus bas " + Math.round(t.brMin / t.n) + " en moyenne, sous 30 dans " + pct(t.under30 / t.n) + " des runs, fin " + Math.round(t.brEnd / t.n) + " | force brute " + (t.brute / t.n).toFixed(2) + " | gorgées de gourde " + (t.gourde / t.n).toFixed(2) + " par run");
+  console.log("  Souffle : plus bas " + Math.round(t.brMin / t.n) + " en moyenne, sous 30 dans " + pct(t.under30 / t.n) + " des runs, fin " + Math.round(t.brEnd / t.n) + " | force brute " + (t.brute / t.n).toFixed(2) + " | gorgées de gourde " + (t.gourde / t.n).toFixed(2) + " par run | relances " + ((t.insist || 0) / t.n).toFixed(2));
   console.log("  Camp et seuil : repos " + (t.rest / t.n).toFixed(2) + " (soigne " + pct(t.healRest / Math.max(1, t.rest)) + " des PV max) · cuisine " + (t.cook / t.n).toFixed(2) + " (soigne " + pct(t.healCook / Math.max(1, t.cook)) + ")");
   var hits = Object.keys(tp.hit).map(function (k) { return k + " " + (tp.hit[k] / t.n).toFixed(2); }).join(", ");
   console.log("  pièges : " + (tp.placed / t.n).toFixed(1) + " posés, " + (tp.met / t.n).toFixed(2) + " rencontrés, " + (tp.back / t.n).toFixed(2) + " rebroussés par run | effets subis : " + (hits || "aucun"));

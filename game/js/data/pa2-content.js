@@ -268,8 +268,17 @@ var PA2_D20 = {
   midBand: 3,          // de justesse : 1 à 3 sous le DD
   // Banc du 30/10 (pa2-jets-bench) : voie forte ~78 %, moyenne ~55 %, faible ~44 % au milieu d'une aventure.
   ddBase: 8, ddWorld: 0.5, ddDepthStep: 3, ddRing: 1, ddBaseRef: 4,
-  ddVoie: { power: 0, precision: 0, endurance: 0 } // les voies diffèrent déjà par le Souffle et le butin
+  ddVoie: { power: 0, precision: 0, endurance: 0 }, // les voies diffèrent déjà par le Souffle et le butin
+  insistBreath: 20 // v3.578.0 (lot 3, 1A) : relancer un jet raté ou de justesse, une fois (banc : 15 trop généreux au Périple)
 };
+/* v3.578.0 (lot 3) : jets de qualité, sans échec (sources, autels, camp, seuil, trouvailles).
+   Moyenne ~×1,01 : le dé pimente sans changer l'équilibre. Un 20 ajoute un petit bonus. */
+var PA2_QUALITY = [
+  { max: 5, id: "maigre", mult: 0.75 },
+  { max: 15, id: "normal", mult: 1 },
+  { max: 19, id: "bon", mult: 1.25 },
+  { max: 20, id: "parfait", mult: 1.5 }
+];
 /* Force et faiblesse de chaque classe (idée de Seb, triangle validé le 30/10).
    alsoStat : la voie forte lit aussi la stat de combat de la classe (le Rôdeur entraîne sa Célérité, le Mage sa Volonté). */
 var PA2_CLASS_VOIES = {
@@ -289,7 +298,8 @@ var PA2_RULES = {
   mistBreath: 10,            // « de justesse » sur un obstacle
   sourceAmount: 20, sourceDry: 5, sourceLantern: 10,   // v3.383.0 (C2) : 25 -> 20
   altarCostPct: 0.25, altarMinCost: 10, altarHealPct: 0.20,
-  campRestPct: 0.10, seuilRestPct: 0.06, cookPct: 0.70, // v3.383.0 (C2) : 30/20 -> 15/10 ; v3.423.0 (C) : 10/6, les rations comptent
+  campRestPct: 0.10, seuilRestPct: 0.06, cookMult: 1.5, // v3.578.0 (lot 3, 2A) : au feu, la ration soigne ×1,5 (avant : 70 % pour toutes)
+  // v3.383.0 (C2) : 30/20 -> 15/10 ; v3.423.0 (C) : 10/6, les rations comptent
   fioleHpPct: 0.40,
   revengeMult: 1.3, enrageMult: 1.4, torchDmgMult: 1.15, armorDmgMult: 0.65, armorBreath: 8,
   dentMult: 0.75, flecheMult: 0.85, boisChargeMult: 0.85, epeeTenirMult: 0.8, ecailleStep: 1, natteRestMult: 2, ciergeSteps: 1, // v3.469.4
@@ -1019,6 +1029,7 @@ window.PA2_CHEST_REWARDS = PA2_CHEST_REWARDS;
 window.PA2_RULES = PA2_RULES;
 window.PA2_D20 = PA2_D20;
 window.PA2_CLASS_VOIES = PA2_CLASS_VOIES;
+window.PA2_QUALITY = PA2_QUALITY;
 window.PA2_FOES = PA2_FOES;
 window.PA2_FOE_LINES = PA2_FOE_LINES;
 window.PA2_OBSTACLE_LINES = PA2_OBSTACLE_LINES;

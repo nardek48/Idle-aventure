@@ -321,6 +321,11 @@ body.pa2-full .pa2-scrim { background: rgba(5, 3, 2, 0.28); }
 .pa2-verdict.is-ok { color: var(--c-green-400-soft); }
 .pa2-verdict.is-mid { color: var(--pa2-gold); }
 .pa2-verdict.is-ko { color: var(--c-red-300); }
+/* v3.578.0 (lot 3) : jets de qualité, sans échec */
+.pa2-verdict.is-q-maigre { color: var(--pa2-ink-dim); }
+.pa2-verdict.is-q-normal { color: var(--pa2-ink); }
+.pa2-verdict.is-q-bon { color: var(--pa2-gold); }
+.pa2-verdict.is-q-parfait { color: var(--c-green-400-soft); }
 .pa2-result { text-align: center; margin: 0 0 12px; color: var(--pa2-ink-dim); }
 #pa2-outcome.is-hidden { visibility: hidden; }
 
