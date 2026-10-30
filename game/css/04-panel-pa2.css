@@ -282,7 +282,7 @@ body.pa2-full .pa2-scrim { background: rgba(5, 3, 2, 0.28); }
 .pa2-cost.is-red { color: var(--pa2-danger); }
 .pa2-cost.is-gold { color: var(--pa2-gold); }
 .pa2-cost.is-deadly { text-transform: uppercase; letter-spacing: .06em; }
-.pa2-breath { color: var(--pa2-breath); }
+.pa2-breath { color: var(--pa2-breath); white-space: nowrap; }
 .pa2-pickrow { grid-template-columns: 40px minmax(0, 1fr) auto; }
 .pa2-size { display: flex; gap: 3px; }
 .pa2-size i { width: 8px; height: 8px; border: 1.5px solid var(--pa2-gold-dark); border-radius: 2px; }
@@ -302,13 +302,19 @@ body.pa2-full .pa2-scrim { background: rgba(5, 3, 2, 0.28); }
 .pa2-odds.o2 .pa2-w { color: #f0a04a; }
 .pa2-odds.o1 .pa2-w { color: var(--c-red-300); }
 
-/* Dé (dessiné en CSS) */
-.pa2-dierow { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 4px 0 12px; }
-.pa2-die { width: 66px; height: 66px; border-radius: 13px; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); padding: 10px; gap: 2px;
-  background: var(--c-brown-950-soft); color: var(--pa2-gold); border: 2px solid var(--pa2-gold-dark); box-shadow: 0 0 22px -2px rgba(240, 170, 62, .5); }
-.pa2-die i { border-radius: 50%; }
-.pa2-die i.on { background: currentColor; }
+/* Dé : le d20 en SVG (v3.577.0), glow doré ; vert au 20 naturel, rouge au 1 */
+.pa2-dierow { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 4px 0 6px; }
+.pa2-die { width: 72px; height: 72px; color: var(--pa2-gold); filter: drop-shadow(0 0 10px rgba(240, 170, 62, .45)); }
+.pa2-die svg { display: block; width: 100%; height: 100%; }
+.pa2-d20-hex { fill: var(--c-brown-950-soft); stroke: var(--pa2-gold-dark); stroke-width: 4; stroke-linejoin: round; }
+.pa2-d20-edge { fill: none; stroke: var(--pa2-gold-dark); stroke-width: 1.6; stroke-linejoin: round; opacity: .75; }
+.pa2-die text { fill: currentColor; font: 800 25px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
 .pa2-die.is-rolling { animation: pa2-roll .5s linear infinite; }
+.pa2-die.is-nat20 { color: var(--c-green-400-soft); filter: drop-shadow(0 0 14px rgba(120, 220, 120, .6)); }
+.pa2-die.is-nat1 { color: var(--c-red-300); filter: drop-shadow(0 0 14px rgba(230, 90, 80, .6)); }
+.pa2-nat { min-height: 18px; text-align: center; font-size: 13px; font-weight: 700; margin: 0 0 6px; }
+.pa2-nat .is-ok { color: var(--c-green-400-soft); }
+.pa2-nat .is-ko { color: var(--c-red-300); }
 .pa2-target { text-align: center; font-size: 12px; color: var(--pa2-ink-dim); }
 .pa2-target b { display: block; font-size: 24px; color: var(--pa2-ink); }
 .pa2-verdict { text-align: center; font-size: 20px; font-weight: 800; margin: 2px 0 6px; }

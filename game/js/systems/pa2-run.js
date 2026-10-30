@@ -815,24 +815,48 @@ var Pa2Run = {
     return null;
   },
 
-  /* ---------- Jets : quatre crans et un dé (V16) ---------- */
+  /* ---------- Jets au d20 (v3.577.0, lot 2) : d20 + modificateurs contre un DD ---------- */
 
-  // Seuil du dé (2 à 6) à partir de la chance du moteur de scène, bonus et blessures compris.
-  dieThreshold: function (chancePct, bonusSteps, wounds) {
-    var t = Math.round(7 - 6 * Number(chancePct || 0) / 100);
-    return this._clamp(t - Number(bonusSteps || 0) + Number(wounds || 0), 2, 6);
+  // Modificateur de stat : +1 tous les statStep points au-delà de statFrom (0 à statMax).
+  statMod: function (v) { var D = PA2_D20; return this._clamp(Math.floor((Number(v || 0) - D.statFrom) / D.statStep), 0, D.statMax); },
+  // Maîtrise de la classe sur une voie : +2 forte, −2 faible, 0 sinon.
+  classVoies: function () {
+    var cls = window.ClassCombatManager && typeof ClassCombatManager.getCurrentClassId === "function" ? ClassCombatManager.getCurrentClassId() : null;
+    return (cls && PA2_CLASS_VOIES[cls]) || null;
   },
-  cranOf: function (thr) { return thr <= 2 ? "sur" : (thr === 3 ? "probable" : (thr >= 6 ? "desespere" : "risque")); },
-  roll: function (thr) {
-    var r = this._int(1, 6);
-    return { roll: r, kind: r >= thr ? "ok" : (r === thr - 1 ? "mid" : "ko") };
+  masteryOf: function (voie) {
+    var c = this.classVoies();
+    return !c ? 0 : (c.strong === voie ? PA2_D20.mastery : (c.weak === voie ? -PA2_D20.mastery : 0));
   },
-  _check: function (run, stat, diff, bonusSteps) {
-    var val = Number(run.heroSnapshot[stat] || 0);
-    var chance = SceneCheckSystem.successChance(val, diff);
-    var bonus = Number(bonusSteps || 0) + (this._marked(run) ? 1 : 0);
-    var thr = this.dieThreshold(chance, bonus, run.wounds);
-    return { stat: stat, statValue: val, difficulty: Math.round(diff), chance: chance, thr: thr, cran: this.cranOf(thr), bonus: bonus };
+  // Stat lue pour un jet : sur sa voie forte, la classe prend aussi sa stat de combat (Célérité, Volonté).
+  checkStat: function (run, stat, voie) {
+    var v = Number(run.heroSnapshot[stat] || 0), c = this.classVoies();
+    if (c && c.alsoStat && c.strong === voie) v = Math.max(v, Number(run.heroSnapshot[c.alsoStat] || 0));
+    return v;
+  },
+  // DD : monde de la carte, profondeur, anneau, obstacle et voie ; jamais la force du héros.
+  dc: function (run, n, base, voie) {
+    var D = PA2_D20;
+    return Math.round(D.ddBase + D.ddWorld * this._worldIndex(run.worldId) + Math.floor(this._depth(n, run) / D.ddDepthStep)
+      + D.ddRing * (this.ring(run).ring - 1) + (Number(base || D.ddBaseRef) - D.ddBaseRef) + Number((D.ddVoie || {})[voie] || 0));
+  },
+  // Chance de réussite d'un seuil (20 naturel réussit toujours, 1 naturel échoue toujours).
+  chanceOf: function (need) { var ok = 1; for (var r = 2; r <= 19; r++) if (r >= need) ok++; return ok / 20; },
+  cranOf: function (chance) { return chance >= 0.8 ? "sur" : (chance >= 0.6 ? "probable" : (chance >= 0.3 ? "risque" : "desespere")); },
+  roll: function (thr, adv) {
+    var r1 = this._int(1, 20), r2 = adv ? this._int(1, 20) : 0, r = Math.max(r1, r2);
+    var kind = r === 20 ? "ok" : (r === 1 ? "ko" : (r >= thr ? "ok" : (r >= thr - PA2_D20.midBand ? "mid" : "ko")));
+    return { roll: r, r2: r2 || null, kind: kind, nat: r === 20 ? 20 : (r === 1 ? 1 : 0) };
+  },
+  /* ctx : { node, base, voie, bonus (crans) }. Renvoie le détail du jet (affiché tel quel) et thr = le chiffre à faire. */
+  _check: function (run, stat, ctx) {
+    var voie = ctx.voie || stat, D = PA2_D20, val = this.checkStat(run, stat, voie);
+    var bonus = Number(ctx.bonus || 0) + (this._marked(run) ? 1 : 0);
+    var mod = this.statMod(val), mastery = this.masteryOf(voie), items = bonus * D.cranValue, wounds = Number(run.wounds || 0) * D.woundValue;
+    var dd = this.dc(run, ctx.node, ctx.base, ctx.voie);
+    var total = mod + mastery + items - wounds, need = dd - total, chance = this.chanceOf(need);
+    return { stat: stat, statValue: val, mod: mod, mastery: mastery, items: items, wounds: wounds, total: total, dd: dd,
+      difficulty: dd, thr: need, chance: Math.round(chance * 100), cran: this.cranOf(chance), bonus: bonus };
   },
   _profiles: function (run) {
     var t = SceneEngine.getTemplate(run.templateId);
@@ -945,7 +969,8 @@ var Pa2Run = {
     if (!to) return null;
     var diff = SceneCheckSystem.depthDifficulty(PA2_TRAP_RULES.baseDifficulty, this._depth(to, run)) * this.ring(run).diffMult
       * Number(run.band.obstacleScale || 1) * this.heroScale(run).obstacle;
-    return this._check(run, "precision", diff, (this.hasItem("pierre_gardien", run) ? 1 : 0) + (this.hasRelic("clou", run) ? 1 : 0)); // v3.469.4 ; v3.469.5 : Clou de bâtisseur
+    return this._check(run, "precision", { node: to, base: PA2_TRAP_RULES.baseDifficulty, voie: "precision",
+      bonus: (this.hasItem("pierre_gardien", run) ? 1 : 0) + (this.hasRelic("clou", run) ? 1 : 0) }); // v3.469.4 ; v3.469.5 : Clou de bâtisseur
   },
   trapOptions: function () {
     var run = this.getRun();
@@ -973,7 +998,7 @@ var Pa2Run = {
       res = { kind: "ok", kit: true };
     } else if (choice === "desamorcer") {
       res = this.roll(opts.disarm.thr);
-      res.thr = opts.disarm.thr; res.cran = opts.disarm.cran;
+      res.thr = opts.disarm.thr; res.cran = opts.disarm.cran; res.chance = opts.disarm.chance;
       if (res.kind === "mid") run.breath = Math.max(0, run.breath - PA2_TRAP_RULES.midBreath);
     } else if (choice === "subir") {
       res = { kind: "endure" };
@@ -1037,7 +1062,7 @@ var Pa2Run = {
       if (v === "endurance" && self.hasItem("ecaille", run)) bonus += 1;        // v3.469.4 : Écaille du Ver
       if (v === "precision" && self.hasItem("pierre_gardien", run)) bonus += 1; // v3.469.4 : Pierre taillée du gardien
       if (self.hasRelic("marteau", run)) bonus += 1; // v3.469.5 : Marteau du Contremaître
-      var ck = self._check(run, gab.options[v].stat, n.diff * p.diffMod, bonus);
+      var ck = self._check(run, gab.options[v].stat, { node: n, base: n.type === "tertre" ? PA2_OBSTACLE_TERTRE.baseDifficulty : Number(gab.baseDifficulty || 4), voie: v, bonus: bonus });
       var cost = Number(p.breathCost || 0) + (self.hasItem("armure", run) ? PA2_RULES.armorBreath : 0);
       // v3.391.0 : Endurance du marcheur (pouvoir légendaire), câblée en v1 seulement jusque-là
       if (typeof hasLegendaryPower === "function" && hasLegendaryPower("leg_marcheur")) cost = Math.round(cost * 0.85);
@@ -1062,9 +1087,9 @@ var Pa2Run = {
     if (useRope && !opt.rope) return { ok: false, reason: _t("Choix impossible") };
     if (!useRope && !opt.affordable) return { ok: false, reason: _t("Pas assez de Souffle pour cette approche") };
     var res;
-    if (useRope) { run.stock.corde -= 1; res = { roll: 6, kind: "ok", rope: true }; }
+    if (useRope) { run.stock.corde -= 1; res = { roll: 20, kind: "ok", rope: true }; }
     else { run.breath = Math.max(0, run.breath - opt.cost); res = this.roll(opt.thr); }
-    res.voie = voie; res.thr = opt.thr; res.cran = opt.cran;
+    res.voie = voie; res.thr = opt.thr; res.cran = opt.cran; res.chance = opt.chance;
     var base = run.refGold * PA2_GOLD.obstacle * Number(opt.lootMod || 1) * this.lootMult(run) * Number(this.condFx(run, "obstacleGold") || 1); // v3.469.0 : vent de sable
     if (res.kind === "ok") res.gain = this._gold(run, base);
     if (res.kind === "mid") { res.gain = this._gold(run, base * PA2_GOLD.obstacleMid); run.breath = Math.max(0, run.breath - PA2_RULES.mistBreath); }
@@ -1183,7 +1208,7 @@ var Pa2Run = {
     if (!n) return null;
     var out = { boss: n.type === "boss", revenge: !!n.revenge, foeId: n.foeId || null, charger: this.combatEstimate("charger"), tenir: this.combatEstimate("tenir") };
     if (!out.boss) {
-      out.ruse = this._check(run, "precision", n.diff, this.ruseBonus(run)); // v3.469.0 : brouillard ; v3.469.5 : reliques
+      out.ruse = this._check(run, "precision", { node: n, base: 5, voie: "precision", bonus: this.ruseBonus(run) }); // v3.469.0 : brouillard ; v3.469.5 : reliques
       out.ruseBlocked = !!n.alarm; // v3.467.0 : l'Alarme a sonné
       out.flee = { cost: PA2_RULES.fleeBreath, affordable: run.breath >= PA2_RULES.fleeBreath };
     }
@@ -1259,9 +1284,9 @@ var Pa2Run = {
     var n = this._current(["combat"]);
     if (!n) return { ok: false, reason: _t("Choix impossible") };
     if (n.alarm) return { ok: false, reason: _t("L'alarme a sonné : ils t'attendent.") };
-    var run = this.getRun(), ck = this._check(run, "precision", n.diff, this.ruseBonus(run));
+    var run = this.getRun(), ck = this._check(run, "precision", { node: n, base: 5, voie: "precision", bonus: this.ruseBonus(run) });
     var res = this.roll(ck.thr);
-    res.thr = ck.thr; res.cran = ck.cran; res.ruse = true;
+    res.thr = ck.thr; res.cran = ck.cran; res.chance = ck.chance; res.ruse = true;
     if (res.kind === "ko") { res.surprised = true; run.lastResult = res; this._save(); return { ok: true, reason: null, result: res }; }
     var est = this.combatEstimate("tenir");
     var share = res.kind === "ok" ? PA2_GOLD.ruse : PA2_GOLD.ruseMid;

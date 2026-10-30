@@ -11886,11 +11886,11 @@ console.log("\n[158] v3.381.0 — Petites Aventures v2 (PA2-0) : moteur sans éc
     runv.nodes.C0.type = "obstacle"; runv.nodes.C0.done = false;
     ok(P.moveTo("C0").ok && runv.status === "pa2-node" && runv.breath === 100 - R.heavyStep - (g.PA2_WORLD_RULES.forest ? g.PA2_WORLD_RULES.forest.stepBreath : 0), "un pas : « Pas lourd » coûte 4 Souffle (+ la marche en Forêt, v3.423.0)");
     var opts = P.obstacleOptions();
-    ok(opts.length === 3 && opts.every(function (o) { return o.thr >= 2 && o.thr <= 6 && typeof o.cran === "string"; }), "trois voies, seuil de dé entre 2 et 6");
+    ok(opts.length === 3 && opts.every(function (o) { return o.thr === Math.round(o.thr) && o.chance >= 5 && o.chance <= 95 && typeof o.cran === "string"; }), "trois voies, d20 : seuil entier, chance entre 5 et 95 % (v3.577.0)");
     var before = opts.map(function (o) { return o.thr; });
     runv.wounds = 1;
     var after = P.obstacleOptions().map(function (o) { return o.thr; });
-    ok(after.every(function (t, i) { return t === Math.min(6, before[i] + 1); }), "une blessure = un cran de moins sur chaque voie");
+    ok(after.every(function (t, i) { return t === before[i] + g.PA2_D20.woundValue; }), "une blessure = −2 au jet sur chaque voie (v3.577.0)");
     runv.wounds = 0;
     var gold0 = runv.loot;
     var ro = P.resolveObstacle("precision", true);
@@ -12333,7 +12333,7 @@ console.log("\n[162] v3.385.0 — Petites Aventures v2 (PA2-4) : quatre accroche
     ok(pr.run.flags.hookBranch === "main" && pr.run.breath === Math.min(100, b0 + 40), "La pierre : la main posée rend 40 Souffle");
     ref.done = false; pr.run.at = ref.key; pr.run.status = "pa2-node";
     var thr1 = P.obstacleOptions()[0].thr;
-    ok(thr1 === Math.max(2, thr0 - 1) || thr0 === 2, "La pierre : +1 cran sur les jets (" + thr0 + "+ → " + thr1 + "+)");
+    ok(thr1 === thr0 - g.PA2_D20.cranValue, "La pierre : +1 cran, soit +3 au jet (" + thr0 + "+ → " + thr1 + "+)");
     var cm = nodeAt(pr.run, "combat", 2);
     ok(P._dmgMult(pr.run, cm, "tenir") > g.PA2_APPROACHES.tenir.dmg * 1.19 * (P.hasItem("torche", pr.run) ? 1.15 : 1) - 1e-9, "La pierre : la marque pique, les combats font +20 % de dégâts");
     var pr2 = withHook("pierre", [], "main");
@@ -17066,8 +17066,8 @@ console.log("\n[281] v3.467.0 — Petites Aventures : pièges sur les sentiers (
     ok(d1.result.kind === "ok" && r.breath === bb && !r.fx.entrave, "Désamorcer réussi : sans Souffle, aucun effet");
     r = go("sentier", [], { "S>C0": { fx: "entrave", seen: true, done: false } });
     P.moveTo("C0"); bb = r.breath; var thr = P.trapOptions().disarm.thr;
-    P.rand = function () { return (thr - 2 + 0.5) / 6; }; var d2 = P.resolveTrap("desamorcer"); P.rand = savedRand;
-    ok(thr > 2 ? (d2.result.kind === "mid" && r.breath === bb - TR.midBreath && !r.fx.entrave) : d2.result.kind !== "ko", "de justesse : on passe, −10 Souffle");
+    P.rand = function () { return (thr - 2 + 0.5) / 20; }; var d2 = P.resolveTrap("desamorcer"); P.rand = savedRand;
+    ok(thr > 2 && thr <= 21 ? (d2.result.kind === "mid" && r.breath === bb - TR.midBreath && !r.fx.entrave) : d2.result.kind !== "ko", "de justesse : on passe, −10 Souffle");
     r = go("sentier", [], { "S>C0": { fx: "entrave", seen: true, done: false } });
     P.moveTo("C0"); var w3 = r.wounds; P.rand = function () { return 0; }; var d3 = P.resolveTrap("desamorcer"); P.rand = savedRand;
     ok(d3.result.kind === "ko" && r.fx.entrave === TR.steps && r.wounds === w3 + 1 && d3.result.wound, "Désamorcer raté : l'effet joue, et une blessure (v3.467.2)");
@@ -20251,6 +20251,42 @@ console.log("\n[380] v3.576.0 — Petites Aventures, lot 1 : caméra sans sauts,
     ok(typeof g.pa2CamKeepMoves === "function" && typeof g.pa2CamRevealMoves === "function", "les points accessibles restent visibles (parcours aux étapes espacées)");
     ok(g.PA2_FOLLOW_Y > 0.2 && g.PA2_FOLLOW_Y < 0.5, "le héros suivi est placé au-dessus du milieu de l'écran");
   } catch (err) { ok(false, "[380] exception : " + err.message); }
+})();
+
+console.log("\n[381] v3.577.0 — Petites Aventures, lot 2 : les jets au d20");
+(function () {
+  var P = g.Pa2Run, D = g.PA2_D20, saveInt = P._int, CCM = g.ClassCombatManager, saveCls = CCM && CCM.getCurrentClassId;
+  try {
+    ok(P.chanceOf(2) === 0.95 && P.chanceOf(-5) === 0.95 && P.chanceOf(11) === 0.5 && P.chanceOf(21) === 0.05 && P.chanceOf(40) === 0.05, "chance : le 20 passe toujours, le 1 rate toujours (5 % à 95 %)");
+    ok(P.statMod(30) === 0 && P.statMod(65) === 1 && P.statMod(170) === 4 && P.statMod(5000) === D.statMax, "bonus de stat : +1 tous les 35 points au-delà de 30, plafonné à +9");
+    P._int = function () { return 20; }; var r20 = P.roll(30);
+    P._int = function () { return 1; }; var r1 = P.roll(-3);
+    P._int = function () { return 10; }; var rm = P.roll(12), rk = P.roll(14), ro = P.roll(10);
+    ok(r20.kind === "ok" && r20.nat === 20 && r1.kind === "ko" && r1.nat === 1, "20 naturel : réussite d'office ; 1 naturel : échec d'office");
+    ok(ro.kind === "ok" && rm.kind === "mid" && rk.kind === "ko", "3 sous le seuil : de justesse ; plus bas : raté");
+    P._int = function () { return 3; }; var adv = P.roll(10, true);
+    ok(adv.r2 === 3 && adv.roll === 3, "avantage : deux dés, le meilleur garde (mécanique prête, sans source pour l'instant)");
+    P._int = saveInt;
+    var snap = { power: 100, precision: 100, endurance: 100, celerity: 170, will: 30 };
+    var run = { worldId: "forest", ring: "sentier", parcours: true, heroSnapshot: snap, wounds: 0, flags: {} };
+    var node = { row: 0 };
+    CCM.getCurrentClassId = function () { return "knight"; };
+    ok(P.masteryOf("power") === D.mastery && P.masteryOf("precision") === -D.mastery && P.masteryOf("endurance") === 0, "Chevalier : Force +2, Précision −2 (triangle validé)");
+    var a = P._check(run, "power", { node: node, base: 5, voie: "power" }), b = P._check(run, "precision", { node: node, base: 5, voie: "precision" });
+    ok(a.thr === b.thr - 2 * D.mastery && a.total === a.mod + a.mastery && a.dd === b.dd, "voie forte et voie faible : 4 points d'écart au même DD");
+    CCM.getCurrentClassId = function () { return "archer"; };
+    ok(P.checkStat(run, "precision", "precision") === 170 && P.checkStat(run, "endurance", "endurance") === 100, "Rôdeur : sa Précision lit aussi la Célérité entraînée");
+    run.wounds = 2; var w = P._check(run, "power", { node: node, base: 5, voie: "power", bonus: 1 }); run.wounds = 0;
+    var w0 = P._check(run, "power", { node: node, base: 5, voie: "power" });
+    ok(w.thr === w0.thr + 2 * D.woundValue - D.cranValue && w.items === D.cranValue && w.wounds === 2 * D.woundValue, "deux blessures −4, un cran d'objet +3");
+    ok(P._check(run, "power", { node: { row: 8 }, base: 5, voie: "power" }).dd > w0.dd && P._check(run, "power", { node: node, base: 7, voie: "power" }).dd === w0.dd + 2, "le DD monte avec la profondeur et la difficulté de l'obstacle");
+    ok(g.pa2NeedText(25) === "20" && g.pa2NeedText(1) === "2+" && g.pa2NeedText(9) === "9+", "affichage : « Il faut 9+ », « 2+ » au plus bas, « 20 » quand seul le naturel passe");
+    var why = g.pa2WhyHTML(w, { wounds: 2 }).replace(/\u00a0/g, " ");
+    ok(/Puissance \+\d/.test(why) && /Rôdeur|Archer/.test(why) === false && /matériel \+3/.test(why) && /blessures −4/.test(why) && /DD \d+/.test(why), "détail du jet : stat, matériel, blessures et DD (" + why + ")");
+    var blk = g.pa2DieBlock({ thr: 9, cran: "probable", chance: 60, roll: 20, nat: 20 }, true);
+    ok(/<svg/.test(blk) && />20</.test(blk) && /is-nat20/.test(blk) && /9\+/.test(blk) && /60 %/.test(blk), "le dé : d20 dessiné, valeur, seuil et chance");
+  } catch (err) { ok(false, "[381] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  P._int = saveInt; if (CCM) CCM.getCurrentClassId = saveCls;
 })();
 
 Promise.all(ATTENTES).then(function () {
