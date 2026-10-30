@@ -307,6 +307,14 @@ function openHeroSelection() {
     }
   }
 
+  // v3.568.0 (grand écran) : la création sur une seule page (atelier/accueil-grand-ecran.html)
+  if (document.documentElement.classList.contains("wide-mode")) {
+    var keepName = document.getElementById("player-name-input");
+    if (keepName) pendingPlayerName = keepName.value;
+    host.innerHTML = buildHeroCreationWideHTML(selectedHero);
+    return;
+  }
+
   var step;
   if (heroSelectionStep === "confirm") step = buildConfirmStepHTML(selectedHero);
   else if (heroSelectionStep === "hero") step = buildHeroStepHTML(selectedHero);
@@ -353,6 +361,42 @@ function buildHeroCreationShellHTML(step) {
   html += '</div>';
   return html;
 }
+
+/* v3.568.0 (grand écran) : création en une page — le héros à gauche (portrait, nom, classe, phrase),
+   à droite le nom, la classe et l'apparence, puis les stats et les compétences, et « Commencer ».
+   Mêmes données et mêmes actions que les 3 étapes du téléphone. */
+function buildHeroCreationWideHTML(selectedHero) {
+  heroAttackPreviewExpanded = true;
+  var cls = selectedHero ? getHeroClassEntry(selectedHero.id) : null, gender = getPendingHeroGender();
+  var baseHero = (cls && cls.heroIds) ? getHeroById(cls.heroIds[0]) : selectedHero;
+  var name = pendingPlayerName || game.playerName || "";
+  var classBody = buildHeroStepHTML(selectedHero).body;
+  var cut = classBody.indexOf('<div class="hc-stats">');
+  var h = '<div class="hc-overlay hc-wide"><img src="images/TitleScreen/title_background_wide.webp" alt="" class="hc-wide-bg"><div class="hc-wide-shade"></div><div class="hc-wide-win">';
+  h += '<div class="hc-wide-hero"><img class="hc-wide-pt" src="' + esc(getHeroImageForGender(selectedHero, gender)) + '" alt="">'
+    + '<h2 id="hc-wide-name">' + esc(name || _t("Ton héros")) + '</h2>'
+    + '<span class="hc-wide-cl">' + (cls && cls.icon ? renderIconOrEmojiHTML(cls.icon, "", "") : '') + esc(selectedHero ? _td(selectedHero.name) : (baseHero ? _td(baseHero.name) : "")) + (cls && cls.resource ? ' · ' + esc(_td(cls.resource.label)) : '') + '</span>'
+    + (cls && HERO_CLASS_TAGLINES[cls.id] ? '<p>' + esc(HERO_CLASS_TAGLINES[cls.id]) + '</p>' : '') + '</div>';
+  h += '<div class="hc-wide-pane">';
+  h += '<div class="hc-wide-card"><div class="hc-wide-step"><i>1</i>' + esc(_t("Ton nom")) + '</div>'
+    + '<input id="player-name-input" class="hc-name-input" type="text" maxlength="20" autocomplete="off" autocapitalize="words" placeholder="' + esc(_t("Entre un nom…")) + '" value="' + esc(name) + '"'
+    + ' oninput="pendingPlayerName=this.value;var t=document.getElementById(\'hc-wide-name\');if(t)t.textContent=this.value||\'' + esc(_t("Ton héros")) + '\'" onkeydown="if(event.key===\'Enter\'){event.preventDefault();heroCreationWideStart();}"></div>';
+  h += '<div class="hc-wide-card"><div class="hc-wide-step"><i>2</i>' + esc(_t("Ta classe")) + '</div>' + (cut > 0 ? classBody.slice(0, cut) : classBody) + '</div>';
+  if (cut > 0) h += '<div class="hc-wide-card"><div class="hc-wide-step"><i>3</i>' + esc(_t("Ce qu'il sait faire")) + '</div>' + classBody.slice(cut) + '</div>';
+  h += '<div class="hc-wide-go">' + (window.pendingHeroCreationOrigin || window.titleScreenSlotBeingCreated ? '<button type="button" class="kbtn is-sec" onclick="cancelHeroSelection()">‹ ' + _t("Retour") + '</button>' : '<span></span>')
+    + '<button type="button" class="kbtn primary" onclick="heroCreationWideStart()">' + _t("Commencer l'aventure") + '</button></div>';
+  return h + '</div></div></div>';
+}
+
+// « Commencer » du grand écran : le nom est lu dans le champ, puis la confirmation du téléphone
+function heroCreationWideStart() {
+  var input = document.getElementById("player-name-input");
+  pendingPlayerName = input ? input.value.trim() : String(pendingPlayerName || "").trim();
+  if (!pendingPlayerName) { showToast(_t("Entre un nom"), 1200); if (input) input.focus(); return; }
+  confirmHeroSelection();
+}
+window.heroCreationWideStart = heroCreationWideStart;
+window.buildHeroCreationWideHTML = buildHeroCreationWideHTML;
 
 /* ---------------------------------------------------------------
    Étape 1 — Nom
@@ -411,9 +455,9 @@ function buildHeroStepHTML(selectedHero) {
   html += '<div class="hc-stats">';
   html += '  <div class="hc-stat"><span class="hc-stat-icon"><img class="hc-stat-ico-img" src="images/Icons/combat_stats/stat_health.webp" alt=""></span><span class="hc-stat-label">' + _t("PV", "unité") + '</span><strong>' + esc(formatNumber(stats.pv)) + '</strong></div>';
   html += '  <div class="hc-stat"><span class="hc-stat-icon"><img class="hc-stat-ico-img" src="images/Icons/combat_stats/stat_attack.webp" alt=""></span><span class="hc-stat-label">' + _t("ATK", "unité") + '</span><strong>' + esc(formatNumber(stats.atk)) + '</strong></div>';
-  html += '  <div class="hc-stat"><span class="hc-stat-icon"><img class="hc-stat-ico-img" src="images/Icons/combat_stats/stat_defense.webp" alt=""></span><span class="hc-stat-label">' + _t("DEF", "unité") + '</span><strong>' + stats.def + '%</strong></div>';
+  html += '  <div class="hc-stat"><span class="hc-stat-icon"><img class="hc-stat-ico-img" src="images/Icons/combat_stats/stat_defense.webp" alt=""></span><span class="hc-stat-label">' + _t("DEF", "unité") + '</span><strong>' + esc(formatNumber(stats.def)) + ' %</strong></div>';
   html += '  <div class="hc-stat"><span class="hc-stat-icon"><img class="hc-stat-ico-img" src="images/Icons/combat_stats/stat_speed.webp" alt=""></span><span class="hc-stat-label">' + _t("VIT", "unité") + '</span><strong>' + esc(formatNumber(stats.vit)) + '</strong></div>';
-  html += '  <div class="hc-stat"><span class="hc-stat-icon"><img class="hc-stat-ico-img" src="images/Icons/combat_stats/stat_critical.webp" alt=""></span><span class="hc-stat-label">' + _t("CRIT", "unité") + '</span><strong>' + stats.crit + '%</strong></div>';
+  html += '  <div class="hc-stat"><span class="hc-stat-icon"><img class="hc-stat-ico-img" src="images/Icons/combat_stats/stat_critical.webp" alt=""></span><span class="hc-stat-label">' + _t("CRIT", "unité") + '</span><strong>' + esc(formatNumber(stats.crit)) + ' %</strong></div>'; // v3.568.0 : à la française (7,5 %)
   html += '</div>';
 
   html += buildHeroAttackPreviewBandeauHTML(selectedHero);
