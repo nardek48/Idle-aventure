@@ -32,6 +32,10 @@ body.fond-c .voile { height: auto; top: auto; bottom: 0; min-height: 34%; backgr
 /* Apparition ligne à ligne (réglage) */
 .texte p { opacity: 1; transform: none; transition: opacity .7s ease, transform .7s ease; }
 body.lignes .texte p.cache { opacity: 0; transform: translateY(6px); }
+/* Lettre à lettre : mots insécables, lettres invisibles mais déjà en place (aucun saut de mise en page) */
+.texte .m { white-space: nowrap; }
+.texte .l { opacity: 0; }
+.texte .l.v { opacity: 1; transition: opacity .15s ease; }
 
 /* ---------- Commandes ---------- */
 .haut { position: fixed; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; gap: 8px; padding-top: calc(10px + env(safe-area-inset-top, 0px)); padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px)); z-index: 5; pointer-events: none; }
@@ -73,7 +77,9 @@ body.lignes .texte p.cache { opacity: 0; transform: translateY(6px); }
   <div class="reglage"><span>Fond sous le texte</span><div class="choix" data-r="fond">
     <button type="button" data-v="a">A · dégradé léger</button><button type="button" data-v="b">B · dégradé appuyé</button><button type="button" data-v="c">C · bandeau</button></div></div>
   <div class="reglage"><span>Apparition du texte</span><div class="choix" data-r="anim">
-    <button type="button" data-v="lignes">Ligne à ligne</button><button type="button" data-v="bloc">D'un bloc</button></div></div>
+    <button type="button" data-v="lettres">Lettre à lettre</button><button type="button" data-v="lignes">Ligne à ligne</button><button type="button" data-v="bloc">D'un bloc</button></div></div>
+  <div class="reglage"><span>Vitesse (lettre à lettre)</span><div class="choix" data-r="vitesse">
+    <button type="button" data-v="lente">Lente</button><button type="button" data-v="normale">Normale</button><button type="button" data-v="rapide">Rapide</button></div></div>
   <div class="reglage"><span>Taille du texte (réglage du jeu)</span><div class="choix" data-r="taille">
     <button type="button" data-v="normal">Normale</button><button type="button" data-v="grand">Grande</button></div></div>
   <div class="reglage"><span>Aller à</span><div class="choix" id="aller"></div></div>
@@ -86,7 +92,8 @@ body.lignes .texte p.cache { opacity: 0; transform: translateY(6px); }
   "use strict";
   var P = JSON.parse(document.getElementById("planches").textContent);
   var app = document.getElementById("app"), etape = "titre", idx = 0, lignesVues = 0, timers = [];
-  var R = { fond: "a", anim: "lignes", taille: "normal" };
+  var R = { fond: "a", anim: "lettres", taille: "normal", vitesse: "normale" };
+  var VITESSES = { lente: 60, normale: 40, rapide: 24 }; // ms par lettre
   try { var s = JSON.parse(localStorage.getItem("atelier-prologue") || "null"); if (s) R = Object.assign(R, s); } catch (e) {}
 
   function appliquer() {
@@ -128,7 +135,7 @@ body.lignes .texte p.cache { opacity: 0; transform: translateY(6px); }
     app.innerHTML = '<div class="scene" id="scene" role="button" tabindex="0" aria-label="Planche ' + (i + 1) + ', toucher pour continuer">'
       + '<picture><source media="(min-aspect-ratio: 1/1)" srcset="' + p.wide + '"><img id="img" src="' + p.tall + '" alt=""></picture>'
       + '<div class="voile"></div><div class="texte" id="texte">'
-      + p.lignes.map(function (l) { return '<p class="' + (l === "Aeswyn." ? "nom " : "") + (R.anim === "lignes" ? "cache" : "") + '">' + esc(l) + '</p>'; }).join("")
+      + p.lignes.map(function (l) { return '<p class="' + (l === "Aeswyn." ? "nom " : "") + (R.anim === "lignes" ? "cache" : "") + '">' + (R.anim === "lettres" ? lettres(l) : esc(l)) + '</p>'; }).join("")
       + '</div></div>'
       + '<div class="haut"><button type="button" class="btn" id="regl">Réglages</button><button type="button" class="btn" id="passer">Passer</button></div>'
       + '<div class="bas"><div class="points">' + pts + '</div><span class="suite" id="suite">Toucher pour continuer</span></div>';
@@ -138,16 +145,38 @@ body.lignes .texte p.cache { opacity: 0; transform: translateY(6px); }
     document.getElementById("scene").onclick = avancer;
     document.getElementById("passer").onclick = function (e) { e.stopPropagation(); passer(); };
     document.getElementById("regl").onclick = function (e) { e.stopPropagation(); ouvrirPanneau(); };
-    if (R.anim === "lignes") {
+    if (R.anim === "lettres") {
+      taper();
+    } else if (R.anim === "lignes") {
       var ps = document.querySelectorAll("#texte p");
       ps.forEach(function (el, k) { timers.push(setTimeout(function () { el.classList.remove("cache"); lignesVues = k + 1; if (k === ps.length - 1) finTexte(); }, 700 + k * 1100)); });
     } else { lignesVues = p.lignes.length; timers.push(setTimeout(finTexte, 900)); }
+  }
+  /* Lettre à lettre : chaque lettre s'allume à son tour ; pauses sur la ponctuation et entre les lignes */
+  function lettres(t) {
+    return t.split(" ").map(function (mot) {
+      return '<span class="m">' + Array.from(mot).map(function (c) { return '<span class="l">' + esc(c) + '</span>'; }).join("") + '</span>';
+    }).join(" ");
+  }
+  function taper() {
+    var ls = document.querySelectorAll("#texte .l"), t = 700, pas = VITESSES[R.vitesse] || 40;
+    if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) { ls.forEach(function (el) { el.classList.add("v"); }); finTexte(); return; }
+    ls.forEach(function (el, k) {
+      var c = el.textContent, suivant = ls[k + 1];
+      timers.push(setTimeout(function () { el.classList.add("v"); }, t));
+      t += pas;
+      if (/[.!?]/.test(c)) t += pas * 9; else if (/[,;:]/.test(c)) t += pas * 4;
+      if (suivant && el.closest("p") !== suivant.closest("p")) t += pas * 10;
+    });
+    timers.push(setTimeout(finTexte, t + 200));
   }
   function finTexte() { var s = document.getElementById("suite"); if (s) s.classList.add("on"); }
 
   /* Toucher : d'abord tout le texte, ensuite la planche suivante */
   function avancer() {
     if (etape !== "planche") return;
+    var ls = document.querySelectorAll("#texte .l:not(.v)");
+    if (ls.length) { vider(); ls.forEach(function (el) { el.classList.add("v"); }); finTexte(); return; }
     var ps = document.querySelectorAll("#texte p.cache");
     if (ps.length) { vider(); ps.forEach(function (el) { el.classList.remove("cache"); }); finTexte(); return; }
     if (idx === 3) return creation();
