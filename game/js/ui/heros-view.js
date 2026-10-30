@@ -77,7 +77,7 @@ function getHeroTrainingProgress() {
 function buildHeroFicheHTML() {
   // v3.425.0 (chantier Héros, lot H-2) : Résumé refait (ui/heros-screens-view.js) ;
   // v3.449.1 : les anciens morceaux buildHeroSummary*, plus appelés, sont retirés.
-  return herosFrameOpen("hs-page nb-page-frame-fill") + buildHerosResumeHTML() + '</div>';
+  return herosFrameOpen("hs-page nb-page-frame-fill", true) + buildHerosResumeHTML() + '</div>';
 }
 
 /* Ouvre l'écran titre directement sur "Charger une partie", qui est la gestion
@@ -690,9 +690,10 @@ function buildHerosRailHTML() {
 }
 window.buildHerosRailHTML = buildHerosRailHTML;
 
-/* Ouverture du cadre « Héros », rail compris. extraClass : classes propres à la sous-vue. */
-function herosFrameOpen(extraClass) {
-  return '<div class="nb-page-frame kframe-page heros-frame' + (extraClass ? ' ' + extraClass : '') + '" data-kf-title="' + esc(HEROS_FRAME_ICON + "|" + _t("Héros")) + '">' + buildHerosRailHTML();
+/* Ouverture du cadre « Héros », rail compris. extraClass : classes propres à la sous-vue ;
+   banner (v3.581.0) : bandeau illustré, sur la fiche principale seulement. */
+function herosFrameOpen(extraClass, banner) {
+  return '<div class="nb-page-frame kframe-page heros-frame' + (extraClass ? ' ' + extraClass : '') + '"' + (banner ? ' data-kf-banner="heros"' : '') + ' data-kf-title="' + esc(HEROS_FRAME_ICON + "|" + _t("Héros")) + '">' + buildHerosRailHTML();
 }
 window.herosFrameOpen = herosFrameOpen;
 

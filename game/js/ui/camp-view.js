@@ -120,7 +120,7 @@ function buildCampHTML(tab) {
   var minutesToFull = window.CampManager ? CampManager.getMinutesToFull() : 0;
   var rationOptions = window.CampManager ? CampManager.getRationOptions() : [];
 
-  var h = '<div class="nb-page-frame nb-page-frame-fill camp-page kframe-page" data-kf-title="images/Icons/quests/village_quest.webp|' + _t("Campement") + '">';
+  var h = '<div class="nb-page-frame nb-page-frame-fill camp-page kframe-page" data-kf-banner="camp" data-kf-title="images/Icons/quests/village_quest.webp|' + _t("Campement") + '">';
 
   // v3.194.0 (Seb) : titre et sous-titre retirés — le bandeau figé porte
   // déjà « <img class=ico-inline src=images/Icons/quests/village_quest.webp> Campement », la ligne d'ambiance n'apportait rien.

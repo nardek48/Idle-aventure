@@ -28,6 +28,23 @@ I18n.register("en", {
   "étape {a} / {b}": "step {a} / {b}",
   // v3.553.0 : bandeau du grand écran
   "Campement d'Aeswyn": "Aeswyn Camp",
+  // v3.581.0 : bandeaux illustrés des écrans (ui/screen-banner.js)
+  "Un refuge au cœur de la forêt": "A shelter in the heart of the forest",
+  "Camp de l'oasis": "Oasis Camp",
+  "Un peu d'ombre au bord des dunes": "A little shade at the edge of the dunes",
+  "Camp des colonnes": "Camp of the Columns",
+  "Des tentes entre les pierres d'autrefois": "Tents among the stones of old",
+  "Camp de la veille": "Camp of the Vigil",
+  "On ne dort que d'un œil, ici": "Here, you sleep with one eye open",
+  "Camp des cendres": "Ash Camp",
+  "Accroché aux pentes du volcan": "Clinging to the slopes of the volcano",
+  "Le dernier camp": "The Last Camp",
+  "Un dernier feu avant la Tour": "One last fire before the Tower",
+  "Le tableau des missions": "The mission board",
+  "Le village d'Aeswyn": "The village of Aeswyn",
+  "Rebâti planche après planche": "Rebuilt plank by plank",
+  "Le terrain d'entraînement": "The training ground",
+  "Se préparer avant de repartir": "Get ready before setting out again",
   "{n} bâtiment de production||{n} bâtiments de production": ["{n} production building", "{n} production buildings"],
   "{n} mondes · {k} ouverts": "{n} worlds · {k} open",
   // v3.555.0 : Quêtes sur grand écran

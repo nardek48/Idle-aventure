@@ -646,3 +646,8 @@ html.wide-mode .hc-wide { background: var(--c-brown-900); }
 .hc-wide-card .hc-skills-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
 .hc-wide-go { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 0 2px 4px; }
 html.wide-mode .pwa-boot-bg { content: url('../images/TitleScreen/title_background_wide.webp'); object-fit: cover; }
+
+/* v3.581.0 : bandeau illustré des écrans (ui/screen-banner.js) — image entière (3:1), titre plus grand */
+html.wide-mode #panel-container .kfb-tx { left: 22px; bottom: 16px; }
+html.wide-mode #panel-container .kfb-t { font-size: 26px; }
+html.wide-mode #panel-container .kfb-s { font-size: 16px; }
