@@ -18,11 +18,13 @@ var CRYPTE = process.argv.indexOf("--crypte") > 0;        // v3.454.0 : la Petit
 var REVEIL = process.argv.indexOf("--reveiller") > 0;     // v3.454.0 : gisants réveillés au départ (carte de la Crypte)
 var TPL = CRYPTE ? "petite_aventure_crypte" : RUINES ? "petite_aventure_ruines" : DESERT ? "petite_aventure_desert" : "petite_aventure_foret";
 var NO_TRAPS = process.argv.indexOf("--sans-pieges") > 0; // v3.467.0 : comparer avec et sans pièges
+var ALL_IN = process.argv.indexOf("--insiste-tout") > 0; // v3.578.0 : le joueur qui insiste dès qu'il peut
 var NO_GOURDE = process.argv.indexOf("--sans-gourde") > 0; // v3.578.0 : la gourde sert-elle ?
 var BLIND = process.argv.indexOf("--droit-devant") > 0;
 var KIT = process.argv.indexOf("--trousse") > 0;
 var OBJ = (process.argv.filter(function (x) { return x.indexOf("--objet=") === 0; })[0] || "").slice(8); // v3.469.4 : un objet du coffre à la place de la torche          // v3.467.1 : la Trousse à la place de la torche   // v3.467.0 : le joueur qui ne contourne pas les pièges
 var OVR = (process.argv.filter(function (a) { return a.indexOf("--ovr=") === 0; })[0] || "").slice(6); // réglages d'essai, JSON
+var GOURDE_ADV = OVR.indexOf("gourdeAdv") >= 0; // prototype : la gorgée donne l'avantage
 
 var src = fs.readFileSync(path.join(__dirname, "forecast-calibration-bench.js"), "utf8").replace(/\nmain\(\);\s*$/, "\n");
 var mod = { exports: {} };
@@ -45,6 +47,7 @@ if (OVR) {
   if (o.map) g.PA2_MAPS_BY_WORLD.forest = [o.map]; // v3.386.0 : banc sur une carte donnée (foret_1, foret_2)
   if (o.map && o.tune) g.PA2_MAPS[o.map].tune = o.tune; // v3.386.0 : {"foeMult":0.9,"lootMult":1.1}
   if (o.d20) Object.assign(g.PA2_D20, o.d20); // v3.578.0 : coût de la relance
+  if (o.gourdeAdv) { g.PA2_ITEMS.gourde.breath = o.gourdeAdv; var ui0 = g.Pa2Run.useItem; g.Pa2Run.useItem = function (id) { var run = this.getRun(), b = run && run.breath; if (id === "gourde" && run && run.breath >= 100) run.breath = 99; var r = ui0.call(this, id); if (r.ok && id === "gourde") run.advNext = true; return r; }; } // prototype v3.578.1
   if (o.rules) Object.assign(g.PA2_RULES, o.rules); // v3.578.0 : réglages de PA2_RULES
   if (o.walk != null) Object.keys(g.PA2_WORLD_RULES).forEach(function (w) { g.PA2_WORLD_RULES[w].stepBreath = o.walk; });
   if (o.epuise) { var ck0 = g.Pa2Run._check; g.Pa2Run._check = function (run, stat, ctx) { // prototype : Souffle bas, malus au jet
@@ -124,7 +127,8 @@ function playRun(c, stage) {
   function insistOrKeep() { // v3.578.0 (lot 3) : raté, on insiste si on peut ; de justesse, s'il reste du Souffle
     var r = run.pending.res;
     if (r.kind === "ko" && !P.canInsist(run) && run.stock.gourde > 0) P.useItem("gourde"); // la gourde, pour avoir de quoi insister
-    var go = r.kind === "ko" ? P.canInsist(run) : run.breath >= 45;
+    if (ALL_IN && !P.canInsist(run) && run.stock.gourde > 0) P.useItem("gourde");
+    var go = r.kind === "ko" || ALL_IN ? P.canInsist(run) : run.breath >= 45;
     br.insist += go ? 1 : 0;
     return P.insist(!go);
   }
@@ -151,6 +155,7 @@ function playRun(c, stage) {
       var o = P.obstacleOptions().filter(function (x) { return x.affordable; })
         .sort(function (a, b) { return (a.thr - b.thr) || (a.cost - b.cost); });
       var rope = P.obstacleOptions().filter(function (x) { return x.rope; })[0];
+      if (GOURDE_ADV && o.length && o[0].chance < 70 && !run.advNext && run.stock.gourde > 0) { P.useItem("gourde"); o = P.obstacleOptions().filter(function (x) { return x.affordable; }).sort(function (a, b) { return (a.thr - b.thr) || (a.cost - b.cost); }); }
       if (rope && (!o.length || o[0].chance < 60)) res = P.resolveObstacle("precision", true);
       else if (o.length) {
         if (run.breath < 30 && run.stock.gourde > 0) P.useItem("gourde"); else if (run.breath < 30 && run.stock.outre > 0) P.useItem("outre");
