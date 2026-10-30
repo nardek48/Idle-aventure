@@ -15,4 +15,4 @@ Suite de la v3.581.0, accord de Seb du 30/10.
 - `js/ui/screen-banner.js` : les 3 bandeaux. `achievement-view.js`, `bestiary-view.js`, `log-view.js` : une ligne chacun. `js/lang/en.js` : 6 textes. Aucun nouveau fichier de code.
 
 ## Contrôles
-`round-harness` 5 575 OK, 0 échec (deux passes), avec un contrôle nouveau [386] (images présentes, pages qui déclarent leur bandeau). Audit i18n : 100 %, 0 appel non littéral. Mesures au pixel sous Chromium (iPhone 390 × 844 et Mac 1440 × 900) : bandeau à 340 × 150 et 966 × 322 sur les 3 pages, bonne image, aucune erreur.
+`round-harness` 5 584 OK, 0 échec (deux passes), avec un contrôle nouveau [387] (images présentes, pages qui déclarent leur bandeau). Audit i18n : 100 %, 0 appel non littéral. Mesures au pixel sous Chromium (iPhone 390 × 844 et Mac 1440 × 900) : bandeau à 340 × 150 et 966 × 322 sur les 3 pages, bonne image, aucune erreur.

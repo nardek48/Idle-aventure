@@ -20455,7 +20455,37 @@ console.log("\n[385] v3.581.0 — Bandeaux illustrés : Camp et Quêtes suivent 
   } catch (err) { ok(false, "[385] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
-console.log("\n[386] v3.583.0 — Bandeaux illustrés des pages du menu : Bibliothèque, Journal, Hauts faits");
+console.log("\n[386] v3.582.0 — Carte du monde : le donjon de chaque monde en badge (options A et 1 de Seb)");
+(function () {
+  var DM = g.DungeonManager, save = { lock: DM.getLockReason, left: DM.getRunsLeft, free: DM.isStoryTicketFree }, toast = g.showToast, open = g.openDungeonSheet, said = [], opened = [];
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
+    var W = g.WORLDS[0];
+    DM.getLockReason = function () { return "data"; };
+    ok(g.mapDungeonOf(W) === null && g.mapDungeonBadgeHTML(W, 0) === "", "donjon pas encore annoncé par l'Histoire : pas de badge");
+    DM.getLockReason = function () { return "previous"; };
+    ok(g.mapDungeonOf(W).state === "locked" && /is-locked/.test(g.mapDungeonBadgeHTML(W, 0)) && /lock_closed/.test(g.mapDungeonBadgeHTML(W, 0)), "annoncé mais fermé : badge gris au cadenas");
+    DM.getLockReason = function () { return null; }; DM.isStoryTicketFree = function () { return false; };
+    DM.getRunsLeft = function () { return 2; };
+    ok(g.mapDungeonOf(W).state === "ready", "ouvert, sorties restantes : badge doré");
+    DM.getRunsLeft = function () { return 0; };
+    ok(g.mapDungeonOf(W).state === "spent", "plus de sortie aujourd'hui : badge éteint");
+    ok(g.mapDungeonBadgeHTML(g.WORLDS[4], 4) === "", "monde pas encore atteint : pas de badge");
+    var html = g.buildMapHTML();
+    ok(/map-dungeon/.test(html) && /dungeon_entrance\.webp/.test(html) && /search_unknown\.webp/.test(html), "carte : le badge garde le vrai chemin de l'image, l'icône générique en attendant");
+    g.showToast = function (m) { said.push(m); }; g.openDungeonSheet = function (id) { opened.push(id); };
+    DM.getRunsLeft = function () { return 1; };
+    g.tapMapDungeon(1, 0);
+    ok(opened[0] === 1, "toucher le badge du monde où tu es : la fiche du donjon s'ouvre");
+    DM.getLockReason = function () { return "previous"; };
+    g.tapMapDungeon(1, 0);
+    ok(/pas encore ouvert/.test(said[said.length - 1]), "badge fermé : le message dit qu'il n'est pas encore ouvert");
+    ok(!/dungeon_guaranteed_loot/.test(fs.readFileSync(path.join(ROOT, "js/ui/map-view.js"), "utf8")), "fiche du monde (PC) : l'icône « Butin garanti » n'est plus empruntée");
+  } catch (err) { ok(false, "[386] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  DM.getLockReason = save.lock; DM.getRunsLeft = save.left; DM.isStoryTicketFree = save.free; g.showToast = toast; g.openDungeonSheet = open;
+})();
+
+console.log("\n[387] v3.583.0 — Bandeaux illustrés des pages du menu : Bibliothèque, Journal, Hauts faits");
 (function () {
   try {
     var fs = require("fs"), path = require("path"), SB = g.ScreenBanner;
@@ -20463,7 +20493,7 @@ console.log("\n[386] v3.583.0 — Bandeaux illustrés des pages du menu : Biblio
     ok(d.every(function (x) { return x && fs.existsSync(path.join(ROOT, x[0])) && x[1] && x[2]; }), "3 bandeaux de menu : image présente, titre et phrase");
     var html = [g.buildAchievementsHTML, g.buildBestiaryHTML, g.buildLogHTML].map(function (f) { try { return typeof f === "function" ? f() : ""; } catch (e) { return ""; } }).join("");
     ok(keys.every(function (k) { return html.indexOf('data-kf-banner="' + k + '"') >= 0; }), "les 3 pages déclarent leur bandeau");
-  } catch (err) { ok(false, "[386] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  } catch (err) { ok(false, "[387] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
 Promise.all(ATTENTES).then(function () {

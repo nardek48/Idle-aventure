@@ -69,6 +69,39 @@ function buildMapPathSvgHTML(count) {
          '</svg>';
 }
 
+/* v3.582.0 (chantier « icône de donjon », options A et 1 de Seb) : le donjon de chaque monde, en badge sur la carte.
+   L'image n'est pas encore livrée : son vrai chemin est gardé, l'icône générique s'affiche à sa place. */
+var DUNGEON_MAP_ICON = "images/Icons/dungeon/dungeon_entrance.webp";
+function dungeonMapIconHTML(cls) {
+  return '<img class="' + cls + '" src="' + DUNGEON_MAP_ICON + '" alt="" onerror="this.onerror=null;this.dataset.missing=this.src;'
+    + 'if(window.MISSING_ICONS&&MISSING_ICONS.indexOf(this.src)<0)MISSING_ICONS.push(this.src);this.src=\'images/Icons/system/search_unknown.webp\'">';
+}
+// Donjon d'un monde et son état : null (pas encore annoncé), "locked", "ready" (sorties restantes), "spent".
+function mapDungeonOf(world) {
+  var d = (window.DUNGEONS || []).filter(function (x) { return x.worldId === world.id; })[0];
+  if (!d || !window.DungeonManager) return null;
+  var why = DungeonManager.getLockReason(d.id);
+  if (why === "data") return null; // fermé par l'Histoire : pas encore annoncé
+  if (why !== null) return { d: d, state: "locked" };
+  var free = typeof DungeonManager.isStoryTicketFree === "function" && DungeonManager.isStoryTicketFree(d.id);
+  return { d: d, state: free || DungeonManager.getRunsLeft(d.id) > 0 ? "ready" : "spent" };
+}
+function mapDungeonBadgeHTML(world, index) {
+  var md = isWorldUnlocked(index) ? mapDungeonOf(world) : null;
+  if (!md) return "";
+  return '<span class="map-dungeon is-' + md.state + '" role="button" aria-label="' + esc(_t("Donjon : {d}", { d: _td(md.d.name) })) + '" onclick="event.stopPropagation();tapMapDungeon(' + Number(md.d.id) + ',' + index + ')">'
+    + dungeonMapIconHTML("map-dungeon-img") + (md.state === "locked" ? '<img class="map-dungeon-lock" src="images/Icons/system/lock_closed.webp" alt="">' : '') + '</span>';
+}
+function tapMapDungeon(id, index) {
+  var d = (window.DUNGEONS || []).filter(function (x) { return x.id === id; })[0];
+  if (!d) return;
+  var md = mapDungeonOf(WORLDS[index]);
+  if (!md || md.state === "locked") { showToast(_t("{d} : pas encore ouvert.", { d: _td(d.name) }), 1800); return; }
+  if (index !== (WorldManager.worldIndex || 0)) { showToast(_t("{d} : voyage d'abord jusqu'à ce monde.", { d: _td(d.name) }), 1800); return; }
+  openDungeonSheet(id);
+}
+window.tapMapDungeon = tapMapDungeon;
+
 function buildMapNodeHTML(world, index) {
   var pos = MAP_NODE_POSITIONS[index] || { x: 50, y: 50 };
   var currentWorldIndex = WorldManager.worldIndex || 0;
@@ -82,10 +115,10 @@ function buildMapNodeHTML(world, index) {
   if (isDone) classes.push("is-done");
 
   var h = '<button type="button" class="' + classes.join(" ") + '" style="left:' + pos.x + '%;top:' + pos.y + '%;" onclick="tapMapWorld(' + index + ')">';
-  h += '<span class="map-node-circle"><img src="' + esc(getWorldThumb(world)) + '" alt="' + esc(_td(world.name)) + '" draggable="false">';
+  h += '<span class="map-node-pic"><span class="map-node-circle"><img src="' + esc(getWorldThumb(world)) + '" alt="' + esc(_td(world.name)) + '" draggable="false">';
   if (isCurrent) h += '<span class="map-node-badge">' + _t("Actuel") + '</span>';
   if (!unlocked) h += '<span class="map-node-lock"><img class=ico-inline src=images/Icons/system/lock_closed.webp></span>';
-  h += '</span>';
+  h += '</span>' + mapDungeonBadgeHTML(world, index) + '</span>';
   h += '<span class="map-node-name">' + esc(_td(world.name)) + '</span>';
   h += '</button>';
   return h;
@@ -121,7 +154,7 @@ function selectMapWorldWide(index) { mapWideSel = index; if (typeof renderPanel 
 window.selectMapWorldWide = selectMapWorldWide;
 
 function mapWideCard(icon, title, text, action) {
-  return '<div class="mw-card"><div class="mw-card-h">' + renderIconOrEmojiHTML(icon, "mw-card-ico", "") + '<b>' + esc(title) + '</b></div>'
+  return '<div class="mw-card"><div class="mw-card-h">' + (String(icon).charAt(0) === "<" ? icon : renderIconOrEmojiHTML(icon, "mw-card-ico", "")) + '<b>' + esc(title) + '</b></div>'
     + '<p>' + esc(text) + '</p>' + (action ? '<div class="mw-card-act">' + action + '</div>' : '') + '</div>';
 }
 
@@ -156,7 +189,7 @@ function buildMapWideSheetHTML() {
   (window.DUNGEONS || []).forEach(function (d) {
     if (d.worldId !== world.id || (d.locked && !d.requiresStoryStep)) return;
     var open = DungeonManager.isUnlocked(d.id), left = open ? DungeonManager.getRunsLeft(d.id) : 0;
-    cards += mapWideCard("images/Icons/dungeon/dungeon_guaranteed_loot.webp", _td(d.name),
+    cards += mapWideCard(dungeonMapIconHTML("mw-card-ico"), _td(d.name), // v3.582.0 : plus l'icône « Butin garanti » empruntée
       open ? _tn(left, "Donjon · {n} sortie aujourd'hui", "Donjon · {n} sorties aujourd'hui") : _t("Donjon · pas encore ouvert"),
       open && isCurrent ? '<button class="settings-btn" type="button" onclick="openDungeonSheet(' + Number(d.id) + ')">' + _t("Entrer") + '</button>' : "");
   });
