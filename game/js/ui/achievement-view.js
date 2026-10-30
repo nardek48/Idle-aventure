@@ -161,7 +161,7 @@ function buildAchievementsHTML() {
     // v3.365.0 (lot J, demande Seb) : le Bilan de la partie est parti en tête du Journal (log-view.js)
   }
 
-  return '<div class="nb-page-frame kframe-page" data-kf-title="' + esc("images/Icons/scene/final_reward.webp|" + _t("Hauts faits")) + '">' + h + '</div>';
+  return '<div class="nb-page-frame kframe-page" data-kf-banner="hauts_faits" data-kf-title="' + esc("images/Icons/scene/final_reward.webp|" + _t("Hauts faits")) + '">' + h + '</div>';
 }
 
 /* ---------- Titre porté (H8) : feuille du bas ---------- */

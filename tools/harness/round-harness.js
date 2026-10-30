@@ -20455,6 +20455,17 @@ console.log("\n[385] v3.581.0 — Bandeaux illustrés : Camp et Quêtes suivent 
   } catch (err) { ok(false, "[385] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[386] v3.582.0 — Bandeaux illustrés des pages du menu : Bibliothèque, Journal, Hauts faits");
+(function () {
+  try {
+    var fs = require("fs"), path = require("path"), SB = g.ScreenBanner;
+    var keys = ["bibliotheque", "journal", "hauts_faits"], d = keys.map(function (k) { return SB.data(k); });
+    ok(d.every(function (x) { return x && fs.existsSync(path.join(ROOT, x[0])) && x[1] && x[2]; }), "3 bandeaux de menu : image présente, titre et phrase");
+    var html = [g.buildAchievementsHTML, g.buildBestiaryHTML, g.buildLogHTML].map(function (f) { try { return typeof f === "function" ? f() : ""; } catch (e) { return ""; } }).join("");
+    ok(keys.every(function (k) { return html.indexOf('data-kf-banner="' + k + '"') >= 0; }), "les 3 pages déclarent leur bandeau");
+  } catch (err) { ok(false, "[386] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");
