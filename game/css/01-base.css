@@ -102,3 +102,31 @@ img {
   height: auto;     /* Conserve les proportions */
 }
 
+
+/* =========================
+   v3.572.0 — iPhone, appli installée (retour de Seb) : selon les lancements, iOS donne au jeu une hauteur
+   d'écran réduite de la zone de la barre d'accueil ; tout se calait au-dessus d'une bande vide. Le script de
+   l'en-tête (index.html) mesure la vraie hauteur (screen) et l'écart : la page et les écrans plein écran
+   s'étendent jusqu'en bas. Écart nul (cas normal, autres appareils) : rien ne change.
+   ========================= */
+html.ios-app:not(.pc-mode) { height: var(--app-h, 100%); overflow: hidden; }
+html.ios-app:not(.pc-mode) .ksheet-backdrop,
+html.ios-app:not(.pc-mode) .ksheet,
+html.ios-app:not(.pc-mode) .kwin-veil,
+html.ios-app:not(.pc-mode) .full-menu-overlay,
+html.ios-app:not(.pc-mode) .hc-overlay,
+html.ios-app:not(.pc-mode) .prologue,
+html.ios-app:not(.pc-mode) .title-screen-overlay,
+html.ios-app:not(.pc-mode) .hf-sheet-bg,
+html.ios-app:not(.pc-mode) .bm-intro,
+html.ios-app:not(.pc-mode) .bm-flash,
+html.ios-app:not(.pc-mode) .bm-final,
+html.ios-app:not(.pc-mode) .bm-win,
+html.ios-app:not(.pc-mode) body.scene-active.lab-run .lab-page,
+html.ios-app:not(.pc-mode) .lab-scrim,
+html.ios-app:not(.pc-mode) .lab-ksheet,
+html.ios-app:not(.pc-mode) .pa2-scrim,
+html.ios-app:not(.pc-mode) .wh-dd-veil,
+html.ios-app:not(.pc-mode) #pwa-boot-gate,
+html.ios-app:not(.pc-mode) #instance-lock,
+html.ios-app:not(.pc-mode) #rotate-veil { bottom: calc(-1 * var(--app-gap, 0px)); }

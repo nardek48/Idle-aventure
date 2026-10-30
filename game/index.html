@@ -15,6 +15,27 @@
   <script>if (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)) document.querySelector('meta[name="viewport"]').setAttribute("content", "width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover");</script>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <!-- v3.572.0 : iPhone, appli installée — iOS donne parfois une hauteur d'écran trop courte (bande vide en bas).
+       On mesure la vraie hauteur (--app-h) et l'écart (--app-gap), lus par css/01-base.css (html.ios-app). -->
+  <script>
+    (function () {
+      if (!window.navigator || navigator.standalone !== true) return;
+      var root = document.documentElement;
+      root.classList.add("ios-app");
+      function fit() {
+        var portrait = (window.innerHeight || 0) >= (window.innerWidth || 0);
+        var full = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
+        var h = Math.max(window.innerHeight || 0, full);
+        root.style.setProperty("--app-h", h + "px");
+        root.style.setProperty("--app-gap", Math.max(0, h - (window.innerHeight || h)) + "px");
+      }
+      fit();
+      window.addEventListener("resize", fit);
+      window.addEventListener("orientationchange", function () { setTimeout(fit, 250); });
+      window.addEventListener("pageshow", fit);
+      document.addEventListener("visibilitychange", function () { if (!document.hidden) setTimeout(fit, 100); });
+    })();
+  </script>
   <meta name="theme-color" content="#020312">
   <!-- v2.90.5 : PWA — manifest + icônes, voir manifest.json et
        js/main/pwa.js (enregistrement du service worker sw.js). -->

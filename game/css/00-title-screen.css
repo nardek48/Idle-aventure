@@ -216,3 +216,4 @@
 }
 .pwa-install-btn-title:active { transform: translateX(-50%) scale(0.97); }
 .pwa-install-btn-title .ico-inline { width: 16px; height: 16px; border-radius: 4px; }
+/* v3.571.0 : règle « 100lvh » de l'appli installée remplacée en v3.572.0 par la vraie hauteur d'écran (css/01-base.css). */
