@@ -20455,7 +20455,7 @@ console.log("\n[385] v3.581.0 — Bandeaux illustrés : Camp et Quêtes suivent 
   } catch (err) { ok(false, "[385] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
-console.log("\n[386] v3.582.0 — Bandeaux illustrés des pages du menu : Bibliothèque, Journal, Hauts faits");
+console.log("\n[386] v3.583.0 — Bandeaux illustrés des pages du menu : Bibliothèque, Journal, Hauts faits");
 (function () {
   try {
     var fs = require("fs"), path = require("path"), SB = g.ScreenBanner;

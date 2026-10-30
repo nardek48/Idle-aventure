@@ -45,7 +45,7 @@ I18n.register("en", {
   "Rebâti planche après planche": "Rebuilt plank by plank",
   "Le terrain d'entraînement": "The training ground",
   "Se préparer avant de repartir": "Get ready before setting out again",
-  // v3.582.0 : bandeaux des pages du menu
+  // v3.583.0 : bandeaux des pages du menu
   "La bibliothèque": "The library",
   "Bêtes et savoirs du voyage": "Beasts and lore from the road",
   "Le journal": "The journal",
