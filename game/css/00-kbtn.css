@@ -406,7 +406,7 @@
 /* =====================================================================
    v3.402.0 (lot B-1, choix de Seb dans atelier-boutons.html) :
    HIÉRARCHIE DES BOUTONS « H2 · bleu + filaire », ACHAT « P2 · pièce d'or »,
-   DANGER « D1 » inchangé (bleu, texte rouge).
+   DANGER « D1 » inchangé (bleu, texte rouge) ; v3.590.0 : contour rouge, voir la fin du fichier.
    - Principal : le bouton bleu serti (.kbtn.primary / .settings-btn.primary),
      un seul par carte.
    - Secondaire : filaire bronze sur le parchemin. Par défaut, tout .kbtn ou
@@ -589,3 +589,18 @@
 /* Sac et Boutique de l'équipement : légende, minuteur et note de la Halle sur parchemin ; bouton grisé lisible */
 #panel-container .kframe .kf-mid :is(.hs-cmp-legend, .equip-shop-timer, .equip-shop-hall-note) { background-color: var(--c-cream-100-soft); border-radius: 10px; padding: 8px 10px; box-shadow: var(--kf-ring); }
 #panel-container .kframe .kf-mid > .settings-btn:disabled { background-color: var(--c-cream-100-soft); }
+
+/* v3.590.0 (relevé boutons-releve.html, choix de Seb) : le DANGER quitte le bleu serti (D1) pour un contour rouge,
+   comme un secondaire ; à côté d'un principal, l'action normale ressort seule. Mêmes conteneurs que le secondaire. */
+:is(.kframe, .ksheet, .full-menu, .kwin) :is(.kbtn, .settings-btn).danger,
+:is(.kbtn, .settings-btn).danger.is-sec {
+  border: 2px solid var(--c-red-600-soft);
+  border-radius: 10px;
+  background: rgba(255, 236, 228, 0.55);
+  color: var(--c-red-700);
+  text-shadow: none;
+  box-shadow: none;
+  filter: none;
+}
+:is(.kframe, .ksheet, .full-menu, .kwin) :is(.kbtn, .settings-btn).danger:not(:disabled):active,
+:is(.kbtn, .settings-btn).danger.is-sec:not(:disabled):active { background: rgba(179, 38, 30, 0.14); background-image: none; }
