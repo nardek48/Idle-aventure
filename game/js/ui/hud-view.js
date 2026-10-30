@@ -137,7 +137,7 @@ function renderHudWide() {
 function hudWhere(world, ch, sub) {
   var tab = (window.game && game.activeTab) || "", wn = world ? _td(world.name) : "";
   var ico = function (t) { var im = document.querySelector('.tab-btn[data-tab="' + t + '"] img'); return im ? im.getAttribute("src") : ""; };
-  if (tab === "campement") return [_t("Campement d'Aeswyn"), wn + (sub ? " · " + sub : ""), ico("campement")];
+  if (tab === "campement") return [window.ScreenBanner ? ScreenBanner.campName() : _t("Campement d'Aeswyn"), wn + (sub ? " · " + sub : ""), ico("campement")]; // v3.581.0 : le camp suit le monde
   if (tab === "quests" && ch) return [_td(ch.title), wn + " · " + sub.split(" · ").slice(1).join(" · "), ico("quests")];
   if (tab === "village") {
     var n = 0;
