@@ -87,6 +87,10 @@
   <link rel="stylesheet" href="./css/09-wide.css"> <!-- v3.406.0 : format tablette (PC, tablette) -->
   <link rel="stylesheet" href="./css/10-grand-ecran.css"> <!-- v3.503.0 : grand écran (rail complet, bandeau, Chronique) -->
   <link rel="stylesheet" href="./css/99-icon-assets.css">
+  <!-- v3.569.0 : préférences et mode d'affichage chargés AVANT le corps de la page — le format PC est posé
+       avant la première image (sinon l'écran de chargement s'affichait en téléphone puis sautait en PC) -->
+  <script src="js/systems/prefs-system.js"></script> <!-- v3.332.0 : préférences de l'appareil ; avant i18n.js, qui y lit la langue -->
+  <script src="js/ui/desktop-scale.js"></script> <!-- v3.367.0 : mode PC, pose html.pc-mode avant le premier rendu -->
 
 </head>
 
@@ -284,12 +288,10 @@
 <script src="js/core/state.js"></script>
 <script src="js/core/combat-actors.js"></script>
 <script src="js/core/utils.js"></script>
-<script src="js/systems/prefs-system.js"></script> <!-- v3.332.0 : préférences d'affichage de l'appareil ; v3.369.0 : chargé avant i18n.js, qui y lit la langue -->
 <script src="js/core/i18n.js"></script> <!-- v3.368.0 : socle multilangue, _t() / _tn() -->
 <!-- v3.368.0 : dictionnaire français → anglais. v3.448.4 : chargé seulement si la langue est l'anglais
      (424 Ko épargnés au joueur francophone) ; changer de langue relance le jeu (I18n.setLang). -->
 <script>if (I18n.lang() === "en") document.write('<script src="js/lang/en.js"><\/script>');</script>
-<script src="js/ui/desktop-scale.js"></script> <!-- v3.367.0 : mode PC, pose html.pc-mode avant le premier rendu -->
 
 <!-- DATA -->
 <script src="js/data/combat-states.js"></script>
