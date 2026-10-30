@@ -10,3 +10,8 @@
 /* 3. Règle des 12 px : compteur des potions et raccourcis clavier */
 .cbx-pot > .cbx-pot-count { font-size: 12px; width: 22px; height: 22px; }
 .cbx-key-badge { font-size: 12px; }
+/* 1 bis. Avec compagnons (c2, c3) : le portrait couvre toute la hauteur, nom, Rage et PV empilés à sa droite */
+.cbx-team:is(.c2, .c3) .cbx-card.is-hero { grid-template-columns: 46px minmax(0, 1fr); row-gap: 3px; } /* 46 px : la place du badge de niveau */
+.cbx-team:is(.c2, .c3) .cbx-card.is-hero .cbx-card-pt { grid-column: 1; grid-row: 1 / span 4; align-self: center; justify-self: center; }
+.cbx-team.c2 .cbx-card.is-hero .cbx-card-pt { width: 40px; height: 40px; }
+.cbx-team:is(.c2, .c3) .cbx-card.is-hero :is(.cbx-card-nm, .cbx-cel, .cbx-res, .cbx-hpbar) { grid-column: 2; }
