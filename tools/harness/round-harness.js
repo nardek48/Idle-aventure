@@ -17253,7 +17253,7 @@ console.log("\n[283] v3.469.0 — Petites Aventures : condition du run (PG-B1a �
     prep(); S.startRun("petite_aventure_foret"); var r = game.sceneRun; r.cond = "brouillard";
     run("switchTab('scene')"); g.pa2View.prepStep = "bag";
     var hp = g.buildPa2PrepHTML(r);
-    ok(/nuit de brouillard/.test(hp) && /pa2-cond/.test(hp) && /Ruser gagne un cran/.test(hp) && /Cette nuit : Torche/.test(hp) && /pa2-night/.test(hp), "préparation : « … · nuit de brouillard », panneau Cette nuit, avantage, inconvénient, objet de la nuit (v3.580.0)");
+    ok(/nuit de brouillard/.test(hp) && /pa2-cond/.test(hp) && /Ruser gagne un cran/.test(hp) && /Cette nuit : Torche/.test(hp) && /pa2-nightitem/.test(hp), "préparation : « … · nuit de brouillard », panneau Cette nuit, avantage, inconvénient, objet de la nuit (v3.580.0)");
     r.cond = "calme"; hp = g.buildPa2PrepHTML(r);
     ok(/nuit calme/.test(hp) && !/pa2-pro/.test(hp.split("pa2-cond")[1] || ""), "Nuit calme : la phrase seule");
     r = go("forest", "brouillard");
@@ -20432,7 +20432,7 @@ console.log("\n[384] v3.580.0 — Petites Aventures, lot 4 : l'objet de la nuit 
     }
     r = go("forest", fw, ["trousse"]); run("switchTab('scene')"); g.pa2View.prepStep = "bag";
     var hp = g.buildPa2PrepHTML(r);
-    ok(/pa2-night/.test(hp) && /Un usage de plus/.test(hp) && /is-night/.test(hp) && hp.indexOf("undefined") < 0, "préparation : l'objet de la nuit mis en avant, et marqué dans la besace");
+    ok(/pa2-nightitem/.test(hp) && /Un usage de plus/.test(hp) && /is-night/.test(hp) && hp.indexOf("undefined") < 0, "préparation : l'objet de la nuit mis en avant, et marqué dans la besace");
     S.abandon();
   } catch (err) { ok(false, "[384] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   game.sceneRun = null;
@@ -20514,6 +20514,16 @@ console.log("\n[390] v3.586.0 — Expéditions : Donjon, Petites Aventures, Patr
     ok(b.indexOf("exp-sec") === -1 && (b.match(/class="exp-row is-/g) || []).length === 3, "plus de rubriques par état : trois lignes, l'état sur chaque ligne");
     run("LivingMapManager.isLiberated = LivingMapManager.__lib2;");
   } catch (err) { ok(false, "[390] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[391] v3.587.0 — Petites Aventures : la carte de nuit garde son image (régression v3.580.0)");
+(function () {
+  try {
+    var css = fs.readFileSync(path.join(ROOT, "css/04-panel-pa2.css"), "utf8");
+    var bad = (css.match(/(^|[\s,}])\.pa2-night[\s{.:]/gm) || []).length;
+    ok(bad === 0, "aucune règle sur « .pa2-night » seule : c'est la classe du body sur la carte de nuit (toutes les images passaient à 34 px)");
+    ok(/\.pa2-nightitem img/.test(css) && /pa2-nightitem/.test(fs.readFileSync(path.join(ROOT, "js/ui/pa2-view.js"), "utf8")), "l'objet de la nuit a sa propre classe (« pa2-nightitem »)");
+  } catch (err) { ok(false, "[391] exception : " + err.message); }
 })();
 
 Promise.all(ATTENTES).then(function () {
