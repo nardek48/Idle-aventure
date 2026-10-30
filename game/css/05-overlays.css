@@ -447,3 +447,12 @@
 }
 @keyframes rvTurn { 0%, 30% { transform: rotate(-90deg); } 60%, 100% { transform: rotate(0); } }
 @media (prefers-reduced-motion: reduce) { #rotate-veil i { animation: none; } }
+
+/* v3.592.0 : « Quoi de neuf » (ui/news-view.js, atelier quoi-de-neuf.html, choix A) */
+.news-win .kwin-body, .news-sheet .ksheet-body { display: grid; gap: 8px; }
+.news-list { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.news-list li { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 9px; align-items: start; padding: 8px 10px; border-radius: 10px;
+  background: rgba(255, 250, 240, 0.75); border: 1px solid rgba(194, 127, 31, 0.3); font-size: 14px; line-height: 1.35; color: var(--c-brown-850-2); text-align: left; }
+.news-list img { width: 30px; height: 30px; object-fit: contain; }
+.news-more { justify-self: center; }
+.news-v { margin: 6px 2px 0; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--c-brown-700-vivid); }

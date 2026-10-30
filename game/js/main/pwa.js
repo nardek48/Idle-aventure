@@ -186,6 +186,7 @@ function buildPwaUpdateCardHTML() {
   h += '<p>' + _t("Version installée : v{v}. Le jeu se met à jour seul ; si une version tarde à arriver, cherche-la ici.", { v: (typeof GAME_VERSION === "string" ? GAME_VERSION : "?") }) + '</p>';
   h += '<div class="set-pair"><button type="button" class="settings-btn" onclick="PwaUpdate.check()"><img class=ico-inline src=images/Icons/system/reset.webp> ' + _t("Chercher") + '</button>';
   h += '<button type="button" class="settings-btn" onclick="PwaUpdate.force()"><img class=ico-inline src=images/Icons/system/warning.webp> ' + _t("Forcer") + '</button></div>';
+  if (typeof openNewsList === "function") h += '<div class="set-links"><button type="button" class="klink" onclick="openNewsList()">' + _t("Voir les nouveautés") + '</button></div>'; // v3.592.0
   h += '<p class="set-note pwa-upd-msg" role="status" aria-live="polite">' + _t("« Forcer » vide le cache du jeu et retélécharge tout. Ta sauvegarde n'est pas touchée.") + '</p>';
   return h + '</div>';
 }
