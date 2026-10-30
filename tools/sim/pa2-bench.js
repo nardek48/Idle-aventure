@@ -155,7 +155,7 @@ function playRun(c, stage) {
       var o = P.obstacleOptions().filter(function (x) { return x.affordable; })
         .sort(function (a, b) { return (a.thr - b.thr) || (a.cost - b.cost); });
       var rope = P.obstacleOptions().filter(function (x) { return x.rope; })[0];
-      if (GOURDE_ADV && o.length && o[0].chance < 70 && !run.advNext && run.stock.gourde > 0) { P.useItem("gourde"); o = P.obstacleOptions().filter(function (x) { return x.affordable; }).sort(function (a, b) { return (a.thr - b.thr) || (a.cost - b.cost); }); }
+      if ((GOURDE_ADV || g.PA2_ITEMS.gourde.adv) && o.length && o[0].chance < 70 && !run.advNext && run.stock.gourde > 0) { P.useItem("gourde"); o = P.obstacleOptions().filter(function (x) { return x.affordable; }).sort(function (a, b) { return (a.thr - b.thr) || (a.cost - b.cost); }); }
       if (rope && (!o.length || o[0].chance < 60)) res = P.resolveObstacle("precision", true);
       else if (o.length) {
         if (run.breath < 30 && run.stock.gourde > 0) P.useItem("gourde"); else if (run.breath < 30 && run.stock.outre > 0) P.useItem("outre");

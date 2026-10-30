@@ -785,11 +785,12 @@ var Pa2Run = {
         + (this.hasRelic("meche", run) ? PA2_RULES.mecheSteps : 0) // v3.469.5 : Mèche de Sarkel
         + ((window.LivingMapManager && LivingMapManager.hasEffect("lanterne_plus")) ? 1 : 0); // l'obélisque tenu
     } else if (it.breath) {
-      if (run.breath >= 100) return { ok: false, reason: _t("Ton Souffle est déjà plein.") };
+      if (run.breath >= 100 && !(it.adv && !run.advNext)) return { ok: false, reason: it.adv ? _t("Souffle plein, et l'avantage est déjà pris.") : _t("Ton Souffle est déjà plein.") };
       var amt = it.breath;
-      if (itemId === "gourde" && window.LivingMapManager && LivingMapManager.hasEffect("gourde_40")) amt = Number(LivingMapManager.getEffectValue("gourdeBreath", 40));
+      if (itemId === "gourde" && window.LivingMapManager && LivingMapManager.hasEffect("gourde_40")) amt = Number(LivingMapManager.getEffectValue("gourdeBreath", 25));
       amt = this.drinkAmount(itemId, amt);
       run.breath = Math.min(100, run.breath + amt);
+      if (it.adv) run.advNext = true; // v3.579.0 : la gorgée de la gourde donne l'avantage au prochain jet
     } else {
       if (it.uses && !it.healPct) return { ok: false, reason: _t("Choix impossible") }; // corde, trousse, craie : pas à boire
       if (game.heroHp >= game.heroMaxHp && !(it.healsWound && run.wounds > 0) && !(this.fxLeft(run, "venin") > 0)) return { ok: false, reason: _t("Tu es en pleine forme.") };

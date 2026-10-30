@@ -6311,10 +6311,10 @@ console.log("\n[59b] v3.257.0 \u2014 Cartes Vivantes C-3 : Palissade, effets ten
   var run1 = g.game.sceneRun;
   ok(run1.stock.corde === 2, "Pont du gu\u00e9 tenu : une corde embarqu\u00e9e = 2 usages");
   run1.breath = 50; P.useItem("gourde");
-  ok(run1.breath === 75, "Autel de pierre non tenu : gourde +25");
+  ok(run1.breath === 65 && run1.advNext === true, "Autel de pierre non tenu : gourde +15 et l'avantage (v3.579.0)");
   LM.onRunEnd(M, "autel", "success");
   run1.breath = 50; P.useItem("gourde");
-  ok(run1.breath === 90, "Autel de pierre tenu : gourde +40");
+  ok(run1.breath === 75, "Autel de pierre tenu : gourde +25 (v3.579.0)");
   ok(P._altarFree(run1) === false, "sans Menhirs : l'autel se paie");
   LM.onRunEnd(M, "menhirs", "success");
   ok(P._altarFree(run1) === true, "Menhirs tenus : l'autel est gratuit une fois par run");
@@ -20372,6 +20372,27 @@ console.log("\n[382] v3.578.0 — Petites Aventures, lot 3 : insister, l'avantag
     S.abandon();
   } catch (err) { ok(false, "[382] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   P._int = saveInt; P.quality = saveQ; game.sceneRun = null;
+})();
+
+console.log("\n[383] v3.579.0 — Petites Aventures : la gourde donne l'avantage (choix A de Seb)");
+(function () {
+  var S = g.SceneRunManager, P = g.Pa2Run;
+  try {
+    game = freshCombat("knight"); giveWeapon(); run("game.enemy = null; game.combat = null;");
+    S.ensureDefaults(); game.explorationProgression.petiteAventure = { spent: 0, since: null }; game.sceneRun = null;
+    if (g.SortieManager.isActive()) g.SortieManager.end("return");
+    S.startRun("petite_aventure_foret"); var r = game.sceneRun; P.addItem("gourde"); P.depart();
+    ok(g.PA2_ITEMS.gourde.breath === 15 && g.PA2_ITEMS.gourde.adv === true && r.stock.gourde === 2, "deux gorgées : +15 Souffle et l'avantage chacune");
+    r.breath = 100; r.advNext = false;
+    var u1 = P.useItem("gourde");
+    ok(u1.ok && r.advNext === true && r.breath === 100 && r.stock.gourde === 1, "Souffle plein : la gorgée se boit quand même, pour l'avantage");
+    var u2 = P.useItem("gourde");
+    ok(!u2.ok && r.stock.gourde === 1, "Souffle plein et avantage déjà pris : la gorgée attend");
+    var hud = g.pa2HudHTML(r);
+    ok(/is-adv/.test(hud) && /Avantage/.test(hud), "le bandeau montre l'avantage en attente");
+    S.abandon();
+  } catch (err) { ok(false, "[383] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  game.sceneRun = null;
 })();
 
 Promise.all(ATTENTES).then(function () {
