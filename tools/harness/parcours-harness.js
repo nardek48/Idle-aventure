@@ -120,7 +120,8 @@ function consoleClean(page) {
    (fonction exécutée dans la page) et sauvegarde. Le héros créé devient le dernier joué. */
 async function makeHero(page, name, heroId, prep) {
   await page.evaluate(function (a) {
-    titleScreenNewGame(); pendingHeroId = a.heroId; pendingPlayerName = a.name; confirmHeroSelection();
+    titleScreenNewGame(); if (window.PrologueView) PrologueView.skip(); // v3.570.0 : setup, prologue passé
+    pendingHeroId = a.heroId; pendingPlayerName = a.name; confirmHeroSelection(); if (window.PrologueView) PrologueView.skip();
   }, { name: name, heroId: heroId });
   await page.waitForTimeout(300);
   // prep : une fonction ou une liste, exécutées DANS la page (pas de fermeture sur le script)
@@ -386,6 +387,11 @@ async function P1(browser, base) {
   var page = await launch(dev, base);
   ok(!(await visible(page, ".title-screen-continue", 500)), "tout premier lancement : pas de « Continuer »");
   await tap(page, ".title-screen-img-btn");                          // « Nouvelle Partie »
+  // v3.570.0 : le prologue, planches 1-4, puis « Passer ▸ » comme un joueur pressé
+  ok(await visible(page, ".prologue-scene", 2000), "prologue : planche 1 par-dessus la création");
+  await shot(page, "1_prologue");
+  await tap(page, ".prologue-skip");
+  ok(!(await visible(page, ".prologue", 300)), "« Passer » : la création apparaît");
   ok(await visible(page, "#player-name-input"), "création : champ du nom");
   await page.fill("#player-name-input", "Aube");
   await page.locator("#player-name-input").press("Enter");
@@ -399,6 +405,8 @@ async function P1(browser, base) {
   var conf = page.locator('[onclick^="confirmHeroSelection"]');
   ok(await conf.count() === 1, "création : bouton de confirmation");
   await conf.first().click(); await page.waitForTimeout(800);
+  ok(await page.evaluate(function () { return PrologueView.active && PrologueView.idx === 4; }), "prologue : planche 5 après la création");
+  await tap(page, ".prologue-skip");
   ok(await visible(page, "#tutorial-modal-root button", 3000), "tutoriel d'accueil affiché");
   await shot(page, "2_accueil");
   await dismissTutorials(page);

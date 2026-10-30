@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.569.0"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.570.0"; // <- à incrémenter à CHAQUE livraison
 var CACHE_NAME = "quest-idle-" + CACHE_VERSION;
 var IMAGE_CACHE = "aethervale-images"; // v3.457.4 : hors du préfixe quest-idle- ; v3.547.0 : images disparues purgées (purgeMissingImages)
 var imagesRevalidated = {};             // URL déjà revérifiées depuis le démarrage de ce service worker
@@ -57,6 +57,7 @@ var PRECACHE_APP_SHELL = [
   "./css/00-components.css",
   "./css/00-title-screen.css",
   "./css/00-hero-creation.css",
+  "./css/00-prologue.css", // v3.570.0 : NOUVEAU fichier (le prologue)
   "./css/00-tokens.css",
   "./css/01-base.css",
   "./css/02-layout.css",
@@ -227,6 +228,7 @@ var PRECACHE_APP_SHELL = [
   "./js/ui/living-map-view.js",
   "./js/ui/menu-view.js",
   "./js/ui/modal-view.js",
+  "./js/ui/prologue-view.js", // v3.570.0 : NOUVEAU fichier (le prologue)
   "./js/ui/modal.js",
   "./js/ui/potion-view.js",
   "./js/ui/quests-view.js",
@@ -268,6 +270,7 @@ var PRECACHE_APP_SHELL = [
   "./js/data/tavern-contracts.js",
   "./js/data/workshop-unlock.js",
   "./js/data/village-quests.js",
+  "./js/data/prologue.js", // v3.570.0 : NOUVEAU fichier (le prologue)
   "./js/systems/warehouse-system.js",
   "./js/systems/village-building-system.js",
   "./js/systems/apothecary-system.js",
