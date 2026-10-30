@@ -8,6 +8,7 @@ D'après l'atelier `atelier/accueil-grand-ecran.html` (accord de Seb du 30/10) e
 
 ## Téléphone
 - Seule l'image d'accueil change (nouvelle version, même nom de fichier). Les écrans gardent leur forme.
+- Création du héros : défense et critique écrits à la française (« 7,5 % » au lieu de « 7.5% »), téléphone compris.
 
 ## Code
 - **Fichiers ajoutés** : `images/TitleScreen/title_background_wide.webp` (3 072 × 2 048, chargée à la demande) ; `atelier/accueil-grand-ecran.html`.

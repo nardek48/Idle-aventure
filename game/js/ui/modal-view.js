@@ -455,9 +455,9 @@ function buildHeroStepHTML(selectedHero) {
   html += '<div class="hc-stats">';
   html += '  <div class="hc-stat"><span class="hc-stat-icon"><img class="hc-stat-ico-img" src="images/Icons/combat_stats/stat_health.webp" alt=""></span><span class="hc-stat-label">' + _t("PV", "unité") + '</span><strong>' + esc(formatNumber(stats.pv)) + '</strong></div>';
   html += '  <div class="hc-stat"><span class="hc-stat-icon"><img class="hc-stat-ico-img" src="images/Icons/combat_stats/stat_attack.webp" alt=""></span><span class="hc-stat-label">' + _t("ATK", "unité") + '</span><strong>' + esc(formatNumber(stats.atk)) + '</strong></div>';
-  html += '  <div class="hc-stat"><span class="hc-stat-icon"><img class="hc-stat-ico-img" src="images/Icons/combat_stats/stat_defense.webp" alt=""></span><span class="hc-stat-label">' + _t("DEF", "unité") + '</span><strong>' + stats.def + '%</strong></div>';
+  html += '  <div class="hc-stat"><span class="hc-stat-icon"><img class="hc-stat-ico-img" src="images/Icons/combat_stats/stat_defense.webp" alt=""></span><span class="hc-stat-label">' + _t("DEF", "unité") + '</span><strong>' + esc(formatNumber(stats.def)) + ' %</strong></div>';
   html += '  <div class="hc-stat"><span class="hc-stat-icon"><img class="hc-stat-ico-img" src="images/Icons/combat_stats/stat_speed.webp" alt=""></span><span class="hc-stat-label">' + _t("VIT", "unité") + '</span><strong>' + esc(formatNumber(stats.vit)) + '</strong></div>';
-  html += '  <div class="hc-stat"><span class="hc-stat-icon"><img class="hc-stat-ico-img" src="images/Icons/combat_stats/stat_critical.webp" alt=""></span><span class="hc-stat-label">' + _t("CRIT", "unité") + '</span><strong>' + stats.crit + '%</strong></div>';
+  html += '  <div class="hc-stat"><span class="hc-stat-icon"><img class="hc-stat-ico-img" src="images/Icons/combat_stats/stat_critical.webp" alt=""></span><span class="hc-stat-label">' + _t("CRIT", "unité") + '</span><strong>' + esc(formatNumber(stats.crit)) + ' %</strong></div>'; // v3.568.0 : à la française (7,5 %)
   html += '</div>';
 
   html += buildHeroAttackPreviewBandeauHTML(selectedHero);
