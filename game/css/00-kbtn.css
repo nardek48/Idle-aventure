@@ -532,3 +532,50 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, .5); cursor: pointer;
   pointer-events: auto; } /* v3.492.2 : le bandeau .kf-top est en pointer-events: none, hérité : le retour ne recevait aucun toucher */
 .kf-back:focus-visible { outline: 2px solid var(--c-cream-50-soft); outline-offset: 2px; }
+
+/* ============================================================
+   v3.584.0 — SANS GRAND CADRE (atelier sans-cadre.html, variante B de Seb)
+   Plus de chapeau, de rails ni de pied dorés : le décor du monde, assombri, passe
+   entre les blocs ; chaque bloc garde son fond et reçoit un filet doré, comme le bandeau.
+   Les pages sans bandeau gardent un titre simple. Ton futur fond parchemin : remplacer
+   --kf-scrim (décor) et --kf-ring (filet des blocs).
+   ============================================================ */
+#panel-container { --kf-scrim: rgba(12, 9, 6, 0.5); --kf-ring: 0 0 0 1px rgba(194, 127, 31, 0.75), 0 4px 12px rgba(0, 0, 0, 0.45); --kf-ink: var(--c-cream-100-2); }
+#panel-container .kframe .kf-top::before, #panel-container .kframe .kf-top::after,
+#panel-container .kfp-top-holder .kf-top::before, #panel-container .kfp-top-holder .kf-top::after,
+#panel-container .kframe .kf-mid::before, #panel-container .kframe .kf-mid::after { display: none; }
+#panel-container .kframe > .kf-bot, #panel-container .kframe:not(.kframe-page) > .kf-top { display: none; }
+#panel-container .kframe > .kf-mid { padding: 6px 10px 16px; }
+#panel-container .kfp-scrollzone, #panel-container .subtab-page-content { background: var(--kf-scrim); }
+#panel-container .kfp-top-holder.has-banner { margin-bottom: 0; }
+#panel-container .kfp-top-holder.has-banner .kf-top { display: none; }
+#panel-container .kfb { margin: 8px 10px 10px; }
+
+/* Titre simple des pages sans bandeau : bande sombre, filet doré, retour « ‹ » conservé */
+#panel-container .kfp-top-holder:not(.has-banner) .kf-top {
+  aspect-ratio: auto; height: auto; min-height: 46px; margin: 6px 10px 0; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(rgba(14, 10, 6, 0.88), rgba(14, 10, 6, 0.72)); border-radius: 8px; box-shadow: var(--kf-ring);
+}
+#panel-container .kfp-top-holder:not(.has-banner) .kf-title {
+  position: static; inset: auto; padding: 0 48px; color: var(--c-bronze-300-soft);
+  font-family: "Cinzel", Georgia, "Times New Roman", serif; font-weight: 700; letter-spacing: 0.04em; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+#panel-container .kfp-top-holder:not(.has-banner) .kf-back { left: 6px; top: 50%; }
+
+/* Filet doré des blocs (les bordures d'état d'origine restent) */
+#panel-container .kframe .kf-mid :is(.camp-card, .kseg, .story-prologue-card, .story-chain, .warehouse-note, .hs-kstrip, .hs-eq,
+  .hs-edetail, .hs-roster-btn, .hst-bar, .hst-tree, .hst-detail, .hst-seg, .hf-top, .hf-tiers, .hf-card, .nb-accordion-section, .set-card,
+  .mem-head, .mem-level, .dungeon-ticket-badge, .dungeon-card, .grimoire-rule-row, .prod-tile, .wh-cell, .story-prologue-card) { box-shadow: var(--kf-ring); }
+/* Blocs qui n'avaient pas de fond propre : parchemin */
+#panel-container .kframe .kf-mid :is(.mem-level, .grimoire-rule-row.is-empty, .hst-seg, .prod-tile, .kseg) { background-color: var(--c-cream-100-soft); }
+#panel-container .kframe .kf-mid .mem-level { border-radius: 12px; padding: 12px; }
+#panel-container .kframe .kf-mid .hst-seg { border-radius: 10px; padding: 3px; }
+
+/* Textes posés sur le décor : passent en clair */
+#panel-container .kframe .kf-mid :is(.qb-cap-indicator, .qb-completed-link, .production-dash-hint, .wh-zero-note, .codex-summary, .tutorials-intro,
+  .grimoire-mode-desc, .grimoire-divider, .qw-grp, .hs-wh),
+#panel-container .kframe .kf-mid > .ksec, #panel-container .kframe .kf-mid > .ksec *,
+#panel-container .kframe .kf-mid :is(.wh-filter, .hs-sets, .grimoire-head, .grimoire-foot) :is(span, small, b, div, button:not(.kbtn):not(.settings-btn)) {
+  color: var(--kf-ink); text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+#panel-container .kframe .kf-mid > .ksec::before, #panel-container .kframe .kf-mid > .ksec::after { background: rgba(226, 177, 74, 0.55); }

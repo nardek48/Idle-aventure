@@ -651,3 +651,18 @@ html.wide-mode .pwa-boot-bg { content: url('../images/TitleScreen/title_backgrou
 html.wide-mode #panel-container .kfb-tx { left: 22px; bottom: 16px; }
 html.wide-mode #panel-container .kfb-t { font-size: 26px; }
 html.wide-mode #panel-container .kfb-s { font-size: 16px; }
+
+/* v3.584.0 : sans grand cadre en grand écran aussi (règles de css/00-kbtn.css, ici face aux règles du cadre de 09-wide.css) */
+html.wide-mode #panel-container .kframe .kf-top::before, html.wide-mode #panel-container .kframe .kf-top::after,
+html.wide-mode #panel-container .kfp-top-holder .kf-top::before, html.wide-mode #panel-container .kfp-top-holder .kf-top::after,
+html.wide-mode #panel-container .kframe .kf-mid::before, html.wide-mode #panel-container .kframe .kf-mid::after,
+html.wide-mode #panel-container .kf-orn { display: none; }
+html.wide-mode #panel-container .nb-page-frame.kframe > .kf-mid { padding: 8px 14px 22px; }
+html.wide-mode #panel-container .kfp-top-holder:not(.has-banner) .kf-top { height: auto; margin: 8px 14px 0; }
+html.wide-mode #panel-container .kfb { margin: 10px 14px 12px; }
+/* Textes posés sur le décor, propres au grand écran : passent en clair */
+html.wide-mode #panel-container .pw .production-dash-hint,
+html.wide-mode #panel-container .kframe .kf-mid .hs-wh small,
+html.wide-mode #panel-container .kframe .kf-mid .qw-act small { color: var(--kf-ink); text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9); }
+html.wide-mode #panel-container .kframe .kf-mid .qw-act.is-on small { color: var(--c-bronze-300-soft); }
+html.wide-mode #panel-container .kframe .kf-mid .qw-act i:not(.is-done):not(.is-cur) { background: rgba(244, 233, 208, 0.22); }
