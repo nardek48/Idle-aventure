@@ -1,0 +1,17 @@
+/* 1. Carte du héros seul (c1) : portrait à gauche, nom et Rage sur une ligne, PV dessous — 3 rangées au lieu de 4 */
+.cbx-team.c1 .cbx-card.is-hero { grid-template-columns: auto minmax(0, 1fr) minmax(0, 1.1fr); grid-template-rows: auto auto auto; column-gap: 10px; row-gap: 4px; padding: 6px 10px 7px; }
+.cbx-team.c1 .cbx-card.is-hero .cbx-card-pt { grid-column: 1; grid-row: 1 / span 3; width: 46px; height: 46px; align-self: center; }
+.cbx-team.c1 .cbx-card.is-hero .cbx-card-nm { grid-column: 2; grid-row: 1; font-size: 14px; }
+.cbx-team.c1 .cbx-card.is-hero .cbx-res { grid-column: 3; grid-row: 1; }
+.cbx-team.c1 .cbx-card.is-hero .cbx-cel { grid-column: 2 / -1; grid-row: 2; }
+.cbx-team.c1 .cbx-card.is-hero .cbx-hpbar { grid-column: 2 / -1; grid-row: 3; }
+/* 2. Ligne de tactique : pastille sombre, lisible sur tous les décors */
+.cbx-advice:not(.is-tip) > span { color: rgba(255, 244, 220, .92); background: rgba(12, 8, 4, .72); border: 1px solid rgba(240, 198, 74, .35); border-radius: 999px; padding: 2px 9px 2px 5px; }
+/* 3. Règle des 12 px : compteur des potions et raccourcis clavier */
+.cbx-pot > .cbx-pot-count { font-size: 12px; width: 22px; height: 22px; }
+.cbx-key-badge { font-size: 12px; }
+/* 1 bis. Avec compagnons (c2, c3) : le portrait couvre toute la hauteur, nom, Rage et PV empilés à sa droite */
+.cbx-team:is(.c2, .c3) .cbx-card.is-hero { grid-template-columns: 46px minmax(0, 1fr); row-gap: 3px; } /* 46 px : la place du badge de niveau */
+.cbx-team:is(.c2, .c3) .cbx-card.is-hero .cbx-card-pt { grid-column: 1; grid-row: 1 / span 4; align-self: center; justify-self: center; }
+.cbx-team.c2 .cbx-card.is-hero .cbx-card-pt { width: 40px; height: 40px; }
+.cbx-team:is(.c2, .c3) .cbx-card.is-hero :is(.cbx-card-nm, .cbx-cel, .cbx-res, .cbx-hpbar) { grid-column: 2; }
