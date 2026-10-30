@@ -272,23 +272,24 @@ html.wide-mode body.scene-active:not(.lab-run) > #panel-container > * { max-widt
 @font-face { font-family: "Cinzel"; src: url("../fonts/cinzel-latin-700-normal.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
 @font-face { font-family: "Alegreya"; src: url("../fonts/alegreya-latin-400-normal.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
 @font-face { font-family: "Alegreya"; src: url("../fonts/alegreya-latin-400-italic.woff2") format("woff2"); font-weight: 400; font-style: italic; font-display: swap; }
-html.wide-mode { --f-title: "Cinzel", Georgia, "Times New Roman", serif; --f-story: "Alegreya", Georgia, "Times New Roman", serif; }
+/* v3.588.0 : les deux polices valent aussi sur téléphone (atelier polices-telephone.html, version B de Seb) */
+:root { --f-title: "Cinzel", Georgia, "Times New Roman", serif; --f-story: "Alegreya", Georgia, "Times New Roman", serif; }
 
-/* Titres en Cinzel (graisse unique 700, pas de gras simulé) */
-html.wide-mode #panel-container .kf-title,
-html.wide-mode .ksheet-ttl,
-html.wide-mode #panel-container .ksec,
-html.wide-mode #panel-container .hs-name,
-html.wide-mode #panel-container .story-step-current .story-step-title,
+/* Titres en Cinzel (graisse unique 700, pas de gras simulé) ; v3.588.0 : les lignes sans html.wide-mode valent aussi sur téléphone */
+#panel-container .kf-title,
+.ksheet-ttl,
+#panel-container .ksec,
+#panel-container .hs-name,
+#panel-container .story-step-current .story-step-title,
 html.wide-mode .hud-name strong,
 html.wide-mode .hud-where-txt strong,
 html.wide-mode .chr-h strong,
 html.wide-mode .chr-obj b,
-html.wide-mode .cbx-tname b { font-family: var(--f-title); font-weight: 700; letter-spacing: 0.04em; }
-html.wide-mode #panel-container .ksec { letter-spacing: 0.06em; }
-html.wide-mode .ksheet-ttl small { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; letter-spacing: 0; }
+.cbx-tname b { font-family: var(--f-title); font-weight: 700; letter-spacing: 0.04em; }
+#panel-container .ksec { letter-spacing: 0.06em; }
+.ksheet-ttl small { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; letter-spacing: 0; }
 /* Récit des étapes d'Histoire en Alegreya italique */
-html.wide-mode #panel-container .story-step-text { font-family: var(--f-story); font-style: italic; font-size: 16px; line-height: 1.5; }
+#panel-container .story-step-text { font-family: var(--f-story); font-style: italic; font-size: 16px; line-height: 1.5; }
 
 /* Coque : un seul bloc de pierre (le décor du monde ne passe plus entre les colonnes) */
 html.wide-mode body:not(.lab-run) {

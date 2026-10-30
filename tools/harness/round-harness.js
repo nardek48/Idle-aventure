@@ -20014,7 +20014,8 @@ console.log("\n[369] v3.553.0 — Grand écran, option A : polices, coque d'un s
     ["cinzel-latin-700-normal", "alegreya-latin-400-normal", "alegreya-latin-400-italic"].forEach(function (f) {
       ok(fs.existsSync(path.join(ROOT, "fonts/" + f + ".woff2")) && sw.indexOf("./fonts/" + f + ".woff2") > 0 && css.indexOf("../fonts/" + f + ".woff2") > 0, "police hébergée, précachée et déclarée : " + f);
     });
-    ok(/^html\.wide-mode \{ --f-title: "Cinzel"/m.test(css), "polices réservées au format large (le téléphone garde la police du système)");
+    // v3.588.0 (décision Seb, atelier polices-telephone.html, version B) : les polices valent aussi sur téléphone
+    ok(/^:root \{ --f-title: "Cinzel"/m.test(css) && /^#panel-container \.story-step-text \{ font-family: var\(--f-story\)/m.test(css), "polices du grand écran aussi sur téléphone : titres en Cinzel, récit en Alegreya (version B)");
     ok(/^\.hud-name, \.hud-wh \{ display: none; \}/m.test(css), "téléphone : ni nom ni bouton Entrepôt dans le bandeau");
     var hud = g.buildHudHTML();
     ok(hud.indexOf('id="hud-name-t"') > 0 && hud.indexOf("hudOpenWarehouse()") > 0, "bandeau : nom du héros et bouton Entrepôt");
