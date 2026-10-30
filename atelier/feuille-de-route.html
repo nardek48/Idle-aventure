@@ -28,6 +28,7 @@ ul { padding-left: 20px; display: grid; gap: 3px; }
 a { color: var(--bronze); font-weight: 700; }
 code { font: 13px var(--f-code); overflow-wrap: anywhere; }
 .intro { color: var(--sourd); max-width: 65ch; }
+.sec-intro { font-size: 15px; }
 .etat { font-size: 14px; color: var(--sourd); min-height: 1.4em; }
 .outils { display: flex; flex-wrap: wrap; gap: 6px; }
 .outils button { font: 500 14px var(--f-texte); color: var(--encre); background: var(--carte); border: 1px solid var(--trait); border-radius: 999px; min-height: 40px; padding: 0 14px; cursor: pointer; }
@@ -67,7 +68,9 @@ button:focus-visible { outline: 2px solid var(--bronze); outline-offset: 2px; }
 </div>
 <script id="donnees" type="application/json">
 [
- {"id": "chantiers", "titre": "Chantiers", "numeros": true, "items": [
+ {"id": "chantiers", "titre": "Chantiers", "numeros": true,
+  "intro": "<b>Ordre proposé le 30/10.</b> Un chantier à la fois, jusqu'au bout. (1) Les images avancent en parallèle, au rythme de tes lots. (2) Les Petites Aventures d'abord : on corrige ce qui existe avant d'ajouter. (3) L'icône de donjon : petite, vite faite. (4) à (7) La « vie du monde », dans l'ordre où chaque chantier réutilise le précédent : ouvertures de chapitre (le composant du prologue), camp qui évolue (ses paliers suivent les chapitres), conversations au feu de camp (sur le camp habité), jours de jeu (qui animent cartes et camp). (8) L'évolution du village, après les jours, puisque ses événements en dépendent. (9) La Tour en dernier : elle profite de tout le reste (ouvertures, conversations, choix pesants). Change l'ordre avec ▲ ▼ si tu veux.",
+  "items": [
   {"id": "ch-images", "statut": "cours", "titre": "Images à générer",
    "html": "<p>Il y a 46 images, avec leur prompt, dans <a href=\"https://claude.ai/artifact/SdtrXba9Wkt6YVLQYVS3Cd\" target=\"_blank\" rel=\"noopener\">Images à générer</a> :</p><ul><li>les deux pastilles des élites, « pièce Rare » et « pièce Épique », à la place de l'icône d'armure empruntée ;</li><li>les 6 élites et boss en 400 px ;</li><li>la silhouette du héros (mesurée trop petite sur Mac) ;</li><li>les icônes des bâtiments, des ateliers et des objets, les cartes vivantes et l'icône de l'application.</li></ul><p class=\"sourd\">Nouvelle règle : les formats tiennent compte du PC. Un nouveau fond de combat se livre en deux fichiers, portrait et paysage <code>-wide</code>.</p><p><b>Premier lot intégré en v3.573.0</b> (30/10) : les deux pastilles (branchées, l'icône d'armure n'est plus empruntée), les 6 élites et boss, les silhouettes et le cadenas. Reste la P2 : bâtiments, ateliers, objets, cartes vivantes, destinations et icônes de l'application.</p>"},
   {"id": "ch-pa", "statut": "cadrer", "titre": "Petites Aventures : bugs et améliorations",
@@ -141,7 +144,7 @@ button:focus-visible { outline: 2px solid var(--bronze); outline-offset: 2px; }
     var h = "";
     SECTIONS.forEach(function (s) {
       var items = ordonner(s), n = items.filter(function (it) { return etat.fait[it.id]; }).length;
-      h += '<h2>' + esc(s.titre) + '<small>' + n + ' / ' + items.length + ' faits</small></h2><div class="section">';
+      h += '<h2>' + esc(s.titre) + '<small>' + n + ' / ' + items.length + ' faits</small></h2>' + (s.intro ? '<p class="intro sec-intro">' + s.intro + '</p>' : '') + '<div class="section">';
       items.forEach(function (it, i) {
         var on = !!etat.fait[it.id];
         if (masquer && on) return;
