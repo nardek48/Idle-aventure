@@ -60,6 +60,16 @@ var Pa2Run = {
     if (!list.length || this.rand() < Number((PA2_CONDITION_RULES || {}).calmPct || 0)) return "calme";
     return this._pick(list);
   },
+  /* v3.580.0 (lot 4, choix A de Seb) : l'objet conseillé par la nuit est renforcé pour ce run.
+     Objet à usages : +1 usage. Torche et armure : leur défaut ne joue pas cette nuit. */
+  nightItem: function (run) {
+    var c = this.condition(run);
+    return c && c.tip && PA2_ITEMS[c.tip] ? c.tip : null;
+  },
+  nightBoost: function (id, run) {
+    run = run || this.getRun();
+    return !!run && this.nightItem(run) === id && run.bag.indexOf(id) >= 0;
+  },
   condition: function (run) {
     run = run || this.getRun();
     if (!run || !run.cond || this.isParcours(run)) return null;
@@ -425,6 +435,8 @@ var Pa2Run = {
     run.bag.forEach(function (id) { var it = PA2_ITEMS[id]; if (it.uses) run.stock[id] = (run.stock[id] || 0) + (id === "gourde" && gUses ? gUses : it.uses); });
     // Q11 : Seconde gorgée (Mémoire) +1 gorgée, Gué tenu +1 corde.
     if (run.stock.gourde && window.MemoryManager && MemoryManager.has("seconde_gorgee")) run.stock.gourde += 1;
+    var night = this.nightItem(run);
+    if (night && run.stock[night]) run.stock[night] += 1; // v3.580.0 : l'objet de la nuit, +1 usage
     if (run.stock.craie && window.LivingMapManager && LivingMapManager.hasEffect("craie_plus")) run.stock.craie += 1; // v3.429.0 : la rue qui tourne tenue
     if (run.stock.craie && window.MemoryManager && MemoryManager.has("craie_epaisse")) run.stock.craie += 1; // v3.453.0 : Craie épaisse (Mémoire 10)
     if (this.condFx(run, "chalkBonus")) run.stock.craie = Number(run.stock.craie || 0) + Number(this.condFx(run, "chalkBonus")); // v3.469.0
@@ -1110,7 +1122,7 @@ var Pa2Run = {
       if (v === "precision" && self.hasItem("pierre_gardien", run)) bonus += 1; // v3.469.4 : Pierre taillée du gardien
       if (self.hasRelic("marteau", run)) bonus += 1; // v3.469.5 : Marteau du Contremaître
       var ck = self._check(run, gab.options[v].stat, { node: n, base: n.type === "tertre" ? PA2_OBSTACLE_TERTRE.baseDifficulty : Number(gab.baseDifficulty || 4), voie: v, bonus: bonus });
-      var cost = Number(p.breathCost || 0) + (self.hasItem("armure", run) ? PA2_RULES.armorBreath : 0);
+      var cost = Number(p.breathCost || 0) + (self.hasItem("armure", run) && !self.nightBoost("armure", run) ? PA2_RULES.armorBreath : 0); // v3.580.0 : armure de la nuit, sans Souffle
       // v3.391.0 : Endurance du marcheur (pouvoir légendaire), câblée en v1 seulement jusque-là
       if (typeof hasLegendaryPower === "function" && hasLegendaryPower("leg_marcheur")) cost = Math.round(cost * 0.85);
       if (v === "precision" && self.hasRelic("plume", run)) cost = 0;
@@ -1205,7 +1217,7 @@ var Pa2Run = {
     var R = PA2_RULES, m = PA2_APPROACHES[apId].dmg;
     if (n.revenge) m *= R.revengeMult;
     if (this.hasPact("enrage", run) && (n.type === "boss" || n.act === 3)) m *= R.enrageMult;
-    if (this.hasItem("torche", run)) m *= R.torchDmgMult;
+    if (this.hasItem("torche", run) && !this.nightBoost("torche", run)) m *= R.torchDmgMult; // v3.580.0 : torche de la nuit, sa lumière n'attire rien
     m *= Number(this.condFx(run, "combatDmg") || 1); // v3.469.0 : pleine lune
     if (this.hasRelic("marteau", run)) m *= R.marteauDmg; // v3.469.5 : Marteau du Contremaître
     if (this.hasItem("armure", run)) m *= R.armorDmgMult;
@@ -1643,6 +1655,7 @@ var Pa2Run = {
     if (!window.WarehouseManager) return;
     Object.keys(run.stock || {}).forEach(function (id) {
       var it = PA2_ITEMS[id], left = Number(run.stock[id] || 0);
+      if (it && it.resource && run.taken && run.taken[it.resource] != null) left = Math.min(left, Number(run.taken[it.resource])); // v3.580.0 : l'usage offert par la nuit ne se revend pas
       if (it && it.resource && left > 0) WarehouseManager.refundResource(it.resource, left);
       run.stock[id] = 0;
     });

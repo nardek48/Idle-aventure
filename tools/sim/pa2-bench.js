@@ -55,6 +55,7 @@ if (OVR) {
   if (o.ringDiff) ["sentier", "chemin", "periple"].forEach(function (r, i) { g.PA2_RINGS[r].diffMult = o.ringDiff[i]; });
 }
 
+if (process.argv.indexOf("--sans-nuit") > 0) g.Pa2Run.nightItem = function () { return null; }; // v3.580.0 : sans l'objet de la nuit
 if (NO_TRAPS) g.PA2_TRAP_RULES.perAct = { sentier: 0, chemin: 0, periple: 0 };
 if (process.argv.indexOf("--sans-coupes") > 0) { g.PA2_CUT_RULES.min = 0; g.PA2_CUT_RULES.max = 0; } // v3.468.0 : tracé intact
 if (OBJ) g.Pa2Run.isUnlocked = function () { return true; }; // objet du coffre : débloqué pour le banc
