@@ -80,6 +80,8 @@ body.lignes .texte p.cache { opacity: 0; transform: translateY(6px); }
     <button type="button" data-v="lettres">Lettre à lettre</button><button type="button" data-v="lignes">Ligne à ligne</button><button type="button" data-v="bloc">D'un bloc</button></div></div>
   <div class="reglage"><span>Vitesse (lettre à lettre)</span><div class="choix" data-r="vitesse">
     <button type="button" data-v="lente">Lente</button><button type="button" data-v="normale">Normale</button><button type="button" data-v="rapide">Rapide</button></div></div>
+  <div class="reglage"><span>Rythme (lettre à lettre)</span><div class="choix" data-r="rythme">
+    <button type="button" data-v="regulier">Régulier</button><button type="button" data-v="ponctuation">Pauses sur la ponctuation</button></div></div>
   <div class="reglage"><span>Taille du texte (réglage du jeu)</span><div class="choix" data-r="taille">
     <button type="button" data-v="normal">Normale</button><button type="button" data-v="grand">Grande</button></div></div>
   <div class="reglage"><span>Aller à</span><div class="choix" id="aller"></div></div>
@@ -92,7 +94,7 @@ body.lignes .texte p.cache { opacity: 0; transform: translateY(6px); }
   "use strict";
   var P = JSON.parse(document.getElementById("planches").textContent);
   var app = document.getElementById("app"), etape = "titre", idx = 0, lignesVues = 0, timers = [];
-  var R = { fond: "a", anim: "lettres", taille: "normal", vitesse: "normale" };
+  var R = { fond: "a", anim: "lettres", taille: "normal", vitesse: "normale", rythme: "regulier" };
   var VITESSES = { lente: 60, normale: 40, rapide: 24 }; // ms par lettre
   try { var s = JSON.parse(localStorage.getItem("atelier-prologue") || "null"); if (s) R = Object.assign(R, s); } catch (e) {}
 
@@ -165,8 +167,8 @@ body.lignes .texte p.cache { opacity: 0; transform: translateY(6px); }
       var c = el.textContent, suivant = ls[k + 1];
       timers.push(setTimeout(function () { el.classList.add("v"); }, t));
       t += pas;
-      if (/[.!?]/.test(c)) t += pas * 9; else if (/[,;:]/.test(c)) t += pas * 4;
-      if (suivant && el.closest("p") !== suivant.closest("p")) t += pas * 10;
+      if (R.rythme === "ponctuation") { if (/[.!?]/.test(c)) t += pas * 9; else if (/[,;:]/.test(c)) t += pas * 4; }
+      if (suivant && el.closest("p") !== suivant.closest("p")) t += pas * (R.rythme === "ponctuation" ? 10 : 5); // court temps entre deux lignes
     });
     timers.push(setTimeout(finTexte, t + 200));
   }
