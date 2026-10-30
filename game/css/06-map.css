@@ -120,6 +120,18 @@
   white-space: nowrap;
 }
 
+/* v3.582.0 : le donjon du monde, en badge au bas du cercle */
+.map-node-pic { position: relative; display: block; width: 100%; }
+.map-dungeon { position: absolute; right: -8%; bottom: -6%; width: 40%; aspect-ratio: 1; border-radius: 50%; display: block; cursor: pointer;
+  background: var(--c-brown-850-vivid); border: 2px solid var(--nb-gold); box-shadow: 0 2px 6px rgba(0, 0, 0, .6); }
+.map-dungeon::after { content: ""; position: absolute; inset: -10px; } /* zone de toucher élargie */
+.map-dungeon-img { position: absolute; inset: 10%; width: 80%; height: 80%; object-fit: contain; }
+.map-dungeon.is-ready { box-shadow: 0 0 10px 2px rgba(240, 170, 62, .7), 0 2px 6px rgba(0, 0, 0, .6); }
+.map-dungeon.is-spent .map-dungeon-img { filter: grayscale(.6) brightness(.6); }
+.map-dungeon.is-locked { border-color: var(--c-brown-550-soft); }
+.map-dungeon.is-locked .map-dungeon-img { filter: grayscale(1) brightness(.5); }
+.map-dungeon-lock { position: absolute; right: -6%; top: -6%; width: 42%; height: 42%; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .7)); }
+
 .map-node-lock {
   position: absolute;
   top: -2px;
