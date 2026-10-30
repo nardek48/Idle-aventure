@@ -289,7 +289,7 @@ function buildPa2PrepHTML(run) {
     var cells = "", used = Pa2Run.bagUsed(run);
     run.bag.forEach(function (id, idx) {
       var it = PA2_ITEMS[id], nm = pa2ItemName(id);
-      cells += '<button type="button" class="pa2-cell is-full' + (pa2View.justAdded === idx ? ' is-pop' : '') + '" onclick="pa2OpenItem(' + idx + ')" aria-label="' + esc(nm) + '">' + pa2Img(it.icon, "", nm) + '</button>';
+      cells += '<button type="button" class="pa2-cell is-full' + (pa2View.justAdded === idx ? ' is-pop' : '') + (Pa2Run.nightItem(run) === id ? ' is-night' : '') + '" onclick="pa2OpenItem(' + idx + ')" aria-label="' + esc(nm) + '">' + pa2Img(it.icon, "", nm) + '</button>';
       for (var k = 1; k < it.size; k++) {
         cells += '<button type="button" class="pa2-cell is-held' + (pa2View.justAdded === idx ? ' is-pop' : '') + '" onclick="pa2OpenItem(' + idx + ')" aria-label="' + esc(_t("Place prise : {n}", { n: nm })) + '"></button>';
       }
@@ -424,10 +424,12 @@ function pa2RenderPicker() {
       var stock = it.resource && window.WarehouseManager ? WarehouseManager.getAmount(it.resource) : null;
       var why = c.ok ? "" : (c.reason === _t("La besace est pleine.") ? _tn(it.size, "Trop grand : {n} place.", "Trop grand : {n} places.", { n: it.size }) : c.reason);
       h += '<button type="button" class="pa2-choice pa2-pickrow' + (locked ? ' is-locked' : '') + '"' + (c.ok ? '' : ' disabled') + ' onclick="pa2AddItem(\'' + id + '\')">' +
-        pa2Img(it.icon) + '<span class="pa2-t">' + esc(pa2ItemName(id)) + (n ? ' <span class="pa2-dim">(×' + n + ')</span>' : '') + '</span>' +
+        pa2Img(it.icon) + '<span class="pa2-t">' + esc(pa2ItemName(id)) + (n ? ' <span class="pa2-dim">(×' + n + ')</span>' : '') +
+        (Pa2Run.nightItem(run) === id ? ' <span class="pa2-night-tag">' + esc("★ " + _t("cette nuit")) + '</span>' : '') + '</span>' +
         '<span class="pa2-size">' + sz + '</span><span class="pa2-s">' +
         (why ? '<span class="pa2-dim">' + esc(why) + '</span>'
-          : '<span class="pa2-pro">' + esc(_td(it.pro)) + '</span>' + (it.con ? ' <span class="pa2-con">' + esc(_td(it.con)) + '</span>' : '')) +
+          : '<span class="pa2-pro">' + esc(_td(it.pro)) + '</span>' + (it.con ? ' <span class="pa2-con">' + esc(_td(it.con)) + '</span>' : '') +
+            (Pa2Run.nightItem(run) === id ? ' <span class="pa2-night-tag">' + esc(pa2NightBonus(id)) + '</span>' : '')) +
         (stock != null && !locked ? ' <span class="pa2-dim">' + esc(_t("Entrepôt : {n}", { n: stock })) + '</span>' : '') + '</span></button>';
     });
     h += '</div>';
@@ -808,8 +810,16 @@ function pa2CondPanelHTML(cond) {
   var h = '<div class="pa2-panel pa2-cond"><div class="pa2-cond-head"><div class="pa2-kicker">' + esc(_t("Cette nuit")) + '</div><h3 class="pa2-h3">' + esc(_td(cond.name)) + '</h3></div>';
   h += '<p class="pa2-narr pa2-dim">' + esc(_td(cond.line)) + '</p>';
   if (cond.pro) h += '<ul><li class="pa2-pro"><span>+</span><span>' + esc(_td(cond.pro)) + '</span></li><li class="pa2-con"><span>−</span><span>' + esc(_td(cond.con)) + '</span></li></ul>';
-  if (cond.tip) h += '<p class="pa2-small pa2-dim">' + esc(_t("Utile cette nuit : {x}", { x: pa2ItemName(cond.tip) })) + '</p>';
+  if (cond.tip && PA2_ITEMS[cond.tip]) { // v3.580.0 (lot 4, A) : l'objet de la nuit, renforcé pour ce run
+    h += '<div class="pa2-night">' + pa2Img(PA2_ITEMS[cond.tip].icon) + '<div><b>' + esc("★ " + _t("Cette nuit : {x}", { x: pa2ItemName(cond.tip) })) + '</b>' +
+      '<span>' + esc(pa2NightBonus(cond.tip)) + '</span></div></div>';
+  }
   return h + '</div>';
+}
+function pa2NightBonus(id) {
+  if (id === "torche") return _t("Sa lumière n'attire rien : pas de dégâts en plus.");
+  if (id === "armure") return _t("Pas de Souffle en plus sur les obstacles.");
+  return _t("Un usage de plus.");
 }
 function pa2CondChipHTML(run) {
   var c = Pa2Run.condition(run);

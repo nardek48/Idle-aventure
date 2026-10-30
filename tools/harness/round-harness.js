@@ -17249,7 +17249,7 @@ console.log("\n[283] v3.469.0 — Petites Aventures : condition du run (PG-B1a �
     prep(); S.startRun("petite_aventure_foret"); var r = game.sceneRun; r.cond = "brouillard";
     run("switchTab('scene')"); g.pa2View.prepStep = "bag";
     var hp = g.buildPa2PrepHTML(r);
-    ok(/nuit de brouillard/.test(hp) && /pa2-cond/.test(hp) && /Ruser gagne un cran/.test(hp) && /Utile cette nuit : Torche/.test(hp), "préparation : « … · nuit de brouillard », panneau Cette nuit, avantage, inconvénient, objet utile");
+    ok(/nuit de brouillard/.test(hp) && /pa2-cond/.test(hp) && /Ruser gagne un cran/.test(hp) && /Cette nuit : Torche/.test(hp) && /pa2-night/.test(hp), "préparation : « … · nuit de brouillard », panneau Cette nuit, avantage, inconvénient, objet de la nuit (v3.580.0)");
     r.cond = "calme"; hp = g.buildPa2PrepHTML(r);
     ok(/nuit calme/.test(hp) && !/pa2-pro/.test(hp.split("pa2-cond")[1] || ""), "Nuit calme : la phrase seule");
     r = go("forest", "brouillard");
@@ -20392,6 +20392,45 @@ console.log("\n[383] v3.579.0 — Petites Aventures : la gourde donne l'avantage
     ok(/is-adv/.test(hud) && /Avantage/.test(hud), "le bandeau montre l'avantage en attente");
     S.abandon();
   } catch (err) { ok(false, "[383] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  game.sceneRun = null;
+})();
+
+console.log("\n[384] v3.580.0 — Petites Aventures, lot 4 : l'objet de la nuit (choix A de Seb)");
+(function () {
+  var S = g.SceneRunManager, P = g.Pa2Run, R = g.PA2_RULES;
+  function go(world, cond, items) {
+    game = freshCombat("knight"); giveWeapon(); run("game.enemy = null; game.combat = null;");
+    S.ensureDefaults(); game.explorationProgression.petiteAventure = { spent: 0, since: null }; game.sceneRun = null;
+    game.resources.outre_pleine = 3; game.resources.petite_ration = 3;
+    if (g.SortieManager.isActive()) g.SortieManager.end("return");
+    S.startRun(world === "desert" ? "petite_aventure_desert" : "petite_aventure_foret"); var r = game.sceneRun; r.cond = cond; r.hookId = null;
+    (items || []).forEach(function (id) { P.addItem(id); }); return r;
+  }
+  try {
+    var tips = {}; Object.keys(g.PA2_CONDITIONS).forEach(function (w) { Object.keys(g.PA2_CONDITIONS[w]).forEach(function (c) { tips[g.PA2_CONDITIONS[w][c].tip] = 1; }); }); delete tips["null"]; delete tips["undefined"]; // une nuit sans conseil reste possible
+    ok(Object.keys(tips).every(function (id) { return !!g.PA2_ITEMS[id]; }), "chaque nuit conseille un objet qui existe (" + Object.keys(tips).join(", ") + ")");
+    var fw = Object.keys(g.PA2_CONDITIONS.forest).filter(function (c) { return g.PA2_CONDITIONS.forest[c].tip === "trousse"; })[0];
+    var r = go("forest", fw, ["trousse", "gourde"]); P.depart();
+    ok(fw && r.stock.trousse === g.PA2_ITEMS.trousse.uses + 1 && r.stock.gourde === g.PA2_ITEMS.gourde.uses, "objet de la nuit : +1 usage (trousse " + r.stock.trousse + "), les autres objets inchangés");
+    var r0 = go("forest", "calme", ["trousse"]); P.depart();
+    ok(r0.stock.trousse === g.PA2_ITEMS.trousse.uses && !P.nightItem(r0), "nuit calme : aucun objet renforcé");
+    var ft = Object.keys(g.PA2_CONDITIONS.forest).filter(function (c) { return g.PA2_CONDITIONS.forest[c].tip === "torche"; })[0];
+    if (ft) {
+      r = go("forest", ft, ["torche"]); P.depart();
+      ok(P.nightBoost("torche", r) && !P.nightBoost("torche", r0), "torche de la nuit : son défaut (combats +15 %) ne joue pas");
+    }
+    var dw = Object.keys(g.PA2_CONDITIONS.desert).filter(function (c) { return g.PA2_CONDITIONS.desert[c].tip === "outre"; })[0];
+    if (dw) {
+      var o0 = game.resources.outre_pleine; r = go("desert", dw, ["outre"]); var before = g.WarehouseManager.getAmount("outre_pleine"); P.depart();
+      ok(r.stock.outre === 2, "outre de la nuit : une gorgée de plus");
+      P._refundStock(r);
+      ok(g.WarehouseManager.getAmount("outre_pleine") === before, "la gorgée offerte ne revient pas à l'Entrepôt (pas de duplication)");
+    }
+    r = go("forest", fw, ["trousse"]); run("switchTab('scene')"); g.pa2View.prepStep = "bag";
+    var hp = g.buildPa2PrepHTML(r);
+    ok(/pa2-night/.test(hp) && /Un usage de plus/.test(hp) && /is-night/.test(hp) && hp.indexOf("undefined") < 0, "préparation : l'objet de la nuit mis en avant, et marqué dans la besace");
+    S.abandon();
+  } catch (err) { ok(false, "[384] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   game.sceneRun = null;
 })();
 

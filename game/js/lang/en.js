@@ -4157,6 +4157,12 @@ I18n.register("en", {
   "Il faut": "You need",
   "corde": "rope",
   "Assuré": "Certain",
+  // v3.580.0 : l'objet de la nuit
+  "Cette nuit : {x}": "Tonight: {x}",
+  "cette nuit": "tonight",
+  "Sa lumière n'attire rien : pas de dégâts en plus.": "Its light draws nothing: no extra damage.",
+  "Pas de Souffle en plus sur les obstacles.": "No extra Breath on obstacles.",
+  "Un usage de plus.": "One more use.",
   // v3.579.0 : la gourde
   "Souffle plein, et l'avantage est déjà pris.": "Breath full, and you already have advantage.",
   "Avantage": "Advantage",
@@ -6331,7 +6337,6 @@ I18n.register("en", {
   "Quelqu'un veille les morts cette nuit. Les coupes sont pleines, et chaque cloche est prête à sonner.": "Someone keeps vigil over the dead tonight. The cups are full, and every bell is ready to ring.",
   "Les alcôves sont gratuites": "The alcoves are free",
   "Cette nuit": "Tonight",
-  "Utile cette nuit : {x}": "Useful tonight: {x}",
   "{n} : + {p} ; − {c}": "{n}: + {p}; − {c}",
   "Cette nuit, le premier combat de l'acte compte un ennemi de plus.": "Tonight, the first fight of the act has one more enemy.",
   // v3.469.2 : fenêtres des nouveautés des Petites Aventures
