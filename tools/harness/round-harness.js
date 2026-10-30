@@ -15366,6 +15366,7 @@ console.log("\n[234] v3.448.10 — Images allégées (icônes), texte de la Clé
     fs.readdirSync(d).forEach(function (n) {
       var p = path.join(d, n);
       if (fs.statSync(p).isDirectory()) return walk(p);
+      if (/^icon-512/.test(n)) return; // v3.575.0 : icônes de l'application, 512 px exigés par le manifeste
       if (/\.(png|webp)$/i.test(n)) { var wh = dims(p); if (Math.max(wh[0], wh[1]) > 400) trop.push(path.relative(ROOT, p) + " " + wh.join("×")); }
     });
   })(path.join(ROOT, "images", "Icons"));
