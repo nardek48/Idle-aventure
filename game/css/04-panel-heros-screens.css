@@ -58,7 +58,7 @@ body.hs-on-heros .hud-dock { display: none !important; }
 .hs-edetail-head > span { font-size: 13px; }
 .hs-edetail-head > .hs-edetail-orig { font-size: 12px; font-style: italic; color: var(--c-brown-650-soft); } /* v3.492.11 : monde d'origine */
 .hs-edetail-act { flex: 0 0 auto; display: flex; flex-direction: column; gap: 6px; max-width: 128px; }
-.hs-edetail-act .kbtn { width: 100%; min-height: 38px; padding: 4px 8px; font-size: 13px; line-height: 1.15; }
+.hs-edetail-act .kbtn { width: 100%; min-height: 44px; padding: 4px 8px; font-size: 13px; line-height: 1.15; }
 .hs-bagcap { flex: none; display: flex; flex-direction: column; align-items: center; font-size: 13px; color: var(--c-brown-800-3); line-height: 1.1; }
 .hs-bagcap b { font-size: 18px; }
 .hs-bagcap small { font-size: 12px; }
