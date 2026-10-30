@@ -51,6 +51,11 @@ I18n.register("en", {
   "{n} avec toi": "{n} with you",
   // v3.567.0 : composants grand écran
   "SI": "IF",
+  "Tes parties": "Your games",
+  "Ton nom": "Your name",
+  "Ta classe": "Your class",
+  "Ce qu'il sait faire": "What they can do",
+  "Ton héros": "Your hero",
   "cible": "target",
   "Bâtiment de production · {a}/{b} zones": "Production building · {a}/{b} zones",
   "avec toi": "with you",

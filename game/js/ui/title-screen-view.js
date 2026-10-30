@@ -322,7 +322,33 @@ function buildTitleScreenContinueHTML(slot) {
     + '<span class="title-screen-continue-txt"><b>' + _t("Continuer") + '</b><small>' + line + '</small></span></button>';
 }
 
+/* v3.568.0 (grand écran) : l'accueil en tableau plein écran — image paysage, logo sur le ciel, panneau
+   à droite avec le héros à reprendre et toutes les parties (atelier/accueil-grand-ecran.html). */
+function titleScreenIsWide() { return typeof document !== "undefined" && document.documentElement.classList.contains("wide-mode"); }
+
+function buildTitleScreenWideHTML() {
+  var continueSlot = getTitleScreenContinueSlot();
+  var html = '<div class="title-screen-overlay ts-wide"><img src="images/TitleScreen/title_background_wide.webp" alt="" class="ts-wide-bg"><div class="ts-wide-shade"></div>';
+  html += '<img src="images/TitleScreen/titre_logo.webp" alt="' + esc(_t("Aethervale")) + '" class="ts-wide-logo">';
+  html += '<div class="ts-wide-pane"><div class="ts-wide-card">';
+  if (continueSlot) {
+    var sum = HeroSlotManager.getSlotSummary(continueSlot) || {}, world = getWorldNameByIndex(sum.worldIndex);
+    html += '<div class="ts-cont">' + titleScreenHeroImage(sum) + '<div><b>' + esc(sum.playerName || _t("Emplacement {n}", { n: continueSlot })) + '</b><small>'
+      + esc(_t("Niveau {n}", { n: formatNumber(sum.heroLevel || 1) })) + (world ? ' · ' + esc(world) : '') + '</small></div>'
+      + '<button type="button" class="kbtn primary" onclick="titleScreenConfirmLoad(' + continueSlot + ')">' + _t("Continuer") + '</button></div>';
+    html += '<div class="ts-h">' + esc(_t("Tes parties")) + '</div>' + buildTitleScreenLoadListHTML();
+  } else {
+    html += '<h2 class="ts-welcome">' + _t("Bienvenue") + '</h2><p class="ts-sub">' + _t("Une aventure t'attend au-delà de la Lisière.") + '</p>';
+    html += '<div class="ts-first"><button type="button" class="kbtn primary" onclick="titleScreenNewGame()">' + _t("Nouvelle partie") + '</button>'
+      + '<button type="button" class="kbtn is-sec" onclick="titleScreenShowLoad()">' + _t("Charger la partie") + '</button></div>';
+  }
+  html += '</div><div class="ts-foot">' + (typeof buildPwaInstallButtonHTML === "function" ? buildPwaInstallButtonHTML("title") : "")
+    + '<span class="title-screen-version">v' + (typeof GAME_VERSION !== "undefined" ? GAME_VERSION : "?") + '</span></div></div>';
+  return html + buildTitleScreenDeleteConfirmHTML() + '</div>';
+}
+
 function buildTitleScreenMainHTML() {
+  if (titleScreenIsWide()) return buildTitleScreenWideHTML();
   var continueSlot = getTitleScreenContinueSlot();
   var html = buildTitleScreenStageOpenHTML(false);
   // v3.359.0 : « Installer le jeu » (main/pwa.js), en haut de l'écran ; vide si déjà installé ou masqué par « Plus tard »
