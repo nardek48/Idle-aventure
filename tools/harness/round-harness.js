@@ -20434,6 +20434,27 @@ console.log("\n[384] v3.580.0 — Petites Aventures, lot 4 : l'objet de la nuit 
   game.sceneRun = null;
 })();
 
+console.log("\n[385] v3.581.0 — Bandeaux illustrés : Camp et Quêtes suivent le monde, Village et Héros grandissent");
+(function () {
+  try {
+    var fs = require("fs"), path = require("path"), SB = g.ScreenBanner, W = g.WorldManager;
+    var keep = W.worldIndex, seen = game.worldsEverReached;
+    var paths = [];
+    for (var i = 0; i < 6; i++) {
+      W.worldIndex = i; game.worldsEverReached = {}; game.worldsEverReached[i] = true;
+      ["camp", "quetes", "village", "heros"].forEach(function (k) { paths.push(SB.data(k)[0]); });
+    }
+    var missing = paths.filter(function (p) { return !fs.existsSync(path.join(ROOT, p)); });
+    ok(paths.length === 24 && new Set(paths).size === 24 && missing.length === 0, "24 bandeaux, tous différents, tous présents sur disque" + (missing.length ? " (manque " + missing[0] + ")" : ""));
+    W.worldIndex = 0; game.worldsEverReached = { 0: true, 3: true };
+    ok(/camp_forest/.test(SB.data("camp")[0]) && /village_4/.test(SB.data("village")[0]) && /heros_4/.test(SB.data("heros")[0]), "retour en Forêt : le camp redevient celui de la Forêt, le village garde le stade atteint");
+    W.worldIndex = 1; game.worldsEverReached = { 0: true, 1: true };
+    ok(SB.campName() === "Camp de l'oasis" && /quetes_desert/.test(SB.data("quetes")[0]), "Désert : « Camp de l'oasis » et le tableau du désert");
+    ok(SB.data("autre") === null, "un écran sans bandeau n'en reçoit pas");
+    W.worldIndex = keep; game.worldsEverReached = seen;
+  } catch (err) { ok(false, "[385] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

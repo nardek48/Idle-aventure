@@ -396,7 +396,7 @@ window.travelToWorldFromUI = travelToWorldFromUI;
 function buildQuestsHTML() {
   var h = '<div class="subtab-page">';
   h += '<div class="subtab-page-content">';
-  h += '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="images/Icons/quests/quest_story.webp|' + _t("Quêtes") + '">';
+  h += '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-banner="quetes" data-kf-title="images/Icons/quests/quest_story.webp|' + _t("Quêtes") + '">';
 
   h += buildQuestsGeneralSubTabHTML();
 

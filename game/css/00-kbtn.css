@@ -312,6 +312,31 @@
   max-width: 600px; /* aligné sur .subtab-page-content */
 }
 
+/* v3.581.0 : bandeau illustré (ui/screen-banner.js). Il remplace le titre et remonte sur le bas du cap :
+   la zone de défilement passe sous le porte-titre de 40 px, le bandeau sticky la couvre toujours. */
+.kfp-top-holder.has-banner { margin-bottom: -40px; }
+.kfp-top-holder.has-banner .kf-title { display: none; }
+.kfb {
+  position: sticky;
+  z-index: 3;
+  margin: 0 13px 8px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: var(--c-brown-950-soft) center 58% / cover no-repeat;
+  box-shadow: 0 0 0 1px rgba(194, 127, 31, 0.75), 0 4px 12px rgba(0, 0, 0, 0.45);
+}
+.kfb::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(10, 7, 4, 0) 38%, rgba(10, 7, 4, 0.55) 72%, rgba(10, 7, 4, 0.88));
+  pointer-events: none;
+}
+.kfb-tx { position: absolute; left: 14px; right: 14px; bottom: 10px; z-index: 1; display: grid; gap: 1px; }
+.kfb-t { font: 700 19px/1.15 "Cinzel", Georgia, "Times New Roman", serif; letter-spacing: 0.03em; color: var(--c-bronze-300-soft); text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9); }
+.kfb-s { font: italic 400 14px/1.25 "Alegreya", Georgia, serif; color: var(--c-cream-100-2); text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9); }
+.kfb.is-mini .kfb-s { display: none; } /* replié : le titre seul descend au bas de la bande visible */
+
 /* enveloppe des pages simples : prend toute la hauteur du panel, le
    scroll vit dans la zone interne */
 .kfp-wrap {

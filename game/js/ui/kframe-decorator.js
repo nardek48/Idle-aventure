@@ -71,12 +71,16 @@ function decoratePageFrames(root) {
       var holder = document.createElement("div");
       holder.className = "kfp-top-holder";
       holder.appendChild(top);
+      // v3.581.0 : bandeau illustré (ui/screen-banner.js) à la place du titre, en tête du défilement
+      var kfb = window.ScreenBanner && f.getAttribute("data-kf-banner") ? ScreenBanner.build(f.getAttribute("data-kf-banner")) : null;
+      if (kfb) holder.classList.add("has-banner");
       var subtabContent = f.closest ? f.closest(".subtab-page-content") : null;
       if (subtabContent && subtabContent.parentNode) {
         // page à sous-onglets : le porte-bandeau se place AU-DESSUS de la zone
         // scrollable existante, symétrique de la barre de sous-onglets du bas.
         holder.classList.add("is-subtab");
         subtabContent.parentNode.insertBefore(holder, subtabContent);
+        if (kfb) ScreenBanner.attach(kfb, subtabContent);
       } else if (f.parentNode) {
         // page simple : le scroll vit dans #panel-container (02-layout, fichier
         // RESYNC intouché) — on enveloppe la page dans une colonne pleine
@@ -90,6 +94,7 @@ function decoratePageFrames(root) {
         wrap.appendChild(holder);
         wrap.appendChild(zone);
         zone.appendChild(f);
+        if (kfb) ScreenBanner.attach(kfb, zone);
       }
       f.appendChild(mid);
       f.appendChild(bot);
