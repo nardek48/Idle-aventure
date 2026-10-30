@@ -20551,6 +20551,19 @@ console.log("\n[388] v3.591.0 — Accueil : Paramètres (import vers un emplacem
   } catch (err) { ok(false, "[388] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[389] v3.592.0 — Quoi de neuf : nouveautés après une mise à jour (choix A de Seb)");
+(function () {
+  try {
+    var E = g.newsEntries(), C = g.newsCompare;
+    ok(E.length >= 5 && E.every(function (n) { return /^\d+\.\d+\.\d+$/.test(n[0]) && n[2]; }), "nouveautés : version, icône, texte");
+    ok(E.every(function (n, i) { return i === 0 || C(E[i - 1][0], n[0]) >= 0; }), "nouveautés : la plus récente en premier");
+    ok(C(E[0][0], g.GAME_VERSION) <= 0, "la nouveauté la plus récente ne dépasse pas la version du jeu");
+    ok(C("3.590.0", "3.591.0") < 0 && C("3.10.0", "3.9.0") > 0 && C("3.591.0", "3.591.0") === 0, "comparaison de versions nombre par nombre");
+    var fs = require("fs"), missing = E.filter(function (n) { return !fs.existsSync(require("path").join(ROOT, "images/Icons/" + n[1] + ".webp")); });
+    ok(!missing.length, "icônes des nouveautés présentes" + (missing.length ? " (manque " + missing[0][1] + ")" : ""));
+  } catch (err) { ok(false, "[389] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");
