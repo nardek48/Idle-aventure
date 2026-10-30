@@ -217,7 +217,7 @@
 .pwa-install-btn-title:active { transform: translateX(-50%) scale(0.97); }
 .pwa-install-btn-title .ico-inline { width: 16px; height: 16px; border-radius: 4px; }
 
-/* v3.570.0 (vidéo de Seb, iPhone) : à l'ouverture de l'appli installée, iOS fait alterner la hauteur de
+/* v3.571.0 (vidéo de Seb, iPhone) : à l'ouverture de l'appli installée, iOS fait alterner la hauteur de
    l'écran (avec puis sans la zone de la barre d'accueil) ; collés au bas (inset: 0), l'accueil, la
    création et le chargement tremblaient. Ils prennent la plus grande hauteur d'écran, qui ne change pas.
    Pas en mode PC : le zoom y agrandirait cette hauteur (08-desktop.css divise déjà par le zoom).

@@ -285,6 +285,12 @@ function confirmHeroSelection() {
     if (typeof resolveTitleScreen === "function") resolveTitleScreen();
   }
 
+  // v3.570.0 : première création -> planches 5-6 du prologue, puis le Camp (sauvegarde faite avant)
+  if (isFirstEverSetup && window.PrologueView) {
+    saveGame();
+    PrologueView.play("apres", function () { switchTab("campement"); renderAll(); saveGame(); });
+    return;
+  }
   switchTab(isFirstEverSetup ? "campement" : "combat");
   renderAll();
   saveGame();

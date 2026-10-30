@@ -7184,4 +7184,26 @@ I18n.register("en", {
   "Une relance, en moyenne : presque rien": "One reroll, on average: next to nothing",
   "Au maximum, ton héros gagne {x}": "At the maximum, your hero gains {x}",
 
+  // v3.570.0 : le prologue (textes validés, Aethervale_Prologue_v0_2)
+  "Passer ▸": "Skip ▸",
+  "Toucher pour continuer": "Tap to continue",
+  "Prologue — Cette nuit-là": "Prologue — That night",
+  "Revoir le prologue": "Replay the prologue",
+  "Cette nuit-là, les étoiles ont disparu.": "That night, the stars went out.",
+  "Au nord, le ciel s'est ouvert. Une lumière en est tombée. Bleue. Froide. Sans forme.": "In the north, the sky opened. A light fell from it. Blue. Cold. Shapeless.",
+  "Elle est entrée dans la terre. Dans l'eau, dans les racines, dans le sang des bêtes.": "It sank into the earth. Into the water, the roots, the blood of beasts.",
+  "Au matin, les bêtes avaient changé.": "By morning, the beasts had changed.",
+  "Cette même nuit, un village de la forêt a brûlé.": "That same night, a village in the forest burned.",
+  "Aeswyn.": "Aeswyn.",
+  "Trois familles ont fui dans les bois. D'autres n'en sont jamais sorties.": "Three families fled into the woods. Others never came out.",
+  "Au milieu des flammes, un enfant ne bougeait pas.": "In the middle of the flames, a child did not move.",
+  "Pas un cri. Pas un pas.": "Not a cry. Not a step.",
+  "Les yeux ouverts.": "Eyes open.",
+  "Douze hivers ont passé.": "Twelve winters have passed.",
+  "Ceux qui ont survécu vivent autour du feu.": "Those who survived live around the fire.",
+  "Quand on parle de cette nuit-là, on se tait en te voyant.": "When anyone speaks of that night, they fall silent when they see you.",
+  "La nuit, les bêtes rôdent autour du camp. Elles viennent de plus en plus près.": "At night, the beasts prowl around the camp. They come closer and closer.",
+  "Orwen t'observe, près du feu.": "Orwen watches you, by the fire.",
+  "Cette nuit, il faudra bien que quelqu'un s'en charge.": "Tonight, someone will have to deal with them.",
+
 });

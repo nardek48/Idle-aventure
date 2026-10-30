@@ -21,6 +21,7 @@
 var DATA_TEXT_FIELDS = {
   /* --- Hauts faits --- */
   ACHIEVEMENTS_DB: ["*.name", "*.desc", "*.hint", "*.title"],
+  PROLOGUE_PLANCHES: ["*.lignes.*"], // v3.570.0 : le prologue (data/prologue.js)
   ACHIEVEMENTS_RETIRED: ["*.name", "*.desc"],
   ACHIEVEMENT_CATEGORIES: ["*.label", "*.tierRewards.*.title"],
   ACHIEVEMENT_CATEGORY_LABELS: ["*"],
