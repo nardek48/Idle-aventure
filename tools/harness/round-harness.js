@@ -20455,6 +20455,36 @@ console.log("\n[385] v3.581.0 — Bandeaux illustrés : Camp et Quêtes suivent 
   } catch (err) { ok(false, "[385] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[386] v3.582.0 — Carte du monde : le donjon de chaque monde en badge (options A et 1 de Seb)");
+(function () {
+  var DM = g.DungeonManager, save = { lock: DM.getLockReason, left: DM.getRunsLeft, free: DM.isStoryTicketFree }, toast = g.showToast, open = g.openDungeonSheet, said = [], opened = [];
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
+    var W = g.WORLDS[0];
+    DM.getLockReason = function () { return "data"; };
+    ok(g.mapDungeonOf(W) === null && g.mapDungeonBadgeHTML(W, 0) === "", "donjon pas encore annoncé par l'Histoire : pas de badge");
+    DM.getLockReason = function () { return "previous"; };
+    ok(g.mapDungeonOf(W).state === "locked" && /is-locked/.test(g.mapDungeonBadgeHTML(W, 0)) && /lock_closed/.test(g.mapDungeonBadgeHTML(W, 0)), "annoncé mais fermé : badge gris au cadenas");
+    DM.getLockReason = function () { return null; }; DM.isStoryTicketFree = function () { return false; };
+    DM.getRunsLeft = function () { return 2; };
+    ok(g.mapDungeonOf(W).state === "ready", "ouvert, sorties restantes : badge doré");
+    DM.getRunsLeft = function () { return 0; };
+    ok(g.mapDungeonOf(W).state === "spent", "plus de sortie aujourd'hui : badge éteint");
+    ok(g.mapDungeonBadgeHTML(g.WORLDS[4], 4) === "", "monde pas encore atteint : pas de badge");
+    var html = g.buildMapHTML();
+    ok(/map-dungeon/.test(html) && /dungeon_entrance\.webp/.test(html) && /search_unknown\.webp/.test(html), "carte : le badge garde le vrai chemin de l'image, l'icône générique en attendant");
+    g.showToast = function (m) { said.push(m); }; g.openDungeonSheet = function (id) { opened.push(id); };
+    DM.getRunsLeft = function () { return 1; };
+    g.tapMapDungeon(1, 0);
+    ok(opened[0] === 1, "toucher le badge du monde où tu es : la fiche du donjon s'ouvre");
+    DM.getLockReason = function () { return "previous"; };
+    g.tapMapDungeon(1, 0);
+    ok(/pas encore ouvert/.test(said[said.length - 1]), "badge fermé : le message dit qu'il n'est pas encore ouvert");
+    ok(!/dungeon_guaranteed_loot/.test(fs.readFileSync(path.join(ROOT, "js/ui/map-view.js"), "utf8")), "fiche du monde (PC) : l'icône « Butin garanti » n'est plus empruntée");
+  } catch (err) { ok(false, "[386] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  DM.getLockReason = save.lock; DM.getRunsLeft = save.left; DM.isStoryTicketFree = save.free; g.showToast = toast; g.openDungeonSheet = open;
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

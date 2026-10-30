@@ -4174,6 +4174,10 @@ I18n.register("en", {
   "Il faut": "You need",
   "corde": "rope",
   "Assuré": "Certain",
+  // v3.582.0 : le donjon sur la carte du monde
+  "Donjon : {d}": "Dungeon: {d}",
+  "{d} : pas encore ouvert.": "{d}: not open yet.",
+  "{d} : voyage d'abord jusqu'à ce monde.": "{d}: travel to this world first.",
   // v3.580.0 : l'objet de la nuit
   "Cette nuit : {x}": "Tonight: {x}",
   "cette nuit": "tonight",
