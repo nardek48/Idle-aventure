@@ -36,6 +36,7 @@ function buildSettingsPartieHTML() {
   h += '<div class="set-links"><button type="button" class="klink" onclick="showExportTextModal()">' + _t("Copier le code de sauvegarde") + '</button>';
   h += '<button type="button" class="klink" onclick="showImportTextModal()">' + _t("Coller un code") + '</button></div>';
   h += '</div></div>';
+  if (typeof buildPwaUpdateCardHTML === "function") h += buildPwaUpdateCardHTML(); // v3.591.0 : chercher ou forcer une mise à jour
 
   h += '<div class="ksec"><img src="images/Icons/system/warning.webp" alt=""><span>' + _t("Zone de danger") + '</span></div>';
   h += '<div class="set-card"><p>' + _t("Effacer la partie supprime ton héros, ton village et toute ta progression sur cet appareil. C'est définitif.") + '</p>';
@@ -71,7 +72,10 @@ function buildSettingsJeuHTML() {
   return h;
 }
 
-function buildSettingsAppareilHTML() {
+/* where === "title" (v3.591.0) : feuille de l'accueil — la langue change sans fenêtre de confirmation
+   (elle passerait sous l'accueil), sans installation (l'accueil a son bouton), journal de test ni Admin. */
+function buildSettingsAppareilHTML(where) {
+  var atTitle = where === "title";
   var h = '';
   // v3.375.0 (i18n, D3) : les libellés des langues restent dans leur propre langue
   if (window.I18n) {
@@ -80,7 +84,7 @@ function buildSettingsAppareilHTML() {
     h += '<div class="kkick">' + _t("Langue") + (curLang === "fr" ? ' · Language' : '') + '</div>';
     h += '<div class="kseg set-seg">';
     [["fr", "Français"], ["en", "English"]].forEach(function (l) {
-      h += '<button type="button" class="' + (l[0] === curLang ? 'is-on' : '') + '" onclick="confirmLanguageChange(\'' + l[0] + '\')"><span>' + l[1] + '</span></button>';
+      h += '<button type="button" class="' + (l[0] === curLang ? 'is-on' : '') + '" onclick="' + (atTitle ? 'I18n.setLang(\'' + l[0] + '\')' : 'confirmLanguageChange(\'' + l[0] + '\')') + '"><span>' + l[1] + '</span></button>';
     });
     h += '</div>';
     h += '<p>' + _t("Le jeu redémarre pour changer de langue.") + '</p>';
@@ -88,7 +92,7 @@ function buildSettingsAppareilHTML() {
   }
 
   // v3.359.0 : installer le jeu sur l'appareil (main/pwa.js)
-  if (typeof buildPwaSettingsCardHTML === "function") h += buildPwaSettingsCardHTML();
+  if (!atTitle && typeof buildPwaSettingsCardHTML === "function") h += buildPwaSettingsCardHTML();
 
   // v3.538.0 (audit ERG-11, option A) : taille du texte, propre à l'appareil
   if (window.DesktopScale && typeof DesktopScale.textBig === "function") {
@@ -118,6 +122,7 @@ function buildSettingsAppareilHTML() {
     h += '</div>';
   }
 
+  if (atTitle) return h;
   // v3.437.0 : journal de test (main/journal-test.js) — relevés de la partie, comparés aux simulations
   if (window.JournalTest) {
     var jOn = JournalTest.isOn(), jN = JournalTest.count();

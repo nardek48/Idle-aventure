@@ -406,9 +406,69 @@ function renderTitleScreen() {
   host.innerHTML = titleScreenView === "load"
     ? buildTitleScreenLoadHTML()
     : buildTitleScreenMainHTML();
+  // v3.591.0 : roue des Paramètres, en haut à droite (atelier accueil-parametres.html)
+  var ov = host.querySelector(".title-screen-overlay");
+  if (ov) ov.insertAdjacentHTML("beforeend", '<button type="button" class="ts-gear" onclick="openTitleSettingsSheet()" aria-label="' + esc(_t("Paramètres")) + '"><img src="images/Icons/menu_icons/settings_menu.webp" alt=""></button>');
+}
+
+/* v3.591.0 : l'accueil est-il affiché (import vers un emplacement libre, voir ui/save-transfer-view.js) */
+function titleScreenIsOpen() {
+  var host = document.getElementById("title-screen-root");
+  return !!(host && host.innerHTML && !titleScreenResolved);
+}
+
+/* v3.591.0 : feuille des Paramètres de l'accueil — sauvegarde (import vers un emplacement libre), mises à jour,
+   réglages de l'appareil. Sa propre couche, au-dessus de l'accueil (les feuilles du jeu passeraient dessous). */
+function titleSettingsRoot() {
+  var root = document.getElementById("title-settings-root");
+  if (!root && document.body) { root = document.createElement("div"); root.id = "title-settings-root"; document.body.appendChild(root); }
+  return root;
+}
+function openTitleSettingsSheet() {
+  var root = titleSettingsRoot();
+  if (!root) return;
+  var h = '<div class="hf-sheet-bg"><div class="ksheet-backdrop" onclick="closeTitleSettingsSheet()"></div><div class="ksheet hf-sheet ts-set-sheet" role="dialog" aria-label="' + esc(_t("Paramètres")) + '">';
+  h += kSheetHeadHTML({ icon: '<img src="images/Icons/menu_icons/settings_menu.webp" alt="">', title: _t("Paramètres"), sub: _t("Réglages de cet appareil"), close: "closeTitleSettingsSheet()" });
+  h += '<div class="ksheet-body" onclick="titleSettingsRefreshSoon(event)">';
+  h += '<div class="set-card"><div class="kkick">' + _t("Sauvegarde") + '</div>';
+  h += '<p>' + _t("Tu as joué sur un autre appareil ? Importe ta sauvegarde : elle prend un emplacement libre, rien n'est écrasé.") + '</p>';
+  h += '<div class="set-pair"><button type="button" class="settings-btn" onclick="triggerImportFilePicker()"><img class=ico-inline src=images/Icons/system/import.webp> ' + _t("Importer un fichier") + '</button>';
+  h += '<button type="button" class="settings-btn" onclick="titleSettingsShowPaste()">' + _t("Coller un code") + '</button></div>';
+  h += '<div class="ts-paste" hidden><textarea id="ts-paste-area" class="export-textarea" placeholder="' + esc(_t("Colle le code ici...")) + '"></textarea>';
+  h += '<button type="button" class="settings-btn primary" onclick="importSaveFromText(document.getElementById(\'ts-paste-area\').value)">' + _t("Importer ce code") + '</button></div>';
+  h += '<p class="set-note ts-set-msg" role="status" aria-live="polite"></p></div>';
+  if (typeof buildPwaUpdateCardHTML === "function") h += buildPwaUpdateCardHTML();
+  if (typeof buildSettingsAppareilHTML === "function") h += buildSettingsAppareilHTML("title");
+  h += '</div></div></div>';
+  root.innerHTML = h;
+}
+function closeTitleSettingsSheet() {
+  var root = document.getElementById("title-settings-root");
+  if (root) root.innerHTML = "";
+}
+function titleSettingsShowPaste() {
+  var box = document.querySelector("#title-settings-root .ts-paste");
+  if (box) { box.hidden = false; var ta = document.getElementById("ts-paste-area"); if (ta) ta.focus(); }
+}
+function titleSettingsSay(text) {
+  var el = document.querySelector("#title-settings-root .ts-set-msg");
+  if (el) el.textContent = text; else if (typeof showToast === "function") showToast(text, 2200);
+}
+/* Taille du texte : le réglage s'applique tout de suite ; la feuille et l'accueil se redessinent */
+function titleSettingsRefreshSoon(e) {
+  var b = e && e.target && e.target.closest ? e.target.closest(".set-seg button") : null;
+  if (!b || /setLang/.test(b.getAttribute("onclick") || "")) return;
+  setTimeout(function () { renderTitleScreen(); openTitleSettingsSheet(); }, 60);
 }
 
 window.openTitleScreen = openTitleScreen;
+window.renderTitleScreen = renderTitleScreen;
+window.titleScreenIsOpen = titleScreenIsOpen;
+window.openTitleSettingsSheet = openTitleSettingsSheet;
+window.closeTitleSettingsSheet = closeTitleSettingsSheet;
+window.titleSettingsShowPaste = titleSettingsShowPaste;
+window.titleSettingsSay = titleSettingsSay;
+window.titleSettingsRefreshSoon = titleSettingsRefreshSoon;
 window.getTitleScreenContinueSlot = getTitleScreenContinueSlot;
 window.resolveTitleScreen = resolveTitleScreen;
 window.titleScreenNewGame = titleScreenNewGame;
