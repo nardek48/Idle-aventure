@@ -466,3 +466,129 @@ html.wide-mode.ge-arena-wide body.combat-active:not(.lab-run) .cbx-team.c2 { gri
 .chr-states .st-row:not(.is-alert) .st-row-name { font-size: 12px; }
 .chr-states .st-row:not(.is-alert) .st-row-n { font-size: 12px; color: var(--c-bronze-400-4); }
 .chr-states .st-row.is-alert { border: 1px solid rgba(224, 83, 63, 0.55); border-radius: 10px; padding: 6px 8px; background: rgba(179, 38, 30, 0.12); margin-bottom: 6px; }
+
+/* =========================================================
+   v3.567.0 (option D, composants grand écran) — Camp : cartes claires, équipe compacte, rations
+   en ligne, Grimoire avec ses règles, missions en lignes, expéditions sur deux colonnes (maquette).
+   ========================================================= */
+html.wide-mode #panel-container .cw { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 16px; }
+html.wide-mode #panel-container .cw-col { gap: 14px; }
+html.wide-mode #panel-container .cw-card { padding: 14px 16px; border-radius: 14px; background: rgba(255, 250, 240, 0.86); border: 1px solid rgba(194, 127, 31, 0.35); box-shadow: 0 2px 8px rgba(60, 40, 10, 0.12); color: var(--c-brown-850-3); }
+html.wide-mode #panel-container .cw-card > .cw-h { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; }
+html.wide-mode #panel-container .cw-card > .cw-h::after { content: ""; flex: 1; height: 1px; background: rgba(194, 127, 31, 0.35); }
+html.wide-mode #panel-container .cw-h small { font: 600 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; letter-spacing: 0; text-transform: none; color: var(--nb-ink-dim); }
+html.wide-mode #panel-container .cw-h small img { width: 14px; height: 14px; vertical-align: -2px; }
+html.wide-mode #panel-container .cw-team { display: grid; gap: 10px; }
+html.wide-mode #panel-container .cw-mb { display: grid; grid-template-columns: 50px minmax(0, 1fr); gap: 4px 12px; align-items: center; }
+html.wide-mode #panel-container .cw-mb-img { grid-row: span 2; width: 50px; height: 50px; border-radius: 50%; object-fit: cover; object-position: top; box-shadow: 0 0 0 2px var(--c-bronze-450); background: var(--c-brown-900); }
+html.wide-mode #panel-container .cw-mb-nm { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+html.wide-mode #panel-container .cw-mb-nm b { font-size: 14.5px; }
+html.wide-mode #panel-container .cw-mb-nm small { font-size: 12px; color: var(--nb-ink-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html.wide-mode #panel-container .cw-pill { margin-left: auto; padding: 0 8px; border-radius: 999px; border: 1px solid var(--c-green-650-2); color: var(--c-green-650-2); font-size: 12px; font-weight: 700; white-space: nowrap; }
+html.wide-mode #panel-container .cw-mb-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--c-brown-750-2); }
+html.wide-mode #panel-container .cw-bar { display: block; height: 8px; border-radius: 4px; background: rgba(58, 44, 26, 0.18); overflow: hidden; box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.18); }
+html.wide-mode #panel-container .cw-bar i { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--c-green-650-2), var(--c-green-400)); }
+html.wide-mode #panel-container .cw-others { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 12px; font-size: 12.5px; color: var(--nb-ink-dim); }
+html.wide-mode #panel-container .cw-others span { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px 2px 2px; border-radius: 999px; background: rgba(228, 207, 160, 0.5); font-weight: 700; color: var(--c-brown-750-2); }
+html.wide-mode #panel-container .cw-others img { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; object-position: top; }
+html.wide-mode #panel-container .cw-rations { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+html.wide-mode #panel-container .cw-ration { position: relative; display: flex; align-items: center; gap: 6px; padding: 8px 7px; min-width: 0; border-radius: 12px; border: 1.5px solid var(--c-bronze-250-soft); background: rgba(255, 250, 240, 0.8); cursor: pointer; text-align: left; color: var(--c-brown-850-3); }
+html.wide-mode #panel-container .cw-ration img { width: 28px; height: 28px; flex: none; object-fit: contain; }
+html.wide-mode #panel-container .cw-ration span { min-width: 0; }
+html.wide-mode #panel-container .cw-ration b { display: block; color: var(--c-green-650-2); font-size: 15px; }
+html.wide-mode #panel-container .cw-ration small { display: block; color: var(--nb-ink-dim); font-size: 12px; line-height: 1.2; }
+html.wide-mode #panel-container .cw-ration-n { position: absolute; top: -7px; right: -6px; min-width: 19px; height: 19px; padding: 0 5px; border-radius: 10px; background: var(--c-brown-850-3); border: 1.5px solid var(--c-bronze-450); color: var(--c-white-50-soft); font: 800 11px/16px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; text-align: center; font-style: normal; }
+html.wide-mode #panel-container .cw-ration.is-off, html.wide-mode #panel-container .cw-ration:disabled { opacity: 0.5; cursor: default; }
+html.wide-mode #panel-container .cw-note { margin: 8px 0 0; font-size: 12.5px; color: var(--nb-ink-dim); }
+html.wide-mode #panel-container .cw-seg { display: inline-flex; padding: 3px; gap: 3px; border-radius: 10px; background: rgba(58, 44, 26, 0.12); }
+html.wide-mode #panel-container .cw-seg button { padding: 4px 12px; border: 0; border-radius: 8px; background: none; font: 700 12.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: var(--nb-ink-dim); cursor: pointer; }
+html.wide-mode #panel-container .cw-seg button.is-on { background: var(--c-cream-50-soft); color: var(--c-brown-850-3); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15); }
+html.wide-mode #panel-container .cw-rules { margin: 12px 0; display: grid; gap: 6px; }
+html.wide-mode #panel-container .cw-rule { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 6px 10px; border-radius: 10px; background: rgba(228, 207, 160, 0.4); font-size: 13px; }
+html.wide-mode #panel-container .cw-rule b { color: var(--nb-gold-deep); font-size: 12px; letter-spacing: 0.06em; }
+html.wide-mode #panel-container .cw-rule img { width: 26px; height: 26px; object-fit: contain; }
+html.wide-mode #panel-container .cw-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 34px; margin-top: 10px; padding: 0 16px; border-radius: 10px; border: 1.5px solid var(--c-bronze-450); background: rgba(255, 250, 240, 0.9); color: var(--c-brown-850-3); font: 700 13px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; cursor: pointer; }
+html.wide-mode #panel-container .cw-btn:hover { background: var(--c-white-50-soft); }
+html.wide-mode #panel-container .cw-card:has(.cw-mlist) { padding-left: 0; padding-right: 0; padding-bottom: 0; }
+html.wide-mode #panel-container .cw-card:has(.cw-mlist) > .cw-h { padding: 0 16px; }
+html.wide-mode #panel-container .cw-mrow { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 12px 16px; border-top: 1px solid rgba(194, 127, 31, 0.25); }
+html.wide-mode #panel-container .cw-mrow:first-child { border-top: 0; }
+html.wide-mode #panel-container .cw-mrow.is-claim { background: rgba(79, 191, 114, 0.1); }
+html.wide-mode #panel-container .cw-mrow-ico { width: 44px; height: 44px; object-fit: contain; }
+html.wide-mode #panel-container .cw-mrow-tx { min-width: 0; }
+html.wide-mode #panel-container .cw-mrow h4 { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 15px; font-weight: 800; }
+html.wide-mode #panel-container .cw-badge { padding: 0 8px; border-radius: 999px; border: 1px solid var(--c-brown-550-3); font-size: 12px; font-weight: 700; color: var(--nb-gold-deep); }
+html.wide-mode #panel-container .cw-mrow p { margin: 3px 0 6px; font-size: 13px; color: var(--nb-ink-dim); }
+html.wide-mode #panel-container .cw-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+html.wide-mode #panel-container .cw-chips span { padding: 2px 9px; border-radius: 999px; background: rgba(228, 207, 160, 0.55); border: 1px solid rgba(194, 127, 31, 0.3); font-size: 12px; font-weight: 700; color: var(--c-brown-750-2); }
+html.wide-mode #panel-container .cw-mrow-act .camp-mission-actions { display: flex; flex-direction: column; gap: 6px; }
+html.wide-mode #panel-container .cw-mrow-act .settings-btn { width: auto; min-width: 120px; margin: 0; }
+html.wide-mode #panel-container .cw-mfoot { display: flex; justify-content: center; padding: 0 0 12px; border-top: 1px solid rgba(194, 127, 31, 0.25); }
+/* Expéditions : compteurs discrets, départs sur deux colonnes */
+html.wide-mode #panel-container .cw .exp-sum { margin: 0 0 6px; gap: 6px; }
+html.wide-mode #panel-container .cw .exp-sum span { padding: 4px 6px; font-size: 12px; }
+html.wide-mode #panel-container .cw .exp-sum b { font-size: 16px; }
+html.wide-mode #panel-container .cw .exp-sec { margin: 8px 0 6px; font-size: 12px; }
+html.wide-mode #panel-container .cw .exp-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+html.wide-mode #panel-container .cw .exp-list > .exp-row { margin: 0; }
+html.wide-mode #panel-container .cw .exp-foot { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+html.wide-mode #panel-container .cw .exp-sum { display: none; }
+html.wide-mode #panel-container .cw .exp-row { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 4px 12px; align-items: center; padding: 10px; border-radius: 12px; }
+html.wide-mode #panel-container .cw .exp-row-ico { grid-row: span 2; width: 52px; height: 52px; }
+html.wide-mode #panel-container .cw .exp-row-txt b { font-size: 14px; }
+html.wide-mode #panel-container .cw .exp-row-txt small { display: block; font-size: 12.5px; }
+html.wide-mode #panel-container .cw .exp-act { grid-column: 2; justify-self: start; min-height: 30px; padding: 0 12px; font-size: 12.5px; }
+html.wide-mode #panel-container .cw .exp-row > .exp-chev { display: none; }
+html.wide-mode #panel-container .cw .exp-act { width: auto; max-width: none; white-space: nowrap; }
+
+/* ---------- Option D : onglets de page en pastilles (Village, Héros, Quêtes…) ---------- */
+html.wide-mode #panel-container .kseg.is-stack:not(.prod-sheet-tabs) { display: flex; width: max-content; max-width: 100%; margin: 0 auto 14px; padding: 3px; gap: 3px; border-radius: 12px; }
+html.wide-mode #panel-container .kseg.is-stack:not(.prod-sheet-tabs) button { flex: 0 0 auto; flex-direction: row; gap: 7px; min-height: 36px; padding: 6px 16px; font-size: 13px; border-radius: 9px; }
+html.wide-mode #panel-container .kseg.is-stack:not(.prod-sheet-tabs) button img { width: 20px; height: 20px; }
+html.wide-mode #panel-container .kseg.is-stack button.is-on { background: linear-gradient(var(--c-bronze-250), var(--c-bronze-400-3) 60%, var(--c-bronze-450)); }
+
+/* ---------- Option D : Village › Production, vignettes compactes (3 par rangée) et fiche résumée ---------- */
+html.wide-mode #panel-container .pw { grid-template-columns: minmax(0, 1fr) minmax(300px, 360px); }
+html.wide-mode #panel-container .pw .production-dash-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+html.wide-mode #panel-container .pw .prod-tile { padding: 10px 12px 12px; gap: 4px; border-radius: 14px; }
+html.wide-mode #panel-container .pw .prod-tile .prod-tile-img { width: 96px; height: 84px; }
+html.wide-mode #panel-container .pw .prod-tile .production-dash-name { font-size: 15px; }
+html.wide-mode #panel-container .pw .prod-tile .prod-tile-gauge.kgauge-thin { aspect-ratio: auto; height: 18px; }
+html.wide-mode #panel-container .pw-left { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 12px; }
+html.wide-mode #panel-container .pw .production-harvest-all-kbtn { grid-column: 2; grid-row: 1; width: auto; min-width: 0; margin: 0; padding: 0 18px; min-height: 36px; }
+html.wide-mode #panel-container .pw-left > :not(.production-harvest-all-kbtn):not(.production-dash-hint) { grid-column: 1 / -1; }
+html.wide-mode #panel-container .pw .production-dash-hint { grid-column: 1; grid-row: 1; margin: 0 0 12px; text-align: left; font-size: 13px; color: var(--nb-ink-dim); }
+html.wide-mode #panel-container .pw-sheet { padding: 16px; background: rgba(255, 250, 240, 0.9); }
+html.wide-mode #panel-container .pw-hero { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 2px; }
+html.wide-mode #panel-container .pw-hero-img { width: 140px; height: 140px; object-fit: contain; }
+html.wide-mode #panel-container .pw-hero h3 { margin: 0; font: 700 20px var(--f-title); letter-spacing: 0.04em; color: var(--c-brown-850-3); }
+html.wide-mode #panel-container .pw-hero small { font-size: 12.5px; color: var(--nb-ink-dim); }
+html.wide-mode #panel-container .pw-kv { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 12px; margin: 12px 0 4px; font-size: 13px; }
+html.wide-mode #panel-container .pw-kv dt { color: var(--nb-ink-dim); }
+html.wide-mode #panel-container .pw-kv dd { margin: 0; font-weight: 800; text-align: right; font-variant-numeric: tabular-nums; }
+html.wide-mode #panel-container .pw-sheet .ksheet-body { padding: 0; }
+html.wide-mode #panel-container .pw-sheet .prod-sheet-harvest { padding: 8px 10px; margin: 8px 0 10px; }
+html.wide-mode #panel-container .pw-sheet .prod-sheet-store { display: none; }
+html.wide-mode #panel-container .pw-sheet .prod-sheet-tabs { margin: 4px 0 10px; }
+html.wide-mode #panel-container .pw-sheet .prod-sheet-tabs button { flex-direction: row; min-height: 34px; font-size: 12.5px; }
+html.wide-mode #panel-container .pw-sheet .prod-sheet-tabs button img { width: 18px; height: 18px; }
+html.wide-mode #panel-container .pw-sheet .wk-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+
+/* ---------- Option D : combat, étiquette au sol et anneau doré de la cible (maquette) ---------- */
+.cbx-foe-pl { display: none; }
+html.wide-mode.ge-arena-wide body.combat-active .cbx-foe-pl { display: block; position: absolute; left: 50%; bottom: -26px; transform: translateX(-50%); z-index: 6; padding: 1px 9px; border-radius: 999px; background: rgba(0, 0, 0, 0.62); font-size: 12px; font-weight: 700; color: var(--c-cream-100-2); white-space: nowrap; }
+html.wide-mode.ge-arena-wide body.combat-active .cbx-foe.is-target .cbx-foe-ground { opacity: 1; left: 14%; right: 14%; bottom: 2%; height: 9%; background: none; border: 2px solid rgba(240, 198, 74, 0.85); box-shadow: 0 0 18px rgba(240, 170, 62, 0.6); animation: none; }
+html.wide-mode.ge-arena-wide body.combat-active .cbx-foe.is-target .cbx-foe-halo { opacity: 0.35; }
+
+/* ---------- Option D : boutons de page à la taille de la maquette (le bleu pour l'action principale,
+   un bouton cerclé d'or pour les autres) ; le téléphone garde ses boutons ---------- */
+html.wide-mode #panel-container .kbtn,
+html.wide-mode #panel-container .settings-btn { width: auto; min-width: 150px; max-width: 100%; min-height: 38px; padding: 0 22px; white-space: nowrap; }
+html.wide-mode #panel-container .kbtn:not(.primary):not(.danger):not(:disabled),
+html.wide-mode #panel-container .settings-btn:not(.primary):not(.danger):not(:disabled) { min-width: 0; min-height: 34px; padding: 0 16px; border-radius: 10px; background: rgba(255, 250, 240, 0.75); border: 1.5px solid var(--c-bronze-450); color: var(--c-brown-850-3); text-shadow: none; font-weight: 700; font-size: 13px; }
+html.wide-mode #panel-container .kbtn:not(.primary):not(.danger):not(:disabled):hover,
+html.wide-mode #panel-container .settings-btn:not(.primary):not(.danger):not(:disabled):hover { background: var(--c-white-50-soft); }
+html.wide-mode #panel-container .story-step-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-start; }
+html.wide-mode #panel-container .story-step-actions .settings-btn { flex: 0 0 auto; margin: 0; }
+html.wide-mode #panel-container .qw-done .story-step-title { font-size: 14px; font-weight: 700; }
+html.wide-mode #panel-container .qw-done .story-step-claimed { padding: 7px 10px; }

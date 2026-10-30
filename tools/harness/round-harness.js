@@ -20089,7 +20089,7 @@ console.log("\n[373] v3.558.0 — Grand écran, option B : Camp sur une page, H�
     ok(phone.indexOf('class="cw"') < 0, "téléphone : Camp inchangé (onglets)");
     wide = true;
     var w = g.buildCampHTML();
-    ok(w.indexOf('<div class="cw"><div class="cw-col">') > 0 && w.indexOf("camp-tabs") < 0 && w.indexOf("camp-health-card") < w.indexOf("camp-missions-card"), "grand écran : Camp sur une page, feu à gauche, missions à droite, sans onglets");
+    ok(w.indexOf('<div class="cw"><div class="cw-col">') > 0 && w.indexOf("camp-tabs") < 0 && w.indexOf("cw-team") > 0 && w.indexOf("cw-team") < w.indexOf("cw-mlist"), "grand écran (v3.567.0 : blocs compacts) : Camp sur une page, feu à gauche, missions à droite, sans onglets");
     ok(g.buildCampHTML("grimoire").indexOf('class="cw"') < 0, "un onglet demandé (harnais) garde l'affichage du téléphone");
     var r = g.buildHerosResumeHTML();
     ok(r.indexOf("hs-wskills") > 0 || g.SkillRanks.kitActions().length === 0, "Résumé large : liste des capacités avec leur rang");

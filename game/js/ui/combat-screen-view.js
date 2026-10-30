@@ -246,6 +246,19 @@
       var b = (n <= 1 && e.isBoss) ? BOSS_RANK[r] : RANK[r];
       pos[e.actorId] = { left: x, bottom: b.y + up, w: base, s: b.s, z: 10 - r * 3 - (lane === "C" && n >= 3 ? 1 : 0), rank: r, boss: !!e.isBoss };
     });
+    return arenaSpread(pos);
+  }
+
+  /* v3.567.0 (grand écran, option D) : arène pleine largeur — les couloirs s'écartent du centre
+     (le téléphone garde ses positions) et la taille ne dépend plus que de la hauteur de l'arène. */
+  function arenaSpread(pos) {
+    var root = document.documentElement;
+    if (!root.classList.contains("wide-mode") || !root.classList.contains("ge-arena-wide")) return pos;
+    Object.keys(pos).forEach(function (k) {
+      var p = pos[k];
+      p.left = Math.max(18, Math.min(82, 50 + (p.left - 50) * 1.3));
+      p.w = p.w.replace(/min\((\d+)%, (\d+)cqh\)/, function (m0, a, b) { return Number(b) + "cqh"; });
+    });
     return pos;
   }
 
@@ -265,6 +278,8 @@
     if (num(e.engageIn) > 0) marks += '<button type="button" class="cbx-dist-badge" onclick="openCombatStatesSheet()">' + ico(IC.st + (e.charged ? "enemy_stunned.webp" : "enemy_approaching.webp")) + '<b>' + num(e.engageIn) + '</b></button>';
     if (isRanged(e)) marks += '<button type="button" class="cbx-dist-badge is-ranged" onclick="openCombatStatesSheet()">' + ico(CBX_STATES.ranged.icon) + '<span>' + _t("à distance") + '</span></button>';
     if (marks) h += '<div class="cbx-foe-marks">' + marks + '</div>';
+    // v3.567.0 : étiquette au sol (grand écran seulement, css/10-grand-ecran.css)
+    h += '<span class="cbx-foe-pl">' + esc(_td(e.name || "")) + (e === target() ? ' · ' + esc(_t("cible")) : '') + '</span>';
     return h;
   }
 

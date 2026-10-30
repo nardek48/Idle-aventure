@@ -49,6 +49,13 @@ I18n.register("en", {
   "recharge {n} round||recharge {n} rounds": ["cooldown {n} round", "cooldown {n} rounds"],
   "défense": "defence",
   "{n} avec toi": "{n} with you",
+  // v3.567.0 : composants grand écran
+  "SI": "IF",
+  "cible": "target",
+  "Bâtiment de production · {a}/{b} zones": "Production building · {a}/{b} zones",
+  "avec toi": "with you",
+  "Au camp :": "At camp:",
+  "Une ration : toute l'équipe mange.": "One ration: the whole team eats.",
   "Donjon · {n} sortie aujourd'hui||Donjon · {n} sorties aujourd'hui": ["Dungeon · {n} run today", "Dungeon · {n} runs today"],
   // v3.505.0 : Chronique de combat
   "Aucune règle n'a encore joué.": "No rule has fired yet.",

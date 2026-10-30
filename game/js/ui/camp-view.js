@@ -247,15 +247,17 @@ function buildCampHTML(tab) {
     gh += '</div>';
     tabsHTML.grimoire = gh;
   }
-  // v3.558.0 (grand écran, option B) : une seule page, sans onglets — le feu et le Grimoire à gauche,
-  // les missions et les expéditions à droite (maquette atelier/grand-ecran.html). Le téléphone ne change pas.
+  // v3.558.0 (grand écran, option B) : une seule page, sans onglets ; v3.567.0 (option D) : blocs compacts
+  // de la maquette (atelier/grand-ecran.html) — équipe, rations, Grimoire, missions, expéditions. Le téléphone ne change pas.
   if (!tab && document.documentElement.classList.contains("wide-mode")) {
-    var titled = function (t, x) { return x ? '<h3 class="cw-h">' + esc(t) + '</h3>' + x : ""; };
+    var titled = function (t, sub, x) { return x ? '<section class="cw-card"><h3 class="cw-h">' + esc(t) + (sub ? ' <small>' + sub + '</small>' : '') + '</h3>' + x + '</section>' : ""; };
     var healthEnd = h.lastIndexOf('<div class="camp-card camp-health-card">');
-    var head = h.slice(0, healthEnd), health = h.slice(healthEnd);
     campShownTab = "missions";
-    return head + '<div class="cw"><div class="cw-col">' + titled(_t("Le feu de camp"), health) + eh + titled(_t("Grimoire"), tabsHTML.grimoire || "") + '</div>'
-      + '<div class="cw-col">' + titled(_t("Missions"), tabsHTML.missions) + titled(_t("Expéditions"), tabsHTML.depart || "") + '</div></div></div>';
+    var sub = esc(_t("+{n} % PV/min", { n: regenPct })) + ' · <span id="camp-fire-eta">' + esc(hpFull ? _t("PV au maximum") : _t("Max dans {d}", { d: formatTime(Math.ceil(minutesToFull * 60)) })) + '</span>';
+    return h.slice(0, healthEnd) + '<div class="cw"><div class="cw-col">'
+      + titled(_t("Le feu de camp"), sub, campWideTeamHTML(maxHp, hp, rationOptions, teamFull, campLock, campMates)) + eh
+      + titled(_t("Grimoire"), tabsHTML.grimoire ? esc(campWideRulesCount()) : "", tabsHTML.grimoire ? campWideGrimoireHTML() : "") + '</div>'
+      + '<div class="cw-col">' + titled(_t("Missions"), "", campWideMissionsHTML()) + titled(_t("Expéditions"), "", tabsHTML.depart || "") + '</div></div></div>';
   }
   var order = CAMP_TABS.filter(function (t) { return !!tabsHTML[t.key]; });
   var want = tab || campTab;
@@ -281,6 +283,93 @@ function buildCampHTML(tab) {
 
   h += '</div>';
   return h;
+}
+
+/* =========================================================
+   v3.567.0 (grand écran, option D) : blocs compacts du Camp, d'après la maquette.
+   ========================================================= */
+function campWideBar(cur, max, id) { // id : barre tenue à jour par CampManager.refreshCampCard
+  return '<span class="cw-bar"><i' + (id ? ' id="' + id + '"' : '') + ' style="width:' + Math.max(0, Math.min(100, 100 * cur / Math.max(1, max))).toFixed(1) + '%"></i></span>';
+}
+
+// Le héros et les compagnons qui partent avec lui, puis ceux restés au camp, puis les rations
+function campWideTeamHTML(maxHp, hp, rations, teamFull, campLock, campMates) {
+  var hero = typeof getSelectedHero === "function" ? getSelectedHero() : null, cls = hero && typeof getClassForHero === "function" ? getClassForHero(hero) : null;
+  var h = '<div class="cw-team"><div class="cw-mb">' + renderIconOrEmojiHTML((hero && hero.image) || "", "cw-mb-img", "")
+    + '<div class="cw-mb-nm"><b>' + esc(game.playerName || "") + '</b><small>' + esc((cls ? _td(cls.label) + " · " : "") + _t("niv. {n}", { n: Number(game.heroLevel || 1) })) + '</small></div>'
+    + '<div class="cw-mb-row">' + campWideBar(hp, maxHp, "camp-hp-fill") + '<span id="camp-fire-hp-value">' + formatNumber(Math.floor(hp)) + ' / ' + formatNumber(maxHp) + '</span></div></div>';
+  var CM = window.CompanionManager, party = CM ? CM.partyIds() : [];
+  party.forEach(function (id) {
+    var def = getCompanionDef(id), mx = Math.max(1, CM.maxHpOf(id)), cur = CM.hpOf(id);
+    h += '<div class="cw-mb">' + renderIconOrEmojiHTML(def.image, "cw-mb-img", "")
+      + '<div class="cw-mb-nm"><b>' + esc(_td(def.name)) + '</b><small>' + esc(def.skill ? _td(def.skill.name) : "") + '</small><span class="cw-pill">' + esc(_t("avec toi")) + '</span></div>'
+      + '<div class="cw-mb-row">' + campWideBar(cur, mx, "camp-comp-hp-" + esc(id)) + '<span>' + formatNumber(Math.floor(cur)) + ' / ' + formatNumber(mx) + '</span></div></div>';
+  });
+  h += '</div>';
+  var others = (campMates || []).filter(function (id) { return party.indexOf(id) < 0; });
+  if (others.length) {
+    h += '<div class="cw-others">' + esc(_t("Au camp :"));
+    others.forEach(function (id) {
+      var def = getCompanionDef(id), mx = Math.max(1, CM.maxHpOf(id)), cur = Math.floor(CM.hpOf(id));
+      h += '<span>' + renderIconOrEmojiHTML(def.image, "", "") + esc(_td(def.name)) + (cur < mx ? ' ' + formatNumber(cur) + ' / ' + formatNumber(mx) : '') + '</span>';
+    });
+    h += '</div>';
+  }
+  if (campLock) h += '<div class="camp-lock-note"><img class="ico-inline" src="images/Icons/system/hero_away.webp" alt=""> ' + esc(campLock) + '</div>';
+  h += '<div class="cw-rations">';
+  rations.forEach(function (r) {
+    var def = (window.WAREHOUSE_RESOURCES || {})[r.id] || {}, canEat = r.amount >= 1 && !teamFull && !campLock;
+    h += '<button type="button" class="cw-ration' + (r.amount < 1 ? ' is-off' : '') + '"' + (canEat ? ' onclick="CampManager.eatRation(\'' + esc(r.id) + '\');"' : (r.amount < 1 ? ' onclick="campRationEmpty()"' : ' disabled')) + '>'
+      + renderIconOrEmojiHTML(def.icon || "images/Icons/quests/ration_reward.webp", "", "") + '<span><b>+' + formatNumber(Math.floor(maxHp * r.healPct)) + '</b><small>' + esc(_td(r.name)) + '</small></span>'
+      + '<i class="cw-ration-n">' + formatNumber(r.amount) + '</i></button>';
+  });
+  h += '</div><p class="cw-note">' + esc(party.length || (campMates || []).length ? _t("Une ration : toute l'équipe mange.") : _t("Toucher une ration pour la manger")) + '</p>';
+  return h;
+}
+
+function campWideActiveRules() {
+  if (typeof ensureGrimoireRules === "function") ensureGrimoireRules();
+  var n = typeof getGrimoireSlotCount === "function" ? getGrimoireSlotCount(game.worldsEverReached) : 6;
+  return { slots: n, rules: (game.grimoireRules || []).slice(0, n).filter(function (r) { return r && r.conditionId && r.actionSlot; }) };
+}
+function campWideRulesCount() { var a = campWideActiveRules(); return _t("{a} / {b} règles actives", { a: a.rules.length, b: a.slots }); }
+
+// Grimoire : bascule Tactique / Grimoire, puis les règles actives (« Si … → … »)
+function campWideGrimoireHTML() {
+  var grim = game.combatMode === "grimoire", a = campWideActiveRules();
+  var kit = typeof getGrimoireCurrentKit === "function" ? getGrimoireCurrentKit() : null;
+  var h = '<div class="cw-seg"><button type="button" class="' + (grim ? '' : 'is-on') + '" onclick="if(window.CombatEngine)CombatEngine.setCombatMode(\'tactique\');renderPanel()">' + esc(_t("Tactique")) + '</button>'
+    + '<button type="button" class="' + (grim ? 'is-on' : '') + '" onclick="if(window.CombatEngine)CombatEngine.setCombatMode(\'grimoire\');renderPanel()">' + esc(_t("Grimoire")) + '</button></div>';
+  h += '<p class="cw-note">' + esc(grim ? _t("Mode Grimoire : tes règles jouent seules.") : _t("Mode Tactique : tes règles conseillent, tu choisis.")) + '</p>';
+  if (a.rules.length) {
+    h += '<div class="cw-rules">';
+    a.rules.forEach(function (r) {
+      var c = typeof getGrimoireCondition === "function" ? getGrimoireCondition(r.conditionId) : null;
+      var act = typeof getGrimoireActionDef === "function" ? getGrimoireActionDef(kit, r.actionSlot) : null;
+      var icon = act ? ((typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[act.id]) || act.icon || "") : "";
+      h += '<div class="cw-rule"><b>' + esc(_t("SI")) + '</b><span>' + esc(c ? _td(c.label) : "") + ' → ' + esc(act && act.label ? _td(act.label) : "") + '</span>' + (icon ? renderIconOrEmojiHTML(icon, "", "") : "") + '</div>';
+    });
+    h += '</div>';
+  }
+  return h + '<button class="cw-btn" type="button" onclick="switchTab(\'grimoire\')">' + esc(_t("Régler mes tactiques")) + '</button>';
+}
+
+// Missions en lignes : icône, titre et badge, lieu et objectif, récompenses, action à droite
+function campWideMissionsHTML() {
+  if (!window.MissionBoard) return "";
+  var top = MissionBoard.top(3);
+  var h = '<div class="cw-mlist">';
+  if (!top.length) h += '<p class="cw-note">' + esc(_t("Rien à signaler pour l'instant.")) + '</p>';
+  top.forEach(function (m) {
+    var enCours = m.status === "running" || m.status === "accepted", obj = m.objectiveLabel || "";
+    if (enCours && m.progressLabel) obj = obj ? obj + " — " + m.progressLabel : m.progressLabel;
+    h += '<div class="cw-mrow' + (m.claim ? ' is-claim' : '') + '">' + renderIconOrEmojiHTML(MissionBoard.typeIcon(m.type), "cw-mrow-ico", "")
+      + '<div class="cw-mrow-tx"><h4>' + esc(_td(m.title)) + ' <span class="cw-badge">' + (m.badge === "story" ? _t("Histoire", "badge") : _t("Contrat", "badge")) + '</span></h4>'
+      + '<p>' + esc([m.place ? _td(m.place) : "", obj].filter(Boolean).join(" · ")) + '</p>'
+      + (m.rewardSummary ? '<div class="cw-chips">' + m.rewardSummary.split(" · ").map(function (c) { return '<span>' + esc(c) + '</span>'; }).join("") + '</div>' : '')
+      + '</div><div class="cw-mrow-act">' + buildCampMissionActionHTML(m) + '</div></div>';
+  });
+  return h + '<div class="cw-mfoot"><button class="cw-btn" type="button" onclick="switchTab(\'quests\')">' + esc(_t("Voir le tableau complet")) + '</button></div></div>';
 }
 
 window.buildCampHTML = buildCampHTML;
