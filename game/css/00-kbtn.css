@@ -575,7 +575,14 @@
 #panel-container .kframe .kf-mid :is(.qb-cap-indicator, .qb-completed-link, .production-dash-hint, .wh-zero-note, .codex-summary, .tutorials-intro,
   .grimoire-mode-desc, .grimoire-divider, .qw-grp, .hs-wh),
 #panel-container .kframe .kf-mid > .ksec, #panel-container .kframe .kf-mid > .ksec *,
-#panel-container .kframe .kf-mid :is(.wh-filter, .hs-sets, .grimoire-head, .grimoire-foot) :is(span, small, b, div, button:not(.kbtn):not(.settings-btn)) {
+#panel-container .kframe .kf-mid :is(.grimoire-head, .grimoire-foot) :is(span, small, b, div, button:not(.kbtn):not(.settings-btn)) {
   color: var(--kf-ink); text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
 }
 #panel-container .kframe .kf-mid > .ksec::before, #panel-container .kframe .kf-mid > .ksec::after { background: rgba(226, 177, 74, 0.55); }
+
+/* Entrepôt et Équipement : leurs zones reçoivent le même fond que les autres blocs (demande de Seb) */
+#panel-container .kframe .kf-mid :is(.wh-filter, .hs-sets) { background-color: var(--c-cream-100-soft); border-radius: 10px; padding: 8px 10px; box-shadow: var(--kf-ring); }
+#panel-container .kframe .kf-mid > .ksec:has(+ .wh-grid) { margin-bottom: 0; padding: 10px 12px 4px; background-color: var(--c-cream-100-soft); border-radius: 10px 10px 0 0; box-shadow: var(--kf-ring); }
+#panel-container .kframe .kf-mid > .ksec:has(+ .wh-grid), #panel-container .kframe .kf-mid > .ksec:has(+ .wh-grid) * { color: var(--c-brown-850-2); text-shadow: none; }
+#panel-container .kframe .kf-mid > .ksec:has(+ .wh-grid)::before, #panel-container .kframe .kf-mid > .ksec:has(+ .wh-grid)::after { background: rgba(194, 127, 31, 0.45); }
+#panel-container .kframe .kf-mid > .ksec + .wh-grid { margin-top: 0; padding: 6px 12px 12px; background-color: var(--c-cream-100-soft); border-radius: 0 0 10px 10px; box-shadow: var(--kf-ring); clip-path: inset(0 -20px -20px -20px); }

@@ -666,3 +666,11 @@ html.wide-mode #panel-container .kframe .kf-mid .hs-wh small,
 html.wide-mode #panel-container .kframe .kf-mid .qw-act small { color: var(--kf-ink); text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9); }
 html.wide-mode #panel-container .kframe .kf-mid .qw-act.is-on small { color: var(--c-bronze-300-soft); }
 html.wide-mode #panel-container .kframe .kf-mid .qw-act i:not(.is-done):not(.is-cur) { background: rgba(244, 233, 208, 0.22); }
+/* Équipement (PC) : le bloc du mannequin prend toute la largeur, l'image garde ses 380 px au centre ;
+   les emplacements suivent (même position qu'avant, recalculée depuis le centre : (x - 50 %) × 380 px) */
+html.wide-mode #panel-container .kframe .kf-mid > .hs-eq { width: 100%; background-color: var(--c-cream-100-soft); background-size: 380px 100%; border-radius: 12px; box-shadow: var(--kf-ring); }
+html.wide-mode #panel-container .kframe .kf-mid > .hs-eq .pin-helmet { left: calc(50% - 99px); }
+html.wide-mode #panel-container .kframe .kf-mid > .hs-eq .pin-amulet { left: calc(50% + 103px); }
+html.wide-mode #panel-container .kframe .kf-mid > .hs-eq .pin-weapon { left: calc(50% - 129px); }
+html.wide-mode #panel-container .kframe .kf-mid > .hs-eq .pin-gloves { left: calc(50% - 133px); }
+html.wide-mode #panel-container .kframe .kf-mid > .hs-eq .pin-ring { left: calc(50% + 129px); }
