@@ -268,7 +268,12 @@ var lastRenderedTab = null;
 /* v3.425.0 : « le même écran » pour renderPanel = même onglet + mêmes boutons allumés dans les rails
    (.kseg). Changer de sous-onglet change la clé : on repart alors en haut, comme avant. */
 function getPanelScreenKey(container) {
-  return game.activeTab + "|" + Array.prototype.map.call(container.querySelectorAll(".kseg .is-on"), function (b) { return b.textContent.trim(); }).join("|");
+  // v3.586.0 (retour Seb) : sans les pastilles de compte : récupérer une caravane ne doit pas renvoyer en haut
+  return game.activeTab + "|" + Array.prototype.map.call(container.querySelectorAll(".kseg .is-on"), function (b) {
+    var t = b.textContent;
+    Array.prototype.forEach.call(b.querySelectorAll(".kseg-dot"), function (d) { t = t.replace(d.textContent, ""); });
+    return t.trim();
+  }).join("|");
 }
 
 /* v3.458.1 (audit P29) : une rangée de pastilles qui défile garde sa position au re-rendu,

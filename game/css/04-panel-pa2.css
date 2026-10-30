@@ -433,10 +433,11 @@ body.pa2-full .pa2-scrim { background: rgba(5, 3, 2, 0.28); }
 
 /* v3.469.0 (Condition du run, atelier conditions-run) : panneau « Cette nuit » et pastille en route */
 /* v3.580.0 (lot 4) : l'objet de la nuit */
-.pa2-night { display: flex; align-items: center; gap: 10px; margin-top: 10px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--pa2-gold); background: rgba(240, 170, 62, .08); }
-.pa2-night img { width: 34px; height: 34px; object-fit: contain; flex: none; }
-.pa2-night b { display: block; color: var(--pa2-gold); font-size: 14px; }
-.pa2-night span { display: block; font-size: 13px; color: var(--pa2-ink-dim); }
+/* v3.587.0 : « pa2-nightitem », pas « pa2-night » (classe du body sur la carte de nuit : toutes les images passaient à 34 px) */
+.pa2-nightitem { display: flex; align-items: center; gap: 10px; margin-top: 10px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--pa2-gold); background: rgba(240, 170, 62, .08); }
+.pa2-nightitem img { width: 34px; height: 34px; object-fit: contain; flex: none; }
+.pa2-nightitem b { display: block; color: var(--pa2-gold); font-size: 14px; }
+.pa2-nightitem span { display: block; font-size: 13px; color: var(--pa2-ink-dim); }
 .pa2-night-tag { color: var(--pa2-gold); font-weight: 700; }
 .pa2-cell.is-night { box-shadow: inset 0 0 0 2px var(--pa2-gold); }
 .pa2-cell.is-night::before { content: "★"; position: absolute; top: 2px; right: 5px; font-size: 12px; color: var(--pa2-gold); }

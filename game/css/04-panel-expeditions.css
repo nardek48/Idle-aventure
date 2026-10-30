@@ -11,8 +11,6 @@ body.exp-on-board .hud-dock { display: none !important; }
 .exp-sum .is-ready b { color: var(--c-brown-700-vivid); }
 .exp-sum .is-away b { color: #2d5d8a; }
 
-.exp-sec.is-collect span { color: var(--c-green-650-soft); }
-.exp-sec.is-away span { color: #2d5d8a; }
 
 /* Une ligne */
 .exp-list { display: flex; flex-direction: column; gap: 6px; }

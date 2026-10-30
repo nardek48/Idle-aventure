@@ -4181,6 +4181,14 @@ I18n.register("en", {
   "Il faut": "You need",
   "corde": "rope",
   "Assuré": "Certain",
+  // v3.586.0 : Expéditions, une ligne par sorte
+  "Tout prendre": "Take it all",
+  "une place pour partir": "a slot to leave",
+  "{n} de retour||{n} de retour": ["{n} back", "{n} back"],
+  "{n} en patrouille||{n} en patrouille": ["{n} on patrol", "{n} on patrol"],
+  "{n} au camp||{n} au camp": ["{n} at camp", "{n} at camp"],
+  "Rentrée · {g} or à décharger||{n} rentrées · {g} or à décharger": ["Back · {g} gold to unload", "{n} back · {g} gold to unload"],
+  "{n} en route||{n} en route": ["{n} on the road", "{n} on the road"],
   // v3.582.0 : le donjon sur la carte du monde
   "Donjon : {d}": "Dungeon: {d}",
   "{d} : pas encore ouvert.": "{d}: not open yet.",
@@ -4655,8 +4663,6 @@ I18n.register("en", {
   "à récupérer": "to collect",
   "prêts à partir": "ready to go",
   "en route": "on the way",
-  "À récupérer": "To collect",
-  "Prêts à partir": "Ready to go",
   "En route": "On the way",
   "Durée": "Duration",
   "le plus": "the most",

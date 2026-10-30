@@ -13430,7 +13430,7 @@ console.log("\n[191] v3.419.0 — La Caravane de la Halle marchande (R3, version
     run("CaravanManager._now = function () { return 1000000 + 4 * 3600 * 1000 + 5; };");
     ok(run("CaravanManager.isBack()") && run("CaravanManager.checkArrival()") === true && run("CaravanManager.checkArrival()") === false, "retour hors ligne : annoncé une seule fois");
     ok(run("getVillageSubTabBadges().buildings") >= 1 && run("buildVillageBuildingCardHTML('hall')").indexOf("is-caravan-back") !== -1, "ruban « De retour » sur la tuile de la Halle, pastille sur Bâtiments");
-    ok(run("buildExpeditionsSheetHTML()").indexOf("unloadCaravanFromSheet(1)") !== -1 && run("buildExpeditionsBoardHTML()").indexOf("unloadCaravanFromSheet(1)") !== -1, "de retour : bouton Décharger (feuille et tableau des départs)");
+    ok(run("buildExpeditionsSheetHTML()").indexOf("unloadCaravanFromSheet(1)") !== -1 && run("buildExpeditionsBoardHTML()").indexOf("caravanUnloadAll()") !== -1, "de retour : bouton Décharger (feuille et tableau des départs, v3.586.0 : une ligne)");
     run("expSheet = null;");
     var loot = run("CaravanManager.unload()");
     ok(loot && loot.gold === 400 && run("game.gold") === gold0 + 400 && run("CaravanManager.get()") === null, "décharger : +400 or, la Halle est libre");
@@ -13737,8 +13737,12 @@ console.log("\n[198] v3.426.0 — Chantier Expéditions : Campement › Expédit
     // --- l'onglet ---
     var camp = run("buildCampHTML('depart')");
     ok(camp.indexOf("setCampTab('depart')") !== -1 && camp.indexOf("<span>Expéditions</span>") !== -1 && camp.indexOf("start_expedition.webp") !== -1, "Campement : l'onglet « Départ » devient « Expéditions »");
-    ok(camp.indexOf("exp-sum") !== -1 && camp.indexOf("Prêts à partir") !== -1 && camp.indexOf("goToPotions()") !== -1 && camp.indexOf("switchTab('map')") !== -1, "tableau des départs : compteurs, « Prêts à partir », Carte et Potions en pied");
-    ok(run("getExpeditionEntries().map(function (e) { return e.kind; }).join()") === "pa,patrol,patrol,dungeon", "entrées : Petites Aventures, deux compagnons, Donjon (pas de Halle, pas de caravane)");
+    ok(camp.indexOf("exp-sum") !== -1 && camp.indexOf("prêts à partir") !== -1 && camp.indexOf("goToPotions()") !== -1 && camp.indexOf("switchTab('map')") !== -1, "tableau des départs : compteurs, « Prêts à partir », Carte et Potions en pied");
+    ok(run("getExpeditionEntries().map(function (e) { return e.kind; }).join()") === "dungeon,pa,patrols", "entrées (v3.586.0) : Donjon, Petites Aventures, une ligne Patrouilles (pas de Halle, pas de caravane)");
+    run("expSheet = { type: 'patrols' };");
+    var _ps = run("buildExpeditionsSheetHTML()");
+    ok((_ps.match(/class="exp-row is-/g) || []).length === 2, "feuille Patrouilles : un compagnon par ligne");
+    run("expSheet = null;");
     // --- patrouilles vers toute carte atteinte ---
     ok(run("PatrolManager.reachedMapIds().join()") === "forest,desert", "cartes atteintes : la Forêt et le Désert");
     ok(run("PatrolManager.getDestinations().length") === 3 && run("PatrolManager.getDestinations('forest').length") === 2, "destinations : toutes les cartes (3), ou une seule (Forêt : 2)");
@@ -13752,10 +13756,10 @@ console.log("\n[198] v3.426.0 — Chantier Expéditions : Campement › Expédit
     run("patrolStart('wenna');");
     var p = run("PatrolManager.get('wenna')");
     ok(p && p.mapId === "forest" && p.sectorId === "arbremere" && p.hours === 4, "départ : Wenna patrouille en Forêt sans changer de monde");
-    ok(run("getExpeditionEntries().filter(function (e) { return e.id === 'wenna'; })[0].tone") === "away" && run("buildExpeditionsBoardHTML()").indexOf("data-exp-end") !== -1, "en route : rubrique « En route », compte à rebours");
+    ok(run("getExpeditionEntries().filter(function (e) { return e.kind === 'patrols'; })[0].status").indexOf("1 en patrouille") !== -1 && run("buildExpeditionsBoardHTML()").indexOf("data-exp-end") !== -1, "en route : rubrique « En route », compte à rebours");
     run("PatrolManager.get('wenna').endsAt = Date.now() - 1000;");
     ok(run("countExpeditionsToCollect()") === 1 && run("buildCampHTML('missions')").indexOf("kseg-dot is-green") !== -1, "rentrée : « À récupérer », pastille verte sur l'onglet");
-    ok(run("buildExpeditionsBoardHTML()").indexOf("patrolCollect('wenna')") !== -1, "...avec « Prendre le butin » sur la ligne");
+    ok(run("buildExpeditionsBoardHTML()").indexOf("patrolCollectAll()") !== -1, "...avec « Prendre le butin » sur la ligne Patrouilles");
     run("patrolCollect('wenna');");
     ok(!run("PatrolManager.get('wenna')") && run("buildPatrolSheetHTML('wenna')").indexOf("exp-last") !== -1, "butin pris : la feuille montre le dernier retour");
     // --- fiche du compagnon : renvoi ---
@@ -13772,7 +13776,7 @@ console.log("\n[198] v3.426.0 — Chantier Expéditions : Campement › Expédit
     run("selectCaravanTrip('long'); var _r = Math.random; Math.random = function () { return 0; }; departCaravanFromSheet(); Math.random = _r;");
     var c = run("CaravanManager.get()");
     ok(c && c.world === 0 && c.rare && c.rare.key === "seve_aeswyn" && run("CaravanManager.getMapId()") === "forest", "départ au marché de la Forêt depuis le Désert : Sève d'Aeswyn, roule sur la carte de la Forêt");
-    ok(run("getExpeditionEntries().filter(function (e) { return e.kind === 'caravan'; })[0].tone") === "away", "caravane en route dans le tableau");
+    ok(run("getExpeditionEntries().filter(function (e) { return e.kind === 'caravan'; })[0].status").indexOf("1 en route") !== -1, "caravane en route dans le tableau");
     run("game.village.caravans = []; expSheet = null;");
     // --- fichiers ---
     var idx = fsx.readFileSync(px.join(ROOT, "index.html"), "utf8"), sw = fsx.readFileSync(px.join(ROOT, "sw.js"), "utf8");
@@ -16132,7 +16136,7 @@ console.log("\n[250] v3.457.0 — Plusieurs caravanes : 1 + 1 tous les 3 niveaux
     var sh = run("buildExpeditionsSheetHTML()");
     ok((sh.match(/data-car="route"/g) || []).length === 2 && sh.indexOf("car-left-0") !== -1 && sh.indexOf("car-left-1") !== -1 && sh.indexOf('data-car="depart"') === -1, "feuille : deux blocs en route, pas de départ");
     ok(sh.indexOf("Une caravane de plus à la Halle niveau 6.") !== -1 && sh.indexOf("Marché · ") !== -1, "feuille : le marché de chaque caravane, la prochaine au niveau 6");
-    ok(run("getExpeditionEntries().filter(function (e) { return e.kind === 'caravan'; }).map(function (e) { return e.tone; }).join()") === "away,away", "tableau des départs : une ligne par caravane");
+    ok(run("getExpeditionEntries().filter(function (e) { return e.kind === 'caravan'; }).map(function (e) { return e.tone + ':' + e.status; }).join()") === "away:2 en route", "tableau des départs (v3.586.0) : une seule ligne Caravane, « 2 en route »");
     ok(run("VILLAGE_BUILDINGS.hall.effectLabel(6)").indexOf("3 caravanes") !== -1, "fiche de la Halle : « 3 caravanes » au niveau 6");
     /* Halle 6 : une place de plus, le départ revient ; les marchés pris sont grisés */
     run("game.village.buildings.hall.level = 6; LivingMapManager.__lib2 = LivingMapManager.isLiberated; LivingMapManager.isLiberated = function (m, s) { return m === 'forest' || m === 'desert'; };");
@@ -17249,7 +17253,7 @@ console.log("\n[283] v3.469.0 — Petites Aventures : condition du run (PG-B1a �
     prep(); S.startRun("petite_aventure_foret"); var r = game.sceneRun; r.cond = "brouillard";
     run("switchTab('scene')"); g.pa2View.prepStep = "bag";
     var hp = g.buildPa2PrepHTML(r);
-    ok(/nuit de brouillard/.test(hp) && /pa2-cond/.test(hp) && /Ruser gagne un cran/.test(hp) && /Cette nuit : Torche/.test(hp) && /pa2-night/.test(hp), "préparation : « … · nuit de brouillard », panneau Cette nuit, avantage, inconvénient, objet de la nuit (v3.580.0)");
+    ok(/nuit de brouillard/.test(hp) && /pa2-cond/.test(hp) && /Ruser gagne un cran/.test(hp) && /Cette nuit : Torche/.test(hp) && /pa2-nightitem/.test(hp), "préparation : « … · nuit de brouillard », panneau Cette nuit, avantage, inconvénient, objet de la nuit (v3.580.0)");
     r.cond = "calme"; hp = g.buildPa2PrepHTML(r);
     ok(/nuit calme/.test(hp) && !/pa2-pro/.test(hp.split("pa2-cond")[1] || ""), "Nuit calme : la phrase seule");
     r = go("forest", "brouillard");
@@ -20429,7 +20433,7 @@ console.log("\n[384] v3.580.0 — Petites Aventures, lot 4 : l'objet de la nuit 
     }
     r = go("forest", fw, ["trousse"]); run("switchTab('scene')"); g.pa2View.prepStep = "bag";
     var hp = g.buildPa2PrepHTML(r);
-    ok(/pa2-night/.test(hp) && /Un usage de plus/.test(hp) && /is-night/.test(hp) && hp.indexOf("undefined") < 0, "préparation : l'objet de la nuit mis en avant, et marqué dans la besace");
+    ok(/pa2-nightitem/.test(hp) && /Un usage de plus/.test(hp) && /is-night/.test(hp) && hp.indexOf("undefined") < 0, "préparation : l'objet de la nuit mis en avant, et marqué dans la besace");
     S.abandon();
   } catch (err) { ok(false, "[384] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   game.sceneRun = null;
@@ -20495,6 +20499,32 @@ console.log("\n[387] v3.583.0 — Bandeaux illustrés des pages du menu : Biblio
     var html = [g.buildAchievementsHTML, g.buildBestiaryHTML, g.buildLogHTML].map(function (f) { try { return typeof f === "function" ? f() : ""; } catch (e) { return ""; } }).join("");
     ok(keys.every(function (k) { return html.indexOf('data-kf-banner="' + k + '"') >= 0; }), "les 3 pages déclarent leur bandeau");
   } catch (err) { ok(false, "[387] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[390] v3.586.0 — Expéditions : Donjon, Petites Aventures, Patrouilles, Caravane ; la page garde sa place");
+(function () {
+  try {
+    var src = fs.readFileSync(path.join(ROOT, "js/ui/ui-root.js"), "utf8");
+    ok(/querySelectorAll\("\.kseg-dot"\)/.test(src.slice(src.indexOf("function getPanelScreenKey"), src.indexOf("function revealActiveChips"))), "la clé de l'écran ignore les pastilles de compte : récupérer ne renvoie plus en haut");
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); VillageBuildingManager.ensure();");
+    run("game.unlockedTabs.map = true; game.unlockedTabs.dungeon = true; game.unlockedTabs.companions = true; CompanionManager.unlock('wenna'); CompanionManager.unlock('maddoc');");
+    run("LivingMapManager.__lib2 = LivingMapManager.isLiberated; LivingMapManager.isLiberated = function (m, s) { return m === 'forest' && s === 'gue'; };");
+    var kinds = run("getExpeditionEntries().map(function (e) { return e.kind; }).join()");
+    ok(kinds === "dungeon,pa,patrols", "ordre fixe : Donjon, Petites Aventures, puis une seule ligne Patrouilles (" + kinds + ")");
+    var b = run("buildExpeditionsBoardHTML()");
+    ok(b.indexOf("exp-sec") === -1 && (b.match(/class="exp-row is-/g) || []).length === 3, "plus de rubriques par état : trois lignes, l'état sur chaque ligne");
+    run("LivingMapManager.isLiberated = LivingMapManager.__lib2;");
+  } catch (err) { ok(false, "[390] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[391] v3.587.0 — Petites Aventures : la carte de nuit garde son image (régression v3.580.0)");
+(function () {
+  try {
+    var css = fs.readFileSync(path.join(ROOT, "css/04-panel-pa2.css"), "utf8");
+    var bad = (css.match(/(^|[\s,}])\.pa2-night[\s{.:]/gm) || []).length;
+    ok(bad === 0, "aucune règle sur « .pa2-night » seule : c'est la classe du body sur la carte de nuit (toutes les images passaient à 34 px)");
+    ok(/\.pa2-nightitem img/.test(css) && /pa2-nightitem/.test(fs.readFileSync(path.join(ROOT, "js/ui/pa2-view.js"), "utf8")), "l'objet de la nuit a sa propre classe (« pa2-nightitem »)");
+  } catch (err) { ok(false, "[391] exception : " + err.message); }
 })();
 
 Promise.all(ATTENTES).then(function () {
