@@ -674,3 +674,6 @@ html.wide-mode #panel-container .kframe .kf-mid > .hs-eq .pin-amulet { left: cal
 html.wide-mode #panel-container .kframe .kf-mid > .hs-eq .pin-weapon { left: calc(50% - 129px); }
 html.wide-mode #panel-container .kframe .kf-mid > .hs-eq .pin-gloves { left: calc(50% - 133px); }
 html.wide-mode #panel-container .kframe .kf-mid > .hs-eq .pin-ring { left: calc(50% + 129px); }
+/* v3.585.0 : Quêtes — le bandeau illustré montre déjà le lieu ; l'en-tête de chapitre garde titre et compteur, sans la vignette du monde */
+html.wide-mode #panel-container .qw-chap { grid-template-columns: minmax(0, 1fr) auto; }
+html.wide-mode #panel-container .qw-chap-img { display: none; }
