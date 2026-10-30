@@ -60,6 +60,10 @@ var ScreenBanner = {
     }
     if (screen === "village") return ["images/Banners/village_" + (far + 1) + ".webp", _t("Le village d'Aeswyn"), _t("Rebâti planche après planche")];
     if (screen === "heros") return ["images/Banners/heros_" + (far + 1) + ".webp", _t("Le terrain d'entraînement"), _t("Se préparer avant de repartir")];
+    // v3.583.0 : pages du menu, une image chacune
+    if (screen === "bibliotheque") return ["images/Banners/bibliotheque.webp", _t("La bibliothèque"), _t("Bêtes et savoirs du voyage")];
+    if (screen === "journal") return ["images/Banners/journal.webp", _t("Le journal"), _t("La chronique du voyage")];
+    if (screen === "hauts_faits") return ["images/Banners/hauts_faits.webp", _t("Les hauts faits"), _t("Le mur des trophées")];
     return null;
   },
 

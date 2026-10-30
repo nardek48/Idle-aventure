@@ -415,7 +415,7 @@ window.buildBestiaryTrophiesHTML = buildBestiaryTrophiesHTML;
 
 function buildBestiaryHTML() {
   var cur = libraryActiveSub();
-  var h = '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="' + esc("images/Icons/menu_icons/bestiaire_menu.webp|" + _t("Bibliothèque")) + '">';
+  var h = '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-banner="bibliotheque" data-kf-title="' + esc("images/Icons/menu_icons/bestiaire_menu.webp|" + _t("Bibliothèque")) + '">';
   h += buildBestiaryCodexSubTabBarHTML();
 
   if (cur === "codex") {
