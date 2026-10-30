@@ -18,10 +18,13 @@ var CRYPTE = process.argv.indexOf("--crypte") > 0;        // v3.454.0 : la Petit
 var REVEIL = process.argv.indexOf("--reveiller") > 0;     // v3.454.0 : gisants réveillés au départ (carte de la Crypte)
 var TPL = CRYPTE ? "petite_aventure_crypte" : RUINES ? "petite_aventure_ruines" : DESERT ? "petite_aventure_desert" : "petite_aventure_foret";
 var NO_TRAPS = process.argv.indexOf("--sans-pieges") > 0; // v3.467.0 : comparer avec et sans pièges
+var ALL_IN = process.argv.indexOf("--insiste-tout") > 0; // v3.578.0 : le joueur qui insiste dès qu'il peut
+var NO_GOURDE = process.argv.indexOf("--sans-gourde") > 0; // v3.578.0 : la gourde sert-elle ?
 var BLIND = process.argv.indexOf("--droit-devant") > 0;
 var KIT = process.argv.indexOf("--trousse") > 0;
 var OBJ = (process.argv.filter(function (x) { return x.indexOf("--objet=") === 0; })[0] || "").slice(8); // v3.469.4 : un objet du coffre à la place de la torche          // v3.467.1 : la Trousse à la place de la torche   // v3.467.0 : le joueur qui ne contourne pas les pièges
 var OVR = (process.argv.filter(function (a) { return a.indexOf("--ovr=") === 0; })[0] || "").slice(6); // réglages d'essai, JSON
+var GOURDE_ADV = OVR.indexOf("gourdeAdv") >= 0; // prototype : la gorgée donne l'avantage
 
 var src = fs.readFileSync(path.join(__dirname, "forecast-calibration-bench.js"), "utf8").replace(/\nmain\(\);\s*$/, "\n");
 var mod = { exports: {} };
@@ -43,9 +46,16 @@ if (OVR) {
   if (o.ringFoe) ["sentier", "chemin", "periple"].forEach(function (r, i) { g.PA2_RINGS[r].foeMult = o.ringFoe[i]; });
   if (o.map) g.PA2_MAPS_BY_WORLD.forest = [o.map]; // v3.386.0 : banc sur une carte donnée (foret_1, foret_2)
   if (o.map && o.tune) g.PA2_MAPS[o.map].tune = o.tune; // v3.386.0 : {"foeMult":0.9,"lootMult":1.1}
+  if (o.d20) Object.assign(g.PA2_D20, o.d20); // v3.578.0 : coût de la relance
+  if (o.gourdeAdv) { g.PA2_ITEMS.gourde.breath = o.gourdeAdv; var ui0 = g.Pa2Run.useItem; g.Pa2Run.useItem = function (id) { var run = this.getRun(), b = run && run.breath; if (id === "gourde" && run && run.breath >= 100) run.breath = 99; var r = ui0.call(this, id); if (r.ok && id === "gourde") run.advNext = true; return r; }; } // prototype v3.578.1
+  if (o.rules) Object.assign(g.PA2_RULES, o.rules); // v3.578.0 : réglages de PA2_RULES
+  if (o.walk != null) Object.keys(g.PA2_WORLD_RULES).forEach(function (w) { g.PA2_WORLD_RULES[w].stepBreath = o.walk; });
+  if (o.epuise) { var ck0 = g.Pa2Run._check; g.Pa2Run._check = function (run, stat, ctx) { // prototype : Souffle bas, malus au jet
+    var c = Object.assign({}, ctx); if (run.breath < o.epuise[0]) c.bonus = Number(c.bonus || 0) - o.epuise[1]; return ck0.call(this, run, stat, c); }; }
   if (o.ringDiff) ["sentier", "chemin", "periple"].forEach(function (r, i) { g.PA2_RINGS[r].diffMult = o.ringDiff[i]; });
 }
 
+if (process.argv.indexOf("--sans-nuit") > 0) g.Pa2Run.nightItem = function () { return null; }; // v3.580.0 : sans l'objet de la nuit
 if (NO_TRAPS) g.PA2_TRAP_RULES.perAct = { sentier: 0, chemin: 0, periple: 0 };
 if (process.argv.indexOf("--sans-coupes") > 0) { g.PA2_CUT_RULES.min = 0; g.PA2_CUT_RULES.max = 0; } // v3.468.0 : tracé intact
 if (OBJ) g.Pa2Run.isUnlocked = function () { return true; }; // objet du coffre : débloqué pour le banc
@@ -99,7 +109,7 @@ function playRun(c, stage) {
   S.startRun(TPL, opts);
   var run = g.game.sceneRun;
   var light = OBJ || (KIT ? "trousse" : "torche");
-  (NO_RATION ? ["gourde", "corde", light] : ["petite_ration", "petite_ration", "gourde", "corde", light]).forEach(function (id) { P.addItem(id); });
+  (NO_RATION ? ["gourde", "corde", light] : ["petite_ration", "petite_ration", "gourde", "corde", light]).filter(function (id) { return !(NO_GOURDE && id === "gourde"); }).forEach(function (id) { P.addItem(id); });
   if (DESERT) { g.game.resources.outre_pleine = 5; P.addItem("outre"); } // la place libre : l'Outre
   if (RUINES) P.addItem("craie"); // la place libre : la Craie d'Edda (gratuite)
   if (CRYPTE) P.addItem("lanterne"); // la place libre : la Lanterne de Sarkel (gratuite)
@@ -107,6 +117,7 @@ function playRun(c, stage) {
   P.depart();
   if (CRYPTE && run.stock.lanterne > 0) P.useItem("lanterne"); // allumée au départ
   var max = g.game.heroMaxHp, seconds = SECONDS.prep, nodes = 0;
+  var br = { insist: 0, min: 100, brute: 0, gourde0: run.stock.gourde || 0, rest: 0, cook: 0, healRest: 0, healCook: 0, src: 0, srcBr: 0 }; // v3.578.0 : lot 3
   var lossByAct = { 1: 0, 2: 0, 3: 0 }, guard = 200, koAt = null;
   var traps = { met: 0, back: 0, hit: {}, placed: Object.keys(run.traps || {}).length };
   var target = ["BOSS", "CLAIRIERE", "TERTRE"][Math.floor(Math.random() * 3)];
@@ -114,11 +125,21 @@ function playRun(c, stage) {
     if (g.game.heroHp / max >= 0.4) return;
     ["grande_ration", "ration", "petite_ration"].forEach(function (id) { if (g.game.heroHp / max < 0.4 && run.stock[id] > 0) P.useItem(id); });
   }
+  function insistOrKeep() { // v3.578.0 (lot 3) : raté, on insiste si on peut ; de justesse, s'il reste du Souffle
+    var r = run.pending.res;
+    if (r.kind === "ko" && !P.canInsist(run) && run.stock.gourde > 0) P.useItem("gourde"); // la gourde, pour avoir de quoi insister
+    if (ALL_IN && !P.canInsist(run) && run.stock.gourde > 0) P.useItem("gourde");
+    var go = r.kind === "ko" || ALL_IN ? P.canInsist(run) : run.breath >= 45;
+    br.insist += go ? 1 : 0;
+    return P.insist(!go);
+  }
   while (run.status !== "completed" && guard-- > 0) {
+    if (run.pending) { if (!insistOrKeep().ok) break; continue; }
     if (run.status === "pa2-trap") {
       var hpT = g.game.heroHp, tc = trapChoice(P, run), tr = P.resolveTrap(tc);
       if (!tr.ok) break;
       traps.met++; if (tr.result && tr.result.fx && (tr.result.kind === "ko" || tr.result.kind === "endure")) traps.hit[tr.result.fx] = (traps.hit[tr.result.fx] || 0) + 1;
+      if (run.pending) insistOrKeep();
       if (tc !== "rebrousser") P.trapContinue(); else traps.back++;
       seconds += SECONDS.move; continue;
     }
@@ -129,17 +150,18 @@ function playRun(c, stage) {
       P.moveTo(pickMove); seconds += SECONDS.move; continue;
     }
     var n = P.node(run.at), t = n.type, hp0 = g.game.heroHp, res;
-    nodes++; seconds += SECONDS[t] || 20;
+    nodes++; seconds += SECONDS[t] || 20; br.min = Math.min(br.min, run.breath);
     eat();
     if (t === "obstacle" || t === "tertre") {
       var o = P.obstacleOptions().filter(function (x) { return x.affordable; })
         .sort(function (a, b) { return (a.thr - b.thr) || (a.cost - b.cost); });
       var rope = P.obstacleOptions().filter(function (x) { return x.rope; })[0];
-      if (rope && (!o.length || o[0].thr >= 5)) res = P.resolveObstacle("precision", true);
+      if ((GOURDE_ADV || g.PA2_ITEMS.gourde.adv) && o.length && o[0].chance < 70 && !run.advNext && run.stock.gourde > 0) { P.useItem("gourde"); o = P.obstacleOptions().filter(function (x) { return x.affordable; }).sort(function (a, b) { return (a.thr - b.thr) || (a.cost - b.cost); }); }
+      if (rope && (!o.length || o[0].chance < 60)) res = P.resolveObstacle("precision", true);
       else if (o.length) {
         if (run.breath < 30 && run.stock.gourde > 0) P.useItem("gourde"); else if (run.breath < 30 && run.stock.outre > 0) P.useItem("outre");
         res = P.resolveObstacle(o[0].voie);
-      } else res = P.bruteForce();
+      } else { res = P.bruteForce(); br.brute++; }
     } else if (t === "combat") {
       if (run.lastResult && run.lastResult.surprised) res = P.fight("tenir", true);
       else {
@@ -148,7 +170,7 @@ function playRun(c, stage) {
         ["grande_ration", "ration", "petite_ration"].forEach(function (id) { while (run.stock[id] > 0 && P.combatPreview().tenir.hpLoss * 1.2 >= g.game.heroHp && P.useItem(id).ok) { /* mange */ } });
         pv = P.combatPreview();
         if (pv.tenir.verdict === "mortel") {
-          if (pv.ruse.thr <= 4 && !pv.ruseBlocked) res = P.ruse();
+          if (pv.ruse.chance >= 60 && !pv.ruseBlocked) res = P.ruse();
           else if (pv.flee.affordable) res = P.flee();
           else res = P.fight("tenir");
         } else res = P.fight(pv.charger.hpLoss < g.game.heroHp * 0.3 ? "charger" : "tenir");
@@ -161,7 +183,7 @@ function playRun(c, stage) {
       if (P.canPassGuardian && P.canPassGuardian() && P.combatPreview().tenir.hpLoss >= g.game.heroHp * 0.8) res = P.passGuardian();
       else res = P.fight("tenir");
     }
-    else if (t === "source") res = P.drink();
+    else if (t === "source") { var b0 = run.breath; res = P.drink(); br.src++; br.srcBr += run.breath - b0; }
     else if (t === "autel") res = P.altar(run.wounds > 0 && run.loot >= P.altarCost());
     else if (t === "trouvaille") res = P.takeRelic();
     else if (t === "evenement") res = P.eventChoice(P.hookBranches().filter(function (b) { return b.ok; })[0].id);
@@ -175,6 +197,8 @@ function playRun(c, stage) {
       if (low < 0.25 && !P._rationInStock(run)) res = P.placeAction("home");
       else if (low < 0.5 && P._rationInStock(run)) res = P.placeAction("cook");
       else res = P.placeAction("rest");
+      if (res && res.result && res.result.action === "rest") { br.rest++; br.healRest += (res.result.healed || 0) / max; }
+      if (res && res.result && res.result.action === "cook") { br.cook++; br.healCook += (res.result.healed || 0) / max; }
     } else if (t === "clairiere") res = P.clairiere();
     if (run.status === "completed" && run.end && run.end.how === "ko") koAt = (t === "boss" || t === "tertre" ? t : t + n.act);
     var lost = Math.max(0, hp0 - g.game.heroHp);
@@ -185,6 +209,7 @@ function playRun(c, stage) {
   var kept = (end.summary && end.summary.kept) ? end.summary.kept.gold : 0;
   return {
     how: end.how || "stuck", dest: end.dest, target: target, koAt: koAt, gold: kept, eaten: pr0 - g.game.resources.petite_ration, seve: Number(run.rareFound || 0), // Sève du run seul (hors récompense de secteur)
+    br: br, brEnd: run.breath, gourdeUsed: br.gourde0 - (run.stock.gourde || 0),
     nodes: nodes, seconds: seconds, shifts: Object.keys(run.walls || {}).length, traps: traps,
     loss: { 1: lossByAct[1] / max, 2: lossByAct[2] / max, 3: lossByAct[3] / max }
   };
@@ -195,8 +220,8 @@ function playRun(c, stage) {
 function trapChoice(P, run) {
   var o = P.trapOptions();
   if (o.kit > 0) return "trousse";
-  if (o.disarm.thr >= 6 && run.trap.unseen && o.back.affordable && run.breath >= 60) return "rebrousser";
-  return o.disarm.thr <= 4 ? "desamorcer" : "subir"; // v3.467.2 : raté = effet et blessure ; dé mauvais, on subit
+  if (o.disarm.chance < 30 && run.trap.unseen && o.back.affordable && run.breath >= 60) return "rebrousser";
+  return o.disarm.chance >= 50 ? "desamorcer" : "subir"; // v3.467.2 : raté = effet et blessure ; dé mauvais, on subit
 }
 function avoidTraps(P, run, mv) {
   if (BLIND) return mv;
@@ -246,7 +271,7 @@ function summary() {
         B.seedRng(90000 + r);
         var x = playRun(c, st);
         if (x.how === "ko") ko++;
-        t.eaten += x.eaten; t.gold += x.gold; t.seve += x.seve; t.sec += x.seconds; t.n++;
+        t.eaten += x.eaten; t.brMin = (t.brMin || 0) + x.br.min; t.brEnd = (t.brEnd || 0) + x.brEnd; t.brute = (t.brute || 0) + x.br.brute; t.gourde = (t.gourde || 0) + x.gourdeUsed; t.rest = (t.rest || 0) + x.br.rest; t.cook = (t.cook || 0) + x.br.cook; t.healRest = (t.healRest || 0) + x.br.healRest; t.healCook = (t.healCook || 0) + x.br.healCook; t.under30 = (t.under30 || 0) + (x.br.min < 30 ? 1 : 0); t.insist = (t.insist || 0) + x.br.insist; t.gold += x.gold; t.seve += x.seve; t.sec += x.seconds; t.n++;
         tp.placed += x.traps.placed; tp.met += x.traps.met; tp.back += x.traps.back;
         Object.keys(x.traps.hit).forEach(function (k) { tp.hit[k] = (tp.hit[k] || 0) + x.traps.hit[k]; });
       }
@@ -256,6 +281,8 @@ function summary() {
   });
   console.log(RING + (NO_RATION ? " sans rations" : "") + " | KO " + pct(t.ko / t.n) + " (pire " + pct(t.worst) + " " + t.worstAt + ") | rations " + (t.eaten / t.n).toFixed(2) +
     " | or " + Math.round(t.gold / t.n) + " (" + (t.gold / t.sec * 60).toFixed(1) + "/min) | Sève " + (t.seve / t.n).toFixed(2) + " | " + (t.sec / t.n / 60).toFixed(1) + " min");
+  console.log("  Souffle : plus bas " + Math.round(t.brMin / t.n) + " en moyenne, sous 30 dans " + pct(t.under30 / t.n) + " des runs, fin " + Math.round(t.brEnd / t.n) + " | force brute " + (t.brute / t.n).toFixed(2) + " | gorgées de gourde " + (t.gourde / t.n).toFixed(2) + " par run | relances " + ((t.insist || 0) / t.n).toFixed(2));
+  console.log("  Camp et seuil : repos " + (t.rest / t.n).toFixed(2) + " (soigne " + pct(t.healRest / Math.max(1, t.rest)) + " des PV max) · cuisine " + (t.cook / t.n).toFixed(2) + " (soigne " + pct(t.healCook / Math.max(1, t.cook)) + ")");
   var hits = Object.keys(tp.hit).map(function (k) { return k + " " + (tp.hit[k] / t.n).toFixed(2); }).join(", ");
   console.log("  pièges : " + (tp.placed / t.n).toFixed(1) + " posés, " + (tp.met / t.n).toFixed(2) + " rencontrés, " + (tp.back / t.n).toFixed(2) + " rebroussés par run | effets subis : " + (hits || "aucun"));
 }

@@ -150,6 +150,7 @@ body.pa2-night .pa2-link, body.pa2-night .pa2-note { color: var(--pa2-ink-dim); 
   background: rgba(0, 0, 0, 0.4); color: var(--pa2-ink); font: 700 12px/1 inherit; font-family: inherit; cursor: pointer; }
 span.pa2-chip { cursor: default; }
 .pa2-chip img { width: 24px; height: 24px; object-fit: contain; }
+.pa2-chip.is-adv { padding: 0 9px; color: var(--c-green-400-soft); border-color: var(--c-green-400-soft); font-weight: 700; font-size: 12px; } /* v3.579.0 : l'avantage en attente */
 .pa2-chip.is-wound { border-color: var(--c-red-700); color: var(--pa2-danger); }
 .pa2-chip.is-relic { padding: 0 3px; width: 30px; justify-content: center; }
 .pa2-chip.is-relic.is-wide { width: auto; padding: 0 8px 0 3px; }
@@ -282,7 +283,7 @@ body.pa2-full .pa2-scrim { background: rgba(5, 3, 2, 0.28); }
 .pa2-cost.is-red { color: var(--pa2-danger); }
 .pa2-cost.is-gold { color: var(--pa2-gold); }
 .pa2-cost.is-deadly { text-transform: uppercase; letter-spacing: .06em; }
-.pa2-breath { color: var(--pa2-breath); }
+.pa2-breath { color: var(--pa2-breath); white-space: nowrap; }
 .pa2-pickrow { grid-template-columns: 40px minmax(0, 1fr) auto; }
 .pa2-size { display: flex; gap: 3px; }
 .pa2-size i { width: 8px; height: 8px; border: 1.5px solid var(--pa2-gold-dark); border-radius: 2px; }
@@ -302,19 +303,30 @@ body.pa2-full .pa2-scrim { background: rgba(5, 3, 2, 0.28); }
 .pa2-odds.o2 .pa2-w { color: #f0a04a; }
 .pa2-odds.o1 .pa2-w { color: var(--c-red-300); }
 
-/* Dé (dessiné en CSS) */
-.pa2-dierow { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 4px 0 12px; }
-.pa2-die { width: 66px; height: 66px; border-radius: 13px; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); padding: 10px; gap: 2px;
-  background: var(--c-brown-950-soft); color: var(--pa2-gold); border: 2px solid var(--pa2-gold-dark); box-shadow: 0 0 22px -2px rgba(240, 170, 62, .5); }
-.pa2-die i { border-radius: 50%; }
-.pa2-die i.on { background: currentColor; }
+/* Dé : le d20 en SVG (v3.577.0), glow doré ; vert au 20 naturel, rouge au 1 */
+.pa2-dierow { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 4px 0 6px; }
+.pa2-die { width: 72px; height: 72px; color: var(--pa2-gold); filter: drop-shadow(0 0 10px rgba(240, 170, 62, .45)); }
+.pa2-die svg { display: block; width: 100%; height: 100%; }
+.pa2-d20-hex { fill: var(--c-brown-950-soft); stroke: var(--pa2-gold-dark); stroke-width: 4; stroke-linejoin: round; }
+.pa2-d20-edge { fill: none; stroke: var(--pa2-gold-dark); stroke-width: 1.6; stroke-linejoin: round; opacity: .75; }
+.pa2-die text { fill: currentColor; font: 800 25px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
 .pa2-die.is-rolling { animation: pa2-roll .5s linear infinite; }
+.pa2-die.is-nat20 { color: var(--c-green-400-soft); filter: drop-shadow(0 0 14px rgba(120, 220, 120, .6)); }
+.pa2-die.is-nat1 { color: var(--c-red-300); filter: drop-shadow(0 0 14px rgba(230, 90, 80, .6)); }
+.pa2-nat { min-height: 18px; text-align: center; font-size: 13px; font-weight: 700; margin: 0 0 6px; }
+.pa2-nat .is-ok { color: var(--c-green-400-soft); }
+.pa2-nat .is-ko { color: var(--c-red-300); }
 .pa2-target { text-align: center; font-size: 12px; color: var(--pa2-ink-dim); }
 .pa2-target b { display: block; font-size: 24px; color: var(--pa2-ink); }
 .pa2-verdict { text-align: center; font-size: 20px; font-weight: 800; margin: 2px 0 6px; }
 .pa2-verdict.is-ok { color: var(--c-green-400-soft); }
 .pa2-verdict.is-mid { color: var(--pa2-gold); }
 .pa2-verdict.is-ko { color: var(--c-red-300); }
+/* v3.578.0 (lot 3) : jets de qualité, sans échec */
+.pa2-verdict.is-q-maigre { color: var(--pa2-ink-dim); }
+.pa2-verdict.is-q-normal { color: var(--pa2-ink); }
+.pa2-verdict.is-q-bon { color: var(--pa2-gold); }
+.pa2-verdict.is-q-parfait { color: var(--c-green-400-soft); }
 .pa2-result { text-align: center; margin: 0 0 12px; color: var(--pa2-ink-dim); }
 #pa2-outcome.is-hidden { visibility: hidden; }
 
@@ -420,6 +432,14 @@ body.pa2-full .pa2-scrim { background: rgba(5, 3, 2, 0.28); }
 .pa2-fs .pa2-cut { width: calc(6.4% * var(--nk, 1)); }
 
 /* v3.469.0 (Condition du run, atelier conditions-run) : panneau « Cette nuit » et pastille en route */
+/* v3.580.0 (lot 4) : l'objet de la nuit */
+.pa2-night { display: flex; align-items: center; gap: 10px; margin-top: 10px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--pa2-gold); background: rgba(240, 170, 62, .08); }
+.pa2-night img { width: 34px; height: 34px; object-fit: contain; flex: none; }
+.pa2-night b { display: block; color: var(--pa2-gold); font-size: 14px; }
+.pa2-night span { display: block; font-size: 13px; color: var(--pa2-ink-dim); }
+.pa2-night-tag { color: var(--pa2-gold); font-weight: 700; }
+.pa2-cell.is-night { box-shadow: inset 0 0 0 2px var(--pa2-gold); }
+.pa2-cell.is-night::before { content: "★"; position: absolute; top: 2px; right: 5px; font-size: 12px; color: var(--pa2-gold); }
 .pa2-cond-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .pa2-cond ul { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 4px; font-size: 13.5px; font-weight: 700; }
 .pa2-cond li { display: grid; grid-template-columns: 18px 1fr; gap: 4px; }

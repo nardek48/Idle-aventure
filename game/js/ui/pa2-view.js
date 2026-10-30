@@ -289,7 +289,7 @@ function buildPa2PrepHTML(run) {
     var cells = "", used = Pa2Run.bagUsed(run);
     run.bag.forEach(function (id, idx) {
       var it = PA2_ITEMS[id], nm = pa2ItemName(id);
-      cells += '<button type="button" class="pa2-cell is-full' + (pa2View.justAdded === idx ? ' is-pop' : '') + '" onclick="pa2OpenItem(' + idx + ')" aria-label="' + esc(nm) + '">' + pa2Img(it.icon, "", nm) + '</button>';
+      cells += '<button type="button" class="pa2-cell is-full' + (pa2View.justAdded === idx ? ' is-pop' : '') + (Pa2Run.nightItem(run) === id ? ' is-night' : '') + '" onclick="pa2OpenItem(' + idx + ')" aria-label="' + esc(nm) + '">' + pa2Img(it.icon, "", nm) + '</button>';
       for (var k = 1; k < it.size; k++) {
         cells += '<button type="button" class="pa2-cell is-held' + (pa2View.justAdded === idx ? ' is-pop' : '') + '" onclick="pa2OpenItem(' + idx + ')" aria-label="' + esc(_t("Place prise : {n}", { n: nm })) + '"></button>';
       }
@@ -424,10 +424,12 @@ function pa2RenderPicker() {
       var stock = it.resource && window.WarehouseManager ? WarehouseManager.getAmount(it.resource) : null;
       var why = c.ok ? "" : (c.reason === _t("La besace est pleine.") ? _tn(it.size, "Trop grand : {n} place.", "Trop grand : {n} places.", { n: it.size }) : c.reason);
       h += '<button type="button" class="pa2-choice pa2-pickrow' + (locked ? ' is-locked' : '') + '"' + (c.ok ? '' : ' disabled') + ' onclick="pa2AddItem(\'' + id + '\')">' +
-        pa2Img(it.icon) + '<span class="pa2-t">' + esc(pa2ItemName(id)) + (n ? ' <span class="pa2-dim">(×' + n + ')</span>' : '') + '</span>' +
+        pa2Img(it.icon) + '<span class="pa2-t">' + esc(pa2ItemName(id)) + (n ? ' <span class="pa2-dim">(×' + n + ')</span>' : '') +
+        (Pa2Run.nightItem(run) === id ? ' <span class="pa2-night-tag">' + esc("★ " + _t("cette nuit")) + '</span>' : '') + '</span>' +
         '<span class="pa2-size">' + sz + '</span><span class="pa2-s">' +
         (why ? '<span class="pa2-dim">' + esc(why) + '</span>'
-          : '<span class="pa2-pro">' + esc(_td(it.pro)) + '</span>' + (it.con ? ' <span class="pa2-con">' + esc(_td(it.con)) + '</span>' : '')) +
+          : '<span class="pa2-pro">' + esc(_td(it.pro)) + '</span>' + (it.con ? ' <span class="pa2-con">' + esc(_td(it.con)) + '</span>' : '') +
+            (Pa2Run.nightItem(run) === id ? ' <span class="pa2-night-tag">' + esc(pa2NightBonus(id)) + '</span>' : '')) +
         (stock != null && !locked ? ' <span class="pa2-dim">' + esc(_t("Entrepôt : {n}", { n: stock })) + '</span>' : '') + '</span></button>';
     });
     h += '</div>';
@@ -462,13 +464,14 @@ function pa2Snapshot(run) {
 
 function pa2HudHTML(run) {
   var v = pa2HudValues(run), hero = pa2Hero(), n = Pa2Run.node(run.at, run), chips = "";
-  if (v.wounds) chips += '<span class="pa2-chip is-wound" title="' + esc(_t("Blessures : −1 cran par blessure")) + '">' + pa2Img(PA2_ICONS.wound) + '×' + v.wounds + '</span>';
+  if (v.wounds) chips += '<span class="pa2-chip is-wound" title="' + esc(_t("Blessures : −2 au jet par blessure")) + '">' + pa2Img(PA2_ICONS.wound) + '×' + v.wounds + '</span>';
   ["petite_ration", "ration", "grande_ration", "gourde", "outre"].forEach(function (id) {
     if (run.stock[id] > 0) chips += '<button type="button" class="pa2-chip" onclick="pa2Use(\'' + id + '\')" aria-label="' + esc(_t("Utiliser : {n}", { n: pa2ItemName(id) })) + '">' + pa2Img(PA2_ITEMS[id].icon) + '×' + run.stock[id] + '</button>';
   });
   if (run.stock.corde > 0) chips += '<span class="pa2-chip" title="' + esc(pa2ItemName("corde")) + '">' + pa2Img(PA2_ITEMS.corde.icon) + '×' + run.stock.corde + '</span>';
   if (run.stock.trousse > 0) chips += '<span class="pa2-chip" title="' + esc(pa2ItemName("trousse")) + '">' + pa2Img(PA2_ITEMS.trousse.icon) + '×' + run.stock.trousse + '</span>';
   if (run.stock.pierre_froide > 0) chips += '<span class="pa2-chip" title="' + esc(pa2ItemName("pierre_froide")) + '">' + pa2Img(PA2_ITEMS.pierre_froide.icon) + '×' + run.stock.pierre_froide + '</span>'; // v3.489.0
+  if (run.advNext) chips += '<span class="pa2-chip is-adv" title="' + esc(_t("Deux dés au prochain jet, le meilleur compte.")) + '">' + esc(_t("Avantage")) + '</span>'; // v3.579.0
   chips = pa2CondChipHTML(run) + pa2FxChipsHTML(run) + chips; // v3.467.0 : effets des pièges en cours ; v3.469.0 : la condition, en tête
   // v3.454.0 (Crypte) : la Lanterne, à allumer ; allumée, le nombre de pas qu'il lui reste
   if (Number(run.lanternLeft || 0) > 0) chips += '<span class="pa2-chip is-lit" title="' + esc(pa2ItemName("lanterne")) + '">' + pa2Img(PA2_ITEMS.lanterne.icon) + esc(_tn(run.lanternLeft, "{n} pas", "{n} pas")) + '</span>';
@@ -500,9 +503,12 @@ function pa2RefreshHud() {
 function buildPa2MapScreenHTML(run) {
   var n = Pa2Run.node(run.at, run), v = pa2View.cam, map = Pa2Run.getMap(run);
   var keep = v.key === pa2CamKey(run) && v.w;
+  // v3.576.0 : un rendu pendant un glissement repart de la position affichée, pas de l'arrivée
+  var shown = keep ? pa2CamShownXY() : null;
+  pa2View.camDrawn = shown || { tx: v.tx, ty: v.ty };
   var h = '<div class="pa2-fs pa2-page" id="pa2-fs">';
   h += '<div class="pa2-vp" id="pa2-vp"><div class="pa2-stage" id="pa2-stage" style="' + (keep
-    ? 'width:' + v.w + 'px;height:' + (v.w * map.height / map.width) + 'px;transform:translate3d(' + v.tx + 'px,' + v.ty + 'px,0);--nk:' + pa2CamNk()
+    ? 'width:' + v.w + 'px;height:' + (v.w * map.height / map.width) + 'px;transform:translate3d(' + pa2View.camDrawn.tx + 'px,' + pa2View.camDrawn.ty + 'px,0);--nk:' + pa2CamNk()
     : 'visibility:hidden') + '">' + pa2MapHTML(run) + '</div></div>';
   h += pa2HudHTML(run);
   // Consigne : seulement avant le premier pas, elle s'efface d'elle-même.
@@ -520,6 +526,7 @@ function buildPa2MapScreenHTML(run) {
 /* ---------- Caméra de la carte (moteur commun, ui/map-camera.js) ---------- */
 
 var PA2_ZOOM_MAX = 2;       // choix de Seb (atelier) : ×2 par rapport au cadrage Couvrant
+var PA2_ZOOM_START = 1.4;   // v3.576.0 (retour Seb) : la carte s'ouvre zoomée, on ne voit pas tout d'un coup
 var PA2_NODE_GROW = 0.4;    // choix de Seb (atelier) : les repères grossissent peu (taille ∝ zoom^0,4)
 
 var pa2Cam = window.MapCamera ? MapCamera.create({
@@ -527,12 +534,21 @@ var pa2Cam = window.MapCamera ? MapCamera.create({
   ratio: function () { var m = window.Pa2Run && Pa2Run.getMap(); return m ? m.height / m.width : 1; },
   zoomMax: function () { return PA2_ZOOM_MAX; },
   topSlack: function () { return pa2View.camTop || 0; },
-  bottomSlack: function () { return pa2CamSheetH(); },
+  bottomSlack: function () { return pa2CamSheetH() || (pa2View.sheet ? (pa2View.camSheet || 0) : 0); }, // v3.576.0 : pendant un rendu, la feuille ouverte compte encore
   onSettle: function () { pa2CamOffscreen(); },
   onReset: function () { pa2CamFollow(true); },
   onResize: function (st) { st.style.setProperty("--nk", pa2CamNk()); }
 }) : null;
 
+// Translation affichée de la scène (animation en cours comprise), ou null.
+function pa2CamShownXY() {
+  var st = document.getElementById ? document.getElementById("pa2-stage") : null;
+  if (!st || typeof getComputedStyle !== "function") return null;
+  var m = /matrix\(([^)]+)\)/.exec(getComputedStyle(st).transform || "");
+  if (!m) return null;
+  var p = m[1].split(",").map(Number);
+  return p.length === 6 && isFinite(p[4]) && isFinite(p[5]) ? { tx: p[4], ty: p[5] } : null;
+}
 function pa2CamKey(run) { return run.id + "|" + (run.mapId || (run.map && run.map.image) || ""); }
 // Compensation de taille des repères : 1 en Couvrant, (Couvrant / largeur)^0,6 en zoomant.
 function pa2CamNk() { var c = pa2Cam ? pa2Cam.coverW() : 0, w = pa2View.cam.w; return c && w ? Math.pow(c / w, 1 - PA2_NODE_GROW).toFixed(3) : "1"; }
@@ -552,14 +568,47 @@ function pa2CamAfterRender(run) {
   if (!pa2Cam) return;
   pa2CamTop();
   var v = pa2View.cam, key = pa2CamKey(run);
-  if (v.key !== key || !v.w) { v.key = key; pa2Cam.resetCover(); pa2CamFollow(false); }
-  else pa2Cam.refit();
+  if (v.key !== key || !v.w) { v.key = key; pa2Cam.resetCover(); v.w = Math.min(pa2Cam.maxW(), v.w * PA2_ZOOM_START); pa2CamFollow(false); return; }
+  // v3.576.0 : la carte revient dans ses bornes en glissant (une feuille fermée), jamais d'un saut
+  var d0 = pa2View.camDrawn || { tx: v.tx, ty: v.ty }, st = document.getElementById("pa2-stage");
+  v.w = Math.max(pa2Cam.coverW(), Math.min(pa2Cam.maxW(), v.w));
+  pa2Cam.clamp(); pa2CamRevealMoves();
+  if (st && st.getBoundingClientRect) st.getBoundingClientRect(); // position de départ prise en compte avant l'animation
+  pa2Cam.apply(Math.abs(d0.tx - v.tx) + Math.abs(d0.ty - v.ty) > 1);
 }
-// Centre le nœud du héros dans la zone utile (sous l'en-tête, au-dessus de la feuille).
+// Place le nœud du héros dans la zone utile (sous l'en-tête, au-dessus de la feuille).
+// v3.576.0 : sans feuille, vers 40 % de la hauteur, pour qu'une feuille qui s'ouvre le cache rarement.
+var PA2_FOLLOW_Y = 0.4;
 function pa2CamFollow(anim) {
-  var run = Pa2Run.getRun(); if (!pa2Cam || !run || !document.getElementById("pa2-vp")) return;
-  var map = Pa2Run.getMap(run), d = map.nodes[run.at];
-  if (d) pa2Cam.centerOn(d.x / map.width, d.y / map.height, anim);
+  var run = Pa2Run.getRun(), vp = document.getElementById("pa2-vp"); if (!pa2Cam || !run || !vp) return;
+  var map = Pa2Run.getMap(run), d = map.nodes[run.at], v = pa2View.cam; if (!d) return;
+  var T = pa2Cam.top(), H = vp.clientHeight - pa2Cam.bottom(), W = vp.clientWidth, f = pa2View.sheet ? 0.5 : PA2_FOLLOW_Y;
+  v.tx = W / 2 - v.w * d.x / map.width;
+  v.ty = T + (H - T) * f - v.w * d.y / map.width;
+  if (!pa2View.sheet) pa2CamKeepMoves(run, map, d, T, H, W);
+  pa2Cam.clamp(); pa2Cam.apply(anim);
+}
+// Les points où l'on peut aller restent visibles (sentiers très espacés des parcours), sans perdre le héros.
+function pa2CamKeepMoves(run, map, d, T, H, W) {
+  var v = pa2View.cam, k = v.w / map.width, M = 44; // marge autour d'un repère, en px
+  Pa2Run.openMoves().forEach(function (key) {
+    var q = map.nodes[key]; if (!q) return;
+    var sy = v.ty + k * q.y, sx = v.tx + k * q.x;
+    if (sy < T + M) v.ty = Math.min(v.ty + (T + M - sy), H - M - k * d.y);
+    else if (sy > H - M) v.ty = Math.max(v.ty - (sy - H + M), T + M - k * d.y);
+    if (sx < M) v.tx = Math.min(v.tx + (M - sx), W - M - k * d.x);
+    else if (sx > W - M) v.tx = Math.max(v.tx - (sx - W + M), M - k * d.x);
+  });
+}
+// Feuille fermée, de retour sur la carte : décalage minimal si un point accessible est hors de vue.
+function pa2CamRevealMoves() {
+  var run = Pa2Run.getRun(), vp = document.getElementById("pa2-vp");
+  if (!pa2Cam || !run || !vp || pa2View.sheet || run.status !== PA2_STATUS.map) return false;
+  var map = Pa2Run.getMap(run), d = map.nodes[run.at]; if (!d) return false;
+  var v = pa2View.cam, ox = v.tx, oy = v.ty;
+  pa2CamKeepMoves(run, map, d, pa2Cam.top(), vp.clientHeight - pa2Cam.bottom(), vp.clientWidth);
+  pa2Cam.clamp();
+  return Math.abs(ox - v.tx) + Math.abs(oy - v.ty) > 1;
 }
 window.pa2CamFollow = pa2CamFollow;
 // Héros hors de la zone utile : pastille au bord, flèche vers lui.
@@ -711,6 +760,7 @@ function pa2Use(id) {
   var run = Pa2Run.getRun();
   if (game.heroHp > before.hp) pa2Float("+" + pa2Num(game.heroHp - before.hp) + " " + _t("PV"), "heal");
   if (run.breath > before.breath) pa2Float("+" + pa2Num(run.breath - before.breath) + " " + _t("Souffle"), "breath");
+  if (PA2_ITEMS[id] && PA2_ITEMS[id].adv && typeof showToast === "function") showToast(_t("Avantage au prochain jet."), 1800);
   pa2RefreshHud();
   if (pa2View.sheet && pa2View.sheet.step === "intro") pa2RenderSheet();
   if (PA2_ITEMS[id] && PA2_ITEMS[id].light) pa2Rerender(); // v3.454.0 : la Lanterne montre de nouvelles rangées
@@ -760,8 +810,16 @@ function pa2CondPanelHTML(cond) {
   var h = '<div class="pa2-panel pa2-cond"><div class="pa2-cond-head"><div class="pa2-kicker">' + esc(_t("Cette nuit")) + '</div><h3 class="pa2-h3">' + esc(_td(cond.name)) + '</h3></div>';
   h += '<p class="pa2-narr pa2-dim">' + esc(_td(cond.line)) + '</p>';
   if (cond.pro) h += '<ul><li class="pa2-pro"><span>+</span><span>' + esc(_td(cond.pro)) + '</span></li><li class="pa2-con"><span>−</span><span>' + esc(_td(cond.con)) + '</span></li></ul>';
-  if (cond.tip) h += '<p class="pa2-small pa2-dim">' + esc(_t("Utile cette nuit : {x}", { x: pa2ItemName(cond.tip) })) + '</p>';
+  if (cond.tip && PA2_ITEMS[cond.tip]) { // v3.580.0 (lot 4, A) : l'objet de la nuit, renforcé pour ce run
+    h += '<div class="pa2-night">' + pa2Img(PA2_ITEMS[cond.tip].icon) + '<div><b>' + esc("★ " + _t("Cette nuit : {x}", { x: pa2ItemName(cond.tip) })) + '</b>' +
+      '<span>' + esc(pa2NightBonus(cond.tip)) + '</span></div></div>';
+  }
   return h + '</div>';
+}
+function pa2NightBonus(id) {
+  if (id === "torche") return _t("Sa lumière n'attire rien : pas de dégâts en plus.");
+  if (id === "armure") return _t("Pas de Souffle en plus sur les obstacles.");
+  return _t("Un usage de plus.");
 }
 function pa2CondChipHTML(run) {
   var c = Pa2Run.condition(run);
@@ -780,7 +838,7 @@ function pa2CutInfo(key) {
 function pa2OpenTrapSheet() {
   var run = Pa2Run.getRun();
   if (!run || run.status !== PA2_STATUS.trap) return;
-  var r = run.trap && run.trap.result;
+  var r = (run.trap && run.trap.result) || (run.pending && run.pending.type === "trap" ? run.pending.res : null); // v3.578.0 : jet en suspens
   pa2View.sheet = { trap: true, step: r ? "result" : "intro", res: r || null, shown: !!r };
   pa2RenderSheet();
 }
@@ -808,13 +866,14 @@ function pa2TrapSheetBody(run, st) {
     h += '</div>';
   } else {
     var r = st.res;
-    if (r.choice === "desamorcer") h += pa2DieBlock(r.thr, r.cran, false).replace(pa2DieFace(1), pa2DieFace(st.shown ? r.roll : 1));
+    if (r.choice === "desamorcer") h += pa2DieBlock(r, st.shown);
     h += '<div id="pa2-outcome" class="' + (st.shown ? "" : "is-hidden") + '">' + pa2TrapOutcome(run, r, td) +
-      '<button type="button" class="kbtn primary" onclick="pa2TrapGo()">' + esc(_t("Continuer")) + '</button></div>';
+      (r.pending ? '' : '<button type="button" class="kbtn primary" onclick="pa2TrapGo()">' + esc(_t("Continuer")) + '</button>') + '</div>';
   }
   return h;
 }
 function pa2TrapOutcome(run, r, td) {
+  if (r.pending) return pa2InsistHTML(run, r);
   var fx = td.fxDef, hit = r.kind === "ko" || r.kind === "endure", h;
   if (r.kind === "ok") h = '<div class="pa2-verdict is-ok">' + esc(r.kit ? _t("Les crochets tiennent") : _t("Désamorcé")) + '</div><p class="pa2-result">' + esc(_t("Tu passes sans rien déclencher.")) + '</p>';
   else if (r.kind === "mid") h = '<div class="pa2-verdict is-mid">' + esc(_t("De justesse")) + '</div><p class="pa2-result">' + esc(_t("Tu passes, épuisé. −{b} Souffle", { b: PA2_TRAP_RULES.midBreath })) + '</p>';
@@ -841,7 +900,7 @@ function pa2Trap(choice) {
   }
   pa2View.sheet = { trap: true, step: "result", res: r.result, shown: choice !== "desamorcer" };
   pa2RenderSheet();
-  if (choice === "desamorcer") pa2RollDie(r.result.roll, function () { if (r.result.kind === "ok") pa2Buzz(30); pa2Reveal(Pa2Run.getRun() || run); });
+  if (choice === "desamorcer") pa2RollDie(r.result.roll, function () { if (r.result.kind === "ok") pa2Buzz(30); pa2Reveal(Pa2Run.getRun() || run); }, r.result);
   else { pa2Reveal(run); pa2RefreshHud(); }
 }
 // Le pas reprend du milieu du sentier jusqu'au point visé.
@@ -893,15 +952,23 @@ function pa2SetSheetHTML(inner, label, closable) {
   box.innerHTML = '<div class="pa2-scrim"' + (closable ? ' onclick="if(event.target===this)pa2ClosePicker()"' : '') + '><div class="pa2-sheet" role="dialog" aria-modal="true" aria-label="' + esc(label || "") + '">' + body + '</div></div>';
 }
 
-/* v3.394.0 : la feuille ouverte (ou changée de taille) réduit la zone utile ; le nœud du héros
-   est ramené au-dessus d'elle. Feuille fermée : la carte reprend toute la hauteur. */
+/* v3.394.0 : la feuille ouverte (ou changée de taille) réduit la zone utile.
+   v3.576.0 (retour Seb, « la carte va dans tous les sens ») : on ne recentre que si la feuille
+   cache le héros ; feuille fermée, la carte glisse doucement dans ses bornes au lieu de sauter. */
+function pa2CamHeroHidden() {
+  var run = Pa2Run.getRun(), vp = document.getElementById("pa2-vp"); if (!run || !vp) return false;
+  var map = Pa2Run.getMap(run), d = map.nodes[run.at], v = pa2View.cam; if (!d || !v.w) return false;
+  var sy = v.ty + v.w * d.y / map.width, H = vp.clientHeight - pa2CamSheetH(), T = pa2View.camTop || 0;
+  return sy > H - 48 || sy < T + 24;
+}
 function pa2CamSheetChanged() {
   if (!pa2Cam || !document.getElementById("pa2-vp")) return;
   var go = function () {
     var h = pa2CamSheetH();
     if (Math.abs(h - (pa2View.camSheet || 0)) < 2) return;
     pa2View.camSheet = h;
-    if (h) pa2CamFollow(true); else pa2Cam.refit();
+    if (h) { if (pa2CamHeroHidden()) pa2CamFollow(true); }
+    else { pa2Cam.clamp(); pa2CamRevealMoves(); pa2Cam.apply(true); }
   };
   if (typeof requestAnimationFrame === "function") requestAnimationFrame(go); else go();
 }
@@ -911,7 +978,21 @@ function pa2OpenSheet() {
   if (!run || run.status !== PA2_STATUS.node) return;
   var n = Pa2Run.node(run.at, run);
   pa2View.sheet = { key: n.key, step: (run.lastResult && run.lastResult.surprised) ? "surprised" : "intro" };
+  if (run.pending && run.pending.key === n.key) pa2View.sheet = { key: n.key, step: run.pending.type === "ruse" ? "ruse" : "roll", res: run.pending.res, shown: true }; // v3.578.0 : jet en suspens
   pa2RenderSheet();
+}
+function pa2Insist(accept) {
+  var run = Pa2Run.getRun(), st = pa2View.sheet;
+  if (!run || !st) return;
+  pa2Snapshot(run);
+  var r = Pa2Run.insist(accept);
+  if (pa2Fail(r)) { pa2View.hud = null; return; }
+  st.res = r.result; st.shown = !!accept;
+  if (accept) { pa2RenderSheet(); pa2Reveal(Pa2Run.getRun() || run); return; }
+  pa2View.hud.breath = Math.max(0, pa2View.hud.breath - PA2_D20.insistBreath); // le Souffle est payé avant la relance
+  pa2RefreshHud();
+  pa2RenderSheet();
+  pa2RollDie(r.result.roll, function () { if (r.result.kind === "ok") pa2Buzz(30); pa2Reveal(Pa2Run.getRun() || run); }, r.result);
 }
 function pa2CloseSheet() {
   pa2ClearTimers();
@@ -937,20 +1018,44 @@ function pa2Head(run, n, title, kicker, big) {
 function pa2OddsHTML(cran) {
   return '<span class="pa2-odds o' + PA2_CRAN_LEVEL[cran] + '"><span class="pa2-cran"><i></i><i></i><i></i><i></i></span><span class="pa2-w">' + esc(PA2_CRAN_WORD[cran]) + '</span></span>';
 }
+/* v3.577.0 : le d20 (dessiné en SVG), la valeur du jet au centre. */
+var PA2_D20_SVG = '<svg viewBox="0 0 100 100" aria-hidden="true"><polygon class="pa2-d20-hex" points="50,3 91,26.5 91,73.5 50,97 9,73.5 9,26.5"/>' +
+  '<path class="pa2-d20-edge" d="M50,22 L77,68 L23,68 Z M50,3 L50,22 M91,26.5 L50,22 L9,26.5 M91,26.5 L77,68 L91,73.5 M77,68 L50,97 L23,68 L9,73.5 M9,26.5 L23,68"/>';
 function pa2DieFace(v) {
-  var m = { 1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8] }, h = "";
-  for (var i = 0; i < 9; i++) h += "<i" + (m[v].indexOf(i) >= 0 ? ' class="on"' : "") + "></i>";
-  return h;
+  return PA2_D20_SVG + '<text x="50" y="59" text-anchor="middle">' + esc(v == null ? "?" : String(v)) + '</text></svg>';
 }
-function pa2DieBlock(thr, cran, rope) {
-  return '<div class="pa2-dierow"><div class="pa2-die" id="pa2-die">' + pa2DieFace(rope ? 6 : 1) + '</div><div class="pa2-target">' + esc(_t("Il faut")) +
-    '<b>' + (rope ? esc(_t("corde")) : thr + (thr < 6 ? "+" : "")) + '</b>' + esc(rope ? _t("Assuré") : PA2_CRAN_WORD[cran]) + '</div></div>';
+// « Il faut 9+ » ; au-delà de 20, seul le 20 naturel passe ; le 1 rate toujours.
+function pa2NeedText(thr) { return thr >= 20 ? "20" : Math.max(2, Number(thr || 0)) + "+"; }
+function pa2Signed(n) { return (n < 0 ? "−" : "+") + Math.abs(n); }
+/* r : résultat du jet (thr, cran, chance, roll, nat, rope) ; shown : le dé est déjà tombé. */
+function pa2DieBlock(r, shown) {
+  var nat = shown && !r.rope && !r.pending && r.nat ? r.nat : 0;
+  var h = '<div class="pa2-dierow"><div class="pa2-die' + (nat ? " is-nat" + nat : "") + '" id="pa2-die">' + pa2DieFace(r.rope ? 20 : (shown ? r.roll : null)) + '</div><div class="pa2-target">' + esc(_t("Il faut")) +
+    '<b>' + (r.rope ? esc(_t("corde")) : pa2NeedText(r.thr)) + '</b>' + esc(r.rope ? _t("Assuré") : PA2_CRAN_WORD[r.cran] + (r.chance != null ? " · " + r.chance + " %" : "")) + '</div></div>';
+  return h + '<div class="pa2-nat" id="pa2-nat">' + (shown && !r.rope ? pa2NatHTML(r) : "") + '</div>';
 }
+/* Sous le dé : 20 ou 1 naturel, les deux dés de l'avantage, le premier jet d'une relance (v3.578.0). */
+function pa2NatHTML(r) {
+  var p = [];
+  if (r.adv && r.r2) p.push('<span>' + esc(_t("Avantage : {a} et {b}", { a: r.r1, b: r.r2 })) + '</span>');
+  if (r.insisted) p.push('<span>' + esc(_t("Relancé (premier jet : {n})", { n: r.first })) + '</span>');
+  if (r.nat === 20 && !r.pending) p.push('<span class="is-ok">' + esc(_t("20 naturel : réussite d'office")) + '</span>');
+  if (r.nat === 1 && !r.pending) p.push('<span class="is-ko">' + esc(_t("1 naturel : échec d'office")) + '</span>');
+  return p.join(" · ");
+}
+function pa2ClassLabel() {
+  var hero = typeof getSelectedHero === "function" ? getSelectedHero() : null, cls = hero && typeof getClassForHero === "function" ? getClassForHero(hero) : null;
+  return cls ? _td(cls.label) : "";
+}
+/* Le détail du jet : « Puissance +4 · Chevalier +2 · matériel +3 · blessure −2 · DD 12 ». */
 function pa2WhyHTML(o, run) {
-  var parts = [_t("{s} {v} contre {d}", { s: sceneStatLabel(o.stat), v: pa2Num(o.statValue), d: pa2Num(o.difficulty) })];
-  if (o.bonus) parts.push(_tn(o.bonus, "+{n} cran", "+{n} crans", { n: o.bonus }));
-  if (run.wounds) parts.push(_tn(run.wounds, "{n} blessure", "{n} blessures", { n: run.wounds }));
-  return esc(parts.join(" · "));
+  var parts = [sceneStatLabel(o.stat) + " " + pa2Signed(o.mod || 0)];
+  if (o.mastery) parts.push(pa2ClassLabel() + " " + pa2Signed(o.mastery));
+  if (o.items) parts.push(_t("matériel {m}", { m: pa2Signed(o.items) }));
+  if (o.wounds) parts.push(_tn(run.wounds, "blessure {m}", "blessures {m}", { m: pa2Signed(-o.wounds) }));
+  if (o.adv) parts.push(_t("avantage"));
+  parts.push(_t("DD {d}", { d: o.dd }));
+  return esc(parts.map(function (x) { return x.replace(/ /g, "\u00a0"); }).join(" · ")); // chaque terme reste d'un bloc
 }
 function pa2ActKicker(n, what) {
   var run = Pa2Run.getRun();
@@ -962,6 +1067,7 @@ function pa2SheetBody(run, n, st) {
   var h = pa2EchoHTML(n, st) + (run.wallNote && st && st.step === "intro" ? '<p class="pa2-echo">' + esc(run.wallNote) + '</p>' : ""), dests = pa2Dests(run), hook = pa2Hook(run), R = PA2_RULES;
   if (run.fxNote && st && st.step === "intro") h += '<p class="pa2-echo is-red">' + esc(run.fxNote) + '</p>'; // v3.467.0 : le Venin
   if (run.burnNote && st && st.step === "intro") h += '<p class="pa2-echo is-red">' + esc(run.burnNote) + '</p>'; // v3.489.0 : le sol qui brûle
+  if (st && st.step === "quality") return h + pa2QualityBody(run, n, st); // v3.578.0
   switch (n.type) {
     case "obstacle":
     case "tertre": {
@@ -991,7 +1097,7 @@ function pa2SheetBody(run, n, st) {
       } else {
         var r = st.res;
         h += pa2Head(run, n, name, _td((gab.options[r.voie] || {}).label || ""));
-        h += pa2DieBlock(r.thr, r.cran, r.rope);
+        h += pa2DieBlock(r, st.shown);
         h += '<div id="pa2-outcome" class="' + (st.shown ? "" : "is-hidden") + '">' + pa2ObstacleOutcome(run, n, r) + '</div>';
       }
       break;
@@ -1036,7 +1142,7 @@ function pa2SheetBody(run, n, st) {
         h += '</div>';
       } else if (st.step === "ruse") {
         h += pa2FoeHead(foe, _t("Ruser"), false);
-        h += pa2DieBlock(st.res.thr, st.res.cran, false);
+        h += pa2DieBlock(st.res, st.shown);
         h += '<div id="pa2-outcome" class="' + (st.shown ? "" : "is-hidden") + '">' + pa2RuseOutcome(run, st.res) + '</div>';
       } else {
         h += pa2FoeHead(foe, st.apName, false);
@@ -1139,9 +1245,15 @@ function pa2SheetBody(run, n, st) {
         h += '<div class="pa2-panel pa2-trophy">' + pa2Img(PA2_RELICS[hook.campGift.relic].icon) + '<div><div class="pa2-dim pa2-small">' + esc(_td(hook.campGift.text)) + '</div></div></div>';
       }
       h += '<div class="pa2-choices">';
-      h += '<button type="button" class="pa2-choice is-noicon" onclick="pa2Place(\'rest\')"><span class="pa2-t">' + esc(camp ? _t("Dormir") : _t("Reprendre ton souffle")) + '</span><span class="pa2-cost">' + esc(_t("+{n} % PV · +{n} Souffle", { n: Math.round(pct * 100) })) + '</span></button>';
-      h += '<button type="button" class="pa2-choice"' + (hasR ? '' : ' disabled') + ' onclick="pa2Place(\'cook\')">' + pa2Img(PA2_ITEMS.petite_ration.icon) + '<span class="pa2-t">' + esc(_t("Cuisiner une ration")) + '</span>' +
-        '<span class="pa2-cost">' + esc(_t("+{n} PV · −1 blessure", { n: pa2Pct(R.cookPct) })) + '</span><span class="pa2-s">' + esc(hasR ? _t("Au feu, une ration vaut bien plus.") : _t("Il te faut une ration.")) + '</span></button>';
+      h += '<button type="button" class="pa2-choice is-noicon" onclick="pa2Place(\'rest\')"><span class="pa2-t">' + esc(camp ? _t("Dormir") : _t("Reprendre ton souffle")) + '</span><span class="pa2-cost">' + esc(_t("+{n} % PV · +{n} Souffle", { n: Math.round(pct * 100) })) + '</span>' +
+        '<span class="pa2-s">' + esc(_t("Et l'avantage au prochain jet : deux dés, le meilleur compte.")) + '</span></button>';
+      // v3.578.0 (2A) : au feu, chaque ration soigne ×1,5 son effet ; on choisit laquelle
+      var rations = ["petite_ration", "ration", "grande_ration"].filter(function (id) { return run.stock[id] > 0; });
+      rations.forEach(function (id) {
+        h += '<button type="button" class="pa2-choice" onclick="pa2Place(\'cook\',\'' + id + '\')">' + pa2Img(PA2_ITEMS[id].icon) + '<span class="pa2-t">' + esc(_t("Cuisiner : {r}", { r: pa2ItemName(id) })) + '</span>' +
+          '<span class="pa2-cost">' + esc(_t("+{n} PV · −1 blessure", { n: pa2Pct(Pa2Run.cookPct(id)) })) + '</span><span class="pa2-s">' + esc(_tn(run.stock[id], "il t'en reste {n}", "il t'en reste {n}", { n: run.stock[id] })) + '</span></button>';
+      });
+      if (!hasR) h += '<button type="button" class="pa2-choice" disabled>' + pa2Img(PA2_ITEMS.petite_ration.icon) + '<span class="pa2-t">' + esc(_t("Cuisiner une ration")) + '</span><span class="pa2-s">' + esc(_t("Il te faut une ration.")) + '</span></button>';
       h += '<button type="button" class="pa2-choice is-noicon" onclick="pa2Place(\'listen\')"><span class="pa2-t">' + esc(camp ? pa2Words(run).listen : _t("Lire les traces")) + '</span>' +
         '<span class="pa2-cost">' + esc(camp ? _t("Acte II révélé") : _t("Acte III révélé")) + '</span><span class="pa2-s">' + esc(camp ? _t("Tu sais ce qui t'attend jusqu'au seuil.") : _t("Tu sais ce qui t'attend jusqu'au bout.")) + '</span></button>';
       h += '<button type="button" class="pa2-choice is-noicon" onclick="pa2Place(\'home\')"><span class="pa2-t">' + esc(_t("Rentrer au village")) + '</span>' +
@@ -1161,6 +1273,23 @@ function pa2SheetBody(run, n, st) {
       break;
     }
   }
+  return h;
+}
+
+/* v3.578.0 (lot 3) : la feuille d'un jet de qualité (source, autel, camp, seuil, trouvaille). */
+var PA2_QUALITY_WORD = { maigre: _t("Maigre · −25 %"), normal: _t("Normal"), bon: _t("Bon · +25 %"), parfait: _t("Parfait · +50 %") };
+function pa2QualityBody(run, n, st) {
+  var r = st.res, q = r.quality, line = "", wound = r.cured ? _tn(r.cured, "−{n} blessure", "−{n} blessures", { n: r.cured }) : "";
+  if (r.kind === "source") line = _t("+{h} PV · +{b} Souffle", { h: pa2Num(r.healed), b: r.amount });
+  else if (r.kind === "autel") line = _t("+{h} PV", { h: pa2Num(r.healed) }) + (wound ? " · " + wound : "");
+  else if (r.kind === "trouvaille") line = _t("{n} rejoint tes trouvailles.", { n: _td(PA2_RELICS[r.relic].name) }) + (r.rare ? " " + _t("Et, au fond : {r} +{n}.", { r: pa2RareName(run.worldId), n: r.rare }) : "");
+  else if (r.action === "rest") line = _t("+{h} PV · +{b} Souffle", { h: pa2Num(r.healed), b: r.breath }) + (wound ? " · " + wound : "") + ". " + _t("Avantage au prochain jet.");
+  else if (r.action === "cook") line = pa2ItemName(r.ration) + " : " + _t("+{h} PV", { h: pa2Num(r.healed) }) + (wound ? " · " + wound : "");
+  var h = pa2Head(run, n, pa2NodeLabel(run, n), _t("Jet de qualité"));
+  h += '<div class="pa2-dierow"><div class="pa2-die" id="pa2-die">' + pa2DieFace(st.shown ? q.roll : null) + '</div><div class="pa2-target">' + esc(_t("Sans échec")) +
+    '<b>' + esc(_t("d20")) + '</b>' + esc(_t("16+ : bon · 20 : parfait")) + '</div></div><div class="pa2-nat" id="pa2-nat"></div>';
+  h += '<div id="pa2-outcome" class="' + (st.shown ? "" : "is-hidden") + '"><div class="pa2-verdict is-q-' + q.q + '">' + esc(PA2_QUALITY_WORD[q.q]) + '</div>' +
+    '<p class="pa2-result">' + esc(line) + '</p>' + pa2ContinueButton(run) + '</div>';
   return h;
 }
 
@@ -1221,7 +1350,17 @@ function pa2ContinueButton(run) {
 function pa2LootRes(run) { var id = Pa2Run._parcoursResource(run); return id && window.WAREHOUSE_RESOURCES ? WAREHOUSE_RESOURCES[id] : null; }
 function pa2Unit(run) { var r = pa2LootRes(run); return r ? _td(r.name) : _t("or"); }
 
+/* v3.578.0 (lot 3, 1A) : un jet raté ou de justesse attend ; insister relance le dé contre du Souffle. */
+function pa2InsistHTML(run, r) {
+  var can = Pa2Run.canInsist(run);
+  return '<div class="pa2-verdict is-' + r.kind + '">' + esc(r.kind === "mid" ? _t("De justesse") : _t("Raté")) + '</div>' +
+    '<p class="pa2-result">' + esc(_t("Tu peux insister : relancer le dé, une seule fois.")) + '</p><div class="pa2-choices">' +
+    '<button type="button" class="pa2-choice is-noicon"' + (can ? '' : ' disabled') + ' onclick="pa2Insist(false)"><span class="pa2-t">' + esc(_t("Insister")) + '</span>' +
+    '<span class="pa2-cost">' + esc(_t("{n} Souffle", { n: PA2_D20.insistBreath })) + '</span><span class="pa2-s">' + esc(_t("Le nouveau jet compte, quel qu'il soit.")) + '</span></button>' +
+    '<button type="button" class="pa2-choice is-noicon" onclick="pa2Insist(true)"><span class="pa2-t">' + esc(_t("Garder ce jet")) + '</span></button></div>';
+}
 function pa2ObstacleOutcome(run, n, r) {
+  if (r.pending) return pa2InsistHTML(run, r);
   var h;
   if (r.kind === "ok") h = '<div class="pa2-verdict is-ok">' + esc(r.rope ? _t("La corde tient") : _t("Réussi")) + '</div><p class="pa2-result">+' + pa2Num(r.gain) + ' ' + esc(pa2Unit(run)) + '</p>';
   else if (r.kind === "mid") h = '<div class="pa2-verdict is-mid">' + esc(_t("De justesse")) + '</div><p class="pa2-result">' + esc(pa2LootRes(run) ? _t("Tu passes, épuisé. −{b} Souffle · +{g} {x}", { b: PA2_RULES.mistBreath, g: pa2Num(r.gain), x: pa2Unit(run) }) : _t("Tu passes, épuisé. −{b} Souffle · +{g} or", { b: PA2_RULES.mistBreath, g: pa2Num(r.gain) })) + '</p>';
@@ -1234,6 +1373,7 @@ function pa2ObstacleOutcome(run, n, r) {
   return h + pa2ContinueButton(run);
 }
 function pa2RuseOutcome(run, r) {
+  if (r.pending) return pa2InsistHTML(run, r);
   if (r.kind === "ko") {
     return '<div class="pa2-verdict is-ko">' + esc(_t("Repéré")) + '</div><p class="pa2-result">' + esc(_t("Il t'a vu venir. Il frappe le premier.")) + '</p>' +
       '<button type="button" class="kbtn" onclick="pa2Surprised()">' + esc(_t("Se battre")) + '</button>';
@@ -1273,13 +1413,21 @@ function pa2Shake() {
 function pa2Buzz(p) { try { if (navigator.vibrate) navigator.vibrate(p); } catch (e) { noteErreur("pa2-view.pa2Buzz", e); /* vibration indisponible */ } }
 
 // Dé qui roule, puis se pose sur la valeur déjà tirée par le moteur.
-function pa2RollDie(finalVal, then) {
+function pa2RollDie(finalVal, then, res) {
   var die = document.getElementById("pa2-die");
   if (!die) { then(); return; }
+  var txt = die.querySelector("text");
   die.classList.add("is-rolling");
-  var t = setInterval(function () { die.innerHTML = pa2DieFace(1 + Math.floor(Math.random() * 6)); }, 70);
+  var t = setInterval(function () { if (txt) txt.textContent = String(1 + Math.floor(Math.random() * 20)); }, 70);
   pa2View.timers.push(t);
-  pa2Later(function () { clearInterval(t); die.classList.remove("is-rolling"); die.innerHTML = pa2DieFace(finalVal); then(); }, 800);
+  pa2Later(function () {
+    clearInterval(t); die.classList.remove("is-rolling");
+    if (txt) txt.textContent = String(finalVal);
+    var nat = res && !res.pending && !res.rope ? res.nat : 0, el = document.getElementById("pa2-nat");
+    if (nat) die.classList.add("is-nat" + nat); // 20 ou 1 naturel
+    if (el && res && !res.rope) el.innerHTML = pa2NatHTML(res);
+    then();
+  }, 800);
 }
 // Fin d'animation : la feuille montre l'issue, le HUD reprend les vraies valeurs.
 function pa2Reveal(run) {
@@ -1318,7 +1466,7 @@ function pa2Obstacle(voie, rope) {
   pa2RollDie(r.result.roll, function () {
     if (r.result.kind === "ok") pa2Buzz(30);
     pa2Reveal(Pa2Run.getRun() || run);
-  });
+  }, r.result);
 }
 function pa2Brute() {
   var run = Pa2Run.getRun();
@@ -1368,7 +1516,7 @@ function pa2Ruse() {
   pa2View.sheet.step = "ruse";
   pa2View.sheet.res = r.result;
   pa2RenderSheet();
-  pa2RollDie(r.result.roll, function () { pa2Reveal(Pa2Run.getRun() || run); });
+  pa2RollDie(r.result.roll, function () { pa2Reveal(Pa2Run.getRun() || run); }, r.result);
 }
 function pa2PassGuardian() { // v3.454.0 (Crypte)
   if (pa2Quick(function () { return Pa2Run.passGuardian(); })) pa2CloseSheet();
@@ -1390,9 +1538,23 @@ function pa2Quick(fn, toast) {
   if (toast && typeof showToast === "function") showToast(toast, 2400);
   return r;
 }
-function pa2Drink() { if (pa2Quick(function () { return Pa2Run.drink(); })) pa2CloseSheet(); }
+/* v3.578.0 (lot 3) : jet de qualité, sans échec. Le dé roule, la feuille montre l'effet, « Continuer » referme. */
+function pa2QualityRoll(fn) {
+  var run = Pa2Run.getRun(), key = pa2View.sheet && pa2View.sheet.key;
+  pa2Snapshot(run);
+  var r = fn();
+  if (pa2Fail(r)) { pa2View.hud = null; return null; }
+  pa2View.sheet = { key: key, step: "quality", res: r.result, shown: false };
+  pa2RenderSheet();
+  pa2RollDie(r.result.quality.roll, function () { if (r.result.quality.q === "parfait") pa2Buzz(30); pa2Reveal(Pa2Run.getRun() || run); }, null);
+  return r;
+}
+function pa2Drink() { pa2QualityRoll(function () { return Pa2Run.drink(); }); }
 function pa2Vein(take) { if (pa2Quick(function () { return Pa2Run.cutVein(take); })) pa2CloseSheet(); } // v3.489.0
-function pa2Altar(accept) { if (pa2Quick(function () { return Pa2Run.altar(accept); })) pa2CloseSheet(); }
+function pa2Altar(accept) {
+  if (accept) { pa2QualityRoll(function () { return Pa2Run.altar(true); }); return; }
+  if (pa2Quick(function () { return Pa2Run.altar(false); })) pa2CloseSheet();
+}
 
 function pa2Flip() {
   var st = pa2View.sheet;
@@ -1407,12 +1569,7 @@ function pa2TakeRelic() {
   var run = Pa2Run.getRun(), st = pa2View.sheet, n = Pa2Run.node(st.key, run), draw = n.draw || [];
   var id = draw.length > 1 ? st.picked : draw[0];
   if (!id) return;
-  var r = Pa2Run.takeRelic(id);
-  if (pa2Fail(r)) return;
-  var msg = _t("{n} rejoint tes trouvailles.", { n: _td(PA2_RELICS[id].name) });
-  if (r.result.rare) msg += " " + _t("Et, au fond : {r} +{n}.", { r: pa2RareName(run.worldId), n: r.result.rare });
-  if (typeof showToast === "function") showToast(msg, 2800);
-  pa2CloseSheet();
+  pa2QualityRoll(function () { return Pa2Run.takeRelic(id); });
 }
 
 function pa2Event(branch) {
@@ -1426,8 +1583,13 @@ function pa2Event(branch) {
   pa2RenderSheet();
 }
 
-function pa2Place(action) {
+function pa2Place(action, rationId) {
   var run = Pa2Run.getRun(), camp = Pa2Run.node(run.at, run).type === "camp";
+  if (action === "rest" || action === "cook") { // v3.578.0 : jet de qualité
+    var q = pa2QualityRoll(function () { return Pa2Run.placeAction(action, rationId); });
+    if (q && q.result.gift && typeof showToast === "function") showToast(_t("{n} rejoint tes trouvailles.", { n: _td(PA2_RELICS[q.result.gift].name) }), 2800);
+    return;
+  }
   var r = pa2Quick(function () { return Pa2Run.placeAction(action); });
   if (!r) return;
   var msgs = [];

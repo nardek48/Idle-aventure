@@ -89,6 +89,7 @@ function playParcours(win) {
 function playTrap(P) {
   var o = P.trapOptions(), c = o.kit > 0 ? "trousse" : (Math.random() < 0.1 && o.back.affordable ? "rebrousser" : (Math.random() < 0.5 ? "desamorcer" : "subir"));
   var r = P.resolveTrap(c);
+  if (r.ok && r.result && r.result.pending) r = P.insist(Math.random() < 0.5); // v3.578.0 : insister ou accepter
   return (r.ok && c !== "rebrousser") ? P.trapContinue() : r;
 }
 
@@ -2049,6 +2050,7 @@ g.game.heroHp = g.game.heroMaxHp;
 P2a.moveTo(P2a.openMoves()[0]);
 P2a.rand = function () { return 0; }; // dés au plus bas : échec
 var s2cFail = P2a.resolveObstacle(P2a.obstacleOptions()[0].voie);
+if (s2cFail.result && s2cFail.result.pending) P2a.insist(true); // v3.578.0 : on accepte l'échec, sans insister
 P2a.rand = rand2a;
 ok(s2cFail.ok && s2cFail.result && /fail|rate|ko/.test(String(s2cFail.result.kind || s2cFail.result.outcome || "")), "premier jet forcé en échec (" + JSON.stringify(s2cFail.result && (s2cFail.result.kind || s2cFail.result.outcome)) + ")");
 ok(r2a.status === "pa2-map" && r2a.wounds >= 1, "après un échec (une blessure) : le parcours CONTINUE, pas d'échec net (décision Seb)");
@@ -6309,10 +6311,10 @@ console.log("\n[59b] v3.257.0 \u2014 Cartes Vivantes C-3 : Palissade, effets ten
   var run1 = g.game.sceneRun;
   ok(run1.stock.corde === 2, "Pont du gu\u00e9 tenu : une corde embarqu\u00e9e = 2 usages");
   run1.breath = 50; P.useItem("gourde");
-  ok(run1.breath === 75, "Autel de pierre non tenu : gourde +25");
+  ok(run1.breath === 65 && run1.advNext === true, "Autel de pierre non tenu : gourde +15 et l'avantage (v3.579.0)");
   LM.onRunEnd(M, "autel", "success");
   run1.breath = 50; P.useItem("gourde");
-  ok(run1.breath === 90, "Autel de pierre tenu : gourde +40");
+  ok(run1.breath === 75, "Autel de pierre tenu : gourde +25 (v3.579.0)");
   ok(P._altarFree(run1) === false, "sans Menhirs : l'autel se paie");
   LM.onRunEnd(M, "menhirs", "success");
   ok(P._altarFree(run1) === true, "Menhirs tenus : l'autel est gratuit une fois par run");
@@ -11886,11 +11888,11 @@ console.log("\n[158] v3.381.0 — Petites Aventures v2 (PA2-0) : moteur sans éc
     runv.nodes.C0.type = "obstacle"; runv.nodes.C0.done = false;
     ok(P.moveTo("C0").ok && runv.status === "pa2-node" && runv.breath === 100 - R.heavyStep - (g.PA2_WORLD_RULES.forest ? g.PA2_WORLD_RULES.forest.stepBreath : 0), "un pas : « Pas lourd » coûte 4 Souffle (+ la marche en Forêt, v3.423.0)");
     var opts = P.obstacleOptions();
-    ok(opts.length === 3 && opts.every(function (o) { return o.thr >= 2 && o.thr <= 6 && typeof o.cran === "string"; }), "trois voies, seuil de dé entre 2 et 6");
+    ok(opts.length === 3 && opts.every(function (o) { return o.thr === Math.round(o.thr) && o.chance >= 5 && o.chance <= 95 && typeof o.cran === "string"; }), "trois voies, d20 : seuil entier, chance entre 5 et 95 % (v3.577.0)");
     var before = opts.map(function (o) { return o.thr; });
     runv.wounds = 1;
     var after = P.obstacleOptions().map(function (o) { return o.thr; });
-    ok(after.every(function (t, i) { return t === Math.min(6, before[i] + 1); }), "une blessure = un cran de moins sur chaque voie");
+    ok(after.every(function (t, i) { return t === before[i] + g.PA2_D20.woundValue; }), "une blessure = −2 au jet sur chaque voie (v3.577.0)");
     runv.wounds = 0;
     var gold0 = runv.loot;
     var ro = P.resolveObstacle("precision", true);
@@ -11945,7 +11947,7 @@ console.log("\n[158] v3.381.0 — Petites Aventures v2 (PA2-0) : moteur sans éc
     game.heroHp = 1;
     runv.wounds = 0;
     P.rand = function () { return 0; };
-    P.resolveObstacle("power");
+    P.resolveObstacle("power"); if (runv.pending) P.insist(true); // v3.578.0 : l'échec accepté
     P.rand = savedRand;
     ok(runv.status !== "completed" && runv.fioleUsed && game.heroHp === Math.round(game.heroMaxHp * R.fioleHpPct), "Fiole noire : à 0 PV, le héros se relève à 40 %");
     runv.nodes.C1.type = "obstacle"; runv.status = "pa2-map"; P.moveTo("C1");
@@ -11953,7 +11955,7 @@ console.log("\n[158] v3.381.0 — Petites Aventures v2 (PA2-0) : moteur sans éc
     var spentKo = S.petiteAventureCountToday();
     game.heroHp = 1;
     P.rand = function () { return 0; };
-    P.resolveObstacle("power");
+    P.resolveObstacle("power"); if (runv.pending) P.insist(true); // v3.578.0 : l'échec accepté
     P.rand = savedRand;
     ok(runv.status === "completed" && runv.end.how === "ko" && game.heroHp === 0, "KO : fin du run, héros à terre");
     ok(runv.end.summary.outcome === "flee" && S.petiteAventureCountToday() === spentKo - 1, "KO : on te ramène avec la moitié du butin, la place est rendue");
@@ -11965,7 +11967,7 @@ console.log("\n[158] v3.381.0 — Petites Aventures v2 (PA2-0) : moteur sans éc
     g.SortieManager.addGold(80); runv.loot += 80;
     game.heroHp = 1;
     P.rand = function () { return 0; };
-    P.resolveObstacle("power");
+    P.resolveObstacle("power"); if (runv.pending) P.insist(true); // v3.578.0 : l'échec accepté
     P.rand = savedRand;
     ok(runv.end.how === "ko" && runv.end.summary.outcome === "death" && runv.end.summary.kept.gold === 0, "« Pas de retour » : tomber, c'est tout perdre");
 
@@ -12010,6 +12012,7 @@ console.log("\n[158] v3.381.0 — Petites Aventures v2 (PA2-0) : moteur sans éc
       P.depart();
       var guard = 200;
       while (runv.status !== "completed" && guard-- > 0) {
+        if (runv.pending) { if (!P.insist(Math.random() < 0.5).ok) break; continue; } // v3.578.0 : jet en suspens
         if (runv.status === "pa2-map") { var mv = P.openMoves(); P.moveTo(mv[Math.floor(Math.random() * mv.length)]); continue; }
         if (runv.status === "pa2-trap") { if (!playTrap(P).ok) break; continue; }
         var n = P.node(runv.at), t = n.type, res = null;
@@ -12333,7 +12336,7 @@ console.log("\n[162] v3.385.0 — Petites Aventures v2 (PA2-4) : quatre accroche
     ok(pr.run.flags.hookBranch === "main" && pr.run.breath === Math.min(100, b0 + 40), "La pierre : la main posée rend 40 Souffle");
     ref.done = false; pr.run.at = ref.key; pr.run.status = "pa2-node";
     var thr1 = P.obstacleOptions()[0].thr;
-    ok(thr1 === Math.max(2, thr0 - 1) || thr0 === 2, "La pierre : +1 cran sur les jets (" + thr0 + "+ → " + thr1 + "+)");
+    ok(thr1 === thr0 - g.PA2_D20.cranValue, "La pierre : +1 cran, soit +3 au jet (" + thr0 + "+ → " + thr1 + "+)");
     var cm = nodeAt(pr.run, "combat", 2);
     ok(P._dmgMult(pr.run, cm, "tenir") > g.PA2_APPROACHES.tenir.dmg * 1.19 * (P.hasItem("torche", pr.run) ? 1.15 : 1) - 1e-9, "La pierre : la marque pique, les combats font +20 % de dégâts");
     var pr2 = withHook("pierre", [], "main");
@@ -12420,6 +12423,7 @@ console.log("\n[163] v3.386.0 — Petites Aventures v2 (PA2-4) : deuxième carte
       if (!ev || r.nodes[ev].row < 1 || r.nodes[ev].row >= M.rows.camp) evRow++;
       var guard = 200, played = 0;
       while (r.status !== "completed" && guard-- > 0) {
+        if (r.pending) { if (!P.insist(Math.random() < 0.5).ok) break; continue; } // v3.578.0 : jet en suspens
         if (r.status === "pa2-map") { var mv = P.openMoves(); P.moveTo(mv[Math.floor(Math.random() * mv.length)]); played++; continue; }
         if (r.status === "pa2-trap") { if (!playTrap(P).ok) break; continue; }
         var n = P.node(r.at), t = n.type, res = null;
@@ -12483,6 +12487,7 @@ console.log("\n[164] v3.387.0 — Petites Aventures v2 (PA2-5) : le Désert (car
   function play(r, pick) {
     var guard = 200;
     while (r.status !== "completed" && guard-- > 0) {
+      if (r.pending) { if (!P.insist(Math.random() < 0.5).ok) break; continue; } // v3.578.0 : jet en suspens
       if (r.status === "pa2-map") { var mv = P.openMoves(); P.moveTo(pick ? pick(mv) : mv[Math.floor(Math.random() * mv.length)]); continue; }
       if (r.status === "pa2-trap") { if (!playTrap(P).ok) break; continue; }
       var n = P.node(r.at), t = n.type, res = null;
@@ -15366,6 +15371,7 @@ console.log("\n[234] v3.448.10 — Images allégées (icônes), texte de la Clé
     fs.readdirSync(d).forEach(function (n) {
       var p = path.join(d, n);
       if (fs.statSync(p).isDirectory()) return walk(p);
+      if (/^icon-512/.test(n)) return; // v3.575.0 : icônes de l'application, 512 px exigés par le manifeste
       if (/\.(png|webp)$/i.test(n)) { var wh = dims(p); if (Math.max(wh[0], wh[1]) > 400) trop.push(path.relative(ROOT, p) + " " + wh.join("×")); }
     });
   })(path.join(ROOT, "images", "Icons"));
@@ -17065,10 +17071,10 @@ console.log("\n[281] v3.467.0 — Petites Aventures : pièges sur les sentiers (
     ok(d1.result.kind === "ok" && r.breath === bb && !r.fx.entrave, "Désamorcer réussi : sans Souffle, aucun effet");
     r = go("sentier", [], { "S>C0": { fx: "entrave", seen: true, done: false } });
     P.moveTo("C0"); bb = r.breath; var thr = P.trapOptions().disarm.thr;
-    P.rand = function () { return (thr - 2 + 0.5) / 6; }; var d2 = P.resolveTrap("desamorcer"); P.rand = savedRand;
-    ok(thr > 2 ? (d2.result.kind === "mid" && r.breath === bb - TR.midBreath && !r.fx.entrave) : d2.result.kind !== "ko", "de justesse : on passe, −10 Souffle");
+    P.rand = function () { return (thr - 2 + 0.5) / 20; }; var d2 = P.resolveTrap("desamorcer"); if (r.pending) P.insist(true); P.rand = savedRand;
+    ok(thr > 2 && thr <= 21 ? (d2.result.kind === "mid" && r.breath === bb - TR.midBreath && !r.fx.entrave) : d2.result.kind !== "ko", "de justesse : on passe, −10 Souffle");
     r = go("sentier", [], { "S>C0": { fx: "entrave", seen: true, done: false } });
-    P.moveTo("C0"); var w3 = r.wounds; P.rand = function () { return 0; }; var d3 = P.resolveTrap("desamorcer"); P.rand = savedRand;
+    P.moveTo("C0"); var w3 = r.wounds; P.rand = function () { return 0; }; var d3 = P.resolveTrap("desamorcer"); if (r.pending) P.insist(true); P.rand = savedRand;
     ok(d3.result.kind === "ko" && r.fx.entrave === TR.steps && r.wounds === w3 + 1 && d3.result.wound, "Désamorcer raté : l'effet joue, et une blessure (v3.467.2)");
     // Entrave : +6 Souffle par pas, 3 pas, le pas du piège ne compte pas ; le repos la lève
     P.trapContinue(); r.status = "pa2-map"; r.nodes.C0.done = true;
@@ -17243,7 +17249,7 @@ console.log("\n[283] v3.469.0 — Petites Aventures : condition du run (PG-B1a �
     prep(); S.startRun("petite_aventure_foret"); var r = game.sceneRun; r.cond = "brouillard";
     run("switchTab('scene')"); g.pa2View.prepStep = "bag";
     var hp = g.buildPa2PrepHTML(r);
-    ok(/nuit de brouillard/.test(hp) && /pa2-cond/.test(hp) && /Ruser gagne un cran/.test(hp) && /Utile cette nuit : Torche/.test(hp), "préparation : « … · nuit de brouillard », panneau Cette nuit, avantage, inconvénient, objet utile");
+    ok(/nuit de brouillard/.test(hp) && /pa2-cond/.test(hp) && /Ruser gagne un cran/.test(hp) && /Cette nuit : Torche/.test(hp) && /pa2-night/.test(hp), "préparation : « … · nuit de brouillard », panneau Cette nuit, avantage, inconvénient, objet de la nuit (v3.580.0)");
     r.cond = "calme"; hp = g.buildPa2PrepHTML(r);
     ok(/nuit calme/.test(hp) && !/pa2-pro/.test(hp.split("pa2-cond")[1] || ""), "Nuit calme : la phrase seule");
     r = go("forest", "brouillard");
@@ -17458,8 +17464,10 @@ console.log("\n[286] v3.469.4 — Petites Aventures : coffre d'expédition au D�
     ok(p0 != null && bonusOf(r, "precision") === p0 + 1, "Pierre taillée : +1 cran sur la voie précision");
     r.traps = {}; r.traps[r.at + ">" + P.links(r)[r.at][0]] = { fx: "venin", hidden: false, seen: true, done: false }; r.status = "pa2-map"; r.nodes[r.at].done = true; P.moveTo(P.links(r)[r.at][0]);
     ok(P.trapOptions().disarm.bonus >= 1, "Pierre taillée : +1 cran pour désamorcer");
+    var q0 = P.quality; P.quality = function () { return { roll: 10, q: "normal", mult: 1, nat: 0 }; }; // v3.578.0 : qualité fixée
     function camp(world, items) { var r = go(world, items), k = destKey(r, "camp"); r.at = k; r.status = "pa2-node"; r.nodes[k].done = false; r.breath = 10; game.heroHp = 1; P.placeAction("rest"); return r.breath; }
     ok(camp("desert", ["natte"]) - 10 === 2 * (camp("desert") - 10), "Natte de caravane : le repos au camp rend le double de Souffle");
+    P.quality = q0;
     r = go("ruins", ["pierre_puits"]); var tk = r.at + ">" + P.openMoves()[0]; r.traps = {}; r.traps[tk] = { fx: "venin", hidden: true, seen: false, done: false };
     ok(P.isTrapShown(tk, r), "Pierre du puits : le piège caché se voit");
     r = go("crypt"); var cC = r.nodes[destKey(r, "boss")], mC = P._dmgMult(r, cC, "tenir"), mCh = P._dmgMult(r, cC, "charger");
@@ -17511,7 +17519,8 @@ console.log("\n[287] v3.469.5 — Petites Aventures : trois reliques par monde (
     r = go("crypt", ["meche"], ["lanterne"]); P.useItem("lanterne"); var l1 = r.lanternLeft; r = go("crypt", [], ["lanterne"]); P.useItem("lanterne");
     ok(l1 === r.lanternLeft + R.mecheSteps, "Mèche de Sarkel : la Lanterne brûle 3 pas de plus");
     r = go("crypt", ["cendre"]); r.loot = 500; var a = r.nodes[Object.keys(r.nodes).filter(function (x) { return r.nodes[x].row === 1; })[0]]; a.type = "autel"; a.done = false; r.at = a.key; r.status = "pa2-node"; game.heroHp = 1;
-    var al = P.altar(true);
+    var q1 = P.quality; P.quality = function () { return { roll: 10, q: "normal", mult: 1, nat: 0 }; }; // v3.578.0 : qualité fixée
+    var al = P.altar(true); P.quality = q1;
     ok(P.altarCost(r) === 0 && al.ok && al.result.cost === 0 && al.result.healed === Math.round(game.heroMaxHp * R.altarHealPct * R.cendreHeal), "Cendre de veilleur : alcôves gratuites, soin double");
     r = go("crypt", ["cloche"]); var res = {}; P._applyTrapFx(r, "alarme", res);
     ok(!r.fx.alarme && res.muted, "Cloche muette : l'Alarme ne sonne pas");
@@ -19939,7 +19948,7 @@ console.log("\n[366] v3.549.0 — Carte vivante : objectif de l'Histoire, chemin
     ok(/lm-story-trace/.test(html) && (html.match(/class="lm-story-flag"/g) || []).length === 1, "le tracé doré et un seul parchemin d'objectif");
     ok(/lm-elite-gain is-repete" style="background-image:url\('images\/Icons\/resources\/chitine_profondeurs_icon\.webp'\)/.test(html), "le Dard : pastille Chitine, ↻ (élite répétable)");
     ok(!/lmxTapSector\('tour_guet'\)[^>]*>[^]*?lm-elite-gain[^]*?<\/button>/.test(html.split("lmxTapSector('tour_guet')")[1] ? "lmxTapSector('tour_guet')" + html.split("lmxTapSector('tour_guet')")[1].split("</button>")[0] + "</button>" : ""), "le Serment déjà battu (élite unique) n'est plus signalé");
-    ok(g.lmEliteGainIcon("mountain", g.LIVING_MAPS.mountain.sectors.filter(function (d) { return d.id === "nid"; })[0]) === "images/Icons/equipment_icon/armor_epic.webp", "élite de la Montagne : pastille pièce Épique (même voilée)");
+    ok(g.lmEliteGainIcon("mountain", g.LIVING_MAPS.mountain.sectors.filter(function (d) { return d.id === "nid"; })[0]) === "images/Icons/living_map/elite_gain_epic.webp", "élite de la Montagne : pastille pièce Épique (même voilée)");
     accepte = false;
     html = run("buildLivingMapHTML('desert')");
     ok(!/lm-story-trace|class="lm-story-flag"/.test(html) && /lm-elite-gain/.test(html), "étape pas acceptée : ni tracé ni objectif, les élites restent signalées");
@@ -19956,7 +19965,7 @@ console.log("\n[367] v3.550.0 — Élites qui se rejouent aux Ruines (Golem, pi�
       ok(d.content.type === "elite" && d.content.eliteId === x[2] && d.content.repeatable === true && LM.isRepeatable(x[0], x[1]), x[1] + " : " + x[2] + " se rejoue");
       ok(e && e.repeatable && e.winDrop && e.winDrop.rarity === x[3] && e.winDrop.chancePct === 35 && e.winDrop.pityAfter === 2, x[2] + " : pièce " + x[3] + " à 35 %, la 3e victoire sans pièce en donne une");
       ok(fs.existsSync(path.join(ROOT, e.image.replace(/^\.\//, ""))), x[2] + " : portrait présent (" + e.image + ")");
-      ok(g.lmEliteGainIcon(x[0], d) === "images/Icons/equipment_icon/armor_" + x[3] + ".webp", x[2] + " : pastille de la carte = pièce " + x[3]);
+      ok(g.lmEliteGainIcon(x[0], d) === "images/Icons/living_map/elite_gain_" + x[3] + ".webp", x[2] + " : pastille de la carte = pièce " + x[3]);
     });
     ok(g.LIVING_MAPS.ruins.plan.tomber.collapse.indexOf("tour_garde") < 0, "la tour de garde ne s'effondre pas (branche « tomber »)");
   } catch (err) { ok(false, "[367] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
@@ -20235,7 +20244,194 @@ console.log("\n[379] v3.570.0 — Le prologue (option B, atelier atelier/prologu
     PV.play("avant", null); var r = g.backNavCloseTop();
     ok(r === "closed" && PV.active === false, "retour Android / Échap = « Passer »");
     ok(g.I18n && typeof g.I18n.t === "function", "traduction disponible");
+    ok(/a\.blur\(\)/.test(src("js/ui/prologue-view.js")) && /heroSelectionStep === "name" && !\(window\.PrologueView && PrologueView\.active\)/.test(src("js/ui/modal-view.js")), "v3.573.0 : pas de clavier sous le prologue, le champ du nom prend la main à la création");
   } catch (err) { ok(false, "[379] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[380] v3.576.0 — Petites Aventures, lot 1 : caméra sans sauts, zoom de départ");
+(function () {
+  try {
+    var src = fs.readFileSync(path.join(ROOT, "js/ui/pa2-view.js"), "utf8");
+    ok(g.PA2_ZOOM_START === 1.4 && g.PA2_ZOOM_START <= g.PA2_ZOOM_MAX, "la carte s'ouvre à ×1,4 (choix de Seb), sous le zoom maximum ×2");
+    ok(/if \(pa2CamHeroHidden\(\)\) pa2CamFollow\(true\)/.test(src), "une feuille ouverte ne recentre que si elle cache le héros");
+    ok(/pa2CamSheetH\(\) \|\| \(pa2View\.sheet \? \(pa2View\.camSheet \|\| 0\) : 0\)/.test(src), "pendant un rendu, la feuille ouverte compte encore dans les bornes");
+    ok(/pa2View\.camDrawn = shown/.test(src) && /pa2CamShownXY/.test(src), "un rendu pendant un glissement repart de la position affichée");
+    ok(typeof g.pa2CamKeepMoves === "function" && typeof g.pa2CamRevealMoves === "function", "les points accessibles restent visibles (parcours aux étapes espacées)");
+    ok(g.PA2_FOLLOW_Y > 0.2 && g.PA2_FOLLOW_Y < 0.5, "le héros suivi est placé au-dessus du milieu de l'écran");
+  } catch (err) { ok(false, "[380] exception : " + err.message); }
+})();
+
+console.log("\n[381] v3.577.0 — Petites Aventures, lot 2 : les jets au d20");
+(function () {
+  var P = g.Pa2Run, D = g.PA2_D20, saveInt = P._int, CCM = g.ClassCombatManager, saveCls = CCM && CCM.getCurrentClassId;
+  try {
+    ok(P.chanceOf(2) === 0.95 && P.chanceOf(-5) === 0.95 && P.chanceOf(11) === 0.5 && P.chanceOf(21) === 0.05 && P.chanceOf(40) === 0.05, "chance : le 20 passe toujours, le 1 rate toujours (5 % à 95 %)");
+    ok(P.statMod(30) === 0 && P.statMod(65) === 1 && P.statMod(170) === 4 && P.statMod(5000) === D.statMax, "bonus de stat : +1 tous les 35 points au-delà de 30, plafonné à +9");
+    P._int = function () { return 20; }; var r20 = P.roll(30);
+    P._int = function () { return 1; }; var r1 = P.roll(-3);
+    P._int = function () { return 10; }; var rm = P.roll(12), rk = P.roll(14), ro = P.roll(10);
+    ok(r20.kind === "ok" && r20.nat === 20 && r1.kind === "ko" && r1.nat === 1, "20 naturel : réussite d'office ; 1 naturel : échec d'office");
+    ok(ro.kind === "ok" && rm.kind === "mid" && rk.kind === "ko", "3 sous le seuil : de justesse ; plus bas : raté");
+    P._int = function () { return 3; }; var adv = P.roll(10, true);
+    ok(adv.r2 === 3 && adv.roll === 3, "avantage : deux dés, le meilleur garde (mécanique prête, sans source pour l'instant)");
+    P._int = saveInt;
+    var snap = { power: 100, precision: 100, endurance: 100, celerity: 170, will: 30 };
+    var run = { worldId: "forest", ring: "sentier", parcours: true, heroSnapshot: snap, wounds: 0, flags: {} };
+    var node = { row: 0 };
+    CCM.getCurrentClassId = function () { return "knight"; };
+    ok(P.masteryOf("power") === D.mastery && P.masteryOf("precision") === -D.mastery && P.masteryOf("endurance") === 0, "Chevalier : Force +2, Précision −2 (triangle validé)");
+    var a = P._check(run, "power", { node: node, base: 5, voie: "power" }), b = P._check(run, "precision", { node: node, base: 5, voie: "precision" });
+    ok(a.thr === b.thr - 2 * D.mastery && a.total === a.mod + a.mastery && a.dd === b.dd, "voie forte et voie faible : 4 points d'écart au même DD");
+    CCM.getCurrentClassId = function () { return "archer"; };
+    ok(P.checkStat(run, "precision", "precision") === 170 && P.checkStat(run, "endurance", "endurance") === 100, "Rôdeur : sa Précision lit aussi la Célérité entraînée");
+    run.wounds = 2; var w = P._check(run, "power", { node: node, base: 5, voie: "power", bonus: 1 }); run.wounds = 0;
+    var w0 = P._check(run, "power", { node: node, base: 5, voie: "power" });
+    ok(w.thr === w0.thr + 2 * D.woundValue - D.cranValue && w.items === D.cranValue && w.wounds === 2 * D.woundValue, "deux blessures −4, un cran d'objet +3");
+    ok(P._check(run, "power", { node: { row: 8 }, base: 5, voie: "power" }).dd > w0.dd && P._check(run, "power", { node: node, base: 7, voie: "power" }).dd === w0.dd + 2, "le DD monte avec la profondeur et la difficulté de l'obstacle");
+    ok(g.pa2NeedText(25) === "20" && g.pa2NeedText(1) === "2+" && g.pa2NeedText(9) === "9+", "affichage : « Il faut 9+ », « 2+ » au plus bas, « 20 » quand seul le naturel passe");
+    var why = g.pa2WhyHTML(w, { wounds: 2 }).replace(/\u00a0/g, " ");
+    ok(/Puissance \+\d/.test(why) && /Rôdeur|Archer/.test(why) === false && /matériel \+3/.test(why) && /blessures −4/.test(why) && /DD \d+/.test(why), "détail du jet : stat, matériel, blessures et DD (" + why + ")");
+    var blk = g.pa2DieBlock({ thr: 9, cran: "probable", chance: 60, roll: 20, nat: 20 }, true);
+    ok(/<svg/.test(blk) && />20</.test(blk) && /is-nat20/.test(blk) && /9\+/.test(blk) && /60 %/.test(blk), "le dé : d20 dessiné, valeur, seuil et chance");
+  } catch (err) { ok(false, "[381] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  P._int = saveInt; if (CCM) CCM.getCurrentClassId = saveCls;
+})();
+
+console.log("\n[382] v3.578.0 — Petites Aventures, lot 3 : insister, l'avantage du repos, la ration au feu, les jets de qualité");
+(function () {
+  var S = g.SceneRunManager, P = g.Pa2Run, D = g.PA2_D20, R = g.PA2_RULES, saveInt = P._int, saveQ = P.quality;
+  function prep() {
+    game = freshCombat("knight"); giveWeapon();
+    run("game.enemy = null; game.combat = null;");
+    S.ensureDefaults();
+    game.explorationProgression.petiteAventure = { spent: 0, since: null };
+    game.resources.petite_ration = 5; game.resources.ration = 2; game.resources.grande_ration = 1;
+    game.heroLevel = 6; game.heroHp = game.heroMaxHp; game.sceneRun = null;
+    if (g.SortieManager.isActive()) g.SortieManager.end("return");
+  }
+  function go(items) { prep(); S.startRun("petite_aventure_foret"); var r = game.sceneRun; r.hookId = null; (items || []).forEach(function (id) { P.addItem(id); }); P.depart(); r.traps = {}; r.cuts = {}; return r; }
+  function at(r, type, row) { var k = Object.keys(r.nodes).filter(function (x) { return row == null ? r.nodes[x].type === type || x === type : r.nodes[x].row === row; })[0]; r.nodes[k].type = r.nodes[k].type === "camp" || r.nodes[k].type === "seuil" ? r.nodes[k].type : type; r.nodes[k].done = false; r.at = k; r.status = "pa2-node"; P._prepareNode(r, r.nodes[k]); return r.nodes[k]; }
+  function die(v) { P._int = function () { return v; }; }
+  try {
+    // Jets de qualité
+    var qs = [3, 10, 17, 20].map(function (v) { die(v); return P.quality(); }); P._int = saveInt;
+    ok(qs[0].q === "maigre" && qs[0].mult === 0.75 && qs[1].mult === 1 && qs[2].q === "bon" && qs[2].mult === 1.25 && qs[3].q === "parfait" && qs[3].nat === 20, "qualité : 1-5 maigre −25 %, 6-15 normal, 16-19 bon +25 %, 20 parfait +50 %");
+    var avg = 0; for (var v = 1; v <= 20; v++) { die(v); avg += P.quality().mult / 20; } P._int = saveInt;
+    ok(Math.abs(avg - 1) < 0.02, "qualité : en moyenne, l'effet ne change pas (×" + avg.toFixed(3) + ")");
+    // La ration au feu
+    ok(Math.abs(P.cookPct("petite_ration") - 0.525) < 1e-9 && Math.abs(P.cookPct("ration") - 0.9) < 1e-9 && P.cookPct("grande_ration") === 1, "au feu : petite ration 53 %, ration 90 %, grande ration 100 % (×1,5, plafonné)");
+    var r = go(["petite_ration", "ration"]); at(r, "camp"); game.heroHp = 1; r.wounds = 2;
+    P.quality = function () { return { roll: 10, q: "normal", mult: 1, nat: 0 }; };
+    var ck = P.placeAction("cook", "ration");
+    ok(ck.ok && ck.result.ration === "ration" && r.stock.ration === 0 && r.stock.petite_ration === 1 && ck.result.healed === Math.round(game.heroMaxHp * 0.9) - 0 && r.wounds === 1 && ck.result.cured === 1, "cuisiner : on choisit la ration ; elle soigne 90 %, une blessure levée");
+    // Le repos : qualité et avantage au prochain jet
+    r = go(); at(r, "camp"); game.heroHp = 1; r.breath = 10;
+    var rs = P.placeAction("rest"); P.quality = saveQ;
+    ok(rs.ok && r.advNext === true && rs.result.adv && r.breath === 10 + Math.round(R.campRestPct * 100), "se reposer : soin et Souffle au jet de qualité, l'avantage au prochain jet");
+    var n = at(r, "obstacle", 1); n.gabaritId = Object.keys(g.SceneEngine.getNodeBank().obstacles)[0];
+    var withAdv = P.obstacleOptions()[0]; r.advNext = false; var noAdv = P.obstacleOptions()[0]; r.advNext = true;
+    ok(withAdv.adv && withAdv.chance > noAdv.chance && withAdv.thr === noAdv.thr, "avec l'avantage : même seuil, meilleure chance affichée (" + noAdv.chance + " → " + withAdv.chance + " %)");
+    var seq = [3, 18]; P._int = function () { return seq.shift(); };
+    var ro = P.resolveObstacle(withAdv.voie); P._int = saveInt;
+    ok(ro.result.adv && ro.result.roll === 18 && ro.result.r1 === 3 && !r.advNext, "le jet suivant lance deux dés et garde le meilleur ; l'avantage est consommé");
+    // Insister
+    r = go(); n = at(r, "obstacle", 1); n.gabaritId = Object.keys(g.SceneEngine.getNodeBank().obstacles)[0]; r.breath = 100; game.heroHp = game.heroMaxHp;
+    var op = P.obstacleOptions()[0], w0 = r.wounds, hp0 = game.heroHp;
+    die(1); var pr = P.resolveObstacle(op.voie); P._int = saveInt;
+    var b1 = r.breath;
+    ok(pr.result.pending && r.pending && r.wounds === w0 && game.heroHp === hp0 && P.obstacleOptions().length === 0, "jet raté : en suspens, rien n'est encore appliqué, le nœud attend");
+    die(20); var ins = P.insist(false); P._int = saveInt;
+    ok(ins.ok && ins.result.insisted && ins.result.first === 1 && ins.result.kind === "ok" && r.breath === b1 - D.insistBreath && !r.pending && n.done, "insister : −" + D.insistBreath + " Souffle, le nouveau jet compte (ici réussi)");
+    r = go(); n = at(r, "obstacle", 1); n.gabaritId = Object.keys(g.SceneEngine.getNodeBank().obstacles)[0]; r.breath = 100;
+    die(1); P.resolveObstacle(P.obstacleOptions()[0].voie); P._int = saveInt; b1 = r.breath;
+    var acc = P.insist(true);
+    ok(acc.ok && acc.result.kind === "ko" && r.wounds === 1 && r.breath === b1 && !r.pending, "garder ce jet : l'échec s'applique, sans Souffle dépensé");
+    r = go(); n = at(r, "obstacle", 1); n.gabaritId = Object.keys(g.SceneEngine.getNodeBank().obstacles)[0]; r.breath = 100;
+    var cost = P.obstacleOptions()[0].cost; r.breath = cost + D.insistBreath - 1;
+    die(1); var np = P.resolveObstacle(P.obstacleOptions()[0].voie); P._int = saveInt;
+    ok(!np.result.pending && !r.pending, "pas assez de Souffle pour insister : l'échec s'applique tout de suite");
+    // Source, autel, trouvaille
+    r = go(); at(r, "source", 1); r.breath = 30; P.quality = function () { return { roll: 20, q: "parfait", mult: 1.5, nat: 20 }; };
+    var dr = P.drink();
+    ok(dr.ok && r.breath === 100 && dr.result.quality.q === "parfait", "source, 20 : le Souffle revient en entier");
+    r = go(); at(r, "autel", 1); r.loot = 500; r.wounds = 3; game.heroHp = 1;
+    var au = P.altar(true);
+    ok(au.ok && r.wounds === 1 && au.result.cured === 2, "autel, 20 : deux blessures levées au lieu d'une");
+    r = go(); var tn = at(r, "trouvaille", 1); tn.draw = P.drawRelics(r, 1);
+    var tr = P.takeRelic(tn.draw[0]);
+    ok(tr.ok && (g.PA2_RARE[r.worldId] ? tr.result.rare === 1 : true), "trouvaille, 20 : la ressource rare est garantie");
+    P.quality = saveQ;
+    // Écrans
+    r = go(["petite_ration", "ration"]); var cn = at(r, "camp");
+    var hc = g.pa2SheetBody(r, cn, { key: cn.key, step: "intro" });
+    ok((hc.match(/pa2Place\('cook','/g) || []).length === 2 && hc.indexOf("undefined") < 0 && hc.indexOf("NaN") < 0, "camp : un bouton « Cuisiner » par ration en stock");
+    var hq = g.pa2SheetBody(r, cn, { key: cn.key, step: "quality", shown: true, res: { kind: "camp", action: "rest", healed: 40, breath: 12, cured: 0, quality: { roll: 17, q: "bon", mult: 1.25 } } });
+    ok(/Bon/.test(hq) && /Avantage au prochain jet/.test(hq) && hq.indexOf("undefined") < 0 && hq.indexOf("NaN") < 0, "feuille du jet de qualité : le dé, la qualité, l'effet");
+    var hi = g.pa2InsistHTML(r, { kind: "ko", pending: true });
+    ok(/pa2Insist\(false\)/.test(hi) && /pa2Insist\(true\)/.test(hi) && /20 Souffle/.test(hi), "jet en suspens : « Insister » (20 Souffle) ou « Garder ce jet »");
+    S.abandon();
+  } catch (err) { ok(false, "[382] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  P._int = saveInt; P.quality = saveQ; game.sceneRun = null;
+})();
+
+console.log("\n[383] v3.579.0 — Petites Aventures : la gourde donne l'avantage (choix A de Seb)");
+(function () {
+  var S = g.SceneRunManager, P = g.Pa2Run;
+  try {
+    game = freshCombat("knight"); giveWeapon(); run("game.enemy = null; game.combat = null;");
+    S.ensureDefaults(); game.explorationProgression.petiteAventure = { spent: 0, since: null }; game.sceneRun = null;
+    if (g.SortieManager.isActive()) g.SortieManager.end("return");
+    S.startRun("petite_aventure_foret"); var r = game.sceneRun; P.addItem("gourde"); P.depart();
+    ok(g.PA2_ITEMS.gourde.breath === 15 && g.PA2_ITEMS.gourde.adv === true && r.stock.gourde === 2, "deux gorgées : +15 Souffle et l'avantage chacune");
+    r.breath = 100; r.advNext = false;
+    var u1 = P.useItem("gourde");
+    ok(u1.ok && r.advNext === true && r.breath === 100 && r.stock.gourde === 1, "Souffle plein : la gorgée se boit quand même, pour l'avantage");
+    var u2 = P.useItem("gourde");
+    ok(!u2.ok && r.stock.gourde === 1, "Souffle plein et avantage déjà pris : la gorgée attend");
+    var hud = g.pa2HudHTML(r);
+    ok(/is-adv/.test(hud) && /Avantage/.test(hud), "le bandeau montre l'avantage en attente");
+    S.abandon();
+  } catch (err) { ok(false, "[383] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  game.sceneRun = null;
+})();
+
+console.log("\n[384] v3.580.0 — Petites Aventures, lot 4 : l'objet de la nuit (choix A de Seb)");
+(function () {
+  var S = g.SceneRunManager, P = g.Pa2Run, R = g.PA2_RULES;
+  function go(world, cond, items) {
+    game = freshCombat("knight"); giveWeapon(); run("game.enemy = null; game.combat = null;");
+    S.ensureDefaults(); game.explorationProgression.petiteAventure = { spent: 0, since: null }; game.sceneRun = null;
+    game.resources.outre_pleine = 3; game.resources.petite_ration = 3;
+    if (g.SortieManager.isActive()) g.SortieManager.end("return");
+    S.startRun(world === "desert" ? "petite_aventure_desert" : "petite_aventure_foret"); var r = game.sceneRun; r.cond = cond; r.hookId = null;
+    (items || []).forEach(function (id) { P.addItem(id); }); return r;
+  }
+  try {
+    var tips = {}; Object.keys(g.PA2_CONDITIONS).forEach(function (w) { Object.keys(g.PA2_CONDITIONS[w]).forEach(function (c) { tips[g.PA2_CONDITIONS[w][c].tip] = 1; }); }); delete tips["null"]; delete tips["undefined"]; // une nuit sans conseil reste possible
+    ok(Object.keys(tips).every(function (id) { return !!g.PA2_ITEMS[id]; }), "chaque nuit conseille un objet qui existe (" + Object.keys(tips).join(", ") + ")");
+    var fw = Object.keys(g.PA2_CONDITIONS.forest).filter(function (c) { return g.PA2_CONDITIONS.forest[c].tip === "trousse"; })[0];
+    var r = go("forest", fw, ["trousse", "gourde"]); P.depart();
+    ok(fw && r.stock.trousse === g.PA2_ITEMS.trousse.uses + 1 && r.stock.gourde === g.PA2_ITEMS.gourde.uses, "objet de la nuit : +1 usage (trousse " + r.stock.trousse + "), les autres objets inchangés");
+    var r0 = go("forest", "calme", ["trousse"]); P.depart();
+    ok(r0.stock.trousse === g.PA2_ITEMS.trousse.uses && !P.nightItem(r0), "nuit calme : aucun objet renforcé");
+    var ft = Object.keys(g.PA2_CONDITIONS.forest).filter(function (c) { return g.PA2_CONDITIONS.forest[c].tip === "torche"; })[0];
+    if (ft) {
+      r = go("forest", ft, ["torche"]); P.depart();
+      ok(P.nightBoost("torche", r) && !P.nightBoost("torche", r0), "torche de la nuit : son défaut (combats +15 %) ne joue pas");
+    }
+    var dw = Object.keys(g.PA2_CONDITIONS.desert).filter(function (c) { return g.PA2_CONDITIONS.desert[c].tip === "outre"; })[0];
+    if (dw) {
+      var o0 = game.resources.outre_pleine; r = go("desert", dw, ["outre"]); var before = g.WarehouseManager.getAmount("outre_pleine"); P.depart();
+      ok(r.stock.outre === 2, "outre de la nuit : une gorgée de plus");
+      P._refundStock(r);
+      ok(g.WarehouseManager.getAmount("outre_pleine") === before, "la gorgée offerte ne revient pas à l'Entrepôt (pas de duplication)");
+    }
+    r = go("forest", fw, ["trousse"]); run("switchTab('scene')"); g.pa2View.prepStep = "bag";
+    var hp = g.buildPa2PrepHTML(r);
+    ok(/pa2-night/.test(hp) && /Un usage de plus/.test(hp) && /is-night/.test(hp) && hp.indexOf("undefined") < 0, "préparation : l'objet de la nuit mis en avant, et marqué dans la besace");
+    S.abandon();
+  } catch (err) { ok(false, "[384] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  game.sceneRun = null;
 })();
 
 Promise.all(ATTENTES).then(function () {
