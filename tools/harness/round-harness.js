@@ -19939,7 +19939,7 @@ console.log("\n[366] v3.549.0 — Carte vivante : objectif de l'Histoire, chemin
     ok(/lm-story-trace/.test(html) && (html.match(/class="lm-story-flag"/g) || []).length === 1, "le tracé doré et un seul parchemin d'objectif");
     ok(/lm-elite-gain is-repete" style="background-image:url\('images\/Icons\/resources\/chitine_profondeurs_icon\.webp'\)/.test(html), "le Dard : pastille Chitine, ↻ (élite répétable)");
     ok(!/lmxTapSector\('tour_guet'\)[^>]*>[^]*?lm-elite-gain[^]*?<\/button>/.test(html.split("lmxTapSector('tour_guet')")[1] ? "lmxTapSector('tour_guet')" + html.split("lmxTapSector('tour_guet')")[1].split("</button>")[0] + "</button>" : ""), "le Serment déjà battu (élite unique) n'est plus signalé");
-    ok(g.lmEliteGainIcon("mountain", g.LIVING_MAPS.mountain.sectors.filter(function (d) { return d.id === "nid"; })[0]) === "images/Icons/equipment_icon/armor_epic.webp", "élite de la Montagne : pastille pièce Épique (même voilée)");
+    ok(g.lmEliteGainIcon("mountain", g.LIVING_MAPS.mountain.sectors.filter(function (d) { return d.id === "nid"; })[0]) === "images/Icons/living_map/elite_gain_epic.webp", "élite de la Montagne : pastille pièce Épique (même voilée)");
     accepte = false;
     html = run("buildLivingMapHTML('desert')");
     ok(!/lm-story-trace|class="lm-story-flag"/.test(html) && /lm-elite-gain/.test(html), "étape pas acceptée : ni tracé ni objectif, les élites restent signalées");
@@ -19956,7 +19956,7 @@ console.log("\n[367] v3.550.0 — Élites qui se rejouent aux Ruines (Golem, pi�
       ok(d.content.type === "elite" && d.content.eliteId === x[2] && d.content.repeatable === true && LM.isRepeatable(x[0], x[1]), x[1] + " : " + x[2] + " se rejoue");
       ok(e && e.repeatable && e.winDrop && e.winDrop.rarity === x[3] && e.winDrop.chancePct === 35 && e.winDrop.pityAfter === 2, x[2] + " : pièce " + x[3] + " à 35 %, la 3e victoire sans pièce en donne une");
       ok(fs.existsSync(path.join(ROOT, e.image.replace(/^\.\//, ""))), x[2] + " : portrait présent (" + e.image + ")");
-      ok(g.lmEliteGainIcon(x[0], d) === "images/Icons/equipment_icon/armor_" + x[3] + ".webp", x[2] + " : pastille de la carte = pièce " + x[3]);
+      ok(g.lmEliteGainIcon(x[0], d) === "images/Icons/living_map/elite_gain_" + x[3] + ".webp", x[2] + " : pastille de la carte = pièce " + x[3]);
     });
     ok(g.LIVING_MAPS.ruins.plan.tomber.collapse.indexOf("tour_garde") < 0, "la tour de garde ne s'effondre pas (branche « tomber »)");
   } catch (err) { ok(false, "[367] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
@@ -20235,6 +20235,7 @@ console.log("\n[379] v3.570.0 — Le prologue (option B, atelier atelier/prologu
     PV.play("avant", null); var r = g.backNavCloseTop();
     ok(r === "closed" && PV.active === false, "retour Android / Échap = « Passer »");
     ok(g.I18n && typeof g.I18n.t === "function", "traduction disponible");
+    ok(/a\.blur\(\)/.test(src("js/ui/prologue-view.js")) && /heroSelectionStep === "name" && !\(window\.PrologueView && PrologueView\.active\)/.test(src("js/ui/modal-view.js")), "v3.573.0 : pas de clavier sous le prologue, le champ du nom prend la main à la création");
   } catch (err) { ok(false, "[379] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 

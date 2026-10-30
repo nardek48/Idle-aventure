@@ -20,6 +20,7 @@ var PrologueView = {
     PrologueView.active = true;
     PrologueView.temps = temps;
     PrologueView.fin = onEnd || null;
+    var a = document.activeElement; if (a && a.blur) a.blur(); // v3.573.0 : pas de clavier ouvert sous les planches
     PrologueView.show(PROLOGUE_TEMPS[temps][0]);
   },
 
@@ -89,12 +90,13 @@ var PrologueView = {
   skip: function () { if (PrologueView.active) PrologueView.end(); },
 
   end: function () {
-    var cb = PrologueView.fin;
+    var cb = PrologueView.fin, nom = PrologueView.temps === "avant" && document.getElementById("player-name-input");
     PrologueView.clear();
     PrologueView.active = false;
     PrologueView.fin = null;
     var root = document.getElementById("prologue-root");
     if (root) root.innerHTML = "";
+    if (nom) { try { nom.focus({ preventScroll: true }); } catch (e) { nom.focus(); } } // le clavier s'ouvre au nom, pas avant
     if (cb) cb();
   }
 };

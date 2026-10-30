@@ -329,7 +329,7 @@ function openHeroSelection() {
   host.innerHTML = buildHeroCreationShellHTML(step);
 
   // Étape "name" : focus direct dans le champ (sans scroll intempestif sur mobile).
-  if (heroSelectionStep === "name") {
+  if (heroSelectionStep === "name" && !(window.PrologueView && PrologueView.active)) { // v3.573.0 : pas sous le prologue
     var input = document.getElementById("player-name-input");
     if (input) { try { input.focus({ preventScroll: true }); } catch (e) { input.focus(); } }
   }
