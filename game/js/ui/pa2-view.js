@@ -811,7 +811,7 @@ function pa2CondPanelHTML(cond) {
   h += '<p class="pa2-narr pa2-dim">' + esc(_td(cond.line)) + '</p>';
   if (cond.pro) h += '<ul><li class="pa2-pro"><span>+</span><span>' + esc(_td(cond.pro)) + '</span></li><li class="pa2-con"><span>−</span><span>' + esc(_td(cond.con)) + '</span></li></ul>';
   if (cond.tip && PA2_ITEMS[cond.tip]) { // v3.580.0 (lot 4, A) : l'objet de la nuit, renforcé pour ce run
-    h += '<div class="pa2-night">' + pa2Img(PA2_ITEMS[cond.tip].icon) + '<div><b>' + esc("★ " + _t("Cette nuit : {x}", { x: pa2ItemName(cond.tip) })) + '</b>' +
+    h += '<div class="pa2-nightitem">' + pa2Img(PA2_ITEMS[cond.tip].icon) + '<div><b>' + esc("★ " + _t("Cette nuit : {x}", { x: pa2ItemName(cond.tip) })) + '</b>' +
       '<span>' + esc(pa2NightBonus(cond.tip)) + '</span></div></div>';
   }
   return h + '</div>';
