@@ -484,7 +484,13 @@ function buildProductionSheetHTML(buildingId) {
   var docked = productionSheetDocked();
   var h = docked ? '<div class="pw-sheet vb-sheet-card prod-sheet">' : '<div class="full-menu-overlay" onclick="closeProductionSheetFromBackdrop(event)">';
   if (!docked) h += '<div class="full-menu vb-sheet-card prod-sheet" onclick="event.stopPropagation()">';
-  h += kSheetHeadHTML({
+  // v3.567.0 (option D) : fiche ancrée du grand écran — grande illustration et chiffres clés, comme la maquette
+  if (docked) {
+    h += '<div class="pw-hero">' + renderIconOrEmojiHTML(def.buildingImage || resDef.icon, "pw-hero-img", _td(def.name)) + '<h3>' + esc(_td(def.name)) + '</h3>'
+      + '<small>' + esc(_t("Bâtiment de production · {a}/{b} zones", { a: openCount, b: PRODUCTION_PLOTS_SHARED.totalPlots })) + '</small></div>'
+      + '<dl class="pw-kv"><dt>' + esc(_t("Réserve")) + '</dt><dd>' + formatNumber(Math.floor(WarehouseManager.getAmount(resKey))) + (cap !== Infinity ? ' / ' + formatNumber(cap) : '') + ' ' + esc(_td(resDef.name || "")) + '</dd>'
+      + '<dt>' + esc(_t("Débit")) + '</dt><dd>' + esc(formatRatePerMin(ProductionManager.getRatePerMin(buildingId))) + ' ' + esc(_td(resDef.name || "")) + '/min</dd></dl>';
+  } else h += kSheetHeadHTML({
     icon: renderIconOrEmojiHTML(def.buildingImage || resDef.icon, "vb-sheet-icon prod-sheet-icon", _td(def.name)),
     title: esc(_td(def.name)),
     sub: esc(_t("+{n}/min · {a}/{b} zones", { n: formatNumber(ProductionManager.getRatePerMin(buildingId)), a: openCount, b: PRODUCTION_PLOTS_SHARED.totalPlots })),
