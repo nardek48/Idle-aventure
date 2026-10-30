@@ -89,6 +89,7 @@ function playParcours(win) {
 function playTrap(P) {
   var o = P.trapOptions(), c = o.kit > 0 ? "trousse" : (Math.random() < 0.1 && o.back.affordable ? "rebrousser" : (Math.random() < 0.5 ? "desamorcer" : "subir"));
   var r = P.resolveTrap(c);
+  if (r.ok && r.result && r.result.pending) r = P.insist(Math.random() < 0.5); // v3.578.0 : insister ou accepter
   return (r.ok && c !== "rebrousser") ? P.trapContinue() : r;
 }
 
@@ -2049,6 +2050,7 @@ g.game.heroHp = g.game.heroMaxHp;
 P2a.moveTo(P2a.openMoves()[0]);
 P2a.rand = function () { return 0; }; // dés au plus bas : échec
 var s2cFail = P2a.resolveObstacle(P2a.obstacleOptions()[0].voie);
+if (s2cFail.result && s2cFail.result.pending) P2a.insist(true); // v3.578.0 : on accepte l'échec, sans insister
 P2a.rand = rand2a;
 ok(s2cFail.ok && s2cFail.result && /fail|rate|ko/.test(String(s2cFail.result.kind || s2cFail.result.outcome || "")), "premier jet forcé en échec (" + JSON.stringify(s2cFail.result && (s2cFail.result.kind || s2cFail.result.outcome)) + ")");
 ok(r2a.status === "pa2-map" && r2a.wounds >= 1, "après un échec (une blessure) : le parcours CONTINUE, pas d'échec net (décision Seb)");
@@ -11945,7 +11947,7 @@ console.log("\n[158] v3.381.0 — Petites Aventures v2 (PA2-0) : moteur sans éc
     game.heroHp = 1;
     runv.wounds = 0;
     P.rand = function () { return 0; };
-    P.resolveObstacle("power");
+    P.resolveObstacle("power"); if (runv.pending) P.insist(true); // v3.578.0 : l'échec accepté
     P.rand = savedRand;
     ok(runv.status !== "completed" && runv.fioleUsed && game.heroHp === Math.round(game.heroMaxHp * R.fioleHpPct), "Fiole noire : à 0 PV, le héros se relève à 40 %");
     runv.nodes.C1.type = "obstacle"; runv.status = "pa2-map"; P.moveTo("C1");
@@ -11953,7 +11955,7 @@ console.log("\n[158] v3.381.0 — Petites Aventures v2 (PA2-0) : moteur sans éc
     var spentKo = S.petiteAventureCountToday();
     game.heroHp = 1;
     P.rand = function () { return 0; };
-    P.resolveObstacle("power");
+    P.resolveObstacle("power"); if (runv.pending) P.insist(true); // v3.578.0 : l'échec accepté
     P.rand = savedRand;
     ok(runv.status === "completed" && runv.end.how === "ko" && game.heroHp === 0, "KO : fin du run, héros à terre");
     ok(runv.end.summary.outcome === "flee" && S.petiteAventureCountToday() === spentKo - 1, "KO : on te ramène avec la moitié du butin, la place est rendue");
@@ -11965,7 +11967,7 @@ console.log("\n[158] v3.381.0 — Petites Aventures v2 (PA2-0) : moteur sans éc
     g.SortieManager.addGold(80); runv.loot += 80;
     game.heroHp = 1;
     P.rand = function () { return 0; };
-    P.resolveObstacle("power");
+    P.resolveObstacle("power"); if (runv.pending) P.insist(true); // v3.578.0 : l'échec accepté
     P.rand = savedRand;
     ok(runv.end.how === "ko" && runv.end.summary.outcome === "death" && runv.end.summary.kept.gold === 0, "« Pas de retour » : tomber, c'est tout perdre");
 
@@ -12010,6 +12012,7 @@ console.log("\n[158] v3.381.0 — Petites Aventures v2 (PA2-0) : moteur sans éc
       P.depart();
       var guard = 200;
       while (runv.status !== "completed" && guard-- > 0) {
+        if (runv.pending) { if (!P.insist(Math.random() < 0.5).ok) break; continue; } // v3.578.0 : jet en suspens
         if (runv.status === "pa2-map") { var mv = P.openMoves(); P.moveTo(mv[Math.floor(Math.random() * mv.length)]); continue; }
         if (runv.status === "pa2-trap") { if (!playTrap(P).ok) break; continue; }
         var n = P.node(runv.at), t = n.type, res = null;
@@ -12420,6 +12423,7 @@ console.log("\n[163] v3.386.0 — Petites Aventures v2 (PA2-4) : deuxième carte
       if (!ev || r.nodes[ev].row < 1 || r.nodes[ev].row >= M.rows.camp) evRow++;
       var guard = 200, played = 0;
       while (r.status !== "completed" && guard-- > 0) {
+        if (r.pending) { if (!P.insist(Math.random() < 0.5).ok) break; continue; } // v3.578.0 : jet en suspens
         if (r.status === "pa2-map") { var mv = P.openMoves(); P.moveTo(mv[Math.floor(Math.random() * mv.length)]); played++; continue; }
         if (r.status === "pa2-trap") { if (!playTrap(P).ok) break; continue; }
         var n = P.node(r.at), t = n.type, res = null;
@@ -12483,6 +12487,7 @@ console.log("\n[164] v3.387.0 — Petites Aventures v2 (PA2-5) : le Désert (car
   function play(r, pick) {
     var guard = 200;
     while (r.status !== "completed" && guard-- > 0) {
+      if (r.pending) { if (!P.insist(Math.random() < 0.5).ok) break; continue; } // v3.578.0 : jet en suspens
       if (r.status === "pa2-map") { var mv = P.openMoves(); P.moveTo(pick ? pick(mv) : mv[Math.floor(Math.random() * mv.length)]); continue; }
       if (r.status === "pa2-trap") { if (!playTrap(P).ok) break; continue; }
       var n = P.node(r.at), t = n.type, res = null;
@@ -17066,10 +17071,10 @@ console.log("\n[281] v3.467.0 — Petites Aventures : pièges sur les sentiers (
     ok(d1.result.kind === "ok" && r.breath === bb && !r.fx.entrave, "Désamorcer réussi : sans Souffle, aucun effet");
     r = go("sentier", [], { "S>C0": { fx: "entrave", seen: true, done: false } });
     P.moveTo("C0"); bb = r.breath; var thr = P.trapOptions().disarm.thr;
-    P.rand = function () { return (thr - 2 + 0.5) / 20; }; var d2 = P.resolveTrap("desamorcer"); P.rand = savedRand;
+    P.rand = function () { return (thr - 2 + 0.5) / 20; }; var d2 = P.resolveTrap("desamorcer"); if (r.pending) P.insist(true); P.rand = savedRand;
     ok(thr > 2 && thr <= 21 ? (d2.result.kind === "mid" && r.breath === bb - TR.midBreath && !r.fx.entrave) : d2.result.kind !== "ko", "de justesse : on passe, −10 Souffle");
     r = go("sentier", [], { "S>C0": { fx: "entrave", seen: true, done: false } });
-    P.moveTo("C0"); var w3 = r.wounds; P.rand = function () { return 0; }; var d3 = P.resolveTrap("desamorcer"); P.rand = savedRand;
+    P.moveTo("C0"); var w3 = r.wounds; P.rand = function () { return 0; }; var d3 = P.resolveTrap("desamorcer"); if (r.pending) P.insist(true); P.rand = savedRand;
     ok(d3.result.kind === "ko" && r.fx.entrave === TR.steps && r.wounds === w3 + 1 && d3.result.wound, "Désamorcer raté : l'effet joue, et une blessure (v3.467.2)");
     // Entrave : +6 Souffle par pas, 3 pas, le pas du piège ne compte pas ; le repos la lève
     P.trapContinue(); r.status = "pa2-map"; r.nodes.C0.done = true;
@@ -17459,8 +17464,10 @@ console.log("\n[286] v3.469.4 — Petites Aventures : coffre d'expédition au D�
     ok(p0 != null && bonusOf(r, "precision") === p0 + 1, "Pierre taillée : +1 cran sur la voie précision");
     r.traps = {}; r.traps[r.at + ">" + P.links(r)[r.at][0]] = { fx: "venin", hidden: false, seen: true, done: false }; r.status = "pa2-map"; r.nodes[r.at].done = true; P.moveTo(P.links(r)[r.at][0]);
     ok(P.trapOptions().disarm.bonus >= 1, "Pierre taillée : +1 cran pour désamorcer");
+    var q0 = P.quality; P.quality = function () { return { roll: 10, q: "normal", mult: 1, nat: 0 }; }; // v3.578.0 : qualité fixée
     function camp(world, items) { var r = go(world, items), k = destKey(r, "camp"); r.at = k; r.status = "pa2-node"; r.nodes[k].done = false; r.breath = 10; game.heroHp = 1; P.placeAction("rest"); return r.breath; }
     ok(camp("desert", ["natte"]) - 10 === 2 * (camp("desert") - 10), "Natte de caravane : le repos au camp rend le double de Souffle");
+    P.quality = q0;
     r = go("ruins", ["pierre_puits"]); var tk = r.at + ">" + P.openMoves()[0]; r.traps = {}; r.traps[tk] = { fx: "venin", hidden: true, seen: false, done: false };
     ok(P.isTrapShown(tk, r), "Pierre du puits : le piège caché se voit");
     r = go("crypt"); var cC = r.nodes[destKey(r, "boss")], mC = P._dmgMult(r, cC, "tenir"), mCh = P._dmgMult(r, cC, "charger");
@@ -17512,7 +17519,8 @@ console.log("\n[287] v3.469.5 — Petites Aventures : trois reliques par monde (
     r = go("crypt", ["meche"], ["lanterne"]); P.useItem("lanterne"); var l1 = r.lanternLeft; r = go("crypt", [], ["lanterne"]); P.useItem("lanterne");
     ok(l1 === r.lanternLeft + R.mecheSteps, "Mèche de Sarkel : la Lanterne brûle 3 pas de plus");
     r = go("crypt", ["cendre"]); r.loot = 500; var a = r.nodes[Object.keys(r.nodes).filter(function (x) { return r.nodes[x].row === 1; })[0]]; a.type = "autel"; a.done = false; r.at = a.key; r.status = "pa2-node"; game.heroHp = 1;
-    var al = P.altar(true);
+    var q1 = P.quality; P.quality = function () { return { roll: 10, q: "normal", mult: 1, nat: 0 }; }; // v3.578.0 : qualité fixée
+    var al = P.altar(true); P.quality = q1;
     ok(P.altarCost(r) === 0 && al.ok && al.result.cost === 0 && al.result.healed === Math.round(game.heroMaxHp * R.altarHealPct * R.cendreHeal), "Cendre de veilleur : alcôves gratuites, soin double");
     r = go("crypt", ["cloche"]); var res = {}; P._applyTrapFx(r, "alarme", res);
     ok(!r.fx.alarme && res.muted, "Cloche muette : l'Alarme ne sonne pas");
@@ -20287,6 +20295,83 @@ console.log("\n[381] v3.577.0 — Petites Aventures, lot 2 : les jets au d20");
     ok(/<svg/.test(blk) && />20</.test(blk) && /is-nat20/.test(blk) && /9\+/.test(blk) && /60 %/.test(blk), "le dé : d20 dessiné, valeur, seuil et chance");
   } catch (err) { ok(false, "[381] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   P._int = saveInt; if (CCM) CCM.getCurrentClassId = saveCls;
+})();
+
+console.log("\n[382] v3.578.0 — Petites Aventures, lot 3 : insister, l'avantage du repos, la ration au feu, les jets de qualité");
+(function () {
+  var S = g.SceneRunManager, P = g.Pa2Run, D = g.PA2_D20, R = g.PA2_RULES, saveInt = P._int, saveQ = P.quality;
+  function prep() {
+    game = freshCombat("knight"); giveWeapon();
+    run("game.enemy = null; game.combat = null;");
+    S.ensureDefaults();
+    game.explorationProgression.petiteAventure = { spent: 0, since: null };
+    game.resources.petite_ration = 5; game.resources.ration = 2; game.resources.grande_ration = 1;
+    game.heroLevel = 6; game.heroHp = game.heroMaxHp; game.sceneRun = null;
+    if (g.SortieManager.isActive()) g.SortieManager.end("return");
+  }
+  function go(items) { prep(); S.startRun("petite_aventure_foret"); var r = game.sceneRun; r.hookId = null; (items || []).forEach(function (id) { P.addItem(id); }); P.depart(); r.traps = {}; r.cuts = {}; return r; }
+  function at(r, type, row) { var k = Object.keys(r.nodes).filter(function (x) { return row == null ? r.nodes[x].type === type || x === type : r.nodes[x].row === row; })[0]; r.nodes[k].type = r.nodes[k].type === "camp" || r.nodes[k].type === "seuil" ? r.nodes[k].type : type; r.nodes[k].done = false; r.at = k; r.status = "pa2-node"; P._prepareNode(r, r.nodes[k]); return r.nodes[k]; }
+  function die(v) { P._int = function () { return v; }; }
+  try {
+    // Jets de qualité
+    var qs = [3, 10, 17, 20].map(function (v) { die(v); return P.quality(); }); P._int = saveInt;
+    ok(qs[0].q === "maigre" && qs[0].mult === 0.75 && qs[1].mult === 1 && qs[2].q === "bon" && qs[2].mult === 1.25 && qs[3].q === "parfait" && qs[3].nat === 20, "qualité : 1-5 maigre −25 %, 6-15 normal, 16-19 bon +25 %, 20 parfait +50 %");
+    var avg = 0; for (var v = 1; v <= 20; v++) { die(v); avg += P.quality().mult / 20; } P._int = saveInt;
+    ok(Math.abs(avg - 1) < 0.02, "qualité : en moyenne, l'effet ne change pas (×" + avg.toFixed(3) + ")");
+    // La ration au feu
+    ok(Math.abs(P.cookPct("petite_ration") - 0.525) < 1e-9 && Math.abs(P.cookPct("ration") - 0.9) < 1e-9 && P.cookPct("grande_ration") === 1, "au feu : petite ration 53 %, ration 90 %, grande ration 100 % (×1,5, plafonné)");
+    var r = go(["petite_ration", "ration"]); at(r, "camp"); game.heroHp = 1; r.wounds = 2;
+    P.quality = function () { return { roll: 10, q: "normal", mult: 1, nat: 0 }; };
+    var ck = P.placeAction("cook", "ration");
+    ok(ck.ok && ck.result.ration === "ration" && r.stock.ration === 0 && r.stock.petite_ration === 1 && ck.result.healed === Math.round(game.heroMaxHp * 0.9) - 0 && r.wounds === 1 && ck.result.cured === 1, "cuisiner : on choisit la ration ; elle soigne 90 %, une blessure levée");
+    // Le repos : qualité et avantage au prochain jet
+    r = go(); at(r, "camp"); game.heroHp = 1; r.breath = 10;
+    var rs = P.placeAction("rest"); P.quality = saveQ;
+    ok(rs.ok && r.advNext === true && rs.result.adv && r.breath === 10 + Math.round(R.campRestPct * 100), "se reposer : soin et Souffle au jet de qualité, l'avantage au prochain jet");
+    var n = at(r, "obstacle", 1); n.gabaritId = Object.keys(g.SceneEngine.getNodeBank().obstacles)[0];
+    var withAdv = P.obstacleOptions()[0]; r.advNext = false; var noAdv = P.obstacleOptions()[0]; r.advNext = true;
+    ok(withAdv.adv && withAdv.chance > noAdv.chance && withAdv.thr === noAdv.thr, "avec l'avantage : même seuil, meilleure chance affichée (" + noAdv.chance + " → " + withAdv.chance + " %)");
+    var seq = [3, 18]; P._int = function () { return seq.shift(); };
+    var ro = P.resolveObstacle(withAdv.voie); P._int = saveInt;
+    ok(ro.result.adv && ro.result.roll === 18 && ro.result.r1 === 3 && !r.advNext, "le jet suivant lance deux dés et garde le meilleur ; l'avantage est consommé");
+    // Insister
+    r = go(); n = at(r, "obstacle", 1); n.gabaritId = Object.keys(g.SceneEngine.getNodeBank().obstacles)[0]; r.breath = 100; game.heroHp = game.heroMaxHp;
+    var op = P.obstacleOptions()[0], w0 = r.wounds, hp0 = game.heroHp;
+    die(1); var pr = P.resolveObstacle(op.voie); P._int = saveInt;
+    var b1 = r.breath;
+    ok(pr.result.pending && r.pending && r.wounds === w0 && game.heroHp === hp0 && P.obstacleOptions().length === 0, "jet raté : en suspens, rien n'est encore appliqué, le nœud attend");
+    die(20); var ins = P.insist(false); P._int = saveInt;
+    ok(ins.ok && ins.result.insisted && ins.result.first === 1 && ins.result.kind === "ok" && r.breath === b1 - D.insistBreath && !r.pending && n.done, "insister : −" + D.insistBreath + " Souffle, le nouveau jet compte (ici réussi)");
+    r = go(); n = at(r, "obstacle", 1); n.gabaritId = Object.keys(g.SceneEngine.getNodeBank().obstacles)[0]; r.breath = 100;
+    die(1); P.resolveObstacle(P.obstacleOptions()[0].voie); P._int = saveInt; b1 = r.breath;
+    var acc = P.insist(true);
+    ok(acc.ok && acc.result.kind === "ko" && r.wounds === 1 && r.breath === b1 && !r.pending, "garder ce jet : l'échec s'applique, sans Souffle dépensé");
+    r = go(); n = at(r, "obstacle", 1); n.gabaritId = Object.keys(g.SceneEngine.getNodeBank().obstacles)[0]; r.breath = 100;
+    var cost = P.obstacleOptions()[0].cost; r.breath = cost + D.insistBreath - 1;
+    die(1); var np = P.resolveObstacle(P.obstacleOptions()[0].voie); P._int = saveInt;
+    ok(!np.result.pending && !r.pending, "pas assez de Souffle pour insister : l'échec s'applique tout de suite");
+    // Source, autel, trouvaille
+    r = go(); at(r, "source", 1); r.breath = 30; P.quality = function () { return { roll: 20, q: "parfait", mult: 1.5, nat: 20 }; };
+    var dr = P.drink();
+    ok(dr.ok && r.breath === 100 && dr.result.quality.q === "parfait", "source, 20 : le Souffle revient en entier");
+    r = go(); at(r, "autel", 1); r.loot = 500; r.wounds = 3; game.heroHp = 1;
+    var au = P.altar(true);
+    ok(au.ok && r.wounds === 1 && au.result.cured === 2, "autel, 20 : deux blessures levées au lieu d'une");
+    r = go(); var tn = at(r, "trouvaille", 1); tn.draw = P.drawRelics(r, 1);
+    var tr = P.takeRelic(tn.draw[0]);
+    ok(tr.ok && (g.PA2_RARE[r.worldId] ? tr.result.rare === 1 : true), "trouvaille, 20 : la ressource rare est garantie");
+    P.quality = saveQ;
+    // Écrans
+    r = go(["petite_ration", "ration"]); var cn = at(r, "camp");
+    var hc = g.pa2SheetBody(r, cn, { key: cn.key, step: "intro" });
+    ok((hc.match(/pa2Place\('cook','/g) || []).length === 2 && hc.indexOf("undefined") < 0 && hc.indexOf("NaN") < 0, "camp : un bouton « Cuisiner » par ration en stock");
+    var hq = g.pa2SheetBody(r, cn, { key: cn.key, step: "quality", shown: true, res: { kind: "camp", action: "rest", healed: 40, breath: 12, cured: 0, quality: { roll: 17, q: "bon", mult: 1.25 } } });
+    ok(/Bon/.test(hq) && /Avantage au prochain jet/.test(hq) && hq.indexOf("undefined") < 0 && hq.indexOf("NaN") < 0, "feuille du jet de qualité : le dé, la qualité, l'effet");
+    var hi = g.pa2InsistHTML(r, { kind: "ko", pending: true });
+    ok(/pa2Insist\(false\)/.test(hi) && /pa2Insist\(true\)/.test(hi) && /20 Souffle/.test(hi), "jet en suspens : « Insister » (20 Souffle) ou « Garder ce jet »");
+    S.abandon();
+  } catch (err) { ok(false, "[382] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  P._int = saveInt; P.quality = saveQ; game.sceneRun = null;
 })();
 
 Promise.all(ATTENTES).then(function () {

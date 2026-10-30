@@ -767,7 +767,7 @@ var Pa2Run = {
   },
   _current: function (types) {
     var run = this.getRun();
-    if (!run || run.status !== PA2_STATUS.node) return null;
+    if (!run || run.status !== PA2_STATUS.node || run.pending) return null; // v3.578.0 : un jet attend « Insister » ou « Accepter »
     var n = this.node(run.at, run);
     if (!n || n.done || (types && types.indexOf(n.type) < 0)) return null;
     return n;
@@ -846,7 +846,7 @@ var Pa2Run = {
   roll: function (thr, adv) {
     var r1 = this._int(1, 20), r2 = adv ? this._int(1, 20) : 0, r = Math.max(r1, r2);
     var kind = r === 20 ? "ok" : (r === 1 ? "ko" : (r >= thr ? "ok" : (r >= thr - PA2_D20.midBand ? "mid" : "ko")));
-    return { roll: r, r2: r2 || null, kind: kind, nat: r === 20 ? 20 : (r === 1 ? 1 : 0) };
+    return { roll: r, r1: r1, r2: r2 || null, kind: kind, nat: r === 20 ? 20 : (r === 1 ? 1 : 0) };
   },
   /* ctx : { node, base, voie, bonus (crans) }. Renvoie le détail du jet (affiché tel quel) et thr = le chiffre à faire. */
   _check: function (run, stat, ctx) {
@@ -855,8 +855,49 @@ var Pa2Run = {
     var mod = this.statMod(val), mastery = this.masteryOf(voie), items = bonus * D.cranValue, wounds = Number(run.wounds || 0) * D.woundValue;
     var dd = this.dc(run, ctx.node, ctx.base, ctx.voie);
     var total = mod + mastery + items - wounds, need = dd - total, chance = this.chanceOf(need);
-    return { stat: stat, statValue: val, mod: mod, mastery: mastery, items: items, wounds: wounds, total: total, dd: dd,
-      difficulty: dd, thr: need, chance: Math.round(chance * 100), cran: this.cranOf(chance), bonus: bonus };
+    var ck = { stat: stat, statValue: val, mod: mod, mastery: mastery, items: items, wounds: wounds, total: total, dd: dd,
+      difficulty: dd, thr: need, chance: Math.round(chance * 100), cran: this.cranOf(chance), bonus: bonus, adv: false };
+    if (run.advNext) { chance = 1 - (1 - chance) * (1 - chance); ck.adv = true; ck.chance = Math.round(chance * 100); ck.cran = this.cranOf(chance); } // v3.578.0 : deux dés, le meilleur garde
+    return ck;
+  },
+  // v3.578.0 (lot 3) : jet risqué ; l'avantage gagné au repos part sur ce jet.
+  _riskRoll: function (run, thr) {
+    var adv = !!run.advNext;
+    run.advNext = false;
+    var r = this.roll(thr, adv);
+    r.adv = adv;
+    return r;
+  },
+  // Jet de qualité, sans échec : maigre, normal, bon, parfait (PA2_QUALITY).
+  quality: function () {
+    var r = this._int(1, 20), t = PA2_QUALITY.filter(function (q) { return r <= q.max; })[0];
+    return { roll: r, q: t.id, mult: t.mult, nat: r === 20 ? 20 : 0 };
+  },
+  // « Insister » (1A) : un jet raté ou de justesse se relance une fois, contre du Souffle.
+  canInsist: function (run) { run = run || this.getRun(); return !!run && run.breath >= PA2_D20.insistBreath; },
+  _offerInsist: function (run, type, key, res) {
+    if (res.kind === "ok" || res.rope || res.kit || !this.canInsist(run)) return false;
+    res.pending = true;
+    run.pending = { type: type, key: key, res: res };
+    this._save();
+    return true;
+  },
+  insist: function (accept) {
+    var run = this.getRun(), p = run && run.pending;
+    if (!p) return { ok: false, reason: _t("Choix impossible") };
+    var res = p.res;
+    if (!accept && !this.canInsist(run)) return { ok: false, reason: _t("Pas assez de Souffle pour cette approche") };
+    delete run.pending; delete res.pending;
+    if (!accept) {
+      run.breath -= PA2_D20.insistBreath;
+      var r2 = this.roll(res.thr);
+      ["voie", "thr", "cran", "chance", "choice", "fx", "ruse", "lootMod"].forEach(function (k) { if (res[k] !== undefined) r2[k] = res[k]; });
+      r2.insisted = true; r2.first = res.roll;
+      res = r2;
+    }
+    if (p.type === "trap") return this._applyTrap(run, res);
+    var n = this.node(p.key, run);
+    return p.type === "ruse" ? this._applyRuse(run, n, res) : this._applyObstacle(run, n, res);
   },
   _profiles: function (run) {
     var t = SceneEngine.getTemplate(run.templateId);
@@ -974,7 +1015,7 @@ var Pa2Run = {
   },
   trapOptions: function () {
     var run = this.getRun();
-    if (!run || run.status !== PA2_STATUS.trap || !run.trap || run.trap.result) return null;
+    if (!run || run.status !== PA2_STATUS.trap || !run.trap || run.trap.result || run.pending) return null;
     var ck = this._trapCheck(run), back = PA2_TRAP_RULES.backBreath;
     return { disarm: ck, kit: Number(run.stock.trousse || 0), back: { cost: back, affordable: run.breath >= back } };
   },
@@ -997,13 +1038,18 @@ var Pa2Run = {
       run.stock.trousse -= 1;
       res = { kind: "ok", kit: true };
     } else if (choice === "desamorcer") {
-      res = this.roll(opts.disarm.thr);
+      res = this._riskRoll(run, opts.disarm.thr);
       res.thr = opts.disarm.thr; res.cran = opts.disarm.cran; res.chance = opts.disarm.chance;
-      if (res.kind === "mid") run.breath = Math.max(0, run.breath - PA2_TRAP_RULES.midBreath);
     } else if (choice === "subir") {
       res = { kind: "endure" };
     } else return { ok: false, reason: _t("Choix impossible") };
     res.choice = choice; res.fx = t.fx;
+    if (choice === "desamorcer" && this._offerInsist(run, "trap", run.trap.key, res)) return { ok: true, reason: null, result: res };
+    return this._applyTrap(run, res);
+  },
+  _applyTrap: function (run, res) {
+    var t = run.traps[run.trap.key];
+    if (res.choice === "desamorcer" && res.kind === "mid") run.breath = Math.max(0, run.breath - PA2_TRAP_RULES.midBreath);
     if (res.kind === "ko" || res.kind === "endure") this._applyTrapFx(run, t.fx, res);
     if (res.kind === "ko") { run.wounds += 1; res.wound = true; } // v3.467.2 (PG-D3) : raté, c'est pire que subir
     t.done = true;
@@ -1088,9 +1134,13 @@ var Pa2Run = {
     if (!useRope && !opt.affordable) return { ok: false, reason: _t("Pas assez de Souffle pour cette approche") };
     var res;
     if (useRope) { run.stock.corde -= 1; res = { roll: 20, kind: "ok", rope: true }; }
-    else { run.breath = Math.max(0, run.breath - opt.cost); res = this.roll(opt.thr); }
-    res.voie = voie; res.thr = opt.thr; res.cran = opt.cran; res.chance = opt.chance;
-    var base = run.refGold * PA2_GOLD.obstacle * Number(opt.lootMod || 1) * this.lootMult(run) * Number(this.condFx(run, "obstacleGold") || 1); // v3.469.0 : vent de sable
+    else { run.breath = Math.max(0, run.breath - opt.cost); res = this._riskRoll(run, opt.thr); }
+    res.voie = voie; res.thr = opt.thr; res.cran = opt.cran; res.chance = opt.chance; res.lootMod = opt.lootMod;
+    if (this._offerInsist(run, "obstacle", n.key, res)) return { ok: true, reason: null, result: res };
+    return this._applyObstacle(run, n, res);
+  },
+  _applyObstacle: function (run, n, res) {
+    var base = run.refGold * PA2_GOLD.obstacle * Number(res.lootMod || 1) * this.lootMult(run) * Number(this.condFx(run, "obstacleGold") || 1); // v3.469.0 : vent de sable
     if (res.kind === "ok") res.gain = this._gold(run, base);
     if (res.kind === "mid") { res.gain = this._gold(run, base * PA2_GOLD.obstacleMid); run.breath = Math.max(0, run.breath - PA2_RULES.mistBreath); }
     if (res.kind === "ko") {
@@ -1285,8 +1335,12 @@ var Pa2Run = {
     if (!n) return { ok: false, reason: _t("Choix impossible") };
     if (n.alarm) return { ok: false, reason: _t("L'alarme a sonné : ils t'attendent.") };
     var run = this.getRun(), ck = this._check(run, "precision", { node: n, base: 5, voie: "precision", bonus: this.ruseBonus(run) });
-    var res = this.roll(ck.thr);
+    var res = this._riskRoll(run, ck.thr);
     res.thr = ck.thr; res.cran = ck.cran; res.chance = ck.chance; res.ruse = true;
+    if (this._offerInsist(run, "ruse", n.key, res)) return { ok: true, reason: null, result: res };
+    return this._applyRuse(run, n, res);
+  },
+  _applyRuse: function (run, n, res) {
     if (res.kind === "ko") { res.surprised = true; run.lastResult = res; this._save(); return { ok: true, reason: null, result: res }; }
     var est = this.combatEstimate("tenir");
     var share = res.kind === "ok" ? PA2_GOLD.ruse : PA2_GOLD.ruseMid;
@@ -1317,11 +1371,11 @@ var Pa2Run = {
   drink: function () {
     var n = this._current(["source"]);
     if (!n) return { ok: false, reason: _t("Choix impossible") };
-    var run = this.getRun(), amt = this.sourceAmount(run);
+    var run = this.getRun(), q = this.quality(), amt = Math.round(this.sourceAmount(run) * q.mult); // v3.578.0 : jet de qualité
     var healed = this._heal(game.heroMaxHp * amt / 100);
-    if (n.fullBreath) amt = Math.max(amt, 100 - run.breath); // parcours : la source qui rend tout le Souffle
+    if (n.fullBreath || q.q === "parfait") amt = Math.max(amt, 100 - run.breath); // parcours, ou un 20 : la source rend tout le Souffle
     run.breath = Math.min(100, run.breath + amt);
-    return this._done(run, n, { kind: "source", amount: amt, healed: healed });
+    return this._done(run, n, { kind: "source", amount: amt, healed: healed, quality: q });
   },
 
   altarCost: function (run) {
@@ -1342,10 +1396,11 @@ var Pa2Run = {
     var free = this._altarFree(run), cost = this.altarCost(run);
     if (!free && run.loot < cost) return { ok: false, reason: _t("Pas assez d'or.") };
     if (free) run.altarFreeUsed = true; else this._pay(run, cost);
-    if (run.wounds > 0) run.wounds -= 1;
+    var q = this.quality(), w0 = run.wounds; // v3.578.0 : jet de qualité ; un 20 lève une blessure de plus
+    run.wounds = Math.max(0, run.wounds - (q.q === "parfait" ? 2 : 1));
     if (run.fx) delete run.fx.venin; // v3.467.0 : l'autel lève le Venin
-    var healed = this._heal(game.heroMaxHp * PA2_RULES.altarHealPct * (this.hasRelic("cendre", run) ? PA2_RULES.cendreHeal : 1)); // v3.469.5
-    return this._done(run, n, { kind: "autel", accepted: true, cost: free ? 0 : cost, healed: healed });
+    var healed = this._heal(game.heroMaxHp * PA2_RULES.altarHealPct * q.mult * (this.hasRelic("cendre", run) ? PA2_RULES.cendreHeal : 1)); // v3.469.5
+    return this._done(run, n, { kind: "autel", accepted: true, cost: free ? 0 : cost, healed: healed, cured: w0 - run.wounds, quality: q });
   },
 
   drawRelics: function (run, count) {
@@ -1370,7 +1425,8 @@ var Pa2Run = {
     run.relics.push(id);
     var res = { kind: "trouvaille", relic: id, rare: 0 };
     var rare = PA2_RARE[run.worldId];
-    if (rare && this.rand() * 100 < rare.findChancePct) res.rare = this._creditRare(run, 1);
+    res.quality = this.quality(); // v3.578.0 : jet de qualité ; un 20 garantit la ressource rare
+    if (rare && (res.quality.q === "parfait" || this.rand() * 100 < rare.findChancePct * res.quality.mult)) res.rare = this._creditRare(run, 1);
     return this._done(run, n, res);
   },
   _rareName: function (run) {
@@ -1448,7 +1504,7 @@ var Pa2Run = {
     if (hook.id === "chasseur") return !!run.flags.sauve; // runs d'avant la v3.385.0 : pas de hookBranch
     return g.branches ? g.branches.indexOf(this.hookBranch(run)) >= 0 : false;
   },
-  placeAction: function (action) {
+  placeAction: function (action, rationId) {
     var n = this._current(["camp", "seuil"]);
     if (!n) return { ok: false, reason: _t("Choix impossible") };
     var run = this.getRun(), R = PA2_RULES, camp = n.type === "camp";
@@ -1461,17 +1517,23 @@ var Pa2Run = {
       run.relics.push(hook.campGift.relic);
       res.gift = hook.campGift.relic;
     }
+    var w0 = run.wounds;
     if (action === "rest") {
-      var pct = (camp ? R.campRestPct : R.seuilRestPct) * (this.hasItem("natte", run) ? R.natteRestMult : 1); // v3.469.4 : Natte de caravane
+      res.quality = this.quality(); // v3.578.0 : jet de qualité ; le repos donne l'avantage au prochain jet
+      var pct = (camp ? R.campRestPct : R.seuilRestPct) * (this.hasItem("natte", run) ? R.natteRestMult : 1) * res.quality.mult; // v3.469.4 : Natte de caravane
       res.healed = this._heal(game.heroMaxHp * pct);
-      run.breath = Math.min(100, run.breath + Math.round(pct * 100));
+      res.breath = Math.round(pct * 100);
+      run.breath = Math.min(100, run.breath + res.breath);
+      if (res.quality.q === "parfait" && run.wounds > 0) run.wounds -= 1;
+      run.advNext = true; res.adv = true;
       if (run.fx) delete run.fx.entrave; // v3.467.0 : le repos lève l'Entrave
     } else if (action === "cook") {
-      var rid = this._rationInStock(run);
+      var rid = rationId && run.stock[rationId] > 0 && PA2_ITEMS[rationId].healPct ? rationId : this._rationInStock(run);
       if (!rid) return { ok: false, reason: _t("Tu n'as plus de ration.") };
       run.stock[rid] -= 1;
-      res.healed = this._heal(game.heroMaxHp * R.cookPct);
-      if (run.wounds > 0) run.wounds -= 1;
+      res.ration = rid; res.quality = this.quality();
+      res.healed = this._heal(game.heroMaxHp * this.cookPct(rid) * res.quality.mult); // v3.578.0 (2A) : la ration compte
+      run.wounds = Math.max(0, run.wounds - (res.quality.q === "parfait" ? 2 : 1));
       if (run.fx) { delete run.fx.entrave; delete run.fx.venin; } // v3.467.0 : un repas au feu, ration comprise
     } else if (action === "listen") {
       run.reveal[camp ? 2 : 3] = true;
@@ -1482,8 +1544,11 @@ var Pa2Run = {
     } else {
       return { ok: false, reason: _t("Choix impossible") };
     }
+    res.cured = w0 - run.wounds;
     return this._done(run, n, res);
   },
+  // Au feu, une ration soigne ×1,5 son effet, plafonné aux PV max (v3.578.0, 2A).
+  cookPct: function (rid) { return Math.min(1, Number((PA2_ITEMS[rid] || {}).healPct || 0) * PA2_RULES.cookMult); },
 
   /* ---------- Destination sans combat ---------- */
 
