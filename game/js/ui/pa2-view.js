@@ -854,7 +854,7 @@ function pa2TrapSheetBody(run, st) {
     h += '</div>';
   } else {
     var r = st.res;
-    if (r.choice === "desamorcer") h += pa2DieBlock(r.thr, r.cran, false).replace(pa2DieFace(1), pa2DieFace(st.shown ? r.roll : 1));
+    if (r.choice === "desamorcer") h += pa2DieBlock(r, st.shown);
     h += '<div id="pa2-outcome" class="' + (st.shown ? "" : "is-hidden") + '">' + pa2TrapOutcome(run, r, td) +
       '<button type="button" class="kbtn primary" onclick="pa2TrapGo()">' + esc(_t("Continuer")) + '</button></div>';
   }
@@ -887,7 +887,7 @@ function pa2Trap(choice) {
   }
   pa2View.sheet = { trap: true, step: "result", res: r.result, shown: choice !== "desamorcer" };
   pa2RenderSheet();
-  if (choice === "desamorcer") pa2RollDie(r.result.roll, function () { if (r.result.kind === "ok") pa2Buzz(30); pa2Reveal(Pa2Run.getRun() || run); });
+  if (choice === "desamorcer") pa2RollDie(r.result.roll, function () { if (r.result.kind === "ok") pa2Buzz(30); pa2Reveal(Pa2Run.getRun() || run); }, r.result.nat);
   else { pa2Reveal(run); pa2RefreshHud(); }
 }
 // Le pas reprend du milieu du sentier jusqu'au point visé.
@@ -991,20 +991,37 @@ function pa2Head(run, n, title, kicker, big) {
 function pa2OddsHTML(cran) {
   return '<span class="pa2-odds o' + PA2_CRAN_LEVEL[cran] + '"><span class="pa2-cran"><i></i><i></i><i></i><i></i></span><span class="pa2-w">' + esc(PA2_CRAN_WORD[cran]) + '</span></span>';
 }
+/* v3.577.0 : le d20 (dessiné en SVG), la valeur du jet au centre. */
+var PA2_D20_SVG = '<svg viewBox="0 0 100 100" aria-hidden="true"><polygon class="pa2-d20-hex" points="50,3 91,26.5 91,73.5 50,97 9,73.5 9,26.5"/>' +
+  '<path class="pa2-d20-edge" d="M50,22 L77,68 L23,68 Z M50,3 L50,22 M91,26.5 L50,22 L9,26.5 M91,26.5 L77,68 L91,73.5 M77,68 L50,97 L23,68 L9,73.5 M9,26.5 L23,68"/>';
 function pa2DieFace(v) {
-  var m = { 1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8] }, h = "";
-  for (var i = 0; i < 9; i++) h += "<i" + (m[v].indexOf(i) >= 0 ? ' class="on"' : "") + "></i>";
-  return h;
+  return PA2_D20_SVG + '<text x="50" y="59" text-anchor="middle">' + esc(v == null ? "?" : String(v)) + '</text></svg>';
 }
-function pa2DieBlock(thr, cran, rope) {
-  return '<div class="pa2-dierow"><div class="pa2-die" id="pa2-die">' + pa2DieFace(rope ? 6 : 1) + '</div><div class="pa2-target">' + esc(_t("Il faut")) +
-    '<b>' + (rope ? esc(_t("corde")) : thr + (thr < 6 ? "+" : "")) + '</b>' + esc(rope ? _t("Assuré") : PA2_CRAN_WORD[cran]) + '</div></div>';
+// « Il faut 9+ » ; au-delà de 20, seul le 20 naturel passe ; le 1 rate toujours.
+function pa2NeedText(thr) { return thr >= 20 ? "20" : Math.max(2, Number(thr || 0)) + "+"; }
+function pa2Signed(n) { return (n < 0 ? "−" : "+") + Math.abs(n); }
+/* r : résultat du jet (thr, cran, chance, roll, nat, rope) ; shown : le dé est déjà tombé. */
+function pa2DieBlock(r, shown) {
+  var nat = shown && !r.rope && r.nat ? r.nat : 0;
+  var h = '<div class="pa2-dierow"><div class="pa2-die' + (nat ? " is-nat" + nat : "") + '" id="pa2-die">' + pa2DieFace(r.rope ? 20 : (shown ? r.roll : null)) + '</div><div class="pa2-target">' + esc(_t("Il faut")) +
+    '<b>' + (r.rope ? esc(_t("corde")) : pa2NeedText(r.thr)) + '</b>' + esc(r.rope ? _t("Assuré") : PA2_CRAN_WORD[r.cran] + (r.chance != null ? " · " + r.chance + " %" : "")) + '</div></div>';
+  return h + '<div class="pa2-nat" id="pa2-nat">' + (nat ? pa2NatHTML(nat) : "") + '</div>';
 }
+function pa2NatHTML(nat) {
+  return nat === 20 ? '<span class="is-ok">' + esc(_t("20 naturel : réussite d'office")) + '</span>' : '<span class="is-ko">' + esc(_t("1 naturel : échec d'office")) + '</span>';
+}
+function pa2ClassLabel() {
+  var hero = typeof getSelectedHero === "function" ? getSelectedHero() : null, cls = hero && typeof getClassForHero === "function" ? getClassForHero(hero) : null;
+  return cls ? _td(cls.label) : "";
+}
+/* Le détail du jet : « Puissance +4 · Chevalier +2 · matériel +3 · blessure −2 · DD 12 ». */
 function pa2WhyHTML(o, run) {
-  var parts = [_t("{s} {v} contre {d}", { s: sceneStatLabel(o.stat), v: pa2Num(o.statValue), d: pa2Num(o.difficulty) })];
-  if (o.bonus) parts.push(_tn(o.bonus, "+{n} cran", "+{n} crans", { n: o.bonus }));
-  if (run.wounds) parts.push(_tn(run.wounds, "{n} blessure", "{n} blessures", { n: run.wounds }));
-  return esc(parts.join(" · "));
+  var parts = [sceneStatLabel(o.stat) + " " + pa2Signed(o.mod || 0)];
+  if (o.mastery) parts.push(pa2ClassLabel() + " " + pa2Signed(o.mastery));
+  if (o.items) parts.push(_t("matériel {m}", { m: pa2Signed(o.items) }));
+  if (o.wounds) parts.push(_tn(run.wounds, "blessure {m}", "blessures {m}", { m: pa2Signed(-o.wounds) }));
+  parts.push(_t("DD {d}", { d: o.dd }));
+  return esc(parts.map(function (x) { return x.replace(/ /g, "\u00a0"); }).join(" · ")); // chaque terme reste d'un bloc
 }
 function pa2ActKicker(n, what) {
   var run = Pa2Run.getRun();
@@ -1045,7 +1062,7 @@ function pa2SheetBody(run, n, st) {
       } else {
         var r = st.res;
         h += pa2Head(run, n, name, _td((gab.options[r.voie] || {}).label || ""));
-        h += pa2DieBlock(r.thr, r.cran, r.rope);
+        h += pa2DieBlock(r, st.shown);
         h += '<div id="pa2-outcome" class="' + (st.shown ? "" : "is-hidden") + '">' + pa2ObstacleOutcome(run, n, r) + '</div>';
       }
       break;
@@ -1090,7 +1107,7 @@ function pa2SheetBody(run, n, st) {
         h += '</div>';
       } else if (st.step === "ruse") {
         h += pa2FoeHead(foe, _t("Ruser"), false);
-        h += pa2DieBlock(st.res.thr, st.res.cran, false);
+        h += pa2DieBlock(st.res, st.shown);
         h += '<div id="pa2-outcome" class="' + (st.shown ? "" : "is-hidden") + '">' + pa2RuseOutcome(run, st.res) + '</div>';
       } else {
         h += pa2FoeHead(foe, st.apName, false);
@@ -1327,13 +1344,19 @@ function pa2Shake() {
 function pa2Buzz(p) { try { if (navigator.vibrate) navigator.vibrate(p); } catch (e) { noteErreur("pa2-view.pa2Buzz", e); /* vibration indisponible */ } }
 
 // Dé qui roule, puis se pose sur la valeur déjà tirée par le moteur.
-function pa2RollDie(finalVal, then) {
+function pa2RollDie(finalVal, then, nat) {
   var die = document.getElementById("pa2-die");
   if (!die) { then(); return; }
+  var txt = die.querySelector("text");
   die.classList.add("is-rolling");
-  var t = setInterval(function () { die.innerHTML = pa2DieFace(1 + Math.floor(Math.random() * 6)); }, 70);
+  var t = setInterval(function () { if (txt) txt.textContent = String(1 + Math.floor(Math.random() * 20)); }, 70);
   pa2View.timers.push(t);
-  pa2Later(function () { clearInterval(t); die.classList.remove("is-rolling"); die.innerHTML = pa2DieFace(finalVal); then(); }, 800);
+  pa2Later(function () {
+    clearInterval(t); die.classList.remove("is-rolling");
+    if (txt) txt.textContent = String(finalVal);
+    if (nat) { die.classList.add("is-nat" + nat); var el = document.getElementById("pa2-nat"); if (el) el.innerHTML = pa2NatHTML(nat); } // 20 ou 1 naturel
+    then();
+  }, 800);
 }
 // Fin d'animation : la feuille montre l'issue, le HUD reprend les vraies valeurs.
 function pa2Reveal(run) {
@@ -1372,7 +1395,7 @@ function pa2Obstacle(voie, rope) {
   pa2RollDie(r.result.roll, function () {
     if (r.result.kind === "ok") pa2Buzz(30);
     pa2Reveal(Pa2Run.getRun() || run);
-  });
+  }, r.result.rope ? 0 : r.result.nat);
 }
 function pa2Brute() {
   var run = Pa2Run.getRun();
@@ -1422,7 +1445,7 @@ function pa2Ruse() {
   pa2View.sheet.step = "ruse";
   pa2View.sheet.res = r.result;
   pa2RenderSheet();
-  pa2RollDie(r.result.roll, function () { pa2Reveal(Pa2Run.getRun() || run); });
+  pa2RollDie(r.result.roll, function () { pa2Reveal(Pa2Run.getRun() || run); }, r.result.nat);
 }
 function pa2PassGuardian() { // v3.454.0 (Crypte)
   if (pa2Quick(function () { return Pa2Run.passGuardian(); })) pa2CloseSheet();

@@ -4158,7 +4158,12 @@ I18n.register("en", {
   "Il faut": "You need",
   "corde": "rope",
   "Assuré": "Certain",
-  "{s} {v} contre {d}": "{s} {v} against {d}",
+  // v3.577.0 : le jet au d20
+  "matériel {m}": "gear {m}",
+  "blessure {m}||blessures {m}": ["wound {m}", "wounds {m}"],
+  "DD {d}": "DC {d}",
+  "20 naturel : réussite d'office": "Natural 20: automatic success",
+  "1 naturel : échec d'office": "Natural 1: automatic failure",
   "Destination": "Destination",
   "{n} Souffle": "{n} Breath",
   "sans Souffle": "no Breath",
@@ -4281,8 +4286,6 @@ I18n.register("en", {
   "{n} place libre||{n} places libres": ["{n} free slot", "{n} free slots"],
   "Trop grand : {n} place.||Trop grand : {n} places.": ["Too big: {n} slot.", "Too big: {n} slots."],
   "{n} place||{n} places": ["{n} slot", "{n} slots"],
-  "+{n} cran||+{n} crans": ["+{n} step", "+{n} steps"],
-  "{n} blessure||{n} blessures": ["{n} wound", "{n} wounds"],
   "il te reste {n} corde||il te reste {n} cordes": ["{n} rope left", "{n} ropes left"],
   "L'autel de pierre ne demande rien, une fois par aventure.": "The stone altar asks nothing, once per adventure."
 });

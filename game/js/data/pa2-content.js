@@ -257,6 +257,27 @@ var PA2_CHEST_REWARDS = {
   mountain: { boss: "eclat_trieur", clairiere: "galet_source" } // v3.489.0 : le trieur, seulement s'il est combattu
 };
 
+/* v3.577.0 (Petites Aventures, lot 2, proposition validée par Seb le 30/10) : LE JET AU d20.
+   Jet = d20 + stat + maîtrise de classe + objets − blessures, contre un DD qui ne suit pas la force du héros.
+   Stat : +1 tous les statStep points au-delà de statFrom (l'entraînement se voit). Banc : tools/sim/pa2-jets-bench.js. */
+var PA2_D20 = {
+  statFrom: 30, statStep: 35, statMax: 9,
+  mastery: 2,          // voie forte +2, voie faible −2
+  cranValue: 3,        // un cran d'objet ou de relique (ancien d6) vaut +3
+  woundValue: 2,       // −2 par blessure
+  midBand: 3,          // de justesse : 1 à 3 sous le DD
+  // Banc du 30/10 (pa2-jets-bench) : voie forte ~78 %, moyenne ~55 %, faible ~44 % au milieu d'une aventure.
+  ddBase: 8, ddWorld: 0.5, ddDepthStep: 3, ddRing: 1, ddBaseRef: 4,
+  ddVoie: { power: 0, precision: 0, endurance: 0 } // les voies diffèrent déjà par le Souffle et le butin
+};
+/* Force et faiblesse de chaque classe (idée de Seb, triangle validé le 30/10).
+   alsoStat : la voie forte lit aussi la stat de combat de la classe (le Rôdeur entraîne sa Célérité, le Mage sa Volonté). */
+var PA2_CLASS_VOIES = {
+  knight: { strong: "power", weak: "precision" },
+  archer: { strong: "precision", weak: "endurance", alsoStat: "celerity" },
+  mage: { strong: "endurance", weak: "power", alsoStat: "will" }
+};
+
 /* Réglages divers. Banc. */
 var PA2_RULES = {
   sightRows: 2,              // rangées visibles devant soi (torche : +1)
@@ -996,6 +1017,8 @@ window.PA2_RARE = PA2_RARE;
 window.PA2_MEMORY_DEST_RARE = PA2_MEMORY_DEST_RARE;
 window.PA2_CHEST_REWARDS = PA2_CHEST_REWARDS;
 window.PA2_RULES = PA2_RULES;
+window.PA2_D20 = PA2_D20;
+window.PA2_CLASS_VOIES = PA2_CLASS_VOIES;
 window.PA2_FOES = PA2_FOES;
 window.PA2_FOE_LINES = PA2_FOE_LINES;
 window.PA2_OBSTACLE_LINES = PA2_OBSTACLE_LINES;

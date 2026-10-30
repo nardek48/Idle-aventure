@@ -204,8 +204,17 @@ var SceneRunManager = {
       heroId: game.heroId,
       power: Number(game.heroPowerRaw || 0),
       precision: Number(game.heroPrecisionRaw || 0),
-      endurance: Number(game.heroEnduranceRaw || 0)
+      endurance: Number(game.heroEnduranceRaw || 0),
+      // v3.577.0 (jets au d20) : stats de combat lues par la voie forte du Rôdeur et du Mage
+      celerity: this.rawStat("celerity"),
+      will: this.rawStat("will")
     };
+  },
+  // Stat brute = base du héros + entraînement (même règle que StatsSystem, sans toucher au fichier protégé).
+  rawStat: function (stat) {
+    var hero = typeof getHeroByGameId === "function" ? getHeroByGameId(game.heroId) : null;
+    var base = (hero && hero.stats) ? Number(hero.stats[stat]) || 0 : 0;
+    return base + Number((game.trainedStats && game.trainedStats[stat]) || 0);
   },
 
   /* startRun(templateId, opts) -> { ok, reason, run } : Petite Aventure ou parcours, menés par
