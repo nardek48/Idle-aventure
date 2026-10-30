@@ -528,7 +528,6 @@ html.wide-mode #panel-container .cw-mfoot { display: flex; justify-content: cent
 html.wide-mode #panel-container .cw .exp-sum { margin: 0 0 6px; gap: 6px; }
 html.wide-mode #panel-container .cw .exp-sum span { padding: 4px 6px; font-size: 12px; }
 html.wide-mode #panel-container .cw .exp-sum b { font-size: 16px; }
-html.wide-mode #panel-container .cw .exp-sec { margin: 8px 0 6px; font-size: 12px; }
 html.wide-mode #panel-container .cw .exp-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 html.wide-mode #panel-container .cw .exp-list > .exp-row { margin: 0; }
 html.wide-mode #panel-container .cw .exp-foot { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
