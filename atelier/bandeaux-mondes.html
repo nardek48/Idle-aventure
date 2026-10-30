@@ -100,14 +100,14 @@ var SCR = {
   quetes: { name: "Quêtes", note: "Le même tableau et le même panneau, dressés dans le camp de chaque monde, la route vers son danger. L'image suit le chapitre d'Histoire en cours.",
     key: function (i) { return "quetes_" + WORLDS[i][0]; }, title: function () { return "Le tableau des missions"; }, sub: function (i) { return WORLDS[i][1]; },
     label: function (i) { return WORLDS[i][1]; }, state: function () { return ["ok"]; } },
-  village: { name: "Village", note: "Aeswyn reste en forêt et se rebâtit. L'image suit le monde le plus loin atteint. Les stades 5 et 6 sont à refaire ; en attendant, le jeu garderait le stade 4.",
+  village: { name: "Village", note: "Aeswyn reste en forêt et se rebâtit. L'image suit le monde le plus loin atteint. Le stade 6 est à retoucher (texte écrit) ; en attendant, le jeu garderait le stade 5.",
     key: function (i) { return "village_" + (i + 1); }, title: function () { return "Le village d'Aeswyn"; }, sub: function () { return "Rebâti planche après planche"; },
     label: function (i) { return "Stade " + (i + 1) + " · " + WORLDS[i][1]; },
-    state: function (i) { return i === 4 ? ["redo", "Un château fort en pierre apparaît derrière le village."] : i === 5 ? ["redo", "Écusson « NIVEAU 6 » écrit en haut à gauche, château, lac et bateaux, cadrage reculé."] : ["ok"]; } },
-  heros: { name: "Héros", note: "Le terrain d'entraînement reste en forêt et s'équipe. L'image suit le monde le plus loin atteint. Les stades 4 à 6 sont à refaire ; en attendant, le jeu garderait le stade 3.",
+    state: function (i) { return i === 5 ? ["redo", "Écusson « NIVEAU 6 » écrit en haut à gauche : à retirer par retouche."] : ["ok"]; } },
+  heros: { name: "Héros", note: "Le terrain d'entraînement reste en forêt et s'équipe. L'image suit le monde le plus loin atteint. À partir du stade 4, le terrain change d'angle et devient un vrai camp d'entraînement.",
     key: function (i) { return "heros_" + (i + 1); }, title: function () { return "Le terrain d'entraînement"; }, sub: function () { return "Se préparer avant de repartir"; },
     label: function (i) { return "Stade " + (i + 1) + " · " + WORLDS[i][1]; },
-    state: function (i) { return i === 3 ? ["redo", "Un grand pavillon de bois apparaît, le terrain perd son côté forêt."] : i === 4 ? ["redo", "Forteresse en pierre, personnage au premier plan."] : i === 5 ? ["redo", "Presque identique au stade 5 ; les trois équipements de classe manquent."] : ["ok"]; } }
+    state: function () { return ["ok"]; } }
 };
 var HP = 150, HC = 200; // hauteurs retenues : téléphone Moyenne, PC 200 px
 var S = { scr: "camp", view: "both" };
