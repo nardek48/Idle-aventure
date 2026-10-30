@@ -20201,6 +20201,21 @@ console.log("\n[378] v3.563.0 — Une feuille redessinée garde sa position de d
   } catch (err) { ok(false, "[378] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[370b] v3.568.0 — Grand écran : accueil et création du héros");
+(function () {
+  try {
+    var fs = require("fs"), path = require("path");
+    ok(fs.existsSync(path.join(ROOT, "images/TitleScreen/title_background_wide.webp")), "fond d'accueil paysage présent");
+    var cl = g.document.documentElement.classList, c0 = cl.contains, wide = false;
+    cl.contains = function (c) { return c === "wide-mode" ? wide : false; };
+    ok(typeof g.buildTitleScreenWideHTML === "function" && g.titleScreenIsWide() === false, "téléphone : accueil inchangé");
+    wide = true;
+    ok(g.buildTitleScreenWideHTML().indexOf("title_background_wide.webp") > 0, "grand écran : accueil sur le fond paysage");
+    ok(g.buildHeroCreationWideHTML(g.HEROES_DB.knight).indexOf("heroCreationWideStart()") > 0, "grand écran : création sur une page");
+    cl.contains = c0;
+  } catch (err) { ok(false, "[370b] exception : " + err.message); }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");
