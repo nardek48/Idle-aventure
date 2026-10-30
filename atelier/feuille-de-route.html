@@ -1,0 +1,156 @@
+<title>Feuille de route Aethervale</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600&family=Alegreya+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Mise en page : une colonne ; chantiers numérotés (ordre proposé), puis listes à état (pastille à gauche). */
+:root {
+  --fond: #ece6dc; --carte: #f8f4ec; --encre: #2a2118; --sourd: #6e604d; --trait: #d3c6b1; --bronze: #8f5f17;
+  --s-cours: #2f5f8f; --s-cadrer: #8f5f17; --s-tester: #3d7348; --s-signal: #9b2f22; --s-report: #6e604d; --s-clos: #3d7348;
+  --f-titre: "Cinzel", Georgia, serif; --f-texte: "Alegreya Sans", system-ui, sans-serif; --f-code: "JetBrains Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --fond: #15110c; --carte: #211a12; --encre: #f1e6cf; --sourd: #b9a988; --trait: #42352a; --bronze: #e0a347;
+  --s-cours: #8cb8e6; --s-cadrer: #e0a347; --s-tester: #8fd19c; --s-signal: #f08a74; --s-report: #b9a988; --s-clos: #8fd19c; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --fond: #15110c; --carte: #211a12; --encre: #f1e6cf; --sourd: #b9a988; --trait: #42352a; --bronze: #e0a347;
+  --s-cours: #8cb8e6; --s-cadrer: #e0a347; --s-tester: #8fd19c; --s-signal: #f08a74; --s-report: #b9a988; --s-clos: #8fd19c; color-scheme: dark }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--fond); color: var(--encre); font: 16px/1.5 var(--f-texte); }
+.wrap { max-width: 760px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 18px 48px; display: grid; gap: 16px; }
+h1 { font: 600 26px/1.2 var(--f-titre); letter-spacing: .03em; margin: 0; color: var(--bronze); text-wrap: balance; }
+h2 { font: 600 17px var(--f-titre); letter-spacing: .04em; color: var(--bronze); margin: 14px 0 0; text-wrap: balance; }
+h3 { font-size: 18px; margin: 0; text-wrap: balance; }
+p, ul { margin: 0; }
+ul { padding-left: 20px; display: grid; gap: 4px; }
+a { color: var(--bronze); font-weight: 700; }
+code { font: 13px var(--f-code); overflow-wrap: anywhere; }
+.intro { color: var(--sourd); max-width: 65ch; }
+.chantier { background: var(--carte); border: 1px solid var(--trait); border-radius: 12px; padding: 12px 14px; display: grid; grid-template-columns: 34px 1fr; gap: 4px 12px; }
+.rang { font: 600 22px/1 var(--f-titre); color: var(--bronze); padding-top: 2px; font-variant-numeric: tabular-nums; }
+.chantier .corps { min-width: 0; display: grid; gap: 6px; }
+.tete { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; }
+.pastille { font: 700 12px var(--f-texte); letter-spacing: .05em; text-transform: uppercase; border: 1px solid currentColor; border-radius: 999px; padding: 1px 8px; white-space: nowrap; }
+.s-cours { color: var(--s-cours); } .s-cadrer { color: var(--s-cadrer); } .s-tester { color: var(--s-tester); }
+.s-signal { color: var(--s-signal); } .s-report { color: var(--s-report); } .s-clos { color: var(--s-clos); }
+.sourd { color: var(--sourd); font-size: 15px; }
+.liste { display: grid; gap: 0; border-top: 1px solid var(--trait); }
+.ligne { display: grid; grid-template-columns: 112px 1fr; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--trait); align-items: start; }
+.ligne > div { min-width: 0; }
+.ligne .pastille { justify-self: start; }
+.ligne b { font-weight: 700; }
+@media (max-width: 440px) { .ligne { grid-template-columns: 1fr; gap: 4px; } }
+</style>
+<div class="wrap">
+  <h1>Feuille de route</h1>
+  <p class="intro">Aethervale, état au 30/10/2026, sur la v3.567.0. Les chantiers sont dans l'ordre proposé, à valider ensemble un par un. Ensuite viennent ce qui attend ton test en jeu, ce qui est signalé sans être corrigé, et ce qui est reporté.</p>
+
+  <h2>Clos aujourd'hui</h2>
+  <div class="liste">
+    <div class="ligne"><span class="pastille s-clos">Clos</span><div><b>Difficulté de la Crypte et de la Montagne (v3.562).</b> Testée en jeu avec un Mage : c'est nettement plus dur, et il faut des potions de force contre le Dragon. C'est l'effet voulu, rien ne change.</div></div>
+    <div class="ligne"><span class="pastille s-clos">Clos</span><div><b>Suivi « Images à faire ».</b> 192 images sur 192 sont faites, et aucune n'est absente du jeu. La suite est dans la nouvelle liste ci-dessous.</div></div>
+  </div>
+
+  <h2>Chantiers, dans l'ordre proposé</h2>
+
+  <div class="chantier">
+    <span class="rang">1</span>
+    <div class="corps">
+      <div class="tete"><h3>Images à générer</h3><span class="pastille s-cours">En cours</span></div>
+      <p>Il y a 46 images, avec leur prompt, dans <a href="https://claude.ai/artifact/SdtrXba9Wkt6YVLQYVS3Cd" target="_blank" rel="noopener">Images à générer</a> :</p>
+      <ul>
+        <li>les deux pastilles des élites, « pièce Rare » et « pièce Épique », à la place de l'icône d'armure empruntée ;</li>
+        <li>les 6 élites et boss en 400 px ;</li>
+        <li>la silhouette du héros (mesurée trop petite sur Mac) ;</li>
+        <li>les icônes des bâtiments, des ateliers et des objets, les cartes vivantes et l'icône de l'application.</li>
+      </ul>
+      <p class="sourd">Nouvelle règle : les formats tiennent compte du PC. Un nouveau fond de combat se livre en deux fichiers, portrait et paysage <code>-wide</code>.</p>
+      <p class="sourd">À faire de mon côté quand les pastilles arrivent : remplacer le chemin dans <code>js/ui/living-map-view.js:520</code>.</p>
+    </div>
+  </div>
+
+  <div class="chantier">
+    <span class="rang">2</span>
+    <div class="corps">
+      <div class="tete"><h3>Petites Aventures : bugs et améliorations</h3><span class="pastille s-cadrer">À cadrer</span></div>
+      <p>À commencer par ta liste : ce que tu as relevé en jeu (bugs, lourdeurs, envies). Je vérifie chaque point dans le code avant de proposer.</p>
+      <p class="sourd">Déjà noté dans l'État des chantiers :</p>
+      <ul class="sourd">
+        <li>sur le parcours « Vers le Cœur », les murs ne bougent pas ;</li>
+        <li>les approches « charger » et « tenir » reprennent les icônes d'état des ennemis ;</li>
+        <li>la besace reprend l'icône de la Sacoche du donjon.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="chantier">
+    <span class="rang">3</span>
+    <div class="corps">
+      <div class="tete"><h3>Évolution du village</h3><span class="pastille s-cadrer">À cadrer</span></div>
+      <p>Il faut d'abord fixer ce que tu veux : de nouveaux bâtiments, de nouveaux niveaux, des usages pour le surplus, ou plus de vie au village. Viendra ensuite un document de conception, comme pour les mondes.</p>
+      <p class="sourd">Pistes déjà dans le code ou la doc :</p>
+      <ul class="sourd">
+        <li>des niveaux qu'aucun monde ouvert ne permet de construire : Atelier 9-10, Enchanteresse 3, Entrepôt 9-10, Palissade 9-10. C'est relevé en v3.501, à revérifier ;</li>
+        <li>l'Outre pleine affiche « Rien pour l'instant : elle servira plus tard » (<code>js/ui/warehouse-view.js:485</code>) ;</li>
+        <li>le Grand Ouvrage (v3.561), à juger en jeu ;</li>
+        <li>les matières de la Tour, à prévoir avec le chapitre VI.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="chantier">
+    <span class="rang">4</span>
+    <div class="corps">
+      <div class="tete"><h3>Chapitre VI, la Tour</h3><span class="pastille s-cadrer">À cadrer</span></div>
+      <p>Aujourd'hui, l'Histoire s'arrête sur « Fin du chapitre 5 ». Le premier livrable serait le document de conception (<code>mondes/tour/Aethervale_Conception_Tour_v0_1.md</code>), sans code.</p>
+      <p class="sourd">Déjà décidé :</p>
+      <ul class="sourd">
+        <li>le gabarit des actes, QUE-15 option A : ordre varié, contraintes, 2 quêtes autonomes ;</li>
+        <li>le donjon 6, qui donne le Légendaire ;</li>
+        <li>les images du bestiaire et le fond paysage.</li>
+      </ul>
+      <p class="sourd">À trancher :</p>
+      <ul class="sourd">
+        <li>le récit §VI et le nom Azhem ;</li>
+        <li>le combat de la silhouette, qui touchera peut-être le moteur de combat (fichier protégé) ;</li>
+        <li>la Question et ses 4 fins ;</li>
+        <li>la Mémoire et le Grimoire ;</li>
+        <li>ce qui suit la fin.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>À tester en jeu</h2>
+  <div class="liste">
+    <div class="ligne"><span class="pastille s-tester">À tester</span><div><b>Grand écran, option D (v3.567).</b> Le Camp, la Production, le combat en paysage, les onglets en pastilles.</div></div>
+    <div class="ligne"><span class="pastille s-tester">À tester</span><div><b>Retour Android (v3.536)</b>, sur un vrai Android, avec le jeu installé.</div></div>
+    <div class="ligne"><span class="pastille s-tester">À tester</span><div><b>Taille du texte « Grande » (v3.538)</b> sur iPhone (zoom de Safari).</div></div>
+    <div class="ligne"><span class="pastille s-tester">À tester</span><div><b>Grand Ouvrage (v3.561)</b> : le rythme des paliers et l'or gagné.</div></div>
+    <div class="ligne"><span class="pastille s-tester">À tester</span><div><b>Combat (v3.438 à v3.447)</b> : l'initiative, la préparation de sortie, les objets de combat, le coup de grâce, une descente complète du Labyrinthe, le journal de test.</div></div>
+    <div class="ligne"><span class="pastille s-tester">À tester</span><div><b>Équilibre</b> : le Chevalier sur « Celui qui retient » (98 % au banc, contre 83 % pour les autres) ; Nezzam depuis l'initiative ; l'or des caravanes multiples (non mesuré au banc).</div></div>
+  </div>
+
+  <h2>Signalé, sans correction d'office</h2>
+  <div class="liste">
+    <div class="ligne"><span class="pastille s-signal">Signalé</span><div><b>Images qui servent à deux choses</b> :
+      <ul>
+        <li>Viande et Viande séchée ; Eau et Eau purifiée ;</li>
+        <li><code>node_discovery</code>, <code>stat_critical</code> et <code>equipment_shop</code> (tutoriels compris) ;</li>
+        <li><code>stat_speed</code>, <code>heal_incoming</code> ;</li>
+        <li><code>quests/mission_hunt.webp</code>, qui ne sert plus.</li>
+      </ul>
+    </div></div>
+    <div class="ligne"><span class="pastille s-signal">Provisoire</span><div>Les gains de la carte des Ruines, les récompenses des étapes 11 à 20, Le seuil (25 %) et le titre de chapitre « La ville rangée ».</div></div>
+    <div class="ligne"><span class="pastille s-signal">Robot</span><div>Le robot n'envoie qu'une caravane. L'or des caravanes multiples n'est donc pas mesuré.</div></div>
+    <div class="ligne"><span class="pastille s-signal">Écart</span><div>Grand écran par rapport à la maquette : la fiche du Village garde les cases du jeu, et le journal de combat n'est pas regroupé par round.</div></div>
+  </div>
+
+  <h2>Reporté</h2>
+  <div class="liste">
+    <div class="ligne"><span class="pastille s-report">Reporté</span><div><b>Sons</b> (PLA-6).</div></div>
+    <div class="ligne"><span class="pastille s-report">Reporté</span><div><b>Gestes d'attaque</b> (piste combat B).</div></div>
+    <div class="ligne"><span class="pastille s-report">Reporté</span><div><b>Escorte et temps limité</b> (QUE-15 option B), possibles plus tard à la Tour.</div></div>
+    <div class="ligne"><span class="pastille s-report">Reporté</span><div><b>Politique de sécurité (CSP)</b> : à faire s'il y a un jour un serveur de connexion.</div></div>
+    <div class="ligne"><span class="pastille s-report">Reporté</span><div><b>Échelle typographique complète</b> (INT-11 A), écran par écran.</div></div>
+    <div class="ligne"><span class="pastille s-report">Reporté</span><div><b>Nettoyages</b> : l'ancien code de combat, l'ancien écran Équipement (pour les vieilles sauvegardes), les noms <code>scene-*</code>.</div></div>
+  </div>
+</div>
