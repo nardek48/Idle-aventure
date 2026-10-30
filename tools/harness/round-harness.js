@@ -20216,6 +20216,28 @@ console.log("\n[370b] v3.568.0 — Grand écran : accueil et création du héros
   } catch (err) { ok(false, "[370b] exception : " + err.message); }
 })();
 
+console.log("\n[379] v3.570.0 — Le prologue (option B, atelier atelier/prologue.html)");
+(function () {
+  try {
+    var fs = require("fs"), path = require("path"), P = g.PROLOGUE_PLANCHES, PV = g.PrologueView;
+    ok(Array.isArray(P) && P.length === 6 && P.every(function (p) { return p.lignes && p.lignes.length >= 2; }), "6 planches, chacune avec ses lignes de récit");
+    var manque = [];
+    P.forEach(function (p) { ["", "-wide"].forEach(function (s) { var f = "images/Prologue/" + p.img + s + ".webp"; if (!fs.existsSync(path.join(ROOT, f))) manque.push(f); }); });
+    ok(!manque.length, "12 images présentes, téléphone et PC (" + manque.join(", ") + ")");
+    ok(g.PROLOGUE_TEMPS.avant.join() === "0,4" && g.PROLOGUE_TEMPS.apres.join() === "4,6" && g.PROLOGUE_TEMPS.tout.join() === "0,6", "planches 1-4 avant la création, 5-6 après ; « Revoir » joue les 6");
+    var html = g.prologueLetters("Pas un cri.");
+    ok((html.match(/prologue-l"/g) || []).length === 9 && (html.match(/prologue-m"/g) || []).length === 3, "lettre à lettre : une case par lettre, mots insécables");
+    var src = function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); };
+    ok(/PrologueView\.play\("avant"\)/.test(src("js/ui/title-screen-view.js")) && (src("js/ui/title-screen-view.js").match(/PrologueView\.play\("avant"\)/g) || []).length === 2, "Nouvelle partie et emplacement vide : planches 1-4");
+    ok(/isFirstEverSetup && window\.PrologueView[\s\S]{0,120}PrologueView\.play\("apres"/.test(src("js/ui/modal-view.js")), "première création seulement : planches 5-6, puis le Camp");
+    var fin = 0; PV.play("apres", function () { fin++; }); var actif = PV.active; PV.skip();
+    ok(actif === true && PV.active === false && fin === 1, "« Passer » termine le temps en cours et rend la main une fois");
+    PV.play("avant", null); var r = g.backNavCloseTop();
+    ok(r === "closed" && PV.active === false, "retour Android / Échap = « Passer »");
+    ok(g.I18n && typeof g.I18n.t === "function", "traduction disponible");
+  } catch (err) { ok(false, "[379] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

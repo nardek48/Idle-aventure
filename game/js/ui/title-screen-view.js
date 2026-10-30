@@ -106,6 +106,7 @@ function titleScreenNewGame() {
 
   var titleHost = document.getElementById("title-screen-root");
   if (titleHost) titleHost.innerHTML = "";
+  if (window.PrologueView) PrologueView.play("avant"); // v3.570.0 : planches 1-4 par-dessus la création
 }
 
 /* v3.202.0 : l'écran titre peut maintenant être ouvert EN COURS DE PARTIE,
@@ -194,6 +195,7 @@ function titleScreenCreateInSlot(slotNumber) {
 
   var titleHost = document.getElementById("title-screen-root");
   if (titleHost) titleHost.innerHTML = "";
+  if (window.PrologueView) PrologueView.play("avant"); // v3.570.0 : planches 1-4 par-dessus la création
 }
 
 function getWorldNameByIndex(worldIndex) {

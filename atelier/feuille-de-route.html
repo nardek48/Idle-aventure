@@ -1,0 +1,204 @@
+<title>Feuille de route Aethervale</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600&family=Alegreya+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Mise en page : une colonne ; chaque section est une liste de lignes à cocher et à réordonner (▲ ▼). */
+:root {
+  --fond: #ece6dc; --carte: #f8f4ec; --encre: #2a2118; --sourd: #6e604d; --trait: #d3c6b1; --bronze: #8f5f17;
+  --fait: #3d7348; --fait-fond: #e3eee0;
+  --s-cours: #2f5f8f; --s-cadrer: #8f5f17; --s-tester: #3d7348; --s-signal: #9b2f22; --s-report: #6e604d;
+  --f-titre: "Cinzel", Georgia, serif; --f-texte: "Alegreya Sans", system-ui, sans-serif; --f-code: "JetBrains Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --fond: #15110c; --carte: #211a12; --encre: #f1e6cf; --sourd: #b9a988; --trait: #42352a; --bronze: #e0a347;
+  --fait: #8fd19c; --fait-fond: #1d2a1f;
+  --s-cours: #8cb8e6; --s-cadrer: #e0a347; --s-tester: #8fd19c; --s-signal: #f08a74; --s-report: #b9a988; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --fond: #15110c; --carte: #211a12; --encre: #f1e6cf; --sourd: #b9a988; --trait: #42352a; --bronze: #e0a347;
+  --fait: #8fd19c; --fait-fond: #1d2a1f;
+  --s-cours: #8cb8e6; --s-cadrer: #e0a347; --s-tester: #8fd19c; --s-signal: #f08a74; --s-report: #b9a988; color-scheme: dark }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--fond); color: var(--encre); font: 16px/1.5 var(--f-texte); }
+.wrap { max-width: 760px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 18px 48px; display: grid; gap: 14px; }
+h1 { font: 600 26px/1.2 var(--f-titre); letter-spacing: .03em; margin: 0; color: var(--bronze); text-wrap: balance; }
+h2 { font: 600 17px var(--f-titre); letter-spacing: .04em; color: var(--bronze); margin: 12px 0 0; text-wrap: balance; display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+h2 small { font: 500 14px var(--f-texte); letter-spacing: 0; color: var(--sourd); font-variant-numeric: tabular-nums; }
+p, ul { margin: 0; }
+ul { padding-left: 20px; display: grid; gap: 3px; }
+a { color: var(--bronze); font-weight: 700; }
+code { font: 13px var(--f-code); overflow-wrap: anywhere; }
+.intro { color: var(--sourd); max-width: 65ch; }
+.etat { font-size: 14px; color: var(--sourd); min-height: 1.4em; }
+.outils { display: flex; flex-wrap: wrap; gap: 6px; }
+.outils button { font: 500 14px var(--f-texte); color: var(--encre); background: var(--carte); border: 1px solid var(--trait); border-radius: 999px; min-height: 40px; padding: 0 14px; cursor: pointer; }
+.outils button[aria-pressed="true"] { border-color: var(--bronze); color: var(--bronze); font-weight: 700; }
+.section { display: grid; gap: 8px; }
+.item { background: var(--carte); border: 1px solid var(--trait); border-radius: 12px; padding: 10px 10px 10px 12px; display: grid; grid-template-columns: 44px 1fr 40px; gap: 10px; align-items: start; }
+.item.is-fait { background: var(--fait-fond); }
+.item.is-fait .titre { text-decoration: line-through; text-decoration-color: var(--fait); }
+.item.is-fait .detail { display: none; }
+.coche { width: 44px; height: 44px; border-radius: 10px; border: 2px solid var(--bronze); background: transparent; cursor: pointer; display: grid; place-items: center; color: var(--fait); font-size: 24px; font-weight: 700; }
+.item.is-fait .coche { border-color: var(--fait); background: var(--carte); }
+.corps { min-width: 0; display: grid; gap: 5px; }
+.tete { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: baseline; }
+.rang { font: 600 16px var(--f-titre); color: var(--bronze); font-variant-numeric: tabular-nums; }
+.titre { font-weight: 700; font-size: 17px; }
+.pastille { font: 700 12px var(--f-texte); letter-spacing: .05em; text-transform: uppercase; border: 1px solid currentColor; border-radius: 999px; padding: 1px 8px; white-space: nowrap; }
+.s-cours { color: var(--s-cours); } .s-cadrer { color: var(--s-cadrer); } .s-tester { color: var(--s-tester); }
+.s-signal { color: var(--s-signal); } .s-report { color: var(--s-report); } .s-clos { color: var(--fait); }
+.detail { display: grid; gap: 5px; font-size: 15px; }
+.detail .sourd { color: var(--sourd); }
+.date { font-size: 13px; color: var(--fait); }
+.fleches { display: grid; gap: 4px; }
+.fleches button { width: 40px; height: 36px; border-radius: 8px; border: 1px solid var(--trait); background: var(--fond); color: var(--bronze); font-size: 14px; cursor: pointer; }
+.fleches button:disabled { opacity: .35; cursor: default; }
+button:focus-visible { outline: 2px solid var(--bronze); outline-offset: 2px; }
+@media (max-width: 400px) { .item { grid-template-columns: 44px 1fr; } .fleches { grid-column: 2; grid-auto-flow: column; justify-content: start; } }
+</style>
+<div class="wrap">
+  <h1>Feuille de route</h1>
+  <p class="intro">Aethervale, tenue depuis le 30/10/2026 (v3.567.0). C'est le fichier de suivi de cette conversation. Coche une ligne quand elle est faite, et change l'ordre avec ▲ ▼ : je lis tes coches et ton ordre avant chaque étape.</p>
+  <p class="etat" id="etat">Chargement de ton suivi…</p>
+  <div class="outils" role="group" aria-label="Affichage">
+    <button type="button" id="b-tout" aria-pressed="true">Tout</button>
+    <button type="button" id="b-afaire" aria-pressed="false">Masquer ce qui est fait</button>
+  </div>
+  <div id="contenu"></div>
+</div>
+<script id="donnees" type="application/json">
+[
+ {"id": "chantiers", "titre": "Chantiers", "numeros": true, "items": [
+  {"id": "ch-images", "statut": "cours", "titre": "Images à générer",
+   "html": "<p>Il y a 46 images, avec leur prompt, dans <a href=\"https://claude.ai/artifact/SdtrXba9Wkt6YVLQYVS3Cd\" target=\"_blank\" rel=\"noopener\">Images à générer</a> :</p><ul><li>les deux pastilles des élites, « pièce Rare » et « pièce Épique », à la place de l'icône d'armure empruntée ;</li><li>les 6 élites et boss en 400 px ;</li><li>la silhouette du héros (mesurée trop petite sur Mac) ;</li><li>les icônes des bâtiments, des ateliers et des objets, les cartes vivantes et l'icône de l'application.</li></ul><p class=\"sourd\">Nouvelle règle : les formats tiennent compte du PC. Un nouveau fond de combat se livre en deux fichiers, portrait et paysage <code>-wide</code>.</p><p class=\"sourd\">À faire de mon côté quand les pastilles arrivent : remplacer le chemin dans <code>js/ui/living-map-view.js:520</code>.</p>"},
+  {"id": "ch-pa", "statut": "cadrer", "titre": "Petites Aventures : bugs et améliorations",
+   "html": "<p>À commencer par ta liste : ce que tu as relevé en jeu (bugs, lourdeurs, envies). Je vérifie chaque point dans le code avant de proposer.</p><p class=\"sourd\">Déjà noté dans l'État des chantiers :</p><ul class=\"sourd\"><li>sur le parcours « Vers le Cœur », les murs ne bougent pas ;</li><li>les approches « charger » et « tenir » reprennent les icônes d'état des ennemis ;</li><li>la besace reprend l'icône de la Sacoche du donjon.</li></ul>"},
+  {"id": "ch-village", "statut": "cadrer", "titre": "Évolution du village",
+   "html": "<p>Il faut d'abord fixer ce que tu veux : de nouveaux bâtiments, de nouveaux niveaux, des usages pour le surplus, ou plus de vie au village. Viendra ensuite un document de conception, comme pour les mondes.</p><p class=\"sourd\">Pistes déjà dans le code ou la doc :</p><ul class=\"sourd\"><li>des niveaux qu'aucun monde ouvert ne permet de construire : Atelier 9-10, Enchanteresse 3, Entrepôt 9-10, Palissade 9-10. C'est relevé en v3.501, à revérifier ;</li><li>l'Outre pleine affiche « Rien pour l'instant : elle servira plus tard » (<code>js/ui/warehouse-view.js:485</code>) ;</li><li>le Grand Ouvrage (v3.561), à juger en jeu ;</li><li>les matières de la Tour, à prévoir avec le chapitre VI.</li></ul>"},
+  {"id": "ch-tour", "statut": "cadrer", "titre": "Chapitre VI, la Tour",
+   "html": "<p>Aujourd'hui, l'Histoire s'arrête sur « Fin du chapitre 5 ». Le premier livrable serait le document de conception (<code>mondes/tour/Aethervale_Conception_Tour_v0_1.md</code>), sans code.</p><p class=\"sourd\">Déjà décidé :</p><ul class=\"sourd\"><li>le gabarit des actes, QUE-15 option A : ordre varié, contraintes, 2 quêtes autonomes ;</li><li>le donjon 6, qui donne le Légendaire ;</li><li>les images du bestiaire et le fond paysage.</li></ul><p class=\"sourd\">À trancher :</p><ul class=\"sourd\"><li>le récit §VI et le nom Azhem ;</li><li>le combat de la silhouette, qui touchera peut-être le moteur de combat (fichier protégé) ;</li><li>la Question et ses 4 fins ;</li><li>la Mémoire et le Grimoire ;</li><li>ce qui suit la fin.</li></ul>"},
+  {"id": "ch-intro", "statut": "cours", "titre": "Introduction du jeu (l'accroche)",
+   "html": "<p>Aujourd'hui, on va de l'écran titre à la création (nom, classe), puis directement au Camp et au tutoriel « Le Campement ». Le seul récit d'ouverture est la phrase de <code>forest_01</code> et le Prologue du Codex, qu'on ne lit pas par défaut.</p><p>Idée : un prologue illustré, fait de planches plein écran avec le texte court du narrateur. On le passe quand on veut, et on peut le revoir.</p><p><b>Option B validée</b> (30/10) : 4 planches avant la création (« Cette nuit-là »), 2 après (« Douze hivers »), puis le Camp. L'option C, la mise en scène animée, viendra peut-être ensuite.</p><p><b>Textes validés</b> (30/10, version fusionnée, phrase 6 de Seb) : <code>systemes/introduction/Aethervale_Prologue_v0_2.md</code>.</p><p><b>Images livrées</b> (30/10) : les 12, converties dans <code>game/images/Prologue/</code> (2,4 Mo).</p><p><b>Codé en v3.570.0</b> (30/10) : fond A, lettre à lettre, vitesse normale, rythme régulier ; « Revoir le prologue » dans Quêtes › Histoire. Contrôles à zéro échec.</p><p class=\"sourd\">Reste : publier sur <code>main</code> (accord de Seb), puis le juger en jeu sur iPhone. L'option C, les animations, viendra plus tard.</p>"}
+ ]},
+ {"id": "tests", "titre": "À tester en jeu", "items": [
+  {"id": "t-ge-d", "statut": "tester", "titre": "Grand écran, option D (v3.567)", "html": "<p>Le Camp, la Production, le combat en paysage, les onglets en pastilles.</p>"},
+  {"id": "t-android", "statut": "tester", "titre": "Retour Android (v3.536)", "html": "<p>Sur un vrai Android, avec le jeu installé.</p>"},
+  {"id": "t-texte", "statut": "tester", "titre": "Taille du texte « Grande » (v3.538)", "html": "<p>Sur iPhone (zoom de Safari).</p>"},
+  {"id": "t-ouvrage", "statut": "tester", "titre": "Grand Ouvrage (v3.561)", "html": "<p>Le rythme des paliers et l'or gagné.</p>"},
+  {"id": "t-combat", "statut": "tester", "titre": "Combat (v3.438 à v3.447)", "html": "<p>L'initiative, la préparation de sortie, les objets de combat, le coup de grâce, une descente complète du Labyrinthe, le journal de test.</p>"},
+  {"id": "t-equilibre", "statut": "tester", "titre": "Équilibre", "html": "<p>Le Chevalier sur « Celui qui retient » (98 % au banc, contre 83 % pour les autres) ; Nezzam depuis l'initiative ; l'or des caravanes multiples (non mesuré au banc).</p>"}
+ ]},
+ {"id": "signales", "titre": "Signalé, sans correction d'office", "items": [
+  {"id": "s-doubles", "statut": "signal", "titre": "Images qui servent à deux choses", "html": "<ul><li>Viande et Viande séchée ; Eau et Eau purifiée ;</li><li><code>node_discovery</code>, <code>stat_critical</code> et <code>equipment_shop</code> (tutoriels compris) ;</li><li><code>stat_speed</code>, <code>heal_incoming</code> ;</li><li><code>quests/mission_hunt.webp</code>, qui ne sert plus.</li></ul>"},
+  {"id": "s-provisoire", "statut": "signal", "titre": "Valeurs et textes provisoires", "html": "<p>Les gains de la carte des Ruines, les récompenses des étapes 11 à 20, Le seuil (25 %) et le titre de chapitre « La ville rangée ».</p>"},
+  {"id": "s-robot", "statut": "signal", "titre": "Robot : une seule caravane", "html": "<p>Le robot n'envoie qu'une caravane. L'or des caravanes multiples n'est donc pas mesuré.</p>"},
+  {"id": "s-maquette", "statut": "signal", "titre": "Grand écran : écarts avec la maquette", "html": "<p>La fiche du Village garde les cases du jeu, et le journal de combat n'est pas regroupé par round.</p>"}
+ ]},
+ {"id": "reportes", "titre": "Reporté", "items": [
+  {"id": "r-sons", "statut": "report", "titre": "Sons (PLA-6)", "html": ""},
+  {"id": "r-gestes", "statut": "report", "titre": "Gestes d'attaque (piste combat B)", "html": ""},
+  {"id": "r-escorte", "statut": "report", "titre": "Escorte et temps limité (QUE-15 option B)", "html": "<p>Possibles plus tard à la Tour.</p>"},
+  {"id": "r-csp", "statut": "report", "titre": "Politique de sécurité (CSP)", "html": "<p>À faire s'il y a un jour un serveur de connexion.</p>"},
+  {"id": "r-typo", "statut": "report", "titre": "Échelle typographique complète (INT-11 A)", "html": "<p>Écran par écran.</p>"},
+  {"id": "r-menage", "statut": "report", "titre": "Nettoyages", "html": "<p>L'ancien code de combat, l'ancien écran Équipement (pour les vieilles sauvegardes), les noms <code>scene-*</code>.</p>"}
+ ]},
+ {"id": "clos", "titre": "Clos", "items": [
+  {"id": "c-difficulte", "statut": "clos", "titre": "Difficulté de la Crypte et de la Montagne (v3.562)", "faitDefaut": "2026-10-30", "html": "<p>Testée en jeu avec un Mage : c'est nettement plus dur, et il faut des potions de force contre le Dragon. C'est l'effet voulu, rien ne change.</p>"},
+  {"id": "c-images-192", "statut": "clos", "titre": "Suivi « Images à faire » : 192 sur 192", "faitDefaut": "2026-10-30", "html": "<p>Aucune image n'est absente du jeu. La suite est dans « Images à générer ».</p>"}
+ ]}
+]
+</script>
+<script>
+(function () {
+  var SECTIONS = JSON.parse(document.getElementById("donnees").textContent);
+  var STATUT = { cours: "En cours", cadrer: "À cadrer", tester: "À tester", signal: "Signalé", report: "Reporté", clos: "Clos" };
+  // État du suivi : ordre par section (liste d'ids) et lignes faites (id -> date)
+  var etat = { ordre: {}, fait: {} }, version = 0, db = null, ref = null, masquer = false;
+  var $ = function (id) { return document.getElementById(id); };
+
+  SECTIONS.forEach(function (s) { s.items.forEach(function (it) { if (it.faitDefaut) etat.fait[it.id] = it.faitDefaut; }); });
+
+  // Ordre d'une section : celui du suivi, puis les lignes nouvelles à la fin
+  function ordonner(s) {
+    var o = (etat.ordre[s.id] || []).filter(function (id) { return s.items.some(function (it) { return it.id === id; }); });
+    s.items.forEach(function (it) { if (o.indexOf(it.id) < 0) o.push(it.id); });
+    return o.map(function (id) { return s.items.filter(function (it) { return it.id === id; })[0]; });
+  }
+
+  function esc(t) { var d = document.createElement("div"); d.textContent = t; return d.innerHTML; }
+  function dateFr(iso) { var p = String(iso).slice(0, 10).split("-"); return p.length === 3 ? p[2] + "/" + p[1] + "/" + p[0] : ""; }
+
+  function rendre() {
+    var h = "";
+    SECTIONS.forEach(function (s) {
+      var items = ordonner(s), n = items.filter(function (it) { return etat.fait[it.id]; }).length;
+      h += '<h2>' + esc(s.titre) + '<small>' + n + ' / ' + items.length + ' faits</small></h2><div class="section">';
+      items.forEach(function (it, i) {
+        var on = !!etat.fait[it.id];
+        if (masquer && on) return;
+        h += '<div class="item' + (on ? ' is-fait' : '') + '">'
+          + '<button type="button" class="coche" data-id="' + it.id + '" aria-pressed="' + on + '" aria-label="' + (on ? "Décocher " : "Cocher ") + esc(it.titre) + '">' + (on ? "✓" : "") + '</button>'
+          + '<div class="corps"><div class="tete">' + (s.numeros ? '<span class="rang">' + (i + 1) + '.</span>' : '')
+          + '<span class="titre">' + esc(it.titre) + '</span><span class="pastille s-' + it.statut + '">' + STATUT[it.statut] + '</span></div>'
+          + (on ? '<span class="date">Fait le ' + dateFr(etat.fait[it.id]) + '</span>' : '')
+          + (it.html ? '<div class="detail">' + it.html + '</div>' : '') + '</div>'
+          + '<div class="fleches"><button type="button" data-s="' + s.id + '" data-i="' + i + '" data-d="-1" aria-label="Monter ' + esc(it.titre) + '"' + (i === 0 ? ' disabled' : '') + '>▲</button>'
+          + '<button type="button" data-s="' + s.id + '" data-i="' + i + '" data-d="1" aria-label="Descendre ' + esc(it.titre) + '"' + (i === items.length - 1 ? ' disabled' : '') + '>▼</button></div>'
+          + '</div>';
+      });
+      h += '</div>';
+    });
+    $("contenu").innerHTML = h;
+    $("contenu").querySelectorAll(".coche").forEach(function (b) { b.onclick = function () { basculer(b.dataset.id); }; });
+    $("contenu").querySelectorAll(".fleches button").forEach(function (b) { b.onclick = function () { deplacer(b.dataset.s, +b.dataset.i, +b.dataset.d); }; });
+  }
+
+  function basculer(id) {
+    if (etat.fait[id]) delete etat.fait[id]; else etat.fait[id] = new Date().toISOString().slice(0, 10);
+    rendre(); enregistrer();
+  }
+
+  function deplacer(sid, i, d) {
+    var s = SECTIONS.filter(function (x) { return x.id === sid; })[0], o = ordonner(s).map(function (it) { return it.id; });
+    var j = i + d; if (j < 0 || j >= o.length) return;
+    var t = o[i]; o[i] = o[j]; o[j] = t; etat.ordre[sid] = o;
+    rendre(); enregistrer();
+  }
+
+  // Un seul document « suivi/etat » : base de la page, sinon cet appareil
+  function enregistrer() {
+    var doc = { ordre: etat.ordre, fait: etat.fait, le: new Date().toISOString() };
+    if (ref) {
+      ref.set(doc).catch(function (e) {
+        $("etat").textContent = e && e.code === "invalid_argument" ? "Tu peux consulter cette page, mais pas la modifier." : "Le changement n'a pas été enregistré. Réessaie dans un instant.";
+      });
+    } else {
+      try { localStorage.setItem("feuille-de-route", JSON.stringify(doc)); } catch (e) {}
+    }
+  }
+
+  // Copie profonde : les données de la base sont figées, on ne peut pas les modifier sur place
+  function charger(v) { if (v && typeof v === "object") { v = JSON.parse(JSON.stringify(v)); etat.ordre = v.ordre || {}; etat.fait = v.fait || {}; } }
+
+  function modeLocal() {
+    ref = null;
+    try { charger(JSON.parse(localStorage.getItem("feuille-de-route") || "null")); } catch (e) {}
+    $("etat").textContent = "Suivi enregistré sur cet appareil seulement : je ne pourrai pas le lire.";
+    rendre();
+  }
+
+  $("b-tout").onclick = function () { masquer = false; this.setAttribute("aria-pressed", "true"); $("b-afaire").setAttribute("aria-pressed", "false"); rendre(); };
+  $("b-afaire").onclick = function () { masquer = true; this.setAttribute("aria-pressed", "true"); $("b-tout").setAttribute("aria-pressed", "false"); rendre(); };
+
+  rendre();
+  var dispo = window.claude && typeof window.claude.use === "function" ? window.claude.use("db") : Promise.resolve(null);
+  dispo.then(function (d) {
+    if (!d) return modeLocal();
+    db = d; ref = db.collection("suivi").doc("etat");
+    ref.onSnapshot(function (snap) {
+      if (snap && snap.exists) charger(snap.data());
+      $("etat").textContent = "Suivi enregistré : il suit sur tous tes appareils, et je le lis.";
+      rendre();
+    }, function () { modeLocal(); });
+  }, modeLocal);
+})();
+</script>

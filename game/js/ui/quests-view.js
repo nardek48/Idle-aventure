@@ -334,6 +334,7 @@ function buildQuestsWideHTML(missions) {
     h += '<h4 class="qw-grp">' + esc(cat.label) + '</h4>';
     h += E[cat.key] && E[cat.key].length ? E[cat.key].map(function (e) { return questsWideItemHTML(e, questsWideSel); }).join("") : '<p class="qw-empty">' + esc(cat.emptyText) + '</p>';
     h += buildOtherWorldQuestsHTML(cat.kinds);
+    if (cat.key === "histoire" && window.PrologueView) h += '<button class="qb-completed-link" type="button" onclick="openPrologueReplay()">' + esc(_t("Revoir le prologue")) + ' ▸</button>'; // v3.570.0
   });
   h += '<div class="qb-completed-bar"><button class="qb-completed-link" type="button" onclick="setQuestsFilter(\'completed\')">' + _t("Voir les quêtes terminées") + ' ▸</button></div>';
   h += '</div><div class="qw-detail">';
@@ -841,6 +842,7 @@ function buildStoryChainHTML() {
   });
 
   if (!completedMode && storyAllDone()) h = buildStoryEndCardHTML() + h; // v3.534.0 (PLA-9) : carte du bilan en tête
+  if (!completedMode && window.PrologueView) h = buildPrologueCardHTML() + h; // v3.570.0 : le prologue, toujours en tête
   return h + done;
 }
 
@@ -907,6 +909,12 @@ function openStoryEndPopup() {
 function buildStoryEndCardHTML() {
   return '<div class="story-end-card"><b>' + esc(_t("Fin de l'Histoire, pour l'instant")) + '</b><p>' + esc(_t("La Tour sera le prochain chapitre. Elle n'est pas encore ouverte.")) + '</p>'
     + '<button class="story-end-link" type="button" onclick="openStoryEndPopup()">' + esc(_t("Revoir le bilan")) + ' ▸</button></div>';
+}
+
+/* v3.570.0 : carte « Revoir le prologue » en tête de Quêtes › Histoire (parties en cours comprises). */
+function buildPrologueCardHTML() {
+  return '<div class="story-prologue-card"><b>' + esc(_t("Prologue — Cette nuit-là")) + '</b>'
+    + '<button class="story-end-link" type="button" onclick="openPrologueReplay()">' + esc(_t("Revoir le prologue")) + ' ▸</button></div>';
 }
 
 /* La fenêtre de la dernière étape du dernier chapitre ouvre le bilan à sa fermeture (une fois : l'étape ne se réclame qu'une fois). */

@@ -466,6 +466,7 @@ function backNavZ(el) {
 
 /* Ferme le calque du dessus : "closed", "blocked" (fenêtre sans croix) ou "none". */
 function backNavCloseTop() {
+  if (window.PrologueView && PrologueView.active) { PrologueView.skip(); return "closed"; } // v3.570.0 : retour = « Passer »
   var c = document.getElementById("confirm-modal");
   if (c && c.classList.contains("show")) { closeConfirmModal(false); return "closed"; }
   var o = document.getElementById("offline-modal");
