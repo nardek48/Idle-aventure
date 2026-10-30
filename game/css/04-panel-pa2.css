@@ -150,6 +150,7 @@ body.pa2-night .pa2-link, body.pa2-night .pa2-note { color: var(--pa2-ink-dim); 
   background: rgba(0, 0, 0, 0.4); color: var(--pa2-ink); font: 700 12px/1 inherit; font-family: inherit; cursor: pointer; }
 span.pa2-chip { cursor: default; }
 .pa2-chip img { width: 24px; height: 24px; object-fit: contain; }
+.pa2-chip.is-adv { padding: 0 9px; color: var(--c-green-400-soft); border-color: var(--c-green-400-soft); font-weight: 700; font-size: 12px; } /* v3.579.0 : l'avantage en attente */
 .pa2-chip.is-wound { border-color: var(--c-red-700); color: var(--pa2-danger); }
 .pa2-chip.is-relic { padding: 0 3px; width: 30px; justify-content: center; }
 .pa2-chip.is-relic.is-wide { width: auto; padding: 0 8px 0 3px; }

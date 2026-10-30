@@ -469,6 +469,7 @@ function pa2HudHTML(run) {
   if (run.stock.corde > 0) chips += '<span class="pa2-chip" title="' + esc(pa2ItemName("corde")) + '">' + pa2Img(PA2_ITEMS.corde.icon) + '×' + run.stock.corde + '</span>';
   if (run.stock.trousse > 0) chips += '<span class="pa2-chip" title="' + esc(pa2ItemName("trousse")) + '">' + pa2Img(PA2_ITEMS.trousse.icon) + '×' + run.stock.trousse + '</span>';
   if (run.stock.pierre_froide > 0) chips += '<span class="pa2-chip" title="' + esc(pa2ItemName("pierre_froide")) + '">' + pa2Img(PA2_ITEMS.pierre_froide.icon) + '×' + run.stock.pierre_froide + '</span>'; // v3.489.0
+  if (run.advNext) chips += '<span class="pa2-chip is-adv" title="' + esc(_t("Deux dés au prochain jet, le meilleur compte.")) + '">' + esc(_t("Avantage")) + '</span>'; // v3.579.0
   chips = pa2CondChipHTML(run) + pa2FxChipsHTML(run) + chips; // v3.467.0 : effets des pièges en cours ; v3.469.0 : la condition, en tête
   // v3.454.0 (Crypte) : la Lanterne, à allumer ; allumée, le nombre de pas qu'il lui reste
   if (Number(run.lanternLeft || 0) > 0) chips += '<span class="pa2-chip is-lit" title="' + esc(pa2ItemName("lanterne")) + '">' + pa2Img(PA2_ITEMS.lanterne.icon) + esc(_tn(run.lanternLeft, "{n} pas", "{n} pas")) + '</span>';
@@ -757,6 +758,7 @@ function pa2Use(id) {
   var run = Pa2Run.getRun();
   if (game.heroHp > before.hp) pa2Float("+" + pa2Num(game.heroHp - before.hp) + " " + _t("PV"), "heal");
   if (run.breath > before.breath) pa2Float("+" + pa2Num(run.breath - before.breath) + " " + _t("Souffle"), "breath");
+  if (PA2_ITEMS[id] && PA2_ITEMS[id].adv && typeof showToast === "function") showToast(_t("Avantage au prochain jet."), 1800);
   pa2RefreshHud();
   if (pa2View.sheet && pa2View.sheet.step === "intro") pa2RenderSheet();
   if (PA2_ITEMS[id] && PA2_ITEMS[id].light) pa2Rerender(); // v3.454.0 : la Lanterne montre de nouvelles rangées

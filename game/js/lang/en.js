@@ -3110,7 +3110,7 @@ I18n.register("en", {
   "Puits +10 %.": "Well +10%.",
   "L'autel soigne aussi une blessure normale.": "The altar also heals a normal wound.",
   "Scierie +10 %.": "Sawmill +10%.",
-  "Gourde : 40 Souffle au lieu de 25.": "Flask: 40 Breath instead of 25.",
+  "Gourde : 25 Souffle au lieu de 15.": "Flask: 25 Breath instead of 15.",
 
   // LivingMapManager
   "le Recouvrement": "the Reclaiming",
@@ -3997,7 +3997,7 @@ I18n.register("en", {
   "Rend 35 % des PV. Cuisinée au camp ou au seuil : 70 % et une blessure en moins.": "Restores 35% HP. Cooked at the camp or the threshold: 70% and one wound less.",
   "Rend 60 % des PV et efface une blessure.": "Restores 60% HP and heals one wound.",
   "Rend tous les PV et efface une blessure.": "Restores all HP and heals one wound.",
-  "Deux gorgées : +25 Souffle chacune.": "Two sips: +25 Breath each.",
+  "Deux gorgées : +15 Souffle et l'avantage au prochain jet.": "Two sips: +15 Breath and advantage on your next roll.",
   "Réussite assurée sur un obstacle, voie précision. Pas sur les pièges.": "Guaranteed success on one obstacle, precision path. Not on traps.",
   "Tu vois une rangée de plus devant toi, et les pièges cachés des sentiers que tu peux prendre.": "You see one more row ahead, and the hidden traps on the paths you can take.",
   "Combats : −35 % de dégâts reçus.": "Fights: −35% damage taken.",
@@ -4157,6 +4157,10 @@ I18n.register("en", {
   "Il faut": "You need",
   "corde": "rope",
   "Assuré": "Certain",
+  // v3.579.0 : la gourde
+  "Souffle plein, et l'avantage est déjà pris.": "Breath full, and you already have advantage.",
+  "Avantage": "Advantage",
+  "Deux dés au prochain jet, le meilleur compte.": "Two dice on your next roll, the best one counts.",
   // v3.578.0 : insister, l'avantage, les jets de qualité
   "Blessures : −2 au jet par blessure": "Wounds: −2 to the roll per wound",
   "Avantage : {a} et {b}": "Advantage: {a} and {b}",

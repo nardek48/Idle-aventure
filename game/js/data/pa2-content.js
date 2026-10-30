@@ -21,9 +21,10 @@ var PA2_ITEMS = {
   grande_ration: { id: "grande_ration", resource: "grande_ration", size: 3, uses: 1, healPct: 1.00, healsWound: true,
     icon: "images/Icons/resources/grande_ration_icon.webp",
     pro: "Rend tous les PV et efface une blessure.", con: "Prend la moitié de la besace." },
-  gourde: { id: "gourde", name: "Gourde", size: 1, uses: 2, breath: 25,
+  // v3.579.0 (choix A de Seb) : la gorgée éclaircit les idées, +15 Souffle et l'avantage au prochain jet
+  gourde: { id: "gourde", name: "Gourde", size: 1, uses: 2, breath: 15, adv: true,
     icon: "images/Icons/scene/water_flask.webp",
-    pro: "Deux gorgées : +25 Souffle chacune." },
+    pro: "Deux gorgées : +15 Souffle et l'avantage au prochain jet." },
   // v3.387.0 (PA2-5, F2) : l'Outre du Désert, prise à l'Entrepôt. Puits sec tenu : +15 ; Outre de cuir (Mémoire) : ×1,5.
   outre: { id: "outre", resource: "outre_pleine", size: 1, uses: 1, breath: 40, worlds: ["desert"], bonusEffect: "outre_plus",
     icon: "images/Icons/resources/outre_pleine_icon.webp",

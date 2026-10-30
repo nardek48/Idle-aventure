@@ -41,7 +41,7 @@ var LIVING_MAP_RULES = {
      (Arbre-mère : 2 en Forêt … 6 à la Montagne). Banc : 63 → 24 combats d'Arbre-mère par partie. */
   repeatableElite: { brakePerWin: 0.25, sevePerWin: 2, sevePerWorldAhead: 1 },
   /* Effets tenus (C-3), chiffres en un seul endroit. */
-  effects: { productionMult: 1.10, contractMult: 1.10, gourdeBreath: 40, ropeBonus: 1,
+  effects: { productionMult: 1.10, contractMult: 1.10, gourdeBreath: 25, ropeBonus: 1,
     outreBreathBonus: 15, // v3.305.0 : puits sec tenu -> l'Outre rend 55 au lieu de 40 (provisoire)
     workshopSpeedMult: 1.10 }, // v3.305.0 : oasis basse / verrerie tenues -> Réservoir / Tailleur de pierre 10 % plus rapides
   /* §5.4 : Palissade (C-3). Frein : chance qu'un échec ne recouvre rien. Tenue : secteur d'un anneau tenu, jamais repris par un échec (v3.335.0 : l'Ascension n'existe plus). */
@@ -85,7 +85,7 @@ var LIVING_MAPS = {
         lore: "Une maison dans les branches, une échelle, une lanterne encore chaude." },
       { id: "autel", name: "Autel de pierre", x: 74.1, y: 23.7, ring: 2, neighbors: ["camp", "arbremere"],
         content: { type: "expedition", templateId: "petite_aventure_foret", pools: { obstacle: ["porte_scellee", "paroi"] } },
-        heldEffect: { id: "gourde_40", label: "Gourde : 40 Souffle au lieu de 25." },
+        heldEffect: { id: "gourde_40", label: "Gourde : 25 Souffle au lieu de 15." },
         lore: "Des marches trop hautes pour des jambes humaines. En haut, une lueur." },
       // Arbre-mère (C-5) : élite RÉPÉTABLE — se rejoue à volonté une fois libérée, hors cap ; chaque
       // victoire du jour durcit la suivante (LIVING_MAP_RULES.repeatableElite). v3.331.0 : une
