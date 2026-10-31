@@ -17,15 +17,27 @@ var CompanionRelics = {
     var r = game.companionRelics;
     if (!r || typeof r !== "object") r = game.companionRelics = { inv: [], next: 1, pity: 0 };
     if (!Array.isArray(r.inv)) r.inv = [];
-    r.inv = r.inv.filter(function (x) { return x && COMPANION_RELIC_FAMILIES[x.f] && typeof x.id === "number"; });
+    r.inv = r.inv.filter(function (x) { return x && CompanionRelics.fam(x) && typeof x.id === "number"; });
     if (typeof r.next !== "number" || r.next < 1) r.next = 1 + r.inv.reduce(function (m, x) { return Math.max(m, x.id); }, 0);
     if (typeof r.pity !== "number" || r.pity < 0) r.pity = 0;
     return r;
   },
+  /* v3.598.0 : une relique ordinaire (famille) ou unique (data/companions.js, COMPANION_RELIC_UNIQUES). */
+  fam: function (relic) { var f = relic && relic.f; return (f && (COMPANION_RELIC_FAMILIES[f] || (window.COMPANION_RELIC_UNIQUES || {})[f])) || null; },
+  isUnique: function (relic) { return !!(relic && window.COMPANION_RELIC_UNIQUES && COMPANION_RELIC_UNIQUES[relic.f]); },
+  ownerOf: function (relic) { return this.isUnique(relic) ? COMPANION_RELIC_UNIQUES[relic.f].owner : null; },
+  hasUnique: function (key) { return this.ensure().inv.some(function (x) { return x.f === key; }); },
+  /* Récompense d'une quête de compagnon : une seule fois par relique. */
+  grantUnique: function (key) {
+    var U = window.COMPANION_RELIC_UNIQUES && COMPANION_RELIC_UNIQUES[key];
+    if (!U || this.hasUnique(key)) return null;
+    return this.grant(key, U.w);
+  },
   byId: function (id) { return this.ensure().inv.filter(function (x) { return x.id === id; })[0] || null; },
-  rank: function (relic) { return Math.max(1, Math.min(5, Number(relic.w || 0) + 1)); },
+  rank: function (relic) { if (this.isUnique(relic)) return 1; return Math.max(1, Math.min(5, Number(relic.w || 0) + 1)); },
   /* v3.512.0 (Seb 27/10) : la couleur suit le monde, comme l'équipement (rareté la plus haute du monde). */
   rarity: function (relic) {
+    if (this.isUnique(relic)) return "legendary"; // v3.598.0 : unique, couleur la plus haute
     var u = window.WORLD_RARITY_UNLOCKS || [["common"]], row = u[Math.max(0, Math.min(Number(relic.w || 0), u.length - 1))];
     return row[row.length - 1];
   },
@@ -36,15 +48,17 @@ var CompanionRelics = {
     return relic;
   },
   icon: function (relic) { return COMPANION_RELIC_DIR + "relic_" + relic.f + ".webp"; },
-  name: function (relic) { return I18n.fill(COMPANION_RELIC_OF[Math.min(relic.w, COMPANION_RELIC_OF.length - 1)] || "{f}", { f: _td(COMPANION_RELIC_FAMILIES[relic.f].name) }); },
+  name: function (relic) { if (this.isUnique(relic)) return _td(COMPANION_RELIC_UNIQUES[relic.f].name); return I18n.fill(COMPANION_RELIC_OF[Math.min(relic.w, COMPANION_RELIC_OF.length - 1)] || "{f}", { f: _td(COMPANION_RELIC_FAMILIES[relic.f].name) }); },
+  // v3.598.0 : chaque effet présent, dans l'ordre (une relique unique en a deux)
   effectText: function (relic) {
-    var F = COMPANION_RELIC_FAMILIES[relic.f], r = this.rank(relic);
-    if (F.dmgPct) return _t("+{n} % dégâts", { n: Math.round(F.dmgPct * r * 100) });
-    if (F.hpPct) return _t("+{n} % PV", { n: Math.round(F.hpPct * r * 100) });
-    if (F.threatPct) return _t("+{n} % menace", { n: Math.round(F.threatPct * r * 100) });
-    if (F.cd) return _t("Recharge −{n}", { n: r >= 5 ? F.cdAt5 : F.cd });
-    if (F.heroPct) return _t("Héros +{n} % dégâts", { n: Math.round(F.heroPct * r * 100) });
-    return _t("+{n} % butin de patrouille", { n: Math.round(F.patrolPct * r * 100) });
+    var F = this.fam(relic), r = this.rank(relic), out = [], pct = function (k) { return Math.round(F[k] * r * 100); };
+    if (F.dmgPct) out.push(_t("+{n} % dégâts", { n: pct("dmgPct") }));
+    if (F.hpPct) out.push(_t("+{n} % PV", { n: pct("hpPct") }));
+    if (F.threatPct) out.push(_t("+{n} % menace", { n: pct("threatPct") }));
+    if (F.cd) out.push(_t("Recharge −{n}", { n: r >= 5 && F.cdAt5 ? F.cdAt5 : F.cd }));
+    if (F.heroPct) out.push(_t("Héros +{n} % dégâts", { n: pct("heroPct") }));
+    if (F.patrolPct) out.push(_t("+{n} % butin de patrouille", { n: pct("patrolPct") }));
+    return out.join(" · ");
   },
 
   /* ---------- Emplacements ---------- */
@@ -71,11 +85,11 @@ var CompanionRelics = {
   },
   sum: function (companionId, key) {
     var self = this;
-    return this.active(companionId).reduce(function (s, x) { return s + Number(COMPANION_RELIC_FAMILIES[x.f][key] || 0) * self.rank(x); }, 0);
+    return this.active(companionId).reduce(function (s, x) { return s + Number(self.fam(x)[key] || 0) * self.rank(x); }, 0);
   },
   cooldownCut: function (companionId) {
     var self = this, cut = 0;
-    this.active(companionId).forEach(function (x) { var F = COMPANION_RELIC_FAMILIES[x.f]; if (F.cd) cut = Math.max(cut, self.rank(x) >= 5 ? F.cdAt5 : F.cd); });
+    this.active(companionId).forEach(function (x) { var F = self.fam(x); if (F.cd) cut = Math.max(cut, self.rank(x) >= 5 && F.cdAt5 ? F.cdAt5 : F.cd); });
     return cut;
   },
   /* Emblème (id « talisman ») : bonus du héros, compagnons présents seulement. */
@@ -88,6 +102,7 @@ var CompanionRelics = {
   equip: function (companionId, slot, relicId) {
     var r = this.byId(relicId);
     if (!r || slot < 0 || slot >= this.slotsOpen(companionId)) return false;
+    if (this.ownerOf(r) && this.ownerOf(r) !== companionId) return false; // v3.598.0 : relique unique, réservée à son compagnon
     var w = this.worn(companionId), self = this;
     if (w.some(function (id, k) { return k !== slot && id != null && (self.byId(id) || {}).f === r.f; })) return false; // une par famille
     var other = this.wornBy(relicId);

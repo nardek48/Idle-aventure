@@ -794,7 +794,8 @@ var CompanionManager = {
         keepReserve: !!st.keepReserve,
         voie: st.voie || null,               // v3.311.0 : compagnon à voies
         voieChanges: Number(st.voieChanges || 0),
-        talks: CompanionManager.cleanTalks(st.talks) // v3.597.0 : conversations faites et réponse choisie
+        talks: CompanionManager.cleanTalks(st.talks), // v3.597.0 : conversations faites et réponse choisie
+        quests: CompanionManager.cleanQuests(st.quests) // v3.598.0 : quêtes personnelles (étape, compteur, finie)
       };
     });
     return out;
@@ -805,6 +806,18 @@ var CompanionManager = {
     var out = {};
     if (!t || typeof t !== "object") return out;
     Object.keys(t).forEach(function (k) { if (/^[a-z0-9_]{1,40}$/.test(k) && typeof t[k] === "string") out[k] = t[k].slice(0, 16); });
+    return out;
+  },
+
+  // v3.598.0 : { questId: { s, n, d } } ; nombres entiers positifs, id court
+  cleanQuests: function (q) {
+    var out = {};
+    if (!q || typeof q !== "object") return out;
+    Object.keys(q).forEach(function (k) {
+      var v = q[k];
+      if (!/^[a-z0-9_]{1,40}$/.test(k) || !v || typeof v !== "object") return;
+      out[k] = { s: Math.max(0, Math.floor(Number(v.s) || 0)), n: Math.max(0, Math.floor(Number(v.n) || 0)), d: !!v.d };
+    });
     return out;
   },
 
@@ -831,6 +844,7 @@ var CompanionManager = {
       if (d.healPriority) self.setSetting(id, "healPriority", d.healPriority, true);
       self.setSetting(id, "keepReserve", !!d.keepReserve, true);
       st.talks = self.cleanTalks(d.talks); // v3.597.0 : conversations au feu
+      st.quests = self.cleanQuests(d.quests); // v3.598.0 : quêtes personnelles
       if (self.hasVoies(id)) { // v3.311.0
         st.voie = (d.voie && COMPANIONS_DB[id].voies[d.voie]) ? d.voie : null;
         st.voieChanges = Math.max(0, Number(d.voieChanges || 0));

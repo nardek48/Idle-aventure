@@ -1634,6 +1634,7 @@ var Pa2Run = {
     else if (dest) this._log("🏁 " + _t("Petite Aventure : {d} atteint.", { d: _td(((PA2_DESTS[run.worldId] || PA2_DESTS.forest)[dest.type] || {}).name || "") }));
     if (end.rare > 0 || run.rareFound > 0) this._log("✨ " + _t("Trouvaille : +{n} {x}", { n: run.rareFound, x: this._rareName(run) }));
     if (end.chest && end.chest.isNew) this._log("🧰 " + _t("Coffre d'expédition : {x}", { x: _td((PA2_ITEMS[end.chest.item] || {}).name || "") }));
+    if (window.CompanionQuestManager) CompanionQuestManager.onRunEnd(run.worldId, how); // v3.598.0 : avant la fin de sortie (équipe encore là)
     end.summary = window.SortieManager ? SortieManager.end(outcome) : null;
     SceneRunManager._notifyLivingMap(run, (how === "dest" || how === "parcours") ? "success" : (how === "ko" ? "fail" : "neutral"));
     // Q12 : « Un Périple » ; v3.384.0 : compté pour le monde de la carte jouée, pas celui où réside le héros.

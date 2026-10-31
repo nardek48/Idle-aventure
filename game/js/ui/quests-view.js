@@ -76,6 +76,7 @@ function buildQuestCategoryTabsHTML(missions) {
   });
   // v3.509.0 : un jalon à réclamer allume la pastille de « Secondaires »
   if (window.MilestoneManager && MilestoneManager.readyCount() > 0) claimableByCat.secondaires = true;
+  if (window.CompanionQuestManager && CompanionQuestManager.readyCount() > 0) claimableByCat.secondaires = true; // v3.598.0
   // La chaîne Histoire (hors MissionBoard côté onglet) compte aussi pour la pastille Histoire.
   if (window.StoryQuestManager && typeof StoryQuestManager.getClaimableCount === "function" && StoryQuestManager.getClaimableCount() > 0) {
     claimableByCat.histoire = true;
@@ -220,10 +221,12 @@ function buildQuestsGeneralSubTabHTML() {
   h += storyHTML;
   var msHTML = (cat.key === "secondaires" && typeof buildMilestonesHTML === "function") ? buildMilestonesHTML() : ""; // v3.509.0 : jalons en tête
   h += msHTML;
+  var cqHTML = (cat.key === "secondaires" && typeof buildCompanionQuestsHTML === "function") ? buildCompanionQuestsHTML() : ""; // v3.598.0 : quêtes des compagnons
+  h += cqHTML;
 
   if (catMissions.length) {
     h += '<div class="quest-board-list">' + catMissions.map(buildQuestBoardCardHTML).join("") + '</div>';
-  } else if (!storyHTML && !msHTML) {
+  } else if (!storyHTML && !msHTML && !cqHTML) {
     h += '<div class="eq-empty">' + esc(cat.emptyText) + '</div>';
   }
 
@@ -269,6 +272,7 @@ function questsWideEntries(missions) {
     out[cat.key].push({ key: "m:" + m.id, icon: MissionBoard.typeIcon(m.type), title: _td(m.title),
       sub: m.progressLabel || (m.blurb ? _td(m.blurb) : (m.objectiveLabel || "")), right: m.claim ? "!" : (m.status === "running" || m.status === "accepted") ? "›" : "", m: m });
   });
+  if (typeof companionQuestWideEntries === "function") out.secondaires = companionQuestWideEntries().concat(out.secondaires); // v3.598.0 : quêtes des compagnons
   if (window.MilestoneManager && typeof buildMilestonesHTML === "function" && buildMilestonesHTML()) {
     var nb = MilestoneManager.readyCount();
     out.secondaires.unshift({ key: "ms", icon: "images/Icons/quests/quest_side.webp", title: _t("Jalons"), sub: _t("Village et héros · une récompense chacun"), right: nb ? "!" : "" });
@@ -340,6 +344,7 @@ function buildQuestsWideHTML(missions) {
   h += '</div><div class="qw-detail">';
   if (questsWideSel.indexOf("story:") === 0) h += questsWideStoryHTML(questsWideSel.slice(6));
   else if (questsWideSel === "ms") h += buildMilestonesHTML();
+  else if (questsWideSel.indexOf("cq:") === 0 && window.CompanionQuestManager && CompanionQuestManager.get(questsWideSel.slice(3))) h += '<div class="quest-board-list">' + buildCompanionQuestCardHTML(CompanionQuestManager.get(questsWideSel.slice(3))) + '</div>'; // v3.598.0
   else {
     var m = missions.filter(function (x) { return "m:" + x.id === questsWideSel; })[0];
     h += m ? '<div class="quest-board-list">' + buildQuestBoardCardHTML(m) + '</div>' : '<div class="eq-empty">' + esc(_t("Choisis une quête dans la liste.")) + '</div>';

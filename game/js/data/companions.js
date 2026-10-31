@@ -52,6 +52,24 @@ var COMPANION_RELIC_FAMILIES = {
   besace: { name: "Besace", patrolPct: 0.05 }    // +5 % de butin de patrouille
 };
 var COMPANION_RELIC_ORDER = ["croc", "ecorce", "sceau", "sablier", "talisman", "besace"];
+/* v3.598.0 (tableau validé par Seb le 31/10) : reliques uniques, une par quête personnelle, réservées à leur compagnon.
+   Valeurs fixes (pas de rang) : l'effet d'une relique ordinaire au rang 5, plus un second effet au rang 2. */
+var COMPANION_RELIC_UNIQUES = {
+  wenna_pousse:   { owner: "wenna",  w: 1, name: "La Pousse du Clos",        hpPct: 0.15, heroPct: 0.02 },
+  wenna_ruban:    { owner: "wenna",  w: 3, name: "Le Ruban de la nuit",      cd: 2, hpPct: 0.06 },
+  wenna_braise:   { owner: "wenna",  w: 4, name: "La Première braise",       heroPct: 0.05, hpPct: 0.06 },
+  maddoc_pierre:  { owner: "maddoc", w: 1, name: "La Pierre du puits",       threatPct: 0.30, hpPct: 0.06 },
+  maddoc_couteau: { owner: "maddoc", w: 2, name: "Le Couteau du frère",      dmgPct: 0.15, threatPct: 0.12 },
+  maddoc_noms:    { owner: "maddoc", w: 4, name: "Les Deux noms",            hpPct: 0.15, dmgPct: 0.06 },
+  edda_craie:     { owner: "edda",   w: 2, name: "La Craie qui ne s'use pas", dmgPct: 0.15, cd: 1 },
+  edda_carte:     { owner: "edda",   w: 3, name: "La Carte des dormeurs",    patrolPct: 0.25, dmgPct: 0.06 },
+  edda_page:      { owner: "edda",   w: 4, name: "La Dernière page",         dmgPct: 0.15, heroPct: 0.02 },
+  ysolt_fleche:   { owner: "ysolt",  w: 3, name: "La Flèche retrouvée",      dmgPct: 0.15, cd: 1 },
+  ysolt_marche:   { owner: "ysolt",  w: 3, name: "La Neuvième marche",       hpPct: 0.15, dmgPct: 0.06 },
+  ysolt_carquois: { owner: "ysolt",  w: 4, name: "Le Carquois plein",        cd: 2, dmgPct: 0.06 },
+  sarkel_secret:  { owner: "sarkel", w: 4, name: "Ce qu'il ne vend pas",     patrolPct: 0.25, heroPct: 0.02 },
+  sarkel_cle:     { owner: "sarkel", w: 4, name: "La Clé des couchés",       dmgPct: 0.15, threatPct: 0.12 }
+};
 
 var COMPANION_SKILL_RANKS = {
   wenna: { value: 0.02 },                              // soin 18 → 28 %
@@ -403,6 +421,7 @@ window.COMPANION_SKILL_RANK_MAX = COMPANION_SKILL_RANK_MAX;
 window.COMPANION_RELIC_SLOTS_AT = COMPANION_RELIC_SLOTS_AT;
 window.COMPANION_RELIC_FAMILIES = COMPANION_RELIC_FAMILIES;
 window.COMPANION_RELIC_ORDER = COMPANION_RELIC_ORDER;
+window.COMPANION_RELIC_UNIQUES = COMPANION_RELIC_UNIQUES;
 window.COMPANION_RELIC_CHANCE_PER_H = COMPANION_RELIC_CHANCE_PER_H;
 window.COMPANION_RELIC_PITY_H = COMPANION_RELIC_PITY_H;
 window.COMPANION_RELIC_DIR = COMPANION_RELIC_DIR;
