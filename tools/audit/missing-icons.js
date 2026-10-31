@@ -116,6 +116,8 @@ function passeChromium(savePath) {
     var construits = await p.evaluate(function () {
       var o = {}, sl = function (x) { return String(x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z]/g, ""); };
       try { COMPANION_RELIC_ORDER.forEach(function (f) { o[CompanionRelics.icon({ f: f, w: 0 })] = "relique " + f; }); } catch (x) {}
+      try { Object.keys(COMPANION_RELIC_UNIQUES).forEach(function (f) { o[CompanionRelics.icon({ f: f, w: 0 })] = "relique unique " + f; }); } catch (x) {} // v3.601.1
+      try { TALK_TOPIC_ICONS.forEach(function (s) { o[s] = "sujet de conversation"; }); } catch (x) {}
       try { Object.keys(EQUIPMENT_ICON_PNG_TYPES).forEach(function (t) { ["common", "green", "rare", "epic", "legendary"].forEach(function (r) { o[getEquipmentIconPath({ icon: t, rarity: r })] = "équipement " + t; }); }); } catch (x) {}
       try { (window.WORLDS || []).forEach(function (w) { o[getWorldThumb(w)] = "vignette " + w.id; o["images/Icons/codex/world_" + w.id + ".webp"] = "pastille " + w.id; }); } catch (x) {}
       try { Object.keys(TALENT_TREES).forEach(function (c) { (TALENT_TREES[c].paths || []).forEach(function (q) { o["images/UI/talents/emb_" + sl(q.name) + ".webp"] = "emblème " + q.name; }); }); } catch (x) {}

@@ -20810,6 +20810,7 @@ console.log("\n[398] v3.601.0 — Parler aux compagnons : la liste des sujets (M
     ok(g.talkMenuTopics("wenna").some(function (o) { return o.k === "quete"; }), "quête en cours : le sujet « Ta quête »");
     g.openCompanionMenu("wenna"); g.talkTopic("quete");
     ok(g.talkScene && g.talkScene.questTopic === "q_wenna_1" && g.talkScene.queue.length === 1, "« Ta quête » : où elle en est, puis l'action de l'étape");
+    ok(g.talkMenuTopics("wenna").every(function (o) { return g.TALK_TOPIC_ICONS.indexOf(o.icon) >= 0; }), "v3.601.1 : chaque sujet a son icône dédiée (aucune image empruntée)");
     g.closeCompanionTalk(false);
   } catch (err) { ok(false, "[398] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   if (g.talkScene) g.closeCompanionTalk(false);
