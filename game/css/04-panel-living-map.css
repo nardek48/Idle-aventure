@@ -211,3 +211,7 @@ body.living-map-active #panel-container { padding: 0; overflow: hidden; max-widt
 .lm-elite-gain.is-repete::after { content: "↻"; position: absolute; left: -9px; top: -8px; width: 14px; height: 14px; border-radius: 50%; background: var(--c-red-450); color: #fff; font: 700 10px/14px sans-serif; text-align: center; }
 .lmx-legend-row .lm-story-flag { top: -6px; left: auto; right: -6px; transform: none; width: 18px; height: 18px; background-size: 13px; }
 .lmx-legend-row .lm-elite-gain { right: -6px; bottom: -2px; width: 18px; height: 18px; background-size: 13px; }
+/* v3.600.0 : secteur qui fait avancer une quête de compagnon — le portrait, en bas à gauche (l'élite est à droite) */
+.lm-cq-flag { position: absolute; left: -10px; bottom: 6px; width: 26px; height: 26px; border-radius: 50%; background: var(--c-brown-850-soft) center 18% / cover no-repeat; border: 2px solid var(--c-bronze-400-vivid); box-shadow: 0 1px 3px rgba(0, 0, 0, .7); pointer-events: none; }
+.lmx-legend-row .lm-cq-flag { left: -6px; bottom: -2px; width: 18px; height: 18px; }
+.lm-panel-line.is-cq { color: var(--c-gold-650); }
