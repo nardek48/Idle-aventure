@@ -54,6 +54,40 @@ var CompanionTalkManager = {
   },
   availableFor: function (companionId) { return this.available().filter(function (t) { return t.companion === companionId; })[0] || null; },
 
+  /* ---------- v3.601.0 : les sujets libres (data/companion-topics.js), menu M1 ----------
+     Écoutés : gardés dans talks sous « s_toi_forest », « s_monde_ruins » (pas de nouvel état à sauvegarder). */
+  _worldIdx: function (worldId) { return window.WORLDS ? WORLDS.findIndex(function (w) { return w.id === worldId; }) : -1; },
+  heard: function (companionId, key) { var s = this.talksOf(companionId); return !!(s && typeof s[key] === "string"); },
+  markHeard: function (companionId, key) {
+    var s = this.talksOf(companionId);
+    if (!s || typeof s[key] === "string") return;
+    s[key] = "-";
+    if (typeof saveGame === "function") saveGame();
+  },
+  // « Parle-moi de toi » : le plus ancien souvenir pas encore écouté parmi les mondes atteints, sinon le dernier.
+  topicToi: function (companionId) {
+    var D = (typeof companionTopicsData === "function" ? companionTopicsData() : {})[companionId], self = this;
+    if (!D || !D.toi) return null;
+    var best = window.DungeonManager ? DungeonManager.getHighestWorldReached() : Number((window.WorldManager && WorldManager.worldIndex) || 0);
+    var ws = Object.keys(D.toi).filter(function (w) { var i = self._worldIdx(w); return i >= 0 && i <= best; })
+      .sort(function (a, b) { return self._worldIdx(a) - self._worldIdx(b); });
+    if (!ws.length) return null;
+    var w = ws.filter(function (x) { return !self.heard(companionId, "s_toi_" + x); })[0] || ws[ws.length - 1];
+    return { key: "s_toi_" + w, world: w, lines: D.toi[w] };
+  },
+  // « Et ce monde-ci ? » : le monde où vit le héros, si le compagnon en a quelque chose à dire.
+  topicMonde: function (companionId) {
+    var D = (typeof companionTopicsData === "function" ? companionTopicsData() : {})[companionId];
+    var w = window.WORLDS && window.WorldManager ? (WORLDS[Number(WorldManager.worldIndex || 0)] || {}).id : null;
+    if (!D || !D.monde || !w || !D.monde[w]) return null;
+    return { key: "s_monde_" + w, world: w, lines: D.monde[w] };
+  },
+  // Un sujet nouveau (pastille) : conversation de l'histoire, ou souvenir / monde pas encore écouté.
+  hasNewTopic: function (companionId) {
+    var t = this.topicToi(companionId), m = this.topicMonde(companionId);
+    return !!(this.availableFor(companionId) || (t && !this.heard(companionId, t.key)) || (m && !this.heard(companionId, m.key)));
+  },
+
   // Fin de conversation : la réponse choisie (« a », « b », plusieurs lettres, ou « - » sans choix).
   finish: function (id, choices) {
     var t = this.get(id);
