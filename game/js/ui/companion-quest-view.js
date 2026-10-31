@@ -42,9 +42,17 @@ function companionQuestGo(id) {
   if (!st || !window.WORLDS) return;
   var idx = WORLDS.findIndex(function (w) { return w.id === st.world; }), LM = window.LivingMapManager;
   var map = LM ? LM.getMapForWorld(st.world) : null, here = idx === Number((window.WorldManager && WorldManager.worldIndex) || 0);
-  if (map && here) { openLivingMap(map.id, M.sectorsFor(q)[0] || null); return; }
+  if (map && here) { openLivingMap(map.id, M.targetOf(q)); return; } // v3.603.0 : le lieu attribué
   if (typeof switchTab === "function") switchTab("map");
   if (idx >= 0 && typeof openWorldPopup === "function") openWorldPopup(idx);
+}
+
+/* v3.603.0 : où se joue l'étape (le lieu attribué, un seul par quête). */
+function companionQuestWhere(q) {
+  var M = CompanionQuestManager, st = M.step(q), LM = window.LivingMapManager, map = LM && st ? LM.getMapForWorld(st.world) : null, id = M.targetOf(q);
+  if (!map || !id) return _t("Aucun lieu ouvert pour l'instant : avance sur la carte de ce monde.");
+  var d = LM.getSectorDef(map.id, id);
+  return LM.isNameRevealed(map.id, id) ? _t("Lieu : {x}", { x: _td(d.name) }) : _t("Lieu : un secteur voilé (marqué sur la carte)");
 }
 
 function buildCompanionQuestCardHTML(q) {
@@ -63,6 +71,7 @@ function buildCompanionQuestCardHTML(q) {
     });
     h += '</div>';
     if (cur && cur.type === "deliver") h += '<div class="cq-cost">' + companionQuestCostHTML(cur) + '</div>';
+    if (cur && (cur.type === "run" || cur.type === "elite")) h += '<div class="cq-where">' + esc(companionQuestWhere(q)) + '</div>'; // v3.603.0
   }
   var R = window.COMPANION_RELIC_UNIQUES && COMPANION_RELIC_UNIQUES[q.relic], relic = R ? { f: q.relic, w: R.w } : null;
   h += '<div class="qb-card-footer"><div class="qb-card-rewards">' + (relic ? '<span class="qb-reward-chip cq-relic"><img src="' + esc(CompanionRelics.icon(relic)) + '" alt="">'

@@ -7882,5 +7882,10 @@ I18n.register("en", {
   "{n} sortie avant la nuit||{n} sorties avant la nuit": ["{n} outing before nightfall", "{n} outings before nightfall"],
   "Le frein retombe à la nuit, dans {n} sortie.||Le frein retombe à la nuit, dans {n} sorties.": ["The brake resets at nightfall, in {n} outing.", "The brake resets at nightfall, in {n} outings."],
   "Les jours du monde : une nuit tombe toutes les 3 sorties (le jour est sur le bandeau du Camp). La nuit, la carte du monde où tu vis peut reprendre un secteur lointain ; la Palissade le protège.": "World days: night falls every 3 outings (the day is shown on the Camp banner). At night, the map of the world you live in can take back a distant sector; the Palisade protects it.",
+  // v3.603.0 : un lieu par quête
+  "Aucun lieu ouvert pour l'instant : avance sur la carte de ce monde.": "No place open for now: move forward on this world's map.",
+  "Lieu : {x}": "Place: {x}",
+  "Lieu : un secteur voilé (marqué sur la carte)": "Place: a veiled sector (marked on the map)",
+  "Quêtes des compagnons : chaque étape a maintenant son propre lieu sur la carte, marqué du portrait. Une Petite Aventure ne fait avancer qu'une seule quête.": "Companion quests: each step now has its own place on the map, marked with the portrait. A Small Adventure moves only one quest forward.",
 
 });

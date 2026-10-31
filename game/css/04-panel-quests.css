@@ -694,3 +694,4 @@
 .cq-relic small { font-weight: 600; color: var(--nb-ink-dim); }
 .cq-done { font-size: 13px; font-weight: 800; color: var(--nb-green-text); }
 .qb-card.cq-card.is-done { opacity: 0.85; }
+.cq-where { font-size: 13px; font-weight: 700; color: var(--nb-ink-dim); }

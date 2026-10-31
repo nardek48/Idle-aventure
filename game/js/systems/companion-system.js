@@ -817,6 +817,7 @@ var CompanionManager = {
       var v = q[k];
       if (!/^[a-z0-9_]{1,40}$/.test(k) || !v || typeof v !== "object") return;
       out[k] = { s: Math.max(0, Math.floor(Number(v.s) || 0)), n: Math.max(0, Math.floor(Number(v.n) || 0)), d: !!v.d };
+      ["sec", "last"].forEach(function (f) { if (typeof v[f] === "string" && /^[a-z0-9_]{1,40}$/.test(v[f])) out[k][f] = v[f]; }); // v3.603.0 : lieu attribué, dernier joué
     });
     return out;
   },
