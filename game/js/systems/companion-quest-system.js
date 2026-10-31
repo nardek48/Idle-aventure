@@ -20,11 +20,13 @@ var CompanionQuestManager = {
   isUnlocked: function (id) { return !!this.stateOf(id); },
   isDone: function (id) { var s = this.stateOf(id); return !!(s && s.d); },
   isActive: function (id) { var s = this.stateOf(id); return !!(s && !s.d); },
-  step: function (q) { var s = this.stateOf(q.id); return s && !s.d ? q.steps[s.s] || null : null; },
+  // v3.598.1 : un compagnon parti pour de bon (Ysolt recouchée) laisse ses quêtes en cours ; les finies restent
+  departed: function (q) { return !!(window.CompanionManager && CompanionManager.hasDeparted && CompanionManager.hasDeparted(q.companion)); },
+  step: function (q) { var s = this.stateOf(q.id); return s && !s.d && !this.departed(q) ? q.steps[s.s] || null : null; },
 
   // Quêtes débloquées, en cours d'abord puis finies, dans l'ordre des données.
   list: function () {
-    var self = this, qs = this.all().filter(function (q) { return self.isUnlocked(q.id); });
+    var self = this, qs = this.all().filter(function (q) { return self.isUnlocked(q.id) && (self.isDone(q.id) || !self.departed(q)); });
     return qs.filter(function (q) { return !self.isDone(q.id); }).concat(qs.filter(function (q) { return self.isDone(q.id); }));
   },
 

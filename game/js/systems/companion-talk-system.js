@@ -26,6 +26,7 @@ var CompanionTalkManager = {
     if (!t || !window.CompanionManager) return false;
     var st = CompanionManager.state(t.companion);
     if (!st || !st.unlocked || this.isDone(t.id)) return false;
+    if (CompanionManager.hasDeparted && CompanionManager.hasDeparted(t.companion)) return false; // v3.598.1 : Ysolt recouchée
     if (t.step && !(window.StoryQuestManager && StoryQuestManager.isStepReached(t.step))) return false;
     if (t.afterQuest && !(window.CompanionQuestManager && CompanionQuestManager.isDone(t.afterQuest))) return false; // v3.598.1 : quête du compagnon finie avant
     return !t.after || this.isDone(t.after);
