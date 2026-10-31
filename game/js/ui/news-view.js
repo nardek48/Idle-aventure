@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.593.0", "menu_icons/bestiaire_menu", _t("Combat sur téléphone : chaque ennemi porte son nom sous lui, pas seulement la cible.")],
     ["3.592.0", "system/upgrade", _t("Après une mise à jour, cette fenêtre te dit ce qui a changé. Tu la retrouves dans Paramètres › Partie.")],
     ["3.591.0", "menu_icons/settings_menu", _t("Une roue des Paramètres sur l'accueil : importe une sauvegarde, change la langue ou la taille du texte avant de jouer.")],
     ["3.591.0", "system/reset", _t("Paramètres › Partie : cherche ou force une mise à jour.")],

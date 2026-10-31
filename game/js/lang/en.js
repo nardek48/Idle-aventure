@@ -69,6 +69,7 @@ I18n.register("en", {
   "Importer ce code": "Import this code",
   // v3.592.0 : Quoi de neuf
   "Voir les nouveautés": "See what's new",
+  "Combat sur téléphone : chaque ennemi porte son nom sous lui, pas seulement la cible.": "Combat on phones: every enemy shows its name below it, not just the target.",
   "Après une mise à jour, cette fenêtre te dit ce qui a changé. Tu la retrouves dans Paramètres › Partie.": "After an update, this window tells you what changed. Find it again in Settings › Game.",
   "Une roue des Paramètres sur l'accueil : importe une sauvegarde, change la langue ou la taille du texte avant de jouer.": "A Settings wheel on the home screen: import a save, change the language or text size before playing.",
   "Paramètres › Partie : cherche ou force une mise à jour.": "Settings › Game: check for or force an update.",

@@ -554,3 +554,8 @@ html.pc-mode .cbx-key-badge { display: block; }
 /* Règle des 12 px : compteur des potions et raccourcis clavier */
 .cbx-pot > .cbx-pot-count { font-size: 12px; width: 22px; height: 22px; }
 .cbx-key-badge { font-size: 12px; }
+
+/* v3.593.0 (atelier combat-noms.html, accord de Seb) : sur téléphone, chaque ennemi qui n'est pas la cible porte son nom
+   sous lui (la cible a déjà le sien en haut) ; sous ses pastilles d'état quand il en a. En grand écran : css/10-grand-ecran.css. */
+html:not(.wide-mode) body.combat-active .cbx-foe:not(.is-target) .cbx-foe-pl { display: block; position: absolute; left: 50%; bottom: -20px; transform: translateX(-50%); z-index: 6; max-width: 140px; overflow: hidden; text-overflow: ellipsis; padding: 1px 8px; border-radius: 999px; background: rgba(0, 0, 0, 0.62); font-size: 12px; font-weight: 700; color: var(--c-cream-100-2); white-space: nowrap; }
+html:not(.wide-mode) body.combat-active .cbx-foe:not(.is-target):has(.cbx-foe-marks) .cbx-foe-pl { bottom: -42px; }
