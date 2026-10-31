@@ -186,6 +186,7 @@ var SortieManager = {
       StatsSystem.recalcStats(); // sortie farm close : désarme les effets éventuels (isEffectLive redevient false)
     }
     if (typeof renderCombatControls === "function") renderCombatControls();
+    if (window.WorldDays) WorldDays.onSortieEnd(s.context); // v3.602.0 : une nuit toutes les 3 sorties (hors farm libre)
     return summary;
   },
 

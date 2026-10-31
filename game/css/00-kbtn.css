@@ -605,3 +605,11 @@
 :is(.kframe, .ksheet, .full-menu, .kwin) :is(.kbtn, .settings-btn).danger:not(:disabled):active,
 :is(.kbtn, .settings-btn).danger.is-sec:not(:disabled):active { background: rgba(179, 38, 30, 0.14); background-image: none; }
 
+
+/* v3.602.0 (atelier jours-du-monde, B) : le jour du monde sur le bandeau du Camp, en bas à droite (visible replié) ; la soirée après la nuit assombrit l'image */
+.kfb-day { position: absolute; right: 10px; bottom: 9px; z-index: 2; display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 999px; background: rgba(18, 14, 9, 0.72); border: 1px solid rgba(226, 177, 74, 0.4); }
+.kfb-day b { font: 700 12px/1.2 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: var(--c-cream-100-2); white-space: nowrap; }
+.kfb-moons { display: inline-flex; gap: 3px; }
+.kfb-moons i { width: 8px; height: 8px; border-radius: 50%; border: 1px solid rgb(205, 214, 240); }
+.kfb-moons i.is-on { background: rgb(205, 214, 240); }
+.kfb.is-night::after { background: linear-gradient(180deg, rgba(10, 14, 28, 0.42), rgba(10, 14, 28, 0.55) 60%, rgba(10, 7, 4, 0.9)); } /* la pastille et le titre restent nets */

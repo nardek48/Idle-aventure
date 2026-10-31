@@ -2060,7 +2060,7 @@ STORY_QUESTS.ruins = {
         title: "Le chantier errant",
         points: [
           { icon: "images/Icons/scene/node_obstacle.webp", text: "La carte des Ruines fonctionne comme celle du Désert : tu libères un quartier en terminant sa Petite Aventure." },
-          { icon: "images/Icons/scene/node_unknown.webp", text: "Chaque jour, la cité rebâtit un quartier : le chantier. Il change de place à minuit, et même un quartier libéré peut redevenir chantier." },
+          { icon: "images/Icons/scene/node_unknown.webp", text: "Chaque jour, la cité rebâtit un quartier : le chantier. Il change de place à chaque nuit (une nuit toutes les 3 sorties), et même un quartier libéré peut redevenir chantier." }, // v3.602.0 : jours du monde
           { icon: "images/Icons/resources/pierre_errante_icon.webp", text: "Libérer le chantier du jour rapporte des Pierres errantes. Un échec sur un quartier déjà libéré le fait retomber : c'est l'Éboulement." },
           { icon: "images/Icons/scene/protective_amulet.webp", text: "La Palissade d'Aeswyn freine l'Éboulement." }
         ]

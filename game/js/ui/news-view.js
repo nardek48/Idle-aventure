@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.602.0", "camp/campfire", _t("Les jours du monde : une nuit tombe toutes les 3 sorties (le jour est sur le bandeau du Camp). La nuit, la carte du monde où tu vis peut reprendre un secteur lointain ; la Palissade le protège.")],
     ["3.601.0", "camp/campfire", _t("Au feu, touche un compagnon : choisis de quoi parler. Ses souvenirs, ce qu'il pense du monde où vous êtes, sa quête.")],
     ["3.600.0", "menu_icons/map_menu", _t("Quêtes des compagnons : « J'y vais » mène au bon monde, et la carte vivante marque d'un portrait les lieux qui font avancer la quête.")],
     ["3.599.0", "camp/campfire", _t("Au feu, tes compagnons veulent te parler : 27 conversations sur eux, l'histoire et le monde, avec un choix de réponse.")],

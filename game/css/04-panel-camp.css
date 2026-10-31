@@ -490,3 +490,15 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
 .talk-topic-seen { font-style: normal; font-weight: 800; font-size: 13px; color: var(--c-green-650-soft); }
 .talk-topic:focus-visible, .talk-back:focus-visible { outline: 2px solid var(--nb-gold); outline-offset: 2px; }
 .talk-back { text-align: center; }
+/* v3.602.0 : la tombée de la nuit (plein écran, une fois au retour au Camp) et la carte « Cette nuit » */
+.wn { position: fixed; inset: 0; z-index: 9000; display: grid; place-items: center; padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); background: radial-gradient(ellipse at 50% 40%, rgb(36, 46, 72), rgb(8, 8, 16)); animation: wn-in .5s ease; }
+@keyframes wn-in { from { opacity: 0; } to { opacity: 1; } }
+.wn-in { width: min(420px, 100%); display: grid; gap: 14px; text-align: center; }
+.wn-in h3 { margin: 0; font: 700 24px "Cinzel", Georgia, serif; letter-spacing: .06em; color: rgb(230, 236, 255); }
+.wn-in p { margin: 0; font: 400 18px/1.45 "Alegreya", Georgia, serif; color: rgb(233, 226, 207); }
+.wn-what { font-size: 15px !important; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; font-weight: 600 !important; color: rgb(207, 224, 180) !important; }
+.wn-what.is-lost { color: rgb(255, 207, 155) !important; }
+.wn-ok { justify-self: center; min-width: 160px; }
+.wn-w { margin-top: -10px; font: italic 400 15px "Alegreya", Georgia, serif; color: rgb(185, 196, 226); }
+.camp-soir.is-night { box-shadow: inset 4px 0 0 rgba(42, 53, 80, .55); }
+@media (prefers-reduced-motion: reduce) { .wn { animation: none; } }

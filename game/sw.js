@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.601.1"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.602.0"; // <- à incrémenter à CHAQUE livraison
 var CACHE_NAME = "quest-idle-" + CACHE_VERSION;
 var IMAGE_CACHE = "aethervale-images"; // v3.457.4 : hors du préfixe quest-idle- ; v3.547.0 : images disparues purgées (purgeMissingImages)
 var imagesRevalidated = {};             // URL déjà revérifiées depuis le démarrage de ce service worker
@@ -277,6 +277,7 @@ var PRECACHE_APP_SHELL = [
   "./js/ui/companion-talk-view.js", // v3.597.0 : NOUVEAU fichier
   "./js/data/companion-quests.js", // v3.598.0 : NOUVEAU fichier (les quêtes des compagnons)
   "./js/data/companion-topics.js", // v3.601.0 : NOUVEAU fichier (les sujets libres au feu)
+  "./js/systems/world-day-system.js", // v3.602.0 : NOUVEAU fichier (les jours du monde)
   "./js/systems/companion-quest-system.js", // v3.598.0 : NOUVEAU fichier
   "./js/ui/companion-quest-view.js", // v3.598.0 : NOUVEAU fichier
   "./js/systems/warehouse-system.js",

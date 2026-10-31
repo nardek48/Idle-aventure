@@ -714,7 +714,7 @@ function buildLivingMapPanelHTML(mapId, running) {
     h += '<p class="lm-panel-line"><b>' + _t("Chaque victoire :") + '</b> ' + esc(_t("+{n} {x}. Chaque combat rejoué prend ses vivres (ci-dessous), hors cap des Petites Aventures. Fuir ou tomber reste un échec.", { n: LM.getRepeatSevePerWin(mapId), x: _td(rName) })) + '</p>';
     h += '<p class="lm-panel-line"><b>' + _t("Aujourd'hui :") + '</b> ' + _tn(wins, "{n} victoire", "{n} victoires") + ' · ' + (wins ? _t("prochain combat +{p} % PV et dégâts", { p: Math.round((LM.getBrakeMult(mapId, d.id) - 1) * 100) }) : _t("prochain combat à sa force de base")) + '</p>';
     // v3.457.5 (audit P18) : le frein retombe au jour civil — on dit quand
-    if (wins) { var minuit = new Date(); minuit.setHours(24, 0, 0, 0); h += '<p class="lm-panel-line">' + esc(_t("Le frein retombe à minuit, dans {d}.", { d: formatTime(Math.max(60, Math.round((minuit.getTime() - Date.now()) / 1000))) })) + '</p>'; }
+    if (wins && window.WorldDays) h += '<p class="lm-panel-line">' + esc(_tn(WorldDays.left(), "Le frein retombe à la nuit, dans {n} sortie.", "Le frein retombe à la nuit, dans {n} sorties.")) + '</p>'; // v3.602.0 : jours du monde
   }
   if (s.state === "recouvert") {
     var gw = LM.getGateway(mapId, d.id);

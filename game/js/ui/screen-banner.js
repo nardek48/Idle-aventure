@@ -84,7 +84,18 @@ var ScreenBanner = {
     s.className = "kfb-s"; s.textContent = d[2];
     tx.appendChild(t); tx.appendChild(s);
     el.appendChild(tx);
+    if (screen === "camp" && window.WorldDays) this.dayPill(el); // v3.602.0 (atelier jours-du-monde, B)
     return el;
+  },
+
+  /* Le jour du monde et les sorties avant la nuit, en bas à droite du bandeau du Camp (visible replié). */
+  dayPill: function (el) {
+    var W = WorldDays, left = W.left(), done = WORLD_DAY_SORTIES - left, p = document.createElement("div"), moons = "";
+    for (var i = 0; i < WORLD_DAY_SORTIES; i++) moons += '<i class="' + (i < done ? "is-on" : "") + '"></i>';
+    p.className = "kfb-day";
+    p.innerHTML = '<b>☾ ' + esc(_t("Jour {n}", { n: W.day() })) + '</b><span class="kfb-moons" title="' + esc(_tn(left, "{n} sortie avant la nuit", "{n} sorties avant la nuit")) + '">' + moons + '</span>';
+    el.appendChild(p);
+    if (W.isDark()) el.classList.add("is-night");
   },
 
   /* Pose le bandeau en tête de la zone de défilement et branche le repli */

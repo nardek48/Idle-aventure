@@ -346,7 +346,7 @@ var LivingMapManager = {
     this.ensureDefaults();
     // v3.433.0 : la cité finie ne se rebâtit plus ; elle paie à la place
     if (this.getPlan(mapId) === "finir") { this.collectFinishedCity(mapId); return null; }
-    var lm = game.livingMaps[mapId], today = this._todayKey(), self = this;
+    var lm = game.livingMaps[mapId], today = this._dayKey(), self = this; // v3.602.0 : le quartier se rebâtit à chaque nuit de jeu
     var c = lm.chantier;
     if (c && c.day === today && this.getSectorDef(mapId, c.sectorId)) return c;
     var open = map.sectors.filter(function (d) {
@@ -366,7 +366,7 @@ var LivingMapManager = {
   /* v3.454.0 (Crypte, CR9) — « Le réveil » : un couloir raté reste hostile (plus dur) jusqu'au lendemain. */
   isHostile: function (mapId, sectorId) {
     var map = this.getMap(mapId), s = map && (map.gisants || map.veins) ? this.getState(mapId, sectorId) : null; // v3.489.0 : La coulée
-    return !!(s && s.hostileDay && s.hostileDay === this._todayKey());
+    return !!(s && s.hostileDay && s.hostileDay === this._dayKey());
   },
 
   /* v3.489.0 (Montagne, MT9) — chaleur d'un secteur (0 à heatMax) : +1 par veine taillée au départ,
@@ -374,14 +374,14 @@ var LivingMapManager = {
   heatOf: function (mapId, sectorId) {
     var map = this.getMap(mapId), s = map && map.veins ? this.getState(mapId, sectorId) : null;
     if (!s || !s.heat || !s.heatDay) return 0;
-    var days = Math.max(0, Math.round((Date.parse(this._todayKey()) - Date.parse(s.heatDay)) / 86400000));
+    var days = this._dayDiff(s.heatDay, this._dayKey());
     return Math.max(0, s.heat - (isFinite(days) ? days : 0));
   },
   _cutVein: function (mapId, sectorId) {
     var map = this.getMap(mapId), s = this.getState(mapId, sectorId);
     if (!map || !map.veins || !s) return;
     s.heat = Math.min(Number(map.veins.heatMax || 3), this.heatOf(mapId, sectorId) + 1);
-    s.heatDay = this._todayKey();
+    s.heatDay = this._dayKey();
   },
 
   isChantier: function (mapId, sectorId) {
@@ -397,18 +397,26 @@ var LivingMapManager = {
   },
 
   _todayKey: function () { return new Date().toDateString(); },
+  /* v3.602.0 (jours du monde) : le jour de jeu (« J12 ») pour les règles qui suivaient minuit ; le jour civil sans WorldDays. */
+  _dayKey: function () { return window.WorldDays ? WorldDays.key() : this._todayKey(); },
+  _dayDiff: function (a, b) {
+    var j = /^J(\d+)$/, ma = j.exec(String(a)), mb = j.exec(String(b));
+    if (ma && mb) return Math.max(0, Number(mb[1]) - Number(ma[1]));
+    var d = Math.round((Date.parse(b) - Date.parse(a)) / 86400000);
+    return isFinite(d) ? Math.max(0, d) : 1; // ancienne clé (jour civil) : un jour au moins a passé
+  },
 
   /* Victoires du jour civil sur ce secteur (0 si la journée a changé). */
   getDailyWins: function (mapId, sectorId) {
     var s = this.getState(mapId, sectorId);
     if (!s || !this.isRepeatable(mapId, sectorId)) return 0;
-    return s.dailyKey === this._todayKey() ? Number(s.dailyWins || 0) : 0;
+    return s.dailyKey === this._dayKey() ? Number(s.dailyWins || 0) : 0;
   },
 
   _addDailyWin: function (mapId, sectorId) {
     var s = this.getState(mapId, sectorId);
     if (!s) return 0;
-    var today = this._todayKey();
+    var today = this._dayKey();
     if (s.dailyKey !== today) { s.dailyKey = today; s.dailyWins = 0; }
     s.dailyWins = Number(s.dailyWins || 0) + 1;
     return s.dailyWins;
@@ -764,7 +772,7 @@ var LivingMapManager = {
 
     if (result === "fail" && this.getMap(mapId).noRegress) { // v3.454.0 (Crypte) : Le réveil, rien n'est repris
       // lot 6 : une élite n'est pas freinée par le réveil ni la coulée (lus par les Petites Aventures seules)
-      if (!this.isRepeatable(mapId, sectorId)) { s.hostileDay = this._todayKey(); report.hostile = true; }
+      if (!this.isRepeatable(mapId, sectorId)) { s.hostileDay = this._dayKey(); report.hostile = true; }
       report.message = _t("Échec devant {x}.", { x: _td(def.name) }) + " " + (this.isRepeatable(mapId, sectorId)
         ? _t("Soigne-toi, puis retente quand tu veux.")
         : this.getMap(mapId).veins
