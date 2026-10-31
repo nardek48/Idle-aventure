@@ -7797,5 +7797,12 @@ I18n.register("en", {
   "Personne n'a jamais laissé de pain à ceux que le Dragon a triés. Sarkel veut le faire.": "No one has ever left bread for the ones the Dragon sorted. Sarkel wants to.",
   "Au feu, tes compagnons veulent te parler : 27 conversations sur eux, l'histoire et le monde, avec un choix de réponse.": "At the fire, your companions want to talk: 27 conversations about themselves, the story and the world, with a choice of reply.",
   "Chaque compagnon a ses quêtes personnelles (14 en tout), ouvertes par ses conversations. Chacune donne une relique unique.": "Each companion has personal quests (14 in all), opened by their conversations. Each one gives a unique relic.",
+  // v3.600.0 : quêtes des compagnons sur la carte vivante
+  "Quête de {n} :": "{n}'s quest:",
+  "Quête de {n}": "{n}'s quest",
+  "compte pour « {t} »": "counts for “{t}”",
+  "Quête d'un compagnon": "A companion's quest",
+  "ici, son étape en cours avance": "here, their current step moves forward",
+  "Quêtes des compagnons : « J'y vais » mène au bon monde, et la carte vivante marque d'un portrait les lieux qui font avancer la quête.": "Companion quests: “Let's go” takes you to the right world, and the living map marks with a portrait the places that move the quest forward.",
 
 });

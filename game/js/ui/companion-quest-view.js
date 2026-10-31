@@ -30,7 +30,21 @@ function companionQuestActionHTML(q, name) {
   if (!st) return '<span class="cq-done">✓ ' + esc(_t("Terminée")) + '</span>';
   if (st.type === "scene") return '<button type="button" class="settings-btn primary qb-card-btn" onclick="openQuestScene(\'' + esc(q.id) + '\')">' + esc(_t("Écouter")) + '</button>';
   if (st.type === "deliver") return '<button type="button" class="settings-btn primary qb-card-btn" onclick="companionQuestDeliver(\'' + esc(q.id) + '\')"' + (M.canDeliver(q) ? '' : ' disabled') + '>' + esc(_t("Donner")) + '</button>';
-  return M.inParty(q) ? '' : '<span class="qb-card-locked">' + esc(_t("{n} doit être dans l'équipe", { n: name })) + '</span>';
+  // v3.600.0 (option B) : « J'y vais » mène à la carte vivante du monde, sur un secteur qui compte
+  return (M.inParty(q) ? '' : '<span class="qb-card-locked">' + esc(_t("{n} doit être dans l'équipe", { n: name })) + '</span>')
+    + '<button type="button" class="settings-btn primary qb-card-btn" onclick="companionQuestGo(\'' + esc(q.id) + '\')">' + esc(_t("J'y vais")) + '</button>';
+}
+
+/* Le monde de l'étape : sa carte vivante si le héros y est (centrée sur un secteur qui compte),
+   sinon la fiche du monde, avec le voyage. */
+function companionQuestGo(id) {
+  var M = CompanionQuestManager, q = M.get(id), st = q ? M.step(q) : null;
+  if (!st || !window.WORLDS) return;
+  var idx = WORLDS.findIndex(function (w) { return w.id === st.world; }), LM = window.LivingMapManager;
+  var map = LM ? LM.getMapForWorld(st.world) : null, here = idx === Number((window.WorldManager && WorldManager.worldIndex) || 0);
+  if (map && here) { openLivingMap(map.id, M.sectorsFor(q)[0] || null); return; }
+  if (typeof switchTab === "function") switchTab("map");
+  if (idx >= 0 && typeof openWorldPopup === "function") openWorldPopup(idx);
 }
 
 function buildCompanionQuestCardHTML(q) {
@@ -82,3 +96,4 @@ window.buildCompanionQuestsHTML = buildCompanionQuestsHTML;
 window.buildCompanionQuestCardHTML = buildCompanionQuestCardHTML;
 window.companionQuestWideEntries = companionQuestWideEntries;
 window.companionQuestDeliver = companionQuestDeliver;
+window.companionQuestGo = companionQuestGo;

@@ -83,6 +83,35 @@ var CompanionQuestManager = {
       else if (typeof saveGame === "function") saveGame();
     });
   },
+  /* v3.600.0 (option B de Seb) : les secteurs de la carte vivante qui font avancer l'étape en cours.
+     Petite Aventure (contenu « expedition ») ou élite, atteignable et jouable hors contraintes du moment. */
+  sectorsFor: function (q) {
+    var st = this.step(q), LM = window.LivingMapManager;
+    if (!st || (st.type !== "run" && st.type !== "elite") || !LM) return [];
+    var map = LM.getMapForWorld(st.world), want = st.type === "run" ? "expedition" : "elite";
+    if (!map) return [];
+    var open = null;
+    return map.sectors.filter(function (d) {
+      var c = LM.getContentFor(map.id, d.id);
+      if (!c || c.type !== want || !LM.isReachable(map.id, d.id)) return false;
+      if (d.requiresStoryStep && !LM.isStoryStepReached(d.requiresStoryStep)) return false;
+      if (LM.isLiberated(map.id, d.id) && !LM.isRepeatable(map.id, d.id)) {
+        if (open === null) open = LM.getOpenTargets(map.id).length; // un libéré ne se rejoue que si rien d'autre n'attend
+        return open === 0;
+      }
+      return true;
+    }).map(function (d) { return d.id; });
+  },
+  // Quêtes en cours qu'un secteur fait avancer (pastille au portrait, ligne du volet).
+  questsAt: function (mapId, sectorId) {
+    var self = this, LM = window.LivingMapManager, map = LM && LM.getMap(mapId);
+    if (!map) return [];
+    return this.list().filter(function (q) {
+      var st = self.step(q);
+      return st && st.world === map.worldId && self.sectorsFor(q).indexOf(sectorId) >= 0;
+    });
+  },
+
   progressText: function (q) {
     var st = this.step(q), s = this.stateOf(q.id);
     if (!st || (st.type !== "run" && st.type !== "elite")) return "";

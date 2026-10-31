@@ -8211,7 +8211,7 @@ console.log("\n[88] v3.292.0 — Carte vivante plein écran");
   ok(!/lmx-legend"/.test(html), "légende repliée par défaut");
   run("lmxToggleLegend()");
   html = run("buildMapHTML()");
-  ok(/lmx-legend"/.test(html) && (html.match(/lmx-legend-row/g) || []).length === 10, "légende ouverte : sept états, les points de l'anneau, l'objectif et l'élite (v3.549.0)");
+  ok(/lmx-legend"/.test(html) && (html.match(/lmx-legend-row/g) || []).length === 11, "légende ouverte : sept états, les points de l'anneau, l'objectif, l'élite et la quête de compagnon (v3.600.0)");
   run("lmxToggleLegend()");
   run("selectLivingMapSector('gue')");
   html = run("buildMapHTML()");
@@ -20755,6 +20755,34 @@ console.log("\n[396] v3.599.0 — Conversations et quêtes des compagnons : les 
     ok(M.availableFor("maddoc") === null, "la conversation 4 attend « Ce qui reste du roi »");
   } catch (err) { ok(false, "[396] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   if (g.talkScene) g.closeCompanionTalk(false);
+})();
+
+console.log("\n[397] v3.600.0 — Quêtes des compagnons : le secteur à jouer sur la carte vivante");
+(function () {
+  var saveQ = g.companionQuestsData, M = g.CompanionQuestManager, CM = g.CompanionManager, saveParty = CM && CM.partyIds;
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.unlockedTabs.village = true; CompanionManager.unlock('wenna');");
+    g.companionQuestsData = function () { return [{ id: "q_lm", companion: "wenna", title: "Test", relic: "wenna_pousse", steps: [{ type: "run", world: "forest", count: 1, label: "Une Petite Aventure" }, { type: "elite", world: "forest", count: 1, label: "Une élite" }] }]; };
+    M.unlock("q_lm");
+    var map = g.LivingMapManager.getMapForWorld("forest");
+    var secs = M.sectorsFor(M.get("q_lm"));
+    var allExp = secs.length > 0 && secs.every(function (id) { return g.LivingMapManager.getContentFor(map.id, id).type === "expedition" && g.LivingMapManager.isReachable(map.id, id); });
+    ok(allExp, "étape Petite Aventure : secteurs d'expédition atteignables de la Forêt (" + secs.join(", ") + ")");
+    ok(M.questsAt(map.id, secs[0]).length === 1 && M.questsAt("desert", secs[0]).length === 0, "le secteur sait quelle quête il fait avancer");
+    var lm = g.buildLivingMapHTML(map.id);
+    ok((lm.match(/lm-cq-flag/g) || []).length === secs.length, "carte vivante : une pastille au portrait par secteur qui compte (" + secs.length + ")");
+    run("livingMapSelected = '" + secs[0] + "';");
+    ok(/is-cq/.test(g.buildLivingMapPanelHTML(map.id, null)) && /compte pour/.test(g.buildLivingMapPanelHTML(map.id, null)), "volet du secteur : « Quête de Wenna : compte pour… »");
+    run("livingMapSelected = null;");
+    ok(/companionQuestGo\('q_lm'\)/.test(g.buildCompanionQuestCardHTML(M.get("q_lm"))), "carte de la quête : bouton « J'y vais »");
+    CM.partyIds = function () { return ["wenna"]; };
+    M.onRunEnd("forest", "dest");
+    var es = M.sectorsFor(M.get("q_lm"));
+    ok(es.every(function (id) { return g.LivingMapManager.getContentFor(map.id, id).type === "elite"; }), "étape élite : seuls les secteurs d'élite comptent (" + es.join(", ") + ")");
+  } catch (err) { ok(false, "[397] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  g.companionQuestsData = saveQ;
+  if (CM) CM.partyIds = saveParty;
+  run("livingMapSelected = null;");
 })();
 
 Promise.all(ATTENTES).then(function () {
