@@ -82,10 +82,20 @@ var CompanionTalkManager = {
     if (!D || !D.monde || !w || !D.monde[w]) return null;
     return { key: "s_monde_" + w, world: w, lines: D.monde[w] };
   },
-  // Un sujet nouveau (pastille) : conversation de l'histoire, ou souvenir / monde pas encore écouté.
+  /* v3.605.0 (T2) : « Et les autres ? » — les compagnons recrutés (et pas partis) dont il a un avis. */
+  topicAvis: function (companionId) {
+    var D = (typeof companionAvisData === "function" ? companionAvisData() : {})[companionId], CM = window.CompanionManager;
+    if (!D || !CM) return [];
+    return Object.keys(D).filter(function (o) {
+      var st = CM.state(o);
+      return st && st.unlocked && !(CM.hasDeparted && CM.hasDeparted(o));
+    }).map(function (o) { return { other: o, key: "s_avis_" + o, lines: D[o] }; });
+  },
+  // Un sujet nouveau (pastille) : conversation de l'histoire, ou souvenir / monde / avis pas encore écouté.
   hasNewTopic: function (companionId) {
-    var t = this.topicToi(companionId), m = this.topicMonde(companionId);
-    return !!(this.availableFor(companionId) || (t && !this.heard(companionId, t.key)) || (m && !this.heard(companionId, m.key)));
+    var t = this.topicToi(companionId), m = this.topicMonde(companionId), self = this;
+    return !!(this.availableFor(companionId) || (t && !this.heard(companionId, t.key)) || (m && !this.heard(companionId, m.key))
+      || this.topicAvis(companionId).some(function (a) { return !self.heard(companionId, a.key); }));
   },
 
   // Fin de conversation : la réponse choisie (« a », « b », plusieurs lettres, ou « - » sans choix).
