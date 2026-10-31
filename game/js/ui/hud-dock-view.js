@@ -82,6 +82,7 @@ function renderHudDock() {
   if (!root) { mountHudDock(); root = document.getElementById("hud-dock"); if (!root) return; }
   var fil = hudDockFil(), list = hudDockOrder(fil, hudDockItems());
   refreshTabClaimBadge(fil);
+  if (typeof refreshTabVillageBadge === "function") refreshTabVillageBadge(); // v3.604.0 : événement du village
   // v3.429.24 : l'or à investir, en plus des trois situations, tout en haut (loin du pouce)
   var or = typeof hudDockOr === "function" ? hudDockOr() : null;
   if (or) list.unshift(or);

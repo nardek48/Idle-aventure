@@ -51,6 +51,7 @@ var WorldDays = {
         }
       }
     }
+    if (window.VillageEvents) { var ev = VillageEvents.onDawn(w.day); night.event = ev ? ev.id : null; } // v3.604.0 : Ce matin à Aeswyn
     w.night = night;
     if (typeof addLog === "function") addLog("🌙 " + this.nightText(night), "event");
     if (typeof saveGame === "function") saveGame();
@@ -74,12 +75,12 @@ var WorldDays = {
   // Ce que la nuit a fait, en une phrase (journal, écran de la nuit, « Cette nuit » au camp).
   nightText: function (night) {
     var LM = window.LivingMapManager, n = night || this.ensure().night;
-    if (!n || !LM || !n.mapId) return _t("La nuit tombe. Rien n'a bougé autour du camp.");
+    if (!n || !LM || !n.mapId) return _t("Rien n'a bougé autour du camp.");
     var d = n.sectorId ? LM.getSectorDef(n.mapId, n.sectorId) : null;
     if (n.kind === "reprise" && d) return LM.buildRegressionMessage(n.mapId, n.sectorId);
     if (n.kind === "chantier" && d) return _t("Cette nuit, la ville a rebâti {x}.", { x: _td(d.name) });
     if (n.braked) return _t("La Palissade a tenu : rien n'a été repris.");
-    return _t("La nuit tombe. Rien n'a bougé autour du camp.");
+    return _t("Rien n'a bougé autour du camp.");
   },
 
   // Écran de la nuit : montré une fois, au premier passage au Camp après la tombée de la nuit.

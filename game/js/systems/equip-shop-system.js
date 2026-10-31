@@ -65,7 +65,8 @@ var EquipShopManager = {
   getPrice: function (item) {
     if (!item) return Infinity;
     var base = EQUIP_SHOP_PRICES[item.rarity] || EQUIP_SHOP_PRICES.common;
-    return Math.floor(base * getEquipShopWorldPriceMult());
+    var market = window.VillageEvents && VillageEvents.marketOn() ? VILLAGE_EVENT_MARKET.discount : 1; // v3.604.0 : le marché de Sarkel
+    return Math.floor(base * getEquipShopWorldPriceMult() * market);
   },
 
   /* v3.216.0 (lot V-5) — LA HALLE AGRANDIT L'ÉCHOPPE, elle ne la déplace pas.
@@ -78,7 +79,8 @@ var EquipShopManager = {
       : ((window.VillageBuildingManager && typeof VillageBuildingManager.getLevel === "function")
           ? VillageBuildingManager.getLevel("hall") : 0);
     var etal = (window.MemoryManager && MemoryManager.has("etal_garni")) ? 1 : 0; // v3.322.0 : Étal garni
-    return EQUIP_SHOP_SIZE + Math.floor(Math.max(0, lvl) / 2) + etal;
+    var market = typeof level !== "number" && window.VillageEvents && VillageEvents.marketOn() ? VILLAGE_EVENT_MARKET.extra : 0; // v3.604.0
+    return EQUIP_SHOP_SIZE + Math.floor(Math.max(0, lvl) / 2) + etal + market;
   },
 
   /* Remise sur le renouvellement manuel : -5 % par niveau, composés. Elle ne
