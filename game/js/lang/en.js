@@ -4220,6 +4220,11 @@ I18n.register("en", {
   "Il faut": "You need",
   "corde": "rope",
   "Assuré": "Certain",
+  // v3.594.0 : Camp, l'onglet « Le feu » et la carte
+  "Le feu": "The fire",
+  "Carte vivante · {k} secteurs sur {n} libérés": "Living map · {k} of {n} sectors freed",
+  "Tu es ici : {w}": "You are here: {w}",
+  "Ouvrir la carte du monde": "Open the world map",
   // v3.586.0 : Expéditions, une ligne par sorte
   "Tout prendre": "Take it all",
   "une place pour partir": "a slot to leave",
