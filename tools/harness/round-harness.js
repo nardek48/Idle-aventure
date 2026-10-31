@@ -20593,12 +20593,12 @@ console.log("\n[393] v3.595.0 — Camp : la phrase du soir et le coin du feu ; l
     run("lastRenderedTab = 'quests';");
     var feu = g.buildCampHTML("feu");
     var phrase = (feu.match(/class="camp-soir-t">([^<]*)</) || [])[1] || "";
-    var pool = D[1].lieu.concat(D[1].maddoc).map(function (t) { return g.esc(t); });
-    ok(pool.indexOf(phrase) !== -1, "la phrase du soir vient du Désert : le lieu ou Maddoc, resté au camp (« " + phrase.slice(0, 40) + "… »)");
-    ok(/campSoirTap\('maddoc'\)/.test(feu) && !/campSoirTap\('wenna'\)/.test(feu), "au coin du feu : ceux qui sont restés au camp (Maddoc), pas ceux qui partent au combat (Wenna)");
-    run("lastRenderedTab = 'campement'; campSoir.tap = 'maddoc';");
+    var pool = D[1].lieu.concat(D[1].maddoc, D[1].wenna).map(function (t) { return g.esc(t); });
+    ok(pool.indexOf(phrase) !== -1, "la phrase du soir vient du Désert : le lieu ou un compagnon au camp (« " + phrase.slice(0, 40) + "… »)");
+    ok(/openCompanionMenu\('maddoc'\)/.test(feu) && /openCompanionMenu\('wenna'\)/.test(feu), "v3.601.0 : hors sortie, toute l'équipe est au coin du feu, et la toucher ouvre la liste des sujets");
+    run("lastRenderedTab = 'campement';");
     var feu2 = g.buildCampHTML("feu");
-    ok(feu2.indexOf(g.esc(D[1].tap.maddoc)) !== -1 && feu2.indexOf(phrase) !== -1, "toucher Maddoc : sa phrase ; la phrase du soir ne change pas tant qu'on reste au Camp");
+    ok(feu2.indexOf(phrase) !== -1, "la phrase du soir ne change pas tant qu'on reste au Camp");
     var exp = fs.readFileSync(path.join(ROOT, "js/ui/expeditions-view.js"), "utf8"), mv = fs.readFileSync(path.join(ROOT, "js/ui/map-view.js"), "utf8");
     ok(exp.indexOf("switchTab(\\'map\\')\" ") === -1 && exp.indexOf("ICON.map") === -1, "Expéditions : plus d'entrée « Carte » en pied");
     ok(mv.indexOf("voyage d'abord") === -1 && /open \? '<button class="settings-btn" type="button" onclick="openDungeonSheet\(/.test(mv), "carte du monde : un donjon ouvert s'entre sans voyager jusqu'à son monde");
@@ -20783,6 +20783,36 @@ console.log("\n[397] v3.600.0 — Quêtes des compagnons : le secteur à jouer s
   g.companionQuestsData = saveQ;
   if (CM) CM.partyIds = saveParty;
   run("livingMapSelected = null;");
+})();
+
+console.log("\n[398] v3.601.0 — Parler aux compagnons : la liste des sujets (M1, T1)");
+(function () {
+  var M = g.CompanionTalkManager;
+  try {
+    var D = g.companionTopicsData(), n = 0;
+    Object.keys(D).forEach(function (c) { ["toi", "monde"].forEach(function (k) { n += Object.keys(D[c][k]).length; }); });
+    ok(n === 30, "30 sujets : un souvenir et un avis sur le monde, par compagnon et par monde où il est (" + n + ")");
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); CompanionManager.unlock('wenna'); WorldManager.worldIndex = 1; game.worldsEverReached = { 0: true, 1: true };");
+    var toi = M.topicToi("wenna"), monde = M.topicMonde("wenna");
+    ok(toi && toi.world === "forest" && monde && monde.world === "desert", "Wenna au Désert : son souvenir de la Forêt d'abord, son avis sur le Désert");
+    ok(M.hasNewTopic("wenna"), "sujets jamais écoutés : pastille « … » au coin du feu");
+    var topics = g.talkMenuTopics("wenna").map(function (o) { return o.k; });
+    ok(topics.join(",") === "toi,monde", "menu : « Parle-moi de toi », « Et ce monde-ci ? » (" + topics.join(",") + ")");
+    g.openCompanionMenu("wenna"); g.talkTopic("toi");
+    ok(g.talkScene && g.talkScene.topic === "toi" && M.heard("wenna", "s_toi_forest"), "« Parle-moi de toi » : le souvenir se joue et passe en écouté");
+    ok(M.topicToi("wenna").world === "desert", "le souvenir suivant est celui du Désert");
+    g.closeCompanionTalk(false);
+    run("CompanionTalkManager.markHeard('wenna', 's_toi_desert'); CompanionTalkManager.markHeard('wenna', 's_monde_desert');");
+    ok(!M.hasNewTopic("wenna") && M.topicToi("wenna").world === "desert", "tout écouté : plus de pastille, le dernier souvenir se réécoute");
+    var save = run("JSON.stringify(CompanionManager.buildSaveData().wenna.talks)");
+    ok(/s_toi_forest/.test(save) && /s_monde_desert/.test(save), "les sujets écoutés partent dans la sauvegarde, sans nouvel état");
+    run("CompanionQuestManager.questsOf('wenna').q_wenna_1 = { s: 0, n: 0, d: false };");
+    ok(g.talkMenuTopics("wenna").some(function (o) { return o.k === "quete"; }), "quête en cours : le sujet « Ta quête »");
+    g.openCompanionMenu("wenna"); g.talkTopic("quete");
+    ok(g.talkScene && g.talkScene.questTopic === "q_wenna_1" && g.talkScene.queue.length === 1, "« Ta quête » : où elle en est, puis l'action de l'étape");
+    g.closeCompanionTalk(false);
+  } catch (err) { ok(false, "[398] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  if (g.talkScene) g.closeCompanionTalk(false);
 })();
 
 Promise.all(ATTENTES).then(function () {
