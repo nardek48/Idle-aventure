@@ -45,6 +45,7 @@ var CompanionTalkManager = {
     var t = this.get(id);
     if (!t || !this.isAvailable(t)) return false;
     this.talksOf(t.companion)[id] = String(choices || "-").slice(0, 16) || "-";
+    if (t.unlocks && t.unlocks.quest && window.CompanionQuestManager) CompanionQuestManager.unlock(t.unlocks.quest); // v3.598.0
     if (typeof saveGame === "function") saveGame();
     return true;
   }

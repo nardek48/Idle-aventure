@@ -623,6 +623,8 @@ var LivingMapManager = {
     var f = this.getFight();
     if (!f) return false;
     if (!enemy || enemy.id !== f.eliteId) return false;
+    var lmMap = window.LIVING_MAPS && LIVING_MAPS[f.mapId];
+    if (window.CompanionQuestManager && lmMap) CompanionQuestManager.onEliteWon(lmMap.worldId); // v3.598.0 : quêtes des compagnons
     if (window.SortieManager) SortieManager.end("success");
     game.livingMaps.fight = null;
     var report = this.onRunEnd(f.mapId, f.sectorId, "success");

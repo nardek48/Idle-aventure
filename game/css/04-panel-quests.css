@@ -681,3 +681,16 @@
 .story-end-card b, .story-prologue-card b { font-size: 16px; }
 .story-end-card p { margin: 0; font-size: 13px; color: var(--sheet-ink-dim); }
 .story-end-link { justify-self: start; padding: 4px 0; border: 0; background: none; font-size: 14px; font-weight: 700; color: var(--nb-gold-deep); text-decoration: underline; }
+
+/* v3.598.0 : quêtes des compagnons (Secondaires) — le portrait remplit l'écusson, la relique promise en pied de carte */
+.cq-banner { background: linear-gradient(180deg, var(--nb-cream-alt), var(--nb-frame-light)); overflow: hidden; }
+.cq-banner .qb-card-banner-img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 18%; }
+.cq-badge { margin-left: 4px; color: var(--nb-ink-dim); }
+.cq-cost { display: flex; flex-wrap: wrap; gap: 6px; }
+.cq-card .qb-card-rewards { flex: 1 1 100%; }
+.cq-relic { display: flex; align-items: center; gap: 8px; border-radius: 10px; white-space: normal; min-width: 0; }
+.cq-relic img { flex: 0 0 32px; width: 32px; height: 32px; object-fit: contain; }
+.cq-relic b, .cq-relic small { display: block; }
+.cq-relic small { font-weight: 600; color: var(--nb-ink-dim); }
+.cq-done { font-size: 13px; font-weight: 800; color: var(--nb-green-text); }
+.qb-card.cq-card.is-done { opacity: 0.85; }

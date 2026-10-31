@@ -4,7 +4,7 @@
 
 /* Une conversation : id, companion, step (étape de l'Histoire atteinte), after (conversation faite avant),
    lines (w : compagnon, "n" narrateur ; un nœud { choix: [{ t, suite }] } propose deux réponses),
-   unlocks (quête personnelle débloquée, plus tard). Textes littéraux pour l'audit i18n. */
+   unlocks ({ quest, title } : la quête personnelle débloquée, data/companion-quests.js). Textes littéraux pour l'audit i18n. */
 function companionTalksData() {
   return [];
 }

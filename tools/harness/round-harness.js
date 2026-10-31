@@ -20644,6 +20644,62 @@ console.log("\n[394] v3.597.0 — Conversations au feu : le moteur et la scène 
   if (g.talkScene) g.closeCompanionTalk(false);
 })();
 
+console.log("\n[395] v3.598.0 — Quêtes des compagnons et reliques uniques (déroulés à venir)");
+(function () {
+  var saveQ = g.companionQuestsData, saveT = g.companionTalksData, M = g.CompanionQuestManager, CR = g.CompanionRelics, CM = g.CompanionManager, saveParty = CM && CM.partyIds;
+  try {
+    ok(saveQ().length === 0, "aucune quête livrée tant que les déroulés ne sont pas validés");
+    var U = g.COMPANION_RELIC_UNIQUES, owners = {};
+    Object.keys(U).forEach(function (k) { owners[U[k].owner] = (owners[U[k].owner] || 0) + 1; });
+    ok(Object.keys(U).length === 14 && owners.wenna === 3 && owners.maddoc === 3 && owners.edda === 3 && owners.ysolt === 3 && owners.sarkel === 2, "14 reliques uniques : 3 par compagnon, 2 pour Sarkel");
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.unlockedTabs.companions = true; CompanionManager.unlock('wenna'); CompanionManager.unlock('maddoc');");
+    var r = CR.grantUnique("wenna_pousse");
+    ok(r && CR.isUnique(r) && CR.name(r) === "La Pousse du Clos" && CR.effectText(r) === "+15 % PV · Héros +2 % dégâts" && CR.rarity(r) === "legendary", "relique unique : nom propre, deux effets, couleur légendaire (" + (r && CR.effectText(r)) + ")");
+    ok(CR.grantUnique("wenna_pousse") === null, "une relique unique ne se gagne qu'une fois");
+    run("CompanionManager.state('wenna').upgrades = 5; CompanionManager.state('maddoc').upgrades = 5;");
+    ok(!CR.equip("maddoc", 0, r.id) && CR.equip("wenna", 0, r.id), "réservée à son compagnon : Maddoc ne peut pas la porter, Wenna oui");
+    ok(Math.abs(CR.sum("wenna", "hpPct") - 0.15) < 1e-9 && Math.abs(CR.sum("wenna", "heroPct") - 0.02) < 1e-9, "ses deux effets comptent, sans rang");
+    run("companionRelicPick = { id: 'maddoc', slot: 0 };");
+    ok(!/Pousse du Clos/.test(g.buildCompanionRelicPickHTML()), "la feuille de Maddoc ne propose pas la relique de Wenna");
+    var c = CR.grant("croc", 2);
+    ok(CR.effectText(c) === "+9 % dégâts", "relique ordinaire : texte inchangé (" + CR.effectText(c) + ")");
+    // Une quête de test : scène, livraison, Petite Aventure, élite
+    g.companionQuestsData = function () { return [{ id: "q_test", companion: "wenna", title: "Test", relic: "wenna_ruban", steps: [
+      { type: "scene", lines: [{ w: "wenna", t: "Viens." }] }, { type: "deliver", res: { eau: 5 } }, { type: "run", world: "desert", count: 2 }, { type: "elite", world: "desert", count: 1 }] }]; };
+    g.companionTalksData = function () { return [{ id: "t_test", companion: "wenna", lines: [{ w: "wenna", t: "J'ai une idée." }], unlocks: { quest: "q_test", title: "Test" } }]; };
+    ok(!M.isUnlocked("q_test") && M.list().length === 0, "quête fermée tant que sa conversation n'est pas faite");
+    g.openCompanionTalk("t_test"); g.talkNext(); g.talkNext(); g.closeCompanionTalk(true);
+    ok(M.isActive("q_test") && M.step(M.get("q_test")).type === "scene", "la conversation finie ouvre la quête, à sa première étape");
+    ok(M.readyCount() === 1 && /openQuestScene\('q_test'\)/.test(g.buildCompanionQuestsHTML()), "Secondaires : la carte de la quête, bouton « Écouter », pastille");
+    g.openQuestScene("q_test"); g.talkNext(); g.talkNext(); g.closeCompanionTalk(true);
+    ok(M.step(M.get("q_test")).type === "deliver" && !M.canDeliver(M.get("q_test")), "scène écoutée : étape suivante (livraison), pas encore les ressources");
+    run("WarehouseManager.addResource('eau', 8, true);");
+    var eau = run("WarehouseManager.getAmount('eau')");
+    ok(M.deliver("q_test") && run("WarehouseManager.getAmount('eau')") === eau - 5, "livraison : les ressources sont retirées de l'Entrepôt");
+    CM.partyIds = function () { return []; };
+    M.onRunEnd("desert", "dest");
+    ok(M.stateOf("q_test").n === 0, "Petite Aventure sans Wenna dans l'équipe : ne compte pas");
+    CM.partyIds = function () { return ["wenna"]; };
+    M.onRunEnd("forest", "dest"); M.onRunEnd("desert", "ko");
+    ok(M.stateOf("q_test").n === 0, "autre monde ou échec : ne compte pas");
+    M.onRunEnd("desert", "dest");
+    var mid = run("JSON.stringify(CompanionManager.buildSaveData().wenna.quests)");
+    ok(mid === '{"q_test":{"s":2,"n":1,"d":false}}', "la progression part dans la sauvegarde du compagnon (" + mid + ")");
+    run("CompanionManager.restore(JSON.parse(JSON.stringify(CompanionManager.buildSaveData())));");
+    ok(M.stateOf("q_test").n === 1, "et revient au chargement");
+    M.onRunEnd("desert", "parcours");
+    ok(M.step(M.get("q_test")).type === "elite", "deux réussites dans le Désert : étape suivante (élite)");
+    M.onEliteWon("desert");
+    ok(M.isDone("q_test") && CR.hasUnique("wenna_ruban"), "élite vaincue : quête terminée, relique unique gagnée");
+    ok(/cq-done/.test(g.buildCompanionQuestCardHTML(M.get("q_test"))), "la carte affiche la quête terminée");
+    var idx = fs.readFileSync(path.join(ROOT, "index.html"), "utf8"), sw = fs.readFileSync(path.join(ROOT, "sw.js"), "utf8");
+    ok(["js/data/companion-quests.js", "js/systems/companion-quest-system.js", "js/ui/companion-quest-view.js"].every(function (f) { return idx.indexOf(f) > 0 && sw.indexOf("./" + f) > 0; }), "trois fichiers nouveaux, chargés et précachés");
+  } catch (err) { ok(false, "[395] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  g.companionQuestsData = saveQ; g.companionTalksData = saveT;
+  if (CM) CM.partyIds = saveParty;
+  if (g.talkScene) g.closeCompanionTalk(false);
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

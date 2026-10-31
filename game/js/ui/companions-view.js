@@ -106,7 +106,9 @@ function buildCompanionRelicPickHTML() {
   if (!p || !CR) return "";
   var def = getCompanionDef(p.id), worn = CR.worn(p.id), R = CR.ensure();
   var fams = worn.filter(function (x, k) { return x != null && k !== p.slot; }).map(function (x) { var r = CR.byId(x); return r ? r.f : null; });
-  var list = R.inv.slice().sort(function (a, b) { return COMPANION_RELIC_ORDER.indexOf(a.f) - COMPANION_RELIC_ORDER.indexOf(b.f) || b.w - a.w; });
+  // v3.598.0 : les reliques uniques d'un autre compagnon ne sont pas proposées ; celles du compagnon passent en tête
+  var list = R.inv.filter(function (r) { var o = CR.ownerOf(r); return !o || o === p.id; })
+    .sort(function (a, b) { return COMPANION_RELIC_ORDER.indexOf(a.f) - COMPANION_RELIC_ORDER.indexOf(b.f) || b.w - a.w; });
   var h = '<div class="hs-sheet"><div class="cp-relic-pick-h"><b>' + esc(_t("Emplacement {n} · {x}", { n: p.slot + 1, x: _td(def.name) })) + '</b>'
     + '<button type="button" class="cp-relic-back" onclick="herosOpenCompanion(\'' + p.id + '\')">‹ ' + esc(_td(def.name)) + '</button></div>';
   if (!list.length) return h + '<div class="pc-empty">' + esc(_t("Aucune relique pour l'instant. Les compagnons en rapportent de patrouille.")) + '</div></div>';
