@@ -95,6 +95,7 @@ window.campRationEmpty = campRationEmpty;
 
 /* v3.411.0 : onglet ouvert du Campement (retenu pendant la session). */
 var CAMP_TABS = [
+  { key: "feu", label: _t("Le feu"), icon: "images/Icons/camp/campfire.webp" }, // v3.594.0 (atelier camp-carte, choix Seb) : santé, rations, compagnons
   { key: "missions", label: _t("Missions"), icon: "images/Icons/quests/quest_list.webp" },
   { key: "depart", label: _t("Expéditions"), icon: "images/Icons/quests/start_expedition.webp" }, // v3.426.0 : était « Départ »
   { key: "grimoire", label: _t("Grimoire"), icon: "images/Icons/codex/codex_lore.webp" }
@@ -137,7 +138,8 @@ function buildCampHTML(tab) {
      boutons carrés (icône, soin, stock en pastille). Toucher une ration = la manger.
      Les identifiants camp-hp-fill, camp-fire-hp-value et camp-fire-eta sont gardés : le
      système de camp les met à jour en direct. */
-  h += '<div class="camp-card camp-health-card">';
+  var hc = '<div class="camp-card camp-health-card">'; // v3.594.0 : la santé passe dans l'onglet « Le feu »
+  var h0 = h; h = hc; // la suite assemble le bloc santé dans h, rendu à h0 plus bas
   h += '<div class="camp-hp-line"><img class="camp-hp-ico" src="images/Icons/combat_stats/stat_health.webp" alt="">';
   h += '<div class="camp-hp-bar kgauge kgauge-thin kgauge-hp"><div class="kgauge-track"><div class="kgauge-fill" id="camp-hp-fill" style="width:' + hpPct + '%"></div></div>'
     + '<span class="kgauge-text" id="camp-fire-hp-value">' + formatNumber(Math.floor(hp)) + ' / ' + formatNumber(maxHp) + '</span></div></div>';
@@ -187,6 +189,7 @@ function buildCampHTML(tab) {
   h += '</div>';
   if (!teamFull && !campLock && rationOptions.some(function (r) { return r.amount >= 1; })) h += '<div class="camp-ration-hint">' + (campMates.length ? _t("Toucher une ration : toute l'équipe mange") : _t("Toucher une ration pour la manger")) + '</div>';
   h += '</div>'; // fin .camp-health-card
+  hc = h; h = h0;
 
   // v3.133.0 : bloc « Les braises » — offrande de l'étape Histoire courante (forest_15), affiché
   // seulement pendant l'étape acceptée et tant que l'offrande n'est pas faite (StoryQuestManager.getOfferingInfo).
@@ -216,6 +219,7 @@ function buildCampHTML(tab) {
      Missions · Départ (préparer, expédition) · Grimoire. Un onglet n'apparaît que s'il a du
      contenu ; s'il n'en reste qu'un, pas de rail. L'onglet ouvert est retenu (campTab). */
   var tabsHTML = {};
+  tabsHTML.feu = campHereCardHTML() + hc;
   var mh = '<div class="camp-card camp-missions-card">';
   mh += buildCampMissionBoardHTML();
   mh += '<button class="settings-btn" type="button" onclick="switchTab(\'quests\')">' + _t("Voir le tableau complet") + '</button>';
@@ -251,10 +255,9 @@ function buildCampHTML(tab) {
   // de la maquette (atelier/grand-ecran.html) — équipe, rations, Grimoire, missions, expéditions. Le téléphone ne change pas.
   if (!tab && document.documentElement.classList.contains("wide-mode")) {
     var titled = function (t, sub, x) { return x ? '<section class="cw-card"><h3 class="cw-h">' + esc(t) + (sub ? ' <small>' + sub + '</small>' : '') + '</h3>' + x + '</section>' : ""; };
-    var healthEnd = h.lastIndexOf('<div class="camp-card camp-health-card">');
     campShownTab = "missions";
     var sub = esc(_t("+{n} % PV/min", { n: regenPct })) + ' · <span id="camp-fire-eta">' + esc(hpFull ? _t("PV au maximum") : _t("Max dans {d}", { d: formatTime(Math.ceil(minutesToFull * 60)) })) + '</span>';
-    return h.slice(0, healthEnd) + '<div class="cw"><div class="cw-col">'
+    return h + '<div class="cw"><div class="cw-col">'
       + titled(_t("Le feu de camp"), sub, campWideTeamHTML(maxHp, hp, rationOptions, teamFull, campLock, campMates)) + eh
       + titled(_t("Grimoire"), tabsHTML.grimoire ? esc(campWideRulesCount()) : "", tabsHTML.grimoire ? campWideGrimoireHTML() : "") + '</div>'
       + '<div class="cw-col">' + titled(_t("Missions"), "", campWideMissionsHTML()) + titled(_t("Expéditions"), "", tabsHTML.depart || "") + '</div></div></div>';
@@ -269,6 +272,7 @@ function buildCampHTML(tab) {
     order.forEach(function (t) {
       h += '<button type="button" class="' + (cur === t.key ? 'is-on' : '') + '" onclick="setCampTab(\'' + t.key + '\')">'
         + '<img src="' + t.icon + '" alt=""><span>' + esc(t.label) + '</span>'
+        + (t.key === "feu" && !teamFull ? '<span class="kseg-dot">!</span>' : '') // v3.594.0 : à soigner
         + (t.key === "missions" && claimable ? '<span class="kseg-dot">' + claimable + '</span>' : '')
         + (t.key === "depart" && toCollect ? '<span class="kseg-dot is-green">' + toCollect + '</span>' : '') + '</button>';
     });
@@ -283,6 +287,17 @@ function buildCampHTML(tab) {
 
   h += '</div>';
   return h;
+}
+
+/* v3.594.0 (atelier camp-carte, option M3 de Seb) : en tête du « feu », le monde où l'on est et la carte. */
+function campHereCardHTML() {
+  if (typeof isTabUnlocked === "function" && !isTabUnlocked("map")) return "";
+  var w = window.WorldManager && typeof WorldManager.getWorld === "function" ? WorldManager.getWorld() : null;
+  if (!w) return "";
+  var lm = window.LivingMapManager ? LivingMapManager.getMapForWorld(w.id) : null, sub = _t("Carte du monde");
+  if (lm) { var sm = LivingMapManager.getSummary(lm.id); sub = _t("Carte vivante · {k} secteurs sur {n} libérés", { k: sm.libere, n: sm.total }); }
+  return '<button type="button" class="camp-card camp-here" onclick="switchTab(\'map\')"><img class="camp-here-img" src="' + esc(getWorldThumb(w)) + '" alt="">'
+    + '<span class="camp-here-tx"><b>' + esc(_t("Tu es ici : {w}", { w: _td(w.name) })) + '</b><small>' + esc(sub) + '</small></span><span class="camp-here-go">' + esc(_t("Carte")) + ' ›</span></button>';
 }
 
 /* =========================================================

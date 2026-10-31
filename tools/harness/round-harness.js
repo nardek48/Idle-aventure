@@ -601,7 +601,7 @@ ok(!!withGold, "au moins une mission affiche un résumé de récompense avec de 
 
 console.log("\n[24] Campement = hub (3.103.1) : cartes de mission pleines, actions déléguées");
 game = freshCombat("knight"); giveWeapon(); game.activeTab = "campement";
-var campHtml = g.buildCampHTML();
+var campHtml = (g.buildCampHTML("feu") + g.buildCampHTML("missions")); // v3.594.0 : la santé est dans l'onglet « Le feu »
 ok(campHtml.indexOf("camp-mission-card") !== -1, "l'écran Campement affiche des cartes de mission");
 ok(campHtml.indexOf("Résumé des quêtes") === -1 && typeof g.buildCampQuestSummaryHTML === "undefined", "ancien résumé texte retiré");
 var boardHtml = g.buildCampMissionBoardHTML();
@@ -621,7 +621,7 @@ ok(campHtml.indexOf("camp-regen-fill") === -1, "bloc Régénération : barre ret
 ok(campHtml.indexOf("PV/min") !== -1 && campHtml.indexOf("camp-fire-eta") !== -1 && campHtml.indexOf("camp-help-btn") !== -1, "bloc Régénération : rythme, ETA et bouton « ? » sur une ligne");
 ok(campHtml.indexOf("camp-regen-desc") === -1, "bloc Régénération : explication repliée par défaut");
 run("toggleCampRegenHelp()");
-ok(g.buildCampHTML().indexOf("camp-regen-desc") !== -1, "bloc Régénération : le « ? » déplie l'explication");
+ok(g.buildCampHTML("feu").indexOf("camp-regen-desc") !== -1, "bloc Régénération : le « ? » déplie l'explication");
 run("toggleCampRegenHelp()");
 run("CampManager.refreshCampCard()");
 ok(true, "refreshCampCard() (nouvelles barres) ne plante pas");
@@ -1004,7 +1004,7 @@ ok(g.CampManager.eatRation("ration") === false, "PV pleins : ration refusée");
 ok(typeof g.CAMP_MEAL_COST === "undefined" && typeof g.CampManager.eat === "undefined", "ancien système Repas (viande+eau) retiré");
 game.activeTab = "campement";
 game.heroHp = Math.floor(game.heroMaxHp * 0.5); // PV pleins -> "Pas faim" masque la liste (comportement voulu)
-var campHtml = g.buildCampHTML();
+var campHtml = (g.buildCampHTML("feu") + g.buildCampHTML("missions")); // v3.594.0 : la santé est dans l'onglet « Le feu »
 ok(campHtml.indexOf("camp-ration-row") !== -1 && campHtml.indexOf("Petite ration") !== -1 && campHtml.indexOf("Grande ration") !== -1, "écran Campement : carte Rations avec les 3 types");
 game.heroHp = game.heroMaxHp;
 
@@ -11292,7 +11292,7 @@ console.log("\n[145] v3.369.0 — Multilangue, lot L-1 : HUD, Camp, Combat, fen�
   game = freshCombat("knight");
   /* Français : textes inchangés, pluriels corrects */
   I._lang = "fr";
-  var camp = g.buildCampHTML();
+  var camp = (g.buildCampHTML("feu") + g.buildCampHTML("missions"));
   ok(camp.indexOf("camp-hp-fill") !== -1 && camp.indexOf("Manger : ") !== -1 && camp.indexOf("Voir le tableau complet") !== -1, "Camp en français : textes inchangés (v3.411.0 : santé en deux lignes)");
   ok(camp.indexOf("⟦") === -1, "français : aucun ⟦ ⟧ dans le Camp");
   ok(g._tn(1, "{n} sortie", "{n} sorties") === "1 sortie" && g._tn(3, "{n} sortie", "{n} sorties") === "3 sorties", "pluriel « sortie » du Camp");
@@ -11300,7 +11300,7 @@ console.log("\n[145] v3.369.0 — Multilangue, lot L-1 : HUD, Camp, Combat, fen�
   ok(g.ResumeManager.formatAbsence(135 * 60000) === "2 h 15 min" && g.ResumeManager.formatAbsence(26 * 3600e3) === "1 j 2 h", "durée d'absence inchangée (2 h 15 min, 1 j 2 h)");
   /* Pseudo-langue : les textes du lot passent par _t */
   I._lang = "xx";
-  var campX = g.buildCampHTML();
+  var campX = (g.buildCampHTML("feu") + g.buildCampHTML("missions"));
   ok(campX.indexOf("⟦Manger : ") !== -1 && campX.indexOf("⟦Voir le tableau complet⟧") !== -1, "pseudo-langue : Camp extrait");
   ok(g.buildHudHTML().indexOf("⟦Niv. 1⟧") !== -1, "pseudo-langue : HUD extrait (niveau)");
   ok(g.buildCbxCmdHTML().indexOf("⟦ATTAQUER⟧") !== -1, "pseudo-langue : bouton ATTAQUER extrait");
@@ -13176,7 +13176,7 @@ console.log("\n[184] v3.411.0 — Campement R3b, nettoyage de l'Économie");
     var game = freshCombat("knight");
     game.heroHp = Math.floor(game.heroMaxHp * 0.5);
     game.unlockedTabs = game.unlockedTabs || {}; game.unlockedTabs.shop = true;
-    var m = g.buildCampHTML("missions"), d = g.buildCampHTML("depart");
+    var m = (g.buildCampHTML("feu") + g.buildCampHTML("missions")), d = g.buildCampHTML("depart");
     ok(/camp-hp-line/.test(m) && /camp-ration-row/.test(m) && /camp-ration-ib-n/.test(m), "santé sur deux lignes : PV puis rations en boutons (stock en pastille)");
     ok(/Toucher une ration pour la manger/.test(m) && /CampManager\.eatRation\('/.test(m) && m.indexOf(">Manger<") === -1, "toucher une ration la mange ; plus de bouton « Manger »");
     ok(m.indexOf("camp-missions-card") !== -1 && m.indexOf("goToPotions()") === -1 && d.indexOf("camp-missions-card") === -1, "un seul onglet affiché à la fois (Missions, puis Départ)");
@@ -15110,7 +15110,7 @@ console.log("\n[223] v3.448.0 — Camp : le feu et les rations soignent aussi le
     ok(K.eatRation("ration") === true, "héros plein : la ration sert encore, pour Wenna");
     C.state("wenna").hp = mw;
     ok(K.eatRation("ration") === false, "tout le monde plein : la ration reste au stock");
-    var html = g.buildCampHTML();
+    var html = g.buildCampHTML("feu");
     ok(html.indexOf("camp-comp-hp-wenna") !== -1, "la carte du camp montre la jauge de Wenna");
   } catch (err) {
     ok(false, "[223] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
@@ -18993,7 +18993,7 @@ console.log("\n[328] v3.503.0 — Grand écran GE-2 et GE-3 : rail complet, band
     ok(idx.indexOf("css/10-grand-ecran.css") > idx.indexOf("css/09-wide.css") && sw.indexOf("./css/10-grand-ecran.css") > 0, "10-grand-ecran.css chargé après 09-wide.css et précaché");
     ok(idx.indexOf("js/ui/chronique-view.js") > idx.indexOf("js/ui/hud-dock-view.js") && sw.indexOf("./js/ui/chronique-view.js") > 0, "chronique-view.js chargé après le dock et précaché");
     ["map", "achievements", "tutorials", "log", "settings"].forEach(function (t) {
-      ok(new RegExp('class="tab-btn tab-wide[^"]*" data-tab="' + t + '"').test(idx), "rail du format large : entrée " + t);
+      ok(new RegExp('class="tab-btn' + (t === "map" ? '' : ' tab-wide[^"]*') + '" data-tab="' + t + '"').test(idx), "rail du format large : entrée " + t);
     });
     ok(/\.tab-btn\.tab-wide, \.tab-sep \{ display: none !important; \}/.test(rd("css/02-layout.css")), "téléphone : entrées du rail cachées");
     ok(/^#chronique \{ display: none; \}/m.test(css) && /^\.hud-where, \.hud-res-x \{ display: none; \}/m.test(css), "téléphone : ni Chronique, ni bandeau enrichi");
@@ -20562,6 +20562,23 @@ console.log("\n[389] v3.592.0 — Quoi de neuf : nouveautés après une mise à 
     var fs = require("fs"), missing = E.filter(function (n) { return !fs.existsSync(require("path").join(ROOT, "images/Icons/" + n[1] + ".webp")); });
     ok(!missing.length, "icônes des nouveautés présentes" + (missing.length ? " (manque " + missing[0][1] + ")" : ""));
   } catch (err) { ok(false, "[389] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[392] v3.594.0 — Camp : l'onglet « Le feu », et la carte du monde dans la barre du bas (option M3 de Seb)");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.unlockedTabs.map = true; game.heroHp = Math.floor(game.heroMaxHp / 2);");
+    ok(g.CAMP_TABS[0].key === "feu", "« Le feu » est le premier onglet du Camp");
+    var feu = g.buildCampHTML("feu"), mis = g.buildCampHTML("missions");
+    ok(feu.indexOf("camp-health-card") !== -1 && mis.indexOf("camp-health-card") === -1, "la santé et les rations sont dans « Le feu », plus au-dessus des autres onglets");
+    ok(/setCampTab\('feu'\)[^<]*>.*?<span class="kseg-dot">!<\/span>/.test(mis), "héros blessé : pastille « ! » sur « Le feu »");
+    ok(feu.indexOf("camp-here") !== -1 && feu.indexOf("switchTab('map')") !== -1, "« Tu es ici » en tête du feu, qui ouvre la carte");
+    run("game.unlockedTabs.map = false;");
+    ok(g.buildCampHTML("feu").indexOf("camp-here") === -1, "carte pas encore débloquée : pas de « Tu es ici »");
+    var idx = fs.readFileSync(path.join(ROOT, "index.html"), "utf8");
+    ok(/class="tab-btn" data-tab="map"/.test(idx) && idx.indexOf('data-tab="map"') < idx.indexOf('data-tab="village"'), "barre du bas : « Carte » visible sur téléphone, entre Quêtes et Village");
+    ok(/kfb-gochip/.test(fs.readFileSync(path.join(ROOT, "js/ui/screen-banner.js"), "utf8")), "le bandeau du Camp mène à la carte du monde");
+  } catch (err) { ok(false, "[392] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
 Promise.all(ATTENTES).then(function () {
