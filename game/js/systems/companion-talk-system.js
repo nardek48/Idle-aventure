@@ -22,12 +22,24 @@ var CompanionTalkManager = {
     return s && typeof s[id] === "string" ? s[id] : null;
   },
 
+  // v3.599.0 : étape de l'Histoire réclamée (ou chapitre fini, ou passé) : la conversation vient après elle
+  stepDone: function (stepId) {
+    if (!window.StoryQuestManager || typeof STORY_QUESTS === "undefined") return false;
+    var ids = Object.keys(STORY_QUESTS);
+    for (var i = 0; i < ids.length; i++) {
+      if (!STORY_QUESTS[ids[i]].steps.some(function (s) { return s.id === stepId; })) continue;
+      var st = StoryQuestManager.getState(ids[i]);
+      return !!(st.skipped || StoryQuestManager.isChapterCompleted(ids[i]) || (st.claimedSteps && st.claimedSteps[stepId]));
+    }
+    return false;
+  },
+
   isAvailable: function (t) {
     if (!t || !window.CompanionManager) return false;
     var st = CompanionManager.state(t.companion);
     if (!st || !st.unlocked || this.isDone(t.id)) return false;
     if (CompanionManager.hasDeparted && CompanionManager.hasDeparted(t.companion)) return false; // v3.598.1 : Ysolt recouchée
-    if (t.step && !(window.StoryQuestManager && StoryQuestManager.isStepReached(t.step))) return false;
+    if (t.step && !this.stepDone(t.step)) return false;
     if (t.afterQuest && !(window.CompanionQuestManager && CompanionQuestManager.isDone(t.afterQuest))) return false; // v3.598.1 : quête du compagnon finie avant
     return !t.after || this.isDone(t.after);
   },

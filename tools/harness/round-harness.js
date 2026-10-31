@@ -20612,14 +20612,14 @@ console.log("\n[394] v3.597.0 — Conversations au feu : le moteur et la scène 
 (function () {
   var saveData = g.companionTalksData, M = g.CompanionTalkManager;
   try {
-    ok(saveData().length === 0, "aucune conversation livrée tant que les textes ne sont pas validés");
+    ok(saveData().length === 27, "27 conversations livrées (v3.599.0)");
     g.companionTalksData = function () { return [
       { id: "test_1", companion: "maddoc", step: "desert_08", after: null, lines: [{ w: "maddoc", t: "Bonsoir." }, { choix: [{ t: "Oui.", suite: [{ w: "maddoc", t: "Bien." }] }, { t: "Non.", suite: [] }] }, { w: "n", t: "Le feu craque." }] },
       { id: "test_2", companion: "maddoc", step: "desert_08", after: "test_1", lines: [{ w: "maddoc", t: "Encore moi." }] }
     ]; };
     run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.unlockedTabs.companions = true;");
     ok(M.available().length === 0, "compagnon pas encore recruté : rien à dire");
-    run("CompanionManager.unlock('maddoc'); StoryQuestManager.isStepReached = (function (f) { StoryQuestManager.__isr = f; return function (id) { return id === 'desert_08' ? true : f.call(StoryQuestManager, id); }; })(StoryQuestManager.isStepReached);");
+    run("CompanionManager.unlock('maddoc'); CompanionTalkManager.stepDone = (function (f) { CompanionTalkManager.__sd = f; return function (id) { return id === 'desert_08' ? true : f.call(CompanionTalkManager, id); }; })(CompanionTalkManager.stepDone);");
     var av = M.available();
     ok(av.length === 1 && av[0].id === "test_1", "étape atteinte et compagnon recruté : une seule conversation proposée, la première");
     var feu = g.buildCampHTML("feu");
@@ -20640,7 +20640,7 @@ console.log("\n[394] v3.597.0 — Conversations au feu : le moteur et la scène 
     ok(["js/data/companion-talks.js", "js/systems/companion-talk-system.js", "js/ui/companion-talk-view.js"].every(function (f) { return idx.indexOf(f) > 0 && sw.indexOf("./" + f) > 0; }), "trois fichiers nouveaux, chargés et précachés");
   } catch (err) { ok(false, "[394] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   g.companionTalksData = saveData;
-  run("if (StoryQuestManager.__isr) { StoryQuestManager.isStepReached = StoryQuestManager.__isr; delete StoryQuestManager.__isr; }");
+  run("if (CompanionTalkManager.__sd) { CompanionTalkManager.stepDone = CompanionTalkManager.__sd; delete CompanionTalkManager.__sd; }");
   if (g.talkScene) g.closeCompanionTalk(false);
 })();
 
@@ -20648,7 +20648,7 @@ console.log("\n[395] v3.598.0 — Quêtes des compagnons et reliques uniques (d�
 (function () {
   var saveQ = g.companionQuestsData, saveT = g.companionTalksData, M = g.CompanionQuestManager, CR = g.CompanionRelics, CM = g.CompanionManager, saveParty = CM && CM.partyIds;
   try {
-    ok(saveQ().length === 0, "aucune quête livrée tant que les déroulés ne sont pas validés");
+    ok(saveQ().length === 14, "14 quêtes livrées (v3.599.0)");
     var U = g.COMPANION_RELIC_UNIQUES, owners = {};
     Object.keys(U).forEach(function (k) { owners[U[k].owner] = (owners[U[k].owner] || 0) + 1; });
     ok(Object.keys(U).length === 14 && owners.wenna === 3 && owners.maddoc === 3 && owners.edda === 3 && owners.ysolt === 3 && owners.sarkel === 2, "14 reliques uniques : 3 par compagnon, 2 pour Sarkel");
@@ -20705,6 +20705,55 @@ console.log("\n[395] v3.598.0 — Quêtes des compagnons et reliques uniques (d�
   } catch (err) { ok(false, "[395] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   g.companionQuestsData = saveQ; g.companionTalksData = saveT;
   if (CM) CM.partyIds = saveParty;
+  if (g.talkScene) g.closeCompanionTalk(false);
+})();
+
+console.log("\n[396] v3.599.0 — Conversations et quêtes des compagnons : les données livrées");
+(function () {
+  try {
+    var T = g.companionTalksData(), Qs = g.companionQuestsData(), tid = {}, qid = {}, unl = {}, errs = [];
+    var steps = {}; Object.keys(g.STORY_QUESTS).forEach(function (c) { g.STORY_QUESTS[c].steps.forEach(function (x) { steps[x.id] = true; }); });
+    T.forEach(function (t) { tid[t.id] = t; });
+    Qs.forEach(function (q) { qid[q.id] = q; });
+    var lineOk = function (l, cid) { return l.choix ? l.choix.length === 2 && l.choix.every(function (c) { return c.t && (c.suite || []).every(function (x) { return lineOk(x, cid); }); }) : (l.t && (l.w === "n" || !!g.COMPANIONS_DB[l.w])); };
+    T.forEach(function (t) {
+      if (!g.COMPANIONS_DB[t.companion]) errs.push(t.id + " compagnon");
+      if (!steps[t.step]) errs.push(t.id + " étape " + t.step);
+      if (t.after && (!tid[t.after] || tid[t.after].companion !== t.companion)) errs.push(t.id + " after");
+      if (t.afterQuest && (!qid[t.afterQuest] || qid[t.afterQuest].companion !== t.companion)) errs.push(t.id + " afterQuest");
+      if (t.unlocks) { if (!qid[t.unlocks.quest]) errs.push(t.id + " unlocks"); unl[t.unlocks.quest] = (unl[t.unlocks.quest] || 0) + 1; }
+      if (!t.lines.length || !t.lines.every(function (l) { return lineOk(l, t.companion); })) errs.push(t.id + " répliques");
+    });
+    var relics = {};
+    Qs.forEach(function (q) {
+      if (unl[q.id] !== 1) errs.push(q.id + " débloquée " + (unl[q.id] || 0) + " fois");
+      var U = g.COMPANION_RELIC_UNIQUES[q.relic];
+      if (!U || U.owner !== q.companion || relics[q.relic]) errs.push(q.id + " relique");
+      relics[q.relic] = true;
+      q.steps.forEach(function (st, k) {
+        if (!st.label) errs.push(q.id + "/" + k + " label");
+        if (st.type === "deliver" && !Object.keys(st.res).every(function (r) { return g.WAREHOUSE_RESOURCES[r] && st.res[r] > 0; })) errs.push(q.id + "/" + k + " ressource");
+        if ((st.type === "run" || st.type === "elite") && !g.WORLDS.some(function (w) { return w.id === st.world; })) errs.push(q.id + "/" + k + " monde");
+        if (st.type === "elite") {
+          var rep = Object.keys(g.LIVING_MAPS).some(function (m) { var M = g.LIVING_MAPS[m]; return M.worldId === st.world && JSON.stringify(M).indexOf('"repeatable":true') >= 0; });
+          if (!rep) errs.push(q.id + "/" + k + " pas d'élite rejouable");
+        }
+        if (st.type === "scene" && !(st.lines.length && st.lines.every(function (l) { return lineOk(l, q.companion); }))) errs.push(q.id + "/" + k + " scène");
+      });
+    });
+    ok(errs.length === 0, "27 conversations et 14 quêtes cohérentes : étapes, chaînes, reliques, ressources, mondes, élites rejouables" + (errs.length ? " — " + errs.join(", ") : ""));
+    var per = {}; Qs.forEach(function (q) { per[q.companion] = (per[q.companion] || 0) + 1; });
+    ok(per.wenna === 3 && per.maddoc === 3 && per.edda === 3 && per.ysolt === 3 && per.sarkel === 2, "3 quêtes par compagnon, 2 pour Sarkel");
+    // Parcours réel : Maddoc recruté, étapes réclamées, conversation 3 → quête 1
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); CompanionManager.unlock('maddoc');");
+    ok(g.CompanionTalkManager.availableFor("maddoc") === null, "étape pas réclamée : Maddoc n'a rien à dire");
+    run("var __s = StoryQuestManager.getState('desert'); __s.claimedSteps.desert_08 = true; __s.claimedSteps.desert_10 = true; __s.claimedSteps.desert_12 = true;");
+    var M = g.CompanionTalkManager, done = function (id) { g.openCompanionTalk(id); var n = 0; while (g.talkScene && !g.talkScene.cur.fin && n++ < 40) { if (g.talkScene.cur.choix) g.talkChoose(0); else g.talkNext(); } g.closeCompanionTalk(true); };
+    ok((M.availableFor("maddoc") || {}).id === "maddoc_1", "étape « Celui qui n'est pas rentré » réclamée : la conversation 1 de Maddoc");
+    done("maddoc_1"); done("maddoc_2"); done("maddoc_3");
+    ok(g.CompanionQuestManager.isActive("q_maddoc_1") && M.choiceOf("maddoc_3") === "a", "la conversation 3 ouvre « Ce qu'il reste de l'autre côté »");
+    ok(M.availableFor("maddoc") === null, "la conversation 4 attend « Ce qui reste du roi »");
+  } catch (err) { ok(false, "[396] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   if (g.talkScene) g.closeCompanionTalk(false);
 })();
 
