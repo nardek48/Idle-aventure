@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.596.0"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.597.0"; // <- à incrémenter à CHAQUE livraison
 var CACHE_NAME = "quest-idle-" + CACHE_VERSION;
 var IMAGE_CACHE = "aethervale-images"; // v3.457.4 : hors du préfixe quest-idle- ; v3.547.0 : images disparues purgées (purgeMissingImages)
 var imagesRevalidated = {};             // URL déjà revérifiées depuis le démarrage de ce service worker
@@ -272,6 +272,9 @@ var PRECACHE_APP_SHELL = [
   "./js/data/village-quests.js",
   "./js/data/prologue.js", // v3.570.0 : NOUVEAU fichier (le prologue)
   "./js/data/camp-soir.js", // v3.595.0 : NOUVEAU fichier (la phrase du soir au Camp)
+  "./js/data/companion-talks.js", // v3.597.0 : NOUVEAU fichier (les conversations au feu)
+  "./js/systems/companion-talk-system.js", // v3.597.0 : NOUVEAU fichier
+  "./js/ui/companion-talk-view.js", // v3.597.0 : NOUVEAU fichier
   "./js/systems/warehouse-system.js",
   "./js/systems/village-building-system.js",
   "./js/systems/apothecary-system.js",

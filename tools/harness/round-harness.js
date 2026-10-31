@@ -20608,6 +20608,42 @@ console.log("\n[393] v3.595.0 — Camp : la phrase du soir et le coin du feu ; l
   if (CM) CM.partyIds = saveParty;
 })();
 
+console.log("\n[394] v3.597.0 — Conversations au feu : le moteur et la scène (textes à venir)");
+(function () {
+  var saveData = g.companionTalksData, M = g.CompanionTalkManager;
+  try {
+    ok(saveData().length === 0, "aucune conversation livrée tant que les textes ne sont pas validés");
+    g.companionTalksData = function () { return [
+      { id: "test_1", companion: "maddoc", step: "desert_08", after: null, lines: [{ w: "maddoc", t: "Bonsoir." }, { choix: [{ t: "Oui.", suite: [{ w: "maddoc", t: "Bien." }] }, { t: "Non.", suite: [] }] }, { w: "n", t: "Le feu craque." }] },
+      { id: "test_2", companion: "maddoc", step: "desert_08", after: "test_1", lines: [{ w: "maddoc", t: "Encore moi." }] }
+    ]; };
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.unlockedTabs.companions = true;");
+    ok(M.available().length === 0, "compagnon pas encore recruté : rien à dire");
+    run("CompanionManager.unlock('maddoc'); StoryQuestManager.isStepReached = (function (f) { StoryQuestManager.__isr = f; return function (id) { return id === 'desert_08' ? true : f.call(StoryQuestManager, id); }; })(StoryQuestManager.isStepReached);");
+    var av = M.available();
+    ok(av.length === 1 && av[0].id === "test_1", "étape atteinte et compagnon recruté : une seule conversation proposée, la première");
+    var feu = g.buildCampHTML("feu");
+    ok(/openCompanionTalk\('test_1'\)/.test(feu) && /veut te parler/.test(feu), "« Le feu » : la carte « Maddoc veut te parler »");
+    g.openCompanionTalk("test_1"); g.talkNext(); g.talkChoose(0);
+    ok(g.talkScene && g.talkScene.choices === "a", "la scène suit le dialogue et retient la réponse choisie");
+    g.closeCompanionTalk(false);
+    ok(!M.isDone("test_1") && M.available()[0].id === "test_1", "quitter avant la fin : rien n'est noté, la conversation reste proposée");
+    g.openCompanionTalk("test_1"); g.talkNext(); g.talkChoose(1); g.talkNext(); g.talkNext(); g.talkNext();
+    ok(g.talkScene && g.talkScene.cur && g.talkScene.cur.fin, "fin de la conversation atteinte");
+    g.closeCompanionTalk(true);
+    ok(M.choiceOf("test_1") === "b" && M.available()[0].id === "test_2", "terminée : réponse « b » gardée, la suivante s'ouvre");
+    var save = run("JSON.stringify(CompanionManager.buildSaveData().maddoc.talks)");
+    ok(save === '{"test_1":"b"}', "les conversations faites partent dans la sauvegarde du compagnon (" + save + ")");
+    run("CompanionManager.restore(JSON.parse(JSON.stringify(CompanionManager.buildSaveData())));");
+    ok(M.choiceOf("test_1") === "b", "et reviennent au chargement");
+    var idx = fs.readFileSync(path.join(ROOT, "index.html"), "utf8"), sw = fs.readFileSync(path.join(ROOT, "sw.js"), "utf8");
+    ok(["js/data/companion-talks.js", "js/systems/companion-talk-system.js", "js/ui/companion-talk-view.js"].every(function (f) { return idx.indexOf(f) > 0 && sw.indexOf("./" + f) > 0; }), "trois fichiers nouveaux, chargés et précachés");
+  } catch (err) { ok(false, "[394] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  g.companionTalksData = saveData;
+  run("if (StoryQuestManager.__isr) { StoryQuestManager.isStepReached = StoryQuestManager.__isr; delete StoryQuestManager.__isr; }");
+  if (g.talkScene) g.closeCompanionTalk(false);
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

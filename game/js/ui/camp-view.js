@@ -219,7 +219,8 @@ function buildCampHTML(tab) {
      Missions · Départ (préparer, expédition) · Grimoire. Un onglet n'apparaît que s'il a du
      contenu ; s'il n'en reste qu'un, pas de rail. L'onglet ouvert est retenu (campTab). */
   var tabsHTML = {};
-  tabsHTML.feu = campHereCardHTML() + campFeuStoryHTML(campMates) + hc;
+  tabsHTML.feu = campHereCardHTML() + (typeof campTalkCardsHTML === "function" ? campTalkCardsHTML() : "") + campFeuStoryHTML(campMates) + hc;
+  var talkReady = !!(window.CompanionTalkManager && CompanionTalkManager.available().length); // v3.597.0
   var mh = '<div class="camp-card camp-missions-card">';
   mh += buildCampMissionBoardHTML();
   mh += '<button class="settings-btn" type="button" onclick="switchTab(\'quests\')">' + _t("Voir le tableau complet") + '</button>';
@@ -272,7 +273,7 @@ function buildCampHTML(tab) {
     order.forEach(function (t) {
       h += '<button type="button" class="' + (cur === t.key ? 'is-on' : '') + '" onclick="setCampTab(\'' + t.key + '\')">'
         + '<img src="' + t.icon + '" alt=""><span>' + esc(t.label) + '</span>'
-        + (t.key === "feu" && !teamFull ? '<span class="kseg-dot">!</span>' : '') // v3.594.0 : à soigner
+        + (t.key === "feu" && (!teamFull || talkReady) ? '<span class="kseg-dot">!</span>' : '') // v3.594.0 : à soigner ; v3.597.0 : quelqu'un veut parler
         + (t.key === "missions" && claimable ? '<span class="kseg-dot">' + claimable + '</span>' : '')
         + (t.key === "depart" && toCollect ? '<span class="kseg-dot is-green">' + toCollect + '</span>' : '') + '</button>';
     });
@@ -311,9 +312,9 @@ function campFeuStoryHTML(campMates) {
   var h = '<div class="camp-card camp-soir"><div class="camp-soir-k">' + esc(_t("Ce soir au camp")) + '</div><p class="camp-soir-t">' + esc(campSoir.text) + '</p></div>';
   if (!ids.length) return h;
   var half = Math.ceil(ids.length / 2), mate = function (id) {
-    var def = getCompanionDef(id);
-    return '<button type="button" class="camp-feu-mate' + (campSoir.tap === id ? ' is-on' : '') + '" onclick="campSoirTap(\'' + esc(id) + '\')">'
-      + renderIconOrEmojiHTML(def.image, "camp-feu-img", _td(def.name)) + '<span>' + esc(_td(def.name)) + '</span></button>';
+    var def = getCompanionDef(id), talk = window.CompanionTalkManager ? CompanionTalkManager.availableFor(id) : null; // v3.597.0 : il veut parler
+    return '<button type="button" class="camp-feu-mate' + (campSoir.tap === id ? ' is-on' : '') + '" onclick="' + (talk ? 'openCompanionTalk(\'' + esc(talk.id) + '\')' : 'campSoirTap(\'' + esc(id) + '\')') + '">'
+      + renderIconOrEmojiHTML(def.image, "camp-feu-img", _td(def.name)) + (talk ? '<i class="camp-feu-talk">…</i>' : '') + '<span>' + esc(_td(def.name)) + '</span></button>';
   };
   h += '<div class="camp-card camp-feu"><div class="camp-soir-k">' + esc(_t("Au coin du feu")) + '</div><div class="camp-feu-row">'
     + ids.slice(0, half).map(mate).join("") + '<img class="camp-feu-fire" src="images/Icons/camp/campfire.webp" alt="">' + ids.slice(half).map(mate).join("") + '</div>'

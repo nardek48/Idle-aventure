@@ -442,3 +442,40 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
 .camp-feu-mate:focus-visible { outline: 2px solid var(--nb-gold); outline-offset: 2px; border-radius: 8px; }
 .camp-feu-say { padding: 6px 10px; border-radius: 10px; background: rgba(255, 255, 255, .55); border: 1px solid var(--nb-frame-light); }
 .camp-feu-hint { margin: 0; font-size: 12.5px; color: var(--c-brown-550-soft); text-align: center; }
+
+/* v3.597.0 (atelier conversations, mise en page B) : un compagnon veut parler, puis la scène de conversation */
+.camp-talk { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; gap: 10px; align-items: center; width: 100%; padding: 10px 12px; text-align: left; cursor: pointer; font: inherit; color: inherit;
+  border-color: var(--nb-gold); background: linear-gradient(var(--nb-cream), var(--c-cream-150-2)); }
+.camp-talk-img { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; border: 2px solid var(--nb-gold); }
+.camp-talk-tx { min-width: 0; display: grid; gap: 2px; }
+.camp-talk-tx b { font-size: 14px; }
+.camp-talk-tx small { font: italic 400 14px/1.35 "Alegreya", Georgia, serif; color: var(--c-brown-550-soft); }
+.camp-talk-go { font-weight: 800; font-size: 13px; padding: 8px 12px; border-radius: 9px; border: 1px solid var(--nb-gold); background: var(--nb-gold); color: var(--c-brown-850-vivid); white-space: nowrap; }
+.camp-talk:focus-visible { outline: 2px solid var(--nb-gold); outline-offset: 2px; }
+.camp-feu-mate { position: relative; }
+.camp-feu-talk { position: absolute; top: -4px; right: -6px; width: 22px; height: 22px; border-radius: 50%; background: var(--nb-gold); color: var(--c-brown-850-vivid); font: 900 13px/20px -apple-system, BlinkMacSystemFont, sans-serif; font-style: normal; text-align: center; border: 1px solid var(--c-brown-850-vivid); }
+
+#talk-root:empty { display: none; }
+.talk-scene { position: fixed; inset: 0; z-index: 3500; background: var(--c-brown-950-soft) center / cover no-repeat; }
+.talk-scene::before { content: ""; position: absolute; inset: 0; background: linear-gradient(rgba(8, 6, 4, .25), rgba(8, 6, 4, .55) 45%, rgba(8, 6, 4, .92)); }
+.talk-x { position: absolute; z-index: 2; top: calc(10px + env(safe-area-inset-top, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); width: 44px; height: 44px; border-radius: 50%;
+  border: 1px solid rgba(226, 177, 74, .4); background: rgba(18, 14, 9, .7); color: var(--c-cream-100-2); font: 700 16px -apple-system, BlinkMacSystemFont, sans-serif; cursor: pointer; }
+.talk-por { position: absolute; left: 50%; top: calc(6% + env(safe-area-inset-top, 0px)); transform: translateX(-50%); width: min(62vw, 300px); aspect-ratio: 3 / 4; object-fit: cover; object-position: top;
+  border-radius: 16px; border: 2px solid var(--nb-gold); box-shadow: 0 10px 30px rgba(0, 0, 0, .6); transition: filter .2s; }
+.talk-por.is-dim { filter: brightness(.55); }
+.talk-box { position: absolute; z-index: 2; left: max(12px, env(safe-area-inset-left, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  max-width: 640px; margin: 0 auto; display: grid; gap: 8px; }
+.talk-line { background: rgba(243, 231, 204, .96); color: var(--c-brown-850-vivid); border: 1px solid var(--nb-frame-light); border-radius: 12px; padding: 10px 14px 12px; min-height: 100px; cursor: pointer; }
+.talk-line b { display: block; font: 700 13px "Cinzel", Georgia, serif; letter-spacing: .05em; color: var(--c-brown-550-soft); margin-bottom: 2px; }
+.talk-line p { margin: 0; font: 400 18px/1.45 "Alegreya", Georgia, serif; }
+.talk-line p.is-n { font-style: italic; color: var(--c-brown-550-soft); }
+.talk-hint { display: block; text-align: right; font-size: 12px; font-weight: 600; color: var(--c-brown-550-soft); margin-top: 4px; }
+.talk-choice { font: 600 17px/1.35 "Alegreya", Georgia, serif; text-align: left; color: var(--c-brown-850-vivid); background: rgba(255, 250, 240, .96); border: 1px solid var(--nb-frame-light); border-radius: 12px; padding: 12px 14px; cursor: pointer; }
+.talk-next { font-weight: 800; font-size: 15px; min-height: 48px; border-radius: 12px; border: 1px solid var(--c-brown-550-soft); background: var(--nb-gold); color: var(--c-brown-850-vivid); cursor: pointer; }
+.talk-unlock { display: grid; gap: 2px; background: rgba(232, 240, 221, .96); border: 1px solid var(--c-green-400-soft); border-radius: 12px; padding: 10px 14px; color: var(--c-brown-850-vivid); }
+.talk-unlock b { font-size: 13px; color: var(--c-green-650-soft); }
+.talk-unlock span { font: 600 16px "Alegreya", Georgia, serif; }
+.talk-x:focus-visible, .talk-choice:focus-visible, .talk-next:focus-visible, .talk-line:focus-visible { outline: 2px solid var(--nb-gold); outline-offset: 2px; }
+@media (min-width: 900px) and (min-aspect-ratio: 1/1) { .talk-por { width: min(28vw, 340px); } }
+@media (prefers-reduced-motion: reduce) { .talk-por { transition: none; } }
+.talk-line.is-ask { min-height: 0; cursor: default; }

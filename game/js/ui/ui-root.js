@@ -472,6 +472,7 @@ function backNavZ(el) {
 /* Ferme le calque du dessus : "closed", "blocked" (fenêtre sans croix) ou "none". */
 function backNavCloseTop() {
   if (window.PrologueView && PrologueView.active) { PrologueView.skip(); return "closed"; } // v3.570.0 : retour = « Passer »
+  if (typeof talkScene !== "undefined" && talkScene) { closeCompanionTalk(false); return "closed"; } // v3.597.0 : retour = quitter la conversation
   var c = document.getElementById("confirm-modal");
   if (c && c.classList.contains("show")) { closeConfirmModal(false); return "closed"; }
   var o = document.getElementById("offline-modal");
