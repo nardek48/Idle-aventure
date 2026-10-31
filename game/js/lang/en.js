@@ -4220,6 +4220,10 @@ I18n.register("en", {
   "Il faut": "You need",
   "corde": "rope",
   "Assuré": "Certain",
+  // v3.596.0 : Quoi de neuf
+  "Le Camp s'anime : chaque soir une phrase, et tes compagnons restés au camp autour du feu. Touche-les.": "The Camp comes alive: a line every evening, and the companions who stayed behind sit around the fire. Tap them.",
+  "Camp : un onglet « Le feu » réunit la santé, les rations et les compagnons.": "Camp: a “The fire” tab brings together health, rations and companions.",
+  "La Carte est dans la barre du bas. Entre dans le donjon de n'importe quel monde atteint, sans y voyager.": "The Map is in the bottom bar. Enter the dungeon of any world you've reached, without travelling there.",
   // v3.595.0 : la phrase du soir au Camp (data/camp-soir.js)
   "Ce soir au camp": "Tonight at camp",
   "Au coin du feu": "By the fire",
