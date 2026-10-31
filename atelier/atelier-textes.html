@@ -1,0 +1,205 @@
+<title>Atelier des textes</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Cinzel:wght@700&display=swap">
+<style>
+/* Une colonne de fiches de relecture : le texte du jeu en grand (police du récit), le reste en petit. Filtres en tête, compteurs. */
+:root {
+  --bg: #efe7d6; --card: #fbf6ea; --ink: #2a2015; --dim: #6c5a42; --line: #d8c8a6;
+  --gold: #9a6a16; --ok: #2f6b3c; --ok-bg: #e2eedc; --warn: #a2402d; --warn-bg: #f6e1d9; --mine: #6a4a9a; --mine-bg: #ece4f5;
+  --f-title: "Cinzel", Georgia, "Times New Roman", serif;
+  --f-story: "Alegreya", Georgia, serif;
+  --f-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #15110c; --card: #211a12; --ink: #f1e6cf; --dim: #b9a988; --line: #43362a;
+  --gold: #e2b14a; --ok: #8fd19c; --ok-bg: #1d2a1f; --warn: #f08a74; --warn-bg: #3a2019; --mine: #c3a6ee; --mine-bg: #2a2236; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #15110c; --card: #211a12; --ink: #f1e6cf; --dim: #b9a988; --line: #43362a;
+  --gold: #e2b14a; --ok: #8fd19c; --ok-bg: #1d2a1f; --warn: #f08a74; --warn-bg: #3a2019; --mine: #c3a6ee; --mine-bg: #2a2236; color-scheme: dark }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.45 var(--f-ui); }
+.wrap { max-width: 760px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 18px 48px; display: grid; gap: 14px; }
+.wrap > * { min-width: 0; }
+h1 { margin: 0; font: 700 22px/1.2 var(--f-title); letter-spacing: .04em; color: var(--gold); text-wrap: balance; }
+h2 { margin: 12px 0 0; font: 700 15px var(--f-title); letter-spacing: .05em; color: var(--gold); text-wrap: balance; }
+h3 { margin: 4px 0 0; font: 700 12px var(--f-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--dim); }
+p { margin: 0; }
+.intro { color: var(--dim); max-width: 65ch; }
+.sum { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.sum div { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 8px 6px; text-align: center; }
+.sum b { display: block; font: 700 20px var(--f-ui); font-variant-numeric: tabular-nums; }
+.sum span { font-size: 12px; color: var(--dim); }
+.sum .s-relire b { color: var(--gold); } .sum .s-valide b { color: var(--ok); } .sum .s-revoir b { color: var(--warn); }
+.filters { display: grid; gap: 8px; }
+.row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.chip { font: 600 13px var(--f-ui); color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: 999px; min-height: 36px; padding: 0 12px; cursor: pointer; }
+.chip[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold); }
+.search { width: 100%; font: 15px var(--f-ui); color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; }
+.etat { font-size: 13px; color: var(--dim); min-height: 1.3em; }
+.list { display: grid; gap: 10px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px 12px; display: grid; gap: 8px; }
+.card.st-valide { border-left: 4px solid var(--ok); }
+.card.st-revoir { border-left: 4px solid var(--warn); }
+.head { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: space-between; }
+.who { font: 700 13px var(--f-ui); }
+.who small { font-weight: 500; color: var(--dim); }
+.pills { display: flex; gap: 4px; flex-wrap: wrap; }
+.pill { font: 700 11px var(--f-ui); letter-spacing: .03em; border-radius: 999px; padding: 2px 8px; border: 1px solid currentColor; }
+.pill.relire { color: var(--gold); } .pill.valide { color: var(--ok); background: var(--ok-bg); } .pill.revoir { color: var(--warn); background: var(--warn-bg); }
+.pill.mine { color: var(--mine); background: var(--mine-bg); } .pill.jeu { color: var(--dim); }
+.ctx { font-size: 13px; color: var(--dim); }
+.txt { font: 400 17px/1.5 var(--f-story); white-space: pre-line; }
+.dlg { display: grid; gap: 4px; }
+.dlg .l { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 8px; align-items: baseline; }
+.dlg .l b { font: 700 12px var(--f-ui); color: var(--dim); text-align: right; }
+.dlg .l.choix b { color: var(--gold); }
+.dlg .l.choix .txt { font-style: italic; }
+.orig { font-size: 13px; color: var(--dim); }
+.orig summary { cursor: pointer; color: var(--dim); font-weight: 600; }
+.orig .txt { font-size: 15px; color: var(--dim); }
+.com { font-size: 14px; background: var(--warn-bg); color: var(--ink); border-radius: 8px; padding: 6px 10px; }
+.acts { display: flex; flex-wrap: wrap; gap: 6px; }
+.btn { font: 700 14px var(--f-ui); border-radius: 9px; min-height: 40px; padding: 0 14px; cursor: pointer; border: 1px solid var(--line); background: transparent; color: var(--ink); }
+.btn.ok { background: var(--ok); border-color: var(--ok); color: var(--card); }
+.btn.warn { color: var(--warn); border-color: var(--warn); }
+.btn:disabled { opacity: .45; cursor: default; }
+textarea { width: 100%; font: 16px/1.45 var(--f-story); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; resize: vertical; min-height: 64px; }
+textarea.c { font: 15px/1.4 var(--f-ui); min-height: 52px; }
+.lbl { font: 700 12px var(--f-ui); color: var(--dim); }
+.empty { color: var(--dim); text-align: center; padding: 30px 10px; border: 1px dashed var(--line); border-radius: 12px; }
+button:focus-visible, .chip:focus-visible, textarea:focus-visible, .search:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+@media (max-width: 420px) { .dlg .l { grid-template-columns: 1fr; gap: 0; } .dlg .l b { text-align: left; } }
+</style>
+
+<div class="wrap">
+  <h1>Atelier des textes</h1>
+  <p class="intro">Tous les textes à venir d'Aethervale passent ici avant d'entrer dans le jeu. Relis, corrige directement, puis valide. Un texte « à revoir » attend ton commentaire. Je lis tes choix et je n'intègre que les textes validés, dans ta version s'il y en a une.</p>
+  <div class="sum" id="sum">
+    <div class="s-relire"><b id="n-relire">–</b><span>à relire</span></div>
+    <div class="s-valide"><b id="n-valide">–</b><span>validés</span></div>
+    <div class="s-revoir"><b id="n-revoir">–</b><span>à revoir</span></div>
+    <div><b id="n-mine">–</b><span>modifiés par toi</span></div>
+  </div>
+  <div class="filters">
+    <div class="row" role="group" aria-label="Statut" id="f-statut"></div>
+    <div class="row" role="group" aria-label="Chantier" id="f-chantier"></div>
+    <div class="row" role="group" aria-label="Personnage" id="f-qui"></div>
+    <input class="search" id="q" type="search" placeholder="Chercher un mot dans les textes" aria-label="Chercher">
+  </div>
+  <p class="etat" id="etat">Chargement des textes…</p>
+  <div class="list" id="list"></div>
+</div>
+
+<script>
+(function () {
+  var docs = [], db = null, editing = null, reviewing = null;
+  var F = { statut: "relire", chantier: "", qui: "", q: "" };
+  try { var s = JSON.parse(localStorage.getItem("atelier-textes-filtres") || "null"); if (s) F = Object.assign(F, s, { q: "" }); } catch (e) {}
+  function keep() { try { localStorage.setItem("atelier-textes-filtres", JSON.stringify({ statut: F.statut, chantier: F.chantier, qui: F.qui })); } catch (e) {} }
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  var STATUTS = [["relire", "À relire"], ["revoir", "À revoir"], ["valide", "Validés"], ["", "Tous"]];
+
+  function current(d) { return d.seb != null ? d.seb : (d.type === "dialogue" ? d.lignes : d.propose); }
+  function textOf(d) { var c = current(d); return d.type === "dialogue" ? (c || []).map(function (l) { return l.texte; }).join(" ") : String(c || ""); }
+  function uniq(key) { var o = {}; docs.forEach(function (d) { if (d[key]) o[d[key]] = 1; }); return Object.keys(o); }
+
+  function renderFilters() {
+    $("f-statut").innerHTML = STATUTS.map(function (s) { return '<button type="button" class="chip" data-f="statut" data-v="' + s[0] + '" aria-pressed="' + (F.statut === s[0]) + '">' + s[1] + '</button>'; }).join("");
+    var ch = uniq("chantier"); if (F.chantier && ch.indexOf(F.chantier) < 0) F.chantier = "";
+    $("f-chantier").innerHTML = ch.length > 1 ? ['<button type="button" class="chip" data-f="chantier" data-v="" aria-pressed="' + (!F.chantier) + '">Tous les chantiers</button>'].concat(ch.map(function (c) { return '<button type="button" class="chip" data-f="chantier" data-v="' + esc(c) + '" aria-pressed="' + (F.chantier === c) + '">' + esc(c) + '</button>'; })).join("") : "";
+    var qui = uniq("qui"); if (F.qui && qui.indexOf(F.qui) < 0) F.qui = "";
+    $("f-qui").innerHTML = qui.length > 1 ? ['<button type="button" class="chip" data-f="qui" data-v="" aria-pressed="' + (!F.qui) + '">Tout le monde</button>'].concat(qui.map(function (c) { return '<button type="button" class="chip" data-f="qui" data-v="' + esc(c) + '" aria-pressed="' + (F.qui === c) + '">' + esc(c) + '</button>'; })).join("") : "";
+  }
+  function renderSum() {
+    var n = { relire: 0, valide: 0, revoir: 0, mine: 0 };
+    docs.forEach(function (d) { n[d.statut || "relire"]++; if (d.seb != null) n.mine++; });
+    ["relire", "valide", "revoir", "mine"].forEach(function (k) { $("n-" + k).textContent = n[k]; });
+  }
+  function bodyHTML(d, which, cls) {
+    var c = which || current(d);
+    if (d.type === "dialogue") return '<div class="dlg">' + (c || []).map(function (l) { return '<div class="l' + (l.choix ? " choix" : "") + '"><b>' + esc(l.choix ? "Ton choix" : l.qui) + '</b><span class="txt">' + esc(l.texte) + '</span></div>'; }).join("") + '</div>';
+    return '<p class="txt' + (cls ? " " + cls : "") + '">' + esc(c) + '</p>';
+  }
+  function cardHTML(d) {
+    var st = d.statut || "relire", lab = { relire: "À relire", valide: "Validé", revoir: "À revoir" }[st];
+    var h = '<article class="card st-' + st + '" data-id="' + esc(d.id) + '"><div class="head"><span class="who">' + esc(d.qui || "Narrateur") + (d.groupe ? ' <small>· ' + esc(d.groupe) + '</small>' : '') + '</span><span class="pills"><span class="pill ' + st + '">' + lab + '</span>' +
+      (d.seb != null ? '<span class="pill mine">Ta version</span>' : '') + (d.integre ? '<span class="pill jeu">Dans le jeu' + (d.version ? " · v" + esc(d.version) : "") + '</span>' : '') + '</span></div>';
+    if (d.contexte) h += '<p class="ctx">' + esc(d.contexte) + '</p>';
+    if (editing === d.id) {
+      var c = current(d);
+      if (d.type === "dialogue") h += (c || []).map(function (l, i) { return '<label class="lbl" for="e-' + i + '">' + esc(l.choix ? "Ton choix" : l.qui) + '</label><textarea id="e-' + i + '" data-i="' + i + '">' + esc(l.texte) + '</textarea>'; }).join("");
+      else h += '<label class="lbl" for="e-0">Ton texte</label><textarea id="e-0">' + esc(c) + '</textarea>';
+      h += '<div class="acts"><button type="button" class="btn ok" data-act="save">Enregistrer</button><button type="button" class="btn" data-act="cancel">Annuler</button>' + (d.seb != null ? '<button type="button" class="btn warn" data-act="restore">Reprendre ma proposition</button>' : '') + '</div>';
+      return h + '</article>';
+    }
+    h += bodyHTML(d);
+    if (d.seb != null) h += '<details class="orig"><summary>Version proposée</summary>' + bodyHTML(d, d.type === "dialogue" ? d.lignes : d.propose) + '</details>';
+    if (d.commentaire && st === "revoir") h += '<p class="com">' + esc(d.commentaire) + '</p>';
+    if (reviewing === d.id) {
+      h += '<label class="lbl" for="c-' + esc(d.id) + '">Ce qui ne va pas</label><textarea class="c" id="c-' + esc(d.id) + '">' + esc(d.commentaire || "") + '</textarea>' +
+        '<div class="acts"><button type="button" class="btn warn" data-act="send-revoir">Marquer à revoir</button><button type="button" class="btn" data-act="cancel">Annuler</button></div>';
+    } else {
+      h += '<div class="acts"><button type="button" class="btn ok" data-act="valide"' + (st === "valide" ? " disabled" : "") + '>Valider</button><button type="button" class="btn" data-act="edit">Modifier</button><button type="button" class="btn warn" data-act="revoir">À revoir</button></div>';
+    }
+    return h + '</article>';
+  }
+  function render() {
+    renderSum(); renderFilters();
+    var q = F.q.trim().toLowerCase();
+    var list = docs.filter(function (d) {
+      return (!F.statut || (d.statut || "relire") === F.statut) && (!F.chantier || d.chantier === F.chantier) && (!F.qui || d.qui === F.qui) && (!q || textOf(d).toLowerCase().indexOf(q) >= 0);
+    });
+    if (!docs.length) { $("list").innerHTML = '<div class="empty">Aucun texte pour l’instant. Je dépose ici chaque lot à relire, et il apparaît tout de suite.</div>'; return; }
+    if (!list.length) { $("list").innerHTML = '<div class="empty">Rien dans ce filtre. Essaie « Tous ».</div>'; return; }
+    var h = "", lastC = null, lastG = null;
+    list.forEach(function (d) {
+      if (d.chantier !== lastC) { h += '<h2>' + esc(d.chantier) + '</h2>'; lastC = d.chantier; lastG = null; }
+      if (d.groupe !== lastG && d.groupe) { h += '<h3>' + esc(d.groupe) + '</h3>'; lastG = d.groupe; }
+      h += cardHTML(d);
+    });
+    $("list").innerHTML = h;
+  }
+  function find(id) { return docs.filter(function (d) { return d.id === id; })[0]; }
+  function save(id, patch, msg) {
+    if (!db) { $("etat").textContent = "Enregistrement impossible ici : ouvre l’atelier depuis claude.ai."; return; }
+    patch.majLe = new Date().toISOString();
+    db.collection("textes").doc(id).update(patch).then(function () { $("etat").textContent = msg; }, function (e) { $("etat").textContent = "Pas enregistré (" + (e && e.code || "erreur") + "). Réessaie dans un instant."; });
+  }
+
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.f) { F[b.dataset.f] = b.dataset.v; keep(); render(); return; }
+    var card = b.closest(".card"); if (!card) return;
+    var id = card.dataset.id, d = find(id), act = b.dataset.act;
+    if (act === "valide") { save(id, { statut: "valide" }, "Validé."); }
+    else if (act === "edit") { editing = id; reviewing = null; render(); var t = card.ownerDocument.getElementById("e-0"); if (t) t.focus(); }
+    else if (act === "revoir") { reviewing = id; editing = null; render(); }
+    else if (act === "cancel") { editing = null; reviewing = null; render(); }
+    else if (act === "restore") { editing = null; save(id, { seb: null, statut: "relire" }, "Ta version est retirée : la proposition revient."); }
+    else if (act === "send-revoir") { var c = document.getElementById("c-" + id); reviewing = null; save(id, { statut: "revoir", commentaire: c ? c.value.trim() : "" }, "Marqué à revoir."); }
+    else if (act === "save") {
+      var val;
+      if (d.type === "dialogue") { var base = current(d) || []; val = base.map(function (l, i) { var t = document.querySelector('textarea[data-i="' + i + '"]'); return Object.assign({}, l, { texte: t ? t.value.trim() : l.texte }); }); }
+      else { var t0 = document.getElementById("e-0"); val = t0 ? t0.value.trim() : ""; }
+      var same = JSON.stringify(val) === JSON.stringify(d.type === "dialogue" ? d.lignes : d.propose);
+      editing = null;
+      save(id, { seb: same ? null : val, statut: "valide" }, same ? "Inchangé : validé tel quel." : "Ta version est enregistrée et validée.");
+    }
+  });
+  $("q").addEventListener("input", function () { F.q = this.value; render(); });
+
+  render();
+  window.claude && window.claude.use("db").then(function (d) {
+    db = d;
+    if (!db) { $("etat").textContent = "Les textes s’affichent seulement dans claude.ai."; return; }
+    db.collection("textes").onSnapshot(function (snap) {
+      docs = snap.docs.map(function (x) { return Object.assign({ id: x.id }, x.data()); });
+      docs.sort(function (a, b) { return String(a.chantier).localeCompare(String(b.chantier)) || (a.ordre || 0) - (b.ordre || 0); });
+      $("etat").textContent = docs.length ? docs.length + " textes." : "";
+      if (!editing && !reviewing) render(); else renderSum();
+    }, function () { $("etat").textContent = "Lecture interrompue. Recharge la page."; });
+  });
+})();
+</script>
