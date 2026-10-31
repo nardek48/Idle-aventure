@@ -219,7 +219,7 @@ function buildCampHTML(tab) {
      Missions · Départ (préparer, expédition) · Grimoire. Un onglet n'apparaît que s'il a du
      contenu ; s'il n'en reste qu'un, pas de rail. L'onglet ouvert est retenu (campTab). */
   var tabsHTML = {};
-  tabsHTML.feu = campHereCardHTML() + hc;
+  tabsHTML.feu = campHereCardHTML() + campFeuStoryHTML(campMates) + hc;
   var mh = '<div class="camp-card camp-missions-card">';
   mh += buildCampMissionBoardHTML();
   mh += '<button class="settings-btn" type="button" onclick="switchTab(\'quests\')">' + _t("Voir le tableau complet") + '</button>';
@@ -288,6 +288,43 @@ function buildCampHTML(tab) {
   h += '</div>';
   return h;
 }
+
+/* v3.595.0 (C1 et C2, data/camp-soir.js) : la phrase du soir, tirée à chaque retour au Camp,
+   et les compagnons restés au camp autour du feu ; toucher l'un d'eux affiche sa phrase. */
+var campSoir = { key: null, text: "", tap: null };
+function campSoirWorld() { return Math.max(0, Math.min(5, Number((window.WorldManager && WorldManager.worldIndex) || 0))); }
+function campSoirPick(ids) {
+  var all = campSoirData(), D = all[campSoirWorld()] || all[0], any = campSoirAny(), pool = D.lieu.slice();
+  ids.forEach(function (id) { (D[id] || (any[id] && any[id].soir) || []).forEach(function (t) { pool.push(t); }); });
+  return pool[Math.floor(Math.random() * pool.length)] || "";
+}
+function campSoirTapText(id) {
+  var D = campSoirData()[campSoirWorld()] || {}, any = campSoirAny();
+  return (D.tap && D.tap[id]) || (any[id] && any[id].tap) || "";
+}
+function campFeuStoryHTML(campMates) {
+  if (typeof campSoirData !== "function") return "";
+  var party = window.CompanionManager ? CompanionManager.partyIds() : [];
+  var ids = (campMates || []).filter(function (id) { return party.indexOf(id) < 0; });
+  var key = campSoirWorld() + "|" + ids.join(",");
+  if (lastRenderedTab !== "campement" || campSoir.key !== key) campSoir = { key: key, text: campSoirPick(ids), tap: null };
+  var h = '<div class="camp-card camp-soir"><div class="camp-soir-k">' + esc(_t("Ce soir au camp")) + '</div><p class="camp-soir-t">' + esc(campSoir.text) + '</p></div>';
+  if (!ids.length) return h;
+  var half = Math.ceil(ids.length / 2), mate = function (id) {
+    var def = getCompanionDef(id);
+    return '<button type="button" class="camp-feu-mate' + (campSoir.tap === id ? ' is-on' : '') + '" onclick="campSoirTap(\'' + esc(id) + '\')">'
+      + renderIconOrEmojiHTML(def.image, "camp-feu-img", _td(def.name)) + '<span>' + esc(_td(def.name)) + '</span></button>';
+  };
+  h += '<div class="camp-card camp-feu"><div class="camp-soir-k">' + esc(_t("Au coin du feu")) + '</div><div class="camp-feu-row">'
+    + ids.slice(0, half).map(mate).join("") + '<img class="camp-feu-fire" src="images/Icons/camp/campfire.webp" alt="">' + ids.slice(half).map(mate).join("") + '</div>'
+    + (campSoir.tap ? '<p class="camp-feu-say">' + esc(campSoirTapText(campSoir.tap)) + '</p>' : '<p class="camp-feu-hint">' + esc(_t("Touche un compagnon.")) + '</p>') + '</div>';
+  return h;
+}
+function campSoirTap(id) {
+  campSoir.tap = campSoir.tap === id ? null : id;
+  if (typeof renderPanel === "function") renderPanel();
+}
+window.campSoirTap = campSoirTap;
 
 /* v3.594.0 (atelier camp-carte, option M3 de Seb) : en tête du « feu », le monde où l'on est et la carte. */
 function campHereCardHTML() {

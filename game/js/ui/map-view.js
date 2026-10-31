@@ -97,7 +97,7 @@ function tapMapDungeon(id, index) {
   if (!d) return;
   var md = mapDungeonOf(WORLDS[index]);
   if (!md || md.state === "locked") { showToast(_t("{d} : pas encore ouvert.", { d: _td(d.name) }), 1800); return; }
-  if (index !== (WorldManager.worldIndex || 0)) { showToast(_t("{d} : voyage d'abord jusqu'à ce monde.", { d: _td(d.name) }), 1800); return; }
+  // v3.595.0 (retour Seb) : un donjon ouvert se fait depuis la carte, sans voyager jusqu'à son monde
   openDungeonSheet(id);
 }
 window.tapMapDungeon = tapMapDungeon;
@@ -191,7 +191,7 @@ function buildMapWideSheetHTML() {
     var open = DungeonManager.isUnlocked(d.id), left = open ? DungeonManager.getRunsLeft(d.id) : 0;
     cards += mapWideCard(dungeonMapIconHTML("mw-card-ico"), _td(d.name), // v3.582.0 : plus l'icône « Butin garanti » empruntée
       open ? _tn(left, "Donjon · {n} sortie aujourd'hui", "Donjon · {n} sorties aujourd'hui") : _t("Donjon · pas encore ouvert"),
-      open && isCurrent ? '<button class="settings-btn" type="button" onclick="openDungeonSheet(' + Number(d.id) + ')">' + _t("Entrer") + '</button>' : "");
+      open ? '<button class="settings-btn" type="button" onclick="openDungeonSheet(' + Number(d.id) + ')">' + _t("Entrer") + '</button>' : "");
   });
   if (cards) h += '<div class="mw-cards">' + cards + '</div>';
   h += buildWorldLoreExcerptHTML(idx);

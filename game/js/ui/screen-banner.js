@@ -84,17 +84,6 @@ var ScreenBanner = {
     s.className = "kfb-s"; s.textContent = d[2];
     tx.appendChild(t); tx.appendChild(s);
     el.appendChild(tx);
-    // v3.594.0 (atelier camp-carte, option M3 de Seb) : le bandeau du Camp ouvre la carte du monde
-    if (screen === "camp" && (typeof isTabUnlocked !== "function" || isTabUnlocked("map"))) {
-      el.classList.add("kfb-go");
-      el.setAttribute("role", "button"); el.setAttribute("tabindex", "0");
-      el.setAttribute("aria-label", d[1] + ". " + _t("Ouvrir la carte du monde"));
-      el.onclick = function () { if (typeof switchTab === "function") switchTab("map"); };
-      el.onkeydown = function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); el.onclick(); } };
-      var go = document.createElement("span");
-      go.className = "kfb-gochip"; go.textContent = _t("Carte du monde") + " ›";
-      el.appendChild(go);
-    }
     return el;
   },
 

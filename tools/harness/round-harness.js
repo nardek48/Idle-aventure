@@ -20577,8 +20577,35 @@ console.log("\n[392] v3.594.0 — Camp : l'onglet « Le feu », et la carte du m
     ok(g.buildCampHTML("feu").indexOf("camp-here") === -1, "carte pas encore débloquée : pas de « Tu es ici »");
     var idx = fs.readFileSync(path.join(ROOT, "index.html"), "utf8");
     ok(/class="tab-btn" data-tab="map"/.test(idx) && idx.indexOf('data-tab="map"') < idx.indexOf('data-tab="village"'), "barre du bas : « Carte » visible sur téléphone, entre Quêtes et Village");
-    ok(/kfb-gochip/.test(fs.readFileSync(path.join(ROOT, "js/ui/screen-banner.js"), "utf8")), "le bandeau du Camp mène à la carte du monde");
+    ok(!/kfb-gochip/.test(fs.readFileSync(path.join(ROOT, "js/ui/screen-banner.js"), "utf8")), "v3.595.0 (retour Seb) : le bandeau du Camp n'ouvre plus la carte");
   } catch (err) { ok(false, "[392] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[393] v3.595.0 — Camp : la phrase du soir et le coin du feu ; les donjons depuis la carte ; plus de Carte dans les Expéditions");
+(function () {
+  var CM = g.CompanionManager, saveParty = CM && CM.partyIds;
+  try {
+    var D = g.campSoirData(), any = g.campSoirAny();
+    ok(D.length === 6 && D.every(function (w) { return w.lieu.length >= 3 && w.wenna && w.wenna.length >= 1 && w.tap && w.tap.wenna; }), "six mondes, chacun avec ses phrases du lieu et celles de Wenna");
+    ok(["wenna", "maddoc", "edda", "ysolt", "sarkel"].every(function (id) { return any[id] && any[id].soir.length && any[id].tap; }), "chaque compagnon a une phrase de repli, partout");
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.unlockedTabs.companions = true; CompanionManager.unlock('wenna'); CompanionManager.unlock('maddoc'); WorldManager.worldIndex = 1;");
+    CM.partyIds = function () { return ["wenna"]; };
+    run("lastRenderedTab = 'quests';");
+    var feu = g.buildCampHTML("feu");
+    var phrase = (feu.match(/class="camp-soir-t">([^<]*)</) || [])[1] || "";
+    var pool = D[1].lieu.concat(D[1].maddoc).map(function (t) { return g.esc(t); });
+    ok(pool.indexOf(phrase) !== -1, "la phrase du soir vient du Désert : le lieu ou Maddoc, resté au camp (« " + phrase.slice(0, 40) + "… »)");
+    ok(/campSoirTap\('maddoc'\)/.test(feu) && !/campSoirTap\('wenna'\)/.test(feu), "au coin du feu : ceux qui sont restés au camp (Maddoc), pas ceux qui partent au combat (Wenna)");
+    run("lastRenderedTab = 'campement'; campSoir.tap = 'maddoc';");
+    var feu2 = g.buildCampHTML("feu");
+    ok(feu2.indexOf(g.esc(D[1].tap.maddoc)) !== -1 && feu2.indexOf(phrase) !== -1, "toucher Maddoc : sa phrase ; la phrase du soir ne change pas tant qu'on reste au Camp");
+    var exp = fs.readFileSync(path.join(ROOT, "js/ui/expeditions-view.js"), "utf8"), mv = fs.readFileSync(path.join(ROOT, "js/ui/map-view.js"), "utf8");
+    ok(exp.indexOf("switchTab(\\'map\\')\" ") === -1 && exp.indexOf("ICON.map") === -1, "Expéditions : plus d'entrée « Carte » en pied");
+    ok(mv.indexOf("voyage d'abord") === -1 && /open \? '<button class="settings-btn" type="button" onclick="openDungeonSheet\(/.test(mv), "carte du monde : un donjon ouvert s'entre sans voyager jusqu'à son monde");
+    var idx = fs.readFileSync(path.join(ROOT, "index.html"), "utf8"), sw = fs.readFileSync(path.join(ROOT, "sw.js"), "utf8");
+    ok(idx.indexOf("js/data/camp-soir.js") > 0 && sw.indexOf("./js/data/camp-soir.js") > 0, "nouveau fichier data/camp-soir.js chargé et précaché");
+  } catch (err) { ok(false, "[393] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  if (CM) CM.partyIds = saveParty;
 })();
 
 Promise.all(ATTENTES).then(function () {

@@ -23,7 +23,6 @@ var expSheet = null; // null | { type: "patrol" | "caravan", id }
     patrol: "images/Icons/quests/mission_exploration.webp",
     caravan: "images/Icons/village_buildings/caravan.webp",
     dungeon: "images/Icons/subtabs/dungeon.webp",
-    map: "images/Icons/menu_icons/map_menu.webp",
     potions: "images/Icons/subtabs/potions.webp"
   };
   function img(src, cls) { return '<img class="' + (cls || "") + '" src="' + esc(src) + '" alt="">'; }
@@ -180,10 +179,7 @@ var expSheet = null; // null | { type: "patrol" | "caravan", id }
 
   function footerHTML() {
     var h = '<div class="exp-foot">';
-    if (unlocked("map")) {
-      var world = (window.WorldManager && typeof WorldManager.getWorld === "function") ? WorldManager.getWorld() : null;
-      h += '<button type="button" class="exp-door" onclick="switchTab(\'map\')">' + img(ICON.map) + '<span><b>' + _t("Carte") + '</b><small>' + esc(world && world.name ? _td(world.name) : _t("Monde")) + '</small></span><i class="exp-chev">›</i></button>';
-    }
+    // v3.595.0 (retour Seb) : la Carte n'est plus ici, elle est dans la barre du bas
     if (unlocked("shop")) {
       var potions = 0;
       if (window.PotionManager && typeof PotionManager.getHealingStock === "function") (window.HEALING_POTIONS_DB || []).forEach(function (po) { potions += Number(PotionManager.getHealingStock(po.id) || 0); });
