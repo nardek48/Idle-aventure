@@ -632,7 +632,7 @@ var LivingMapManager = {
     if (!f) return false;
     if (!enemy || enemy.id !== f.eliteId) return false;
     var lmMap = window.LIVING_MAPS && LIVING_MAPS[f.mapId];
-    if (window.CompanionQuestManager && lmMap) CompanionQuestManager.onEliteWon(lmMap.worldId); // v3.598.0 : quêtes des compagnons
+    if (window.CompanionQuestManager && lmMap) CompanionQuestManager.onEliteWon(lmMap.worldId, f.sectorId); // v3.598.0 ; v3.603.0 : le lieu joué
     if (window.SortieManager) SortieManager.end("success");
     game.livingMaps.fight = null;
     var report = this.onRunEnd(f.mapId, f.sectorId, "success");

@@ -70,17 +70,49 @@ var CompanionQuestManager = {
     if (!st || st.type !== "scene") return false;
     return this._advance(q);
   },
-  // Fin d'une Petite Aventure ou d'un parcours (pa2-run.js), et victoire sur une élite de carte (living-map-system.js).
-  onRunEnd: function (worldId, how) { if (how === "dest" || how === "parcours") this._count("run", worldId); },
-  onEliteWon: function (worldId) { this._count("elite", worldId); },
-  _count: function (type, worldId) {
+  /* Fin d'une Petite Aventure de la carte vivante (pa2-run.js) et victoire sur une élite de carte (living-map-system.js).
+     v3.603.0 (demande de Seb) : seul le lieu attribué à la quête compte, et une sortie ne fait avancer qu'une quête. */
+  onRunEnd: function (worldId, how, sectorId) { if (how === "dest") this._count("run", worldId, sectorId); },
+  onEliteWon: function (worldId, sectorId) { this._count("elite", worldId, sectorId); },
+  _count: function (type, worldId, sectorId) {
+    if (!sectorId) return;
     var self = this;
+    this.assignAll();
+    var q = this.list().filter(function (x) {
+      var st = self.step(x), s = self.stateOf(x.id);
+      return st && st.type === type && st.world === worldId && s.sec === sectorId && self.inParty(x);
+    })[0];
+    if (!q) return;
+    var st = this.step(q), s = this.stateOf(q.id);
+    s.n += 1; s.last = sectorId; s.sec = null; // le lieu suivant sera un autre, si la carte en offre un
+    if (s.n >= Math.max(1, Number(st.count || 1))) this._advance(q);
+    else if (typeof saveGame === "function") saveGame();
+  },
+
+  /* Le lieu de l'étape en cours : gardé tant qu'il reste jouable, sinon un autre, libre (pas celui d'une autre
+     quête en cours), de préférence pas encore libéré et pas celui qu'on vient de jouer. */
+  targetOf: function (q) {
+    this.assignAll();
+    var s = this.stateOf(q.id);
+    return s && s.sec ? s.sec : null;
+  },
+  assignAll: function () {
+    var self = this, LM = window.LivingMapManager, taken = {};
+    if (!LM) return;
     this.list().forEach(function (q) {
-      var st = self.step(q), s = self.stateOf(q.id);
-      if (!st || st.type !== type || (st.world && st.world !== worldId) || !self.inParty(q)) return;
-      s.n += 1;
-      if (s.n >= Math.max(1, Number(st.count || 1))) self._advance(q);
-      else if (typeof saveGame === "function") saveGame();
+      var s = self.stateOf(q.id), st = self.step(q);
+      if (!st || (st.type !== "run" && st.type !== "elite")) { if (s && s.sec) s.sec = null; return; }
+      var map = LM.getMapForWorld(st.world), pool = self.sectorsFor(q);
+      if (!map || !pool.length) { s.sec = null; return; }
+      var key = function (id) { return map.id + ":" + id; };
+      if (s.sec && pool.indexOf(s.sec) >= 0 && !taken[key(s.sec)]) { taken[key(s.sec)] = true; return; }
+      var free = pool.filter(function (id) { return !taken[key(id)]; });
+      if (!free.length) free = pool; // plus de lieu libre : partagé, mais une sortie ne crédite qu'une quête
+      var fresh = free.filter(function (id) { return id !== s.last; });
+      if (fresh.length) free = fresh;
+      var unlib = free.filter(function (id) { return !LM.isLiberated(map.id, id); });
+      s.sec = (unlib.length ? unlib : free)[0];
+      taken[key(s.sec)] = true;
     });
   },
   /* v3.600.0 (option B de Seb) : les secteurs de la carte vivante qui font avancer l'étape en cours.
@@ -102,13 +134,14 @@ var CompanionQuestManager = {
       return true;
     }).map(function (d) { return d.id; });
   },
-  // Quêtes en cours qu'un secteur fait avancer (pastille au portrait, ligne du volet).
+  // Quêtes en cours dont le lieu attribué est ce secteur (pastille au portrait, ligne du volet).
   questsAt: function (mapId, sectorId) {
     var self = this, LM = window.LivingMapManager, map = LM && LM.getMap(mapId);
     if (!map) return [];
+    this.assignAll();
     return this.list().filter(function (q) {
-      var st = self.step(q);
-      return st && st.world === map.worldId && self.sectorsFor(q).indexOf(sectorId) >= 0;
+      var st = self.step(q), s = self.stateOf(q.id);
+      return st && st.world === map.worldId && s.sec === sectorId;
     });
   },
 
