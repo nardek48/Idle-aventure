@@ -10,6 +10,8 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.599.0", "camp/campfire", _t("Au feu, tes compagnons veulent te parler : 27 conversations sur eux, l'histoire et le monde, avec un choix de réponse.")],
+    ["3.599.0", "quests/quest_side", _t("Chaque compagnon a ses quêtes personnelles (14 en tout), ouvertes par ses conversations. Chacune donne une relique unique.")],
     // v3.596.0 : les nouveautés des v3.594.0 et v3.595.0, annoncées ici pour qu'elles s'affichent aussi chez qui a déjà ouvert ces versions
     ["3.596.0", "camp/campfire", _t("Le Camp s'anime : chaque soir une phrase, et tes compagnons restés au camp autour du feu. Touche-les.")],
     ["3.596.0", "menu_icons/camp_menu", _t("Camp : un onglet « Le feu » réunit la santé, les rations et les compagnons.")],

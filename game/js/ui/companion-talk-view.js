@@ -56,19 +56,20 @@ function renderTalkScene() {
   if (!root || !talkScene) return;
   var t = talkScene.quest ? null : CompanionTalkManager.get(talkScene.id), def = getCompanionDef(talkScene.companion), name = _td(def.name), cur = talkScene.cur;
   var bg = window.ScreenBanner && typeof ScreenBanner.data === "function" ? (ScreenBanner.data("camp") || [])[0] : "";
-  var dim = cur.w === "n" || cur.w === "me";
+  var dim = !!cur.w && cur.w !== talkScene.companion; // narrateur, héros ou autre compagnon : le portrait s'efface
+  var nameOf = function (w) { var d = w && w !== talkScene.companion && w !== "n" && w !== "me" ? getCompanionDef(w) : null; return d ? _td(d.name) : name; };
   var h = '<div class="talk-scene" role="dialog" aria-modal="true" aria-label="' + esc(_t("Conversation avec {n}", { n: name })) + '"' + (bg ? ' style="background-image:url(\'' + esc(bg) + '\')"' : '') + '>'
     + '<button type="button" class="talk-x" onclick="closeCompanionTalk(false)" aria-label="' + esc(_t("Fermer")) + '">✕</button>'
     + '<img class="talk-por' + (dim ? ' is-dim' : '') + '" src="' + esc(def.image) + '" alt="' + esc(name) + '"><div class="talk-box">';
   if (cur.choix) {
     var last = talkScene.last;
-    if (last && last.w !== "me") h += '<div class="talk-line is-ask">' + (last.w === "n" ? '' : '<b>' + esc(name) + '</b>') + '<p class="' + (last.w === "n" ? "is-n" : "") + '">' + esc(last.t) + '</p></div>';
+    if (last && last.w !== "me") h += '<div class="talk-line is-ask">' + (last.w === "n" ? '' : '<b>' + esc(nameOf(last.w)) + '</b>') + '<p class="' + (last.w === "n" ? "is-n" : "") + '">' + esc(last.t) + '</p></div>';
     h += cur.choix.map(function (c, k) { return '<button type="button" class="talk-choice" onclick="talkChoose(' + k + ')">' + esc(c.t) + '</button>'; }).join("");
   } else if (cur.fin) {
     if (t && t.unlocks && t.unlocks.title) h += '<div class="talk-unlock"><b>' + esc(_t("Quête de {n} débloquée", { n: name })) + '</b><span>' + esc(t.unlocks.title) + '</span></div>';
     h += '<button type="button" class="talk-next" onclick="closeCompanionTalk(true)">' + esc(talkScene.quest ? _t("Continuer") : _t("Retour au feu")) + '</button>';
   } else {
-    var who = cur.w === "me" ? _t("Toi") : (cur.w === "n" ? "" : name);
+    var who = cur.w === "me" ? _t("Toi") : (cur.w === "n" ? "" : nameOf(cur.w));
     h += '<div class="talk-line" onclick="talkNext()" role="button" tabindex="0">' + (who ? '<b>' + esc(who) + '</b>' : '')
       + '<p class="' + (cur.w === "n" ? "is-n" : "") + '">' + esc(cur.t) + '</p><span class="talk-hint">' + esc(_t("Touche pour continuer")) + ' ▸</span></div>';
   }
