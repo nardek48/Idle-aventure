@@ -793,9 +793,18 @@ var CompanionManager = {
         healPriority: st.healPriority,
         keepReserve: !!st.keepReserve,
         voie: st.voie || null,               // v3.311.0 : compagnon à voies
-        voieChanges: Number(st.voieChanges || 0)
+        voieChanges: Number(st.voieChanges || 0),
+        talks: CompanionManager.cleanTalks(st.talks) // v3.597.0 : conversations faites et réponse choisie
       };
     });
+    return out;
+  },
+
+  // v3.597.0 : { talkId: réponses choisies } ; seules les chaînes courtes passent
+  cleanTalks: function (t) {
+    var out = {};
+    if (!t || typeof t !== "object") return out;
+    Object.keys(t).forEach(function (k) { if (/^[a-z0-9_]{1,40}$/.test(k) && typeof t[k] === "string") out[k] = t[k].slice(0, 16); });
     return out;
   },
 
@@ -821,6 +830,7 @@ var CompanionManager = {
       if (d.healThreshold) self.setSetting(id, "healThreshold", d.healThreshold, true);
       if (d.healPriority) self.setSetting(id, "healPriority", d.healPriority, true);
       self.setSetting(id, "keepReserve", !!d.keepReserve, true);
+      st.talks = self.cleanTalks(d.talks); // v3.597.0 : conversations au feu
       if (self.hasVoies(id)) { // v3.311.0
         st.voie = (d.voie && COMPANIONS_DB[id].voies[d.voie]) ? d.voie : null;
         st.voieChanges = Math.max(0, Number(d.voieChanges || 0));

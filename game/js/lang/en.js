@@ -4220,6 +4220,12 @@ I18n.register("en", {
   "Il faut": "You need",
   "corde": "rope",
   "Assuré": "Certain",
+  // v3.597.0 : les conversations au feu
+  "Conversation avec {n}": "Conversation with {n}",
+  "Quête de {n} débloquée": "{n}'s quest unlocked",
+  "Touche pour continuer": "Tap to continue",
+  "{n} veut te parler": "{n} wants to talk to you",
+  "Parler": "Talk",
   // v3.596.0 : Quoi de neuf
   "Le Camp s'anime : chaque soir une phrase, et tes compagnons restés au camp autour du feu. Touche-les.": "The Camp comes alive: a line every evening, and the companions who stayed behind sit around the fire. Tap them.",
   "Camp : un onglet « Le feu » réunit la santé, les rations et les compagnons.": "Camp: a “The fire” tab brings together health, rations and companions.",
