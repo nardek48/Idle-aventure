@@ -20692,6 +20692,9 @@ console.log("\n[395] v3.598.0 — Quêtes des compagnons et reliques uniques (d�
     M.onEliteWon("desert");
     ok(M.isDone("q_test") && CR.hasUnique("wenna_ruban"), "élite vaincue : quête terminée, relique unique gagnée");
     ok(/cq-done/.test(g.buildCompanionQuestCardHTML(M.get("q_test"))), "la carte affiche la quête terminée");
+    g.companionTalksData = function () { return [{ id: "t_apres", companion: "wenna", afterQuest: "q_autre", lines: [{ w: "wenna", t: "Après." }] }, { id: "t_fini", companion: "wenna", afterQuest: "q_test", lines: [{ w: "wenna", t: "Merci." }] }]; };
+    var tav = g.CompanionTalkManager.available();
+    ok(tav.length === 1 && tav[0].id === "t_fini", "afterQuest : la conversation attend que la quête du compagnon soit finie");
     var idx = fs.readFileSync(path.join(ROOT, "index.html"), "utf8"), sw = fs.readFileSync(path.join(ROOT, "sw.js"), "utf8");
     ok(["js/data/companion-quests.js", "js/systems/companion-quest-system.js", "js/ui/companion-quest-view.js"].every(function (f) { return idx.indexOf(f) > 0 && sw.indexOf("./" + f) > 0; }), "trois fichiers nouveaux, chargés et précachés");
   } catch (err) { ok(false, "[395] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }

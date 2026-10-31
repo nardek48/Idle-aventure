@@ -27,6 +27,7 @@ var CompanionTalkManager = {
     var st = CompanionManager.state(t.companion);
     if (!st || !st.unlocked || this.isDone(t.id)) return false;
     if (t.step && !(window.StoryQuestManager && StoryQuestManager.isStepReached(t.step))) return false;
+    if (t.afterQuest && !(window.CompanionQuestManager && CompanionQuestManager.isDone(t.afterQuest))) return false; // v3.598.1 : quête du compagnon finie avant
     return !t.after || this.isDone(t.after);
   },
   // Une seule conversation proposée par compagnon : la première de sa liste qui est prête.
