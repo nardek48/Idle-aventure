@@ -53,7 +53,13 @@ function talkTopic(kind) {
   if (!talkScene) return;
   var cid = talkScene.companion, M = CompanionTalkManager, lines = null, quest = null;
   if (kind === "talk") { var t = M.availableFor(cid); if (t) openCompanionTalk(t.id); return; }
-  if (kind === "toi" || kind === "monde") {
+  if (kind === "autres") { talkScene = { companion: cid, menu: true, sub: "autres", queue: [], cur: {}, choices: "" }; renderTalkScene(); return; } // v3.605.0
+  if (kind.indexOf("avis:") === 0) {
+    var av = M.topicAvis(cid).filter(function (a) { return a.other === kind.slice(5); })[0];
+    if (!av) return;
+    M.markHeard(cid, av.key);
+    lines = av.lines;
+  } else if (kind === "toi" || kind === "monde") {
     var tp = kind === "toi" ? M.topicToi(cid) : M.topicMonde(cid);
     if (!tp) return;
     M.markHeard(cid, tp.key);
@@ -76,7 +82,7 @@ function companionTalkActiveQuest(cid) {
 }
 
 /* v3.601.1 : icônes dédiées (atelier des images) ; tant qu'elles manquent, l'icône générique, sans emprunt. */
-var TALK_TOPIC_ICONS = ["images/Icons/camp/topic_talk.webp", "images/Icons/camp/topic_self.webp", "images/Icons/camp/topic_world.webp", "images/Icons/camp/topic_quest.webp"];
+var TALK_TOPIC_ICONS = ["images/Icons/camp/topic_talk.webp", "images/Icons/camp/topic_self.webp", "images/Icons/camp/topic_world.webp", "images/Icons/camp/topic_quest.webp", "images/Icons/camp/topic_others.webp"];
 function talkTopicIconHTML(src) {
   return '<img src="' + esc(src) + '" alt="" onerror="this.onerror=null;this.dataset.missing=this.src;'
     + 'if(window.MISSING_ICONS&&MISSING_ICONS.indexOf(this.src)<0)MISSING_ICONS.push(this.src);this.src=\'images/Icons/system/search_unknown.webp\'">';
@@ -89,8 +95,18 @@ function talkMenuTopics(cid) {
   var toi = M.topicToi(cid), monde = M.topicMonde(cid), q = companionTalkActiveQuest(cid);
   if (toi) out.push({ k: "toi", icon: "images/Icons/camp/topic_self.webp", t: _t("Parle-moi de toi"), s: _t("Un souvenir de {n}", { n: name }), isNew: !M.heard(cid, toi.key) });
   if (monde) { var w = WORLDS[M._worldIdx(monde.world)]; out.push({ k: "monde", icon: "images/Icons/camp/topic_world.webp", t: _t("Et ce monde-ci ?"), s: w ? _td(w.name) : "", isNew: !M.heard(cid, monde.key) }); }
+  var avis = M.topicAvis(cid); // v3.605.0 (T2)
+  if (avis.length) out.push({ k: "autres", icon: "images/Icons/camp/topic_others.webp", t: _t("Et les autres ?"), s: avis.map(function (a) { return _td(getCompanionDef(a.other).name); }).join(", "), isNew: avis.some(function (a) { return !M.heard(cid, a.key); }) });
   if (q) { var Q = CompanionQuestManager; out.push({ k: "quete", icon: "images/Icons/camp/topic_quest.webp", t: _t("Ta quête"), s: _td(q.title) + " · " + (Q.stateOf(q.id).s + 1) + " / " + q.steps.length, seen: true }); }
   return out;
+}
+
+// « ‹ Autre chose » : après un avis, la liste des compagnons ; sinon, la liste des sujets.
+function talkBack() {
+  if (!talkScene) return;
+  var cid = talkScene.companion, avis = String(talkScene.topic || "").indexOf("avis:") === 0;
+  openCompanionMenu(cid);
+  if (avis) talkTopic("autres");
 }
 
 // Après le point sur la quête : l'action de l'étape (ferme la scène d'abord).
@@ -123,7 +139,15 @@ function renderTalkScene() {
   var h = '<div class="talk-scene" role="dialog" aria-modal="true" aria-label="' + esc(_t("Conversation avec {n}", { n: name })) + '"' + (bg ? ' style="background-image:url(\'' + esc(bg) + '\')"' : '') + '>'
     + '<button type="button" class="talk-x" onclick="closeCompanionTalk(false)" aria-label="' + esc(_t("Fermer")) + '">✕</button>'
     + '<img class="talk-por' + (dim ? ' is-dim' : '') + '" src="' + esc(def.image) + '" alt="' + esc(name) + '"><div class="talk-box">';
-  if (talkScene.menu) {
+  if (talkScene.menu && talkScene.sub === "autres") { // v3.605.0 : un compagnon par ligne, son portrait
+    h += '<div class="talk-line is-ask"><b>' + esc(name) + '</b><p>' + esc(_t("De qui tu veux parler ?")) + '</p></div>';
+    h += CompanionTalkManager.topicAvis(talkScene.companion).map(function (a) {
+      var od = getCompanionDef(a.other), isNew = !CompanionTalkManager.heard(talkScene.companion, a.key);
+      return '<button type="button" class="talk-topic" onclick="talkTopic(\'avis:' + a.other + '\')"><img class="talk-topic-por" src="' + esc(od.image) + '" alt=""><span><b>' + esc(_td(od.name)) + '</b></span>'
+        + (isNew ? '<i class="talk-topic-new" aria-label="' + esc(_t("Nouveau")) + '"></i>' : '<i class="talk-topic-seen">✓</i>') + '</button>';
+    }).join("");
+    h += '<button type="button" class="talk-topic is-quiet" onclick="openCompanionMenu(\'' + esc(talkScene.companion) + '\')"><b>‹ ' + esc(_t("Autre chose")) + '</b></button>';
+  } else if (talkScene.menu) {
     var hello = typeof campSoirTapText === "function" ? String(campSoirTapText(talkScene.companion) || "").replace(/^«\s*|\s*»$/g, "") : "";
     if (hello) h += '<div class="talk-line is-ask"><b>' + esc(name) + '</b><p>' + esc(hello) + '</p></div>';
     h += talkMenuTopics(talkScene.companion).map(function (o) {
@@ -141,7 +165,7 @@ function renderTalkScene() {
       var aq = CompanionQuestManager.get(talkScene.questTopic), ast = aq ? CompanionQuestManager.step(aq) : null;
       if (ast && (ast.type !== "deliver" || CompanionQuestManager.canDeliver(aq))) h += '<button type="button" class="talk-next" onclick="talkQuestAction(\'' + esc(aq.id) + '\')">' + esc(ast.type === "scene" ? _t("Écouter") : ast.type === "deliver" ? _t("Donner") : _t("J'y vais")) + '</button>';
     }
-    if (talkScene.topic) h += '<button type="button" class="talk-choice talk-back" onclick="openCompanionMenu(\'' + esc(talkScene.companion) + '\')">‹ ' + esc(_t("Autre chose")) + '</button>';
+    if (talkScene.topic) h += '<button type="button" class="talk-choice talk-back" onclick="talkBack()">‹ ' + esc(_t("Autre chose")) + '</button>';
     else h += '<button type="button" class="talk-next" onclick="closeCompanionTalk(true)">' + esc(talkScene.quest ? _t("Continuer") : _t("Retour au feu")) + '</button>';
   } else {
     var who = cur.w === "me" ? _t("Toi") : (cur.w === "n" ? "" : nameOf(cur.w));
@@ -176,6 +200,7 @@ window.openQuestScene = openQuestScene;
 window.openCompanionMenu = openCompanionMenu;
 window.talkTopic = talkTopic;
 window.talkQuestAction = talkQuestAction;
+window.talkBack = talkBack;
 window.talkNext = talkNext;
 window.talkChoose = talkChoose;
 window.closeCompanionTalk = closeCompanionTalk;

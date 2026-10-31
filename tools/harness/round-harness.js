@@ -20915,6 +20915,34 @@ console.log("\n[400] v3.604.0 — Ce matin à Aeswyn : les événements du villa
   if (saveLvl) g.VillageBuildingManager.getLevel = saveLvl;
 })();
 
+console.log("\n[401] v3.605.0 — Parler aux compagnons : « Et les autres ? » (T2)");
+(function () {
+  var M = g.CompanionTalkManager, CM = g.CompanionManager, saveDep = CM && CM.hasDeparted;
+  try {
+    var D = g.companionAvisData(), n = 0, ok2 = true;
+    Object.keys(D).forEach(function (a) { Object.keys(D[a]).forEach(function (b) { n++; if (a === b || !g.COMPANIONS_DB[b]) ok2 = false; }); });
+    ok(n === 20 && ok2, "20 avis : chaque compagnon sur chacun des quatre autres");
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); CompanionManager.unlock('wenna'); WorldManager.worldIndex = 1;");
+    ok(M.topicAvis("wenna").length === 0 && !g.talkMenuTopics("wenna").some(function (o) { return o.k === "autres"; }), "seule au camp : pas de sujet « Et les autres ? »");
+    run("CompanionManager.unlock('maddoc');");
+    var av = M.topicAvis("wenna");
+    ok(av.length === 1 && av[0].other === "maddoc" && g.talkMenuTopics("wenna").some(function (o) { return o.k === "autres" && o.isNew; }), "Maddoc recruté : « Et les autres ? » (Maddoc), nouveau");
+    g.openCompanionMenu("wenna"); g.talkTopic("autres");
+    ok(g.talkScene && g.talkScene.sub === "autres", "le sujet ouvre la liste des compagnons");
+    g.talkTopic("avis:maddoc");
+    ok(g.talkScene && g.talkScene.topic === "avis:maddoc" && M.heard("wenna", "s_avis_maddoc"), "l'avis sur Maddoc se joue et passe en écouté");
+    g.talkBack();
+    ok(g.talkScene && g.talkScene.sub === "autres", "« ‹ Autre chose » ramène à la liste des compagnons");
+    g.closeCompanionTalk(false);
+    CM.hasDeparted = function (id) { return id === "maddoc"; };
+    ok(M.topicAvis("wenna").length === 0, "un compagnon parti pour de bon n'a plus d'avis à son sujet");
+    CM.hasDeparted = saveDep;
+    ok(g.TALK_TOPIC_ICONS.indexOf("images/Icons/camp/topic_others.webp") >= 0, "icône dédiée du sujet (générique en attendant)");
+  } catch (err) { ok(false, "[401] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  if (CM) CM.hasDeparted = saveDep;
+  if (g.talkScene) g.closeCompanionTalk(false);
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

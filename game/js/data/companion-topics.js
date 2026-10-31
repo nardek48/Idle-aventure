@@ -53,3 +53,36 @@ function companionTopicsData() {
 }
 
 window.companionTopicsData = companionTopicsData;
+
+/* v3.605.0 (T2, demande de Seb) : « Et les autres ? » — ce que chaque compagnon pense de chacun des autres (20 avis). */
+function companionAvisData() {
+  return {
+  wenna: {
+    maddoc: [{ w: "wenna", t: _t("Maddoc fait semblant de ne pas avoir mal. Moi, je fais semblant de ne pas le voir.") }, { w: "wenna", t: _t("Un jour, il me laissera regarder sa jambe. Pas encore.") }],
+    edda: [{ w: "wenna", t: _t("Edda dessine tout. Moi aussi, elle m'a dessinée. Je ne savais pas que je fronçais les sourcils comme ça.") }, { w: "wenna", t: _t("J'ai demandé à garder le dessin. Elle a dit : quand la carte sera finie.") }],
+    ysolt: [{ w: "wenna", t: _t("Ysolt a les mains froides. Toujours. Je lui ai donné une couverture, même si ça ne sert à rien.") }, { w: "wenna", t: _t("Elle l'a pliée sur ses genoux. Elle la garde comme on garde un cadeau.") }],
+    sarkel: [{ w: "wenna", t: _t("Sarkel compte tout ce qu'on lui doit. Mais quand je soigne quelqu'un, il ne compte jamais les bandages.") }, { w: "n", t: _t("Elle hausse les épaules, comme si ça réglait la question.") }] },
+  maddoc: {
+    wenna: [{ w: "maddoc", t: _t("La petite soigne vite et parle peu quand ça compte. Le reste du temps, elle parle pour deux.") }, { w: "maddoc", t: _t("Si mon frère l'avait connue, il aurait ri plus souvent.") }],
+    edda: [{ w: "maddoc", t: _t("Edda dessine les rues avant qu'elles se refassent. Moi, je les traverse après. On fait la paire.") }, { w: "maddoc", t: _t("Elle ne se trompe presque jamais. Presque, c'est ce qui me garde éveillé.") }],
+    ysolt: [{ w: "maddoc", t: _t("Ysolt marche comme quelqu'un qui connaît la fin du chemin. Ça me met mal à l'aise.") }, { w: "maddoc", t: _t("Mais elle ne recule jamais. Ça, je respecte.") }],
+    sarkel: [{ w: "maddoc", t: _t("Je lui ai appris à tenir une pioche. Les deux mains, plus bas. Il m'a payé en me disant merci.") }, { w: "maddoc", t: _t("Venant de Sarkel, c'est le prix le plus cher que j'aie jamais reçu.") }] },
+  edda: {
+    wenna: [{ w: "edda", t: _t("Wenna veut toujours savoir ce qu'il y a au bout du chemin. Moi aussi. Sauf qu'elle, elle n'a pas peur de la réponse.") }, { w: "n", t: _t("Edda sourit, sans lever les yeux de son carnet.") }],
+    maddoc: [{ w: "edda", t: _t("Maddoc ne parle pas beaucoup, mais il se met toujours entre moi et ce qui bouge. Même les murs.") }, { w: "edda", t: _t("J'ai dessiné sa silhouette dans un coin de chaque page. Il ne le sait pas.") }],
+    ysolt: [{ w: "edda", t: _t("Ysolt connaît chaque couloir de la Crypte. Sans carte. Ça me vexe un peu.") }, { w: "edda", t: _t("Elle dit que les morts sont la carte. Je n'ai pas encore compris.") }],
+    sarkel: [{ w: "edda", t: _t("Sarkel m'a vendu une carte fausse, il y a longtemps. Elle m'a menée jusqu'aux Ruines quand même.") }, { w: "edda", t: _t("Je ne lui ai jamais dit. Il le prendrait pour un compliment.") }] },
+  ysolt: {
+    wenna: [{ w: "ysolt", t: _t("Wenna ronfle. Un peu. Comme un chat au coin du feu.") }, { w: "ysolt", t: _t("Quand elle dort, je compte ses respirations. Ça m'aide à compter les miennes.") }],
+    maddoc: [{ w: "ysolt", t: _t("Maddoc a peur de moi. Il le cache mal. C'est bien : ceux qui n'ont peur de rien ne reviennent pas.") }, { w: "n", t: _t("Elle le dit sans méchanceté. Comme on dit le temps qu'il fera.") }],
+    edda: [{ w: "ysolt", t: _t("Edda dessine ceux qui dorment, et elle leur laisse de la place sur la page. Personne ne fait ça.") }, { w: "ysolt", t: _t("Elle m'a dessinée aussi. Debout.") }],
+    sarkel: [{ w: "ysolt", t: _t("Sarkel apporte du pain aux morts et dit que c'est pour les affaires. Il ment mal.") }, { w: "ysolt", t: _t("Ils le savent. Ils l'aiment bien quand même.") }] },
+  sarkel: {
+    wenna: [{ w: "sarkel", t: _t("La petite ne marchande jamais. Ça me fend le cœur. Je lui fais des prix quand même. Ne lui dis pas.") }, { w: "sarkel", t: _t("Elle me rendrait la différence. Elle en est capable.") }],
+    maddoc: [{ w: "sarkel", t: _t("Maddoc m'a appris à tailler. Je lui ai appris à acheter de l'eau sans se faire voler. On est quittes.") }, { w: "n", t: _t("Il réfléchit, puis corrige.") }, { w: "sarkel", t: _t("Presque quittes.") }],
+    edda: [{ w: "sarkel", t: _t("Je lui ai vendu une carte fausse, autrefois. Elle ne m'en a jamais parlé. Ça me travaille.") }, { w: "sarkel", t: _t("Les clients qui se taisent, ce sont les pires. Ou les meilleurs.") }],
+    ysolt: [{ w: "sarkel", t: _t("Je vends à tout le monde. Aux vivants, aux pressés, aux perdus. À elle, je n'ai jamais rien vendu.") }, { w: "sarkel", t: _t("Elle n'a besoin de rien. Ça devrait m'inquiéter. Ça me repose.") }] }
+  };
+}
+
+window.companionAvisData = companionAvisData;
