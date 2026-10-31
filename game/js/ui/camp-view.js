@@ -287,8 +287,33 @@ function buildCampHTML(tab) {
   // bas couvre ces raccourcis depuis la refonte.
 
   h += '</div>';
+  if (window.WorldDays && WorldDays.ensure().pending && typeof setTimeout === "function") setTimeout(worldNightShow, 0); // v3.602.0 : la nuit, au retour au Camp
   return h;
 }
+
+/* v3.602.0 (atelier jours-du-monde, plein écran) : la tombée de la nuit, montrée une fois au retour au Camp. */
+function worldNightShow() {
+  if (typeof document === "undefined" || !document.body || !window.WorldDays || game.activeTab !== "campement") return;
+  if (window.SortieManager && SortieManager.ensure().active) return;
+  var night = WorldDays.takePending();
+  if (!night) return;
+  var w = window.WORLDS ? WORLDS.filter(function (x) { return x.id === night.world; })[0] : null;
+  var root = document.getElementById("world-night-root");
+  if (!root) { root = document.createElement("div"); root.id = "world-night-root"; document.body.appendChild(root); }
+  var lost = night.kind === "reprise" || (night.kind === "chantier" && night.sectorId);
+  root.innerHTML = '<div class="wn" role="dialog" aria-modal="true" aria-label="' + esc(_t("Jour {n}", { n: night.day })) + '"><div class="wn-in">'
+    + '<h3>' + esc(_t("Jour {n}", { n: night.day })) + '</h3>' + (w ? '<small class="wn-w">' + esc(_td(w.name)) + '</small>' : '')
+    + '<p>' + esc(_t("La nuit tombe.")) + '</p>'
+    + '<p class="wn-what' + (lost ? ' is-lost' : '') + '">' + esc(WorldDays.nightText(night)) + '</p>'
+    + '<button type="button" class="kbtn primary wn-ok" onclick="worldNightClose()">' + esc(_t("Au matin")) + '</button></div></div>';
+  if (typeof saveGame === "function") saveGame();
+}
+function worldNightClose() {
+  var root = document.getElementById("world-night-root");
+  if (root) root.innerHTML = "";
+}
+window.worldNightShow = worldNightShow;
+window.worldNightClose = worldNightClose;
 
 /* v3.595.0 (C1 et C2, data/camp-soir.js) : la phrase du soir, tirée à chaque retour au Camp,
    et les compagnons restés au camp autour du feu ; toucher l'un d'eux affiche sa phrase. */
@@ -311,7 +336,10 @@ function campFeuStoryHTML(campMates) {
   var ids = (campMates || []).filter(function (id) { return party.indexOf(id) < 0; });
   var key = campSoirWorld() + "|" + ids.join(",");
   if (lastRenderedTab !== "campement" || campSoir.key !== key) campSoir = { key: key, text: campSoirPick(ids), tap: null };
-  var h = '<div class="camp-card camp-soir"><div class="camp-soir-k">' + esc(_t("Ce soir au camp")) + '</div><p class="camp-soir-t">' + esc(campSoir.text) + '</p></div>';
+  var dark = window.WorldDays && WorldDays.isDark(); // v3.602.0 : la soirée qui suit la nuit dit ce qu'elle a fait
+  var h = dark
+    ? '<div class="camp-card camp-soir is-night"><div class="camp-soir-k">' + esc(_t("Cette nuit")) + '</div><p class="camp-soir-t">' + esc(WorldDays.nightText()) + '</p></div>'
+    : '<div class="camp-card camp-soir"><div class="camp-soir-k">' + esc(_t("Ce soir au camp")) + '</div><p class="camp-soir-t">' + esc(campSoir.text) + '</p></div>';
   if (!ids.length) return h;
   var half = Math.ceil(ids.length / 2), mate = function (id) {
     // v3.601.0 (M1) : toucher ouvre la liste des sujets ; « … » quand il a quelque chose de nouveau à dire

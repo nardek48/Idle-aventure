@@ -5075,7 +5075,7 @@ I18n.register("en", {
   "La Craie d'Edda se met dans ta besace sans rien coûter : chaque trait empêche un mur de bouger près de toi.": "Edda's Chalk goes in your satchel free of charge: each line stops a wall from shifting near you.",
   "La Pierre errante se trouve dans les trouvailles et aux destinations. Elle n'est jamais perdue.": "Wandering Stone turns up in finds and at destinations. It is never lost.",
   "La carte des Ruines fonctionne comme celle du Désert : tu libères un quartier en terminant sa Petite Aventure.": "The Ruins map works like the Desert's: you free a quarter by finishing its Short Adventure.",
-  "Chaque jour, la cité rebâtit un quartier : le chantier. Il change de place à minuit, et même un quartier libéré peut redevenir chantier.": "Each day, the city rebuilds one quarter: the building site. It moves at midnight, and even a freed quarter can become the site again.",
+  "Chaque jour, la cité rebâtit un quartier : le chantier. Il change de place à chaque nuit (une nuit toutes les 3 sorties), et même un quartier libéré peut redevenir chantier.": "Each day, the city rebuilds one quarter: the building site. It moves every night (a night falls every 3 outings), and even a freed quarter can become the site again.",
   "Libérer le chantier du jour rapporte des Pierres errantes. Un échec sur un quartier déjà libéré le fait retomber : c'est l'Éboulement.": "Freeing the day's site yields Wandering Stones. A failure on a quarter already freed brings it down again: that's the Rockfall.",
   "La Palissade d'Aeswyn freine l'Éboulement.": "Aeswyn's Palisade slows the Rockfall.",
   "Le Bâtisseur frappe peu. Il annonce un mur, puis blinde un de ses alliés : tes coups sur lui passent mal pendant quelques rounds.": "The Builder barely hits. He announces a wall, then shields one of his allies: your blows on it land poorly for a few rounds.",
@@ -6272,7 +6272,6 @@ I18n.register("en", {
   "Recharger ici": "Reload here",
   "Dans Safari, ta partie peut être effacée après 7 jours sans visite. Installe le jeu, ou exporte ta partie (Paramètres › Partie).": "In Safari, your game can be erased after 7 days without a visit. Install the game, or export your save (Settings › Game).",
   "Une erreur du jeu a empêché de charger ta partie. Elle reste intacte : rien ne sera écrit dessus pendant cette session. Recharge la page après la prochaine mise à jour.": "A game error prevented your save from loading. It is untouched: nothing will be written to it during this session. Reload the page after the next update.",
-  "Le frein retombe à minuit, dans {d}.": "The brake drops at midnight, in {d}.",
   "La Halle en permet plus : chaque nouveau marché ouvert ajoutera une caravane.": "The Hall allows more: each new market that opens will add a caravan.",
   "L'Arbre-mère, carte de la Forêt (+2 par victoire, rejouable) · la Tanière du Basilic (+2 par Marque) · Petites Aventures de la Forêt · caravane longue au marché de la Forêt": "The Mother Tree, Forest map (+2 per win, replayable) · the Basilisk's Den (+2 per Mark) · Forest Short Adventures · long caravan to the Forest market",
   "Le Dard des profondeurs, carte du Désert (+2 par victoire, rejouable) · la Cité engloutie (+2 par Marque) · Petites Aventures du Désert · caravane longue au marché du Désert": "The Deep Sting, Desert map (+2 per win, replayable) · the Sunken City (+2 per Mark) · Desert Short Adventures · long caravan to the Desert market",
@@ -7874,5 +7873,14 @@ I18n.register("en", {
   "Autre chose": "Something else",
   "Touche un compagnon pour lui parler.": "Tap a companion to talk.",
   "Au feu, touche un compagnon : choisis de quoi parler. Ses souvenirs, ce qu'il pense du monde où vous êtes, sa quête.": "At the fire, tap a companion and choose what to talk about: their memories, what they think of the world you're in, their quest.",
+  // v3.602.0 : jours du monde
+  "Jour {n}": "Day {n}",
+  "La nuit tombe. Rien n'a bougé autour du camp.": "Night falls. Nothing has moved around the camp.",
+  "La Palissade a tenu : rien n'a été repris.": "The Palisade held: nothing was taken back.",
+  "La nuit tombe.": "Night falls.",
+  "Au matin": "Come morning",
+  "{n} sortie avant la nuit||{n} sorties avant la nuit": ["{n} outing before nightfall", "{n} outings before nightfall"],
+  "Le frein retombe à la nuit, dans {n} sortie.||Le frein retombe à la nuit, dans {n} sorties.": ["The brake resets at nightfall, in {n} outing.", "The brake resets at nightfall, in {n} outings."],
+  "Les jours du monde : une nuit tombe toutes les 3 sorties (le jour est sur le bandeau du Camp). La nuit, la carte du monde où tu vis peut reprendre un secteur lointain ; la Palissade le protège.": "World days: night falls every 3 outings (the day is shown on the Camp banner). At night, the map of the world you live in can take back a distant sector; the Palisade protects it.",
 
 });

@@ -6390,6 +6390,7 @@ console.log("\n[60c] v3.258.0 \u2014 Cartes Vivantes C-5 : Arbre-m\u00e8re");
   /* Défaite : échec de secteur (régression), compteur intact. */
   LM._rand = function () { return 0.99; };
   game.heroHp = game.heroMaxHp;
+  run("WorldDays.ensure().done = 0;"); // v3.602.0 : la 3e sortie ferait tomber la nuit (nouveau jour de jeu)
   LM.start(M, "arbremere");
   run("CombatEngine.onHeroDefeated();");
   ok(!LM.getFight() && LM.getDailyWins(M, "arbremere") === 2 && LM.getState(M, "gue").state === "libere" && LM.getState(M, "arbremere").state === "recouvert", "mort : l'Arbre-m\u00e8re elle-m\u00eame est reprise (v3.366.0), le gu\u00e9 reste, les victoires du jour restent");
@@ -19481,7 +19482,7 @@ console.log("\n[343] v3.523.0 — lot 7 : pronostic des élites");
     ok(Math.abs(f.heroDamagePerRound - Math.round(hd * 0.88)) <= 1 && Math.abs(CF.forEnemy(Object.assign({}, dard, { isElite: false })).heroDamagePerRound - Math.round(hd)) <= 1, "bouclier d'élite : dégâts du héros ×0,88 contre une élite, inchangés sinon");
     ok(CF.getEnemyDamagePerRound(dard) === base, "dégâts estimés inchangés hors pronostic (Petites Aventures, Labyrinthe, usure des vagues)");
     LM.ensureDefaults();
-    var st = LM.getState("desert", "bete_dune"); st.state = "libere"; st.dailyKey = LM._todayKey(); st.dailyWins = 2;
+    var st = LM.getState("desert", "bete_dune"); st.state = "libere"; st.dailyKey = LM._dayKey(); st.dailyWins = 2;
     var fm = CF.forMapElite("desert", "bete_dune", "dard_profondeurs");
     ok(fm && fm.brakeMult === 1.5 && fm.enemyName === g.ELITE_DB.dard_profondeurs.name && fm.enemyHp > dard.maxHp * 1.45, "élite de carte : verdict au frein du jour (×1,5, PV compris)");
     var line = g.buildCombatForecastLineHTML(fm, { who: true, brake: true });
@@ -20814,6 +20815,45 @@ console.log("\n[398] v3.601.0 — Parler aux compagnons : la liste des sujets (M
     g.closeCompanionTalk(false);
   } catch (err) { ok(false, "[398] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   if (g.talkScene) g.closeCompanionTalk(false);
+})();
+
+console.log("\n[399] v3.602.0 — Les jours du monde : une nuit toutes les 3 sorties, la nuit vivante");
+(function () {
+  var LM = g.LivingMapManager, W = g.WorldDays, saveRand = LM && LM._rand, saveOpen = LM && LM.isMapOpen, saveLvl;
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.unlockedTabs.village = true; WorldManager.worldIndex = 0;");
+    ok(W.day() === 1 && W.left() === 3, "début : jour 1, 3 sorties avant la nuit");
+    W.onSortieEnd("farm");
+    ok(W.left() === 3, "le farm libre ne compte pas");
+    W.onSortieEnd("scene"); W.onSortieEnd("mapelite");
+    ok(W.day() === 1 && W.left() === 1, "deux sorties : la nuit approche");
+    var map = LM.getMapForWorld("forest");
+    LM.ensureDefaults();
+    map.sectors.forEach(function (d) { var st = LM.getState(map.id, d.id); st.state = "libere"; st.liberatedCount = 1; st.firstRewardClaimed = true; });
+    saveLvl = g.VillageBuildingManager.getLevel; g.VillageBuildingManager.getLevel = function (id) { return id === "palisade" ? 0 : saveLvl.call(g.VillageBuildingManager, id); };
+    LM._rand = function () { return 0.1; };
+    var n = W.onSortieEnd("dungeon");
+    var d = n && n.sectorId ? LM.getSectorDef(map.id, n.sectorId) : null;
+    ok(W.day() === 2 && W.left() === 3 && n && n.kind === "reprise" && d && d.ring === 3 && LM.getState(map.id, d.id).state === "recouvert", "3e sortie : la nuit tombe, jour 2 ; la Forêt reprend un secteur de l'anneau le plus lointain (" + (d ? d.id : "-") + ")");
+    ok(W.isDark() && /Reprends-le depuis/.test(W.nightText()), "la soirée qui suit : « Cette nuit » dit ce qui a été repris et par où revenir");
+    var feu = g.buildCampHTML("feu");
+    ok(/camp-soir is-night/.test(feu) && feu.indexOf(g._t("Cette nuit")) >= 0, "Camp : la carte « Cette nuit » remplace « Ce soir au camp »");
+    ok(W.takePending() && !W.takePending(), "l'écran de la nuit ne se montre qu'une fois");
+    W.onSortieEnd("scene");
+    ok(!W.isDark(), "la sortie suivante : le jour revient");
+    g.VillageBuildingManager.getLevel = function (id) { return id === "palisade" ? 10 : saveLvl.call(g.VillageBuildingManager, id); };
+    LM._rand = function () { return 0; };
+    run("WorldDays.ensure().done = 2;");
+    var n2 = W.onSortieEnd("scene");
+    ok(n2 && n2.kind !== "reprise", "Palissade 10 : les trois anneaux sont tenus, la nuit ne reprend rien");
+    ok(LM._dayKey() === "J3" && LM._dayDiff("J1", "J3") === 2 && LM._dayDiff("Mon Oct 30 2026", "J3") === 1, "règles des cartes en jours de jeu (clé « J3 ») ; une ancienne clé civile compte pour un jour");
+    var save = run("JSON.stringify(buildSaveData().explorationProgression.worldDay)");
+    ok(/"day":3/.test(save), "le jour part dans la sauvegarde existante (explorationProgression), sans nouvel état");
+    var idx = fs.readFileSync(path.join(ROOT, "index.html"), "utf8"), sw = fs.readFileSync(path.join(ROOT, "sw.js"), "utf8");
+    ok(idx.indexOf("js/systems/world-day-system.js") > 0 && sw.indexOf("./js/systems/world-day-system.js") > 0, "nouveau fichier world-day-system.js chargé et précaché");
+  } catch (err) { ok(false, "[399] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  if (LM) { LM._rand = saveRand; LM.isMapOpen = saveOpen; }
+  if (saveLvl) g.VillageBuildingManager.getLevel = saveLvl;
 })();
 
 Promise.all(ATTENTES).then(function () {
