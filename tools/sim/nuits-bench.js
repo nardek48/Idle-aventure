@@ -29,3 +29,24 @@ g.saveGame = function () {}; g.addLog = function () {}; g.LivingMapManager.isMap
     console.log("    " + String(pal).padStart(2) + "    |     " + (lost / NIGHTS).toFixed(2) + "      |   " + Math.round(100 * lost / NIGHTS / 3) + " %");
   });
 });
+
+/* v3.604.0 : les événements du village sur les mêmes nuits — part des jours avec un événement, types, gains des demandes. */
+(function () {
+  var V = g.VillageEvents;
+  if (!V) return;
+  run("game.unlockedTabs.village = true; game.explorationProgression.villageEvent = null; WorldManager.worldIndex = 0;");
+  g.VillageBuildingManager.getLevel = function (id) { return id === "hall" ? 2 : 0; };
+  var days = 0, withEv = 0, types = {};
+  for (var n = 0; n < NIGHTS; n++) { g.WorldDays.nightfall(); days++; var d = V.def(); if (d) { withEv++; types[d.type] = (types[d.type] || 0) + 1; } }
+  console.log("\nÉvénements du village (" + NIGHTS + " nuits) : un événement en cours " + Math.round(100 * withEv / days) + " % des jours");
+  console.log("  jours par type : " + Object.keys(types).map(function (k) { return k + " " + Math.round(100 * types[k] / withEv) + " %"; }).join(", "));
+  console.log("Demandes : livraison et or (1,5 fois un contrat de Taverne), par monde");
+  ["Forêt", "Désert", "Ruines", "Crypte", "Montagne"].forEach(function (name, w) {
+    var row = g.villageEventsData().filter(function (e) { return e.type === "demande"; }).map(function (e) {
+      g.game.explorationProgression.villageEvent = { id: e.id, from: g.WorldDays.day(), until: g.WorldDays.day() + 2, w: w, done: false };
+      var nd = V.needs(), k = Object.keys(nd)[0];
+      return nd[k] + " " + k + " → " + V.rewardGold() + " or";
+    });
+    console.log("  " + name.padEnd(9) + row.join(" | "));
+  });
+})();

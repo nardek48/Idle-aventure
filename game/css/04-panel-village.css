@@ -840,3 +840,17 @@
 .vb-learned[open] .vb-learned-chev { transform: rotate(90deg); }
 .vb-learned-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 10px; }
 .vb-learned-chip { padding: 4px 10px; border-radius: 999px; border: 1px solid var(--c-bronze-500); background: var(--c-cream-50-soft); font-size: 13px; font-weight: 600; color: var(--c-brown-850-soft); }
+/* v3.604.0 (atelier evenements-village) : la carte « Ce matin à Aeswyn » en tête du Village */
+.vev { margin: 0 0 10px; padding: 10px 12px; display: grid; gap: 8px; border-radius: 12px; border: 1px solid var(--c-brown-550-soft); background: linear-gradient(rgba(251, 240, 214, .98), rgba(241, 223, 180, .98)); color: var(--c-brown-850-vivid); }
+.vev-k { display: flex; justify-content: space-between; align-items: center; gap: 8px; font: 700 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: var(--c-brown-550-soft); }
+.vev-left { text-transform: none; letter-spacing: 0; color: var(--c-red-650); background: rgba(246, 226, 196, .9); border: 1px solid var(--nb-frame-light); border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
+.vev-main { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 10px; align-items: start; }
+.vev-ico { width: 52px; height: 52px; object-fit: contain; }
+.vev-main b { display: block; font: 700 17px/1.25 "Alegreya", Georgia, serif; }
+.vev-main small { display: block; font-size: 12px; font-weight: 700; color: var(--c-brown-550-soft); }
+.vev-main p { margin: 2px 0 0; font: italic 400 15px/1.4 "Alegreya", Georgia, serif; }
+.vev-cost { display: flex; flex-wrap: wrap; gap: 6px; }
+.vev-gain { font-size: 13px; font-weight: 600; }
+.vev-act { display: flex; justify-content: flex-end; }
+.vev-act .kbtn { margin-bottom: 0; }
+.vev-done { font-size: 13px; font-weight: 800; color: var(--nb-green-text); }

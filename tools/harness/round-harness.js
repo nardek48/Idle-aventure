@@ -20867,6 +20867,54 @@ console.log("\n[399] v3.602.0 — Les jours du monde : une nuit toutes les 3 sor
   if (saveLvl) g.VillageBuildingManager.getLevel = saveLvl;
 })();
 
+console.log("\n[400] v3.604.0 — Ce matin à Aeswyn : les événements du village");
+(function () {
+  var V = g.VillageEvents, LM = g.LivingMapManager, saveLvl = g.VillageBuildingManager && g.VillageBuildingManager.getLevel;
+  try {
+    var D = g.villageEventsData(), per = {};
+    D.forEach(function (e) { per[e.type] = (per[e.type] || 0) + 1; });
+    ok(D.length === 24 && per.rumeur === 6 && per.demande === 6 && per.marche === 6 && per.fete === 6, "24 événements : 6 rumeurs, 6 demandes, 6 marchés, 6 fêtes");
+    ok(D.filter(function (e) { return e.type === "demande"; }).every(function (e) { return Object.keys(e.res).concat(Object.keys(e.gain)).every(function (r) { return g.WAREHOUSE_RESOURCES[r]; }); }), "les demandes ne citent que des ressources de l'Entrepôt");
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); WorldManager.worldIndex = 0;");
+    ok(V.onDawn(2, function () { return 0; }) === null, "village pas encore ouvert : aucun événement");
+    run("game.unlockedTabs.village = true;");
+    ok(V.onDawn(2, function () { return 0.6; }) === null, "une aube sur deux environ : pas cette fois");
+    var picks = [0, 0.3];
+    var rv = V.onDawn(g.WorldDays.day(), function () { return picks.length ? picks.shift() : 0; });
+    ok(rv && V.def() && V.daysLeft() === 2, "un événement arrive à l'aube, pour 2 jours (" + (rv && rv.id) + ")");
+    // Demande : forcer celle de Brannoc
+    run("game.explorationProgression.villageEvent = { id: 'd_brannoc_fer', from: 2, until: 4, w: 1, done: false };");
+    var n = V.needs();
+    ok(n.fer === 120 && !V.canDeliver(), "demande au Désert : 120 Fer (80 × 1,5), pas encore dans l'Entrepôt");
+    run("WarehouseManager.addResource('fer', 200, true);");
+    var gold0 = run("game.gold"), gold = V.rewardGold();
+    ok(gold === Math.floor(g.WAREHOUSE_RESOURCES.fer.sellPrice * 120 * g.TAVERN_REWARD_MULT * 1.5), "récompense : 1,5 fois un contrat de Taverne (" + gold + " or)");
+    ok(V.hasAction() && V.deliver() && run("game.gold") === gold0 + gold && run("WarehouseManager.getAmount('fer')") === 80 && !V.hasAction(), "« Livrer » : le fer part, l'or et les lingots arrivent, la pastille s'éteint");
+    ok(/vev-done/.test(g.buildVillageEventCardHTML()), "la carte affiche « Livré »");
+    // Fête
+    run("game.explorationProgression.villageEvent = { id: 'f_moissons', from: 2, until: 4, w: 0, done: false }; WarehouseManager.addResource('pain', 10, true); game.heroHp = 1;");
+    ok(V.canFete() && V.startFete() && run("game.heroHp") === run("game.heroMaxHp") && V.feteLeft() === 3, "la fête : 6 pains, tout le monde soigné, 3 sorties à +25 % d'or");
+    ok(V.feteGoldMult("scene") === 1.25 && V.feteGoldMult("farm") === 1 && V.feteLeft() === 2, "l'or de la sortie suivante ×1,25 ; le farm libre ne compte pas");
+    // Marché
+    g.VillageBuildingManager.getLevel = function (id) { return id === "hall" ? 2 : saveLvl.call(g.VillageBuildingManager, id); };
+    var it = { rarity: "rare", slot: "weapon" }, p0 = g.EquipShopManager.getPrice(it), sz0 = g.EquipShopManager.getShopSize();
+    run("game.explorationProgression.villageEvent = { id: 'm_sud', from: 2, until: 4, w: 0, done: false };");
+    ok(g.EquipShopManager.getPrice(it) === Math.floor(p0 * 0.8) || Math.abs(g.EquipShopManager.getPrice(it) - p0 * 0.8) <= 1, "marché : −20 % sur les prix de l'échoppe");
+    ok(g.EquipShopManager.getShopSize() === sz0 + 1 && g.EquipShopManager.getShopSize(2) === sz0, "marché : une pièce de plus (la fiche de la Halle n'en tient pas compte)");
+    // Rumeur et fin
+    run("game.explorationProgression.villageEvent = null;");
+    var r2 = V.onDawn(5, (function () { var q = [0, 0]; return function () { return q.length ? q.shift() : 0; }; })());
+    var hasRumor = r2 && V.def().type === "rumeur";
+    ok(hasRumor && r2.sector && V.rumorAt(r2.mapId, r2.sector) && /lm-ev-flag/.test(g.buildLivingMapHTML(r2.mapId)), "rumeur : un lieu de la carte vivante, marqué (" + (r2 && r2.sector) + ")");
+    ok(V.onDawn(7, function () { return 0.9; }) === null && !V.active() && V.state().lastType === "rumeur", "au bout de 2 jours, l'événement s'efface");
+    var save = run("JSON.stringify(buildSaveData().explorationProgression.villageEvent)");
+    ok(/lastType/.test(save), "l'événement part dans la sauvegarde existante (explorationProgression)");
+    var idx = fs.readFileSync(path.join(ROOT, "index.html"), "utf8"), sw = fs.readFileSync(path.join(ROOT, "sw.js"), "utf8");
+    ok(["js/data/village-events.js", "js/systems/village-event-system.js", "js/ui/village-event-view.js"].every(function (f) { return idx.indexOf(f) > 0 && sw.indexOf("./" + f) > 0; }), "trois fichiers nouveaux, chargés et précachés");
+  } catch (err) { ok(false, "[400] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  if (saveLvl) g.VillageBuildingManager.getLevel = saveLvl;
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

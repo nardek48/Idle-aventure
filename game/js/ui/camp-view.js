@@ -305,6 +305,7 @@ function worldNightShow() {
     + '<h3>' + esc(_t("Jour {n}", { n: night.day })) + '</h3>' + (w ? '<small class="wn-w">' + esc(_td(w.name)) + '</small>' : '')
     + '<p>' + esc(_t("La nuit tombe.")) + '</p>'
     + '<p class="wn-what' + (lost ? ' is-lost' : '') + '">' + esc(WorldDays.nightText(night)) + '</p>'
+    + (typeof villageEventMorningHTML === "function" ? villageEventMorningHTML(night) : '') // v3.604.0
     + '<button type="button" class="kbtn primary wn-ok" onclick="worldNightClose()">' + esc(_t("Au matin")) + '</button></div></div>';
   if (typeof saveGame === "function") saveGame();
 }
