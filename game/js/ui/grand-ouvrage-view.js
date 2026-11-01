@@ -41,6 +41,7 @@ function buildGrandOuvrageSheetHTML() {
   h += '<div class="go-go"><button type="button" class="kbtn primary"' + (sur.points > 0 ? ' onclick="pourGrandOuvrageSurplus()"' : ' disabled') + '><span>'
     + (sur.points > 0 ? _t("Verser le surplus") : _t("Rien en trop pour l'instant")) + '</span><small>'
     + (sur.points > 0 ? _t("+{n} points · garde la moitié du plafond et la réserve", { n: formatNumber(sur.points) }) : _t("Les matières brutes partent au-dessus de la moitié du plafond")) + '</small></button></div>';
+  h += buildGrandOuvrageAutoHTML();
   h += '<button type="button" class="go-more" onclick="toggleGrandOuvrageList()">' + (grandOuvrageListOpen ? _t("Replier la liste ‹") : _t("Choisir quoi verser ›")) + '</button>';
   if (grandOuvrageListOpen) h += buildGrandOuvrageListHTML();
   var next = (Math.floor(p.tier / GRAND_OUVRAGE.milestoneEvery) + 1) * GRAND_OUVRAGE.milestoneEvery;
@@ -50,6 +51,27 @@ function buildGrandOuvrageSheetHTML() {
   return h + '</div></div></div>';
 }
 window.buildGrandOuvrageSheetHTML = buildGrandOuvrageSheetHTML;
+
+/* v3.609.0 (chantier surproduction, option C) : le versement automatique, interrupteur et seuil réglable. */
+function buildGrandOuvrageAutoHTML() {
+  var on = GrandOuvrage.isAuto(), s = Math.round(GrandOuvrage.getSeuil() * 100);
+  var h = '<div class="go-auto"><div class="go-auto-h"><span><b>' + _t("Versement automatique") + '</b><small>'
+    + _t("Au-delà du seuil, chaque matière brute part ici dès qu'elle entre à l'Entrepôt. Rien n'est perdu ; la réserve protégée reste.") + '</small></span>'
+    + '<button type="button" class="kswitch' + (on ? ' is-on' : '') + '" role="switch" aria-checked="' + on + '" aria-label="' + esc(_t("Versement automatique")) + '" onclick="toggleGrandOuvrageAuto()"></button></div>';
+  if (on) h += '<div class="go-auto-s"><span>' + _t("Seuil : {p} % du plafond", { p: s }) + '</span><span class="go-step">'
+    + '<button type="button" onclick="stepGrandOuvrageSeuil(-1)"' + (s <= Math.round(GRAND_OUVRAGE.autoMin * 100) ? ' disabled' : '') + ' aria-label="' + _t("Moins") + '">−</button>'
+    + '<button type="button" onclick="stepGrandOuvrageSeuil(1)"' + (s >= Math.round(GRAND_OUVRAGE.autoMax * 100) ? ' disabled' : '') + ' aria-label="' + _t("Plus") + '">+</button></span></div>';
+  return h + '</div>';
+}
+function toggleGrandOuvrageAuto() { GrandOuvrage.setAuto(!GrandOuvrage.isAuto()); afterGrandOuvrageSetting(); }
+function stepGrandOuvrageSeuil(dir) { GrandOuvrage.stepSeuil(dir); afterGrandOuvrageSetting(); }
+function afterGrandOuvrageSetting() {
+  if (typeof saveGame === "function") saveGame();
+  rerenderGrandOuvrageSheet();
+  if (typeof renderPanel === "function") renderPanel();
+}
+window.toggleGrandOuvrageAuto = toggleGrandOuvrageAuto;
+window.stepGrandOuvrageSeuil = stepGrandOuvrageSeuil;
 
 /* « Choisir quoi verser » : toute ressource en stock, ce qu'elle vaut, une quantité choisie (pas de 10 %). */
 function buildGrandOuvrageListHTML() {

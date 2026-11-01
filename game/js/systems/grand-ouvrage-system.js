@@ -8,14 +8,21 @@
    « Verser le surplus » ne prend que les matières brutes, au-dessus de la moitié du plafond et de
    la réserve protégée (même règle que la caravane). Le reste se verse à la main.
 
-   ÉTAT : game.village.grandOuvrage = { points } (game.village est sauvegardé tel quel). */
+   v3.609.0 (chantier surproduction, option C) : versement AUTOMATIQUE des matières brutes au-delà d'un seuil
+   du plafond (70-95 %, 80 % par défaut), à chaque entrée dans l'Entrepôt ; paliers à +18 % ; ouvert au Désert.
+   ÉTAT : game.village.grandOuvrage = { points, v, auto, seuil } (game.village est sauvegardé tel quel). */
 
 var GRAND_OUVRAGE = {
   base: 2000,          // coût du premier palier, en points
-  growth: 1.12,        // chaque palier coûte 12 % de plus que le précédent
+  growth: 1.18,        // v3.609.0 : 12 → 18 % de plus par palier (le versement automatique accélère tout)
+  oldGrowth: 1.12,     // pour convertir les points des parties d'avant (même palier gardé)
   goldPerTier: 0.01,   // +1 % d'or par palier
   milestoneEvery: 5,   // un haut fait tous les 5 paliers
-  opensAtWorld: 2,     // les Ruines : là où le surplus commence (banc des débouchés)
+  opensAtWorld: 1,     // v3.609.0 : le Désert (il déborde déjà, banc des débouchés)
+  autoDefault: 0.8,    // seuil par défaut du versement automatique
+  autoMin: 0.7,        // aucun achat ne demande plus de 62 % du plafond d'une matière brute (banc 01/11)
+  autoMax: 0.95,
+  autoStep: 0.05,
   rareValue: 25,       // un matériau de monde (Sève, Verre des dunes, Pierre errante, Cire, Cendre)
   keepShare: 0.5       // « Verser le surplus » laisse la moitié du plafond
 };
@@ -32,7 +39,66 @@ var GrandOuvrage = {
     var s = game.village.grandOuvrage;
     if (!s || typeof s !== "object") s = game.village.grandOuvrage = { points: 0 };
     s.points = Math.max(0, Math.floor(Number(s.points) || 0));
+    if (s.v !== 2) { s.points = this._convertPoints(s.points); s.v = 2; } // v3.609.0 : même palier, nouvelle courbe
+    if (typeof s.auto !== "boolean") s.auto = true;
+    var t = Number(s.seuil);
+    s.seuil = isFinite(t) && t > 0 ? Math.min(GRAND_OUVRAGE.autoMax, Math.max(GRAND_OUVRAGE.autoMin, Math.round(t * 100) / 100)) : GRAND_OUVRAGE.autoDefault;
     return s;
+  },
+
+  /* Points de l'ancienne courbe (×1,12) -> points de la nouvelle donnant le même palier et la même avancée. */
+  _convertPoints: function (pts) {
+    if (!(pts > 0)) return 0;
+    var G = GRAND_OUVRAGE, n = 0, left = pts, cost = function (g, k) { return Math.round(G.base * Math.pow(g, k - 1)); };
+    while (left >= cost(G.oldGrowth, n + 1)) { left -= cost(G.oldGrowth, n + 1); n++; }
+    var out = 0; for (var k = 1; k <= n; k++) out += cost(G.growth, k);
+    return Math.floor(out + left / cost(G.oldGrowth, n + 1) * cost(G.growth, n + 1));
+  },
+
+  /* ---------- v3.609.0 : versement automatique ---------- */
+  isAuto: function () { return this.isOpen() && this._state().auto; },
+  getSeuil: function () { return this._state().seuil; },
+  setAuto: function (on) { this._state().auto = !!on; if (on) this.autoPourAll(); },
+  stepSeuil: function (dir) { var s = this._state(); s.seuil = Math.min(GRAND_OUVRAGE.autoMax, Math.max(GRAND_OUVRAGE.autoMin, Math.round((s.seuil + dir * GRAND_OUVRAGE.autoStep) * 100) / 100)); this.autoPourAll(); return s.seuil; },
+
+  /* Ce que le seuil garde d'une matière brute (Infinity si le versement auto ne la concerne pas). */
+  autoKeep: function (key) {
+    var d = (window.WAREHOUSE_RESOURCES || {})[key];
+    if (!d || (d.tier || "raw") !== "raw" || !this.isAuto() || !window.WarehouseManager) return Infinity;
+    var cap = WarehouseManager.getCap(key);
+    if (!(cap > 0) || cap === Infinity) return Infinity;
+    var reserve = (window.ResourceReserveManager && typeof ResourceReserveManager.getReserve === "function") ? Number(ResourceReserveManager.getReserve(key) || 0) : 0;
+    return Math.max(Math.floor(cap * this.getSeuil()), reserve);
+  },
+
+  /* Appelé par WarehouseManager.addResource : `total` = stock + arrivée ; rend ce qui reste au stock.
+     Le reste part en points, sans journal (seul un palier franchi s'annonce). */
+  autoAbsorb: function (key, total) {
+    var keep = this.autoKeep(key);
+    if (keep === Infinity || total <= keep) return total;
+    this._gain(Math.floor(total - keep) * this.getValue(key));
+    return keep;
+  },
+
+  /* Remet chaque matière brute sous le seuil (activation, seuil baissé). */
+  autoPourAll: function () {
+    var self = this;
+    Object.keys(window.WAREHOUSE_RESOURCES || {}).forEach(function (k) {
+      var keep = self.autoKeep(k), have = Number(game.resources[k] || 0);
+      if (keep !== Infinity && have > keep) game.resources[k] = self.autoAbsorb(k, have);
+    });
+  },
+
+  _gain: function (pts) {
+    if (!(pts > 0)) return;
+    var before = this.getTier();
+    this._state().points += pts;
+    var tier = this.getTier();
+    if (tier > before) {
+      if (typeof addLog === "function") addLog("🏛 " + _t("Grand Ouvrage : palier {t} atteint, +{p} % d'or", { t: tier, p: Math.round(tier * GRAND_OUVRAGE.goldPerTier * 100) }), "event");
+      if (window.EquipmentManager && typeof EquipmentManager.recalcStats === "function") EquipmentManager.recalcStats();
+      if (window.AchievementManager && typeof AchievementManager.refresh === "function") AchievementManager.refresh();
+    }
   },
 
   getPoints: function () { return this._state().points; },

@@ -8065,6 +8065,12 @@ I18n.register("en", {
   "Recevoir": "Receive",
   "La Palissade freine {p} % d'échecs de plus sur les cartes vivantes, le temps du compte.": "The Palisade stops {p}% more failures on the living maps, while the count holds.",
   "Et ce matin ?": "And this morning?",
+  // v3.609.0 : le Grand Ouvrage automatique
+  "Le Grand Ouvrage ouvre dès le Désert et se remplit tout seul : au-delà de 80 % du plafond (réglable), les matières brutes y partent au lieu d'être perdues.": "The Great Work opens from the Desert and fills itself: above 80% of the cap (adjustable), raw materials go there instead of being lost.",
+  "Grand Ouvrage : palier {t} atteint, +{p} % d'or": "Great Work: tier {t} reached, +{p}% gold",
+  "Versement automatique": "Automatic deposit",
+  "Au-delà du seuil, chaque matière brute part ici dès qu'elle entre à l'Entrepôt. Rien n'est perdu ; la réserve protégée reste.": "Above the threshold, each raw material goes here as soon as it enters the Warehouse. Nothing is lost; the protected reserve stays.",
+  "Seuil : {p} % du plafond": "Threshold: {p}% of the cap",
   // v3.608.0 : la recette de la Grande ration
   "La Grande ration ne demande plus de Sève d'Aeswyn : 1 Ration, 15 Viandes et 10 Eau à la Cuisine de camp.": "The Large ration no longer needs Aeswyn Sap: 1 Ration, 15 Meat and 10 Water at the Camp Kitchen.",
   "Les événements du village ont des suites : livre une demande ou joue une rumeur, et le lendemain le village te le rend. Et au feu, demande à un compagnon « Et ce matin ? ».": "Village events now have follow-ups: deliver a request or play a rumour, and the next day the village pays you back. And at the fire, ask a companion “And this morning?”.",

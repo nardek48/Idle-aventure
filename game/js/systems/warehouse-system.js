@@ -98,6 +98,7 @@ var WarehouseManager = {
   getFreeSpace: function (key) {
     var cap = this.getCap(key);
     if (cap === Infinity) return Infinity;
+    if (window.GrandOuvrage && typeof GrandOuvrage.autoKeep === "function" && GrandOuvrage.autoKeep(key) !== Infinity) return Infinity; // v3.609.0 : le surplus part au Grand Ouvrage
     return Math.max(0, Math.floor(cap - Number((game.resources || {})[key] || 0)));
   },
 
@@ -117,6 +118,13 @@ var WarehouseManager = {
     var current = Number(game.resources[key] || 0);
     var cap = this.getCap(key);
     var applied = Math.max(0, Math.min(amount, cap - current));
+    // v3.609.0 : versement automatique au Grand Ouvrage — au-delà du seuil, rien n'est perdu, tout devient des points
+    var kept = (window.GrandOuvrage && typeof GrandOuvrage.autoAbsorb === "function") ? GrandOuvrage.autoAbsorb(key, current + amount) : current + amount;
+    if (kept < current + amount) {
+      game.resources[key] = kept;
+      if (!silent) addLog(_t("{x} +{n} (Entrepôt)", { x: _td(def.name), n: formatNumber(amount) }), "event");
+      return amount;
+    }
     // v3.330.1 (E1) : ce qui ne rentre pas est perdu — on le dit au journal (chasses, sorties, récompenses)
     if (applied < amount && typeof addLog === "function") {
       addLog("📦 " + _t("Entrepôt plein : {n} {x} perdu(s)", { n: formatNumber(amount - applied), x: _td(def.name) }), "event");
