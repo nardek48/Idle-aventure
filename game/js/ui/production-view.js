@@ -172,7 +172,7 @@ function buildProductionDashCardHTML(id) {
     + '<span class="kgauge-text" id="prod-stock-label-' + id + '">' + formatNumber(Math.floor(stock)) + ' / ' + formatNumber(capacity) + '</span></span>';
   h += '<span class="prod-tile-meta' + (storeFull ? ' is-store-full' : '') + '">' + renderIconOrEmojiHTML(resDef.icon, "ico-inline", _td(resDef.name))
     + formatNumber(Math.floor(WarehouseManager.getAmount(resKey))) + (cap !== Infinity ? ' / ' + formatNumber(cap) : '')
-    + ' · ' + _t("{a}/{b} zones", { a: openCount, b: PRODUCTION_PLOTS_SHARED.totalPlots }) + '</span>';
+    + ' · ' + _t("{a}/{b} zones", { a: openCount, b: PRODUCTION_PLOTS_SHARED.parcels }) + '</span>';
   h += '</button>';
   return h;
 }
@@ -209,72 +209,48 @@ function buildProductionCostRowHTML(cost, afford) {
   return h;
 }
 
-/* v3.417.0 (atelier zones Z2, choix Seb) : la grille 3×3 reste, sans sélection. Toucher une zone
-   ouvre une FENÊTRE centrée avec ses actions ; v3.479.0 : sous la grille, une barre par rangée.
-   La prochaine zone à défricher est signalée sur la grille. */
-function getNextUnlockablePlot(buildingId) {
-  var plots = ProductionPlotsSystem.getPlots(buildingId);
-  for (var i = 0; i < plots.length; i++) {
-    if (plots[i].state === "locked" && ProductionPlotsSystem.isPlotRowOpen(i)) return i;
-  }
-  return null;
-}
-
+/* v3.612.0 (atelier parcelles, disposition B) : 3 lignes, une par parcelle (rapide, moyenne, lente) — nom, profil,
+   niveau, débit et améliorations ; le bouton du prochain achat à droite ; la réserve en jauge. Toucher la ligne
+   ouvre la fenêtre de la parcelle. */
 function buildPlotsPanelHTML(buildingId) {
-  var plots = ProductionPlotsSystem.getPlots(buildingId);
-  var nextIndex = getNextUnlockablePlot(buildingId);
-  var h = '<div class="farm-plots-panel">';
-  h += '<div class="farm-plots-grid">';
-  plots.forEach(function (plot, index) {
-    h += buildPlotCardHTML(buildingId, plot, index, nextIndex);
-  });
-  h += '</div>';
-  h += '</div>';
-  return h;
-}
-
-/* Mini-carte de zone : niveau, nom, profil, jauge, icônes d'amélioration (état seul).
-   Toute la carte ouvre la fenêtre de la zone (v3.417.0). Les zones d'un monde pas encore
-   atteint disent quel monde les ouvre et ne s'ouvrent pas. */
-function buildPlotCardHTML(buildingId, plot, index, nextIndex) {
-  var buildingCfg = PRODUCTION_PLOTS_BUILDINGS[buildingId];
-  var zoneName = getProductionZoneName(buildingId, index);
-  var classNames = "farm-plot-card";
-  var open = ' onclick="openZoneWindow(\'' + buildingId + '\', ' + index + ')"';
-
-  if (plot.state === "locked") {
-    var rowOpen = ProductionPlotsSystem.isPlotRowOpen(index);
-    classNames += " is-locked" + (index === nextIndex ? " is-next" : "");
-    var h0 = '<button type="button" class="' + classNames + '"' + (rowOpen ? open : ' disabled') + '>';
-    h0 += '<span class="farm-plot-card-lock-icon"><img class=ico-inline src=images/Icons/system/lock_closed.webp></span>';
-    h0 += '<span class="farm-plot-card-name">' + esc(zoneName) + '</span>';
-    // v3.289.0 : une ligne par monde — la zone dit quel monde l'ouvre
-    if (!rowOpen) h0 += '<span class="farm-plot-card-profile">' + esc(_td((WORLDS[WorldCaps.getRowOpeningIndex(Math.floor(index / 3))] || {}).name || '')) + '</span>'; // v3.437.2 : le monde qui ouvre la rangée
-    else if (index === nextIndex) h0 += '<span class="farm-plot-card-profile">' + _t("Défricher") + '</span>';
-    h0 += '</button>';
-    return h0;
+  var PPS = ProductionPlotsSystem, plots = PPS.getPlots(buildingId), cap = PPS.getPlotLevelCap(), cfg = PRODUCTION_PLOTS_BUILDINGS[buildingId];
+  var h = '<div class="pc3-list">';
+  for (var i = 0; i < 3; i++) {
+    var plot = plots[i], open = plot.state === "open", profile = PPS.getProfile(i);
+    var meta = esc(_td(profile.label));
+    if (open) meta += ' · ' + esc(_t("niv. {a} / {b}", { a: plot.level, b: cap })) + ' · +' + esc(formatRatePerMin(PPS.getPlotRatePerMin(i, plot, buildingId))) + '/min';
+    else meta += ' · ' + esc(_t("à défricher"));
+    h += '<div class="pc3' + (open ? '' : ' is-locked') + '">';
+    h += '<button type="button" class="pc3-main" onclick="openZoneWindow(\'' + buildingId + '\', ' + i + ')"><b>' + esc(getProductionZoneName(buildingId, i)) + '</b><span class="pc3-meta">' + meta + '</span>';
+    if (open) h += '<span class="pc3-imps">' + buildPlotImprovementIconHTML(cfg, plot, "fertile") + buildPlotImprovementIconHTML(cfg, plot, "irrigated") + '</span>';
+    h += '</button>' + buildParcelActionHTML(buildingId, i);
+    if (open) {
+      var c = PPS.getPlotCapacity(i, plot), pct = c > 0 ? Math.min(100, plot.stock / c * 100) : 0;
+      h += '<span class="pc3-bar kgauge kgauge-thin kgauge-xp"><span class="kgauge-track"><span class="kgauge-fill nb-entry-progress-fill" id="prod-plot-bar-' + buildingId + '-' + i + '" style="width:' + pct + '%"></span></span></span>';
+    }
+    h += '</div>';
   }
-
-  classNames += " is-open";
-  var profile = ProductionPlotsSystem.getProfile(index);
-  var capacity = ProductionPlotsSystem.getPlotCapacity(index, plot);
-  var pct = capacity > 0 ? Math.min(100, (plot.stock / capacity) * 100) : 0;
-
-  var h = '<button type="button" class="' + classNames + '"' + open + '>';
-  h += '<span class="farm-plot-card-level-badge">' + _t("Niv. {n}", { n: plot.level }) + '</span>';
-  h += '<span class="farm-plot-card-name">' + esc(zoneName) + '</span>';
-  h += '<span class="farm-plot-card-profile">' + esc(_td(profile.label)) + '</span>';
-  h += '<span class="farm-plot-card-bar kgauge kgauge-thin kgauge-xp">';
-  h += '<span class="kgauge-track"><span class="kgauge-fill nb-entry-progress-fill" id="prod-plot-bar-' + buildingId + '-' + index + '" style="width:' + pct + '%"></span></span>';
-  h += '</span>';
-  h += '<span class="farm-plot-card-stock-label" id="prod-plot-stock-' + buildingId + '-' + index + '">' + formatNumber(Math.floor(plot.stock)) + '/' + formatNumber(capacity) + '</span>';
-  h += '<span class="farm-plot-card-improvements">';
-  h += buildPlotImprovementIconHTML(buildingCfg, plot, "fertile");
-  h += buildPlotImprovementIconHTML(buildingCfg, plot, "irrigated");
-  h += '</span>';
-  h += '</button>';
-  return h;
+  return h + '</div>';
 }
+
+/* Bouton du prochain achat d'une parcelle (défricher, niveau suivant, amélioration), ou « Au maximum ». */
+function buildParcelActionHTML(buildingId, i) {
+  var a = ProductionPlotsSystem.getNextAction(buildingId, i), cfg = PRODUCTION_PLOTS_BUILDINGS[buildingId];
+  if (!a) return '<span class="pc3-max">' + esc(_t("Au maximum")) + '</span>';
+  var plot = ProductionPlotsSystem.getPlots(buildingId)[i];
+  var label = a.kind === "unlock" ? _t("Défricher") : a.kind === "upgrade" ? _t("Niv. {n}", { n: plot.level + 1 }) : _td(cfg.improvementCost[a.kind].label);
+  var afford = {}, all = true;
+  Object.keys(a.cost || {}).forEach(function (k) { afford[k] = WarehouseManager.getAmount(k) >= a.cost[k]; if (!afford[k]) all = false; });
+  return '<button type="button" class="kbtn primary pc3-act"' + (all ? '' : ' disabled') + ' onclick="productionParcelAction(\'' + buildingId + '\', ' + i + ')"><span>' + esc(label) + '</span>'
+    + buildProductionCostRowHTML(a.cost, afford) + '</button>';
+}
+function productionParcelAction(buildingId, i) {
+  var PPS = ProductionPlotsSystem, a = PPS.getNextAction(buildingId, i);
+  if (!a) return;
+  var res = a.kind === "unlock" ? PPS.unlockPlot(buildingId, i) : a.kind === "upgrade" ? PPS.upgradePlot(buildingId, i) : PPS.toggleImprovement(buildingId, i, a.kind);
+  if (res && !res.ok && res.reason) showToast(res.reason, 1400);
+}
+window.productionParcelAction = productionParcelAction;
 
 /* Icône d'amélioration : état visuel seul (grisée/colorée), pas tapable directement —
    l'action se fait via la zone commune sous la grille, une fois la zone sélectionnée.
@@ -423,44 +399,21 @@ window.productionPlotToggleImprovement = productionPlotToggleImprovement;
    nom, stock + récolte locale) et les ACTIONS GROUPÉES.
    ============================================================ */
 
-/* v3.479.0 (refonte de l'économie RE-2, atelier zones-par-rangee.html) : sous la grille, une barre par
-   rangée ouverte — Défricher, monter d'un niveau, Améliorer — à la place de « La moins chère ». */
-function buildZoneRowButtonHTML(buildingId, row, kind, label, cost, primary) {
-  var afford = {}, all = true;
-  Object.keys(cost).forEach(function (key) { afford[key] = WarehouseManager.getAmount(key) >= cost[key]; if (!afford[key]) all = false; });
-  return '<button type="button" class="kbtn' + (primary ? ' primary' : '') + ' prod-row-btn"' + (all ? '' : ' disabled')
-    + ' onclick="productionRowAction(\'' + buildingId + '\', ' + row + ', \'' + kind + '\')"><span class="prod-row-lbl">' + label + '</span>'
-    + buildProductionCostRowHTML(cost, afford) + '</button>';
-}
-
+/* v3.612.0 : sous les parcelles, l'achat automatique (dès le Désert) remplace les barres par rangée. */
 function buildZoneGroupActionsHTML(buildingId) {
-  var PPS = ProductionPlotsSystem, rows = Math.min(3, WorldCaps.getZoneRows()), cap = PPS.getPlotLevelCap();
-  var h = '<div class="prod-rows">';
-  for (var r = 0; r < rows; r++) {
-    var st = PPS.getRowState(buildingId, r), acts = '';
-    var world = (WORLDS[WorldCaps.getRowOpeningIndex(r)] || {}).name || "";
-    if (st.locked.length) acts += buildZoneRowButtonHTML(buildingId, r, "unlock", _t("Défricher") + (st.locked.length > 1 ? ' ×' + st.locked.length : ''), st.unlockCost, true);
-    if (st.upNow.length) acts += buildZoneRowButtonHTML(buildingId, r, "upgrade", "↑ " + _t("Niv. {n}", { n: st.minLevel + 1 }) + (st.upNow.length > 1 ? ' ×' + st.upNow.length : ''), st.upCost, !st.locked.length);
-    if (st.impN) acts += buildZoneRowButtonHTML(buildingId, r, "improve", _t("Améliorer") + ' ×' + st.impN, st.impCost, false);
-    var lv = !st.open.length ? _t("à défricher") : (st.lvMin === st.lvMax ? _t("niv. {n}", { n: st.lvMin }) : _t("niv. {a} à {b}", { a: st.lvMin, b: st.lvMax })) + ' / ' + cap;
-    h += '<div class="prod-row' + (acts ? '' : ' is-done') + '"><div class="prod-row-head"><b>' + _t("Rangée {n}", { n: r + 1 }) + '</b><span>'
-      + esc(_td(world)) + ' · ' + lv + (acts ? '' : ' · ' + _t("au maximum")) + '</span></div>';
-    if (acts) h += '<div class="prod-row-acts">' + acts + '</div>';
-    // v3.520.0 (audit RES-9) : un bouton jamais payable dit pourquoi (le coût dépasse le plafond de l'Entrepôt)
-    var trop = (st.locked.length && PPS.overCapReason(st.unlockCost, "unlock")) || (st.upNow.length && PPS.overCapReason(st.upCost, "upgrade"));
-    if (trop) h += '<p class="production-group-hint prod-row-overcap">' + esc(trop) + '</p>';
-    h += '</div>';
-  }
-  h += '<p class="production-group-hint">' + _t("Touche une zone pour la régler à part.") + '</p>';
-  return h + '</div>';
+  var PPS = ProductionPlotsSystem, avail = PPS.isAutoAvailable(), on = PPS.isAuto();
+  return '<div class="pc3-auto"><span><b>' + esc(_t("Achat automatique")) + '</b><small>'
+    + esc(avail ? _t("Monte la parcelle la moins chère avec ce qui dépasse la moitié du plafond. Le village garde le reste.") : _t("S'ouvre au Désert. En Forêt, on apprend à la main."))
+    + '</small></span><button type="button" class="kswitch' + (on ? ' is-on' : '') + '" role="switch" aria-checked="' + on + '" aria-label="' + esc(_t("Achat automatique")) + '"'
+    + (avail ? ' onclick="toggleParcelAuto()"' : ' disabled') + '></button></div>';
 }
-
-function productionRowAction(buildingId, row, kind) {
-  var PPS = ProductionPlotsSystem;
-  var res = kind === "unlock" ? PPS.unlockRow(buildingId, row) : kind === "upgrade" ? PPS.upgradeRow(buildingId, row) : PPS.improveRow(buildingId, row);
-  showToast(res.ok ? res.text : res.reason, 1400);
+function toggleParcelAuto() {
+  ProductionPlotsSystem.setAuto(!ProductionPlotsSystem.isAuto());
+  if (typeof saveGame === "function") saveGame();
+  if (typeof renderPanel === "function") renderPanel();
+  if (typeof renderProductionSheet === "function") renderProductionSheet(true);
 }
-window.productionRowAction = productionRowAction;
+window.toggleParcelAuto = toggleParcelAuto;
 
 
 /* v3.414.0 (VUI-1) : FEUILLE d'un bâtiment de production — en-tête de pierre (illustration,
@@ -487,13 +440,13 @@ function buildProductionSheetHTML(buildingId) {
   // v3.567.0 (option D) : fiche ancrée du grand écran — grande illustration et chiffres clés, comme la maquette
   if (docked) {
     h += '<div class="pw-hero">' + renderIconOrEmojiHTML(def.buildingImage || resDef.icon, "pw-hero-img", _td(def.name)) + '<h3>' + esc(_td(def.name)) + '</h3>'
-      + '<small>' + esc(_t("Bâtiment de production · {a}/{b} zones", { a: openCount, b: PRODUCTION_PLOTS_SHARED.totalPlots })) + '</small></div>'
+      + '<small>' + esc(_t("Bâtiment de production · {a}/{b} zones", { a: openCount, b: PRODUCTION_PLOTS_SHARED.parcels })) + '</small></div>'
       + '<dl class="pw-kv"><dt>' + esc(_t("Réserve")) + '</dt><dd>' + formatNumber(Math.floor(WarehouseManager.getAmount(resKey))) + (cap !== Infinity ? ' / ' + formatNumber(cap) : '') + ' ' + esc(_td(resDef.name || "")) + '</dd>'
       + '<dt>' + esc(_t("Débit")) + '</dt><dd>' + esc(formatRatePerMin(ProductionManager.getRatePerMin(buildingId))) + ' ' + esc(_td(resDef.name || "")) + '/min</dd></dl>';
   } else h += kSheetHeadHTML({
     icon: renderIconOrEmojiHTML(def.buildingImage || resDef.icon, "vb-sheet-icon prod-sheet-icon", _td(def.name)),
     title: esc(_td(def.name)),
-    sub: esc(_t("+{n}/min · {a}/{b} zones", { n: formatNumber(ProductionManager.getRatePerMin(buildingId)), a: openCount, b: PRODUCTION_PLOTS_SHARED.totalPlots })),
+    sub: esc(_t("+{n}/min · {a}/{b} zones", { n: formatNumber(ProductionManager.getRatePerMin(buildingId)), a: openCount, b: PRODUCTION_PLOTS_SHARED.parcels })),
     close: docked ? "" : "closeProductionBuildingDetail()"
   });
   h += '<div class="ksheet-body">';
@@ -518,7 +471,7 @@ function buildProductionSheetHTML(buildingId) {
   var label = PRODUCTION_PLOTS_BUILDINGS[buildingId] ? _td(PRODUCTION_PLOTS_BUILDINGS[buildingId].sectionLabel).replace(/^[^A-Za-zÀ-ÿ]+/, "") : _t("Zones");
   h += '<div class="kseg is-stack prod-sheet-tabs">';
   if (shops.length) h += '<button type="button" class="' + (tab === "shops" ? 'is-on' : '') + '" onclick="setProductionSheetTab(\'shops\')"><img src="images/Icons/subtabs/workshops.webp" alt=""><span>' + esc(_t("Ateliers · {n}", { n: shops.length })) + '</span></button>';
-  h += '<button type="button" class="' + (tab === "zones" ? 'is-on' : '') + '" onclick="setProductionSheetTab(\'zones\')"><img src="images/Icons/subtabs/production.webp" alt=""><span>' + esc(label) + ' · ' + openCount + '/' + PRODUCTION_PLOTS_SHARED.totalPlots + '</span></button>';
+  h += '<button type="button" class="' + (tab === "zones" ? 'is-on' : '') + '" onclick="setProductionSheetTab(\'zones\')"><img src="images/Icons/subtabs/production.webp" alt=""><span>' + esc(label) + ' · ' + openCount + '/' + PRODUCTION_PLOTS_SHARED.parcels + '</span></button>';
   h += '</div>';
 
   if (tab === "shops") {

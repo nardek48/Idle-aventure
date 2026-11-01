@@ -224,6 +224,9 @@ var ProductionManager = {
       ProductionPlotsSystem.tick(id, dt);
       changed = true;
     });
+    // v3.612.0 : l'achat automatique des parcelles passe toutes les 15 s (et après chaque récolte)
+    this._autoAcc = (this._autoAcc || 0) + dt;
+    if (this._autoAcc >= 15) { this._autoAcc = 0; if (ProductionPlotsSystem.autoUpgrade()) changed = true; }
 
     // v3.98.0 : ateliers de craft locaux (voir WorkshopsSystem) — un atelier ne tourne
     // que si son bâtiment parent est débloqué (ex. Cuisine de camp ne tick pas tant que la Chasse
@@ -461,6 +464,7 @@ var ProductionManager = {
     } else {
       showToast(_t("Tout récolté"), 1300);
     }
+    ProductionPlotsSystem.autoUpgrade(); // v3.612.0
     if (typeof renderPanel === "function") renderPanel();
     saveGame();
   },
@@ -536,6 +540,7 @@ var ProductionManager = {
     addLog("🌾 " + _t("{x} récoltée : +{n} {r}", { x: _td(def.name), n: formatNumber(amount), r: resDef ? _td(resDef.name) : def.resourceKey }), "event");
     showToast("+" + formatNumber(amount) + " " + (resDef ? _td(resDef.name) : ""), 1300);
 
+    ProductionPlotsSystem.autoUpgrade(); // v3.612.0
     if (typeof renderPanel === "function") renderPanel();
     saveGame();
   },

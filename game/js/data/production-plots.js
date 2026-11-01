@@ -22,16 +22,25 @@
 /* Profils et bonus d'amélioration : communs aux 6 bâtiments, valeurs identiques à Champs
    (décision validée avec Seb — même mécanique, mêmes formules, mêmes montants). */
 var PRODUCTION_PLOTS_SHARED = {
-  totalPlots: 9,
+  totalPlots: 9,     // stockage (9 entrées gardées) ; seules les 3 premières servent depuis v3.612.0
+  parcels: 3,
   plotMaxLevel: 20, // relevé 2 (Seb, 27/10) : 5 → 20, plafond par monde dans world-caps.js (5/8/11/14/17, Tour 20)
   /* Relevé 2 : débit et réserve LINÉAIRES, +70 % du niveau 1 par niveau (la réserve suit : même temps de
      remplissage). rateGrowthPerLevel (×1,78) ne sert plus qu'à convertir les anciennes zones (modèle 1). */
   linearPerLevel: 0.7,
-  model: 2,
+  model: 3, // v3.612.0 : 3 parcelles (2 = relevé 2, linéaire ; 1 = ×1,78 par niveau)
   profilePattern: ["rapide", "equilibree", "lente", "rapide", "equilibree", "lente", "rapide", "equilibree", "lente"],
   /* v3.98.12 : multiplicateur de coût d'amélioration par LIGNE de la grille 3×3
      (Math.floor(plotIndex / 3) -> 0, 1 ou 2), voir getProductionPlotUpgradeCost. */
   rowUpgradeCostMult: [1.0, 1.8, 3.2],
+  /* v3.612.0 (chantier zones, idée de Seb) : 3 PARCELLES (rapide, moyenne, lente) qui montent à chaque monde.
+     Débit d'une parcelle par niveau, par ancres [niveau, ×] : +70 % jusqu'au 5 (inchangé), puis calé pour que
+     les 3 parcelles égalent les zones d'avant au plafond de chaque monde (banc parcelles-bench.js). */
+  p3Anchors: [[1, 1], [5, 3.8], [10, 11.8], [12, 16], [15, 30.3], [17, 36.6], [20, 46]],
+  p3Caps: [5, 10, 12, 15, 17],            // plafond des parcelles par monde (world-caps.js)
+  legacyCaps: [5, 8, 11, 14, 17],         // l'ancienne grille : niveaux et rangées par monde, enveloppe des coûts
+  legacyRows: [1, 2, 2, 3, 3],
+  p3CostGrowth: 1.25,                     // dans un monde, chaque niveau coûte 25 % de plus que le précédent (même total)
   profiles: {
     rapide: {
       label: "Zone rapide",
@@ -176,6 +185,14 @@ function getProductionPlotUnlockCost(buildingId, plotIndex) {
 function getProductionPlotUpgradeCost(buildingId, level, plotIndex) {
   var cfg = PRODUCTION_PLOTS_BUILDINGS[buildingId];
   if (!cfg) return null;
+  if (level >= PRODUCTION_PLOTS_SHARED.p3Caps[0]) return getP3UpgradeCost(buildingId, level); // v3.612.0 : au-delà de la Forêt
+  return getLegacyPlotUpgradeCost(buildingId, level, plotIndex);
+}
+
+/* Coût de l'ancienne grille (rangée × niveau) : la Forêt le garde, et il sert d'enveloppe aux mondes suivants. */
+function getLegacyPlotUpgradeCost(buildingId, level, plotIndex) {
+  var cfg = PRODUCTION_PLOTS_BUILDINGS[buildingId];
+  if (!cfg) return null;
   var row = Math.floor(Number(plotIndex || 0) / 3);
   var rowMult = PRODUCTION_PLOTS_SHARED.rowUpgradeCostMult[row] || 1;
   var mult = Math.pow(PRODUCTION_PLOTS_SHARED.upgradeCostMultPerLevel, level - 1) * rowMult;
@@ -184,6 +201,36 @@ function getProductionPlotUpgradeCost(buildingId, level, plotIndex) {
     result[key] = Math.floor(cfg.upgradeCost.base[key] * mult);
   });
   return result;
+}
+
+/* v3.612.0 : coût d'un niveau de parcelle au-delà de la Forêt. Pour chaque monde, l'enveloppe = ce que coûtaient
+   ses zones dans l'ancienne grille (ouvertures + niveaux), partagée entre les 3 parcelles, puis répartie sur
+   les niveaux du monde en courbe croissante (×p3CostGrowth). Calcul fait une fois par bâtiment. */
+var _p3CostCache = {};
+function getP3UpgradeCost(buildingId, level) {
+  var S = PRODUCTION_PLOTS_SHARED, caps = S.p3Caps, table = _p3CostCache[buildingId];
+  if (!table) {
+    table = _p3CostCache[buildingId] = {};
+    for (var w = 1; w < caps.length; w++) {
+      var band = {}, add = function (c) { Object.keys(c || {}).forEach(function (k) { band[k] = (band[k] || 0) + c[k]; }); };
+      for (var i = 0; i < S.legacyRows[w] * 3; i++) {
+        var isNew = Math.floor(i / 3) >= S.legacyRows[w - 1];
+        if (isNew && i > 0) add(getProductionPlotUnlockCost(buildingId, i));
+        for (var l = isNew ? 1 : S.legacyCaps[w - 1]; l < S.legacyCaps[w]; l++) add(getLegacyPlotUpgradeCost(buildingId, l, i));
+      }
+      var lo = caps[w - 1], n = caps[w] - lo, sumW = 0;
+      for (var k = 0; k < n; k++) sumW += Math.pow(S.p3CostGrowth, k);
+      for (k = 0; k < n; k++) {
+        var c = {}, share = Math.pow(S.p3CostGrowth, k) / sumW / 3;
+        Object.keys(band).forEach(function (r) { c[r] = Math.max(1, Math.round(band[r] * share)); });
+        table[lo + k] = c;
+      }
+    }
+  }
+  if (table[level]) return Object.assign({}, table[level]);
+  var last = caps[caps.length - 1] - 1, base = table[last], out = {}; // au-delà de la Montagne (la Tour) : la courbe continue
+  Object.keys(base || {}).forEach(function (r) { out[r] = Math.round(base[r] * Math.pow(S.p3CostGrowth, level - last)); });
+  return out;
 }
 
 /* Nom de la zone d'index `plotIndex` (0-based) du bâtiment `buildingId` — v3.98.19,
@@ -198,6 +245,8 @@ function getProductionZoneName(buildingId, plotIndex) {
 }
 
 window.PRODUCTION_PLOTS_SHARED = PRODUCTION_PLOTS_SHARED;
+window.getP3UpgradeCost = getP3UpgradeCost;
+window.getLegacyPlotUpgradeCost = getLegacyPlotUpgradeCost;
 window.PRODUCTION_PLOTS_BUILDINGS = PRODUCTION_PLOTS_BUILDINGS;
 window.getProductionPlotUnlockCost = getProductionPlotUnlockCost;
 window.getProductionPlotUpgradeCost = getProductionPlotUpgradeCost;
