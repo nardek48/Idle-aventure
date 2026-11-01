@@ -2483,15 +2483,15 @@ console.log("\n[UX-PROD] Tableau de bord Production v3.191.0 — routeur, vue At
   // 3. v3.414.0 (VUI-1) : le détail est une FEUILLE (ateliers + zones), plus une sous-page
   run("productionDetailBuildingId = 'farm'; productionSheetTab = 'zones';");
   var detailHtml = run("buildProductionSheetHTML('farm')");
-  ok(detailHtml.indexOf("prod-sheet") !== -1 && detailHtml.indexOf("farm-plots-grid") !== -1, "feuille, onglet Zones = grille de zones");
-  ok(detailHtml.indexOf("prod-rows") !== -1 && detailHtml.indexOf("Rangée 1") !== -1 && detailHtml.indexOf("Défricher une zone") === -1, "sous la grille : une barre par rangée ouverte (v3.479.0)");
+  ok(detailHtml.indexOf("prod-sheet") !== -1 && detailHtml.indexOf("pc3-list") !== -1, "feuille, onglet Zones = les 3 parcelles (v3.612.0)");
+  ok(detailHtml.indexOf("pc3-auto") !== -1 && detailHtml.indexOf("Rangée 1") === -1, "sous les parcelles : l'achat automatique, plus de barres par rangée (v3.612.0)");
   ok(detailHtml.indexOf("wk-tile") === -1, "onglet Zones : aucun atelier");
   ok(detailHtml.indexOf("closeProductionBuildingDetail()") !== -1, "la feuille se ferme par sa croix");
   // v3.417.0 (atelier zones Z2) : plus de sélection — toucher une zone ouvre sa fenêtre ; le bouton du bas ne bouge plus
   ok(detailHtml.indexOf("openZoneWindow('farm', 0)") !== -1 && detailHtml.indexOf("selectProductionPlot") === -1, "toucher une zone ouvre sa fenêtre (plus de sélection)");
   run("productionZoneWin = { b: 'farm', i: 0 };");
   var detailSel = run("buildProductionSheetHTML('farm')");
-  ok(detailSel.indexOf("zone-win") !== -1 && detailSel.indexOf("prod-rows") !== -1, "fenêtre ouverte par-dessus, les barres de rangée restent en place");
+  ok(detailSel.indexOf("zone-win") !== -1 && detailSel.indexOf("pc3-list") !== -1, "fenêtre ouverte par-dessus, les parcelles restent en place");
   run("productionZoneWin = null;");
   run("productionSheetTab = 'shops';");
   var sheetShops = run("buildProductionSheetHTML('farm')");
@@ -8067,7 +8067,7 @@ console.log("\n[86] v3.289.0 — Plafonds par monde du village et de la producti
   ok(P.isPlotRowOpen(2) && !P.isPlotRowOpen(3), "Forêt : zones 1 à 3 ouvrables, la 4e non");
   run("WarehouseManager.addResource('fer', 5000, true); WarehouseManager.addResource('pierre', 5000, true); WarehouseManager.addResource('eau', 5000, true);");
   var refus = P.unlockPlot("sawmill", 3);
-  ok(refus.ok === false && refus.reason === "S'ouvre au Désert oublié", "défricher une zone du Désert est refusé, avec le monde nommé");
+  ok(refus.ok === false && refus.reason === "Zone invalide", "v3.612.0 : une 4e zone n'existe plus, refusée");
   ok(P.unlockPlot("sawmill", 1).ok === true, "une zone de la Forêt se défriche normalement");
   plots[0].level = 5; // relevé 2 : Forêt 5
   var r = P.upgradePlot("sawmill", 0);
@@ -8078,7 +8078,7 @@ console.log("\n[86] v3.289.0 — Plafonds par monde du village et de la producti
   ok(P.getTotalRatePerMin("sawmill") > avant && P.getOpenPlotsCount("sawmill") === 3,
     "une zone déjà ouverte au-delà du plafond reste ouverte et produit");
   monde(1);
-  ok(P.isPlotRowOpen(5) && !P.isPlotRowOpen(6) && P.getPlotLevelCap() === 8, "Désert : deux lignes, zones au niveau 8 (relevé 2)");
+  ok(!P.isPlotRowOpen(3) && P.getPlotLevelCap() === 10, "Désert : toujours 3 parcelles, niveau 10 (v3.612.0)");
   monde(0);
 
   /* --- Ateliers : 2 en Forêt --- */
@@ -13259,7 +13259,7 @@ console.log("\n[186] v3.414.0 — Village : rail à quatre onglets, vignettes, f
     ok(sh.indexOf("wk-tile-cuisine_de_camp") !== -1 && sh.indexOf("wk-tile-boulangerie") === -1, "feuille : seulement les ateliers de ce bâtiment");
     ok(sh.indexOf('id="prod-harvest-btn-hunt"') !== -1 && sh.indexOf('id="prod-sheet-bar-hunt"') !== -1 && sh.indexOf('id="prod-bar-hunt"') === -1, "feuille : récolte et jauge à ids propres (pas de doublon avec la vignette)");
     run("setProductionSheetTab('zones');");
-    ok(run("buildProductionSheetHTML('hunt')").indexOf("farm-plots-grid") !== -1, "onglet Zones : la grille 3×3");
+    ok(run("buildProductionSheetHTML('hunt')").indexOf("pc3-list") !== -1, "onglet Zones : les 3 parcelles en lignes (v3.612.0)");
     run("setVillageSubTab('buildings');");
     ok(run("productionDetailBuildingId") === null, "changer d'onglet referme la feuille");
     var b = run("buildVillageHTML()");
@@ -13357,9 +13357,9 @@ console.log("\n[189] v3.417.0 — Zones de production : la grille reste, une fen
     run("game.resources.bois = 500; game.resources.fer = 500; game.resources.pierre = 500; game.resources.viande = 500;");
     run("openProductionBuildingDetail('well'); setProductionSheetTab('zones');");
     var g0 = run("buildProductionSheetHTML('well')");
-    var next = run("getNextUnlockablePlot('well')");
-    ok(next !== null && g0.indexOf("is-next") !== -1, "la prochaine zone à défricher est signalée sur la grille");
-    ok(/farm-plot-card is-locked"? disabled|is-locked" disabled/.test(g0) || g0.indexOf(" disabled>") !== -1, "une zone d'un monde pas encore atteint ne s'ouvre pas");
+    var next = 1;
+    ok(g0.indexOf("productionParcelAction('well', 1)") !== -1 && g0.indexOf("Défricher") !== -1, "la prochaine parcelle à défricher a son bouton (v3.612.0)");
+    ok(g0.indexOf("productionParcelAction('well', 3)") === -1, "pas de 4e parcelle");
     run("openZoneWindow('well', 0);");
     var w = run("buildProductionSheetHTML('well')");
     ok(w.indexOf("zone-win") !== -1 && w.indexOf("productionPlotUpgrade('well', 0)") !== -1, "fenêtre d'une zone ouverte : passer au niveau suivant");
@@ -15481,7 +15481,7 @@ console.log("\n[238] v3.450.0 — Crypte, lot C-0 : socle et passage entre les m
   var reachedAvant = game.worldsEverReached, wiAvant = g.WorldManager.worldIndex, advAvant = g.WorldManager.adventureIndex;
   try {
     var e3 = g.WORLD_CAPS[3];
-    ok(!!e3 && e3.zoneRows === 3 && g.WorldCaps.getRowOpeningIndex(2) === 3, "WORLD_CAPS[3] écrit avant d'ouvrir le monde ; la 3e rangée de zones s'ouvre à la Crypte");
+    ok(!!e3 && e3.zoneRows === 1 && e3.zoneLevel === 15, "WORLD_CAPS[3] écrit avant d'ouvrir le monde ; 3 parcelles au niveau 15 (v3.612.0)");
     ok(g.TRAINING_CAP_BY_ACT.some(function (a) { return a.worldIndex === 3 && a.stepId === "crypte_01"; })
       && g.TALENT_CAP_BY_ACT.some(function (a) { return a.worldIndex === 3 && a.stepId === "crypte_01"; }), "Terrain et talents : entrée d'acte I à la Crypte");
     var R = g.WAREHOUSE_RESOURCES;
@@ -15493,10 +15493,10 @@ console.log("\n[238] v3.450.0 — Crypte, lot C-0 : socle et passage entre les m
     game.worldsEverReached = { 0: true, 1: true, 2: true };
     game.dungeonTierCleared = { 1: true, 2: true, 3: true };
     ok(g.WorldTravel.arrive("crypt", 0) === true && g.WorldManager.worldIndex === 3 && game.worldsEverReached[3] === true, "arrivée : la Crypte devient le monde de résidence, notée atteinte");
-    ok(g.WorldCaps.getReachedWorldIndex() === 3 && g.WorldCaps.getZoneRows() === 3, "plafonds lus sur la Crypte");
+    ok(g.WorldCaps.getReachedWorldIndex() === 3 && g.WorldCaps.getZoneLevel() === 15, "plafonds lus sur la Crypte");
     ok(g.DungeonManager.isUnlocked(4) === false, "l'Ossuaire reste fermé à l'arrivée (pas de contenu avant l'acte III)");
     ok(g.WorldTravel.canTravelTo("ruins") && g.WorldTravel.travelTo && (g.WorldTravel.travelTo("ruins"), g.WorldManager.worldIndex === 2), "voyage retour vers les Ruines");
-    ok(g.WorldCaps.getZoneRows() === 3, "retour aux Ruines : rien ne se referme (plus haut monde atteint)");
+    ok(g.WorldCaps.getZoneLevel() === 15, "retour aux Ruines : rien ne se referme (plus haut monde atteint)");
   } catch (err) {
     ok(false, "[238] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   } finally {
@@ -17890,18 +17890,10 @@ console.log("\n[300] v3.479.0 — Refonte de l'économie RE-2 : zones de product
   ["bois", "fer", "pierre", "eau", "viande", "ble"].forEach(function (k) { g.game.resources[k] = 5000; });
   var st = PPS.getRowState("sawmill", 0);
   ok(st.locked.length === 1 && st.upNow.length === 1 && st.minLevel === 1 && st.impN === 4, "rangée 1 : 1 zone à défricher, la zone la plus basse à monter, 4 améliorations");
-  var fer = W.getAmount("fer"), want = g.getProductionPlotUnlockCost("sawmill", 2).fer;
-  ok(PPS.unlockRow("sawmill", 0).ok && plots[2].state === "open" && fer - W.getAmount("fer") === want, "Défricher : la zone ouvre, coût de la zone payé");
-  ok(PPS.upgradeRow("sawmill", 0).ok && plots[1].level === 2 && plots[2].level === 2 && plots[0].level === 3, "Monter : les zones les plus basses (1 → 2), la plus haute attend");
-  var n = 0; while (PPS.upgradeRow("sawmill", 0).ok && n < 9) n++;
-  ok(n === 6 && plots[0].level === 8 && plots[1].level === 8 && plots[2].level === 8, "à égalité, la rangée monte ensemble (6 achats de 2 à 8, Désert) et s'arrête au plafond du monde"); // relevé 2
-  ok(PPS.improveRow("sawmill", 0).ok && [0, 1, 2].every(function (i) { return plots[i].fertile && plots[i].irrigated; }) && !PPS.improveRow("sawmill", 0).ok, "Améliorer : les deux améliorations sur les 3 zones, une seule fois");
-  g.game.resources.fer = 0; var before = JSON.stringify(plots.slice(3, 6));
-  ok(!PPS.unlockRow("sawmill", 1).ok && JSON.stringify(plots.slice(3, 6)) === before, "sans les ressources : rien n'est payé ni ouvert (tout ou rien)");
-  g.game.resources.fer = 5000;
-  ok(!PPS.unlockRow("sawmill", 2).ok && plots[6].state === "locked", "la rangée de la Crypte reste fermée au Désert");
+  // v3.612.0 : 3 parcelles, plus d'actions par rangée (l'achat automatique les remplace)
+  ok(typeof PPS.unlockRow === "undefined" && typeof PPS.upgradeRow === "undefined" && typeof PPS.improveRow === "undefined", "v3.612.0 : actions par rangée retirées");
   var html = g.buildZoneGroupActionsHTML("sawmill");
-  ok(html.indexOf("Rangée 1") !== -1 && html.indexOf("au maximum") !== -1 && html.indexOf("Rangée 2") !== -1 && html.indexOf("Rangée 3") === -1 && html.indexOf("productionRowAction('sawmill', 1, 'unlock')") !== -1, "barres : rangée 1 au maximum sur une ligne, rangée 2 à défricher, pas de rangée 3 au Désert");
+  ok(html.indexOf("pc3-auto") !== -1 && html.indexOf("Rangée") === -1, "v3.612.0 : sous les parcelles, l'achat automatique");
   var css = fs.readFileSync(path.join(ROOT, "css/04-panel-production.css"), "utf8");
   ok(/\.farm-plot-card \.farm-plot-card-name, \.farm-plot-card \.farm-plot-card-profile \{ max-width: 100%; overflow: hidden; text-overflow: ellipsis; \}/.test(css), "320 px : nom et monde d'une zone verrouillée coupés par « … »");
   g.game.worldsEverReached = reached; g.WorldManager.worldIndex = wi;
@@ -18093,7 +18085,7 @@ console.log("\n[308] v3.486.0 — Montagne, lot M-0 : socle et passage entre les
   var reachedAvant = game.worldsEverReached, wiAvant = g.WorldManager.worldIndex, advAvant = g.WorldManager.adventureIndex;
   try {
     var e4 = g.WORLD_CAPS[4];
-    ok(!!e4 && e4.zoneRows === 3 && e4.village.forge === 6 && e4.forgeActStep === "montagne_11" && e4.petiteAventureCap === 4, "WORLD_CAPS[4] écrit avant d'ouvrir le monde (égal à la Crypte, Forge 6 à l'acte III)");
+    ok(!!e4 && e4.zoneRows === 1 && e4.zoneLevel === 17 && e4.village.forge === 6 && e4.forgeActStep === "montagne_11" && e4.petiteAventureCap === 4, "WORLD_CAPS[4] écrit avant d'ouvrir le monde (égal à la Crypte, Forge 6 à l'acte III)");
     ok(g.TRAINING_CAP_BY_ACT.some(function (a) { return a.worldIndex === 4 && a.stepId === "montagne_01"; })
       && g.TALENT_CAP_BY_ACT.some(function (a) { return a.worldIndex === 4 && a.stepId === "montagne_01"; }), "Terrain et talents : entrée d'acte I à la Montagne");
     var R = g.WAREHOUSE_RESOURCES;
@@ -18117,7 +18109,7 @@ console.log("\n[308] v3.486.0 — Montagne, lot M-0 : socle et passage entre les
     // Le passage : arrivée, monde posé, plafonds de la Montagne, Gueule du volcan fermée, voyage retour
     game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true };
     ok(g.WorldTravel.arrive("mountain", 0) === true && g.WorldManager.worldIndex === 4 && game.worldsEverReached[4] === true, "arrivée : la Montagne devient le monde de résidence, notée atteinte");
-    ok(g.WorldCaps.getReachedWorldIndex() === 4 && g.WorldCaps.getZoneRows() === 3, "plafonds lus sur la Montagne");
+    ok(g.WorldCaps.getReachedWorldIndex() === 4 && g.WorldCaps.getZoneLevel() === 17, "plafonds lus sur la Montagne");
     ok(g.DungeonManager.isUnlocked(5) === false, "la Gueule du volcan reste fermée à l'arrivée");
     ok(g.WorldTravel.canTravelTo("crypt") && (g.WorldTravel.travelTo("crypt"), g.WorldManager.worldIndex === 3), "voyage retour vers la Crypte");
   } catch (err) {
@@ -19067,9 +19059,9 @@ console.log("\n[328] Relevé 2 (27/10) — zones de production à 20 niveaux, d�
   try {
     var PPS = g.ProductionPlotsSystem, S = g.PRODUCTION_PLOTS_SHARED;
     ok(S.plotMaxLevel === 20 && S.upgradeCostMultPerLevel === 1.15 && S.linearPerLevel === 0.7, "20 niveaux, +70 % par niveau, coût ×1,15");
-    ok(g.WORLD_CAPS.map(function (w) { return w.zoneLevel; }).join(",") === "5,8,11,14,17", "plafonds de monde 5 / 8 / 11 / 14 / 17");
+    ok(g.WORLD_CAPS.map(function (w) { return w.zoneLevel; }).join(",") === "5,10,12,15,17", "plafonds de monde 5 / 10 / 12 / 15 / 17 (3 parcelles, v3.612.0)");
     var r1 = PPS.getPlotRatePerMin(0, { level: 1 }), r8 = PPS.getPlotRatePerMin(0, { level: 8 });
-    ok(Math.abs(r8 / r1 - 5.9) < 1e-9, "niveau 8 : 5,9 fois le niveau 1");
+    ok(Math.abs(r8 / r1 - 8.6) < 1e-9, "niveau 8 : 8,6 fois le niveau 1 (ancres des 3 parcelles, v3.612.0)");
     ok(Math.abs(PPS.getPlotCapacity(0, { level: 8 }) / PPS.getPlotRatePerMin(0, { level: 8 }) - PPS.getPlotCapacity(0, { level: 1 }) / r1) < 1, "la réserve suit le débit : même temps de remplissage à tout niveau");
     var map = [1, 2, 3, 4, 5].map(function (L) { return PPS.migrateLevel(L); });
     ok(map.join(",") === "1,3,5,8,14", "migration b : niveaux 1-5 de l'ancien modèle → 1 / 3 / 5 / 8 / 14");
@@ -19078,9 +19070,9 @@ console.log("\n[328] Relevé 2 (27/10) — zones de production à 20 niveaux, d�
     g.game.production = { sawmill: { plots: [] } };
     for (var i = 0; i < 9; i++) g.game.production.sawmill.plots.push({ state: i < 3 ? "open" : "locked", level: i < 3 ? 5 : 1, fertile: false, irrigated: false, stock: 0, lastTick: Date.now() });
     var pl = PPS.getPlots("sawmill");
-    ok(pl[0].level === 14 && pl[3].level === 1 && g.game.production.sawmill.model === 2, "ancienne partie : zones 5 → 14, zones fermées intactes, modèle 2 noté");
+    ok(pl[0].level === 9 && pl[3].level === 1 && g.game.production.sawmill.model === 3, "ancienne partie : zones 5 → 14 (relevé 2) → parcelle niveau 9 (même débit), modèle 3 noté");
     PPS.getPlots("sawmill");
-    ok(pl[0].level === 14, "la conversion ne se refait pas");
+    ok(pl[0].level === 9, "la conversion ne se refait pas");
   } catch (err) { ok(false, "[328] exception : " + err.message); }
 })();
 
@@ -21158,6 +21150,52 @@ console.log("\n[406] v3.611.0 — Caravanes : rare garanti sur le Long (R1), com
   } catch (err) { ok(false, "[406] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 function WAREHOUSE_RESOURCES_PRICE(k) { return Number(g.WAREHOUSE_RESOURCES[k].sellPrice || 0); }
+
+console.log("\n[407] v3.612.0 — Zones : 3 parcelles qui montent par monde, achat automatique (idée de Seb, atelier parcelles B)");
+(function () {
+  var PPS = g.ProductionPlotsSystem, S = g.PRODUCTION_PLOTS_SHARED, W = g.WarehouseManager;
+  try {
+    ok(g.WORLD_CAPS.map(function (w) { return w.zoneRows + ":" + w.zoneLevel; }).join(",") === "1:5,1:10,1:12,1:15,1:17", "plafonds : 1 rangée partout, niveaux 5 / 10 / 12 / 15 / 17");
+    ok(PPS.isPlotRowOpen(2) && !PPS.isPlotRowOpen(3), "seules les 3 parcelles existent");
+    ok([1, 2, 3, 4].every(function (L) { return JSON.stringify(g.getProductionPlotUpgradeCost("sawmill", L, 0)) === JSON.stringify(g.getLegacyPlotUpgradeCost("sawmill", L, 0)); }), "Forêt : coûts des niveaux 1 à 5 inchangés");
+    // enveloppe du Désert : 3 parcelles × niveaux 5→10 = ouvertures + niveaux de l'ancienne grille
+    var band = {}, add = function (c) { Object.keys(c || {}).forEach(function (k) { band[k] = (band[k] || 0) + c[k]; }); };
+    for (var i = 0; i < 6; i++) { if (i >= 3) add(g.getProductionPlotUnlockCost("sawmill", i)); for (var l = i < 3 ? 5 : 1; l < 8; l++) add(g.getLegacyPlotUpgradeCost("sawmill", l, i)); }
+    var p3 = {}; for (var L = 5; L < 10; L++) { var c = g.getProductionPlotUpgradeCost("sawmill", L, 0); Object.keys(c).forEach(function (k) { p3[k] = (p3[k] || 0) + 3 * c[k]; }); }
+    ok(Object.keys(band).every(function (k) { return Math.abs(p3[k] - band[k]) <= 8; }), "Désert : même coût total que les 6 zones d'avant (" + JSON.stringify(p3) + " / " + JSON.stringify(band) + ")");
+    var lv = [5, 6, 7, 8, 9].map(function (L) { return g.getProductionPlotUpgradeCost("sawmill", L, 0).fer; });
+    ok(lv.every(function (v, k) { return !k || v > lv[k - 1]; }), "coûts lissés : chaque niveau un peu plus cher (" + lv.join(" → ") + ")");
+    var base = S.profiles.rapide.baseRatePerMin + S.profiles.equilibree.baseRatePerMin + S.profiles.lente.baseRatePerMin;
+    ok(Math.abs(base * PPS.levelMult(10) - 2 * base * PPS.legacyLevelMult(8)) < 1e-6 && Math.abs(base * PPS.levelMult(15) - 3 * base * PPS.legacyLevelMult(14)) < 1e-6, "débit : 3 parcelles au plafond = les zones d'avant (Désert, Crypte)");
+    // migration d'une partie du Désert : 6 zones au niveau 8, améliorées
+    g.game.production = { sawmill: { model: 2, plots: [] } };
+    for (i = 0; i < 9; i++) g.game.production.sawmill.plots.push({ state: i < 6 ? "open" : "locked", level: i < 6 ? 8 : 1, fertile: i < 6, irrigated: i < 6, stock: i < 6 ? 50 : 0, lastTick: Date.now() });
+    var old = 0; g.game.production.sawmill.plots.forEach(function (pl, k) { if (pl.state === "open") old += PPS.getProfile(k).baseRatePerMin * PPS.legacyLevelMult(pl.level) * 1.18; });
+    var pl = PPS.getPlots("sawmill"), now = PPS.getTotalRatePerMin("sawmill") / (g.PRODUCTION_PLOTS_BUILDINGS.sawmill.rateMult || 1);
+    ok(g.game.production.sawmill.model === 3 && pl.slice(0, 3).every(function (q) { return q.state === "open" && q.level === 10 && q.fertile && q.irrigated; }) && pl.slice(3).every(function (q) { return q.state === "locked"; }), "migration : 6 zones niv. 8 → 3 parcelles niv. 10, améliorations gardées, zones 4 à 9 fermées");
+    ok(now >= old - 1e-6 && now < old * 1.15 && pl[0].stock === 100, "migration : débit gardé (" + now.toFixed(2) + " ≥ " + old.toFixed(2) + "), stock regroupé");
+    // achat automatique
+    run("fullResetState(); game.playerName='T'; game.heroId='knight'; Object.keys(PRODUCTION_UNLOCK_FLAGS).forEach(function (id) { game.explorationProgression[PRODUCTION_UNLOCK_FLAGS[id]] = true; }); ProductionManager.ensure();");
+    g.game.worldsEverReached = { 0: true };
+    ok(!PPS.isAutoAvailable() && !PPS.isAuto() && PPS.autoUpgrade() === 0, "Forêt : pas d'achat automatique");
+    g.game.worldsEverReached = { 0: true, 1: true }; g.WorldManager.worldIndex = 1;
+    ok(PPS.isAuto(), "Désert : achat automatique actif par défaut");
+    ["bois", "fer", "pierre", "eau", "viande", "ble"].forEach(function (k) { g.ResourceReserveManager.setReserve(k, 0); g.game.resources[k] = W.getCap(k); });
+    var n = PPS.autoUpgrade();
+    var keepOk = ["bois", "fer", "pierre", "eau", "viande"].every(function (k) { return W.getAmount(k) >= Math.ceil(W.getCap(k) / 2); });
+    ok(n > 0 && keepOk, n + " achats ; jamais sous la moitié du plafond");
+    ok(["sawmill", "farm", "mine", "quarry", "well", "hunt"].every(function (b) { return PPS.getPlots(b)[2].state === "open"; }), "les parcelles se défrichent d'abord, dans tous les bâtiments (" + ["sawmill", "farm", "mine"].map(function (b) { return PPS.getPlots(b).slice(0, 3).map(function (q) { return q.state[0] + q.level; }).join("/"); }).join(" ") + ")");
+    PPS.setAuto(false);
+    ["bois", "fer", "pierre", "eau", "viande", "ble"].forEach(function (k) { g.game.resources[k] = W.getCap(k); });
+    ok(PPS.autoUpgrade() === 0 && JSON.parse(JSON.stringify(g.buildSaveData())).village.plotAuto === false, "désactivé : rien n'est acheté, réglage sauvegardé");
+    PPS.setAuto(true);
+    var html = g.buildPlotsPanelHTML("sawmill");
+    ok((html.match(/class="pc3[" ]/g) || []).length === 3 && /productionParcelAction\('sawmill', 0\)|Au maximum/.test(html), "fiche : 3 lignes, bouton du prochain achat");
+    ok(/kswitch is-on/.test(g.buildZoneGroupActionsHTML("sawmill")), "fiche : interrupteur de l'achat automatique");
+    var M = g.VILLAGE_MILESTONES.filter(function (m) { return /zones/.test(m.id); });
+    ok(M.every(function (m) { return m.kind === "zonesAtLevel" && m.arg <= [5, 10, 12, 15, 17][m.w] && m.target <= 18; }), "jalons de zones atteignables avec 3 parcelles par bâtiment");
+  } catch (err) { ok(false, "[407] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
 
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
