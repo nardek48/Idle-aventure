@@ -24,29 +24,40 @@ var VillageEvents = {
      Rend l'événement tiré, ou null. rng injectable (harnais). */
   onDawn: function (day, rng) {
     rng = rng || Math.random;
-    var old = this.state(), wasMarket = !!(old && old.id && (this.get(old.id) || {}).type === "marche");
-    if (old && old.id && day >= old.until) { this._ep().villageEvent = { last: old.id, lastType: (this.get(old.id) || {}).type || null }; if (wasMarket) this._repriceShop(); }
-    if (this.active() || !(game.unlockedTabs && game.unlockedTabs.village)) return null;
+    var old = this.state(), od = old && old.id ? this.get(old.id) : null, wasMarket = !!(od && od.type === "marche"), suite = null;
+    /* v3.607.0 (E3, S1) : un événement réussi appelle sa suite à l'aube suivante ; un marché où l'on a vendu fait revenir Sarkel. */
+    var doneEarly = !!(od && old.done && od.next), ended = !!(od && day >= old.until);
+    if (doneEarly || ended) {
+      suite = doneEarly ? od.next : (wasMarket && !od.suite && Number(old.sold || 0) > 0 ? "s_sarkel_retour" : null);
+      this._ep().villageEvent = { last: old.id, lastType: od.type || null };
+      if (wasMarket) this._repriceShop();
+    }
+    if (!(game.unlockedTabs && game.unlockedTabs.village)) return null;
+    if (suite && this.get(suite) && this._possible(this.get(suite), true)) return this._start(this.get(suite), day, rng);
+    if (this.active()) return null;
     if (rng() >= VILLAGE_EVENT_CHANCE) return null;
     var prev = this.state() || {}, self = this;
-    var pool = this.all().filter(function (e) { return e.type !== prev.lastType && self._possible(e); });
+    var pool = this.all().filter(function (e) { return !e.suite && e.type !== prev.lastType && self._possible(e); });
     if (!pool.length) return null;
-    var e = pool[Math.min(pool.length - 1, Math.floor(rng() * pool.length))];
+    return this._start(pool[Math.min(pool.length - 1, Math.floor(rng() * pool.length))], day, rng);
+  },
+  _start: function (e, day, rng) {
+    var prev = this.state() || {};
     var v = { id: e.id, from: day, until: day + VILLAGE_EVENT_DAYS, w: this._world(), done: false, last: prev.last || null };
-    if (e.type === "rumeur") { var sp = this._pickSector(rng); v.mapId = sp.mapId; v.sector = sp.sector; }
+    if (e.type === "rumeur") { var sp = this._pickSector(rng, !!e.rumor2); v.mapId = sp.mapId; v.sector = sp.sector; }
     this._ep().villageEvent = v;
     if (e.type === "marche") this._repriceShop();
     if (typeof addLog === "function") addLog("🏘️ " + _t("Ce matin à Aeswyn : {x}", { x: this.titleOf(e) }), "event");
     return v;
   },
   _world: function () { return Math.max(0, Math.min(VILLAGE_EVENT_SCALE.length - 1, Number((window.WorldManager && WorldManager.worldIndex) || 0))); },
-  _possible: function (e) {
-    if (e.type === "rumeur") return !!this._pickSector(function () { return 0; }).sector;
+  _possible: function (e, isSuite) {
+    if (e.type === "rumeur") return !!this._pickSector(function () { return 0; }, !!e.rumor2).sector;
     if (e.type === "marche") return !!(window.EquipShopManager && window.VillageBuildingManager && VillageBuildingManager.getLevel("hall") > 0); // l'échoppe est à la Halle
     return true;
   },
-  // La rumeur : un secteur d'expédition atteignable de la carte du monde où vit le héros.
-  _pickSector: function (rng) {
+  // La rumeur : un secteur d'expédition atteignable de la carte du monde où vit le héros (la deuxième : le plus lointain).
+  _pickSector: function (rng, far) {
     var LM = window.LivingMapManager, w = window.WORLDS ? WORLDS[this._world()] : null, map = LM && w ? LM.getMapForWorld(w.id) : null;
     if (!map) return { mapId: null, sector: null };
     var pool = map.sectors.filter(function (d) {
@@ -54,6 +65,7 @@ var VillageEvents = {
       return c && c.type === "expedition" && LM.isReachable(map.id, d.id) && !(d.requiresStoryStep && !LM.isStoryStepReached(d.requiresStoryStep));
     });
     if (!pool.length) return { mapId: map.id, sector: null };
+    if (far) { var top = Math.max.apply(null, pool.map(function (d) { return d.ring; })); pool = pool.filter(function (d) { return d.ring === top; }); }
     return { mapId: map.id, sector: pool[Math.min(pool.length - 1, Math.floor(rng() * pool.length))].id };
   },
 
@@ -107,7 +119,7 @@ var VillageEvents = {
   },
 
   /* ---------- Fête ---------- */
-  feteCost: function () { var v = this.active(); return v ? Math.round(6 * (VILLAGE_EVENT_SCALE[v.w] || 1)) : 0; },
+  feteCost: function () { var v = this.active(), e = this.def(); return v && !(e && e.free) ? Math.round(6 * (VILLAGE_EVENT_SCALE[v.w] || 1)) : 0; }, // v3.607.0 : la table d'Orwen, offerte
   canFete: function () {
     var v = this.active();
     return !!(v && !v.done && this.isType("fete") && window.WarehouseManager && WarehouseManager.getAmount("pain") >= this.feteCost());
@@ -115,7 +127,7 @@ var VillageEvents = {
   startFete: function () {
     if (!this.canFete()) return false;
     var v = this.active();
-    WarehouseManager.removeResource("pain", this.feteCost());
+    if (this.feteCost() > 0) WarehouseManager.removeResource("pain", this.feteCost());
     game.heroHp = game.heroMaxHp; // le camp soigne tout le monde
     if (window.CompanionManager) CompanionManager.unlockedIds().forEach(function (id) { CompanionManager.state(id).hp = CompanionManager.maxHpOf(id); });
     this._ep().villageFete = { left: VILLAGE_EVENT_FETE.sorties };
@@ -133,6 +145,10 @@ var VillageEvents = {
   },
 
   /* ---------- Rumeur : la Petite Aventure du lieu (pa2-run.js) ---------- */
+  rumorLootMult: function () { var e = this.def(); return e && e.rumor2 ? VILLAGE_EVENT_RUMOR2.lootMult : VILLAGE_EVENT_RUMOR.lootMult; },
+  rumorRare: function () { var e = this.def(); return e && e.rumor2 ? VILLAGE_EVENT_RUMOR2.rare : VILLAGE_EVENT_RUMOR.rare; },
+  // v3.607.0 : la Petite Aventure du lieu de la rumeur réussie (pa2-run.js) — la rumeur est faite, sa suite viendra à l'aube.
+  onRumorRun: function () { var v = this.active(); if (v && this.isType("rumeur") && !v.done) { v.done = true; if (typeof saveGame === "function") saveGame(); } },
   rumorAt: function (mapId, sectorId) {
     var v = this.active();
     return !!(v && this.isType("rumeur") && v.mapId === mapId && v.sector === sectorId);
@@ -162,8 +178,34 @@ var VillageEvents = {
     game.equipShopStock.forEach(function (it) { if (it && it.slot && !it.bought) it.price = EquipShopManager.getPrice(it); });
   },
 
-  // Pastille de l'onglet Village : une demande livrable ou une fête à lancer.
-  hasAction: function () { return this.canDeliver() || this.canFete(); }
+  /* ---------- v3.607.0 (E3) : le cadeau (une suite) et le compte juste d'Aldric ---------- */
+  canClaim: function () { var v = this.active(); return !!(v && !v.done && this.isType("cadeau")); },
+  giftList: function () {
+    var v = this.active(), e = this.def();
+    if (!e || e.type !== "cadeau" || e.gift === "equip") return null;
+    var k = VILLAGE_EVENT_SCALE[v.w] || 1, out = {};
+    Object.keys(e.gift).forEach(function (r) { out[r] = Math.max(1, Math.round(e.gift[r] * k)); });
+    return out;
+  },
+  claim: function () {
+    if (!this.canClaim()) return false;
+    var v = this.active(), e = this.def(), item = null;
+    if (e.gift === "equip") {
+      item = window.LootSystem && typeof LootSystem.rollWorldDrop === "function" ? LootSystem.rollWorldDrop() : null;
+      if (item && typeof addLootToInventory === "function") addLootToInventory(item);
+    } else {
+      var g = this.giftList();
+      Object.keys(g).forEach(function (r) { WarehouseManager.addResource(r, g[r], true); });
+    }
+    v.done = true;
+    if (typeof addLog === "function") addLog("🎁 " + _t("Ce matin à Aeswyn : {x}", { x: this.titleOf(e) }) + (item && item.name ? " · " + _td(item.name) : ""), "event");
+    if (typeof saveGame === "function") saveGame();
+    return item || true;
+  },
+  brakeBonus: function () { return this.isType("palissade") ? VILLAGE_EVENT_PALISADE : 0; },
+
+  // Pastille de l'onglet Village : une demande livrable, une fête à lancer, un cadeau à recevoir.
+  hasAction: function () { return this.canDeliver() || this.canFete() || this.canClaim(); }
 };
 
 window.VillageEvents = VillageEvents;

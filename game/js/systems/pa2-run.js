@@ -1596,7 +1596,7 @@ var Pa2Run = {
       if (lmap && lmap.veins) amt += Number(lmap.veins.cutRare || 0);      // v3.489.0 (Montagne) : la veine du secteur taillée
       amt += Number(this.condFx(run, "rareDest") || 0); // v3.469.0 : les dormeurs remuent
       var rumor = !!(window.VillageEvents && run.livingMap && VillageEvents.rumorAt(run.livingMap.mapId, run.livingMap.sectorId)); // v3.604.0
-      if (rumor) amt += VILLAGE_EVENT_RUMOR.rare;
+      if (rumor) { amt += VillageEvents.rumorRare(); VillageEvents.onRumorRun(); } // v3.607.0 : la rumeur faite appelle sa suite
       var hk = this._hook(run);
       if (hk && hk.destRare && hk.destRare[this.hookBranch(run)]) amt += Number(hk.destRare[this.hookBranch(run)]); // le feu nourri
       end.rare = this._creditRare(run, amt);
@@ -1613,7 +1613,7 @@ var Pa2Run = {
     // Multiplicateur final de l'or : pactes, Carte du braconnier, Fiole noire.
     var mult = this.pactMult(run) * Number(this.condFx(run, "lootMult") || 1) * (this.hasRelic("dune", run) ? PA2_RULES.duneLoot : 1); // v3.469.0 ; v3.469.5 : Cœur de dune
     if (this.hasItem("carte", run)) mult *= PA2_RULES.carteLoot;
-    if (end.dest && window.VillageEvents && run.livingMap && VillageEvents.rumorAt(run.livingMap.mapId, run.livingMap.sectorId)) mult *= VILLAGE_EVENT_RUMOR.lootMult; // v3.604.0 : la rumeur
+    if (end.dest && window.VillageEvents && run.livingMap && VillageEvents.rumorAt(run.livingMap.mapId, run.livingMap.sectorId)) mult *= VillageEvents.rumorLootMult(); // v3.604.0 : la rumeur ; v3.607.0 : la deuxième, plus riche
     if (run.fioleUsed) mult *= PA2_RULES.fioleLoot;
     end.mult = mult;
     var s = window.SortieManager ? SortieManager.ensure() : null;

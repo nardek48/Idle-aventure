@@ -20871,7 +20871,7 @@ console.log("\n[400] v3.604.0 — Ce matin à Aeswyn : les événements du villa
 (function () {
   var V = g.VillageEvents, LM = g.LivingMapManager, saveLvl = g.VillageBuildingManager && g.VillageBuildingManager.getLevel;
   try {
-    var D = g.villageEventsData(), per = {};
+    var D = g.villageEventsData().filter(function (e) { return !e.suite; }), per = {}; // v3.607.0 : les suites à part
     D.forEach(function (e) { per[e.type] = (per[e.type] || 0) + 1; });
     ok(D.length === 24 && per.rumeur === 6 && per.demande === 6 && per.marche === 6 && per.fete === 6, "24 événements : 6 rumeurs, 6 demandes, 6 marchés, 6 fêtes");
     ok(D.filter(function (e) { return e.type === "demande"; }).every(function (e) { return Object.keys(e.res).concat(Object.keys(e.gain)).every(function (r) { return g.WAREHOUSE_RESOURCES[r]; }); }), "les demandes ne citent que des ressources de l'Entrepôt");
@@ -20984,6 +20984,63 @@ console.log("\n[402] v3.606.0 — L'artisan d'Aeswyn : corde tressée, trousse d
   } catch (err) { ok(false, "[402] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   if (P) P.nightItem = saveNight;
   try { S.abandon(); S.clearRun(); } catch (e) {}
+})();
+
+console.log("\n[403] v3.607.0 — Événements du village : les suites (S1) et les compagnons qui réagissent (S2)");
+(function () {
+  var V = g.VillageEvents, W = g.WarehouseManager, LM = g.LivingMapManager, M = g.CompanionTalkManager;
+  var day = function () { return g.WorldDays.day(); };
+  var set = function (id, extra) { run("game.explorationProgression.villageEvent = Object.assign({ id: '" + id + "', from: WorldDays.day(), until: WorldDays.day() + 2, w: 0, done: false }, " + JSON.stringify(extra || {}) + ");"); };
+  try {
+    var D = g.villageEventsData(), suites = D.filter(function (e) { return e.suite; });
+    ok(suites.length === 6 && D.filter(function (e) { return e.next; }).every(function (e) { return V.get(e.next) && V.get(e.next).suite; }), "6 suites, et chaque « next » mène à une suite");
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.unlockedTabs.village = true; WorldManager.worldIndex = 0;");
+    var drawn = {};
+    for (var i = 0; i < 200; i++) { run("game.explorationProgression.villageEvent = null;"); var r0 = V.onDawn(day(), (function (k) { var q = [0, k / 200]; return function () { return q.length ? q.shift() : 0; }; })(i)); if (r0) drawn[r0.id] = true; }
+    ok(!Object.keys(drawn).some(function (id) { return V.get(id).suite; }), "le tirage au hasard ne sort jamais une suite (" + Object.keys(drawn).length + " événements tirés)");
+    // Brannoc : livrer → la lame
+    set("d_brannoc_fer"); W.addResource("fer", 200, true); V.deliver();
+    var inv0 = (g.game.inventory || []).length, s1 = V.onDawn(day(), function () { return 0.99; });
+    ok(s1 && s1.id === "s_lame" && V.canClaim(), "fer livré : à l'aube suivante, « La lame de Brannoc » (même sans tirage)");
+    V.claim();
+    ok((g.game.inventory || []).length === inv0 + 1 && !V.canClaim(), "« Recevoir » : une pièce d'équipement du monde");
+    // Orwen : eau → cadeau de vivres ; blé → fête offerte
+    set("d_orwen_eau"); W.addResource("eau", 200, true); V.deliver(); V.onDawn(day(), function () { return 0.99; });
+    var gr0 = W.getAmount("grande_ration"); V.claim();
+    ok(V.def().id === "s_orwen_merci" && W.getAmount("grande_ration") === gr0 + 1, "eau livrée : Orwen offre des vivres");
+    set("d_orwen_ble"); W.addResource("ble", 200, true); V.deliver(); V.onDawn(day(), function () { return 0.99; });
+    run("WarehouseManager.removeResource('pain', WarehouseManager.getAmount('pain'));");
+    ok(V.def().id === "s_fete_orwen" && V.feteCost() === 0 && V.canFete() && V.startFete(), "blé livré : « La table d'Orwen », fête sans pain");
+    // Aldric : pierre → frein de la Palissade
+    var b0 = LM.getBrakeChance("forest");
+    set("d_aldric_pierre"); W.addResource("pierre", 200, true); V.deliver(); V.onDawn(day(), function () { return 0.99; });
+    ok(V.def().id === "s_aldric" && Math.abs(LM.getBrakeChance("forest") - b0 - 0.15) < 1e-9, "pierre livrée : « Le compte est juste », Palissade +15 % de frein");
+    // Rumeur : jouée → deuxième rumeur, plus loin, plus riche
+    set("r_harde", { mapId: "forest", sector: "gue" }); V.onRumorRun();
+    var s5 = V.onDawn(day(), function () { return 0; });
+    var ring = s5 && s5.sector ? LM.getSectorDef("forest", s5.sector).ring : 0;
+    ok(s5 && s5.id === "s_rumeur2" && V.rumorLootMult() === 1.75 && V.rumorRare() === 3, "rumeur jouée : « Plus loin… », +75 % de butin et +3 (secteur " + (s5 && s5.sector) + ", anneau " + ring + ")");
+    // Marché : vendu → Sarkel revient ; sans vente → rien de forcé
+    g.game.village.buildings.hall.level = 1; // l'échoppe est à la Halle
+    set("m_sud", { sold: 1, until: day() });
+    var s6 = V.onDawn(day(), function () { return 0.99; });
+    ok(s6 && s6.id === "s_sarkel_retour", "marché avec vente, fini : Sarkel revient à l'aube suivante");
+    set("m_fin", { until: day() });
+    ok(V.onDawn(day(), function () { return 0.99; }) === null, "marché sans vente : pas de retour forcé");
+    // S2 : les compagnons réagissent
+    run("CompanionManager.unlock('wenna'); game.explorationProgression.villageEvent = null;");
+    set("f_moissons");
+    var mt = M.topicMatin("wenna");
+    ok(mt && /fête/.test(mt.lines[0].t) && g.talkMenuTopics("wenna").some(function (o) { return o.k === "matin" && o.isNew; }), "« Et ce matin ? » : Wenna parle de la fête (sujet nouveau)");
+    g.openCompanionMenu("wenna"); g.talkTopic("matin");
+    ok(M.heard("wenna", "s_matin_f_moissons") && !g.talkMenuTopics("wenna").filter(function (o) { return o.k === "matin"; })[0].isNew, "écouté : plus de pastille pour cet événement");
+    g.closeCompanionTalk(false);
+    set("s_aldric");
+    ok(M.topicMatin("wenna") && M.topicMatin("wenna").lines[0].t === g.companionMorningData().wenna.demande, "une suite (le compte d'Aldric) se commente comme une demande");
+    var soir = g.villageEventSoirData();
+    ok(["rumeur", "demande", "marche", "fete"].every(function (k) { return soir[k]; }), "une phrase du soir par type d'événement");
+  } catch (err) { ok(false, "[403] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  if (g.talkScene) g.closeCompanionTalk(false);
 })();
 
 Promise.all(ATTENTES).then(function () {

@@ -86,3 +86,16 @@ function companionAvisData() {
 }
 
 window.companionAvisData = companionAvisData;
+
+/* v3.607.0 (E3, S2) : « Et ce matin ? » — ce que chaque compagnon dit de l'événement du village en cours, par type. */
+function companionMorningData() {
+  return {
+    wenna: { rumeur: _t("Une rumeur, à la Taverne ? Si c'est des bêtes, je prends des bandages. Si c'est un trésor, aussi."), demande: _t("Ils demandent toujours la même chose, les anciens : un peu plus. Et ils ont toujours raison."), marche: _t("Sarkel a monté son étal. Ne le regarde pas dans les yeux, sinon tu achètes."), fete: _t("Une fête ! J'ai déjà réservé ma place, près du pain.") },
+    maddoc: { rumeur: _t("Les rumeurs de taverne, c'est moitié bière, moitié vrai. On ira voir la moitié vraie."), demande: _t("Le village demande. On donne. Chez moi, c'était pareil. Sauf qu'on n'avait rien."), marche: _t("Sarkel vend. Moi, je surveille qu'il rende la monnaie."), fete: _t("Une fête. Je resterai au bord. Quelqu'un doit garder la porte, même un soir de fête.") },
+    edda: { rumeur: _t("Une rumeur, c'est une carte sans traits. Je vais la dessiner."), demande: _t("Aldric m'a demandé de recompter ses pieux. Il avait raison, il en manquait. Ça l'a contrarié."), marche: _t("Sarkel vend des cartes, aujourd'hui. Je vérifierai lesquelles sont vraies."), fete: _t("Je dessine les fêtes. Personne ne bouge assez vite pour que ce soit flou.") },
+    ysolt: { rumeur: _t("Les vivants racontent des histoires sur les lieux. Les morts, eux, y restent."), demande: _t("Ils ont besoin de choses. C'est bien, d'avoir besoin de choses."), marche: _t("Sarkel m'a proposé un miroir. Je lui ai dit non merci. Il n'a pas insisté."), fete: _t("Une fête. Je compterai les rires. Il y en aura plus de huit.") },
+    sarkel: { rumeur: _t("Une rumeur ? Je l'ai peut-être lancée. Pour les affaires. Mais elle est vraie, cette fois."), demande: _t("Les anciens paient en remerciements. Ça ne se revend pas. Ça se garde quand même."), marche: _t("Mon étal est monté. Pour toi, des prix d'ami. Enfin, d'ami qui paie."), fete: _t("Une fête, c'est un marché où personne ne paie. Je déteste. J'y vais quand même.") }
+  };
+}
+
+window.companionMorningData = companionMorningData;

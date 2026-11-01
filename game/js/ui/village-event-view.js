@@ -23,7 +23,7 @@ function buildVillageEventCardHTML() {
   if (!v || !e) return "";
   var left = V.daysLeft(), gain = "", act = "";
   if (e.type === "rumeur") {
-    gain = _t("{x} : +50 % de butin et +{n} de la ressource rare à sa destination.", { x: V.sectorName(v), n: VILLAGE_EVENT_RUMOR.rare });
+    gain = _t("{x} : +{p} % de butin et +{n} de la ressource rare à sa destination.", { x: V.sectorName(v), p: Math.round((V.rumorLootMult() - 1) * 100), n: V.rumorRare() });
     act = '<button type="button" class="kbtn primary" onclick="villageEventGo()">' + esc(_t("Voir sur la carte")) + '</button>';
   } else if (e.type === "demande") {
     var gifts = V.rewardGifts(), gl = Object.keys(gifts).map(function (r) { return _td(((window.WAREHOUSE_RESOURCES || {})[r] || {}).name || r) + " ×" + gifts[r]; }).join(", "); // « Lingot ×2 » : pas d'accord à faire
@@ -33,6 +33,12 @@ function buildVillageEventCardHTML() {
   } else if (e.type === "marche") {
     gain = _t("L'échoppe : une pièce de plus et −{p} % sur tout. Et Sarkel rachète tes ressources rares.", { p: Math.round((1 - VILLAGE_EVENT_MARKET.discount) * 100) });
     act = '<button type="button" class="kbtn primary" onclick="villageEventShop()">' + esc(_t("Aller à l'échoppe")) + '</button>';
+  } else if (e.type === "cadeau") { // v3.607.0 (E3) : une suite qui offre
+    var gl2 = V.giftList();
+    gain = gl2 ? _t("Cadeau : {x}.", { x: Object.keys(gl2).map(function (r) { return _td(((window.WAREHOUSE_RESOURCES || {})[r] || {}).name || r) + " ×" + gl2[r]; }).join(", ") }) : _t("Cadeau : une pièce d'équipement forgée pour toi.");
+    act = v.done ? '<span class="vev-done">✓ ' + esc(_t("Reçu")) + '</span>' : '<button type="button" class="kbtn primary" onclick="villageEventClaim()">' + esc(_t("Recevoir")) + '</button>';
+  } else if (e.type === "palissade") {
+    gain = _t("La Palissade freine {p} % d'échecs de plus sur les cartes vivantes, le temps du compte.", { p: Math.round(VILLAGE_EVENT_PALISADE * 100) });
   } else if (e.type === "fete") {
     gain = _t("Le camp soigne tout le monde, et les {n} sorties suivantes rapportent +{p} % d'or.", { n: VILLAGE_EVENT_FETE.sorties, p: Math.round((VILLAGE_EVENT_FETE.goldMult - 1) * 100) });
     act = v.done ? '<span class="vev-done">✓ ' + esc(_tn(V.feteLeft(), "Fête lancée · encore {n} sortie", "Fête lancée · encore {n} sorties")) + '</span>'
@@ -41,7 +47,7 @@ function buildVillageEventCardHTML() {
   var h = '<div class="vev"><div class="vev-k"><span>' + esc(_t("Ce matin à Aeswyn")) + '</span><span class="vev-left">' + esc(_tn(left, "encore {n} jour", "encore {n} jours")) + '</span></div>';
   h += '<div class="vev-main">' + villageEventIconHTML(e.type, "vev-ico") + '<div><b>' + esc(V.titleOf(e, v)) + '</b><small>' + esc(_td(e.who)) + '</small><p>' + esc(V.textOf(e, v)) + '</p></div></div>';
   if (e.type === "demande" && !v.done) h += '<div class="vev-cost">' + villageEventResChipsHTML(V.needs(), true) + '</div>';
-  if (e.type === "fete" && !v.done) h += '<div class="vev-cost">' + villageEventResChipsHTML({ pain: V.feteCost() }, true) + '</div>';
+  if (e.type === "fete" && !v.done && V.feteCost() > 0) h += '<div class="vev-cost">' + villageEventResChipsHTML({ pain: V.feteCost() }, true) + '</div>';
   if (e.type === "marche") h += villageEventBuybackHTML(); // v3.606.0 (D2)
   return h + '<div class="vev-gain">' + esc(gain) + '</div><div class="vev-act">' + act + '</div></div>';
 }
@@ -72,6 +78,7 @@ function villageEventGo() {
   if (v && v.mapId && typeof openLivingMap === "function") openLivingMap(v.mapId, v.sector);
 }
 function villageEventDeliver() { if (VillageEvents.deliver() && typeof renderPanel === "function") renderPanel(); }
+function villageEventClaim() { if (VillageEvents.claim() && typeof renderPanel === "function") renderPanel(); }
 function villageEventFete() { if (VillageEvents.startFete() && typeof renderPanel === "function") renderPanel(); }
 // L'échoppe vit à la Halle (segment « Échoppe »).
 function villageEventShop() {
@@ -97,4 +104,5 @@ window.villageEventDeliver = villageEventDeliver;
 window.villageEventFete = villageEventFete;
 window.villageEventShop = villageEventShop;
 window.villageEventSell = villageEventSell;
+window.villageEventClaim = villageEventClaim;
 window.refreshTabVillageBadge = refreshTabVillageBadge;
