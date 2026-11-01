@@ -124,7 +124,7 @@ function etapesDe(r) { var o = {}; (r && r.etapes || []).forEach(function (e) { 
 function mondeDe(r, ch) { return (r && r.mondes || []).filter(function (m) { return m.monde === ch; })[0] || null; }
 function dlt(b, a, d, inverse) {
   if (a == null || b == null) return "";
-  var v = b - a, cls = Math.abs(v) < (d === 0 ? 0.5 : 0.05) ? "eq" : ((v < 0) === !!inverse ? "up" : "down");
+  var v = b - a, cls = Math.abs(v) < (d === 0 ? 0.5 : 0.05) ? "eq" : ((v < 0) !== !!inverse ? "up" : "down"); // inverse : plus haut = mieux
   return '<i class="' + cls + '">' + (v >= 0 ? "+" : "−") + fr(Math.abs(v), d) + '</i>';
 }
 function selects() {
