@@ -60,6 +60,13 @@ function buildItemWorldPipHTML(item) {
   return '<span class="wpip' + (ici ? ' is-here' : '') + '" title="' + esc(_td(w.name)) + '"><img class="wpip-img" src="images/Icons/codex/world_' + esc(w.id) + '.webp" alt=""></span>';
 }
 
+/* v3.615.0 (atelier ilvl, variante C) : le niveau d'objet en coin bas droit de l'icône, en face de la pastille du monde. */
+function buildItemLevelBadgeHTML(item) {
+  if (!item || !item.slot || typeof getItemLevel !== "function") return "";
+  return '<span class="ilc rarity-' + esc(item.rarity || "common") + '" title="' + esc(_t("Niveau d'objet {n}", { n: getItemLevel(item) })) + '">' + getItemLevel(item) + '</span>';
+}
+window.buildItemLevelBadgeHTML = buildItemLevelBadgeHTML;
+
 function buildEquipmentIconHTML(item, cssClass) {
   var cls = cssClass || "";
   if (!item) return '<div class="' + cls + '">' + renderIcon("equipment", "") + '</div>';
@@ -68,13 +75,13 @@ function buildEquipmentIconHTML(item, cssClass) {
   var fallbackEmoji = renderIcon("equipment", item.icon);
   var rarityClass = item.rarity ? (" rarity-" + item.rarity) : "";
 
-  if (!path) return '<div class="' + cls + rarityClass + ' has-wpip">' + fallbackEmoji + buildItemWorldPipHTML(item) + '</div>';
+  if (!path) return '<div class="' + cls + rarityClass + ' has-wpip">' + fallbackEmoji + buildItemWorldPipHTML(item) + buildItemLevelBadgeHTML(item) + '</div>';
 
   return '<div class="' + cls + rarityClass + ' has-icon-img has-wpip">'
     + '<img src="' + esc(path) + '" alt="" '
     + 'onerror="this.parentElement.classList.remove(\'has-icon-img\'); this.remove();">'
     + '<span class="icon-img-fallback">' + fallbackEmoji + '</span>'
-    + buildItemWorldPipHTML(item)
+    + buildItemWorldPipHTML(item) + buildItemLevelBadgeHTML(item)
     + '</div>';
 }
 

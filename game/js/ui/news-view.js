@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.615.0", "menu_icons/heroes_menu", _t("Chaque pièce d\'équipement a maintenant un niveau d\'objet (ilvl) : en coin sur son icône, et détaillé dans sa fiche. Environ 10 par monde, plus selon la rareté.")],
     ["3.614.0", "menu_icons/heroes_menu", _t("Entraînement : ta caractéristique de classe et l\'Endurance montent jusqu\'au plafond du Terrain ; les trois autres s\'arrêtent à 70 % de ce plafond.")],
     ["3.613.0", "menu_icons/heroes_menu", _t("L\'entraînement coûte quatre fois plus cher à partir du Désert : chaque palier du Terrain se gagne. Et les combats avec Wenna contre une élite seule comptent bien un par un.")],
     ["3.612.0", "menu_icons/village_menu", _t("Les bâtiments de production n'ont plus que 3 zones, qui montent plus haut à chaque monde. Dès le Désert, l'achat automatique les améliore avec ton surplus.")],
