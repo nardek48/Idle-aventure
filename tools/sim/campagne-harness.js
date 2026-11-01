@@ -75,6 +75,7 @@ var CHANTIER = ARGS.indexOf("--chantier") >= 0;
    compagnons du groupe, patrouilles, reliques) et --avise (talents, Grimoire), et ajoute : Taverne, tous les bâtiments du village
    (chantier en fond), Entrepôt agrandi quand un coût dépasse le stockable, Apothicaire ; puis compagnons et donjons (lots 1 et 3). */
 var JOUEUR = ARGS.indexOf("--joueur") >= 0;
+var SECONDAIRES = ARGS.indexOf("--secondaires") >= 0 ? Number(ARGS[ARGS.indexOf("--secondaires") + 1]) || 1 : 1; // essai option B (stats du héros)
 // --lots 2 | 21 | 213 : les lots actifs du joueur appliqué (tous par défaut), pour un relevé par lot
 var LOTS = ARGS.indexOf("--lots") >= 0 ? String(ARGS[ARGS.indexOf("--lots") + 1] || "") : "123";
 var LOT1 = JOUEUR && LOTS.indexOf("1") >= 0, LOT3 = JOUEUR && LOTS.indexOf("3") >= 0;
@@ -158,6 +159,17 @@ function launch() {
     X.EquipmentManager.effectiveTapDamage = function () {
       var m = 1 + (Number(X.game.tapMult || 1) - 1) * k;
       return Math.max(1, Math.floor((X.game.tapDamage + Math.floor(X.game.equipFlatTapBonus || 0)) * m));
+    };
+  })(sb);
+  /* Essai (chantier stats du héros, option B) : --secondaires 0.6 = les caractéristiques autres que celle de la classe et
+     l'Endurance plafonnent à 60 % du plafond du Terrain (jamais sous le niveau déjà acquis). Simulé ici, le jeu ne change pas. */
+  if (SECONDAIRES < 1) (function (X) {
+    var orig = X.getUpgradeCap, MAIN = { knight: "utrain_power", ranger: "utrain_celerity", mage: "utrain_will" };
+    X.getUpgradeCap = function (u) {
+      var cap = orig.apply(this, arguments);
+      if (!u || !X.isTrainingUpgradeId(u.id) || u.id === "utrain_endurance" || u.id === (MAIN[X.game.heroId] || "utrain_power")) return cap;
+      var owned = Number((X.game.upgrades || {})[u.id] || 0);
+      return Math.min(cap, Math.max(owned, Math.floor(X.getTrainingCapLevels() * SECONDAIRES)));
     };
   })(sb);
   // v3.379.0 : compteurs du banc des potions (toutes les potions bues, or dépensé en potions de soin)
@@ -881,8 +893,9 @@ function obtainIn(res, qty, depth) {
   if (bid) {
     if (!g.ProductionManager.isBuildingUnlocked(bid)) { note(res + " : bâtiment " + bid + " verrouillé"); return false; }
     // v3.457.3 (audit P2) : un joueur récolte d'abord ; il attend ensuite au plus juste, 10 min à 1 h selon le débit
-    if (JOUEUR) entrepotPour(res, qty); // v3.613.0 (lot 2)
+    if (JOUEUR && !SANS_ATTENTE) entrepotPour(res, qty); // v3.613.0 (lot 2)
     harvest();
+    if (SANS_ATTENTE) return have() >= qty; // un joueur n'attend pas la production pour un achat facultatif
     for (var h = 0; h < 432 && have() < qty; h++) {
       var parMin = Number(g.ProductionManager.getRatePerMin(bid) || 0);
       var minutes = parMin > 0 ? Math.ceil((qty - have()) / parMin) : 60;
@@ -1350,7 +1363,7 @@ function villageJoueur(g) {
   var ids = (g.VILLAGE_BUILDING_ORDER || Object.keys(g.VILLAGE_BUILDINGS)).filter(function (id) { return !V.isMaxLevel(id) && okWhy(id); });
   var cost = function (id) { var c = V.getNextCost(id) || {}; return Object.keys(c).reduce(function (a, k) { return a + Number(c[k] || 0); }, 0); };
   ids = ids.filter(function (id) { return Number((V.getNextCost(id) || {}).gold || 0) <= g.game.gold * 0.3; }).sort(function (a, b) { return (plein && b === "warehouse") - (plein && a === "warehouse") || cost(a) - cost(b); });
-  if (ids.length && V.getBlockReason(ids[0]) === "Matériaux manquants") { SANS_LENDEMAIN++; try { ensureCost(V.getNextCost(ids[0])); } finally { SANS_LENDEMAIN--; } }
+  if (ids.length && V.getBlockReason(ids[0]) === "Matériaux manquants") { SANS_LENDEMAIN++; SANS_ATTENTE++; try { ensureCost(V.getNextCost(ids[0])); } finally { SANS_LENDEMAIN--; SANS_ATTENTE--; } }
   if (ids.length && !V.getBlockReason(ids[0]) && V.startBuild(ids[0])) { act("chantier:" + ids[0], (V.getNextCost(ids[0]) || {}).gold || 0); STATS.village.push(ids[0] + " " + (V.getLevel(ids[0]) + 1) + " (" + CURRENT_STEP + ")"); }
 }
 /* Apothicaire : les commandes livrables (recettes apprises), puis les préparations du jour, soins d'abord. */
@@ -1379,7 +1392,7 @@ function compagnonsJoueur(g) {
     if (!st) return;
     if (st.type === "scene") { if (CQM.sceneDone(q.id)) act("compagnon:scène", 0); return; }
     if (st.type === "deliver") {
-      if (!CQM.canDeliver(q)) { SANS_LENDEMAIN++; Object.keys(st.res || {}).forEach(function (r) { obtain(r, st.res[r]); }); SANS_LENDEMAIN--; }
+      if (!CQM.canDeliver(q)) { SANS_LENDEMAIN++; SANS_ATTENTE++; try { Object.keys(st.res || {}).forEach(function (r) { obtain(r, st.res[r]); }); } finally { SANS_LENDEMAIN--; SANS_ATTENTE--; } }
       if (CQM.deliver(q.id)) act("compagnon:livraison", 0);
       return;
     }
@@ -1410,7 +1423,7 @@ function entrepotPour(res, qty) {
 
 function chantierHeros(g) {
   var SR = g.SkillRanks, CM = g.CompanionManager, WM = g.WarehouseManager;
-  function mat(m, q) { if (WM.getAmount(m) >= q) return true; SANS_LENDEMAIN++; var r = obtain(m, q); SANS_LENDEMAIN--; return r && WM.getAmount(m) >= q; }
+  function mat(m, q) { if (WM.getAmount(m) >= q) return true; SANS_LENDEMAIN++; if (JOUEUR) SANS_ATTENTE++; var r; try { r = obtain(m, q); } finally { SANS_LENDEMAIN--; if (JOUEUR) SANS_ATTENTE--; } return r && WM.getAmount(m) >= q; }
   if (SR) for (var k = 0; k < 20; k++) {
     var acts = SR.kitActions().filter(function (a) { return SR.get(a.id) < SR.maxRank(); }).sort(function (a, b) { return SR.get(a.id) - SR.get(b.id); });
     var a = acts[0], p = a && SR.nextCost(a.id);
@@ -1549,6 +1562,7 @@ function boutiqueEclats(g) {
   });
 }
 
+var SANS_ATTENTE = 0; // > 0 : achat facultatif (--joueur) : on récolte et on fabrique avec le stock, sans attendre la production
 var SANS_LENDEMAIN = 0; // > 0 : achat facultatif en cours, le matériau du monde se prend sans attendre le jour suivant
 /* audit (27/10, COM-2) : élites perdues dans la journée civile (clé carte:secteur -> jour). */
 var PERDUES = {};

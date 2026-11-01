@@ -12,7 +12,7 @@ if (args[0] === "--liste" || files.length < 2 && !args.length) {
   files.forEach(function (f) { var r = JSON.parse(fs.readFileSync(path.join(DIR, f), "utf8")); console.log(f + "  ·  " + r.resume.reussies + " étapes, " + r.resume.totalH.toFixed(1) + " h, arrêt : " + (r.resume.arret ? r.resume.arret.split(" «")[0].replace(/^\S+ /, "") : "aucun")); });
   process.exit(0);
 }
-function pick(q) { var f = files.filter(function (x) { return x === q || x === q + ".json" || x.indexOf(q + "_") === 0 || x.indexOf("_" + q + "_") > 0; }).pop(); if (!f) { console.error("Relevé introuvable : " + q); process.exit(2); } return f; }
+function pick(q) { var f = files.filter(function (x) { return x === q || x === q + ".json" || x.indexOf(q + "_") === 0 || x.indexOf("_" + q + "_") > 0 || x.indexOf("_" + q + ".json") > 0; }).pop(); if (!f) { console.error("Relevé introuvable : " + q); process.exit(2); } return f; }
 var fa = args[0] ? pick(args[0]) : files[files.length - 2], fb = args[1] ? pick(args[1]) : files[files.length - 1];
 var A = JSON.parse(fs.readFileSync(path.join(DIR, fa), "utf8")), B = JSON.parse(fs.readFileSync(path.join(DIR, fb), "utf8"));
 function n(x, d) { return x == null ? "—" : Number(x).toFixed(d == null ? 1 : d); }
