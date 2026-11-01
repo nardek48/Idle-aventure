@@ -123,20 +123,37 @@ function buildCaravanChancesHTML(t, c) {
   var rk = CaravanManager.getRareKey(c && typeof c.world === "number" ? c.world : caravanMarketWorld());
   var h = '<div class="car-hope">';
   if (t.rareChance > 0 && rk) h += '<span><img src="' + WAREHOUSE_RESOURCES[rk].icon + '" alt="">'
-    + esc(_t("{p} % : {x}", { p: Math.round(t.rareChance * 100), x: _td(WAREHOUSE_RESOURCES[rk].name) })) + '</span>';
+    + esc(t.rareChance >= 1 ? _t("{x} ×{n}", { n: CARAVAN_RARE_QTY[0], x: _td(WAREHOUSE_RESOURCES[rk].name) }) // v3.611.0 (R1) : garanti
+      : _t("{p} % : {x}", { p: Math.round(t.rareChance * 100), x: _td(WAREHOUSE_RESOURCES[rk].name) })) + '</span>';
   if (t.itemChance > 0) h += '<span><img src="images/Icons/equipment_icon/casque_rare.webp" alt="">'
     + esc(_t("{p} % : un objet", { p: Math.round(t.itemChance * 100) })) + '</span>';
   return h + '</div>';
 }
 
+/* v3.611.0 (R2) : la commande du jour du marché choisi — +25 % d'or, +1 rare une fois par jour à partir de 100 unités. */
+function buildCaravanOrderHTML(world, load) {
+  if (typeof world !== "number") return "";
+  var C = CaravanManager, k = C.getOrder(world), d = k ? WAREHOUSE_RESOURCES[k] : null, rk = C.getRareKey(world), rd = rk ? WAREHOUSE_RESOURCES[rk] : null;
+  if (!d) return "";
+  var done = C.isOrderDone(world), n = Number((load || {})[k] || 0);
+  var h = '<div class="car-order' + (done ? ' is-done' : '') + '">' + renderIconOrEmojiHTML(d.icon, "car-order-ico", _td(d.name)) + '<span><b>'
+    + esc(_t("Commande du jour : {x}", { x: _td(d.name) })) + '</b><small>';
+  if (done) h += esc(_t("Honorée aujourd'hui : encore +{p} % d'or sur elle.", { p: Math.round(CARAVAN_ORDER.goldBonus * 100) }));
+  else h += esc(_t("Chargée en premier, +{p} % d'or sur elle.", { p: Math.round(CARAVAN_ORDER.goldBonus * 100) })) + (rd ? ' ' + esc(_t("À partir de {m}, +{r} {x} (une fois par jour).", { m: CARAVAN_ORDER.minUnits, r: CARAVAN_ORDER.rare, x: _td(rd.name) })) : '')
+    + (n > 0 ? ' ' + esc(_t("Dans ce chargement : {n}.", { n: formatNumber(n) })) : '');
+  return h + '</small></span></div>';
+}
+
 function buildCaravanDepartHTML() {
   var sel = getCaravanSelectedTrip(), t = CARAVAN_TRIPS[sel];
-  var load = CaravanManager.computeLoad(sel);
+  var mw = caravanMarketWorld();
+  var load = CaravanManager.computeLoad(sel, undefined, mw);
   var units = CaravanManager.getLoadUnits(load), cap = CaravanManager.getCapacity(sel);
-  var gold = CaravanManager.getLoadGold(load, sel);
+  var gold = CaravanManager.getLoadGold(load, sel, mw);
 
   var h = buildCaravanMarketsHTML() + '<div class="car-h6">' + _t("Trajet") + '</div>' + buildCaravanTripsHTML(sel);
   h += buildCaravanChancesHTML(t);
+  h += buildCaravanOrderHTML(mw, load);
 
   var keep = Math.round(CaravanManager.getKeepShare() * 100);
   h += '<div class="car-load"><div class="car-load-h"><b>' + _t("Chargement") + '</b><span>'
