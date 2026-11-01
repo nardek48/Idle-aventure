@@ -854,3 +854,12 @@
 .vev-act { display: flex; justify-content: flex-end; }
 .vev-act .kbtn { margin-bottom: 0; }
 .vev-done { font-size: 13px; font-weight: 800; color: var(--nb-green-text); }
+/* v3.606.0 (D2) : « Sarkel rachète », dans la carte du marché */
+.vev-buy { display: grid; gap: 6px; padding-top: 8px; border-top: 1px solid var(--nb-frame-light); }
+.vev-buy-h { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.vev-buy-h b { font-size: 14px; }
+.vev-buy-h small, .vev-buy-none { font-size: 12px; color: var(--c-brown-550-soft); margin: 0; }
+.vev-buy-row { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 13px; font-weight: 600; }
+.vev-buy-row .kbtn { margin-bottom: 0; min-height: 40px; padding: 0 12px; }
+.vev-buy-ico { width: 24px; height: 24px; object-fit: contain; }
+.vev-buy-row small { color: var(--c-brown-550-soft); }

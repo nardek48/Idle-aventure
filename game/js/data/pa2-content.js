@@ -47,6 +47,17 @@ var PA2_ITEMS = {
   torche: { id: "torche", name: "Torche", size: 1,
     icon: "images/Icons/scene/torch.webp",
     pro: "Tu vois une rangée de plus devant toi, et les pièges cachés des sentiers que tu peux prendre.", con: "Sa lumière attire : combats +15 % de dégâts." }, // v3.467.1 : les pièges cachés
+  /* v3.606.0 (l'artisan d'Aeswyn) : les versions fabriquées. as = l'objet dont elles prennent la place (mêmes effets, mêmes usages
+     cumulés) ; resource = prises à l'Entrepôt, rendues si leurs usages n'ont pas servi (la torche brûle : jamais rendue). */
+  corde_t: { id: "corde_t", name: "Corde tressée", as: "corde", resource: "corde_tressee", size: 1, uses: 2,
+    icon: "images/Icons/resources/corde_tressee_icon.webp",
+    pro: "Deux usages : réussite assurée sur un obstacle, voie précision. Pas sur les pièges.", con: "Fabriquée au village : prise à l'Entrepôt." },
+  trousse_t: { id: "trousse_t", name: "Trousse de maître", as: "trousse", resource: "trousse_maitre", size: 1, uses: 3,
+    icon: "images/Icons/resources/trousse_maitre_icon.webp",
+    pro: "Trois crochets : un piège désamorcé à coup sûr, sans dé ni Souffle.", con: "Fabriquée au village : prise à l'Entrepôt." },
+  torche_t: { id: "torche_t", name: "Torche résinée", as: "torche", resource: "torche_resinee", size: 1,
+    icon: "images/Icons/resources/torche_resinee_icon.webp",
+    pro: "Une rangée de plus et les pièges cachés, sans attirer les coups.", con: "Elle brûle pendant la sortie : prise à l'Entrepôt." },
   armure: { id: "armure", name: "Armure de voyage", size: 3,
     icon: "images/Icons/scene/items/item_armor.webp",
     pro: "Combats : −35 % de dégâts reçus.", con: "Chaque obstacle coûte +8 Souffle." },
@@ -102,7 +113,7 @@ var PA2_ITEMS = {
     pro: "La lave avance moins vite : une rangée tous les deux pas.",
     lockedHint: "Coffre d'expédition : atteindre la source chaude." }
 };
-var PA2_ITEM_ORDER = ["petite_ration", "ration", "grande_ration", "gourde", "outre", "craie", "lanterne", "corde", "trousse", "torche", "armure", "carte", "fiole", "bois", "veilleurs", "ecaille", "natte", "pierre_gardien", "pierre_puits", "epee_gisant", "cierge", "pierre_froide", "eclat_trieur", "galet_source"];
+var PA2_ITEM_ORDER = ["petite_ration", "ration", "grande_ration", "gourde", "outre", "craie", "lanterne", "corde", "corde_t", "trousse", "trousse_t", "torche", "torche_t", "armure", "carte", "fiole", "bois", "veilleurs", "ecaille", "natte", "pierre_gardien", "pierre_puits", "epee_gisant", "cierge", "pierre_froide", "eclat_trieur", "galet_source"];
 
 /* Pactes (V14, Q6) : malus choisis contre du butin final. */
 var PA2_PACTS = {

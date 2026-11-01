@@ -140,6 +140,23 @@ var VillageEvents = {
 
   /* ---------- Marché : l'échoppe (equip-shop-system.js) ---------- */
   marketOn: function () { return this.isType("marche"); },
+  /* v3.606.0 (D2) : pendant le marché, Sarkel rachète les ressources rares, par lots, dans la limite du marché. */
+  buybackLotsLeft: function () { var v = this.active(); return this.marketOn() ? Math.max(0, VILLAGE_EVENT_BUYBACK.maxLots - Number(v.sold || 0)) : 0; },
+  buybackList: function () {
+    if (!this.marketOn() || !window.WarehouseManager) return [];
+    var B = VILLAGE_EVENT_BUYBACK;
+    return Object.keys(B.prices).filter(function (r) { return WarehouseManager.getAmount(r) >= B.lot; })
+      .map(function (r) { return { res: r, price: B.prices[r], gold: B.prices[r] * B.lot }; });
+  },
+  sellLot: function (res) {
+    var B = VILLAGE_EVENT_BUYBACK, v = this.active();
+    if (!this.marketOn() || !B.prices[res] || this.buybackLotsLeft() <= 0 || !window.WarehouseManager || WarehouseManager.getAmount(res) < B.lot) return false;
+    WarehouseManager.removeResource(res, B.lot);
+    game.gold = Number(game.gold || 0) + B.prices[res] * B.lot;
+    v.sold = Number(v.sold || 0) + 1;
+    if (typeof saveGame === "function") saveGame();
+    return true;
+  },
   _repriceShop: function () {
     if (!window.EquipShopManager || !Array.isArray(game.equipShopStock)) return;
     game.equipShopStock.forEach(function (it) { if (it && it.slot && !it.bought) it.price = EquipShopManager.getPrice(it); });

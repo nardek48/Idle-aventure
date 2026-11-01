@@ -422,6 +422,7 @@ function pa2RenderPicker() {
       for (var k = 0; k < it.size; k++) sz += "<i></i>";
       var locked = !Pa2Run.isUnlocked(id);
       var stock = it.resource && window.WarehouseManager ? WarehouseManager.getAmount(it.resource) : null;
+      if (it.as && !stock && !n) return; // v3.606.0 : une version fabriquée n'apparaît que si l'Entrepôt en a
       var why = c.ok ? "" : (c.reason === _t("La besace est pleine.") ? _tn(it.size, "Trop grand : {n} place.", "Trop grand : {n} places.", { n: it.size }) : c.reason);
       h += '<button type="button" class="pa2-choice pa2-pickrow' + (locked ? ' is-locked' : '') + '"' + (c.ok ? '' : ' disabled') + ' onclick="pa2AddItem(\'' + id + '\')">' +
         pa2Img(it.icon) + '<span class="pa2-t">' + esc(pa2ItemName(id)) + (n ? ' <span class="pa2-dim">(×' + n + ')</span>' : '') +
