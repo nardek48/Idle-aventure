@@ -440,6 +440,7 @@ var CombatForecast = {
     if (typeof getTrainingCapLevels === "function" && window.HEROS_TRAINING_UPGRADE_IDS) {
       var cap = getTrainingCapLevels();
       capped = HEROS_TRAINING_UPGRADE_IDS.some(function (id) {
+        if (typeof isTrainingSecondaryId === "function" && isTrainingSecondaryId(id)) return false; // v3.614.0 : seules la classe et l'Endurance appellent le Terrain
         return Number((game.upgrades || {})[id] || 0) >= cap;
       });
     }

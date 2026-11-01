@@ -70,7 +70,7 @@ var releves = (fs.existsSync(DIR) ? fs.readdirSync(DIR) : []).filter(function (f
     mondes: (r.mondes || []).map(function (m) { return { monde: m.monde, h: m.h, niv: m.niv, orMonde: m.orMonde, entr: m.entr, rangsSorts: m.rangsSorts, talents: m.talents, compagnons: m.compagnons, forge: m.forge, equip: m.equip, zones: m.zones }; }) };
 }).sort(function (a, b) { return a.fichier < b.fichier ? -1 : 1; });
 // l'ordre de création compte : la référence d'abord, puis chaque lot
-var ORDRE = ["reference", "lot2", "lot21", "lot213", "joueur", "secondaires60"];
+var ORDRE = ["reference", "lot2", "lot21", "lot213", "joueur", "secondaires60", "secondaires70"];
 releves.sort(function (a, b) { var ia = ORDRE.indexOf(a.meta.nom), ib = ORDRE.indexOf(b.meta.nom); return (a.meta.date + (ia < 0 ? 9 : ia)) < (b.meta.date + (ib < 0 ? 9 : ib)) ? -1 : 1; });
 
 var tpl = fs.readFileSync(path.join(__dirname, "journal-robot.tpl.html"), "utf8");
