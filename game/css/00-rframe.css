@@ -137,3 +137,16 @@
 span.wpip > img.wpip-img { position: absolute; inset: 1px; width: calc(100% - 2px); height: calc(100% - 2px); object-fit: contain; }
 .wpip.is-here { border-color: #f0c64a; box-shadow: 0 0 0 2px rgba(240, 198, 74, .35), 0 0 8px rgba(240, 198, 74, .8); }
 .wh-tile .wpip { top: 4px; left: 4px; width: 24px; }
+
+/* v3.615.0 (atelier ilvl, variante C) : niveau d'objet en coin bas droit de l'icône, liseré de la rareté */
+.ilc { position: absolute; z-index: 2; right: 2%; bottom: 2%; min-width: 22px; height: 18px; padding: 0 4px; border-radius: 6px; background: var(--c-brown-900-soft, rgb(29, 20, 11));
+  color: var(--c-white-50-soft); border: 1.5px solid var(--c-bronze-500); font: 800 11px/15px system-ui, -apple-system, sans-serif; text-align: center; font-variant-numeric: tabular-nums; pointer-events: none; }
+.ilc.rarity-green { border-color: var(--c-green-650-2); } .ilc.rarity-rare { border-color: rgb(47, 107, 179); }
+.ilc.rarity-epic { border-color: rgb(123, 70, 176); } .ilc.rarity-legendary { border-color: rgb(208, 129, 31); }
+.wh-tile .ilc { bottom: 26px; right: 4px; }
+.ilpill { display: inline-block; padding: 1px 8px; border-radius: 999px; background: var(--c-brown-900-soft, rgb(29, 20, 11)); color: var(--c-white-50-soft); border: 1.5px solid var(--c-bronze-500); font: 800 12px/17px system-ui, -apple-system, sans-serif; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ilpill.rarity-green { border-color: var(--c-green-650-2); } .ilpill.rarity-rare { border-color: rgb(47, 107, 179); }
+.ilpill.rarity-epic { border-color: rgb(123, 70, 176); } .ilpill.rarity-legendary { border-color: rgb(208, 129, 31); }
+.eq-detail-ilvl { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 6px; font-size: 12px; color: var(--c-brown-700-soft); font-variant-numeric: tabular-nums; }
+.eq-ilvl-delta { font-size: 12px; font-weight: 800; white-space: nowrap; }
+.eq-ilvl-delta.is-up { color: var(--c-green-700-soft); } .eq-ilvl-delta.is-down { color: rgb(168, 69, 47); }

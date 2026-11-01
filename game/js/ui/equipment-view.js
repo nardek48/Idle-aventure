@@ -190,7 +190,9 @@ function buildCompatibleItemsListHTML(slot) {
     h += '<div class="eq-compat-row" onclick="openEquipCompareSheet(\'' + esc(item.uid) + '\')">';
     h += '<div class="eq-compat-icon">' + buildEquipmentIconHTML(item, "eq-compat-icon-img rframe") + '</div>';
     h += '<div class="eq-compat-info">';
-    h += '<div class="eq-compat-name rarity-' + esc(item.rarity) + '">' + esc(_td(item.name)) + '</div>';
+    var dIl = equipped && typeof getItemLevel === "function" ? getItemLevel(item) - getItemLevel(equipped) : 0; // v3.615.0 : écart d'ilvl avec la pièce portée
+    h += '<div class="eq-compat-name rarity-' + esc(item.rarity) + '">' + esc(_td(item.name))
+      + (dIl ? ' <span class="eq-ilvl-delta ' + (dIl > 0 ? "is-up" : "is-down") + '">' + esc(_t("ilvl {d}", { d: (dIl > 0 ? "\u25b2 +" : "\u25bc ") + dIl })) + '</span>' : '') + '</div>';
     h += '<div class="eq-compat-stat">' + esc(formatEquipmentStat(item));
     if (baseDelta != null && baseDelta !== 0) {
       h += ' <span class="eq-compat-delta ' + (baseDelta > 0 ? "is-up" : "is-down") + '">'
@@ -391,6 +393,17 @@ function buildUnifiedTileHTML(entry) {
    joueur n'a aucun moyen de comprendre pourquoi. Un objet d'une sauvegarde
    antérieure n'a pas de `worldIndex` : il est de fait de Forêt, et on l'affiche
    comme tel plutôt que de laisser un trou. */
+/* v3.615.0 (atelier ilvl, variante C) : dans la fiche, « ilvl 57 » et le détail du calcul. */
+function buildItemLevelLineHTML(item) {
+  var p = typeof getItemLevelParts === "function" ? getItemLevelParts(item) : null;
+  if (!p) return "";
+  var w = window.WORLDS && WORLDS[p.world] ? _td(WORLDS[p.world].name).split(" ")[0] : "";
+  var parts = [w + " " + p.monde, String(_td((window.RARITY_LABELS || {})[item.rarity || "common"] || "") || "").toLowerCase() + " +" + p.rarete, _t("tirage +{n}", { n: p.tirage })];
+  if (p.aether) parts.push(_t("Aether +{n}", { n: p.aether }));
+  return '<div class="eq-detail-ilvl"><span class="ilpill rarity-' + esc(item.rarity) + '">' + esc(_t("ilvl {n}", { n: p.total })) + '</span><span>' + esc(parts.join(" · ")) + '</span></div>';
+}
+window.buildItemLevelLineHTML = buildItemLevelLineHTML;
+
 function buildItemOriginHTML(item) {
   if (!item) return "";
   // v3.461.0 (N-E) : objet tiré au-delà du plafond d'un niveau de donjon
@@ -398,14 +411,14 @@ function buildItemOriginHTML(item) {
   // v3.492.11 (L1, retour Seb) : sur les 7 emplacements, plus seulement ceux qui suivent l'échelle de monde
   var idx = (typeof item.worldIndex === "number") ? item.worldIndex : 0;
   var world = (window.WORLDS && WORLDS[idx]) ? WORLDS[idx].name : null;
-  if (!world) return aether;
+  if (!world) return buildItemLevelLineHTML(item) + aether;
   // v3.492.12 (P1) : l'affinité de monde, active ou non selon où se tient le héros
   var A = window.EQUIP_WORLD_AFFINITY, aff = "";
   if (A && idx >= A.fromWorld) {
     var n = Math.round(A.bonus * 100), actif = typeof getItemAffinityMult === "function" && getItemAffinityMult(item) > 1;
     aff = '<div class="eq-detail-hint">✦ ' + esc(actif ? _t("Affinité : +{n} % ici, dans son monde", { n: n }) : _t("Affinité : +{n} % en {w}", { n: n, w: _td(world) })) + '</div>';
   }
-  return '<div class="eq-detail-hint"><img class=ico-inline src=images/Icons/quests/quest_resources.webp> ' + esc(_t("Trouvé en {w}", { w: _td(world) })) + '</div>' + aff + aether;
+  return buildItemLevelLineHTML(item) + '<div class="eq-detail-hint"><img class=ico-inline src=images/Icons/quests/quest_resources.webp> ' + esc(_t("Trouvé en {w}", { w: _td(world) })) + '</div>' + aff + aether;
 }
 window.buildItemOriginHTML = buildItemOriginHTML;
 

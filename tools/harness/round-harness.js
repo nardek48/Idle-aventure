@@ -21235,6 +21235,25 @@ console.log("\n[409] v3.614.0 — Stats du héros, option B : caractéristiques 
   } catch (err) { ok(false, "[409] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[410] v3.615.0 — Niveau d'objet (ilvl), formule B, affichage C (atelier ilvl)");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
+    var mk = function (slot, rar, w, val, ae) { return { slot: slot, rarity: rar, worldIndex: w, value: val, aether: ae || 0, affixes: [] }; };
+    var cfg = g.EQUIPMENT_SLOT_CONFIG.weapon, r = cfg.ranges.epic, sc = g.getEquipWorldScale(4);
+    ok(g.getItemLevel(mk("weapon", "common", 0, cfg.ranges.common[0])) === 10, "arme commune de Forêt, bas de fourchette : ilvl 10");
+    ok(g.getItemLevel(mk("weapon", "epic", 4, r[1] * sc)) === 57 && g.getItemLevel(mk("weapon", "epic", 4, r[0] * sc)) === 56, "épique de la Montagne : 57 en haut de fourchette, 56 en bas");
+    ok(g.getItemLevel(mk("weapon", "epic", 4, r[1] * sc, 3)) === 60, "touchée par l'Aether niveau 3 : +3");
+    ok(g.getItemLevel(mk("helmet", "legendary", 5, g.EQUIPMENT_SLOT_CONFIG.helmet.ranges.legendary[1] * (g.EQUIPMENT_SLOT_CONFIG.helmet.scalesWithWorld ? g.getEquipWorldScale(5) : 1))) === 69, "légendaire de la Tour, haut de fourchette : 69");
+    var vrai = g.generateEquipmentItem("armor", "rare", 2);
+    ok(g.getItemLevel(vrai) >= 34 && g.getItemLevel(vrai) <= 35, "un vrai tirage (armure rare des Ruines) : 34 ou 35 (" + g.getItemLevel(vrai) + ")");
+    var ic = g.buildEquipmentIconHTML(vrai, "x");
+    ok(/class="ilc rarity-rare"/.test(ic) && /wpip/.test(ic), "icône : le coin ilvl, en face de la pastille du monde");
+    ok(/class="ilpill rarity-rare">ilvl 3[45]</.test(g.buildItemOriginHTML(vrai)) && /Ruines 30/.test(g.buildItemOriginHTML(vrai)), "fiche : « ilvl » et le détail du calcul");
+    ok(g.getItemLevel({}) === 0 && g.buildItemLevelBadgeHTML(null) === "", "sans pièce : rien");
+  } catch (err) { ok(false, "[410] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

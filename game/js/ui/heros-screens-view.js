@@ -225,6 +225,12 @@
   function herosOpenSlotSheet(slot) { selectedEquipSlot = slot; openHerosSheet("slot"); }
 
   function setLineHTML() {
+    var portes = Object.keys(game.equipped || {}).map(function (k) { return game.equipped[k]; }).filter(Boolean);
+    var moy = portes.length && typeof getItemLevel === "function" ? Math.round(portes.reduce(function (a, it) { return a + getItemLevel(it); }, 0) / portes.length) : 0;
+    var ilv = moy ? '<div class="hs-set hs-ilvl">' + esc(_t("Équipement porté : ilvl moyen {n}", { n: moy })) + '</div>' : ""; // v3.615.0
+    return ilv + setLineHTML0();
+  }
+  function setLineHTML0() {
     var active = (EquipmentManager.getActiveSetBonuses ? EquipmentManager.getActiveSetBonuses() : []);
     var ico = img("images/Icons/equipment_slots/set_bonus.webp", "hs-mini-ico");
     if (!active.length) return '<div class="hs-set is-off">' + ico + _t("Aucune panoplie active") + '</div>';
@@ -321,7 +327,7 @@
     var it = e.item, p = (typeof getEquipmentIconPath === "function") ? getEquipmentIconPath(it) : "";
     return '<button type="button" class="wh-tile hs-btile rarity-' + esc(it.rarity) + '" onclick="herosOpenItem(\'' + esc(e.key) + '\')">'
       + (p ? '<img class="hs-btile-img" src="' + esc(p) + '" alt="">' : '<span class="hs-btile-img">' + renderIcon("equipment", it.icon) + '</span>')
-      + cmpBadge(cmpState(it)) + buildItemWorldPipHTML(it) // v3.492.13 (L2) : pastille du monde
+      + cmpBadge(cmpState(it)) + buildItemWorldPipHTML(it) + buildItemLevelBadgeHTML(it) // v3.492.13 (L2) : pastille du monde ; v3.615.0 : ilvl
       + '<span class="wh-tile-band"><span class="wh-tile-name rarity-' + esc(it.rarity) + '">' + esc(_td(it.name)) + '</span></span></button>';
   }
 

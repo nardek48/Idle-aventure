@@ -8052,6 +8052,14 @@ I18n.register("en", {
   "Recevoir": "Receive",
   "La Palissade freine {p} % d'échecs de plus sur les cartes vivantes, le temps du compte.": "The Palisade stops {p}% more failures on the living maps, while the count holds.",
   "Et ce matin ?": "And this morning?",
+  // v3.615.0 : niveau d'objet (ilvl)
+  "Niveau d'objet {n}": "Item level {n}",
+  "ilvl {n}": "ilvl {n}",
+  "tirage +{n}": "roll +{n}",
+  "Aether +{n}": "Aether +{n}",
+  "ilvl {d}": "ilvl {d}",
+  "Équipement porté : ilvl moyen {n}": "Gear worn: average ilvl {n}",
+  "Chaque pièce d'équipement a maintenant un niveau d'objet (ilvl) : en coin sur son icône, et détaillé dans sa fiche. Environ 10 par monde, plus selon la rareté.": "Each piece of gear now has an item level (ilvl): in the corner of its icon, and detailed on its sheet. About 10 per world, more by rarity.",
   // v3.614.0 : caractéristiques secondaires à 70 % du plafond du Terrain
   "{p} % du Terrain : ta caractéristique de classe et l'Endurance montent plus haut": "{p}% of the Training Ground: your class stat and Endurance go higher",
   "Entraînement : ta caractéristique de classe et l'Endurance montent jusqu'au plafond du Terrain ; les trois autres s'arrêtent à 70 % de ce plafond.": "Training: your class stat and Endurance go up to the Training Ground cap; the other three stop at 70% of that cap.",
