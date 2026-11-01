@@ -382,8 +382,9 @@ function farmDonjonsJoueur(g) {
   if (!D || SAVING) return;
   D.checkTicketReset();
   (g.DUNGEONS || []).forEach(function (d) {
-    if (!D.isUnlocked(d.id) || !D.hasRunLeft(d.id) || g.game.dungeonRun.active || D.isStoryTicketFree(d.id)) return;
-    var fini = (g.game.dungeonTierCleared || {})[d.id];
+    // seulement un donjon déjà fini une fois : les autres, l'Histoire les ouvre et les fait (un héros trop faible y meurt)
+    if (!D.isUnlocked(d.id) || !(g.game.dungeonTierCleared || {})[d.id] || !D.hasRunLeft(d.id) || g.game.dungeonRun.active || D.isStoryTicketFree(d.id)) return;
+    var fini = true;
     healUp();
     var t0 = CLOCK.offset, or0 = g.game.gold;
     playDungeonOnce(d.id, false, false, fini ? niveauAuMonde(g, d) : undefined);

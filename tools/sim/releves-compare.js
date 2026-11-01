@@ -1,7 +1,7 @@
 "use strict";
 /* tools/sim/releves-compare.js — compare deux relevés de campagne (tools/sim/releves/, écrits par campagne-harness.js --releve <nom>).
    USAGE : node tools/sim/releves-compare.js                 les deux derniers relevés
-           node tools/sim/releves-compare.js <A> <B>         deux relevés (nom de fichier, ou début de nom)
+           node tools/sim/releves-compare.js <A> <B>         deux relevés (nom du relevé, ex. reference, lot2, ou nom de fichier)
            node tools/sim/releves-compare.js --liste         la liste des relevés */
 var fs = require("fs"), path = require("path");
 var DIR = path.join(__dirname, "releves");
@@ -12,7 +12,7 @@ if (args[0] === "--liste" || files.length < 2 && !args.length) {
   files.forEach(function (f) { var r = JSON.parse(fs.readFileSync(path.join(DIR, f), "utf8")); console.log(f + "  ·  " + r.resume.reussies + " étapes, " + r.resume.totalH.toFixed(1) + " h, arrêt : " + (r.resume.arret ? r.resume.arret.split(" «")[0].replace(/^\S+ /, "") : "aucun")); });
   process.exit(0);
 }
-function pick(q) { var f = files.filter(function (x) { return x.indexOf(q) === 0 || x === q; }).pop(); if (!f) { console.error("Relevé introuvable : " + q); process.exit(2); } return f; }
+function pick(q) { var f = files.filter(function (x) { return x === q || x === q + ".json" || x.indexOf(q + "_") === 0 || x.indexOf("_" + q + "_") > 0; }).pop(); if (!f) { console.error("Relevé introuvable : " + q); process.exit(2); } return f; }
 var fa = args[0] ? pick(args[0]) : files[files.length - 2], fb = args[1] ? pick(args[1]) : files[files.length - 1];
 var A = JSON.parse(fs.readFileSync(path.join(DIR, fa), "utf8")), B = JSON.parse(fs.readFileSync(path.join(DIR, fb), "utf8"));
 function n(x, d) { return x == null ? "—" : Number(x).toFixed(d == null ? 1 : d); }
