@@ -82,6 +82,14 @@ var CompanionTalkManager = {
     if (!D || !D.monde || !w || !D.monde[w]) return null;
     return { key: "s_monde_" + w, world: w, lines: D.monde[w] };
   },
+  /* v3.607.0 (E3, S2) : « Et ce matin ? » — l'événement du village en cours, vu par le compagnon. */
+  topicMatin: function (companionId) {
+    var V = window.VillageEvents, v = V && V.active(), e = V && V.def(), D = (typeof companionMorningData === "function" ? companionMorningData() : {})[companionId];
+    if (!e || !D) return null;
+    var type = e.type === "cadeau" || e.type === "palissade" ? "demande" : e.type;
+    if (!D[type]) return null;
+    return { key: "s_matin_" + v.id, event: e, lines: [{ w: companionId, t: D[type] }] };
+  },
   /* v3.605.0 (T2) : « Et les autres ? » — les compagnons recrutés (et pas partis) dont il a un avis. */
   topicAvis: function (companionId) {
     var D = (typeof companionAvisData === "function" ? companionAvisData() : {})[companionId], CM = window.CompanionManager;
@@ -93,8 +101,8 @@ var CompanionTalkManager = {
   },
   // Un sujet nouveau (pastille) : conversation de l'histoire, ou souvenir / monde / avis pas encore écouté.
   hasNewTopic: function (companionId) {
-    var t = this.topicToi(companionId), m = this.topicMonde(companionId), self = this;
-    return !!(this.availableFor(companionId) || (t && !this.heard(companionId, t.key)) || (m && !this.heard(companionId, m.key))
+    var t = this.topicToi(companionId), m = this.topicMonde(companionId), mt = this.topicMatin(companionId), self = this;
+    return !!(this.availableFor(companionId) || (t && !this.heard(companionId, t.key)) || (m && !this.heard(companionId, m.key)) || (mt && !this.heard(companionId, mt.key))
       || this.topicAvis(companionId).some(function (a) { return !self.heard(companionId, a.key); }));
   },
 

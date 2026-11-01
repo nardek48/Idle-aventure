@@ -323,6 +323,8 @@ function campSoirWorld() { return Math.max(0, Math.min(5, Number((window.WorldMa
 function campSoirPick(ids) {
   var all = campSoirData(), D = all[campSoirWorld()] || all[0], any = campSoirAny(), pool = D.lieu.slice();
   ids.forEach(function (id) { (D[id] || (any[id] && any[id].soir) || []).forEach(function (t) { pool.push(t); }); });
+  var ev = window.VillageEvents && VillageEvents.def(), evs = ev && typeof villageEventSoirData === "function" ? villageEventSoirData() : null; // v3.607.0 (E3) : l'événement en cours
+  if (evs) { var et = ev.type === "cadeau" || ev.type === "palissade" ? "demande" : ev.type; if (evs[et]) { pool.push(evs[et]); pool.push(evs[et]); } }
   return pool[Math.floor(Math.random() * pool.length)] || "";
 }
 function campSoirTapText(id) {

@@ -812,7 +812,7 @@ var LivingMapManager = {
   getBrakeChance: function (mapId) {
     if (mapId && this.getPlan(mapId) === "finir") return 1; // v3.433.0 : la cité figée ne s'éboule plus
     var per = Number((this.getRules().palisade || {}).brakePerLevel || 0);
-    var brake = per * this.getPalisadeLevel();
+    var brake = per * this.getPalisadeLevel() + (window.VillageEvents ? VillageEvents.brakeBonus() : 0); // v3.607.0 : le compte juste d'Aldric
     var map = mapId ? this.getMap(mapId) : null;
     var self = this;
     ((map && map.choiceBrakes) || []).forEach(function (cb) {

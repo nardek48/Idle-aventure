@@ -59,8 +59,8 @@ function talkTopic(kind) {
     if (!av) return;
     M.markHeard(cid, av.key);
     lines = av.lines;
-  } else if (kind === "toi" || kind === "monde") {
-    var tp = kind === "toi" ? M.topicToi(cid) : M.topicMonde(cid);
+  } else if (kind === "toi" || kind === "monde" || kind === "matin") {
+    var tp = kind === "toi" ? M.topicToi(cid) : kind === "monde" ? M.topicMonde(cid) : M.topicMatin(cid); // v3.607.0 : « Et ce matin ? »
     if (!tp) return;
     M.markHeard(cid, tp.key);
     lines = tp.lines;
@@ -95,6 +95,8 @@ function talkMenuTopics(cid) {
   var toi = M.topicToi(cid), monde = M.topicMonde(cid), q = companionTalkActiveQuest(cid);
   if (toi) out.push({ k: "toi", icon: "images/Icons/camp/topic_self.webp", t: _t("Parle-moi de toi"), s: _t("Un souvenir de {n}", { n: name }), isNew: !M.heard(cid, toi.key) });
   if (monde) { var w = WORLDS[M._worldIdx(monde.world)]; out.push({ k: "monde", icon: "images/Icons/camp/topic_world.webp", t: _t("Et ce monde-ci ?"), s: w ? _td(w.name) : "", isNew: !M.heard(cid, monde.key) }); }
+  var matin = M.topicMatin(cid); // v3.607.0 (E3, S2) : l'événement du village en cours
+  if (matin) out.push({ k: "matin", icon: VILLAGE_EVENT_ICONS[matin.event.type] || "", t: _t("Et ce matin ?"), s: VillageEvents.titleOf(matin.event), isNew: !M.heard(cid, matin.key) });
   var avis = M.topicAvis(cid); // v3.605.0 (T2)
   if (avis.length) out.push({ k: "autres", icon: "images/Icons/camp/topic_others.webp", t: _t("Et les autres ?"), s: avis.map(function (a) { return _td(getCompanionDef(a.other).name); }).join(", "), isNew: avis.some(function (a) { return !M.heard(cid, a.key); }) });
   if (q) { var Q = CompanionQuestManager; out.push({ k: "quete", icon: "images/Icons/camp/topic_quest.webp", t: _t("Ta quête"), s: _td(q.title) + " · " + (Q.stateOf(q.id).s + 1) + " / " + q.steps.length, seen: true }); }
