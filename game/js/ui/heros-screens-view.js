@@ -275,7 +275,7 @@
   function buildHerosEquippedHTML() {
     if (!selectedEquipSlot) selectedEquipSlot = "weapon";
     // v3.426.3 (retour Seb) : les bonus de panoplie passent SOUS la silhouette.
-    return '<div class="hs-eq" style="background-image:url(' + silhouette() + ')">' + SLOTS.map(slotBtn).join("") + '</div>'
+    return '<div class="hs-eq" style="background-image:url(' + silhouette() + ')">' + SLOTS.map(function (sl) { return slotBtn(sl); }).join("") /* v3.615.1 : map passait l'index comme action (onclick="6('boots')") */ + '</div>'
       + '<div class="hs-sets">' + setLineHTML() + '</div>'
       + slotDetailHTML();
   }
