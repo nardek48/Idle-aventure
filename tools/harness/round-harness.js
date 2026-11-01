@@ -21097,6 +21097,35 @@ console.log("\n[404] v3.609.0 — Le Grand Ouvrage automatique : au-delà du seu
   } catch (err) { ok(false, "[404] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[405] v3.610.0 — Caravane : la part laissée au village se règle (10 à 75 %), retour de Seb (caravanes bloquées au Désert)");
+(function () {
+  var C = g.CaravanManager, W = g.WarehouseManager;
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; VillageBuildingManager.ensure(); game.village.buildings.hall.level = 1; game.worldsEverReached = { 0: true };");
+    ok(C.getKeepShare() === 0.5, "par défaut : la moitié du plafond reste au village");
+    var cap = W.getCap("ble");
+    run("ResourceReserveManager.setReserve('ble', 0); game.resources.ble = " + Math.floor(cap * 0.3) + ";");
+    ok(C.getSpare("ble") === 0, "blé à 30 % du plafond : rien à charger à 50 %");
+    for (var i = 0; i < 4; i++) C.stepKeepShare(-1);
+    ok(C.getKeepShare() === 0.3 && C.getSpare("ble") === 0, "part baissée à 30 % : toujours rien au-dessus");
+    C.stepKeepShare(-1);
+    ok(C.getKeepShare() === 0.25 && C.getSpare("ble") === Math.floor(cap * 0.3) - Math.ceil(cap * 0.25), "à 25 % : la caravane prend ce qui dépasse");
+    for (i = 0; i < 9; i++) C.stepKeepShare(-1);
+    ok(C.getKeepShare() === 0.1, "borne basse : 10 %");
+    for (i = 0; i < 20; i++) C.stepKeepShare(1);
+    ok(C.getKeepShare() === 0.75, "borne haute : 75 %");
+    C.stepKeepShare(-10); C.stepKeepShare(-10);
+    run("ResourceReserveManager.setReserve('ble', " + Math.floor(cap * 0.28) + ");");
+    ok(C.getSpare("ble") === Math.floor(cap * 0.3) - Math.floor(cap * 0.28), "la réserve protégée l'emporte sur la part choisie");
+    var sd = JSON.parse(JSON.stringify(g.buildSaveData()));
+    ok(sd.village && sd.village.caravanKeep === 0.1, "réglage sauvegardé avec game.village");
+    var html = g.buildCaravanDepartHTML();
+    ok(/Laisser au village : 10 % du plafond/.test(html) && /stepCaravanKeep\(1\)/.test(html), "fiche : la part réglable");
+    run("game.village.caravanKeep = 3;"); ok(C.getKeepShare() === 0.75, "valeur hors bornes ramenée à 75 %");
+    run("ResourceReserveManager.setReserve('ble', 0); delete game.village.caravanKeep;");
+  } catch (err) { ok(false, "[405] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

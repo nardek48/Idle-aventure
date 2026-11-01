@@ -138,8 +138,13 @@ function buildCaravanDepartHTML() {
   var h = buildCaravanMarketsHTML() + '<div class="car-h6">' + _t("Trajet") + '</div>' + buildCaravanTripsHTML(sel);
   h += buildCaravanChancesHTML(t);
 
+  var keep = Math.round(CaravanManager.getKeepShare() * 100);
   h += '<div class="car-load"><div class="car-load-h"><b>' + _t("Chargement") + '</b><span>'
     + formatNumber(units) + ' / ' + formatNumber(cap) + '</span></div>';
+  // v3.610.0 : la part laissée au village se règle (10 à 75 %)
+  h += '<div class="car-keep"><span>' + _t("Laisser au village : {p} % du plafond", { p: keep }) + '</span><span class="go-step">'
+    + '<button type="button" onclick="stepCaravanKeep(-1)"' + (keep <= Math.round(CARAVAN_KEEP_MIN * 100) ? ' disabled' : '') + ' aria-label="' + _t("Moins") + '">−</button>'
+    + '<button type="button" onclick="stepCaravanKeep(1)"' + (keep >= Math.round(CARAVAN_KEEP_MAX * 100) ? ' disabled' : '') + ' aria-label="' + _t("Plus") + '">+</button></span></div>';
   if (units > 0) {
     h += '<div class="car-chips">';
     Object.keys(load).forEach(function (k) {
@@ -148,9 +153,9 @@ function buildCaravanDepartHTML() {
     });
     h += '</div>';
   } else {
-    h += '<div class="car-empty">' + _t("Rien à vendre : aucune matière brute ne dépasse la moitié de son plafond.") + '</div>';
+    h += '<div class="car-empty">' + _t("Rien à vendre : aucune matière brute ne dépasse {p} % de son plafond. Baisse la part laissée au village pour charger quand même.", { p: keep }) + '</div>';
   }
-  h += '<p class="car-why">' + _t("La caravane prend d'abord ce qui est au plafond, à parts égales. Elle laisse toujours la moitié du plafond et la réserve protégée de l'Entrepôt.") + '</p></div>';
+  h += '<p class="car-why">' + _t("La caravane prend d'abord ce qui est au plafond, à parts égales. Elle laisse toujours la part choisie et la réserve protégée de l'Entrepôt.") + '</p></div>';
 
   var reason = CaravanManager.getBlockReason(sel, caravanMarketWorld());
   h += '<div class="car-go"><button type="button" class="kbtn primary"' + (reason ? ' disabled' : ' onclick="departCaravanFromSheet()"') + '>'
@@ -263,6 +268,13 @@ function goToCaravanHall() {
   if (typeof openVillageBuildingSheet === "function") openVillageBuildingSheet("hall");
 }
 window.goToCaravanHall = goToCaravanHall;
+
+function stepCaravanKeep(dir) {
+  CaravanManager.stepKeepShare(dir);
+  if (typeof saveGame === "function") saveGame();
+  rerenderCaravanSheet();
+}
+window.stepCaravanKeep = stepCaravanKeep;
 
 function departCaravanFromSheet() {
   if (CaravanManager.depart(getCaravanSelectedTrip(), caravanMarketWorld())) {
