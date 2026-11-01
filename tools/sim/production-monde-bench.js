@@ -24,6 +24,7 @@ function add(acc, cost, n) { Object.keys(cost || {}).forEach(function (k) { var 
 var g = boot();
 vm.runInContext("fullResetState(); game.playerName='Banc'; game.heroId='knight';", g);
 ["renderPanel", "renderHud", "renderAll", "saveGame", "showToast", "addLog"].forEach(function (f) { g[f] = function () {}; });
+var LIN = (process.argv.join(" ").match(/--lin=([\d.]+)/) || [])[1]; if (LIN) g.PRODUCTION_PLOTS_SHARED.linearPerLevel = Number(LIN); // débit des zones par niveau
 var VB = g.VillageBuildingManager, PPS = g.ProductionPlotsSystem; VB.ensure();
 var prevVillage = {}, prevRows = 0, prevZL = 1, prevWL = 1, out = [];
 for (var world = 0; world < 5; world++) {

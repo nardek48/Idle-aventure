@@ -20145,16 +20145,16 @@ console.log("\n[376] v3.561.0 — Le Grand Ouvrage : verser le surplus, +1 % d'o
 (function () {
   var GO = g.GrandOuvrage, W = g.WarehouseManager, sv = { wr: game.worldsEverReached, vil: game.village && game.village.grandOuvrage };
   try {
-    game.worldsEverReached = { 0: true, 1: true };
-    ok(!GO.isOpen() && g.buildGrandOuvrageCardHTML() === "", "fermé avant les Ruines : pas de carte au Village");
+    game.worldsEverReached = { 0: true };
+    ok(!GO.isOpen() && g.buildGrandOuvrageCardHTML() === "", "fermé avant le Désert (v3.609.0) : pas de carte au Village");
     game.worldsEverReached = { 0: true, 1: true, 2: true };
-    game.village.grandOuvrage = { points: 0 };
+    game.village.grandOuvrage = { points: 0, v: 2 };
     ok(GO.isOpen() && /Le Grand Ouvrage/.test(g.buildGrandOuvrageCardHTML()), "ouvert aux Ruines : la carte en tête du Village");
     ok(GO.getValue("bois") === 1 && GO.getValue("planche") === 5 && GO.getValue("bloc") === 8 && GO.getValue("pierre_errante") === 25 && GO.getValue("cle_de_voute") === 85,
       "valeur : brute 1, planche 5, bloc 8, matériau de monde 25, Clé de voûte 85 (" + ["planche", "bloc", "pain", "acier", "ration", "cle_de_voute"].map(function (k) { return k + " " + GO.getValue(k); }).join(", ") + ")");
-    ok(GO.getTierCost(1) === 2000 && GO.getTierCost(10) === Math.round(2000 * Math.pow(1.12, 9)), "palier n : 2 000 × 1,12^(n−1)");
-    var p = GO.getProgress(2000 + 2240 + 100);
-    ok(p.tier === 2 && p.into === 100 && p.cost === 2509, "progression : 2 paliers, 100 points dans le 3e (coût 2 509)");
+    ok(GO.getTierCost(1) === 2000 && GO.getTierCost(10) === Math.round(2000 * Math.pow(1.18, 9)), "palier n : 2 000 × 1,18^(n−1) (v3.609.0)");
+    var p = GO.getProgress(2000 + 2360 + 100);
+    ok(p.tier === 2 && p.into === 100 && p.cost === 2785, "progression : 2 paliers, 100 points dans le 3e (coût 2 785)");
     // le surplus : au-dessus de la moitié du plafond et de la réserve
     var cap = W.getCap("bois");
     W.addResource("bois", cap, true);
@@ -21041,6 +21041,60 @@ console.log("\n[403] v3.607.0 — Événements du village : les suites (S1) et l
     ok(["rumeur", "demande", "marche", "fete"].every(function (k) { return soir[k]; }), "une phrase du soir par type d'événement");
   } catch (err) { ok(false, "[403] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   if (g.talkScene) g.closeCompanionTalk(false);
+})();
+
+console.log("\n[404] v3.609.0 — Le Grand Ouvrage automatique : au-delà du seuil, le surplus brut y part (chantier surproduction, option C)");
+(function () {
+  var GO = g.GrandOuvrage, W = g.WarehouseManager, PPS = g.ProductionPlotsSystem;
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
+    game.worldsEverReached = { 0: true, 1: true };
+    ok(GO.isOpen() && GO.isAuto() && GO.getSeuil() === 0.8, "ouvert dès le Désert ; automatique à 80 % par défaut");
+    // conversion des parties d'avant : même palier, même avancée
+    var old = 0; for (var k = 1; k <= 10; k++) old += Math.round(2000 * Math.pow(1.12, k - 1));
+    game.village.grandOuvrage = { points: old + Math.round(2000 * Math.pow(1.12, 10) / 2) };
+    var pr = GO.getProgress();
+    ok(pr.tier === 10 && Math.abs(pr.into / pr.cost - 0.5) < 0.01 && game.village.grandOuvrage.v === 2, "ancienne partie au palier 10 et demi : palier 10 et demi gardés sur la nouvelle courbe");
+    ok(GO.getPoints() === (function () { var n = game.village.grandOuvrage.points; GO.getTier(); return n; })(), "conversion faite une seule fois");
+    // versement à l'entrée
+    game.village.grandOuvrage = { points: 0, v: 2 };
+    run("ResourceReserveManager.setReserve('bois', 0); game.resources.bois = 0;");
+    var cap = W.getCap("bois"), keep = Math.floor(cap * 0.8);
+    var got = W.addResource("bois", cap + 500, true);
+    ok(W.getAmount("bois") === keep && GO.getPoints() === cap + 500 - keep && got === cap + 500, "bois au-delà de 80 % : le stock reste à 80 %, le reste devient des points, rien n'est perdu");
+    ok(W.getFreeSpace("bois") === Infinity && W.getFreeSpace("planche") !== Infinity, "place libre infinie pour une matière brute, pas pour un produit");
+    var pl0 = GO.getPoints(); run("game.resources.planche = 0;"); W.addResource("planche", W.getCap("planche") + 50, true);
+    ok(GO.getPoints() === pl0 && W.getAmount("planche") === W.getCap("planche"), "un produit fabriqué (planche) n'est jamais versé automatiquement");
+    // la réserve protégée l'emporte sur le seuil
+    run("ResourceReserveManager.setReserve('fer', " + Math.floor(W.getCap("fer") * 0.9) + "); game.resources.fer = 0;");
+    W.addResource("fer", W.getCap("fer"), true);
+    ok(W.getAmount("fer") === Math.max(Math.floor(W.getCap("fer") * 0.8), g.ResourceReserveManager.getReserve("fer")), "la réserve protégée reste au-dessus du seuil");
+    run("ResourceReserveManager.setReserve('fer', 0);");
+    // récolte : les zones se vident, le surplus part
+    run("game.explorationProgression = game.explorationProgression || {}; Object.keys(PRODUCTION_UNLOCK_FLAGS).forEach(function (id) { game.explorationProgression[PRODUCTION_UNLOCK_FLAGS[id]] = true; });");
+    var b = "sawmill", plots = PPS.getPlots(b); plots[0].state = "open"; plots[0].stock = 3000;
+    run("game.resources.bois = " + keep + ";");
+    var gp = GO.getPoints(); g.ProductionManager._harvestSilent(b);
+    ok(Math.floor(plots[0].stock) === 0 && W.getAmount("bois") === keep && GO.getPoints() === gp + 3000, "récolte avec l'Entrepôt au seuil : la zone se vide, tout part au Grand Ouvrage");
+    // seuil réglable, bornes 70-95 %
+    for (var i = 0; i < 6; i++) GO.stepSeuil(-1);
+    ok(GO.getSeuil() === 0.7 && W.getAmount("bois") === Math.floor(cap * 0.7), "seuil baissé jusqu'à 70 % (borne) : le stock redescend aussitôt");
+    for (i = 0; i < 9; i++) GO.stepSeuil(1);
+    ok(GO.getSeuil() === 0.95, "seuil monté jusqu'à 95 % (borne)");
+    // désactivé : l'ancienne règle (plafond, perte)
+    GO.setAuto(false); run("game.resources.bois = 0;");
+    var gp2 = GO.getPoints(); W.addResource("bois", cap + 100, true);
+    ok(!GO.isAuto() && W.getAmount("bois") === cap && GO.getPoints() === gp2 && W.getFreeSpace("bois") === 0, "désactivé : plafond plein, l'excédent est perdu comme avant");
+    GO.setAuto(true);
+    ok(W.getAmount("bois") === Math.floor(cap * 0.95), "réactivé : le stock repasse sous le seuil");
+    var sd = JSON.parse(JSON.stringify(g.buildSaveData()));
+    ok(sd.village && sd.village.grandOuvrage && sd.village.grandOuvrage.auto === true && sd.village.grandOuvrage.seuil === 0.95, "réglage sauvegardé (game.village, tel quel)");
+    var html = g.buildGrandOuvrageSheetHTML();
+    ok(/Versement automatique/.test(html) && /kswitch is-on/.test(html) && /Seuil : 95 %/.test(html), "fiche : interrupteur et seuil");
+    game.worldsEverReached = { 0: true }; game.resources.bois = 0;
+    W.addResource("bois", cap + 10, true);
+    ok(!GO.isOpen() && W.getAmount("bois") === cap, "en Forêt (fermé) : rien n'est versé");
+  } catch (err) { ok(false, "[404] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
 Promise.all(ATTENTES).then(function () {
