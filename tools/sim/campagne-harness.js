@@ -59,7 +59,7 @@ var JSON_OUT = ARGS.indexOf("--json") >= 0 ? ARGS[ARGS.indexOf("--json") + 1] : 
    20 % de réussite, 100 % avec les talents défensifs (rapport U-0 v1.1, §4.4). Ici : voie B des
    talents (celle de plafond-bench.js) et jusqu'à trois règles, chacune tenue par l'action que
    l'éditeur marque comme contre (⚡). Sans l'option, rien ne change : les mesures restent comparables. */
-var AVISE = ARGS.indexOf("--avise") >= 0;
+var AVISE = ARGS.indexOf("--avise") >= 0 || ARGS.indexOf("--joueur") >= 0;
 /* v3.459.10 (audit I2) : --apres <h> = après crypte_20, h heures simulées d'« après-Histoire » à l'Enchanteresse :
    chantier, puis Sève de la carte et relances des pièces Épiques ou mieux, tant que l'or suit. */
 var APRES_H = ARGS.indexOf("--apres") >= 0 ? Number(ARGS[ARGS.indexOf("--apres") + 1]) || 0 : 0;
@@ -71,7 +71,20 @@ var FAILLE_PV = Number(process.env.FAILLE_PV || 0.15), FAILLE_DMG = Number(proce
 /* Audit d'équilibrage (26/10) : --chantier = le joueur se sert aussi du chantier du héros : rangs des sorts (H2),
    entraînement et rangs des compagnons du groupe (H4), patrouilles des compagnons au camp et reliques. */
 var CHANTIER = ARGS.indexOf("--chantier") >= 0;
-function dep(k, v) { var D = STATS.depChantier = STATS.depChantier || {}; D[k] = (D[k] || 0) + Number(v || 0); }
+/* v3.613.0 (demande de Seb) : --joueur = un joueur appliqué, au plus près d'un vrai joueur. Il reprend --chantier (rangs des sorts,
+   compagnons du groupe, patrouilles, reliques) et --avise (talents, Grimoire), et ajoute : Taverne, tous les bâtiments du village
+   (chantier en fond), Entrepôt agrandi quand un coût dépasse le stockable, Apothicaire ; puis compagnons et donjons (lots 1 et 3). */
+var JOUEUR = ARGS.indexOf("--joueur") >= 0;
+// --lots 2 | 21 | 213 : les lots actifs du joueur appliqué (tous par défaut), pour un relevé par lot
+var LOTS = ARGS.indexOf("--lots") >= 0 ? String(ARGS[ARGS.indexOf("--lots") + 1] || "") : "123";
+var LOT1 = JOUEUR && LOTS.indexOf("1") >= 0, LOT3 = JOUEUR && LOTS.indexOf("3") >= 0;
+if (JOUEUR) CHANTIER = true;
+function dep(k, v) { var D = STATS.depChantier = STATS.depChantier || {}; D[k] = (D[k] || 0) + Number(v || 0); act(k, v); }
+/* v3.613.0 (relevés) : ce que le robot fait pendant une étape et l'entretien qui suit — { geste: { n, or } }, rangé dans STATS.steps[].actions. */
+var ACT = {};
+function act(k, v) { var a = ACT[k] = ACT[k] || { n: 0, or: 0 }; a.n++; a.or += Math.max(0, Math.round(Number(v || 0))); }
+/* --releve <nom> : la partie est enregistrée dans tools/sim/releves/ (date, version, réglages, étapes, bilans), pour comparer les robots. */
+var RELEVE = ARGS.indexOf("--releve") >= 0 ? (ARGS[ARGS.indexOf("--releve") + 1] || "partie") : null;
 var JUSQUA = ARGS.indexOf("--jusqua") >= 0 ? ARGS[ARGS.indexOf("--jusqua") + 1] : null;
 var TALENTS_AVISES = {
   knight: ["k_cuirasse", "k_cuirasse", "k_sang_chaud", "k_elan", "k_curee", "k_colere_froide", "k_brise_os", "k_sentence", "k_soif_bourreau", "k_rancune", "k_garde_vengeresse"],
@@ -164,7 +177,8 @@ function flushTimers(g) {
 /* ---------- Journal ---------- */
 
 var passes = 0, failures = 0, notes = [];
-function ok(cond, msg) { if (cond) { passes++; console.log("  ✔ " + msg); } else { failures++; console.log("  ✘ " + msg); } return !!cond; }
+var LAST_FAIL = null;
+function ok(cond, msg) { if (cond) { passes++; console.log("  ✔ " + msg); } else { LAST_FAIL = String(msg).slice(0, 300); failures++; console.log("  ✘ " + msg); } return !!cond; }
 function note(msg) { notes.push(msg); if (VERBOSE) console.log("    · " + msg); }
 
 /* ---------- Gestes du robot ---------- */
@@ -352,8 +366,52 @@ function grindOnceIn(raison) {
   entretien();
   return true;
 }
+/* ---------- v3.613.0 (--joueur, lot 3, demande de Seb) : les donjons comme un joueur ----------
+   Niveau « au monde » : le plus petit niveau dont le butin vient du monde où l'on est (paliers levelSteps), borné par le
+   niveau jouable (meilleur fini + 1). */
+function mondeCourant(g) { return g.WorldCaps && g.WorldCaps.getReachedWorldIndex ? g.WorldCaps.getReachedWorldIndex() : Number(g.WorldManager.worldIndex || 0); }
+function niveauAuMonde(g, d) {
+  var D = g.DungeonManager, w = mondeCourant(g), max = D.getMaxLevel(d.id);
+  for (var L = 1; L <= max; L++) if (Number((D.getLevelLootSource(d, L) || d).worldRequired || 0) >= w) return L;
+  return max;
+}
+/* À chaque entretien : une sortie dans CHAQUE donjon ouvert qui a encore des sorties du jour, au niveau du monde s'il est
+   déjà fini. Les sorties du jour sont toutes utilisées, comme un joueur qui passe chaque jour. */
+function farmDonjonsJoueur(g) {
+  var D = g.DungeonManager;
+  if (!D || SAVING) return;
+  D.checkTicketReset();
+  (g.DUNGEONS || []).forEach(function (d) {
+    if (!D.isUnlocked(d.id) || !D.hasRunLeft(d.id) || g.game.dungeonRun.active || D.isStoryTicketFree(d.id)) return;
+    var fini = (g.game.dungeonTierCleared || {})[d.id];
+    healUp();
+    var t0 = CLOCK.offset, or0 = g.game.gold;
+    playDungeonOnce(d.id, false, false, fini ? niveauAuMonde(g, d) : undefined);
+    var gf = STATS.goldFarm["routine donjon " + d.id] = STATS.goldFarm["routine donjon " + d.id] || { lots: 0, or: 0, h: 0, morts: 0 };
+    gf.lots++; gf.or += g.game.gold - or0; gf.h += (CLOCK.offset - t0) / 3600e3; if (DEFEATED) gf.morts++;
+  });
+}
+/* Bloqué : le mode libre (hors quota du jour) du donjon fini qui donne le meilleur butin, monté au niveau du monde pour l'équipement. */
+function donjonLibreAuMonde(raison) {
+  var g = G, D = g.DungeonManager;
+  var finis = (g.DUNGEONS || []).filter(function (d) { return D.isUnlocked(d.id) && (g.game.dungeonTierCleared || {})[d.id]; });
+  if (!finis.length) return false;
+  var choix = finis.map(function (d) { var L = niveauAuMonde(g, d); return { d: d, L: L, w: Number((D.getLevelLootSource(d, L) || d).worldRequired || 0) }; })
+    .sort(function (a, b) { return b.w - a.w || a.L - b.L; })[0];
+  var t0 = CLOCK.offset, or0 = g.game.gold, key = "libre donjon " + choix.d.id;
+  healUp();
+  if (playDungeonOnce(choix.d.id, false, true, choix.L, true) === null) return false;
+  STATS.grinds[raison] = (STATS.grinds[raison] || 0) + 1;
+  STATS.grindMs += CLOCK.offset - t0;
+  var gf = STATS.goldFarm[key] = STATS.goldFarm[key] || { lots: 0, or: 0, h: 0, morts: 0 };
+  gf.lots++; gf.or += g.game.gold - or0; gf.h += (CLOCK.offset - t0) / 3600e3; if (DEFEATED) gf.morts++;
+  entretien();
+  return true;
+}
+
 /* v3.511.0 : sans chasse, une sortie du donjon débloqué le plus loin (déjà fini si possible, sinon le premier). */
 function grindDungeon(raison) {
+  if (LOT3 && donjonLibreAuMonde(raison)) return true; // v3.613.0 (lot 3)
   var g = G, D = g.DungeonManager, L = (g.DUNGEONS || []).filter(function (d) { return D.isUnlocked(d.id); });
   var done = L.filter(function (d) { return (g.game.dungeonTierCleared || {})[d.id]; });
   var dg = done.length ? done[done.length - 1] : L[0];
@@ -391,7 +449,7 @@ function developVillage() {
     }
   }
   /* Compagnons : une amélioration par compagnon et par passage, si elle coûte moins de 30 % de la bourse. */
-  var aEntrainer = ["wenna", "maddoc"];
+  var aEntrainer = LOT1 && g.CompanionManager ? g.CompanionManager.unlockedIds().slice() : ["wenna", "maddoc"]; // v3.613.0 (--joueur) : tous les compagnons
   if (CHANTIER && g.CompanionManager) g.CompanionManager.partyIds().forEach(function (id) { if (aEntrainer.indexOf(id) < 0) aEntrainer.push(id); });
   if (g.CompanionManager) aEntrainer.forEach(function (cid) {
     var st = g.CompanionManager.state(cid);
@@ -502,7 +560,7 @@ function caravanes(g) {
     if ((m.world === 2 && !ep.ruinsMarketDone) || (m.world === 3 && !ep.cryptMarketDone)) return; // audit (27/10, DUR-7) : l'étape envoie sa Courte
     if (C.getBlockReason(trip, m.world)) return;
     harvest();
-    if (C.depart(trip, m.world)) ST.departs++;
+    if (C.depart(trip, m.world)) { ST.departs++; act("caravane", 0); }
   });
 }
 
@@ -653,6 +711,7 @@ function entretien() {
   depensesOr(g);       // v3.457.3 (audit I2) : vitrine et Enchanteresse quand l'or s'entasse
   boutiqueEclats(g);   // v3.457.3 : Éclats du donjon (5 sorties par jour, Sacoche)
   caravanes(g);        // v3.457.3 : les caravanes partent vers chaque marché libre
+  if (JOUEUR) { taverneJoueur(g); villageJoueur(g); apothicaireJoueur(g); if (LOT1) compagnonsJoueur(g); if (LOT3) farmDonjonsJoueur(g); } // v3.613.0 (lots 2, 1 et 3)
   var budget = g.game.gold * 0.6, avant = g.game.gold;
   for (var j = 0; j < 60 && avant - g.game.gold < budget; j++) { var o = g.game.gold; buyTraining(g, 1, true, true); if (g.game.gold === o) break; }
 }
@@ -821,6 +880,7 @@ function obtainIn(res, qty, depth) {
   if (bid) {
     if (!g.ProductionManager.isBuildingUnlocked(bid)) { note(res + " : bâtiment " + bid + " verrouillé"); return false; }
     // v3.457.3 (audit P2) : un joueur récolte d'abord ; il attend ensuite au plus juste, 10 min à 1 h selon le débit
+    if (JOUEUR) entrepotPour(res, qty); // v3.613.0 (lot 2)
     harvest();
     for (var h = 0; h < 432 && have() < qty; h++) {
       var parMin = Number(g.ProductionManager.getRatePerMin(bid) || 0);
@@ -1021,8 +1081,8 @@ function playDungeon(id, withMark, goal) {
   }
   return goal();
 }
-function playDungeonOnce(id, withMark, libreOk) {
-  var g = G, D = g.DungeonManager, libre = false;
+function playDungeonOnce(id, withMark, libreOk, niveau, libreForce) {
+  var g = G, D = g.DungeonManager, libre = !!libreForce;
   if (!D.isUnlocked(id)) { note("donjon " + id + " verrouillé : " + D.getLockReason(id)); return null; }
   var marks = [];
   if (withMark) {
@@ -1044,7 +1104,8 @@ function playDungeonOnce(id, withMark, libreOk) {
   // audit (26/10) : les vivres de sortie d'un donjon déjà fini (les runs de matériau les oubliaient)
   var viv = !libre && g.ProvisionsManager && D.getById(id) && g.ProvisionsManager.check("dungeon", D.getById(id)) && g.ProvisionsManager.getRequirement("dungeon", D.getById(id));
   if (viv) obtain(viv.resourceId, viv.amount);
-  if (libre) D.start(id, [], 1, true); else D.start(id, marks);
+  if (libre) D.start(id, [], niveau || 1, true); else D.start(id, marks, niveau);
+  act((libre ? "donjonLibre" : "donjon") + ":" + id + (niveau > 1 ? " niv. " + niveau : ""), 0);
   if (!g.game.dungeonRun.active) { note("donjon " + id + " : entrée refusée (sorties restantes " + D.getRunsLeft(id) + ", PV " + Math.floor(g.game.heroHp) + ", verrou " + (g.heroLockReason ? g.heroLockReason() : "") + ", quête " + !!(g.game.adventureQuestRun && g.game.adventureQuestRun.active) + ", chasse " + !!(g.game.huntRun && g.game.huntRun.active) + ")"); return null; }
   winCombat(200);
   flushTimers(g);
@@ -1243,6 +1304,7 @@ function run() {
       CTX = "histoire";
       // temps complet de l'étape, y compris ce qui suit la récompense (élites du tableau, entretien)
       var stRec = STATS.steps[STATS.steps.length - 1]; stRec.temps = diffTemps(snap0, snapTemps()); stRec.apresH = stRec.temps.total - stRec.h;
+      stRec.actions = ACT; ACT = {}; stRec.niv = G.game.heroLevel; stRec.finH = CLOCK.offset / 3600e3;
       G.saveGame();
     }
     if (!dejaFini) bilanMonde(cid);
@@ -1260,6 +1322,91 @@ function espionOr() {
 }
 /* --chantier : rangs des sorts (35 % de la bourse), rangs des compétences du groupe (20 %), matériau du monde
    obtenu s'il manque ; patrouilles de 8 h des compagnons au camp ; reliques posées sur le groupe. */
+/* ---------- v3.613.0 (--joueur, lot 2) : l'entretien d'un joueur appliqué ---------- */
+/* Taverne : chaque contrat livrable, tant qu'il reste au moins 30 % du plafond de la ressource au village. */
+function taverneJoueur(g) {
+  var T = g.TavernManager, W = g.WarehouseManager;
+  if (!T || !T.getContracts || T.getLevel() < 1) return;
+  if (T.checkRefresh) T.checkRefresh();
+  T.getContracts().forEach(function (c) {
+    if (!c || c.done || !T.canDeliver(c.id)) return;
+    var cap = W.getCap(c.resourceId);
+    if (cap !== Infinity && W.getAmount(c.resourceId) - c.quantity < cap * 0.3) return;
+    var o = g.game.gold;
+    if (T.deliver(c.id)) act("taverne", g.game.gold - o);
+  });
+}
+/* Village : un chantier à la fois, en fond (le joueur ne l'attend pas). Le moins cher d'abord, s'il coûte moins de 30 % de la bourse
+   et que les matériaux sont en stock ; l'Entrepôt passe devant dès qu'une ressource bute sur le seuil du Grand Ouvrage. */
+function villageJoueur(g) {
+  var V = g.VillageBuildingManager, W = g.WarehouseManager, GO = g.GrandOuvrage;
+  if (!V) return;
+  V.tick();
+  if (V.isBuilding()) return;
+  var plein = ["bois", "pierre", "fer", "eau", "ble", "viande"].some(function (k) { var keep = GO && GO.autoKeep ? GO.autoKeep(k) : W.getCap(k); return W.getAmount(k) >= Math.min(keep, W.getCap(k)) - 1; });
+  // matériaux manquants : le joueur les fabrique (planches, lingots…) avec son stock, sans attendre le lendemain
+  var okWhy = function (id) { var w = V.getBlockReason(id); return !w || w === "Matériaux manquants"; };
+  var ids = (g.VILLAGE_BUILDING_ORDER || Object.keys(g.VILLAGE_BUILDINGS)).filter(function (id) { return !V.isMaxLevel(id) && okWhy(id); });
+  var cost = function (id) { var c = V.getNextCost(id) || {}; return Object.keys(c).reduce(function (a, k) { return a + Number(c[k] || 0); }, 0); };
+  ids = ids.filter(function (id) { return Number((V.getNextCost(id) || {}).gold || 0) <= g.game.gold * 0.3; }).sort(function (a, b) { return (plein && b === "warehouse") - (plein && a === "warehouse") || cost(a) - cost(b); });
+  if (ids.length && V.getBlockReason(ids[0]) === "Matériaux manquants") { SANS_LENDEMAIN++; try { ensureCost(V.getNextCost(ids[0])); } finally { SANS_LENDEMAIN--; } }
+  if (ids.length && !V.getBlockReason(ids[0]) && V.startBuild(ids[0])) { act("chantier:" + ids[0], (V.getNextCost(ids[0]) || {}).gold || 0); STATS.village.push(ids[0] + " " + (V.getLevel(ids[0]) + 1) + " (" + CURRENT_STEP + ")"); }
+}
+/* Apothicaire : les commandes livrables (recettes apprises), puis les préparations du jour, soins d'abord. */
+function apothicaireJoueur(g) {
+  var A = g.ApothecaryManager;
+  if (!A || A.getLevel() < 1) return;
+  (g.APOTHECARY_RECIPES || []).forEach(function (r) { if (A.isOrderOpen && A.isOrderOpen(r.potionId) && A.canDeliver(r.potionId) && A.deliverOrder(r.potionId)) act("apothicaire:commande", 0); });
+  var list = A.getUnlockedRecipes().slice().sort(function (a, b) { return (a.kind === "healing" ? 0 : 1) - (b.kind === "healing" ? 0 : 1); });
+  for (var k = 0; k < 20 && A.getDailyRemaining() > 0; k++) {
+    var r = list.filter(function (x) { return A.canAfford(x.potionId); })[k % Math.max(1, list.length)];
+    if (!r || !A.craft(r.potionId)) break;
+    act("apothicaire", 0);
+  }
+}
+/* v3.613.0 (lot 1) : les compagnons comme un joueur — chaque conversation prête (premier choix), puis jusqu'à deux étapes de
+   quêtes personnelles par entretien : scène, livraison (ressources obtenues), ou le lieu de la carte vivante marqué pour la quête,
+   joué avec le compagnon dans le groupe (le groupe d'avant revient ensuite). Les reliques s'équipent dans chantierHeros. */
+function compagnonsJoueur(g) {
+  var CTM = g.CompanionTalkManager, CQM = g.CompanionQuestManager, LM = g.LivingMapManager, CM = g.CompanionManager;
+  if (CTM) for (var k = 0; k < 20; k++) { var t = CTM.available()[0]; if (!t || !CTM.finish(t.id, "a")) break; act("conversation", 0); }
+  if (!CQM || !CM) return;
+  var faits = 0;
+  CQM.list().forEach(function (q) {
+    if (faits >= 2 || CQM.isDone(q.id)) return;
+    var st = CQM.step(q);
+    if (!st) return;
+    if (st.type === "scene") { if (CQM.sceneDone(q.id)) act("compagnon:scène", 0); return; }
+    if (st.type === "deliver") {
+      if (!CQM.canDeliver(q)) { SANS_LENDEMAIN++; Object.keys(st.res || {}).forEach(function (r) { obtain(r, st.res[r]); }); SANS_LENDEMAIN--; }
+      if (CQM.deliver(q.id)) act("compagnon:livraison", 0);
+      return;
+    }
+    var sec = CQM.targetOf(q), map = LM && LM.getMapForWorld(st.world);
+    if (!sec || !map) return;
+    var avant = CM.partyIds().slice();
+    withCompanion(g, q.companion);
+    SANS_LENDEMAIN++;
+    try { if (LM.isLiberated(map.id, sec)) freeSectorAgain(map.id, sec); else freeSector(map.id, sec); } finally { SANS_LENDEMAIN--; }
+    CM.partyIds().forEach(function (id) { if (avant.indexOf(id) < 0) CM.setPresent(id, false); });
+    avant.forEach(function (id) { if (CM.partyIds().indexOf(id) < 0 && !(g.PatrolManager && g.PatrolManager.isOnPatrol(id))) CM.setPresent(id, true); });
+    faits++; act("compagnon:" + (st.type === "run" ? "sortie" : "élite"), 0);
+    if (CQM.isDone(q.id)) act("compagnon:quête finie", 0);
+  });
+}
+
+/* Avant d'attendre la production : un coût plus grand que ce que l'Entrepôt garde (seuil du Grand Ouvrage) fait d'abord agrandir l'Entrepôt. */
+function entrepotPour(res, qty) {
+  var g = G, GO = g.GrandOuvrage, V = g.VillageBuildingManager;
+  for (var k = 0; k < 4; k++) {
+    var keep = GO && GO.autoKeep ? GO.autoKeep(res) : g.WarehouseManager.getCap(res);
+    if (qty <= Math.min(keep, g.WarehouseManager.getCap(res)) || V.isMaxLevel("warehouse")) return;
+    var lv = V.getLevel("warehouse");
+    if (!upgradeBuilding("warehouse", lv + 1)) return;
+    act("chantier:warehouse", 0);
+  }
+}
+
 function chantierHeros(g) {
   var SR = g.SkillRanks, CM = g.CompanionManager, WM = g.WarehouseManager;
   function mat(m, q) { if (WM.getAmount(m) >= q) return true; SANS_LENDEMAIN++; var r = obtain(m, q); SANS_LENDEMAIN--; return r && WM.getAmount(m) >= q; }
@@ -2085,6 +2232,20 @@ STATS.economie = { orGagne: G.game.totalGoldEarned, or: G.game.gold, aetherTotal
 if (COMBATS) console.log("Économie : " + JSON.stringify(STATS.economie));
 if (ZONES) console.log("Zones défrichées ou montées : " + (STATS.zones || 0));
 if (STATS.patrouilleRefus) console.log("Patrouilles refusées : " + JSON.stringify(STATS.patrouilleRefus));
+if (RELEVE) {
+  var dirR = path.join(__dirname, "releves"); fs.mkdirSync(dirR, { recursive: true });
+  var verR = String(G.GAME_VERSION || "?"), dateR = new RealDate().toISOString().slice(0, 10);
+  var nomR = dateR + "_v" + verR + "_" + RELEVE + "_" + CLASSE + ".json";
+  var murR = (STATS.murs || []).map(function (m) { return { step: m.step, notes: (m.notes || []).slice(0, 2) }; });
+  fs.writeFileSync(path.join(dirR, nomR), JSON.stringify({
+    meta: { nom: RELEVE, version: verR, date: dateR, classe: CLASSE, combats: COMBATS, args: ARGS.join(" ") },
+    resume: { totalH: CLOCK.offset / 3600e3, reussies: STATS.steps.length, echecs: failures, arret: LAST_FAIL, murs: murR, niveau: G.game.heroLevel, morts: STATS.deaths, economie: STATS.economie },
+    etapes: STATS.steps.map(function (st) { return { id: st.id, title: st.title, finH: st.finH != null ? st.finH : st.totalH, h: st.temps ? st.temps.total : st.h, niv: st.niv || st.level, or: st.gold, morts: st.deaths,
+      combatH: st.combatH, soinH: st.healH, temps: st.temps ? st.temps.parts : null, actions: st.actions || {} }; }),
+    mondes: STATS.mondes, depenses: STATS.depChantier || {}, caravanes: STATS.caravanes || null, donjonLibre: STATS.donjonLibre || 0
+  }, null, 1));
+  console.log("Relevé enregistré : tools/sim/releves/" + nomR);
+}
 if (JSON_OUT) fs.writeFileSync(JSON_OUT, JSON.stringify({ classe: CLASSE, policy: POLICY, combats: COMBATS, passes: passes, failures: failures, totalH: CLOCK.offset / 3600e3,
   daysCap: DAYS_WAITED, capWaitH: CAP_WAIT_H, stats: STATS }, null, 1));
 // Comparable au « Temps de jeu » du journal (game.playTime, app ouverte) : seuls les combats exigent l'écran, le reste (soin, production, recharges) avance aussi hors ligne.

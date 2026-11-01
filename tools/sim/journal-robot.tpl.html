@@ -1,0 +1,210 @@
+<title>Journal du robot de campagne</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Alegreya:ital,wght@0,500;0,700;1,500&display=swap">
+<style>
+/* Une colonne de lecture : en-tête, règles du robot, puis l'Histoire monde par monde (bilan + barres de durée + étapes). */
+:root {
+  color-scheme: dark;
+  --nuit: #15110c; --pierre: #221a12; --pierre2: #2c2218; --trait: #4a3a27; --clair: #f3e8d0; --sourd: #c2b190; --or: #eba63f; --vert: #8fd3a3; --rouge: #e6866b;
+  --f-titre: "Cinzel", Georgia, serif; --f-recit: "Alegreya", Georgia, serif; --f-texte: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--nuit); color: var(--clair); font: 15px/1.5 var(--f-texte); }
+.wrap { max-width: 860px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 22px 40px; display: grid; gap: 18px; }
+h1 { margin: 0; font: 700 26px/1.15 var(--f-titre); letter-spacing: .03em; color: var(--or); text-wrap: balance; }
+h2 { margin: 0; font: 700 19px/1.2 var(--f-titre); letter-spacing: .04em; color: var(--or); }
+h3 { margin: 0; font: 700 16px/1.25 var(--f-recit); }
+p { margin: 0; max-width: 68ch; }
+.sourd { color: var(--sourd); }
+.lbl { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--sourd); }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.kpi { background: var(--pierre); border: 1px solid var(--trait); border-radius: 12px; padding: 10px 12px; }
+.kpi b { display: block; font: 700 22px/1.1 var(--f-titre); color: var(--clair); font-variant-numeric: tabular-nums; }
+.kpi span { font-size: 12px; color: var(--sourd); }
+details.regles { background: var(--pierre); border: 1px solid var(--trait); border-radius: 12px; padding: 12px 14px; }
+details.regles summary { cursor: pointer; font-weight: 700; }
+details.regles ul { margin: 10px 0 0; padding-left: 18px; display: grid; gap: 6px; max-width: 72ch; }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--nuit); padding-block: 8px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; border-bottom: 1px solid var(--trait); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--nuit); }
+.bar button { font: 600 13px var(--f-texte); color: var(--clair); background: var(--pierre); border: 1px solid var(--trait); border-radius: 999px; min-height: 36px; padding: 0 12px; cursor: pointer; }
+.bar button[aria-pressed="true"] { border-color: var(--or); color: var(--or); }
+.bar label { margin-left: auto; font-size: 13px; color: var(--sourd); display: flex; align-items: center; gap: 6px; }
+button:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--or); outline-offset: 2px; }
+section.monde { display: grid; gap: 10px; }
+.mhead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; }
+.mhead .sourd { font-size: 13px; font-variant-numeric: tabular-nums; }
+.train { font-size: 12px; color: var(--sourd); }
+.strip { display: block; width: 100%; height: 46px; }
+.etape { display: grid; grid-template-columns: 74px minmax(0, 1fr); gap: 4px 12px; padding: 12px 0; border-top: 1px solid var(--trait); }
+.etape .t { font-variant-numeric: tabular-nums; font-size: 13px; color: var(--sourd); line-height: 1.35; }
+.etape .t b { display: block; font-size: 16px; color: var(--clair); }
+.etape .c { display: grid; gap: 6px; min-width: 0; }
+.obj { font-size: 13px; color: var(--sourd); }
+.acts { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 6px; }
+.acts li { font-size: 13px; background: var(--pierre2); border: 1px solid var(--trait); border-radius: 8px; padding: 3px 8px; }
+.meta { font-size: 12px; color: var(--sourd); font-variant-numeric: tabular-nums; }
+.long .t b { color: var(--or); }
+.chip { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .04em; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--trait); color: var(--sourd); margin-left: 6px; vertical-align: 2px; }
+.chip.mort { color: var(--rouge); border-color: var(--rouge); }
+.chip.mur { color: var(--rouge); border-color: var(--rouge); }
+.chip.ok { color: var(--vert); border-color: var(--vert); }
+.note { font-size: 12px; color: var(--sourd); border-left: 2px solid var(--trait); padding-left: 8px; }
+@media (max-width: 520px) { .etape { grid-template-columns: 1fr; } .etape .t { display: flex; gap: 10px; align-items: baseline; } .etape .t b { display: inline; } }
+.sel { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; }
+.sel label { display: grid; gap: 4px; font-size: 12px; color: var(--sourd); }
+.sel select { font: 600 14px var(--f-texte); color: var(--clair); background: var(--pierre); border: 1px solid var(--trait); border-radius: 10px; min-height: 40px; padding: 0 8px; }
+.kpi i { display: block; font-style: normal; font-size: 12px; font-weight: 700; margin-top: 2px; }
+.up { color: var(--vert); } .down { color: var(--rouge); } .eq { color: var(--sourd); }
+.cmp { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.cmp th, .cmp td { text-align: left; padding: 5px 8px 5px 0; border-bottom: 1px solid var(--trait); vertical-align: top; }
+.cmp th { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--sourd); font-weight: 700; }
+.tablewrap { overflow-x: auto; }
+.gestes { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 4px; }
+.gestes li { font-size: 12px; color: var(--sourd); border: 1px dashed var(--trait); border-radius: 8px; padding: 2px 7px; }
+.ghost { opacity: .35; }
+</style>
+
+<div class="wrap">
+  <header style="display:grid;gap:8px">
+    <div class="lbl">Aethervale · banc de campagne</div>
+    <h1>Journal du robot de campagne</h1>
+    <p class="sourd">Un joueur-robot enchaîne toute l'Histoire dans le vrai moteur, en vrais combats. Chaque partie est enregistrée (relevé) : choisis-en une et compare-la à une autre. Pour chaque étape : ce qu'elle demande, ce que le robot fait, ce qu'il fait ensuite entre deux quêtes, le temps de jeu simulé et le niveau du héros.</p>
+  </header>
+
+  <div class="sel">
+    <label for="selB">Relevé affiché<select id="selB"></select></label>
+    <label for="selA">Comparé à<select id="selA"></select></label>
+  </div>
+  <p class="sourd" id="metaB" style="font-size:13px"></p>
+  <div class="kpis" id="kpis"></div>
+
+  <details class="regles">
+    <summary>Comment le robot joue, selon le profil</summary>
+    <ul>
+      <li><b>Robot de base</b> (relevé « reference ») : Grimoire dès qu'il est ouvert, potion sous 30 % ; PV pleins au feu avant chaque sortie ; entre deux étapes, meilleur objet porté, talents, échoppe (pièce meilleure à moins de 40 % de la bourse), Terrain quand la caractéristique de classe bute, reforge de l'arme et de l'armure, entraînement avec 60 % de l'or (caractéristique de classe et Endurance d'abord). Bloqué : il réessaie et va se renforcer au donjon.</li>
+      <li><b>Lot 2, l'entretien d'un joueur</b> (<code>--joueur --lots 2</code>) : rangs des sorts du héros et des compétences du groupe (matériaux obtenus), patrouilles, reliques, talents et Grimoire « avisés », contrats de la Taverne, un chantier du village à la fois en fond (Entrepôt d'abord quand une ressource bute), Entrepôt agrandi quand un coût dépasse ce qu'il garde, Apothicaire.</li>
+      <li><b>Lot 1, les compagnons</b> (<code>--lots 21</code>) : chaque conversation prête, jusqu'à deux étapes de quêtes personnelles par entretien (scène, livraison, lieu de la carte vivante joué avec le compagnon), entraînement de tous les compagnons.</li>
+      <li><b>Lot 3, les donjons</b> (<code>--lots 213</code>) : une sortie par jour dans chaque donjon ouvert, au niveau du monde une fois fini ; bloqué, le mode libre du donjon qui donne le meilleur butin, monté au niveau du monde.</li>
+      <li><b>Ce qu'il ne fait jamais</b> : jouer les compagnons à la main, l'Enchanteresse au-delà du nécessaire, la Mémoire, renouveler l'échoppe à prix d'or.</li>
+    </ul>
+  </details>
+
+  <section style="display:grid;gap:8px"><h2>Fin de chaque monde</h2><div class="tablewrap"><table class="cmp" id="mondesTab"></table></div></section>
+
+  <div class="bar" id="bar" role="toolbar" aria-label="Filtrer les étapes"></div>
+  <div id="mondes" style="display:grid;gap:26px"></div>
+</div>
+
+<script>
+"use strict";
+var D = /*DONNEES*/null;
+var MONDES = [{ ch: "forest", nom: "Forêt enchantée" }, { ch: "desert", nom: "Désert oublié" }, { ch: "ruins", nom: "Ruines anciennes" }, { ch: "crypt", nom: "Crypte" }, { ch: "mountain", nom: "Montagne" }];
+var STATS = { power: "Puiss.", endurance: "Endu.", celerity: "Célér.", precision: "Préc.", will: "Vol." };
+var NOMS_DONJONS = { 1: "Tanière du Basilic", 2: "Cité engloutie", 3: "donjon des Ruines", 4: "Ossuaire", 5: "Gueule du volcan", 6: "Tour" };
+var BAT = { training: "Terrain", warehouse: "Entrepôt", hall: "Halle", palisade: "Palissade", workshop: "Atelier", tavern: "Taverne", apothecary: "Apothicaire", forge: "Forge", enchanter: "Enchanteresse" };
+var etat = { a: null, b: null, monde: "tous", longues: false };
+function fr(n, d) { return n == null || isNaN(n) ? "—" : Number(n).toLocaleString("fr-FR", { maximumFractionDigits: d == null ? 1 : d }); }
+function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+function nomReleve(r) { return r.meta.nom + " · v" + r.meta.version + " · " + r.meta.date + " · " + r.meta.classe; }
+/* Libellé lisible d'un geste d'entretien (clé du relevé). */
+function geste(k, a) {
+  var m, n = a.n, or = a.or;
+  if ((m = /^donjon(Libre)?:(\d+)(?: niv\. (\d+))?/.exec(k))) return (m[1] ? "Mode libre " : "Donjon ") + (NOMS_DONJONS[m[2]] || m[2]) + (m[3] ? " (niv. " + m[3] + ")" : "") + " ×" + n;
+  if ((m = /^chantier:(\w+)/.exec(k))) return "Chantier : " + (BAT[m[1]] || m[1]) + (n > 1 ? " ×" + n : "");
+  var L = { entrHeros: "Entraînement du héros", entrCompagnons: "Entraînement des compagnons", rangsSorts: "Rangs des sorts", rangsCompagnons: "Rangs des compagnons", forge: "Reforge",
+    echoppe: "Échoppe", caravane: "Caravane", taverne: "Taverne (contrats)", apothicaire: "Apothicaire", "apothicaire:commande": "Apothicaire : recette apprise", conversation: "Conversation au feu",
+    "compagnon:scène": "Quête de compagnon : scène", "compagnon:livraison": "Quête de compagnon : livraison", "compagnon:sortie": "Quête de compagnon : sortie", "compagnon:élite": "Quête de compagnon : élite",
+    "compagnon:quête finie": "Quête de compagnon terminée", departsPatrouille: "Patrouille envoyée", patrouilles: "Patrouille rentrée", reliques: "Relique trouvée", reliquesEchoppe: "Relique achetée", donjon: "Donjon", donjonLibre: "Mode libre" };
+  if (k === "orPatrouilles" || k === "reliquesEchoppeNb") return null;
+  var t = L[k] || k;
+  return t + (n > 1 ? " ×" + n : "") + (or ? (k === "taverne" ? " (+" : " (") + fr(or, 0) + " or)" : "");
+}
+function etapesDe(r) { var o = {}; (r && r.etapes || []).forEach(function (e) { o[e.id] = e; }); return o; }
+function mondeDe(r, ch) { return (r && r.mondes || []).filter(function (m) { return m.monde === ch; })[0] || null; }
+function dlt(b, a, d, inverse) {
+  if (a == null || b == null) return "";
+  var v = b - a, cls = Math.abs(v) < (d === 0 ? 0.5 : 0.05) ? "eq" : ((v < 0) === !!inverse ? "up" : "down");
+  return '<i class="' + cls + '">' + (v >= 0 ? "+" : "−") + fr(Math.abs(v), d) + '</i>';
+}
+function selects() {
+  var opts = D.releves.map(function (r, i) { return '<option value="' + i + '">' + esc(nomReleve(r)) + '</option>'; }).join("");
+  var sb = document.getElementById("selB"), sa = document.getElementById("selA");
+  sb.innerHTML = opts; sa.innerHTML = '<option value="-1">(aucun)</option>' + opts;
+  sb.value = String(etat.b); sa.value = String(etat.a);
+}
+function kpis() {
+  var B = D.releves[etat.b], A = etat.a >= 0 ? D.releves[etat.a] : null;
+  var fin = function (r) { var e = r && r.etapes.length ? r.etapes[r.etapes.length - 1] : null; return e ? e.finH : null; };
+  document.getElementById("metaB").textContent = "Réglages : " + (B.meta.args || "") + (B.resume.arret ? " · arrêt : " + B.resume.arret.split(" — ")[0] : " · Histoire finie");
+  var h = [[B.resume.reussies + " / " + D.steps.length, "étapes réussies", dlt(B.resume.reussies, A && A.resume.reussies, 0, true)],
+    [fr(fin(B)) + " h", "de jeu à la dernière étape réussie", dlt(fin(B), A && fin(A), 1)],
+    ["niv. " + B.resume.niveau, "niveau du héros à la fin", dlt(B.resume.niveau, A && A.resume.niveau, 0, true)],
+    [String(B.resume.morts), "morts au combat", dlt(B.resume.morts, A && A.resume.morts, 0)]];
+  document.getElementById("kpis").innerHTML = h.map(function (k) { return '<div class="kpi"><b>' + esc(k[0]) + '</b><span>' + esc(k[1]) + '</span>' + (A ? k[2] : "") + '</div>'; }).join("");
+}
+function mondesTab() {
+  var B = D.releves[etat.b], A = etat.a >= 0 ? D.releves[etat.a] : null;
+  var h = '<tr><th>Monde</th><th>Fini à</th><th>Niveau</th><th>Or gagné</th><th>Entraînement</th><th>Rangs de sorts</th><th>Compagnons (paliers · rang)</th></tr>';
+  MONDES.forEach(function (m) {
+    var b = mondeDe(B, m.ch), a = mondeDe(A, m.ch);
+    var tr = function (x) { return x && x.entr ? Object.keys(x.entr).map(function (k) { return STATS[k] + " " + x.entr[k]; }).join(" · ") : "—"; };
+    var cp = function (x) { return x && x.compagnons ? Object.keys(x.compagnons).map(function (k) { var c = x.compagnons[k]; return k.charAt(0).toUpperCase() + k.slice(1) + " +" + c.upg + " · " + c.rang; }).join(", ") : "—"; };
+    h += '<tr><td><b>' + esc(m.nom) + '</b></td><td>' + (b ? fr(b.h) + " h" : "—") + (A ? " " + dlt(b && b.h, a && a.h, 1) : "") + '</td><td>' + (b ? b.niv : "—") + (A ? " " + dlt(b && b.niv, a && a.niv, 0, true) : "") + '</td><td>' + (b ? fr(b.orMonde, 0) : "—") + '</td><td>' + tr(b) + (A && a ? '<br><span class="sourd">avant : ' + tr(a) + '</span>' : "") + '</td><td>' + (b ? b.rangsSorts : "—") + (A ? " " + dlt(b && b.rangsSorts, a && a.rangsSorts, 0, true) : "") + '</td><td>' + esc(cp(b)) + '</td></tr>';
+  });
+  document.getElementById("mondesTab").innerHTML = h;
+}
+function bar() {
+  var b = '<button type="button" data-m="tous" aria-pressed="' + (etat.monde === "tous") + '">Tous</button>';
+  MONDES.forEach(function (m) { b += '<button type="button" data-m="' + m.ch + '" aria-pressed="' + (etat.monde === m.ch) + '">' + esc(m.nom.split(" ")[0]) + '</button>'; });
+  b += '<label for="longues"><input type="checkbox" id="longues"' + (etat.longues ? ' checked' : '') + '> étapes de 0,3 h et plus</label>';
+  document.getElementById("bar").innerHTML = b;
+}
+function strip(list, EB, EA) {
+  var val = function (E, s) { return E[s.id] ? E[s.id].h || 0 : 0; };
+  var max = Math.max.apply(null, list.map(function (s) { return Math.max(val(EB, s), EA ? val(EA, s) : 0); }).concat([0.5]));
+  var w = 100 / Math.max(1, list.length), r = "";
+  list.forEach(function (s, i) {
+    if (EA) { var da = val(EA, s), ha = Math.max(1, da / max * 34); r += '<rect class="ghost" x="' + (i * w + w * 0.08).toFixed(2) + '" y="' + (38 - ha).toFixed(2) + '" width="' + (w * 0.84).toFixed(2) + '" height="' + ha.toFixed(2) + '" fill="var(--sourd)"></rect>'; }
+    var d = val(EB, s), h = Math.max(1.5, d / max * 34);
+    r += '<rect x="' + (i * w + w * 0.22).toFixed(2) + '" y="' + (38 - h).toFixed(2) + '" width="' + (w * 0.56).toFixed(2) + '" height="' + h.toFixed(2) + '" fill="' + (d >= 1 ? "var(--rouge)" : "var(--or)") + '" opacity="' + (EB[s.id] ? 1 : 0.3) + '"><title>' + esc(s.id + " : " + fr(d) + " h") + '</title></rect>';
+  });
+  return '<svg class="strip" viewBox="0 0 100 46" preserveAspectRatio="none" role="img" aria-label="Durée de chaque étape"><line x1="0" x2="100" y1="38.5" y2="38.5" stroke="var(--trait)" stroke-width="0.4"/>' + r + '</svg>'
+    + '<div class="meta" style="display:flex;justify-content:space-between;gap:8px"><span>' + esc(list[0].id) + '</span><span>' + (EA ? "barre pâle : relevé comparé · " : "") + 'plus longue : ' + fr(max) + ' h</span><span>' + esc(list[list.length - 1].id) + '</span></div>';
+}
+function etapeHTML(s, EB, EA) {
+  var e = EB[s.id], a = EA ? EA[s.id] : null, d = e ? e.h || 0 : 0;
+  var t = e ? '<b>' + fr(e.finH) + ' h</b>niv. ' + e.niv + (d >= 0.05 ? '<br>+' + fr(d) + ' h' : '') + (EA ? dlt(e.finH, a && a.finH, 1) : '') : '<b>—</b>non jouée';
+  var chips = (e && e.morts ? '<span class="chip mort">' + e.morts + ' mort' + (e.morts > 1 ? 's' : '') + '</span>' : '') + (!e ? '<span class="chip mur">pas atteinte</span>' : '') + (EA && e && !a ? '<span class="chip ok">nouvelle</span>' : '');
+  var h = '<article class="etape' + (d >= 0.3 ? ' long' : '') + '"><div class="t">' + t + '</div><div class="c">';
+  h += '<h3>' + esc(s.title) + ' <span class="chip">' + esc(s.id) + '</span>' + chips + '</h3>';
+  if (s.obj) h += '<div class="obj">Objectif : ' + esc(s.obj) + '</div>';
+  if (s.robot.length) h += '<ul class="acts">' + s.robot.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join("") + '</ul>';
+  var g = e && e.actions ? Object.keys(e.actions).map(function (k) { return geste(k, e.actions[k]); }).filter(Boolean) : [];
+  if (g.length) h += '<div class="meta">Ensuite, entre deux quêtes :</div><ul class="gestes">' + g.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join("") + '</ul>';
+  if (e && (e.combatH > 0.05 || e.soinH > 0.05)) h += '<div class="meta">dont combat ' + fr(e.combatH) + ' h · soin au camp ' + fr(e.soinH) + ' h</div>';
+  return h + '</div></article>';
+}
+function rendre() {
+  var B = D.releves[etat.b], A = etat.a >= 0 ? D.releves[etat.a] : null, EB = etapesDe(B), EA = A ? etapesDe(A) : null, out = "";
+  MONDES.forEach(function (m) {
+    if (etat.monde !== "tous" && etat.monde !== m.ch) return;
+    var list = D.steps.filter(function (s) { return s.ch === m.ch; });
+    if (!list.length) return;
+    var b = mondeDe(B, m.ch);
+    var tete = '<div class="mhead"><h2>' + esc(m.nom) + '</h2><span class="sourd">' + (b ? "fini à " + fr(b.h) + " h · niv. " + b.niv : list.filter(function (s) { return EB[s.id]; }).length + " étapes sur " + list.length) + '</span></div>';
+    var vis = list.filter(function (s) { return !etat.longues || !EB[s.id] || (EB[s.id].h || 0) >= 0.3; });
+    out += '<section class="monde">' + tete + strip(list, EB, EA) + (vis.length ? vis.map(function (s) { return etapeHTML(s, EB, EA); }).join("") : '<p class="sourd">Aucune étape de 0,3 h ou plus.</p>') + '</section>';
+  });
+  document.getElementById("mondes").innerHTML = out;
+}
+function tout() { selects(); kpis(); mondesTab(); bar(); rendre(); }
+document.addEventListener("click", function (e) { var b = e.target.closest("button[data-m]"); if (!b) return; etat.monde = b.dataset.m; bar(); rendre(); });
+document.addEventListener("change", function (e) {
+  if (e.target.id === "longues") { etat.longues = e.target.checked; rendre(); }
+  if (e.target.id === "selB") { etat.b = Number(e.target.value); tout(); }
+  if (e.target.id === "selA") { etat.a = Number(e.target.value); tout(); }
+});
+etat.b = D.releves.length - 1; etat.a = D.releves.length - 2;
+if (D.releves.length) tout(); else document.getElementById("mondes").innerHTML = '<p class="sourd">Aucun relevé : lance <code>node tools/sim/campagne-harness.js . --combats --releve nom</code>.</p>';
+</script>
