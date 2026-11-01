@@ -840,7 +840,8 @@ function obtainIn(res, qty, depth) {
     var manque = qty - have();
     var fois = Math.max(1, Math.ceil(manque / recipe.outputs[0].quantity));
     // v3.456.0 : par lots qui tiennent dans l'Entrepôt (1 500 fers pour 100 aciers ne tiennent pas d'un coup)
-    recipe.inputs.forEach(function (inp) { var cap = Number(g.WarehouseManager.getCap(inp.resourceId) || 0); if (cap > 0) fois = Math.max(1, Math.min(fois, Math.floor(cap / inp.quantity))); });
+    // v3.613.0 : sous le seuil du Grand Ouvrage automatique (v3.609.0), le surplus ne reste pas à l'Entrepôt
+    recipe.inputs.forEach(function (inp) { var cap = Number(g.WarehouseManager.getCap(inp.resourceId) || 0), keep = g.GrandOuvrage && g.GrandOuvrage.autoKeep ? g.GrandOuvrage.autoKeep(inp.resourceId) : Infinity; if (keep < cap) cap = keep; if (cap > 0) fois = Math.max(1, Math.min(fois, Math.floor(cap / inp.quantity))); });
     var okIng = recipe.inputs.every(function (inp) { return obtain(inp.resourceId, inp.quantity * fois, depth + 1); });
     if (!okIng) { note(res + " : ingrédients introuvables (" + wid + ")"); return false; }
     if (!g.WorkshopsSystem.enqueueCraft(wid, recipe.id, fois)) {

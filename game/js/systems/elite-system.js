@@ -160,6 +160,8 @@ var EliteManager = {
     if (window.CompanionManager && typeof CompanionManager.onCombatStart === "function") {
       CompanionManager.onCombatStart();
     }
+    // v3.613.0 : nouveau combat aussi sans escorte (initiative, et les combats avec un compagnon comptent un par un)
+    if (window.Initiative && typeof Initiative.newCombat === "function") Initiative.newCombat();
     if (typeof renderEnemy === "function") renderEnemy();
     if (typeof renderHud === "function") renderHud();
     return enemy;
