@@ -21254,6 +21254,16 @@ console.log("\n[410] v3.615.0 — Niveau d'objet (ilvl), formule B, affichage C 
   } catch (err) { ok(false, "[410] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[411] v3.615.1 — Écran Équipé : chaque emplacement se choisit (retour de Seb)");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
+    var html = g.buildHerosEquippedHTML();
+    var oc = (html.match(/class="hs-eslot[^"]*" data-slot="(\w+)" onclick="([^"]+)"/g) || []);
+    ok(oc.length === 7 && oc.every(function (x) { return /onclick="herosPickSlot\('\w+'\)"/.test(x); }), "les 7 emplacements appellent herosPickSlot (" + oc.length + ")");
+  } catch (err) { ok(false, "[411] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");
