@@ -168,6 +168,7 @@ function getWarehouseOtherUses(key) {
   var depTxt = departs.length > 4 ? departs.slice(0, 3).join(", ") + " " + _tn(departs.length - 3, "et {n} autre", "et {n} autres") : departs.join(", "); // liste courte à 320 px
   if (departs.length) out.push({ icon: "images/Icons/quests/start_expedition.webp", text: _t("Départ : {x}", { x: depTxt }) });
   if (Object.keys(window.PA2_ITEMS || {}).some(function (id) { return PA2_ITEMS[id].resource === key; })) out.push({ icon: "images/Icons/subtabs/inventory.webp", text: _t("Besace des Petites Aventures") });
+  if (window.VILLAGE_EVENT_BUYBACK && VILLAGE_EVENT_BUYBACK.prices[key]) out.push({ icon: "images/Icons/village_buildings/merchant_hall.webp", text: _t("Marché de Sarkel : il la rachète par lots de {n} ({p} or l'unité)", { n: VILLAGE_EVENT_BUYBACK.lot, p: VILLAGE_EVENT_BUYBACK.prices[key] }) }); // v3.606.0 (D2)
   if (window.COMBAT_ITEMS && COMBAT_ITEMS[key]) out.push({ icon: COMBAT_ITEMS[key].icon, text: _t("Objet de combat : emporté à la préparation d'une sortie") });
   return out;
 }

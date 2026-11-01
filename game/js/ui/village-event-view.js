@@ -31,7 +31,7 @@ function buildVillageEventCardHTML() {
     act = v.done ? '<span class="vev-done">✓ ' + esc(_t("Livré")) + '</span>'
       : '<button type="button" class="kbtn primary" onclick="villageEventDeliver()"' + (V.canDeliver() ? '' : ' disabled') + '>' + esc(_t("Livrer")) + '</button>';
   } else if (e.type === "marche") {
-    gain = _t("L'échoppe : une pièce de plus et −{p} % sur tout.", { p: Math.round((1 - VILLAGE_EVENT_MARKET.discount) * 100) });
+    gain = _t("L'échoppe : une pièce de plus et −{p} % sur tout. Et Sarkel rachète tes ressources rares.", { p: Math.round((1 - VILLAGE_EVENT_MARKET.discount) * 100) });
     act = '<button type="button" class="kbtn primary" onclick="villageEventShop()">' + esc(_t("Aller à l'échoppe")) + '</button>';
   } else if (e.type === "fete") {
     gain = _t("Le camp soigne tout le monde, et les {n} sorties suivantes rapportent +{p} % d'or.", { n: VILLAGE_EVENT_FETE.sorties, p: Math.round((VILLAGE_EVENT_FETE.goldMult - 1) * 100) });
@@ -42,8 +42,23 @@ function buildVillageEventCardHTML() {
   h += '<div class="vev-main">' + villageEventIconHTML(e.type, "vev-ico") + '<div><b>' + esc(V.titleOf(e, v)) + '</b><small>' + esc(_td(e.who)) + '</small><p>' + esc(V.textOf(e, v)) + '</p></div></div>';
   if (e.type === "demande" && !v.done) h += '<div class="vev-cost">' + villageEventResChipsHTML(V.needs(), true) + '</div>';
   if (e.type === "fete" && !v.done) h += '<div class="vev-cost">' + villageEventResChipsHTML({ pain: V.feteCost() }, true) + '</div>';
+  if (e.type === "marche") h += villageEventBuybackHTML(); // v3.606.0 (D2)
   return h + '<div class="vev-gain">' + esc(gain) + '</div><div class="vev-act">' + act + '</div></div>';
 }
+
+/* v3.606.0 (D2) : « Sarkel rachète » — une ligne par ressource rare dont l'Entrepôt a un lot, dans la limite du marché. */
+function villageEventBuybackHTML() {
+  var V = VillageEvents, list = V.buybackList(), left = V.buybackLotsLeft(), B = VILLAGE_EVENT_BUYBACK;
+  var h = '<div class="vev-buy"><div class="vev-buy-h"><b>' + esc(_t("Sarkel rachète")) + '</b><small>' + esc(_tn(left, "encore {n} lot ce marché", "encore {n} lots ce marché")) + '</small></div>';
+  if (!list.length) return h + '<p class="vev-buy-none">' + esc(_t("Rien à lui vendre : il prend les ressources rares par lots de {n}.", { n: B.lot })) + '</p></div>';
+  list.forEach(function (x) {
+    var def = (window.WAREHOUSE_RESOURCES || {})[x.res] || {};
+    h += '<div class="vev-buy-row">' + renderIconOrEmojiHTML(def.icon || "", "vev-buy-ico", "") + '<span>' + esc(_t("{n} {x} · {g} or", { n: B.lot, x: _td(def.name || x.res), g: formatNumber(x.gold) }))
+      + ' <small>(' + formatNumber(WarehouseManager.getAmount(x.res)) + ')</small></span><button type="button" class="kbtn" onclick="villageEventSell(\'' + x.res + '\')"' + (left > 0 ? '' : ' disabled') + '>' + esc(_t("Vendre")) + '</button></div>';
+  });
+  return h + '</div>';
+}
+function villageEventSell(res) { if (VillageEvents.sellLot(res) && typeof renderPanel === "function") renderPanel(); }
 
 // La ligne « Au matin » de l'écran de la nuit (camp-view.js).
 function villageEventMorningHTML(night) {
@@ -81,4 +96,5 @@ window.villageEventGo = villageEventGo;
 window.villageEventDeliver = villageEventDeliver;
 window.villageEventFete = villageEventFete;
 window.villageEventShop = villageEventShop;
+window.villageEventSell = villageEventSell;
 window.refreshTabVillageBadge = refreshTabVillageBadge;

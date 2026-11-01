@@ -70,7 +70,8 @@ var WORKSHOPS_CONFIG = {
     buildingId: "sawmill", name: "Scierie fine", icon: "images/Icons/workshops/fine_sawmill.webp", active: true,
     upgradeCostBase: { planche: 3, lingot: 2 },
     recipes: [
-      { id: "planche", inputs: [{ resourceId: "bois", quantity: 5 }], outputs: [{ resourceId: "planche", quantity: 1 }], craftTimeMs: 3000 }
+      { id: "planche", inputs: [{ resourceId: "bois", quantity: 5 }], outputs: [{ resourceId: "planche", quantity: 1 }], craftTimeMs: 3000 },
+      { id: "corde_tressee", inputs: [{ resourceId: "bois", quantity: 30 }, { resourceId: "planche", quantity: 1 }], outputs: [{ resourceId: "corde_tressee", quantity: 1 }], craftTimeMs: 6000 } // v3.606.0 : l'artisan d'Aeswyn
     ]
   },
   /* v3.214.0 (lot V-3) : premier atelier de tier 2 activé. Il ne fabrique pas
@@ -82,7 +83,8 @@ var WORKSHOPS_CONFIG = {
     buildingId: "sawmill", name: "Menuiserie", icon: "images/Icons/workshops/carpentry.webp", active: true,
     upgradeCostBase: { planche: 4, lingot: 3 },
     recipes: [
-      { id: "resine_durcie", inputs: [{ resourceId: "seve_aeswyn", quantity: 2 }, { resourceId: "planche", quantity: 3 }], outputs: [{ resourceId: "resine_durcie", quantity: 1 }], craftTimeMs: 9000 }
+      { id: "resine_durcie", inputs: [{ resourceId: "seve_aeswyn", quantity: 2 }, { resourceId: "planche", quantity: 3 }], outputs: [{ resourceId: "resine_durcie", quantity: 1 }], craftTimeMs: 9000 },
+      { id: "torche_resinee", inputs: [{ resourceId: "resine_durcie", quantity: 1 }, { resourceId: "bois", quantity: 10 }], outputs: [{ resourceId: "torche_resinee", quantity: 1 }], craftTimeMs: 9000 } // v3.606.0
     ]
   },
 
@@ -106,7 +108,8 @@ var WORKSHOPS_CONFIG = {
     buildingId: "mine", name: "Forge", icon: "images/Icons/workshops/mine_smithy.webp", active: true,
     upgradeCostBase: { planche: 4, lingot: 4 },
     recipes: [
-      { id: "acier", inputs: [{ resourceId: "lingot", quantity: 3 }, { resourceId: "bois", quantity: 6 }], outputs: [{ resourceId: "acier", quantity: 1 }], craftTimeMs: 8000 }
+      { id: "acier", inputs: [{ resourceId: "lingot", quantity: 3 }, { resourceId: "bois", quantity: 6 }], outputs: [{ resourceId: "acier", quantity: 1 }], craftTimeMs: 8000 },
+      { id: "trousse_maitre", inputs: [{ resourceId: "lingot", quantity: 2 }], outputs: [{ resourceId: "trousse_maitre", quantity: 1 }], craftTimeMs: 8000 } // v3.606.0
     ]
   },
 

@@ -12145,7 +12145,7 @@ console.log("\n[159] v3.382.0 — Petites Aventures v2 (PA2-1) : écrans (prépa
     Object.keys(g.PA2_ICONS).forEach(function (k) { dataIcons.push(g.PA2_ICONS[k]); });
     // v3.454.0 : icônes demandées à Seb, affichées en icône générique en attendant (règle « icône manquante »)
     // v3.492.5 : toutes les icônes du mode v2 sont livrées (la Montagne comprise) ; plus rien à fournir
-    var aFournir = [];
+    var aFournir = ["images/Icons/resources/corde_tressee_icon.webp", "images/Icons/resources/trousse_maitre_icon.webp", "images/Icons/resources/torche_resinee_icon.webp"]; // v3.606.0 : l'artisan d'Aeswyn (atelier des images)
     var absent = dataIcons.filter(function (s) { return !fs.existsSync(path.join(ROOT, s)) && aFournir.indexOf(s) < 0; });
     ok(absent.length === 0, "icônes du mode v2 : toutes présentes, hors celles à fournir (" + dataIcons.length + ")" + (absent.length ? " — manquent " + absent.join(", ") : ""));
   } catch (e) {
@@ -17153,7 +17153,7 @@ console.log("\n[281] v3.467.0 — Petites Aventures : pièges sur les sentiers (
     P.resolveTrap("subir");
     ok(/is-fx/.test(g.pa2HudHTML(r)) && /Venin 3/.test(g.pa2HudHTML(r)), "en-tête : pastille « Venin 3 »");
     g.pa2View.sheet = null;
-    ok(g.PA2_ITEMS.corde.pro.indexOf("Pas sur les pièges") > 0 && g.PA2_ITEM_ORDER.indexOf("trousse") === g.PA2_ITEM_ORDER.indexOf("corde") + 1, "besace : la Trousse après la Corde, la Corde « pas sur les pièges »");
+    ok(g.PA2_ITEMS.corde.pro.indexOf("Pas sur les pièges") > 0 && g.PA2_ITEM_ORDER.indexOf("trousse") === g.PA2_ITEM_ORDER.indexOf("corde") + 2, "besace : la Trousse après la Corde (et sa version tressée, v3.606.0), la Corde « pas sur les pièges »");
   } finally {
     P.rand = savedRand; g.__traps = false; g.PA2_MAPS_BY_WORLD.forest = savedMaps; game.sceneRun = null;
     if (g.SortieManager.isActive()) g.SortieManager.end("return");
@@ -20941,6 +20941,49 @@ console.log("\n[401] v3.605.0 — Parler aux compagnons : « Et les autres ? » 
   } catch (err) { ok(false, "[401] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   if (CM) CM.hasDeparted = saveDep;
   if (g.talkScene) g.closeCompanionTalk(false);
+})();
+
+console.log("\n[402] v3.606.0 — L'artisan d'Aeswyn : corde tressée, trousse de maître, torche résinée ; Sarkel rachète");
+(function () {
+  var P = g.Pa2Run, S = g.SceneRunManager, W = g.WarehouseManager, V = g.VillageEvents, saveNight = P && P.nightItem;
+  try {
+    var rec = {};
+    Object.keys(g.WORKSHOPS_CONFIG).forEach(function (w) { (g.WORKSHOPS_CONFIG[w].recipes || []).forEach(function (r) { rec[r.id] = w; }); });
+    ok(rec.corde_tressee === "scierie_fine" && rec.trousse_maitre === "forge" && rec.torche_resinee === "menuiserie", "recettes : Scierie fine, Forge, Menuiserie (W1, ateliers existants)");
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.unlockedTabs.village = true; game.explorationProgression.petiteAventure = { spent: 0, since: null };");
+    P.nightItem = function () { return null; };
+    S.startRun("petite_aventure_foret");
+    ok(!/pa2AddItem\('corde_t'\)/.test((function () { g.pa2View.picker = { mode: "add" }; var h = ""; var keep = g.pa2SetSheetHTML; g.pa2SetSheetHTML = function (x) { h = x || ""; }; g.pa2RenderPicker(); g.pa2SetSheetHTML = keep; return h; })()), "sans corde tressée à l'Entrepôt, la besace ne la propose pas");
+    W.addResource("corde_tressee", 2, true); W.addResource("trousse_maitre", 1, true); W.addResource("torche_resinee", 1, true);
+    ok(P.addItem("corde").ok && P.addItem("corde_t").ok && P.addItem("trousse_t").ok && P.addItem("torche_t").ok && !P.addItem("torche").ok, "besace : corde + corde tressée, trousse de maître, torche résinée (pas deux torches)");
+    P.depart();
+    var r = g.game.sceneRun;
+    ok(r.stock.corde === 3 && r.stock.trousse === 3 && W.getAmount("corde_tressee") === 1 && W.getAmount("torche_resinee") === 0, "départ : 3 cordes (1 + 2), 3 crochets ; les objets fabriqués sortent de l'Entrepôt");
+    var ap0 = Object.keys(g.PA2_APPROACHES)[0], n0 = { type: "combat" }, base = P._dmgMult(r, n0, ap0);
+    r.bag = r.bag.filter(function (x) { return x !== "torche_t"; }).concat(["torche"]);
+    var withTorch = P._dmgMult(r, n0, ap0);
+    r.bag = r.bag.filter(function (x) { return x !== "torche"; }).concat(["torche_t"]);
+    ok(Math.abs(withTorch / base - g.PA2_RULES.torchDmgMult) < 1e-9 && P.hasItem("torche", r), "la torche résinée éclaire comme une torche, sans le +15 % de dégâts");
+    r.stock.corde = 2; r.stock.trousse = 2; // une corde (la gratuite) et un crochet utilisés
+    P._refundStock(r);
+    ok(W.getAmount("corde_tressee") === 2 && W.getAmount("trousse_maitre") === 0, "retour : la corde tressée intacte est rendue ; la trousse entamée ne l'est pas ; la torche a brûlé");
+    S.abandon(); S.clearRun();
+    // Sarkel rachète
+    run("game.explorationProgression.villageEvent = { id: 'm_sud', from: WorldDays.day(), until: WorldDays.day() + 2, w: 0, done: false };");
+    W.addResource("seve_aeswyn", 12, true);
+    var gold0 = run("game.gold"), list = V.buybackList();
+    ok(list.length === 1 && list[0].res === "seve_aeswyn" && list[0].gold === 100, "marché : Sarkel rachète la Sève par lots de 5 (100 or)");
+    ok(V.sellLot("seve_aeswyn") && V.sellLot("seve_aeswyn") && !V.sellLot("seve_aeswyn") && run("game.gold") === gold0 + 200 && W.getAmount("seve_aeswyn") === 2, "deux lots vendus (+200 or), le troisième manque de Sève");
+    run("game.explorationProgression.villageEvent.sold = 10;");
+    W.addResource("seve_aeswyn", 10, true);
+    ok(V.buybackLotsLeft() === 0 && !V.sellLot("seve_aeswyn"), "10 lots par marché, pas plus");
+    run("game.explorationProgression.villageEvent = null;");
+    ok(!V.sellLot("seve_aeswyn"), "hors marché, Sarkel ne rachète rien");
+    var uses = g.getWarehouseOtherUses("seve_aeswyn").map(function (u) { return u.text; }).join(" | ");
+    ok(/Marché de Sarkel/.test(uses) && /Besace des Petites Aventures/.test(g.getWarehouseOtherUses("corde_tressee").map(function (u) { return u.text; }).join(" | ")), "Entrepôt : la Sève dit « Marché de Sarkel », la corde tressée dit « Besace des Petites Aventures »");
+  } catch (err) { ok(false, "[402] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  if (P) P.nightItem = saveNight;
+  try { S.abandon(); S.clearRun(); } catch (e) {}
 })();
 
 Promise.all(ATTENTES).then(function () {

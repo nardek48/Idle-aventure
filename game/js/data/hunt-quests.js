@@ -46,6 +46,11 @@ var WAREHOUSE_RESOURCES = {
   /* v3.303.0 (W-2, Désert D3) : l'Outre pleine, fabriquée au Réservoir du Puits. Emportée dans
      la préparation d'un parcours du Désert, elle rend du Souffle une fois. Jamais obligatoire.
      v3.304.0 : icône propre (générique en jeu tant qu'elle n'est pas dessinée), plus celle de la gourde. */
+  /* v3.606.0 (l'artisan d'Aeswyn, A + W1 validés par Seb) : versions fabriquées de la corde, de la trousse et de la torche,
+     prises dans l'Entrepôt au départ d'une Petite Aventure et rendues si elles n'ont pas servi. Invendables : ce sont des outils. */
+  corde_tressee: { id: "corde_tressee", name: "Corde tressée", icon: "images/Icons/resources/corde_tressee_icon.webp", desc: "Tressée à la Scierie fine. En Petite Aventure, deux usages au lieu d'un.", sellPrice: 0, tier: "crafted", cap: 99 },
+  trousse_maitre: { id: "trousse_maitre", name: "Trousse de maître", icon: "images/Icons/resources/trousse_maitre_icon.webp", desc: "Forgée à la Forge de la Mine. En Petite Aventure, trois crochets au lieu de deux.", sellPrice: 0, tier: "crafted", cap: 99 },
+  torche_resinee: { id: "torche_resinee", name: "Torche résinée", icon: "images/Icons/resources/torche_resinee_icon.webp", desc: "Montée à la Menuiserie. En Petite Aventure, elle éclaire sans attirer les coups.", sellPrice: 0, tier: "crafted", cap: 99 },
   outre_pleine: { id: "outre_pleine", name: "Outre pleine", icon: "images/Icons/resources/outre_pleine_icon.webp", desc: "Se remplit au Réservoir (Puits). Emportée dans un parcours du Désert, elle rend du Souffle une fois.", sellPrice: 20, tier: "crafted", cap: 99 },
   grande_ration: { id: "grande_ration", name: "Grande ration", icon: "images/Icons/resources/grande_ration_icon.webp", desc: "Repas au Campement : restaure 100 % des PV max de toute l'équipe. Cuisine de camp (Chasse) : 1 Ration moyenne + 3 Sève d'Aeswyn → 1.", sellPrice: 60, tier: "crafted", cap: 999, healPct: 1.00 },
   // v3.127.0 (Petites Aventures, Lot PA3) : butin exclusif du scene-engine petite_aventure_foret

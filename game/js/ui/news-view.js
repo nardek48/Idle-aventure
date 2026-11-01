@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.606.0", "menu_icons/village_menu", _t("L'artisan d'Aeswyn : fabrique au village une corde tressée, une trousse de maître et une torche résinée, meilleures pour les Petites Aventures. Et pendant son marché, Sarkel rachète tes ressources rares.")],
     ["3.605.0", "camp/campfire", _t("Au feu, un nouveau sujet : « Et les autres ? ». Demande à un compagnon ce qu'il pense de chacun des autres.")],
     ["3.604.0", "menu_icons/village_menu", _t("Ce matin à Aeswyn : à l'aube, un événement peut arriver au village pour 2 jours. Une rumeur de Taverne, une demande d'un ancien, le marché de Sarkel ou une fête.")],
     ["3.603.0", "menu_icons/map_menu", _t("Quêtes des compagnons : chaque étape a maintenant son propre lieu sur la carte, marqué du portrait. Une Petite Aventure ne fait avancer qu'une seule quête.")],

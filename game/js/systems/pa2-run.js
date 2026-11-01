@@ -30,7 +30,8 @@ var Pa2Run = {
   getRun: function () { var r = game.sceneRun; return (r && r.pa2) ? r : null; },
   getMap: function (run) { run = run || this.getRun() || {}; return run.map || PA2_MAPS[run.mapId] || null; }, // parcours : tracé dans le run
   node: function (key, run) { run = run || this.getRun(); return (run && run.nodes) ? run.nodes[key] || null : null; },
-  hasItem: function (id, run) { run = run || this.getRun(); return !!run && run.bag.indexOf(id) >= 0; },
+  // v3.606.0 : une version fabriquée (as) compte comme l'objet qu'elle remplace
+  hasItem: function (id, run) { run = run || this.getRun(); return !!run && run.bag.some(function (x) { return x === id || (PA2_ITEMS[x] || {}).as === id; }); },
   hasRelic: function (id, run) { run = run || this.getRun(); return !!run && !!run.relics && run.relics.indexOf(id) >= 0; }, // v3.469.5 : run sans reliques (murs lus hors run)
   hasPact: function (id, run) { run = run || this.getRun(); return !!run && run.pacts.indexOf(id) >= 0; },
   ring: function (run) {
@@ -372,7 +373,7 @@ var Pa2Run = {
     if (!run || run.status !== PA2_STATUS.prep || !it) return { ok: false, reason: _t("Choix impossible") };
     if (!this.itemInWorld(itemId, run)) return { ok: false, reason: _t("Pas dans ce monde.") };
     if (!this.isUnlocked(itemId)) return { ok: false, reason: _td(it.lockedHint || "") };
-    if (!it.uses && run.bag.indexOf(itemId) >= 0) return { ok: false, reason: _t("Déjà dans la besace.") };
+    if (!it.uses && this.hasItem(it.as || itemId, run)) return { ok: false, reason: _t("Déjà dans la besace.") }; // v3.606.0 : une torche, fabriquée ou non
     if (this.bagUsed(run) + it.size > this.bagSize(run)) return { ok: false, reason: _t("La besace est pleine.") };
     if (it.resource && window.WarehouseManager && this._countInBag(run, itemId) >= WarehouseManager.getAmount(it.resource)) {
       return { ok: false, reason: _t("Plus en réserve à l'Entrepôt.") };
@@ -432,7 +433,7 @@ var Pa2Run = {
     run.taken = taken;
     run.stock = {};
     var gUses = this.worldRule(run, "gourdeUses");
-    run.bag.forEach(function (id) { var it = PA2_ITEMS[id]; if (it.uses) run.stock[id] = (run.stock[id] || 0) + (id === "gourde" && gUses ? gUses : it.uses); });
+    run.bag.forEach(function (id) { var it = PA2_ITEMS[id], k = it.as || id; if (it.uses) run.stock[k] = (run.stock[k] || 0) + (id === "gourde" && gUses ? gUses : it.uses); }); // v3.606.0 : la version fabriquée s'ajoute à l'objet
     // Q11 : Seconde gorgée (Mémoire) +1 gorgée, Gué tenu +1 corde.
     if (run.stock.gourde && window.MemoryManager && MemoryManager.has("seconde_gorgee")) run.stock.gourde += 1;
     var night = this.nightItem(run);
@@ -1217,7 +1218,7 @@ var Pa2Run = {
     var R = PA2_RULES, m = PA2_APPROACHES[apId].dmg;
     if (n.revenge) m *= R.revengeMult;
     if (this.hasPact("enrage", run) && (n.type === "boss" || n.act === 3)) m *= R.enrageMult;
-    if (this.hasItem("torche", run) && !this.nightBoost("torche", run)) m *= R.torchDmgMult; // v3.580.0 : torche de la nuit, sa lumière n'attire rien
+    if (this.hasItem("torche", run) && !this.nightBoost("torche", run) && run.bag.indexOf("torche_t") < 0) m *= R.torchDmgMult; // v3.580.0 : torche de la nuit ; v3.606.0 : la torche résinée n'attire rien
     m *= Number(this.condFx(run, "combatDmg") || 1); // v3.469.0 : pleine lune
     if (this.hasRelic("marteau", run)) m *= R.marteauDmg; // v3.469.5 : Marteau du Contremaître
     if (this.hasItem("armure", run)) m *= R.armorDmgMult;
@@ -1657,6 +1658,14 @@ var Pa2Run = {
   },
   _refundStock: function (run) {
     if (!window.WarehouseManager) return;
+    /* v3.606.0 : les versions fabriquées servent en dernier ; on rend chaque unité dont tous les usages restent. */
+    var crafted = {};
+    run.bag.forEach(function (id) { var it = PA2_ITEMS[id]; if (it && it.as && it.uses && it.resource) crafted[id] = (crafted[id] || 0) + 1; });
+    Object.keys(crafted).forEach(function (id) {
+      var it = PA2_ITEMS[id], left = Math.min(Number((run.stock || {})[it.as] || 0), crafted[id] * it.uses);
+      var units = Math.min(Math.floor(left / it.uses), Number((run.taken || {})[it.resource] || 0));
+      if (units > 0) WarehouseManager.refundResource(it.resource, units);
+    });
     Object.keys(run.stock || {}).forEach(function (id) {
       var it = PA2_ITEMS[id], left = Number(run.stock[id] || 0);
       if (it && it.resource && run.taken && run.taken[it.resource] != null) left = Math.min(left, Number(run.taken[it.resource])); // v3.580.0 : l'usage offert par la nuit ne se revend pas

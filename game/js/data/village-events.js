@@ -10,6 +10,8 @@ var VILLAGE_EVENT_SCALE = [1, 1.5, 2, 2.5, 3, 3.5]; // quantités demandées sel
 var VILLAGE_EVENT_RUMOR = { lootMult: 1.5, rare: 2 };     // la Petite Aventure du lieu de la rumeur
 var VILLAGE_EVENT_MARKET = { discount: 0.8, extra: 1 };   // l'échoppe pendant le marché
 var VILLAGE_EVENT_FETE = { goldMult: 1.25, sorties: 3 };  // la fête : soin du camp, puis l'or des sorties suivantes
+var VILLAGE_EVENT_BUYBACK = { lot: 5, maxLots: 10, // v3.606.0 (D2) : Sarkel rachète les ressources rares pendant son marché
+  prices: { seve_aeswyn: 20, verre_des_dunes: 40, pierre_errante: 80, cire_sepulcre: 130, cendre_vive: 220 } }; // banc : le quart de l'or d'une Petite Aventure, par unité rapportée
 var VILLAGE_EVENT_DEMAND_MULT = 1.5; // une demande paie 1,5 fois un contrat de Taverne (banc : quantités du haut d'un contrat)
 var VILLAGE_EVENT_ICONS = { rumeur: "images/Icons/village_events/event_rumeur.webp", demande: "images/Icons/village_events/event_demande.webp",
   marche: "images/Icons/village_events/event_marche.webp", fete: "images/Icons/village_events/event_fete.webp" };
@@ -55,4 +57,5 @@ window.VILLAGE_EVENT_RUMOR = VILLAGE_EVENT_RUMOR;
 window.VILLAGE_EVENT_MARKET = VILLAGE_EVENT_MARKET;
 window.VILLAGE_EVENT_FETE = VILLAGE_EVENT_FETE;
 window.VILLAGE_EVENT_DEMAND_MULT = VILLAGE_EVENT_DEMAND_MULT;
+window.VILLAGE_EVENT_BUYBACK = VILLAGE_EVENT_BUYBACK;
 window.VILLAGE_EVENT_ICONS = VILLAGE_EVENT_ICONS;
