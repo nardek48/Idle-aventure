@@ -24,7 +24,7 @@
 /* Chantier du héros, lot H1 (décisions Seb 26/10/2026) : le plafond absolu passe à 200 (Terrain 18, acte IV
    de la Montagne) et chaque niveau au-delà de 150 coûte ×15 ; les niveaux 1 à 150 gardent le prix v3.248.0. */
 var TRAINING_HARD_CAP = 200;
-var TRAINING_PRICE_TRANCHES = [{ from: 150, mult: 15 }]; // niveau acheté >= from : prix × mult
+var TRAINING_PRICE_TRANCHES = [{ from: 60, mult: 4 }, { from: 150, mult: 15 }]; // niveau acheté >= from : prix × mult ; v3.613.0 : ×4 dès le Désert (la Forêt s'arrête à 60, banc de campagne : ×5 bloque aux Ruines)
 
 var UPGRADES = [
   {

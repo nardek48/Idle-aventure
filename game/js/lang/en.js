@@ -8052,6 +8052,8 @@ I18n.register("en", {
   "Recevoir": "Receive",
   "La Palissade freine {p} % d'échecs de plus sur les cartes vivantes, le temps du compte.": "The Palisade stops {p}% more failures on the living maps, while the count holds.",
   "Et ce matin ?": "And this morning?",
+  // v3.613.0 : entraînement ×4 dès le Désert, élite seule
+  "L'entraînement coûte quatre fois plus cher à partir du Désert : chaque palier du Terrain se gagne. Et les combats avec Wenna contre une élite seule comptent bien un par un.": "Training costs four times more from the Desert on: each Training Ground tier has to be earned. And fights with Wenna against a lone elite now count one by one.",
   // v3.612.0 : 3 parcelles par bâtiment, achat automatique
   "Six zones au niveau 11": "Six zones at level 11",
   "Neuf zones au niveau 14": "Nine zones at level 14",
