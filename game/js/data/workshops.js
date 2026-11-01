@@ -61,7 +61,8 @@ var WORKSHOPS_CONFIG = {
       // v3.137.0 (option B validée Seb) : Grande ration = Ration moyenne + 3 Sève d'Aeswyn — escalade
       // visible sur la chaîne plutôt qu'un doublon des intrants de la Ration moyenne (option A).
       // Premier débouché de craft de la Sève (jusqu'ici uniquement l'offrande forest_15, ponctuelle).
-      { id: "grande_ration", inputs: [{ resourceId: "ration", quantity: 1 }, { resourceId: "seve_aeswyn", quantity: 3 }], outputs: [{ resourceId: "grande_ration", quantity: 1 }], craftTimeMs: 12000 }
+      // v3.608.0 (option A de Seb) : la Sève, demandée par les bâtiments, est remplacée par 15 Viandes + 10 Eau.
+      { id: "grande_ration", inputs: [{ resourceId: "ration", quantity: 1 }, { resourceId: "viande", quantity: 15 }, { resourceId: "eau", quantity: 10 }], outputs: [{ resourceId: "grande_ration", quantity: 1 }], craftTimeMs: 12000 }
     ]
   },
 

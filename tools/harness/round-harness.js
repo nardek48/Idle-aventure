@@ -2391,22 +2391,22 @@ console.log("\n== v3.137.0 : recette Grande ration (Cuisine de camp) ==");
   run("StoryQuestManager.ensure();");
   var recipe = g.WorkshopsSystem.getRecipe("cuisine_de_camp", "grande_ration");
   ok(!!recipe, "recette grande_ration présente sur cuisine_de_camp");
-  ok(recipe.inputs.length === 2 && recipe.inputs[0].resourceId === "ration" && recipe.inputs[0].quantity === 1
-    && recipe.inputs[1].resourceId === "seve_aeswyn" && recipe.inputs[1].quantity === 3,
-    "intrants : 1 Ration moyenne + 3 Sève d'Aeswyn (option B)");
+  ok(recipe.inputs[0].resourceId === "ration" && recipe.inputs[0].quantity === 1
+    && recipe.inputs[1].resourceId === "viande" && recipe.inputs[1].quantity === 15 && recipe.inputs[2].resourceId === "eau" && recipe.inputs[2].quantity === 10 && recipe.inputs.length === 3,
+    "intrants : 1 Ration moyenne + 15 Viandes + 10 Eau (v3.608.0, plus de Sève)");
   ok(recipe.craftTimeMs === 12000, "temps de base 12 s");
 
   // fullResetState donne 3 Ration moyenne de départ (v3.107.1) : on repart de 0 pour un test net.
-  run("game.resources.ration = 0; game.resources.seve_aeswyn = 0;");
+  run("game.resources.ration = 0; game.resources.viande = 0; game.resources.eau = 0;");
   ok(g.WorkshopsSystem.getMaxCraftTimes("cuisine_de_camp", "grande_ration") === 0, "pas assez de stock : 0 craft possible");
   g.WarehouseManager.addResource("ration", 2, true);
-  g.WarehouseManager.addResource("seve_aeswyn", 3, true);
-  ok(g.WorkshopsSystem.getMaxCraftTimes("cuisine_de_camp", "grande_ration") === 1, "stock limité par la Sève (3 -> 1 craft), pas par la Ration (2)");
+  g.WarehouseManager.addResource("viande", 15, true); g.WarehouseManager.addResource("eau", 30, true);
+  ok(g.WorkshopsSystem.getMaxCraftTimes("cuisine_de_camp", "grande_ration") === 1, "stock limité par la Viande (15 -> 1 craft), pas par la Ration (2) ni l'Eau (30)");
   ok(g.WorkshopsSystem.canCraft("cuisine_de_camp", "grande_ration", 1) === true, "canCraft vrai avec le stock réuni");
 
   var okEnqueue = g.WorkshopsSystem.enqueueCraft("cuisine_de_camp", "grande_ration", 1);
   ok(okEnqueue === true, "mise en file réussie");
-  ok(g.WarehouseManager.getAmount("ration") === 1 && g.WarehouseManager.getAmount("seve_aeswyn") === 0, "intrants déduits à la mise en file (1 Ration, 3 Sève)");
+  ok(g.WarehouseManager.getAmount("ration") === 1 && g.WarehouseManager.getAmount("viande") === 0 && g.WarehouseManager.getAmount("eau") === 20, "intrants déduits à la mise en file (1 Ration, 15 Viandes, 10 Eau)");
   var queue = g.WorkshopsSystem.getQueue("cuisine_de_camp");
   var entry = queue[queue.length - 1];
   ok(entry.recipeId === "grande_ration" && entry.msRemaining === 12000, "entrée en file : recipeId + durée totale corrects");
@@ -2418,7 +2418,7 @@ console.log("\n== v3.137.0 : recette Grande ration (Cuisine de camp) ==");
   var pain = g.WAREHOUSE_RESOURCES.pain;
   ok(pain.desc.indexOf("Boulangerie") !== -1 && pain.desc.indexOf("Atelier de Construction") === -1, "desc Pain corrigée (Boulangerie, plus Atelier de Construction)");
   var seve = g.WAREHOUSE_RESOURCES.seve_aeswyn;
-  ok(seve.desc.indexOf("Grande ration") !== -1, "desc Sève d'Aeswyn mentionne son usage de craft");
+  ok(seve.desc.indexOf("Résine durcie") !== -1 && seve.desc.indexOf("Grande ration") === -1, "desc Sève d'Aeswyn : son usage de craft (Résine durcie), plus la Grande ration (v3.608.0)");
 })();
 
 
@@ -13336,7 +13336,7 @@ console.log("\n[188] v3.416.0 — Entrepôt : tuiles T3, liste déroulante, Ma s
     var pl = run("buildWarehouseSheetHTML('planche')");
     ok(pl.indexOf("warehouseGoTo('workshop', 'scierie_fine')") !== -1 && pl.indexOf("Améliorer les ateliers") !== -1 && pl.indexOf("Constructions") !== -1, "Planche : vient de la Scierie fine ; sert aux ateliers et aux constructions");
     var sv = run("buildWarehouseSheetHTML('seve_aeswyn')");
-    ok(sv.indexOf("wh-cap") === -1 && sv.indexOf("cuisine_de_camp") !== -1, "Sève : pas de plafond, consommée par la Cuisine de camp");
+    ok(sv.indexOf("wh-cap") === -1 && sv.indexOf("cuisine_de_camp") === -1 && sv.indexOf("menuiserie") !== -1, "Sève : pas de plafond, consommée par la Menuiserie (plus la Cuisine de camp, v3.608.0)");
     var pr = run("buildWarehouseSheetHTML('petite_ration')");
     ok(pr.indexOf("Campement") !== -1, "Petite ration : le repas au Campement est cité");
     run("openWarehouseSheet('ble'); setVillageSubTab('production');");

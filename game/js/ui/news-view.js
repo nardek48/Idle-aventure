@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.608.0", "camp/campfire", _t("La Grande ration ne demande plus de Sève d'Aeswyn : 1 Ration, 15 Viandes et 10 Eau à la Cuisine de camp.")],
     ["3.607.0", "menu_icons/village_menu", _t("Les événements du village ont des suites : livre une demande ou joue une rumeur, et le lendemain le village te le rend. Et au feu, demande à un compagnon « Et ce matin ? ».")],
     ["3.606.0", "menu_icons/village_menu", _t("L'artisan d'Aeswyn : fabrique au village une corde tressée, une trousse de maître et une torche résinée, meilleures pour les Petites Aventures. Et pendant son marché, Sarkel rachète tes ressources rares.")],
     ["3.605.0", "camp/campfire", _t("Au feu, un nouveau sujet : « Et les autres ? ». Demande à un compagnon ce qu'il pense de chacun des autres.")],

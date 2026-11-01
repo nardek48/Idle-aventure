@@ -2354,8 +2354,8 @@ I18n.register("en", {
   "Repas au Campement : restaure 60 % des PV max de toute l'équipe. Vivres pour repartir au Désert, aux Ruines, à la Crypte et à la Montagne (donjon et élite rejoués, traversées, Labyrinthe). Cuisine de camp : 15 Viandes + 1 Pain.": "A meal at Camp: restores 60% of max HP to the whole team. Provisions for setting out again in the Desert, the Ruins, the Crypt and the Mountain (replayed dungeon and elite, crossings, Labyrinth). Camp Kitchen: 15 Meat + 1 Bread.",
   "Repas au Campement : restaure 35 % des PV max de toute l'équipe. Vivres pour repartir en Forêt (donjon et élite rejoués, expéditions). Crafté à la Cuisine de camp à partir de Viande et d'Eau.": "A meal at Camp: restores 35% of max HP to the whole team. Provisions for setting out again in the Forest (replayed dungeon and elite, expeditions). Crafted at the Camp Kitchen from Meat and Water.",
   "Se remplit au Réservoir (Puits). Emportée dans un parcours du Désert, elle rend du Souffle une fois.": "Filled at the Reservoir (Well). Taken on a Desert route, it restores Breath once.",
-  "Repas au Campement : restaure 100 % des PV max de toute l'équipe. Cuisine de camp (Chasse) : 1 Ration moyenne + 3 Sève d'Aeswyn → 1.": "A meal at Camp: restores 100% of max HP to the whole team. Camp Kitchen (Hunting Lodge): 1 Medium ration + 3 Aeswyn Sap → 1.",
-  "Résine runique rare de la Forêt. Sert à cuisiner la Grande ration et, durcie à la Menuiserie, à bâtir les hauts paliers du village.": "Rare runic resin from the Forest. Used to cook the Large ration and, hardened at the Joinery, to build the village's high tiers.",
+  "Repas au Campement : restaure 100 % des PV max de toute l'équipe. Cuisine de camp (Chasse) : 1 Ration moyenne + 15 Viandes + 10 Eau → 1.": "A meal at Camp: restores 100% of max HP to the whole team. Camp Kitchen (Hunting Lodge): 1 Medium ration + 15 Meat + 10 Water → 1.",
+  "Résine runique rare de la Forêt. Sert à bâtir les hauts paliers du village et, durcie à la Menuiserie, à faire la Résine durcie.": "Rare runic resin from the Forest. Used to build the village's high tiers and, hardened at the Joinery, to make Hardened resin.",
   "Sable fondu par la foudre, lisse comme de l'eau. Trouvé en Petite Aventure du Désert.": "Sand melted by lightning, smooth as water. Found on Desert Short Adventures.",
   "Une plaque arrachée au dard de la bête. Elle ne chauffe pas : elle boit le feu. On s'en sert pour les reforges 5 et 6.": "A plate torn from the beast's sting. It doesn't heat up: it drinks the fire. Used for reforges 5 and 6.",
   "Verre des dunes chauffé deux fois au Tailleur de pierre. Il coupe le fer. Matériau de la Forge 3, des hauts paliers des Ruines et des reforges 7 à 12.": "Dune glass heated twice at the Stonecutter. It cuts iron. Material for Forge 3, the high tiers of the Ruins and reforges 7 to 12.",
@@ -8065,6 +8065,8 @@ I18n.register("en", {
   "Recevoir": "Receive",
   "La Palissade freine {p} % d'échecs de plus sur les cartes vivantes, le temps du compte.": "The Palisade stops {p}% more failures on the living maps, while the count holds.",
   "Et ce matin ?": "And this morning?",
+  // v3.608.0 : la recette de la Grande ration
+  "La Grande ration ne demande plus de Sève d'Aeswyn : 1 Ration, 15 Viandes et 10 Eau à la Cuisine de camp.": "The Large ration no longer needs Aeswyn Sap: 1 Ration, 15 Meat and 10 Water at the Camp Kitchen.",
   "Les événements du village ont des suites : livre une demande ou joue une rumeur, et le lendemain le village te le rend. Et au feu, demande à un compagnon « Et ce matin ? ».": "Village events now have follow-ups: deliver a request or play a rumour, and the next day the village pays you back. And at the fire, ask a companion “And this morning?”.",
 
 });
