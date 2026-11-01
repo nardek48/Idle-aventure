@@ -21216,6 +21216,25 @@ console.log("\n[408] v3.613.0 — Entraînement ×4 dès le Désert ; élite san
   } catch (err) { ok(false, "[408] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[409] v3.614.0 — Stats du héros, option B : caractéristiques secondaires à 70 % du plafond du Terrain");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; VillageBuildingManager.ensure(); game.village.buildings.training.level = 4; EquipmentManager.recalcStats();");
+    var U = function (id) { return g.UPGRADES.filter(function (u) { return u.id === id; })[0]; }, cap = g.getTrainingCapLevels();
+    ok(cap === 60 && g.getUpgradeCap(U("utrain_power")) === 60 && g.getUpgradeCap(U("utrain_endurance")) === 60, "Chevalier : Puissance (classe) et Endurance au plafond du Terrain (60)");
+    ok(["utrain_celerity", "utrain_precision", "utrain_will"].every(function (id) { return g.getUpgradeCap(U(id)) === 42; }), "les trois autres à 70 % (42)");
+    run("game.upgrades.utrain_precision = 55;");
+    ok(g.getUpgradeCap(U("utrain_precision")) === 55, "un niveau déjà acquis au-delà est gardé");
+    run("game.heroId = 'mage';");
+    ok(g.getUpgradeCap(U("utrain_will")) === 60 && g.getUpgradeCap(U("utrain_power")) === 42, "Mage : Volonté au plafond, Puissance à 70 %");
+    run("game.heroId = 'ranger';");
+    ok(g.getUpgradeCap(U("utrain_celerity")) === 60 && g.getUpgradeCap(U("utrain_will")) === 42, "Rôdeur : Célérité au plafond, Volonté à 70 %");
+    run("game.heroId = 'knight'; game.upgrades.utrain_precision = 0; game.upgrades.utrain_celerity = 42;");
+    var html = g.buildHeroStatCardHTML ? "" : "";
+    ok(g.isTrainingSecondaryId("utrain_celerity") && !g.isTrainingSecondaryId("utrain_power") && !g.isTrainingSecondaryId("utrain_endurance"), "secondaires du Chevalier : Célérité, Précision, Volonté");
+  } catch (err) { ok(false, "[409] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

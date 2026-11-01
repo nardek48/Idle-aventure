@@ -105,5 +105,15 @@ var UPGRADES = [
 
 /* v3.355.0 : AETHER_SHOP et son achat retirés (boutique vide depuis la v3.322.0, remplacée par
    la Mémoire). v3.412.0 : game.aetherUpgrades n’est plus lu ni écrit. */
+/* v3.614.0 (chantier stats du héros, option B, banc du 01/11) : la caractéristique de la classe et l'Endurance montent au
+   plafond du Terrain ; les trois autres s'arrêtent à 70 % de ce plafond (un niveau déjà acquis est toujours gardé). */
+var TRAINING_SECONDARY_SHARE = 0.7;
+function isTrainingSecondaryId(id) {
+  if (id === "utrain_endurance") return false;
+  var main = (typeof getHeroMainStat === "function" && typeof game !== "undefined") ? getHeroMainStat(game.heroId).stat : "power";
+  return id !== "utrain_" + main;
+}
 window.TRAINING_HARD_CAP = TRAINING_HARD_CAP;
+window.TRAINING_SECONDARY_SHARE = TRAINING_SECONDARY_SHARE;
+window.isTrainingSecondaryId = isTrainingSecondaryId;
 window.TRAINING_PRICE_TRANCHES = TRAINING_PRICE_TRANCHES;

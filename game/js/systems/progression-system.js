@@ -342,7 +342,9 @@ function getUpgradeCap(upgrade) {
   if (!isTrainingUpgradeId(upgrade.id)) return hardMax;
 
   var owned = Number((game.upgrades && game.upgrades[upgrade.id]) || 0);
-  return Math.min(hardMax, Math.max(getTrainingCapLevels(), owned));
+  var cap = getTrainingCapLevels();
+  if (typeof isTrainingSecondaryId === "function" && isTrainingSecondaryId(upgrade.id)) cap = Math.floor(cap * TRAINING_SECONDARY_SHARE); // v3.614.0 : option B (accord de Seb)
+  return Math.min(hardMax, Math.max(cap, owned));
 }
 window.TRAINING_BASE_CAP = TRAINING_BASE_CAP;
 window.getTrainingCapLevels = getTrainingCapLevels;

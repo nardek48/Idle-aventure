@@ -45,7 +45,8 @@
     var cap = (typeof getTrainingCapLevels === "function") ? getTrainingCapLevels() : (window.TRAINING_HARD_CAP || 150);
     var terrain = window.VillageBuildingManager ? VillageBuildingManager.getLevel("training") : 0;
     var left = 0;
-    ids.forEach(function (id) { left += Math.max(0, cap - Number((game.upgrades || {})[id] || 0)); });
+    // v3.614.0 (option B) : chaque caractéristique a son plafond (les secondaires s'arrêtent à 70 % du Terrain)
+    ids.forEach(function (id) { var u = (window.UPGRADES || []).filter(function (x) { return x.id === id; })[0]; var c = u && typeof getUpgradeCap === "function" ? getUpgradeCap(u) : cap; left += Math.max(0, c - Number((game.upgrades || {})[id] || 0)); });
     // Tout au maximum absolu (maxLevel de chaque entraînement) : c'est fini, quel que soit le Terrain.
     var prog = (typeof getHeroTrainingProgress === "function") ? getHeroTrainingProgress() : null;
     if (prog && prog.total > 0 && prog.left === 0) return { tone: "done", line: _t("Tout est entraîné au maximum"), sub: _t("Maximum absolu atteint") };
