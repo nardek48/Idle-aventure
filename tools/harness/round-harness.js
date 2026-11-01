@@ -18748,7 +18748,7 @@ console.log("\n[322] Chantier du héros, H1 — entraînement au-delà de 150 (�
     var game = g.game, WC = g.WorldCaps, VB = g.VillageBuildingManager;
     var force = g.UPGRADES.filter(function (u) { return u.id === "utrain_power"; })[0];
     ok(g.TRAINING_HARD_CAP === 200 && force.maxLevel === 200, "plafond absolu : 200");
-    ok(g.getUpgradeCost(force, 149) === 413 && g.getUpgradeCost(force, 150) === 1248, "Force : niveau 150 à 413 or (×5 dès 60, v3.613.0), 151 à 1 248 (×15)");
+    ok(g.getUpgradeCost(force, 149) === 331 && g.getUpgradeCost(force, 150) === 1248, "Force : niveau 150 à 331 or (×4 dès 60, v3.613.0), 151 à 1 248 (×15)");
     var t = 0; g.HEROS_TRAINING_UPGRADE_IDS.forEach(function (id) { var u = g.UPGRADES.filter(function (x) { return x.id === id; })[0]; for (var l = 150; l < 200; l++) t += g.getUpgradeCost(u, l); });
     ok(t === 266142, "les cinq statistiques de 150 à 200 : 266 142 or");
     VB.ensure();
@@ -21197,15 +21197,15 @@ console.log("\n[407] v3.612.0 — Zones : 3 parcelles qui montent par monde, ach
   } catch (err) { ok(false, "[407] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
-console.log("\n[408] v3.613.0 — Entraînement ×5 dès le Désert ; élite sans escorte = nouveau combat (forest_wenna)");
+console.log("\n[408] v3.613.0 — Entraînement ×4 dès le Désert ; élite sans escorte = nouveau combat (forest_wenna)");
 (function () {
   try {
     run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
     var force = g.UPGRADES.filter(function (u) { return u.id === "utrain_power"; })[0];
     var base = function (L) { return Math.floor(9 * (1 + 0.055 * L)); };
-    ok(g.getUpgradeCost(force, 59) === base(59) && g.getUpgradeCost(force, 60) === Math.floor(9 * (1 + 0.055 * 60) * 5), "Forêt (niveaux 1 à 60) inchangée, ×5 dès le 61e niveau");
+    ok(g.getUpgradeCost(force, 59) === base(59) && g.getUpgradeCost(force, 60) === Math.floor(9 * (1 + 0.055 * 60) * 4), "Forêt (niveaux 1 à 60) inchangée, ×4 dès le 61e niveau");
     var palier = 0; g.HEROS_TRAINING_UPGRADE_IDS.forEach(function (id) { var u = g.UPGRADES.filter(function (x) { return x.id === id; })[0]; for (var L = 60; L < 70; L++) palier += g.getUpgradeCost(u, L); });
-    ok(palier > 7000 && palier < 8000, "un palier du Désert (60 → 70, 5 caractéristiques) ≈ 7 600 or (" + palier + ")");
+    ok(palier > 5800 && palier < 6500, "un palier du Désert (60 → 70, 5 caractéristiques) ≈ 6 100 or (" + palier + ")");
     // élite sans escorte : un nouveau combat à chaque apparition
     var k0 = g.Initiative.combatKey;
     var id = Object.keys(g.ELITE_DB).filter(function (e) { var d = g.ELITE_DB[e]; return !d.escort || !d.escort.length; })[0];
