@@ -48,7 +48,9 @@ var CARAVAN_TRIP_ORDER = ["court", "moyen", "long"];
 /* v3.421.0 : matières brutes que la caravane n'emporte jamais (planches, lingots, blocs en dépendent). */
 var CARAVAN_EXCLUDED = []; // v3.480.0 (refonte de l'économie RE-3) : le Bois et le Fer partent aussi ; la moitié du plafond reste au village
 var CARAVAN_CAPACITY_PER_LEVEL = 0.10;   // +10 % par niveau de Halle au-delà du premier
-var CARAVAN_KEEP_SHARE = 0.5;            // la moitié basse du plafond ne part jamais
+var CARAVAN_KEEP_SHARE = 0.5;            // part du plafond laissée au village, par défaut
+/* v3.610.0 (retour Seb : caravanes bloquées au Désert) : la part laissée se règle, 10 à 75 %, par pas de 5. */
+var CARAVAN_KEEP_MIN = 0.1, CARAVAN_KEEP_MAX = 0.75, CARAVAN_KEEP_STEP = 0.05;
 /* Matériau rare rapporté par le trajet Long : celui du monde du marché choisi (v3.426.0). */
 var CARAVAN_RARE_BY_WORLD = { 0: "seve_aeswyn", 1: "verre_des_dunes", 2: "pierre_errante", 3: "cire_sepulcre", 4: "cendre_vive" }; // v3.452.0 : la Crypte ; v3.489.0 : la Montagne
 /* v3.428.0 (Ruines, étape ruines_04) : marchés SANS carte vivante. Les Ruines n'ont pas encore
@@ -132,13 +134,24 @@ var CaravanManager = {
     });
   },
 
-  /* Ce qui peut partir d'une ressource : au-dessus de la moitié du plafond ET de la réserve. */
+  /* v3.610.0 : part du plafond que la caravane laisse au village (game.village.caravanKeep, sauvegardé avec game.village). */
+  getKeepShare: function () {
+    var v = game.village && Number(game.village.caravanKeep);
+    return isFinite(v) && v > 0 ? Math.min(CARAVAN_KEEP_MAX, Math.max(CARAVAN_KEEP_MIN, v)) : CARAVAN_KEEP_SHARE;
+  },
+  stepKeepShare: function (dir) {
+    if (!game.village || typeof game.village !== "object") game.village = {};
+    game.village.caravanKeep = Math.min(CARAVAN_KEEP_MAX, Math.max(CARAVAN_KEEP_MIN, Math.round((this.getKeepShare() + dir * CARAVAN_KEEP_STEP) * 100) / 100));
+    return game.village.caravanKeep;
+  },
+
+  /* Ce qui peut partir d'une ressource : au-dessus de la part laissée au village ET de la réserve. */
   getSpare: function (key) {
     var cap = WarehouseManager.getCap(key);
     if (cap === Infinity) return 0;
     var reserve = (window.ResourceReserveManager && typeof ResourceReserveManager.getReserve === "function")
       ? Number(ResourceReserveManager.getReserve(key) || 0) : 0;
-    var keep = Math.max(Math.ceil(cap * CARAVAN_KEEP_SHARE), reserve);
+    var keep = Math.max(Math.ceil(cap * this.getKeepShare()), reserve);
     return Math.max(0, Math.floor(WarehouseManager.getAmount(key) - keep));
   },
 

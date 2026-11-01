@@ -147,6 +147,11 @@ var SCENARIOS = {
         levers: { capMult: 3, unlockGift: { bois: 40, pierre: 30 }, huntShare: 0.25, huntQty: 4 } },
   D7: { label: "réserve ×2 + dotation + zones ÷2", zoneLevel: 3, zones: 3, costMult: {}, prodMult: {},
         levers: { capMult: 2, unlockGift: { bois: 40, pierre: 30 }, upCostMult: 0.5, unlockCostMult: 0.5 } },
+  /* Chantier zones (01/11) : ACT = le jeu d'aujourd'hui (3 zones niv. 5 en Forêt) ; A = un niveau par bâtiment
+     (1 → 5 en Forêt), même débit et même coût total qu'ACT au plafond, 2 améliorations uniques (coût ×3). */
+  ACT: { label: "aujourd'hui (3 zones, niv. 5)", zoneLevel: 5, zones: 3, costMult: {}, prodMult: {} },
+  A: { label: "option A : un niveau par bâtiment (1 → 5)", zoneLevel: 5, zones: 1, single: true, costMult: {}, prodMult: {} },
+  A2: { label: "option A, premiers niveaux moins chers (coûts du niv. 2 et 3 ÷2)", zoneLevel: 5, zones: 1, single: true, cheapStart: true, costMult: {}, prodMult: {} },
   S4: { label: "zones niv. 4 + trois gros ÷2", zoneLevel: 4, zones: 3,
         costMult: { hall: 0.5, warehouse: 0.5, palisade: 0.5 }, prodMult: {} }
 };
@@ -216,6 +221,37 @@ function campaign(scen, prof) {
     PPS[fn] = function (b, dt) { cur = b; var r = orig(b, dt); cur = null; return r; };
   });
 
+  /* Option A : la zone 0 joue le bâtiment entier. Débit = celui des 3 zones de la Forêt au même palier
+     (géométrique de 0,7 à 5,89 /min), réserve de 200 min, coût de chaque niveau = part du coût réel des zones. */
+  if (scen.single) {
+    var RA = [0, 0.7], lvMax = scen.zoneLevel, top = (0.7 + 0.5 + 0.35) * PPS.levelMult(lvMax), ratio = Math.pow(top / 0.7, 1 / (lvMax - 1));
+    for (var lv = 2; lv <= lvMax; lv++) RA[lv] = RA[lv - 1] * ratio;
+    var CA = {};
+    PROD_IDS.forEach(function (b) {
+      var band = {}; function addc(c) { Object.keys(c || {}).forEach(function (k) { band[k] = (band[k] || 0) + c[k]; }); }
+      for (var z = 0; z < 3; z++) { if (z) addc(g.getProductionPlotUnlockCost(b, z)); for (var l = 1; l < lvMax; l++) addc(g.getProductionPlotUpgradeCost(b, l, z)); }
+      CA[b] = {};
+      for (var l2 = 1; l2 < lvMax; l2++) {
+        var share = (RA[l2 + 1] - RA[l2]) / (RA[lvMax] - RA[1]), c = {};
+        if (scen.cheapStart && l2 <= 2) share /= 2;
+        Object.keys(band).forEach(function (k) { c[k] = Math.max(1, Math.round(band[k] * share)); });
+        CA[b][l2] = c;
+      }
+      var imp = g.PRODUCTION_PLOTS_BUILDINGS[b].improvementCost;
+      ["fertile", "irrigated"].forEach(function (k) { Object.keys(imp[k].cost).forEach(function (r) { imp[k].cost[r] *= 3; }); });
+    });
+    if (process.env.TRACE_A) PROD_IDS.forEach(function (b) { console.log("   " + b + " " + JSON.stringify(CA[b])); });
+    var curB = null, origUp = g.getProductionPlotUpgradeCost;
+    g.getProductionPlotUpgradeCost = function (b, level, i) { return i === 0 ? CA[b][level] : origUp(b, level, i); };
+    PPS.getPlotRatePerMin = function (i, p) {
+      if (i !== 0) return 0;
+      var bonus = 1 + (p.fertile ? 0.08 : 0) + (p.irrigated ? 0.10 : 0);
+      return RA[p.level] * bonus * (scen.prodMult[cur] || 1);
+    };
+    PPS.getPlotCapacity = function (i, p) { return i === 0 ? Math.floor(RA[p.level] * 200) : 0; };
+    if (process.env.TRACE_A) console.log("   débit par niveau : " + RA.slice(1).map(function (x) { return x.toFixed(2); }).join(" · "));
+  }
+
   g.game.gold = 1e9; var goldStart = g.game.gold;
   var active = 0;               // minutes de jeu actif cumulées
   var huntAcc = 0;
@@ -279,7 +315,7 @@ function campaign(scen, prof) {
           if (opt && afford(opt.cost) && (!best || woodEq(opt.cost) < woodEq(best.cost))) best = opt;
         });
       });
-      if (best && best.go().ok) did = true;
+      if (best && best.go().ok) { did = true; zoneBuys++; if (firstBuy == null) firstBuy = active; }
     }
   }
 
@@ -317,7 +353,7 @@ function campaign(scen, prof) {
   function builtLevels() { var t = 0; Object.keys(FOREST_CAPS).forEach(function (id) { t += VBM.getLevel(id); }); return t; }
   function snapshot() { var o = {}; Object.keys(FOREST_CAPS).forEach(function (id) { if (FOREST_CAPS[id]) o[id] = VBM.getLevel(id) + "/" + FOREST_CAPS[id]; }); return o; }
 
-  var TARGET = totalTarget();
+  var TARGET = totalTarget(), zoneBuys = 0, firstBuy = null;
   var atArrival = null, doneActive = null, doneReal = null;
   var realMin = 0, guard = 0;
 
@@ -338,7 +374,8 @@ function campaign(scen, prof) {
       if (m % prof.harvest === 0 || m === prof.session - 1) { harvestAll(); if (POLICY === "zones") { investZones(); investVillage(); } else { investVillage(); investZones(); } }
       else VBM.tick();
       if (!atArrival && active >= prof.arrival) {
-        atArrival = { pct: Math.round(100 * builtLevels() / TARGET), snap: snapshot(), gold: goldStart - g.game.gold, realH: realMin / 60 };
+        atArrival = { pct: Math.round(100 * builtLevels() / TARGET), snap: snapshot(), gold: goldStart - g.game.gold, realH: realMin / 60,
+          rate: PROD_IDS.reduce(function (a, id) { return a + (prog[flags[id]] ? PPS.getTotalRatePerMin(id) : 0); }, 0), buys: zoneBuys };
       }
       if (builtLevels() >= TARGET && !VBM.isBuilding()) { doneActive = active; doneReal = realMin; break; }
     }
@@ -347,7 +384,7 @@ function campaign(scen, prof) {
     NOW += prof.gap * 60000; realMin += prof.gap;
     VBM.tick();
   }
-  return { atArrival: atArrival, doneActive: doneActive, doneReal: doneReal, gold: goldStart - g.game.gold };
+  return { firstBuy: firstBuy, zoneBuys: zoneBuys, atArrival: atArrival, doneActive: doneActive, doneReal: doneReal, gold: goldStart - g.game.gold };
 }
 
 /* ---------- Rapport ---------- */
@@ -365,7 +402,7 @@ Object.keys(SCENARIOS).forEach(function (sk) {
     var a = r.atArrival || { pct: "?", snap: {} };
     console.log("  " + p.label.padEnd(30) + " à l'arrivée au Désert : " + String(a.pct).padStart(3) + " % des niveaux"
       + " | fini après " + h(r.doneActive) + " de jeu actif, " + h(r.doneReal) + " réelles"
-      + " | or total " + Math.round(r.gold));
+      + " | débit à l'arrivée " + (a.rate || 0).toFixed(1) + "/min, " + (a.buys || 0) + " achats de zone (1er à " + r.firstBuy + " min) ; " + r.zoneBuys + " au total");
     if (DETAIL) console.log("     " + JSON.stringify(a.snap));
   });
 });

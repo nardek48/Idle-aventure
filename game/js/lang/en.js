@@ -822,8 +822,6 @@ I18n.register("en", {
   "{p} % : un objet": "{p}%: an item",
   "Trajet": "Trip",
   "Chargement": "Cargo",
-  "Rien à vendre : aucune matière brute ne dépasse la moitié de son plafond.": "Nothing to sell: no raw material is above half its cap.",
-  "La caravane prend d'abord ce qui est au plafond, à parts égales. Elle laisse toujours la moitié du plafond et la réserve protégée de l'Entrepôt.": "The caravan first takes whatever is at its cap, in equal shares. It always leaves half the cap and the Warehouse's protected reserve.",
   "Partir · {d}": "Set off · {d}",
   "≈ {g} or au retour": "≈ {g} gold on return",
   "Marché": "Market",
@@ -839,7 +837,7 @@ I18n.register("en", {
   "Halle": "Hall",
   "Agrandir · niv. {n}": "Expand · lv. {n}",
   "De retour": "Back",
-  "Caravane de la Halle (au-delà de la moitié du plafond)": "Market Hall caravan (above half the cap)",
+  "Caravane de la Halle (au-delà de {p} % du plafond)": "Market Hall caravan (above {p}% of the cap)",
   // js/systems/tavern-system.js
   "Contrat déjà honoré": "Contract already fulfilled",
   "Contrat honoré : {x} (+{n} or)": "Contract fulfilled: {x} (+{n} gold)",
@@ -8065,6 +8063,11 @@ I18n.register("en", {
   "Recevoir": "Receive",
   "La Palissade freine {p} % d'échecs de plus sur les cartes vivantes, le temps du compte.": "The Palisade stops {p}% more failures on the living maps, while the count holds.",
   "Et ce matin ?": "And this morning?",
+  // v3.610.0 : la part laissée par la caravane
+  "Laisser au village : {p} % du plafond": "Leave in the village: {p}% of the cap",
+  "Rien à vendre : aucune matière brute ne dépasse {p} % de son plafond. Baisse la part laissée au village pour charger quand même.": "Nothing to sell: no raw material is above {p}% of its cap. Lower the share left in the village to load anyway.",
+  "La caravane prend d'abord ce qui est au plafond, à parts égales. Elle laisse toujours la part choisie et la réserve protégée de l'Entrepôt.": "The caravan first takes what is at the cap, in equal shares. It always leaves the chosen share and the Warehouse's protected reserve.",
+  "La part laissée au village par la caravane se règle (10 à 75 % du plafond) : plus de caravane bloquée faute de surplus.": "The share the caravan leaves in the village is adjustable (10 to 75% of the cap): no more caravans stuck for lack of surplus.",
   // v3.609.0 : le Grand Ouvrage automatique
   "Le Grand Ouvrage ouvre dès le Désert et se remplit tout seul : au-delà de 80 % du plafond (réglable), les matières brutes y partent au lieu d'être perdues.": "The Great Work opens from the Desert and fills itself: above 80% of the cap (adjustable), raw materials go there instead of being lost.",
   "Grand Ouvrage : palier {t} atteint, +{p} % d'or": "Great Work: tier {t} reached, +{p}% gold",
