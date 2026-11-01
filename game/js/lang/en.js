@@ -8063,6 +8063,14 @@ I18n.register("en", {
   "Recevoir": "Receive",
   "La Palissade freine {p} % d'échecs de plus sur les cartes vivantes, le temps du compte.": "The Palisade stops {p}% more failures on the living maps, while the count holds.",
   "Et ce matin ?": "And this morning?",
+  // v3.611.0 : caravanes, rare garanti et commande du jour
+  "{x} ×{n}": "{x} ×{n}",
+  "Commande du jour : {x}": "Today's order: {x}",
+  "Honorée aujourd'hui : encore +{p} % d'or sur elle.": "Filled today: still +{p}% gold on it.",
+  "Chargée en premier, +{p} % d'or sur elle.": "Loaded first, +{p}% gold on it.",
+  "À partir de {m}, +{r} {x} (une fois par jour).": "From {m} units, +{r} {x} (once a day).",
+  "Dans ce chargement : {n}.": "In this load: {n}.",
+  "Caravanes : le trajet Long rapporte 2 matériaux rares à coup sûr, et chaque marché passe une commande du jour (+25 % d'or, +1 rare).": "Caravans: the Long trip always brings back 2 rare materials, and each market places a daily order (+25% gold, +1 rare).",
   // v3.610.0 : la part laissée par la caravane
   "Laisser au village : {p} % du plafond": "Leave in the village: {p}% of the cap",
   "Rien à vendre : aucune matière brute ne dépasse {p} % de son plafond. Baisse la part laissée au village pour charger quand même.": "Nothing to sell: no raw material is above {p}% of its cap. Lower the share left in the village to load anyway.",

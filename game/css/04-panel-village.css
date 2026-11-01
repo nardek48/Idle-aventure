@@ -759,6 +759,10 @@
 .car-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .car-chip { display: inline-flex; align-items: center; gap: 4px; height: 30px; padding: 0 9px 0 5px; border-radius: 15px; background: var(--c-brown-850-2); color: var(--c-cream-150-vivid); font-size: 13px; font-weight: 800; line-height: 1; white-space: nowrap; }
 .car-chip img, .car-chip .car-chip-ico { width: 22px; height: 22px; object-fit: contain; }
+.car-order { display: flex; align-items: center; gap: 8px; margin: 8px 0 0; padding: 8px 10px; border: 1px solid var(--c-bronze-500); border-radius: 12px; background: var(--c-cream-50-soft); color: var(--c-brown-850-soft); font-size: 13px; } /* v3.611.0 */
+.car-order .car-order-ico { width: 28px; height: 28px; flex: 0 0 auto; }
+.car-order small { display: block; margin-top: 2px; font-size: 12px; font-weight: 600; color: var(--c-brown-700-soft); }
+.car-order.is-done { opacity: .75; }
 .car-keep { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 6px 0 8px; font-size: 13px; font-weight: 700; color: var(--c-brown-850-soft); } /* v3.610.0 */
 .car-empty { font-size: 13px; color: var(--c-brown-750-2); }
 .car-gold { width: 16px; height: 16px; vertical-align: -3px; }

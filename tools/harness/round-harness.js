@@ -13401,7 +13401,8 @@ console.log("\n[191] v3.419.0 — La Caravane de la Halle marchande (R3, version
   try {
     run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); VillageBuildingManager.ensure(); Prefs._cache = {}; Prefs._save({});");
     run("game.village.buildings.warehouse.level = 0; game.village.buildings.hall.level = 1; WorldManager.worldIndex = 1;");
-    ok(run("CARAVAN_TRIPS.court.units === 150 && CARAVAN_TRIPS.moyen.units === 400 && CARAVAN_TRIPS.long.units === 800 && CARAVAN_TRIPS.long.rareChance === 0.25 && CARAVAN_TRIPS.long.itemChance === 0.10"), "trois trajets : 150 / 400 / 800 unités, Long 25 % rare et 10 % objet");
+    ok(run("CARAVAN_TRIPS.court.units === 150 && CARAVAN_TRIPS.moyen.units === 400 && CARAVAN_TRIPS.long.units === 800 && CARAVAN_TRIPS.long.rareChance === 1 && CARAVAN_TRIPS.long.itemChance === 0.10"), "trois trajets : 150 / 400 / 800 unités, Long rare garanti (v3.611.0) et 10 % objet");
+    run("CaravanManager._getOrder0 = CaravanManager.getOrder; CaravanManager.getOrder = function () { return null; };"); // la commande du jour (v3.611.0) est testée en [406]
     ok(run("CARAVAN_TRIPS.court.valuePct === 0.6 && CARAVAN_TRIPS.moyen.valuePct === 0.8 && CARAVAN_TRIPS.long.valuePct === 1 && CARAVAN_TRIPS.long.seconds === 28800"), "60 / 80 / 100 % de la valeur (v3.421.0), Long 8 h");
     ok(run("CaravanManager.isTripOpen('moyen', 1) && !CaravanManager.isTripOpen('long', 2) && CaravanManager.isTripOpen('long', 3)"), "Court et Moyen dès la Halle 1, Long à la Halle 3");
     ok(run("CaravanManager.getCapacity('court', 1)") === 150 && run("CaravanManager.getCapacity('moyen', 5)") === 560 && run("CaravanManager.getCapacity('long', 10)") === 1520, "+10 % de capacité par niveau : Moyen 560 au niveau 5, Long 1 520 au niveau 10");
@@ -13443,6 +13444,7 @@ console.log("\n[191] v3.419.0 — La Caravane de la Halle marchande (R3, version
     run("CaravanManager._now = function () { return 1e13; };");
     run("CaravanManager.unload(); CaravanManager._now = function () { return Date.now(); };");
     ok(run("game.resources.verre_des_dunes") === 2 && run("game.inventory.length") === 1, "au déchargement : le matériau rare à l'Entrepôt, l'objet dans le sac");
+    run("CaravanManager.getOrder = CaravanManager._getOrder0;");
     ok(run("VILLAGE_BUILDINGS.hall.effectLabel(3)").indexOf("trajet Long") !== -1 && run("VILLAGE_BUILDINGS.hall.effectLabel(10)").indexOf("Caravane +90 %") !== -1, "fiche de la Halle : niveau 3 « trajet Long », niveau 10 « Caravane +90 % »");
     ok(run("buildWarehouseSheetHTML('ble')").indexOf("Caravane de la Halle") !== -1, "Entrepôt : la caravane est citée dans « Où ça part » des matières brutes");
     var idx = fs.readFileSync(ROOT + "/index.html", "utf8"), sw = fs.readFileSync(ROOT + "/sw.js", "utf8");
@@ -21125,6 +21127,37 @@ console.log("\n[405] v3.610.0 — Caravane : la part laissée au village se règ
     run("ResourceReserveManager.setReserve('ble', 0); delete game.village.caravanKeep;");
   } catch (err) { ok(false, "[405] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
+
+console.log("\n[406] v3.611.0 — Caravanes : rare garanti sur le Long (R1), commande du jour par marché (R2)");
+(function () {
+  var C = g.CaravanManager, W = g.WarehouseManager;
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; VillageBuildingManager.ensure(); game.village.buildings.hall.level = 3; game.village.buildings.warehouse.level = 0; WorldManager.worldIndex = 1; game.worldsEverReached = { 0: true, 1: true };");
+    run("['ble','viande','bois','eau','pierre','fer'].forEach(function (k) { ResourceReserveManager.setReserve(k, 0); game.resources[k] = 500; });");
+    var o1 = C.getOrder(1), o0 = C.getOrder(0);
+    ok(C.getEligibleKeys().indexOf(o1) >= 0 && C.getOrder(1) === o1, "commande du jour : une matière brute, la même toute la journée (" + o0 + " / " + o1 + ")");
+    var load = C.computeLoad("moyen", undefined, 1);
+    ok(load[o1] === C.getSpare(o1) && C.getLoadUnits(load) === C.getCapacity("moyen"), "la commande est chargée en premier, tout son surplus");
+    var part = {}; part[o1] = load[o1];
+    ok(C.getLoadGold(part, "moyen", 1) === Math.floor(load[o1] * WAREHOUSE_RESOURCES_PRICE(o1) * 1.25 * 0.8), "+25 % d'or sur la ressource commandée");
+    ok(C.orderRareFor(load, 1) && !C.orderRareFor({}, 1), "à partir de 100 unités : +1 rare promis");
+    run("var _r = Math.random; Math.random = function () { return 0.99; };");
+    C.depart("long", 1);
+    var c = C.get(1);
+    ok(c && c.rare && c.rare.key === "verre_des_dunes" && c.rare.n === 3 && c.order === o1, "Long au Désert, tirage défavorable : 2 Verres garantis + 1 de la commande (" + (c && c.rare && c.rare.n) + ")");
+    ok(C.isOrderDone(1) && !C.orderRareFor(load, 1), "commande honorée : plus de rare ce jour-là pour ce marché");
+    var html = g.buildCaravanOrderHTML(1, load);
+    ok(/Commande du jour/.test(html) && /Honorée aujourd/.test(html), "fiche : la commande du jour, honorée");
+    run("game.village.caravans = []; game.village.caravanOrders = { day: 'hier', done: [1] };");
+    ok(!C.isOrderDone(1), "jour suivant : la commande est de nouveau à honorer");
+    run("['ble','viande','bois','eau','pierre','fer'].forEach(function (k) { game.resources[k] = 500; });");
+    C.depart("long", 0);
+    c = C.get(0);
+    ok(c && c.rare && c.rare.n >= 2, "Long au marché de la Forêt : rare du marché garanti (" + (c && c.rare && c.rare.key) + " ×" + (c && c.rare && c.rare.n) + ")");
+    run("Math.random = _r; game.village.caravans = [];");
+  } catch (err) { ok(false, "[406] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+function WAREHOUSE_RESOURCES_PRICE(k) { return Number(g.WAREHOUSE_RESOURCES[k].sellPrice || 0); }
 
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
