@@ -1194,7 +1194,7 @@ function choiceStep(g, step) {
   if (c.mapId && !g.LivingMapManager.isLiberated(c.mapId, c.sectorId)) freeSector(c.mapId, c.sectorId);
   var val = c.options[0].value;
   if (c.options.some(function (o) { return o.value === SERMENT; })) val = SERMENT;
-  if (!g.storyMakeChoice(step.chapterId || (c.mapId === "desert" || /desert/.test(step.id) ? "desert" : (/ruines/.test(step.id) ? "ruins" : (/crypte/.test(step.id) ? "crypt" : (/montagne/.test(step.id) ? "mountain" : "forest")))), val)) note("choix refusé (" + c.key + ")");
+  if (!g.storyMakeChoice(step.chapterId || (c.mapId === "desert" || /desert/.test(step.id) ? "desert" : (/ruines/.test(step.id) ? "ruins" : (/crypte/.test(step.id) ? "crypt" : (/montagne/.test(step.id) ? "mountain" : (/^tour_/.test(step.id) ? "tower" : "forest"))))), val)) note("choix refusé (" + c.key + ")");
 }
 
 /* Le secteur qui porte la descente au Temple. */
@@ -1225,7 +1225,7 @@ function playAdventure(id) {
     var fin = winCombat(80);
     flushTimers(g);
     // v3.452.0 (Crypte) : PV restants et potions bues à la fin du run (cible : 25 à 35 % des PV, sans mort)
-    if (COMBATS && /crypte|montagne/.test(id) && g.game.adventureQuestsCompleted[id]) {
+    if (COMBATS && /crypte|montagne|tour/.test(id) && g.game.adventureQuestsCompleted[id]) {
       var sm = g.game.lastSortieSummary || {};
       console.log("  ◦ fin de " + id + " : PV " + Math.round(100 * g.game.heroHp / g.game.heroMaxHp) + " %, potions " + (sm.potionsUsed || 0) + ", essai " + (essai + 1));
     }
@@ -1262,7 +1262,7 @@ function run() {
   espionOr();
   G.saveGame();
 
-  var chapters = ["forest", "desert", "ruins", "crypt", "mountain"]; // v3.428.0 : chapitre III ; v3.433.0 : ses 20 étapes ; v3.452.0 : Crypte, acte I ; v3.488.0 : Montagne, acte I
+  var chapters = ["forest", "desert", "ruins", "crypt", "mountain", "tower"]; // v3.626.0 : Tour, acte I ; v3.428.0 : chapitre III ; v3.433.0 : ses 20 étapes ; v3.452.0 : Crypte, acte I ; v3.488.0 : Montagne, acte I
   var t0 = Date.now();
   for (var c = 0; c < chapters.length; c++) {
     var cid = chapters[c];
@@ -1280,7 +1280,7 @@ function run() {
       CURRENT_STEP = step.id;
       // v3.423.0 : TRACE_FORCE=1 relève la force du héros à chaque étape (référence des ajustements de difficulté)
       if (process.env.TRACE_FORCE) console.log("  [force] " + step.id + " monde " + G.WorldManager.worldIndex + " aventure " + G.WorldManager.adventureIndex + " niv. " + G.game.heroLevel + " dmg " + Math.round(G.CombatForecast.getHeroDamagePerRound()) + " ehp " + Math.round(G.CombatForecast.getHeroEffectiveHp ? G.CombatForecast.getHeroEffectiveHp() : G.game.heroMaxHp));
-      if (COMBATS && /^(desert_12|desert_15|desert_17|forest_14|forest_15|ruines_01|ruines_02|ruines_03|ruines_11|ruines_13|ruines_15|ruines_19|crypte_01|crypte_02|crypte_03|crypte_06|crypte_12|crypte_14|crypte_16|crypte_19|montagne_01|montagne_02|montagne_03|montagne_04|montagne_06|montagne_08|montagne_10|montagne_12|montagne_13)$/.test(step.id)) { STATS.profils[step.id] = combatLine(); console.log("  ◦ héros à l'entrée de " + step.id + " : " + STATS.profils[step.id]); if (process.env.TRACE_FORGE) console.log("     forge armure : " + G.ForgeManager.getBlockReason("armor") + " " + JSON.stringify(G.ForgeManager.getCost("armor")) + " or " + Math.floor(G.game.gold)); }
+      if (COMBATS && /^(desert_12|desert_15|desert_17|forest_14|forest_15|ruines_01|ruines_02|ruines_03|ruines_11|ruines_13|ruines_15|ruines_19|crypte_01|crypte_02|crypte_03|crypte_06|crypte_12|crypte_14|crypte_16|crypte_19|montagne_01|montagne_02|montagne_03|montagne_04|montagne_06|montagne_08|montagne_10|montagne_12|montagne_13|tour_01|tour_02|tour_04)$/.test(step.id)) { STATS.profils[step.id] = combatLine(); console.log("  ◦ héros à l'entrée de " + step.id + " : " + STATS.profils[step.id]); if (process.env.TRACE_FORGE) console.log("     forge armure : " + G.ForgeManager.getBlockReason("armor") + " " + JSON.stringify(G.ForgeManager.getCost("armor")) + " or " + Math.floor(G.game.gold)); }
       var t0s = { h: CLOCK.offset, c: STATS.combatMs, s: STATS.healMs, d: STATS.deaths, j: DAYS_WAITED, e: (STATS.secteurs.desert || {}).essais || 0 };
       var snap0 = snapTemps();
       G.StoryQuestManager.acceptStep(cid);
@@ -1936,6 +1936,15 @@ var SOLVERS = {
   montagne_17: function (g) { playExpedition("sentier_du_dessus", function () { return g.storyDesertFlag("sentierDessusDone"); }); },
   montagne_18: function (g) { playAdventure("aq_montagne_tries"); },
   montagne_19: function (g) { playAdventure("aq_montagne_dragon"); },
+  // v3.626.0 (Tour, acte I) : --poser = la braise laissée au Veilleur
+  tour_01: function (g) { playExpedition("traversee_tour", function () { return g.storyDesertFlag("towerCrossingCompleted"); }); },
+  tour_02: function (g) { playAdventure("aq_tour_pied"); },
+  tour_03: function (g) { offer(g, "tower"); },
+  tour_04: function (g) { playAdventure("aq_tour_sable"); },
+  tour_05: function (g) {
+    var val = ARGS.indexOf("--poser") >= 0 ? "poser" : "garder";
+    if (!g.storyMakeChoice("tower", val)) note("choix refusé (braise)");
+  },
   montagne_20: function (g) {
     var val = ARGS.indexOf("--laisser-veine") >= 0 ? "laisser" : "prendre";
     if (!g.storyMakeChoice("mountain", val)) note("choix refusé (droit)");

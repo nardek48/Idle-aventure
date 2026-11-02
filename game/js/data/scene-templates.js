@@ -312,6 +312,32 @@ var SCENE_TEMPLATES = {
     travelOnSuccess: { worldId: "mountain", adventureIndex: 0 }
   },
 
+  /* v3.626.0 (Tour, acte I étape 1, texte validé par Seb le 02/11) — LA ROUTE DU NORD. Passage de la Montagne
+     à la Tour, monde posé à l'arrivée. Deux Grandes rations. Fond à fournir (piste provisoire). Au banc. */
+  traversee_tour: {
+    id: "traversee_tour",
+    worldId: "tower",
+    adventureIndex: 0,
+    mode: "parcours",
+    title: "Vers le nord",
+    departLabel: "Partir vers le nord",
+    icon: "images/Icons/codex/world_tower.webp",
+    parcours: {
+      image: "tour_route", track: "route", points: [0, 2, 4, 6],
+      steps: [
+        { type: "obstacle", gabaritId: "plaine_grise", text: "Au nord d'Aeswyn, l'herbe devient grise. Puis elle ne pousse plus. La carriole de Sarkel trace deux lignes droites." },
+        { type: "obstacle", gabaritId: "vent_absent", text: "Il n'y a pas de vent. Le pot de terre est chaud contre ta hanche. La braise penche toujours du même côté." },
+        { type: "combat", foe: "guardian", pack: 2, foeMult: 1.5, text: "Deux gardiens de pierre sur la route. Ils marchent vers la Tour, puis reviennent. Toujours les mêmes dalles.",
+          after: "Les gardiens s'arrêtent. La route reprend, droite, jusqu'au pied." },
+        { type: "obstacle", gabaritId: "porte_ouverte", text: "Au bout, une porte. Ouverte. Pas de gonds, pas de cadre. Personne ne l'a construite." }
+      ]
+    },
+    entryCost: { resourceId: "grande_ration", amount: 2 },
+    lootResource: "gold",
+    unlockOnSuccess: { buildingId: null, unlockFlag: "towerReached", completionFlag: "towerCrossingCompleted" },
+    travelOnSuccess: { worldId: "tower", adventureIndex: 0 }
+  },
+
   /* v3.491.0 (Montagne, acte IV étape 17) — LE SENTIER DU DESSUS : de la coupe du lac au plateau du nid.
      Cinq paliers, journal fixe. Fond à fournir par Seb (piste provisoire). Au banc. */
   sentier_du_dessus: {

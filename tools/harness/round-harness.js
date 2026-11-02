@@ -16488,8 +16488,8 @@ console.log("\n[262] v3.458.4 — Lot 7b : une fenêtre de fin, Histoire, Mémoi
     var icones = hs.match(/\{ key: "\w+", value: "\w+", icon: "images\/Icons\/[a-z_]+\/[a-z_]+\.webp", name: _t\(/g) || [];
     // v3.488.0 : les deux effets du choix « veine » (Montagne) attendent leur image (icône générique en attendant)
     // v3.491.0 : trois de plus (ouvrage achevé, veine-mère, ce que la Montagne apprend)
-    var attendues = ["images/Icons/traits/veine_dans_la_lame.webp", "images/Icons/traits/puits_chaud.webp", "images/Icons/traits/ouvrage_acheve.webp", "images/Icons/traits/veine_mere.webp", "images/Icons/traits/montagne_apprend.webp"];
-    ok(icones.length === 19 && /hs-trait-ico/.test(hs.split("STORY_TRAITS").slice(1).join("")) && icones.every(function (l) { var f = /icon: "([^"]+)"/.exec(l)[1]; return attendues.indexOf(f) !== -1 || fs10.existsSync(ROOT + "/" + f); }), "Ce que tu portes : 19 effets possibles, chacun avec son image (fichiers présents, sauf les cinq de la Montagne à venir)");
+    var attendues = ["images/Icons/traits/veine_dans_la_lame.webp", "images/Icons/traits/puits_chaud.webp", "images/Icons/traits/ouvrage_acheve.webp", "images/Icons/traits/veine_mere.webp", "images/Icons/traits/montagne_apprend.webp", "images/Icons/scene/braise_aeswyn.webp"]; // v3.626.0 : la braise (Tour)
+    ok(icones.length === 21 && /hs-trait-ico/.test(hs.split("STORY_TRAITS").slice(1).join("")) && icones.every(function (l) { var f = /icon: "([^"]+)"/.exec(l)[1]; return attendues.indexOf(f) !== -1 || fs10.existsSync(ROOT + "/" + f); }), "Ce que tu portes : 19 effets possibles, chacun avec son image (fichiers présents, sauf les cinq de la Montagne à venir)");
     ok(/dont \{p\} % par tes choix/.test(fs10.readFileSync(ROOT + "/js/ui/living-map-view.js", "utf8")), "Palissade : la part des choix dite à part");
     // C9
     ok(/class="settings-btn ret-eat"/.test(fs10.readFileSync(ROOT + "/js/ui/return-view.js", "utf8")), "écran de retour : « Manger »");
@@ -19666,9 +19666,9 @@ console.log("\n[353] v3.534.0 — Bilan de fin de l'Histoire (audit PLA-9, optio
     ok(g.storyAllDone() === true, "storyAllDone : vrai quand tous les chapitres sont terminés");
     var ch = g.storyEndChoices(), n = 0;
     ch.forEach(function (x) { n += x.rows.length; });
-    ok(notes === 12 && n === 12, "12 choix pesants notés, tous au bilan (" + n + "), les choix de compagnons exclus");
+    ok(notes === 13 && n === 13, "13 choix pesants notés (v3.626.0 : la braise), tous au bilan (" + n + "), les choix de compagnons exclus");
     var h = g.buildStoryEndHTML();
-    ok(h.indexOf("Fin du chapitre " + ids.length) !== -1 && (h.match(/dungeon-summary-row/g) || []).length === 16, "fenêtre : titre du dernier chapitre, 4 lignes de bilan et 12 choix");
+    ok(h.indexOf("Fin du chapitre " + ids.length) !== -1 && (h.match(/dungeon-summary-row/g) || []).length === 17, "fenêtre : titre du dernier chapitre, 4 lignes de bilan et 13 choix");
     ok(!/Donner|Garder|registre/.test(h.replace(/<span>[^<]*<\/span>/g, "")), "aucun axe ni registre affiché hors des textes de choix");
     var last = SQ[ids[ids.length - 1]].steps.slice(-1)[0];
     var c1 = { title: last.title, dialogue: [{ who: null, text: "x" }] }, c2 = { title: "Autre", dialogue: [] }, c3 = { title: last.title, dialogue: [], closeOnclick: "f()" };
@@ -21498,7 +21498,7 @@ console.log("\n[418] v3.623.0 — Ouvertures de chapitre");
   try {
     var fs = require("fs"), path = require("path"), rd = function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); };
     var ids = run("CHAPTER_OPENING_ORDER.join(',')");
-    ok(ids === "desert,ruins,crypt,mountain", "quatre ouvertures, du Désert à la Montagne (" + ids + ")");
+    ok(ids === "desert,ruins,crypt,mountain,tower", "cinq ouvertures, du Désert à la Tour (" + ids + ", v3.626.0)");
     var bad = run("CHAPTER_OPENING_ORDER.filter(function(id){ var c=CHAPTER_OPENINGS[id], q=STORY_QUESTS[id], last=c.planches[c.planches.length-1]; return !(c.planches.length===3 && q.steps[0].id===c.step && last.lignes[last.nom]===q.title && c.planches.every(function(p){return /^[a-z]+_[1-3]_[a-z]+$/.test(p.img);})); }).join(',')");
     ok(bad === "", "trois planches chacune, déclenchées par la 1re étape du monde, le titre doré = le nom du chapitre" + (bad ? " (" + bad + ")" : ""));
     run("fullResetState(); game.playerName='Test'; game.heroId='knight'; StoryQuestManager.ensure();");
@@ -21513,9 +21513,9 @@ console.log("\n[418] v3.623.0 — Ouvertures de chapitre");
     ok(rd("index.html").indexOf("js/data/chapter-openings.js") > 0 && rd("sw.js").indexOf('"./js/data/chapter-openings.js"') > 0, "nouveau fichier dans index.html et le précache du service worker");
     var en = rd("js/lang/en.js"), manque = run("CHAPTER_OPENING_ORDER.reduce(function(a,id){ CHAPTER_OPENINGS[id].planches.forEach(function(p){ a=a.concat(p.lignes); }); return a; }, [])").filter(function (l) { return en.indexOf(JSON.stringify(l) + ":") < 0; });
     // v3.624.2 : les 24 illustrations de Seb (PC et téléphone) sont livrées
-    var absentes = run("CHAPTER_OPENING_ORDER.reduce(function(a,id){ CHAPTER_OPENINGS[id].planches.forEach(function(p){ a.push(p.img, p.img + '-wide'); }); return a; }, [])").filter(function (n) { return !fs.existsSync(path.join(ROOT, "images/Chapitres/" + n + ".webp")); });
+    var absentes = run("CHAPTER_OPENING_ORDER.filter(function(id){ return id !== 'tower'; }).reduce(function(a,id){ CHAPTER_OPENINGS[id].planches.forEach(function(p){ a.push(p.img, p.img + '-wide'); }); return a; }, [])").filter(function (n) { return !fs.existsSync(path.join(ROOT, "images/Chapitres/" + n + ".webp")); });
     ok(absentes.length === 0, "les 24 images des ouvertures sont dans images/Chapitres/" + (absentes.length ? " (manque : " + absentes[0] + ")" : ""));
-    ok(manque.length === 0, "les 36 lignes traduites en anglais" + (manque.length ? " (manque : " + manque[0] + ")" : ""));
+    ok(manque.length === 0, "les 44 lignes traduites en anglais" + (manque.length ? " (manque : " + manque[0] + ")" : ""));
   } catch (err) { ok(false, "[418] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
@@ -21558,6 +21558,36 @@ console.log("\n[420] v3.625.0 — Tour, lot T-0 : le socle");
     ok(g.DUNGEONS.filter(function (d) { return d.id === 6; })[0].locked === true, "Sommet interdit : reste fermé");
     ok(g.EQUIP_WORLD_SCALE[5] === 6, "échelle d'équipement de la Tour : ×6, comme la Montagne (décision de Seb, v3.625.1)");
   } catch (err) { ok(false, "[420] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[421] v3.626.0 — Tour, lot T-1 : acte I « Le pied de la Tour »");
+(function () {
+  var TS = g.TowerSystem, wi = g.WorldManager.worldIndex;
+  try {
+    var ch = g.STORY_QUESTS.tower;
+    ok(ch && ch.requiresChapter === "mountain" && ch.steps.map(function (x) { return x.id; }).join(",") === "tour_01,tour_02,tour_03,tour_04,tour_05", "chapitre VI : s'ouvre après la Montagne, acte I en cinq étapes");
+    var tr = g.SCENE_TEMPLATES.traversee_tour;
+    ok(tr && tr.travelOnSuccess.worldId === "tower" && tr.unlockOnSuccess.completionFlag === "towerCrossingCompleted" && tr.entryCost.resourceId === "grande_ration" && tr.entryCost.amount === 2, "la route du nord : 2 Grandes rations, le monde posé à l'arrivée");
+    ok(g.ADVENTURE_QUESTS.aq_tour_pied.encounters.length === 5 && g.ADVENTURE_QUESTS.aq_tour_sable.encounters.length === 4 && g.ADVENTURE_QUESTS.aq_tour_sable.encounters[0].group.indexOf("scarab") >= 0, "quêtes : 5 rencontres au pied, 4 à l'étage du sable (bêtes du Désert, écho)");
+    ok(JSON.stringify(ch.steps[2].offering) === JSON.stringify({ bois: 400, grande_ration: 2 }) && ch.steps[2].offeringUi.where === "story", "dernier camp : 400 Bois et 2 Grandes rations, donnés depuis la carte d'étape");
+    ok(g.STORY_CHOICE_AXES.braise.garder.join() === "garder,aeswyn" && g.STORY_CHOICE_AXES.braise.poser.join() === "donner,soi", "choix « braise » : garder = Garder + Aeswyn, poser = Donner + Soi");
+    ok(g.CHAPTER_OPENINGS.tower && g.CHAPTER_OPENINGS.tower.step === "tour_01" && g.CHAPTER_OPENINGS.tower.planches[2].lignes[2] === "La Question", "ouverture du chapitre VI : trois planches, « La Question » en titre doré");
+    // effets de la braise
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; StoryQuestManager.ensure(); EquipmentManager.recalcStats();");
+    var towerIdx = run("WORLDS.findIndex(function(w){ return w.id === 'tower'; })");
+    run("game.storyQuests.tower.choices.braise = 'poser'; WorldManager.worldIndex = " + towerIdx + ";");
+    ok(TS.dmgMult() === 1.1 && g.VeinSystem.bladeMult() === 1.1, "braise posée : +10 % de dégâts à la Tour (lu par la lame)");
+    run("WorldManager.worldIndex = 4;");
+    ok(TS.dmgMult() === 1 && g.VeinSystem.bladeMult() === 1, "hors de la Tour : rien");
+    run("game.storyQuests.tower.choices.braise = 'garder'; WorldManager.worldIndex = " + towerIdx + "; game.heroHp = 10;");
+    var max = run("game.heroMaxHp"), soin = TS.onVictory();
+    ok(soin === Math.floor(max * 0.05) && run("game.heroHp") === 10 + soin, "braise gardée : combat gagné à la Tour, +5 % des PV (" + soin + ")");
+    run("game.heroHp = game.heroMaxHp;");
+    ok(TS.onVictory() === 0, "PV pleins : rien à rendre");
+    var idx = require("fs").readFileSync(require("path").join(ROOT, "index.html"), "utf8"), sw = require("fs").readFileSync(require("path").join(ROOT, "sw.js"), "utf8");
+    ok(idx.indexOf("js/systems/tower-system.js") > 0 && sw.indexOf('"./js/systems/tower-system.js"') > 0, "nouveau fichier tower-system.js dans index.html et le précache");
+  } catch (err) { ok(false, "[421] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  g.WorldManager.worldIndex = wi;
 })();
 
 Promise.all(ATTENTES).then(function () {

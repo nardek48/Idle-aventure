@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.626.0", "menu_icons/quests_menu", _t("Chapitre VI : la Tour s\'ouvre à la fin de la Montagne. Acte I, « Le pied de la Tour » : la route du nord, le dernier camp, et celui qui attend.")],
     ["3.624.2", "menu_icons/quests_menu", _t("Les ouvertures du Désert, des Ruines, de la Crypte et de la Montagne ont leurs illustrations.")],
     ["3.624.1", "menu_icons/quests_menu", _t("Fin du chapitre V : la Tour est bien au nord, comme dans le prologue.")],
     ["3.624.0", "menu_icons/village_menu", _t("Aeswyn se repeuple : le bandeau du Village compte ses habitants, et sa phrase change à mesure que le village grandit.")],

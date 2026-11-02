@@ -4724,7 +4724,208 @@ window.storySarkelInParty = storySarkelInParty;
 window.storyVeinsCut = storyVeinsCut;
 window.storyVeinesRelance = storyVeinesRelance;
 window.STORY_VEINES_CIBLE = STORY_VEINES_CIBLE;
+/* =====================================================================
+   v3.626.0 — Chapitre VI, la Tour (Conception Tour v0.1 et « Chapitre VI : textes » v0.1, validés
+   par Seb le 02/11/2026). Lot T-1 : acte I « Le pied de la Tour », étapes 1 à 5.
+   ===================================================================== */
+STORY_REWARDS.tour_01 = { gold: 16000 };
+STORY_REWARDS.tour_02 = { gold: 16500 };
+STORY_REWARDS.tour_03 = { gold: 17000 };
+STORY_REWARDS.tour_04 = { gold: 17500 };
+STORY_REWARDS.tour_05 = { gold: 18000 };
+
+/* Dernier camp (étape 3) : ce que Sarkel demande pour planter ses pieux. Au banc. */
+var STORY_DERNIER_CAMP = { bois: 400, grande_ration: 2 };
+
+/* Choix « braise » (étape 5) : garder la braise d'Aeswyn (Garder + Aeswyn) ou la poser sur le palier (Donner + Soi).
+   Effets à la Tour seulement (TowerSystem) : 5 % des PV rendus par combat gagné, ou +10 % de dégâts. */
+var STORY_BRAISE_TEXTS = {
+  garder: {
+    completion: "Tu refermes le couvercle sur la braise. Le Veilleur hoche la tête, une fois.",
+    dialogue: [
+      { who: "Le Veilleur", text: "Alors elle montera avec toi. C'est aussi un chemin." },
+      { who: null, text: "Quand tu te retournes, le palier est vide. Plus haut, des pas, lents." }
+    ]
+  },
+  poser: {
+    completion: "Tu poses le pot sur la chaise. Le Veilleur le regarde longtemps, sans le toucher.",
+    dialogue: [
+      { who: "Le Veilleur", text: "Je la garderai chaude. Je sais faire." },
+      { who: "Wenna", text: "Orwen ne va pas aimer." },
+      { who: "Le Veilleur", text: "Non." },
+      { who: null, text: "Quand tu te retournes, le palier est vide. Plus haut, des pas, lents." }
+    ]
+  }
+};
+function storyBraiseBranch() {
+  return (window.StoryQuestManager && StoryQuestManager.getChoice("braise") === "poser") ? "poser" : "garder";
+}
+STORY_CHOICE_AXES.braise = { garder: ["garder", "aeswyn"], poser: ["donner", "soi"] }; // v3.626.0 (Tour, étape 5)
+
+STORY_QUESTS.tower = {
+  id: "tower",
+  worldId: "tower",
+  requiresChapter: "mountain",
+  title: "La Question",
+  subtitle: "Chapitre 6 — Tour",
+  icon: "images/Icons/codex/world_tower.webp",
+  endText: "Le sommet. Ce n'est pas une fin.", // provisoire : la fin du chapitre viendra avec l'acte IV (T-4)
+  steps: [
+    /* ---------- Acte I — Le pied de la Tour ---------- */
+    /* Étape 1 : la route du nord, parcours de quatre paliers ; le monde est posé à l'arrivée. Ouvre le chapitre VI
+       (ouverture en trois planches, data/chapter-openings.js). */
+    {
+      id: "tour_01",
+      title: "Vers le nord",
+      act: "Acte I — Le pied de la Tour",
+      narrative: {
+        objective: "À Aeswyn, la braise ne fume plus droit. Elle penche vers le nord. Orwen a mis du pain dans ton sac, et une braise dans un pot de terre fermé d'un couvercle.",
+        completion: "La route monte toute seule. Pas de forêt, pas de sable, pas de pierre qui bouge : une plaine d'herbe grise, et au bout, la Tour. Elle perce le ciel exactement là où il est fendu.",
+        dialogue: [
+          { who: "Orwen", text: "Garde-la chaude." },
+          { who: "Brannoc", text: "Le vieux est parti par là, petit. Il y a longtemps." },
+          { who: "Aldric", text: "Je ne veux pas savoir où. Reviens, c'est tout." },
+          { who: "Sarkel", text: "Je mène la carriole jusqu'au pied. Pas plus haut. Là-haut, je ne vends rien." }
+        ],
+        completionDialogue: [
+          { who: "Maddoc", text: "Chez moi, on disait qu'au nord il y avait une porte que personne n'a construite." },
+          { who: null, text: "La porte est là. Ouverte." }
+        ]
+      },
+      objectiveLabel: "Terminer la route du nord (coût : 2 Grandes rations)",
+      unlockTabs: [],
+      reward: STORY_REWARDS.tour_01,
+      linkTo: { section: "expedition", cardId: "scene_traversee_tour" },
+      check: function () { return storyDesertFlag("towerCrossingCompleted"); },
+      progress: function () { return "Route " + (storyDesertFlag("towerCrossingCompleted") ? "1/1" : "0/1"); }
+    },
+    /* Étape 2 : cinq rencontres au pied de la Tour (les gardiens). */
+    {
+      id: "tour_02",
+      title: "Ce qui garde le pied",
+      act: "Acte I — Le pied de la Tour",
+      narrative: {
+        objective: "Au pied, des gardiens de pierre font les cent pas. Ils ne regardent pas la porte. Ils regardent ceux qui arrivent.",
+        completion: "Le dernier gardien s'arrête au milieu d'un pas. Il reste là, une jambe levée, comme s'il attendait qu'on lui dise la suite.",
+        dialogue: [
+          { who: "Edda", text: "Ils marchent toujours sur les mêmes dalles. Regarde l'usure." },
+          { who: "Ysolt", text: "Comme à la Veillée. Ils gardent ce qu'on leur a dit de garder." }
+        ],
+        completionDialogue: [
+          { who: "Wenna", text: "Personne ne lui dira." }
+        ]
+      },
+      objectiveLabel: "Terminer « Le pied de la Tour » : 5 rencontres",
+      unlockTabs: [],
+      reward: STORY_REWARDS.tour_02,
+      linkTo: { section: "adventure", cardId: "adv_aq_tour_pied" },
+      check: function (game) { return storyAdvDone(game, "aq_tour_pied"); },
+      progress: function (game) { return "Rencontres " + storyAdvProgress(game, "aq_tour_pied", "rencontres_pied", 5) + "/5"; }
+    },
+    /* Étape 3 : le dernier camp. Aucun combat : bois et vivres donnés depuis la carte d'étape (offrande, comme desert_07). */
+    {
+      id: "tour_03",
+      title: "La porte que personne n'a construite",
+      act: "Acte I — Le pied de la Tour",
+      narrative: {
+        objective: "Sarkel dételle. Il plante ses pieux devant la porte, pas plus près.",
+        completion: "Le soir, un feu devant la Tour. Le premier, sans doute. La porte reste ouverte, et Maddoc s'assoit dessous, sa barre de fer en travers des genoux.",
+        dialogue: [
+          { who: "Sarkel", text: "Le dernier camp. Je le tiens. Tu redescends, tu me trouves ici. Tu ne redescends pas…" },
+          { who: "Sarkel", text: "Tu redescends." },
+          { who: "Maddoc", text: "Moi, je tiens la porte." },
+          { who: "Wenna", text: "Contre quoi ?" },
+          { who: "Maddoc", text: "Contre rien. Une porte, ça se tient. Le vieux du Temple me l'a appris." }
+        ],
+        completionDialogue: [
+          { who: "Maddoc", text: "Il a tenu la sienne pour moi. Je tiens celle-là." }
+        ]
+      },
+      objectiveLabel: "Dresser le dernier camp : 400 Bois et 2 Grandes rations",
+      unlockTabs: [],
+      reward: STORY_REWARDS.tour_03,
+      offering: STORY_DERNIER_CAMP,
+      offeringKey: "campDresse",
+      offeringUi: {
+        where: "story",
+        buttonLabel: "Dresser le camp",
+        lackToast: "Il faut 400 Bois et 2 Grandes rations pour dresser le dernier camp.",
+        doneToast: "Le dernier camp est dressé",
+        log: "Tu donnes le bois et les vivres. Sarkel plante ses pieux devant la porte."
+      },
+      check: function (game) { return storyChapterCounter(game, "tower", "campDresse") >= 1; },
+      progress: function (game) { return "Camp dressé " + (storyChapterCounter(game, "tower", "campDresse") >= 1 ? "1/1" : "0/1"); }
+    },
+    /* Étape 4 : l'étage du sable. Écho du Désert (TW2) : ses bêtes, comme elle s'en souvient (le Désert n'a pas de
+       règle de combat propre ; l'écho passe par les ennemis). */
+    {
+      id: "tour_04",
+      title: "Le premier étage",
+      act: "Acte I — Le pied de la Tour",
+      narrative: {
+        objective: "Derrière la porte, un escalier. En haut de l'escalier, du sable. Pas un grain de trop, chaud, avec une odeur de puits.",
+        completion: "Le sable ne bouge pas quand tu marches dessus. Il garde la forme de tes pas, longtemps.",
+        dialogue: [
+          { who: "Wenna", text: "C'est le Désert. En plus petit." },
+          { who: "Edda", text: "Non. C'est le Désert comme quelqu'un s'en souvient. Il manque des dunes." }
+        ],
+        completionDialogue: [
+          { who: "Ysolt", text: "Elle apprend comment on marche." }
+        ]
+      },
+      objectiveLabel: "Terminer « L'étage du sable » : 4 rencontres",
+      unlockTabs: [],
+      reward: STORY_REWARDS.tour_04,
+      linkTo: { section: "adventure", cardId: "adv_aq_tour_sable" },
+      check: function (game) { return storyAdvDone(game, "aq_tour_sable"); },
+      progress: function (game) { return "Rencontres " + storyAdvProgress(game, "aq_tour_sable", "rencontres_sable", 4) + "/4"; }
+    },
+    /* Étape 5 : premier choix pesant de la Tour, clé « braise ». Le Veilleur revient (absent depuis les Ruines). */
+    {
+      id: "tour_05",
+      title: "Celui qui attend",
+      act: "Acte I — Le pied de la Tour",
+      narrative: {
+        objective: "Sur le palier, une chaise. Une seule. Le sol est propre. Un homme est assis, les mains sur les genoux.",
+        get completion() { return STORY_BRAISE_TEXTS[storyBraiseBranch()].completion; },
+        dialogue: [
+          { who: "Le Veilleur", text: "Il n'y a qu'une chaise. Je l'ai gardée." },
+          { who: "Wenna", text: "Tu étais où ?" },
+          { who: "Le Veilleur", text: "Ici. Je montais avant toi. Je monte moins vite, maintenant." },
+          { who: "Le Veilleur", text: "Tu portes du feu. Je le sens d'ici." },
+          { who: "Le Veilleur", text: "Laisse-le sur ce palier. Là-haut, elle prend ce qui brûle. Tu monteras plus léger." },
+          { who: "Ysolt", text: "Il ne ment pas. Il ne l'a jamais fait." }
+        ],
+        get completionDialogue() { return STORY_BRAISE_TEXTS[storyBraiseBranch()].dialogue; }
+      },
+      objectiveLabel: "Choisir pour la braise d'Aeswyn",
+      unlockTabs: [],
+      reward: STORY_REWARDS.tour_05,
+      choice: {
+        key: "braise", onStoryCard: true,
+        buttonLabel: "Décider",
+        title: "Celui qui attend",
+        text: "La braise d'Aeswyn est chaude contre ta hanche. Le Veilleur attend. Personne ne choisira pour toi.",
+        options: [
+          { value: "garder", label: "La garder", desc: "Tu la gardes. À la Tour, chaque combat gagné te rend 5 % de tes PV." },
+          { value: "poser", label: "La poser sur le palier", desc: "Tu la poses. À la Tour, tu frappes 10 % plus fort. Elle reste sur le palier." }
+        ],
+        apply: function (value) {
+          if (typeof addLog !== "function") return;
+          if (value === "poser") addLog(_t("La braise sur le palier : à la Tour, tu frappes 10 % plus fort."), "event");
+          else addLog(_t("La braise d'Aeswyn : à la Tour, chaque combat gagné te rend 5 % de tes PV."), "event");
+        }
+      },
+      check: function () { return !!(window.StoryQuestManager && StoryQuestManager.getChoice("braise")); },
+      progress: function () { return "Choix " + ((window.StoryQuestManager && StoryQuestManager.getChoice("braise")) ? "1/1" : "0/1"); }
+    }
+  ]
+};
+
 window.STORY_VEINE_TEXTS = STORY_VEINE_TEXTS;
+window.STORY_BRAISE_TEXTS = STORY_BRAISE_TEXTS;
+window.storyBraiseBranch = storyBraiseBranch;
+window.STORY_DERNIER_CAMP = STORY_DERNIER_CAMP;
 window.storyVeineBranch = storyVeineBranch;
 window.STORY_PIOCHE_OPTIONS = STORY_PIOCHE_OPTIONS;
 window.storyCompanionCount = storyCompanionCount;

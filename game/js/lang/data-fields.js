@@ -32,6 +32,7 @@ var DATA_TEXT_FIELDS = {
   STORY_SEUIL_TEXTS: ["*.completion", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.428.0 (Ruines) : les deux branches du choix « seuil »
   STORY_PORTENT_TEXTS: ["*.completion", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.452.0 (Crypte) : les deux branches du choix « portent »
   STORY_VEINE_TEXTS: ["*.completion", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.488.0 (Montagne) : les deux branches du choix « veine »
+  STORY_BRAISE_TEXTS: ["*.completion", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.626.0 (Tour) : les deux branches du choix « braise »
   STORY_OUVRAGE_TEXTS: ["*.completion", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.490.0 (Montagne) : les deux branches du choix « ouvrage »
   STORY_DROIT_TEXTS: ["*.completion", "*.text", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.491.0 (Montagne) : le choix « droit » et la fin du chapitre
   STORY_PIOCHE_OPTIONS: ["*.label", "*.desc"], // v3.488.0 (Montagne, montagne_03) : « Deux sur cinq »

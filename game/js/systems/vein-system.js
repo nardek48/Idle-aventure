@@ -99,9 +99,10 @@ var VeinSystem = {
   _memV: function (k, d) { return (window.MemoryManager && typeof MemoryManager.V === "function") ? MemoryManager.V(k) : d; },
   /* Multiplicateur des dégâts du héros (attaque de base et compétences). Taille franche (Mémoire 17) : +10 % à la première. */
   bladeMult: function () {
-    if (!this.state) return 1;
-    return 1 + this.state.heroCuts * this.bladePerCut() + (this.state.heroCuts > 0 && this._mem("taille_franche") ? Number(this._memV("taille_franche_blade", 0.10)) : 0)
-      + (this.mountainLearns() ? this.heatLevel() * VEIN_DROIT_HEAT_BLADE : 0);
+    var tour = window.TowerSystem ? TowerSystem.dmgMult() : 1; // v3.626.0 : la braise posée, à la Tour
+    if (!this.state) return tour;
+    return tour * (1 + this.state.heroCuts * this.bladePerCut() + (this.state.heroCuts > 0 && this._mem("taille_franche") ? Number(this._memV("taille_franche_blade", 0.10)) : 0)
+      + (this.mountainLearns() ? this.heatLevel() * VEIN_DROIT_HEAT_BLADE : 0));
   },
   /* Multiplicateur des frappes ennemies (les façonnés, tous les ennemis de la Montagne). Peau de basalte (Mémoire 17) : +7 %. */
   heatMult: function () {
@@ -263,6 +264,7 @@ var VeinSystem = {
   /* Garde de killEnemy : le combat est gagné, la Cendre taillée est versée. v3.491.0 : enemy, le dernier tombé
      (Mémoire 20, « Ce qui a été pris » : boss ou élite de la Montagne vaincu après une taille, +25 % d'or). */
   onVictory: function (enemy) {
+    if (window.TowerSystem) TowerSystem.onVictory(); // v3.626.0 : la braise gardée, à la Tour
     var st = this.state;
     this.state = null;
     if (st && !st.cuts && window.AchievementManager) { // v3.492.0 : hauts faits de la Montagne
