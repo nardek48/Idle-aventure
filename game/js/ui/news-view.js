@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.630.0", "menu_icons/quests_menu", _t("La Tour, acte IV : « Seul », la faille et la silhouette, sans compagnon. Elle se bat comme toi : pose le contre de ta classe.")],
     ["3.629.0", "menu_icons/quests_menu", _t("La Tour, acte III : le Sommet interdit et son Reflet, qui garde ta dernière technique. Les sept Légendaires, la Forge 7 et un choix sur Aeswyn d\'avant.")],
     ["3.628.1", "menu_icons/heroes_menu", _t("Héros › Équipé : le détail de la pièce choisie reste de nouveau visible en bas de l\'écran, comme dans les Talents.")],
     ["3.628.0", "menu_icons/map_menu", _t("La Tour, fin de l\'acte II : l\'étage des gisants, le Gardien qui répète, le palier Légendaire et les feuillets du Veilleur au Codex.")],

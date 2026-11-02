@@ -177,6 +177,8 @@ var AdventureQuestManager = {
     if (forceBoss && quest.bossLog) addLog(_td(quest.bossLog), "event"); // v3.360.0 : ligne d'entrée du boss de quête
 
     game.enemy = enemy;
+    // v3.630.0 (Tour, TW5) : un ennemi seul ne repasse pas par onCombatStart ; une quête « seul » retire le groupe ici
+    if (quest.solo && window.CompanionManager && typeof CompanionManager.refreshParty === "function") CompanionManager.refreshParty();
     if (window.CombatEngine && typeof CombatEngine.prepareEnemy === "function") CombatEngine.prepareEnemy(enemy);
     this.applyQuestTheme(quest);
     if (typeof renderEnemy === "function") renderEnemy();

@@ -1297,6 +1297,68 @@ var ADVENTURE_QUESTS = {
       { id: "rencontres_haut", type: "encounter", worldId: "tower", target: 4, desc: "Vaincre {target} rencontres en haut de l'escalier" }
     ],
     reward: {}
+  },
+
+  /* v3.630.0 (Tour, acte IV, étape 16) — « Seul » : trois rencontres sans compagnon (TW5, `solo` lu par
+     TowerSystem.isSolo puis CompanionManager.partyIds). Au banc. */
+  aq_tour_seul: {
+    id: "aq_tour_seul",
+    type: "kill",
+    section: "adventure",
+    difficulty: "hard",
+    progressionStage: "world_end",
+    category: "side",
+    worldId: "tower",
+    adventureIndex: 1,
+    requiresStoryStep: "tour_16",
+    solo: true,
+    encounters: [
+      { group: ["guardian", "corruptmage"], groupHpMult: 0.55 },
+      { group: ["arcanegolem", "hybrid"], groupHpMult: 0.55 },
+      { enemy: "corruptmage" }
+    ],
+    encounterHpMult: 2.75, // banc (sauvegardes de fin d'acte III) : réussite 94 à 100 % ; ×3,5 / ×8 : Mage 25 %
+    enemyPowerMult: 6.5,
+    name: "Seul",
+    story: "Tu montes seul. En bas, très loin, Maddoc tient une porte contre rien.",
+    icon: "./images/Icons/quest_icons/exploration/exploration1.webp",
+    steps: [
+      { id: "rencontres_seul", type: "encounter", worldId: "tower", target: 3, desc: "Vaincre {target} rencontres, seul" }
+    ],
+    reward: {}
+  },
+
+  /* v3.630.0 (Tour, acte IV, étape 18) — LA SILHOUETTE (TW6), seule. Elle prend le trait de ta classe, puis garde
+     ta dernière technique (le miroir, 60 %), puis la lumière passe à travers elle (bouclier, 30 %). Au banc. */
+  aq_tour_silhouette: {
+    id: "aq_tour_silhouette",
+    type: "kill",
+    section: "adventure",
+    difficulty: "hard",
+    progressionStage: "world_end",
+    category: "side",
+    worldId: "tower",
+    adventureIndex: 1,
+    requiresStoryStep: "tour_18",
+    solo: true,
+    bossId: "silhouette",
+    // banc, contre de la classe au Grimoire : ×3,75 / ×1 -> 100 % de réussite pour les trois classes ; au-delà le combat bascule net
+    // (×4,5 / ×1,1 : Chevalier 0 %, Rôdeur 25 %). Sans le contre de la rage, le Chevalier tombe à 63 %.
+    bossHpMult: 3.75,
+    bossPowerMult: 1,
+    bossPhases: [
+      { atPct: 1, copyClass: true, label: "elle se bat comme toi", line: "Elle a tes gestes. Elle les fait avant toi." },
+      { atPct: 0.6, mirror: true, label: "elle garde tes gestes", line: "Elle garde ce que tu annonces. Ne refais pas deux fois la même chose." },
+      { atPct: 0.3, through: true, label: "la lumière passe à travers elle", line: "La lumière passe à travers elle comme à travers une vitre." }
+    ],
+    bossLog: "Elle ne parle pas. Elle se bat comme lui : précise, sans un geste de trop.",
+    name: "La silhouette",
+    story: "Là où la fente est la plus large, quelqu'un t'attend. Il a le visage du Veilleur.",
+    icon: "./images/Icons/quest_icons/exploration/exploration3.webp",
+    steps: [
+      { id: "boss_silhouette", type: "bossKill", bossId: "silhouette", target: 1, desc: "Vaincre la silhouette" }
+    ],
+    reward: {}
   }
 };
 

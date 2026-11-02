@@ -108,6 +108,19 @@ var BOSS_DB = {
     stats: makeRpgStats(74, 96, 28, 38, 50)
   },
 
+  /* v3.630.0 (Tour, acte IV, TW6) — LA SILHOUETTE, boss d'Histoire unique (aq_tour_silhouette). Base mécanique de
+     l'Archimage, nom et portrait propres (image à générer : vrai chemin gardé). Phases lues par TowerSystem.onBossPhase. */
+  silhouette: {
+    name: "La silhouette",
+    asset: "archmage",
+    image: "./images/Boss/silhouette.webp",
+    worldId: "tower",
+    lore: "Elle a le visage du Veilleur, parce qu'elle n'en a pas d'autre.",
+    resists: ["magic"],
+    weak: ["sword", "bow"],
+    stats: makeRpgStats(84, 92, 34, 48, 74)
+  },
+
   archmage: {
     name: "Archimage",
     asset: "archmage",

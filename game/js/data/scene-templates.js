@@ -338,6 +338,34 @@ var SCENE_TEMPLATES = {
     travelOnSuccess: { worldId: "tower", adventureIndex: 0 }
   },
 
+  /* v3.630.0 (Tour, acte IV étape 17) — LA FAILLE : l'escalier de lumière jusqu'au sommet, seul (TW5).
+     Cinq paliers, journal fixe. Fond à fournir par Seb (images/Maps/parcours/tour_faille.webp, piste provisoire). */
+  faille_tour: {
+    id: "faille_tour",
+    worldId: "tower",
+    adventureIndex: 1,
+    mode: "parcours",
+    solo: true,
+    title: "La faille",
+    departLabel: "Monter seul",
+    icon: "images/Icons/codex/world_tower.webp",
+    parcours: {
+      image: "tour_faille", track: "route", points: [0, 2, 4, 6, 8], bag: 3,
+      steps: [
+        { type: "obstacle", gabaritId: "escalier_lumiere", text: "Plus de murs. Des marches de lumière froide, posées sur rien. Elles tiennent quand on ne les regarde pas." },
+        { type: "combat", foe: "corruptmage", pack: 2, foeMult: 1.6, text: "Deux formes sur les marches. Elles ont des robes de mage, et rien dedans.",
+          after: "Elles se défont en poussière bleue. La poussière remonte." },
+        { type: "source", fullBreath: true, text: "Un palier plus large, et du silence. Tu t'assois. Plus bas, la Tour continue de répéter." },
+        { type: "combat", foe: "arcanegolem", pack: 2, foeMult: 1.6, text: "Deux golems de verre ferment l'escalier. Tu te vois dedans, deux fois.",
+          after: "Le verre se fend. Derrière, il n'y a plus que le ciel." },
+        { type: "obstacle", gabaritId: "fente_ouverte", text: "Le sommet. Au-dessus, le ciel est ouvert, et ce qui passe par la fente ne fait aucun bruit." }
+      ]
+    },
+    entryCost: { resourceId: "grande_ration", amount: 1 },
+    lootResource: "gold",
+    unlockOnSuccess: { buildingId: null, unlockFlag: null, completionFlag: "failleTourDone" }
+  },
+
   /* v3.491.0 (Montagne, acte IV étape 17) — LE SENTIER DU DESSUS : de la coupe du lac au plateau du nid.
      Cinq paliers, journal fixe. Fond à fournir par Seb (piste provisoire). Au banc. */
   sentier_du_dessus: {

@@ -178,8 +178,9 @@ var extra = function () {
     QUETES.forEach(function (qid) {
       console.log(qid + (QBOSS ? " · essai boss PV ×" + QBOSS[0] + " puissance ×" + QBOSS[1] : "") + (QUETE ? " · essai rencontres PV ×" + QUETE[0] + " puissance ×" + QUETE[1] : ""));
       if (QUETE) { g.ADVENTURE_QUESTS[qid].encounterHpMult = QUETE[0]; g.ADVENTURE_QUESTS[qid].enemyPowerMult = QUETE[1]; }
+      if (QBOSS && g.ADVENTURE_QUESTS[qid].bossId) { g.ADVENTURE_QUESTS[qid].bossHpMult = QBOSS[0]; g.ADVENTURE_QUESTS[qid].bossPowerMult = QBOSS[1]; } // v3.630.0 : tout boss de quête
       txt.forEach(function (t, k) {
-        var cls = JSON.parse(t).heroId || path.basename(SAVES[k]), n = 0, ok = 0, hp = 0;
+        var cls = JSON.parse(t).heroId || path.basename(SAVES[k]), n = 0, ok = 0, hp = 0, bloque = 0, rd = 0;
         for (var i = 0; i < RUNS; i++) {
           charge(t, 93000 + i);
           g.game.adventureQuestsCompleted = {}; g.game.adventureQuestProgress = {};
@@ -189,8 +190,10 @@ var extra = function () {
           if (!r) continue;
           n++;
           if (r.ok) { ok++; hp += Math.max(0, g.game.heroHp) / g.game.heroMaxHp; }
+          else if (g.game.adventureQuestRun && g.game.adventureQuestRun.active) bloque = (bloque || 0) + 1; // v3.630.0 : quête encore en cours (rounds épuisés), pas une mort
+          rd = (rd || 0) + r.rounds;
         }
-        console.log("   " + String(cls).padEnd(8) + " réussite " + String(Math.round(100 * ok / Math.max(1, n))).padStart(3) + " %   PV restants " + String(Math.round(100 * (ok ? hp / ok : 0))).padStart(3) + " %   (" + n + " runs)");
+        console.log("   " + String(cls).padEnd(8) + " réussite " + String(Math.round(100 * ok / Math.max(1, n))).padStart(3) + " %   PV restants " + String(Math.round(100 * (ok ? hp / ok : 0))).padStart(3) + " %   sans fin " + bloque + "   rounds " + Math.round(rd / Math.max(1, n)) + "   (" + n + " runs)");
       });
     });
     return;
