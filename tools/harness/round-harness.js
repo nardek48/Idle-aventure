@@ -21514,6 +21514,27 @@ console.log("\n[418] v3.623.0 — Ouvertures de chapitre");
   } catch (err) { ok(false, "[418] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[419] v3.624.0 — Aeswyn se repeuple (habitants sur le bandeau du Village)");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; VillageBuildingManager.ensure(); game.worldsEverReached = {}; WorldManager.worldIndex = 0;");
+    ok(run("aeswynPopulation()") === 9 && run("aeswynTier(9)") === 0, "départ : trois familles, 9 habitants, premier palier");
+    run("Object.keys(game.village.buildings).forEach(function(k){ game.village.buildings[k].level = 0; }); game.village.buildings.hall.level = 4; game.village.buildings.training.level = 5;");
+    ok(run("aeswynPopulation()") === 15, "+1 par niveau de bâtiment, Terrain pour moitié (Halle 4 + Terrain 5 -> +6)");
+    run("game.worldsEverReached = { 0: true, 1: true, 2: true };");
+    ok(run("aeswynPopulation()") === 27 && run("aeswynTier(27)") === 2, "+6 par monde atteint après la Forêt (Ruines atteintes : 27, troisième palier)");
+    var d = run("ScreenBanner.data('village')");
+    ok(d && d[0] === "images/Banners/village_3.webp" && d[2] === run("aeswynTierText(2)"), "bandeau : image du monde le plus loin, phrase du palier à la place de « Rebâti planche après planche »");
+    ok(run("[9,14,15,39,40,99,100,500].map(aeswynTier).join(',')") === "0,0,1,2,3,6,7,7", "seuils 9 / 15 / 25 / 40 / 55 / 70 / 85 / 100");
+    var en = require("fs").readFileSync(require("path").join(ROOT, "js/lang/en.js"), "utf8");
+    var faltan = run("[0,1,2,3,4,5,6,7].map(aeswynTierText)").filter(function (x) { return en.indexOf(JSON.stringify(x) + ":") < 0; });
+    ok(faltan.length === 0 && en.indexOf('"{n} habitant||{n} habitants"') > 0, "8 phrases et le compte traduits en anglais");
+    var sb = require("fs").readFileSync(require("path").join(ROOT, "js/ui/screen-banner.js"), "utf8");
+    ok(/this\.popPill\(el\)/.test(sb) && /kfb-pop/.test(require("fs").readFileSync(require("path").join(ROOT, "css/00-kbtn.css"), "utf8")), "pastille des habitants posée sur le bandeau du Village");
+    run("game.worldsEverReached = {}; WorldManager.worldIndex = 0;");
+  } catch (err) { ok(false, "[419] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");
