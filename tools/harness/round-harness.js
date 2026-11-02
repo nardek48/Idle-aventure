@@ -21350,6 +21350,83 @@ console.log("\n[414] v3.616.1 — Description du Terrain d'entraînement (plafon
   } catch (err) { ok(false, "[414] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[415] v3.621.0 — Audit narratif : feuillets du Veilleur, lame de Brannoc, prologue, « Cycle »");
+(function () {
+  try {
+    var LORE = ["prologue", "world_forest", "world_desert", "bestiary", "dungeon", "dungeon_tier_1", "village", "chaos", "epilogue"];
+    var fiche = function (id) { return "CodexManager.isUnlocked(CodexManager.getById('" + id + "'))"; };
+    // partie neuve, en Forêt : premier kill, Basilic, production, héros du Chaos — rien ne se lit avant le Veilleur
+    run("fullResetState(); game.playerName='Test'; game.heroId='chaosKnight'; StoryQuestManager.ensure(); CodexManager.ensure();"
+      + "game.worldsEverReached={0:true,1:true}; game.totalKills=5; game.dungeonTiersEntered={1:true}; game.dungeonBossClears=1;"
+      + "game.production={hunt:{}}; game.codexChaosSeen=true; game.codexRead={};");
+    var avant = LORE.filter(function (id) { return run(fiche(id)); });
+    ok(avant.length === 0, "avant desert_07 : aucune fiche d'histoire lisible" + (avant.length ? " — " + avant.join(", ") : ""));
+    ok(run("buildCodexExcerptHTML('bestiary')") === "" && run("buildCodexExcerptHTML('world_forest', 'map-world-lore')") === "", "extraits du Bestiaire et de la Carte masqués avant le Veilleur");
+    ok(run("buildDungeonSceauLoreHTML(1)") === "", "fiche du Donjon : le texte du Sceau suit le déblocage (plus affiché d'office)");
+    var cats = run("buildCodexCategoryHeaderHTML('system', CODEX_ENTRIES.filter(function(e){return e.category==='system';}), false)");
+    ok(cats.indexOf("Le Cycle") < 0 && cats.indexOf("???") > 0, "Codex : la catégorie « Le Cycle » reste « ??? » tant qu'aucune de ses fiches n'est lisible");
+    // fiche déjà lue : reste lisible (choix de Seb)
+    run("game.codexRead={prologue:true};");
+    ok(run(fiche("prologue")) === true, "une fiche déjà lue reste lisible");
+    run("game.codexRead={};");
+    // desert_07 terminée : feuillets reçus
+    run("game.storyQuests.forest.currentStep=STORY_QUESTS.forest.steps.length;"
+      + "game.storyQuests.desert.currentStep=STORY_QUESTS.desert.steps.map(function(x){return x.id;}).indexOf('desert_08');");
+    var apres = LORE.filter(function (id) { return id !== "epilogue" && !run(fiche(id)); }); // l'épilogue demande aussi la Mémoire 1
+    ok(run(fiche("epilogue")) === run("!!(window.MemoryManager && MemoryManager.getLevel() >= 1)"), "« Ce qui attend au sommet » : feuillets + Basilic vaincu + Mémoire 1");
+    ok(apres.length === 0, "après desert_07 : les fiches se lisent selon leur condition" + (apres.length ? " — encore fermées : " + apres.join(", ") : ""));
+    ok(run(fiche("prologue_cycle")) === false, "« Le Cycle » : encore fermé tant qu'Orwen n'a pas nommé la Tour");
+    ok(run(fiche("ascension")) === run("!!(window.MemoryManager && MemoryManager.getLevel() >= 1)"), "« La Mémoire » garde sa condition (le mot Aether est déjà dans l'interface)");
+    run("['ruins','crypt','mountain'].forEach(function(c){ game.storyQuests[c].currentStep = STORY_QUESTS[c].steps.length; });");
+    ok(run(fiche("prologue_cycle")) === true, "« Le Cycle » : se lit à la fin de la Montagne (« Il reste la Tour »)");
+    var pro = run("CodexManager.getById('prologue').text"), cyc = run("CodexManager.getById('prologue_cycle').text");
+    ok(pro.indexOf("Cycle") < 0 && pro.indexOf("Tu es l'un d'eux") < 0 && /quelque chose d'ancien se réveilla\.$/.test(pro) && cyc.indexOf("Les érudits l'appelèrent le Cycle") === 0 && /Tu es l'un d'eux\.$/.test(cyc),
+      "prologue découpé sans réécriture : §1-3 puis « Le Cycle » (§4 et « Tu es l'un d'eux. »)");
+    // la lame de Brannoc : toujours une arme, du type de la classe
+    var ko = [];
+    ["knight", "ranger", "mage", "chaosKnight", "chaosRanger", "chaosMage"].forEach(function (h) {
+      run("game.heroId='" + h + "';");
+      for (var i = 0; i < 25; i++) {
+        var it = run("LootSystem.rollWorldDrop('weapon')");
+        var allowed = run("getAllowedWeaponIconsForCurrentHero()");
+        if (!it || it.slot !== "weapon" || allowed.indexOf(it.icon) < 0) { ko.push(h); break; }
+      }
+    });
+    ok(ko.length === 0, "rollWorldDrop('weapon') : une arme de la classe pour les 3 classes et leurs variantes du Chaos" + (ko.length ? " — " + ko.join(", ") : ""));
+    ok(run("(function(){ var seen={}; for (var i=0;i<200;i++) seen[LootSystem.rollWorldDrop().slot]=1; return Object.keys(seen).length; })()") >= 5, "sans argument, rollWorldDrop garde un emplacement au hasard (vitrine, caravanes)");
+    run("game.heroId='ranger'; game.inventory=[]; game.unlockedTabs.village=true; game.explorationProgression.villageEvent={ id:'s_lame', w:1, from:0, until:(window.WorldDays?WorldDays.day():1)+3, done:false };");
+    var lame = run("VillageEvents.claim()");
+    ok(!!lame && lame.slot === "weapon" && lame.icon === "bow" && run("game.inventory.length") === 1 && run("game.explorationProgression.villageEvent.done") === true,
+      "« La lame de Brannoc » : le cadeau reçu est une arme (arc pour le Rôdeur), rangée dans le sac");
+    ok(run("(VillageEvents.get('s_lame')||{}).giftSlot") === "weapon", "s_lame annonce une arme (giftSlot)");
+    // prologue et cartes vivantes
+    var pl = run("PROLOGUE_PLANCHES");
+    ok(pl.length === 6 && pl[5].lignes[2] === "Cette nuit encore, quelqu'un devra les tenir à distance." && pl[5].lignes[0].indexOf("La nuit, les bêtes rôdent") === 0, "prologue : seule la dernière phrase de la sixième planche change");
+    ok(run("LIVING_MAPS.desert.words.homeLore").indexOf("Cycle") < 0 && run("JSON.stringify(LivingMapManager)").indexOf("hors du Cycle") < 0,
+      "cartes vivantes : plus de « hors du Cycle » avant le Veilleur");
+    // audit des tutoriels et objectifs (rapport vérifié ligne à ligne)
+    var fs415 = require("fs"), path415 = require("path"), lire = function (f) { return fs415.readFileSync(path415.join(ROOT, f), "utf8"); };
+    var sq = lire("js/data/story-quests.js"), vq = lire("js/data/village-quests.js"), hq = lire("js/data/hunt-quests.js");
+    ok(sq.indexOf("Bouclier au prochain tour") < 0 && sq.indexOf("« Le soutien »") < 0 && sq.indexOf("Dans le Grimoire, le réglage « Cible »") < 0,
+      "tutoriels : noms réels du Grimoire (« L'ennemi invoque un bouclier », « Celle qui soutient », réglée dans « Préparer la sortie »)");
+    ok(run("Object.keys(GRIMOIRE_CONDITIONS).some(function(k){ return GRIMOIRE_CONDITIONS[k].label === \"L'ennemi invoque un bouclier\"; })")
+      && run("GRIMOIRE_TARGET_POLICIES.some(function(t){ return t.label === 'Celle qui soutient'; })")
+      && sq.indexOf("« L'ennemi invoque un bouclier »") > 0 && sq.indexOf("« Celle qui soutient »") > 0, "les noms cités existent dans le Grimoire (conditions et cibles)");
+    ok(!/trajet Long \(Halle 3\), parfois/.test(sq) && vq.indexOf("peut ramener une rareté") < 0 && run("CARAVAN_RARE_QTY[0]") === 2,
+      "caravanes : le trajet Long promet 2 raretés à coup sûr, comme le code (v3.611.0)");
+    ok(vq.indexOf("sept terres") < 0 && vq.indexOf("il reste une terre à reprendre") > 0, "deuxième parcelle du Champs : il reste une terre (3 parcelles depuis la v3.612.0)");
+    ok(hq.indexOf("fondue puis taillée") < 0, "Obsidienne taillée : taillée au burin, elle ne fond pas");
+    ok(run("(function(){ var s=STORY_QUESTS.mountain.steps.find(function(x){return x.id==='montagne_17';}); return s.objectiveLabel; })()").indexOf("(coût : 1 Ration moyenne)") > 0, "montagne_17 : le coût de la traversée est annoncé");
+    var m3 = "STORY_QUESTS.mountain.steps.find(function(x){return x.id==='montagne_03';})";
+    run("window.__cnt415 = storyCompanionCount; storyCompanionCount = function(){ return 4; };");
+    var t4 = run(m3 + ".choice.title + '|' + " + m3 + ".tutorial.title");
+    run("storyCompanionCount = function(){ return 5; };");
+    var t5 = run(m3 + ".choice.title + '|' + " + m3 + ".tutorial.title");
+    run("storyCompanionCount = window.__cnt415;");
+    ok(t4 === "Deux sur quatre|Deux sur quatre" && t5 === "Deux sur cinq|Deux sur cinq", "montagne_03 : « Deux sur quatre » quand Ysolt est partie, « Deux sur cinq » sinon");
+  } catch (err) { ok(false, "[415] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

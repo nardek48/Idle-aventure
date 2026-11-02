@@ -1942,7 +1942,7 @@ STORY_QUESTS.ruins = {
         title: "Le Marché des Ruines",
         points: [
           { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "La caravane de la Halle marchande peut maintenant partir vers le Marché des Ruines, dans Campement › Expéditions. La première est une caravane d'essai : elle part à vide, revient en 10 minutes et ne prend pas de place." }, // v3.551.0
-          { icon: "images/Icons/resources/pierre_errante_icon.webp", text: "Elle en rapporte de l'or. Au trajet Long (Halle 3), parfois de la Pierre errante, la pierre des Ruines." }
+          { icon: "images/Icons/resources/pierre_errante_icon.webp", text: "Elle en rapporte de l'or. Au trajet Long (Halle 3), 2 Pierres errantes à coup sûr, la pierre des Ruines." }
         ]
       },
       check: function () { return storyDesertFlag("ruinsMarketDone"); },
@@ -2101,8 +2101,8 @@ STORY_QUESTS.ruins = {
         title: "Le Bâtisseur",
         points: [
           { icon: "images/Icons/combat_status/shield_incoming.webp", text: "Le Bâtisseur frappe peu. Il annonce un mur, puis blinde un de ses alliés : tes coups sur lui passent mal pendant quelques rounds." },
-          { icon: "images/Icons/memory/grimoire_etendu.webp", text: "Contre l'annonce, la même réponse qu'au bouclier : la condition « Bouclier au prochain tour » du Grimoire." },
-          { icon: "images/Icons/combat_stats/stat_attack.webp", text: "Mieux : le tuer en premier. Dans le Grimoire, le réglage « Cible » sur « Le soutien » le vise d'abord." },
+          { icon: "images/Icons/memory/grimoire_etendu.webp", text: "Contre l'annonce, la même réponse qu'au bouclier : la condition « L'ennemi invoque un bouclier » du Grimoire." },
+          { icon: "images/Icons/combat_stats/stat_attack.webp", text: "Mieux : le tuer en premier. Dans « Préparer la sortie », le réglage « Cible » sur « Celle qui soutient » le vise d'abord." },
           { icon: "images/Icons/camp/campfire.webp", text: "Deux compagnons sur trois : Wenna soigne, Maddoc frappe de loin, Edda achève. Choisis selon ce qui t'attend." }
         ]
       },
@@ -2501,8 +2501,8 @@ STORY_QUESTS.ruins = {
         title: "Le Maître d'œuvre",
         points: [
           { icon: "images/Icons/combat_status/rising.webp", text: "Il se relève une fois, quoi qu'il arrive, avec la moitié de ses PV." },
-          { icon: "images/Icons/memory/grimoire_etendu.webp", text: "Relevé, il appelle deux bâtisseurs. Le réglage « Cible » sur « Le soutien » les vise d'abord." },
-          { icon: "images/Icons/combat_status/shield_incoming.webp", text: "Sous les 30 %, il se blinde : la condition « Bouclier au prochain tour » du Grimoire." }
+          { icon: "images/Icons/memory/grimoire_etendu.webp", text: "Relevé, il appelle deux bâtisseurs. Le réglage « Cible » sur « Celle qui soutient » les vise d'abord." },
+          { icon: "images/Icons/combat_status/shield_incoming.webp", text: "Sous les 30 %, il se blinde : la condition « L'ennemi invoque un bouclier » du Grimoire." }
         ]
       },
       check: function (game) { return storyAdvDone(game, "aq_ruines_plan"); },
@@ -2767,7 +2767,7 @@ STORY_QUESTS.crypt = {
         title: "Le Marché de la Crypte",
         points: [
           { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "La caravane de la Halle marchande peut maintenant partir vers le Marché de la Crypte, dans Campement › Expéditions. La première est une caravane d'essai : elle part à vide, revient en 10 minutes et ne prend pas de place." }, // v3.551.0
-          { icon: "images/Icons/resources/cire_sepulcre_icon.webp", text: "Elle en rapporte de l'or. Au trajet Long (Halle 3), parfois de la Cire de sépulcre." }
+          { icon: "images/Icons/resources/cire_sepulcre_icon.webp", text: "Elle en rapporte de l'or. Au trajet Long (Halle 3), 2 Cires de sépulcre à coup sûr." }
         ]
       },
       check: function () { return storyDesertFlag("cryptMarketDone"); },
@@ -2926,7 +2926,7 @@ STORY_QUESTS.crypt = {
         title: "Celui qui appelle",
         points: [
           { icon: "images/Icons/combat_status/calling.webp", text: "Le Nécromancien annonce un appel, puis réveille un dormeur au tour suivant. Celui-là ne rapporte pas d'or en plus : ce n'est pas toi qui l'as réveillé." },
-          { icon: "images/Icons/combat_stats/stat_attack.webp", text: "Le tuer en premier coupe l'appel. Dans le Grimoire, le réglage « Cible » sur « Le soutien » le vise d'abord." },
+          { icon: "images/Icons/combat_stats/stat_attack.webp", text: "Le tuer en premier coupe l'appel. Dans « Préparer la sortie », le réglage « Cible » sur « Celle qui soutient » le vise d'abord." },
           { icon: "images/Icons/camp/campfire.webp", text: "Ysolt retarde un réveil, Wenna soigne, Maddoc frappe de loin, Edda achève. Deux sur quatre : choisis selon ce qui t'attend." }
         ]
       },
@@ -3995,7 +3995,7 @@ STORY_QUESTS.mountain = {
       choice: {
         key: "pioche", onStoryCard: true, noRecord: true,
         buttonLabel: "Choisir qui l'accompagne",
-        title: "Deux sur cinq",
+        get title() { return storyCompanionCount() === 4 ? "Deux sur quatre" : "Deux sur cinq"; }, // v3.621.0 : Ysolt partie
         text: "Sarkel vient avec toi. Une seule autre place au combat : qui la prend ?",
         get options() {
           return STORY_PIOCHE_OPTIONS.filter(function (o) { return window.CompanionManager && CompanionManager.isUnlocked(o.value); });
@@ -4015,7 +4015,7 @@ STORY_QUESTS.mountain = {
       tutorial: {
         tab: "more",
         icon: "images/Icons/subtabs/hero_summary.webp",
-        title: "Deux sur cinq",
+        get title() { return storyCompanionCount() === 4 ? "Deux sur quatre" : "Deux sur cinq"; }, // v3.621.0 : Ysolt partie
         points: [
           { icon: "images/Icons/subtabs/hero_summary.webp", get text() { return STORY_DEUX_SUR_CINQ[storyCompanionCount() === 4 ? 0 : 1]; } },
           { icon: "images/Icons/companions/sarkel_coup_de_pioche.webp", text: "Sarkel taille : une fois par combat, il taille la veine à ta place. Tu gagnes la Cendre sans perdre ton coup, mais la chaleur monte." }
@@ -4175,7 +4175,7 @@ STORY_QUESTS.mountain = {
           { icon: "images/Icons/menu_icons/map_menu.webp", text: "La carte de la Montagne fonctionne comme celle de la Crypte : tu libères un secteur en terminant sa Petite Aventure." },
           { icon: "images/Icons/combat_actions/vein_cut.webp", text: "Chaque secteur a sa veine. Avant de partir, tu choisis : la tailler (plus de Cendre vive, mais le secteur chauffe et ses combats sont plus durs ensuite) ou la laisser (plus facile, rapporte moins)." },
           { icon: "images/Icons/combat_status/vein_heat.webp", text: "Une Petite Aventure ratée recouvre le secteur de lave : c'est La coulée. Il reste plus dur jusqu'au lendemain. Une élite perdue, elle, se retente le jour même." },
-          { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "Le Marché de la Montagne est sur la carte, à côté du Replat. La caravane en rapporte de l'or. Au trajet Long (Halle 3), parfois de la Cendre vive." }
+          { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "Le Marché de la Montagne est sur la carte, à côté du Replat. La caravane en rapporte de l'or. Au trajet Long (Halle 3), 2 Cendres vives à coup sûr." }
         ]
       },
       check: function () { return storyMountainSectorsFreed() >= 2; },
@@ -4211,7 +4211,7 @@ STORY_QUESTS.mountain = {
         title: "Le tri",
         points: [
           { icon: "images/Icons/combat_status/sorting.webp", text: "Le Démon mineur annonce le tri, puis frappe plus fort celui qui a taillé la veine dans ce combat. Si personne n'a taillé, il frappe comme les autres." },
-          { icon: "images/Icons/memory/grimoire_etendu.webp", text: "Le tuer en premier coupe le tri. Dans le Grimoire, le réglage « Cible » sur « Le soutien » le vise d'abord." },
+          { icon: "images/Icons/memory/grimoire_etendu.webp", text: "Le tuer en premier coupe le tri. Dans « Préparer la sortie », le réglage « Cible » sur « Celle qui soutient » le vise d'abord." },
           { icon: "images/Icons/companions/sarkel_coup_de_pioche.webp", text: "Tailler attire ses coups sur toi. Laisser Sarkel tailler les attire sur lui." }
         ]
       },
@@ -4523,7 +4523,7 @@ STORY_QUESTS.mountain = {
           { who: "Sarkel", text: "Il nous entend depuis la Gueule." }
         ]
       },
-      objectiveLabel: "Monter « Le sentier du dessus »",
+      objectiveLabel: "Monter « Le sentier du dessus » (coût : 1 Ration moyenne)",
       unlockTabs: [],
       reward: STORY_REWARDS.montagne_17,
       linkTo: { section: "expedition", cardId: "scene_sentier_du_dessus" },

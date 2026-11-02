@@ -191,7 +191,8 @@ var VillageEvents = {
     if (!this.canClaim()) return false;
     var v = this.active(), e = this.def(), item = null;
     if (e.gift === "equip") {
-      item = window.LootSystem && typeof LootSystem.rollWorldDrop === "function" ? LootSystem.rollWorldDrop() : null;
+      // v3.621.0 : « La lame de Brannoc » est une arme (giftSlot), adaptée à la classe par generateEquipmentItem
+      item = window.LootSystem && typeof LootSystem.rollWorldDrop === "function" ? LootSystem.rollWorldDrop(e.giftSlot) : null;
       if (item && typeof addLootToInventory === "function") addLootToInventory(item);
     } else {
       var g = this.giftList();
