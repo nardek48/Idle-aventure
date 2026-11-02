@@ -13642,7 +13642,7 @@ console.log("\n[196] v3.424.0 — Chantier Héros, H-1 : rail en haut, quatre on
     ok(run("buildHerosHTML()").indexOf("equip-shop-grid") !== -1 && !run("isEquipShopAtHall()"), "Halle non bâtie : la Boutique reste dans Héros › Équipement");
     run("game.village.buildings.hall.level = 2; activeEquipSubTab = 'shop';");
     var eq = run("buildHerosHTML()");
-    ok(eq.indexOf("equip-shop-grid") === -1 && eq.indexOf("setEquipSubTab('shop')") === -1 && eq.indexOf("heros-shop-hint") === -1, "Halle bâtie : plus de Boutique dans Héros, ni de renvoi (v3.424.1)");
+    ok(eq.indexOf("equip-shop-grid") !== -1 && eq.indexOf("setEquipSubTab('shop')") !== -1 && eq.indexOf("heros-shop-hint") === -1, "Halle bâtie : la Boutique reste dans Héros › Équipement, à côté du Sac (v3.615.2, option A de Seb)");
     run("game.gold = 1e6; openVillageBuildingId = 'hall'; hallSheetSegment = 'shop';");
     var hall = run("buildVillageBuildingSheetHTML('hall')");
     ok(hall.indexOf("setHallSheetSegment('shop')") !== -1 && hall.indexOf("equip-shop-grid") !== -1 && hall.indexOf("equipShopRefresh()") !== -1, "feuille de la Halle : segment Échoppe avec la vitrine");
@@ -21262,6 +21262,18 @@ console.log("\n[411] v3.615.1 — Écran Équipé : chaque emplacement se choisi
     var oc = (html.match(/class="hs-eslot[^"]*" data-slot="(\w+)" onclick="([^"]+)"/g) || []);
     ok(oc.length === 7 && oc.every(function (x) { return /onclick="herosPickSlot\('\w+'\)"/.test(x); }), "les 7 emplacements appellent herosPickSlot (" + oc.length + ")");
   } catch (err) { ok(false, "[411] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[412] v3.615.2 — La Boutique d'équipement reste à côté du Sac (option A de Seb)");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; VillageBuildingManager.ensure(); EquipmentManager.recalcStats(); setHerosSubTabSilent('equip');");
+    ok(run("buildHerosHTML()").indexOf("setEquipSubTab('shop')") !== -1, "sans Halle : Équipé · Sac · Boutique");
+    run("game.village.buildings.hall.level = 3; activeEquipSubTab = 'shop';");
+    var h = run("buildHerosHTML()");
+    ok(h.indexOf("setEquipSubTab('shop')") !== -1 && h.indexOf("equip-shop-grid") !== -1, "Halle bâtie : l'onglet Boutique reste et montre l'échoppe");
+    run("activeEquipSubTab = 'equipment';");
+  } catch (err) { ok(false, "[412] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
 Promise.all(ATTENTES).then(function () {

@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.615.2", "menu_icons/heroes_menu", _t("La Boutique d\'équipement reste à côté du Sac toute la partie, dans Héros › Équipement ; la Halle marchande la propose aussi.")],
     ["3.615.1", "menu_icons/heroes_menu", _t("Correctif : sur l\'écran Équipé, on peut de nouveau choisir n\'importe quel emplacement après en avoir touché un.")],
     ["3.615.0", "menu_icons/heroes_menu", _t("Chaque pièce d\'équipement a maintenant un niveau d\'objet (ilvl) : en coin sur son icône, et détaillé dans sa fiche. Environ 10 par monde, plus selon la rareté.")],
     ["3.614.0", "menu_icons/heroes_menu", _t("Entraînement : ta caractéristique de classe et l\'Endurance montent jusqu\'au plafond du Terrain ; les trois autres s\'arrêtent à 70 % de ce plafond.")],
