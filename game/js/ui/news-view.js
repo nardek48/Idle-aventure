@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.616.3", "menu_icons/village_menu", _t("Les fiches ont un nouveau fond de parchemin crème, plus fin et plus léger.")],
     ["3.616.2", "menu_icons/village_menu", _t("Nouvelles icônes : les événements du village, les sujets au feu, les reliques des compagnons, les objets de l\'artisan, l\'entrée de donjon et le Sommet interdit.")],
     ["3.616.1", "menu_icons/village_menu", _t("Correctif : la description du Terrain d\'entraînement donne les bons plafonds (+10 pour la caractéristique de classe et l\'Endurance, environ +7 pour les autres).")],
     ["3.616.0", "menu_icons/village_menu", _t("Forêt : le Village s\'ouvre quand « La Meute affamée » est réussie, plus dès qu\'on l\'accepte. La Scierie, la Mine et les Champs ne s\'ouvrent plus sans leur expédition.")],
