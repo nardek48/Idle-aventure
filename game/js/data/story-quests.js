@@ -541,7 +541,7 @@ var STORY_QUESTS = {
           icon: "images/Icons/resources/seve_aeswyn_icon.webp",
           title: "La brume reprend",
           points: [
-            { icon: "images/Icons/scene/node_obstacle.webp", text: "La carte est découpée en secteurs autour d'Aeswyn. Tu libères un secteur en terminant sa Petite Aventure. Seuls ceux qui touchent le foyer ou un secteur libéré sont atteignables." },
+            { icon: "images/Icons/scene/node_obstacle.webp", text: "La carte est découpée en secteurs autour d'Aeswyn. Tu libères un secteur en terminant sa Petite Aventure, ou en battant l'élite qui le garde. Seuls ceux qui touchent le foyer ou un secteur libéré sont atteignables." },
             { icon: "images/Icons/resources/seve_aeswyn_icon.webp", text: "Un, deux ou trois points : l'anneau du secteur. Plus il est loin du foyer, plus le parcours est dur, et plus la première libération rapporte de Sève (5, 8 ou 12)." },
             { icon: "images/Icons/scene/node_unknown.webp", text: "Un secteur libéré donne souvent un effet (Puits +10 %, une corde de plus…). Si tu échoues en rejouant un secteur déjà libéré, la brume le reprend : c'est le Recouvrement. Une première tentative ratée ne coûte rien. L'effet revient quand tu le reprends." },
             { icon: "images/Icons/scene/protective_amulet.webp", text: "La Palissade d'Aeswyn freine le Recouvrement et, dès le niveau 3, tient les secteurs proches du foyer. Le bouton « ? » de la carte rappelle chaque pastille." }
@@ -1036,7 +1036,7 @@ STORY_QUESTS.desert = {
         icon: "images/Icons/resources/verre_des_dunes_icon.webp",
         title: "L'Ensablement",
         points: [
-          { icon: "images/Icons/scene/node_obstacle.webp", text: "La carte du Désert fonctionne comme celle de la Forêt. Tu libères un secteur en terminant son parcours." },
+          { icon: "images/Icons/scene/node_obstacle.webp", text: "La carte du Désert fonctionne comme celle de la Forêt. Tu libères un secteur en terminant son parcours, ou en battant l'élite qui le garde." },
           { icon: "images/Icons/scene/node_unknown.webp", text: "Un parcours raté rend un secteur au sable. Sa récompense de secteur tenu est perdue jusqu'à ce que tu le reprennes." },
           { icon: "images/Icons/scene/protective_amulet.webp", text: "La Palissade d'Aeswyn freine l'Ensablement, comme elle freine la brume." }
         ]
@@ -2062,7 +2062,7 @@ STORY_QUESTS.ruins = {
         icon: "images/Icons/resources/pierre_errante_icon.webp",
         title: "Le chantier errant",
         points: [
-          { icon: "images/Icons/scene/node_obstacle.webp", text: "La carte des Ruines fonctionne comme celle du Désert : tu libères un quartier en terminant sa Petite Aventure." },
+          { icon: "images/Icons/scene/node_obstacle.webp", text: "La carte des Ruines fonctionne comme celle du Désert : tu libères un quartier en terminant sa Petite Aventure, ou en battant l'élite qui le garde." },
           { icon: "images/Icons/scene/node_unknown.webp", text: "Chaque jour, la cité rebâtit un quartier : le chantier. Il change de place à chaque nuit (une nuit toutes les 3 sorties), et même un quartier libéré peut redevenir chantier." }, // v3.602.0 : jours du monde
           { icon: "images/Icons/resources/pierre_errante_icon.webp", text: "Libérer le chantier du jour rapporte des Pierres errantes. Un échec sur un quartier déjà libéré le fait retomber : c'est l'Éboulement." },
           { icon: "images/Icons/scene/protective_amulet.webp", text: "La Palissade d'Aeswyn freine l'Éboulement." }
@@ -2886,7 +2886,7 @@ STORY_QUESTS.crypt = {
         icon: "images/Icons/resources/cire_sepulcre_icon.webp",
         title: "Les gisants",
         points: [
-          { icon: "images/Icons/scene/node_obstacle.webp", text: "La carte de la Crypte fonctionne comme celle des Ruines : tu libères un couloir en terminant sa Petite Aventure." },
+          { icon: "images/Icons/scene/node_obstacle.webp", text: "La carte de la Crypte fonctionne comme celle des Ruines : tu libères un couloir en terminant sa Petite Aventure, ou en battant l'élite qui le garde." },
           { icon: "images/Icons/combat_status/asleep.webp", text: "Chaque couloir a ses gisants. Avant de partir, tu choisis : les laisser (plus facile, rapporte moins) ou les réveiller (plus dur, plus de Cire de sépulcre)." },
           { icon: "images/Icons/scene/node_unknown.webp", text: "Un échec réveille le couloir : c'est Le réveil. Il reste hostile, et plus dur, jusqu'au lendemain." },
           { icon: "images/Icons/resources/cire_sepulcre_icon.webp", text: "Le Marché de la Crypte est sur la carte, à côté de la Veillée." }
@@ -4172,7 +4172,7 @@ STORY_QUESTS.mountain = {
         icon: "images/Icons/resources/cendre_vive_icon.webp",
         title: "Les veines de la carte",
         points: [
-          { icon: "images/Icons/menu_icons/map_menu.webp", text: "La carte de la Montagne fonctionne comme celle de la Crypte : tu libères un secteur en terminant sa Petite Aventure." },
+          { icon: "images/Icons/menu_icons/map_menu.webp", text: "La carte de la Montagne fonctionne comme celle de la Crypte : tu libères un secteur en terminant sa Petite Aventure, ou en battant l'élite qui le garde." },
           { icon: "images/Icons/combat_actions/vein_cut.webp", text: "Chaque secteur a sa veine. Avant de partir, tu choisis : la tailler (plus de Cendre vive, mais le secteur chauffe et ses combats sont plus durs ensuite) ou la laisser (plus facile, rapporte moins)." },
           { icon: "images/Icons/combat_status/vein_heat.webp", text: "Une Petite Aventure ratée recouvre le secteur de lave : c'est La coulée. Il reste plus dur jusqu'au lendemain. Une élite perdue, elle, se retente le jour même." },
           { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "Le Marché de la Montagne est sur la carte, à côté du Replat. La caravane en rapporte de l'or. Au trajet Long (Halle 3), 2 Cendres vives à coup sûr." }

@@ -21452,6 +21452,11 @@ console.log("\n[416] v3.621.1 — forest_13 : des vagues franchies sous Marque, 
     var cc = require("fs").readFileSync(require("path").join(ROOT, "css/00-cartes.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
     var masques = cc.match(/(-webkit-mask-box-image|mask-border):[^;]*;/g) || [];
     ok(masques.length >= 4 && masques.every(function (m) { return / 60 fill \//.test(m); }), "parchemin déchiré : les " + masques.length + " déclarations de masque gardent le centre (« fill »)");
+    // v3.621.3 : les tutoriels des cinq cartes vivantes disent aussi l'élite qui garde certains secteurs
+    var sq416 = require("fs").readFileSync(require("path").join(ROOT, "js/data/story-quests.js"), "utf8");
+    var elites = run("Object.keys(LIVING_MAPS).filter(function(m){ return (LIVING_MAPS[m].sectors||[]).some(function(x){ return x.content && x.content.type === 'elite'; }); }).length");
+    ok((sq416.match(/en terminant (?:sa Petite Aventure|son parcours), ou en battant l'élite qui le garde\./g) || []).length === 5 && elites >= 5,
+      "cartes vivantes : les 5 tutoriels citent l'élite (" + elites + " cartes ont des secteurs à élite)");
   } catch (err) { ok(false, "[416] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
