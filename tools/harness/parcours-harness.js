@@ -951,9 +951,9 @@ async function P13(browser, base) {
 }
 
 /* ====================================================================================
-   P14 — Habillage des cartes (v3.618.0, lot 2 de l'atelier « Cartes E ») : sur 22 écrans et
-   fiches, en téléphone et en PC, toute carte crème porte la texture parchemin. Un oubli nomme
-   sa classe : l'ajouter aux listes de css/00-cartes.css. Documents exclus jusqu'au lot 3.
+   P14 — Habillage des cartes (v3.618.0 lot 2, v3.619.0 lot 3 de l'atelier « Cartes E ») : sur 22
+   écrans et fiches, en téléphone et en PC, toute carte crème porte la texture parchemin, et tout
+   document non imbriqué la découpe déchirée. Un oubli nomme sa classe (listes de css/00-cartes.css).
    ==================================================================================== */
 function prepHabillage() {
   game.unlockedTabs = Object.assign({}, game.unlockedTabs, { village: true, map: true, combat: true, more: true, quests: true, companions: true, equip: true, achievements: true, log: true, tutorials: true, settings: true });
@@ -982,7 +982,7 @@ var ECRANS_HABILLAGE = [
   ["Fiche Donjon", "switchTab('village');openDungeonSheet(1)"]
 ];
 function cartesNonHabillees() {
-  var DOC = /^(story-chain|story-step|story-prologue-card|camp-missions-card|ms-block|qb-card|tavern-board|chr-)/;
+  var DOC = /^(story-chain|story-step|story-prologue-card|camp-missions-card|ms-block|qb-card|tavern-board|chr-obj)$/;
   var CONTENEUR = /^(vb-sheet-card|full-menu|ksheet|mw-sheet|pw-sheet)$/;
   var oublis = {};
   document.querySelectorAll("#panel-container *, .vb-sheet-card *, .ksheet *").forEach(function (e) {
@@ -990,11 +990,14 @@ function cartesNonHabillees() {
     var s = getComputedStyle(e), m = (s.backgroundColor.match(/[\d.]+/g) || []).map(Number);
     if (!(m.length >= 3 && (m[3] === undefined || m[3] > 0.5) && m[0] > 225 && m[1] > 205 && m[2] > 160)) return;
     var cls = String(e.className || "").split(/\s+/).filter(Boolean);
-    if (cls.some(function (c) { return CONTENEUR.test(c) || DOC.test(c); })) return;
-    if (cls.indexOf("cw-card") >= 0 && e.querySelector(".camp-mission-card, .cw-mlist")) return; // carte Missions (PC) : document
+    if (cls.some(function (c) { return CONTENEUR.test(c); })) return;
     if ((e.tagName === "BUTTON" || e.closest("button")) && r.height < 70) return;
-    var p = e.parentElement; while (p) { if (String(p.className || "").split(/\s+/).some(function (c) { return DOC.test(c); })) return; p = p.parentElement; }
-    if (s.backgroundImage.indexOf("parchment-cream") < 0) oublis[cls[0] || e.tagName.toLowerCase()] = 1;
+    if (s.backgroundImage.indexOf("parchment-cream") < 0) { oublis[cls[0] || e.tagName.toLowerCase()] = 1; return; }
+    // document (dont la carte Missions en PC) hors de toute carte habillée : découpe déchirée attendue
+    var doc = cls.some(function (c) { return DOC.test(c); }) || (cls.indexOf("cw-card") >= 0 && !!e.querySelector(".cw-mlist"));
+    var p = e.parentElement, range = false;
+    while (p && !range) { if (getComputedStyle(p).backgroundImage.indexOf("parchment-cream") >= 0) range = true; p = p.parentElement; }
+    if (doc && !range && (s.webkitMaskBoxImageSource || "none") === "none") oublis[(cls[0] || "?") + " (sans bord déchiré)"] = 1;
   });
   return Object.keys(oublis);
 }
