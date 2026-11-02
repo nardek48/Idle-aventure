@@ -154,3 +154,181 @@ Lot 1 : les classes .kc-*. Lot 2 (fin du fichier) : listes de cartes d'interface
   background-image: linear-gradient(to right, transparent 4px, var(--c-brown-550-3) 4px 8px, transparent 8px), linear-gradient(var(--kc-voile), var(--kc-voile)), var(--kc-tex) !important;
   background-size: auto, auto, 256px !important;
 }
+
+
+/* v3.618.1 (option A de Seb) : encres plus foncées DANS les cartes habillées seulement, car texture et cadre
+   les éclaircissaient (2,1 à 4,1:1). Couleur changée sélecteur par sélecteur (la palette n'est jamais redéfinie). */
+:root :is(
+  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
+  .full-menu-card, .go-auto, .go-bonus, .hf-card, .hf-tiers, .hf-top, .hs-comp, .hs-edetail, .hs-eq,
+  .hs-sets, .hs-wc, .hs-wskills, .kseg, .log-entry, .nb-accordion-section, .nb-purchase-card, .pc3,
+  .pc3-auto, .prod-sheet-harvest, .production-dash-card, .qb-other-world, .quest-section-card, .set-card,
+  .vb-card, .vb-cost-list, .vb-site-banner, .warehouse-note, .wh-filter, .wh-grid, .wk-banner, .wk-tile,
+  .achievement-total, .camp-mission-card, .cf-line, .equip-shop-hall-note, .equip-shop-timer, .hs-cmp-legend,
+  .hs-traits, .ksec, .ms-row, .mw-card, .vb-chain-banner, .wk-act, .vb-sheet-effect
+) :is(
+  .construction-popup-delta,
+  .eq-cmp-delta.is-up,
+  .eq-compat-delta.is-up,
+  .eq-compat-extra .is-up,
+  .eqs-row-delta.is-up
+),
+:root :is(
+  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
+  .full-menu-card, .go-auto, .go-bonus, .hf-card, .hf-tiers, .hf-top, .hs-comp, .hs-edetail, .hs-eq,
+  .hs-sets, .hs-wc, .hs-wskills, .kseg, .log-entry, .nb-accordion-section, .nb-purchase-card, .pc3,
+  .pc3-auto, .prod-sheet-harvest, .production-dash-card, .qb-other-world, .quest-section-card, .set-card,
+  .vb-card, .vb-cost-list, .vb-site-banner, .warehouse-note, .wh-filter, .wh-grid, .wk-banner, .wk-tile,
+  .achievement-total, .camp-mission-card, .cf-line, .equip-shop-hall-note, .equip-shop-timer, .hs-cmp-legend,
+  .hs-traits, .ksec, .ms-row, .mw-card, .vb-chain-banner, .wk-act, .vb-sheet-effect
+):is(
+  .construction-popup-delta,
+  .eq-cmp-delta.is-up,
+  .eq-compat-delta.is-up,
+  .eq-compat-extra .is-up,
+  .eqs-row-delta.is-up
+) { color: var(--nb-green-text); }
+:root :is(
+  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
+  .full-menu-card, .go-auto, .go-bonus, .hf-card, .hf-tiers, .hf-top, .hs-comp, .hs-edetail, .hs-eq,
+  .hs-sets, .hs-wc, .hs-wskills, .kseg, .log-entry, .nb-accordion-section, .nb-purchase-card, .pc3,
+  .pc3-auto, .prod-sheet-harvest, .production-dash-card, .qb-other-world, .quest-section-card, .set-card,
+  .vb-card, .vb-cost-list, .vb-site-banner, .warehouse-note, .wh-filter, .wh-grid, .wk-banner, .wk-tile,
+  .achievement-total, .camp-mission-card, .cf-line, .equip-shop-hall-note, .equip-shop-timer, .hs-cmp-legend,
+  .hs-traits, .ksec, .ms-row, .mw-card, .vb-chain-banner, .wk-act, .vb-sheet-effect
+) :is(
+  .hf-meta,
+  .hf-opt small,
+  .pt-hint
+),
+:root :is(
+  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
+  .full-menu-card, .go-auto, .go-bonus, .hf-card, .hf-tiers, .hf-top, .hs-comp, .hs-edetail, .hs-eq,
+  .hs-sets, .hs-wc, .hs-wskills, .kseg, .log-entry, .nb-accordion-section, .nb-purchase-card, .pc3,
+  .pc3-auto, .prod-sheet-harvest, .production-dash-card, .qb-other-world, .quest-section-card, .set-card,
+  .vb-card, .vb-cost-list, .vb-site-banner, .warehouse-note, .wh-filter, .wh-grid, .wk-banner, .wk-tile,
+  .achievement-total, .camp-mission-card, .cf-line, .equip-shop-hall-note, .equip-shop-timer, .hs-cmp-legend,
+  .hs-traits, .ksec, .ms-row, .mw-card, .vb-chain-banner, .wk-act, .vb-sheet-effect
+):is(
+  .hf-meta,
+  .hf-opt small,
+  .pt-hint
+) { color: var(--c-brown-750-soft); }
+:root :is(
+  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
+  .full-menu-card, .go-auto, .go-bonus, .hf-card, .hf-tiers, .hf-top, .hs-comp, .hs-edetail, .hs-eq,
+  .hs-sets, .hs-wc, .hs-wskills, .kseg, .log-entry, .nb-accordion-section, .nb-purchase-card, .pc3,
+  .pc3-auto, .prod-sheet-harvest, .production-dash-card, .qb-other-world, .quest-section-card, .set-card,
+  .vb-card, .vb-cost-list, .vb-site-banner, .warehouse-note, .wh-filter, .wh-grid, .wk-banner, .wk-tile,
+  .achievement-total, .camp-mission-card, .cf-line, .equip-shop-hall-note, .equip-shop-timer, .hs-cmp-legend,
+  .hs-traits, .ksec, .ms-row, .mw-card, .vb-chain-banner, .wk-act, .vb-sheet-effect
+) :is(
+  .ksec small,
+  .kkick,
+  .hc-skills-chevron,
+  .hc-confirm-class,
+  .lc-row-tx .title-slot-heroic-title,
+  .st-group-title,
+  .hf-tiers-h,
+  .hf-rew,
+  .cr-tip b,
+  .cp-behavior-title,
+  .dsheet-marks-title,
+  .dlvl-sum .is-aether,
+  .dgain-ttl,
+  .dgain-ttl strong,
+  .dgain .is-aether,
+  .dsheet-fold b,
+  .dcamp-lbl,
+  .dcamp-opt .dcamp-eff,
+  .dhalt-tag,
+  .dprep-ttl,
+  .eq-compare-title,
+  .fr-also-btn,
+  .ret-link,
+  .exp-sum .is-ready b,
+  .exp-chev,
+  .cf-line.is-risque .cf-line-verdict,
+  .cf-card.is-risque .cf-verdict,
+  .hs-chev,
+  .lab-note,
+  .lab-cost,
+  .wk-group,
+  .wk-tile-op,
+  .wk-bigrec-op,
+  .farm-plot-card.is-locked.is-next .farm-plot-card-profile,
+  .zone-win-rate b,
+  .sp-lock,
+  .sp-rule b,
+  .vb-card-lock,
+  .wh-dd-btn small,
+  .wh-dd-car,
+  .wh-dd-cap,
+  .wh-line-chev,
+  .workshop-completion-next,
+  .news-v
+),
+:root :is(
+  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
+  .full-menu-card, .go-auto, .go-bonus, .hf-card, .hf-tiers, .hf-top, .hs-comp, .hs-edetail, .hs-eq,
+  .hs-sets, .hs-wc, .hs-wskills, .kseg, .log-entry, .nb-accordion-section, .nb-purchase-card, .pc3,
+  .pc3-auto, .prod-sheet-harvest, .production-dash-card, .qb-other-world, .quest-section-card, .set-card,
+  .vb-card, .vb-cost-list, .vb-site-banner, .warehouse-note, .wh-filter, .wh-grid, .wk-banner, .wk-tile,
+  .achievement-total, .camp-mission-card, .cf-line, .equip-shop-hall-note, .equip-shop-timer, .hs-cmp-legend,
+  .hs-traits, .ksec, .ms-row, .mw-card, .vb-chain-banner, .wk-act, .vb-sheet-effect
+):is(
+  .ksec small,
+  .kkick,
+  .hc-skills-chevron,
+  .hc-confirm-class,
+  .lc-row-tx .title-slot-heroic-title,
+  .st-group-title,
+  .hf-tiers-h,
+  .hf-rew,
+  .cr-tip b,
+  .cp-behavior-title,
+  .dsheet-marks-title,
+  .dlvl-sum .is-aether,
+  .dgain-ttl,
+  .dgain-ttl strong,
+  .dgain .is-aether,
+  .dsheet-fold b,
+  .dcamp-lbl,
+  .dcamp-opt .dcamp-eff,
+  .dhalt-tag,
+  .dprep-ttl,
+  .eq-compare-title,
+  .fr-also-btn,
+  .ret-link,
+  .exp-sum .is-ready b,
+  .exp-chev,
+  .cf-line.is-risque .cf-line-verdict,
+  .cf-card.is-risque .cf-verdict,
+  .hs-chev,
+  .lab-note,
+  .lab-cost,
+  .wk-group,
+  .wk-tile-op,
+  .wk-bigrec-op,
+  .farm-plot-card.is-locked.is-next .farm-plot-card-profile,
+  .zone-win-rate b,
+  .sp-lock,
+  .sp-rule b,
+  .vb-card-lock,
+  .wh-dd-btn small,
+  .wh-dd-car,
+  .wh-dd-cap,
+  .wh-line-chev,
+  .workshop-completion-next,
+  .news-v
+) { color: var(--c-brown-750-3); }
+
+:root :is(
+  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
+  .full-menu-card, .go-auto, .go-bonus, .hf-card, .hf-tiers, .hf-top, .hs-comp, .hs-edetail, .hs-eq,
+  .hs-sets, .hs-wc, .hs-wskills, .kseg, .log-entry, .nb-accordion-section, .nb-purchase-card, .pc3,
+  .pc3-auto, .prod-sheet-harvest, .production-dash-card, .qb-other-world, .quest-section-card, .set-card,
+  .vb-card, .vb-cost-list, .vb-site-banner, .warehouse-note, .wh-filter, .wh-grid, .wk-banner, .wk-tile,
+  .achievement-total, .camp-mission-card, .cf-line, .equip-shop-hall-note, .equip-shop-timer, .hs-cmp-legend,
+  .hs-traits, .ksec, .ms-row, .mw-card, .vb-chain-banner, .wk-act, .vb-sheet-effect
+) { --nb-ink-dim: var(--c-brown-750-soft) !important; } /* sous-titres à 72 % d'opacité ailleurs */
