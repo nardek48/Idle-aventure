@@ -8058,6 +8058,7 @@ I18n.register("en", {
   "Forêt : le Village s'ouvre quand « La Meute affamée » est réussie, plus dès qu'on l'accepte. La Scierie, la Mine et les Champs ne s'ouvrent plus sans leur expédition.": "Forest: the Village opens when “The Hungry Pack” is completed, no longer as soon as you accept it. The Sawmill, the Mine and the Fields no longer open without their expedition.",
   "« Comme la dernière fois » ne reprend plus la besace d'une autre partie. Plusieurs aides des tutoriels sont corrigées (carte, Grimoire, compagnons, Terrain, petite aventure).": "“Same as last time” no longer brings back the satchel from another save. Several tutorial tips are fixed (map, Grimoire, companions, Training Ground, short adventure).",
   // v3.615.1 : correctif de l'écran Équipé
+  "La Boutique d'équipement reste à côté du Sac toute la partie, dans Héros › Équipement ; la Halle marchande la propose aussi.": "The equipment Shop now stays next to the Bag all game long, in Hero › Equipment; the Market Hall offers it too.",
   "Correctif : sur l'écran Équipé, on peut de nouveau choisir n'importe quel emplacement après en avoir touché un.": "Fix: on the Equipped screen, you can choose any slot again after tapping one.",
   // v3.615.0 : niveau d'objet (ilvl)
   "Niveau d'objet {n}": "Item level {n}",

@@ -101,6 +101,7 @@ window.buildEquipShopHTML = buildEquipShopHTML;
    hors de renderPanel() : après un achat ou un renouvellement, on la redessine. */
 function refreshHallShopSheet() {
   if (typeof openVillageBuildingId !== "undefined" && openVillageBuildingId === "hall" && typeof openVillageBuildingSheet === "function") openVillageBuildingSheet("hall");
+  else if (typeof renderPanel === "function") renderPanel(); // v3.615.2 : la Boutique de Héros › Équipement se redessine aussi
 }
 function equipShopBuy(uid) { EquipShopManager.buy(uid); refreshHallShopSheet(); }
 function equipShopRefresh() { EquipShopManager.manualRefresh(); refreshHallShopSheet(); }

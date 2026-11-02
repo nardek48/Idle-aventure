@@ -34,7 +34,7 @@ Audit de la Forêt demandé par Seb (02/11) : quêtes, tutoriels, difficulté, b
 - La Meute reste la marche la plus haute du début : un robot qui part avec tous ses PV et des potions descend à environ 30 % de PV en Chevalier et en Mage. Aucun chiffre changé.
 
 ## Contrôles
-- round-harness : 5 818 OK, 0 échec, stable sur 3 passes. Nouvelle section [412].
+- round-harness : 5 820 OK, 0 échec, stable sur 3 passes (après fusion de la v3.615.2). Nouvelle section [413].
   - [66b] et [201] mis à jour : nouvelles règles.
   - [UX-PROD] : la mise en place posait les drapeaux d'ouverture sur `game` au lieu de `game.explorationProgression`, et ne fonctionnait que grâce au bug du point 1.
 - boot : 4 OK. Création du héros : 44 OK. Parcours : 142 OK.

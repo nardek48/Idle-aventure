@@ -13647,7 +13647,7 @@ console.log("\n[196] v3.424.0 — Chantier Héros, H-1 : rail en haut, quatre on
     ok(run("buildHerosHTML()").indexOf("equip-shop-grid") !== -1 && !run("isEquipShopAtHall()"), "Halle non bâtie : la Boutique reste dans Héros › Équipement");
     run("game.village.buildings.hall.level = 2; activeEquipSubTab = 'shop';");
     var eq = run("buildHerosHTML()");
-    ok(eq.indexOf("equip-shop-grid") === -1 && eq.indexOf("setEquipSubTab('shop')") === -1 && eq.indexOf("heros-shop-hint") === -1, "Halle bâtie : plus de Boutique dans Héros, ni de renvoi (v3.424.1)");
+    ok(eq.indexOf("equip-shop-grid") !== -1 && eq.indexOf("setEquipSubTab('shop')") !== -1 && eq.indexOf("heros-shop-hint") === -1, "Halle bâtie : la Boutique reste dans Héros › Équipement, à côté du Sac (v3.615.2, option A de Seb)");
     run("game.gold = 1e6; openVillageBuildingId = 'hall'; hallSheetSegment = 'shop';");
     var hall = run("buildVillageBuildingSheetHTML('hall')");
     ok(hall.indexOf("setHallSheetSegment('shop')") !== -1 && hall.indexOf("equip-shop-grid") !== -1 && hall.indexOf("equipShopRefresh()") !== -1, "feuille de la Halle : segment Échoppe avec la vitrine");
@@ -21269,7 +21269,19 @@ console.log("\n[411] v3.615.1 — Écran Équipé : chaque emplacement se choisi
   } catch (err) { ok(false, "[411] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
-console.log("\n[412] v3.616.0 — Audit de la Forêt : bâtiments offerts, Village à la réussite de la Meute, besace d'une autre partie, tutoriels");
+console.log("\n[412] v3.615.2 — La Boutique d'équipement reste à côté du Sac (option A de Seb)");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; VillageBuildingManager.ensure(); EquipmentManager.recalcStats(); setHerosSubTabSilent('equip');");
+    ok(run("buildHerosHTML()").indexOf("setEquipSubTab('shop')") !== -1, "sans Halle : Équipé · Sac · Boutique");
+    run("game.village.buildings.hall.level = 3; activeEquipSubTab = 'shop';");
+    var h = run("buildHerosHTML()");
+    ok(h.indexOf("setEquipSubTab('shop')") !== -1 && h.indexOf("equip-shop-grid") !== -1, "Halle bâtie : l'onglet Boutique reste et montre l'échoppe");
+    run("activeEquipSubTab = 'equipment';");
+  } catch (err) { ok(false, "[412] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[413] v3.616.0 — Audit de la Forêt : bâtiments offerts, Village à la réussite de la Meute, besace d'une autre partie, tutoriels");
 (function () {
   try {
     var EP = function () { return game.explorationProgression; };
@@ -21325,7 +21337,7 @@ console.log("\n[412] v3.616.0 — Audit de la Forêt : bâtiments offerts, Villa
     var src = require("fs").readFileSync(ROOT + "/js/data/story-quests.js", "utf8") + require("fs").readFileSync(ROOT + "/js/ui/tutorial-view.js", "utf8");
     ok(["reprend un secteur libéré voisin", "à tout moment depuis l'écran Combat", "Tu choisis pour chacun : Auto", "il joue son action après la tienne", "Tes caractéristiques butent à 20", "ouvre 10 niveaux de plus sur CHACUNE", "seules les rations de la besace, les sources et le feu de camp"].every(function (t) { return src.indexOf(t) === -1; }), "les 7 phrases fausses ont disparu");
     ok(src.indexOf("les trois autres à 14") !== -1 && src.indexOf("au départ de chaque sortie, ou au Campement") !== -1, "plafonds 20/14 et choix du mode au départ : textes présents");
-  } catch (err) { ok(false, "[412] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  } catch (err) { ok(false, "[413] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
 Promise.all(ATTENTES).then(function () {
