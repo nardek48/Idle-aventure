@@ -4271,9 +4271,10 @@ console.log("\n[29b] v3.220.0 \u2014 \u00c9chelle de monde sur l'\u00e9quipement
   /* --- La courbe monte et reste loin de celle des PV -------------------- */
   var croissante = true;
   for (var i = 1; i < g.EQUIP_WORLD_SCALE.length; i++) {
-    if (g.EQUIP_WORLD_SCALE[i] <= g.EQUIP_WORLD_SCALE[i - 1]) croissante = false;
+    // v3.625.1 (Seb) : la Tour reprend l'échelle de la Montagne (×6) ; le saut vient du Légendaire
+    if (g.EQUIP_WORLD_SCALE[i] < g.EQUIP_WORLD_SCALE[i - 1] || (i < 5 && g.EQUIP_WORLD_SCALE[i] === g.EQUIP_WORLD_SCALE[i - 1])) croissante = false;
   }
-  ok(croissante, "la courbe monte \u00e0 chaque monde");
+  ok(croissante, "la courbe monte \u00e0 chaque monde (la Tour reste \u00e0 \u00d76, comme la Montagne)");
   ok(g.EQUIP_WORLD_SCALE[0] === 1, "le monde de d\u00e9part n'est pas touch\u00e9 : rien ne change en For\u00eat");
   ok(g.EQUIP_WORLD_SCALE[5] < 214,
     "elle reste tr\u00e8s en dessous de la courbe des PV ennemis (\u00d7214) : elle compl\u00e8te les stats, elle ne les remplace pas");
@@ -4284,7 +4285,7 @@ console.log("\n[29b] v3.220.0 \u2014 \u00c9chelle de monde sur l'\u00e9quipement
   ok(forest.worldIndex === 0 && tour.worldIndex === 5, "l'objet est estampill\u00e9 de son monde d'origine");
   var r = g.EQUIPMENT_SLOT_CONFIG.weapon.ranges.common;
   ok(forest.value >= r[0] && forest.value <= r[1], "en For\u00eat, la valeur reste dans la fourchette d'origine");
-  ok(tour.value > r[1] * 5, "\u00e0 la Tour, la m\u00eame rarit\u00e9 vaut bien davantage");
+  ok(tour.value >= r[0] * 6 - 0.5, "\u00e0 la Tour, la m\u00eame rarit\u00e9 vaut bien davantage (\u00d76, v3.625.1)");
 
   /* --- Une armure ne change PAS d'un monde \u00e0 l'autre ------------------ */
   var armF = g.generateEquipmentItem("armor", "legendary", 0);
@@ -15021,7 +15022,7 @@ console.log("\n[222] v3.447.0 — Initiative : jet, ordre, file de tours, Garde,
     game = freshCombat("knight"); giveWeapon();
     var hero = g.CombatActors.heroActor(), tot = CE.getTotalCelerity();
     g.WorldManager.worldIndex = 5;
-    ok(Math.abs(I.celerityOf(hero) - tot / 18) < 1e-9, "héros : célérité ramenée au monde (Tour ÷ 18)");
+    ok(Math.abs(I.celerityOf(hero) - tot / 6) < 1e-9, "héros : célérité ramenée au monde (Tour ÷ 6, v3.625.1)");
     g.WorldManager.worldIndex = 0;
     ok(I.hasAdvantage(hero) === false && !!I.rollOf(hero), "Chevalier : un dé, jet posé à l'ouverture du combat");
     game = freshCombat("ranger");
@@ -21555,6 +21556,7 @@ console.log("\n[420] v3.625.0 — Tour, lot T-0 : le socle");
     ok(c13.verre_faille === 1 && c13.obsidienne_taillee === 1 && c11.obsidienne_taillee === 1 && !c11.verre_faille, "reforge 13 : 1 Verre de faille (+1 Obsidienne) ; reforge 11 : Obsidienne seule");
     ok(g.HERO_SCALING_REFS.joueurMontagne && g.WORLD_HERO_SCALING.refByWorld.tower[0] === "joueurMontagne", "ajustement au héros : la Tour se mesure au héros de fin de Montagne");
     ok(g.DUNGEONS.filter(function (d) { return d.id === 6; })[0].locked === true, "Sommet interdit : reste fermé");
+    ok(g.EQUIP_WORLD_SCALE[5] === 6, "échelle d'équipement de la Tour : ×6, comme la Montagne (décision de Seb, v3.625.1)");
   } catch (err) { ok(false, "[420] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
