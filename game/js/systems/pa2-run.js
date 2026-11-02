@@ -106,6 +106,8 @@ var Pa2Run = {
     if (!game.expeditionChest.unlocked || typeof game.expeditionChest.unlocked !== "object") game.expeditionChest.unlocked = {};
     // v3.384.0 (PA2-2, D3) : trophées, dans le coffre déjà sauvegardé en entier (aucune ligne de save-system).
     if (!game.expeditionChest.stats || typeof game.expeditionChest.stats !== "object") game.expeditionChest.stats = { runs: 0, byWorld: {}, bestPacts: 0 };
+    // v3.616.0 : besace du dernier départ (« Comme la dernière fois »), par monde ou par parcours — propre à la partie
+    if (!game.expeditionChest.lastBag || typeof game.expeditionChest.lastBag !== "object") game.expeditionChest.lastBag = {};
     return game.expeditionChest;
   },
   // Trophées d'un monde : réussites et destinations atteintes (base des futurs Hauts faits, Q12).

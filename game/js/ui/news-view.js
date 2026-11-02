@@ -10,6 +10,8 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.616.0", "menu_icons/village_menu", _t("Forêt : le Village s\'ouvre quand « La Meute affamée » est réussie, plus dès qu\'on l\'accepte. La Scierie, la Mine et les Champs ne s\'ouvrent plus sans leur expédition.")],
+    ["3.616.0", "menu_icons/quests_menu", _t("« Comme la dernière fois » ne reprend plus la besace d\'une autre partie. Plusieurs aides des tutoriels sont corrigées (carte, Grimoire, compagnons, Terrain, petite aventure).")],
     ["3.615.2", "menu_icons/heroes_menu", _t("La Boutique d\'équipement reste à côté du Sac toute la partie, dans Héros › Équipement ; la Halle marchande la propose aussi.")],
     ["3.615.1", "menu_icons/heroes_menu", _t("Correctif : sur l\'écran Équipé, on peut de nouveau choisir n\'importe quel emplacement après en avoir touché un.")],
     ["3.615.0", "menu_icons/heroes_menu", _t("Chaque pièce d\'équipement a maintenant un niveau d\'objet (ilvl) : en coin sur son icône, et détaillé dans sa fiche. Environ 10 par monde, plus selon la rareté.")],
