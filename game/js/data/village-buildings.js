@@ -136,9 +136,9 @@ var VILLAGE_BUILDINGS = {
     maxLevel: 18, // H1 (chantier du héros) : 14 à 18 en Obsidienne taillée, 160 à 200
     implemented: true,
     lockLabel: "Atteins 20 dans une caractéristique",
-    desc: "Chaque niveau ouvre 10 niveaux d'entraînement supplémentaires sur chacune des cinq caractéristiques. L'entraînement lui-même se paie en or, dans Héros → Entraînement.",
+    desc: "Chaque niveau ouvre 10 niveaux d'entraînement de plus pour ta caractéristique de classe et l'Endurance, environ 7 pour les trois autres. L'entraînement lui-même se paie en or, dans Héros → Entraînement.", // v3.616.1 : plafonds de la v3.614.0 (secondaires à 70 %)
     /* La porte d'entrée du Terrain n'est pas une quête du tableau : c'est le
-       mur lui-même. Quand une caractéristique bute à 10, le bâtiment devient
+       mur lui-même. Quand une caractéristique bute à 20, le bâtiment devient
        constructible — le joueur découvre le besoin avant l'objet. */
     unlockCheck: function () {
       var ids = window.HEROS_TRAINING_UPGRADE_IDS

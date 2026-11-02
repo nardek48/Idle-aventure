@@ -2487,7 +2487,7 @@ I18n.register("en", {
   "Entrepôt agrandi": "Expanded Warehouse",
   "Palissade": "Palisade",
   "Le maître d'œuvre du village. Son niveau ouvre les chantiers des autres bâtiments, et chaque amélioration fait mieux payer les contrats de la Taverne.": "The village's master builder. Its level opens building work on the other buildings, and each upgrade makes the Tavern's contracts pay better.",
-  "Chaque niveau ouvre 10 niveaux d'entraînement supplémentaires sur chacune des cinq caractéristiques. L'entraînement lui-même se paie en or, dans Héros → Entraînement.": "Each level opens 10 more training levels on each of the five attributes. Training itself is paid in gold, in Hero → Training.",
+  "Chaque niveau ouvre 10 niveaux d'entraînement de plus pour ta caractéristique de classe et l'Endurance, environ 7 pour les trois autres. L'entraînement lui-même se paie en or, dans Héros → Entraînement.": "Each level opens 10 more training levels for your class stat and Endurance, about 7 for the other three. Training itself is paid in gold, in Hero → Training.",
   "Reforge une pièce d'équipement. Le niveau appartient à l'emplacement, pas à l'objet : changer de pièce ne fait rien perdre.": "Reforges a piece of equipment. The level belongs to the slot, not the item: changing items loses nothing.",
   "Prépare les potions avec des ressources plutôt qu'avec de l'or. Les recettes se gagnent en livrant ses commandes ; chaque niveau permet plus de préparations par jour.": "Brews potions with resources rather than gold. Recipes are earned by delivering its orders; each level allows more brews per day.",
   "Relance la valeur d'un bonus d'une pièce équipée, ou change sa nature. La pièce ne peut jamais empirer.": "Rerolls the value of a bonus on an equipped item, or changes its nature. The item can never get worse.",
@@ -8052,6 +8052,8 @@ I18n.register("en", {
   "Recevoir": "Receive",
   "La Palissade freine {p} % d'échecs de plus sur les cartes vivantes, le temps du compte.": "The Palisade stops {p}% more failures on the living maps, while the count holds.",
   "Et ce matin ?": "And this morning?",
+  // v3.616.1 : description du Terrain d'entraînement
+  "Correctif : la description du Terrain d'entraînement donne les bons plafonds (+10 pour la caractéristique de classe et l'Endurance, environ +7 pour les autres).": "Fix: the Training Ground description gives the right caps (+10 for your class stat and Endurance, about +7 for the others).",
   // v3.616.0 : audit de la Forêt (Village à la réussite de la Meute, bâtiments offerts, besace d'une autre partie, tutoriels)
   "Débloqué": "Unlocked",
   "Débloque à la réussite : {x}": "Unlocks on success: {x}",

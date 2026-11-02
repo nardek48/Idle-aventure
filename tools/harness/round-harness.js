@@ -21340,6 +21340,16 @@ console.log("\n[413] v3.616.0 — Audit de la Forêt : bâtiments offerts, Villa
   } catch (err) { ok(false, "[413] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[414] v3.616.1 — Description du Terrain d'entraînement (plafonds de la v3.614.0)");
+(function () {
+  try {
+    var d = g.VILLAGE_BUILDINGS.training.desc;
+    ok(d.indexOf("chacune des cinq") === -1 && /10 niveaux .*caractéristique de classe et l'Endurance, environ 7 pour les trois autres/.test(d), "la description dit +10 (classe, Endurance) et environ +7 (les trois autres)");
+    var cap = function (lvl) { return g.TRAINING_BASE_CAP + 10 * lvl; }, sec = function (lvl) { return Math.floor(cap(lvl) * g.TRAINING_SECONDARY_SHARE); };
+    ok(cap(1) - cap(0) === 10 && sec(1) - sec(0) === 7 && sec(2) - sec(1) === 7, "le moteur donne bien +10 et +7 par niveau du Terrain (" + sec(0) + " → " + sec(1) + " → " + sec(2) + ")");
+  } catch (err) { ok(false, "[414] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");
