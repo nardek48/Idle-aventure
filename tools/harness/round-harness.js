@@ -21460,6 +21460,37 @@ console.log("\n[416] v3.621.1 — forest_13 : des vagues franchies sous Marque, 
   } catch (err) { ok(false, "[416] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[417] v3.622.0 — La nuit dit vrai dans la Crypte et la Montagne");
+(function () {
+  var LM = g.LivingMapManager, W = g.WorldDays, saveOpen417 = LM.isMapOpen;
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.unlockedTabs.village = true;");
+    LM.isMapOpen = function () { return true; }; // cartes ouvertes sans rejouer l'Histoire
+    var wi = function (id) { return run("WORLDS.findIndex(function(w){ return w.id === '" + id + "'; })"); };
+    var nuit = function () { W.onSortieEnd("scene"); W.onSortieEnd("scene"); return W.onSortieEnd("scene"); };
+    LM.ensureDefaults();
+    var mm = LM.getMapForWorld("mountain"), s0 = mm.sectors[1], s1 = mm.sectors[2], key = W.key();
+    LM.getState(mm.id, s0.id).hostileDay = key;
+    LM.getState(mm.id, s1.id).heat = 2; LM.getState(mm.id, s1.id).heatDay = key;
+    run("WorldManager.worldIndex = " + wi("mountain") + ";");
+    var n = nuit(), txt = W.nightText(n), nom0 = String(g._td(s0.name)), nom1 = String(g._td(s1.name));
+    ok(n.kind === "repos" && txt.indexOf("Cette nuit, la lave a refroidi : " + nom0.charAt(0).toLowerCase() + nom0.slice(1) + ".") === 0, "Montagne : la coulée retombe et l'écran le dit (« " + txt + " »)");
+    ok(txt.indexOf(" La chaleur aussi est retombée : " + nom1.charAt(0).toLowerCase()) > 0 && txt.split("Cette nuit").length === 2 && LM.heatOf(mm.id, s1.id) === 1 && !LM.isHostile(mm.id, s0.id), "Montagne : la chaleur baisse d'un cran, dite dans la même phrase sans second « Cette nuit » ; plus de lave");
+    n = nuit(); txt = W.nightText(n);
+    ok(n.kind === "repos" && /^Cette nuit, la chaleur est retombée : /.test(txt) && LM.heatOf(mm.id, s1.id) === 0, "nuit suivante : la dernière chaleur retombe");
+    n = nuit();
+    ok(n.kind === "calme" && W.nightText(n) === "Rien n'a bougé autour du camp.", "plus rien de chaud ni d'hostile : « Rien n'a bougé » est vrai");
+    var cm = LM.getMapForWorld("crypt"); key = W.key();
+    cm.sectors.slice(1, 4).forEach(function (d) { LM.getState(cm.id, d.id).hostileDay = key; });
+    run("WorldManager.worldIndex = " + wi("crypt") + ";");
+    n = nuit(); txt = W.nightText(n);
+    ok(n.kind === "repos" && txt === "Cette nuit, les gisants se sont rendormis dans 3 couloirs.", "Crypte : trois couloirs réveillés se rendorment (« " + txt + " »)");
+    var en = require("fs").readFileSync(require("path").join(ROOT, "js/lang/en.js"), "utf8");
+    ok(["Cette nuit, la lave a refroidi : {x}.", "Cette nuit, les gisants se sont rendormis dans {n} couloirs.", "Cette nuit, la chaleur est retombée sur {n} secteurs.", "{a} et {b}"].every(function (k) { return en.indexOf('"' + k + '"') >= 0; }), "phrases de la nuit traduites en anglais");
+  } catch (err) { ok(false, "[417] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  LM.isMapOpen = saveOpen417; run("WorldManager.worldIndex = 0;");
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

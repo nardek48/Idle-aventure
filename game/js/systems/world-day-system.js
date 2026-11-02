@@ -31,13 +31,16 @@ var WorldDays = {
   },
 
   /* La nuit : jour +1, puis la carte du monde où vit le héros réagit selon sa règle.
-     Chantier (Ruines) : la ville rebâtit un quartier ; noRegress (Crypte, Montagne) : rien n'est repris ;
+     Chantier (Ruines) : la ville rebâtit un quartier ; noRegress (Crypte, Montagne) : rien n'est repris, le réveil et la chaleur retombent ;
      sinon (Forêt, Désert) : une chance de reprendre un secteur libéré lointain non tenu. */
   nightfall: function () {
     var w = this.ensure(), LM = window.LivingMapManager;
-    w.day += 1; w.done = 0; w.dark = true; w.pending = true;
     var world = window.WORLDS && window.WorldManager ? WORLDS[Number(WorldManager.worldIndex || 0)] : null;
-    var map = LM && world ? LM.getMapForWorld(world.id) : null, night = { day: w.day, world: world ? world.id : null, mapId: map ? map.id : null, sectorId: null, braked: false, kind: "calme" };
+    var map = LM && world ? LM.getMapForWorld(world.id) : null;
+    var rest = map && map.noRegress ? this._restBefore(map) : null; // v3.622.0 : relevé avant le changement de jour
+    w.day += 1; w.done = 0; w.dark = true; w.pending = true;
+    var night = { day: w.day, world: world ? world.id : null, mapId: map ? map.id : null, sectorId: null, braked: false, kind: "calme" };
+    if (rest && (rest.calmed.length || rest.cooled.length)) { night.kind = "repos"; night.calmed = rest.calmed; night.cooled = rest.cooled; }
     if (map) {
       if (map.chantier) {
         var c = LM.getChantier(map.id);
@@ -56,6 +59,41 @@ var WorldDays = {
     if (typeof addLog === "function") addLog("🌙 " + this.nightText(night), "event");
     if (typeof saveGame === "function") saveGame();
     return night;
+  },
+
+  /* v3.622.0 — Crypte et Montagne : secteurs hostiles (réveil, coulée) et veines chaudes, relevés avant la nuit.
+     La nuit les fait retomber d'eux-mêmes (hostileDay et heatDay suivent le jour) : l'écran le dit. */
+  _restBefore: function (map) {
+    var LM = LivingMapManager, out = { calmed: [], cooled: [] };
+    map.sectors.forEach(function (d) {
+      if (LM.isHostile(map.id, d.id)) out.calmed.push(d.id);
+      if (map.veins && LM.heatOf(map.id, d.id) > 0) out.cooled.push(d.id);
+    });
+    return out;
+  },
+
+  // « la nef et le crâne » (1 ou 2 noms, initiale en minuscule) ; null au-delà, la phrase donne alors le nombre.
+  _names: function (mapId, ids) {
+    var LM = LivingMapManager, n = ids.map(function (id) { var d = LM.getSectorDef(mapId, id); var x = d ? String(_td(d.name)) : ""; return x.charAt(0).toLowerCase() + x.slice(1); }).filter(Boolean);
+    if (!n.length || n.length > 2) return null;
+    return n.length === 1 ? n[0] : _t("{a} et {b}", { a: n[0], b: n[1] });
+  },
+
+  _restText: function (n) {
+    var LM = window.LivingMapManager, map = LM ? LM.getMap(n.mapId) : null, out = [], self = this;
+    if (!map) return "";
+    var calmed = n.calmed || [], cooled = n.cooled || [];
+    if (calmed.length) {
+      var x = self._names(n.mapId, calmed);
+      if (map.veins) out.push(x ? _t("Cette nuit, la lave a refroidi : {x}.", { x: x }) : _t("Cette nuit, la lave a refroidi sur {n} secteurs.", { n: calmed.length }));
+      else out.push(x ? _t("Cette nuit, les gisants se sont rendormis : {x}.", { x: x }) : _t("Cette nuit, les gisants se sont rendormis dans {n} couloirs.", { n: calmed.length }));
+    }
+    if (cooled.length) {
+      var y = self._names(n.mapId, cooled);
+      if (out.length) out.push(y ? _t("La chaleur aussi est retombée : {x}.", { x: y }) : _t("La chaleur aussi est retombée sur {n} secteurs.", { n: cooled.length })); // pas deux « Cette nuit »
+      else out.push(y ? _t("Cette nuit, la chaleur est retombée : {x}.", { x: y }) : _t("Cette nuit, la chaleur est retombée sur {n} secteurs.", { n: cooled.length }));
+    }
+    return out.join(" ");
   },
 
   // Un secteur libéré de l'anneau le plus lointain (3, puis 2), non tenu par la Palissade, pas l'élite rejouable, pas celui qu'on vient de jouer.
@@ -78,6 +116,7 @@ var WorldDays = {
     if (!n || !LM || !n.mapId) return _t("Rien n'a bougé autour du camp.");
     var d = n.sectorId ? LM.getSectorDef(n.mapId, n.sectorId) : null;
     if (n.kind === "reprise" && d) return LM.buildRegressionMessage(n.mapId, n.sectorId);
+    if (n.kind === "repos") { var r = this._restText(n); if (r) return r; }
     if (n.kind === "chantier" && d) return _t("Cette nuit, la ville a rebâti {x}.", { x: _td(d.name) });
     if (n.braked) return _t("La Palissade a tenu : rien n'a été repris.");
     return _t("Rien n'a bougé autour du camp.");
