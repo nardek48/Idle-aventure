@@ -546,7 +546,7 @@ var LIVING_MAPS = {
         heldEffect: null,
         lore: "Des gisants debout contre les murs, en rang, les yeux fermés. Personne ne lui a montré qu'on les couche." },
       { id: "etage_veines", name: "La veine du dedans", x: 70, y: 48, ring: 2, neighbors: ["etage_rue", "etage_gisants", "palier_sans_murs"],
-        content: { type: "expedition", templateId: "petite_aventure_tour", pools: { obstacle: ["paroi_coupee", "pierres_plates"] } },
+        content: { type: "elite", eliteId: "gardien_qui_repete", repeatable: true }, // v3.628.0 (T-2b) : l'élite des étages
         heldEffect: null,
         lore: "Des murs faits de veines bleues. Elles ne battent pas : elles écoutent." },
       /* Anneau 3 — plus haut */

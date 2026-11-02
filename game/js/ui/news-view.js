@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.628.0", "menu_icons/map_menu", _t("La Tour, fin de l\'acte II : l\'étage des gisants, le Gardien qui répète, le palier Légendaire et les feuillets du Veilleur au Codex.")],
     ["3.627.0", "menu_icons/map_menu", _t("La Tour, acte II : la carte des étages, l\'escalier (la Petite aventure de la Tour) et le Marché de la Tour.")],
     ["3.626.0", "menu_icons/quests_menu", _t("Chapitre VI : la Tour s\'ouvre à la fin de la Montagne. Acte I, « Le pied de la Tour » : la route du nord, le dernier camp, et celui qui attend.")],
     ["3.624.2", "menu_icons/quests_menu", _t("Les ouvertures du Désert, des Ruines, de la Crypte et de la Montagne ont leurs illustrations.")],
