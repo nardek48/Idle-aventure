@@ -12,16 +12,33 @@ var PrologueView = {
   idx: 0,
   fin: null,
   timers: [],
+  deck: null, // v3.623.0 : planches jouées (prologue ou ouverture de chapitre), voir deckPrologue / deckChapitre
 
   /* Lance un temps ("avant" ou "apres") ; onEnd est appelé à la fin ou sur « Passer ». */
   play: function (temps, onEnd) {
     var root = PrologueView.root();
     if (!root || !PROLOGUE_TEMPS[temps]) { if (onEnd) onEnd(); return; }
+    PrologueView.start(PrologueView.deckPrologue(temps), temps, onEnd);
+  },
+
+  /* v3.623.0 : ouverture d'un chapitre (data/chapter-openings.js), trois planches, même lecture que le prologue. */
+  playChapter: function (id, onEnd) {
+    var c = window.CHAPTER_OPENINGS && CHAPTER_OPENINGS[id];
+    if (!c || !PrologueView.root()) { if (onEnd) onEnd(); return; }
+    PrologueView.start({ planches: c.planches, dir: "images/Chapitres/", range: [0, c.planches.length], label: _td(c.num), eyebrow: _td(c.num), teinte: c.teinte, cls: "is-chapitre" }, "chapitre", onEnd);
+  },
+
+  deckPrologue: function (temps) {
+    return { planches: PROLOGUE_PLANCHES, dir: "images/Prologue/", range: PROLOGUE_TEMPS[temps], label: _t("Prologue"), eyebrow: "", teinte: null, cls: "" };
+  },
+
+  start: function (deck, temps, onEnd) {
     PrologueView.active = true;
     PrologueView.temps = temps;
+    PrologueView.deck = deck;
     PrologueView.fin = onEnd || null;
     var a = document.activeElement; if (a && a.blur) a.blur(); // v3.573.0 : pas de clavier ouvert sous les planches
-    PrologueView.show(PROLOGUE_TEMPS[temps][0]);
+    PrologueView.show(deck.range[0]);
   },
 
   /* Calque plein écran créé à la demande, au-dessus de la création du héros (z-index 3001). */
@@ -32,27 +49,34 @@ var PrologueView = {
     return el;
   },
 
-  src: function (i, wide) { return "images/Prologue/" + PROLOGUE_PLANCHES[i].img + (wide ? "-wide" : "") + ".webp"; },
+  src: function (i, wide) { var d = PrologueView.deck || PrologueView.deckPrologue("tout"); return d.dir + d.planches[i].img + (wide ? "-wide" : "") + ".webp"; },
 
   show: function (i) {
     PrologueView.clear();
     PrologueView.idx = i;
-    var p = PROLOGUE_PLANCHES[i], range = PROLOGUE_TEMPS[PrologueView.temps], dots = "";
+    var d = PrologueView.deck, p = d.planches[i], range = d.range, dots = "";
     for (var k = range[0]; k < range[1]; k++) dots += '<i class="' + (k === i ? "on" : "") + '"></i>';
     var lignes = p.lignes.map(function (l, n) {
       return '<p class="' + (p.nom === n ? "is-nom" : "") + '">' + prologueLetters(_td(l)) + '</p>';
     }).join("");
-    PrologueView.root().innerHTML = '<div class="prologue" role="dialog" aria-modal="true" aria-label="' + esc(_t("Prologue")) + '">'
+    // v3.623.0 : teinte du chapitre en variables (fond animé si l'image manque), chapitre rappelé sur la première planche
+    var tv = d.teinte ? ' style="--pro-a:' + d.teinte[0] + ';--pro-b:' + d.teinte[1] + ';--pro-c:' + d.teinte[2] + '"' : "";
+    PrologueView.root().innerHTML = '<div class="prologue ' + d.cls + '" role="dialog" aria-modal="true" aria-label="' + esc(d.label) + '"' + tv + '>'
       + '<div class="prologue-scene" onclick="PrologueView.next()">'
       + '<picture><source media="(min-aspect-ratio: 1/1)" srcset="' + PrologueView.src(i, true) + '">'
       + '<img id="prologue-img" src="' + PrologueView.src(i, false) + '" alt=""></picture>'
-      + '<div class="prologue-veil"></div><div class="prologue-text" aria-live="polite">' + lignes + '</div></div>'
+      + '<div class="prologue-veil"></div>' + (d.eyebrow && i === range[0] ? '<div class="prologue-eyebrow">' + esc(d.eyebrow) + '</div>' : '')
+      + '<div class="prologue-text" aria-live="polite">' + lignes + '</div></div>'
       + '<button class="prologue-skip" type="button" onclick="PrologueView.skip()">' + esc(_t("Passer ▸")) + '</button>'
       + '<div class="prologue-foot"><div class="prologue-dots">' + dots + '</div>'
       + '<span class="prologue-hint" id="prologue-hint">' + esc(_t("Toucher pour continuer")) + '</span></div></div>';
     var img = document.getElementById("prologue-img");
     var on = function () { img.classList.add("on"); };
-    if (img.complete) requestAnimationFrame(on); else img.onload = img.onerror = on;
+    // v3.623.0 : image absente (pas encore livrée) -> fond animé de la teinte ; le chemin reste celui attendu
+    var vide = function () { var sc = img.closest(".prologue-scene"); if (sc) sc.classList.add("is-vide"); img.classList.add("is-absente"); };
+    if (img.complete && img.naturalWidth) requestAnimationFrame(on);
+    else if (img.complete) vide();
+    else { img.onload = on; img.onerror = vide; }
     PrologueView.type();
     if (i + 1 < range[1] && typeof Image !== "undefined") { var pre = new Image(); pre.src = PrologueView.src(i + 1, window.matchMedia && matchMedia("(min-aspect-ratio: 1/1)").matches); }
   },
@@ -83,7 +107,7 @@ var PrologueView = {
   next: function () {
     if (!PrologueView.active) return;
     if (document.querySelector("#prologue-root .prologue-l:not(.v)")) { PrologueView.revealAll(); return; }
-    if (PrologueView.idx + 1 < PROLOGUE_TEMPS[PrologueView.temps][1]) PrologueView.show(PrologueView.idx + 1);
+    if (PrologueView.idx + 1 < PrologueView.deck.range[1]) PrologueView.show(PrologueView.idx + 1);
     else PrologueView.end();
   },
 
@@ -94,6 +118,7 @@ var PrologueView = {
     PrologueView.clear();
     PrologueView.active = false;
     PrologueView.fin = null;
+    PrologueView.deck = null;
     var root = document.getElementById("prologue-root");
     if (root) root.innerHTML = "";
     if (nom) { try { nom.focus({ preventScroll: true }); } catch (e) { nom.focus(); } } // le clavier s'ouvre au nom, pas avant
@@ -113,6 +138,24 @@ function openPrologueReplay() {
   PrologueView.play("tout", null);
 }
 
+/* v3.623.0 : ouvertures de chapitre. Jouée une fois à la fin de l'étape d'arrivée du monde, revue depuis Quêtes › Histoire. */
+function chapterOpeningForStepTitle(title) {
+  var found = null;
+  (window.CHAPTER_OPENING_ORDER || []).forEach(function (id) {
+    var q = window.STORY_QUESTS && STORY_QUESTS[id], c = CHAPTER_OPENINGS[id];
+    var st = q && q.steps.find(function (s) { return s.id === c.step; });
+    if (st && st.title === title && window.StoryQuestManager && StoryQuestManager.isStepReached && StoryQuestManager.getState(id).claimedSteps[c.step]) found = id;
+  });
+  return found;
+}
+function chapterOpeningsAvailable() { // chapitres dont l'étape d'arrivée est faite (parties en cours comprises)
+  return (window.CHAPTER_OPENING_ORDER || []).filter(function (id) {
+    var st = window.StoryQuestManager && StoryQuestManager.getState(id);
+    return !!(st && st.claimedSteps && st.claimedSteps[CHAPTER_OPENINGS[id].step]);
+  });
+}
+function openChapterOpeningReplay(id) { PrologueView.playChapter(id, null); }
+
 if (typeof document !== "undefined") {
   document.addEventListener("keydown", function (e) {
     if (!PrologueView.active) return;
@@ -123,3 +166,6 @@ if (typeof document !== "undefined") {
 window.PrologueView = PrologueView;
 window.prologueLetters = prologueLetters;
 window.openPrologueReplay = openPrologueReplay;
+window.chapterOpeningForStepTitle = chapterOpeningForStepTitle;
+window.chapterOpeningsAvailable = chapterOpeningsAvailable;
+window.openChapterOpeningReplay = openChapterOpeningReplay;

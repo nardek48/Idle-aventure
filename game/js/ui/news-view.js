@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.623.0", "menu_icons/quests_menu", _t("Ouvertures de chapitre : chaque nouveau monde s\'ouvre sur trois planches, à revoir dans Quêtes › Histoire.")],
     ["3.622.0", "menu_icons/map_menu", _t("Crypte et Montagne : l\'écran de la nuit dit ce qui a changé (gisants rendormis, lave et chaleur retombées) au lieu de « Rien n\'a bougé ».")],
     ["3.621.3", "menu_icons/map_menu", _t("Cartes vivantes : les explications précisent qu\'un secteur se libère aussi en battant l\'élite qui le garde.")],
     ["3.621.2", "menu_icons/quests_menu", _t("Correctif iPhone : le milieu des parchemins déchirés (quêtes, missions) ne disparaît plus derrière une bande sombre.")],
