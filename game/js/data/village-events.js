@@ -52,7 +52,7 @@ function villageEventsData() {
     /* ---------- v3.607.0 (E3, S1) : les suites, jamais tirées au hasard ----------
        Un événement réussi (livré, fête lancée, rumeur jouée) appelle sa suite à l'aube suivante ;
        un marché où l'on a vendu fait revenir Sarkel à l'aube qui suit sa fin. */
-    { id: "s_lame", type: "cadeau", suite: true, gift: "equip", who: _t("Demande de Brannoc"), title: _t("La lame de Brannoc"), text: _t("« Ton fer est devenu ça. Prends. Je n'ai pas le temps de l'admirer. »") },
+    { id: "s_lame", type: "cadeau", suite: true, gift: "equip", giftSlot: "weapon", who: _t("Demande de Brannoc"), title: _t("La lame de Brannoc"), text: _t("« Ton fer est devenu ça. Prends. Je n'ai pas le temps de l'admirer. »") },
     { id: "s_orwen_merci", type: "cadeau", suite: true, gift: { grande_ration: 1, ration: 2 }, who: _t("Demande d'Orwen"), title: _t("Plus personne ne tousse"), text: _t("« Plus personne ne tousse dans la deuxième maison. Tiens, c'est pour la route. »") },
     { id: "s_fete_orwen", type: "fete", suite: true, free: true, who: _t("Fête"), title: _t("La table d'Orwen"), text: _t("« Les réserves sont pleines. Ce soir, c'est moi qui fournis le pain. »") },
     { id: "s_aldric", type: "palissade", suite: true, who: _t("Demande d'Aldric"), title: _t("Le compte est juste"), text: _t("« Le mur est droit. J'ai recompté les pieux. Il n'en manque aucun, pour une fois. »") },

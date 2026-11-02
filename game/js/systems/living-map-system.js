@@ -72,7 +72,7 @@ var LivingMapManager = {
     home: "le village", fogLore: "La brume ne laisse rien voir.",
     openElsewhere: "La brume attend encore ailleurs",
     homeTitle: "Aeswyn tient la clairière.",
-    homeLore: "Le village hors du Cycle. Les trois secteurs de l'anneau 1 sont toujours à portée.",
+    homeLore: "Le village. Les trois secteurs de l'anneau 1 sont toujours à portée.", // v3.621.0 : « Cycle » réservé au Veilleur
     intro: "Touche un secteur pour voir ce qu'on en sait. Le Recouvrement ne reprend que ce qu'on lui laisse, quand une expédition échoue.",
     runLoot: "Sève du run seule",
     mapBlurb: "Choisis un secteur sur la carte de la Forêt : chaque expédition repousse la brume."

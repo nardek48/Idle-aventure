@@ -35,7 +35,7 @@ function buildVillageEventCardHTML() {
     act = '<button type="button" class="kbtn primary" onclick="villageEventShop()">' + esc(_t("Aller à l'échoppe")) + '</button>';
   } else if (e.type === "cadeau") { // v3.607.0 (E3) : une suite qui offre
     var gl2 = V.giftList();
-    gain = gl2 ? _t("Cadeau : {x}.", { x: Object.keys(gl2).map(function (r) { return _td(((window.WAREHOUSE_RESOURCES || {})[r] || {}).name || r) + " ×" + gl2[r]; }).join(", ") }) : _t("Cadeau : une pièce d'équipement forgée pour toi.");
+    gain = gl2 ? _t("Cadeau : {x}.", { x: Object.keys(gl2).map(function (r) { return _td(((window.WAREHOUSE_RESOURCES || {})[r] || {}).name || r) + " ×" + gl2[r]; }).join(", ") }) : (e.giftSlot === "weapon" ? _t("Cadeau : une arme forgée pour toi.") : _t("Cadeau : une pièce d'équipement forgée pour toi.")); // v3.621.0 : la lame de Brannoc
     act = v.done ? '<span class="vev-done">✓ ' + esc(_t("Reçu")) + '</span>' : '<button type="button" class="kbtn primary" onclick="villageEventClaim()">' + esc(_t("Recevoir")) + '</button>';
   } else if (e.type === "palissade") {
     gain = _t("La Palissade freine {p} % d'échecs de plus sur les cartes vivantes, le temps du compte.", { p: Math.round(VILLAGE_EVENT_PALISADE * 100) });

@@ -142,7 +142,7 @@ window.buildDungeonHTML = buildDungeonHTML;
 function buildDungeonSceauLoreHTML(dungeonId) {
   if (typeof CodexManager === "undefined") return "";
   var entry = CodexManager.getById("dungeon_tier_" + dungeonId);
-  if (!entry) return "";
+  if (!entry || !CodexManager.isUnlocked(entry)) return ""; // v3.621.0 : pas de feuillet avant le Veilleur
   return '<div class="dsheet-lore">« ' + esc(_td(entry.text)) + ' »</div>';
 }
 

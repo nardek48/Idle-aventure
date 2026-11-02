@@ -140,7 +140,7 @@ var LIVING_MAPS = {
       home: "le camp", fogLore: "Le sable ne laisse rien voir.",
       openElsewhere: "Le sable attend encore ailleurs",
       homeTitle: "Le camp tient le puits.",
-      homeLore: "Le camp du Portail, hors du Cycle. Les secteurs de l'anneau 1 sont toujours à portée.",
+      homeLore: "Le camp du Portail. Les secteurs de l'anneau 1 sont toujours à portée.", // v3.621.0 : « Cycle » réservé au Veilleur
       intro: "Touche un secteur pour voir ce qu'on en sait. L'Ensablement ne reprend que ce qu'on lui laisse, quand une expédition échoue.",
       runLoot: "Verre du run seul",
       mapBlurb: "Choisis un secteur sur la carte du Désert : chaque expédition repousse le sable."

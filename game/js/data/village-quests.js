@@ -25,7 +25,7 @@ var VILLAGE_QUESTS = [
     category: "side",
     narrative: {
       objective: "Le Clos d'Aeswyn nourrit à peine trois familles. Juste à côté, le Champ Béni attend sous les ronces — du bois pour les clôtures, de la pierre pour le muret, et la terre sera à nous.",
-      completion: "Deux parcelles, deux récoltes. Wenna a compté les sillons deux fois. Le blé ne manquera plus les soirs de disette — et il reste sept terres à reprendre." // v3.197.0 (bible B §2.1)
+      completion: "Deux parcelles, deux récoltes. Wenna a compté les sillons deux fois. Le blé ne manquera plus les soirs de disette — et il reste une terre à reprendre." // v3.197.0 (bible B §2.1)
     },
     objectiveLabel: "Débloquer une 2e parcelle du Champs",
     check: function () {
@@ -310,7 +310,7 @@ var MILESTONE_BOOKS = {
     ["images/Icons/resources/verre_trempe_icon.webp", "Un rang coûte de l'or et 2 matériaux du monde. Comme les sorts du héros, le rang 2 s'ouvre au Désert, le 3 aux Ruines."]] },
   caravane: { title: "Les caravanes", icon: "images/Icons/village_buildings/caravan.webp", tips: [
     ["images/Icons/village_buildings/merchant_hall.webp", "La Halle marchande envoie des caravanes vers les marchés des mondes déjà libérés : trajet court (1 h), moyen (4 h) ou long (8 h)."],
-    ["images/Icons/gold_icon.webp", "Au retour, elle rapporte de l'or et des ressources du monde visité ; le trajet long peut ramener une rareté."]] }
+    ["images/Icons/gold_icon.webp", "Au retour, elle rapporte de l'or et des ressources du monde visité ; le trajet long ramène à coup sûr deux matériaux rares."]] }
 };
 window.MILESTONE_REWARD_BY_WORLD = MILESTONE_REWARD_BY_WORLD;
 window.VILLAGE_MILESTONES = VILLAGE_MILESTONES;
