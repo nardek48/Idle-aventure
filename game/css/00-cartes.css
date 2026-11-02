@@ -51,8 +51,8 @@ Lot 1 : les classes .kc-*. Lot 2 : listes de cartes d'interface. Lot 3 (fin du f
   position: relative;
   border: 0;
   border-radius: 0;
-  -webkit-mask-box-image: url('../images/UI/frames/kc-dechire-masque.webp') 60 / var(--kc-g) stretch;
-  mask-border: url('../images/UI/frames/kc-dechire-masque.webp') 60 / var(--kc-g) stretch;
+  -webkit-mask-box-image: url('../images/UI/frames/kc-dechire-masque.webp') 60 fill / var(--kc-g) stretch; /* fill : Safari jette le centre du masque sans lui */
+  mask-border: url('../images/UI/frames/kc-dechire-masque.webp') 60 fill / var(--kc-g) stretch; /* fill : Safari jette le centre du masque sans lui */
   box-shadow: inset 0 0 25px rgba(70, 44, 14, 0.35);
 }
 .kc-doc.kc-petit { --kc-g: var(--kc-doc-bord-petit); }
@@ -365,8 +365,8 @@ Lot 1 : les classes .kc-*. Lot 2 : listes de cartes d'interface. Lot 3 (fin du f
   border: 0 !important;
   border-radius: 0 !important;
   box-shadow: inset 0 0 25px rgba(70, 44, 14, 0.35) !important;
-  -webkit-mask-box-image: url('../images/UI/frames/kc-dechire-masque.webp') 60 / var(--kc-g) stretch;
-  mask-border: url('../images/UI/frames/kc-dechire-masque.webp') 60 / var(--kc-g) stretch;
+  -webkit-mask-box-image: url('../images/UI/frames/kc-dechire-masque.webp') 60 fill / var(--kc-g) stretch; /* fill : Safari jette le centre du masque sans lui */
+  mask-border: url('../images/UI/frames/kc-dechire-masque.webp') 60 fill / var(--kc-g) stretch; /* fill : Safari jette le centre du masque sans lui */
   padding: 14px calc(var(--kc-g) * 0.45 + 6px) !important; /* marge minimale : la découpe ne rogne plus le texte (Taverne) */
 }
 :root .story-chain.is-done:not(.story-chain *) { --kc-g: var(--kc-doc-bord-petit); padding: 10px calc(var(--kc-g) * 0.45 + 6px) !important; }

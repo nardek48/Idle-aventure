@@ -21448,6 +21448,10 @@ console.log("\n[416] v3.621.1 — forest_13 : des vagues franchies sous Marque, 
     run("game.dungeonRun = { active: true, wave: 4, dungeonId: 1, marks: [], storyRunTag: 'sans' }; window.__vivants416 = 0; __st416.counters.coeurKillsMarked = 0; StoryQuestManager._countKills(__st416, 1, 'forest');");
     ok(run("__st416.counters.coeurKillsMarked") === 0, "sans Marque : rien ne compte");
     run("CombatActors.aliveEnemies = window.__ae416; game.dungeonRun = { active: false, wave: 0, dungeonId: 1, marks: [] };");
+    // v3.621.2 (bug iPhone) : sans « fill », Safari (mask-border standard) jette le centre du masque -> bande vide au milieu des documents
+    var cc = require("fs").readFileSync(require("path").join(ROOT, "css/00-cartes.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+    var masques = cc.match(/(-webkit-mask-box-image|mask-border):[^;]*;/g) || [];
+    ok(masques.length >= 4 && masques.every(function (m) { return / 60 fill \//.test(m); }), "parchemin déchiré : les " + masques.length + " déclarations de masque gardent le centre (« fill »)");
   } catch (err) { ok(false, "[416] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
