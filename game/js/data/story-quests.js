@@ -4700,7 +4700,7 @@ var STORY_DROIT_TEXTS = {
     dialogue: [{ who: "Le Dragon ancien", text: "Toi, tu ne prends pas. Elle s'en souviendra." }, { who: "Sarkel", text: "Moi aussi." }]
   },
   suite: {
-    text: "À Aeswyn, le soir, Orwen regarde vers l'est. Au-dessus des toits, loin, une tour. Personne ne l'avait vue avant. Elle était peut-être là.",
+    text: "À Aeswyn, le soir, Orwen regarde vers le nord. Au-dessus des toits, loin, une tour. Personne ne l'avait vue avant. Elle était peut-être là.",
     dialogue: [{ who: "Orwen", text: "Il reste la Tour." }, { who: "Orwen", text: "Elle te prendra le reste." }]
   }
 };

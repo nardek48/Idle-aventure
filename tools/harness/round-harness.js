@@ -21532,6 +21532,9 @@ console.log("\n[419] v3.624.0 — Aeswyn se repeuple (habitants sur le bandeau d
     var sb = require("fs").readFileSync(require("path").join(ROOT, "js/ui/screen-banner.js"), "utf8");
     ok(/this\.popPill\(el\)/.test(sb) && /kfb-pop/.test(require("fs").readFileSync(require("path").join(ROOT, "css/00-kbtn.css"), "utf8")), "pastille des habitants posée sur le bandeau du Village");
     run("game.worldsEverReached = {}; WorldManager.worldIndex = 0;");
+    // v3.624.1 (Seb) : la Tour est au nord, comme dans le prologue et la bible
+    var sq419 = require("fs").readFileSync(require("path").join(ROOT, "js/data/story-quests.js"), "utf8");
+    ok(sq419.indexOf("Orwen regarde vers le nord.") > 0 && sq419.indexOf("Orwen regarde vers l'est") < 0, "fin du chapitre V : Orwen regarde la Tour au nord");
   } catch (err) { ok(false, "[419] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 

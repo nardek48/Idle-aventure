@@ -7118,7 +7118,7 @@ I18n.register("en", {
   "À la Montagne, chaque cran de chaleur donne aussi +5 % à tes coups.": "On the Mountain, each level of heat also gives +5% to your strikes.",
   "La pioche entre une fois. La veine-mère se détache, lourde, tiède. Elle bat encore dans tes bras jusqu'à Aeswyn. Orwen la regarde descendre dans le puits.": "The pickaxe goes in once. The mother vein comes loose, heavy, warm. It still beats in your arms all the way to Aeswyn. Orwen watches it go down into the well.",
   "Tu retires la main. La veine-mère bat plus fort, une fois, comme pour répondre. Le Dragon ferme les yeux.": "You take your hand away. The mother vein beats harder, once, as if to answer. The Dragon closes its eyes.",
-  "À Aeswyn, le soir, Orwen regarde vers l'est. Au-dessus des toits, loin, une tour. Personne ne l'avait vue avant. Elle était peut-être là.": "In Aeswyn, in the evening, Orwen looks east. Above the roofs, far off, a tower. No one had seen it before. Maybe it was always there.",
+  "À Aeswyn, le soir, Orwen regarde vers le nord. Au-dessus des toits, loin, une tour. Personne ne l'avait vue avant. Elle était peut-être là.": "In Aeswyn, in the evening, Orwen looks north. Above the roofs, far off, a tower. No one had seen it before. Maybe it was always there.",
   "Elle est chaude.": "It's warm.",
   "Je l'ai tenue droite.": "I held it straight.",
   "Toi, tu ne prends pas. Elle s'en souviendra.": "You don't take. She will remember.",
@@ -7865,6 +7865,7 @@ I18n.register("en", {
   // v3.602.0 : jours du monde
   "Jour {n}": "Day {n}",
   "Rien n'a bougé autour du camp.": "Nothing has moved around the camp.",
+  "Fin du chapitre V : la Tour est bien au nord, comme dans le prologue.": "End of chapter V: the Tower is indeed to the north, as in the prologue.",
   "Trois familles autour du feu. Le reste est encore de la cendre.": "Three families around the fire. The rest is still ash.",
   "Un toit de plus, cette saison. Quelqu'un est revenu des bois.": "One more roof this season. Someone came back from the woods.",
   "On se dispute pour le puits, le matin. Brannoc dit que c'est bon signe.": "People argue over the well in the morning. Brannoc says it's a good sign.",
