@@ -4980,9 +4980,97 @@ STORY_QUESTS.tower = {
       onAccept: function (game, st) { if (st && st.counters) st.counters.paBase = storyTowerPaWins(); },
       check: function (game) { return storyTowerPaWins() > storyChapterCounter(game, "tower", "paBase"); },
       progress: function (game) { return "Petite aventure " + (storyTowerPaWins() > storyChapterCounter(game, "tower", "paBase") ? "1/1" : "0/1"); }
+    },
+    /* ---------- Acte II, suite (lot T-2b : étapes 8 à 10) ---------- */
+    /* Étape 8 : l'étage des gisants, quatre rencontres avec les morts de la Crypte (écho). */
+    {
+      id: "tour_08",
+      title: "Ceux qui dorment debout",
+      act: "Acte II — Les étages",
+      narrative: {
+        objective: "Un étage de gisants. Mais ils ne sont pas couchés : ils se tiennent debout contre les murs, les yeux fermés, en rang.",
+        completion: "Ysolt couche le dernier. Elle lui joint les mains. Elle ne dit rien d'autre.",
+        dialogue: [
+          { who: "Ysolt", text: "Elle ne sait pas qu'on les couche. Personne ne le lui a montré." },
+          { who: "Ysolt", text: "Je vais le lui montrer." }
+        ],
+        completionDialogue: [
+          { who: "Wenna", text: "Elle a appris ?" },
+          { who: "Ysolt", text: "Elle a regardé. C'est déjà ça." }
+        ]
+      },
+      objectiveLabel: "Terminer « L'étage des gisants » : 4 rencontres",
+      unlockTabs: [],
+      reward: STORY_REWARDS.tour_08,
+      linkTo: { section: "adventure", cardId: "adv_aq_tour_gisants" },
+      check: function (game) { return storyAdvDone(game, "aq_tour_gisants"); },
+      progress: function (game) { return "Rencontres " + storyAdvProgress(game, "aq_tour_gisants", "rencontres_gisants", 4) + "/4"; }
+    },
+    /* Étape 9 : l'élite des étages, le Gardien qui répète (secteur « La veine du dedans », répétable). */
+    {
+      id: "tour_09",
+      title: "La veine du dedans",
+      act: "Acte II — Les étages",
+      narrative: {
+        objective: "Ici, les murs sont des veines. Bleues. Elles ne battent pas : elles écoutent.",
+        completion: "Dans la veine, une coupe. Nette. La même qu'à la Montagne. Le vieux est passé ici, et il a pris.",
+        dialogue: [
+          { who: "Edda", text: "Sarkel taillerait." },
+          { who: "Maddoc", text: "Sarkel est en bas. Il a dit qu'il ne vendait rien, ici." }
+        ],
+        completionDialogue: []
+      },
+      objectiveLabel: "Vaincre l'élite des étages : le Gardien qui répète",
+      storyPa: { worldId: "tower", targets: ["etage_veines"] },
+      unlockTabs: [],
+      reward: STORY_REWARDS.tour_09,
+      linkTo: { section: "map", cardId: "livingmap_tower" },
+      check: function () { var lm = window.LivingMapManager, st = lm && lm.getState("tower", "etage_veines"); return !!(st && st.liberatedCount > 0); },
+      progress: function () { var lm = window.LivingMapManager, st = lm && lm.getState("tower", "etage_veines"); return "Gardien vaincu " + (st && st.liberatedCount > 0 ? "1/1" : "0/1"); }
+    },
+    /* Étape 10 : le palier Légendaire de l'acte II (TW7), puis les feuillets du Veilleur au Codex. */
+    {
+      id: "tour_10",
+      title: "Les feuillets",
+      act: "Acte II — Les étages",
+      narrative: {
+        objective: "Sur chaque palier, depuis le sable, une feuille. Pliée en quatre, posée sous une pierre. L'écriture est petite, serrée, la même partout.",
+        completion: "Tu déplies la dernière. Une seule ligne. « Ici, je n'avais plus rien à donner. J'ai continué quand même. »",
+        dialogue: [
+          { who: "Wenna", text: "Il nous laisse des lettres ?" },
+          { who: "Edda", text: "Il laisse des cartes. Il dit où il est passé. Pas où il va." }
+        ],
+        completionDialogue: [
+          { who: "Ysolt", text: "Il savait qu'on lirait." }
+        ]
+      },
+      objectiveLabel: "Porter 3 pièces Légendaires",
+      unlockTabs: [],
+      reward: STORY_REWARDS.tour_10,
+      linkTo: { tab: "equip" },
+      tutorial: {
+        tab: "equip",
+        icon: "images/Icons/equipment_slots/slot_weapon.webp",
+        title: "Le palier Légendaire",
+        points: [
+          { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Pour monter plus haut, trois de tes sept emplacements doivent porter une pièce Légendaire." },
+          { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "Les étapes 8 et 9 t'en donnent deux. Sinon : le Gardien qui répète, 35 % de chance par victoire, et jamais plus de deux victoires de suite sans pièce. L'échoppe de la Tour en propose aussi." }
+        ]
+      },
+      check: function (game) { return storyPalier(game, "legendary").pieces >= STORY_PALIER_TOUR.pieces; },
+      progress: function (game) { return "Pièces Légendaires " + Math.min(STORY_PALIER_TOUR.pieces, storyPalier(game, "legendary").pieces) + "/" + STORY_PALIER_TOUR.pieces; }
     }
   ]
 };
+/* v3.628.0 (Tour, TW7) : palier Légendaire de l'acte II, trois pièces sur sept, de tout monde. Au banc. */
+var STORY_PALIER_TOUR = { pieces: 3 };
+window.STORY_PALIER_TOUR = STORY_PALIER_TOUR;
+STORY_REWARDS.tour_08 = { gold: 19500, resources: { givre_bleu: 3 }, equipmentRarity: "legendary", equipmentCount: 1, equipmentFill: true };
+STORY_REWARDS.tour_09 = { gold: 20000, equipmentRarity: "legendary", equipmentCount: 1, equipmentFill: true };
+STORY_REWARDS.tour_10 = { gold: 21000, resources: { givre_bleu: 5 } };
+STORY_QUESTS.tower.steps[7].reward = STORY_REWARDS.tour_08;
+STORY_QUESTS.tower.steps[8].reward = STORY_REWARDS.tour_09;
+STORY_QUESTS.tower.steps[9].reward = STORY_REWARDS.tour_10;
 STORY_REWARDS.tour_06 = { gold: 18500, resources: { givre_bleu: 3 } };
 STORY_REWARDS.tour_07 = { gold: 19000, resources: { givre_bleu: 4 } };
 STORY_QUESTS.tower.steps[5].reward = STORY_REWARDS.tour_06;

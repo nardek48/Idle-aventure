@@ -133,6 +133,16 @@ var CODEX_ENTRIES = [
     text: "Personne ne sait avec certitude ce qui a causé la Rupture, ni ce qui attend réellement au sommet de la Tour, au cœur du cinquième Sceau. Mais chaque niveau de Mémoire, chaque créature du Bestiaire comprise, chaque Éclat arraché à la Faille rapproche un peu plus le héros d'une réponse.\n\nLe Cycle continuera tant que personne n'aura franchi ce dernier seuil. Jusque-là, il ne reste qu'une chose à faire : continuer, un peu plus fort, un peu plus proche de la vérité — et voir jusqu'où l'Aether est prêt à mener qui refuse de s'arrêter.",
     isUnlocked: function () { return codexFeuilletsRecus() && (game.dungeonBossClears || 0) >= 1 && !!(window.MemoryManager && MemoryManager.getLevel() >= 1); } // v3.322.0
   }
+  ,
+  /* v3.628.0 (Tour, étape 10) : les feuillets laissés sur les paliers. Textes à relire par Seb (atelier des textes). */
+  {
+    id: "feuillets_tour",
+    title: "Les feuillets de la Tour",
+    icon: "images/Icons/scene/feuillet_veilleur.webp",
+    category: "world",
+    text: "Sur le premier palier : « Elle refait ce qu'elle a vu. Elle ne sait pas encore ce qu'elle a vu. »\n\nUn peu plus haut : « J'ai laissé une chaise. Celui qui monte après moi aura besoin de s'asseoir. »\n\nLe dernier : « Ici, je n'avais plus rien à donner. J'ai continué quand même. »",
+    isUnlocked: function () { var st = window.StoryQuestManager && StoryQuestManager.getState("tower"); return !!(st && st.claimedSteps && st.claimedSteps.tour_10); }
+  }
 ];
 
 window.CODEX_ENTRIES = CODEX_ENTRIES;

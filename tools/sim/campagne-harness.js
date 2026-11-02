@@ -1280,7 +1280,7 @@ function run() {
       CURRENT_STEP = step.id;
       // v3.423.0 : TRACE_FORCE=1 relève la force du héros à chaque étape (référence des ajustements de difficulté)
       if (process.env.TRACE_FORCE) console.log("  [force] " + step.id + " monde " + G.WorldManager.worldIndex + " aventure " + G.WorldManager.adventureIndex + " niv. " + G.game.heroLevel + " dmg " + Math.round(G.CombatForecast.getHeroDamagePerRound()) + " ehp " + Math.round(G.CombatForecast.getHeroEffectiveHp ? G.CombatForecast.getHeroEffectiveHp() : G.game.heroMaxHp));
-      if (COMBATS && /^(desert_12|desert_15|desert_17|forest_14|forest_15|ruines_01|ruines_02|ruines_03|ruines_11|ruines_13|ruines_15|ruines_19|crypte_01|crypte_02|crypte_03|crypte_06|crypte_12|crypte_14|crypte_16|crypte_19|montagne_01|montagne_02|montagne_03|montagne_04|montagne_06|montagne_08|montagne_10|montagne_12|montagne_13|tour_01|tour_02|tour_04|tour_06|tour_07)$/.test(step.id)) { STATS.profils[step.id] = combatLine(); console.log("  ◦ héros à l'entrée de " + step.id + " : " + STATS.profils[step.id]); if (process.env.TRACE_FORGE) console.log("     forge armure : " + G.ForgeManager.getBlockReason("armor") + " " + JSON.stringify(G.ForgeManager.getCost("armor")) + " or " + Math.floor(G.game.gold)); }
+      if (COMBATS && /^(desert_12|desert_15|desert_17|forest_14|forest_15|ruines_01|ruines_02|ruines_03|ruines_11|ruines_13|ruines_15|ruines_19|crypte_01|crypte_02|crypte_03|crypte_06|crypte_12|crypte_14|crypte_16|crypte_19|montagne_01|montagne_02|montagne_03|montagne_04|montagne_06|montagne_08|montagne_10|montagne_12|montagne_13|tour_01|tour_02|tour_04|tour_06|tour_07|tour_08|tour_09|tour_10)$/.test(step.id)) { STATS.profils[step.id] = combatLine(); console.log("  ◦ héros à l'entrée de " + step.id + " : " + STATS.profils[step.id]); if (process.env.TRACE_FORGE) console.log("     forge armure : " + G.ForgeManager.getBlockReason("armor") + " " + JSON.stringify(G.ForgeManager.getCost("armor")) + " or " + Math.floor(G.game.gold)); }
       var t0s = { h: CLOCK.offset, c: STATS.combatMs, s: STATS.healMs, d: STATS.deaths, j: DAYS_WAITED, e: (STATS.secteurs.desert || {}).essais || 0 };
       var snap0 = snapTemps();
       G.StoryQuestManager.acceptStep(cid);
@@ -1761,6 +1761,14 @@ function gearRarity(rarity, n, needWeapon, minWorld) {
     // v3.433.0 : le Rare se trouve au Sanctuaire (butin de fin de run, et sac de la sortie)
     if (rarity === "rare" && g.DungeonManager.isUnlocked(3)) { if (COMBATS) healUp(); if (playDungeonOnce(3, false) === null) farmOnce(); }
     // v3.489.0 (Montagne) : les élites de la carte (Épique de la Montagne au hasard de la victoire)
+    // v3.628.0 (Tour) : le Légendaire vient du Gardien qui répète (35 %, pas plus de deux victoires sans pièce)
+    else if (rarity === "legendary" && g.LivingMapManager.isMapOpen("tower")) {
+      var LMt = g.LivingMapManager;
+      if (perdueAujourdhui("tower", "etage_veines", 1) || LMt.getBrakeMult("tower", "etage_veines") > 2) { attendreLendemain(); continue; }
+      if (!freeSectorAgain("tower", "etage_veines")) { notePerdue("tower", "etage_veines"); if (LMt.getDailyWins("tower", "etage_veines") <= 0) farmOnce(); }
+      if (COMBATS) healUp();
+      continue;
+    }
     else if (minWorld === 4) {
       /* audit (27/10, DUR-3, COM-2) : élites de la carte enchaînées avec le soin réel, sans les 2 h d'échoppe ;
          le lendemain quand les deux sont perdues deux fois (lot 6 : une reprise) ou que leur frein dépasse ×2 (5 victoires du jour). */
@@ -1943,6 +1951,9 @@ var SOLVERS = {
   tour_04: function (g) { playAdventure("aq_tour_sable"); },
   tour_06: function (g) { for (var i = 0; i < 8 && g.storyTowerFloorsFreed() < 3; i++) freeSector("tower"); },
   tour_07: function (g) { var b = g.storyTowerPaWins(); for (var i = 0; i < 4 && g.storyTowerPaWins() <= b; i++) freeSector("tower"); },
+  tour_08: function (g) { playAdventure("aq_tour_gisants"); },
+  tour_09: function (g) { freeSector("tower", "etage_veines"); },
+  tour_10: function (g) { gearRarity("legendary", g.STORY_PALIER_TOUR.pieces, false, 0); },
   tour_05: function (g) {
     var val = ARGS.indexOf("--poser") >= 0 ? "poser" : "garder";
     if (!g.storyMakeChoice("tower", val)) note("choix refusé (braise)");

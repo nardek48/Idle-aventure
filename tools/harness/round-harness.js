@@ -21595,7 +21595,7 @@ console.log("\n[422] v3.627.0 — Tour, lot T-2a : la carte des étages et l'esc
   var LM = g.LivingMapManager, wi = g.WorldManager.worldIndex, open422 = LM.isMapOpen;
   try {
     var m = g.LIVING_MAPS.tower;
-    ok(m && m.opensAtStoryStep === "tour_06" && m.noRegress && m.redite && m.sectors.length === 6 && m.sectors.every(function (d) { return d.content.templateId === "petite_aventure_tour"; }), "carte des étages : ouverte à tour_06, six étages, rien n'est repris");
+    ok(m && m.opensAtStoryStep === "tour_06" && m.noRegress && m.redite && m.sectors.length === 6 && m.sectors.filter(function (d) { return d.content.templateId === "petite_aventure_tour"; }).length === 5 && m.sectors.filter(function (d) { return d.content.eliteId === "gardien_qui_repete"; }).length === 1, "carte des étages : ouverte à tour_06, cinq étages d'escalier et le Gardien qui répète (v3.628.0), rien n'est repris");
     var t = g.SCENE_TEMPLATES.petite_aventure_tour;
     ok(t && t.worldId === "tower" && t.successFlag === "towerPaCompleted" && t.successCount === "towerPaWins", "Petite Aventure de la Tour : réussites comptées pour « L'escalier »");
     ok(g.PA2_OBSTACLES.tower.indexOf("dalle_qui_glisse") >= 0 && g.PA2_OBSTACLES.tower.indexOf("allee_des_gisants") >= 0 && g.PA2_MAPS_BY_WORLD.tower.join() === "tour_1,tour_2" && g.PA2_RARE.tower.resourceId === "givre_bleu", "l'escalier rejoue les obstacles des autres mondes ; deux cartes ; Givre bleu");
@@ -21612,6 +21612,24 @@ console.log("\n[422] v3.627.0 — Tour, lot T-2a : la carte des étages et l'esc
     ok(g.storyTowerPaWins() === 2, "réussites de l'escalier lues (" + g.storyTowerPaWins() + ")");
   } catch (err) { ok(false, "[422] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   LM.isMapOpen = open422; g.WorldManager.worldIndex = wi;
+})();
+
+console.log("\n[423] v3.628.0 — Tour, lot T-2b : gisants, Gardien qui répète, feuillets, palier Légendaire");
+(function () {
+  try {
+    var ch = g.STORY_QUESTS.tower;
+    ok(ch.steps.slice(7, 10).map(function (x) { return x.id; }).join() === "tour_08,tour_09,tour_10", "acte II complet : étapes 8 à 10");
+    var e = g.ELITE_DB.gardien_qui_repete;
+    ok(e && e.baseId === "guardian" && e.repeatable && e.winDrop.rarity === "legendary" && e.winDrop.chancePct === 35 && e.winDrop.pityAfter === 2, "le Gardien qui répète : élite répétable, Légendaire à 35 %, la 3e victoire sans pièce en donne une");
+    ok(g.LIVING_MAPS.tower.sectors.filter(function (d) { return d.id === "etage_veines"; })[0].content.eliteId === "gardien_qui_repete", "il garde « La veine du dedans »");
+    ok(g.ADVENTURE_QUESTS.aq_tour_gisants.encounters.length === 4 && g.ADVENTURE_QUESTS.aq_tour_gisants.encounters[2].enemy === "deadknight", "l'étage des gisants : quatre rencontres avec les morts de la Crypte");
+    ok(g.STORY_REWARDS.tour_08.equipmentRarity === "legendary" && g.STORY_REWARDS.tour_09.equipmentRarity === "legendary" && g.STORY_PALIER_TOUR.pieces === 3, "palier : 3 Légendaires, deux offerts aux étapes 8 et 9");
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; StoryQuestManager.ensure();");
+    var cx = g.CODEX_ENTRIES.filter(function (x) { return x.id === "feuillets_tour"; })[0];
+    ok(cx && cx.isUnlocked() === false, "feuillets de la Tour : fermés avant l'étape 10");
+    run("game.storyQuests.tower.claimedSteps.tour_10 = true;");
+    ok(cx.isUnlocked() === true && /J'ai continué quand même/.test(cx.text), "feuillets de la Tour : ouverts une fois l'étape 10 faite");
+  } catch (err) { ok(false, "[423] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
 Promise.all(ATTENTES).then(function () {

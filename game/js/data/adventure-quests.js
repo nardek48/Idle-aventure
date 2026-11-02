@@ -1241,6 +1241,34 @@ var ADVENTURE_QUESTS = {
       { id: "rencontres_sable", type: "encounter", worldId: "tower", target: 4, desc: "Vaincre {target} rencontres à l'étage du sable" }
     ],
     reward: {}
+  },
+
+  /* v3.628.0 (Tour, acte II étape 8) — « L'étage des gisants » : quatre rencontres avec les morts de la Crypte, debout
+     contre les murs (écho de la Crypte). Mêmes réglages que l'acte I, au banc. */
+  aq_tour_gisants: {
+    id: "aq_tour_gisants",
+    type: "kill",
+    section: "adventure",
+    difficulty: "medium",
+    progressionStage: "world_start",
+    category: "side",
+    worldId: "tower",
+    adventureIndex: 0,
+    encounters: [
+      { group: ["skeleton", "skeleton", "ghoul"], groupHpMult: 0.45 },
+      { group: ["wraith", "spectre"], groupHpMult: 0.55 },
+      { enemy: "deadknight" },
+      { group: ["deadknight", "necromancer"], groupHpMult: 0.55 }
+    ],
+    encounterHpMult: 2.5,
+    enemyPowerMult: 6,
+    name: "L'étage des gisants",
+    story: "Un étage de gisants debout contre les murs, les yeux fermés. Certains se décollent du mur quand on passe.",
+    icon: "./images/Icons/quest_icons/exploration/exploration1.webp",
+    steps: [
+      { id: "rencontres_gisants", type: "encounter", worldId: "tower", target: 4, desc: "Vaincre {target} rencontres à l'étage des gisants" }
+    ],
+    reward: {}
   }
 };
 
