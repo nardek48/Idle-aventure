@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.618.1", "menu_icons/settings_menu", _t("Sur les cartes en parchemin, le vert des gains, l'or des récompenses et les sous-titres sont plus foncés, donc plus lisibles.")],
     ["3.618.0", "menu_icons/heroes_menu", _t("Les cartes des écrans prennent un fond de parchemin et un fin cadre de bronze. Les quêtes et les missions suivront, en parchemin déchiré.")],
     ["3.617.0", "menu_icons/settings_menu", _t("Lisibilité : l\'or, le vert des gains et le texte secondaire sont un peu plus foncés sur les cartes crème.")],
     ["3.616.3", "menu_icons/village_menu", _t("Les fiches ont un nouveau fond de parchemin crème, plus fin et plus léger.")],
