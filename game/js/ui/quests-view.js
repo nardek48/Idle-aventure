@@ -709,9 +709,9 @@ function buildStoryStepRewardText(reward) {
   return parts.join(" · ") || "—";
 }
 
-function buildStoryStepUnlockText(step) {
+function buildStoryStepUnlockText(step, onClaim) {
   var labels = window.STORY_TAB_LABELS || {};
-  return (step.unlockTabs || []).map(function (t) { return labels[t] ? _td(labels[t]) : t; }).join(", ");
+  return ((onClaim ? step.unlockTabsOnClaim : step.unlockTabs) || []).map(function (t) { return labels[t] ? _td(labels[t]) : t; }).join(", ");
 }
 
 function buildStoryClaimedStepHTML(chapterId, step, index) {
@@ -775,6 +775,8 @@ function buildStoryCurrentStepHTML(chapterId, chapter, step, index) {
 
   if (step.hint) h += '<div class="story-step-unlock story-step-hint"><img class=ico-inline src=images/Icons/system/warning.webp> ' + esc(_td(step.hint)) + '</div>'; // v3.429.6
   if (unlockText) h += '<div class="story-step-unlock"><img class=ico-inline src=images/Icons/system/lock_open.webp> ' + esc(_t("Débloque : {x}", { x: unlockText })) + '</div>';
+  var claimUnlockText = buildStoryStepUnlockText(step, true); // v3.616.0 : onglets ouverts par la réussite (forest_06)
+  if (claimUnlockText) h += '<div class="story-step-unlock"><img class=ico-inline src=images/Icons/system/lock_open.webp> ' + esc(_t("Débloque à la réussite : {x}", { x: claimUnlockText })) + '</div>';
   h += '<div class="map-quest-reward"><span class="map-quest-reward-label">' + _t("Récompense") + '</span><span class="map-quest-reward-value">' + esc(buildStoryStepRewardText(step.reward)) + '</span></div>';
 
   h += '<div class="story-step-actions" data-story-actions="' + esc(chapterId) + '">';

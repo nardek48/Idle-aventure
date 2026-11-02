@@ -29,6 +29,8 @@ var ProductionPlotsSystem = {
     if (!game.production || typeof game.production !== "object") game.production = {};
     if (!game.production[buildingId] || typeof game.production[buildingId] !== "object") {
       game.production[buildingId] = {};
+      // v3.616.0 : lue avant l'ouverture, l'entrée est marquée — sinon la migration « déjà en jeu » offrait le bâtiment
+      if (window.ProductionManager && !ProductionManager.isBuildingUnlocked(buildingId)) game.production[buildingId].lockedStub = true;
     }
     var bucket = game.production[buildingId];
 

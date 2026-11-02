@@ -158,7 +158,10 @@ var MilestoneManager = {
     switch (m.kind) {
       case "zonesAtLevel": {
         var n = 0;
-        if (P) P.getManagedBuildingIds().forEach(function (bid) { P.getPlots(bid).forEach(function (pl) { if (pl.state === "open" && pl.level >= m.arg) n++; }); });
+        if (P) P.getManagedBuildingIds().forEach(function (bid) {
+          if (window.ProductionManager && !ProductionManager.isBuildingUnlocked(bid)) return; // v3.616.0 : bâtiment fermé, pas lu
+          P.getPlots(bid).forEach(function (pl) { if (pl.state === "open" && pl.level >= m.arg) n++; });
+        });
         return n;
       }
       case "zonesOpenMax": {

@@ -249,7 +249,8 @@ var StoryQuestManager = {
     return Object.keys(STORY_QUESTS).filter(function (id) { return self.isCurrentStepReady(id); }).length;
   },
 
-  /* Accepter l'étape courante : applique unlockTabs immédiatement (décision Seb, v3.100.0). */
+  /* Accepter l'étape courante : applique unlockTabs immédiatement (décision Seb, v3.100.0).
+     v3.616.0 : unlockTabsOnClaim attend la réclamation (forest_06, le Village). */
   acceptStep: function (chapterId) {
     chapterId = chapterId || "forest";
     var step = this.getCurrentStep(chapterId);
@@ -270,14 +271,15 @@ var StoryQuestManager = {
     return true;
   },
 
-  _applyUnlockTabs: function (step) {
+  /* onClaim (v3.616.0) : la liste lue est unlockTabsOnClaim (onglets ouverts par la réussite). */
+  _applyUnlockTabs: function (step, onClaim) {
     if (!game.unlockedTabs || typeof game.unlockedTabs !== "object") game.unlockedTabs = {};
-    (step.unlockTabs || []).forEach(function (tab) { game.unlockedTabs[tab] = true; });
+    ((onClaim ? step.unlockTabsOnClaim : step.unlockTabs) || []).forEach(function (tab) { game.unlockedTabs[tab] = true; });
   },
 
-  _describeUnlocks: function (step) {
+  _describeUnlocks: function (step, onClaim) {
     var labels = window.STORY_TAB_LABELS || {};
-    return (step.unlockTabs || []).map(function (t) { return labels[t] ? _td(labels[t]) : t; }).join(", ");
+    return ((onClaim ? step.unlockTabsOnClaim : step.unlockTabs) || []).map(function (t) { return labels[t] ? _td(labels[t]) : t; }).join(", ");
   },
 
   /* Vérification opportuniste (renderPanel, throttlée) : signale une seule fois le passage à « réclamable ».
@@ -398,6 +400,10 @@ var StoryQuestManager = {
     }
 
     var rewardRows = this._grantReward(step.reward || {});
+    // v3.616.0 : onglets ouverts par la réussite (unlockTabsOnClaim), annoncés avec la récompense
+    var claimUnlocks = this._describeUnlocks(step, true);
+    this._applyUnlockTabs(step, true);
+    if (claimUnlocks) rewardRows.push({ label: _t("Débloqué"), value: claimUnlocks });
     // v3.322.0 (Souvenirs, O10) : une étape d'Histoire terminée, l'Aether s'en souvient
     if (window.MemoryManager) MemoryManager.souvenir("storyStep", _t("Souvenir : {x}", { x: _td(step.title) }));
     st.claimedSteps[step.id] = true;

@@ -2425,8 +2425,9 @@ console.log("\n== v3.137.0 : recette Grande ration (Cuisine de camp) ==");
 console.log("\n[UX-PROD] Tableau de bord Production v3.191.0 — routeur, vue Ateliers, actions groupées");
 (function () {
   // état : les 6 bâtiments débloqués, zones assurées
-  run("game.quarryUnlocked = true; game.huntBuildingUnlocked = true; game.wellUnlocked = true;" +
-      "game.sawmillUnlocked = true; game.mineUnlocked = true; game.farmUnlocked = true;" +
+  // v3.616.0 : drapeaux posés là où le jeu les lit (avant, la migration « déjà en jeu » ouvrait tout par erreur)
+  run("var ep = game.explorationProgression; ep.quarryUnlocked = true; ep.huntBuildingUnlocked = true; ep.wellUnlocked = true;" +
+      "ep.sawmillUnlocked = true; ep.mineUnlocked = true; ep.farmUnlocked = true;" +
       "ProductionManager.ensure();");
   run("Object.keys(PRODUCTION_BUILDINGS).forEach(function (id) { ProductionPlotsSystem.ensurePlots(id); });");
 
@@ -6659,7 +6660,11 @@ console.log("\n[66b] v3.264.0 \u2014 Battue avec le Village, Atelier de Construc
   ok(g.MissionBoard.list().some(function (m) { return m.id === "hunt_hq_forest_battue" && m.status === "running"; }), "une battue d\u00e9j\u00e0 lanc\u00e9e (save ant\u00e9rieure) reste visible");
   run("HuntQuestManager.stop();");
   run("StoryQuestManager.ensure(); StoryQuestManager.getState('forest').currentStep = " + g.STORY_QUESTS.forest.steps.findIndex(function (s) { return s.id === "forest_06"; }) + "; StoryQuestManager.acceptStep('forest');");
-  ok(game.unlockedTabs.village === true && g.MissionBoard.list().some(function (m) { return m.id === "hunt_hq_forest_battue"; }), "« La meute affam\u00e9e » accept\u00e9e : la Battue appara\u00eet");
+  // v3.616.0 (retour Seb) : le Village s'ouvre à la réussite de la Meute, plus à l'acceptation
+  ok(!game.unlockedTabs.village && !g.MissionBoard.list().some(function (m) { return m.id === "hunt_hq_forest_battue"; }), "« La meute affam\u00e9e » accept\u00e9e : ni Village ni Battue avant la r\u00e9ussite (v3.616.0)");
+  game.adventureQuestsCompleted.hq_wolf_pack = true;
+  run("StoryQuestManager.claimStep('forest');");
+  ok(game.unlockedTabs.village === true && g.MissionBoard.list().some(function (m) { return m.id === "hunt_hq_forest_battue"; }), "« La meute affam\u00e9e » r\u00e9ussie : le Village s'ouvre, la Battue appara\u00eet");
 
   var M = g.VillageBuildingManager;
   game.village = {}; M.ensure();
@@ -13934,7 +13939,7 @@ console.log("\n[201] v3.427.2 — Petites Aventures : « Comme la dernière fois
     // départ : la besace est retenue sur l'appareil, par monde
     fake.bag = ["corde", "torche"];
     g.pa2Depart();
-    ok(g.Prefs.getValue("pa2LastBag:forest") === "corde,torche" && g.pa2LastBag(fake).join() === "corde,torche", "au départ, la besace est retenue (préférence de l'appareil, par monde)");
+    ok(g.Pa2Run.ensureChest().lastBag.forest.join() === "corde,torche" && g.pa2LastBag(fake).join() === "corde,torche", "au départ, la besace est retenue (dans la partie depuis v3.616.0, par monde)");
     // préparation suivante : un toucher la remet, ce qui manque est dit
     fake.bag = ["gourde"];
     g.pa2ReuseLastBag();
@@ -21262,6 +21267,65 @@ console.log("\n[411] v3.615.1 — Écran Équipé : chaque emplacement se choisi
     var oc = (html.match(/class="hs-eslot[^"]*" data-slot="(\w+)" onclick="([^"]+)"/g) || []);
     ok(oc.length === 7 && oc.every(function (x) { return /onclick="herosPickSlot\('\w+'\)"/.test(x); }), "les 7 emplacements appellent herosPickSlot (" + oc.length + ")");
   } catch (err) { ok(false, "[411] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[412] v3.616.0 — Audit de la Forêt : bâtiments offerts, Village à la réussite de la Meute, besace d'une autre partie, tutoriels");
+(function () {
+  try {
+    var EP = function () { return game.explorationProgression; };
+    // --- D1 : lire les zones ou les ateliers d'un bâtiment fermé ne l'ouvre plus ---
+    game = freshCombat("knight"); game.unlockedTabs.village = true;
+    run("ProductionManager.ensure(); FilRouge.invalidate(); FilRouge.all(); isWarehouseBeingMade('planche'); WorkshopsSystem.getQueue('fonderie'); ProductionPlotsSystem.getPlots('farm'); MilestoneManager.measure({ kind: 'zonesAtLevel', arg: 1 }); ProductionManager.ensure();");
+    ok(!EP().sawmillUnlocked && !EP().mineUnlocked && !EP().farmUnlocked, "Village ouvert, fil rouge, Entrepôt, ateliers et jalons lus : Scierie, Mine et Champs restent fermés");
+    ok(!game.production.sawmill && game.production.mine && game.production.mine.lockedStub === true && game.production.farm.lockedStub === true, "fil rouge et Entrepôt ne lisent plus un bâtiment fermé ; une lecture directe marque l'entrée (lockedStub)");
+    // ancienne partie : une entrée non marquée prouve toujours le bâtiment (migration v3.110.0 intacte)
+    game.production.sawmill = { plots: [] };
+    run("ProductionManager.ensure();");
+    ok(EP().sawmillUnlocked === true && !EP().mineUnlocked, "entrée d'une ancienne partie (non marquée) : la Scierie est accordée, la Mine marquée reste fermée");
+    // ouverture par l'expédition : l'entrée marquée devient la vraie, sans rattrapage du temps fermé, dotation versée
+    g.ProductionPlotsSystem.getPlots("mine").forEach(function (p) { p.lastTick = Date.now() - 6 * 3600e3; }); // zones lues bâtiment fermé, il y a 6 h
+    var bois0 = g.WarehouseManager.getAmount("bois");
+    run("SceneRunManager._applyUnlock(SCENE_TEMPLATES.eboulis_ferreux.unlockOnSuccess);");
+    var mine = game.production.mine;
+    ok(EP().mineUnlocked === true && !mine.lockedStub && mine.plots.every(function (p) { return Date.now() - p.lastTick < 60e3; }), "Éboulis ferreux réussi : la Mine s'ouvre, horloges remises à maintenant");
+    ok(mine.giftGranted === true && g.WarehouseManager.getAmount("bois") > bois0, "la dotation d'ouverture de la Mine est versée");
+
+    // --- D2 : le Village s'ouvre à la réussite de la Meute, pas à l'acceptation ni à l'échec ---
+    game = freshCombat("ranger");
+    var SQ = g.StoryQuestManager, idx = g.STORY_QUESTS.forest.steps.findIndex(function (st) { return st.id === "forest_06"; });
+    run("StoryQuestManager.ensure();"); SQ.getState("forest").currentStep = idx;
+    var step06 = g.STORY_QUESTS.forest.steps[idx];
+    ok(step06.unlockTabs.length === 0 && step06.unlockTabsOnClaim.join() === "village", "forest_06 : Village dans unlockTabsOnClaim, plus dans unlockTabs");
+    ok(g.buildStoryStepUnlockText(step06) === "" && g.buildStoryStepUnlockText(step06, true) === "Village", "carte d'étape : « Débloque à la réussite : Village »");
+    SQ.acceptStep("forest");
+    ok(!game.unlockedTabs.village, "Meute acceptée : Village fermé");
+    g.AdventureQuestManager.start("hq_wolf_pack");
+    g.AdventureQuestManager.onDefeat();
+    ok(!game.unlockedTabs.village && !g.MissionBoard.list().some(function (m) { return m.id === "petite_aventure_foret" || m.id === "scene_bosquet_silencieux"; }), "Meute ratée : ni Village, ni Petite aventure, ni Bosquet");
+    var rows = null, _pop = g.openQuestCompletePopup; g.openQuestCompletePopup = function (c) { rows = c.rewardRows; };
+    game.heroHp = game.heroMaxHp; game.adventureQuestsCompleted.hq_wolf_pack = true;
+    var claimed = SQ.claimStep("forest");
+    g.openQuestCompletePopup = _pop;
+    ok(claimed && game.unlockedTabs.village === true, "Meute réussie et réclamée : le Village s'ouvre");
+    ok(!!rows && rows.some(function (r) { return r.label === "Débloqué" && r.value === "Village"; }), "la fenêtre de fin annonce « Débloqué : Village »");
+
+    // --- D3 : « Comme la dernière fois » est propre à la partie ---
+    game = freshCombat("knight");
+    g.Prefs.setValue("pa2LastBag:forest", "trousse_t,corde");   // la besace d'une autre sauvegarde, restée sur l'appareil
+    var fake = { status: g.PA2_STATUS.prep, bag: [], worldId: "forest", parcours: null, templateId: "petite_aventure_foret" };
+    ok(g.pa2LastBag(fake).length === 0, "partie neuve : la besace d'une autre sauvegarde n'est plus lue");
+    g.Pa2Run.ensureChest().lastBag.forest = ["trousse_t"];
+    ok(!g.pa2LastBagAvailable(fake, g.pa2LastBag(fake)), "rien de disponible (Trousse de maître sans stock) : pas de bouton");
+    g.Pa2Run.ensureChest().lastBag.forest = ["trousse_t", "corde"];
+    ok(g.pa2LastBagAvailable(fake, g.pa2LastBag(fake)), "un objet disponible (la Corde) : le bouton revient");
+    run("fullResetState();");
+    ok(!game.expeditionChest.lastBag || !game.expeditionChest.lastBag.forest, "nouvelle partie : besace retenue vide");
+
+    // --- D4 : tutoriels corrigés (erreurs factuelles) ---
+    var src = require("fs").readFileSync(ROOT + "/js/data/story-quests.js", "utf8") + require("fs").readFileSync(ROOT + "/js/ui/tutorial-view.js", "utf8");
+    ok(["reprend un secteur libéré voisin", "à tout moment depuis l'écran Combat", "Tu choisis pour chacun : Auto", "il joue son action après la tienne", "Tes caractéristiques butent à 20", "ouvre 10 niveaux de plus sur CHACUNE", "seules les rations de la besace, les sources et le feu de camp"].every(function (t) { return src.indexOf(t) === -1; }), "les 7 phrases fausses ont disparu");
+    ok(src.indexOf("les trois autres à 14") !== -1 && src.indexOf("au départ de chaque sortie, ou au Campement") !== -1, "plafonds 20/14 et choix du mode au départ : textes présents");
+  } catch (err) { ok(false, "[412] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
 Promise.all(ATTENTES).then(function () {

@@ -305,7 +305,7 @@ function buildPa2PrepHTML(run) {
     h += '<p class="pa2-small pa2-dim">' + esc(_t("Les rations viennent de l'Entrepôt ; celles que tu ne manges pas y retournent.")) + '</p>';
     // v3.427.2 (retour Seb, option A) : la besace du dernier départ, remise en un toucher
     var last = pa2LastBag(run);
-    if (last.length && pa2BagKey(run.bag) !== pa2BagKey(last)) {
+    if (last.length && pa2BagKey(run.bag) !== pa2BagKey(last) && pa2LastBagAvailable(run, last)) { // v3.616.0 : rien à reprendre, pas de bouton
       h += '<button type="button" class="kbtn is-sec pa2-lastbag" onclick="pa2ReuseLastBag()">' + pa2Img(PA2_ICONS.bag) + esc(_t("Comme la dernière fois")) + '</button>';
     }
     h += '</div>';
@@ -370,14 +370,23 @@ function pa2RemoveItem(idx) {
 function pa2TogglePact(id) { Pa2Run.togglePact(id); pa2Rerender(); }
 
 /* v3.427.2 (retour Seb, option A) : « Comme la dernière fois ». La besace du dernier départ est retenue
-   SUR L'APPAREIL (Prefs, comme le marché de la Caravane), par monde — et par parcours pour les parcours
-   à besace. Rien n'entre dans la sauvegarde. */
-function pa2LastBagPref(run) { return "pa2LastBag:" + (run.parcours ? run.templateId : run.worldId); }
+   par monde — et par parcours pour les parcours à besace.
+   v3.616.0 (retour Seb) : retenue dans la PARTIE (coffre d'expédition), plus sur l'appareil : une partie neuve
+   reprenait la besace d'une autre sauvegarde (Trousse de maître). Les anciennes clés Prefs ne sont plus lues. */
+function pa2LastBagPref(run) { return run.parcours ? run.templateId : run.worldId; }
 function pa2BagKey(bag) { return (bag || []).slice().sort().join(","); }
 function pa2LastBag(run) {
-  if (!run || !window.Prefs || typeof Prefs.getValue !== "function") return [];
-  var v = Prefs.getValue(pa2LastBagPref(run));   // Prefs range du texte : « corde,petite_ration,… »
-  return (typeof v === "string" && v) ? v.split(",").filter(function (id) { return !!PA2_ITEMS[id]; }) : [];
+  if (!run || !window.Pa2Run) return [];
+  var v = Pa2Run.ensureChest().lastBag[pa2LastBagPref(run)];
+  return Array.isArray(v) ? v.filter(function (id) { return !!PA2_ITEMS[id]; }) : [];
+}
+// Au moins un objet retenu peut revenir : présent dans ce monde, débloqué, et en stock s'il vient de l'Entrepôt.
+function pa2LastBagAvailable(run, last) {
+  return (last || []).some(function (id) {
+    var it = PA2_ITEMS[id];
+    if (!it || !Pa2Run.itemInWorld(id, run) || !Pa2Run.isUnlocked(id)) return false;
+    return !it.resource || !window.WarehouseManager || WarehouseManager.getAmount(it.resource) > 0;
+  });
 }
 function pa2ReuseLastBag() {
   var run = Pa2Run.getRun();
@@ -399,7 +408,7 @@ function pa2Depart() {
   var run = Pa2Run.getRun(), bag = run ? run.bag.slice() : [], key = run ? pa2LastBagPref(run) : null;
   var r = Pa2Run.depart();
   if (!r.ok) { if (typeof showToast === "function") showToast(r.reason, 2200); return; }
-  if (key && bag.length && window.Prefs && typeof Prefs.setValue === "function") Prefs.setValue(key, bag.join(","));
+  if (key && bag.length) { Pa2Run.ensureChest().lastBag[key] = bag; if (typeof saveGame === "function") saveGame(); } // v3.616.0 : dans la partie
   pa2Rerender();
 }
 function pa2CancelPrep() {

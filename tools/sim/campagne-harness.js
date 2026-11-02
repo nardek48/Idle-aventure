@@ -474,6 +474,7 @@ function developVillage() {
   /* --zones : le joueur défriche et monte ses zones de production avec ce qu'il a en stock,
      si l'or du cran coûte moins de 20 % de la bourse. Une action par zone et par passage. */
   if (ZONES && g.ProductionPlotsSystem) g.ProductionPlotsSystem.getManagedBuildingIds().forEach(function (bid) {
+    if (!g.ProductionManager.isBuildingUnlocked(bid)) return; // v3.616.0 : le robot ouvrait la Scierie, la Mine et les Champs dès forest_02
     var P = g.ProductionPlotsSystem;
     P.getPlots(bid).forEach(function (pl, i) {
       var cost = pl.state === "locked" ? (P.isPlotRowOpen(i) && g.getProductionPlotUnlockCost(bid, i))

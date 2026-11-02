@@ -429,7 +429,10 @@ var STORY_QUESTS = {
           completion: "Le gibier s'entasse. Un camp qui stocke est déjà un village."
         },
         objectiveLabel: "Terminer « La Meute Affamée »",
-        unlockTabs: ["village"],
+        /* v3.616.0 (retour Seb) : le Village s'ouvre à la réussite, plus à l'acceptation — une Meute ratée
+           l'ouvrait déjà, avec la carte, la Petite aventure et le Bosquet. */
+        unlockTabs: [],
+        unlockTabsOnClaim: ["village"],
         reward: STORY_REWARDS.forest_06,
         linkTo: { section: "adventure", cardId: "adv_hq_wolf_pack" },
         // v3.105.1 : condition viande retirée — le bâtiment Chasse (seule vraie source) est débloqué PAR cette
@@ -540,7 +543,7 @@ var STORY_QUESTS = {
           points: [
             { icon: "images/Icons/scene/node_obstacle.webp", text: "La carte est découpée en secteurs autour d'Aeswyn. Tu libères un secteur en terminant sa Petite Aventure. Seuls ceux qui touchent le foyer ou un secteur libéré sont atteignables." },
             { icon: "images/Icons/resources/seve_aeswyn_icon.webp", text: "Un, deux ou trois points : l'anneau du secteur. Plus il est loin du foyer, plus le parcours est dur, et plus la première libération rapporte de Sève (5, 8 ou 12)." },
-            { icon: "images/Icons/scene/node_unknown.webp", text: "Un secteur libéré donne souvent un effet (Puits +10 %, une corde de plus…). Si une Petite Aventure de la carte échoue, la brume reprend un secteur libéré voisin : c'est le Recouvrement. L'effet revient quand tu le reprends." },
+            { icon: "images/Icons/scene/node_unknown.webp", text: "Un secteur libéré donne souvent un effet (Puits +10 %, une corde de plus…). Si tu échoues en rejouant un secteur déjà libéré, la brume le reprend : c'est le Recouvrement. Une première tentative ratée ne coûte rien. L'effet revient quand tu le reprends." },
             { icon: "images/Icons/scene/protective_amulet.webp", text: "La Palissade d'Aeswyn freine le Recouvrement et, dès le niveau 3, tient les secteurs proches du foyer. Le bouton « ? » de la carte rappelle chaque pastille." }
           ]
         },
@@ -641,7 +644,7 @@ var STORY_QUESTS = {
           points: [
             { icon: "images/Icons/codex/codex_lore.webp", text: "Le Grimoire automatise tes actions en combat selon des règles conditionnelles que tu définis (ex. « si une charge est annoncée → Défense »)." },
             { icon: "🎚️", text: "Tu commences avec 2 règles disponibles, et tu en débloqueras d'autres au fil de ta progression dans le jeu." },
-            { icon: "🔀", text: "Bascule entre mode Tactique (manuel, tu joues chaque round) et mode Grimoire (automatique, tes règles décident) à tout moment depuis l'écran Combat." }
+            { icon: "🔀", text: "Choisis le mode Tactique (manuel, tu joues chaque round) ou le mode Grimoire (automatique, tes règles décident) au départ de chaque sortie, ou au Campement : il ne change plus avant le retour." }
           ]
         },
         check: function (game) { return storyAdvDone(game, "aq_story_coeur") && storyCountActiveGrimoireRules(game) >= 1; },
@@ -734,9 +737,9 @@ var STORY_QUESTS = {
           icon: "images/Icons/subtabs/hero_summary.webp",
           title: "Les compagnons",
           points: [
-            { icon: "images/Icons/subtabs/hero_summary.webp", text: "Un compagnon combat à tes côtés : il joue son action après la tienne, à chaque round. Deux au maximum peuvent t'accompagner." },
+            { icon: "images/Icons/subtabs/hero_summary.webp", text: "Un compagnon combat à tes côtés : il joue une action à chaque round, à sa place dans l'ordre des tours (parfois avant toi). Deux au maximum peuvent t'accompagner." },
             { icon: "images/Icons/companions/wenna_bandage.webp", text: "Wenna est un Soutien : elle soigne l'allié le plus bas en PV. Elle n'a ni équipement ni talents — elle s'améliore contre de l'or, dans Héros › Compagnons." },
-            { icon: "images/Icons/combat_stats/stat_attack.webp", text: "Tu choisis pour chacun : Auto (il décide seul) ou Manuel. Un compagnon tombé à 0 PV est hors de combat jusqu'à la fin, et revient affaibli au combat suivant." }
+            { icon: "images/Icons/combat_stats/stat_attack.webp", text: "En mode Grimoire, tes compagnons jouent seuls ; en mode Tactique, tu choisis leurs actions. Un compagnon tombé à 0 PV est hors de combat jusqu'à la fin, et revient affaibli au combat suivant." }
           ]
         },
         check: function (game) { return storyCounter(game, "companionWins") >= 3; },

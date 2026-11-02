@@ -108,6 +108,8 @@ function getWorkshopsConsuming(key) {
 }
 function isWarehouseBeingMade(key) {
   return getWorkshopsProducing(key).some(function (wid) {
+    var bid = WORKSHOPS_CONFIG[wid].buildingId; // v3.616.0 : lire la file d'un bâtiment fermé créait son entrée
+    if (bid && window.ProductionManager && !ProductionManager.isBuildingUnlocked(bid)) return false;
     var q = WorkshopsSystem.getQueue(wid);
     return q.some(function (e) { var r = WorkshopsSystem.getRecipe(wid, e.recipeId); return r && r.outputs[0].resourceId === key; });
   });
