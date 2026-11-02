@@ -86,7 +86,7 @@ var ScreenBanner = {
       var wn = window.WORLDS && WORLDS[w] ? _td(WORLDS[w].name) : "";
       return ["images/Banners/quetes_" + SCREEN_BANNER_WORLDS[w] + ".webp", _t("Le tableau des missions"), wn];
     }
-    if (screen === "village") return ["images/Banners/village_" + (far + 1) + ".webp", _t("Le village d'Aeswyn"), aeswynTierText(aeswynTier(aeswynPopulation()))]; // v3.624.0 : la phrase du palier
+    if (screen === "village") return ["images/Banners/village_" + (far + 1) + ".webp", _t("Le village d'Aeswyn"), ((window.TowerSystem && TowerSystem.bannerLine()) || aeswynTierText(aeswynTier(aeswynPopulation())))]; // v3.624.0 : la phrase du palier ; v3.631.0 : celle de la fin
     if (screen === "heros") return ["images/Banners/heros_" + (far + 1) + ".webp", _t("Le terrain d'entraînement"), _t("Se préparer avant de repartir")];
     // v3.583.0 : pages du menu, une image chacune
     if (screen === "bibliotheque") return ["images/Banners/bibliotheque.webp", _t("La bibliothèque"), _t("Bêtes et savoirs du voyage")];

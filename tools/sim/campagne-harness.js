@@ -1973,6 +1973,13 @@ var SOLVERS = {
     playAdventure("aq_tour_silhouette");
     REGLE_EN_TETE = null;
   },
+  // v3.631.0 (Tour, acte IV) : la vision, puis la Question ; --bascule-fil / --bascule-brannoc = répondre contre sa pente
+  tour_19: function (g) { if (!g.storyMakeChoice("tower", "regarder")) note("vision refusée"); },
+  tour_20: function (g) {
+    var ans = g.TowerSystem.questionAnswers(), k = ARGS.indexOf("--bascule-fil") >= 0 ? 1 : (ARGS.indexOf("--bascule-brannoc") >= 0 ? 2 : 0);
+    note("Question : pente " + JSON.stringify(g.TowerSystem.pente()) + ", réponse « " + ans[k].value + " »" + (ans[k].prix ? ", prix " + ans[k].prix : ""));
+    if (!g.storyMakeChoice("tower", ans[k].value)) note("choix refusé (question)");
+  },
   tour_05: function (g) {
     var val = ARGS.indexOf("--poser") >= 0 ? "poser" : "garder";
     if (!g.storyMakeChoice("tower", val)) note("choix refusé (braise)");

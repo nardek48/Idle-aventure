@@ -19666,14 +19666,14 @@ console.log("\n[353] v3.534.0 — Bilan de fin de l'Histoire (audit PLA-9, optio
     ok(g.storyAllDone() === true, "storyAllDone : vrai quand tous les chapitres sont terminés");
     var ch = g.storyEndChoices(), n = 0;
     ch.forEach(function (x) { n += x.rows.length; });
-    ok(notes === 14 && n === 14, "14 choix pesants notés (v3.626.0 : la braise ; v3.629.0 : la copie), tous au bilan (" + n + "), les choix de compagnons exclus");
+    ok(notes === 15 && n === 15, "15 choix pesants notés (v3.626.0 : la braise ; v3.629.0 : la copie ; v3.631.0 : la Question), tous au bilan (" + n + "), les choix de compagnons et « Regarder » exclus");
     var h = g.buildStoryEndHTML();
-    ok(h.indexOf("Fin du chapitre " + ids.length) !== -1 && (h.match(/dungeon-summary-row/g) || []).length === 18, "fenêtre : titre du dernier chapitre, 4 lignes de bilan et 14 choix");
+    ok(h.indexOf("Fin de l&#39;Histoire") !== -1 && h.indexOf("pas encore ouverte") === -1 && (h.match(/dungeon-summary-row/g) || []).length === 19, "fenêtre : « Fin de l'Histoire » et le titre de la fin (v3.631.0), 4 lignes de bilan et 15 choix");
     ok(!/Donner|Garder|registre/.test(h.replace(/<span>[^<]*<\/span>/g, "")), "aucun axe ni registre affiché hors des textes de choix");
     var last = SQ[ids[ids.length - 1]].steps.slice(-1)[0];
     var c1 = { title: last.title, dialogue: [{ who: null, text: "x" }] }, c2 = { title: "Autre", dialogue: [] }, c3 = { title: last.title, dialogue: [], closeOnclick: "f()" };
     [c1, c2, c3].forEach(function (c) { g.storyEndChain(c); });
-    ok(c1.closeOnclick === "openStoryEndPopup()" && !c2.closeOnclick && c3.closeOnclick === "f()", "seule la fenêtre de la dernière étape ouvre le bilan à sa fermeture");
+    ok(c1.closeOnclick === "storyEpilogueThenEnd()" && !c2.closeOnclick && c3.closeOnclick === "f()", "seule la fenêtre de la dernière étape ouvre l'épilogue puis le bilan à sa fermeture (v3.631.0)");
     ok(g.buildStoryChainHTML().indexOf("story-end-card") !== -1, "carte « Revoir le bilan » en tête de Quêtes › Histoire");
     g.game.storyQuests = JSON.parse(sauve);
     ok(g.storyAllDone() === false && g.buildStoryChainHTML().indexOf("story-end-card") === -1, "Histoire en cours : ni bilan ni carte");
@@ -21713,6 +21713,52 @@ console.log("\n[425] v3.630.0 — Tour, lot T-4a : seul, la faille, la silhouett
     ok(/TowerSystem\.onBossPhase\(enemy, ph\)/.test(bm), "phases branchées sur BossMomentManager.onPhase, avant l'archétype du moteur");
   } catch (err) { ok(false, "[425] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   g.game.adventureQuestRun = run0; g.game.sceneRun = sc0;
+})();
+
+console.log("\n[426] v3.631.0 — Tour, lot T-4b : la vision, la Question, Azhem, l'épilogue");
+(function () {
+  var TS = g.TowerSystem, SQ = g.StoryQuestManager, gc = SQ.getChoice, C = {};
+  try {
+    var ch = g.STORY_QUESTS.tower;
+    ok(ch.steps.length === 20 && ch.steps.slice(18).map(function (x) { return x.id; }).join() === "tour_19,tour_20", "chapitre VI complet : 20 étapes");
+    ok(ch.steps[18].choice.noRecord && ch.steps[19].choice.key === "question" && /Azhem/.test(ch.steps[19].narrative.completionDialogue[0].text), "19 : regarder (hors registre) ; 20 : la Question, puis Azhem");
+    SQ.getChoice = function (k) { return C[k] != null ? C[k] : null; };
+    C = { braise: "garder", copie: "laisser", ouvrage: "donner" }; // donner 2 / garder 1 ; aeswyn 1 / soi 0
+    var p = TS.pente();
+    ok(p.don === "donner" && p.lieu === "aeswyn", "pente lue au registre (" + p.don + ", " + p.lieu + ")");
+    var ans = TS.questionAnswers();
+    ok(ans.length === 3 && ans[0].value === "aeswyn" && !ans[0].prix && ans[1].value === "rien" && ans[1].prix === "fil" && ans[2].value === "sienne" && ans[2].prix === "brannoc", "trois réponses : la pente sans prix, Donner/Garder (Le fil bleu), Soi/Aeswyn (Brannoc) ; « La tienne » n'est pas proposée");
+    var opts = ch.steps[19].choice.options;
+    ok(opts.length === 3 && !opts[0].prix && /fil bleu/.test(opts[1].prix) && /Brannoc/.test(opts[2].prix), "le prix est écrit sous chaque bascule");
+    C = { braise: "poser" }; // donner 1 / garder 0 ; soi 1
+    p = TS.pente(); ok(p.don === "donner" && p.lieu === "soi", "autre pente (" + p.don + ", " + p.lieu + ")");
+    C = { braise: "garder", copie: "laisser", seuil: "soi" }; // 1-1 sur les deux axes : copie départage Donner, braise départage Aeswyn
+    p = TS.pente(); ok(p.don === "donner" && p.lieu === "aeswyn", "égalité : le dernier choix de la Tour départage (copie, puis braise)");
+    // prix
+    run("fullResetState(); game.playerName='Lys'; game.heroId='knight'; StoryQuestManager.ensure();");
+    var fil = g.EliteManager.buildUniqueLoot("fil_bleu"); g.game.equipped.amulet = fil;
+    C = { braise: "garder", copie: "laisser" };
+    ok(TS.payQuestion("rien") === "fil" && !g.game.equipped.amulet && g.game.explorationProgression.questionPrix === "fil", "bascule Donner/Garder : Le fil bleu quitte l'équipement");
+    g.game.inventory = [g.EliteManager.buildUniqueLoot("fil_bleu")];
+    TS.takeFilBleu(); ok(g.game.inventory.length === 0, "… ou le sac");
+    ok(TS.payQuestion("sienne") === "brannoc" && g.game.explorationProgression.questionPrix === "brannoc", "bascule Soi/Aeswyn : Brannoc absent");
+    C.question = "sienne";
+    var d = TS.endingDeck(), last = d.planches[d.planches.length - 1];
+    ok(TS.ending() === "sienne" && last.lignes.indexOf(g.TOWER_FIN_PRIX.brannoc) === last.nom - 1 && last.lignes[last.nom] === "La forme au sommet", "épilogue : deux planches, la ligne de Brannoc avant le titre doré");
+    g.game.explorationProgression.questionPrix = "aucun";
+    d = TS.endingDeck(); ok(d.planches[1].lignes.indexOf(g.TOWER_FIN_PRIX.brannoc) === -1, "sans ce prix, pas de ligne");
+    ok(TS.bannerLine() === "Orwen met un morceau de pain de côté, sans dire pour qui." && ch.endText === "La forme au sommet", "la phrase du bandeau du Village et le titre du chapitre prennent ceux de la fin");
+    ok(g.TOWER_VISION.planches.length === 3 && /\{nom\}/.test(g.TOWER_VISION.planches[1].lignes[1]) && Object.keys(g.TOWER_FINS).join() === "sienne,aeswyn,tienne,rien", "la vision (trois planches, {nom}) et les quatre fins");
+    var sb = require("fs").readFileSync(require("path").join(ROOT, "js/ui/screen-banner.js"), "utf8"), pv = require("fs").readFileSync(require("path").join(ROOT, "js/ui/prologue-view.js"), "utf8");
+    ok(/TowerSystem\.bannerLine\(\)/.test(sb) && /split\("\{nom\}"\)/.test(pv), "bandeau du Village et nom du héros dans les planches");
+    // Codex
+    SQ.getChoice = gc;
+    var cx = function (id) { return g.CODEX_ENTRIES.filter(function (x) { return x.id === id; })[0]; };
+    ok(cx("cette_nuit_la").isUnlocked() === false, "« Cette nuit-là » : fermée avant l'étape 19");
+    run("game.storyQuests.tower.claimedSteps.tour_19 = true;");
+    ok(cx("cette_nuit_la").isUnlocked() === true && cx("dungeon_tier_6") && !/cinq couches/.test(cx("dungeon").text) && !/dernier Sceau connu/.test(cx("dungeon_tier_5").text), "Codex : « Cette nuit-là », le sixième Sceau ; « cinq couches » et « dernier Sceau connu » relus");
+  } catch (err) { ok(false, "[426] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  SQ.getChoice = gc;
 })();
 
 Promise.all(ATTENTES).then(function () {

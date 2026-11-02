@@ -28,6 +28,12 @@ var PrologueView = {
     PrologueView.start({ planches: c.planches, dir: "images/Chapitres/", range: [0, c.planches.length], label: _td(c.num), eyebrow: _td(c.num), teinte: c.teinte, cls: "is-chapitre" }, "chapitre", onEnd);
   },
 
+  /* v3.631.0 (Tour) : paquet de planches libre (vision, fins), images dans images/Tour/. */
+  playDeck: function (deck, onEnd) {
+    if (!deck || !PrologueView.root()) { if (onEnd) onEnd(); return; }
+    PrologueView.start({ planches: deck.planches, dir: "images/Tour/", range: [0, deck.planches.length], label: _td(deck.num), eyebrow: _td(deck.eyebrow || ""), teinte: deck.teinte, cls: "is-chapitre" }, "tour", onEnd);
+  },
+
   deckPrologue: function (temps) {
     return { planches: PROLOGUE_PLANCHES, dir: "images/Prologue/", range: PROLOGUE_TEMPS[temps], label: _t("Prologue"), eyebrow: "", teinte: null, cls: "" };
   },
@@ -57,7 +63,8 @@ var PrologueView = {
     var d = PrologueView.deck, p = d.planches[i], range = d.range, dots = "";
     for (var k = range[0]; k < range[1]; k++) dots += '<i class="' + (k === i ? "on" : "") + '"></i>';
     var lignes = p.lignes.map(function (l, n) {
-      return '<p class="' + (p.nom === n ? "is-nom" : "") + '">' + prologueLetters(_td(l)) + '</p>';
+      var txt = _td(l).split("{nom}").join((typeof game !== "undefined" && game && game.playerName) || ""); // v3.631.0 : nom du héros
+      return '<p class="' + (p.nom === n ? "is-nom" : "") + '">' + prologueLetters(txt) + '</p>';
     }).join("");
     // v3.623.0 : teinte du chapitre en variables (fond animé si l'image manque), chapitre rappelé sur la première planche
     var tv = d.teinte ? ' style="--pro-a:' + d.teinte[0] + ';--pro-b:' + d.teinte[1] + ';--pro-c:' + d.teinte[2] + '"' : "";
@@ -128,7 +135,9 @@ var PrologueView = {
 
 /* Mots insécables, lettres déjà en place mais invisibles : rien ne saute pendant la frappe. */
 function prologueLetters(text) {
-  return String(text).split(" ").map(function (mot) {
+  // v3.631.0 : « : ; ! ? » » collés au mot d'avant, « « » au suivant (pas de deux-points seul en début de ligne)
+  var t = String(text).replace(/ ([:;!?»])/g, "\u00a0$1").replace(/« /g, "«\u00a0");
+  return t.split(" ").map(function (mot) {
     return '<span class="prologue-m">' + mot.split("").map(function (c) { return '<span class="prologue-l">' + esc(c) + '</span>'; }).join("") + '</span>';
   }).join(" ");
 }

@@ -892,17 +892,18 @@ function buildStoryEndHTML() {
     { label: _t("Ennemis vaincus"), value: formatNumber(game.totalKills || 0) },
     { label: _t("Hauts faits"), value: hf + " / " + db.length }
   ];
+  var fin = window.TowerSystem && TowerSystem.ending(); // v3.631.0 : la vraie fin, celle de la Question
   var h = '<div class="full-menu-overlay kwin-veil"><div class="kwin dungeon-story-card is-success story-end-win">';
   h += kWinHeadHTML({ icon: renderIconOrEmojiHTML("images/Icons/quests/quest_story.webp", "dungeon-story-icon-img", ""),
-    title: esc(_t("Fin du chapitre {n}", { n: ids.length })), sub: esc(_t("L'Histoire s'arrête ici, pour l'instant")) });
-  h += '<div class="kwin-body"><div class="kwin-quote dungeon-story-text">' + esc(_t("La Tour sera le prochain chapitre. Elle n'est pas encore ouverte.")) + '</div>';
+    title: esc(fin ? _t("Fin de l'Histoire") : _t("Fin du chapitre {n}", { n: ids.length })), sub: esc(fin ? _td(TOWER_FINS[fin].num) : _t("L'Histoire s'arrête ici, pour l'instant")) });
+  h += '<div class="kwin-body"><div class="kwin-quote dungeon-story-text">' + esc(fin ? TowerSystem.bannerLine() : _t("La suite de l'Histoire arrive bientôt.")) + '</div>';
   h += storyEndRowsHTML(rows);
   var choix = storyEndChoices();
   if (choix.length) {
     h += '<div class="story-end-h">' + esc(_t("Tes choix")) + '</div>';
     choix.forEach(function (g) { h += '<div class="story-end-ch">' + esc(_td(g.chapter)) + '</div>' + storyEndRowsHTML(g.rows, "story-end-rows"); });
   }
-  h += '<p class="story-end-note">' + esc(_t("Ce bilan reste dans Quêtes › Histoire. Au Camp, le fil rouge propose la suite.")) + '</p></div>';
+  h += '<p class="story-end-note">' + esc(fin ? _t("Le jeu continue : donjons, cartes, village. Ce bilan, la vision et l'épilogue restent dans Quêtes › Histoire.") : _t("Ce bilan reste dans Quêtes › Histoire. Au Camp, le fil rouge propose la suite.")) + '</p></div>';
   h += '<div class="kwin-foot"><button class="kbtn primary" type="button" onclick="closeQuestCompletePopup()">' + esc(_t("Continuer")) + '</button></div></div></div>';
   return h;
 }
@@ -914,15 +915,21 @@ function openStoryEndPopup() {
 
 /* Carte en tête de Quêtes › Histoire, une fois l'Histoire finie. */
 function buildStoryEndCardHTML() {
-  return '<div class="story-end-card"><b>' + esc(_t("Fin de l'Histoire, pour l'instant")) + '</b><p>' + esc(_t("La Tour sera le prochain chapitre. Elle n'est pas encore ouverte.")) + '</p>'
+  var fin = window.TowerSystem && TowerSystem.ending(); // v3.631.0 : la fin choisie, l'épilogue et la vision à revoir
+  if (fin) return '<div class="story-end-card"><b>' + esc(_td(TOWER_FINS[fin].num)) + '</b><p>' + esc(TowerSystem.bannerLine()) + '</p>'
+    + '<button class="story-end-link" type="button" onclick="openStoryEndPopup()">' + esc(_t("Revoir le bilan")) + ' ▸</button>'
+    + '<button class="story-end-link" type="button" onclick="TowerSystem.playEpilogue(null)">' + esc(_t("Revoir l'épilogue")) + ' ▸</button></div>';
+  return '<div class="story-end-card"><b>' + esc(_t("Fin de l'Histoire, pour l'instant")) + '</b><p>' + esc(_t("La suite de l'Histoire arrive bientôt.")) + '</p>'
     + '<button class="story-end-link" type="button" onclick="openStoryEndPopup()">' + esc(_t("Revoir le bilan")) + ' ▸</button></div>';
 }
 
 /* v3.570.0 : carte « Revoir le prologue » en tête de Quêtes › Histoire (parties en cours comprises). */
 function buildPrologueCardHTML() {
+  var vision = !!(game.explorationProgression && game.explorationProgression.towerVisionSeen); // v3.631.0 : la vision de l'étape 19
   return '<div class="story-prologue-card"><b>' + esc(_t("Prologue — Cette nuit-là")) + '</b>'
     + '<button class="story-end-link" type="button" onclick="openPrologueReplay()">' + esc(_t("Revoir le prologue")) + ' ▸</button>'
-    + chapterOpeningLinksHTML("story-end-link") + '</div>';
+    + chapterOpeningLinksHTML("story-end-link")
+    + (vision && window.TowerSystem ? '<button class="story-end-link" type="button" onclick="TowerSystem.playVision(null)">' + esc(_t("Revoir la vision : {x}", { x: _td(TOWER_VISION.num) })) + ' ▸</button>' : '') + '</div>';
 }
 
 /* v3.623.0 : un lien par ouverture déjà vue (étape d'arrivée faite), sous le prologue. */
@@ -937,8 +944,14 @@ function chapterOpeningLinksHTML(cls) {
 /* La fenêtre de la dernière étape du dernier chapitre ouvre le bilan à sa fermeture (une fois : l'étape ne se réclame qu'une fois). */
 function storyEndChain(config) {
   var ids = Object.keys(STORY_QUESTS), last = STORY_QUESTS[ids[ids.length - 1]].steps.slice(-1)[0];
-  if (!config.closeOnclick && config.dialogue && last && config.title === last.title && storyAllDone()) config.closeOnclick = "openStoryEndPopup()";
+  // v3.631.0 : après la Question, l'épilogue (deux planches) avant le bilan
+  if (!config.closeOnclick && config.dialogue && last && config.title === last.title && storyAllDone()) config.closeOnclick = (window.TowerSystem && TowerSystem.ending()) ? "storyEpilogueThenEnd()" : "openStoryEndPopup()";
 }
+function storyEpilogueThenEnd() {
+  if (typeof closeQuestCompletePopup === "function") closeQuestCompletePopup();
+  if (window.TowerSystem) TowerSystem.playEpilogue(openStoryEndPopup); else openStoryEndPopup();
+}
+window.storyEpilogueThenEnd = storyEpilogueThenEnd;
 window.storyAllDone = storyAllDone;
 window.storyEndChoices = storyEndChoices;
 window.buildStoryEndHTML = buildStoryEndHTML;

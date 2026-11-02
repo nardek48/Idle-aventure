@@ -23,6 +23,8 @@ var DATA_TEXT_FIELDS = {
   ACHIEVEMENTS_DB: ["*.name", "*.desc", "*.hint", "*.title"],
   PROLOGUE_PLANCHES: ["*.lignes.*"], // v3.570.0 : le prologue (data/prologue.js)
   CHAPTER_OPENINGS: ["*.num", "*.planches.*.lignes.*"], // v3.623.0 : ouvertures de chapitre (data/chapter-openings.js)
+  TOWER_VISION: ["num", "planches.*.lignes.*"], // v3.631.0 (Tour) : la vision de l'étape 19
+  TOWER_FINS: ["*.num", "*.banniere", "*.planches.*.lignes.*"], // v3.631.0 (Tour) : les quatre fins
   ACHIEVEMENTS_RETIRED: ["*.name", "*.desc"],
   ACHIEVEMENT_CATEGORIES: ["*.label", "*.tierRewards.*.title"],
   ACHIEVEMENT_CATEGORY_LABELS: ["*"],
@@ -34,6 +36,9 @@ var DATA_TEXT_FIELDS = {
   STORY_VEINE_TEXTS: ["*.completion", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.488.0 (Montagne) : les deux branches du choix « veine »
   STORY_BRAISE_TEXTS: ["*.completion", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.626.0 (Tour) : les deux branches du choix « braise »
   STORY_COPIE_TEXTS: ["*.completion", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.629.0 (Tour) : les deux branches du choix « copie »
+  STORY_QUESTION_OPTIONS: ["*.label", "*.desc"], // v3.631.0 (Tour) : les quatre réponses à la Question
+  STORY_QUESTION_PRIX: ["*"], // v3.631.0 : les deux prix affichés
+  TOWER_FIN_PRIX: ["*"], // v3.631.0 : ligne de l'épilogue quand Brannoc manque
   STORY_OUVRAGE_TEXTS: ["*.completion", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.490.0 (Montagne) : les deux branches du choix « ouvrage »
   STORY_DROIT_TEXTS: ["*.completion", "*.text", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.491.0 (Montagne) : le choix « droit » et la fin du chapitre
   STORY_PIOCHE_OPTIONS: ["*.label", "*.desc"], // v3.488.0 (Montagne, montagne_03) : « Deux sur cinq »
