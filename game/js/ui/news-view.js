@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.624.2", "menu_icons/quests_menu", _t("Les ouvertures du Désert, des Ruines, de la Crypte et de la Montagne ont leurs illustrations.")],
     ["3.624.1", "menu_icons/quests_menu", _t("Fin du chapitre V : la Tour est bien au nord, comme dans le prologue.")],
     ["3.624.0", "menu_icons/village_menu", _t("Aeswyn se repeuple : le bandeau du Village compte ses habitants, et sa phrase change à mesure que le village grandit.")],
     ["3.623.0", "menu_icons/quests_menu", _t("Ouvertures de chapitre : chaque nouveau monde s\'ouvre sur trois planches, à revoir dans Quêtes › Histoire.")],

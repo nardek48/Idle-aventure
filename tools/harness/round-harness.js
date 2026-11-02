@@ -21510,6 +21510,9 @@ console.log("\n[418] v3.623.0 — Ouvertures de chapitre");
     ok(/images\/Chapitres\//.test(pv) && /is-vide/.test(pv) && /img\.onerror = vide/.test(pv), "images attendues dans images/Chapitres/ ; image absente : fond animé, vrai chemin gardé");
     ok(rd("index.html").indexOf("js/data/chapter-openings.js") > 0 && rd("sw.js").indexOf('"./js/data/chapter-openings.js"') > 0, "nouveau fichier dans index.html et le précache du service worker");
     var en = rd("js/lang/en.js"), manque = run("CHAPTER_OPENING_ORDER.reduce(function(a,id){ CHAPTER_OPENINGS[id].planches.forEach(function(p){ a=a.concat(p.lignes); }); return a; }, [])").filter(function (l) { return en.indexOf(JSON.stringify(l) + ":") < 0; });
+    // v3.624.2 : les 24 illustrations de Seb (PC et téléphone) sont livrées
+    var absentes = run("CHAPTER_OPENING_ORDER.reduce(function(a,id){ CHAPTER_OPENINGS[id].planches.forEach(function(p){ a.push(p.img, p.img + '-wide'); }); return a; }, [])").filter(function (n) { return !fs.existsSync(path.join(ROOT, "images/Chapitres/" + n + ".webp")); });
+    ok(absentes.length === 0, "les 24 images des ouvertures sont dans images/Chapitres/" + (absentes.length ? " (manque : " + absentes[0] + ")" : ""));
     ok(manque.length === 0, "les 36 lignes traduites en anglais" + (manque.length ? " (manque : " + manque[0] + ")" : ""));
   } catch (err) { ok(false, "[418] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
