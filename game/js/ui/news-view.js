@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.621.1", "menu_icons/quests_menu", _t("Marques du corrompu : ce sont bien 5 vagues franchies qui comptent, plus 5 ennemis (une vague de deux ne compte plus double).")],
     ["3.621.0", "menu_icons/quests_menu", _t("Le Codex se découvre au fil de l\'histoire, sans en dire trop d\'avance. Le cadeau de Brannoc est bien une lame, faite pour ta classe.")],
     ["3.621.0", "menu_icons/quests_menu", _t("Explications corrigées : noms des réglages du Grimoire, raretés des caravanes, coût du sentier de la Montagne.")],
     ["3.620.0", "menu_icons/heroes_menu", _t("L\'habillage des cartes est terminé : le bouton de l\'équipe du Résumé prend aussi son cadre.")],

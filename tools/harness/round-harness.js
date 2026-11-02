@@ -6755,18 +6755,21 @@ console.log("\n[64b] v3.261.0 \u2014 Qu\u00eates de combat : chaque d\u00e9part 
   st.currentStep = idxOf("forest_13"); st.accepted = false;
   run("StoryQuestManager.acceptStep('forest');");
   var sMark = chapitre.steps[idxOf("forest_13")];
+  // v3.621.1 : le compteur suit les VAGUES franchies (vague en cours, sans ennemi debout ici), plus les kills
+  var aeAvant = g.CombatActors.aliveEnemies; g.CombatActors.aliveEnemies = function () { return []; };
   game.dungeonRun = { active: true, wave: 3, dungeonId: 1, marks: ["m1"] };
   game.totalKills += 3; run("StoryQuestManager._trackKills();");
   ok(st.counters.coeurKillsMarked === 3, "run 1 : 3 vagues sous Marque");
-  game.dungeonRun = { active: true, wave: 1, dungeonId: 1, marks: ["m1"] }; // mort puis nouveau run
+  game.dungeonRun = { active: true, wave: 2, dungeonId: 1, marks: ["m1"] }; // mort puis nouveau run (2 vagues franchies)
   game.totalKills += 2; run("StoryQuestManager._trackKills();");
   ok(st.counters.coeurKillsMarked === 2 && sMark.check(game) === false, "run 2 : le compteur repart de 0 (2, pas 5)");
   var tag = game.dungeonRun.storyRunTag;
   var dSave = JSON.parse(JSON.stringify(game.dungeonRun));
   game.dungeonRun = dSave; // rechargement : l'étiquette est sauvegardée avec le run
-  game.totalKills += 3; run("StoryQuestManager._trackKills();");
+  game.dungeonRun.wave = 5; game.totalKills += 3; run("StoryQuestManager._trackKills();");
   ok(game.dungeonRun.storyRunTag === tag && st.counters.coeurKillsMarked === 5 && sMark.check(game) === true, "rechargement en plein run : pas de remise \u00e0 z\u00e9ro, 5 vagues atteintes");
   game.dungeonRun = { active: false, wave: 0, dungeonId: 1, marks: [] };
+  g.CombatActors.aliveEnemies = aeAvant;
 
   /* Chasse et donjon : départ à 0 par construction */
   ok(/game\.huntRun = \{ active: true, questId: questId, killsInLot: 0 \}/.test(String(g.HuntQuestManager.start)), "chasse : chaque lot part de 0 kill");
@@ -21425,6 +21428,27 @@ console.log("\n[415] v3.621.0 — Audit narratif : feuillets du Veilleur, lame d
     run("storyCompanionCount = window.__cnt415;");
     ok(t4 === "Deux sur quatre|Deux sur quatre" && t5 === "Deux sur cinq|Deux sur cinq", "montagne_03 : « Deux sur quatre » quand Ysolt est partie, « Deux sur cinq » sinon");
   } catch (err) { ok(false, "[415] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[416] v3.621.1 — forest_13 : des vagues franchies sous Marque, plus des kills (accord Seb)");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; StoryQuestManager.ensure();"
+      + "window.__ae416 = CombatActors.aliveEnemies; window.__vivants416 = 0; CombatActors.aliveEnemies = function(){ return new Array(window.__vivants416); };"
+      + "window.__st416 = game.storyQuests.forest; __st416.counters.coeurKillsMarked = 0; __st416.markedRunTag = null;"
+      + "game.dungeonRun = { active: true, wave: 3, dungeonId: 1, marks: ['m1'], storyRunTag: 'run416' };");
+    var compte = function (wave, vivants) { run("game.dungeonRun.wave=" + wave + "; window.__vivants416=" + vivants + "; StoryQuestManager._countKills(__st416, 1, 'forest');"); return run("__st416.counters.coeurKillsMarked"); };
+    ok(compte(3, 1) === 2, "vague de groupe (vague 3) : un ennemi tombé, l'autre debout -> 2 vagues franchies, pas 3");
+    ok(compte(3, 0) === 3, "le second tombe : la vague 3 compte, une seule fois");
+    ok(compte(4, 1) === 3, "la vague 4 apparue : toujours 3 (rien ne compte double)");
+    ok(compte(4, 0) === 4 && run("STORY_QUESTS.forest.steps.find(function(x){return x.id==='forest_13';}).check(game)") === false, "vague 4 franchie : 4/5, l'étape attend encore");
+    ok(compte(6, 1) === 5 && run("STORY_QUESTS.forest.steps.find(function(x){return x.id==='forest_13';}).check(game)") === true, "vague 5 franchie (la 6 a paru) : 5/5, l'étape se valide");
+    run("game.dungeonRun = { active: true, wave: 2, dungeonId: 1, marks: ['m1'], storyRunTag: 'autre' }; window.__vivants416 = 1; StoryQuestManager._countKills(__st416, 1, 'forest');");
+    ok(run("__st416.counters.coeurKillsMarked") === 1, "nouveau run : le compte repart de 0 (vague 1 franchie)");
+    run("game.dungeonRun = { active: true, wave: 4, dungeonId: 1, marks: [], storyRunTag: 'sans' }; window.__vivants416 = 0; __st416.counters.coeurKillsMarked = 0; StoryQuestManager._countKills(__st416, 1, 'forest');");
+    ok(run("__st416.counters.coeurKillsMarked") === 0, "sans Marque : rien ne compte");
+    run("CombatActors.aliveEnemies = window.__ae416; game.dungeonRun = { active: false, wave: 0, dungeonId: 1, marks: [] };");
+  } catch (err) { ok(false, "[416] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
 Promise.all(ATTENTES).then(function () {
