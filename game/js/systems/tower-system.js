@@ -10,6 +10,9 @@ var TOWER_BRAISE_DMG = 0.10;   // poser : +10 % de dégâts du héros à la Tour
 var TOWER_MIRROR_PENALTY = 0.25;
 /* v3.629.0 (choix « copie », tour_14) : Aeswyn d'avant laissée debout -> le Sommet interdit plus dur et plus riche. */
 var TOWER_SUMMIT_HARD = 1.2, TOWER_SUMMIT_LOOT = 2;
+/* v3.630.0 (TW6) : le trait que la silhouette prend à chaque classe (un contre connu du Grimoire pour chacun).
+   Rôdeur : blindée, pas corruptrice (au banc, la corruption rendait le combat impossible quel que soit le réglage). */
+var TOWER_CLASS_ARCHETYPE = { knight: "enraged", ranger: "armored", mage: "silenced" };
 
 var TowerSystem = {
   /* Le héros se bat à la Tour (monde de résidence). */
@@ -27,6 +30,7 @@ var TowerSystem = {
   /* Le miroir : la cible garde-t-elle tes gestes ? */
   isMirror: function (foe) {
     if (!foe) return false;
+    if (foe.mirror) return true; // v3.630.0 : la silhouette, à partir de sa phase « elle garde tes gestes »
     if (foe.isElite && foe.id === "gardien_qui_repete") return true;
     var r = game.dungeonRun;
     return !!(foe.isBoss && !foe.isElite && r && r.active && Number(r.dungeonId) === 6);
@@ -49,6 +53,25 @@ var TowerSystem = {
   summitHardMult: function (dungeon) { return this.summitLeftStanding(dungeon) ? TOWER_SUMMIT_HARD : 1; },
   summitLootMult: function (dungeon) { return this.summitLeftStanding(dungeon) ? TOWER_SUMMIT_LOOT : 1; },
 
+  /* v3.630.0 (TW5) : quête ou parcours marqué `solo` en cours -> aucun compagnon (lu par CompanionManager.partyIds). */
+  isSolo: function () {
+    var q = game.adventureQuestRun, r = game.sceneRun;
+    if (q && q.active && q.questId && window.ADVENTURE_QUESTS && ADVENTURE_QUESTS[q.questId] && ADVENTURE_QUESTS[q.questId].solo) return true;
+    return !!(r && r.templateId && r.status !== "completed" && window.SCENE_TEMPLATES && SCENE_TEMPLATES[r.templateId] && SCENE_TEMPLATES[r.templateId].solo);
+  },
+  /* v3.630.0 (TW6) : phases de la silhouette, appelées par BossMomentManager.onPhase. */
+  onBossPhase: function (e, ph) {
+    if (!e || !ph) return;
+    // elle prend le trait de ta classe : posé sur la phase, que checkPhases applique juste après (silence compris)
+    if (ph.copyClass) ph.archetype = TOWER_CLASS_ARCHETYPE[game.heroId] || "enraged";
+    if (ph.mirror) e.mirror = true;
+    if (ph.through) { // la lumière passe à travers elle : le bouclier de boss, tout de suite (round intouchable : plus tard)
+      e.shieldTelegraphed = false;
+      e.shieldRounds = (typeof BOSS_SHIELD_DURATION_ROUNDS === "number") ? BOSS_SHIELD_DURATION_ROUNDS : 2;
+      if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
+    }
+  },
+
   /* Combat gagné : la braise gardée rend un peu de PV. */
   onVictory: function () {
     if (!this.atTower() || this.braise() !== "garder" || !(game.heroHp > 0)) return 0;
@@ -65,3 +88,4 @@ window.TowerSystem = TowerSystem;
 window.TOWER_BRAISE_HEAL = TOWER_BRAISE_HEAL;
 window.TOWER_BRAISE_DMG = TOWER_BRAISE_DMG;
 window.TOWER_MIRROR_PENALTY = TOWER_MIRROR_PENALTY;
+window.TOWER_CLASS_ARCHETYPE = TOWER_CLASS_ARCHETYPE;

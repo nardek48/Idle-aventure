@@ -146,6 +146,7 @@ var CompanionManager = {
   /* Compagnons qui partent avec le héros, dans l'ordre, plafonnés. */
   partyIds: function () {
     var self = this;
+    if (window.TowerSystem && TowerSystem.isSolo()) return []; // v3.630.0 (Tour, TW5) : étapes 16 à 18, seul
     return this.unlockedIds().filter(function (id) {
       // v3.334.0 (P2) : un compagnon en patrouille quitte le groupe jusqu'à son retour
       if (window.PatrolManager && PatrolManager.isOnPatrol(id)) return false;

@@ -1280,7 +1280,7 @@ function run() {
       CURRENT_STEP = step.id;
       // v3.423.0 : TRACE_FORCE=1 relève la force du héros à chaque étape (référence des ajustements de difficulté)
       if (process.env.TRACE_FORCE) console.log("  [force] " + step.id + " monde " + G.WorldManager.worldIndex + " aventure " + G.WorldManager.adventureIndex + " niv. " + G.game.heroLevel + " dmg " + Math.round(G.CombatForecast.getHeroDamagePerRound()) + " ehp " + Math.round(G.CombatForecast.getHeroEffectiveHp ? G.CombatForecast.getHeroEffectiveHp() : G.game.heroMaxHp));
-      if (COMBATS && /^(desert_12|desert_15|desert_17|forest_14|forest_15|ruines_01|ruines_02|ruines_03|ruines_11|ruines_13|ruines_15|ruines_19|crypte_01|crypte_02|crypte_03|crypte_06|crypte_12|crypte_14|crypte_16|crypte_19|montagne_01|montagne_02|montagne_03|montagne_04|montagne_06|montagne_08|montagne_10|montagne_12|montagne_13|tour_01|tour_02|tour_04|tour_06|tour_07|tour_08|tour_09|tour_10|tour_11|tour_12|tour_13|tour_15)$/.test(step.id)) { STATS.profils[step.id] = combatLine(); console.log("  ◦ héros à l'entrée de " + step.id + " : " + STATS.profils[step.id]); if (process.env.TRACE_FORGE) console.log("     forge armure : " + G.ForgeManager.getBlockReason("armor") + " " + JSON.stringify(G.ForgeManager.getCost("armor")) + " or " + Math.floor(G.game.gold)); }
+      if (COMBATS && /^(desert_12|desert_15|desert_17|forest_14|forest_15|ruines_01|ruines_02|ruines_03|ruines_11|ruines_13|ruines_15|ruines_19|crypte_01|crypte_02|crypte_03|crypte_06|crypte_12|crypte_14|crypte_16|crypte_19|montagne_01|montagne_02|montagne_03|montagne_04|montagne_06|montagne_08|montagne_10|montagne_12|montagne_13|tour_01|tour_02|tour_04|tour_06|tour_07|tour_08|tour_09|tour_10|tour_11|tour_12|tour_13|tour_15|tour_16|tour_18)$/.test(step.id)) { STATS.profils[step.id] = combatLine(); console.log("  ◦ héros à l'entrée de " + step.id + " : " + STATS.profils[step.id]); if (process.env.TRACE_FORGE) console.log("     forge armure : " + G.ForgeManager.getBlockReason("armor") + " " + JSON.stringify(G.ForgeManager.getCost("armor")) + " or " + Math.floor(G.game.gold)); }
       var t0s = { h: CLOCK.offset, c: STATS.combatMs, s: STATS.healMs, d: STATS.deaths, j: DAYS_WAITED, e: (STATS.secteurs.desert || {}).essais || 0 };
       var snap0 = snapTemps();
       G.StoryQuestManager.acceptStep(cid);
@@ -1963,6 +1963,16 @@ var SOLVERS = {
     if (!g.storyMakeChoice("tower", val)) note("choix refusé (copie)");
   },
   tour_15: function (g) { playAdventure("aq_tour_haut"); },
+  // v3.630.0 (Tour, acte IV, seul) : avant la silhouette, le contre de son trait en tête du Grimoire (comme un joueur)
+  tour_16: function (g) { playAdventure("aq_tour_seul"); },
+  tour_17: function (g) { playExpedition("faille_tour", function () { return g.storyDesertFlag("failleTourDone"); }); },
+  tour_18: function (g) {
+    var contre = { knight: ["enemyEnraged", "skill1"], ranger: ["enemyArmored", "skill2"], mage: ["enemySilenceIncoming", "defense"] }[g.game.heroId];
+    REGLE_EN_TETE = contre ? { conditionId: contre[0], actionSlot: contre[1] } : null;
+    reglesAvisees(g);
+    playAdventure("aq_tour_silhouette");
+    REGLE_EN_TETE = null;
+  },
   tour_05: function (g) {
     var val = ARGS.indexOf("--poser") >= 0 ? "poser" : "garder";
     if (!g.storyMakeChoice("tower", val)) note("choix refusé (braise)");
@@ -2099,7 +2109,10 @@ function reglesAvisees(g) {
     g.setGrimoireRuleAction(i, pick.v);
     i++;
   });
+  // v3.630.0 : contre d'un boss précis (la silhouette), gardé en tête malgré la réécriture de l'entretien
+  if (REGLE_EN_TETE) g.game.grimoireRules = [REGLE_EN_TETE].concat((g.game.grimoireRules || []).filter(function (r) { return r && r.conditionId && r.conditionId !== REGLE_EN_TETE.conditionId; })).slice(0, Math.max(1, places));
 }
+var REGLE_EN_TETE = null;
 
 /* Une règle du Grimoire, par les fonctions de l'éditeur (condition, puis action). */
 function activateGrimoireRule(g) {

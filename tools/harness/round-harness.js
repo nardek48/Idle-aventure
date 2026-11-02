@@ -21675,6 +21675,46 @@ console.log("\n[424] v3.629.0 — Tour, lot T-3 : Sommet interdit, le Reflet, L�
   g.game.enemy = en0; g.game.dungeonRun = run0; g.game._towerMirror = null;
 })();
 
+console.log("\n[425] v3.630.0 — Tour, lot T-4a : seul, la faille, la silhouette");
+(function () {
+  var TS = g.TowerSystem, CM = g.CompanionManager, run0 = g.game.adventureQuestRun, sc0 = g.game.sceneRun;
+  try {
+    var ch = g.STORY_QUESTS.tower;
+    ok(ch.steps.slice(15, 18).map(function (x) { return x.id; }).join() === "tour_16,tour_17,tour_18", "acte IV : étapes 16 à 18");
+    ok(g.ADVENTURE_QUESTS.aq_tour_seul.solo && g.ADVENTURE_QUESTS.aq_tour_silhouette.solo && g.SCENE_TEMPLATES.faille_tour.solo, "seul : la quête, la faille et la silhouette (TW5)");
+    var tpl = g.SCENE_TEMPLATES.faille_tour;
+    ok(tpl.mode === "parcours" && tpl.parcours.steps.length === 5 && tpl.unlockOnSuccess.completionFlag === "failleTourDone" && g.PA2_PARCOURS_IMAGES.tour_faille, "la faille : parcours de cinq paliers, piste provisoire");
+    ok(g.BOSS_DB.silhouette && g.BOSS_DB.silhouette.image === "./images/Boss/silhouette.webp" && g.BOSS_DB.archmage.image === "./images/Boss/Lord_Archimage.webp", "la silhouette : sa fiche et son image propres, l'Archimage garde la sienne");
+    var ph = g.ADVENTURE_QUESTS.aq_tour_silhouette.bossPhases;
+    ok(ph.length === 3 && ph[0].copyClass && ph[1].atPct === 0.6 && ph[1].mirror && ph[2].atPct === 0.3 && ph[2].through, "trois phases : ta classe, le miroir à 60 %, la lumière à 30 %");
+    // seul
+    run("fullResetState(); game.playerName='Test'; game.heroId='ranger'; StoryQuestManager.ensure(); CompanionManager.unlock('wenna'); CompanionManager.setPresent('wenna', true);");
+    var avant = CM.partyIds().length;
+    g.game.adventureQuestRun = { active: true, questId: "aq_tour_seul" };
+    ok(avant >= 1 && TS.isSolo() && CM.partyIds().length === 0, "quête « seul » en cours : aucun compagnon (" + avant + " avant)");
+    g.game.adventureQuestRun = { active: true, questId: "aq_tour_haut" };
+    ok(!TS.isSolo() && CM.partyIds().length === avant, "une autre quête : le groupe revient");
+    g.game.adventureQuestRun = { active: false, questId: null }; g.game.sceneRun = { templateId: "faille_tour", status: "running" };
+    ok(TS.isSolo(), "parcours de la faille : seul aussi");
+    g.game.sceneRun = null;
+    var aqs = require("fs").readFileSync(require("path").join(ROOT, "js/systems/adventure-quest-system.js"), "utf8");
+    ok(/quest\.solo && window\.CompanionManager[^\n]*refreshParty\(\)/.test(aqs), "un boss seul au départ de la quête retire aussi le groupe déjà en place");
+    // phases
+    var e = { name: "La silhouette", isBoss: true, hp: 100, maxHp: 100 }, p0 = { copyClass: true }, p1 = { mirror: true }, p2 = { through: true };
+    TS.onBossPhase(e, p0);
+    ok(p0.archetype === "armored", "Rôdeur : la silhouette prend « blindée » (posé sur la phase, appliqué par le moteur)");
+    run("game.heroId='knight';"); var pk = { copyClass: true }; TS.onBossPhase(e, pk);
+    ok(pk.archetype === "enraged", "Chevalier : enragée");
+    TS.onBossPhase(e, p1);
+    ok(e.mirror === true && TS.isMirror(e), "à 60 % : le miroir");
+    TS.onBossPhase(e, p2);
+    ok(e.shieldRounds === g.BOSS_SHIELD_DURATION_ROUNDS, "à 30 % : la lumière passe à travers elle (bouclier, " + e.shieldRounds + " rounds)");
+    var bm = require("fs").readFileSync(require("path").join(ROOT, "js/systems/boss-moment-system.js"), "utf8");
+    ok(/TowerSystem\.onBossPhase\(enemy, ph\)/.test(bm), "phases branchées sur BossMomentManager.onPhase, avant l'archétype du moteur");
+  } catch (err) { ok(false, "[425] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  g.game.adventureQuestRun = run0; g.game.sceneRun = sc0;
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

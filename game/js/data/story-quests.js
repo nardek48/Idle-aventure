@@ -5204,6 +5204,74 @@ STORY_QUESTS.tower = {
       linkTo: { section: "adventure", cardId: "adv_aq_tour_haut" },
       check: function (game) { return storyAdvDone(game, "aq_tour_haut"); },
       progress: function (game) { return "Rencontres " + storyAdvProgress(game, "aq_tour_haut", "rencontres_haut", 4) + "/4"; }
+    },
+    /* v3.630.0 (Tour, acte IV « La Question », lot T-4a) — étapes 16 à 18, sans compagnon (TW5). */
+    {
+      id: "tour_16",
+      title: "Seul",
+      act: "Acte IV — La Question",
+      narrative: {
+        objective: "Tu montes seul. Derrière toi, Wenna s'assoit sur la dernière marche, son carnet sur les genoux. En bas, très loin, Maddoc tient une porte contre rien.",
+        completion: "Ici, rien ne te suit. Ni les pas, ni l'écho."
+      },
+      tutorial: {
+        tab: "quests",
+        icon: "images/Icons/codex/world_tower.webp",
+        title: "Seul",
+        points: [
+          { icon: "images/Icons/codex/world_tower.webp", text: "Les étapes 16 à 18 se jouent seul : tes compagnons restent en bas, le temps de la quête ou du parcours." },
+          { icon: "images/Icons/memory/grimoire_etendu.webp", text: "Personne pour encaisser à ta place : prends des potions, et revois ton Grimoire avant de monter." }
+        ]
+      },
+      objectiveLabel: "Terminer « Seul » : 3 rencontres, sans compagnon",
+      unlockTabs: [],
+      reward: STORY_REWARDS.tour_16,
+      linkTo: { section: "adventure", cardId: "adv_aq_tour_seul" },
+      check: function (game) { return storyAdvDone(game, "aq_tour_seul"); },
+      progress: function (game) { return "Rencontres " + storyAdvProgress(game, "aq_tour_seul", "rencontres_seul", 3) + "/3"; }
+    },
+    {
+      id: "tour_17",
+      title: "La faille",
+      act: "Acte IV — La Question",
+      narrative: {
+        objective: "Plus de murs. Un escalier de lumière froide, posé sur rien. Au-dessus, le ciel est ouvert, et ce qui passe par la fente ne fait aucun bruit.",
+        completion: "Le sommet. Ce n'est pas une fin."
+      },
+      objectiveLabel: "Terminer le parcours de la faille, seul (coût : 1 Grande ration)",
+      unlockTabs: [],
+      reward: STORY_REWARDS.tour_17,
+      linkTo: { section: "expedition", cardId: "scene_faille_tour" },
+      check: function () { return storyDesertFlag("failleTourDone"); },
+      progress: function () { return "Faille " + (storyDesertFlag("failleTourDone") ? "1/1" : "0/1"); }
+    },
+    {
+      id: "tour_18",
+      title: "La silhouette",
+      act: "Acte IV — La Question",
+      narrative: {
+        objective: "Il y a une silhouette, là où la fente est la plus large. Elle a le visage du Veilleur, parce qu'elle n'en a pas d'autre. La lumière passe à travers elle comme à travers une vitre. Elle ne parle pas. Elle se bat comme lui : précise, sans un geste de trop.",
+        completion: "Elle tombe. Elle ne meurt pas. Elle se défait, et il reste au sol une forme d'homme, vide, chaude, qui bat lentement. Le Veilleur est assis à côté. Tu ne l'as pas entendu arriver.",
+        completionDialogue: [
+          { who: "Le Veilleur", text: "Elle s'est battue comme moi. Je n'avais rien d'autre à lui donner." },
+          { who: "Le Veilleur", text: "Maintenant, elle va te demander. Elle ne sait pas parler. Elle va te montrer." }
+        ]
+      },
+      tutorial: {
+        tab: "quests",
+        icon: "images/Boss/silhouette.webp",
+        title: "La silhouette",
+        points: [
+          { icon: "images/Boss/silhouette.webp", text: "Elle se bat comme toi : elle prend le trait de ta classe (Chevalier : enragée ; Rôdeur : blindée ; Mage : elle fait taire)." },
+          { icon: "images/Icons/memory/grimoire_etendu.webp", text: "À 60 % de ses PV, elle garde ta dernière technique, comme le Reflet : varie. À 30 %, la lumière passe à travers elle : deux rounds de bouclier." }
+        ]
+      },
+      objectiveLabel: "Vaincre la silhouette, seul",
+      unlockTabs: [],
+      reward: STORY_REWARDS.tour_18,
+      linkTo: { section: "adventure", cardId: "adv_aq_tour_silhouette" },
+      check: function (game) { return storyAdvDone(game, "aq_tour_silhouette"); },
+      progress: function (game) { return "Silhouette " + (storyAdvDone(game, "aq_tour_silhouette") ? "1/1" : "0/1"); }
     }
   ]
 };
@@ -5230,6 +5298,10 @@ STORY_REWARDS.tour_13 = { gold: 24000, resources: { verre_faille: 3 } };
 STORY_REWARDS.tour_14 = { gold: 25000 };
 STORY_REWARDS.tour_15 = { gold: 26000, resources: { givre_bleu: 6 } };
 ["tour_11", "tour_12", "tour_13", "tour_14", "tour_15"].forEach(function (id, k) { STORY_QUESTS.tower.steps[10 + k].reward = STORY_REWARDS[id]; });
+STORY_REWARDS.tour_16 = { gold: 27000, resources: { givre_bleu: 4 } }; // v3.630.0 (Tour, acte IV)
+STORY_REWARDS.tour_17 = { gold: 28000, resources: { grande_ration: 1 } };
+STORY_REWARDS.tour_18 = { gold: 30000, resources: { verre_faille: 3 } };
+["tour_16", "tour_17", "tour_18"].forEach(function (id, k) { STORY_QUESTS.tower.steps[15 + k].reward = STORY_REWARDS[id]; });
 window.STORY_PALIER_TOUR_COMPLET = STORY_PALIER_TOUR_COMPLET;
 window.STORY_COPIE_TEXTS = STORY_COPIE_TEXTS;
 window.STORY_PALIER_TOUR_COMPLET = STORY_PALIER_TOUR_COMPLET;
