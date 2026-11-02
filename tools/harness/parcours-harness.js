@@ -952,7 +952,7 @@ async function P13(browser, base) {
 
 /* ====================================================================================
    P14 — Habillage des cartes (v3.618.0 lot 2, v3.619.0 lot 3 de l'atelier « Cartes E ») : sur 22
-   écrans et fiches, en téléphone et en PC, toute carte crème porte la texture parchemin, et tout
+   écrans et fiches, en téléphone et en PC, toute carte crème porte la texture (ou sa propre image), et tout
    document non imbriqué la découpe déchirée. Un oubli nomme sa classe (listes de css/00-cartes.css).
    ==================================================================================== */
 function prepHabillage() {
@@ -992,7 +992,7 @@ function cartesNonHabillees() {
     var cls = String(e.className || "").split(/\s+/).filter(Boolean);
     if (cls.some(function (c) { return CONTENEUR.test(c); })) return;
     if ((e.tagName === "BUTTON" || e.closest("button")) && r.height < 70) return;
-    if (s.backgroundImage.indexOf("parchment-cream") < 0) { oublis[cls[0] || e.tagName.toLowerCase()] = 1; return; }
+    if (!/url\(/.test(s.backgroundImage)) { oublis[cls[0] || e.tagName.toLowerCase()] = 1; return; } // texture, ou illustration propre (mannequin, route)
     // document (dont la carte Missions en PC) hors de toute carte habillée : découpe déchirée attendue
     var doc = cls.some(function (c) { return DOC.test(c); }) || (cls.indexOf("cw-card") >= 0 && !!e.querySelector(".cw-mlist"));
     var p = e.parentElement, range = false;
@@ -1002,6 +1002,16 @@ function cartesNonHabillees() {
   return Object.keys(oublis);
 }
 async function verifierHabillage(page, mode) {
+  // v3.619.1 (bug Seb) : la texture ne doit pas recouvrir une illustration propre (mannequin, route de la Caravane)
+  var illus = await page.evaluate(function () {
+    switchTab("equip"); setHerosSubTab("equip"); setEquipSubTab("equipment");
+    var eq = document.querySelector(".hs-eq"), a = eq ? getComputedStyle(eq).backgroundImage : "";
+    switchTab("campement"); openExpeditionsSheet("caravan");
+    var w = document.querySelector(".exp-world"), b = w ? getComputedStyle(w).backgroundImage : "";
+    try { closeExpeditionsSheet(); } catch (x) {}
+    return { eq: a.indexOf("/Heroes/") >= 0, route: !w || (b.indexOf("url(") >= 0 && b.indexOf("parchment-cream") < 0) };
+  });
+  ok(illus.eq && illus.route, mode + " · le mannequin de l'équipement et la route de la Caravane restent visibles");
   for (var i = 0; i < ECRANS_HABILLAGE.length; i++) {
     var e = ECRANS_HABILLAGE[i];
     await page.evaluate(function () {
