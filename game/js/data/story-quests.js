@@ -4918,9 +4918,83 @@ STORY_QUESTS.tower = {
       },
       check: function () { return !!(window.StoryQuestManager && StoryQuestManager.getChoice("braise")); },
       progress: function () { return "Choix " + ((window.StoryQuestManager && StoryQuestManager.getChoice("braise")) ? "1/1" : "0/1"); }
+    },
+    /* ---------- Acte II — Les étages (lot T-2a : étapes 6 et 7) ---------- */
+    /* Étape 6 : la carte des étages s'ouvre (opensAtStoryStep), la redite, le Marché de la Tour (CARAVAN_WORLD_MARKETS). */
+    {
+      id: "tour_06",
+      title: "La rue qui tient",
+      act: "Acte II — Les étages",
+      narrative: {
+        objective: "Au deuxième étage, une rue. Des maisons rangées des deux côtés, toutes fermées. Edda pose sa feuille à plat.",
+        completion: "Edda dessine la rue en entier, sans une rature. Elle regarde sa feuille, puis la jette.",
+        dialogue: [
+          { who: "Edda", text: "Je l'ai dessinée cent fois, celle-là. Elle ne m'a jamais tenu une nuit." },
+          { who: "Edda", text: "Ici, elle tient. Rien ne bouge." },
+          { who: "Maddoc", text: "C'est pire." }
+        ],
+        completionDialogue: [
+          { who: "Edda", text: "Une carte juste, ici, ça ne sert à rien. C'est elle qui l'a dessinée." }
+        ]
+      },
+      objectiveLabel: "Ouvrir la carte des étages : libérer 3 étages",
+      storyPa: { worldId: "tower" },
+      unlockTabs: [],
+      reward: STORY_REWARDS.tour_06,
+      linkTo: { section: "map", cardId: "livingmap_tower" },
+      tutorial: {
+        tab: "map",
+        icon: "images/Icons/menu_icons/map_menu.webp",
+        title: "Les étages",
+        points: [
+          { icon: "images/Icons/menu_icons/map_menu.webp", text: "La carte de la Tour est en coupe : un étage par secteur. Tu libères un étage en terminant sa Petite Aventure." },
+          { icon: "images/Icons/scene/path_easy.webp", text: "Chaque étage se souvient d'un monde : ses obstacles viennent du Désert, des Ruines, de la Crypte ou de la Montagne." },
+          { icon: "images/Icons/scene/node_unknown.webp", text: "Une Petite Aventure ratée, et la Tour refait l'étage : c'est La redite. Il reste plus dur jusqu'au lendemain. Rien n'est perdu." },
+          { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "Le Marché de la Tour est au dernier camp, devant la porte. La caravane en rapporte de l'or. Au trajet Long (Halle 3), 2 Givres bleus à coup sûr." }
+        ]
+      },
+      check: function () { return storyTowerFloorsFreed() >= 3; },
+      progress: function () { return "Étages libérés " + Math.min(3, storyTowerFloorsFreed()) + "/3"; }
+    },
+    /* Étape 7 : une Petite Aventure de la Tour réussie depuis l'acceptation (towerPaWins, compté par pa2-run). */
+    {
+      id: "tour_07",
+      title: "L'escalier",
+      act: "Acte II — Les étages",
+      narrative: {
+        objective: "L'escalier ne monte pas toujours. Parfois il descend pour mieux remonter. Parfois une marche manque, et quelqu'un l'a dessinée à la place.",
+        completion: "En haut, une marche porte une entaille de couteau. Récente.",
+        dialogue: [
+          { who: "Ysolt", text: "Je compte. Quarante-deux. Quarante-trois." },
+          { who: "Ysolt", text: "La quarante-quatrième, il n'y en a pas." }
+        ],
+        completionDialogue: [
+          { who: "Maddoc", text: "Le vieux. Il compte, lui aussi." }
+        ]
+      },
+      objectiveLabel: "Terminer une Petite aventure de la Tour",
+      storyPa: { worldId: "tower" },
+      unlockTabs: [],
+      reward: STORY_REWARDS.tour_07,
+      linkTo: { section: "map", cardId: "livingmap_tower" },
+      onAccept: function (game, st) { if (st && st.counters) st.counters.paBase = storyTowerPaWins(); },
+      check: function (game) { return storyTowerPaWins() > storyChapterCounter(game, "tower", "paBase"); },
+      progress: function (game) { return "Petite aventure " + (storyTowerPaWins() > storyChapterCounter(game, "tower", "paBase") ? "1/1" : "0/1"); }
     }
   ]
 };
+STORY_REWARDS.tour_06 = { gold: 18500, resources: { givre_bleu: 3 } };
+STORY_REWARDS.tour_07 = { gold: 19000, resources: { givre_bleu: 4 } };
+STORY_QUESTS.tower.steps[5].reward = STORY_REWARDS.tour_06;
+STORY_QUESTS.tower.steps[6].reward = STORY_REWARDS.tour_07;
+function storyTowerFloorsFreed() {
+  var lm = window.LivingMapManager, map = lm && lm.getMap("tower");
+  if (!map) return 0;
+  return map.sectors.filter(function (d) { var st = lm.getState("tower", d.id); return !!(st && st.liberatedCount > 0); }).length;
+}
+function storyTowerPaWins() { return Number((game.explorationProgression || {}).towerPaWins || 0); }
+window.storyTowerFloorsFreed = storyTowerFloorsFreed;
+window.storyTowerPaWins = storyTowerPaWins;
 
 window.STORY_VEINE_TEXTS = STORY_VEINE_TEXTS;
 window.STORY_BRAISE_TEXTS = STORY_BRAISE_TEXTS;

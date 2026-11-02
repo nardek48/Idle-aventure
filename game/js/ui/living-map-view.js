@@ -747,6 +747,7 @@ function buildLivingMapPanelHTML(mapId, running) {
     var vns = !isElite && LM.getMap(mapId) && LM.getMap(mapId).veins;   // v3.489.0 (Montagne) : la veine du secteur
     if (gis && LM.isHostile(mapId, d.id)) h += '<p class="lm-panel-wall">' + esc(_t("Le réveil : ce couloir reste hostile jusqu'à demain. Plus dur, pas plus riche.")) + '</p>';
     if (vns && LM.isHostile(mapId, d.id)) h += '<p class="lm-panel-wall">' + esc(_t("La coulée : ce secteur reste sous la lave jusqu'à demain. Plus dur, pas plus riche.")) + '</p>';
+    if (!isElite && LM.getMap(mapId) && LM.getMap(mapId).redite && LM.isHostile(mapId, d.id)) h += '<p class="lm-panel-wall">' + esc(_t("La redite : la Tour refait cet étage jusqu'à demain. Plus dur, pas plus riche.")) + '</p>'; // v3.627.0
     if (vns) {
       var heat = LM.heatOf(mapId, d.id);
       h += '<p class="lm-panel-line"><b>' + _t("Chaleur :") + '</b> ' + esc(heat ? _t("{n} / {m} — ses combats +{p} %, un cran retombe chaque jour.", { n: heat, m: vns.heatMax, p: Math.round(heat * vns.heatStep * 100) }) : _t("aucune, la pente est froide.")) + '</p>';

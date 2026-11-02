@@ -194,7 +194,8 @@ var PA2_LEVEL_BANDS = [
   // d'atteinte pour ne pas changer les Petites Aventures de la Forêt et du Désert d'un héros avancé
   { minLevel: 99, worldId: "ruins", adventureIndex: 0, obstacleScale: 3.3, heroRef: "joueurDesert2" },
   { minLevel: 99, worldId: "crypt", adventureIndex: 0, obstacleScale: 3.9, heroRef: "joueurRuines" }, // v3.454.0 (Crypte) : plancher de la carte, au banc
-  { minLevel: 99, worldId: "mountain", adventureIndex: 0, obstacleScale: 4.5, heroRef: "joueurCrypte" } // v3.489.0 (Montagne) : plancher, au banc
+  { minLevel: 99, worldId: "mountain", adventureIndex: 0, obstacleScale: 4.5, heroRef: "joueurCrypte" }, // v3.489.0 (Montagne) : plancher, au banc
+  { minLevel: 99, worldId: "tower", adventureIndex: 0, obstacleScale: 5.1, heroRef: "joueurMontagne" } // v3.627.0 (Tour) : plancher, au banc
 ];
 
 /* v3.423.0 (chantier Difficulté, A, décision Seb) : la tranche donne les ennemis et les obstacles
@@ -213,9 +214,11 @@ var PA2_OBSTACLES = {
   desert: ["sables_mouvants", "dune", "dalle_scellee", "puits_effondre", "vent_de_face", "dalles_ensablees"], // v3.387.0
   ruins: ["route_de_pierre", "rue_qui_tourne", "mur_neuf", "escalier_sans_fin", "dalle_qui_glisse"], // v3.429.0
   crypt: ["allee_des_gisants", "grille_basse", "couloir_noir", "cire_au_sol", "dalle_qui_glisse"], // v3.454.0
-  mountain: ["lacets_de_cendre", "pierres_plates", "eboulis_chaud", "croute_de_lave", "paroi_coupee"] // v3.489.0
+  mountain: ["lacets_de_cendre", "pierres_plates", "eboulis_chaud", "croute_de_lave", "paroi_coupee"], // v3.489.0
+  // v3.627.0 (Tour, TW10) : l'escalier rejoue un obstacle de chaque monde, comme la Tour s'en souvient
+  tower: ["dalle_qui_glisse", "allee_des_gisants", "pierres_plates", "paroi_coupee", "plaine_grise", "vent_absent", "porte_ouverte"]
 };
-var PA2_OBSTACLE_TERTRE = { baseDifficulty: 7, gabaritId: "porte_scellee", byWorld: { desert: "dalle_scellee", ruins: "porte_qui_attend", crypt: "porte_basse", mountain: "fente_scellee" } };
+var PA2_OBSTACLE_TERTRE = { baseDifficulty: 7, gabaritId: "porte_scellee", byWorld: { desert: "dalle_scellee", ruins: "porte_qui_attend", crypt: "porte_basse", mountain: "fente_scellee", tower: "porte_ouverte" } };
 
 /* Gardien de la destination « combat » (v3.383.0, PA2-3) : un ennemi d'acte III renforcé,
    indexé sur la tranche de niveau comme les autres. Multiplicateurs calés au banc. */
@@ -224,7 +227,8 @@ var PA2_GUARDIAN = {
   desert: { foe: "sandworm", hpMult: 4.25, powMult: 1.9 }, // v3.387.0 (F4) : le Ver du plateau, adouci de 15 %
   ruins: { foe: "skeleton", hpMult: 6.4, powMult: 1.9 },   // v3.429.0 : le gardien se relève une fois (PV ×1,5, combat par approche)
   crypt: { foe: "deadknight", hpMult: 4.3, powMult: 1.9, sleeps: true }, // v3.454.0 (CR10) : il dort ; on fait le tour ou on le réveille (au banc)
-  mountain: { foe: "lavagolem", hpMult: 4.3, powMult: 1.9, sorts: true }  // v3.489.0 (MT10) : il trie ; rien taillé, il laisse passer (au banc)
+  mountain: { foe: "lavagolem", hpMult: 4.3, powMult: 1.9, sorts: true }, // v3.489.0 (MT10) : il trie ; rien taillé, il laisse passer (au banc)
+  tower: { foe: "guardian", hpMult: 4.3, powMult: 1.9 }                     // v3.627.0 (Tour) : le gardien du palier (au banc)
 };
 
 /* Approches de combat (V17, Q2). dmg : dégâts reçus ; loot : or gagné. Ruser = jet de précision. */
@@ -253,7 +257,8 @@ var PA2_RARE = {
   desert: { resourceId: "verre_des_dunes", findChancePct: 25, dest: { 1: 2, 2: 3, 3: 4 } }, // v3.387.0
   ruins: { resourceId: "pierre_errante", findChancePct: 25, dest: { 1: 2, 2: 3, 3: 4 } }, // v3.429.0
   crypt: { resourceId: "cire_sepulcre", findChancePct: 25, dest: { 1: 2, 2: 3, 3: 4 } },   // v3.454.0
-  mountain: { resourceId: "cendre_vive", findChancePct: 25, dest: { 1: 2, 2: 3, 3: 4 } }    // v3.489.0
+  mountain: { resourceId: "cendre_vive", findChancePct: 25, dest: { 1: 2, 2: 3, 3: 4 } },   // v3.489.0
+  tower: { resourceId: "givre_bleu", findChancePct: 25, dest: { 1: 2, 2: 3, 3: 4 } }       // v3.627.0
 };
 
 /* v3.453.0 : choix de Mémoire qui ajoutent 1 matériau rare par destination atteinte, par monde. */
@@ -332,7 +337,8 @@ var PA2_WORLD_RULES = {
   desert: { stepBreath: 4, gourdeUses: 1 }, // v3.423.0 (B) : 3 -> 4
   ruins: { stepBreath: 4 },                 // v3.429.0 : pas de soif, des murs qui bougent (PA2_RULES.wallShiftPct)
   crypt: { stepBreath: 4, sightRows: 1, trapsHidden: true }, // v3.454.0 (CR10) : l'obscurité ; v3.467.0 : pièges vus seulement à la Lanterne
-  mountain: { stepBreath: 4, lava: true }                     // v3.489.0 (MT10) : le sol qui brûle, la lave qui avance
+  mountain: { stepBreath: 4, lava: true },                    // v3.489.0 (MT10) : le sol qui brûle, la lave qui avance
+  tower: { stepBreath: 4 }                                    // v3.627.0 : l'escalier, sans règle propre (les échos passent par les obstacles)
 };
 
 /* v3.467.0 (Pièges, conception PG-A à PG-G) : pièges posés sur les sentiers. perAct : pièges par acte
@@ -352,7 +358,8 @@ var PA2_CUTS = {
   desert: { dune: { name: "Dune nouvelle", icon: "images/Icons/scene/cuts/cut_dune.webp" }, ravin: { name: "Ravin effondré", icon: "images/Icons/scene/cuts/cut_ravine.webp" } },
   ruins:  { rue: { name: "Rue effondrée", icon: "images/Icons/scene/cuts/cut_collapsed_street.webp" }, porte: { name: "Porte murée", icon: "images/Icons/scene/cuts/cut_walled_door.webp" } },
   crypt:  { grille: { name: "Grille tombée", icon: "images/Icons/scene/cuts/cut_gate.webp" }, voute: { name: "Voûte écroulée", icon: "images/Icons/scene/cuts/cut_collapse.webp" } },
-  mountain: { coulee: { name: "Coulée fraîche", icon: "images/Icons/scene/cuts/cut_lava_flow.webp" }, crevasse: { name: "Crevasse fumante", icon: "images/Icons/scene/cuts/cut_steaming_crevasse.webp" } } // v3.489.0
+  mountain: { coulee: { name: "Coulée fraîche", icon: "images/Icons/scene/cuts/cut_lava_flow.webp" }, crevasse: { name: "Crevasse fumante", icon: "images/Icons/scene/cuts/cut_steaming_crevasse.webp" } }, // v3.489.0
+  tower: { marche: { name: "Marche manquante", icon: "images/Icons/scene/cuts/cut_missing_step.webp" }, palier: { name: "Palier muré", icon: "images/Icons/scene/cuts/cut_walled_landing.webp" } } // v3.627.0 (icônes à générer)
 };
 /* v3.469.0 (Condition du run, PG-B1a à PG-B1c) : tirée au lancement, propre au monde, un avantage et un
    inconvénient, annoncée sur la préparation. fx : réglages lus par Pa2Run (cond). « Nuit calme » une fois sur cinq. */
@@ -408,6 +415,14 @@ var PA2_CONDITIONS = {
       pro: "Les sources rendent le double", con: "La marche coûte 1 Souffle de plus par pas", tip: "gourde", fx: { sourceMult: 2, stepBreath: 1 } },
     faconnes: { name: "Nuit des façonnés", kicker: "nuit des façonnés", line: "Les façonnés sont sortis ce soir. Ils trient tout ce qui monte, et ce qu'ils gardent vaut la peine.",
       pro: "Butin final +20 %", con: "Premier combat de chaque acte : un ennemi de plus", tip: "armure", fx: { lootMult: 1.2, firstCombatExtra: 1 } }
+  },
+  tower: { // v3.627.0 (Tour) : les nuits de l'escalier, reprises des effets déjà connus
+    lumiere: { name: "Lumière froide", kicker: "nuit de lumière froide", line: "La fente du ciel est plus large ce soir. Tout l'escalier est bleu, et on y voit loin.",
+      pro: "Ruser gagne un cran", con: "Premier combat de chaque acte : un ennemi de plus", tip: "armure", fx: { ruseBonus: 1, firstCombatExtra: 1 } },
+    redites: { name: "Nuit des redites", kicker: "nuit des redites", line: "Ce soir, les paliers se répètent. On croit monter, on repasse au même endroit.",
+      pro: "Butin final +20 %", con: "La marche coûte 1 Souffle de plus par pas", tip: "gourde", fx: { lootMult: 1.2, stepBreath: 1 } },
+    silence: { name: "Silence", kicker: "nuit sans bruit", line: "Plus un bruit dans la Tour. Ni pas, ni écho. Ceux qui gardent les paliers n'entendent rien venir.",
+      pro: "Les sources rendent le double", con: "Une rangée de vue en moins", tip: "torche", fx: { sourceMult: 2, sight: -1 } }
   }
 };
 /* Les cinq effets (PG-C). steps : pas pendant lesquels l'effet dure (0 : immédiat ou jusqu'au combat). */
@@ -430,7 +445,8 @@ var PA2_TRAP_WEIGHTS = {
   desert: { venin: 1, alarme: 1, entrave: 2, aveugle: 2, besace: 1 },
   ruins:  { venin: 1, alarme: 2, entrave: 1, aveugle: 1, besace: 2 },
   crypt:  { venin: 1, alarme: 2, entrave: 1, aveugle: 2, besace: 1 },
-  mountain: { venin: 1, alarme: 1, entrave: 2, aveugle: 2, besace: 1 } // v3.489.0
+  mountain: { venin: 1, alarme: 1, entrave: 2, aveugle: 2, besace: 1 }, // v3.489.0
+  tower: { venin: 1, alarme: 2, entrave: 1, aveugle: 2, besace: 1 }     // v3.627.0
 };
 /* PG-E : un piège par effet et par monde, textes validés par Seb le 23/10/2026. */
 var PA2_TRAPS = {
@@ -468,6 +484,13 @@ var PA2_TRAPS = {
     entrave: { name: "Cendre profonde",      line: "La cendre est plus épaisse ici. Elle avale la jambe jusqu'au genou." },
     aveugle: { name: "Jet de vapeur",        line: "Une fissure siffle dans la roche. Elle crache de la vapeur brûlante, puis se tait." },
     besace:  { name: "Lame de basalte",      line: "Une arête de basalte, coupante comme du verre, au ras du sac." }
+  },
+  tower: { // v3.627.0 (Tour)
+    venin:   { name: "Éclats de lumière",    line: "Des éclats bleus plantés entre les marches. Ils coupent comme du verre, et le froid reste dans la plaie." },
+    alarme:  { name: "Marche qui sonne",     line: "Une marche sonne comme une cloche. Toute la Tour l'a entendue." },
+    entrave: { name: "Sable du souvenir",    line: "Du sable sur les marches, venu d'un étage plus bas. Il retient les pieds." },
+    aveugle: { name: "Éclair froid",         line: "La fente du ciel s'ouvre d'un coup, juste au-dessus. Tout est blanc, puis plus rien." },
+    besace:  { name: "Main de pierre",       line: "Une main de gardien sort du mur, à hauteur du sac, et se referme." }
   }
 };
 
@@ -479,7 +502,8 @@ var PA2_FOES = {
   desert: { 1: ["scarab"], 2: ["sandwarrior", "scarab"], 3: ["sandworm", "sandwarrior"] }, // v3.387.0 (F4)
   ruins: { 1: ["skeleton", "zombie"], 2: ["ghoul", "skeleton"], 3: ["gargoyle", "batisseur"] }, // v3.429.0
   crypt: { 1: ["spectre", "wraith"], 2: ["wraith", "necromancer"], 3: ["deadknight", "necromancer"] }, // v3.454.0
-  mountain: { 1: ["dragonling", "minordemon"], 2: ["lavagolem", "dragonling"], 3: ["ifrit", "lavagolem"] } // v3.489.0
+  mountain: { 1: ["dragonling", "minordemon"], 2: ["lavagolem", "dragonling"], 3: ["ifrit", "lavagolem"] }, // v3.489.0
+  tower: { 1: ["guardian", "hybrid"], 2: ["corruptmage", "guardian"], 3: ["arcanegolem", "hybrid"] } // v3.627.0
 };
 var PA2_FOE_LINES = {
   wolf: "Deux yeux dans la fougère. Puis quatre.",
@@ -600,6 +624,15 @@ var PA2_PLACES_BY_WORLD = {
     camp: { name: "Le surplomb", text: "Un surplomb de roche, à l'abri du vent chaud. Sarkel y a laissé une toile." },
     seuil: { name: "Le seuil", text: "Une arche de basalte, tordue comme une racine. De l'autre côté, la roche est plus chaude. Ce qui t'attend là-bas trie déjà." },
     veine: { name: "Une veine", text: "Une veine bleue affleure entre deux pierres. Elle bat. Elle ne sait pas que tu es là." }
+  },
+  tower: { // v3.627.0 (Tour) : l'escalier
+    source: { name: "Une citerne", text: "Une citerne taillée dans le mur, pleine d'une eau qui ne vient de nulle part. Elle est fraîche." },
+    sourceDry: { name: "Une citerne", text: "Le fond de la citerne est humide. Il faut attendre pour une gorgée." },
+    autel: { name: "Une niche bleue", text: "Une niche dans le mur, une lueur froide au fond. Elle demande {cost} or. Elle rend une plaie." },
+    autelFree: { name: "Une niche bleue", text: "Une niche dans le mur, déjà pleine de lumière. Elle ne demande rien." },
+    trouvaille: { name: "Une trouvaille", text: "Quelque chose posé sur une marche, plié avec soin. Quelqu'un est passé avant toi." },
+    camp: { name: "Le palier large", text: "Un palier plus large que les autres. Il y a de la place pour s'asseoir, et une entaille de couteau sur le mur." },
+    seuil: { name: "Le seuil", text: "Une porte sans cadre au milieu de l'escalier. De l'autre côté, les marches sont plus froides." }
   }
 };
 
@@ -652,6 +685,15 @@ var PA2_DESTS = {
     tertre: { name: "La paroi fermée", line: "Une paroi coupée droit, comme au Replat. Au milieu, une fente, fermée de l'intérieur.",
       win: "La fente a cédé. Derrière, une niche taillée net. Il reste ce qu'elle gardait.",
       fail: "La fente a tenu. Tu repars avec ce que tu portais. La roche autour est un peu plus chaude." }
+  },
+  tower: { // v3.627.0 : le gardien du palier, la citerne haute, la porte murée
+    boss: { name: "Le gardien du palier", line: "En haut, un gardien de pierre fait les cent pas devant un coffre. Toujours les mêmes dalles.",
+      win: "Il s'arrête au milieu d'un pas. Le coffre est là, sous la poussière." },
+    clairiere: { name: "La citerne haute", line: "Une citerne pleine, dans un renfoncement. Personne ne garde ce palier.",
+      win: "Au bord de l'eau, quelque chose qui brille, oublié là." },
+    tertre: { name: "La porte murée", line: "Une porte murée, au bout d'un palier. Les pierres sont posées sans mortier, une par une.",
+      win: "Le mur a cédé. Derrière, une petite pièce. Il reste ce qu'elle gardait.",
+      fail: "Le mur a tenu. Tu repars avec ce que tu portais. Une pierre a bougé, quand même." }
   }
 };
 

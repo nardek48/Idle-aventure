@@ -575,6 +575,21 @@ var SCENE_TEMPLATES = {
     icon: "images/Icons/scene/path_easy.webp",
     boardRequires: { tabUnlocked: "village", storyStep: "montagne_06" },
     successFlag: "mountainPaCompleted"
+  },
+
+  /* v3.627.0 (Tour, lot T-2a, TW10) — la Petite Aventure de la Tour : l'escalier, un obstacle de chaque monde.
+     Ouverte avec la carte des étages (tour_06) ; les réussites sont comptées pour « L'escalier » (tour_07). */
+  petite_aventure_tour: {
+    id: "petite_aventure_tour",
+    mode: "pa2",
+    worldId: "tower",
+    adventureIndex: 0,
+    title: "Petite aventure — Tour",
+    departLabel: "Monter l'escalier",
+    icon: "images/Icons/scene/path_easy.webp",
+    boardRequires: { tabUnlocked: "village", storyStep: "tour_06" },
+    successFlag: "towerPaCompleted",
+    successCount: "towerPaWins"
   }
 };
 

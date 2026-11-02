@@ -49,6 +49,10 @@ var Pa2Run = {
       if (LMm && LMm.isHostile && LMm.isHostile(lm.mapId, lm.sectorId)) mv *= Number(v.hostileMult || 1);
       return mv;
     }
+    if (map && map.redite) { // v3.627.0 (Tour, TW9) : La redite, l'étage raté du jour
+      var LMr = window.LivingMapManager;
+      return (LMr && LMr.isHostile && LMr.isHostile(lm.mapId, lm.sectorId)) ? Number(map.redite.hostileMult || 1) : 1;
+    }
     if (!g) return 1;
     var m = lm.wake ? Number(g.wakeMult || 1) : 1;
     if (window.LivingMapManager && LivingMapManager.isHostile && LivingMapManager.isHostile(lm.mapId, lm.sectorId)) m *= Number(g.hostileMult || 1);
@@ -1606,6 +1610,7 @@ var Pa2Run = {
       // v3.387.0 : le drapeau de l'Histoire (étape « L'outre ») est posé à une destination atteinte, comme la chambre finale en v1.
       var tpl = window.SceneEngine ? SceneEngine.getTemplate(run.templateId) : null;
       if (tpl && tpl.successFlag) { if (!game.explorationProgression) game.explorationProgression = {}; game.explorationProgression[tpl.successFlag] = true; }
+      if (tpl && tpl.successCount) { var epc = game.explorationProgression || (game.explorationProgression = {}); epc[tpl.successCount] = Number(epc[tpl.successCount] || 0) + 1; } // v3.627.0 : réussites comptées (tour_07)
       if (chestItem && (dest.type !== "boss" || run.flags.bossDown)) {
         var chest = this.ensureChest();
         end.chest = { item: chestItem, isNew: !chest.unlocked[chestItem] };

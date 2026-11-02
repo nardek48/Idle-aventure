@@ -86,6 +86,7 @@ var WorldDays = {
     if (calmed.length) {
       var x = self._names(n.mapId, calmed);
       if (map.veins) out.push(x ? _t("Cette nuit, la lave a refroidi : {x}.", { x: x }) : _t("Cette nuit, la lave a refroidi sur {n} secteurs.", { n: calmed.length }));
+      else if (map.redite) out.push(x ? _t("Cette nuit, la Tour a fini de refaire : {x}.", { x: x }) : _t("Cette nuit, la Tour a fini de refaire {n} étages.", { n: calmed.length })); // v3.627.0
       else out.push(x ? _t("Cette nuit, les gisants se sont rendormis : {x}.", { x: x }) : _t("Cette nuit, les gisants se sont rendormis dans {n} couloirs.", { n: calmed.length }));
     }
     if (cooled.length) {
