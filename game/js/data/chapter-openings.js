@@ -49,5 +49,48 @@ CHAPTER_OPENINGS.tower = {
 };
 var CHAPTER_OPENING_ORDER = ["desert", "ruins", "crypt", "mountain", "tower"];
 
+/* v3.631.0 (Tour, lot T-4b) : la vision de l'étape 19 et les quatre fins (deux planches), même composant.
+   Textes de l'atelier (vision validée, fins à relire). {nom} = nom du héros. Images à générer (images/Tour/). */
+var TOWER_VISION = {
+  num: "Cette nuit-là", teinte: ["120,150,200", "40,46,70", "8,9,14"],
+  planches: [
+    { img: "vision_1_homme", lignes: ["Douze hivers. Un homme descend vers un village de la forêt. Un homme sec, qui ne ment pas.", "Dans ses mains, une goutte de lumière bleue, prise à la Montagne."] },
+    { img: "vision_2_feu", lignes: ["Il la pose au milieu des maisons. Il dit : « Prends. Tout. »", "Elle prend. Le feu. Trois familles qui courent. Une femme crie un nom. C'est Orwen, plus jeune. Elle crie le tien : {nom}."] },
+    { img: "vision_3_enfant", lignes: ["Un enfant ne court pas. Il regarde la lumière, et la lumière le regarde.", "Elle le touche. Elle ne le prend pas. Elle prend seulement ce qu'il regarde : la nuit, le feu, l'homme.", "Tu as toujours été ce qu'elle a gardé de cette nuit-là."], nom: 2 }
+  ]
+};
+/* Une fin par réponse à la Question (clé `question`) ; banniere = phrase du bandeau du Village une fois la fin choisie. */
+var TOWER_FINS = {
+  sienne: { num: "La forme au sommet", teinte: ["150,170,210", "46,54,84", "8,10,18"],
+    banniere: "Orwen met un morceau de pain de côté, sans dire pour qui.",
+    planches: [
+      { img: "fin_ds_1", lignes: ["Tu es là où la fente est la plus large. La lumière passe à travers toi. Tu n'as plus froid.", "En bas, le monde se brise encore, et recommence. Il apprend ton visage."] },
+      { img: "fin_ds_2", lignes: ["À Aeswyn, Orwen coupe le pain. Elle en met un morceau de côté, sans dire pour qui.", "La forme au sommet"], nom: 1 }
+    ] },
+  aeswyn: { num: "Ce que la braise a gardé", teinte: ["214,150,90", "92,52,30", "20,12,8"],
+    banniere: "Wenna demande ce qu'il y avait avant. Quelqu'un lui répond.",
+    planches: [
+      { img: "fin_da_1", lignes: ["Le ciel se referme. Pas d'un coup : comme une braise qui retombe.", "Tu redescends. Maddoc lâche la barre de fer. Sarkel n'a rien à vendre, et il te fait monter quand même."] },
+      { img: "fin_da_2", lignes: ["À Aeswyn, la braise est un feu de camp, rien de plus. Orwen pose une tranche devant la place vide, puis la mange elle-même.", "Wenna demande ce qu'il y avait avant. Et pour une fois, quelqu'un lui répond.", "Ce que la braise a gardé"], nom: 2 }
+    ] },
+  tienne: { num: "Ce que tu as gardé", teinte: ["150,160,190", "50,56,74", "10,11,16"],
+    banniere: "Le ciel est toujours fendu. Tu as ton nom.",
+    planches: [
+      { img: "fin_gs_1", lignes: ["Tu redescends. La Tour est derrière toi, le ciel toujours fendu.", "Le monde se brisera encore."] },
+      { img: "fin_gs_2", lignes: ["Tu as ton nom : {nom}. C'est tout ce que tu as. C'est à toi.", "Ce que tu as gardé"], nom: 1 }
+    ] },
+  rien: { num: "Le feu tient encore", teinte: ["200,130,70", "84,46,26", "18,10,6"],
+    banniere: "La file devant la Boulangerie est longue, et le pain est bon.",
+    planches: [
+      { img: "fin_ga_1", lignes: ["La braise est petite. Aldric la surveille, et ne demande pas pourquoi.", "Le monde ne guérit pas."] },
+      { img: "fin_ga_2", lignes: ["Mais la file devant la Boulangerie est longue, et le pain est bon.", "Le feu tient encore"], nom: 1 }
+    ] }
+};
+/* Prix de la bascule Soi/Aeswyn (Seb, 02/11) : Brannoc manque au dernier feu, ligne glissée avant le titre doré. */
+var TOWER_FIN_PRIX = { brannoc: "Au dernier feu, la place de Brannoc reste vide. L'enclume ne sonne plus." };
+
 window.CHAPTER_OPENINGS = CHAPTER_OPENINGS;
 window.CHAPTER_OPENING_ORDER = CHAPTER_OPENING_ORDER;
+window.TOWER_VISION = TOWER_VISION;
+window.TOWER_FINS = TOWER_FINS;
+window.TOWER_FIN_PRIX = TOWER_FIN_PRIX;

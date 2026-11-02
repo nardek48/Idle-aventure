@@ -4769,7 +4769,8 @@ STORY_QUESTS.tower = {
   title: "La Question",
   subtitle: "Chapitre 6 — Tour",
   icon: "images/Icons/codex/world_tower.webp",
-  endText: "Le sommet. Ce n'est pas une fin.", // provisoire : la fin du chapitre viendra avec l'acte IV (T-4)
+  // v3.631.0 : la fin choisie (titre doré de l'épilogue)
+  get endText() { var f = window.TowerSystem && TowerSystem.ending(); return f ? TOWER_FINS[f].num : "Le sommet. Ce n'est pas une fin."; },
   steps: [
     /* ---------- Acte I — Le pied de la Tour ---------- */
     /* Étape 1 : la route du nord, parcours de quatre paliers ; le monde est posé à l'arrivée. Ouvre le chapitre VI
@@ -5272,6 +5273,79 @@ STORY_QUESTS.tower = {
       linkTo: { section: "adventure", cardId: "adv_aq_tour_silhouette" },
       check: function (game) { return storyAdvDone(game, "aq_tour_silhouette"); },
       progress: function (game) { return "Silhouette " + (storyAdvDone(game, "aq_tour_silhouette") ? "1/1" : "0/1"); }
+    },
+    /* v3.631.0 (Tour, lot T-4b) — étape 19 : la vision (trois planches, TOWER_VISION). « Regarder » est un geste, pas un
+       choix pesant (noRecord) ; la vision se revoit depuis Quêtes › Histoire. */
+    {
+      id: "tour_19",
+      title: "Cette nuit-là",
+      act: "Acte IV — La Question",
+      narrative: {
+        objective: "La faille s'ouvre un peu plus. Ce qu'elle montre, tu l'as déjà vu. Tu ne t'en souvenais pas.",
+        completion: "Le Veilleur n'a pas bougé. Il regarde la forme au sol.",
+        completionDialogue: [
+          { who: "Le Veilleur", text: "Oui. C'était moi." },
+          { who: "Le Veilleur", text: "Tu ne me l'avais pas demandé." },
+          { who: "Le Veilleur", text: "Je ne savais pas ton nom. Elle, elle l'a entendu." },
+          { who: "Le Veilleur", text: "Elle veut une forme. La mienne est prête : elle est là, par terre. Il lui faut un vivant pour la porter." },
+          { who: "Le Veilleur", text: "C'est toi. Ou ce n'est personne, et elle continue de casser le monde pour apprendre." },
+          { who: "Le Veilleur", text: "Je ne te mens pas. Je ne te demande rien. Elle va le faire." }
+        ]
+      },
+      objectiveLabel: "Regarder",
+      unlockTabs: [],
+      reward: STORY_REWARDS.tour_19,
+      choice: {
+        key: "vision", noRecord: true, onStoryCard: true,
+        buttonLabel: "Regarder",
+        title: "Cette nuit-là",
+        text: "La faille s'ouvre un peu plus. Ce qu'elle montre, tu l'as déjà vu.",
+        options: [{ value: "regarder", label: "Regarder", desc: "Trois planches. Tu pourras les revoir dans Quêtes › Histoire." }],
+        isDone: function () { return storyDesertFlag("towerVisionSeen"); },
+        apply: function () {
+          game.explorationProgression = game.explorationProgression || {};
+          game.explorationProgression.towerVisionSeen = true; // posé avant les planches : « Passer » compte aussi
+          if (window.TowerSystem) TowerSystem.playVision(null);
+        }
+      },
+      check: function () { return storyDesertFlag("towerVisionSeen"); },
+      progress: function () { return "Vision " + (storyDesertFlag("towerVisionSeen") ? "1/1" : "0/1"); }
+    },
+    /* Étape 20 : la Question (TW4, option A de Seb). Trois réponses selon la pente du registre : la pente sans prix,
+       une bascule Donner/Garder (Le fil bleu rendu), une bascule Soi/Aeswyn (Brannoc absent du dernier feu). Puis Azhem,
+       et l'épilogue en deux planches à la fermeture (ui/quests-view.js, storyEndChain). */
+    {
+      id: "tour_20",
+      title: "La Question",
+      act: "Acte IV — La Question",
+      narrative: {
+        objective: "La faille attend. Elle demande. Quelle forme.",
+        completion: "Et tu dis un nom. Le seul mot que tu diras jamais. Pas le tien : le sien, celui que le sable gardait.",
+        completionDialogue: [
+          { who: null, text: "Azhem." },
+          { who: null, text: "Il ne l'avait pas entendu depuis les sables. La forme au sol cesse de battre. Ce n'est pas une mort. C'est quelqu'un qu'on appelle enfin par son nom, et qui peut s'arrêter." }
+        ]
+      },
+      objectiveLabel: "Répondre",
+      unlockTabs: [],
+      reward: STORY_REWARDS.tour_20,
+      choice: {
+        key: "question", onStoryCard: true,
+        buttonLabel: "Répondre",
+        title: "La Question",
+        text: "Il y a la forme au sol, la sienne. Il y a la tienne. Il y a ce que tu as rapporté à Aeswyn, à chaque retour. Personne ne choisira pour toi.",
+        // les trois réponses du registre (TowerSystem.questionAnswers) ; la quatrième n'est pas proposée
+        get options() {
+          var ans = window.TowerSystem ? TowerSystem.questionAnswers() : [];
+          return ans.map(function (a) {
+            var o = STORY_QUESTION_OPTIONS[a.value];
+            return { value: a.value, label: o.label, desc: o.desc, prix: a.prix ? STORY_QUESTION_PRIX[a.prix] : null };
+          });
+        },
+        apply: function (value) { if (window.TowerSystem) TowerSystem.payQuestion(value); }
+      },
+      check: function () { return !!(window.StoryQuestManager && StoryQuestManager.getChoice("question")); },
+      progress: function () { return "Réponse " + ((window.StoryQuestManager && StoryQuestManager.getChoice("question")) ? "1/1" : "0/1"); }
     }
   ]
 };
@@ -5302,6 +5376,23 @@ STORY_REWARDS.tour_16 = { gold: 27000, resources: { givre_bleu: 4 } }; // v3.630
 STORY_REWARDS.tour_17 = { gold: 28000, resources: { grande_ration: 1 } };
 STORY_REWARDS.tour_18 = { gold: 30000, resources: { verre_faille: 3 } };
 ["tour_16", "tour_17", "tour_18"].forEach(function (id, k) { STORY_QUESTS.tower.steps[15 + k].reward = STORY_REWARDS[id]; });
+STORY_REWARDS.tour_19 = { gold: 32000 }; // v3.631.0 (Tour, lot T-4b)
+STORY_REWARDS.tour_20 = { gold: 40000 };
+["tour_19", "tour_20"].forEach(function (id, k) { STORY_QUESTS.tower.steps[18 + k].reward = STORY_REWARDS[id]; });
+/* Les quatre réponses (textes validés, atelier) et les deux prix affichés (Seb, 02/11 : un prix par axe). */
+var STORY_QUESTION_OPTIONS = {
+  sienne: { label: "La sienne", desc: "Tu prends la forme au sol. Tu seras la silhouette. Elle cessera de casser le monde pour apprendre : elle t'aura." },
+  aeswyn: { label: "Aeswyn", desc: "Tu lui donnes ce que le village est : le pain d'abord, la meule qui tourne, la poutre posée trois fois au même endroit, la fille qui compte. La forme d'un lieu où l'on revient." },
+  tienne: { label: "La tienne", desc: "Tu ne lui donnes rien. Tu gardes ce que tu es, et tu redescends. Le ciel restera fendu." },
+  rien: { label: "Rien, et rentrer", desc: "Tu ne lui donnes rien. Tu rapportes tout à Aeswyn. Le monde ne guérira pas, mais la braise tiendra." }
+};
+var STORY_QUESTION_PRIX = {
+  fil: "Ce n'est pas ta pente. Prix : Le fil bleu te quitte.",
+  brannoc: "Ce n'est pas ta pente. Prix : Brannoc ne sera pas au dernier feu."
+};
+STORY_CHOICE_AXES.question = { sienne: ["donner", "soi"], aeswyn: ["donner", "aeswyn"], tienne: ["garder", "soi"], rien: ["garder", "aeswyn"] }; // v3.631.0 (Tour, étape 20)
+window.STORY_QUESTION_OPTIONS = STORY_QUESTION_OPTIONS;
+window.STORY_QUESTION_PRIX = STORY_QUESTION_PRIX;
 window.STORY_PALIER_TOUR_COMPLET = STORY_PALIER_TOUR_COMPLET;
 window.STORY_COPIE_TEXTS = STORY_COPIE_TEXTS;
 window.STORY_PALIER_TOUR_COMPLET = STORY_PALIER_TOUR_COMPLET;

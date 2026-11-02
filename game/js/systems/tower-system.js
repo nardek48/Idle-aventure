@@ -72,6 +72,81 @@ var TowerSystem = {
     }
   },
 
+  /* ---------- v3.631.0 (TW4, lot T-4b) : la Question ----------
+     Pente = pôle dominant de chaque axe, choix notés hors `question` ; égalité : le dernier choix de la Tour sur cet axe
+     (copie puis braise), sinon Donner / Aeswyn. Trois réponses : la pente sans prix, une bascule par axe avec son prix. */
+  pente: function () {
+    var axes = window.STORY_CHOICE_AXES || {}, SQ = window.StoryQuestManager, reg = { donner: 0, garder: 0, soi: 0, aeswyn: 0 };
+    if (!SQ) return { don: "donner", lieu: "aeswyn" };
+    Object.keys(axes).forEach(function (k) {
+      if (k === "question") return;
+      var v = SQ.getChoice(k);
+      ((v != null && axes[k][v]) || []).forEach(function (p) { if (reg[p] != null) reg[p] += 1; });
+    });
+    function departage(a, b) {
+      var ordre = ["copie", "braise"];
+      for (var i = 0; i < ordre.length; i++) {
+        var v = SQ.getChoice(ordre[i]), poles = (v != null && axes[ordre[i]] && axes[ordre[i]][v]) || [];
+        if (poles.indexOf(a) >= 0) return a;
+        if (poles.indexOf(b) >= 0) return b;
+      }
+      return a;
+    }
+    return {
+      don: reg.donner > reg.garder ? "donner" : (reg.garder > reg.donner ? "garder" : departage("donner", "garder")),
+      lieu: reg.soi > reg.aeswyn ? "soi" : (reg.aeswyn > reg.soi ? "aeswyn" : departage("aeswyn", "soi"))
+    };
+  },
+  /* Réponse -> axes, et l'inverse. */
+  answerOf: function (don, lieu) { return don === "donner" ? (lieu === "soi" ? "sienne" : "aeswyn") : (lieu === "soi" ? "tienne" : "rien"); },
+  axesOf: function (value) { var a = (window.STORY_CHOICE_AXES && STORY_CHOICE_AXES.question && STORY_CHOICE_AXES.question[value]) || []; return { don: a[0], lieu: a[1] }; },
+  /* Les trois réponses proposées, dans l'ordre : pente, bascule Donner/Garder (Le fil bleu), bascule Soi/Aeswyn (Brannoc). */
+  questionAnswers: function () {
+    var p = this.pente(), flip = function (x, a, b) { return x === a ? b : a; };
+    return [
+      { value: this.answerOf(p.don, p.lieu), prix: null },
+      { value: this.answerOf(flip(p.don, "donner", "garder"), p.lieu), prix: "fil" },
+      { value: this.answerOf(p.don, flip(p.lieu, "soi", "aeswyn")), prix: "brannoc" }
+    ];
+  },
+  /* Prix payé au moment de répondre (gardé dans explorationProgression, déjà sauvegardé). */
+  payQuestion: function (value) {
+    var ans = this.questionAnswers().filter(function (a) { return a.value === value; })[0];
+    var prix = ans ? ans.prix : null, ep = game.explorationProgression || (game.explorationProgression = {});
+    ep.questionPrix = prix || "aucun";
+    if (prix === "fil") this.takeFilBleu();
+    if (prix === "brannoc" && typeof addLog === "function") addLog(_t("Brannoc ne sera pas au dernier feu."), "event");
+    return prix;
+  },
+  /* Le fil bleu quitte l'équipement ou le sac (rien si déjà vendu). */
+  takeFilBleu: function () {
+    var pris = false, eq = game.equipped || {};
+    Object.keys(eq).forEach(function (sl) { if (eq[sl] && eq[sl].eliteId === "fil_bleu") { eq[sl] = null; pris = true; } });
+    if (Array.isArray(game.inventory)) {
+      var n = game.inventory.length;
+      game.inventory = game.inventory.filter(function (it) { return !(it && it.eliteId === "fil_bleu"); });
+      if (game.inventory.length !== n) pris = true;
+    }
+    if (pris && window.EquipmentManager && typeof EquipmentManager.recalcStats === "function") EquipmentManager.recalcStats();
+    if (typeof addLog === "function") addLog("🧵 " + _t("Le fil bleu se défait dans ta main. La faille le reprend."), "event");
+    return pris;
+  },
+  /* La fin choisie (clé de TOWER_FINS) ou null. */
+  ending: function () { var v = window.StoryQuestManager ? StoryQuestManager.getChoice("question") : null; return (v && window.TOWER_FINS && TOWER_FINS[v]) ? v : null; },
+  bannerLine: function () { var f = this.ending(); return f ? _td(TOWER_FINS[f].banniere) : null; },
+  /* Planches de la fin, avec la ligne de Brannoc si ce prix a été payé. */
+  endingDeck: function () {
+    var f = this.ending(); if (!f) return null;
+    var d = TOWER_FINS[f], planches = d.planches.map(function (p) { return { img: p.img, lignes: p.lignes.slice(), nom: p.nom }; });
+    if ((game.explorationProgression || {}).questionPrix === "brannoc") {
+      var last = planches[planches.length - 1];
+      last.lignes.splice(last.nom, 0, TOWER_FIN_PRIX.brannoc); last.nom += 1;
+    }
+    return { num: d.num, eyebrow: _t("Épilogue"), teinte: d.teinte, planches: planches };
+  },
+  playVision: function (onEnd) { if (window.PrologueView) PrologueView.playDeck({ num: TOWER_VISION.num, eyebrow: TOWER_VISION.num, teinte: TOWER_VISION.teinte, planches: TOWER_VISION.planches }, onEnd); else if (onEnd) onEnd(); },
+  playEpilogue: function (onEnd) { var d = this.endingDeck(); if (d && window.PrologueView) PrologueView.playDeck(d, onEnd); else if (onEnd) onEnd(); },
+
   /* Combat gagné : la braise gardée rend un peu de PV. */
   onVictory: function () {
     if (!this.atTower() || this.braise() !== "garder" || !(game.heroHp > 0)) return 0;

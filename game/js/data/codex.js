@@ -93,7 +93,7 @@ var CODEX_ENTRIES = [
     title: "Le Donjon — la Faille sous les Cinq Sceaux",
     icon: "images/Icons/subtabs/dungeon.webp",
     category: "system",
-    text: "Sous chaque monde traversé se trouve un accès à la Faille — un lieu hors du temps normal du Cycle, où l'Aether s'exprime sans filtre. On raconte qu'elle est scellée en cinq couches, chacune plus instable que la précédente.\n\nLes Éclats récoltés dans la Faille ne sont pas de simples fragments de minerai : ce sont des morceaux de Sceau, arrachés à la structure même qui retient la Faille de se répandre dans le reste du Cycle. Les utiliser pour renforcer son équipement, c'est emprunter, un peu, à la prison elle-même.",
+    text: "Sous chaque monde traversé se trouve un accès à la Faille — un lieu hors du temps normal du Cycle, où l'Aether s'exprime sans filtre. On raconte qu'elle est scellée en couches, chacune plus instable que la précédente.\n\nLes Éclats récoltés dans la Faille ne sont pas de simples fragments de minerai : ce sont des morceaux de Sceau, arrachés à la structure même qui retient la Faille de se répandre dans le reste du Cycle. Les utiliser pour renforcer son équipement, c'est emprunter, un peu, à la prison elle-même.",
     isUnlocked: function () { return codexFeuilletsRecus() && !!(game.dungeonTiersEntered && Object.keys(game.dungeonTiersEntered).length > 0); }
   },
   { id: "dungeon_tier_1", title: "Le premier Sceau", icon: "images/Icons/system/lock_open.webp", category: "system",
@@ -109,8 +109,12 @@ var CODEX_ENTRIES = [
     text: "Le quatrième Sceau est le premier où la Faille semble répondre : les créatures y sont façonnées avec une intention presque calculée, comme un test.",
     isUnlocked: function () { return codexFeuilletsRecus() && !!(game.dungeonTiersEntered && game.dungeonTiersEntered[4]); } },
   { id: "dungeon_tier_5", title: "Le cinquième Sceau — « la Question »", icon: "images/Icons/scene/node_unknown.webp", category: "system",
-    text: "Le cinquième et dernier Sceau connu, réservé aux héros les plus aguerris, est celui que les archivistes du Cycle appellent simplement « la Question ». On y descend rarement en cherchant du butin. On y descend pour comprendre pourquoi la Faille existe.",
+    text: "Le cinquième Sceau, longtemps le dernier connu, réservé aux héros les plus aguerris, est celui que les archivistes du Cycle appellent simplement « la Question ». On y descend rarement en cherchant du butin. On y descend pour comprendre pourquoi la Faille existe.",
     isUnlocked: function () { return codexFeuilletsRecus() && !!(game.dungeonTiersEntered && game.dungeonTiersEntered[5]); } },
+  /* v3.631.0 (Tour, TW15, note v3.621.3) : le sixième Sceau, au Sommet interdit. Texte à relire. */
+  { id: "dungeon_tier_6", title: "Le sixième Sceau — « le Sommet »", icon: "images/Icons/scene/node_unknown.webp", category: "system",
+    text: "Les archivistes n'en comptaient que cinq. Le sixième est en haut de la Tour, là où la fente est la plus large. Ce n'est pas une couche de plus : c'est la salle où elle s'est mise à apprendre. Tout ce qu'on y fait, elle le refait.",
+    isUnlocked: function () { return codexFeuilletsRecus() && !!(game.dungeonTiersEntered && game.dungeonTiersEntered[6]); } },
 
   {
     id: "village",
@@ -142,6 +146,15 @@ var CODEX_ENTRIES = [
     category: "world",
     text: "Sur le premier palier : « Elle refait ce qu'elle a vu. Elle ne sait pas encore ce qu'elle a vu. »\n\nUn peu plus haut : « J'ai laissé une chaise. Celui qui monte après moi aura besoin de s'asseoir. »\n\nLe dernier : « Ici, je n'avais plus rien à donner. J'ai continué quand même. »",
     isUnlocked: function () { var st = window.StoryQuestManager && StoryQuestManager.getState("tower"); return !!(st && st.claimedSteps && st.claimedSteps.tour_10); }
+  },
+  /* v3.631.0 (Tour, TW15) : la vision, en fiche, une fois l'étape 19 faite. */
+  {
+    id: "cette_nuit_la",
+    title: "Cette nuit-là",
+    icon: "images/Icons/codex/codex_lore.webp",
+    category: "world",
+    text: "Douze hivers. Un homme sec descend vers un village de la forêt, une goutte de lumière bleue dans les mains. Il la pose au milieu des maisons et dit : « Prends. Tout. »\n\nElle prend. Le feu, les familles qui courent, Orwen qui crie un nom.\n\nUn enfant ne court pas. Elle ne le prend pas : elle garde ce qu'il regarde. Le Veilleur ne savait pas son nom. Elle, elle l'a entendu.",
+    isUnlocked: function () { var st = window.StoryQuestManager && StoryQuestManager.getState("tower"); return !!(st && st.claimedSteps && st.claimedSteps.tour_19); }
   }
 ];
 

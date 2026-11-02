@@ -788,6 +788,7 @@ function buildStoryChoiceModalHTML(chapterId) {
     h += '    <div class="story-choice-option">';
     h += '      <button class="settings-btn primary" type="button" onclick="chooseStoryOption(\'' + esc(chapterId) + '\', \'' + esc(o.value) + '\')">' + esc(_td(o.label)) + '</button>';
     h += '      <p class="story-choice-desc">' + esc(_td(o.desc || "")) + '</p>';
+    if (o.prix) h += '      <p class="story-choice-desc story-choice-prix">' + esc(_td(o.prix)) + '</p>'; // v3.631.0 (Tour) : le prix d'une bascule
     h += '    </div>';
   });
   h += '    </div>';
