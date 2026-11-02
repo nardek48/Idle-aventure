@@ -5059,9 +5059,182 @@ STORY_QUESTS.tower = {
       },
       check: function (game) { return storyPalier(game, "legendary").pieces >= STORY_PALIER_TOUR.pieces; },
       progress: function (game) { return "Pièces Légendaires " + Math.min(STORY_PALIER_TOUR.pieces, storyPalier(game, "legendary").pieces) + "/" + STORY_PALIER_TOUR.pieces; }
+    },
+    /* ---------- Acte III — Ce qu'elle a appris (lot T-3) ---------- */
+    /* Étape 11 : le Sommet interdit s'ouvre (donjon 6) ; atteindre son campement dans un run. */
+    {
+      id: "tour_11",
+      title: "Le Sommet interdit",
+      act: "Acte III — Ce qu'elle a appris",
+      narrative: {
+        objective: "Une porte de plus. Derrière, le bruit d'un combat qui n'a pas encore eu lieu.",
+        completion: "Au fond, quelqu'un se bat contre toi. Il a tes gestes, à l'envers. Il s'arrête quand tu t'arrêtes.",
+        dialogue: [
+          { who: "Edda", text: "Ce n'est pas un étage. C'est une salle qui se répète." }
+        ],
+        completionDialogue: [
+          { who: "Wenna", text: "C'est toi ?" },
+          { who: "Ysolt", text: "C'est ce qu'elle a vu de toi." }
+        ]
+      },
+      objectiveLabel: "Atteindre le campement du Sommet interdit (vaincre le Gardien qui répète dans un même run)",
+      unlockTabs: [],
+      reward: STORY_REWARDS.tour_11,
+      linkTo: { section: "dungeon" },
+      tutorial: {
+        tab: "dungeon",
+        icon: "images/Dungeons/Icone_base/palier6.webp",
+        title: "Le miroir",
+        points: [
+          { icon: "images/Dungeons/Icone_base/palier6.webp", text: "Le Sommet interdit est une salle qui se répète : vagues, campement après la huitième, puis le Reflet au bout." },
+          { icon: "images/Icons/memory/grimoire_etendu.webp", text: "Le Reflet et le Gardien qui répète gardent ta dernière technique : la même, utilisée juste après contre eux, perd 25 %. Varie tes techniques pour garder toute ta force." }
+        ]
+      },
+      check: function (game) { return !!(game && game.explorationProgression && game.explorationProgression.sommetCamp); },
+      progress: function (game) { return "Campement " + ((game.explorationProgression || {}).sommetCamp ? "1/1" : "0/1"); }
+    },
+    /* Étape 12 : le Reflet, boss du Sommet interdit. */
+    {
+      id: "tour_12",
+      title: "Le reflet",
+      act: "Acte III — Ce qu'elle a appris",
+      narrative: {
+        objective: "Le reflet attend au bout de la salle. Il ne bouge pas tant que tu ne bouges pas.",
+        completion: "Le reflet se brise comme un verre qui n'aurait pas de bruit. Dans les éclats, tes gestes, en petit, continuent un moment.",
+        dialogue: [
+          { who: "Edda", text: "Change de main. Il ne connaît que ce qu'il a vu." }
+        ],
+        completionDialogue: []
+      },
+      objectiveLabel: "Vaincre le Reflet, au bout du Sommet interdit",
+      unlockTabs: [],
+      reward: STORY_REWARDS.tour_12,
+      linkTo: { section: "dungeon" },
+      check: function (game) { return !!((game.dungeonTierCleared || {})[6]); },
+      progress: function (game) { return "Reflet vaincu " + ((game.dungeonTierCleared || {})[6] ? "1/1" : "0/1"); }
+    },
+    /* Étape 13 : le Légendaire complet (TW7) ; la Forge 7 s'ouvre avec l'étape (forgeActStep). */
+    {
+      id: "tour_13",
+      title: "Ce qui ne se forge pas",
+      act: "Acte III — Ce qu'elle a appris",
+      narrative: {
+        objective: "Ce que le Sommet laisse tomber ne ressemble à rien de ce que tu as porté. Les pièces sont légères. Elles prennent la forme de la main qui les tient. À Aeswyn, Brannoc retourne une pièce entre ses doigts.",
+        completion: "Tu repars. Orwen a remis du pain dans ton sac. Elle ne demande pas pour la braise.",
+        dialogue: [
+          { who: "Brannoc", text: "Personne ne l'a forgée, petit. Elle s'est faite." },
+          { who: "Aldric", text: "Alors ne me dis pas comment." }
+        ],
+        completionDialogue: []
+      },
+      objectiveLabel: "Porter 7 pièces Légendaires",
+      unlockTabs: [],
+      reward: STORY_REWARDS.tour_13,
+      linkTo: { tab: "equip" },
+      tutorial: {
+        tab: "equip",
+        icon: "images/Icons/workshops/smithing_station.webp",
+        title: "Le Légendaire complet",
+        points: [
+          { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Pour la suite, tes sept emplacements doivent porter une pièce Légendaire. Le Sommet interdit en laisse tomber, comme le Gardien qui répète." },
+          { icon: "images/Icons/workshops/smithing_station.webp", text: "La Forge 7 s'ouvre maintenant, au Verre de faille (Givre bleu fondu à la Fonderie) : reforges 13 et 14." }
+        ]
+      },
+      check: function (game) { return storyPalier(game, "legendary").pieces >= STORY_PALIER_TOUR_COMPLET.pieces; },
+      progress: function (game) { return "Pièces Légendaires " + Math.min(STORY_PALIER_TOUR_COMPLET.pieces, storyPalier(game, "legendary").pieces) + "/" + STORY_PALIER_TOUR_COMPLET.pieces; }
+    },
+    /* Étape 14 : deuxième choix pesant, clé « copie » : laisser le village d'avant (Donner) ou le défaire (Garder). */
+    {
+      id: "tour_14",
+      title: "Aeswyn d'avant",
+      act: "Acte III — Ce qu'elle a appris",
+      narrative: {
+        objective: "Au dernier étage avant le sommet, une forêt. Un sentier. Au bout du sentier, un village de bois, entier. Des toits que tu n'as jamais vus debout.",
+        get completion() { return STORY_COPIE_TEXTS[storyCopieBranch()].completion; },
+        dialogue: [
+          { who: "Wenna", text: "C'est Aeswyn." },
+          { who: "Wenna", text: "C'est Aeswyn avant. Il y a la maison de mes parents." },
+          { who: "Ysolt", text: "Elle l'a gardé. Elle garde tout ce qu'elle prend." },
+          { who: "Edda", text: "Ce n'est pas un endroit. C'est un souvenir. Le sien." }
+        ],
+        get completionDialogue() { return STORY_COPIE_TEXTS[storyCopieBranch()].dialogue; }
+      },
+      objectiveLabel: "Choisir pour le village d'avant",
+      unlockTabs: [],
+      reward: STORY_REWARDS.tour_14,
+      choice: {
+        key: "copie", onStoryCard: true,
+        buttonLabel: "Décider",
+        title: "Aeswyn d'avant",
+        text: "Le village d'avant est là, intact, sans personne dedans. Wenna se tient devant la porte de sa maison. Personne ne choisira pour toi.",
+        options: [
+          { value: "laisser", label: "Le laisser debout", desc: "Elle garde le village d'avant. Le Sommet interdit devient plus dur, et plus riche." },
+          { value: "defaire", label: "Le défaire", desc: "Tu pousses la première porte. Le village se défait en verre. Tu en rapportes la matière." }
+        ],
+        apply: function (value) {
+          if (value === "defaire" && window.WarehouseManager) WarehouseManager.addResource("verre_faille", STORY_COPIE_VERRE, true);
+          if (typeof addLog !== "function") return;
+          if (value === "laisser") addLog(_t("Aeswyn d'avant reste debout : le Sommet interdit est plus dur, et rapporte deux fois plus de Givre bleu."), "event");
+          else addLog(_t("Aeswyn d'avant se défait en verre : +{n} Verres de faille.", { n: STORY_COPIE_VERRE }), "event");
+        }
+      },
+      check: function () { return !!(window.StoryQuestManager && StoryQuestManager.getChoice("copie")); },
+      progress: function () { return "Choix " + ((window.StoryQuestManager && StoryQuestManager.getChoice("copie")) ? "1/1" : "0/1"); }
+    },
+    /* Étape 15 : le haut de l'escalier, quatre rencontres ; fin de l'acte III. */
+    {
+      id: "tour_15",
+      title: "La dernière porte",
+      act: "Acte III — Ce qu'elle a appris",
+      narrative: {
+        objective: "Plus haut, l'escalier se rétrécit. Une personne de front. Puis une personne tout court.",
+        completion: "Devant la dernière porte, l'air a le goût de la nuit où le ciel s'est fendu.",
+        dialogue: [
+          { who: "Edda", text: "Ma carte s'arrête ici. Le reste, il n'y a rien à dessiner." }
+        ],
+        completionDialogue: [
+          { who: "Ysolt", text: "Ceux d'avant sont montés seuls. Tous." },
+          { who: "Wenna", text: "On t'attend ici." },
+          { who: "Wenna", text: "Reviens. Je compterai." }
+        ]
+      },
+      objectiveLabel: "Terminer « Le haut de l'escalier » : 4 rencontres",
+      unlockTabs: [],
+      reward: STORY_REWARDS.tour_15,
+      linkTo: { section: "adventure", cardId: "adv_aq_tour_haut" },
+      check: function (game) { return storyAdvDone(game, "aq_tour_haut"); },
+      progress: function (game) { return "Rencontres " + storyAdvProgress(game, "aq_tour_haut", "rencontres_haut", 4) + "/4"; }
     }
   ]
 };
+/* v3.629.0 (Tour, TW7) : le Légendaire complet de l'acte III. Au banc. */
+var STORY_PALIER_TOUR_COMPLET = { pieces: 7 };
+var STORY_COPIE_VERRE = 6; // défaire Aeswyn d'avant : sa matière, de quoi la Forge 7 et une reforge
+var STORY_COPIE_TEXTS = {
+  laisser: {
+    completion: "Wenna touche la porte. Elle ne l'ouvre pas.",
+    dialogue: [{ who: "Wenna", text: "Je voulais juste savoir de quelle couleur elle était." }]
+  },
+  defaire: {
+    completion: "Le village tombe sans bruit, comme une neige. Wenna ramasse un éclat bleu et le garde dans son poing.",
+    dialogue: [{ who: "Wenna", text: "Ce n'était pas le nôtre. Le nôtre brûle encore un peu." }]
+  }
+};
+function storyCopieBranch() {
+  return (window.StoryQuestManager && StoryQuestManager.getChoice("copie") === "defaire") ? "defaire" : "laisser";
+}
+STORY_CHOICE_AXES.copie = { laisser: ["donner"], defaire: ["garder"] }; // v3.629.0 (Tour, étape 14)
+STORY_REWARDS.tour_11 = { gold: 22000, resources: { givre_bleu: 4 } };
+STORY_REWARDS.tour_12 = { gold: 23000, equipmentRarity: "legendary", equipmentCount: 1, equipmentFill: true };
+STORY_REWARDS.tour_13 = { gold: 24000, resources: { verre_faille: 3 } };
+STORY_REWARDS.tour_14 = { gold: 25000 };
+STORY_REWARDS.tour_15 = { gold: 26000, resources: { givre_bleu: 6 } };
+["tour_11", "tour_12", "tour_13", "tour_14", "tour_15"].forEach(function (id, k) { STORY_QUESTS.tower.steps[10 + k].reward = STORY_REWARDS[id]; });
+window.STORY_PALIER_TOUR_COMPLET = STORY_PALIER_TOUR_COMPLET;
+window.STORY_COPIE_TEXTS = STORY_COPIE_TEXTS;
+window.STORY_PALIER_TOUR_COMPLET = STORY_PALIER_TOUR_COMPLET;
+window.STORY_COPIE_VERRE = STORY_COPIE_VERRE;
+window.storyCopieBranch = storyCopieBranch;
 /* v3.628.0 (Tour, TW7) : palier Légendaire de l'acte II, trois pièces sur sept, de tout monde. Au banc. */
 var STORY_PALIER_TOUR = { pieces: 3 };
 window.STORY_PALIER_TOUR = STORY_PALIER_TOUR;

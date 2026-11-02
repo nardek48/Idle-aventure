@@ -327,15 +327,26 @@ var DUNGEONS = [
   {
     id: 6, key: "tower",
     name: "Sommet interdit",
-    worldId: "tower", worldRequired: 5, worldPower: 5, difficultyMult: 30,
+    worldId: "tower", worldRequired: 5, worldPower: 5, difficultyMult: 70, // v3.629.0 : mesuré au banc (Chevalier 42 % de PV en fin, Mage 73 %)
     maxRarity: "legendary",
-    specialResourceId: null, specialResourceAmount: 0,
     icon: "images/Dungeons/Icone_base/palier6.webp", banner: null, combatMap: "../images/Maps/tower-combat.webp",
     desc: "Le sommet de la Tour, et ce qui s'y reflète.",
-    story: "",
-    enemyPool: null, eliteWaves: null,
-    boss: { baseId: "archmage", name: "Reflet de l'Archimage", archetype: "vampiric", statMult: { endurance: 1, power: 1 }, image: null },
-    locked: true, lockedHint: "Pas encore disponible"
+    story: "Une salle qui se répète. Au bout, le bruit d'un combat qui n'a pas encore eu lieu.",
+    /* v3.629.0 (Tour, lot T-3, TW11) : le pool de la Tour ; vague 8 : le Gardien qui répète (le miroir) ;
+       campement après la vague 8. Givre bleu en fin de run. Réglages au banc. */
+    specialResourceId: "givre_bleu", specialResourceAmount: 3,
+    enemyPool: ["arcanegolem", "corruptmage", "hybrid", "guardian"],
+    eliteWaves: { 8: "gardien_qui_repete" },
+    groupWaves: { 3: 2, 6: 2, 10: 3, 14: 2 },
+    haltSlots: [4, 11, 13],
+    camp: { afterWave: 8, healPct: 0.4, stoneAmount: 2, storyFlag: "sommetCamp" },
+    /* LE REFLET (TW6) : base Archimage, il garde ta dernière technique (TowerSystem.isMirror : -25 % si tu la répètes). */
+    boss: { baseId: "archmage", name: "Le Reflet", archetype: "vampiric", statMult: { endurance: 0.5, power: 0.6 }, image: "./images/Boss/reflet.webp" },
+    locked: false,
+    requiresStoryStep: "tour_11",
+    storyChapterId: "tower",
+    storyFreeSteps: ["tour_11", "tour_12"],
+    lockedHint: "Le Sommet interdit ne s'ouvre pas encore."
   }
 ];
 
