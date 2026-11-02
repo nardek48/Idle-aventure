@@ -43,7 +43,28 @@ html.text-big .prologue-text { --pro-t: 24px; }
   .prologue-foot { padding-left: 8vw; padding-right: 4vw; }
 }
 
+/* ---------- v3.623.0 : ouvertures de chapitre (même lecture, trois planches) ---------- */
+/* Lent rapprochement de l'image : le chapitre s'ouvre, il ne défile pas */
+.prologue.is-chapitre .prologue-scene img.on { animation: pro-approche 18s ease-out both; }
+@keyframes pro-approche { from { transform: scale(1); } to { transform: scale(1.06); } }
+/* Image pas encore livrée : fond de la teinte du chapitre, une lueur qui dérive lentement */
+.prologue-scene img.is-absente { display: none; }
+.prologue-scene.is-vide { background: radial-gradient(120% 90% at 50% 25%, rgba(var(--pro-a, 120, 100, 80), .55) 0%, rgba(var(--pro-b, 50, 40, 30), .9) 48%, rgb(var(--pro-c, 14, 11, 8)) 100%); }
+.prologue-scene.is-vide::before { content: ""; position: absolute; inset: -20%; pointer-events: none;
+  background: radial-gradient(40% 30% at 30% 35%, rgba(var(--pro-a, 120, 100, 80), .35), transparent 70%), radial-gradient(35% 28% at 72% 55%, rgba(var(--pro-a, 120, 100, 80), .22), transparent 70%);
+  animation: pro-derive 16s ease-in-out infinite alternate; }
+@keyframes pro-derive { from { transform: translate3d(-3%, -2%, 0) scale(1); } to { transform: translate3d(3%, 2%, 0) scale(1.08); } }
+/* « Chapitre II » en tête de la première planche */
+.prologue-eyebrow { position: absolute; z-index: 1; top: calc(18px + env(safe-area-inset-top, 0px)); left: max(24px, env(safe-area-inset-left, 0px)); pointer-events: none;
+  font: 700 13px "Cinzel", Georgia, serif; letter-spacing: .22em; text-transform: uppercase; color: var(--c-gold-550); text-shadow: 0 1px 3px rgba(0, 0, 0, .9);
+  animation: pro-eyebrow 1.6s ease .2s both; }
+@keyframes pro-eyebrow { from { opacity: 0; transform: translateY(-4px); } to { opacity: .9; transform: none; } }
+/* Le titre du chapitre se pose plus lentement que le reste */
+.prologue.is-chapitre .prologue-text p.is-nom .prologue-l.v { transition-duration: .5s; }
+@media (min-width: 900px) and (min-aspect-ratio: 1/1) { .prologue-eyebrow { left: 8vw; top: 28px; font-size: 15px; } }
+
 @media (prefers-reduced-motion: reduce) {
   .prologue-scene img, .prologue-l.v { transition: none; }
   .prologue-hint.on { animation: none; }
+  .prologue.is-chapitre .prologue-scene img.on, .prologue-scene.is-vide::before, .prologue-eyebrow { animation: none; }
 }

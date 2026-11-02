@@ -338,7 +338,7 @@ function buildQuestsWideHTML(missions) {
     h += '<h4 class="qw-grp">' + esc(cat.label) + '</h4>';
     h += E[cat.key] && E[cat.key].length ? E[cat.key].map(function (e) { return questsWideItemHTML(e, questsWideSel); }).join("") : '<p class="qw-empty">' + esc(cat.emptyText) + '</p>';
     h += buildOtherWorldQuestsHTML(cat.kinds);
-    if (cat.key === "histoire" && window.PrologueView) h += '<button class="qb-completed-link" type="button" onclick="openPrologueReplay()">' + esc(_t("Revoir le prologue")) + ' ▸</button>'; // v3.570.0
+    if (cat.key === "histoire" && window.PrologueView) h += '<button class="qb-completed-link" type="button" onclick="openPrologueReplay()">' + esc(_t("Revoir le prologue")) + ' ▸</button>' + chapterOpeningLinksHTML("qb-completed-link"); // v3.570.0
   });
   h += '<div class="qb-completed-bar"><button class="qb-completed-link" type="button" onclick="setQuestsFilter(\'completed\')">' + _t("Voir les quêtes terminées") + ' ▸</button></div>';
   h += '</div><div class="qw-detail">';
@@ -921,7 +921,17 @@ function buildStoryEndCardHTML() {
 /* v3.570.0 : carte « Revoir le prologue » en tête de Quêtes › Histoire (parties en cours comprises). */
 function buildPrologueCardHTML() {
   return '<div class="story-prologue-card"><b>' + esc(_t("Prologue — Cette nuit-là")) + '</b>'
-    + '<button class="story-end-link" type="button" onclick="openPrologueReplay()">' + esc(_t("Revoir le prologue")) + ' ▸</button></div>';
+    + '<button class="story-end-link" type="button" onclick="openPrologueReplay()">' + esc(_t("Revoir le prologue")) + ' ▸</button>'
+    + chapterOpeningLinksHTML("story-end-link") + '</div>';
+}
+
+/* v3.623.0 : un lien par ouverture déjà vue (étape d'arrivée faite), sous le prologue. */
+function chapterOpeningLinksHTML(cls) {
+  if (typeof chapterOpeningsAvailable !== "function") return "";
+  return chapterOpeningsAvailable().map(function (id) {
+    var c = CHAPTER_OPENINGS[id], titre = c.planches[c.planches.length - 1].lignes[c.planches[c.planches.length - 1].nom];
+    return '<button class="' + cls + '" type="button" onclick="openChapterOpeningReplay(\'' + id + '\')">' + esc(_t("Revoir l'ouverture : {x}", { x: _td(titre) })) + ' ▸</button>';
+  }).join("");
 }
 
 /* La fenêtre de la dernière étape du dernier chapitre ouvre le bilan à sa fermeture (une fois : l'étape ne se réclame qu'une fois). */
@@ -1159,6 +1169,8 @@ function openQuestCompletePopup(config) {
   if (storyMergeRows) { config.rewardRows = storyMergeRows.concat(config.rewardRows || []); config.questDone = true; storyMergeRows = null; }
   applyQuestUnlockSideEffects();
   if (window.StoryQuestManager && window.STORY_QUESTS) storyEndChain(config);
+  // v3.623.0 : fin de l'étape d'arrivée d'un monde -> son ouverture de chapitre, à la fermeture de la fenêtre
+  if (typeof chapterOpeningForStepTitle === "function" && config.title) { var ouv = chapterOpeningForStepTitle(config.title); if (ouv) pendingChapterOpening = ouv; }
   var boss = document.getElementById("cycle-modal-root");
   if (boss && boss.innerHTML) { pendingQuestCompleteConfig = config; return; }
   var host = document.getElementById("adventure-quest-modal-root");
@@ -1196,9 +1208,13 @@ function applyQuestUnlockSideEffects() {
   });
 }
 
+var pendingChapterOpening = null; // v3.623.0 : chapitre à ouvrir quand la fenêtre de fin d'étape se ferme
 function closeQuestCompletePopup() {
   var host = document.getElementById("adventure-quest-modal-root");
   if (host) host.innerHTML = "";
+  var ouv = pendingChapterOpening;
+  pendingChapterOpening = null;
+  if (ouv && window.PrologueView) PrologueView.playChapter(ouv, null);
 }
 window.closeQuestCompletePopup = closeQuestCompletePopup;
 

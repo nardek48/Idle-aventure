@@ -21491,6 +21491,29 @@ console.log("\n[417] v3.622.0 — La nuit dit vrai dans la Crypte et la Montagne
   LM.isMapOpen = saveOpen417; run("WorldManager.worldIndex = 0;");
 })();
 
+console.log("\n[418] v3.623.0 — Ouvertures de chapitre");
+(function () {
+  try {
+    var fs = require("fs"), path = require("path"), rd = function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); };
+    var ids = run("CHAPTER_OPENING_ORDER.join(',')");
+    ok(ids === "desert,ruins,crypt,mountain", "quatre ouvertures, du Désert à la Montagne (" + ids + ")");
+    var bad = run("CHAPTER_OPENING_ORDER.filter(function(id){ var c=CHAPTER_OPENINGS[id], q=STORY_QUESTS[id], last=c.planches[c.planches.length-1]; return !(c.planches.length===3 && q.steps[0].id===c.step && last.lignes[last.nom]===q.title && c.planches.every(function(p){return /^[a-z]+_[1-3]_[a-z]+$/.test(p.img);})); }).join(',')");
+    ok(bad === "", "trois planches chacune, déclenchées par la 1re étape du monde, le titre doré = le nom du chapitre" + (bad ? " (" + bad + ")" : ""));
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; StoryQuestManager.ensure();");
+    var t = run("STORY_QUESTS.crypt.steps[0].title");
+    ok(run("chapterOpeningForStepTitle(" + JSON.stringify(t) + ")") === null && run("chapterOpeningsAvailable().length") === 0, "étape d'arrivée pas faite : ni ouverture ni lien « Revoir »");
+    run("StoryQuestManager.getState('crypt').claimedSteps.crypte_01 = true;");
+    ok(run("chapterOpeningForStepTitle(" + JSON.stringify(t) + ")") === "crypt" && run("chapterOpeningsAvailable().join(',')") === "crypt", "fin de « " + t + " » : l'ouverture de la Crypte, puis son lien dans Quêtes › Histoire");
+    ok(run("chapterOpeningForStepTitle(STORY_QUESTS.crypt.steps[1].title)") === null, "une autre étape du monde n'ouvre rien");
+    var qv = rd("js/ui/quests-view.js"), pv = rd("js/ui/prologue-view.js");
+    ok(/pendingChapterOpening = ouv/.test(qv) && /PrologueView\.playChapter\(ouv, null\)/.test(qv) && /chapterOpeningLinksHTML\("story-end-link"\)/.test(qv) && /chapterOpeningLinksHTML\("qb-completed-link"\)/.test(qv), "jouée à la fermeture de la fenêtre de fin d'étape ; liens « Revoir » sur téléphone et PC");
+    ok(/images\/Chapitres\//.test(pv) && /is-vide/.test(pv) && /img\.onerror = vide/.test(pv), "images attendues dans images/Chapitres/ ; image absente : fond animé, vrai chemin gardé");
+    ok(rd("index.html").indexOf("js/data/chapter-openings.js") > 0 && rd("sw.js").indexOf('"./js/data/chapter-openings.js"') > 0, "nouveau fichier dans index.html et le précache du service worker");
+    var en = rd("js/lang/en.js"), manque = run("CHAPTER_OPENING_ORDER.reduce(function(a,id){ CHAPTER_OPENINGS[id].planches.forEach(function(p){ a=a.concat(p.lignes); }); return a; }, [])").filter(function (l) { return en.indexOf(JSON.stringify(l) + ":") < 0; });
+    ok(manque.length === 0, "les 36 lignes traduites en anglais" + (manque.length ? " (manque : " + manque[0] + ")" : ""));
+  } catch (err) { ok(false, "[418] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");
