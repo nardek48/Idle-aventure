@@ -21629,6 +21629,9 @@ console.log("\n[423] v3.628.0 — Tour, lot T-2b : gisants, Gardien qui répète
     ok(cx && cx.isUnlocked() === false, "feuillets de la Tour : fermés avant l'étape 10");
     run("game.storyQuests.tower.claimedSteps.tour_10 = true;");
     ok(cx.isUnlocked() === true && /J'ai continué quand même/.test(cx.text), "feuillets de la Tour : ouverts une fois l'étape 10 faite");
+    // v3.628.1 (bug Seb) : le cadre des cartes ne doit pas décoller le détail de l'équipement (sticky, comme les Talents)
+    var cc628 = require("fs").readFileSync(require("path").join(ROOT, "css/00-cartes.css"), "utf8");
+    ok(/\.hs-edetail:not\(#kc-sticky\) \{ position: sticky; \}/.test(cc628), "Équipé : le détail de la pièce reste collé en bas de l'écran malgré son cadre");
   } catch (err) { ok(false, "[423] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 

@@ -7865,6 +7865,7 @@ I18n.register("en", {
   // v3.602.0 : jours du monde
   "Jour {n}": "Day {n}",
   "Rien n'a bougé autour du camp.": "Nothing has moved around the camp.",
+  "Héros › Équipé : le détail de la pièce choisie reste de nouveau visible en bas de l'écran, comme dans les Talents.": "Hero › Equipped: the selected piece's details stay visible at the bottom of the screen again, as in Talents.",
   "La Tour, fin de l'acte II : l'étage des gisants, le Gardien qui répète, le palier Légendaire et les feuillets du Veilleur au Codex.": "The Tower, end of act II: the sleepers' floor, the Repeating Guardian, the Legendary threshold and the Watcher's leaves in the Codex.",
   "L'étage des gisants": "The Sleepers' Floor",
   "Un étage de gisants debout contre les murs, les yeux fermés. Certains se décollent du mur quand on passe.": "A floor of sleepers standing against the walls, eyes closed. Some come away from the wall as you pass.",
