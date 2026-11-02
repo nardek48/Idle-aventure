@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.625.1"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.626.0"; // <- à incrémenter à CHAQUE livraison
 var CACHE_NAME = "quest-idle-" + CACHE_VERSION;
 var IMAGE_CACHE = "aethervale-images"; // v3.457.4 : hors du préfixe quest-idle- ; v3.547.0 : images disparues purgées (purgeMissingImages)
 var imagesRevalidated = {};             // URL déjà revérifiées depuis le démarrage de ce service worker
@@ -145,6 +145,7 @@ var PRECACHE_APP_SHELL = [
   "./js/systems/rise-system.js",
   "./js/systems/sleep-system.js",
   "./js/systems/vein-system.js",
+  "./js/systems/tower-system.js", // v3.626.0 : NOUVEAU fichier (règles de la Tour)
   "./js/systems/companion-system.js",
   "./js/systems/companion-relic-system.js",
   "./js/data/combat-states.js",

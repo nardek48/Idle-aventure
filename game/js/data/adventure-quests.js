@@ -1182,6 +1182,65 @@ var ADVENTURE_QUESTS = {
       }
     ],
     reward: { gold: 1350, seve: 5 }
+  },
+
+  /* v3.626.0 (Tour, acte I étape 2) — « Le pied de la Tour » : cinq rencontres avec les gardiens. Réglés au banc
+     (tour-acte1-bench) : plus faciles que la cible, la marge du Mage face aux coups lourds décide. */
+  aq_tour_pied: {
+    id: "aq_tour_pied",
+    type: "kill",
+    section: "adventure",
+    difficulty: "medium",
+    progressionStage: "world_start",
+    category: "side",
+    worldId: "tower",
+    adventureIndex: 0,
+    encounters: [
+      { enemy: "guardian" },
+      { group: ["guardian", "arcanegolem"], groupHpMult: 0.55 },
+      { enemy: "hybrid" }, // banc : le golem seul (résiste à la magie, réduit au silence) écrasait le Mage
+      { group: ["guardian", "guardian"], groupHpMult: 0.55 },
+      { group: ["arcanegolem", "guardian"], groupHpMult: 0.55 }
+    ],
+    // banc (tour-acte1-bench, sauvegardes d'entrée de la Tour, 6 runs, sans potion) : 100 % de réussite pour les trois classes,
+    // 85-97 % des PV restants, 4,3 à 7,5 rounds par combat. Plus dur que ×6 en puissance, le Mage tombe d'un coup (17 % à ×8).
+    encounterHpMult: 2.5,
+    enemyPowerMult: 6,
+    name: "Le pied de la Tour",
+    story: "Au pied de la Tour, des gardiens de pierre font les cent pas. Ils regardent ceux qui arrivent.",
+    icon: "./images/Icons/quest_icons/exploration/exploration1.webp",
+    steps: [
+      { id: "rencontres_pied", type: "encounter", worldId: "tower", target: 5, desc: "Vaincre {target} rencontres au pied de la Tour" }
+    ],
+    reward: {}
+  },
+
+  /* v3.626.0 (Tour, acte I étape 4) — « L'étage du sable » : quatre rencontres avec les bêtes du Désert, comme la Tour
+     s'en souvient (écho du Désert, TW2). Mêmes réglages que le pied. */
+  aq_tour_sable: {
+    id: "aq_tour_sable",
+    type: "kill",
+    section: "adventure",
+    difficulty: "medium",
+    progressionStage: "world_start",
+    category: "side",
+    worldId: "tower",
+    adventureIndex: 0,
+    encounters: [
+      { group: ["scarab", "scarab", "scorpion"], groupHpMult: 0.45 },
+      { group: ["sandwarrior", "scorpion"], groupHpMult: 0.55 },
+      { enemy: "sandworm" },
+      { group: ["sandwarrior", "sandworm"], groupHpMult: 0.55 }
+    ],
+    encounterHpMult: 2.5, // banc : 100 % de réussite, 90-95 % des PV restants, 4,4 à 7,8 rounds par combat
+    enemyPowerMult: 6,
+    name: "L'étage du sable",
+    story: "Derrière la porte, un escalier, puis du sable. Le Désert comme quelqu'un s'en souvient.",
+    icon: "./images/Icons/quest_icons/exploration/exploration1.webp",
+    steps: [
+      { id: "rencontres_sable", type: "encounter", worldId: "tower", target: 4, desc: "Vaincre {target} rencontres à l'étage du sable" }
+    ],
+    reward: {}
   }
 };
 

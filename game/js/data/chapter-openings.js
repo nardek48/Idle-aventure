@@ -38,7 +38,16 @@ var CHAPTER_OPENINGS = {
     ]
   }
 };
-var CHAPTER_OPENING_ORDER = ["desert", "ruins", "crypt", "mountain"];
+/* v3.626.0 (Tour, lot T-1) : textes validés par Seb le 02/11/2026 (Chapitre VI : textes v0.1). Images à générer. */
+CHAPTER_OPENINGS.tower = {
+  num: "Chapitre VI", step: "tour_01", teinte: ["150,160,190", "50,56,74", "10,11,16"],
+  planches: [
+    { img: "tour_1_nord", lignes: ["La braise d'Aeswyn ne fume plus droit. Elle penche vers le nord.", "Orwen a mis du pain dans ton sac. Elle n'a rien dit d'autre.", "Sarkel attelle sans qu'on le lui demande."] },
+    { img: "tour_2_plaine", lignes: ["Au nord, l'herbe devient grise, puis elle ne pousse plus.", "Au bout, la Tour. Elle perce le ciel exactement là où il est fendu."] },
+    { img: "tour_3_porte", lignes: ["Il y a une porte. Ouverte. Personne ne l'a construite.", "Ceux qui sont montés avant toi sont passés par là.", "La Question"], nom: 2 }
+  ]
+};
+var CHAPTER_OPENING_ORDER = ["desert", "ruins", "crypt", "mountain", "tower"];
 
 window.CHAPTER_OPENINGS = CHAPTER_OPENINGS;
 window.CHAPTER_OPENING_ORDER = CHAPTER_OPENING_ORDER;

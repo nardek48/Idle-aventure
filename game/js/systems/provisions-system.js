@@ -14,7 +14,7 @@
    v3.461.2 (N-L, Seb) : Ruines et Crypte aussi en Ration moyenne, le stock s'accumulait après le Désert.
    Les Petites Aventures gardent leur propre coût d'entrée (scene-templates.js, entryCost). */
 
-var PROVISIONS_BY_WORLD = { forest: "petite_ration", desert: "ration", ruins: "ration", crypt: "ration", mountain: "ration" }; // v3.519.0 (audit SUI-2, option A) : la Montagne aussi
+var PROVISIONS_BY_WORLD = { forest: "petite_ration", desert: "ration", ruins: "ration", crypt: "ration", mountain: "ration", tower: "ration" }; // v3.519.0 (audit SUI-2, option A) : la Montagne aussi
 var PROVISIONS_FREE_UNTIL_STEP = "forest_crossing"; // acte III de la Forêt
 
 var ProvisionsManager = {

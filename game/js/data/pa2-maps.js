@@ -375,6 +375,11 @@ var PA2_PARCOURS_IMAGES = {
     image: "images/Maps/parcours/montagne_montee.webp", width: 1024, height: 1536, start: [505, 1320],
     tracks: { route: [[446, 1150], [584, 1050], [506, 860], [466, 700], [530, 560], [587, 400], [500, 215]] }
   },
+  /* v3.626.0 (Tour, acte I) : la route du nord. Image à fournir (Images à générer) : piste provisoire, droite, à relever. */
+  tour_route: {
+    image: "images/Maps/parcours/tour_route.webp", width: 1024, height: 1536, start: [512, 1400],
+    tracks: { route: [[512, 1250], [512, 1100], [512, 950], [512, 800], [512, 650], [512, 450], [512, 250]] }
+  },
   /* v3.491.0 (Montagne, acte IV) : le sentier du dessus. v3.492.8 : image de Seb (26/10/2026) ; piste relevée sur le
      trait bleu, du lac à l'aile. Paliers (points 0, 2, 4, 6, 8) : le haut de la coupe, les dragonnets, la source,
      les deux golems, le plateau aux écailles. */
