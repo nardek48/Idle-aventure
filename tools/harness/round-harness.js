@@ -4503,8 +4503,8 @@ console.log("\n[32b] v3.223.0 \u2014 Donjons : plafond par monde et mat\u00e9ria
 
   var sansMateriau = (g.DUNGEONS || []).filter(function (t) { return !t.specialResourceId; });
   // v3.321.0 : la Cité engloutie rapporte du Verre des dunes ; v3.430.0 : le Sanctuaire, de la Pierre errante — trois à venir
-  ok(sansMateriau.length === 1 && D.getById(2).specialResourceId === "verre_des_dunes" && D.getById(3).specialResourceId === "pierre_errante" && D.getById(4).specialResourceId === "cire_sepulcre" && D.getById(5).specialResourceId === "cendre_vive",
-    "la Cit\u00e9 rapporte du Verre des dunes, le Sanctuaire de la Pierre errante, l'Ossuaire de la Cire, la Gueule de la Cendre vive ; le Sommet attend le sien"); // v3.490.0
+  ok(sansMateriau.length === 0 && D.getById(2).specialResourceId === "verre_des_dunes" && D.getById(3).specialResourceId === "pierre_errante" && D.getById(4).specialResourceId === "cire_sepulcre" && D.getById(5).specialResourceId === "cendre_vive" && D.getById(6).specialResourceId === "givre_bleu",
+    "la Cit\u00e9 rapporte du Verre des dunes, le Sanctuaire de la Pierre errante, l'Ossuaire de la Cire, la Gueule de la Cendre vive, le Sommet du Givre bleu"); // v3.490.0 ; v3.629.0
   var tousDeclares = (g.DUNGEONS || []).every(function (t) { return typeof t.worldRequired === "number"; });
   ok(tousDeclares, "chaque donjon d\u00e9clare son monde requis");
 
@@ -5302,7 +5302,7 @@ console.log("\n[47b] v3.245.0 \u2014 Refonte des Donjons");
   /* --- Données : six donjons, un par monde, id = ancien palier --- */
   ok(g.DUNGEONS.length === 6 && g.DUNGEONS.every(function (d, i) { return d.id === i + 1 && d.worldId === g.WORLDS[i].id; }), "six donjons, id 1..6 = index du monde + 1");
   ok(typeof g.DUNGEON_TIERS === "undefined", "DUNGEON_TIERS a disparu (absorb\u00e9 dans DUNGEONS)");
-  ok(g.DUNGEONS[5].locked === true && D.getLockReason(6) === "data", "la Tour est d\u00e9clar\u00e9e locked (raison 'data')");
+  ok(g.DUNGEONS[5].locked === false && g.DUNGEONS[5].requiresStoryStep === "tour_11" && D.getLockReason(6) === "data", "le Sommet interdit s'ouvre par l'Histoire (tour_11, v3.629.0), raison 'data' avant");
   ok(g.DUNGEONS.every(function (d) { return d.boss && g.BOSS_DB[d.boss.baseId] && d.boss.name && d.boss.archetype; }), "chaque donjon porte un boss identitaire (baseId connu, nom, trait)");
   ok(g.DUNGEON_MARKS.length === 5 && !g.DUNGEON_MARKS.some(function (m) { return m.id === "aff_greed"; }), "cinq Marques, Avarice parqu\u00e9e");
   ok(g.DUNGEON_MARKS.every(function (m) { return /^aff_/.test(m.id) && /afflictions\//.test(m.icon); }), "id et ic\u00f4nes h\u00e9rit\u00e9s des anciennes afflictions (aucune migration)");
@@ -17681,7 +17681,7 @@ console.log("\n[292] v3.471.1 — Gueule du volcan fermée tant que la Montagne 
   game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true, 4: true, 5: true };
   game.dungeonTierCleared = { 1: true, 2: true, 3: true, 4: true };
   ok(D.getById(5).locked === false && D.getById(5).requiresStoryStep === "montagne_12" && D.getLockReason(5) === "data" && !D.isUnlocked(5), "monde 4 atteint, Ossuaire fini : la Gueule du volcan reste fermée avant montagne_12 (v3.490.0)");
-  ok(D.getById(6).locked === true && !D.isUnlocked(6), "le Sommet interdit aussi");
+  ok(D.getById(6).requiresStoryStep === "tour_11" && !D.isUnlocked(6), "le Sommet interdit aussi, avant tour_11 (v3.629.0)");
   game.heroHp = game.heroMaxHp; game.dungeonRunsUsed = {};
   D.start(5, []);
   ok(!game.dungeonRun.active, "on ne peut pas y entrer");
@@ -19666,9 +19666,9 @@ console.log("\n[353] v3.534.0 — Bilan de fin de l'Histoire (audit PLA-9, optio
     ok(g.storyAllDone() === true, "storyAllDone : vrai quand tous les chapitres sont terminés");
     var ch = g.storyEndChoices(), n = 0;
     ch.forEach(function (x) { n += x.rows.length; });
-    ok(notes === 13 && n === 13, "13 choix pesants notés (v3.626.0 : la braise), tous au bilan (" + n + "), les choix de compagnons exclus");
+    ok(notes === 14 && n === 14, "14 choix pesants notés (v3.626.0 : la braise ; v3.629.0 : la copie), tous au bilan (" + n + "), les choix de compagnons exclus");
     var h = g.buildStoryEndHTML();
-    ok(h.indexOf("Fin du chapitre " + ids.length) !== -1 && (h.match(/dungeon-summary-row/g) || []).length === 17, "fenêtre : titre du dernier chapitre, 4 lignes de bilan et 13 choix");
+    ok(h.indexOf("Fin du chapitre " + ids.length) !== -1 && (h.match(/dungeon-summary-row/g) || []).length === 18, "fenêtre : titre du dernier chapitre, 4 lignes de bilan et 14 choix");
     ok(!/Donner|Garder|registre/.test(h.replace(/<span>[^<]*<\/span>/g, "")), "aucun axe ni registre affiché hors des textes de choix");
     var last = SQ[ids[ids.length - 1]].steps.slice(-1)[0];
     var c1 = { title: last.title, dialogue: [{ who: null, text: "x" }] }, c2 = { title: "Autre", dialogue: [] }, c3 = { title: last.title, dialogue: [], closeOnclick: "f()" };
@@ -21555,7 +21555,7 @@ console.log("\n[420] v3.625.0 — Tour, lot T-0 : le socle");
     var c13 = at(12), c11 = at(10); FM.getMaxLevel = maxAv; FM.getLevel = lvAv;
     ok(c13.verre_faille === 1 && c13.obsidienne_taillee === 1 && c11.obsidienne_taillee === 1 && !c11.verre_faille, "reforge 13 : 1 Verre de faille (+1 Obsidienne) ; reforge 11 : Obsidienne seule");
     ok(g.HERO_SCALING_REFS.joueurMontagne && g.WORLD_HERO_SCALING.refByWorld.tower[0] === "joueurMontagne", "ajustement au héros : la Tour se mesure au héros de fin de Montagne");
-    ok(g.DUNGEONS.filter(function (d) { return d.id === 6; })[0].locked === true, "Sommet interdit : reste fermé");
+    ok(g.DUNGEONS.filter(function (d) { return d.id === 6; })[0].requiresStoryStep === "tour_11", "Sommet interdit : s'ouvre à l'acte III (tour_11, v3.629.0)");
     ok(g.EQUIP_WORLD_SCALE[5] === 6, "échelle d'équipement de la Tour : ×6, comme la Montagne (décision de Seb, v3.625.1)");
   } catch (err) { ok(false, "[420] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
@@ -21633,6 +21633,46 @@ console.log("\n[423] v3.628.0 — Tour, lot T-2b : gisants, Gardien qui répète
     var cc628 = require("fs").readFileSync(require("path").join(ROOT, "css/00-cartes.css"), "utf8");
     ok(/\.hs-edetail:not\(#kc-sticky\) \{ position: sticky; \}/.test(cc628), "Équipé : le détail de la pièce reste collé en bas de l'écran malgré son cadre");
   } catch (err) { ok(false, "[423] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[424] v3.629.0 — Tour, lot T-3 : Sommet interdit, le Reflet, Légendaire complet, la copie");
+(function () {
+  var TS = g.TowerSystem, D = g.DungeonManager, en0 = g.game.enemy, run0 = g.game.dungeonRun;
+  try {
+    var ch = g.STORY_QUESTS.tower;
+    ok(ch.steps.slice(10, 15).map(function (x) { return x.id; }).join() === "tour_11,tour_12,tour_13,tour_14,tour_15", "acte III : étapes 11 à 15");
+    var d6 = D.getById(6);
+    ok(d6.boss.name === "Le Reflet" && d6.eliteWaves[8] === "gardien_qui_repete" && d6.camp && d6.camp.storyFlag === "sommetCamp", "Sommet interdit : le Reflet au bout, le Gardien qui répète à la vague 8, une halte");
+    ok(g.STORY_PALIER_TOUR_COMPLET.pieces === 7 && g.STORY_REWARDS.tour_12.equipmentRarity === "legendary" && g.WORLD_CAPS[5].village.forge === 7 && g.WORLD_CAPS[5].forgeActStep === "tour_13", "palier : 7 Légendaires, Forge 7 à l'acte III");
+    var cx = g.STORY_CHOICE_AXES.copie;
+    ok(cx && cx.laisser.join() === "donner" && cx.defaire.join() === "garder", "choix « copie » inscrit au bilan (laisser = donner, défaire = garder)");
+    // le miroir : même technique deux fois de suite contre le Reflet
+    g.game.dungeonRun = { active: true, dungeonId: 6 };
+    g.game.enemy = { id: "archmage", uid: "r1", name: "Le Reflet", isBoss: true };
+    g.game._towerMirror = null;
+    ok(TS.mirrorMult(1) === 1, "miroir : première technique à pleine force");
+    TS.noteSkill(1);
+    ok(TS.mirrorMult(1) === 1 - g.TOWER_MIRROR_PENALTY && TS.mirrorMult(2) === 1, "miroir : la même juste après perd 25 %, une autre non");
+    g.game.enemy = { id: "boar", uid: "x", name: "Sanglier" }; g.game.dungeonRun = { active: false };
+    TS.noteSkill(1);
+    ok(TS.mirrorMult(1) === 1, "pas de miroir hors du Reflet");
+    g.game.enemy = { id: "gardien_qui_repete", uid: "g1", isElite: true };
+    TS.noteSkill(2);
+    ok(TS.mirrorMult(2) === 0.75, "le Gardien qui répète garde aussi tes gestes");
+    // la copie
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; StoryQuestManager.ensure();");
+    ok(TS.summitHardMult(d6) === 1 && TS.summitLootMult(d6) === 1, "copie non tranchée : Sommet normal");
+    var gc = g.StoryQuestManager.getChoice;
+    g.StoryQuestManager.getChoice = function (k) { return k === "copie" ? "laisser" : gc.call(g.StoryQuestManager, k); };
+    ok(TS.summitHardMult(d6) === 1.2 && TS.summitLootMult(d6) === 2 && TS.summitHardMult(D.getById(5)) === 1, "Aeswyn d'avant laissée debout : Sommet ×1,2, Givre ×2, les autres donjons intacts");
+    g.StoryQuestManager.getChoice = gc;
+    ok(g.STORY_COPIE_VERRE === 6 && g.STORY_COPIE_TEXTS.laisser && g.STORY_COPIE_TEXTS.defaire, "défaire : 6 Verres de faille, deux suites de texte");
+    var aq = g.ADVENTURE_QUESTS.aq_tour_haut;
+    ok(aq && aq.worldId === "tower" && aq.encounters.length >= 4, "« Ce qu'elle a appris » : la montée finale de l'acte III");
+    var ccs = require("fs").readFileSync(require("path").join(ROOT, "js/systems/class-combat-system.js"), "utf8");
+    ok(/TowerSystem\.mirrorMult\(slot\)/.test(ccs) && /TowerSystem\.noteSkill\(slot\)/.test(ccs), "technique : le miroir lu avant les dégâts, noté après");
+  } catch (err) { ok(false, "[424] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  g.game.enemy = en0; g.game.dungeonRun = run0; g.game._towerMirror = null;
 })();
 
 Promise.all(ATTENTES).then(function () {

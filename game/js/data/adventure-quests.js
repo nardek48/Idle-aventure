@@ -1269,6 +1269,34 @@ var ADVENTURE_QUESTS = {
       { id: "rencontres_gisants", type: "encounter", worldId: "tower", target: 4, desc: "Vaincre {target} rencontres à l'étage des gisants" }
     ],
     reward: {}
+  },
+
+  /* v3.629.0 (Tour, acte III étape 15) — « Le haut de l'escalier » : quatre rencontres dans l'escalier qui se rétrécit,
+     les gardiens de la Tour. Plus dur que l'acte I (le héros porte le Légendaire complet), au banc. */
+  aq_tour_haut: {
+    id: "aq_tour_haut",
+    type: "kill",
+    section: "adventure",
+    difficulty: "medium",
+    progressionStage: "world_start",
+    category: "side",
+    worldId: "tower",
+    adventureIndex: 1,
+    encounters: [
+      { group: ["guardian", "hybrid"], groupHpMult: 0.55 },
+      { enemy: "corruptmage" },
+      { group: ["arcanegolem", "hybrid"], groupHpMult: 0.55 },
+      { group: ["guardian", "corruptmage"], groupHpMult: 0.55 }
+    ],
+    encounterHpMult: 4.5,
+    enemyPowerMult: 9, // v3.629.0 : banc, réussite 94 à 100 % (au-delà, la quête bascule net)
+    name: "Le haut de l'escalier",
+    story: "Plus haut, l'escalier se rétrécit. Une personne de front, puis une personne tout court.",
+    icon: "./images/Icons/quest_icons/exploration/exploration1.webp",
+    steps: [
+      { id: "rencontres_haut", type: "encounter", worldId: "tower", target: 4, desc: "Vaincre {target} rencontres en haut de l'escalier" }
+    ],
+    reward: {}
   }
 };
 

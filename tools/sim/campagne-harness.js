@@ -92,7 +92,7 @@ var TALENTS_AVISES = {
   archer: ["a_oeil_vif", "a_rythme", "a_souffle_court", "a_pas_de_cote", "a_contre_tir", "a_oeil_vif", "a_transe", "a_danse_ombres", "a_nuee_fleches", "a_tir_ajuste", "a_coup_au_but"],
   mage: ["m_flux", "m_peau_arcane", "m_peau_arcane", "m_barriere_vive", "m_economie", "m_reserve", "m_echo_barriere", "m_surcharge", "m_surtension", "m_braises_tenaces", "m_incendie"]
 };
-var REGLES_AVISEES = ["enemyRising", "healIncoming", "enemyArmored", "chargeIncoming", "enemySilenceIncoming"];
+var REGLES_AVISEES = ["enemyRising", "healIncoming", "enemyArmored", "chargeIncoming", "enemySilenceIncoming", "enemyVampiric"]; // v3.629.0 : le Reflet est vampirique, le joueur pose le contre
 var RECHARGE_H = ARGS.indexOf("--recharge") >= 0 ? Number(ARGS[ARGS.indexOf("--recharge") + 1]) : null;   // v3.366.0 : banc du délai de recharge des Petites Aventures
 var SCRIPTS = require("../harness/index-scripts.js")(ROOT, /pwa\.js/);
 var SOURCES = SCRIPTS.map(function (s) { return { name: s, code: fs.readFileSync(path.join(ROOT, s), "utf8") }; });
@@ -1280,7 +1280,7 @@ function run() {
       CURRENT_STEP = step.id;
       // v3.423.0 : TRACE_FORCE=1 relève la force du héros à chaque étape (référence des ajustements de difficulté)
       if (process.env.TRACE_FORCE) console.log("  [force] " + step.id + " monde " + G.WorldManager.worldIndex + " aventure " + G.WorldManager.adventureIndex + " niv. " + G.game.heroLevel + " dmg " + Math.round(G.CombatForecast.getHeroDamagePerRound()) + " ehp " + Math.round(G.CombatForecast.getHeroEffectiveHp ? G.CombatForecast.getHeroEffectiveHp() : G.game.heroMaxHp));
-      if (COMBATS && /^(desert_12|desert_15|desert_17|forest_14|forest_15|ruines_01|ruines_02|ruines_03|ruines_11|ruines_13|ruines_15|ruines_19|crypte_01|crypte_02|crypte_03|crypte_06|crypte_12|crypte_14|crypte_16|crypte_19|montagne_01|montagne_02|montagne_03|montagne_04|montagne_06|montagne_08|montagne_10|montagne_12|montagne_13|tour_01|tour_02|tour_04|tour_06|tour_07|tour_08|tour_09|tour_10)$/.test(step.id)) { STATS.profils[step.id] = combatLine(); console.log("  ◦ héros à l'entrée de " + step.id + " : " + STATS.profils[step.id]); if (process.env.TRACE_FORGE) console.log("     forge armure : " + G.ForgeManager.getBlockReason("armor") + " " + JSON.stringify(G.ForgeManager.getCost("armor")) + " or " + Math.floor(G.game.gold)); }
+      if (COMBATS && /^(desert_12|desert_15|desert_17|forest_14|forest_15|ruines_01|ruines_02|ruines_03|ruines_11|ruines_13|ruines_15|ruines_19|crypte_01|crypte_02|crypte_03|crypte_06|crypte_12|crypte_14|crypte_16|crypte_19|montagne_01|montagne_02|montagne_03|montagne_04|montagne_06|montagne_08|montagne_10|montagne_12|montagne_13|tour_01|tour_02|tour_04|tour_06|tour_07|tour_08|tour_09|tour_10|tour_11|tour_12|tour_13|tour_15)$/.test(step.id)) { STATS.profils[step.id] = combatLine(); console.log("  ◦ héros à l'entrée de " + step.id + " : " + STATS.profils[step.id]); if (process.env.TRACE_FORGE) console.log("     forge armure : " + G.ForgeManager.getBlockReason("armor") + " " + JSON.stringify(G.ForgeManager.getCost("armor")) + " or " + Math.floor(G.game.gold)); }
       var t0s = { h: CLOCK.offset, c: STATS.combatMs, s: STATS.healMs, d: STATS.deaths, j: DAYS_WAITED, e: (STATS.secteurs.desert || {}).essais || 0 };
       var snap0 = snapTemps();
       G.StoryQuestManager.acceptStep(cid);
@@ -1954,6 +1954,15 @@ var SOLVERS = {
   tour_08: function (g) { playAdventure("aq_tour_gisants"); },
   tour_09: function (g) { freeSector("tower", "etage_veines"); },
   tour_10: function (g) { gearRarity("legendary", g.STORY_PALIER_TOUR.pieces, false, 0); },
+  // v3.629.0 (Tour, acte III) : --defaire = la copie défaite
+  tour_11: function (g) { playDungeon(6, false, function () { return !!(g.game.explorationProgression || {}).sommetCamp; }); },
+  tour_12: function (g) { if (!(g.game.dungeonTierCleared || {})[6]) playDungeon(6, false); },
+  tour_13: function (g) { gearRarity("legendary", g.STORY_PALIER_TOUR_COMPLET.pieces, false, 0); },
+  tour_14: function (g) {
+    var val = ARGS.indexOf("--defaire") >= 0 ? "defaire" : "laisser";
+    if (!g.storyMakeChoice("tower", val)) note("choix refusé (copie)");
+  },
+  tour_15: function (g) { playAdventure("aq_tour_haut"); },
   tour_05: function (g) {
     var val = ARGS.indexOf("--poser") >= 0 ? "poser" : "garder";
     if (!g.storyMakeChoice("tower", val)) note("choix refusé (braise)");

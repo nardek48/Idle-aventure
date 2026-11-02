@@ -18,6 +18,7 @@ var ARGV = process.argv.slice(3);
 function opt(k) { var i = ARGV.indexOf(k); return i >= 0 ? ARGV[i + 1] : null; }
 var SAVES = String(opt("--save") || "").split(",").filter(Boolean);
 var DIFF5 = opt("--diff") ? Number(opt("--diff")) : null;
+var DJ = opt("--donjon") ? Number(opt("--donjon")) : 5; // v3.629.0 : --donjon 6 = le Sommet interdit (Tour, acte III)
 var WYRM = opt("--boss") ? opt("--boss").split(",").map(Number) : null;
 var QUETE = opt("--quete") ? opt("--quete").split(",").map(Number) : null;
 var SANS_POTION = ARGV.indexOf("--sans-potion") >= 0;
@@ -50,8 +51,9 @@ var OBJETS = opt("--objet") ? opt("--objet").split(",") : []; // v3.492.15 : obj
 if (!SAVES.length) { console.log("--save <fichier> attendu (sauvegarde de campagne)"); process.exit(1); }
 
 var extra = function () {
-  var d = g.DUNGEONS.filter(function (x) { return x.id === 5; })[0];
+  var d = g.DUNGEONS.filter(function (x) { return x.id === DJ; })[0];
   if (DIFF5) d.difficultyMult = DIFF5;
+  if (opt("--miroir") !== null) g.TOWER_MIRROR_PENALTY = Number(opt("--miroir")); // v3.629.0 : pénalité du miroir (Reflet)
   if (WYRM) { d.boss.statMult.power = WYRM[0]; d.boss.statMult.endurance = WYRM[1]; }
   if (QUETE) { g.ADVENTURE_QUESTS.aq_montagne_salle_ronde.encounterHpMult = QUETE[0]; g.ADVENTURE_QUESTS.aq_montagne_salle_ronde.enemyPowerMult = QUETE[1]; }
   // v3.492.12 : l'affinité est dans le jeu ; --affinite en change seulement le bonus
@@ -122,18 +124,19 @@ var extra = function () {
     B.run("game.combatMode = 'grimoire'; EquipmentManager.recalcStats(); game.heroHp = game.heroMaxHp; CompanionManager.healAll();");
     if (SANS_POTION) g.game.healingPotionsOwned = {};
     if (OBJETS.length) g.CombatItems.carried = function () { return OBJETS.slice(); };
+    if (opt("--plus-regle")) { var pr = opt("--plus-regle").split(":"); g.game.grimoireRules = [{ conditionId: pr[0], actionSlot: pr[1] }].concat((g.game.grimoireRules || []).filter(function (r) { return r && r.conditionId; })).slice(0, 6); } // v3.629.0 : règle posée en tête
     if (SANS_REGLE.length) g.game.grimoireRules = (g.game.grimoireRules || []).filter(function (r) { return !r || SANS_REGLE.indexOf(r.conditionId) === -1; });
     if (TAILLER) g.game.grimoireRules = [{ conditionId: "veinIntact", actionSlot: "vein" }].concat((g.game.grimoireRules || []).filter(function (r) { return r && r.conditionId; })).slice(0, 6);
   }
   function gueule() {
-    var cleared = Object.assign({}, g.game.dungeonTierCleared); delete cleared[5];
+    var cleared = Object.assign({}, g.game.dungeonTierCleared); delete cleared[DJ];
     g.game.dungeonTierCleared = cleared; g.game.dungeonRunsUsed = {};
     if (g.game.dungeonRun) g.game.dungeonRun.active = false;
     var boss0 = Number(g.game.dungeonBossClears || 0);
-    var ash0 = g.WarehouseManager.getAmount("cendre_vive");
+    var ash0 = g.WarehouseManager.getAmount(d.specialResourceId);
     process.__ash = process.__ash || { n: 0, sum: 0 };
     if (COMP_RANG !== null && !process.__ashHook) { process.__ashHook = true; process.on("exit", function () { console.log("CENDRE VIVE par sortie (fin de sortie, campement compris) : " + (process.__ash.sum / Math.max(1, process.__ash.n)).toFixed(2) + " sur " + process.__ash.n + " sorties"); }); }
-    g.DungeonManager.start(5, []);
+    g.DungeonManager.start(DJ, []);
     if (!g.game.dungeonRun.active) return null;
     setTimeout(function () {}, 0);
     var rounds = 0, guard = 8000, camp = false, hpCamp = null, hpBoss = null, pot0 = JSON.stringify(g.game.healingPotionsOwned || {});
@@ -149,7 +152,7 @@ var extra = function () {
       if (!autoRound()) break;
       rounds++;
     }
-    process.__ash.n += 1; process.__ash.sum += g.WarehouseManager.getAmount("cendre_vive") - ash0;
+    process.__ash.n += 1; process.__ash.sum += g.WarehouseManager.getAmount(d.specialResourceId) - ash0;
     return { camp: camp, hpCamp: hpCamp, boss: hpBoss !== null, hpBoss: hpBoss, ok: Number(g.game.dungeonBossClears || 0) > boss0, rounds: rounds,
       hp: Math.max(0, g.game.heroHp) / g.game.heroMaxHp };
   }
