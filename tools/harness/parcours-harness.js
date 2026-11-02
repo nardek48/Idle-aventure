@@ -951,7 +951,7 @@ async function P13(browser, base) {
 }
 
 /* ====================================================================================
-   P14 — Habillage des cartes (v3.618.0 lot 2, v3.619.0 lot 3 de l'atelier « Cartes E ») : sur 22
+   P14 — Habillage des cartes (v3.618.0 lot 2, v3.619.0 lot 3, v3.620.0 lot 4, atelier « Cartes E ») : sur 33
    écrans et fiches, en téléphone et en PC, toute carte crème porte la texture (ou sa propre image), et tout
    document non imbriqué la découpe déchirée. Un oubli nomme sa classe (listes de css/00-cartes.css).
    ==================================================================================== */
@@ -979,7 +979,13 @@ var ECRANS_HABILLAGE = [
   ["Fiche Halle", "switchTab('village');openVillageBuildingSheet('hall')"], ["Fiche Taverne", "switchTab('village');openVillageBuildingSheet('tavern')"],
   ["Fiche Forge", "switchTab('village');openVillageBuildingSheet('forge')"], ["Fiche Stats", "switchTab('equip');openHerosSheet('stats')"],
   ["Fiche Capacités", "switchTab('equip');openHerosSheet('abilities')"], ["Fiche Caravane", "switchTab('campement');openExpeditionsSheet('caravan')"],
-  ["Fiche Donjon", "switchTab('village');openDungeonSheet(1)"]
+  ["Fiche Donjon", "switchTab('village');openDungeonSheet(1)"],
+  // v3.620.0 (lot 4) : le reste du jeu
+  ["Carte", "switchTab('map')"], ["Bibliothèque", "switchTab('tutorials')"], ["Camp, grimoire", "switchTab('campement');setCampTab('grimoire')"],
+  ["Camp, expéditions", "switchTab('campement');setCampTab('depart')"], ["Fiche Entrepôt", "switchTab('village');openVillageBuildingSheet('warehouse')"],
+  ["Fiche Terrain", "switchTab('village');openVillageBuildingSheet('training')"], ["Fiche Apothicaire", "switchTab('village');openVillageBuildingSheet('apothecary')"],
+  ["Fiche Enchanteresse", "switchTab('village');openVillageBuildingSheet('enchanter')"], ["Fiche Palissade", "switchTab('village');openVillageBuildingSheet('palisade')"],
+  ["Fiche Grand Ouvrage", "switchTab('village');openGrandOuvrageSheet()"], ["Fiche Patrouilles", "switchTab('campement');openExpeditionsSheet('patrols')"]
 ];
 function cartesNonHabillees() {
   var DOC = /^(story-chain|story-step|story-prologue-card|camp-missions-card|ms-block|qb-card|tavern-board|chr-obj)$/;
@@ -1015,7 +1021,7 @@ async function verifierHabillage(page, mode) {
   for (var i = 0; i < ECRANS_HABILLAGE.length; i++) {
     var e = ECRANS_HABILLAGE[i];
     await page.evaluate(function () {
-      ["closeVillageBuildingSheet", "closeHerosSheet", "closeDungeonSheet", "closeExpeditionsSheet"].forEach(function (f) { try { if (typeof window[f] === "function") window[f](); } catch (x) {} });
+      ["closeVillageBuildingSheet", "closeHerosSheet", "closeDungeonSheet", "closeExpeditionsSheet", "closeGrandOuvrageSheet"].forEach(function (f) { try { if (typeof window[f] === "function") window[f](); } catch (x) {} });
     });
     await page.evaluate(function (c) { new Function(c)(); }, e[1]);
     await page.waitForTimeout(500);
