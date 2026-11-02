@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.616.3"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.617.0"; // <- à incrémenter à CHAQUE livraison
 var CACHE_NAME = "quest-idle-" + CACHE_VERSION;
 var IMAGE_CACHE = "aethervale-images"; // v3.457.4 : hors du préfixe quest-idle- ; v3.547.0 : images disparues purgées (purgeMissingImages)
 var imagesRevalidated = {};             // URL déjà revérifiées depuis le démarrage de ce service worker
@@ -58,6 +58,7 @@ var PRECACHE_APP_SHELL = [
   "./css/00-title-screen.css",
   "./css/00-hero-creation.css",
   "./css/00-prologue.css", // v3.570.0 : NOUVEAU fichier (le prologue)
+  "./css/00-cartes.css", // v3.617.0 : NOUVEAU fichier (habillages des cartes, lot 1)
   "./css/00-tokens.css",
   "./css/01-base.css",
   "./css/02-layout.css",

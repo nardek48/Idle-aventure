@@ -1,0 +1,67 @@
+/* ============================================================
+Aethervale — css/00-cartes.css
+v3.617.0 (lot 1 de l'habillage E, atelier « Cartes E » validé par Seb le 02/11).
+Trois habillages de carte, posés par classe :
+  .kc-tex  texture parchemin crème (voile 30 %) ;
+  .kc-sec  cadre secondaire (barres bronze, petits coins dorés) pour l'interface ;
+  .kc-doc  parchemin déchiré pour les documents de l'histoire (quêtes, missions,
+           Taverne, Chronique) ; .kc-petit pour un bord plus fin.
+Lot 1 : les classes existent, aucune carte ne les porte encore.
+============================================================ */
+
+:root {
+  --kc-voile: rgba(246, 236, 217, 0.3);
+  --kc-tex: url('../images/UI/frames/parchment-cream.webp');
+  --kc-sec-coin: 18px;          /* coins du cadre secondaire ; l'image en a 48 */
+  --kc-sec-clip: 3px;           /* la texture démarre sous la barre : jamais de liseré au bord */
+  --kc-doc-bord: 28px;          /* bord déchiré des grandes cartes ; l'image en a 60 */
+  --kc-doc-bord-petit: 20px;
+}
+
+/* Texture : longhands seulement, pour ne pas écraser la couleur de fond de la carte */
+.kc-tex {
+  background-image: linear-gradient(var(--kc-voile), var(--kc-voile)), var(--kc-tex);
+  background-size: auto, 256px;
+  background-repeat: repeat;
+}
+
+/* Cadre secondaire : bord transparent + fond limité à l'intérieur, cadre en 9 morceaux par-dessus */
+.kc-sec {
+  position: relative;
+  border: var(--kc-sec-clip) solid transparent;
+  background-clip: padding-box;
+  border-radius: 0;
+  box-shadow: inset 0 0 24px rgba(70, 44, 14, 0.64); /* dégradé foncé du cadre vers le parchemin */
+}
+.kc-sec::before {
+  content: "";
+  position: absolute;
+  inset: calc(var(--kc-sec-clip) * -1);
+  z-index: 1;
+  pointer-events: none;
+  border: var(--kc-sec-coin) solid transparent;
+  border-image: url('../images/UI/frames/kc-secondaire.webp') 48 / var(--kc-sec-coin) stretch;
+}
+
+/* Document : la carte est découpée selon le bord déchiré (masque), puis le bord est posé par-dessus.
+   Firefox ignore la découpe : carte rectangulaire, bord dessiné quand même (accepté par Seb). */
+.kc-doc {
+  --kc-g: var(--kc-doc-bord);
+  --kc-doc-pad: calc(var(--kc-g) * 0.45 + 6px); /* marge intérieure conseillée, posée composant par composant */
+  position: relative;
+  border: 0;
+  border-radius: 0;
+  -webkit-mask-box-image: url('../images/UI/frames/kc-dechire-masque.webp') 60 / var(--kc-g) stretch;
+  mask-border: url('../images/UI/frames/kc-dechire-masque.webp') 60 / var(--kc-g) stretch;
+  box-shadow: inset 0 0 25px rgba(70, 44, 14, 0.35);
+}
+.kc-doc.kc-petit { --kc-g: var(--kc-doc-bord-petit); }
+.kc-doc::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  border: var(--kc-g) solid transparent;
+  border-image: url('../images/UI/frames/kc-dechire-bord.webp') 60 / var(--kc-g) stretch;
+}
