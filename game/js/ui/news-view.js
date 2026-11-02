@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.616.1", "menu_icons/village_menu", _t("Correctif : la description du Terrain d\'entraînement donne les bons plafonds (+10 pour la caractéristique de classe et l\'Endurance, environ +7 pour les autres).")],
     ["3.616.0", "menu_icons/village_menu", _t("Forêt : le Village s\'ouvre quand « La Meute affamée » est réussie, plus dès qu\'on l\'accepte. La Scierie, la Mine et les Champs ne s\'ouvrent plus sans leur expédition.")],
     ["3.616.0", "menu_icons/quests_menu", _t("« Comme la dernière fois » ne reprend plus la besace d\'une autre partie. Plusieurs aides des tutoriels sont corrigées (carte, Grimoire, compagnons, Terrain, petite aventure).")],
     ["3.615.2", "menu_icons/heroes_menu", _t("La Boutique d\'équipement reste à côté du Sac toute la partie, dans Héros › Équipement ; la Halle marchande la propose aussi.")],

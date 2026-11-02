@@ -103,7 +103,7 @@ var GENERIC_TUTORIALS = {
     ]
   },
   /* v3.213.1 (lot V-2) : premier plafond d'entraînement. Condition : une
-     caractéristique a buté à 10 — le joueur vient de rencontrer le mur, c'est
+     caractéristique a buté à 20 — le joueur vient de rencontrer le mur, c'est
      le seul moment où l'explication a du sens. */
   village_training: {
     tab: "village",
