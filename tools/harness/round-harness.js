@@ -21565,7 +21565,7 @@ console.log("\n[421] v3.626.0 — Tour, lot T-1 : acte I « Le pied de la Tour �
   var TS = g.TowerSystem, wi = g.WorldManager.worldIndex;
   try {
     var ch = g.STORY_QUESTS.tower;
-    ok(ch && ch.requiresChapter === "mountain" && ch.steps.map(function (x) { return x.id; }).join(",") === "tour_01,tour_02,tour_03,tour_04,tour_05", "chapitre VI : s'ouvre après la Montagne, acte I en cinq étapes");
+    ok(ch && ch.requiresChapter === "mountain" && ch.steps.slice(0, 5).map(function (x) { return x.id; }).join(",") === "tour_01,tour_02,tour_03,tour_04,tour_05", "chapitre VI : s'ouvre après la Montagne, acte I en cinq étapes");
     var tr = g.SCENE_TEMPLATES.traversee_tour;
     ok(tr && tr.travelOnSuccess.worldId === "tower" && tr.unlockOnSuccess.completionFlag === "towerCrossingCompleted" && tr.entryCost.resourceId === "grande_ration" && tr.entryCost.amount === 2, "la route du nord : 2 Grandes rations, le monde posé à l'arrivée");
     ok(g.ADVENTURE_QUESTS.aq_tour_pied.encounters.length === 5 && g.ADVENTURE_QUESTS.aq_tour_sable.encounters.length === 4 && g.ADVENTURE_QUESTS.aq_tour_sable.encounters[0].group.indexOf("scarab") >= 0, "quêtes : 5 rencontres au pied, 4 à l'étage du sable (bêtes du Désert, écho)");
@@ -21588,6 +21588,30 @@ console.log("\n[421] v3.626.0 — Tour, lot T-1 : acte I « Le pied de la Tour �
     ok(idx.indexOf("js/systems/tower-system.js") > 0 && sw.indexOf('"./js/systems/tower-system.js"') > 0, "nouveau fichier tower-system.js dans index.html et le précache");
   } catch (err) { ok(false, "[421] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   g.WorldManager.worldIndex = wi;
+})();
+
+console.log("\n[422] v3.627.0 — Tour, lot T-2a : la carte des étages et l'escalier");
+(function () {
+  var LM = g.LivingMapManager, wi = g.WorldManager.worldIndex, open422 = LM.isMapOpen;
+  try {
+    var m = g.LIVING_MAPS.tower;
+    ok(m && m.opensAtStoryStep === "tour_06" && m.noRegress && m.redite && m.sectors.length === 6 && m.sectors.every(function (d) { return d.content.templateId === "petite_aventure_tour"; }), "carte des étages : ouverte à tour_06, six étages, rien n'est repris");
+    var t = g.SCENE_TEMPLATES.petite_aventure_tour;
+    ok(t && t.worldId === "tower" && t.successFlag === "towerPaCompleted" && t.successCount === "towerPaWins", "Petite Aventure de la Tour : réussites comptées pour « L'escalier »");
+    ok(g.PA2_OBSTACLES.tower.indexOf("dalle_qui_glisse") >= 0 && g.PA2_OBSTACLES.tower.indexOf("allee_des_gisants") >= 0 && g.PA2_MAPS_BY_WORLD.tower.join() === "tour_1,tour_2" && g.PA2_RARE.tower.resourceId === "givre_bleu", "l'escalier rejoue les obstacles des autres mondes ; deux cartes ; Givre bleu");
+    ok(g.CARAVAN_WORLD_MARKETS.tower.requiresStoryStep === "tour_06" && g.CARAVAN_RARE_BY_WORLD[5] === "givre_bleu", "Marché de la Tour : ouvert à tour_06, Givre bleu au trajet Long");
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; StoryQuestManager.ensure(); LivingMapManager.ensureDefaults();");
+    LM.isMapOpen = (function (f) { return function (id) { return id === "tower" ? true : f.call(LM, id); }; })(LM.isMapOpen);
+    var st = LM.getState("tower", "etage_sable"); st.state = "libere"; st.liberatedCount = 1;
+    ok(g.storyTowerFloorsFreed() === 1, "étages libérés comptés (" + g.storyTowerFloorsFreed() + ")");
+    st.hostileDay = LM._dayKey();
+    ok(LM.isHostile("tower", "etage_sable") === true, "La redite : l'étage raté du jour est plus dur");
+    run("game.sceneRun = { livingMap: { mapId: 'tower', sectorId: 'etage_sable' } };");
+    ok(g.Pa2Run && typeof g.Pa2Run.gisantsMult === "function" ? g.Pa2Run.gisantsMult({ livingMap: { mapId: "tower", sectorId: "etage_sable" } }) === 1.25 : true, "La redite : ennemis ×1,25 dans la Petite Aventure");
+    run("game.sceneRun = null; game.explorationProgression.towerPaWins = 2;");
+    ok(g.storyTowerPaWins() === 2, "réussites de l'escalier lues (" + g.storyTowerPaWins() + ")");
+  } catch (err) { ok(false, "[422] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  LM.isMapOpen = open422; g.WorldManager.worldIndex = wi;
 })();
 
 Promise.all(ATTENTES).then(function () {

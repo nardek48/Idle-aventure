@@ -365,7 +365,7 @@ var LivingMapManager = {
 
   /* v3.454.0 (Crypte, CR9) — « Le réveil » : un couloir raté reste hostile (plus dur) jusqu'au lendemain. */
   isHostile: function (mapId, sectorId) {
-    var map = this.getMap(mapId), s = map && (map.gisants || map.veins) ? this.getState(mapId, sectorId) : null; // v3.489.0 : La coulée
+    var map = this.getMap(mapId), s = map && (map.gisants || map.veins || map.redite) ? this.getState(mapId, sectorId) : null; // v3.489.0 : La coulée ; v3.627.0 : La redite
     return !!(s && s.hostileDay && s.hostileDay === this._dayKey());
   },
 
@@ -777,6 +777,8 @@ var LivingMapManager = {
         ? _t("Soigne-toi, puis retente quand tu veux.")
         : this.getMap(mapId).veins
         ? _t("La coulée : {x} reste sous la lave jusqu'à demain. Rien n'est perdu.", { x: _td(def.name) }) // v3.489.0 (Montagne)
+        : this.getMap(mapId).redite
+        ? _t("La redite : la Tour refait {x}, plus dur jusqu'à demain. Rien n'est perdu.", { x: _td(def.name) }) // v3.627.0 (Tour)
         : _t("Le réveil : {x} reste hostile jusqu'à demain. Rien n'est perdu.", { x: _td(def.name) }));
       if (typeof addLog === "function") addLog(_t("Carte : {x}", { x: report.message }), "event");
       return report;

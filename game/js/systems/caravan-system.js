@@ -52,10 +52,10 @@ var CARAVAN_KEEP_SHARE = 0.5;            // part du plafond laissée au village,
 /* v3.610.0 (retour Seb : caravanes bloquées au Désert) : la part laissée se règle, 10 à 75 %, par pas de 5. */
 var CARAVAN_KEEP_MIN = 0.1, CARAVAN_KEEP_MAX = 0.75, CARAVAN_KEEP_STEP = 0.05;
 /* Matériau rare rapporté par le trajet Long : celui du monde du marché choisi (v3.426.0). */
-var CARAVAN_RARE_BY_WORLD = { 0: "seve_aeswyn", 1: "verre_des_dunes", 2: "pierre_errante", 3: "cire_sepulcre", 4: "cendre_vive" }; // v3.452.0 : la Crypte ; v3.489.0 : la Montagne
+var CARAVAN_RARE_BY_WORLD = { 0: "seve_aeswyn", 1: "verre_des_dunes", 2: "pierre_errante", 3: "cire_sepulcre", 4: "cendre_vive", 5: "givre_bleu" }; // v3.627.0 : la Tour // v3.452.0 : la Crypte ; v3.489.0 : la Montagne
 /* v3.428.0 (Ruines, étape ruines_04) : marchés SANS carte vivante. Les Ruines n'ont pas encore
    de carte (lot U-5) : leur marché s'ouvre par l'Histoire. mapId sert d'identifiant de marché. */
-var CARAVAN_WORLD_MARKETS = { ruins: { requiresStoryStep: "ruines_04" }, crypt: { requiresStoryStep: "crypte_04" }, mountain: { requiresStoryStep: "montagne_07" } }; // v3.452.0 : Marché de la Crypte (crypte_04) ; v3.489.0 : de la Montagne
+var CARAVAN_WORLD_MARKETS = { ruins: { requiresStoryStep: "ruines_04" }, crypt: { requiresStoryStep: "crypte_04" }, mountain: { requiresStoryStep: "montagne_07" }, tower: { requiresStoryStep: "tour_06" } }; // v3.627.0 : Marché de la Tour // v3.452.0 : Marché de la Crypte (crypte_04) ; v3.489.0 : de la Montagne
 var CARAVAN_RARE_QTY = [2, 2]; // v3.611.0 (R1, banc 01/11) : 2 garantis au lieu de 25 % de chance de 2-3
 /* v3.611.0 (R2) : la commande du jour de chaque marché — chargée en premier, +25 % d'or sur elle ;
    une fois par jour et par marché, +1 rare du marché si la caravane en emporte au moins 100. */
