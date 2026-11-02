@@ -2262,6 +2262,24 @@ if (RELEVE) {
   }, null, 1));
   console.log("Relevé enregistré : tools/sim/releves/" + nomR);
 }
+/* v3.625.0 (Tour, T-0) : MESURE_TOUR=1 -> en fin de campagne, le héros de fin de Montagne équipé de Légendaires
+   de la Tour (20 tirages par échelle), pour choisir EQUIP_WORLD_SCALE[5]. Rien n'est gardé. */
+if (process.env.MESURE_TOUR && G) {
+  var gG = G, keepEq = JSON.parse(JSON.stringify(gG.game.equipped)), CFm = gG.CombatForecast, wiM = gG.WorldManager.worldIndex, scaleM = gG.EQUIP_WORLD_SCALE[5];
+  var ehpM = function () { return CFm.getHeroEffectiveHp ? CFm.getHeroEffectiveHp() : gG.game.heroMaxHp; };
+  gG.EquipmentManager.recalcStats();
+  console.log("MESURE fin de campagne (monde " + wiM + ") : dmg " + Math.round(CFm.getHeroDamagePerRound()) + " ehp " + Math.round(ehpM()));
+  gG.WorldManager.worldIndex = 5;
+  [6, 8, 10, 12, 18].forEach(function (sc) {
+    gG.EQUIP_WORLD_SCALE[5] = sc; var dm = 0, eh = 0, NM = 20;
+    for (var km = 0; km < NM; km++) {
+      gG.EQUIPMENT_SLOTS.forEach(function (sl) { var it = gG.generateEquipmentItem(sl, "legendary", 5); if (it) gG.game.equipped[sl] = it; });
+      gG.EquipmentManager.recalcStats(); dm += CFm.getHeroDamagePerRound(); eh += ehpM();
+    }
+    console.log("MESURE Légendaire de la Tour x" + sc + " : dmg " + Math.round(dm / NM) + " ehp " + Math.round(eh / NM));
+  });
+  gG.EQUIP_WORLD_SCALE[5] = scaleM; gG.game.equipped = keepEq; gG.WorldManager.worldIndex = wiM; gG.EquipmentManager.recalcStats();
+}
 if (JSON_OUT) fs.writeFileSync(JSON_OUT, JSON.stringify({ classe: CLASSE, policy: POLICY, combats: COMBATS, passes: passes, failures: failures, totalH: CLOCK.offset / 3600e3,
   daysCap: DAYS_WAITED, capWaitH: CAP_WAIT_H, stats: STATS }, null, 1));
 // Comparable au « Temps de jeu » du journal (game.playTime, app ouverte) : seuls les combats exigent l'écran, le reste (soin, production, recharges) avance aussi hors ligne.

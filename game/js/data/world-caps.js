@@ -64,6 +64,17 @@ var WORLD_CAPS = [
     zoneLevel: 17, // v3.612.0 : 3 parcelles au niveau 17 = 9 zones d'avant au niveau 17
     workshopLevel: 3,
     petiteAventureCap: 4
+  },
+  /* 5 — La Tour. v3.625.0 (Conception Tour TW8, lot T-0) : écrit avant d'ouvrir le monde, pour que rien ne s'ouvre
+     d'un coup. Les derniers niveaux du village (Atelier 10, Enchanteresse 3, Entrepôt 20, Palissade 10, zones 20) ;
+     la Forge 7 (Verre de faille) n'ouvre qu'à l'acte III (forgeActStep), comme la Forge 6 à la Montagne. */
+  {
+    village: { workshop: 10, training: 18, hall: 10, warehouse: 20, palisade: 10, tavern: 6, apothecary: 10, forge: 7, enchanter: 3 },
+    forgeActStep: "tour_13",
+    zoneRows: 1,
+    zoneLevel: 20,
+    workshopLevel: 3,
+    petiteAventureCap: 4
   }
 ];
 
@@ -88,7 +99,8 @@ var TRAINING_CAP_BY_ACT = [
   { worldIndex: 3, stepId: "crypte_11", act: "III", terrain: 13 },    // v3.456.2 : 150, celui des actes III et IV
   { worldIndex: 4, stepId: "montagne_01", act: "I", terrain: 13 },    // v3.486.0 : Montagne, acte I — inchangé (crans au banc)
   { worldIndex: 4, stepId: "montagne_11", act: "III", terrain: 15 },   // H1 (chantier du héros) : 170
-  { worldIndex: 4, stepId: "montagne_16", act: "IV", terrain: 18 }     // H1 : 200, le plafond absolu
+  { worldIndex: 4, stepId: "montagne_16", act: "IV", terrain: 18 },    // H1 : 200, le plafond absolu
+  { worldIndex: 5, stepId: "tour_01", act: "I", terrain: 18 }          // v3.625.0 (Tour, T-0) : le plafond absolu reste
 ];
 
 /* v3.327.0 (conception Talents v1.1, T2 option B) — PLAFOND DE POINTS DE TALENT PAR ACTE.
@@ -109,7 +121,8 @@ var TALENT_CAP_BY_ACT = [
   { worldIndex: 4, stepId: "montagne_01", act: "I", points: 18 },     // v3.486.0 : Montagne, acte I — inchangé (crans au banc)
   { worldIndex: 4, stepId: "montagne_06", act: "II", points: 20 },    // H3 (chantier du héros) : rangs des talents, 18 → 23
   { worldIndex: 4, stepId: "montagne_11", act: "III", points: 21 },
-  { worldIndex: 4, stepId: "montagne_16", act: "IV", points: 23 }
+  { worldIndex: 4, stepId: "montagne_16", act: "IV", points: 23 },
+  { worldIndex: 5, stepId: "tour_01", act: "I", points: 23 }          // v3.625.0 (Tour, T-0) : inchangé, crans au banc
 ];
 
 /* « de la Forêt enchantée », « du Désert oublié » : pour « l'acte II du Désert oublié ».

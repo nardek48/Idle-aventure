@@ -100,7 +100,10 @@ var WORKSHOPS_CONFIG = {
         outputs: [{ resourceId: "cire_consacree", quantity: 1 }], craftTimeMs: 30000 },
       // v3.490.0 (Montagne, acte III) : l'Obsidienne taillée, la Cendre vive taillée au burin (elle ne fond pas). Au banc.
       { id: "obsidienne_taillee", inputs: [{ resourceId: "cendre_vive", quantity: 3 }, { resourceId: "acier", quantity: 1 }],
-        outputs: [{ resourceId: "obsidienne_taillee", quantity: 1 }], craftTimeMs: 30000 }
+        outputs: [{ resourceId: "obsidienne_taillee", quantity: 1 }], craftTimeMs: 30000 },
+      // v3.625.0 (Tour, T-0, TW8) : le Verre de faille, du Givre bleu fondu. Au banc avec l'acte III.
+      { id: "verre_faille", inputs: [{ resourceId: "givre_bleu", quantity: 3 }, { resourceId: "acier", quantity: 1 }],
+        outputs: [{ resourceId: "verre_faille", quantity: 1 }], craftTimeMs: 30000 }
     ]
   },
   /* v3.221.0 (lot V-8) : troisième atelier de tier 2 activé, pour alimenter la

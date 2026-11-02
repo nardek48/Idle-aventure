@@ -210,7 +210,10 @@ var HERO_SCALING_REFS = {
   joueurRuines:  { dmg: 870, ehp: 1615 },
   /* v3.486.0 (Montagne, lot M-0) : fin de la Crypte (crypte_20), campagne --combats --avise, v3.485.0.
      Chevalier 2548 / 2520, Rôdeur 3123 / 2046, Mage 3947 / 1930. */
-  joueurCrypte:  { dmg: 3206, ehp: 2165 }
+  joueurCrypte:  { dmg: 3206, ehp: 2165 },
+  /* v3.625.0 (Tour, lot T-0) : fin de la Montagne (montagne_20), campagne --combats --joueur, v3.624.2
+     (le robot --avise ne monte pas l'Entrepôt et bute sur la Forge 6). Chevalier 14403 / 3780, Rôdeur 13034 / 2694, Mage 13328 / 3413. */
+  joueurMontagne: { dmg: 13588, ehp: 3296 }
 };
 /* D : les mondes. « Un peu » (Seb) : exp 0,5, et une marge de 15 % au-dessus du joueur
    appliqué de fin de segment : le robot de campagne ne voit aucune différence (mesuré : avec
@@ -231,7 +234,8 @@ var WORLD_HERO_SCALING = {
      tous les bancs des Ruines ont été faits avec cette référence. */
   refByWorld: { forest: ["joueurForet", "joueurForet"], desert: ["joueurDesert1", "joueurDesert2"], ruins: ["joueurDesert2", "joueurDesert2"],
     crypt: ["joueurRuines", "joueurRuines"], // v3.450.0 : le héros de fin des Ruines
-    mountain: ["joueurCrypte", "joueurCrypte"] } // v3.486.0 : le héros de fin de la Crypte
+    mountain: ["joueurCrypte", "joueurCrypte"], // v3.486.0 : le héros de fin de la Crypte
+    tower: ["joueurMontagne", "joueurMontagne"] } // v3.625.0 : le héros de fin de la Montagne
 };
 window.HERO_SCALING_REFS = HERO_SCALING_REFS;
 window.WORLD_HERO_SCALING = WORLD_HERO_SCALING;
