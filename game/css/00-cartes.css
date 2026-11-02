@@ -6,7 +6,7 @@ Trois habillages de carte, posés par classe :
   .kc-sec  cadre secondaire (barres bronze, petits coins dorés) pour l'interface ;
   .kc-doc  parchemin déchiré pour les documents de l'histoire (quêtes, missions,
            Taverne, Chronique) ; .kc-petit pour un bord plus fin.
-Lot 1 : les classes existent, aucune carte ne les porte encore.
+Lot 1 : les classes .kc-*. Lot 2 (fin du fichier) : listes de cartes d'interface.
 ============================================================ */
 
 :root {
@@ -64,4 +64,93 @@ Lot 1 : les classes existent, aucune carte ne les porte encore.
   pointer-events: none;
   border: var(--kc-g) solid transparent;
   border-image: url('../images/UI/frames/kc-dechire-bord.webp') 60 / var(--kc-g) stretch;
+}
+
+/* ============================================================
+   v3.618.0 — lot 2 : cadre secondaire sur les onglets et les cartes d'interface,
+   texture seule sur les lignes fines. Listes tirées de l'inventaire du jeu (atelier « Cartes E »).
+   !important : les composants posent bordure, ombre et fond plus loin dans la cascade.
+   ============================================================ */
+
+/* Texture : toutes les cartes listées (interface et lignes fines) */
+:root :is(
+  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
+  .full-menu-card, .go-auto, .go-bonus, .hf-card, .hf-tiers, .hf-top, .hs-comp, .hs-edetail, .hs-eq,
+  .hs-sets, .hs-wc, .hs-wskills, .kseg, .log-entry, .nb-accordion-section, .nb-purchase-card, .pc3,
+  .pc3-auto, .prod-sheet-harvest, .production-dash-card, .qb-other-world, .quest-section-card, .set-card,
+  .vb-card, .vb-cost-list, .vb-site-banner, .warehouse-note, .wh-filter, .wh-grid, .wk-banner, .wk-tile,
+  .achievement-total, .camp-mission-card, .cf-line, .equip-shop-hall-note, .equip-shop-timer, .hs-cmp-legend,
+  .hs-traits, .ksec, .ms-row, .mw-card, .vb-chain-banner, .wk-act, .vb-sheet-effect
+) {
+  background-image: linear-gradient(var(--kc-voile), var(--kc-voile)), var(--kc-tex) !important;
+  background-size: auto, 256px !important;
+  background-repeat: repeat !important;
+}
+
+/* Cadre secondaire : cartes d'interface, sauf une carte déjà rangée dans une carte encadrée */
+:root :is(
+  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
+  .full-menu-card, .go-auto, .go-bonus, .hf-card, .hf-tiers, .hf-top, .hs-comp, .hs-edetail, .hs-eq,
+  .hs-sets, .hs-wc, .hs-wskills, .kseg, .log-entry, .nb-accordion-section, .nb-purchase-card, .pc3,
+  .pc3-auto, .prod-sheet-harvest, .production-dash-card, .qb-other-world, .quest-section-card, .set-card,
+  .vb-card, .vb-cost-list, .vb-site-banner, .warehouse-note, .wh-filter, .wh-grid, .wk-banner, .wk-tile
+):not(:is(
+  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
+  .full-menu-card, .go-auto, .go-bonus, .hf-card, .hf-tiers, .hf-top, .hs-comp, .hs-edetail, .hs-eq,
+  .hs-sets, .hs-wc, .hs-wskills, .kseg, .log-entry, .nb-accordion-section, .nb-purchase-card, .pc3,
+  .pc3-auto, .prod-sheet-harvest, .production-dash-card, .qb-other-world, .quest-section-card, .set-card,
+  .vb-card, .vb-cost-list, .vb-site-banner, .warehouse-note, .wh-filter, .wh-grid, .wk-banner, .wk-tile
+) *) {
+  position: relative;
+  border: var(--kc-sec-clip) solid transparent !important;
+  background-clip: padding-box !important;
+  border-radius: 0 !important;
+  box-shadow: inset 0 0 24px rgba(70, 44, 14, 0.64) !important;
+}
+:root :is(
+  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
+  .full-menu-card, .go-auto, .go-bonus, .hf-card, .hf-tiers, .hf-top, .hs-comp, .hs-edetail, .hs-eq,
+  .hs-sets, .hs-wc, .hs-wskills, .kseg, .log-entry, .nb-accordion-section, .nb-purchase-card, .pc3,
+  .pc3-auto, .prod-sheet-harvest, .production-dash-card, .qb-other-world, .quest-section-card, .set-card,
+  .vb-card, .vb-cost-list, .vb-site-banner, .warehouse-note, .wh-filter, .wh-grid, .wk-banner, .wk-tile
+):not(:is(
+  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
+  .full-menu-card, .go-auto, .go-bonus, .hf-card, .hf-tiers, .hf-top, .hs-comp, .hs-edetail, .hs-eq,
+  .hs-sets, .hs-wc, .hs-wskills, .kseg, .log-entry, .nb-accordion-section, .nb-purchase-card, .pc3,
+  .pc3-auto, .prod-sheet-harvest, .production-dash-card, .qb-other-world, .quest-section-card, .set-card,
+  .vb-card, .vb-cost-list, .vb-site-banner, .warehouse-note, .wh-filter, .wh-grid, .wk-banner, .wk-tile
+) *)::before {
+  content: "";
+  position: absolute;
+  inset: calc(var(--kc-sec-clip) * -1);
+  z-index: 1;
+  pointer-events: none;
+  border: var(--kc-sec-coin) solid transparent;
+  border-image: url('../images/UI/frames/kc-secondaire.webp') 48 / var(--kc-sec-coin) stretch;
+}
+
+/* États qui passaient par la bordure ou l'ombre : un liseré dans le cadre (pseudo-élément ::after,
+   libre sur ces cartes), peint au-dessus du contenu pour rester visible */
+:root :is(.nb-purchase-card.rarity-green, .nb-purchase-card.rarity-rare, .nb-purchase-card.rarity-epic,
+  .nb-purchase-card.rarity-legendary, .hf-card.is-ready, .production-dash-card.is-sel)::after {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  z-index: 1;
+  pointer-events: none;
+  border: 2px solid var(--kc-etat);
+}
+:root .nb-purchase-card.rarity-green { --kc-etat: var(--rarity-green); }
+:root .nb-purchase-card.rarity-rare { --kc-etat: var(--rarity-rare); }
+:root .nb-purchase-card.rarity-epic { --kc-etat: var(--rarity-epic); }
+:root .nb-purchase-card.rarity-legendary { --kc-etat: var(--rarity-legendary); }
+:root .hf-card.is-ready { --kc-etat: var(--c-brown-550-3); }
+:root .production-dash-card.is-sel { --kc-etat: var(--nb-gold-deep); }
+:root .hf-card.is-hidden {
+  background-image: linear-gradient(rgba(70, 44, 14, 0.1), rgba(70, 44, 14, 0.1)), linear-gradient(var(--kc-voile), var(--kc-voile)), var(--kc-tex) !important;
+  background-size: auto, auto, 256px !important;
+}
+:root .exp-row.is-ready {
+  background-image: linear-gradient(to right, transparent 4px, var(--c-brown-550-3) 4px 8px, transparent 8px), linear-gradient(var(--kc-voile), var(--kc-voile)), var(--kc-tex) !important;
+  background-size: auto, auto, 256px !important;
 }
