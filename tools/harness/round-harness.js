@@ -9755,8 +9755,8 @@ console.log("\n[120] v3.325.0 — Plafond du Terrain d'entraînement par acte");
   pose(F.length, 0, { 0: true, 1: true });
   game.village.buildings.training.level = 9;
   ok(VB.getMaxLevel("training") === 9 && VB.isMaxLevel("training"), "Terrain 9 déjà construit à l'acte I : rien n'est repris, pas de niveau au-delà");
-  pose(0, 0, { 0: true, 1: true, 2: true, 3: true, 4: true, 5: true }); // v3.486.0 : la Montagne a son entrée, la Tour non
-  ok(WC.getTrainingActCap() === Infinity, "monde sans entrée d'acte : aucun plafond d'acte");
+  pose(0, 0, { 0: true, 1: true, 2: true, 3: true, 4: true, 5: true }); // v3.625.0 : la Tour a aussi son entrée (T-0)
+  ok(WC.getTrainingActCap() === 18, "la Tour : Terrain 18 dès l'acte I (v3.625.0)");
   game.storyQuests.forest.skipped = true; game.worldsEverReached = { 0: true };
   ok(WC.getVillageCap("training") === 4, "chapitre de la Forêt court-circuité : Forêt au complet (4)");
   ok(WC.getVillageCap("hall") === 4, "les autres bâtiments gardent le plafond du monde");
@@ -9820,7 +9820,7 @@ console.log("\n[122] v3.327.0 — Talents par classe : points plafonnés par act
       "niveau 12 au Désert I : 7 points à placer, 4 en réserve");
     ok(game.talentPoints === 7, "game.talentPoints suit les points disponibles");
     atAct(5, []);
-    ok(TM.cap() === Infinity && TM.available() === 11, "monde sans table : pas de plafond");
+    ok(TM.cap() === 23 && TM.available() === 11, "la Tour : 23 points dès l'acte I (v3.625.0), 11 gagnés");
 
     // --- Règles de l'arbre (T13 libre, T14 tronc à 2) ---
     atAct(1, ["desert_01"]);
@@ -18113,7 +18113,8 @@ console.log("\n[308] v3.486.0 — Montagne, lot M-0 : socle et passage entre les
     FM.getMaxLevel = maxAvant; FM.getLevel = lvAvant;
     ok(c11.obsidienne_taillee === 1 && c11.cire_consacree === 1 && c9.cire_consacree === 1 && !c9.obsidienne_taillee, "reforge 11 : 1 Obsidienne taillée (+1 Cire) ; reforge 9 : Cire seule");
     var tier6 = g.VillageBuildingManager.getLevelCost ? g.VillageBuildingManager.getLevelCost("forge", 5) : null; // coût du niveau 5 au niveau 6
-    ok(g.VILLAGE_BUILDINGS.forge.maxLevel === 6 && tier6 && tier6.obsidienne_taillee === 3, "Forge 6 : palier à l'Obsidienne posé, bâtiment à 6 (v3.490.0)");
+    var tier7 = g.VillageBuildingManager.getLevelCost ? g.VillageBuildingManager.getLevelCost("forge", 6) : null;
+    ok(g.VILLAGE_BUILDINGS.forge.maxLevel === 7 && tier6 && tier6.obsidienne_taillee === 3 && tier7 && tier7.verre_faille === 3, "Forge 6 à l'Obsidienne, Forge 7 au Verre de faille (v3.625.0), bâtiment à 7");
     // Le passage : arrivée, monde posé, plafonds de la Montagne, Gueule du volcan fermée, voyage retour
     game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true };
     ok(g.WorldTravel.arrive("mountain", 0) === true && g.WorldManager.worldIndex === 4 && game.worldsEverReached[4] === true, "arrivée : la Montagne devient le monde de résidence, notée atteinte");
@@ -19067,7 +19068,7 @@ console.log("\n[328] Relevé 2 (27/10) — zones de production à 20 niveaux, d�
   try {
     var PPS = g.ProductionPlotsSystem, S = g.PRODUCTION_PLOTS_SHARED;
     ok(S.plotMaxLevel === 20 && S.upgradeCostMultPerLevel === 1.15 && S.linearPerLevel === 0.7, "20 niveaux, +70 % par niveau, coût ×1,15");
-    ok(g.WORLD_CAPS.map(function (w) { return w.zoneLevel; }).join(",") === "5,10,12,15,17", "plafonds de monde 5 / 10 / 12 / 15 / 17 (3 parcelles, v3.612.0)");
+    ok(g.WORLD_CAPS.map(function (w) { return w.zoneLevel; }).join(",") === "5,10,12,15,17,20", "plafonds de monde 5 / 10 / 12 / 15 / 17 / 20 (3 parcelles, v3.612.0 ; la Tour, v3.625.0)");
     var r1 = PPS.getPlotRatePerMin(0, { level: 1 }), r8 = PPS.getPlotRatePerMin(0, { level: 8 });
     ok(Math.abs(r8 / r1 - 8.6) < 1e-9, "niveau 8 : 8,6 fois le niveau 1 (ancres des 3 parcelles, v3.612.0)");
     ok(Math.abs(PPS.getPlotCapacity(0, { level: 8 }) / PPS.getPlotRatePerMin(0, { level: 8 }) - PPS.getPlotCapacity(0, { level: 1 }) / r1) < 1, "la réserve suit le débit : même temps de remplissage à tout niveau");
@@ -20135,7 +20136,7 @@ console.log("\n[375] v3.560.0 — Potions majeures : colporteur 15 par jour, Apo
 (function () {
   try {
     var A = g.ApothecaryManager, VB = g.VILLAGE_BUILDINGS.apothecary, M = g.VillageBuildingManager;
-    ok(VB.maxLevel === 10 && g.WORLD_CAPS.map(function (w) { return w.village.apothecary; }).join() === "3,7,8,9,10", "Apothicaire : niveau max 10, plafonds par monde 3 / 7 / 8 / 9 / 10");
+    ok(VB.maxLevel === 10 && g.WORLD_CAPS.map(function (w) { return w.village.apothecary; }).join() === "3,7,8,9,10,10", "Apothicaire : niveau max 10, plafonds par monde 3 / 7 / 8 / 9 / 10 / 10");
     ok([1, 3, 7, 8, 9, 10].map(function (l) { return A.getDailyCap(l) - (A.hasPuitsDuRoi() ? 2 : 0); }).join() === "4,8,16,18,20,22", "préparations par jour : 4 au niveau 1, +2 par niveau (8 en Forêt, 16 au Désert … 22 à la Montagne)");
     var c = M.getLevelCost("apothecary", 9);
     ok(c && c.gold === 6776 && c.lingot === 105 && c.bloc === 225, "niveau 10 : la courbe continue (6 776 or, 225 blocs, 105 lingots)");
@@ -21163,7 +21164,7 @@ console.log("\n[407] v3.612.0 — Zones : 3 parcelles qui montent par monde, ach
 (function () {
   var PPS = g.ProductionPlotsSystem, S = g.PRODUCTION_PLOTS_SHARED, W = g.WarehouseManager;
   try {
-    ok(g.WORLD_CAPS.map(function (w) { return w.zoneRows + ":" + w.zoneLevel; }).join(",") === "1:5,1:10,1:12,1:15,1:17", "plafonds : 1 rangée partout, niveaux 5 / 10 / 12 / 15 / 17");
+    ok(g.WORLD_CAPS.map(function (w) { return w.zoneRows + ":" + w.zoneLevel; }).join(",") === "1:5,1:10,1:12,1:15,1:17,1:20", "plafonds : 1 rangée partout, niveaux 5 / 10 / 12 / 15 / 17 / 20 (la Tour, v3.625.0)");
     ok(PPS.isPlotRowOpen(2) && !PPS.isPlotRowOpen(3), "seules les 3 parcelles existent");
     ok([1, 2, 3, 4].every(function (L) { return JSON.stringify(g.getProductionPlotUpgradeCost("sawmill", L, 0)) === JSON.stringify(g.getLegacyPlotUpgradeCost("sawmill", L, 0)); }), "Forêt : coûts des niveaux 1 à 5 inchangés");
     // enveloppe du Désert : 3 parcelles × niveaux 5→10 = ouvertures + niveaux de l'ancienne grille
@@ -21539,6 +21540,22 @@ console.log("\n[419] v3.624.0 — Aeswyn se repeuple (habitants sur le bandeau d
     var sq419 = require("fs").readFileSync(require("path").join(ROOT, "js/data/story-quests.js"), "utf8");
     ok(sq419.indexOf("Orwen regarde vers le nord.") > 0 && sq419.indexOf("Orwen regarde vers l'est") < 0, "fin du chapitre V : Orwen regarde la Tour au nord");
   } catch (err) { ok(false, "[419] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[420] v3.625.0 — Tour, lot T-0 : le socle");
+(function () {
+  try {
+    var WC = g.WORLD_CAPS[5];
+    ok(WC && WC.village.workshop === 10 && WC.village.enchanter === 3 && WC.village.warehouse === 20 && WC.village.palisade === 10 && WC.village.forge === 7 && WC.forgeActStep === "tour_13" && WC.zoneLevel === 20,
+      "plafonds de la Tour : Atelier 10, Enchanteresse 3, Entrepôt 20, Palissade 10, zones 20, Forge 7 à l'acte III");
+    ok(g.WAREHOUSE_RESOURCES.givre_bleu && g.WAREHOUSE_RESOURCES.givre_bleu.tier === "special" && g.WAREHOUSE_RESOURCES.verre_faille && g.WAREHOUSE_RESOURCES.verre_faille.tier === "crafted",
+      "matières : Givre bleu (brute) et Verre de faille (raffinée)");
+    var FM = g.ForgeManager || g.ForgeSystem, maxAv = FM.getMaxLevel, lvAv = FM.getLevel, at = function (lv) { FM.getMaxLevel = function () { return 14; }; FM.getLevel = function () { return lv; }; return FM.getCost("armor"); };
+    var c13 = at(12), c11 = at(10); FM.getMaxLevel = maxAv; FM.getLevel = lvAv;
+    ok(c13.verre_faille === 1 && c13.obsidienne_taillee === 1 && c11.obsidienne_taillee === 1 && !c11.verre_faille, "reforge 13 : 1 Verre de faille (+1 Obsidienne) ; reforge 11 : Obsidienne seule");
+    ok(g.HERO_SCALING_REFS.joueurMontagne && g.WORLD_HERO_SCALING.refByWorld.tower[0] === "joueurMontagne", "ajustement au héros : la Tour se mesure au héros de fin de Montagne");
+    ok(g.DUNGEONS.filter(function (d) { return d.id === 6; })[0].locked === true, "Sommet interdit : reste fermé");
+  } catch (err) { ok(false, "[420] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
 Promise.all(ATTENTES).then(function () {

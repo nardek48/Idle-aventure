@@ -7865,6 +7865,12 @@ I18n.register("en", {
   // v3.602.0 : jours du monde
   "Jour {n}": "Day {n}",
   "Rien n'a bougé autour du camp.": "Nothing has moved around the camp.",
+  "Givre bleu": "Blue Frost",
+  "De la lumière froide, prise en givre sur un éclat de pierre. Elle fond dans la main sans mouiller.": "Cold light, frozen as frost on a stone chip. It melts in your hand without wetting it.",
+  "Étages de la Tour : combats, carte des étages, Petites Aventures et Sommet interdit": "Tower floors: fights, the floor map, Small Adventures and the Forbidden Summit",
+  "Verre de faille": "Riftglass",
+  "Du givre bleu fondu en verre clair. On y voit parfois un toit qui n'existe plus. Matériau de la Forge de la Tour et des dernières reforges.": "Blue frost melted into clear glass. Sometimes you see a roof in it that no longer exists. Material for the Tower Forge and the last reforges.",
+  "Se coule à la Fonderie (Mine), avec du Givre bleu et de l'Acier": "Cast at the Foundry (Mine), with Blue Frost and Steel",
   "Les ouvertures du Désert, des Ruines, de la Crypte et de la Montagne ont leurs illustrations.": "The Desert, Ruins, Crypt and Mountain openings now have their illustrations.",
   "Fin du chapitre V : la Tour est bien au nord, comme dans le prologue.": "End of chapter V: the Tower is indeed to the north, as in the prologue.",
   "Trois familles autour du feu. Le reste est encore de la cendre.": "Three families around the fire. The rest is still ash.",
