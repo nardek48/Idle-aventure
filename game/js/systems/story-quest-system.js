@@ -351,7 +351,11 @@ var StoryQuestManager = {
         // v3.261.0 (retour Seb) : les 5 vagues se passent dans UN run — un nouveau run repart de 0.
         if (!game.dungeonRun.storyRunTag) game.dungeonRun.storyRunTag = "r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
         if (st.markedRunTag !== game.dungeonRun.storyRunTag) { st.markedRunTag = game.dungeonRun.storyRunTag; st.counters.coeurKillsMarked = 0; }
-        st.counters.coeurKillsMarked += delta;
+        /* v3.621.1 (accord Seb) : des VAGUES franchies, plus des kills (une vague de groupe comptait double).
+           Franchies = la vague en cours, moins elle-même si un de ses ennemis est encore debout. */
+        var alive = window.CombatActors && typeof CombatActors.aliveEnemies === "function" ? CombatActors.aliveEnemies().length : 0;
+        var cleared = Math.max(0, Number(game.dungeonRun.wave || 1) - (alive > 0 ? 1 : 0));
+        st.counters.coeurKillsMarked = Math.max(Number(st.counters.coeurKillsMarked || 0), cleared);
       }
     }
   },
