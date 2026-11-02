@@ -390,3 +390,7 @@ Lot 1 : les classes .kc-*. Lot 2 : listes de cartes d'interface. Lot 3 (fin du f
 /* v3.620.0 — lot 4 : inventaire complet (68 écrans et fiches, téléphone et PC, CSS désactivé).
    .hs-roster-btn ajouté aux listes ; .ksec (titres de section, 32-50 px, décor propre en pseudo-élément)
    reste en texture seule, comme toute ligne fine. */
+
+/* v3.628.1 (bug Seb) : le cadre secondaire passait le détail de l'équipement en relative ; il reste collé
+   en bas de l'écran (sticky, comme les Talents). L'identifiant fictif donne la priorité sans !important. */
+.hs-edetail:not(#kc-sticky) { position: sticky; }
