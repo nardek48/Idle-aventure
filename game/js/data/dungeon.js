@@ -330,7 +330,7 @@ var DUNGEONS = [
     worldId: "tower", worldRequired: 5, worldPower: 5, difficultyMult: 30,
     maxRarity: "legendary",
     specialResourceId: null, specialResourceAmount: 0,
-    icon: null, banner: null, combatMap: "../images/Maps/tower-combat.webp",
+    icon: "images/Dungeons/Icone_base/palier6.webp", banner: null, combatMap: "../images/Maps/tower-combat.webp",
     desc: "Le sommet de la Tour, et ce qui s'y reflète.",
     story: "",
     enemyPool: null, eliteWaves: null,
