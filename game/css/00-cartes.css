@@ -75,7 +75,7 @@ Lot 1 : les classes .kc-*. Lot 2 : listes de cartes d'interface. Lot 3 (fin du f
 /* Texture : toutes les cartes listées (interface et lignes fines). v3.619.1 : sans .hs-eq (mannequin)
    ni .exp-world (route de la Caravane), qui ont leur propre image de fond. */
 :root :is(
-  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-tile, .wk-bigrec, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
+  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-roster-btn, .hs-tile, .wk-bigrec, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
   .full-menu-card, .go-auto, .go-bonus, .hf-card, .hf-tiers, .hf-top, .hs-comp, .hs-edetail,
   .hs-sets, .hs-wc, .hs-wskills, .kseg, .log-entry, .nb-accordion-section, .nb-purchase-card, .pc3,
   .pc3-auto, .prod-sheet-harvest, .production-dash-card, .qb-other-world, .quest-section-card, .set-card,
@@ -90,13 +90,13 @@ Lot 1 : les classes .kc-*. Lot 2 : listes de cartes d'interface. Lot 3 (fin du f
 
 /* Cadre secondaire : cartes d'interface, sauf une carte déjà rangée dans une carte encadrée */
 :root :is(
-  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
+  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-roster-btn, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
   .full-menu-card, .go-auto, .go-bonus, .hf-card, .hf-tiers, .hf-top, .hs-comp, .hs-edetail, .hs-eq,
   .hs-sets, .hs-wc, .hs-wskills, .kseg, .log-entry, .nb-accordion-section, .nb-purchase-card, .pc3,
   .pc3-auto, .prod-sheet-harvest, .production-dash-card, .qb-other-world, .quest-section-card, .set-card,
   .vb-card, .vb-cost-list, .vb-site-banner, .warehouse-note, .wh-filter, .wh-grid, .wk-banner, .wk-tile
 ):not(:is(
-  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
+  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-roster-btn, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
   .full-menu-card, .go-auto, .go-bonus, .hf-card, .hf-tiers, .hf-top, .hs-comp, .hs-edetail, .hs-eq,
   .hs-sets, .hs-wc, .hs-wskills, .kseg, .log-entry, .nb-accordion-section, .nb-purchase-card, .pc3,
   .pc3-auto, .prod-sheet-harvest, .production-dash-card, .qb-other-world, .quest-section-card, .set-card,
@@ -110,13 +110,13 @@ Lot 1 : les classes .kc-*. Lot 2 : listes de cartes d'interface. Lot 3 (fin du f
   box-shadow: inset 0 0 24px rgba(70, 44, 14, 0.64) !important;
 }
 :root :is(
-  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
+  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-roster-btn, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
   .full-menu-card, .go-auto, .go-bonus, .hf-card, .hf-tiers, .hf-top, .hs-comp, .hs-edetail, .hs-eq,
   .hs-sets, .hs-wc, .hs-wskills, .kseg, .log-entry, .nb-accordion-section, .nb-purchase-card, .pc3,
   .pc3-auto, .prod-sheet-harvest, .production-dash-card, .qb-other-world, .quest-section-card, .set-card,
   .vb-card, .vb-cost-list, .vb-site-banner, .warehouse-note, .wh-filter, .wh-grid, .wk-banner, .wk-tile
 ):not(:is(
-  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
+  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-roster-btn, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
   .full-menu-card, .go-auto, .go-bonus, .hf-card, .hf-tiers, .hf-top, .hs-comp, .hs-edetail, .hs-eq,
   .hs-sets, .hs-wc, .hs-wskills, .kseg, .log-entry, .nb-accordion-section, .nb-purchase-card, .pc3,
   .pc3-auto, .prod-sheet-harvest, .production-dash-card, .qb-other-world, .quest-section-card, .set-card,
@@ -162,7 +162,7 @@ Lot 1 : les classes .kc-*. Lot 2 : listes de cartes d'interface. Lot 3 (fin du f
 /* v3.618.1 (option A de Seb) : encres plus foncées DANS les cartes habillées seulement, car texture et cadre
    les éclaircissaient (2,1 à 4,1:1). Couleur changée sélecteur par sélecteur (la palette n'est jamais redéfinie). */
 :root :is(
-  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
+  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-roster-btn, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
   .full-menu-card, .go-auto, .go-bonus, .hf-card, .hf-tiers, .hf-top, .hs-comp, .hs-edetail, .hs-eq,
   .hs-sets, .hs-wc, .hs-wskills, .kseg, .log-entry, .nb-accordion-section, .nb-purchase-card, .pc3,
   .pc3-auto, .prod-sheet-harvest, .production-dash-card, .qb-other-world, .quest-section-card, .set-card,
@@ -178,7 +178,7 @@ Lot 1 : les classes .kc-*. Lot 2 : listes de cartes d'interface. Lot 3 (fin du f
   .eqs-row-delta.is-up
 ),
 :root :is(
-  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
+  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-roster-btn, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
   .full-menu-card, .go-auto, .go-bonus, .hf-card, .hf-tiers, .hf-top, .hs-comp, .hs-edetail, .hs-eq,
   .hs-sets, .hs-wc, .hs-wskills, .kseg, .log-entry, .nb-accordion-section, .nb-purchase-card, .pc3,
   .pc3-auto, .prod-sheet-harvest, .production-dash-card, .qb-other-world, .quest-section-card, .set-card,
@@ -194,7 +194,7 @@ Lot 1 : les classes .kc-*. Lot 2 : listes de cartes d'interface. Lot 3 (fin du f
   .eqs-row-delta.is-up
 ) { color: var(--nb-green-text); }
 :root :is(
-  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
+  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-roster-btn, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
   .full-menu-card, .go-auto, .go-bonus, .hf-card, .hf-tiers, .hf-top, .hs-comp, .hs-edetail, .hs-eq,
   .hs-sets, .hs-wc, .hs-wskills, .kseg, .log-entry, .nb-accordion-section, .nb-purchase-card, .pc3,
   .pc3-auto, .prod-sheet-harvest, .production-dash-card, .qb-other-world, .quest-section-card, .set-card,
@@ -208,7 +208,7 @@ Lot 1 : les classes .kc-*. Lot 2 : listes de cartes d'interface. Lot 3 (fin du f
   .pt-hint
 ),
 :root :is(
-  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
+  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-roster-btn, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
   .full-menu-card, .go-auto, .go-bonus, .hf-card, .hf-tiers, .hf-top, .hs-comp, .hs-edetail, .hs-eq,
   .hs-sets, .hs-wc, .hs-wskills, .kseg, .log-entry, .nb-accordion-section, .nb-purchase-card, .pc3,
   .pc3-auto, .prod-sheet-harvest, .production-dash-card, .qb-other-world, .quest-section-card, .set-card,
@@ -222,7 +222,7 @@ Lot 1 : les classes .kc-*. Lot 2 : listes de cartes d'interface. Lot 3 (fin du f
   .pt-hint
 ) { color: var(--c-brown-750-soft); }
 :root :is(
-  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
+  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-roster-btn, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
   .full-menu-card, .go-auto, .go-bonus, .hf-card, .hf-tiers, .hf-top, .hs-comp, .hs-edetail, .hs-eq,
   .hs-sets, .hs-wc, .hs-wskills, .kseg, .log-entry, .nb-accordion-section, .nb-purchase-card, .pc3,
   .pc3-auto, .prod-sheet-harvest, .production-dash-card, .qb-other-world, .quest-section-card, .set-card,
@@ -277,7 +277,7 @@ Lot 1 : les classes .kc-*. Lot 2 : listes de cartes d'interface. Lot 3 (fin du f
   .news-v
 ),
 :root :is(
-  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
+  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-roster-btn, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
   .full-menu-card, .go-auto, .go-bonus, .hf-card, .hf-tiers, .hf-top, .hs-comp, .hs-edetail, .hs-eq,
   .hs-sets, .hs-wc, .hs-wskills, .kseg, .log-entry, .nb-accordion-section, .nb-purchase-card, .pc3,
   .pc3-auto, .prod-sheet-harvest, .production-dash-card, .qb-other-world, .quest-section-card, .set-card,
@@ -333,7 +333,7 @@ Lot 1 : les classes .kc-*. Lot 2 : listes de cartes d'interface. Lot 3 (fin du f
 ) { color: var(--c-brown-750-3); }
 
 :root :is(
-  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
+  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-roster-btn, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
   .full-menu-card, .go-auto, .go-bonus, .hf-card, .hf-tiers, .hf-top, .hs-comp, .hs-edetail, .hs-eq,
   .hs-sets, .hs-wc, .hs-wskills, .kseg, .log-entry, .nb-accordion-section, .nb-purchase-card, .pc3,
   .pc3-auto, .prod-sheet-harvest, .production-dash-card, .qb-other-world, .quest-section-card, .set-card,
@@ -353,7 +353,7 @@ Lot 1 : les classes .kc-*. Lot 2 : listes de cartes d'interface. Lot 3 (fin du f
   background-repeat: repeat !important;
 }
 :root :is(.story-chain, .story-step, .story-prologue-card, .camp-missions-card, .cw-card:has(.cw-mlist), .ms-block, .qb-card, .tavern-board, .chr-obj):not(:is(
-  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
+  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-roster-btn, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
   .full-menu-card, .go-auto, .go-bonus, .hf-card, .hf-tiers, .hf-top, .hs-comp, .hs-edetail, .hs-eq,
   .hs-sets, .hs-wc, .hs-wskills, .kseg, .log-entry, .nb-accordion-section, .nb-purchase-card, .pc3,
   .pc3-auto, .prod-sheet-harvest, .production-dash-card, .qb-other-world, .quest-section-card, .set-card,
@@ -371,7 +371,7 @@ Lot 1 : les classes .kc-*. Lot 2 : listes de cartes d'interface. Lot 3 (fin du f
 }
 :root .story-chain.is-done:not(.story-chain *) { --kc-g: var(--kc-doc-bord-petit); padding: 10px calc(var(--kc-g) * 0.45 + 6px) !important; }
 :root :is(.story-chain, .story-step, .story-prologue-card, .camp-missions-card, .cw-card:has(.cw-mlist), .ms-block, .qb-card, .tavern-board, .chr-obj):not(:is(
-  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
+  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-roster-btn, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
   .full-menu-card, .go-auto, .go-bonus, .hf-card, .hf-tiers, .hf-top, .hs-comp, .hs-edetail, .hs-eq,
   .hs-sets, .hs-wc, .hs-wskills, .kseg, .log-entry, .nb-accordion-section, .nb-purchase-card, .pc3,
   .pc3-auto, .prod-sheet-harvest, .production-dash-card, .qb-other-world, .quest-section-card, .set-card,
@@ -386,3 +386,7 @@ Lot 1 : les classes .kc-*. Lot 2 : listes de cartes d'interface. Lot 3 (fin du f
   border: var(--kc-g) solid transparent;
   border-image: url('../images/UI/frames/kc-dechire-bord.webp') 60 / var(--kc-g) stretch;
 }
+
+/* v3.620.0 — lot 4 : inventaire complet (68 écrans et fiches, téléphone et PC, CSS désactivé).
+   .hs-roster-btn ajouté aux listes ; .ksec (titres de section, 32-50 px, décor propre en pseudo-élément)
+   reste en texture seule, comme toute ligne fine. */
