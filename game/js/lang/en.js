@@ -8053,6 +8053,7 @@ I18n.register("en", {
   "La Palissade freine {p} % d'échecs de plus sur les cartes vivantes, le temps du compte.": "The Palisade stops {p}% more failures on the living maps, while the count holds.",
   "Et ce matin ?": "And this morning?",
   // v3.615.1 : correctif de l'écran Équipé
+  "La Boutique d'équipement reste à côté du Sac toute la partie, dans Héros › Équipement ; la Halle marchande la propose aussi.": "The equipment Shop now stays next to the Bag all game long, in Hero › Equipment; the Market Hall offers it too.",
   "Correctif : sur l'écran Équipé, on peut de nouveau choisir n'importe quel emplacement après en avoir touché un.": "Fix: on the Equipped screen, you can choose any slot again after tapping one.",
   // v3.615.0 : niveau d'objet (ilvl)
   "Niveau d'objet {n}": "Item level {n}",

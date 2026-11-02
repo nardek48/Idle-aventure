@@ -718,13 +718,12 @@ window.isEquipShopAtHall = isEquipShopAtHall;
    fonctions qui le lisent (sélection d'objet, tri, autovente). */
 function buildHerosEquipHTML() {
   var cur = (typeof activeEquipSubTab !== "undefined") ? activeEquipSubTab : "equipment";
-  var atHall = isEquipShopAtHall(); // v3.424.0 (H-1) : la Boutique part à la Halle
-  if (atHall && cur === "shop") { activeEquipSubTab = "equipment"; cur = "equipment"; }
+  // v3.615.2 (option A de Seb) : la Boutique reste à côté du Sac toute la partie ; la Halle la montre aussi
   var bagCount = Array.isArray(game.inventory) ? game.inventory.length : 0;
   var seg = '<div class="kseg hs-subseg">'; // v3.401.0 (lot O-1) : rail du kit, déjà taillé pour le parchemin
   seg += '<button type="button" class="' + (cur === "equipment" ? 'is-on' : '') + '" onclick="setEquipSubTab(\'equipment\')"><span>' + _t("Équipé") + '</span></button>';
   seg += '<button type="button" class="' + (cur === "inventory" ? 'is-on' : '') + '" onclick="setEquipSubTab(\'inventory\')"><span>' + _t("Sac") + '<span class="kseg-count">' + bagCount + '</span></span></button>';
-  if (!atHall) seg += '<button type="button" class="' + (cur === "shop" ? 'is-on' : '') + '" onclick="setEquipSubTab(\'shop\')"><span>' + _t("Boutique") + '</span></button>';
+  seg += '<button type="button" class="' + (cur === "shop" ? 'is-on' : '') + '" onclick="setEquipSubTab(\'shop\')"><span>' + _t("Boutique") + '</span></button>';
   seg += '</div>';
 
   // v3.425.0 (lot H-2) : Équipé (silhouette, emplacements autour du corps) et Sac (modèle de
