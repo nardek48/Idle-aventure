@@ -1,0 +1,229 @@
+<title>Ouvertures de chapitre</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Cinzel:wght@700&family=Alegreya+Sans:wght@400;600;700&display=swap">
+<style>
+/* Une colonne de chapitres ; chaque planche = vignette (ébauche de l'image) + texte du récit + idée d'image et prompts repliés. Bouton « Voir » : lecture plein écran, lettre à lettre. */
+:root {
+  --bg: #f3efe6; --card: #fffdf8; --ink: #2b2318; --dim: #6c604e; --line: #ddd3c2; --gold: #8a5a12; --gold-soft: #f3e6cc;
+  --scrim: rgba(12, 9, 6, .78); --on-img: #f6efe2;
+  --f-story: "Alegreya", Georgia, serif; --f-title: "Cinzel", Georgia, serif; --f-ui: "Alegreya Sans", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #16130f; --card: #201b15; --ink: #ece3d3; --dim: #a89a85; --line: #3a3127; --gold: #d9a94e; --gold-soft: #3a2c16; color-scheme: dark; } }
+:root[data-theme="dark"] { --bg: #16130f; --card: #201b15; --ink: #ece3d3; --dim: #a89a85; --line: #3a3127; --gold: #d9a94e; --gold-soft: #3a2c16; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 var(--f-ui); }
+.wrap { max-width: 820px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 22px 56px; display: grid; gap: 22px; }
+.wrap > * { min-width: 0; }
+h1 { margin: 0; font: 700 24px/1.2 var(--f-title); letter-spacing: .04em; color: var(--gold); text-wrap: balance; }
+h2 { margin: 0; font: 700 18px/1.25 var(--f-title); letter-spacing: .04em; text-wrap: balance; }
+p { margin: 0; }
+.intro { color: var(--dim); max-width: 65ch; display: grid; gap: 8px; }
+.points { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; gap: 6px; }
+.points b { color: var(--gold); }
+.points ol { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.chap { display: grid; gap: 12px; }
+.chap-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 12px; border-bottom: 1px solid var(--line); padding-bottom: 8px; }
+.chap-num { font: 700 12px var(--f-ui); letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
+.when { font-size: 14px; color: var(--dim); }
+.btn { font: 700 14px var(--f-ui); border-radius: 9px; min-height: 40px; padding: 0 14px; cursor: pointer; border: 1px solid var(--gold); background: transparent; color: var(--gold); }
+.btn:hover { background: var(--gold-soft); }
+.btn:focus-visible, summary:focus-visible, .copy:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.pl { background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; display: grid; grid-template-columns: 200px minmax(0, 1fr); }
+.thumb { position: relative; min-height: 220px; display: flex; align-items: flex-end; padding: 10px; color: var(--on-img); font: 600 12px/1.3 var(--f-ui); letter-spacing: .03em; }
+.thumb span { background: rgba(0,0,0,.35); border-radius: 6px; padding: 3px 7px; }
+.body { padding: 12px 14px 14px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.pl-k { font: 700 12px var(--f-ui); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); }
+.txt { font: 400 18px/1.5 var(--f-story); display: grid; gap: 4px; }
+.txt .gold { font: 700 17px var(--f-title); letter-spacing: .05em; color: var(--gold); margin-top: 4px; }
+.idee { font-size: 15px; border-left: 3px solid var(--gold); padding-left: 10px; }
+.idee b { font-weight: 700; }
+details { font-size: 14px; }
+summary { cursor: pointer; color: var(--dim); font-weight: 700; }
+.prompt { margin-top: 6px; display: grid; gap: 4px; }
+.prompt pre { margin: 0; white-space: pre-wrap; word-break: break-word; font: 13px/1.45 ui-monospace, Menlo, monospace; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+.prompt .row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: space-between; }
+.path { font: 12px ui-monospace, Menlo, monospace; color: var(--dim); word-break: break-all; }
+.copy { font: 700 12px var(--f-ui); border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 7px; min-height: 30px; padding: 0 10px; cursor: pointer; }
+.rem { font-size: 14px; background: var(--gold-soft); border-radius: 10px; padding: 8px 12px; display: grid; gap: 4px; }
+.later { color: var(--dim); font-size: 15px; border: 1px dashed var(--line); border-radius: 12px; padding: 12px 14px; }
+@media (max-width: 560px) { .pl { grid-template-columns: 1fr; } .thumb { min-height: 150px; } }
+
+/* Lecture plein écran */
+.viewer { position: fixed; inset: 0; z-index: 50; display: grid; align-items: end; cursor: pointer; color: var(--on-img); }
+.viewer .bgimg { position: absolute; inset: 0; transition: opacity .6s; }
+.viewer .shade { position: absolute; inset: 0; background: linear-gradient(to top, var(--scrim) 0%, rgba(0,0,0,.2) 45%, transparent 70%); }
+.viewer .vt { position: relative; max-width: 640px; margin: 0 auto; width: 100%; padding: 0 max(20px, env(safe-area-inset-right, 0px)) calc(48px + env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px)); display: grid; gap: 8px; font: 400 20px/1.5 var(--f-story); text-shadow: 0 1px 3px rgba(0,0,0,.6); min-height: 9em; align-content: end; }
+.viewer .vt .gold { font: 700 22px var(--f-title); letter-spacing: .06em; color: #e4b75c; }
+.viewer .vk { position: absolute; top: calc(14px + env(safe-area-inset-top, 0px)); left: max(16px, env(safe-area-inset-left, 0px)); font: 600 12px var(--f-ui); letter-spacing: .1em; text-transform: uppercase; opacity: .8; }
+.viewer .vx { position: absolute; top: calc(10px + env(safe-area-inset-top, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); font: 700 14px var(--f-ui); color: var(--on-img); background: rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,.3); border-radius: 9px; min-height: 40px; padding: 0 14px; cursor: pointer; }
+.viewer .vh { position: absolute; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); left: 0; right: 0; text-align: center; font: 600 12px var(--f-ui); opacity: .6; }
+</style>
+
+<div class="wrap">
+  <h1>Ouvertures de chapitre</h1>
+  <div class="intro">
+    <p>Quatre chapitres, trois planches chacun, sur le modèle du prologue : une image plein écran, le texte posé lettre à lettre sur le tiers bas, la dernière ligne en titre doré (le nom du chapitre). « Voir » lance la lecture comme en jeu ; les vignettes sont des ébauches de couleur, pas les images.</p>
+    <p>Elles s'ouvrent à la fin de la première étape de chaque monde (la première arrivée). Les parties déjà plus loin les voient en arrivant dans leur prochain monde. Toutes se revoient depuis Quêtes › Histoire.</p>
+  </div>
+  <div class="points">
+    <p><b>À trancher, dans l'ordre</b></p>
+    <ol>
+      <li>Les textes, chapitre par chapitre (le Désert existait déjà ; Ruines, Crypte et Montagne sont nouveaux). Ils sont aussi dans l'atelier des textes, groupe « Ouvertures de chapitre ».</li>
+      <li>Les idées d'image : 12 scènes, 24 fichiers (PC 3072 × 2048, téléphone 1366 × 2048), même style que le prologue. Le bleu pâle reste réservé à la lumière tombée du ciel : il revient seulement dans les Ruines (joints des pierres) et la Montagne (les veines).</li>
+      <li>Ensuite seulement le code (composant du prologue réutilisé), chapitre par chapitre, en commençant par le Désert.</li>
+    </ol>
+  </div>
+  <div id="chapitres" class="wrap" style="padding:0;gap:30px"></div>
+  <p class="later"><b>La Tour (chapitre VI)</b> viendra avec le chapitre lui-même. Rien n'est écrit pour elle ici, pour ne rien lui prendre d'avance.</p>
+</div>
+
+<div class="viewer" id="viewer" hidden>
+  <div class="bgimg" id="v-bg"></div><div class="shade"></div>
+  <div class="vk" id="v-k"></div>
+  <button type="button" class="vx" id="v-x">Fermer</button>
+  <div class="vt" id="v-t"></div>
+  <div class="vh">Touche pour continuer</div>
+</div>
+
+<script>
+(function () {
+  var CHEMIN = "images/Chapitres/";
+  var BASE = "Cinematic illustration for a chapter opening of a fantasy mobile RPG called Aethervale, same series as its prologue: semi-realistic hand-painted digital art, rich textures, painterly light, muted natural palette. The only blue in the whole series is the pale, cold light that fell from the sky and its traces. Full-bleed scene, no frame, no border. No text, no letters, no runes, no numbers, no watermark, no signature. Nothing gory, no blood. Any person is seen from behind or far away, face never visible.";
+  var FMT = {
+    wide: "FORMAT: landscape 3:2, 1536x1024, upscaled x2 to 3072x2048. Shown full screen on computers and tablets, cropped to 16:10 or 16:9: keep the main subject in the central area, and keep the bottom third calmer and darker, without important detail, because the text is written over it.",
+    tall: "FORMAT: portrait 2:3, 1024x1536, upscaled to 1366x2048. Shown full screen on phones, cropped to 9:19.5: keep the main subject in the central vertical band, and keep the bottom third calmer and darker, without important detail, because the text is written over it."
+  };
+  var CH = [
+    { id: "desert", num: "Chapitre II", titre: "Ce que le sable garde", quand: "Après « La traversée » (desert_01)",
+      rem: ["Textes écrits le 30/10, chantier mis en pause ensuite, jamais relus.", "Deux lignes reprennent presque mot pour mot l'étape qui vient de finir : « Trois jours de sable. Deux puits. » (Sarkel) et « personne ne demande d'où tu viens » (fin de l'étape). La première fait écho, je la garderais. Pour la seconde, je propose : « Au bout, un camp de toile autour d'un puits. Des gens qui ont tous l'air d'attendre une caravane. »"],
+      pl: [
+        { nom: "traversee", titre: "La traversée", c: ["#d9a45a", "#a8682e", "#3b2414"],
+          l: ["Trois jours de sable. Deux puits.", "Derrière toi, la forêt n'est plus qu'un trait vert. Puis plus rien.", "Sarkel ne parle pas en marchant. Il compte les outres."],
+          idee: "Les dunes à perte de vue dans la chaleur du matin. Le héros, de dos, derrière Sarkel qui tire sa carriole bâchée, outres pendues aux ridelles. Tout au fond, un mince trait vert : la forêt.",
+          scene: "SCENE: endless sand dunes in the hard light of early morning heat, heat haze. Two small figures walk away from the viewer along a dune crest: a cloaked young traveller seen from behind, and ahead of them a lean old merchant pulling a covered two-wheeled cart, leather waterskins hanging from its sides. Far behind them on the horizon, a thin dark-green line: the forest they left. Warm ochre, sand gold and burnt orange palette, long soft shadows, footprints in the sand. Bottom third: smooth shadowed dune slope." },
+        { nom: "royaume", titre: "Ce qui dépasse", c: ["#c9a06a", "#8a6440", "#2e2016"],
+          l: ["Ici, rien ne se presse. Le vent découvre, le sable recouvre.", "Des pierres dépassent. Un toit. Une main de statue.", "Tout un royaume est couché dessous."],
+          idee: "Le vent soulève le sable et découvre l'arête d'un toit, des chapiteaux, une immense main de statue ouverte qui sort d'une dune. On devine une ville entière dessous. Fin d'après-midi, ombres longues.",
+          scene: "SCENE: late afternoon in a deep desert, wind lifting streams of sand off the dune crests. Half-buried ancient stonework emerges from the dunes: the ridge of a tiled roof, the tops of carved columns, and in the centre a colossal stone hand of a statue rising out of the sand, palm open to the sky, worn smooth by wind. The scale suggests a whole kingdom buried beneath. Long raking shadows, dust in the air, faded sandstone and ochre palette. No people. Bottom third: rippled sand in shadow." },
+        { nom: "portail", titre: "Le camp du Portail", c: ["#8a5a3a", "#4a3226", "#17110d"],
+          l: ["Au bout, un camp de toile autour d'un puits. On y paie l'eau, et personne ne demande d'où tu viens.", "Sous le sable, quelqu'un attend depuis longtemps."], gold: "Ce que le sable garde",
+          idee: "Au crépuscule, quelques tentes de toile tendues sur des pieux autour d'un puits de pierre, trois lampes, des silhouettes. Au premier plan, à demi enfouie dans la pente, une porte de pierre qui descend dans le noir.",
+          scene: "SCENE: dusk in the desert. A small camp of patched canvas tents stretched on wooden stakes around an old stone well; a few oil lamps glow warm, a handful of distant silhouettes sit near the well. In the foreground, half-buried in the sand slope, the top of an ancient carved stone doorway leading down into darkness, only its lintel and the first step visible, sand pouring slowly into it. Deep violet sky with the first stars, warm lamplight against cold dusk. Bottom third: dark sand slope." }
+      ] },
+    { id: "ruines", num: "Chapitre III", titre: "La ville rangée", quand: "Après « La route du nord » (ruines_01)",
+      rem: ["Nouveaux. La fin de l'étape dit déjà « une ville entière, debout. Personne dedans » : la planche 2 reprend l'idée sans la phrase.", "La planche 3 annonce Edda sans la nommer (« quelqu'un dessine les rues ») : elle arrive deux étapes plus tard, « Celle qui dessine les murs ». « Quelque chose rebâtit » suit la bible (l'Aether qui reconstruit un plan) sans le dire."],
+      pl: [
+        { nom: "route", titre: "La route du nord", c: ["#b8a684", "#76705e", "#2a2822"],
+          l: ["Au nord du camp, le sable durcit. Puis il devient pavé.", "La route que Sarkel connaissait n'est plus là. Il en prend une autre, sans rien dire.", "Le fleuve de ses cartes aussi est parti. Il reste son lit, sec et propre."],
+          idee: "Le sable qui devient une chaussée pavée, intacte. Elle franchit le lit d'un fleuve à sec, lisse comme s'il avait été balayé. Sarkel et sa carriole s'arrêtent au bord. Au loin, la silhouette d'une ville.",
+          scene: "SCENE: grey overcast daylight at the northern edge of a desert. The sand gives way to a perfectly laid ancient paved road, no stone out of place. The road crosses the bed of a vanished river: a wide, dry, smooth riverbed, clean as if swept, pebbles neatly sorted. At its edge an old merchant with his covered cart has stopped, seen from behind, looking ahead. Far on the horizon, the skyline of a large stone city, towers and roofs, standing intact. Muted grey-gold, slate and pale stone palette. Bottom third: the dry riverbed in soft shadow." },
+        { nom: "pierres", titre: "Ce qui bouge", c: ["#5a6470", "#2c3138", "#9fc4dc"],
+          l: ["Une ville entière, debout. Pas une fenêtre cassée. Pas une porte ouverte.", "La nuit, on entend la pierre frotter la pierre.", "Au matin, une rue n'est plus là où elle était."],
+          idee: "La ville la nuit, sous la lune, rues parfaitement rangées et vides. Une rangée de maisons est en train de glisser : un mur se déplace dans un nuage de poussière, et une lueur bleu pâle filtre entre les joints des pierres qui bougent.",
+          scene: "SCENE: night, moonlight over an empty, perfectly ordered ancient stone city: straight streets, intact windows, every door closed, no one anywhere. In the middle ground a whole row of houses is sliding sideways along the street, a wall shifting with a plume of dust, stones grinding against stones. In the joints between the moving stones, a faint pale-blue cold glow seeps out (the only blue in the image). Cold silver and slate palette. Bottom third: dark empty paved street in shadow." },
+        { nom: "borne", titre: "La Borne", c: ["#a0623a", "#4a3a30", "#14110f"],
+          l: ["Quelqu'un, à la Borne, dessine les rues sur une feuille. Chaque matin, il faut raturer.", "La ville se rebâtit toute seule. Personne ne sait pour qui."], gold: "La ville rangée",
+          idee: "Trois petits feux entre deux vieux murs, au pied d'une borne de pierre. Une silhouette assise, de dos, une feuille sur les genoux couverte de rues raturées. Derrière, la ville sombre et ses toits.",
+          scene: "SCENE: night camp at the foot of an old carved stone milestone, between two ancient walls. Three small campfires. A seated figure seen from behind, a large sheet of paper on their knees covered with drawn streets, many lines crossed out and redrawn, a stick of chalk in hand. Beyond the walls, the dark silhouette of the silent city, roofs and towers against a starry sky. Warm firelight on stone, deep blue-black night. Bottom third: ground in shadow, embers." }
+      ] },
+    { id: "crypte", num: "Chapitre IV", titre: "Ceux qui sont montés", quand: "Après « Là où ils sont couchés » (crypte_01)",
+      rem: ["Nouveaux. Les lampes de Sarkel viennent de l'étape (« des lampes, et de l'huile pour les lampes »).", "« Ceux qui sont montés » : ceux qui sont partis à la Tour avant le héros, comme le dit l'étape. Rien sur le Cycle ni sur l'Ascension. Pas de bleu dans ce chapitre : rien ne bouge ici."],
+      pl: [
+        { nom: "escalier", titre: "L'escalier", c: ["#8a6a3a", "#2e2418", "#0b0907"],
+          l: ["Sous la Borne, un escalier. Les marches sont usées au milieu, comme si beaucoup étaient descendus.", "Personne n'en est remonté par ici.", "Sarkel pose une lampe à chaque palier. Il ne revient pas les chercher."],
+          idee: "Un large escalier de pierre qui plonge dans le noir, marches creusées au milieu par les pas. Une lampe à huile posée sur chaque palier, de plus en plus petite vers le fond.",
+          scene: "SCENE: a wide ancient stone staircase descending into deep darkness, seen from the top. The steps are worn hollow in the middle by countless feet. On each landing sits a small oil lamp, a chain of warm points of light growing smaller and smaller down into the black. A figure with a lamp, far down, seen from behind. Dust in the lamplight, vast dark volume. Warm amber against near-black. Bottom third: the first steps in deep shadow." },
+        { nom: "gisants", titre: "Les gisants", c: ["#7a7466", "#3a3832", "#121110"],
+          l: ["En bas, des salles plus hautes que la forêt. Des rangées de pierres couchées, à perte de vue.", "Sur chaque pierre, quelqu'un. Les mains jointes, les yeux fermés.", "Certains portent encore leurs armes."],
+          idee: "Une nef souterraine immense, plus haute que les arbres. Des rangées de gisants sur leurs tombeaux, mains jointes ; sur certains, une vraie épée ou un bouclier posé. Lumière de lampe, poussière. Ni squelette ni crâne.",
+          scene: "SCENE: a colossal underground nave, its vaults higher than forest trees, lost in darkness. Endless orderly rows of stone tombs, each with a recumbent stone effigy lying on top, hands joined on the chest, eyes closed. On some of them lie real weapons and gear: a sword, a shield, a quiver, dusty but intact. Lit only by a few distant oil lamps, dust hanging in the light. No skeletons, no skulls, no corpses, nothing frightening: stillness. Cold grey stone and warm lamp amber. Bottom third: the floor between the rows in shadow." },
+        { nom: "veillee", titre: "La Veillée", c: ["#6a5a44", "#2a241c", "#0e0c0a"],
+          l: ["Ici, rien ne bouge. Rien ne pourrit. Ils attendent.", "Ce sont ceux qui sont partis avant toi. Ceux qui sont montés, et ne sont pas revenus."], gold: "Ceux qui sont montés",
+          idee: "Plus près : un gisant parmi les autres, paisible, la poussière intacte sur son visage de pierre, une lampe à ses pieds. Derrière, les rangées qui se perdent dans le noir.",
+          scene: "SCENE: close view of one stone effigy among many in a vast underground hall: a peaceful recumbent figure on a tomb, hands joined, a travel-worn cloak carved in stone, an untouched layer of dust on its face. A single oil lamp burns at its feet. Behind it, the rows of tombs recede into darkness. Absolute stillness, no movement, no dust disturbed. Warm lamplight, deep brown-black shadows. Bottom third: the tomb's base and floor in shadow." }
+      ] },
+    { id: "montagne", num: "Chapitre V", titre: "Ce qui ne fond pas", quand: "Après « La roche est chaude » (montagne_01)",
+      rem: ["Nouveaux. L'étape vient de dire « Quelqu'un qui savait tenir une pioche » : la planche 3 montre la coupe sans répéter la phrase.", "Les veines sont bleues et froides au milieu du feu : c'est la lumière du prologue, devenue une chose. Le texte ne fait pas le lien, le joueur le fait (règle du prologue)."],
+      pl: [
+        { nom: "montee", titre: "La montée", c: ["#c0603a", "#5a2a1a", "#1a0e0a"],
+          l: ["En haut de l'escalier, l'air change. Il sent la cendre.", "La roche est tiède sous la main. Puis chaude.", "Sarkel a laissé ses lampes en bas. Ici, on n'en a pas besoin."],
+          idee: "Un escalier taillé dans la roche qui sort de l'ombre vers un air orange et fumeux. Des flocons de cendre. Sarkel monte devant, une pioche neuve sur l'épaule.",
+          scene: "SCENE: a narrow stair cut into dark volcanic rock, rising out of shadow into hazy orange air. Flakes of ash drift down. The rock walls glow faintly warm in their cracks. Ahead, an old man climbs with a new pickaxe awkwardly on his shoulder, seen from behind; below, darkness where the lamps were left. Smoky orange, ember red and charcoal palette. Bottom third: the lower dark steps." },
+        { nom: "veines", titre: "Les veines", c: ["#2a2a30", "#c4502a", "#a8d4ec"],
+          l: ["Dans la paroi, des veines brillent. Bleues. Froides, au milieu du feu.", "Elles ne fondent pas. Rien ne les fait fondre.", "On pourrait en prendre. On pourrait la tailler."],
+          idee: "Une paroi de basalte noir dans la lumière orange de la lave. En travers, des veines qui brillent d'un bleu pâle et froid, nettes, sans fondre. Le contraste chaud et froid fait toute l'image.",
+          scene: "SCENE: a black basalt cliff face lit from below by the orange glow of a lava flow. Running through the rock, branching veins of solid pale-blue cold light, crisp and sharp-edged, untouched by the heat; frost-like sheen around them. Strong warm/cold contrast: everything orange and black except the veins. Heat shimmer, drifting ash. No people. Bottom third: dark rock and a dim lava glow." },
+        { nom: "coupe", titre: "La coupe", c: ["#6a6260", "#2e2a28", "#a85a30"],
+          l: ["Plus haut, une paroi coupée net. Pas par la lave.", "Les éclats sont encore au pied du mur. Personne n'est revenu les ramasser."], gold: "Ce qui ne fond pas",
+          idee: "Une falaise tranchée parfaitement plane, marques de burin anciennes. Au pied, un tas d'éclats sous la cendre. La pioche neuve de Sarkel posée contre la paroi, toute petite à côté.",
+          scene: "SCENE: high on a volcanic mountain, a whole cliff face cut perfectly flat and smooth as if by a tool, with faint ancient chisel marks in regular rows. At its foot, a heap of old stone chips half covered in grey ash, undisturbed for a very long time. A single new pickaxe leans against the wall, tiny next to the cut. Smoky sky, distant orange glow, muted grey stone. No people. Bottom third: ash-covered ground in shadow." }
+      ] }
+  ];
+
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function grad(c) { return "radial-gradient(120% 80% at 50% 30%, " + c[2] + " 0%, transparent 55%), linear-gradient(170deg, " + c[0] + " 0%, " + c[1] + " 60%, #0a0806 100%)"; }
+  function fichier(ch, i, p, wide) { return CHEMIN + ch.id + "_" + (i + 1) + "_" + p.nom + (wide ? "-wide" : "") + ".webp"; }
+  function prompt(p, k) { return BASE + " " + FMT[k] + " " + p.scene; }
+
+  var root = document.getElementById("chapitres"), h = "";
+  CH.forEach(function (ch, ci) {
+    h += '<section class="chap" id="' + ch.id + '"><div class="chap-head"><div><div class="chap-num">' + esc(ch.num) + '</div><h2>' + esc(ch.titre) + '</h2></div>'
+      + '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="when">' + esc(ch.quand) + '</span><button type="button" class="btn" data-voir="' + ci + '">Voir</button></div></div>';
+    ch.pl.forEach(function (p, i) {
+      h += '<article class="pl"><div class="thumb" style="background:' + grad(p.c) + '"><span>Ébauche · ' + esc(p.titre) + '</span></div><div class="body">'
+        + '<div class="pl-k">Planche ' + (i + 1) + ' · ' + esc(p.titre) + '</div>'
+        + '<div class="txt">' + p.l.map(function (x) { return '<p>' + esc(x) + '</p>'; }).join("") + (p.gold ? '<p class="gold">' + esc(p.gold) + '</p>' : '') + '</div>'
+        + '<p class="idee"><b>Image : </b>' + esc(p.idee) + '</p>'
+        + '<details><summary>Prompts (PC et téléphone)</summary>'
+        + ["wide", "tall"].map(function (k) { return '<div class="prompt"><div class="row"><span class="path">' + esc(fichier(ch, i, p, k === "wide")) + '</span><button type="button" class="copy" data-copy="' + ci + '.' + i + '.' + k + '">Copier</button></div><pre>' + esc(prompt(p, k)) + '</pre></div>'; }).join("")
+        + '</details></div></article>';
+    });
+    h += '<div class="rem">' + ch.rem.map(function (r) { return '<p>' + esc(r) + '</p>'; }).join("") + '</div></section>';
+  });
+  root.innerHTML = h;
+
+  root.addEventListener("click", function (e) {
+    var c = e.target.closest("[data-copy]");
+    if (c) {
+      var a = c.getAttribute("data-copy").split("."), txt = prompt(CH[a[0]].pl[a[1]], a[2]);
+      var done = function () { c.textContent = "Copié"; setTimeout(function () { c.textContent = "Copier"; }, 1500); };
+      try { navigator.clipboard.writeText(txt).then(done, function () { sel(c); }); } catch (err) { sel(c); }
+      return;
+    }
+    var v = e.target.closest("[data-voir]");
+    if (v) ouvrir(Number(v.getAttribute("data-voir")));
+  });
+  function sel(btn) { var pre = btn.closest(".prompt").querySelector("pre"), r = document.createRange(); r.selectNodeContents(pre); var s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "Sélectionné"; }
+
+  /* Lecture : une planche à la fois, lettre à lettre ; toucher termine la ligne en cours, puis passe à la planche suivante. */
+  var V = document.getElementById("viewer"), VT = document.getElementById("v-t"), VB = document.getElementById("v-bg"), VK = document.getElementById("v-k");
+  var reduit = matchMedia("(prefers-reduced-motion: reduce)").matches, cur = null, timer = null;
+  function ouvrir(ci) { cur = { ch: CH[ci], i: 0 }; V.hidden = false; planche(); }
+  function fermer() { clearInterval(timer); V.hidden = true; cur = null; }
+  function planche() {
+    var p = cur.ch.pl[cur.i], lignes = p.l.slice(), out = [];
+    VB.style.background = grad(p.c); VK.textContent = cur.ch.num + " · " + (cur.i + 1) + " / " + cur.ch.pl.length;
+    VT.innerHTML = ""; clearInterval(timer);
+    var items = lignes.map(function (x) { return { t: x, gold: false }; }); if (p.gold) items.push({ t: p.gold, gold: true });
+    var els = items.map(function (it) { var el = document.createElement("p"); el.style.margin = "0"; if (it.gold) el.className = "gold"; VT.appendChild(el); return el; });
+    var li = 0, ci = 0;
+    cur.fini = false;
+    if (reduit) { items.forEach(function (it, k) { els[k].textContent = it.t; }); cur.fini = true; return; }
+    timer = setInterval(function () {
+      if (li >= items.length) { clearInterval(timer); cur.fini = true; return; }
+      ci++; els[li].textContent = items[li].t.slice(0, ci);
+      if (ci >= items[li].t.length) { li++; ci = 0; }
+    }, 34);
+    cur.finir = function () { clearInterval(timer); items.forEach(function (it, k) { els[k].textContent = it.t; }); cur.fini = true; };
+  }
+  V.addEventListener("click", function (e) {
+    if (e.target.id === "v-x") { fermer(); return; }
+    if (!cur) return;
+    if (!cur.fini) { cur.finir(); return; }
+    if (cur.i < cur.ch.pl.length - 1) { cur.i++; planche(); } else fermer();
+  });
+  document.addEventListener("keydown", function (e) { if (!V.hidden && e.key === "Escape") fermer(); });
+})();
+</script>
