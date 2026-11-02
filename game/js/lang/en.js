@@ -7865,6 +7865,7 @@ I18n.register("en", {
   // v3.602.0 : jours du monde
   "Jour {n}": "Day {n}",
   "Rien n'a bougé autour du camp.": "Nothing has moved around the camp.",
+  "Les ouvertures du Désert, des Ruines, de la Crypte et de la Montagne ont leurs illustrations.": "The Desert, Ruins, Crypt and Mountain openings now have their illustrations.",
   "Fin du chapitre V : la Tour est bien au nord, comme dans le prologue.": "End of chapter V: the Tower is indeed to the north, as in the prologue.",
   "Trois familles autour du feu. Le reste est encore de la cendre.": "Three families around the fire. The rest is still ash.",
   "Un toit de plus, cette saison. Quelqu'un est revenu des bois.": "One more roof this season. Someone came back from the woods.",
