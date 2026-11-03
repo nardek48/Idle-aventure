@@ -4701,7 +4701,8 @@ I18n.register("en", {
   "État": "Status", // v3.429.22 : menu de l'Entrepôt
   "Choisir ma sélection…": "Choose my selection…",
   "Zéros": "Zeros",
-  "Matières brutes · plafond {n}": "Raw materials · cap {n}",
+  "plafond {n}": "cap {n}",
+  "Village et Héros plus nets : le choix « Avec toi / Au camp » sur la ligne des PV, le plafond de l'Entrepôt en petit, et plus de bouton grisé quand il n'y a rien à récolter.": "Cleaner Village and Heroes: the “With you / At camp” choice on the HP line, the Warehouse cap in small type, and no greyed-out button when there is nothing to harvest.",
   "Aucune ressource pour ce filtre.": "No resource for this filter.",
   "{a} / {b} en stock": "{a} / {b} in stock",
   "{a} en stock": "{a} in stock",
