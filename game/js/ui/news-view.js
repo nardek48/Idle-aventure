@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.654.0", "menu_icons/quests_menu", _t("Grimoire : plus de listes déroulantes. La condition se choisit dans une liste avec son icône et sa description, l'action en tuiles, et « Contre » s'affiche avant même de choisir.")],
     ["3.653.0", "menu_icons/quests_menu", _t("Grimoire : nouveau réglage « Varier » à la préparation de sortie, dès la Tour. Ton héros évite de refaire la même technique quand une autre est prête, et le miroir de la Tour ne lui prend presque plus rien.")],
     ["3.652.0", "menu_icons/village_menu", _t("Échoppe moins chère à partir de la Crypte : une Épique y coûte 135 000 or (au lieu de 225 000), 180 000 en Montagne (au lieu de 810 000), et une Légendaire 1,05 million à la Tour (au lieu de 7 millions).")],
     ["3.651.0", "menu_icons/heroes_menu", _t("Héros : l'illustration du Terrain d'entraînement s'affiche aussi dans Équipement, Talents et Alliés.")],
