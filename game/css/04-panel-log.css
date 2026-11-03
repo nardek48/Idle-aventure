@@ -50,3 +50,19 @@
     animation: none;
   }
 }
+/* v3.649.0 (atelier journal.html, option C) : une carte, une ligne par événement, filtres en pastilles,
+   étapes d'Histoire en un bloc (titre, récit, gains). */
+.jx-chips { display: flex; gap: 6px; overflow-x: auto; margin: 0 0 10px; padding: 2px 0; scrollbar-width: none; }
+.jx-chips button { flex: 0 0 auto; min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--nb-frame-light); background: var(--nb-cream); color: var(--nb-ink); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.jx-chips button.is-on { background: linear-gradient(var(--c-bronze-300-soft), var(--c-bronze-450)); border-color: var(--c-brown-700-vivid); }
+.jx-chips small { margin-left: 4px; font-size: 12px; opacity: 0.7; }
+.jx-card { padding: 6px 12px; color: var(--nb-ink); }
+.jx-row { position: relative; z-index: 2; display: flex; gap: 8px; align-items: flex-start; padding: 7px 0; font-size: 13.5px; line-height: 1.35; }
+.jx-row + .jx-row { border-top: 1px solid var(--nb-frame-light); }
+.jx-ico { flex: 0 0 20px; text-align: center; }
+.jx-tx { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.jx-row.is-recit .jx-tx, .jx-step p { font-family: var(--f-story, Georgia, serif); font-style: italic; }
+.jx-step b { display: block; font-size: 14px; }
+.jx-step p { margin: 3px 0 4px; }
+.jx-gains { display: flex; flex-wrap: wrap; gap: 4px; }
+.jx-gains span { padding: 1px 8px; border-radius: 999px; background: var(--nb-cream-deep); color: var(--nb-ink); font-size: 12px; font-weight: 700; }

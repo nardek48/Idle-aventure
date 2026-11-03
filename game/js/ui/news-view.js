@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.649.0", "menu_icons/journal_menu", _t("Journal plus lisible : des filtres (Histoire, Gains, Village, Combat), et chaque étape d'Histoire tient en un bloc avec son récit et ses gains.")],
     ["3.648.0", "menu_icons/heroes_menu", _t("Héros : l'onglet des compagnons s'appelle Alliés, comme dans Quêtes.")],
     ["3.647.0", "menu_icons/village_menu", _t("Village sur téléphone : Production, Bâtiments et Ateliers en lignes, le texte à gauche, l'image à droite. Les nouvelles illustrations arrivent bientôt.")],
     ["3.646.0", "menu_icons/village_menu", _t("Récits de patrouille : « au puits sec », « des marches de craie », plus de « à Le » ni « de Les ».")],
