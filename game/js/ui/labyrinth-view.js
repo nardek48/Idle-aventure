@@ -228,6 +228,7 @@ function labShowSheet() {
       var sp = { n: run.floor, s: g.stones }, sb = { s: run.stones, g: run.gold };
       h = labSheetHTML(_t("L'escalier"), labSay("stairsSub", _t("Étage {n} franchi · +{s} Pierres errantes", sp), sp),
         '<div class="lab-bigchart">' + labChartSVG(false) + '</div><p>' + esc(labSay("stairsBag", _t("Dans le sac : {s} Pierres errantes, {g} or.", sb), sb)) + '</p>'
+        + (run.nextEcho && (LabyrinthRun.texts().echoes || {})[run.nextEcho] ? '<p class="lab-quote">' + esc(labSay("nextEcho", "", { x: _td(LabyrinthRun.texts().echoes[run.nextEcho].name) + " · " + _td(LabyrinthRun.texts().echoes[run.nextEcho].rule) })) + '</p>' : '') // v3.644.0 (Mémoire 26)
         + '<p class="lab-cost">' + esc(labSay("climbCost", _t("Descendre : Souffle +{n}, étage plus dur. Tomber ou s'essouffler plus bas fait perdre la moitié du sac.", { n: c.breathFloor }), { n: c.breathFloor })) + '</p>',
         [{ t: labSay("climbBtn", _t("Descendre à l'étage {n}", { n: run.floor + 1 }), { n: run.floor + 1 }), on: "labDescend()" }, { t: labSay("leaveBagBtn", _t("Remonter avec le sac")), sec: true, on: "labLeave()" }]);
   } else if (s.kind === "vein") {   // v3.640.0 (la veine) : tailler ou laisser

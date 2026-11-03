@@ -12,13 +12,17 @@ var MEMORY_SOUVENIRS = {
   storyStep: 1,     // étape d'Histoire terminée
   adventureBoss: 2, // boss d'aventure vaincu
   elite: 3,         // élite vaincue, à chaque fois
-  dungeonClear: 3   // run de donjon complet
+  dungeonClear: 3,  // run de donjon complet
+  failleFloor: 2,   // v3.644.0 (Faille, F-3) : étage de la faille franchi
+  failleReflet: 10  // v3.644.0 : le Reflet vaincu dans la faille
 };
 
 /* Coût de chaque niveau (O11), mesuré au banc : Forêt 5/8/11/14, Désert 20/25/30/35.
    v3.453.0 : règle O16 (sim/offrande-bench.js, N = 14 runs du donjon du monde) — Ruines 35/44/52/62,
    Crypte 77/99/116/138 (provisoire : seul l'acte I existe, ses aventures sont comptées comme aux Ruines). */
-var MEMORY_LEVEL_COSTS = [5, 8, 11, 14, 20, 25, 30, 35, 35, 44, 52, 62, 77, 99, 116, 138, 160, 190, 225, 265, 310, 360, 420, 490]; // v3.489.0 : Montagne 17 à 19 ; v3.491.0 : le jalon 20 ; v3.632.0 : Tour 21 à 24 (au banc)
+var MEMORY_LEVEL_COSTS = [5, 8, 11, 14, 20, 25, 30, 35, 35, 44, 52, 62, 77, 99, 116, 138, 160, 190, 225, 265, 310, 360, 420, 490, 570, 660, 760, 870]; // v3.489.0 : Montagne 17 à 19 ; v3.491.0 : le jalon 20 ; v3.632.0 : Tour 21 à 24 (au banc) ; v3.644.0 : la faille, 25 à 28
+/* v3.644.0 (Faille, FA8 C) : après la Tour, les niveaux 25 à 28 s'ouvrent au record de la faille, un par palier. */
+var MEMORY_FAILLE_GATES = [5, 10, 15, 20];
 var MEMORY_LEVELS_PER_WORLD = 4;        // O6 : plafond par monde atteint
 var MEMORY_REPRISE_BASE_COST = 500;     // O5 : reprise d'un choix, ×3 à chaque fois ; v3.358.0 : en or (10 Aether × AETHER_GOLD_RATE)
 var MEMORY_REPRISE_MULT = 3;
@@ -52,7 +56,17 @@ var MEMORY_VALUES = {
   forme_pretee_dmg: 0.10,     // +10 % contre les boss et les élites de la Tour
   pain_dabord_mult: 1.10,     // les rations soignent 10 % de plus
   ton_nom_hp: 0.10,           // +10 % de PV max à la Tour
-  braise_tient_givre: 1       // +1 Givre bleu par sortie terminée du Sommet interdit
+  braise_tient_givre: 1,      // +1 Givre bleu par sortie terminée du Sommet interdit
+  // v3.644.0 (Faille, FA9, validé par Seb le 03/11) : niveaux 25 à 28
+  souffle_long_start: 15,     // +15 de Souffle au départ d'une montée
+  source_vive_mult: 2,        // la source rend le double…
+  source_vive_start: -10,     // … mais −10 de Souffle au départ
+  echo_rend_mult: 1.25,       // Givre bleu des étages à écho : +25 %
+  reflet_garde_mirror: 0.15,  // le miroir du palier : +15 % au lieu de +25 %
+  reflet_verre_n: 1,          // +1 Verre de faille par Reflet vaincu
+  elle_regarde_touch: 5,      // la forme au sol ne prend que 5 de Souffle
+  ce_que_tu_portes_mult: 0.9, // combats de la faille : −10 % de PV perdus
+  braise_encore_givre: 1      // +1 Givre bleu par escalier franchi
 };
 
 /* Les huit niveaux (conception v1.2 §5.3-5.4). `id` est la clé lue par MemoryManager.has().
@@ -233,12 +247,43 @@ var MEMORY_LEVELS = [
       desc: "+10 % de PV max à la Tour." },
     { id: "braise_tient", side: "garder", answer: "rien", name: "La braise tient", icon: "images/Icons/memory/braise_tient.webp",
       desc: "+1 Givre bleu par sortie terminée du Sommet interdit." }
+  ] },
+  /* v3.644.0 (Faille, FA9, validé par Seb le 03/11) : 25 à 27 Garder / Donner ; le jalon 28 a une option par fin,
+     comme le 24. Plafond : un niveau par palier de record de la faille (MEMORY_FAILLE_GATES). */
+  { level: 25, theme: "Le Souffle long", options: [
+    { id: "souffle_long", side: "garder", name: "Le Souffle long", icon: "images/Icons/memory/souffle_long.webp",
+      desc: "+15 de Souffle au départ de chaque montée dans la faille." },
+    { id: "source_vive", side: "donner", name: "La source vive", icon: "images/Icons/memory/source_vive.webp",
+      desc: "Dans la faille, la source rend le double, mais tu pars avec 10 de Souffle en moins." }
+  ] },
+  { level: 26, theme: "L'écho appris", options: [
+    { id: "echo_appris", side: "garder", name: "L'écho appris", icon: "images/Icons/memory/echo_appris.webp",
+      desc: "À l'escalier, tu sais quel écho t'attend à l'étage suivant." },
+    { id: "echo_rend", side: "donner", name: "L'écho rend", icon: "images/Icons/memory/echo_rend.webp",
+      desc: "Les étages à écho rapportent 25 % de Givre bleu en plus." }
+  ] },
+  { level: 27, theme: "Le Reflet", options: [
+    { id: "reflet_garde", side: "garder", name: "Ce qu'il ne prend pas", icon: "images/Icons/memory/reflet_garde.webp",
+      desc: "Au palier, reprendre la même approche ne coûte que 15 % de coups en plus au lieu de 25 %." },
+    { id: "reflet_verre", side: "donner", name: "Le verre du Reflet", icon: "images/Icons/memory/reflet_verre.webp",
+      desc: "+1 Verre de faille chaque fois que tu vaincs le Reflet dans la faille." }
+  ] },
+  { level: 28, theme: "Plus haut que la Tour", jalon: true, requiresChoice: "question", options: [
+    { id: "elle_regarde", side: "donner", answer: "sienne", name: "Elle regarde", icon: "images/Icons/memory/elle_regarde.webp",
+      desc: "La forme au sol ne prend que 5 de Souffle quand elle te rejoint." },
+    { id: "pain_camp", side: "donner", answer: "aeswyn", name: "Le pain du dernier camp", icon: "images/Icons/memory/pain_camp.webp",
+      desc: "Chaque montée dans la faille commence avec tous tes PV." },
+    { id: "ce_que_tu_portes", side: "garder", answer: "tienne", name: "Ce que tu portes", icon: "images/Icons/memory/ce_que_tu_portes.webp",
+      desc: "Les combats de la faille te coûtent 10 % de PV en moins." },
+    { id: "braise_encore", side: "garder", answer: "rien", name: "La braise tient encore", icon: "images/Icons/memory/braise_encore.webp",
+      desc: "+1 Givre bleu à chaque escalier franchi dans la faille." }
   ] }
 ];
 
 window.MEMORY_OFFERING_VALUES = MEMORY_OFFERING_VALUES;
 window.MEMORY_SOUVENIRS = MEMORY_SOUVENIRS;
 window.MEMORY_LEVEL_COSTS = MEMORY_LEVEL_COSTS;
+window.MEMORY_FAILLE_GATES = MEMORY_FAILLE_GATES;
 window.MEMORY_LEVELS_PER_WORLD = MEMORY_LEVELS_PER_WORLD;
 window.MEMORY_REPRISE_BASE_COST = MEMORY_REPRISE_BASE_COST;
 window.MEMORY_REPRISE_MULT = MEMORY_REPRISE_MULT;

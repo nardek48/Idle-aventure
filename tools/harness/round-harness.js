@@ -10731,7 +10731,7 @@ console.log("\n[133] v3.338.0 — Hauts faits : catalogue, rattrapage, paliers, 
   var byCat = function (c) { return DB.filter(function (a) { return a.category === c; }); };
 
   // --- Catalogue (H1, H2, H5) ---
-  ok(DB.length === 89, "catalogue : 89 hauts faits, Ruines, Crypte, Montagne et Tour compris (v3.561.0 : +5 du Grand Ouvrage ; v3.632.0 : +10 de la Tour) (" + DB.length + ")");
+  ok(DB.length === 95, "catalogue : 95 hauts faits, Ruines, Crypte, Montagne et Tour compris (v3.561.0 : +5 du Grand Ouvrage ; v3.632.0 : +10 de la Tour ; v3.644.0 : +6 de la faille) (" + DB.length + ")");
   ok(byCat("forest").length === 10 && byCat("forest").filter(function (a) { return a.hidden; }).length === 2, "Forêt : 8 + 2 cachés");
   ok(byCat("desert").length === 11 && byCat("desert").filter(function (a) { return a.hidden; }).length === 3, "Désert : 8 + 3 cachés (v3.362.0 : « Pas une goutte »)");
   ok(["grimoire", "companions"].every(function (c) { return byCat(c).length === 5; }) && byCat("village").length === 10 && byCat("collection").length === 8, "transversales : 5, Village 10 (dont 5 du Grand Ouvrage), 5 et Collection 8");
@@ -21773,7 +21773,7 @@ console.log("\n[427] v3.632.0 — Tour, lot T-5 : Mémoire 21 à 24, hauts faits
 (function () {
   var TS = g.TowerSystem, MM = g.MemoryManager, has0 = MM.has, at0 = TS.atTower, gc = g.StoryQuestManager.getChoice, M = {};
   try {
-    ok(g.MEMORY_LEVELS.length === 24 && g.MEMORY_LEVEL_COSTS.length === 24 && g.MEMORY_LEVEL_COSTS.slice(20).join() === "310,360,420,490", "Mémoire : 24 niveaux, Tour 310 / 360 / 420 / 490");
+    ok(g.MEMORY_LEVELS.length >= 24 && g.MEMORY_LEVEL_COSTS.length === g.MEMORY_LEVELS.length && g.MEMORY_LEVEL_COSTS.slice(20, 24).join() === "310,360,420,490", "Mémoire : Tour 310 / 360 / 420 / 490 (v3.644.0 : la faille ajoute 25 à 28, voir [435])");
     var l24 = g.MEMORY_LEVELS[23];
     ok(l24.jalon && l24.requiresChoice === "question" && l24.options.map(function (o) { return o.answer; }).join() === "sienne,aeswyn,tienne,rien", "jalon 24 : une option par réponse à la Question");
     run("fullResetState(); game.playerName='Test'; game.heroId='knight'; StoryQuestManager.ensure(); game.worldsEverReached = {0:true,1:true,2:true,3:true,4:true,5:true}; game.totalAetherEarned = 5000;");
@@ -22112,6 +22112,97 @@ console.log("\n[434] v3.640.0 — Faille, lot F-2 : les cinq échos");
     L.abandon();
   } catch (err) { ok(false, "[434] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   finally { TS.ending = savedEnding; SQ.isStepReached = savedReach; if (g.game) { g.game.sceneRun = null; if (g.game.explorationProgression) { delete g.game.explorationProgression.faille; g.game.explorationProgression.labyrinth = null; } } }
+})();
+
+console.log("\n[435] v3.644.0 — Faille, lot F-3 : Mémoire 25 à 28, Souvenirs, hauts faits");
+(function () {
+  var L = g.LabyrinthRun, TS = g.TowerSystem, MM = g.MemoryManager, SQ = g.StoryQuestManager, AM = g.AchievementManager;
+  var savedEnding = TS.ending, savedGetChoice = SQ.getChoice, C = g.FAILLE_CONFIG, V = g.MEMORY_VALUES;
+  function sum(n) { var t = 0; for (var i = 0; i < n; i++) t += g.MEMORY_LEVEL_COSTS[i]; return t; }
+  /* Mémoire portée : les choix voulus, jauge pleine, Tour atteinte, record de faille 20, Question répondue */
+  function withMem(ch) {
+    var m = MM.ensure(); m.choices = {}; Object.keys(ch).forEach(function (k) { m.choices[k] = ch[k]; });
+    g.game.totalAetherEarned = sum(28); g.game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true, 4: true, 5: true };
+    g.game.explorationProgression.faille = { spent: 0, since: null, best: 20, runs: 0 };
+  }
+  function newClimb() { g.game.sceneRun = null; g.game.explorationProgression.faille.spent = 0; g.WarehouseManager.addResource("grande_ration", 2); var r = L.start("faille"); return r.ok ? L.getRun() : null; }
+  try {
+    var game = freshCombat("knight");
+    TS.ending = function () { return "rien"; };
+    SQ.getChoice = function (k) { return k === "question" ? "rien" : savedGetChoice.call(SQ, k); };
+    ok(g.MEMORY_LEVEL_COSTS.slice(24).join() === "570,660,760,870" && g.MEMORY_LEVELS.length === 28 && g.MEMORY_FAILLE_GATES.join() === "5,10,15,20", "Mémoire 25 à 28 : 570 / 660 / 760 / 870 Aether, ouverts aux étages 5, 10, 15, 20");
+    var ids = [25, 26, 27, 28].map(function (l) { return MM.getLevelDef(l).options.map(function (o) { return o.id; }).join("/"); }).join(" · ");
+    ok(ids === "souffle_long/source_vive · echo_appris/echo_rend · reflet_garde/reflet_verre · elle_regarde/pain_camp/ce_que_tu_portes/braise_encore", "FA9 : " + ids);
+    ok(MM.getLevelDef(28).jalon && MM.getLevelDef(28).requiresChoice === "question" && MM.getLevelDef(28).options.map(function (o) { return o.answer; }).join() === "sienne,aeswyn,tienne,rien", "le jalon 28 : une option par fin");
+    /* Plafond par record */
+    withMem({}); game.explorationProgression.faille.best = 0;
+    ok(MM.getCap() === 24, "Tour atteinte, pas de record : plafond 24");
+    game.explorationProgression.faille.best = 10; ok(MM.getCap() === 26 && MM.getLevel() === 26, "record 10 : plafond 26");
+    game.explorationProgression.faille.best = 20; ok(MM.getCap() === 28, "record 20 : plafond 28");
+    ok(MM.failleGate(27) === 15 && MM.failleGate(24) === null, "l'écran dit l'étage qui ouvre un niveau (27 : étage 15)");
+    game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true, 4: true }; ok(MM.getCap() === 20, "avant la Tour, le record ne compte pas");
+    /* 25 */
+    withMem({ 25: "souffle_long" }); var run = newClimb();
+    ok(run && run.breath === C.breathStart + V.souffle_long_start, "Le Souffle long : départ à " + run.breath);
+    L.abandon();
+    withMem({ 25: "source_vive" }); run = newClimb();
+    ok(run.breath === C.breathStart + V.source_vive_start, "La source vive : 10 de Souffle en moins au départ");
+    run.echo = null; run.breath = 10; L._spring(run);
+    ok(run.breath === 10 + C.springBreath * 2, "… et la source rend le double");
+    L.abandon();
+    /* 26 */
+    withMem({ 26: "echo_appris" }); run = newClimb(); L._nextFloor(run);
+    var told = run.nextEcho; L._nextFloor(run);
+    ok(told && run.echo === told, "L'écho appris : l'écho de l'étage suivant est connu d'avance (" + told + ")");
+    L.abandon();
+    withMem({ 26: "echo_rend" }); run = newClimb(); run.echo = "sable"; var s0 = run.stones;
+    for (var k = 0; k < 4; k++) L._gain(run, 1, 0);
+    ok(run.stones - s0 === 5, "L'écho rend : 4 Givres bleus sur un étage à écho en font 5");
+    run.echo = null; s0 = run.stones; L._gain(run, 1, 0); ok(run.stones - s0 === 1, "rien de plus sans écho");
+    L.abandon();
+    /* 27 */
+    withMem({ 27: "reflet_garde" }); run = newClimb(); run.echo = "palier"; run.lastAp = "tenir";
+    ok(Math.abs(L.echoMult(run, "tenir") - 1.15) < 1e-9, "Ce qu'il ne prend pas : le miroir +15 % au lieu de +25 %");
+    L.abandon();
+    withMem({ 27: "reflet_verre" }); run = newClimb(); var v0 = run.verre || 0;
+    run.mirrorHit = false; var a0 = Number(game.totalAetherEarned || 0); L.hook("onBossDown", run);
+    ok(Number(run.verre || 0) === v0 + V.reflet_verre_n, "Le verre du Reflet : +1 Verre de faille au sac");
+    L.abandon();
+    /* 28 */
+    withMem({ 28: "elle_regarde" }); run = newClimb();
+    ok(L.hook("touchBreath", run, C.foeTouch) === V.elle_regarde_touch, "Elle regarde : la forme au sol ne prend que 5 de Souffle");
+    L.abandon();
+    withMem({ 28: "pain_camp" }); game.heroHp = 1; run = newClimb();
+    ok(game.heroHp === game.heroMaxHp, "Le pain du dernier camp : la montée commence avec tous les PV");
+    L.abandon();
+    withMem({ 28: "ce_que_tu_portes" }); run = newClimb(); run.echo = null;
+    ok(Math.abs(L.echoMult(run, "tenir") - 0.9) < 1e-9, "Ce que tu portes : −10 % de PV perdus");
+    L.abandon();
+    withMem({ 28: "braise_encore" }); run = newClimb();
+    ok(L.stairsGain(run).stones === C.stairsStones + 1, "La braise tient encore : +1 Givre bleu par escalier");
+    L.abandon();
+    /* Le Labyrinthe ne prend aucun de ces effets */
+    withMem({ 25: "souffle_long", 28: "ce_que_tu_portes" }); game.sceneRun = null;
+    var reach = SQ.isStepReached; SQ.isStepReached = function (id) { return id === "ruines_11" ? true : reach.call(SQ, id); };
+    game.explorationProgression.labyrinth = null; g.WarehouseManager.addResource("ration", 2); L.start("labyrinthe"); var lr = L.getRun();
+    ok(lr.breath === g.LABYRINTH_CONFIG.breathStart && L.echoMult(lr, "tenir") === 1, "le Labyrinthe ne prend aucun effet de la faille");
+    L.abandon(); SQ.isStepReached = reach;
+    /* Souvenirs et hauts faits */
+    withMem({}); g.game.memory.choices = {}; run = newClimb();
+    a0 = Number(game.totalAetherEarned); run.echo = "rue"; run.at = run.F.stairs; run.bossDown = true; L.claimStairs();
+    ok(Number(game.totalAetherEarned) - a0 === g.MEMORY_SOUVENIRS.failleFloor && game.explorationProgression.faille.echoes.rue === 1, "escalier franchi : Souvenir (+" + g.MEMORY_SOUVENIRS.failleFloor + " Aether), écho noté");
+    a0 = Number(game.totalAetherEarned); var c0 = g.achCounter("failleReflet"); run.mirrorHit = false; L.hook("onBossDown", run);
+    ok(Number(game.totalAetherEarned) - a0 === g.MEMORY_SOUVENIRS.failleReflet && g.achCounter("failleReflet") === c0 + 1 && g.achCounter("failleRefletVarier") >= 1, "le Reflet : Souvenir (+" + g.MEMORY_SOUVENIRS.failleReflet + "), haut fait, « Sans redite » s'il n'a rien repris");
+    L.abandon();
+    var cat = AM.getCategory("faille"), fa = g.ACHIEVEMENTS_DB.filter(function (a) { return a.category === "faille"; });
+    ok(cat && cat.tiers.join() === "2,3,5" && fa.length === 6 && fa.filter(function (a) { return a.hidden; }).length === 1, "catégorie « Faille » : 5 hauts faits visibles, 1 caché, paliers 2 / 3 / 5");
+    game.explorationProgression.faille.best = 12; game.explorationProgression.faille.echoes = { sable: 1, rue: 1, gisants: 1, veine: 1, palier: 1 };
+    ok(AM.isComplete(AM.getById("hf_faille_10")) && !AM.isComplete(AM.getById("hf_faille_20")) && AM.isComplete(AM.getById("hf_faille_echos")), "record 12 et cinq échos : « Dix étages » et « Cinq mondes », pas « Vingt étages »");
+  } catch (err) { ok(false, "[435] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  finally {
+    TS.ending = savedEnding; SQ.getChoice = savedGetChoice;
+    if (g.game) { g.game.sceneRun = null; if (g.game.memory) g.game.memory.choices = {}; if (g.game.explorationProgression) { delete g.game.explorationProgression.faille; g.game.explorationProgression.labyrinth = null; } }
+  }
 })();
 
 Promise.all(ATTENTES).then(function () {

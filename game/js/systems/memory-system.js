@@ -82,8 +82,13 @@ var MemoryManager = {
     var reached = game.worldsEverReached && typeof game.worldsEverReached === "object" ? game.worldsEverReached : {};
     var maxIdx = 0;
     Object.keys(reached).forEach(function (k) { if (reached[k]) maxIdx = Math.max(maxIdx, Number(k) || 0); });
-    return Math.min(MEMORY_LEVEL_COSTS.length, (maxIdx + 1) * MEMORY_LEVELS_PER_WORLD);
+    var cap = (maxIdx + 1) * MEMORY_LEVELS_PER_WORLD;
+    // v3.644.0 (Faille) : au-delà de la Tour, un niveau par palier de record de la faille
+    if (cap >= 24) { var fs = (game.explorationProgression || {}).faille, best = Number((fs && fs.best) || 0); cap += (window.MEMORY_FAILLE_GATES || []).filter(function (f) { return best >= f; }).length; }
+    return Math.min(MEMORY_LEVEL_COSTS.length, cap);
   },
+  /* v3.644.0 : record de faille qui ouvre ce niveau (null : niveau ouvert par un monde). */
+  failleGate: function (level) { var g = window.MEMORY_FAILLE_GATES || []; return level > 24 && level - 25 < g.length ? g[level - 25] : null; },
 
   /* Niveau porté par la jauge seule, sans plafond de monde. */
   getGaugeLevel: function () {
