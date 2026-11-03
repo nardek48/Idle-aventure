@@ -205,6 +205,16 @@ body.toast-shown .hud-bub .hud-bub-tip { opacity: 0; }
 }
 @media (prefers-reduced-motion: reduce) { .hud-bub.is-new { animation: none; } }
 
+/* v3.650.0 (atelier bulles-flottantes, F0+ validé par Seb le 03/11) : sur téléphone, bulles plus petites
+   (48 -> 40 px) et, en fin de liste, un espace de leur hauteur (--hud-dock-space, ui/hud-dock-view.js), posé après le contenu de la zone qui défile. */
+html:not(.wide-mode) .hud-dock { gap: 8px; }
+html:not(.wide-mode) .hud-bub { width: 40px; height: 40px; }
+html:not(.wide-mode) .hud-bub .hud-bub-ico { width: 25px; height: 25px; }
+html:not(.wide-mode) .hud-bub.is-quiet { width: 32px; height: 32px; }
+html:not(.wide-mode) .hud-bub.is-quiet .hud-bub-ico { width: 20px; height: 20px; }
+html:not(.wide-mode) .hud-bub-tip { right: 48px; }
+html:not(.wide-mode) #panel-container :is(.kfp-scrollzone, .subtab-page-content)::after { content: ""; display: block; flex: none; height: var(--hud-dock-space, 0px); }
+
 /* =========================
    Mini-carte héros (v2.40 — portrait + niveau + PV réduits).
    v2.61 : agrandi d'environ 20% (portrait + mini-barre de PV) à la
