@@ -133,7 +133,7 @@ var VILLAGE_BUILDINGS = {
     iconImg: "images/Icons/village_buildings/training_grounds.webp",
     rank: 1,
     /* v3.214.0 : 14 niveaux pour 150 par caractéristique ; H1 (chantier du héros) : 18 niveaux, 200. */
-    maxLevel: 18, // H1 (chantier du héros) : 14 à 18 en Obsidienne taillée, 160 à 200
+    maxLevel: 21, // H1 (chantier du héros) : 14 à 18 en Obsidienne taillée, 160 à 200 ; rythme de la Tour (Seb, 03/11) : 19 à 21, 210 à 230
     implemented: true,
     lockLabel: "Atteins 20 dans une caractéristique",
     desc: "Chaque niveau ouvre 10 niveaux d'entraînement de plus pour ta caractéristique de classe et l'Endurance, environ 7 pour les trois autres. L'entraînement lui-même se paie en or, dans Héros → Entraînement.", // v3.616.1 : plafonds de la v3.614.0 (secondaires à 70 %)
@@ -183,6 +183,14 @@ var VILLAGE_BUILDINGS = {
         resources: ["gold", "planche", "pierre", "acier", "obsidienne_taillee"],
         baseCost: { gold: 10000, planche: 300, pierre: 400, acier: 80, obsidienne_taillee: 3 },
         costMult: 1.2
+      },
+      /* Rythme de la Tour (Seb, 03/11) : Terrain 19 à 21 (palier lu sur le niveau actuel, 18 à 20), un par acte de la Tour,
+         au Givre bleu et au Verre de faille. Au banc. */
+      {
+        minLevel: 18, maxLevel: 20,
+        resources: ["gold", "planche", "pierre", "acier", "givre_bleu", "verre_faille"],
+        baseCost: { gold: 30000, planche: 400, pierre: 500, acier: 100, givre_bleu: 6, verre_faille: 2 },
+        costMult: 1.25
       }
     ],
     effectLabel: function (level) {

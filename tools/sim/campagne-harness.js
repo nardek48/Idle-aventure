@@ -122,7 +122,9 @@ function el() {
   return { style: { setProperty: function () {}, removeProperty: function () {} }, classList: { add: function () {}, remove: function () {}, toggle: function () {}, contains: function () { return false; } },
     innerHTML: "", textContent: "", value: "", scrollTop: 0, disabled: false, querySelector: function () { return null; }, querySelectorAll: function () { return []; },
     addEventListener: function () {}, setAttribute: function () {}, getAttribute: function () { return null; }, appendChild: function () {}, removeChild: function () {},
-    remove: function () {}, hasChildNodes: function () { return false; }, focus: function () {}, dataset: {}, offsetWidth: 0, parentNode: null };
+    remove: function () {}, hasChildNodes: function () { return false; }, focus: function () {}, dataset: {}, offsetWidth: 0, parentNode: null,
+    // rythme de la Tour (03/11) : le rejeu d'une Petite aventure place sa caméra (pa2-view, map-camera)
+    getBoundingClientRect: function () { return { top: 0, bottom: 0, left: 0, right: 0, width: 0, height: 0, x: 0, y: 0 }; }, clientWidth: 0, clientHeight: 0 };
 }
 function launch() {
   var timers = [];
@@ -449,7 +451,10 @@ function developVillage() {
     var why = V.getBlockReason("training"), cost = V.getNextCost("training");
     if (cost && (!why || why === "Matériaux manquants" || /^Atelier niveau/.test(why)) && Number(cost.gold || 0) <= g.game.gold * 0.5) {
       var t0 = CLOCK.offset;
-      if (upgradeBuilding("training", V.getLevel("training") + 1)) STATS.village.push("Terrain " + V.getLevel("training") + " (" + CURRENT_STEP + ", " + ((CLOCK.offset - t0) / 3600e3).toFixed(1) + " h)");
+      // rythme de la Tour (03/11) : le Terrain se construit avec ce qu'on a, sans attendre le lendemain d'une carte (Givre bleu)
+      SANS_LENDEMAIN++;
+      try { if (upgradeBuilding("training", V.getLevel("training") + 1)) STATS.village.push("Terrain " + V.getLevel("training") + " (" + CURRENT_STEP + ", " + ((CLOCK.offset - t0) / 3600e3).toFixed(1) + " h)"); }
+      finally { SANS_LENDEMAIN--; }
     }
   }
   /* Forge (profil --investi) : construite dès qu'elle est ouverte, un niveau par passage, jusqu'au
@@ -1152,6 +1157,8 @@ function freeSectorAgain(mapId, sectorId) {
     r = LM.start(mapId, sectorId);
   }
   if (!r.ok) { note(sectorId + " rejoué : " + r.reason); return false; }
+  // rythme de la Tour (03/11) : un secteur d'expédition rejoué se joue comme une Petite aventure, pas comme un combat d'élite
+  if (g.SceneRunManager.isRunActive()) { var fini = playScene(); if (!fini && g.SceneRunManager.isRunActive()) g.SceneRunManager.abandon(); flushTimers(g); return !!fini; }
   var gagne = winCombat();
   // v3.429.0 : combat d'élite pas fini (élite trop forte pour ce farm) : le joueur fuit, sinon la carte reste bloquée
   if (LM.getFight()) { if (g.SortieManager && g.SortieManager.flee) g.SortieManager.flee(); if (LM.getFight()) LM.abandonFight(); return false; }
@@ -1951,15 +1958,28 @@ var SOLVERS = {
   tour_02: function (g) { playAdventure("aq_tour_pied"); },
   tour_03: function (g) { offer(g, "tower"); },
   tour_04: function (g) { playAdventure("aq_tour_sable"); },
-  tour_06: function (g) { for (var i = 0; i < 8 && g.storyTowerFloorsFreed() < 3; i++) freeSector("tower"); },
-  tour_07: function (g) { var b = g.storyTowerPaWins(); for (var i = 0; i < 4 && g.storyTowerPaWins() <= b; i++) freeSector("tower"); },
+  tour_06: function (g) { for (var i = 0; i < 16 && g.storyTowerFloorsFreed() < g.STORY_TOUR_ETAGES; i++) freeSector("tower"); }, // rythme de la Tour (03/11) : 5 étages
+  tour_07: function (g) { // 2 escaliers : les étages sont déjà libres, on en rejoue un (Petite aventure)
+    var b = g.storyTowerPaWins(), pa = g.LIVING_MAPS.tower.sectors.filter(function (d) { return d.content && d.content.templateId === "petite_aventure_tour"; });
+    for (var i = 0; i < 10 && g.storyTowerPaWins() - b < g.STORY_TOUR_PA; i++) {
+      var libre = pa.filter(function (d) { return !g.LivingMapManager.isLiberated("tower", d.id); })[0]; // la Tour fait finir l'étage restant d'abord
+      var cible = libre ? libre.id : pa[i % pa.length].id, cs = g.LivingMapManager.canStart("tower", cible);
+      if (!cs.ok && CAP_RE.test(cs.reason || "")) waitCap(); // la recharge des expéditions, comme un joueur
+      if (libre) freeSector("tower", libre.id); else freeSectorAgain("tower", cible);
+    }
+  },
   tour_08: function (g) { playAdventure("aq_tour_gisants"); },
   tour_09: function (g) { freeSector("tower", "etage_veines"); },
   tour_10: function (g) { gearRarity("legendary", g.STORY_PALIER_TOUR.pieces, false, 0); },
   // v3.629.0 (Tour, acte III) : --defaire = la copie défaite
   tour_11: function (g) { playDungeon(6, false, function () { return !!(g.game.explorationProgression || {}).sommetCamp; }); },
   tour_12: function (g) { if (!(g.game.dungeonTierCleared || {})[6]) playDungeon(6, false); },
-  tour_13: function (g) { gearRarity("legendary", g.STORY_PALIER_TOUR_COMPLET.pieces, false, 0); },
+  tour_13: function (g) { // rythme de la Tour (03/11) : + Forge 7 et arme reforgée à 13, comme montagne_13
+    var P = g.STORY_PALIER_TOUR_COMPLET;
+    gearRarity("legendary", P.pieces, false, 0);
+    upgradeBuilding("forge", P.forge);
+    reforgeTo("weapon", P.reforge);
+  },
   tour_14: function (g) {
     var val = ARGS.indexOf("--defaire") >= 0 ? "defaire" : "laisser";
     if (!g.storyMakeChoice("tower", val)) note("choix refusé (copie)");

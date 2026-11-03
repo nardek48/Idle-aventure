@@ -4938,7 +4938,7 @@ STORY_QUESTS.tower = {
           { who: "Edda", text: "Une carte juste, ici, ça ne sert à rien. C'est elle qui l'a dessinée." }
         ]
       },
-      objectiveLabel: "Ouvrir la carte des étages : libérer 3 étages",
+      objectiveLabel: "Libérer les 5 étages de l'escalier",
       storyPa: { worldId: "tower" },
       unlockTabs: [],
       reward: STORY_REWARDS.tour_06,
@@ -4954,8 +4954,8 @@ STORY_QUESTS.tower = {
           { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "Le Marché de la Tour est au dernier camp, devant la porte. La caravane en rapporte de l'or. Au trajet Long (Halle 3), 2 Givres bleus à coup sûr." }
         ]
       },
-      check: function () { return storyTowerFloorsFreed() >= 3; },
-      progress: function () { return "Étages libérés " + Math.min(3, storyTowerFloorsFreed()) + "/3"; }
+      check: function () { return storyTowerFloorsFreed() >= STORY_TOUR_ETAGES; }, // rythme de la Tour (Seb, 03/11) : 3 -> 5
+      progress: function () { return "Étages libérés " + Math.min(STORY_TOUR_ETAGES, storyTowerFloorsFreed()) + "/" + STORY_TOUR_ETAGES; }
     },
     /* Étape 7 : une Petite Aventure de la Tour réussie depuis l'acceptation (towerPaWins, compté par pa2-run). */
     {
@@ -4973,14 +4973,14 @@ STORY_QUESTS.tower = {
           { who: "Maddoc", text: "Le vieux. Il compte, lui aussi." }
         ]
       },
-      objectiveLabel: "Terminer une Petite aventure de la Tour",
+      objectiveLabel: "Terminer 2 Petites aventures de la Tour",
       storyPa: { worldId: "tower" },
       unlockTabs: [],
       reward: STORY_REWARDS.tour_07,
       linkTo: { section: "map", cardId: "livingmap_tower" },
       onAccept: function (game, st) { if (st && st.counters) st.counters.paBase = storyTowerPaWins(); },
-      check: function (game) { return storyTowerPaWins() > storyChapterCounter(game, "tower", "paBase"); },
-      progress: function (game) { return "Petite aventure " + (storyTowerPaWins() > storyChapterCounter(game, "tower", "paBase") ? "1/1" : "0/1"); }
+      check: function (game) { return storyTowerPaWins() - storyChapterCounter(game, "tower", "paBase") >= STORY_TOUR_PA; }, // 1 -> 2
+      progress: function (game) { return "Petites aventures " + Math.min(STORY_TOUR_PA, Math.max(0, storyTowerPaWins() - storyChapterCounter(game, "tower", "paBase"))) + "/" + STORY_TOUR_PA; }
     },
     /* ---------- Acte II, suite (lot T-2b : étapes 8 à 10) ---------- */
     /* Étape 8 : l'étage des gisants, quatre rencontres avec les morts de la Crypte (écho). */
@@ -5128,7 +5128,7 @@ STORY_QUESTS.tower = {
         ],
         completionDialogue: []
       },
-      objectiveLabel: "Porter 7 pièces Légendaires",
+      objectiveLabel: "7 emplacements avec une pièce Légendaire, Forge 7, arme reforgée à 13",
       unlockTabs: [],
       reward: STORY_REWARDS.tour_13,
       linkTo: { tab: "equip" },
@@ -5138,11 +5138,15 @@ STORY_QUESTS.tower = {
         title: "Le Légendaire complet",
         points: [
           { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Pour la suite, tes sept emplacements doivent porter une pièce Légendaire. Le Sommet interdit en laisse tomber, comme le Gardien qui répète." },
-          { icon: "images/Icons/workshops/smithing_station.webp", text: "La Forge 7 s'ouvre maintenant, au Verre de faille (Givre bleu fondu à la Fonderie) : reforges 13 et 14." }
+          { icon: "images/Icons/workshops/smithing_station.webp", text: "La Forge 7 s'ouvre maintenant, au Verre de faille (Givre bleu fondu à la Fonderie) : reforges 13 et 14. L'étape demande la Forge 7 et l'arme reforgée à 13." }
         ]
       },
-      check: function (game) { return storyPalier(game, "legendary").pieces >= STORY_PALIER_TOUR_COMPLET.pieces; },
-      progress: function (game) { return "Pièces Légendaires " + Math.min(STORY_PALIER_TOUR_COMPLET.pieces, storyPalier(game, "legendary").pieces) + "/" + STORY_PALIER_TOUR_COMPLET.pieces; }
+      check: function (game) { var p = storyPalier(game, "legendary"), P = STORY_PALIER_TOUR_COMPLET; return p.pieces >= P.pieces && p.forge >= P.forge && p.arme >= P.reforge; },
+      progress: function (game) {
+        var p = storyPalier(game, "legendary"), P = STORY_PALIER_TOUR_COMPLET;
+        return "Pièces Légendaires " + Math.min(p.pieces, P.pieces) + "/" + P.pieces + " · Forge " + Math.min(p.forge, P.forge) + "/" + P.forge + " · Reforge de l'arme " + Math.min(p.arme, P.reforge) + "/" + P.reforge;
+      },
+      missing: function (game) { return storyPalierTourCompletMissing(game); }
     },
     /* Étape 14 : deuxième choix pesant, clé « copie » : laisser le village d'avant (Donner) ou le défaire (Garder). */
     {
@@ -5350,7 +5354,14 @@ STORY_QUESTS.tower = {
   ]
 };
 /* v3.629.0 (Tour, TW7) : le Légendaire complet de l'acte III. Au banc. */
-var STORY_PALIER_TOUR_COMPLET = { pieces: 7 };
+var STORY_PALIER_TOUR_COMPLET = { pieces: 7, forge: 7, reforge: 13 }; // rythme de la Tour (Seb, 03/11) : + Forge 7 et arme reforgée à 13
+function storyPalierTourCompletMissing(game) {
+  var P = STORY_PALIER_TOUR_COMPLET;
+  return storyPalierManques(game, "legendary", P, function (a, b) {
+    return { text: _t("Pièces Légendaires : {a} / {b}", { a: a, b: b }), where: _t("Le Sommet interdit, le Gardien qui répète et l'échoppe de la Halle marchande.") };
+  }).filter(Boolean);
+}
+window.storyPalierTourCompletMissing = storyPalierTourCompletMissing;
 var STORY_COPIE_VERRE = 6; // défaire Aeswyn d'avant : sa matière, de quoi la Forge 7 et une reforge
 var STORY_COPIE_TEXTS = {
   laisser: {
@@ -5416,6 +5427,8 @@ function storyTowerFloorsFreed() {
   if (!map) return 0;
   return map.sectors.filter(function (d) { var st = lm.getState("tower", d.id); return !!(st && st.liberatedCount > 0); }).length;
 }
+var STORY_TOUR_ETAGES = 5, STORY_TOUR_PA = 2; // rythme de la Tour (Seb, 03/11) : les 5 étages de l'escalier, 2 escaliers réussis
+window.STORY_TOUR_ETAGES = STORY_TOUR_ETAGES; window.STORY_TOUR_PA = STORY_TOUR_PA;
 function storyTowerPaWins() { return Number((game.explorationProgression || {}).towerPaWins || 0); }
 window.storyTowerFloorsFreed = storyTowerFloorsFreed;
 window.storyTowerPaWins = storyTowerPaWins;
