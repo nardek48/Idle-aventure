@@ -58,7 +58,7 @@ function labTile(run, k) {
   if (k === F.start) return T.stairsUp;
   if (L.leverAt(run, k) >= 0) return T.lever;
   if (k === F.spring && !run.springUsed) return T.spring;
-  if (k === F.chest && !run.chestTaken) return T.chest;
+  if (k === F.chest && !run.chestTaken) return (run.echo === "veine" && T.vein) || T.chest; // v3.640.0 : la veine
   var h = 0, s = k + "#" + run.floor; for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 97;
   return T.rooms[h % T.rooms.length];
 }
@@ -106,7 +106,8 @@ function labHud(run) {
   var hp = Math.max(0, Math.min(1, Number(game.heroHp || 0) / Math.max(1, game.heroMaxHp)));
   set("lab-floor", _t("Étage {n}", { n: run.floor }) + (run.F.boss ? " · " + labSay("hudBoss", _t("Gardien")) : ""));
   set("lab-best", _t("Record : étage {n}", { n: LabyrinthRun.bestFloor() }));
-  set("lab-fname", _td(T.floorNames[(run.floor - 1) % T.floorNames.length]));
+  var E = run.echo && (T.echoes || {})[run.echo]; // v3.640.0 : l'écho de l'étage, son nom et sa règle
+  set("lab-fname", E ? _td(E.name) + " · " + _td(E.rule) : _td(T.floorNames[(run.floor - 1) % T.floorNames.length]));
   set("lab-hp", _t("PV {a} / {b}", { a: Math.round(game.heroHp || 0), b: Math.round(game.heroMaxHp || 0) }));
   set("lab-br", _t("Souffle {n}", { n: run.breath }));
   var bp = { s: run.stones, g: run.gold };
@@ -179,6 +180,7 @@ function labStep(k, passing) {
   if (run.pending) { labStopWalk(); labOpenSheet({ kind: "fight", fk: run.pending.kind, li: run.pending.li }); }
   else if (r.event === "lever") { labStopWalk(); labOpenSheet({ kind: "lever", li: LabyrinthRun.leverAt(run, run.at) }); }
   else if (r.event === "stairs") { labStopWalk(); labOpenSheet({ kind: "stairs" }); }
+  else if (r.event === "vein") { labStopWalk(); labOpenSheet({ kind: "vein" }); }
   else if (r.event) labStopWalk();
   else if (run.note && run.note.alert) labStopWalk();
   return r;
@@ -228,6 +230,12 @@ function labShowSheet() {
         '<div class="lab-bigchart">' + labChartSVG(false) + '</div><p>' + esc(labSay("stairsBag", _t("Dans le sac : {s} Pierres errantes, {g} or.", sb), sb)) + '</p>'
         + '<p class="lab-cost">' + esc(labSay("climbCost", _t("Descendre : Souffle +{n}, étage plus dur. Tomber ou s'essouffler plus bas fait perdre la moitié du sac.", { n: c.breathFloor }), { n: c.breathFloor })) + '</p>',
         [{ t: labSay("climbBtn", _t("Descendre à l'étage {n}", { n: run.floor + 1 }), { n: run.floor + 1 }), on: "labDescend()" }, { t: labSay("leaveBagBtn", _t("Remonter avec le sac")), sec: true, on: "labLeave()" }]);
+  } else if (s.kind === "vein") {   // v3.640.0 (la veine) : tailler ou laisser
+    var vp = Math.round(Number(run.heat || 0) * c.echoVeinHeat * 100), left = run.chestTaken ? 0 : c.echoVeinMax - Number(run.veinCuts || 0);
+    h = labSheetHTML(labSay("veinTitle", _t("Un levier")), labSay("veinSub", "", { g: c.echoVeinGain, n: c.pull }),
+      '<p class="lab-quote">' + esc(left > 0 ? (vp ? labSay("veinHeat", "", { p: vp }) : labSay("veinCold", "")) : labSay("veinDone", "")) + '</p>'
+      + (left > 0 ? '<p class="lab-cost">' + esc(labSay("veinLeft", "", { n: left })) + '</p>' : ''),
+      left > 0 ? [{ t: labSay("veinBtn", _t("Tirer le levier")), on: "labCut()" }, { t: _t("Laisser"), sec: true, on: "labCloseSheet()" }] : [{ t: _t("Fermer"), sec: true, on: "labCloseSheet()" }]);
   } else if (s.kind === "chart") {
     h = labSheetHTML(labSay("chartTitle", _t("La carte d'Edda")), _t("Étage {n} · touche une salle dessinée pour y aller", { n: run.floor }),
       '<div class="lab-bigchart">' + labChartSVG(true) + '</div><p class="lab-cost">' + esc(_t("En violet : les pans qui tournent. Pointillés : les salles qu'on devine. Cercle rouge : les pas qu'on entend.")) + '</p>',
@@ -248,6 +256,12 @@ function labAskLeave() { labStopWalk(); if (!labPendingSheet(LabyrinthRun.getRun
 window.labAskLeave = labAskLeave;
 function labPull(li) { var r = LabyrinthRun.pull(li); labCloseSheet(); if (LabyrinthRun.getRun().status === LAB_STATUS.done) { refreshSceneScreen(); return; } labDraw(false, r.mask); }
 window.labPull = labPull;
+function labCut() {   // v3.640.0 (la veine)
+  var r = LabyrinthRun.cut(); var run = LabyrinthRun.getRun();
+  if (run && run.status === LAB_STATUS.done) { labCloseSheet(); refreshSceneScreen(); return; }
+  labDraw(false); if (r.ok) labShowSheet();
+}
+window.labCut = labCut;
 function labDescend() { labCloseSheet(); LabyrinthRun.descend(); labDraw(true); }
 window.labDescend = labDescend;
 function labLeave() { labCloseSheet(); labStopWalk(); LabyrinthRun.finish("remonte"); refreshSceneScreen(); }
@@ -259,7 +273,7 @@ function labFightSheetHTML(s, run) {
   var c = LabyrinthRun.cfg(), TL = LabyrinthRun.tiles(), p = run.pending, surprised = !!(p && p.surprised), locked = !!p;
   var te = LabyrinthRun.estimate(s.fk, "tenir"); if (!te) return "";
   var title, sub, line, img = te.foeImage;
-  if (s.fk === "guard") { title = _t("Un levier gardé"); sub = _t("Étage {n} · la garde ne bouge pas du levier", { n: run.floor }); line = _td(LabyrinthRun.leverInfo(s.li).guardLine); }
+  if (s.fk === "guard") { title = _t("Un levier gardé"); sub = _t("Étage {n} · la garde ne bouge pas du levier", { n: run.floor }); var gi = LabyrinthRun.leverInfo(s.li); line = gi.asleep ? labSay("asleepLine", "") : _td(gi.guardLine); }
   else if (s.fk === "foe") { title = _td(te.foeName); sub = labSay("foeSub", _t("Il t'a rattrapé dans le noir")); line = labSay("foeLine", _t("Il ne court pas. Il connaît chaque mur, et les murs l'attendent.")); }
   else { title = _td(c.bossName); sub = _t("Étage {n} · il garde l'escalier", { n: run.floor }); line = _td(LabyrinthRun.texts().bossLine); img = TL.bossPortrait; }
   var body = '<div class="lab-foehead' + (s.fk === "boss" ? ' is-boss' : '') + '"><img src="' + esc(img || TL.icon) + '" alt="" onerror="this.src=\'' + TL.icon + '\'">'
@@ -285,6 +299,10 @@ function labApproachHTML(fk, id, surprised) {
   var loss = surprised ? Math.round(est.hpLoss * PA2_RULES.surprisedMult) : est.hpLoss, v = est.unwinnable ? "mortel" : Pa2Run.verdictOf(loss);
   var name = surprised ? _t("Se défendre") + " · " + (id === "charger" ? _t("Charger", "combat") : _t("Tenir")) : (id === "charger" ? _t("Charger", "combat") : _t("Tenir"));
   var sub = id === "charger" ? _t("Court et brutal. Plus de coups reçus, plus de butin.") : _t("Bouclier levé. Moins de coups, butin normal.");
+  // v3.640.0 (échos) : le miroir et la chaleur, dits sur la carte du choix
+  var c = LabyrinthRun.cfg();
+  if (est.mirror) sub += " " + labSay("mirror", "", { p: Math.round(c.echoMirror * 100) }) + ".";
+  if (est.heat) sub += " " + labSay("heat", "", { p: Math.round(est.heat * c.echoVeinHeat * 100) }) + ".";
   return '<button type="button" class="lab-choice" onclick="labFight(\'' + id + '\')"><img src="' + esc(ap.icon) + '" alt=""><span class="lab-ct">' + esc(name) + '</span>'
     + '<span class="lab-cc' + (v === "mortel" ? ' is-deadly' : '') + '">' + esc(PA2_VERDICT_WORD[v] || "") + (est.unwinnable ? '' : ' · ~' + loss + ' ' + esc(_t("PV"))) + '</span>'
     + '<span class="lab-cs">' + esc(sub) + ' ' + esc(_t("Butin ~{n} or.", { n: est.gold })) + '</span></button>';

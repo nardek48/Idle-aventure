@@ -8752,4 +8752,29 @@ I18n.register("en", {
   "{n} à réclamer||{n} à réclamer": ["{n} to claim", "{n} to claim"],
   "et {n} autre monde aux jalons ouverts||et {n} autres mondes aux jalons ouverts": ["and {n} other world with open milestones", "and {n} other worlds with open milestones"],
 
+  // v3.640.0 (Faille, F-2) : les échos
+  "la soif": "thirst",
+  "Du sable sur les marches, venu de nulle part. Chaque pas coûte plus de Souffle ; la source rend le double.": "Sand on the steps, from nowhere. Every step costs more Breath; the spring gives back double.",
+  "la relève": "rising",
+  "Une rue, entre deux paliers. Ce qui tombe ici se relève quand tu repasses, sauf si tu l'as achevé en chargeant.": "A street, between two landings. What falls here rises again when you come back, unless you finished it with a charge.",
+  "le sommeil": "sleep",
+  "Des gisants debout contre les murs. Une garde sur deux dort : on passe sans la réveiller, ou on la paie.": "Effigies standing against the walls. One guard in two is asleep: slip past without waking it, or pay for it.",
+  "la chaleur": "heat",
+  "Une veine bat dans la pierre. La tailler rapporte du givre, et chaque coup réchauffe l'étage.": "A vein beats in the stone. Cutting it yields frost, and every blow heats the floor.",
+  "le miroir": "the mirror",
+  "Ici, elle garde tes gestes. La même approche deux fois de suite coûte plus cher.": "Here, she keeps your moves. The same approach twice in a row costs more.",
+  "La garde se relève. Il fallait l'achever.": "The guard rises again. You should have finished it.",
+  "La garde dort debout, la main sur le levier. Elle ne t'a pas entendu.": "The guard sleeps standing, hand on the lever. It did not hear you.",
+  "Tailler : +{g} Givre bleu · Souffle −{n}": "Cut: +{g} Blue Frost · Breath −{n}",
+  "Chaleur de l'étage : coups reçus +{p} %.": "Floor heat: damage taken +{p}%.",
+  "La pierre est encore froide.": "The stone is still cold.",
+  "Tu tailles. +{g} Givre bleu, l'étage chauffe : coups reçus +{p} %. Souffle −{n}.": "You cut. +{g} Blue Frost, the floor heats up: damage taken +{p}%. Breath −{n}.",
+  "La veine ne bat plus. Il n'y a plus rien à tailler.": "The vein no longer beats. There is nothing left to cut.",
+  "Encore {n} tailles possibles.": "{n} more cuts possible.",
+  "Le miroir : +{p} %": "The mirror: +{p}%",
+  "Chaleur : +{p} %": "Heat: +{p}%",
+  "Dès l'étage 2, chaque étage se souvient d'un monde, et son nom dit sa règle : la soif, la relève, le sommeil, la chaleur ou le miroir.": "From floor 2, each floor remembers a world, and its name tells its rule: thirst, rising, sleep, heat or the mirror.",
+
+  "La faille se souvient des mondes : dès l'étage 2, chaque étage a sa règle (la soif, la relève, le sommeil, la chaleur, le miroir). Et le Souffle tient plus longtemps.": "The rift remembers the worlds: from floor 2, each floor has its rule (thirst, rising, sleep, heat, the mirror). And Breath lasts longer.",
+
 });

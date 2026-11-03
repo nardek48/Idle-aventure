@@ -196,10 +196,46 @@ var LabyrinthRun = {
     run.springUsed = false; run.chestTaken = false; run.bossDown = !F.boss;
     if (run.floor > 1) run.breath = Math.min(c.breathStart, run.breath + c.breathFloor);
     run.foe = run.floor >= c.foeFrom ? { at: this._farthest(run, F.start), stun: 3, tick: 0, every: run.floor >= c.foeFastFrom ? c.foeEveryFast : c.foeEvery } : null;
+    this._rollEcho(run, F);
     var T = this.texts(), fn = this.def().floorNote, own = typeof fn === "function" ? fn(run) : null; // v3.638.0 : ligne propre à la sorte
-    run.note = { text: own || T.floorLines[(run.floor - 1) % T.floorLines.length], data: true };
+    var E = run.echo && (T.echoes || {})[run.echo];
+    run.note = { text: own || (E ? E.line : T.floorLines[(run.floor - 1) % T.floorLines.length]), data: true };
     this._look(run);
     var st = this._state(); if (run.floor > Number(st.best || 0)) st.best = run.floor;
+  },
+  /* ---------- v3.640.0 (faille, FA3) : les échos ---------- */
+  /* Un écho par étage dès echoFrom, jamais deux fois le même de suite ; bossEcho sur l'étage du boss. Sans écho
+     (le Labyrinthe) : aucun tirage, rien ne change. */
+  _rollEcho: function (run, F) {
+    var c = this.cfg();
+    run.heat = 0; run.veinCuts = 0; run.guardDownAt = null; run.guardRose = false; run.guardAsleep = false;
+    if (!c.echoes || !c.echoes.length || run.floor < (c.echoFrom || 1)) { run.echo = null; return; }
+    var prev = run.echo, pool = c.echoes.filter(function (e) { return e !== prev; });
+    run.echo = (F.boss && c.bossEcho) ? c.bossEcho : this._pick(pool.length ? pool : c.echoes);
+    if (run.echo === "gisants") run.guardAsleep = Math.random() < c.echoSleepPct;
+  },
+  echoOf: function (run) { run = run || this.getRun(); return run ? run.echo || null : null; },
+  /* Le sable : chaque pas coûte plus de Souffle */
+  stepCost: function (run) { var c = this.cfg(); return run && run.echo === "sable" ? Math.round(c.step * c.echoSandStep) : c.step; },
+  /* Coups reçus en plus sur l'étage : la chaleur de la veine ; le miroir si l'approche est la même que la précédente */
+  echoMult: function (run, apId) {
+    var c = this.cfg(), m = 1 + Number(run.heat || 0) * Number(c.echoVeinHeat || 0);
+    if (run.echo === "palier" && apId && run.lastAp === apId) m += Number(c.echoMirror || 0);
+    return m;
+  },
+  /* La veine : tailler, tant qu'il y a du Souffle et que la veine bat */
+  cut: function () {
+    var run = this.getRun(), c = this.cfg();
+    if (!run || run.status !== LAB_STATUS.map || run.echo !== "veine" || run.at !== run.F.chest || run.chestTaken) return { ok: false };
+    if (run.breath < c.pull) { run.note = { text: _t("Plus assez de Souffle pour tirer."), alert: true }; return { ok: false }; }
+    run.breath -= c.pull; run.veinCuts = Number(run.veinCuts || 0) + 1; run.heat = Number(run.heat || 0) + 1;
+    this._gain(run, c.echoVeinGain, 0); this._stat(run, "cuts");
+    if (run.veinCuts >= c.echoVeinMax) run.chestTaken = true;
+    var pp = { g: c.echoVeinGain, p: Math.round(run.heat * c.echoVeinHeat * 100), n: c.pull };
+    run.note = { text: this.say("veinCut", "", pp) };
+    if (run.breath <= 0) this.finish("souffle");
+    this._save();
+    return { ok: true, heat: run.heat, left: run.chestTaken ? 0 : c.echoVeinMax - run.veinCuts };
   },
   _farthest: function (run, s) {
     var F = run.F, self = this, d = this._bfs(F, s, function (dd) { return F.open[dd] || self.pivotOf(F, dd) >= 0; }), far = s;
@@ -234,7 +270,13 @@ var LabyrinthRun = {
     if (!run || run.pending || !this.canMove(run, k)) return { ok: false, event: null };
     var was = !!run.seen[k];
     run.at = k; run.seen[k] = 1; run.newPiv = {}; this._look(run);
-    run.breath = Math.max(0, run.breath - c.step);
+    var stepN = this.stepCost(run);
+    run.breath = Math.max(0, run.breath - stepN);
+    // v3.640.0 (la rue) : la garde battue en tenant se relève quand le héros revient au levier
+    var rose = false;
+    if (run.guardDownAt != null && !run.guardRose && this.leverAt(run, k) === run.guardDownAt) {
+      run.guardUp = true; run.guardFoe = null; run.guardRose = true; run.guardDownAt = null; rose = true;
+    }
     var ev = null, ft = this._foeTurn(run);
     if (ft === true) ev = "caught";
     if (run.status !== LAB_STATUS.map) { this._save(); return { ok: true, event: "end" }; }
@@ -244,18 +286,19 @@ var LabyrinthRun = {
       if (k === F.stairs) ev = "stairs";
       else if (this.leverAt(run, k) >= 0) ev = "lever";
       else if (k === F.spring && !run.springUsed) { ev = "spring"; this._spring(run); }
-      else if (k === F.chest && !run.chestTaken) { ev = "chest"; this._chest(run); }
+      else if (k === F.chest && !run.chestTaken) { if (run.echo === "veine") ev = "vein"; else { ev = "chest"; this._chest(run); } }
     }
+    if (rose) run.note = { text: this.say("rise", ""), alert: true };
     // v3.636.0 : l'alerte suit la distance (le test du mot « tout près » ratait en anglais)
-    if ((!ev || ev === "caught") && ft !== "touched") { if (ev !== "caught") { var fd = this.foeDist(run); run.note = { text: this.foeHint(run) || _t("Tu avances. Souffle −{n}.", { n: c.step }), alert: fd != null && fd >= 0 && fd <= 2 }; } }
+    if ((!ev || ev === "caught") && ft !== "touched" && !rose) { if (ev !== "caught") { var fd = this.foeDist(run); run.note = { text: this.foeHint(run) || _t("Tu avances. Souffle −{n}.", { n: stepN }), alert: fd != null && fd >= 0 && fd <= 2 }; } }
     this._save();
     return { ok: true, event: ev };
   },
   _spring: function (run) {
-    var c = this.cfg(); run.springUsed = true;
-    run.breath = Math.min(c.breathStart, run.breath + c.springBreath);
-    game.heroHp = Math.min(game.heroMaxHp, Number(game.heroHp || 0) + Math.round(game.heroMaxHp * c.springHealPct));
-    var sp = { n: c.springBreath, p: Math.round(c.springHealPct * 100) };
+    var c = this.cfg(), k2 = run.echo === "sable" ? c.echoSandSpring : 1; run.springUsed = true; // v3.640.0 : le sable, la source rend le double
+    run.breath = Math.min(c.breathStart, run.breath + c.springBreath * k2);
+    game.heroHp = Math.min(game.heroMaxHp, Number(game.heroHp || 0) + Math.round(game.heroMaxHp * c.springHealPct * k2));
+    var sp = { n: c.springBreath * k2, p: Math.round(c.springHealPct * k2 * 100) };
     run.note = { text: this.say("spring", _t("Une source, sous une dalle fendue. Souffle +{n}, PV +{p} %.", sp), sp) };
   },
   _chest: function (run) {
@@ -393,11 +436,13 @@ var LabyrinthRun = {
     var ap = PA2_APPROACHES[apId || "tenir"] || PA2_APPROACHES.tenir, c = this.cfg();
     var heroDmg = CombatForecast.getHeroDamagePerRound(), foeDmg = CombatForecast.getEnemyDamagePerRound(e);
     var net = heroDmg - CombatForecast.getHealThreshold(e), rounds = net > 0 ? Math.ceil(e.maxHp / net) : Infinity;
-    var unwinnable = !(rounds <= PA2_RULES.maxRounds), pack = kind === "guard" ? c.guardPack : 1;
-    var hpLoss = unwinnable ? Number(game.heroHp || 0) : Math.max(1, Math.round(rounds * foeDmg * pack * Number(ap.dmg || 1)));
+    var unwinnable = !(rounds <= PA2_RULES.maxRounds), pack = kind === "guard" ? (run.guardAsleep ? c.echoSleepPack : c.guardPack) : 1;
+    var em = this.echoMult(run, ap.id); // v3.640.0 : chaleur de la veine, miroir du palier (1 sans écho)
+    var hpLoss = unwinnable ? Number(game.heroHp || 0) : Math.max(1, Math.round(rounds * foeDmg * pack * Number(ap.dmg || 1) * em));
     var gold = Math.round(this._refGold(run) * Number((c.combatGold || {})[kind] || 1.7) * pack * Number(ap.loot || 1) * this.goldMult(run));
     return { kind: kind, approach: ap.id, foeName: e.name, foeImage: e.image || null, pack: pack, hpLoss: hpLoss, unwinnable: unwinnable, gold: gold,
-      rounds: Number(ap.rounds || 3), verdict: window.Pa2Run ? Pa2Run.verdictOf(hpLoss) : "" };
+      rounds: Number(ap.rounds || 3), verdict: window.Pa2Run ? Pa2Run.verdictOf(hpLoss) : "",
+      mirror: run.echo === "palier" && run.lastAp === ap.id, heat: Number(run.heat || 0) };
   },
   /* Applique les dégâts d'un combat ; false si le héros tombe (le run s'arrête). */
   _hit: function (run, est) {
@@ -429,6 +474,11 @@ var LabyrinthRun = {
     run.pending = null;
     if (!this._hit(run, est)) { res.ko = true; res.dmg = est.hpLoss; res.parts = splitDamage(est.hpLoss, est.rounds); this._save(); return { ok: true, result: res }; }
     res.dmg = est.hpLoss; res.parts = splitDamage(est.hpLoss, est.rounds);
+    run.lastAp = apId; // v3.640.0 : le miroir garde l'approche du combat précédent
+    if (p.kind === "guard") {
+      if (run.echo === "rue" && apId === "tenir" && !run.guardRose) run.guardDownAt = p.li; // la rue : tenir ne l'achève pas
+      run.guardAsleep = false;
+    }
     res.gain = est.gold; this._gain(run, 0, est.gold); this._stat(run, "fights");
     if (window.SortieManager) SortieManager.noteKill(p.kind === "boss");
     if (p.kind === "guard") { run.guardUp = false; run.guardFoe = null; run.note = { text: _t("Combat de garde gagné : PV −{n}.", { n: res.dmg }) }; }
@@ -438,7 +488,11 @@ var LabyrinthRun = {
     return { ok: true, result: res };
   },
   /* La ruse (garde d'un levier) : réussie, on tire sans combattre ; ratée, du Souffle en moins et la garde frappe la première. */
-  ruseChance: function (run) { var c = this.cfg(); run = run || this.getRun(); return Math.max(c.ruseMin, c.ruseBase - c.rusePerFloor * ((run ? run.floor : 1) - 1)); },
+  ruseChance: function (run) {
+    var c = this.cfg(); run = run || this.getRun();
+    if (run && run.guardAsleep) return 1; // v3.640.0 (les gisants) : elle dort, on passe
+    return Math.max(c.ruseMin, c.ruseBase - c.rusePerFloor * ((run ? run.floor : 1) - 1));
+  },
   ruse: function () {
     var run = this.getRun(), p = run && run.pending, c = this.cfg();
     if (!p || p.kind !== "guard" || p.surprised) return { ok: false };
@@ -470,8 +524,9 @@ var LabyrinthRun = {
   leverInfo: function (li) {
     var run = this.getRun(); if (!run) return null;
     if (li === run.F.guarded && run.guardUp && !run.guardFoe) run.guardFoe = this._pick(this.cfg().guardFoes);
+    var asleep = !!run.guardAsleep && li === run.F.guarded && run.guardUp;
     return { guarded: li === run.F.guarded && run.guardUp, pulled: Number(run.pulled[li] || 0), estimate: (li === run.F.guarded && run.guardUp) ? this.estimate("guard") : null,
-      guardLine: this.texts().guardLines[Math.max(0, this.cfg().guardFoes.indexOf(run.guardFoe))] };
+      asleep: asleep, guardLine: asleep ? null : this.texts().guardLines[Math.max(0, this.cfg().guardFoes.indexOf(run.guardFoe))] };
   },
   fightGuard: function (li, apId) {   // raccourci (bancs, harnais) : engager puis combattre
     if (!this.engage("guard", li).ok) return { ok: false };

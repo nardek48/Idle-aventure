@@ -21924,6 +21924,15 @@ console.log("\n[431] v3.636.0 — Faille, lot F-0 : le moteur à leviers partag�
 console.log("\n[432] v3.638.0 — Faille, lot F-1 : la faille sans fond, après la Question");
 (function () {
   var L = g.LabyrinthRun, TS = g.TowerSystem, savedEnding = TS.ending, C = g.FAILLE_CONFIG;
+  /* Place le héros à côté d'une salle sans événement (ni escalier, ni levier, ni source, ni coffre) ; rend cette salle */
+  function freeStep(run) {
+    var F = run.F, rooms = L.rooms(F), plain = function (k) { return k !== F.stairs && k !== F.spring && k !== F.chest && k !== F.start && L.leverAt(run, k) < 0; };
+    for (var a = 0; a < rooms.length; a++) {
+      var n = L.nbrs(F, rooms[a]).filter(function (k) { return L.openNow(run, L.door(rooms[a], k)) && plain(k); })[0];
+      if (n && plain(rooms[a])) { run.at = rooms[a]; return n; }
+    }
+    return null;
+  }
   try {
     var game = freshCombat("knight");
     game.sceneRun = null; game.explorationProgression.faille = null;
@@ -21951,7 +21960,7 @@ console.log("\n[432] v3.638.0 — Faille, lot F-1 : la faille sans fond, après 
     ok(L.genFloor(5).boss && !L.genFloor(4).boss, "tous les 5 étages");
     /* FA6 : la forme au sol rejoint, prend 10 de Souffle et recule, sans combat */
     run.floor = 3;
-    var nb = L.nbrs(run.F, run.at).filter(function (k) { return L.canMove(run, k); })[0];
+    var nb = freeStep(run);
     run.foe = { at: nb, stun: 0, tick: 0, every: 1 }; var br = run.breath;
     var mv = L.move(nb);
     ok(mv.ok && !run.pending && run.breath === br - C.step - C.foeTouch && run.foe.stun === C.foeStun && run.foe.at !== run.at, "FA6 : la forme au sol prend " + C.foeTouch + " de Souffle et recule, sans combat");
@@ -22003,6 +22012,106 @@ console.log("\n[433] v3.639.0 — Onglets allégés : Quêtes et Camp (atelier o
     ok(ih !== -1 && ic > ih && (ia === -1 || ia > ic), "Le feu : la santé d'abord, la soirée ensuite, « Tu es ici » en dernier");
   } catch (err) { ok(false, "[433] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   finally { if (g.setQuestCategory) g.setQuestCategory("histoire"); }
+})();
+
+console.log("\n[434] v3.640.0 — Faille, lot F-2 : les cinq échos");
+(function () {
+  var L = g.LabyrinthRun, TS = g.TowerSystem, savedEnding = TS.ending, C = g.FAILLE_CONFIG, SQ = g.StoryQuestManager, savedReach = SQ.isStepReached;
+  /* Place le héros à côté d'une salle sans événement (ni escalier, ni levier, ni source, ni coffre) ; rend cette salle */
+  function freeStep(run) {
+    var F = run.F, rooms = L.rooms(F), plain = function (k) { return k !== F.stairs && k !== F.spring && k !== F.chest && k !== F.start && L.leverAt(run, k) < 0; };
+    for (var a = 0; a < rooms.length; a++) {
+      var n = L.nbrs(F, rooms[a]).filter(function (k) { return L.openNow(run, L.door(rooms[a], k)) && plain(k); })[0];
+      if (n && plain(rooms[a])) { run.at = rooms[a]; return n; }
+    }
+    return null;
+  }
+  /* Pose un étage de la faille avec l'écho voulu ; le héros sur sa case de départ */
+  function floorWith(echo) {
+    var run = L.getRun(); run.floor = 2; L._nextFloor(run); run.floor = 3;
+    run.echo = echo; run.heat = 0; run.veinCuts = 0; run.guardDownAt = null; run.guardRose = false; run.guardAsleep = false; run.lastAp = null;
+    run.foe = null; run.pending = null; run.breath = 100;
+    run.heroScale = { hp: 0.01, power: 1 }; g.game.heroMaxHp = g.game.heroHp = 1e7; // gardes battables, héros qui ne tombe pas
+    return run;
+  }
+  try {
+    var game = freshCombat("knight");
+    /* Le Labyrinthe n'a pas d'écho */
+    SQ.isStepReached = function (id) { return id === "ruines_11" ? true : savedReach.call(SQ, id); };
+    game.sceneRun = null; game.explorationProgression.labyrinth = null; g.WarehouseManager.addResource("ration", 3);
+    L.start("labyrinthe"); var lr = L.getRun(); L._nextFloor(lr); L._nextFloor(lr);
+    ok(lr.echo === null && L.stepCost(lr) === g.LABYRINTH_CONFIG.step && L.echoMult(lr, "tenir") === 1, "le Labyrinthe n'a pas d'écho : pas, pronostic inchangés");
+    L.abandon(); game.sceneRun = null;
+    /* Tirage */
+    TS.ending = function () { return "rien"; };
+    game.explorationProgression.faille = null; g.WarehouseManager.addResource("grande_ration", 3);
+    L.start("faille"); var run = L.getRun();
+    ok(run.floor === 1 && run.echo === null, "étage 1 : pas d'écho (la ligne de la fin choisie)");
+    var twice = 0, out = 0, seen = {}, prev = null, bossOk = true;
+    for (var t = 0; t < 200; t++) {
+      L._nextFloor(run);
+      if (run.F.boss && run.echo !== "palier") bossOk = false;
+      if (!run.F.boss && run.echo === prev) twice++;
+      if (C.echoes.indexOf(run.echo) < 0) out++;
+      seen[run.echo] = 1; prev = run.echo;
+    }
+    ok(out === 0 && Object.keys(seen).length === 5, "dès l'étage 2, un des cinq échos (" + Object.keys(seen).join(", ") + ")");
+    ok(twice === 0 && bossOk, "jamais deux fois le même de suite ; le palier sur l'étage du Reflet");
+    ok(g.FAILLE_TEXTS.echoes.sable.name === "L'étage du sable" && g.FAILLE_TEXTS.echoes.palier.rule === "le miroir", "noms et règles des échos (les étages de la Tour)");
+    /* Le sable */
+    run = floorWith("sable");
+    ok(L.stepCost(run) === Math.round(C.step * 1.5), "le sable : un pas coûte " + L.stepCost(run) + " de Souffle au lieu de " + C.step);
+    var nb = freeStep(run), b0 = run.breath;
+    L.move(nb);
+    ok(run.breath === b0 - L.stepCost(run), "appliqué au pas");
+    run.breath = 10; game.heroMaxHp = 1000; game.heroHp = 1; L._spring(run);
+    ok(run.breath === 10 + C.springBreath * 2 && game.heroHp === 1 + Math.round(1000 * C.springHealPct * 2), "la source rend le double (Souffle et PV)");
+    /* La rue */
+    run = floorWith("rue"); var li = run.F.guarded, lk = run.F.levers[li];
+    run.at = lk; L.fightGuard(li, "tenir");
+    ok(run.guardDownAt === li && !run.guardUp, "la rue : tenue, la garde reste à terre");
+    var out1 = L.nbrs(run.F, lk).filter(function (k) { return L.canMove(run, k); })[0];
+    L.move(out1); L.move(lk);
+    ok(run.guardUp && run.guardRose && run.note.alert && /relève/.test(run.note.text), "elle se relève quand tu reviens au levier");
+    L.fightGuard(li, "tenir"); L.move(out1); L.move(lk);
+    ok(!run.guardUp, "une seule fois");
+    run = floorWith("rue"); li = run.F.guarded; run.at = run.F.levers[li]; L.fightGuard(li, "charger");
+    ok(run.guardDownAt === null, "en chargeant, elle est achevée");
+    /* Les gisants */
+    run = floorWith("gisants"); run.guardAsleep = true; li = run.F.guarded; run.at = run.F.levers[li];
+    var info = L.leverInfo(li);
+    ok(info.asleep && L.ruseChance(run) === 1 && L.estimate("guard", "tenir").pack === C.echoSleepPack, "les gisants : endormie, la ruse passe d'office ; la combattre en réveille " + C.echoSleepPack);
+    L.engage("guard", li); var ru = L.ruse();
+    ok(ru.success && !run.guardUp, "la ruse passe");
+    run = floorWith("gisants"); run.guardAsleep = true; li = run.F.guarded; run.at = run.F.levers[li]; L.fightGuard(li, "tenir");
+    ok(!run.guardAsleep, "combattue, elle est réveillée");
+    /* La veine */
+    run = floorWith("veine");
+    (function () { /* le héros à côté d'une salle libre, qui devient la veine */
+      var F = run.F, rooms = L.rooms(F);
+      for (var a = 0; a < rooms.length; a++) { var ok2 = L.nbrs(F, rooms[a]).filter(function (k) { return L.openNow(run, L.door(rooms[a], k)) && k !== F.stairs && k !== F.spring && k !== F.start && L.leverAt(run, k) < 0; })[0];
+        if (ok2 && rooms[a] !== F.stairs && L.leverAt(run, rooms[a]) < 0) { run.at = rooms[a]; F.chest = ok2; return; } }
+    })();
+    var st0 = run.stones, e0 = L.estimate("guard", "tenir").hpLoss;
+    var mv = L.move(run.F.chest);
+    ok(mv.event === "vein" && !run.chestTaken && run.stones === st0, "la veine : le coffre devient une veine, rien n'est pris d'office");
+    var b1 = run.breath, c1 = L.cut();
+    ok(c1.ok && run.stones === st0 + C.echoVeinGain && run.heat === 1 && run.breath === b1 - C.pull, "tailler : +1 Givre bleu, Souffle −" + C.pull + ", l'étage chauffe");
+    var e1 = L.estimate("guard", "tenir");
+    ok(e1.heat === 1 && e1.hpLoss > e0, "la chaleur alourdit les combats de l'étage (" + e0 + " -> " + e1.hpLoss + " PV)");
+    for (var cc = 0; cc < 10; cc++) L.cut();
+    ok(run.veinCuts === C.echoVeinMax && run.chestTaken && !L.cut().ok, "au plus " + C.echoVeinMax + " tailles");
+    /* Le palier */
+    run = floorWith("palier"); run.lastAp = "tenir";
+    var same = L.estimate("guard", "tenir"), other = L.estimate("guard", "charger");
+    run.lastAp = null; var base = L.estimate("guard", "tenir");
+    ok(same.mirror && !other.mirror && Math.abs(same.hpLoss / base.hpLoss - (1 + C.echoMirror)) < 0.02, "le palier : la même approche que le combat d'avant coûte +" + Math.round(C.echoMirror * 100) + " %");
+    li = run.F.guarded; run.at = run.F.levers[li]; L.fightGuard(li, "charger");
+    ok(run.lastAp === "charger", "l'approche est notée pour le combat suivant");
+    ok(C.breathFloor === 50, "FA4 : +50 de Souffle par escalier (banc)");
+    L.abandon();
+  } catch (err) { ok(false, "[434] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  finally { TS.ending = savedEnding; SQ.isStepReached = savedReach; if (g.game) { g.game.sceneRun = null; if (g.game.explorationProgression) { delete g.game.explorationProgression.faille; g.game.explorationProgression.labyrinth = null; } } }
 })();
 
 Promise.all(ATTENTES).then(function () {

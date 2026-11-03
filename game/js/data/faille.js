@@ -17,7 +17,7 @@ var FAILLE_CONFIG = {
   costMaxBase: 44, costMaxPerGate: 10,
 
   /* Souffle */
-  breathStart: 100, step: 3, pull: 4, breathFloor: 30,
+  breathStart: 100, step: 3, pull: 4, breathFloor: 50, // v3.640.0 (FA4) : +50 par escalier (au banc, +30 arrêtait toutes les montées vers l'étage 7)
   springBreath: 25, springHealPct: 0.20,
 
   /* Gardes : ennemis de la Tour ; FA4 : +6 % composés par étage (pas de fond, la montée doit finir par fermer) */
@@ -39,7 +39,15 @@ var FAILLE_CONFIG = {
   stairsStones: 1, stairsStonesPerFloor: 0, stairsGoldPerFloor: 150,
   chestStones: 1, chestStonesPerTwoFloors: 0, chestGoldPerFloor: 100,
   bossStones: 3,
-  stoneResource: "givre_bleu"
+  stoneResource: "givre_bleu",
+
+  /* v3.640.0 (lot F-2, FA3) : LES ÉCHOS. Un écho tiré par étage dès l'étage 2 (jamais deux fois le même de suite),
+     le palier sur l'étage du Reflet. Règles au niveau de la carte et du pronostic, sans moteur de combat. */
+  echoes: ["sable", "rue", "gisants", "veine", "palier"], echoFrom: 2, bossEcho: "palier",
+  echoSandStep: 1.5, echoSandSpring: 2,  // le sable : chaque pas ×1,5 de Souffle ; la source rend le double
+  echoSleepPct: 0.5, echoSleepPack: 3,   // les gisants : une garde sur deux dort ; la combattre en réveille une troisième
+  echoVeinHeat: 0.08, echoVeinMax: 5, echoVeinGain: 1, // la veine : +1 Givre bleu par taille, +8 % de coups reçus sur l'étage
+  echoMirror: 0.25                       // le palier : même approche que le combat précédent, +25 % de coups reçus
 };
 
 /* Tuiles à générer (Images à générer, famille « La faille ») : vrai chemin gardé, l'icône générique en attendant. */
@@ -52,6 +60,7 @@ var FAILLE_TILES = {
   stairsUp: "images/Maps/faille/palier.webp",
   spring: "images/Maps/faille/source.webp",
   chest: "images/Maps/faille/givre.webp",
+  vein: "images/Maps/faille/veine.webp",       // v3.640.0 : la veine (écho de la Montagne)
   bossRoom: "images/Maps/faille/salle_reflet.webp",
   bossPortrait: "images/Boss/reflet.webp",   // la fiche du Reflet (Sommet interdit) : même image, déjà listée
   icon: "images/Icons/quest_icons/exploration/faille.webp",
@@ -81,6 +90,14 @@ var FAILLE_TEXTS = {
     "Un mage corrompu parle au levier. Le levier ne répond pas.",
     "Un hybride tourne autour du levier. Il n'a pas décidé ce qu'il est."],
   bossLine: "Il se bat comme toi, avec un geste de retard. Il garde ce que tu viens de faire.",
+  /* v3.640.0 (FA3) : les cinq échos. Chaque étage se souvient d'un monde et en reprend la leçon. */
+  echoes: {
+    sable: { name: "L'étage du sable", rule: "la soif", line: "Du sable sur les marches, venu de nulle part. Chaque pas coûte plus de Souffle ; la source rend le double." },
+    rue: { name: "La rue qui tient", rule: "la relève", line: "Une rue, entre deux paliers. Ce qui tombe ici se relève quand tu repasses, sauf si tu l'as achevé en chargeant." },
+    gisants: { name: "Les gisants debout", rule: "le sommeil", line: "Des gisants debout contre les murs. Une garde sur deux dort : on passe sans la réveiller, ou on la paie." },
+    veine: { name: "La veine du dedans", rule: "la chaleur", line: "Une veine bat dans la pierre. La tailler rapporte du givre, et chaque coup réchauffe l'étage." },
+    palier: { name: "Le palier sans murs", rule: "le miroir", line: "Ici, elle garde tes gestes. La même approche deux fois de suite coûte plus cher." }
+  },
   /* Textes propres à la faille (LabyrinthRun.say) : sans clé ici, le texte du Labyrinthe */
   say: {
     locked: "La faille s'ouvre une fois la Question répondue",
@@ -127,7 +144,20 @@ var FAILLE_TEXTS = {
     endAbandon: "Tu redescends sans te retourner.",
     lost: "Resté là-haut : {s} Givre bleu, {g} or.",
     statCaught: "Rejoint par la forme au sol",
-    endChartCap: "Ta carte · étage {n}"
+    endChartCap: "Ta carte · étage {n}",
+    /* v3.640.0 (FA3) : les échos */
+    rise: "La garde se relève. Il fallait l'achever.",
+    asleepLine: "La garde dort debout, la main sur le levier. Elle ne t'a pas entendu.",
+    veinTitle: "La veine",
+    veinSub: "Tailler : +{g} Givre bleu · Souffle −{n}",
+    veinHeat: "Chaleur de l'étage : coups reçus +{p} %.",
+    veinCold: "La pierre est encore froide.",
+    veinCut: "Tu tailles. +{g} Givre bleu, l'étage chauffe : coups reçus +{p} %. Souffle −{n}.",
+    veinDone: "La veine ne bat plus. Il n'y a plus rien à tailler.",
+    veinLeft: "Encore {n} tailles possibles.",
+    veinBtn: "Tailler",
+    mirror: "Le miroir : +{p} %",
+    heat: "Chaleur : +{p} %"
   }
 };
 
