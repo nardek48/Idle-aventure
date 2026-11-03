@@ -22233,6 +22233,41 @@ console.log("\n[436] v3.649.0 — Journal : filtres et étapes d'Histoire en un 
   } catch (err) { ok(false, "[436] exception : " + err.message); }
 })();
 
+console.log("\n[437] v3.653.0 — Grimoire : réglage « Varier » (ne pas refaire la même technique)");
+(function () {
+  var cu = g.canUseAction, cra = g.ClassCombatManager._chooseRoundAction, sv = { v: g.game.grimoireVarier, r: g.game._varier, m: g.game._towerMirror };
+  try {
+    ok(g.isGrimoireSlotAvoided("skill1", { avoidSlots: ["skill1"] }) && !g.isGrimoireSlotAvoided("skill2", { avoidSlots: ["skill1"] }) && !g.isGrimoireSlotAvoided("skill1", {}), "isGrimoireSlotAvoided : seulement les techniques listées");
+    var kit = { actions: { skill1: { id: "a" }, skill2: { id: "b" } } }, prets = { a: true, b: true };
+    g.canUseAction = function (r, c, a) { return !!prets[a.id]; };
+    ok(g.chooseAutoAction(["skill1", "skill2"], kit, {}, {}, { avoidSlots: ["skill1"] }) === "skill2", "repli : la technique d'avant est sautée, l'autre part");
+    ok(g.chooseAutoAction(["skill1", "skill2"], kit, {}, {}, {}) === "skill1", "sans réglage : l'ordre habituel");
+    var rg = g.chooseGrimoireAction([{ conditionId: "x", actionSlot: "skill1" }], kit, {}, {}, { avoidSlots: ["skill1"] });
+    ok(rg === null, "règle du Grimoire sur la technique d'avant : sautée");
+    g.canUseAction = cu;
+    g.game.grimoireVarier = true; g.game._varier = { last: "skill1", used: {} }; g.game._towerMirror = { slot: "skill2", foe: "f" };
+    ok(JSON.stringify(g.ClassCombatManager.varierAvoidSlots()) === '["skill1","skill2"]', "à éviter : la technique d'avant et celle que garde le miroir");
+    g.game._varier = { last: "defense", used: {} }; g.game._towerMirror = null;
+    ok(g.ClassCombatManager.varierAvoidSlots().length === 0, "la défense n'est pas une technique à éviter");
+    var appels = [];
+    g.ClassCombatManager._chooseRoundAction = function (fx, av) { appels.push(av ? av.join(",") : "libre"); return av ? null : { slot: "skill1" }; };
+    g.game._varier = { last: "skill1", used: {} };
+    var d = g.ClassCombatManager.chooseRoundAction(false);
+    ok(appels.join("|") === "skill1|libre" && d && d.slot === "skill1", "seule technique prête : elle part quand même (relance sans contrainte)");
+    appels = []; g.game.grimoireVarier = false; g.ClassCombatManager.chooseRoundAction(false);
+    ok(appels.join("|") === "libre", "réglage éteint : une seule décision, comme avant");
+    g.ClassCombatManager._chooseRoundAction = cra;
+    g.game.grimoireVarier = true;
+    var sd = g.buildSaveData();
+    ok(sd.grimoireVarier === true, "sauvegarde : grimoireVarier écrit");
+    delete sd.grimoireVarier; g.restoreBaseState(sd);
+    ok(g.game.grimoireVarier === false, "ancienne sauvegarde sans le champ : éteint");
+    sd.grimoireVarier = true; g.restoreBaseState(sd);
+    ok(g.game.grimoireVarier === true, "rechargement : réglage gardé");
+  } catch (err) { ok(false, "[437] exception : " + err.message); }
+  finally { g.canUseAction = cu; g.ClassCombatManager._chooseRoundAction = cra; g.game.grimoireVarier = sv.v; g.game._varier = sv.r; g.game._towerMirror = sv.m; }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

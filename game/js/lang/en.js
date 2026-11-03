@@ -8844,6 +8844,9 @@ I18n.register("en", {
 
   "Récits de patrouille : « au puits sec », « des marches de craie », plus de « à Le » ni « de Les ».": "Patrol stories: sector names now read naturally in the middle of a sentence.",
   "Échoppe moins chère à partir de la Crypte : une Épique y coûte 135 000 or (au lieu de 225 000), 180 000 en Montagne (au lieu de 810 000), et une Légendaire 1,05 million à la Tour (au lieu de 7 millions).": "Cheaper shop from the Crypt on: an Epic now costs 135,000 gold there (instead of 225,000), 180,000 in the Mountain (instead of 810,000), and a Legendary 1.05 million in the Tower (instead of 7 million).",
+  "Grimoire : nouveau réglage « Varier » à la préparation de sortie, dès la Tour. Ton héros évite de refaire la même technique quand une autre est prête, et le miroir de la Tour ne lui prend presque plus rien.": "Grimoire: new “Vary” setting in the outing preparation, from the Tower on. Your hero avoids repeating the same technique when another is ready, and the Tower's mirror takes almost nothing from them anymore.",
+  "Varier : ne pas refaire la même technique": "Vary: don't repeat the same technique",
+  "Si une autre technique est prête, elle passe avant celle d'avant. Contre le miroir de la Tour, tu gardes toute ta force.": "If another technique is ready, it goes before the previous one. Against the Tower's mirror, you keep your full strength.",
   "Patrouilles dans la Tour : tes compagnons peuvent partir sur les étages libérés, avec leurs récits de là-haut.": "Patrols in the Tower: your companions can head out to the freed floors, with their stories from up there.",
   "La Mémoire continue après la Tour : les niveaux 25 à 28 s'ouvrent avec ton record dans la faille, et chaque étage franchi rapporte de l'Aether. Six hauts faits de la faille.": "Memory goes on after the Tower: levels 25 to 28 open with your record in the rift, and every floor cleared yields Aether. Six rift achievements.",
 

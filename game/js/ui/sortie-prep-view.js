@@ -135,6 +135,11 @@ function buildSortiePrepHTML() {
         h += '<div class="cp-behavior-row"><span>' + _t("Cible") + '</span>' + sortiePrepSegHTML(GRIMOIRE_TARGET_POLICIES, pol, "sortiePrepTarget") + '</div>';
         h += '<div class="cp-behavior-hint">' + esc(_td(RiseSystem.getPolicyDef(pol).desc)) + '</div>';
       }
+      if (game.worldsEverReached && game.worldsEverReached[5]) { // v3.653.0 : réglage « Varier », dès la Tour
+        h += '<label class="cp-behavior-check"><input type="checkbox"' + (game.grimoireVarier ? ' checked' : '')
+          + ' onclick="sortiePrepVarier(this.checked)"><span>' + _t("Varier : ne pas refaire la même technique") + '</span></label>';
+        h += '<div class="cp-behavior-hint">' + _t("Si une autre technique est prête, elle passe avant celle d'avant. Contre le miroir de la Tour, tu gardes toute ta force.") + '</div>';
+      }
       if (window.PotionAutoManager) {
         var pa = PotionAutoManager.ensure();
         h += '<div class="cp-behavior-row"><span>' + _t("Boire") + '</span>' + sortiePrepSegHTML(POTION_AUTO_THRESHOLDS, pa.threshold, "sortiePrepPotAuto") + '</div>';
@@ -514,6 +519,7 @@ function sortiePrepTuneSummary(grim) {
 function sortiePrepMode(mode) { if (window.CombatEngine) CombatEngine.setCombatMode(mode); renderSortiePrep(); }
 function sortiePrepPreset(id) { if (sortiePrep) sortiePrep.preset = id || null; renderSortiePrep(); }
 function sortiePrepTarget(id) { if (window.RiseSystem) RiseSystem.setPolicy(id); renderSortiePrep(); }
+function sortiePrepVarier(on) { game.grimoireVarier = !!on; if (typeof saveGame === "function") saveGame(); renderSortiePrep(); } // v3.653.0
 function sortiePrepPotAuto(id) { if (window.PotionAutoManager) PotionAutoManager.set("threshold", id); renderSortiePrep(); }
 function sortiePrepKeepBoss(on) { if (window.PotionAutoManager) PotionAutoManager.set("keepForBoss", !!on); renderSortiePrep(); }
 function sortiePrepMate(id, present) { if (window.CompanionManager) CompanionManager.setPresent(id, present); renderSortiePrep(); }
@@ -553,6 +559,7 @@ window.sortiePrepHasChoice = sortiePrepHasChoice;
 window.sortiePrepMode = sortiePrepMode;
 window.sortiePrepPreset = sortiePrepPreset;
 window.sortiePrepTarget = sortiePrepTarget;
+window.sortiePrepVarier = sortiePrepVarier;
 window.sortiePrepPotAuto = sortiePrepPotAuto;
 window.sortiePrepKeepBoss = sortiePrepKeepBoss;
 window.sortiePrepMate = sortiePrepMate;
