@@ -29,7 +29,8 @@ function buildMemoryGaugeHTML(p) {
   h += '<div class="mem-gauge-head"><span class="mem-gauge-lvl">' + _t("Mémoire {n}", { n: p.level }) + '</span></div>';
   h += '<div class="kgauge kgauge-thin kgauge-aether mem-gauge-bar"><div class="kgauge-track"><div class="kgauge-fill" style="width:' + pct + '%"></div></div>'
     + '<span class="kgauge-text">' + (p.maxed ? _t("Tout est retenu") : _t("{a} / {b} Aether", { a: formatNumber(p.into), b: formatNumber(p.need) })) + '</span></div>';
-  if (p.capped) h += '<div class="mem-gauge-note">' + _t("La jauge est pleine pour ce monde : le niveau suivant s'ouvrira dans le prochain monde.") + '</div>';
+  var fg = p.capped && MemoryManager.failleGate ? MemoryManager.failleGate(p.cap + 1) : null; // v3.644.0 : au-delà de la Tour, la faille
+  if (p.capped) h += '<div class="mem-gauge-note">' + (fg ? _t("La jauge est pleine : le niveau suivant s'ouvrira quand tu atteindras l'étage {n} de la faille.", { n: fg }) : _t("La jauge est pleine pour ce monde : le niveau suivant s'ouvrira dans le prochain monde.")) + '</div>';
   h += '</div>';
   return h;
 }
@@ -45,7 +46,7 @@ function buildMemoryLevelHTML(def, p) {
   var h = '<div class="mem-level' + (reached ? '' : ' is-locked') + (pending ? ' is-pending' : '') + '" id="mem-level-' + level + '">';
   h += '<div class="ksec mem-level-head"><span>' + _t("Niveau {n}", { n: level }) + ' <small>' + esc(_td(def.theme)) + (def.jalon ? ' · ' + _t("jalon") : '') + '</small></span></div>';
   if (!reached) {
-    h += '<div class="mem-level-lock"><img class="ico-inline" src="images/Icons/system/lock_closed.webp" alt=""> ' + (waiting ? _t("S'ouvre une fois la Question répondue, en haut de la Tour.") : worldLocked ? _t("S'ouvre dans un monde plus lointain.") : _t("Encore un peu d'Aether à rassembler.")) + '</div>';
+    h += '<div class="mem-level-lock"><img class="ico-inline" src="images/Icons/system/lock_closed.webp" alt=""> ' + (waiting ? _t("S'ouvre une fois la Question répondue, en haut de la Tour.") : worldLocked ? (MemoryManager.failleGate && MemoryManager.failleGate(level) ? _t("S'ouvre à l'étage {n} de la faille.", { n: MemoryManager.failleGate(level) }) : _t("S'ouvre dans un monde plus lointain.")) : _t("Encore un peu d'Aether à rassembler.")) + '</div>';
   } else if (pending) {
     h += '<div class="mem-level-lock is-pending"><img class="ico-inline" src="images/Icons/aether_icon.webp" alt=""> ' + (broken ? _t("La ligne ne tient plus : choisis à nouveau, sans frais.") : _t("Un choix t'attend ici.")) + '</div>';
   }

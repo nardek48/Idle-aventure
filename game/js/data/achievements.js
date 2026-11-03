@@ -38,6 +38,8 @@ function achievementHasRarityOwned(rarity) {
 function storyAdvDoneAch(id) { return (game.adventureQuestsCompleted && game.adventureQuestsCompleted[id]) ? 1 : 0; }
 
 /* Compteur neuf (game.achievementStats.counters), sans rattrapage. */
+/* v3.644.0 : record de la faille (lu sans créer d'état) */
+function achFailleBest() { var st = (game.explorationProgression || {}).faille; return Number((st && st.best) || 0); }
 function achCounter(key) {
   var st = game.achievementStats;
   return (st && st.counters && Number(st.counters[key])) || 0;
@@ -244,6 +246,21 @@ var ACHIEVEMENTS_DB = [
     hidden: true, hint: "Elle refait. Toi aussi.", fresh: true,
     target: 1, track: function () { return achCounter("retakenTower"); }, reward: { gold: 12000 } },
 
+  /* ===================== La faille (v3.644.0, lot F-3, FA10) ===================== */
+  { id: "hf_faille_10", category: "faille", name: "Dix étages", desc: "Atteindre l'étage 10 de la faille.",
+    target: 10, track: function () { return achFailleBest(); }, reward: { gold: 8000 } },
+  { id: "hf_faille_20", category: "faille", name: "Vingt étages", desc: "Atteindre l'étage 20 de la faille.",
+    target: 20, track: function () { return achFailleBest(); }, reward: { gold: 15000 } },
+  { id: "hf_faille_30", category: "faille", name: "Trente étages", desc: "Atteindre l'étage 30 de la faille.",
+    target: 30, track: function () { return achFailleBest(); }, reward: { gold: 25000 } },
+  { id: "hf_faille_echos", category: "faille", name: "Cinq mondes", desc: "Franchir un étage de chacun des cinq échos.",
+    target: 5, track: function () { var st = (game.explorationProgression || {}).faille; return st && st.echoes ? Object.keys(st.echoes).length : 0; }, reward: { gold: 8000 } },
+  { id: "hf_faille_reflet", category: "faille", name: "Le Reflet, là-haut", desc: "Vaincre le Reflet dans la faille.",
+    target: 1, track: function () { return achCounter("failleReflet"); }, reward: { gold: 8000 } },
+  { id: "hf_faille_varier", category: "faille", name: "Sans redite", desc: "Vaincre le Reflet dans la faille sans avoir repris la même approche sur son palier.",
+    hidden: true, hint: "Il garde ce que tu viens de faire.", fresh: true,
+    target: 1, track: function () { return achCounter("failleRefletVarier"); }, reward: { gold: 15000 } },
+
   /* ===================== Grimoire ===================== */
   { id: "hf_grim_rule", category: "grimoire", name: "Première règle", desc: "Écrire une règle du Grimoire.",
     target: 1, track: function () { return Array.isArray(game.grimoireRules) && game.grimoireRules.length ? 1 : 0; }, reward: { gold: 150 } },
@@ -335,6 +352,9 @@ var ACHIEVEMENT_CATEGORIES = [
   // v3.632.0 : la Tour (titre neutre)
   { id: "tower", label: "Tour", world: 5, tiers: [3, 6, 8],
     tierRewards: [{ gold: 20000 }, { gold: 50000 }, { gold: 10000, title: "Qui est monté jusqu'en haut" }] },
+  // v3.644.0 : la faille (FA10), sans monde : paliers sur ses cinq hauts faits visibles
+  { id: "faille", label: "Faille", tiers: [2, 3, 5],
+    tierRewards: [{ gold: 25000 }, { gold: 60000 }, { gold: 15000, title: "Plus haut que la carte" }] },
   { id: "grimoire", label: "Grimoire" },
   { id: "village", label: "Village" },
   { id: "companions", label: "Compagnons" },

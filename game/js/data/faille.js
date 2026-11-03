@@ -157,7 +157,8 @@ var FAILLE_TEXTS = {
     veinLeft: "Encore {n} tailles possibles.",
     veinBtn: "Tailler",
     mirror: "Le miroir : +{p} %",
-    heat: "Chaleur : +{p} %"
+    heat: "Chaleur : +{p} %",
+    nextEcho: "Plus haut, tu le sais déjà : {x}."   // v3.644.0 (Mémoire 26, L'écho appris)
   }
 };
 
@@ -169,8 +170,33 @@ LAB_KINDS.faille = {
   floorNote: function (run) {
     var f = run.floor === 1 && window.TowerSystem ? TowerSystem.ending() : null;
     return f && FAILLE_TEXTS.entryLines[f] ? FAILLE_TEXTS.entryLines[f] : null;
+  },
+  /* v3.644.0 (lot F-3) : la Mémoire 25 à 28 (FA9), les Souvenirs et les hauts faits de la faille, branchés sur le moteur. */
+  startBreath: function (run, v) { return v + (faMem("souffle_long") ? faVal("souffle_long_start") : 0) + (faMem("source_vive") ? faVal("source_vive_start") : 0); },
+  springMult: function (run, v) { return faMem("source_vive") ? v * faVal("source_vive_mult") : v; },
+  foresee: function () { return faMem("echo_appris"); },
+  stoneGain: function (run, n) {   // l'écho rend : +25 % de Givre bleu sur un étage à écho (le reste est gardé pour la fois suivante)
+    if (!run.echo || !faMem("echo_rend")) return n;
+    var raw = n * faVal("echo_rend_mult") + Number(run.stoneCarry || 0), k = Math.floor(raw + 1e-9);
+    run.stoneCarry = raw - k; return k;
+  },
+  mirrorPct: function (run, v) { return faMem("reflet_garde") ? faVal("reflet_garde_mirror") : v; },
+  lossMult: function (run, v) { return faMem("ce_que_tu_portes") ? v * faVal("ce_que_tu_portes_mult") : v; },
+  touchBreath: function (run, v) { return faMem("elle_regarde") ? faVal("elle_regarde_touch") : v; },
+  stairsBonus: function (run, v) { return v + (faMem("braise_encore") ? faVal("braise_encore_givre") : 0); },
+  onStart: function () { if (faMem("pain_camp")) game.heroHp = game.heroMaxHp; },
+  onStairs: function (run) {   // Souvenir de l'étage ; écho traversé (haut fait « Cinq mondes »)
+    if (window.MemoryManager) MemoryManager.souvenir("failleFloor", FAILLE_TEXTS.title);
+    if (run.echo) { var st = (game.explorationProgression || {}).faille; if (st) { st.echoes = st.echoes || {}; st.echoes[run.echo] = 1; } }
+  },
+  onBossDown: function (run) {
+    if (window.MemoryManager) MemoryManager.souvenir("failleReflet", FAILLE_CONFIG.bossName);
+    if (faMem("reflet_verre") && window.SortieManager) { SortieManager.addResource("verre_faille", faVal("reflet_verre_n")); run.verre = Number(run.verre || 0) + faVal("reflet_verre_n"); }
+    if (window.AchievementManager) { AchievementManager.bump("failleReflet"); if (!run.mirrorHit) AchievementManager.flag("failleRefletVarier"); }
   }
 };
+function faMem(id) { return !!(window.MemoryManager && MemoryManager.has(id)); }
+function faVal(k) { return Number((window.MEMORY_VALUES || {})[k] || 0); }
 
 window.FAILLE_CONFIG = FAILLE_CONFIG;
 window.FAILLE_TILES = FAILLE_TILES;

@@ -17,6 +17,8 @@ var LabyrinthRun = {
   cfg: function (kind) { return this.def(kind).config; },
   tiles: function (kind) { return this.def(kind).tiles; },
   texts: function (kind) { return this.def(kind).texts; },
+  /* v3.644.0 : point d'accroche de la sorte (data/faille.js : la Mémoire 25 à 28, les hauts faits). Sans lui : val. */
+  hook: function (name, run, val) { var f = this.def()[name]; return typeof f === "function" ? f(run, val) : val; },
   /* Texte propre à la sorte (texts.say[key], traduit et rempli), sinon le texte du Labyrinthe déjà traduit. */
   say: function (key, fallback, params, kind) { var o = (this.texts(kind).say || {})[key]; return o ? I18n.fill(_td(o), params) : fallback; },
   _save: function () { if (typeof saveGame === "function") saveGame(); },
@@ -66,7 +68,9 @@ var LabyrinthRun = {
     game.sceneRun = { lab: true, kind: k, templateId: k, worldId: c.worldId, status: LAB_STATUS.map, startedAt: Date.now(), bestBefore: Number(s.best || 0), stats: {},
       floor: 0, breath: c.breathStart, stones: 0, gold: 0, heroScale: null, end: null, note: null };
     if (window.SortieManager) SortieManager.start("scene");
-    this._nextFloor(this.getRun());
+    var nr = this.getRun(); this.hook("onStart", nr);
+    nr.breath = Math.max(1, nr.breath + Number(this.hook("startBreath", nr, 0) || 0)); // v3.644.0 : Mémoire 25
+    this._nextFloor(nr);
     this._log("🗝️ " + this.say("startLog", _t("Tu descends dans le labyrinthe sous la ville.")));
     this._save();
     return { ok: true, reason: null };
@@ -208,10 +212,15 @@ var LabyrinthRun = {
      (le Labyrinthe) : aucun tirage, rien ne change. */
   _rollEcho: function (run, F) {
     var c = this.cfg();
-    run.heat = 0; run.veinCuts = 0; run.guardDownAt = null; run.guardRose = false; run.guardAsleep = false;
+    run.heat = 0; run.veinCuts = 0; run.guardDownAt = null; run.guardRose = false; run.guardAsleep = false; run.mirrorHit = false;
     if (!c.echoes || !c.echoes.length || run.floor < (c.echoFrom || 1)) { run.echo = null; return; }
-    var prev = run.echo, pool = c.echoes.filter(function (e) { return e !== prev; });
-    run.echo = (F.boss && c.bossEcho) ? c.bossEcho : this._pick(pool.length ? pool : c.echoes);
+    var prev = run.echo, pool = c.echoes.filter(function (e) { return e !== prev; }), self = this;
+    run.echo = (F.boss && c.bossEcho) ? c.bossEcho : (run.nextEcho && run.nextEcho !== prev ? run.nextEcho : this._pick(pool.length ? pool : c.echoes));
+    run.nextEcho = null;
+    if (this.hook("foresee", run, false)) {   // v3.644.0 (Mémoire 26) : l'écho de l'étage suivant, tiré d'avance
+      var nextBoss = (run.floor + 1) % c.bossEvery === 0, pool2 = c.echoes.filter(function (e) { return e !== run.echo; });
+      run.nextEcho = nextBoss && c.bossEcho ? c.bossEcho : self._pick(pool2);
+    }
     if (run.echo === "gisants") run.guardAsleep = Math.random() < c.echoSleepPct;
   },
   echoOf: function (run) { run = run || this.getRun(); return run ? run.echo || null : null; },
@@ -220,8 +229,8 @@ var LabyrinthRun = {
   /* Coups reçus en plus sur l'étage : la chaleur de la veine ; le miroir si l'approche est la même que la précédente */
   echoMult: function (run, apId) {
     var c = this.cfg(), m = 1 + Number(run.heat || 0) * Number(c.echoVeinHeat || 0);
-    if (run.echo === "palier" && apId && run.lastAp === apId) m += Number(c.echoMirror || 0);
-    return m;
+    if (run.echo === "palier" && apId && run.lastAp === apId) m += Number(this.hook("mirrorPct", run, c.echoMirror) || 0);
+    return m * this.hook("lossMult", run, 1); // v3.644.0 : Mémoire 27 et 28
   },
   /* La veine : tailler, tant qu'il y a du Souffle et que la veine bat */
   cut: function () {
@@ -295,7 +304,7 @@ var LabyrinthRun = {
     return { ok: true, event: ev };
   },
   _spring: function (run) {
-    var c = this.cfg(), k2 = run.echo === "sable" ? c.echoSandSpring : 1; run.springUsed = true; // v3.640.0 : le sable, la source rend le double
+    var c = this.cfg(), k2 = (run.echo === "sable" ? c.echoSandSpring : 1) * this.hook("springMult", run, 1); run.springUsed = true; // v3.640.0 : le sable, la source rend le double
     run.breath = Math.min(c.breathStart, run.breath + c.springBreath * k2);
     game.heroHp = Math.min(game.heroMaxHp, Number(game.heroHp || 0) + Math.round(game.heroMaxHp * c.springHealPct * k2));
     var sp = { n: c.springBreath * k2, p: Math.round(c.springHealPct * k2 * 100) };
@@ -307,6 +316,7 @@ var LabyrinthRun = {
     run.note = { text: this.say("chest", _t("Un coffre oublié : +{s} Pierres errantes, +{g} or.", { s: s, g: g }), { s: s, g: g }) };
   },
   _gain: function (run, stones, gold) {
+    if (stones) stones = this.hook("stoneGain", run, stones); // v3.644.0 (Mémoire 26)
     run.stones += stones; run.gold += gold;
     if (window.SortieManager) { if (stones) SortieManager.addResource(this.cfg().stoneResource, stones); if (gold) SortieManager.addGold(gold); }
   },
@@ -328,8 +338,9 @@ var LabyrinthRun = {
     if (f.at !== run.at) return false;
     var c = this.cfg();
     if (c.foeTouch) {   // v3.638.0 (faille, FA6) : elle ne se bat pas, elle prend du Souffle et recule
-      run.breath = Math.max(0, run.breath - c.foeTouch); f.stun = c.foeStun; f.at = this._farthest(run, run.at); this._stat(run, "caught");
-      run.note = { text: this.say("touched", _t("Le Contremaître te rattrape."), { n: c.foeTouch }), alert: true };
+      var tb = this.hook("touchBreath", run, c.foeTouch); // v3.644.0 (Mémoire 28)
+      run.breath = Math.max(0, run.breath - tb); f.stun = c.foeStun; f.at = this._farthest(run, run.at); this._stat(run, "caught");
+      run.note = { text: this.say("touched", _t("Le Contremaître te rattrape."), { n: tb }), alert: true };
       if (run.breath <= 0) this.finish("souffle");
       return "touched";
     }
@@ -474,6 +485,7 @@ var LabyrinthRun = {
     run.pending = null;
     if (!this._hit(run, est)) { res.ko = true; res.dmg = est.hpLoss; res.parts = splitDamage(est.hpLoss, est.rounds); this._save(); return { ok: true, result: res }; }
     res.dmg = est.hpLoss; res.parts = splitDamage(est.hpLoss, est.rounds);
+    if (est.mirror) run.mirrorHit = true; // v3.644.0 : haut fait « Sans redite »
     run.lastAp = apId; // v3.640.0 : le miroir garde l'approche du combat précédent
     if (p.kind === "guard") {
       if (run.echo === "rue" && apId === "tenir" && !run.guardRose) run.guardDownAt = p.li; // la rue : tenir ne l'achève pas
@@ -483,7 +495,7 @@ var LabyrinthRun = {
     if (window.SortieManager) SortieManager.noteKill(p.kind === "boss");
     if (p.kind === "guard") { run.guardUp = false; run.guardFoe = null; run.note = { text: _t("Combat de garde gagné : PV −{n}.", { n: res.dmg }) }; }
     else if (p.kind === "foe") { run.foe.stun = c.foeStun; run.foe.at = this._farthest(run, run.at); run.note = { text: this.say("foeBack", _t("Le Contremaître recule dans le noir… pour l'instant. PV −{n}.", { n: res.dmg }), { n: res.dmg }), alert: true }; }
-    else { run.bossDown = true; this._gain(run, c.bossStones, 0); res.stones = c.bossStones; run.note = { text: this.say("bossDown", _t("Le Gardien s'effondre en marches. +{n} Pierres errantes.", { n: c.bossStones }), { n: c.bossStones }) }; }
+    else { run.bossDown = true; this._gain(run, c.bossStones, 0); res.stones = c.bossStones; this.hook("onBossDown", run); run.note = { text: this.say("bossDown", _t("Le Gardien s'effondre en marches. +{n} Pierres errantes.", { n: c.bossStones }), { n: c.bossStones }) }; }
     this._save();
     return { ok: true, result: res };
   },
@@ -551,7 +563,7 @@ var LabyrinthRun = {
 
   /* ---------- L'escalier : le Gardien, puis descendre ou remonter ---------- */
 
-  stairsGain: function (run) { var c = this.cfg(); return { stones: c.stairsStones + c.stairsStonesPerFloor * run.floor, gold: Math.round(c.stairsGoldPerFloor * run.floor * this.goldMult(run)) }; },
+  stairsGain: function (run) { var c = this.cfg(); return { stones: c.stairsStones + c.stairsStonesPerFloor * run.floor + Number(this.hook("stairsBonus", run, 0) || 0), gold: Math.round(c.stairsGoldPerFloor * run.floor * this.goldMult(run)) }; },
   fightBoss: function (apId) {   // raccourci (bancs, harnais)
     if (!this.engage("boss").ok) return { ok: false };
     var r = this.fight(apId || "tenir");
@@ -561,7 +573,7 @@ var LabyrinthRun = {
   claimStairs: function () {
     var run = this.getRun(); if (!run || run.at !== run.F.stairs || !run.bossDown) return null;
     if (run.claimed === run.floor) return null;
-    var g = this.stairsGain(run); run.claimed = run.floor; this._gain(run, g.stones, g.gold); this._stat(run, "floors"); this._save();
+    var g = this.stairsGain(run); run.claimed = run.floor; this._gain(run, g.stones, g.gold); this._stat(run, "floors"); this.hook("onStairs", run); this._save();
     return g;
   },
   descend: function () {

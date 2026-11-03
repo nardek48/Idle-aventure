@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.644.0", "menu_icons/heroes_menu", _t("La Mémoire continue après la Tour : les niveaux 25 à 28 s\'ouvrent avec ton record dans la faille, et chaque étage franchi rapporte de l\'Aether. Six hauts faits de la faille.")],
     ["3.643.0", "menu_icons/village_menu", _t("Village et Héros plus nets : le choix « Avec toi / Au camp » sur la ligne des PV, le plafond de l'Entrepôt en petit, et plus de bouton grisé quand il n'y a rien à récolter.")],
     ["3.642.0", "menu_icons/heroes_menu", _t("Héros › Compagnons : la phrase d'aide en haut de l'écran est de nouveau lisible.")],
     ["3.641.0", "menu_icons/quests_menu", _t("Quêtes : les onglets s'appellent maintenant Annexes et Alliés, plus courts et lisibles sur les petits téléphones.")],
