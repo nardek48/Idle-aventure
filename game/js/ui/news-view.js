@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.643.0", "menu_icons/village_menu", _t("Village et Héros plus nets : le choix « Avec toi / Au camp » sur la ligne des PV, le plafond de l'Entrepôt en petit, et plus de bouton grisé quand il n'y a rien à récolter.")],
     ["3.642.0", "menu_icons/heroes_menu", _t("Héros › Compagnons : la phrase d'aide en haut de l'écran est de nouveau lisible.")],
     ["3.641.0", "menu_icons/quests_menu", _t("Quêtes : les onglets s'appellent maintenant Annexes et Alliés, plus courts et lisibles sur les petits téléphones.")],
     ["3.640.0", "menu_icons/quests_menu", _t("La faille se souvient des mondes : dès l\'étage 2, chaque étage a sa règle (la soif, la relève, le sommeil, la chaleur, le miroir). Et le Souffle tient plus longtemps.")],

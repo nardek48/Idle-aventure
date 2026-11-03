@@ -874,3 +874,6 @@
 .vev-buy-row .kbtn { margin-bottom: 0; min-height: 40px; padding: 0 12px; }
 .vev-buy-ico { width: 24px; height: 24px; object-fit: contain; }
 .vev-buy-row small { color: var(--c-brown-550-soft); }
+
+/* v3.643.0 (atelier village-heros) : Entrepôt, le plafond en petit à côté du titre (titre sur une ligne) */
+.ksec .wh-sec-sub { font-family: inherit; font-size: 12px; font-weight: 700; letter-spacing: 0; text-transform: none; opacity: 0.85; }

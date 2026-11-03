@@ -117,6 +117,11 @@ body.hs-on-heros .hud-dock { display: none !important; }
 .hs-comp-st.is-away { background: rgba(45, 93, 138, .15); color: #2d5d8a; }
 .hs-comp-st.is-go { background: var(--c-green-650-2); color: var(--c-white-50-soft); }
 .hs-comp-hp { margin: 8px 0 6px; }
+/* v3.643.0 (atelier village-heros) : PV et « Avec toi / Au camp » sur une ligne */
+.hs-comp-row { display: flex; align-items: center; gap: 8px; margin: 8px 0 6px; }
+.hs-comp-row .hs-comp-hp { flex: 1 1 auto; min-width: 0; margin: 0; }
+.hs-comp-row .cp-seg { flex: 0 0 auto; width: auto; margin: 0; }
+.hs-comp-row .cp-seg button { padding-left: 10px; padding-right: 10px; }
 .hs-sheet .eq-detail-panel { width: 100%; max-width: none; }
 /* INT-1 : liste « Dans le sac » sur une carte crème, comme la carte du dessus (noms en encre de rareté) */
 .hs-sheet .eq-compat-list { padding: 6px 5px 2px; background: var(--nb-cream); border: 1px solid var(--nb-frame-light); border-radius: var(--nb-radius-md); }

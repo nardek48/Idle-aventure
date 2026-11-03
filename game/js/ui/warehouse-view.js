@@ -268,7 +268,7 @@ function buildWarehouseHTML() {
   if (!zeros) shown = shown.filter(function (k) { return WarehouseManager.getAmount(k) > 0; });
 
   var groups = [
-    ["raw", _t("Matières brutes · plafond {n}", { n: formatNumber(WarehouseManager.getCap("bois")) })],
+    ["raw", _t("Matières brutes"), _t("plafond {n}", { n: formatNumber(WarehouseManager.getCap("bois")) })], // v3.643.0 : le plafond en petit, titre sur une ligne
     ["crafted", _t("Fabriqué")],
     ["special", _t("Rare")]
   ];
@@ -277,7 +277,7 @@ function buildWarehouseHTML() {
     var ks = shown.filter(function (k) { return warehouseTier(k) === g[0]; });
     if (!ks.length) return;
     any = true;
-    h += '<div class="ksec"><span>' + esc(g[1]) + '</span></div>';
+    h += '<div class="ksec"><span>' + esc(g[1]) + (g[2] ? ' <small class="wh-sec-sub">' + esc(g[2]) + '</small>' : '') + '</span></div>';
     h += '<div class="wh-grid">' + ks.map(buildWarehouseTileHTML).join("") + '</div>';
   });
   if (!any) h += '<div class="eq-empty">' + _t("Aucune ressource pour ce filtre.") + '</div>';
