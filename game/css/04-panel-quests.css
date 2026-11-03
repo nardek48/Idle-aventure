@@ -375,6 +375,10 @@
   border-color: var(--danger, var(--c-red-500-soft));
   color: var(--danger, var(--c-red-500-soft));
 }
+/* v3.639.0 (atelier onglets-alleges) : téléphone, une mention discrète à droite au lieu d'une barre */
+.qb-cap-indicator.is-compact { width: auto; margin: -4px 4px 8px; padding: 0; border: 0; background: none; text-align: right; font-size: 12px; }
+.qb-cap-indicator.is-compact .ico-sys { width: 14px; height: 14px; vertical-align: -2px; }
+
 
 /* v3.182.0 : les 4 onglets de catégorie passent sur le composant
    sous-onglet du kit (btn-subtab-normal/selected.png, mêmes assets et
@@ -599,30 +603,14 @@
 }
 @media (prefers-reduced-motion: reduce) { .qb-card.is-highlight { animation: none; } }
 
-/* v3.301.0 (W-2b) : quêtes proposées dans un autre monde, masquées du tableau — une ligne par monde. */
-.qb-other-world {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  max-width: 720px;
-  margin: 10px auto 0;
-  padding: 8px 12px;
-  border: 1px dashed rgba(138, 109, 43, .55);
-  border-radius: 10px;
-  background: rgba(255, 248, 230, .55);
-}
-.qb-other-world-text {
-  font-size: 13px;
-  font-weight: 700;
-  color: #5a4418;
-}
-.qb-other-world .settings-btn {
-  flex: 0 0 auto;
-  width: auto;
-  margin: 0;
-  padding: 6px 14px;
-}
+/* v3.301.0 (W-2b) : quêtes proposées dans un autre monde, masquées du tableau — une ligne par monde.
+   v3.639.0 (atelier onglets-alleges, Seb) : une seule carte au cadre standard (.kc-sec .kc-tex), lignes séparées d'un filet. */
+.qb-other-worlds { max-width: 720px; margin: 10px auto 0; padding: 10px 14px; color: var(--nb-ink); }
+.qb-ow-k { margin: 2px 0 4px; font-size: 12px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--nb-ink-dim); }
+.qb-ow-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 0; }
+.qb-ow-row + .qb-ow-row { border-top: 1px solid var(--nb-frame-light); }
+.qb-other-world-text { flex: 1 1 auto; min-width: 0; font-size: 13.5px; font-weight: 700; color: var(--nb-ink); }
+.qb-ow-row .settings-btn { flex: 0 0 auto; width: auto; min-width: 0; margin: 0; padding: 6px 16px; }
 
 /* v3.448.6 : « Ce qui manque » sur la carte d'étape, et où le trouver */
 .story-missing { display: grid; gap: 6px; margin-top: 8px; padding: 8px 10px; border-radius: var(--nb-radius-sm); background: var(--nb-cream-alt); }
@@ -695,3 +683,27 @@
 .cq-done { font-size: 13px; font-weight: 800; color: var(--nb-green-text); }
 .qb-card.cq-card.is-done { opacity: 0.85; }
 .cq-where { font-size: 13px; font-weight: 700; color: var(--nb-ink-dim); }
+
+/* v3.639.0 (atelier onglets-alleges, validé par Seb le 03/11) : écrans allégés.
+   Étapes repliées, carte « Déjà vécu », jalons repliés, sections par compagnon. */
+.qb-steps-more { display: block; margin: 2px 0 0 24px; padding: 4px 0; border: 0; background: none; font: inherit; font-size: 12.5px; font-weight: 700; color: var(--nb-ink-dim); text-align: left; cursor: pointer; }
+.story-past { display: grid; gap: 6px; }
+.story-past-k { font-size: 12px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--nb-ink-dim); }
+.story-past-row, .ms-toggle { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 7px 12px; border: 0; border-radius: var(--nb-radius-sm, 10px); background: var(--nb-cream-deep); font: inherit; color: var(--nb-ink); text-align: left; cursor: pointer; }
+.story-past-row span, .ms-toggle span { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; }
+.story-past-row b, .ms-toggle b { font-size: 14px; }
+.story-past-row small, .ms-toggle small { font-size: 12px; font-weight: 600; color: var(--nb-ink-dim); }
+.story-past-row i, .ms-toggle i { font-style: normal; font-size: 13px; color: var(--nb-ink-dim); }
+.story-past-body { display: grid; gap: 6px; }
+.story-past-body .story-chain.is-done { background: var(--nb-cream-alt); border-radius: var(--nb-radius-sm, 10px); }
+.ms-toggle.is-ready small { color: var(--nb-green-text); font-weight: 800; }
+.cq-sec { display: flex; align-items: center; gap: 10px; margin: 6px 4px 2px; color: var(--kf-ink, var(--nb-ink-inverse)); text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9); }
+.cq-sec:first-child { margin-top: 0; }
+.cq-sec-img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; object-position: 50% 18%; box-shadow: 0 0 0 1.5px var(--c-bronze-400-soft); }
+.cq-sec b { font-size: 15px; }
+.cq-sec small { font-size: 12px; font-weight: 700; opacity: 0.85; }
+/* v3.639.0 : petits téléphones (320-359 px), 4 onglets dont « Compagnons » : rail élargi, lettres resserrées (12 px gardés) */
+@media (max-width: 359px) {
+  #panel-container .qb-tabs.kseg.is-stack { margin-left: -12px; margin-right: -12px; max-width: none; }
+  #panel-container .qb-tabs.kseg.is-stack button { padding-left: 0; padding-right: 0; letter-spacing: -0.05em; }
+}

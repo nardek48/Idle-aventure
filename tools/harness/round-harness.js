@@ -3388,15 +3388,13 @@ console.log("\n[BATTUE] Farm d'or répétable en Forêt");
   ok(!g.MENU_ITEMS.some(function (m) { return m.tab === "grimoire"; }), "[CAMP] le Grimoire a quitté le menu ☰");
   var camp = g.buildCampHTML("grimoire"); // v3.411.0 : onglet Grimoire du Campement
   ok(camp.indexOf("camp-grimoire-card") !== -1, "[CAMP] carte Grimoire présente au Campement");
-  ok(camp.indexOf("switchTab(&#39;grimoire&#39;)") !== -1 || camp.indexOf("switchTab('grimoire')") !== -1, "[CAMP] le bouton mène bien à l'écran Grimoire");
-  ok(camp.indexOf("règles actives") !== -1, "[CAMP] résumé du nombre de règles actives");
-  ok(camp.indexOf("Mode Tactique") !== -1, "[CAMP] mode de combat rappelé sur la carte");
-
-  // Le résumé compte les règles réellement configurées, pas les emplacements.
-  g.game.grimoireRules[1] = { conditionId: null, actionSlot: null };
-  g.game.grimoireRules[2] = { conditionId: null, actionSlot: null };
-  ok(g.buildCampHTML("grimoire").indexOf("1 / " + nbSlots + " règles actives") !== -1,
-    "[CAMP] une seule règle configurée -> « 1 / " + nbSlots + " règles actives »");
+  // v3.639.0 (atelier onglets-alleges) : l'onglet montre le Grimoire lui-même, plus un bouton vers l'écran
+  ok(camp.indexOf("grimoire-rule-row") !== -1 && camp.indexOf("openGrimoireSheet(") !== -1, "[CAMP] le Grimoire du Camp montre ses règles, Presets et Rapport");
+  ok(camp.indexOf("Mode : Tactique") !== -1, "[CAMP] mode de combat rappelé");
+  g.openGrimoireRule(0);
+  ok(g.buildCampHTML("grimoire").indexOf("closeGrimoireRule()") !== -1, "[CAMP] toucher une règle l'ouvre dans le Camp");
+  g.closeGrimoireRule();
+  ok(g.buildCampHTML("grimoire").indexOf("closeGrimoireRule()") === -1, "[CAMP] retour à la liste des règles");
 })();
 
 
@@ -8413,7 +8411,9 @@ console.log("\n[92] v3.297.0 — W-1a : chapitres enchaînés, endroits « fores
     ok(S.isChapterCompleted("forest") && S.isChapterOpen("test2") && S.getCurrentStep("test2").id === "test2_01", "Forêt terminée : le chapitre 2 s'ouvre sur sa 1re étape");
     ok(S.isStepReached("forest_12") === true && S.isStepReached("inconnue") === true, "isStepReached : chapitre terminé = oui ; id inconnu = oui");
     ok(g.MissionBoard.list().some(function (m) { return m.id === "story_test2" && m.status === "available"; }), "étape du chapitre 2 au tableau");
+    g.expandedQuestCardIds.story_past_done = true; // v3.639.0 : chapitres terminés repliés dans « Déjà vécu »
     ok(g.buildStoryChainHTML().indexOf("Chapitre terminé — le Désert t'attend.") !== -1, "texte de fin propre au chapitre de la Forêt");
+    delete g.expandedQuestCardIds.story_past_done;
     S.acceptStep("test2");
     ok(g.isStoryLinkedQuest("aq_story_coeur") === true && g.isStoryLinkedQuest("aq_forest_depths") === false, "quête liée à l'étape du chapitre 2 : visible au tableau");
 
@@ -16479,7 +16479,7 @@ console.log("\n[262] v3.458.4 — Lot 7b : une fenêtre de fin, Histoire, Mémoi
     ok(vues.length === 1 && st.claimedSteps.forest_02 && st.currentStep === idx + 1, "fin de « Premier sang » : étape réclamée, une seule fenêtre (" + vues.join(" | ") + ")");
     // C3
     var qv = fs10.readFileSync(ROOT + "/js/ui/quests-view.js", "utf8");
-    ok(/function buildStoryDoneChapterHTML/.test(qv) && /return h \+ done;/.test(qv) && /buildOtherWorldQuestsHTML\(cat\.kinds\)/.test(qv), "Histoire : chapitre en cours d'abord, chapitres terminés repliés ; autres mondes par catégorie");
+    ok(/function buildStoryDoneChapterHTML/.test(qv) && /buildStoryPastHTML\(done\)/.test(qv) && /buildOtherWorldQuestsHTML\(cat\.kinds\)/.test(qv), "Histoire : chapitre en cours d'abord, chapitres terminés repliés ; autres mondes par catégorie");
     // C4
     var av = fs10.readFileSync(ROOT + "/js/ui/ascension-view.js", "utf8");
     ok(/class="mem-chosen"/.test(av) && /chaque niveau oppose Garder/.test(av), "Mémoire : niveaux choisis repliés, Garder / Donner expliqués");
@@ -20629,7 +20629,10 @@ console.log("\n[394] v3.597.0 — Conversations au feu : le moteur et la scène 
     var av = M.available();
     ok(av.length === 1 && av[0].id === "test_1", "étape atteinte et compagnon recruté : une seule conversation proposée, la première");
     var feu = g.buildCampHTML("feu");
-    ok(/openCompanionTalk\('test_1'\)/.test(feu) && /veut te parler/.test(feu), "« Le feu » : la carte « Maddoc veut te parler »");
+    // v3.639.0 : assis au feu, Maddoc n'a plus de carte à lui ; la bulle « … » de son portrait la remplace
+    var auFeu = g.campFeuMateIds(g.CampManager.campCompanionIds()).indexOf("maddoc") >= 0;
+    ok(auFeu ? (!/openCompanionTalk\('test_1'\)/.test(feu) && /openCompanionMenu\('maddoc'\)/.test(feu)) : (/openCompanionTalk\('test_1'\)/.test(feu) && /veut te parler/.test(feu)),
+      "« Le feu » : Maddoc veut parler (" + (auFeu ? "au feu, par son portrait" : "carte « veut te parler »") + ")");
     g.openCompanionTalk("test_1"); g.talkNext(); g.talkChoose(0);
     ok(g.talkScene && g.talkScene.choices === "a", "la scène suit le dialogue et retient la réponse choisie");
     g.closeCompanionTalk(false);
@@ -21962,6 +21965,44 @@ console.log("\n[432] v3.638.0 — Faille, lot F-1 : la faille sans fond, après 
     ok(html.indexOf('js/data/faille.js') > html.indexOf('js/data/labyrinth.js') && sw.indexOf('"./js/data/faille.js"') > 0, "data/faille.js chargé après labyrinth.js et précaché par sw.js");
   } catch (err) { ok(false, "[432] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   finally { TS.ending = savedEnding; if (g.game) { g.game.sceneRun = null; if (g.game.explorationProgression) { delete g.game.explorationProgression.faille; g.game.explorationProgression.labyrinth = null; } } }
+})();
+
+console.log("\n[433] v3.639.0 — Onglets allégés : Quêtes et Camp (atelier onglets-alleges)");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.unlockedTabs.companions = true;");
+    var M = g.CompanionQuestManager, tabs = function () { return g.buildQuestCategoryTabsHTML(g.MissionBoard.list()); };
+    ok(tabs().indexOf("setQuestCategory('compagnons')") === -1 && !g.questCategoryShown("compagnons"), "sans quête de compagnon : pas d'onglet Compagnons");
+    run("CompanionManager.unlock('wenna'); CompanionManager.unlock('maddoc');");
+    M.unlock("q_wenna_1"); M.unlock("q_wenna_2"); M.unlock("q_maddoc_1");
+    ok(tabs().indexOf("setQuestCategory('compagnons')") !== -1, "une quête de compagnon : l'onglet Compagnons apparaît");
+    g.setQuestCategory("secondaires");
+    var sec = g.buildQuestsGeneralSubTabHTML();
+    ok(sec.indexOf("cq-card") === -1 && sec.indexOf("qb-cap-indicator is-compact") !== -1, "Secondaires : sans les quêtes des compagnons, compteur compact");
+    ok(sec.indexOf("ms-row") === -1 || !g.VILLAGE_MILESTONES, "Secondaires : jalons repliés derrière une ligne");
+    g.expandedQuestCardIds.milestones = true;
+    ok(!g.VILLAGE_MILESTONES || g.buildQuestsGeneralSubTabHTML().indexOf("ms-row") !== -1, "jalons dépliés : la liste revient");
+    delete g.expandedQuestCardIds.milestones;
+    g.setQuestCategory("compagnons");
+    var cp = g.buildQuestsGeneralSubTabHTML();
+    ok((cp.match(/class="cq-sec"/g) || []).length === 2 && (cp.match(/cq-card/g) || []).length >= 3, "Compagnons : une section par compagnon, les 3 quêtes");
+    ok(cp.indexOf("qb-cap-indicator") === -1 && cp.indexOf("cq-badge") === -1, "Compagnons : ni compteur de quêtes actives, ni nom répété sur la carte");
+    var st = g.questStepsHTML("t", [{ state: "done", label: "A" }, { state: "current", label: "B", progress: "0/2" }, { state: "pending", label: "C" }]);
+    ok(st.indexOf(">B<") !== -1 && st.indexOf(">A<") === -1 && st.indexOf(">C<") === -1 && st.indexOf("3 étapes · 1 faite") !== -1, "étapes : l'étape en cours seule, « 3 étapes · 1 faite ▸ »");
+    g.expandedQuestCardIds.steps_t = true;
+    st = g.questStepsHTML("t", [{ state: "done", label: "A" }, { state: "current", label: "B" }, { state: "pending", label: "C" }]);
+    ok(st.indexOf(">A<") !== -1 && st.indexOf(">C<") !== -1 && st.indexOf("Masquer les étapes") !== -1, "étapes dépliées : toutes, et « Masquer les étapes »");
+    delete g.expandedQuestCardIds.steps_t;
+    g.setQuestCategory("histoire");
+    var hi = g.buildQuestsGeneralSubTabHTML();
+    ok(hi.indexOf("qb-cap-indicator") === -1 && hi.indexOf("story-prologue-card") === -1, "Histoire : ni compteur de quêtes actives, ni carte Prologue en tête");
+    ok(hi.indexOf("story-past") > hi.indexOf("story-chain\"") && hi.indexOf("Revoir le prologue et les ouvertures") !== -1, "Histoire : « Déjà vécu » sous le chapitre en cours");
+    var qv = fsRead("js/ui/quests-view.js");
+    ok(/qb-other-worlds kc-sec kc-tex/.test(qv), "autres mondes : une seule carte au cadre standard");
+    var feu = g.buildCampHTML("feu"), ih = feu.indexOf("camp-health-card"), ic = feu.indexOf("camp-soir"), ia = feu.indexOf("camp-here");
+    ok(ih !== -1 && ic > ih && (ia === -1 || ia > ic), "Le feu : la santé d'abord, la soirée ensuite, « Tu es ici » en dernier");
+  } catch (err) { ok(false, "[433] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  finally { if (g.setQuestCategory) g.setQuestCategory("histoire"); }
 })();
 
 Promise.all(ATTENTES).then(function () {

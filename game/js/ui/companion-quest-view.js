@@ -55,21 +55,17 @@ function companionQuestWhere(q) {
   return LM.isNameRevealed(map.id, id) ? _t("Lieu : {x}", { x: _td(d.name) }) : _t("Lieu : un secteur voilé (marqué sur la carte)");
 }
 
-function buildCompanionQuestCardHTML(q) {
+function buildCompanionQuestCardHTML(q, inSection) {
   var M = CompanionQuestManager, def = getCompanionDef(q.companion), name = _td(def.name), s = M.stateOf(q.id) || { s: 0 }, done = M.isDone(q.id), cur = M.step(q);
   var h = '<div class="qb-card cq-card' + (done ? ' is-done' : M.isReady(q) ? ' is-claimable' : ' is-running') + '" data-cq="' + esc(q.id) + '">';
   h += '<div class="qb-card-banner cq-banner">' + renderIconOrEmojiHTML(def.image, "qb-card-banner-img", name) + '</div><div class="qb-card-body">';
-  h += '<div class="qb-card-title-row"><span class="qb-card-title">' + esc(_td(q.title)) + '</span><span class="quest-badge cq-badge">' + esc(name) + '</span></div>';
+  h += '<div class="qb-card-title-row"><span class="qb-card-title">' + esc(_td(q.title)) + '</span>' + (inSection ? '' : '<span class="quest-badge cq-badge">' + esc(name) + '</span>') + '</div>';
   if (q.blurb) h += '<div class="qb-card-desc">' + esc(_td(q.blurb)) + '</div>';
   if (!done) {
-    h += '<div class="qb-card-steps">';
-    q.steps.forEach(function (st, k) {
-      var cls = k < s.s ? "is-done" : k === s.s ? "is-current" : "is-pending";
-      var icon = k < s.s ? "<img class=ico-inline src=images/Icons/system/check_valid.webp>" : k === s.s ? "<img class=ico-inline src=images/Icons/quests/continue.webp>" : "○";
-      h += '<div class="qb-card-step ' + cls + '"><span class="qb-card-step-icon">' + icon + '</span><span class="qb-card-step-label">' + esc(companionQuestStepLabel(st)) + '</span>'
-        + (k === s.s && M.progressText(q) ? '<span class="qb-card-step-progress">' + esc(M.progressText(q)) + '</span>' : '') + '</div>';
-    });
-    h += '</div>';
+    // v3.639.0 : l'étape en cours seule, les autres derrière une ligne (questStepsHTML, quests-view.js)
+    h += questStepsHTML("cq_" + q.id, q.steps.map(function (st, k) {
+      return { state: k < s.s ? "done" : k === s.s ? "current" : "pending", label: companionQuestStepLabel(st), progress: k === s.s ? (M.progressText(q) || "") : "" };
+    }));
     if (cur && cur.type === "deliver") h += '<div class="cq-cost">' + companionQuestCostHTML(cur) + '</div>';
     if (cur && (cur.type === "run" || cur.type === "elite")) h += '<div class="cq-where">' + esc(companionQuestWhere(q)) + '</div>'; // v3.603.0
   }
@@ -80,10 +76,19 @@ function buildCompanionQuestCardHTML(q) {
   return h;
 }
 
-function buildCompanionQuestsHTML() {
+/* bySection (v3.639.0, onglet Compagnons) : une section par compagnon dès qu'il y a plusieurs quêtes */
+function buildCompanionQuestsHTML(bySection) {
   if (!window.CompanionQuestManager) return "";
   var list = CompanionQuestManager.list();
-  return list.length ? '<div class="quest-board-list cq-list">' + list.map(buildCompanionQuestCardHTML).join("") + '</div>' : "";
+  if (!list.length) return "";
+  if (!bySection || list.length < 2) return '<div class="quest-board-list cq-list">' + list.map(function (q) { return buildCompanionQuestCardHTML(q); }).join("") + '</div>';
+  var order = [], by = {};
+  list.forEach(function (q) { if (!by[q.companion]) { by[q.companion] = []; order.push(q.companion); } by[q.companion].push(q); });
+  return '<div class="quest-board-list cq-list">' + order.map(function (id) {
+    var def = getCompanionDef(id), qs = by[id];
+    return '<div class="cq-sec">' + renderIconOrEmojiHTML(def.image, "cq-sec-img", "") + '<b>' + esc(_td(def.name)) + '</b><small>' + esc(_tn(qs.length, "{n} quête", "{n} quêtes")) + '</small></div>'
+      + qs.map(function (q) { return buildCompanionQuestCardHTML(q, true); }).join("");
+  }).join("") + '</div>';
 }
 
 // Grand écran : une ligne par quête dans la liste de gauche.

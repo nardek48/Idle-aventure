@@ -318,7 +318,7 @@ function renderPanel() {
   // v3.212.0 : la feuille basse du Grimoire vit hors de #panel-container (isolation:
   // isolate y enfermait son z-index sous la barre du bas). Alimentée à chaque rendu,
   // et vidée dès qu'on quitte l'écran.
-  if (typeof renderGrimoireSheet === "function") renderGrimoireSheet(game.activeTab === "grimoire");
+  if (typeof renderGrimoireSheet === "function") renderGrimoireSheet(game.activeTab === "grimoire" || (game.activeTab === "campement" && typeof campTab !== "undefined" && campTab === "grimoire" && !document.documentElement.classList.contains("wide-mode"))); // v3.639.0 : Grimoire du Camp
   // v3.244.0 : même mécanique pour les feuilles Stats / Capacités du Résumé du héros.
   if (typeof renderHerosSheet === "function") renderHerosSheet(game.activeTab === "more");
   // v3.426.0 : feuilles Patrouille / Caravane de Campement › Expéditions, même mécanique.

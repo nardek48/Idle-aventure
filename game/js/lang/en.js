@@ -1005,7 +1005,6 @@ I18n.register("en", {
   "aucune en réserve": "none in reserve",
   "Économie": "Economy",
   "Carte": "Map",
-  "{n} contre||{n} contres": ["{n} counter", "{n} counters"],
 
   // js/ui/codex-view.js
   "Prologue": "Prologue",
@@ -7381,7 +7380,6 @@ I18n.register("en", {
   // v3.570.0 : le prologue (textes validés, Aethervale_Prologue_v0_2)
   "Passer ▸": "Skip ▸",
   "Toucher pour continuer": "Tap to continue",
-  "Prologue — Cette nuit-là": "Prologue — That night",
   "Revoir le prologue": "Replay the prologue",
   "Cette nuit-là, les étoiles ont disparu.": "That night, the stars went out.",
   "Au nord, le ciel s'est ouvert. Une lumière en est tombée. Bleue. Froide. Sans forme.": "In the north, the sky opened. A light fell from it. Blue. Cold. Shapeless.",
@@ -8735,5 +8733,23 @@ I18n.register("en", {
   "Dès l'étage 3, la forme au sol te suit. Elle ne se bat pas : si elle te rejoint, elle prend du Souffle et recule. Sa lumière froide te prévient quand elle approche.": "From floor 3, the shape on the ground follows you. It does not fight: if it reaches you, it takes Breath and backs away. Its cold light warns you when it comes near.",
 
   "Après la Question, la faille s'ouvre : des étages sans fond, le Reflet tous les cinq étages, et ton record. Deux montées, une revient toutes les 6 h.": "After the Question, the rift opens: floors without end, the Reflection every five floors, and your record. Two climbs, one comes back every 6 h.",
+
+  // v3.639.0 : onglets allégés (Quêtes, Camp)
+  "Quêtes plus légères : un onglet Compagnons, les jalons et les étapes repliés, le prologue et les chapitres finis rangés dans « Déjà vécu ».": "Lighter Quests: a Companions tab, milestones and steps folded away, the prologue and finished chapters kept in “Already lived”.",
+  "Camp : la santé et les rations en tête du feu, et le Grimoire montre directement tes règles.": "Camp: health and rations at the top of the fire, and the Grimoire shows your rules directly.",
+  "{n} quête||{n} quêtes": ["{n} quest", "{n} quests"],
+  "Aucune quête de compagnon pour le moment.": "No companion quests yet.",
+  "Masquer les étapes": "Hide the steps",
+  "Dans les autres mondes": "In the other worlds",
+  "Déjà vécu": "Already lived",
+  "Revoir le prologue et les ouvertures": "Replay the prologue and openings",
+  "Replier les jalons": "Fold the milestones",
+  "Village et héros": "Village and hero",
+  "{t} étapes · {n} faite||{t} étapes · {n} faites": ["{t} steps · {n} done", "{t} steps · {n} done"],
+  "{n} chapitre terminé||{n} chapitres terminés": ["{n} chapter completed", "{n} chapters completed"],
+  "{n} scène à revoir||{n} scènes à revoir": ["{n} scene to replay", "{n} scenes to replay"],
+  "Voir le jalon||Voir les {n} jalons": ["See the milestone", "See the {n} milestones"],
+  "{n} à réclamer||{n} à réclamer": ["{n} to claim", "{n} to claim"],
+  "et {n} autre monde aux jalons ouverts||et {n} autres mondes aux jalons ouverts": ["and {n} other world with open milestones", "and {n} other worlds with open milestones"],
 
 });
