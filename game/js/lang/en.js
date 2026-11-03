@@ -8755,6 +8755,7 @@ I18n.register("en", {
   "{n} quête||{n} quêtes": ["{n} quest", "{n} quests"],
   "Aucune quête de compagnon pour le moment.": "No companion quests yet.",
   "Alliés": "Allies",
+  "Héros : l'illustration du Terrain d'entraînement s'affiche aussi dans Équipement, Talents et Alliés.": "Heroes: the Training Ground illustration now also shows in Equipment, Talents and Allies.",
   "Les bulles en bas à droite sont plus petites, et chaque liste se termine au-dessus d'elles : plus aucun bouton coincé dessous.": "The bubbles at the bottom right are smaller, and every list now ends above them: no button stuck underneath.",
   "Entrepôt : {liste}": "Warehouse: {liste}",
   "chacun": "each",
