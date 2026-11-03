@@ -21879,6 +21879,44 @@ console.log("\n[430] Rythme de la Tour (Seb, 03/11 : Terrain 19 à 21, palier de
   } catch (err) { ok(false, "[430] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[431] v3.636.0 — Faille, lot F-0 : le moteur à leviers partagé par sorte de run");
+(function () {
+  var L = g.LabyrinthRun, SQ = g.StoryQuestManager, savedReach = SQ.isStepReached, K = g.LAB_KINDS;
+  try {
+    var game = freshCombat("knight");
+    ok(K && K.labyrinthe && K.labyrinthe.config === g.LABYRINTH_CONFIG && K.labyrinthe.stateKey === "labyrinth", "registre : le Labyrinthe, sa config et sa clé d'état");
+    game.sceneRun = null;
+    ok(L.cfg() === g.LABYRINTH_CONFIG && L.texts() === g.LABYRINTH_TEXTS && L.tiles() === g.LABYRINTH_TILES, "sans run ni sorte : le Labyrinthe");
+    /* Une sorte d'essai : config copiée, autre clé d'état, textes propres */
+    var cfg2 = JSON.parse(JSON.stringify(g.LABYRINTH_CONFIG)); cfg2.reserve = 2;
+    var tx2 = JSON.parse(JSON.stringify(g.LABYRINTH_TEXTS)); tx2.title = "Essai"; tx2.say = { startLog: "Tu montes dans l'essai.", bag: "Sac d'essai : {s} · {g}" };
+    K.essai = { config: cfg2, tiles: g.LABYRINTH_TILES, texts: tx2, stateKey: "essaiLab", isUnlocked: function () { return true; } };
+    SQ.isStepReached = function (id) { return id === "ruines_11" ? true : savedReach.call(SQ, id); };
+    game.explorationProgression.labyrinth = null; game.explorationProgression.essaiLab = null;
+    g.WarehouseManager.addResource("ration", 5);
+    ok(L.isUnlocked("essai") && L.reserveLeft("essai") === 2 && L.reserveLeft("labyrinthe") === 3, "chaque sorte a sa réserve");
+    var ms = g.MissionBoard._labyrinthMissions().map(function (m) { return m.id + ":" + m.labKind; }).join();
+    ok(ms === "labyrinthe:labyrinthe,essai:essai", "une carte de mission par sorte ouverte (" + ms + ")");
+    var r = L.start("essai");
+    ok(r.ok && game.sceneRun.kind === "essai" && game.sceneRun.templateId === "essai", "départ d'une sorte : run.kind posé");
+    ok(L.cfg() === cfg2 && L.reserveLeft() === 1 && L.reserveLeft("labyrinthe") === 3 && game.explorationProgression.essaiLab.spent === 1, "le run lit sa config ; la descente est prise sur sa réserve, pas sur celle du Labyrinthe");
+    ok(L.say("bag", "repli", { s: 1, g: 2 }) === "Sac d'essai : 1 · 2" && L.say("koLog", "repli") === "repli", "textes propres de la sorte, sinon ceux du Labyrinthe");
+    var lab = g.MissionBoard._labyrinthMissions().filter(function (m) { return m.id === "labyrinthe"; })[0];
+    ok(lab && lab.status === "available", "la carte du Labyrinthe ne prend pas le run d'une autre sorte pour le sien");
+    L.abandon();
+    ok(L.bestFloor() === 1 && L.bestFloor("labyrinthe") === 0, "record par sorte (au bilan : celui du run terminé)");
+    game.sceneRun = null; r = L.start();
+    ok(r.ok && game.sceneRun.kind === "labyrinthe" && L.reserveLeft("labyrinthe") === 2, "sans sorte : le Labyrinthe");
+    delete game.sceneRun.kind;
+    ok(L.kindOf() === "labyrinthe" && L.cfg() === g.LABYRINTH_CONFIG && L.reserveLeft() === 2, "un run sauvegardé sans sorte (avant v3.636.0) reste le Labyrinthe");
+    L.abandon();
+  } catch (err) { ok(false, "[431] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  finally {
+    delete K.essai; SQ.isStepReached = savedReach;
+    if (g.game) { g.game.sceneRun = null; if (g.game.explorationProgression) { g.game.explorationProgression.labyrinth = null; delete g.game.explorationProgression.essaiLab; } }
+  }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

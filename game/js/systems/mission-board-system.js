@@ -627,23 +627,29 @@ var MissionBoard = {
   },
 
   /* v3.434.0 (Ruines, RU12) : le Labyrinthe aux leviers, après l'étape 10. Réserve à part
-     (3 descentes, une revient toutes les 4 h) ; accepter = descendre, comme une Petite Aventure. */
+     (3 descentes, une revient toutes les 4 h) ; accepter = descendre, comme une Petite Aventure.
+     v3.636.0 (Faille, F-0) : une carte par sorte de run du moteur à leviers (LAB_KINDS). */
   _labyrinthMissions: function () {
+    var self = this;
+    return Object.keys(window.LAB_KINDS || { labyrinthe: 1 }).map(function (k) { return self._labMission(k); }).filter(Boolean);
+  },
+  _labMission: function (kind) {
     var L = window.LabyrinthRun;
-    if (!L || !L.isUnlocked()) return [];
-    var run = L.getRun(), running = !!(run && run.status !== "completed"), left = L.reserveLeft(), cap = LABYRINTH_CONFIG.reserve;
-    var blurb = _td(LABYRINTH_TEXTS.blurb);
-    if (!running && left <= 0) blurb += " " + _t("Prochaine descente dans {d}", { d: SceneRunManager.formatPetiteAventureWait(L.nextInMs()) }) + ".";
+    if (!L || !L.isUnlocked(kind)) return null;
+    var C = L.cfg(kind), T = L.texts(kind), run = L.getRun();
+    var running = !!(run && run.status !== "completed" && (run.kind || "labyrinthe") === kind), left = L.reserveLeft(kind), cap = C.reserve;
+    var blurb = _td(T.blurb);
+    if (!running && left <= 0) blurb += " " + _t("Prochaine descente dans {d}", { d: SceneRunManager.formatPetiteAventureWait(L.nextInMs(kind)) }) + ".";
     var m = {
-      id: "labyrinthe", sourceKind: "scene", worldId: LABYRINTH_CONFIG.worldId, isLabyrinth: true,
-      title: _td(LABYRINTH_TEXTS.title), blurb: blurb, type: "expedition", place: "", objectiveLabel: "",
+      id: kind, sourceKind: "scene", worldId: C.worldId, isLabyrinth: true, labKind: kind,
+      title: _td(T.title), blurb: blurb, type: "expedition", place: "", objectiveLabel: "",
       progressLabel: running ? _t("En cours") : "",
       rewardSummary: (!running && left > 0) ? _t("{a}/{b} descentes", { a: left, b: cap }) : "",
       badge: "contract", status: running ? "running" : (left > 0 ? "available" : "unavailable"), isMain: false
     };
-    if (running) m.launch = function () { if (typeof labLaunch === "function") labLaunch(); };
-    else if (left > 0) m.accept = function () { if (typeof labLaunch === "function") labLaunch(); };
-    return [m];
+    if (running) m.launch = function () { if (typeof labLaunch === "function") labLaunch(kind); };
+    else if (left > 0) m.accept = function () { if (typeof labLaunch === "function") labLaunch(kind); };
+    return m;
   },
 
   /* ---------- Agrégation ---------- */

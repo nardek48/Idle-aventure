@@ -76,6 +76,13 @@ var LABYRINTH_TEXTS = {
   bossLine: "Il est fait des marches qu'il garde. Quand il bouge, l'escalier bouge avec lui."
 };
 
+/* v3.636.0 (Faille, F-0) : les sortes de run du moteur à leviers (systems/labyrinth-run.js). Une sorte = config,
+   tuiles, textes (texts.say : textes propres, sinon ceux du Labyrinthe) et clé d'état dans explorationProgression. */
+var LAB_KINDS = {
+  labyrinthe: { config: LABYRINTH_CONFIG, tiles: LABYRINTH_TILES, texts: LABYRINTH_TEXTS, stateKey: "labyrinth" }
+};
+
 window.LABYRINTH_CONFIG = LABYRINTH_CONFIG;
 window.LABYRINTH_TILES = LABYRINTH_TILES;
 window.LABYRINTH_TEXTS = LABYRINTH_TEXTS;
+window.LAB_KINDS = LAB_KINDS;
