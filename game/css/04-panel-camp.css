@@ -290,27 +290,13 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
 .camp-embers-count { flex: 0 0 auto; font-weight: 800; color: var(--nb-ink); }
 .camp-embers-btn { width: 100%; }
 
-/* =========================
-   v3.210.0 — Carte Grimoire (raccourci, décision Seb)
-   .camp-card est déjà dans la liste de restauration d'encre de
-   00-kframe-scope.css : rien à ajouter pour la lisibilité.
-   ========================= */
-.camp-grimoire-summary {
-  margin-bottom: 2px;
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: var(--nb-ink);
+/* v3.639.0 (atelier onglets-alleges) : Camp › Grimoire montre le Grimoire lui-même, sur parchemin.
+   Ses textes, faits pour le décor sombre (00-kbtn.css), repassent à l'encre. */
+#panel-container .kframe .kf-mid .camp-grimoire-card :is(.grimoire-mode-desc, .grimoire-divider),
+#panel-container .kframe .kf-mid .camp-grimoire-card :is(.grimoire-head, .grimoire-foot) :is(span, small, b, div, button:not(.kbtn):not(.settings-btn)) {
+  color: var(--nb-ink); text-shadow: none;
 }
-
-.camp-grimoire-counters { color: var(--c-green-750); }
-
-.camp-grimoire-mode {
-  margin-bottom: 8px;
-  font-size: 12px;
-  color: var(--nb-ink-dim);
-}
-
-.camp-grimoire-card .settings-btn { width: 100%; }
+#panel-container .kframe .kf-mid .camp-grimoire-card .grimoire-mode-desc { color: var(--nb-ink-dim); }
 
 /* v3.260.0 : petits écrans (320-359 px) — rations et ligne de régénération tiennent sans déborder */
 @media (max-width: 359px) {

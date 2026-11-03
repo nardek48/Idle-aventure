@@ -10,6 +10,8 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.639.0", "menu_icons/quests_menu", _t("Quêtes plus légères : un onglet Compagnons, les jalons et les étapes repliés, le prologue et les chapitres finis rangés dans « Déjà vécu ».")],
+    ["3.639.0", "menu_icons/camp_menu", _t("Camp : la santé et les rations en tête du feu, et le Grimoire montre directement tes règles.")],
     ["3.638.0", "menu_icons/quests_menu", _t("Après la Question, la faille s\'ouvre : des étages sans fond, le Reflet tous les cinq étages, et ton record. Deux montées, une revient toutes les 6 h.")],
     ["3.637.0", "menu_icons/quests_menu", _t("La silhouette : à 30 %, la lumière passe vraiment à travers elle. Un round où rien ne la touche, annoncé un round avant.")],
     ["3.635.1", "menu_icons/camp_menu", _t("Au camp, le soir : trois phrases de Maddoc et d\'Ysolt réécrites.")],

@@ -219,7 +219,8 @@ function buildCampHTML(tab) {
      Missions · Départ (préparer, expédition) · Grimoire. Un onglet n'apparaît que s'il a du
      contenu ; s'il n'en reste qu'un, pas de rail. L'onglet ouvert est retenu (campTab). */
   var tabsHTML = {};
-  tabsHTML.feu = campHereCardHTML() + (typeof campTalkCardsHTML === "function" ? campTalkCardsHTML() : "") + campFeuStoryHTML(campMates) + hc;
+  // v3.639.0 (atelier onglets-alleges) : la santé d'abord ; « veut te parler » seulement pour qui n'est pas au feu (la bulle « … » suffit)
+  tabsHTML.feu = hc + campFeuStoryHTML(campMates) + (typeof campTalkCardsHTML === "function" ? campTalkCardsHTML(campFeuMateIds(campMates)) : "") + campHereCardHTML();
   var talkReady = !!(window.CompanionTalkManager && CompanionTalkManager.available().length); // v3.597.0
   var mh = '<div class="camp-card camp-missions-card">';
   mh += buildCampMissionBoardHTML();
@@ -230,27 +231,15 @@ function buildCampHTML(tab) {
   // v3.426.0 (chantier Expéditions) : l'onglet devient le tableau des départs (ui/expeditions-view.js)
   var dep = (typeof buildExpeditionsBoardHTML === "function") ? buildExpeditionsBoardHTML() : "";
   if (dep) tabsHTML.depart = dep;
-  // v3.210.0 (décision Seb) : raccourci vers le Grimoire, même verrou que l'ancienne entrée de menu.
+  // v3.210.0 (décision Seb) : le Grimoire au Camp, même verrou que l'ancienne entrée de menu.
   if (typeof isTabUnlocked !== "function" || isTabUnlocked("grimoire")) {
     ensureGrimoireRules();
     var slotCount = (typeof getGrimoireSlotCount === "function") ? getGrimoireSlotCount(game.worldsEverReached) : 6;
     var kit = (typeof getGrimoireCurrentKit === "function") ? getGrimoireCurrentKit() : null;
-    var activeRules = game.grimoireRules.slice(0, slotCount).filter(function (r) {
-      return r && r.conditionId && r.actionSlot;
-    });
-    var counterCount = activeRules.filter(function (r) {
-      return (typeof isGrimoireRuleCounter === "function") && isGrimoireRuleCounter(r, kit);
-    }).length;
-    var gh = '<div class="camp-card camp-grimoire-card">';
-    gh += '<div class="camp-grimoire-summary">' + _t("{a} / {b} règles actives", { a: activeRules.length, b: slotCount })
-      + (counterCount ? ' · <span class="camp-grimoire-counters"><img class=ico-inline src=images/Icons/combat_status/counter.webp> ' + _tn(counterCount, "{n} contre", "{n} contres") + '</span>' : '')
-      + '</div>';
-    gh += '<div class="camp-grimoire-mode">' + (game.combatMode === "grimoire"
-      ? '<img class=ico-inline src=images/Icons/codex/codex_lore.webp> ' + _t("Mode Grimoire : tes règles jouent seules.")
-      : '<img class=ico-inline src=images/Icons/combat_stats/stat_critical.webp> ' + _t("Mode Tactique : tes règles conseillent, tu choisis.")) + '</div>';
-    gh += '<button class="settings-btn" type="button" onclick="switchTab(\'grimoire\')">' + _t("Régler mes tactiques") + '</button>';
-    gh += '</div>';
-    tabsHTML.grimoire = gh;
+    // v3.639.0 (atelier onglets-alleges, Seb) : le Grimoire montre son contenu (mode, règles, Presets, Rapport)
+    if (typeof grimoireEditIndex !== "undefined" && grimoireEditIndex !== null && grimoireEditIndex >= slotCount) grimoireEditIndex = null;
+    tabsHTML.grimoire = '<div class="camp-card camp-grimoire-card">' + ((typeof grimoireEditIndex !== "undefined" && grimoireEditIndex !== null)
+      ? buildGrimoireEditHTML(grimoireEditIndex, kit) : buildGrimoireListHTML(kit, slotCount)) + '</div>';
   }
   // v3.558.0 (grand écran, option B) : une seule page, sans onglets ; v3.567.0 (option D) : blocs compacts
   // de la maquette (atelier/grand-ecran.html) — équipe, rations, Grimoire, missions, expéditions. Le téléphone ne change pas.
@@ -331,12 +320,17 @@ function campSoirTapText(id) {
   var D = campSoirData()[campSoirWorld()] || {}, any = campSoirAny();
   return (D.tap && D.tap[id]) || (any[id] && any[id].tap) || "";
 }
-function campFeuStoryHTML(campMates) {
-  if (typeof campSoirData !== "function") return "";
-  // v3.601.0 : hors sortie, l'équipe est aussi au feu (on peut parler à tout le monde)
+/* Compagnons assis au feu. v3.601.0 : hors sortie, l'équipe est aussi au feu (on peut parler à tout le monde) */
+function campFeuMateIds(campMates) {
+  if (typeof campSoirData !== "function") return [];
   var away = window.SortieManager && typeof SortieManager.ensure === "function" && SortieManager.ensure().active;
   var party = away && window.CompanionManager ? CompanionManager.partyIds() : [];
-  var ids = (campMates || []).filter(function (id) { return party.indexOf(id) < 0; });
+  return (campMates || []).filter(function (id) { return party.indexOf(id) < 0; });
+}
+
+function campFeuStoryHTML(campMates) {
+  if (typeof campSoirData !== "function") return "";
+  var ids = campFeuMateIds(campMates);
   var key = campSoirWorld() + "|" + ids.join(",");
   if (lastRenderedTab !== "campement" || campSoir.key !== key) campSoir = { key: key, text: campSoirPick(ids), tap: null };
   var dark = window.WorldDays && WorldDays.isDark(); // v3.602.0 : la soirée qui suit la nuit dit ce qu'elle a fait
@@ -344,6 +338,7 @@ function campFeuStoryHTML(campMates) {
     ? '<div class="camp-card camp-soir is-night"><div class="camp-soir-k">' + esc(_t("Cette nuit")) + '</div><p class="camp-soir-t">' + esc(WorldDays.nightText()) + '</p></div>'
     : '<div class="camp-card camp-soir"><div class="camp-soir-k">' + esc(_t("Ce soir au camp")) + '</div><p class="camp-soir-t">' + esc(campSoir.text) + '</p></div>';
   if (!ids.length) return h;
+  var soir = h; // v3.639.0 : le coin du feu d'abord, la soirée ensuite
   var half = Math.ceil(ids.length / 2), mate = function (id) {
     // v3.601.0 (M1) : toucher ouvre la liste des sujets ; « … » quand il a quelque chose de nouveau à dire
     var def = getCompanionDef(id), news = window.CompanionTalkManager && typeof CompanionTalkManager.hasNewTopic === "function" && CompanionTalkManager.hasNewTopic(id);
@@ -353,7 +348,7 @@ function campFeuStoryHTML(campMates) {
   h += '<div class="camp-card camp-feu"><div class="camp-soir-k">' + esc(_t("Au coin du feu")) + '</div><div class="camp-feu-row">'
     + ids.slice(0, half).map(mate).join("") + '<img class="camp-feu-fire" src="images/Icons/camp/campfire.webp" alt="">' + ids.slice(half).map(mate).join("") + '</div>'
     + '<p class="camp-feu-hint">' + esc(_t("Touche un compagnon pour lui parler.")) + '</p></div>';
-  return h;
+  return h.slice(soir.length) + soir;
 }
 
 /* v3.594.0 (atelier camp-carte, option M3 de Seb) : en tête du « feu », le monde où l'on est et la carte. */

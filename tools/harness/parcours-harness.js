@@ -896,6 +896,8 @@ async function P12(browser, base) {
   ok(await page.evaluate(function () { return (game.inventory || []).some(function (it) { return it.name === "Lame du Fleuve" && it.rarity === "rare"; }); }), "Lame du Fleuve (Rare) dans le sac");
   await page.evaluate(function () { switchTab("quests"); });
   await page.waitForTimeout(300);
+  await tap(page, ".story-past-row"); // v3.639.0 : chapitres terminés repliés dans « Déjà vécu »
+  await page.waitForTimeout(300);
   ok(/au nord, les pierres bougent/.test(await page.evaluate(function () { return document.body.innerText; })), "Histoire : « Chapitre terminé — au nord, les pierres bougent. »");
   await shot(page, "3_fin");
   consoleClean(page);

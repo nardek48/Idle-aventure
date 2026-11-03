@@ -177,10 +177,11 @@ function renderTalkScene() {
   root.innerHTML = h + '</div></div>';
 }
 
-/* Dans « Le feu » : une carte par compagnon qui a quelque chose à dire. */
-function campTalkCardsHTML() {
+/* Dans « Le feu » : une carte par compagnon qui a quelque chose à dire.
+   skip (v3.639.0) : compagnons assis au feu, que sa bulle « … » signale déjà */
+function campTalkCardsHTML(skip) {
   if (!window.CompanionTalkManager) return "";
-  return CompanionTalkManager.available().map(function (t) {
+  return CompanionTalkManager.available().filter(function (t) { return !skip || skip.indexOf(t.companion) < 0; }).map(function (t) {
     var def = getCompanionDef(t.companion), first = (t.lines || [])[0];
     return '<button type="button" class="camp-card camp-talk" onclick="openCompanionTalk(\'' + esc(t.id) + '\')">'
       + renderIconOrEmojiHTML(def.image, "camp-talk-img", _td(def.name))

@@ -22,9 +22,17 @@ var activeQuestCategory = "histoire"; // histoire | secondaires | chasse | avent
 var QUEST_BOARD_CATEGORIES = [
   { key: "histoire", label: _t("Histoire", "catégorie"), icon: "images/Icons/quests/quest_story.webp", kinds: ["story"], emptyText: _t("Aucune quête d'histoire pour le moment.") },
   { key: "secondaires", label: _t("Secondaires"), icon: "images/Icons/quests/quest_side.webp", kinds: ["village", "workshop", "exploration", "scene"], emptyText: _t("Aucune quête secondaire disponible pour le moment.") }, // v3.122.0 (Lot S2a) : "scene" ajouté (quêtes migrées vers le scene-engine)
+  // v3.639.0 (atelier onglets-alleges, idée de Seb) : les quêtes des compagnons ont leur onglet, affiché dès la première
+  { key: "compagnons", label: _t("Compagnons"), icon: "images/Icons/subtabs/companions.webp", kinds: [], emptyText: _t("Aucune quête de compagnon pour le moment.") },
   // v3.511.0 : catégorie « Chasse » retirée avec les chasses et les battues
   { key: "aventure", label: _t("Aventure"), icon: "images/Icons/quests/quest_adventure.webp", kinds: ["adventure", "dungeon"], emptyText: _t("Aucune aventure disponible pour le moment.") }
 ];
+
+/* v3.639.0 : l'onglet Compagnons n'existe qu'avec au moins une quête de compagnon */
+function questCategoryShown(key) {
+  return key !== "compagnons" || !!(window.CompanionQuestManager && CompanionQuestManager.list().length);
+}
+window.questCategoryShown = questCategoryShown;
 
 function setQuestCategory(key) {
   activeQuestCategory = key;
@@ -76,7 +84,7 @@ function buildQuestCategoryTabsHTML(missions) {
   });
   // v3.509.0 : un jalon à réclamer allume la pastille de « Secondaires »
   if (window.MilestoneManager && MilestoneManager.readyCount() > 0) claimableByCat.secondaires = true;
-  if (window.CompanionQuestManager && CompanionQuestManager.readyCount() > 0) claimableByCat.secondaires = true; // v3.598.0
+  if (window.CompanionQuestManager && CompanionQuestManager.readyCount() > 0) claimableByCat.compagnons = true; // v3.598.0 ; v3.639.0 : sur leur onglet
   // La chaîne Histoire (hors MissionBoard côté onglet) compte aussi pour la pastille Histoire.
   if (window.StoryQuestManager && typeof StoryQuestManager.getClaimableCount === "function" && StoryQuestManager.getClaimableCount() > 0) {
     claimableByCat.histoire = true;
@@ -85,6 +93,7 @@ function buildQuestCategoryTabsHTML(missions) {
   // v3.401.0 (lot O-1) : onglets du kit (.kseg, rail), icône au-dessus du libellé
   var h = '<div class="kseg is-stack qb-tabs">';
   QUEST_BOARD_CATEGORIES.forEach(function (cat) {
+    if (!questCategoryShown(cat.key)) return;
     h += '<button type="button" class="qb-tab' + (activeQuestCategory === cat.key ? ' is-on' : '') + '" onclick="setQuestCategory(\'' + cat.key + '\')">';
     h += renderIconOrEmojiHTML(cat.icon, "qb-tab-icon-img", cat.label);
     h += '<span class="qb-tab-label">' + esc(cat.label) + '</span>';
@@ -154,17 +163,9 @@ function buildQuestBoardCardHTML(m) {
   // v3.131.0 : détail des étapes (m.stepsDetail, optionnel, générique — voir _workshopMissions()
   // pour "Les fondations") — visible tant que la mission est acceptée/en cours, pas avant.
   if ((m.status === "running" || m.status === "accepted") && hasStepsDetail) {
-    h += '<div class="qb-card-steps">';
-    m.stepsDetail.forEach(function (s) {
-      var stateCls = s.done ? "is-done" : s.current ? "is-current" : "is-pending";
-      var icon = s.done ? "<img class=ico-inline src=images/Icons/system/check_valid.webp>" : s.current ? "<img class=ico-inline src=images/Icons/quests/continue.webp>" : "○";
-      h += '<div class="qb-card-step ' + stateCls + '">';
-      h += '<span class="qb-card-step-icon">' + icon + '</span>';
-      h += '<span class="qb-card-step-label">' + esc(_td(s.label)) + '</span>';
-      if (s.current && s.progress) h += '<span class="qb-card-step-progress">' + esc(s.progress) + '</span>';
-      h += '</div>';
-    });
-    h += '</div>';
+    h += questStepsHTML("m_" + m.id, m.stepsDetail.map(function (s) {
+      return { state: s.done ? "done" : s.current ? "current" : "pending", label: _td(s.label), progress: s.current ? s.progress : "" };
+    }));
   }
   h += '<div class="qb-card-footer">';
   if (m.rewardSummary) {
@@ -183,15 +184,34 @@ function buildQuestBoardCardHTML(m) {
   return h;
 }
 
+/* v3.639.0 (atelier onglets-alleges) : étapes d'une carte — l'étape en cours seule, une ligne déplie les autres.
+   rows : [{ state: "done" | "current" | "pending", label, progress }] (textes déjà traduits). */
+function questStepsHTML(key, rows) {
+  var id = "steps_" + key, open = !!expandedQuestCardIds[id] || !rows.some(function (r) { return r.state === "current"; });
+  var done = rows.filter(function (r) { return r.state === "done"; }).length;
+  var h = '<div class="qb-card-steps">';
+  rows.forEach(function (r) {
+    if (!open && r.state !== "current") return;
+    var icon = r.state === "done" ? "<img class=ico-inline src=images/Icons/system/check_valid.webp>" : r.state === "current" ? "<img class=ico-inline src=images/Icons/quests/continue.webp>" : "○";
+    h += '<div class="qb-card-step is-' + r.state + '"><span class="qb-card-step-icon">' + icon + '</span><span class="qb-card-step-label">' + esc(r.label) + '</span>'
+      + (r.progress ? '<span class="qb-card-step-progress">' + esc(r.progress) + '</span>' : '') + '</div>';
+  });
+  if (rows.length > 1) h += '<button type="button" class="qb-steps-more" aria-expanded="' + open + '" onclick="event.stopPropagation(); toggleQuestCardExpand(\'' + esc(id) + '\')">'
+    + esc(open ? _t("Masquer les étapes") : _tn(done, "{t} étapes · {n} faite", "{t} étapes · {n} faites", { n: done, t: rows.length })) + (open ? ' ▴' : ' ▸') + '</button>';
+  return h + '</div>';
+}
+window.questStepsHTML = questStepsHTML;
+
 /* v3.131.0 (retour Seb) : indicateur permanent du cap de 3 quêtes actives (village/workshop/
    scene/adventure/hunt confondus — voir MissionBoard.ACTIVE_QUEST_CAP). Discret quand il reste
    de la marge, en alerte visuelle quand le cap est atteint (couleur + icône). */
-function buildActiveQuestCapIndicatorHTML() {
+function buildActiveQuestCapIndicatorHTML(compact) {
   if (!window.MissionBoard || typeof MissionBoard.getActiveQuestCount !== "function") return "";
   var count = MissionBoard.getActiveQuestCount();
   var cap = (typeof ACTIVE_QUEST_CAP === "number") ? ACTIVE_QUEST_CAP : 3;
   var atCap = count >= cap;
-  return '<div class="qb-cap-indicator' + (atCap ? ' is-full' : '') + '">'
+  // v3.639.0 : compact sur téléphone, une mention à droite au lieu d'une barre
+  return '<div class="qb-cap-indicator' + (atCap ? ' is-full' : '') + (compact ? ' is-compact' : '') + '">'
     + (atCap ? '<img class="ico-sys" src="images/Icons/quests/quest_capacity_full.webp" alt="">' : '<img class="ico-sys" src="images/Icons/quests/quest_list.webp" alt="">') + ' ' + _t("Quêtes actives : {a}/{b}", { a: count, b: cap })
     + '</div>';
 }
@@ -203,8 +223,10 @@ function buildQuestsGeneralSubTabHTML() {
   // v3.555.0 (grand écran, option B) : liste à gauche, quête choisie à droite ; le téléphone ne change pas
   if (activeQuestsFilter !== "completed" && document.documentElement.classList.contains("wide-mode")) return buildQuestsWideHTML(missions);
   var h = '';
+  if (!questCategoryShown(activeQuestCategory)) activeQuestCategory = "histoire";
   h += buildQuestCategoryTabsHTML(missions);
-  h += buildActiveQuestCapIndicatorHTML();
+  // v3.639.0 : le plafond ne compte ni l'Histoire ni les compagnons, il ne s'affiche que là où il joue
+  if (activeQuestsFilter === "completed" || activeQuestCategory === "secondaires" || activeQuestCategory === "aventure") h += buildActiveQuestCapIndicatorHTML(true);
 
   if (activeQuestsFilter === "completed") {
     h += '<div class="qb-completed-bar"><button class="qb-completed-link" type="button" onclick="setQuestsFilter(\'active\')">◂ ' + _t("Retour aux quêtes actives") + '</button></div>';
@@ -221,7 +243,7 @@ function buildQuestsGeneralSubTabHTML() {
   h += storyHTML;
   var msHTML = (cat.key === "secondaires" && typeof buildMilestonesHTML === "function") ? buildMilestonesHTML() : ""; // v3.509.0 : jalons en tête
   h += msHTML;
-  var cqHTML = (cat.key === "secondaires" && typeof buildCompanionQuestsHTML === "function") ? buildCompanionQuestsHTML() : ""; // v3.598.0 : quêtes des compagnons
+  var cqHTML = (cat.key === "compagnons" && typeof buildCompanionQuestsHTML === "function") ? buildCompanionQuestsHTML(true) : ""; // v3.598.0 ; v3.639.0 : leur onglet, par compagnon
   h += cqHTML;
 
   if (catMissions.length) {
@@ -334,6 +356,7 @@ function buildQuestsWideHTML(missions) {
   });
   h += '</div>' + buildActiveQuestCapIndicatorHTML();
   QUEST_BOARD_CATEGORIES.forEach(function (cat) {
+    if (cat.key === "compagnons") return; // v3.639.0 : au grand écran, les compagnons restent dans Secondaires
     if (questsWideFilter !== "toutes" && questsWideFilter !== cat.key) return;
     h += '<h4 class="qw-grp">' + esc(cat.label) + '</h4>';
     h += E[cat.key] && E[cat.key].length ? E[cat.key].map(function (e) { return questsWideItemHTML(e, questsWideSel); }).join("") : '<p class="qw-empty">' + esc(cat.emptyText) + '</p>';
@@ -359,17 +382,18 @@ function buildOtherWorldQuestsHTML(kinds) {
   if (!window.MissionBoard || typeof MissionBoard.hiddenByWorld !== "function" || !window.WORLDS) return "";
   var hidden = MissionBoard.hiddenByWorld(kinds);
   var h = "";
+  // v3.639.0 (atelier onglets-alleges) : une seule carte au cadre standard, une ligne par monde
   Object.keys(hidden).forEach(function (worldId) {
     var w = WORLDS.find(function (x) { return x.id === worldId; });
     if (!w) return;
     var n = hidden[worldId];
     var refusal = window.WorldTravel ? WorldTravel.refusalReason(worldId) : _t("Voyage indisponible");
-    h += '<div class="qb-other-world">';
+    h += '<div class="qb-ow-row">';
     h += '<span class="qb-other-world-text">' + esc(_tn(n, "{n} quête {lieu}", "{n} quêtes {lieu}", { lieu: worldInPrep(WORLDS.indexOf(w)) })) + '</span>';
     if (!refusal) h += '<button class="settings-btn" type="button" onclick="travelToWorldFromUI(\'' + esc(worldId) + '\')">' + _t("Y aller") + '</button>';
     h += '</div>';
   });
-  return h;
+  return h ? '<div class="qb-other-worlds kc-sec kc-tex"><div class="qb-ow-k">' + esc(_t("Dans les autres mondes")) + '</div>' + h + '</div>' : "";
 }
 window.buildOtherWorldQuestsHTML = buildOtherWorldQuestsHTML;
 
@@ -849,8 +873,8 @@ function buildStoryChainHTML() {
   });
 
   if (!completedMode && storyAllDone()) h = buildStoryEndCardHTML() + h; // v3.534.0 (PLA-9) : carte du bilan en tête
-  if (!completedMode && window.PrologueView) h = buildPrologueCardHTML() + h; // v3.570.0 : le prologue, toujours en tête
-  return h + done;
+  // v3.639.0 (atelier onglets-alleges) : prologue, ouvertures et chapitres terminés rangés en bas, dans « Déjà vécu »
+  return h + (completedMode ? done : buildStoryPastHTML(done));
 }
 
 /* v3.534.0 (audit PLA-9) : fin de l'Histoire. Tous les chapitres terminés : bilan et choix notés,
@@ -923,13 +947,32 @@ function buildStoryEndCardHTML() {
     + '<button class="story-end-link" type="button" onclick="openStoryEndPopup()">' + esc(_t("Revoir le bilan")) + ' ▸</button></div>';
 }
 
-/* v3.570.0 : carte « Revoir le prologue » en tête de Quêtes › Histoire (parties en cours comprises). */
-function buildPrologueCardHTML() {
-  var vision = !!(game.explorationProgression && game.explorationProgression.towerVisionSeen); // v3.631.0 : la vision de l'étape 19
-  return '<div class="story-prologue-card"><b>' + esc(_t("Prologue — Cette nuit-là")) + '</b>'
-    + '<button class="story-end-link" type="button" onclick="openPrologueReplay()">' + esc(_t("Revoir le prologue")) + ' ▸</button>'
+/* v3.639.0 (atelier onglets-alleges) : carte « Déjà vécu » en bas d'Histoire — deux lignes repliées,
+   les chapitres terminés (leurs cartes d'avant) et les « Revoir » (prologue, ouvertures, vision). */
+function buildStoryPastHTML(doneHTML) {
+  var doneN = (doneHTML.match(/story-chain is-done/g) || []).length;
+  var links = window.PrologueView ? storyReplayLinksHTML() : "", linksN = (links.match(/<button/g) || []).length;
+  if (!doneN && !linksN) return "";
+  var row = function (id, title, sub, body) {
+    var open = !!expandedQuestCardIds[id];
+    return '<button type="button" class="story-past-row" aria-expanded="' + open + '" onclick="toggleQuestCardExpand(\'' + id + '\')"><span><b>' + esc(title) + '</b><small>' + esc(sub) + '</small></span><i>' + (open ? '▾' : '▸') + '</i></button>'
+      + (open ? '<div class="story-past-body">' + body + '</div>' : '');
+  };
+  var titles = [], re = /<span><b>([^<]*)<\/b><small>/g, x;
+  while ((x = re.exec(doneHTML))) titles.push(x[1].replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&")); // row() rééchappe
+  var h = '<div class="story-chain story-past"><div class="story-past-k">' + esc(_t("Déjà vécu")) + '</div>';
+  if (doneN) h += row("story_past_done", _tn(doneN, "{n} chapitre terminé", "{n} chapitres terminés"), titles.join(" · "), doneHTML);
+  if (linksN) h += row("story_past_replay", _t("Revoir le prologue et les ouvertures"), _tn(linksN, "{n} scène à revoir", "{n} scènes à revoir"), links);
+  return h + '</div>';
+}
+window.buildStoryPastHTML = buildStoryPastHTML;
+
+/* Liens « Revoir » : prologue, ouvertures vues, vision de la Tour */
+function storyReplayLinksHTML() {
+  var vision = !!(game.explorationProgression && game.explorationProgression.towerVisionSeen);
+  return '<button class="story-end-link" type="button" onclick="openPrologueReplay()">' + esc(_t("Revoir le prologue")) + ' ▸</button>'
     + chapterOpeningLinksHTML("story-end-link")
-    + (vision && window.TowerSystem ? '<button class="story-end-link" type="button" onclick="TowerSystem.playVision(null)">' + esc(_t("Revoir la vision : {x}", { x: _td(TOWER_VISION.num) })) + ' ▸</button>' : '') + '</div>';
+    + (vision && window.TowerSystem ? '<button class="story-end-link" type="button" onclick="TowerSystem.playVision(null)">' + esc(_t("Revoir la vision : {x}", { x: _td(TOWER_VISION.num) })) + ' ▸</button>' : '');
 }
 
 /* v3.623.0 : un lien par ouverture déjà vue (étape d'arrivée faite), sous le prologue. */
@@ -1340,6 +1383,16 @@ function buildMilestonesHTML() {
     + '<div class="ms-head-tx"><b>' + esc(_t("Jalons · {x}", { x: W ? _td(W.name) : "" })) + '</b><small>' + esc(_t("Village et héros · une récompense chacun")) + '</small></div>'
     + '<span class="ms-count">' + done + ' / ' + list.length + '</span></div>';
   h += '<div class="ms-bar"><i style="width:' + Math.round(100 * done / list.length) + '%"></i></div>';
+  // v3.639.0 (atelier onglets-alleges) : téléphone, la liste se replie derrière une ligne ; le grand écran la garde ouverte
+  var others = [];
+  for (var k = 0; k <= M.reachedWorld() && k < MILESTONE_REWARD_BY_WORLD.length; k++) if (k !== w && M.openCount(k) && window.WORLDS && WORLDS[k]) others.push(k);
+  var wide = typeof document !== "undefined" && document.documentElement.classList.contains("wide-mode");
+  var open = wide || !!expandedQuestCardIds.milestones, ready = list.filter(function (m) { return M.isReady(m); }).length;
+  if (!wide) h += '<button type="button" class="ms-toggle' + (ready ? ' is-ready' : '') + '" aria-expanded="' + open + '" onclick="toggleQuestCardExpand(\'milestones\')"><span><b>'
+    + esc(open ? _t("Replier les jalons") : _tn(list.length, "Voir le jalon", "Voir les {n} jalons")) + '</b>'
+    + (open ? '' : '<small>' + esc(ready ? _tn(ready, "{n} à réclamer", "{n} à réclamer") : others.length ? _tn(others.length, "et {n} autre monde aux jalons ouverts", "et {n} autres mondes aux jalons ouverts") : _t("Village et héros")) + '</small>')
+    + '</span><i>' + (open ? '▴' : '▸') + '</i></button>';
+  if (!open) return h + '</section>';
   [["v", _t("Village")], ["h", _t("Héros")]].forEach(function (g) {
     h += '<div class="ms-grp">' + esc(g[1]) + '</div>';
     list.filter(function (m) { return m.g === g[0]; }).forEach(function (m) { h += buildMilestoneRowHTML(m); });
@@ -1355,7 +1408,7 @@ function buildMilestonesHTML() {
   return h;
 }
 
-function milestoneShowWorld(w) { milestoneViewWorld = w; if (typeof renderPanel === "function") renderPanel(); }
+function milestoneShowWorld(w) { milestoneViewWorld = w; expandedQuestCardIds.milestones = true; if (typeof renderPanel === "function") renderPanel(); }
 function milestoneClaim(id) {
   if (window.MilestoneManager && MilestoneManager.claim(id)) {
     if (window.FilRouge) FilRouge.invalidate();
