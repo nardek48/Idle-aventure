@@ -98,6 +98,9 @@ function renderHudDock() {
   }).join("");
   if (fil && fil.urgent) now.filUrgent = true;
   hudDockSeen = now;
+  // v3.650.0 (atelier bulles-flottantes, F0+) : la fin de chaque liste laisse la hauteur des bulles,
+  // pour qu'aucun bouton ne reste coincé dessous (css/02-layout.css, zone qui défile ::after)
+  if (document.body && document.body.style) document.body.style.setProperty("--hud-dock-space", (root.offsetHeight ? root.offsetHeight + 12 : 0) + "px");
   hudDockFilId = fil ? fil.id : null;
   // Le libellé des nouvelles bulles s'affiche deux secondes, puis s'efface
   Array.prototype.forEach.call(root.querySelectorAll(".hud-bub.is-new"), function (b) {
