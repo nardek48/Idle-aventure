@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.647.0", "menu_icons/village_menu", _t("Village sur téléphone : Production, Bâtiments et Ateliers en lignes, le texte à gauche, l'image à droite. Les nouvelles illustrations arrivent bientôt.")],
     ["3.646.0", "menu_icons/village_menu", _t("Récits de patrouille : « au puits sec », « des marches de craie », plus de « à Le » ni « de Les ».")],
     ["3.645.0", "menu_icons/village_menu", _t("Patrouilles dans la Tour : tes compagnons peuvent partir sur les étages libérés, avec leurs récits de là-haut.")],
     ["3.644.0", "menu_icons/heroes_menu", _t("La Mémoire continue après la Tour : les niveaux 25 à 28 s\'ouvrent avec ton record dans la faille, et chaque étage franchi rapporte de l\'Aether. Six hauts faits de la faille.")],

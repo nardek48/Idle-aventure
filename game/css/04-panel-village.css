@@ -877,3 +877,65 @@
 
 /* v3.643.0 (atelier village-heros) : Entrepôt, le plafond en petit à côté du titre (titre sur une ligne) */
 .ksec .wh-sec-sub { font-family: inherit; font-size: 12px; font-weight: 700; letter-spacing: 0; text-transform: none; opacity: 0.85; }
+
+/* =========================
+   v3.647.0 (atelier ateliers-maquettes, 50:50, validé par Seb le 03/11) : sur téléphone,
+   Production, Bâtiments et Ateliers passent en lignes. Texte sur la moitié gauche, image sur la
+   moitié droite (.row-scene) : la scène de ligne si elle est livrée, sinon l'image actuelle.
+   Le grand écran garde ses vignettes (.row-scene s'efface : display contents).
+   ========================= */
+.row-scene { display: contents; }
+.row-scene-img { width: 100%; aspect-ratio: 3 / 2; object-fit: cover; border-radius: 8px; }
+.wk-tile-src { display: none; }
+
+html:not(.wide-mode) :is(.production-dash-grid, .vb-grid, .wk-grid) { grid-template-columns: minmax(0, 1fr); }
+html:not(.wide-mode) .wk-grid + .wk-grid { margin-top: 8px; }
+html:not(.wide-mode) .wk-group { display: none; }
+
+/* La ligne : environ 3:1 à 390 px (deux moitiés en 3:2), plus haute si le texte l'exige */
+html:not(.wide-mode) :is(.prod-tile, .vb-card, .wk-tile) {
+  position: relative;
+  min-height: 112px;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 3px;
+  padding: 10px calc(50% + 6px) 10px 12px;
+  text-align: left;
+  overflow: hidden;
+}
+html:not(.wide-mode) .vb-card-top { align-items: flex-start; }
+html:not(.wide-mode) .row-scene {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+/* Scène livrée : elle remplit sa moitié et se fond dans le parchemin par son bord gauche */
+html:not(.wide-mode) .row-scene.is-scene .row-scene-img {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+  border-radius: 0;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 28%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 28%);
+}
+/* Pastilles de niveau : du côté de l'image, en bas, pour laisser le nom à gauche */
+html:not(.wide-mode) :is(.vb-card-lvl, .wk-tile-lvl) { top: auto; bottom: 6px; left: auto; right: 6px; z-index: 2; }
+html:not(.wide-mode) :is(.prod-tile-rib, .vb-card-flag, .wk-tile-rib, .wk-tile-auto) { z-index: 2; }
+html:not(.wide-mode) .prod-tile-meta { justify-content: flex-start; }
+html:not(.wide-mode) .prod-tile .production-dash-name { flex: 0 0 auto; }
+/* Petits téléphones (320-359 px) : le texte prend 56 % de la ligne */
+@media (max-width: 359px) {
+  html:not(.wide-mode) :is(.prod-tile, .vb-card, .wk-tile) { padding-right: calc(44% + 6px); }
+  html:not(.wide-mode) .row-scene { width: 44%; }
+}
+html:not(.wide-mode) .wk-tile-recipe { justify-content: flex-start; }
+html:not(.wide-mode) .wk-tile-bar { width: 100%; }
+html:not(.wide-mode) .wk-tile-src { display: block; font-size: 12px; font-weight: 700; line-height: 1.1; color: var(--nb-ink-dim); }
+html:not(.wide-mode) :is(.prod-tile.is-locked, .wk-tile.is-soon) .row-scene-img { filter: grayscale(1); opacity: 0.6; }
+html:not(.wide-mode) .wk-tile.is-block .row-scene-img { filter: grayscale(0.6); }

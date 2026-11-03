@@ -166,7 +166,7 @@ function buildProductionDashCardHTML(id) {
 
   var h = '<button type="button" class="production-dash-card prod-tile' + (isFull && storeFull ? ' is-full' : '') + '" onclick="openProductionBuildingDetail(\'' + id + '\')">';
   h += flag;
-  h += renderIconOrEmojiHTML(def.buildingImage || resDef.icon, "prod-tile-img", _td(def.name));
+  h += buildingSceneHTML("prod_" + id, renderIconOrEmojiHTML(def.buildingImage || resDef.icon, "prod-tile-img", _td(def.name))); // v3.647.0 : moitié droite
   h += '<span class="production-dash-name">' + esc(_td(def.name)) + '</span>';
   h += '<span class="kgauge kgauge-thin kgauge-xp prod-tile-gauge"><span class="kgauge-track"><span class="kgauge-fill nb-entry-progress-fill' + (isFull ? ' done' : '') + '" id="prod-bar-' + id + '" style="width:' + pct + '%"></span></span>'
     + '<span class="kgauge-text" id="prod-stock-label-' + id + '">' + formatNumber(Math.floor(stock)) + ' / ' + formatNumber(capacity) + '</span></span>';
@@ -735,7 +735,7 @@ function buildProductionLockedCardHTML(id) {
   var accepted = running || !!((game.explorationProgression || {}).boardAccepted || {})[questId];
   var h = '<button type="button" class="production-dash-card prod-tile is-locked" onclick="goToProductionUnlockQuest(\'' + id + '\')">';
   h += '<span class="prod-tile-rib is-lock"><img class="ico-sys" src="images/Icons/system/lock_closed.webp" alt="">' + _t("À débloquer") + '</span>';
-  h += renderIconOrEmojiHTML(def.buildingImage || resDef.icon, "prod-tile-img", _td(def.name));
+  h += buildingSceneHTML("prod_" + id, renderIconOrEmojiHTML(def.buildingImage || resDef.icon, "prod-tile-img", _td(def.name))); // v3.647.0 : moitié droite
   h += '<span class="production-dash-name">' + esc(_td(def.name)) + '</span>';
   h += '<span class="production-dash-lock-quest">' + esc(tpl.title ? _td(tpl.title) : questId) + '</span>';
   h += '<span class="production-dash-status">' + (running ? _t("En cours") : accepted ? _t("Acceptée · touche pour partir") : _t("Touche pour voir la quête")) + ' ›</span>';
@@ -853,7 +853,10 @@ function buildWorkshopTileHTML(w, backId) {
   }
   h += rib;
   if (w.active && WorkshopsSystem.getAutoRecipeId(w.id)) h += '<span class="wk-tile-auto"><img class="ico-sys" src="images/Icons/system/auto_repeat.webp" alt=""></span>';
-  h += renderIconOrEmojiHTML(w.icon, "wk-tile-img", _td(w.name));
+  h += buildingSceneHTML("atelier_" + (w.id === "forge" ? "forge_mine" : w.id), renderIconOrEmojiHTML(w.icon, "wk-tile-img", _td(w.name))); // v3.647.0
+  // v3.647.0 : sur téléphone, plus de titres de groupe dans l'onglet Ateliers ; le bâtiment est écrit sur la ligne
+  var src = !backId && w.buildingId && PRODUCTION_BUILDINGS[w.buildingId];
+  if (src) h += '<span class="wk-tile-src">' + esc(_td(src.name)) + '</span>';
   h += '<span class="wk-tile-name">' + esc(_td(w.name)) + '</span>';
   if (state === "soon") {
     h += '<span class="wk-tile-sub"><img class="ico-inline" src="images/Icons/system/lock_closed.webp" alt=""> ' + _t("Bientôt") + '</span>';

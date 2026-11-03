@@ -20,7 +20,7 @@ function buildGrandOuvrageCardHTML() {
   var h = '<button type="button" class="vb-card is-built go-card" onclick="openGrandOuvrageSheet()">';
   if (p.tier > 0) h += '<span class="vb-card-lvl">' + p.tier + '</span>';
   if (surplus) h += '<span class="vb-card-flag is-good">' + _t("À verser") + '</span>';
-  h += '<div class="vb-card-top">' + grandOuvrageIconHTML("vb-card-icon") + '<div class="vb-card-name">' + _t("Le Grand Ouvrage") + '</div></div>';
+  h += '<div class="vb-card-top">' + buildingSceneHTML("village_grand_ouvrage", grandOuvrageIconHTML("vb-card-icon")) + '<div class="vb-card-name">' + _t("Le Grand Ouvrage") + '</div></div>';
   h += '<div class="vb-card-status">' + _t("+{p} % d'or", { p: Math.round(GrandOuvrage.getGoldBonus() * 100) })
     + '<br>' + _t("palier {n} : {p} %", { n: p.tier + 1, p: Math.floor(p.into / p.cost * 100) }) + '</div>';
   return h + '</button>';
