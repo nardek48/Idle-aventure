@@ -10,9 +10,9 @@ var src = fs.readFileSync(path.join(__dirname, "debouches-bench.js"), "utf8");
 src = src.slice(0, src.indexOf("var SCENARIOS")); // on garde boot(), RAW, RECIPE
 var lib = new Function("require", "ROOT", "path", "vm", src.replace(/^"use strict";/, "").replace(/var fs = [^\n]*\n/, "var fs = require('fs');\n").replace(/var ROOT = [^\n]*\n/, "") + "\nreturn { boot: boot, RAW: RAW };")(require, ROOT, path, vm);
 var boot = lib.boot, RAW = lib.RAW;
-var NOMS = ["Forêt", "Désert", "Ruines", "Crypte", "Montagne"], PREFIX = ["forest", "desert", "ruines", "crypte", "montagne"];
+var NOMS = ["Forêt", "Désert", "Ruines", "Crypte", "Montagne", "Tour"], PREFIX = ["forest", "desert", "ruines", "crypte", "montagne", "tour"]; // 03/11 : + la Tour
 var TO_RAW = { planche: { bois: 5 }, lingot: { fer: 5 }, bloc: { pierre: 6, fer: 2 }, acier: { lingot: 3, bois: 6 },
-  cire_consacree: { cire_sepulcre: 3, lingot: 2 }, obsidienne_taillee: { cendre_vive: 3, acier: 1 }, resine_durcie: { seve_aeswyn: 2, planche: 3 } }; // recettes de data/workshops.js
+  cire_consacree: { cire_sepulcre: 3, lingot: 2 }, obsidienne_taillee: { cendre_vive: 3, acier: 1 }, verre_faille: { givre_bleu: 3, acier: 1 }, resine_durcie: { seve_aeswyn: 2, planche: 3 } }; // recettes de data/workshops.js
 
 function setWorld(g, world) {
   g.game.worldsEverReached = {}; for (var w = 0; w <= world; w++) g.game.worldsEverReached[w] = true;
@@ -27,7 +27,7 @@ vm.runInContext("fullResetState(); game.playerName='Banc'; game.heroId='knight';
 var LIN = (process.argv.join(" ").match(/--lin=([\d.]+)/) || [])[1]; if (LIN) g.PRODUCTION_PLOTS_SHARED.linearPerLevel = Number(LIN); // débit des zones par niveau
 var VB = g.VillageBuildingManager, PPS = g.ProductionPlotsSystem; VB.ensure();
 var prevVillage = {}, prevRows = 0, prevZL = 1, prevWL = 1, out = [];
-for (var world = 0; world < 5; world++) {
+for (var world = 0; world < 6; world++) { // 03/11 : + la Tour
   setWorld(g, world);
   var cap = g.WORLD_CAPS[world], parts = { batiments: {}, zones: {}, ateliers: {} };
   Object.keys(g.VILLAGE_BUILDINGS).forEach(function (id) {

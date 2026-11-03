@@ -5,7 +5,9 @@
    v3.331.0 : première version. v3.367.0 : mise à jour pour la v3.366.0 — donjon sans tickets
    (DUNGEON_CONFIG.runsPerDay), reprise de la Mémoire en or, réserve de Petites Aventures et
    recharge, boss (BOSS_DB, phases), uniques (ELITE_UNIQUE_LOOT), Hauts faits, puits du roi,
-   règle d'échec des cartes (option A), mesures de campagne.
+   règle d'échec des cartes (option A), mesures de campagne. v3.637.0 (03/11) : changements depuis la v3.433.0
+   (Crypte, Montagne, chantier du héros, Tour), équilibre des classes, voies communes de talents, règles de la Tour,
+   cartes vivantes de tous les mondes, mesures de campagne v3.634 et v3.635.
    USAGE : node tools/docs-gen/generate-balance-guide.js <racine du projet> <fichier.md de sortie> */
 var fs = require("fs"), path = require("path"), vm = require("vm");
 var ROOT = require("../chemins.js").jeu(process.argv[2]);
@@ -75,24 +77,23 @@ var PA_RECHARGE_H = G.SceneRunManager.PETITE_AVENTURE_RECHARGE_MS / 3600000;
 H(1, "Aethervale — Guide d'équilibrage");
 var NOW = new Date(), DATE = ("0" + NOW.getDate()).slice(-2) + "/" + ("0" + (NOW.getMonth() + 1)).slice(-2) + "/" + NOW.getFullYear();
 P("**État du code au " + DATE + " — v" + V + ".** Toutes les tables sont **extraites automatiquement du code** (scripts d'`index.html` chargés dans le bac à sable du harnais, par `tools/docs-gen/generate-balance-guide.js`) ; aucune valeur n'est recopiée à la main. Les commentaires et les mesures viennent des bancs de `sim/`.\n");
-P("La version précédente datait de la v3.392.0, complétée par la mise à jour v3.392.0 → v3.427.2 : ce guide remplace les deux. Parties : 0 Changements · 1 Économie · 2 Héros et progression · 3 Combat · 4 Cartes Vivantes · 5 Combat de groupe · 6 Outils et points ouverts.\n");
+P("La version précédente datait de la v3.433.0 (fin du chapitre III) ; ce guide la remplace et couvre les six chapitres. Parties : 0 Changements · 1 Économie · 2 Héros et progression · 3 Combat · 4 Cartes Vivantes · 5 Combat de groupe · 6 Outils et points ouverts. Les mesures de la partie 3.8 antérieures à la v3.634.0 sont gardées comme historique.\n");
 
 /* ---------- 0. Changements ---------- */
-H(1, "0. Changements depuis la v3.392.0");
-var D3 = G.DUNGEONS.filter(function (d) { return d.camp; })[0] || {};
+H(1, "0. Changements depuis la v3.433.0");
+var CLB = {}; G.CLASSES.forEach(function (c) { CLB[c.id] = c.balance || {}; });
 P(table(["Période", "Chantier", "Ce qui change pour l'équilibrage"], [
-  ["v3.393 → v3.417", "Audit design, Village (écrans)", "Rien : retrait de l'Ascension et des bonus d'Aether qui valaient zéro, écrans refaits"],
-  ["v3.418.0", "Économie E-1", "Taverne et Halle à l'Atelier 2 ; Taverne 2 contrats au niveau 1, +1 par niveau. **Production −20 %** sur le Blé, la Viande, l'Eau et la Pierre"],
-  ["v3.419 → v3.421", "Caravane", "Caravane de la Halle marchande, visible sur la carte ; elle rapporte le rare du monde (§1.11)"],
-  ["v3.422.0", "Points ouverts", "Bonus de carte sur la production appliqués (+10 %). Obstacles des Petites Aventures tirés 3 fois sur 4 dans le pool du secteur"],
-  ["v3.423.0", "**Difficulté**", "Les ennemis suivent un peu la force réelle du héros (§2.8). Souffle plus cher, repos plus court"],
-  ["v3.427.2", "Anneau", "Base de l'anneau : chance de critique au lieu de l'or"],
-  ["v3.428.0", "Ruines, acte I", "Monde 3 ouvert. **La relève** : certains ennemis se relèvent une fois à " + pct(G.RISE_HP_PCT) + " de leurs PV (§3.2). Choix « seuil » : **Le seuil**, le héros tombé se relève une fois par combat à " + pct(G.HERO_RISE_HP_PCT) + ", ou −10 % de matériaux au village. Edda, troisième compagnon. **Pierre errante**"],
-  ["v3.429.0", "Ruines, acte II", "Le **Bâtisseur** (il pose un mur sur un allié). Carte des Ruines : **chantier errant** (" + G.LIVING_MAPS.ruins.chantier.reward + " Pierres errantes) et **Éboulement**. Les murs bougent en Petite Aventure. Terrain 10"],
-  ["v3.429.1 → v3.429.24", "Correctifs, pronostic", "Pronostic des donjons, quêtes et chasses : le run entier, les groupes, les compagnons et leurs soins comptent. Sans effet sur les chiffres de combat"],
-  ["v3.430.0", "Ruines, acte III (1)", "**" + D3.name + "** : campement après la vague " + (D3.camp || {}).afterWave + " (soin " + pct((D3.camp || {}).healPct || 0) + ", butin mis en sûreté). Élites Contremaître et Golem ; Varrek se relève"],
-  ["v3.431.0", "Ruines, acte III (2)", "**Clé de voûte** et **Forge 4** (reforges 7 et 8). Terrain 11, 13 points de talent. Golem de quête calé à part (`eliteStatMult`). Choix « salle »"],
-  ["v3.432.0 → v3.433.0", "Ruines, acte IV", "Le Cœur (requiresAllNeighbors), « Vers le Cœur », « Le dernier trait ». **Le Maître d'œuvre** : relève forcée, renforts, blindage. Choix « plan ». **Arme du Cœur**, premier Épique (valeur " + G.ELITE_UNIQUE_LOOT.arme_coeur.value + ")"]
+  ["v3.434 → v3.449", "Labyrinthe, combat", "Labyrinthe aux leviers (Ruines). Objets de combat (7), préparation de sortie, initiative au d20 (Rôdeur à deux dés). Chevalier : gabarit ÷1,3 sur les quêtes à multiplicateur fixe"],
+  ["v3.450 → v3.458", "Crypte (chapitre IV)", "Les morts qui dorment (réveil, gisants), Lanterne, chaînes sur les compagnons, donjon 4 (Ossuaire). **Voie du Commandement** (5 talents communs). **Mémoire 9 à 16** (Garder / Donner, ligne au jalon). Terrain 12 et 13. Caravanes multiples"],
+  ["v3.486 → v3.492", "Montagne (chapitre V)", "La veine (tailler : lame + chaleur), tri des façonnés, donjon 5 (Gueule du volcan, Wyrm qui plonge), Mémoire 17 à 20, palier Épique et Forge 6"],
+  ["v3.493 → v3.501", "Chantier du héros (H1 à H4)", "Terrain jusqu'à 18 (entraînement 200), rangs des sorts, rangs des talents (plafond 18 → 23), compagnons et reliques"],
+  ["v3.515 → v3.562", "Audits, retours de Seb", "Crypte et Montagne plus difficiles (v3.562) ; potions majeures ; élites aux Ruines et à la Crypte ; Grand Ouvrage (v3.561)"],
+  ["v3.609 → v3.614", "Économie, entraînement", "Grand Ouvrage automatique ; caravanes : rare garanti ; **3 parcelles par zone**, achat automatique ; entraînement **×4 dès le Désert** ; caractéristiques secondaires à **" + pct(G.TRAINING_SECONDARY_SHARE) + "** du plafond du Terrain"],
+  ["v3.625 → v3.632", "La Tour (chapitre VI)", "Braise, carte des étages (La redite), escalier, Gardien qui répète, donjon 6 (Sommet interdit, le Reflet), **le miroir**, palier Légendaire, Forge 7, silhouette, la Question (prix par axe), **Mémoire 21 à 24**, hauts faits de la Tour"],
+  ["v3.633.0", "Voie « Varier »", "5 talents communs ouverts à la Tour ; plafond des talents **23 → 28** (§2.6)"],
+  ["v3.634.0", "**Équilibre des classes**", "Dégâts : Chevalier ×" + fr(CLB.knight.damageMult) + ", Rôdeur ×" + fr(CLB.archer.damageMult) + ", Mage ×" + fr(CLB.mage.damageMult) + " ; PV du Mage +" + pct(CLB.mage.hpPct || 0) + " (§2.9)"],
+  ["v3.635.0", "Rythme de la Tour", "Terrain **19 à 21** (entraînement " + G.TRAINING_HARD_CAP + "), palier de l'acte III avec Forge 7 et reforge 13, 5 étages et 2 escaliers ; silhouette ×4,25 / ×1,1"],
+  ["v3.637.0", "Silhouette", "Le vrai round intouchable à 30 % (annoncé un round avant), par les accroches du Wyrm"]
 ]));
 P("**Principes posés par Seb**, à garder pour tout réglage futur :\n");
 P("- **Calibrer au plafond atteignable de l'acte**, et vérifier les premiers contenus d'un acte au plafond de l'acte précédent (plan C).");
@@ -172,7 +173,7 @@ P(table(["Monde", "Acte", "Étape d'ouverture", "Terrain max", "Entraînement ma
     if (t) lastTalentCap = t.points;
     return [G.WORLDS[a.worldIndex].name, a.act, a.stepId, a.terrain, 20 + a.terrain * 10, lastTalentCap];
   })));
-P("Les talents s'ouvrent à l'étape forest_11 (acte III). L'acte IV du Désert (étapes 16 à 18) garde les plafonds de l'acte III. Les mondes suivants n'ont pas encore de table : pas de plafond d'acte.\n");
+P("Les talents s'ouvrent à l'étape forest_11 (acte III). Un acte sans ligne garde les plafonds de l'acte précédent (acte IV du Désert, actes II et IV de certains mondes). Les plafonds de la Tour (actes II à IV) viennent du rythme de la Tour (v3.635.0) et de la voie Varier (v3.633.0).\n");
 
 H(2, "1.5 L'or");
 var goldByWorld = { forest: 0, desert: 0 }, goldActIV = 0;
@@ -303,7 +304,7 @@ function affText(a) {
   var txt = (s === "critChance") ? "+" + fr(v) + " %" : (Math.abs(v) < 1 ? "+" + pct(v) : "+" + fr(v));
   return (STATL[s] || s) + " " + txt + " (" + (a.tier === "P" ? "principal" : "secondaire") + ")";
 }
-var UL = G.ELITE_UNIQUE_LOOT, ulSource = { araignee_marquee: "élite : la Fileuse", ronce_ardente: "élite : la Ronce", heaume_guet: "choix du Serment (desert_11)", arme_cite: "la Cité engloutie (desert_12)", arme_fleuve: "Maddoc après Nezzam (desert_18)", sceau_salle: "choix « salle » = rouvrir (ruines_14)", arme_coeur: "Edda, fin du chapitre III (ruines_20)" };
+var UL = G.ELITE_UNIQUE_LOOT, ulSource = { araignee_marquee: "élite : la Fileuse", ronce_ardente: "élite : la Ronce", heaume_guet: "choix du Serment (desert_11)", arme_cite: "la Cité engloutie (desert_12)", arme_fleuve: "Maddoc après Nezzam (desert_18)", sceau_salle: "choix « salle » = rouvrir (ruines_14)", arme_coeur: "Edda, fin du chapitre III (ruines_20)", carquois_ysolt: "Ysolt (Crypte)", porte_couronne: "élite : le Porte-couronne (Ossuaire)", maillon_wenna: "Wenna, fin du chapitre IV (crypte_20)", fil_bleu: "fin du chapitre V (montagne_20)" };
 P(table(["Objet", "Emplacement", "Rareté", "Valeur", "Affixes", "Source"], Object.keys(UL).map(function (id) {
   var u = UL[id];
   var names = u.byClass ? Object.keys(u.byClass).map(function (k) { return u.byClass[k].name; }).join(" / ") : (u.item ? u.item.name : id);
@@ -345,6 +346,13 @@ Object.keys(G.TALENT_TREES).forEach(function (cid) {
 });
 P("Chiffres des crochets (`TALENT_VALUES`) : " + Object.keys(G.TALENT_VALUES).map(function (k) { return k + " " + fr(G.TALENT_VALUES[k]); }).join(" · ") + ".\n");
 P("*Mesures (`plafond-bench.js --voie A|B`, v3.328.0) : Chevalier Bourreau 100 % sur l'orc de l'étape 15 ; Rôdeur Faucon 72 à 77 % sur le dard ; Chevalier Rempart 100 % sur la Cité. À surveiller : le Rôdeur Ombre en fin de Forêt (87 % sur la ronce et l'orc).*\n");
+H(3, "Voies communes (Commandement, Varier)");
+P("Communes aux trois classes, points partagés avec l'arbre de classe, 5 nœuds appris dans l'ordre, la clé au bout. Le Commandement s'ouvre au monde " + G.TALENT_COMMAND.opensAt + " (Crypte), Varier au monde " + G.TALENT_TOWER.opensAt + " (Tour, v3.633.0). Les effets de Varier jouent partout.\n");
+P(table(["Voie", "Talent", "Effet"], G.TALENT_COMMAND.nodes.map(function (n) { return [G.TALENT_COMMAND.name + (n.key ? " — clé" : ""), n.name, n.effect]; })
+  .concat(G.TALENT_TOWER.nodes.map(function (n) { return [G.TALENT_TOWER.name + (n.key ? " — clé" : ""), n.name, n.effect]; }))));
+H(3, "Plafond de points par acte");
+P("Un point par niveau du héros ; au-delà du plafond de l'acte, le point part en réserve. L'arbre de classe n'offre que 18 rangs utilisables (clés exclusives) : 18 + 5 + 5 = **28**, tout l'arbre.\n");
+P(table(["Monde", "Étape", "Acte", "Points"], G.TALENT_CAP_BY_ACT.map(function (c) { return [worldName(c.worldIndex), c.stepId, c.act, c.points]; })));
 
 H(2, "2.7 Compagnons");
 var comp = [];
@@ -369,6 +377,10 @@ P("Fichiers : `data/worlds.js` (HERO_SCALING_REFS, WORLD_HERO_SCALING), `CombatF
 P(table(["Référence", "Dégâts par round", "PV effectifs"], Object.keys(G.HERO_SCALING_REFS).map(function (k) { var r = G.HERO_SCALING_REFS[k]; return [k, r.dmg, r.ehp]; })));
 P(table(["Monde", "Référence par aventure"], Object.keys(WS.refByWorld).map(function (w) { return [worldName(w), WS.refByWorld[w].join(" · ")]; })));
 P("*Ruines : le héros de fin du chapitre II (`joueurDesert2`). Posé provisoirement en v3.428.0, **gardé par décision de Seb du 09/10** : tous les bancs des Ruines ont été faits avec cette référence. L'ajustement compare donc le héros des Ruines au héros de fin du Désert.*\n");
+H(2, "2.9 Équilibre des classes (v3.634.0)");
+P("Fichier : `data/classes.js` (`balance`). Le multiplicateur de dégâts porte sur **tous** les dégâts du héros (attaque de base et techniques), par `VeinSystem.classMult()` lu dans `bladeMult` ; les PV passent par `TalentManager.getStatBonuses()`. Décision de Seb (03/11) : « converger au milieu ».\n");
+P(table(["Classe", "Caractéristique principale", "Dégâts", "PV en plus"], G.CLASSES.map(function (c) { var b = c.balance || {}; return [c.label, ({ power: "Puissance", celerity: "Célérité", will: "Volonté" })[c.mainStat] || c.mainStat, "×" + fr(b.damageMult || 1), pct(b.hpPct || 0)]; })));
+P("*Mesure avant (campagne v3.632.0) : Rôdeur 30,8 h jusqu'à la fin de l'Histoire, Chevalier 38,4 h, Mage 41,2 h ; dégâts du héros par round sur le Dragon ancien ~6 300 / ~15 500 / ~13 200 (Ch / Rô / Ma). Après (v3.634.0) : 35,3 / 36,8 / 33,4 h ; Dragon ancien en 1 / 4 / 2 essais.*\n");
 
 H(1, "Partie 3 — Combat : ennemis, boss, missions, calibrages");
 H(2, "3.1 Mise à l'échelle des ennemis");
@@ -466,6 +478,26 @@ P(table(["Règle", "Valeur"], [
 ]));
 
 H(2, "3.8 État mesuré");
+H(3, "Campagne complète, classes recalées (robot joueur, v3.634.0)");
+P("Banc `tools/sim/campagne-harness.js . --combats --joueur --classe <c>`, une partie par classe, de zéro jusqu'à la fin de l'Histoire (122 contrôles, 0 échec chacune). Durées simulées par chapitre.\n");
+P(table(["Chapitre", "Chevalier", "Rôdeur", "Mage"], [
+  ["Forêt", "2,1 h", "2,3 h", "2,2 h"], ["Désert", "5,6 h", "3,1 h", "3,0 h"], ["Ruines", "3,2 h", "5,8 h", "4,4 h"], ["Crypte", "6,2 h", "10,3 h", "5,8 h"],
+  ["Montagne", "14,5 h", "12,6 h", "14,8 h"], ["Tour (avant v3.635.0)", "3,7 h", "2,7 h", "3,2 h"], ["**Total**", "**35,3 h**", "**36,8 h**", "**33,4 h**"]
+]));
+P(table(["Combat de fin de chapitre", "Chevalier", "Rôdeur", "Mage"], [
+  ["Celui qui retient (Crypte)", "38 % de PV, 3 potions", "54 %, 1", "58 %, 0"],
+  ["Le Dragon ancien (Montagne)", "1 essai, 56 %", "4 essais, 11 %", "2 essais, 20 %"],
+  ["La silhouette (Tour)", "58 %", "37 %", "43 %"]
+]));
+H(3, "Le chapitre VI, la Tour (v3.635.0 à v3.637.0)");
+P("Reprise de la Tour au robot (`SAVE_IN` = sauvegarde d'entrée de la Tour, 28 contrôles, 0 échec par classe), après le rythme de la Tour (Terrain 19 à 21, palier de l'acte III, 5 étages et 2 escaliers) : **13,6 / 8,1 / 11,2 h** (Ch / Rô / Ma ; cible 8 à 10 h ; écart surtout dû aux recharges d'expédition).\n");
+P(table(["Quête", "Réglage", "Mesure (banc `montagne-acte3-bench.js --quetes`)"], [
+  ["Seul (3 rencontres, sans compagnon)", "PV ×" + fr(G.ADVENTURE_QUESTS.aq_tour_seul.encounterHpMult) + ", puissance ×" + fr(G.ADVENTURE_QUESTS.aq_tour_seul.enemyPowerMult), "94 à 100 % de réussite"],
+  ["La silhouette", "PV ×" + fr(G.ADVENTURE_QUESTS.aq_tour_silhouette.bossHpMult) + ", puissance ×" + fr(G.ADVENTURE_QUESTS.aq_tour_silhouette.bossPowerMult), "100 % pour les trois classes avec le contre de la classe ; à ×5 / ×1,3, Chevalier 0 % (course à l'usure, voir §6.2)"],
+  ["Le haut de l'escalier", "PV ×" + fr(G.ADVENTURE_QUESTS.aq_tour_haut.encounterHpMult) + ", puissance ×" + fr(G.ADVENTURE_QUESTS.aq_tour_haut.enemyPowerMult), "94 à 100 %"],
+  ["Sommet interdit (donjon 6)", "difficultyMult " + fr(G.DUNGEONS.filter(function (d) { return d.id === 6; })[0].difficultyMult) + ", Reflet 0,6 / 0,5", "Chevalier 42 % de PV en fin de sortie (avec la règle « ennemi vampirique »), Mage 73 %, Rôdeur 93 % (avant l'équilibre des classes)"]
+]));
+H(3, "Historique");
 H(3, "Au plafond atteignable (plan C, v3.331.0)");
 P("Banc `tools/sim/plafond-bench.js`, Grimoire automatique, 2 potions, compagnons à pleine force, talents voie A au plafond de points de l'acte. Réussite Chevalier / Rôdeur / Mage. Mesures du 24/09, non refaites : les contenus n'ont pas changé depuis.\n");
 P(table(["Contenu", "Profil", "Réussite", "PV à la fin", "Potions"], [
@@ -528,6 +560,23 @@ P(table(["Mesure", "Chevalier", "Rôdeur", "Mage"], [
 ]));
 P("*Lecture : le palier Rare coûte surtout la reforge de l'arme 5 et 6 (Résine de la Forêt, Chitine du Désert), pas la Clé de voûte ni les Pierres errantes (les récompenses suffisent). Le temps facultatif part en Résine (50 à 100 h) et en Chitine (20 à 40 h). Sans zones montées, l'acier coûte 200 à 350 h. Le robot attend 1 h entre deux combats rejoués contre l'Arbre-mère ou le Dard : hypothèse du robot, ces heures sont peut-être surestimées.*\n");
 
+/* ---------- 3.9 La Tour ---------- */
+H(2, "3.9 La Tour : règles propres (chapitre VI)");
+P("Fichier : `systems/tower-system.js`. Accroches non protégées : `VeinSystem.bladeMult` (dégâts), `VeinSystem.onVictory`, `VeinSystem.onEnemyTurn` et `VeinSystem.blocksHit` (silhouette), `BossMomentManager.onPhase` (phases), `CompanionManager.partyIds` (seul).\n");
+P(table(["Règle", "Valeur"], [
+  ["La braise gardée (choix « braise »)", "+" + pct(G.TOWER_BRAISE_HEAL) + " des PV max rendus par combat gagné à la Tour"],
+  ["La braise posée", "+" + pct(G.TOWER_BRAISE_DMG) + " de dégâts à la Tour"],
+  ["Le miroir (Reflet, Gardien qui répète, silhouette à 60 %)", "la même technique que la précédente perd " + pct(G.TOWER_MIRROR_PENALTY) + " (Geste caché, Mémoire 23 : " + pct(G.MEMORY_VALUES.geste_cache_penalty) + ")"],
+  ["Aeswyn d'avant laissée (choix « copie »)", "Sommet interdit ×" + fr(G.TOWER_SUMMIT_HARD) + " plus dur, Givre bleu ×" + fr(G.TOWER_SUMMIT_LOOT) + " ; la défaire : +" + G.STORY_COPIE_VERRE + " Verres de faille"],
+  ["La silhouette", "trait de la classe (" + Object.keys(G.TOWER_CLASS_ARCHETYPE).map(function (k) { return ({ knight: "Chevalier", ranger: "Rôdeur", mage: "Mage" })[k] + " : " + ({ enraged: "enragée", armored: "blindée", silenced: "silence", corrupted: "corruptrice" })[G.TOWER_CLASS_ARCHETYPE[k]]; }).join(", ") + "), miroir à 60 %, round intouchable annoncé à 30 %"],
+  ["La Question", "trois réponses selon la pente du registre ; bascule Donner/Garder : Le fil bleu rendu ; bascule Soi/Aeswyn : Brannoc absent du dernier feu"],
+  ["La redite (carte des étages)", "étage raté durci ×" + fr(G.LIVING_MAPS.tower.redite.hostileMult) + " jusqu'au lendemain (La redite apprise : ×" + fr(G.MEMORY_VALUES.redite_apprise_mult) + ")"],
+  ["Gardien qui répète", "Légendaire " + G.ELITE_DB.gardien_qui_repete.winDrop.chancePct + " % par victoire, la " + (G.ELITE_DB.gardien_qui_repete.winDrop.pityAfter + 1) + "e victoire sans pièce en donne une (Ce qui se répète : +" + G.MEMORY_VALUES.ce_qui_se_repete_pct + " points)"],
+  ["Paliers", "acte II : " + G.STORY_PALIER_TOUR.pieces + " Légendaires ; acte III : " + G.STORY_PALIER_TOUR_COMPLET.pieces + " Légendaires, Forge " + G.STORY_PALIER_TOUR_COMPLET.forge + ", arme reforgée à " + G.STORY_PALIER_TOUR_COMPLET.reforge],
+  ["Étages (étapes 6 et 7)", G.STORY_TOUR_ETAGES + " étages de l'escalier, puis " + G.STORY_TOUR_PA + " Petites Aventures réussies"]
+]));
+P("Mémoire 21 à 24 (`data/memory.js`) : " + G.MEMORY_LEVELS.filter(function (l) { return l.level > 20; }).map(function (l) { return l.level + " « " + l.theme + " » (" + l.options.map(function (o) { return o.name; }).join(", ") + ")"; }).join(" ; ") + ". Coûts : " + G.MEMORY_LEVEL_COSTS.slice(20).join(" / ") + " Aether.\n");
+
 /* ---------- 4. Cartes vivantes ---------- */
 H(1, "Partie 4 — Cartes Vivantes");
 var LR = G.LIVING_MAP_RULES;
@@ -543,6 +592,16 @@ P(table(["Règle", "Valeur"], [
   ["Ruines : le Cœur (v3.432.0)", "ne s'ouvre qu'avec ses trois voisins libérés (`requiresAllNeighbors`)"],
   ["Échec d'une expédition (v3.366.0, option A)", "seul le secteur tenté peut reculer (s'il était libéré et non protégé par la Palissade ou un choix) ; sinon rien n'est perdu. Plus de recul tiré au hasard dans un autre secteur"]
 ]));
+P("Les six cartes (v3.637.0) :\n");
+P(table(["Carte", "Secteurs", "Ressource", "Règle propre"], Object.keys(G.LIVING_MAPS).map(function (k) {
+  var m = G.LIVING_MAPS[k], r = [];
+  if (m.noRegress) r.push("rien n'est repris (noRegress)");
+  if (m.gisants) r.push("gisants : réveil ×" + fr(m.gisants.wakeMult || 1) + ", « Le réveil » ×" + fr(m.gisants.hostileMult || 1));
+  if (m.veins) r.push("veines : chaleur +" + pct(m.veins.heatStep || 0) + " par cran, « La coulée » ×" + fr(m.veins.hostileMult || 1));
+  if (m.redite) r.push("« La redite » ×" + fr(m.redite.hostileMult));
+  if (m.chantier) r.push("chantier errant (" + m.chantier.reward + ")");
+  return [worldName(m.worldId) || k, m.sectors.length, m.rewardResourceId ? resName(m.rewardResourceId) : "Sève", r.join(" ; ") || "—"];
+})));
 
 /* ---------- 5. Groupe ---------- */
 H(1, "Partie 5 — Combat de groupe");
@@ -564,7 +623,7 @@ P("Tous les bancs chargent les vrais scripts du jeu et jouent de vrais rounds av
 P(table(["Banc", "Mesure"], [
   ["plafond-bench.js", "Combats de l'Histoire au plafond de l'acte ; options --voie, --points, --sans-talents, --suite, --pa, --journee, --setelite, --qset, --diff, --boss, --mark, --train, --solo ; contenu « trone »"],
   ["nezzam-bench.js", "Le trône de sable en entier (rencontres + Nezzam) ; --runs, --enc hp,puissance, --boss hp,puissance, --profil campagne|desertfin, --voie ; sonde du vol de vie et des silences"],
-  ["campagne-harness.js", "Robot joueur sur toute l'Histoire, chapitre III compris : structure (option A) ou --combats ; --classe, --avise, --rapporter, --recharge H, --investi, --sans-zones, --tomber ; temps d'obtention par ressource en fin de rapport"],
+  ["campagne-harness.js", "Robot joueur sur toute l'Histoire, six chapitres : structure (option A) ou --combats ; --classe, --avise, --rapporter, --recharge H, --investi, --sans-zones, --tomber ; temps d'obtention par ressource en fin de rapport"],
   ["ruines-acte1-bench.js, ruines-acte2-bench.js", "Quêtes des actes I et II des Ruines"],
   ["ruines-acte3-bench.js", "Sanctuaire scellé (profils palier / rare, --boss, --camp) ; --golem --quete <id> [--enc] [--golemmult] [--qboss] pour les quêtes d'élite et le Maître d'œuvre"],
   ["campagne-lot.js", "Lot de parties de campagne (médianes, murs, qui tue, farm) ; --recharge, --tag"],
@@ -576,20 +635,19 @@ P(table(["Banc", "Mesure"], [
   ["dungeon-bench.js, map-bench.js", "Donjons ; carte et Palissade"],
   ["seve-bench.js, upgrade-economy-bench.js, offline-bench.js", "Sève ; entraînement ; hors ligne"],
   ["group-bench.js, quest-cost-bench.js", "Combat de groupe"],
-  ["missing-icons.js", "Chemins d'images cités dans le code et absents du dossier"]
+  ["missing-icons.js", "Chemins d'images cités dans le code et absents du dossier"],
+  ["campagne-harness.js (v3.6xx)", "--joueur (robot qui entretient comme un joueur), SAVE_IN / SAVE_OUT / SAVE_MONDES (reprise par chapitre), TRACE_FORCE ; gestes de choix --poser, --defaire, --bascule-fil, --bascule-brannoc"],
+  ["montagne-acte3-bench.js", "Donjons 5 et 6 (--donjon), quêtes (--quetes, --quete, --qboss), --miroir, --plus-regle cond:slot, **--detail** (dégâts infligés et reçus, esquives, techniques)"],
+  ["tour-acte1-bench.js, crypte-acte*-bench.js, montagne-acte1-bench.js", "Quêtes de la Tour, de la Crypte et de la Montagne"]
 ]));
 P("Harnais de non-régression : `round-harness.js` (section [85] v3.287.0 neutralisée), `boot-harness.js`, `hero-creation-harness.js`, `tools/sim/retour-demarrage-bench.js`. Documents : `tools/docs-gen/generate-balance-guide.js` (ce guide), `tools/docs-gen/generate-function-reference.js` (Référence des fonctions).\n");
 H(2, "6.2 Points ouverts");
-P("- **Décisions de Seb du 09/10 (closes)** : la référence de héros des Ruines reste `joueurDesert2` (§2.8) ; la 3ᵉ rangée de zones de production reste fermée aux Ruines (`zoneRows` 2) ; la Clé de voûte ne paie que la Forge 4 et les reforges 7 et 8, les autres niveaux du monde 3 se paient comme au Désert.");
-P("- **Varrek et le Rôdeur** : 58 % pour une cible de 60 %. À juger en jeu.");
-P("- **Le Chevalier meurt beaucoup au Sanctuaire** dans la campagne du robot (21 morts sur la partie).");
-P("- **Gains provisoires des Ruines** : chantier du jour (" + G.LIVING_MAPS.ruins.chantier.reward + "), Cœur (" + G.LIVING_MAPS.ruins.plan.finir.dailyStones + " par jour), éboulis (+" + G.LIVING_MAPS.ruins.plan.tomber.quarryBonus + "), remise de la clé du Cœur, or des étapes 11 à 20.");
-P("- **Le seuil** (" + pct(G.HERO_RISE_HP_PCT) + " des PV) : banc à faire.");
-P("- **Reforges hautes de toutes les pièces** : longues (Résine et Chitine des mondes précédents). Décision de Seb du 09/10 : on garde, c'est un objectif facultatif.");
-P("- **Labyrinthe aux leviers** (RU12) : reporté.");
-P("- **Recharge des Petites Aventures** (" + fr(PA_RECHARGE_H) + " h) : à confirmer en jeu.");
-P("- **Compteur Chaos** posé par le choix `roi`, sans effet visible. **Descriptions des compétences** : n'affichent pas les valeurs modifiées par les talents.");
-P("- Inchangés : Piste C (production par bâtiment), courbe d'XP linéaire, Fiole de réserve aux Ruines, sac à 25, section [85] du harnais.\n");
+P("- **La silhouette bascule net** : à ×4,25 / ×1,1, 100 % de réussite et 81 à 94 % de PV ; à ×5 / ×1,3, Chevalier 0 %. C'est une course à l'usure (dégâts totaux à peu près fixes avant l'épuisement, potions comprises), pas un effet du round intouchable. Le robot Chevalier répète sa technique 1 (contre de la rage à chaque round) et subit le miroir en permanence.");
+P("- **Rythme de la Tour** : 8,1 à 13,6 h selon les recharges d'expédition. À juger en jeu.");
+P("- **Le Rôdeur sans compagnon** reste très à l'aise sur « Seul » (93 à 100 % de PV).");
+P("- **Le Mage contre le Dragon ancien** : une course aux dégâts (le Dragon enragé à 25 %), pas une question de PV ; +10 % de PV n'y change rien.");
+P("- **Robot** : une seule caravane (l'or des caravanes multiples n'est pas mesuré).");
+P("- Historiques, toujours vrais : Labyrinthe et recharge des Petites Aventures (" + fr(PA_RECHARGE_H) + " h) à juger en jeu ; compteur Chaos sans effet visible ; descriptions des compétences sans les valeurs modifiées par les talents.\n");
 
 fs.writeFileSync(OUT, out.join("\n"));
 console.log("Guide écrit : " + OUT + " (" + out.length + " lignes)");
