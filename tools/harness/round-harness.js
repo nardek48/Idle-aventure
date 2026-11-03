@@ -18830,7 +18830,7 @@ console.log("\n[324] Chantier du héros, H3 — rangs de talents (5 nœuds par c
       archer: ["a_oeil_vif", "a_coup_au_but", "a_perforation", "a_transe", "a_nuee_fleches"],
       mage: ["m_peau_arcane", "m_braises_tenaces", "m_incendie", "m_barriere_vive", "m_surtension"] };
     Object.keys(attendus).forEach(function (c) {
-      var n = 0; TM.getNodes(c).forEach(function (e) { if (e.zone !== "command") n += TM.maxRank(e.node); });
+      var n = 0; TM.getNodes(c).forEach(function (e) { if (e.zone !== "command" && e.zone !== "tower") n += TM.maxRank(e.node); });
       ok(n === 19, c + " : 19 rangs dans l'arbre de classe, 18 utilisables (clés exclusives) + 5 du Commandement = 23");
       ok(attendus[c].every(function (id) { var e = TM.find(id, c); return e && TM.maxRank(e.node) === (/cuirasse|oeil_vif|peau_arcane/.test(id) ? 3 : 2); }), c + " : les 5 nœuds H3 ont leur rang de plus");
     });
@@ -21801,6 +21801,44 @@ console.log("\n[427] v3.632.0 — Tour, lot T-5 : Mémoire 21 à 24, hauts faits
     ok(/aq_tour_seul[^\n]*seulNoPotion/.test(src), "« Seul, et sans boire » noté à la fin de la quête");
   } catch (err) { ok(false, "[427] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   MM.has = has0; TS.atTower = at0; g.StoryQuestManager.getChoice = gc; g.game.enemy = null; g.game._towerMirror = null;
+})();
+
+console.log("\n[428] v3.633.0 — Voie de talents « Varier » (Tour)");
+(function () {
+  var TS = g.TowerSystem, TM = g.TalentManager, WC = g.WorldCaps;
+  try {
+    var V = g.TALENT_TOWER;
+    ok(V && V.opensAt === 5 && V.nodes.length === 5 && V.nodes[4].key && V.nodes.map(function (n) { return n.id; }).join() === "v_pas_de_cote,v_seul,v_souffle,v_ne_se_forge_pas,v_varier", "Varier : 5 nœuds, ouverte à la Tour, la clé au bout");
+    var caps = g.TALENT_CAP_BY_ACT.filter(function (c) { return c.worldIndex === 5; }).map(function (c) { return c.stepId + ":" + c.points; }).join();
+    ok(caps === "tour_01:23,tour_06:25,tour_11:27,tour_16:28", "plafond de la Tour : 23, 25, 27, 28 (tout l'arbre : 18 + 5 + 5)");
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; StoryQuestManager.ensure(); game.heroLevel = 40; game.worldsEverReached = {0:true,1:true,2:true,3:true,4:true};");
+    TM.sync && TM.sync();
+    ok(!TM.towerOpen() && TM.blockInfo("v_pas_de_cote").kind === "towerClosed", "fermée avant la Tour");
+    run("game.worldsEverReached[5] = true; game.talents = { v_pas_de_cote: 1 };");
+    ok(TM.towerOpen() && TM.towerSpent() === 1 && TM.blockInfo("v_souffle").kind === "commandOrder", "à la Tour : ouverte, apprise dans l'ordre");
+    // effets
+    run("game.talents = { v_pas_de_cote: 1, v_seul: 1, v_souffle: 1, v_ne_se_forge_pas: 1, v_varier: 1 }; game._varier = { last: null, used: {} };");
+    ok(TS.skillMult("skill1") === 1, "première technique : pas de bonus");
+    TS.noteTechnique("skill1");
+    ok(Math.abs(TS.skillMult("skill2") - 1.08) < 1e-9 && TS.skillMult("skill1") === 1, "Un pas de côté : +8 % sur une technique différente");
+    TS.noteTechnique("skill2"); ok(!TS.varierActive(), "deux techniques : pas encore Varier");
+    TS.noteTechnique("skill3"); ok(TS.varierActive(), "trois techniques : Varier actif");
+    run("game.equipped = { weapon: { rarity: 'legendary' }, armor: { rarity: 'legendary' }, ring: { rarity: 'epic' } };");
+    var aa = g.CombatActors.aliveAllies; g.CombatActors.aliveAllies = function () { return [{}]; };
+    var m = TS.talentDmgMult();
+    ok(Math.abs(m - (1 + 0.08 + 0.04 + 0.15)) < 1e-9, "dégâts : seul +8 %, 2 Légendaires +4 %, Varier +15 % (" + m.toFixed(2) + ")");
+    g.CombatActors.aliveAllies = function () { return [{}, {}]; };
+    ok(Math.abs(TS.talentDmgMult() - 1.19) < 1e-9, "un compagnon debout : pas de bonus « seul »");
+    g.CombatActors.aliveAllies = aa;
+    var at0 = TS.atTower; TS.atTower = function () { return false; };
+    run("game.heroMaxHp = 1000; game.heroHp = 500;");
+    ok(TS.onVictory() === 30 && Math.abs(TS.dmgMult() - TS.talentDmgMult()) < 1e-9, "hors de la Tour : Reprendre son souffle (+3 %) et les dégâts jouent quand même");
+    TS.atTower = at0;
+    run("game._varier = { last: 'skill1', used: { skill1: true } }; TalentManager.onCombatStart();");
+    ok(!g.game._varier.last && !Object.keys(g.game._varier.used).length, "nouveau combat : techniques remises à zéro");
+    var ccs = require("fs").readFileSync(require("path").join(ROOT, "js/systems/class-combat-system.js"), "utf8");
+    ok(/TowerSystem\.skillMult\(slot\)/.test(ccs) && /TowerSystem\.noteTechnique\(slot\)/.test(ccs), "techniques : bonus lu avant les dégâts, notée après");
+  } catch (err) { ok(false, "[428] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
 Promise.all(ATTENTES).then(function () {

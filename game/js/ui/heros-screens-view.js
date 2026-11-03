@@ -386,8 +386,11 @@
   }
   function herosTalentMode(m) {
     if (m === "cmd" && !TalentManager.commandOpen()) return;
-    talentMode = m === "cmd" ? "cmd" : "classe"; talentSel = null; rerender();
+    if (m === "tour" && !TalentManager.towerOpen()) return; // v3.633.0 : voie Varier
+    talentMode = (m === "cmd" || m === "tour") ? m : "classe"; talentSel = null; rerender();
   }
+  /* v3.633.0 : voie commune affichée (Commandement ou Varier), ou null pour l'arbre de classe. */
+  function talentModePath() { return talentMode === "cmd" ? TalentManager.getCommand() : (talentMode === "tour" ? (window.TALENT_TOWER || null) : null); }
   function herosTalentLearn() {
     if (talentSel && TalentManager.buy(talentSel)) { if (typeof saveGame === "function") saveGame(); rerender(); }
   }
@@ -402,12 +405,12 @@
   }
 
   function talentDetailHTML() {
-    var TM = TalentManager, t = TM.getTree(), C = TM.getCommand();
-    var cmd = talentMode === "cmd" && C, e0 = talentSel ? TM.find(talentSel) : null;
-    if (!e0 || (e0.zone === "command") !== !!cmd) talentSel = cmd ? C.nodes[0].id : (t.trunk[0] || {}).id;
+    var TM = TalentManager, t = TM.getTree(), P = talentModePath();
+    var e0 = talentSel ? TM.find(talentSel) : null, zone = talentMode === "cmd" ? "command" : (talentMode === "tour" ? "tower" : null);
+    if (!e0 || (zone ? e0.zone !== zone : (e0.zone === "command" || e0.zone === "tower"))) talentSel = P ? P.nodes[0].id : (t.trunk[0] || {}).id;
     var e = TM.find(talentSel); if (!e) return '<div class="hst-detail"></div>';
     var n = e.node, r = TM.rank(n.id), max = TM.maxRank(n), block = TM.blockInfo ? TM.blockInfo(n.id) : null;
-    var where = e.zone === "trunk" ? _t("Tronc") : (e.zone === "command" ? _td(e.path.name) : _t("Voie {x}", { x: _td(e.path.name) })) + (n.key ? " · " + _t("clé de voûte") : "");
+    var where = e.zone === "trunk" ? _t("Tronc") : ((e.zone === "command" || e.zone === "tower") ? _td(e.path.name) : _t("Voie {x}", { x: _td(e.path.name) })) + (n.key ? " · " + _t("clé de voûte") : "");
     var h = '<div class="hst-detail"><span class="hst-detail-ico">' + img(n.img || "") + '</span><div class="hst-detail-txt"><b>' + esc(_td(n.name)) + '</b><small>' + esc(where) + (max > 1 ? ' · ' + esc(_t("rang {a} / {b}", { a: r, b: max })) : '') + '</small><span>' + esc(_td(n.effect)) + '</span></div><div class="hst-detail-act">';
     if (r >= max) h += '<span class="hst-done">' + _t("Appris") + ' ✓</span>';
     else h += '<button type="button" class="kbtn primary"' + (block ? ' disabled' : '') + ' onclick="herosTalentLearn()">' + (r ? _t("Rang suivant") : _t("Apprendre")) + '<small>' + _t("1 point") + '</small></button>' + (block ? '<small class="hst-why">' + esc(block.text) + '</small>' : '');
@@ -422,15 +425,18 @@
     var h = '<div class="hst-bar"><span class="hst-bar-pts"><b>' + av + '</b> ' + esc(_tn(av, "point à placer", "points à placer")) + '</span>'
       + '<span class="hst-bar-cap">' + esc(_t("{a} / {b} placés", { a: TM.spent(), b: isFinite(cap) ? cap : "∞" })) + '</span>'
       + '<button type="button" class="hst-bar-reset" onclick="respecTalents()"' + (TM.spent() ? '' : ' disabled') + ' aria-label="' + esc(_t("Réinitialiser")) + '">↺</button></div>';
-    var C = TM.getCommand(), open = C && TM.commandOpen();
-    if (!open) talentMode = "classe";
-    if (C) {   // v3.453.0 : sélecteur « Classe · Commandement », points partagés
+    var C = TM.getCommand(), open = C && TM.commandOpen(), V = window.TALENT_TOWER || null, openV = !!V && TM.towerOpen();
+    if ((talentMode === "cmd" && !open) || (talentMode === "tour" && !openV)) talentMode = "classe";
+    if (C) {   // v3.453.0 : sélecteur « Classe · Commandement », points partagés ; v3.633.0 : + Varier, une fois la Tour atteinte
       var clsDef = (window.CLASSES || []).filter(function (c) { return c.id === cls; })[0];
-      h = '<div class="hst-seg"><button type="button" aria-pressed="' + (talentMode === "classe") + '" onclick="herosTalentMode(\'classe\')">' + esc(_td(clsDef ? clsDef.label : "")) + '<small>' + _t("ta classe") + '</small></button>'
+      h = '<div class="hst-seg' + (openV ? ' is-3' : '') + '"><button type="button" aria-pressed="' + (talentMode === "classe") + '" onclick="herosTalentMode(\'classe\')">' + esc(_td(clsDef ? clsDef.label : "")) + '<small>' + _t("ta classe") + '</small></button>'
         + '<button type="button" aria-pressed="' + (talentMode === "cmd") + '"' + (open ? '' : ' disabled') + ' onclick="herosTalentMode(\'cmd\')">' + esc(_td(C.name)) + '<small>'
-        + (open ? esc(TM.commandSpent() + " / " + C.nodes.length) : _t("s'ouvre à la Crypte")) + '</small></button></div>' + h;
+        + (open ? esc(TM.commandSpent() + " / " + C.nodes.length) : _t("s'ouvre à la Crypte")) + '</small></button>'
+        + (openV ? '<button type="button" aria-pressed="' + (talentMode === "tour") + '" onclick="herosTalentMode(\'tour\')">' + esc(_td(V.name)) + '<small>' + esc(TM.towerSpent() + " / " + V.nodes.length) + '</small></button>' : '')
+        + '</div>' + h;
     }
-    if (talentMode === "cmd") return h + buildCommandTreeHTML(C) + talentDetailHTML();
+    if (talentMode === "cmd") return h + buildCommandTreeHTML(C, TM.commandSpent()) + talentDetailHTML();
+    if (talentMode === "tour") return h + buildCommandTreeHTML(V, TM.towerSpent()) + talentDetailHTML();
     h += '<div class="hst-tree" style="background-image:url(' + TT_IMG + 'bg_' + cls + '.webp)">'
       + '<div class="hst-trunk">' + t.trunk.map(function (n) { return talentNode(n, false); }).join('<i class="hst-link-h"></i>') + '</div>'
       + '<div class="hst-fork' + (TM.trunkSpent() >= gate ? ' is-open' : '') + '"></div><div class="hst-paths">';
@@ -445,9 +451,9 @@
   }
 
   /* v3.453.0 : la voie du Commandement, une colonne de 5 nœuds (atelier talents-commandement). */
-  function buildCommandTreeHTML(C) {
-    var h = '<div class="hst-cmd"><div class="hst-cmd-banner">' + img(TT_IMG + "emb_commandement.webp", "hst-emb")
-      + '<b>' + esc(_td(C.name)) + '</b><small>' + esc(_t("{a} / {b} · commune aux trois classes", { a: TalentManager.commandSpent(), b: C.nodes.length })) + '</small></div>';
+  function buildCommandTreeHTML(C, spent) { // v3.633.0 : sert aussi à la voie Varier (emblème emb_<nom>.webp)
+    var h = '<div class="hst-cmd"><div class="hst-cmd-banner">' + img(TT_IMG + "emb_" + slug(C.name) + ".webp", "hst-emb")
+      + '<b>' + esc(_td(C.name)) + '</b><small>' + esc(_t("{a} / {b} · commune aux trois classes", { a: spent, b: C.nodes.length })) + '</small></div>';
     C.nodes.forEach(function (n, i) { h += (i ? '<i class="hst-link-v"></i>' : '') + talentNode(n, !!n.key); });
     return h + '</div>';
   }
