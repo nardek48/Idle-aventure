@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.641.0", "menu_icons/quests_menu", _t("Quêtes : les onglets s'appellent maintenant Annexes et Alliés, plus courts et lisibles sur les petits téléphones.")],
     ["3.640.0", "menu_icons/quests_menu", _t("La faille se souvient des mondes : dès l\'étage 2, chaque étage a sa règle (la soif, la relève, le sommeil, la chaleur, le miroir). Et le Souffle tient plus longtemps.")],
     ["3.639.0", "menu_icons/quests_menu", _t("Quêtes plus légères : un onglet Compagnons, les jalons et les étapes repliés, le prologue et les chapitres finis rangés dans « Déjà vécu ».")],
     ["3.639.0", "menu_icons/camp_menu", _t("Camp : la santé et les rations en tête du feu, et le Grimoire montre directement tes règles.")],
