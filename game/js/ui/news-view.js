@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.651.0", "menu_icons/heroes_menu", _t("Héros : l'illustration du Terrain d'entraînement s'affiche aussi dans Équipement, Talents et Alliés.")],
     ["3.650.0", "menu_icons/camp_menu", _t("Les bulles en bas à droite sont plus petites, et chaque liste se termine au-dessus d'elles : plus aucun bouton coincé dessous.")],
     ["3.649.0", "menu_icons/journal_menu", _t("Journal plus lisible : des filtres (Histoire, Gains, Village, Combat), et chaque étape d'Histoire tient en un bloc avec son récit et ses gains.")],
     ["3.648.0", "menu_icons/heroes_menu", _t("Héros : l'onglet des compagnons s'appelle Alliés, comme dans Quêtes.")],
