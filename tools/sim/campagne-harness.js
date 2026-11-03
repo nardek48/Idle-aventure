@@ -180,6 +180,9 @@ function launch() {
   sb.PotionManager.buyHealingPotion = function () { var o = sb.game.gold; var r = bh.apply(this, arguments); STATS.potionGold = (STATS.potionGold || 0) + Math.max(0, o - sb.game.gold); return r; };
   /* SHOP_MULT=1,4,10,15,20,30 : essaie une autre grille de prix de l'échoppe (multiplicateur par monde atteint). */
   if (process.env.SHOP_MULT) sb.EQUIP_SHOP_WORLD_PRICE_MULT.splice(0, 99, ...process.env.SHOP_MULT.split(",").map(Number));
+  /* Miroir de la Tour : coups pris par le miroir (STATS.miroir) ; VARIER=1 allume le réglage « Varier » du Grimoire. */
+  if (sb.TowerSystem && sb.TowerSystem.noteSkill) { var ns = sb.TowerSystem.noteSkill; sb.TowerSystem.noteSkill = function () { if (this.isMirror(sb.game.enemy)) STATS.miroirTech = (STATS.miroirTech || 0) + 1; return ns.apply(this, arguments); }; }
+  if (sb.AchievementManager && sb.AchievementManager.onMirror) { var om = sb.AchievementManager.onMirror; sb.AchievementManager.onMirror = function () { STATS.miroir = (STATS.miroir || 0) + 1; return om.apply(this, arguments); }; }
   return sb;
 }
 /* Minuteries du jeu (setTimeout) : exécutées quand le robot « laisse passer un instant ». */
@@ -1270,6 +1273,7 @@ function run() {
     G.restoreBaseState(sauvee);
     ok(true, "sauvegarde reprise : " + process.env.SAVE_IN);
   }
+  if (process.env.VARIER) G.game.grimoireVarier = true;
   espionOr();
   G.saveGame();
 
@@ -2297,6 +2301,7 @@ if (COMBATS) {
   if (STATS.rations) console.log("Rations au camp : mangées " + JSON.stringify(STATS.rations.mangees) + " · cuisinées " + JSON.stringify(STATS.rations.cuisinees) + " · attente évitée " + (STATS.rations.minutesEvitees / 60).toFixed(1) + " h");
   if (VERBOSE) STATS.fights.slice(-12).forEach(function (f) { console.log("    " + f.step + " · " + f.kind + " " + f.name + " : " + f.rounds + " rounds, PV " + Math.round(f.hp0 * 100) + "→" + Math.round((f.hp1 || 0) * 100) + " %" + (f.died ? " †" : "") + (f.potions ? " (" + f.potions + " potion)" : "")); });
 }
+console.log("Miroir de la Tour : " + (STATS.miroir || 0) + " technique(s) prise(s) sur " + (STATS.miroirTech || 0) + " lancée(s) face à un miroir" + (process.env.VARIER ? " (réglage Varier allumé)" : ""));
 console.log("Farm d'élites : " + STATS.farms + " · achats à l'échoppe : " + STATS.shopBuys + " · secteurs repris au sable : " + STATS.recouvrements + " · sac plein : " + STATS.sacPlein);
 console.log("Secteurs de carte (essais → libérés) : " + JSON.stringify(STATS.secteurs));
 if (STATS.donjonsEquipement) console.log("Runs de donjon pour l'équipement : " + STATS.donjonsEquipement);
