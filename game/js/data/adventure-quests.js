@@ -1344,8 +1344,8 @@ var ADVENTURE_QUESTS = {
     bossId: "silhouette",
     // banc, contre de la classe au Grimoire : ×3,75 / ×1 -> 100 % de réussite pour les trois classes ; au-delà le combat bascule net
     // (×4,5 / ×1,1 : Chevalier 0 %, Rôdeur 25 %). Sans le contre de la rage, le Chevalier tombe à 63 %.
-    bossHpMult: 3.75,
-    bossPowerMult: 1,
+    bossHpMult: 4.25, // rythme de la Tour (03/11, Terrain 21) : 3,75 / 1 -> 4,25 / 1,1 ; à 5 / 1,3 le Chevalier tombe à 0 % (pas d'entre-deux)
+    bossPowerMult: 1.1,
     bossPhases: [
       { atPct: 1, copyClass: true, label: "elle se bat comme toi", line: "Elle a tes gestes. Elle les fait avant toi." },
       { atPct: 0.6, mirror: true, label: "elle garde tes gestes", line: "Elle garde ce que tu annonces. Ne refais pas deux fois la même chose." },

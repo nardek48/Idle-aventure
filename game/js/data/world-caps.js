@@ -69,7 +69,7 @@ var WORLD_CAPS = [
      d'un coup. Les derniers niveaux du village (Atelier 10, Enchanteresse 3, Entrepôt 20, Palissade 10, zones 20) ;
      la Forge 7 (Verre de faille) n'ouvre qu'à l'acte III (forgeActStep), comme la Forge 6 à la Montagne. */
   {
-    village: { workshop: 10, training: 18, hall: 10, warehouse: 20, palisade: 10, tavern: 6, apothecary: 10, forge: 7, enchanter: 3 },
+    village: { workshop: 10, training: 21, hall: 10, warehouse: 20, palisade: 10, tavern: 6, apothecary: 10, forge: 7, enchanter: 3 }, // training 21 : rythme de la Tour (03/11)
     forgeActStep: "tour_13",
     zoneRows: 1,
     zoneLevel: 20,
@@ -100,7 +100,10 @@ var TRAINING_CAP_BY_ACT = [
   { worldIndex: 4, stepId: "montagne_01", act: "I", terrain: 13 },    // v3.486.0 : Montagne, acte I — inchangé (crans au banc)
   { worldIndex: 4, stepId: "montagne_11", act: "III", terrain: 15 },   // H1 (chantier du héros) : 170
   { worldIndex: 4, stepId: "montagne_16", act: "IV", terrain: 18 },    // H1 : 200, le plafond absolu
-  { worldIndex: 5, stepId: "tour_01", act: "I", terrain: 18 }          // v3.625.0 (Tour, T-0) : le plafond absolu reste
+  { worldIndex: 5, stepId: "tour_01", act: "I", terrain: 18 },         // v3.625.0 (Tour, T-0)
+  { worldIndex: 5, stepId: "tour_06", act: "II", terrain: 19 },        // rythme de la Tour (Seb, 03/11) : 210
+  { worldIndex: 5, stepId: "tour_11", act: "III", terrain: 20 },       // 220
+  { worldIndex: 5, stepId: "tour_16", act: "IV", terrain: 21 }         // 230
 ];
 
 /* v3.327.0 (conception Talents v1.1, T2 option B) — PLAFOND DE POINTS DE TALENT PAR ACTE.

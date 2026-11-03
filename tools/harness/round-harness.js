@@ -2790,13 +2790,13 @@ console.log("\n[UX-PROD] Tableau de bord Production v3.191.0 — routeur, vue At
   ok(srcsVides.length === 0, "[STATS] aucune source listée quand aucune ne contribue");
 
   // plafond
-  run("game.upgrades.utrain_precision = 200; StatsSystem.recalcStats();"); // v3.308.0 : plafond commun ; H1 : 200
+  run("game.upgrades.utrain_precision = 230; StatsSystem.recalcStats();"); // v3.308.0 : plafond commun ; H1 : 200 ; Tour : 230
   var stCap = run("buildHerosSheetHTML()");
   /* v3.213.1 : deux murs, deux mots. « Maximum » = plafond absolu d'upgrades.js
      (Précision plafonne à 60), rien ne le lèvera ; « Terrain » = plafond du
      bâtiment, levable par un chantier. */
   ok(stCap.indexOf("Maximum") !== -1, "[STATS] une stat au maximum absolu le dit au lieu d'afficher un prix");
-  ok(stCap.indexOf("is-training-wall") === -1 || run("game.upgrades.utrain_precision") < 200,
+  ok(stCap.indexOf("is-training-wall") === -1 || run("game.upgrades.utrain_precision") < 230,
     "[STATS] le maximum absolu n'est pas confondu avec le mur du Terrain");
 
   // ---------- sous-onglet Capacités ----------
@@ -3848,7 +3848,7 @@ console.log("\n[23b] v3.214.0 (lot V-3) \u2014 Mat\u00e9riau de monde et atelier
   ok(M.getAffordability("training").all === true, "avec le Verre trempé, le chantier repart");
 
   /* --- Le Terrain va d\u00e9sormais jusqu'au plafond historique ------------ */
-  ok(g.VILLAGE_BUILDINGS.training.maxLevel === 18, "Terrain port\u00e9 \u00e0 18 niveaux (H1)");
+  ok(g.VILLAGE_BUILDINGS.training.maxLevel === 21, "Terrain port\u00e9 \u00e0 21 niveaux (H1 ; rythme de la Tour, 03/11)");
   g.game.village.buildings.training.level = 18;
   ok(g.getTrainingCapLevels() === 200, "Terrain au maximum : plafond d'entra\u00eenement 200 (H1)");
   g.game.village.buildings.training.level = 13;
@@ -5603,8 +5603,8 @@ console.log("\n[50b] v3.248.0 \u2014 Prix des entra\u00eenements et plafond de d
   ok(g.TRAINING_BASE_CAP === 20 && g.getTrainingCapLevels() === 20, "socle sans b\u00e2timent : 20 niveaux");
   run("game.village.buildings.training.level = 3;");
   ok(g.getTrainingCapLevels() === 50, "Terrain niveau 3 : 20 + 3 \u00d7 10 = 50");
-  run("game.village.buildings.training.level = 19;");
-  ok(g.getTrainingCapLevels() === 200, "born\u00e9 \u00e0 200, le plafond absolu (H1)");
+  run("game.village.buildings.training.level = 22;");
+  ok(g.getTrainingCapLevels() === 230, "born\u00e9 \u00e0 230, le plafond absolu (H1 ; Tour, 03/11)");
 
   /* Le plafond ne fait jamais redescendre : une partie en cours garde ses niveaux. */
   run("game.village.buildings.training.level = 0; game.upgrades.utrain_power = 63;");
@@ -8932,7 +8932,7 @@ console.log("\n[105] v3.308.0 — boutique (25 % de rareté du sommet) et plafon
 (function () {
   run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
   var ids = ["utrain_power", "utrain_endurance", "utrain_celerity", "utrain_precision", "utrain_will"];
-  ok(ids.every(function (id) { return g.UPGRADES.filter(function (u) { return u.id === id; })[0].maxLevel === 200; }), "les cinq entraînements plafonnent à 200 (H1)");
+  ok(ids.every(function (id) { return g.UPGRADES.filter(function (u) { return u.id === id; })[0].maxLevel === 230; }), "les cinq entraînements plafonnent à 230 (H1 ; Tour, 03/11)");
   ok(g.EquipShopManager.getTopRarityCap(6) === 1 && g.EquipShopManager.getTopRarityCap(8) === 2 && g.EquipShopManager.getTopRarityCap(11) === 2 && g.EquipShopManager.getTopRarityCap(3) === 1, "plafond : 1 sur 6, 2 sur 8 à 11, minimum 1");
   game = g.game; game.equipShopStarterServed = true;
   var saveW = g.WorldManager.worldIndex;
@@ -18757,7 +18757,7 @@ console.log("\n[322] Chantier du héros, H1 — entraînement au-delà de 150 (�
     run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
     var game = g.game, WC = g.WorldCaps, VB = g.VillageBuildingManager;
     var force = g.UPGRADES.filter(function (u) { return u.id === "utrain_power"; })[0];
-    ok(g.TRAINING_HARD_CAP === 200 && force.maxLevel === 200, "plafond absolu : 200");
+    ok(g.TRAINING_HARD_CAP === 230 && force.maxLevel === 230, "plafond absolu : 230 (Tour, 03/11)");
     ok(g.getUpgradeCost(force, 149) === 331 && g.getUpgradeCost(force, 150) === 1248, "Force : niveau 150 à 331 or (×4 dès 60, v3.613.0), 151 à 1 248 (×15)");
     var t = 0; g.HEROS_TRAINING_UPGRADE_IDS.forEach(function (id) { var u = g.UPGRADES.filter(function (x) { return x.id === id; })[0]; for (var l = 150; l < 200; l++) t += g.getUpgradeCost(u, l); });
     ok(t === 266142, "les cinq statistiques de 150 à 200 : 266 142 or");
@@ -21852,6 +21852,27 @@ console.log("\n[429] Équilibre des classes (Seb, 03/11 : converger au milieu)")
     g.game.heroId = "mage"; ok(g.VeinSystem.classMult() === 1 && g.TalentManager.getStatBonuses().hpPct >= 0.05, "Mage : dégâts inchangés, +5 % de PV");
   } catch (err) { ok(false, "[429] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   g.game.heroId = h0;
+})();
+
+console.log("\n[430] Rythme de la Tour (Seb, 03/11 : Terrain 19 à 21, palier de l'acte III, étages en entier)");
+(function () {
+  try {
+    var tr = g.TRAINING_CAP_BY_ACT.filter(function (c) { return c.worldIndex === 5; }).map(function (c) { return c.stepId + ":" + c.terrain; }).join();
+    ok(tr === "tour_01:18,tour_06:19,tour_11:20,tour_16:21" && g.WORLD_CAPS[5].village.training === 21 && g.VILLAGE_BUILDINGS.training.maxLevel === 21 && g.TRAINING_HARD_CAP === 230, "Terrain 19, 20, 21 aux actes II, III, IV de la Tour : entraînement jusqu'à 230");
+    var tier = g.VILLAGE_BUILDINGS.training.costTiers.filter(function (t) { return t.minLevel === 18; })[0];
+    ok(tier && tier.maxLevel === 20 && tier.baseCost.givre_bleu > 0 && tier.baseCost.verre_faille > 0, "Terrain 19 à 21 au Givre bleu et au Verre de faille");
+    var P = g.STORY_PALIER_TOUR_COMPLET;
+    ok(P.pieces === 7 && P.forge === 7 && P.reforge === 13, "acte III : 7 Légendaires, Forge 7, arme reforgée à 13");
+    var st13 = g.STORY_QUESTS.tower.steps.filter(function (x) { return x.id === "tour_13"; })[0];
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; StoryQuestManager.ensure();");
+    ok(st13.check(g.game) === false && typeof st13.missing === "function" && st13.missing(g.game).length >= 1, "palier non tenu : « Ce qui manque » le détaille");
+    ok(g.STORY_TOUR_ETAGES === 5 && g.STORY_TOUR_PA === 2, "étapes 6 et 7 : les 5 étages de l'escalier, 2 escaliers réussis");
+    var st7 = g.STORY_QUESTS.tower.steps.filter(function (x) { return x.id === "tour_07"; })[0];
+    run("game.storyQuests.tower.counters = { paBase: 1 }; game.explorationProgression.towerPaWins = 2;");
+    ok(st7.check(g.game) === false, "une réussite de plus : pas encore");
+    run("game.explorationProgression.towerPaWins = 3;");
+    ok(st7.check(g.game) === true, "deux réussites depuis l'acceptation : faite");
+  } catch (err) { ok(false, "[430] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
 Promise.all(ATTENTES).then(function () {
