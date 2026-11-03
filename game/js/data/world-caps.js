@@ -122,7 +122,10 @@ var TALENT_CAP_BY_ACT = [
   { worldIndex: 4, stepId: "montagne_06", act: "II", points: 20 },    // H3 (chantier du héros) : rangs des talents, 18 → 23
   { worldIndex: 4, stepId: "montagne_11", act: "III", points: 21 },
   { worldIndex: 4, stepId: "montagne_16", act: "IV", points: 23 },
-  { worldIndex: 5, stepId: "tour_01", act: "I", points: 23 }          // v3.625.0 (Tour, T-0) : inchangé, crans au banc
+  { worldIndex: 5, stepId: "tour_01", act: "I", points: 23 },         // v3.625.0 (Tour, T-0) : inchangé
+  { worldIndex: 5, stepId: "tour_06", act: "II", points: 25 },        // v3.633.0 : voie Varier (validée par Seb le 03/11)
+  { worldIndex: 5, stepId: "tour_11", act: "III", points: 27 },
+  { worldIndex: 5, stepId: "tour_16", act: "IV", points: 28 }         // 28 = 18 utilisables (clés exclusives) + 5 + 5 : tout l'arbre
 ];
 
 /* « de la Forêt enchantée », « du Désert oublié » : pour « l'acte II du Désert oublié ».

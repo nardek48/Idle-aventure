@@ -28,11 +28,34 @@ var TowerSystem = {
   memV: function (k) { return Number((window.MEMORY_VALUES || {})[k] || 0); },
   /* Multiplicateur des dégâts du héros : la braise posée sur le palier ; Braise vive ; La forme prêtée (boss, élite). */
   dmgMult: function () {
-    if (!this.atTower()) return 1;
+    var t = this.talentDmgMult(); // v3.633.0 : voie Varier, partout
+    if (!this.atTower()) return t;
     var m = 1 + (this.braise() === "poser" ? TOWER_BRAISE_DMG : 0) + (this.mem("braise_vive") ? this.memV("braise_vive_dmg") : 0);
     var foe = game.enemy;
     if (this.mem("forme_pretee") && foe && (foe.isBoss || foe.isElite)) m += this.memV("forme_pretee_dmg");
+    return m * t;
+  },
+  /* ---------- v3.633.0 : la voie de talents « Varier » (effets partout) ---------- */
+  tal: function (id) { return !!(window.TalentManager && TalentManager.has(id)); },
+  talV: function (k) { return Number((window.TALENT_VALUES || {})[k] || 0); },
+  legendariesWorn: function () { var eq = game.equipped || {}; return Object.keys(eq).filter(function (k) { return eq[k] && eq[k].rarity === "legendary"; }).length; },
+  varierActive: function () { var v = game._varier; return !!(v && v.used && v.used.skill1 && v.used.skill2 && v.used.skill3); },
+  talentDmgMult: function () {
+    var m = 1;
+    if (this.tal("v_seul") && window.CombatActors && CombatActors.aliveAllies().length <= 1) m += this.talV("v_seul");
+    if (this.tal("v_ne_se_forge_pas")) m += this.talV("v_ne_se_forge_pas") * Math.min(7, this.legendariesWorn());
+    if (this.tal("v_varier") && this.varierActive()) m += this.talV("v_varier");
     return m;
+  },
+  /* Un pas de côté : multiplicateur d'une technique `slot`, différente de la précédente du combat. */
+  skillMult: function (slot) {
+    var v = game._varier;
+    return (this.tal("v_pas_de_cote") && v && v.last && v.last !== slot) ? 1 + this.talV("v_pas_de_cote") : 1;
+  },
+  noteTechnique: function (slot) {
+    var v = game._varier || (game._varier = { last: null, used: {} }), avant = this.varierActive();
+    v.last = slot; if (/^skill[123]$/.test(slot)) v.used[slot] = true;
+    if (!avant && this.varierActive() && this.tal("v_varier") && typeof addLog === "function") addLog("🔀 " + _t("Varier : +{n} % de dégâts jusqu'à la fin du combat.", { n: Math.round(this.talV("v_varier") * 100) }), "event");
   },
   /* Ton nom (Mémoire 24) : +10 % de PV max à la Tour, lu par TalentManager.getStatBonuses (recalc au voyage). */
   hpPct: function () { return (this.atTower() && this.mem("ton_nom")) ? this.memV("ton_nom_hp") : 0; },
@@ -174,13 +197,14 @@ var TowerSystem = {
   /* Combat gagné : la braise gardée rend un peu de PV. */
   onVictory: function () {
     // v3.632.0 : Feu couvé (Mémoire 21) s'ajoute à la braise gardée, ou joue seul
-    var pct = (this.braise() === "garder" ? TOWER_BRAISE_HEAL : 0) + (this.mem("feu_couve") ? this.memV("feu_couve_heal") : 0);
-    if (!this.atTower() || !(pct > 0) || !(game.heroHp > 0)) return 0;
+    var tour = this.atTower() ? (this.braise() === "garder" ? TOWER_BRAISE_HEAL : 0) + (this.mem("feu_couve") ? this.memV("feu_couve_heal") : 0) : 0;
+    var pct = tour + (this.tal("v_souffle") ? this.talV("v_souffle") : 0); // v3.633.0 : Reprendre son souffle, partout
+    if (!(pct > 0) || !(game.heroHp > 0)) return 0;
     var max = Number(game.heroMaxHp || 0), heal = Math.min(Math.floor(max * pct), Math.max(0, max - game.heroHp));
     if (heal <= 0) return 0;
     game.heroHp += heal;
     if (typeof renderHeroHp === "function") renderHeroHp();
-    if (typeof addLog === "function") addLog("🔥 " + (this.braise() === "garder" ? _t("La braise d'Aeswyn : +{n} PV.", { n: formatNumber(heal) }) : _t("Feu couvé : +{n} PV.", { n: formatNumber(heal) })), "event");
+    if (typeof addLog === "function") addLog("🔥 " + (this.atTower() && this.braise() === "garder" ? _t("La braise d'Aeswyn : +{n} PV.", { n: formatNumber(heal) }) : (tour > 0 ? _t("Feu couvé : +{n} PV.", { n: formatNumber(heal) }) : _t("Reprendre son souffle : +{n} PV.", { n: formatNumber(heal) }))), "event");
     return heal;
   }
 };
