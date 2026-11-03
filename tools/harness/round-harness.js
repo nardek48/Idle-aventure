@@ -21708,7 +21708,11 @@ console.log("\n[425] v3.630.0 — Tour, lot T-4a : seul, la faille, la silhouett
     TS.onBossPhase(e, p1);
     ok(e.mirror === true && TS.isMirror(e), "à 60 % : le miroir");
     TS.onBossPhase(e, p2);
-    ok(e.shieldRounds === g.BOSS_SHIELD_DURATION_ROUNDS, "à 30 % : la lumière passe à travers elle (bouclier, " + e.shieldRounds + " rounds)");
+    ok(e.throughIn === true && !TS.blocksHit(e), "à 30 % : annoncé, pas encore intouchable (v3.636.0)");
+    TS.onEnemyTurn(e);
+    ok(e.through === true && TS.blocksHit(e) && g.VeinSystem.blocksHit(e), "à son tour : intouchable, le moteur ne laisse passer aucun coup (VeinSystem.blocksHit)");
+    TS.onEnemyTurn(e);
+    ok(!e.through && !TS.blocksHit(e), "à son tour suivant : de nouveau touchable (un seul round)");
     var bm = require("fs").readFileSync(require("path").join(ROOT, "js/systems/boss-moment-system.js"), "utf8");
     ok(/TowerSystem\.onBossPhase\(enemy, ph\)/.test(bm), "phases branchées sur BossMomentManager.onPhase, avant l'archétype du moteur");
   } catch (err) { ok(false, "[425] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }

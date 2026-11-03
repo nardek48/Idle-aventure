@@ -148,6 +148,7 @@ var VeinSystem = {
   /* Garde de enemyTurn : true si l'ennemi ne joue pas son tour ordinaire (le Wyrm qui ressort). */
   onEnemyTurn: function (e) {
     if (!e || Number(e.hp || 0) <= 0) return false;
+    if (window.TowerSystem) TowerSystem.onEnemyTurn(e); // v3.636.0 : le round intouchable de la silhouette
     if (this.tickBurns(e)) return true;
     if (e.diving) return this.surface(e);
     this.sortTurn(e);
@@ -253,7 +254,7 @@ var VeinSystem = {
     if (ph.sorts) e.sorts = true; // v3.491.0 : le Dragon ancien trie
   },
   /* Lu par dealDamage : sous la lave, aucun coup ne porte. */
-  blocksHit: function (foe) { return !!(foe && foe.diving && Number(foe.hp || 0) > 0); },
+  blocksHit: function (foe) { return !!(foe && foe.diving && Number(foe.hp || 0) > 0) || !!(window.TowerSystem && TowerSystem.blocksHit(foe)); }, // v3.636.0 : + la silhouette
   /* Il ressort : il frappe chaque allié vivant (×0,8, chaleur comprise), puis son tour s'arrête. */
   surface: function (e) {
     e.diving = false;

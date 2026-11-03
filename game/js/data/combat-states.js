@@ -179,6 +179,17 @@ var COMBAT_STATES_SCREEN = {
     desc: "Sous la lave, on ne peut pas le toucher. À son tour, il ressort et frappe tout le groupe.",
     hint: "Garde ta Défense pour ce moment."
   },
+  // v3.636.0 (Tour, TW6) : le round intouchable de la silhouette, annoncé puis actif. Icône à générer (générique en attendant).
+  throughIn: {
+    famille: "alerte", nom: "La lumière monte", icon: COMBAT_STATE_ICON + "through.webp", mot: "Intouchable au prochain round !",
+    desc: "Au prochain round, la lumière passera à travers elle : aucun coup ne la touchera.",
+    hint: "Garde ta technique la plus forte pour après."
+  },
+  through: {
+    famille: "alerte", nom: "Intouchable", icon: COMBAT_STATE_ICON + "through.webp", mot: "Rien ne la touche !",
+    desc: "La lumière passe à travers elle : aucun coup ne la touche jusqu'à son prochain tour.",
+    hint: "Défends-toi ou soigne-toi : frapper ne sert à rien ce round-ci."
+  },
   burning: {
     famille: "onme", nom: "Tu brûles", icon: COMBAT_STATE_ICON + "burning.webp",
     desc: "Tu perds une part de tes PV à chaque tour de celui qui t'a mis le feu.",
