@@ -8,6 +8,15 @@ var LAB_CELL = 100, LAB_ROOM = 74, LAB_WALK_MS = 170, LAB_VIEW_W = 340; // v3.43
 var labView = { sheet: null, walk: null, flash: 0, drawn: null };
 /* Texte propre à la sorte de run en cours, sinon celui du Labyrinthe (déjà traduit). */
 function labSay(key, fallback, params) { return LabyrinthRun.say(key, fallback, params); }
+/* v3.638.0 : une tuile pas encore dessinée garde son chemin et montre l'icône générique (règle des icônes manquantes). */
+var LAB_TILE_ERR = ' onerror="labTileMissing(this)"';
+function labTileMissing(img) {
+  var src = img.getAttribute("href") || "";
+  if (!src || src.indexOf("data:") === 0) return;
+  if (window.MISSING_ICONS && MISSING_ICONS.indexOf(src) < 0) MISSING_ICONS.push(src);
+  img.setAttribute("data-missing-icon", src); img.setAttribute("href", window.MISSING_ICON_SRC || "");
+}
+window.labTileMissing = labTileMissing;
 
 /* ---------- Routage (buildSceneScreenHTML) ---------- */
 function buildLabyrinthScreenHTML(run) {
@@ -24,7 +33,7 @@ function buildLabyrinthScreenHTML(run) {
   h += '<button type="button" class="lab-chart" id="lab-chart" onclick="labOpenChart()" aria-label="' + esc(labSay("chartAria", _t("Ouvrir la carte d'Edda"))) + '"></button></div>';
   h += '<div class="lab-note" id="lab-note"></div>';
   h += '<div class="lab-actions"><button type="button" class="kbtn is-sec" onclick="labOpenChart()">' + esc(_t("Carte")) + '</button>';
-  h += '<button type="button" class="kbtn is-sec" onclick="labAskLeave()">' + esc(_t("Remonter")) + '</button></div>';
+  h += '<button type="button" class="kbtn is-sec" onclick="labAskLeave()">' + esc(labSay("leaveBtn", _t("Remonter"))) + '</button></div>';
   h += '</div><div id="lab-sheet"></div>';
   return h;
 }
@@ -62,13 +71,13 @@ function labDraw(jump, flashMask) {
   Object.keys(doors).forEach(function (d) {                    // couloirs ouverts
     var p = d.split("|"), a = p[0], b = p[1]; if (!L.openNow(run, d) || !shown(a) || !shown(b) || !(run.seen[a] || run.seen[b])) return;
     var pv = L.pivotOf(F, d), hz = labY(F, a) === labY(F, b), mx = (labX(F, a) + labX(F, b)) / 2, my = (labY(F, a) + labY(F, b)) / 2;
-    svg.push('<image class="lab-tile ' + (st(a) === "is-mem" && st(b) === "is-mem" ? "is-mem" : "is-lit") + '" href="' + L.tiles().corridor + '" x="' + (mx - LAB_CELL / 2) + '" y="' + (my - LAB_CELL / 4) + '" width="' + LAB_CELL + '" height="' + (LAB_CELL / 2) + '" preserveAspectRatio="none"' + (hz ? "" : ' transform="rotate(90 ' + mx + " " + my + ')"') + '/>');
+    svg.push('<image class="lab-tile ' + (st(a) === "is-mem" && st(b) === "is-mem" ? "is-mem" : "is-lit") + '" href="' + L.tiles().corridor + '"' + LAB_TILE_ERR + ' x="' + (mx - LAB_CELL / 2) + '" y="' + (my - LAB_CELL / 4) + '" width="' + LAB_CELL + '" height="' + (LAB_CELL / 2) + '" preserveAspectRatio="none"' + (hz ? "" : ' transform="rotate(90 ' + mx + " " + my + ')"') + '/>');
     if (pv >= 0) svg.push('<rect class="lab-pivopen' + (flashMask && ((flashMask >> pv) & 1) ? " is-flash" : "") + '" x="' + (hz ? mx - 14 : mx - 18) + '" y="' + (hz ? my - 18 : my - 14) + '" width="' + (hz ? 28 : 36) + '" height="' + (hz ? 36 : 28) + '" rx="6"/>');
   });
   L.rooms(F).forEach(function (k) {                             // salles
     if (!shown(k)) return;
     var x = labX(F, k) - LAB_ROOM / 2, y = labY(F, k) - LAB_ROOM / 2, li = L.leverAt(run, k);
-    svg.push('<image class="lab-tile ' + st(k) + '" href="' + labTile(run, k) + '" x="' + x + '" y="' + y + '" width="' + LAB_ROOM + '" height="' + LAB_ROOM + '" preserveAspectRatio="none"/>');
+    svg.push('<image class="lab-tile ' + st(k) + '" href="' + labTile(run, k) + '"' + LAB_TILE_ERR + ' x="' + x + '" y="' + y + '" width="' + LAB_ROOM + '" height="' + LAB_ROOM + '" preserveAspectRatio="none"/>');
     if (li >= 0 && li === F.guarded && run.guardUp) svg.push('<text class="lab-badge" x="' + (x + LAB_ROOM - 10) + '" y="' + (y + 10) + '">⚔️</text>');
     svg.push('<rect class="lab-hit' + (L.canMove(run, k) ? " is-can" : "") + '" data-k="' + k + '" x="' + x + '" y="' + y + '" width="' + LAB_ROOM + '" height="' + LAB_ROOM + '" rx="6"/>');
   });
@@ -76,9 +85,9 @@ function labDraw(jump, flashMask) {
     var p = d.split("|"), a = p[0], b = p[1], pv = L.pivotOf(F, d);
     if (pv < 0 || L.openNow(run, d) || !(run.seen[a] || run.seen[b])) return;
     var hz = labY(F, a) === labY(F, b), mx = (labX(F, a) + labX(F, b)) / 2, my = (labY(F, a) + labY(F, b)) / 2;
-    svg.push('<image class="' + (flashMask && ((flashMask >> pv) & 1) ? "is-flash" : "") + '" href="' + L.tiles().pan + '" x="' + (mx - 37) + '" y="' + (my - 12) + '" width="74" height="24" preserveAspectRatio="none"' + (hz ? ' transform="rotate(90 ' + mx + " " + my + ')"' : "") + '/>');
+    svg.push('<image class="' + (flashMask && ((flashMask >> pv) & 1) ? "is-flash" : "") + '" href="' + L.tiles().pan + '"' + LAB_TILE_ERR + ' x="' + (mx - 37) + '" y="' + (my - 12) + '" width="74" height="24" preserveAspectRatio="none"' + (hz ? ' transform="rotate(90 ' + mx + " " + my + ')"' : "") + '/>');
   });
-  if (run.foe && L.isLit(run, run.foe.at)) svg.push('<text class="lab-foe" x="' + labX(F, run.foe.at) + '" y="' + labY(F, run.foe.at) + '">' + (run.foe.stun > 0 ? "😵" : "🗿") + '</text>');
+  if (run.foe && L.isLit(run, run.foe.at)) svg.push('<text class="lab-foe" x="' + labX(F, run.foe.at) + '" y="' + labY(F, run.foe.at) + '">' + (run.foe.stun > 0 ? "😵" : (L.tiles().foeGlyph || "🗿")) + '</text>');
   svg.push('<circle class="lab-hero" cx="' + labX(F, run.at) + '" cy="' + labY(F, run.at) + '" r="11"/>');
   if (jump || labView.drawn !== run.floor) w.style.transition = "none";
   w.innerHTML = svg.join("");
@@ -217,16 +226,16 @@ function labShowSheet() {
       var sp = { n: run.floor, s: g.stones }, sb = { s: run.stones, g: run.gold };
       h = labSheetHTML(_t("L'escalier"), labSay("stairsSub", _t("Étage {n} franchi · +{s} Pierres errantes", sp), sp),
         '<div class="lab-bigchart">' + labChartSVG(false) + '</div><p>' + esc(labSay("stairsBag", _t("Dans le sac : {s} Pierres errantes, {g} or.", sb), sb)) + '</p>'
-        + '<p class="lab-cost">' + esc(_t("Descendre : Souffle +{n}, étage plus dur. Tomber ou s'essouffler plus bas fait perdre la moitié du sac.", { n: c.breathFloor })) + '</p>',
-        [{ t: _t("Descendre à l'étage {n}", { n: run.floor + 1 }), on: "labDescend()" }, { t: _t("Remonter avec le sac"), sec: true, on: "labLeave()" }]);
+        + '<p class="lab-cost">' + esc(labSay("climbCost", _t("Descendre : Souffle +{n}, étage plus dur. Tomber ou s'essouffler plus bas fait perdre la moitié du sac.", { n: c.breathFloor }), { n: c.breathFloor })) + '</p>',
+        [{ t: labSay("climbBtn", _t("Descendre à l'étage {n}", { n: run.floor + 1 }), { n: run.floor + 1 }), on: "labDescend()" }, { t: labSay("leaveBagBtn", _t("Remonter avec le sac")), sec: true, on: "labLeave()" }]);
   } else if (s.kind === "chart") {
     h = labSheetHTML(labSay("chartTitle", _t("La carte d'Edda")), _t("Étage {n} · touche une salle dessinée pour y aller", { n: run.floor }),
       '<div class="lab-bigchart">' + labChartSVG(true) + '</div><p class="lab-cost">' + esc(_t("En violet : les pans qui tournent. Pointillés : les salles qu'on devine. Cercle rouge : les pas qu'on entend.")) + '</p>',
       [{ t: _t("Fermer"), sec: true, on: "labCloseSheet()" }]);
   } else if (s.kind === "leave") {
-    h = labSheetHTML(_t("Remonter ?"), _t("Étage {n}", { n: run.floor }),
+    h = labSheetHTML(labSay("leaveTitle", _t("Remonter ?")), _t("Étage {n}", { n: run.floor }),
       '<p>' + esc(labSay("leaveLine", _t("Edda roule sa carte. Vous remontez avec tout le sac : {s} Pierres errantes, {g} or.", { s: run.stones, g: run.gold }), { s: run.stones, g: run.gold })) + '</p>',
-      [{ t: _t("Remonter"), on: "labLeave()" }, { t: _t("Rester"), sec: true, on: "labCloseSheet()" }]);
+      [{ t: labSay("leaveBtn", _t("Remonter")), on: "labLeave()" }, { t: _t("Rester"), sec: true, on: "labCloseSheet()" }]);
   }
   box.innerHTML = h;
 }
@@ -360,7 +369,7 @@ function labEndHTML(run) {
   var c = LabyrinthRun.cfg(), TL = LabyrinthRun.tiles(), e = run.end || {}, sm = e.summary || {}, kept = sm.kept || { gold: 0, resources: {} }, lost = sm.lost || { gold: 0, resources: {} };
   var st = e.stats || run.stats || {}, stoneOf = function (o) { return Number(((o || {}).resources || {})[c.stoneResource] || 0); };
   var how = e.how || "remonte";
-  var title = { remonte: _t("Remonté des profondeurs"), ko: _t("Tombé à l'étage {n}", { n: e.floor }), souffle: _t("À bout de souffle, étage {n}", { n: e.floor }), abandon: _t("Descente abandonnée") }[how] || labSay("endTitle", _t("Labyrinthe"));
+  var title = { remonte: labSay("endRemonteTitle", _t("Remonté des profondeurs")), ko: _t("Tombé à l'étage {n}", { n: e.floor }), souffle: _t("À bout de souffle, étage {n}", { n: e.floor }), abandon: labSay("endAbandonTitle", _t("Descente abandonnée")) }[how] || labSay("endTitle", _t("Labyrinthe"));
   var line = { remonte: labSay("endRemonte", _t("Edda roule sa carte. « On reviendra. Elle aura encore changé. »")), ko: labSay("endKo", _t("Edda t'a traîné jusqu'à l'escalier. « La ville a gardé la moitié du sac. Elle garde toujours quelque chose. »")),
     souffle: labSay("endSouffle", _t("Tu ne sens plus tes jambes. Edda te guide vers la sortie, la carte sous le bras.")), abandon: labSay("endAbandon", _t("Edda range ses craies sans un mot.")) }[how] || "";
   var res = (window.WAREHOUSE_RESOURCES || {})[c.stoneResource] || {};

@@ -229,7 +229,7 @@ var GENERIC_TUTORIALS = {
   /* v3.435.0 (Ruines, RU12) : première descente dans le Labyrinthe aux leviers. Edda explique. */
   labyrinth_first: {
     tab: "scene",
-    condition: function () { var run = game.sceneRun; return !!(run && run.lab && run.status === "lab-map"); },
+    condition: function () { var run = game.sceneRun; return !!(run && run.lab && (run.kind || "labyrinthe") === "labyrinthe" && run.status === "lab-map"); }, // v3.638.0 : pas dans la faille
     icon: "images/Icons/quest_icons/exploration/labyrinthe.webp",
     title: "Le Labyrinthe aux leviers",
     points: [
@@ -238,6 +238,19 @@ var GENERIC_TUTORIALS = {
       { icon: "images/Maps/labyrinthe/papier.webp", text: "Edda dessine la carte dans le coin. Ce que les leviers font tourner, même au loin, y est noté en violet. Touche une salle dessinée sur la grande carte pour y retourner." },
       { icon: "images/Maps/labyrinthe/escalier_bas.webp", text: "À l'escalier : descends pour un sac plus lourd, ou remonte avec tout ce que tu portes. Tomber ou t'essouffler en bas n'en garde que la moitié." },
       { icon: "images/Enemies/elite_contremaitre.webp", text: "Dès l'étage 2, le Contremaître te cherche. Tu l'entends avant de le voir : écoute de quel côté viennent ses pas." }
+    ]
+  },
+  /* v3.638.0 (Faille, F-1) : première montée dans la faille, après la Question. */
+  faille_first: {
+    tab: "scene",
+    condition: function () { var run = game.sceneRun; return !!(run && run.lab && run.kind === "faille" && run.status === "lab-map"); },
+    icon: "images/Icons/quest_icons/exploration/faille.webp",
+    title: "La faille",
+    points: [
+      { icon: "images/Maps/faille/salle_1.webp", text: "La faille se parcourt comme le Labyrinthe des Ruines : des salles dans le noir, des leviers qui font tourner des pans, du Souffle à chaque pas." },
+      { icon: "images/Maps/faille/escalier_1.webp", text: "Elle n'a pas de fond. Chaque étage est plus dur que le précédent, et ton record est gardé. Redescends quand tu veux avec tout le sac : tomber ou t'essouffler n'en garde que la moitié." },
+      { icon: "images/Boss/reflet.webp", text: "Tous les cinq étages, le Reflet garde l'escalier." },
+      { icon: "images/Boss/silhouette.webp", text: "Dès l'étage 3, la forme au sol te suit. Elle ne se bat pas : si elle te rejoint, elle prend du Souffle et recule. Sa lumière froide te prévient quand elle approche." }
     ]
   },
   grimoire_rules: {

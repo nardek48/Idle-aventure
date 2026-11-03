@@ -165,6 +165,7 @@ function getWarehouseOtherUses(key) {
   var departs = [];
   Object.keys(window.SCENE_TEMPLATES || {}).forEach(function (id) { var t = SCENE_TEMPLATES[id], c = t && t.entryCost; if (c && c.resourceId === key) departs.push({ w: wIdx(t.worldId) - (t.travelOnSuccess ? 1 : 0), x: _td(t.title || id) }); });
   if (window.LABYRINTH_CONFIG && LABYRINTH_CONFIG.entryCost && LABYRINTH_CONFIG.entryCost.resourceId === key) departs.push({ w: wIdx(LABYRINTH_CONFIG.worldId), x: _t("Labyrinthe") });
+  if (window.FAILLE_CONFIG && FAILLE_CONFIG.entryCost.resourceId === key && window.LabyrinthRun && LabyrinthRun.isUnlocked("faille")) departs.push({ w: wIdx(FAILLE_CONFIG.worldId), x: _t("La faille") }); // v3.638.0
   departs = departs.map(function (d, i) { d.i = i; return d; }).filter(function (d) { return d.w <= atteint; })
     .sort(function (a, b) { return (b.w - a.w) || (a.i - b.i); }).map(function (d) { return d.x; });
   var depTxt = departs.length > 4 ? departs.slice(0, 3).join(", ") + " " + _tn(departs.length - 3, "et {n} autre", "et {n} autres") : departs.join(", "); // liste courte à 320 px

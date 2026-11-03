@@ -48,7 +48,8 @@ var LabyrinthRun = {
     var k = kind || "labyrinthe", c = this.cfg(k), cost = c.entryCost;
     if (!this.isUnlocked(k)) return { ok: false, reason: this.say("locked", _t("Le labyrinthe s'ouvre après l'étape 10 des Ruines"), null, k) };
     if (window.SceneRunManager && SceneRunManager.isRunActive()) return { ok: false, reason: _t("Une expédition est déjà en cours") };
-    if (this.reserveLeft(k) <= 0) return { ok: false, reason: _t("Prochaine descente dans {d}", { d: SceneRunManager.formatPetiteAventureWait(this.nextInMs(k)) }) };
+    var wait = { d: SceneRunManager.formatPetiteAventureWait(this.nextInMs(k)) };
+    if (this.reserveLeft(k) <= 0) return { ok: false, reason: this.say("nextIn", _t("Prochaine descente dans {d}", wait), wait, k) };
     if (cost && WarehouseManager.getAmount(cost.resourceId) < cost.amount) {
       var res = (window.WAREHOUSE_RESOURCES || {})[cost.resourceId];
       return { ok: false, reason: _t("Il faut {n} {x}", { n: cost.amount, x: _td(res ? res.name : cost.resourceId) }) };
@@ -195,7 +196,8 @@ var LabyrinthRun = {
     run.springUsed = false; run.chestTaken = false; run.bossDown = !F.boss;
     if (run.floor > 1) run.breath = Math.min(c.breathStart, run.breath + c.breathFloor);
     run.foe = run.floor >= c.foeFrom ? { at: this._farthest(run, F.start), stun: 3, tick: 0, every: run.floor >= c.foeFastFrom ? c.foeEveryFast : c.foeEvery } : null;
-    var T = this.texts(); run.note = { text: T.floorLines[(run.floor - 1) % T.floorLines.length], data: true };
+    var T = this.texts(), fn = this.def().floorNote, own = typeof fn === "function" ? fn(run) : null; // v3.638.0 : ligne propre à la sorte
+    run.note = { text: own || T.floorLines[(run.floor - 1) % T.floorLines.length], data: true };
     this._look(run);
     var st = this._state(); if (run.floor > Number(st.best || 0)) st.best = run.floor;
   },
@@ -233,8 +235,8 @@ var LabyrinthRun = {
     var was = !!run.seen[k];
     run.at = k; run.seen[k] = 1; run.newPiv = {}; this._look(run);
     run.breath = Math.max(0, run.breath - c.step);
-    var ev = null;
-    if (this._foeTurn(run)) ev = "caught";
+    var ev = null, ft = this._foeTurn(run);
+    if (ft === true) ev = "caught";
     if (run.status !== LAB_STATUS.map) { this._save(); return { ok: true, event: "end" }; }
     if (!ev && run.breath <= 0) { this.finish("souffle"); return { ok: true, event: "end" }; }
     var F = run.F;
@@ -245,7 +247,7 @@ var LabyrinthRun = {
       else if (k === F.chest && !run.chestTaken) { ev = "chest"; this._chest(run); }
     }
     // v3.636.0 : l'alerte suit la distance (le test du mot « tout près » ratait en anglais)
-    if (!ev || ev === "caught") { if (ev !== "caught") { var fd = this.foeDist(run); run.note = { text: this.foeHint(run) || _t("Tu avances. Souffle −{n}.", { n: c.step }), alert: fd != null && fd >= 0 && fd <= 2 }; } }
+    if ((!ev || ev === "caught") && ft !== "touched") { if (ev !== "caught") { var fd = this.foeDist(run); run.note = { text: this.foeHint(run) || _t("Tu avances. Souffle −{n}.", { n: c.step }), alert: fd != null && fd >= 0 && fd <= 2 }; } }
     this._save();
     return { ok: true, event: ev };
   },
@@ -281,6 +283,13 @@ var LabyrinthRun = {
       }
     }
     if (f.at !== run.at) return false;
+    var c = this.cfg();
+    if (c.foeTouch) {   // v3.638.0 (faille, FA6) : elle ne se bat pas, elle prend du Souffle et recule
+      run.breath = Math.max(0, run.breath - c.foeTouch); f.stun = c.foeStun; f.at = this._farthest(run, run.at); this._stat(run, "caught");
+      run.note = { text: this.say("touched", _t("Le Contremaître te rattrape."), { n: c.foeTouch }), alert: true };
+      if (run.breath <= 0) this.finish("souffle");
+      return "touched";
+    }
     // v3.436.0 : il te rattrape ; le joueur choisit (Charger, Tenir, Fuir) avant de repartir
     run.pending = { kind: "foe" }; this._stat(run, "caught");
     run.note = { text: this.say("caught", _t("Le Contremaître te rattrape.")), alert: true };
@@ -333,17 +342,23 @@ var LabyrinthRun = {
       e = e ? JSON.parse(JSON.stringify(e)) : null; hpM = c.foeHpMult; powM = c.foePowMult;
     } else if (kind === "boss") {
       e = this._spawn(c.bossFoe, false); hpM = c.bossHpMult; powM = c.bossPowMult;
+      if (c.bossCompound) { hpM *= this.floorGrowth(run); powM *= this.floorGrowth(run); } // v3.638.0 : le Reflet suit l'étage
       if (e) e.name = c.bossName;
     } else {
       var gf = run.guardFoe || c.guardFoes[0];
       e = this._spawn(gf, false);
-      hpM = powM = c.guardMult * (1 + c.guardPerFloor * (run.floor - 1)) * Math.sqrt(Number((c.guardFoeMult || {})[gf] || 1));
+      hpM = powM = c.guardMult * this.floorGrowth(run) * Math.sqrt(Number((c.guardFoeMult || {})[gf] || 1));
     }
     if (!e) return null;
     var hs = this.heroScale(run);
     e.maxHp = Math.max(1, Math.round(Number(e.maxHp || 1) * hpM * hs.hp)); e.hp = e.maxHp;
     if (e.stats) e.stats.power = Math.max(1, Math.round(Number(e.stats.power || 1) * powM * hs.power));
     return e;
+  },
+  /* Force des gardes à l'étage : +guardPerFloor par étage, linéaire (Labyrinthe) ou composé (guardCompound, faille). */
+  floorGrowth: function (run) {
+    var c = this.cfg(), n = Math.max(0, Number(run.floor || 1) - 1);
+    return c.guardCompound ? Math.pow(1 + c.guardPerFloor, n) : 1 + c.guardPerFloor * n;
   },
   _worldIdx: function () { var id = this.cfg().worldId; for (var i = 0; i < (window.WORLDS || []).length; i++) if (WORLDS[i].id === id) return i; return 2; },
   _stat: function (run, k) { run.stats = run.stats || {}; run.stats[k] = Number(run.stats[k] || 0) + 1; },
