@@ -98,8 +98,14 @@ var VeinSystem = {
   _mem: function (id) { return !!(window.MemoryManager && MemoryManager.has(id)); },
   _memV: function (k, d) { return (window.MemoryManager && typeof MemoryManager.V === "function") ? MemoryManager.V(k) : d; },
   /* Multiplicateur des dégâts du héros (attaque de base et compétences). Taille franche (Mémoire 17) : +10 % à la première. */
+  /* Équilibre des classes (Seb, 03/11) : multiplicateur de dégâts de la classe du héros (data/classes.js, balance). */
+  classMult: function () {
+    var cb = (typeof getClassByHeroId === "function" && window.game) ? getClassByHeroId(game.heroId) : null;
+    return (cb && cb.balance && cb.balance.damageMult) ? Number(cb.balance.damageMult) : 1;
+  },
   bladeMult: function () {
     var tour = window.TowerSystem ? TowerSystem.dmgMult() : 1; // v3.626.0 : la braise posée, à la Tour
+    tour *= this.classMult(); // équilibre des classes (03/11)
     if (!this.state) return tour;
     return tour * (1 + this.state.heroCuts * this.bladePerCut() + (this.state.heroCuts > 0 && this._mem("taille_franche") ? Number(this._memV("taille_franche_blade", 0.10)) : 0)
       + (this.mountainLearns() ? this.heatLevel() * VEIN_DROIT_HEAT_BLADE : 0));

@@ -5,6 +5,9 @@
 var CLASSES = [
   {
     id: "knight",
+    /* Équilibre des classes (Seb, 03/11 : converger au milieu) : multiplicateur de tous les dégâts du héros et PV en plus.
+       Mesuré au banc (Dragon ancien, Couronne) : le Rôdeur tapait 1,35 à 1,7 fois plus que les autres. */
+    balance: { damageMult: 1.15, hpPct: 0 },
     label: "Chevalier",
     icon: "images/Icons/classes/class_knight.webp",
     weaponType: "sword",
@@ -27,6 +30,9 @@ var CLASSES = [
   },
   {
     id: "archer",
+    /* Équilibre des classes (Seb, 03/11 : converger au milieu) : multiplicateur de tous les dégâts du héros et PV en plus.
+       Mesuré au banc (Dragon ancien, Couronne) : le Rôdeur tapait 1,35 à 1,7 fois plus que les autres. */
+    balance: { damageMult: 0.85, hpPct: 0 },
     label: "Rôdeur", // v3.429.10 : le nom de la classe partout ailleurs (création, CLAUDE.md)
     icon: "images/Icons/classes/class_ranger.webp",
     weaponType: "bow",
@@ -52,6 +58,9 @@ var CLASSES = [
   },
   {
     id: "mage",
+    /* Équilibre des classes (Seb, 03/11 : converger au milieu) : multiplicateur de tous les dégâts du héros et PV en plus.
+       Mesuré au banc (Dragon ancien, Couronne) : le Rôdeur tapait 1,35 à 1,7 fois plus que les autres. */
+    balance: { damageMult: 1, hpPct: 0.05 },
     label: "Mage",
     icon: "images/Icons/classes/class_mage.webp",
     weaponType: "magic",

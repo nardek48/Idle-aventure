@@ -291,6 +291,8 @@ var TalentManager = {
       if (e.node.stats.critChance) out.critChance += e.node.stats.critChance * r;
     });
     if (window.TowerSystem) out.hpPct += TowerSystem.hpPct(); // v3.632.0 : Ton nom (Mémoire 24), +10 % de PV à la Tour
+    var cb = (typeof getClassByHeroId === "function") ? getClassByHeroId(game.heroId) : null; // équilibre des classes (03/11) : Mage +5 % PV
+    if (cb && cb.balance && cb.balance.hpPct) out.hpPct += cb.balance.hpPct;
     return out;
   },
 

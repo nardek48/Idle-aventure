@@ -18144,7 +18144,7 @@ console.log("\n[309] v3.487.0 — Montagne, lot M-1 : les veines");
     g.WorldManager.worldIndex = 4;
     SQ.getChoice = function () { return null; };
     CE.spawnGroup([mk("lavagolem"), mk("dragonling")]);
-    ok(V.active() && V.intact() && V.cutsLeft() === 3 && V.heatMult() === 1 && V.bladeMult() === 1, "à la Montagne : une veine intacte, trois tailles possibles");
+    ok(V.active() && V.intact() && V.cutsLeft() === 3 && V.heatMult() === 1 && (V.bladeMult() / V.classMult()) === 1, "à la Montagne : une veine intacte, trois tailles possibles");
     ok(g.ClassCombatManager.getAction("vein") === g.VEIN_ACTION && g.VEIN_ACTION.label === "Tailler", "l'action « Tailler » se lit comme une action de combat");
     // La lame : +15 % sur l'attaque du héros
     g.EquipmentManager.effectiveCritChance = function () { return 0; };
@@ -18162,7 +18162,7 @@ console.log("\n[309] v3.487.0 — Montagne, lot M-1 : les veines");
     ok(/enemyStrike: function[\s\S]{0,400}VeinSystem\.heatMult\(\)/.test(src), "la chaleur s'applique à la frappe ennemie (héros comme compagnons)");
     // Trois tailles au plus
     V.cut(true); V.cut(true);
-    ok(V.cutsLeft() === 0 && V.cut(true) === false && Math.abs(V.bladeMult() - 1.45) < 1e-9, "trois tailles au plus (lame +45 %, chaleur +30 %)");
+    ok(V.cutsLeft() === 0 && V.cut(true) === false && Math.abs((V.bladeMult() / V.classMult()) - 1.45) < 1e-9, "trois tailles au plus (lame +45 %, chaleur +30 %)");
     // Victoire : la Cendre est versée
     var c0 = W.getAmount("cendre_vive");
     g.CombatActors.enemies().slice().forEach(function (e) { e.hp = 1; CE.killEnemy(e); });
@@ -18175,7 +18175,7 @@ console.log("\n[309] v3.487.0 — Montagne, lot M-1 : les veines");
     // Les choix de l'étape 5 : la lame +20 % (soi), le puits chaud (aeswyn)
     SQ.getChoice = function (k) { return k === "veine" ? "soi" : null; };
     V.cut(true);
-    ok(Math.abs(V.bladeMult() - 1.20) < 1e-9, "choix « soi » (La veine dans la lame) : +20 % par taille");
+    ok(Math.abs((V.bladeMult() / V.classMult()) - 1.20) < 1e-9, "choix « soi » (La veine dans la lame) : +20 % par taille");
     SQ.getChoice = function (k) { return k === "veine" ? "aeswyn" : null; };
     var c2 = W.getAmount("cendre_vive");
     game.enemy.hp = 1; CE.killEnemy(game.enemy);
@@ -18235,7 +18235,7 @@ console.log("\n[310] v3.488.0 — Montagne, lot M-2 : acte I « La montée », S
     var mk = function (id) { var d = g.ENEMY_DB[id]; return { id: id, name: d.name, isBoss: false, archetype: null, hp: 1e5, maxHp: 1e5, stats: d.stats, resists: [], weak: [], goldReward: 20 }; };
     CE.spawnGroup([mk("lavagolem"), mk("dragonling")]);
     var actor = { companionId: "sarkel", charges: 1, cooldown: 0, damage: 10 };
-    ok(CM.chooseAction(actor) === "skill" && CM.useSkill(actor, sk) === true && V.cuts() === 1 && V.bladeMult() === 1 && Math.abs(V.heatMult() - 1.1) < 1e-9 && actor.charges === 0, "Coup de pioche : la veine taillée, la chaleur monte, la lame reste au héros");
+    ok(CM.chooseAction(actor) === "skill" && CM.useSkill(actor, sk) === true && V.cuts() === 1 && (V.bladeMult() / V.classMult()) === 1 && Math.abs(V.heatMult() - 1.1) < 1e-9 && actor.charges === 0, "Coup de pioche : la veine taillée, la chaleur monte, la lame reste au héros");
     V.cut(true); V.cut(true);
     ok(CM.chooseAction({ companionId: "sarkel", charges: 1, cooldown: 0 }) === "basic", "veine épuisée : Sarkel frappe");
     // Sarkel reste du groupe pendant ses étapes
@@ -18355,7 +18355,7 @@ console.log("\n[311] v3.489.0 — Montagne, lot M-3 : acte II « Ce qui trie »"
     ok(g.MEMORY_LEVELS.filter(function (l) { return l.level >= 17 && l.level <= 19; }).length === 3 && g.MEMORY_LEVEL_COSTS.length >= 19, "Mémoire 17 à 19 écrite, coûts dans la courbe");
     MM.has = function (id) { return id === "peau_basalte" || id === "taille_franche" || id === "pioche_sure"; };
     CE.spawnGroup([mk("ifrit")]); V.cut(true);
-    ok(Math.abs(V.heatMult() - 1.07) < 1e-9 && Math.abs(V.bladeMult() - 1.25) < 1e-9, "Peau de basalte (+7 %) et Taille franche (+10 % à la première taille)");
+    ok(Math.abs(V.heatMult() - 1.07) < 1e-9 && Math.abs((V.bladeMult() / V.classMult()) - 1.25) < 1e-9, "Peau de basalte (+7 %) et Taille franche (+10 % à la première taille)");
     V.cut(false, "sarkel");
     var a0 = g.WarehouseManager.getAmount("cendre_vive"); game.enemy.hp = 1; CE.killEnemy(game.enemy);
     ok(g.WarehouseManager.getAmount("cendre_vive") - a0 === 3, "Pioche sûre : la taille de Sarkel verse une Cendre de plus");
@@ -18480,9 +18480,9 @@ console.log("\n[313] v3.491.0 — Montagne, lot M-5 : acte IV « Le droit de pre
     var t = V.takeSort(de);
     ok(t && g.CombatActors.isHero(t.actor) && V.heatLevel() === 2, "il trie celui qui a taillé ; chaleur : la taille et sa phase");
     // Le choix « laisser » : la chaleur porte aussi le héros
-    var b0 = V.bladeMult();
+    var b0 = (V.bladeMult() / V.classMult());
     SQ.getChoice = function (k) { return k === "droit" ? "laisser" : null; };
-    ok(Math.abs(V.bladeMult() - b0 - 0.10) < 1e-9, "Laisser : chaque cran de chaleur donne +5 % aux coups du héros");
+    ok(Math.abs((V.bladeMult() / V.classMult()) - b0 - 0.10) < 1e-9, "Laisser : chaque cran de chaleur donne +5 % aux coups du héros");
     // Le choix « prendre » : le puits, une fois par jour
     SQ.getChoice = function (k) { return k === "droit" ? "prendre" : null; };
     game.explorationProgression.puitsMereDay = null;
@@ -18495,7 +18495,7 @@ console.log("\n[313] v3.491.0 — Montagne, lot M-5 : acte IV « Le droit de pre
     MM.has = function (id) { return id === "froid_pierre" || id === "lame_vive" || id === "rien_ne_se_perd" || id === "ce_qui_a_ete_pris"; };
     CE.spawnGroup([{ id: "lavagolem", name: "Golem", isBoss: false, hp: 1e6, maxHp: 1e6, stats: g.ENEMY_DB.lavagolem.stats, resists: [], weak: [], goldReward: 5 }]);
     V.cut(true);
-    ok(V.heatLevel() === 0 && Math.abs(V.bladeMult() - 1.20) < 1e-9, "Le froid de la pierre : le premier cran ne compte pas ; Lame vive : +5 % par taille");
+    ok(V.heatLevel() === 0 && Math.abs((V.bladeMult() / V.classMult()) - 1.20) < 1e-9, "Le froid de la pierre : le premier cran ne compte pas ; Lame vive : +5 % par taille");
     var c1 = g.WarehouseManager.getAmount("cendre_vive");
     CE.spawnGroup([{ id: "lavagolem", name: "Golem", isBoss: false, hp: 10, maxHp: 10, stats: g.ENEMY_DB.lavagolem.stats, resists: [], weak: [], goldReward: 5 }]);
     ok(g.WarehouseManager.getAmount("cendre_vive") - c1 === 1, "Rien ne se perd : la Cendre d'un combat perdu est versée au combat suivant");
@@ -21576,9 +21576,9 @@ console.log("\n[421] v3.626.0 — Tour, lot T-1 : acte I « Le pied de la Tour �
     run("fullResetState(); game.playerName='Test'; game.heroId='knight'; StoryQuestManager.ensure(); EquipmentManager.recalcStats();");
     var towerIdx = run("WORLDS.findIndex(function(w){ return w.id === 'tower'; })");
     run("game.storyQuests.tower.choices.braise = 'poser'; WorldManager.worldIndex = " + towerIdx + ";");
-    ok(TS.dmgMult() === 1.1 && g.VeinSystem.bladeMult() === 1.1, "braise posée : +10 % de dégâts à la Tour (lu par la lame)");
+    ok(TS.dmgMult() === 1.1 && (g.VeinSystem.bladeMult() / g.VeinSystem.classMult()) === 1.1, "braise posée : +10 % de dégâts à la Tour (lu par la lame)");
     run("WorldManager.worldIndex = 4;");
-    ok(TS.dmgMult() === 1 && g.VeinSystem.bladeMult() === 1, "hors de la Tour : rien");
+    ok(TS.dmgMult() === 1 && (g.VeinSystem.bladeMult() / g.VeinSystem.classMult()) === 1, "hors de la Tour : rien");
     run("game.storyQuests.tower.choices.braise = 'garder'; WorldManager.worldIndex = " + towerIdx + "; game.heroHp = 10;");
     var max = run("game.heroMaxHp"), soin = TS.onVictory();
     ok(soin === Math.floor(max * 0.05) && run("game.heroHp") === 10 + soin, "braise gardée : combat gagné à la Tour, +5 % des PV (" + soin + ")");
@@ -21839,6 +21839,19 @@ console.log("\n[428] v3.633.0 — Voie de talents « Varier » (Tour)");
     var ccs = require("fs").readFileSync(require("path").join(ROOT, "js/systems/class-combat-system.js"), "utf8");
     ok(/TowerSystem\.skillMult\(slot\)/.test(ccs) && /TowerSystem\.noteTechnique\(slot\)/.test(ccs), "techniques : bonus lu avant les dégâts, notée après");
   } catch (err) { ok(false, "[428] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[429] Équilibre des classes (Seb, 03/11 : converger au milieu)");
+(function () {
+  var h0 = g.game.heroId;
+  try {
+    var B = {}; g.CLASSES.forEach(function (c) { B[c.id] = c.balance; });
+    ok(B.knight.damageMult === 1.15 && B.archer.damageMult === 0.85 && B.mage.damageMult === 1 && B.mage.hpPct === 0.05, "Chevalier +15 % de dégâts, Rôdeur −15 %, Mage +5 % de PV");
+    g.game.heroId = "ranger"; ok(g.VeinSystem.classMult() === 0.85, "Rôdeur : ×0,85 sur tous ses dégâts (attaque de base et techniques, par la lame)");
+    g.game.heroId = "knight"; ok(g.VeinSystem.classMult() === 1.15, "Chevalier : ×1,15");
+    g.game.heroId = "mage"; ok(g.VeinSystem.classMult() === 1 && g.TalentManager.getStatBonuses().hpPct >= 0.05, "Mage : dégâts inchangés, +5 % de PV");
+  } catch (err) { ok(false, "[429] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  g.game.heroId = h0;
 })();
 
 Promise.all(ATTENTES).then(function () {
