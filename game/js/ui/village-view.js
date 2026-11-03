@@ -17,6 +17,17 @@
 var activeVillageSubTab = "production"; // "buildings" | "production" | "shops" | "entrepot"
 var VILLAGE_SUBTABS = ["buildings", "production", "shops", "entrepot"];
 
+/* v3.646.0 (atelier ateliers-maquettes, 50:50) : scènes de ligne livrées dans images/Buildings/scenes/<clé>.webp.
+   Clés : prod_<id>, village_<id>, atelier_<id> (forge de la Mine : atelier_forge_mine). Vide tant que rien n'est livré. */
+var BUILDING_SCENES_READY = [];
+/* Moitié droite d'une ligne : la scène si elle est livrée, sinon l'image actuelle du bâtiment (iconHTML) */
+function buildingSceneHTML(key, iconHTML) {
+  if (BUILDING_SCENES_READY.indexOf(key) >= 0) return '<span class="row-scene is-scene"><img class="row-scene-img" src="images/Buildings/scenes/' + key + '.webp" alt=""></span>';
+  return '<span class="row-scene">' + iconHTML + '</span>';
+}
+window.BUILDING_SCENES_READY = BUILDING_SCENES_READY;
+window.buildingSceneHTML = buildingSceneHTML;
+
 /* v3.222.0 (retour Seb) : changer d'onglet ramène TOUJOURS l'écran à sa page d'accueil
    (feuille de bâtiment fermée, ressource désélectionnée). */
 function resetVillageSubScreenState() {
@@ -194,7 +205,7 @@ function buildVillageBuildingCardHTML(id) {
   else if (carBack) h += '<span class="vb-card-flag is-good"><img class="vb-flag-ico" src="images/Icons/village_buildings/caravan.webp" alt=""> ' + _t("De retour") + '</span>';
 
   h += '<div class="vb-card-top">';
-  h += buildVillageBuildingIconHTML(def, "vb-card-icon");
+  h += buildingSceneHTML("village_" + id, buildVillageBuildingIconHTML(def, "vb-card-icon")); // v3.646.0
   h += '<div class="vb-card-name">' + esc(_td(def.name)) + '</div>';
   h += '</div>';
 
