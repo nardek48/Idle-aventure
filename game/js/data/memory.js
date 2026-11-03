@@ -18,7 +18,7 @@ var MEMORY_SOUVENIRS = {
 /* Coût de chaque niveau (O11), mesuré au banc : Forêt 5/8/11/14, Désert 20/25/30/35.
    v3.453.0 : règle O16 (sim/offrande-bench.js, N = 14 runs du donjon du monde) — Ruines 35/44/52/62,
    Crypte 77/99/116/138 (provisoire : seul l'acte I existe, ses aventures sont comptées comme aux Ruines). */
-var MEMORY_LEVEL_COSTS = [5, 8, 11, 14, 20, 25, 30, 35, 35, 44, 52, 62, 77, 99, 116, 138, 160, 190, 225, 265]; // v3.489.0 : Montagne 17 à 19 ; v3.491.0 : le jalon 20 (provisoires, au banc)
+var MEMORY_LEVEL_COSTS = [5, 8, 11, 14, 20, 25, 30, 35, 35, 44, 52, 62, 77, 99, 116, 138, 160, 190, 225, 265, 310, 360, 420, 490]; // v3.489.0 : Montagne 17 à 19 ; v3.491.0 : le jalon 20 ; v3.632.0 : Tour 21 à 24 (au banc)
 var MEMORY_LEVELS_PER_WORLD = 4;        // O6 : plafond par monde atteint
 var MEMORY_REPRISE_BASE_COST = 500;     // O5 : reprise d'un choix, ×3 à chaque fois ; v3.358.0 : en or (10 Aether × AETHER_GOLD_RATE)
 var MEMORY_REPRISE_MULT = 3;
@@ -42,7 +42,17 @@ var MEMORY_VALUES = {
   pierre_profonde_uses: 2,    // la Pierre froide sert deux fois de plus
   pioche_sure_ash: 1,         // Coup de pioche : une Cendre vive de plus
   lame_vive_blade: 0.05,         // v3.491.0 (Mémoire 20) : Lame vive, +5 % de lame par taille du héros
-  ce_qui_a_ete_pris_gold: 0.25   // v3.491.0 : Ce qui a été pris, +25 % d'or sur un boss ou une élite après une taille
+  ce_qui_a_ete_pris_gold: 0.25,  // v3.491.0 : Ce qui a été pris, +25 % d'or sur un boss ou une élite après une taille
+  // v3.632.0 (Tour, TW12, validé par Seb le 03/11) : niveaux 21 à 24
+  feu_couve_heal: 0.03,       // +3 % des PV rendus par combat gagné à la Tour
+  braise_vive_dmg: 0.05,      // +5 % de dégâts à la Tour
+  redite_apprise_mult: 1.1,   // étage raté durci à ×1,1 au lieu de ×1,25
+  geste_cache_penalty: 0.15,  // le miroir retire 15 % au lieu de 25 %
+  ce_qui_se_repete_pct: 10,   // Légendaire du Gardien qui répète : +10 points (45 %)
+  forme_pretee_dmg: 0.10,     // +10 % contre les boss et les élites de la Tour
+  pain_dabord_mult: 1.10,     // les rations soignent 10 % de plus
+  ton_nom_hp: 0.10,           // +10 % de PV max à la Tour
+  braise_tient_givre: 1       // +1 Givre bleu par sortie terminée du Sommet interdit
 };
 
 /* Les huit niveaux (conception v1.2 §5.3-5.4). `id` est la clé lue par MemoryManager.has().
@@ -193,6 +203,36 @@ var MEMORY_LEVELS = [
       desc: "Le premier cran de chaleur de chaque combat ne compte pas." },
     { id: "ce_qui_a_ete_pris", line: "donner", name: "Ce qui a été pris", icon: "images/Icons/memory/ce_qui_a_ete_pris.webp",
       desc: "Un boss ou une élite de la Montagne vaincu après une taille rapporte 25 % d'or de plus." }
+  ] },
+  /* v3.632.0 (Tour, TW12, lot T-5, validé par Seb le 03/11) : 21 à 23 Garder / Donner ; le jalon 24 s'ouvre avec la
+     réponse à la Question (requiresChoice), quatre options, une par réponse (la sienne mise en avant). */
+  { level: 21, theme: "La braise", options: [
+    { id: "feu_couve", side: "garder", name: "Feu couvé", icon: "images/Icons/memory/feu_couve.webp",
+      desc: "Chaque combat gagné à la Tour rend 3 % de tes PV max, en plus de la braise." },
+    { id: "braise_vive", side: "donner", name: "Braise vive", icon: "images/Icons/memory/braise_vive.webp",
+      desc: "+5 % de dégâts à la Tour." }
+  ] },
+  { level: 22, theme: "Les étages", options: [
+    { id: "redite_apprise", side: "garder", name: "La redite apprise", icon: "images/Icons/memory/redite_apprise.webp",
+      desc: "Un étage raté n'est durci qu'à ×1,1 au lieu de ×1,25." },
+    { id: "escalier_rend", side: "donner", name: "L'escalier rend", icon: "images/Icons/memory/escalier_rend.webp",
+      desc: "+1 Givre bleu à chaque destination atteinte dans l'escalier." }
+  ] },
+  { level: 23, theme: "Le reflet", options: [
+    { id: "geste_cache", side: "garder", name: "Geste caché", icon: "images/Icons/memory/geste_cache.webp",
+      desc: "Le miroir ne retire que 15 % au lieu de 25 %." },
+    { id: "ce_qui_se_repete", side: "donner", name: "Ce qui se répète", icon: "images/Icons/memory/ce_qui_se_repete.webp",
+      desc: "Le Gardien qui répète laisse une pièce Légendaire à 45 % au lieu de 35 %." }
+  ] },
+  { level: 24, theme: "La Question", jalon: true, requiresChoice: "question", options: [
+    { id: "forme_pretee", side: "donner", answer: "sienne", name: "La forme prêtée", icon: "images/Icons/memory/forme_pretee.webp",
+      desc: "+10 % de dégâts contre les boss et les élites de la Tour." },
+    { id: "pain_dabord", side: "donner", answer: "aeswyn", name: "Le pain d'abord", icon: "images/Icons/memory/pain_dabord.webp",
+      desc: "Les rations soignent 10 % de plus." },
+    { id: "ton_nom", side: "garder", answer: "tienne", name: "Ton nom", icon: "images/Icons/memory/ton_nom.webp",
+      desc: "+10 % de PV max à la Tour." },
+    { id: "braise_tient", side: "garder", answer: "rien", name: "La braise tient", icon: "images/Icons/memory/braise_tient.webp",
+      desc: "+1 Givre bleu par sortie terminée du Sommet interdit." }
   ] }
 ];
 

@@ -262,7 +262,7 @@ var PA2_RARE = {
 };
 
 /* v3.453.0 : choix de Mémoire qui ajoutent 1 matériau rare par destination atteinte, par monde. */
-var PA2_MEMORY_DEST_RARE = { ruins: "pierre_de_plus", crypt: "cire_chaude", mountain: "cendre_au_pas" }; // v3.489.0 : Cendre au pas (Mémoire 18)
+var PA2_MEMORY_DEST_RARE = { ruins: "pierre_de_plus", crypt: "cire_chaude", mountain: "cendre_au_pas", tower: "escalier_rend" }; // v3.489.0 : Cendre au pas (Mémoire 18) ; v3.632.0 : L'escalier rend (22)
 
 /* Coffre d'expédition : destination -> objet débloqué (V12, Q8). */
 /* v3.387.0 : par monde ; v3.469.4 : un coffre dans chaque monde. */

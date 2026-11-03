@@ -278,6 +278,7 @@ var TalentManager = {
       if (e.node.stats.hpPct) out.hpPct += e.node.stats.hpPct * r;
       if (e.node.stats.critChance) out.critChance += e.node.stats.critChance * r;
     });
+    if (window.TowerSystem) out.hpPct += TowerSystem.hpPct(); // v3.632.0 : Ton nom (Mémoire 24), +10 % de PV à la Tour
     return out;
   },
 

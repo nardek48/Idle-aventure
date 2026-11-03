@@ -152,6 +152,7 @@ var CampManager = {
     if (rationId === "petite_ration" && window.MemoryManager && MemoryManager.has("cuisine_campagne")) {
       pct *= (typeof MEMORY_CUISINE_PETITE_RATION_MULT === "number" ? MEMORY_CUISINE_PETITE_RATION_MULT : 1.25);
     }
+    if (window.TowerSystem) pct *= TowerSystem.rationMult(); // v3.632.0 : Le pain d'abord (Mémoire 24)
     var healed = Math.min(maxHp - (game.heroHp || 0), Math.floor(maxHp * pct));
     game.heroHp = (game.heroHp || 0) + healed;
     // v3.448.0 (décision Seb, option 3) : la ration nourrit toute l'équipe, du même pourcentage

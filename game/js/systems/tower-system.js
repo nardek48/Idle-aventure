@@ -23,9 +23,33 @@ var TowerSystem = {
   braise: function () {
     return (window.StoryQuestManager && typeof StoryQuestManager.getChoice === "function") ? StoryQuestManager.getChoice("braise") : null;
   },
-  /* Multiplicateur des dégâts du héros : la braise posée sur le palier. */
+  /* v3.632.0 (Mémoire 21 à 24) : choix de Mémoire porté. */
+  mem: function (id) { return !!(window.MemoryManager && MemoryManager.has(id)); },
+  memV: function (k) { return Number((window.MEMORY_VALUES || {})[k] || 0); },
+  /* Multiplicateur des dégâts du héros : la braise posée sur le palier ; Braise vive ; La forme prêtée (boss, élite). */
   dmgMult: function () {
-    return (this.atTower() && this.braise() === "poser") ? 1 + TOWER_BRAISE_DMG : 1;
+    if (!this.atTower()) return 1;
+    var m = 1 + (this.braise() === "poser" ? TOWER_BRAISE_DMG : 0) + (this.mem("braise_vive") ? this.memV("braise_vive_dmg") : 0);
+    var foe = game.enemy;
+    if (this.mem("forme_pretee") && foe && (foe.isBoss || foe.isElite)) m += this.memV("forme_pretee_dmg");
+    return m;
+  },
+  /* Ton nom (Mémoire 24) : +10 % de PV max à la Tour, lu par TalentManager.getStatBonuses (recalc au voyage). */
+  hpPct: function () { return (this.atTower() && this.mem("ton_nom")) ? this.memV("ton_nom_hp") : 0; },
+  /* Le pain d'abord (Mémoire 24) : multiplicateur du soin des rations. */
+  rationMult: function () { return this.mem("pain_dabord") ? this.memV("pain_dabord_mult") : 1; },
+  /* La redite apprise (Mémoire 22) : durcissement d'un étage raté. */
+  rediteMult: function (base) { return this.mem("redite_apprise") ? this.memV("redite_apprise_mult") : base; },
+  /* Ce qui se répète (Mémoire 23) : points de chance de Légendaire en plus pour le Gardien qui répète. */
+  eliteDropBonus: function (eliteId) { return (eliteId === "gardien_qui_repete" && this.mem("ce_qui_se_repete")) ? this.memV("ce_qui_se_repete_pct") : 0; },
+  /* La braise tient (Mémoire 24) : +1 Givre bleu par sortie terminée du Sommet interdit. */
+  onDungeonClear: function () {
+    var r = game.dungeonRun;
+    if (!this.mem("braise_tient") || !r || Number(r.dungeonId) !== 6 || !window.WarehouseManager) return 0;
+    var n = this.memV("braise_tient_givre");
+    WarehouseManager.addResource("givre_bleu", n, true);
+    if (typeof addLog === "function") addLog("🔥 " + _t("La braise tient : +{n} Givre bleu.", { n: n }), "event");
+    return n;
   },
   /* Le miroir : la cible garde-t-elle tes gestes ? */
   isMirror: function (foe) {
@@ -40,7 +64,7 @@ var TowerSystem = {
   mirrorMult: function (slot) {
     var foe = game.enemy, m = game._towerMirror;
     if (!this.isMirror(foe) || !m || m.slot !== slot || m.foe !== this._foeKey(foe)) return 1;
-    return 1 - TOWER_MIRROR_PENALTY;
+    return 1 - (this.mem("geste_cache") ? this.memV("geste_cache_penalty") : TOWER_MIRROR_PENALTY); // v3.632.0 : Geste caché
   },
   noteSkill: function (slot) {
     var foe = game.enemy;
@@ -149,12 +173,14 @@ var TowerSystem = {
 
   /* Combat gagné : la braise gardée rend un peu de PV. */
   onVictory: function () {
-    if (!this.atTower() || this.braise() !== "garder" || !(game.heroHp > 0)) return 0;
-    var max = Number(game.heroMaxHp || 0), heal = Math.min(Math.floor(max * TOWER_BRAISE_HEAL), Math.max(0, max - game.heroHp));
+    // v3.632.0 : Feu couvé (Mémoire 21) s'ajoute à la braise gardée, ou joue seul
+    var pct = (this.braise() === "garder" ? TOWER_BRAISE_HEAL : 0) + (this.mem("feu_couve") ? this.memV("feu_couve_heal") : 0);
+    if (!this.atTower() || !(pct > 0) || !(game.heroHp > 0)) return 0;
+    var max = Number(game.heroMaxHp || 0), heal = Math.min(Math.floor(max * pct), Math.max(0, max - game.heroHp));
     if (heal <= 0) return 0;
     game.heroHp += heal;
     if (typeof renderHeroHp === "function") renderHeroHp();
-    if (typeof addLog === "function") addLog("🔥 " + _t("La braise d'Aeswyn : +{n} PV.", { n: formatNumber(heal) }), "event");
+    if (typeof addLog === "function") addLog("🔥 " + (this.braise() === "garder" ? _t("La braise d'Aeswyn : +{n} PV.", { n: formatNumber(heal) }) : _t("Feu couvé : +{n} PV.", { n: formatNumber(heal) })), "event");
     return heal;
   }
 };

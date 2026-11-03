@@ -39,11 +39,13 @@ function buildMemoryLevelHTML(def, p) {
   var reached = level <= p.level;
   var worldLocked = !reached && level > p.cap;
   var broken = reached && !!chosen && MemoryManager.isLineBroken(level); // v3.453.0 : la ligne ne tient plus
+  var waiting = reached && MemoryManager.isWaiting && MemoryManager.isWaiting(level); // v3.632.0 : le jalon 24 attend la Question
+  if (waiting) reached = false;
   var pending = reached && (!chosen || broken);
   var h = '<div class="mem-level' + (reached ? '' : ' is-locked') + (pending ? ' is-pending' : '') + '" id="mem-level-' + level + '">';
   h += '<div class="ksec mem-level-head"><span>' + _t("Niveau {n}", { n: level }) + ' <small>' + esc(_td(def.theme)) + (def.jalon ? ' · ' + _t("jalon") : '') + '</small></span></div>';
   if (!reached) {
-    h += '<div class="mem-level-lock"><img class="ico-inline" src="images/Icons/system/lock_closed.webp" alt=""> ' + (worldLocked ? _t("S'ouvre dans un monde plus lointain.") : _t("Encore un peu d'Aether à rassembler.")) + '</div>';
+    h += '<div class="mem-level-lock"><img class="ico-inline" src="images/Icons/system/lock_closed.webp" alt=""> ' + (waiting ? _t("S'ouvre une fois la Question répondue, en haut de la Tour.") : worldLocked ? _t("S'ouvre dans un monde plus lointain.") : _t("Encore un peu d'Aether à rassembler.")) + '</div>';
   } else if (pending) {
     h += '<div class="mem-level-lock is-pending"><img class="ico-inline" src="images/Icons/aether_icon.webp" alt=""> ' + (broken ? _t("La ligne ne tient plus : choisis à nouveau, sans frais.") : _t("Un choix t'attend ici.")) + '</div>';
   }
@@ -69,6 +71,8 @@ function buildMemoryLevelHTML(def, p) {
     var tag = !side ? '' : ' <span class="mem-tag is-' + (o.line ? 'line' : side) + '">'
       + (o.line ? (side === "garder" ? _t("Ligne Garder") : _t("Ligne Donner")) : (side === "garder" ? _t("Garder") : _t("Donner"))) + '</span>';
     h += '<span class="mem-option-ico">' + renderIconOrEmojiHTML(o.icon, "mem-option-img", _td(o.name)) + '</span>';
+    // v3.632.0 : l'option de ta réponse à la Question est mise en avant (les quatre restent prenables)
+    if (o.answer && window.StoryQuestManager && StoryQuestManager.getChoice("question") === o.answer) tag += ' <span class="mem-tag is-line">' + _t("Ta réponse") + '</span>';
     h += '<span class="mem-option-txt"><span class="mem-option-name">' + esc(_td(o.name)) + tag + '</span>';
     h += '<span class="mem-option-desc">' + esc(_td(o.desc)) + '</span>';
     if (lineLocked) h += '<span class="mem-line-cond">' + esc(side === "garder" ? _t("S'ouvre si tu as choisi Garder aux niveaux {a}, {b}, {c}.", { a: level - 3, b: level - 2, c: level - 1 }) : _t("S'ouvre si tu as choisi Donner aux niveaux {a}, {b}, {c}.", { a: level - 3, b: level - 2, c: level - 1 })) + '</span>';

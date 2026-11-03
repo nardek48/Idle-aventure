@@ -207,6 +207,7 @@ var AdventureQuestManager = {
       return showToast(_t("Choisis d'abord la voie de {x}, dans l'Histoire", { x: _td((getCompanionDef(quest.requiresVoie) || {}).name) }), 1800);
     }
     this._resetProgress(quest); // v3.260.0 : chaque départ repart de 0
+    if (window.AchievementManager) AchievementManager._seulPotion = false; // v3.632.0 : « Seul », sans boire
     game.adventureQuestRun = { active: true, questId: questId };
     if (window.SortieManager) { SortieManager.end("return"); SortieManager.start("adventure"); } // v3.102.1 : la quête est une sortie
     addLog("📜 " + _t("Départ en quête : {x}", { x: _td(quest.name) }), "event");
@@ -268,6 +269,7 @@ var AdventureQuestManager = {
 
     if (success && quest) {
       game.adventureQuestsCompleted[quest.id] = true;
+      if (quest.id === "aq_tour_seul" && window.AchievementManager && !AchievementManager._seulPotion) AchievementManager.flag("seulNoPotion"); // v3.632.0
 
       var reward = quest.reward || {};
       game.gold += Number(reward.gold || 0);
