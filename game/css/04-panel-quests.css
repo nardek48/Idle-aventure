@@ -702,8 +702,3 @@
 .cq-sec-img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; object-position: 50% 18%; box-shadow: 0 0 0 1.5px var(--c-bronze-400-soft); }
 .cq-sec b { font-size: 15px; }
 .cq-sec small { font-size: 12px; font-weight: 700; opacity: 0.85; }
-/* v3.639.0 : petits téléphones (320-359 px), 4 onglets dont « Compagnons » : rail élargi, lettres resserrées (12 px gardés) */
-@media (max-width: 359px) {
-  #panel-container .qb-tabs.kseg.is-stack { margin-left: -12px; margin-right: -12px; max-width: none; }
-  #panel-container .qb-tabs.kseg.is-stack button { padding-left: 0; padding-right: 0; letter-spacing: -0.05em; }
-}

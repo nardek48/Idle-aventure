@@ -21,9 +21,9 @@ var activeQuestCategory = "histoire"; // histoire | secondaires | chasse | avent
 /* v3.370.0 : libellés traduits à la définition (changer de langue relance le jeu, i18n D2). */
 var QUEST_BOARD_CATEGORIES = [
   { key: "histoire", label: _t("Histoire", "catégorie"), icon: "images/Icons/quests/quest_story.webp", kinds: ["story"], emptyText: _t("Aucune quête d'histoire pour le moment.") },
-  { key: "secondaires", label: _t("Secondaires"), icon: "images/Icons/quests/quest_side.webp", kinds: ["village", "workshop", "exploration", "scene"], emptyText: _t("Aucune quête secondaire disponible pour le moment.") }, // v3.122.0 (Lot S2a) : "scene" ajouté (quêtes migrées vers le scene-engine)
-  // v3.639.0 (atelier onglets-alleges, idée de Seb) : les quêtes des compagnons ont leur onglet, affiché dès la première
-  { key: "compagnons", label: _t("Compagnons"), icon: "images/Icons/subtabs/companions.webp", kinds: [], emptyText: _t("Aucune quête de compagnon pour le moment.") },
+  { key: "secondaires", label: _t("Annexes"), icon: "images/Icons/quests/quest_side.webp", kinds: ["village", "workshop", "exploration", "scene"], emptyText: _t("Aucune quête annexe disponible pour le moment.") }, // v3.122.0 (Lot S2a) : "scene" ajouté ; v3.641.0 : « Secondaires » devient « Annexes » (Seb, plus court)
+  // v3.639.0 (atelier onglets-alleges, idée de Seb) : les quêtes des compagnons ont leur onglet, affiché dès la première ; v3.641.0 : « Alliés »
+  { key: "compagnons", label: _t("Alliés"), icon: "images/Icons/subtabs/companions.webp", kinds: [], emptyText: _t("Aucune quête de compagnon pour le moment.") },
   // v3.511.0 : catégorie « Chasse » retirée avec les chasses et les battues
   { key: "aventure", label: _t("Aventure"), icon: "images/Icons/quests/quest_adventure.webp", kinds: ["adventure", "dungeon"], emptyText: _t("Aucune aventure disponible pour le moment.") }
 ];
@@ -349,7 +349,7 @@ function buildQuestsWideHTML(missions) {
     var firstStory = E.histoire.filter(function (e) { return !e.done; })[0];
     questsWideSel = firstStory ? firstStory.key : (all[0] ? all[0].key : "");
   }
-  var cats = [["toutes", _t("Toutes"), ""], ["histoire", _t("Histoire", "catégorie"), "images/Icons/quests/quest_story.webp"], ["secondaires", _t("Secondaires"), "images/Icons/quests/quest_side.webp"], ["aventure", _t("Aventure"), "images/Icons/quests/quest_adventure.webp"]];
+  var cats = [["toutes", _t("Toutes"), ""], ["histoire", _t("Histoire", "catégorie"), "images/Icons/quests/quest_story.webp"], ["secondaires", _t("Annexes"), "images/Icons/quests/quest_side.webp"], ["aventure", _t("Aventure"), "images/Icons/quests/quest_adventure.webp"]];
   var h = '<div class="qw"><div class="qw-list"><div class="qw-filters">';
   cats.forEach(function (c) {
     h += '<button type="button" class="qw-chip' + (questsWideFilter === c[0] ? ' is-on' : '') + '" onclick="setQuestsWideFilter(\'' + c[0] + '\')">' + (c[2] ? renderIconOrEmojiHTML(c[2], "qw-chip-ico", "") : "") + esc(c[1]) + '</button>';
@@ -536,7 +536,7 @@ function buildQuestBadgesHTML(quest) {
   if (quest.category === "main") {
     h += '<span class="quest-badge quest-badge-main">' + _t("Principale") + '</span>';
   } else if (quest.category === "side") {
-    h += '<span class="quest-badge quest-badge-side">' + _t("Secondaire") + '</span>';
+    h += '<span class="quest-badge quest-badge-side">' + _t("Annexe") + '</span>';
   }
   return h;
 }
