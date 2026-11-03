@@ -879,7 +879,7 @@
 .ksec .wh-sec-sub { font-family: inherit; font-size: 12px; font-weight: 700; letter-spacing: 0; text-transform: none; opacity: 0.85; }
 
 /* =========================
-   v3.646.0 (atelier ateliers-maquettes, 50:50, validé par Seb le 03/11) : sur téléphone,
+   v3.647.0 (atelier ateliers-maquettes, 50:50, validé par Seb le 03/11) : sur téléphone,
    Production, Bâtiments et Ateliers passent en lignes. Texte sur la moitié gauche, image sur la
    moitié droite (.row-scene) : la scène de ligne si elle est livrée, sinon l'image actuelle.
    Le grand écran garde ses vignettes (.row-scene s'efface : display contents).
