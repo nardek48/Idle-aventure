@@ -8843,6 +8843,7 @@ I18n.register("en", {
   "+1 Givre bleu à chaque escalier franchi dans la faille.": "+1 Blue Frost for each stair cleared in the rift.",
 
   "Récits de patrouille : « au puits sec », « des marches de craie », plus de « à Le » ni « de Les ».": "Patrol stories: sector names now read naturally in the middle of a sentence.",
+  "Échoppe moins chère à partir de la Crypte : une Épique y coûte 135 000 or (au lieu de 225 000), 180 000 en Montagne (au lieu de 810 000), et une Légendaire 1,05 million à la Tour (au lieu de 7 millions).": "Cheaper shop from the Crypt on: an Epic now costs 135,000 gold there (instead of 225,000), 180,000 in the Mountain (instead of 810,000), and a Legendary 1.05 million in the Tower (instead of 7 million).",
   "Patrouilles dans la Tour : tes compagnons peuvent partir sur les étages libérés, avec leurs récits de là-haut.": "Patrols in the Tower: your companions can head out to the freed floors, with their stories from up there.",
   "La Mémoire continue après la Tour : les niveaux 25 à 28 s'ouvrent avec ton record dans la faille, et chaque étage franchi rapporte de l'Aether. Six hauts faits de la faille.": "Memory goes on after the Tower: levels 25 to 28 open with your record in the rift, and every floor cleared yields Aether. Six rift achievements.",
 

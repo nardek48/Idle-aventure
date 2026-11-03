@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.652.0", "menu_icons/village_menu", _t("Échoppe moins chère à partir de la Crypte : une Épique y coûte 135 000 or (au lieu de 225 000), 180 000 en Montagne (au lieu de 810 000), et une Légendaire 1,05 million à la Tour (au lieu de 7 millions).")],
     ["3.651.0", "menu_icons/heroes_menu", _t("Héros : l'illustration du Terrain d'entraînement s'affiche aussi dans Équipement, Talents et Alliés.")],
     ["3.650.0", "menu_icons/camp_menu", _t("Les bulles en bas à droite sont plus petites, et chaque liste se termine au-dessus d'elles : plus aucun bouton coincé dessous.")],
     ["3.649.0", "menu_icons/journal_menu", _t("Journal plus lisible : des filtres (Histoire, Gains, Village, Combat), et chaque étape d'Histoire tient en un bloc avec son récit et ses gains.")],

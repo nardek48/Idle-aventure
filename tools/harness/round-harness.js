@@ -1845,6 +1845,13 @@ g.WorldManager.worldIndex = 0; // retour en For\u00eat...
 ok(g.getEquipShopWorldPriceMult() === 4, "...les prix ne redescendent PAS (monde max atteint)");
 game.equipShopManualRefreshCount = 0;
 ok(g.EquipShopManager.getManualRefreshCost() === 4000, "refresh manuel index\u00e9 : 1000\u00d74 = 4000");
+// v3.652.0 : grille baissée à partir de la Crypte ; l'Enchanteresse garde l'ancienne
+game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true };
+ok(g.EquipShopManager.getPrice({ rarity: "epic" }) === 135000, "Épique en Crypte = 9000×15 = 135 000");
+ok(g.getEquipShopWorldPriceMult(g.ENCHANT_WORLD_PRICE_MULT) === 25, "Enchanteresse en Crypte : ×25 inchangé");
+game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true, 4: true, 5: true };
+ok(g.EquipShopManager.getPrice({ rarity: "legendary" }) === 1050000, "Légendaire à la Tour = 35000×30 = 1 050 000");
+game.worldsEverReached = { 0: true, 1: true };
 
 // --- L'achat honore le prix AFFICH\u00c9 (estampill\u00e9 sur le stock) ---
 game.gold = 10000;

@@ -178,6 +178,8 @@ function launch() {
   var uh = sb.PotionManager.useHealingPotion, bh = sb.PotionManager.buyHealingPotion;
   sb.PotionManager.useHealingPotion = function () { var r = uh.apply(this, arguments); if (r === true) STATS.potionsBues = (STATS.potionsBues || 0) + 1; return r; };
   sb.PotionManager.buyHealingPotion = function () { var o = sb.game.gold; var r = bh.apply(this, arguments); STATS.potionGold = (STATS.potionGold || 0) + Math.max(0, o - sb.game.gold); return r; };
+  /* SHOP_MULT=1,4,10,15,20,30 : essaie une autre grille de prix de l'échoppe (multiplicateur par monde atteint). */
+  if (process.env.SHOP_MULT) sb.EQUIP_SHOP_WORLD_PRICE_MULT.splice(0, 99, ...process.env.SHOP_MULT.split(",").map(Number));
   return sb;
 }
 /* Minuteries du jeu (setTimeout) : exécutées quand le robot « laisse passer un instant ». */
@@ -718,7 +720,7 @@ function entretien() {
     if ((g.game.inventory || []).length >= g.getInventoryCap() - 1) (g.game.inventory || []).slice().forEach(function (x) { if (x.slot && score(x) <= score(g.game.equipped[x.slot])) g.EquipmentManager.sell(x.uid); });
     S.buy(it.uid);
     if (it.bought) {
-      dep("echoppe", it.price);
+      dep("echoppe", it.price); dep("echoppeNb", 1);
       STATS.shopBuys++;
       var mine = (g.game.inventory || []).filter(function (x) { return x.slot === it.slot && x.name === it.name && x.value === it.value; })[0];
       if (mine) g.EquipmentManager.equip(mine.uid);
@@ -1747,7 +1749,7 @@ function gearRarity(rarity, n, needWeapon, minWorld) {
     }
     var S = g.EquipShopManager; S.checkRefresh(); compte(g.game.equipShopStock, "échoppe");
     (g.game.equipShopStock || []).forEach(function (it) {
-      if (!it.bought && good(it) && !good(g.game.equipped[it.slot]) && g.game.gold >= it.price) { S.buy(it.uid); if (it.bought) STATS.shopBuys++; else note("achat refusé : " + it.name); }
+      if (!it.bought && good(it) && !good(g.game.equipped[it.slot]) && g.game.gold >= it.price) { var px = it.price; S.buy(it.uid); if (it.bought) { STATS.shopBuys++; dep("echoppe", px); dep("echoppeNb", 1); } else note("achat refusé : " + it.name); }
     });
     (g.game.inventory || []).slice().forEach(function (it) {
       if (good(it) && it.slot && !good(g.game.equipped[it.slot])) g.EquipmentManager.equip(it.uid);
