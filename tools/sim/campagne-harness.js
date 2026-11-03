@@ -998,6 +998,8 @@ function playExpedition(templateId, flag) {
     if (COMBATS) healUp(); // v3.456.4 : se soigner d'abord (le soin mange des rations), réunir le coût ensuite
     if (cost && !obtain(cost.resourceId, Number(cost.amount || 1))) { note(templateId + " : coût d'entrée introuvable (" + cost.resourceId + ")"); return false; }
     LAST_END = null;
+    // v3.632.0 : une expédition laissée en cours par l'entretien bloquerait le départ ; le robot l'abandonne d'abord
+    if (g.SceneRunManager.isRunActive()) { note(templateId + " : expédition oubliée (" + ((g.game.sceneRun || {}).templateId || "?") + ") abandonnée avant le départ"); g.SceneRunManager.abandon(); }
     var r = g.SceneRunManager.startRun(templateId);
     if (!r.ok && CAP_RE.test(r.reason || "")) { if (SANS_LENDEMAIN) return false; waitCap(); essai--; continue; } // v3.366.0 : recharge ; audit (27/10, DUR-6) : pas d'attente pour un achat facultatif
     if (!r.ok) { note(templateId + " : départ refusé — " + r.reason); return false; }

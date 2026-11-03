@@ -293,6 +293,7 @@ var ClassCombatManager = {
       var mirror = window.TowerSystem ? TowerSystem.mirrorMult(slot) : 1;
       if (mirror < 1) {
         action = Object.assign({}, action, { damageMultiplier: Number(action.damageMultiplier || 1) * mirror });
+        if (window.AchievementManager && AchievementManager.onMirror) AchievementManager.onMirror(); // v3.632.0
         addLog("🪞 " + _t("Le reflet a vu venir {x} : −{n} %.", { x: _td(action.label), n: Math.round((1 - mirror) * 100) }), "event");
       }
       this.applyDamageAction(action, matchedConditionId);

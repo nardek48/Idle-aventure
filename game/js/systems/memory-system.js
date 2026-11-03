@@ -118,8 +118,13 @@ var MemoryManager = {
 
   getPendingLevels: function () {
     var out = [], lvl = this.getLevel();
-    for (var i = 1; i <= lvl; i++) if (!this.getChoice(i) || this.isLineBroken(i)) out.push(i);
+    for (var i = 1; i <= lvl; i++) if ((!this.getChoice(i) || this.isLineBroken(i)) && !this.isWaiting(i)) out.push(i);
     return out;
+  },
+  /* v3.632.0 (Tour) : niveau qui attend un choix d'Histoire (le jalon 24 attend la réponse à la Question). */
+  isWaiting: function (level) {
+    var def = this.getLevelDef(level);
+    return !!(def && def.requiresChoice && !(window.StoryQuestManager && StoryQuestManager.getChoice(def.requiresChoice)));
   },
 
   getRepriseCost: function () {
@@ -130,7 +135,7 @@ var MemoryManager = {
   choose: function (level, optionId) {
     if (window.heroLockToast && heroLockToast()) return false; // v3.307.0 : héros en expédition
     var m = this.ensure(), def = this.getLevelDef(level);
-    if (!def || level > this.getLevel()) return false;
+    if (!def || level > this.getLevel() || this.isWaiting(level)) return false;
     var opt = this.getOptionDef(level, optionId);
     if (!opt) return false;
     if (opt.line && !this.lineOpen(level, opt.line)) return false; // v3.453.0 : ligne fermée
@@ -183,6 +188,7 @@ var MemoryManager = {
 
   /* Souvenirs : appelés là où la victoire est déjà reconnue. */
   souvenir: function (key, label) {
+    if (key === "dungeonClear" && window.TowerSystem) TowerSystem.onDungeonClear(); // v3.632.0 : La braise tient (Mémoire 24)
     var v = (window.MEMORY_SOUVENIRS || {})[key];
     return v ? this.gainAether(v, label || _t("Souvenir")) : 0;
   },

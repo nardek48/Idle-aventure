@@ -268,7 +268,11 @@ var AchievementManager = {
   /* potion-system.js : potion bue à l'écran de combat. */
   onPotionUsed: function () {
     if (game.activeTab === "combat") this._fight.potion = true;
+    var q = game.adventureQuestRun; // v3.632.0 (Tour) : « Seul », sans boire
+    if (q && q.active && q.questId === "aq_tour_seul") this._seulPotion = true;
   },
+  /* v3.632.0 (Tour) : le miroir a retiré une technique pendant ce combat (class-combat-system.js). */
+  onMirror: function () { this._fight.mirror = true; },
 
   /* combat-engine.js (killEnemy), une ligne : chaque ennemi vaincu. */
   onEnemyKilled: function (enemy) {
@@ -286,6 +290,7 @@ var AchievementManager = {
       var ep = game.explorationProgression = game.explorationProgression || {};
       var dk = ep.dungeonBossKills = ep.dungeonBossKills || {};
       dk[dg.id] = Number(dk[dg.id] || 0) + 1;
+      if (dg.id === 6 && this._fight.enemy === enemy && !this._fight.mirror) this.flag("refletNoMirror"); // v3.632.0 : Varier
     }
     if (enemy.id === "necrosupreme" && window.SleepSystem && SleepSystem.questDef() && SleepSystem.questDef().id === "aq_crypte_retient" && !game._chainHeldFull) this.flag("retientNoChain"); // v3.456.6
   },
@@ -300,6 +305,7 @@ var AchievementManager = {
     else if (idx === 2) this.bump("runRuins"); // v3.456.6
     else if (idx === 3) this.bump("runCrypt");
     else if (idx === 4) this.bump("runMountain"); // v3.492.0
+    else if (idx === 5) this.bump("runTower"); // v3.632.0
   },
 
   /* patrol-system.js */

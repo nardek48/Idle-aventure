@@ -51,7 +51,9 @@ var Pa2Run = {
     }
     if (map && map.redite) { // v3.627.0 (Tour, TW9) : La redite, l'étage raté du jour
       var LMr = window.LivingMapManager;
-      return (LMr && LMr.isHostile && LMr.isHostile(lm.mapId, lm.sectorId)) ? Number(map.redite.hostileMult || 1) : 1;
+      var rd = Number(map.redite.hostileMult || 1);
+      if (window.TowerSystem) rd = TowerSystem.rediteMult(rd); // v3.632.0 : La redite apprise (Mémoire 22)
+      return (LMr && LMr.isHostile && LMr.isHostile(lm.mapId, lm.sectorId)) ? rd : 1;
     }
     if (!g) return 1;
     var m = lm.wake ? Number(g.wakeMult || 1) : 1;
@@ -813,7 +815,7 @@ var Pa2Run = {
     } else {
       if (it.uses && !it.healPct) return { ok: false, reason: _t("Choix impossible") }; // corde, trousse, craie : pas à boire
       if (game.heroHp >= game.heroMaxHp && !(it.healsWound && run.wounds > 0) && !(this.fxLeft(run, "venin") > 0)) return { ok: false, reason: _t("Tu es en pleine forme.") };
-      this._heal(game.heroMaxHp * Number(it.healPct || 0));
+      this._heal(game.heroMaxHp * Number(it.healPct || 0) * (window.TowerSystem && it.resource && (window.RATION_IDS || []).indexOf(it.resource) >= 0 ? TowerSystem.rationMult() : 1)); // v3.632.0 : Le pain d'abord
       if (run.fx) delete run.fx.venin; // v3.467.0 : une ration lève le Venin
       if (it.healsWound && run.wounds > 0) run.wounds -= 1;
     }

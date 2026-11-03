@@ -10730,7 +10730,7 @@ console.log("\n[133] v3.338.0 — Hauts faits : catalogue, rattrapage, paliers, 
   var byCat = function (c) { return DB.filter(function (a) { return a.category === c; }); };
 
   // --- Catalogue (H1, H2, H5) ---
-  ok(DB.length === 79, "catalogue : 79 hauts faits, Ruines, Crypte et Montagne compris (v3.561.0 : +5 du Grand Ouvrage) (" + DB.length + ")");
+  ok(DB.length === 89, "catalogue : 89 hauts faits, Ruines, Crypte, Montagne et Tour compris (v3.561.0 : +5 du Grand Ouvrage ; v3.632.0 : +10 de la Tour) (" + DB.length + ")");
   ok(byCat("forest").length === 10 && byCat("forest").filter(function (a) { return a.hidden; }).length === 2, "Forêt : 8 + 2 cachés");
   ok(byCat("desert").length === 11 && byCat("desert").filter(function (a) { return a.hidden; }).length === 3, "Désert : 8 + 3 cachés (v3.362.0 : « Pas une goutte »)");
   ok(["grimoire", "companions"].every(function (c) { return byCat(c).length === 5; }) && byCat("village").length === 10 && byCat("collection").length === 8, "transversales : 5, Village 10 (dont 5 du Grand Ouvrage), 5 et Collection 8");
@@ -15658,7 +15658,7 @@ console.log("\n[241] v3.453.0 — Voie du Commandement et Mémoire 9 à 16 (Gard
     ok(MM.getCap() === 12, "Ruines : plafond 12");
     G.worldsEverReached[3] = true;
     ok(MM.getCap() === 16, "Crypte : plafond 16");
-    ok(g.MEMORY_LEVELS.slice(8).every(function (d) { return d.options.filter(function (o) { return o.side === "garder"; }).length === 1 && d.options.filter(function (o) { return o.side === "donner"; }).length === 1; }), "niveaux 9 à 16 : un Garder et un Donner chacun");
+    ok(g.MEMORY_LEVELS.slice(8).filter(function (d) { return !d.requiresChoice; }).every(function (d) { return d.options.filter(function (o) { return o.side === "garder"; }).length === 1 && d.options.filter(function (o) { return o.side === "donner"; }).length === 1; }), "niveaux 9 à 16 : un Garder et un Donner chacun (v3.632.0 : hors jalon 24, une option par réponse à la Question)");
     G.totalAetherEarned = 99999; G.gold = 1e9;
     MM.ensure().choices = { 9: "fiole_reserve", 10: "craie_epaisse", 11: "fidelite_edda" };
     ok(MM.lineOpen(12, "garder") && !MM.lineOpen(12, "donner"), "ligne Garder ouverte après trois Garder");
@@ -18490,7 +18490,7 @@ console.log("\n[313] v3.491.0 — Montagne, lot M-5 : acte IV « Le droit de pre
     ok(g.storyPuitsVeineMere() === 3 && g.storyPuitsVeineMere() === 0 && g.WarehouseManager.getAmount("cendre_vive") - a0 === 3, "Prendre : le puits verse 3 Cendres vives, une fois par jour");
     // La Mémoire 20
     var l20 = g.MEMORY_LEVELS.filter(function (l) { return l.level === 20; })[0];
-    ok(l20 && l20.jalon && l20.options.length === 4 && g.MEMORY_LEVEL_COSTS.length === 20, "Mémoire 20 : jalon à quatre options, coût dans la courbe");
+    ok(l20 && l20.jalon && l20.options.length === 4 && g.MEMORY_LEVEL_COSTS.length >= 20, "Mémoire 20 : jalon à quatre options, coût dans la courbe");
     SQ.getChoice = function () { return null; };
     MM.has = function (id) { return id === "froid_pierre" || id === "lame_vive" || id === "rien_ne_se_perd" || id === "ce_qui_a_ete_pris"; };
     CE.spawnGroup([{ id: "lavagolem", name: "Golem", isBoss: false, hp: 1e6, maxHp: 1e6, stats: g.ENEMY_DB.lavagolem.stats, resists: [], weak: [], goldReward: 5 }]);
@@ -21759,6 +21759,48 @@ console.log("\n[426] v3.631.0 — Tour, lot T-4b : la vision, la Question, Azhem
     ok(cx("cette_nuit_la").isUnlocked() === true && cx("dungeon_tier_6") && !/cinq couches/.test(cx("dungeon").text) && !/dernier Sceau connu/.test(cx("dungeon_tier_5").text), "Codex : « Cette nuit-là », le sixième Sceau ; « cinq couches » et « dernier Sceau connu » relus");
   } catch (err) { ok(false, "[426] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   SQ.getChoice = gc;
+})();
+
+console.log("\n[427] v3.632.0 — Tour, lot T-5 : Mémoire 21 à 24, hauts faits de la Tour");
+(function () {
+  var TS = g.TowerSystem, MM = g.MemoryManager, has0 = MM.has, at0 = TS.atTower, gc = g.StoryQuestManager.getChoice, M = {};
+  try {
+    ok(g.MEMORY_LEVELS.length === 24 && g.MEMORY_LEVEL_COSTS.length === 24 && g.MEMORY_LEVEL_COSTS.slice(20).join() === "310,360,420,490", "Mémoire : 24 niveaux, Tour 310 / 360 / 420 / 490");
+    var l24 = g.MEMORY_LEVELS[23];
+    ok(l24.jalon && l24.requiresChoice === "question" && l24.options.map(function (o) { return o.answer; }).join() === "sienne,aeswyn,tienne,rien", "jalon 24 : une option par réponse à la Question");
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; StoryQuestManager.ensure(); game.worldsEverReached = {0:true,1:true,2:true,3:true,4:true,5:true}; game.totalAetherEarned = 5000;");
+    ok(MM.getCap() === 24 && MM.getLevel() === 24, "plafond de la Tour : 24");
+    ok(MM.isWaiting(24) && MM.getPendingLevels().indexOf(24) === -1 && MM.choose(24, "ton_nom") === false, "jalon 24 fermé tant que la Question n'est pas répondue");
+    g.StoryQuestManager.getChoice = function (k) { return k === "question" ? "tienne" : gc.call(g.StoryQuestManager, k); };
+    ok(!MM.isWaiting(24) && MM.choose(24, "ton_nom") === true, "Question répondue : le jalon s'ouvre");
+    g.StoryQuestManager.getChoice = gc;
+    // effets
+    MM.has = function (id) { return !!M[id]; }; TS.atTower = function () { return true; };
+    run("game.heroMaxHp = 1000; game.heroHp = 500;");
+    M.feu_couve = true; ok(TS.onVictory() === 30, "Feu couvé : +3 % des PV, sans la braise gardée");
+    M.braise_vive = true; ok(Math.abs(TS.dmgMult() - 1.05) < 1e-9, "Braise vive : +5 % de dégâts à la Tour");
+    g.game.enemy = { id: "x", isBoss: true, hp: 1, maxHp: 1 }; M.forme_pretee = true;
+    ok(Math.abs(TS.dmgMult() - 1.15) < 1e-9, "La forme prêtée : +10 % contre un boss");
+    ok(TS.rediteMult(1.25) === 1.25 && (M.redite_apprise = true) && TS.rediteMult(1.25) === 1.1, "La redite apprise : ×1,1");
+    ok(TS.eliteDropBonus("gardien_qui_repete") === 0 && (M.ce_qui_se_repete = true) && TS.eliteDropBonus("gardien_qui_repete") === 10 && TS.eliteDropBonus("golem_forge") === 0, "Ce qui se répète : 45 % pour le seul Gardien qui répète");
+    M.ton_nom = true; ok(TS.hpPct() === 0.1 && g.TalentManager.getStatBonuses().hpPct >= 0.1, "Ton nom : +10 % de PV, lu par les bonus de talents");
+    M.pain_dabord = true; ok(Math.abs(TS.rationMult() - 1.1) < 1e-9, "Le pain d'abord : rations +10 %");
+    g.game.enemy = null; g.game.dungeonRun = { active: true, dungeonId: 6 }; M.braise_tient = true;
+    var gv = g.WarehouseManager.getAmount("givre_bleu"); TS.onDungeonClear();
+    ok(g.WarehouseManager.getAmount("givre_bleu") - gv === 1, "La braise tient : +1 Givre bleu par sortie du Sommet");
+    g.game.dungeonRun = { active: false };
+    g.game._towerMirror = null; g.game.enemy = { id: "gardien_qui_repete", uid: "a", isElite: true }; TS.noteSkill(1); M.geste_cache = true;
+    ok(TS.mirrorMult(1) === 0.85, "Geste caché : le miroir ne retire que 15 %");
+    ok(g.PA2_MEMORY_DEST_RARE.tower === "escalier_rend", "L'escalier rend : +1 Givre bleu à la destination");
+    // hauts faits
+    var hf = g.ACHIEVEMENTS_DB.filter(function (a) { return a.category === "tower"; });
+    ok(hf.length === 10 && g.ACHIEVEMENT_CATEGORIES.filter(function (c) { return c.id === "tower" && c.world === 5; }).length === 1, "10 hauts faits de la Tour, catégorie à paliers");
+    g.AchievementManager._fight = { enemy: null }; g.AchievementManager.onMirror();
+    ok(g.AchievementManager._fight.mirror === true, "le miroir est noté pour « Varier »");
+    var src = require("fs").readFileSync(require("path").join(ROOT, "js/systems/adventure-quest-system.js"), "utf8");
+    ok(/aq_tour_seul[^\n]*seulNoPotion/.test(src), "« Seul, et sans boire » noté à la fin de la quête");
+  } catch (err) { ok(false, "[427] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  MM.has = has0; TS.atTower = at0; g.StoryQuestManager.getChoice = gc; g.game.enemy = null; g.game._towerMirror = null;
 })();
 
 Promise.all(ATTENTES).then(function () {

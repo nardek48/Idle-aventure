@@ -219,6 +219,31 @@ var ACHIEVEMENTS_DB = [
     hidden: true, hint: "La lave recouvre. Elle se retire aussi.", fresh: true,
     target: 1, track: function () { return achCounter("retakenMountain"); }, reward: { gold: 9000 } },
 
+  /* ===================== La Tour (v3.632.0, lot T-5, validés par Seb le 03/11) ===================== */
+  { id: "hf_tour_silhouette", category: "tower", name: "Elle s'est battue comme toi", desc: "Vaincre la silhouette.",
+    target: 1, track: function () { return storyAdvDoneAch("aq_tour_silhouette"); }, reward: { gold: 6000 } },
+  { id: "hf_tour_reflet", category: "tower", name: "Ce qu'elle a appris", desc: "Vaincre le Reflet, au bout du Sommet interdit.",
+    target: 1, track: function () { return (game.dungeonTierCleared || {})[6] ? 1 : 0; }, reward: { gold: 6000 } },
+  { id: "hf_tour_map", category: "tower", name: "Tous les étages", desc: "Tous les étages de la Tour libérés en même temps.",
+    target: 6, track: function () { return achMapLiberated("tower"); }, targetFn: function () { return achMapSize("tower"); }, reward: { gold: 6000 } },
+  { id: "hf_tour_gardien", category: "tower", name: "Il répète, toi aussi", desc: "Vaincre 5 fois le Gardien qui répète.",
+    target: 5, track: function () { return achKills("gardien_qui_repete"); }, reward: { gold: 6000 } },
+  { id: "hf_tour_legendaire", category: "tower", name: "Ce qui ne se forge pas", desc: "Porter sept pièces Légendaires.",
+    target: 7, track: function () { var eq = game.equipped || {}; return Object.keys(eq).filter(function (k) { return eq[k] && eq[k].rarity === "legendary"; }).length; }, reward: { gold: 6000 } },
+  { id: "hf_tour_run", category: "tower", name: "L'escalier", desc: "Mener une Petite Aventure de la Tour jusqu'au bout.",
+    target: 1, fresh: true, track: function () { return achCounter("runTower"); }, reward: { gold: 6000 } },
+  { id: "hf_tour_bestiary", category: "tower", name: "Naturaliste de la Tour", desc: "Rencontrer toutes les créatures de la Tour.",
+    target: 1, track: function () { return achBestiaryWorld(5).found; }, targetFn: function () { return achBestiaryWorld(5).total; }, reward: { gold: 6000 } },
+  { id: "hf_tour_varier", category: "tower", name: "Varier", desc: "Vaincre le Reflet sans que le miroir te prenne une seule technique.",
+    hidden: true, hint: "Il garde ce que tu annonces.", fresh: true,
+    target: 1, track: function () { return achCounter("refletNoMirror"); }, reward: { gold: 12000 } },
+  { id: "hf_tour_seul", category: "tower", name: "Seul, et sans boire", desc: "Terminer « Seul » sans boire une seule potion.",
+    hidden: true, hint: "Personne pour te tendre la gourde.", fresh: true,
+    target: 1, track: function () { return achCounter("seulNoPotion"); }, reward: { gold: 12000 } },
+  { id: "hf_tour_retaken", category: "tower", name: "La redite, reprise", desc: "Libérer un étage refait par la Tour après « La redite ».",
+    hidden: true, hint: "Elle refait. Toi aussi.", fresh: true,
+    target: 1, track: function () { return achCounter("retakenTower"); }, reward: { gold: 12000 } },
+
   /* ===================== Grimoire ===================== */
   { id: "hf_grim_rule", category: "grimoire", name: "Première règle", desc: "Écrire une règle du Grimoire.",
     target: 1, track: function () { return Array.isArray(game.grimoireRules) && game.grimoireRules.length ? 1 : 0; }, reward: { gold: 150 } },
@@ -307,6 +332,9 @@ var ACHIEVEMENT_CATEGORIES = [
   // v3.492.0 : Montagne (titre neutre)
   { id: "mountain", label: "Montagne", world: 4, tiers: [3, 6, 8],
     tierRewards: [{ gold: 13500 }, { gold: 33750 }, { gold: 6750, title: "Qui sait ce qui tient au feu" }] },
+  // v3.632.0 : la Tour (titre neutre)
+  { id: "tower", label: "Tour", world: 5, tiers: [3, 6, 8],
+    tierRewards: [{ gold: 20000 }, { gold: 50000 }, { gold: 10000, title: "Qui est monté jusqu'en haut" }] },
   { id: "grimoire", label: "Grimoire" },
   { id: "village", label: "Village" },
   { id: "companions", label: "Compagnons" },

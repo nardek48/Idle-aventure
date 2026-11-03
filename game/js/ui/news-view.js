@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.632.0", "menu_icons/achivment_menu", _t("La Tour : Mémoire 21 à 24 (le jalon 24 s\'ouvre avec ta réponse à la Question) et dix hauts faits de la Tour.")],
     ["3.631.0", "menu_icons/quests_menu", _t("La Tour, fin du chapitre VI : la vision de cette nuit-là, la Question et ses quatre fins, le nom du Veilleur, l\'épilogue. L\'Histoire est complète ; le jeu continue.")],
     ["3.630.0", "menu_icons/quests_menu", _t("La Tour, acte IV : « Seul », la faille et la silhouette, sans compagnon. Elle se bat comme toi : pose le contre de ta classe.")],
     ["3.629.0", "menu_icons/quests_menu", _t("La Tour, acte III : le Sommet interdit et son Reflet, qui garde ta dernière technique. Les sept Légendaires, la Forge 7 et un choix sur Aeswyn d\'avant.")],

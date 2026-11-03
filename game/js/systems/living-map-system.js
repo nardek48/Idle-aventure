@@ -670,7 +670,8 @@ var LivingMapManager = {
       /* v3.489.0 (Montagne) : une élite peut lâcher une pièce (ELITE_DB.winDrop), au monde du combat. */
       var wd = eliteDef && eliteDef.winDrop, lmSt = game.livingMaps[f.mapId] || {}, sec = Math.max(0, Math.floor(Number(lmSt.dropDry || 0)));
       // lot 6 (Seb, option A) : compteur de victoires sans pièce, commun aux élites de la carte ; au seuil, la pièce tombe
-      var tombe = !!wd && (this._rand() * 100 < Number(wd.chancePct || 0) || (Number(wd.pityAfter || 0) > 0 && sec >= Number(wd.pityAfter)));
+      var wdPct = wd ? Number(wd.chancePct || 0) + (window.TowerSystem ? TowerSystem.eliteDropBonus(f.eliteId) : 0) : 0; // v3.632.0 : Ce qui se répète
+      var tombe = !!wd && (this._rand() * 100 < wdPct || (Number(wd.pityAfter || 0) > 0 && sec >= Number(wd.pityAfter)));
       if (wd) lmSt.dropDry = tombe ? 0 : sec + 1;
       if (tombe && typeof generateEquipmentItem === "function" && typeof addLootToInventory === "function") {
         // lot 6 (revue) : la pièce est du monde de la carte, même si le héros réside ailleurs (voyage libre)
@@ -735,7 +736,7 @@ var LivingMapManager = {
     var s = this.getState(mapId, sectorId);
 
     if (result === "success") {
-      if (this.isHostile(mapId, sectorId) && window.AchievementManager) AchievementManager.flag(this.getMap(mapId).veins ? "retakenMountain" : "retakenCrypt"); // v3.456.6 : Le réveil, repris ; v3.489.0 : La coulée
+      if (this.isHostile(mapId, sectorId) && window.AchievementManager) AchievementManager.flag(this.getMap(mapId).redite ? "retakenTower" : this.getMap(mapId).veins ? "retakenMountain" : "retakenCrypt"); // v3.632.0 : La redite // v3.456.6 : Le réveil, repris ; v3.489.0 : La coulée
       delete s.hostileDay; // v3.454.0 : le couloir repris se recouche
       var chantierDuJour = this.isChantier(mapId, sectorId); // v3.429.0 : lu avant la libération
       s.state = "libere";
