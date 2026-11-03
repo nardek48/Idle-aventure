@@ -48,6 +48,7 @@ var DATA_TEXT_FIELDS = {
   STORY_BAT_TEXTS: ["*.completion", "*.aeswyn", "*.text", "*.*.*.text", "*.*.*.who", "*.aeswynDialogue.*.text", "*.aeswynDialogue.*.who", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.456.0 : le choix « bat »
   LABYRINTH_TEXTS: [""], // v3.434.0 (Ruines, RU12) : le Labyrinthe aux leviers
   LABYRINTH_CONFIG: ["bossName"],
+  LAB_KINDS: ["*.texts", "*.config.bossName"], // v3.636.0 (Faille, F-0) : sortes de run du moteur à leviers (mêmes objets que ci-dessus)
   STORY_SALLE_TEXTS: ["*.completion", "*.chaise", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.431.0 (Ruines) : les deux branches du choix « salle »
   STORY_PLAN_TEXTS: ["*.completion", "*.dialogue.*.text", "*.dialogue.*.who", "suite.*.text", "suite.*.who"], // v3.433.0 (Ruines) : le plan et la fin du chapitre
   ADVENTURE_QUESTS: ["*.name", "*.story", "*.bossLog", "*.bossPhases.*.label", "*.bossPhases.*.line", "*.steps.*.desc", "*.encounterLines.*"],
