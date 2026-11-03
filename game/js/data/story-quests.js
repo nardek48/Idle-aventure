@@ -5268,7 +5268,7 @@ STORY_QUESTS.tower = {
         title: "La silhouette",
         points: [
           { icon: "images/Boss/silhouette.webp", text: "Elle se bat comme toi : elle prend le trait de ta classe (Chevalier : enragée ; Rôdeur : blindée ; Mage : elle fait taire)." },
-          { icon: "images/Icons/memory/grimoire_etendu.webp", text: "À 60 % de ses PV, elle garde ta dernière technique, comme le Reflet : varie. À 30 %, la lumière passe à travers elle : deux rounds de bouclier." }
+          { icon: "images/Icons/memory/grimoire_etendu.webp", text: "À 60 % de ses PV, elle garde ta dernière technique, comme le Reflet : varie. À 30 %, la lumière passe à travers elle : un round où rien ne la touche, annoncé un round avant." }
         ]
       },
       objectiveLabel: "Vaincre la silhouette, seul",

@@ -112,9 +112,9 @@ var TowerSystem = {
     // elle prend le trait de ta classe : posé sur la phase, que checkPhases applique juste après (silence compris)
     if (ph.copyClass) ph.archetype = TOWER_CLASS_ARCHETYPE[game.heroId] || "enraged";
     if (ph.mirror) e.mirror = true;
-    if (ph.through) { // la lumière passe à travers elle : le bouclier de boss, tout de suite (round intouchable : plus tard)
-      e.shieldTelegraphed = false;
-      e.shieldRounds = (typeof BOSS_SHIELD_DURATION_ROUNDS === "number") ? BOSS_SHIELD_DURATION_ROUNDS : 2;
+    if (ph.through) { // v3.636.0 (TW6, Seb 03/11) : le round intouchable, annoncé ; il commence à son prochain tour
+      e.throughIn = true;
+      if (typeof addLog === "function") addLog("✨ " + _t("La lumière va passer à travers elle : au prochain round, rien ne la touchera."), "danger");
       if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
     }
   },
@@ -193,6 +193,17 @@ var TowerSystem = {
   },
   playVision: function (onEnd) { if (window.PrologueView) PrologueView.playDeck({ num: TOWER_VISION.num, eyebrow: TOWER_VISION.num, teinte: TOWER_VISION.teinte, planches: TOWER_VISION.planches }, onEnd); else if (onEnd) onEnd(); },
   playEpilogue: function (onEnd) { var d = this.endingDeck(); if (d && window.PrologueView) PrologueView.playDeck(d, onEnd); else if (onEnd) onEnd(); },
+
+  /* v3.636.0 : le round intouchable de la silhouette. À son tour annoncé, la lumière passe à travers elle jusqu'à
+     son tour suivant (un round du héros sans effet). Appelé par VeinSystem.onEnemyTurn ; ne remplace pas son attaque. */
+  onEnemyTurn: function (e) {
+    if (!e) return;
+    if (e.through) { e.through = false; if (typeof addLog === "function") addLog(_t("La lumière se retire : on peut de nouveau la toucher."), "event"); }
+    else if (e.throughIn) { e.throughIn = false; e.through = true; if (typeof addLog === "function") addLog("✨ " + _t("La lumière passe à travers elle : rien ne la touche jusqu'à son prochain tour."), "danger"); }
+    if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
+  },
+  /* Lu par dealDamage (via VeinSystem.blocksHit) : pendant le round intouchable, aucun coup ne porte. */
+  blocksHit: function (foe) { return !!(foe && foe.through && Number(foe.hp || 0) > 0); },
 
   /* Combat gagné : la braise gardée rend un peu de PV. */
   onVictory: function () {

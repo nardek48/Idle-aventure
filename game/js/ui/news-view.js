@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.637.0", "menu_icons/quests_menu", _t("La silhouette : à 30 %, la lumière passe vraiment à travers elle. Un round où rien ne la touche, annoncé un round avant.")],
     ["3.635.1", "menu_icons/camp_menu", _t("Au camp, le soir : trois phrases de Maddoc et d\'Ysolt réécrites.")],
     ["3.635.0", "menu_icons/quests_menu", _t("La Tour prend son temps : Terrain d\'entraînement 19 à 21 (jusqu\'à 230), les 5 étages et 2 escaliers, et à l\'acte III la Forge 7 avec l\'arme reforgée à 13.")],
     ["3.634.0", "menu_icons/heroes_menu", _t("Équilibre des classes : le Chevalier frappe 15 % plus fort, le Rôdeur 15 % moins fort, le Mage a 5 % de PV en plus. Les trois classes finissent l\'Histoire dans des temps proches.")],

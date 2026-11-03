@@ -139,6 +139,7 @@
     if (e.callArmed) push("calling"); // v3.454.0 (Crypte) : l'appel du Nécromancien
     if (e.sortArmed) push("sorting"); // v3.489.0 (Montagne) : le tri du Démon mineur
     if (e.diving) push("diving"); // v3.490.0 (Montagne) : le Wyrm sous la lave
+    if (e.through) push("through"); else if (e.throughIn) push("throughIn"); // v3.636.0 (Tour) : la silhouette intouchable
     if (num(e.shell) > 0) push("shell"); // v3.490.0 : la carapace du Golem-forge
     if (e.chainArmed) push("chaining"); // v3.456.0 (Crypte) : il lève une chaîne
     if (num(e.engageIn) > 0) push(e.charged ? "stunned" : "approaching", num(e.engageIn)); // v3.477.0 : Charge du Chevalier
