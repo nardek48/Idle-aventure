@@ -18,8 +18,8 @@ var WORLD_CAPS = [
   /* 0 — Forêt enchantée */
   {
     village: { workshop: 4, training: 4, hall: 4, warehouse: 3, palisade: 3, tavern: 2, apothecary: 3, forge: 0, enchanter: 0 },
-    zoneRows: 1,      // lignes de la grille 3×3 ouvrables (1 ligne = 3 zones)
-    zoneLevel: 5,     // niveau max d'une zone ; relevé 2 (27/10) : 3 → 5
+    zoneRows: 1,      // v3.612.0 : 3 parcelles seulement, dans tous les mondes
+    zoneLevel: 5,     // niveau max d'une parcelle
     workshopLevel: 2, // niveau max d'un atelier (« L'atelier bien huilé » exige 2)
     petiteAventureCap: 3 // v3.298.0 (D10) : Petites Aventures par jour civil, partagées entre canevas
   },
@@ -27,8 +27,8 @@ var WORLD_CAPS = [
   {
     // v3.316.0 (W-4b) : forge 2 -> 3, le palier de l'étape 13 se paie en Verre trempé.
     village: { workshop: 7, training: 9, hall: 7, warehouse: 6, palisade: 7, tavern: 5, apothecary: 7, forge: 3, enchanter: 1 },
-    zoneRows: 2,
-    zoneLevel: 8, // relevé 2 (27/10) : 5 → 8
+    zoneRows: 1,
+    zoneLevel: 10, // v3.612.0 (3 parcelles) : 8 → 10, même débit que 6 zones au niveau 8
     workshopLevel: 3,
     petiteAventureCap: 4 // D10 : 4 au Désert — une seconde ressource exclusive (Verre des dunes)
   },
@@ -38,8 +38,8 @@ var WORLD_CAPS = [
      niveaux payés en Clé de voûte viennent avec l'acte III. */
   {
     village: { workshop: 8, training: 11, hall: 8, warehouse: 7, palisade: 8, tavern: 5, apothecary: 8, forge: 4, enchanter: 2 }, // v3.431.0 (acte III) : Terrain 11, Forge 4
-    zoneRows: 2,      // pas de 3e rangée aux Ruines (RU7, tranché par Seb le 09/10/2026)
-    zoneLevel: 11, // relevé 2 (27/10) : 5 → 11
+    zoneRows: 1,
+    zoneLevel: 12, // v3.612.0 : 11 → 12
     workshopLevel: 3,
     petiteAventureCap: 4
   },
@@ -49,8 +49,8 @@ var WORLD_CAPS = [
   {
     village: { workshop: 8, training: 13, hall: 10, warehouse: 12, palisade: 8, tavern: 6, apothecary: 9, forge: 5, enchanter: 2 }, // v3.456.2 : Terrain 13 ; v3.456.9 : Taverne 6 ; v3.459.9 (audit I3) : Halle 10, Entrepôt 8 ; option B (27/10) : Entrepôt 12
     forgeActStep: "crypte_13", // v3.543.0 (audit PLA-7) : la Forge 5 s'ouvre avec sa Cire consacrée et son aide, à l'acte III
-    zoneRows: 3,
-    zoneLevel: 14, // relevé 2 (27/10) : 5 → 14
+    zoneRows: 1,
+    zoneLevel: 15, // v3.612.0 : 14 → 15
     workshopLevel: 3,
     petiteAventureCap: 4
   },
@@ -60,8 +60,19 @@ var WORLD_CAPS = [
   {
     village: { workshop: 8, training: 18, hall: 10, warehouse: 16, palisade: 8, tavern: 6, apothecary: 10, forge: 6, enchanter: 2 }, // H1 : Terrain 18 (acte IV) ; option B (27/10) : Entrepôt 16
     forgeActStep: "montagne_11",
-    zoneRows: 3,
-    zoneLevel: 17, // relevé 2 (27/10) : 5 → 17
+    zoneRows: 1,
+    zoneLevel: 17, // v3.612.0 : 3 parcelles au niveau 17 = 9 zones d'avant au niveau 17
+    workshopLevel: 3,
+    petiteAventureCap: 4
+  },
+  /* 5 — La Tour. v3.625.0 (Conception Tour TW8, lot T-0) : écrit avant d'ouvrir le monde, pour que rien ne s'ouvre
+     d'un coup. Les derniers niveaux du village (Atelier 10, Enchanteresse 3, Entrepôt 20, Palissade 10, zones 20) ;
+     la Forge 7 (Verre de faille) n'ouvre qu'à l'acte III (forgeActStep), comme la Forge 6 à la Montagne. */
+  {
+    village: { workshop: 10, training: 21, hall: 10, warehouse: 20, palisade: 10, tavern: 6, apothecary: 10, forge: 7, enchanter: 3 }, // training 21 : rythme de la Tour (03/11)
+    forgeActStep: "tour_13",
+    zoneRows: 1,
+    zoneLevel: 20,
     workshopLevel: 3,
     petiteAventureCap: 4
   }
@@ -88,7 +99,11 @@ var TRAINING_CAP_BY_ACT = [
   { worldIndex: 3, stepId: "crypte_11", act: "III", terrain: 13 },    // v3.456.2 : 150, celui des actes III et IV
   { worldIndex: 4, stepId: "montagne_01", act: "I", terrain: 13 },    // v3.486.0 : Montagne, acte I — inchangé (crans au banc)
   { worldIndex: 4, stepId: "montagne_11", act: "III", terrain: 15 },   // H1 (chantier du héros) : 170
-  { worldIndex: 4, stepId: "montagne_16", act: "IV", terrain: 18 }     // H1 : 200, le plafond absolu
+  { worldIndex: 4, stepId: "montagne_16", act: "IV", terrain: 18 },    // H1 : 200, le plafond absolu
+  { worldIndex: 5, stepId: "tour_01", act: "I", terrain: 18 },         // v3.625.0 (Tour, T-0)
+  { worldIndex: 5, stepId: "tour_06", act: "II", terrain: 19 },        // rythme de la Tour (Seb, 03/11) : 210
+  { worldIndex: 5, stepId: "tour_11", act: "III", terrain: 20 },       // 220
+  { worldIndex: 5, stepId: "tour_16", act: "IV", terrain: 21 }         // 230
 ];
 
 /* v3.327.0 (conception Talents v1.1, T2 option B) — PLAFOND DE POINTS DE TALENT PAR ACTE.
@@ -109,7 +124,11 @@ var TALENT_CAP_BY_ACT = [
   { worldIndex: 4, stepId: "montagne_01", act: "I", points: 18 },     // v3.486.0 : Montagne, acte I — inchangé (crans au banc)
   { worldIndex: 4, stepId: "montagne_06", act: "II", points: 20 },    // H3 (chantier du héros) : rangs des talents, 18 → 23
   { worldIndex: 4, stepId: "montagne_11", act: "III", points: 21 },
-  { worldIndex: 4, stepId: "montagne_16", act: "IV", points: 23 }
+  { worldIndex: 4, stepId: "montagne_16", act: "IV", points: 23 },
+  { worldIndex: 5, stepId: "tour_01", act: "I", points: 23 },         // v3.625.0 (Tour, T-0) : inchangé
+  { worldIndex: 5, stepId: "tour_06", act: "II", points: 25 },        // v3.633.0 : voie Varier (validée par Seb le 03/11)
+  { worldIndex: 5, stepId: "tour_11", act: "III", points: 27 },
+  { worldIndex: 5, stepId: "tour_16", act: "IV", points: 28 }         // 28 = 18 utilisables (clés exclusives) + 5 + 5 : tout l'arbre
 ];
 
 /* « de la Forêt enchantée », « du Désert oublié » : pour « l'acte II du Désert oublié ».

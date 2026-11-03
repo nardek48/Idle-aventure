@@ -9,7 +9,7 @@ var PROLOGUE_PLANCHES = [
   { img: "prologue_3_feu", lignes: ["Cette même nuit, un village de la forêt a brûlé.", "Aeswyn.", "Trois familles ont fui dans les bois. D'autres n'en sont jamais sorties."], nom: 1 },
   { img: "prologue_4_enfant", lignes: ["Au milieu des flammes, un enfant ne bougeait pas.", "Pas un cri. Pas un pas.", "Les yeux ouverts."] },
   { img: "prologue_5_hivers", lignes: ["Douze hivers ont passé.", "Ceux qui ont survécu vivent autour du feu.", "Quand on parle de cette nuit-là, on se tait en te voyant."] },
-  { img: "prologue_6_soir", lignes: ["La nuit, les bêtes rôdent autour du camp. Elles viennent de plus en plus près.", "Orwen t'observe, près du feu.", "Cette nuit, il faudra bien que quelqu'un s'en charge."] }
+  { img: "prologue_6_soir", lignes: ["La nuit, les bêtes rôdent autour du camp. Elles viennent de plus en plus près.", "Orwen t'observe, près du feu.", "Cette nuit encore, quelqu'un devra les tenir à distance."] }
 ];
 
 window.PROLOGUE_PLANCHES = PROLOGUE_PLANCHES;

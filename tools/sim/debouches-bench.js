@@ -68,7 +68,20 @@ var SCENARIOS = {
   A4: { label: "A1 + Taverne ×2", noExclude: true, tavernQty: 2 },
   A5: { label: "A1 + capacité des caravanes ×2", noExclude: true, capMult: 2 },
   S1: { label: "lot S : plus de contrats de farine ni de viande séchée (fait en v3.484.0 : identique à A0)", dropTemplates: ["farine", "viande_sechee"] },
-  Z1: { label: "aujourd'hui, avec l'ancienne réserve des zones (avant v3.478.0)", zoneCap: 1 / 3 }
+  Z1: { label: "aujourd'hui, avec l'ancienne réserve des zones (avant v3.478.0)", zoneCap: 1 / 3 },
+  // chantier surproduction (01/11) : débit des zones par niveau (+70 % du niveau 1 aujourd'hui)
+  L35: { label: "zones : +35 % par niveau au lieu de +70 %", lin: 0.35 },
+  L20: { label: "zones : +20 % par niveau au lieu de +70 %", lin: 0.2 },
+  L10: { label: "zones : +10 % par niveau au lieu de +70 %", lin: 0.1 },
+  D10: { label: "zones : débit ÷10 (réserve comprise)", rateMult: 0.1 },
+  D20: { label: "zones : débit ÷20", rateMult: 0.05 },
+  D30: { label: "zones : débit ÷30", rateMult: 1 / 30 },
+  // Grand Ouvrage automatique : au-delà de 80 % du plafond, le surplus brut y part (puis on récolte ce qui reste aux zones)
+  G80: { label: "Grand Ouvrage auto au-delà de 80 %", auto: 0.8 },
+  // Caravanes (01/11) : R2 = commande du jour par marché (chargée en premier, +X % d'or sur elle, +2 rares si >= 100 unités)
+  R2: { label: "commande du jour : +50 % d'or", order: 0.5 },
+  R2b: { label: "commande du jour : +25 % d'or", order: 0.25 },
+  G80L35: { label: "G80 + zones +35 % par niveau", auto: 0.8, lin: 0.35 }
 };
 
 function campaign(world, visits, scen, days) {
@@ -99,6 +112,8 @@ function campaign(world, visits, scen, days) {
   });
 
   // Leviers du scénario (données seulement)
+  if (scen.lin != null) g.PRODUCTION_PLOTS_SHARED.linearPerLevel = scen.lin;
+  if (scen.rateMult) Object.keys(g.PRODUCTION_PLOTS_SHARED.profiles).forEach(function (k) { var p = g.PRODUCTION_PLOTS_SHARED.profiles[k]; p.baseRatePerMin *= scen.rateMult; p.baseCapacity *= scen.rateMult; });
   if (scen.noExclude) g.CARAVAN_EXCLUDED.length = 0;
   if (scen.keep != null) vm.runInContext("CARAVAN_KEEP_SHARE = " + scen.keep + ";", g);
   if (scen.zoneCap) Object.keys(g.PRODUCTION_PLOTS_SHARED.profiles).forEach(function (k) { g.PRODUCTION_PLOTS_SHARED.profiles[k].baseCapacity *= scen.zoneCap; });
@@ -107,6 +122,26 @@ function campaign(world, visits, scen, days) {
   if (scen.tavernQty) g.TAVERN_CONTRACT_TEMPLATES.forEach(function (t) { t.min *= scen.tavernQty; t.max *= scen.tavernQty; });
 
   var W = g.WarehouseManager, C = g.CaravanManager, T = g.TavernManager;
+  var trips = { court: 0, moyen: 0, long: 0 }, orderRares = 0, curMarket = null;
+  function orderOf(world) { var d = Math.floor((NOW - Date.UTC(2026, 9, 26)) / 864e5); return RAW[(d * 7 + world * 3) % 6]; }
+  if (scen.order) {
+    var origLoad = C.computeLoad.bind(C), origCap = C.getCapacity.bind(C), origGold = C.getLoadGold.bind(C);
+    C.computeLoad = function (tripId, level) {
+      if (curMarket == null) return origLoad(tripId, level);
+      var req = orderOf(curMarket), cap = origCap(tripId, level), q = Math.min(C.getSpare(req), cap);
+      g.game.resources[req] -= q;                       // déjà pris : le chargement ordinaire ne le reprend pas
+      C.getCapacity = function () { return cap - q; };
+      var load = origLoad(tripId, level);
+      C.getCapacity = origCap; g.game.resources[req] += q;
+      if (q > 0) load[req] = (load[req] || 0) + q;
+      return load;
+    };
+    C.getLoadGold = function (load, tripId) {
+      var base = origGold(load, tripId); if (curMarket == null) return base;
+      var req = orderOf(curMarket), part = {}; part[req] = load[req] || 0;
+      return base + Math.floor(origGold(part, tripId) * scen.order);
+    };
+  }
   RAW.forEach(function (k) { g.game.resources[k] = Math.floor(W.getCap(k) / 2); });
   g.game.gold = 0;
 
@@ -138,7 +173,18 @@ function campaign(world, visits, scen, days) {
   var hours = visits === 1 ? [19] : Array.from({ length: visits }, function (_, i) { return 7 + Math.round(i * 16 / (visits - 1)); });
   var perVisit = { ration: 4 / visits, soin: 10 / visits };
 
+  var GO = g.GrandOuvrage, autoPts = 0;
+  function autoPour() {
+    if (!scen.auto || !GO.isOpen()) return;
+    var load = {}; RAW.forEach(function (k) { var x = Math.floor(W.getAmount(k) - W.getCap(k) * scen.auto); if (x > 0) load[k] = x; });
+    var r = GO.pour(load); if (r && measuring) autoPts += r.points;
+  }
   function harvest() {
+    harvestOnce();
+    for (var loop = 0; scen.auto && loop < 6; loop++) { autoPour(); harvestOnce(); }
+    autoPour();
+  }
+  function harvestOnce() {
     PPS.getManagedBuildingIds().forEach(function (b) {
       PPS.catchUpOffline(b);
       var key = g.PRODUCTION_BUILDINGS[b].resourceKey, free = W.getFreeSpace(key);
@@ -172,7 +218,14 @@ function campaign(world, visits, scen, days) {
     C.getMarkets().forEach(function (m) {
       if (!C.hasFreeSlot() || C.get(m.world)) return;
       var before = {}; RAW.forEach(function (k) { before[k] = W.getAmount(k); });
-      if (C.depart(trip, m.world) && measuring) RAW.forEach(function (k) { S[k].caravan += before[k] - W.getAmount(k); });
+      curMarket = m.world;
+      var ok = C.depart(trip, m.world);
+      curMarket = null;
+      if (ok && measuring) {
+        RAW.forEach(function (k) { S[k].caravan += before[k] - W.getAmount(k); });
+        trips[trip]++;
+        if (scen.order && before[orderOf(m.world)] - W.getAmount(orderOf(m.world)) >= 100) orderRares += 2;
+      }
     });
     patrolCollect();
     harvest();
@@ -193,7 +246,7 @@ function campaign(world, visits, scen, days) {
   // Production théorique des zones (si elles ne s'arrêtaient jamais)
   var theo = {};
   PPS.getManagedBuildingIds().forEach(function (b) { theo[g.PRODUCTION_BUILDINGS[b].resourceKey] = PPS.getTotalRatePerMin(b) * 1440; });
-  return { S: S, gold: gold, days: days, theo: theo, cap: W.getCap("bois"), caravans: C.getMaxCaravans(), markets: C.getMarkets().length, tavernSlots: T.getSlotCount() };
+  return { trips: trips, orderRares: orderRares, auto: scen.auto ? { pts: autoPts, tier: GO.getTier() } : null, S: S, gold: gold, days: days, theo: theo, cap: W.getCap("bois"), caravans: C.getMaxCaravans(), markets: C.getMarkets().length, tavernSlots: T.getSlotCount() };
 }
 
 /* ---------- Rapport ---------- */
@@ -216,6 +269,10 @@ worlds.forEach(function (world) {
     RAW.forEach(function (k) { Object.keys(T0).forEach(function (x) { T0[x] += x === "theo" ? r.theo[k] : r.S[k][x] / D; }); });
     console.log("   TOTAL/j : zones " + Math.round(T0.zones) + " sur " + Math.round(T0.theo) + " théoriques (" + Math.round(T0.zones / T0.theo * 100) + " %) · patrouilles " + Math.round(T0.patrol)
       + " · perdu " + Math.round(T0.lost) + " · Taverne " + Math.round(T0.tavern) + " · caravane " + Math.round(T0.caravan));
+    var T3 = r.trips, rNow = T3.long * 0.25 * 2.5, rR1 = T3.long * 4 + T3.moyen * 0.3 * 1.5;
+    console.log("   trajets/j : court " + (T3.court / D).toFixed(1) + " · moyen " + (T3.moyen / D).toFixed(1) + " · long " + (T3.long / D).toFixed(1)
+      + " — rares/j : aujourd'hui " + (rNow / D).toFixed(1) + " · R1 " + (rR1 / D).toFixed(1) + (SCENARIOS[sk].order ? " · commande +" + (r.orderRares / D).toFixed(1) : ""));
+    if (r.auto) console.log("   Grand Ouvrage auto : " + Math.round(r.auto.pts / D) + " points/j · palier " + r.auto.tier + " après " + (D + 2) + " j (+" + r.auto.tier + " % d'or)");
     console.log("   or par jour : Taverne " + Math.round(r.gold.tavern / D) + " · caravane " + Math.round(r.gold.caravan / D) + " · total " + Math.round((r.gold.tavern + r.gold.caravan) / D));
   });
 });

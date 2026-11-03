@@ -25,7 +25,7 @@ var VILLAGE_QUESTS = [
     category: "side",
     narrative: {
       objective: "Le Clos d'Aeswyn nourrit à peine trois familles. Juste à côté, le Champ Béni attend sous les ronces — du bois pour les clôtures, de la pierre pour le muret, et la terre sera à nous.",
-      completion: "Deux parcelles, deux récoltes. Wenna a compté les sillons deux fois. Le blé ne manquera plus les soirs de disette — et il reste sept terres à reprendre." // v3.197.0 (bible B §2.1)
+      completion: "Deux parcelles, deux récoltes. Wenna a compté les sillons deux fois. Le blé ne manquera plus les soirs de disette — et il reste une terre à reprendre." // v3.197.0 (bible B §2.1)
     },
     objectiveLabel: "Débloquer une 2e parcelle du Champs",
     check: function () {
@@ -41,7 +41,7 @@ var VILLAGE_QUESTS = [
       icon: "images/Icons/plots/enriched_soil.webp",
       title: "Agrandir un bâtiment : les zones",
       points: [
-        { icon: "images/Icons/quests/quest_resources.webp", text: "Chaque bâtiment de production possède 9 zones (les « Parcelles » pour le Champs). Seule la première est ouverte au départ. En Forêt, tu peux en ouvrir 3 contre des ressources ; les autres s'ouvrent dans les mondes suivants." },
+        { icon: "images/Icons/quests/quest_resources.webp", text: "Chaque bâtiment de production possède 3 zones (les « Parcelles » pour le Champs). Seule la première est ouverte au départ ; les deux autres s'ouvrent contre des ressources. Dans les mondes suivants, elles montent plus haut." },
         { icon: "images/Icons/scene/scene_harvest.webp", text: "Chaque zone ouverte produit en continu, indépendamment des autres, avec son propre stock local — plus de zones, plus de blé à chaque récolte." },
         { icon: "⚖️", text: "Les zones ont des profils différents (rapide, équilibrée, lente) : une zone lente produit moins vite mais stocke davantage — pratique si tu récoltes rarement." },
         { icon: "images/Icons/workshops/fine_sawmill.webp", text: "Le déblocage du Champ Béni coûte du bois et de la pierre : la Scierie et la Carrière (ouverte par l'expédition de la Veine instable) alimentent le Champs — chaque bâtiment nourrit les autres." }
@@ -251,7 +251,7 @@ var MILESTONE_REWARD_BY_WORLD = [
   { gold: 250, mat: "resine_durcie" }, { gold: 600, mat: "verre_trempe" }, { gold: 1500, mat: "cle_de_voute" },
   { gold: 4000, mat: "cire_consacree" }, { gold: 12000, mat: "obsidienne_taillee" }
 ]; // ~10 % de l'or que rapporte chaque monde (audit du 26/10), + 1 matériau du monde
-var VILLAGE_MILESTONES = [
+var VILLAGE_MILESTONES = [ // v3.612.0 : jalons de zones recalés sur les 3 parcelles (plafonds 5/10/12/15/17)
   // Forêt
   { id: "ms_f_zones", w: 0, g: "v", title: "Trois zones au niveau 3", kind: "zonesAtLevel", arg: 3, target: 3, icon: "images/Production/farm.webp", go: "production" },
   { id: "ms_f_entrepot", w: 0, g: "v", title: "Entrepôt niveau 2", kind: "building", arg: "warehouse", target: 2, icon: "images/Icons/village_buildings/warehouse_expanded.webp", go: "b:warehouse" },
@@ -260,28 +260,28 @@ var VILLAGE_MILESTONES = [
   { id: "ms_f_wenna", w: 0, g: "h", title: "Wenna au palier 5", kind: "companionUpg", arg: "wenna", target: 5, icon: "images/Companions/wenna.webp", go: "c:wenna", book: "ardeur" },
   { id: "ms_f_relique", w: 0, g: "h", title: "Équiper une relique", kind: "relicsWorn", target: 1, icon: "images/Icons/quests/mission_exploration.webp", go: "c:wenna", book: "reliques" },
   // Désert
-  { id: "ms_d_zones", w: 1, g: "v", title: "Six zones au niveau 5", kind: "zonesAtLevel", arg: 5, target: 6, icon: "images/Production/sawmill.webp", go: "production" },
+  { id: "ms_d_zones", w: 1, g: "v", title: "Six zones au niveau 8", kind: "zonesAtLevel", arg: 8, target: 6, icon: "images/Production/sawmill.webp", go: "production" },
   { id: "ms_d_entrepot", w: 1, g: "v", title: "Entrepôt niveau 5", kind: "building", arg: "warehouse", target: 5, icon: "images/Icons/village_buildings/warehouse_expanded.webp", go: "b:warehouse" },
   { id: "ms_d_apothicaire", w: 1, g: "v", title: "Apothicaire : une préparation", kind: "counter", arg: "apothecaryCrafts", target: 1, icon: "images/Icons/village_buildings/apothecary.webp", go: "b:apothecary", book: "apothicaire" },
   { id: "ms_d_rang", w: 1, g: "h", title: "Un sort au rang 2", kind: "spellRankMax", target: 2, icon: "images/Icons/special_attacks/spell_ranks.webp", go: "skills" },
   { id: "ms_d_wenna", w: 1, g: "h", title: "Compétence de Wenna au rang 2", kind: "companionRank", arg: "wenna", target: 2, icon: "images/Companions/wenna.webp", go: "c:wenna", book: "competence" },
   { id: "ms_d_maddoc", w: 1, g: "h", title: "Maddoc au palier 5", kind: "companionUpg", arg: "maddoc", target: 5, icon: "images/Companions/maddoc.webp", go: "c:maddoc" },
   // Ruines
-  { id: "ms_r_zones", w: 2, g: "v", title: "Six zones au niveau 8", kind: "zonesAtLevel", arg: 8, target: 6, icon: "images/Production/quarry.webp", go: "production" },
+  { id: "ms_r_zones", w: 2, g: "v", title: "Six zones au niveau 11", kind: "zonesAtLevel", arg: 11, target: 6, icon: "images/Production/quarry.webp", go: "production" },
   { id: "ms_r_caravane", w: 2, g: "v", title: "Une caravane rentrée", kind: "counter", arg: "caravansBack", target: 1, icon: "images/Icons/village_buildings/caravan.webp", go: "b:hall", book: "caravane" },
   { id: "ms_r_terrain", w: 2, g: "v", title: "Terrain d'entraînement niveau 10", kind: "building", arg: "training", target: 10, icon: "images/Icons/village_buildings/training_grounds.webp", go: "b:training" },
   { id: "ms_r_rangs", w: 2, g: "h", title: "Les quatre sorts au rang 2", kind: "spellRankMin", target: 2, icon: "images/Icons/special_attacks/spell_ranks.webp", go: "skills" },
   { id: "ms_r_edda", w: 2, g: "h", title: "Edda au palier 5", kind: "companionUpg", arg: "edda", target: 5, icon: "images/Companions/edda.webp", go: "c:edda" },
   { id: "ms_r_reliques", w: 2, g: "h", title: "Deux reliques équipées", kind: "relicsWorn", target: 2, icon: "images/Icons/quests/mission_exploration.webp", go: "c:wenna" },
   // Crypte
-  { id: "ms_c_zones", w: 3, g: "v", title: "Neuf zones ouvertes dans un bâtiment", kind: "zonesOpenMax", target: 9, icon: "images/Production/mine.webp", go: "production" },
+  { id: "ms_c_zones", w: 3, g: "v", title: "Neuf zones au niveau 14", kind: "zonesAtLevel", arg: 14, target: 9, icon: "images/Production/mine.webp", go: "production" },
   { id: "ms_c_entrepot", w: 3, g: "v", title: "Entrepôt niveau 10", kind: "building", arg: "warehouse", target: 10, icon: "images/Icons/village_buildings/warehouse_expanded.webp", go: "b:warehouse" },
   { id: "ms_c_taverne", w: 3, g: "v", title: "Taverne niveau 6", kind: "building", arg: "tavern", target: 6, icon: "images/Icons/village_buildings/tavern.webp", go: "b:tavern" },
   { id: "ms_c_rang", w: 3, g: "h", title: "Un sort au rang 4", kind: "spellRankMax", target: 4, icon: "images/Icons/special_attacks/spell_ranks.webp", go: "skills" },
   { id: "ms_c_palier", w: 3, g: "h", title: "Un compagnon au palier 15", kind: "companionUpgMax", target: 15, icon: "images/Companions/ysolt.webp", go: "companions" },
   { id: "ms_c_entrainement", w: 3, g: "h", title: "Une caractéristique entraînée à 150", kind: "trainingMax", target: 150, icon: "images/Icons/village_buildings/training_grounds.webp", go: "training" },
   // Montagne
-  { id: "ms_m_zones", w: 4, g: "v", title: "Trois zones au niveau 14", kind: "zonesAtLevel", arg: 14, target: 3, icon: "images/Production/well.webp", go: "production" },
+  { id: "ms_m_zones", w: 4, g: "v", title: "Trois zones au niveau 17", kind: "zonesAtLevel", arg: 17, target: 3, icon: "images/Production/well.webp", go: "production" },
   { id: "ms_m_entrepot", w: 4, g: "v", title: "Entrepôt niveau 14", kind: "building", arg: "warehouse", target: 14, icon: "images/Icons/village_buildings/warehouse_expanded.webp", go: "b:warehouse" },
   { id: "ms_m_terrain", w: 4, g: "v", title: "Terrain d'entraînement niveau 18", kind: "building", arg: "training", target: 18, icon: "images/Icons/village_buildings/training_grounds.webp", go: "b:training" },
   { id: "ms_m_rang", w: 4, g: "h", title: "Un sort au rang 5", kind: "spellRankMax", target: 5, icon: "images/Icons/special_attacks/spell_ranks.webp", go: "skills" },
@@ -310,7 +310,7 @@ var MILESTONE_BOOKS = {
     ["images/Icons/resources/verre_trempe_icon.webp", "Un rang coûte de l'or et 2 matériaux du monde. Comme les sorts du héros, le rang 2 s'ouvre au Désert, le 3 aux Ruines."]] },
   caravane: { title: "Les caravanes", icon: "images/Icons/village_buildings/caravan.webp", tips: [
     ["images/Icons/village_buildings/merchant_hall.webp", "La Halle marchande envoie des caravanes vers les marchés des mondes déjà libérés : trajet court (1 h), moyen (4 h) ou long (8 h)."],
-    ["images/Icons/gold_icon.webp", "Au retour, elle rapporte de l'or et des ressources du monde visité ; le trajet long peut ramener une rareté."]] }
+    ["images/Icons/gold_icon.webp", "Au retour, elle rapporte de l'or et des ressources du monde visité ; le trajet long ramène à coup sûr deux matériaux rares."]] }
 };
 window.MILESTONE_REWARD_BY_WORLD = MILESTONE_REWARD_BY_WORLD;
 window.VILLAGE_MILESTONES = VILLAGE_MILESTONES;

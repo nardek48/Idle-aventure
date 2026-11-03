@@ -48,6 +48,8 @@ var WorkshopsSystem = {
     if (!game.production || typeof game.production !== "object") game.production = {};
     if (!game.production[buildingId] || typeof game.production[buildingId] !== "object") {
       game.production[buildingId] = {};
+      // v3.616.0 : même marque que ProductionPlotsSystem.ensurePlots (bâtiment encore fermé)
+      if (window.ProductionManager && !ProductionManager.isBuildingUnlocked(buildingId)) game.production[buildingId].lockedStub = true;
     }
     var bucket = game.production[buildingId];
     if (!bucket.workshops || typeof bucket.workshops !== "object") bucket.workshops = {};

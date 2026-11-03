@@ -23,8 +23,8 @@
    réexaminer avec son propre banc — point ouvert O11. */
 /* Chantier du héros, lot H1 (décisions Seb 26/10/2026) : le plafond absolu passe à 200 (Terrain 18, acte IV
    de la Montagne) et chaque niveau au-delà de 150 coûte ×15 ; les niveaux 1 à 150 gardent le prix v3.248.0. */
-var TRAINING_HARD_CAP = 200;
-var TRAINING_PRICE_TRANCHES = [{ from: 150, mult: 15 }]; // niveau acheté >= from : prix × mult
+var TRAINING_HARD_CAP = 230; // rythme de la Tour (Seb, 03/11) : Terrain 19 à 21
+var TRAINING_PRICE_TRANCHES = [{ from: 60, mult: 4 }, { from: 150, mult: 15 }]; // niveau acheté >= from : prix × mult ; v3.613.0 : ×4 dès le Désert (la Forêt s'arrête à 60, banc de campagne : ×5 bloque aux Ruines)
 
 var UPGRADES = [
   {
@@ -105,5 +105,15 @@ var UPGRADES = [
 
 /* v3.355.0 : AETHER_SHOP et son achat retirés (boutique vide depuis la v3.322.0, remplacée par
    la Mémoire). v3.412.0 : game.aetherUpgrades n’est plus lu ni écrit. */
+/* v3.614.0 (chantier stats du héros, option B, banc du 01/11) : la caractéristique de la classe et l'Endurance montent au
+   plafond du Terrain ; les trois autres s'arrêtent à 70 % de ce plafond (un niveau déjà acquis est toujours gardé). */
+var TRAINING_SECONDARY_SHARE = 0.7;
+function isTrainingSecondaryId(id) {
+  if (id === "utrain_endurance") return false;
+  var main = (typeof getHeroMainStat === "function" && typeof game !== "undefined") ? getHeroMainStat(game.heroId).stat : "power";
+  return id !== "utrain_" + main;
+}
 window.TRAINING_HARD_CAP = TRAINING_HARD_CAP;
+window.TRAINING_SECONDARY_SHARE = TRAINING_SECONDARY_SHARE;
+window.isTrainingSecondaryId = isTrainingSecondaryId;
 window.TRAINING_PRICE_TRANCHES = TRAINING_PRICE_TRANCHES;

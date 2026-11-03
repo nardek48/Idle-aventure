@@ -176,6 +176,53 @@ var SCENE_NODES = {
         endurance: { stat: "endurance", label: "Avancer lentement" }
       }
     },
+    /* v3.626.0 (Tour, lot T-1) — gabarits de la route du nord (traversee_tour). */
+    plaine_grise: {
+      id: "plaine_grise", biome: "tower", name: "La plaine grise",
+      baseDifficulty: 5,
+      options: {
+        power: { stat: "power", label: "Couper droit dans l'herbe morte" },
+        precision: { stat: "precision", label: "Suivre les traces de la carriole" },
+        endurance: { stat: "endurance", label: "Marcher sans s'arrêter" }
+      }
+    },
+    vent_absent: {
+      id: "vent_absent", biome: "tower", name: "L'air immobile",
+      baseDifficulty: 5,
+      options: {
+        power: { stat: "power", label: "Forcer le pas" },
+        precision: { stat: "precision", label: "Se guider sur la braise" },
+        endurance: { stat: "endurance", label: "Respirer lentement" }
+      }
+    },
+    porte_ouverte: {
+      id: "porte_ouverte", biome: "tower", name: "La porte ouverte",
+      baseDifficulty: 4,
+      options: {
+        power: { stat: "power", label: "Entrer d'un pas" },
+        precision: { stat: "precision", label: "Regarder où les autres ont marché" },
+        endurance: { stat: "endurance", label: "Attendre que l'air bouge" }
+      }
+    },
+    /* v3.630.0 (Tour, acte IV) — gabarits de la faille (faille_tour). */
+    escalier_lumiere: {
+      id: "escalier_lumiere", biome: "tower", name: "L'escalier de lumière",
+      baseDifficulty: 6,
+      options: {
+        power: { stat: "power", label: "Monter vite, sans regarder" },
+        precision: { stat: "precision", label: "Poser le pied où la lumière est dense" },
+        endurance: { stat: "endurance", label: "Une marche, puis attendre" }
+      }
+    },
+    fente_ouverte: {
+      id: "fente_ouverte", biome: "tower", name: "La fente",
+      baseDifficulty: 6,
+      options: {
+        power: { stat: "power", label: "Franchir le bord d'un saut" },
+        precision: { stat: "precision", label: "Longer la fente sans la toucher" },
+        endurance: { stat: "endurance", label: "Tenir debout dans le froid" }
+      }
+    },
     /* v3.488.0 (Montagne, lot M-2) — gabarits de la montée (traversee_montagne). */
     lacets_de_cendre: {
       id: "lacets_de_cendre", biome: "mountain", name: "Le chemin en lacets",

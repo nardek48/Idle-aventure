@@ -601,7 +601,7 @@ ok(!!withGold, "au moins une mission affiche un résumé de récompense avec de 
 
 console.log("\n[24] Campement = hub (3.103.1) : cartes de mission pleines, actions déléguées");
 game = freshCombat("knight"); giveWeapon(); game.activeTab = "campement";
-var campHtml = g.buildCampHTML();
+var campHtml = (g.buildCampHTML("feu") + g.buildCampHTML("missions")); // v3.594.0 : la santé est dans l'onglet « Le feu »
 ok(campHtml.indexOf("camp-mission-card") !== -1, "l'écran Campement affiche des cartes de mission");
 ok(campHtml.indexOf("Résumé des quêtes") === -1 && typeof g.buildCampQuestSummaryHTML === "undefined", "ancien résumé texte retiré");
 var boardHtml = g.buildCampMissionBoardHTML();
@@ -621,7 +621,7 @@ ok(campHtml.indexOf("camp-regen-fill") === -1, "bloc Régénération : barre ret
 ok(campHtml.indexOf("PV/min") !== -1 && campHtml.indexOf("camp-fire-eta") !== -1 && campHtml.indexOf("camp-help-btn") !== -1, "bloc Régénération : rythme, ETA et bouton « ? » sur une ligne");
 ok(campHtml.indexOf("camp-regen-desc") === -1, "bloc Régénération : explication repliée par défaut");
 run("toggleCampRegenHelp()");
-ok(g.buildCampHTML().indexOf("camp-regen-desc") !== -1, "bloc Régénération : le « ? » déplie l'explication");
+ok(g.buildCampHTML("feu").indexOf("camp-regen-desc") !== -1, "bloc Régénération : le « ? » déplie l'explication");
 run("toggleCampRegenHelp()");
 run("CampManager.refreshCampCard()");
 ok(true, "refreshCampCard() (nouvelles barres) ne plante pas");
@@ -1004,7 +1004,7 @@ ok(g.CampManager.eatRation("ration") === false, "PV pleins : ration refusée");
 ok(typeof g.CAMP_MEAL_COST === "undefined" && typeof g.CampManager.eat === "undefined", "ancien système Repas (viande+eau) retiré");
 game.activeTab = "campement";
 game.heroHp = Math.floor(game.heroMaxHp * 0.5); // PV pleins -> "Pas faim" masque la liste (comportement voulu)
-var campHtml = g.buildCampHTML();
+var campHtml = (g.buildCampHTML("feu") + g.buildCampHTML("missions")); // v3.594.0 : la santé est dans l'onglet « Le feu »
 ok(campHtml.indexOf("camp-ration-row") !== -1 && campHtml.indexOf("Petite ration") !== -1 && campHtml.indexOf("Grande ration") !== -1, "écran Campement : carte Rations avec les 3 types");
 game.heroHp = game.heroMaxHp;
 
@@ -2391,22 +2391,22 @@ console.log("\n== v3.137.0 : recette Grande ration (Cuisine de camp) ==");
   run("StoryQuestManager.ensure();");
   var recipe = g.WorkshopsSystem.getRecipe("cuisine_de_camp", "grande_ration");
   ok(!!recipe, "recette grande_ration présente sur cuisine_de_camp");
-  ok(recipe.inputs.length === 2 && recipe.inputs[0].resourceId === "ration" && recipe.inputs[0].quantity === 1
-    && recipe.inputs[1].resourceId === "seve_aeswyn" && recipe.inputs[1].quantity === 3,
-    "intrants : 1 Ration moyenne + 3 Sève d'Aeswyn (option B)");
+  ok(recipe.inputs[0].resourceId === "ration" && recipe.inputs[0].quantity === 1
+    && recipe.inputs[1].resourceId === "viande" && recipe.inputs[1].quantity === 15 && recipe.inputs[2].resourceId === "eau" && recipe.inputs[2].quantity === 10 && recipe.inputs.length === 3,
+    "intrants : 1 Ration moyenne + 15 Viandes + 10 Eau (v3.608.0, plus de Sève)");
   ok(recipe.craftTimeMs === 12000, "temps de base 12 s");
 
   // fullResetState donne 3 Ration moyenne de départ (v3.107.1) : on repart de 0 pour un test net.
-  run("game.resources.ration = 0; game.resources.seve_aeswyn = 0;");
+  run("game.resources.ration = 0; game.resources.viande = 0; game.resources.eau = 0;");
   ok(g.WorkshopsSystem.getMaxCraftTimes("cuisine_de_camp", "grande_ration") === 0, "pas assez de stock : 0 craft possible");
   g.WarehouseManager.addResource("ration", 2, true);
-  g.WarehouseManager.addResource("seve_aeswyn", 3, true);
-  ok(g.WorkshopsSystem.getMaxCraftTimes("cuisine_de_camp", "grande_ration") === 1, "stock limité par la Sève (3 -> 1 craft), pas par la Ration (2)");
+  g.WarehouseManager.addResource("viande", 15, true); g.WarehouseManager.addResource("eau", 30, true);
+  ok(g.WorkshopsSystem.getMaxCraftTimes("cuisine_de_camp", "grande_ration") === 1, "stock limité par la Viande (15 -> 1 craft), pas par la Ration (2) ni l'Eau (30)");
   ok(g.WorkshopsSystem.canCraft("cuisine_de_camp", "grande_ration", 1) === true, "canCraft vrai avec le stock réuni");
 
   var okEnqueue = g.WorkshopsSystem.enqueueCraft("cuisine_de_camp", "grande_ration", 1);
   ok(okEnqueue === true, "mise en file réussie");
-  ok(g.WarehouseManager.getAmount("ration") === 1 && g.WarehouseManager.getAmount("seve_aeswyn") === 0, "intrants déduits à la mise en file (1 Ration, 3 Sève)");
+  ok(g.WarehouseManager.getAmount("ration") === 1 && g.WarehouseManager.getAmount("viande") === 0 && g.WarehouseManager.getAmount("eau") === 20, "intrants déduits à la mise en file (1 Ration, 15 Viandes, 10 Eau)");
   var queue = g.WorkshopsSystem.getQueue("cuisine_de_camp");
   var entry = queue[queue.length - 1];
   ok(entry.recipeId === "grande_ration" && entry.msRemaining === 12000, "entrée en file : recipeId + durée totale corrects");
@@ -2418,15 +2418,16 @@ console.log("\n== v3.137.0 : recette Grande ration (Cuisine de camp) ==");
   var pain = g.WAREHOUSE_RESOURCES.pain;
   ok(pain.desc.indexOf("Boulangerie") !== -1 && pain.desc.indexOf("Atelier de Construction") === -1, "desc Pain corrigée (Boulangerie, plus Atelier de Construction)");
   var seve = g.WAREHOUSE_RESOURCES.seve_aeswyn;
-  ok(seve.desc.indexOf("Grande ration") !== -1, "desc Sève d'Aeswyn mentionne son usage de craft");
+  ok(seve.desc.indexOf("Résine durcie") !== -1 && seve.desc.indexOf("Grande ration") === -1, "desc Sève d'Aeswyn : son usage de craft (Résine durcie), plus la Grande ration (v3.608.0)");
 })();
 
 
 console.log("\n[UX-PROD] Tableau de bord Production v3.191.0 — routeur, vue Ateliers, actions groupées");
 (function () {
   // état : les 6 bâtiments débloqués, zones assurées
-  run("game.quarryUnlocked = true; game.huntBuildingUnlocked = true; game.wellUnlocked = true;" +
-      "game.sawmillUnlocked = true; game.mineUnlocked = true; game.farmUnlocked = true;" +
+  // v3.616.0 : drapeaux posés là où le jeu les lit (avant, la migration « déjà en jeu » ouvrait tout par erreur)
+  run("var ep = game.explorationProgression; ep.quarryUnlocked = true; ep.huntBuildingUnlocked = true; ep.wellUnlocked = true;" +
+      "ep.sawmillUnlocked = true; ep.mineUnlocked = true; ep.farmUnlocked = true;" +
       "ProductionManager.ensure();");
   run("Object.keys(PRODUCTION_BUILDINGS).forEach(function (id) { ProductionPlotsSystem.ensurePlots(id); });");
 
@@ -2483,15 +2484,15 @@ console.log("\n[UX-PROD] Tableau de bord Production v3.191.0 — routeur, vue At
   // 3. v3.414.0 (VUI-1) : le détail est une FEUILLE (ateliers + zones), plus une sous-page
   run("productionDetailBuildingId = 'farm'; productionSheetTab = 'zones';");
   var detailHtml = run("buildProductionSheetHTML('farm')");
-  ok(detailHtml.indexOf("prod-sheet") !== -1 && detailHtml.indexOf("farm-plots-grid") !== -1, "feuille, onglet Zones = grille de zones");
-  ok(detailHtml.indexOf("prod-rows") !== -1 && detailHtml.indexOf("Rangée 1") !== -1 && detailHtml.indexOf("Défricher une zone") === -1, "sous la grille : une barre par rangée ouverte (v3.479.0)");
+  ok(detailHtml.indexOf("prod-sheet") !== -1 && detailHtml.indexOf("pc3-list") !== -1, "feuille, onglet Zones = les 3 parcelles (v3.612.0)");
+  ok(detailHtml.indexOf("pc3-auto") !== -1 && detailHtml.indexOf("Rangée 1") === -1, "sous les parcelles : l'achat automatique, plus de barres par rangée (v3.612.0)");
   ok(detailHtml.indexOf("wk-tile") === -1, "onglet Zones : aucun atelier");
   ok(detailHtml.indexOf("closeProductionBuildingDetail()") !== -1, "la feuille se ferme par sa croix");
   // v3.417.0 (atelier zones Z2) : plus de sélection — toucher une zone ouvre sa fenêtre ; le bouton du bas ne bouge plus
   ok(detailHtml.indexOf("openZoneWindow('farm', 0)") !== -1 && detailHtml.indexOf("selectProductionPlot") === -1, "toucher une zone ouvre sa fenêtre (plus de sélection)");
   run("productionZoneWin = { b: 'farm', i: 0 };");
   var detailSel = run("buildProductionSheetHTML('farm')");
-  ok(detailSel.indexOf("zone-win") !== -1 && detailSel.indexOf("prod-rows") !== -1, "fenêtre ouverte par-dessus, les barres de rangée restent en place");
+  ok(detailSel.indexOf("zone-win") !== -1 && detailSel.indexOf("pc3-list") !== -1, "fenêtre ouverte par-dessus, les parcelles restent en place");
   run("productionZoneWin = null;");
   run("productionSheetTab = 'shops';");
   var sheetShops = run("buildProductionSheetHTML('farm')");
@@ -2789,13 +2790,13 @@ console.log("\n[UX-PROD] Tableau de bord Production v3.191.0 — routeur, vue At
   ok(srcsVides.length === 0, "[STATS] aucune source listée quand aucune ne contribue");
 
   // plafond
-  run("game.upgrades.utrain_precision = 200; StatsSystem.recalcStats();"); // v3.308.0 : plafond commun ; H1 : 200
+  run("game.upgrades.utrain_precision = 230; StatsSystem.recalcStats();"); // v3.308.0 : plafond commun ; H1 : 200 ; Tour : 230
   var stCap = run("buildHerosSheetHTML()");
   /* v3.213.1 : deux murs, deux mots. « Maximum » = plafond absolu d'upgrades.js
      (Précision plafonne à 60), rien ne le lèvera ; « Terrain » = plafond du
      bâtiment, levable par un chantier. */
   ok(stCap.indexOf("Maximum") !== -1, "[STATS] une stat au maximum absolu le dit au lieu d'afficher un prix");
-  ok(stCap.indexOf("is-training-wall") === -1 || run("game.upgrades.utrain_precision") < 200,
+  ok(stCap.indexOf("is-training-wall") === -1 || run("game.upgrades.utrain_precision") < 230,
     "[STATS] le maximum absolu n'est pas confondu avec le mur du Terrain");
 
   // ---------- sous-onglet Capacités ----------
@@ -3847,7 +3848,7 @@ console.log("\n[23b] v3.214.0 (lot V-3) \u2014 Mat\u00e9riau de monde et atelier
   ok(M.getAffordability("training").all === true, "avec le Verre trempé, le chantier repart");
 
   /* --- Le Terrain va d\u00e9sormais jusqu'au plafond historique ------------ */
-  ok(g.VILLAGE_BUILDINGS.training.maxLevel === 18, "Terrain port\u00e9 \u00e0 18 niveaux (H1)");
+  ok(g.VILLAGE_BUILDINGS.training.maxLevel === 21, "Terrain port\u00e9 \u00e0 21 niveaux (H1 ; rythme de la Tour, 03/11)");
   g.game.village.buildings.training.level = 18;
   ok(g.getTrainingCapLevels() === 200, "Terrain au maximum : plafond d'entra\u00eenement 200 (H1)");
   g.game.village.buildings.training.level = 13;
@@ -4270,9 +4271,10 @@ console.log("\n[29b] v3.220.0 \u2014 \u00c9chelle de monde sur l'\u00e9quipement
   /* --- La courbe monte et reste loin de celle des PV -------------------- */
   var croissante = true;
   for (var i = 1; i < g.EQUIP_WORLD_SCALE.length; i++) {
-    if (g.EQUIP_WORLD_SCALE[i] <= g.EQUIP_WORLD_SCALE[i - 1]) croissante = false;
+    // v3.625.1 (Seb) : la Tour reprend l'échelle de la Montagne (×6) ; le saut vient du Légendaire
+    if (g.EQUIP_WORLD_SCALE[i] < g.EQUIP_WORLD_SCALE[i - 1] || (i < 5 && g.EQUIP_WORLD_SCALE[i] === g.EQUIP_WORLD_SCALE[i - 1])) croissante = false;
   }
-  ok(croissante, "la courbe monte \u00e0 chaque monde");
+  ok(croissante, "la courbe monte \u00e0 chaque monde (la Tour reste \u00e0 \u00d76, comme la Montagne)");
   ok(g.EQUIP_WORLD_SCALE[0] === 1, "le monde de d\u00e9part n'est pas touch\u00e9 : rien ne change en For\u00eat");
   ok(g.EQUIP_WORLD_SCALE[5] < 214,
     "elle reste tr\u00e8s en dessous de la courbe des PV ennemis (\u00d7214) : elle compl\u00e8te les stats, elle ne les remplace pas");
@@ -4283,7 +4285,7 @@ console.log("\n[29b] v3.220.0 \u2014 \u00c9chelle de monde sur l'\u00e9quipement
   ok(forest.worldIndex === 0 && tour.worldIndex === 5, "l'objet est estampill\u00e9 de son monde d'origine");
   var r = g.EQUIPMENT_SLOT_CONFIG.weapon.ranges.common;
   ok(forest.value >= r[0] && forest.value <= r[1], "en For\u00eat, la valeur reste dans la fourchette d'origine");
-  ok(tour.value > r[1] * 5, "\u00e0 la Tour, la m\u00eame rarit\u00e9 vaut bien davantage");
+  ok(tour.value >= r[0] * 6 - 0.5, "\u00e0 la Tour, la m\u00eame rarit\u00e9 vaut bien davantage (\u00d76, v3.625.1)");
 
   /* --- Une armure ne change PAS d'un monde \u00e0 l'autre ------------------ */
   var armF = g.generateEquipmentItem("armor", "legendary", 0);
@@ -4501,8 +4503,8 @@ console.log("\n[32b] v3.223.0 \u2014 Donjons : plafond par monde et mat\u00e9ria
 
   var sansMateriau = (g.DUNGEONS || []).filter(function (t) { return !t.specialResourceId; });
   // v3.321.0 : la Cité engloutie rapporte du Verre des dunes ; v3.430.0 : le Sanctuaire, de la Pierre errante — trois à venir
-  ok(sansMateriau.length === 1 && D.getById(2).specialResourceId === "verre_des_dunes" && D.getById(3).specialResourceId === "pierre_errante" && D.getById(4).specialResourceId === "cire_sepulcre" && D.getById(5).specialResourceId === "cendre_vive",
-    "la Cit\u00e9 rapporte du Verre des dunes, le Sanctuaire de la Pierre errante, l'Ossuaire de la Cire, la Gueule de la Cendre vive ; le Sommet attend le sien"); // v3.490.0
+  ok(sansMateriau.length === 0 && D.getById(2).specialResourceId === "verre_des_dunes" && D.getById(3).specialResourceId === "pierre_errante" && D.getById(4).specialResourceId === "cire_sepulcre" && D.getById(5).specialResourceId === "cendre_vive" && D.getById(6).specialResourceId === "givre_bleu",
+    "la Cit\u00e9 rapporte du Verre des dunes, le Sanctuaire de la Pierre errante, l'Ossuaire de la Cire, la Gueule de la Cendre vive, le Sommet du Givre bleu"); // v3.490.0 ; v3.629.0
   var tousDeclares = (g.DUNGEONS || []).every(function (t) { return typeof t.worldRequired === "number"; });
   ok(tousDeclares, "chaque donjon d\u00e9clare son monde requis");
 
@@ -5300,7 +5302,7 @@ console.log("\n[47b] v3.245.0 \u2014 Refonte des Donjons");
   /* --- Données : six donjons, un par monde, id = ancien palier --- */
   ok(g.DUNGEONS.length === 6 && g.DUNGEONS.every(function (d, i) { return d.id === i + 1 && d.worldId === g.WORLDS[i].id; }), "six donjons, id 1..6 = index du monde + 1");
   ok(typeof g.DUNGEON_TIERS === "undefined", "DUNGEON_TIERS a disparu (absorb\u00e9 dans DUNGEONS)");
-  ok(g.DUNGEONS[5].locked === true && D.getLockReason(6) === "data", "la Tour est d\u00e9clar\u00e9e locked (raison 'data')");
+  ok(g.DUNGEONS[5].locked === false && g.DUNGEONS[5].requiresStoryStep === "tour_11" && D.getLockReason(6) === "data", "le Sommet interdit s'ouvre par l'Histoire (tour_11, v3.629.0), raison 'data' avant");
   ok(g.DUNGEONS.every(function (d) { return d.boss && g.BOSS_DB[d.boss.baseId] && d.boss.name && d.boss.archetype; }), "chaque donjon porte un boss identitaire (baseId connu, nom, trait)");
   ok(g.DUNGEON_MARKS.length === 5 && !g.DUNGEON_MARKS.some(function (m) { return m.id === "aff_greed"; }), "cinq Marques, Avarice parqu\u00e9e");
   ok(g.DUNGEON_MARKS.every(function (m) { return /^aff_/.test(m.id) && /afflictions\//.test(m.icon); }), "id et ic\u00f4nes h\u00e9rit\u00e9s des anciennes afflictions (aucune migration)");
@@ -5601,8 +5603,8 @@ console.log("\n[50b] v3.248.0 \u2014 Prix des entra\u00eenements et plafond de d
   ok(g.TRAINING_BASE_CAP === 20 && g.getTrainingCapLevels() === 20, "socle sans b\u00e2timent : 20 niveaux");
   run("game.village.buildings.training.level = 3;");
   ok(g.getTrainingCapLevels() === 50, "Terrain niveau 3 : 20 + 3 \u00d7 10 = 50");
-  run("game.village.buildings.training.level = 19;");
-  ok(g.getTrainingCapLevels() === 200, "born\u00e9 \u00e0 200, le plafond absolu (H1)");
+  run("game.village.buildings.training.level = 22;");
+  ok(g.getTrainingCapLevels() === 230, "born\u00e9 \u00e0 230, le plafond absolu (H1 ; Tour, 03/11)");
 
   /* Le plafond ne fait jamais redescendre : une partie en cours garde ses niveaux. */
   run("game.village.buildings.training.level = 0; game.upgrades.utrain_power = 63;");
@@ -6390,6 +6392,7 @@ console.log("\n[60c] v3.258.0 \u2014 Cartes Vivantes C-5 : Arbre-m\u00e8re");
   /* Défaite : échec de secteur (régression), compteur intact. */
   LM._rand = function () { return 0.99; };
   game.heroHp = game.heroMaxHp;
+  run("WorldDays.ensure().done = 0;"); // v3.602.0 : la 3e sortie ferait tomber la nuit (nouveau jour de jeu)
   LM.start(M, "arbremere");
   run("CombatEngine.onHeroDefeated();");
   ok(!LM.getFight() && LM.getDailyWins(M, "arbremere") === 2 && LM.getState(M, "gue").state === "libere" && LM.getState(M, "arbremere").state === "recouvert", "mort : l'Arbre-m\u00e8re elle-m\u00eame est reprise (v3.366.0), le gu\u00e9 reste, les victoires du jour restent");
@@ -6658,7 +6661,11 @@ console.log("\n[66b] v3.264.0 \u2014 Battue avec le Village, Atelier de Construc
   ok(g.MissionBoard.list().some(function (m) { return m.id === "hunt_hq_forest_battue" && m.status === "running"; }), "une battue d\u00e9j\u00e0 lanc\u00e9e (save ant\u00e9rieure) reste visible");
   run("HuntQuestManager.stop();");
   run("StoryQuestManager.ensure(); StoryQuestManager.getState('forest').currentStep = " + g.STORY_QUESTS.forest.steps.findIndex(function (s) { return s.id === "forest_06"; }) + "; StoryQuestManager.acceptStep('forest');");
-  ok(game.unlockedTabs.village === true && g.MissionBoard.list().some(function (m) { return m.id === "hunt_hq_forest_battue"; }), "« La meute affam\u00e9e » accept\u00e9e : la Battue appara\u00eet");
+  // v3.616.0 (retour Seb) : le Village s'ouvre à la réussite de la Meute, plus à l'acceptation
+  ok(!game.unlockedTabs.village && !g.MissionBoard.list().some(function (m) { return m.id === "hunt_hq_forest_battue"; }), "« La meute affam\u00e9e » accept\u00e9e : ni Village ni Battue avant la r\u00e9ussite (v3.616.0)");
+  game.adventureQuestsCompleted.hq_wolf_pack = true;
+  run("StoryQuestManager.claimStep('forest');");
+  ok(game.unlockedTabs.village === true && g.MissionBoard.list().some(function (m) { return m.id === "hunt_hq_forest_battue"; }), "« La meute affam\u00e9e » r\u00e9ussie : le Village s'ouvre, la Battue appara\u00eet");
 
   var M = g.VillageBuildingManager;
   game.village = {}; M.ensure();
@@ -6749,18 +6756,21 @@ console.log("\n[64b] v3.261.0 \u2014 Qu\u00eates de combat : chaque d\u00e9part 
   st.currentStep = idxOf("forest_13"); st.accepted = false;
   run("StoryQuestManager.acceptStep('forest');");
   var sMark = chapitre.steps[idxOf("forest_13")];
+  // v3.621.1 : le compteur suit les VAGUES franchies (vague en cours, sans ennemi debout ici), plus les kills
+  var aeAvant = g.CombatActors.aliveEnemies; g.CombatActors.aliveEnemies = function () { return []; };
   game.dungeonRun = { active: true, wave: 3, dungeonId: 1, marks: ["m1"] };
   game.totalKills += 3; run("StoryQuestManager._trackKills();");
   ok(st.counters.coeurKillsMarked === 3, "run 1 : 3 vagues sous Marque");
-  game.dungeonRun = { active: true, wave: 1, dungeonId: 1, marks: ["m1"] }; // mort puis nouveau run
+  game.dungeonRun = { active: true, wave: 2, dungeonId: 1, marks: ["m1"] }; // mort puis nouveau run (2 vagues franchies)
   game.totalKills += 2; run("StoryQuestManager._trackKills();");
   ok(st.counters.coeurKillsMarked === 2 && sMark.check(game) === false, "run 2 : le compteur repart de 0 (2, pas 5)");
   var tag = game.dungeonRun.storyRunTag;
   var dSave = JSON.parse(JSON.stringify(game.dungeonRun));
   game.dungeonRun = dSave; // rechargement : l'étiquette est sauvegardée avec le run
-  game.totalKills += 3; run("StoryQuestManager._trackKills();");
+  game.dungeonRun.wave = 5; game.totalKills += 3; run("StoryQuestManager._trackKills();");
   ok(game.dungeonRun.storyRunTag === tag && st.counters.coeurKillsMarked === 5 && sMark.check(game) === true, "rechargement en plein run : pas de remise \u00e0 z\u00e9ro, 5 vagues atteintes");
   game.dungeonRun = { active: false, wave: 0, dungeonId: 1, marks: [] };
+  g.CombatActors.aliveEnemies = aeAvant;
 
   /* Chasse et donjon : départ à 0 par construction */
   ok(/game\.huntRun = \{ active: true, questId: questId, killsInLot: 0 \}/.test(String(g.HuntQuestManager.start)), "chasse : chaque lot part de 0 kill");
@@ -8066,7 +8076,7 @@ console.log("\n[86] v3.289.0 — Plafonds par monde du village et de la producti
   ok(P.isPlotRowOpen(2) && !P.isPlotRowOpen(3), "Forêt : zones 1 à 3 ouvrables, la 4e non");
   run("WarehouseManager.addResource('fer', 5000, true); WarehouseManager.addResource('pierre', 5000, true); WarehouseManager.addResource('eau', 5000, true);");
   var refus = P.unlockPlot("sawmill", 3);
-  ok(refus.ok === false && refus.reason === "S'ouvre au Désert oublié", "défricher une zone du Désert est refusé, avec le monde nommé");
+  ok(refus.ok === false && refus.reason === "Zone invalide", "v3.612.0 : une 4e zone n'existe plus, refusée");
   ok(P.unlockPlot("sawmill", 1).ok === true, "une zone de la Forêt se défriche normalement");
   plots[0].level = 5; // relevé 2 : Forêt 5
   var r = P.upgradePlot("sawmill", 0);
@@ -8077,7 +8087,7 @@ console.log("\n[86] v3.289.0 — Plafonds par monde du village et de la producti
   ok(P.getTotalRatePerMin("sawmill") > avant && P.getOpenPlotsCount("sawmill") === 3,
     "une zone déjà ouverte au-delà du plafond reste ouverte et produit");
   monde(1);
-  ok(P.isPlotRowOpen(5) && !P.isPlotRowOpen(6) && P.getPlotLevelCap() === 8, "Désert : deux lignes, zones au niveau 8 (relevé 2)");
+  ok(!P.isPlotRowOpen(3) && P.getPlotLevelCap() === 10, "Désert : toujours 3 parcelles, niveau 10 (v3.612.0)");
   monde(0);
 
   /* --- Ateliers : 2 en Forêt --- */
@@ -8211,7 +8221,7 @@ console.log("\n[88] v3.292.0 — Carte vivante plein écran");
   ok(!/lmx-legend"/.test(html), "légende repliée par défaut");
   run("lmxToggleLegend()");
   html = run("buildMapHTML()");
-  ok(/lmx-legend"/.test(html) && (html.match(/lmx-legend-row/g) || []).length === 10, "légende ouverte : sept états, les points de l'anneau, l'objectif et l'élite (v3.549.0)");
+  ok(/lmx-legend"/.test(html) && (html.match(/lmx-legend-row/g) || []).length === 11, "légende ouverte : sept états, les points de l'anneau, l'objectif, l'élite et la quête de compagnon (v3.600.0)");
   run("lmxToggleLegend()");
   run("selectLivingMapSector('gue')");
   html = run("buildMapHTML()");
@@ -8922,7 +8932,7 @@ console.log("\n[105] v3.308.0 — boutique (25 % de rareté du sommet) et plafon
 (function () {
   run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
   var ids = ["utrain_power", "utrain_endurance", "utrain_celerity", "utrain_precision", "utrain_will"];
-  ok(ids.every(function (id) { return g.UPGRADES.filter(function (u) { return u.id === id; })[0].maxLevel === 200; }), "les cinq entraînements plafonnent à 200 (H1)");
+  ok(ids.every(function (id) { return g.UPGRADES.filter(function (u) { return u.id === id; })[0].maxLevel === 230; }), "les cinq entraînements plafonnent à 230 (H1 ; Tour, 03/11)");
   ok(g.EquipShopManager.getTopRarityCap(6) === 1 && g.EquipShopManager.getTopRarityCap(8) === 2 && g.EquipShopManager.getTopRarityCap(11) === 2 && g.EquipShopManager.getTopRarityCap(3) === 1, "plafond : 1 sur 6, 2 sur 8 à 11, minimum 1");
   game = g.game; game.equipShopStarterServed = true;
   var saveW = g.WorldManager.worldIndex;
@@ -9746,8 +9756,8 @@ console.log("\n[120] v3.325.0 — Plafond du Terrain d'entraînement par acte");
   pose(F.length, 0, { 0: true, 1: true });
   game.village.buildings.training.level = 9;
   ok(VB.getMaxLevel("training") === 9 && VB.isMaxLevel("training"), "Terrain 9 déjà construit à l'acte I : rien n'est repris, pas de niveau au-delà");
-  pose(0, 0, { 0: true, 1: true, 2: true, 3: true, 4: true, 5: true }); // v3.486.0 : la Montagne a son entrée, la Tour non
-  ok(WC.getTrainingActCap() === Infinity, "monde sans entrée d'acte : aucun plafond d'acte");
+  pose(0, 0, { 0: true, 1: true, 2: true, 3: true, 4: true, 5: true }); // v3.625.0 : la Tour a aussi son entrée (T-0)
+  ok(WC.getTrainingActCap() === 18, "la Tour : Terrain 18 dès l'acte I (v3.625.0)");
   game.storyQuests.forest.skipped = true; game.worldsEverReached = { 0: true };
   ok(WC.getVillageCap("training") === 4, "chapitre de la Forêt court-circuité : Forêt au complet (4)");
   ok(WC.getVillageCap("hall") === 4, "les autres bâtiments gardent le plafond du monde");
@@ -9811,7 +9821,7 @@ console.log("\n[122] v3.327.0 — Talents par classe : points plafonnés par act
       "niveau 12 au Désert I : 7 points à placer, 4 en réserve");
     ok(game.talentPoints === 7, "game.talentPoints suit les points disponibles");
     atAct(5, []);
-    ok(TM.cap() === Infinity && TM.available() === 11, "monde sans table : pas de plafond");
+    ok(TM.cap() === 23 && TM.available() === 11, "la Tour : 23 points dès l'acte I (v3.625.0), 11 gagnés");
 
     // --- Règles de l'arbre (T13 libre, T14 tronc à 2) ---
     atAct(1, ["desert_01"]);
@@ -10720,7 +10730,7 @@ console.log("\n[133] v3.338.0 — Hauts faits : catalogue, rattrapage, paliers, 
   var byCat = function (c) { return DB.filter(function (a) { return a.category === c; }); };
 
   // --- Catalogue (H1, H2, H5) ---
-  ok(DB.length === 79, "catalogue : 79 hauts faits, Ruines, Crypte et Montagne compris (v3.561.0 : +5 du Grand Ouvrage) (" + DB.length + ")");
+  ok(DB.length === 89, "catalogue : 89 hauts faits, Ruines, Crypte, Montagne et Tour compris (v3.561.0 : +5 du Grand Ouvrage ; v3.632.0 : +10 de la Tour) (" + DB.length + ")");
   ok(byCat("forest").length === 10 && byCat("forest").filter(function (a) { return a.hidden; }).length === 2, "Forêt : 8 + 2 cachés");
   ok(byCat("desert").length === 11 && byCat("desert").filter(function (a) { return a.hidden; }).length === 3, "Désert : 8 + 3 cachés (v3.362.0 : « Pas une goutte »)");
   ok(["grimoire", "companions"].every(function (c) { return byCat(c).length === 5; }) && byCat("village").length === 10 && byCat("collection").length === 8, "transversales : 5, Village 10 (dont 5 du Grand Ouvrage), 5 et Collection 8");
@@ -11292,7 +11302,7 @@ console.log("\n[145] v3.369.0 — Multilangue, lot L-1 : HUD, Camp, Combat, fen�
   game = freshCombat("knight");
   /* Français : textes inchangés, pluriels corrects */
   I._lang = "fr";
-  var camp = g.buildCampHTML();
+  var camp = (g.buildCampHTML("feu") + g.buildCampHTML("missions"));
   ok(camp.indexOf("camp-hp-fill") !== -1 && camp.indexOf("Manger : ") !== -1 && camp.indexOf("Voir le tableau complet") !== -1, "Camp en français : textes inchangés (v3.411.0 : santé en deux lignes)");
   ok(camp.indexOf("⟦") === -1, "français : aucun ⟦ ⟧ dans le Camp");
   ok(g._tn(1, "{n} sortie", "{n} sorties") === "1 sortie" && g._tn(3, "{n} sortie", "{n} sorties") === "3 sorties", "pluriel « sortie » du Camp");
@@ -11300,7 +11310,7 @@ console.log("\n[145] v3.369.0 — Multilangue, lot L-1 : HUD, Camp, Combat, fen�
   ok(g.ResumeManager.formatAbsence(135 * 60000) === "2 h 15 min" && g.ResumeManager.formatAbsence(26 * 3600e3) === "1 j 2 h", "durée d'absence inchangée (2 h 15 min, 1 j 2 h)");
   /* Pseudo-langue : les textes du lot passent par _t */
   I._lang = "xx";
-  var campX = g.buildCampHTML();
+  var campX = (g.buildCampHTML("feu") + g.buildCampHTML("missions"));
   ok(campX.indexOf("⟦Manger : ") !== -1 && campX.indexOf("⟦Voir le tableau complet⟧") !== -1, "pseudo-langue : Camp extrait");
   ok(g.buildHudHTML().indexOf("⟦Niv. 1⟧") !== -1, "pseudo-langue : HUD extrait (niveau)");
   ok(g.buildCbxCmdHTML().indexOf("⟦ATTAQUER⟧") !== -1, "pseudo-langue : bouton ATTAQUER extrait");
@@ -12144,7 +12154,7 @@ console.log("\n[159] v3.382.0 — Petites Aventures v2 (PA2-1) : écrans (prépa
     Object.keys(g.PA2_ICONS).forEach(function (k) { dataIcons.push(g.PA2_ICONS[k]); });
     // v3.454.0 : icônes demandées à Seb, affichées en icône générique en attendant (règle « icône manquante »)
     // v3.492.5 : toutes les icônes du mode v2 sont livrées (la Montagne comprise) ; plus rien à fournir
-    var aFournir = [];
+    var aFournir = ["images/Icons/resources/corde_tressee_icon.webp", "images/Icons/resources/trousse_maitre_icon.webp", "images/Icons/resources/torche_resinee_icon.webp"]; // v3.606.0 : l'artisan d'Aeswyn (atelier des images)
     var absent = dataIcons.filter(function (s) { return !fs.existsSync(path.join(ROOT, s)) && aFournir.indexOf(s) < 0; });
     ok(absent.length === 0, "icônes du mode v2 : toutes présentes, hors celles à fournir (" + dataIcons.length + ")" + (absent.length ? " — manquent " + absent.join(", ") : ""));
   } catch (e) {
@@ -13176,7 +13186,7 @@ console.log("\n[184] v3.411.0 — Campement R3b, nettoyage de l'Économie");
     var game = freshCombat("knight");
     game.heroHp = Math.floor(game.heroMaxHp * 0.5);
     game.unlockedTabs = game.unlockedTabs || {}; game.unlockedTabs.shop = true;
-    var m = g.buildCampHTML("missions"), d = g.buildCampHTML("depart");
+    var m = (g.buildCampHTML("feu") + g.buildCampHTML("missions")), d = g.buildCampHTML("depart");
     ok(/camp-hp-line/.test(m) && /camp-ration-row/.test(m) && /camp-ration-ib-n/.test(m), "santé sur deux lignes : PV puis rations en boutons (stock en pastille)");
     ok(/Toucher une ration pour la manger/.test(m) && /CampManager\.eatRation\('/.test(m) && m.indexOf(">Manger<") === -1, "toucher une ration la mange ; plus de bouton « Manger »");
     ok(m.indexOf("camp-missions-card") !== -1 && m.indexOf("goToPotions()") === -1 && d.indexOf("camp-missions-card") === -1, "un seul onglet affiché à la fois (Missions, puis Départ)");
@@ -13258,7 +13268,7 @@ console.log("\n[186] v3.414.0 — Village : rail à quatre onglets, vignettes, f
     ok(sh.indexOf("wk-tile-cuisine_de_camp") !== -1 && sh.indexOf("wk-tile-boulangerie") === -1, "feuille : seulement les ateliers de ce bâtiment");
     ok(sh.indexOf('id="prod-harvest-btn-hunt"') !== -1 && sh.indexOf('id="prod-sheet-bar-hunt"') !== -1 && sh.indexOf('id="prod-bar-hunt"') === -1, "feuille : récolte et jauge à ids propres (pas de doublon avec la vignette)");
     run("setProductionSheetTab('zones');");
-    ok(run("buildProductionSheetHTML('hunt')").indexOf("farm-plots-grid") !== -1, "onglet Zones : la grille 3×3");
+    ok(run("buildProductionSheetHTML('hunt')").indexOf("pc3-list") !== -1, "onglet Zones : les 3 parcelles en lignes (v3.612.0)");
     run("setVillageSubTab('buildings');");
     ok(run("productionDetailBuildingId") === null, "changer d'onglet referme la feuille");
     var b = run("buildVillageHTML()");
@@ -13335,7 +13345,7 @@ console.log("\n[188] v3.416.0 — Entrepôt : tuiles T3, liste déroulante, Ma s
     var pl = run("buildWarehouseSheetHTML('planche')");
     ok(pl.indexOf("warehouseGoTo('workshop', 'scierie_fine')") !== -1 && pl.indexOf("Améliorer les ateliers") !== -1 && pl.indexOf("Constructions") !== -1, "Planche : vient de la Scierie fine ; sert aux ateliers et aux constructions");
     var sv = run("buildWarehouseSheetHTML('seve_aeswyn')");
-    ok(sv.indexOf("wh-cap") === -1 && sv.indexOf("cuisine_de_camp") !== -1, "Sève : pas de plafond, consommée par la Cuisine de camp");
+    ok(sv.indexOf("wh-cap") === -1 && sv.indexOf("cuisine_de_camp") === -1 && sv.indexOf("menuiserie") !== -1, "Sève : pas de plafond, consommée par la Menuiserie (plus la Cuisine de camp, v3.608.0)");
     var pr = run("buildWarehouseSheetHTML('petite_ration')");
     ok(pr.indexOf("Campement") !== -1, "Petite ration : le repas au Campement est cité");
     run("openWarehouseSheet('ble'); setVillageSubTab('production');");
@@ -13356,9 +13366,9 @@ console.log("\n[189] v3.417.0 — Zones de production : la grille reste, une fen
     run("game.resources.bois = 500; game.resources.fer = 500; game.resources.pierre = 500; game.resources.viande = 500;");
     run("openProductionBuildingDetail('well'); setProductionSheetTab('zones');");
     var g0 = run("buildProductionSheetHTML('well')");
-    var next = run("getNextUnlockablePlot('well')");
-    ok(next !== null && g0.indexOf("is-next") !== -1, "la prochaine zone à défricher est signalée sur la grille");
-    ok(/farm-plot-card is-locked"? disabled|is-locked" disabled/.test(g0) || g0.indexOf(" disabled>") !== -1, "une zone d'un monde pas encore atteint ne s'ouvre pas");
+    var next = 1;
+    ok(g0.indexOf("productionParcelAction('well', 1)") !== -1 && g0.indexOf("Défricher") !== -1, "la prochaine parcelle à défricher a son bouton (v3.612.0)");
+    ok(g0.indexOf("productionParcelAction('well', 3)") === -1, "pas de 4e parcelle");
     run("openZoneWindow('well', 0);");
     var w = run("buildProductionSheetHTML('well')");
     ok(w.indexOf("zone-win") !== -1 && w.indexOf("productionPlotUpgrade('well', 0)") !== -1, "fenêtre d'une zone ouverte : passer au niveau suivant");
@@ -13400,7 +13410,8 @@ console.log("\n[191] v3.419.0 — La Caravane de la Halle marchande (R3, version
   try {
     run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); VillageBuildingManager.ensure(); Prefs._cache = {}; Prefs._save({});");
     run("game.village.buildings.warehouse.level = 0; game.village.buildings.hall.level = 1; WorldManager.worldIndex = 1;");
-    ok(run("CARAVAN_TRIPS.court.units === 150 && CARAVAN_TRIPS.moyen.units === 400 && CARAVAN_TRIPS.long.units === 800 && CARAVAN_TRIPS.long.rareChance === 0.25 && CARAVAN_TRIPS.long.itemChance === 0.10"), "trois trajets : 150 / 400 / 800 unités, Long 25 % rare et 10 % objet");
+    ok(run("CARAVAN_TRIPS.court.units === 150 && CARAVAN_TRIPS.moyen.units === 400 && CARAVAN_TRIPS.long.units === 800 && CARAVAN_TRIPS.long.rareChance === 1 && CARAVAN_TRIPS.long.itemChance === 0.10"), "trois trajets : 150 / 400 / 800 unités, Long rare garanti (v3.611.0) et 10 % objet");
+    run("CaravanManager._getOrder0 = CaravanManager.getOrder; CaravanManager.getOrder = function () { return null; };"); // la commande du jour (v3.611.0) est testée en [406]
     ok(run("CARAVAN_TRIPS.court.valuePct === 0.6 && CARAVAN_TRIPS.moyen.valuePct === 0.8 && CARAVAN_TRIPS.long.valuePct === 1 && CARAVAN_TRIPS.long.seconds === 28800"), "60 / 80 / 100 % de la valeur (v3.421.0), Long 8 h");
     ok(run("CaravanManager.isTripOpen('moyen', 1) && !CaravanManager.isTripOpen('long', 2) && CaravanManager.isTripOpen('long', 3)"), "Court et Moyen dès la Halle 1, Long à la Halle 3");
     ok(run("CaravanManager.getCapacity('court', 1)") === 150 && run("CaravanManager.getCapacity('moyen', 5)") === 560 && run("CaravanManager.getCapacity('long', 10)") === 1520, "+10 % de capacité par niveau : Moyen 560 au niveau 5, Long 1 520 au niveau 10");
@@ -13442,6 +13453,7 @@ console.log("\n[191] v3.419.0 — La Caravane de la Halle marchande (R3, version
     run("CaravanManager._now = function () { return 1e13; };");
     run("CaravanManager.unload(); CaravanManager._now = function () { return Date.now(); };");
     ok(run("game.resources.verre_des_dunes") === 2 && run("game.inventory.length") === 1, "au déchargement : le matériau rare à l'Entrepôt, l'objet dans le sac");
+    run("CaravanManager.getOrder = CaravanManager._getOrder0;");
     ok(run("VILLAGE_BUILDINGS.hall.effectLabel(3)").indexOf("trajet Long") !== -1 && run("VILLAGE_BUILDINGS.hall.effectLabel(10)").indexOf("Caravane +90 %") !== -1, "fiche de la Halle : niveau 3 « trajet Long », niveau 10 « Caravane +90 % »");
     ok(run("buildWarehouseSheetHTML('ble')").indexOf("Caravane de la Halle") !== -1, "Entrepôt : la caravane est citée dans « Où ça part » des matières brutes");
     var idx = fs.readFileSync(ROOT + "/index.html", "utf8"), sw = fs.readFileSync(ROOT + "/sw.js", "utf8");
@@ -13639,7 +13651,7 @@ console.log("\n[196] v3.424.0 — Chantier Héros, H-1 : rail en haut, quatre on
     ok(run("buildHerosHTML()").indexOf("equip-shop-grid") !== -1 && !run("isEquipShopAtHall()"), "Halle non bâtie : la Boutique reste dans Héros › Équipement");
     run("game.village.buildings.hall.level = 2; activeEquipSubTab = 'shop';");
     var eq = run("buildHerosHTML()");
-    ok(eq.indexOf("equip-shop-grid") === -1 && eq.indexOf("setEquipSubTab('shop')") === -1 && eq.indexOf("heros-shop-hint") === -1, "Halle bâtie : plus de Boutique dans Héros, ni de renvoi (v3.424.1)");
+    ok(eq.indexOf("equip-shop-grid") !== -1 && eq.indexOf("setEquipSubTab('shop')") !== -1 && eq.indexOf("heros-shop-hint") === -1, "Halle bâtie : la Boutique reste dans Héros › Équipement, à côté du Sac (v3.615.2, option A de Seb)");
     run("game.gold = 1e6; openVillageBuildingId = 'hall'; hallSheetSegment = 'shop';");
     var hall = run("buildVillageBuildingSheetHTML('hall')");
     ok(hall.indexOf("setHallSheetSegment('shop')") !== -1 && hall.indexOf("equip-shop-grid") !== -1 && hall.indexOf("equipShopRefresh()") !== -1, "feuille de la Halle : segment Échoppe avec la vitrine");
@@ -13931,7 +13943,7 @@ console.log("\n[201] v3.427.2 — Petites Aventures : « Comme la dernière fois
     // départ : la besace est retenue sur l'appareil, par monde
     fake.bag = ["corde", "torche"];
     g.pa2Depart();
-    ok(g.Prefs.getValue("pa2LastBag:forest") === "corde,torche" && g.pa2LastBag(fake).join() === "corde,torche", "au départ, la besace est retenue (préférence de l'appareil, par monde)");
+    ok(g.Pa2Run.ensureChest().lastBag.forest.join() === "corde,torche" && g.pa2LastBag(fake).join() === "corde,torche", "au départ, la besace est retenue (dans la partie depuis v3.616.0, par monde)");
     // préparation suivante : un toucher la remet, ce qui manque est dit
     fake.bag = ["gourde"];
     g.pa2ReuseLastBag();
@@ -15010,7 +15022,7 @@ console.log("\n[222] v3.447.0 — Initiative : jet, ordre, file de tours, Garde,
     game = freshCombat("knight"); giveWeapon();
     var hero = g.CombatActors.heroActor(), tot = CE.getTotalCelerity();
     g.WorldManager.worldIndex = 5;
-    ok(Math.abs(I.celerityOf(hero) - tot / 18) < 1e-9, "héros : célérité ramenée au monde (Tour ÷ 18)");
+    ok(Math.abs(I.celerityOf(hero) - tot / 6) < 1e-9, "héros : célérité ramenée au monde (Tour ÷ 6, v3.625.1)");
     g.WorldManager.worldIndex = 0;
     ok(I.hasAdvantage(hero) === false && !!I.rollOf(hero), "Chevalier : un dé, jet posé à l'ouverture du combat");
     game = freshCombat("ranger");
@@ -15110,7 +15122,7 @@ console.log("\n[223] v3.448.0 — Camp : le feu et les rations soignent aussi le
     ok(K.eatRation("ration") === true, "héros plein : la ration sert encore, pour Wenna");
     C.state("wenna").hp = mw;
     ok(K.eatRation("ration") === false, "tout le monde plein : la ration reste au stock");
-    var html = g.buildCampHTML();
+    var html = g.buildCampHTML("feu");
     ok(html.indexOf("camp-comp-hp-wenna") !== -1, "la carte du camp montre la jauge de Wenna");
   } catch (err) {
     ok(false, "[223] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
@@ -15478,7 +15490,7 @@ console.log("\n[238] v3.450.0 — Crypte, lot C-0 : socle et passage entre les m
   var reachedAvant = game.worldsEverReached, wiAvant = g.WorldManager.worldIndex, advAvant = g.WorldManager.adventureIndex;
   try {
     var e3 = g.WORLD_CAPS[3];
-    ok(!!e3 && e3.zoneRows === 3 && g.WorldCaps.getRowOpeningIndex(2) === 3, "WORLD_CAPS[3] écrit avant d'ouvrir le monde ; la 3e rangée de zones s'ouvre à la Crypte");
+    ok(!!e3 && e3.zoneRows === 1 && e3.zoneLevel === 15, "WORLD_CAPS[3] écrit avant d'ouvrir le monde ; 3 parcelles au niveau 15 (v3.612.0)");
     ok(g.TRAINING_CAP_BY_ACT.some(function (a) { return a.worldIndex === 3 && a.stepId === "crypte_01"; })
       && g.TALENT_CAP_BY_ACT.some(function (a) { return a.worldIndex === 3 && a.stepId === "crypte_01"; }), "Terrain et talents : entrée d'acte I à la Crypte");
     var R = g.WAREHOUSE_RESOURCES;
@@ -15490,10 +15502,10 @@ console.log("\n[238] v3.450.0 — Crypte, lot C-0 : socle et passage entre les m
     game.worldsEverReached = { 0: true, 1: true, 2: true };
     game.dungeonTierCleared = { 1: true, 2: true, 3: true };
     ok(g.WorldTravel.arrive("crypt", 0) === true && g.WorldManager.worldIndex === 3 && game.worldsEverReached[3] === true, "arrivée : la Crypte devient le monde de résidence, notée atteinte");
-    ok(g.WorldCaps.getReachedWorldIndex() === 3 && g.WorldCaps.getZoneRows() === 3, "plafonds lus sur la Crypte");
+    ok(g.WorldCaps.getReachedWorldIndex() === 3 && g.WorldCaps.getZoneLevel() === 15, "plafonds lus sur la Crypte");
     ok(g.DungeonManager.isUnlocked(4) === false, "l'Ossuaire reste fermé à l'arrivée (pas de contenu avant l'acte III)");
     ok(g.WorldTravel.canTravelTo("ruins") && g.WorldTravel.travelTo && (g.WorldTravel.travelTo("ruins"), g.WorldManager.worldIndex === 2), "voyage retour vers les Ruines");
-    ok(g.WorldCaps.getZoneRows() === 3, "retour aux Ruines : rien ne se referme (plus haut monde atteint)");
+    ok(g.WorldCaps.getZoneLevel() === 15, "retour aux Ruines : rien ne se referme (plus haut monde atteint)");
   } catch (err) {
     ok(false, "[238] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   } finally {
@@ -15646,7 +15658,7 @@ console.log("\n[241] v3.453.0 — Voie du Commandement et Mémoire 9 à 16 (Gard
     ok(MM.getCap() === 12, "Ruines : plafond 12");
     G.worldsEverReached[3] = true;
     ok(MM.getCap() === 16, "Crypte : plafond 16");
-    ok(g.MEMORY_LEVELS.slice(8).every(function (d) { return d.options.filter(function (o) { return o.side === "garder"; }).length === 1 && d.options.filter(function (o) { return o.side === "donner"; }).length === 1; }), "niveaux 9 à 16 : un Garder et un Donner chacun");
+    ok(g.MEMORY_LEVELS.slice(8).filter(function (d) { return !d.requiresChoice; }).every(function (d) { return d.options.filter(function (o) { return o.side === "garder"; }).length === 1 && d.options.filter(function (o) { return o.side === "donner"; }).length === 1; }), "niveaux 9 à 16 : un Garder et un Donner chacun (v3.632.0 : hors jalon 24, une option par réponse à la Question)");
     G.totalAetherEarned = 99999; G.gold = 1e9;
     MM.ensure().choices = { 9: "fiole_reserve", 10: "craie_epaisse", 11: "fidelite_edda" };
     ok(MM.lineOpen(12, "garder") && !MM.lineOpen(12, "donner"), "ligne Garder ouverte après trois Garder");
@@ -16476,8 +16488,8 @@ console.log("\n[262] v3.458.4 — Lot 7b : une fenêtre de fin, Histoire, Mémoi
     var icones = hs.match(/\{ key: "\w+", value: "\w+", icon: "images\/Icons\/[a-z_]+\/[a-z_]+\.webp", name: _t\(/g) || [];
     // v3.488.0 : les deux effets du choix « veine » (Montagne) attendent leur image (icône générique en attendant)
     // v3.491.0 : trois de plus (ouvrage achevé, veine-mère, ce que la Montagne apprend)
-    var attendues = ["images/Icons/traits/veine_dans_la_lame.webp", "images/Icons/traits/puits_chaud.webp", "images/Icons/traits/ouvrage_acheve.webp", "images/Icons/traits/veine_mere.webp", "images/Icons/traits/montagne_apprend.webp"];
-    ok(icones.length === 19 && /hs-trait-ico/.test(hs.split("STORY_TRAITS").slice(1).join("")) && icones.every(function (l) { var f = /icon: "([^"]+)"/.exec(l)[1]; return attendues.indexOf(f) !== -1 || fs10.existsSync(ROOT + "/" + f); }), "Ce que tu portes : 19 effets possibles, chacun avec son image (fichiers présents, sauf les cinq de la Montagne à venir)");
+    var attendues = ["images/Icons/traits/veine_dans_la_lame.webp", "images/Icons/traits/puits_chaud.webp", "images/Icons/traits/ouvrage_acheve.webp", "images/Icons/traits/veine_mere.webp", "images/Icons/traits/montagne_apprend.webp", "images/Icons/scene/braise_aeswyn.webp"]; // v3.626.0 : la braise (Tour)
+    ok(icones.length === 21 && /hs-trait-ico/.test(hs.split("STORY_TRAITS").slice(1).join("")) && icones.every(function (l) { var f = /icon: "([^"]+)"/.exec(l)[1]; return attendues.indexOf(f) !== -1 || fs10.existsSync(ROOT + "/" + f); }), "Ce que tu portes : 19 effets possibles, chacun avec son image (fichiers présents, sauf les cinq de la Montagne à venir)");
     ok(/dont \{p\} % par tes choix/.test(fs10.readFileSync(ROOT + "/js/ui/living-map-view.js", "utf8")), "Palissade : la part des choix dite à part");
     // C9
     ok(/class="settings-btn ret-eat"/.test(fs10.readFileSync(ROOT + "/js/ui/return-view.js", "utf8")), "écran de retour : « Manger »");
@@ -17152,7 +17164,7 @@ console.log("\n[281] v3.467.0 — Petites Aventures : pièges sur les sentiers (
     P.resolveTrap("subir");
     ok(/is-fx/.test(g.pa2HudHTML(r)) && /Venin 3/.test(g.pa2HudHTML(r)), "en-tête : pastille « Venin 3 »");
     g.pa2View.sheet = null;
-    ok(g.PA2_ITEMS.corde.pro.indexOf("Pas sur les pièges") > 0 && g.PA2_ITEM_ORDER.indexOf("trousse") === g.PA2_ITEM_ORDER.indexOf("corde") + 1, "besace : la Trousse après la Corde, la Corde « pas sur les pièges »");
+    ok(g.PA2_ITEMS.corde.pro.indexOf("Pas sur les pièges") > 0 && g.PA2_ITEM_ORDER.indexOf("trousse") === g.PA2_ITEM_ORDER.indexOf("corde") + 2, "besace : la Trousse après la Corde (et sa version tressée, v3.606.0), la Corde « pas sur les pièges »");
   } finally {
     P.rand = savedRand; g.__traps = false; g.PA2_MAPS_BY_WORLD.forest = savedMaps; game.sceneRun = null;
     if (g.SortieManager.isActive()) g.SortieManager.end("return");
@@ -17669,7 +17681,7 @@ console.log("\n[292] v3.471.1 — Gueule du volcan fermée tant que la Montagne 
   game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true, 4: true, 5: true };
   game.dungeonTierCleared = { 1: true, 2: true, 3: true, 4: true };
   ok(D.getById(5).locked === false && D.getById(5).requiresStoryStep === "montagne_12" && D.getLockReason(5) === "data" && !D.isUnlocked(5), "monde 4 atteint, Ossuaire fini : la Gueule du volcan reste fermée avant montagne_12 (v3.490.0)");
-  ok(D.getById(6).locked === true && !D.isUnlocked(6), "le Sommet interdit aussi");
+  ok(D.getById(6).requiresStoryStep === "tour_11" && !D.isUnlocked(6), "le Sommet interdit aussi, avant tour_11 (v3.629.0)");
   game.heroHp = game.heroMaxHp; game.dungeonRunsUsed = {};
   D.start(5, []);
   ok(!game.dungeonRun.active, "on ne peut pas y entrer");
@@ -17887,18 +17899,10 @@ console.log("\n[300] v3.479.0 — Refonte de l'économie RE-2 : zones de product
   ["bois", "fer", "pierre", "eau", "viande", "ble"].forEach(function (k) { g.game.resources[k] = 5000; });
   var st = PPS.getRowState("sawmill", 0);
   ok(st.locked.length === 1 && st.upNow.length === 1 && st.minLevel === 1 && st.impN === 4, "rangée 1 : 1 zone à défricher, la zone la plus basse à monter, 4 améliorations");
-  var fer = W.getAmount("fer"), want = g.getProductionPlotUnlockCost("sawmill", 2).fer;
-  ok(PPS.unlockRow("sawmill", 0).ok && plots[2].state === "open" && fer - W.getAmount("fer") === want, "Défricher : la zone ouvre, coût de la zone payé");
-  ok(PPS.upgradeRow("sawmill", 0).ok && plots[1].level === 2 && plots[2].level === 2 && plots[0].level === 3, "Monter : les zones les plus basses (1 → 2), la plus haute attend");
-  var n = 0; while (PPS.upgradeRow("sawmill", 0).ok && n < 9) n++;
-  ok(n === 6 && plots[0].level === 8 && plots[1].level === 8 && plots[2].level === 8, "à égalité, la rangée monte ensemble (6 achats de 2 à 8, Désert) et s'arrête au plafond du monde"); // relevé 2
-  ok(PPS.improveRow("sawmill", 0).ok && [0, 1, 2].every(function (i) { return plots[i].fertile && plots[i].irrigated; }) && !PPS.improveRow("sawmill", 0).ok, "Améliorer : les deux améliorations sur les 3 zones, une seule fois");
-  g.game.resources.fer = 0; var before = JSON.stringify(plots.slice(3, 6));
-  ok(!PPS.unlockRow("sawmill", 1).ok && JSON.stringify(plots.slice(3, 6)) === before, "sans les ressources : rien n'est payé ni ouvert (tout ou rien)");
-  g.game.resources.fer = 5000;
-  ok(!PPS.unlockRow("sawmill", 2).ok && plots[6].state === "locked", "la rangée de la Crypte reste fermée au Désert");
+  // v3.612.0 : 3 parcelles, plus d'actions par rangée (l'achat automatique les remplace)
+  ok(typeof PPS.unlockRow === "undefined" && typeof PPS.upgradeRow === "undefined" && typeof PPS.improveRow === "undefined", "v3.612.0 : actions par rangée retirées");
   var html = g.buildZoneGroupActionsHTML("sawmill");
-  ok(html.indexOf("Rangée 1") !== -1 && html.indexOf("au maximum") !== -1 && html.indexOf("Rangée 2") !== -1 && html.indexOf("Rangée 3") === -1 && html.indexOf("productionRowAction('sawmill', 1, 'unlock')") !== -1, "barres : rangée 1 au maximum sur une ligne, rangée 2 à défricher, pas de rangée 3 au Désert");
+  ok(html.indexOf("pc3-auto") !== -1 && html.indexOf("Rangée") === -1, "v3.612.0 : sous les parcelles, l'achat automatique");
   var css = fs.readFileSync(path.join(ROOT, "css/04-panel-production.css"), "utf8");
   ok(/\.farm-plot-card \.farm-plot-card-name, \.farm-plot-card \.farm-plot-card-profile \{ max-width: 100%; overflow: hidden; text-overflow: ellipsis; \}/.test(css), "320 px : nom et monde d'une zone verrouillée coupés par « … »");
   g.game.worldsEverReached = reached; g.WorldManager.worldIndex = wi;
@@ -18090,7 +18094,7 @@ console.log("\n[308] v3.486.0 — Montagne, lot M-0 : socle et passage entre les
   var reachedAvant = game.worldsEverReached, wiAvant = g.WorldManager.worldIndex, advAvant = g.WorldManager.adventureIndex;
   try {
     var e4 = g.WORLD_CAPS[4];
-    ok(!!e4 && e4.zoneRows === 3 && e4.village.forge === 6 && e4.forgeActStep === "montagne_11" && e4.petiteAventureCap === 4, "WORLD_CAPS[4] écrit avant d'ouvrir le monde (égal à la Crypte, Forge 6 à l'acte III)");
+    ok(!!e4 && e4.zoneRows === 1 && e4.zoneLevel === 17 && e4.village.forge === 6 && e4.forgeActStep === "montagne_11" && e4.petiteAventureCap === 4, "WORLD_CAPS[4] écrit avant d'ouvrir le monde (égal à la Crypte, Forge 6 à l'acte III)");
     ok(g.TRAINING_CAP_BY_ACT.some(function (a) { return a.worldIndex === 4 && a.stepId === "montagne_01"; })
       && g.TALENT_CAP_BY_ACT.some(function (a) { return a.worldIndex === 4 && a.stepId === "montagne_01"; }), "Terrain et talents : entrée d'acte I à la Montagne");
     var R = g.WAREHOUSE_RESOURCES;
@@ -18110,11 +18114,12 @@ console.log("\n[308] v3.486.0 — Montagne, lot M-0 : socle et passage entre les
     FM.getMaxLevel = maxAvant; FM.getLevel = lvAvant;
     ok(c11.obsidienne_taillee === 1 && c11.cire_consacree === 1 && c9.cire_consacree === 1 && !c9.obsidienne_taillee, "reforge 11 : 1 Obsidienne taillée (+1 Cire) ; reforge 9 : Cire seule");
     var tier6 = g.VillageBuildingManager.getLevelCost ? g.VillageBuildingManager.getLevelCost("forge", 5) : null; // coût du niveau 5 au niveau 6
-    ok(g.VILLAGE_BUILDINGS.forge.maxLevel === 6 && tier6 && tier6.obsidienne_taillee === 3, "Forge 6 : palier à l'Obsidienne posé, bâtiment à 6 (v3.490.0)");
+    var tier7 = g.VillageBuildingManager.getLevelCost ? g.VillageBuildingManager.getLevelCost("forge", 6) : null;
+    ok(g.VILLAGE_BUILDINGS.forge.maxLevel === 7 && tier6 && tier6.obsidienne_taillee === 3 && tier7 && tier7.verre_faille === 3, "Forge 6 à l'Obsidienne, Forge 7 au Verre de faille (v3.625.0), bâtiment à 7");
     // Le passage : arrivée, monde posé, plafonds de la Montagne, Gueule du volcan fermée, voyage retour
     game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true };
     ok(g.WorldTravel.arrive("mountain", 0) === true && g.WorldManager.worldIndex === 4 && game.worldsEverReached[4] === true, "arrivée : la Montagne devient le monde de résidence, notée atteinte");
-    ok(g.WorldCaps.getReachedWorldIndex() === 4 && g.WorldCaps.getZoneRows() === 3, "plafonds lus sur la Montagne");
+    ok(g.WorldCaps.getReachedWorldIndex() === 4 && g.WorldCaps.getZoneLevel() === 17, "plafonds lus sur la Montagne");
     ok(g.DungeonManager.isUnlocked(5) === false, "la Gueule du volcan reste fermée à l'arrivée");
     ok(g.WorldTravel.canTravelTo("crypt") && (g.WorldTravel.travelTo("crypt"), g.WorldManager.worldIndex === 3), "voyage retour vers la Crypte");
   } catch (err) {
@@ -18139,7 +18144,7 @@ console.log("\n[309] v3.487.0 — Montagne, lot M-1 : les veines");
     g.WorldManager.worldIndex = 4;
     SQ.getChoice = function () { return null; };
     CE.spawnGroup([mk("lavagolem"), mk("dragonling")]);
-    ok(V.active() && V.intact() && V.cutsLeft() === 3 && V.heatMult() === 1 && V.bladeMult() === 1, "à la Montagne : une veine intacte, trois tailles possibles");
+    ok(V.active() && V.intact() && V.cutsLeft() === 3 && V.heatMult() === 1 && (V.bladeMult() / V.classMult()) === 1, "à la Montagne : une veine intacte, trois tailles possibles");
     ok(g.ClassCombatManager.getAction("vein") === g.VEIN_ACTION && g.VEIN_ACTION.label === "Tailler", "l'action « Tailler » se lit comme une action de combat");
     // La lame : +15 % sur l'attaque du héros
     g.EquipmentManager.effectiveCritChance = function () { return 0; };
@@ -18157,7 +18162,7 @@ console.log("\n[309] v3.487.0 — Montagne, lot M-1 : les veines");
     ok(/enemyStrike: function[\s\S]{0,400}VeinSystem\.heatMult\(\)/.test(src), "la chaleur s'applique à la frappe ennemie (héros comme compagnons)");
     // Trois tailles au plus
     V.cut(true); V.cut(true);
-    ok(V.cutsLeft() === 0 && V.cut(true) === false && Math.abs(V.bladeMult() - 1.45) < 1e-9, "trois tailles au plus (lame +45 %, chaleur +30 %)");
+    ok(V.cutsLeft() === 0 && V.cut(true) === false && Math.abs((V.bladeMult() / V.classMult()) - 1.45) < 1e-9, "trois tailles au plus (lame +45 %, chaleur +30 %)");
     // Victoire : la Cendre est versée
     var c0 = W.getAmount("cendre_vive");
     g.CombatActors.enemies().slice().forEach(function (e) { e.hp = 1; CE.killEnemy(e); });
@@ -18170,7 +18175,7 @@ console.log("\n[309] v3.487.0 — Montagne, lot M-1 : les veines");
     // Les choix de l'étape 5 : la lame +20 % (soi), le puits chaud (aeswyn)
     SQ.getChoice = function (k) { return k === "veine" ? "soi" : null; };
     V.cut(true);
-    ok(Math.abs(V.bladeMult() - 1.20) < 1e-9, "choix « soi » (La veine dans la lame) : +20 % par taille");
+    ok(Math.abs((V.bladeMult() / V.classMult()) - 1.20) < 1e-9, "choix « soi » (La veine dans la lame) : +20 % par taille");
     SQ.getChoice = function (k) { return k === "veine" ? "aeswyn" : null; };
     var c2 = W.getAmount("cendre_vive");
     game.enemy.hp = 1; CE.killEnemy(game.enemy);
@@ -18230,7 +18235,7 @@ console.log("\n[310] v3.488.0 — Montagne, lot M-2 : acte I « La montée », S
     var mk = function (id) { var d = g.ENEMY_DB[id]; return { id: id, name: d.name, isBoss: false, archetype: null, hp: 1e5, maxHp: 1e5, stats: d.stats, resists: [], weak: [], goldReward: 20 }; };
     CE.spawnGroup([mk("lavagolem"), mk("dragonling")]);
     var actor = { companionId: "sarkel", charges: 1, cooldown: 0, damage: 10 };
-    ok(CM.chooseAction(actor) === "skill" && CM.useSkill(actor, sk) === true && V.cuts() === 1 && V.bladeMult() === 1 && Math.abs(V.heatMult() - 1.1) < 1e-9 && actor.charges === 0, "Coup de pioche : la veine taillée, la chaleur monte, la lame reste au héros");
+    ok(CM.chooseAction(actor) === "skill" && CM.useSkill(actor, sk) === true && V.cuts() === 1 && (V.bladeMult() / V.classMult()) === 1 && Math.abs(V.heatMult() - 1.1) < 1e-9 && actor.charges === 0, "Coup de pioche : la veine taillée, la chaleur monte, la lame reste au héros");
     V.cut(true); V.cut(true);
     ok(CM.chooseAction({ companionId: "sarkel", charges: 1, cooldown: 0 }) === "basic", "veine épuisée : Sarkel frappe");
     // Sarkel reste du groupe pendant ses étapes
@@ -18350,7 +18355,7 @@ console.log("\n[311] v3.489.0 — Montagne, lot M-3 : acte II « Ce qui trie »"
     ok(g.MEMORY_LEVELS.filter(function (l) { return l.level >= 17 && l.level <= 19; }).length === 3 && g.MEMORY_LEVEL_COSTS.length >= 19, "Mémoire 17 à 19 écrite, coûts dans la courbe");
     MM.has = function (id) { return id === "peau_basalte" || id === "taille_franche" || id === "pioche_sure"; };
     CE.spawnGroup([mk("ifrit")]); V.cut(true);
-    ok(Math.abs(V.heatMult() - 1.07) < 1e-9 && Math.abs(V.bladeMult() - 1.25) < 1e-9, "Peau de basalte (+7 %) et Taille franche (+10 % à la première taille)");
+    ok(Math.abs(V.heatMult() - 1.07) < 1e-9 && Math.abs((V.bladeMult() / V.classMult()) - 1.25) < 1e-9, "Peau de basalte (+7 %) et Taille franche (+10 % à la première taille)");
     V.cut(false, "sarkel");
     var a0 = g.WarehouseManager.getAmount("cendre_vive"); game.enemy.hp = 1; CE.killEnemy(game.enemy);
     ok(g.WarehouseManager.getAmount("cendre_vive") - a0 === 3, "Pioche sûre : la taille de Sarkel verse une Cendre de plus");
@@ -18475,9 +18480,9 @@ console.log("\n[313] v3.491.0 — Montagne, lot M-5 : acte IV « Le droit de pre
     var t = V.takeSort(de);
     ok(t && g.CombatActors.isHero(t.actor) && V.heatLevel() === 2, "il trie celui qui a taillé ; chaleur : la taille et sa phase");
     // Le choix « laisser » : la chaleur porte aussi le héros
-    var b0 = V.bladeMult();
+    var b0 = (V.bladeMult() / V.classMult());
     SQ.getChoice = function (k) { return k === "droit" ? "laisser" : null; };
-    ok(Math.abs(V.bladeMult() - b0 - 0.10) < 1e-9, "Laisser : chaque cran de chaleur donne +5 % aux coups du héros");
+    ok(Math.abs((V.bladeMult() / V.classMult()) - b0 - 0.10) < 1e-9, "Laisser : chaque cran de chaleur donne +5 % aux coups du héros");
     // Le choix « prendre » : le puits, une fois par jour
     SQ.getChoice = function (k) { return k === "droit" ? "prendre" : null; };
     game.explorationProgression.puitsMereDay = null;
@@ -18485,12 +18490,12 @@ console.log("\n[313] v3.491.0 — Montagne, lot M-5 : acte IV « Le droit de pre
     ok(g.storyPuitsVeineMere() === 3 && g.storyPuitsVeineMere() === 0 && g.WarehouseManager.getAmount("cendre_vive") - a0 === 3, "Prendre : le puits verse 3 Cendres vives, une fois par jour");
     // La Mémoire 20
     var l20 = g.MEMORY_LEVELS.filter(function (l) { return l.level === 20; })[0];
-    ok(l20 && l20.jalon && l20.options.length === 4 && g.MEMORY_LEVEL_COSTS.length === 20, "Mémoire 20 : jalon à quatre options, coût dans la courbe");
+    ok(l20 && l20.jalon && l20.options.length === 4 && g.MEMORY_LEVEL_COSTS.length >= 20, "Mémoire 20 : jalon à quatre options, coût dans la courbe");
     SQ.getChoice = function () { return null; };
     MM.has = function (id) { return id === "froid_pierre" || id === "lame_vive" || id === "rien_ne_se_perd" || id === "ce_qui_a_ete_pris"; };
     CE.spawnGroup([{ id: "lavagolem", name: "Golem", isBoss: false, hp: 1e6, maxHp: 1e6, stats: g.ENEMY_DB.lavagolem.stats, resists: [], weak: [], goldReward: 5 }]);
     V.cut(true);
-    ok(V.heatLevel() === 0 && Math.abs(V.bladeMult() - 1.20) < 1e-9, "Le froid de la pierre : le premier cran ne compte pas ; Lame vive : +5 % par taille");
+    ok(V.heatLevel() === 0 && Math.abs((V.bladeMult() / V.classMult()) - 1.20) < 1e-9, "Le froid de la pierre : le premier cran ne compte pas ; Lame vive : +5 % par taille");
     var c1 = g.WarehouseManager.getAmount("cendre_vive");
     CE.spawnGroup([{ id: "lavagolem", name: "Golem", isBoss: false, hp: 10, maxHp: 10, stats: g.ENEMY_DB.lavagolem.stats, resists: [], weak: [], goldReward: 5 }]);
     ok(g.WarehouseManager.getAmount("cendre_vive") - c1 === 1, "Rien ne se perd : la Cendre d'un combat perdu est versée au combat suivant");
@@ -18752,8 +18757,8 @@ console.log("\n[322] Chantier du héros, H1 — entraînement au-delà de 150 (�
     run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
     var game = g.game, WC = g.WorldCaps, VB = g.VillageBuildingManager;
     var force = g.UPGRADES.filter(function (u) { return u.id === "utrain_power"; })[0];
-    ok(g.TRAINING_HARD_CAP === 200 && force.maxLevel === 200, "plafond absolu : 200");
-    ok(g.getUpgradeCost(force, 149) === 82 && g.getUpgradeCost(force, 150) === 1248, "Force : niveau 150 à 82 or (inchangé), 151 à 1 248 (×15)");
+    ok(g.TRAINING_HARD_CAP === 230 && force.maxLevel === 230, "plafond absolu : 230 (Tour, 03/11)");
+    ok(g.getUpgradeCost(force, 149) === 331 && g.getUpgradeCost(force, 150) === 1248, "Force : niveau 150 à 331 or (×4 dès 60, v3.613.0), 151 à 1 248 (×15)");
     var t = 0; g.HEROS_TRAINING_UPGRADE_IDS.forEach(function (id) { var u = g.UPGRADES.filter(function (x) { return x.id === id; })[0]; for (var l = 150; l < 200; l++) t += g.getUpgradeCost(u, l); });
     ok(t === 266142, "les cinq statistiques de 150 à 200 : 266 142 or");
     VB.ensure();
@@ -18825,7 +18830,7 @@ console.log("\n[324] Chantier du héros, H3 — rangs de talents (5 nœuds par c
       archer: ["a_oeil_vif", "a_coup_au_but", "a_perforation", "a_transe", "a_nuee_fleches"],
       mage: ["m_peau_arcane", "m_braises_tenaces", "m_incendie", "m_barriere_vive", "m_surtension"] };
     Object.keys(attendus).forEach(function (c) {
-      var n = 0; TM.getNodes(c).forEach(function (e) { if (e.zone !== "command") n += TM.maxRank(e.node); });
+      var n = 0; TM.getNodes(c).forEach(function (e) { if (e.zone !== "command" && e.zone !== "tower") n += TM.maxRank(e.node); });
       ok(n === 19, c + " : 19 rangs dans l'arbre de classe, 18 utilisables (clés exclusives) + 5 du Commandement = 23");
       ok(attendus[c].every(function (id) { var e = TM.find(id, c); return e && TM.maxRank(e.node) === (/cuirasse|oeil_vif|peau_arcane/.test(id) ? 3 : 2); }), c + " : les 5 nœuds H3 ont leur rang de plus");
     });
@@ -18993,7 +18998,7 @@ console.log("\n[328] v3.503.0 — Grand écran GE-2 et GE-3 : rail complet, band
     ok(idx.indexOf("css/10-grand-ecran.css") > idx.indexOf("css/09-wide.css") && sw.indexOf("./css/10-grand-ecran.css") > 0, "10-grand-ecran.css chargé après 09-wide.css et précaché");
     ok(idx.indexOf("js/ui/chronique-view.js") > idx.indexOf("js/ui/hud-dock-view.js") && sw.indexOf("./js/ui/chronique-view.js") > 0, "chronique-view.js chargé après le dock et précaché");
     ["map", "achievements", "tutorials", "log", "settings"].forEach(function (t) {
-      ok(new RegExp('class="tab-btn tab-wide[^"]*" data-tab="' + t + '"').test(idx), "rail du format large : entrée " + t);
+      ok(new RegExp('class="tab-btn' + (t === "map" ? '' : ' tab-wide[^"]*') + '" data-tab="' + t + '"').test(idx), "rail du format large : entrée " + t);
     });
     ok(/\.tab-btn\.tab-wide, \.tab-sep \{ display: none !important; \}/.test(rd("css/02-layout.css")), "téléphone : entrées du rail cachées");
     ok(/^#chronique \{ display: none; \}/m.test(css) && /^\.hud-where, \.hud-res-x \{ display: none; \}/m.test(css), "téléphone : ni Chronique, ni bandeau enrichi");
@@ -19064,9 +19069,9 @@ console.log("\n[328] Relevé 2 (27/10) — zones de production à 20 niveaux, d�
   try {
     var PPS = g.ProductionPlotsSystem, S = g.PRODUCTION_PLOTS_SHARED;
     ok(S.plotMaxLevel === 20 && S.upgradeCostMultPerLevel === 1.15 && S.linearPerLevel === 0.7, "20 niveaux, +70 % par niveau, coût ×1,15");
-    ok(g.WORLD_CAPS.map(function (w) { return w.zoneLevel; }).join(",") === "5,8,11,14,17", "plafonds de monde 5 / 8 / 11 / 14 / 17");
+    ok(g.WORLD_CAPS.map(function (w) { return w.zoneLevel; }).join(",") === "5,10,12,15,17,20", "plafonds de monde 5 / 10 / 12 / 15 / 17 / 20 (3 parcelles, v3.612.0 ; la Tour, v3.625.0)");
     var r1 = PPS.getPlotRatePerMin(0, { level: 1 }), r8 = PPS.getPlotRatePerMin(0, { level: 8 });
-    ok(Math.abs(r8 / r1 - 5.9) < 1e-9, "niveau 8 : 5,9 fois le niveau 1");
+    ok(Math.abs(r8 / r1 - 8.6) < 1e-9, "niveau 8 : 8,6 fois le niveau 1 (ancres des 3 parcelles, v3.612.0)");
     ok(Math.abs(PPS.getPlotCapacity(0, { level: 8 }) / PPS.getPlotRatePerMin(0, { level: 8 }) - PPS.getPlotCapacity(0, { level: 1 }) / r1) < 1, "la réserve suit le débit : même temps de remplissage à tout niveau");
     var map = [1, 2, 3, 4, 5].map(function (L) { return PPS.migrateLevel(L); });
     ok(map.join(",") === "1,3,5,8,14", "migration b : niveaux 1-5 de l'ancien modèle → 1 / 3 / 5 / 8 / 14");
@@ -19075,9 +19080,9 @@ console.log("\n[328] Relevé 2 (27/10) — zones de production à 20 niveaux, d�
     g.game.production = { sawmill: { plots: [] } };
     for (var i = 0; i < 9; i++) g.game.production.sawmill.plots.push({ state: i < 3 ? "open" : "locked", level: i < 3 ? 5 : 1, fertile: false, irrigated: false, stock: 0, lastTick: Date.now() });
     var pl = PPS.getPlots("sawmill");
-    ok(pl[0].level === 14 && pl[3].level === 1 && g.game.production.sawmill.model === 2, "ancienne partie : zones 5 → 14, zones fermées intactes, modèle 2 noté");
+    ok(pl[0].level === 9 && pl[3].level === 1 && g.game.production.sawmill.model === 3, "ancienne partie : zones 5 → 14 (relevé 2) → parcelle niveau 9 (même débit), modèle 3 noté");
     PPS.getPlots("sawmill");
-    ok(pl[0].level === 14, "la conversion ne se refait pas");
+    ok(pl[0].level === 9, "la conversion ne se refait pas");
   } catch (err) { ok(false, "[328] exception : " + err.message); }
 })();
 
@@ -19481,7 +19486,7 @@ console.log("\n[343] v3.523.0 — lot 7 : pronostic des élites");
     ok(Math.abs(f.heroDamagePerRound - Math.round(hd * 0.88)) <= 1 && Math.abs(CF.forEnemy(Object.assign({}, dard, { isElite: false })).heroDamagePerRound - Math.round(hd)) <= 1, "bouclier d'élite : dégâts du héros ×0,88 contre une élite, inchangés sinon");
     ok(CF.getEnemyDamagePerRound(dard) === base, "dégâts estimés inchangés hors pronostic (Petites Aventures, Labyrinthe, usure des vagues)");
     LM.ensureDefaults();
-    var st = LM.getState("desert", "bete_dune"); st.state = "libere"; st.dailyKey = LM._todayKey(); st.dailyWins = 2;
+    var st = LM.getState("desert", "bete_dune"); st.state = "libere"; st.dailyKey = LM._dayKey(); st.dailyWins = 2;
     var fm = CF.forMapElite("desert", "bete_dune", "dard_profondeurs");
     ok(fm && fm.brakeMult === 1.5 && fm.enemyName === g.ELITE_DB.dard_profondeurs.name && fm.enemyHp > dard.maxHp * 1.45, "élite de carte : verdict au frein du jour (×1,5, PV compris)");
     var line = g.buildCombatForecastLineHTML(fm, { who: true, brake: true });
@@ -19661,14 +19666,14 @@ console.log("\n[353] v3.534.0 — Bilan de fin de l'Histoire (audit PLA-9, optio
     ok(g.storyAllDone() === true, "storyAllDone : vrai quand tous les chapitres sont terminés");
     var ch = g.storyEndChoices(), n = 0;
     ch.forEach(function (x) { n += x.rows.length; });
-    ok(notes === 12 && n === 12, "12 choix pesants notés, tous au bilan (" + n + "), les choix de compagnons exclus");
+    ok(notes === 15 && n === 15, "15 choix pesants notés (v3.626.0 : la braise ; v3.629.0 : la copie ; v3.631.0 : la Question), tous au bilan (" + n + "), les choix de compagnons et « Regarder » exclus");
     var h = g.buildStoryEndHTML();
-    ok(h.indexOf("Fin du chapitre " + ids.length) !== -1 && (h.match(/dungeon-summary-row/g) || []).length === 16, "fenêtre : titre du dernier chapitre, 4 lignes de bilan et 12 choix");
+    ok(h.indexOf("Fin de l&#39;Histoire") !== -1 && h.indexOf("pas encore ouverte") === -1 && (h.match(/dungeon-summary-row/g) || []).length === 19, "fenêtre : « Fin de l'Histoire » et le titre de la fin (v3.631.0), 4 lignes de bilan et 15 choix");
     ok(!/Donner|Garder|registre/.test(h.replace(/<span>[^<]*<\/span>/g, "")), "aucun axe ni registre affiché hors des textes de choix");
     var last = SQ[ids[ids.length - 1]].steps.slice(-1)[0];
     var c1 = { title: last.title, dialogue: [{ who: null, text: "x" }] }, c2 = { title: "Autre", dialogue: [] }, c3 = { title: last.title, dialogue: [], closeOnclick: "f()" };
     [c1, c2, c3].forEach(function (c) { g.storyEndChain(c); });
-    ok(c1.closeOnclick === "openStoryEndPopup()" && !c2.closeOnclick && c3.closeOnclick === "f()", "seule la fenêtre de la dernière étape ouvre le bilan à sa fermeture");
+    ok(c1.closeOnclick === "storyEpilogueThenEnd()" && !c2.closeOnclick && c3.closeOnclick === "f()", "seule la fenêtre de la dernière étape ouvre l'épilogue puis le bilan à sa fermeture (v3.631.0)");
     ok(g.buildStoryChainHTML().indexOf("story-end-card") !== -1, "carte « Revoir le bilan » en tête de Quêtes › Histoire");
     g.game.storyQuests = JSON.parse(sauve);
     ok(g.storyAllDone() === false && g.buildStoryChainHTML().indexOf("story-end-card") === -1, "Histoire en cours : ni bilan ni carte");
@@ -20132,7 +20137,7 @@ console.log("\n[375] v3.560.0 — Potions majeures : colporteur 15 par jour, Apo
 (function () {
   try {
     var A = g.ApothecaryManager, VB = g.VILLAGE_BUILDINGS.apothecary, M = g.VillageBuildingManager;
-    ok(VB.maxLevel === 10 && g.WORLD_CAPS.map(function (w) { return w.village.apothecary; }).join() === "3,7,8,9,10", "Apothicaire : niveau max 10, plafonds par monde 3 / 7 / 8 / 9 / 10");
+    ok(VB.maxLevel === 10 && g.WORLD_CAPS.map(function (w) { return w.village.apothecary; }).join() === "3,7,8,9,10,10", "Apothicaire : niveau max 10, plafonds par monde 3 / 7 / 8 / 9 / 10 / 10");
     ok([1, 3, 7, 8, 9, 10].map(function (l) { return A.getDailyCap(l) - (A.hasPuitsDuRoi() ? 2 : 0); }).join() === "4,8,16,18,20,22", "préparations par jour : 4 au niveau 1, +2 par niveau (8 en Forêt, 16 au Désert … 22 à la Montagne)");
     var c = M.getLevelCost("apothecary", 9);
     ok(c && c.gold === 6776 && c.lingot === 105 && c.bloc === 225, "niveau 10 : la courbe continue (6 776 or, 225 blocs, 105 lingots)");
@@ -20144,16 +20149,16 @@ console.log("\n[376] v3.561.0 — Le Grand Ouvrage : verser le surplus, +1 % d'o
 (function () {
   var GO = g.GrandOuvrage, W = g.WarehouseManager, sv = { wr: game.worldsEverReached, vil: game.village && game.village.grandOuvrage };
   try {
-    game.worldsEverReached = { 0: true, 1: true };
-    ok(!GO.isOpen() && g.buildGrandOuvrageCardHTML() === "", "fermé avant les Ruines : pas de carte au Village");
+    game.worldsEverReached = { 0: true };
+    ok(!GO.isOpen() && g.buildGrandOuvrageCardHTML() === "", "fermé avant le Désert (v3.609.0) : pas de carte au Village");
     game.worldsEverReached = { 0: true, 1: true, 2: true };
-    game.village.grandOuvrage = { points: 0 };
+    game.village.grandOuvrage = { points: 0, v: 2 };
     ok(GO.isOpen() && /Le Grand Ouvrage/.test(g.buildGrandOuvrageCardHTML()), "ouvert aux Ruines : la carte en tête du Village");
     ok(GO.getValue("bois") === 1 && GO.getValue("planche") === 5 && GO.getValue("bloc") === 8 && GO.getValue("pierre_errante") === 25 && GO.getValue("cle_de_voute") === 85,
       "valeur : brute 1, planche 5, bloc 8, matériau de monde 25, Clé de voûte 85 (" + ["planche", "bloc", "pain", "acier", "ration", "cle_de_voute"].map(function (k) { return k + " " + GO.getValue(k); }).join(", ") + ")");
-    ok(GO.getTierCost(1) === 2000 && GO.getTierCost(10) === Math.round(2000 * Math.pow(1.12, 9)), "palier n : 2 000 × 1,12^(n−1)");
-    var p = GO.getProgress(2000 + 2240 + 100);
-    ok(p.tier === 2 && p.into === 100 && p.cost === 2509, "progression : 2 paliers, 100 points dans le 3e (coût 2 509)");
+    ok(GO.getTierCost(1) === 2000 && GO.getTierCost(10) === Math.round(2000 * Math.pow(1.18, 9)), "palier n : 2 000 × 1,18^(n−1) (v3.609.0)");
+    var p = GO.getProgress(2000 + 2360 + 100);
+    ok(p.tier === 2 && p.into === 100 && p.cost === 2785, "progression : 2 paliers, 100 points dans le 3e (coût 2 785)");
     // le surplus : au-dessus de la moitié du plafond et de la réserve
     var cap = W.getCap("bois");
     W.addResource("bois", cap, true);
@@ -20562,6 +20567,1354 @@ console.log("\n[389] v3.592.0 — Quoi de neuf : nouveautés après une mise à 
     var fs = require("fs"), missing = E.filter(function (n) { return !fs.existsSync(require("path").join(ROOT, "images/Icons/" + n[1] + ".webp")); });
     ok(!missing.length, "icônes des nouveautés présentes" + (missing.length ? " (manque " + missing[0][1] + ")" : ""));
   } catch (err) { ok(false, "[389] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[392] v3.594.0 — Camp : l'onglet « Le feu », et la carte du monde dans la barre du bas (option M3 de Seb)");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.unlockedTabs.map = true; game.heroHp = Math.floor(game.heroMaxHp / 2);");
+    ok(g.CAMP_TABS[0].key === "feu", "« Le feu » est le premier onglet du Camp");
+    var feu = g.buildCampHTML("feu"), mis = g.buildCampHTML("missions");
+    ok(feu.indexOf("camp-health-card") !== -1 && mis.indexOf("camp-health-card") === -1, "la santé et les rations sont dans « Le feu », plus au-dessus des autres onglets");
+    ok(/setCampTab\('feu'\)[^<]*>.*?<span class="kseg-dot">!<\/span>/.test(mis), "héros blessé : pastille « ! » sur « Le feu »");
+    ok(feu.indexOf("camp-here") !== -1 && feu.indexOf("switchTab('map')") !== -1, "« Tu es ici » en tête du feu, qui ouvre la carte");
+    run("game.unlockedTabs.map = false;");
+    ok(g.buildCampHTML("feu").indexOf("camp-here") === -1, "carte pas encore débloquée : pas de « Tu es ici »");
+    var idx = fs.readFileSync(path.join(ROOT, "index.html"), "utf8");
+    ok(/class="tab-btn" data-tab="map"/.test(idx) && idx.indexOf('data-tab="map"') < idx.indexOf('data-tab="village"'), "barre du bas : « Carte » visible sur téléphone, entre Quêtes et Village");
+    ok(!/kfb-gochip/.test(fs.readFileSync(path.join(ROOT, "js/ui/screen-banner.js"), "utf8")), "v3.595.0 (retour Seb) : le bandeau du Camp n'ouvre plus la carte");
+  } catch (err) { ok(false, "[392] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[393] v3.595.0 — Camp : la phrase du soir et le coin du feu ; les donjons depuis la carte ; plus de Carte dans les Expéditions");
+(function () {
+  var CM = g.CompanionManager, saveParty = CM && CM.partyIds;
+  try {
+    var D = g.campSoirData(), any = g.campSoirAny();
+    ok(D.length === 6 && D.every(function (w) { return w.lieu.length >= 3 && w.wenna && w.wenna.length >= 1 && w.tap && w.tap.wenna; }), "six mondes, chacun avec ses phrases du lieu et celles de Wenna");
+    ok(["wenna", "maddoc", "edda", "ysolt", "sarkel"].every(function (id) { return any[id] && any[id].soir.length && any[id].tap; }), "chaque compagnon a une phrase de repli, partout");
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.unlockedTabs.companions = true; CompanionManager.unlock('wenna'); CompanionManager.unlock('maddoc'); WorldManager.worldIndex = 1;");
+    CM.partyIds = function () { return ["wenna"]; };
+    run("lastRenderedTab = 'quests';");
+    var feu = g.buildCampHTML("feu");
+    var phrase = (feu.match(/class="camp-soir-t">([^<]*)</) || [])[1] || "";
+    var pool = D[1].lieu.concat(D[1].maddoc, D[1].wenna).map(function (t) { return g.esc(t); });
+    ok(pool.indexOf(phrase) !== -1, "la phrase du soir vient du Désert : le lieu ou un compagnon au camp (« " + phrase.slice(0, 40) + "… »)");
+    ok(/openCompanionMenu\('maddoc'\)/.test(feu) && /openCompanionMenu\('wenna'\)/.test(feu), "v3.601.0 : hors sortie, toute l'équipe est au coin du feu, et la toucher ouvre la liste des sujets");
+    run("lastRenderedTab = 'campement';");
+    var feu2 = g.buildCampHTML("feu");
+    ok(feu2.indexOf(phrase) !== -1, "la phrase du soir ne change pas tant qu'on reste au Camp");
+    var exp = fs.readFileSync(path.join(ROOT, "js/ui/expeditions-view.js"), "utf8"), mv = fs.readFileSync(path.join(ROOT, "js/ui/map-view.js"), "utf8");
+    ok(exp.indexOf("switchTab(\\'map\\')\" ") === -1 && exp.indexOf("ICON.map") === -1, "Expéditions : plus d'entrée « Carte » en pied");
+    ok(mv.indexOf("voyage d'abord") === -1 && /open \? '<button class="settings-btn" type="button" onclick="openDungeonSheet\(/.test(mv), "carte du monde : un donjon ouvert s'entre sans voyager jusqu'à son monde");
+    var idx = fs.readFileSync(path.join(ROOT, "index.html"), "utf8"), sw = fs.readFileSync(path.join(ROOT, "sw.js"), "utf8");
+    ok(idx.indexOf("js/data/camp-soir.js") > 0 && sw.indexOf("./js/data/camp-soir.js") > 0, "nouveau fichier data/camp-soir.js chargé et précaché");
+  } catch (err) { ok(false, "[393] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  if (CM) CM.partyIds = saveParty;
+})();
+
+console.log("\n[394] v3.597.0 — Conversations au feu : le moteur et la scène (textes à venir)");
+(function () {
+  var saveData = g.companionTalksData, M = g.CompanionTalkManager;
+  try {
+    ok(saveData().length === 27, "27 conversations livrées (v3.599.0)");
+    g.companionTalksData = function () { return [
+      { id: "test_1", companion: "maddoc", step: "desert_08", after: null, lines: [{ w: "maddoc", t: "Bonsoir." }, { choix: [{ t: "Oui.", suite: [{ w: "maddoc", t: "Bien." }] }, { t: "Non.", suite: [] }] }, { w: "n", t: "Le feu craque." }] },
+      { id: "test_2", companion: "maddoc", step: "desert_08", after: "test_1", lines: [{ w: "maddoc", t: "Encore moi." }] }
+    ]; };
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.unlockedTabs.companions = true;");
+    ok(M.available().length === 0, "compagnon pas encore recruté : rien à dire");
+    run("CompanionManager.unlock('maddoc'); CompanionTalkManager.stepDone = (function (f) { CompanionTalkManager.__sd = f; return function (id) { return id === 'desert_08' ? true : f.call(CompanionTalkManager, id); }; })(CompanionTalkManager.stepDone);");
+    var av = M.available();
+    ok(av.length === 1 && av[0].id === "test_1", "étape atteinte et compagnon recruté : une seule conversation proposée, la première");
+    var feu = g.buildCampHTML("feu");
+    ok(/openCompanionTalk\('test_1'\)/.test(feu) && /veut te parler/.test(feu), "« Le feu » : la carte « Maddoc veut te parler »");
+    g.openCompanionTalk("test_1"); g.talkNext(); g.talkChoose(0);
+    ok(g.talkScene && g.talkScene.choices === "a", "la scène suit le dialogue et retient la réponse choisie");
+    g.closeCompanionTalk(false);
+    ok(!M.isDone("test_1") && M.available()[0].id === "test_1", "quitter avant la fin : rien n'est noté, la conversation reste proposée");
+    g.openCompanionTalk("test_1"); g.talkNext(); g.talkChoose(1); g.talkNext(); g.talkNext(); g.talkNext();
+    ok(g.talkScene && g.talkScene.cur && g.talkScene.cur.fin, "fin de la conversation atteinte");
+    g.closeCompanionTalk(true);
+    ok(M.choiceOf("test_1") === "b" && M.available()[0].id === "test_2", "terminée : réponse « b » gardée, la suivante s'ouvre");
+    var save = run("JSON.stringify(CompanionManager.buildSaveData().maddoc.talks)");
+    ok(save === '{"test_1":"b"}', "les conversations faites partent dans la sauvegarde du compagnon (" + save + ")");
+    run("CompanionManager.restore(JSON.parse(JSON.stringify(CompanionManager.buildSaveData())));");
+    ok(M.choiceOf("test_1") === "b", "et reviennent au chargement");
+    var idx = fs.readFileSync(path.join(ROOT, "index.html"), "utf8"), sw = fs.readFileSync(path.join(ROOT, "sw.js"), "utf8");
+    ok(["js/data/companion-talks.js", "js/systems/companion-talk-system.js", "js/ui/companion-talk-view.js"].every(function (f) { return idx.indexOf(f) > 0 && sw.indexOf("./" + f) > 0; }), "trois fichiers nouveaux, chargés et précachés");
+  } catch (err) { ok(false, "[394] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  g.companionTalksData = saveData;
+  run("if (CompanionTalkManager.__sd) { CompanionTalkManager.stepDone = CompanionTalkManager.__sd; delete CompanionTalkManager.__sd; }");
+  if (g.talkScene) g.closeCompanionTalk(false);
+})();
+
+console.log("\n[395] v3.598.0 — Quêtes des compagnons et reliques uniques (déroulés à venir)");
+(function () {
+  var saveQ = g.companionQuestsData, saveT = g.companionTalksData, M = g.CompanionQuestManager, CR = g.CompanionRelics, CM = g.CompanionManager, saveParty = CM && CM.partyIds;
+  try {
+    ok(saveQ().length === 14, "14 quêtes livrées (v3.599.0)");
+    var U = g.COMPANION_RELIC_UNIQUES, owners = {};
+    Object.keys(U).forEach(function (k) { owners[U[k].owner] = (owners[U[k].owner] || 0) + 1; });
+    ok(Object.keys(U).length === 14 && owners.wenna === 3 && owners.maddoc === 3 && owners.edda === 3 && owners.ysolt === 3 && owners.sarkel === 2, "14 reliques uniques : 3 par compagnon, 2 pour Sarkel");
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.unlockedTabs.companions = true; CompanionManager.unlock('wenna'); CompanionManager.unlock('maddoc');");
+    var r = CR.grantUnique("wenna_pousse");
+    ok(r && CR.isUnique(r) && CR.name(r) === "La Pousse du Clos" && CR.effectText(r) === "+15 % PV · Héros +2 % dégâts" && CR.rarity(r) === "legendary", "relique unique : nom propre, deux effets, couleur légendaire (" + (r && CR.effectText(r)) + ")");
+    ok(CR.grantUnique("wenna_pousse") === null, "une relique unique ne se gagne qu'une fois");
+    run("CompanionManager.state('wenna').upgrades = 5; CompanionManager.state('maddoc').upgrades = 5;");
+    ok(!CR.equip("maddoc", 0, r.id) && CR.equip("wenna", 0, r.id), "réservée à son compagnon : Maddoc ne peut pas la porter, Wenna oui");
+    ok(Math.abs(CR.sum("wenna", "hpPct") - 0.15) < 1e-9 && Math.abs(CR.sum("wenna", "heroPct") - 0.02) < 1e-9, "ses deux effets comptent, sans rang");
+    run("companionRelicPick = { id: 'maddoc', slot: 0 };");
+    ok(!/Pousse du Clos/.test(g.buildCompanionRelicPickHTML()), "la feuille de Maddoc ne propose pas la relique de Wenna");
+    var c = CR.grant("croc", 2);
+    ok(CR.effectText(c) === "+9 % dégâts", "relique ordinaire : texte inchangé (" + CR.effectText(c) + ")");
+    // Une quête de test : scène, livraison, Petite Aventure, élite
+    g.companionQuestsData = function () { return [{ id: "q_test", companion: "wenna", title: "Test", relic: "wenna_ruban", steps: [
+      { type: "scene", lines: [{ w: "wenna", t: "Viens." }] }, { type: "deliver", res: { eau: 5 } }, { type: "run", world: "forest", count: 2 }, { type: "elite", world: "forest", count: 1 }] }]; };
+    g.companionTalksData = function () { return [{ id: "t_test", companion: "wenna", lines: [{ w: "wenna", t: "J'ai une idée." }], unlocks: { quest: "q_test", title: "Test" } }]; };
+    ok(!M.isUnlocked("q_test") && M.list().length === 0, "quête fermée tant que sa conversation n'est pas faite");
+    g.openCompanionTalk("t_test"); g.talkNext(); g.talkNext(); g.closeCompanionTalk(true);
+    ok(M.isActive("q_test") && M.step(M.get("q_test")).type === "scene", "la conversation finie ouvre la quête, à sa première étape");
+    ok(M.readyCount() === 1 && /openQuestScene\('q_test'\)/.test(g.buildCompanionQuestsHTML()), "Secondaires : la carte de la quête, bouton « Écouter », pastille");
+    g.openQuestScene("q_test"); g.talkNext(); g.talkNext(); g.closeCompanionTalk(true);
+    ok(M.step(M.get("q_test")).type === "deliver" && !M.canDeliver(M.get("q_test")), "scène écoutée : étape suivante (livraison), pas encore les ressources");
+    run("WarehouseManager.addResource('eau', 8, true);");
+    var eau = run("WarehouseManager.getAmount('eau')");
+    ok(M.deliver("q_test") && run("WarehouseManager.getAmount('eau')") === eau - 5, "livraison : les ressources sont retirées de l'Entrepôt");
+    run("game.unlockedTabs.village = true; LivingMapManager.ensureDefaults(); LIVING_MAPS.forest.sectors.forEach(function (d) { var s = LivingMapManager.getState('forest', d.id); s.state = 'libere'; s.liberatedCount = 1; });");
+    var t1 = M.targetOf(M.get("q_test"));
+    CM.partyIds = function () { return []; };
+    M.onRunEnd("forest", "dest", t1);
+    ok(t1 && M.stateOf("q_test").n === 0, "Petite Aventure sans Wenna dans l'équipe : ne compte pas (lieu " + t1 + ")");
+    CM.partyIds = function () { return ["wenna"]; };
+    M.onRunEnd("desert", "dest", t1); M.onRunEnd("forest", "ko", t1); M.onRunEnd("forest", "dest", t1 === "gue" ? "menhirs" : "gue"); M.onRunEnd("forest", "parcours", t1);
+    ok(M.stateOf("q_test").n === 0, "autre monde, échec, autre lieu ou parcours : ne compte pas (v3.603.0 : seul le lieu attribué)");
+    M.onRunEnd("forest", "dest", t1);
+    var mid = run("JSON.stringify(CompanionManager.buildSaveData().wenna.quests)");
+    ok(/"s":2,"n":1/.test(mid) && mid.indexOf('"last":"' + t1 + '"') > 0, "la progression part dans la sauvegarde du compagnon (" + mid + ")");
+    run("CompanionManager.restore(JSON.parse(JSON.stringify(CompanionManager.buildSaveData())));");
+    ok(M.stateOf("q_test").n === 1, "et revient au chargement");
+    var t2 = M.targetOf(M.get("q_test"));
+    ok(t2 && t2 !== t1, "après une réussite, un autre lieu (" + t1 + " → " + t2 + ")");
+    M.onRunEnd("forest", "dest", t2);
+    ok(M.step(M.get("q_test")).type === "elite", "deux réussites : étape suivante (élite)");
+    M.onEliteWon("forest", M.targetOf(M.get("q_test")));
+    ok(M.isDone("q_test") && CR.hasUnique("wenna_ruban"), "élite vaincue : quête terminée, relique unique gagnée");
+    ok(/cq-done/.test(g.buildCompanionQuestCardHTML(M.get("q_test"))), "la carte affiche la quête terminée");
+    g.companionTalksData = function () { return [{ id: "t_apres", companion: "wenna", afterQuest: "q_autre", lines: [{ w: "wenna", t: "Après." }] }, { id: "t_fini", companion: "wenna", afterQuest: "q_test", lines: [{ w: "wenna", t: "Merci." }] }]; };
+    var tav = g.CompanionTalkManager.available();
+    ok(tav.length === 1 && tav[0].id === "t_fini", "afterQuest : la conversation attend que la quête du compagnon soit finie");
+    g.companionQuestsData = function () { return [{ id: "q_part", companion: "wenna", title: "Partie", steps: [{ type: "scene", lines: [] }] }]; };
+    M.unlock("q_part");
+    var saveDep = CM.hasDeparted; CM.hasDeparted = function (id) { return id === "wenna"; };
+    ok(M.list().length === 0 && M.step(M.get("q_part")) === null && g.CompanionTalkManager.available().length === 0, "compagnon parti pour de bon : ni quête en cours ni conversation");
+    CM.hasDeparted = saveDep;
+    var idx = fs.readFileSync(path.join(ROOT, "index.html"), "utf8"), sw = fs.readFileSync(path.join(ROOT, "sw.js"), "utf8");
+    ok(["js/data/companion-quests.js", "js/systems/companion-quest-system.js", "js/ui/companion-quest-view.js"].every(function (f) { return idx.indexOf(f) > 0 && sw.indexOf("./" + f) > 0; }), "trois fichiers nouveaux, chargés et précachés");
+  } catch (err) { ok(false, "[395] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  g.companionQuestsData = saveQ; g.companionTalksData = saveT;
+  if (CM) CM.partyIds = saveParty;
+  if (g.talkScene) g.closeCompanionTalk(false);
+})();
+
+console.log("\n[396] v3.599.0 — Conversations et quêtes des compagnons : les données livrées");
+(function () {
+  try {
+    var T = g.companionTalksData(), Qs = g.companionQuestsData(), tid = {}, qid = {}, unl = {}, errs = [];
+    var steps = {}; Object.keys(g.STORY_QUESTS).forEach(function (c) { g.STORY_QUESTS[c].steps.forEach(function (x) { steps[x.id] = true; }); });
+    T.forEach(function (t) { tid[t.id] = t; });
+    Qs.forEach(function (q) { qid[q.id] = q; });
+    var lineOk = function (l, cid) { return l.choix ? l.choix.length === 2 && l.choix.every(function (c) { return c.t && (c.suite || []).every(function (x) { return lineOk(x, cid); }); }) : (l.t && (l.w === "n" || !!g.COMPANIONS_DB[l.w])); };
+    T.forEach(function (t) {
+      if (!g.COMPANIONS_DB[t.companion]) errs.push(t.id + " compagnon");
+      if (!steps[t.step]) errs.push(t.id + " étape " + t.step);
+      if (t.after && (!tid[t.after] || tid[t.after].companion !== t.companion)) errs.push(t.id + " after");
+      if (t.afterQuest && (!qid[t.afterQuest] || qid[t.afterQuest].companion !== t.companion)) errs.push(t.id + " afterQuest");
+      if (t.unlocks) { if (!qid[t.unlocks.quest]) errs.push(t.id + " unlocks"); unl[t.unlocks.quest] = (unl[t.unlocks.quest] || 0) + 1; }
+      if (!t.lines.length || !t.lines.every(function (l) { return lineOk(l, t.companion); })) errs.push(t.id + " répliques");
+    });
+    var relics = {};
+    Qs.forEach(function (q) {
+      if (unl[q.id] !== 1) errs.push(q.id + " débloquée " + (unl[q.id] || 0) + " fois");
+      var U = g.COMPANION_RELIC_UNIQUES[q.relic];
+      if (!U || U.owner !== q.companion || relics[q.relic]) errs.push(q.id + " relique");
+      relics[q.relic] = true;
+      q.steps.forEach(function (st, k) {
+        if (!st.label) errs.push(q.id + "/" + k + " label");
+        if (st.type === "deliver" && !Object.keys(st.res).every(function (r) { return g.WAREHOUSE_RESOURCES[r] && st.res[r] > 0; })) errs.push(q.id + "/" + k + " ressource");
+        if ((st.type === "run" || st.type === "elite") && !g.WORLDS.some(function (w) { return w.id === st.world; })) errs.push(q.id + "/" + k + " monde");
+        if (st.type === "elite") {
+          var rep = Object.keys(g.LIVING_MAPS).some(function (m) { var M = g.LIVING_MAPS[m]; return M.worldId === st.world && JSON.stringify(M).indexOf('"repeatable":true') >= 0; });
+          if (!rep) errs.push(q.id + "/" + k + " pas d'élite rejouable");
+        }
+        if (st.type === "scene" && !(st.lines.length && st.lines.every(function (l) { return lineOk(l, q.companion); }))) errs.push(q.id + "/" + k + " scène");
+      });
+    });
+    ok(errs.length === 0, "27 conversations et 14 quêtes cohérentes : étapes, chaînes, reliques, ressources, mondes, élites rejouables" + (errs.length ? " — " + errs.join(", ") : ""));
+    var per = {}; Qs.forEach(function (q) { per[q.companion] = (per[q.companion] || 0) + 1; });
+    ok(per.wenna === 3 && per.maddoc === 3 && per.edda === 3 && per.ysolt === 3 && per.sarkel === 2, "3 quêtes par compagnon, 2 pour Sarkel");
+    // Parcours réel : Maddoc recruté, étapes réclamées, conversation 3 → quête 1
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); CompanionManager.unlock('maddoc');");
+    ok(g.CompanionTalkManager.availableFor("maddoc") === null, "étape pas réclamée : Maddoc n'a rien à dire");
+    run("var __s = StoryQuestManager.getState('desert'); __s.claimedSteps.desert_08 = true; __s.claimedSteps.desert_10 = true; __s.claimedSteps.desert_12 = true;");
+    var M = g.CompanionTalkManager, done = function (id) { g.openCompanionTalk(id); var n = 0; while (g.talkScene && !g.talkScene.cur.fin && n++ < 40) { if (g.talkScene.cur.choix) g.talkChoose(0); else g.talkNext(); } g.closeCompanionTalk(true); };
+    ok((M.availableFor("maddoc") || {}).id === "maddoc_1", "étape « Celui qui n'est pas rentré » réclamée : la conversation 1 de Maddoc");
+    done("maddoc_1"); done("maddoc_2"); done("maddoc_3");
+    ok(g.CompanionQuestManager.isActive("q_maddoc_1") && M.choiceOf("maddoc_3") === "a", "la conversation 3 ouvre « Ce qu'il reste de l'autre côté »");
+    ok(M.availableFor("maddoc") === null, "la conversation 4 attend « Ce qui reste du roi »");
+  } catch (err) { ok(false, "[396] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  if (g.talkScene) g.closeCompanionTalk(false);
+})();
+
+console.log("\n[397] v3.600.0 — Quêtes des compagnons : le secteur à jouer sur la carte vivante");
+(function () {
+  var saveQ = g.companionQuestsData, M = g.CompanionQuestManager, CM = g.CompanionManager, saveParty = CM && CM.partyIds;
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.unlockedTabs.village = true; CompanionManager.unlock('wenna');");
+    g.companionQuestsData = function () { return [{ id: "q_lm", companion: "wenna", title: "Test", relic: "wenna_pousse", steps: [{ type: "run", world: "forest", count: 1, label: "Une Petite Aventure" }, { type: "elite", world: "forest", count: 1, label: "Une élite" }] }]; };
+    M.unlock("q_lm");
+    var map = g.LivingMapManager.getMapForWorld("forest");
+    var secs = M.sectorsFor(M.get("q_lm"));
+    var allExp = secs.length > 0 && secs.every(function (id) { return g.LivingMapManager.getContentFor(map.id, id).type === "expedition" && g.LivingMapManager.isReachable(map.id, id); });
+    ok(allExp, "étape Petite Aventure : secteurs d'expédition atteignables de la Forêt (" + secs.join(", ") + ")");
+    var tg0 = M.targetOf(M.get("q_lm")), other = secs.filter(function (x) { return x !== tg0; })[0];
+    ok(M.questsAt(map.id, tg0).length === 1 && M.questsAt(map.id, other).length === 0 && M.questsAt("desert", tg0).length === 0, "seul le lieu attribué sait quelle quête il fait avancer");
+    var tg = M.targetOf(M.get("q_lm")), lm = g.buildLivingMapHTML(map.id);
+    ok((lm.match(/lm-cq-flag/g) || []).length === 1 && secs.indexOf(tg) >= 0, "v3.603.0 : une seule pastille, sur le lieu attribué à la quête (" + tg + ")");
+    run("livingMapSelected = '" + tg + "';");
+    ok(/is-cq/.test(g.buildLivingMapPanelHTML(map.id, null)) && /compte pour/.test(g.buildLivingMapPanelHTML(map.id, null)), "volet du secteur : « Quête de Wenna : compte pour… »");
+    run("livingMapSelected = null;");
+    ok(/companionQuestGo\('q_lm'\)/.test(g.buildCompanionQuestCardHTML(M.get("q_lm"))), "carte de la quête : bouton « J'y vais »");
+    CM.partyIds = function () { return ["wenna", "maddoc"]; };
+    run("CompanionManager.unlock('maddoc');");
+    g.companionQuestsData = (function (f) { return function () { return f().concat([{ id: "q_lm2", companion: "maddoc", title: "Test 2", relic: "maddoc_pierre", steps: [{ type: "run", world: "forest", count: 1, label: "Une Petite Aventure" }] }]); }; })(g.companionQuestsData);
+    M.unlock("q_lm2");
+    var ta = M.targetOf(M.get("q_lm")), tb = M.targetOf(M.get("q_lm2"));
+    ok(ta && tb && ta !== tb, "deux quêtes dans le même monde : deux lieux différents (" + ta + ", " + tb + ")");
+    M.onRunEnd("forest", "dest", ta);
+    ok(M.step(M.get("q_lm")).type === "elite" && M.stateOf("q_lm2").n === 0, "une Petite Aventure ne fait avancer qu'une seule quête");
+    var es = M.sectorsFor(M.get("q_lm"));
+    ok(es.every(function (id) { return g.LivingMapManager.getContentFor(map.id, id).type === "elite"; }), "étape élite : seuls les secteurs d'élite comptent (" + es.join(", ") + ")");
+  } catch (err) { ok(false, "[397] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  g.companionQuestsData = saveQ;
+  if (CM) CM.partyIds = saveParty;
+  run("livingMapSelected = null;");
+})();
+
+console.log("\n[398] v3.601.0 — Parler aux compagnons : la liste des sujets (M1, T1)");
+(function () {
+  var M = g.CompanionTalkManager;
+  try {
+    var D = g.companionTopicsData(), n = 0;
+    Object.keys(D).forEach(function (c) { ["toi", "monde"].forEach(function (k) { n += Object.keys(D[c][k]).length; }); });
+    ok(n === 30, "30 sujets : un souvenir et un avis sur le monde, par compagnon et par monde où il est (" + n + ")");
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); CompanionManager.unlock('wenna'); WorldManager.worldIndex = 1; game.worldsEverReached = { 0: true, 1: true };");
+    var toi = M.topicToi("wenna"), monde = M.topicMonde("wenna");
+    ok(toi && toi.world === "forest" && monde && monde.world === "desert", "Wenna au Désert : son souvenir de la Forêt d'abord, son avis sur le Désert");
+    ok(M.hasNewTopic("wenna"), "sujets jamais écoutés : pastille « … » au coin du feu");
+    var topics = g.talkMenuTopics("wenna").map(function (o) { return o.k; });
+    ok(topics.join(",") === "toi,monde", "menu : « Parle-moi de toi », « Et ce monde-ci ? » (" + topics.join(",") + ")");
+    g.openCompanionMenu("wenna"); g.talkTopic("toi");
+    ok(g.talkScene && g.talkScene.topic === "toi" && M.heard("wenna", "s_toi_forest"), "« Parle-moi de toi » : le souvenir se joue et passe en écouté");
+    ok(M.topicToi("wenna").world === "desert", "le souvenir suivant est celui du Désert");
+    g.closeCompanionTalk(false);
+    run("CompanionTalkManager.markHeard('wenna', 's_toi_desert'); CompanionTalkManager.markHeard('wenna', 's_monde_desert');");
+    ok(!M.hasNewTopic("wenna") && M.topicToi("wenna").world === "desert", "tout écouté : plus de pastille, le dernier souvenir se réécoute");
+    var save = run("JSON.stringify(CompanionManager.buildSaveData().wenna.talks)");
+    ok(/s_toi_forest/.test(save) && /s_monde_desert/.test(save), "les sujets écoutés partent dans la sauvegarde, sans nouvel état");
+    run("CompanionQuestManager.questsOf('wenna').q_wenna_1 = { s: 0, n: 0, d: false };");
+    ok(g.talkMenuTopics("wenna").some(function (o) { return o.k === "quete"; }), "quête en cours : le sujet « Ta quête »");
+    g.openCompanionMenu("wenna"); g.talkTopic("quete");
+    ok(g.talkScene && g.talkScene.questTopic === "q_wenna_1" && g.talkScene.queue.length === 1, "« Ta quête » : où elle en est, puis l'action de l'étape");
+    ok(g.talkMenuTopics("wenna").every(function (o) { return g.TALK_TOPIC_ICONS.indexOf(o.icon) >= 0; }), "v3.601.1 : chaque sujet a son icône dédiée (aucune image empruntée)");
+    g.closeCompanionTalk(false);
+  } catch (err) { ok(false, "[398] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  if (g.talkScene) g.closeCompanionTalk(false);
+})();
+
+console.log("\n[399] v3.602.0 — Les jours du monde : une nuit toutes les 3 sorties, la nuit vivante");
+(function () {
+  var LM = g.LivingMapManager, W = g.WorldDays, saveRand = LM && LM._rand, saveOpen = LM && LM.isMapOpen, saveLvl;
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.unlockedTabs.village = true; WorldManager.worldIndex = 0;");
+    ok(W.day() === 1 && W.left() === 3, "début : jour 1, 3 sorties avant la nuit");
+    W.onSortieEnd("farm");
+    ok(W.left() === 3, "le farm libre ne compte pas");
+    W.onSortieEnd("scene"); W.onSortieEnd("mapelite");
+    ok(W.day() === 1 && W.left() === 1, "deux sorties : la nuit approche");
+    var map = LM.getMapForWorld("forest");
+    LM.ensureDefaults();
+    map.sectors.forEach(function (d) { var st = LM.getState(map.id, d.id); st.state = "libere"; st.liberatedCount = 1; st.firstRewardClaimed = true; });
+    saveLvl = g.VillageBuildingManager.getLevel; g.VillageBuildingManager.getLevel = function (id) { return id === "palisade" ? 0 : saveLvl.call(g.VillageBuildingManager, id); };
+    LM._rand = function () { return 0.1; };
+    var n = W.onSortieEnd("dungeon");
+    var d = n && n.sectorId ? LM.getSectorDef(map.id, n.sectorId) : null;
+    ok(W.day() === 2 && W.left() === 3 && n && n.kind === "reprise" && d && d.ring === 3 && LM.getState(map.id, d.id).state === "recouvert", "3e sortie : la nuit tombe, jour 2 ; la Forêt reprend un secteur de l'anneau le plus lointain (" + (d ? d.id : "-") + ")");
+    ok(W.isDark() && /Reprends-le depuis/.test(W.nightText()), "la soirée qui suit : « Cette nuit » dit ce qui a été repris et par où revenir");
+    var feu = g.buildCampHTML("feu");
+    ok(/camp-soir is-night/.test(feu) && feu.indexOf(g._t("Cette nuit")) >= 0, "Camp : la carte « Cette nuit » remplace « Ce soir au camp »");
+    ok(W.takePending() && !W.takePending(), "l'écran de la nuit ne se montre qu'une fois");
+    W.onSortieEnd("scene");
+    ok(!W.isDark(), "la sortie suivante : le jour revient");
+    g.VillageBuildingManager.getLevel = function (id) { return id === "palisade" ? 10 : saveLvl.call(g.VillageBuildingManager, id); };
+    LM._rand = function () { return 0; };
+    run("WorldDays.ensure().done = 2;");
+    var n2 = W.onSortieEnd("scene");
+    ok(n2 && n2.kind !== "reprise", "Palissade 10 : les trois anneaux sont tenus, la nuit ne reprend rien");
+    ok(LM._dayKey() === "J3" && LM._dayDiff("J1", "J3") === 2 && LM._dayDiff("Mon Oct 30 2026", "J3") === 1, "règles des cartes en jours de jeu (clé « J3 ») ; une ancienne clé civile compte pour un jour");
+    var save = run("JSON.stringify(buildSaveData().explorationProgression.worldDay)");
+    ok(/"day":3/.test(save), "le jour part dans la sauvegarde existante (explorationProgression), sans nouvel état");
+    var idx = fs.readFileSync(path.join(ROOT, "index.html"), "utf8"), sw = fs.readFileSync(path.join(ROOT, "sw.js"), "utf8");
+    ok(idx.indexOf("js/systems/world-day-system.js") > 0 && sw.indexOf("./js/systems/world-day-system.js") > 0, "nouveau fichier world-day-system.js chargé et précaché");
+  } catch (err) { ok(false, "[399] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  if (LM) { LM._rand = saveRand; LM.isMapOpen = saveOpen; }
+  if (saveLvl) g.VillageBuildingManager.getLevel = saveLvl;
+})();
+
+console.log("\n[400] v3.604.0 — Ce matin à Aeswyn : les événements du village");
+(function () {
+  var V = g.VillageEvents, LM = g.LivingMapManager, saveLvl = g.VillageBuildingManager && g.VillageBuildingManager.getLevel;
+  try {
+    var D = g.villageEventsData().filter(function (e) { return !e.suite; }), per = {}; // v3.607.0 : les suites à part
+    D.forEach(function (e) { per[e.type] = (per[e.type] || 0) + 1; });
+    ok(D.length === 24 && per.rumeur === 6 && per.demande === 6 && per.marche === 6 && per.fete === 6, "24 événements : 6 rumeurs, 6 demandes, 6 marchés, 6 fêtes");
+    ok(D.filter(function (e) { return e.type === "demande"; }).every(function (e) { return Object.keys(e.res).concat(Object.keys(e.gain)).every(function (r) { return g.WAREHOUSE_RESOURCES[r]; }); }), "les demandes ne citent que des ressources de l'Entrepôt");
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); WorldManager.worldIndex = 0;");
+    ok(V.onDawn(2, function () { return 0; }) === null, "village pas encore ouvert : aucun événement");
+    run("game.unlockedTabs.village = true;");
+    ok(V.onDawn(2, function () { return 0.6; }) === null, "une aube sur deux environ : pas cette fois");
+    var picks = [0, 0.3];
+    var rv = V.onDawn(g.WorldDays.day(), function () { return picks.length ? picks.shift() : 0; });
+    ok(rv && V.def() && V.daysLeft() === 2, "un événement arrive à l'aube, pour 2 jours (" + (rv && rv.id) + ")");
+    // Demande : forcer celle de Brannoc
+    run("game.explorationProgression.villageEvent = { id: 'd_brannoc_fer', from: 2, until: 4, w: 1, done: false };");
+    var n = V.needs();
+    ok(n.fer === 120 && !V.canDeliver(), "demande au Désert : 120 Fer (80 × 1,5), pas encore dans l'Entrepôt");
+    run("WarehouseManager.addResource('fer', 200, true);");
+    var gold0 = run("game.gold"), gold = V.rewardGold();
+    ok(gold === Math.floor(g.WAREHOUSE_RESOURCES.fer.sellPrice * 120 * g.TAVERN_REWARD_MULT * 1.5), "récompense : 1,5 fois un contrat de Taverne (" + gold + " or)");
+    ok(V.hasAction() && V.deliver() && run("game.gold") === gold0 + gold && run("WarehouseManager.getAmount('fer')") === 80 && !V.hasAction(), "« Livrer » : le fer part, l'or et les lingots arrivent, la pastille s'éteint");
+    ok(/vev-done/.test(g.buildVillageEventCardHTML()), "la carte affiche « Livré »");
+    // Fête
+    run("game.explorationProgression.villageEvent = { id: 'f_moissons', from: 2, until: 4, w: 0, done: false }; WarehouseManager.addResource('pain', 10, true); game.heroHp = 1;");
+    ok(V.canFete() && V.startFete() && run("game.heroHp") === run("game.heroMaxHp") && V.feteLeft() === 3, "la fête : 6 pains, tout le monde soigné, 3 sorties à +25 % d'or");
+    ok(V.feteGoldMult("scene") === 1.25 && V.feteGoldMult("farm") === 1 && V.feteLeft() === 2, "l'or de la sortie suivante ×1,25 ; le farm libre ne compte pas");
+    // Marché
+    g.VillageBuildingManager.getLevel = function (id) { return id === "hall" ? 2 : saveLvl.call(g.VillageBuildingManager, id); };
+    var it = { rarity: "rare", slot: "weapon" }, p0 = g.EquipShopManager.getPrice(it), sz0 = g.EquipShopManager.getShopSize();
+    run("game.explorationProgression.villageEvent = { id: 'm_sud', from: 2, until: 4, w: 0, done: false };");
+    ok(g.EquipShopManager.getPrice(it) === Math.floor(p0 * 0.8) || Math.abs(g.EquipShopManager.getPrice(it) - p0 * 0.8) <= 1, "marché : −20 % sur les prix de l'échoppe");
+    ok(g.EquipShopManager.getShopSize() === sz0 + 1 && g.EquipShopManager.getShopSize(2) === sz0, "marché : une pièce de plus (la fiche de la Halle n'en tient pas compte)");
+    // Rumeur et fin
+    run("game.explorationProgression.villageEvent = null;");
+    var r2 = V.onDawn(5, (function () { var q = [0, 0]; return function () { return q.length ? q.shift() : 0; }; })());
+    var hasRumor = r2 && V.def().type === "rumeur";
+    ok(hasRumor && r2.sector && V.rumorAt(r2.mapId, r2.sector) && /lm-ev-flag/.test(g.buildLivingMapHTML(r2.mapId)), "rumeur : un lieu de la carte vivante, marqué (" + (r2 && r2.sector) + ")");
+    ok(V.onDawn(7, function () { return 0.9; }) === null && !V.active() && V.state().lastType === "rumeur", "au bout de 2 jours, l'événement s'efface");
+    var save = run("JSON.stringify(buildSaveData().explorationProgression.villageEvent)");
+    ok(/lastType/.test(save), "l'événement part dans la sauvegarde existante (explorationProgression)");
+    var idx = fs.readFileSync(path.join(ROOT, "index.html"), "utf8"), sw = fs.readFileSync(path.join(ROOT, "sw.js"), "utf8");
+    ok(["js/data/village-events.js", "js/systems/village-event-system.js", "js/ui/village-event-view.js"].every(function (f) { return idx.indexOf(f) > 0 && sw.indexOf("./" + f) > 0; }), "trois fichiers nouveaux, chargés et précachés");
+  } catch (err) { ok(false, "[400] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  if (saveLvl) g.VillageBuildingManager.getLevel = saveLvl;
+})();
+
+console.log("\n[401] v3.605.0 — Parler aux compagnons : « Et les autres ? » (T2)");
+(function () {
+  var M = g.CompanionTalkManager, CM = g.CompanionManager, saveDep = CM && CM.hasDeparted;
+  try {
+    var D = g.companionAvisData(), n = 0, ok2 = true;
+    Object.keys(D).forEach(function (a) { Object.keys(D[a]).forEach(function (b) { n++; if (a === b || !g.COMPANIONS_DB[b]) ok2 = false; }); });
+    ok(n === 20 && ok2, "20 avis : chaque compagnon sur chacun des quatre autres");
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); CompanionManager.unlock('wenna'); WorldManager.worldIndex = 1;");
+    ok(M.topicAvis("wenna").length === 0 && !g.talkMenuTopics("wenna").some(function (o) { return o.k === "autres"; }), "seule au camp : pas de sujet « Et les autres ? »");
+    run("CompanionManager.unlock('maddoc');");
+    var av = M.topicAvis("wenna");
+    ok(av.length === 1 && av[0].other === "maddoc" && g.talkMenuTopics("wenna").some(function (o) { return o.k === "autres" && o.isNew; }), "Maddoc recruté : « Et les autres ? » (Maddoc), nouveau");
+    g.openCompanionMenu("wenna"); g.talkTopic("autres");
+    ok(g.talkScene && g.talkScene.sub === "autres", "le sujet ouvre la liste des compagnons");
+    g.talkTopic("avis:maddoc");
+    ok(g.talkScene && g.talkScene.topic === "avis:maddoc" && M.heard("wenna", "s_avis_maddoc"), "l'avis sur Maddoc se joue et passe en écouté");
+    g.talkBack();
+    ok(g.talkScene && g.talkScene.sub === "autres", "« ‹ Autre chose » ramène à la liste des compagnons");
+    g.closeCompanionTalk(false);
+    CM.hasDeparted = function (id) { return id === "maddoc"; };
+    ok(M.topicAvis("wenna").length === 0, "un compagnon parti pour de bon n'a plus d'avis à son sujet");
+    CM.hasDeparted = saveDep;
+    ok(g.TALK_TOPIC_ICONS.indexOf("images/Icons/camp/topic_others.webp") >= 0, "icône dédiée du sujet (générique en attendant)");
+  } catch (err) { ok(false, "[401] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  if (CM) CM.hasDeparted = saveDep;
+  if (g.talkScene) g.closeCompanionTalk(false);
+})();
+
+console.log("\n[402] v3.606.0 — L'artisan d'Aeswyn : corde tressée, trousse de maître, torche résinée ; Sarkel rachète");
+(function () {
+  var P = g.Pa2Run, S = g.SceneRunManager, W = g.WarehouseManager, V = g.VillageEvents, saveNight = P && P.nightItem;
+  try {
+    var rec = {};
+    Object.keys(g.WORKSHOPS_CONFIG).forEach(function (w) { (g.WORKSHOPS_CONFIG[w].recipes || []).forEach(function (r) { rec[r.id] = w; }); });
+    ok(rec.corde_tressee === "scierie_fine" && rec.trousse_maitre === "forge" && rec.torche_resinee === "menuiserie", "recettes : Scierie fine, Forge, Menuiserie (W1, ateliers existants)");
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.unlockedTabs.village = true; game.explorationProgression.petiteAventure = { spent: 0, since: null };");
+    P.nightItem = function () { return null; };
+    S.startRun("petite_aventure_foret");
+    ok(!/pa2AddItem\('corde_t'\)/.test((function () { g.pa2View.picker = { mode: "add" }; var h = ""; var keep = g.pa2SetSheetHTML; g.pa2SetSheetHTML = function (x) { h = x || ""; }; g.pa2RenderPicker(); g.pa2SetSheetHTML = keep; return h; })()), "sans corde tressée à l'Entrepôt, la besace ne la propose pas");
+    W.addResource("corde_tressee", 2, true); W.addResource("trousse_maitre", 1, true); W.addResource("torche_resinee", 1, true);
+    ok(P.addItem("corde").ok && P.addItem("corde_t").ok && P.addItem("trousse_t").ok && P.addItem("torche_t").ok && !P.addItem("torche").ok, "besace : corde + corde tressée, trousse de maître, torche résinée (pas deux torches)");
+    P.depart();
+    var r = g.game.sceneRun;
+    ok(r.stock.corde === 3 && r.stock.trousse === 3 && W.getAmount("corde_tressee") === 1 && W.getAmount("torche_resinee") === 0, "départ : 3 cordes (1 + 2), 3 crochets ; les objets fabriqués sortent de l'Entrepôt");
+    var ap0 = Object.keys(g.PA2_APPROACHES)[0], n0 = { type: "combat" }, base = P._dmgMult(r, n0, ap0);
+    r.bag = r.bag.filter(function (x) { return x !== "torche_t"; }).concat(["torche"]);
+    var withTorch = P._dmgMult(r, n0, ap0);
+    r.bag = r.bag.filter(function (x) { return x !== "torche"; }).concat(["torche_t"]);
+    ok(Math.abs(withTorch / base - g.PA2_RULES.torchDmgMult) < 1e-9 && P.hasItem("torche", r), "la torche résinée éclaire comme une torche, sans le +15 % de dégâts");
+    r.stock.corde = 2; r.stock.trousse = 2; // une corde (la gratuite) et un crochet utilisés
+    P._refundStock(r);
+    ok(W.getAmount("corde_tressee") === 2 && W.getAmount("trousse_maitre") === 0, "retour : la corde tressée intacte est rendue ; la trousse entamée ne l'est pas ; la torche a brûlé");
+    S.abandon(); S.clearRun();
+    // Sarkel rachète
+    run("game.explorationProgression.villageEvent = { id: 'm_sud', from: WorldDays.day(), until: WorldDays.day() + 2, w: 0, done: false };");
+    W.addResource("seve_aeswyn", 12, true);
+    var gold0 = run("game.gold"), list = V.buybackList();
+    ok(list.length === 1 && list[0].res === "seve_aeswyn" && list[0].gold === 100, "marché : Sarkel rachète la Sève par lots de 5 (100 or)");
+    ok(V.sellLot("seve_aeswyn") && V.sellLot("seve_aeswyn") && !V.sellLot("seve_aeswyn") && run("game.gold") === gold0 + 200 && W.getAmount("seve_aeswyn") === 2, "deux lots vendus (+200 or), le troisième manque de Sève");
+    run("game.explorationProgression.villageEvent.sold = 10;");
+    W.addResource("seve_aeswyn", 10, true);
+    ok(V.buybackLotsLeft() === 0 && !V.sellLot("seve_aeswyn"), "10 lots par marché, pas plus");
+    run("game.explorationProgression.villageEvent = null;");
+    ok(!V.sellLot("seve_aeswyn"), "hors marché, Sarkel ne rachète rien");
+    var uses = g.getWarehouseOtherUses("seve_aeswyn").map(function (u) { return u.text; }).join(" | ");
+    ok(/Marché de Sarkel/.test(uses) && /Besace des Petites Aventures/.test(g.getWarehouseOtherUses("corde_tressee").map(function (u) { return u.text; }).join(" | ")), "Entrepôt : la Sève dit « Marché de Sarkel », la corde tressée dit « Besace des Petites Aventures »");
+  } catch (err) { ok(false, "[402] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  if (P) P.nightItem = saveNight;
+  try { S.abandon(); S.clearRun(); } catch (e) {}
+})();
+
+console.log("\n[403] v3.607.0 — Événements du village : les suites (S1) et les compagnons qui réagissent (S2)");
+(function () {
+  var V = g.VillageEvents, W = g.WarehouseManager, LM = g.LivingMapManager, M = g.CompanionTalkManager;
+  var day = function () { return g.WorldDays.day(); };
+  var set = function (id, extra) { run("game.explorationProgression.villageEvent = Object.assign({ id: '" + id + "', from: WorldDays.day(), until: WorldDays.day() + 2, w: 0, done: false }, " + JSON.stringify(extra || {}) + ");"); };
+  try {
+    var D = g.villageEventsData(), suites = D.filter(function (e) { return e.suite; });
+    ok(suites.length === 6 && D.filter(function (e) { return e.next; }).every(function (e) { return V.get(e.next) && V.get(e.next).suite; }), "6 suites, et chaque « next » mène à une suite");
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.unlockedTabs.village = true; WorldManager.worldIndex = 0;");
+    var drawn = {};
+    for (var i = 0; i < 200; i++) { run("game.explorationProgression.villageEvent = null;"); var r0 = V.onDawn(day(), (function (k) { var q = [0, k / 200]; return function () { return q.length ? q.shift() : 0; }; })(i)); if (r0) drawn[r0.id] = true; }
+    ok(!Object.keys(drawn).some(function (id) { return V.get(id).suite; }), "le tirage au hasard ne sort jamais une suite (" + Object.keys(drawn).length + " événements tirés)");
+    // Brannoc : livrer → la lame
+    set("d_brannoc_fer"); W.addResource("fer", 200, true); V.deliver();
+    var inv0 = (g.game.inventory || []).length, s1 = V.onDawn(day(), function () { return 0.99; });
+    ok(s1 && s1.id === "s_lame" && V.canClaim(), "fer livré : à l'aube suivante, « La lame de Brannoc » (même sans tirage)");
+    V.claim();
+    ok((g.game.inventory || []).length === inv0 + 1 && !V.canClaim(), "« Recevoir » : une pièce d'équipement du monde");
+    // Orwen : eau → cadeau de vivres ; blé → fête offerte
+    set("d_orwen_eau"); W.addResource("eau", 200, true); V.deliver(); V.onDawn(day(), function () { return 0.99; });
+    var gr0 = W.getAmount("grande_ration"); V.claim();
+    ok(V.def().id === "s_orwen_merci" && W.getAmount("grande_ration") === gr0 + 1, "eau livrée : Orwen offre des vivres");
+    set("d_orwen_ble"); W.addResource("ble", 200, true); V.deliver(); V.onDawn(day(), function () { return 0.99; });
+    run("WarehouseManager.removeResource('pain', WarehouseManager.getAmount('pain'));");
+    ok(V.def().id === "s_fete_orwen" && V.feteCost() === 0 && V.canFete() && V.startFete(), "blé livré : « La table d'Orwen », fête sans pain");
+    // Aldric : pierre → frein de la Palissade
+    var b0 = LM.getBrakeChance("forest");
+    set("d_aldric_pierre"); W.addResource("pierre", 200, true); V.deliver(); V.onDawn(day(), function () { return 0.99; });
+    ok(V.def().id === "s_aldric" && Math.abs(LM.getBrakeChance("forest") - b0 - 0.15) < 1e-9, "pierre livrée : « Le compte est juste », Palissade +15 % de frein");
+    // Rumeur : jouée → deuxième rumeur, plus loin, plus riche
+    set("r_harde", { mapId: "forest", sector: "gue" }); V.onRumorRun();
+    var s5 = V.onDawn(day(), function () { return 0; });
+    var ring = s5 && s5.sector ? LM.getSectorDef("forest", s5.sector).ring : 0;
+    ok(s5 && s5.id === "s_rumeur2" && V.rumorLootMult() === 1.75 && V.rumorRare() === 3, "rumeur jouée : « Plus loin… », +75 % de butin et +3 (secteur " + (s5 && s5.sector) + ", anneau " + ring + ")");
+    // Marché : vendu → Sarkel revient ; sans vente → rien de forcé
+    g.game.village.buildings.hall.level = 1; // l'échoppe est à la Halle
+    set("m_sud", { sold: 1, until: day() });
+    var s6 = V.onDawn(day(), function () { return 0.99; });
+    ok(s6 && s6.id === "s_sarkel_retour", "marché avec vente, fini : Sarkel revient à l'aube suivante");
+    set("m_fin", { until: day() });
+    ok(V.onDawn(day(), function () { return 0.99; }) === null, "marché sans vente : pas de retour forcé");
+    // S2 : les compagnons réagissent
+    run("CompanionManager.unlock('wenna'); game.explorationProgression.villageEvent = null;");
+    set("f_moissons");
+    var mt = M.topicMatin("wenna");
+    ok(mt && /fête/.test(mt.lines[0].t) && g.talkMenuTopics("wenna").some(function (o) { return o.k === "matin" && o.isNew; }), "« Et ce matin ? » : Wenna parle de la fête (sujet nouveau)");
+    g.openCompanionMenu("wenna"); g.talkTopic("matin");
+    ok(M.heard("wenna", "s_matin_f_moissons") && !g.talkMenuTopics("wenna").filter(function (o) { return o.k === "matin"; })[0].isNew, "écouté : plus de pastille pour cet événement");
+    g.closeCompanionTalk(false);
+    set("s_aldric");
+    ok(M.topicMatin("wenna") && M.topicMatin("wenna").lines[0].t === g.companionMorningData().wenna.demande, "une suite (le compte d'Aldric) se commente comme une demande");
+    var soir = g.villageEventSoirData();
+    ok(["rumeur", "demande", "marche", "fete"].every(function (k) { return soir[k]; }), "une phrase du soir par type d'événement");
+  } catch (err) { ok(false, "[403] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  if (g.talkScene) g.closeCompanionTalk(false);
+})();
+
+console.log("\n[404] v3.609.0 — Le Grand Ouvrage automatique : au-delà du seuil, le surplus brut y part (chantier surproduction, option C)");
+(function () {
+  var GO = g.GrandOuvrage, W = g.WarehouseManager, PPS = g.ProductionPlotsSystem;
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
+    game.worldsEverReached = { 0: true, 1: true };
+    ok(GO.isOpen() && GO.isAuto() && GO.getSeuil() === 0.8, "ouvert dès le Désert ; automatique à 80 % par défaut");
+    // conversion des parties d'avant : même palier, même avancée
+    var old = 0; for (var k = 1; k <= 10; k++) old += Math.round(2000 * Math.pow(1.12, k - 1));
+    game.village.grandOuvrage = { points: old + Math.round(2000 * Math.pow(1.12, 10) / 2) };
+    var pr = GO.getProgress();
+    ok(pr.tier === 10 && Math.abs(pr.into / pr.cost - 0.5) < 0.01 && game.village.grandOuvrage.v === 2, "ancienne partie au palier 10 et demi : palier 10 et demi gardés sur la nouvelle courbe");
+    ok(GO.getPoints() === (function () { var n = game.village.grandOuvrage.points; GO.getTier(); return n; })(), "conversion faite une seule fois");
+    // versement à l'entrée
+    game.village.grandOuvrage = { points: 0, v: 2 };
+    run("ResourceReserveManager.setReserve('bois', 0); game.resources.bois = 0;");
+    var cap = W.getCap("bois"), keep = Math.floor(cap * 0.8);
+    var got = W.addResource("bois", cap + 500, true);
+    ok(W.getAmount("bois") === keep && GO.getPoints() === cap + 500 - keep && got === cap + 500, "bois au-delà de 80 % : le stock reste à 80 %, le reste devient des points, rien n'est perdu");
+    ok(W.getFreeSpace("bois") === Infinity && W.getFreeSpace("planche") !== Infinity, "place libre infinie pour une matière brute, pas pour un produit");
+    var pl0 = GO.getPoints(); run("game.resources.planche = 0;"); W.addResource("planche", W.getCap("planche") + 50, true);
+    ok(GO.getPoints() === pl0 && W.getAmount("planche") === W.getCap("planche"), "un produit fabriqué (planche) n'est jamais versé automatiquement");
+    // la réserve protégée l'emporte sur le seuil
+    run("ResourceReserveManager.setReserve('fer', " + Math.floor(W.getCap("fer") * 0.9) + "); game.resources.fer = 0;");
+    W.addResource("fer", W.getCap("fer"), true);
+    ok(W.getAmount("fer") === Math.max(Math.floor(W.getCap("fer") * 0.8), g.ResourceReserveManager.getReserve("fer")), "la réserve protégée reste au-dessus du seuil");
+    run("ResourceReserveManager.setReserve('fer', 0);");
+    // récolte : les zones se vident, le surplus part
+    run("game.explorationProgression = game.explorationProgression || {}; Object.keys(PRODUCTION_UNLOCK_FLAGS).forEach(function (id) { game.explorationProgression[PRODUCTION_UNLOCK_FLAGS[id]] = true; });");
+    var b = "sawmill", plots = PPS.getPlots(b); plots[0].state = "open"; plots[0].stock = 3000;
+    run("game.resources.bois = " + keep + ";");
+    var gp = GO.getPoints(); g.ProductionManager._harvestSilent(b);
+    ok(Math.floor(plots[0].stock) === 0 && W.getAmount("bois") === keep && GO.getPoints() === gp + 3000, "récolte avec l'Entrepôt au seuil : la zone se vide, tout part au Grand Ouvrage");
+    // seuil réglable, bornes 70-95 %
+    for (var i = 0; i < 6; i++) GO.stepSeuil(-1);
+    ok(GO.getSeuil() === 0.7 && W.getAmount("bois") === Math.floor(cap * 0.7), "seuil baissé jusqu'à 70 % (borne) : le stock redescend aussitôt");
+    for (i = 0; i < 9; i++) GO.stepSeuil(1);
+    ok(GO.getSeuil() === 0.95, "seuil monté jusqu'à 95 % (borne)");
+    // désactivé : l'ancienne règle (plafond, perte)
+    GO.setAuto(false); run("game.resources.bois = 0;");
+    var gp2 = GO.getPoints(); W.addResource("bois", cap + 100, true);
+    ok(!GO.isAuto() && W.getAmount("bois") === cap && GO.getPoints() === gp2 && W.getFreeSpace("bois") === 0, "désactivé : plafond plein, l'excédent est perdu comme avant");
+    GO.setAuto(true);
+    ok(W.getAmount("bois") === Math.floor(cap * 0.95), "réactivé : le stock repasse sous le seuil");
+    var sd = JSON.parse(JSON.stringify(g.buildSaveData()));
+    ok(sd.village && sd.village.grandOuvrage && sd.village.grandOuvrage.auto === true && sd.village.grandOuvrage.seuil === 0.95, "réglage sauvegardé (game.village, tel quel)");
+    var html = g.buildGrandOuvrageSheetHTML();
+    ok(/Versement automatique/.test(html) && /kswitch is-on/.test(html) && /Seuil : 95 %/.test(html), "fiche : interrupteur et seuil");
+    game.worldsEverReached = { 0: true }; game.resources.bois = 0;
+    W.addResource("bois", cap + 10, true);
+    ok(!GO.isOpen() && W.getAmount("bois") === cap, "en Forêt (fermé) : rien n'est versé");
+  } catch (err) { ok(false, "[404] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[405] v3.610.0 — Caravane : la part laissée au village se règle (10 à 75 %), retour de Seb (caravanes bloquées au Désert)");
+(function () {
+  var C = g.CaravanManager, W = g.WarehouseManager;
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; VillageBuildingManager.ensure(); game.village.buildings.hall.level = 1; game.worldsEverReached = { 0: true };");
+    ok(C.getKeepShare() === 0.5, "par défaut : la moitié du plafond reste au village");
+    var cap = W.getCap("ble");
+    run("ResourceReserveManager.setReserve('ble', 0); game.resources.ble = " + Math.floor(cap * 0.3) + ";");
+    ok(C.getSpare("ble") === 0, "blé à 30 % du plafond : rien à charger à 50 %");
+    for (var i = 0; i < 4; i++) C.stepKeepShare(-1);
+    ok(C.getKeepShare() === 0.3 && C.getSpare("ble") === 0, "part baissée à 30 % : toujours rien au-dessus");
+    C.stepKeepShare(-1);
+    ok(C.getKeepShare() === 0.25 && C.getSpare("ble") === Math.floor(cap * 0.3) - Math.ceil(cap * 0.25), "à 25 % : la caravane prend ce qui dépasse");
+    for (i = 0; i < 9; i++) C.stepKeepShare(-1);
+    ok(C.getKeepShare() === 0.1, "borne basse : 10 %");
+    for (i = 0; i < 20; i++) C.stepKeepShare(1);
+    ok(C.getKeepShare() === 0.75, "borne haute : 75 %");
+    C.stepKeepShare(-10); C.stepKeepShare(-10);
+    run("ResourceReserveManager.setReserve('ble', " + Math.floor(cap * 0.28) + ");");
+    ok(C.getSpare("ble") === Math.floor(cap * 0.3) - Math.floor(cap * 0.28), "la réserve protégée l'emporte sur la part choisie");
+    var sd = JSON.parse(JSON.stringify(g.buildSaveData()));
+    ok(sd.village && sd.village.caravanKeep === 0.1, "réglage sauvegardé avec game.village");
+    var html = g.buildCaravanDepartHTML();
+    ok(/Laisser au village : 10 % du plafond/.test(html) && /stepCaravanKeep\(1\)/.test(html), "fiche : la part réglable");
+    run("game.village.caravanKeep = 3;"); ok(C.getKeepShare() === 0.75, "valeur hors bornes ramenée à 75 %");
+    run("ResourceReserveManager.setReserve('ble', 0); delete game.village.caravanKeep;");
+  } catch (err) { ok(false, "[405] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[406] v3.611.0 — Caravanes : rare garanti sur le Long (R1), commande du jour par marché (R2)");
+(function () {
+  var C = g.CaravanManager, W = g.WarehouseManager;
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; VillageBuildingManager.ensure(); game.village.buildings.hall.level = 3; game.village.buildings.warehouse.level = 0; WorldManager.worldIndex = 1; game.worldsEverReached = { 0: true, 1: true };");
+    run("['ble','viande','bois','eau','pierre','fer'].forEach(function (k) { ResourceReserveManager.setReserve(k, 0); game.resources[k] = 500; });");
+    var o1 = C.getOrder(1), o0 = C.getOrder(0);
+    ok(C.getEligibleKeys().indexOf(o1) >= 0 && C.getOrder(1) === o1, "commande du jour : une matière brute, la même toute la journée (" + o0 + " / " + o1 + ")");
+    var load = C.computeLoad("moyen", undefined, 1);
+    ok(load[o1] === C.getSpare(o1) && C.getLoadUnits(load) === C.getCapacity("moyen"), "la commande est chargée en premier, tout son surplus");
+    var part = {}; part[o1] = load[o1];
+    ok(C.getLoadGold(part, "moyen", 1) === Math.floor(load[o1] * WAREHOUSE_RESOURCES_PRICE(o1) * 1.25 * 0.8), "+25 % d'or sur la ressource commandée");
+    ok(C.orderRareFor(load, 1) && !C.orderRareFor({}, 1), "à partir de 100 unités : +1 rare promis");
+    run("var _r = Math.random; Math.random = function () { return 0.99; };");
+    C.depart("long", 1);
+    var c = C.get(1);
+    ok(c && c.rare && c.rare.key === "verre_des_dunes" && c.rare.n === 3 && c.order === o1, "Long au Désert, tirage défavorable : 2 Verres garantis + 1 de la commande (" + (c && c.rare && c.rare.n) + ")");
+    ok(C.isOrderDone(1) && !C.orderRareFor(load, 1), "commande honorée : plus de rare ce jour-là pour ce marché");
+    var html = g.buildCaravanOrderHTML(1, load);
+    ok(/Commande du jour/.test(html) && /Honorée aujourd/.test(html), "fiche : la commande du jour, honorée");
+    run("game.village.caravans = []; game.village.caravanOrders = { day: 'hier', done: [1] };");
+    ok(!C.isOrderDone(1), "jour suivant : la commande est de nouveau à honorer");
+    run("['ble','viande','bois','eau','pierre','fer'].forEach(function (k) { game.resources[k] = 500; });");
+    C.depart("long", 0);
+    c = C.get(0);
+    ok(c && c.rare && c.rare.n >= 2, "Long au marché de la Forêt : rare du marché garanti (" + (c && c.rare && c.rare.key) + " ×" + (c && c.rare && c.rare.n) + ")");
+    run("Math.random = _r; game.village.caravans = [];");
+  } catch (err) { ok(false, "[406] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+function WAREHOUSE_RESOURCES_PRICE(k) { return Number(g.WAREHOUSE_RESOURCES[k].sellPrice || 0); }
+
+console.log("\n[407] v3.612.0 — Zones : 3 parcelles qui montent par monde, achat automatique (idée de Seb, atelier parcelles B)");
+(function () {
+  var PPS = g.ProductionPlotsSystem, S = g.PRODUCTION_PLOTS_SHARED, W = g.WarehouseManager;
+  try {
+    ok(g.WORLD_CAPS.map(function (w) { return w.zoneRows + ":" + w.zoneLevel; }).join(",") === "1:5,1:10,1:12,1:15,1:17,1:20", "plafonds : 1 rangée partout, niveaux 5 / 10 / 12 / 15 / 17 / 20 (la Tour, v3.625.0)");
+    ok(PPS.isPlotRowOpen(2) && !PPS.isPlotRowOpen(3), "seules les 3 parcelles existent");
+    ok([1, 2, 3, 4].every(function (L) { return JSON.stringify(g.getProductionPlotUpgradeCost("sawmill", L, 0)) === JSON.stringify(g.getLegacyPlotUpgradeCost("sawmill", L, 0)); }), "Forêt : coûts des niveaux 1 à 5 inchangés");
+    // enveloppe du Désert : 3 parcelles × niveaux 5→10 = ouvertures + niveaux de l'ancienne grille
+    var band = {}, add = function (c) { Object.keys(c || {}).forEach(function (k) { band[k] = (band[k] || 0) + c[k]; }); };
+    for (var i = 0; i < 6; i++) { if (i >= 3) add(g.getProductionPlotUnlockCost("sawmill", i)); for (var l = i < 3 ? 5 : 1; l < 8; l++) add(g.getLegacyPlotUpgradeCost("sawmill", l, i)); }
+    var p3 = {}; for (var L = 5; L < 10; L++) { var c = g.getProductionPlotUpgradeCost("sawmill", L, 0); Object.keys(c).forEach(function (k) { p3[k] = (p3[k] || 0) + 3 * c[k]; }); }
+    ok(Object.keys(band).every(function (k) { return Math.abs(p3[k] - band[k]) <= 8; }), "Désert : même coût total que les 6 zones d'avant (" + JSON.stringify(p3) + " / " + JSON.stringify(band) + ")");
+    var lv = [5, 6, 7, 8, 9].map(function (L) { return g.getProductionPlotUpgradeCost("sawmill", L, 0).fer; });
+    ok(lv.every(function (v, k) { return !k || v > lv[k - 1]; }), "coûts lissés : chaque niveau un peu plus cher (" + lv.join(" → ") + ")");
+    var base = S.profiles.rapide.baseRatePerMin + S.profiles.equilibree.baseRatePerMin + S.profiles.lente.baseRatePerMin;
+    ok(Math.abs(base * PPS.levelMult(10) - 2 * base * PPS.legacyLevelMult(8)) < 1e-6 && Math.abs(base * PPS.levelMult(15) - 3 * base * PPS.legacyLevelMult(14)) < 1e-6, "débit : 3 parcelles au plafond = les zones d'avant (Désert, Crypte)");
+    // migration d'une partie du Désert : 6 zones au niveau 8, améliorées
+    g.game.production = { sawmill: { model: 2, plots: [] } };
+    for (i = 0; i < 9; i++) g.game.production.sawmill.plots.push({ state: i < 6 ? "open" : "locked", level: i < 6 ? 8 : 1, fertile: i < 6, irrigated: i < 6, stock: i < 6 ? 50 : 0, lastTick: Date.now() });
+    var old = 0; g.game.production.sawmill.plots.forEach(function (pl, k) { if (pl.state === "open") old += PPS.getProfile(k).baseRatePerMin * PPS.legacyLevelMult(pl.level) * 1.18; });
+    var pl = PPS.getPlots("sawmill"), now = PPS.getTotalRatePerMin("sawmill") / (g.PRODUCTION_PLOTS_BUILDINGS.sawmill.rateMult || 1);
+    ok(g.game.production.sawmill.model === 3 && pl.slice(0, 3).every(function (q) { return q.state === "open" && q.level === 10 && q.fertile && q.irrigated; }) && pl.slice(3).every(function (q) { return q.state === "locked"; }), "migration : 6 zones niv. 8 → 3 parcelles niv. 10, améliorations gardées, zones 4 à 9 fermées");
+    ok(now >= old - 1e-6 && now < old * 1.15 && pl[0].stock === 100, "migration : débit gardé (" + now.toFixed(2) + " ≥ " + old.toFixed(2) + "), stock regroupé");
+    // achat automatique
+    run("fullResetState(); game.playerName='T'; game.heroId='knight'; Object.keys(PRODUCTION_UNLOCK_FLAGS).forEach(function (id) { game.explorationProgression[PRODUCTION_UNLOCK_FLAGS[id]] = true; }); ProductionManager.ensure();");
+    g.game.worldsEverReached = { 0: true };
+    ok(!PPS.isAutoAvailable() && !PPS.isAuto() && PPS.autoUpgrade() === 0, "Forêt : pas d'achat automatique");
+    g.game.worldsEverReached = { 0: true, 1: true }; g.WorldManager.worldIndex = 1;
+    ok(PPS.isAuto(), "Désert : achat automatique actif par défaut");
+    ["bois", "fer", "pierre", "eau", "viande", "ble"].forEach(function (k) { g.ResourceReserveManager.setReserve(k, 0); g.game.resources[k] = W.getCap(k); });
+    var n = PPS.autoUpgrade();
+    var keepOk = ["bois", "fer", "pierre", "eau", "viande"].every(function (k) { return W.getAmount(k) >= Math.ceil(W.getCap(k) / 2); });
+    ok(n > 0 && keepOk, n + " achats ; jamais sous la moitié du plafond");
+    ok(["sawmill", "farm", "mine", "quarry", "well", "hunt"].every(function (b) { return PPS.getPlots(b)[2].state === "open"; }), "les parcelles se défrichent d'abord, dans tous les bâtiments (" + ["sawmill", "farm", "mine"].map(function (b) { return PPS.getPlots(b).slice(0, 3).map(function (q) { return q.state[0] + q.level; }).join("/"); }).join(" ") + ")");
+    PPS.setAuto(false);
+    ["bois", "fer", "pierre", "eau", "viande", "ble"].forEach(function (k) { g.game.resources[k] = W.getCap(k); });
+    ok(PPS.autoUpgrade() === 0 && JSON.parse(JSON.stringify(g.buildSaveData())).village.plotAuto === false, "désactivé : rien n'est acheté, réglage sauvegardé");
+    PPS.setAuto(true);
+    var html = g.buildPlotsPanelHTML("sawmill");
+    ok((html.match(/class="pc3[" ]/g) || []).length === 3 && /productionParcelAction\('sawmill', 0\)|Au maximum/.test(html), "fiche : 3 lignes, bouton du prochain achat");
+    ok(/kswitch is-on/.test(g.buildZoneGroupActionsHTML("sawmill")), "fiche : interrupteur de l'achat automatique");
+    var M = g.VILLAGE_MILESTONES.filter(function (m) { return /zones/.test(m.id); });
+    ok(M.every(function (m) { return m.kind === "zonesAtLevel" && m.arg <= [5, 10, 12, 15, 17][m.w] && m.target <= 18; }), "jalons de zones atteignables avec 3 parcelles par bâtiment");
+  } catch (err) { ok(false, "[407] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[408] v3.613.0 — Entraînement ×4 dès le Désert ; élite sans escorte = nouveau combat (forest_wenna)");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
+    var force = g.UPGRADES.filter(function (u) { return u.id === "utrain_power"; })[0];
+    var base = function (L) { return Math.floor(9 * (1 + 0.055 * L)); };
+    ok(g.getUpgradeCost(force, 59) === base(59) && g.getUpgradeCost(force, 60) === Math.floor(9 * (1 + 0.055 * 60) * 4), "Forêt (niveaux 1 à 60) inchangée, ×4 dès le 61e niveau");
+    var palier = 0; g.HEROS_TRAINING_UPGRADE_IDS.forEach(function (id) { var u = g.UPGRADES.filter(function (x) { return x.id === id; })[0]; for (var L = 60; L < 70; L++) palier += g.getUpgradeCost(u, L); });
+    ok(palier > 5800 && palier < 6500, "un palier du Désert (60 → 70, 5 caractéristiques) ≈ 6 100 or (" + palier + ")");
+    // élite sans escorte : un nouveau combat à chaque apparition
+    var k0 = g.Initiative.combatKey;
+    var id = Object.keys(g.ELITE_DB).filter(function (e) { var d = g.ELITE_DB[e]; return !d.escort || !d.escort.length; })[0];
+    g.EliteManager.spawn(id, "forest", 0, {}); var k1 = g.Initiative.combatKey;
+    g.EliteManager.spawn(id, "forest", 0, {}); var k2 = g.Initiative.combatKey;
+    ok(k1 > k0 && k2 > k1, "élite sans escorte (" + id + ") : nouveau combat à chaque fois (clé " + k0 + " → " + k1 + " → " + k2 + ")");
+    run("game.enemy = null;");
+  } catch (err) { ok(false, "[408] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[409] v3.614.0 — Stats du héros, option B : caractéristiques secondaires à 70 % du plafond du Terrain");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; VillageBuildingManager.ensure(); game.village.buildings.training.level = 4; EquipmentManager.recalcStats();");
+    var U = function (id) { return g.UPGRADES.filter(function (u) { return u.id === id; })[0]; }, cap = g.getTrainingCapLevels();
+    ok(cap === 60 && g.getUpgradeCap(U("utrain_power")) === 60 && g.getUpgradeCap(U("utrain_endurance")) === 60, "Chevalier : Puissance (classe) et Endurance au plafond du Terrain (60)");
+    ok(["utrain_celerity", "utrain_precision", "utrain_will"].every(function (id) { return g.getUpgradeCap(U(id)) === 42; }), "les trois autres à 70 % (42)");
+    run("game.upgrades.utrain_precision = 55;");
+    ok(g.getUpgradeCap(U("utrain_precision")) === 55, "un niveau déjà acquis au-delà est gardé");
+    run("game.heroId = 'mage';");
+    ok(g.getUpgradeCap(U("utrain_will")) === 60 && g.getUpgradeCap(U("utrain_power")) === 42, "Mage : Volonté au plafond, Puissance à 70 %");
+    run("game.heroId = 'ranger';");
+    ok(g.getUpgradeCap(U("utrain_celerity")) === 60 && g.getUpgradeCap(U("utrain_will")) === 42, "Rôdeur : Célérité au plafond, Volonté à 70 %");
+    run("game.heroId = 'knight'; game.upgrades.utrain_precision = 0; game.upgrades.utrain_celerity = 42;");
+    var html = g.buildHeroStatCardHTML ? "" : "";
+    ok(g.isTrainingSecondaryId("utrain_celerity") && !g.isTrainingSecondaryId("utrain_power") && !g.isTrainingSecondaryId("utrain_endurance"), "secondaires du Chevalier : Célérité, Précision, Volonté");
+  } catch (err) { ok(false, "[409] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[410] v3.615.0 — Niveau d'objet (ilvl), formule B, affichage C (atelier ilvl)");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
+    var mk = function (slot, rar, w, val, ae) { return { slot: slot, rarity: rar, worldIndex: w, value: val, aether: ae || 0, affixes: [] }; };
+    var cfg = g.EQUIPMENT_SLOT_CONFIG.weapon, r = cfg.ranges.epic, sc = g.getEquipWorldScale(4);
+    ok(g.getItemLevel(mk("weapon", "common", 0, cfg.ranges.common[0])) === 10, "arme commune de Forêt, bas de fourchette : ilvl 10");
+    ok(g.getItemLevel(mk("weapon", "epic", 4, r[1] * sc)) === 57 && g.getItemLevel(mk("weapon", "epic", 4, r[0] * sc)) === 56, "épique de la Montagne : 57 en haut de fourchette, 56 en bas");
+    ok(g.getItemLevel(mk("weapon", "epic", 4, r[1] * sc, 3)) === 60, "touchée par l'Aether niveau 3 : +3");
+    ok(g.getItemLevel(mk("helmet", "legendary", 5, g.EQUIPMENT_SLOT_CONFIG.helmet.ranges.legendary[1] * (g.EQUIPMENT_SLOT_CONFIG.helmet.scalesWithWorld ? g.getEquipWorldScale(5) : 1))) === 69, "légendaire de la Tour, haut de fourchette : 69");
+    var vrai = g.generateEquipmentItem("armor", "rare", 2);
+    ok(g.getItemLevel(vrai) >= 34 && g.getItemLevel(vrai) <= 35, "un vrai tirage (armure rare des Ruines) : 34 ou 35 (" + g.getItemLevel(vrai) + ")");
+    var ic = g.buildEquipmentIconHTML(vrai, "x");
+    ok(/class="ilc rarity-rare"/.test(ic) && /wpip/.test(ic), "icône : le coin ilvl, en face de la pastille du monde");
+    ok(/class="ilpill rarity-rare">ilvl 3[45]</.test(g.buildItemOriginHTML(vrai)) && /Ruines 30/.test(g.buildItemOriginHTML(vrai)), "fiche : « ilvl » et le détail du calcul");
+    ok(g.getItemLevel({}) === 0 && g.buildItemLevelBadgeHTML(null) === "", "sans pièce : rien");
+  } catch (err) { ok(false, "[410] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[411] v3.615.1 — Écran Équipé : chaque emplacement se choisit (retour de Seb)");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
+    var html = g.buildHerosEquippedHTML();
+    var oc = (html.match(/class="hs-eslot[^"]*" data-slot="(\w+)" onclick="([^"]+)"/g) || []);
+    ok(oc.length === 7 && oc.every(function (x) { return /onclick="herosPickSlot\('\w+'\)"/.test(x); }), "les 7 emplacements appellent herosPickSlot (" + oc.length + ")");
+  } catch (err) { ok(false, "[411] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[412] v3.615.2 — La Boutique d'équipement reste à côté du Sac (option A de Seb)");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; VillageBuildingManager.ensure(); EquipmentManager.recalcStats(); setHerosSubTabSilent('equip');");
+    ok(run("buildHerosHTML()").indexOf("setEquipSubTab('shop')") !== -1, "sans Halle : Équipé · Sac · Boutique");
+    run("game.village.buildings.hall.level = 3; activeEquipSubTab = 'shop';");
+    var h = run("buildHerosHTML()");
+    ok(h.indexOf("setEquipSubTab('shop')") !== -1 && h.indexOf("equip-shop-grid") !== -1, "Halle bâtie : l'onglet Boutique reste et montre l'échoppe");
+    run("activeEquipSubTab = 'equipment';");
+  } catch (err) { ok(false, "[412] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[413] v3.616.0 — Audit de la Forêt : bâtiments offerts, Village à la réussite de la Meute, besace d'une autre partie, tutoriels");
+(function () {
+  try {
+    var EP = function () { return game.explorationProgression; };
+    // --- D1 : lire les zones ou les ateliers d'un bâtiment fermé ne l'ouvre plus ---
+    game = freshCombat("knight"); game.unlockedTabs.village = true;
+    run("ProductionManager.ensure(); FilRouge.invalidate(); FilRouge.all(); isWarehouseBeingMade('planche'); WorkshopsSystem.getQueue('fonderie'); ProductionPlotsSystem.getPlots('farm'); MilestoneManager.measure({ kind: 'zonesAtLevel', arg: 1 }); ProductionManager.ensure();");
+    ok(!EP().sawmillUnlocked && !EP().mineUnlocked && !EP().farmUnlocked, "Village ouvert, fil rouge, Entrepôt, ateliers et jalons lus : Scierie, Mine et Champs restent fermés");
+    ok(!game.production.sawmill && game.production.mine && game.production.mine.lockedStub === true && game.production.farm.lockedStub === true, "fil rouge et Entrepôt ne lisent plus un bâtiment fermé ; une lecture directe marque l'entrée (lockedStub)");
+    // ancienne partie : une entrée non marquée prouve toujours le bâtiment (migration v3.110.0 intacte)
+    game.production.sawmill = { plots: [] };
+    run("ProductionManager.ensure();");
+    ok(EP().sawmillUnlocked === true && !EP().mineUnlocked, "entrée d'une ancienne partie (non marquée) : la Scierie est accordée, la Mine marquée reste fermée");
+    // ouverture par l'expédition : l'entrée marquée devient la vraie, sans rattrapage du temps fermé, dotation versée
+    g.ProductionPlotsSystem.getPlots("mine").forEach(function (p) { p.lastTick = Date.now() - 6 * 3600e3; }); // zones lues bâtiment fermé, il y a 6 h
+    var bois0 = g.WarehouseManager.getAmount("bois");
+    run("SceneRunManager._applyUnlock(SCENE_TEMPLATES.eboulis_ferreux.unlockOnSuccess);");
+    var mine = game.production.mine;
+    ok(EP().mineUnlocked === true && !mine.lockedStub && mine.plots.every(function (p) { return Date.now() - p.lastTick < 60e3; }), "Éboulis ferreux réussi : la Mine s'ouvre, horloges remises à maintenant");
+    ok(mine.giftGranted === true && g.WarehouseManager.getAmount("bois") > bois0, "la dotation d'ouverture de la Mine est versée");
+
+    // --- D2 : le Village s'ouvre à la réussite de la Meute, pas à l'acceptation ni à l'échec ---
+    game = freshCombat("ranger");
+    var SQ = g.StoryQuestManager, idx = g.STORY_QUESTS.forest.steps.findIndex(function (st) { return st.id === "forest_06"; });
+    run("StoryQuestManager.ensure();"); SQ.getState("forest").currentStep = idx;
+    var step06 = g.STORY_QUESTS.forest.steps[idx];
+    ok(step06.unlockTabs.length === 0 && step06.unlockTabsOnClaim.join() === "village", "forest_06 : Village dans unlockTabsOnClaim, plus dans unlockTabs");
+    ok(g.buildStoryStepUnlockText(step06) === "" && g.buildStoryStepUnlockText(step06, true) === "Village", "carte d'étape : « Débloque à la réussite : Village »");
+    SQ.acceptStep("forest");
+    ok(!game.unlockedTabs.village, "Meute acceptée : Village fermé");
+    g.AdventureQuestManager.start("hq_wolf_pack");
+    g.AdventureQuestManager.onDefeat();
+    ok(!game.unlockedTabs.village && !g.MissionBoard.list().some(function (m) { return m.id === "petite_aventure_foret" || m.id === "scene_bosquet_silencieux"; }), "Meute ratée : ni Village, ni Petite aventure, ni Bosquet");
+    var rows = null, _pop = g.openQuestCompletePopup; g.openQuestCompletePopup = function (c) { rows = c.rewardRows; };
+    game.heroHp = game.heroMaxHp; game.adventureQuestsCompleted.hq_wolf_pack = true;
+    var claimed = SQ.claimStep("forest");
+    g.openQuestCompletePopup = _pop;
+    ok(claimed && game.unlockedTabs.village === true, "Meute réussie et réclamée : le Village s'ouvre");
+    ok(!!rows && rows.some(function (r) { return r.label === "Débloqué" && r.value === "Village"; }), "la fenêtre de fin annonce « Débloqué : Village »");
+
+    // --- D3 : « Comme la dernière fois » est propre à la partie ---
+    game = freshCombat("knight");
+    g.Prefs.setValue("pa2LastBag:forest", "trousse_t,corde");   // la besace d'une autre sauvegarde, restée sur l'appareil
+    var fake = { status: g.PA2_STATUS.prep, bag: [], worldId: "forest", parcours: null, templateId: "petite_aventure_foret" };
+    ok(g.pa2LastBag(fake).length === 0, "partie neuve : la besace d'une autre sauvegarde n'est plus lue");
+    g.Pa2Run.ensureChest().lastBag.forest = ["trousse_t"];
+    ok(!g.pa2LastBagAvailable(fake, g.pa2LastBag(fake)), "rien de disponible (Trousse de maître sans stock) : pas de bouton");
+    g.Pa2Run.ensureChest().lastBag.forest = ["trousse_t", "corde"];
+    ok(g.pa2LastBagAvailable(fake, g.pa2LastBag(fake)), "un objet disponible (la Corde) : le bouton revient");
+    run("fullResetState();");
+    ok(!game.expeditionChest.lastBag || !game.expeditionChest.lastBag.forest, "nouvelle partie : besace retenue vide");
+
+    // --- D4 : tutoriels corrigés (erreurs factuelles) ---
+    var src = require("fs").readFileSync(ROOT + "/js/data/story-quests.js", "utf8") + require("fs").readFileSync(ROOT + "/js/ui/tutorial-view.js", "utf8");
+    ok(["reprend un secteur libéré voisin", "à tout moment depuis l'écran Combat", "Tu choisis pour chacun : Auto", "il joue son action après la tienne", "Tes caractéristiques butent à 20", "ouvre 10 niveaux de plus sur CHACUNE", "seules les rations de la besace, les sources et le feu de camp"].every(function (t) { return src.indexOf(t) === -1; }), "les 7 phrases fausses ont disparu");
+    ok(src.indexOf("les trois autres à 14") !== -1 && src.indexOf("au départ de chaque sortie, ou au Campement") !== -1, "plafonds 20/14 et choix du mode au départ : textes présents");
+  } catch (err) { ok(false, "[413] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[414] v3.616.1 — Description du Terrain d'entraînement (plafonds de la v3.614.0)");
+(function () {
+  try {
+    var d = g.VILLAGE_BUILDINGS.training.desc;
+    ok(d.indexOf("chacune des cinq") === -1 && /10 niveaux .*caractéristique de classe et l'Endurance, environ 7 pour les trois autres/.test(d), "la description dit +10 (classe, Endurance) et environ +7 (les trois autres)");
+    var cap = function (lvl) { return g.TRAINING_BASE_CAP + 10 * lvl; }, sec = function (lvl) { return Math.floor(cap(lvl) * g.TRAINING_SECONDARY_SHARE); };
+    ok(cap(1) - cap(0) === 10 && sec(1) - sec(0) === 7 && sec(2) - sec(1) === 7, "le moteur donne bien +10 et +7 par niveau du Terrain (" + sec(0) + " → " + sec(1) + " → " + sec(2) + ")");
+  } catch (err) { ok(false, "[414] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[415] v3.621.0 — Audit narratif : feuillets du Veilleur, lame de Brannoc, prologue, « Cycle »");
+(function () {
+  try {
+    var LORE = ["prologue", "world_forest", "world_desert", "bestiary", "dungeon", "dungeon_tier_1", "village", "chaos", "epilogue"];
+    var fiche = function (id) { return "CodexManager.isUnlocked(CodexManager.getById('" + id + "'))"; };
+    // partie neuve, en Forêt : premier kill, Basilic, production, héros du Chaos — rien ne se lit avant le Veilleur
+    run("fullResetState(); game.playerName='Test'; game.heroId='chaosKnight'; StoryQuestManager.ensure(); CodexManager.ensure();"
+      + "game.worldsEverReached={0:true,1:true}; game.totalKills=5; game.dungeonTiersEntered={1:true}; game.dungeonBossClears=1;"
+      + "game.production={hunt:{}}; game.codexChaosSeen=true; game.codexRead={};");
+    var avant = LORE.filter(function (id) { return run(fiche(id)); });
+    ok(avant.length === 0, "avant desert_07 : aucune fiche d'histoire lisible" + (avant.length ? " — " + avant.join(", ") : ""));
+    ok(run("buildCodexExcerptHTML('bestiary')") === "" && run("buildCodexExcerptHTML('world_forest', 'map-world-lore')") === "", "extraits du Bestiaire et de la Carte masqués avant le Veilleur");
+    ok(run("buildDungeonSceauLoreHTML(1)") === "", "fiche du Donjon : le texte du Sceau suit le déblocage (plus affiché d'office)");
+    var cats = run("buildCodexCategoryHeaderHTML('system', CODEX_ENTRIES.filter(function(e){return e.category==='system';}), false)");
+    ok(cats.indexOf("Le Cycle") < 0 && cats.indexOf("???") > 0, "Codex : la catégorie « Le Cycle » reste « ??? » tant qu'aucune de ses fiches n'est lisible");
+    // fiche déjà lue : reste lisible (choix de Seb)
+    run("game.codexRead={prologue:true};");
+    ok(run(fiche("prologue")) === true, "une fiche déjà lue reste lisible");
+    run("game.codexRead={};");
+    // desert_07 terminée : feuillets reçus
+    run("game.storyQuests.forest.currentStep=STORY_QUESTS.forest.steps.length;"
+      + "game.storyQuests.desert.currentStep=STORY_QUESTS.desert.steps.map(function(x){return x.id;}).indexOf('desert_08');");
+    var apres = LORE.filter(function (id) { return id !== "epilogue" && !run(fiche(id)); }); // l'épilogue demande aussi la Mémoire 1
+    ok(run(fiche("epilogue")) === run("!!(window.MemoryManager && MemoryManager.getLevel() >= 1)"), "« Ce qui attend au sommet » : feuillets + Basilic vaincu + Mémoire 1");
+    ok(apres.length === 0, "après desert_07 : les fiches se lisent selon leur condition" + (apres.length ? " — encore fermées : " + apres.join(", ") : ""));
+    ok(run(fiche("prologue_cycle")) === false, "« Le Cycle » : encore fermé tant qu'Orwen n'a pas nommé la Tour");
+    ok(run(fiche("ascension")) === run("!!(window.MemoryManager && MemoryManager.getLevel() >= 1)"), "« La Mémoire » garde sa condition (le mot Aether est déjà dans l'interface)");
+    run("['ruins','crypt','mountain'].forEach(function(c){ game.storyQuests[c].currentStep = STORY_QUESTS[c].steps.length; });");
+    ok(run(fiche("prologue_cycle")) === true, "« Le Cycle » : se lit à la fin de la Montagne (« Il reste la Tour »)");
+    var pro = run("CodexManager.getById('prologue').text"), cyc = run("CodexManager.getById('prologue_cycle').text");
+    ok(pro.indexOf("Cycle") < 0 && pro.indexOf("Tu es l'un d'eux") < 0 && /quelque chose d'ancien se réveilla\.$/.test(pro) && cyc.indexOf("Les érudits l'appelèrent le Cycle") === 0 && /Tu es l'un d'eux\.$/.test(cyc),
+      "prologue découpé sans réécriture : §1-3 puis « Le Cycle » (§4 et « Tu es l'un d'eux. »)");
+    // la lame de Brannoc : toujours une arme, du type de la classe
+    var ko = [];
+    ["knight", "ranger", "mage", "chaosKnight", "chaosRanger", "chaosMage"].forEach(function (h) {
+      run("game.heroId='" + h + "';");
+      for (var i = 0; i < 25; i++) {
+        var it = run("LootSystem.rollWorldDrop('weapon')");
+        var allowed = run("getAllowedWeaponIconsForCurrentHero()");
+        if (!it || it.slot !== "weapon" || allowed.indexOf(it.icon) < 0) { ko.push(h); break; }
+      }
+    });
+    ok(ko.length === 0, "rollWorldDrop('weapon') : une arme de la classe pour les 3 classes et leurs variantes du Chaos" + (ko.length ? " — " + ko.join(", ") : ""));
+    ok(run("(function(){ var seen={}; for (var i=0;i<200;i++) seen[LootSystem.rollWorldDrop().slot]=1; return Object.keys(seen).length; })()") >= 5, "sans argument, rollWorldDrop garde un emplacement au hasard (vitrine, caravanes)");
+    run("game.heroId='ranger'; game.inventory=[]; game.unlockedTabs.village=true; game.explorationProgression.villageEvent={ id:'s_lame', w:1, from:0, until:(window.WorldDays?WorldDays.day():1)+3, done:false };");
+    var lame = run("VillageEvents.claim()");
+    ok(!!lame && lame.slot === "weapon" && lame.icon === "bow" && run("game.inventory.length") === 1 && run("game.explorationProgression.villageEvent.done") === true,
+      "« La lame de Brannoc » : le cadeau reçu est une arme (arc pour le Rôdeur), rangée dans le sac");
+    ok(run("(VillageEvents.get('s_lame')||{}).giftSlot") === "weapon", "s_lame annonce une arme (giftSlot)");
+    // prologue et cartes vivantes
+    var pl = run("PROLOGUE_PLANCHES");
+    ok(pl.length === 6 && pl[5].lignes[2] === "Cette nuit encore, quelqu'un devra les tenir à distance." && pl[5].lignes[0].indexOf("La nuit, les bêtes rôdent") === 0, "prologue : seule la dernière phrase de la sixième planche change");
+    ok(run("LIVING_MAPS.desert.words.homeLore").indexOf("Cycle") < 0 && run("JSON.stringify(LivingMapManager)").indexOf("hors du Cycle") < 0,
+      "cartes vivantes : plus de « hors du Cycle » avant le Veilleur");
+    // audit des tutoriels et objectifs (rapport vérifié ligne à ligne)
+    var fs415 = require("fs"), path415 = require("path"), lire = function (f) { return fs415.readFileSync(path415.join(ROOT, f), "utf8"); };
+    var sq = lire("js/data/story-quests.js"), vq = lire("js/data/village-quests.js"), hq = lire("js/data/hunt-quests.js");
+    ok(sq.indexOf("Bouclier au prochain tour") < 0 && sq.indexOf("« Le soutien »") < 0 && sq.indexOf("Dans le Grimoire, le réglage « Cible »") < 0,
+      "tutoriels : noms réels du Grimoire (« L'ennemi invoque un bouclier », « Celle qui soutient », réglée dans « Préparer la sortie »)");
+    ok(run("Object.keys(GRIMOIRE_CONDITIONS).some(function(k){ return GRIMOIRE_CONDITIONS[k].label === \"L'ennemi invoque un bouclier\"; })")
+      && run("GRIMOIRE_TARGET_POLICIES.some(function(t){ return t.label === 'Celle qui soutient'; })")
+      && sq.indexOf("« L'ennemi invoque un bouclier »") > 0 && sq.indexOf("« Celle qui soutient »") > 0, "les noms cités existent dans le Grimoire (conditions et cibles)");
+    ok(!/trajet Long \(Halle 3\), parfois/.test(sq) && vq.indexOf("peut ramener une rareté") < 0 && run("CARAVAN_RARE_QTY[0]") === 2,
+      "caravanes : le trajet Long promet 2 raretés à coup sûr, comme le code (v3.611.0)");
+    ok(vq.indexOf("sept terres") < 0 && vq.indexOf("il reste une terre à reprendre") > 0, "deuxième parcelle du Champs : il reste une terre (3 parcelles depuis la v3.612.0)");
+    ok(hq.indexOf("fondue puis taillée") < 0, "Obsidienne taillée : taillée au burin, elle ne fond pas");
+    ok(run("(function(){ var s=STORY_QUESTS.mountain.steps.find(function(x){return x.id==='montagne_17';}); return s.objectiveLabel; })()").indexOf("(coût : 1 Ration moyenne)") > 0, "montagne_17 : le coût de la traversée est annoncé");
+    var m3 = "STORY_QUESTS.mountain.steps.find(function(x){return x.id==='montagne_03';})";
+    run("window.__cnt415 = storyCompanionCount; storyCompanionCount = function(){ return 4; };");
+    var t4 = run(m3 + ".choice.title + '|' + " + m3 + ".tutorial.title");
+    run("storyCompanionCount = function(){ return 5; };");
+    var t5 = run(m3 + ".choice.title + '|' + " + m3 + ".tutorial.title");
+    run("storyCompanionCount = window.__cnt415;");
+    ok(t4 === "Deux sur quatre|Deux sur quatre" && t5 === "Deux sur cinq|Deux sur cinq", "montagne_03 : « Deux sur quatre » quand Ysolt est partie, « Deux sur cinq » sinon");
+  } catch (err) { ok(false, "[415] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[416] v3.621.1 — forest_13 : des vagues franchies sous Marque, plus des kills (accord Seb)");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; StoryQuestManager.ensure();"
+      + "window.__ae416 = CombatActors.aliveEnemies; window.__vivants416 = 0; CombatActors.aliveEnemies = function(){ return new Array(window.__vivants416); };"
+      + "window.__st416 = game.storyQuests.forest; __st416.counters.coeurKillsMarked = 0; __st416.markedRunTag = null;"
+      + "game.dungeonRun = { active: true, wave: 3, dungeonId: 1, marks: ['m1'], storyRunTag: 'run416' };");
+    var compte = function (wave, vivants) { run("game.dungeonRun.wave=" + wave + "; window.__vivants416=" + vivants + "; StoryQuestManager._countKills(__st416, 1, 'forest');"); return run("__st416.counters.coeurKillsMarked"); };
+    ok(compte(3, 1) === 2, "vague de groupe (vague 3) : un ennemi tombé, l'autre debout -> 2 vagues franchies, pas 3");
+    ok(compte(3, 0) === 3, "le second tombe : la vague 3 compte, une seule fois");
+    ok(compte(4, 1) === 3, "la vague 4 apparue : toujours 3 (rien ne compte double)");
+    ok(compte(4, 0) === 4 && run("STORY_QUESTS.forest.steps.find(function(x){return x.id==='forest_13';}).check(game)") === false, "vague 4 franchie : 4/5, l'étape attend encore");
+    ok(compte(6, 1) === 5 && run("STORY_QUESTS.forest.steps.find(function(x){return x.id==='forest_13';}).check(game)") === true, "vague 5 franchie (la 6 a paru) : 5/5, l'étape se valide");
+    run("game.dungeonRun = { active: true, wave: 2, dungeonId: 1, marks: ['m1'], storyRunTag: 'autre' }; window.__vivants416 = 1; StoryQuestManager._countKills(__st416, 1, 'forest');");
+    ok(run("__st416.counters.coeurKillsMarked") === 1, "nouveau run : le compte repart de 0 (vague 1 franchie)");
+    run("game.dungeonRun = { active: true, wave: 4, dungeonId: 1, marks: [], storyRunTag: 'sans' }; window.__vivants416 = 0; __st416.counters.coeurKillsMarked = 0; StoryQuestManager._countKills(__st416, 1, 'forest');");
+    ok(run("__st416.counters.coeurKillsMarked") === 0, "sans Marque : rien ne compte");
+    run("CombatActors.aliveEnemies = window.__ae416; game.dungeonRun = { active: false, wave: 0, dungeonId: 1, marks: [] };");
+    // v3.621.2 (bug iPhone) : sans « fill », Safari (mask-border standard) jette le centre du masque -> bande vide au milieu des documents
+    var cc = require("fs").readFileSync(require("path").join(ROOT, "css/00-cartes.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+    var masques = cc.match(/(-webkit-mask-box-image|mask-border):[^;]*;/g) || [];
+    ok(masques.length >= 4 && masques.every(function (m) { return / 60 fill \//.test(m); }), "parchemin déchiré : les " + masques.length + " déclarations de masque gardent le centre (« fill »)");
+    // v3.621.3 : les tutoriels des cinq cartes vivantes disent aussi l'élite qui garde certains secteurs
+    var sq416 = require("fs").readFileSync(require("path").join(ROOT, "js/data/story-quests.js"), "utf8");
+    var elites = run("Object.keys(LIVING_MAPS).filter(function(m){ return (LIVING_MAPS[m].sectors||[]).some(function(x){ return x.content && x.content.type === 'elite'; }); }).length");
+    ok((sq416.match(/en terminant (?:sa Petite Aventure|son parcours), ou en battant l'élite qui le garde\./g) || []).length === 5 && elites >= 5,
+      "cartes vivantes : les 5 tutoriels citent l'élite (" + elites + " cartes ont des secteurs à élite)");
+  } catch (err) { ok(false, "[416] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[417] v3.622.0 — La nuit dit vrai dans la Crypte et la Montagne");
+(function () {
+  var LM = g.LivingMapManager, W = g.WorldDays, saveOpen417 = LM.isMapOpen;
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.unlockedTabs.village = true;");
+    LM.isMapOpen = function () { return true; }; // cartes ouvertes sans rejouer l'Histoire
+    var wi = function (id) { return run("WORLDS.findIndex(function(w){ return w.id === '" + id + "'; })"); };
+    var nuit = function () { W.onSortieEnd("scene"); W.onSortieEnd("scene"); return W.onSortieEnd("scene"); };
+    LM.ensureDefaults();
+    var mm = LM.getMapForWorld("mountain"), s0 = mm.sectors[1], s1 = mm.sectors[2], key = W.key();
+    LM.getState(mm.id, s0.id).hostileDay = key;
+    LM.getState(mm.id, s1.id).heat = 2; LM.getState(mm.id, s1.id).heatDay = key;
+    run("WorldManager.worldIndex = " + wi("mountain") + ";");
+    var n = nuit(), txt = W.nightText(n), nom0 = String(g._td(s0.name)), nom1 = String(g._td(s1.name));
+    ok(n.kind === "repos" && txt.indexOf("Cette nuit, la lave a refroidi : " + nom0.charAt(0).toLowerCase() + nom0.slice(1) + ".") === 0, "Montagne : la coulée retombe et l'écran le dit (« " + txt + " »)");
+    ok(txt.indexOf(" La chaleur aussi est retombée : " + nom1.charAt(0).toLowerCase()) > 0 && txt.split("Cette nuit").length === 2 && LM.heatOf(mm.id, s1.id) === 1 && !LM.isHostile(mm.id, s0.id), "Montagne : la chaleur baisse d'un cran, dite dans la même phrase sans second « Cette nuit » ; plus de lave");
+    n = nuit(); txt = W.nightText(n);
+    ok(n.kind === "repos" && /^Cette nuit, la chaleur est retombée : /.test(txt) && LM.heatOf(mm.id, s1.id) === 0, "nuit suivante : la dernière chaleur retombe");
+    n = nuit();
+    ok(n.kind === "calme" && W.nightText(n) === "Rien n'a bougé autour du camp.", "plus rien de chaud ni d'hostile : « Rien n'a bougé » est vrai");
+    var cm = LM.getMapForWorld("crypt"); key = W.key();
+    cm.sectors.slice(1, 4).forEach(function (d) { LM.getState(cm.id, d.id).hostileDay = key; });
+    run("WorldManager.worldIndex = " + wi("crypt") + ";");
+    n = nuit(); txt = W.nightText(n);
+    ok(n.kind === "repos" && txt === "Cette nuit, les gisants se sont rendormis dans 3 couloirs.", "Crypte : trois couloirs réveillés se rendorment (« " + txt + " »)");
+    var en = require("fs").readFileSync(require("path").join(ROOT, "js/lang/en.js"), "utf8");
+    ok(["Cette nuit, la lave a refroidi : {x}.", "Cette nuit, les gisants se sont rendormis dans {n} couloirs.", "Cette nuit, la chaleur est retombée sur {n} secteurs.", "{a} et {b}"].every(function (k) { return en.indexOf('"' + k + '"') >= 0; }), "phrases de la nuit traduites en anglais");
+  } catch (err) { ok(false, "[417] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  LM.isMapOpen = saveOpen417; run("WorldManager.worldIndex = 0;");
+})();
+
+console.log("\n[418] v3.623.0 — Ouvertures de chapitre");
+(function () {
+  try {
+    var fs = require("fs"), path = require("path"), rd = function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); };
+    var ids = run("CHAPTER_OPENING_ORDER.join(',')");
+    ok(ids === "desert,ruins,crypt,mountain,tower", "cinq ouvertures, du Désert à la Tour (" + ids + ", v3.626.0)");
+    var bad = run("CHAPTER_OPENING_ORDER.filter(function(id){ var c=CHAPTER_OPENINGS[id], q=STORY_QUESTS[id], last=c.planches[c.planches.length-1]; return !(c.planches.length===3 && q.steps[0].id===c.step && last.lignes[last.nom]===q.title && c.planches.every(function(p){return /^[a-z]+_[1-3]_[a-z]+$/.test(p.img);})); }).join(',')");
+    ok(bad === "", "trois planches chacune, déclenchées par la 1re étape du monde, le titre doré = le nom du chapitre" + (bad ? " (" + bad + ")" : ""));
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; StoryQuestManager.ensure();");
+    var t = run("STORY_QUESTS.crypt.steps[0].title");
+    ok(run("chapterOpeningForStepTitle(" + JSON.stringify(t) + ")") === null && run("chapterOpeningsAvailable().length") === 0, "étape d'arrivée pas faite : ni ouverture ni lien « Revoir »");
+    run("StoryQuestManager.getState('crypt').claimedSteps.crypte_01 = true;");
+    ok(run("chapterOpeningForStepTitle(" + JSON.stringify(t) + ")") === "crypt" && run("chapterOpeningsAvailable().join(',')") === "crypt", "fin de « " + t + " » : l'ouverture de la Crypte, puis son lien dans Quêtes › Histoire");
+    ok(run("chapterOpeningForStepTitle(STORY_QUESTS.crypt.steps[1].title)") === null, "une autre étape du monde n'ouvre rien");
+    var qv = rd("js/ui/quests-view.js"), pv = rd("js/ui/prologue-view.js");
+    ok(/pendingChapterOpening = ouv/.test(qv) && /PrologueView\.playChapter\(ouv, null\)/.test(qv) && /chapterOpeningLinksHTML\("story-end-link"\)/.test(qv) && /chapterOpeningLinksHTML\("qb-completed-link"\)/.test(qv), "jouée à la fermeture de la fenêtre de fin d'étape ; liens « Revoir » sur téléphone et PC");
+    ok(/images\/Chapitres\//.test(pv) && /is-vide/.test(pv) && /img\.onerror = vide/.test(pv), "images attendues dans images/Chapitres/ ; image absente : fond animé, vrai chemin gardé");
+    ok(rd("index.html").indexOf("js/data/chapter-openings.js") > 0 && rd("sw.js").indexOf('"./js/data/chapter-openings.js"') > 0, "nouveau fichier dans index.html et le précache du service worker");
+    var en = rd("js/lang/en.js"), manque = run("CHAPTER_OPENING_ORDER.reduce(function(a,id){ CHAPTER_OPENINGS[id].planches.forEach(function(p){ a=a.concat(p.lignes); }); return a; }, [])").filter(function (l) { return en.indexOf(JSON.stringify(l) + ":") < 0; });
+    // v3.624.2 : les 24 illustrations de Seb (PC et téléphone) sont livrées
+    var absentes = run("CHAPTER_OPENING_ORDER.filter(function(id){ return id !== 'tower'; }).reduce(function(a,id){ CHAPTER_OPENINGS[id].planches.forEach(function(p){ a.push(p.img, p.img + '-wide'); }); return a; }, [])").filter(function (n) { return !fs.existsSync(path.join(ROOT, "images/Chapitres/" + n + ".webp")); });
+    ok(absentes.length === 0, "les 24 images des ouvertures sont dans images/Chapitres/" + (absentes.length ? " (manque : " + absentes[0] + ")" : ""));
+    ok(manque.length === 0, "les 44 lignes traduites en anglais" + (manque.length ? " (manque : " + manque[0] + ")" : ""));
+  } catch (err) { ok(false, "[418] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[419] v3.624.0 — Aeswyn se repeuple (habitants sur le bandeau du Village)");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; VillageBuildingManager.ensure(); game.worldsEverReached = {}; WorldManager.worldIndex = 0;");
+    ok(run("aeswynPopulation()") === 9 && run("aeswynTier(9)") === 0, "départ : trois familles, 9 habitants, premier palier");
+    run("Object.keys(game.village.buildings).forEach(function(k){ game.village.buildings[k].level = 0; }); game.village.buildings.hall.level = 4; game.village.buildings.training.level = 5;");
+    ok(run("aeswynPopulation()") === 15, "+1 par niveau de bâtiment, Terrain pour moitié (Halle 4 + Terrain 5 -> +6)");
+    run("game.worldsEverReached = { 0: true, 1: true, 2: true };");
+    ok(run("aeswynPopulation()") === 27 && run("aeswynTier(27)") === 2, "+6 par monde atteint après la Forêt (Ruines atteintes : 27, troisième palier)");
+    var d = run("ScreenBanner.data('village')");
+    ok(d && d[0] === "images/Banners/village_3.webp" && d[2] === run("aeswynTierText(2)"), "bandeau : image du monde le plus loin, phrase du palier à la place de « Rebâti planche après planche »");
+    ok(run("[9,14,15,39,40,99,100,500].map(aeswynTier).join(',')") === "0,0,1,2,3,6,7,7", "seuils 9 / 15 / 25 / 40 / 55 / 70 / 85 / 100");
+    var en = require("fs").readFileSync(require("path").join(ROOT, "js/lang/en.js"), "utf8");
+    var faltan = run("[0,1,2,3,4,5,6,7].map(aeswynTierText)").filter(function (x) { return en.indexOf(JSON.stringify(x) + ":") < 0; });
+    ok(faltan.length === 0 && en.indexOf('"{n} habitant||{n} habitants"') > 0, "8 phrases et le compte traduits en anglais");
+    var sb = require("fs").readFileSync(require("path").join(ROOT, "js/ui/screen-banner.js"), "utf8");
+    ok(/this\.popPill\(el\)/.test(sb) && /kfb-pop/.test(require("fs").readFileSync(require("path").join(ROOT, "css/00-kbtn.css"), "utf8")), "pastille des habitants posée sur le bandeau du Village");
+    run("game.worldsEverReached = {}; WorldManager.worldIndex = 0;");
+    // v3.624.1 (Seb) : la Tour est au nord, comme dans le prologue et la bible
+    var sq419 = require("fs").readFileSync(require("path").join(ROOT, "js/data/story-quests.js"), "utf8");
+    ok(sq419.indexOf("Orwen regarde vers le nord.") > 0 && sq419.indexOf("Orwen regarde vers l'est") < 0, "fin du chapitre V : Orwen regarde la Tour au nord");
+  } catch (err) { ok(false, "[419] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[420] v3.625.0 — Tour, lot T-0 : le socle");
+(function () {
+  try {
+    var WC = g.WORLD_CAPS[5];
+    ok(WC && WC.village.workshop === 10 && WC.village.enchanter === 3 && WC.village.warehouse === 20 && WC.village.palisade === 10 && WC.village.forge === 7 && WC.forgeActStep === "tour_13" && WC.zoneLevel === 20,
+      "plafonds de la Tour : Atelier 10, Enchanteresse 3, Entrepôt 20, Palissade 10, zones 20, Forge 7 à l'acte III");
+    ok(g.WAREHOUSE_RESOURCES.givre_bleu && g.WAREHOUSE_RESOURCES.givre_bleu.tier === "special" && g.WAREHOUSE_RESOURCES.verre_faille && g.WAREHOUSE_RESOURCES.verre_faille.tier === "crafted",
+      "matières : Givre bleu (brute) et Verre de faille (raffinée)");
+    var FM = g.ForgeManager || g.ForgeSystem, maxAv = FM.getMaxLevel, lvAv = FM.getLevel, at = function (lv) { FM.getMaxLevel = function () { return 14; }; FM.getLevel = function () { return lv; }; return FM.getCost("armor"); };
+    var c13 = at(12), c11 = at(10); FM.getMaxLevel = maxAv; FM.getLevel = lvAv;
+    ok(c13.verre_faille === 1 && c13.obsidienne_taillee === 1 && c11.obsidienne_taillee === 1 && !c11.verre_faille, "reforge 13 : 1 Verre de faille (+1 Obsidienne) ; reforge 11 : Obsidienne seule");
+    ok(g.HERO_SCALING_REFS.joueurMontagne && g.WORLD_HERO_SCALING.refByWorld.tower[0] === "joueurMontagne", "ajustement au héros : la Tour se mesure au héros de fin de Montagne");
+    ok(g.DUNGEONS.filter(function (d) { return d.id === 6; })[0].requiresStoryStep === "tour_11", "Sommet interdit : s'ouvre à l'acte III (tour_11, v3.629.0)");
+    ok(g.EQUIP_WORLD_SCALE[5] === 6, "échelle d'équipement de la Tour : ×6, comme la Montagne (décision de Seb, v3.625.1)");
+  } catch (err) { ok(false, "[420] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[421] v3.626.0 — Tour, lot T-1 : acte I « Le pied de la Tour »");
+(function () {
+  var TS = g.TowerSystem, wi = g.WorldManager.worldIndex;
+  try {
+    var ch = g.STORY_QUESTS.tower;
+    ok(ch && ch.requiresChapter === "mountain" && ch.steps.slice(0, 5).map(function (x) { return x.id; }).join(",") === "tour_01,tour_02,tour_03,tour_04,tour_05", "chapitre VI : s'ouvre après la Montagne, acte I en cinq étapes");
+    var tr = g.SCENE_TEMPLATES.traversee_tour;
+    ok(tr && tr.travelOnSuccess.worldId === "tower" && tr.unlockOnSuccess.completionFlag === "towerCrossingCompleted" && tr.entryCost.resourceId === "grande_ration" && tr.entryCost.amount === 2, "la route du nord : 2 Grandes rations, le monde posé à l'arrivée");
+    ok(g.ADVENTURE_QUESTS.aq_tour_pied.encounters.length === 5 && g.ADVENTURE_QUESTS.aq_tour_sable.encounters.length === 4 && g.ADVENTURE_QUESTS.aq_tour_sable.encounters[0].group.indexOf("scarab") >= 0, "quêtes : 5 rencontres au pied, 4 à l'étage du sable (bêtes du Désert, écho)");
+    ok(JSON.stringify(ch.steps[2].offering) === JSON.stringify({ bois: 400, grande_ration: 2 }) && ch.steps[2].offeringUi.where === "story", "dernier camp : 400 Bois et 2 Grandes rations, donnés depuis la carte d'étape");
+    ok(g.STORY_CHOICE_AXES.braise.garder.join() === "garder,aeswyn" && g.STORY_CHOICE_AXES.braise.poser.join() === "donner,soi", "choix « braise » : garder = Garder + Aeswyn, poser = Donner + Soi");
+    ok(g.CHAPTER_OPENINGS.tower && g.CHAPTER_OPENINGS.tower.step === "tour_01" && g.CHAPTER_OPENINGS.tower.planches[2].lignes[2] === "La Question", "ouverture du chapitre VI : trois planches, « La Question » en titre doré");
+    // effets de la braise
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; StoryQuestManager.ensure(); EquipmentManager.recalcStats();");
+    var towerIdx = run("WORLDS.findIndex(function(w){ return w.id === 'tower'; })");
+    run("game.storyQuests.tower.choices.braise = 'poser'; WorldManager.worldIndex = " + towerIdx + ";");
+    ok(TS.dmgMult() === 1.1 && (g.VeinSystem.bladeMult() / g.VeinSystem.classMult()) === 1.1, "braise posée : +10 % de dégâts à la Tour (lu par la lame)");
+    run("WorldManager.worldIndex = 4;");
+    ok(TS.dmgMult() === 1 && (g.VeinSystem.bladeMult() / g.VeinSystem.classMult()) === 1, "hors de la Tour : rien");
+    run("game.storyQuests.tower.choices.braise = 'garder'; WorldManager.worldIndex = " + towerIdx + "; game.heroHp = 10;");
+    var max = run("game.heroMaxHp"), soin = TS.onVictory();
+    ok(soin === Math.floor(max * 0.05) && run("game.heroHp") === 10 + soin, "braise gardée : combat gagné à la Tour, +5 % des PV (" + soin + ")");
+    run("game.heroHp = game.heroMaxHp;");
+    ok(TS.onVictory() === 0, "PV pleins : rien à rendre");
+    var idx = require("fs").readFileSync(require("path").join(ROOT, "index.html"), "utf8"), sw = require("fs").readFileSync(require("path").join(ROOT, "sw.js"), "utf8");
+    ok(idx.indexOf("js/systems/tower-system.js") > 0 && sw.indexOf('"./js/systems/tower-system.js"') > 0, "nouveau fichier tower-system.js dans index.html et le précache");
+  } catch (err) { ok(false, "[421] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  g.WorldManager.worldIndex = wi;
+})();
+
+console.log("\n[422] v3.627.0 — Tour, lot T-2a : la carte des étages et l'escalier");
+(function () {
+  var LM = g.LivingMapManager, wi = g.WorldManager.worldIndex, open422 = LM.isMapOpen;
+  try {
+    var m = g.LIVING_MAPS.tower;
+    ok(m && m.opensAtStoryStep === "tour_06" && m.noRegress && m.redite && m.sectors.length === 6 && m.sectors.filter(function (d) { return d.content.templateId === "petite_aventure_tour"; }).length === 5 && m.sectors.filter(function (d) { return d.content.eliteId === "gardien_qui_repete"; }).length === 1, "carte des étages : ouverte à tour_06, cinq étages d'escalier et le Gardien qui répète (v3.628.0), rien n'est repris");
+    var t = g.SCENE_TEMPLATES.petite_aventure_tour;
+    ok(t && t.worldId === "tower" && t.successFlag === "towerPaCompleted" && t.successCount === "towerPaWins", "Petite Aventure de la Tour : réussites comptées pour « L'escalier »");
+    ok(g.PA2_OBSTACLES.tower.indexOf("dalle_qui_glisse") >= 0 && g.PA2_OBSTACLES.tower.indexOf("allee_des_gisants") >= 0 && g.PA2_MAPS_BY_WORLD.tower.join() === "tour_1,tour_2" && g.PA2_RARE.tower.resourceId === "givre_bleu", "l'escalier rejoue les obstacles des autres mondes ; deux cartes ; Givre bleu");
+    ok(g.CARAVAN_WORLD_MARKETS.tower.requiresStoryStep === "tour_06" && g.CARAVAN_RARE_BY_WORLD[5] === "givre_bleu", "Marché de la Tour : ouvert à tour_06, Givre bleu au trajet Long");
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; StoryQuestManager.ensure(); LivingMapManager.ensureDefaults();");
+    LM.isMapOpen = (function (f) { return function (id) { return id === "tower" ? true : f.call(LM, id); }; })(LM.isMapOpen);
+    var st = LM.getState("tower", "etage_sable"); st.state = "libere"; st.liberatedCount = 1;
+    ok(g.storyTowerFloorsFreed() === 1, "étages libérés comptés (" + g.storyTowerFloorsFreed() + ")");
+    st.hostileDay = LM._dayKey();
+    ok(LM.isHostile("tower", "etage_sable") === true, "La redite : l'étage raté du jour est plus dur");
+    run("game.sceneRun = { livingMap: { mapId: 'tower', sectorId: 'etage_sable' } };");
+    ok(g.Pa2Run && typeof g.Pa2Run.gisantsMult === "function" ? g.Pa2Run.gisantsMult({ livingMap: { mapId: "tower", sectorId: "etage_sable" } }) === 1.25 : true, "La redite : ennemis ×1,25 dans la Petite Aventure");
+    run("game.sceneRun = null; game.explorationProgression.towerPaWins = 2;");
+    ok(g.storyTowerPaWins() === 2, "réussites de l'escalier lues (" + g.storyTowerPaWins() + ")");
+  } catch (err) { ok(false, "[422] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  LM.isMapOpen = open422; g.WorldManager.worldIndex = wi;
+})();
+
+console.log("\n[423] v3.628.0 — Tour, lot T-2b : gisants, Gardien qui répète, feuillets, palier Légendaire");
+(function () {
+  try {
+    var ch = g.STORY_QUESTS.tower;
+    ok(ch.steps.slice(7, 10).map(function (x) { return x.id; }).join() === "tour_08,tour_09,tour_10", "acte II complet : étapes 8 à 10");
+    var e = g.ELITE_DB.gardien_qui_repete;
+    ok(e && e.baseId === "guardian" && e.repeatable && e.winDrop.rarity === "legendary" && e.winDrop.chancePct === 35 && e.winDrop.pityAfter === 2, "le Gardien qui répète : élite répétable, Légendaire à 35 %, la 3e victoire sans pièce en donne une");
+    ok(g.LIVING_MAPS.tower.sectors.filter(function (d) { return d.id === "etage_veines"; })[0].content.eliteId === "gardien_qui_repete", "il garde « La veine du dedans »");
+    ok(g.ADVENTURE_QUESTS.aq_tour_gisants.encounters.length === 4 && g.ADVENTURE_QUESTS.aq_tour_gisants.encounters[2].enemy === "deadknight", "l'étage des gisants : quatre rencontres avec les morts de la Crypte");
+    ok(g.STORY_REWARDS.tour_08.equipmentRarity === "legendary" && g.STORY_REWARDS.tour_09.equipmentRarity === "legendary" && g.STORY_PALIER_TOUR.pieces === 3, "palier : 3 Légendaires, deux offerts aux étapes 8 et 9");
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; StoryQuestManager.ensure();");
+    var cx = g.CODEX_ENTRIES.filter(function (x) { return x.id === "feuillets_tour"; })[0];
+    ok(cx && cx.isUnlocked() === false, "feuillets de la Tour : fermés avant l'étape 10");
+    run("game.storyQuests.tower.claimedSteps.tour_10 = true;");
+    ok(cx.isUnlocked() === true && /J'ai continué quand même/.test(cx.text), "feuillets de la Tour : ouverts une fois l'étape 10 faite");
+    // v3.628.1 (bug Seb) : le cadre des cartes ne doit pas décoller le détail de l'équipement (sticky, comme les Talents)
+    var cc628 = require("fs").readFileSync(require("path").join(ROOT, "css/00-cartes.css"), "utf8");
+    ok(/\.hs-edetail:not\(#kc-sticky\) \{ position: sticky; \}/.test(cc628), "Équipé : le détail de la pièce reste collé en bas de l'écran malgré son cadre");
+  } catch (err) { ok(false, "[423] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[424] v3.629.0 — Tour, lot T-3 : Sommet interdit, le Reflet, Légendaire complet, la copie");
+(function () {
+  var TS = g.TowerSystem, D = g.DungeonManager, en0 = g.game.enemy, run0 = g.game.dungeonRun;
+  try {
+    var ch = g.STORY_QUESTS.tower;
+    ok(ch.steps.slice(10, 15).map(function (x) { return x.id; }).join() === "tour_11,tour_12,tour_13,tour_14,tour_15", "acte III : étapes 11 à 15");
+    var d6 = D.getById(6);
+    ok(d6.boss.name === "Le Reflet" && d6.eliteWaves[8] === "gardien_qui_repete" && d6.camp && d6.camp.storyFlag === "sommetCamp", "Sommet interdit : le Reflet au bout, le Gardien qui répète à la vague 8, une halte");
+    ok(g.STORY_PALIER_TOUR_COMPLET.pieces === 7 && g.STORY_REWARDS.tour_12.equipmentRarity === "legendary" && g.WORLD_CAPS[5].village.forge === 7 && g.WORLD_CAPS[5].forgeActStep === "tour_13", "palier : 7 Légendaires, Forge 7 à l'acte III");
+    var cx = g.STORY_CHOICE_AXES.copie;
+    ok(cx && cx.laisser.join() === "donner" && cx.defaire.join() === "garder", "choix « copie » inscrit au bilan (laisser = donner, défaire = garder)");
+    // le miroir : même technique deux fois de suite contre le Reflet
+    g.game.dungeonRun = { active: true, dungeonId: 6 };
+    g.game.enemy = { id: "archmage", uid: "r1", name: "Le Reflet", isBoss: true };
+    g.game._towerMirror = null;
+    ok(TS.mirrorMult(1) === 1, "miroir : première technique à pleine force");
+    TS.noteSkill(1);
+    ok(TS.mirrorMult(1) === 1 - g.TOWER_MIRROR_PENALTY && TS.mirrorMult(2) === 1, "miroir : la même juste après perd 25 %, une autre non");
+    g.game.enemy = { id: "boar", uid: "x", name: "Sanglier" }; g.game.dungeonRun = { active: false };
+    TS.noteSkill(1);
+    ok(TS.mirrorMult(1) === 1, "pas de miroir hors du Reflet");
+    g.game.enemy = { id: "gardien_qui_repete", uid: "g1", isElite: true };
+    TS.noteSkill(2);
+    ok(TS.mirrorMult(2) === 0.75, "le Gardien qui répète garde aussi tes gestes");
+    // la copie
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; StoryQuestManager.ensure();");
+    ok(TS.summitHardMult(d6) === 1 && TS.summitLootMult(d6) === 1, "copie non tranchée : Sommet normal");
+    var gc = g.StoryQuestManager.getChoice;
+    g.StoryQuestManager.getChoice = function (k) { return k === "copie" ? "laisser" : gc.call(g.StoryQuestManager, k); };
+    ok(TS.summitHardMult(d6) === 1.2 && TS.summitLootMult(d6) === 2 && TS.summitHardMult(D.getById(5)) === 1, "Aeswyn d'avant laissée debout : Sommet ×1,2, Givre ×2, les autres donjons intacts");
+    g.StoryQuestManager.getChoice = gc;
+    ok(g.STORY_COPIE_VERRE === 6 && g.STORY_COPIE_TEXTS.laisser && g.STORY_COPIE_TEXTS.defaire, "défaire : 6 Verres de faille, deux suites de texte");
+    var aq = g.ADVENTURE_QUESTS.aq_tour_haut;
+    ok(aq && aq.worldId === "tower" && aq.encounters.length >= 4, "« Ce qu'elle a appris » : la montée finale de l'acte III");
+    var ccs = require("fs").readFileSync(require("path").join(ROOT, "js/systems/class-combat-system.js"), "utf8");
+    ok(/TowerSystem\.mirrorMult\(slot\)/.test(ccs) && /TowerSystem\.noteSkill\(slot\)/.test(ccs), "technique : le miroir lu avant les dégâts, noté après");
+  } catch (err) { ok(false, "[424] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  g.game.enemy = en0; g.game.dungeonRun = run0; g.game._towerMirror = null;
+})();
+
+console.log("\n[425] v3.630.0 — Tour, lot T-4a : seul, la faille, la silhouette");
+(function () {
+  var TS = g.TowerSystem, CM = g.CompanionManager, run0 = g.game.adventureQuestRun, sc0 = g.game.sceneRun;
+  try {
+    var ch = g.STORY_QUESTS.tower;
+    ok(ch.steps.slice(15, 18).map(function (x) { return x.id; }).join() === "tour_16,tour_17,tour_18", "acte IV : étapes 16 à 18");
+    ok(g.ADVENTURE_QUESTS.aq_tour_seul.solo && g.ADVENTURE_QUESTS.aq_tour_silhouette.solo && g.SCENE_TEMPLATES.faille_tour.solo, "seul : la quête, la faille et la silhouette (TW5)");
+    var tpl = g.SCENE_TEMPLATES.faille_tour;
+    ok(tpl.mode === "parcours" && tpl.parcours.steps.length === 5 && tpl.unlockOnSuccess.completionFlag === "failleTourDone" && g.PA2_PARCOURS_IMAGES.tour_faille, "la faille : parcours de cinq paliers, piste provisoire");
+    ok(g.BOSS_DB.silhouette && g.BOSS_DB.silhouette.image === "./images/Boss/silhouette.webp" && g.BOSS_DB.archmage.image === "./images/Boss/Lord_Archimage.webp", "la silhouette : sa fiche et son image propres, l'Archimage garde la sienne");
+    var ph = g.ADVENTURE_QUESTS.aq_tour_silhouette.bossPhases;
+    ok(ph.length === 3 && ph[0].copyClass && ph[1].atPct === 0.6 && ph[1].mirror && ph[2].atPct === 0.3 && ph[2].through, "trois phases : ta classe, le miroir à 60 %, la lumière à 30 %");
+    // seul
+    run("fullResetState(); game.playerName='Test'; game.heroId='ranger'; StoryQuestManager.ensure(); CompanionManager.unlock('wenna'); CompanionManager.setPresent('wenna', true);");
+    var avant = CM.partyIds().length;
+    g.game.adventureQuestRun = { active: true, questId: "aq_tour_seul" };
+    ok(avant >= 1 && TS.isSolo() && CM.partyIds().length === 0, "quête « seul » en cours : aucun compagnon (" + avant + " avant)");
+    g.game.adventureQuestRun = { active: true, questId: "aq_tour_haut" };
+    ok(!TS.isSolo() && CM.partyIds().length === avant, "une autre quête : le groupe revient");
+    g.game.adventureQuestRun = { active: false, questId: null }; g.game.sceneRun = { templateId: "faille_tour", status: "running" };
+    ok(TS.isSolo(), "parcours de la faille : seul aussi");
+    g.game.sceneRun = null;
+    var aqs = require("fs").readFileSync(require("path").join(ROOT, "js/systems/adventure-quest-system.js"), "utf8");
+    ok(/quest\.solo && window\.CompanionManager[^\n]*refreshParty\(\)/.test(aqs), "un boss seul au départ de la quête retire aussi le groupe déjà en place");
+    // phases
+    var e = { name: "La silhouette", isBoss: true, hp: 100, maxHp: 100 }, p0 = { copyClass: true }, p1 = { mirror: true }, p2 = { through: true };
+    TS.onBossPhase(e, p0);
+    ok(p0.archetype === "armored", "Rôdeur : la silhouette prend « blindée » (posé sur la phase, appliqué par le moteur)");
+    run("game.heroId='knight';"); var pk = { copyClass: true }; TS.onBossPhase(e, pk);
+    ok(pk.archetype === "enraged", "Chevalier : enragée");
+    TS.onBossPhase(e, p1);
+    ok(e.mirror === true && TS.isMirror(e), "à 60 % : le miroir");
+    TS.onBossPhase(e, p2);
+    ok(e.throughIn === true && !TS.blocksHit(e), "à 30 % : annoncé, pas encore intouchable (v3.636.0)");
+    TS.onEnemyTurn(e);
+    ok(e.through === true && TS.blocksHit(e) && g.VeinSystem.blocksHit(e), "à son tour : intouchable, le moteur ne laisse passer aucun coup (VeinSystem.blocksHit)");
+    TS.onEnemyTurn(e);
+    ok(!e.through && !TS.blocksHit(e), "à son tour suivant : de nouveau touchable (un seul round)");
+    var bm = require("fs").readFileSync(require("path").join(ROOT, "js/systems/boss-moment-system.js"), "utf8");
+    ok(/TowerSystem\.onBossPhase\(enemy, ph\)/.test(bm), "phases branchées sur BossMomentManager.onPhase, avant l'archétype du moteur");
+  } catch (err) { ok(false, "[425] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  g.game.adventureQuestRun = run0; g.game.sceneRun = sc0;
+})();
+
+console.log("\n[426] v3.631.0 — Tour, lot T-4b : la vision, la Question, Azhem, l'épilogue");
+(function () {
+  var TS = g.TowerSystem, SQ = g.StoryQuestManager, gc = SQ.getChoice, C = {};
+  try {
+    var ch = g.STORY_QUESTS.tower;
+    ok(ch.steps.length === 20 && ch.steps.slice(18).map(function (x) { return x.id; }).join() === "tour_19,tour_20", "chapitre VI complet : 20 étapes");
+    ok(ch.steps[18].choice.noRecord && ch.steps[19].choice.key === "question" && /Azhem/.test(ch.steps[19].narrative.completionDialogue[0].text), "19 : regarder (hors registre) ; 20 : la Question, puis Azhem");
+    SQ.getChoice = function (k) { return C[k] != null ? C[k] : null; };
+    C = { braise: "garder", copie: "laisser", ouvrage: "donner" }; // donner 2 / garder 1 ; aeswyn 1 / soi 0
+    var p = TS.pente();
+    ok(p.don === "donner" && p.lieu === "aeswyn", "pente lue au registre (" + p.don + ", " + p.lieu + ")");
+    var ans = TS.questionAnswers();
+    ok(ans.length === 3 && ans[0].value === "aeswyn" && !ans[0].prix && ans[1].value === "rien" && ans[1].prix === "fil" && ans[2].value === "sienne" && ans[2].prix === "brannoc", "trois réponses : la pente sans prix, Donner/Garder (Le fil bleu), Soi/Aeswyn (Brannoc) ; « La tienne » n'est pas proposée");
+    var opts = ch.steps[19].choice.options;
+    ok(opts.length === 3 && !opts[0].prix && /fil bleu/.test(opts[1].prix) && /Brannoc/.test(opts[2].prix), "le prix est écrit sous chaque bascule");
+    C = { braise: "poser" }; // donner 1 / garder 0 ; soi 1
+    p = TS.pente(); ok(p.don === "donner" && p.lieu === "soi", "autre pente (" + p.don + ", " + p.lieu + ")");
+    C = { braise: "garder", copie: "laisser", seuil: "soi" }; // 1-1 sur les deux axes : copie départage Donner, braise départage Aeswyn
+    p = TS.pente(); ok(p.don === "donner" && p.lieu === "aeswyn", "égalité : le dernier choix de la Tour départage (copie, puis braise)");
+    // prix
+    run("fullResetState(); game.playerName='Lys'; game.heroId='knight'; StoryQuestManager.ensure();");
+    var fil = g.EliteManager.buildUniqueLoot("fil_bleu"); g.game.equipped.amulet = fil;
+    C = { braise: "garder", copie: "laisser" };
+    ok(TS.payQuestion("rien") === "fil" && !g.game.equipped.amulet && g.game.explorationProgression.questionPrix === "fil", "bascule Donner/Garder : Le fil bleu quitte l'équipement");
+    g.game.inventory = [g.EliteManager.buildUniqueLoot("fil_bleu")];
+    TS.takeFilBleu(); ok(g.game.inventory.length === 0, "… ou le sac");
+    ok(TS.payQuestion("sienne") === "brannoc" && g.game.explorationProgression.questionPrix === "brannoc", "bascule Soi/Aeswyn : Brannoc absent");
+    C.question = "sienne";
+    var d = TS.endingDeck(), last = d.planches[d.planches.length - 1];
+    ok(TS.ending() === "sienne" && last.lignes.indexOf(g.TOWER_FIN_PRIX.brannoc) === last.nom - 1 && last.lignes[last.nom] === "La forme au sommet", "épilogue : deux planches, la ligne de Brannoc avant le titre doré");
+    g.game.explorationProgression.questionPrix = "aucun";
+    d = TS.endingDeck(); ok(d.planches[1].lignes.indexOf(g.TOWER_FIN_PRIX.brannoc) === -1, "sans ce prix, pas de ligne");
+    ok(TS.bannerLine() === "Orwen met un morceau de pain de côté, sans dire pour qui." && ch.endText === "La forme au sommet", "la phrase du bandeau du Village et le titre du chapitre prennent ceux de la fin");
+    ok(g.TOWER_VISION.planches.length === 3 && /\{nom\}/.test(g.TOWER_VISION.planches[1].lignes[1]) && Object.keys(g.TOWER_FINS).join() === "sienne,aeswyn,tienne,rien", "la vision (trois planches, {nom}) et les quatre fins");
+    var sb = require("fs").readFileSync(require("path").join(ROOT, "js/ui/screen-banner.js"), "utf8"), pv = require("fs").readFileSync(require("path").join(ROOT, "js/ui/prologue-view.js"), "utf8");
+    ok(/TowerSystem\.bannerLine\(\)/.test(sb) && /split\("\{nom\}"\)/.test(pv), "bandeau du Village et nom du héros dans les planches");
+    // Codex
+    SQ.getChoice = gc;
+    var cx = function (id) { return g.CODEX_ENTRIES.filter(function (x) { return x.id === id; })[0]; };
+    ok(cx("cette_nuit_la").isUnlocked() === false, "« Cette nuit-là » : fermée avant l'étape 19");
+    run("game.storyQuests.tower.claimedSteps.tour_19 = true;");
+    ok(cx("cette_nuit_la").isUnlocked() === true && cx("dungeon_tier_6") && !/cinq couches/.test(cx("dungeon").text) && !/dernier Sceau connu/.test(cx("dungeon_tier_5").text), "Codex : « Cette nuit-là », le sixième Sceau ; « cinq couches » et « dernier Sceau connu » relus");
+  } catch (err) { ok(false, "[426] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  SQ.getChoice = gc;
+})();
+
+console.log("\n[427] v3.632.0 — Tour, lot T-5 : Mémoire 21 à 24, hauts faits de la Tour");
+(function () {
+  var TS = g.TowerSystem, MM = g.MemoryManager, has0 = MM.has, at0 = TS.atTower, gc = g.StoryQuestManager.getChoice, M = {};
+  try {
+    ok(g.MEMORY_LEVELS.length === 24 && g.MEMORY_LEVEL_COSTS.length === 24 && g.MEMORY_LEVEL_COSTS.slice(20).join() === "310,360,420,490", "Mémoire : 24 niveaux, Tour 310 / 360 / 420 / 490");
+    var l24 = g.MEMORY_LEVELS[23];
+    ok(l24.jalon && l24.requiresChoice === "question" && l24.options.map(function (o) { return o.answer; }).join() === "sienne,aeswyn,tienne,rien", "jalon 24 : une option par réponse à la Question");
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; StoryQuestManager.ensure(); game.worldsEverReached = {0:true,1:true,2:true,3:true,4:true,5:true}; game.totalAetherEarned = 5000;");
+    ok(MM.getCap() === 24 && MM.getLevel() === 24, "plafond de la Tour : 24");
+    ok(MM.isWaiting(24) && MM.getPendingLevels().indexOf(24) === -1 && MM.choose(24, "ton_nom") === false, "jalon 24 fermé tant que la Question n'est pas répondue");
+    g.StoryQuestManager.getChoice = function (k) { return k === "question" ? "tienne" : gc.call(g.StoryQuestManager, k); };
+    ok(!MM.isWaiting(24) && MM.choose(24, "ton_nom") === true, "Question répondue : le jalon s'ouvre");
+    g.StoryQuestManager.getChoice = gc;
+    // effets
+    MM.has = function (id) { return !!M[id]; }; TS.atTower = function () { return true; };
+    run("game.heroMaxHp = 1000; game.heroHp = 500;");
+    M.feu_couve = true; ok(TS.onVictory() === 30, "Feu couvé : +3 % des PV, sans la braise gardée");
+    M.braise_vive = true; ok(Math.abs(TS.dmgMult() - 1.05) < 1e-9, "Braise vive : +5 % de dégâts à la Tour");
+    g.game.enemy = { id: "x", isBoss: true, hp: 1, maxHp: 1 }; M.forme_pretee = true;
+    ok(Math.abs(TS.dmgMult() - 1.15) < 1e-9, "La forme prêtée : +10 % contre un boss");
+    ok(TS.rediteMult(1.25) === 1.25 && (M.redite_apprise = true) && TS.rediteMult(1.25) === 1.1, "La redite apprise : ×1,1");
+    ok(TS.eliteDropBonus("gardien_qui_repete") === 0 && (M.ce_qui_se_repete = true) && TS.eliteDropBonus("gardien_qui_repete") === 10 && TS.eliteDropBonus("golem_forge") === 0, "Ce qui se répète : 45 % pour le seul Gardien qui répète");
+    M.ton_nom = true; ok(TS.hpPct() === 0.1 && g.TalentManager.getStatBonuses().hpPct >= 0.1, "Ton nom : +10 % de PV, lu par les bonus de talents");
+    M.pain_dabord = true; ok(Math.abs(TS.rationMult() - 1.1) < 1e-9, "Le pain d'abord : rations +10 %");
+    g.game.enemy = null; g.game.dungeonRun = { active: true, dungeonId: 6 }; M.braise_tient = true;
+    var gv = g.WarehouseManager.getAmount("givre_bleu"); TS.onDungeonClear();
+    ok(g.WarehouseManager.getAmount("givre_bleu") - gv === 1, "La braise tient : +1 Givre bleu par sortie du Sommet");
+    g.game.dungeonRun = { active: false };
+    g.game._towerMirror = null; g.game.enemy = { id: "gardien_qui_repete", uid: "a", isElite: true }; TS.noteSkill(1); M.geste_cache = true;
+    ok(TS.mirrorMult(1) === 0.85, "Geste caché : le miroir ne retire que 15 %");
+    ok(g.PA2_MEMORY_DEST_RARE.tower === "escalier_rend", "L'escalier rend : +1 Givre bleu à la destination");
+    // hauts faits
+    var hf = g.ACHIEVEMENTS_DB.filter(function (a) { return a.category === "tower"; });
+    ok(hf.length === 10 && g.ACHIEVEMENT_CATEGORIES.filter(function (c) { return c.id === "tower" && c.world === 5; }).length === 1, "10 hauts faits de la Tour, catégorie à paliers");
+    g.AchievementManager._fight = { enemy: null }; g.AchievementManager.onMirror();
+    ok(g.AchievementManager._fight.mirror === true, "le miroir est noté pour « Varier »");
+    var src = require("fs").readFileSync(require("path").join(ROOT, "js/systems/adventure-quest-system.js"), "utf8");
+    ok(/aq_tour_seul[^\n]*seulNoPotion/.test(src), "« Seul, et sans boire » noté à la fin de la quête");
+  } catch (err) { ok(false, "[427] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  MM.has = has0; TS.atTower = at0; g.StoryQuestManager.getChoice = gc; g.game.enemy = null; g.game._towerMirror = null;
+})();
+
+console.log("\n[428] v3.633.0 — Voie de talents « Varier » (Tour)");
+(function () {
+  var TS = g.TowerSystem, TM = g.TalentManager, WC = g.WorldCaps;
+  try {
+    var V = g.TALENT_TOWER;
+    ok(V && V.opensAt === 5 && V.nodes.length === 5 && V.nodes[4].key && V.nodes.map(function (n) { return n.id; }).join() === "v_pas_de_cote,v_seul,v_souffle,v_ne_se_forge_pas,v_varier", "Varier : 5 nœuds, ouverte à la Tour, la clé au bout");
+    var caps = g.TALENT_CAP_BY_ACT.filter(function (c) { return c.worldIndex === 5; }).map(function (c) { return c.stepId + ":" + c.points; }).join();
+    ok(caps === "tour_01:23,tour_06:25,tour_11:27,tour_16:28", "plafond de la Tour : 23, 25, 27, 28 (tout l'arbre : 18 + 5 + 5)");
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; StoryQuestManager.ensure(); game.heroLevel = 40; game.worldsEverReached = {0:true,1:true,2:true,3:true,4:true};");
+    TM.sync && TM.sync();
+    ok(!TM.towerOpen() && TM.blockInfo("v_pas_de_cote").kind === "towerClosed", "fermée avant la Tour");
+    run("game.worldsEverReached[5] = true; game.talents = { v_pas_de_cote: 1 };");
+    ok(TM.towerOpen() && TM.towerSpent() === 1 && TM.blockInfo("v_souffle").kind === "commandOrder", "à la Tour : ouverte, apprise dans l'ordre");
+    // effets
+    run("game.talents = { v_pas_de_cote: 1, v_seul: 1, v_souffle: 1, v_ne_se_forge_pas: 1, v_varier: 1 }; game._varier = { last: null, used: {} };");
+    ok(TS.skillMult("skill1") === 1, "première technique : pas de bonus");
+    TS.noteTechnique("skill1");
+    ok(Math.abs(TS.skillMult("skill2") - 1.08) < 1e-9 && TS.skillMult("skill1") === 1, "Un pas de côté : +8 % sur une technique différente");
+    TS.noteTechnique("skill2"); ok(!TS.varierActive(), "deux techniques : pas encore Varier");
+    TS.noteTechnique("skill3"); ok(TS.varierActive(), "trois techniques : Varier actif");
+    run("game.equipped = { weapon: { rarity: 'legendary' }, armor: { rarity: 'legendary' }, ring: { rarity: 'epic' } };");
+    var aa = g.CombatActors.aliveAllies; g.CombatActors.aliveAllies = function () { return [{}]; };
+    var m = TS.talentDmgMult();
+    ok(Math.abs(m - (1 + 0.08 + 0.04 + 0.15)) < 1e-9, "dégâts : seul +8 %, 2 Légendaires +4 %, Varier +15 % (" + m.toFixed(2) + ")");
+    g.CombatActors.aliveAllies = function () { return [{}, {}]; };
+    ok(Math.abs(TS.talentDmgMult() - 1.19) < 1e-9, "un compagnon debout : pas de bonus « seul »");
+    g.CombatActors.aliveAllies = aa;
+    var at0 = TS.atTower; TS.atTower = function () { return false; };
+    run("game.heroMaxHp = 1000; game.heroHp = 500;");
+    ok(TS.onVictory() === 30 && Math.abs(TS.dmgMult() - TS.talentDmgMult()) < 1e-9, "hors de la Tour : Reprendre son souffle (+3 %) et les dégâts jouent quand même");
+    TS.atTower = at0;
+    run("game._varier = { last: 'skill1', used: { skill1: true } }; TalentManager.onCombatStart();");
+    ok(!g.game._varier.last && !Object.keys(g.game._varier.used).length, "nouveau combat : techniques remises à zéro");
+    var ccs = require("fs").readFileSync(require("path").join(ROOT, "js/systems/class-combat-system.js"), "utf8");
+    ok(/TowerSystem\.skillMult\(slot\)/.test(ccs) && /TowerSystem\.noteTechnique\(slot\)/.test(ccs), "techniques : bonus lu avant les dégâts, notée après");
+  } catch (err) { ok(false, "[428] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[429] Équilibre des classes (Seb, 03/11 : converger au milieu)");
+(function () {
+  var h0 = g.game.heroId;
+  try {
+    var B = {}; g.CLASSES.forEach(function (c) { B[c.id] = c.balance; });
+    ok(B.knight.damageMult === 1.15 && B.archer.damageMult === 0.85 && B.mage.damageMult === 1 && B.mage.hpPct === 0.05, "Chevalier +15 % de dégâts, Rôdeur −15 %, Mage +5 % de PV");
+    g.game.heroId = "ranger"; ok(g.VeinSystem.classMult() === 0.85, "Rôdeur : ×0,85 sur tous ses dégâts (attaque de base et techniques, par la lame)");
+    g.game.heroId = "knight"; ok(g.VeinSystem.classMult() === 1.15, "Chevalier : ×1,15");
+    g.game.heroId = "mage"; ok(g.VeinSystem.classMult() === 1 && g.TalentManager.getStatBonuses().hpPct >= 0.05, "Mage : dégâts inchangés, +5 % de PV");
+  } catch (err) { ok(false, "[429] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  g.game.heroId = h0;
+})();
+
+console.log("\n[430] Rythme de la Tour (Seb, 03/11 : Terrain 19 à 21, palier de l'acte III, étages en entier)");
+(function () {
+  try {
+    var tr = g.TRAINING_CAP_BY_ACT.filter(function (c) { return c.worldIndex === 5; }).map(function (c) { return c.stepId + ":" + c.terrain; }).join();
+    ok(tr === "tour_01:18,tour_06:19,tour_11:20,tour_16:21" && g.WORLD_CAPS[5].village.training === 21 && g.VILLAGE_BUILDINGS.training.maxLevel === 21 && g.TRAINING_HARD_CAP === 230, "Terrain 19, 20, 21 aux actes II, III, IV de la Tour : entraînement jusqu'à 230");
+    var tier = g.VILLAGE_BUILDINGS.training.costTiers.filter(function (t) { return t.minLevel === 18; })[0];
+    ok(tier && tier.maxLevel === 20 && tier.baseCost.givre_bleu > 0 && tier.baseCost.verre_faille > 0, "Terrain 19 à 21 au Givre bleu et au Verre de faille");
+    var P = g.STORY_PALIER_TOUR_COMPLET;
+    ok(P.pieces === 7 && P.forge === 7 && P.reforge === 13, "acte III : 7 Légendaires, Forge 7, arme reforgée à 13");
+    var st13 = g.STORY_QUESTS.tower.steps.filter(function (x) { return x.id === "tour_13"; })[0];
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; StoryQuestManager.ensure();");
+    ok(st13.check(g.game) === false && typeof st13.missing === "function" && st13.missing(g.game).length >= 1, "palier non tenu : « Ce qui manque » le détaille");
+    ok(g.STORY_TOUR_ETAGES === 5 && g.STORY_TOUR_PA === 2, "étapes 6 et 7 : les 5 étages de l'escalier, 2 escaliers réussis");
+    var st7 = g.STORY_QUESTS.tower.steps.filter(function (x) { return x.id === "tour_07"; })[0];
+    run("game.storyQuests.tower.counters = { paBase: 1 }; game.explorationProgression.towerPaWins = 2;");
+    ok(st7.check(g.game) === false, "une réussite de plus : pas encore");
+    run("game.explorationProgression.towerPaWins = 3;");
+    ok(st7.check(g.game) === true, "deux réussites depuis l'acceptation : faite");
+  } catch (err) { ok(false, "[430] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[431] v3.636.0 — Faille, lot F-0 : le moteur à leviers partagé par sorte de run");
+(function () {
+  var L = g.LabyrinthRun, SQ = g.StoryQuestManager, savedReach = SQ.isStepReached, K = g.LAB_KINDS;
+  try {
+    var game = freshCombat("knight");
+    ok(K && K.labyrinthe && K.labyrinthe.config === g.LABYRINTH_CONFIG && K.labyrinthe.stateKey === "labyrinth", "registre : le Labyrinthe, sa config et sa clé d'état");
+    game.sceneRun = null;
+    ok(L.cfg() === g.LABYRINTH_CONFIG && L.texts() === g.LABYRINTH_TEXTS && L.tiles() === g.LABYRINTH_TILES, "sans run ni sorte : le Labyrinthe");
+    /* Une sorte d'essai : config copiée, autre clé d'état, textes propres */
+    var cfg2 = JSON.parse(JSON.stringify(g.LABYRINTH_CONFIG)); cfg2.reserve = 2;
+    var tx2 = JSON.parse(JSON.stringify(g.LABYRINTH_TEXTS)); tx2.title = "Essai"; tx2.say = { startLog: "Tu montes dans l'essai.", bag: "Sac d'essai : {s} · {g}" };
+    K.essai = { config: cfg2, tiles: g.LABYRINTH_TILES, texts: tx2, stateKey: "essaiLab", isUnlocked: function () { return true; } };
+    SQ.isStepReached = function (id) { return id === "ruines_11" ? true : savedReach.call(SQ, id); };
+    game.explorationProgression.labyrinth = null; game.explorationProgression.essaiLab = null;
+    g.WarehouseManager.addResource("ration", 5);
+    ok(L.isUnlocked("essai") && L.reserveLeft("essai") === 2 && L.reserveLeft("labyrinthe") === 3, "chaque sorte a sa réserve");
+    var ms = g.MissionBoard._labyrinthMissions().map(function (m) { return m.id + ":" + m.labKind; }).join();
+    ok(ms === "labyrinthe:labyrinthe,essai:essai", "une carte de mission par sorte ouverte (" + ms + ")");
+    var r = L.start("essai");
+    ok(r.ok && game.sceneRun.kind === "essai" && game.sceneRun.templateId === "essai", "départ d'une sorte : run.kind posé");
+    ok(L.cfg() === cfg2 && L.reserveLeft() === 1 && L.reserveLeft("labyrinthe") === 3 && game.explorationProgression.essaiLab.spent === 1, "le run lit sa config ; la descente est prise sur sa réserve, pas sur celle du Labyrinthe");
+    ok(L.say("bag", "repli", { s: 1, g: 2 }) === "Sac d'essai : 1 · 2" && L.say("koLog", "repli") === "repli", "textes propres de la sorte, sinon ceux du Labyrinthe");
+    var lab = g.MissionBoard._labyrinthMissions().filter(function (m) { return m.id === "labyrinthe"; })[0];
+    ok(lab && lab.status === "available", "la carte du Labyrinthe ne prend pas le run d'une autre sorte pour le sien");
+    L.abandon();
+    ok(L.bestFloor() === 1 && L.bestFloor("labyrinthe") === 0, "record par sorte (au bilan : celui du run terminé)");
+    game.sceneRun = null; r = L.start();
+    ok(r.ok && game.sceneRun.kind === "labyrinthe" && L.reserveLeft("labyrinthe") === 2, "sans sorte : le Labyrinthe");
+    delete game.sceneRun.kind;
+    ok(L.kindOf() === "labyrinthe" && L.cfg() === g.LABYRINTH_CONFIG && L.reserveLeft() === 2, "un run sauvegardé sans sorte (avant v3.636.0) reste le Labyrinthe");
+    L.abandon();
+  } catch (err) { ok(false, "[431] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  finally {
+    delete K.essai; SQ.isStepReached = savedReach;
+    if (g.game) { g.game.sceneRun = null; if (g.game.explorationProgression) { g.game.explorationProgression.labyrinth = null; delete g.game.explorationProgression.essaiLab; } }
+  }
 })();
 
 Promise.all(ATTENTES).then(function () {

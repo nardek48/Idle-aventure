@@ -288,8 +288,19 @@ var ClassCombatManager = {
       this.activateDefenseEffect(action);
       if (game.enemy) this.applyActionEffects(action, 0, matchedConditionId);
       addLog("🛡️ " + _td(action.label) + " !", "event"); // v3.294.0 : plus de popup, le bandeau de combat suffit (retour Seb)
+      if (window.TowerSystem) TowerSystem.noteTechnique(slot); // v3.633.0 : Un pas de côté
     } else {
+      // v3.629.0 (Tour, le miroir) : la même technique que la précédente contre un reflet perd 25 %
+      var mirror = window.TowerSystem ? TowerSystem.mirrorMult(slot) : 1;
+      if (mirror < 1) {
+        action = Object.assign({}, action, { damageMultiplier: Number(action.damageMultiplier || 1) * mirror });
+        if (window.AchievementManager && AchievementManager.onMirror) AchievementManager.onMirror(); // v3.632.0
+        addLog("🪞 " + _t("Le reflet a vu venir {x} : −{n} %.", { x: _td(action.label), n: Math.round((1 - mirror) * 100) }), "event");
+      }
+      var pas = window.TowerSystem ? TowerSystem.skillMult(slot) : 1; // v3.633.0 : Un pas de côté (+8 %, autre technique)
+      if (pas > 1) action = Object.assign({}, action, { damageMultiplier: Number(action.damageMultiplier || 1) * pas });
       this.applyDamageAction(action, matchedConditionId);
+      if (window.TowerSystem) { TowerSystem.noteSkill(slot); TowerSystem.noteTechnique(slot); }
       addLog("✨ " + _td(action.label) + " !", "event"); // v3.294.0 : idem, journal seulement
     }
 

@@ -298,6 +298,22 @@ var ELITE_DB = {
     winDrop: { rarity: "epic", chancePct: 35, pityAfter: 2 }
   },
 
+  /* v3.628.0 (Tour, lot T-2b) — le Gardien qui répète, élite répétable de la carte des étages (la veine du dedans).
+     Le Légendaire de la Tour à 35 %, la 3e victoire sans pièce en donne une. Image à générer (vrai chemin gardé). */
+  gardien_qui_repete: {
+    id: "gardien_qui_repete",
+    baseId: "guardian",
+    name: "Le Gardien qui répète",
+    archetype: "armored",
+    statMult: { endurance: 0.9, power: 3.6, celerity: 0.6 }, // repris du Vieux Golem, au banc
+    lore: "Il marche sur les mêmes dalles depuis qu'on l'a posé là. Il a usé la pierre jusqu'à faire un sillon.",
+    image: "./images/Enemies/gardien_qui_repete.webp",
+    escort: { members: ["guardian"], hpMult: 0.3, goldMult: 0.3 },
+    phases: null,
+    repeatable: true,
+    winDrop: { rarity: "legendary", chancePct: 35, pityAfter: 2 }
+  },
+
   /* v3.550.0 (retour Seb, point 7, option A) — élites qui se rejouent sur les cartes des Ruines et de la Crypte,
      reprises des élites d'Histoire (nom et portrait). Pièce du palier du monde à 35 %, la 3e victoire sans pièce
      en donne une (comme la Montagne). Force au banc (campagne-harness, BANC_ELITE). */

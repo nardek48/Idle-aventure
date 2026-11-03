@@ -18,6 +18,7 @@ var ARGV = process.argv.slice(3);
 function opt(k) { var i = ARGV.indexOf(k); return i >= 0 ? ARGV[i + 1] : null; }
 var SAVES = String(opt("--save") || "").split(",").filter(Boolean);
 var DIFF5 = opt("--diff") ? Number(opt("--diff")) : null;
+var DJ = opt("--donjon") ? Number(opt("--donjon")) : 5; // v3.629.0 : --donjon 6 = le Sommet interdit (Tour, acte III)
 var WYRM = opt("--boss") ? opt("--boss").split(",").map(Number) : null;
 var QUETE = opt("--quete") ? opt("--quete").split(",").map(Number) : null;
 var SANS_POTION = ARGV.indexOf("--sans-potion") >= 0;
@@ -50,8 +51,32 @@ var OBJETS = opt("--objet") ? opt("--objet").split(",") : []; // v3.492.15 : obj
 if (!SAVES.length) { console.log("--save <fichier> attendu (sauvegarde de campagne)"); process.exit(1); }
 
 var extra = function () {
-  var d = g.DUNGEONS.filter(function (x) { return x.id === 5; })[0];
+  var d = g.DUNGEONS.filter(function (x) { return x.id === DJ; })[0];
   if (DIFF5) d.difficultyMult = DIFF5;
+  /* Équilibre des classes (03/11) : --detail décompose les combats d'une quête (dégâts infligés héros / compagnons,
+     reçus, esquivés, techniques). Compteurs remis à zéro par sauvegarde, affichés sous la ligne de la classe. */
+  if (ARGV.indexOf("--detail") >= 0) {
+    var DT = process.__dt = { hero: 0, crit: 0, comp: 0, taken: 0, hits: 0, evaded: 0, compTaken: 0, slots: {} };
+    var dd0 = g.CombatEngine.dealDamage.bind(g.CombatEngine);
+    g.CombatEngine.dealDamage = function (dmg, isCrit, fromTap, ign, target) {
+      var foe = target || g.game.enemy, h0 = foe ? Number(foe.hp || 0) : 0, r = dd0(dmg, isCrit, fromTap, ign, target), dlt = foe ? Math.max(0, h0 - Number(foe.hp || 0)) : 0;
+      if (g.game._dtComp) process.__dt.comp += dlt; else { process.__dt.hero += dlt; if (isCrit) process.__dt.crit += dlt; }
+      return r;
+    };
+    var es0 = g.CombatEngine.enemyStrike.bind(g.CombatEngine);
+    g.CombatEngine.enemyStrike = function (m, p) {
+      var h0 = Number(g.game.heroHp || 0), c0 = 0; (g.CompanionManager.partyIds() || []).forEach(function (id) { c0 += Number(g.CompanionManager.hpOf(id) || 0); });
+      var r = es0(m, p), c1 = 0; (g.CompanionManager.partyIds() || []).forEach(function (id) { c1 += Number(g.CompanionManager.hpOf(id) || 0); });
+      var t = Math.max(0, h0 - Number(g.game.heroHp || 0)); process.__dt.taken += t; process.__dt.compTaken += Math.max(0, c0 - c1);
+      if (c0 === c1) { process.__dt.hits++; if (t === 0) process.__dt.evaded++; }
+      return r;
+    };
+    var us0 = g.ClassCombatManager.useSkill.bind(g.ClassCombatManager);
+    g.ClassCombatManager.useSkill = function (slot) { var r = us0.apply(g.ClassCombatManager, arguments); if (r) process.__dt.slots[slot] = (process.__dt.slots[slot] || 0) + 1; return r; };
+    var CM = g.CompanionManager, ct = CM.takeTurn || CM.playTurn || CM.companionTurn;
+    ["takeTurn", "playTurn", "companionTurn", "actTurn"].forEach(function (k) { if (typeof CM[k] === "function") { var f = CM[k].bind(CM); CM[k] = function () { g.game._dtComp = true; try { return f.apply(CM, arguments); } finally { g.game._dtComp = false; } }; } });
+  }
+  if (opt("--miroir") !== null) g.TOWER_MIRROR_PENALTY = Number(opt("--miroir")); // v3.629.0 : pénalité du miroir (Reflet)
   if (WYRM) { d.boss.statMult.power = WYRM[0]; d.boss.statMult.endurance = WYRM[1]; }
   if (QUETE) { g.ADVENTURE_QUESTS.aq_montagne_salle_ronde.encounterHpMult = QUETE[0]; g.ADVENTURE_QUESTS.aq_montagne_salle_ronde.enemyPowerMult = QUETE[1]; }
   // v3.492.12 : l'affinité est dans le jeu ; --affinite en change seulement le bonus
@@ -122,18 +147,19 @@ var extra = function () {
     B.run("game.combatMode = 'grimoire'; EquipmentManager.recalcStats(); game.heroHp = game.heroMaxHp; CompanionManager.healAll();");
     if (SANS_POTION) g.game.healingPotionsOwned = {};
     if (OBJETS.length) g.CombatItems.carried = function () { return OBJETS.slice(); };
+    if (opt("--plus-regle")) { var pr = opt("--plus-regle").split(":"); g.game.grimoireRules = [{ conditionId: pr[0], actionSlot: pr[1] }].concat((g.game.grimoireRules || []).filter(function (r) { return r && r.conditionId; })).slice(0, 6); } // v3.629.0 : règle posée en tête
     if (SANS_REGLE.length) g.game.grimoireRules = (g.game.grimoireRules || []).filter(function (r) { return !r || SANS_REGLE.indexOf(r.conditionId) === -1; });
     if (TAILLER) g.game.grimoireRules = [{ conditionId: "veinIntact", actionSlot: "vein" }].concat((g.game.grimoireRules || []).filter(function (r) { return r && r.conditionId; })).slice(0, 6);
   }
   function gueule() {
-    var cleared = Object.assign({}, g.game.dungeonTierCleared); delete cleared[5];
+    var cleared = Object.assign({}, g.game.dungeonTierCleared); delete cleared[DJ];
     g.game.dungeonTierCleared = cleared; g.game.dungeonRunsUsed = {};
     if (g.game.dungeonRun) g.game.dungeonRun.active = false;
     var boss0 = Number(g.game.dungeonBossClears || 0);
-    var ash0 = g.WarehouseManager.getAmount("cendre_vive");
+    var ash0 = g.WarehouseManager.getAmount(d.specialResourceId);
     process.__ash = process.__ash || { n: 0, sum: 0 };
     if (COMP_RANG !== null && !process.__ashHook) { process.__ashHook = true; process.on("exit", function () { console.log("CENDRE VIVE par sortie (fin de sortie, campement compris) : " + (process.__ash.sum / Math.max(1, process.__ash.n)).toFixed(2) + " sur " + process.__ash.n + " sorties"); }); }
-    g.DungeonManager.start(5, []);
+    g.DungeonManager.start(DJ, []);
     if (!g.game.dungeonRun.active) return null;
     setTimeout(function () {}, 0);
     var rounds = 0, guard = 8000, camp = false, hpCamp = null, hpBoss = null, pot0 = JSON.stringify(g.game.healingPotionsOwned || {});
@@ -149,7 +175,7 @@ var extra = function () {
       if (!autoRound()) break;
       rounds++;
     }
-    process.__ash.n += 1; process.__ash.sum += g.WarehouseManager.getAmount("cendre_vive") - ash0;
+    process.__ash.n += 1; process.__ash.sum += g.WarehouseManager.getAmount(d.specialResourceId) - ash0;
     return { camp: camp, hpCamp: hpCamp, boss: hpBoss !== null, hpBoss: hpBoss, ok: Number(g.game.dungeonBossClears || 0) > boss0, rounds: rounds,
       hp: Math.max(0, g.game.heroHp) / g.game.heroMaxHp };
   }
@@ -175,8 +201,10 @@ var extra = function () {
     QUETES.forEach(function (qid) {
       console.log(qid + (QBOSS ? " · essai boss PV ×" + QBOSS[0] + " puissance ×" + QBOSS[1] : "") + (QUETE ? " · essai rencontres PV ×" + QUETE[0] + " puissance ×" + QUETE[1] : ""));
       if (QUETE) { g.ADVENTURE_QUESTS[qid].encounterHpMult = QUETE[0]; g.ADVENTURE_QUESTS[qid].enemyPowerMult = QUETE[1]; }
+      if (QBOSS && g.ADVENTURE_QUESTS[qid].bossId) { g.ADVENTURE_QUESTS[qid].bossHpMult = QBOSS[0]; g.ADVENTURE_QUESTS[qid].bossPowerMult = QBOSS[1]; } // v3.630.0 : tout boss de quête
       txt.forEach(function (t, k) {
-        var cls = JSON.parse(t).heroId || path.basename(SAVES[k]), n = 0, ok = 0, hp = 0;
+        var cls = JSON.parse(t).heroId || path.basename(SAVES[k]), n = 0, ok = 0, hp = 0, bloque = 0, rd = 0;
+        if (process.__dt) process.__dt = { hero: 0, crit: 0, comp: 0, taken: 0, hits: 0, evaded: 0, compTaken: 0, slots: {} };
         for (var i = 0; i < RUNS; i++) {
           charge(t, 93000 + i);
           g.game.adventureQuestsCompleted = {}; g.game.adventureQuestProgress = {};
@@ -186,8 +214,13 @@ var extra = function () {
           if (!r) continue;
           n++;
           if (r.ok) { ok++; hp += Math.max(0, g.game.heroHp) / g.game.heroMaxHp; }
+          else if (g.game.adventureQuestRun && g.game.adventureQuestRun.active) bloque = (bloque || 0) + 1; // v3.630.0 : quête encore en cours (rounds épuisés), pas une mort
+          rd = (rd || 0) + r.rounds;
         }
-        console.log("   " + String(cls).padEnd(8) + " réussite " + String(Math.round(100 * ok / Math.max(1, n))).padStart(3) + " %   PV restants " + String(Math.round(100 * (ok ? hp / ok : 0))).padStart(3) + " %   (" + n + " runs)");
+        console.log("   " + String(cls).padEnd(8) + " réussite " + String(Math.round(100 * ok / Math.max(1, n))).padStart(3) + " %   PV restants " + String(Math.round(100 * (ok ? hp / ok : 0))).padStart(3) + " %   sans fin " + bloque + "   rounds " + Math.round(rd / Math.max(1, n)) + "   (" + n + " runs)");
+        if (process.__dt) { var D = process.__dt, tot = D.hero + D.comp, nn = Math.max(1, n);
+          console.log("      détail / run : infligés " + Math.round(tot / nn) + " (héros " + Math.round(100 * D.hero / Math.max(1, tot)) + " %, dont critiques " + Math.round(100 * D.crit / Math.max(1, D.hero)) + " %) · reçus héros " + Math.round(D.taken / nn) + " sur " + Math.round(D.hits / nn) + " coups (esquivés " + Math.round(100 * D.evaded / Math.max(1, D.hits)) + " %) · reçus compagnons " + Math.round(D.compTaken / nn) + " · techniques " + JSON.stringify(D.slots));
+          process.__dt = { hero: 0, crit: 0, comp: 0, taken: 0, hits: 0, evaded: 0, compTaken: 0, slots: {} }; }
       });
     });
     return;

@@ -95,6 +95,7 @@ window.campRationEmpty = campRationEmpty;
 
 /* v3.411.0 : onglet ouvert du Campement (retenu pendant la session). */
 var CAMP_TABS = [
+  { key: "feu", label: _t("Le feu"), icon: "images/Icons/camp/campfire.webp" }, // v3.594.0 (atelier camp-carte, choix Seb) : santé, rations, compagnons
   { key: "missions", label: _t("Missions"), icon: "images/Icons/quests/quest_list.webp" },
   { key: "depart", label: _t("Expéditions"), icon: "images/Icons/quests/start_expedition.webp" }, // v3.426.0 : était « Départ »
   { key: "grimoire", label: _t("Grimoire"), icon: "images/Icons/codex/codex_lore.webp" }
@@ -137,7 +138,8 @@ function buildCampHTML(tab) {
      boutons carrés (icône, soin, stock en pastille). Toucher une ration = la manger.
      Les identifiants camp-hp-fill, camp-fire-hp-value et camp-fire-eta sont gardés : le
      système de camp les met à jour en direct. */
-  h += '<div class="camp-card camp-health-card">';
+  var hc = '<div class="camp-card camp-health-card">'; // v3.594.0 : la santé passe dans l'onglet « Le feu »
+  var h0 = h; h = hc; // la suite assemble le bloc santé dans h, rendu à h0 plus bas
   h += '<div class="camp-hp-line"><img class="camp-hp-ico" src="images/Icons/combat_stats/stat_health.webp" alt="">';
   h += '<div class="camp-hp-bar kgauge kgauge-thin kgauge-hp"><div class="kgauge-track"><div class="kgauge-fill" id="camp-hp-fill" style="width:' + hpPct + '%"></div></div>'
     + '<span class="kgauge-text" id="camp-fire-hp-value">' + formatNumber(Math.floor(hp)) + ' / ' + formatNumber(maxHp) + '</span></div></div>';
@@ -187,6 +189,7 @@ function buildCampHTML(tab) {
   h += '</div>';
   if (!teamFull && !campLock && rationOptions.some(function (r) { return r.amount >= 1; })) h += '<div class="camp-ration-hint">' + (campMates.length ? _t("Toucher une ration : toute l'équipe mange") : _t("Toucher une ration pour la manger")) + '</div>';
   h += '</div>'; // fin .camp-health-card
+  hc = h; h = h0;
 
   // v3.133.0 : bloc « Les braises » — offrande de l'étape Histoire courante (forest_15), affiché
   // seulement pendant l'étape acceptée et tant que l'offrande n'est pas faite (StoryQuestManager.getOfferingInfo).
@@ -216,6 +219,8 @@ function buildCampHTML(tab) {
      Missions · Départ (préparer, expédition) · Grimoire. Un onglet n'apparaît que s'il a du
      contenu ; s'il n'en reste qu'un, pas de rail. L'onglet ouvert est retenu (campTab). */
   var tabsHTML = {};
+  tabsHTML.feu = campHereCardHTML() + (typeof campTalkCardsHTML === "function" ? campTalkCardsHTML() : "") + campFeuStoryHTML(campMates) + hc;
+  var talkReady = !!(window.CompanionTalkManager && CompanionTalkManager.available().length); // v3.597.0
   var mh = '<div class="camp-card camp-missions-card">';
   mh += buildCampMissionBoardHTML();
   mh += '<button class="settings-btn" type="button" onclick="switchTab(\'quests\')">' + _t("Voir le tableau complet") + '</button>';
@@ -251,10 +256,9 @@ function buildCampHTML(tab) {
   // de la maquette (atelier/grand-ecran.html) — équipe, rations, Grimoire, missions, expéditions. Le téléphone ne change pas.
   if (!tab && document.documentElement.classList.contains("wide-mode")) {
     var titled = function (t, sub, x) { return x ? '<section class="cw-card"><h3 class="cw-h">' + esc(t) + (sub ? ' <small>' + sub + '</small>' : '') + '</h3>' + x + '</section>' : ""; };
-    var healthEnd = h.lastIndexOf('<div class="camp-card camp-health-card">');
     campShownTab = "missions";
     var sub = esc(_t("+{n} % PV/min", { n: regenPct })) + ' · <span id="camp-fire-eta">' + esc(hpFull ? _t("PV au maximum") : _t("Max dans {d}", { d: formatTime(Math.ceil(minutesToFull * 60)) })) + '</span>';
-    return h.slice(0, healthEnd) + '<div class="cw"><div class="cw-col">'
+    return h + '<div class="cw"><div class="cw-col">'
       + titled(_t("Le feu de camp"), sub, campWideTeamHTML(maxHp, hp, rationOptions, teamFull, campLock, campMates)) + eh
       + titled(_t("Grimoire"), tabsHTML.grimoire ? esc(campWideRulesCount()) : "", tabsHTML.grimoire ? campWideGrimoireHTML() : "") + '</div>'
       + '<div class="cw-col">' + titled(_t("Missions"), "", campWideMissionsHTML()) + titled(_t("Expéditions"), "", tabsHTML.depart || "") + '</div></div></div>';
@@ -269,6 +273,7 @@ function buildCampHTML(tab) {
     order.forEach(function (t) {
       h += '<button type="button" class="' + (cur === t.key ? 'is-on' : '') + '" onclick="setCampTab(\'' + t.key + '\')">'
         + '<img src="' + t.icon + '" alt=""><span>' + esc(t.label) + '</span>'
+        + (t.key === "feu" && (!teamFull || talkReady) ? '<span class="kseg-dot">!</span>' : '') // v3.594.0 : à soigner ; v3.597.0 : quelqu'un veut parler
         + (t.key === "missions" && claimable ? '<span class="kseg-dot">' + claimable + '</span>' : '')
         + (t.key === "depart" && toCollect ? '<span class="kseg-dot is-green">' + toCollect + '</span>' : '') + '</button>';
     });
@@ -282,7 +287,84 @@ function buildCampHTML(tab) {
   // bas couvre ces raccourcis depuis la refonte.
 
   h += '</div>';
+  if (window.WorldDays && WorldDays.ensure().pending && typeof setTimeout === "function") setTimeout(worldNightShow, 0); // v3.602.0 : la nuit, au retour au Camp
   return h;
+}
+
+/* v3.602.0 (atelier jours-du-monde, plein écran) : la tombée de la nuit, montrée une fois au retour au Camp. */
+function worldNightShow() {
+  if (typeof document === "undefined" || !document.body || !window.WorldDays || game.activeTab !== "campement") return;
+  if (window.SortieManager && SortieManager.ensure().active) return;
+  var night = WorldDays.takePending();
+  if (!night) return;
+  var w = window.WORLDS ? WORLDS.filter(function (x) { return x.id === night.world; })[0] : null;
+  var root = document.getElementById("world-night-root");
+  if (!root) { root = document.createElement("div"); root.id = "world-night-root"; document.body.appendChild(root); }
+  var lost = night.kind === "reprise" || (night.kind === "chantier" && night.sectorId);
+  root.innerHTML = '<div class="wn" role="dialog" aria-modal="true" aria-label="' + esc(_t("Jour {n}", { n: night.day })) + '"><div class="wn-in">'
+    + '<h3>' + esc(_t("Jour {n}", { n: night.day })) + '</h3>' + (w ? '<small class="wn-w">' + esc(_td(w.name)) + '</small>' : '')
+    + '<p>' + esc(_t("La nuit tombe.")) + '</p>'
+    + '<p class="wn-what' + (lost ? ' is-lost' : '') + '">' + esc(WorldDays.nightText(night)) + '</p>'
+    + (typeof villageEventMorningHTML === "function" ? villageEventMorningHTML(night) : '') // v3.604.0
+    + '<button type="button" class="kbtn primary wn-ok" onclick="worldNightClose()">' + esc(_t("Au matin")) + '</button></div></div>';
+  if (typeof saveGame === "function") saveGame();
+}
+function worldNightClose() {
+  var root = document.getElementById("world-night-root");
+  if (root) root.innerHTML = "";
+}
+window.worldNightShow = worldNightShow;
+window.worldNightClose = worldNightClose;
+
+/* v3.595.0 (C1 et C2, data/camp-soir.js) : la phrase du soir, tirée à chaque retour au Camp,
+   et les compagnons restés au camp autour du feu ; toucher l'un d'eux affiche sa phrase. */
+var campSoir = { key: null, text: "", tap: null };
+function campSoirWorld() { return Math.max(0, Math.min(5, Number((window.WorldManager && WorldManager.worldIndex) || 0))); }
+function campSoirPick(ids) {
+  var all = campSoirData(), D = all[campSoirWorld()] || all[0], any = campSoirAny(), pool = D.lieu.slice();
+  ids.forEach(function (id) { (D[id] || (any[id] && any[id].soir) || []).forEach(function (t) { pool.push(t); }); });
+  var ev = window.VillageEvents && VillageEvents.def(), evs = ev && typeof villageEventSoirData === "function" ? villageEventSoirData() : null; // v3.607.0 (E3) : l'événement en cours
+  if (evs) { var et = ev.type === "cadeau" || ev.type === "palissade" ? "demande" : ev.type; if (evs[et]) { pool.push(evs[et]); pool.push(evs[et]); } }
+  return pool[Math.floor(Math.random() * pool.length)] || "";
+}
+function campSoirTapText(id) {
+  var D = campSoirData()[campSoirWorld()] || {}, any = campSoirAny();
+  return (D.tap && D.tap[id]) || (any[id] && any[id].tap) || "";
+}
+function campFeuStoryHTML(campMates) {
+  if (typeof campSoirData !== "function") return "";
+  // v3.601.0 : hors sortie, l'équipe est aussi au feu (on peut parler à tout le monde)
+  var away = window.SortieManager && typeof SortieManager.ensure === "function" && SortieManager.ensure().active;
+  var party = away && window.CompanionManager ? CompanionManager.partyIds() : [];
+  var ids = (campMates || []).filter(function (id) { return party.indexOf(id) < 0; });
+  var key = campSoirWorld() + "|" + ids.join(",");
+  if (lastRenderedTab !== "campement" || campSoir.key !== key) campSoir = { key: key, text: campSoirPick(ids), tap: null };
+  var dark = window.WorldDays && WorldDays.isDark(); // v3.602.0 : la soirée qui suit la nuit dit ce qu'elle a fait
+  var h = dark
+    ? '<div class="camp-card camp-soir is-night"><div class="camp-soir-k">' + esc(_t("Cette nuit")) + '</div><p class="camp-soir-t">' + esc(WorldDays.nightText()) + '</p></div>'
+    : '<div class="camp-card camp-soir"><div class="camp-soir-k">' + esc(_t("Ce soir au camp")) + '</div><p class="camp-soir-t">' + esc(campSoir.text) + '</p></div>';
+  if (!ids.length) return h;
+  var half = Math.ceil(ids.length / 2), mate = function (id) {
+    // v3.601.0 (M1) : toucher ouvre la liste des sujets ; « … » quand il a quelque chose de nouveau à dire
+    var def = getCompanionDef(id), news = window.CompanionTalkManager && typeof CompanionTalkManager.hasNewTopic === "function" && CompanionTalkManager.hasNewTopic(id);
+    return '<button type="button" class="camp-feu-mate" onclick="openCompanionMenu(\'' + esc(id) + '\')">'
+      + renderIconOrEmojiHTML(def.image, "camp-feu-img", _td(def.name)) + (news ? '<i class="camp-feu-talk">…</i>' : '') + '<span>' + esc(_td(def.name)) + '</span></button>';
+  };
+  h += '<div class="camp-card camp-feu"><div class="camp-soir-k">' + esc(_t("Au coin du feu")) + '</div><div class="camp-feu-row">'
+    + ids.slice(0, half).map(mate).join("") + '<img class="camp-feu-fire" src="images/Icons/camp/campfire.webp" alt="">' + ids.slice(half).map(mate).join("") + '</div>'
+    + '<p class="camp-feu-hint">' + esc(_t("Touche un compagnon pour lui parler.")) + '</p></div>';
+  return h;
+}
+
+/* v3.594.0 (atelier camp-carte, option M3 de Seb) : en tête du « feu », le monde où l'on est et la carte. */
+function campHereCardHTML() {
+  if (typeof isTabUnlocked === "function" && !isTabUnlocked("map")) return "";
+  var w = window.WorldManager && typeof WorldManager.getWorld === "function" ? WorldManager.getWorld() : null;
+  if (!w) return "";
+  var lm = window.LivingMapManager ? LivingMapManager.getMapForWorld(w.id) : null, sub = _t("Carte du monde");
+  if (lm) { var sm = LivingMapManager.getSummary(lm.id); sub = _t("Carte vivante · {k} secteurs sur {n} libérés", { k: sm.libere, n: sm.total }); }
+  return '<button type="button" class="camp-card camp-here" onclick="switchTab(\'map\')"><img class="camp-here-img" src="' + esc(getWorldThumb(w)) + '" alt="">'
+    + '<span class="camp-here-tx"><b>' + esc(_t("Tu es ici : {w}", { w: _td(w.name) })) + '</b><small>' + esc(sub) + '</small></span><span class="camp-here-go">' + esc(_t("Carte")) + ' ›</span></button>';
 }
 
 /* =========================================================

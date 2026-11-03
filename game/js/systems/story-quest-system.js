@@ -249,7 +249,8 @@ var StoryQuestManager = {
     return Object.keys(STORY_QUESTS).filter(function (id) { return self.isCurrentStepReady(id); }).length;
   },
 
-  /* Accepter l'étape courante : applique unlockTabs immédiatement (décision Seb, v3.100.0). */
+  /* Accepter l'étape courante : applique unlockTabs immédiatement (décision Seb, v3.100.0).
+     v3.616.0 : unlockTabsOnClaim attend la réclamation (forest_06, le Village). */
   acceptStep: function (chapterId) {
     chapterId = chapterId || "forest";
     var step = this.getCurrentStep(chapterId);
@@ -270,14 +271,15 @@ var StoryQuestManager = {
     return true;
   },
 
-  _applyUnlockTabs: function (step) {
+  /* onClaim (v3.616.0) : la liste lue est unlockTabsOnClaim (onglets ouverts par la réussite). */
+  _applyUnlockTabs: function (step, onClaim) {
     if (!game.unlockedTabs || typeof game.unlockedTabs !== "object") game.unlockedTabs = {};
-    (step.unlockTabs || []).forEach(function (tab) { game.unlockedTabs[tab] = true; });
+    ((onClaim ? step.unlockTabsOnClaim : step.unlockTabs) || []).forEach(function (tab) { game.unlockedTabs[tab] = true; });
   },
 
-  _describeUnlocks: function (step) {
+  _describeUnlocks: function (step, onClaim) {
     var labels = window.STORY_TAB_LABELS || {};
-    return (step.unlockTabs || []).map(function (t) { return labels[t] ? _td(labels[t]) : t; }).join(", ");
+    return ((onClaim ? step.unlockTabsOnClaim : step.unlockTabs) || []).map(function (t) { return labels[t] ? _td(labels[t]) : t; }).join(", ");
   },
 
   /* Vérification opportuniste (renderPanel, throttlée) : signale une seule fois le passage à « réclamable ».
@@ -349,7 +351,11 @@ var StoryQuestManager = {
         // v3.261.0 (retour Seb) : les 5 vagues se passent dans UN run — un nouveau run repart de 0.
         if (!game.dungeonRun.storyRunTag) game.dungeonRun.storyRunTag = "r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
         if (st.markedRunTag !== game.dungeonRun.storyRunTag) { st.markedRunTag = game.dungeonRun.storyRunTag; st.counters.coeurKillsMarked = 0; }
-        st.counters.coeurKillsMarked += delta;
+        /* v3.621.1 (accord Seb) : des VAGUES franchies, plus des kills (une vague de groupe comptait double).
+           Franchies = la vague en cours, moins elle-même si un de ses ennemis est encore debout. */
+        var alive = window.CombatActors && typeof CombatActors.aliveEnemies === "function" ? CombatActors.aliveEnemies().length : 0;
+        var cleared = Math.max(0, Number(game.dungeonRun.wave || 1) - (alive > 0 ? 1 : 0));
+        st.counters.coeurKillsMarked = Math.max(Number(st.counters.coeurKillsMarked || 0), cleared);
       }
     }
   },
@@ -398,6 +404,10 @@ var StoryQuestManager = {
     }
 
     var rewardRows = this._grantReward(step.reward || {});
+    // v3.616.0 : onglets ouverts par la réussite (unlockTabsOnClaim), annoncés avec la récompense
+    var claimUnlocks = this._describeUnlocks(step, true);
+    this._applyUnlockTabs(step, true);
+    if (claimUnlocks) rewardRows.push({ label: _t("Débloqué"), value: claimUnlocks });
     // v3.322.0 (Souvenirs, O10) : une étape d'Histoire terminée, l'Aether s'en souvient
     if (window.MemoryManager) MemoryManager.souvenir("storyStep", _t("Souvenir : {x}", { x: _td(step.title) }));
     st.claimedSteps[step.id] = true;

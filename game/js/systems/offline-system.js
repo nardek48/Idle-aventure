@@ -66,7 +66,7 @@ var OfflineManager = {
 
     Object.keys(PRODUCTION_PLOTS_BUILDINGS).forEach(function (id) {
       var bucket = game.production[id];
-      if (!bucket || !Array.isArray(bucket.plots)) return;
+      if (!bucket || !Array.isArray(bucket.plots) || bucket.lockedStub) return; // v3.616.0 : bâtiment pas encore ouvert
       bucket.plots.forEach(function (plot, index) {
         if (!plot || plot.state !== "open") return;
         open++;

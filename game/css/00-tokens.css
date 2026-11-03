@@ -205,14 +205,14 @@
 
   /* Texte (inversé par rapport à l'ancien thème : sombre sur clair) */
   --nb-ink: var(--c-brown-850-soft);            /* texte principal, brun très foncé */
-  --nb-ink-dim: #6b5d45;                        /* texte secondaire ; v3.448.5 : 3,2-3,6 → 4,8-5,4:1 sur crème (avant c-brown-550-soft) */
+  --nb-ink-dim: #635640;                        /* texte secondaire ; v3.617.0 : ≥ 4,6:1 sur la texture et près des cadres (avant #6b5d45) */
   --nb-ink-inverse: var(--c-cream-100-soft);    /* texte clair, pour les fonds sombres (barre du haut, boutons) */
 
   /* Or (réutilise les mêmes teintes que l'ancien thème, l'accent doré fonctionne dans les deux) */
   --nb-gold: var(--c-bronze-400-vivid);
   --nb-gold-dark: var(--c-brown-550-3);
-  --nb-gold-deep: #7c5114;                      /* or de texte sur parchemin ; v3.448.5 : 4,5-5,0 → 5,3-5,9:1 (avant c-brown-700-vivid) */
-  --nb-green-text: #1e7236;                     /* v3.448.5 : vert de texte sur parchemin, 4,6-5,1:1 */
+  --nb-gold-deep: #784e13;                      /* or de texte sur parchemin ; v3.617.0 : ≥ 4,7:1 près des cadres (avant #7c5114) */
+  --nb-green-text: #1a642f;                     /* vert de texte ; v3.617.0 : ≥ 4,7:1 sur la texture (avant #1e7236, 4,4) */
 
   /* Bleu gemme (essence) */
   --nb-blue: var(--c-blue-400-soft);
@@ -231,7 +231,7 @@
      plus tard reviendra à changer ces jetons. */
   --sheet-veil: rgba(12, 8, 5, 0.62);
   --sheet-radius: 18px;
-  --sheet-body-bg: linear-gradient(rgba(246, 236, 217, 0.55), rgba(239, 224, 194, 0.4)), url('../images/UI/frames/parchment-tile.webp') 0 0 / 300px, var(--c-cream-150-2); /* v3.403.0 : couleur pleine en dernier : opaque même si la texture manque */
+  --sheet-body-bg: linear-gradient(rgba(246, 236, 217, 0.55), rgba(239, 224, 194, 0.4)), url('../images/UI/frames/parchment-cream.webp') 0 0 / 300px, var(--c-cream-150-2); /* v3.403.0 : couleur pleine en dernier ; v3.616.3 : texture crème de Seb (raccordable) */
   --sheet-ink: var(--c-brown-850-soft);
   --sheet-ink-dim: var(--c-brown-650-soft);
   --sheet-head-bg: linear-gradient(rgba(16, 12, 8, 0.78), rgba(16, 12, 8, 0.9)), url('../images/UI/textures/bg-stone-tile.webp') 0 0 / 256px, var(--c-brown-900-soft);

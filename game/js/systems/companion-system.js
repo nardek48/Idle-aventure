@@ -146,6 +146,7 @@ var CompanionManager = {
   /* Compagnons qui partent avec le héros, dans l'ordre, plafonnés. */
   partyIds: function () {
     var self = this;
+    if (window.TowerSystem && TowerSystem.isSolo()) return []; // v3.630.0 (Tour, TW5) : étapes 16 à 18, seul
     return this.unlockedIds().filter(function (id) {
       // v3.334.0 (P2) : un compagnon en patrouille quitte le groupe jusqu'à son retour
       if (window.PatrolManager && PatrolManager.isOnPatrol(id)) return false;
@@ -793,8 +794,31 @@ var CompanionManager = {
         healPriority: st.healPriority,
         keepReserve: !!st.keepReserve,
         voie: st.voie || null,               // v3.311.0 : compagnon à voies
-        voieChanges: Number(st.voieChanges || 0)
+        voieChanges: Number(st.voieChanges || 0),
+        talks: CompanionManager.cleanTalks(st.talks), // v3.597.0 : conversations faites et réponse choisie
+        quests: CompanionManager.cleanQuests(st.quests) // v3.598.0 : quêtes personnelles (étape, compteur, finie)
       };
+    });
+    return out;
+  },
+
+  // v3.597.0 : { talkId: réponses choisies } ; seules les chaînes courtes passent
+  cleanTalks: function (t) {
+    var out = {};
+    if (!t || typeof t !== "object") return out;
+    Object.keys(t).forEach(function (k) { if (/^[a-z0-9_]{1,40}$/.test(k) && typeof t[k] === "string") out[k] = t[k].slice(0, 16); });
+    return out;
+  },
+
+  // v3.598.0 : { questId: { s, n, d } } ; nombres entiers positifs, id court
+  cleanQuests: function (q) {
+    var out = {};
+    if (!q || typeof q !== "object") return out;
+    Object.keys(q).forEach(function (k) {
+      var v = q[k];
+      if (!/^[a-z0-9_]{1,40}$/.test(k) || !v || typeof v !== "object") return;
+      out[k] = { s: Math.max(0, Math.floor(Number(v.s) || 0)), n: Math.max(0, Math.floor(Number(v.n) || 0)), d: !!v.d };
+      ["sec", "last"].forEach(function (f) { if (typeof v[f] === "string" && /^[a-z0-9_]{1,40}$/.test(v[f])) out[k][f] = v[f]; }); // v3.603.0 : lieu attribué, dernier joué
     });
     return out;
   },
@@ -821,6 +845,8 @@ var CompanionManager = {
       if (d.healThreshold) self.setSetting(id, "healThreshold", d.healThreshold, true);
       if (d.healPriority) self.setSetting(id, "healPriority", d.healPriority, true);
       self.setSetting(id, "keepReserve", !!d.keepReserve, true);
+      st.talks = self.cleanTalks(d.talks); // v3.597.0 : conversations au feu
+      st.quests = self.cleanQuests(d.quests); // v3.598.0 : quêtes personnelles
       if (self.hasVoies(id)) { // v3.311.0
         st.voie = (d.voie && COMPANIONS_DB[id].voies[d.voie]) ? d.voie : null;
         st.voieChanges = Math.max(0, Number(d.voieChanges || 0));

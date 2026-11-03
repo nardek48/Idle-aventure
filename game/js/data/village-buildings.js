@@ -133,12 +133,12 @@ var VILLAGE_BUILDINGS = {
     iconImg: "images/Icons/village_buildings/training_grounds.webp",
     rank: 1,
     /* v3.214.0 : 14 niveaux pour 150 par caractéristique ; H1 (chantier du héros) : 18 niveaux, 200. */
-    maxLevel: 18, // H1 (chantier du héros) : 14 à 18 en Obsidienne taillée, 160 à 200
+    maxLevel: 21, // H1 (chantier du héros) : 14 à 18 en Obsidienne taillée, 160 à 200 ; rythme de la Tour (Seb, 03/11) : 19 à 21, 210 à 230
     implemented: true,
     lockLabel: "Atteins 20 dans une caractéristique",
-    desc: "Chaque niveau ouvre 10 niveaux d'entraînement supplémentaires sur chacune des cinq caractéristiques. L'entraînement lui-même se paie en or, dans Héros → Entraînement.",
+    desc: "Chaque niveau ouvre 10 niveaux d'entraînement de plus pour ta caractéristique de classe et l'Endurance, environ 7 pour les trois autres. L'entraînement lui-même se paie en or, dans Héros → Entraînement.", // v3.616.1 : plafonds de la v3.614.0 (secondaires à 70 %)
     /* La porte d'entrée du Terrain n'est pas une quête du tableau : c'est le
-       mur lui-même. Quand une caractéristique bute à 10, le bâtiment devient
+       mur lui-même. Quand une caractéristique bute à 20, le bâtiment devient
        constructible — le joueur découvre le besoin avant l'objet. */
     unlockCheck: function () {
       var ids = window.HEROS_TRAINING_UPGRADE_IDS
@@ -183,6 +183,14 @@ var VILLAGE_BUILDINGS = {
         resources: ["gold", "planche", "pierre", "acier", "obsidienne_taillee"],
         baseCost: { gold: 10000, planche: 300, pierre: 400, acier: 80, obsidienne_taillee: 3 },
         costMult: 1.2
+      },
+      /* Rythme de la Tour (Seb, 03/11) : Terrain 19 à 21 (palier lu sur le niveau actuel, 18 à 20), un par acte de la Tour,
+         au Givre bleu et au Verre de faille. Au banc. */
+      {
+        minLevel: 18, maxLevel: 20,
+        resources: ["gold", "planche", "pierre", "acier", "givre_bleu", "verre_faille"],
+        baseCost: { gold: 30000, planche: 400, pierre: 500, acier: 100, givre_bleu: 6, verre_faille: 2 },
+        costMult: 1.25
       }
     ],
     effectLabel: function (level) {
@@ -211,7 +219,7 @@ var VILLAGE_BUILDINGS = {
        coûte du Verre trempé (étape 9) et ouvre la reforge jusqu'au niveau 6 — c'est le
        deuxième compteur du palier de l'étape 13. Les niveaux 4 à 6 attendent les mondes
        suivants, comme avant. */
-    maxLevel: 6, // v3.431.0 : la Forge 4 à la Clé de voûte ; v3.455.0 : la Forge 5 à la Cire consacrée ; v3.490.0 : la Forge 6 à l'Obsidienne, ouverte à l'acte III de la Montagne (world-caps.js)
+    maxLevel: 7, // v3.625.0 : la Forge 7 au Verre de faille, ouverte à l'acte III de la Tour ; v3.431.0 : la Forge 4 à la Clé de voûte ; v3.455.0 : la Forge 5 à la Cire consacrée ; v3.490.0 : la Forge 6 à l'Obsidienne, ouverte à l'acte III de la Montagne (world-caps.js)
     implemented: true,
     desc: "Reforge une pièce d'équipement. Le niveau appartient à l'emplacement, pas à l'objet : changer de pièce ne fait rien perdre.",
     costTiers: [
@@ -258,6 +266,13 @@ var VILLAGE_BUILDINGS = {
         minLevel: 5, maxLevel: 5,
         resources: ["gold", "pierre", "acier", "obsidienne_taillee"],
         baseCost: { gold: 15000, pierre: 480, acier: 130, obsidienne_taillee: 3 },
+        costMult: 1.50
+      },
+      /* v3.625.0 (Tour, T-0, TW7) : palier de la Tour, la Forge 7 au Verre de faille (acte III). Provisoire, au banc. */
+      {
+        minLevel: 6, maxLevel: 6,
+        resources: ["gold", "pierre", "acier", "verre_faille"],
+        baseCost: { gold: 21000, pierre: 480, acier: 170, verre_faille: 3 },
         costMult: 1.50
       }
     ],

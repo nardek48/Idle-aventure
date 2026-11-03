@@ -57,10 +57,22 @@ var ProductionManager = {
     ["sawmill", "mine", "farm"].forEach(function (id) {
       var flagName = PRODUCTION_UNLOCK_FLAGS[id];
       if (prog[flagName]) return;
-      if (game.production[id] && typeof game.production[id] === "object") {
+      // v3.616.0 : une entrée créée par simple lecture, bâtiment fermé (lockedStub), ne prouve rien
+      if (game.production[id] && typeof game.production[id] === "object" && !game.production[id].lockedStub) {
         prog[flagName] = true;
       }
     });
+  },
+
+  /* v3.616.0 : une entrée lue bâtiment fermé (lockedStub) devient la vraie à l'ouverture ; ses horloges
+     repartent de maintenant, sinon le rattrapage créditerait le temps passé fermé. */
+  _releaseStub: function (id) {
+    var b = game.production && game.production[id];
+    if (!b || !b.lockedStub) return;
+    var now = Date.now();
+    (Array.isArray(b.plots) ? b.plots : []).forEach(function (p) { if (p) p.lastTick = now; });
+    Object.keys(b.workshops || {}).forEach(function (w) { if (b.workshops[w]) b.workshops[w].lastTick = now; });
+    delete b.lockedStub;
   },
 
   ensure: function () {
@@ -69,6 +81,7 @@ var ProductionManager = {
     var self = this;
     Object.keys(PRODUCTION_BUILDINGS).forEach(function (id) {
       if (!self.isBuildingUnlocked(id)) return; // pas d'initialisation tant que verrouillé
+      self._releaseStub(id); // v3.616.0 : ouvert pour de bon
       // v3.97.0 : tout bâtiment listé dans PRODUCTION_PLOTS_BUILDINGS (les 6 : Chasse,
       // Champs, Scierie, Mine, Carrière, Puits) n'a plus de niveau/stock de bâtiment —
       // délégué en totalité à ProductionPlotsSystem (9 zones indépendantes). Généralise
@@ -98,6 +111,7 @@ var ProductionManager = {
     if (!game.production[id] || typeof game.production[id] !== "object") {
       game.production[id] = { level: 1, stock: 0, lastTick: Date.now() };
     }
+    this._releaseStub(id); // v3.616.0 : l'entrée lue d'avance devient la vraie
     // v3.111.0 : bâtiment à zones -> initialise les parcelles immédiatement (zone 0 ouverte)
     // plutôt qu'au tick suivant — les checks des quêtes de village lisent l'état en direct.
     if (window.ProductionPlotsSystem && ProductionPlotsSystem.isManaged(id)) {
@@ -224,6 +238,9 @@ var ProductionManager = {
       ProductionPlotsSystem.tick(id, dt);
       changed = true;
     });
+    // v3.612.0 : l'achat automatique des parcelles passe toutes les 15 s (et après chaque récolte)
+    this._autoAcc = (this._autoAcc || 0) + dt;
+    if (this._autoAcc >= 15) { this._autoAcc = 0; if (ProductionPlotsSystem.autoUpgrade()) changed = true; }
 
     // v3.98.0 : ateliers de craft locaux (voir WorkshopsSystem) — un atelier ne tourne
     // que si son bâtiment parent est débloqué (ex. Cuisine de camp ne tick pas tant que la Chasse
@@ -461,6 +478,7 @@ var ProductionManager = {
     } else {
       showToast(_t("Tout récolté"), 1300);
     }
+    ProductionPlotsSystem.autoUpgrade(); // v3.612.0
     if (typeof renderPanel === "function") renderPanel();
     saveGame();
   },
@@ -536,6 +554,7 @@ var ProductionManager = {
     addLog("🌾 " + _t("{x} récoltée : +{n} {r}", { x: _td(def.name), n: formatNumber(amount), r: resDef ? _td(resDef.name) : def.resourceKey }), "event");
     showToast("+" + formatNumber(amount) + " " + (resDef ? _td(resDef.name) : ""), 1300);
 
+    ProductionPlotsSystem.autoUpgrade(); // v3.612.0
     if (typeof renderPanel === "function") renderPanel();
     saveGame();
   },

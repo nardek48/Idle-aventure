@@ -423,6 +423,10 @@ function buildHeroStatCardHTML(row, buyAmount) {
     h += '<div class="pc-stat-break-row"><span>' + _t("Base du héros") + '</span><span>+' + formatNumber(base) + '</span></div>';
     h += '<div class="pc-stat-break-row' + (trained === 0 ? ' is-zero' : '') + '"><span>' + _t("Entraînement (niveau {n})", { n: level }) + '</span><span>+' + formatNumber(trained) + '</span></div>';
     h += '<div class="pc-stat-break-row is-total"><span>' + esc(row.produces) + '</span><span>' + esc(row.fmt(row.read())) + '</span></div>';
+    // v3.614.0 (option B) : une caractéristique secondaire s'arrête plus bas que le plafond du Terrain
+    if (typeof isTrainingSecondaryId === "function" && isTrainingSecondaryId(row.upgradeId)) {
+      h += '<div class="pc-stat-break-row"><span>' + _t("Plafond") + '</span><span>' + esc(_t("{p} % du Terrain : ta caractéristique de classe et l'Endurance montent plus haut", { p: Math.round(TRAINING_SECONDARY_SHARE * 100) })) + '</span></div>';
+    }
     if (typeof row.extra === "function") {
       h += '<div class="pc-stat-break-row"><span>' + _t("Aussi") + '</span><span>' + esc(row.extra()) + '</span></div>';
     }
@@ -489,7 +493,11 @@ function buildHerosAmeliorationHTML() {
   var cards = '';
   HEROS_STAT_ROWS.forEach(function (row) { cards += buildHeroStatCardHTML(getHeroStatRowView(row), buyAmount); });
   // v3.425.0 (lot H-2) : au plafond de l'entraînement, UN bandeau explique et mène au Terrain.
-  if (cards.indexOf("is-training-wall") !== -1) {
+  // v3.614.0 (option B) : le bandeau du Terrain ne parle que quand une caractéristique principale (classe, Endurance) bute
+  var mainWall = ["utrain_endurance", "utrain_" + (typeof getHeroMainStat === "function" ? getHeroMainStat(game.heroId).stat : "power")].some(function (id) {
+    var u = getHeroStatUpgrade(id); return u && Number((game.upgrades || {})[id] || 0) >= getUpgradeCap(u) && Number((game.upgrades || {})[id] || 0) < Number(u.maxLevel || 0);
+  });
+  if (cards.indexOf("is-training-wall") !== -1 && mainWall) {
     var terrain = window.VillageBuildingManager ? VillageBuildingManager.getLevel("training") : 0;
     h += '<div class="hs-capbanner"><span><b>' + _t("Plafond de l'entraînement : {c}", { c: getTrainingCapLevels() }) + '</b><br>'
       + _t("Terrain d'entraînement niv. {t} — chaque niveau ouvre +10.", { t: terrain }) + '</span>'
@@ -710,13 +718,12 @@ window.isEquipShopAtHall = isEquipShopAtHall;
    fonctions qui le lisent (sélection d'objet, tri, autovente). */
 function buildHerosEquipHTML() {
   var cur = (typeof activeEquipSubTab !== "undefined") ? activeEquipSubTab : "equipment";
-  var atHall = isEquipShopAtHall(); // v3.424.0 (H-1) : la Boutique part à la Halle
-  if (atHall && cur === "shop") { activeEquipSubTab = "equipment"; cur = "equipment"; }
+  // v3.615.2 (option A de Seb) : la Boutique reste à côté du Sac toute la partie ; la Halle la montre aussi
   var bagCount = Array.isArray(game.inventory) ? game.inventory.length : 0;
   var seg = '<div class="kseg hs-subseg">'; // v3.401.0 (lot O-1) : rail du kit, déjà taillé pour le parchemin
   seg += '<button type="button" class="' + (cur === "equipment" ? 'is-on' : '') + '" onclick="setEquipSubTab(\'equipment\')"><span>' + _t("Équipé") + '</span></button>';
   seg += '<button type="button" class="' + (cur === "inventory" ? 'is-on' : '') + '" onclick="setEquipSubTab(\'inventory\')"><span>' + _t("Sac") + '<span class="kseg-count">' + bagCount + '</span></span></button>';
-  if (!atHall) seg += '<button type="button" class="' + (cur === "shop" ? 'is-on' : '') + '" onclick="setEquipSubTab(\'shop\')"><span>' + _t("Boutique") + '</span></button>';
+  seg += '<button type="button" class="' + (cur === "shop" ? 'is-on' : '') + '" onclick="setEquipSubTab(\'shop\')"><span>' + _t("Boutique") + '</span></button>';
   seg += '</div>';
 
   // v3.425.0 (lot H-2) : Équipé (silhouette, emplacements autour du corps) et Sac (modèle de

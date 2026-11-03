@@ -98,10 +98,17 @@ var VeinSystem = {
   _mem: function (id) { return !!(window.MemoryManager && MemoryManager.has(id)); },
   _memV: function (k, d) { return (window.MemoryManager && typeof MemoryManager.V === "function") ? MemoryManager.V(k) : d; },
   /* Multiplicateur des dégâts du héros (attaque de base et compétences). Taille franche (Mémoire 17) : +10 % à la première. */
+  /* Équilibre des classes (Seb, 03/11) : multiplicateur de dégâts de la classe du héros (data/classes.js, balance). */
+  classMult: function () {
+    var cb = (typeof getClassByHeroId === "function" && window.game) ? getClassByHeroId(game.heroId) : null;
+    return (cb && cb.balance && cb.balance.damageMult) ? Number(cb.balance.damageMult) : 1;
+  },
   bladeMult: function () {
-    if (!this.state) return 1;
-    return 1 + this.state.heroCuts * this.bladePerCut() + (this.state.heroCuts > 0 && this._mem("taille_franche") ? Number(this._memV("taille_franche_blade", 0.10)) : 0)
-      + (this.mountainLearns() ? this.heatLevel() * VEIN_DROIT_HEAT_BLADE : 0);
+    var tour = window.TowerSystem ? TowerSystem.dmgMult() : 1; // v3.626.0 : la braise posée, à la Tour
+    tour *= this.classMult(); // équilibre des classes (03/11)
+    if (!this.state) return tour;
+    return tour * (1 + this.state.heroCuts * this.bladePerCut() + (this.state.heroCuts > 0 && this._mem("taille_franche") ? Number(this._memV("taille_franche_blade", 0.10)) : 0)
+      + (this.mountainLearns() ? this.heatLevel() * VEIN_DROIT_HEAT_BLADE : 0));
   },
   /* Multiplicateur des frappes ennemies (les façonnés, tous les ennemis de la Montagne). Peau de basalte (Mémoire 17) : +7 %. */
   heatMult: function () {
@@ -141,6 +148,7 @@ var VeinSystem = {
   /* Garde de enemyTurn : true si l'ennemi ne joue pas son tour ordinaire (le Wyrm qui ressort). */
   onEnemyTurn: function (e) {
     if (!e || Number(e.hp || 0) <= 0) return false;
+    if (window.TowerSystem) TowerSystem.onEnemyTurn(e); // v3.636.0 : le round intouchable de la silhouette
     if (this.tickBurns(e)) return true;
     if (e.diving) return this.surface(e);
     this.sortTurn(e);
@@ -246,7 +254,7 @@ var VeinSystem = {
     if (ph.sorts) e.sorts = true; // v3.491.0 : le Dragon ancien trie
   },
   /* Lu par dealDamage : sous la lave, aucun coup ne porte. */
-  blocksHit: function (foe) { return !!(foe && foe.diving && Number(foe.hp || 0) > 0); },
+  blocksHit: function (foe) { return !!(foe && foe.diving && Number(foe.hp || 0) > 0) || !!(window.TowerSystem && TowerSystem.blocksHit(foe)); }, // v3.636.0 : + la silhouette
   /* Il ressort : il frappe chaque allié vivant (×0,8, chaleur comprise), puis son tour s'arrête. */
   surface: function (e) {
     e.diving = false;
@@ -263,6 +271,7 @@ var VeinSystem = {
   /* Garde de killEnemy : le combat est gagné, la Cendre taillée est versée. v3.491.0 : enemy, le dernier tombé
      (Mémoire 20, « Ce qui a été pris » : boss ou élite de la Montagne vaincu après une taille, +25 % d'or). */
   onVictory: function (enemy) {
+    if (window.TowerSystem) TowerSystem.onVictory(); // v3.626.0 : la braise gardée, à la Tour
     var st = this.state;
     this.state = null;
     if (st && !st.cuts && window.AchievementManager) { // v3.492.0 : hauts faits de la Montagne

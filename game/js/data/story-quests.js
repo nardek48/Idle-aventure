@@ -429,7 +429,10 @@ var STORY_QUESTS = {
           completion: "Le gibier s'entasse. Un camp qui stocke est déjà un village."
         },
         objectiveLabel: "Terminer « La Meute Affamée »",
-        unlockTabs: ["village"],
+        /* v3.616.0 (retour Seb) : le Village s'ouvre à la réussite, plus à l'acceptation — une Meute ratée
+           l'ouvrait déjà, avec la carte, la Petite aventure et le Bosquet. */
+        unlockTabs: [],
+        unlockTabsOnClaim: ["village"],
         reward: STORY_REWARDS.forest_06,
         linkTo: { section: "adventure", cardId: "adv_hq_wolf_pack" },
         // v3.105.1 : condition viande retirée — le bâtiment Chasse (seule vraie source) est débloqué PAR cette
@@ -538,9 +541,9 @@ var STORY_QUESTS = {
           icon: "images/Icons/resources/seve_aeswyn_icon.webp",
           title: "La brume reprend",
           points: [
-            { icon: "images/Icons/scene/node_obstacle.webp", text: "La carte est découpée en secteurs autour d'Aeswyn. Tu libères un secteur en terminant sa Petite Aventure. Seuls ceux qui touchent le foyer ou un secteur libéré sont atteignables." },
+            { icon: "images/Icons/scene/node_obstacle.webp", text: "La carte est découpée en secteurs autour d'Aeswyn. Tu libères un secteur en terminant sa Petite Aventure, ou en battant l'élite qui le garde. Seuls ceux qui touchent le foyer ou un secteur libéré sont atteignables." },
             { icon: "images/Icons/resources/seve_aeswyn_icon.webp", text: "Un, deux ou trois points : l'anneau du secteur. Plus il est loin du foyer, plus le parcours est dur, et plus la première libération rapporte de Sève (5, 8 ou 12)." },
-            { icon: "images/Icons/scene/node_unknown.webp", text: "Un secteur libéré donne souvent un effet (Puits +10 %, une corde de plus…). Si une Petite Aventure de la carte échoue, la brume reprend un secteur libéré voisin : c'est le Recouvrement. L'effet revient quand tu le reprends." },
+            { icon: "images/Icons/scene/node_unknown.webp", text: "Un secteur libéré donne souvent un effet (Puits +10 %, une corde de plus…). Si tu échoues en rejouant un secteur déjà libéré, la brume le reprend : c'est le Recouvrement. Une première tentative ratée ne coûte rien. L'effet revient quand tu le reprends." },
             { icon: "images/Icons/scene/protective_amulet.webp", text: "La Palissade d'Aeswyn freine le Recouvrement et, dès le niveau 3, tient les secteurs proches du foyer. Le bouton « ? » de la carte rappelle chaque pastille." }
           ]
         },
@@ -641,7 +644,7 @@ var STORY_QUESTS = {
           points: [
             { icon: "images/Icons/codex/codex_lore.webp", text: "Le Grimoire automatise tes actions en combat selon des règles conditionnelles que tu définis (ex. « si une charge est annoncée → Défense »)." },
             { icon: "🎚️", text: "Tu commences avec 2 règles disponibles, et tu en débloqueras d'autres au fil de ta progression dans le jeu." },
-            { icon: "🔀", text: "Bascule entre mode Tactique (manuel, tu joues chaque round) et mode Grimoire (automatique, tes règles décident) à tout moment depuis l'écran Combat." }
+            { icon: "🔀", text: "Choisis le mode Tactique (manuel, tu joues chaque round) ou le mode Grimoire (automatique, tes règles décident) au départ de chaque sortie, ou au Campement : il ne change plus avant le retour." }
           ]
         },
         check: function (game) { return storyAdvDone(game, "aq_story_coeur") && storyCountActiveGrimoireRules(game) >= 1; },
@@ -734,9 +737,9 @@ var STORY_QUESTS = {
           icon: "images/Icons/subtabs/hero_summary.webp",
           title: "Les compagnons",
           points: [
-            { icon: "images/Icons/subtabs/hero_summary.webp", text: "Un compagnon combat à tes côtés : il joue son action après la tienne, à chaque round. Deux au maximum peuvent t'accompagner." },
+            { icon: "images/Icons/subtabs/hero_summary.webp", text: "Un compagnon combat à tes côtés : il joue une action à chaque round, à sa place dans l'ordre des tours (parfois avant toi). Deux au maximum peuvent t'accompagner." },
             { icon: "images/Icons/companions/wenna_bandage.webp", text: "Wenna est un Soutien : elle soigne l'allié le plus bas en PV. Elle n'a ni équipement ni talents — elle s'améliore contre de l'or, dans Héros › Compagnons." },
-            { icon: "images/Icons/combat_stats/stat_attack.webp", text: "Tu choisis pour chacun : Auto (il décide seul) ou Manuel. Un compagnon tombé à 0 PV est hors de combat jusqu'à la fin, et revient affaibli au combat suivant." }
+            { icon: "images/Icons/combat_stats/stat_attack.webp", text: "En mode Grimoire, tes compagnons jouent seuls ; en mode Tactique, tu choisis leurs actions. Un compagnon tombé à 0 PV est hors de combat jusqu'à la fin, et revient affaibli au combat suivant." }
           ]
         },
         check: function (game) { return storyCounter(game, "companionWins") >= 3; },
@@ -1033,7 +1036,7 @@ STORY_QUESTS.desert = {
         icon: "images/Icons/resources/verre_des_dunes_icon.webp",
         title: "L'Ensablement",
         points: [
-          { icon: "images/Icons/scene/node_obstacle.webp", text: "La carte du Désert fonctionne comme celle de la Forêt. Tu libères un secteur en terminant son parcours." },
+          { icon: "images/Icons/scene/node_obstacle.webp", text: "La carte du Désert fonctionne comme celle de la Forêt. Tu libères un secteur en terminant son parcours, ou en battant l'élite qui le garde." },
           { icon: "images/Icons/scene/node_unknown.webp", text: "Un parcours raté rend un secteur au sable. Sa récompense de secteur tenu est perdue jusqu'à ce que tu le reprennes." },
           { icon: "images/Icons/scene/protective_amulet.webp", text: "La Palissade d'Aeswyn freine l'Ensablement, comme elle freine la brume." }
         ]
@@ -1939,7 +1942,7 @@ STORY_QUESTS.ruins = {
         title: "Le Marché des Ruines",
         points: [
           { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "La caravane de la Halle marchande peut maintenant partir vers le Marché des Ruines, dans Campement › Expéditions. La première est une caravane d'essai : elle part à vide, revient en 10 minutes et ne prend pas de place." }, // v3.551.0
-          { icon: "images/Icons/resources/pierre_errante_icon.webp", text: "Elle en rapporte de l'or. Au trajet Long (Halle 3), parfois de la Pierre errante, la pierre des Ruines." }
+          { icon: "images/Icons/resources/pierre_errante_icon.webp", text: "Elle en rapporte de l'or. Au trajet Long (Halle 3), 2 Pierres errantes à coup sûr, la pierre des Ruines." }
         ]
       },
       check: function () { return storyDesertFlag("ruinsMarketDone"); },
@@ -2059,8 +2062,8 @@ STORY_QUESTS.ruins = {
         icon: "images/Icons/resources/pierre_errante_icon.webp",
         title: "Le chantier errant",
         points: [
-          { icon: "images/Icons/scene/node_obstacle.webp", text: "La carte des Ruines fonctionne comme celle du Désert : tu libères un quartier en terminant sa Petite Aventure." },
-          { icon: "images/Icons/scene/node_unknown.webp", text: "Chaque jour, la cité rebâtit un quartier : le chantier. Il change de place à minuit, et même un quartier libéré peut redevenir chantier." },
+          { icon: "images/Icons/scene/node_obstacle.webp", text: "La carte des Ruines fonctionne comme celle du Désert : tu libères un quartier en terminant sa Petite Aventure, ou en battant l'élite qui le garde." },
+          { icon: "images/Icons/scene/node_unknown.webp", text: "Chaque jour, la cité rebâtit un quartier : le chantier. Il change de place à chaque nuit (une nuit toutes les 3 sorties), et même un quartier libéré peut redevenir chantier." }, // v3.602.0 : jours du monde
           { icon: "images/Icons/resources/pierre_errante_icon.webp", text: "Libérer le chantier du jour rapporte des Pierres errantes. Un échec sur un quartier déjà libéré le fait retomber : c'est l'Éboulement." },
           { icon: "images/Icons/scene/protective_amulet.webp", text: "La Palissade d'Aeswyn freine l'Éboulement." }
         ]
@@ -2098,8 +2101,8 @@ STORY_QUESTS.ruins = {
         title: "Le Bâtisseur",
         points: [
           { icon: "images/Icons/combat_status/shield_incoming.webp", text: "Le Bâtisseur frappe peu. Il annonce un mur, puis blinde un de ses alliés : tes coups sur lui passent mal pendant quelques rounds." },
-          { icon: "images/Icons/memory/grimoire_etendu.webp", text: "Contre l'annonce, la même réponse qu'au bouclier : la condition « Bouclier au prochain tour » du Grimoire." },
-          { icon: "images/Icons/combat_stats/stat_attack.webp", text: "Mieux : le tuer en premier. Dans le Grimoire, le réglage « Cible » sur « Le soutien » le vise d'abord." },
+          { icon: "images/Icons/memory/grimoire_etendu.webp", text: "Contre l'annonce, la même réponse qu'au bouclier : la condition « L'ennemi invoque un bouclier » du Grimoire." },
+          { icon: "images/Icons/combat_stats/stat_attack.webp", text: "Mieux : le tuer en premier. Dans « Préparer la sortie », le réglage « Cible » sur « Celle qui soutient » le vise d'abord." },
           { icon: "images/Icons/camp/campfire.webp", text: "Deux compagnons sur trois : Wenna soigne, Maddoc frappe de loin, Edda achève. Choisis selon ce qui t'attend." }
         ]
       },
@@ -2498,8 +2501,8 @@ STORY_QUESTS.ruins = {
         title: "Le Maître d'œuvre",
         points: [
           { icon: "images/Icons/combat_status/rising.webp", text: "Il se relève une fois, quoi qu'il arrive, avec la moitié de ses PV." },
-          { icon: "images/Icons/memory/grimoire_etendu.webp", text: "Relevé, il appelle deux bâtisseurs. Le réglage « Cible » sur « Le soutien » les vise d'abord." },
-          { icon: "images/Icons/combat_status/shield_incoming.webp", text: "Sous les 30 %, il se blinde : la condition « Bouclier au prochain tour » du Grimoire." }
+          { icon: "images/Icons/memory/grimoire_etendu.webp", text: "Relevé, il appelle deux bâtisseurs. Le réglage « Cible » sur « Celle qui soutient » les vise d'abord." },
+          { icon: "images/Icons/combat_status/shield_incoming.webp", text: "Sous les 30 %, il se blinde : la condition « L'ennemi invoque un bouclier » du Grimoire." }
         ]
       },
       check: function (game) { return storyAdvDone(game, "aq_ruines_plan"); },
@@ -2764,7 +2767,7 @@ STORY_QUESTS.crypt = {
         title: "Le Marché de la Crypte",
         points: [
           { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "La caravane de la Halle marchande peut maintenant partir vers le Marché de la Crypte, dans Campement › Expéditions. La première est une caravane d'essai : elle part à vide, revient en 10 minutes et ne prend pas de place." }, // v3.551.0
-          { icon: "images/Icons/resources/cire_sepulcre_icon.webp", text: "Elle en rapporte de l'or. Au trajet Long (Halle 3), parfois de la Cire de sépulcre." }
+          { icon: "images/Icons/resources/cire_sepulcre_icon.webp", text: "Elle en rapporte de l'or. Au trajet Long (Halle 3), 2 Cires de sépulcre à coup sûr." }
         ]
       },
       check: function () { return storyDesertFlag("cryptMarketDone"); },
@@ -2883,7 +2886,7 @@ STORY_QUESTS.crypt = {
         icon: "images/Icons/resources/cire_sepulcre_icon.webp",
         title: "Les gisants",
         points: [
-          { icon: "images/Icons/scene/node_obstacle.webp", text: "La carte de la Crypte fonctionne comme celle des Ruines : tu libères un couloir en terminant sa Petite Aventure." },
+          { icon: "images/Icons/scene/node_obstacle.webp", text: "La carte de la Crypte fonctionne comme celle des Ruines : tu libères un couloir en terminant sa Petite Aventure, ou en battant l'élite qui le garde." },
           { icon: "images/Icons/combat_status/asleep.webp", text: "Chaque couloir a ses gisants. Avant de partir, tu choisis : les laisser (plus facile, rapporte moins) ou les réveiller (plus dur, plus de Cire de sépulcre)." },
           { icon: "images/Icons/scene/node_unknown.webp", text: "Un échec réveille le couloir : c'est Le réveil. Il reste hostile, et plus dur, jusqu'au lendemain." },
           { icon: "images/Icons/resources/cire_sepulcre_icon.webp", text: "Le Marché de la Crypte est sur la carte, à côté de la Veillée." }
@@ -2923,7 +2926,7 @@ STORY_QUESTS.crypt = {
         title: "Celui qui appelle",
         points: [
           { icon: "images/Icons/combat_status/calling.webp", text: "Le Nécromancien annonce un appel, puis réveille un dormeur au tour suivant. Celui-là ne rapporte pas d'or en plus : ce n'est pas toi qui l'as réveillé." },
-          { icon: "images/Icons/combat_stats/stat_attack.webp", text: "Le tuer en premier coupe l'appel. Dans le Grimoire, le réglage « Cible » sur « Le soutien » le vise d'abord." },
+          { icon: "images/Icons/combat_stats/stat_attack.webp", text: "Le tuer en premier coupe l'appel. Dans « Préparer la sortie », le réglage « Cible » sur « Celle qui soutient » le vise d'abord." },
           { icon: "images/Icons/camp/campfire.webp", text: "Ysolt retarde un réveil, Wenna soigne, Maddoc frappe de loin, Edda achève. Deux sur quatre : choisis selon ce qui t'attend." }
         ]
       },
@@ -3992,7 +3995,7 @@ STORY_QUESTS.mountain = {
       choice: {
         key: "pioche", onStoryCard: true, noRecord: true,
         buttonLabel: "Choisir qui l'accompagne",
-        title: "Deux sur cinq",
+        get title() { return storyCompanionCount() === 4 ? "Deux sur quatre" : "Deux sur cinq"; }, // v3.621.0 : Ysolt partie
         text: "Sarkel vient avec toi. Une seule autre place au combat : qui la prend ?",
         get options() {
           return STORY_PIOCHE_OPTIONS.filter(function (o) { return window.CompanionManager && CompanionManager.isUnlocked(o.value); });
@@ -4012,7 +4015,7 @@ STORY_QUESTS.mountain = {
       tutorial: {
         tab: "more",
         icon: "images/Icons/subtabs/hero_summary.webp",
-        title: "Deux sur cinq",
+        get title() { return storyCompanionCount() === 4 ? "Deux sur quatre" : "Deux sur cinq"; }, // v3.621.0 : Ysolt partie
         points: [
           { icon: "images/Icons/subtabs/hero_summary.webp", get text() { return STORY_DEUX_SUR_CINQ[storyCompanionCount() === 4 ? 0 : 1]; } },
           { icon: "images/Icons/companions/sarkel_coup_de_pioche.webp", text: "Sarkel taille : une fois par combat, il taille la veine à ta place. Tu gagnes la Cendre sans perdre ton coup, mais la chaleur monte." }
@@ -4169,10 +4172,10 @@ STORY_QUESTS.mountain = {
         icon: "images/Icons/resources/cendre_vive_icon.webp",
         title: "Les veines de la carte",
         points: [
-          { icon: "images/Icons/menu_icons/map_menu.webp", text: "La carte de la Montagne fonctionne comme celle de la Crypte : tu libères un secteur en terminant sa Petite Aventure." },
+          { icon: "images/Icons/menu_icons/map_menu.webp", text: "La carte de la Montagne fonctionne comme celle de la Crypte : tu libères un secteur en terminant sa Petite Aventure, ou en battant l'élite qui le garde." },
           { icon: "images/Icons/combat_actions/vein_cut.webp", text: "Chaque secteur a sa veine. Avant de partir, tu choisis : la tailler (plus de Cendre vive, mais le secteur chauffe et ses combats sont plus durs ensuite) ou la laisser (plus facile, rapporte moins)." },
           { icon: "images/Icons/combat_status/vein_heat.webp", text: "Une Petite Aventure ratée recouvre le secteur de lave : c'est La coulée. Il reste plus dur jusqu'au lendemain. Une élite perdue, elle, se retente le jour même." },
-          { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "Le Marché de la Montagne est sur la carte, à côté du Replat. La caravane en rapporte de l'or. Au trajet Long (Halle 3), parfois de la Cendre vive." }
+          { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "Le Marché de la Montagne est sur la carte, à côté du Replat. La caravane en rapporte de l'or. Au trajet Long (Halle 3), 2 Cendres vives à coup sûr." }
         ]
       },
       check: function () { return storyMountainSectorsFreed() >= 2; },
@@ -4208,7 +4211,7 @@ STORY_QUESTS.mountain = {
         title: "Le tri",
         points: [
           { icon: "images/Icons/combat_status/sorting.webp", text: "Le Démon mineur annonce le tri, puis frappe plus fort celui qui a taillé la veine dans ce combat. Si personne n'a taillé, il frappe comme les autres." },
-          { icon: "images/Icons/memory/grimoire_etendu.webp", text: "Le tuer en premier coupe le tri. Dans le Grimoire, le réglage « Cible » sur « Le soutien » le vise d'abord." },
+          { icon: "images/Icons/memory/grimoire_etendu.webp", text: "Le tuer en premier coupe le tri. Dans « Préparer la sortie », le réglage « Cible » sur « Celle qui soutient » le vise d'abord." },
           { icon: "images/Icons/companions/sarkel_coup_de_pioche.webp", text: "Tailler attire ses coups sur toi. Laisser Sarkel tailler les attire sur lui." }
         ]
       },
@@ -4520,7 +4523,7 @@ STORY_QUESTS.mountain = {
           { who: "Sarkel", text: "Il nous entend depuis la Gueule." }
         ]
       },
-      objectiveLabel: "Monter « Le sentier du dessus »",
+      objectiveLabel: "Monter « Le sentier du dessus » (coût : 1 Ration moyenne)",
       unlockTabs: [],
       reward: STORY_REWARDS.montagne_17,
       linkTo: { section: "expedition", cardId: "scene_sentier_du_dessus" },
@@ -4697,7 +4700,7 @@ var STORY_DROIT_TEXTS = {
     dialogue: [{ who: "Le Dragon ancien", text: "Toi, tu ne prends pas. Elle s'en souviendra." }, { who: "Sarkel", text: "Moi aussi." }]
   },
   suite: {
-    text: "À Aeswyn, le soir, Orwen regarde vers l'est. Au-dessus des toits, loin, une tour. Personne ne l'avait vue avant. Elle était peut-être là.",
+    text: "À Aeswyn, le soir, Orwen regarde vers le nord. Au-dessus des toits, loin, une tour. Personne ne l'avait vue avant. Elle était peut-être là.",
     dialogue: [{ who: "Orwen", text: "Il reste la Tour." }, { who: "Orwen", text: "Elle te prendra le reste." }]
   }
 };
@@ -4721,7 +4724,719 @@ window.storySarkelInParty = storySarkelInParty;
 window.storyVeinsCut = storyVeinsCut;
 window.storyVeinesRelance = storyVeinesRelance;
 window.STORY_VEINES_CIBLE = STORY_VEINES_CIBLE;
+/* =====================================================================
+   v3.626.0 — Chapitre VI, la Tour (Conception Tour v0.1 et « Chapitre VI : textes » v0.1, validés
+   par Seb le 02/11/2026). Lot T-1 : acte I « Le pied de la Tour », étapes 1 à 5.
+   ===================================================================== */
+STORY_REWARDS.tour_01 = { gold: 16000 };
+STORY_REWARDS.tour_02 = { gold: 16500 };
+STORY_REWARDS.tour_03 = { gold: 17000 };
+STORY_REWARDS.tour_04 = { gold: 17500 };
+STORY_REWARDS.tour_05 = { gold: 18000 };
+
+/* Dernier camp (étape 3) : ce que Sarkel demande pour planter ses pieux. Au banc. */
+var STORY_DERNIER_CAMP = { bois: 400, grande_ration: 2 };
+
+/* Choix « braise » (étape 5) : garder la braise d'Aeswyn (Garder + Aeswyn) ou la poser sur le palier (Donner + Soi).
+   Effets à la Tour seulement (TowerSystem) : 5 % des PV rendus par combat gagné, ou +10 % de dégâts. */
+var STORY_BRAISE_TEXTS = {
+  garder: {
+    completion: "Tu refermes le couvercle sur la braise. Le Veilleur hoche la tête, une fois.",
+    dialogue: [
+      { who: "Le Veilleur", text: "Alors elle montera avec toi. C'est aussi un chemin." },
+      { who: null, text: "Quand tu te retournes, le palier est vide. Plus haut, des pas, lents." }
+    ]
+  },
+  poser: {
+    completion: "Tu poses le pot sur la chaise. Le Veilleur le regarde longtemps, sans le toucher.",
+    dialogue: [
+      { who: "Le Veilleur", text: "Je la garderai chaude. Je sais faire." },
+      { who: "Wenna", text: "Orwen ne va pas aimer." },
+      { who: "Le Veilleur", text: "Non." },
+      { who: null, text: "Quand tu te retournes, le palier est vide. Plus haut, des pas, lents." }
+    ]
+  }
+};
+function storyBraiseBranch() {
+  return (window.StoryQuestManager && StoryQuestManager.getChoice("braise") === "poser") ? "poser" : "garder";
+}
+STORY_CHOICE_AXES.braise = { garder: ["garder", "aeswyn"], poser: ["donner", "soi"] }; // v3.626.0 (Tour, étape 5)
+
+STORY_QUESTS.tower = {
+  id: "tower",
+  worldId: "tower",
+  requiresChapter: "mountain",
+  title: "La Question",
+  subtitle: "Chapitre 6 — Tour",
+  icon: "images/Icons/codex/world_tower.webp",
+  // v3.631.0 : la fin choisie (titre doré de l'épilogue)
+  get endText() { var f = window.TowerSystem && TowerSystem.ending(); return f ? TOWER_FINS[f].num : "Le sommet. Ce n'est pas une fin."; },
+  steps: [
+    /* ---------- Acte I — Le pied de la Tour ---------- */
+    /* Étape 1 : la route du nord, parcours de quatre paliers ; le monde est posé à l'arrivée. Ouvre le chapitre VI
+       (ouverture en trois planches, data/chapter-openings.js). */
+    {
+      id: "tour_01",
+      title: "Vers le nord",
+      act: "Acte I — Le pied de la Tour",
+      narrative: {
+        objective: "À Aeswyn, la braise ne fume plus droit. Elle penche vers le nord. Orwen a mis du pain dans ton sac, et une braise dans un pot de terre fermé d'un couvercle.",
+        completion: "La route monte toute seule. Pas de forêt, pas de sable, pas de pierre qui bouge : une plaine d'herbe grise, et au bout, la Tour. Elle perce le ciel exactement là où il est fendu.",
+        dialogue: [
+          { who: "Orwen", text: "Garde-la chaude." },
+          { who: "Brannoc", text: "Le vieux est parti par là, petit. Il y a longtemps." },
+          { who: "Aldric", text: "Je ne veux pas savoir où. Reviens, c'est tout." },
+          { who: "Sarkel", text: "Je mène la carriole jusqu'au pied. Pas plus haut. Là-haut, je ne vends rien." }
+        ],
+        completionDialogue: [
+          { who: "Maddoc", text: "Chez moi, on disait qu'au nord il y avait une porte que personne n'a construite." },
+          { who: null, text: "La porte est là. Ouverte." }
+        ]
+      },
+      objectiveLabel: "Terminer la route du nord (coût : 2 Grandes rations)",
+      unlockTabs: [],
+      reward: STORY_REWARDS.tour_01,
+      linkTo: { section: "expedition", cardId: "scene_traversee_tour" },
+      check: function () { return storyDesertFlag("towerCrossingCompleted"); },
+      progress: function () { return "Route " + (storyDesertFlag("towerCrossingCompleted") ? "1/1" : "0/1"); }
+    },
+    /* Étape 2 : cinq rencontres au pied de la Tour (les gardiens). */
+    {
+      id: "tour_02",
+      title: "Ce qui garde le pied",
+      act: "Acte I — Le pied de la Tour",
+      narrative: {
+        objective: "Au pied, des gardiens de pierre font les cent pas. Ils ne regardent pas la porte. Ils regardent ceux qui arrivent.",
+        completion: "Le dernier gardien s'arrête au milieu d'un pas. Il reste là, une jambe levée, comme s'il attendait qu'on lui dise la suite.",
+        dialogue: [
+          { who: "Edda", text: "Ils marchent toujours sur les mêmes dalles. Regarde l'usure." },
+          { who: "Ysolt", text: "Comme à la Veillée. Ils gardent ce qu'on leur a dit de garder." }
+        ],
+        completionDialogue: [
+          { who: "Wenna", text: "Personne ne lui dira." }
+        ]
+      },
+      objectiveLabel: "Terminer « Le pied de la Tour » : 5 rencontres",
+      unlockTabs: [],
+      reward: STORY_REWARDS.tour_02,
+      linkTo: { section: "adventure", cardId: "adv_aq_tour_pied" },
+      check: function (game) { return storyAdvDone(game, "aq_tour_pied"); },
+      progress: function (game) { return "Rencontres " + storyAdvProgress(game, "aq_tour_pied", "rencontres_pied", 5) + "/5"; }
+    },
+    /* Étape 3 : le dernier camp. Aucun combat : bois et vivres donnés depuis la carte d'étape (offrande, comme desert_07). */
+    {
+      id: "tour_03",
+      title: "La porte que personne n'a construite",
+      act: "Acte I — Le pied de la Tour",
+      narrative: {
+        objective: "Sarkel dételle. Il plante ses pieux devant la porte, pas plus près.",
+        completion: "Le soir, un feu devant la Tour. Le premier, sans doute. La porte reste ouverte, et Maddoc s'assoit dessous, sa barre de fer en travers des genoux.",
+        dialogue: [
+          { who: "Sarkel", text: "Le dernier camp. Je le tiens. Tu redescends, tu me trouves ici. Tu ne redescends pas…" },
+          { who: "Sarkel", text: "Tu redescends." },
+          { who: "Maddoc", text: "Moi, je tiens la porte." },
+          { who: "Wenna", text: "Contre quoi ?" },
+          { who: "Maddoc", text: "Contre rien. Une porte, ça se tient. Le vieux du Temple me l'a appris." }
+        ],
+        completionDialogue: [
+          { who: "Maddoc", text: "Il a tenu la sienne pour moi. Je tiens celle-là." }
+        ]
+      },
+      objectiveLabel: "Dresser le dernier camp : 400 Bois et 2 Grandes rations",
+      unlockTabs: [],
+      reward: STORY_REWARDS.tour_03,
+      offering: STORY_DERNIER_CAMP,
+      offeringKey: "campDresse",
+      offeringUi: {
+        where: "story",
+        buttonLabel: "Dresser le camp",
+        lackToast: "Il faut 400 Bois et 2 Grandes rations pour dresser le dernier camp.",
+        doneToast: "Le dernier camp est dressé",
+        log: "Tu donnes le bois et les vivres. Sarkel plante ses pieux devant la porte."
+      },
+      check: function (game) { return storyChapterCounter(game, "tower", "campDresse") >= 1; },
+      progress: function (game) { return "Camp dressé " + (storyChapterCounter(game, "tower", "campDresse") >= 1 ? "1/1" : "0/1"); }
+    },
+    /* Étape 4 : l'étage du sable. Écho du Désert (TW2) : ses bêtes, comme elle s'en souvient (le Désert n'a pas de
+       règle de combat propre ; l'écho passe par les ennemis). */
+    {
+      id: "tour_04",
+      title: "Le premier étage",
+      act: "Acte I — Le pied de la Tour",
+      narrative: {
+        objective: "Derrière la porte, un escalier. En haut de l'escalier, du sable. Pas un grain de trop, chaud, avec une odeur de puits.",
+        completion: "Le sable ne bouge pas quand tu marches dessus. Il garde la forme de tes pas, longtemps.",
+        dialogue: [
+          { who: "Wenna", text: "C'est le Désert. En plus petit." },
+          { who: "Edda", text: "Non. C'est le Désert comme quelqu'un s'en souvient. Il manque des dunes." }
+        ],
+        completionDialogue: [
+          { who: "Ysolt", text: "Elle apprend comment on marche." }
+        ]
+      },
+      objectiveLabel: "Terminer « L'étage du sable » : 4 rencontres",
+      unlockTabs: [],
+      reward: STORY_REWARDS.tour_04,
+      linkTo: { section: "adventure", cardId: "adv_aq_tour_sable" },
+      check: function (game) { return storyAdvDone(game, "aq_tour_sable"); },
+      progress: function (game) { return "Rencontres " + storyAdvProgress(game, "aq_tour_sable", "rencontres_sable", 4) + "/4"; }
+    },
+    /* Étape 5 : premier choix pesant de la Tour, clé « braise ». Le Veilleur revient (absent depuis les Ruines). */
+    {
+      id: "tour_05",
+      title: "Celui qui attend",
+      act: "Acte I — Le pied de la Tour",
+      narrative: {
+        objective: "Sur le palier, une chaise. Une seule. Le sol est propre. Un homme est assis, les mains sur les genoux.",
+        get completion() { return STORY_BRAISE_TEXTS[storyBraiseBranch()].completion; },
+        dialogue: [
+          { who: "Le Veilleur", text: "Il n'y a qu'une chaise. Je l'ai gardée." },
+          { who: "Wenna", text: "Tu étais où ?" },
+          { who: "Le Veilleur", text: "Ici. Je montais avant toi. Je monte moins vite, maintenant." },
+          { who: "Le Veilleur", text: "Tu portes du feu. Je le sens d'ici." },
+          { who: "Le Veilleur", text: "Laisse-le sur ce palier. Là-haut, elle prend ce qui brûle. Tu monteras plus léger." },
+          { who: "Ysolt", text: "Il ne ment pas. Il ne l'a jamais fait." }
+        ],
+        get completionDialogue() { return STORY_BRAISE_TEXTS[storyBraiseBranch()].dialogue; }
+      },
+      objectiveLabel: "Choisir pour la braise d'Aeswyn",
+      unlockTabs: [],
+      reward: STORY_REWARDS.tour_05,
+      choice: {
+        key: "braise", onStoryCard: true,
+        buttonLabel: "Décider",
+        title: "Celui qui attend",
+        text: "La braise d'Aeswyn est chaude contre ta hanche. Le Veilleur attend. Personne ne choisira pour toi.",
+        options: [
+          { value: "garder", label: "La garder", desc: "Tu la gardes. À la Tour, chaque combat gagné te rend 5 % de tes PV." },
+          { value: "poser", label: "La poser sur le palier", desc: "Tu la poses. À la Tour, tu frappes 10 % plus fort. Elle reste sur le palier." }
+        ],
+        apply: function (value) {
+          if (typeof addLog !== "function") return;
+          if (value === "poser") addLog(_t("La braise sur le palier : à la Tour, tu frappes 10 % plus fort."), "event");
+          else addLog(_t("La braise d'Aeswyn : à la Tour, chaque combat gagné te rend 5 % de tes PV."), "event");
+        }
+      },
+      check: function () { return !!(window.StoryQuestManager && StoryQuestManager.getChoice("braise")); },
+      progress: function () { return "Choix " + ((window.StoryQuestManager && StoryQuestManager.getChoice("braise")) ? "1/1" : "0/1"); }
+    },
+    /* ---------- Acte II — Les étages (lot T-2a : étapes 6 et 7) ---------- */
+    /* Étape 6 : la carte des étages s'ouvre (opensAtStoryStep), la redite, le Marché de la Tour (CARAVAN_WORLD_MARKETS). */
+    {
+      id: "tour_06",
+      title: "La rue qui tient",
+      act: "Acte II — Les étages",
+      narrative: {
+        objective: "Au deuxième étage, une rue. Des maisons rangées des deux côtés, toutes fermées. Edda pose sa feuille à plat.",
+        completion: "Edda dessine la rue en entier, sans une rature. Elle regarde sa feuille, puis la jette.",
+        dialogue: [
+          { who: "Edda", text: "Je l'ai dessinée cent fois, celle-là. Elle ne m'a jamais tenu une nuit." },
+          { who: "Edda", text: "Ici, elle tient. Rien ne bouge." },
+          { who: "Maddoc", text: "C'est pire." }
+        ],
+        completionDialogue: [
+          { who: "Edda", text: "Une carte juste, ici, ça ne sert à rien. C'est elle qui l'a dessinée." }
+        ]
+      },
+      objectiveLabel: "Libérer les 5 étages de l'escalier",
+      storyPa: { worldId: "tower" },
+      unlockTabs: [],
+      reward: STORY_REWARDS.tour_06,
+      linkTo: { section: "map", cardId: "livingmap_tower" },
+      tutorial: {
+        tab: "map",
+        icon: "images/Icons/menu_icons/map_menu.webp",
+        title: "Les étages",
+        points: [
+          { icon: "images/Icons/menu_icons/map_menu.webp", text: "La carte de la Tour est en coupe : un étage par secteur. Tu libères un étage en terminant sa Petite Aventure." },
+          { icon: "images/Icons/scene/path_easy.webp", text: "Chaque étage se souvient d'un monde : ses obstacles viennent du Désert, des Ruines, de la Crypte ou de la Montagne." },
+          { icon: "images/Icons/scene/node_unknown.webp", text: "Une Petite Aventure ratée, et la Tour refait l'étage : c'est La redite. Il reste plus dur jusqu'au lendemain. Rien n'est perdu." },
+          { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "Le Marché de la Tour est au dernier camp, devant la porte. La caravane en rapporte de l'or. Au trajet Long (Halle 3), 2 Givres bleus à coup sûr." }
+        ]
+      },
+      check: function () { return storyTowerFloorsFreed() >= STORY_TOUR_ETAGES; }, // rythme de la Tour (Seb, 03/11) : 3 -> 5
+      progress: function () { return "Étages libérés " + Math.min(STORY_TOUR_ETAGES, storyTowerFloorsFreed()) + "/" + STORY_TOUR_ETAGES; }
+    },
+    /* Étape 7 : une Petite Aventure de la Tour réussie depuis l'acceptation (towerPaWins, compté par pa2-run). */
+    {
+      id: "tour_07",
+      title: "L'escalier",
+      act: "Acte II — Les étages",
+      narrative: {
+        objective: "L'escalier ne monte pas toujours. Parfois il descend pour mieux remonter. Parfois une marche manque, et quelqu'un l'a dessinée à la place.",
+        completion: "En haut, une marche porte une entaille de couteau. Récente.",
+        dialogue: [
+          { who: "Ysolt", text: "Je compte. Quarante-deux. Quarante-trois." },
+          { who: "Ysolt", text: "La quarante-quatrième, il n'y en a pas." }
+        ],
+        completionDialogue: [
+          { who: "Maddoc", text: "Le vieux. Il compte, lui aussi." }
+        ]
+      },
+      objectiveLabel: "Terminer 2 Petites aventures de la Tour",
+      storyPa: { worldId: "tower" },
+      unlockTabs: [],
+      reward: STORY_REWARDS.tour_07,
+      linkTo: { section: "map", cardId: "livingmap_tower" },
+      onAccept: function (game, st) { if (st && st.counters) st.counters.paBase = storyTowerPaWins(); },
+      check: function (game) { return storyTowerPaWins() - storyChapterCounter(game, "tower", "paBase") >= STORY_TOUR_PA; }, // 1 -> 2
+      progress: function (game) { return "Petites aventures " + Math.min(STORY_TOUR_PA, Math.max(0, storyTowerPaWins() - storyChapterCounter(game, "tower", "paBase"))) + "/" + STORY_TOUR_PA; }
+    },
+    /* ---------- Acte II, suite (lot T-2b : étapes 8 à 10) ---------- */
+    /* Étape 8 : l'étage des gisants, quatre rencontres avec les morts de la Crypte (écho). */
+    {
+      id: "tour_08",
+      title: "Ceux qui dorment debout",
+      act: "Acte II — Les étages",
+      narrative: {
+        objective: "Un étage de gisants. Mais ils ne sont pas couchés : ils se tiennent debout contre les murs, les yeux fermés, en rang.",
+        completion: "Ysolt couche le dernier. Elle lui joint les mains. Elle ne dit rien d'autre.",
+        dialogue: [
+          { who: "Ysolt", text: "Elle ne sait pas qu'on les couche. Personne ne le lui a montré." },
+          { who: "Ysolt", text: "Je vais le lui montrer." }
+        ],
+        completionDialogue: [
+          { who: "Wenna", text: "Elle a appris ?" },
+          { who: "Ysolt", text: "Elle a regardé. C'est déjà ça." }
+        ]
+      },
+      objectiveLabel: "Terminer « L'étage des gisants » : 4 rencontres",
+      unlockTabs: [],
+      reward: STORY_REWARDS.tour_08,
+      linkTo: { section: "adventure", cardId: "adv_aq_tour_gisants" },
+      check: function (game) { return storyAdvDone(game, "aq_tour_gisants"); },
+      progress: function (game) { return "Rencontres " + storyAdvProgress(game, "aq_tour_gisants", "rencontres_gisants", 4) + "/4"; }
+    },
+    /* Étape 9 : l'élite des étages, le Gardien qui répète (secteur « La veine du dedans », répétable). */
+    {
+      id: "tour_09",
+      title: "La veine du dedans",
+      act: "Acte II — Les étages",
+      narrative: {
+        objective: "Ici, les murs sont des veines. Bleues. Elles ne battent pas : elles écoutent.",
+        completion: "Dans la veine, une coupe. Nette. La même qu'à la Montagne. Le vieux est passé ici, et il a pris.",
+        dialogue: [
+          { who: "Edda", text: "Sarkel taillerait." },
+          { who: "Maddoc", text: "Sarkel est en bas. Il a dit qu'il ne vendait rien, ici." }
+        ],
+        completionDialogue: []
+      },
+      objectiveLabel: "Vaincre l'élite des étages : le Gardien qui répète",
+      storyPa: { worldId: "tower", targets: ["etage_veines"] },
+      unlockTabs: [],
+      reward: STORY_REWARDS.tour_09,
+      linkTo: { section: "map", cardId: "livingmap_tower" },
+      check: function () { var lm = window.LivingMapManager, st = lm && lm.getState("tower", "etage_veines"); return !!(st && st.liberatedCount > 0); },
+      progress: function () { var lm = window.LivingMapManager, st = lm && lm.getState("tower", "etage_veines"); return "Gardien vaincu " + (st && st.liberatedCount > 0 ? "1/1" : "0/1"); }
+    },
+    /* Étape 10 : le palier Légendaire de l'acte II (TW7), puis les feuillets du Veilleur au Codex. */
+    {
+      id: "tour_10",
+      title: "Les feuillets",
+      act: "Acte II — Les étages",
+      narrative: {
+        objective: "Sur chaque palier, depuis le sable, une feuille. Pliée en quatre, posée sous une pierre. L'écriture est petite, serrée, la même partout.",
+        completion: "Tu déplies la dernière. Une seule ligne. « Ici, je n'avais plus rien à donner. J'ai continué quand même. »",
+        dialogue: [
+          { who: "Wenna", text: "Il nous laisse des lettres ?" },
+          { who: "Edda", text: "Il laisse des cartes. Il dit où il est passé. Pas où il va." }
+        ],
+        completionDialogue: [
+          { who: "Ysolt", text: "Il savait qu'on lirait." }
+        ]
+      },
+      objectiveLabel: "Porter 3 pièces Légendaires",
+      unlockTabs: [],
+      reward: STORY_REWARDS.tour_10,
+      linkTo: { tab: "equip" },
+      tutorial: {
+        tab: "equip",
+        icon: "images/Icons/equipment_slots/slot_weapon.webp",
+        title: "Le palier Légendaire",
+        points: [
+          { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Pour monter plus haut, trois de tes sept emplacements doivent porter une pièce Légendaire." },
+          { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "Les étapes 8 et 9 t'en donnent deux. Sinon : le Gardien qui répète, 35 % de chance par victoire, et jamais plus de deux victoires de suite sans pièce. L'échoppe de la Tour en propose aussi." }
+        ]
+      },
+      check: function (game) { return storyPalier(game, "legendary").pieces >= STORY_PALIER_TOUR.pieces; },
+      progress: function (game) { return "Pièces Légendaires " + Math.min(STORY_PALIER_TOUR.pieces, storyPalier(game, "legendary").pieces) + "/" + STORY_PALIER_TOUR.pieces; }
+    },
+    /* ---------- Acte III — Ce qu'elle a appris (lot T-3) ---------- */
+    /* Étape 11 : le Sommet interdit s'ouvre (donjon 6) ; atteindre son campement dans un run. */
+    {
+      id: "tour_11",
+      title: "Le Sommet interdit",
+      act: "Acte III — Ce qu'elle a appris",
+      narrative: {
+        objective: "Une porte de plus. Derrière, le bruit d'un combat qui n'a pas encore eu lieu.",
+        completion: "Au fond, quelqu'un se bat contre toi. Il a tes gestes, à l'envers. Il s'arrête quand tu t'arrêtes.",
+        dialogue: [
+          { who: "Edda", text: "Ce n'est pas un étage. C'est une salle qui se répète." }
+        ],
+        completionDialogue: [
+          { who: "Wenna", text: "C'est toi ?" },
+          { who: "Ysolt", text: "C'est ce qu'elle a vu de toi." }
+        ]
+      },
+      objectiveLabel: "Atteindre le campement du Sommet interdit (vaincre le Gardien qui répète dans un même run)",
+      unlockTabs: [],
+      reward: STORY_REWARDS.tour_11,
+      linkTo: { section: "dungeon" },
+      tutorial: {
+        tab: "dungeon",
+        icon: "images/Dungeons/Icone_base/palier6.webp",
+        title: "Le miroir",
+        points: [
+          { icon: "images/Dungeons/Icone_base/palier6.webp", text: "Le Sommet interdit est une salle qui se répète : vagues, campement après la huitième, puis le Reflet au bout." },
+          { icon: "images/Icons/memory/grimoire_etendu.webp", text: "Le Reflet et le Gardien qui répète gardent ta dernière technique : la même, utilisée juste après contre eux, perd 25 %. Varie tes techniques pour garder toute ta force." }
+        ]
+      },
+      check: function (game) { return !!(game && game.explorationProgression && game.explorationProgression.sommetCamp); },
+      progress: function (game) { return "Campement " + ((game.explorationProgression || {}).sommetCamp ? "1/1" : "0/1"); }
+    },
+    /* Étape 12 : le Reflet, boss du Sommet interdit. */
+    {
+      id: "tour_12",
+      title: "Le reflet",
+      act: "Acte III — Ce qu'elle a appris",
+      narrative: {
+        objective: "Le reflet attend au bout de la salle. Il ne bouge pas tant que tu ne bouges pas.",
+        completion: "Le reflet se brise comme un verre qui n'aurait pas de bruit. Dans les éclats, tes gestes, en petit, continuent un moment.",
+        dialogue: [
+          { who: "Edda", text: "Change de main. Il ne connaît que ce qu'il a vu." }
+        ],
+        completionDialogue: []
+      },
+      objectiveLabel: "Vaincre le Reflet, au bout du Sommet interdit",
+      unlockTabs: [],
+      reward: STORY_REWARDS.tour_12,
+      linkTo: { section: "dungeon" },
+      check: function (game) { return !!((game.dungeonTierCleared || {})[6]); },
+      progress: function (game) { return "Reflet vaincu " + ((game.dungeonTierCleared || {})[6] ? "1/1" : "0/1"); }
+    },
+    /* Étape 13 : le Légendaire complet (TW7) ; la Forge 7 s'ouvre avec l'étape (forgeActStep). */
+    {
+      id: "tour_13",
+      title: "Ce qui ne se forge pas",
+      act: "Acte III — Ce qu'elle a appris",
+      narrative: {
+        objective: "Ce que le Sommet laisse tomber ne ressemble à rien de ce que tu as porté. Les pièces sont légères. Elles prennent la forme de la main qui les tient. À Aeswyn, Brannoc retourne une pièce entre ses doigts.",
+        completion: "Tu repars. Orwen a remis du pain dans ton sac. Elle ne demande pas pour la braise.",
+        dialogue: [
+          { who: "Brannoc", text: "Personne ne l'a forgée, petit. Elle s'est faite." },
+          { who: "Aldric", text: "Alors ne me dis pas comment." }
+        ],
+        completionDialogue: []
+      },
+      objectiveLabel: "7 emplacements avec une pièce Légendaire, Forge 7, arme reforgée à 13",
+      unlockTabs: [],
+      reward: STORY_REWARDS.tour_13,
+      linkTo: { tab: "equip" },
+      tutorial: {
+        tab: "equip",
+        icon: "images/Icons/workshops/smithing_station.webp",
+        title: "Le Légendaire complet",
+        points: [
+          { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Pour la suite, tes sept emplacements doivent porter une pièce Légendaire. Le Sommet interdit en laisse tomber, comme le Gardien qui répète." },
+          { icon: "images/Icons/workshops/smithing_station.webp", text: "La Forge 7 s'ouvre maintenant, au Verre de faille (Givre bleu fondu à la Fonderie) : reforges 13 et 14. L'étape demande la Forge 7 et l'arme reforgée à 13." }
+        ]
+      },
+      check: function (game) { var p = storyPalier(game, "legendary"), P = STORY_PALIER_TOUR_COMPLET; return p.pieces >= P.pieces && p.forge >= P.forge && p.arme >= P.reforge; },
+      progress: function (game) {
+        var p = storyPalier(game, "legendary"), P = STORY_PALIER_TOUR_COMPLET;
+        return "Pièces Légendaires " + Math.min(p.pieces, P.pieces) + "/" + P.pieces + " · Forge " + Math.min(p.forge, P.forge) + "/" + P.forge + " · Reforge de l'arme " + Math.min(p.arme, P.reforge) + "/" + P.reforge;
+      },
+      missing: function (game) { return storyPalierTourCompletMissing(game); }
+    },
+    /* Étape 14 : deuxième choix pesant, clé « copie » : laisser le village d'avant (Donner) ou le défaire (Garder). */
+    {
+      id: "tour_14",
+      title: "Aeswyn d'avant",
+      act: "Acte III — Ce qu'elle a appris",
+      narrative: {
+        objective: "Au dernier étage avant le sommet, une forêt. Un sentier. Au bout du sentier, un village de bois, entier. Des toits que tu n'as jamais vus debout.",
+        get completion() { return STORY_COPIE_TEXTS[storyCopieBranch()].completion; },
+        dialogue: [
+          { who: "Wenna", text: "C'est Aeswyn." },
+          { who: "Wenna", text: "C'est Aeswyn avant. Il y a la maison de mes parents." },
+          { who: "Ysolt", text: "Elle l'a gardé. Elle garde tout ce qu'elle prend." },
+          { who: "Edda", text: "Ce n'est pas un endroit. C'est un souvenir. Le sien." }
+        ],
+        get completionDialogue() { return STORY_COPIE_TEXTS[storyCopieBranch()].dialogue; }
+      },
+      objectiveLabel: "Choisir pour le village d'avant",
+      unlockTabs: [],
+      reward: STORY_REWARDS.tour_14,
+      choice: {
+        key: "copie", onStoryCard: true,
+        buttonLabel: "Décider",
+        title: "Aeswyn d'avant",
+        text: "Le village d'avant est là, intact, sans personne dedans. Wenna se tient devant la porte de sa maison. Personne ne choisira pour toi.",
+        options: [
+          { value: "laisser", label: "Le laisser debout", desc: "Elle garde le village d'avant. Le Sommet interdit devient plus dur, et plus riche." },
+          { value: "defaire", label: "Le défaire", desc: "Tu pousses la première porte. Le village se défait en verre. Tu en rapportes la matière." }
+        ],
+        apply: function (value) {
+          if (value === "defaire" && window.WarehouseManager) WarehouseManager.addResource("verre_faille", STORY_COPIE_VERRE, true);
+          if (typeof addLog !== "function") return;
+          if (value === "laisser") addLog(_t("Aeswyn d'avant reste debout : le Sommet interdit est plus dur, et rapporte deux fois plus de Givre bleu."), "event");
+          else addLog(_t("Aeswyn d'avant se défait en verre : +{n} Verres de faille.", { n: STORY_COPIE_VERRE }), "event");
+        }
+      },
+      check: function () { return !!(window.StoryQuestManager && StoryQuestManager.getChoice("copie")); },
+      progress: function () { return "Choix " + ((window.StoryQuestManager && StoryQuestManager.getChoice("copie")) ? "1/1" : "0/1"); }
+    },
+    /* Étape 15 : le haut de l'escalier, quatre rencontres ; fin de l'acte III. */
+    {
+      id: "tour_15",
+      title: "La dernière porte",
+      act: "Acte III — Ce qu'elle a appris",
+      narrative: {
+        objective: "Plus haut, l'escalier se rétrécit. Une personne de front. Puis une personne tout court.",
+        completion: "Devant la dernière porte, l'air a le goût de la nuit où le ciel s'est fendu.",
+        dialogue: [
+          { who: "Edda", text: "Ma carte s'arrête ici. Le reste, il n'y a rien à dessiner." }
+        ],
+        completionDialogue: [
+          { who: "Ysolt", text: "Ceux d'avant sont montés seuls. Tous." },
+          { who: "Wenna", text: "On t'attend ici." },
+          { who: "Wenna", text: "Reviens. Je compterai." }
+        ]
+      },
+      objectiveLabel: "Terminer « Le haut de l'escalier » : 4 rencontres",
+      unlockTabs: [],
+      reward: STORY_REWARDS.tour_15,
+      linkTo: { section: "adventure", cardId: "adv_aq_tour_haut" },
+      check: function (game) { return storyAdvDone(game, "aq_tour_haut"); },
+      progress: function (game) { return "Rencontres " + storyAdvProgress(game, "aq_tour_haut", "rencontres_haut", 4) + "/4"; }
+    },
+    /* v3.630.0 (Tour, acte IV « La Question », lot T-4a) — étapes 16 à 18, sans compagnon (TW5). */
+    {
+      id: "tour_16",
+      title: "Seul",
+      act: "Acte IV — La Question",
+      narrative: {
+        objective: "Tu montes seul. Derrière toi, Wenna s'assoit sur la dernière marche, son carnet sur les genoux. En bas, très loin, Maddoc tient une porte contre rien.",
+        completion: "Ici, rien ne te suit. Ni les pas, ni l'écho."
+      },
+      tutorial: {
+        tab: "quests",
+        icon: "images/Icons/codex/world_tower.webp",
+        title: "Seul",
+        points: [
+          { icon: "images/Icons/codex/world_tower.webp", text: "Les étapes 16 à 18 se jouent seul : tes compagnons restent en bas, le temps de la quête ou du parcours." },
+          { icon: "images/Icons/memory/grimoire_etendu.webp", text: "Personne pour encaisser à ta place : prends des potions, et revois ton Grimoire avant de monter." }
+        ]
+      },
+      objectiveLabel: "Terminer « Seul » : 3 rencontres, sans compagnon",
+      unlockTabs: [],
+      reward: STORY_REWARDS.tour_16,
+      linkTo: { section: "adventure", cardId: "adv_aq_tour_seul" },
+      check: function (game) { return storyAdvDone(game, "aq_tour_seul"); },
+      progress: function (game) { return "Rencontres " + storyAdvProgress(game, "aq_tour_seul", "rencontres_seul", 3) + "/3"; }
+    },
+    {
+      id: "tour_17",
+      title: "La faille",
+      act: "Acte IV — La Question",
+      narrative: {
+        objective: "Plus de murs. Un escalier de lumière froide, posé sur rien. Au-dessus, le ciel est ouvert, et ce qui passe par la fente ne fait aucun bruit.",
+        completion: "Le sommet. Ce n'est pas une fin."
+      },
+      objectiveLabel: "Terminer le parcours de la faille, seul (coût : 1 Grande ration)",
+      unlockTabs: [],
+      reward: STORY_REWARDS.tour_17,
+      linkTo: { section: "expedition", cardId: "scene_faille_tour" },
+      check: function () { return storyDesertFlag("failleTourDone"); },
+      progress: function () { return "Faille " + (storyDesertFlag("failleTourDone") ? "1/1" : "0/1"); }
+    },
+    {
+      id: "tour_18",
+      title: "La silhouette",
+      act: "Acte IV — La Question",
+      narrative: {
+        objective: "Il y a une silhouette, là où la fente est la plus large. Elle a le visage du Veilleur, parce qu'elle n'en a pas d'autre. La lumière passe à travers elle comme à travers une vitre. Elle ne parle pas. Elle se bat comme lui : précise, sans un geste de trop.",
+        completion: "Elle tombe. Elle ne meurt pas. Elle se défait, et il reste au sol une forme d'homme, vide, chaude, qui bat lentement. Le Veilleur est assis à côté. Tu ne l'as pas entendu arriver.",
+        completionDialogue: [
+          { who: "Le Veilleur", text: "Elle s'est battue comme moi. Je n'avais rien d'autre à lui donner." },
+          { who: "Le Veilleur", text: "Maintenant, elle va te demander. Elle ne sait pas parler. Elle va te montrer." }
+        ]
+      },
+      tutorial: {
+        tab: "quests",
+        icon: "images/Boss/silhouette.webp",
+        title: "La silhouette",
+        points: [
+          { icon: "images/Boss/silhouette.webp", text: "Elle se bat comme toi : elle prend le trait de ta classe (Chevalier : enragée ; Rôdeur : blindée ; Mage : elle fait taire)." },
+          { icon: "images/Icons/memory/grimoire_etendu.webp", text: "À 60 % de ses PV, elle garde ta dernière technique, comme le Reflet : varie. À 30 %, la lumière passe à travers elle : un round où rien ne la touche, annoncé un round avant." }
+        ]
+      },
+      objectiveLabel: "Vaincre la silhouette, seul",
+      unlockTabs: [],
+      reward: STORY_REWARDS.tour_18,
+      linkTo: { section: "adventure", cardId: "adv_aq_tour_silhouette" },
+      check: function (game) { return storyAdvDone(game, "aq_tour_silhouette"); },
+      progress: function (game) { return "Silhouette " + (storyAdvDone(game, "aq_tour_silhouette") ? "1/1" : "0/1"); }
+    },
+    /* v3.631.0 (Tour, lot T-4b) — étape 19 : la vision (trois planches, TOWER_VISION). « Regarder » est un geste, pas un
+       choix pesant (noRecord) ; la vision se revoit depuis Quêtes › Histoire. */
+    {
+      id: "tour_19",
+      title: "Cette nuit-là",
+      act: "Acte IV — La Question",
+      narrative: {
+        objective: "La faille s'ouvre un peu plus. Ce qu'elle montre, tu l'as déjà vu. Tu ne t'en souvenais pas.",
+        completion: "Le Veilleur n'a pas bougé. Il regarde la forme au sol.",
+        completionDialogue: [
+          { who: "Le Veilleur", text: "Oui. C'était moi." },
+          { who: "Le Veilleur", text: "Tu ne me l'avais pas demandé." },
+          { who: "Le Veilleur", text: "Je ne savais pas ton nom. Elle, elle l'a entendu." },
+          { who: "Le Veilleur", text: "Elle veut une forme. La mienne est prête : elle est là, par terre. Il lui faut un vivant pour la porter." },
+          { who: "Le Veilleur", text: "C'est toi. Ou ce n'est personne, et elle continue de casser le monde pour apprendre." },
+          { who: "Le Veilleur", text: "Je ne te mens pas. Je ne te demande rien. Elle va le faire." }
+        ]
+      },
+      objectiveLabel: "Regarder",
+      unlockTabs: [],
+      reward: STORY_REWARDS.tour_19,
+      choice: {
+        key: "vision", noRecord: true, onStoryCard: true,
+        buttonLabel: "Regarder",
+        title: "Cette nuit-là",
+        text: "La faille s'ouvre un peu plus. Ce qu'elle montre, tu l'as déjà vu.",
+        options: [{ value: "regarder", label: "Regarder", desc: "Trois planches. Tu pourras les revoir dans Quêtes › Histoire." }],
+        isDone: function () { return storyDesertFlag("towerVisionSeen"); },
+        apply: function () {
+          game.explorationProgression = game.explorationProgression || {};
+          game.explorationProgression.towerVisionSeen = true; // posé avant les planches : « Passer » compte aussi
+          if (window.TowerSystem) TowerSystem.playVision(null);
+        }
+      },
+      check: function () { return storyDesertFlag("towerVisionSeen"); },
+      progress: function () { return "Vision " + (storyDesertFlag("towerVisionSeen") ? "1/1" : "0/1"); }
+    },
+    /* Étape 20 : la Question (TW4, option A de Seb). Trois réponses selon la pente du registre : la pente sans prix,
+       une bascule Donner/Garder (Le fil bleu rendu), une bascule Soi/Aeswyn (Brannoc absent du dernier feu). Puis Azhem,
+       et l'épilogue en deux planches à la fermeture (ui/quests-view.js, storyEndChain). */
+    {
+      id: "tour_20",
+      title: "La Question",
+      act: "Acte IV — La Question",
+      narrative: {
+        objective: "La faille attend. Elle demande. Quelle forme.",
+        completion: "Et tu dis un nom. Le seul mot que tu diras jamais. Pas le tien : le sien, celui que le sable gardait.",
+        completionDialogue: [
+          { who: null, text: "Azhem." },
+          { who: null, text: "Il ne l'avait pas entendu depuis les sables. La forme au sol cesse de battre. Ce n'est pas une mort. C'est quelqu'un qu'on appelle enfin par son nom, et qui peut s'arrêter." }
+        ]
+      },
+      objectiveLabel: "Répondre",
+      unlockTabs: [],
+      reward: STORY_REWARDS.tour_20,
+      choice: {
+        key: "question", onStoryCard: true,
+        buttonLabel: "Répondre",
+        title: "La Question",
+        text: "Il y a la forme au sol, la sienne. Il y a la tienne. Il y a ce que tu as rapporté à Aeswyn, à chaque retour. Personne ne choisira pour toi.",
+        // les trois réponses du registre (TowerSystem.questionAnswers) ; la quatrième n'est pas proposée
+        get options() {
+          var ans = window.TowerSystem ? TowerSystem.questionAnswers() : [];
+          return ans.map(function (a) {
+            var o = STORY_QUESTION_OPTIONS[a.value];
+            return { value: a.value, label: o.label, desc: o.desc, prix: a.prix ? STORY_QUESTION_PRIX[a.prix] : null };
+          });
+        },
+        apply: function (value) { if (window.TowerSystem) TowerSystem.payQuestion(value); }
+      },
+      check: function () { return !!(window.StoryQuestManager && StoryQuestManager.getChoice("question")); },
+      progress: function () { return "Réponse " + ((window.StoryQuestManager && StoryQuestManager.getChoice("question")) ? "1/1" : "0/1"); }
+    }
+  ]
+};
+/* v3.629.0 (Tour, TW7) : le Légendaire complet de l'acte III. Au banc. */
+var STORY_PALIER_TOUR_COMPLET = { pieces: 7, forge: 7, reforge: 13 }; // rythme de la Tour (Seb, 03/11) : + Forge 7 et arme reforgée à 13
+function storyPalierTourCompletMissing(game) {
+  var P = STORY_PALIER_TOUR_COMPLET;
+  return storyPalierManques(game, "legendary", P, function (a, b) {
+    return { text: _t("Pièces Légendaires : {a} / {b}", { a: a, b: b }), where: _t("Le Sommet interdit, le Gardien qui répète et l'échoppe de la Halle marchande.") };
+  }).filter(Boolean);
+}
+window.storyPalierTourCompletMissing = storyPalierTourCompletMissing;
+var STORY_COPIE_VERRE = 6; // défaire Aeswyn d'avant : sa matière, de quoi la Forge 7 et une reforge
+var STORY_COPIE_TEXTS = {
+  laisser: {
+    completion: "Wenna touche la porte. Elle ne l'ouvre pas.",
+    dialogue: [{ who: "Wenna", text: "Je voulais juste savoir de quelle couleur elle était." }]
+  },
+  defaire: {
+    completion: "Le village tombe sans bruit, comme une neige. Wenna ramasse un éclat bleu et le garde dans son poing.",
+    dialogue: [{ who: "Wenna", text: "Ce n'était pas le nôtre. Le nôtre brûle encore un peu." }]
+  }
+};
+function storyCopieBranch() {
+  return (window.StoryQuestManager && StoryQuestManager.getChoice("copie") === "defaire") ? "defaire" : "laisser";
+}
+STORY_CHOICE_AXES.copie = { laisser: ["donner"], defaire: ["garder"] }; // v3.629.0 (Tour, étape 14)
+STORY_REWARDS.tour_11 = { gold: 22000, resources: { givre_bleu: 4 } };
+STORY_REWARDS.tour_12 = { gold: 23000, equipmentRarity: "legendary", equipmentCount: 1, equipmentFill: true };
+STORY_REWARDS.tour_13 = { gold: 24000, resources: { verre_faille: 3 } };
+STORY_REWARDS.tour_14 = { gold: 25000 };
+STORY_REWARDS.tour_15 = { gold: 26000, resources: { givre_bleu: 6 } };
+["tour_11", "tour_12", "tour_13", "tour_14", "tour_15"].forEach(function (id, k) { STORY_QUESTS.tower.steps[10 + k].reward = STORY_REWARDS[id]; });
+STORY_REWARDS.tour_16 = { gold: 27000, resources: { givre_bleu: 4 } }; // v3.630.0 (Tour, acte IV)
+STORY_REWARDS.tour_17 = { gold: 28000, resources: { grande_ration: 1 } };
+STORY_REWARDS.tour_18 = { gold: 30000, resources: { verre_faille: 3 } };
+["tour_16", "tour_17", "tour_18"].forEach(function (id, k) { STORY_QUESTS.tower.steps[15 + k].reward = STORY_REWARDS[id]; });
+STORY_REWARDS.tour_19 = { gold: 32000 }; // v3.631.0 (Tour, lot T-4b)
+STORY_REWARDS.tour_20 = { gold: 40000 };
+["tour_19", "tour_20"].forEach(function (id, k) { STORY_QUESTS.tower.steps[18 + k].reward = STORY_REWARDS[id]; });
+/* Les quatre réponses (textes validés, atelier) et les deux prix affichés (Seb, 02/11 : un prix par axe). */
+var STORY_QUESTION_OPTIONS = {
+  sienne: { label: "La sienne", desc: "Tu prends la forme au sol. Tu seras la silhouette. Elle cessera de casser le monde pour apprendre : elle t'aura." },
+  aeswyn: { label: "Aeswyn", desc: "Tu lui donnes ce que le village est : le pain d'abord, la meule qui tourne, la poutre posée trois fois au même endroit, la fille qui compte. La forme d'un lieu où l'on revient." },
+  tienne: { label: "La tienne", desc: "Tu ne lui donnes rien. Tu gardes ce que tu es, et tu redescends. Le ciel restera fendu." },
+  rien: { label: "Rien, et rentrer", desc: "Tu ne lui donnes rien. Tu rapportes tout à Aeswyn. Le monde ne guérira pas, mais la braise tiendra." }
+};
+var STORY_QUESTION_PRIX = {
+  fil: "Ce n'est pas ta pente. Prix : Le fil bleu te quitte.",
+  brannoc: "Ce n'est pas ta pente. Prix : Brannoc ne sera pas au dernier feu."
+};
+STORY_CHOICE_AXES.question = { sienne: ["donner", "soi"], aeswyn: ["donner", "aeswyn"], tienne: ["garder", "soi"], rien: ["garder", "aeswyn"] }; // v3.631.0 (Tour, étape 20)
+window.STORY_QUESTION_OPTIONS = STORY_QUESTION_OPTIONS;
+window.STORY_QUESTION_PRIX = STORY_QUESTION_PRIX;
+window.STORY_PALIER_TOUR_COMPLET = STORY_PALIER_TOUR_COMPLET;
+window.STORY_COPIE_TEXTS = STORY_COPIE_TEXTS;
+window.STORY_PALIER_TOUR_COMPLET = STORY_PALIER_TOUR_COMPLET;
+window.STORY_COPIE_VERRE = STORY_COPIE_VERRE;
+window.storyCopieBranch = storyCopieBranch;
+/* v3.628.0 (Tour, TW7) : palier Légendaire de l'acte II, trois pièces sur sept, de tout monde. Au banc. */
+var STORY_PALIER_TOUR = { pieces: 3 };
+window.STORY_PALIER_TOUR = STORY_PALIER_TOUR;
+STORY_REWARDS.tour_08 = { gold: 19500, resources: { givre_bleu: 3 }, equipmentRarity: "legendary", equipmentCount: 1, equipmentFill: true };
+STORY_REWARDS.tour_09 = { gold: 20000, equipmentRarity: "legendary", equipmentCount: 1, equipmentFill: true };
+STORY_REWARDS.tour_10 = { gold: 21000, resources: { givre_bleu: 5 } };
+STORY_QUESTS.tower.steps[7].reward = STORY_REWARDS.tour_08;
+STORY_QUESTS.tower.steps[8].reward = STORY_REWARDS.tour_09;
+STORY_QUESTS.tower.steps[9].reward = STORY_REWARDS.tour_10;
+STORY_REWARDS.tour_06 = { gold: 18500, resources: { givre_bleu: 3 } };
+STORY_REWARDS.tour_07 = { gold: 19000, resources: { givre_bleu: 4 } };
+STORY_QUESTS.tower.steps[5].reward = STORY_REWARDS.tour_06;
+STORY_QUESTS.tower.steps[6].reward = STORY_REWARDS.tour_07;
+function storyTowerFloorsFreed() {
+  var lm = window.LivingMapManager, map = lm && lm.getMap("tower");
+  if (!map) return 0;
+  return map.sectors.filter(function (d) { var st = lm.getState("tower", d.id); return !!(st && st.liberatedCount > 0); }).length;
+}
+var STORY_TOUR_ETAGES = 5, STORY_TOUR_PA = 2; // rythme de la Tour (Seb, 03/11) : les 5 étages de l'escalier, 2 escaliers réussis
+window.STORY_TOUR_ETAGES = STORY_TOUR_ETAGES; window.STORY_TOUR_PA = STORY_TOUR_PA;
+function storyTowerPaWins() { return Number((game.explorationProgression || {}).towerPaWins || 0); }
+window.storyTowerFloorsFreed = storyTowerFloorsFreed;
+window.storyTowerPaWins = storyTowerPaWins;
+
 window.STORY_VEINE_TEXTS = STORY_VEINE_TEXTS;
+window.STORY_BRAISE_TEXTS = STORY_BRAISE_TEXTS;
+window.storyBraiseBranch = storyBraiseBranch;
+window.STORY_DERNIER_CAMP = STORY_DERNIER_CAMP;
 window.storyVeineBranch = storyVeineBranch;
 window.STORY_PIOCHE_OPTIONS = STORY_PIOCHE_OPTIONS;
 window.storyCompanionCount = storyCompanionCount;

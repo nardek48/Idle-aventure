@@ -89,6 +89,7 @@ var BossMomentManager = {
   onPhase: function (enemy, ph) {
     if (window.SleepSystem && enemy) SleepSystem.onBossPhase(enemy, ph); // v3.455.0 : effets de phase de la Crypte (la Liche), même réglages coupés
     if (window.VeinSystem && enemy) VeinSystem.onBossPhase(enemy, ph); // v3.490.0 : le Wyrm de cendres (chaleur, plongée)
+    if (window.TowerSystem && enemy) TowerSystem.onBossPhase(enemy, ph); // v3.630.0 : la silhouette (classe, miroir, lumière)
     if (!enemy || (window.Prefs && !Prefs.get("bossMoments"))) return;
     var m = this.getMoment(enemy);
     if (typeof showBossPhase === "function") {

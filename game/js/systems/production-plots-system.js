@@ -29,6 +29,8 @@ var ProductionPlotsSystem = {
     if (!game.production || typeof game.production !== "object") game.production = {};
     if (!game.production[buildingId] || typeof game.production[buildingId] !== "object") {
       game.production[buildingId] = {};
+      // v3.616.0 : lue avant l'ouverture, l'entrée est marquée — sinon la migration « déjà en jeu » offrait le bâtiment
+      if (window.ProductionManager && !ProductionManager.isBuildingUnlocked(buildingId)) game.production[buildingId].lockedStub = true;
     }
     var bucket = game.production[buildingId];
 
@@ -51,8 +53,10 @@ var ProductionPlotsSystem = {
     }
 
     // relevé 2 (27/10) : zones de l'ancien modèle (5 niveaux, ×1,78) converties une fois, production gardée
+    var self = this;
     if (bucket.model !== PRODUCTION_PLOTS_SHARED.model) {
-      if (!needsReset) { var self = this; bucket.plots.forEach(function (p) { if (p && p.level > 1) p.level = self.migrateLevel(p.level); }); }
+      if (!needsReset && (bucket.model || 1) < 2) bucket.plots.forEach(function (p) { if (p && p.level > 1) p.level = self.migrateLevel(p.level); });
+      if (!needsReset) this.migrateToParcels(bucket); // v3.612.0 : 9 zones -> 3 parcelles, débit gardé
       bucket.model = PRODUCTION_PLOTS_SHARED.model;
     }
 
@@ -91,13 +95,41 @@ var ProductionPlotsSystem = {
   },
 
   /* Relevé 2 (27/10) : multiplicateur du niveau, 1 + 0,7 × (niveau − 1). */
-  levelMult: function (level) { return 1 + PRODUCTION_PLOTS_SHARED.linearPerLevel * (Math.max(1, Number(level) || 1) - 1); },
+  /* v3.612.0 : débit d'une parcelle par niveau, par ancres (PRODUCTION_PLOTS_SHARED.p3Anchors) ; inchangé jusqu'au 5. */
+  levelMult: function (level) {
+    var L = Math.max(1, Number(level) || 1), A = PRODUCTION_PLOTS_SHARED.p3Anchors;
+    for (var i = 1; i < A.length; i++) if (L <= A[i][0]) return A[i - 1][1] + (A[i][1] - A[i - 1][1]) * (L - A[i - 1][0]) / (A[i][0] - A[i - 1][0]);
+    var a = A[A.length - 2], b = A[A.length - 1];
+    return b[1] + (b[1] - a[1]) / (b[0] - a[0]) * (L - b[0]);
+  },
+  /* Relevé 2 (modèle 2, linéaire) : sert aux conversions des anciennes parties. */
+  legacyLevelMult: function (level) { return 1 + PRODUCTION_PLOTS_SHARED.linearPerLevel * (Math.max(1, Number(level) || 1) - 1); },
+
+  /* v3.612.0 : une partie à 9 zones passe à 3 parcelles. Chaque parcelle reprend sa colonne (même profil) :
+     ouverte si une zone de la colonne l'était, ses améliorations, le stock ; son niveau = le plus petit qui
+     produit au moins autant que toute la colonne d'avant. */
+  migrateToParcels: function (bucket) {
+    var self = this, plots = bucket.plots, S = PRODUCTION_PLOTS_SHARED;
+    var bonus = function (p) { return 1 + (p.fertile ? S.bonusPerImprovement.fertile : 0) + (p.irrigated ? S.bonusPerImprovement.irrigated : 0); };
+    for (var c = 0; c < 3; c++) {
+      var open = [c, c + 3, c + 6].map(function (i) { return plots[i]; }).filter(function (p) { return p && p.state === "open"; });
+      if (!open.length) continue;
+      var head = plots[c], target = open.reduce(function (a, p) { return a + self.legacyLevelMult(p.level) * bonus(p); }, 0);
+      head.state = "open";
+      head.fertile = open.some(function (p) { return p.fertile; });
+      head.irrigated = open.some(function (p) { return p.irrigated; });
+      var L = 1; while (L < S.plotMaxLevel && self.levelMult(L) * bonus(head) < target - 1e-9) L++; // le plus petit niveau qui produit autant
+      head.level = L;
+      head.stock = Math.min(self.getPlotCapacity(c, head), open.reduce(function (a, p) { return a + Number(p.stock || 0); }, 0));
+    }
+    for (var j = 3; j < plots.length; j++) { plots[j].state = "locked"; plots[j].level = 1; plots[j].fertile = plots[j].irrigated = false; plots[j].stock = 0; }
+  },
 
   /* Migration b (Seb, 27/10) : niveau du modèle 2 qui produit au moins autant que l'ancien niveau (×1,78 par niveau).
      Peut dépasser le plafond du monde : la production acquise est gardée. */
   migrateLevel: function (oldLevel) {
     var target = Math.pow(PRODUCTION_PLOTS_SHARED.profiles.rapide.rateGrowthPerLevel, Math.max(1, Number(oldLevel) || 1) - 1);
-    var L = 1; while (L < PRODUCTION_PLOTS_SHARED.plotMaxLevel && this.levelMult(L) < target - 1e-9) L++;
+    var L = 1; while (L < PRODUCTION_PLOTS_SHARED.plotMaxLevel && this.legacyLevelMult(L) < target - 1e-9) L++;
     return L;
   },
 
@@ -125,8 +157,7 @@ var ProductionPlotsSystem = {
   /* v3.289.0 : une ligne de la grille 3×3 par monde (Forêt / Désert / Ruines).
      Une zone déjà ouverte reste ouverte, quelle que soit sa ligne. */
   isPlotRowOpen: function (plotIndex) {
-    var rows = window.WorldCaps ? WorldCaps.getZoneRows() : Infinity;
-    return Math.floor(Number(plotIndex) / 3) < rows;
+    return Number(plotIndex) < 3; // v3.612.0 : seules les 3 parcelles existent, dans tous les mondes
   },
 
   /* Monde qui ouvre la ligne de cette zone, avec sa préposition (« au Désert oublié »). */
@@ -224,7 +255,7 @@ var ProductionPlotsSystem = {
     var plots = this.getPlots(buildingId);
     var plot = plots[plotIndex];
     if (!plot || plot.state !== "locked") return { ok: false, reason: _t("Zone invalide") };
-    if (!this.isPlotRowOpen(plotIndex)) return { ok: false, reason: _t("S'ouvre {lieu}", { lieu: this.getPlotRowOpening(plotIndex) }) };
+    if (!this.isPlotRowOpen(plotIndex)) return { ok: false, reason: _t("Zone invalide") }; // v3.612.0 : 3 parcelles seulement
 
     var cost = getProductionPlotUnlockCost(buildingId, plotIndex);
     if (!cost) return { ok: false, reason: _t("Zone invalide") };
@@ -309,39 +340,10 @@ var ProductionPlotsSystem = {
     if (ok) Object.keys(cost).forEach(function (k) { WarehouseManager.removeResource(k, cost[k]); });
     return ok;
   },
-  _rowDone: function (text) {
-    addLog("🗺️ " + text, "event");
-    if (typeof renderPanel === "function") renderPanel();
-    if (typeof saveGame === "function") saveGame();
-    return { ok: true, reason: null, text: text };
-  },
-  unlockRow: function (buildingId, row) {
-    var st = this.getRowState(buildingId, row), plots = this.getPlots(buildingId);
-    if (!st.rowOpen) return { ok: false, reason: _t("S'ouvre {lieu}", { lieu: this.getPlotRowOpening(row * 3) }) };
-    if (!st.locked.length) return { ok: false, reason: _t("Rangée déjà défrichée") };
-    if (this.overCap(st.unlockCost)) return { ok: false, reason: this.overCapReason(st.unlockCost, "unlock") };
-    if (!this._payAll(st.unlockCost)) return { ok: false, reason: _t("Ressources insuffisantes") };
-    st.locked.forEach(function (i) { plots[i].state = "open"; plots[i].lastTick = Date.now(); });
-    var def = PRODUCTION_BUILDINGS[buildingId];
-    return this._rowDone(_tn(st.locked.length, "{x} : rangée {r}, {n} zone défrichée", "{x} : rangée {r}, {n} zones défrichées", { x: def ? _td(def.name) : buildingId, r: row + 1 }));
-  },
-  upgradeRow: function (buildingId, row) {
-    var st = this.getRowState(buildingId, row), plots = this.getPlots(buildingId);
-    if (!st.upNow.length) return { ok: false, reason: _t("Rangée au maximum de ce monde") };
-    if (this.overCap(st.upCost)) return { ok: false, reason: this.overCapReason(st.upCost, "upgrade") };
-    if (!this._payAll(st.upCost)) return { ok: false, reason: _t("Ressources insuffisantes") };
-    st.upNow.forEach(function (i) { plots[i].level += 1; });
-    var def = PRODUCTION_BUILDINGS[buildingId];
-    return this._rowDone(_t("{x} : rangée {r} au niveau {l}", { x: def ? _td(def.name) : buildingId, r: row + 1, l: st.minLevel + 1 }));
-  },
-  improveRow: function (buildingId, row) {
-    var st = this.getRowState(buildingId, row), plots = this.getPlots(buildingId);
-    if (!st.impN) return { ok: false, reason: _t("Déjà appliquée") };
-    if (!this._payAll(st.impCost)) return { ok: false, reason: _t("Ressources insuffisantes") };
-    st.open.forEach(function (i) { plots[i].fertile = true; plots[i].irrigated = true; });
-    var def = PRODUCTION_BUILDINGS[buildingId];
-    return this._rowDone(_t("{x} : rangée {r} améliorée", { x: def ? _td(def.name) : buildingId, r: row + 1 }));
-  },
+
+
+
+
   toggleImprovement: function (buildingId, plotIndex, kind) {
     if (kind !== "fertile" && kind !== "irrigated") return { ok: false, reason: _t("Amélioration invalide") };
     var plots = this.getPlots(buildingId);
@@ -367,6 +369,65 @@ var ProductionPlotsSystem = {
     if (typeof renderPanel === "function") renderPanel();
     if (typeof saveGame === "function") saveGame();
     return { ok: true, reason: null };
+  },
+
+  /* ---------- v3.612.0 : achat automatique ----------
+     Dès le Désert, défriche puis monte la parcelle la moins chère (niveau, amélioration) avec ce qui dépasse
+     la moitié du plafond et la réserve protégée. Réglage : game.village.plotAuto (sauvegardé avec game.village). */
+  AUTO_KEEP: 0.5,
+  isAutoAvailable: function () { return !!(game.worldsEverReached && game.worldsEverReached[1]); },
+  isAuto: function () { return this.isAutoAvailable() && !(game.village && game.village.plotAuto === false); },
+  setAuto: function (on) {
+    if (!game.village || typeof game.village !== "object") game.village = {};
+    game.village.plotAuto = !!on;
+    if (on) this.autoUpgrade();
+  },
+  _autoKeep: function (key) {
+    var cap = WarehouseManager.getCap(key);
+    var reserve = (window.ResourceReserveManager && typeof ResourceReserveManager.getReserve === "function") ? Number(ResourceReserveManager.getReserve(key) || 0) : 0;
+    return Math.max(cap === Infinity ? 0 : Math.ceil(cap * this.AUTO_KEEP), reserve);
+  },
+  /* Prochain achat d'une parcelle : { kind, cost } ou null. */
+  getNextAction: function (buildingId, i) {
+    var p = this.getPlots(buildingId)[i], cfg = PRODUCTION_PLOTS_BUILDINGS[buildingId];
+    if (!p || !this.isPlotRowOpen(i)) return null;
+    if (p.state !== "open") return { kind: "unlock", cost: getProductionPlotUnlockCost(buildingId, i) };
+    if (!this.isPlotMaxLevel(p)) return { kind: "upgrade", cost: getProductionPlotUpgradeCost(buildingId, p.level, i) };
+    if (!p.fertile) return { kind: "fertile", cost: cfg.improvementCost.fertile.cost };
+    if (!p.irrigated) return { kind: "irrigated", cost: cfg.improvementCost.irrigated.cost };
+    return null;
+  },
+  /* Une passe : achète tant que c'est payable au-dessus de la part gardée. Rend le nombre d'achats. */
+  autoUpgrade: function () {
+    if (!this.isAuto() || !window.WarehouseManager) return 0;
+    var self = this, n = 0, last = null;
+    var ids = this.getManagedBuildingIds().filter(function (b) { return !window.ProductionManager || typeof ProductionManager.isBuildingUnlocked !== "function" || ProductionManager.isBuildingUnlocked(b); });
+    for (var guard = 0; guard < 100; guard++) {
+      var best = null;
+      ids.forEach(function (b) {
+        for (var i = 0; i < 3; i++) {
+          var a = self.getNextAction(b, i);
+          if (!a || !a.cost) continue;
+          var ok = Object.keys(a.cost).every(function (k) { return WarehouseManager.getAmount(k) - a.cost[k] >= self._autoKeep(k); });
+          var sum = Object.keys(a.cost).reduce(function (s, k) { return s + a.cost[k]; }, 0);
+          var rank = (a.kind === "unlock" ? 0 : 1e9) + sum; // défricher d'abord (une parcelle de plus), puis le moins cher
+          if (ok && (!best || rank < best.rank)) best = { b: b, i: i, a: a, rank: rank };
+        }
+      });
+      if (!best) break;
+      Object.keys(best.a.cost).forEach(function (k) { WarehouseManager.removeResource(k, best.a.cost[k]); });
+      var p = this.getPlots(best.b)[best.i];
+      if (best.a.kind === "unlock") { p.state = "open"; p.lastTick = Date.now(); }
+      else if (best.a.kind === "upgrade") p.level++;
+      else p[best.a.kind] = true;
+      n++; last = best;
+    }
+    if (n && typeof addLog === "function") {
+      var def = PRODUCTION_BUILDINGS[last.b];
+      addLog("🌱 " + _tn(n, "Achat automatique : {n} amélioration de parcelle (dernière : {x}, {z})", "Achat automatique : {n} améliorations de parcelles (dernière : {x}, {z})",
+        { x: def ? _td(def.name) : last.b, z: getProductionZoneName(last.b, last.i) }), "event");
+    }
+    return n;
   }
 };
 

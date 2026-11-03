@@ -72,7 +72,7 @@ var LivingMapManager = {
     home: "le village", fogLore: "La brume ne laisse rien voir.",
     openElsewhere: "La brume attend encore ailleurs",
     homeTitle: "Aeswyn tient la clairière.",
-    homeLore: "Le village hors du Cycle. Les trois secteurs de l'anneau 1 sont toujours à portée.",
+    homeLore: "Le village. Les trois secteurs de l'anneau 1 sont toujours à portée.", // v3.621.0 : « Cycle » réservé au Veilleur
     intro: "Touche un secteur pour voir ce qu'on en sait. Le Recouvrement ne reprend que ce qu'on lui laisse, quand une expédition échoue.",
     runLoot: "Sève du run seule",
     mapBlurb: "Choisis un secteur sur la carte de la Forêt : chaque expédition repousse la brume."
@@ -346,7 +346,7 @@ var LivingMapManager = {
     this.ensureDefaults();
     // v3.433.0 : la cité finie ne se rebâtit plus ; elle paie à la place
     if (this.getPlan(mapId) === "finir") { this.collectFinishedCity(mapId); return null; }
-    var lm = game.livingMaps[mapId], today = this._todayKey(), self = this;
+    var lm = game.livingMaps[mapId], today = this._dayKey(), self = this; // v3.602.0 : le quartier se rebâtit à chaque nuit de jeu
     var c = lm.chantier;
     if (c && c.day === today && this.getSectorDef(mapId, c.sectorId)) return c;
     var open = map.sectors.filter(function (d) {
@@ -365,8 +365,8 @@ var LivingMapManager = {
 
   /* v3.454.0 (Crypte, CR9) — « Le réveil » : un couloir raté reste hostile (plus dur) jusqu'au lendemain. */
   isHostile: function (mapId, sectorId) {
-    var map = this.getMap(mapId), s = map && (map.gisants || map.veins) ? this.getState(mapId, sectorId) : null; // v3.489.0 : La coulée
-    return !!(s && s.hostileDay && s.hostileDay === this._todayKey());
+    var map = this.getMap(mapId), s = map && (map.gisants || map.veins || map.redite) ? this.getState(mapId, sectorId) : null; // v3.489.0 : La coulée ; v3.627.0 : La redite
+    return !!(s && s.hostileDay && s.hostileDay === this._dayKey());
   },
 
   /* v3.489.0 (Montagne, MT9) — chaleur d'un secteur (0 à heatMax) : +1 par veine taillée au départ,
@@ -374,14 +374,14 @@ var LivingMapManager = {
   heatOf: function (mapId, sectorId) {
     var map = this.getMap(mapId), s = map && map.veins ? this.getState(mapId, sectorId) : null;
     if (!s || !s.heat || !s.heatDay) return 0;
-    var days = Math.max(0, Math.round((Date.parse(this._todayKey()) - Date.parse(s.heatDay)) / 86400000));
+    var days = this._dayDiff(s.heatDay, this._dayKey());
     return Math.max(0, s.heat - (isFinite(days) ? days : 0));
   },
   _cutVein: function (mapId, sectorId) {
     var map = this.getMap(mapId), s = this.getState(mapId, sectorId);
     if (!map || !map.veins || !s) return;
     s.heat = Math.min(Number(map.veins.heatMax || 3), this.heatOf(mapId, sectorId) + 1);
-    s.heatDay = this._todayKey();
+    s.heatDay = this._dayKey();
   },
 
   isChantier: function (mapId, sectorId) {
@@ -397,18 +397,26 @@ var LivingMapManager = {
   },
 
   _todayKey: function () { return new Date().toDateString(); },
+  /* v3.602.0 (jours du monde) : le jour de jeu (« J12 ») pour les règles qui suivaient minuit ; le jour civil sans WorldDays. */
+  _dayKey: function () { return window.WorldDays ? WorldDays.key() : this._todayKey(); },
+  _dayDiff: function (a, b) {
+    var j = /^J(\d+)$/, ma = j.exec(String(a)), mb = j.exec(String(b));
+    if (ma && mb) return Math.max(0, Number(mb[1]) - Number(ma[1]));
+    var d = Math.round((Date.parse(b) - Date.parse(a)) / 86400000);
+    return isFinite(d) ? Math.max(0, d) : 1; // ancienne clé (jour civil) : un jour au moins a passé
+  },
 
   /* Victoires du jour civil sur ce secteur (0 si la journée a changé). */
   getDailyWins: function (mapId, sectorId) {
     var s = this.getState(mapId, sectorId);
     if (!s || !this.isRepeatable(mapId, sectorId)) return 0;
-    return s.dailyKey === this._todayKey() ? Number(s.dailyWins || 0) : 0;
+    return s.dailyKey === this._dayKey() ? Number(s.dailyWins || 0) : 0;
   },
 
   _addDailyWin: function (mapId, sectorId) {
     var s = this.getState(mapId, sectorId);
     if (!s) return 0;
-    var today = this._todayKey();
+    var today = this._dayKey();
     if (s.dailyKey !== today) { s.dailyKey = today; s.dailyWins = 0; }
     s.dailyWins = Number(s.dailyWins || 0) + 1;
     return s.dailyWins;
@@ -623,6 +631,8 @@ var LivingMapManager = {
     var f = this.getFight();
     if (!f) return false;
     if (!enemy || enemy.id !== f.eliteId) return false;
+    var lmMap = window.LIVING_MAPS && LIVING_MAPS[f.mapId];
+    if (window.CompanionQuestManager && lmMap) CompanionQuestManager.onEliteWon(lmMap.worldId, f.sectorId); // v3.598.0 ; v3.603.0 : le lieu joué
     if (window.SortieManager) SortieManager.end("success");
     game.livingMaps.fight = null;
     var report = this.onRunEnd(f.mapId, f.sectorId, "success");
@@ -660,7 +670,8 @@ var LivingMapManager = {
       /* v3.489.0 (Montagne) : une élite peut lâcher une pièce (ELITE_DB.winDrop), au monde du combat. */
       var wd = eliteDef && eliteDef.winDrop, lmSt = game.livingMaps[f.mapId] || {}, sec = Math.max(0, Math.floor(Number(lmSt.dropDry || 0)));
       // lot 6 (Seb, option A) : compteur de victoires sans pièce, commun aux élites de la carte ; au seuil, la pièce tombe
-      var tombe = !!wd && (this._rand() * 100 < Number(wd.chancePct || 0) || (Number(wd.pityAfter || 0) > 0 && sec >= Number(wd.pityAfter)));
+      var wdPct = wd ? Number(wd.chancePct || 0) + (window.TowerSystem ? TowerSystem.eliteDropBonus(f.eliteId) : 0) : 0; // v3.632.0 : Ce qui se répète
+      var tombe = !!wd && (this._rand() * 100 < wdPct || (Number(wd.pityAfter || 0) > 0 && sec >= Number(wd.pityAfter)));
       if (wd) lmSt.dropDry = tombe ? 0 : sec + 1;
       if (tombe && typeof generateEquipmentItem === "function" && typeof addLootToInventory === "function") {
         // lot 6 (revue) : la pièce est du monde de la carte, même si le héros réside ailleurs (voyage libre)
@@ -725,7 +736,7 @@ var LivingMapManager = {
     var s = this.getState(mapId, sectorId);
 
     if (result === "success") {
-      if (this.isHostile(mapId, sectorId) && window.AchievementManager) AchievementManager.flag(this.getMap(mapId).veins ? "retakenMountain" : "retakenCrypt"); // v3.456.6 : Le réveil, repris ; v3.489.0 : La coulée
+      if (this.isHostile(mapId, sectorId) && window.AchievementManager) AchievementManager.flag(this.getMap(mapId).redite ? "retakenTower" : this.getMap(mapId).veins ? "retakenMountain" : "retakenCrypt"); // v3.632.0 : La redite // v3.456.6 : Le réveil, repris ; v3.489.0 : La coulée
       delete s.hostileDay; // v3.454.0 : le couloir repris se recouche
       var chantierDuJour = this.isChantier(mapId, sectorId); // v3.429.0 : lu avant la libération
       s.state = "libere";
@@ -762,11 +773,13 @@ var LivingMapManager = {
 
     if (result === "fail" && this.getMap(mapId).noRegress) { // v3.454.0 (Crypte) : Le réveil, rien n'est repris
       // lot 6 : une élite n'est pas freinée par le réveil ni la coulée (lus par les Petites Aventures seules)
-      if (!this.isRepeatable(mapId, sectorId)) { s.hostileDay = this._todayKey(); report.hostile = true; }
+      if (!this.isRepeatable(mapId, sectorId)) { s.hostileDay = this._dayKey(); report.hostile = true; }
       report.message = _t("Échec devant {x}.", { x: _td(def.name) }) + " " + (this.isRepeatable(mapId, sectorId)
         ? _t("Soigne-toi, puis retente quand tu veux.")
         : this.getMap(mapId).veins
         ? _t("La coulée : {x} reste sous la lave jusqu'à demain. Rien n'est perdu.", { x: _td(def.name) }) // v3.489.0 (Montagne)
+        : this.getMap(mapId).redite
+        ? _t("La redite : la Tour refait {x}, plus dur jusqu'à demain. Rien n'est perdu.", { x: _td(def.name) }) // v3.627.0 (Tour)
         : _t("Le réveil : {x} reste hostile jusqu'à demain. Rien n'est perdu.", { x: _td(def.name) }));
       if (typeof addLog === "function") addLog(_t("Carte : {x}", { x: report.message }), "event");
       return report;
@@ -802,7 +815,7 @@ var LivingMapManager = {
   getBrakeChance: function (mapId) {
     if (mapId && this.getPlan(mapId) === "finir") return 1; // v3.433.0 : la cité figée ne s'éboule plus
     var per = Number((this.getRules().palisade || {}).brakePerLevel || 0);
-    var brake = per * this.getPalisadeLevel();
+    var brake = per * this.getPalisadeLevel() + (window.VillageEvents ? VillageEvents.brakeBonus() : 0); // v3.607.0 : le compte juste d'Aldric
     var map = mapId ? this.getMap(mapId) : null;
     var self = this;
     ((map && map.choiceBrakes) || []).forEach(function (cb) {

@@ -54,6 +54,7 @@
   <link rel="stylesheet" href="./css/00-tokens.css">
   <link rel="stylesheet" href="./css/00-components.css">
   <link rel="stylesheet" href="./css/00-rframe.css">
+  <link rel="stylesheet" href="./css/00-cartes.css"> <!-- v3.617.0 : habillages des cartes (lot 1) -->
   <link rel="stylesheet" href="./css/00-kbtn.css">
   <link rel="stylesheet" href="./css/00-kgauge.css">
   <link rel="stylesheet" href="./css/00-kframe-scope.css">
@@ -143,6 +144,13 @@
       </div>
     </button>
 
+    <!-- v3.594.0 (atelier camp-carte, option M3 de Seb) : la Carte aussi dans la barre du téléphone -->
+    <button class="tab-btn" data-tab="map" onclick="switchTab('map')">
+      <div class="tab-icon-frame">
+        <img src="./images/Icons/menu_icons/map_menu.webp" alt="" class="tab-icon-img">
+        <span class="tab-label" data-i18n="onglet">Carte</span>
+      </div>
+    </button>
     <button class="tab-btn" data-tab="village" onclick="switchTab('village')">
       <div class="tab-icon-frame">
         <img src="./images/Icons/menu_icons/village_menu.webp" alt="" class="tab-icon-img">
@@ -158,12 +166,6 @@
     </button>
 
     <!-- v3.503.0 (grand écran, GE-2) : entrées du rail de gauche, cachées sur téléphone (css/02-layout.css) -->
-    <button class="tab-btn tab-wide" data-tab="map" onclick="switchTab('map')">
-      <div class="tab-icon-frame">
-        <img src="./images/Icons/menu_icons/map_menu.webp" alt="" class="tab-icon-img">
-        <span class="tab-label" data-i18n="onglet">Carte</span>
-      </div>
-    </button>
 
     <span class="tab-sep tab-wide" aria-hidden="true"></span>
 
@@ -360,6 +362,12 @@
 <script src="js/data/village-quests.js"></script>
 <script src="js/data/story-quests.js"></script>
 <script src="js/data/prologue.js"></script> <!-- v3.570.0 : le prologue -->
+<script src="js/data/chapter-openings.js"></script> <!-- v3.623.0 : ouvertures de chapitre -->
+<script src="js/data/camp-soir.js"></script> <!-- v3.595.0 : la phrase du soir au Camp -->
+<script src="js/data/companion-talks.js"></script> <!-- v3.597.0 : les conversations au feu -->
+<script src="js/data/companion-topics.js"></script> <!-- v3.601.0 : les sujets libres au feu -->
+<script src="js/data/village-events.js"></script> <!-- v3.604.0 : les événements du village -->
+<script src="js/data/companion-quests.js"></script> <!-- v3.598.0 : les quêtes des compagnons -->
 
 
 <!-- SHARED MAIN SERVICES -->
@@ -424,7 +432,10 @@
 <script src="js/systems/rise-system.js"></script>
 <script src="js/systems/sleep-system.js"></script>
 <script src="js/systems/vein-system.js"></script>
+<script src="js/systems/tower-system.js"></script> <!-- v3.626.0 : règles de la Tour (la braise) -->
 <script src="js/systems/sortie-system.js"></script>
+<script src="js/systems/world-day-system.js"></script> <!-- v3.602.0 : les jours du monde -->
+<script src="js/systems/village-event-system.js"></script> <!-- v3.604.0 : les événements du village -->
 <script src="js/systems/scene-run-system.js"></script> <!-- v3.120.0 (Lot S1) : dépend de SortieManager, WarehouseManager, StatsSystem -->
 <script src="js/systems/pa2-run.js"></script> <!-- v3.381.0 (PA2-0) : règles du run v2, dépend de SceneRunManager -->
 <script src="js/systems/labyrinth-run.js"></script> <!-- v3.434.0 : le Labyrinthe aux leviers, dépend de Pa2Run (verdicts) -->
@@ -432,6 +443,8 @@
 <script src="js/systems/combat-cooldown-system.js"></script>
 <script src="js/systems/class-combat-system.js"></script>
 <script src="js/systems/companion-system.js"></script>
+<script src="js/systems/companion-talk-system.js"></script> <!-- v3.597.0 : les conversations au feu -->
+<script src="js/systems/companion-quest-system.js"></script> <!-- v3.598.0 : les quêtes des compagnons -->
 <script src="js/systems/companion-relic-system.js"></script>
 <script src="js/systems/combat-auto-policy-system.js"></script>
 
@@ -481,6 +494,9 @@
 <script src="js/ui/production-view.js"></script>
 <script src="js/ui/construction-view.js"></script>
 <script src="js/ui/camp-view.js"></script>
+<script src="js/ui/companion-talk-view.js"></script> <!-- v3.597.0 : la scène de conversation -->
+<script src="js/ui/companion-quest-view.js"></script> <!-- v3.598.0 : les quêtes des compagnons dans Secondaires -->
+<script src="js/ui/village-event-view.js"></script> <!-- v3.604.0 : Ce matin à Aeswyn -->
 <script src="js/ui/map-view.js"></script>
 <script src="js/ui/living-map-view.js"></script> <!-- v3.256.0 (Cartes Vivantes, C-2) : sous-vue de l'onglet Carte, buildMapHTML lui délègue -->
 <script src="js/ui/bestiary-view.js"></script>

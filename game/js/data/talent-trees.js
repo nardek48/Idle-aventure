@@ -220,6 +220,30 @@ var TALENT_COMMAND = {
   ]
 };
 
+/* v3.633.0 : LA VOIE « VARIER » (Tour, validée par Seb le 03/11/2026). Même modèle que le Commandement :
+   commune aux trois classes, ouverte à la Tour, 5 nœuds dans l'ordre, la clé au bout. Effets partout,
+   crochets lus par TowerSystem (dégâts, victoire) et ClassCombatManager (techniques). */
+var TALENT_TOWER = {
+  id: "varier", name: "Varier", tag: "Ne jamais refaire le même geste", opensAt: 5,
+  nodes: [
+    { id: "v_pas_de_cote", img: "images/Icons/talents/tower/v_pas_de_cote.webp",
+      name: "Un pas de côté", short: "Technique nouvelle : +8 %",
+      effect: "Une technique différente de celle d'avant fait 8 % de dégâts en plus." },
+    { id: "v_seul", img: "images/Icons/talents/tower/v_seul.webp",
+      name: "Seul s'il le faut", short: "Sans compagnon debout : +8 %",
+      effect: "Quand aucun compagnon n'est debout à tes côtés, tu fais 8 % de dégâts en plus." },
+    { id: "v_souffle", img: "images/Icons/talents/tower/v_souffle.webp",
+      name: "Reprendre son souffle", short: "Victoire : +3 % PV",
+      effect: "Chaque combat gagné te rend 3 % de tes PV max." },
+    { id: "v_ne_se_forge_pas", img: "images/Icons/talents/tower/v_ne_se_forge_pas.webp",
+      name: "Ce qui ne se forge pas", short: "+2 % par Légendaire porté",
+      effect: "+2 % de dégâts par pièce Légendaire portée (jusqu'à +14 %)." },
+    { id: "v_varier", img: "images/Icons/talents/tower/v_varier.webp",
+      name: "Varier", key: true, short: "Trois techniques → +15 %",
+      effect: "Une fois tes trois techniques utilisées dans un combat, tu fais 15 % de dégâts en plus jusqu'à la fin de ce combat." }
+  ]
+};
+
 /* Chiffres des crochets (un seul endroit à régler au banc). */
 var TALENT_VALUES = {
   k_sang_chaud: 25,          // Rage minimale à l'ouverture d'un combat
@@ -238,11 +262,17 @@ var TALENT_VALUES = {
   c_mon_signal: 0.10,
   c_charge_plus: 1,
   c_personne_terre: 0.5,
-  c_relais: 0.40
+  c_relais: 0.40,
+  v_pas_de_cote: 0.08,       // v3.633.0 : Varier (au banc)
+  v_seul: 0.08,              // banc (reprise de la Tour) : 0,12 -> 0,08, la silhouette passait de 18-57 % à 50-97 % de PV
+  v_souffle: 0.03,
+  v_ne_se_forge_pas: 0.02,
+  v_varier: 0.15            // banc : 0,20 -> 0,15
 };
 
 window.TALENT_TREES = TALENT_TREES;
 window.TALENT_VALUES = TALENT_VALUES;
 window.TALENT_COMMAND = TALENT_COMMAND;
+window.TALENT_TOWER = TALENT_TOWER;
 window.TALENT_TRUNK_GATE = TALENT_TRUNK_GATE;
 window.TALENT_KEY_GATE = TALENT_KEY_GATE;

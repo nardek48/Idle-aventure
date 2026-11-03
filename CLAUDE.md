@@ -53,8 +53,9 @@ Une fois l'accord obtenu : modification minimale, limitée au besoin.
 3. Supprimer un fichier seulement après publication d'un `sw.js` qui ne le précache plus.
 4. `node --check` sur chaque JS modifié.
 5. `round-harness.js` à **0 échec**, stable sur plusieurs passes.
-6. Changelog `docs/changelog/CHANGELOG_vX.Y.Z.md` + commit git intitulé `vX.Y.Z`. Le push sur `main` publie `game/` si les harnais passent.
-7. **Push sur `main` : automatique** une fois la version validée par Seb et les contrôles passés (points 4 à 6). Ne jamais pousser un travail en cours, non mesuré ou dont les contrôles échouent : le commit reste alors en local et Seb est prévenu.
+6. **Quoi de neuf** (demande de Seb, 31/10) : chaque version visible pour le joueur ajoute une ou deux lignes en tête de `newsEntries()` (`js/ui/news-view.js`), avec leur traduction anglaise.
+7. Changelog `docs/changelog/CHANGELOG_vX.Y.Z.md` + commit git intitulé `vX.Y.Z`. Le push sur `main` publie `game/` si les harnais passent.
+8. **Push sur `main` : automatique** une fois la version validée par Seb et les contrôles passés (points 4 à 7). Ne jamais pousser un travail en cours, non mesuré ou dont les contrôles échouent : le commit reste alors en local et Seb est prévenu.
 
 ## Tests et bancs
 Depuis la racine du dépôt. Sans argument, les outils visent `game/` ; avec des options, passer la racine d'abord (`.` ou `game`).

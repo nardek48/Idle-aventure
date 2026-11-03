@@ -140,7 +140,7 @@ var LIVING_MAPS = {
       home: "le camp", fogLore: "Le sable ne laisse rien voir.",
       openElsewhere: "Le sable attend encore ailleurs",
       homeTitle: "Le camp tient le puits.",
-      homeLore: "Le camp du Portail, hors du Cycle. Les secteurs de l'anneau 1 sont toujours à portée.",
+      homeLore: "Le camp du Portail. Les secteurs de l'anneau 1 sont toujours à portée.", // v3.621.0 : « Cycle » réservé au Veilleur
       intro: "Touche un secteur pour voir ce qu'on en sait. L'Ensablement ne reprend que ce qu'on lui laisse, quand une expédition échoue.",
       runLoot: "Verre du run seul",
       mapBlurb: "Choisis un secteur sur la carte du Désert : chaque expédition repousse le sable."
@@ -502,6 +502,62 @@ var LIVING_MAPS = {
         content: { type: "expedition", templateId: "petite_aventure_montagne", pools: { obstacle: ["paroi_coupee", "croute_de_lave"] } },
         heldEffect: null,
         lore: "Une bouche dans la montagne. L'air qui en sort est plus chaud que le soleil." }
+    ],
+    landmarks: []
+  },
+
+  /* v3.627.0 (Tour, lot T-2a, TW9) — LES ÉTAGES. Une carte en coupe, un secteur par étage ; chaque étage rejoue un
+     monde comme la Tour s'en souvient (obstacles de l'escalier tirés dans son monde). Échec : « La redite », l'étage
+     raté est refait par la Tour, plus dur jusqu'au lendemain. Rien n'est repris. Image à générer : positions provisoires. */
+  tower: {
+    id: "tower",
+    worldId: "tower",
+    name: "Les étages",
+    asset: "images/Maps/tour.webp",
+    opensAtStoryStep: "tour_06",
+    rewardResourceId: "givre_bleu",
+    redite: { hostileMult: 1.25 },
+    noRegress: true,
+    words: {
+      cover: "la redite", coverCap: "La redite", coveredState: "Refait",
+      home: "le dernier camp", fogLore: "Un étage qu'on n'a pas encore monté. La Tour sait ce qu'il y a dedans.",
+      openElsewhere: "La Tour attend encore ailleurs",
+      homeTitle: "Le dernier camp tient.",
+      homeLore: "Le camp de Sarkel, devant la porte. Maddoc s'assoit dessous, sa barre de fer en travers des genoux.",
+      intro: "Touche un étage pour voir ce qu'on en sait. Chacun rejoue un monde, comme la Tour s'en souvient.",
+      runLoot: "Givre du run seul",
+      mapBlurb: "Choisis un étage sur la carte de la Tour : chacun se souvient d'un monde."
+    },
+    village: { x: 50, y: 92, name: "Le dernier camp" },
+    caravanMarket: { x: 64, y: 92 },          // le Marché de la Tour, l'étal de Sarkel devant la porte (TW8)
+    sectors: [
+      /* Anneau 1 — les étages du bas */
+      { id: "etage_sable", name: "L'étage du sable", x: 32, y: 76, ring: 1, neighbors: ["etage_rue", "etage_gisants"],
+        content: { type: "expedition", templateId: "petite_aventure_tour", pools: { obstacle: ["pierres_plates", "plaine_grise"] } },
+        heldEffect: null,
+        lore: "Du sable chaud, deux puits. Le Désert comme quelqu'un s'en souvient. Il manque des dunes." },
+      { id: "etage_rue", name: "La rue qui tient", x: 68, y: 70, ring: 1, neighbors: ["etage_sable", "etage_veines", "etage_gisants"],
+        content: { type: "expedition", templateId: "petite_aventure_tour", pools: { obstacle: ["dalle_qui_glisse", "porte_ouverte"] } },
+        heldEffect: null,
+        lore: "Une rue entre des maisons fermées. Ici, rien ne bouge. Edda dit que c'est pire." },
+      /* Anneau 2 */
+      { id: "etage_gisants", name: "Les gisants debout", x: 30, y: 54, ring: 2, neighbors: ["etage_sable", "etage_rue", "etage_veines", "marches_craie"],
+        content: { type: "expedition", templateId: "petite_aventure_tour", pools: { obstacle: ["allee_des_gisants", "vent_absent"] } },
+        heldEffect: null,
+        lore: "Des gisants debout contre les murs, en rang, les yeux fermés. Personne ne lui a montré qu'on les couche." },
+      { id: "etage_veines", name: "La veine du dedans", x: 70, y: 48, ring: 2, neighbors: ["etage_rue", "etage_gisants", "palier_sans_murs"],
+        content: { type: "elite", eliteId: "gardien_qui_repete", repeatable: true }, // v3.628.0 (T-2b) : l'élite des étages
+        heldEffect: null,
+        lore: "Des murs faits de veines bleues. Elles ne battent pas : elles écoutent." },
+      /* Anneau 3 — plus haut */
+      { id: "marches_craie", name: "Les marches de craie", x: 34, y: 28, ring: 3, neighbors: ["etage_gisants", "palier_sans_murs"], labelTop: true,
+        content: { type: "expedition", templateId: "petite_aventure_tour", pools: { obstacle: ["porte_ouverte", "allee_des_gisants"] } },
+        heldEffect: null,
+        lore: "Des marches qui manquent, et quelqu'un les a dessinées à la craie. On peut marcher dessus. On ne sait pas comment." },
+      { id: "palier_sans_murs", name: "Le palier sans murs", x: 66, y: 22, ring: 3, neighbors: ["etage_veines", "marches_craie"], labelTop: true,
+        content: { type: "expedition", templateId: "petite_aventure_tour", pools: { obstacle: ["vent_absent", "dalle_qui_glisse"] } },
+        heldEffect: null,
+        lore: "Un palier sans murs, posé sur rien. Au-dessus, la fente du ciel. Le vent ne passe pas." }
     ],
     landmarks: []
   }

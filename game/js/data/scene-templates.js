@@ -312,6 +312,60 @@ var SCENE_TEMPLATES = {
     travelOnSuccess: { worldId: "mountain", adventureIndex: 0 }
   },
 
+  /* v3.626.0 (Tour, acte I étape 1, texte validé par Seb le 02/11) — LA ROUTE DU NORD. Passage de la Montagne
+     à la Tour, monde posé à l'arrivée. Deux Grandes rations. Fond à fournir (piste provisoire). Au banc. */
+  traversee_tour: {
+    id: "traversee_tour",
+    worldId: "tower",
+    adventureIndex: 0,
+    mode: "parcours",
+    title: "Vers le nord",
+    departLabel: "Partir vers le nord",
+    icon: "images/Icons/codex/world_tower.webp",
+    parcours: {
+      image: "tour_route", track: "route", points: [0, 2, 4, 6],
+      steps: [
+        { type: "obstacle", gabaritId: "plaine_grise", text: "Au nord d'Aeswyn, l'herbe devient grise. Puis elle ne pousse plus. La carriole de Sarkel trace deux lignes droites." },
+        { type: "obstacle", gabaritId: "vent_absent", text: "Il n'y a pas de vent. Le pot de terre est chaud contre ta hanche. La braise penche toujours du même côté." },
+        { type: "combat", foe: "guardian", pack: 2, foeMult: 1.5, text: "Deux gardiens de pierre sur la route. Ils marchent vers la Tour, puis reviennent. Toujours les mêmes dalles.",
+          after: "Les gardiens s'arrêtent. La route reprend, droite, jusqu'au pied." },
+        { type: "obstacle", gabaritId: "porte_ouverte", text: "Au bout, une porte. Ouverte. Pas de gonds, pas de cadre. Personne ne l'a construite." }
+      ]
+    },
+    entryCost: { resourceId: "grande_ration", amount: 2 },
+    lootResource: "gold",
+    unlockOnSuccess: { buildingId: null, unlockFlag: "towerReached", completionFlag: "towerCrossingCompleted" },
+    travelOnSuccess: { worldId: "tower", adventureIndex: 0 }
+  },
+
+  /* v3.630.0 (Tour, acte IV étape 17) — LA FAILLE : l'escalier de lumière jusqu'au sommet, seul (TW5).
+     Cinq paliers, journal fixe. Fond à fournir par Seb (images/Maps/parcours/tour_faille.webp, piste provisoire). */
+  faille_tour: {
+    id: "faille_tour",
+    worldId: "tower",
+    adventureIndex: 1,
+    mode: "parcours",
+    solo: true,
+    title: "La faille",
+    departLabel: "Monter seul",
+    icon: "images/Icons/codex/world_tower.webp",
+    parcours: {
+      image: "tour_faille", track: "route", points: [0, 2, 4, 6, 8], bag: 3,
+      steps: [
+        { type: "obstacle", gabaritId: "escalier_lumiere", text: "Plus de murs. Des marches de lumière froide, posées sur rien. Elles tiennent quand on ne les regarde pas." },
+        { type: "combat", foe: "corruptmage", pack: 2, foeMult: 1.6, text: "Deux formes sur les marches. Elles ont des robes de mage, et rien dedans.",
+          after: "Elles se défont en poussière bleue. La poussière remonte." },
+        { type: "source", fullBreath: true, text: "Un palier plus large, et du silence. Tu t'assois. Plus bas, la Tour continue de répéter." },
+        { type: "combat", foe: "arcanegolem", pack: 2, foeMult: 1.6, text: "Deux golems de verre ferment l'escalier. Tu te vois dedans, deux fois.",
+          after: "Le verre se fend. Derrière, il n'y a plus que le ciel." },
+        { type: "obstacle", gabaritId: "fente_ouverte", text: "Le sommet. Au-dessus, le ciel est ouvert, et ce qui passe par la fente ne fait aucun bruit." }
+      ]
+    },
+    entryCost: { resourceId: "grande_ration", amount: 1 },
+    lootResource: "gold",
+    unlockOnSuccess: { buildingId: null, unlockFlag: null, completionFlag: "failleTourDone" }
+  },
+
   /* v3.491.0 (Montagne, acte IV étape 17) — LE SENTIER DU DESSUS : de la coupe du lac au plateau du nid.
      Cinq paliers, journal fixe. Fond à fournir par Seb (piste provisoire). Au banc. */
   sentier_du_dessus: {
@@ -549,6 +603,21 @@ var SCENE_TEMPLATES = {
     icon: "images/Icons/scene/path_easy.webp",
     boardRequires: { tabUnlocked: "village", storyStep: "montagne_06" },
     successFlag: "mountainPaCompleted"
+  },
+
+  /* v3.627.0 (Tour, lot T-2a, TW10) — la Petite Aventure de la Tour : l'escalier, un obstacle de chaque monde.
+     Ouverte avec la carte des étages (tour_06) ; les réussites sont comptées pour « L'escalier » (tour_07). */
+  petite_aventure_tour: {
+    id: "petite_aventure_tour",
+    mode: "pa2",
+    worldId: "tower",
+    adventureIndex: 0,
+    title: "Petite aventure — Tour",
+    departLabel: "Monter l'escalier",
+    icon: "images/Icons/scene/path_easy.webp",
+    boardRequires: { tabUnlocked: "village", storyStep: "tour_06" },
+    successFlag: "towerPaCompleted",
+    successCount: "towerPaWins"
   }
 };
 

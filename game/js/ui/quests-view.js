@@ -76,6 +76,7 @@ function buildQuestCategoryTabsHTML(missions) {
   });
   // v3.509.0 : un jalon à réclamer allume la pastille de « Secondaires »
   if (window.MilestoneManager && MilestoneManager.readyCount() > 0) claimableByCat.secondaires = true;
+  if (window.CompanionQuestManager && CompanionQuestManager.readyCount() > 0) claimableByCat.secondaires = true; // v3.598.0
   // La chaîne Histoire (hors MissionBoard côté onglet) compte aussi pour la pastille Histoire.
   if (window.StoryQuestManager && typeof StoryQuestManager.getClaimableCount === "function" && StoryQuestManager.getClaimableCount() > 0) {
     claimableByCat.histoire = true;
@@ -114,7 +115,7 @@ function buildQuestBoardActionHTML(m) {
   // même habillage visuel que "locked" (qb-card-locked, is-locked sur la carte).
   // v3.366.0 : les places se rechargent une à une — on dit quand revient la prochaine
   if (m.status === "unavailable") return '<span class="qb-card-locked"><img class=ico-inline src=images/Icons/system/hourglass_waiting.webp> '
-    + (m.isLabyrinth && window.LabyrinthRun ? esc(_t("Dans {d}", { d: SceneRunManager.formatPetiteAventureWait(LabyrinthRun.nextInMs()) })) // v3.434.0
+    + (m.isLabyrinth && window.LabyrinthRun ? esc(_t("Dans {d}", { d: SceneRunManager.formatPetiteAventureWait(LabyrinthRun.nextInMs(m.labKind)) })) // v3.434.0
       : m.isPetiteAventure && window.SceneRunManager ? esc(_t("Dans {d}", { d: SceneRunManager.formatPetiteAventureWait(SceneRunManager.petiteAventureNextInMs()) })) : _t("Revenez demain")) + '</span>';
   return "";
 }
@@ -220,10 +221,12 @@ function buildQuestsGeneralSubTabHTML() {
   h += storyHTML;
   var msHTML = (cat.key === "secondaires" && typeof buildMilestonesHTML === "function") ? buildMilestonesHTML() : ""; // v3.509.0 : jalons en tête
   h += msHTML;
+  var cqHTML = (cat.key === "secondaires" && typeof buildCompanionQuestsHTML === "function") ? buildCompanionQuestsHTML() : ""; // v3.598.0 : quêtes des compagnons
+  h += cqHTML;
 
   if (catMissions.length) {
     h += '<div class="quest-board-list">' + catMissions.map(buildQuestBoardCardHTML).join("") + '</div>';
-  } else if (!storyHTML && !msHTML) {
+  } else if (!storyHTML && !msHTML && !cqHTML) {
     h += '<div class="eq-empty">' + esc(cat.emptyText) + '</div>';
   }
 
@@ -269,6 +272,7 @@ function questsWideEntries(missions) {
     out[cat.key].push({ key: "m:" + m.id, icon: MissionBoard.typeIcon(m.type), title: _td(m.title),
       sub: m.progressLabel || (m.blurb ? _td(m.blurb) : (m.objectiveLabel || "")), right: m.claim ? "!" : (m.status === "running" || m.status === "accepted") ? "›" : "", m: m });
   });
+  if (typeof companionQuestWideEntries === "function") out.secondaires = companionQuestWideEntries().concat(out.secondaires); // v3.598.0 : quêtes des compagnons
   if (window.MilestoneManager && typeof buildMilestonesHTML === "function" && buildMilestonesHTML()) {
     var nb = MilestoneManager.readyCount();
     out.secondaires.unshift({ key: "ms", icon: "images/Icons/quests/quest_side.webp", title: _t("Jalons"), sub: _t("Village et héros · une récompense chacun"), right: nb ? "!" : "" });
@@ -334,12 +338,13 @@ function buildQuestsWideHTML(missions) {
     h += '<h4 class="qw-grp">' + esc(cat.label) + '</h4>';
     h += E[cat.key] && E[cat.key].length ? E[cat.key].map(function (e) { return questsWideItemHTML(e, questsWideSel); }).join("") : '<p class="qw-empty">' + esc(cat.emptyText) + '</p>';
     h += buildOtherWorldQuestsHTML(cat.kinds);
-    if (cat.key === "histoire" && window.PrologueView) h += '<button class="qb-completed-link" type="button" onclick="openPrologueReplay()">' + esc(_t("Revoir le prologue")) + ' ▸</button>'; // v3.570.0
+    if (cat.key === "histoire" && window.PrologueView) h += '<button class="qb-completed-link" type="button" onclick="openPrologueReplay()">' + esc(_t("Revoir le prologue")) + ' ▸</button>' + chapterOpeningLinksHTML("qb-completed-link"); // v3.570.0
   });
   h += '<div class="qb-completed-bar"><button class="qb-completed-link" type="button" onclick="setQuestsFilter(\'completed\')">' + _t("Voir les quêtes terminées") + ' ▸</button></div>';
   h += '</div><div class="qw-detail">';
   if (questsWideSel.indexOf("story:") === 0) h += questsWideStoryHTML(questsWideSel.slice(6));
   else if (questsWideSel === "ms") h += buildMilestonesHTML();
+  else if (questsWideSel.indexOf("cq:") === 0 && window.CompanionQuestManager && CompanionQuestManager.get(questsWideSel.slice(3))) h += '<div class="quest-board-list">' + buildCompanionQuestCardHTML(CompanionQuestManager.get(questsWideSel.slice(3))) + '</div>'; // v3.598.0
   else {
     var m = missions.filter(function (x) { return "m:" + x.id === questsWideSel; })[0];
     h += m ? '<div class="quest-board-list">' + buildQuestBoardCardHTML(m) + '</div>' : '<div class="eq-empty">' + esc(_t("Choisis une quête dans la liste.")) + '</div>';
@@ -704,9 +709,9 @@ function buildStoryStepRewardText(reward) {
   return parts.join(" · ") || "—";
 }
 
-function buildStoryStepUnlockText(step) {
+function buildStoryStepUnlockText(step, onClaim) {
   var labels = window.STORY_TAB_LABELS || {};
-  return (step.unlockTabs || []).map(function (t) { return labels[t] ? _td(labels[t]) : t; }).join(", ");
+  return ((onClaim ? step.unlockTabsOnClaim : step.unlockTabs) || []).map(function (t) { return labels[t] ? _td(labels[t]) : t; }).join(", ");
 }
 
 function buildStoryClaimedStepHTML(chapterId, step, index) {
@@ -770,6 +775,8 @@ function buildStoryCurrentStepHTML(chapterId, chapter, step, index) {
 
   if (step.hint) h += '<div class="story-step-unlock story-step-hint"><img class=ico-inline src=images/Icons/system/warning.webp> ' + esc(_td(step.hint)) + '</div>'; // v3.429.6
   if (unlockText) h += '<div class="story-step-unlock"><img class=ico-inline src=images/Icons/system/lock_open.webp> ' + esc(_t("Débloque : {x}", { x: unlockText })) + '</div>';
+  var claimUnlockText = buildStoryStepUnlockText(step, true); // v3.616.0 : onglets ouverts par la réussite (forest_06)
+  if (claimUnlockText) h += '<div class="story-step-unlock"><img class=ico-inline src=images/Icons/system/lock_open.webp> ' + esc(_t("Débloque à la réussite : {x}", { x: claimUnlockText })) + '</div>';
   h += '<div class="map-quest-reward"><span class="map-quest-reward-label">' + _t("Récompense") + '</span><span class="map-quest-reward-value">' + esc(buildStoryStepRewardText(step.reward)) + '</span></div>';
 
   h += '<div class="story-step-actions" data-story-actions="' + esc(chapterId) + '">';
@@ -885,17 +892,18 @@ function buildStoryEndHTML() {
     { label: _t("Ennemis vaincus"), value: formatNumber(game.totalKills || 0) },
     { label: _t("Hauts faits"), value: hf + " / " + db.length }
   ];
+  var fin = window.TowerSystem && TowerSystem.ending(); // v3.631.0 : la vraie fin, celle de la Question
   var h = '<div class="full-menu-overlay kwin-veil"><div class="kwin dungeon-story-card is-success story-end-win">';
   h += kWinHeadHTML({ icon: renderIconOrEmojiHTML("images/Icons/quests/quest_story.webp", "dungeon-story-icon-img", ""),
-    title: esc(_t("Fin du chapitre {n}", { n: ids.length })), sub: esc(_t("L'Histoire s'arrête ici, pour l'instant")) });
-  h += '<div class="kwin-body"><div class="kwin-quote dungeon-story-text">' + esc(_t("La Tour sera le prochain chapitre. Elle n'est pas encore ouverte.")) + '</div>';
+    title: esc(fin ? _t("Fin de l'Histoire") : _t("Fin du chapitre {n}", { n: ids.length })), sub: esc(fin ? _td(TOWER_FINS[fin].num) : _t("L'Histoire s'arrête ici, pour l'instant")) });
+  h += '<div class="kwin-body"><div class="kwin-quote dungeon-story-text">' + esc(fin ? TowerSystem.bannerLine() : _t("La suite de l'Histoire arrive bientôt.")) + '</div>';
   h += storyEndRowsHTML(rows);
   var choix = storyEndChoices();
   if (choix.length) {
     h += '<div class="story-end-h">' + esc(_t("Tes choix")) + '</div>';
     choix.forEach(function (g) { h += '<div class="story-end-ch">' + esc(_td(g.chapter)) + '</div>' + storyEndRowsHTML(g.rows, "story-end-rows"); });
   }
-  h += '<p class="story-end-note">' + esc(_t("Ce bilan reste dans Quêtes › Histoire. Au Camp, le fil rouge propose la suite.")) + '</p></div>';
+  h += '<p class="story-end-note">' + esc(fin ? _t("Le jeu continue : donjons, cartes, village. Ce bilan, la vision et l'épilogue restent dans Quêtes › Histoire.") : _t("Ce bilan reste dans Quêtes › Histoire. Au Camp, le fil rouge propose la suite.")) + '</p></div>';
   h += '<div class="kwin-foot"><button class="kbtn primary" type="button" onclick="closeQuestCompletePopup()">' + esc(_t("Continuer")) + '</button></div></div></div>';
   return h;
 }
@@ -907,21 +915,43 @@ function openStoryEndPopup() {
 
 /* Carte en tête de Quêtes › Histoire, une fois l'Histoire finie. */
 function buildStoryEndCardHTML() {
-  return '<div class="story-end-card"><b>' + esc(_t("Fin de l'Histoire, pour l'instant")) + '</b><p>' + esc(_t("La Tour sera le prochain chapitre. Elle n'est pas encore ouverte.")) + '</p>'
+  var fin = window.TowerSystem && TowerSystem.ending(); // v3.631.0 : la fin choisie, l'épilogue et la vision à revoir
+  if (fin) return '<div class="story-end-card"><b>' + esc(_td(TOWER_FINS[fin].num)) + '</b><p>' + esc(TowerSystem.bannerLine()) + '</p>'
+    + '<button class="story-end-link" type="button" onclick="openStoryEndPopup()">' + esc(_t("Revoir le bilan")) + ' ▸</button>'
+    + '<button class="story-end-link" type="button" onclick="TowerSystem.playEpilogue(null)">' + esc(_t("Revoir l'épilogue")) + ' ▸</button></div>';
+  return '<div class="story-end-card"><b>' + esc(_t("Fin de l'Histoire, pour l'instant")) + '</b><p>' + esc(_t("La suite de l'Histoire arrive bientôt.")) + '</p>'
     + '<button class="story-end-link" type="button" onclick="openStoryEndPopup()">' + esc(_t("Revoir le bilan")) + ' ▸</button></div>';
 }
 
 /* v3.570.0 : carte « Revoir le prologue » en tête de Quêtes › Histoire (parties en cours comprises). */
 function buildPrologueCardHTML() {
+  var vision = !!(game.explorationProgression && game.explorationProgression.towerVisionSeen); // v3.631.0 : la vision de l'étape 19
   return '<div class="story-prologue-card"><b>' + esc(_t("Prologue — Cette nuit-là")) + '</b>'
-    + '<button class="story-end-link" type="button" onclick="openPrologueReplay()">' + esc(_t("Revoir le prologue")) + ' ▸</button></div>';
+    + '<button class="story-end-link" type="button" onclick="openPrologueReplay()">' + esc(_t("Revoir le prologue")) + ' ▸</button>'
+    + chapterOpeningLinksHTML("story-end-link")
+    + (vision && window.TowerSystem ? '<button class="story-end-link" type="button" onclick="TowerSystem.playVision(null)">' + esc(_t("Revoir la vision : {x}", { x: _td(TOWER_VISION.num) })) + ' ▸</button>' : '') + '</div>';
+}
+
+/* v3.623.0 : un lien par ouverture déjà vue (étape d'arrivée faite), sous le prologue. */
+function chapterOpeningLinksHTML(cls) {
+  if (typeof chapterOpeningsAvailable !== "function") return "";
+  return chapterOpeningsAvailable().map(function (id) {
+    var c = CHAPTER_OPENINGS[id], titre = c.planches[c.planches.length - 1].lignes[c.planches[c.planches.length - 1].nom];
+    return '<button class="' + cls + '" type="button" onclick="openChapterOpeningReplay(\'' + id + '\')">' + esc(_t("Revoir l'ouverture : {x}", { x: _td(titre) })) + ' ▸</button>';
+  }).join("");
 }
 
 /* La fenêtre de la dernière étape du dernier chapitre ouvre le bilan à sa fermeture (une fois : l'étape ne se réclame qu'une fois). */
 function storyEndChain(config) {
   var ids = Object.keys(STORY_QUESTS), last = STORY_QUESTS[ids[ids.length - 1]].steps.slice(-1)[0];
-  if (!config.closeOnclick && config.dialogue && last && config.title === last.title && storyAllDone()) config.closeOnclick = "openStoryEndPopup()";
+  // v3.631.0 : après la Question, l'épilogue (deux planches) avant le bilan
+  if (!config.closeOnclick && config.dialogue && last && config.title === last.title && storyAllDone()) config.closeOnclick = (window.TowerSystem && TowerSystem.ending()) ? "storyEpilogueThenEnd()" : "openStoryEndPopup()";
 }
+function storyEpilogueThenEnd() {
+  if (typeof closeQuestCompletePopup === "function") closeQuestCompletePopup();
+  if (window.TowerSystem) TowerSystem.playEpilogue(openStoryEndPopup); else openStoryEndPopup();
+}
+window.storyEpilogueThenEnd = storyEpilogueThenEnd;
 window.storyAllDone = storyAllDone;
 window.storyEndChoices = storyEndChoices;
 window.buildStoryEndHTML = buildStoryEndHTML;
@@ -1152,6 +1182,8 @@ function openQuestCompletePopup(config) {
   if (storyMergeRows) { config.rewardRows = storyMergeRows.concat(config.rewardRows || []); config.questDone = true; storyMergeRows = null; }
   applyQuestUnlockSideEffects();
   if (window.StoryQuestManager && window.STORY_QUESTS) storyEndChain(config);
+  // v3.623.0 : fin de l'étape d'arrivée d'un monde -> son ouverture de chapitre, à la fermeture de la fenêtre
+  if (typeof chapterOpeningForStepTitle === "function" && config.title) { var ouv = chapterOpeningForStepTitle(config.title); if (ouv) pendingChapterOpening = ouv; }
   var boss = document.getElementById("cycle-modal-root");
   if (boss && boss.innerHTML) { pendingQuestCompleteConfig = config; return; }
   var host = document.getElementById("adventure-quest-modal-root");
@@ -1189,9 +1221,13 @@ function applyQuestUnlockSideEffects() {
   });
 }
 
+var pendingChapterOpening = null; // v3.623.0 : chapitre à ouvrir quand la fenêtre de fin d'étape se ferme
 function closeQuestCompletePopup() {
   var host = document.getElementById("adventure-quest-modal-root");
   if (host) host.innerHTML = "";
+  var ouv = pendingChapterOpening;
+  pendingChapterOpening = null;
+  if (ouv && window.PrologueView) PrologueView.playChapter(ouv, null);
 }
 window.closeQuestCompletePopup = closeQuestCompletePopup;
 

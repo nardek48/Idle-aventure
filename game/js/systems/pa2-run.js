@@ -30,7 +30,8 @@ var Pa2Run = {
   getRun: function () { var r = game.sceneRun; return (r && r.pa2) ? r : null; },
   getMap: function (run) { run = run || this.getRun() || {}; return run.map || PA2_MAPS[run.mapId] || null; }, // parcours : tracé dans le run
   node: function (key, run) { run = run || this.getRun(); return (run && run.nodes) ? run.nodes[key] || null : null; },
-  hasItem: function (id, run) { run = run || this.getRun(); return !!run && run.bag.indexOf(id) >= 0; },
+  // v3.606.0 : une version fabriquée (as) compte comme l'objet qu'elle remplace
+  hasItem: function (id, run) { run = run || this.getRun(); return !!run && run.bag.some(function (x) { return x === id || (PA2_ITEMS[x] || {}).as === id; }); },
   hasRelic: function (id, run) { run = run || this.getRun(); return !!run && !!run.relics && run.relics.indexOf(id) >= 0; }, // v3.469.5 : run sans reliques (murs lus hors run)
   hasPact: function (id, run) { run = run || this.getRun(); return !!run && run.pacts.indexOf(id) >= 0; },
   ring: function (run) {
@@ -47,6 +48,12 @@ var Pa2Run = {
       var mv = 1 + Number(v.heatStep || 0) * (LMm && LMm.heatOf ? LMm.heatOf(lm.mapId, lm.sectorId) : 0);
       if (LMm && LMm.isHostile && LMm.isHostile(lm.mapId, lm.sectorId)) mv *= Number(v.hostileMult || 1);
       return mv;
+    }
+    if (map && map.redite) { // v3.627.0 (Tour, TW9) : La redite, l'étage raté du jour
+      var LMr = window.LivingMapManager;
+      var rd = Number(map.redite.hostileMult || 1);
+      if (window.TowerSystem) rd = TowerSystem.rediteMult(rd); // v3.632.0 : La redite apprise (Mémoire 22)
+      return (LMr && LMr.isHostile && LMr.isHostile(lm.mapId, lm.sectorId)) ? rd : 1;
     }
     if (!g) return 1;
     var m = lm.wake ? Number(g.wakeMult || 1) : 1;
@@ -105,6 +112,8 @@ var Pa2Run = {
     if (!game.expeditionChest.unlocked || typeof game.expeditionChest.unlocked !== "object") game.expeditionChest.unlocked = {};
     // v3.384.0 (PA2-2, D3) : trophées, dans le coffre déjà sauvegardé en entier (aucune ligne de save-system).
     if (!game.expeditionChest.stats || typeof game.expeditionChest.stats !== "object") game.expeditionChest.stats = { runs: 0, byWorld: {}, bestPacts: 0 };
+    // v3.616.0 : besace du dernier départ (« Comme la dernière fois »), par monde ou par parcours — propre à la partie
+    if (!game.expeditionChest.lastBag || typeof game.expeditionChest.lastBag !== "object") game.expeditionChest.lastBag = {};
     return game.expeditionChest;
   },
   // Trophées d'un monde : réussites et destinations atteintes (base des futurs Hauts faits, Q12).
@@ -372,7 +381,7 @@ var Pa2Run = {
     if (!run || run.status !== PA2_STATUS.prep || !it) return { ok: false, reason: _t("Choix impossible") };
     if (!this.itemInWorld(itemId, run)) return { ok: false, reason: _t("Pas dans ce monde.") };
     if (!this.isUnlocked(itemId)) return { ok: false, reason: _td(it.lockedHint || "") };
-    if (!it.uses && run.bag.indexOf(itemId) >= 0) return { ok: false, reason: _t("Déjà dans la besace.") };
+    if (!it.uses && this.hasItem(it.as || itemId, run)) return { ok: false, reason: _t("Déjà dans la besace.") }; // v3.606.0 : une torche, fabriquée ou non
     if (this.bagUsed(run) + it.size > this.bagSize(run)) return { ok: false, reason: _t("La besace est pleine.") };
     if (it.resource && window.WarehouseManager && this._countInBag(run, itemId) >= WarehouseManager.getAmount(it.resource)) {
       return { ok: false, reason: _t("Plus en réserve à l'Entrepôt.") };
@@ -432,7 +441,7 @@ var Pa2Run = {
     run.taken = taken;
     run.stock = {};
     var gUses = this.worldRule(run, "gourdeUses");
-    run.bag.forEach(function (id) { var it = PA2_ITEMS[id]; if (it.uses) run.stock[id] = (run.stock[id] || 0) + (id === "gourde" && gUses ? gUses : it.uses); });
+    run.bag.forEach(function (id) { var it = PA2_ITEMS[id], k = it.as || id; if (it.uses) run.stock[k] = (run.stock[k] || 0) + (id === "gourde" && gUses ? gUses : it.uses); }); // v3.606.0 : la version fabriquée s'ajoute à l'objet
     // Q11 : Seconde gorgée (Mémoire) +1 gorgée, Gué tenu +1 corde.
     if (run.stock.gourde && window.MemoryManager && MemoryManager.has("seconde_gorgee")) run.stock.gourde += 1;
     var night = this.nightItem(run);
@@ -806,7 +815,7 @@ var Pa2Run = {
     } else {
       if (it.uses && !it.healPct) return { ok: false, reason: _t("Choix impossible") }; // corde, trousse, craie : pas à boire
       if (game.heroHp >= game.heroMaxHp && !(it.healsWound && run.wounds > 0) && !(this.fxLeft(run, "venin") > 0)) return { ok: false, reason: _t("Tu es en pleine forme.") };
-      this._heal(game.heroMaxHp * Number(it.healPct || 0));
+      this._heal(game.heroMaxHp * Number(it.healPct || 0) * (window.TowerSystem && it.resource && (window.RATION_IDS || []).indexOf(it.resource) >= 0 ? TowerSystem.rationMult() : 1)); // v3.632.0 : Le pain d'abord
       if (run.fx) delete run.fx.venin; // v3.467.0 : une ration lève le Venin
       if (it.healsWound && run.wounds > 0) run.wounds -= 1;
     }
@@ -1217,7 +1226,7 @@ var Pa2Run = {
     var R = PA2_RULES, m = PA2_APPROACHES[apId].dmg;
     if (n.revenge) m *= R.revengeMult;
     if (this.hasPact("enrage", run) && (n.type === "boss" || n.act === 3)) m *= R.enrageMult;
-    if (this.hasItem("torche", run) && !this.nightBoost("torche", run)) m *= R.torchDmgMult; // v3.580.0 : torche de la nuit, sa lumière n'attire rien
+    if (this.hasItem("torche", run) && !this.nightBoost("torche", run) && run.bag.indexOf("torche_t") < 0) m *= R.torchDmgMult; // v3.580.0 : torche de la nuit ; v3.606.0 : la torche résinée n'attire rien
     m *= Number(this.condFx(run, "combatDmg") || 1); // v3.469.0 : pleine lune
     if (this.hasRelic("marteau", run)) m *= R.marteauDmg; // v3.469.5 : Marteau du Contremaître
     if (this.hasItem("armure", run)) m *= R.armorDmgMult;
@@ -1594,6 +1603,8 @@ var Pa2Run = {
       if (lmap && lmap.gisants) amt += Number(lmap.gisants.wakeRare || 0); // v3.454.0 (Crypte) : gisants réveillés, plus de Cire
       if (lmap && lmap.veins) amt += Number(lmap.veins.cutRare || 0);      // v3.489.0 (Montagne) : la veine du secteur taillée
       amt += Number(this.condFx(run, "rareDest") || 0); // v3.469.0 : les dormeurs remuent
+      var rumor = !!(window.VillageEvents && run.livingMap && VillageEvents.rumorAt(run.livingMap.mapId, run.livingMap.sectorId)); // v3.604.0
+      if (rumor) { amt += VillageEvents.rumorRare(); VillageEvents.onRumorRun(); } // v3.607.0 : la rumeur faite appelle sa suite
       var hk = this._hook(run);
       if (hk && hk.destRare && hk.destRare[this.hookBranch(run)]) amt += Number(hk.destRare[this.hookBranch(run)]); // le feu nourri
       end.rare = this._creditRare(run, amt);
@@ -1601,6 +1612,7 @@ var Pa2Run = {
       // v3.387.0 : le drapeau de l'Histoire (étape « L'outre ») est posé à une destination atteinte, comme la chambre finale en v1.
       var tpl = window.SceneEngine ? SceneEngine.getTemplate(run.templateId) : null;
       if (tpl && tpl.successFlag) { if (!game.explorationProgression) game.explorationProgression = {}; game.explorationProgression[tpl.successFlag] = true; }
+      if (tpl && tpl.successCount) { var epc = game.explorationProgression || (game.explorationProgression = {}); epc[tpl.successCount] = Number(epc[tpl.successCount] || 0) + 1; } // v3.627.0 : réussites comptées (tour_07)
       if (chestItem && (dest.type !== "boss" || run.flags.bossDown)) {
         var chest = this.ensureChest();
         end.chest = { item: chestItem, isNew: !chest.unlocked[chestItem] };
@@ -1610,6 +1622,7 @@ var Pa2Run = {
     // Multiplicateur final de l'or : pactes, Carte du braconnier, Fiole noire.
     var mult = this.pactMult(run) * Number(this.condFx(run, "lootMult") || 1) * (this.hasRelic("dune", run) ? PA2_RULES.duneLoot : 1); // v3.469.0 ; v3.469.5 : Cœur de dune
     if (this.hasItem("carte", run)) mult *= PA2_RULES.carteLoot;
+    if (end.dest && window.VillageEvents && run.livingMap && VillageEvents.rumorAt(run.livingMap.mapId, run.livingMap.sectorId)) mult *= VillageEvents.rumorLootMult(); // v3.604.0 : la rumeur ; v3.607.0 : la deuxième, plus riche
     if (run.fioleUsed) mult *= PA2_RULES.fioleLoot;
     end.mult = mult;
     var s = window.SortieManager ? SortieManager.ensure() : null;
@@ -1634,6 +1647,7 @@ var Pa2Run = {
     else if (dest) this._log("🏁 " + _t("Petite Aventure : {d} atteint.", { d: _td(((PA2_DESTS[run.worldId] || PA2_DESTS.forest)[dest.type] || {}).name || "") }));
     if (end.rare > 0 || run.rareFound > 0) this._log("✨ " + _t("Trouvaille : +{n} {x}", { n: run.rareFound, x: this._rareName(run) }));
     if (end.chest && end.chest.isNew) this._log("🧰 " + _t("Coffre d'expédition : {x}", { x: _td((PA2_ITEMS[end.chest.item] || {}).name || "") }));
+    if (window.CompanionQuestManager) CompanionQuestManager.onRunEnd(run.worldId, how, run.livingMap && run.livingMap.sectorId); // v3.598.0 ; v3.603.0 : le lieu joué
     end.summary = window.SortieManager ? SortieManager.end(outcome) : null;
     SceneRunManager._notifyLivingMap(run, (how === "dest" || how === "parcours") ? "success" : (how === "ko" ? "fail" : "neutral"));
     // Q12 : « Un Périple » ; v3.384.0 : compté pour le monde de la carte jouée, pas celui où réside le héros.
@@ -1653,6 +1667,14 @@ var Pa2Run = {
   },
   _refundStock: function (run) {
     if (!window.WarehouseManager) return;
+    /* v3.606.0 : les versions fabriquées servent en dernier ; on rend chaque unité dont tous les usages restent. */
+    var crafted = {};
+    run.bag.forEach(function (id) { var it = PA2_ITEMS[id]; if (it && it.as && it.uses && it.resource) crafted[id] = (crafted[id] || 0) + 1; });
+    Object.keys(crafted).forEach(function (id) {
+      var it = PA2_ITEMS[id], left = Math.min(Number((run.stock || {})[it.as] || 0), crafted[id] * it.uses);
+      var units = Math.min(Math.floor(left / it.uses), Number((run.taken || {})[it.resource] || 0));
+      if (units > 0) WarehouseManager.refundResource(it.resource, units);
+    });
     Object.keys(run.stock || {}).forEach(function (id) {
       var it = PA2_ITEMS[id], left = Number(run.stock[id] || 0);
       if (it && it.resource && run.taken && run.taken[it.resource] != null) left = Math.min(left, Number(run.taken[it.resource])); // v3.580.0 : l'usage offert par la nuit ne se revend pas

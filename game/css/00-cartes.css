@@ -1,0 +1,396 @@
+/* ============================================================
+Aethervale — css/00-cartes.css
+v3.617.0 (lot 1 de l'habillage E, atelier « Cartes E » validé par Seb le 02/11).
+Trois habillages de carte, posés par classe :
+  .kc-tex  texture parchemin crème (voile 30 %) ;
+  .kc-sec  cadre secondaire (barres bronze, petits coins dorés) pour l'interface ;
+  .kc-doc  parchemin déchiré pour les documents de l'histoire (quêtes, missions,
+           Taverne, Chronique) ; .kc-petit pour un bord plus fin.
+Lot 1 : les classes .kc-*. Lot 2 : listes de cartes d'interface. Lot 3 (fin du fichier) : documents.
+============================================================ */
+
+:root {
+  --kc-voile: rgba(246, 236, 217, 0.3);
+  --kc-tex: url('../images/UI/frames/parchment-cream.webp');
+  --kc-sec-coin: 18px;          /* coins du cadre secondaire ; l'image en a 48 */
+  --kc-sec-clip: 3px;           /* la texture démarre sous la barre : jamais de liseré au bord */
+  --kc-doc-bord: 28px;          /* bord déchiré des grandes cartes ; l'image en a 60 */
+  --kc-doc-bord-petit: 20px;
+}
+
+/* Texture : longhands seulement, pour ne pas écraser la couleur de fond de la carte */
+.kc-tex {
+  background-image: linear-gradient(var(--kc-voile), var(--kc-voile)), var(--kc-tex);
+  background-size: auto, 256px;
+  background-repeat: repeat;
+}
+
+/* Cadre secondaire : bord transparent + fond limité à l'intérieur, cadre en 9 morceaux par-dessus */
+.kc-sec {
+  position: relative;
+  border: var(--kc-sec-clip) solid transparent;
+  background-clip: padding-box;
+  border-radius: 0;
+  box-shadow: inset 0 0 24px rgba(70, 44, 14, 0.64); /* dégradé foncé du cadre vers le parchemin */
+}
+.kc-sec::before {
+  content: "";
+  position: absolute;
+  inset: calc(var(--kc-sec-clip) * -1);
+  z-index: 1;
+  pointer-events: none;
+  border: var(--kc-sec-coin) solid transparent;
+  border-image: url('../images/UI/frames/kc-secondaire.webp') 48 / var(--kc-sec-coin) stretch;
+}
+
+/* Document : la carte est découpée selon le bord déchiré (masque), puis le bord est posé par-dessus.
+   Firefox ignore la découpe : carte rectangulaire, bord dessiné quand même (accepté par Seb). */
+.kc-doc {
+  --kc-g: var(--kc-doc-bord);
+  --kc-doc-pad: calc(var(--kc-g) * 0.45 + 6px); /* marge intérieure conseillée, posée composant par composant */
+  position: relative;
+  border: 0;
+  border-radius: 0;
+  -webkit-mask-box-image: url('../images/UI/frames/kc-dechire-masque.webp') 60 fill / var(--kc-g) stretch; /* fill : Safari jette le centre du masque sans lui */
+  mask-border: url('../images/UI/frames/kc-dechire-masque.webp') 60 fill / var(--kc-g) stretch; /* fill : Safari jette le centre du masque sans lui */
+  box-shadow: inset 0 0 25px rgba(70, 44, 14, 0.35);
+}
+.kc-doc.kc-petit { --kc-g: var(--kc-doc-bord-petit); }
+.kc-doc::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  border: var(--kc-g) solid transparent;
+  border-image: url('../images/UI/frames/kc-dechire-bord.webp') 60 / var(--kc-g) stretch;
+}
+
+/* ============================================================
+   v3.618.0 — lot 2 : cadre secondaire sur les onglets et les cartes d'interface,
+   texture seule sur les lignes fines. Listes tirées de l'inventaire du jeu (atelier « Cartes E »).
+   !important : les composants posent bordure, ombre et fond plus loin dans la cascade.
+   ============================================================ */
+
+/* Texture : toutes les cartes listées (interface et lignes fines). v3.619.1 : sans .hs-eq (mannequin)
+   ni .exp-world (route de la Caravane), qui ont leur propre image de fond. */
+:root :is(
+  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-roster-btn, .hs-tile, .wk-bigrec, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
+  .full-menu-card, .go-auto, .go-bonus, .hf-card, .hf-tiers, .hf-top, .hs-comp, .hs-edetail,
+  .hs-sets, .hs-wc, .hs-wskills, .kseg, .log-entry, .nb-accordion-section, .nb-purchase-card, .pc3,
+  .pc3-auto, .prod-sheet-harvest, .production-dash-card, .qb-other-world, .quest-section-card, .set-card,
+  .vb-card, .vb-cost-list, .vb-site-banner, .warehouse-note, .wh-filter, .wh-grid, .wk-banner, .wk-tile,
+  .achievement-total, .camp-mission-card, .cf-line, .equip-shop-hall-note, .equip-shop-timer, .hs-cmp-legend,
+  .hs-traits, .ksec, .ms-row, .mw-card, .vb-chain-banner, .wk-act, .vb-sheet-effect
+) {
+  background-image: linear-gradient(var(--kc-voile), var(--kc-voile)), var(--kc-tex) !important;
+  background-size: auto, 256px !important;
+  background-repeat: repeat !important;
+}
+
+/* Cadre secondaire : cartes d'interface, sauf une carte déjà rangée dans une carte encadrée */
+:root :is(
+  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-roster-btn, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
+  .full-menu-card, .go-auto, .go-bonus, .hf-card, .hf-tiers, .hf-top, .hs-comp, .hs-edetail, .hs-eq,
+  .hs-sets, .hs-wc, .hs-wskills, .kseg, .log-entry, .nb-accordion-section, .nb-purchase-card, .pc3,
+  .pc3-auto, .prod-sheet-harvest, .production-dash-card, .qb-other-world, .quest-section-card, .set-card,
+  .vb-card, .vb-cost-list, .vb-site-banner, .warehouse-note, .wh-filter, .wh-grid, .wk-banner, .wk-tile
+):not(:is(
+  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-roster-btn, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
+  .full-menu-card, .go-auto, .go-bonus, .hf-card, .hf-tiers, .hf-top, .hs-comp, .hs-edetail, .hs-eq,
+  .hs-sets, .hs-wc, .hs-wskills, .kseg, .log-entry, .nb-accordion-section, .nb-purchase-card, .pc3,
+  .pc3-auto, .prod-sheet-harvest, .production-dash-card, .qb-other-world, .quest-section-card, .set-card,
+  .vb-card, .vb-cost-list, .vb-site-banner, .warehouse-note, .wh-filter, .wh-grid, .wk-banner, .wk-tile,
+  .story-chain, .story-step, .story-prologue-card, .camp-missions-card, .cw-card:has(.cw-mlist), .ms-block, .qb-card, .tavern-board, .chr-obj
+) *) {
+  position: relative;
+  border: var(--kc-sec-clip) solid transparent !important;
+  background-clip: padding-box !important;
+  border-radius: 0 !important;
+  box-shadow: inset 0 0 24px rgba(70, 44, 14, 0.64) !important;
+}
+:root :is(
+  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-roster-btn, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
+  .full-menu-card, .go-auto, .go-bonus, .hf-card, .hf-tiers, .hf-top, .hs-comp, .hs-edetail, .hs-eq,
+  .hs-sets, .hs-wc, .hs-wskills, .kseg, .log-entry, .nb-accordion-section, .nb-purchase-card, .pc3,
+  .pc3-auto, .prod-sheet-harvest, .production-dash-card, .qb-other-world, .quest-section-card, .set-card,
+  .vb-card, .vb-cost-list, .vb-site-banner, .warehouse-note, .wh-filter, .wh-grid, .wk-banner, .wk-tile
+):not(:is(
+  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-roster-btn, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
+  .full-menu-card, .go-auto, .go-bonus, .hf-card, .hf-tiers, .hf-top, .hs-comp, .hs-edetail, .hs-eq,
+  .hs-sets, .hs-wc, .hs-wskills, .kseg, .log-entry, .nb-accordion-section, .nb-purchase-card, .pc3,
+  .pc3-auto, .prod-sheet-harvest, .production-dash-card, .qb-other-world, .quest-section-card, .set-card,
+  .vb-card, .vb-cost-list, .vb-site-banner, .warehouse-note, .wh-filter, .wh-grid, .wk-banner, .wk-tile,
+  .story-chain, .story-step, .story-prologue-card, .camp-missions-card, .cw-card:has(.cw-mlist), .ms-block, .qb-card, .tavern-board, .chr-obj
+) *)::before {
+  content: "";
+  position: absolute;
+  inset: calc(var(--kc-sec-clip) * -1);
+  z-index: 1;
+  pointer-events: none;
+  border: var(--kc-sec-coin) solid transparent;
+  border-image: url('../images/UI/frames/kc-secondaire.webp') 48 / var(--kc-sec-coin) stretch;
+}
+
+/* États qui passaient par la bordure ou l'ombre : un liseré dans le cadre (pseudo-élément ::after,
+   libre sur ces cartes), peint au-dessus du contenu pour rester visible */
+:root :is(.nb-purchase-card.rarity-green, .nb-purchase-card.rarity-rare, .nb-purchase-card.rarity-epic,
+  .nb-purchase-card.rarity-legendary, .hf-card.is-ready, .production-dash-card.is-sel)::after {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  z-index: 1;
+  pointer-events: none;
+  border: 2px solid var(--kc-etat);
+}
+:root .nb-purchase-card.rarity-green { --kc-etat: var(--rarity-green); }
+:root .nb-purchase-card.rarity-rare { --kc-etat: var(--rarity-rare); }
+:root .nb-purchase-card.rarity-epic { --kc-etat: var(--rarity-epic); }
+:root .nb-purchase-card.rarity-legendary { --kc-etat: var(--rarity-legendary); }
+:root .hf-card.is-ready { --kc-etat: var(--c-brown-550-3); }
+:root .production-dash-card.is-sel { --kc-etat: var(--nb-gold-deep); }
+:root .hf-card.is-hidden {
+  background-image: linear-gradient(rgba(70, 44, 14, 0.1), rgba(70, 44, 14, 0.1)), linear-gradient(var(--kc-voile), var(--kc-voile)), var(--kc-tex) !important;
+  background-size: auto, auto, 256px !important;
+}
+:root .exp-row.is-ready {
+  background-image: linear-gradient(to right, transparent 4px, var(--c-brown-550-3) 4px 8px, transparent 8px), linear-gradient(var(--kc-voile), var(--kc-voile)), var(--kc-tex) !important;
+  background-size: auto, auto, 256px !important;
+}
+
+
+/* v3.618.1 (option A de Seb) : encres plus foncées DANS les cartes habillées seulement, car texture et cadre
+   les éclaircissaient (2,1 à 4,1:1). Couleur changée sélecteur par sélecteur (la palette n'est jamais redéfinie). */
+:root :is(
+  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-roster-btn, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
+  .full-menu-card, .go-auto, .go-bonus, .hf-card, .hf-tiers, .hf-top, .hs-comp, .hs-edetail, .hs-eq,
+  .hs-sets, .hs-wc, .hs-wskills, .kseg, .log-entry, .nb-accordion-section, .nb-purchase-card, .pc3,
+  .pc3-auto, .prod-sheet-harvest, .production-dash-card, .qb-other-world, .quest-section-card, .set-card,
+  .vb-card, .vb-cost-list, .vb-site-banner, .warehouse-note, .wh-filter, .wh-grid, .wk-banner, .wk-tile,
+  .achievement-total, .camp-mission-card, .cf-line, .equip-shop-hall-note, .equip-shop-timer, .hs-cmp-legend,
+  .hs-traits, .ksec, .ms-row, .mw-card, .vb-chain-banner, .wk-act, .vb-sheet-effect,
+  .story-chain, .story-step, .story-prologue-card, .camp-missions-card, .cw-card:has(.cw-mlist), .ms-block, .qb-card, .tavern-board, .chr-obj
+) :is(
+  .construction-popup-delta,
+  .eq-cmp-delta.is-up,
+  .eq-compat-delta.is-up,
+  .eq-compat-extra .is-up,
+  .eqs-row-delta.is-up
+),
+:root :is(
+  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-roster-btn, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
+  .full-menu-card, .go-auto, .go-bonus, .hf-card, .hf-tiers, .hf-top, .hs-comp, .hs-edetail, .hs-eq,
+  .hs-sets, .hs-wc, .hs-wskills, .kseg, .log-entry, .nb-accordion-section, .nb-purchase-card, .pc3,
+  .pc3-auto, .prod-sheet-harvest, .production-dash-card, .qb-other-world, .quest-section-card, .set-card,
+  .vb-card, .vb-cost-list, .vb-site-banner, .warehouse-note, .wh-filter, .wh-grid, .wk-banner, .wk-tile,
+  .achievement-total, .camp-mission-card, .cf-line, .equip-shop-hall-note, .equip-shop-timer, .hs-cmp-legend,
+  .hs-traits, .ksec, .ms-row, .mw-card, .vb-chain-banner, .wk-act, .vb-sheet-effect,
+  .story-chain, .story-step, .story-prologue-card, .camp-missions-card, .cw-card:has(.cw-mlist), .ms-block, .qb-card, .tavern-board, .chr-obj
+):is(
+  .construction-popup-delta,
+  .eq-cmp-delta.is-up,
+  .eq-compat-delta.is-up,
+  .eq-compat-extra .is-up,
+  .eqs-row-delta.is-up
+) { color: var(--nb-green-text); }
+:root :is(
+  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-roster-btn, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
+  .full-menu-card, .go-auto, .go-bonus, .hf-card, .hf-tiers, .hf-top, .hs-comp, .hs-edetail, .hs-eq,
+  .hs-sets, .hs-wc, .hs-wskills, .kseg, .log-entry, .nb-accordion-section, .nb-purchase-card, .pc3,
+  .pc3-auto, .prod-sheet-harvest, .production-dash-card, .qb-other-world, .quest-section-card, .set-card,
+  .vb-card, .vb-cost-list, .vb-site-banner, .warehouse-note, .wh-filter, .wh-grid, .wk-banner, .wk-tile,
+  .achievement-total, .camp-mission-card, .cf-line, .equip-shop-hall-note, .equip-shop-timer, .hs-cmp-legend,
+  .hs-traits, .ksec, .ms-row, .mw-card, .vb-chain-banner, .wk-act, .vb-sheet-effect,
+  .story-chain, .story-step, .story-prologue-card, .camp-missions-card, .cw-card:has(.cw-mlist), .ms-block, .qb-card, .tavern-board, .chr-obj
+) :is(
+  .hf-meta,
+  .hf-opt small,
+  .pt-hint
+),
+:root :is(
+  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-roster-btn, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
+  .full-menu-card, .go-auto, .go-bonus, .hf-card, .hf-tiers, .hf-top, .hs-comp, .hs-edetail, .hs-eq,
+  .hs-sets, .hs-wc, .hs-wskills, .kseg, .log-entry, .nb-accordion-section, .nb-purchase-card, .pc3,
+  .pc3-auto, .prod-sheet-harvest, .production-dash-card, .qb-other-world, .quest-section-card, .set-card,
+  .vb-card, .vb-cost-list, .vb-site-banner, .warehouse-note, .wh-filter, .wh-grid, .wk-banner, .wk-tile,
+  .achievement-total, .camp-mission-card, .cf-line, .equip-shop-hall-note, .equip-shop-timer, .hs-cmp-legend,
+  .hs-traits, .ksec, .ms-row, .mw-card, .vb-chain-banner, .wk-act, .vb-sheet-effect,
+  .story-chain, .story-step, .story-prologue-card, .camp-missions-card, .cw-card:has(.cw-mlist), .ms-block, .qb-card, .tavern-board, .chr-obj
+):is(
+  .hf-meta,
+  .hf-opt small,
+  .pt-hint
+) { color: var(--c-brown-750-soft); }
+:root :is(
+  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-roster-btn, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
+  .full-menu-card, .go-auto, .go-bonus, .hf-card, .hf-tiers, .hf-top, .hs-comp, .hs-edetail, .hs-eq,
+  .hs-sets, .hs-wc, .hs-wskills, .kseg, .log-entry, .nb-accordion-section, .nb-purchase-card, .pc3,
+  .pc3-auto, .prod-sheet-harvest, .production-dash-card, .qb-other-world, .quest-section-card, .set-card,
+  .vb-card, .vb-cost-list, .vb-site-banner, .warehouse-note, .wh-filter, .wh-grid, .wk-banner, .wk-tile,
+  .achievement-total, .camp-mission-card, .cf-line, .equip-shop-hall-note, .equip-shop-timer, .hs-cmp-legend,
+  .hs-traits, .ksec, .ms-row, .mw-card, .vb-chain-banner, .wk-act, .vb-sheet-effect,
+  .story-chain, .story-step, .story-prologue-card, .camp-missions-card, .cw-card:has(.cw-mlist), .ms-block, .qb-card, .tavern-board, .chr-obj
+) :is(
+  .ksec small,
+  .kkick,
+  .hc-skills-chevron,
+  .hc-confirm-class,
+  .lc-row-tx .title-slot-heroic-title,
+  .st-group-title,
+  .hf-tiers-h,
+  .hf-rew,
+  .cr-tip b,
+  .cp-behavior-title,
+  .dsheet-marks-title,
+  .dlvl-sum .is-aether,
+  .dgain-ttl,
+  .dgain-ttl strong,
+  .dgain .is-aether,
+  .dsheet-fold b,
+  .dcamp-lbl,
+  .dcamp-opt .dcamp-eff,
+  .dhalt-tag,
+  .dprep-ttl,
+  .eq-compare-title,
+  .fr-also-btn,
+  .ret-link,
+  .exp-sum .is-ready b,
+  .exp-chev,
+  .cf-line.is-risque .cf-line-verdict,
+  .cf-card.is-risque .cf-verdict,
+  .hs-chev,
+  .lab-note,
+  .lab-cost,
+  .wk-group,
+  .wk-tile-op,
+  .wk-bigrec-op,
+  .farm-plot-card.is-locked.is-next .farm-plot-card-profile,
+  .zone-win-rate b,
+  .sp-lock,
+  .sp-rule b,
+  .vb-card-lock,
+  .wh-dd-btn small,
+  .wh-dd-car,
+  .wh-dd-cap,
+  .wh-line-chev,
+  .workshop-completion-next,
+  .news-v
+),
+:root :is(
+  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-roster-btn, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
+  .full-menu-card, .go-auto, .go-bonus, .hf-card, .hf-tiers, .hf-top, .hs-comp, .hs-edetail, .hs-eq,
+  .hs-sets, .hs-wc, .hs-wskills, .kseg, .log-entry, .nb-accordion-section, .nb-purchase-card, .pc3,
+  .pc3-auto, .prod-sheet-harvest, .production-dash-card, .qb-other-world, .quest-section-card, .set-card,
+  .vb-card, .vb-cost-list, .vb-site-banner, .warehouse-note, .wh-filter, .wh-grid, .wk-banner, .wk-tile,
+  .achievement-total, .camp-mission-card, .cf-line, .equip-shop-hall-note, .equip-shop-timer, .hs-cmp-legend,
+  .hs-traits, .ksec, .ms-row, .mw-card, .vb-chain-banner, .wk-act, .vb-sheet-effect,
+  .story-chain, .story-step, .story-prologue-card, .camp-missions-card, .cw-card:has(.cw-mlist), .ms-block, .qb-card, .tavern-board, .chr-obj
+):is(
+  .ksec small,
+  .kkick,
+  .hc-skills-chevron,
+  .hc-confirm-class,
+  .lc-row-tx .title-slot-heroic-title,
+  .st-group-title,
+  .hf-tiers-h,
+  .hf-rew,
+  .cr-tip b,
+  .cp-behavior-title,
+  .dsheet-marks-title,
+  .dlvl-sum .is-aether,
+  .dgain-ttl,
+  .dgain-ttl strong,
+  .dgain .is-aether,
+  .dsheet-fold b,
+  .dcamp-lbl,
+  .dcamp-opt .dcamp-eff,
+  .dhalt-tag,
+  .dprep-ttl,
+  .eq-compare-title,
+  .fr-also-btn,
+  .ret-link,
+  .exp-sum .is-ready b,
+  .exp-chev,
+  .cf-line.is-risque .cf-line-verdict,
+  .cf-card.is-risque .cf-verdict,
+  .hs-chev,
+  .lab-note,
+  .lab-cost,
+  .wk-group,
+  .wk-tile-op,
+  .wk-bigrec-op,
+  .farm-plot-card.is-locked.is-next .farm-plot-card-profile,
+  .zone-win-rate b,
+  .sp-lock,
+  .sp-rule b,
+  .vb-card-lock,
+  .wh-dd-btn small,
+  .wh-dd-car,
+  .wh-dd-cap,
+  .wh-line-chev,
+  .workshop-completion-next,
+  .news-v
+) { color: var(--c-brown-750-3); }
+
+:root :is(
+  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-roster-btn, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
+  .full-menu-card, .go-auto, .go-bonus, .hf-card, .hf-tiers, .hf-top, .hs-comp, .hs-edetail, .hs-eq,
+  .hs-sets, .hs-wc, .hs-wskills, .kseg, .log-entry, .nb-accordion-section, .nb-purchase-card, .pc3,
+  .pc3-auto, .prod-sheet-harvest, .production-dash-card, .qb-other-world, .quest-section-card, .set-card,
+  .vb-card, .vb-cost-list, .vb-site-banner, .warehouse-note, .wh-filter, .wh-grid, .wk-banner, .wk-tile,
+  .achievement-total, .camp-mission-card, .cf-line, .equip-shop-hall-note, .equip-shop-timer, .hs-cmp-legend,
+  .hs-traits, .ksec, .ms-row, .mw-card, .vb-chain-banner, .wk-act, .vb-sheet-effect,
+  .story-chain, .story-step, .story-prologue-card, .camp-missions-card, .cw-card:has(.cw-mlist), .ms-block, .qb-card, .tavern-board, .chr-obj
+) { --nb-ink-dim: var(--c-brown-750-soft) !important; } /* sous-titres à 72 % d'opacité ailleurs */
+
+/* ============================================================
+   v3.619.0 — lot 3 : documents de l'histoire en parchemin déchiré (quêtes, missions, Taverne,
+   objectif de la Chronique). Un document rangé dans un document ou une carte encadrée garde la texture seule.
+   ============================================================ */
+:root :is(.story-chain, .story-step, .story-prologue-card, .camp-missions-card, .cw-card:has(.cw-mlist), .ms-block, .qb-card, .tavern-board, .chr-obj) {
+  background-image: linear-gradient(var(--kc-voile), var(--kc-voile)), var(--kc-tex) !important;
+  background-size: auto, 256px !important;
+  background-repeat: repeat !important;
+}
+:root :is(.story-chain, .story-step, .story-prologue-card, .camp-missions-card, .cw-card:has(.cw-mlist), .ms-block, .qb-card, .tavern-board, .chr-obj):not(:is(
+  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-roster-btn, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
+  .full-menu-card, .go-auto, .go-bonus, .hf-card, .hf-tiers, .hf-top, .hs-comp, .hs-edetail, .hs-eq,
+  .hs-sets, .hs-wc, .hs-wskills, .kseg, .log-entry, .nb-accordion-section, .nb-purchase-card, .pc3,
+  .pc3-auto, .prod-sheet-harvest, .production-dash-card, .qb-other-world, .quest-section-card, .set-card,
+  .vb-card, .vb-cost-list, .vb-site-banner, .warehouse-note, .wh-filter, .wh-grid, .wk-banner, .wk-tile,
+  .story-chain, .story-step, .story-prologue-card, .camp-missions-card, .cw-card:has(.cw-mlist), .ms-block, .qb-card, .tavern-board, .chr-obj
+) *) {
+  --kc-g: var(--kc-doc-bord);
+  position: relative;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: inset 0 0 25px rgba(70, 44, 14, 0.35) !important;
+  -webkit-mask-box-image: url('../images/UI/frames/kc-dechire-masque.webp') 60 fill / var(--kc-g) stretch; /* fill : Safari jette le centre du masque sans lui */
+  mask-border: url('../images/UI/frames/kc-dechire-masque.webp') 60 fill / var(--kc-g) stretch; /* fill : Safari jette le centre du masque sans lui */
+  padding: 14px calc(var(--kc-g) * 0.45 + 6px) !important; /* marge minimale : la découpe ne rogne plus le texte (Taverne) */
+}
+:root .story-chain.is-done:not(.story-chain *) { --kc-g: var(--kc-doc-bord-petit); padding: 10px calc(var(--kc-g) * 0.45 + 6px) !important; }
+:root :is(.story-chain, .story-step, .story-prologue-card, .camp-missions-card, .cw-card:has(.cw-mlist), .ms-block, .qb-card, .tavern-board, .chr-obj):not(:is(
+  .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-roster-btn, .hs-tile, .wk-bigrec, .exp-world, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
+  .full-menu-card, .go-auto, .go-bonus, .hf-card, .hf-tiers, .hf-top, .hs-comp, .hs-edetail, .hs-eq,
+  .hs-sets, .hs-wc, .hs-wskills, .kseg, .log-entry, .nb-accordion-section, .nb-purchase-card, .pc3,
+  .pc3-auto, .prod-sheet-harvest, .production-dash-card, .qb-other-world, .quest-section-card, .set-card,
+  .vb-card, .vb-cost-list, .vb-site-banner, .warehouse-note, .wh-filter, .wh-grid, .wk-banner, .wk-tile,
+  .story-chain, .story-step, .story-prologue-card, .camp-missions-card, .cw-card:has(.cw-mlist), .ms-block, .qb-card, .tavern-board, .chr-obj
+) *)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  border: var(--kc-g) solid transparent;
+  border-image: url('../images/UI/frames/kc-dechire-bord.webp') 60 / var(--kc-g) stretch;
+}
+
+/* v3.620.0 — lot 4 : inventaire complet (68 écrans et fiches, téléphone et PC, CSS désactivé).
+   .hs-roster-btn ajouté aux listes ; .ksec (titres de section, 32-50 px, décor propre en pseudo-élément)
+   reste en texture seule, comme toute ligne fine. */
+
+/* v3.628.1 (bug Seb) : le cadre secondaire passait le détail de l'équipement en relative ; il reste collé
+   en bas de l'écran (sticky, comme les Talents). L'identifiant fictif donne la priorité sans !important. */
+.hs-edetail:not(#kc-sticky) { position: sticky; }

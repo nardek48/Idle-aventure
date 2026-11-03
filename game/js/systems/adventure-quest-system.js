@@ -177,6 +177,8 @@ var AdventureQuestManager = {
     if (forceBoss && quest.bossLog) addLog(_td(quest.bossLog), "event"); // v3.360.0 : ligne d'entrée du boss de quête
 
     game.enemy = enemy;
+    // v3.630.0 (Tour, TW5) : un ennemi seul ne repasse pas par onCombatStart ; une quête « seul » retire le groupe ici
+    if (quest.solo && window.CompanionManager && typeof CompanionManager.refreshParty === "function") CompanionManager.refreshParty();
     if (window.CombatEngine && typeof CombatEngine.prepareEnemy === "function") CombatEngine.prepareEnemy(enemy);
     this.applyQuestTheme(quest);
     if (typeof renderEnemy === "function") renderEnemy();
@@ -205,6 +207,7 @@ var AdventureQuestManager = {
       return showToast(_t("Choisis d'abord la voie de {x}, dans l'Histoire", { x: _td((getCompanionDef(quest.requiresVoie) || {}).name) }), 1800);
     }
     this._resetProgress(quest); // v3.260.0 : chaque départ repart de 0
+    if (window.AchievementManager) AchievementManager._seulPotion = false; // v3.632.0 : « Seul », sans boire
     game.adventureQuestRun = { active: true, questId: questId };
     if (window.SortieManager) { SortieManager.end("return"); SortieManager.start("adventure"); } // v3.102.1 : la quête est une sortie
     addLog("📜 " + _t("Départ en quête : {x}", { x: _td(quest.name) }), "event");
@@ -266,6 +269,7 @@ var AdventureQuestManager = {
 
     if (success && quest) {
       game.adventureQuestsCompleted[quest.id] = true;
+      if (quest.id === "aq_tour_seul" && window.AchievementManager && !AchievementManager._seulPotion) AchievementManager.flag("seulNoPotion"); // v3.632.0
 
       var reward = quest.reward || {};
       game.gold += Number(reward.gold || 0);

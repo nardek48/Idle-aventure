@@ -142,7 +142,9 @@ var ForgeManager = {
     // v3.455.0 (Crypte, acte III) : la bande de la Forge 5 (niveaux 9 et 10) demande la Cire consacrée
     if (target > seuil * 4 && target <= seuil * 5) cost.cire_consacree = target - seuil * 4;
     // v3.486.0 (Montagne, M-0) : la bande de la Forge 6 (niveaux 11 et 12) demande l'Obsidienne taillée
-    if (target > seuil * 5) cost.obsidienne_taillee = target - seuil * 5;
+    if (target > seuil * 5 && target <= seuil * 6) cost.obsidienne_taillee = target - seuil * 5;
+    // v3.625.0 (Tour, T-0) : la bande de la Forge 7 (niveaux 13 et 14) demande le Verre de faille
+    if (target > seuil * 6) cost.verre_faille = target - seuil * 6;
     // v3.433.0 (choix « plan » = tomber) : la clé du Cœur, une Clé de voûte de moins (la reforge 7 n'en coûte plus)
     if (cost.cle_de_voute && window.StoryQuestManager && StoryQuestManager.getChoice("plan") === "tomber") {
       cost.cle_de_voute -= (typeof VILLAGE_COEUR_KEY_DISCOUNT === "number" ? VILLAGE_COEUR_KEY_DISCOUNT : 1);
@@ -154,6 +156,7 @@ var ForgeManager = {
     if (target > seuil * 3) cost.verre_trempe = Math.floor((target - seuil * 3) / 2) + 1;
     if (target > seuil * 4) cost.cle_de_voute = (cost.cle_de_voute || 0) + Math.floor((target - seuil * 4) / 2) + 1;
     if (target > seuil * 5) cost.cire_consacree = Math.floor((target - seuil * 5) / 2) + 1; // v3.486.0 : Cire consacrée aux reforges 11 et 12 (1/1)
+    if (target > seuil * 6) cost.obsidienne_taillee = Math.floor((target - seuil * 6) / 2) + 1; // v3.625.0 : Obsidienne aux reforges 13 et 14 (1/1)
     // v3.330.0 (E2) : reforges de l'arme exigées par l'Histoire -> or et matériaux du monde seulement
     if (this.isStoryReforge(slot, target) && typeof stripStoryMaterials === "function") cost = stripStoryMaterials(cost).cost;
     return cost;

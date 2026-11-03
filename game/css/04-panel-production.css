@@ -934,3 +934,20 @@
 .zone-act.is-done { opacity: 0.65; }
 .zone-act-ok { flex: none; font-size: 18px; font-weight: 800; color: var(--c-green-650-2); }
 .zone-act.is-info { justify-content: space-between; }
+
+/* v3.612.0 (atelier parcelles, disposition B) : 3 parcelles en lignes, bouton du prochain achat à droite,
+   réserve en jauge ; sous elles, l'achat automatique. */
+.pc3-list { display: grid; gap: 8px; margin-top: 8px; }
+.pc3 { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px 10px; padding: 8px 10px; border: 1px solid var(--nb-frame); border-radius: var(--nb-radius-sm); background: var(--nb-cream); }
+.pc3.is-locked { border-style: dashed; background: rgba(0, 0, 0, 0.05); }
+.pc3-main { display: grid; gap: 2px; min-width: 0; padding: 0; border: 0; background: none; font: inherit; color: var(--nb-ink); text-align: left; cursor: pointer; }
+.pc3-main b { font-size: 15px; line-height: 1.2; }
+.pc3-meta { font-size: 12px; font-weight: 600; color: var(--c-brown-700-soft); font-variant-numeric: tabular-nums; }
+.pc3-imps { display: flex; gap: 4px; margin-top: 2px; }
+.pc3-act { min-width: 112px; max-width: none; margin: 0; min-height: 48px; flex-direction: column; gap: 2px; padding: 4px 10px; }
+.pc3-act .production-cost-row { justify-content: center; }
+.pc3-max { font-size: 13px; font-weight: 700; color: var(--c-green-700-soft); padding: 0 6px; }
+.pc3-bar { grid-column: 1 / -1; }
+.pc3-auto { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; padding: 8px 10px; border: 1px solid var(--nb-frame); border-radius: var(--nb-radius-sm); background: var(--nb-cream-alt); color: var(--nb-ink); }
+.pc3-auto b { font-size: 14px; }
+.pc3-auto small { display: block; margin-top: 2px; font-size: 12px; font-weight: 600; color: var(--c-brown-700-soft); }

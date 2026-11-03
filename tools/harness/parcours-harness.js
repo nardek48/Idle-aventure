@@ -1,5 +1,5 @@
 "use strict";
-/* tools/harness/parcours-harness.js — v3.351.0 (H-0), v3.352.0 (H-1) : harnais de PARCOURS, P1 à P10 ; v3.359.0 : P11 (installer le jeu) ; v3.364.0 : P12 (acte IV du Désert) ; v3.380.0 : P12 déterministe sur la remontée.
+/* tools/harness/parcours-harness.js — v3.351.0 (H-0), v3.352.0 (H-1) : harnais de PARCOURS, P1 à P10 ; v3.359.0 : P11 (installer le jeu) ; v3.364.0 : P12 (acte IV du Désert) ; v3.380.0 : P12 déterministe sur la remontée ; v3.618.0 : P14 (habillage des cartes).
    Carte des systèmes v3.350.0 §7. Complète round-harness.js, ne le remplace pas.
 
    Le VRAI index.html, servi en http://localhost (service worker compris), dans Chromium à la
@@ -950,9 +950,115 @@ async function P13(browser, base) {
   await dev.close();
 }
 
+/* ====================================================================================
+   P14 — Habillage des cartes (v3.618.0 lot 2, v3.619.0 lot 3, v3.620.0 lot 4, atelier « Cartes E ») : sur 33
+   écrans et fiches, en téléphone et en PC, toute carte crème porte la texture (ou sa propre image), et tout
+   document non imbriqué la découpe déchirée. Un oubli nomme sa classe (listes de css/00-cartes.css).
+   ==================================================================================== */
+function prepHabillage() {
+  game.unlockedTabs = Object.assign({}, game.unlockedTabs, { village: true, map: true, combat: true, more: true, quests: true, companions: true, equip: true, achievements: true, log: true, tutorials: true, settings: true });
+  Object.keys(PRODUCTION_UNLOCK_FLAGS).forEach(function (id) { game.explorationProgression[PRODUCTION_UNLOCK_FLAGS[id]] = true; });
+  Object.keys(PRODUCTION_BUILDINGS).forEach(function (id) { ProductionManager.unlockBuilding(id); });
+  StoryQuestManager.ensure();
+  game.storyQuests.forest.currentStep = STORY_QUESTS.forest.steps.length;
+  game.storyQuests.desert.currentStep = STORY_QUESTS.desert.steps.map(function (x) { return x.id; }).indexOf("desert_16");
+  CompanionManager.unlock("wenna"); CompanionManager.unlock("maddoc"); CompanionManager.chooseVoie("maddoc", "tronc");
+  WorldTravel.arrive("desert", 0);
+  VillageBuildingManager.ensure();
+  Object.keys(game.village.buildings).forEach(function (k) { game.village.buildings[k].level = Math.max(game.village.buildings[k].level || 0, 3); });
+  game.gold = 48000; game.heroMaxHp = 99999; game.heroHp = 99999; game.activeTab = "campement";
+}
+var ECRANS_HABILLAGE = [
+  ["Quêtes", "switchTab('quests')"], ["Quêtes secondaires", "switchTab('quests');setQuestCategory('secondaires')"],
+  ["Camp, le feu", "switchTab('campement');setCampTab('feu')"], ["Camp, missions", "switchTab('campement');setCampTab('missions')"],
+  ["Village, production", "switchTab('village');setVillageSubTab('production')"], ["Village, bâtiments", "switchTab('village');setVillageSubTab('buildings')"],
+  ["Village, ateliers", "switchTab('village');setVillageSubTab('shops')"], ["Village, entrepôt", "switchTab('village');setVillageSubTab('entrepot')"],
+  ["Héros, résumé", "switchTab('equip');setHerosSubTab('hero')"], ["Héros, boutique", "switchTab('equip');setHerosSubTab('equip');setEquipSubTab('shop')"],
+  ["Héros, sac", "switchTab('equip');setHerosSubTab('equip');setEquipSubTab('inventory')"], ["Héros, compagnons", "switchTab('equip');setHerosSubTab('companions')"],
+  ["Hauts faits", "switchTab('achievements')"], ["Journal", "switchTab('log')"], ["Paramètres", "switchTab('settings')"],
+  ["Fiche Halle", "switchTab('village');openVillageBuildingSheet('hall')"], ["Fiche Taverne", "switchTab('village');openVillageBuildingSheet('tavern')"],
+  ["Fiche Forge", "switchTab('village');openVillageBuildingSheet('forge')"], ["Fiche Stats", "switchTab('equip');openHerosSheet('stats')"],
+  ["Fiche Capacités", "switchTab('equip');openHerosSheet('abilities')"], ["Fiche Caravane", "switchTab('campement');openExpeditionsSheet('caravan')"],
+  ["Fiche Donjon", "switchTab('village');openDungeonSheet(1)"],
+  // v3.620.0 (lot 4) : le reste du jeu
+  ["Carte", "switchTab('map')"], ["Bibliothèque", "switchTab('tutorials')"], ["Camp, grimoire", "switchTab('campement');setCampTab('grimoire')"],
+  ["Camp, expéditions", "switchTab('campement');setCampTab('depart')"], ["Fiche Entrepôt", "switchTab('village');openVillageBuildingSheet('warehouse')"],
+  ["Fiche Terrain", "switchTab('village');openVillageBuildingSheet('training')"], ["Fiche Apothicaire", "switchTab('village');openVillageBuildingSheet('apothecary')"],
+  ["Fiche Enchanteresse", "switchTab('village');openVillageBuildingSheet('enchanter')"], ["Fiche Palissade", "switchTab('village');openVillageBuildingSheet('palisade')"],
+  ["Fiche Grand Ouvrage", "switchTab('village');openGrandOuvrageSheet()"], ["Fiche Patrouilles", "switchTab('campement');openExpeditionsSheet('patrols')"]
+];
+function cartesNonHabillees() {
+  var DOC = /^(story-chain|story-step|story-prologue-card|camp-missions-card|ms-block|qb-card|tavern-board|chr-obj)$/;
+  var CONTENEUR = /^(vb-sheet-card|full-menu|ksheet|mw-sheet|pw-sheet)$/;
+  var oublis = {};
+  document.querySelectorAll("#panel-container *, .vb-sheet-card *, .ksheet *").forEach(function (e) {
+    var r = e.getBoundingClientRect(); if (r.width < 120 || r.height < 30) return;
+    var s = getComputedStyle(e), m = (s.backgroundColor.match(/[\d.]+/g) || []).map(Number);
+    if (!(m.length >= 3 && (m[3] === undefined || m[3] > 0.5) && m[0] > 225 && m[1] > 205 && m[2] > 160)) return;
+    var cls = String(e.className || "").split(/\s+/).filter(Boolean);
+    if (cls.some(function (c) { return CONTENEUR.test(c); })) return;
+    if ((e.tagName === "BUTTON" || e.closest("button")) && r.height < 70) return;
+    if (!/url\(/.test(s.backgroundImage)) { oublis[cls[0] || e.tagName.toLowerCase()] = 1; return; } // texture, ou illustration propre (mannequin, route)
+    // document (dont la carte Missions en PC) hors de toute carte habillée : découpe déchirée attendue
+    var doc = cls.some(function (c) { return DOC.test(c); }) || (cls.indexOf("cw-card") >= 0 && !!e.querySelector(".cw-mlist"));
+    var p = e.parentElement, range = false;
+    while (p && !range) { if (getComputedStyle(p).backgroundImage.indexOf("parchment-cream") >= 0) range = true; p = p.parentElement; }
+    if (doc && !range && (s.webkitMaskBoxImageSource || "none") === "none") oublis[(cls[0] || "?") + " (sans bord déchiré)"] = 1;
+  });
+  return Object.keys(oublis);
+}
+async function verifierHabillage(page, mode) {
+  // v3.619.1 (bug Seb) : la texture ne doit pas recouvrir une illustration propre (mannequin, route de la Caravane)
+  var illus = await page.evaluate(function () {
+    switchTab("equip"); setHerosSubTab("equip"); setEquipSubTab("equipment");
+    var eq = document.querySelector(".hs-eq"), a = eq ? getComputedStyle(eq).backgroundImage : "";
+    switchTab("campement"); openExpeditionsSheet("caravan");
+    var w = document.querySelector(".exp-world"), b = w ? getComputedStyle(w).backgroundImage : "";
+    try { closeExpeditionsSheet(); } catch (x) {}
+    return { eq: a.indexOf("/Heroes/") >= 0, route: !w || (b.indexOf("url(") >= 0 && b.indexOf("parchment-cream") < 0) };
+  });
+  ok(illus.eq && illus.route, mode + " · le mannequin de l'équipement et la route de la Caravane restent visibles");
+  for (var i = 0; i < ECRANS_HABILLAGE.length; i++) {
+    var e = ECRANS_HABILLAGE[i];
+    await page.evaluate(function () {
+      ["closeVillageBuildingSheet", "closeHerosSheet", "closeDungeonSheet", "closeExpeditionsSheet", "closeGrandOuvrageSheet"].forEach(function (f) { try { if (typeof window[f] === "function") window[f](); } catch (x) {} });
+    });
+    await page.evaluate(function (c) { new Function(c)(); }, e[1]);
+    await page.waitForTimeout(500);
+    var oublis = await page.evaluate(cartesNonHabillees);
+    ok(oublis.length === 0, mode + " · " + e[0] + " : cartes crème habillées" + (oublis.length ? " — oubli : " + oublis.join(", ") : ""));
+  }
+}
+async function P14(browser, base) {
+  var dev = await newDevice(browser);
+  var page = await launch(dev, base);
+  await makeHero(page, "Seb", "knight", [prepHabillage]);
+  await page.close();
+  page = await launch(dev, base);
+  await tap(page, ".title-screen-continue");
+  await dismissTutorials(page);
+  await verifierHabillage(page, "téléphone");
+  await shot(page, "1_telephone");
+  consoleClean(page);
+  await dev.close();
+  // PC : fenêtre large à la souris (mode grand écran)
+  dev = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: "fr-FR" });
+  page = await launch(dev, base);
+  await makeHero(page, "Seb", "knight", [prepHabillage]);
+  await page.close();
+  page = await launch(dev, base);
+  await page.locator(".ts-wide-card button:visible", { hasText: "Continuer" }).first().click(); // accueil grand écran : autre bouton
+  await page.waitForTimeout(400);
+  await dismissTutorials(page);
+  ok(await page.evaluate(function () { return document.documentElement.classList.contains("wide-mode"); }), "PC : mode grand écran actif");
+  await verifierHabillage(page, "PC");
+  await shot(page, "2_pc");
+  await dev.close();
+}
+
 /* ---------- Lancement ---------- */
 
-var PARCOURS = { P1: P1, P2: P2, P3: P3, P4: P4, P5: P5, P6: P6, P7: P7, P8: P8, P9: P9, P10: P10, P11: P11, P12: P12, P13: P13 };
+var PARCOURS = { P1: P1, P2: P2, P3: P3, P4: P4, P5: P5, P6: P6, P7: P7, P8: P8, P9: P9, P10: P10, P11: P11, P12: P12, P13: P13, P14: P14 };
 
 (async function () {
   var srv = await serve(ROOT);

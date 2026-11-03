@@ -72,7 +72,8 @@ function buildCodexListItemHTML(entry) {
 function buildCodexCategoryHeaderHTML(cat, items, isExpanded) {
   var unlockedInCat = items.filter(function (e) { return CodexManager.isUnlocked(e); }).length;
   var h = '<button type="button" class="nb-accordion-head' + (isExpanded ? ' is-expanded' : '') + '" onclick="toggleCodexCategory(\'' + esc(cat) + '\')">';
-  h += '<span class="nb-accordion-name">' + esc(CODEX_CATEGORY_LABELS[cat] || cat) + '</span>';
+  // v3.621.0 : catégorie encore vide -> « ??? », comme une fiche verrouillée (« Le Cycle » est un mot du Veilleur)
+  h += '<span class="nb-accordion-name">' + (unlockedInCat ? esc(CODEX_CATEGORY_LABELS[cat] || cat) : '???') + '</span>';
   h += '<span class="nb-accordion-count">' + unlockedInCat + ' / ' + items.length + '</span>';
   h += '<span class="nb-accordion-chevron">' + (isExpanded ? "▲" : "▼") + '</span>';
   h += '</button>';

@@ -126,13 +126,14 @@ var LootSystem = {
     return this._roll(ctx ? ctx.allowed : getAllowedRarities(), ctx ? ctx.world : undefined, ctx ? ctx.aether : null);
   },
 
-  /* Butin du monde, même pendant un donjon : vitrine de la Halle, caravanes. */
-  rollWorldDrop: function () {
-    return this._roll(getAllowedRarities(), undefined);
+  /* Butin du monde, même pendant un donjon : vitrine de la Halle, caravanes.
+     v3.621.0 : slot facultatif (la lame de Brannoc impose « weapon ») ; sans lui, emplacement au hasard. */
+  rollWorldDrop: function (slot) {
+    return this._roll(getAllowedRarities(), undefined, null, slot);
   },
 
-  _roll: function (allowed, worldIndex, aether) {
-    var slot = EQUIPMENT_SLOTS[randInt(0, EQUIPMENT_SLOTS.length - 1)];
+  _roll: function (allowed, worldIndex, aether, forcedSlot) {
+    var slot = (forcedSlot && EQUIPMENT_SLOTS.indexOf(forcedSlot) >= 0) ? forcedSlot : EQUIPMENT_SLOTS[randInt(0, EQUIPMENT_SLOTS.length - 1)];
 
     var weights = allowed.map(function (r) { return RARITY_DROP_RATES[r] || 0; });
     var totalWeight = weights.reduce(function (a, b) { return a + b; }, 0);

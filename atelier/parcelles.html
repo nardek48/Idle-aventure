@@ -1,0 +1,238 @@
+<title>Atelier Parcelles</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Alegreya:ital,wght@0,500;0,700;1,500&display=swap">
+<style>
+/* Atelier sombre (coque), écran du jeu en parchemin (jetons de css/00-tokens.css) ; une colonne téléphone. */
+:root {
+  color-scheme: dark;
+  --nuit: #14100b; --pierre: #221a12; --trait: #4a3a27; --clair: #f4e9d0; --sourd: #c9b896; --or: #f0aa3e;
+  --parch: #efe2c6; --carte: #fbf3e4; --bronze: #b98a4a; --encre: #3a2c1a; --encre2: #6b4a22; --vert: #2f7a45; --rouge: #a8452f; --bleu: #1f4f86;
+  --f-titre: "Cinzel", Georgia, serif; --f-recit: "Alegreya", Georgia, serif; --f-texte: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--nuit); color: var(--clair); font: 15px/1.45 var(--f-texte); }
+.wrap { max-width: 440px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 14px 32px; display: grid; gap: 12px; }
+h1 { font: 700 20px/1.2 var(--f-titre); letter-spacing: .03em; margin: 0; color: var(--or); text-wrap: balance; }
+.intro { margin: 0; color: var(--sourd); font-size: 14px; }
+.lbl { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--sourd); }
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 6px; }
+.seg button { font: 600 13px var(--f-texte); color: var(--clair); background: var(--pierre); border: 1px solid var(--trait); border-radius: 10px; min-height: 44px; padding: 0 4px; cursor: pointer; }
+.seg button small { display: block; font-size: 11px; font-weight: 500; color: var(--sourd); }
+.seg button[aria-pressed="true"] { border-color: var(--or); color: var(--or); }
+button:focus-visible { outline: 2px solid var(--or); outline-offset: 2px; }
+.tools { display: flex; gap: 8px; flex-wrap: wrap; }
+.tools button { flex: 1 1 auto; font: 600 13px var(--f-texte); color: var(--nuit); background: var(--or); border: 0; border-radius: 10px; min-height: 44px; padding: 0 12px; cursor: pointer; }
+.tools button.alt { background: var(--pierre); color: var(--clair); border: 1px solid var(--trait); }
+.note { margin: 0; font-size: 13px; color: var(--sourd); }
+.note b { color: var(--clair); }
+
+/* ---------- Écran du jeu ---------- */
+.ecran { background: var(--parch); color: var(--encre); border-radius: 18px; border: 2px solid #2a1f14; overflow: hidden; }
+.tete { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: linear-gradient(#2b2117, #1b140d); color: var(--clair); border-bottom: 2px solid var(--or); }
+.tete .ico { width: 42px; height: 42px; border-radius: 10px; background: #5a4126; display: grid; place-items: center; font: 700 18px var(--f-titre); color: var(--or); flex: 0 0 auto; }
+.tete h2 { margin: 0; font: 700 18px/1.15 var(--f-titre); letter-spacing: .04em; }
+.tete small { display: block; color: var(--sourd); font-size: 13px; }
+.corps { padding: 12px; display: grid; gap: 10px; }
+.stock { display: flex; gap: 6px; flex-wrap: wrap; font-size: 12px; font-weight: 700; }
+.stock span { background: var(--carte); border: 1px solid var(--bronze); border-radius: 999px; padding: 3px 9px; font-variant-numeric: tabular-nums; }
+.stock span.bas { color: var(--rouge); }
+.rail { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: #e3d2ad; border-radius: 12px; padding: 4px; }
+.rail span { text-align: center; font-weight: 700; font-size: 13px; padding: 9px 4px; border-radius: 9px; color: var(--encre2); }
+.rail span.on { background: linear-gradient(#f7c766, #e6a43a); color: var(--encre); }
+
+/* parcelles : variante A (trois cartes) */
+.grille { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.pc { background: var(--carte); border: 1px solid var(--bronze); border-radius: 12px; padding: 8px 6px; display: grid; gap: 4px; text-align: center; min-width: 0; }
+.pc.verrou { background: #e6d6b6; border-style: dashed; color: var(--encre2); }
+.pc b { font: 700 14px/1.15 var(--f-recit); }
+.pc .prof { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--encre2); }
+.niv { font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.debit { font-size: 12px; color: var(--vert); font-weight: 700; font-variant-numeric: tabular-nums; }
+.jauge { height: 7px; border-radius: 4px; background: #d9c59c; overflow: hidden; }
+.jauge i { display: block; height: 100%; background: linear-gradient(90deg, #c76b1c, #f1b43a); }
+.ams { display: flex; justify-content: center; gap: 4px; }
+.am { font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 6px; border: 1px solid var(--bronze); color: var(--encre2); opacity: .45; }
+.am.on { opacity: 1; background: #f3e1b8; }
+.act { font: 700 12px/1.2 var(--f-texte); color: var(--clair); background: linear-gradient(#2b5f9e, var(--bleu)); border: 1px solid #0f2c4f; border-radius: 9px; min-height: 44px; padding: 4px; cursor: pointer; display: grid; gap: 1px; }
+.act small { font-weight: 600; font-size: 11px; opacity: .9; }
+.act:disabled { background: #b9a888; border-color: #9a8a6c; color: #f3ead6; cursor: default; }
+.max { font-size: 12px; font-weight: 700; color: var(--vert); min-height: 44px; display: grid; place-items: center; }
+
+/* variante B (trois lignes) */
+.lignes { display: grid; gap: 6px; }
+.ln { background: var(--carte); border: 1px solid var(--bronze); border-radius: 12px; padding: 8px 10px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 10px; align-items: center; }
+.ln.verrou { background: #e6d6b6; border-style: dashed; }
+.ln .tx { display: grid; gap: 3px; min-width: 0; }
+.ln .tx b { font: 700 15px/1.15 var(--f-recit); }
+.ln .meta { font-size: 12px; color: var(--encre2); font-weight: 600; font-variant-numeric: tabular-nums; }
+.ln .act { min-width: 118px; }
+.ln .jauge { grid-column: 1 / -1; }
+
+/* achat automatique */
+.auto { background: var(--carte); border: 1px solid var(--bronze); border-radius: 12px; padding: 10px; display: grid; gap: 6px; }
+.auto-h { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.auto-h b { font-size: 14px; }
+.auto-h small, .auto p { display: block; margin: 0; font-size: 12px; font-weight: 600; color: var(--encre2); }
+.sw { position: relative; flex: 0 0 auto; width: 52px; height: 30px; border-radius: 15px; border: 1.5px solid var(--encre2); background: #d9c7a3; cursor: pointer; padding: 0; }
+.sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 23px; height: 23px; border-radius: 50%; background: #fff8ea; box-shadow: 0 1px 2px rgba(0,0,0,.4); transition: transform .15s; }
+.sw[aria-checked="true"] { background: linear-gradient(#e0a948, #9c6a2b); }
+.sw[aria-checked="true"]::after { transform: translateX(22px); }
+.sw:disabled { opacity: .45; cursor: default; }
+.journal { font-size: 12px; color: var(--encre2); margin: 0; padding-left: 16px; }
+@media (prefers-reduced-motion: reduce) { .sw::after { transition: none; } }
+</style>
+
+<div class="wrap">
+  <h1>Atelier · 3 parcelles</h1>
+  <p class="intro">La fiche d'un bâtiment de production avec 3 parcelles (rapide, moyenne, lente) qui montent à chaque monde, et l'achat automatique. Les coûts et débits sont ceux du banc <code>parcelles-bench.js</code> (Scierie).</p>
+
+  <div class="lbl">Monde atteint</div>
+  <div class="seg" id="seg-monde"></div>
+  <div class="lbl">Disposition</div>
+  <div class="seg" id="seg-var">
+    <button type="button" data-v="A" aria-pressed="true">A · trois cartes<small>côte à côte</small></button>
+    <button type="button" data-v="B" aria-pressed="false">B · trois lignes<small>bouton à droite</small></button>
+  </div>
+  <div class="tools">
+    <button type="button" id="b-heure">+1 h de jeu</button>
+    <button type="button" class="alt" id="b-reset">Remettre à l'arrivée</button>
+  </div>
+  <p class="note" id="note"></p>
+
+  <div class="ecran" role="region" aria-label="Fiche de la Scierie (prototype)">
+    <div class="tete"><div class="ico">S</div><div><h2>Scierie</h2><small id="sous"></small></div></div>
+    <div class="corps">
+      <div class="stock" id="stock"></div>
+      <div class="rail"><span>Ateliers · 2</span><span class="on">Parcelles · 3</span></div>
+      <div id="parcelles"></div>
+      <div class="auto" id="auto"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* Données du banc (01/11) : coût du niveau L → L+1 par parcelle, défrichage, améliorations, multiplicateur de débit. */
+var D = {"cost":{"1":{"fer":8,"pierre":6},"2":{"fer":9,"pierre":6},"3":{"fer":10,"pierre":7},"4":{"fer":12,"pierre":9},"5":{"fer":52,"pierre":38},"6":{"fer":52,"pierre":38},"7":{"fer":52,"pierre":38},"8":{"fer":52,"pierre":38},"9":{"fer":52,"pierre":38},"10":{"fer":103,"pierre":76},"11":{"fer":103,"pierre":76},"12":{"fer":469,"pierre":345},"13":{"fer":469,"pierre":345},"14":{"fer":469,"pierre":345},"15":{"fer":511,"pierre":382},"16":{"fer":511,"pierre":382}},
+  "unlock":[null,{"fer":15,"pierre":10},{"fer":23,"pierre":15}],
+  "imp":{"fertile":{"fer":20,"eau":15},"irrigated":{"pierre":18,"eau":22}},
+  "mult":{"1":1,"2":1.7,"3":2.4,"4":3.1,"5":3.8,"6":5.4,"7":7,"8":8.6,"9":10.2,"10":11.8,"11":13.9,"12":16,"13":20.767,"14":25.533,"15":30.3,"16":33.45,"17":36.6}};
+var MONDES = [
+  { nom: "Forêt", cap: 5, ent: 1250 }, { nom: "Désert", cap: 10, ent: 2000 }, { nom: "Ruines", cap: 12, ent: 2250 },
+  { nom: "Crypte", cap: 15, ent: 4000 }, { nom: "Montagne", cap: 17, ent: 6000 }
+];
+var PROFILS = [
+  { nom: "Taillis d'Aeswyn", prof: "Rapide", base: 0.7, res: 45 },
+  { nom: "Bois Sacré", prof: "Moyenne", base: 0.5, res: 90 },
+  { nom: "Haie Runique", prof: "Lente", base: 0.35, res: 180 }
+];
+var AM = { fertile: "Reboisement", irrigated: "Bois préservé" };
+var NOMS_RES = { fer: "fer", pierre: "pierre", eau: "eau" };
+var S = { monde: 1, v: "A", auto: true, parc: [], stock: {}, journal: [] };
+
+function capMonde() { return MONDES[S.monde].cap; }
+function arrivee() {
+  var prev = S.monde ? MONDES[S.monde - 1].cap : 1;
+  S.parc = PROFILS.map(function (p, i) { return { open: S.monde > 0 || i === 0, lvl: prev, fertile: S.monde > 0, irrigated: S.monde > 0, fill: 0.6 }; });
+  var e = MONDES[S.monde].ent;
+  S.stock = { fer: Math.round(e * 0.55), pierre: Math.round(e * 0.55), eau: Math.round(e * 0.4) };
+  S.journal = []; S.auto = S.monde > 0;
+}
+function debit(i) { var p = S.parc[i], b = PROFILS[i]; if (!p.open) return 0; return b.base * D.mult[p.lvl] * (1 + (p.fertile ? 0.08 : 0) + (p.irrigated ? 0.10 : 0)); }
+function prochaine(i) {
+  var p = S.parc[i];
+  if (!p.open) return { k: "open", c: D.unlock[i], t: "Défricher" };
+  if (p.lvl < capMonde()) return { k: "lvl", c: D.cost[p.lvl], t: "Niv. " + (p.lvl + 1) };
+  if (!p.fertile) return { k: "fertile", c: D.imp.fertile, t: AM.fertile };
+  if (!p.irrigated) return { k: "irrigated", c: D.imp.irrigated, t: AM.irrigated };
+  return null;
+}
+function payable(c, marge) {
+  var e = MONDES[S.monde].ent;
+  return Object.keys(c).every(function (k) { return S.stock[k] - (marge ? e * 0.5 : 0) >= c[k]; });
+}
+function acheter(i, parAuto) {
+  var n = prochaine(i); if (!n || !payable(n.c, parAuto)) return false;
+  Object.keys(n.c).forEach(function (k) { S.stock[k] -= n.c[k]; });
+  var p = S.parc[i];
+  if (n.k === "open") p.open = true; else if (n.k === "lvl") p.lvl++; else p[n.k] = true;
+  if (parAuto) S.journal.unshift(PROFILS[i].nom + " : " + n.t);
+  return true;
+}
+function autoAchats() {
+  if (!S.auto || S.monde === 0) return;
+  for (var g = 0; g < 200; g++) {
+    var best = -1, bs = Infinity;
+    S.parc.forEach(function (p, i) { var n = prochaine(i); if (!n || !payable(n.c, true)) return; var s = Object.keys(n.c).reduce(function (a, k) { return a + n.c[k]; }, 0); if (s < bs) { bs = s; best = i; } });
+    if (best < 0 || !acheter(best, true)) break;
+  }
+  S.journal = S.journal.slice(0, 4);
+}
+/* +1 h : les autres bâtiments rapportent fer, pierre et eau (débit des 3 parcelles au plafond du monde), dans la limite de l'Entrepôt. */
+function uneHeure() {
+  var e = MONDES[S.monde].ent, apport = Math.round((0.7 + 0.5 + 0.35) * D.mult[capMonde()] * 1.18 * 60);
+  Object.keys(S.stock).forEach(function (k) { S.stock[k] = Math.min(e, S.stock[k] + apport); });
+  S.parc.forEach(function (p) { p.fill = Math.min(1, p.fill + 0.3); });
+  autoAchats(); rendre();
+}
+function fmt(n) { return Math.round(n).toLocaleString("fr-FR"); }
+function coutHTML(c) { return Object.keys(c).map(function (k) { return fmt(c[k]) + " " + NOMS_RES[k]; }).join(" · "); }
+
+function boutonHTML(i) {
+  var n = prochaine(i);
+  if (!n) return '<div class="max">Au maximum</div>';
+  return '<button type="button" class="act" data-i="' + i + '"' + (payable(n.c) ? '' : ' disabled') + '>' + n.t + '<small>' + coutHTML(n.c) + '</small></button>';
+}
+function rendre() {
+  document.getElementById("seg-monde").innerHTML = MONDES.map(function (m, i) {
+    return '<button type="button" data-m="' + i + '" aria-pressed="' + (i === S.monde) + '">' + m.nom + '<small>niv. ' + m.cap + '</small></button>';
+  }).join("");
+  Array.prototype.forEach.call(document.querySelectorAll("#seg-var button"), function (b) { b.setAttribute("aria-pressed", String(b.dataset.v === S.v)); });
+  var tot = S.parc.reduce(function (a, p, i) { return a + debit(i); }, 0);
+  document.getElementById("sous").textContent = "+" + tot.toFixed(1).replace(".", ",") + " bois/min · 3 parcelles";
+  var e = MONDES[S.monde].ent;
+  document.getElementById("stock").innerHTML = "<span>Entrepôt " + fmt(e) + "</span>" + Object.keys(S.stock).map(function (k) {
+    return '<span' + (S.stock[k] < e * 0.5 ? ' class="bas"' : '') + '>' + fmt(S.stock[k]) + " " + NOMS_RES[k] + '</span>';
+  }).join("");
+  var h = "";
+  if (S.v === "A") {
+    h = '<div class="grille">' + S.parc.map(function (p, i) {
+      var b = PROFILS[i];
+      if (!p.open) return '<div class="pc verrou"><b>' + b.nom + '</b><span class="prof">' + b.prof + '</span><span class="niv">À défricher</span>' + boutonHTML(i) + '</div>';
+      return '<div class="pc"><b>' + b.nom + '</b><span class="prof">' + b.prof + '</span><span class="niv">Niv. ' + p.lvl + ' / ' + capMonde() + '</span>'
+        + '<span class="debit">+' + debit(i).toFixed(1).replace(".", ",") + '/min</span><div class="jauge"><i style="width:' + Math.round(p.fill * 100) + '%"></i></div>'
+        + '<div class="ams"><span class="am' + (p.fertile ? ' on' : '') + '">R</span><span class="am' + (p.irrigated ? ' on' : '') + '">P</span></div>' + boutonHTML(i) + '</div>';
+    }).join("") + '</div>';
+  } else {
+    h = '<div class="lignes">' + S.parc.map(function (p, i) {
+      var b = PROFILS[i];
+      var meta = p.open ? b.prof + ' · niv. ' + p.lvl + ' / ' + capMonde() + ' · +' + debit(i).toFixed(1).replace(".", ",") + '/min'
+        + (p.fertile ? ' · ' + AM.fertile : '') + (p.irrigated ? ' · ' + AM.irrigated : '') : b.prof + ' · à défricher';
+      return '<div class="ln' + (p.open ? '' : ' verrou') + '"><div class="tx"><b>' + b.nom + '</b><span class="meta">' + meta + '</span></div>' + boutonHTML(i)
+        + (p.open ? '<div class="jauge"><i style="width:' + Math.round(p.fill * 100) + '%"></i></div>' : '') + '</div>';
+    }).join("") + '</div>';
+  }
+  document.getElementById("parcelles").innerHTML = h;
+  var foret = S.monde === 0;
+  document.getElementById("auto").innerHTML = '<div class="auto-h"><span><b>Achat automatique</b><small>'
+    + (foret ? "S'ouvre au Désert. En Forêt, on apprend à la main." : "Monte la parcelle la moins chère avec ce qui dépasse la moitié du plafond. Le village garde le reste.") + '</small></span>'
+    + '<button type="button" class="sw" role="switch" id="sw-auto" aria-label="Achat automatique" aria-checked="' + (S.auto && !foret) + '"' + (foret ? ' disabled' : '') + '></button></div>'
+    + (S.journal.length ? '<ul class="journal">' + S.journal.map(function (j) { return '<li>' + j + '</li>'; }).join("") + '</ul>' : '<p>Rien acheté pour l\'instant. Touche « +1 h de jeu ».</p>');
+  document.getElementById("note").innerHTML = "<b>" + MONDES[S.monde].nom + "</b> : parcelles arrivées au niveau " + (S.monde ? MONDES[S.monde - 1].cap : 1)
+    + ", plafond " + capMonde() + ". Aujourd'hui, ce monde a " + [3, 6, 6, 9, 9][S.monde] + " zones.";
+}
+
+document.addEventListener("click", function (ev) {
+  var t = ev.target.closest("button"); if (!t) return;
+  if (t.dataset.m) { S.monde = Number(t.dataset.m); arrivee(); }
+  else if (t.dataset.v) S.v = t.dataset.v;
+  else if (t.dataset.i) acheter(Number(t.dataset.i), false);
+  else if (t.id === "sw-auto") { S.auto = !S.auto; autoAchats(); }
+  else if (t.id === "b-heure") { uneHeure(); return; }
+  else if (t.id === "b-reset") arrivee();
+  else return;
+  rendre();
+});
+arrivee(); rendre();
+</script>

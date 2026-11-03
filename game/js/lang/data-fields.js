@@ -22,6 +22,9 @@ var DATA_TEXT_FIELDS = {
   /* --- Hauts faits --- */
   ACHIEVEMENTS_DB: ["*.name", "*.desc", "*.hint", "*.title"],
   PROLOGUE_PLANCHES: ["*.lignes.*"], // v3.570.0 : le prologue (data/prologue.js)
+  CHAPTER_OPENINGS: ["*.num", "*.planches.*.lignes.*"], // v3.623.0 : ouvertures de chapitre (data/chapter-openings.js)
+  TOWER_VISION: ["num", "planches.*.lignes.*"], // v3.631.0 (Tour) : la vision de l'étape 19
+  TOWER_FINS: ["*.num", "*.banniere", "*.planches.*.lignes.*"], // v3.631.0 (Tour) : les quatre fins
   ACHIEVEMENTS_RETIRED: ["*.name", "*.desc"],
   ACHIEVEMENT_CATEGORIES: ["*.label", "*.tierRewards.*.title"],
   ACHIEVEMENT_CATEGORY_LABELS: ["*"],
@@ -31,6 +34,11 @@ var DATA_TEXT_FIELDS = {
   STORY_SEUIL_TEXTS: ["*.completion", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.428.0 (Ruines) : les deux branches du choix « seuil »
   STORY_PORTENT_TEXTS: ["*.completion", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.452.0 (Crypte) : les deux branches du choix « portent »
   STORY_VEINE_TEXTS: ["*.completion", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.488.0 (Montagne) : les deux branches du choix « veine »
+  STORY_BRAISE_TEXTS: ["*.completion", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.626.0 (Tour) : les deux branches du choix « braise »
+  STORY_COPIE_TEXTS: ["*.completion", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.629.0 (Tour) : les deux branches du choix « copie »
+  STORY_QUESTION_OPTIONS: ["*.label", "*.desc"], // v3.631.0 (Tour) : les quatre réponses à la Question
+  STORY_QUESTION_PRIX: ["*"], // v3.631.0 : les deux prix affichés
+  TOWER_FIN_PRIX: ["*"], // v3.631.0 : ligne de l'épilogue quand Brannoc manque
   STORY_OUVRAGE_TEXTS: ["*.completion", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.490.0 (Montagne) : les deux branches du choix « ouvrage »
   STORY_DROIT_TEXTS: ["*.completion", "*.text", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.491.0 (Montagne) : le choix « droit » et la fin du chapitre
   STORY_PIOCHE_OPTIONS: ["*.label", "*.desc"], // v3.488.0 (Montagne, montagne_03) : « Deux sur cinq »
@@ -40,6 +48,7 @@ var DATA_TEXT_FIELDS = {
   STORY_BAT_TEXTS: ["*.completion", "*.aeswyn", "*.text", "*.*.*.text", "*.*.*.who", "*.aeswynDialogue.*.text", "*.aeswynDialogue.*.who", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.456.0 : le choix « bat »
   LABYRINTH_TEXTS: [""], // v3.434.0 (Ruines, RU12) : le Labyrinthe aux leviers
   LABYRINTH_CONFIG: ["bossName"],
+  LAB_KINDS: ["*.texts", "*.config.bossName"], // v3.636.0 (Faille, F-0) : sortes de run du moteur à leviers (mêmes objets que ci-dessus)
   STORY_SALLE_TEXTS: ["*.completion", "*.chaise", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.431.0 (Ruines) : les deux branches du choix « salle »
   STORY_PLAN_TEXTS: ["*.completion", "*.dialogue.*.text", "*.dialogue.*.who", "suite.*.text", "suite.*.who"], // v3.433.0 (Ruines) : le plan et la fin du chapitre
   ADVENTURE_QUESTS: ["*.name", "*.story", "*.bossLog", "*.bossPhases.*.label", "*.bossPhases.*.line", "*.steps.*.desc", "*.encounterLines.*"],
@@ -90,6 +99,7 @@ var DATA_TEXT_FIELDS = {
   TALENT_TREES: ["*.trunk.*.name", "*.trunk.*.short", "*.trunk.*.effect",
     "*.paths.*.name", "*.paths.*.tag", "*.paths.*.nodes.*.name", "*.paths.*.nodes.*.short", "*.paths.*.nodes.*.effect"],
   TALENT_COMMAND: ["name", "tag", "nodes.*.name", "nodes.*.short", "nodes.*.effect"], // v3.453.0 : voie du Commandement
+  TALENT_TOWER: ["name", "tag", "nodes.*.name", "nodes.*.short", "nodes.*.effect"], // v3.633.0 : voie Varier (Tour)
 
   /* --- Équipement, objets, économie --- */
   EQUIPMENT_SLOT_LABELS: ["*"],
@@ -103,6 +113,7 @@ var DATA_TEXT_FIELDS = {
   SET_BONUS_CONFIG: ["tiers.*.bonuses.*.name"],
   POTIONS_DB: ["*.name", "*.desc"],
   COMPANION_RELIC_FAMILIES: ["*.name"], // H4 : reliques des compagnons
+  COMPANION_RELIC_UNIQUES: ["*.name"], // v3.598.0 : reliques uniques des compagnons
   COMBAT_ITEMS: ["*.name", "*.desc", "*.con"], // v3.441.0 : objets de combat (v3.442.0 : contrepartie)
   HEALING_POTIONS_DB: ["*.name"],
   UPGRADES: ["*.name", "*.desc"],

@@ -216,8 +216,8 @@ var DungeonManager = {
   /* Matériau projeté pour un donjon et n Marques : base + n × specialPerMark (décision 12.2). */
   getSpecialAmount: function (dungeon, count) {
     if (!dungeon || !dungeon.specialResourceId || !(dungeon.specialResourceAmount > 0)) return 0;
-    return Number(dungeon.specialResourceAmount) + Math.max(0, count || 0) * Number(DUNGEON_CONFIG.specialPerMark || 0)
-      + this.getShardEffect("specialBonus"); // v3.321.0 : Sacoche du donjon
+    return Math.round((Number(dungeon.specialResourceAmount) + Math.max(0, count || 0) * Number(DUNGEON_CONFIG.specialPerMark || 0)
+      + this.getShardEffect("specialBonus")) * (window.TowerSystem ? TowerSystem.summitLootMult(dungeon) : 1)); // v3.321.0 : Sacoche du donjon ; v3.629.0 : Aeswyn d'avant laissée (Tour)
   },
 
   checkTicketReset: function () {
@@ -268,7 +268,8 @@ var DungeonManager = {
     // v3.253.0 : les vagues normales suivent le donjon quand il le déclare (wavePremiumMult).
     var wavePremium = (typeof dungeon.wavePremiumMult === "number") ? dungeon.wavePremiumMult : DUNGEON_CONFIG.basePremiumMult;
     var premium = isBossWave ? DUNGEON_CONFIG.bossPremiumMult : wavePremium;
-    return worldScale * (1 + waveProgress * DUNGEON_CONFIG.waveRampMult) * premium * Math.max(1, dungeon.difficultyMult || 1);
+    return worldScale * (1 + waveProgress * DUNGEON_CONFIG.waveRampMult) * premium * Math.max(1, dungeon.difficultyMult || 1)
+      * (window.TowerSystem ? TowerSystem.summitHardMult(dungeon) : 1); // v3.629.0 (Tour, choix « copie ») : le Sommet plus dur
   },
 
   /* Élite de données à l'échelle du donjon (doc §4.5) : EliteManager.build calcule

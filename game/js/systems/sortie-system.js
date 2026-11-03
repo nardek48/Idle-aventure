@@ -153,6 +153,7 @@ var SortieManager = {
       lost.resources[k] = q - kept.resources[k];
     });
 
+    if (window.VillageEvents) kept.gold = Math.floor(kept.gold * VillageEvents.feteGoldMult(s.context)); // v3.604.0 : après la fête
     this.bank(kept);
     if (window.CombatItems) CombatItems.onSortieEnd(s); // v3.442.0 : la Fiole qui n'a pas servi revient
     if (outcome === "success") this.grantMissionXp(s);
@@ -186,6 +187,7 @@ var SortieManager = {
       StatsSystem.recalcStats(); // sortie farm close : désarme les effets éventuels (isEffectLive redevient false)
     }
     if (typeof renderCombatControls === "function") renderCombatControls();
+    if (window.WorldDays) WorldDays.onSortieEnd(s.context); // v3.602.0 : une nuit toutes les 3 sorties (hors farm libre)
     return summary;
   },
 

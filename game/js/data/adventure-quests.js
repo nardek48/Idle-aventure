@@ -1182,6 +1182,183 @@ var ADVENTURE_QUESTS = {
       }
     ],
     reward: { gold: 1350, seve: 5 }
+  },
+
+  /* v3.626.0 (Tour, acte I étape 2) — « Le pied de la Tour » : cinq rencontres avec les gardiens. Réglés au banc
+     (tour-acte1-bench) : plus faciles que la cible, la marge du Mage face aux coups lourds décide. */
+  aq_tour_pied: {
+    id: "aq_tour_pied",
+    type: "kill",
+    section: "adventure",
+    difficulty: "medium",
+    progressionStage: "world_start",
+    category: "side",
+    worldId: "tower",
+    adventureIndex: 0,
+    encounters: [
+      { enemy: "guardian" },
+      { group: ["guardian", "arcanegolem"], groupHpMult: 0.55 },
+      { enemy: "hybrid" }, // banc : le golem seul (résiste à la magie, réduit au silence) écrasait le Mage
+      { group: ["guardian", "guardian"], groupHpMult: 0.55 },
+      { group: ["arcanegolem", "guardian"], groupHpMult: 0.55 }
+    ],
+    // banc (tour-acte1-bench, sauvegardes d'entrée de la Tour, 6 runs, sans potion) : 100 % de réussite pour les trois classes,
+    // 85-97 % des PV restants, 4,3 à 7,5 rounds par combat. Plus dur que ×6 en puissance, le Mage tombe d'un coup (17 % à ×8).
+    encounterHpMult: 2.5,
+    enemyPowerMult: 6,
+    name: "Le pied de la Tour",
+    story: "Au pied de la Tour, des gardiens de pierre font les cent pas. Ils regardent ceux qui arrivent.",
+    icon: "./images/Icons/quest_icons/exploration/exploration1.webp",
+    steps: [
+      { id: "rencontres_pied", type: "encounter", worldId: "tower", target: 5, desc: "Vaincre {target} rencontres au pied de la Tour" }
+    ],
+    reward: {}
+  },
+
+  /* v3.626.0 (Tour, acte I étape 4) — « L'étage du sable » : quatre rencontres avec les bêtes du Désert, comme la Tour
+     s'en souvient (écho du Désert, TW2). Mêmes réglages que le pied. */
+  aq_tour_sable: {
+    id: "aq_tour_sable",
+    type: "kill",
+    section: "adventure",
+    difficulty: "medium",
+    progressionStage: "world_start",
+    category: "side",
+    worldId: "tower",
+    adventureIndex: 0,
+    encounters: [
+      { group: ["scarab", "scarab", "scorpion"], groupHpMult: 0.45 },
+      { group: ["sandwarrior", "scorpion"], groupHpMult: 0.55 },
+      { enemy: "sandworm" },
+      { group: ["sandwarrior", "sandworm"], groupHpMult: 0.55 }
+    ],
+    encounterHpMult: 2.5, // banc : 100 % de réussite, 90-95 % des PV restants, 4,4 à 7,8 rounds par combat
+    enemyPowerMult: 6,
+    name: "L'étage du sable",
+    story: "Derrière la porte, un escalier, puis du sable. Le Désert comme quelqu'un s'en souvient.",
+    icon: "./images/Icons/quest_icons/exploration/exploration1.webp",
+    steps: [
+      { id: "rencontres_sable", type: "encounter", worldId: "tower", target: 4, desc: "Vaincre {target} rencontres à l'étage du sable" }
+    ],
+    reward: {}
+  },
+
+  /* v3.628.0 (Tour, acte II étape 8) — « L'étage des gisants » : quatre rencontres avec les morts de la Crypte, debout
+     contre les murs (écho de la Crypte). Mêmes réglages que l'acte I, au banc. */
+  aq_tour_gisants: {
+    id: "aq_tour_gisants",
+    type: "kill",
+    section: "adventure",
+    difficulty: "medium",
+    progressionStage: "world_start",
+    category: "side",
+    worldId: "tower",
+    adventureIndex: 0,
+    encounters: [
+      { group: ["skeleton", "skeleton", "ghoul"], groupHpMult: 0.45 },
+      { group: ["wraith", "spectre"], groupHpMult: 0.55 },
+      { enemy: "deadknight" },
+      { group: ["deadknight", "necromancer"], groupHpMult: 0.55 }
+    ],
+    encounterHpMult: 2.5,
+    enemyPowerMult: 6,
+    name: "L'étage des gisants",
+    story: "Un étage de gisants debout contre les murs, les yeux fermés. Certains se décollent du mur quand on passe.",
+    icon: "./images/Icons/quest_icons/exploration/exploration1.webp",
+    steps: [
+      { id: "rencontres_gisants", type: "encounter", worldId: "tower", target: 4, desc: "Vaincre {target} rencontres à l'étage des gisants" }
+    ],
+    reward: {}
+  },
+
+  /* v3.629.0 (Tour, acte III étape 15) — « Le haut de l'escalier » : quatre rencontres dans l'escalier qui se rétrécit,
+     les gardiens de la Tour. Plus dur que l'acte I (le héros porte le Légendaire complet), au banc. */
+  aq_tour_haut: {
+    id: "aq_tour_haut",
+    type: "kill",
+    section: "adventure",
+    difficulty: "medium",
+    progressionStage: "world_start",
+    category: "side",
+    worldId: "tower",
+    adventureIndex: 1,
+    encounters: [
+      { group: ["guardian", "hybrid"], groupHpMult: 0.55 },
+      { enemy: "corruptmage" },
+      { group: ["arcanegolem", "hybrid"], groupHpMult: 0.55 },
+      { group: ["guardian", "corruptmage"], groupHpMult: 0.55 }
+    ],
+    encounterHpMult: 4.5,
+    enemyPowerMult: 9, // v3.629.0 : banc, réussite 94 à 100 % (au-delà, la quête bascule net)
+    name: "Le haut de l'escalier",
+    story: "Plus haut, l'escalier se rétrécit. Une personne de front, puis une personne tout court.",
+    icon: "./images/Icons/quest_icons/exploration/exploration1.webp",
+    steps: [
+      { id: "rencontres_haut", type: "encounter", worldId: "tower", target: 4, desc: "Vaincre {target} rencontres en haut de l'escalier" }
+    ],
+    reward: {}
+  },
+
+  /* v3.630.0 (Tour, acte IV, étape 16) — « Seul » : trois rencontres sans compagnon (TW5, `solo` lu par
+     TowerSystem.isSolo puis CompanionManager.partyIds). Au banc. */
+  aq_tour_seul: {
+    id: "aq_tour_seul",
+    type: "kill",
+    section: "adventure",
+    difficulty: "hard",
+    progressionStage: "world_end",
+    category: "side",
+    worldId: "tower",
+    adventureIndex: 1,
+    requiresStoryStep: "tour_16",
+    solo: true,
+    encounters: [
+      { group: ["guardian", "corruptmage"], groupHpMult: 0.55 },
+      { group: ["arcanegolem", "hybrid"], groupHpMult: 0.55 },
+      { enemy: "corruptmage" }
+    ],
+    encounterHpMult: 2.75, // banc (sauvegardes de fin d'acte III) : réussite 94 à 100 % ; ×3,5 / ×8 : Mage 25 %
+    enemyPowerMult: 6.5,
+    name: "Seul",
+    story: "Tu montes seul. En bas, très loin, Maddoc tient une porte contre rien.",
+    icon: "./images/Icons/quest_icons/exploration/exploration1.webp",
+    steps: [
+      { id: "rencontres_seul", type: "encounter", worldId: "tower", target: 3, desc: "Vaincre {target} rencontres, seul" }
+    ],
+    reward: {}
+  },
+
+  /* v3.630.0 (Tour, acte IV, étape 18) — LA SILHOUETTE (TW6), seule. Elle prend le trait de ta classe, puis garde
+     ta dernière technique (le miroir, 60 %), puis la lumière passe à travers elle (bouclier, 30 %). Au banc. */
+  aq_tour_silhouette: {
+    id: "aq_tour_silhouette",
+    type: "kill",
+    section: "adventure",
+    difficulty: "hard",
+    progressionStage: "world_end",
+    category: "side",
+    worldId: "tower",
+    adventureIndex: 1,
+    requiresStoryStep: "tour_18",
+    solo: true,
+    bossId: "silhouette",
+    // banc, contre de la classe au Grimoire : ×3,75 / ×1 -> 100 % de réussite pour les trois classes ; au-delà le combat bascule net
+    // (×4,5 / ×1,1 : Chevalier 0 %, Rôdeur 25 %). Sans le contre de la rage, le Chevalier tombe à 63 %.
+    bossHpMult: 4.25, // rythme de la Tour (03/11, Terrain 21) : 3,75 / 1 -> 4,25 / 1,1 ; à 5 / 1,3 le Chevalier tombe à 0 % (pas d'entre-deux)
+    bossPowerMult: 1.1,
+    bossPhases: [
+      { atPct: 1, copyClass: true, label: "elle se bat comme toi", line: "Elle a tes gestes. Elle les fait avant toi." },
+      { atPct: 0.6, mirror: true, label: "elle garde tes gestes", line: "Elle garde ce que tu annonces. Ne refais pas deux fois la même chose." },
+      { atPct: 0.3, through: true, label: "la lumière passe à travers elle", line: "La lumière passe à travers elle comme à travers une vitre." }
+    ],
+    bossLog: "Elle ne parle pas. Elle se bat comme lui : précise, sans un geste de trop.",
+    name: "La silhouette",
+    story: "Là où la fente est la plus large, quelqu'un t'attend. Il a le visage du Veilleur.",
+    icon: "./images/Icons/quest_icons/exploration/exploration3.webp",
+    steps: [
+      { id: "boss_silhouette", type: "bossKill", bossId: "silhouette", target: 1, desc: "Vaincre la silhouette" }
+    ],
+    reward: {}
   }
 };
 

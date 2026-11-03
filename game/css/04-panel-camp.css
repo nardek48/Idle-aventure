@@ -420,3 +420,92 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
   .camp-ration-ib-n { top: -6px; right: -6px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px; line-height: 18px; }
   .camp-ration-ib::after { content: ""; position: absolute; inset: -6px; } /* bordure 1 px : 32 + 2×6 = 44 px de toucher, rendu inchangé */
 }
+
+/* v3.594.0 (atelier camp-carte, option M3 de Seb) : en tête du « feu », le monde où l'on est et la carte */
+.camp-here { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; gap: 10px; align-items: center; width: 100%; padding: 10px 12px; text-align: left; cursor: pointer; font: inherit; color: inherit; }
+.camp-here-img { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid var(--nb-frame-light); }
+.camp-here-tx { min-width: 0; display: grid; gap: 1px; }
+.camp-here-tx b { font-size: 14px; }
+.camp-here-tx small { font-size: 12.5px; color: var(--c-brown-550-soft); }
+.camp-here-go { font-weight: 800; font-size: 13px; padding: 8px 12px; border-radius: 9px; border: 1px solid var(--nb-gold); background: var(--nb-gold); color: var(--c-brown-850-vivid); white-space: nowrap; }
+.camp-here:focus-visible { outline: 2px solid var(--nb-gold); outline-offset: 2px; }
+
+/* v3.595.0 (C1 et C2) : la phrase du soir, et les compagnons autour du feu */
+.camp-soir, .camp-feu { padding: 10px 14px; text-align: left; display: grid; gap: 6px; }
+.camp-soir-k { font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--c-brown-550-soft); }
+.camp-soir-t, .camp-feu-say { margin: 0; font: italic 400 15px/1.45 "Alegreya", Georgia, serif; color: var(--c-brown-850-vivid); }
+.camp-feu-row { display: flex; justify-content: center; align-items: flex-end; gap: 12px; flex-wrap: wrap; padding-top: 2px; }
+.camp-feu-fire { width: 44px; height: 44px; object-fit: contain; align-self: center; filter: drop-shadow(0 0 8px rgba(255, 150, 40, .65)); }
+.camp-feu-mate { display: grid; justify-items: center; gap: 2px; border: 0; background: none; padding: 0; cursor: pointer; font-family: inherit; font-weight: 700; font-size: 13px; line-height: 1.2; color: var(--c-brown-850-vivid); }
+.camp-feu-img { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; border: 2px solid var(--nb-frame-light); }
+.camp-feu-mate.is-on .camp-feu-img { border-color: var(--nb-gold); box-shadow: 0 0 0 3px rgba(201, 154, 61, .45); }
+.camp-feu-mate:focus-visible { outline: 2px solid var(--nb-gold); outline-offset: 2px; border-radius: 8px; }
+.camp-feu-say { padding: 6px 10px; border-radius: 10px; background: rgba(255, 255, 255, .55); border: 1px solid var(--nb-frame-light); }
+.camp-feu-hint { margin: 0; font-size: 12.5px; color: var(--c-brown-550-soft); text-align: center; }
+
+/* v3.597.0 (atelier conversations, mise en page B) : un compagnon veut parler, puis la scène de conversation */
+.camp-talk { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; gap: 10px; align-items: center; width: 100%; padding: 10px 12px; text-align: left; cursor: pointer; font: inherit; color: inherit;
+  border-color: var(--nb-gold); background: linear-gradient(var(--nb-cream), var(--c-cream-150-2)); }
+.camp-talk-img { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; border: 2px solid var(--nb-gold); }
+.camp-talk-tx { min-width: 0; display: grid; gap: 2px; }
+.camp-talk-tx b { font-size: 14px; }
+.camp-talk-tx small { font: italic 400 14px/1.35 "Alegreya", Georgia, serif; color: var(--c-brown-550-soft); }
+.camp-talk-go { font-weight: 800; font-size: 13px; padding: 8px 12px; border-radius: 9px; border: 1px solid var(--nb-gold); background: var(--nb-gold); color: var(--c-brown-850-vivid); white-space: nowrap; }
+.camp-talk:focus-visible { outline: 2px solid var(--nb-gold); outline-offset: 2px; }
+.camp-feu-mate { position: relative; }
+.camp-feu-talk { position: absolute; top: -4px; right: -6px; width: 22px; height: 22px; border-radius: 50%; background: var(--nb-gold); color: var(--c-brown-850-vivid); font: 900 13px/20px -apple-system, BlinkMacSystemFont, sans-serif; font-style: normal; text-align: center; border: 1px solid var(--c-brown-850-vivid); }
+
+#talk-root:empty { display: none; }
+.talk-scene { position: fixed; inset: 0; z-index: 3500; background: var(--c-brown-950-soft) center / cover no-repeat; }
+.talk-scene::before { content: ""; position: absolute; inset: 0; background: linear-gradient(rgba(8, 6, 4, .25), rgba(8, 6, 4, .55) 45%, rgba(8, 6, 4, .92)); }
+.talk-x { position: absolute; z-index: 2; top: calc(10px + env(safe-area-inset-top, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); width: 44px; height: 44px; border-radius: 50%;
+  border: 1px solid rgba(226, 177, 74, .4); background: rgba(18, 14, 9, .7); color: var(--c-cream-100-2); font: 700 16px -apple-system, BlinkMacSystemFont, sans-serif; cursor: pointer; }
+.talk-por { position: absolute; left: 50%; top: calc(6% + env(safe-area-inset-top, 0px)); transform: translateX(-50%); width: min(62vw, 300px); aspect-ratio: 3 / 4; object-fit: cover; object-position: top;
+  border-radius: 16px; border: 2px solid var(--nb-gold); box-shadow: 0 10px 30px rgba(0, 0, 0, .6); transition: filter .2s; }
+.talk-por.is-dim { filter: brightness(.55); }
+.talk-box { position: absolute; z-index: 2; left: max(12px, env(safe-area-inset-left, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  max-width: 640px; margin: 0 auto; display: grid; gap: 8px; }
+.talk-line { background: rgba(243, 231, 204, .96); color: var(--c-brown-850-vivid); border: 1px solid var(--nb-frame-light); border-radius: 12px; padding: 10px 14px 12px; min-height: 100px; cursor: pointer; }
+.talk-line b { display: block; font: 700 13px "Cinzel", Georgia, serif; letter-spacing: .05em; color: var(--c-brown-550-soft); margin-bottom: 2px; }
+.talk-line p { margin: 0; font: 400 18px/1.45 "Alegreya", Georgia, serif; }
+.talk-line p.is-n { font-style: italic; color: var(--c-brown-550-soft); }
+.talk-hint { display: block; text-align: right; font-size: 12px; font-weight: 600; color: var(--c-brown-550-soft); margin-top: 4px; }
+.talk-choice { font: 600 17px/1.35 "Alegreya", Georgia, serif; text-align: left; color: var(--c-brown-850-vivid); background: rgba(255, 250, 240, .96); border: 1px solid var(--nb-frame-light); border-radius: 12px; padding: 12px 14px; cursor: pointer; }
+.talk-next { font-weight: 800; font-size: 15px; min-height: 48px; border-radius: 12px; border: 1px solid var(--c-brown-550-soft); background: var(--nb-gold); color: var(--c-brown-850-vivid); cursor: pointer; }
+.talk-unlock { display: grid; gap: 2px; background: rgba(232, 240, 221, .96); border: 1px solid var(--c-green-400-soft); border-radius: 12px; padding: 10px 14px; color: var(--c-brown-850-vivid); }
+.talk-unlock b { font-size: 13px; color: var(--c-green-650-soft); }
+.talk-unlock span { font: 600 16px "Alegreya", Georgia, serif; }
+.talk-x:focus-visible, .talk-choice:focus-visible, .talk-next:focus-visible, .talk-line:focus-visible { outline: 2px solid var(--nb-gold); outline-offset: 2px; }
+@media (min-width: 900px) and (min-aspect-ratio: 1/1) { .talk-por { width: min(28vw, 340px); } }
+@media (prefers-reduced-motion: reduce) { .talk-por { transition: none; } }
+.talk-line.is-ask { min-height: 0; cursor: default; }
+/* v3.601.0 (atelier sujets-compagnons, M1) : la liste des sujets dans la scène */
+.talk-topic { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 10px; align-items: center; text-align: left; min-height: 52px; padding: 8px 14px; border-radius: 12px; border: 1px solid var(--nb-frame-light); background: rgba(255, 250, 240, .96); color: var(--c-brown-850-vivid); cursor: pointer; font: inherit; }
+.talk-topic img { width: 36px; height: 36px; object-fit: contain; }
+.talk-topic b { display: block; font: 700 16px/1.25 "Alegreya", Georgia, serif; }
+.talk-topic small { display: block; font-size: 12px; color: var(--c-brown-550-soft); overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.talk-topic.is-hot { border-color: var(--c-brown-550-soft); background: linear-gradient(rgba(251, 240, 214, .98), rgba(241, 223, 180, .98)); }
+.talk-topic.is-quiet { grid-template-columns: minmax(0, 1fr); min-height: 44px; text-align: center; background: rgba(243, 231, 204, .75); }
+.talk-topic-new { width: 12px; height: 12px; border-radius: 50%; background: var(--c-red-450); }
+.talk-topic-seen { font-style: normal; font-weight: 800; font-size: 13px; color: var(--c-green-650-soft); }
+.talk-topic:focus-visible, .talk-back:focus-visible { outline: 2px solid var(--nb-gold); outline-offset: 2px; }
+.talk-back { text-align: center; }
+/* v3.602.0 : la tombée de la nuit (plein écran, une fois au retour au Camp) et la carte « Cette nuit » */
+.wn { position: fixed; inset: 0; z-index: 9000; display: grid; place-items: center; padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); background: radial-gradient(ellipse at 50% 40%, rgb(36, 46, 72), rgb(8, 8, 16)); animation: wn-in .5s ease; }
+@keyframes wn-in { from { opacity: 0; } to { opacity: 1; } }
+.wn-in { width: min(420px, 100%); display: grid; gap: 14px; text-align: center; }
+.wn-in h3 { margin: 0; font: 700 24px "Cinzel", Georgia, serif; letter-spacing: .06em; color: rgb(230, 236, 255); }
+.wn-in p { margin: 0; font: 400 18px/1.45 "Alegreya", Georgia, serif; color: rgb(233, 226, 207); }
+.wn-what { font-size: 15px !important; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; font-weight: 600 !important; color: rgb(207, 224, 180) !important; }
+.wn-what.is-lost { color: rgb(255, 207, 155) !important; }
+.wn-ok { justify-self: center; min-width: 160px; }
+.wn-w { margin-top: -10px; font: italic 400 15px "Alegreya", Georgia, serif; color: rgb(185, 196, 226); }
+.camp-soir.is-night { box-shadow: inset 4px 0 0 rgba(42, 53, 80, .55); }
+@media (prefers-reduced-motion: reduce) { .wn { animation: none; } }
+/* v3.604.0 : « Au matin » sur l'écran de la nuit (événement du village) */
+.wn-morn { border-top: 1px solid rgba(230, 236, 255, .18); padding-top: 12px; display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 10px; align-items: center; text-align: left; }
+.wn-morn-ico { width: 44px; height: 44px; object-fit: contain; }
+.wn-morn b { display: block; font: 700 13px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; letter-spacing: .06em; text-transform: uppercase; color: rgb(230, 194, 122); }
+.wn-morn span { font: 400 16px/1.35 "Alegreya", Georgia, serif; color: rgb(241, 233, 214); }
+/* v3.605.0 (T2) : « Et les autres ? », un compagnon par ligne avec son portrait */
+.talk-topic-por { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; object-position: 50% 18%; border: 2px solid var(--nb-frame-light); }

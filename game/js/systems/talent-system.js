@@ -36,11 +36,12 @@ var TalentManager = {
   /* Liste à plat : { node, zone: "trunk" | index de voie | "command", path }.
      v3.453.0 : la voie du Commandement suit l'arbre de classe (commune, points partagés). */
   getNodes: function (classId) {
-    var t = this.getTree(classId), out = [], C = this.getCommand();
+    var t = this.getTree(classId), out = [], C = this.getCommand(), V = window.TALENT_TOWER || null;
     if (!t) return out;
     t.trunk.forEach(function (n) { out.push({ node: n, zone: "trunk", path: null }); });
     t.paths.forEach(function (p, i) { p.nodes.forEach(function (n) { out.push({ node: n, zone: i, path: p }); }); });
     if (C) C.nodes.forEach(function (n) { out.push({ node: n, zone: "command", path: C }); });
+    if (V) V.nodes.forEach(function (n) { out.push({ node: n, zone: "tower", path: V }); }); // v3.633.0 : voie Varier
     return out;
   },
 
@@ -51,6 +52,16 @@ var TalentManager = {
     if (!C) return false;
     var w = (window.WorldCaps && typeof WorldCaps.getReachedWorldIndex === "function") ? WorldCaps.getReachedWorldIndex() : 0;
     return w >= Number(C.opensAt || 0);
+  },
+  /* v3.633.0 : la voie Varier, ouverte quand la Tour est atteinte. */
+  towerOpen: function () {
+    var V = window.TALENT_TOWER;
+    var w = (window.WorldCaps && typeof WorldCaps.getReachedWorldIndex === "function") ? WorldCaps.getReachedWorldIndex() : 0;
+    return !!V && w >= Number(V.opensAt || 0);
+  },
+  towerSpent: function () {
+    var V = window.TALENT_TOWER, self = this;
+    return V ? V.nodes.reduce(function (s, n) { return s + self.rank(n.id); }, 0) : 0;
   },
   commandSpent: function () {
     var C = this.getCommand(), self = this;
@@ -97,8 +108,9 @@ var TalentManager = {
     if (!e) return { kind: "missing", text: _t("Talent introuvable.") };
     var n = e.node, t = this.getTree();
     if (this.rank(id) >= this.maxRank(n)) return { kind: "maxRank", text: _t("Rang maximum atteint.") };
-    if (e.zone === "command") {   // v3.453.0 : ouverte à la Crypte, nœuds appris dans l'ordre
-      if (!this.commandOpen()) return { kind: "commandClosed", text: _t("Le Commandement s'ouvre à la Crypte.") };
+    if (e.zone === "command" || e.zone === "tower") {   // v3.453.0 : ouverte à la Crypte, nœuds appris dans l'ordre ; v3.633.0 : Varier, à la Tour
+      if (e.zone === "command" && !this.commandOpen()) return { kind: "commandClosed", text: _t("Le Commandement s'ouvre à la Crypte.") };
+      if (e.zone === "tower" && !this.towerOpen()) return { kind: "towerClosed", text: _t("La voie Varier s'ouvre à la Tour.") };
       var i = e.path.nodes.indexOf(n), prev = i > 0 ? e.path.nodes[i - 1] : null;
       if (prev && !this.has(prev.id)) return { kind: "commandOrder", text: _t("Apprends d'abord « {x} ».", { x: _td(prev.name) }) };
     } else if (e.zone !== "trunk") {
@@ -278,6 +290,9 @@ var TalentManager = {
       if (e.node.stats.hpPct) out.hpPct += e.node.stats.hpPct * r;
       if (e.node.stats.critChance) out.critChance += e.node.stats.critChance * r;
     });
+    if (window.TowerSystem) out.hpPct += TowerSystem.hpPct(); // v3.632.0 : Ton nom (Mémoire 24), +10 % de PV à la Tour
+    var cb = (typeof getClassByHeroId === "function") ? getClassByHeroId(game.heroId) : null; // équilibre des classes (03/11) : Mage +5 % PV
+    if (cb && cb.balance && cb.balance.hpPct) out.hpPct += cb.balance.hpPct;
     return out;
   },
 
@@ -300,6 +315,7 @@ var TalentManager = {
       game.classResource.current = Math.max(Number(game.classResource.current || 0), this.V("k_sang_chaud"));
     }
     delete game._relaisReady; // v3.453.0 : Relais ne passe pas d'un combat à l'autre
+    game._varier = { last: null, used: {} }; // v3.633.0 : techniques de ce combat (Un pas de côté, Varier)
     if (game._talentBurnPending && game.enemy) {
       if (this.has("m_brasier") && !game.enemy.dot) game.enemy.dot = game._talentBurnPending;
       delete game._talentBurnPending;

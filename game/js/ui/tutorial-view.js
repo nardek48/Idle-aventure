@@ -103,7 +103,7 @@ var GENERIC_TUTORIALS = {
     ]
   },
   /* v3.213.1 (lot V-2) : premier plafond d'entraînement. Condition : une
-     caractéristique a buté à 10 — le joueur vient de rencontrer le mur, c'est
+     caractéristique a buté à 20 — le joueur vient de rencontrer le mur, c'est
      le seul moment où l'explication a du sens. */
   village_training: {
     tab: "village",
@@ -115,9 +115,9 @@ var GENERIC_TUTORIALS = {
     icon: "images/Icons/combat_stats/stat_critical.webp",
     title: "Le Terrain d'entraînement",
     points: [
-      { icon: "images/Icons/system/training_cap.webp", text: "Tes caractéristiques butent à 20 : c'est la limite de l'entraînement de fortune du campement. Pour aller plus loin, il faut un vrai terrain." },
+      { icon: "images/Icons/system/training_cap.webp", text: "Ta caractéristique de classe et l'Endurance butent à 20, les trois autres à 14 : c'est la limite de l'entraînement de fortune du campement. Pour aller plus loin, il faut un vrai terrain." },
       { icon: "images/Icons/workshops/masonry.webp", text: "Le Terrain se bâtit ici, au Village, comme l'Atelier : des matériaux, puis un chantier qui prend un peu de temps." },
-      { icon: "images/Icons/combat_stats/stat_critical.webp", text: "Chaque niveau du Terrain ouvre 10 niveaux de plus sur CHACUNE des cinq caractéristiques — jamais un total à répartir." },
+      { icon: "images/Icons/combat_stats/stat_critical.webp", text: "Chaque niveau du Terrain relève le plafond de CHACUNE des cinq caractéristiques : +10 pour ta caractéristique de classe et l'Endurance, environ +7 pour les trois autres — jamais un total à répartir." },
       { icon: "images/Icons/gold_icon.webp", text: "L'entraînement lui-même se paie toujours en or, dans Héros → Entraînement. Le Terrain décide jusqu'où tu peux monter, pas combien ça coûte." }
     ]
   },
@@ -185,7 +185,7 @@ var GENERIC_TUTORIALS = {
     title: "Préparer une petite aventure",
     points: [
       { icon: "images/Icons/dungeon/dungeon_sacoche.webp", text: "La besace : touche une case pour y mettre des rations ou des objets. Chacun a un avantage (en vert) et souvent un prix (en rouge). Les rations que tu ne manges pas retournent à l'Entrepôt." },
-      { icon: "images/Icons/combat_stats/stat_health.webp", text: "Tu pars avec tes PV actuels : en route, seules les rations de la besace, les sources et le feu de camp te soignent." },
+      { icon: "images/Icons/combat_stats/stat_health.webp", text: "Tu pars avec tes PV actuels : en route, seuls te soignent les rations de la besace, les sources, le repos (au seuil ou au feu de camp), les autels et quelques reliques." },
       { icon: "images/Icons/scene/pacts/pact_awake.webp", text: "Les pactes ne sont pas obligatoires. Chacun rend la nuit plus dure et le retour plus riche : choisis-les quand tu t'en sens capable." },
       { icon: "images/Icons/scene/node_threshold.webp", text: "« Renoncer à cette aventure » te ramène sans rien perdre, tant que tu n'es pas encore parti." }
     ]

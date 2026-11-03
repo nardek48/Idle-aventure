@@ -22,6 +22,34 @@ function screenBannerCamp(i) {
   ][i];
 }
 
+/* v3.624.0 (atelier aeswyn-habitants, A) : Aeswyn se repeuple. 9 habitants (trois familles), +1 par niveau de
+   bâtiment (Terrain : +1 tous les 2), +6 par monde atteint après la Forêt. Calculé, rien n'est sauvegardé. */
+var AESWYN_TIERS = [9, 15, 25, 40, 55, 70, 85, 100];
+function aeswynTierText(i) {
+  return [
+    _t("Trois familles autour du feu. Le reste est encore de la cendre."),
+    _t("Un toit de plus, cette saison. Quelqu'un est revenu des bois."),
+    _t("On se dispute pour le puits, le matin. Brannoc dit que c'est bon signe."),
+    _t("Des enfants courent entre les maisons. Personne ne les gronde."),
+    _t("Des gens arrivent par la route, avec leurs sacs. Ils demandent s'il reste de la place."),
+    _t("Le marché tient tout seul, le matin. Sarkel s'en plaint."),
+    _t("Il faut des noms pour les rues, maintenant. Wenna en a déjà une liste."),
+    _t("On ne connaît plus tout le monde. Orwen regarde la place pleine, et ne dit rien.")
+  ][i];
+}
+function aeswynPopulation() {
+  var n = 9, VB = window.VillageBuildingManager;
+  if (VB && window.VILLAGE_BUILDINGS) Object.keys(VILLAGE_BUILDINGS).forEach(function (id) {
+    var lv = Math.max(0, Number(VB.getLevel(id)) || 0);
+    n += id === "training" ? Math.floor(lv / 2) : lv;
+  });
+  return n + 6 * ScreenBanner.furthestWorld();
+}
+function aeswynTier(n) { var t = 0; AESWYN_TIERS.forEach(function (x, i) { if (n >= x) t = i; }); return t; }
+function aeswynExplain() {
+  if (typeof showToast === "function") showToast(_t("Chaque niveau de bâtiment ramène quelqu'un au village. Chaque monde ouvert aussi : on apprend qu'Aeswyn tient encore."), 4200);
+}
+
 var ScreenBanner = {
   MIN_PHONE: 44, MIN_WIDE: 56, // hauteur gardée une fois replié (ligne de titre)
   PHONE_H: 150,
@@ -58,7 +86,7 @@ var ScreenBanner = {
       var wn = window.WORLDS && WORLDS[w] ? _td(WORLDS[w].name) : "";
       return ["images/Banners/quetes_" + SCREEN_BANNER_WORLDS[w] + ".webp", _t("Le tableau des missions"), wn];
     }
-    if (screen === "village") return ["images/Banners/village_" + (far + 1) + ".webp", _t("Le village d'Aeswyn"), _t("Rebâti planche après planche")];
+    if (screen === "village") return ["images/Banners/village_" + (far + 1) + ".webp", _t("Le village d'Aeswyn"), ((window.TowerSystem && TowerSystem.bannerLine()) || aeswynTierText(aeswynTier(aeswynPopulation())))]; // v3.624.0 : la phrase du palier ; v3.631.0 : celle de la fin
     if (screen === "heros") return ["images/Banners/heros_" + (far + 1) + ".webp", _t("Le terrain d'entraînement"), _t("Se préparer avant de repartir")];
     // v3.583.0 : pages du menu, une image chacune
     if (screen === "bibliotheque") return ["images/Banners/bibliotheque.webp", _t("La bibliothèque"), _t("Bêtes et savoirs du voyage")];
@@ -84,7 +112,29 @@ var ScreenBanner = {
     s.className = "kfb-s"; s.textContent = d[2];
     tx.appendChild(t); tx.appendChild(s);
     el.appendChild(tx);
+    if (screen === "camp" && window.WorldDays) this.dayPill(el); // v3.602.0 (atelier jours-du-monde, B)
+    if (screen === "village") this.popPill(el); // v3.624.0 (atelier aeswyn-habitants, A)
     return el;
+  },
+
+  /* Le jour du monde et les sorties avant la nuit, en bas à droite du bandeau du Camp (visible replié). */
+  dayPill: function (el) {
+    var W = WorldDays, left = W.left(), done = WORLD_DAY_SORTIES - left, p = document.createElement("div"), moons = "";
+    for (var i = 0; i < WORLD_DAY_SORTIES; i++) moons += '<i class="' + (i < done ? "is-on" : "") + '"></i>';
+    p.className = "kfb-day";
+    p.innerHTML = '<b>☾ ' + esc(_t("Jour {n}", { n: W.day() })) + '</b><span class="kfb-moons" title="' + esc(_tn(left, "{n} sortie avant la nuit", "{n} sorties avant la nuit")) + '">' + moons + '</span>';
+    el.appendChild(p);
+    if (W.isDark()) el.classList.add("is-night");
+  },
+
+  /* Les habitants d'Aeswyn, en haut à droite du bandeau du Village ; toucher dit d'où ils viennent. */
+  popPill: function (el) {
+    var n = aeswynPopulation(), b = document.createElement("button");
+    b.type = "button"; b.className = "kfb-pop";
+    b.setAttribute("onclick", "aeswynExplain()");
+    b.innerHTML = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5 1 7.6h2v6.9h4v-4h2v4h4V7.6h2z"/></svg>' + esc(_tn(n, "{n} habitant", "{n} habitants"));
+    el.removeAttribute("role"); // un bouton dans le bandeau : plus une simple image
+    el.appendChild(b);
   },
 
   /* Pose le bandeau en tête de la zone de défilement et branche le repli */
@@ -127,5 +177,8 @@ var ScreenBanner = {
 
 if (typeof window.addEventListener === "function") window.addEventListener("resize", function () { ScreenBanner.refitAll(); }); // absent des harnais
 
+window.aeswynPopulation = aeswynPopulation;
+window.aeswynTier = aeswynTier;
+window.aeswynExplain = aeswynExplain;
 window.ScreenBanner = ScreenBanner;
 window.screenBannerCamp = screenBannerCamp;

@@ -86,6 +86,26 @@ function getEquipmentIconPath(item) {
   return "images/Icons/equipment_icon/" + item.icon + "_" + rarityFile + ".jpg";
 }
 
+/* v3.615.0 (atelier ilvl, formule B) : NIVEAU D'OBJET, déduit de la pièce (rien de sauvegardé).
+   Monde × 10 (Forêt 10, Désert 20…), + rareté (commune 0 · inhabituelle 2 · rare 4 · épique 6 · légendaire 8),
+   + 1 si la valeur tirée est dans la moitié haute de sa fourchette, + le niveau d'Aether. Affichage seul. */
+function getItemLevelParts(item) {
+  if (!item || !item.slot) return null;
+  var w = typeof item.worldIndex === "number" ? item.worldIndex : 0, order = typeof RARITY_ORDER !== "undefined" ? RARITY_ORDER : ["common", "green", "rare", "epic", "legendary"];
+  var cfg = (typeof EQUIPMENT_SLOT_CONFIG !== "undefined") ? EQUIPMENT_SLOT_CONFIG[item.slot] : null, haut = 0;
+  if (cfg) {
+    var r = cfg.ranges[item.rarity] || cfg.ranges.common, scale = cfg.scalesWithWorld && typeof getEquipWorldScale === "function" ? getEquipWorldScale(w) : 1;
+    var base = Number(item.value || 0) / (scale || 1);
+    haut = r && r[1] > r[0] && (base - r[0]) / (r[1] - r[0]) >= 0.5 ? 1 : 0;
+  }
+  var p = { monde: (w + 1) * 10, rarete: Math.max(0, order.indexOf(item.rarity)) * 2, tirage: haut, aether: Math.max(0, Math.floor(Number(item.aether) || 0)), world: w };
+  p.total = p.monde + p.rarete + p.tirage + p.aether;
+  return p;
+}
+function getItemLevel(item) { var p = getItemLevelParts(item); return p ? p.total : 0; }
+window.getItemLevel = getItemLevel;
+window.getItemLevelParts = getItemLevelParts;
+
 function isWeaponIconAllowedForCurrentHero(icon) {
   if (typeof getAllowedWeaponIconsForCurrentHero !== "function") return true;
   var allowed = getAllowedWeaponIconsForCurrentHero();

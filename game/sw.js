@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.593.0"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.637.0"; // <- à incrémenter à CHAQUE livraison
 var CACHE_NAME = "quest-idle-" + CACHE_VERSION;
 var IMAGE_CACHE = "aethervale-images"; // v3.457.4 : hors du préfixe quest-idle- ; v3.547.0 : images disparues purgées (purgeMissingImages)
 var imagesRevalidated = {};             // URL déjà revérifiées depuis le démarrage de ce service worker
@@ -58,6 +58,7 @@ var PRECACHE_APP_SHELL = [
   "./css/00-title-screen.css",
   "./css/00-hero-creation.css",
   "./css/00-prologue.css", // v3.570.0 : NOUVEAU fichier (le prologue)
+  "./css/00-cartes.css", // v3.617.0 : NOUVEAU fichier (habillages des cartes, lot 1)
   "./css/00-tokens.css",
   "./css/01-base.css",
   "./css/02-layout.css",
@@ -144,6 +145,7 @@ var PRECACHE_APP_SHELL = [
   "./js/systems/rise-system.js",
   "./js/systems/sleep-system.js",
   "./js/systems/vein-system.js",
+  "./js/systems/tower-system.js", // v3.626.0 : NOUVEAU fichier (règles de la Tour)
   "./js/systems/companion-system.js",
   "./js/systems/companion-relic-system.js",
   "./js/data/combat-states.js",
@@ -271,6 +273,19 @@ var PRECACHE_APP_SHELL = [
   "./js/data/workshop-unlock.js",
   "./js/data/village-quests.js",
   "./js/data/prologue.js", // v3.570.0 : NOUVEAU fichier (le prologue)
+  "./js/data/chapter-openings.js", // v3.623.0 : NOUVEAU fichier (ouvertures de chapitre)
+  "./js/data/camp-soir.js", // v3.595.0 : NOUVEAU fichier (la phrase du soir au Camp)
+  "./js/data/companion-talks.js", // v3.597.0 : NOUVEAU fichier (les conversations au feu)
+  "./js/systems/companion-talk-system.js", // v3.597.0 : NOUVEAU fichier
+  "./js/ui/companion-talk-view.js", // v3.597.0 : NOUVEAU fichier
+  "./js/data/companion-quests.js", // v3.598.0 : NOUVEAU fichier (les quêtes des compagnons)
+  "./js/data/companion-topics.js", // v3.601.0 : NOUVEAU fichier (les sujets libres au feu)
+  "./js/systems/world-day-system.js", // v3.602.0 : NOUVEAU fichier (les jours du monde)
+  "./js/data/village-events.js", // v3.604.0 : NOUVEAU fichier (les événements du village)
+  "./js/systems/village-event-system.js", // v3.604.0 : NOUVEAU fichier
+  "./js/ui/village-event-view.js", // v3.604.0 : NOUVEAU fichier
+  "./js/systems/companion-quest-system.js", // v3.598.0 : NOUVEAU fichier
+  "./js/ui/companion-quest-view.js", // v3.598.0 : NOUVEAU fichier
   "./js/systems/warehouse-system.js",
   "./js/systems/village-building-system.js",
   "./js/systems/apothecary-system.js",

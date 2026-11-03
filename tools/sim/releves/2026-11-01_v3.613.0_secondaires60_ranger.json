@@ -1,0 +1,3380 @@
+{
+ "meta": {
+  "nom": "secondaires60",
+  "version": "3.613.0",
+  "date": "2026-11-01",
+  "classe": "ranger",
+  "combats": true,
+  "args": "--combats --joueur --classe ranger --secondaires 0.6 --releve secondaires60"
+ },
+ "resume": {
+  "totalH": 32.35112129815895,
+  "reussies": 95,
+  "echecs": 0,
+  "arret": null,
+  "murs": [],
+  "niveau": 25,
+  "morts": 2,
+  "economie": {
+   "orGagne": 2844573,
+   "or": 1049014,
+   "aetherTotal": 1289,
+   "attenteDonjonH": 0
+  }
+ },
+ "etapes": [
+  {
+   "id": "forest_01",
+   "title": "Le feu de camp",
+   "finH": 0,
+   "h": 0,
+   "niv": 1,
+   "or": 50,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0,
+   "temps": {
+    "combat": 0,
+    "soin au camp": 0
+   },
+   "actions": {
+    "entrHeros": {
+     "n": 6,
+     "or": 35
+    }
+   }
+  },
+  {
+   "id": "forest_02",
+   "title": "Premier sang",
+   "finH": 0.04243285504047093,
+   "h": 0.04243285504047093,
+   "niv": 3,
+   "or": 170,
+   "morts": 0,
+   "combatH": 0.01125,
+   "soinH": 0,
+   "temps": {
+    "combat": 0.01125,
+    "soin au camp": 0.030905077262693155
+   },
+   "actions": {
+    "entrHeros": {
+     "n": 20,
+     "or": 165
+    }
+   }
+  },
+  {
+   "id": "forest_03",
+   "title": "Prendre la mesure",
+   "finH": 0.04243285504047093,
+   "h": 0,
+   "niv": 3,
+   "or": 275,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0,
+   "temps": {
+    "combat": 0,
+    "soin au camp": 0
+   },
+   "actions": {
+    "entrHeros": {
+     "n": 9,
+     "or": 89
+    }
+   }
+  },
+  {
+   "id": "forest_04",
+   "title": "Le colporteur",
+   "finH": 0.04243285504047093,
+   "h": 0,
+   "niv": 3,
+   "or": 41,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0,
+   "temps": {
+    "combat": 0,
+    "soin au camp": 0
+   },
+   "actions": {
+    "entrHeros": {
+     "n": 3,
+     "or": 35
+    }
+   }
+  },
+  {
+   "id": "forest_05",
+   "title": "Le Roi des marais",
+   "finH": 0.11133120502533317,
+   "h": 0.06889834998486224,
+   "niv": 4,
+   "or": 1455,
+   "morts": 0,
+   "combatH": 0.009583333333333333,
+   "soinH": 0.05903723887375115,
+   "temps": {
+    "combat": 0.009583333333333333,
+    "soin au camp": 0.05903723887375115
+   },
+   "actions": {
+    "echoppe": {
+     "n": 3,
+     "or": 900
+    },
+    "entrHeros": {
+     "n": 25,
+     "or": 337
+    }
+   }
+  },
+  {
+   "id": "forest_06",
+   "title": "La meute affamée",
+   "finH": 0.3071366459819849,
+   "h": 0.19580544095665176,
+   "niv": 4,
+   "or": 966,
+   "morts": 0,
+   "combatH": 0.007083333333333333,
+   "soinH": 0.15844544095665172,
+   "temps": {
+    "combat": 0.007083333333333333,
+    "soin au camp": 0.15844544095665172,
+    "atelier": 0.0044444444444444444,
+    "chantier": 0.025554444444444446
+   },
+   "actions": {
+    "echoppe": {
+     "n": 1,
+     "or": 300
+    },
+    "entrHeros": {
+     "n": 20,
+     "or": 352
+    }
+   }
+  },
+  {
+   "id": "forest_07",
+   "title": "La source tarie",
+   "finH": 0.3071366459819849,
+   "h": 0,
+   "niv": 4,
+   "or": 383,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0,
+   "temps": {
+    "combat": 0,
+    "soin au camp": 0
+   },
+   "actions": {
+    "entrHeros": {
+     "n": 30,
+     "or": 238
+    }
+   }
+  },
+  {
+   "id": "forest_08",
+   "title": "Le sentier obstrué",
+   "finH": 0.37980863059388803,
+   "h": 0.07267198461190312,
+   "niv": 5,
+   "or": 370,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0.07128309572301424,
+   "temps": {
+    "combat": 0,
+    "soin au camp": 0.07128309572301424,
+    "atelier": 0.0011111111111111111
+   },
+   "actions": {
+    "entrHeros": {
+     "n": 20,
+     "or": 228
+    }
+   }
+  },
+  {
+   "id": "forest_09",
+   "title": "La veine instable",
+   "finH": 0.37980863059388803,
+   "h": 0,
+   "niv": 5,
+   "or": 367,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0,
+   "temps": {
+    "combat": 0,
+    "soin au camp": 0
+   },
+   "actions": {
+    "entrHeros": {
+     "n": 19,
+     "or": 304
+    }
+   }
+  },
+  {
+   "id": "forest_brume",
+   "title": "Ce que la brume reprend",
+   "finH": 0.40508613059388804,
+   "h": 0.0252775,
+   "niv": 6,
+   "or": 711,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0,
+   "temps": {
+    "combat": 0,
+    "soin au camp": 0,
+    "chantier": 0.0252775
+   },
+   "actions": {
+    "entrHeros": {
+     "n": 18,
+     "or": 371
+    }
+   }
+  },
+  {
+   "id": "forest_crossing",
+   "title": "Franchir la Lisière",
+   "finH": 0.44952974170499915,
+   "h": 0.044443611111111114,
+   "niv": 6,
+   "or": 625,
+   "morts": 0,
+   "combatH": 0.010833333333333334,
+   "soinH": 0,
+   "temps": {
+    "combat": 0.010833333333333334,
+    "soin au camp": 0,
+    "chantier": 0.03361027777777778
+   },
+   "actions": {
+    "entrHeros": {
+     "n": 13,
+     "or": 291
+    }
+   }
+  },
+  {
+   "id": "forest_11",
+   "title": "L'éveil des talents",
+   "finH": 0.6976775462813751,
+   "h": 0.24814780457637603,
+   "niv": 6,
+   "or": 537,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0,
+   "temps": {
+    "combat": 0.013333333333333334,
+    "soin au camp": 0.23314780457637602,
+    "atelier": 0.0011111111111111111
+   },
+   "actions": {
+    "echoppe": {
+     "n": 2,
+     "or": 600
+    },
+    "entrHeros": {
+     "n": 45,
+     "or": 891
+    }
+   }
+  },
+  {
+   "id": "forest_12",
+   "title": "Le grimoire du veilleur",
+   "finH": 0.7498942497398005,
+   "h": 0.05221670345842528,
+   "niv": 6,
+   "or": 2007,
+   "morts": 0,
+   "combatH": 0.008333333333333333,
+   "soinH": 0.04249448123620306,
+   "temps": {
+    "combat": 0.008333333333333333,
+    "soin au camp": 0.04249448123620306,
+    "atelier": 0.0011111111111111111
+   },
+   "actions": {}
+  },
+  {
+   "id": "forest_13",
+   "title": "Marques du corrompu",
+   "finH": 0.7780886941842449,
+   "h": 0.028194444444444446,
+   "niv": 7,
+   "or": 4064,
+   "morts": 1,
+   "combatH": 0.027083333333333334,
+   "soinH": 0,
+   "temps": {
+    "combat": 0.027083333333333334,
+    "soin au camp": 0,
+    "atelier": 0.0011111111111111111
+   },
+   "actions": {
+    "donjon:1": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "forest_14",
+   "title": "La tanière du Basilic",
+   "finH": 1.1649273623225818,
+   "h": 0.38683866813833695,
+   "niv": 7,
+   "or": 7171,
+   "morts": 0,
+   "combatH": 0.02125,
+   "soinH": 0.32836644591611475,
+   "temps": {
+    "combat": 0.04041666666666666,
+    "soin au camp": 0.32836644591611475,
+    "atelier": 0.017777777777777778
+   },
+   "actions": {
+    "donjon:1": {
+     "n": 2,
+     "or": 0
+    },
+    "rangsSorts": {
+     "n": 1,
+     "or": 1000
+    }
+   }
+  },
+  {
+   "id": "forest_wenna",
+   "title": "Celle qui demande",
+   "finH": 1.5402428516529718,
+   "h": 0.37531548933038994,
+   "niv": 7,
+   "or": 10660,
+   "morts": 0,
+   "combatH": 0.03875,
+   "soinH": 0.1600441501103753,
+   "temps": {
+    "combat": 0.057916666666666665,
+    "soin au camp": 0.3068432671081677,
+    "atelier": 0.01
+   },
+   "actions": {
+    "donjonLibre:1": {
+     "n": 1,
+     "or": 0
+    },
+    "entrCompagnons": {
+     "n": 2,
+     "or": 180
+    },
+    "rangsCompagnons": {
+     "n": 1,
+     "or": 500
+    },
+    "donjon:1": {
+     "n": 2,
+     "or": 0
+    },
+    "conversation": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "forest_15",
+   "title": "Les braises s'éveillent",
+   "finH": 1.7906659568774015,
+   "h": 0.2504231052244297,
+   "niv": 8,
+   "or": 15580,
+   "morts": 0,
+   "combatH": 0.01625,
+   "soinH": 0.1865342163355408,
+   "temps": {
+    "combat": 0.03666666666666667,
+    "soin au camp": 0.1865342163355408,
+    "atelier": 0.026944444444444444
+   },
+   "actions": {
+    "entrCompagnons": {
+     "n": 1,
+     "or": 240
+    },
+    "rangsSorts": {
+     "n": 1,
+     "or": 1000
+    },
+    "donjon:1": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "desert_01",
+   "title": "La traversée",
+   "finH": 2.039475916406467,
+   "h": 0.24880995952906554,
+   "niv": 8,
+   "or": 17520,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0.1285871964679912,
+   "temps": {
+    "combat": 0.0175,
+    "soin au camp": 0.17825607064017665,
+    "atelier": 0.010555555555555556,
+    "chantier": 0.04194277777777778
+   },
+   "actions": {
+    "entrCompagnons": {
+     "n": 1,
+     "or": 480
+    },
+    "donjon:1 niv. 2": {
+     "n": 1,
+     "or": 0
+    },
+    "entrHeros": {
+     "n": 38,
+     "or": 2649
+    }
+   }
+  },
+  {
+   "id": "desert_02",
+   "title": "Ce qui vit ici a le temps",
+   "finH": 2.2111425830731335,
+   "h": 0.17166666666666666,
+   "niv": 8,
+   "or": 18314,
+   "morts": 0,
+   "combatH": 0.015833333333333335,
+   "soinH": 0.1388888888888889,
+   "temps": {
+    "combat": 0.015833333333333335,
+    "soin au camp": 0.1388888888888889,
+    "atelier": 0.016666666666666666
+   },
+   "actions": {
+    "entrCompagnons": {
+     "n": 1,
+     "or": 900
+    },
+    "rangsSorts": {
+     "n": 1,
+     "or": 1000
+    }
+   }
+  },
+  {
+   "id": "desert_03",
+   "title": "L'outre",
+   "finH": 2.2883236530319815,
+   "h": 0.07718106995884769,
+   "niv": 9,
+   "or": 17818,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0.06995884773662546,
+   "temps": {
+    "combat": 0,
+    "soin au camp": 0.06995884773662546,
+    "atelier": 0.006944444444444444
+   },
+   "actions": {
+    "entrCompagnons": {
+     "n": 1,
+     "or": 240
+    }
+   }
+  },
+  {
+   "id": "desert_04",
+   "title": "Les pierres qui dépassent",
+   "finH": 2.689969743566961,
+   "h": 0.4016460905349798,
+   "niv": 9,
+   "or": 19334,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0.3683127572016462,
+   "temps": {
+    "combat": 0,
+    "soin au camp": 0.3683127572016462,
+    "atelier": 0.03277777777777778
+   },
+   "actions": {
+    "entrCompagnons": {
+     "n": 1,
+     "or": 480
+    },
+    "rangsSorts": {
+     "n": 1,
+     "or": 1000
+    },
+    "chantier:workshop": {
+     "n": 1,
+     "or": 33
+    }
+   }
+  },
+  {
+   "id": "desert_05",
+   "title": "Les noms sous le sable",
+   "finH": 2.689969743566961,
+   "h": 0,
+   "niv": 9,
+   "or": 19313,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0,
+   "temps": {
+    "combat": 0,
+    "soin au camp": 0
+   },
+   "actions": {
+    "entrCompagnons": {
+     "n": 1,
+     "or": 960
+    },
+    "conversation": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "desert_06",
+   "title": "La descente",
+   "finH": 3.155113498710994,
+   "h": 0.46514375514403294,
+   "niv": 9,
+   "or": 20196,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0.3801440329218105,
+   "temps": {
+    "combat": 0,
+    "soin au camp": 0.3801440329218105,
+    "atelier": 0.0175,
+    "chantier": 0.06694416666666667
+   },
+   "actions": {
+    "entrCompagnons": {
+     "n": 1,
+     "or": 1920
+    },
+    "chantier:workshop": {
+     "n": 1,
+     "or": 45
+    },
+    "entrHeros": {
+     "n": 38,
+     "or": 2963
+    }
+   }
+  },
+  {
+   "id": "desert_07",
+   "title": "Un homme assis",
+   "finH": 3.155113498710994,
+   "h": 0,
+   "niv": 10,
+   "or": 16048,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0,
+   "temps": {
+    "combat": 0,
+    "soin au camp": 0
+   },
+   "actions": {
+    "entrCompagnons": {
+     "n": 1,
+     "or": 3600
+    }
+   }
+  },
+  {
+   "id": "desert_08",
+   "title": "Celui qui n'est pas rentré",
+   "finH": 3.186514464894569,
+   "h": 0.03140096618357477,
+   "niv": 10,
+   "or": 13671,
+   "morts": 0,
+   "combatH": 0.010833333333333334,
+   "soinH": 0.020289855072463656,
+   "temps": {
+    "combat": 0.010833333333333334,
+    "soin au camp": 0.020289855072463656
+   },
+   "actions": {
+    "entrCompagnons": {
+     "n": 1,
+     "or": 480
+    },
+    "conversation": {
+     "n": 2,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "desert_09",
+   "title": "Le verre des dunes",
+   "finH": 3.29638557600568,
+   "h": 0.10987111111111111,
+   "niv": 10,
+   "or": 14416,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0,
+   "temps": {
+    "combat": 0,
+    "soin au camp": 0,
+    "atelier": 0.026262777777777777,
+    "chantier": 0.08360833333333334
+   },
+   "actions": {
+    "entrCompagnons": {
+     "n": 1,
+     "or": 960
+    },
+    "rangsCompagnons": {
+     "n": 2,
+     "or": 3000
+    },
+    "entrHeros": {
+     "n": 38,
+     "or": 3282
+    }
+   }
+  },
+  {
+   "id": "desert_10",
+   "title": "La nuée",
+   "finH": 3.485729436774794,
+   "h": 0.18934386076911405,
+   "niv": 10,
+   "or": 8104,
+   "morts": 0,
+   "combatH": 0.015833333333333335,
+   "soinH": 0.0729594163246696,
+   "temps": {
+    "combat": 0.015833333333333335,
+    "soin au camp": 0.0729594163246696,
+    "chantier": 0.10027333333333334
+   },
+   "actions": {
+    "entrCompagnons": {
+     "n": 1,
+     "or": 1920
+    },
+    "conversation": {
+     "n": 1,
+     "or": 0
+    },
+    "entrHeros": {
+     "n": 38,
+     "or": 3596
+    }
+   }
+  },
+  {
+   "id": "desert_11",
+   "title": "Le serment sous l'armure",
+   "finH": 3.6494153507068607,
+   "h": 0.16368591393206683,
+   "niv": 10,
+   "or": 5365,
+   "morts": 0,
+   "combatH": 0.01375,
+   "soinH": 0.030224525043177936,
+   "temps": {
+    "combat": 0.01375,
+    "soin au camp": 0.030224525043177936,
+    "atelier": 0.0022222222222222222,
+    "chantier": 0.11693361111111111
+   },
+   "actions": {
+    "entrHeros": {
+     "n": 15,
+     "or": 2404
+    }
+   }
+  },
+  {
+   "id": "desert_12",
+   "title": "La cité engloutie",
+   "finH": 3.9991459397296185,
+   "h": 0.3497305890227575,
+   "niv": 11,
+   "or": 4278,
+   "morts": 1,
+   "combatH": 0.02375,
+   "soinH": 0,
+   "temps": {
+    "combat": 0.02375,
+    "soin au camp": 0.32570281124498024
+   },
+   "actions": {
+    "donjon:2": {
+     "n": 1,
+     "or": 0
+    },
+    "conversation": {
+     "n": 1,
+     "or": 0
+    },
+    "compagnon:sortie": {
+     "n": 1,
+     "or": 0
+    },
+    "entrHeros": {
+     "n": 21,
+     "or": 2863
+    }
+   }
+  },
+  {
+   "id": "desert_13",
+   "title": "Le verre et le fer",
+   "finH": 6.50866489390118,
+   "h": 2.509518954171562,
+   "niv": 13,
+   "or": 2525,
+   "morts": 0,
+   "combatH": 0.16791666666666666,
+   "soinH": 2.18605562083823,
+   "temps": {
+    "combat": 0.16791666666666666,
+    "soin au camp": 2.18605562083823,
+    "atelier": 0.11805555555555555,
+    "chantier": 0.025546666666666665
+   },
+   "actions": {
+    "forge": {
+     "n": 1,
+     "or": 300
+    },
+    "chantier:workshop": {
+     "n": 1,
+     "or": 61
+    },
+    "compagnon:livraison": {
+     "n": 1,
+     "or": 0
+    },
+    "compagnon:sortie": {
+     "n": 1,
+     "or": 0
+    },
+    "entrHeros": {
+     "n": 2,
+     "or": 326
+    }
+   }
+  },
+  {
+   "id": "desert_14",
+   "title": "La bête sous la dune",
+   "finH": 6.7344823360572965,
+   "h": 0.22581744215611577,
+   "niv": 13,
+   "or": 4242,
+   "morts": 0,
+   "combatH": 0.006666666666666667,
+   "soinH": 0.11098398169336426,
+   "temps": {
+    "combat": 0.006666666666666667,
+    "soin au camp": 0.2013729977116713,
+    "atelier": 0.016944444444444446
+   },
+   "actions": {
+    "forge": {
+     "n": 1,
+     "or": 405
+    },
+    "compagnon:sortie": {
+     "n": 1,
+     "or": 0
+    },
+    "compagnon:scène": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "desert_15",
+   "title": "Ce qui garde la porte",
+   "finH": 6.871020284188495,
+   "h": 0.13653794813119807,
+   "niv": 13,
+   "or": 10931,
+   "morts": 0,
+   "combatH": 0.020833333333333332,
+   "soinH": 0,
+   "temps": {
+    "combat": 0.03791666666666667,
+    "soin au camp": 0.06445461479786473,
+    "atelier": 0.03388888888888889
+   },
+   "actions": {
+    "donjon:2": {
+     "n": 2,
+     "or": 0
+    },
+    "forge": {
+     "n": 1,
+     "or": 546
+    },
+    "compagnon:scène": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "desert_16",
+   "title": "Personne ne remonte le fleuve",
+   "finH": 7.0462492700146955,
+   "h": 0.17522898582620133,
+   "niv": 13,
+   "or": 18043,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0.02250190694126611,
+   "temps": {
+    "combat": 0.016666666666666666,
+    "soin au camp": 0.10237537471509021,
+    "atelier": 0.05563138888888889
+   },
+   "actions": {
+    "entrCompagnons": {
+     "n": 1,
+     "or": 3600
+    },
+    "forge": {
+     "n": 1,
+     "or": 738
+    },
+    "rangsSorts": {
+     "n": 1,
+     "or": 5000
+    },
+    "donjon:2": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "desert_17",
+   "title": "Le trône de sable",
+   "finH": 7.2103014042574785,
+   "h": 0.1640521342427832,
+   "niv": 14,
+   "or": 16571,
+   "morts": 0,
+   "combatH": 0.015,
+   "soinH": 0.07354685646500542,
+   "temps": {
+    "combat": 0.034166666666666665,
+    "soin au camp": 0.07354685646500542,
+    "atelier": 0.05606083333333333
+   },
+   "actions": {
+    "rangsSorts": {
+     "n": 1,
+     "or": 5000
+    },
+    "chantier:workshop": {
+     "n": 1,
+     "or": 83
+    },
+    "donjon:2": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "desert_18",
+   "title": "Ce qui reste du roi",
+   "finH": 7.321185848701924,
+   "h": 0.11088444444444444,
+   "niv": 14,
+   "or": 19930,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0,
+   "temps": {
+    "combat": 0.019166666666666665,
+    "soin au camp": 0,
+    "atelier": 0.09171777777777777
+   },
+   "actions": {
+    "rangsSorts": {
+     "n": 2,
+     "or": 10000
+    },
+    "conversation": {
+     "n": 1,
+     "or": 0
+    },
+    "donjon:2": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "ruines_01",
+   "title": "La route du nord",
+   "finH": 7.411697835653288,
+   "h": 0.0905119869513644,
+   "niv": 14,
+   "or": 16237,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0.026888098062475524,
+   "temps": {
+    "combat": 0.01875,
+    "soin au camp": 0.026888098062475524,
+    "atelier": 0.044596111111111114
+   },
+   "actions": {
+    "entrCompagnons": {
+     "n": 2,
+     "or": 960
+    },
+    "rangsCompagnons": {
+     "n": 1,
+     "or": 2500
+    },
+    "donjon:2 niv. 2": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "ruines_02",
+   "title": "Ce qui se relève",
+   "finH": 7.501997855423948,
+   "h": 0.09030001977065992,
+   "niv": 14,
+   "or": 22433,
+   "morts": 0,
+   "combatH": 0.012916666666666667,
+   "soinH": 0.07710557532621548,
+   "temps": {
+    "combat": 0.012916666666666667,
+    "soin au camp": 0.07710557532621548
+   },
+   "actions": {
+    "entrCompagnons": {
+     "n": 2,
+     "or": 1920
+    }
+   }
+  },
+  {
+   "id": "ruines_03",
+   "title": "Celle qui dessine les murs",
+   "finH": 7.529232855423947,
+   "h": 0.027235,
+   "niv": 15,
+   "or": 22371,
+   "morts": 0,
+   "combatH": 0.007916666666666667,
+   "soinH": 0,
+   "temps": {
+    "combat": 0.007916666666666667,
+    "soin au camp": 0,
+    "atelier": 0.019318333333333333
+   },
+   "actions": {
+    "entrCompagnons": {
+     "n": 3,
+     "or": 4320
+    },
+    "rangsCompagnons": {
+     "n": 2,
+     "or": 3000
+    },
+    "departsPatrouille": {
+     "n": 1,
+     "or": 1
+    },
+    "conversation": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "ruines_04",
+   "title": "On n'y vend rien. Pas encore.",
+   "finH": 7.70756257764617,
+   "h": 0.1783297222222222,
+   "niv": 15,
+   "or": 16251,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0,
+   "temps": {
+    "combat": 0,
+    "soin au camp": 0,
+    "atelier": 0.002777777777777778,
+    "chantier": 0.0086075,
+    "caravane": 0.16694444444444445
+   },
+   "actions": {
+    "entrCompagnons": {
+     "n": 2,
+     "or": 4800
+    },
+    "caravane": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "ruines_05",
+   "title": "La pierre de seuil",
+   "finH": 7.841168966535059,
+   "h": 0.1336063888888889,
+   "niv": 15,
+   "or": 14951,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0,
+   "temps": {
+    "combat": 0,
+    "soin au camp": 0,
+    "chantier": 0.1336063888888889
+   },
+   "actions": {
+    "entrCompagnons": {
+     "n": 2,
+     "or": 5760
+    },
+    "entrHeros": {
+     "n": 36,
+     "or": 5682
+    }
+   }
+  },
+  {
+   "id": "ruines_06",
+   "title": "Les murs bougent",
+   "finH": 7.841168966535059,
+   "h": 0,
+   "niv": 15,
+   "or": 6422,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0,
+   "temps": {
+    "combat": 0,
+    "soin au camp": 0
+   },
+   "actions": {
+    "conversation": {
+     "n": 1,
+     "or": 0
+    },
+    "entrHeros": {
+     "n": 2,
+     "or": 350
+    }
+   }
+  },
+  {
+   "id": "ruines_07",
+   "title": "La carte d'Edda",
+   "finH": 8.245457691840205,
+   "h": 0.40428872530514687,
+   "niv": 15,
+   "or": 9806,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0.3790109475273691,
+   "temps": {
+    "combat": 0,
+    "soin au camp": 0.3790109475273691,
+    "atelier": 0.024722222222222222
+   },
+   "actions": {
+    "chantier:workshop": {
+     "n": 1,
+     "or": 120
+    },
+    "conversation": {
+     "n": 2,
+     "or": 0
+    },
+    "compagnon:scène": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "ruines_08",
+   "title": "Celui qui pose les pierres",
+   "finH": 8.333838999251807,
+   "h": 0.08838130741160156,
+   "niv": 15,
+   "or": 11984,
+   "morts": 0,
+   "combatH": 0.009583333333333333,
+   "soinH": 0,
+   "temps": {
+    "combat": 0.009583333333333333,
+    "soin au camp": 0.07852019630049045
+   },
+   "actions": {
+    "compagnon:sortie": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "ruines_09",
+   "title": "La porte trop haute",
+   "finH": 8.365783443696252,
+   "h": 0.03194444444444444,
+   "niv": 16,
+   "or": 15176,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0,
+   "temps": {
+    "combat": 0,
+    "soin au camp": 0,
+    "atelier": 0.03194444444444444
+   },
+   "actions": {
+    "entrCompagnons": {
+     "n": 1,
+     "or": 3840
+    },
+    "chantier:warehouse": {
+     "n": 1,
+     "or": 900
+    }
+   }
+  },
+  {
+   "id": "ruines_10",
+   "title": "La salle qu'il évite",
+   "finH": 8.653084955272947,
+   "h": 0.28730151157669515,
+   "niv": 16,
+   "or": 13202,
+   "morts": 0,
+   "combatH": 0.008333333333333333,
+   "soinH": 0.04907512268780627,
+   "temps": {
+    "combat": 0.008333333333333333,
+    "soin au camp": 0.04907512268780627,
+    "atelier": 0.06267722222222222,
+    "chantier": 0.16693805555555555
+   },
+   "actions": {
+    "chantier:apothecary": {
+     "n": 1,
+     "or": 200
+    },
+    "conversation": {
+     "n": 1,
+     "or": 0
+    },
+    "entrHeros": {
+     "n": 38,
+     "or": 6474
+    }
+   }
+  },
+  {
+   "id": "ruines_11",
+   "title": "La porte qui descend",
+   "finH": 8.71493206813384,
+   "h": 0.0618471128608928,
+   "niv": 16,
+   "or": 10244,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0.05643044619422613,
+   "temps": {
+    "combat": 0.00375,
+    "soin au camp": 0.05643044619422613,
+    "atelier": 0.0011111111111111111
+   },
+   "actions": {
+    "apothicaire": {
+     "n": 2,
+     "or": 0
+    },
+    "compagnon:élite": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "ruines_12",
+   "title": "Sous la ville",
+   "finH": 8.827234006786357,
+   "h": 0.11230193865251831,
+   "niv": 16,
+   "or": 27308,
+   "morts": 0,
+   "combatH": 0.03,
+   "soinH": 0.03477690288713926,
+   "temps": {
+    "combat": 0.05416666666666667,
+    "soin au camp": 0.05230193865251831,
+    "atelier": 0.005277777777777778
+   },
+   "actions": {
+    "donjon:3": {
+     "n": 2,
+     "or": 0
+    },
+    "entrCompagnons": {
+     "n": 1,
+     "or": 7200
+    },
+    "apothicaire": {
+     "n": 2,
+     "or": 0
+    },
+    "compagnon:scène": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "ruines_13",
+   "title": "La clé de voûte",
+   "finH": 9.603429753090603,
+   "h": 0.7761957463042448,
+   "niv": 17,
+   "or": 19419,
+   "morts": 0,
+   "combatH": 0.01125,
+   "soinH": 0.06402002861230324,
+   "temps": {
+    "combat": 0.05708333333333333,
+    "soin au camp": 0.1212446351931327,
+    "atelier": 0.37149027777777777,
+    "chantier": 0.0588775,
+    "production": 0.16666666666666666
+   },
+   "actions": {
+    "forge": {
+     "n": 2,
+     "or": 3259
+    },
+    "chantier:palisade": {
+     "n": 1,
+     "or": 250
+    },
+    "apothicaire:commande": {
+     "n": 2,
+     "or": 0
+    },
+    "apothicaire": {
+     "n": 4,
+     "or": 0
+    },
+    "compagnon:livraison": {
+     "n": 1,
+     "or": 0
+    },
+    "donjon:3": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "ruines_14",
+   "title": "Ce que la cité ne finit pas",
+   "finH": 9.977881350610868,
+   "h": 0.37445159752026613,
+   "niv": 17,
+   "or": 32720,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0,
+   "temps": {
+    "combat": 0.025,
+    "soin au camp": 0.08834048640915607,
+    "atelier": 0.09388888888888888,
+    "production": 0.16666666666666666
+   },
+   "actions": {
+    "entrCompagnons": {
+     "n": 2,
+     "or": 14400
+    },
+    "forge": {
+     "n": 1,
+     "or": 953
+    },
+    "chantier:apothecary": {
+     "n": 1,
+     "or": 270
+    },
+    "apothicaire:commande": {
+     "n": 1,
+     "or": 0
+    },
+    "apothicaire": {
+     "n": 2,
+     "or": 0
+    },
+    "compagnon:sortie": {
+     "n": 1,
+     "or": 0
+    },
+    "donjon:3": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "ruines_15",
+   "title": "Le garde scellé",
+   "finH": 10.124068295055313,
+   "h": 0.14618694444444444,
+   "niv": 17,
+   "or": 35422,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0,
+   "temps": {
+    "combat": 0.0225,
+    "soin au camp": 0,
+    "atelier": 0.12368694444444445
+   },
+   "actions": {
+    "forge": {
+     "n": 1,
+     "or": 1816
+    },
+    "chantier:warehouse": {
+     "n": 1,
+     "or": 1242
+    },
+    "apothicaire:commande": {
+     "n": 1,
+     "or": 0
+    },
+    "apothicaire": {
+     "n": 1,
+     "or": 0
+    },
+    "compagnon:sortie": {
+     "n": 1,
+     "or": 0
+    },
+    "donjon:3": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "ruines_16",
+   "title": "La carte qui manque",
+   "finH": 10.806378066156887,
+   "h": 0.6823097711015741,
+   "niv": 17,
+   "or": 49338,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0.48783977110157306,
+   "temps": {
+    "combat": 0.019166666666666665,
+    "soin au camp": 0.48783977110157306,
+    "atelier": 0.17419222222222222
+   },
+   "actions": {
+    "forge": {
+     "n": 1,
+     "or": 2451
+    },
+    "rangsSorts": {
+     "n": 1,
+     "or": 15000
+    },
+    "chantier:warehouse": {
+     "n": 1,
+     "or": 1713
+    },
+    "apothicaire:commande": {
+     "n": 2,
+     "or": 0
+    },
+    "apothicaire": {
+     "n": 2,
+     "or": 0
+    },
+    "compagnon:scène": {
+     "n": 1,
+     "or": 0
+    },
+    "donjon:3": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "ruines_17",
+   "title": "Ce qu'il demande",
+   "finH": 11.214864388283736,
+   "h": 0.408486322126848,
+   "niv": 18,
+   "or": 47675,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0.07331902718168787,
+   "temps": {
+    "combat": 0.010416666666666666,
+    "soin au camp": 0.29506437768240357,
+    "atelier": 0.10244972222222222
+   },
+   "actions": {
+    "rangsSorts": {
+     "n": 1,
+     "or": 15000
+    },
+    "chantier:workshop": {
+     "n": 1,
+     "or": 168
+    },
+    "apothicaire:commande": {
+     "n": 1,
+     "or": 0
+    },
+    "apothicaire": {
+     "n": 3,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "ruines_18",
+   "title": "Le dernier trait",
+   "finH": 11.214864388283736,
+   "h": 0,
+   "niv": 18,
+   "or": 36620,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0,
+   "temps": {
+    "combat": 0,
+    "soin au camp": 0
+   },
+   "actions": {}
+  },
+  {
+   "id": "ruines_19",
+   "title": "Le plan fait pierre",
+   "finH": 11.235281054950402,
+   "h": 0.020416666666666666,
+   "niv": 18,
+   "or": 40894,
+   "morts": 0,
+   "combatH": 0.020416666666666666,
+   "soinH": 0,
+   "temps": {
+    "combat": 0.020416666666666666,
+    "soin au camp": 0
+   },
+   "actions": {
+    "rangsCompagnons": {
+     "n": 1,
+     "or": 7500
+    }
+   }
+  },
+  {
+   "id": "ruines_20",
+   "title": "Ce qui tient",
+   "finH": 11.250710499394847,
+   "h": 0.015429444444444445,
+   "niv": 18,
+   "or": 37894,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0,
+   "temps": {
+    "combat": 0,
+    "soin au camp": 0,
+    "atelier": 0.015429444444444445
+   },
+   "actions": {
+    "rangsCompagnons": {
+     "n": 1,
+     "or": 7500
+    }
+   }
+  },
+  {
+   "id": "crypte_01",
+   "title": "Là où ils sont couchés",
+   "finH": 11.32855623139294,
+   "h": 0.07784573199809218,
+   "niv": 18,
+   "or": 36214,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0.04756795422031441,
+   "temps": {
+    "combat": 0,
+    "soin au camp": 0.04756795422031441,
+    "atelier": 0.03
+   },
+   "actions": {
+    "entrCompagnons": {
+     "n": 3,
+     "or": 2880
+    },
+    "conversation": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "crypte_02",
+   "title": "Ici, on ne repose pas",
+   "finH": 11.372769393052453,
+   "h": 0.04421316165951391,
+   "niv": 18,
+   "or": 42861,
+   "morts": 0,
+   "combatH": 0.009166666666666667,
+   "soinH": 0.032546494992847244,
+   "temps": {
+    "combat": 0.009166666666666667,
+    "soin au camp": 0.032546494992847244,
+    "atelier": 0.0022222222222222222
+   },
+   "actions": {
+    "entrCompagnons": {
+     "n": 3,
+     "or": 5760
+    }
+   }
+  },
+  {
+   "id": "crypte_03",
+   "title": "Le carquois vide",
+   "finH": 11.401393281941342,
+   "h": 0.02862388888888889,
+   "niv": 19,
+   "or": 42635,
+   "morts": 0,
+   "combatH": 0.005416666666666667,
+   "soinH": 0,
+   "temps": {
+    "combat": 0.005416666666666667,
+    "soin au camp": 0,
+    "atelier": 0.023207222222222223
+   },
+   "actions": {
+    "entrCompagnons": {
+     "n": 4,
+     "or": 12480
+    },
+    "rangsCompagnons": {
+     "n": 2,
+     "or": 3000
+    },
+    "departsPatrouille": {
+     "n": 2,
+     "or": 2
+    },
+    "conversation": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "crypte_04",
+   "title": "Les morts n'achètent pas",
+   "finH": 11.598615226385785,
+   "h": 0.19722194444444444,
+   "niv": 19,
+   "or": 31355,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0,
+   "temps": {
+    "combat": 0,
+    "soin au camp": 0,
+    "atelier": 0.03027777777777778,
+    "caravane": 0.16694416666666667
+   },
+   "actions": {
+    "entrCompagnons": {
+     "n": 3,
+     "or": 16320
+    },
+    "chantier:apothecary": {
+     "n": 1,
+     "or": 364
+    },
+    "conversation": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "crypte_05",
+   "title": "Ce que portent les morts",
+   "finH": 11.598615226385785,
+   "h": 0,
+   "niv": 19,
+   "or": 20471,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0,
+   "temps": {
+    "combat": 0,
+    "soin au camp": 0
+   },
+   "actions": {
+    "entrCompagnons": {
+     "n": 1,
+     "or": 3840
+    }
+   }
+  },
+  {
+   "id": "crypte_06",
+   "title": "La lampe de Sarkel",
+   "finH": 11.598615226385785,
+   "h": 0,
+   "niv": 19,
+   "or": 24111,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0,
+   "temps": {
+    "combat": 0,
+    "soin au camp": 0
+   },
+   "actions": {
+    "entrCompagnons": {
+     "n": 1,
+     "or": 7200
+    }
+   }
+  },
+  {
+   "id": "crypte_07",
+   "title": "Ceux qu'on laisse",
+   "finH": 11.999604108499607,
+   "h": 0.4009888821138214,
+   "niv": 19,
+   "or": 27055,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0.0982113821138214,
+   "temps": {
+    "combat": 0,
+    "soin au camp": 0.0982113821138214,
+    "atelier": 0.10194444444444445,
+    "chantier": 0.2002775
+   },
+   "actions": {
+    "entrCompagnons": {
+     "n": 1,
+     "or": 7200
+    },
+    "caravane": {
+     "n": 1,
+     "or": 0
+    },
+    "chantier:workshop": {
+     "n": 1,
+     "or": 235
+    },
+    "apothicaire:commande": {
+     "n": 1,
+     "or": 0
+    },
+    "apothicaire": {
+     "n": 3,
+     "or": 0
+    },
+    "conversation": {
+     "n": 2,
+     "or": 0
+    },
+    "compagnon:scène": {
+     "n": 1,
+     "or": 0
+    },
+    "compagnon:sortie": {
+     "n": 1,
+     "or": 0
+    },
+    "entrHeros": {
+     "n": 38,
+     "or": 6916
+    }
+   }
+  },
+  {
+   "id": "crypte_08",
+   "title": "Celui qui appelle",
+   "finH": 12.020298552944052,
+   "h": 0.020694444444444446,
+   "niv": 19,
+   "or": 17919,
+   "morts": 0,
+   "combatH": 0.005416666666666667,
+   "soinH": 0,
+   "temps": {
+    "combat": 0.005416666666666667,
+    "soin au camp": 0,
+    "atelier": 0.015277777777777777
+   },
+   "actions": {
+    "departsPatrouille": {
+     "n": 1,
+     "or": 1
+    },
+    "compagnon:sortie": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "crypte_09",
+   "title": "Les alcôves du fond",
+   "finH": 12.020298552944052,
+   "h": 0,
+   "niv": 19,
+   "or": 24519,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0,
+   "temps": {
+    "combat": 0,
+    "soin au camp": 0
+   },
+   "actions": {
+    "departsPatrouille": {
+     "n": 1,
+     "or": 1
+    },
+    "conversation": {
+     "n": 1,
+     "or": 0
+    },
+    "compagnon:sortie": {
+     "n": 2,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "crypte_10",
+   "title": "Ceux qui sont tenus",
+   "finH": 12.167733651594103,
+   "h": 0.14743509865005192,
+   "niv": 20,
+   "or": 31950,
+   "morts": 0,
+   "combatH": 0.004166666666666667,
+   "soinH": 0,
+   "temps": {
+    "combat": 0.004166666666666667,
+    "soin au camp": 0.14299065420560747
+   },
+   "actions": {
+    "departsPatrouille": {
+     "n": 1,
+     "or": 1
+    },
+    "compagnon:sortie": {
+     "n": 2,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "crypte_11",
+   "title": "Les os rangés",
+   "finH": 12.618081250244158,
+   "h": 0.45034759865005397,
+   "niv": 20,
+   "or": 46826,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0.1109034267912774,
+   "temps": {
+    "combat": 0.007083333333333333,
+    "soin au camp": 0.1763239875389408,
+    "atelier": 0.0325,
+    "chantier": 0.23360694444444444
+   },
+   "actions": {
+    "entrCompagnons": {
+     "n": 1,
+     "or": 12000
+    },
+    "departsPatrouille": {
+     "n": 1,
+     "or": 1
+    },
+    "chantier:palisade": {
+     "n": 1,
+     "or": 425
+    },
+    "apothicaire:commande": {
+     "n": 1,
+     "or": 0
+    },
+    "compagnon:livraison": {
+     "n": 1,
+     "or": 0
+    },
+    "compagnon:sortie": {
+     "n": 2,
+     "or": 0
+    },
+    "entrHeros": {
+     "n": 38,
+     "or": 7357
+    }
+   }
+  },
+  {
+   "id": "crypte_12",
+   "title": "L'Ossuaire",
+   "finH": 12.87366676222673,
+   "h": 0.25558551198257135,
+   "niv": 20,
+   "or": 68924,
+   "morts": 0,
+   "combatH": 0.02125,
+   "soinH": 0,
+   "temps": {
+    "combat": 0.03625,
+    "soin au camp": 0.21377995642701475,
+    "atelier": 0.005277777777777778
+   },
+   "actions": {
+    "donjon:4": {
+     "n": 2,
+     "or": 0
+    },
+    "entrCompagnons": {
+     "n": 3,
+     "or": 36000
+    },
+    "departsPatrouille": {
+     "n": 1,
+     "or": 1
+    },
+    "compagnon:sortie": {
+     "n": 2,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "crypte_13",
+   "title": "La cire qui ne coule plus",
+   "finH": 14.112169540004507,
+   "h": 1.2385027777777777,
+   "niv": 20,
+   "or": 64617,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0,
+   "temps": {
+    "combat": 0.019166666666666665,
+    "soin au camp": 0,
+    "atelier": 0.9940669444444444,
+    "chantier": 0.04193583333333333,
+    "production": 0.18333333333333332
+   },
+   "actions": {
+    "forge": {
+     "n": 2,
+     "or": 7777
+    },
+    "rangsSorts": {
+     "n": 2,
+     "or": 30000
+    },
+    "departsPatrouille": {
+     "n": 2,
+     "or": 2
+    },
+    "chantier:warehouse": {
+     "n": 1,
+     "or": 2365
+    },
+    "compagnon:sortie": {
+     "n": 2,
+     "or": 0
+    },
+    "donjon:4": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "crypte_14",
+   "title": "Ce qu'elle garde",
+   "finH": 14.327978151115618,
+   "h": 0.2158086111111111,
+   "niv": 20,
+   "or": 70854,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0,
+   "temps": {
+    "combat": 0.010833333333333334,
+    "soin au camp": 0,
+    "atelier": 0.20497527777777777
+   },
+   "actions": {
+    "forge": {
+     "n": 1,
+     "or": 4468
+    },
+    "rangsCompagnons": {
+     "n": 1,
+     "or": 7500
+    },
+    "chantier:tavern": {
+     "n": 1,
+     "or": 700
+    },
+    "compagnon:sortie": {
+     "n": 2,
+     "or": 0
+    },
+    "donjon:4": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "crypte_15",
+   "title": "La Liche des sépulcres",
+   "finH": 14.4083968114027,
+   "h": 0.08041866028708096,
+   "niv": 20,
+   "or": 106653,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0,
+   "temps": {
+    "combat": 0.009166666666666667,
+    "soin au camp": 0.04625199362041429,
+    "atelier": 0.024722222222222222
+   },
+   "actions": {
+    "rangsSorts": {
+     "n": 1,
+     "or": 30000
+    },
+    "rangsCompagnons": {
+     "n": 1,
+     "or": 15000
+    },
+    "taverne": {
+     "n": 2,
+     "or": 554
+    },
+    "compagnon:sortie": {
+     "n": 2,
+     "or": 0
+    },
+    "donjon:4": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "crypte_16",
+   "title": "La chaîne",
+   "finH": 15.359430835857774,
+   "h": 0.9510340244550755,
+   "niv": 21,
+   "or": 120517,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0.7671451355661887,
+   "temps": {
+    "combat": 0.010833333333333334,
+    "soin au camp": 0.7671451355661887,
+    "atelier": 0.17194444444444446
+   },
+   "actions": {
+    "rangsSorts": {
+     "n": 2,
+     "or": 60000
+    },
+    "chantier:warehouse": {
+     "n": 1,
+     "or": 3264
+    },
+    "compagnon:scène": {
+     "n": 1,
+     "or": 0
+    },
+    "compagnon:sortie": {
+     "n": 1,
+     "or": 0
+    },
+    "donjon:4": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "crypte_17",
+   "title": "Derrière la porte murée",
+   "finH": 15.722540883704664,
+   "h": 0.36311004784688977,
+   "niv": 21,
+   "or": 111824,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0.15311004784688975,
+   "temps": {
+    "combat": 0,
+    "soin au camp": 0.15311004784688975,
+    "atelier": 0.20972222222222223
+   },
+   "actions": {
+    "rangsSorts": {
+     "n": 1,
+     "or": 30000
+    },
+    "rangsCompagnons": {
+     "n": 1,
+     "or": 15000
+    },
+    "chantier:warehouse": {
+     "n": 1,
+     "or": 5000
+    },
+    "compagnon:sortie": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "crypte_18",
+   "title": "Les maillons",
+   "finH": 15.862742903906684,
+   "h": 0.14020202020202038,
+   "niv": 21,
+   "or": 72712,
+   "morts": 0,
+   "combatH": 0.0075,
+   "soinH": 0,
+   "temps": {
+    "combat": 0.0075,
+    "soin au camp": 0.1313131313131315,
+    "atelier": 0.0011111111111111111
+   },
+   "actions": {
+    "compagnon:sortie": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "crypte_19",
+   "title": "Celui qui retient",
+   "finH": 15.94850845414592,
+   "h": 0.08576555023923517,
+   "niv": 21,
+   "or": 84281,
+   "morts": 0,
+   "combatH": 0.010833333333333334,
+   "soinH": 0,
+   "temps": {
+    "combat": 0.010833333333333334,
+    "soin au camp": 0.03854332801701191,
+    "atelier": 0.03611111111111111
+   },
+   "actions": {
+    "chantier:palisade": {
+     "n": 1,
+     "or": 722
+    },
+    "compagnon:sortie": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "crypte_20",
+   "title": "Ce qui bat",
+   "finH": 15.977952898590363,
+   "h": 0.029444444444444443,
+   "niv": 22,
+   "or": 94959,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0,
+   "temps": {
+    "combat": 0,
+    "soin au camp": 0,
+    "atelier": 0.029444444444444443
+   },
+   "actions": {
+    "caravane": {
+     "n": 1,
+     "or": 0
+    },
+    "chantier:enchanter": {
+     "n": 1,
+     "or": 800
+    },
+    "compagnon:sortie": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "montagne_01",
+   "title": "La roche est chaude",
+   "finH": 16.00045821491147,
+   "h": 0.022505316321104765,
+   "niv": 22,
+   "or": 109363,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0,
+   "temps": {
+    "combat": 0,
+    "soin au camp": 0.012227538543328023,
+    "atelier": 0.01
+   },
+   "actions": {
+    "entrCompagnons": {
+     "n": 3,
+     "or": 5760
+    },
+    "apothicaire": {
+     "n": 9,
+     "or": 0
+    },
+    "compagnon:sortie": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "montagne_02",
+   "title": "Ce qui affleure",
+   "finH": 16.06815558333252,
+   "h": 0.06769736842105165,
+   "niv": 22,
+   "or": 119213,
+   "morts": 0,
+   "combatH": 0.009583333333333333,
+   "soinH": 0,
+   "temps": {
+    "combat": 0.009583333333333333,
+    "soin au camp": 0.02339181286549713,
+    "atelier": 0.034444444444444444
+   },
+   "actions": {
+    "entrCompagnons": {
+     "n": 3,
+     "or": 11520
+    },
+    "chantier:hall": {
+     "n": 1,
+     "or": 827
+    },
+    "compagnon:sortie": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "montagne_03",
+   "title": "Celui qui taille",
+   "finH": 16.200390659090097,
+   "h": 0.13223507575757595,
+   "niv": 22,
+   "or": 120536,
+   "morts": 0,
+   "combatH": 0.007083333333333333,
+   "soinH": 0,
+   "temps": {
+    "combat": 0.007083333333333333,
+    "soin au camp": 0.02020202020202039,
+    "atelier": 0.10467194444444444
+   },
+   "actions": {
+    "entrCompagnons": {
+     "n": 4,
+     "or": 23520
+    },
+    "rangsCompagnons": {
+     "n": 4,
+     "or": 25500
+    },
+    "departsPatrouille": {
+     "n": 1,
+     "or": 1
+    },
+    "chantier:apothecary": {
+     "n": 1,
+     "or": 900
+    },
+    "conversation": {
+     "n": 1,
+     "or": 0
+    },
+    "compagnon:sortie": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "montagne_04",
+   "title": "Ça ne fond pas",
+   "finH": 16.273365140748787,
+   "h": 0.07297448165869133,
+   "niv": 22,
+   "or": 86340,
+   "morts": 0,
+   "combatH": 0.009166666666666667,
+   "soinH": 0,
+   "temps": {
+    "combat": 0.009166666666666667,
+    "soin au camp": 0.06353003721424792
+   },
+   "actions": {
+    "entrCompagnons": {
+     "n": 4,
+     "or": 39840
+    },
+    "departsPatrouille": {
+     "n": 1,
+     "or": 1
+    },
+    "apothicaire:commande": {
+     "n": 1,
+     "or": 0
+    },
+    "compagnon:sortie": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "montagne_05",
+   "title": "La première veine",
+   "finH": 16.404501807415453,
+   "h": 0.13113666666666668,
+   "niv": 22,
+   "or": 73500,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0,
+   "temps": {
+    "combat": 0,
+    "soin au camp": 0,
+    "atelier": 0.13113666666666668
+   },
+   "actions": {
+    "entrCompagnons": {
+     "n": 2,
+     "or": 27200
+    },
+    "departsPatrouille": {
+     "n": 1,
+     "or": 1
+    },
+    "apothicaire:commande": {
+     "n": 1,
+     "or": 0
+    },
+    "apothicaire": {
+     "n": 3,
+     "or": 0
+    },
+    "conversation": {
+     "n": 1,
+     "or": 0
+    },
+    "compagnon:sortie": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "montagne_06",
+   "title": "La Pierre froide",
+   "finH": 16.8030318446297,
+   "h": 0.3985300372142469,
+   "niv": 22,
+   "or": 66597,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0.33227006911217444,
+   "temps": {
+    "combat": 0,
+    "soin au camp": 0.39686337054758125,
+    "atelier": 0.0011111111111111111
+   },
+   "actions": {
+    "entrCompagnons": {
+     "n": 1,
+     "or": 12000
+    },
+    "departsPatrouille": {
+     "n": 1,
+     "or": 1
+    },
+    "chantier:tavern": {
+     "n": 1,
+     "or": 979
+    },
+    "conversation": {
+     "n": 1,
+     "or": 0
+    },
+    "compagnon:sortie": {
+     "n": 1,
+     "or": 0
+    },
+    "compagnon:livraison": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "montagne_07",
+   "title": "Chaque pente a sa veine",
+   "finH": 17.07739920241811,
+   "h": 0.27436735778841087,
+   "niv": 23,
+   "or": 78441,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0,
+   "temps": {
+    "combat": 0,
+    "soin au camp": 0.21158958001063308,
+    "atelier": 0.0625
+   },
+   "actions": {
+    "entrCompagnons": {
+     "n": 1,
+     "or": 20000
+    },
+    "departsPatrouille": {
+     "n": 1,
+     "or": 1
+    },
+    "compagnon:sortie": {
+     "n": 1,
+     "or": 0
+    },
+    "compagnon:scène": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "montagne_08",
+   "title": "Ce qui trie",
+   "finH": 17.201971903109232,
+   "h": 0.12457270069112174,
+   "niv": 23,
+   "or": 77237,
+   "morts": 0,
+   "combatH": 0.00625,
+   "soinH": 0,
+   "temps": {
+    "combat": 0.00625,
+    "soin au camp": 0.03110047846889951,
+    "atelier": 0.08694444444444445
+   },
+   "actions": {
+    "entrCompagnons": {
+     "n": 1,
+     "or": 20000
+    },
+    "departsPatrouille": {
+     "n": 1,
+     "or": 1
+    },
+    "chantier:warehouse": {
+     "n": 1,
+     "or": 7100
+    },
+    "conversation": {
+     "n": 1,
+     "or": 0
+    },
+    "compagnon:scène": {
+     "n": 1,
+     "or": 0
+    },
+    "compagnon:sortie": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "montagne_09",
+   "title": "Ce qui tient au feu",
+   "finH": 17.4598159687658,
+   "h": 0.2578440656565647,
+   "niv": 23,
+   "or": 88359,
+   "morts": 0,
+   "combatH": 0.0075,
+   "soinH": 0.12121212121212027,
+   "temps": {
+    "combat": 0.009166666666666667,
+    "soin au camp": 0.18284406565656472,
+    "atelier": 0.06472222222222222
+   },
+   "actions": {
+    "entrCompagnons": {
+     "n": 1,
+     "or": 20000
+    },
+    "departsPatrouille": {
+     "n": 1,
+     "or": 1
+    },
+    "chantier:hall": {
+     "n": 1,
+     "or": 1142
+    },
+    "conversation": {
+     "n": 1,
+     "or": 0
+    },
+    "compagnon:élite": {
+     "n": 1,
+     "or": 0
+    },
+    "compagnon:sortie": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "montagne_10",
+   "title": "L'ouvrage",
+   "finH": 17.78564069098802,
+   "h": 0.3258247222222222,
+   "niv": 23,
+   "or": 93357,
+   "morts": 0,
+   "combatH": 0.006666666666666667,
+   "soinH": 0,
+   "temps": {
+    "combat": 0.006666666666666667,
+    "soin au camp": 0,
+    "atelier": 0.06888888888888889,
+    "chantier": 0.25026916666666665
+   },
+   "actions": {
+    "departsPatrouille": {
+     "n": 1,
+     "or": 1
+    },
+    "caravane": {
+     "n": 1,
+     "or": 0
+    },
+    "chantier:palisade": {
+     "n": 1,
+     "or": 1200
+    },
+    "compagnon:livraison": {
+     "n": 1,
+     "or": 0
+    },
+    "compagnon:sortie": {
+     "n": 2,
+     "or": 0
+    },
+    "entrHeros": {
+     "n": 38,
+     "or": 20861
+    }
+   }
+  },
+  {
+   "id": "montagne_11",
+   "title": "La bouche",
+   "finH": 26.285115590255376,
+   "h": 8.499474899267355,
+   "niv": 23,
+   "or": 103975,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 1.855193539404064,
+   "temps": {
+    "combat": 0.0225,
+    "soin au camp": 1.855193539404064,
+    "atelier": 0.15861111111111112,
+    "chantier": 0.2502775,
+    "recharge": 5.211226082085504,
+    "échec à rejouer": 1
+   },
+   "actions": {
+    "departsPatrouille": {
+     "n": 2,
+     "or": 2
+    },
+    "caravane": {
+     "n": 2,
+     "or": 0
+    },
+    "taverne": {
+     "n": 2,
+     "or": 594
+    },
+    "chantier:apothecary": {
+     "n": 1,
+     "or": 1260
+    },
+    "compagnon:scène": {
+     "n": 1,
+     "or": 0
+    },
+    "compagnon:sortie": {
+     "n": 2,
+     "or": 0
+    },
+    "donjon:1 niv. 3": {
+     "n": 1,
+     "or": 0
+    },
+    "donjon:2 niv. 3": {
+     "n": 1,
+     "or": 0
+    },
+    "donjon:3 niv. 2": {
+     "n": 1,
+     "or": 0
+    },
+    "donjon:4 niv. 2": {
+     "n": 1,
+     "or": 0
+    },
+    "entrHeros": {
+     "n": 38,
+     "or": 22057
+    }
+   }
+  },
+  {
+   "id": "montagne_12",
+   "title": "La Gueule du volcan",
+   "finH": 26.659630094687284,
+   "h": 0.3745145044319083,
+   "niv": 24,
+   "or": 324298,
+   "morts": 0,
+   "combatH": 0.024166666666666666,
+   "soinH": 0.03867848509266766,
+   "temps": {
+    "combat": 0.06333333333333334,
+    "soin au camp": 0.16868117109857705,
+    "atelier": 0.14166666666666666
+   },
+   "actions": {
+    "donjon:5": {
+     "n": 2,
+     "or": 0
+    },
+    "rangsSorts": {
+     "n": 2,
+     "or": 160000
+    },
+    "departsPatrouille": {
+     "n": 2,
+     "or": 2
+    },
+    "chantier:tavern": {
+     "n": 1,
+     "or": 1371
+    },
+    "apothicaire": {
+     "n": 3,
+     "or": 0
+    },
+    "compagnon:sortie": {
+     "n": 2,
+     "or": 0
+    },
+    "donjon:1 niv. 4": {
+     "n": 1,
+     "or": 0
+    },
+    "donjon:2 niv. 4": {
+     "n": 1,
+     "or": 0
+    },
+    "donjon:3 niv. 3": {
+     "n": 1,
+     "or": 0
+    },
+    "donjon:4 niv. 3": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "montagne_13",
+   "title": "Ce qui ne fond pas",
+   "finH": 29.15908457449747,
+   "h": 2.499454479810186,
+   "niv": 24,
+   "or": 1153692,
+   "morts": 0,
+   "combatH": 0.06541666666666666,
+   "soinH": 0.24012892828364132,
+   "temps": {
+    "combat": 0.08875,
+    "soin au camp": 0.6019339242546322,
+    "atelier": 1.5737891666666666,
+    "chantier": 0.06692583333333334,
+    "production": 0.16666666666666666
+   },
+   "actions": {
+    "donjon:5": {
+     "n": 4,
+     "or": 0
+    },
+    "forge": {
+     "n": 2,
+     "or": 14174
+    },
+    "rangsSorts": {
+     "n": 2,
+     "or": 160000
+    },
+    "rangsCompagnons": {
+     "n": 2,
+     "or": 80000
+    },
+    "departsPatrouille": {
+     "n": 2,
+     "or": 2
+    },
+    "taverne": {
+     "n": 1,
+     "or": 231
+    },
+    "chantier:warehouse": {
+     "n": 1,
+     "or": 10082
+    },
+    "compagnon:sortie": {
+     "n": 2,
+     "or": 0
+    },
+    "donjon:1 niv. 5": {
+     "n": 1,
+     "or": 0
+    },
+    "donjon:2 niv. 5": {
+     "n": 1,
+     "or": 0
+    },
+    "donjon:3 niv. 4": {
+     "n": 1,
+     "or": 0
+    },
+    "donjon:4 niv. 4": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "montagne_14",
+   "title": "L'ouvrage inachevé",
+   "finH": 29.92001998747088,
+   "h": 0.7609354129734097,
+   "niv": 25,
+   "or": 1000570,
+   "morts": 0,
+   "combatH": 0.007083333333333333,
+   "soinH": 0.049153908138598004,
+   "temps": {
+    "combat": 0.030416666666666668,
+    "soin au camp": 0.08165457964007432,
+    "atelier": 0.6483086111111112
+   },
+   "actions": {
+    "forge": {
+     "n": 1,
+     "or": 8143
+    },
+    "departsPatrouille": {
+     "n": 2,
+     "or": 2
+    },
+    "chantier:warehouse": {
+     "n": 1,
+     "or": 14316
+    },
+    "compagnon:sortie": {
+     "n": 2,
+     "or": 0
+    },
+    "donjon:1 niv. 6": {
+     "n": 1,
+     "or": 0
+    },
+    "donjon:2 niv. 6": {
+     "n": 1,
+     "or": 0
+    },
+    "donjon:3 niv. 5": {
+     "n": 1,
+     "or": 0
+    },
+    "donjon:4 niv. 5": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "montagne_15",
+   "title": "Le Wyrm de cendres",
+   "finH": 30.05018719133873,
+   "h": 0.13016720386784938,
+   "niv": 25,
+   "or": 1039806,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0,
+   "temps": {
+    "combat": 0.023333333333333334,
+    "soin au camp": 0.09266720386784731,
+    "atelier": 0.01361111111111111
+   },
+   "actions": {
+    "departsPatrouille": {
+     "n": 2,
+     "or": 2
+    },
+    "apothicaire:commande": {
+     "n": 1,
+     "or": 0
+    },
+    "compagnon:sortie": {
+     "n": 2,
+     "or": 0
+    },
+    "donjon:1 niv. 7": {
+     "n": 1,
+     "or": 0
+    },
+    "donjon:2 niv. 7": {
+     "n": 1,
+     "or": 0
+    },
+    "donjon:3 niv. 6": {
+     "n": 1,
+     "or": 0
+    },
+    "donjon:4 niv. 6": {
+     "n": 1,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "montagne_16",
+   "title": "Ce qui respire",
+   "finH": 30.792203186951586,
+   "h": 0.7420159956128564,
+   "niv": 25,
+   "or": 1234043,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0.37174321783507863,
+   "temps": {
+    "combat": 0,
+    "soin au camp": 0.37174321783507863,
+    "atelier": 0.11944444444444445,
+    "chantier": 0.2502727777777778
+   },
+   "actions": {
+    "departsPatrouille": {
+     "n": 2,
+     "or": 2
+    },
+    "taverne": {
+     "n": 1,
+     "or": 348
+    },
+    "chantier:hall": {
+     "n": 1,
+     "or": 1576
+    },
+    "compagnon:sortie": {
+     "n": 2,
+     "or": 0
+    },
+    "entrHeros": {
+     "n": 38,
+     "or": 23250
+    }
+   }
+  },
+  {
+   "id": "montagne_17",
+   "title": "Le sentier du dessus",
+   "finH": 31.066709936691982,
+   "h": 0.2745067497403961,
+   "niv": 25,
+   "or": 1224333,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0,
+   "temps": {
+    "combat": 0,
+    "soin au camp": 0.2689511941848385,
+    "atelier": 0.005277777777777778
+   },
+   "actions": {
+    "departsPatrouille": {
+     "n": 2,
+     "or": 2
+    },
+    "compagnon:sortie": {
+     "n": 2,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "montagne_18",
+   "title": "Ceux qu'il a triés",
+   "finH": 31.423088547803093,
+   "h": 0.35637861111111113,
+   "niv": 25,
+   "or": 1254347,
+   "morts": 0,
+   "combatH": 0.008333333333333333,
+   "soinH": 0,
+   "temps": {
+    "combat": 0.008333333333333333,
+    "soin au camp": 0,
+    "atelier": 0.09777777777777778,
+    "chantier": 0.2502675
+   },
+   "actions": {
+    "departsPatrouille": {
+     "n": 2,
+     "or": 2
+    },
+    "chantier:palisade": {
+     "n": 1,
+     "or": 1655
+    },
+    "compagnon:sortie": {
+     "n": 2,
+     "or": 0
+    },
+    "entrHeros": {
+     "n": 38,
+     "or": 24449
+    }
+   }
+  },
+  {
+   "id": "montagne_19",
+   "title": "Le Dragon ancien",
+   "finH": 31.477242131492286,
+   "h": 0.05415358368919128,
+   "niv": 25,
+   "or": 1068767,
+   "morts": 0,
+   "combatH": 0.014583333333333334,
+   "soinH": 0,
+   "temps": {
+    "combat": 0.014583333333333334,
+    "soin au camp": 0.03818136146696905,
+    "atelier": 0.0011111111111111111
+   },
+   "actions": {
+    "departsPatrouille": {
+     "n": 2,
+     "or": 2
+    },
+    "conversation": {
+     "n": 1,
+     "or": 0
+    },
+    "compagnon:sortie": {
+     "n": 2,
+     "or": 0
+    }
+   }
+  },
+  {
+   "id": "montagne_20",
+   "title": "Le droit de prendre",
+   "finH": 32.35112129815895,
+   "h": 0.8738791666666667,
+   "niv": 25,
+   "or": 1099568,
+   "morts": 0,
+   "combatH": 0,
+   "soinH": 0,
+   "temps": {
+    "combat": 0.0008333333333333334,
+    "soin au camp": 0,
+    "atelier": 0.6227777777777778,
+    "chantier": 0.25026805555555554
+   },
+   "actions": {
+    "departsPatrouille": {
+     "n": 2,
+     "or": 2
+    },
+    "chantier:warehouse": {
+     "n": 1,
+     "or": 20329
+    },
+    "compagnon:sortie": {
+     "n": 2,
+     "or": 0
+    },
+    "entrHeros": {
+     "n": 38,
+     "or": 25646
+    }
+   }
+  }
+ ],
+ "mondes": [
+  {
+   "monde": "forest",
+   "h": 1.7906659568774015,
+   "niv": 8,
+   "or": 16651,
+   "orGagne": 28369,
+   "morts": 1,
+   "murs": 0,
+   "entr": {
+    "power": 36,
+    "endurance": 60,
+    "celerity": 60,
+    "precision": 36,
+    "will": 36
+   },
+   "rangsSorts": 2,
+   "talents": "5/7",
+   "compagnons": {
+    "wenna": {
+     "upg": 3,
+     "rang": 1,
+     "groupe": true,
+     "reliques": ""
+    }
+   },
+   "reliques": 0,
+   "forge": {
+    "weapon": 0,
+    "armor": 0,
+    "helmet": 0,
+    "gloves": 0,
+    "boots": 0,
+    "ring": 0,
+    "amulet": 0
+   },
+   "equip": "ggccccc",
+   "profil": "PV 604 · ATK 53 · VIT 134 · DEF 25 % · CRIT 27.8 % ×2.90 · Forge {\"weapon\":0,\"armor\":0,\"helmet\":0,\"gloves\":0,\"boots\":0,\"ring\":0,\"amulet\":0} · Wenna +3 · Maddoc +0 · équipement ggccccc · arme Arc à corde blanche 26",
+   "depenses": {
+    "entrHeros": 3336,
+    "echoppe": 1800,
+    "rangsSorts": 2000,
+    "entrCompagnons": 420,
+    "rangsCompagnons": 500
+   },
+   "orMonde": 28369,
+   "zones": {
+    "ouvertes": 14,
+    "niveauMoyen": 3.2,
+    "prodParH": 1113,
+    "stocks": "bois 20/500 pierre 26/500 fer 201/500 eau 17/500 ble 318/500 viande 48/500"
+   },
+   "gain": 28369,
+   "perte": 11718,
+   "gainMonde": 28369,
+   "perteMonde": 11718
+  },
+  {
+   "monde": "desert",
+   "h": 7.321185848701924,
+   "niv": 14,
+   "or": 14358,
+   "orGagne": 95635,
+   "morts": 2,
+   "murs": 0,
+   "entr": {
+    "power": 66,
+    "endurance": 110,
+    "celerity": 110,
+    "precision": 66,
+    "will": 66
+   },
+   "rangsSorts": 8,
+   "talents": "11/13",
+   "compagnons": {
+    "wenna": {
+     "upg": 10,
+     "rang": 2,
+     "groupe": true,
+     "reliques": "wenna_pousse1"
+    },
+    "maddoc": {
+     "upg": 5,
+     "rang": 1,
+     "groupe": true,
+     "reliques": "maddoc_pierre1"
+    }
+   },
+   "reliques": 2,
+   "forge": {
+    "weapon": 4,
+    "armor": 4,
+    "helmet": 0,
+    "gloves": 0,
+    "boots": 0,
+    "ring": 0,
+    "amulet": 0
+   },
+   "equip": "rgggggg",
+   "profil": "PV 843 · ATK 112 · VIT 191 · DEF 31 % · CRIT 32.6 % ×3.58 · Forge {\"weapon\":4,\"armor\":4,\"helmet\":0,\"gloves\":0,\"boots\":0,\"ring\":0,\"amulet\":0} · Wenna +10 · Maddoc +5 · équipement rgggggg · arme Arc du Fleuve 50",
+   "depenses": {
+    "entrHeros": 21419,
+    "echoppe": 1800,
+    "rangsSorts": 24000,
+    "entrCompagnons": 15960,
+    "rangsCompagnons": 3500,
+    "forge": 1989
+   },
+   "orMonde": 67266,
+   "zones": {
+    "ouvertes": 18,
+    "niveauMoyen": 7.3,
+    "prodParH": 3777,
+    "stocks": "bois 54/500 pierre 71/500 fer 140/500 eau 142/500 ble 385/500 viande 385/500"
+   },
+   "gain": 95635,
+   "perte": 81277,
+   "gainMonde": 67266,
+   "perteMonde": 69559
+  },
+  {
+   "monde": "ruins",
+   "h": 11.250710499394847,
+   "niv": 18,
+   "or": 30394,
+   "orGagne": 257135,
+   "morts": 2,
+   "murs": 0,
+   "entr": {
+    "power": 78,
+    "endurance": 130,
+    "celerity": 130,
+    "precision": 78,
+    "will": 78
+   },
+   "rangsSorts": 10,
+   "talents": "13/17",
+   "compagnons": {
+    "wenna": {
+     "upg": 15,
+     "rang": 2,
+     "groupe": false,
+     "reliques": "wenna_pousse1"
+    },
+    "maddoc": {
+     "upg": 10,
+     "rang": 3,
+     "groupe": true,
+     "reliques": "maddoc_couteau2"
+    },
+    "edda": {
+     "upg": 5,
+     "rang": 3,
+     "groupe": true,
+     "reliques": "edda_craie2"
+    }
+   },
+   "reliques": 4,
+   "forge": {
+    "weapon": 8,
+    "armor": 8,
+    "helmet": 0,
+    "gloves": 0,
+    "boots": 0,
+    "ring": 0,
+    "amulet": 0
+   },
+   "equip": "ergrrrr",
+   "profil": "PV 932 · ATK 208 · VIT 216 · DEF 37 % · CRIT 40.3 % ×3.65 · Forge {\"weapon\":8,\"armor\":8,\"helmet\":0,\"gloves\":0,\"boots\":0,\"ring\":0,\"amulet\":0} · Wenna +15 · Maddoc +10 · équipement ergrrrr · arme Arc du Cœur 110",
+   "depenses": {
+    "entrHeros": 33925,
+    "echoppe": 1800,
+    "rangsSorts": 54000,
+    "entrCompagnons": 59160,
+    "rangsCompagnons": 24000,
+    "forge": 10468,
+    "departsPatrouille": 1
+   },
+   "orMonde": 161500,
+   "zones": {
+    "ouvertes": 18,
+    "niveauMoyen": 10.3,
+    "prodParH": 6402,
+    "stocks": "bois 161/1250 pierre 56/1250 fer 719/1250 eau 89/1250 ble 689/1250 viande 1000/1250"
+   },
+   "gain": 257135,
+   "perte": 226741,
+   "gainMonde": 161500,
+   "perteMonde": 145464
+  },
+  {
+   "monde": "crypt",
+   "h": 15.977952898590363,
+   "niv": 22,
+   "or": 94837,
+   "orGagne": 680833,
+   "morts": 2,
+   "murs": 0,
+   "entr": {
+    "power": 90,
+    "endurance": 150,
+    "celerity": 150,
+    "precision": 90,
+    "will": 90
+   },
+   "rangsSorts": 16,
+   "talents": "18/21",
+   "compagnons": {
+    "wenna": {
+     "upg": 20,
+     "rang": 4,
+     "groupe": true,
+     "reliques": "wenna_ruban3"
+    },
+    "maddoc": {
+     "upg": 15,
+     "rang": 3,
+     "groupe": false,
+     "reliques": "maddoc_couteau2"
+    },
+    "edda": {
+     "upg": 10,
+     "rang": 4,
+     "groupe": true,
+     "reliques": "edda_craie2"
+    }
+   },
+   "reliques": 5,
+   "forge": {
+    "weapon": 10,
+    "armor": 10,
+    "helmet": 0,
+    "gloves": 0,
+    "boots": 0,
+    "ring": 0,
+    "amulet": 0
+   },
+   "equip": "eeeeeee",
+   "profil": "PV 1254 · ATK 383 · VIT 336 · DEF 43 % · CRIT 67.0 % ×5.45 · Forge {\"weapon\":10,\"armor\":10,\"helmet\":0,\"gloves\":0,\"boots\":0,\"ring\":0,\"amulet\":0} · Wenna +20 · Maddoc +15 · équipement eeeeeee · arme Arc 262",
+   "depenses": {
+    "entrHeros": 48198,
+    "echoppe": 1800,
+    "rangsSorts": 204000,
+    "entrCompagnons": 162840,
+    "rangsCompagnons": 64500,
+    "forge": 22713,
+    "departsPatrouille": 10
+   },
+   "orMonde": 423698,
+   "zones": {
+    "ouvertes": 18,
+    "niveauMoyen": 12.5,
+    "prodParH": 9205,
+    "stocks": "bois 212/2000 pierre 209/2000 fer 374/2000 eau 1121/2000 ble 1467/2000 viande 1466/2000"
+   },
+   "gain": 680833,
+   "perte": 585996,
+   "gainMonde": 423698,
+   "perteMonde": 359255
+  },
+  {
+   "monde": "mountain",
+   "h": 32.35112129815895,
+   "niv": 25,
+   "or": 1049014,
+   "orGagne": 2844573,
+   "morts": 2,
+   "murs": 0,
+   "entr": {
+    "power": 120,
+    "endurance": 200,
+    "celerity": 200,
+    "precision": 120,
+    "will": 120
+   },
+   "rangsSorts": 20,
+   "talents": "23/24",
+   "compagnons": {
+    "wenna": {
+     "upg": 25,
+     "rang": 5,
+     "groupe": true,
+     "reliques": "wenna_braise4,wenna_ruban3"
+    },
+    "maddoc": {
+     "upg": 20,
+     "rang": 3,
+     "groupe": false,
+     "reliques": "maddoc_couteau2"
+    },
+    "edda": {
+     "upg": 15,
+     "rang": 4,
+     "groupe": false,
+     "reliques": "edda_craie2"
+    },
+    "sarkel": {
+     "upg": 5,
+     "rang": 5,
+     "groupe": true,
+     "reliques": "sarkel_secret4"
+    }
+   },
+   "reliques": 7,
+   "forge": {
+    "weapon": 12,
+    "armor": 12,
+    "helmet": 0,
+    "gloves": 0,
+    "boots": 0,
+    "ring": 0,
+    "amulet": 0
+   },
+   "equip": "eeeeeee",
+   "profil": "PV 1370 · ATK 722 · VIT 415 · DEF 46 % · CRIT 80.5 % ×5.53 · Forge {\"weapon\":12,\"armor\":12,\"helmet\":0,\"gloves\":0,\"boots\":0,\"ring\":0,\"amulet\":0} · Wenna +25 · Maddoc +20 · équipement eeeeeee · arme Arc 391",
+   "depenses": {
+    "entrHeros": 164461,
+    "echoppe": 1800,
+    "rangsSorts": 524000,
+    "entrCompagnons": 342680,
+    "rangsCompagnons": 170000,
+    "forge": 45030,
+    "departsPatrouille": 38
+   },
+   "orMonde": 2163740,
+   "zones": {
+    "ouvertes": 18,
+    "niveauMoyen": 14.4,
+    "prodParH": 14174,
+    "stocks": "bois 93/2750 pierre 556/2750 fer 1338/2750 eau 1580/2750 ble 2200/2750 viande 2200/2750"
+   },
+   "gain": 2844573,
+   "perte": 1795559,
+   "gainMonde": 2163740,
+   "perteMonde": 1209563
+  }
+ ],
+ "depenses": {
+  "entrHeros": 164461,
+  "echoppe": 1800,
+  "rangsSorts": 524000,
+  "entrCompagnons": 342680,
+  "rangsCompagnons": 170000,
+  "forge": 45030,
+  "departsPatrouille": 38
+ },
+ "caravanes": {
+  "departs": 6,
+  "or": 3195,
+  "rares": 2
+ },
+ "donjonLibre": 0
+}

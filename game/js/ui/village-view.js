@@ -258,6 +258,7 @@ function buildVillageHTML() {
   activeVillageSubTab = normalizeVillageSubTab(activeVillageSubTab);
   var h = '<div class="nb-page-frame nb-page-frame-fill village-page-frame kframe-page" data-kf-banner="village" data-kf-title="' + esc("images/Icons/menu_icons/village_menu.webp|" + _t("Village")) + '">';
   h += buildVillageSubTabBarHTML();
+  if (typeof buildVillageEventCardHTML === "function") h += buildVillageEventCardHTML(); // v3.604.0 : Ce matin à Aeswyn
 
   if (activeVillageSubTab === "entrepot") h += buildWarehouseHTML();
   else if (activeVillageSubTab === "shops") h += buildShopsViewHTML();

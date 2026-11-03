@@ -340,6 +340,7 @@ var FilRouge = {
     if (typeof isTabUnlocked === "function" && !isTabUnlocked("village")) return null;
     var found = null;
     P.getManagedBuildingIds().some(function (bid) {
+      if (window.ProductionManager && !ProductionManager.isBuildingUnlocked(bid)) return false; // v3.616.0 : bâtiment fermé, rien à lire
       return P.getPlots(bid).some(function (pl, i) {
         if (pl.state !== "open" || P.isPlotMaxLevel(pl)) return false;
         var c = getProductionPlotUpgradeCost(bid, pl.level, i);

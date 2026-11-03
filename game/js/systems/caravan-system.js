@@ -37,7 +37,7 @@
 var CARAVAN_TRIPS = {
   court: { id: "court", name: "Court", seconds: 3600,      units: 150, valuePct: 0.60, rareChance: 0,    itemChance: 0,    minHall: 1 },
   moyen: { id: "moyen", name: "Moyen", seconds: 4 * 3600,  units: 400, valuePct: 0.80, rareChance: 0,    itemChance: 0,    minHall: 1 },
-  long:  { id: "long",  name: "Long",  seconds: 8 * 3600,  units: 800, valuePct: 1.00, rareChance: 0.25, itemChance: 0.10, minHall: 3 },
+  long:  { id: "long",  name: "Long",  seconds: 8 * 3600,  units: 800, valuePct: 1.00, rareChance: 1, itemChance: 0.10, minHall: 3 }, // v3.611.0 (R1) : rare garanti
   /* v3.551.0 (retour Seb, point 2) : la caravane d'essai que l'Histoire demande (ruines_04, crypte_04) :
      10 min, vide, sans gain, sans prendre de place. Hors CARAVAN_TRIP_ORDER : jamais proposée ailleurs. */
   essai: { id: "essai", name: "Essai", seconds: 600,       units: 0,   valuePct: 0,    rareChance: 0,    itemChance: 0,    minHall: 1, story: true }
@@ -48,13 +48,18 @@ var CARAVAN_TRIP_ORDER = ["court", "moyen", "long"];
 /* v3.421.0 : matières brutes que la caravane n'emporte jamais (planches, lingots, blocs en dépendent). */
 var CARAVAN_EXCLUDED = []; // v3.480.0 (refonte de l'économie RE-3) : le Bois et le Fer partent aussi ; la moitié du plafond reste au village
 var CARAVAN_CAPACITY_PER_LEVEL = 0.10;   // +10 % par niveau de Halle au-delà du premier
-var CARAVAN_KEEP_SHARE = 0.5;            // la moitié basse du plafond ne part jamais
+var CARAVAN_KEEP_SHARE = 0.5;            // part du plafond laissée au village, par défaut
+/* v3.610.0 (retour Seb : caravanes bloquées au Désert) : la part laissée se règle, 10 à 75 %, par pas de 5. */
+var CARAVAN_KEEP_MIN = 0.1, CARAVAN_KEEP_MAX = 0.75, CARAVAN_KEEP_STEP = 0.05;
 /* Matériau rare rapporté par le trajet Long : celui du monde du marché choisi (v3.426.0). */
-var CARAVAN_RARE_BY_WORLD = { 0: "seve_aeswyn", 1: "verre_des_dunes", 2: "pierre_errante", 3: "cire_sepulcre", 4: "cendre_vive" }; // v3.452.0 : la Crypte ; v3.489.0 : la Montagne
+var CARAVAN_RARE_BY_WORLD = { 0: "seve_aeswyn", 1: "verre_des_dunes", 2: "pierre_errante", 3: "cire_sepulcre", 4: "cendre_vive", 5: "givre_bleu" }; // v3.627.0 : la Tour // v3.452.0 : la Crypte ; v3.489.0 : la Montagne
 /* v3.428.0 (Ruines, étape ruines_04) : marchés SANS carte vivante. Les Ruines n'ont pas encore
    de carte (lot U-5) : leur marché s'ouvre par l'Histoire. mapId sert d'identifiant de marché. */
-var CARAVAN_WORLD_MARKETS = { ruins: { requiresStoryStep: "ruines_04" }, crypt: { requiresStoryStep: "crypte_04" }, mountain: { requiresStoryStep: "montagne_07" } }; // v3.452.0 : Marché de la Crypte (crypte_04) ; v3.489.0 : de la Montagne
-var CARAVAN_RARE_QTY = [2, 3];
+var CARAVAN_WORLD_MARKETS = { ruins: { requiresStoryStep: "ruines_04" }, crypt: { requiresStoryStep: "crypte_04" }, mountain: { requiresStoryStep: "montagne_07" }, tower: { requiresStoryStep: "tour_06" } }; // v3.627.0 : Marché de la Tour // v3.452.0 : Marché de la Crypte (crypte_04) ; v3.489.0 : de la Montagne
+var CARAVAN_RARE_QTY = [2, 2]; // v3.611.0 (R1, banc 01/11) : 2 garantis au lieu de 25 % de chance de 2-3
+/* v3.611.0 (R2) : la commande du jour de chaque marché — chargée en premier, +25 % d'or sur elle ;
+   une fois par jour et par marché, +1 rare du marché si la caravane en emporte au moins 100. */
+var CARAVAN_ORDER = { goldBonus: 0.25, minUnits: 100, rare: 1 };
 var CARAVAN_HALL_PER_EXTRA = 3;          // v3.457.0 : une caravane de plus tous les 3 niveaux de Halle
 
 var CaravanManager = {
@@ -132,23 +137,36 @@ var CaravanManager = {
     });
   },
 
-  /* Ce qui peut partir d'une ressource : au-dessus de la moitié du plafond ET de la réserve. */
+  /* v3.610.0 : part du plafond que la caravane laisse au village (game.village.caravanKeep, sauvegardé avec game.village). */
+  getKeepShare: function () {
+    var v = game.village && Number(game.village.caravanKeep);
+    return isFinite(v) && v > 0 ? Math.min(CARAVAN_KEEP_MAX, Math.max(CARAVAN_KEEP_MIN, v)) : CARAVAN_KEEP_SHARE;
+  },
+  stepKeepShare: function (dir) {
+    if (!game.village || typeof game.village !== "object") game.village = {};
+    game.village.caravanKeep = Math.min(CARAVAN_KEEP_MAX, Math.max(CARAVAN_KEEP_MIN, Math.round((this.getKeepShare() + dir * CARAVAN_KEEP_STEP) * 100) / 100));
+    return game.village.caravanKeep;
+  },
+
+  /* Ce qui peut partir d'une ressource : au-dessus de la part laissée au village ET de la réserve. */
   getSpare: function (key) {
     var cap = WarehouseManager.getCap(key);
     if (cap === Infinity) return 0;
     var reserve = (window.ResourceReserveManager && typeof ResourceReserveManager.getReserve === "function")
       ? Number(ResourceReserveManager.getReserve(key) || 0) : 0;
-    var keep = Math.max(Math.ceil(cap * CARAVAN_KEEP_SHARE), reserve);
+    var keep = Math.max(Math.ceil(cap * this.getKeepShare()), reserve);
     return Math.max(0, Math.floor(WarehouseManager.getAmount(key) - keep));
   },
 
   /* Chargement C1 : d'abord les ressources au plafond, à parts égales, puis les autres
      par ordre de remplissage. Remplissage « en eau » : on répartit, ce qui n'a pas pu
      être pris par une ressource épuisée repart sur les suivantes. */
-  computeLoad: function (tripId, level) {
+  computeLoad: function (tripId, level, world) {
     var self = this, left = this.getCapacity(tripId, level), load = {};
     var spare = {};
     this.getEligibleKeys().forEach(function (k) { var s = self.getSpare(k); if (s > 0) spare[k] = s; });
+    var order = typeof world === "number" ? this.getOrder(world) : null; // v3.611.0 (R2) : la commande d'abord
+    if (order && spare[order] > 0) { var q0 = Math.min(spare[order], left); load[order] = q0; spare[order] -= q0; left -= q0; }
 
     function fill(keys) {
       var pool = keys.filter(function (k) { return spare[k] > 0; });
@@ -176,15 +194,38 @@ var CaravanManager = {
     return Object.keys(load || {}).reduce(function (a, k) { return a + Number(load[k] || 0); }, 0);
   },
 
-  getLoadGold: function (load, tripId) {
+  getLoadGold: function (load, tripId, world) {
     var t = CARAVAN_TRIPS[tripId];
     if (!t) return 0;
-    var v = 0;
+    var v = 0, order = typeof world === "number" ? this.getOrder(world) : null;
     Object.keys(load || {}).forEach(function (k) {
       var d = WAREHOUSE_RESOURCES[k];
-      v += Number(load[k] || 0) * (d ? Number(d.sellPrice || 0) : 0);
+      v += Number(load[k] || 0) * (d ? Number(d.sellPrice || 0) : 0) * (k === order ? 1 + CARAVAN_ORDER.goldBonus : 1);
     });
     return Math.floor(v * t.valuePct);
+  },
+
+  /* ---------- v3.611.0 (R2) : la commande du jour ---------- */
+  _todayKey: function () { return new Date(this._now()).toDateString(); }, // jour civil, comme l'Apothicaire
+  /* Ressource commandée par le marché `world` aujourd'hui : tirage fixe (jour + marché), parmi ce que la caravane emporte. */
+  getOrder: function (world) {
+    var keys = this.getEligibleKeys().sort();
+    if (!keys.length) return null;
+    var s = this._todayKey() + "|" + world, h = 0;
+    for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+    return keys[h % keys.length];
+  },
+  _orders: function () {
+    var o = game.village.caravanOrders, today = this._todayKey();
+    if (!o || typeof o !== "object" || o.day !== today) o = game.village.caravanOrders = { day: today, done: [] };
+    if (!Array.isArray(o.done)) o.done = [];
+    return o;
+  },
+  isOrderDone: function (world) { return this._orders().done.indexOf(world) >= 0; },
+  /* La commande rapporte-t-elle son rare avec ce chargement ? */
+  orderRareFor: function (load, world) {
+    var order = this.getOrder(world);
+    return !!(order && !this.isOrderDone(world) && Number((load || {})[order] || 0) >= CARAVAN_ORDER.minUnits);
   },
 
   /* v3.426.0 : worldIndex = le monde du MARCHÉ choisi (par défaut, celui où l'on se trouve). */
@@ -298,7 +339,7 @@ var CaravanManager = {
     var t = CARAVAN_TRIPS[tripId];
     if (!t) return _t("Trajet inconnu");
     if (!this.isTripOpen(tripId)) return _t("Halle niveau {n}", { n: t.minHall });
-    if (this.getLoadUnits(this.computeLoad(tripId)) <= 0) return _t("Rien à charger");
+    if (this.getLoadUnits(this.computeLoad(tripId, undefined, world)) <= 0) return _t("Rien à charger");
     return "";
   },
 
@@ -307,7 +348,7 @@ var CaravanManager = {
     var world = (typeof worldIndex === "number" && window.WORLDS && WORLDS[worldIndex]) ? worldIndex : (window.WorldManager ? Number(WorldManager.worldIndex || 0) : 0);
     if (this.getBlockReason(tripId, world)) return false;
     var t = CARAVAN_TRIPS[tripId];
-    var load = t.story ? {} : this.computeLoad(tripId); // v3.551.0 : l'essai part à vide
+    var load = t.story ? {} : this.computeLoad(tripId, undefined, world); // v3.551.0 : l'essai part à vide
     Object.keys(load).forEach(function (k) {
       if (!WarehouseManager.removeResource(k, load[k])) delete load[k];
     });
@@ -322,11 +363,18 @@ var CaravanManager = {
       item = LootSystem.rollWorldDrop() || null;
     }
 
+    // v3.611.0 (R2) : commande honorée (une fois par jour et par marché) -> +1 rare du marché
+    var orderKey = t.story ? null : this.getOrder(world), orderRare = !t.story && this.orderRareFor(load, world);
+    if (orderRare) {
+      var ok2 = this.getRareKey(world);
+      if (ok2) rare = { key: ok2, n: (rare && rare.key === ok2 ? rare.n : 0) + CARAVAN_ORDER.rare };
+      this._orders().done.push(world);
+    }
     var now = this._now();
     game.village.caravans.push({
       trip: tripId, startedAt: now, endsAt: now + t.seconds * 1000,
       world: world, // v3.420.0 : la carte où elle roule ; v3.426.0 : celle du marché choisi
-      cargo: load, gold: this.getLoadGold(load, tripId), rare: rare, item: item, notified: false
+      cargo: load, gold: this.getLoadGold(load, tripId, world), rare: rare, item: item, notified: false, order: orderKey
     });
     if (typeof addLog === "function") {
       addLog("🐪 " + (t.story ? _t("La caravane d'essai part, à vide : retour dans {d}", { d: formatTime(t.seconds) })

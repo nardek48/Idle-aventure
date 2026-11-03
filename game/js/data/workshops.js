@@ -61,7 +61,8 @@ var WORKSHOPS_CONFIG = {
       // v3.137.0 (option B validée Seb) : Grande ration = Ration moyenne + 3 Sève d'Aeswyn — escalade
       // visible sur la chaîne plutôt qu'un doublon des intrants de la Ration moyenne (option A).
       // Premier débouché de craft de la Sève (jusqu'ici uniquement l'offrande forest_15, ponctuelle).
-      { id: "grande_ration", inputs: [{ resourceId: "ration", quantity: 1 }, { resourceId: "seve_aeswyn", quantity: 3 }], outputs: [{ resourceId: "grande_ration", quantity: 1 }], craftTimeMs: 12000 }
+      // v3.608.0 (option A de Seb) : la Sève, demandée par les bâtiments, est remplacée par 15 Viandes + 10 Eau.
+      { id: "grande_ration", inputs: [{ resourceId: "ration", quantity: 1 }, { resourceId: "viande", quantity: 15 }, { resourceId: "eau", quantity: 10 }], outputs: [{ resourceId: "grande_ration", quantity: 1 }], craftTimeMs: 12000 }
     ]
   },
 
@@ -70,7 +71,8 @@ var WORKSHOPS_CONFIG = {
     buildingId: "sawmill", name: "Scierie fine", icon: "images/Icons/workshops/fine_sawmill.webp", active: true,
     upgradeCostBase: { planche: 3, lingot: 2 },
     recipes: [
-      { id: "planche", inputs: [{ resourceId: "bois", quantity: 5 }], outputs: [{ resourceId: "planche", quantity: 1 }], craftTimeMs: 3000 }
+      { id: "planche", inputs: [{ resourceId: "bois", quantity: 5 }], outputs: [{ resourceId: "planche", quantity: 1 }], craftTimeMs: 3000 },
+      { id: "corde_tressee", inputs: [{ resourceId: "bois", quantity: 30 }, { resourceId: "planche", quantity: 1 }], outputs: [{ resourceId: "corde_tressee", quantity: 1 }], craftTimeMs: 6000 } // v3.606.0 : l'artisan d'Aeswyn
     ]
   },
   /* v3.214.0 (lot V-3) : premier atelier de tier 2 activé. Il ne fabrique pas
@@ -82,7 +84,8 @@ var WORKSHOPS_CONFIG = {
     buildingId: "sawmill", name: "Menuiserie", icon: "images/Icons/workshops/carpentry.webp", active: true,
     upgradeCostBase: { planche: 4, lingot: 3 },
     recipes: [
-      { id: "resine_durcie", inputs: [{ resourceId: "seve_aeswyn", quantity: 2 }, { resourceId: "planche", quantity: 3 }], outputs: [{ resourceId: "resine_durcie", quantity: 1 }], craftTimeMs: 9000 }
+      { id: "resine_durcie", inputs: [{ resourceId: "seve_aeswyn", quantity: 2 }, { resourceId: "planche", quantity: 3 }], outputs: [{ resourceId: "resine_durcie", quantity: 1 }], craftTimeMs: 9000 },
+      { id: "torche_resinee", inputs: [{ resourceId: "resine_durcie", quantity: 1 }, { resourceId: "bois", quantity: 10 }], outputs: [{ resourceId: "torche_resinee", quantity: 1 }], craftTimeMs: 9000 } // v3.606.0
     ]
   },
 
@@ -97,7 +100,10 @@ var WORKSHOPS_CONFIG = {
         outputs: [{ resourceId: "cire_consacree", quantity: 1 }], craftTimeMs: 30000 },
       // v3.490.0 (Montagne, acte III) : l'Obsidienne taillée, la Cendre vive taillée au burin (elle ne fond pas). Au banc.
       { id: "obsidienne_taillee", inputs: [{ resourceId: "cendre_vive", quantity: 3 }, { resourceId: "acier", quantity: 1 }],
-        outputs: [{ resourceId: "obsidienne_taillee", quantity: 1 }], craftTimeMs: 30000 }
+        outputs: [{ resourceId: "obsidienne_taillee", quantity: 1 }], craftTimeMs: 30000 },
+      // v3.625.0 (Tour, T-0, TW8) : le Verre de faille, du Givre bleu fondu. Au banc avec l'acte III.
+      { id: "verre_faille", inputs: [{ resourceId: "givre_bleu", quantity: 3 }, { resourceId: "acier", quantity: 1 }],
+        outputs: [{ resourceId: "verre_faille", quantity: 1 }], craftTimeMs: 30000 }
     ]
   },
   /* v3.221.0 (lot V-8) : troisième atelier de tier 2 activé, pour alimenter la
@@ -106,7 +112,8 @@ var WORKSHOPS_CONFIG = {
     buildingId: "mine", name: "Forge", icon: "images/Icons/workshops/mine_smithy.webp", active: true,
     upgradeCostBase: { planche: 4, lingot: 4 },
     recipes: [
-      { id: "acier", inputs: [{ resourceId: "lingot", quantity: 3 }, { resourceId: "bois", quantity: 6 }], outputs: [{ resourceId: "acier", quantity: 1 }], craftTimeMs: 8000 }
+      { id: "acier", inputs: [{ resourceId: "lingot", quantity: 3 }, { resourceId: "bois", quantity: 6 }], outputs: [{ resourceId: "acier", quantity: 1 }], craftTimeMs: 8000 },
+      { id: "trousse_maitre", inputs: [{ resourceId: "lingot", quantity: 2 }], outputs: [{ resourceId: "trousse_maitre", quantity: 1 }], craftTimeMs: 8000 } // v3.606.0
     ]
   },
 

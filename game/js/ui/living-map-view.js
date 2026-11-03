@@ -446,6 +446,9 @@ function buildLivingMapHTML(mapId) {
     h += '<span class="lm-node-name">' + esc(_td(d.name)) + '</span>';
     if (chantier) h += '<img class="lm-node-chantier" src="images/Icons/resources/pierre_errante_icon.webp" alt="">';
     if (cible) h += '<span class="lm-story-flag" aria-label="' + _t("Objectif de l'Histoire") + '"></span>';
+    if (window.VillageEvents && VillageEvents.rumorAt(mapId, d.id)) h += villageEventIconHTML("rumeur", "lm-ev-flag"); // v3.604.0 : la rumeur de la Taverne
+    var cqs = window.CompanionQuestManager ? CompanionQuestManager.questsAt(mapId, d.id) : []; // v3.600.0 : compte pour une quête de compagnon
+    if (cqs.length) h += '<span class="lm-cq-flag" style="background-image:url(\'' + esc(getCompanionDef(cqs[0].companion).image) + '\')" aria-label="' + esc(_t("Quête de {n}", { n: _td(getCompanionDef(cqs[0].companion).name) })) + '"></span>';
     if (gain !== null) h += '<span class="lm-elite-gain' + (d.content.repeatable ? " is-repete" : "") + '" style="background-image:url(\'' + esc(gain) + '\')" aria-label="' + _t("Élite") + '"></span>';
     h += '</button>';
   });
@@ -537,6 +540,7 @@ function buildLivingMapLegendHTML() {
   h += row(node("is-libere is-running", lmRingDots(3)), _t("Expédition en cours"), "");
   h += row('<span class="lm-node is-voile is-story-cible"><span class="lm-node-disc">?</span><span class="lm-story-flag"></span></span>', _t("Objectif de l'Histoire"), _t("le trait doré : le chemin offert")); // v3.549.0
   h += row('<span class="lm-node is-voile is-elite"><span class="lm-node-disc">?</span><span class="lm-elite-gain is-repete" style="background-image:url(\'images/Icons/resources/seve_aeswyn_icon.webp\')"></span></span>', _t("Élite"), _t("la pastille : ce qu'elle donne, ↻ se rejoue"));
+  h += row('<span class="lm-node is-libere"><span class="lm-node-disc">' + lmRingDots(1) + '</span><span class="lm-cq-flag" style="background-image:url(\'images/Companions/wenna.webp\')"></span></span>', _t("Quête d'un compagnon"), _t("ici, son étape en cours avance")); // v3.600.0
   return h + '</div>';
 }
 
@@ -686,6 +690,11 @@ function buildLivingMapPanelHTML(mapId, running) {
   if (known) h += '<p class="lm-panel-lore">' + esc(_td(d.lore || "")) + '</p>';
   else h += '<p class="lm-panel-lore">' + esc(_td(W.fogLore)) + ' ' + (d.ring === 1 ? _t("On sait seulement que le chemin est court.") : d.ring === 2 ? _t("On sait seulement que le chemin est long.") : _t("On sait seulement que le chemin est très long.")) + '</p>';
   h += '<p class="lm-panel-line"><b>' + _t("Contenu :") + '</b> ' + (known ? esc(livingMapContentLabel(mapId, d)) : esc(_t("{x} (contenu inconnu)", { x: intensity }))) + '</p>';
+  if (window.VillageEvents && VillageEvents.rumorAt(mapId, d.id)) h += '<p class="lm-panel-line is-cq"><b>' + esc(_t("Rumeur de Taverne :")) + '</b> ' + esc(_t("+50 % de butin et +{n} à la destination, pendant la rumeur.", { n: VILLAGE_EVENT_RUMOR.rare })) + '</p>'; // v3.604.0
+  if (window.CompanionQuestManager) CompanionQuestManager.questsAt(mapId, d.id).forEach(function (q) { // v3.600.0
+    h += '<p class="lm-panel-line is-cq"><b>' + esc(_t("Quête de {n} :", { n: _td(getCompanionDef(q.companion).name) })) + '</b> ' + esc(_t("compte pour « {t} »", { t: _td(q.title) }))
+      + (CompanionQuestManager.inParty(q) ? '' : ' · ' + esc(_t("{n} doit être dans l'équipe", { n: _td(getCompanionDef(q.companion).name) }))) + '</p>';
+  });
   if (d.heldEffect && LM.isEffectLostByChoice(d)) {
     h += '<p class="lm-panel-line is-lost"><b>' + _t("Effet :") + '</b> ' + _t("aucun. La stèle est vide.") + '</p>'; // v3.306.0 : perdu pour de bon
   } else if (d.heldEffect) {
@@ -707,7 +716,7 @@ function buildLivingMapPanelHTML(mapId, running) {
     h += '<p class="lm-panel-line"><b>' + _t("Chaque victoire :") + '</b> ' + esc(_t("+{n} {x}. Chaque combat rejoué prend ses vivres (ci-dessous), hors cap des Petites Aventures. Fuir ou tomber reste un échec.", { n: LM.getRepeatSevePerWin(mapId), x: _td(rName) })) + '</p>';
     h += '<p class="lm-panel-line"><b>' + _t("Aujourd'hui :") + '</b> ' + _tn(wins, "{n} victoire", "{n} victoires") + ' · ' + (wins ? _t("prochain combat +{p} % PV et dégâts", { p: Math.round((LM.getBrakeMult(mapId, d.id) - 1) * 100) }) : _t("prochain combat à sa force de base")) + '</p>';
     // v3.457.5 (audit P18) : le frein retombe au jour civil — on dit quand
-    if (wins) { var minuit = new Date(); minuit.setHours(24, 0, 0, 0); h += '<p class="lm-panel-line">' + esc(_t("Le frein retombe à minuit, dans {d}.", { d: formatTime(Math.max(60, Math.round((minuit.getTime() - Date.now()) / 1000))) })) + '</p>'; }
+    if (wins && window.WorldDays) h += '<p class="lm-panel-line">' + esc(_tn(WorldDays.left(), "Le frein retombe à la nuit, dans {n} sortie.", "Le frein retombe à la nuit, dans {n} sorties.")) + '</p>'; // v3.602.0 : jours du monde
   }
   if (s.state === "recouvert") {
     var gw = LM.getGateway(mapId, d.id);
@@ -738,6 +747,7 @@ function buildLivingMapPanelHTML(mapId, running) {
     var vns = !isElite && LM.getMap(mapId) && LM.getMap(mapId).veins;   // v3.489.0 (Montagne) : la veine du secteur
     if (gis && LM.isHostile(mapId, d.id)) h += '<p class="lm-panel-wall">' + esc(_t("Le réveil : ce couloir reste hostile jusqu'à demain. Plus dur, pas plus riche.")) + '</p>';
     if (vns && LM.isHostile(mapId, d.id)) h += '<p class="lm-panel-wall">' + esc(_t("La coulée : ce secteur reste sous la lave jusqu'à demain. Plus dur, pas plus riche.")) + '</p>';
+    if (!isElite && LM.getMap(mapId) && LM.getMap(mapId).redite && LM.isHostile(mapId, d.id)) h += '<p class="lm-panel-wall">' + esc(_t("La redite : la Tour refait cet étage jusqu'à demain. Plus dur, pas plus riche.")) + '</p>'; // v3.627.0
     if (vns) {
       var heat = LM.heatOf(mapId, d.id);
       h += '<p class="lm-panel-line"><b>' + _t("Chaleur :") + '</b> ' + esc(heat ? _t("{n} / {m} — ses combats +{p} %, un cran retombe chaque jour.", { n: heat, m: vns.heatMax, p: Math.round(heat * vns.heatStep * 100) }) : _t("aucune, la pente est froide.")) + '</p>';
@@ -778,6 +788,7 @@ function buildStoryChoiceModalHTML(chapterId) {
     h += '    <div class="story-choice-option">';
     h += '      <button class="settings-btn primary" type="button" onclick="chooseStoryOption(\'' + esc(chapterId) + '\', \'' + esc(o.value) + '\')">' + esc(_td(o.label)) + '</button>';
     h += '      <p class="story-choice-desc">' + esc(_td(o.desc || "")) + '</p>';
+    if (o.prix) h += '      <p class="story-choice-desc story-choice-prix">' + esc(_td(o.prix)) + '</p>'; // v3.631.0 (Tour) : le prix d'une bascule
     h += '    </div>';
   });
   h += '    </div>';

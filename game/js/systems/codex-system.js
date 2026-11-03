@@ -15,6 +15,8 @@ var CodexManager = {
 
   isUnlocked: function (entry) {
     try {
+      // v3.621.0 (choix de Seb) : une fiche déjà lue reste lisible, même si sa condition se resserre
+      if (entry && game.codexRead && game.codexRead[entry.id]) return true;
       return !!entry.isUnlocked();
     } catch (e) {
       return false;

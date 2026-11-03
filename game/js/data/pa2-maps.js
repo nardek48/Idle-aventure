@@ -334,6 +334,55 @@ var PA2_MAPS = {
       TERTRE: { row: 7, x: 720, y: 170, type: "tertre" }
     },
     links: RUINES_PA_LINKS
+  },
+  /* v3.627.0 (Tour, lot T-2a) : l'escalier. Places reprises de la Montagne en attendant les images (Images à générer). */
+  tour_1: {
+    id: "tour_1",
+    worldId: "tower",
+    image: "images/Maps/pa2/tour_1.webp",
+    width: 848,
+    height: 1264,
+    start: "S",
+    rows: { camp: 2, seuil: 5, dest: 7 },
+    tune: { foeMult: 0.7 }, // banc
+    nodes: {
+      S: { row: -1, x: 430, y: 1190, type: "depart" },                 // le bas de l'escalier
+      L0: { row: 0, x: 270, y: 1085 }, C0: { row: 0, x: 580, y: 1120 }, R0: { row: 0, x: 700, y: 1010 },
+      L1: { row: 1, x: 195, y: 950 }, R1: { row: 1, x: 640, y: 850 },
+      CAMP: { row: 2, x: 450, y: 1015, type: "camp" },                 // le palier large
+      L3: { row: 3, x: 240, y: 760 }, C3: { row: 3, x: 445, y: 720 }, R3: { row: 3, x: 655, y: 665 },
+      L4: { row: 4, x: 190, y: 575 }, R4: { row: 4, x: 700, y: 510 },
+      SEUIL: { row: 5, x: 450, y: 470, type: "seuil" },                // la porte sans cadre
+      L6: { row: 6, x: 170, y: 360 }, C6: { row: 6, x: 435, y: 310 }, R6: { row: 6, x: 620, y: 300 },
+      BOSS: { row: 7, x: 435, y: 150, type: "boss" },                  // le gardien du palier
+      CLAIRIERE: { row: 7, x: 160, y: 170, type: "clairiere" },        // la citerne haute
+      TERTRE: { row: 7, x: 715, y: 175, type: "tertre" }               // la porte murée
+    },
+    links: RUINES_PA_LINKS
+  },
+  tour_2: {
+    id: "tour_2",
+    worldId: "tower",
+    image: "images/Maps/pa2/tour_2.webp",
+    width: 848,
+    height: 1264,
+    start: "S",
+    rows: { camp: 2, seuil: 5, dest: 7 },
+    tune: { foeMult: 0.7 },
+    nodes: {
+      S: { row: -1, x: 430, y: 1170, type: "depart" },                 // le palier du dessous
+      L0: { row: 0, x: 250, y: 1090 }, C0: { row: 0, x: 600, y: 1110 }, R0: { row: 0, x: 730, y: 980 },
+      L1: { row: 1, x: 190, y: 935 }, R1: { row: 1, x: 640, y: 830 },
+      CAMP: { row: 2, x: 430, y: 990, type: "camp" },                 // le palier large
+      L3: { row: 3, x: 260, y: 760 }, C3: { row: 3, x: 440, y: 700 }, R3: { row: 3, x: 640, y: 670 },
+      L4: { row: 4, x: 180, y: 560 }, R4: { row: 4, x: 700, y: 500 },
+      SEUIL: { row: 5, x: 440, y: 460, type: "seuil" },                // la porte sans cadre
+      L6: { row: 6, x: 210, y: 365 }, C6: { row: 6, x: 440, y: 300 }, R6: { row: 6, x: 620, y: 330 },
+      BOSS: { row: 7, x: 430, y: 140, type: "boss" },
+      CLAIRIERE: { row: 7, x: 150, y: 175, type: "clairiere" },
+      TERTRE: { row: 7, x: 720, y: 170, type: "tertre" }
+    },
+    links: RUINES_PA_LINKS
   }
 };
 
@@ -343,7 +392,8 @@ var PA2_MAPS_BY_WORLD = {
   desert: ["desert_1"],            // v3.387.0 (PA2-5)
   ruins: ["ruines_1", "ruines_2"], // v3.429.0 (U-6)
   crypt: ["crypte_1", "crypte_2"],  // v3.454.0
-  mountain: ["montagne_1", "montagne_2"] // v3.489.0, places relevées en v3.492.7
+  mountain: ["montagne_1", "montagne_2"], // v3.489.0, places relevées en v3.492.7
+  tower: ["tour_1", "tour_2"] // v3.627.0, places provisoires
 };
 
 /* v3.390.0 (chantier P, lot P-2) : fonds illustrés des parcours (images de Seb du 29/09/2026).
@@ -374,6 +424,16 @@ var PA2_PARCOURS_IMAGES = {
   montagne_montee: {
     image: "images/Maps/parcours/montagne_montee.webp", width: 1024, height: 1536, start: [505, 1320],
     tracks: { route: [[446, 1150], [584, 1050], [506, 860], [466, 700], [530, 560], [587, 400], [500, 215]] }
+  },
+  /* v3.626.0 (Tour, acte I) : la route du nord. Image à fournir (Images à générer) : piste provisoire, droite, à relever. */
+  tour_route: {
+    image: "images/Maps/parcours/tour_route.webp", width: 1024, height: 1536, start: [512, 1400],
+    tracks: { route: [[512, 1250], [512, 1100], [512, 950], [512, 800], [512, 650], [512, 450], [512, 250]] }
+  },
+  /* v3.630.0 (Tour, acte IV) : la faille. Image à fournir (Images à générer) : piste provisoire, droite, à relever. */
+  tour_faille: {
+    image: "images/Maps/parcours/tour_faille.webp", width: 1024, height: 1536, start: [512, 1400],
+    tracks: { route: [[512, 1250], [512, 1130], [512, 1010], [512, 890], [512, 770], [512, 650], [512, 530], [512, 410], [512, 290]] }
   },
   /* v3.491.0 (Montagne, acte IV) : le sentier du dessus. v3.492.8 : image de Seb (26/10/2026) ; piste relevée sur le
      trait bleu, du lac à l'aile. Paliers (points 0, 2, 4, 6, 8) : le haut de la coupe, les dragonnets, la source,
