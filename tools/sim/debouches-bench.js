@@ -149,7 +149,7 @@ function campaign(world, visits, scen, days) {
   var gold = { tavern: 0, caravan: 0 }, measuring = false;
 
   // Patrouilles : 2 compagnons en continu, 8 h, ressource dominante en rotation
-  // 03/11 : la Tour n'a pas de taux de patrouille dans le jeu (signalé à Seb) ; le banc prend ceux de la Montagne
+  // v3.645.0 : la Tour a ses taux ; repli sur la Montagne pour un monde sans taux
   var rate = (g.PATROL_RATES[["forest", "desert", "ruins", "crypt", "mountain", "tower"][world]] || g.PATROL_RATES.mountain).matPerHour * g.PATROL_RING_MULT[2] * (1 + 5 * g.PATROL_UPGRADE_BONUS);
   var patrolTurn = 0, patrolEnd = null;
   /* Le butin d'une patrouille ne rentre qu'au passage du joueur (PatrolManager.collect), qui relance aussitôt. */

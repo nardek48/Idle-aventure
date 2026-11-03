@@ -24,7 +24,8 @@ var PATROL_RATES = {
      Crypte : 187 / 21 pour ~15 % des matériaux et 8 % de l'or (deux compagnons hors du groupe). */
   ruins: { matPerHour: 125, goldPerHour: 18 },
   crypt: { matPerHour: 190, goldPerHour: 21 },
-  mountain: { matPerHour: 260, goldPerHour: 24 } // v3.489.0 : dans le prolongement (Crypte ×1,37), au banc
+  mountain: { matPerHour: 260, goldPerHour: 24 }, // v3.489.0 : dans le prolongement (Crypte ×1,37), au banc
+  tower: { matPerHour: 330, goldPerHour: 26 }      // v3.645.0 : zones de la Tour ×1,26 ; or 9,5 % de la Taverne (banc)
 };
 
 var PATROL_SPLIT = { main: 0.7, second: 0.3 };        // ressource dominante du secteur / seconde
@@ -37,7 +38,8 @@ var PATROL_RATION_LOOT = {
   desert: { viande: 15, pain: 1 },                     // une ration moyenne (E4)
   ruins: { viande: 15, pain: 1 },                      // v3.457.3 : comme le Désert
   crypt: { viande: 15, pain: 1 },
-  mountain: { viande: 15, pain: 1 } // v3.489.0
+  mountain: { viande: 15, pain: 1 }, // v3.489.0
+  tower: { viande: 15, pain: 1 }     // v3.645.0
 };
 /* P6 : chance de récit rare = base par heure, +bonus pour la nuit complète (8 h). */
 var PATROL_RARE_PER_H = 0.02;
@@ -76,6 +78,10 @@ var PATROL_SECTORS = {
     eboulis: ["pierre", "bois"], nid: ["viande", "pierre"], champ_basalte: ["pierre", "fer"],
     fumerolles: ["eau", "pierre"], coulee_morte: ["fer", "pierre"], forge_froide: ["fer", "pierre"],
     lac_de_lave: ["fer", "eau"], antre: ["pierre", "fer"]
+  },
+  tower: { // v3.645.0 (Tour) : bois, pierre et fer deux fois chacun en tête, ce que le village demande
+    etage_sable: ["pierre", "eau"], etage_rue: ["bois", "pierre"], etage_gisants: ["pierre", "fer"],
+    etage_veines: ["fer", "pierre"], marches_craie: ["bois", "fer"], palier_sans_murs: ["fer", "bois"]
   }
 };
 
@@ -124,6 +130,14 @@ var PATROL_STORIES = {
         "Les sacs sont pleins. À {secteur}, la cendre est tombée toute la journée, comme de la neige tiède."
       ],
       rare: ["À {secteur}, un petit façonné m'a suivie jusqu'au bord. Il s'est arrêté là où la roche refroidit."]
+    },
+    tower: { // v3.645.0 : textes à relire par Seb
+      common: [
+        "{secteur} : tout ressemble à chez nous, mais en trop propre. J'ai rempli les sacs sans toucher aux murs.",
+        "{secteur}. Il y fait froid, et la lumière ne fait aucun bruit. Elle devrait grésiller, non ?",
+        "{secteur}. J'ai posé une pierre de travers. Au retour, elle était droite. Les sacs sont pleins."
+      ],
+      rare: ["{secteur}. Une femme y pétrissait du pain. Elle avait mes gestes. Elle n'avait pas de visage."]
     }
   },
   maddoc: {
@@ -166,6 +180,14 @@ var PATROL_STORIES = {
         "J'ai ramassé ce qui traînait à {secteur}. Les golems m'ont laissé faire. Je ne sais pas pourquoi."
       ],
       rare: ["À {secteur}, un golem assis, immobile. Il avait une pioche dans la main. Pas la sienne."]
+    },
+    tower: { // v3.645.0
+      common: [
+        "{secteur}. Ça ressemble. Ça n'est pas.",
+        "{secteur}. Cette pierre n'a jamais vu d'outil. Ma jambe n'aime pas ce qui est trop lisse.",
+        "{secteur}. J'ai ramassé ce qui se ramasse. Le reste, elle le refait derrière moi."
+      ],
+      rare: ["{secteur}. Un puits sec, comme chez nous. J'ai jeté un caillou. Je ne l'ai jamais entendu tomber."]
     }
   },
   // v3.457.3 : Edda et Ysolt, dans les mondes où elles ont une raison d'être (option B)
@@ -185,6 +207,14 @@ var PATROL_STORIES = {
         "Les veines de {secteur} battent ensemble. Je ne sais pas comment le dessiner."
       ],
       rare: ["À {secteur}, une colonne de basalte portait une marque droite, nette. Pas un outil d'ici."]
+    },
+    tower: { // v3.645.0 ; Sarkel reste au pied (« je ne vends rien là-haut ») : le narrateur pour lui
+      common: [
+        "{secteur} ne bouge pas. Pour une fois. C'est pire.",
+        "{secteur}. J'en ai fait le plan : il est juste, et je n'y reconnais rien.",
+        "{secteur}. Les murs ont la forme de ceux des Ruines, sans les fautes. Elle a gardé le plan, pas la main."
+      ],
+      rare: ["{secteur}. Un trait de craie m'y attendait. Le mien, au geste près. Il montait."]
     }
   },
   // v3.489.0 (Montagne) : les quatre qui montent ; Ysolt, si elle est restée, rentre avec le narrateur

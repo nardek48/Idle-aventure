@@ -70,7 +70,9 @@ var WORLDS_BENCH = [
   { id: "forest", idx: 0, companions: 1 },
   { id: "desert", idx: 1, companions: 2 },
   { id: "ruins", idx: 2, companions: 2 },   // v3.457.3 (audit P1) : Edda rejoint, deux compagnons hors du groupe tour à tour
-  { id: "crypt", idx: 3, companions: 2 }
+  { id: "crypt", idx: 3, companions: 2 },
+  { id: "mountain", idx: 4, companions: 2 },  // 03/11 : Montagne et Tour ajoutées au banc
+  { id: "tower", idx: 5, companions: 2 }
 ];
 
 console.log("PATROUILLES — banc P-0 (données v" + G.GAME_VERSION + ")");

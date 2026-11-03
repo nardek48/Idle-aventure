@@ -6848,6 +6848,19 @@ I18n.register("en", {
   "À {secteur}, j'ai frappé la roche. Elle a rendu un bruit que je ne connais pas.": "At {secteur}, I struck the rock. It made a sound I don't know.",
   "Les sacs sont pleins. À {secteur}, personne n'achète rien. Ça repose.": "The bags are full. At {secteur}, nobody buys anything. It's restful.",
   "À {secteur}, une coupe dans la roche, comme au Replat. Plus petite. Plus vieille, je crois.": "At {secteur}, a cut in the rock, like at the Ledge. Smaller. Older, I think.",
+  // v3.645.0 : patrouilles de la Tour
+  "{secteur} : tout ressemble à chez nous, mais en trop propre. J'ai rempli les sacs sans toucher aux murs.": "{secteur}: everything looks like home, only too clean. I filled the bags without touching the walls.",
+  "{secteur}. Il y fait froid, et la lumière ne fait aucun bruit. Elle devrait grésiller, non ?": "{secteur}. It's cold there, and the light makes no sound. It should crackle, shouldn't it?",
+  "{secteur}. J'ai posé une pierre de travers. Au retour, elle était droite. Les sacs sont pleins.": "{secteur}. I set a stone crooked. When I came back, it was straight. The bags are full.",
+  "{secteur}. Une femme y pétrissait du pain. Elle avait mes gestes. Elle n'avait pas de visage.": "{secteur}. A woman was kneading bread there. She had my gestures. She had no face.",
+  "{secteur}. Ça ressemble. Ça n'est pas.": "{secteur}. It looks like it. It isn't.",
+  "{secteur}. Cette pierre n'a jamais vu d'outil. Ma jambe n'aime pas ce qui est trop lisse.": "{secteur}. That stone has never seen a tool. My leg doesn't like things too smooth.",
+  "{secteur}. J'ai ramassé ce qui se ramasse. Le reste, elle le refait derrière moi.": "{secteur}. I picked up what can be picked up. The rest, she remakes behind me.",
+  "{secteur}. Un puits sec, comme chez nous. J'ai jeté un caillou. Je ne l'ai jamais entendu tomber.": "{secteur}. A dry well, like back home. I threw a pebble. I never heard it land.",
+  "{secteur} ne bouge pas. Pour une fois. C'est pire.": "{secteur} doesn't move. For once. It's worse.",
+  "{secteur}. J'en ai fait le plan : il est juste, et je n'y reconnais rien.": "{secteur}. I drew its plan: it's right, and I recognise nothing in it.",
+  "{secteur}. Les murs ont la forme de ceux des Ruines, sans les fautes. Elle a gardé le plan, pas la main.": "{secteur}. The walls have the shape of the Ruins' walls, without the mistakes. She kept the plan, not the hand.",
+  "{secteur}. Un trait de craie m'y attendait. Le mien, au geste près. Il montait.": "{secteur}. A chalk line was waiting for me there. Mine, down to the gesture. It went up.",
   "La veine": "The vein",
   "Peau de basalte": "Basalt Skin",
   "Taille franche": "Clean Cut",
@@ -8735,7 +8748,7 @@ I18n.register("en", {
 
   "Après la Question, la faille s'ouvre : des étages sans fond, le Reflet tous les cinq étages, et ton record. Deux montées, une revient toutes les 6 h.": "After the Question, the rift opens: floors without end, the Reflection every five floors, and your record. Two climbs, one comes back every 6 h.",
 
-  // v3.639.0 : onglets allégés (Quêtes, Camp)
+  // v3.645.0 : onglets allégés (Quêtes, Camp)
   "Quêtes plus légères : un onglet Compagnons, les jalons et les étapes repliés, le prologue et les chapitres finis rangés dans « Déjà vécu ».": "Lighter Quests: a Companions tab, milestones and steps folded away, the prologue and finished chapters kept in “Already lived”.",
   "Camp : la santé et les rations en tête du feu, et le Grimoire montre directement tes règles.": "Camp: health and rations at the top of the fire, and the Grimoire shows your rules directly.",
   "{n} quête||{n} quêtes": ["{n} quest", "{n} quests"],
@@ -8820,6 +8833,7 @@ I18n.register("en", {
   "Les combats de la faille te coûtent 10 % de PV en moins.": "Fights in the rift cost you 10% less HP.",
   "+1 Givre bleu à chaque escalier franchi dans la faille.": "+1 Blue Frost for each stair cleared in the rift.",
 
+  "Patrouilles dans la Tour : tes compagnons peuvent partir sur les étages libérés, avec leurs récits de là-haut.": "Patrols in the Tower: your companions can head out to the freed floors, with their stories from up there.",
   "La Mémoire continue après la Tour : les niveaux 25 à 28 s'ouvrent avec ton record dans la faille, et chaque étage franchi rapporte de l'Aether. Six hauts faits de la faille.": "Memory goes on after the Tower: levels 25 to 28 open with your record in the rift, and every floor cleared yields Aether. Six rift achievements.",
 
 });
