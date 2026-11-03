@@ -8740,6 +8740,7 @@ I18n.register("en", {
   "{n} quête||{n} quêtes": ["{n} quest", "{n} quests"],
   "Aucune quête de compagnon pour le moment.": "No companion quests yet.",
   "Alliés": "Allies",
+  "Héros › Compagnons : la phrase d'aide en haut de l'écran est de nouveau lisible.": "Heroes › Companions: the help line at the top of the screen is readable again.",
   "Quêtes : les onglets s'appellent maintenant Annexes et Alliés, plus courts et lisibles sur les petits téléphones.": "Quests: the tabs are now called Side and Allies, shorter and easier to read on small phones.",
   "Masquer les étapes": "Hide the steps",
   "Dans les autres mondes": "In the other worlds",
