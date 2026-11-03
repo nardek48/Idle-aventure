@@ -639,12 +639,13 @@ var MissionBoard = {
     var C = L.cfg(kind), T = L.texts(kind), run = L.getRun();
     var running = !!(run && run.status !== "completed" && (run.kind || "labyrinthe") === kind), left = L.reserveLeft(kind), cap = C.reserve;
     var blurb = _td(T.blurb);
-    if (!running && left <= 0) blurb += " " + _t("Prochaine descente dans {d}", { d: SceneRunManager.formatPetiteAventureWait(L.nextInMs(kind)) }) + ".";
+    var wait = { d: SceneRunManager.formatPetiteAventureWait(L.nextInMs(kind)) }, ra = { a: left, b: cap };
+    if (!running && left <= 0) blurb += " " + L.say("nextIn", _t("Prochaine descente dans {d}", wait), wait, kind) + ".";
     var m = {
       id: kind, sourceKind: "scene", worldId: C.worldId, isLabyrinth: true, labKind: kind,
       title: _td(T.title), blurb: blurb, type: "expedition", place: "", objectiveLabel: "",
       progressLabel: running ? _t("En cours") : "",
-      rewardSummary: (!running && left > 0) ? _t("{a}/{b} descentes", { a: left, b: cap }) : "",
+      rewardSummary: (!running && left > 0) ? L.say("reserve", _t("{a}/{b} descentes", ra), ra, kind) : "",
       badge: "contract", status: running ? "running" : (left > 0 ? "available" : "unavailable"), isMain: false
     };
     if (running) m.launch = function () { if (typeof labLaunch === "function") labLaunch(kind); };

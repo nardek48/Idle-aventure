@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.637.0"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.638.0"; // <- à incrémenter à CHAQUE livraison
 var CACHE_NAME = "quest-idle-" + CACHE_VERSION;
 var IMAGE_CACHE = "aethervale-images"; // v3.457.4 : hors du préfixe quest-idle- ; v3.547.0 : images disparues purgées (purgeMissingImages)
 var imagesRevalidated = {};             // URL déjà revérifiées depuis le démarrage de ce service worker
@@ -156,6 +156,7 @@ var PRECACHE_APP_SHELL = [
   "./js/data/pa2-maps.js", // v3.381.0 (PA2-0) : NOUVEAU fichier
   "./js/data/pa2-content.js", // v3.381.0 (PA2-0) : NOUVEAU fichier
   "./js/data/labyrinth.js", // v3.434.0 : NOUVEAU fichier
+  "./js/data/faille.js", // v3.638.0 : NOUVEAU fichier (la faille sans fond)
   "./js/systems/labyrinth-run.js", // v3.434.0 : NOUVEAU fichier
   "./js/ui/map-camera.js", // v3.394.0 : NOUVEAU fichier (caméra commune des cartes)
   "./js/ui/pa2-view.js", // v3.382.0 (PA2-1) : NOUVEAU fichier

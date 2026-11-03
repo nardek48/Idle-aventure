@@ -94,6 +94,7 @@ function playTrap(P) {
 }
 
 /* Nouvelle partie prête à combattre, sur l'onglet Combat, ennemi généré. */
+function fsRead(rel) { return fs.readFileSync(path.join(ROOT, rel), "utf8"); }
 function freshCombat(heroId) {
   run("fullResetState(); game.playerName='Test'; game.heroId='" + heroId + "'; EquipmentManager.recalcStats(); game.heroHp = game.heroMaxHp;");
   g.game.unlockedTabs.combat = true;
@@ -21915,6 +21916,52 @@ console.log("\n[431] v3.636.0 — Faille, lot F-0 : le moteur à leviers partag�
     delete K.essai; SQ.isStepReached = savedReach;
     if (g.game) { g.game.sceneRun = null; if (g.game.explorationProgression) { g.game.explorationProgression.labyrinth = null; delete g.game.explorationProgression.essaiLab; } }
   }
+})();
+
+console.log("\n[432] v3.638.0 — Faille, lot F-1 : la faille sans fond, après la Question");
+(function () {
+  var L = g.LabyrinthRun, TS = g.TowerSystem, savedEnding = TS.ending, C = g.FAILLE_CONFIG;
+  try {
+    var game = freshCombat("knight");
+    game.sceneRun = null; game.explorationProgression.faille = null;
+    ok(g.LAB_KINDS.faille && g.LAB_KINDS.faille.config === C && g.LAB_KINDS.faille.stateKey === "faille", "la faille est une sorte du moteur à leviers (clé d'état « faille »)");
+    ok(C.reserve === 2 && C.rechargeMs === 6 * 3600e3 && C.entryCost.resourceId === "grande_ration" && C.entryCost.amount === 1, "FA7 : 2 montées, une toutes les 6 h, 1 Grande ration");
+    TS.ending = function () { return null; };
+    ok(!L.isUnlocked("faille") && !g.MissionBoard._labyrinthMissions().some(function (m) { return m.id === "faille"; }), "fermée tant que la Question n'est pas répondue, pas de carte");
+    ok(/Question/.test(L.canStart("faille").reason), "la raison le dit");
+    TS.ending = function () { return "aeswyn"; };
+    var card = g.MissionBoard._labyrinthMissions().filter(function (m) { return m.id === "faille"; })[0];
+    ok(card && card.title === "La faille" && card.rewardSummary === "2/2 montées" && card.worldId === "tower", "une fois la Question répondue : la carte « La faille », 2/2 montées");
+    g.WarehouseManager.addResource("grande_ration", 2);
+    var gr = g.WarehouseManager.getAmount("grande_ration"), r = L.start("faille"), run = game.sceneRun;
+    ok(r.ok && run.kind === "faille" && run.floor === 1 && g.WarehouseManager.getAmount("grande_ration") === gr - 1 && L.reserveLeft() === 1, "départ : run « faille » à l'étage 1, 1 Grande ration et une montée prises");
+    ok(run.note && run.note.text === g.FAILLE_TEXTS.entryLines.aeswyn, "FA1 : le premier étage dit la fin choisie");
+    ok(g.GENERIC_TUTORIALS.faille_first.condition() && !g.GENERIC_TUTORIALS.labyrinth_first.condition(), "tutoriel de la faille, pas celui du Labyrinthe");
+    ok(L.cfg().stoneResource === "givre_bleu" && L.say("bag", "x", { s: 1, g: 2 }) === "Sac : 1 Givre bleu · 2 or", "le sac rapporte du Givre bleu");
+    /* FA4 : croissance composée ; le Labyrinthe garde sa croissance linéaire */
+    run.floor = 11;
+    ok(Math.abs(L.floorGrowth(run) - Math.pow(1.06, 10)) < 1e-9, "FA4 : +6 % composés par étage (étage 11 : ×" + L.floorGrowth(run).toFixed(2) + ")");
+    var e1 = (run.floor = 1, L._enemy(run, "guard")), e11 = (run.floor = 11, L._enemy(run, "guard"));
+    ok(e1 && e11 && e11.maxHp > e1.maxHp * 1.7, "les gardes grossissent avec l'étage (" + e1.maxHp + " -> " + e11.maxHp + " PV)");
+    run.floor = 5; var b5 = L._enemy(run, "boss"); run.floor = 10; var b10 = L._enemy(run, "boss");
+    ok(b5 && b5.name === "Le Reflet" && b10.maxHp > b5.maxHp * 1.3, "FA5 : le Reflet garde l'escalier, plus fort plus haut");
+    ok(L.genFloor(5).boss && !L.genFloor(4).boss, "tous les 5 étages");
+    /* FA6 : la forme au sol rejoint, prend 10 de Souffle et recule, sans combat */
+    run.floor = 3;
+    var nb = L.nbrs(run.F, run.at).filter(function (k) { return L.canMove(run, k); })[0];
+    run.foe = { at: nb, stun: 0, tick: 0, every: 1 }; var br = run.breath;
+    var mv = L.move(nb);
+    ok(mv.ok && !run.pending && run.breath === br - C.step - C.foeTouch && run.foe.stun === C.foeStun && run.foe.at !== run.at, "FA6 : la forme au sol prend " + C.foeTouch + " de Souffle et recule, sans combat");
+    ok(run.note && run.note.alert && /forme au sol/.test(run.note.text) && run.stats.caught === 1, "la note le dit, en alerte ; compté au bilan");
+    var sv = JSON.parse(g.JSON.stringify(g.buildSaveData()));
+    ok(sv.explorationProgression && sv.explorationProgression.faille && sv.explorationProgression.faille.spent === 1, "la réserve de la faille est sauvegardée (explorationProgression)");
+    L.abandon();
+    var labUntouched = game.explorationProgression.labyrinth == null;
+    ok(labUntouched && L.bestFloor("faille") >= 1 && L.bestFloor("labyrinthe") === 0, "record de la faille à part ; le Labyrinthe n'est pas touché");
+    var html = fsRead("index.html"), sw = fsRead("sw.js");
+    ok(html.indexOf('js/data/faille.js') > html.indexOf('js/data/labyrinth.js') && sw.indexOf('"./js/data/faille.js"') > 0, "data/faille.js chargé après labyrinth.js et précaché par sw.js");
+  } catch (err) { ok(false, "[432] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  finally { TS.ending = savedEnding; if (g.game) { g.game.sceneRun = null; if (g.game.explorationProgression) { delete g.game.explorationProgression.faille; g.game.explorationProgression.labyrinth = null; } } }
 })();
 
 Promise.all(ATTENTES).then(function () {
