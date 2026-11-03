@@ -170,7 +170,7 @@ var GENERIC_TUTORIALS = {
       { icon: "images/Icons/quests/mission_exploration.webp", text: "Un compagnon peut partir en patrouille 2, 4 ou 8 heures vers un secteur libéré de la carte, même quand tu ne joues pas." },
       { icon: "images/Icons/resources/wood_icon.webp", text: "Il rapporte les matériaux du secteur, un peu d'or, parfois de quoi faire des rations — et une petite histoire." },
       { icon: "images/Icons/system/hourglass_waiting.webp", text: "Pendant ce temps, il ne combat pas avec toi. Tu peux le rappeler quand tu veux : il rapporte ce qu'il a déjà trouvé." },
-      { icon: "images/Icons/system/check_valid.webp", text: "Aucun risque : une patrouille revient toujours. Réglage sur la fiche du compagnon (Héros › Compagnons)." }
+      { icon: "images/Icons/system/check_valid.webp", text: "Aucun risque : une patrouille revient toujours. Réglage sur la fiche du compagnon (Héros › Alliés)." }
     ]
   },
   /* v3.429.12 : première préparation d'une petite aventure (besace, pactes). Pas les parcours

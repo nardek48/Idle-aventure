@@ -1,5 +1,5 @@
 "use strict";
-/* ui/companions-view.js — v3.268.0 (lot L-2) : sous-onglet Héros › Compagnons.
+/* ui/companions-view.js — v3.268.0 (lot L-2) : sous-onglet Héros › Alliés.
    Doc : Aethervale_Conception_Combat_Groupe_v1_0.docx §4.6.
 
    Une carte par compagnon rejoint : portrait, rôle, PV, stats du monde COURANT,

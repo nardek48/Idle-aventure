@@ -738,7 +738,7 @@ var STORY_QUESTS = {
           title: "Les compagnons",
           points: [
             { icon: "images/Icons/subtabs/hero_summary.webp", text: "Un compagnon combat à tes côtés : il joue une action à chaque round, à sa place dans l'ordre des tours (parfois avant toi). Deux au maximum peuvent t'accompagner." },
-            { icon: "images/Icons/companions/wenna_bandage.webp", text: "Wenna est un Soutien : elle soigne l'allié le plus bas en PV. Elle n'a ni équipement ni talents — elle s'améliore contre de l'or, dans Héros › Compagnons." },
+            { icon: "images/Icons/companions/wenna_bandage.webp", text: "Wenna est un Soutien : elle soigne l'allié le plus bas en PV. Elle n'a ni équipement ni talents — elle s'améliore contre de l'or, dans Héros › Alliés." },
             { icon: "images/Icons/combat_stats/stat_attack.webp", text: "En mode Grimoire, tes compagnons jouent seuls ; en mode Tactique, tu choisis leurs actions. Un compagnon tombé à 0 PV est hors de combat jusqu'à la fin, et revient affaibli au combat suivant." }
           ]
         },
@@ -1245,7 +1245,7 @@ STORY_QUESTS.desert = {
         title: "À trois",
         points: [
           { icon: "images/Icons/subtabs/hero_summary.webp", text: "Maddoc se bat à tes côtés, comme Wenna. Sa voie décide de son rôle : devant, il attire les coups ; derrière, il frappe fort mais attire peu." },
-          { icon: "images/Icons/system/forward.webp", text: "Tu peux changer de voie depuis sa fiche, dans Héros › Compagnons. Chaque changement coûte plus cher que le précédent. Ses améliorations sont conservées." }
+          { icon: "images/Icons/system/forward.webp", text: "Tu peux changer de voie depuis sa fiche, dans Héros › Alliés. Chaque changement coûte plus cher que le précédent. Ses améliorations sont conservées." }
         ]
       },
       check: function (game) { return !!(window.CompanionManager && CompanionManager.state("maddoc").voie) && storyAdvDone(game, "aq_desert_gouffre"); },
@@ -1893,7 +1893,7 @@ STORY_QUESTS.ruins = {
         icon: "images/Icons/subtabs/hero_summary.webp",
         title: "Deux sur trois",
         points: [
-          { icon: "images/Icons/subtabs/hero_summary.webp", text: "Tu as maintenant trois compagnons, mais deux seulement t'accompagnent en combat. Choisis-les avant de partir, dans Héros › Compagnons." },
+          { icon: "images/Icons/subtabs/hero_summary.webp", text: "Tu as maintenant trois compagnons, mais deux seulement t'accompagnent en combat. Choisis-les avant de partir, dans Héros › Alliés." },
           { icon: "images/Icons/camp/campfire.webp", text: "Celui qui ne se bat pas garde le camp, et peut partir en patrouille." },
           { icon: "images/Icons/companions/edda_dernier_trait.webp", text: "Chacun a sa place : Wenna soigne, Maddoc tient ou frappe de loin, Edda achève ceux qui veulent se relever." }
         ]
@@ -2721,7 +2721,7 @@ STORY_QUESTS.crypt = {
         icon: "images/Icons/subtabs/hero_summary.webp",
         title: "Deux sur quatre",
         points: [
-          { icon: "images/Icons/subtabs/hero_summary.webp", text: "Tu as maintenant quatre compagnons. Deux seulement t'accompagnent en combat : choisis-les avant de partir, dans Héros › Compagnons." },
+          { icon: "images/Icons/subtabs/hero_summary.webp", text: "Tu as maintenant quatre compagnons. Deux seulement t'accompagnent en combat : choisis-les avant de partir, dans Héros › Alliés." },
           { icon: "images/Icons/companions/ysolt_pas_encore.webp", text: "Ysolt garde le sommeil : une fois par combat, elle retarde le réveil d'un dormeur." }
         ]
       },
@@ -3878,8 +3878,8 @@ var STORY_PIOCHE_OPTIONS = [
 ];
 /* Le tutoriel dit le vrai nombre : quatre si Ysolt est partie (choix « ysolt » de la Crypte). */
 var STORY_DEUX_SUR_CINQ = [
-  "Tu as maintenant quatre compagnons. Deux seulement t'accompagnent en combat : choisis-les avant de partir, dans Héros › Compagnons.",
-  "Tu as maintenant cinq compagnons. Deux seulement t'accompagnent en combat : choisis-les avant de partir, dans Héros › Compagnons."
+  "Tu as maintenant quatre compagnons. Deux seulement t'accompagnent en combat : choisis-les avant de partir, dans Héros › Alliés.",
+  "Tu as maintenant cinq compagnons. Deux seulement t'accompagnent en combat : choisis-les avant de partir, dans Héros › Alliés."
 ];
 function storyCompanionCount() {
   return window.CompanionManager ? CompanionManager.unlockedIds().length : 0;

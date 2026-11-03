@@ -371,6 +371,11 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
 .camp-ration-hint { margin-top: 6px; text-align: center; font-size: 12px; color: var(--nb-ink-dim); }
 
 .camp-tabs { margin: 0 0 10px; }
+/* v3.648.0 : petits téléphones (320-359 px), « Expéditions » resserré pour tenir dans son onglet (12 px gardés) */
+@media (max-width: 359px) {
+  #panel-container .camp-tabs.kseg.is-stack { margin-left: -6px; margin-right: -6px; }
+  #panel-container .camp-tabs.kseg.is-stack button { padding-left: 0; padding-right: 0; letter-spacing: -0.04em; }
+}
 
 /* Boutons des missions : largeur du libellé, centrés (plus étirés sur toute la carte) */
 .camp-mission-actions { justify-content: center; }

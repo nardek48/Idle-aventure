@@ -669,7 +669,7 @@ function getHerosTabs() {
   if (unlocked("equip")) tabs.push(["equip", "images/Icons/subtabs/equipment.webp", _t("Équipement")]);
   if (unlocked("talents")) tabs.push(["talents", "images/Icons/subtabs/talents.webp", _t("Talents")]); // v3.527.0 (IMA-5)
   if (unlocked("companions") && window.CompanionManager && CompanionManager.unlockedIds().length) {
-    tabs.push(["companions", "images/Icons/subtabs/companions.webp", _t("Compagnons")]); // v3.527.0 (IMA-5)
+    tabs.push(["companions", "images/Icons/subtabs/companions.webp", _t("Alliés")]); // v3.527.0 (IMA-5) ; v3.648.0 : « Alliés » (plus court, comme Quêtes)
   }
   return tabs;
 }

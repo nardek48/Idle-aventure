@@ -308,7 +308,7 @@ function buildAdminCompanionsHTML() {
     return esc(def ? def.name : id) + " : " + etat;
   });
   h += '<p class="panel-sub">' + lignes.join(" · ") + '</p>';
-  h += '<p class="panel-sub">Recrute les compagnons manquants et ouvre Héros › Compagnons. Une voie sans choix prend la voie par défaut, modifiable ensuite dans sa fiche.</p>';
+  h += '<p class="panel-sub">Recrute les compagnons manquants et ouvre Héros › Alliés. Une voie sans choix prend la voie par défaut, modifiable ensuite dans sa fiche.</p>';
   h += '<button class="settings-btn admin-btn" onclick="adminRecruitCompanions()"><img class=ico-inline src=images/Icons/subtabs/companions.webp> Recruter les compagnons</button>';
   h += '</div>';
   return h;

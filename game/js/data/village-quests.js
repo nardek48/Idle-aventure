@@ -295,7 +295,7 @@ var MILESTONE_BOOKS = {
     ["images/Icons/resources/resine_durcie_icon.webp", "Un rang coûte de l'or et un matériau du monde. Le rang 2 s'ouvre au Désert, le 3 aux Ruines, et ainsi de suite."],
     ["images/Icons/gold_icon.webp", "La bulle d'or te signale un rang payable : « J'y vais » ouvre le bon sort."]] },
   ardeur: { title: "Entraîner un compagnon", icon: "images/Companions/wenna.webp", tips: [
-    ["images/Icons/subtabs/hero_roster.webp", "Héros › Compagnons : chaque palier donne +8 % au choix, en Ardeur (dégâts) ou en Vigueur (PV, et il attire davantage les coups)."],
+    ["images/Icons/subtabs/hero_roster.webp", "Héros › Alliés : chaque palier donne +8 % au choix, en Ardeur (dégâts) ou en Vigueur (PV, et il attire davantage les coups)."],
     ["images/Icons/system/lock_open.webp", "Les paliers 5, 15 et 25 ouvrent les trois emplacements de relique."],
     ["images/Icons/gold_icon.webp", "« Répartir de nouveau » rend l'or et remet les paliers à choisir."]] },
   reliques: { title: "Patrouilles et reliques", icon: "images/Icons/quests/mission_exploration.webp", tips: [
