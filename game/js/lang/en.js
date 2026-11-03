@@ -8833,6 +8833,7 @@ I18n.register("en", {
   "Les combats de la faille te coûtent 10 % de PV en moins.": "Fights in the rift cost you 10% less HP.",
   "+1 Givre bleu à chaque escalier franchi dans la faille.": "+1 Blue Frost for each stair cleared in the rift.",
 
+  "Récits de patrouille : « au puits sec », « des marches de craie », plus de « à Le » ni « de Les ».": "Patrol stories: sector names now read naturally in the middle of a sentence.",
   "Patrouilles dans la Tour : tes compagnons peuvent partir sur les étages libérés, avec leurs récits de là-haut.": "Patrols in the Tower: your companions can head out to the freed floors, with their stories from up there.",
   "La Mémoire continue après la Tour : les niveaux 25 à 28 s'ouvrent avec ton record dans la faille, et chaque étage franchi rapporte de l'Aether. Six hauts faits de la faille.": "Memory goes on after the Tower: levels 25 to 28 open with your record in the rift, and every floor cleared yields Aether. Six rift achievements.",
 

@@ -139,7 +139,26 @@ var PatrolManager = {
     var txt = list[p.story.index] || list[0] || "";
     var def = this.getSectorDef(p.mapId, p.sectorId), cdef = window.getCompanionDef ? getCompanionDef(companionId) : null;
     if (!txt) txt = window.PATROL_STORY_NARRATOR || ""; // v3.457.3 : compagnon hors de son monde
-    return _td(txt).replace(/\{secteur\}/g, def ? _td(def.name) : "").replace(/\{nom\}/g, cdef ? _td(cdef.name) : ""); // v3.374.0 : traduit AVANT la substitution
+    return this._placeSector(_td(txt), def ? _td(def.name) : "").replace(/\{nom\}/g, cdef ? _td(cdef.name) : ""); // v3.374.0 : traduit AVANT la substitution
+  },
+
+  /* v3.646.0 : {secteur} dans la phrase. Le nom porte son article (« Le puits sec ») : en milieu de phrase,
+     article en minuscule, et « à le / de les » contractés (« au puits sec », « des marches »). */
+  _placeSector: function (txt, name) {
+    var en = !!(window.I18n && I18n.lang() === "en");
+    return txt.replace(/([dD]e |[àÀ] )?\{secteur\}/g, function (all, prep, off) {
+      var head = txt.slice(0, off);
+      if (prep && /\S$/.test(head) && !(/^[àÀ]/.test(prep) && /['’]$/.test(head))) { head += prep.slice(0, -1); prep = ""; } // « …de » collé à un mot : pas une préposition (« jusqu'à » en est une)
+      var pre = all.slice(0, all.length - 9);                     // ce qui précède {secteur} dans la prise
+      if (!name) return pre;
+      if (!prep && (!/\S/.test(head) || /[.!?]\s*$/.test(head))) return pre + name;   // début de phrase : tel quel
+      if (en) return pre + name.replace(/^The /, "the ");
+      var low = name.replace(/^(Le |La |Les |L')/, function (x) { return x.toLowerCase(); });
+      var m = prep ? /^(le|les) (.*)$/.exec(low) : null;
+      if (!m) return pre + low;
+      var p = prep.charAt(0), c = /[àÀ]/.test(p) ? (m[1] === "le" ? "au" : "aux") : (m[1] === "le" ? "du" : "des");
+      return (p === p.toUpperCase() ? c.charAt(0).toUpperCase() + c.slice(1) : c) + " " + m[2];
+    });
   },
 
   /* ---------- Actions ---------- */
