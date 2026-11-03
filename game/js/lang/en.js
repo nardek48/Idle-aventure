@@ -8102,6 +8102,7 @@ I18n.register("en", {
   "+2 % de dégâts par pièce Légendaire portée (jusqu'à +14 %).": "+2% damage per Legendary piece worn (up to +14%).",
   "Une fois tes trois techniques utilisées dans un combat, tu fais 15 % de dégâts en plus jusqu'à la fin de ce combat.": "Once you have used all three of your techniques in a fight, you deal 15% more damage until the end of that fight.",
   "Talents : la voie « Varier » s'ouvre à la Tour, commune aux trois classes. Le plafond monte jusqu'à 28 points : plus de points dormants en réserve.": "Talents: the “Vary” path opens at the Tower, shared by all three classes. The cap rises up to 28 points: no more points sleeping in reserve.",
+  "Équilibre des classes : le Chevalier frappe 15 % plus fort, le Rôdeur 15 % moins fort, le Mage a 5 % de PV en plus. Les trois classes finissent l'Histoire dans des temps proches.": "Class balance: the Knight hits 15% harder, the Ranger 15% softer, the Mage has 5% more HP. All three classes now finish the Story in similar times.",
   "Héros › Équipé : le détail de la pièce choisie reste de nouveau visible en bas de l'écran, comme dans les Talents.": "Hero › Equipped: the selected piece's details stay visible at the bottom of the screen again, as in Talents.",
   "La Tour, fin de l'acte II : l'étage des gisants, le Gardien qui répète, le palier Légendaire et les feuillets du Veilleur au Codex.": "The Tower, end of act II: the sleepers' floor, the Repeating Guardian, the Legendary threshold and the Watcher's leaves in the Codex.",
   "L'étage des gisants": "The Sleepers' Floor",
