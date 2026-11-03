@@ -22205,6 +22205,27 @@ console.log("\n[435] v3.644.0 — Faille, lot F-3 : Mémoire 25 à 28, Souvenirs
   }
 })();
 
+console.log("\n[436] v3.649.0 — Journal : filtres et étapes d'Histoire en un bloc (atelier journal.html)");
+(function () {
+  try {
+    var L = ["Pain +500 (Entrepôt)", "Eau +500 (Entrepôt)", "📖 Étape terminée : Les os rangés", "✨ Souvenir : Les os rangés : +1 Aether", "🎁 Récompense d'histoire : Heaume", "+15 XP héros",
+      "Maddoc prend la place libre dans le groupe.", "📖 Les os rangés — Edda a posé sa feuille.", "🧺 L'intendant livre de quoi bâtir (Mine) : +60 Bois", "🧺 L'intendant livre de quoi bâtir (Scierie) : +60 Bois", "⚔️ Goule tombe — il en reste 1."]
+      .map(function (t) { return { text: t, type: "event" }; });
+    var it = g.buildLogItems(L), txt = function (x) { return x.html.replace(/<[^>]+>/g, " "); };
+    ok(it.length === 5, "11 lignes deviennent 5 (" + it.length + ")");
+    ok(it[0].cat === "gains" && /Pain \+500 · Eau \+500/.test(txt(it[0])), "livraisons à l'Entrepôt réunies sur une ligne");
+    ok(it[1].cat === "histoire" && /Les os rangés/.test(txt(it[1])) && /Edda a posé/.test(txt(it[1])) && /\+1 Aether/.test(txt(it[1])) && /Heaume/.test(txt(it[1])) && /\+15 XP/.test(txt(it[1])), "étape d'Histoire : titre, récit et gains dans un bloc");
+    ok(it[2].cat === "village" && /Maddoc/.test(txt(it[2])), "ligne ordinaire gardée telle quelle");
+    ok(/\(Mine, Scierie\)/.test(txt(it[3])) && /chacun/.test(txt(it[3])), "même phrase, lieux réunis");
+    ok(it[4].cat === "combat", "combat reconnu à son icône");
+    g.gameLog.length = 0; L.slice().reverse().forEach(function (e) { g.addLog(e.text, "event"); });
+    g.setLogFilter("combat");
+    var h = g.buildLogHTML();
+    ok(/setLogFilter\('combat'\)/.test(h) && h.indexOf("Goule tombe") !== -1 && h.indexOf("Maddoc") === -1, "filtre Combat : seulement les combats");
+    g.setLogFilter("tout");
+  } catch (err) { ok(false, "[436] exception : " + err.message); }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");
