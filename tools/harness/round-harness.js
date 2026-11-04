@@ -13260,7 +13260,7 @@ console.log("\n[186] v3.414.0 — Village : rail à quatre onglets, vignettes, f
     ok((h.match(/class="village-tab/g) || []).length === 4 && h.indexOf("kseg is-stack village-tabs") !== -1, "rail du kit en haut : quatre onglets");
     ok(h.indexOf("subtab-bar-wrapper") === -1 && h.indexOf("pc-subtab-bar") === -1, "plus de barre de sous-onglets en bas");
     ok(h.indexOf("Bâtiments") < h.indexOf("Production") && h.indexOf("Ateliers") < h.indexOf("Entrepôt"), "ordre : Bâtiments · Production · Ateliers · Entrepôt");
-    ok((h.match(/production-dash-card prod-tile/g) || []).length === 6 && h.indexOf("prod-tile-img") !== -1, "Production : six vignettes illustrées");
+    ok((h.match(/production-dash-card prod-tile/g) || []).length === 6 && (h.indexOf("prod-tile-img") !== -1 || (h.match(/row-scene-img/g) || []).length === 6), "Production : six vignettes illustrées (v3.662.0 : ou leurs six scènes de ligne)");
     /* Ruban : plein partout -> « Plein » ; stock local plein, Entrepôt libre -> « Récolter » */
     run("game.resources.ble = WarehouseManager.getCap('ble'); ProductionPlotsSystem.getPlots('farm').forEach(function (p) { if (p.state === 'open') p.stock = 9999; });");
     run("game.resources.viande = 0; ProductionPlotsSystem.getPlots('hunt').forEach(function (p) { if (p.state === 'open') p.stock = 9999; });");
