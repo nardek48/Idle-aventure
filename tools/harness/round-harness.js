@@ -13280,7 +13280,7 @@ console.log("\n[186] v3.414.0 — Village : rail à quatre onglets, vignettes, f
     run("setVillageSubTab('buildings');");
     ok(run("productionDetailBuildingId") === null, "changer d'onglet referme la feuille");
     var b = run("buildVillageHTML()");
-    ok(b.indexOf("vb-grid") !== -1 && b.indexOf("vb-card-lock") !== -1 && b.indexOf("vb-card-icon") !== -1, "Bâtiments : grille de vignettes, condition écrite sur les verrouillés");
+    ok(b.indexOf("vb-grid") !== -1 && b.indexOf("vb-card-lock") !== -1 && (b.indexOf("vb-card-icon") !== -1 || b.indexOf("row-scene-img") !== -1), "Bâtiments : grille de vignettes, condition écrite sur les verrouillés (v3.663.0 : ou leurs scènes de ligne)");
     var css = fs.readFileSync(path.join(ROOT, "css/99-icon-assets.css"), "utf8");
     ok(/img\.vb-card-icon \{ width: 84px; height: 84px;/.test(css), "Bâtiments : illustration en grand (84 px)");
     ok(typeof g.buildBuildingDetailHTML === "undefined" && typeof g.buildProductionSwitchHTML === "undefined", "ancienne sous-page de détail et double bouton retirés");
