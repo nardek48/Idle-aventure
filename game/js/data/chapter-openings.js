@@ -50,7 +50,7 @@ CHAPTER_OPENINGS.tower = {
 var CHAPTER_OPENING_ORDER = ["desert", "ruins", "crypt", "mountain", "tower"];
 
 /* v3.631.0 (Tour, lot T-4b) : la vision de l'étape 19 et les quatre fins (deux planches), même composant.
-   Textes de l'atelier (vision validée, fins à relire). {nom} = nom du héros. Images à générer (images/Tour/). */
+   Textes de l'atelier (vision validée, fins à relire). {nom} = nom du héros. Images livrées (images/Tour/, v3.667 à v3.670). */
 var TOWER_VISION = {
   num: "Cette nuit-là", teinte: ["120,150,200", "40,46,70", "8,9,14"],
   planches: [
