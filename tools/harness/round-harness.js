@@ -22434,6 +22434,20 @@ console.log("\n[443] v3.677.0 — Pas de repas du Camp en sortie de combat (audi
   try { run("game.dungeonRun = null; game.adventureQuestRun = null;"); if (g.game.livingMaps) g.game.livingMaps.fight = saveFight || null; } catch (e) {}
 })();
 
+console.log("\n[444] v3.679.0 — Sac plein : la récompense d'Histoire n'est plus offerte d'office (audit 04/11, QA-4)");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
+    var cap = g.getInventoryCap(), SQ = g.StoryQuestManager;
+    run("game.inventory = []; for (var i = 0; i < " + cap + "; i++) game.inventory.push(LootSystem.rollDropAtRarity('common'));");
+    var rows = SQ._grantReward({ equipmentRarity: "rare", equipmentCount: 1 });
+    ok(g.game.inventory.length === cap + 1 && g.game.inventory[cap].rarity === "rare" && rows.some(function (r) { return r.label === "Objet"; }), "sac plein (" + cap + ") : la pièce Rare de palier entre en dépassement, ligne « Objet » affichée");
+    var n = g.game.inventory.length;
+    ok(g.addLootToInventory(g.LootSystem.rollDropAtRarity("common")) === false && g.game.inventory.length === n, "un butin ordinaire reste offert à sac plein (règle v3.322.0 inchangée)");
+  } catch (err) { ok(false, "[444] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  try { run("game.inventory = [];"); } catch (e) {}
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

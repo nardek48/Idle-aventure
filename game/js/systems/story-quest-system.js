@@ -493,7 +493,7 @@ var StoryQuestManager = {
         affixes: [],
         worldIndex: 0
       };
-      if (typeof addLootToInventory === "function" && addLootToInventory(fixe)) {
+      if (typeof addLootToInventory === "function" && addLootToInventory(fixe, { keep: true })) {
         addLog("🎁 " + _t("Récompense d'histoire : {x}", { x: _td(fixe.name) }), "event");
         rows.push({ label: "Objet", value: fixe.name });
       }
@@ -520,7 +520,7 @@ var StoryQuestManager = {
           if (trous.length) item = generateEquipmentItem(trous[Math.floor(Math.random() * trous.length)], reward.equipmentRarity);
         }
         if (!item) item = (window.LootSystem && typeof LootSystem.rollDropAtRarity === "function") ? LootSystem.rollDropAtRarity(reward.equipmentRarity) : null;
-        if (item && typeof addLootToInventory === "function" && addLootToInventory(item)) {
+        if (item && typeof addLootToInventory === "function" && addLootToInventory(item, { keep: true })) { // audit 04/11 (QA-4) : jamais offerte d'office
           granted += 1;
           addLog("🎁 " + _t("Récompense d'histoire : {x}", { x: _td(item.name) }), "event");
         }
