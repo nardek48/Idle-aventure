@@ -197,34 +197,45 @@ function cancelHeroSelection() {
   if (window.titleScreenSlotBeingCreated) {
     window.titleScreenSlotBeingCreated = null;
     closeHeroSelection();
+    // audit 04/11 (SAVE-1) : lancée depuis « Mes héros » (jeu déjà démarré), la croix revient au héros
+    // d'origine ; avant, l'emplacement vide restait actif et l'autosauvegarde en faisait un héros fantôme.
+    var fromGame = typeof titleScreenFromGame !== "undefined" && titleScreenFromGame;
+    var hasOrigin = origin && window.HeroSlotManager && HeroSlotManager.hasSlot(origin);
+    if (fromGame && hasOrigin) cancelHeroSelectionRestore(origin);
+    else if (hasOrigin) setActiveSlot(origin);
     if (typeof titleScreenBackToMain === "function") titleScreenBackToMain();
+    if (fromGame && typeof renderAll === "function") renderAll();
     return;
   }
 
   closeHeroSelection();
 
-  if (origin && window.HeroSlotManager && HeroSlotManager.hasSlot(origin)) {
-    setActiveSlot(origin);
-
-    if (typeof createInitialGameState === "function") {
-      var keptSaveSupported = game.saveSupported;
-      var fresh = createInitialGameState();
-      Object.keys(game).forEach(function (k) { delete game[k]; });
-      Object.assign(game, fresh);
-      game.saveSupported = keptSaveSupported;
-    }
-    loadGame();
-    if (typeof ensureGameStateDefaults === "function") ensureGameStateDefaults();
-    if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") StatsSystem.recalcStats();
-    if (typeof resumeCombatAfterSlotChange === "function") resumeCombatAfterSlotChange();
-    // v3.239.0 : ce retour recharge un emplacement à la main, sans passer par
-    // switchToSlot — même omission de rattrapage, même correctif.
-    if (window.ResumeManager) ResumeManager.catchUpAfterSlotLoad();
-  } else {
+  if (origin && window.HeroSlotManager && HeroSlotManager.hasSlot(origin)) cancelHeroSelectionRestore(origin);
+  else {
     console.warn("[Aethervale] cancelHeroSelection: pas d'emplacement d'origine valide (origin=" + origin + ") — la fenêtre va se rouvrir via needsHeroSetup(). Si ça se reproduit alors que save-system.js est à jour, remonte ce message à Claude."); // v3.29.4 : TEMPORAIRE, diagnostic
   }
 
   if (typeof renderAll === "function") renderAll();
+}
+
+/* Recharge l'emplacement quitté pour une création annulée (corps repris tel quel de cancelHeroSelection). */
+function cancelHeroSelectionRestore(origin) {
+  setActiveSlot(origin);
+
+  if (typeof createInitialGameState === "function") {
+    var keptSaveSupported = game.saveSupported;
+    var fresh = createInitialGameState();
+    Object.keys(game).forEach(function (k) { delete game[k]; });
+    Object.assign(game, fresh);
+    game.saveSupported = keptSaveSupported;
+  }
+  loadGame();
+  if (typeof ensureGameStateDefaults === "function") ensureGameStateDefaults();
+  if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") StatsSystem.recalcStats();
+  if (typeof resumeCombatAfterSlotChange === "function") resumeCombatAfterSlotChange();
+  // v3.239.0 : ce retour recharge un emplacement à la main, sans passer par
+  // switchToSlot — même omission de rattrapage, même correctif.
+  if (window.ResumeManager) ResumeManager.catchUpAfterSlotLoad();
 }
 
 /* v3.29 : croix <img class=ico-inline src=images/Icons/system/close.webp> — jamais affichée au tout premier lancement (rien où revenir).

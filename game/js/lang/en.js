@@ -10,6 +10,7 @@
    Les textes des données sont traduits par _td() à l'affichage (registre : lang/data-fields.js). */
 I18n.register("en", {
   // index.html
+  "Mes héros : fermer la création d'un nouveau héros ramène au héros en cours, sans laisser d'emplacement vide derrière.": "My heroes: closing the creation of a new hero brings you back to your current hero, without leaving an empty slot behind.",
   "Sac plein : une pièce offerte par l'Histoire n'est plus convertie en Aether, elle entre dans le sac en dépassement.": "Full bag: an item granted by the Story is no longer turned into Aether, it goes into your bag as overflow.",
   "Le feu de camp ne soigne plus pendant un combat d'élite engagé sur la carte, comme pour les donjons et les quêtes.": "The campfire no longer heals during an elite fight in progress on the map, just like dungeons and quests.",
   "onglet|Camp": "Camp",

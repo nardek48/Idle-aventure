@@ -22448,6 +22448,21 @@ console.log("\n[444] v3.679.0 — Sac plein : la récompense d'Histoire n'est pl
   try { run("game.inventory = [];"); } catch (e) {}
 })();
 
+console.log("\n[445] v3.680.0 — Création annulée : pas d'emplacement fantôme (audit 04/11, SAVE-1)");
+(function () {
+  try {
+    var src = fs.readFileSync(path.join(ROOT, "js/ui/modal-view.js"), "utf8");
+    ok(/function cancelHeroSelectionRestore\(origin\)/.test(src) && /fromGame && hasOrigin\) cancelHeroSelectionRestore\(origin\)/.test(src), "la croix d'une création lancée depuis « Mes héros » recharge le héros d'origine");
+    run("fullResetState(); game.saveSupported = true; game.heroId = ''; game.playerName = '';");
+    var key = run("getActiveSaveKey()"); var avant = g.localStorage.getItem(key);
+    g.localStorage.removeItem(key);
+    ok(run("saveGame()") === false && g.localStorage.getItem(key) === null, "héros pas encore créé, emplacement vide : rien n'est écrit");
+    run("game.heroId = 'knight'; game.playerName = 'Test';");
+    ok(run("saveGame()") === true && !!g.localStorage.getItem(key), "héros créé : la sauvegarde s'écrit");
+    if (avant !== null) g.localStorage.setItem(key, avant);
+  } catch (err) { ok(false, "[445] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

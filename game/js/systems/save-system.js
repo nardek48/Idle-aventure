@@ -555,6 +555,7 @@ function saveGame() {
   if (!game.saveSupported) return false;
   if (saveLockedKey && saveLockedKey === getActiveSaveKey()) return false;
   try {
+    if (!game.heroId && !localStorage.getItem(getActiveSaveKey())) return false; // audit 04/11 (SAVE-1) : création non confirmée, pas d'emplacement fantôme
     localStorage.setItem(getActiveSaveKey(), JSON.stringify(buildSaveData()));
     game.lastSave = Date.now();
     game.lastOnline = game.lastSave;
