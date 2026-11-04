@@ -49,10 +49,10 @@ button:focus-visible { outline: 2px solid var(--gold-b); outline-offset: 2px; }
 /* B : le pré-rendu ; le roulé est une bande de 16 images, la pose une image par valeur */
 .die3 { position: relative; width: var(--sz3, 96px); height: var(--sz3, 96px); background: center / contain no-repeat; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .55)); }
 /* le chiffre écrit par-dessus la face avant (vide), au centre de la face : 54 % / 57 % de l'image */
-.die3 .num { position: absolute; left: 54.1%; top: 56.8%; transform: translate(-50%, -50%); font: 900 calc(var(--sz3, 96px) * .27)/1 "Cinzel", Georgia, serif; letter-spacing: -.03em; color: #f3cf73;
-  text-shadow: 0 1px 0 #6a4512, 0 -1px 0 rgba(255, 240, 200, .35), 0 2px 4px rgba(0, 0, 0, .7); pointer-events: none; }
+.die3 .num { position: absolute; left: 54.1%; top: 56.8%; transform: translate(-50%, -50%); font: 700 calc(var(--sz3, 96px) * .21)/1 "Cinzel", Georgia, serif; letter-spacing: -.02em; color: #a8783c;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, .55), 0 1px 0 rgba(255, 214, 150, .18); pointer-events: none; } /* or vieilli des chiffres du modèle (≈ rgb 140,100,55), un rien plus clair */
 .die3.is-rolling .num { visibility: hidden; }
-.die3.is-nat20 .num { color: #a8f0a0; } .die3.is-nat1 .num { color: #ff9a88; }
+.die3.is-nat20 .num { color: #8fcf7a; } .die3.is-nat1 .num { color: #e07a62; }
 .die3.is-rolling { background-size: 1600% 100%; background-position: 0 0; animation: tumble .45s steps(15) infinite, hop .8s ease-out 1; }
 .die3.is-landed { animation: settle .35s cubic-bezier(.3, 1.6, .5, 1) 1; }
 .die3.is-nat20 { filter: drop-shadow(0 0 14px rgba(120, 220, 120, .75)) drop-shadow(0 6px 10px rgba(0, 0, 0, .55)); }
