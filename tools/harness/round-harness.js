@@ -1845,6 +1845,13 @@ g.WorldManager.worldIndex = 0; // retour en For\u00eat...
 ok(g.getEquipShopWorldPriceMult() === 4, "...les prix ne redescendent PAS (monde max atteint)");
 game.equipShopManualRefreshCount = 0;
 ok(g.EquipShopManager.getManualRefreshCost() === 4000, "refresh manuel index\u00e9 : 1000\u00d74 = 4000");
+// v3.652.0 : grille baissée à partir de la Crypte ; l'Enchanteresse garde l'ancienne
+game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true };
+ok(g.EquipShopManager.getPrice({ rarity: "epic" }) === 135000, "Épique en Crypte = 9000×15 = 135 000");
+ok(g.getEquipShopWorldPriceMult(g.ENCHANT_WORLD_PRICE_MULT) === 25, "Enchanteresse en Crypte : ×25 inchangé");
+game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true, 4: true, 5: true };
+ok(g.EquipShopManager.getPrice({ rarity: "legendary" }) === 1050000, "Légendaire à la Tour = 35000×30 = 1 050 000");
+game.worldsEverReached = { 0: true, 1: true };
 
 // --- L'achat honore le prix AFFICH\u00c9 (estampill\u00e9 sur le stock) ---
 game.gold = 10000;
@@ -22224,6 +22231,41 @@ console.log("\n[436] v3.649.0 — Journal : filtres et étapes d'Histoire en un 
     ok(/setLogFilter\('combat'\)/.test(h) && h.indexOf("Goule tombe") !== -1 && h.indexOf("Maddoc") === -1, "filtre Combat : seulement les combats");
     g.setLogFilter("tout");
   } catch (err) { ok(false, "[436] exception : " + err.message); }
+})();
+
+console.log("\n[437] v3.653.0 — Grimoire : réglage « Varier » (ne pas refaire la même technique)");
+(function () {
+  var cu = g.canUseAction, cra = g.ClassCombatManager._chooseRoundAction, sv = { v: g.game.grimoireVarier, r: g.game._varier, m: g.game._towerMirror };
+  try {
+    ok(g.isGrimoireSlotAvoided("skill1", { avoidSlots: ["skill1"] }) && !g.isGrimoireSlotAvoided("skill2", { avoidSlots: ["skill1"] }) && !g.isGrimoireSlotAvoided("skill1", {}), "isGrimoireSlotAvoided : seulement les techniques listées");
+    var kit = { actions: { skill1: { id: "a" }, skill2: { id: "b" } } }, prets = { a: true, b: true };
+    g.canUseAction = function (r, c, a) { return !!prets[a.id]; };
+    ok(g.chooseAutoAction(["skill1", "skill2"], kit, {}, {}, { avoidSlots: ["skill1"] }) === "skill2", "repli : la technique d'avant est sautée, l'autre part");
+    ok(g.chooseAutoAction(["skill1", "skill2"], kit, {}, {}, {}) === "skill1", "sans réglage : l'ordre habituel");
+    var rg = g.chooseGrimoireAction([{ conditionId: "x", actionSlot: "skill1" }], kit, {}, {}, { avoidSlots: ["skill1"] });
+    ok(rg === null, "règle du Grimoire sur la technique d'avant : sautée");
+    g.canUseAction = cu;
+    g.game.grimoireVarier = true; g.game._varier = { last: "skill1", used: {} }; g.game._towerMirror = { slot: "skill2", foe: "f" };
+    ok(JSON.stringify(g.ClassCombatManager.varierAvoidSlots()) === '["skill1","skill2"]', "à éviter : la technique d'avant et celle que garde le miroir");
+    g.game._varier = { last: "defense", used: {} }; g.game._towerMirror = null;
+    ok(g.ClassCombatManager.varierAvoidSlots().length === 0, "la défense n'est pas une technique à éviter");
+    var appels = [];
+    g.ClassCombatManager._chooseRoundAction = function (fx, av) { appels.push(av ? av.join(",") : "libre"); return av ? null : { slot: "skill1" }; };
+    g.game._varier = { last: "skill1", used: {} };
+    var d = g.ClassCombatManager.chooseRoundAction(false);
+    ok(appels.join("|") === "skill1|libre" && d && d.slot === "skill1", "seule technique prête : elle part quand même (relance sans contrainte)");
+    appels = []; g.game.grimoireVarier = false; g.ClassCombatManager.chooseRoundAction(false);
+    ok(appels.join("|") === "libre", "réglage éteint : une seule décision, comme avant");
+    g.ClassCombatManager._chooseRoundAction = cra;
+    g.game.grimoireVarier = true;
+    var sd = g.buildSaveData();
+    ok(sd.grimoireVarier === true, "sauvegarde : grimoireVarier écrit");
+    delete sd.grimoireVarier; g.restoreBaseState(sd);
+    ok(g.game.grimoireVarier === false, "ancienne sauvegarde sans le champ : éteint");
+    sd.grimoireVarier = true; g.restoreBaseState(sd);
+    ok(g.game.grimoireVarier === true, "rechargement : réglage gardé");
+  } catch (err) { ok(false, "[437] exception : " + err.message); }
+  finally { g.canUseAction = cu; g.ClassCombatManager._chooseRoundAction = cra; g.game.grimoireVarier = sv.v; g.game._varier = sv.r; g.game._towerMirror = sv.m; }
 })();
 
 Promise.all(ATTENTES).then(function () {

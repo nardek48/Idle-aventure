@@ -11,6 +11,7 @@ function chooseAutoAction(priorityList, kit, resourceState, cooldownState, comba
     if (typeof slot !== "string") continue;
     var action = kit.actions[slot];
     if (!action) continue;
+    if (isGrimoireSlotAvoided(slot, combatContext)) continue; // v3.653.0 : réglage « Varier »
     if (canUseAction(resourceState, cooldownState, action, combatContext)) {
       return slot;
     }
@@ -19,6 +20,14 @@ function chooseAutoAction(priorityList, kit, resourceState, cooldownState, comba
 }
 
 window.chooseAutoAction = chooseAutoAction;
+
+/* v3.653.0 : réglage « Varier » — combatContext.avoidSlots liste les techniques à ne pas refaire ce round.
+   L'appelant relance sans elles si rien d'autre ne part (ClassCombatManager.chooseRoundAction). */
+function isGrimoireSlotAvoided(slot, combatContext) {
+  var a = combatContext && combatContext.avoidSlots;
+  return !!(a && a.length && a.indexOf(slot) >= 0);
+}
+window.isGrimoireSlotAvoided = isGrimoireSlotAvoided;
 
 var HERO_LOW_HP_THRESHOLD_PCT = 0.40;
 
@@ -92,6 +101,7 @@ function chooseGrimoireAction(rules, kit, resourceState, cooldownState, combatCo
     if (!rule || typeof rule !== "object") continue;
     if (typeof rule.conditionId !== "string" || typeof rule.actionSlot !== "string") continue;
     if (rule.actionSlot === "basic") continue;
+    if (isGrimoireSlotAvoided(rule.actionSlot, combatContext)) continue; // v3.653.0 : réglage « Varier »
 
     if (!evaluateGrimoireCondition(rule.conditionId, combatContext)) continue;
 

@@ -599,7 +599,25 @@ var ClassCombatManager = {
     return !!(step && StoryQuestManager.isCurrentStepAccepted("mountain") && /Tailler \d+ veines/.test(step.objectiveLabel || ""));
   },
 
+  /* v3.653.0 : réglage « Varier » — d'abord sans la technique d'avant (et celle que garde le miroir) ;
+     si rien d'autre ne part, on relance sans contrainte : la technique répétée vaut mieux que l'attaque de base. */
   chooseRoundAction: function (forExecution) {
+    var avoid = this.varierAvoidSlots();
+    if (avoid.length) {
+      var r = this._chooseRoundAction(forExecution, avoid);
+      if (r) return r;
+    }
+    return this._chooseRoundAction(forExecution, null);
+  },
+
+  varierAvoidSlots: function () {
+    if (!game.grimoireVarier) return [];
+    var out = [], v = game._varier, m = game._towerMirror;
+    [v && v.last, m && m.slot].forEach(function (s) { if (s && /^skill[123]$/.test(s) && out.indexOf(s) < 0) out.push(s); });
+    return out;
+  },
+
+  _chooseRoundAction: function (forExecution, avoid) {
     if (!game.enemy) return null;
     if ((game.heroHp || 0) <= 0) return null;
     // v3.540.0 (audit CMP-1, option B) : en Tactique, l'étape « Tailler N veines » met la veine intacte en avant
@@ -615,6 +633,7 @@ var ClassCombatManager = {
     if (!resourceState) return null;
 
     var grimoireContext = this.getGrimoireCombatContext();
+    if (avoid) grimoireContext.avoidSlots = avoid;
 
     var unlockedSlotCount = (typeof getGrimoireSlotCount === "function")
       ? getGrimoireSlotCount(game.worldsEverReached)

@@ -33,13 +33,18 @@ var EQUIP_SHOP_PRICES = {
    ne jamais toucher aux gains). L'effort en sorties reste ainsi constant d'un monde à l'autre.
    Indexé sur le monde max ATTEINT (pas le monde courant) : reculer d'un monde ne baisse pas
    les prix. S'applique aussi au refresh manuel. Les potions ne sont PAS concernées. */
-var EQUIP_SHOP_WORLD_PRICE_MULT = [1, 4, 10, 25, 90, 200];
+// v3.652.0 (Seb, 03/11) : Crypte 25 → 15, Montagne 90 → 20, Tour 200 → 30. La pièce du sommet coûtait 51 % de l'or
+// gagné à la Crypte et 171 % à la Tour (robot v3.634.0) ; désormais 30 / 8 / 26 %, comme les Ruines (16 %).
+var EQUIP_SHOP_WORLD_PRICE_MULT = [1, 4, 10, 15, 20, 30];
+// L'Enchanteresse garde l'ancienne grille (seuls les prix de l'échoppe baissent).
+var ENCHANT_WORLD_PRICE_MULT = [1, 4, 10, 25, 90, 200];
 
 /* v3.512.0 (option A, Seb 27/10) : une relique de compagnon parmi les places de la vitrine, famille au hasard,
    rang du monde le plus loin atteint. Prix : 1 000 × le multiplicateur du monde (banc : 2 500 n'était jamais payable). */
 var EQUIP_SHOP_RELIC_BASE_PRICE = 1000;
 
-function getEquipShopWorldPriceMult() {
+function getEquipShopWorldPriceMult(table) {
+  table = table || EQUIP_SHOP_WORLD_PRICE_MULT;
   var maxWorld = 0;
   if (game.worldsEverReached && typeof game.worldsEverReached === "object") {
     Object.keys(game.worldsEverReached).forEach(function (k) {
@@ -50,8 +55,8 @@ function getEquipShopWorldPriceMult() {
   if (window.WorldManager && Number(WorldManager.worldIndex || 0) > maxWorld) {
     maxWorld = Number(WorldManager.worldIndex || 0);
   }
-  var mult = EQUIP_SHOP_WORLD_PRICE_MULT[maxWorld];
-  return mult != null ? mult : EQUIP_SHOP_WORLD_PRICE_MULT[EQUIP_SHOP_WORLD_PRICE_MULT.length - 1];
+  var mult = table[maxWorld];
+  return mult != null ? mult : table[table.length - 1];
 }
 
 var EquipShopManager = {
@@ -318,3 +323,4 @@ var EquipShopManager = {
 window.EquipShopManager = EquipShopManager;
 window.getEquipShopWorldPriceMult = getEquipShopWorldPriceMult;
 window.EQUIP_SHOP_WORLD_PRICE_MULT = EQUIP_SHOP_WORLD_PRICE_MULT;
+window.ENCHANT_WORLD_PRICE_MULT = ENCHANT_WORLD_PRICE_MULT;

@@ -82,7 +82,7 @@ var EnchantManager = {
     if (!affixes[index]) return null;
 
     var n = this.getRerollCount(item, index);
-    var worldMult = (typeof getEquipShopWorldPriceMult === "function") ? getEquipShopWorldPriceMult() : 1;
+    var worldMult = (typeof getEquipShopWorldPriceMult === "function") ? getEquipShopWorldPriceMult(window.ENCHANT_WORLD_PRICE_MULT) : 1; // v3.652.0 : grille propre
     var gold = (ENCHANT_BASE_GOLD[item.rarity] || 80) * Math.pow(ENCHANT_COST_MULT, n) * worldMult;
     if (window.DungeonManager && typeof DungeonManager.getShardEffect === "function") {
       gold *= Math.max(0, 1 - ENCHANT_DOIGTE_PCT * DungeonManager.getShardEffect("enchantDiscount"));
@@ -162,7 +162,7 @@ var EnchantManager = {
 
   getTransmuteCost: function (item, index) {
     if (!item || !this.canRerollRarity(item.rarity) || !getItemAffixes(item)[index]) return null;
-    var worldMult = (typeof getEquipShopWorldPriceMult === "function") ? getEquipShopWorldPriceMult() : 1;
+    var worldMult = (typeof getEquipShopWorldPriceMult === "function") ? getEquipShopWorldPriceMult(window.ENCHANT_WORLD_PRICE_MULT) : 1; // v3.652.0 : grille propre
     var gold = (ENCHANT_BASE_GOLD[item.rarity] || 80) * ENCHANT_TRANSMUTE_BASE * Math.pow(ENCHANT_COST_MULT, this.getTransmuteCount(item, index)) * worldMult;
     if (window.DungeonManager && typeof DungeonManager.getShardEffect === "function") {
       gold *= Math.max(0, 1 - ENCHANT_DOIGTE_PCT * DungeonManager.getShardEffect("enchantDiscount"));

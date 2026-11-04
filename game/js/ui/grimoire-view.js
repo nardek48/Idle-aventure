@@ -6,7 +6,7 @@
    qu'il faut pour la MODIFIER (deux libellés, deux listes, deux descriptions, un badge d'état).
    Désormais deux niveaux :
      - LISTE  : une ligne par règle, « Si X -> Y », lisible d'un coup d'œil (~560 px au total) ;
-     - FICHE  : ouverte au toucher, deux listes déroulantes natives et le verdict d'appariement.
+     - FICHE  : ouverte au toucher ; v3.654.0 : feuille des conditions et tuiles d'action, puis le verdict d'appariement.
    Retirés sur décision Seb : le Mode Expert (game.expertModeEnabled reste en sauvegarde, inerte)
    et les badges d'état de règle (prête / en attente / ressource insuffisante) — cette information
    n'a de sens qu'en combat, et le Rapport de combat la couvre déjà a posteriori.
@@ -177,39 +177,91 @@ function getGrimoireUnlockWorldLabel(slotIndex) {
   return world ? _td(world.name) : null;
 }
 
-function buildGrimoireConditionOptionsHTML(selectedId) {
-  var h = '<option value="">' + _t("— Choisir une condition —") + '</option>';
+/* v3.654.0 (atelier grimoire-fiche.html, variante C de Seb) : les listes déroulantes natives laissent la place
+   à une feuille pour la condition (icône, description, en groupes) et à des tuiles pour l'action. */
+var GRIMOIRE_CONDITION_GROUPS = [
+  { title: _t("L'ennemi annonce", "grimoire groupe"), ids: ["chargeIncoming", "shieldIncoming", "healIncoming", "eliteSurgeIncoming", "enemyAttackIncoming", "enemySilenceIncoming"] },
+  { title: _t("L'ennemi est", "grimoire groupe"), ids: ["enemyEnraged", "enemyCorrupted", "enemyVampiric", "enemyArmored", "multipleEnemies", "enemyRising", "enemySleeping"] },
+  { title: _t("Ton groupe", "grimoire groupe"), ids: ["heroLowHp", "allyLowHp", "allyChained"] },
+  { title: _t("Le terrain", "grimoire groupe"), ids: ["veinIntact"] }
+];
+
+/* Groupes de la feuille ; une condition oubliée des groupes tombe dans « Autres » (jamais perdue). */
+function getGrimoireConditionGroups() {
   var order = (typeof GRIMOIRE_CONDITION_ORDER !== "undefined") ? GRIMOIRE_CONDITION_ORDER : Object.keys(GRIMOIRE_CONDITIONS || {});
-  order.forEach(function (conditionId) {
-    var cond = getGrimoireCondition(conditionId);
-    if (!cond) return;
-    h += '<option value="' + esc(conditionId) + '"' + (selectedId === conditionId ? ' selected' : '') + '>'
-      + esc(_td(cond.label)) + '</option>';
+  var seen = {}, out = [];
+  GRIMOIRE_CONDITION_GROUPS.forEach(function (g) {
+    var ids = g.ids.filter(function (id) { return getGrimoireCondition(id); });
+    ids.forEach(function (id) { seen[id] = true; });
+    if (ids.length) out.push({ title: g.title, ids: ids });
   });
+  var rest = order.filter(function (id) { return !seen[id] && getGrimoireCondition(id); });
+  if (rest.length) out.push({ title: _t("Autres", "grimoire groupe"), ids: rest });
+  return out;
+}
+
+/* « Contre » (le télégraphe est annulé) ou « Effet » (suppression d'archétype), sinon rien. */
+function getGrimoireCounterKind(action, conditionId) {
+  if (!action || !conditionId) return null;
+  if (Array.isArray(action.counters) && action.counters.indexOf(conditionId) !== -1) return "counter";
+  if (typeof getAllGrimoireCounterIds === "function" && getAllGrimoireCounterIds(action).indexOf(conditionId) !== -1) return "effect";
+  return null;
+}
+
+function buildGrimoireCounterTagHTML(kind) {
+  if (kind === "counter") return '<span class="grimoire-counter-tag"><img class=ico-inline src=images/Icons/combat_status/counter.webp> ' + _t("Contre") + '</span>';
+  if (kind === "effect") return '<span class="grimoire-effect-tag">' + _t("Effet") + '</span>';
+  return "";
+}
+
+function getGrimoireActionIcon(action) {
+  return (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[action.id])
+    || (action.type === "defense" ? "images/Icons/combat_stats/stat_defense.webp" : "images/Icons/scene/node_discovery.webp");
+}
+
+/* Bouton « Si… » : la condition choisie, toucher ouvre la feuille. */
+function buildGrimoireConditionPickHTML(index, rule, editable) {
+  var cond = getGrimoireCondition(rule.conditionId);
+  var h = '<button type="button" class="grimoire-pick"' + (editable ? ' onclick="openGrimoireSheet(\'cond\')"' : ' disabled') + '>';
+  h += cond ? renderIconOrEmojiHTML(cond.icon, "grimoire-pick-ico", _td(cond.label)) : '<span class="grimoire-pick-ico is-empty">＋</span>';
+  h += '<span class="grimoire-pick-lab">' + (cond ? esc(_td(cond.label)) : _t("Choisir une condition")) + '</span>';
+  h += '<span class="grimoire-rule-chevron">›</span></button>';
   return h;
 }
 
-function buildGrimoireActionOptionsHTML(kit, selectedSlot, conditionId) {
-  var h = '<option value="">' + _t("— Choisir une action —") + '</option>';
-  if (!kit || !kit.actions) return h;
+/* Feuille des conditions : icône, nom et description, en groupes. */
+function buildGrimoireConditionSheetHTML() {
+  var index = grimoireEditIndex, rule = (index !== null && game.grimoireRules) ? game.grimoireRules[index] : null;
+  var h = kSheetHeadHTML({ icon: '<img src="images/Icons/codex/codex_lore.webp" alt="">', title: _t("Si…"), close: "closeGrimoireSheet()" });
+  h += '<div class="ksheet-body grimoire-sheet-body">';
+  getGrimoireConditionGroups().forEach(function (g) {
+    h += '<div class="grimoire-group-title">' + esc(g.title) + '</div>';
+    g.ids.forEach(function (id) {
+      var c = getGrimoireCondition(id), on = !!(rule && rule.conditionId === id);
+      h += '<button type="button" class="grimoire-opt' + (on ? ' is-on' : '') + '" aria-pressed="' + on + '" onclick="pickGrimoireCondition(\'' + esc(id) + '\')">'
+        + renderIconOrEmojiHTML(c.icon, "grimoire-opt-ico", _td(c.label))
+        + '<span><b>' + esc(_td(c.label)) + '</b><span class="grimoire-opt-desc">' + esc(_td(c.description)) + '</span></span></button>';
+    });
+  });
+  return h + '</div>';
+}
 
+/* Tuiles d'action : une par action du kit, badge « Contre » / « Effet » selon la condition choisie. */
+function buildGrimoireActionTilesHTML(index, kit, rule, editable) {
+  var h = '<div class="grimoire-acts">';
   GRIMOIRE_ASSIGNABLE_SLOTS.forEach(function (slot) {
     var action = getGrimoireActionDef(kit, slot);
     if (!action) return;
     // v3.487.0 : « Tailler » ne se propose qu'une fois la Montagne atteinte (ou s'il est déjà choisi)
-    if (slot === "vein" && selectedSlot !== "vein" && !(game.worldsEverReached && game.worldsEverReached[4])) return;
-    // v3.208.0 : le <img class=ico-inline src=images/Icons/combat_stats/stat_speed.webp> ne s'allumait que sur action.counters — une action qui contre par
-    // suppression d'archétype (Frappe lourde vs corrompu, Brise-garde vs blindé) paraissait
-    // neutre dans la liste. getAllGrimoireCounterIds() couvre les deux canaux.
-    var isCounter = !!(conditionId && typeof getAllGrimoireCounterIds === "function"
-      && getAllGrimoireCounterIds(action).indexOf(conditionId) !== -1);
-    // v3.242.2 : le suffixe « — contre … » tenté en v3.242.0 tronquait le libellé dans le
-    // champ fermé. L'information passe maintenant par l'icône + la description sous la
-    // liste (voir buildGrimoireEditHTML) ; ici on garde le seul marqueur ⚡.
-    h += '<option value="' + esc(slot) + '"' + (selectedSlot === slot ? ' selected' : '') + '>'
-      + (isCounter ? '\u26a1 ' : '') + esc(_td(action.label)) + '</option>';
+    if (slot === "vein" && rule.actionSlot !== "vein" && !(game.worldsEverReached && game.worldsEverReached[4])) return;
+    var on = rule.actionSlot === slot;
+    h += '<button type="button" class="grimoire-act' + (on ? ' is-on' : '') + '" aria-pressed="' + on + '"'
+      + (editable ? ' onclick="setGrimoireRuleAction(' + index + ', \'' + slot + '\')"' : ' disabled') + '>'
+      + buildGrimoireCounterTagHTML(getGrimoireCounterKind(action, rule.conditionId))
+      + renderIconOrEmojiHTML(getGrimoireActionIcon(action), "grimoire-act-ico", _td(action.label))
+      + '<span>' + esc(_td(action.label)) + '</span></button>';
   });
-  return h;
+  return h + '</div>';
 }
 
 /* ============================================================
@@ -294,7 +346,7 @@ function buildGrimoireRuleRowHTML(index, rule, kit, locked) {
 }
 
 /* ============================================================
-   FICHE — deux listes déroulantes natives
+   FICHE — condition en feuille, actions en tuiles (v3.654.0)
    ============================================================ */
 
 function buildGrimoireEditHTML(index, kit) {
@@ -310,14 +362,9 @@ function buildGrimoireEditHTML(index, kit) {
 
   h += '<div class="grimoire-card">';
   h += '<div class="grimoire-card-title">' + _t("Si…") + '</div>';
-  var lock = isGrimoireEditable() ? '' : ' disabled';
-  h += '<select class="grimoire-select" onchange="setGrimoireRuleCondition(' + index + ', this.value)"' + lock + '>';
-  h += buildGrimoireConditionOptionsHTML(rule.conditionId);
-  h += '</select>';
+  var editable = isGrimoireEditable();
+  h += buildGrimoireConditionPickHTML(index, rule, editable);
   if (cond) {
-    // v3.242.2 (retour Seb) : une <option> native ne peut pas porter d'image. Une fois
-    // la condition choisie, on rappelle son icône à côté de la description — le joueur
-    // voit ainsi quelle attaque ennemie sera contrée.
     h += '<span class="grimoire-select-desc">'
       + renderIconOrEmojiHTML(cond.icon, "grimoire-select-desc-ico", _td(cond.label))
       + '<span>' + esc(_td(cond.description)) + '</span></span>';
@@ -329,16 +376,10 @@ function buildGrimoireEditHTML(index, kit) {
   if (!kit) {
     h += '<p class="grimoire-hint">' + _t("Choisis d'abord un héros pour assigner une action.") + '</p>';
   } else {
-    h += '<select class="grimoire-select" onchange="setGrimoireRuleAction(' + index + ', this.value)"' + lock + '>';
-    h += buildGrimoireActionOptionsHTML(kit, rule.actionSlot, rule.conditionId);
-    h += '</select>';
+    h += buildGrimoireActionTilesHTML(index, kit, rule, editable);
     if (action) {
-      // v3.242.2 : même rappel côté action — l'icône est celle du bouton de compétence
-      // en combat, pour que le lien soit immédiat.
-      var actionIcon = (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[action.id])
-        || (action.type === "defense" ? "images/Icons/combat_stats/stat_defense.webp" : "images/Icons/scene/node_discovery.webp");
       h += '<span class="grimoire-select-desc">'
-        + renderIconOrEmojiHTML(actionIcon, "grimoire-select-desc-ico", _td(action.label))
+        + renderIconOrEmojiHTML(getGrimoireActionIcon(action), "grimoire-select-desc-ico", _td(action.label))
         + '<span>' + esc(_td(action.description)) + '</span></span>';
     }
   }
@@ -445,6 +486,7 @@ function buildGrimoirePresetsSheetHTML() {
 }
 
 var GRIMOIRE_SHEETS = {
+  cond: buildGrimoireConditionSheetHTML, // v3.654.0 : choix de la condition
   help: buildGrimoireHelpSheetHTML,
   presets: buildGrimoirePresetsSheetHTML,
   report: buildGrimoireReportSheetHTML
@@ -666,6 +708,14 @@ function setGrimoireRuleCondition(index, conditionId) {
   if (typeof renderPanel === "function") renderPanel();
 }
 
+/* v3.654.0 : choix dans la feuille des conditions — la feuille se referme sur la fiche. */
+function pickGrimoireCondition(conditionId) {
+  if (grimoireEditIndex === null) return;
+  grimoireOpenSheet = null;
+  setGrimoireRuleCondition(grimoireEditIndex, conditionId);
+  if (typeof renderPanel === "function") renderPanel();
+}
+
 function setGrimoireRuleAction(index, actionSlot) {
   if (!isGrimoireEditable()) return;
   ensureGrimoireRules();
@@ -680,3 +730,4 @@ window.ensureGrimoireRules = ensureGrimoireRules;
 window.buildGrimoireHTML = buildGrimoireHTML;
 window.setGrimoireRuleCondition = setGrimoireRuleCondition;
 window.setGrimoireRuleAction = setGrimoireRuleAction;
+window.pickGrimoireCondition = pickGrimoireCondition;
