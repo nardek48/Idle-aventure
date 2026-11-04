@@ -19640,9 +19640,9 @@ console.log("\n[351] v3.532.0 — Sève par victoire selon le monde atteint (aud
     at(0); var f0 = LM.getRepeatSevePerWin("forest");
     at(4); var f4 = LM.getRepeatSevePerWin("forest"), d4 = LM.getRepeatSevePerWin("desert"), m4 = LM.getRepeatSevePerWin("mountain");
     at(2); var f2 = LM.getRepeatSevePerWin("forest");
-    ok(f0 === 2 && f2 === 4 && f4 === 6, "Arbre-mère : 2 Sève en Forêt, 4 aux Ruines, 6 à la Montagne (" + [f0, f2, f4].join("/") + ")");
-    ok(d4 === 5 && m4 === 2, "Dard du Désert : +1 par monde d'avance (5 à la Montagne) ; élites de la Montagne : 2 (" + d4 + "/" + m4 + ")");
-    ok(g.LIVING_MAP_RULES.repeatableElite.sevePerWorldAhead === 1, "règle en donnée : sevePerWorldAhead = 1");
+    // v3.657.0 (élites à niveaux, option B de Seb) : plus de bonus par monde d'avance, c'est le niveau qui multiplie
+    ok(f0 === 2 && f2 === 2 && f4 === 2 && d4 === 2 && m4 === 2, "2 par victoire au niveau 1, quel que soit le monde atteint (" + [f0, f2, f4, d4, m4].join("/") + ")");
+    ok(g.LIVING_MAP_RULES.repeatableElite.sevePerWorldAhead === 0, "règle en donnée : sevePerWorldAhead = 0 (v3.657.0)");
     g.game.worldsEverReached = saved; g.WorldManager.worldIndex = wi;
   } catch (err) { ok(false, "[351] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
@@ -22324,6 +22324,37 @@ console.log("\n[439] v3.656.0 — Le festin (atelier festin.html, A)");
     ok(h.indexOf("camp-soir") < h.indexOf("camp-feast"), "sous « Ce matin au camp »");
   } catch (err) { ok(false, "[439] exception : " + err.message); }
   run("game.sortie = null;");
+})();
+
+console.log("\n[440] v3.657.0 — Élites à niveaux (atelier elites-niveaux.html, A ; option B : 2 × niveau)");
+(function () {
+  var saveFight = null;
+  try {
+    var LM = g.LivingMapManager;
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.worldsEverReached = {0:true,1:true,2:true,3:true,4:true}; WorldManager.worldIndex = 4;");
+    LM.ensureDefaults();
+    var mapId = "mountain", sec = (g.LIVING_MAPS.mountain.sectors.filter(function (d) { return LM.isRepeatable("mountain", d.id); })[0] || {}), sid = sec.id, eid = sec.content && sec.content.eliteId;
+    ok(!!sid && LM.getEliteLevelBest(mapId, sid) === 0 && LM.getEliteMaxLevel(mapId, sid) === 1, "jamais battue : seul le niveau 1 est ouvert");
+    ok(LM.clampEliteLevel(mapId, sid, 7) === 1 && LM.clampEliteLevel(mapId, sid, null) === 1, "niveau demandé au-delà : ramené au maximum ouvert");
+    var m1 = LM.getEliteLevelMult(1), m5 = LM.getEliteLevelMult(5);
+    ok(m1.hp === 1 && m1.power === 1 && m1.gold === 1 && Math.abs(m5.hp - Math.pow(1.15, 4)) < 1e-9 && Math.abs(m5.power - Math.pow(1.10, 4)) < 1e-9 && Math.abs(m5.gold - Math.pow(1.10, 4)) < 1e-9, "niveau 5 : PV ×1,15⁴, puissance et or ×1,10⁴ (courbe des donjons)");
+    var e1 = g.EliteManager.make(eid, "mountain", 0, { escort: { members: [] } }), e5 = g.EliteManager.make(eid, "mountain", 0, { levelMult: m5, escort: { members: [] } });
+    ok(e5.maxHp > e1.maxHp * 1.7 && e5.maxHp < e1.maxHp * 1.8 && e5.goldReward > e1.goldReward * 1.4, "l'élite au niveau 5 : PV ×1,75, or ×1,46 (" + e1.maxHp + " → " + e5.maxHp + ")");
+    ok(LM.getRepeatRewardAt(mapId, 1) === 2 && LM.getRepeatRewardAt(mapId, 5) === 10, "matériau : 2 × niveau (niveau 5 : 10)");
+    var st = LM.getState(mapId, sid); st.state = "libere"; st.firstRewardClaimed = true; st.levelBest = 2;
+    ok(LM.getEliteMaxLevel(mapId, sid) === 3 && LM.clampEliteLevel(mapId, sid, null) === 2, "meilleur 2 : le niveau 3 est ouvert ; sans choix, le meilleur battu");
+    run("game.resources = game.resources || {};");
+    var avant = g.WarehouseManager.getAmount("cendre_vive");
+    saveFight = g.game.livingMaps.fight;
+    g.game.livingMaps.fight = { mapId: mapId, sectorId: sid, eliteId: eid, level: 3 };
+    LM.onFightWon({ id: eid });
+    ok(g.WarehouseManager.getAmount("cendre_vive") - avant === 6 && LM.getEliteLevelBest(mapId, sid) === 3 && LM.getEliteMaxLevel(mapId, sid) === 4, "victoire au niveau 3 : +6 Cendre vive, niveau 4 ouvert (" + (g.WarehouseManager.getAmount("cendre_vive") - avant) + ", meilleur " + LM.getEliteLevelBest(mapId, sid) + ")");
+    g.sortiePrep = { opts: { ctx: { type: "elite", id: eid, mapId: mapId, sectorId: sid } }, level: 9 };
+    var h = g.buildSortiePrepEliteLevelHTML();
+    ok(/dlvl-step/.test(h) && g.sortiePrep.level === 4 && h.indexOf("+8") !== -1, "feuille de préparation : sélecteur, niveau ramené à 4, « +8 » à gagner");
+    g.sortiePrep = null;
+  } catch (err) { ok(false, "[440] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  try { g.sortiePrep = null; if (g.game.livingMaps) g.game.livingMaps.fight = saveFight; } catch (e) {}
 })();
 
 Promise.all(ATTENTES).then(function () {

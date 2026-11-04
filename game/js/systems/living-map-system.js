@@ -431,6 +431,25 @@ var LivingMapManager = {
     return base > 0 ? base + Number(re.sevePerWorldAhead || 0) * Math.max(0, rw - Math.max(0, mw)) : base;
   },
 
+  /* v3.657.0 (élites à niveaux, atelier elites-niveaux.html, A) : comme les donjons, battre le niveau N ouvre N+1.
+     Meilleur niveau noté sur l'état du secteur (game.livingMaps, déjà sauvegardé en entier). */
+  getEliteLevelBest: function (mapId, sectorId) {
+    var s = this.getState(mapId, sectorId);
+    return (s && this.isRepeatable(mapId, sectorId)) ? Math.max(0, Math.floor(Number(s.levelBest) || 0)) : 0;
+  },
+  getEliteMaxLevel: function (mapId, sectorId) { return this.isRepeatable(mapId, sectorId) ? this.getEliteLevelBest(mapId, sectorId) + 1 : 1; },
+  clampEliteLevel: function (mapId, sectorId, level) { // sans niveau demandé : le meilleur battu (comme les donjons)
+    var want = level == null ? Math.max(1, this.getEliteLevelBest(mapId, sectorId)) : Math.floor(Number(level) || 1);
+    return Math.max(1, Math.min(this.getEliteMaxLevel(mapId, sectorId), want));
+  },
+  /* PV ×1,15, puissance ×1,10, or +10 % par niveau au-dessus du 1 (LIVING_MAP_RULES.repeatableElite). */
+  getEliteLevelMult: function (level) {
+    var re = this.getRules().repeatableElite || {}, n = Math.max(0, Math.floor(Number(level) || 1) - 1);
+    return { hp: Math.pow(Number(re.levelHpMult || 1), n), power: Math.pow(Number(re.levelPowerMult || 1), n), gold: Math.pow(1 + Number(re.levelGoldPct || 0), n) };
+  },
+  /* Matériau de la carte par victoire au niveau donné : ×niveau. */
+  getRepeatRewardAt: function (mapId, level) { return this.getRepeatSevePerWin(mapId) * Math.max(1, Math.floor(Number(level) || 1)); },
+
   getBrakeMult: function (mapId, sectorId) {
     if (!this.isRepeatable(mapId, sectorId)) return 1;
     var per = Number((this.getRules().repeatableElite || {}).brakePerWin || 0);
@@ -563,7 +582,7 @@ var LivingMapManager = {
   start: function (mapId, sectorId, opts) {
     var cs = this.canStart(mapId, sectorId);
     if (!cs.ok) return cs;
-    if (cs.content && cs.content.type === "elite") return this.startEliteFight(mapId, sectorId, cs.content);
+    if (cs.content && cs.content.type === "elite") return this.startEliteFight(mapId, sectorId, cs.content, opts && opts.level);
     if (!window.SceneRunManager || typeof SceneRunManager.startRun !== "function") return { ok: false, reason: _t("Expéditions indisponibles") };
     var map = this.getMap(mapId), wake = !!(opts && opts.wake && map && (map.gisants || map.veins)); // v3.489.0 : tailler la veine
     var r = SceneRunManager.startRun(cs.content.templateId, { livingMap: { mapId: mapId, sectorId: sectorId, wake: wake } });
@@ -577,7 +596,7 @@ var LivingMapManager = {
      contexte "mapelite". combat-engine.js rappelle onFightWon / onFightLost, SortieManager.flee
      rappelle abandonFight. L'objet unique de l'élite reste la récompense de SA quête
      d'aventure ; ici la récompense est celle du secteur (Sève de première libération). */
-  startEliteFight: function (mapId, sectorId, content) {
+  startEliteFight: function (mapId, sectorId, content, level) {
     var map = this.getMap(mapId);
     if (!map || !content || !window.EliteManager || !window.SortieManager) return { ok: false, reason: _t("Combat indisponible") };
     if (!window.ELITE_DB || !ELITE_DB[content.eliteId]) return { ok: false, reason: _t("Élite inconnue") };
@@ -590,11 +609,12 @@ var LivingMapManager = {
     }
     this.ensureDefaults();
     if (window.ProvisionsManager) ProvisionsManager.consume("mapelite", foodRef);
-    game.livingMaps.fight = { mapId: mapId, sectorId: sectorId, eliteId: content.eliteId };
+    var lvl = this.clampEliteLevel(mapId, sectorId, level); // v3.657.0 : 1 hors élite répétable
+    game.livingMaps.fight = { mapId: mapId, sectorId: sectorId, eliteId: content.eliteId, level: lvl };
     SortieManager.end("return"); // un farm en cours est rangé, comme pour une quête ou une chasse
     if (!SortieManager.start("mapelite")) { game.livingMaps.fight = null; return { ok: false, reason: _t("Une sortie est déjà en cours.") }; }
     var brake = this.getBrakeMult(mapId, sectorId); // v3.258.0 (C-5) : 1 hors élite répétable
-    var enemy = EliteManager.spawn(content.eliteId, map.worldId, 0, { brakeMult: brake });
+    var enemy = EliteManager.spawn(content.eliteId, map.worldId, 0, { brakeMult: brake, levelMult: this.getEliteLevelMult(lvl) });
     if (!enemy) { SortieManager.end("return"); game.livingMaps.fight = null; return { ok: false, reason: _t("L'élite n'a pas paru.") }; }
     this._applyFightTheme(map);
     if (typeof addLog === "function") addLog(_t("Carte : {x} — {e} se dresse devant toi.", { x: _td(this.getSectorDef(mapId, sectorId).name), e: _td(enemy.name) }), "event");
@@ -622,7 +642,7 @@ var LivingMapManager = {
     if (!f || !window.EliteManager) return false;
     var map = this.getMap(f.mapId);
     if (map) this._applyFightTheme(map);
-    return !!EliteManager.spawn(f.eliteId, map ? map.worldId : "forest", 0, { brakeMult: this.getBrakeMult(f.mapId, f.sectorId) });
+    return !!EliteManager.spawn(f.eliteId, map ? map.worldId : "forest", 0, { brakeMult: this.getBrakeMult(f.mapId, f.sectorId), levelMult: this.getEliteLevelMult(f.level || 1) });
   },
 
   /* Appelé par combat-engine.js:killEnemy quand un combat de carte est actif. Seule l'élite
@@ -645,7 +665,9 @@ var LivingMapManager = {
     if (this.isRepeatable(f.mapId, f.sectorId)) {
       var rules = this.getRules(), re = rules.repeatableElite || {};
       var wins = this._addDailyWin(f.mapId, f.sectorId);
-      var seve = this.getRepeatSevePerWin(f.mapId);
+      var lvlW = Math.max(1, Math.floor(Number(f.level) || 1)), stL = this.getState(f.mapId, f.sectorId); // v3.657.0 : niveau de l'élite
+      var seve = this.getRepeatRewardAt(f.mapId, lvlW);
+      if (stL && lvlW > Number(stL.levelBest || 0)) { stL.levelBest = lvlW; report.levelUp = lvlW; }
       if (seve > 0 && window.WarehouseManager && typeof WarehouseManager.addResource === "function") {
         WarehouseManager.addResource(this.getRewardResourceId(f.mapId), seve, true); // v3.305.0 : ressource de la carte
       }
@@ -667,6 +689,7 @@ var LivingMapManager = {
         report.message += ", +" + report.repeatResource.amount + " " + (rDef ? _td(rDef.name) : report.repeatResource.id);
       }
       report.message += ". " + _t("Victoire {n} du jour : la prochaine sera plus dure (+{p} %).", { n: wins, p: Math.round(Number(re.brakePerWin || 0) * wins * 100) });
+      if (report.levelUp) report.message += " " + _t("Niveau {n} battu : le niveau {m} est ouvert.", { n: report.levelUp, m: report.levelUp + 1 }); // v3.657.0
       /* v3.489.0 (Montagne) : une élite peut lâcher une pièce (ELITE_DB.winDrop), au monde du combat. */
       var wd = eliteDef && eliteDef.winDrop, lmSt = game.livingMaps[f.mapId] || {}, sec = Math.max(0, Math.floor(Number(lmSt.dropDry || 0)));
       // lot 6 (Seb, option A) : compteur de victoires sans pièce, commun aux élites de la carte ; au seuil, la pièce tombe
