@@ -175,3 +175,63 @@ var CampManager = {
 
 window.CampManager = CampManager;
 window.CAMP_REGEN_PCT_PER_MIN = CAMP_REGEN_PCT_PER_MIN;
+
+/* v3.656.0 (atelier festin.html, placement A, choix de Seb du 04/11) — LE FESTIN.
+   Blé, viande et eau du village contre +10 % de dégâts et de PV pour tout le groupe, pendant 3 sorties (pas l'exploration libre).
+   Prix par monde : 25 % / 25 % / 10 % de l'Entrepôt au niveau max du monde. État dans le jour de jeu (worldDay.feast, déjà sauvegardé). */
+var FEAST_SORTIES = 3;
+var FEAST_BONUS = 0.10;
+var FEAST_COST_BY_WORLD = [
+  { ble: 300, viande: 300, eau: 125 },    // Forêt (Entrepôt 1 250)
+  { ble: 500, viande: 500, eau: 200 },    // Désert (2 000)
+  { ble: 550, viande: 550, eau: 225 },    // Ruines (2 250)
+  { ble: 1000, viande: 1000, eau: 400 },  // Crypte (4 000)
+  { ble: 1500, viande: 1500, eau: 600 },  // Montagne (6 000)
+  { ble: 2000, viande: 2000, eau: 800 }   // Tour (8 000)
+];
+var FEAST_ICON = "images/Icons/camp/festin.webp"; // à générer : icône générique en attendant
+
+var FeastManager = {
+  _w: function () { return window.WorldDays ? WorldDays.ensure() : {}; },
+  left: function () { return Math.max(0, Math.floor(Number(this._w().feast) || 0)); },
+  // Vivant seulement pendant une sortie hors exploration libre (même règle que les potions à bonus).
+  isLive: function () { return this.left() > 0 && !!(window.PotionManager && PotionManager.isEffectLive()); },
+  mult: function () { return this.isLive() ? 1 + FEAST_BONUS : 1; },
+  hpPct: function () { return this.isLive() ? FEAST_BONUS : 0; },
+  cost: function () {
+    var w = Math.max(0, Math.min(FEAST_COST_BY_WORLD.length - 1, Number((window.WorldManager && WorldManager.worldIndex) || 0)));
+    return FEAST_COST_BY_WORLD[w];
+  },
+  missing: function () {
+    var c = this.cost(), out = [];
+    Object.keys(c).forEach(function (k) { if (WarehouseManager.getAmount(k) < c[k]) out.push(k); });
+    return out;
+  },
+  canPrepare: function () { return this.left() === 0 && this.missing().length === 0; },
+  prepare: function () {
+    if (this.left() > 0) return false;
+    if (window.heroLockToast && heroLockToast()) return false;
+    if (this.missing().length) { showToast(_t("Il manque de quoi préparer le festin"), 1400); return false; }
+    var c = this.cost();
+    Object.keys(c).forEach(function (k) { WarehouseManager.removeResource(k, c[k]); });
+    this._w().feast = FEAST_SORTIES;
+    addLog("🔥 " + _t("Festin au camp : +{n} % de dégâts et de PV pour tout le groupe, pendant {k} sorties.", { n: Math.round(FEAST_BONUS * 100), k: FEAST_SORTIES }), "event");
+    showToast("🔥 " + _t("Festin préparé"), 1400);
+    if (typeof saveGame === "function") saveGame();
+    if (typeof renderAll === "function") renderAll();
+    return true;
+  },
+  // Appelé par WorldDays.onSortieEnd (hors exploration libre) : une sortie de moins.
+  onSortieEnd: function (context) {
+    if (context === "farm") return;
+    var w = this._w(), n = this.left();
+    if (n <= 0) return;
+    w.feast = n - 1;
+    if (w.feast === 0) addLog("🔥 " + _t("Le festin est fini."), "event");
+  }
+};
+
+window.FeastManager = FeastManager;
+window.FEAST_COST_BY_WORLD = FEAST_COST_BY_WORLD;
+window.FEAST_ICON = FEAST_ICON;
+

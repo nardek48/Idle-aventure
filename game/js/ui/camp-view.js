@@ -323,6 +323,28 @@ function campSoirTapText(id) {
   var D = campSoirData()[campSoirWorld()] || {}, any = campSoirAny();
   return (D.tap && D.tap[id]) || (any[id] && any[id].tap) || "";
 }
+/* v3.656.0 (atelier festin.html, A) : la carte du festin — prix et stock, ou les sorties qui restent. */
+function campFeastHTML() {
+  if (!window.FeastManager || !window.WarehouseManager) return "";
+  var F = FeastManager, n = F.left(), h = '<div class="camp-card camp-feast"><div class="camp-soir-k">' + esc(_t("Le festin")) + '</div>';
+  if (n > 0) {
+    var pips = ""; for (var i = 0; i < FEAST_SORTIES; i++) pips += '<i class="' + (i < n ? "is-on" : "") + '"></i>';
+    h += '<div class="camp-feast-on">' + renderIconOrEmojiHTML(FEAST_ICON, "camp-feast-ico", "") + '<span><b>' + esc(_t("Festin en cours")) + '</b>'
+      + esc(_tn(n, "+{p} % de dégâts et de PV pour tout le groupe, encore {n} sortie.", "+{p} % de dégâts et de PV pour tout le groupe, encore {n} sorties.", { n: n, p: Math.round(FEAST_BONUS * 100) })) + '</span><span class="camp-feast-pips">' + pips + '</span></div>';
+    return h + '<p class="camp-feu-hint">' + esc(_t("Le prochain se prépare quand celui-ci est fini.")) + '</p></div>';
+  }
+  var c = F.cost(), miss = F.missing();
+  h += '<div class="camp-feast-head">' + renderIconOrEmojiHTML(FEAST_ICON, "camp-feast-ico", "") + '<span><b>' + esc(_t("Préparer un festin")) + '</b><span>'
+    + esc(_t("+{p} % de dégâts et de PV pour tout le groupe, pendant {k} sorties.", { p: Math.round(FEAST_BONUS * 100), k: FEAST_SORTIES })) + '</span></span></div><div class="camp-feast-costs">';
+  ["ble", "viande", "eau"].forEach(function (k) {
+    var def = WAREHOUSE_RESOURCES[k], have = Math.floor(WarehouseManager.getAmount(k));
+    h += '<span class="camp-feast-cost' + (miss.indexOf(k) >= 0 ? ' is-short' : '') + '">' + renderIconOrEmojiHTML(def.icon, "camp-feast-res", "")
+      + formatNumber(c[k]) + ' ' + esc(_td(def.name)) + ' <small>(' + formatNumber(have) + ')</small></span>';
+  });
+  var lab = miss.length ? _t("Il manque : {x}", { x: miss.map(function (k) { return _td(WAREHOUSE_RESOURCES[k].name).toLowerCase(); }).join(", ") }) : _t("Préparer le festin");
+  return h + '</div><button type="button" class="camp-feast-go"' + (miss.length ? ' disabled' : ' onclick="FeastManager.prepare()"') + '>' + esc(lab) + '</button></div>';
+}
+
 /* v3.655.0 (C3) : l'en-tête de la carte suit le moment du jour. */
 function campMomentTitle() {
   var mo = campMoment();
@@ -345,6 +367,7 @@ function campFeuStoryHTML(campMates) {
   var h = dark
     ? '<div class="camp-card camp-soir is-night"><div class="camp-soir-k">' + esc(_t("Cette nuit")) + '</div><p class="camp-soir-t">' + esc(WorldDays.nightText()) + '</p></div>'
     : '<div class="camp-card camp-soir is-' + campMoment() + '"><div class="camp-soir-k">' + esc(campMomentTitle()) + '</div><p class="camp-soir-t">' + esc(campSoir.text) + '</p></div>';
+  h += campFeastHTML(); // v3.656.0 : le festin, sous la phrase du jour
   if (!ids.length) return h;
   var soir = h; // v3.639.0 : le coin du feu d'abord, la soirée ensuite
   var half = Math.ceil(ids.length / 2), mate = function (id) {

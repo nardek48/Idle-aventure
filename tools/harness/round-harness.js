@@ -22292,6 +22292,40 @@ console.log("\n[438] v3.655.0 — Camp : le jour et la nuit (C3, atelier jour-nu
   } catch (err) { ok(false, "[438] exception : " + err.message); }
 })();
 
+console.log("\n[439] v3.656.0 — Le festin (atelier festin.html, A)");
+(function () {
+  try {
+    var F = g.FeastManager, W = g.WorldDays;
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); WorldManager.worldIndex = 3; game.worldsEverReached = {0:true,1:true,2:true,3:true};");
+    var c = F.cost();
+    ok(c.ble === 1000 && c.viande === 1000 && c.eau === 400 && g.FEAST_COST_BY_WORLD.length === 6 && g.FEAST_COST_BY_WORLD[5].ble === 2000, "prix par monde : Crypte 1 000 / 1 000 / 400, Tour 2 000");
+    ok(!F.canPrepare() && F.missing().length === 3 && F.prepare() === false, "sans stock : rien ne se prépare");
+    run("game.resources = game.resources || {}; game.resources.ble = 1500; game.resources.viande = 1200; game.resources.eau = 500;");
+    var avant = g.WarehouseManager.getAmount("ble");
+    ok(F.prepare() === true && F.left() === 3 && g.WarehouseManager.getAmount("ble") === avant - 1000 && g.WarehouseManager.getAmount("eau") === 100, "préparé : 3 sorties, le prix est pris à l'Entrepôt");
+    ok(F.prepare() === false, "un seul festin à la fois");
+    ok(F.mult() === 1 && F.hpPct() === 0, "au camp, l'effet dort (comme les potions à bonus)");
+    run("game.sortie = { active: true, context: 'adventure', loot: { gold: 0, items: [], resources: {} } };");
+    ok(Math.abs(F.mult() - 1.1) < 1e-9 && Math.abs(F.hpPct() - 0.1) < 1e-9, "en sortie : +10 % de dégâts et de PV");
+    ok(g.TalentManager.companionDamageMult() >= 1.1 - 1e-9 && g.TalentManager.getStatBonuses().hpPct >= 0.1 - 1e-9, "compagnons et PV du héros passent par les accroches existantes");
+    run("game.sortie = { active: true, context: 'farm', loot: { gold: 0, items: [], resources: {} } };");
+    ok(F.mult() === 1, "exploration libre : pas de festin");
+    run("game.sortie = null;");
+    W.onSortieEnd("farm"); ok(F.left() === 3, "l'exploration libre ne compte pas");
+    W.onSortieEnd("adventure"); W.onSortieEnd("adventure");
+    ok(F.left() === 1, "chaque sortie en compte une (3 → 1)");
+    var sd = g.buildSaveData();
+    ok(sd.explorationProgression && sd.explorationProgression.worldDay && sd.explorationProgression.worldDay.feast === 1, "sauvegardé avec le jour de jeu (worldDay.feast), sans nouveau champ");
+    W.onSortieEnd("adventure");
+    ok(F.left() === 0, "même à cheval sur la nuit, il dure ses 3 sorties puis s'arrête");
+    run("lastRenderedTab = 'quests';");
+    var h = g.buildCampHTML("feu");
+    ok(/camp-feast/.test(h) && h.indexOf("Préparer un festin") !== -1 && h.indexOf("images/Icons/camp/festin.webp") !== -1, "la carte du festin est au feu, avec le vrai chemin de son icône");
+    ok(h.indexOf("camp-soir") < h.indexOf("camp-feast"), "sous « Ce matin au camp »");
+  } catch (err) { ok(false, "[439] exception : " + err.message); }
+  run("game.sortie = null;");
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

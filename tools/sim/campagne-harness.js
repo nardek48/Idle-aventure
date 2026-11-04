@@ -714,6 +714,8 @@ function entretien() {
   refillPotions();
   memoireEtSac();
   if (SAVING) return;
+  /* FESTIN=1 : le robot prépare un festin dès qu'il le peut (v3.656.0, mesure du +10 %). */
+  if (process.env.FESTIN && g.FeastManager && g.FeastManager.canPrepare() && g.FeastManager.prepare()) STATS.festins = (STATS.festins || 0) + 1;
   /* Échoppe : une pièce meilleure que celle portée, si elle coûte moins de 40 % de la bourse. */
   var S = g.EquipShopManager; S.checkRefresh();
   (g.game.equipShopStock || []).slice().sort(function (a, b) { return (g.game.equipped[a.slot] ? 1 : 0) - (g.game.equipped[b.slot] ? 1 : 0); }).forEach(function (it) {
@@ -2134,10 +2136,7 @@ function reglesAvisees(g) {
   REGLES_AVISEES.forEach(function (cond) {
     if (i >= places) return;
     if (cond === "enemyRising" && !(g.game.worldsEverReached || {})[2]) return;
-    var html = g.buildGrimoireActionOptionsHTML(g.getGrimoireCurrentKit(), null, cond);
-    var opts = (html.match(/<option value="([^"]+)"[^>]*>([^<]*)/g) || []).map(function (o) {
-      var m = /value="([^"]+)"[^>]*>([^<]*)/.exec(o); return { v: m[1], counter: m[2].indexOf("\u26a1") === 0 };
-    });
+    var opts = grimoireActionOptions(g, cond);
     var pick = opts.filter(function (o) { return o.counter; })[0] || (cond === "enemyRising" ? opts.filter(function (o) { return o.v !== "defense"; })[0] : null);
     if (!pick) return;
     g.setGrimoireRuleCondition(i, cond);
@@ -2149,14 +2148,22 @@ function reglesAvisees(g) {
 }
 var REGLE_EN_TETE = null;
 
+/* v3.654.0 : les actions proposées par la fiche du Grimoire (tuiles), dans leur ordre ; counter = badge « Contre » ou « Effet » (l'ancien ⚡). */
+function grimoireActionOptions(g, cond) {
+  var html = g.buildGrimoireActionTilesHTML(0, g.getGrimoireCurrentKit(), { conditionId: cond, actionSlot: null }, true);
+  return html.split('<button').slice(1).map(function (b) {
+    var m = /setGrimoireRuleAction\(0, '([^']+)'\)/.exec(b);
+    return m ? { v: m[1], counter: /grimoire-(counter|effect)-tag/.test(b) } : null;
+  }).filter(Boolean);
+}
+
 /* Une règle du Grimoire, par les fonctions de l'éditeur (condition, puis action). */
 function activateGrimoireRule(g) {
   if ((g.game.grimoireRules || []).some(function (r) { return r && r.conditionId && r.actionSlot; })) return;
   g.ensureGrimoireRules();
   g.setGrimoireRuleCondition(0, g.GRIMOIRE_CONDITION_ORDER[0]);
-  // la liste que propose l'écran (premier choix non vide du menu déroulant)
-  var html = g.buildGrimoireActionOptionsHTML(g.getGrimoireCurrentKit(), null, g.GRIMOIRE_CONDITION_ORDER[0]);
-  var vals = (html.match(/value="([^"]+)"/g) || []).map(function (v) { return v.slice(7, -1); }).filter(Boolean);
+  // les tuiles que propose l'écran (v3.654.0 : plus de menu déroulant), la première
+  var vals = grimoireActionOptions(g, g.GRIMOIRE_CONDITION_ORDER[0]).map(function (o) { return o.v; });
   if (!vals.length) note("Grimoire : aucune action proposée");
   g.setGrimoireRuleAction(0, vals[0]);
 }
@@ -2301,6 +2308,7 @@ if (COMBATS) {
   if (STATS.rations) console.log("Rations au camp : mangées " + JSON.stringify(STATS.rations.mangees) + " · cuisinées " + JSON.stringify(STATS.rations.cuisinees) + " · attente évitée " + (STATS.rations.minutesEvitees / 60).toFixed(1) + " h");
   if (VERBOSE) STATS.fights.slice(-12).forEach(function (f) { console.log("    " + f.step + " · " + f.kind + " " + f.name + " : " + f.rounds + " rounds, PV " + Math.round(f.hp0 * 100) + "→" + Math.round((f.hp1 || 0) * 100) + " %" + (f.died ? " †" : "") + (f.potions ? " (" + f.potions + " potion)" : "")); });
 }
+console.log("Festins préparés : " + (STATS.festins || 0) + (process.env.FESTIN ? " (FESTIN=1)" : ""));
 console.log("Miroir de la Tour : " + (STATS.miroir || 0) + " technique(s) prise(s) sur " + (STATS.miroirTech || 0) + " lancée(s) face à un miroir" + (process.env.VARIER ? " (réglage Varier allumé)" : ""));
 console.log("Farm d'élites : " + STATS.farms + " · achats à l'échoppe : " + STATS.shopBuys + " · secteurs repris au sable : " + STATS.recouvrements + " · sac plein : " + STATS.sacPlein);
 console.log("Secteurs de carte (essais → libérés) : " + JSON.stringify(STATS.secteurs));

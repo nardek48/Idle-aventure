@@ -290,6 +290,7 @@ var TalentManager = {
       if (e.node.stats.hpPct) out.hpPct += e.node.stats.hpPct * r;
       if (e.node.stats.critChance) out.critChance += e.node.stats.critChance * r;
     });
+    if (window.FeastManager) out.hpPct += FeastManager.hpPct(); // v3.656.0 : le festin
     if (window.TowerSystem) out.hpPct += TowerSystem.hpPct(); // v3.632.0 : Ton nom (Mémoire 24), +10 % de PV à la Tour
     var cb = (typeof getClassByHeroId === "function") ? getClassByHeroId(game.heroId) : null; // équilibre des classes (03/11) : Mage +5 % PV
     if (cb && cb.balance && cb.balance.hpPct) out.hpPct += cb.balance.hpPct;
@@ -411,8 +412,8 @@ var TalentManager = {
 
   /* v3.453.0 : crochets du Commandement, lus par companion-system. */
   onCompanionSkill: function () { if (this.has("c_relais")) game._relaisReady = true; },
-  companionHpMult: function () { return this.has("c_serrez_rangs") ? 1 + this.V("c_serrez_rangs") : 1; },
-  companionDamageMult: function () { return this.has("c_mon_signal") ? 1 + this.V("c_mon_signal") : 1; },
+  companionHpMult: function () { return (this.has("c_serrez_rangs") ? 1 + this.V("c_serrez_rangs") : 1) * (window.FeastManager ? FeastManager.mult() : 1); }, // v3.656.0 : festin
+  companionDamageMult: function () { return (this.has("c_mon_signal") ? 1 + this.V("c_mon_signal") : 1) * (window.FeastManager ? FeastManager.mult() : 1); },
   companionExtraCharges: function () { return this.has("c_charge_plus") ? this.V("c_charge_plus") : 0; },
   companionKoReturnPct: function (base) { return this.has("c_personne_terre") ? Math.max(base, this.V("c_personne_terre")) : base; },
   afterAction: function (action, target) {

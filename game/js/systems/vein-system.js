@@ -106,6 +106,7 @@ var VeinSystem = {
   bladeMult: function () {
     var tour = window.TowerSystem ? TowerSystem.dmgMult() : 1; // v3.626.0 : la braise posée, à la Tour
     tour *= this.classMult(); // équilibre des classes (03/11)
+    if (window.FeastManager) tour *= FeastManager.mult(); // v3.656.0 : le festin, pendant ses sorties
     if (!this.state) return tour;
     return tour * (1 + this.state.heroCuts * this.bladePerCut() + (this.state.heroCuts > 0 && this._mem("taille_franche") ? Number(this._memV("taille_franche_blade", 0.10)) : 0)
       + (this.mountainLearns() ? this.heatLevel() * VEIN_DROIT_HEAT_BLADE : 0));
