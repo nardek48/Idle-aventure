@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.656.0", "menu_icons/camp_menu", _t("Le festin : au Camp, sous la phrase du jour, prépare un festin avec ton blé, ta viande et ton eau. Tout le groupe a +10 % de dégâts et de PV pendant 3 sorties.")],
     ["3.655.0", "menu_icons/camp_menu", _t("Le camp vit au rythme du jour : matin, journée, soir et nuit, selon tes sorties. Le bandeau change de lumière et la carte du feu a ses phrases du matin et de la journée.")],
     ["3.654.0", "menu_icons/quests_menu", _t("Grimoire : plus de listes déroulantes. La condition se choisit dans une liste avec son icône et sa description, l'action en tuiles, et « Contre » s'affiche avant même de choisir.")],
     ["3.653.0", "menu_icons/quests_menu", _t("Grimoire : nouveau réglage « Varier » à la préparation de sortie, dès la Tour. Ton héros évite de refaire la même technique quand une autre est prête, et le miroir de la Tour ne lui prend presque plus rien.")],

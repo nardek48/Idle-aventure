@@ -25,6 +25,7 @@ var WorldDays = {
   // Appelé par SortieManager.end (hors farm libre).
   onSortieEnd: function (context) {
     if (context === "farm") return null;
+    if (window.FeastManager) FeastManager.onSortieEnd(context); // v3.656.0 : le festin compte ses sorties
     var w = this.ensure();
     w.dark = false;
     w.done += 1;
