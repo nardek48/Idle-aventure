@@ -563,7 +563,7 @@ function buildHeroSkillCardHTML(action) {
   var isDefense = action.type === "defense";
   var remaining = (game.classCooldowns && typeof game.classCooldowns[id] === "number") ? game.classCooldowns[id] : 0;
   var icon = (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[id])
-    || (isDefense ? "images/Icons/combat_stats/stat_defense.webp" : "images/Icons/scene/node_discovery.webp");
+    || (isDefense ? "images/Icons/combat_stats/stat_defense.webp" : "images/Icons/combat_actions/skill_generic.webp");
   var cost = Number(action.resourceCost || 0);
   var resLabel = "";
   if (typeof getClassForHero === "function") {

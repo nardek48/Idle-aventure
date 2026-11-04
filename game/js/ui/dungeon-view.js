@@ -443,7 +443,7 @@ function buildDungeonCampSheetHTML() {
         + '<img src="' + esc(def && def.image || "") + '" alt="">' + esc(def ? _td(def.name) : id) + '</button>';
     }).join("") + '</div>';
   }
-  h += buildCampOptionHTML("changer", "images/Icons/subtabs/hero_summary.webp", _t("Changer de compagnon"),
+  h += buildCampOptionHTML("changer", "images/Icons/subtabs/companions.webp", _t("Changer de compagnon"),
     canSwap ? _t("Deux sur trois, selon ce qui attend en bas. Celui qui arrive est frais.") : _t("Aucun autre compagnon ne peut descendre."), campSwapText(now), sw, canSwap);
   h += buildCampOptionHTML("sortir", "images/Icons/camp/campfire.webp", _t("Sortir"), _t("Tu remontes avec le butin de l’étape 1. Il est à toi."), campPick === "sortir" ? _t("La sortie s’arrête là.") : "", "", true);
   h += '<p class="dcamp-next">' + _t("En bas : vagues {a} à {b}, une élite, puis le boss. Tomber en bas ne coûte que le butin d’en bas.", { a: (Number(camp.afterWave) || 8) + 1, b: DUNGEON_CONFIG.waveCount }) + '</p>';

@@ -179,7 +179,7 @@ function buildVillageBuildingSheetHTML(id) {
      sans dire où s'en servir. */
   if (id === "training" && level > 0) {
     h += '<div class="vb-sheet-effect vb-sheet-link" onclick="goToHeroTraining()">'
-       + '<img class=ico-inline src=images/Icons/combat_stats/stat_critical.webp> ' + _t("S'entraîner dans Héros → Entraînement ›") + '</div>';
+       + '<img class=ico-inline src=images/Icons/village_buildings/training_grounds.webp> ' + _t("S'entraîner dans Héros → Entraînement ›") + '</div>';
   }
 
   /* L'Apothicaire renvoie vers l'écran où l'on prépare, comme le Terrain

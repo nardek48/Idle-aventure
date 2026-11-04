@@ -613,7 +613,18 @@
 .kfb-moons i { width: 8px; height: 8px; border-radius: 50%; border: 1px solid rgb(205, 214, 240); }
 .kfb-moons i.is-on { background: rgb(205, 214, 240); }
 .kfb.is-night::after { background: linear-gradient(180deg, rgba(10, 14, 28, 0.42), rgba(10, 14, 28, 0.55) 60%, rgba(10, 7, 4, 0.9)); } /* la pastille et le titre restent nets */
+/* v3.655.0 (C3, atelier jour-nuit-camp, B) : le bandeau du Camp suit le moment du jour. Le filtre passe par ::before
+   (backdrop-filter sur l'image de fond), le titre et la pastille restent nets au-dessus. */
+.kfb.is-matin::before, .kfb.is-jour::before, .kfb.is-soir::before, .kfb.is-night::before { content: ""; position: absolute; inset: 0; pointer-events: none; }
+.kfb.is-matin::before { -webkit-backdrop-filter: saturate(0.62) hue-rotate(-22deg) brightness(1.1) contrast(0.92); backdrop-filter: saturate(0.62) hue-rotate(-22deg) brightness(1.1) contrast(0.92); background: linear-gradient(180deg, rgba(150, 195, 255, 0.22), rgba(255, 205, 190, 0.08)); }
+.kfb.is-jour::before { -webkit-backdrop-filter: brightness(1.2) saturate(0.8) hue-rotate(-6deg) contrast(1.04); backdrop-filter: brightness(1.2) saturate(0.8) hue-rotate(-6deg) contrast(1.04); background: rgba(245, 250, 255, 0.1); }
+.kfb.is-soir::before { -webkit-backdrop-filter: saturate(1.12) brightness(0.97); backdrop-filter: saturate(1.12) brightness(0.97); background: linear-gradient(180deg, rgba(255, 140, 60, 0.1), rgba(120, 40, 20, 0.08)); }
+.kfb.is-night::before { -webkit-backdrop-filter: brightness(0.8) saturate(0.6) hue-rotate(8deg); backdrop-filter: brightness(0.8) saturate(0.6) hue-rotate(8deg); /* s'ajoute au voile de nuit de ::after */
+  background: radial-gradient(ellipse 24% 32% at 50% 72%, rgba(255, 150, 60, 0.4), rgba(255, 140, 40, 0) 100%), linear-gradient(180deg, rgba(15, 25, 70, 0.32), rgba(5, 10, 25, 0.2)); }
 /* v3.624.0 (atelier aeswyn-habitants, A) : habitants d'Aeswyn, en haut à droite du bandeau du Village ; toucher explique */
 .kfb-pop { position: absolute; right: 10px; top: 9px; z-index: 2; display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 3px 10px; border-radius: 999px; background: rgba(18, 14, 9, 0.72); border: 1px solid rgba(226, 177, 74, 0.4); font: 700 12px/1.2 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: var(--c-cream-100-2); white-space: nowrap; cursor: pointer; }
 .kfb-pop svg { width: 13px; height: 13px; fill: var(--c-bronze-300-soft); }
 .kfb-pop:focus-visible { outline: 2px solid var(--c-gold-550); outline-offset: 2px; }
+/* v3.656.0 : le festin en cours, en haut à droite du bandeau du Camp */
+.kfb-feast { position: absolute; right: 10px; top: 9px; z-index: 2; display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px 3px 4px; border-radius: 999px; background: rgba(18, 14, 9, 0.78); border: 1px solid rgba(240, 160, 80, 0.7); font: 700 12px/1.2 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: var(--c-cream-150-vivid); white-space: nowrap; }
+.kfb-feast-ico { width: 20px; height: 20px; object-fit: contain; }

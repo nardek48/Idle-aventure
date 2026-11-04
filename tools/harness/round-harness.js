@@ -19640,9 +19640,9 @@ console.log("\n[351] v3.532.0 — Sève par victoire selon le monde atteint (aud
     at(0); var f0 = LM.getRepeatSevePerWin("forest");
     at(4); var f4 = LM.getRepeatSevePerWin("forest"), d4 = LM.getRepeatSevePerWin("desert"), m4 = LM.getRepeatSevePerWin("mountain");
     at(2); var f2 = LM.getRepeatSevePerWin("forest");
-    ok(f0 === 2 && f2 === 4 && f4 === 6, "Arbre-mère : 2 Sève en Forêt, 4 aux Ruines, 6 à la Montagne (" + [f0, f2, f4].join("/") + ")");
-    ok(d4 === 5 && m4 === 2, "Dard du Désert : +1 par monde d'avance (5 à la Montagne) ; élites de la Montagne : 2 (" + d4 + "/" + m4 + ")");
-    ok(g.LIVING_MAP_RULES.repeatableElite.sevePerWorldAhead === 1, "règle en donnée : sevePerWorldAhead = 1");
+    // v3.657.0 (élites à niveaux, option B de Seb) : plus de bonus par monde d'avance, c'est le niveau qui multiplie
+    ok(f0 === 2 && f2 === 2 && f4 === 2 && d4 === 2 && m4 === 2, "2 par victoire au niveau 1, quel que soit le monde atteint (" + [f0, f2, f4, d4, m4].join("/") + ")");
+    ok(g.LIVING_MAP_RULES.repeatableElite.sevePerWorldAhead === 0, "règle en donnée : sevePerWorldAhead = 0 (v3.657.0)");
     g.game.worldsEverReached = saved; g.WorldManager.worldIndex = wi;
   } catch (err) { ok(false, "[351] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
@@ -20602,6 +20602,7 @@ console.log("\n[393] v3.595.0 — Camp : la phrase du soir et le coin du feu ; l
     ok(D.length === 6 && D.every(function (w) { return w.lieu.length >= 3 && w.wenna && w.wenna.length >= 1 && w.tap && w.tap.wenna; }), "six mondes, chacun avec ses phrases du lieu et celles de Wenna");
     ok(["wenna", "maddoc", "edda", "ysolt", "sarkel"].every(function (id) { return any[id] && any[id].soir.length && any[id].tap; }), "chaque compagnon a une phrase de repli, partout");
     run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.unlockedTabs.companions = true; CompanionManager.unlock('wenna'); CompanionManager.unlock('maddoc'); WorldManager.worldIndex = 1;");
+    run("WorldDays.ensure().done = 2;"); // v3.655.0 (C3) : le soir (2 sorties faites), les phrases du soir
     CM.partyIds = function () { return ["wenna"]; };
     run("lastRenderedTab = 'quests';");
     var feu = g.buildCampHTML("feu");
@@ -22266,6 +22267,94 @@ console.log("\n[437] v3.653.0 — Grimoire : réglage « Varier » (ne pas refai
     ok(g.game.grimoireVarier === true, "rechargement : réglage gardé");
   } catch (err) { ok(false, "[437] exception : " + err.message); }
   finally { g.canUseAction = cu; g.ClassCombatManager._chooseRoundAction = cra; g.game.grimoireVarier = sv.v; g.game._varier = sv.r; g.game._towerMirror = sv.m; }
+})();
+
+console.log("\n[438] v3.655.0 — Camp : le jour et la nuit (C3, atelier jour-nuit-camp, B + T2)");
+(function () {
+  try {
+    var D = g.campSoirData(), W = g.WorldDays;
+    ok(D.every(function (w) { return w.matin && w.matin.length >= 2 && w.jour && w.jour.length >= 2; }), "six mondes, deux phrases du matin et deux de la journée");
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); WorldManager.worldIndex = 2;");
+    var w = W.ensure(), mo = function (done, dark) { w.done = done; w.dark = dark; return W.moment(); };
+    ok(mo(0, false) === "matin" && mo(1, false) === "jour" && mo(2, false) === "soir" && mo(0, true) === "nuit", "moment : 0 sortie matin, 1 jour, 2 soir, la soirée après la nuit = nuit");
+    var phrase = function () { run("lastRenderedTab = 'quests';"); var h = g.buildCampHTML("feu"); return { h: h, t: (h.match(/class="camp-soir-t">([^<]*)</) || [])[1] || "" }; };
+    mo(0, false); var m = phrase();
+    ok(D[2].matin.map(g.esc).indexOf(m.t) !== -1 && m.h.indexOf("Ce matin au camp") !== -1 && /camp-soir is-matin/.test(m.h), "matin : phrase du matin des Ruines, en-tête « Ce matin au camp » (" + m.t.slice(0, 50) + ")");
+    mo(1, false); var j = phrase();
+    ok(D[2].jour.map(g.esc).indexOf(j.t) !== -1 && j.h.indexOf("Au camp, en journée") !== -1, "journée : phrase de la journée, en-tête « Au camp, en journée »");
+    mo(2, false); var s2 = phrase();
+    ok(D[2].lieu.map(g.esc).indexOf(s2.t) !== -1 && s2.h.indexOf("Ce soir au camp") !== -1, "soir : phrases du soir, comme avant (" + s2.t.slice(0, 50) + ")");
+    mo(0, true); var n = phrase();
+    ok(n.h.indexOf("Cette nuit") !== -1 && /camp-soir is-night/.test(n.h), "nuit : la carte « Cette nuit », comme avant");
+    var css = fs.readFileSync(path.join(ROOT, "css/00-kbtn.css"), "utf8"), sb = fs.readFileSync(path.join(ROOT, "js/ui/screen-banner.js"), "utf8");
+    ok(/\.kfb\.is-matin::before/.test(css) && /\.kfb\.is-jour::before/.test(css) && /\.kfb\.is-soir::before/.test(css) && /backdrop-filter/.test(css), "bandeau : teintes du matin, du jour et du soir (backdrop-filter)");
+    ok(/el\.classList\.add\("is-" \+ mo\)/.test(sb), "bandeau du Camp : classe du moment posée par la pastille");
+  } catch (err) { ok(false, "[438] exception : " + err.message); }
+})();
+
+console.log("\n[439] v3.656.0 — Le festin (atelier festin.html, A)");
+(function () {
+  try {
+    var F = g.FeastManager, W = g.WorldDays;
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); WorldManager.worldIndex = 3; game.worldsEverReached = {0:true,1:true,2:true,3:true};");
+    var c = F.cost();
+    ok(c.ble === 1000 && c.viande === 1000 && c.eau === 400 && g.FEAST_COST_BY_WORLD.length === 6 && g.FEAST_COST_BY_WORLD[5].ble === 2000, "prix par monde : Crypte 1 000 / 1 000 / 400, Tour 2 000");
+    ok(!F.canPrepare() && F.missing().length === 3 && F.prepare() === false, "sans stock : rien ne se prépare");
+    run("game.resources = game.resources || {}; game.resources.ble = 1500; game.resources.viande = 1200; game.resources.eau = 500;");
+    var avant = g.WarehouseManager.getAmount("ble");
+    ok(F.prepare() === true && F.left() === 3 && g.WarehouseManager.getAmount("ble") === avant - 1000 && g.WarehouseManager.getAmount("eau") === 100, "préparé : 3 sorties, le prix est pris à l'Entrepôt");
+    ok(F.prepare() === false, "un seul festin à la fois");
+    ok(F.mult() === 1 && F.hpPct() === 0, "au camp, l'effet dort (comme les potions à bonus)");
+    run("game.sortie = { active: true, context: 'adventure', loot: { gold: 0, items: [], resources: {} } };");
+    ok(Math.abs(F.mult() - 1.1) < 1e-9 && Math.abs(F.hpPct() - 0.1) < 1e-9, "en sortie : +10 % de dégâts et de PV");
+    ok(g.TalentManager.companionDamageMult() >= 1.1 - 1e-9 && g.TalentManager.getStatBonuses().hpPct >= 0.1 - 1e-9, "compagnons et PV du héros passent par les accroches existantes");
+    run("game.sortie = { active: true, context: 'farm', loot: { gold: 0, items: [], resources: {} } };");
+    ok(F.mult() === 1, "exploration libre : pas de festin");
+    run("game.sortie = null;");
+    W.onSortieEnd("farm"); ok(F.left() === 3, "l'exploration libre ne compte pas");
+    W.onSortieEnd("adventure"); W.onSortieEnd("adventure");
+    ok(F.left() === 1, "chaque sortie en compte une (3 → 1)");
+    var sd = g.buildSaveData();
+    ok(sd.explorationProgression && sd.explorationProgression.worldDay && sd.explorationProgression.worldDay.feast === 1, "sauvegardé avec le jour de jeu (worldDay.feast), sans nouveau champ");
+    W.onSortieEnd("adventure");
+    ok(F.left() === 0, "même à cheval sur la nuit, il dure ses 3 sorties puis s'arrête");
+    run("lastRenderedTab = 'quests';");
+    var h = g.buildCampHTML("feu");
+    ok(/camp-feast/.test(h) && h.indexOf("Préparer un festin") !== -1 && h.indexOf("images/Icons/camp/festin.webp") !== -1, "la carte du festin est au feu, avec le vrai chemin de son icône");
+    ok(h.indexOf("camp-soir") < h.indexOf("camp-feast"), "sous « Ce matin au camp »");
+  } catch (err) { ok(false, "[439] exception : " + err.message); }
+  run("game.sortie = null;");
+})();
+
+console.log("\n[440] v3.657.0 — Élites à niveaux (atelier elites-niveaux.html, A ; option B : 2 × niveau)");
+(function () {
+  var saveFight = null;
+  try {
+    var LM = g.LivingMapManager;
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.worldsEverReached = {0:true,1:true,2:true,3:true,4:true}; WorldManager.worldIndex = 4;");
+    LM.ensureDefaults();
+    var mapId = "mountain", sec = (g.LIVING_MAPS.mountain.sectors.filter(function (d) { return LM.isRepeatable("mountain", d.id); })[0] || {}), sid = sec.id, eid = sec.content && sec.content.eliteId;
+    ok(!!sid && LM.getEliteLevelBest(mapId, sid) === 0 && LM.getEliteMaxLevel(mapId, sid) === 1, "jamais battue : seul le niveau 1 est ouvert");
+    ok(LM.clampEliteLevel(mapId, sid, 7) === 1 && LM.clampEliteLevel(mapId, sid, null) === 1, "niveau demandé au-delà : ramené au maximum ouvert");
+    var m1 = LM.getEliteLevelMult(1), m5 = LM.getEliteLevelMult(5);
+    ok(m1.hp === 1 && m1.power === 1 && m1.gold === 1 && Math.abs(m5.hp - Math.pow(1.15, 4)) < 1e-9 && Math.abs(m5.power - Math.pow(1.10, 4)) < 1e-9 && Math.abs(m5.gold - Math.pow(1.10, 4)) < 1e-9, "niveau 5 : PV ×1,15⁴, puissance et or ×1,10⁴ (courbe des donjons)");
+    var e1 = g.EliteManager.make(eid, "mountain", 0, { escort: { members: [] } }), e5 = g.EliteManager.make(eid, "mountain", 0, { levelMult: m5, escort: { members: [] } });
+    ok(e5.maxHp > e1.maxHp * 1.7 && e5.maxHp < e1.maxHp * 1.8 && e5.goldReward > e1.goldReward * 1.4, "l'élite au niveau 5 : PV ×1,75, or ×1,46 (" + e1.maxHp + " → " + e5.maxHp + ")");
+    ok(LM.getRepeatRewardAt(mapId, 1) === 2 && LM.getRepeatRewardAt(mapId, 5) === 10, "matériau : 2 × niveau (niveau 5 : 10)");
+    var st = LM.getState(mapId, sid); st.state = "libere"; st.firstRewardClaimed = true; st.levelBest = 2;
+    ok(LM.getEliteMaxLevel(mapId, sid) === 3 && LM.clampEliteLevel(mapId, sid, null) === 2, "meilleur 2 : le niveau 3 est ouvert ; sans choix, le meilleur battu");
+    run("game.resources = game.resources || {};");
+    var avant = g.WarehouseManager.getAmount("cendre_vive");
+    saveFight = g.game.livingMaps.fight;
+    g.game.livingMaps.fight = { mapId: mapId, sectorId: sid, eliteId: eid, level: 3 };
+    LM.onFightWon({ id: eid });
+    ok(g.WarehouseManager.getAmount("cendre_vive") - avant === 6 && LM.getEliteLevelBest(mapId, sid) === 3 && LM.getEliteMaxLevel(mapId, sid) === 4, "victoire au niveau 3 : +6 Cendre vive, niveau 4 ouvert (" + (g.WarehouseManager.getAmount("cendre_vive") - avant) + ", meilleur " + LM.getEliteLevelBest(mapId, sid) + ")");
+    g.sortiePrep = { opts: { ctx: { type: "elite", id: eid, mapId: mapId, sectorId: sid } }, level: 9 };
+    var h = g.buildSortiePrepEliteLevelHTML();
+    ok(/dlvl-step/.test(h) && g.sortiePrep.level === 4 && h.indexOf("+8") !== -1, "feuille de préparation : sélecteur, niveau ramené à 4, « +8 » à gagner");
+    g.sortiePrep = null;
+  } catch (err) { ok(false, "[440] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  try { g.sortiePrep = null; if (g.game.livingMaps) g.game.livingMaps.fight = saveFight; } catch (e) {}
 })();
 
 Promise.all(ATTENTES).then(function () {

@@ -231,6 +231,7 @@ function relaunch() {
       // « Le seuil » (RiseSystem.tryHeroRise) relève le héros : ce n'est pas une défaite, le run continue
       var rose = p[1] === "onHeroDefeated" && !rose0 && ca && ca.heroRose && G.game.heroHp > 0;
       if (p[1] === "onHeroDefeated" && !rose) DEFEATED = true;
+      if (rose) STATS.releves = (STATS.releves || 0) + 1; // « Le seuil » : relèves comptées (banc v3.658.0)
       return res; };
   });
   return G;
@@ -574,7 +575,15 @@ function caravanes(g) {
   var C = g.CaravanManager;
   if (!C || !C.isAvailable()) return;
   var ST = STATS.caravanes = STATS.caravanes || { departs: 0, or: 0, rares: 0 };
-  if (C.isBack()) { var l = C.unload(); if (l) { ST.or += l.gold; if (l.rare) ST.rares += l.rare.n; } }
+  // déchargées marché par marché, pour l'or de chacun (relevé 04/11)
+  C.list().map(function (c) { return c.world; }).forEach(function (w) {
+    if (!C.isBack(w)) return;
+    var l = C.unload(w); if (!l) return;
+    ST.or += l.gold; if (l.rare) ST.rares += l.rare.n;
+    var om = ST.orParMarche = ST.orParMarche || {}; om[w] = (om[w] || 0) + l.gold;
+  });
+  // relevé (04/11) : caravanes en route au plus, places de la Halle, départs et or par marché
+  ST.max = Math.max(ST.max || 0, C.list().length); ST.places = C.getMaxCaravans(); ST.marches = C.getMarkets().length;
   var trip = C.isTripOpen("long") ? "long" : "moyen";
   // un joueur garde une place pour le marché que l'Histoire va demander (ruines_04, crypte_04)
   var ep = g.game.explorationProgression || {}, reached = g.game.worldsEverReached || {};
@@ -584,8 +593,12 @@ function caravanes(g) {
     if ((m.world === 2 && !ep.ruinsMarketDone) || (m.world === 3 && !ep.cryptMarketDone)) return; // audit (27/10, DUR-7) : l'étape envoie sa Courte
     if (C.getBlockReason(trip, m.world)) return;
     harvest();
-    if (C.depart(trip, m.world)) { ST.departs++; act("caravane", 0); }
+    if (C.depart(trip, m.world)) {
+      ST.departs++; act("caravane", 0);
+      var pm = ST.parMarche = ST.parMarche || {}; pm[m.world] = (pm[m.world] || 0) + 1;
+    }
   });
+  ST.max = Math.max(ST.max || 0, C.list().length);
 }
 
 function closeRec(rec) {
@@ -714,6 +727,8 @@ function entretien() {
   refillPotions();
   memoireEtSac();
   if (SAVING) return;
+  /* FESTIN=1 : le robot prépare un festin dès qu'il le peut (v3.656.0, mesure du +10 %). */
+  if (process.env.FESTIN && g.FeastManager && g.FeastManager.canPrepare() && g.FeastManager.prepare()) STATS.festins = (STATS.festins || 0) + 1;
   /* Échoppe : une pièce meilleure que celle portée, si elle coûte moins de 40 % de la bourse. */
   var S = g.EquipShopManager; S.checkRefresh();
   (g.game.equipShopStock || []).slice().sort(function (a, b) { return (g.game.equipped[a.slot] ? 1 : 0) - (g.game.equipped[b.slot] ? 1 : 0); }).forEach(function (it) {
@@ -2134,10 +2149,7 @@ function reglesAvisees(g) {
   REGLES_AVISEES.forEach(function (cond) {
     if (i >= places) return;
     if (cond === "enemyRising" && !(g.game.worldsEverReached || {})[2]) return;
-    var html = g.buildGrimoireActionOptionsHTML(g.getGrimoireCurrentKit(), null, cond);
-    var opts = (html.match(/<option value="([^"]+)"[^>]*>([^<]*)/g) || []).map(function (o) {
-      var m = /value="([^"]+)"[^>]*>([^<]*)/.exec(o); return { v: m[1], counter: m[2].indexOf("\u26a1") === 0 };
-    });
+    var opts = grimoireActionOptions(g, cond);
     var pick = opts.filter(function (o) { return o.counter; })[0] || (cond === "enemyRising" ? opts.filter(function (o) { return o.v !== "defense"; })[0] : null);
     if (!pick) return;
     g.setGrimoireRuleCondition(i, cond);
@@ -2149,14 +2161,22 @@ function reglesAvisees(g) {
 }
 var REGLE_EN_TETE = null;
 
+/* v3.654.0 : les actions proposées par la fiche du Grimoire (tuiles), dans leur ordre ; counter = badge « Contre » ou « Effet » (l'ancien ⚡). */
+function grimoireActionOptions(g, cond) {
+  var html = g.buildGrimoireActionTilesHTML(0, g.getGrimoireCurrentKit(), { conditionId: cond, actionSlot: null }, true);
+  return html.split('<button').slice(1).map(function (b) {
+    var m = /setGrimoireRuleAction\(0, '([^']+)'\)/.exec(b);
+    return m ? { v: m[1], counter: /grimoire-(counter|effect)-tag/.test(b) } : null;
+  }).filter(Boolean);
+}
+
 /* Une règle du Grimoire, par les fonctions de l'éditeur (condition, puis action). */
 function activateGrimoireRule(g) {
   if ((g.game.grimoireRules || []).some(function (r) { return r && r.conditionId && r.actionSlot; })) return;
   g.ensureGrimoireRules();
   g.setGrimoireRuleCondition(0, g.GRIMOIRE_CONDITION_ORDER[0]);
-  // la liste que propose l'écran (premier choix non vide du menu déroulant)
-  var html = g.buildGrimoireActionOptionsHTML(g.getGrimoireCurrentKit(), null, g.GRIMOIRE_CONDITION_ORDER[0]);
-  var vals = (html.match(/value="([^"]+)"/g) || []).map(function (v) { return v.slice(7, -1); }).filter(Boolean);
+  // les tuiles que propose l'écran (v3.654.0 : plus de menu déroulant), la première
+  var vals = grimoireActionOptions(g, g.GRIMOIRE_CONDITION_ORDER[0]).map(function (o) { return o.v; });
   if (!vals.length) note("Grimoire : aucune action proposée");
   g.setGrimoireRuleAction(0, vals[0]);
 }
@@ -2301,6 +2321,8 @@ if (COMBATS) {
   if (STATS.rations) console.log("Rations au camp : mangées " + JSON.stringify(STATS.rations.mangees) + " · cuisinées " + JSON.stringify(STATS.rations.cuisinees) + " · attente évitée " + (STATS.rations.minutesEvitees / 60).toFixed(1) + " h");
   if (VERBOSE) STATS.fights.slice(-12).forEach(function (f) { console.log("    " + f.step + " · " + f.kind + " " + f.name + " : " + f.rounds + " rounds, PV " + Math.round(f.hp0 * 100) + "→" + Math.round((f.hp1 || 0) * 100) + " %" + (f.died ? " †" : "") + (f.potions ? " (" + f.potions + " potion)" : "")); });
 }
+console.log("Le seuil : " + (STATS.releves || 0) + " relève(s) du héros");
+console.log("Festins préparés : " + (STATS.festins || 0) + (process.env.FESTIN ? " (FESTIN=1)" : ""));
 console.log("Miroir de la Tour : " + (STATS.miroir || 0) + " technique(s) prise(s) sur " + (STATS.miroirTech || 0) + " lancée(s) face à un miroir" + (process.env.VARIER ? " (réglage Varier allumé)" : ""));
 console.log("Farm d'élites : " + STATS.farms + " · achats à l'échoppe : " + STATS.shopBuys + " · secteurs repris au sable : " + STATS.recouvrements + " · sac plein : " + STATS.sacPlein);
 console.log("Secteurs de carte (essais → libérés) : " + JSON.stringify(STATS.secteurs));
@@ -2326,6 +2348,7 @@ if (COMBATS) {
 }
 STATS.economie = { orGagne: G.game.totalGoldEarned, or: G.game.gold, aetherTotal: G.game.totalAetherEarned, attenteDonjonH: STATS.attenteDonjonH || 0 };
 if (COMBATS) console.log("Économie : " + JSON.stringify(STATS.economie));
+if (STATS.caravanes) console.log("Caravanes : " + JSON.stringify(STATS.caravanes));
 if (ZONES) console.log("Zones défrichées ou montées : " + (STATS.zones || 0));
 if (STATS.patrouilleRefus) console.log("Patrouilles refusées : " + JSON.stringify(STATS.patrouilleRefus));
 if (RELEVE) {
