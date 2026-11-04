@@ -19,7 +19,7 @@ var VILLAGE_SUBTABS = ["buildings", "production", "shops", "entrepot"];
 
 /* v3.647.0 (atelier ateliers-maquettes, 50:50) : scènes de ligne livrées dans images/Buildings/scenes/<clé>.webp.
    Clés : prod_<id>, village_<id>, atelier_<id> (forge de la Mine : atelier_forge_mine). Vide tant que rien n'est livré. */
-var BUILDING_SCENES_READY = [];
+var BUILDING_SCENES_READY = ["prod_hunt", "prod_farm", "prod_sawmill", "prod_mine", "prod_quarry", "prod_well"]; // v3.662.0 : les 6 de Production
 /* Moitié droite d'une ligne : la scène si elle est livrée, sinon l'image actuelle du bâtiment (iconHTML) */
 function buildingSceneHTML(key, iconHTML) {
   if (BUILDING_SCENES_READY.indexOf(key) >= 0) return '<span class="row-scene is-scene"><img class="row-scene-img" src="images/Buildings/scenes/' + key + '.webp" alt=""></span>';
