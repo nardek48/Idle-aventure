@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.671.0", "quest_icons/exploration/faille", _t("La faille : ses salles, couloirs, escaliers, son levier, sa source, son givre, sa veine et la salle du Reflet sont peints, avec son icône.")],
     ["3.670.0", "menu_icons/map_menu", _t("La Tour : les trois autres fins ont leurs planches peintes. Les quatre fins sont complètes.")],
     ["3.669.0", "menu_icons/map_menu", _t("La Tour : ses dix hauts faits ont leur icône.")],
     ["3.668.0", "menu_icons/map_menu", _t("La Tour : la fin « La forme au sommet » a ses deux planches peintes, et les six hauts faits de la faille ont leur icône.")],
