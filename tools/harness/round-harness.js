@@ -22357,6 +22357,29 @@ console.log("\n[440] v3.657.0 — Élites à niveaux (atelier elites-niveaux.htm
   try { g.sortiePrep = null; if (g.game.livingMaps) g.game.livingMaps.fight = saveFight; } catch (e) {}
 })();
 
+console.log("\n[441] v3.675.0 — forest_04 sans or : Sarkel laisse la potion (audit 04/11, NOV-1)");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
+    var SQ = g.StoryQuestManager, PM = g.PotionManager, st = SQ.getState("forest");
+    var idx = g.STORY_QUESTS.forest.steps.map(function (s) { return s.id; }).indexOf("forest_04");
+    st.currentStep = idx; st.accepted = true;
+    run("game.gold = 1; game.healingPotionsOwned = {}; game.potionsOwned = {};");
+    ok(PM.isStoryGiftDue("potion_soin_mineur") && !PM.isStoryGiftDue("potion_soin_majeur"), "forest_04 acceptée, 1 or, aucune potion : la Mineure est offerte (la Majeure non)");
+    var fiche = g.buildHealingPotionCardHTML(PM.getHealingPotion("potion_soin_mineur"));
+    ok(/>Offerte</.test(fiche) && /Sarkel te la laisse/.test(fiche), "la fiche affiche « Offerte » et la ligne de Sarkel");
+    PM.buyHealingPotion("potion_soin_mineur");
+    ok(g.game.gold === 1 && PM.getHealingStock("potion_soin_mineur") === 1 && SQ.isCurrentStepReady("forest"), "potion reçue sans or dépensé, étape prête");
+    ok(!PM.isStoryGiftDue("potion_soin_mineur"), "une potion en stock : plus de cadeau");
+    run("game.healingPotionsOwned = {}; game.gold = 500;");
+    ok(!PM.isStoryGiftDue("potion_soin_mineur"), "assez d'or : achat normal, pas de cadeau");
+    run("game.gold = 1;"); st.accepted = false;
+    ok(!PM.isStoryGiftDue("potion_soin_mineur"), "étape non acceptée : pas de cadeau");
+    st.accepted = true; st.currentStep = idx + 1;
+    ok(!PM.isStoryGiftDue("potion_soin_mineur"), "après forest_04 : pas de cadeau");
+  } catch (err) { ok(false, "[441] exception : " + err.message); }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.675.0", "menu_icons/quests_menu", _t("La Boutique : si tu n'as plus l'or de ta première potion, Sarkel te la laisse. L'Histoire ne peut plus rester bloquée au colporteur.")],
     ["3.674.0", "menu_icons/map_menu", _t("Petites Aventures : un 20 naturel fait jaillir l'or du dé, un 1 naturel le fêle.")],
     ["3.673.0", "menu_icons/map_menu", _t("Petites Aventures : le dé est un vrai d20 en relief, noir, rouge et or. Il roule, puis se pose toujours face à toi, le résultat écrit en grand.")],
     ["3.672.0", "menu_icons/menu_menu", _t("La barre du bas prend les icônes dorées du nouveau kit : camp, quêtes, carte, village, héros et menu.")],

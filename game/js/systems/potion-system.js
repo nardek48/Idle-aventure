@@ -191,6 +191,17 @@ var PotionManager = {
     return Math.max(0, potion.dailyBuyLimit - Number(this._shopDaily().bought[id] || 0));
   },
 
+  /* audit 04/11 (NOV-1) : à forest_04, sans potion ni or pour la payer, l'Histoire restait bloquée
+     pour toujours (aucune autre source d'or à ce stade) ; Sarkel laisse alors la Mineure. */
+  isStoryGiftDue: function (id) {
+    if (id !== "potion_soin_mineur" || !window.StoryQuestManager) return false;
+    var step = StoryQuestManager.getCurrentStep("forest");
+    if (!step || step.id !== "forest_04" || !StoryQuestManager.isCurrentStepAccepted("forest")) return false;
+    var owned = function (o) { return Object.keys(o || {}).some(function (k) { return Number(o[k] || 0) > 0; }); };
+    if (owned(game.healingPotionsOwned) || owned(game.potionsOwned)) return false;
+    return (game.gold || 0) < this.getCost(this.getHealingPotion(id));
+  },
+
   buyHealingPotion: function (id) {
     this.ensureHealing();
     var potion = this.getHealingPotion(id);
@@ -205,9 +216,12 @@ var PotionManager = {
     }
 
     var cost = this.getCost(potion);
+    var gift = this.isStoryGiftDue(id);
+    if (gift) cost = 0;
     if ((game.gold || 0) < cost) return showToast(_t("Pas assez d'or"), 1000);
 
     game.gold -= cost;
+    if (gift) addLog("🩹 " + _t("Sarkel te laisse une {x}. « Tu me la paieras une autre fois. »", { x: _td(potion.name) }), "event");
     game.healingPotionsOwned[id] = this.getHealingStock(id) + 1;
     if (typeof potion.dailyBuyLimit === "number") {
       var daily = this._shopDaily();
