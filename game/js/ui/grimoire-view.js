@@ -96,7 +96,7 @@ function confirmLoadGrimoirePreset(presetId) {
   showConfirmModal(
     _t("Charger « {x} » ?", { x: _td(preset.name) }),
     _t("Les 6 règles actuellement configurées seront remplacées par celles de ce preset. Enregistre ta configuration actuelle comme preset avant de continuer si tu veux la garder."),
-    preset.icon || "images/Icons/codex/codex_lore.webp",
+    preset.icon || "images/Icons/system/grimoire.webp",
     function () { loadGrimoirePreset(presetId); }
   );
 }
@@ -216,7 +216,7 @@ function buildGrimoireCounterTagHTML(kind) {
 
 function getGrimoireActionIcon(action) {
   return (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[action.id])
-    || (action.type === "defense" ? "images/Icons/combat_stats/stat_defense.webp" : "images/Icons/scene/node_discovery.webp");
+    || (action.type === "defense" ? "images/Icons/combat_stats/stat_defense.webp" : "images/Icons/combat_actions/skill_generic.webp");
 }
 
 /* Bouton « Si… » : la condition choisie, toucher ouvre la feuille. */
@@ -232,7 +232,7 @@ function buildGrimoireConditionPickHTML(index, rule, editable) {
 /* Feuille des conditions : icône, nom et description, en groupes. */
 function buildGrimoireConditionSheetHTML() {
   var index = grimoireEditIndex, rule = (index !== null && game.grimoireRules) ? game.grimoireRules[index] : null;
-  var h = kSheetHeadHTML({ icon: '<img src="images/Icons/codex/codex_lore.webp" alt="">', title: _t("Si…"), close: "closeGrimoireSheet()" });
+  var h = kSheetHeadHTML({ icon: '<img src="images/Icons/system/grimoire.webp" alt="">', title: _t("Si…"), close: "closeGrimoireSheet()" });
   h += '<div class="ksheet-body grimoire-sheet-body">';
   getGrimoireConditionGroups().forEach(function (g) {
     h += '<div class="grimoire-group-title">' + esc(g.title) + '</div>';
@@ -584,7 +584,7 @@ function buildGrimoirePresetCardHTML(preset, isSuggested) {
 
   var h = '<div class="panel-card grimoire-preset-card">';
   h += '<div class="grimoire-preset-header">';
-  h += '<span class="grimoire-preset-icon">' + renderIconOrEmojiHTML(preset.icon || "images/Icons/codex/codex_lore.webp", "grimoire-preset-ico", "") + '</span>';
+  h += '<span class="grimoire-preset-icon">' + renderIconOrEmojiHTML(preset.icon || "images/Icons/system/grimoire.webp", "grimoire-preset-ico", "") + '</span>';
   h += '<span class="grimoire-preset-name">' + esc(_td(preset.name)) + '</span>';
   if (isSuggested) {
     h += '<span class="grimoire-preset-suggested" title="' + esc(_t("Suggéré pour le monde actuel")) + '"><img class=ico-inline src=images/Icons/system/suggested_preset.webp></span>';
@@ -646,7 +646,7 @@ function buildGrimoireModeHTML() {
   var on = game.combatMode === "grimoire";
   var editable = isGrimoireEditable();
   var h = '<div class="grimoire-head">';
-  h += '<div class="grimoire-mode-now"><img src="' + (on ? 'images/Icons/codex/codex_lore.webp' : 'images/Icons/combat_stats/stat_critical.webp') + '" alt=""><span>'
+  h += '<div class="grimoire-mode-now"><img src="' + (on ? 'images/Icons/system/grimoire.webp' : 'images/Icons/system/mode_tactique.webp') + '" alt=""><span>'
     + _t("Mode : {x}", { x: on ? _t("Grimoire") : _t("Tactique") }) + '<small>' + _t("Il se choisit au départ de chaque sortie.") + '</small></span></div>';
   h += '<button type="button" class="grimoire-help-btn" onclick="openGrimoireSheet(\'help\')">?</button>';
   h += '</div>';
@@ -696,7 +696,7 @@ function buildGrimoireHTML() {
 
   // v3.422.0 : venu de l'encart « avant le combat » -> bouton de retour en tête
   var back = (typeof buildGrimoireReturnHTML === "function") ? buildGrimoireReturnHTML() : "";
-  return '<div class="nb-page-frame kframe-page" data-kf-title="' + esc("images/Icons/codex/codex_lore.webp|" + _t("Grimoire")) + '">' + back + h + '</div>';
+  return '<div class="nb-page-frame kframe-page" data-kf-title="' + esc("images/Icons/system/grimoire.webp|" + _t("Grimoire")) + '">' + back + h + '</div>';
 }
 
 function setGrimoireRuleCondition(index, conditionId) {

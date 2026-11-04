@@ -129,7 +129,7 @@ var VILLAGE_BUILDINGS = {
   training: {
     id: "training",
     name: "Terrain d'entraînement",
-    icon: "images/Icons/combat_stats/stat_critical.webp",
+    icon: "images/Icons/village_buildings/training_grounds.webp", // v3.658.0 : son image (stat_critical servait aussi au Critique)
     iconImg: "images/Icons/village_buildings/training_grounds.webp",
     rank: 1,
     /* v3.214.0 : 14 niveaux pour 150 par caractéristique ; H1 (chantier du héros) : 18 niveaux, 200. */
@@ -325,7 +325,7 @@ var VILLAGE_BUILDINGS = {
   enchanter: {
     id: "enchanter",
     name: "Enchanteresse",
-    icon: "images/Icons/scene/node_discovery.webp",
+    icon: "images/Icons/village_buildings/enchantress_tower.webp", // v3.658.0 : son image (node_discovery = la Trouvaille des Petites Aventures)
     iconImg: "images/Icons/village_buildings/enchantress_tower.webp",
     rank: 2,
     maxLevel: 3,

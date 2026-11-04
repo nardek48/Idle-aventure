@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.658.0", "menu_icons/settings_menu", _t("Icônes : chaque image ne sert plus qu'à une chose. Le Terrain d'entraînement, l'Enchanteresse et les compagnons reprennent leur propre image ; le Grimoire, le mode Tactique et quelques autres attendent la leur.")],
     ["3.657.0", "menu_icons/map_menu", _t("Élites à niveaux : bats une élite de carte pour ouvrir son niveau suivant. Plus le niveau est haut, plus elle est forte et plus elle rapporte : son matériau est multiplié par le niveau, l'or monte de 10 % par niveau.")],
     ["3.656.0", "menu_icons/camp_menu", _t("Le festin : au Camp, sous la phrase du jour, prépare un festin avec ton blé, ta viande et ton eau. Tout le groupe a +10 % de dégâts et de PV pendant 3 sorties.")],
     ["3.655.0", "menu_icons/camp_menu", _t("Le camp vit au rythme du jour : matin, journée, soir et nuit, selon tes sorties. Le bandeau change de lumière et la carte du feu a ses phrases du matin et de la journée.")],
