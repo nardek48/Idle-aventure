@@ -39,7 +39,8 @@ var LIVING_MAP_RULES = {
      (la cible d'origine) ; avant : 7,5 victoires faciles, 15 Sève. */
   /* v3.532.0 (audit PLA-4, option A de Seb) : +1 par monde atteint au-delà de celui de la carte
      (Arbre-mère : 2 en Forêt … 6 à la Montagne). Banc : 63 → 24 combats d'Arbre-mère par partie. */
-  repeatableElite: { brakePerWin: 0.25, sevePerWin: 2, sevePerWorldAhead: 1 },
+  repeatableElite: { brakePerWin: 0.25, sevePerWin: 2, sevePerWorldAhead: 1,
+    levelHpMult: 1.15, levelPowerMult: 1.10, levelGoldPct: 0.10 }, // v3.657.0 (élites à niveaux) : courbe des donjons ; matériau ×niveau
   /* Effets tenus (C-3), chiffres en un seul endroit. */
   effects: { productionMult: 1.10, contractMult: 1.10, gourdeBreath: 25, ropeBonus: 1,
     outreBreathBonus: 15, // v3.305.0 : puits sec tenu -> l'Outre rend 55 au lieu de 40 (provisoire)

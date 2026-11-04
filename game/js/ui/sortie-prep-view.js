@@ -54,10 +54,11 @@ function sortieLowHp(opts) {
 function openSortiePrep(opts) {
   opts = opts || {};
   if (typeof opts.onGo !== "function") return;
-  var bare = !sortiePrepHasChoice();
+  var lvlEl = sortiePrepEliteLevelCtx(opts.ctx); // v3.657.0 : élite à niveaux — le niveau est un choix
+  var bare = !sortiePrepHasChoice() && !(lvlEl && lvlEl.best > 0);
   if (bare && !sortieLowHp(opts)) return opts.onGo();
   if (!sortiePrepGrimoireOpen() && game.combatMode === "grimoire" && window.CombatEngine) CombatEngine.setCombatMode("tactique");
-  sortiePrep = { opts: opts, preset: null, buffs: {}, items: [], pick: -1, bare: bare };   // bare : feuille réduite à l'alerte PV
+  sortiePrep = { opts: opts, preset: null, buffs: {}, items: [], pick: -1, bare: bare, level: lvlEl ? Math.max(1, lvlEl.best) : null };   // bare : feuille réduite à l'alerte PV
   renderSortiePrep();
 }
 
@@ -101,6 +102,7 @@ function buildSortiePrepHTML() {
   else if (sortiePrep.bare) h += buildSortiePrepHpOkHTML();   // ration mangée : la feuille réduite ne reste pas vide
   if (sortiePrep.bare) return h + '</div>' + buildSortiePrepFootHTML(lowHp);
 
+  h += buildSortiePrepEliteLevelHTML();   // v3.657.0 : élites à niveaux (atelier elites-niveaux.html, A)
   h += buildSortiePrepForecastHTML();   // v3.523.0 : le verdict de l'élite, frein du jour compris
   h += buildSortiePrepTraitsHTML(grim);   // v3.446.1 : la menace d'abord (décision Seb), la préparation ensuite
 
@@ -339,13 +341,48 @@ function sortiePrepTraitName(trait) {
   return typeof enemyTraitLook === "function" ? _td(enemyTraitLook(trait).nom) : trait; // v3.492.14
 }
 
+/* v3.657.0 (élites à niveaux, atelier elites-niveaux.html, A) : élite de carte rejouable, son niveau et ce qu'il change. */
+function sortiePrepEliteLevelCtx(ctx) {
+  var LM = window.LivingMapManager;
+  if (!ctx || ctx.type !== "elite" || !ctx.mapId || !LM || typeof LM.getEliteLevelBest !== "function" || !LM.isRepeatable(ctx.mapId, ctx.sectorId)) return null;
+  return { mapId: ctx.mapId, sectorId: ctx.sectorId, best: LM.getEliteLevelBest(ctx.mapId, ctx.sectorId), max: LM.getEliteMaxLevel(ctx.mapId, ctx.sectorId) };
+}
+function buildSortiePrepEliteLevelHTML() {
+  var c = sortiePrepEliteLevelCtx(sortiePrep.opts.ctx);
+  if (!c) return "";
+  var LM = LivingMapManager, L = LM.clampEliteLevel(c.mapId, c.sectorId, sortiePrep.level), m = LM.getEliteLevelMult(L), pct = function (x) { return Math.round(x * 100); };
+  sortiePrep.level = L;
+  var resId = LM.getRewardResourceId(c.mapId), res = (window.WAREHOUSE_RESOURCES || {})[resId] || {}, eDef = (window.ELITE_DB || {})[sortiePrep.opts.ctx.id] || {};
+  var row = function (ico, html) { return '<div class="dgain-row">' + (ico ? renderIconOrEmojiHTML(ico, "dgain-ico", "") : '<span class="dgain-dot" aria-hidden="true"></span>') + '<span>' + html + '</span></div>'; };
+  var h = '<div class="sp-sec dlvl"><div class="dlvl-row">';
+  h += '<button type="button" class="dlvl-step" aria-label="' + esc(_t("Niveau précédent")) + '"' + (L <= 1 ? ' disabled' : '') + ' onclick="sortiePrepEliteLevel(-1)">‹</button>';
+  h += '<div class="dlvl-num"><small>' + esc(_t("Niveau")) + '</small><strong>' + L + '</strong><small>' + esc(c.best ? _t("meilleur : {n}", { n: c.best }) : _t("jamais battue")) + '</small></div>';
+  h += '<button type="button" class="dlvl-step" aria-label="' + esc(_t("Niveau suivant")) + '"' + (L >= c.max ? ' disabled' : '') + ' onclick="sortiePrepEliteLevel(1)">›</button></div>';
+  h += '<div class="dgain"><div class="dgain-ttl"><span>' + esc(_t("À gagner")) + '</span></div>';
+  h += row(res.icon, esc(_td(res.name || resId)) + ' <strong>+' + LM.getRepeatRewardAt(c.mapId, L) + '</strong>' + (L > 1 ? ' <span class="is-dim">(×' + L + ')</span>' : ''));
+  if (L > 1) h += row("images/Icons/gold_icon.webp", esc(_t("Or +{p} %", { p: pct(m.gold - 1) })));
+  if (eDef.winDrop) h += row(null, esc(_t("Pièce : {n} % par victoire, la {k}e sans pièce en donne une", { n: eDef.winDrop.chancePct, k: Number(eDef.winDrop.pityAfter || 0) + 1 })));
+  h += '</div><div class="dgain"><div class="dgain-ttl"><span>' + esc(_t("Ce qui t'attend")) + '</span></div>';
+  h += row(null, L > 1 ? esc(_t("Niveau {n} : PV +{a} %, dégâts +{b} %", { n: L, a: pct(m.hp - 1), b: pct(m.power - 1) })) : esc(_t("Niveau 1 : l'élite à sa force de base")));
+  var wins = LM.getDailyWins(c.mapId, c.sectorId);
+  if (wins) h += row(null, esc(_tn(wins, "Aujourd'hui, {n} victoire : encore +{p} % (le frein retombe à la nuit)", "Aujourd'hui, {n} victoires : encore +{p} % (le frein retombe à la nuit)", { n: wins, p: pct(LM.getBrakeMult(c.mapId, c.sectorId) - 1) })));
+  return h + '</div></div>';
+}
+function sortiePrepEliteLevel(d) {
+  var c = sortiePrep && sortiePrepEliteLevelCtx(sortiePrep.opts.ctx);
+  if (!c) return;
+  sortiePrep.level = LivingMapManager.clampEliteLevel(c.mapId, c.sectorId, (sortiePrep.level || 1) + d);
+  renderSortiePrep();
+}
+window.sortiePrepEliteLevel = sortiePrepEliteLevel;
+
 /* v3.523.0 (audit PLA-3) : verdict d'une élite de carte, frein du jour compris. Une quête d'élite a déjà la fenêtre
    du tableau (launchWithForecast), le donjon sa feuille : pas de doublon ici. */
 function buildSortiePrepForecastHTML() {
   var ctx = sortiePrep.opts.ctx || {}, f = null;
   if (!window.CombatForecast || typeof buildCombatForecastLineHTML !== "function") return "";
   try {
-    if (ctx.type === "elite" && ctx.mapId) f = CombatForecast.forMapElite(ctx.mapId, ctx.sectorId, ctx.id);
+    if (ctx.type === "elite" && ctx.mapId) f = CombatForecast.forMapElite(ctx.mapId, ctx.sectorId, ctx.id, sortiePrep.level || null);
   } catch (e) { if (typeof noteErreur === "function") noteErreur("sortie-prep-view.buildSortiePrepForecastHTML", e); f = null; }
   return f ? '<div class="sp-sec">' + buildCombatForecastLineHTML(f, { brake: true }) + '</div>' : ""; // le titre nomme déjà l'élite
 }
@@ -546,7 +583,7 @@ function confirmSortiePrep() {
   var objetsPris = s.items.filter(Boolean);
   if (buffsPris.length || objetsPris.length) game.lastSortiePrep = { buffs: buffsPris, items: objetsPris };
   Object.keys(s.buffs).forEach(function (id) { if (s.buffs[id] && !PotionManager.isArmed(id)) PotionManager.usePotion(id); });
-  s.opts.onGo();
+  s.opts.onGo(s); // v3.657.0 : la feuille passe ses choix (niveau de l'élite)
   if (window.CombatItems) CombatItems.takeForSortie(s.items.filter(Boolean));   // v3.441.0 : une fois la sortie ouverte
 }
 

@@ -549,10 +549,11 @@ var CombatForecast = {
   },
 
   /* v3.523.0 (audit PLA-3) : pronostic d'une élite de carte, avec le frein du jour (comme living-map-system.js:516). */
-  forMapElite: function (mapId, sectorId, eliteId) {
+  forMapElite: function (mapId, sectorId, eliteId, level) {
     if (!window.LivingMapManager || !window.EliteManager || typeof EliteManager.make !== "function") return null;
     var map = LivingMapManager.getMap(mapId), brake = LivingMapManager.getBrakeMult(mapId, sectorId);
-    var elite = EliteManager.make(eliteId, map ? map.worldId : "forest", 0, { brakeMult: brake, escort: { members: [] } }); // force de duel
+    var lm = typeof LivingMapManager.getEliteLevelMult === "function" ? LivingMapManager.getEliteLevelMult(level || 1) : null; // v3.657.0
+    var elite = EliteManager.make(eliteId, map ? map.worldId : "forest", 0, { brakeMult: brake, levelMult: lm, escort: { members: [] } }); // force de duel
     var out = elite ? this.forEnemy(elite) : null;
     if (out) { out.enemyName = elite.name; out.brakeMult = brake; }
     return out;

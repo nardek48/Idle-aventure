@@ -121,8 +121,8 @@ window.refreshLivingMap = refreshLivingMap;
 function startLivingMapSector(id, wake) { // v3.454.0 : wake — réveiller les gisants (Crypte)
   if (!window.LivingMapManager || !livingMapOpenId) return;
   var mapId = livingMapOpenId;
-  var go = function () {
-    var r = LivingMapManager.start(mapId, id, { wake: !!wake });
+  var go = function (prep) { // v3.657.0 : la feuille de préparation passe le niveau choisi
+    var r = LivingMapManager.start(mapId, id, { wake: !!wake, level: prep && prep.level ? prep.level : null });
     if (!r.ok) { if (typeof showToast === "function") showToast(r.reason, 1800); refreshLivingMap(); }
   };
   // v3.440.0 : une élite de carte est une sortie de combat, préparée ; une expédition a sa propre préparation
@@ -714,6 +714,8 @@ function buildLivingMapPanelHTML(mapId, running) {
     // v3.258.0 (C-5) : élite répétable — Sève par victoire, frein du jour affiché avant de partir.
     var wins = LM.getDailyWins(mapId, d.id);
     h += '<p class="lm-panel-line"><b>' + _t("Chaque victoire :") + '</b> ' + esc(_t("+{n} {x}. Chaque combat rejoué prend ses vivres (ci-dessous), hors cap des Petites Aventures. Fuir ou tomber reste un échec.", { n: LM.getRepeatSevePerWin(mapId), x: _td(rName) })) + '</p>';
+    var lvB = typeof LM.getEliteLevelBest === "function" ? LM.getEliteLevelBest(mapId, d.id) : 0; // v3.657.0 : élites à niveaux
+    h += '<p class="lm-panel-line"><b>' + _t("Niveau :") + '</b> ' + esc(lvB ? _t("meilleur {n}. Au départ, choisis un niveau jusqu'à {m} : le {x} de la victoire est multiplié par le niveau.", { n: lvB, m: lvB + 1, x: _td(rName) }) : _t("bats-la une fois pour ouvrir le niveau 2 : le {x} de la victoire est multiplié par le niveau.", { x: _td(rName) })) + '</p>';
     h += '<p class="lm-panel-line"><b>' + _t("Aujourd'hui :") + '</b> ' + _tn(wins, "{n} victoire", "{n} victoires") + ' · ' + (wins ? _t("prochain combat +{p} % PV et dégâts", { p: Math.round((LM.getBrakeMult(mapId, d.id) - 1) * 100) }) : _t("prochain combat à sa force de base")) + '</p>';
     // v3.457.5 (audit P18) : le frein retombe au jour civil — on dit quand
     if (wins && window.WorldDays) h += '<p class="lm-panel-line">' + esc(_tn(WorldDays.left(), "Le frein retombe à la nuit, dans {n} sortie.", "Le frein retombe à la nuit, dans {n} sorties.")) + '</p>'; // v3.602.0 : jours du monde

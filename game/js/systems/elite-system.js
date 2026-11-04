@@ -56,13 +56,14 @@ var EliteManager = {
     };
 
     var brake = (opts && typeof opts.brakeMult === "number" && opts.brakeMult > 0) ? opts.brakeMult : 1; // v3.258.0 (C-5) : frein de l'Arbre-mère
+    var lv = (opts && opts.levelMult) || { hp: 1, power: 1, gold: 1 }; // v3.657.0 : niveau d'une élite de carte
     var pvMult = (typeof BOSS_PV_MULT === "number") ? BOSS_PV_MULT : 3.1;
     var milestone = (opts && opts.noMilestone) ? 1
       : ((window.WorldManager && typeof WorldManager.getCycleMilestoneMult === "function") ? WorldManager.getCycleMilestoneMult() : 1);
-    var hp = Math.max(1, Math.floor(stats.endurance * pvMult * s * milestone * brake));
+    var hp = Math.max(1, Math.floor(stats.endurance * pvMult * s * milestone * brake * (lv.hp || 1)));
 
     var powerExp = (typeof ENEMY_POWER_SCALE_EXP === "number") ? ENEMY_POWER_SCALE_EXP : 0.3;
-    stats.power = Math.max(1, Math.floor(stats.power * Math.pow(s, powerExp) * milestone * brake));
+    stats.power = Math.max(1, Math.floor(stats.power * Math.pow(s, powerExp) * milestone * brake * (lv.power || 1)));
 
     return {
       id: def.id,
@@ -74,7 +75,7 @@ var EliteManager = {
       archetype: def.archetype || null,
       hp: hp,
       maxHp: hp,
-      goldReward: Math.floor(60 * s),
+      goldReward: Math.floor(60 * s * (lv.gold || 1)),
       resists: base.resists || [],  // ignorés tant que isBoss (combat-engine.js), conservés pour le bestiaire
       weak: base.weak || [],
       stats: stats
