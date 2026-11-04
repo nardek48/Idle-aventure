@@ -1,0 +1,47 @@
+<!doctype html><html><head><meta charset="utf-8">
+<script type="importmap">{"imports":{"three":"./node_modules/three/build/three.module.js","three/addons/":"./node_modules/three/examples/jsm/"}}</script>
+<style>html,body{margin:0;background:transparent}</style></head><body>
+<script type="module">
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+const S = 512;
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setSize(S, S); renderer.setClearColor(0x000000, 0);
+renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.1;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+const pm = new THREE.PMREMGenerator(renderer); scene.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture;
+const key = new THREE.DirectionalLight(0xffe2b0, 2.2); key.position.set(0.8, 1.2, 5); scene.add(key);
+const rim = new THREE.DirectionalLight(0x9fc0ff, 0.8); rim.position.set(-3, -1, 2); scene.add(rim);
+const cam = new THREE.PerspectiveCamera(30, 1, 0.1, 100); cam.position.set(0, 0, 4.4); cam.lookAt(0, 0, 0);
+const holder = new THREE.Group(); scene.add(holder);
+window.ready = new Promise(res => new GLTFLoader().load("./dice/" + (window.DIE || "D20") + ".gltf", g => {
+  const m = g.scene; const box = new THREE.Box3().setFromObject(m); const c = box.getCenter(new THREE.Vector3()); const sz = box.getSize(new THREE.Vector3()).length();
+  m.position.sub(c); const k = 2.3 / sz; m.scale.multiplyScalar(k); holder.add(m); window.model = m; res(true);
+}));
+
+// oriente la face i vers la caméra, le voisin k vers le bas (pointe du triangle en haut), puis un léger basculement
+window.faceQuat = function (fs, i, k, tilt, flip) {
+  const V = a => new THREE.Vector3(a[0], a[1], a[2]);
+  const n = V(fs[i]); const q1 = new THREE.Quaternion().setFromUnitVectors(n, new THREE.Vector3(0, 0, 1));
+  const nb = fs.slice(0, 20).map((f, j) => [j, V(f).dot(n)]).filter(x => x[0] !== i).sort((a, b) => b[1] - a[1]).slice(0, 3).map(x => x[0]);
+  const d = V(fs[nb[k]]).applyQuaternion(q1); const ang = Math.atan2(d.y, d.x);
+  const q2 = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), -Math.PI / 2 - ang + (flip ? Math.PI : 0));
+  const q3 = new THREE.Quaternion().setFromEuler(new THREE.Euler(tilt || 0, (tilt || 0) * 0.6, 0));
+  return q3.multiply(q2.multiply(q1)).toArray();
+};
+window.THREE = THREE;
+window.shot = function (qx, qy, qz, qw) { holder.quaternion.set(qx, qy, qz, qw); renderer.render(scene, cam); return renderer.domElement.toDataURL("image/png"); };
+// normales des faces : regroupe les normales des triangles, pondérées par l'aire, en 20 directions
+window.faces = function () {
+  const dirs = [];
+  window.model.traverse(o => { if (!o.isMesh) return; const g = o.geometry, p = g.attributes.position, idx = g.index;
+    const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3();
+    for (let i = 0; i < idx.count; i += 3) { a.fromBufferAttribute(p, idx.getX(i)); b.fromBufferAttribute(p, idx.getX(i+1)); c.fromBufferAttribute(p, idx.getX(i+2));
+      const n = new THREE.Vector3().subVectors(b, a).cross(new THREE.Vector3().subVectors(c, a)); const ar = n.length(); if (ar < 1e-9) continue; n.normalize();
+      let f = dirs.find(d => d.v.dot(n) > 0.97); if (f) { f.w += ar; f.s.addScaledVector(n, ar); } else dirs.push({ v: n.clone(), w: ar, s: n.clone().multiplyScalar(ar) }); } });
+  dirs.sort((x, y) => y.w - x.w);
+  return dirs.slice(0, 24).map(d => { const v = d.s.normalize(); return [v.x, v.y, v.z, d.w]; });
+};
+</script></body></html>
