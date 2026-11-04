@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.667.0", "menu_icons/map_menu", _t("La Tour : la vision de cette nuit-là a ses trois planches peintes.")],
     ["3.666.0", "menu_icons/map_menu", _t("Chapitre VI : l'ouverture de la Tour a ses trois planches peintes, vers le nord, la plaine grise et la porte.")],
     ["3.665.0", "memory/souffle_long", _t("Mémoires de la faille : le Souffle long et « Ce qu'il ne prend pas » ont leur vraie icône.")],
     ["3.664.0", "memory/feu_couve", _t("Nouvelles icônes : les dix Mémoires de la Tour, la voie de talents Varier et son emblème, l'état « Intouchable » de la silhouette, le festin et un nouveau Sceau.")],
