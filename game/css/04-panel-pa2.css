@@ -319,6 +319,20 @@ body.pa2-full .pa2-scrim { background: rgba(5, 3, 2, 0.28); }
 .pa2-die.is-nat20 .pa2-die-num { color: rgb(143, 207, 122); }
 .pa2-die.is-nat1 { filter: drop-shadow(0 0 14px rgba(230, 90, 80, .75)) drop-shadow(0 6px 10px rgba(0, 0, 0, .55)); }
 .pa2-die.is-nat1 .pa2-die-num { color: rgb(224, 122, 98); }
+/* v3.674.0 : effets du 20 et du 1 naturels (atelier, variante B). Anneaux : le centre (le dé) reste transparent */
+.pa2-fx { position: absolute; inset: -40%; pointer-events: none; opacity: 0; }
+.pa2-sp { position: absolute; left: 50%; top: 50%; width: 7px; height: 7px; margin: -3.5px; border-radius: 50%; background: rgb(255, 227, 154); box-shadow: 0 0 8px rgb(255, 201, 74); opacity: 0; pointer-events: none; }
+.pa2-crack { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.pa2-crack path { fill: none; stroke: rgba(15, 8, 4, .9); stroke-width: 2.2; stroke-linecap: round; stroke-dasharray: 120; stroke-dashoffset: 120; opacity: 0; filter: drop-shadow(0 1px 0 rgba(255, 190, 140, .25)); }
+.pa2-die.is-fx20 .pa2-die-num { animation: pa2-numpop .5s cubic-bezier(.3, 1.6, .5, 1) 1; }
+.pa2-die.is-fx20 .pa2-fx-halo { background: radial-gradient(closest-side, transparent 50%, rgba(255, 220, 120, .8) 60%, rgba(255, 200, 80, .2) 72%, transparent 82%); animation: pa2-halo .9s ease-out 2; }
+.pa2-die.is-fx20 .pa2-fx-rays { background: repeating-conic-gradient(from 0deg, rgba(255, 215, 110, .55) 0 6deg, transparent 6deg 30deg);
+  -webkit-mask: radial-gradient(closest-side, transparent 52%, black 60%, transparent 92%); mask: radial-gradient(closest-side, transparent 52%, black 60%, transparent 92%); animation: pa2-rays 1.3s ease-out 1; }
+.pa2-die.is-fx20 .pa2-sp { animation: pa2-spark .9s ease-out 1 both; }
+.pa2-die.is-fx1 { animation: pa2-shudder .5s ease-out 1, pa2-dim .6s .5s ease-out 1 forwards; }
+.pa2-die.is-fx1 .pa2-fx-red { background: radial-gradient(closest-side, transparent 48%, rgba(230, 70, 50, .75) 58%, transparent 80%); animation: pa2-redflash .7s ease-out 1; }
+.pa2-die.is-fx1 .pa2-die-num { animation: pa2-droop .6s .35s ease-in 1 forwards; }
+.pa2-die.is-fx1 .pa2-crack path { animation: pa2-crackin .45s .25s ease-out 1 forwards; }
 .pa2-nat { min-height: 18px; text-align: center; font-size: 13px; font-weight: 700; margin: 0 0 6px; }
 .pa2-nat .is-ok { color: var(--c-green-400-soft); }
 .pa2-nat .is-ko { color: var(--c-red-300); }
@@ -395,6 +409,15 @@ body.pa2-full .pa2-scrim { background: rgba(5, 3, 2, 0.28); }
 @keyframes pa2-shake { 0%, 100% { transform: none; } 20% { transform: translateX(-7px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); } }
 @keyframes pa2-tumble { to { background-position: 100% 0; } }
 @keyframes pa2-hop { 0% { transform: translateY(0); } 30% { transform: translateY(-14px); } 60% { transform: translateY(0); } 80% { transform: translateY(-5px); } 100% { transform: translateY(0); } }
+@keyframes pa2-numpop { 0% { transform: translate(-50%, -50%) scale(.4); } 60% { transform: translate(-50%, -50%) scale(1.45); } 100% { transform: translate(-50%, -50%) scale(1); } }
+@keyframes pa2-halo { 0% { opacity: 0; transform: scale(.6); } 30% { opacity: 1; transform: scale(1.05); } 100% { opacity: 0; transform: scale(1.25); } }
+@keyframes pa2-rays { 0% { opacity: 0; transform: rotate(0) scale(.7); } 25% { opacity: 1; } 100% { opacity: 0; transform: rotate(60deg) scale(1.15); } }
+@keyframes pa2-spark { 0% { opacity: 1; transform: translate(0, 0) scale(1); } 100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(.3); } }
+@keyframes pa2-shudder { 0%, 100% { transform: none; } 15% { transform: translateX(-6px) rotate(-4deg); } 30% { transform: translateX(5px) rotate(3deg); } 45% { transform: translateX(-4px) rotate(-2deg); } 60% { transform: translateX(3px); } 80% { transform: translateX(-1px); } }
+@keyframes pa2-redflash { 0% { opacity: 0; } 20% { opacity: .9; } 100% { opacity: 0; } }
+@keyframes pa2-droop { 0% { transform: translate(-50%, -50%); } 60% { transform: translate(-50%, -38%) rotate(9deg); } 100% { transform: translate(-50%, -42%) rotate(7deg); } }
+@keyframes pa2-crackin { from { opacity: 0; stroke-dashoffset: 120; } to { opacity: 1; stroke-dashoffset: 0; } }
+@keyframes pa2-dim { to { filter: brightness(.7) saturate(.8) drop-shadow(0 0 12px rgba(230, 90, 80, .6)) drop-shadow(0 6px 10px rgba(0, 0, 0, .55)); } }
 @keyframes pa2-settle { 0% { transform: scale(1.12) rotate(-6deg); } 100% { transform: none; } }
 @keyframes pa2-pop { from { transform: scale(.3); } to { transform: scale(1); } }
 @keyframes pa2-float-up { from { transform: translate(-50%, 0); opacity: 1; } to { transform: translate(-50%, -70px); opacity: 0; } }

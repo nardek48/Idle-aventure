@@ -1031,11 +1031,15 @@ function pa2OddsHTML(cran) {
 /* v3.673.0 : le d20 pré-rendu (modèle 3D CC0, tools/rendu-de/) : une pose par valeur, face avant vide,
    le jeu y écrit le chiffre ; le roulé est une bande de 16 images (images/UI/de/). */
 var PA2_DIE_DIR = "images/UI/de/", pa2DieLoaded = false;
+/* v3.674.0 (atelier de-d20.html, B) : effets du 20 naturel (anneau doré, rayons, étincelles) et du 1 (fêlure) ; joués à la pose seulement */
+var PA2_DIE_FX = '<span class="pa2-fx pa2-fx-halo" aria-hidden="true"></span><span class="pa2-fx pa2-fx-rays" aria-hidden="true"></span><span class="pa2-fx pa2-fx-red" aria-hidden="true"></span>' +
+  '<i class="pa2-sp" style="--dx:0px;--dy:-62px;animation-delay:0ms"></i><i class="pa2-sp" style="--dx:44px;--dy:-44px;animation-delay:40ms"></i><i class="pa2-sp" style="--dx:62px;--dy:0px;animation-delay:80ms"></i><i class="pa2-sp" style="--dx:44px;--dy:44px;animation-delay:20ms"></i><i class="pa2-sp" style="--dx:0px;--dy:62px;animation-delay:60ms"></i><i class="pa2-sp" style="--dx:-44px;--dy:44px;animation-delay:100ms"></i><i class="pa2-sp" style="--dx:-62px;--dy:0px;animation-delay:30ms"></i><i class="pa2-sp" style="--dx:-44px;--dy:-44px;animation-delay:70ms"></i><i class="pa2-sp" style="--dx:24px;--dy:-58px;animation-delay:120ms"></i><i class="pa2-sp" style="--dx:-28px;--dy:58px;animation-delay:90ms"></i>' +
+  '<svg class="pa2-crack" viewBox="0 0 100 100" aria-hidden="true"><path d="M44 34 L52 46 L47 52 L57 63 L53 70 L60 80"/></svg>';
 function pa2DieFace(v) {
   if (!pa2DieLoaded && typeof Image === "function") { pa2DieLoaded = true; try { new Image().src = PA2_DIE_DIR + "d20_roll.webp"; } catch (e) { noteErreur("pa2-view.pa2DieFace", e); } }
   var n = Math.max(1, Math.min(20, Number(v) || 20));
   return '<img class="pa2-die-img" src="' + PA2_DIE_DIR + 'd20_vide_' + n + '.webp" alt=""><span class="pa2-die-roll" aria-hidden="true"></span>' +
-    '<span class="pa2-die-num">' + esc(v == null ? "?" : String(v)) + '</span>';
+    PA2_DIE_FX + '<span class="pa2-die-num">' + esc(v == null ? "?" : String(v)) + '</span>';
 }
 // « Il faut 9+ » ; au-delà de 20, seul le 20 naturel passe ; le 1 rate toujours.
 function pa2NeedText(thr) { return thr >= 20 ? "20" : Math.max(2, Number(thr || 0)) + "+"; }
@@ -1430,7 +1434,7 @@ function pa2RollDie(finalVal, then, res) {
   var die = document.getElementById("pa2-die");
   if (!die) { then(); return; }
   var num = die.querySelector(".pa2-die-num"), img = die.querySelector(".pa2-die-img");
-  die.classList.remove("is-landed"); die.classList.add("is-rolling"); // v3.673.0 : le dé roule (bande d'images), puis se pose sur la valeur
+  die.classList.remove("is-landed", "is-fx20", "is-fx1", "is-nat20", "is-nat1"); die.classList.add("is-rolling"); // v3.673.0 : le dé roule (bande d'images), puis se pose sur la valeur
   pa2Later(function () {
     die.classList.remove("is-rolling");
     var n = Math.max(1, Math.min(20, Number(finalVal) || 20));
@@ -1438,7 +1442,8 @@ function pa2RollDie(finalVal, then, res) {
     if (num) num.textContent = String(finalVal);
     void die.offsetWidth; die.classList.add("is-landed");
     var nat = res && !res.pending && !res.rope ? res.nat : 0, el = document.getElementById("pa2-nat");
-    if (nat) die.classList.add("is-nat" + nat); // 20 ou 1 naturel
+    if (nat) die.classList.add("is-nat" + nat, "is-fx" + nat); // 20 ou 1 naturel ; is-fx : l'effet ne joue qu'à la pose (v3.674.0)
+    if (nat === 20) pa2Buzz([20, 40, 20]); else if (nat === 1) pa2Buzz(60);
     if (el && res && !res.rope) el.innerHTML = pa2NatHTML(res);
     then();
   }, 800);
