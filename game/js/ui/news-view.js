@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.661.0", "memory/braise_encore", _t("Nouvelles icônes : le givre bleu et le verre de faille, la braise d'Aeswyn, le feuillet du Veilleur, les deux sentiers coupés de la Tour et les dix Mémoires de la faille.")],
     ["3.660.0", "menu_icons/map_menu", _t("Petites Aventures de la Tour : les deux cartes de l'escalier ont leurs images, et les cases suivent maintenant les marches.")],
     ["3.659.0", "living_map/carte_vivante", _t("Nouvelles images : la carte des étages de la Tour, la silhouette, le Reflet, le Gardien qui répète, deux parcours de la Tour, et les icônes du Grimoire, du mode Tactique, des Sceaux et de la carte vivante.")],
     ["3.658.0", "menu_icons/settings_menu", _t("Icônes : chaque image ne sert plus qu'à une chose. Le Terrain d'entraînement, l'Enchanteresse et les compagnons reprennent leur propre image ; le Grimoire, le mode Tactique et quelques autres attendent la leur.")],
