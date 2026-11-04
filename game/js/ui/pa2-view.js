@@ -1028,11 +1028,14 @@ function pa2Head(run, n, title, kicker, big) {
 function pa2OddsHTML(cran) {
   return '<span class="pa2-odds o' + PA2_CRAN_LEVEL[cran] + '"><span class="pa2-cran"><i></i><i></i><i></i><i></i></span><span class="pa2-w">' + esc(PA2_CRAN_WORD[cran]) + '</span></span>';
 }
-/* v3.577.0 : le d20 (dessiné en SVG), la valeur du jet au centre. */
-var PA2_D20_SVG = '<svg viewBox="0 0 100 100" aria-hidden="true"><polygon class="pa2-d20-hex" points="50,3 91,26.5 91,73.5 50,97 9,73.5 9,26.5"/>' +
-  '<path class="pa2-d20-edge" d="M50,22 L77,68 L23,68 Z M50,3 L50,22 M91,26.5 L50,22 L9,26.5 M91,26.5 L77,68 L91,73.5 M77,68 L50,97 L23,68 L9,73.5 M9,26.5 L23,68"/>';
+/* v3.673.0 : le d20 pré-rendu (modèle 3D CC0, tools/rendu-de/) : une pose par valeur, face avant vide,
+   le jeu y écrit le chiffre ; le roulé est une bande de 16 images (images/UI/de/). */
+var PA2_DIE_DIR = "images/UI/de/", pa2DieLoaded = false;
 function pa2DieFace(v) {
-  return PA2_D20_SVG + '<text x="50" y="59" text-anchor="middle">' + esc(v == null ? "?" : String(v)) + '</text></svg>';
+  if (!pa2DieLoaded && typeof Image === "function") { pa2DieLoaded = true; try { new Image().src = PA2_DIE_DIR + "d20_roll.webp"; } catch (e) { noteErreur("pa2-view.pa2DieFace", e); } }
+  var n = Math.max(1, Math.min(20, Number(v) || 20));
+  return '<img class="pa2-die-img" src="' + PA2_DIE_DIR + 'd20_vide_' + n + '.webp" alt=""><span class="pa2-die-roll" aria-hidden="true"></span>' +
+    '<span class="pa2-die-num">' + esc(v == null ? "?" : String(v)) + '</span>';
 }
 // « Il faut 9+ » ; au-delà de 20, seul le 20 naturel passe ; le 1 rate toujours.
 function pa2NeedText(thr) { return thr >= 20 ? "20" : Math.max(2, Number(thr || 0)) + "+"; }
@@ -1426,13 +1429,14 @@ function pa2Buzz(p) { try { if (navigator.vibrate) navigator.vibrate(p); } catch
 function pa2RollDie(finalVal, then, res) {
   var die = document.getElementById("pa2-die");
   if (!die) { then(); return; }
-  var txt = die.querySelector("text");
-  die.classList.add("is-rolling");
-  var t = setInterval(function () { if (txt) txt.textContent = String(1 + Math.floor(Math.random() * 20)); }, 70);
-  pa2View.timers.push(t);
+  var num = die.querySelector(".pa2-die-num"), img = die.querySelector(".pa2-die-img");
+  die.classList.remove("is-landed"); die.classList.add("is-rolling"); // v3.673.0 : le dé roule (bande d'images), puis se pose sur la valeur
   pa2Later(function () {
-    clearInterval(t); die.classList.remove("is-rolling");
-    if (txt) txt.textContent = String(finalVal);
+    die.classList.remove("is-rolling");
+    var n = Math.max(1, Math.min(20, Number(finalVal) || 20));
+    if (img) img.src = PA2_DIE_DIR + "d20_vide_" + n + ".webp";
+    if (num) num.textContent = String(finalVal);
+    void die.offsetWidth; die.classList.add("is-landed");
     var nat = res && !res.pending && !res.rope ? res.nat : 0, el = document.getElementById("pa2-nat");
     if (nat) die.classList.add("is-nat" + nat); // 20 ou 1 naturel
     if (el && res && !res.rope) el.innerHTML = pa2NatHTML(res);

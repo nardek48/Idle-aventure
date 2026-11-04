@@ -20310,7 +20310,7 @@ console.log("\n[381] v3.577.0 — Petites Aventures, lot 2 : les jets au d20");
     var why = g.pa2WhyHTML(w, { wounds: 2 }).replace(/\u00a0/g, " ");
     ok(/Puissance \+\d/.test(why) && /Rôdeur|Archer/.test(why) === false && /matériel \+3/.test(why) && /blessures −4/.test(why) && /DD \d+/.test(why), "détail du jet : stat, matériel, blessures et DD (" + why + ")");
     var blk = g.pa2DieBlock({ thr: 9, cran: "probable", chance: 60, roll: 20, nat: 20 }, true);
-    ok(/<svg/.test(blk) && />20</.test(blk) && /is-nat20/.test(blk) && /9\+/.test(blk) && /60 %/.test(blk), "le dé : d20 dessiné, valeur, seuil et chance");
+    ok(/d20_vide_20\.webp/.test(blk) && /pa2-die-num">20</.test(blk) && /is-nat20/.test(blk) && /9\+/.test(blk) && /60 %/.test(blk), "le dé : d20 pré-rendu (v3.673.0), valeur, seuil et chance");
   } catch (err) { ok(false, "[381] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   P._int = saveInt; if (CCM) CCM.getCurrentClassId = saveCls;
 })();
