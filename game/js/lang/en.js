@@ -10,6 +10,7 @@
    Les textes des données sont traduits par _td() à l'affichage (registre : lang/data-fields.js). */
 I18n.register("en", {
   // index.html
+  "Entrepôt : quand le Grand Ouvrage limite un stock, les coûts le disent ; plus de fabrication perdue à sortie pleine. L'échoppe se renouvelle après un voyage, le festin coûte le prix de ton monde le plus loin.": "Warehouse: when the Great Work caps a stock, costs now say so; no more crafts lost to a full output. The shop restocks after travelling, and the feast costs the price of your furthest world.",
   "Sauvegarde plus sûre : « Effacer la partie » n'efface que ce héros, la copie de secours suit ta partie, la quantité d'entraînement est gardée, un import abîmé ne touche plus rien.": "Safer saves: \"Erase the game\" erases only this hero, the backup copy follows your game, the training amount is kept, a damaged import no longer touches anything.",
   "Interface : textes pâles relus (défaite, butin du donjon, Vague, conseils), abandon de donjon confirmé, « Entrer » grisé sans vivres, Retour sur la carte vivante.": "Interface: faint texts made readable (defeat, dungeon loot, Wave, tips), dungeon abandon now confirmed, “Enter” greyed out without provisions, Back on the living map.",
   "Abandonner la tentative ?": "Abandon the attempt?",
@@ -1300,7 +1301,6 @@ I18n.register("en", {
   "Trier": "Sort",
   "Rareté": "Rarity",
   "Type": "Type",
-  "Autovente": "Auto-sell",
   "Tout": "All",
   "Réglages du sac": "Bag settings",
   "Offrir automatiquement tout objet de rareté :": "Automatically offer any item of rarity:",
@@ -2100,8 +2100,6 @@ I18n.register("en", {
   "Vivres pour rejouer un donjon ou une élite : {x}": "Provisions to replay a dungeon or an elite: {x}",
   "Rangs des compagnons (Héros › Alliés)": "Companion ranks (Hero › Allies)",
   "Rangs des capacités du héros (Héros › Capacités)": "Hero ability ranks (Hero › Abilities)",
-  "Il faut {n} {x}, mais l'Entrepôt n'en garde que {c}. Monte l'Entrepôt, ou monte les zones une par une.": "This needs {n} {x}, but the Warehouse only holds {c}. Upgrade the Warehouse, or level the zones one by one.",
-  "Il faut {n} {x}, mais l'Entrepôt n'en garde que {c}. Monte l'Entrepôt, ou défriche zone par zone.": "This needs {n} {x}, but the Warehouse only holds {c}. Upgrade the Warehouse, or clear zone by zone.",
   "Entrepôt vide pour l'instant.": "Warehouse empty for now.",
   "Le tavernier": "The tavern keeper",
   "L’Entrepôt ne rachète plus rien. Ce qu’il te reste, porte-le-moi : mes contrats paient mieux, et on sait ce qu’on te demande.": "The Warehouse doesn't buy anything any more. Whatever you have left, bring it to me: my contracts pay better, and you know what you're being asked for.",
@@ -8382,7 +8380,6 @@ I18n.register("en", {
   "Les gardiens s'arrêtent. La route reprend, droite, jusqu'au pied.": "The guardians stop. The road goes on, straight, to the foot.",
   "Givre bleu": "Blue Frost",
   "De la lumière froide, prise en givre sur un éclat de pierre. Elle fond dans la main sans mouiller.": "Cold light, frozen as frost on a stone chip. It melts in your hand without wetting it.",
-  "Étages de la Tour : combats, carte des étages, Petites Aventures et Sommet interdit": "Tower floors: fights, the floor map, Small Adventures and the Forbidden Summit",
   "Verre de faille": "Riftglass",
   "Du givre bleu fondu en verre clair. On y voit parfois un toit qui n'existe plus. Matériau de la Forge de la Tour et des dernières reforges.": "Blue frost melted into clear glass. Sometimes you see a roof in it that no longer exists. Material for the Tower Forge and the last reforges.",
   "Se coule à la Fonderie (Mine), avec du Givre bleu et de l'Acier": "Cast at the Foundry (Mine), with Blue Frost and Steel",
@@ -8959,5 +8956,18 @@ I18n.register("en", {
   "{x} doit t'accompagner pour cette quête": "{x} must come with you for this quest",
   "Il faut {x} dans le groupe": "{x} must be in the party",
   "La Mémoire continue après la Tour : les niveaux 25 à 28 s'ouvrent avec ton record dans la faille, et chaque étage franchi rapporte de l'Aether. Six hauts faits de la faille.": "Memory goes on after the Tower: levels 25 to 28 open with your record in the rift, and every floor cleared yields Aether. Six rift achievements.",
+  "L'Entrepôt n'en garde que {c} : monte l'Entrepôt.": "The Warehouse only holds {c}: upgrade the Warehouse.",
+  "Le Grand Ouvrage n'en laisse que {c} : monte l'Entrepôt, ou relève la réserve protégée de {x}.": "The Great Work only leaves {c}: upgrade the Warehouse, or raise the protected reserve of {x}.",
+  "{x} +{a} (Entrepôt), +{b} (Grand Ouvrage)": "{x} +{a} (Warehouse), +{b} (Great Work)",
+  "{x} +{n} (Grand Ouvrage)": "{x} +{n} (Great Work)",
+  "Achat automatique arrêté : la prochaine parcelle demande {n} {x}, le stock n'en garde que {c}. Monte l'Entrepôt.": "Auto-buy stopped: the next plot needs {n} {x}, the stock only holds {c}. Upgrade the Warehouse.",
+  "Achat automatique arrêté : la prochaine parcelle demande {n} {x}, il ne dépense que ce qui dépasse la moitié du plafond ({m}). Achète-la à la main.": "Auto-buy stopped: the next plot needs {n} {x}, and it only spends what is above half the cap ({m}). Buy it by hand.",
+  "{x} est au plafond de l'Entrepôt": "{x} is at the Warehouse cap",
+  "En attente : {x} est au plafond de l'Entrepôt.": "Waiting: {x} is at the Warehouse cap.",
+  "Grand Ouvrage : versé tout seul au-delà de {p} % du plafond": "Great Work: poured automatically above {p}% of the cap",
+  "Grand Ouvrage : à verser à la main": "Great Work: pour by hand",
+  "Campement : le festin": "Camp: the feast",
+  "Auto-offrande": "Auto-offer",
+  "Étages de la Tour : combats, carte des étages, Petites Aventures et Sommet interdit · caravane longue au Marché de la Tour": "Tower floors: fights, the floor map, Small Adventures and the Forbidden Summit · long caravan to the Tower Market",
 
 });

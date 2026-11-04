@@ -189,7 +189,7 @@ window.CAMP_REGEN_PCT_PER_MIN = CAMP_REGEN_PCT_PER_MIN;
 
 /* v3.656.0 (atelier festin.html, placement A, choix de Seb du 04/11) — LE FESTIN.
    Blé, viande et eau du village contre +10 % de dégâts et de PV pour tout le groupe, pendant 3 sorties (pas l'exploration libre).
-   Prix par monde : 25 % / 25 % / 10 % de l'Entrepôt au niveau max du monde. État dans le jour de jeu (worldDay.feast, déjà sauvegardé). */
+   Prix par monde (le plus loin atteint) : 25 % / 25 % / 10 % de l'Entrepôt au niveau max du monde. État dans le jour de jeu (worldDay.feast, déjà sauvegardé). */
 var FEAST_SORTIES = 3;
 var FEAST_BONUS = 0.10;
 var FEAST_COST_BY_WORLD = [
@@ -210,7 +210,9 @@ var FeastManager = {
   mult: function () { return this.isLive() ? 1 + FEAST_BONUS : 1; },
   hpPct: function () { return this.isLive() ? FEAST_BONUS : 0; },
   cost: function () {
-    var w = Math.max(0, Math.min(FEAST_COST_BY_WORLD.length - 1, Number((window.WorldManager && WorldManager.worldIndex) || 0)));
+    // ECON-8 : prix du monde le plus loin atteint (un retour en Forêt ne le divise plus par cinq)
+    var reached = (window.WorldCaps && typeof WorldCaps.getReachedWorldIndex === "function") ? WorldCaps.getReachedWorldIndex() : Number((window.WorldManager && WorldManager.worldIndex) || 0);
+    var w = Math.max(0, Math.min(FEAST_COST_BY_WORLD.length - 1, Number(reached) || 0));
     return FEAST_COST_BY_WORLD[w];
   },
   missing: function () {

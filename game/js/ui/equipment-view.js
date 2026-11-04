@@ -571,7 +571,7 @@ function buildInventoryCompactToolbarHTML() {
   // v3.242.0 (retour Seb) : le bouton n'affichait qu'une icône, réduite à 0 px par le
   // filet `img { font-size: 0 }` — il ne restait qu'une plaque bleue vide. Icône rétablie
   // (voir css/99-icon-assets.css) et libellé ajouté pour qu'il se lise sans ambiguïté.
-  h += '<button class="inv-toolbar-btn" type="button" onclick="openInventorySettings()"><img class=ico-inline src=images/Icons/system/auto_sell.webp> ' + _t("Autovente") + '</button>';
+  h += '<button class="inv-toolbar-btn" type="button" onclick="openInventorySettings()"><img class=ico-inline src=images/Icons/system/auto_sell.webp> ' + _t("Auto-offrande") + '</button>';
 
   h += '</div>';
   return h;

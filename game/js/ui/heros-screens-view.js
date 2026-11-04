@@ -357,7 +357,7 @@
     }
     h += '</div><span class="hs-bagcap"><b>' + n + '</b> / ' + cap + '<small>' + _t("objets") + '</small></span>';
     // v3.429.21 : l'Autovente sort du menu (elle était coupée sous la barre du bas sur iPhone)
-    h += '<button type="button" class="hs-bag-auto" onclick="openInventorySettings()"><img src="images/Icons/system/auto_sell.webp" alt="">' + _t("Autovente") + '</button></div>';
+    h += '<button type="button" class="hs-bag-auto" onclick="openInventorySettings()"><img src="images/Icons/system/auto_sell.webp" alt="">' + _t("Auto-offrande") + '</button></div>';
     var es = bagEntries(bagFilter);
     var eqs = es.filter(function (e) { return e.type === "equipment"; }), pots = es.filter(function (e) { return e.type === "potion"; });
     if (eqs.length) h += '<div class="ksec"><span>' + _t("Équipement") + '</span></div><div class="wh-grid hs-bgrid">' + eqs.map(bagTileHTML).join("") + '</div>';

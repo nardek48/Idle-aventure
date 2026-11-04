@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.687.0", "village_buildings/warehouse_expanded", _t("Entrepôt : quand le Grand Ouvrage limite un stock, les coûts le disent ; plus de fabrication perdue à sortie pleine. L'échoppe se renouvelle après un voyage, le festin coûte le prix de ton monde le plus loin.")],
     ["3.686.0", "system/save", _t("Sauvegarde plus sûre : « Effacer la partie » n'efface que ce héros, la copie de secours suit ta partie, la quantité d'entraînement est gardée, un import abîmé ne touche plus rien.")],
     ["3.685.0", "system/save", _t("Interface : textes pâles relus (défaite, butin du donjon, Vague, conseils), abandon de donjon confirmé, « Entrer » grisé sans vivres, Retour sur la carte vivante.")],
     ["3.684.0", "quests/quest_story", _t("Une quête liée qui attend un compagnon reste au tableau, verrouillée : « Il faut Sarkel dans le groupe ». Il ne part plus en patrouille tant qu'elle l'attend. Les étapes du Sommet interdit mènent au donjon, les cartes s'ouvrent sur le bon secteur.")],

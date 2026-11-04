@@ -137,6 +137,30 @@ var WorkshopsSystem = {
     }, Infinity);
   },
 
+  /* Audit 04/11 (ECON-4) : lots que la sortie peut encore recevoir avant le plafond, lots déjà en file
+     compris (Infinity sans plafond). Borne le craft manuel : un lot à sortie pleine était perdu. */
+  getOutputRoomTimes: function (workshopId, recipeId) {
+    var recipe = this.getRecipe(workshopId, recipeId);
+    if (!recipe) return 0;
+    var self = this, queue = this.getQueue(workshopId);
+    return recipe.outputs.reduce(function (min, output) {
+      var cap = WarehouseManager.getCap(output.resourceId);
+      if (cap === Infinity) return min;
+      var pending = 0;
+      queue.forEach(function (e) {
+        var r = self.getRecipe(workshopId, e.recipeId);
+        (r ? r.outputs : []).forEach(function (o) { if (o.resourceId === output.resourceId) pending += o.quantity * Math.max(0, Math.floor(Number(e.times || 0))); });
+      });
+      var room = Math.max(0, cap - WarehouseManager.getAmount(output.resourceId) - pending);
+      return Math.min(min, Math.floor(room / output.quantity));
+    }, Infinity);
+  },
+
+  /* ECON-4 : maximum du craft manuel = intrants et place en sortie. */
+  getMaxManualCraftTimes: function (workshopId, recipeId) {
+    return Math.min(this.getMaxCraftTimes(workshopId, recipeId), this.getOutputRoomTimes(workshopId, recipeId));
+  },
+
   /* v3.98.13 : équivalent de getMaxCraftTimes, mais borné par
      ResourceReserveManager.getAvailableForAutoCraft() plutôt que le stock brut — utilisé
      UNIQUEMENT par le chaînage auto, jamais par le craft manuel.
@@ -144,9 +168,8 @@ var WorkshopsSystem = {
      chaque ressource PRODUITE par la recette (retour Seb — le chaînage continuait de
      consommer des intrants et d'occuper la file même quand la sortie était déjà pleine,
      gaspillant intrants/temps de craft pour un résultat qui aurait été silencieusement
-     écrêté par WarehouseManager.addResource au moment du crédit). Le craft MANUEL n'est
-     jamais concerné par cette borne non plus (cohérent avec la réserve : le joueur reste
-     libre de lancer un craft "à perte" s'il le décide lui-même). */
+     écrêté par WarehouseManager.addResource au moment du crédit). Audit 04/11 (ECON-4) : le
+     craft MANUEL est borné lui aussi par la place en sortie (getMaxManualCraftTimes), jamais par la réserve. */
   getMaxAutoCraftTimes: function (workshopId, recipeId) {
     var recipe = this.getRecipe(workshopId, recipeId);
     if (!recipe) return 0;
@@ -271,6 +294,11 @@ var WorkshopsSystem = {
     if (!recipe) return false;
     times = Math.floor(Number(times || 1));
     if (!this.canCraft(workshopId, recipeId, times)) return false;
+    if (!fromAuto && times > this.getOutputRoomTimes(workshopId, recipe.id)) { // ECON-4 : jamais d'intrants débités pour un produit perdu
+      var fullDef = WAREHOUSE_RESOURCES[recipe.outputs[0].resourceId];
+      if (typeof showToast === "function") showToast(_t("{x} est au plafond de l'Entrepôt", { x: fullDef ? _td(fullDef.name) : recipe.id }), 1600);
+      return false;
+    }
 
     var workshop = this.ensureWorkshop(def.buildingId, workshopId);
     var maxQueueLength = this.getMaxQueueLength(workshopId);

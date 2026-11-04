@@ -68,7 +68,7 @@ var GrandOuvrage = {
     var cap = WarehouseManager.getCap(key);
     if (!(cap > 0) || cap === Infinity) return Infinity;
     var reserve = (window.ResourceReserveManager && typeof ResourceReserveManager.getReserve === "function") ? Number(ResourceReserveManager.getReserve(key) || 0) : 0;
-    return Math.max(Math.floor(cap * this.getSeuil()), reserve);
+    return Math.min(cap, Math.max(Math.floor(cap * this.getSeuil()), reserve)); // ECON-6 : une réserve au-dessus du plafond ne fait plus perdre la récolte
   },
 
   /* Appelé par WarehouseManager.addResource : `total` = stock + arrivée ; rend ce qui reste au stock.

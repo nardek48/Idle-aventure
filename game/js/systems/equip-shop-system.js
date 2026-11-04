@@ -143,8 +143,8 @@ var EquipShopManager = {
       stock.push(item);
     }
     this._capTopRarity(stock, size);
-    var self = this;
-    stock.forEach(function (it) { it.price = self.getPrice(it); it.bought = false; });
+    var self = this, mult = getEquipShopWorldPriceMult();
+    stock.forEach(function (it) { it.price = self.getPrice(it); it.bought = false; it.priceMult = mult; }); // ECON-7 : multiplicateur du prix
     var relic = this._relicOffer();
     if (relic) { if (stock.length > 1) stock[1] = relic; else stock.push(relic); } // 2e place : visible sans défiler
     return stock;
@@ -205,6 +205,18 @@ var EquipShopManager = {
     });
   },
 
+  /* Audit 04/11 (CPL2-1 / ECON-7) : vitrine tirée dans un monde plus bas que celui de son prix (voyage en
+     arrière) et le héros est remonté : objets de la Forêt au prix de la Tour. On la retire, comme v3.209.0. */
+  hasStaleWorldStock: function () {
+    var cur = window.WorldManager ? Number(WorldManager.worldIndex || 0) : 0, M = EQUIP_SHOP_WORLD_PRICE_MULT;
+    return (game.equipShopStock || []).some(function (it) {
+      if (!it || it.kind === "relic" || it.starter || it.bought || typeof it.worldIndex !== "number") return false;
+      var base = EQUIP_SHOP_PRICES[it.rarity] || EQUIP_SHOP_PRICES.common; // vitrine d'avant : multiplicateur relu dans le prix
+      var pm = typeof it.priceMult === "number" ? it.priceMult : Number(it.price || 0) / base;
+      return it.worldIndex < cur && (M[it.worldIndex] != null ? M[it.worldIndex] : 1) < pm;
+    });
+  },
+
   checkRefresh: function () {
     this.ensure();
     var now = Date.now();
@@ -215,7 +227,7 @@ var EquipShopManager = {
       game.equipShopManualRefreshCount = 0;
       return;
     }
-    if (this.hasOutOfTierStock()) {
+    if (this.hasOutOfTierStock() || this.hasStaleWorldStock()) {
       game.equipShopStock = this.generateStock();
       return;
     }
@@ -229,6 +241,7 @@ var EquipShopManager = {
       var extra = window.LootSystem && typeof LootSystem.rollWorldDrop === "function" ? LootSystem.rollWorldDrop() : null;
       if (!extra) break;
       extra.price = this.getPrice(extra);
+      extra.priceMult = getEquipShopWorldPriceMult();
       extra.bought = false;
       game.equipShopStock.push(extra);
     }
@@ -287,6 +300,7 @@ var EquipShopManager = {
     var owned = Object.assign({}, item);
     delete owned.price;
     delete owned.bought;
+    delete owned.priceMult;
     owned.uid = "itm_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8);
     owned.fromShop = true; // v3.322.0 (O9) : un objet acheté ne porte aucun souvenir, Offrande à 0
 

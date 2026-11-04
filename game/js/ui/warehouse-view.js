@@ -84,8 +84,8 @@ function warehouseOpenDemand() {
   });
   if (window.ProductionManager && window.PRODUCTION_BUILDINGS) Object.keys(PRODUCTION_BUILDINGS).forEach(function (id) {
     if (!ProductionManager.isBuildingUnlocked(id)) return;
-    add(ProductionManager.getNextCost(id));
-    if (!window.ProductionPlotsSystem || !ProductionPlotsSystem.isManaged(id)) return;
+    // ECON-9 : un bâtiment à parcelles ne se monte plus : son ancien coût de niveau n'est pas une demande
+    if (!window.ProductionPlotsSystem || !ProductionPlotsSystem.isManaged(id)) { add(ProductionManager.getNextCost(id)); return; }
     for (var row = 0; row < 3; row++) {
       var st = ProductionPlotsSystem.getRowState(id, row);
       if (st.rowOpen) { add(st.unlockCost); add(st.upCost); add(st.impCost); }
@@ -172,6 +172,13 @@ function getWarehouseOtherUses(key) {
   if (departs.length) out.push({ icon: "images/Icons/quests/start_expedition.webp", text: _t("Départ : {x}", { x: depTxt }) });
   if (Object.keys(window.PA2_ITEMS || {}).some(function (id) { return PA2_ITEMS[id].resource === key; })) out.push({ icon: "images/Icons/subtabs/inventory.webp", text: _t("Besace des Petites Aventures") });
   if (window.VILLAGE_EVENT_BUYBACK && VILLAGE_EVENT_BUYBACK.prices[key]) out.push({ icon: "images/Icons/village_buildings/merchant_hall.webp", text: _t("Marché de Sarkel : il la rachète par lots de {n} ({p} or l'unité)", { n: VILLAGE_EVENT_BUYBACK.lot, p: VILLAGE_EVENT_BUYBACK.prices[key] }) }); // v3.606.0 (D2)
+  // ECON-10 : le Grand Ouvrage (versement automatique ou à la main) et le festin du Campement
+  if (window.GrandOuvrage && GrandOuvrage.isOpen() && GrandOuvrage.getValue(key) > 0) {
+    out.push({ icon: "images/Icons/village_buildings/grand_ouvrage.webp", text: GrandOuvrage.autoKeep(key) !== Infinity
+      ? _t("Grand Ouvrage : versé tout seul au-delà de {p} % du plafond", { p: Math.round(GrandOuvrage.getSeuil() * 100) })
+      : _t("Grand Ouvrage : à verser à la main") });
+  }
+  if (window.FEAST_COST_BY_WORLD && FEAST_COST_BY_WORLD[0] && FEAST_COST_BY_WORLD[0][key]) out.push({ icon: FEAST_ICON, text: _t("Campement : le festin") });
   if (window.COMBAT_ITEMS && COMBAT_ITEMS[key]) out.push({ icon: COMBAT_ITEMS[key].icon, text: _t("Objet de combat : emporté à la préparation d'une sortie") });
   return out;
 }

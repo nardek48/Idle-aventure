@@ -48,7 +48,7 @@ function buildWorkshopSummaryBodyHTML() {
 
     var buildingDef = PRODUCTION_BUILDINGS[def.buildingId];
 
-    var h = '<button type="button" class="workshop-summary-row" onclick="jumpToWorkshop(\'' + def.buildingId + '\')">';
+    var h = '<button type="button" class="workshop-summary-row" onclick="jumpToWorkshop(\'' + workshopId + '\')">';
     h += '<div class="workshop-summary-row-icon">' + renderIconOrEmojiHTML(def.icon, "workshop-sum-ico", "") + '</div>';
     h += '<div class="workshop-summary-row-body">';
     h += '<div class="workshop-summary-row-top">';
@@ -112,12 +112,10 @@ function refreshWorkshopSummaryModal() {
 }
 window.refreshWorkshopSummaryModal = refreshWorkshopSummaryModal;
 
-/* Ferme la popup et déplie le panneau ateliers du bâtiment concerné (même état que le
-   toggle manuel de la carte, voir workshopsPanelExpanded dans production-view.js), pour
-   retrouver directement la carte au lieu de devoir la chercher/déplier soi-même. */
-function jumpToWorkshop(buildingId) {
+/* Ferme la popup et ouvre la feuille de l'atelier concerné. Audit 04/11 (ARCH-6) : l'ancien
+   dépliage (workshopsPanelExpanded) n'existait plus, rien ne s'ouvrait. */
+function jumpToWorkshop(workshopId) {
   closeWorkshopSummaryModal();
-  if (typeof workshopsPanelExpanded === "object") workshopsPanelExpanded[buildingId] = true;
-  if (typeof renderPanel === "function") renderPanel();
+  if (typeof openWorkshopSheet === "function") openWorkshopSheet(workshopId);
 }
 window.jumpToWorkshop = jumpToWorkshop;

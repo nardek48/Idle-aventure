@@ -110,7 +110,7 @@ var expSheet = null; // null | { type: "patrol" | "caravan", id }
     if (!list.length) return [];
     var back = list.filter(function (e) { return e.tone === "collect"; }), away = list.filter(function (e) { return e.tone === "away"; }), ready = list.some(function (e) { return e.tone === "ready"; });
     var e = { kind: "caravan", icon: ICON.caravan, title: _t("Caravane"), open: "openExpeditionsSheet('caravan')" }, parts = [];
-    var gold = window.CaravanManager ? CaravanManager.list().filter(function (c) { return CaravanManager._now() >= c.endsAt; }).reduce(function (t, c) { return t + Number(c.gold || 0); }, 0) : 0;
+    var gold = window.CaravanManager ? CaravanManager.list().filter(function (c) { return CaravanManager._now() >= c.endsAt; }).reduce(function (t, c) { return t + CaravanManager.unloadGold(c.gold); }, 0) : 0; // ECON-12 : bonus compris
     if (back.length) parts.push(_tn(back.length, "Rentrée · {g} or à décharger", "{n} rentrées · {g} or à décharger", { g: formatNumber(gold) }));
     if (away.length) parts.push(_tn(away.length, "{n} en route", "{n} en route"));
     if (ready) parts.push(_t("une place pour partir"));
@@ -136,7 +136,7 @@ var expSheet = null; // null | { type: "patrol" | "caravan", id }
     CM.list().forEach(function (c) {
       var e = { kind: "caravan", icon: ICON.caravan, open: "openExpeditionsSheet('caravan')",
         title: multi && window.WORLDS && WORLDS[c.world] ? _t("Caravane · {x}", { x: _td(WORLDS[c.world].name) }) : _t("Caravane") };
-      if (now >= c.endsAt) { e.status = _t("Rentrée · {n} or à décharger", { n: formatNumber(c.gold) }); e.tone = "collect"; e.action = { label: _t("Décharger"), onclick: "unloadCaravanFromSheet(" + c.world + ")", primary: true }; }
+      if (now >= c.endsAt) { e.status = _t("Rentrée · {n} or à décharger", { n: formatNumber(CM.unloadGold(c.gold)) }); e.tone = "collect"; e.action = { label: _t("Décharger"), onclick: "unloadCaravanFromSheet(" + c.world + ")", primary: true }; }
       else { e.status = _t("En route vers le marché"); e.tone = "away"; e.endAt = c.endsAt; }
       out.push(e);
     });

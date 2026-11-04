@@ -87,6 +87,8 @@ function buildVillageCostListHTML(id) {
     h += '</div>';
 
     if (!ok) {
+      var capWhy = key === "gold" ? "" : WarehouseManager.capHint(key, cost[key]); // EQUI-2 : le stock ne peut pas y arriver
+      if (capWhy) { h += '<div class="vb-cost-where res-go-link"' + resGoAttr(key) + '>' + esc(capWhy) + ' ›</div>'; return; }
       var hint = getVillageResourceHint(key);
       if (hint) h += key === "gold" ? '<div class="vb-cost-where">' + esc(hint) + '</div>'
         : '<div class="vb-cost-where res-go-link"' + resGoAttr(key) + '>' + esc(_t("Où en trouver : {x}", { x: hint })) + ' ›</div>';
@@ -554,7 +556,7 @@ function buildForgeBoardHTML() {
       h += '</div>';
       // v3.448.6 : où trouver chaque matériau qui manque (comme sur les chantiers du village)
       manquants.forEach(function (key) {
-        var hint = getVillageResourceHint(key);
+        var hint = WarehouseManager.capHint(key, cost[key]) || getVillageResourceHint(key); // EQUI-2
         if (hint) h += '<div class="vb-cost-where forge-row-where res-go-link"' + resGoAttr(key) + '>' + esc(_td(getVillageCostMeta(key).label)) + ' : ' + esc(hint) + ' ›</div>';
       });
     }

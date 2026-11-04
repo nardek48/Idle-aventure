@@ -94,6 +94,24 @@ var WarehouseManager = {
     return base + bonus;
   },
 
+  /* Audit 04/11 (EQUI-2) : ce que le stock peut vraiment atteindre, plafond ou part gardée par
+     le versement automatique du Grand Ouvrage (le reste y part). */
+  getUsableCap: function (key) {
+    var cap = this.getCap(key);
+    var keep = (window.GrandOuvrage && typeof GrandOuvrage.autoKeep === "function") ? GrandOuvrage.autoKeep(key) : Infinity;
+    return Math.min(cap, keep);
+  },
+
+  /* EQUI-2 : phrase quand un coût dépasse ce que le stock peut atteindre, sinon "". */
+  capHint: function (key, need) {
+    var def = (typeof WAREHOUSE_RESOURCES !== "undefined") ? WAREHOUSE_RESOURCES[key] : null;
+    need = Number(need || 0);
+    if (!def || key === "gold" || !(need > this.getUsableCap(key))) return "";
+    var cap = this.getCap(key), p = { c: formatNumber(Math.floor(this.getUsableCap(key))), x: _td(def.name) };
+    if (need > cap) return _t("L'Entrepôt n'en garde que {c} : monte l'Entrepôt.", p);
+    return _t("Le Grand Ouvrage n'en laisse que {c} : monte l'Entrepôt, ou relève la réserve protégée de {x}.", p);
+  },
+
   /* v3.330.0 (E1) : place libre avant le plafond (0 si un stock ancien le dépasse déjà). */
   getFreeSpace: function (key) {
     var cap = this.getCap(key);
@@ -122,7 +140,14 @@ var WarehouseManager = {
     var kept = (window.GrandOuvrage && typeof GrandOuvrage.autoAbsorb === "function") ? GrandOuvrage.autoAbsorb(key, current + amount) : current + amount;
     if (kept < current + amount) {
       game.resources[key] = kept;
-      if (!silent) addLog(_t("{x} +{n} (Entrepôt)", { x: _td(def.name), n: formatNumber(amount) }), "event");
+      // EQUI-3 : le journal sépare ce qui reste au stock de ce qui part au Grand Ouvrage
+      var inStore = Math.max(0, kept - current);
+      if (!silent) addLog(inStore > 0
+        ? _t("{x} +{a} (Entrepôt), +{b} (Grand Ouvrage)", { x: _td(def.name), a: formatNumber(inStore), b: formatNumber(amount - inStore) })
+        : _t("{x} +{n} (Grand Ouvrage)", { x: _td(def.name), n: formatNumber(amount) }), "event");
+      if ((key === "bois" || key === "pierre") && window.WorkshopUnlockManager && typeof WorkshopUnlockManager.checkCurrentStep === "function") {
+        WorkshopUnlockManager.checkCurrentStep(); // le stock a bougé : même suivi que l'entrée normale
+      }
       return amount;
     }
     // v3.330.1 (E1) : ce qui ne rentre pas est perdu — on le dit au journal (chasses, sorties, récompenses)

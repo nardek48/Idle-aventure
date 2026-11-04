@@ -287,7 +287,10 @@ function buildZoneActionHTML(opts) {
   if (opts.iconHTML) h += opts.iconHTML;
   h += '<span class="zone-act-t"><b>' + esc(opts.label) + '</b><small>' + esc(opts.desc) + '</small></span>';
   h += opts.done ? '<span class="zone-act-ok">✓</span>' : buildPlotCostRowHTML(opts.cost);
-  return h + '</button>';
+  h += '</button>';
+  // EQUI-2 : un coût hors de portée du stock (plafond ou Grand Ouvrage) le dit sous le bouton
+  var capWhy = !opts.done && !opts.canAfford && opts.cost ? ProductionPlotsSystem.overCapReason(opts.cost) : null;
+  return capWhy ? h + '<p class="zone-win-txt zone-cap-why">' + esc(capWhy) + '</p>' : h;
 }
 
 /* v3.422.0 : un débit sous 1/min garde deux décimales (0,28 et 0,35 s'affichaient tous deux 0,3). */
@@ -405,7 +408,16 @@ function buildZoneGroupActionsHTML(buildingId) {
   return '<div class="pc3-auto"><span><b>' + esc(_t("Achat automatique")) + '</b><small>'
     + esc(avail ? _t("Monte la parcelle la moins chère avec ce qui dépasse la moitié du plafond. Le village garde le reste.") : _t("S'ouvre au Désert. En Forêt, on apprend à la main."))
     + '</small></span><button type="button" class="kswitch' + (on ? ' is-on' : '') + '" role="switch" aria-checked="' + on + '" aria-label="' + esc(_t("Achat automatique")) + '"'
-    + (avail ? ' onclick="toggleParcelAuto()"' : ' disabled') + '></button></div>';
+    + (avail ? ' onclick="toggleParcelAuto()"' : ' disabled') + '></button></div>' + buildZoneAutoBlockHTML(buildingId);
+}
+/* ECON-11 : l'achat automatique qui ne peut plus rien acheter dit pourquoi. */
+function buildZoneAutoBlockHTML(buildingId) {
+  var PPS = ProductionPlotsSystem, b = PPS.isAuto() && typeof PPS.getAutoBlock === "function" ? PPS.getAutoBlock(buildingId) : null;
+  if (!b) return "";
+  var d = WAREHOUSE_RESOURCES[b.key] || {}, p = { x: _td(d.name || b.key), n: formatNumber(b.need), m: formatNumber(b.room), c: formatNumber(Math.floor(b.usable)) };
+  return '<p class="zone-win-txt zone-cap-why">' + esc(b.need > b.usable
+    ? _t("Achat automatique arrêté : la prochaine parcelle demande {n} {x}, le stock n'en garde que {c}. Monte l'Entrepôt.", p)
+    : _t("Achat automatique arrêté : la prochaine parcelle demande {n} {x}, il ne dépense que ce qui dépasse la moitié du plafond ({m}). Achète-la à la main.", p)) + '</p>';
 }
 function toggleParcelAuto() {
   ProductionPlotsSystem.setAuto(!ProductionPlotsSystem.isAuto());
@@ -623,7 +635,7 @@ window.selectWorkshopRecipe = selectWorkshopRecipe;
    plus proche, décision validée avec Seb. */
 function setWorkshopCraftQty(workshopId, rawValue) {
   var recipeId = selectedWorkshopRecipe[workshopId];
-  var maxCrafts = WorkshopsSystem.getMaxCraftTimes(workshopId, recipeId);
+  var maxCrafts = WorkshopsSystem.getMaxManualCraftTimes(workshopId, recipeId); // ECON-4 : place en sortie comprise
   if (maxCrafts <= 0) return;
 
   var parsed = Math.floor(Number(rawValue));
@@ -833,7 +845,7 @@ function getWorkshopTileState(w) {
   if (WorkshopsSystem.getQueue(w.id).length) return "run";
   if (autoId && WorkshopsSystem.getMaxAutoCraftTimes(w.id, autoId) <= 0) return "stalled";
   var best = 0;
-  w.recipes.forEach(function (r) { best = Math.max(best, WorkshopsSystem.getMaxCraftTimes(w.id, r.id)); });
+  w.recipes.forEach(function (r) { best = Math.max(best, WorkshopsSystem.getMaxManualCraftTimes(w.id, r.id)); }); // ECON-4
   return best > 0 ? "idle" : "block";
 }
 window.getWorkshopTileState = getWorkshopTileState;
@@ -869,7 +881,7 @@ function buildWorkshopTileHTML(w, backId) {
   else if (state === "block") rib = '<span class="wk-tile-rib is-block">' + _t("Bloqué") + '</span>';
   else if (state === "idle") {
     var n = 0;
-    w.recipes.forEach(function (r) { n = Math.max(n, WorkshopsSystem.getMaxCraftTimes(w.id, r.id)); });
+    w.recipes.forEach(function (r) { n = Math.max(n, WorkshopsSystem.getMaxManualCraftTimes(w.id, r.id)); });
     rib = '<span class="wk-tile-rib is-idle">×' + formatNumber(n) + '</span>';
   }
   h += rib;
@@ -1022,7 +1034,7 @@ function buildWorkshopSheetHTML(workshopId) {
   var recipe = w.recipes.filter(function (r) { return r.id === selectedWorkshopRecipe[workshopId]; })[0] || w.recipes[0];
   var autoId = WorkshopsSystem.getAutoRecipeId(workshopId);
   var isAutoHere = autoId === recipe.id;
-  var maxCrafts = WorkshopsSystem.getMaxCraftTimes(workshopId, recipe.id);
+  var maxCrafts = WorkshopsSystem.getMaxManualCraftTimes(workshopId, recipe.id); // ECON-4 : place en sortie comprise
   var queue = WorkshopsSystem.getQueue(workshopId);
 
   var h = '<div class="full-menu-overlay" onclick="closeWorkshopSheetFromBackdrop(event)">';
@@ -1092,7 +1104,10 @@ function buildWorkshopSheetHTML(workshopId) {
     h += '<div class="wk-alert is-hint">' + esc(_t("déjà active sur {x} — l'activer ici la remplacera.", { x: oD ? _td(oD.name) : autoId })) + '</div>';
   }
   var missing = getWorkshopMissingInput(recipe);
-  if (isAutoHere && !queue.length && WorkshopsSystem.getMaxAutoCraftTimes(workshopId, recipe.id) <= 0 && !missing) {
+  var outFull = !missing && WorkshopsSystem.getOutputRoomTimes(workshopId, recipe.id) <= 0; // ECON-5 : c'est le produit qui est plein
+  if (outFull && (isAutoHere ? !queue.length : maxCrafts <= 0)) {
+    h += '<div class="wk-alert is-reserve">' + esc(_t("En attente : {x} est au plafond de l'Entrepôt.", { x: _td(out.name || recipe.outputs[0].resourceId) })) + '</div>';
+  } else if (isAutoHere && !queue.length && WorkshopsSystem.getMaxAutoCraftTimes(workshopId, recipe.id) <= 0 && !missing) {
     h += '<div class="wk-alert is-reserve">' + _t("En attente : la réserve protégée empêche un nouveau lot — ajustable dans l'Entrepôt.") + '</div>';
   } else if (missing && maxCrafts <= 0) {
     var md = WAREHOUSE_RESOURCES[missing.resourceId] || {};

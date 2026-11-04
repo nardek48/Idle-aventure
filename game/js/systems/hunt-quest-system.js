@@ -122,6 +122,7 @@ var HuntQuestManager = {
     // de sortie, et c'est ce qui rend le lot de 20 engageant.
     if (quest.rewardGold) {
       game.gold += quest.rewardGold;
+      game.totalGoldEarned = Number(game.totalGoldEarned || 0) + quest.rewardGold; // SUIV-6 : comme les autres primes
       addLog("🪙 " + _t("Prime de battue : +{n} or", { n: formatNumber(quest.rewardGold) }), "event");
     }
 

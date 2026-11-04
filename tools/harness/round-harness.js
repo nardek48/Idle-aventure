@@ -19425,8 +19425,8 @@ console.log("\n[341] v3.520.0 — correctifs de l'audit, lot 5 : fiches et coût
     ok(g.buildWarehouseSheetHTML("resine_durcie").indexOf(g._t("Ne se vend pas.")) >= 0 && g.buildWarehouseSheetHTML("resine_durcie").indexOf("sert aux constructions et aux ateliers") < 0, "phrase du bas : plus de « sert aux constructions et aux ateliers »");
     // RES-9 : un coût au-delà du plafond de l'Entrepôt le dit
     var PPS = g.ProductionPlotsSystem, cap = g.WarehouseManager.getCap("bois");
-    var reason = PPS.overCapReason({ gold: 10, bois: cap + 164 }, "unlock");
-    ok(reason && reason.indexOf(g._t("Il faut {n} {x}, mais l'Entrepôt n'en garde que {c}. Monte l'Entrepôt, ou défriche zone par zone.", { x: g._td(g.WAREHOUSE_RESOURCES.bois.name), n: g.formatNumber(cap + 164), c: g.formatNumber(cap) })) === 0 && PPS.overCapReason({ bois: 1 }, "unlock") === null, "rangée trop chère pour le plafond : la raison le dit (RES-9)");
+    var reason = PPS.overCapReason({ gold: 10, bois: cap + 164 });
+    ok(reason && reason === g.WarehouseManager.capHint("bois", cap + 164) && /Entrepôt/.test(reason) && PPS.overCapReason({ bois: 1 }) === null, "rangée trop chère pour le plafond : la raison le dit (RES-9, v3.687 : EQUI-2)");
     game.resources.bois = cap + 200; // stock d'avant le plafond (remboursement) : au-delà du plafond
     ok(PPS.overCap({ bois: cap + 164 }) === null, "stock déjà au-delà du plafond : la rangée reste payable (revue)");
     // ERG-5 : l'écran de départ refusé ouvre la fiche de la ressource, et « ‹ » y ramène
@@ -22866,6 +22866,111 @@ console.log("\n[451] v3.686.0 — Sauvegarde et fiabilité (audit 04/11, lot I7)
   g.restoreBaseState = fn.rbs; g.ResumeManager.catchUpAfterSlotLoad = fn.cu; g.renderAll = fn.ra; g.HeroSlotManager.getActiveSlot = fn.hga;
   clearSlots(); touched.forEach(function (k) { if (keep[k] !== null) LS.setItem(k, keep[k]); });
   try { run("saveLockedKey = null; instanceLocked = false; ReturnManager._pending = null; fullResetState(); game.saveSupported = true;"); } catch (e) {}
+})();
+
+console.log("\n[452] v3.687.0 — Économie et village (audit 04/11, lot I8)");
+(function () {
+  var rd = function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); };
+  var fn = { toast: g.showToast, log: g.addLog, ows: g.openWorkshopSheet, rp: g.renderPanel, save: g.saveGame };
+  var toasts = [], logs = [];
+  g.showToast = function (t) { toasts.push(String(t)); }; g.addLog = function (t) { logs.push(String(t)); }; g.saveGame = function () {}; g.renderPanel = function () {};
+  var W = g.WarehouseManager, GO = g.GrandOuvrage;
+  var world = function (w) { run("fullResetState(); game.playerName='T'; game.heroId='knight'; game.worldsEverReached = {}; for (var i = 0; i <= " + w + "; i++) game.worldsEverReached[i] = true; WorldManager.worldIndex = " + w + "; WarehouseManager.ensure(); VillageBuildingManager.ensure();"); };
+  try {
+    // CPL2-1 / ECON-7 : vitrine de la Forêt tirée après un voyage, puis retour à la Tour
+    world(5); run("WorldManager.worldIndex = 0; game.equipShopStarterServed = true; game.equipShopStock = []; EquipShopManager.checkRefresh();");
+    var st0 = g.game.equipShopStock.filter(function (it) { return it.kind !== "relic"; });
+    ok(st0.length && st0.every(function (it) { return it.worldIndex === 0 && it.priceMult === 30; }), "ECON-7 : en Forêt, la vitrine est tirée en Forêt au prix de la Tour (v3.114, inchangé)");
+    var t0 = g.game.equipShopResetTime; run("WorldManager.worldIndex = 5;");
+    ok(g.EquipShopManager.hasStaleWorldStock(), "ECON-7 : revenu à la Tour, la vitrine de la Forêt est repérée");
+    run("EquipShopManager.checkRefresh();");
+    ok(g.game.equipShopStock.filter(function (it) { return it.kind !== "relic"; }).every(function (it) { return it.worldIndex === 5; }) && g.game.equipShopResetTime === t0, "ECON-7 : elle est retirée au monde courant, minuteur gardé (comme v3.209)");
+    world(1); run("game.equipShopStarterServed = true; game.equipShopStock = []; EquipShopManager.checkRefresh(); game.worldsEverReached[2] = true; WorldManager.worldIndex = 2;");
+    ok(!g.EquipShopManager.hasStaleWorldStock(), "ECON-7 témoin : en progressant (Désert -> Ruines), la vitrine garde ses prix (v3.114)");
+    var legacy = { slot: "weapon", rarity: "common", worldIndex: 0, price: 9000 };
+    run("WorldManager.worldIndex = 5;"); g.game.equipShopStock = [legacy];
+    ok(g.EquipShopManager.hasStaleWorldStock(), "ECON-7 : vitrine d'avant sans priceMult, le prix suffit à la repérer");
+    // ECON-8 : festin au prix du monde le plus loin atteint
+    world(4); run("WorldManager.worldIndex = 0;");
+    ok(g.FeastManager.cost() === g.FEAST_COST_BY_WORLD[4], "ECON-8 : en Forêt après la Montagne, le festin coûte le prix de la Montagne");
+    // ECON-4 / ECON-5 : sortie pleine, plus de lot manuel perdu, la raison est la bonne
+    world(1); run("game.explorationProgression.sawmillUnlocked = true; ProductionManager.unlockBuilding('sawmill'); game.village.buildings.warehouse.level = 0;");
+    var capP = W.getCap("planche"); g.game.resources.planche = capP; g.game.resources.bois = 400;
+    var WS = g.WorkshopsSystem;
+    ok(WS.getMaxCraftTimes("scierie_fine", "planche") > 0 && WS.getMaxManualCraftTimes("scierie_fine", "planche") === 0, "ECON-4 : sortie pleine, le maximum manuel est 0");
+    ok(WS.enqueueCraft("scierie_fine", "planche", 1) === false && g.game.resources.bois === 400 && toasts.some(function (t) { return /au plafond/.test(t); }), "ECON-4 : Fabriquer refusé, aucun intrant débité, la raison est dite");
+    var sh4 = g.buildWorkshopSheetHTML("scierie_fine");
+    ok(sh4.indexOf(g.esc(g._t("En attente : {x} est au plafond de l'Entrepôt.", { x: g._td(g.WAREHOUSE_RESOURCES.planche.name) }))) >= 0 && sh4.indexOf("confirmCraftWorkshop") < 0, "ECON-4 : la feuille le dit, sans bouton Fabriquer");
+    run("WorkshopsSystem.setAutoRecipe('scierie_fine', 'planche');");
+    var sh5 = g.buildWorkshopSheetHTML("scierie_fine");
+    ok(/au plafond de l&#39;Entrepôt/.test(sh5) && sh5.indexOf("réserve protégée empêche") < 0, "ECON-5 : en Continu, « au plafond » et non « la réserve protégée »");
+    run("WorkshopsSystem.setAutoRecipe('scierie_fine', 'planche');");
+    g.game.resources.planche = capP - 5;
+    var unit = WS.getRecipe("scierie_fine", "planche").outputs[0].quantity;
+    ok(WS.getMaxManualCraftTimes("scierie_fine", "planche") === Math.min(WS.getMaxCraftTimes("scierie_fine", "planche"), Math.floor(5 / unit)) && WS.enqueueCraft("scierie_fine", "planche", Math.floor(5 / unit) || 1) === (Math.floor(5 / unit) >= 1), "ECON-4 témoin : avec de la place, le lot part dans la limite de la sortie");
+    run("Object.keys(WORKSHOPS_CONFIG).forEach(function (w) { if (WORKSHOPS_CONFIG[w].active) WorkshopsSystem.getQueue(w).length = 0; });");
+    // ECON-6 : réserve au-dessus du plafond, la récolte part au Grand Ouvrage
+    world(1); run("game.village.buildings.warehouse.level = 0; GrandOuvrage.setAuto(true);");
+    var capB = W.getCap("bois"); g.ResourceReserveManager.setReserve("bois", capB + 500);
+    ok(GO.autoKeep("bois") === capB, "ECON-6 : la part gardée est bornée au plafond (" + GO.autoKeep("bois") + " / " + capB + ")");
+    g.game.resources.bois = capB; var pts = GO.getPoints(); W.addResource("bois", 270, true);
+    ok(g.game.resources.bois === capB && GO.getPoints() > pts, "ECON-6 : les 270 Bois vont au Grand Ouvrage, plus rien de perdu");
+    g.ResourceReserveManager.setReserve("bois", 0);
+    // EQUI-2 / ECON-3 : ce que le stock peut atteindre, dit aux fiches, refus et palier
+    var capS = W.getCap("pierre"), keepS = Math.floor(capS * GO.getSeuil());
+    ok(W.getUsableCap("pierre") === keepS && W.getUsableCap("planche") === W.getCap("planche"), "EQUI-2 : getUsableCap = min(plafond, part gardée) (" + keepS + ")");
+    var hint = W.capHint("pierre", keepS + 80);
+    ok(hint === g._t("Le Grand Ouvrage n'en laisse que {c} : monte l'Entrepôt, ou relève la réserve protégée de {x}.", { c: g.formatNumber(keepS), x: g._td(g.WAREHOUSE_RESOURCES.pierre.name) }) && W.capHint("pierre", keepS) === "" && /^L'Entrepôt n'en garde que/.test(W.capHint("pierre", capS + 1)), "EQUI-2 : la phrase dit qui limite (Grand Ouvrage ou plafond), rien sous la limite");
+    var ml = g.storyMissingCostLines({ pierre: keepS + 80 }, "Forge 6");
+    ok(ml.length === 1 && ml[0].where === hint, "EQUI-2 : le palier dit la limite au lieu de « Carrière »");
+    ok(g.ProductionPlotsSystem.overCapReason({ pierre: keepS + 80 }) === hint && /zone-cap-why/.test(g.buildZoneActionHTML({ cost: { pierre: keepS + 80 }, canAfford: false, label: "x", desc: "y" })), "ECON-3 : le refus des parcelles reprend la raison, sous le bouton grisé");
+    g.ResourceReserveManager.setReserve("pierre", keepS + 80);
+    ok(W.getUsableCap("pierre") === keepS + 80 && W.capHint("pierre", keepS + 80) === "", "EQUI-2 : relever la réserve protégée lève bien la limite");
+    g.ResourceReserveManager.setReserve("pierre", 0);
+    ok(/WarehouseManager\.capHint\(key, cost\[key\]\)/.test(rd("js/ui/village-building-view.js")), "EQUI-2 : chantiers et reforges lisent la même phrase");
+    // EQUI-3 : le journal sépare Entrepôt et Grand Ouvrage
+    g.game.resources.pierre = keepS - 20; logs.length = 0; W.addResource("pierre", 60);
+    ok(logs.some(function (l) { return l.indexOf("+20 (") >= 0 && /\+40 \(Grand Ouvrage\)/.test(l); }), "EQUI-3 : « Pierre +20 (Entrepôt), +40 (Grand Ouvrage) » (" + logs.join(" | ") + ")");
+    logs.length = 0; W.addResource("pierre", 60);
+    ok(logs.length === 1 && /\+60 \(Grand Ouvrage\)/.test(logs[0]) && !/Entrepôt/.test(logs[0]), "EQUI-3 : tout au Grand Ouvrage, plus de « (Entrepôt) »");
+    // ECON-10 : Grand Ouvrage et festin dans « Où ça part »
+    var uses = function (k) { return g.getWarehouseOtherUses(k).map(function (u) { return u.text; }).join(" | "); };
+    ok(/Grand Ouvrage : versé tout seul/.test(uses("bois")) && /Campement : le festin/.test(uses("ble")) && /Grand Ouvrage : à verser à la main/.test(uses("planche")) && !/festin/.test(uses("bois")), "ECON-10 : débouchés Grand Ouvrage et festin cités");
+    // ECON-11 : l'achat automatique bloqué le dit
+    var PPS = g.ProductionPlotsSystem, nb = PPS.getNextAction, big = { bois: keepS * 10 };
+    PPS.getNextAction = function () { return { kind: "upgrade", cost: big }; };
+    var blk = PPS.getAutoBlock("lumber");
+    var gh = g.buildZoneGroupActionsHTML("lumber");
+    PPS.getNextAction = function () { return { kind: "upgrade", cost: { bois: 1 } }; };
+    var nob = PPS.getAutoBlock("lumber");
+    PPS.getNextAction = nb;
+    ok(blk && blk.key === "bois" && /Achat automatique arrêté/.test(gh) && nob === null, "ECON-11 : achat automatique arrêté, la raison s'affiche sous l'interrupteur");
+    // ECON-12 : l'or affiché des caravanes comprend le bonus du Grand Ouvrage
+    g.game.village.grandOuvrage.points = GO.getTierCost(1) + GO.getTierCost(2);
+    ok(g.CaravanManager.unloadGold(1000) === GO.applyGold(1000) && GO.applyGold(1000) > 1000 && /unloadGold\(c\.gold\)/.test(rd("js/ui/caravan-view.js")) && /unloadGold\(c\.gold\)/.test(rd("js/ui/expeditions-view.js")), "ECON-12 : or des caravanes affiché avec le bonus (" + GO.applyGold(1000) + ")");
+    // ECON-9 : un bâtiment à parcelles n'a plus de coût de niveau dans l'alerte
+    var gnc = g.ProductionManager.getNextCost;
+    g.ProductionManager.getNextCost = function (id) { return PPS.isManaged(id) ? { cire_fantome: 1 } : gnc.call(g.ProductionManager, id); };
+    var dem = g.warehouseOpenDemand(); g.ProductionManager.getNextCost = gnc;
+    ok(!dem.cire_fantome, "ECON-9 : coût hérité des bâtiments à parcelles ignoré");
+    // ECON-13, ECON-15 : textes
+    ok(/caravane longue au Marché de la Tour/.test(g.WAREHOUSE_RESOURCES.givre_bleu.sourceHint), "ECON-13 : le Givre bleu cite la caravane longue");
+    ok(!/_t\("Autovente"\)/.test(rd("js/ui/equipment-view.js") + rd("js/ui/heros-screens-view.js")), "ECON-15 : « Auto-offrande » au lieu d'« Autovente »");
+    // SUIV-6 : or des événements du village dans « Or gagné »
+    var VE = g.VillageEvents, keepVE = { cd: VE.canDeliver, nd: VE.needs, rg: VE.rewardGold, gf: VE.rewardGifts, ac: VE.active, mo: VE.marketOn };
+    var ev = { sold: 0 }; VE.canDeliver = function () { return true; }; VE.needs = function () { return {}; }; VE.rewardGold = function () { return 792; }; VE.rewardGifts = function () { return {}; }; VE.active = function () { return ev; };
+    var tg = Number(g.game.totalGoldEarned || 0); VE.deliver();
+    VE.marketOn = function () { return true; }; g.game.resources.pierre_errante = 10; VE.sellLot("pierre_errante");
+    ok(g.game.totalGoldEarned === tg + 792 + g.VILLAGE_EVENT_BUYBACK.prices.pierre_errante * g.VILLAGE_EVENT_BUYBACK.lot, "SUIV-6 : livraison et rachat de Sarkel comptés dans « Or gagné »");
+    VE.canDeliver = keepVE.cd; VE.needs = keepVE.nd; VE.rewardGold = keepVE.rg; VE.rewardGifts = keepVE.gf; VE.active = keepVE.ac; VE.marketOn = keepVE.mo;
+    ok(/game\.totalGoldEarned = Number\(game\.totalGoldEarned \|\| 0\) \+ quest\.rewardGold/.test(rd("js/systems/hunt-quest-system.js")), "SUIV-6 : prime de battue comptée aussi");
+    // ARCH-6 : « Files » ouvre la feuille de l'atelier
+    var opened = null; g.openWorkshopSheet = function (id) { opened = id; };
+    g.jumpToWorkshop("scierie_fine");
+    ok(opened === "scierie_fine" && /jumpToWorkshop\(\\'' \+ workshopId/.test(rd("js/ui/workshop-summary-modal.js")), "ARCH-6 : une ligne de « Files » ouvre son atelier");
+  } catch (err) { ok(false, "[452] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  g.showToast = fn.toast; g.addLog = fn.log; g.openWorkshopSheet = fn.ows; g.renderPanel = fn.rp; g.saveGame = fn.save;
+  try { run("ResourceReserveManager.ensure(); game.production._resourceReserves = {}; fullResetState();"); } catch (e) {}
 })();
 
 Promise.all(ATTENTES).then(function () {
