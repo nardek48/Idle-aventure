@@ -200,6 +200,7 @@ var AdventureQuestManager = {
     if (window.HuntQuestManager && game.huntRun && game.huntRun.active) {
       return showToast(_t("Termine ou arrête ta chasse en cours avant de lancer une quête"), 1600);
     }
+    if (game.livingMaps && game.livingMaps.fight) return showToast(_t("Termine d'abord le combat engagé sur la carte"), 1600); // audit 04/11 (QA-9) : pas deux sorties à la fois
 
     if (window.heroLockToast && heroLockToast()) return; // v3.307.0 : héros en expédition
     // v3.311.0 : quête qui se joue avec un compagnon dont la voie doit être choisie (étape 8)

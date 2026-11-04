@@ -68,6 +68,7 @@ var HuntQuestManager = {
     if (window.AdventureQuestManager && game.adventureQuestRun && game.adventureQuestRun.active) {
       return showToast(_t("Termine ou abandonne ta quête avant de chasser"), 1600);
     }
+    if (game.livingMaps && game.livingMaps.fight) return showToast(_t("Termine d'abord le combat engagé sur la carte"), 1600); // audit 04/11 (QA-9) : pas deux sorties à la fois
 
     if (window.heroLockToast && heroLockToast()) return; // v3.307.0 : héros en expédition
     // v3.330.0 (E4) : vivres de sortie pour une chasse déjà bouclée une fois

@@ -10,6 +10,7 @@
    Les textes des données sont traduits par _td() à l'affichage (registre : lang/data-fields.js). */
 I18n.register("en", {
   // index.html
+  "Une élite engagée sur la carte doit être finie (ou fuie) avant de lancer une quête, une chasse ou un donjon.": "An elite fight in progress on the map must be finished (or fled) before starting a quest, a hunt or a dungeon.",
   "Deux fenêtres ouvertes : celle qui passe la main n'écrit plus rien, même si l'autre change de héros. « Recharger ici » rouvre ton héros.": "Two windows open: the one that hands over no longer writes anything, even if the other switches hero. “Reload here” reopens your hero.",
   "Mes héros : fermer la création d'un nouveau héros ramène au héros en cours, sans laisser d'emplacement vide derrière.": "My heroes: closing the creation of a new hero brings you back to your current hero, without leaving an empty slot behind.",
   "Sac plein : une pièce offerte par l'Histoire n'est plus convertie en Aether, elle entre dans le sac en dépassement.": "Full bag: an item granted by the Story is no longer turned into Aether, it goes into your bag as overflow.",
@@ -1208,6 +1209,7 @@ I18n.register("en", {
   "Vague {a} / {b}": "Wave {a} / {b}",
   "Le combat continue à l’écran Combat. Si tes PV tombent à 0, la tentative s’arrête ici (récompense réduite selon les vagues passées).": "The fight goes on in the Combat screen. If your HP drops to 0, the attempt ends here (reward reduced according to waves cleared).",
   "Reprendre le combat": "Resume the fight",
+  "Termine d'abord le combat engagé sur la carte": "Finish the fight in progress on the map first",
   "En pleine sortie, pas de repas : termine ou abandonne d'abord.": "No meals in the middle of a run: finish or abandon it first.",
   "Termine le combat d'abord.": "Finish the fight first.",
   "Abandonner la tentative": "Abandon the attempt",

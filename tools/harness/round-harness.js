@@ -22477,6 +22477,27 @@ console.log("\n[446] v3.681.0 — Fenêtre voilée : aucune écriture, « Rechar
   try { run("instanceLocked = false; saveLockedKey = null; setActiveSlot(1);"); } catch (e) {}
 })();
 
+console.log("\n[447] v3.682.0 — Élite de carte engagée : pas de seconde sortie (audit 04/11, QA-9)");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.heroHp = game.heroMaxHp;");
+    run("game.livingMaps = game.livingMaps || {}; game.livingMaps.fight = { mapId: 'forest', sectorId: 'arbremere', eliteId: 'x' };");
+    var aq = Object.keys(g.ADVENTURE_QUESTS)[0], hq = Object.keys(g.HUNT_QUESTS)[0];
+    g.AdventureQuestManager.start(aq);
+    ok(!(g.game.adventureQuestRun && g.game.adventureQuestRun.active), "quête d'aventure refusée");
+    g.HuntQuestManager.start(hq);
+    ok(!(g.game.huntRun && g.game.huntRun.active), "chasse refusée");
+    run("game.dungeonTierCleared = {}; DungeonManager.start(1);");
+    ok(!(g.game.dungeonRun && g.game.dungeonRun.active), "donjon refusé");
+    ok(!!g.game.livingMaps.fight, "l'élite reste engagée");
+    run("game.livingMaps.fight = null; game.dungeonRun = { active: false }; SortieManager.end('return'); DungeonManager.start(1);");
+    var dOk = !!(g.game.dungeonRun && g.game.dungeonRun.active);
+    run("if (game.dungeonRun) game.dungeonRun.active = false; SortieManager.end('return');");
+    ok(dOk, "témoin : sans élite engagée, le même donjon démarre");
+  } catch (err) { ok(false, "[447] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  try { run("game.livingMaps.fight = null; game.adventureQuestRun = { active: false }; game.huntRun = { active: false }; game.dungeonRun = { active: false };"); } catch (e) {}
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");
