@@ -29,7 +29,8 @@ function buildDungeonActiveHTML() {
   }
   var boons = DungeonManager.getRunBoons(); // v3.472.0 : cartes prises aux haltes
   if (boons.length) h += '<div class="dungeon-active-boons">' + boons.map(function (c) { return '<span>' + esc(_td(c.name)) + '</span>'; }).join("") + '</div>';
-  h += '<p class="panel-sub">' + _t("Bats-toi dans l’onglet Combat. Si tes PV tombent à 0, la tentative s’arrête ici (récompense réduite selon les vagues passées).") + '</p>';
+  h += '<p class="panel-sub">' + _t("Le combat continue à l’écran Combat. Si tes PV tombent à 0, la tentative s’arrête ici (récompense réduite selon les vagues passées).") + '</p>';
+  h += '<button class="settings-btn primary" type="button" onclick="switchTab(\'combat\')">' + _t("Reprendre le combat") + '</button>'; // audit 04/11 (QA-2, QA-V1)
   h += '<button class="settings-btn danger" type="button" onclick="DungeonManager.forfeit()">' + _t("Abandonner la tentative") + '</button>';
   h += '</div>';
   return h;

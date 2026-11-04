@@ -734,7 +734,10 @@ function buildLivingMapPanelHTML(mapId, running) {
   var isElite = content && content.type === "elite";
   // Le verbe ne trahit pas un contenu inconnu : « Affronter l'élite » seulement quand le nom est révélé.
   var verb = s.state === "libere" ? (isElite && repeatable ? _t("Affronter l'élite") : _t("Rejouer le secteur")) : s.state === "recouvert" ? _t("Reprendre le secteur") : (isElite && known ? _t("Affronter l'élite") : _t("Partir"));
-  if (running === d.id) {
+  if (running === d.id && isElite && LM.getFight()) {
+    // audit 04/11 (QA-2) : une élite engagée se reprend d'ici (avant : bouton éteint, carte bloquée)
+    h += '<button class="settings-btn primary" type="button" onclick="switchTab(\'combat\')">' + _t("Reprendre le combat") + '</button>';
+  } else if (running === d.id) {
     h += '<button class="settings-btn is-running" type="button" disabled>' + (isElite ? _t("Combat en cours") : _t("Expédition en cours")) + '</button>';
   } else {
     var cs = LM.canStart(mapId, d.id);

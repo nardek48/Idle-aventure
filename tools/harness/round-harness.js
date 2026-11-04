@@ -22380,6 +22380,32 @@ console.log("\n[441] v3.675.0 — forest_04 sans or : Sarkel laisse la potion (a
   } catch (err) { ok(false, "[441] exception : " + err.message); }
 })();
 
+console.log("\n[442] v3.676.0 — Retour d'Android en combat de sortie (audit 04/11, QA-2, QA-V1)");
+(function () {
+  var saveConfirm = g.confirm, saveFight = null;
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.worldsEverReached = {0:true,1:true}; WorldManager.worldIndex = 1;");
+    var LM = g.LivingMapManager; LM.ensureDefaults();
+    var sec = g.LIVING_MAPS.desert.sectors.filter(function (d) { return d.content && d.content.type === "elite"; })[0];
+    ok(!!sec, "une élite de carte au Désert : " + (sec && sec.id));
+    saveFight = g.game.livingMaps.fight;
+    g.game.livingMaps.fight = { mapId: "desert", sectorId: sec.id, eliteId: sec.content.eliteId };
+    run("livingMapSelected = " + JSON.stringify(sec.id) + ";");
+    var panel = g.buildLivingMapPanelHTML("desert", sec.id);
+    ok(/Reprendre le combat/.test(panel) && /switchTab\('combat'\)/.test(panel) && !/Combat en cours/.test(panel), "élite engagée : « Reprendre le combat » (plus de bouton éteint)");
+    var asked = 0; g.confirm = function () { asked++; return false; };
+    run("game.activeTab = 'combat'; game.sortie = game.sortie || {}; game.sortie.active = true;");
+    g.backNavOnPop();
+    ok(g.game.activeTab === "combat" && asked === 1 && !!g.game.livingMaps.fight, "Retour en combat : « Fuir ? » demandé, refusé, on reste au combat");
+    run("game.sortie.active = false;"); asked = 0;
+    g.backNavOnPop();
+    ok(g.game.activeTab === "combat" && asked === 0, "Retour en combat sans sortie : on reste au combat, sans question");
+    var src = fs.readFileSync(path.join(ROOT, "js/ui/dungeon-view.js"), "utf8");
+    ok(/Reprendre le combat/.test(src) && !/l’onglet Combat/.test(src), "carte du donjon en cours : « Reprendre le combat », plus d'« onglet Combat »");
+  } catch (err) { ok(false, "[442] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  try { g.confirm = saveConfirm; g.game.livingMaps.fight = saveFight; run("livingMapSelected = null; game.activeTab = 'campement'; if (game.sortie) game.sortie.active = false;"); } catch (e) {}
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

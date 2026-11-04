@@ -496,6 +496,14 @@ function backNavCloseTop() {
 function backNavOnPop() {
   backNavArmed = false;
   var r = backNavCloseTop();
+  // audit 04/11 (QA-2) : en combat, le retour menait au Camp et laissait le combat figé, sans chemin
+  // de retour (élite de carte bloquée). Il demande désormais « Fuir ? » et reste au combat sinon.
+  if (r === "none" && game.activeTab === "combat" && typeof hasCombatQuestContext === "function" && hasCombatQuestContext()) {
+    if (window.SortieManager && SortieManager.isActive() && typeof confirmFlee === "function") confirmFlee();
+    else if (typeof showToast === "function") showToast(_t("Termine le combat d'abord."), 1600);
+    backNavArm();
+    return;
+  }
   if (r === "none") {
     if (game.activeTab !== "campement" && typeof isTabUnlocked === "function" && isTabUnlocked("campement")) switchTab("campement");
     else {
