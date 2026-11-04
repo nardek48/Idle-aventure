@@ -21,7 +21,7 @@
 
 var RISE_HP_PCT = 0.5;          // décision Seb (03/10/2026) : il revient avec la moitié de ses PV
 var RISE_DOWN_ROUNDS = 2;       // tour ennemi du round de la chute (1), puis celui du suivant (relève)
-var HERO_RISE_HP_PCT = 0.25;    // Le seuil : banc à faire
+var HERO_RISE_HP_PCT = 0.25;    // Le seuil : validé par Seb (04/11) ; robot Ruines → Tour : 12 / 2 / 25 relèves (Ch / Rô / Ma)
 
 var RiseSystem = {
 

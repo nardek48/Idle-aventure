@@ -79,25 +79,25 @@ var STORY_REWARDS = {
   ruines_03: { gold: 1700 },
   ruines_04: { gold: 1800, resources: { pierre_errante: 3 } }, // les pierres « qu'aucune carrière ne taille comme ça »
   ruines_05: { gold: 2000 },
-  // v3.429.0 (acte II, provisoire : au banc)
+  // v3.429.0 (acte II, validé par Seb le 04/11 : courbe Désert 28 100 → Ruines 52 400 → Crypte 149 700)
   // ruines_06 à 08 : une pièce Inhabituelle chacune, pour le palier de l'étape 9 (banc : sans elles, 74 à 200 h de farm)
   ruines_06: { gold: 1900, resources: { pierre_errante: 2 }, equipmentRarity: "green", equipmentCount: 1, equipmentFill: true },
   ruines_07: { gold: 2000, equipmentRarity: "green", equipmentCount: 1, equipmentFill: true },
   ruines_08: { gold: 2100, resources: { pierre_errante: 2 }, equipmentRarity: "green", equipmentCount: 1, equipmentFill: true },
   ruines_09: { gold: 2200 },
   ruines_10: { gold: 2600, resources: { pierre_errante: 4 } },
-  // v3.430.0 (acte III, livraison 1, provisoire : au banc) : une pièce Rare chacune, pour le palier de ruines_13
+  // v3.430.0 (acte III, livraison 1, validé par Seb le 04/11 : courbe Désert 28 100 → Ruines 52 400 → Crypte 149 700) : une pièce Rare chacune, pour le palier de ruines_13
   ruines_11: { gold: 2700, equipmentRarity: "rare", equipmentCount: 1, equipmentFill: true },
   ruines_12: { gold: 2800, resources: { pierre_errante: 2 }, equipmentRarity: "rare", equipmentCount: 1, equipmentFill: true },
-  // v3.431.0 (acte III, livraison 2, provisoire : au banc)
+  // v3.431.0 (acte III, livraison 2, validé par Seb le 04/11 : courbe Désert 28 100 → Ruines 52 400 → Crypte 149 700)
   ruines_13: { gold: 2900 },
   ruines_14: { gold: 3000 },  // + selon le choix : le frein de la salle scellée, ou le sceau de la salle
   ruines_15: { gold: 3400, resources: { pierre_errante: 4, cle_de_voute: 1 } },
-  // v3.432.0 (acte IV, livraison 1, provisoire : au banc)
+  // v3.432.0 (acte IV, livraison 1, validé par Seb le 04/11 : courbe Désert 28 100 → Ruines 52 400 → Crypte 149 700)
   ruines_16: { gold: 3200, resources: { pierre_errante: 2 } },
   ruines_17: { gold: 3300 },
   ruines_18: { gold: 3400, resources: { pierre_errante: 3 } },
-  // v3.433.0 (acte IV, livraison 2, provisoire : au banc)
+  // v3.433.0 (acte IV, livraison 2, validé par Seb le 04/11 : courbe Désert 28 100 → Ruines 52 400 → Crypte 149 700)
   ruines_19: { gold: 3800, resources: { cle_de_voute: 2 } },
   ruines_20: { gold: 4500, uniqueLoot: "arme_coeur" }, // l'arme du Cœur, Épique, d'Edda (dans les deux branches)
   // v3.452.0 (Crypte, acte I, provisoire : au banc)
