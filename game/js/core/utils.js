@@ -82,7 +82,7 @@ function formatTime(totalSeconds) {
 function formatCraftDuration(ms) {
   var totalSeconds = Math.max(0, Number(ms) || 0) / 1000;
   var roundedToTenth = Math.round(totalSeconds * 10) / 10;
-  if (roundedToTenth < 60) return roundedToTenth.toFixed(1) + " s";
+  if (roundedToTenth < 60) return roundedToTenth.toFixed(1).replace(".", ",") + "\u00a0s"; // v3.683.0 (NOV-20) : 3,0 s
 
   var totalSecondsFloor = Math.floor(totalSeconds);
   var m = Math.floor(totalSecondsFloor / 60);

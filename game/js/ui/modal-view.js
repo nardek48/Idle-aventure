@@ -36,20 +36,26 @@ var HERO_CLASS_TAGLINES = {
   mage: _t("Gardien des savoirs anciens, il manipule les éléments et l'énergie arcanique.")
 };
 
+/* v3.683.0 (audit TUTO-2) : aperçu calculé par le moteur (recalcStats) sur un état neuf temporaire,
+   pour que PV et ATK annoncés soient ceux du héros en jeu ; l'état réel est toujours rétabli. */
 function getHeroPreviewStats(hero) {
-  var s = (hero && hero.stats) || {};
-  var power = Number(s.power || 0);
-  var endurance = Number(s.endurance || 0);
-  var celerity = Number(s.celerity || 0);
-  var precision = Number(s.precision || 0);
-
-  return {
-    pv: Math.max(1, Math.floor(endurance * 6)),           // ENDURANCE_HP_COEF
-    atk: Math.max(1, Math.floor(1 + power * 0.2)),          // base 1 + FORCE_TAP_COEF
-    def: Math.round(Math.min(0.6, endurance * 0.002) * 100), // HERO_DEFENSE_COEF, plafonné 60%
-    vit: Math.round(celerity),
-    crit: Math.round((5 + precision * 0.06) * 10) / 10       // base 5% + PRECISION_CRIT_COEF
-  };
+  var real = window.game, out = null;
+  if (hero && hero.id && window.StatsSystem && typeof createInitialGameState === "function") {
+    try {
+      window.game = createInitialGameState();
+      window.game.heroId = hero.id;
+      StatsSystem.recalcStats();
+      out = {
+        pv: Math.max(1, Math.floor(Number(window.game.heroMaxHp) || 0)),
+        atk: Math.max(1, Math.round(StatsSystem.effectiveTapDamage())),
+        def: Math.round(Number(window.game.heroDefensePct || 0) * 100),
+        vit: Math.round(window.CombatEngine && typeof CombatEngine.getTotalCelerity === "function" ? CombatEngine.getTotalCelerity() : Number((hero.stats || {}).celerity || 0)),
+        crit: Math.round(StatsSystem.effectiveCritChance() * 10) / 10
+      };
+    } catch (e) { out = null; }
+    finally { window.game = real; }
+  }
+  return out || { pv: 0, atk: 0, def: 0, vit: 0, crit: 0 };
 }
 
 function getSelectedHero() {

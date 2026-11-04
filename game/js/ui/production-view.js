@@ -1076,7 +1076,9 @@ function buildWorkshopSheetHTML(workshopId) {
   } else if (missing && maxCrafts <= 0) {
     var md = WAREHOUSE_RESOURCES[missing.resourceId] || {};
     var prod = findResourceProducer(missing.resourceId);
-    h += '<div class="wk-alert is-warn"><span>' + esc(_t("{x} insuffisant ({a}/{b})", { x: _td(md.name || missing.resourceId), a: formatNumber(Math.floor(WarehouseManager.getAmount(missing.resourceId))), b: formatNumber(missing.quantity) })) + '</span>';
+    var mdName = _td(md.name || missing.resourceId), elide = /^[aeiouyhàâéèêîôû]/i.test(String(md.name || "")); // v3.683.0 (NOV-21) : « d'Eau », « de Viande »
+    var mdVars = { x: mdName, a: formatNumber(Math.floor(WarehouseManager.getAmount(missing.resourceId))), b: formatNumber(missing.quantity) };
+    h += '<div class="wk-alert is-warn"><span>' + esc(elide ? _t("Pas assez d'{x} ({a}/{b})", mdVars) : _t("Pas assez de {x} ({a}/{b})", mdVars)) + '</span>';
     if (prod) h += '<button type="button" class="kbtn wk-goto" onclick="goToResourceProducer(\'' + prod.kind + '\', \'' + prod.id + '\')">' + esc(_t("Aller à : {x}", { x: prod.name })) + ' ›</button>';
     h += '</div>';
   }

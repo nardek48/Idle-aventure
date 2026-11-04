@@ -161,16 +161,16 @@ var HEROS_STAT_ROWS = [
     name: _t("Précision"), icon: "./images/Icons/improvement_icons/accuracy.webp",
     produces: _t("Chance de coup critique"), unit: _t("CRIT", "unité"),
     read: function () { return (typeof EquipmentManager !== "undefined") ? EquipmentManager.effectiveCritChance() : 0; },
-    fmt: function (v) { return _t("CRIT", "unité") + " " + (Math.round(v * 10) / 10) + " %"; },
-    fmtDelta: function (d) { return _t("+{n} % de critique", { n: Math.round(d * 10) / 10 }); }
+    fmt: function (v) { return _t("CRIT", "unité") + " " + formatNumber(Math.round(v * 10) / 10) + "\u00a0%"; }, // v3.683.0 (NOV-20) : 7,5 %
+    fmtDelta: function (d) { return _t("+{n} % de critique", { n: formatNumber(Math.round(d * 10) / 10) }); }
   },
   {
     key: "will", upgradeId: "utrain_will", trainedKey: "will",
     name: _t("Volonté"), icon: "./images/Icons/improvement_icons/will.webp",
     produces: _t("Puissance des coups critiques"), unit: _t("CRIT ×", "unité"),
     read: function () { return (typeof EquipmentManager !== "undefined") ? EquipmentManager.effectiveCritMult() : 0; },
-    fmt: function (v) { return _t("CRIT ×", "unité") + " " + (Math.round(v * 100) / 100); },
-    fmtDelta: function (d) { return _t("+{n} au multiplicateur", { n: Math.round(d * 100) / 100 }); }
+    fmt: function (v) { return _t("CRIT ×", "unité") + " " + String(Math.round(v * 100) / 100).replace(".", ","); }, // v3.683.0 (NOV-20) : virgule
+    fmtDelta: function (d) { return _t("+{n} au multiplicateur", { n: String(Math.round(d * 100) / 100).replace(".", ",") }); }
   }
 ];
 
@@ -499,8 +499,10 @@ function buildHerosAmeliorationHTML() {
   });
   if (cards.indexOf("is-training-wall") !== -1 && mainWall) {
     var terrain = window.VillageBuildingManager ? VillageBuildingManager.getLevel("training") : 0;
-    h += '<div class="hs-capbanner"><span><b>' + _t("Plafond de l'entraînement : {c}", { c: getTrainingCapLevels() }) + '</b><br>'
-      + _t("Terrain d'entraînement niv. {t} — chaque niveau ouvre +10.", { t: terrain }) + '</span>'
+    // v3.683.0 (audit NOV-17) : les deux plafonds, classe et Endurance d'un côté, les trois autres à 70 %
+    var capMain = getTrainingCapLevels(), capOther = Math.floor(capMain * (window.TRAINING_SECONDARY_SHARE || 1));
+    h += '<div class="hs-capbanner"><span><b>' + _t("Plafond de l'entraînement : {c}", { c: _t("{a} pour ta caractéristique de classe et l'Endurance, {b} pour les autres", { a: capMain, b: capOther }) }) + '</b><br>'
+      + _t("Terrain d'entraînement niv. {t} — chaque niveau ouvre +10, environ +7 pour les autres.", { t: terrain }) + '</span>'
       + '<button type="button" onclick="closeHerosSheet();goToTrainingGround()">' + _t("Terrain") + ' ›</button></div>';
   }
   h += '<div class="pc-stat-list-v2">' + cards + '</div>';

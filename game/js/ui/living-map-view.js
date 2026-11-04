@@ -536,7 +536,7 @@ function buildLivingMapLegendHTML() {
   h += row(node("is-libere", lmRingDots(1)), _t("Libéré"), _t("son effet s'applique"));
   h += row(node("is-libere", lmRingDots(3)), _t("Points : l'anneau"), _t("1 près du foyer, 3 au plus loin et au plus dur"));
   h += row(node("is-recouvert", lmRingDots(2)), esc(_td(livingMapWords().coveredState)), _t("effet perdu, à reprendre")); // v3.305.0
-  h += row(node("is-libere is-protege", lmRingDots(1)), _t("Tenu par la Palissade"), _t("un échec ne le reprend pas")); // v3.335.0
+  h += row(node("is-libere is-protege", lmRingDots(1)), _t("Tenu par la Palissade"), _t("ni un échec ni la nuit ne le reprennent")); // v3.335.0
   h += row(node("is-libere is-running", lmRingDots(3)), _t("Expédition en cours"), "");
   h += row('<span class="lm-node is-voile is-story-cible"><span class="lm-node-disc">?</span><span class="lm-story-flag"></span></span>', _t("Objectif de l'Histoire"), _t("le trait doré : le chemin offert")); // v3.549.0
   h += row('<span class="lm-node is-voile is-elite"><span class="lm-node-disc">?</span><span class="lm-elite-gain is-repete" style="background-image:url(\'images/Icons/resources/seve_aeswyn_icon.webp\')"></span></span>', _t("Élite"), _t("la pastille : ce qu'elle donne, ↻ se rejoue"));

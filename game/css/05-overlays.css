@@ -5,7 +5,7 @@
   position: fixed;
   left: 50%;
   bottom: 120px;
-  z-index: 100;
+  z-index: 9500; /* v3.683.0 (audit NOV-10 = UI-3) : au-dessus des feuilles (3 000), sous le voile PWA (9 999) */
   max-width: 90%;
   padding: 10px 24px;
   border-radius: 999px;

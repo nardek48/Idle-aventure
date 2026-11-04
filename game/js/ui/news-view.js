@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.683.0", "codex/codex_lore", _t("Fenêtres d'aide corrigées : le combat attend qu'on les ferme, la création annonce les vrais PV et la vraie ATK, et plusieurs consignes (ration, nuit, Champs, Mémoire) disent enfin ce qui se passe. Textes clés plus lisibles.")],
     ["3.682.0", "menu_icons/map_menu", _t("Une élite engagée sur la carte doit être finie (ou fuie) avant de lancer une quête, une chasse ou un donjon.")],
     ["3.681.0", "menu_icons/menu_menu", _t("Deux fenêtres ouvertes : celle qui passe la main n'écrit plus rien, même si l'autre change de héros. « Recharger ici » rouvre ton héros.")],
     ["3.680.0", "menu_icons/heroes_menu", _t("Mes héros : fermer la création d'un nouveau héros ramène au héros en cours, sans laisser d'emplacement vide derrière.")],

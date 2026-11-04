@@ -60,7 +60,7 @@ function formatEquipmentStatValue(stat, value) {
   if (stat === "critChance") return _t("+{n}% critique", { n: formatNumber(value) });
   if (stat === "critMult") return _t("+{n}x dégâts crit", { n: formatNumber(value) });
   if (stat === "autoDps") return _t("+{n} célérité", { n: formatNumber(Math.round(value)) });
-  if (stat === "defense") return _t("+{n}% défense", { n: Math.round(value * 1000) / 10 });
+  if (stat === "defense") return _t("+{n}% défense", { n: formatNumber(Math.round(value * 1000) / 10) }); // v3.683.0 (NOV-20) : 1,5
   if (stat === "maxHpPct") return _t("+{n}% PV max", { n: Math.round(value * 100) });
   if (stat === "xpMult") return _t("+{n}% expérience", { n: Math.round(value * 100) });
   if (stat === "dropChance") return _t("+{n}% de butin", { n: formatNumber(value) }); // court : tient sur une ligne à 320 px

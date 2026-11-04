@@ -26,6 +26,7 @@ window.getHeroHpRatio = getHeroHpRatio;
 /* Soigner = aller au Campement (rations, régénération) : ferme l'overlay sans lancer. */
 function goHealFromForecast() {
   closeCombatForecast();
+  if (typeof campTab !== "undefined") campTab = "feu"; // v3.683.0 (audit NOV-8) : droit au feu (santé, rations), pas aux Missions
   if (typeof switchTab === "function") switchTab("campement");
 }
 window.goHealFromForecast = goHealFromForecast;

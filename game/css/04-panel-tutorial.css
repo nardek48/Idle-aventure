@@ -35,11 +35,14 @@
   color: var(--sheet-ink);
 }
 
-/* v3.263.0 : aperçu du bandeau d'alerte (.cb-alert, 03-combat-v2.css), posé sous le texte */
+/* v3.263.0 : aperçu de l'alerte du combat, posé sous le texte. v3.683.0 (NOV-5) : puce .cbx-chip.is-urgent
+   (03-combat-screen.css) ; son liseré rouge est redit ici, les variables --cbx-* n'existant que dans .cbx. */
 .tutorial-preview-alert {
   display: flex;
   width: max-content;
   margin: 6px 0 2px;
+  border: 1px solid rgba(248, 113, 113, 1);
+  background-color: var(--c-brown-900-soft); /* fond sombre du combat, opaque sur le parchemin */
   cursor: default;
 }
 

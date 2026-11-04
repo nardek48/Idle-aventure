@@ -54,7 +54,8 @@ body:not(.scene-active) #pa2-overlay { display: none; }
 .pa2-pro { color: var(--pa2-moss); }
 .pa2-con { color: var(--pa2-danger); }
 .pa2-ring { margin: 8px 0 0; font-size: 12.5px; font-weight: 700; color: var(--pa2-gold); }
-.pa2-note { margin: -4px 4px 0; font-size: 12px; font-weight: 600; color: var(--c-brown-850-soft); }
+/* v3.683.0 (audit NOV-6) : la préparation se lit sur le décor sombre, pas sur du parchemin : encre claire et ombre. */
+.pa2-note { margin: -4px 4px 0; font-size: 12px; font-weight: 600; color: var(--pa2-ink); text-shadow: 0 1px 2px var(--c-black-950); }
 /* Hors des panneaux, l'encre suit le fond du cadre : parchemin le jour, pierre sombre la nuit. */
 body.pa2-night .pa2-link, body.pa2-night .pa2-note { color: var(--pa2-ink-dim); }
 .pa2-link { display: block; margin: 0 auto; padding: 6px 10px; border: 0; background: none; color: var(--c-brown-850-soft); font-size: 12.5px; font-weight: 600; text-decoration: underline; cursor: pointer; }

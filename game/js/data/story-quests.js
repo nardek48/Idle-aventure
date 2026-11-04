@@ -268,6 +268,12 @@ function storyExplorationDone(questId) {
   return !!(game.explorationProgression[flags.completionFlag] || game.explorationProgression[flags.unlockFlag]);
 }
 
+/* v3.683.0 (audit TUTO-5) : tutoriel d'étape réservé à une Petite Aventure libre (ni Labyrinthe, ni parcours). */
+function storyTutoInPa2() {
+  var run = game.sceneRun;
+  return !!(run && run.pa2 && !run.parcours && !run.lab);
+}
+
 function storyResourceAmount(key) {
   return (window.WarehouseManager && typeof WarehouseManager.getAmount === "function") ? Number(WarehouseManager.getAmount(key) || 0) : 0;
 }
@@ -482,9 +488,9 @@ var STORY_QUESTS = {
           title: "Fabriquer une ration",
           points: [
             { icon: "images/Icons/subtabs/inventory.webp", text: "Cette expédition consomme une Petite ration — la source t'en a donné une. Les suivantes, il faudra les fabriquer." },
-            { icon: "images/Icons/quests/mission_construction.webp", text: "Rends-toi au Village, dans l'atelier Cuisine de camp (bâtiment Chasse)." },
-            { icon: "images/Icons/quests/ration_reward.webp", text: "Choisis la recette Petite ration (8 Viande + 4 Eau) et touche Fabriquer." },
-            { icon: "images/Icons/quests/quest_adventure.webp", text: "Une fois la ration en stock, reviens sur ce tableau et lance l'expédition — elle la consommera automatiquement." }
+            { icon: "images/Icons/quests/mission_construction.webp", text: "Pour la suivante, tu iras au Village, dans l'atelier Cuisine de camp (bâtiment Chasse)." },
+            { icon: "images/Icons/quests/ration_reward.webp", text: "Tu y choisiras la recette Petite ration (8 Viande + 4 Eau) et toucheras Fabriquer." },
+            { icon: "images/Icons/quests/quest_adventure.webp", text: "Une fois la ration en stock, tu lanceras « La veine instable » : elle la consommera automatiquement." }
           ]
         },
         // La ration est consommée par l'expédition : « en stock OU sentier terminé » évite un faux 0/1 après coup.
@@ -543,7 +549,7 @@ var STORY_QUESTS = {
           points: [
             { icon: "images/Icons/scene/node_obstacle.webp", text: "La carte est découpée en secteurs autour d'Aeswyn. Tu libères un secteur en terminant sa Petite Aventure, ou en battant l'élite qui le garde. Seuls ceux qui touchent le foyer ou un secteur libéré sont atteignables." },
             { icon: "images/Icons/resources/seve_aeswyn_icon.webp", text: "Un, deux ou trois points : l'anneau du secteur. Plus il est loin du foyer, plus le parcours est dur, et plus la première libération rapporte de Sève (5, 8 ou 12)." },
-            { icon: "images/Icons/living_map/carte_vivante.webp", text: "Un secteur libéré donne souvent un effet (Puits +10 %, une corde de plus…). Si tu échoues en rejouant un secteur déjà libéré, la brume le reprend : c'est le Recouvrement. Une première tentative ratée ne coûte rien. L'effet revient quand tu le reprends." },
+            { icon: "images/Icons/living_map/carte_vivante.webp", text: "Un secteur libéré donne souvent un effet (Puits +10 %, une corde de plus…). Si tu échoues en rejouant un secteur déjà libéré, la brume le reprend : c'est le Recouvrement. Une première tentative ratée ne coûte rien. La nuit aussi (toutes les 3 sorties), la brume peut reprendre un secteur libéré éloigné, de 2 ou 3 points. L'effet revient quand tu le reprends." },
             { icon: "images/Icons/scene/protective_amulet.webp", text: "La Palissade d'Aeswyn freine le Recouvrement et, dès le niveau 3, tient les secteurs proches du foyer. Le bouton « ? » de la carte rappelle chaque pastille." }
           ]
         },
@@ -785,7 +791,7 @@ var STORY_QUESTS = {
           title: "Les braises d'Aeswyn",
           points: [
             { icon: "images/Icons/scene/path_easy.webp", text: "La Sève d'Aeswyn se trouve en Petite Aventure (carte de la Forêt) : parfois en route, surtout en atteignant une destination." },
-            { icon: "images/Icons/quests/ration_reward.webp", text: "La Ration moyenne se cuisine à la Cuisine de camp (bâtiment Chasse) : 15 Viandes + 1 Pain (Boulangerie du Champs)." },
+            { icon: "images/Icons/quests/ration_reward.webp", text: "La Ration moyenne se cuisine à la Cuisine de camp (bâtiment Chasse) : 15 Viandes + 1 Pain (Boulangerie du Champs ; le Champs s'ouvre par l'expédition « La Terre en Friche », Quêtes › Annexes)." },
             { icon: "images/Icons/camp/campfire.webp", text: "Quand tout est réuni, reviens au Campement : le bloc « Les braises » te laisse faire l'offrande." }
           ]
         },
@@ -1037,7 +1043,7 @@ STORY_QUESTS.desert = {
         title: "L'Ensablement",
         points: [
           { icon: "images/Icons/scene/node_obstacle.webp", text: "La carte du Désert fonctionne comme celle de la Forêt. Tu libères un secteur en terminant son parcours, ou en battant l'élite qui le garde." },
-          { icon: "images/Icons/living_map/carte_vivante.webp", text: "Un parcours raté rend un secteur au sable. Sa récompense de secteur tenu est perdue jusqu'à ce que tu le reprennes." },
+          { icon: "images/Icons/living_map/carte_vivante.webp", text: "Un parcours raté rend un secteur au sable. La nuit aussi (toutes les 3 sorties), le sable peut reprendre un secteur libéré éloigné. Sa récompense de secteur tenu est perdue jusqu'à ce que tu le reprennes." },
           { icon: "images/Icons/scene/protective_amulet.webp", text: "La Palissade d'Aeswyn freine l'Ensablement, comme elle freine la brume." }
         ]
       },
@@ -1537,7 +1543,7 @@ STORY_QUESTS.desert = {
         points: [
           { icon: "images/Icons/scene/node_encounter.webp", text: "Cette bête revient. Tu peux la combattre à nouveau, et son butin avec elle." },
           { icon: "images/Icons/resources/chitine_profondeurs_icon.webp", text: "Chaque victoire donne une Chitine des profondeurs : c'est ce qu'exigent les reforges 5 et 6, ouvertes par la Forge 3." },
-          { icon: "images/Icons/combat_stats/stat_attack.webp", text: "Chaque victoire du jour rend la suivante plus dure. Le lendemain, elle repart à sa force de base." }
+          { icon: "images/Icons/combat_stats/stat_attack.webp", text: "Chaque victoire du jour rend la suivante plus dure. Après la prochaine nuit (toutes les 3 sorties), elle repart à sa force de base." }
         ]
       },
       check: function () { return !!(window.LivingMapManager && LivingMapManager.isLiberated("desert", "bete_dune")); },
@@ -2025,6 +2031,7 @@ STORY_QUESTS.ruins = {
       linkTo: { section: "expedition", cardId: "petite_aventure_ruines" },
       tutorial: {
         tab: "scene",
+        when: storyTutoInPa2, // v3.683.0 (TUTO-5) : jamais dans le Labyrinthe ni un parcours
         icon: "images/Icons/scene/items/item_chalk.webp",
         title: "Les murs bougent",
         points: [
@@ -2845,6 +2852,7 @@ STORY_QUESTS.crypt = {
       linkTo: { section: "expedition", cardId: "petite_aventure_crypte" },
       tutorial: {
         tab: "scene",
+        when: storyTutoInPa2, // v3.683.0 (TUTO-5) : jamais dans le Labyrinthe ni un parcours
         icon: "images/Icons/scene/items/item_lantern.webp",
         title: "L'obscurité",
         points: [
@@ -4129,6 +4137,7 @@ STORY_QUESTS.mountain = {
       linkTo: { section: "expedition", cardId: "petite_aventure_montagne" },
       tutorial: {
         tab: "scene",
+        when: storyTutoInPa2, // v3.683.0 (TUTO-5) : jamais dans le Labyrinthe ni un parcours
         icon: "images/Icons/scene/items/item_cold_stone.webp",
         title: "Le sol qui brûle",
         points: [

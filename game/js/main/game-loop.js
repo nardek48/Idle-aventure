@@ -7,7 +7,7 @@ var lastTick = Date.now();
 var questBadgeThrottleAccum = 0;
 var villageSiteThrottleAccum = 0; // v3.213.0 : chantier du Village, testé une fois par seconde
 
-var BLOCKING_MODAL_IDS = ["cycle-modal-root", "map-modal-root", "dungeon-modal-root", "village-modal-root", "talent-modal-root", "adventure-quest-modal-root"];
+var BLOCKING_MODAL_IDS = ["cycle-modal-root", "map-modal-root", "dungeon-modal-root", "village-modal-root", "talent-modal-root", "adventure-quest-modal-root", "tutorial-modal-root"]; // v3.683.0 (TUTO-V1) : le combat attend sous une aide
 function isBlockingModalOpen() {
   for (var i = 0; i < BLOCKING_MODAL_IDS.length; i++) {
     var el = document.getElementById(BLOCKING_MODAL_IDS[i]);

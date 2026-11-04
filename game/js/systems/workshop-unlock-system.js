@@ -26,7 +26,12 @@ var WorkshopUnlockManager = {
     var wu = game.workshopUnlock;
     if (wu.completed) return false;
 
-    var advanced = this._advanceOneStepIfReady(silent);
+    /* v3.683.0 (audit NOV-3) : toutes les étapes déjà remplies d'un coup (15 pierres avant le chantier),
+       comme runRetroactiveCheck, puis une seule fenêtre pour la dernière. */
+    var from = wu.currentStep, guard = 0;
+    while (guard++ < WORKSHOP_UNLOCK_STEPS.length && this._advanceOneStepIfReady(true)) {}
+    var advanced = wu.currentStep > from;
+    if (advanced && !silent) this._announceSteps(from, wu.currentStep);
 
     if (advanced) {
       if (typeof renderPanel === "function") renderPanel();
@@ -65,6 +70,21 @@ var WorkshopUnlockManager = {
     }
 
     return true;
+  },
+
+  // Journal et toast de chaque étape franchie, fenêtre de complétion pour la dernière seulement.
+  _announceSteps: function (from, to) {
+    var wu = game.workshopUnlock, last = null;
+    for (var i = from; i < to; i++) {
+      last = WORKSHOP_UNLOCK_STEPS[i];
+      addLog(_t("Objectif complété : {x}", { x: _td(last.label) }), "event");
+    }
+    if (!last) return;
+    if (typeof showToast === "function") showToast("✅ " + _td(last.label), 1600);
+    if (wu.completed) addLog(_t("L'Atelier de Construction est maintenant débloqué en permanence."), "event");
+    if (typeof showWorkshopStepCompletionPopup === "function") {
+      showWorkshopStepCompletionPopup(last, wu.completed ? null : WORKSHOP_UNLOCK_STEPS[wu.currentStep]);
+    }
   },
 
   runRetroactiveCheck: function () {

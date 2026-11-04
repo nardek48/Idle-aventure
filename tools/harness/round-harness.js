@@ -1306,8 +1306,8 @@ ok(typeof g.maybeShowStepTutorial === "function", "maybeShowStepTutorial exposé
 ok(typeof g.closeTutorialModal === "function", "closeTutorialModal exposée globalement");
 var htmlTut = g.buildTutorialModalHTML("forest", g.STORY_QUESTS.forest.steps[1].tutorial);
 ok(htmlTut.indexOf("Le combat") !== -1 && htmlTut.indexOf("Attaque de base") !== -1, "contenu du popup : titre + attaque de base");
-// v3.263.0 : l'aperçu est le bandeau d'alerte actuel (icône PNG + « Il charge ! »), plus l'ancien badge à emoji
-ok(htmlTut.indexOf("cb-alert") !== -1 && htmlTut.indexOf(g.COMBAT_STATES.charge.icon) !== -1 && htmlTut.indexOf("Il charge !") !== -1 && htmlTut.indexOf("💢") === -1, "aperçu fidèle du bandeau de télégraphe actuel (charge)");
+// v3.263.0 : l'aperçu est l'alerte actuelle (icône PNG + « Il charge ! ») ; v3.683.0 (NOV-5) : la puce .cbx-chip.is-urgent du combat
+ok(htmlTut.indexOf("cbx-chip is-urgent") !== -1 && htmlTut.indexOf(g.COMBAT_STATES.charge.icon) !== -1 && htmlTut.indexOf("Il charge !") !== -1 && htmlTut.indexOf("💢") === -1, "aperçu fidèle du bandeau de télégraphe actuel (charge)");
 ok(htmlTut.indexOf("Compris") !== -1, "bouton de fermeture présent");
 g.closeTutorialModal("forest");
 ok(game.storyQuests.forest.tutorialsSeen.forest_02 === true, "fermeture : marqué comme vu");
@@ -22496,6 +22496,96 @@ console.log("\n[447] v3.682.0 — Élite de carte engagée : pas de seconde sort
     ok(dOk, "témoin : sans élite engagée, le même donjon démarre");
   } catch (err) { ok(false, "[447] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   try { run("game.livingMaps.fight = null; game.adventureQuestRun = { active: false }; game.huntRun = { active: false }; game.dungeonRun = { active: false };"); } catch (e) {}
+})();
+
+console.log("\n[448] v3.683.0 — Tutoriel factuel (audit 04/11, lot I1)");
+(function () {
+  var rd = function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); };
+  var steps = function (c) { return g.STORY_QUESTS[c].steps; }, stp = function (c, id) { return steps(c).find(function (s) { return s.id === id; }); };
+  try {
+    // TUTO-1 : forest_08, points 2 à 4 au futur (la fenêtre peut s'ouvrir expédition lancée)
+    var t8 = stp("forest", "forest_08").tutorial.points.map(function (p) { return p.text; });
+    ok(/^Pour la suivante, tu iras/.test(t8[1]) && /^Tu y choisiras/.test(t8[2]) && /tu lanceras « La veine instable »/.test(t8[3]) && !/reviens sur ce tableau/.test(t8.join(" ")), "TUTO-1 : forest_08 dit la suite au futur, plus « reviens lancer l'expédition »");
+    // TUTO-2 : aperçu de la création = moteur, pour les 6 héros ; l'état réel est rétabli
+    run("fullResetState(); game.playerName='T'; game.heroId='knight'; EquipmentManager.recalcStats();");
+    var real = g.game, ids = ["knight", "ranger", "mage", "chaosKnight", "chaosRanger", "chaosMage"], bad = [];
+    ids.forEach(function (id) {
+      var prev = g.getHeroPreviewStats(g.getHeroById(id));
+      run("fullResetState(); game.playerName='T'; game.heroId='" + id + "'; EquipmentManager.recalcStats();");
+      var hp = g.game.heroMaxHp, atk = g.StatsSystem.effectiveTapDamage();
+      if (prev.pv !== hp || prev.atk !== Math.round(atk)) bad.push(id + " " + prev.pv + "/" + hp + " " + prev.atk + "/" + atk);
+    });
+    ok(bad.length === 0, "TUTO-2 : PV et ATK de l'aperçu égaux au moteur pour les 6 héros " + bad.join(" ; "));
+    run("fullResetState(); game.playerName='T'; game.heroId='knight'; EquipmentManager.recalcStats();");
+    var before = g.game; g.getHeroPreviewStats(g.getHeroById("mage"));
+    ok(g.game === before && g.game.heroId === "knight", "TUTO-2 : l'aperçu rend l'état réel intact");
+    // TUTO-3 : la nuit dans les deux aides et la légende
+    var tb = stp("forest", "forest_brume").tutorial.points.map(function (p) { return p.text; }).join(" ");
+    var t4 = stp("desert", "desert_04").tutorial.points.map(function (p) { return p.text; }).join(" ");
+    ok(/La nuit aussi \(toutes les 3 sorties\)/.test(tb) && /La nuit aussi \(toutes les 3 sorties\)/.test(t4) && /ni un échec ni la nuit ne le reprennent/.test(rd("js/ui/living-map-view.js")), "TUTO-3 : forest_brume, desert_04 et la légende parlent de la nuit");
+    // TUTO-4 : niveau de Mémoire atteint écran fermé : annonce différée, puis rattrapée
+    run("fullResetState(); game.playerName='T'; game.heroId='knight'; EquipmentManager.recalcStats(); game.unlockedTabs = { more: true };");
+    var M = g.MemoryManager; M.gainAether(M.getProgress ? 100000 : 100000, "test");
+    ok(M.getLevel() >= 1 && M.ensure().announced === 0, "TUTO-4 : Mémoire fermée, le niveau " + M.getLevel() + " n'est pas annoncé");
+    run("game.unlockedTabs.ascension = true; MemoryManager.announceLevels(-1);");
+    ok(M.ensure().announced === M.getLevel(), "TUTO-4 : onglet ouvert, l'annonce est rattrapée");
+    ok(/MemoryManager\.announceLevels\(-1\)/.test(rd("js/ui/ui-root.js")), "TUTO-4 : switchTab rattrape l'annonce");
+    // TUTO-5 : jamais par-dessus une autre aide ; crypte_06, montagne_06, ruines_06 seulement en Petite Aventure
+    ok(["crypt:crypte_06", "mountain:montagne_06", "ruins:ruines_06"].every(function (k) { var c = k.split(":"), s0 = (g.STORY_QUESTS[c[0]] ? stp(c[0], c[1]) : null); return s0 && typeof s0.tutorial.when === "function"; }), "TUTO-5 : prédicat « Petite Aventure » sur les trois étapes");
+    run("game.sceneRun = { lab: true, kind: 'labyrinthe', status: 'lab-map' };");
+    var noLab = !g.storyTutoInPa2();
+    run("game.sceneRun = { pa2: true, status: 'pa2-prep' };");
+    var inPa = g.storyTutoInPa2();
+    run("game.sceneRun = null;");
+    ok(noLab && inPa, "TUTO-5 : faux dans le Labyrinthe, vrai en Petite Aventure");
+    ok(/if \(!window\.StoryQuestManager \|\| pendingTutorial\) return;/.test(rd("js/ui/tutorial-view.js")), "TUTO-5 : maybeShowStepTutorial ne remplace pas une aide ouverte");
+    // TUTO-8 : pas de second voile
+    ok(/if \(otherModalRootOpen\(\)\) return;/.test(rd("js/ui/tutorial-view.js")), "TUTO-8 : showStepTutorialAfterGo attend que les autres fenêtres soient fermées");
+    // TUTO-9, TUTO-15
+    ok(/Après la prochaine nuit \(toutes les 3 sorties\)/.test(stp("desert", "desert_14").tutorial.points[2].text), "TUTO-9 : desert_14 parle de la nuit, plus du « lendemain »");
+    ok(/le Champs s'ouvre par l'expédition « La Terre en Friche », Quêtes › Annexes/.test(stp("forest", "forest_15").tutorial.points[1].text), "TUTO-15 : forest_15 dit comment ouvrir le Champs");
+    // TUTO-V1 : le combat attend sous une fenêtre d'aide
+    ok(g.BLOCKING_MODAL_IDS.indexOf("tutorial-modal-root") !== -1, "TUTO-V1 : tutorial-modal-root bloque le combat");
+    // NOV-3 : 15 pierres avant la fin du chantier : la chaîne se termine d'un coup
+    run("fullResetState(); game.playerName='T'; game.heroId='knight'; EquipmentManager.recalcStats();");
+    run("WorkshopUnlockManager.ensure(); game.workshopUnlock.currentStep = 2; game.resources.pierre = 20; VillageBuildingManager.ensure(); game.village.buildings.workshop.level = 1; if (game.construction) game.construction.workshop = { level: 1 };");
+    var adv = g.WorkshopUnlockManager.checkCurrentStep(true);
+    ok(adv && g.game.workshopUnlock.completed === true, "NOV-3 : pierre et Atelier déjà là, la chaîne se termine en un appel");
+    // NOV-4 : la fiche ouverte est redessinée à la fin du chantier
+    ok(/openVillageBuildingId === site\.id && typeof openVillageBuildingSheet === "function"\) openVillageBuildingSheet\(site\.id\)/.test(rd("js/systems/village-building-system.js")), "NOV-4 : _finishSite redessine la fiche ouverte");
+    // NOV-5 / OUB-1 : l'aperçu est la vraie puce d'alerte, lisible
+    var kind = Object.keys(g.COMBAT_STATES).find(function (k) { return g.COMBAT_STATES[k].famille === "alerte"; });
+    ok(/class="cbx-chip is-urgent tutorial-preview-alert"/.test(g.buildTutorialPreviewHTML(kind)), "NOV-5 : aperçu rendu avec .cbx-chip.is-urgent");
+    ok(/\.tutorial-preview-alert \{[^}]*background-color: var\(--c-brown-900-soft\)/.test(rd("css/04-panel-tutorial.css")), "NOV-5 : fond sombre opaque sous l'aperçu (12,5:1 mesuré)");
+    // NOV-6, NOV-7 : encres claires sur le décor
+    ok(/^\.pa2-note \{[^}]*color: var\(--pa2-ink\)/m.test(rd("css/04-panel-pa2.css")), "NOV-6 : notes de la préparation en encre claire (8,8:1 mesuré)");
+    ok(/\.potion-section-label \{[^}]*color: var\(--c-cream-100-2\)/.test(rd("css/04-panel-upgrades.css")), "NOV-7 : titre des potions en encre claire (11:1 mesuré)");
+    // NOV-8 : « Me soigner » mène au feu
+    run("campTab = 'missions'; goHealFromForecast();");
+    ok(run("campTab") === "feu", "NOV-8 : « Me soigner » ouvre l'onglet Le feu du Campement");
+    // NOV-10 : toasts au-dessus des feuilles
+    ok(/#toast \{[^}]*z-index: 9500;/.test(rd("css/05-overlays.css")), "NOV-10 : #toast au-dessus des feuilles (9 500)");
+    // NOV-15 : village_production sans « Plein dans Xm » ni « parcelle »
+    var vp = g.GENERIC_TUTORIALS.village_production.points.map(function (p) { return p.text; }).join(" ");
+    ok(!/Plein dans Xm|parcelle/.test(vp) && /la jauge « 0 \/ 45 »/.test(vp), "NOV-15 : village_production parle de la jauge et des zones");
+    // NOV-17 : deux plafonds
+    run("fullResetState(); game.playerName='T'; game.heroId='knight'; EquipmentManager.recalcStats();");
+    var lab = g.VILLAGE_BUILDINGS.training.effectLabel(0);
+    ok(/20 pour ta caractéristique de classe et l'Endurance, 14 pour les autres/.test(lab), "NOV-17 : Terrain niveau 0 : 20 et 14 (" + lab + ")");
+    // NOV-19 : pas de « Débloqué : Équipement » tant que Héros est fermé
+    run("game.unlockedTabs = {};");
+    var d1 = g.StoryQuestManager._describeUnlocks({ unlockTabs: ["equip", "talents"] });
+    run("game.unlockedTabs = { more: true };");
+    var d2 = g.StoryQuestManager._describeUnlocks({ unlockTabs: ["equip"] });
+    ok(d1 === "" && d2 !== "", "NOV-19 : Équipement tu tant que Héros est fermé, annoncé ensuite");
+    // NOV-20 : décimales à la française
+    ok(g.formatCraftDuration(3000) === "3,0 s" && /1,5/.test(g.formatEquipmentStatValue("defense", 0.015)), "NOV-20 : « 3,0 s » et « +1,5% défense »");
+    ok(/CRIT", "unité"\) \+ " " \+ formatNumber\(Math\.round\(v \* 10\) \/ 10\)/.test(rd("js/ui/heros-view.js")), "NOV-20 : CRIT passe par formatNumber");
+    // NOV-21 : « Pas assez de Viande », « Pas assez d'Eau »
+    var pv = rd("js/ui/production-view.js");
+    ok(/_t\("Pas assez d'\{x\} \(\{a\}\/\{b\}\)"/.test(pv) && /_t\("Pas assez de \{x\} \(\{a\}\/\{b\}\)"/.test(pv) && !/insuffisant \(\{a\}/.test(pv), "NOV-21 : « Pas assez de/d' » remplace « {x} insuffisant »");
+  } catch (err) { ok(false, "[448] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  try { run("game.sceneRun = null; campTab = 'missions'; fullResetState();"); } catch (e) {}
 })();
 
 Promise.all(ATTENTES).then(function () {

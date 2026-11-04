@@ -8,12 +8,12 @@ var pendingTutorial = null; // { chapterId, tutorial } le temps que la modale es
 
 /* Aperçu fidèle d'un badge de statut réel (ex. télégraphe de charge), pour montrer au joueur
    exactement ce qu'il verra en combat plutôt que de le décrire seulement en texte. */
-/* v3.263.0 (retour Seb) : l'aperçu reprend le BANDEAU d'alerte du combat (v3.251.0) et son icône
-   PNG, lus dans COMBAT_STATES — l'ancien badge à emoji n'existe plus en jeu. */
+/* v3.263.0 (retour Seb) : l'aperçu reprend l'alerte du combat et son icône, lues dans COMBAT_STATES.
+   v3.683.0 (audit NOV-5, OUB-1) : la vraie puce .cbx-chip.is-urgent, le bandeau .cb-alert n'existant plus. */
 function buildTutorialPreviewHTML(kind) {
   var def = (window.COMBAT_STATES || {})[kind];
   if (!def) return "";
-  return '<span class="cb-alert tutorial-preview-alert">' + renderIconOrEmojiHTML(def.icon, "", _td(def.nom))
+  return '<span class="cbx-chip is-urgent tutorial-preview-alert">' + renderIconOrEmojiHTML(def.icon, "", _td(def.nom))
     + '<span>' + esc(_td(def.mot || def.nom)) + '</span></span>';
 }
 
@@ -42,9 +42,10 @@ function buildTutorialModalHTML(closeHandlerJs, tutorial) {
 
 /* Affiche le popup si cette étape en a un et qu'il n'a jamais été vu. Appelé depuis switchTab(). */
 function maybeShowStepTutorial(chapterId, tabName) {
-  if (!window.StoryQuestManager) return;
+  if (!window.StoryQuestManager || pendingTutorial) return; // v3.683.0 (TUTO-5) : jamais par-dessus une autre aide
   var step = StoryQuestManager.getCurrentStep(chapterId);
   if (!step || !step.tutorial || step.tutorial.tab !== tabName) return;
+  if (typeof step.tutorial.when === "function" && !step.tutorial.when()) return; // v3.683.0 : contexte voulu (ex. Petite Aventure)
   if (!StoryQuestManager.isCurrentStepAccepted(chapterId)) return;
   var st = StoryQuestManager.getState(chapterId);
   if (!st.tutorialsSeen || typeof st.tutorialsSeen !== "object") st.tutorialsSeen = {};
@@ -56,11 +57,20 @@ function maybeShowStepTutorial(chapterId, tabName) {
 }
 window.maybeShowStepTutorial = maybeShowStepTutorial;
 
+/* v3.683.0 (audit TUTO-8) : une autre fenêtre (*-modal-root hors tutoriel) est-elle ouverte ? */
+function otherModalRootOpen() {
+  if (!document.querySelectorAll) return false;
+  var roots = document.querySelectorAll('[id$="-modal-root"]');
+  for (var i = 0; i < roots.length; i++) if (roots[i].id !== "tutorial-modal-root" && roots[i].innerHTML) return true;
+  return false;
+}
+
 /* v3.518.0 (audit TUT-4) : après « Partir », le tutoriel d'étape jamais vu s'ouvre là où l'on arrive.
    Combat et Scène exclus : ils s'ouvrent plus tard d'eux-mêmes, au bon écran. */
 function showStepTutorialAfterGo(chapterId) {
   var host = document.getElementById("tutorial-modal-root");
   if (pendingTutorial || !host || host.innerHTML || !window.StoryQuestManager) return;
+  if (otherModalRootOpen()) return; // v3.683.0 (TUTO-8) : pas de second voile sur le pronostic ou une autre fenêtre
   var step = StoryQuestManager.getCurrentStep(chapterId);
   if (!step || !step.tutorial || step.tutorial.tab === "combat" || step.tutorial.tab === "scene") return;
   maybeShowStepTutorial(chapterId, step.tutorial.tab);
@@ -129,9 +139,9 @@ var GENERIC_TUTORIALS = {
     icon: "images/Icons/scene/scene_harvest.webp",
     title: "Village & Production",
     points: [
-      { icon: "images/Icons/scene/scene_harvest.webp", text: "Les parcelles produisent une ressource en continu, même hors ligne — mais chaque bâtiment a un stock local limité (« Plein dans Xm »)." },
+      { icon: "images/Icons/scene/scene_harvest.webp", text: "Les zones produisent une ressource en continu, même hors ligne — mais chaque bâtiment a un stock local limité (la jauge « 0 / 45 » sur sa carte)." },
       { icon: "images/Icons/subtabs/inventory.webp", text: "Touche « Récolter » pour transférer ce stock vers ton Entrepôt, qui a son propre plafond (plus grand)." },
-      { icon: "images/Icons/system/upgrade.webp", text: "Améliorer une parcelle augmente sa vitesse de production et sa capacité de stock local." },
+      { icon: "images/Icons/system/upgrade.webp", text: "Améliorer une zone augmente sa vitesse de production et sa capacité de stock local." },
       { icon: "images/Icons/quests/mission_construction.webp", text: "Les Ateliers (comme la Cuisine de camp) transforment des ressources brutes (ex. viande + eau) en objets utiles (ex. rations) — file d'attente, continue même hors ligne." },
       { icon: "images/Icons/system/warehouse_supplies.webp", text: "Garde un œil sur ton Entrepôt : une ressource pleine ne se produit plus tant que tu ne l'as pas dépensée (l'Entrepôt ne rachète rien)." }
     ]

@@ -279,7 +279,9 @@ var StoryQuestManager = {
 
   _describeUnlocks: function (step, onClaim) {
     var labels = window.STORY_TAB_LABELS || {};
-    return ((onClaim ? step.unlockTabsOnClaim : step.unlockTabs) || []).map(function (t) { return labels[t] ? _td(labels[t]) : t; }).join(", ");
+    var noHeros = !(game.unlockedTabs || {}).more; // v3.683.0 (audit NOV-19) : Équipement et Talents vivent dans Héros, pas encore ouvert
+    return ((onClaim ? step.unlockTabsOnClaim : step.unlockTabs) || []).filter(function (t) { return !(noHeros && (t === "equip" || t === "talents")); })
+      .map(function (t) { return labels[t] ? _td(labels[t]) : t; }).join(", ");
   },
 
   /* Vérification opportuniste (renderPanel, throttlée) : signale une seule fois le passage à « réclamable ».

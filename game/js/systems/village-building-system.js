@@ -364,6 +364,8 @@ var VillageBuildingManager = {
 
     if (typeof renderPanel === "function") renderPanel();
     if (typeof renderHud === "function") renderHud();
+    // v3.683.0 (audit NOV-4) : la fiche ouverte du bâtiment quitte « fin dans 0s » et montre le niveau atteint
+    if (typeof openVillageBuildingId !== "undefined" && openVillageBuildingId === site.id && typeof openVillageBuildingSheet === "function") openVillageBuildingSheet(site.id);
     saveGame();
     return true;
   },

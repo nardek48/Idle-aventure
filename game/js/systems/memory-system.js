@@ -182,10 +182,12 @@ var MemoryManager = {
     return gained;
   },
 
-  /* Un niveau atteint s'annonce une fois ; le choix se fait dans l'écran de Mémoire. */
+  /* Un niveau atteint s'annonce une fois ; le choix se fait dans l'écran de Mémoire.
+     v3.683.0 (audit TUTO-4) : rien tant que l'écran est fermé ; switchTab rattrape l'annonce (before = -1). */
   announceLevels: function (before) {
     var m = this.ensure(), now = this.getLevel();
     if (now <= before || now <= m.announced) return;
+    if (typeof isTabUnlocked === "function" && !isTabUnlocked("ascension")) return;
     m.announced = now;
     addLog("🌟 " + _t("Niveau de Mémoire {n} atteint : un choix t'attend (Héros › Mémoire).", { n: now }), "event");
     if (typeof showToast === "function") showToast("🌟 " + _t("Mémoire niveau {n} : un choix t'attend", { n: now }), 2600);
