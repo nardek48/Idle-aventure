@@ -96,23 +96,23 @@ var CODEX_ENTRIES = [
     text: "Sous chaque monde traversé se trouve un accès à la Faille — un lieu hors du temps normal du Cycle, où l'Aether s'exprime sans filtre. On raconte qu'elle est scellée en couches, chacune plus instable que la précédente.\n\nLes Éclats récoltés dans la Faille ne sont pas de simples fragments de minerai : ce sont des morceaux de Sceau, arrachés à la structure même qui retient la Faille de se répandre dans le reste du Cycle. Les utiliser pour renforcer son équipement, c'est emprunter, un peu, à la prison elle-même.",
     isUnlocked: function () { return codexFeuilletsRecus() && !!(game.dungeonTiersEntered && Object.keys(game.dungeonTiersEntered).length > 0); }
   },
-  { id: "dungeon_tier_1", title: "Le premier Sceau", icon: "images/Icons/system/lock_open.webp", category: "system",
+  { id: "dungeon_tier_1", title: "Le premier Sceau", icon: "images/Icons/codex/sceau.webp", category: "system",
     text: "Le premier Sceau est presque accueillant : un écho affaibli de la Faille, où même un héros novice peut apprendre sans trop de danger.",
     isUnlocked: function () { return codexFeuilletsRecus() && !!(game.dungeonTiersEntered && game.dungeonTiersEntered[1]); } },
-  { id: "dungeon_tier_2", title: "Le deuxième Sceau", icon: "images/Icons/system/lock_closed.webp", category: "system",
+  { id: "dungeon_tier_2", title: "Le deuxième Sceau", icon: "images/Icons/codex/sceau.webp", category: "system",
     text: "Le deuxième Sceau ne s'approche qu'après avoir franchi le premier — la Faille ne se laisse approcher que par ceux qui ont montré qu'ils reviendraient, encore et encore.",
     isUnlocked: function () { return codexFeuilletsRecus() && !!(game.dungeonTiersEntered && game.dungeonTiersEntered[2]); } },
-  { id: "dungeon_tier_3", title: "Le troisième Sceau", icon: "images/Icons/system/lock_closed.webp", category: "system",
+  { id: "dungeon_tier_3", title: "Le troisième Sceau", icon: "images/Icons/codex/sceau.webp", category: "system",
     text: "Comme le second, le troisième Sceau ne s'ouvre qu'à ceux qui ont prouvé leur constance. Ici, l'écho de la Faille commence à se faire sentir plus distinctement.",
     isUnlocked: function () { return codexFeuilletsRecus() && !!(game.dungeonTiersEntered && game.dungeonTiersEntered[3]); } },
-  { id: "dungeon_tier_4", title: "Le quatrième Sceau", icon: "images/Icons/system/lock_closed.webp", category: "system",
+  { id: "dungeon_tier_4", title: "Le quatrième Sceau", icon: "images/Icons/codex/sceau.webp", category: "system",
     text: "Le quatrième Sceau est le premier où la Faille semble répondre : les créatures y sont façonnées avec une intention presque calculée, comme un test.",
     isUnlocked: function () { return codexFeuilletsRecus() && !!(game.dungeonTiersEntered && game.dungeonTiersEntered[4]); } },
-  { id: "dungeon_tier_5", title: "Le cinquième Sceau — « la Question »", icon: "images/Icons/scene/node_unknown.webp", category: "system",
+  { id: "dungeon_tier_5", title: "Le cinquième Sceau — « la Question »", icon: "images/Icons/codex/sceau.webp", category: "system",
     text: "Le cinquième Sceau, longtemps le dernier connu, réservé aux héros les plus aguerris, est celui que les archivistes du Cycle appellent simplement « la Question ». On y descend rarement en cherchant du butin. On y descend pour comprendre pourquoi la Faille existe.",
     isUnlocked: function () { return codexFeuilletsRecus() && !!(game.dungeonTiersEntered && game.dungeonTiersEntered[5]); } },
   /* v3.631.0 (Tour, TW15, note v3.621.3) : le sixième Sceau, au Sommet interdit. Texte à relire. */
-  { id: "dungeon_tier_6", title: "Le sixième Sceau — « le Sommet »", icon: "images/Icons/scene/node_unknown.webp", category: "system",
+  { id: "dungeon_tier_6", title: "Le sixième Sceau — « le Sommet »", icon: "images/Icons/codex/sceau.webp", category: "system",
     text: "Les archivistes n'en comptaient que cinq. Le sixième est en haut de la Tour, là où la fente est la plus large. Ce n'est pas une couche de plus : c'est la salle où elle s'est mise à apprendre. Tout ce qu'on y fait, elle le refait.",
     isUnlocked: function () { return codexFeuilletsRecus() && !!(game.dungeonTiersEntered && game.dungeonTiersEntered[6]); } },
 
@@ -132,7 +132,7 @@ var CODEX_ENTRIES = [
   {
     id: "epilogue",
     title: "Ce qui attend au sommet",
-    icon: "images/Icons/scene/node_discovery.webp",
+    icon: "images/Icons/codex/sceau.webp",
     category: "system",
     text: "Personne ne sait avec certitude ce qui a causé la Rupture, ni ce qui attend réellement au sommet de la Tour, au cœur du cinquième Sceau. Mais chaque niveau de Mémoire, chaque créature du Bestiaire comprise, chaque Éclat arraché à la Faille rapproche un peu plus le héros d'une réponse.\n\nLe Cycle continuera tant que personne n'aura franchi ce dernier seuil. Jusque-là, il ne reste qu'une chose à faire : continuer, un peu plus fort, un peu plus proche de la vérité — et voir jusqu'où l'Aether est prêt à mener qui refuse de s'arrêter.",
     isUnlocked: function () { return codexFeuilletsRecus() && (game.dungeonBossClears || 0) >= 1 && !!(window.MemoryManager && MemoryManager.getLevel() >= 1); } // v3.322.0

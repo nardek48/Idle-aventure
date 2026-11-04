@@ -26,8 +26,8 @@
     gold: "images/Icons/gold_icon.webp",
     flee: "images/Icons/quests/flee.webp",
     back: "images/Icons/system/return_camp.webp", // v3.527.0 (IMA-5) : propre à « Rentrer » (était l'Affût aménagé)
-    grim: "images/Icons/codex/codex_lore.webp",
-    tact: "images/Icons/combat_stats/stat_critical.webp",
+    grim: "images/Icons/system/grimoire.webp",
+    tact: "images/Icons/system/mode_tactique.webp",
     cont: "images/Icons/quests/continue.webp",
     stop: "images/Icons/system/pause_stop.webp",
     attack: "images/Icons/special_attacks/attack3.webp",
@@ -539,7 +539,7 @@
 
   function actionIcon(action) {
     return (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[action.id])
-      || (action.type === "defense" ? "images/Icons/combat_stats/stat_defense.webp" : "images/Icons/scene/node_discovery.webp");
+      || (action.type === "defense" ? "images/Icons/combat_stats/stat_defense.webp" : "images/Icons/combat_actions/skill_generic.webp");
   }
 
   /* Le conseil du Grimoire, avec SA RAISON : la condition de la règle qui s'applique. */

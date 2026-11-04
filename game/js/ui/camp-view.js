@@ -98,7 +98,7 @@ var CAMP_TABS = [
   { key: "feu", label: _t("Le feu"), icon: "images/Icons/camp/campfire.webp" }, // v3.594.0 (atelier camp-carte, choix Seb) : santé, rations, compagnons
   { key: "missions", label: _t("Missions"), icon: "images/Icons/quests/quest_list.webp" },
   { key: "depart", label: _t("Expéditions"), icon: "images/Icons/quests/start_expedition.webp" }, // v3.426.0 : était « Départ »
-  { key: "grimoire", label: _t("Grimoire"), icon: "images/Icons/codex/codex_lore.webp" }
+  { key: "grimoire", label: _t("Grimoire"), icon: "images/Icons/system/grimoire.webp" }
 ];
 var campTab = "missions";
 var campShownTab = null; // v3.426.0 : l'onglet réellement affiché au dernier rendu

@@ -68,7 +68,7 @@ function orInvestSkillRanks() {
     var r = SkillRanks.get(a.id), cost = SkillRanks.nextCost(a.id), c = { gold: cost.gold };
     c[cost.mat] = cost.qty;
     out.push({ id: "s:" + a.id + ":" + (r + 1), rank: 3, gold: cost.gold,
-      icon: (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[a.id]) || (a.type === "defense" ? "images/Icons/combat_stats/stat_defense.webp" : "images/Icons/scene/node_discovery.webp"),
+      icon: (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[a.id]) || (a.type === "defense" ? "images/Icons/combat_stats/stat_defense.webp" : "images/Icons/combat_actions/skill_generic.webp"),
       title: _t("{x} : rang {n}", { x: _td(a.label || a.id), n: r + 1 }), sub: _t("Rang de sort"), cost: c,
       go: function () { orInvestGoSkill(a.id); } });
   });

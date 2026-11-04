@@ -64,7 +64,7 @@ function buildSettingsJeuHTML() {
     h += settingsRowHTML("images/Icons/dungeon/boss_crown.webp", _t("Mises en scène des boss"), _t("Carte d'entrée, changement de phase, coup final et trophée."),
       kSwitchHTML(Prefs.get("bossMoments"), "setDisplayPref('bossMoments', " + !Prefs.get("bossMoments") + ")", _t("Mises en scène des boss")));
     // v3.473.0 : vue épurée du combat en Grimoire (atelier grimoire-epure.html)
-    h += settingsRowHTML("images/Icons/codex/codex_lore.webp", _t("Combat épuré en Grimoire"), _t("Seuls l'ennemi, tes PV, la règle jouée et les potions restent à l'écran."),
+    h += settingsRowHTML("images/Icons/system/grimoire.webp", _t("Combat épuré en Grimoire"), _t("Seuls l'ennemi, tes PV, la règle jouée et les potions restent à l'écran."),
       kSwitchHTML(Prefs.get("grimEpure"), "setDisplayPref('grimEpure', " + !Prefs.get("grimEpure") + ")", _t("Combat épuré en Grimoire")));
     h += '<p class="set-note">' + _t("Réglages propres à cet appareil.") + '</p>';
     h += '</div>';
@@ -148,7 +148,7 @@ function buildSettingsAppareilHTML(where) {
 /* tab : optionnel (harnais) — sinon l'onglet actif */
 function buildSettingsHTML(tab) {
   var cur = tab || settingsTab;
-  var R = [["partie", _t("Partie"), "images/Icons/system/save.webp"], ["jeu", _t("Jeu"), "images/Icons/combat_stats/stat_attack.webp"], ["appareil", _t("Appareil"), "images/Icons/system/settings.webp"]];
+  var R = [["partie", _t("Partie"), "images/Icons/system/save.webp"], ["jeu", _t("Jeu"), "images/Icons/system/settings_game.webp"], ["appareil", _t("Appareil"), "images/Icons/system/settings.webp"]];
   var h = '<div class="kseg is-stack set-tabs">';
   R.forEach(function (r) {
     h += '<button type="button" class="' + (cur === r[0] ? 'is-on' : '') + '" onclick="setSettingsTab(\'' + r[0] + '\')"><img src="' + r[2] + '" alt=""><span>' + r[1] + '</span></button>';

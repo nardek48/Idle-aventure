@@ -77,7 +77,7 @@ var VILLAGE_QUESTS = [
         { icon: "images/Icons/system/upgrade.webp", text: "Chaque zone ouverte peut monter de niveau : jusqu'au 5 en Forêt, et le plafond monte à chaque monde. Chaque niveau augmente à la fois sa vitesse de production et sa capacité de stock local." },
         { icon: "images/Icons/scene/node_clear_spring.webp", text: "Pour le Champs, l'amélioration coûte du bois et de l'eau — le Puits n'est pas là que pour les rations." },
         { icon: "📈", text: "Le coût grimpe un peu à chaque niveau (×1,15)." },
-        { icon: "images/Icons/combat_stats/stat_critical.webp", text: "Conseil : améliore d'abord la zone que tu récoltes le plus souvent — c'est elle qui convertit le mieux chaque ressource dépensée." }
+        { icon: "images/Icons/system/upgrade.webp", text: "Conseil : améliore d'abord la zone que tu récoltes le plus souvent — c'est elle qui convertit le mieux chaque ressource dépensée." }
       ]
     }
   },
@@ -236,7 +236,7 @@ var VILLAGE_QUESTS = [
         { icon: "images/Icons/system/upgrade.webp", text: "Chaque atelier monte de niveau (2 en Forêt, 3 dans les mondes suivants), indépendamment des autres (la Scierie fine niveau 3 ne change rien à la Menuiserie)." },
         { icon: "images/Icons/workshops/craft_speed.webp", text: "Chaque niveau accélère les crafts (-8 % de temps par niveau) ET allonge la file d'attente : sa taille est égale au niveau de l'atelier." },
         { icon: "images/Icons/plots/reinforced_gallery.webp", text: "Le coût se paie en planches et lingots, et grimpe de ×1,4 par niveau." },
-        { icon: "images/Icons/combat_stats/stat_critical.webp", text: "Conseil : améliore d'abord l'atelier qui tourne le plus (souvent celui en mode Auto) — chaque pour cent de vitesse y rapporte davantage." }
+        { icon: "images/Icons/system/upgrade.webp", text: "Conseil : améliore d'abord l'atelier qui tourne le plus (souvent celui en mode Auto) — chaque pour cent de vitesse y rapporte davantage." }
       ]
     }
   }

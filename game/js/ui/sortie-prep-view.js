@@ -110,8 +110,8 @@ function buildSortiePrepHTML() {
   if (grimOpen) {
     h += '<div class="sp-sec"><div class="sp-title">' + _t("Mode de combat") + '</div>';
     h += '<div class="sp-mode">';
-    h += '<button type="button" class="' + (!grim ? 'is-on' : '') + '" onclick="sortiePrepMode(\'tactique\')"><img src="images/Icons/combat_stats/stat_critical.webp" alt="">' + _t("Tactique") + '</button>';
-    h += '<button type="button" class="' + (grim ? 'is-on' : '') + '" onclick="sortiePrepMode(\'grimoire\')"><img src="images/Icons/codex/codex_lore.webp" alt="">' + _t("Grimoire") + '</button>';
+    h += '<button type="button" class="' + (!grim ? 'is-on' : '') + '" onclick="sortiePrepMode(\'tactique\')"><img src="images/Icons/system/mode_tactique.webp" alt="">' + _t("Tactique") + '</button>';
+    h += '<button type="button" class="' + (grim ? 'is-on' : '') + '" onclick="sortiePrepMode(\'grimoire\')"><img src="images/Icons/system/grimoire.webp" alt="">' + _t("Grimoire") + '</button>';
     h += '</div>';
     h += '<div class="cp-behavior-hint">' + (grim
       ? _t("Les rounds s'enchaînent seuls et tes règles choisissent l'action.")
@@ -124,9 +124,9 @@ function buildSortiePrepHTML() {
     var presets = (typeof ensureGrimoirePresets === "function") ? ensureGrimoirePresets() : [];
     if (presets.length) {
       h += '<div class="cp-behavior-row"><span>' + _t("Règles") + '</span></div><div class="sp-presets">';
-      h += '<button type="button" class="' + (!sortiePrep.preset ? 'is-on' : '') + '" onclick="sortiePrepPreset(\'\')"><img src="images/Icons/codex/codex_lore.webp" alt="">' + _t("Mes règles actuelles") + '</button>';
+      h += '<button type="button" class="' + (!sortiePrep.preset ? 'is-on' : '') + '" onclick="sortiePrepPreset(\'\')"><img src="images/Icons/system/grimoire.webp" alt="">' + _t("Mes règles actuelles") + '</button>';
       presets.forEach(function (p) {
-        h += '<button type="button" class="' + (sortiePrep.preset === p.id ? 'is-on' : '') + '" onclick="sortiePrepPreset(\'' + esc(p.id) + '\')"><img src="' + esc(p.icon || "images/Icons/codex/codex_lore.webp") + '" alt="">' + esc(_td(p.name)) + '</button>';
+        h += '<button type="button" class="' + (sortiePrep.preset === p.id ? 'is-on' : '') + '" onclick="sortiePrepPreset(\'' + esc(p.id) + '\')"><img src="' + esc(p.icon || "images/Icons/system/grimoire.webp") + '" alt="">' + esc(_td(p.name)) + '</button>';
       });
       h += '</div>';
     }
@@ -270,7 +270,7 @@ function buildSortiePrepRulesHTML() {
   });
   if (!n) h += '<div class="cp-behavior-hint">' + _t("Aucune règle : le Grimoire attaque à chaque round.") + '</div>';
   else if (open - n > 0) h += '<div class="cp-behavior-hint">' + esc(_tn(open - n, "{n} emplacement libre.", "{n} emplacements libres.")) + '</div>';
-  h += '<button type="button" class="kbtn sp-rules-edit" onclick="sortiePrepEditRules()"><img class="ico-inline" src="images/Icons/codex/codex_lore.webp" alt=""> '
+  h += '<button type="button" class="kbtn sp-rules-edit" onclick="sortiePrepEditRules()"><img class="ico-inline" src="images/Icons/system/grimoire.webp" alt=""> '
     + (sortiePrep.preset ? _t("Modifier ces règles") : _t("Modifier mes règles")) + '</button>';
   if (sortiePrep.preset) h += '<div class="cp-behavior-hint">' + _t("Le preset devient tes règles actuelles, puis s'ouvre dans le Grimoire.") + '</div>';
   return h + '</div>';

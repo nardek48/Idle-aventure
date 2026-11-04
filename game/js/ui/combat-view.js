@@ -33,7 +33,7 @@ function buildActivePotionsBarHTML() {
     if (p.kind === "potion") {
       h += '<span class="active-potion-icon' + (p.live ? '' : ' is-armed-idle') + '">';
       h += '<img src="' + esc(p.icon) + '" alt="">';
-      if (p.live) h += '<span class="active-potion-timer"><img class=ico-inline src=images/Icons/combat_stats/stat_attack.webp></span>';
+      if (p.live) h += '<span class="active-potion-timer"><img class=ico-inline src=images/Icons/subtabs/potions.webp></span>';
       h += '</span>';
     } else {
       h += '<span class="active-potion-icon active-affliction-icon">';

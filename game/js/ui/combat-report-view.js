@@ -109,7 +109,7 @@ function buildCombatReportBodyHTML() {
   if (avgDps > 0) summaryParts.push('<img class=ico-inline src=images/Icons/combat_stats/stat_attack.webp> ' + _t("~{n} DPS moyen", { n: formatNumber(Math.round(avgDps)) }));
   if (report.damageAvoidedTotal > 0) summaryParts.push('<img class=ico-inline src=images/Icons/combat_stats/stat_defense.webp> ' + _t("~{n} dégâts évités", { n: formatNumber(Math.floor(report.damageAvoidedTotal)) }));
   if (report.healPreventedTotal > 0) summaryParts.push('<img class=ico-inline src=images/Icons/combat_status/heal_incoming.webp> ' + _t("~{n} PV de soin empêchés", { n: formatNumber(Math.floor(report.healPreventedTotal)) }));
-  if (report.shieldsRemovedCount > 0) summaryParts.push('<img class=ico-inline src=images/Icons/combat_stats/stat_speed.webp> ' + crPl(report.shieldsRemovedCount, _t("{n} bouclier retiré", { n: report.shieldsRemovedCount }), _t("{n} boucliers retirés", { n: report.shieldsRemovedCount })));
+  if (report.shieldsRemovedCount > 0) summaryParts.push('<img class=ico-inline src=images/Icons/combat_status/shield_incoming.webp> ' + crPl(report.shieldsRemovedCount, _t("{n} bouclier retiré", { n: report.shieldsRemovedCount }), _t("{n} boucliers retirés", { n: report.shieldsRemovedCount })));
   if (report.silencesAvoidedCount > 0) summaryParts.push('<img class=ico-inline src=images/Icons/combat_status/silence_incoming.webp> ' + crPl(report.silencesAvoidedCount, _t("{n} silence évité", { n: report.silencesAvoidedCount }), _t("{n} silences évités", { n: report.silencesAvoidedCount })));
   if (summaryParts.length) {
     h += '<div class="combat-report-summary">' + summaryParts.map(function (p) { return escPreservingIcons(p); }).join('<br>') + '</div>';

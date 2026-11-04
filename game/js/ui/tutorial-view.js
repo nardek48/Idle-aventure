@@ -112,12 +112,12 @@ var GENERIC_TUTORIALS = {
         && typeof VILLAGE_BUILDINGS.training.unlockCheck === "function"
         && VILLAGE_BUILDINGS.training.unlockCheck());
     },
-    icon: "images/Icons/combat_stats/stat_critical.webp",
+    icon: "images/Icons/village_buildings/training_grounds.webp",
     title: "Le Terrain d'entraînement",
     points: [
       { icon: "images/Icons/system/training_cap.webp", text: "Ta caractéristique de classe et l'Endurance butent à 20, les trois autres à 14 : c'est la limite de l'entraînement de fortune du campement. Pour aller plus loin, il faut un vrai terrain." },
       { icon: "images/Icons/workshops/masonry.webp", text: "Le Terrain se bâtit ici, au Village, comme l'Atelier : des matériaux, puis un chantier qui prend un peu de temps." },
-      { icon: "images/Icons/combat_stats/stat_critical.webp", text: "Chaque niveau du Terrain relève le plafond de CHACUNE des cinq caractéristiques : +10 pour ta caractéristique de classe et l'Endurance, environ +7 pour les trois autres — jamais un total à répartir." },
+      { icon: "images/Icons/village_buildings/training_grounds.webp", text: "Chaque niveau du Terrain relève le plafond de CHACUNE des cinq caractéristiques : +10 pour ta caractéristique de classe et l'Endurance, environ +7 pour les trois autres — jamais un total à répartir." },
       { icon: "images/Icons/gold_icon.webp", text: "L'entraînement lui-même se paie toujours en or, dans Héros → Entraînement. Le Terrain décide jusqu'où tu peux monter, pas combien ça coûte." }
     ]
   },
@@ -255,10 +255,10 @@ var GENERIC_TUTORIALS = {
     ]
   },
   grimoire_rules: {
-    icon: "images/Icons/codex/codex_lore.webp",
+    icon: "images/Icons/system/grimoire.webp",
     title: "Le Grimoire de tactiques",
     points: [
-      { icon: "images/Icons/codex/codex_lore.webp", text: "Le Grimoire programme ton combat automatique : si une situation se présente, ton héros joue l'action que tu as choisie en priorité." },
+      { icon: "images/Icons/system/grimoire.webp", text: "Le Grimoire programme ton combat automatique : si une situation se présente, ton héros joue l'action que tu as choisie en priorité." },
       { icon: "images/Icons/system/sort.webp", text: "Les règles sont lues dans l'ordre, de haut en bas. La première qui s'applique l'emporte." },
       { icon: "images/Icons/combat_status/counter.webp", text: "Une action marquée « ⚡ Contre » annule complètement l'attaque adverse. C'est le meilleur appariement possible pour cette situation." },
       { icon: "images/Icons/system/ascension.webp", text: "S'il n'y a aucune règle applicable, ton héros continue de se battre normalement — le Grimoire s'ajoute au comportement automatique, il ne le remplace pas." },
