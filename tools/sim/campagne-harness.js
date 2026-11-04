@@ -231,6 +231,7 @@ function relaunch() {
       // « Le seuil » (RiseSystem.tryHeroRise) relève le héros : ce n'est pas une défaite, le run continue
       var rose = p[1] === "onHeroDefeated" && !rose0 && ca && ca.heroRose && G.game.heroHp > 0;
       if (p[1] === "onHeroDefeated" && !rose) DEFEATED = true;
+      if (rose) STATS.releves = (STATS.releves || 0) + 1; // « Le seuil » : relèves comptées (banc v3.658.0)
       return res; };
   });
   return G;
@@ -2308,6 +2309,7 @@ if (COMBATS) {
   if (STATS.rations) console.log("Rations au camp : mangées " + JSON.stringify(STATS.rations.mangees) + " · cuisinées " + JSON.stringify(STATS.rations.cuisinees) + " · attente évitée " + (STATS.rations.minutesEvitees / 60).toFixed(1) + " h");
   if (VERBOSE) STATS.fights.slice(-12).forEach(function (f) { console.log("    " + f.step + " · " + f.kind + " " + f.name + " : " + f.rounds + " rounds, PV " + Math.round(f.hp0 * 100) + "→" + Math.round((f.hp1 || 0) * 100) + " %" + (f.died ? " †" : "") + (f.potions ? " (" + f.potions + " potion)" : "")); });
 }
+console.log("Le seuil : " + (STATS.releves || 0) + " relève(s) du héros");
 console.log("Festins préparés : " + (STATS.festins || 0) + (process.env.FESTIN ? " (FESTIN=1)" : ""));
 console.log("Miroir de la Tour : " + (STATS.miroir || 0) + " technique(s) prise(s) sur " + (STATS.miroirTech || 0) + " lancée(s) face à un miroir" + (process.env.VARIER ? " (réglage Varier allumé)" : ""));
 console.log("Farm d'élites : " + STATS.farms + " · achats à l'échoppe : " + STATS.shopBuys + " · secteurs repris au sable : " + STATS.recouvrements + " · sac plein : " + STATS.sacPlein);
