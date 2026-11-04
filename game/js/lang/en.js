@@ -10,6 +10,7 @@
    Les textes des données sont traduits par _td() à l'affichage (registre : lang/data-fields.js). */
 I18n.register("en", {
   // index.html
+  "Le feu de camp ne soigne plus pendant un combat d'élite engagé sur la carte, comme pour les donjons et les quêtes.": "The campfire no longer heals during an elite fight in progress on the map, just like dungeons and quests.",
   "onglet|Camp": "Camp",
   "onglet|Quêtes": "Quests",
   "onglet|Village": "Village",

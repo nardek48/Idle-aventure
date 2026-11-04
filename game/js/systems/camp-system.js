@@ -19,6 +19,7 @@ var CampManager = {
     if (game.dungeonRun && game.dungeonRun.active) return true;
     if (game.huntRun && game.huntRun.active) return true;
     if (game.adventureQuestRun && game.adventureQuestRun.active) return true;
+    if (game.livingMaps && game.livingMaps.fight) return true; // audit 04/11 : élite de carte engagée, pas de feu de camp
     return false;
   },
 

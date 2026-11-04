@@ -22422,6 +22422,10 @@ console.log("\n[443] v3.677.0 — Pas de repas du Camp en sortie de combat (audi
     saveFight = g.game.livingMaps && g.game.livingMaps.fight;
     run("game.livingMaps = game.livingMaps || {}; game.livingMaps.fight = { mapId: 'forest', sectorId: 'arbremere', eliteId: 'x' };");
     ok(CM.eatRation("petite_ration") === false && WM.getAmount("petite_ration") === n, "élite de carte engagée : refusée");
+    run("game.heroHp = 10; game.activeTab = 'campement'; game.campRegenLastAt = Date.now() - 10 * 60000;");
+    ok(!CM.isRegenActive() && CM.applyRegen(false) === 0 && g.game.heroHp === 10, "v3.678.0 : élite de carte engagée, le feu de camp ne soigne pas");
+    run("game.campRegenLastAt = Date.now() - 10 * 60000;");
+    ok(CM.applyRegen(true) === 0 && g.game.heroHp === 10, "v3.678.0 : ni hors ligne");
     run("game.livingMaps.fight = null; game.adventureQuestRun = { active: true };");
     ok(CM.eatRation("petite_ration") === false, "quête d'aventure en cours : refusée");
     run("game.adventureQuestRun = null;");

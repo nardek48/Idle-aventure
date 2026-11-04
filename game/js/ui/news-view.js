@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.678.0", "menu_icons/camp_menu", _t("Le feu de camp ne soigne plus pendant un combat d'élite engagé sur la carte, comme pour les donjons et les quêtes.")],
     ["3.677.0", "menu_icons/camp_menu", _t("En pleine sortie de combat (donjon, élite, quête, chasse), le Camp ne sert plus de repas : tu pars avec tes PV, comme annoncé.")],
     ["3.676.0", "menu_icons/map_menu", _t("Le geste Retour pendant un combat demande désormais si tu veux fuir, au lieu de quitter l'écran. Une élite ou un donjon en cours se reprend avec « Reprendre le combat ».")],
     ["3.675.0", "menu_icons/quests_menu", _t("La Boutique : si tu n'as plus l'or de ta première potion, Sarkel te la laisse. L'Histoire ne peut plus rester bloquée au colporteur.")],
