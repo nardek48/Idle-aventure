@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.668.0", "menu_icons/map_menu", _t("La Tour : la fin « La forme au sommet » a ses deux planches peintes, et les six hauts faits de la faille ont leur icône.")],
     ["3.667.0", "menu_icons/map_menu", _t("La Tour : la vision de cette nuit-là a ses trois planches peintes.")],
     ["3.666.0", "menu_icons/map_menu", _t("Chapitre VI : l'ouverture de la Tour a ses trois planches peintes, vers le nord, la plaine grise et la porte.")],
     ["3.665.0", "memory/souffle_long", _t("Mémoires de la faille : le Souffle long et « Ce qu'il ne prend pas » ont leur vraie icône.")],
