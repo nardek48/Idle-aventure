@@ -575,7 +575,15 @@ function caravanes(g) {
   var C = g.CaravanManager;
   if (!C || !C.isAvailable()) return;
   var ST = STATS.caravanes = STATS.caravanes || { departs: 0, or: 0, rares: 0 };
-  if (C.isBack()) { var l = C.unload(); if (l) { ST.or += l.gold; if (l.rare) ST.rares += l.rare.n; } }
+  // déchargées marché par marché, pour l'or de chacun (relevé 04/11)
+  C.list().map(function (c) { return c.world; }).forEach(function (w) {
+    if (!C.isBack(w)) return;
+    var l = C.unload(w); if (!l) return;
+    ST.or += l.gold; if (l.rare) ST.rares += l.rare.n;
+    var om = ST.orParMarche = ST.orParMarche || {}; om[w] = (om[w] || 0) + l.gold;
+  });
+  // relevé (04/11) : caravanes en route au plus, places de la Halle, départs et or par marché
+  ST.max = Math.max(ST.max || 0, C.list().length); ST.places = C.getMaxCaravans(); ST.marches = C.getMarkets().length;
   var trip = C.isTripOpen("long") ? "long" : "moyen";
   // un joueur garde une place pour le marché que l'Histoire va demander (ruines_04, crypte_04)
   var ep = g.game.explorationProgression || {}, reached = g.game.worldsEverReached || {};
@@ -585,8 +593,12 @@ function caravanes(g) {
     if ((m.world === 2 && !ep.ruinsMarketDone) || (m.world === 3 && !ep.cryptMarketDone)) return; // audit (27/10, DUR-7) : l'étape envoie sa Courte
     if (C.getBlockReason(trip, m.world)) return;
     harvest();
-    if (C.depart(trip, m.world)) { ST.departs++; act("caravane", 0); }
+    if (C.depart(trip, m.world)) {
+      ST.departs++; act("caravane", 0);
+      var pm = ST.parMarche = ST.parMarche || {}; pm[m.world] = (pm[m.world] || 0) + 1;
+    }
   });
+  ST.max = Math.max(ST.max || 0, C.list().length);
 }
 
 function closeRec(rec) {
@@ -2336,6 +2348,7 @@ if (COMBATS) {
 }
 STATS.economie = { orGagne: G.game.totalGoldEarned, or: G.game.gold, aetherTotal: G.game.totalAetherEarned, attenteDonjonH: STATS.attenteDonjonH || 0 };
 if (COMBATS) console.log("Économie : " + JSON.stringify(STATS.economie));
+if (STATS.caravanes) console.log("Caravanes : " + JSON.stringify(STATS.caravanes));
 if (ZONES) console.log("Zones défrichées ou montées : " + (STATS.zones || 0));
 if (STATS.patrouilleRefus) console.log("Patrouilles refusées : " + JSON.stringify(STATS.patrouilleRefus));
 if (RELEVE) {
