@@ -132,6 +132,8 @@ var MissionBoard = {
     var cardId = String((!tab && !linkTo.beforeGo && linkTo.cardId) || "");
     var target = /^(adv_|petite_aventure_)/.test(cardId) ? this.getById(cardId) : null;
     var dungeon = tab === "dungeon" && !linkTo.afterGo ? (window.DUNGEONS || []).find(function (d) { return d.worldId === chapterId; }) : null;
+    // v3.684.0 (QUET-2) : quête liée verrouillée (compagnon absent du groupe) -> la raison, puis l'écran Quêtes
+    if (target && target.lockLabel && typeof showToast === "function") showToast(target.lockLabel, 2200);
     if (target && target.status === "available" && target.accept && typeof campMissionAction === "function") campMissionAction(cardId, "accept");
     else if (target && target.status === "running" && target.launch) target.launch();
     else if (dungeon && typeof openDungeonSheet === "function" && window.DungeonManager && DungeonManager.isUnlocked(dungeon.id)) {
@@ -169,10 +171,11 @@ var MissionBoard = {
       if (quest.type === "elite") {
         if (!isRunning && !isEliteQuestUnlocked(quest)) return;
       } else if (!isRunning && quest.category !== "main" && !isStoryLinkedQuest(quest.id)) return;
-      // v3.428.0 (Ruines, ruines_03) : une quête qui exige un compagnon dans le groupe
-      if (!isRunning && quest.requiresParty && window.CompanionManager && CompanionManager.partyIds().indexOf(quest.requiresParty) === -1) return;
+      // v3.428.0 (ruines_03) : quête qui exige un compagnon dans le groupe ; v3.684.0 (QUET-2) : gardée, verrouillée, avec sa raison
+      var lack = !isRunning && quest.requiresParty && window.CompanionManager && CompanionManager.partyIds().indexOf(quest.requiresParty) === -1
+        ? getCompanionDef(quest.requiresParty) : null;
       var stepsDone = quest.steps.filter(function (s) { return AdventureQuestManager.isStepComplete(quest, s); }).length;
-      var status = isRunning ? "running" : (running ? "locked" : "available");
+      var status = isRunning ? "running" : ((running || lack) ? "locked" : "available");
       var m = {
         id: "adv_" + quest.id, sourceKind: "adventure", questId: quest.id, worldId: quest.worldId, // v3.247.0 : questId pour le pronostic
         title: _td(quest.name), blurb: _td(quest.story || ""),
@@ -182,6 +185,7 @@ var MissionBoard = {
         status: status, isMain: quest.category === "main" || isStoryLinkedQuest(quest.id),
         isElite: quest.type === "elite" // v3.205.0 (E5)
       };
+      if (lack) m.lockLabel = _t("Il faut {x} dans le groupe", { x: _td(lack.name) });
       if (status === "available") {
         m.accept = function () {
           // v3.205.0 (E5) : les élites sont HORS du cap de 3 quêtes actives, comme

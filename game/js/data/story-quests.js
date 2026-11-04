@@ -2217,7 +2217,7 @@ STORY_QUESTS.ruins = {
       storyPa: { worldId: "ruins", targets: ["porte_sanctuaire"] }, // v3.436.4 : Petite aventure offerte par l'Histoire, oubliée à l'acte III
       unlockTabs: [],
       reward: STORY_REWARDS.ruines_11,
-      linkTo: { section: "map", cardId: "livingmap_ruins" },
+      linkTo: { section: "map", cardId: "livingmap_ruins:porte_sanctuaire" },
       check: function () { return storyPorteSanctuaire(); },
       progress: function () { return "Porte du Sanctuaire " + (storyPorteSanctuaire() ? "1/1" : "0/1"); }
     },
@@ -3038,7 +3038,7 @@ STORY_QUESTS.crypt = {
       storyPa: { worldId: "crypt", targets: ["cotes"] },
       unlockTabs: [],
       reward: STORY_REWARDS.crypte_11,
-      linkTo: { section: "map", cardId: "livingmap_crypt" },
+      linkTo: { section: "map", cardId: "livingmap_crypt:cotes" },
       check: function () { return storyCryptSectorFreed("cotes"); },
       progress: function () { return "Les côtes " + (storyCryptSectorFreed("cotes") ? "1/1" : "0/1"); }
     },
@@ -3152,7 +3152,7 @@ STORY_QUESTS.crypt = {
         title: "Ce qu'elle garde",
         text: "La Pleureuse se tait. Dans la salle, une seule alcôve est occupée : personne dedans, juste une forme dans la pierre, à la taille d'Ysolt. « Montée neuf fois. Revenue huit. La neuvième, je me suis couchée ici. Je me suis réveillée. Je n'aurais pas dû. » Elle attend que quelqu'un décide, et ce ne sera pas elle.",
         options: [
-          { value: "garder", label: "La laisser se recoucher", desc: "Elle reprend sa place. Son carquois reste avec toi." },
+          { value: "garder", label: "La laisser se recoucher", desc: "Elle reprend sa place. Son carquois reste avec toi. Ses quêtes s'arrêtent là." },
           { value: "donner", label: "La garder éveillée", desc: "Elle reste avec toi. Elle s'use, un peu, à chaque combat." }
         ],
         ready: function () { return storyAdvDone(game, "aq_crypte_pleureuse"); },
@@ -4055,7 +4055,7 @@ STORY_QUESTS.mountain = {
           { who: null, text: "Il garde l'éclat sur l'établi. Il le regarde souvent." }
         ]
       },
-      objectiveLabel: "Tailler 5 veines à la Montagne (toi ou Sarkel), dans « Ça ne fond pas »",
+      objectiveLabel: "Tailler 5 veines à la Montagne (toi ou Sarkel), dans « Ça ne fond pas » ou ailleurs", // v3.684.0 (QUET-7) : toute veine compte (M-2)
       unlockTabs: [],
       reward: STORY_REWARDS.montagne_04,
       linkTo: { section: "adventure", cardId: "adv_aq_montagne_veines" },
@@ -4321,7 +4321,7 @@ STORY_QUESTS.mountain = {
       unlockTabs: [],
       storyPa: { worldId: "mountain", targets: ["antre"] }, // v3.519.0 (audit DUR-5) : Petite aventure offerte par l'Histoire, oubliée
       reward: STORY_REWARDS.montagne_11,
-      linkTo: { section: "map", cardId: "livingmap_mountain" },
+      linkTo: { section: "map", cardId: "livingmap_mountain:antre" },
       check: function () { return storyMountainSectorFreed("antre"); },
       progress: function () { return "Entrée de l'Antre " + (storyMountainSectorFreed("antre") ? "1/1" : "0/1"); }
     },
@@ -4863,6 +4863,14 @@ STORY_QUESTS.tower = {
         doneToast: "Le dernier camp est dressé",
         log: "Tu donnes le bois et les vivres. Sarkel plante ses pieux devant la porte."
       },
+      // v3.684.0 (QUET-6) : tant que l'offrande manque, le bouton mène aux Ateliers (Cuisine de camp), comme desert_07
+      linkTo: {
+        tab: "village", label: "Aller aux Ateliers",
+        afterGo: function () {
+          if (typeof setVillageSubTab === "function") setVillageSubTab("production");
+          if (typeof setProductionViewTab === "function") setProductionViewTab("shops");
+        }
+      },
       check: function (game) { return storyChapterCounter(game, "tower", "campDresse") >= 1; },
       progress: function (game) { return "Camp dressé " + (storyChapterCounter(game, "tower", "campDresse") >= 1 ? "1/1" : "0/1"); }
     },
@@ -5034,7 +5042,7 @@ STORY_QUESTS.tower = {
       storyPa: { worldId: "tower", targets: ["etage_veines"] },
       unlockTabs: [],
       reward: STORY_REWARDS.tour_09,
-      linkTo: { section: "map", cardId: "livingmap_tower" },
+      linkTo: { section: "map", cardId: "livingmap_tower:etage_veines" },
       check: function () { var lm = window.LivingMapManager, st = lm && lm.getState("tower", "etage_veines"); return !!(st && st.liberatedCount > 0); },
       progress: function () { var lm = window.LivingMapManager, st = lm && lm.getState("tower", "etage_veines"); return "Gardien vaincu " + (st && st.liberatedCount > 0 ? "1/1" : "0/1"); }
     },
@@ -5090,7 +5098,7 @@ STORY_QUESTS.tower = {
       objectiveLabel: "Atteindre le campement du Sommet interdit (vaincre le Gardien qui répète dans un même run)",
       unlockTabs: [],
       reward: STORY_REWARDS.tour_11,
-      linkTo: { section: "dungeon" },
+      linkTo: { tab: "dungeon" },
       tutorial: {
         tab: "dungeon",
         icon: "images/Dungeons/Icone_base/palier6.webp",
@@ -5119,7 +5127,7 @@ STORY_QUESTS.tower = {
       objectiveLabel: "Vaincre le Reflet, au bout du Sommet interdit",
       unlockTabs: [],
       reward: STORY_REWARDS.tour_12,
-      linkTo: { section: "dungeon" },
+      linkTo: { tab: "dungeon" },
       check: function (game) { return !!((game.dungeonTierCleared || {})[6]); },
       progress: function (game) { return "Reflet vaincu " + ((game.dungeonTierCleared || {})[6] ? "1/1" : "0/1"); }
     },
@@ -5391,14 +5399,18 @@ STORY_REWARDS.tour_12 = { gold: 23000, equipmentRarity: "legendary", equipmentCo
 STORY_REWARDS.tour_13 = { gold: 24000, resources: { verre_faille: 3 } };
 STORY_REWARDS.tour_14 = { gold: 25000 };
 STORY_REWARDS.tour_15 = { gold: 26000, resources: { givre_bleu: 6 } };
-["tour_11", "tour_12", "tour_13", "tour_14", "tour_15"].forEach(function (id, k) { STORY_QUESTS.tower.steps[10 + k].reward = STORY_REWARDS[id]; });
+/* v3.684.0 (QUET-12) : récompenses de la Tour posées par id d'étape, pas par position (insertion sans décalage). */
+function storyTowerSetRewards(ids) {
+  STORY_QUESTS.tower.steps.forEach(function (s) { if (ids.indexOf(s.id) !== -1 && STORY_REWARDS[s.id]) s.reward = STORY_REWARDS[s.id]; });
+}
+storyTowerSetRewards(["tour_11", "tour_12", "tour_13", "tour_14", "tour_15"]);
 STORY_REWARDS.tour_16 = { gold: 27000, resources: { givre_bleu: 4 } }; // v3.630.0 (Tour, acte IV)
 STORY_REWARDS.tour_17 = { gold: 28000, resources: { grande_ration: 1 } };
 STORY_REWARDS.tour_18 = { gold: 30000, resources: { verre_faille: 3 } };
-["tour_16", "tour_17", "tour_18"].forEach(function (id, k) { STORY_QUESTS.tower.steps[15 + k].reward = STORY_REWARDS[id]; });
+storyTowerSetRewards(["tour_16", "tour_17", "tour_18"]);
 STORY_REWARDS.tour_19 = { gold: 32000 }; // v3.631.0 (Tour, lot T-4b)
 STORY_REWARDS.tour_20 = { gold: 40000 };
-["tour_19", "tour_20"].forEach(function (id, k) { STORY_QUESTS.tower.steps[18 + k].reward = STORY_REWARDS[id]; });
+storyTowerSetRewards(["tour_19", "tour_20"]);
 /* Les quatre réponses (textes validés, atelier) et les deux prix affichés (Seb, 02/11 : un prix par axe). */
 var STORY_QUESTION_OPTIONS = {
   sienne: { label: "La sienne", desc: "Tu prends la forme au sol. Tu seras la silhouette. Elle cessera de casser le monde pour apprendre : elle t'aura." },
@@ -5424,17 +5436,15 @@ window.STORY_PALIER_TOUR = STORY_PALIER_TOUR;
 STORY_REWARDS.tour_08 = { gold: 19500, resources: { givre_bleu: 3 }, equipmentRarity: "legendary", equipmentCount: 1, equipmentFill: true };
 STORY_REWARDS.tour_09 = { gold: 20000, equipmentRarity: "legendary", equipmentCount: 1, equipmentFill: true };
 STORY_REWARDS.tour_10 = { gold: 21000, resources: { givre_bleu: 5 } };
-STORY_QUESTS.tower.steps[7].reward = STORY_REWARDS.tour_08;
-STORY_QUESTS.tower.steps[8].reward = STORY_REWARDS.tour_09;
-STORY_QUESTS.tower.steps[9].reward = STORY_REWARDS.tour_10;
+storyTowerSetRewards(["tour_08", "tour_09", "tour_10"]);
 STORY_REWARDS.tour_06 = { gold: 18500, resources: { givre_bleu: 3 } };
 STORY_REWARDS.tour_07 = { gold: 19000, resources: { givre_bleu: 4 } };
-STORY_QUESTS.tower.steps[5].reward = STORY_REWARDS.tour_06;
-STORY_QUESTS.tower.steps[6].reward = STORY_REWARDS.tour_07;
+storyTowerSetRewards(["tour_06", "tour_07"]);
 function storyTowerFloorsFreed() {
   var lm = window.LivingMapManager, map = lm && lm.getMap("tower");
   if (!map) return 0;
-  return map.sectors.filter(function (d) { var st = lm.getState("tower", d.id); return !!(st && st.liberatedCount > 0); }).length;
+  return map.sectors.filter(function (d) { // v3.684.0 (QUET-11) : les étages seuls, sans l'élite (étape tour_09)
+    var st = lm.getState("tower", d.id); return !!(d.content && d.content.type === "expedition" && st && st.liberatedCount > 0); }).length;
 }
 var STORY_TOUR_ETAGES = 5, STORY_TOUR_PA = 2; // rythme de la Tour (Seb, 03/11) : les 5 étages de l'escalier, 2 escaliers réussis
 window.STORY_TOUR_ETAGES = STORY_TOUR_ETAGES; window.STORY_TOUR_PA = STORY_TOUR_PA;

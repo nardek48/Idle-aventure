@@ -154,33 +154,33 @@ var CompanionManager = {
     }).slice(0, COMPANION_MAX_PRESENT);
   },
 
+  /* v3.684.0 (QUET-2) : pourquoi ce compagnon doit rester (étape ou quête qui l'exige), sinon null.
+     `running` : seulement ce qui interdit aussi de le retirer du groupe (étapes de rencontre, quête lancée). */
+  requiredReason: function (companionId, running) {
+    var SQM = window.StoryQuestManager, step = function (ch) { var c = SQM ? SQM.getCurrentStep(ch) : null; return c ? c.id : ""; };
+    // v3.428.0 / v3.452.0 / v3.488.0 : Edda (ruines_03), Ysolt (crypte_03), Sarkel (montagne_03 et 04) jusqu'à la réclamation
+    if (companionId === "edda" && step("ruins") === "ruines_03") return _t("Edda doit t'accompagner pour cette étape");
+    if (companionId === "ysolt" && step("crypt") === "crypte_03") return _t("Ysolt doit t'accompagner pour cette étape");
+    if (companionId === "sarkel" && (step("mountain") === "montagne_03" || step("mountain") === "montagne_04")) return _t("Sarkel doit t'accompagner pour cette étape");
+    var def = getCompanionDef(companionId), msg = _t("{x} doit t'accompagner pour cette quête", { x: def ? _td(def.name) : companionId });
+    var run = window.AdventureQuestManager ? AdventureQuestManager.getRunningQuest() : null;
+    if (run && run.requiresParty === companionId) return msg;
+    if (running) return null;
+    // quête liée à l'étape en cours, pas encore finie ; Wenna pendant « Les compagnons » (TUTO-13)
+    var aq = window.ADVENTURE_QUESTS || {}, done = game.adventureQuestsCompleted || {};
+    if (Object.keys(aq).some(function (k) { return aq[k].requiresParty === companionId && !done[k] && typeof isStoryLinkedQuest === "function" && isStoryLinkedQuest(k); })) return msg;
+    if (companionId === "wenna" && step("forest") === "forest_wenna" && SQM.isCurrentStepAccepted("forest")) return msg;
+    return null;
+  },
+
   setPresent: function (companionId, present) {
     if (window.heroLockToast && heroLockToast()) return false; // v3.307.0 : héros en expédition
     var st = this.state(companionId);
     if (!st || !st.unlocked) return false;
-    // v3.428.0 (Ruines, ruines_03) : Edda reste du groupe tant que l'étape de sa rencontre n'est pas réclamée
-    if (!present && companionId === "edda" && window.StoryQuestManager) {
-      var cur = StoryQuestManager.getCurrentStep("ruins");
-      if (cur && cur.id === "ruines_03") {
-        if (typeof showToast === "function") showToast(_t("Edda doit t'accompagner pour cette étape"), 1600);
-        return false;
-      }
-    }
-    // v3.452.0 (Crypte, crypte_03) : Ysolt reste du groupe tant que l'étape de sa rencontre n'est pas réclamée
-    if (!present && companionId === "ysolt" && window.StoryQuestManager) {
-      var curC = StoryQuestManager.getCurrentStep("crypt");
-      if (curC && curC.id === "crypte_03") {
-        if (typeof showToast === "function") showToast(_t("Ysolt doit t'accompagner pour cette étape"), 1600);
-        return false;
-      }
-    }
-    // v3.488.0 (Montagne, montagne_03 et 04) : Sarkel reste du groupe tant que ses étapes ne sont pas réclamées
-    if (!present && companionId === "sarkel" && window.StoryQuestManager) {
-      var curM = StoryQuestManager.getCurrentStep("mountain");
-      if (curM && (curM.id === "montagne_03" || curM.id === "montagne_04")) { // et sa quête « Ça ne fond pas »
-        if (typeof showToast === "function") showToast(_t("Sarkel doit t'accompagner pour cette étape"), 1600);
-        return false;
-      }
+    var need = !present ? this.requiredReason(companionId, true) : null; // v3.684.0 (QUET-2) : quête lancée comprise
+    if (need) {
+      if (typeof showToast === "function") showToast(need, 1600);
+      return false;
     }
     if (present && this.partyIds().length >= COMPANION_MAX_PRESENT && !st.present) {
       if (typeof showToast === "function") showToast(_t("Deux compagnons au maximum"), 1400);

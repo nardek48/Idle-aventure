@@ -117,7 +117,7 @@ function buildQuestBoardActionHTML(m) {
     return h;
   }
   if (m.accept) return '<button class="settings-btn primary qb-card-btn" type="button" onclick="event.stopPropagation(); campMissionAction(\'' + esc(m.id) + '\', \'accept\')">' + _t("Accepter") + '</button>';
-  if (m.status === "locked") return '<span class="qb-card-locked">' + _t("Occupé ailleurs") + '</span>';
+  if (m.status === "locked") return '<span class="qb-card-locked">' + (m.lockLabel ? esc(m.lockLabel) : _t("Occupé ailleurs")) + '</span>'; // v3.684.0 (QUET-2)
   // v3.141.0 (audit Forêt, cap journalier de la Petite Aventure) : sans ce cas, une carte
   // "unavailable" (cap des 3 runs/jour atteint) retombait dans le "" final — ni bouton ni texte,
   // la carte semblait inerte plutôt que clairement indisponible pour aujourd'hui. Réutilise le

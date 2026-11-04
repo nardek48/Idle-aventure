@@ -22588,6 +22588,72 @@ console.log("\n[448] v3.683.0 — Tutoriel factuel (audit 04/11, lot I1)");
   try { run("game.sceneRun = null; campTab = 'missions'; fullResetState();"); } catch (e) {}
 })();
 
+console.log("\n[449] v3.684.0 — Quêtes (audit 04/11, lot I5)");
+(function () {
+  var rd = function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); };
+  var stp = function (c, id) { return g.STORY_QUESTS[c].steps.find(function (s) { return s.id === id; }); };
+  var linked0 = g.isStoryLinkedQuest, LM = g.LivingMapManager, open449 = LM.isMapOpen;
+  try {
+    // QUET-1 : aucune étape ne renvoie au donjon par `section`
+    var badD = [];
+    Object.keys(g.STORY_QUESTS).forEach(function (c) { g.STORY_QUESTS[c].steps.forEach(function (s) {
+      if (s.linkTo && s.linkTo.section === "dungeon") badD.push(s.id);
+      if (s.tutorial && s.tutorial.tab === "dungeon" && s.linkTo && s.linkTo.tab !== "dungeon") badD.push(s.id);
+    }); });
+    ok(badD.length === 0 && stp("tower", "tour_11").linkTo.tab === "dungeon" && stp("tower", "tour_12").linkTo.tab === "dungeon", "QUET-1 : étapes de donjon -> tab « dungeon » " + badD.join(" "));
+    // QUET-2 : quête liée gardée verrouillée, avec sa raison ; patrouille et retrait refusés
+    run("fullResetState(); game.playerName='T'; game.heroId='knight'; EquipmentManager.recalcStats(); game.activeTab = 'camp'; CompanionManager.unlock('sarkel'); CompanionManager.state('sarkel').present = false;");
+    g.isStoryLinkedQuest = function (id) { return id === "aq_montagne_veines"; };
+    var mv = g.MissionBoard.getById("adv_aq_montagne_veines");
+    ok(mv && mv.status === "locked" && /Sarkel/.test(mv.lockLabel || "") && !mv.accept, "QUET-2 : Sarkel absent, la quête liée reste visible, verrouillée (" + (mv && mv.lockLabel) + ")");
+    ok(/Il faut Sarkel dans le groupe/.test(g.buildQuestBoardActionHTML(mv)), "QUET-2 : la carte dit « Il faut Sarkel dans le groupe »");
+    ok(/Sarkel/.test(g.PatrolManager.canStart("sarkel") || ""), "QUET-2 : patrouille refusée tant que la quête liée n'est pas finie");
+    run("CompanionManager.state('sarkel').present = true;");
+    var mv2 = g.MissionBoard.getById("adv_aq_montagne_veines");
+    ok(mv2 && mv2.status === "available" && !mv2.lockLabel, "QUET-2 : Sarkel dans le groupe, la quête s'accepte");
+    run("game.adventureQuestRun = { active: true, questId: 'aq_montagne_veines' };");
+    g.isStoryLinkedQuest = function () { return false; };
+    ok(g.CompanionManager.setPresent("sarkel", false) === false && g.CompanionManager.state("sarkel").present === true, "QUET-2 : quête lancée, Sarkel ne quitte pas le groupe");
+    run("game.adventureQuestRun = { active: false };");
+    ok(g.PatrolManager.canStart("sarkel") === null && g.CompanionManager.setPresent("sarkel", false) === true, "QUET-2 : témoin, rien ne l'exige : patrouille et retrait permis");
+    ok(/companionId === "wenna" && step\("forest"\) === "forest_wenna"/.test(rd("js/systems/companion-system.js")), "QUET-2 (TUTO-13) : Wenna gardée pendant « Les compagnons »");
+    // QUET-5 : la silhouette prend le trait de la classe, Chaos compris
+    var arch = {};
+    ["knight", "ranger", "mage", "chaosKnight", "chaosRanger", "chaosMage"].forEach(function (id) {
+      g.game.heroId = id; var ph = { copyClass: true }; g.TowerSystem.onBossPhase({}, ph); arch[id] = ph.archetype;
+    });
+    ok(arch.chaosKnight === arch.knight && arch.chaosRanger === arch.ranger && arch.chaosMage === arch.mage && arch.ranger === "armored" && arch.mage === "silenced", "QUET-5 : trait de la silhouette par classe " + JSON.stringify(arch));
+    // QUET-6 : tour_03 mène aux Ateliers tant que l'offrande manque
+    var t3 = stp("tower", "tour_03");
+    ok(t3.linkTo && t3.linkTo.tab === "village" && typeof t3.linkTo.afterGo === "function" && t3.linkTo.label === "Aller aux Ateliers", "QUET-6 : tour_03 a un bouton vers les Ateliers");
+    // QUET-7 : le texte dit que toute veine compte
+    ok(/ou ailleurs$/.test(stp("mountain", "montagne_04").objectiveLabel), "QUET-7 : montagne_04 « dans « Ça ne fond pas » ou ailleurs »");
+    // QUET-10 : élites de carte du même nom comptées
+    var ach = function (id) { return g.ACHIEVEMENTS_DB.find(function (a) { return a.id === id; }); };
+    run("game.killCounts = { golem_tour: 3, pleureuse_nef: 1, porte_couronne: 1 };");
+    ok(ach("hf_ruines_golem").track() === 3 && ach("hf_crypte_elites").track() === 2 && ach("hf_ruines_elites").track() === 1, "QUET-10 : Golem et Pleureuse de la carte comptés");
+    // QUET-11 : l'élite n'est pas un étage
+    run("fullResetState(); game.playerName='T'; game.heroId='knight'; StoryQuestManager.ensure(); LivingMapManager.ensureDefaults();");
+    LM.isMapOpen = function (id) { return id === "tower" ? true : open449.call(LM, id); };
+    var ev = LM.getState("tower", "etage_veines"); ev.state = "libere"; ev.liberatedCount = 1;
+    var f0 = g.storyTowerFloorsFreed();
+    var es = LM.getState("tower", "etage_sable"); es.state = "libere"; es.liberatedCount = 1;
+    ok(f0 === 0 && g.storyTowerFloorsFreed() === 1, "QUET-11 : le Gardien libéré ne compte pas comme étage (" + f0 + ", " + g.storyTowerFloorsFreed() + ")");
+    // QUET-12 : chaque étape de la Tour porte sa propre récompense
+    var badR = g.STORY_QUESTS.tower.steps.filter(function (s) { return g.STORY_REWARDS[s.id] && s.reward !== g.STORY_REWARDS[s.id]; }).map(function (s) { return s.id; });
+    ok(badR.length === 0 && !/STORY_QUESTS\.tower\.steps\[/.test(rd("js/data/story-quests.js")), "QUET-12 : récompenses de la Tour posées par id " + badR.join(" "));
+    // QUET-13 : la carte s'ouvre sur le secteur visé
+    var cards = { ruines_11: ["ruins", "ruins", "porte_sanctuaire"], crypte_11: ["crypt", "crypt", "cotes"], montagne_11: ["mountain", "mountain", "antre"], tour_09: ["tower", "tower", "etage_veines"] };
+    var badC = Object.keys(cards).filter(function (id) { var c = cards[id], st = stp(c[0], id); return !st || st.linkTo.cardId !== "livingmap_" + c[1] + ":" + c[2] || !LM.getSectorDef(c[1], c[2]); });
+    ok(badC.length === 0, "QUET-13 : ruines_11, crypte_11, montagne_11, tour_09 ouvrent leur secteur " + badC.join(" "));
+    // CPL2-3 : « La laisser se recoucher » dit que ses quêtes s'arrêtent
+    var ys = stp("crypt", "crypte_14").choice.options.find(function (o) { return o.value === "garder"; });
+    ok(/Ses quêtes s'arrêtent là\.$/.test(ys.desc), "CPL2-3 : le choix d'Ysolt dit que ses quêtes s'arrêtent");
+  } catch (err) { ok(false, "[449] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  g.isStoryLinkedQuest = linked0; LM.isMapOpen = open449;
+  try { run("game.adventureQuestRun = { active: false }; fullResetState();"); } catch (e) {}
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

@@ -166,6 +166,8 @@ var PatrolManager = {
   canStart: function (companionId) {
     if (!window.CompanionManager || !CompanionManager.isUnlocked(companionId)) return _t("Compagnon indisponible");
     if (this.isOnPatrol(companionId)) return _t("Déjà en patrouille");
+    var need = CompanionManager.requiredReason ? CompanionManager.requiredReason(companionId) : null; // v3.684.0 (QUET-2) : exigé par une étape ou une quête
+    if (need) return need;
     if (window.heroLockReason && heroLockReason()) return heroLockReason();
     if (game.activeTab === "combat") return _t("Pas pendant un combat");
     return null;

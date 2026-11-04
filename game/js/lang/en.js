@@ -10,6 +10,7 @@
    Les textes des données sont traduits par _td() à l'affichage (registre : lang/data-fields.js). */
 I18n.register("en", {
   // index.html
+  "Une quête liée qui attend un compagnon reste au tableau, verrouillée : « Il faut Sarkel dans le groupe ». Il ne part plus en patrouille tant qu'elle l'attend. Les étapes du Sommet interdit mènent au donjon, les cartes s'ouvrent sur le bon secteur.": "A linked quest waiting for a companion stays on the board, locked: \"Sarkel must be in the party\". They no longer leave on patrol while it waits. The Forbidden Summit steps lead to the dungeon, maps open on the right sector.",
   "Fenêtres d'aide corrigées : le combat attend qu'on les ferme, la création annonce les vrais PV et la vraie ATK, et plusieurs consignes (ration, nuit, Champs, Mémoire) disent enfin ce qui se passe. Textes clés plus lisibles.": "Help windows fixed: combat waits until you close them, hero creation shows the real HP and ATK, and several instructions (ration, night, Fields, Memory) now say what actually happens. Key texts are easier to read.",
   "Une élite engagée sur la carte doit être finie (ou fuie) avant de lancer une quête, une chasse ou un donjon.": "An elite fight in progress on the map must be finished (or fled) before starting a quest, a hunt or a dungeon.",
   "Deux fenêtres ouvertes : celle qui passe la main n'écrit plus rien, même si l'autre change de héros. « Recharger ici » rouvre ton héros.": "Two windows open: the one that hands over no longer writes anything, even if the other switches hero. “Reload here” reopens your hero.",
@@ -6027,7 +6028,7 @@ I18n.register("en", {
   "La Pleureuse se tait. Dans la salle, une seule alcôve est occupée : personne dedans, juste une forme dans la pierre, à la taille d'Ysolt. « Montée neuf fois. Revenue huit. La neuvième, je me suis couchée ici. Je me suis réveillée. Je n'aurais pas dû. » Elle attend que quelqu'un décide, et ce ne sera pas elle.": "The Weeper falls silent. In the room, only one alcove is taken: no one in it, just a shape in the stone, Ysolt's size. \"Climbed nine times. Came back eight. The ninth time, I lay down here. I woke up. I shouldn't have.\" She is waiting for someone to decide, and it won't be her.",
   "La laisser se recoucher": "Let her lie back down",
   "La garder éveillée": "Keep her awake",
-  "Elle reprend sa place. Son carquois reste avec toi.": "She takes back her place. Her quiver stays with you.",
+  "Elle reprend sa place. Son carquois reste avec toi. Ses quêtes s'arrêtent là.": "She takes back her place. Her quiver stays with you. Her quests end there.",
   "Elle reste avec toi. Elle s'use, un peu, à chaque combat.": "She stays with you. She wears down, a little, with every fight.",
   "Le Porte-couronne": "The Crown-Bearer",
   "La Pleureuse": "The Weeper",
@@ -6658,7 +6659,7 @@ I18n.register("en", {
   "Monter à la Montagne (coût : 2 Rations moyennes)": "Climb to the Mountain (cost: 2 Medium Rations)",
   "Terminer « Ce qui affleure » : 5 rencontres": "Complete \"What Surfaces\": 5 encounters",
   "Choisir qui accompagne Sarkel, puis 4 rencontres avec lui": "Choose who goes with Sarkel, then 4 encounters with him",
-  "Tailler 5 veines à la Montagne (toi ou Sarkel), dans « Ça ne fond pas »": "Cut 5 veins on the Mountain (you or Sarkel), in \"It Doesn't Melt\"",
+  "Tailler 5 veines à la Montagne (toi ou Sarkel), dans « Ça ne fond pas » ou ailleurs": "Cut 5 veins on the Mountain (you or Sarkel), in \"It Doesn't Melt\" or elsewhere",
   "Décider de la première veine": "Decide on the first vein",
   "En haut de l'escalier de la Crypte, le chemin continue. Il monte. Sarkel a laissé ses lampes en bas. Il porte une pioche neuve, et il la porte mal.": "At the top of the Crypt stairs, the path goes on. It climbs. Sarkel left his lamps below. He carries a new pickaxe, and he carries it badly.",
   "Au Replat, Sarkel a tendu une toile contre le vent chaud. La pioche est posée à côté de lui. Il ne l'a pas encore levée.": "At the Ledge, Sarkel has stretched a canvas against the hot wind. The pickaxe lies beside him. He hasn't lifted it yet.",
@@ -8943,6 +8944,8 @@ I18n.register("en", {
   "Varier : ne pas refaire la même technique": "Vary: don't repeat the same technique",
   "Si une autre technique est prête, elle passe avant celle d'avant. Contre le miroir de la Tour, tu gardes toute ta force.": "If another technique is ready, it goes before the previous one. Against the Tower's mirror, you keep your full strength.",
   "Patrouilles dans la Tour : tes compagnons peuvent partir sur les étages libérés, avec leurs récits de là-haut.": "Patrols in the Tower: your companions can head out to the freed floors, with their stories from up there.",
+  "{x} doit t'accompagner pour cette quête": "{x} must come with you for this quest",
+  "Il faut {x} dans le groupe": "{x} must be in the party",
   "La Mémoire continue après la Tour : les niveaux 25 à 28 s'ouvrent avec ton record dans la faille, et chaque étage franchi rapporte de l'Aether. Six hauts faits de la faille.": "Memory goes on after the Tower: levels 25 to 28 open with your record in the rift, and every floor cleared yields Aether. Six rift achievements.",
 
 });

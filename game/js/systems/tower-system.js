@@ -106,11 +106,16 @@ var TowerSystem = {
     if (q && q.active && q.questId && window.ADVENTURE_QUESTS && ADVENTURE_QUESTS[q.questId] && ADVENTURE_QUESTS[q.questId].solo) return true;
     return !!(r && r.templateId && r.status !== "completed" && window.SCENE_TEMPLATES && SCENE_TEMPLATES[r.templateId] && SCENE_TEMPLATES[r.templateId].solo);
   },
+  /* v3.684.0 (QUET-5) : héros de base de la classe (chaosRanger -> ranger), clé de TOWER_CLASS_ARCHETYPE. */
+  baseHeroId: function (heroId) {
+    var cls = typeof getClassByHeroId === "function" ? getClassByHeroId(heroId) : null;
+    return cls && cls.heroIds && cls.heroIds[0] ? cls.heroIds[0] : heroId;
+  },
   /* v3.630.0 (TW6) : phases de la silhouette, appelées par BossMomentManager.onPhase. */
   onBossPhase: function (e, ph) {
     if (!e || !ph) return;
     // elle prend le trait de ta classe : posé sur la phase, que checkPhases applique juste après (silence compris)
-    if (ph.copyClass) ph.archetype = TOWER_CLASS_ARCHETYPE[game.heroId] || "enraged";
+    if (ph.copyClass) ph.archetype = TOWER_CLASS_ARCHETYPE[TowerSystem.baseHeroId(game.heroId)] || "enraged";
     if (ph.mirror) e.mirror = true;
     if (ph.through) { // v3.636.0 (TW6, Seb 03/11) : le round intouchable, annoncé ; il commence à son prochain tour
       e.throughIn = true;
