@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.681.0", "menu_icons/menu_menu", _t("Deux fenêtres ouvertes : celle qui passe la main n'écrit plus rien, même si l'autre change de héros. « Recharger ici » rouvre ton héros.")],
     ["3.680.0", "menu_icons/heroes_menu", _t("Mes héros : fermer la création d'un nouveau héros ramène au héros en cours, sans laisser d'emplacement vide derrière.")],
     ["3.679.0", "menu_icons/heroes_menu", _t("Sac plein : une pièce offerte par l'Histoire n'est plus convertie en Aether, elle entre dans le sac en dépassement.")],
     ["3.678.0", "menu_icons/camp_menu", _t("Le feu de camp ne soigne plus pendant un combat d'élite engagé sur la carte, comme pour les donjons et les quêtes.")],

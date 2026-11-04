@@ -22463,6 +22463,20 @@ console.log("\n[445] v3.680.0 — Création annulée : pas d'emplacement fantôm
   } catch (err) { ok(false, "[445] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[446] v3.681.0 — Fenêtre voilée : aucune écriture, « Recharger ici » rouvre son héros (audit 04/11, QA-1)");
+(function () {
+  try {
+    run("fullResetState(); game.saveSupported = true; game.heroId = 'knight'; game.playerName = 'Test';");
+    ok(run("typeof instanceLocked") === "boolean" && run("typeof reloadGameInstanceHere") === "function", "verrou et « Recharger ici » exposés");
+    run("instanceLocked = true; saveLockedKey = null; setActiveSlot(2);");
+    var key = run("getActiveSaveKey()"), avant = g.localStorage.getItem(key);
+    ok(run("saveGame()") === false && g.localStorage.getItem(key) === avant, "fenêtre voilée : rien n'est écrit, même si l'autre fenêtre a changé d'emplacement");
+    var src = fs.readFileSync(path.join(ROOT, "js/main/instance-unique.js"), "utf8");
+    ok(/instanceSlot = getActiveSlot\(\)/.test(src) && /setActiveSlot\(instanceSlot\)/.test(src), "« Recharger ici » remet l'emplacement de cette fenêtre avant de recharger");
+  } catch (err) { ok(false, "[446] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  try { run("instanceLocked = false; saveLockedKey = null; setActiveSlot(1);"); } catch (e) {}
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");
