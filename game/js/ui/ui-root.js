@@ -208,7 +208,9 @@ function switchTab(tabName) {
   // v3.458.1 (audit C8) : un écran sans bouton allume l'onglet qui le contient ; à défaut, Menu
   // v3.503.0 (grand écran) : un bouton propre et visible (rail du format large) passe avant le parent
   var ownBtn = document.querySelector('.tab-btn[data-tab="' + tabName + '"]');
-  var directBtn = ownBtn && ownBtn.offsetParent !== null ? ownBtn : document.querySelector('.tab-btn[data-tab="' + (TAB_PARENT[tabName] || tabName) + '"]');
+  var parentTab = TAB_PARENT[tabName] || tabName;
+  if (TAB_PARENT[tabName] && !isTabUnlocked(parentTab)) parentTab = "campement"; // NOV-18 : parent verrouillé = case vide, on allume le Camp
+  var directBtn = ownBtn && ownBtn.offsetParent !== null ? ownBtn : document.querySelector('.tab-btn[data-tab="' + parentTab + '"]');
   if (directBtn) {
     directBtn.classList.add("active");
   } else {
@@ -486,7 +488,11 @@ function backNavCloseTop() {
   var o = document.getElementById("offline-modal");
   if (o && o.classList.contains("show")) { closeOfflineModal(); return "closed"; }
   var list = Array.prototype.filter.call(document.querySelectorAll(".ksheet-x, .kwin-veil, .full-menu-overlay, .ksheet-backdrop, .hc-overlay, .title-screen-overlay"), backNavVisible);
-  if (!list.length) return "none";
+  if (!list.length) {
+    // UI-16 : sur la carte vivante, Retour et Échap reviennent à la carte du monde (plus au Camp)
+    if (game.activeTab === "map" && typeof livingMapOpenId !== "undefined" && livingMapOpenId && typeof closeLivingMap === "function") { closeLivingMap(); return "closed"; }
+    return "none";
+  }
   // À z-index égal, le dernier dans la page est dessus (une croix suit son voile).
   var top = list.reduce(function (a, b) { return backNavZ(b) >= backNavZ(a) ? b : a; });
   if (!top.classList.contains("ksheet-x")) return "blocked";

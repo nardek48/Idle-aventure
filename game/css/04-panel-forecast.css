@@ -25,7 +25,7 @@
 .cf-line.is-abordable .cf-line-verdict { color: var(--c-green-650-soft); }
 .cf-line.is-risque .cf-line-verdict { color: var(--c-brown-700-vivid); }
 .cf-line.is-tresdur .cf-line-verdict { color: var(--c-brown-600-vivid); }
-.cf-line.is-horsportee .cf-line-verdict { color: var(--danger); }
+.cf-line.is-horsportee .cf-line-verdict { color: var(--ink-missing); } /* UI-21 : rouge lisible sur le crème */
 .cf-line.is-horsportee { border-color: var(--danger); }
 
 /* --- Carte de confirmation --- */
@@ -78,7 +78,7 @@
   color: var(--nb-ink);
   text-align: left;
 }
-.cf-lowhp b { color: var(--danger, var(--c-red-550)); }
+.cf-lowhp b { color: var(--ink-missing); } /* UI-21 */
 .cf-lowhp-ico { flex: 0 0 auto; width: 28px; height: 28px; object-fit: contain; }
 
 .cf-card .kwin-body { text-align: left; }

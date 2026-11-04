@@ -31,6 +31,7 @@ body.dg-on-list .hud-dock { display: none !important; }
   font-size: 18px;
   font-weight: 800;
   margin-bottom: 10px;
+  color: var(--nb-ink); /* QA-14 : la couleur héritée était crème sur la carte crème */
 }
 
 .dungeon-progress-bar {
@@ -483,3 +484,7 @@ body.dg-on-list .hud-dock { display: none !important; }
   .dungeon-halt-sheet .dhalt-taken, .dungeon-halt-sheet .dhalt-taken-lbl { display: none; }
   .dungeon-halt-sheet .dhalt-prev { display: inline; }
 }
+
+/* QA-12 (audit 04/11) : raison du « Entrer » grisé, au-dessus des boutons du pied de feuille */
+.ksheet-foot:has(> .dsheet-nofood) { flex-wrap: wrap; }
+.ksheet-foot > .dsheet-nofood { flex: 1 0 100%; font-size: 12.5px; font-weight: 700; line-height: 1.3; color: var(--ink-missing); text-align: center; }

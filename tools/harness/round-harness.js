@@ -13000,7 +13000,7 @@ console.log("\n[175] v3.402.0 — Lot B-1 : boutons (bleu + filaire, pièce d'or
     ok(/\.kbuy,\n\.btn-buy\.kbuy \{[\s\S]*?linear-gradient\(#f6d27a, #d99a34\)/.test(kb), "achat : pastille pièce d'or (.kbuy)");
     var co = unpal(fs.readFileSync(path.join(ROOT, "css/00-components.css"), "utf8"));
     ok(/\.ksec \{[\s\S]*?justify-content: center;[\s\S]*?color: #3a2c1a;/.test(co) && /\.ksec::before,\n\.ksec::after/.test(co) && /\.kkick \{/.test(co), "titre de section centré à filets (.ksec) et surtitre (.kkick)");
-    ok(/settings-btn primary" onclick="saveGame\(\)"/.test(fs.readFileSync(path.join(ROOT, "js/ui/settings-view.js"), "utf8")), "Paramètres : « Sauvegarder » est le bouton principal");
+    ok(/settings-btn primary" onclick="saveGame(FromSettings)?\(\)"/.test(fs.readFileSync(path.join(ROOT, "js/ui/settings-view.js"), "utf8")), "Paramètres : « Sauvegarder » est le bouton principal");
     var html = g.buildEquipShopHTML ? g.buildEquipShopHTML() : "";
     ok(!html || /btn-buy kbuy/.test(html), "Boutique d'équipement : prix en pièce d'or");
     ok(/class="kseg shop-buy-toolbar/.test(fs.readFileSync(path.join(ROOT, "js/ui/heros-view.js"), "utf8")), "quantité d'achat (×1…MAX) : rail du kit");
@@ -13137,7 +13137,7 @@ console.log("\n[181] v3.408.0 — Paramètres refondus (B · Rail, S1 · glissi�
     var game = freshCombat("knight");
     var p = g.buildSettingsHTML("partie"), j = g.buildSettingsHTML("jeu"), a = g.buildSettingsHTML("appareil");
     ok(/kseg is-stack set-tabs/.test(p) && (p.match(/setSettingsTab\('/g) || []).length === 3 && /Paramètres/.test(p), "trois onglets en rail : Partie, Jeu, Appareil ; titre « Paramètres »");
-    ok(/settings-btn primary" onclick="saveGame\(\)"/.test(p) && /exportSaveToFile/.test(p) && /showImportTextModal/.test(p) && /settings-btn danger" onclick="resetGame\(\)"/.test(p), "Partie : sauvegarder, exporter/importer, codes, effacer en zone de danger");
+    ok(/settings-btn primary" onclick="saveGame(FromSettings)?\(\)"/.test(p) && /exportSaveToFile/.test(p) && /showImportTextModal/.test(p) && /settings-btn danger" onclick="resetGame\(\)"/.test(p), "Partie : sauvegarder, exporter/importer, codes, effacer en zone de danger");
     ok(!/toggleAutoSkills\(/.test(j) && j.indexOf("Il se choisit au départ de chaque sortie.") !== -1 && (j.match(/class="kswitch/g) || []).length === 3 && j.indexOf('type="checkbox"') === -1, "Jeu : le mode se lit (préparation de sortie, v3.440.0), interrupteurs du kit (3 depuis v3.473.0), plus de case à cocher");
     ok(/confirmLanguageChange\('en'\)/.test(a) && /switchTab\('admin'\)/.test(a) && a.indexOf("atelier-ui.html") === -1 && a.indexOf("switchTab('log')") === -1, "Appareil : langue, lien Admin ; ateliers morts et bouton Journal retirés");
   } catch (err) {
@@ -22652,6 +22652,90 @@ console.log("\n[449] v3.684.0 — Quêtes (audit 04/11, lot I5)");
   } catch (err) { ok(false, "[449] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   g.isStoryLinkedQuest = linked0; LM.isMapOpen = open449;
   try { run("game.adventureQuestRun = { active: false }; fullResetState();"); } catch (e) {}
+})();
+
+console.log("\n[450] v3.685.0 — Interface (audit 04/11, lot I6)");
+(function () {
+  var rd = function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); };
+  var keep = { gid: g.document.getElementById, ovb: g.openVillageBuildingSheet, conf: g.showConfirmModal, toast: g.showToast, save: g.saveGame,
+    gsum: g.HeroSlotManager.getSlotSummary, has: g.HeroSlotManager.hasSlot, chk: g.ProvisionsManager.check, cost: g.VillageBuildingManager.getNextCost, ff: g.DungeonManager.forfeit };
+  try {
+    // UI-1 : la marge des bulles se rattrape même quand la clé ne change pas
+    ok(/if \(key === hudDockLastKey\) \{ if \(!hudDockSpace\) setHudDockSpace\(root\); return; \}/.test(rd("js/ui/hud-dock-view.js")), "UI-1 : marge du dock recalculée tant qu'elle vaut 0");
+    // UI-4 : seule la feuille ouverte qui lit la ressource livrée est redessinée
+    var host = { firstChild: {}, dataset: { vb: "scierie" }, contains: function () { return false; }, querySelector: function (q) { return q === ".vb-sheet-card" ? {} : null; } };
+    g.document.getElementById = function (id) { return id === "village-modal-root" ? host : keep.gid(id); };
+    var redraw = 0; g.openVillageBuildingSheet = function () { redraw++; };
+    g.VillageBuildingManager.getNextCost = function () { return { planche: 10, gold: 50 }; };
+    run("openVillageBuildingId = 'scierie';");
+    g.refreshOpenSheetAfterDelivery(["pain"]); var r0 = redraw;
+    g.refreshOpenSheetAfterDelivery(["planche"]);
+    ok(r0 === 0 && redraw === 1, "UI-4 : livraison de planches -> fiche du bâtiment redessinée ; pain -> rien (" + r0 + ", " + redraw + ")");
+    ok(/refreshOpenSheetAfterDelivery\(recipe\.outputs\.map/.test(rd("js/systems/workshops-system.js")) && !/renderPanel\(\);\s*\/\/ UI-4/.test(rd("js/systems/workshops-system.js")), "UI-4 : appelée à chaque livraison d'atelier, sans renderPanel");
+    run("openVillageBuildingId = null;"); g.document.getElementById = keep.gid; g.openVillageBuildingSheet = keep.ovb; g.VillageBuildingManager.getNextCost = keep.cost;
+    // UI-5, QA-14, UI-12, UI-22 : CSS
+    var camp = rd("css/04-panel-camp.css");
+    ok(/\.camp-death-banner \{[^}]*border: 1px solid var\(--ink-missing\)[^}]*background-color: var\(--nb-cream\)/.test(camp), "UI-5 : bandeau de défaite sur crème opaque, bordure --ink-missing");
+    ok(/\.dungeon-wave-label \{[^}]*color: var\(--nb-ink\)/.test(rd("css/04-panel-dungeon.css")), "QA-14 : « Vague x / 15 » à l'encre sombre");
+    ok(/\.forge-row-empty \{[^}]*white-space: normal/.test(rd("css/04-panel-village.css")), "UI-12 : phrase de l'Enchanteresse non coupée");
+    ok(/\.qw-act small \{[^}]*-webkit-line-clamp: 2/.test(rd("css/10-grand-ecran.css")), "UI-22 : titres d'actes sur deux lignes au plus (PC)");
+    // UI-6, UI-7 : liste « encre claire »
+    var kb = rd("css/00-kbtn.css");
+    ok(/kf-mid > :is\(\.eq-empty, \.set-about\)/.test(kb) && /kf-mid > \.pa2-col > \.pa2-link/.test(kb) && /kf-mid > \.set-links > \.klink/.test(kb), "UI-6 : état vide, « À propos » et « Renoncer » en encre claire");
+    ok(!/kf-mid > \.ksec \*/.test(kb) && !/\.grimoire-divider/.test(kb), "UI-7 : les titres .ksec (bande crème) gardent l'encre sombre");
+    // UI-8 : encre de rareté dans le rapport et le campement du donjon
+    var dv = rd("js/ui/dungeon-view.js");
+    ok(g.dungeonRarityInk("epic") === "var(--rarity-epic-ink)" && g.dungeonRarityInk("x") === "var(--rarity-common-ink)" && (dv.match(/RARITY_COLORS\[(it|uq)\.rarity\]/g) || []).length === 0, "UI-8 : butin à l'encre --rarity-*-ink");
+    ok(/_t\("Butin"\) \+ '<\/span> <span>'/.test(dv), "UI-8 : espace entre « Butin » et la liste");
+    // UI-21 : recolorations sur les jetons
+    ok(/is-horsportee \.cf-line-verdict \{ color: var\(--ink-missing\)/.test(rd("css/04-panel-forecast.css")) && /\.cf-lowhp b \{ color: var\(--ink-missing\)/.test(rd("css/04-panel-forecast.css")), "UI-21 : « Hors de portée » et « il faut te soigner » en --ink-missing");
+    ok(/\.eqs-row-delta\.is-up \{ color: var\(--nb-green-text\)/.test(rd("css/04-panel-equipment.css")), "UI-21 : ▲ de Comparer en --nb-green-text");
+    ok(/\.st-row-hint \{[^}]*color: var\(--c-brown-700-soft\)/.test(rd("css/03-combat-v2.css")) && /\.camp-soir-k \{[^}]*color: var\(--c-brown-700-soft\)/.test(camp), "UI-21 : conseils de combat et titres du soir lisibles");
+    ok(/\.exp-row\.is-ready \.exp-act\.is-primary \{[^}]*color: var\(--c-brown-850-vivid\)/.test(rd("css/04-panel-expeditions.css")), "UI-21 : « Carte › » à l'encre sombre sur l'or");
+    // QA-3 : l'abandon demande confirmation et dit la part gardée
+    var asked = null, forf = 0; g.showConfirmModal = function (t, x, i, cb) { asked = { t: t, x: x, cb: cb }; }; g.DungeonManager.forfeit = function () { forf++; };
+    run("game.dungeonRun = game.dungeonRun || {}; game.dungeonRun.active = true; game.dungeonRun.wave = 4;");
+    g.askDungeonForfeit();
+    ok(asked && /50 %/.test(asked.x) && /\(3\)/.test(asked.x) && forf === 0, "QA-3 : confirmation « " + (asked && asked.x) + " », rien d'abandonné avant");
+    if (asked) asked.cb();
+    ok(forf === 1 && /onclick="askDungeonForfeit\(\)"/.test(dv), "QA-3 : « Oui » abandonne ; le bouton passe par la confirmation");
+    run("game.dungeonRun.active = false;"); g.DungeonManager.forfeit = keep.ff; g.showConfirmModal = keep.conf;
+    // QA-5 : deux touchers rapprochés ne paient qu'une fois
+    g.showToast = function () {};
+    run("fullResetState(); game.playerName='T'; game.heroId='knight'; game.gold = 1e7; game.equipShopManualRefreshCount = 0; EquipShopManager._lastManualRefreshAt = 0;");
+    var gold0 = g.game.gold; g.EquipShopManager.manualRefresh(); var r2 = g.EquipShopManager.manualRefresh();
+    ok(r2 === false && g.game.equipShopManualRefreshCount === 1 && gold0 > g.game.gold, "QA-5 : second renouvellement à 0 ms refusé (" + g.game.equipShopManualRefreshCount + " payé)");
+    g.EquipShopManager._lastManualRefreshAt = 0;
+    // QA-12 : sans vivres, « Entrer » grisé avec la raison
+    var req0 = g.ProvisionsManager.getRequirement; g.ProvisionsManager.getRequirement = function () { return { resourceId: "ration", amount: 1 }; };
+    g.ProvisionsManager.check = function () { return "Vivres : il te faut 1 Ration"; };
+    var sh = g.buildDungeonSheetHTML(1);
+    ok(/dsheet-nofood/.test(sh) && /onclick="confirmDungeonStart\(\)" disabled/.test(sh) && /Voir les vivres/.test(sh), "QA-12 : « Entrer » grisé, raison et « Voir les vivres »");
+    g.ProvisionsManager.check = function () { return null; };
+    ok(!/onclick="confirmDungeonStart\(\)" disabled/.test(g.buildDungeonSheetHTML(1)), "QA-12 : témoin, avec vivres « Entrer » actif");
+    g.ProvisionsManager.check = keep.chk; g.ProvisionsManager.getRequirement = req0;
+    // NOV-18 : parent verrouillé -> le Camp s'allume
+    ok(/if \(TAB_PARENT\[tabName\] && !isTabUnlocked\(parentTab\)\) parentTab = "campement";/.test(rd("js/ui/ui-root.js")), "NOV-18 : parent verrouillé, onglet Camp allumé");
+    // UI-15 : « Sauvegarder maintenant » répond
+    var said = null; g.showToast = function (t) { said = t; }; g.saveGame = function () { return true; };
+    g.saveGameFromSettings();
+    ok(said === "Partie sauvegardée" && /onclick="saveGameFromSettings\(\)"/.test(g.buildSettingsPartieHTML()), "UI-15 : toast « Partie sauvegardée »");
+    g.saveGame = keep.save; g.showToast = keep.toast;
+    // UI-16 : Retour sur la carte vivante -> carte du monde
+    run("game.activeTab = 'map'; livingMapOpenId = 'forest';");
+    var bn = g.backNavCloseTop();
+    ok(bn === "closed" && g.livingMapOpenId === null, "UI-16 : Retour ferme la carte vivante (" + bn + ")");
+    run("game.activeTab = 'campement'; livingMapOpenId = null;");
+    // QA-13 : emplacement illisible -> résumé de la copie de secours, marqué
+    g.HeroSlotManager.getSlotSummary = function () { return null; }; g.HeroSlotManager.hasSlot = function () { return true; };
+    g.localStorage.setItem(g.getSlotKey(3) + "_bak", JSON.stringify({ playerName: "Ysa", heroLevel: 17 }));
+    var bs = g.titleScreenSlotSummary(3), us = g.titleScreenSlotSummary(4);
+    ok(bs.backup && bs.heroLevel === 17 && us.unreadable && /copie de secours/.test(g.titleScreenLevelText(bs, "niv. 17")) && g.titleScreenLevelText(us, "niv. 1") === "Sauvegarde illisible", "QA-13 : copie de secours (niv. 17) ou « Sauvegarde illisible », plus de « niv. 1 »");
+    g.localStorage.removeItem(g.getSlotKey(3) + "_bak");
+  } catch (err) { ok(false, "[450] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  g.document.getElementById = keep.gid; g.openVillageBuildingSheet = keep.ovb; g.showConfirmModal = keep.conf; g.showToast = keep.toast; g.saveGame = keep.save;
+  g.HeroSlotManager.getSlotSummary = keep.gsum; g.HeroSlotManager.hasSlot = keep.has; g.ProvisionsManager.check = keep.chk; g.VillageBuildingManager.getNextCost = keep.cost; g.DungeonManager.forfeit = keep.ff;
+  try { run("game.dungeonRun = { active: false }; openVillageBuildingId = null; livingMapOpenId = null; fullResetState();"); } catch (e) {}
 })();
 
 Promise.all(ATTENTES).then(function () {

@@ -10,6 +10,13 @@
    Les textes des données sont traduits par _td() à l'affichage (registre : lang/data-fields.js). */
 I18n.register("en", {
   // index.html
+  "Interface : textes pâles relus (défaite, butin du donjon, Vague, conseils), abandon de donjon confirmé, « Entrer » grisé sans vivres, Retour sur la carte vivante.": "Interface: faint texts made readable (defeat, dungeon loot, Wave, tips), dungeon abandon now confirmed, “Enter” greyed out without provisions, Back on the living map.",
+  "Abandonner la tentative ?": "Abandon the attempt?",
+  "Tu gardes {n} % du butin ramassé ; l'or dépend des vagues passées ({w}).": "You keep {n}% of the loot gathered; the gold depends on the waves cleared ({w}).",
+  "Voir les vivres": "See provisions",
+  "Partie sauvegardée": "Game saved",
+  "Sauvegarde illisible": "Unreadable save",
+  "copie de secours": "backup copy",
   "Une quête liée qui attend un compagnon reste au tableau, verrouillée : « Il faut Sarkel dans le groupe ». Il ne part plus en patrouille tant qu'elle l'attend. Les étapes du Sommet interdit mènent au donjon, les cartes s'ouvrent sur le bon secteur.": "A linked quest waiting for a companion stays on the board, locked: \"Sarkel must be in the party\". They no longer leave on patrol while it waits. The Forbidden Summit steps lead to the dungeon, maps open on the right sector.",
   "Fenêtres d'aide corrigées : le combat attend qu'on les ferme, la création annonce les vrais PV et la vraie ATK, et plusieurs consignes (ration, nuit, Champs, Mémoire) disent enfin ce qui se passe. Textes clés plus lisibles.": "Help windows fixed: combat waits until you close them, hero creation shows the real HP and ATK, and several instructions (ration, night, Fields, Memory) now say what actually happens. Key texts are easier to read.",
   "Une élite engagée sur la carte doit être finie (ou fuie) avant de lancer une quête, une chasse ou un donjon.": "An elite fight in progress on the map must be finished (or fled) before starting a quest, a hunt or a dungeon.",

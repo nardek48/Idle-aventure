@@ -437,6 +437,7 @@ var WorkshopsSystem = {
     // Le badge "File : X/Y" et le reste (temps, barre) restent couverts par
     // ProductionManager.updateDOM(), déjà appelée chaque seconde indépendamment.
     if (typeof refreshWorkshopQueueDOM === "function") refreshWorkshopQueueDOM(workshopId);
+    if (recipe && typeof refreshOpenSheetAfterDelivery === "function") refreshOpenSheetAfterDelivery(recipe.outputs.map(function (o) { return o.resourceId; })); // UI-4
     if (typeof renderHud === "function") renderHud();
     saveGame();
 

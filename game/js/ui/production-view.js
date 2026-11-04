@@ -588,6 +588,27 @@ function refreshWorkshopQueueDOM(workshopId) {
 }
 window.refreshWorkshopQueueDOM = refreshWorkshopQueueDOM;
 
+/* UI-4 (audit 04/11) : une livraison redessine la seule feuille ouverte qui lit cette ressource
+   (coût du bâtiment, intrant d'un atelier, fiche de stock) ; jamais renderPanel (v3.98.21). */
+function refreshOpenSheetAfterDelivery(resIds) {
+  if (typeof document === "undefined" || !resIds || !resIds.length) return;
+  var host = document.getElementById("village-modal-root");
+  if (!host || !host.firstChild) return;
+  var ae = document.activeElement;
+  if (ae && host.contains(ae) && /^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName)) return; // saisie en cours : on ne la casse pas
+  var has = function (k) { return resIds.indexOf(k) !== -1; };
+  if (typeof openVillageBuildingId !== "undefined" && openVillageBuildingId && host.dataset.vb === openVillageBuildingId && host.querySelector(".vb-sheet-card")) {
+    var cost = VillageBuildingManager.getNextCost(openVillageBuildingId) || {};
+    if (Object.keys(cost).some(has)) openVillageBuildingSheet(openVillageBuildingId);
+  } else if (openWorkshopId && host.querySelector(".wk-sheet")) {
+    var uses = (WORKSHOPS_CONFIG[openWorkshopId].recipes || []).some(function (r) { return (r.inputs || []).some(function (i) { return has(i.resourceId); }); });
+    if (uses) renderWorkshopSheet(true);
+  } else if (typeof selectedWarehouseKey !== "undefined" && selectedWarehouseKey && !warehousePickerOpen && host.querySelector(".wh-sheet") && has(selectedWarehouseKey)) {
+    renderWarehouseSheet(true);
+  }
+}
+window.refreshOpenSheetAfterDelivery = refreshOpenSheetAfterDelivery;
+
 function selectWorkshopRecipe(workshopId, recipeId) {
   selectedWorkshopRecipe[workshopId] = recipeId;
   workshopCraftQty[workshopId] = 1;

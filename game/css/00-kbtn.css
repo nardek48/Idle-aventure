@@ -573,8 +573,10 @@
 
 /* Textes posés sur le décor : passent en clair */
 #panel-container .kframe .kf-mid :is(.qb-cap-indicator, .qb-completed-link, .production-dash-hint, .wh-zero-note, .codex-summary, .tutorials-intro,
-  .grimoire-mode-desc, .grimoire-divider, .qw-grp, .hs-wh, .cp-intro), /* v3.642.0 : .cp-intro (Héros › Compagnons), illisible sur le décor */
-#panel-container .kframe .kf-mid > .ksec, #panel-container .kframe .kf-mid > .ksec *,
+  .grimoire-mode-desc, .qw-grp, .hs-wh, .cp-intro), /* v3.642.0 : .cp-intro (Héros › Compagnons), illisible sur le décor */
+/* UI-6 : état vide d'Aventure, « À propos », « Renoncer » posés sur le décor. UI-7 : les .ksec ont la bande crème, encre sombre d'origine */
+#panel-container .kframe .kf-mid > :is(.eq-empty, .set-about), #panel-container .kframe .kf-mid > .set-about *,
+#panel-container .kframe .kf-mid > .set-links > .klink, #panel-container .kframe .kf-mid > .pa2-col > .pa2-link,
 #panel-container .kframe .kf-mid :is(.grimoire-head, .grimoire-foot) :is(span, small, b, div, button:not(.kbtn):not(.settings-btn)) {
   color: var(--kf-ink); text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
 }

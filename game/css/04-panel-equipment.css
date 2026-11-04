@@ -957,7 +957,7 @@
 .eqs-row-txt { font-size: 12.5px; font-weight: 800; color: var(--nb-ink); }
 .eqs-row-tier { font-size: 12px; color: var(--nb-ink-dim); text-transform: lowercase; }
 .eqs-row-delta { flex: 0 0 auto; font-size: 12px; font-weight: 800; }
-.eqs-row-delta.is-up { color: var(--c-green-650-vivid); }
-.eqs-row-delta.is-down { color: var(--c-red-500); }
+.eqs-row-delta.is-up { color: var(--nb-green-text); } /* UI-21 : vert et rouge de texte, lisibles sur le crème de Comparer */
+.eqs-row-delta.is-down { color: var(--ink-missing); }
 .eqs-row-delta.is-flat { color: var(--nb-ink-dim); }
 .eqs-power { margin: 8px 0 4px; }

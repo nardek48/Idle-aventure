@@ -25,12 +25,19 @@ function settingsRowHTML(icon, title, sub, ctrl) {
     + (sub ? '<small>' + sub + '</small>' : '') + '</div>' + (ctrl || '') + '</div>';
 }
 
+/* UI-15 (audit 04/11) : la sauvegarde manuelle dit si elle a réussi. */
+function saveGameFromSettings() {
+  var ok = saveGame();
+  if (typeof showToast === "function") showToast(ok ? _t("Partie sauvegardée") : _t("Sauvegarde impossible pour l'instant. Exporte ta partie (Paramètres) pour ne rien perdre."), ok ? 1600 : 3000);
+}
+window.saveGameFromSettings = saveGameFromSettings;
+
 function buildSettingsPartieHTML() {
   var h = '<div class="set-card">';
   h += '<div class="kkick">' + _t("Sauvegarde") + '</div>';
   h += '<p>' + _t("Le jeu se sauvegarde tout seul toutes les 30 secondes, dans ce navigateur. Exporte une copie de temps en temps : elle te suit sur un autre appareil.") + '</p>';
   h += '<div class="set-stack">';
-  h += '<button class="settings-btn primary" onclick="saveGame()"><img class=ico-inline src=images/Icons/system/save.webp> ' + _t("Sauvegarder maintenant") + '</button>';
+  h += '<button class="settings-btn primary" onclick="saveGameFromSettings()"><img class=ico-inline src=images/Icons/system/save.webp> ' + _t("Sauvegarder maintenant") + '</button>';
   h += '<div class="set-pair"><button class="settings-btn" onclick="exportSaveToFile()"><img class=ico-inline src=images/Icons/system/export.webp> ' + _t("Exporter") + '</button>';
   h += '<button class="settings-btn" onclick="triggerImportFilePicker()"><img class=ico-inline src=images/Icons/system/import.webp> ' + _t("Importer") + '</button></div>';
   h += '<div class="set-links"><button type="button" class="klink" onclick="showExportTextModal()">' + _t("Copier le code de sauvegarde") + '</button>';

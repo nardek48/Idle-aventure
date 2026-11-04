@@ -104,8 +104,8 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
   margin-bottom: 14px;
   padding: 12px 14px;
   border-radius: var(--nb-radius-md);
-  border: 1px solid rgba(239, 68, 68, 0.4);
-  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid var(--ink-missing); /* UI-5 : fond crème opaque, le texte se lit sur le décor sombre */
+  background-color: var(--nb-cream);
   color: var(--nb-ink);
   font-size: 13px;
   text-align: center;
@@ -423,7 +423,7 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
 
 /* v3.595.0 (C1 et C2) : la phrase du soir, et les compagnons autour du feu */
 .camp-soir, .camp-feu { padding: 10px 14px; text-align: left; display: grid; gap: 6px; }
-.camp-soir-k { font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--c-brown-550-soft); }
+.camp-soir-k { font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--c-brown-700-soft); } /* UI-21 : 2,9:1 avant */
 .camp-soir-t, .camp-feu-say { margin: 0; font: italic 400 15px/1.45 "Alegreya", Georgia, serif; color: var(--c-brown-850-vivid); }
 .camp-feu-row { display: flex; justify-content: center; align-items: flex-end; gap: 12px; flex-wrap: wrap; padding-top: 2px; }
 .camp-feu-fire { width: 44px; height: 44px; object-fit: contain; align-self: center; filter: drop-shadow(0 0 8px rgba(255, 150, 40, .65)); }
@@ -432,7 +432,7 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
 .camp-feu-mate.is-on .camp-feu-img { border-color: var(--nb-gold); box-shadow: 0 0 0 3px rgba(201, 154, 61, .45); }
 .camp-feu-mate:focus-visible { outline: 2px solid var(--nb-gold); outline-offset: 2px; border-radius: 8px; }
 .camp-feu-say { padding: 6px 10px; border-radius: 10px; background: rgba(255, 255, 255, .55); border: 1px solid var(--nb-frame-light); }
-.camp-feu-hint { margin: 0; font-size: 12.5px; color: var(--c-brown-550-soft); text-align: center; }
+.camp-feu-hint { margin: 0; font-size: 12.5px; color: var(--c-brown-700-soft); text-align: center; } /* UI-21 */
 
 /* v3.597.0 (atelier conversations, mise en page B) : un compagnon veut parler, puis la scène de conversation */
 .camp-talk { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; gap: 10px; align-items: center; width: 100%; padding: 10px 12px; text-align: left; cursor: pointer; font: inherit; color: inherit;

@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.685.0", "system/save", _t("Interface : textes pâles relus (défaite, butin du donjon, Vague, conseils), abandon de donjon confirmé, « Entrer » grisé sans vivres, Retour sur la carte vivante.")],
     ["3.684.0", "quests/quest_story", _t("Une quête liée qui attend un compagnon reste au tableau, verrouillée : « Il faut Sarkel dans le groupe ». Il ne part plus en patrouille tant qu'elle l'attend. Les étapes du Sommet interdit mènent au donjon, les cartes s'ouvrent sur le bon secteur.")],
     ["3.683.0", "codex/codex_lore", _t("Fenêtres d'aide corrigées : le combat attend qu'on les ferme, la création annonce les vrais PV et la vraie ATK, et plusieurs consignes (ration, nuit, Champs, Mémoire) disent enfin ce qui se passe. Textes clés plus lisibles.")],
     ["3.682.0", "menu_icons/map_menu", _t("Une élite engagée sur la carte doit être finie (ou fuie) avant de lancer une quête, une chasse ou un donjon.")],

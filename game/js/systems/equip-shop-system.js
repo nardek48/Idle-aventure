@@ -242,8 +242,12 @@ var EquipShopManager = {
       * ((window.MemoryManager && MemoryManager.has("oeil_marchand")) ? 0.5 : 1)); // v3.322.0 : Œil du marchand
   },
 
+  _lastManualRefreshAt: 0,
   manualRefresh: function () {
     this.ensure();
+    var now = Date.now(); // QA-5 : anti-rebond, un double toucher ne paie plus deux fois
+    if (now - this._lastManualRefreshAt < 800) return false;
+    this._lastManualRefreshAt = now;
     var cost = this.getManualRefreshCost();
     if ((game.gold || 0) < cost) return showToast(_t("Pas assez d'or"), 1000);
 
