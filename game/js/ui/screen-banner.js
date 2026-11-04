@@ -122,9 +122,11 @@ var ScreenBanner = {
     var W = WorldDays, left = W.left(), done = WORLD_DAY_SORTIES - left, p = document.createElement("div"), moons = "";
     for (var i = 0; i < WORLD_DAY_SORTIES; i++) moons += '<i class="' + (i < done ? "is-on" : "") + '"></i>';
     p.className = "kfb-day";
-    p.innerHTML = '<b>☾ ' + esc(_t("Jour {n}", { n: W.day() })) + '</b><span class="kfb-moons" title="' + esc(_tn(left, "{n} sortie avant la nuit", "{n} sorties avant la nuit")) + '">' + moons + '</span>';
+    var mo = typeof W.moment === "function" ? W.moment() : "soir"; // v3.655.0 (C3) : ☀ le matin et en journée
+    p.innerHTML = '<b>' + (mo === "matin" || mo === "jour" ? "☀" : "☾") + ' ' + esc(_t("Jour {n}", { n: W.day() })) + '</b><span class="kfb-moons" title="' + esc(_tn(left, "{n} sortie avant la nuit", "{n} sorties avant la nuit")) + '">' + moons + '</span>';
     el.appendChild(p);
     if (W.isDark()) el.classList.add("is-night");
+    else el.classList.add("is-" + mo); // v3.655.0 (C3) : teinte du matin, du jour, du soir
   },
 
   /* Les habitants d'Aeswyn, en haut à droite du bandeau du Village ; toucher dit d'où ils viennent. */

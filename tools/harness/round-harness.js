@@ -20602,6 +20602,7 @@ console.log("\n[393] v3.595.0 — Camp : la phrase du soir et le coin du feu ; l
     ok(D.length === 6 && D.every(function (w) { return w.lieu.length >= 3 && w.wenna && w.wenna.length >= 1 && w.tap && w.tap.wenna; }), "six mondes, chacun avec ses phrases du lieu et celles de Wenna");
     ok(["wenna", "maddoc", "edda", "ysolt", "sarkel"].every(function (id) { return any[id] && any[id].soir.length && any[id].tap; }), "chaque compagnon a une phrase de repli, partout");
     run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.unlockedTabs.companions = true; CompanionManager.unlock('wenna'); CompanionManager.unlock('maddoc'); WorldManager.worldIndex = 1;");
+    run("WorldDays.ensure().done = 2;"); // v3.655.0 (C3) : le soir (2 sorties faites), les phrases du soir
     CM.partyIds = function () { return ["wenna"]; };
     run("lastRenderedTab = 'quests';");
     var feu = g.buildCampHTML("feu");
@@ -22266,6 +22267,29 @@ console.log("\n[437] v3.653.0 — Grimoire : réglage « Varier » (ne pas refai
     ok(g.game.grimoireVarier === true, "rechargement : réglage gardé");
   } catch (err) { ok(false, "[437] exception : " + err.message); }
   finally { g.canUseAction = cu; g.ClassCombatManager._chooseRoundAction = cra; g.game.grimoireVarier = sv.v; g.game._varier = sv.r; g.game._towerMirror = sv.m; }
+})();
+
+console.log("\n[438] v3.655.0 — Camp : le jour et la nuit (C3, atelier jour-nuit-camp, B + T2)");
+(function () {
+  try {
+    var D = g.campSoirData(), W = g.WorldDays;
+    ok(D.every(function (w) { return w.matin && w.matin.length >= 2 && w.jour && w.jour.length >= 2; }), "six mondes, deux phrases du matin et deux de la journée");
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); WorldManager.worldIndex = 2;");
+    var w = W.ensure(), mo = function (done, dark) { w.done = done; w.dark = dark; return W.moment(); };
+    ok(mo(0, false) === "matin" && mo(1, false) === "jour" && mo(2, false) === "soir" && mo(0, true) === "nuit", "moment : 0 sortie matin, 1 jour, 2 soir, la soirée après la nuit = nuit");
+    var phrase = function () { run("lastRenderedTab = 'quests';"); var h = g.buildCampHTML("feu"); return { h: h, t: (h.match(/class="camp-soir-t">([^<]*)</) || [])[1] || "" }; };
+    mo(0, false); var m = phrase();
+    ok(D[2].matin.map(g.esc).indexOf(m.t) !== -1 && m.h.indexOf("Ce matin au camp") !== -1 && /camp-soir is-matin/.test(m.h), "matin : phrase du matin des Ruines, en-tête « Ce matin au camp » (" + m.t.slice(0, 50) + ")");
+    mo(1, false); var j = phrase();
+    ok(D[2].jour.map(g.esc).indexOf(j.t) !== -1 && j.h.indexOf("Au camp, en journée") !== -1, "journée : phrase de la journée, en-tête « Au camp, en journée »");
+    mo(2, false); var s2 = phrase();
+    ok(D[2].lieu.map(g.esc).indexOf(s2.t) !== -1 && s2.h.indexOf("Ce soir au camp") !== -1, "soir : phrases du soir, comme avant (" + s2.t.slice(0, 50) + ")");
+    mo(0, true); var n = phrase();
+    ok(n.h.indexOf("Cette nuit") !== -1 && /camp-soir is-night/.test(n.h), "nuit : la carte « Cette nuit », comme avant");
+    var css = fs.readFileSync(path.join(ROOT, "css/00-kbtn.css"), "utf8"), sb = fs.readFileSync(path.join(ROOT, "js/ui/screen-banner.js"), "utf8");
+    ok(/\.kfb\.is-matin::before/.test(css) && /\.kfb\.is-jour::before/.test(css) && /\.kfb\.is-soir::before/.test(css) && /backdrop-filter/.test(css), "bandeau : teintes du matin, du jour et du soir (backdrop-filter)");
+    ok(/el\.classList\.add\("is-" \+ mo\)/.test(sb), "bandeau du Camp : classe du moment posée par la pastille");
+  } catch (err) { ok(false, "[438] exception : " + err.message); }
 })();
 
 Promise.all(ATTENTES).then(function () {
