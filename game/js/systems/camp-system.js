@@ -131,9 +131,17 @@ var CampManager = {
     });
   },
 
+  /* audit 04/11 (QA-8) : en sortie de combat (donjon, élite, quête, chasse), pas de repas du Camp ;
+     la règle annoncée : « tu pars avec tes PV actuels ». Raison affichée, ou null. */
+  rationLockReason: function () {
+    if (window.heroLockReason && heroLockReason()) return heroLockReason(); // v3.307.0
+    if (typeof hasCombatQuestContext === "function" && hasCombatQuestContext()) return _t("En pleine sortie, pas de repas : termine ou abandonne d'abord.");
+    return null;
+  },
+
   canEatRation: function (rationId) {
     if (!window.WarehouseManager) return false;
-    if (window.heroLockReason && heroLockReason()) return false; // v3.307.0
+    if (this.rationLockReason()) return false;
     return WarehouseManager.getAmount(rationId) >= 1;
   },
 
@@ -144,6 +152,8 @@ var CampManager = {
     var maxHp = game.heroMaxHp || 1;
     if (this.teamFull()) { showToast(_t("PV déjà au maximum"), 1200); return false; }
     if (window.heroLockToast && heroLockToast()) return false; // v3.307.0
+    var lock = this.rationLockReason(); // audit 04/11 (QA-8)
+    if (lock) { showToast(lock, 1800); return false; }
     if (!this.canEatRation(rationId)) { showToast(_t("Aucune {x} en stock", { x: _td(def.name).toLowerCase() }), 1600); return false; }
     if (!WarehouseManager.removeResource(rationId, 1)) return false;
 

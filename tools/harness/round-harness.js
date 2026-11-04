@@ -22406,6 +22406,30 @@ console.log("\n[442] v3.676.0 — Retour d'Android en combat de sortie (audit 04
   try { g.confirm = saveConfirm; g.game.livingMaps.fight = saveFight; run("livingMapSelected = null; game.activeTab = 'campement'; if (game.sortie) game.sortie.active = false;"); } catch (e) {}
 })();
 
+console.log("\n[443] v3.677.0 — Pas de repas du Camp en sortie de combat (audit 04/11, QA-8)");
+(function () {
+  var saveFight = null;
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.heroHp = 10;");
+    var CM = g.CampManager, WM = g.WarehouseManager;
+    WM.addResource("petite_ration", 3);
+    ok(!CM.rationLockReason() && CM.canEatRation("petite_ration") && CM.eatRation("petite_ration") === true, "hors sortie : la ration se mange");
+    run("game.heroHp = 10; game.dungeonRun = { active: true, dungeonId: 1, wave: 2 };");
+    var n = WM.getAmount("petite_ration");
+    ok(/pleine sortie/.test(CM.rationLockReason() || "") && !CM.canEatRation("petite_ration") && CM.eatRation("petite_ration") === false && WM.getAmount("petite_ration") === n && g.game.heroHp === 10, "en donjon : refusée, stock et PV intacts");
+    ok(/pleine sortie/.test(g.buildCampHTML ? g.buildCampHTML() : String(CM.rationLockReason())), "le Camp affiche la raison");
+    run("game.dungeonRun = null;");
+    saveFight = g.game.livingMaps && g.game.livingMaps.fight;
+    run("game.livingMaps = game.livingMaps || {}; game.livingMaps.fight = { mapId: 'forest', sectorId: 'arbremere', eliteId: 'x' };");
+    ok(CM.eatRation("petite_ration") === false && WM.getAmount("petite_ration") === n, "élite de carte engagée : refusée");
+    run("game.livingMaps.fight = null; game.adventureQuestRun = { active: true };");
+    ok(CM.eatRation("petite_ration") === false, "quête d'aventure en cours : refusée");
+    run("game.adventureQuestRun = null;");
+    ok(CM.eatRation("petite_ration") === true && WM.getAmount("petite_ration") === n - 1, "sortie finie : la ration se mange de nouveau");
+  } catch (err) { ok(false, "[443] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  try { run("game.dungeonRun = null; game.adventureQuestRun = null;"); if (g.game.livingMaps) g.game.livingMaps.fight = saveFight || null; } catch (e) {}
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

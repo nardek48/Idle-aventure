@@ -170,7 +170,7 @@ function buildCampHTML(tab) {
   }
   var teamFull = window.CampManager ? CampManager.teamFull() : hpFull;
 
-  var campLock = (window.heroLockReason && heroLockReason()) || null; // v3.307.0
+  var campLock = (window.CampManager && CampManager.rationLockReason()) || null; // v3.307.0 ; audit 04/11 (QA-8) : sortie de combat
   if (campLock) h += '<div class="camp-lock-note"><img class="ico-inline" src="images/Icons/system/hero_away.webp" alt=""> ' + esc(campLock) + '</div>';
   h += '<div class="camp-ration-row">';
   rationOptions.forEach(function (r) {

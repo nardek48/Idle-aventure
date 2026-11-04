@@ -104,7 +104,7 @@ function buildReturnScreenHTML() {
   }
   // v3.458.4 (audit C9) : manger sans repasser par le Campement — la plus petite ration qui remet à plein, sinon la plus grande
   var CM = window.CampManager;
-  if (CM && !CM.teamFull() && !(window.heroLockReason && heroLockReason())) {
+  if (CM && !CM.teamFull() && !CM.rationLockReason()) { // audit 04/11 (QA-8) : pas en sortie de combat
     var opts = CM.getRationOptions().filter(function (r) { return r.amount >= 1; });
     var miss = (game.heroMaxHp || 1) - (game.heroHp || 0);
     var pick = opts.filter(function (r) { return (game.heroMaxHp || 1) * r.healPct >= miss; }).sort(function (a, b) { return a.healPct - b.healPct; })[0]
