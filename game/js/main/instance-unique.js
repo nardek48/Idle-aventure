@@ -14,8 +14,18 @@ function claimGameInstance() {
   try { localStorage.setItem(INSTANCE_KEY, JSON.stringify({ id: instanceId, at: Date.now() })); } catch (e) { noteErreur("instance-unique.claim", e); }
 }
 
+/* Audit 04/11 (SAVE-19) : avant de céder la main, la fenêtre écrit sa partie, si l'emplacement actif est
+   toujours le sien (même héros) : jamais par-dessus un autre héros (QA-1). */
+function saveBeforeInstanceLock() {
+  if (typeof saveGame !== "function" || !game.heroId) return;
+  var d = null;
+  try { d = JSON.parse(localStorage.getItem(getActiveSaveKey())); } catch (e) { d = null; }
+  if (d && d.heroId === game.heroId && d.playerName === game.playerName) saveGame();
+}
+
 function lockGameInstance() {
   if (instanceLocked) return;
+  saveBeforeInstanceLock();
   instanceLocked = true;
   if (typeof getActiveSaveKey === "function") saveLockedKey = getActiveSaveKey(); // plus aucune écriture ici
   if (typeof getActiveSlot === "function") instanceSlot = getActiveSlot(); // saveGame refuse tout tant que instanceLocked

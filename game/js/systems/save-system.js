@@ -54,6 +54,7 @@ function migrateOldSaveToSlot1() {
   try {
     var slot1Key = getSlotKey(1);
     if (localStorage.getItem(slot1Key)) return; // déjà migré / déjà en place
+    if (localStorage.getItem(ACTIVE_SLOT_KEY) != null) return; // audit 04/11 (SAVE-8) : emplacements déjà utilisés, l'ancienne clé ne ressuscite plus
 
     var oldRaw = localStorage.getItem(SAVE_KEY);
     if (!oldRaw) return; // rien à migrer (partie neuve)
@@ -68,6 +69,7 @@ function migrateOldSaveToSlot1() {
 /* v3.26 : réplique la séquence de boot.js après un switch/création de héros pour éviter un combat sans ennemi (spawnEnemy()).
    Détail : save-system_notes.md #5. */
 function resumeCombatAfterSlotChange(freshState) {
+  if (window.ReturnManager && typeof ReturnManager.clear === "function") ReturnManager.clear(); // audit 04/11 (SAVE-14) : le retour en attente était celui de l'autre héros
   // v3.109.2 (scope validé Seb, remplace la règle v3.41 « toujours monde 1 ») : la position est dans la save
   // (worldIndex/adventureIndex/enemyIndex, restaurée par loadGame comme au boot) — on ne la jette plus au switch.
   // freshState=true (création de héros, suppression du dernier slot) : état neuf SANS loadGame, or WorldManager
@@ -179,7 +181,7 @@ var HeroSlotManager = {
 
   /* Crée un héros dans un emplacement vide : sauvegarde l'ancien, bascule la clé active, repart d'un état neuf, ouvre la création (modal-view.js).
      Détail : save-system_notes.md #12. */
-  createHeroInSlot: function (slotNumber) {
+  createHeroInSlot: function (slotNumber, skipSaveCurrent) {
     if (this.hasSlot(slotNumber)) return false; // emplacement déjà occupé, pas de recréation silencieuse
     if (slotNumber < 1 || slotNumber > MAX_HERO_SLOTS) return false;
 
@@ -187,7 +189,7 @@ var HeroSlotManager = {
     var originSlot = getActiveSlot();
     window.pendingHeroCreationOrigin = HeroSlotManager.hasSlot(originSlot) ? originSlot : null;
 
-    if (getActiveSlot() !== slotNumber) saveGame(); // préserve l'emplacement qu'on quitte
+    if (getActiveSlot() !== slotNumber && !skipSaveCurrent) saveGame(); // préserve l'emplacement qu'on quitte ; audit 04/11 (SAVE-13) : sauté au démarrage, rien n'a été joué
 
     setActiveSlot(slotNumber);
 
@@ -222,6 +224,7 @@ var HeroSlotManager = {
       return false;
     }
     dropSlotBackup(getSlotKey(slotNumber)); // la copie saine d'un héros supprimé ne doit pas revenir
+    try { localStorage.removeItem(getSlotKey(slotNumber) + SAVE_UNREADABLE_SUFFIX); } catch (e) { noteErreur("save-system.deleteSlot", e); } // audit 04/11 (SAVE-12)
 
     if (wasActive) {
       var self = this;
@@ -369,12 +372,14 @@ function initSaveSystem() {
   window.addEventListener("beforeunload", function () {
     saveGame();
   });
+  window.addEventListener("pagehide", function () { saveGame(); }); // audit 04/11 (SAVE-18) : iOS ne lance pas toujours beforeunload
 }
 
 /* Construit l'objet JSON stocké dans localStorage. Tout champ persistant de `game` doit être repris ici (voir restoreBaseState pour l'inverse). */
 function buildSaveData() {
   return {
     version: SAVE_VERSION,
+    gameVersion: typeof GAME_VERSION === "string" ? GAME_VERSION : "", // audit 04/11 (SAVE-7) : une version plus ancienne refuse de la réécrire
     savedAt: Date.now(),
     lastOnline: Date.now(),
     gold: Number(game.gold || 0),
@@ -557,7 +562,9 @@ function saveGame() {
   if (typeof instanceLocked !== "undefined" && instanceLocked) return false; // audit 04/11 (QA-1) : fenêtre voilée, aucun emplacement
   try {
     if (!game.heroId && !localStorage.getItem(getActiveSaveKey())) return false; // audit 04/11 (SAVE-1) : création non confirmée, pas d'emplacement fantôme
-    localStorage.setItem(getActiveSaveKey(), JSON.stringify(buildSaveData()));
+    var json = JSON.stringify(buildSaveData());
+    localStorage.setItem(getActiveSaveKey(), json);
+    refreshSlotBackup(getActiveSaveKey(), json);
     game.lastSave = Date.now();
     game.lastOnline = game.lastSave;
     return true;
@@ -566,6 +573,29 @@ function saveGame() {
     signalerSauvegardeImpossible(e);
     return false;
   }
+}
+
+/* Audit 04/11 (SAVE-11) : la copie saine suit la partie toutes les 10 min, plus seulement au chargement
+   (une récupération effaçait toute la session). */
+var SAVE_BACKUP_EVERY_MS = 10 * 60 * 1000;
+var lastBackupKey = null, lastBackupAt = 0;
+function refreshSlotBackup(key, json, force) {
+  var now = Date.now();
+  if (!force && key === lastBackupKey && now - lastBackupAt >= 0 && now - lastBackupAt < SAVE_BACKUP_EVERY_MS) return;
+  try { localStorage.setItem(key + SAVE_BACKUP_SUFFIX, json); lastBackupKey = key; lastBackupAt = now; } catch (e) { noteErreur("save-system.refreshSlotBackup", e); }
+}
+
+/* Audit 04/11 (SAVE-7) : compare deux versions « 3.685.0 » ; > 0 si a est plus récente que b. */
+function compareGameVersions(a, b) {
+  var pa = String(a || "").split("."), pb = String(b || "").split(".");
+  for (var i = 0; i < Math.max(pa.length, pb.length); i++) {
+    var x = parseInt(pa[i], 10) || 0, y = parseInt(pb[i], 10) || 0;
+    if (x !== y) return x > y ? 1 : -1;
+  }
+  return 0;
+}
+function isNewerGameVersion(v) {
+  return typeof v === "string" && v !== "" && typeof GAME_VERSION === "string" && compareGameVersions(v, GAME_VERSION) > 0;
 }
 
 /* v3.448.9 : une sauvegarde qui échoue (stockage plein le plus souvent) ne passe plus inaperçue. Le joueur
@@ -979,7 +1009,11 @@ function loadGame() {
   if (!raw) return false;
 
   if (loadGameFromRaw(raw)) {
-    try { localStorage.setItem(key + SAVE_BACKUP_SUFFIX, raw); } catch (e) { noteErreur("save-system.loadGame", e); }
+    refreshSlotBackup(key, raw, true);
+    if (lastLoadNewerVersion) { // audit 04/11 (SAVE-7) : réécrire ici effacerait les champs récents
+      saveLockedKey = key;
+      notifySaveRecovery(_t("Cette partie vient d'une version plus récente du jeu : rien ne sera écrit dessus ici. Mets le jeu à jour (Paramètres › Partie)."));
+    }
     return true;
   }
   // v3.457.4 (audit P6) : sauvegarde lisible, erreur du jeu — on ne touche ni à elle ni à sa copie saine
@@ -1010,7 +1044,7 @@ function recoverUnreadableSave(key, raw) {
   resetGameToFreshState();
   if (!kept) saveLockedKey = key; // rien n'a pu être mis de côté : on n'écrit plus sur cette partie
   notifySaveRecovery(kept
-    ? _t("Ta sauvegarde n'a pas pu être lue. Elle est gardée à part : exporte tes sauvegardes (Paramètres) pour la récupérer.")
+    ? _t("Ta sauvegarde n'a pas pu être lue et ne peut pas être rechargée. Sa copie brute est gardée à part et jointe à l'export (Paramètres), pour une réparation.")
     : _t("Ta sauvegarde n'a pas pu être lue. Elle reste intacte : rien ne sera écrit dessus pendant cette session."));
   return false;
 }
@@ -1039,11 +1073,14 @@ function notifySaveRecovery(message) {
    v3.457.4 (audit P6) : une exception du CODE pendant la restauration n'est plus une sauvegarde illisible
    (lastLoadCodeError) — elle est tracée, et loadGame protège la partie au lieu de la mettre de côté. */
 var lastLoadCodeError = false;
+var lastLoadNewerVersion = false;
 function loadGameFromRaw(raw) {
   lastLoadCodeError = false;
+  lastLoadNewerVersion = false;
   var d;
   try { d = JSON.parse(raw); } catch (e) { return false; }
-  if (!d || typeof d !== "object") return false;
+  if (!d || typeof d !== "object" || typeof d.version !== "number") return false; // audit 04/11 (SAVE-10) : `{}` n'est pas une partie
+  lastLoadNewerVersion = isNewerGameVersion(d.gameVersion);
   try {
 
     restoreBaseState(d);
@@ -1070,6 +1107,7 @@ function clearSaveData() {
     localStorage.removeItem(getActiveSaveKey());
   } catch (e) { noteErreur("save-system.clearSaveData", e); }
   dropSlotBackup(getActiveSaveKey());
+  try { localStorage.removeItem(getActiveSaveKey() + SAVE_UNREADABLE_SUFFIX); } catch (e) { noteErreur("save-system.clearSaveData", e); } // audit 04/11 (SAVE-12)
 }
 
 /* Reset "complet" (bouton Paramètres) : efface VRAIMENT tout, y compris l'Aether et le héros. Redonne 1M d'or de départ (réglage debug à surveiller).
@@ -1228,12 +1266,18 @@ function fullResetState() {
 
 /* Bouton "Réinitialiser tout" des Paramètres : demande confirmation (irréversible) puis efface la sauvegarde et appelle fullResetState(). */
 function resetGame() {
+  var name = game.playerName || _t("ton héros");
   var doReset = function () {
-    clearSaveData();
-    fullResetState();
-
-    if (window.CombatEngine && typeof CombatEngine.spawnEnemy === "function") {
-      CombatEngine.spawnEnemy();
+    var slot = getActiveSlot();
+    if (HeroSlotManager.hasSlot(slot)) {
+      // Audit 04/11 (SAVE-15) : l'emplacement est supprimé (plus de héros vide réécrit) ; un autre héros reprend la main
+      if (typeof gameLog !== "undefined" && Array.isArray(gameLog)) gameLog.length = 0;
+      HeroSlotManager.deleteSlot(slot);
+      if (game.heroId && window.ResumeManager) ResumeManager.catchUpAfterSlotLoad(); // SAVE-21 : son absence est rattrapée
+    } else {
+      clearSaveData();
+      fullResetState();
+      if (window.CombatEngine && typeof CombatEngine.spawnEnemy === "function") CombatEngine.spawnEnemy();
     }
 
     if (typeof renderAll === "function") renderAll();
@@ -1243,17 +1287,13 @@ function resetGame() {
     if (typeof updateQuestBadge === "function") updateQuestBadge();
 
     saveGame();
-    if (typeof showToast === "function") showToast(_t("Partie réinitialisée"), 1200);
+    if (typeof showToast === "function") showToast(_t("Partie de {nom} effacée", { nom: name }), 1600);
   };
 
+  var body = _t("Son village, son équipement et toute sa progression sont supprimés de cet appareil. Tes autres héros sont gardés. C'est définitif.");
   if (typeof showConfirmModal === "function") {
-    showConfirmModal(
-      _t("Réinitialiser TOUT ?"),
-      _t("Cette action efface toute la progression, y compris l'Aether et la Mémoire. Cette action est irréversible."),
-      "⚠️",
-      doReset
-    );
-  } else if (window.confirm(_t("Réinitialiser toute la progression ?"))) {
+    showConfirmModal(_t("Effacer {nom} ?", { nom: name }), body, "⚠️", doReset);
+  } else if (window.confirm(_t("Effacer {nom} ?", { nom: name }) + " " + body)) {
     doReset();
   }
 }
@@ -1269,5 +1309,7 @@ window.restoreBaseState = restoreBaseState;
 window.reapplyProgressEffects = reapplyProgressEffects;
 window.ensureUpgradeDefaults = ensureUpgradeDefaults;
 window.migrateHeroId = migrateHeroId;
+window.compareGameVersions = compareGameVersions;
+window.isNewerGameVersion = isNewerGameVersion;
 
 /* v3.459.5 (audit O10) : l'interface d'export et d'import vit dans js/ui/save-transfer-view.js. */

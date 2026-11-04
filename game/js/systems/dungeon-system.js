@@ -222,10 +222,11 @@ var DungeonManager = {
 
   checkTicketReset: function () {
     this.ensure();
-    var now = Date.now();
-    if (now >= (game.dungeonTicketResetTime || 0)) {
+    var now = Date.now(), period = DUNGEON_CONFIG.ticketResetHours * 3600 * 1000;
+    // audit 04/11 (SAVE-5) : une remise plus loin qu'une période vient d'une horloge avancée puis corrigée
+    if (now >= (game.dungeonTicketResetTime || 0) || game.dungeonTicketResetTime - now > period) {
       game.dungeonRunsUsed = {};
-      game.dungeonTicketResetTime = now + DUNGEON_CONFIG.ticketResetHours * 3600 * 1000;
+      game.dungeonTicketResetTime = now + period;
     }
   },
 

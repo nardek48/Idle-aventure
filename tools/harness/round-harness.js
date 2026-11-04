@@ -22738,6 +22738,136 @@ console.log("\n[450] v3.685.0 — Interface (audit 04/11, lot I6)");
   try { run("game.dungeonRun = { active: false }; openVillageBuildingId = null; livingMapOpenId = null; fullResetState();"); } catch (e) {}
 })();
 
+console.log("\n[451] v3.686.0 — Sauvegarde et fiabilité (audit 04/11, lot I7)");
+(function () {
+  var rd = function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); };
+  var LS = g.localStorage, FIX = fs.readFileSync(path.join(__dirname, "sauvegarde-v3685.json"), "utf8");
+  // JSON canonique (clés triées), sans les champs de date et de version
+  var canon = function (o, drop) { var c = JSON.parse(JSON.stringify(o)); (drop || []).forEach(function (k) { delete c[k]; });
+    var s = function (v) { if (v && typeof v === "object") { if (Array.isArray(v)) return "[" + v.map(s).join(",") + "]"; return "{" + Object.keys(v).sort().map(function (k) { return JSON.stringify(k) + ":" + s(v[k]); }).join(",") + "}"; } return JSON.stringify(v); };
+    return s(c); };
+  var DROP = ["savedAt", "lastOnline", "gameVersion"];
+  var touched = ["quest_idle_save_v6", "quest_idle_active_slot"], keep = {};
+  for (var n = 1; n <= 6; n++) ["", "_bak", "_illisible"].forEach(function (x) { touched.push("quest_idle_save_v6_slot" + n + x); });
+  touched.forEach(function (k) { keep[k] = LS.getItem(k); });
+  var fn = { conf: g.showConfirmModal, toast: g.showToast, ohs: g.openHeroSelection, tso: g.titleScreenIsOpen, set: LS.setItem, rbs: g.restoreBaseState, cu: g.ResumeManager.catchUpAfterSlotLoad, ra: g.renderAll, hga: g.HeroSlotManager.getActiveSlot };
+  g.HeroSlotManager.getActiveSlot = g.getActiveSlot; // une section plus haut la remplace par un témoin
+  var clearSlots = function () { touched.forEach(function (k) { LS.removeItem(k); }); };
+  var loadSlot = function (n) { run("setActiveSlot(" + n + "); resetGameToFreshState(); saveLockedKey = null;"); return run("loadGame()"); };
+  var toasts = []; g.showToast = function (t) { toasts.push(String(t)); }; g.openHeroSelection = function () {}; g.renderAll = function () {};
+  try {
+    clearSlots(); run("game.saveSupported = true; instanceLocked = false;");
+    // Aller-retour sur une vraie sauvegarde de v3.685.0 (Rôdeuse niv. 12, Crypte, 5 compagnons, 54 objets)
+    LS.setItem("quest_idle_save_v6_slot1", FIX);
+    ok(loadSlot(1) === true && g.game.playerName === "Rodeuse" && g.game.heroLevel === 12, "ancienne sauvegarde (v3.685.0) chargée");
+    var b1 = g.buildSaveData();
+    ok(canon(b1, DROP) === canon(JSON.parse(FIX), DROP), "chargement de l'ancienne sauvegarde : rien de perdu ni de changé (hors dates)");
+    ok(b1.gameVersion === g.GAME_VERSION, "SAVE-7 : la sauvegarde porte la version du jeu (" + b1.gameVersion + ")");
+    run("lastBackupKey = null;"); ok(run("saveGame()") === true, "réécriture par la nouvelle version");
+    ok(loadSlot(1) === true && canon(g.buildSaveData(), DROP) === canon(JSON.parse(FIX), DROP), "aller-retour sauvegarde -> chargement : état identique");
+    // SAVE-7 : partie d'une version plus récente -> chargée, mais plus écrite
+    var nw = JSON.parse(FIX); nw.gameVersion = "99.0.0"; LS.setItem("quest_idle_save_v6_slot2", JSON.stringify(nw));
+    ok(loadSlot(2) === true && run("saveLockedKey") === g.getSlotKey(2) && run("saveGame()") === false, "SAVE-7 : partie plus récente chargée sans être réécrite");
+    ok(g.compareGameVersions("3.686.0", "3.685.9") > 0 && g.compareGameVersions("3.10.0", "3.9.0") > 0 && g.compareGameVersions("3.685.0", "3.685.0") === 0 && !g.isNewerGameVersion(""), "SAVE-7 : comparaison de versions");
+    run("saveLockedKey = null;");
+    // SAVE-10 : `{}` n'est pas une partie : la copie saine est rechargée
+    LS.setItem("quest_idle_save_v6_slot3", "{}"); LS.setItem("quest_idle_save_v6_slot3_bak", FIX);
+    ok(loadSlot(3) === true && g.game.playerName === "Rodeuse" && LS.getItem("quest_idle_save_v6_slot3_illisible") === "{}" && LS.getItem("quest_idle_save_v6_slot3_bak") === FIX, "SAVE-10 : `{}` refusé, copie saine rechargée et gardée");
+    ok(run("loadGameFromRaw('[]')") === false && run("loadGameFromRaw('{\"gold\":5}')") === false, "SAVE-10 : `[]` et objet sans version refusés");
+    // SAVE-12 : supprimer l'emplacement retire aussi la copie illisible ; message honnête
+    run("HeroSlotManager.deleteSlot(3);");
+    ok(LS.getItem("quest_idle_save_v6_slot3_illisible") === null && LS.getItem("quest_idle_save_v6_slot3_bak") === null, "SAVE-12 : emplacement supprimé, copies illisible et saine retirées");
+    ok(/ne peut pas être rechargée/.test(rd("js/systems/save-system.js")) && !/exporte tes sauvegardes \(Paramètres\) pour la récupérer/.test(rd("js/systems/save-system.js")), "SAVE-12 : plus de « exporte pour la récupérer »");
+    // SAVE-11 : la copie saine suit la partie toutes les 10 min
+    loadSlot(1); var k1 = g.getSlotKey(1);
+    run("game.gold = 4242; saveGame();"); var bakA = LS.getItem(k1 + "_bak");
+    run("lastBackupAt -= 11 * 60 * 1000; game.gold = 4343; saveGame();"); var bakB = LS.getItem(k1 + "_bak");
+    ok(JSON.parse(bakA).gold !== 4242 && JSON.parse(bakB).gold === 4343, "SAVE-11 : copie saine rafraîchie après 10 min, pas à chaque sauvegarde");
+    // SAVE-8 : l'ancienne clé à plat ne ressuscite pas quand les emplacements servent déjà
+    clearSlots(); LS.setItem("quest_idle_save_v6", FIX); LS.setItem("quest_idle_active_slot", "2");
+    run("migrateOldSaveToSlot1();");
+    var m1 = LS.getItem("quest_idle_save_v6_slot1");
+    LS.removeItem("quest_idle_active_slot"); run("migrateOldSaveToSlot1();");
+    ok(m1 === null && LS.getItem("quest_idle_save_v6_slot1") === FIX, "SAVE-8 : migration seulement sur un appareil d'avant les emplacements");
+    // SAVE-13 : « Nouvelle partie » au démarrage ne réécrit pas le héros quitté
+    clearSlots(); LS.setItem("quest_idle_save_v6_slot1", FIX); loadSlot(1);
+    run("game.gold = 1;"); g.HeroSlotManager.createHeroInSlot(2, true);
+    var s13 = LS.getItem("quest_idle_save_v6_slot1") === FIX;
+    loadSlot(1); run("game.gold = 2;"); g.HeroSlotManager.createHeroInSlot(2);
+    ok(s13 && JSON.parse(LS.getItem("quest_idle_save_v6_slot1")).gold === 2, "SAVE-13 : héros quitté intact au démarrage ; témoin, depuis le jeu il est sauvé");
+    ok(/createHeroInSlot\(emptySlot, true\)/.test(rd("js/ui/title-screen-view.js")) && /createHeroInSlot\(slotNumber, !titleScreenFromGame\)/.test(rd("js/ui/title-screen-view.js")), "SAVE-13 : l'écran titre passe skipSaveCurrent au démarrage");
+    // SAVE-14 : le retour en attente ne passe pas à l'autre héros
+    clearSlots(); LS.setItem("quest_idle_save_v6_slot1", FIX); var oth = JSON.parse(FIX); oth.playerName = "Autre"; LS.setItem("quest_idle_save_v6_slot2", JSON.stringify(oth));
+    loadSlot(1); g.ReturnManager._pending = { produced: { bois: 3 } };
+    g.HeroSlotManager.switchToSlot(2);
+    ok(g.game.playerName === "Autre" && g.ReturnManager._pending === null, "SAVE-14 : changement de héros, retour en attente vidé");
+    // SAVE-15 et SAVE-21 : « Effacer la partie » supprime l'emplacement, l'autre héros reprend et rattrape son absence
+    var asked = null, caught = 0; g.showConfirmModal = function (t, x, i, cb) { asked = { t: t, x: x, cb: cb }; };
+    g.ResumeManager.catchUpAfterSlotLoad = function () { caught++; return null; };
+    loadSlot(1); g.resetGame();
+    ok(asked && asked.t === "Effacer Rodeuse ?" && /Tes autres héros sont gardés/.test(asked.x), "SAVE-15 : « " + (asked && asked.t) + " » et « Tes autres héros sont gardés »");
+    if (asked) asked.cb();
+    ok(LS.getItem("quest_idle_save_v6_slot1") === null && g.game.playerName === "Autre" && g.HeroSlotManager.getActiveSlot() === 2 && caught === 1, "SAVE-15/21 : emplacement 1 supprimé (pas réécrit), « Autre » repris, absence rattrapée");
+    asked = null; g.resetGame(); if (asked) asked.cb();
+    ok(!g.HeroSlotManager.hasSlot(2) && g.game.heroId === "" && run("saveGame()") === false && !g.HeroSlotManager.hasSlot(1), "SAVE-15 : dernier héros effacé, aucun emplacement fantôme réécrit");
+    ok(/wasActive && titleScreenFromGame && game\.heroId && window\.ResumeManager\) ResumeManager\.catchUpAfterSlotLoad\(\)/.test(rd("js/ui/title-screen-view.js")), "SAVE-21 : « Mes héros », supprimer le héros actif rattrape l'absence du suivant");
+    g.ResumeManager.catchUpAfterSlotLoad = fn.cu; g.showConfirmModal = fn.conf;
+    // SAVE-2 : stockage plein, l'export prend la partie en mémoire
+    clearSlots(); LS.setItem("quest_idle_save_v6_slot1", FIX); loadSlot(1); run("game.gold = 98765;");
+    LS.setItem = function (k, v) { if (k === "quest_idle_save_v6_slot1") { var e = new Error("plein"); e.name = "QuotaExceededError"; throw e; } return fn.set.call(LS, k, v); };
+    var pay = g.buildMultiSaveExportPayload(); LS.setItem = fn.set;
+    ok(JSON.parse(LS.getItem("quest_idle_save_v6_slot1")).gold === 137975 && pay.slots[1].gold === 98765, "SAVE-2 : stockage plein, l'export garde la progression récente");
+    ok(/a\.download = "aethervale-sauvegarde-" \+ date/.test(rd("js/ui/save-transfer-view.js")), "SAVE-20 : fichier « aethervale-sauvegarde-AAAA-MM-JJ.json »");
+    // SAVE-3 : import multi-héros, un emplacement `{}` est ignoré, pas écrit
+    g.titleScreenIsOpen = function () { return false; }; g.showConfirmModal = function (t, x, i, cb) { cb(); };
+    LS.setItem("quest_idle_save_v6_slot2", JSON.stringify(oth)); toasts = [];
+    g.applyImportedSave({ aethervaleMultiSave: true, activeSlot: 2, slots: { 1: JSON.parse(FIX), 2: {} } });
+    ok(JSON.parse(LS.getItem("quest_idle_save_v6_slot2")).playerName === "Autre" && g.game.playerName === "Rodeuse" && /1 héros, 1 ignoré/.test(toasts.join(" ")), "SAVE-3 : `{}` ignoré, héros valide importé (" + toasts.slice(-1)[0] + ")");
+    toasts = []; g.applyImportedSave({ aethervaleMultiSave: true, slots: { 2: { gold: 5 } } });
+    ok(JSON.parse(LS.getItem("quest_idle_save_v6_slot2")).playerName === "Autre" && /invalide/.test(toasts.join(" ")), "SAVE-3 : fichier sans héros valide refusé, rien d'écrit");
+    toasts = []; g.applyImportedSave(nw);
+    ok(/plus récente/.test(toasts.join(" ")), "SAVE-7 : import d'une partie plus récente refusé");
+    // SAVE-4 : ancien format qui échoue -> partie d'avant intacte, message
+    loadSlot(1); var before4 = LS.getItem("quest_idle_save_v6_slot1"), single = JSON.parse(FIX); single.playerName = "Seule"; single.gold = 11;
+    g.restoreBaseState = function (d) { if (d && d.playerName === "Seule") throw new Error("panne"); return fn.rbs(d); }; toasts = [];
+    g.applyImportedSave(single); g.restoreBaseState = fn.rbs;
+    var after4 = JSON.parse(LS.getItem("quest_idle_save_v6_slot1"));
+    ok(after4.playerName === "Rodeuse" && after4.gold === JSON.parse(before4).gold && g.game.playerName === "Rodeuse" && /Import impossible/.test(toasts.join(" ")), "SAVE-4 : import raté, partie d'avant gardée et message (" + toasts.slice(-1)[0] + ")");
+    toasts = []; g.applyImportedSave(single);
+    ok(g.game.playerName === "Seule" && JSON.parse(LS.getItem("quest_idle_save_v6_slot1")).gold === 11 && /importée/.test(toasts.join(" ")), "SAVE-4 : import réussi, chargé par le chemin protégé et écrit");
+    g.titleScreenIsOpen = fn.tso; g.showConfirmModal = fn.conf;
+    // SAVE-5 : remises bornées à leur période
+    var now = Date.now(); run("DungeonManager.ensure(); game.dungeonRunsUsed = { 1: 3 }; game.dungeonTicketResetTime = " + (now + 8783 * 3600e3) + "; DungeonManager.checkTicketReset();");
+    ok(g.game.dungeonTicketResetTime - now <= 24 * 3600e3 + 5000 && !g.game.dungeonRunsUsed[1], "SAVE-5 : sorties de donjon rendues après une horloge corrigée");
+    run("EquipShopManager.ensure(); game.equipShopResetTime = " + (now + 8765 * 3600e3) + "; EquipShopManager.checkRefresh();");
+    ok(g.game.equipShopResetTime - now <= g.EQUIP_SHOP_REFRESH_MS + 5000, "SAVE-5 : échoppe renouvelée après une horloge corrigée");
+    ok(/game\.tavern\.resetTime - now > TAVERN_REFRESH_MS/.test(rd("js/systems/tavern-system.js")), "SAVE-5 : Taverne bornée à sa période");
+    // SAVE-16 : toute clé sauvegardée a sa valeur initiale
+    var init = g.createInitialGameState(), meta = ["version", "gameVersion", "savedAt", "lastOnline", "worldIndex", "adventureIndex", "enemyIndex"];
+    var miss = Object.keys(g.buildSaveData()).filter(function (k) { return meta.indexOf(k) === -1 && !(k in init); });
+    ok(miss.length === 0, "SAVE-16 : clés de buildSaveData présentes dans l'état initial " + miss.join(" "));
+    // SAVE-17 : quantité d'entraînement gardée par les préférences
+    var p0 = g.Prefs.getValue("shopBuyAmount");
+    g.setHerosBuyAmount(25); run("game.shopBuyAmount = 1;"); g.buildHerosAmeliorationHTML();
+    ok(g.Prefs.getValue("shopBuyAmount") === "25" && g.game.shopBuyAmount === 25, "SAVE-17 : ×25 retrouvé après rechargement");
+    var pd = g.Prefs._load(); if (p0 == null) delete pd.shopBuyAmount; else pd.shopBuyAmount = p0; g.Prefs._save(pd);
+    // SAVE-18, SAVE-19, CPL1-8, ARCH-19
+    ok(/addEventListener\("pagehide", function \(\) \{ saveGame\(\); \}\)/.test(rd("js/systems/save-system.js")) && /function reloadForPwaUpdate\(\) \{\s*PwaUpdate\.saveFirst\(\);/.test(rd("js/main/pwa.js")), "SAVE-18 : sauvegarde à pagehide et avant le rechargement de mise à jour");
+    loadSlot(1); run("game.gold = 5000;"); g.saveBeforeInstanceLock(); var s19 = JSON.parse(LS.getItem("quest_idle_save_v6_slot1")).gold;
+    run("game.gold = 6000; game.playerName = 'Intrus';"); g.saveBeforeInstanceLock();
+    ok(s19 === 5000 && JSON.parse(LS.getItem("quest_idle_save_v6_slot1")).gold === 5000 && /saveBeforeInstanceLock\(\);\s*instanceLocked = true;/.test(rd("js/main/instance-unique.js")), "SAVE-19 : la fenêtre qui cède sauve son héros, jamais un autre");
+    var boot = rd("js/main/boot.js");
+    ok(boot.indexOf("CampManager.applyRegen(true)") < boot.indexOf("ProductionManager.catchUpOffline();") && boot.indexOf("OfflineManager.snapshot()") < boot.indexOf("CampManager.applyRegen(true)"), "CPL1-8 : régénération hors ligne avant le rattrapage, après la photo de retour");
+    run("game.adventureQuestProgress = { aq_x: 1 }; game.adventureQuestProgress[Object.keys(ADVENTURE_QUESTS).map(function (k) { return ADVENTURE_QUESTS[k].id; })[0]] = 'x';");
+    var thr = null; try { g.AdventureQuestManager.ensureDefaults(); } catch (e) { thr = e.message; }
+    ok(thr === null, "ARCH-19 : entrée d'aventure au mauvais type réparée " + (thr || ""));
+  } catch (err) { ok(false, "[451] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  LS.setItem = fn.set; g.showConfirmModal = fn.conf; g.showToast = fn.toast; g.openHeroSelection = fn.ohs; g.titleScreenIsOpen = fn.tso;
+  g.restoreBaseState = fn.rbs; g.ResumeManager.catchUpAfterSlotLoad = fn.cu; g.renderAll = fn.ra; g.HeroSlotManager.getActiveSlot = fn.hga;
+  clearSlots(); touched.forEach(function (k) { if (keep[k] !== null) LS.setItem(k, keep[k]); });
+  try { run("saveLockedKey = null; instanceLocked = false; ReturnManager._pending = null; fullResetState(); game.saveSupported = true;"); } catch (e) {}
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

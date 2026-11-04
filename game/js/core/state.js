@@ -199,6 +199,10 @@ function createInitialGameState() {
     forge: { levels: {} },
 
     dungeonTiersEntered: {},
+    // Audit 04/11 (SAVE-16, ARCH-11) : clés sauvegardées absentes jusqu'ici, valeurs de fullResetState
+    bossGoldBonusPct: 0, dungeonTierCleared: {}, potionsOwned: {}, companions: {}, huntStats: {},
+    huntRun: { active: false, questId: null, killsInLot: 0 }, sceneRun: null, expeditionChest: { unlocked: {} },
+    construction: {}, livingMaps: {}, workshopUnlock: {}, workshopFoundationsCompleted: false, campRegenLastAt: 0, genericTutorialsSeen: {},
     codexChaosSeen: false,
     codexRead: {},
 

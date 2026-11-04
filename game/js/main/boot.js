@@ -35,13 +35,13 @@ function init() {
     OfflineManager.snapshot();
   }
 
+  // v3.101.0 : régénération au camp accumulée hors ligne, voir systems/camp-system.js.
+  // v3.429.3 : avant tout spawn ; audit 04/11 (CPL1-8) : et avant le rattrapage, dont le renderHud consommait l'absence.
+  if (loaded && window.CampManager && typeof CampManager.applyRegen === "function") CampManager.applyRegen(true);
+
   if (window.ProductionManager && typeof ProductionManager.catchUpOffline === "function") {
     ProductionManager.catchUpOffline();
   }
-
-  // v3.101.0 : régénération au camp accumulée hors ligne (plafond 50 % PV max), voir systems/camp-system.js.
-  // v3.429.3 : avant tout spawn — renderHud soignait sans plafond et consommait l'absence.
-  if (loaded && window.CampManager && typeof CampManager.applyRegen === "function") CampManager.applyRegen(true);
 
 
   if (window.WorldManager && typeof WorldManager.markWorldReached === "function") {

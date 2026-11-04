@@ -110,7 +110,8 @@ var TavernManager = {
     }
 
     var now = Date.now();
-    if (!game.tavern.contracts.length || now >= game.tavern.resetTime) {
+    // audit 04/11 (SAVE-5) : remise à plus d'une période = horloge avancée puis corrigée, on renouvelle
+    if (!game.tavern.contracts.length || now >= game.tavern.resetTime || game.tavern.resetTime - now > TAVERN_REFRESH_MS) {
       game.tavern.contracts = this.generateContracts();
       game.tavern.resetTime = now + TAVERN_REFRESH_MS;
       return;

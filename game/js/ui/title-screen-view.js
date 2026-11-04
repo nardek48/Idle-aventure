@@ -96,13 +96,12 @@ function titleScreenNewGame() {
     return;
   }
 
-  ensureActiveSlotLoadedBeforeSwitch();
-
+  // Audit 04/11 (SAVE-13) : au démarrage, rien n'a été joué ; réécrire le héros quitté effaçait son absence.
   // Crée l'emplacement (repart d'un état neuf) puis ouvre le sélecteur nom -> héros.
   // resolveTitleScreen() est branché sur confirmHeroSelection() ci-dessous, pas ici :
   // tant que la création n'est pas confirmée, le joueur peut encore annuler (✕).
   window.titleScreenSlotBeingCreated = emptySlot;
-  HeroSlotManager.createHeroInSlot(emptySlot);
+  HeroSlotManager.createHeroInSlot(emptySlot, true);
 
   var titleHost = document.getElementById("title-screen-root");
   if (titleHost) titleHost.innerHTML = "";
@@ -179,7 +178,10 @@ function titleScreenConfirmDelete() {
   titleScreenDeleteConfirmSlot = null;
   if (!window.HeroSlotManager || !slot) { renderTitleScreen(); return; }
 
+  var wasActive = HeroSlotManager.getActiveSlot() === slot;
   HeroSlotManager.deleteSlot(slot);
+  // Audit 04/11 (SAVE-21) : depuis le jeu, le héros qui reprend la main rattrape son absence (au démarrage, init() le fait)
+  if (wasActive && titleScreenFromGame && game.heroId && window.ResumeManager) ResumeManager.catchUpAfterSlotLoad();
   if (titleScreenSelectedSlot === slot) titleScreenSelectedSlot = null;
   renderTitleScreen();
 }
@@ -188,10 +190,10 @@ function titleScreenConfirmDelete() {
 function titleScreenCreateInSlot(slotNumber) {
   if (!window.HeroSlotManager || HeroSlotManager.hasSlot(slotNumber)) return;
 
-  ensureActiveSlotLoadedBeforeSwitch(); // v3.99.16 : voir commentaire au-dessus de titleScreenNewGame()
+  if (titleScreenFromGame) ensureActiveSlotLoadedBeforeSwitch(); // v3.99.16 : voir titleScreenNewGame()
 
   window.titleScreenSlotBeingCreated = slotNumber;
-  HeroSlotManager.createHeroInSlot(slotNumber);
+  HeroSlotManager.createHeroInSlot(slotNumber, !titleScreenFromGame); // SAVE-13 : au démarrage, le héros quitté n'est pas réécrit
 
   var titleHost = document.getElementById("title-screen-root");
   if (titleHost) titleHost.innerHTML = "";

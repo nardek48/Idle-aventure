@@ -90,6 +90,13 @@ var ReturnManager = {
 
   hasPending: function () { return !!this._pending; },
 
+  /* Audit 04/11 (SAVE-14) : changement ou effacement de héros, le retour en attente n'est plus le sien. */
+  clear: function () {
+    if (!this._pending) return;
+    this._pending = null;
+    if (typeof renderReturnPending === "function") renderReturnPending(false);
+  },
+
   /* Appelé une fois par seconde par la vue tant qu'un retour attend. */
   flushPending: function () {
     if (!this._pending || this.isHeroEngaged()) return false;

@@ -469,6 +469,9 @@ function buildHerosAmeliorationHTML() {
     return '<div class="pc-empty">' + _t("Entraînement indisponible.") + '</div>';
   }
 
+  // Audit 04/11 (SAVE-17) : la quantité choisie est une préférence de l'appareil, gardée au rechargement
+  var prefAmount = window.Prefs ? Number(Prefs.getValue("shopBuyAmount")) : NaN;
+  if ([1, 10, 25, -1].indexOf(prefAmount) !== -1) game.shopBuyAmount = prefAmount;
   var buyAmount = Number(game.shopBuyAmount || 1);
   if ([1, 10, 25, -1].indexOf(buyAmount) === -1) buyAmount = 1;
 
@@ -486,7 +489,7 @@ function buildHerosAmeliorationHTML() {
   // v3.402.0 (lot B-1) : quantité d'achat = rail du kit (.kseg)
   h += '<div class="kseg shop-buy-toolbar pc-heros-train-toolbar">';
   [[1, "×1"], [10, "×10"], [25, "×25"], [-1, _t("MAX")]].forEach(function (b) {
-    h += '<button type="button" class="' + (buyAmount === b[0] ? 'is-on' : '') + '" onclick="setShopBuyAmount(' + b[0] + ')">' + b[1] + '</button>';
+    h += '<button type="button" class="' + (buyAmount === b[0] ? 'is-on' : '') + '" onclick="setHerosBuyAmount(' + b[0] + ')">' + b[1] + '</button>';
   });
   h += '</div>';
 
@@ -809,6 +812,12 @@ window.closeHerosSheet = closeHerosSheet;
 window.setHerosSubTabSilent = setHerosSubTabSilent;
 
 window.buildHerosHTML = buildHerosHTML;
+/* SAVE-17 : retient la quantité d'entraînement dans les préférences, puis l'applique. */
+function setHerosBuyAmount(amount) {
+  if (window.Prefs) Prefs.setValue("shopBuyAmount", Number(amount) || 1);
+  setShopBuyAmount(amount);
+}
+window.setHerosBuyAmount = setHerosBuyAmount;
 window.openHeroSlotsScreen = openHeroSlotsScreen; // v3.202.0
 window.setHerosSubTab = setHerosSubTab;
 window.toggleHeroStat = toggleHeroStat;   // v3.203.0

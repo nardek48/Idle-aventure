@@ -14,7 +14,8 @@ var AdventureQuestManager = {
 
     Object.keys(ADVENTURE_QUESTS).forEach(function (key) {
       var quest = ADVENTURE_QUESTS[key];
-      if (!game.adventureQuestProgress[quest.id]) game.adventureQuestProgress[quest.id] = {};
+      var qp = game.adventureQuestProgress[quest.id]; // audit 04/11 (ARCH-19) : une entrée d'un autre type levait à chaque sortie
+      if (!qp || typeof qp !== "object" || Array.isArray(qp)) game.adventureQuestProgress[quest.id] = {};
       quest.steps.forEach(function (step) {
         if (typeof game.adventureQuestProgress[quest.id][step.id] !== "number") {
           game.adventureQuestProgress[quest.id][step.id] = 0;

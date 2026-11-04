@@ -10,12 +10,16 @@
 /* v3.29 : construit le payload d'export COMPLET (tous les emplacements occupés), partagé par exportSaveToFile() et showExportTextModal(). */
 function buildMultiSaveExportPayload() {
   saveGame(); // l'emplacement actif doit être à jour avant de lire les autres
+  // Audit 04/11 (SAVE-2) : si l'écriture a échoué (stockage plein), l'actif est exporté depuis la partie en mémoire
+  var activeKey = getActiveSaveKey();
+  var activeLive = game.heroId && !(saveLockedKey && saveLockedKey === activeKey) && !(typeof instanceLocked !== "undefined" && instanceLocked);
 
   var slots = {};
   var unreadable = {}; // v3.448.1 : versions illisibles mises de côté, exportées brutes pour être réparées
   var maxSlots = window.MAX_HERO_SLOTS || 3;
   for (var i = 1; i <= maxSlots; i++) {
-    if (window.HeroSlotManager && HeroSlotManager.hasSlot(i)) {
+    if (activeLive && i === getActiveSlot()) slots[i] = JSON.parse(JSON.stringify(buildSaveData()));
+    else if (window.HeroSlotManager && HeroSlotManager.hasSlot(i)) {
       try {
         var raw = localStorage.getItem(getSlotKey(i));
         if (raw) slots[i] = JSON.parse(raw);
@@ -50,7 +54,7 @@ function exportSaveToFile() {
   var date = new Date().toISOString().slice(0, 10);
   var a = document.createElement("a");
   a.href = url;
-  a.download = "quest-idle-save-" + date + ".json";
+  a.download = "aethervale-sauvegarde-" + date + ".json"; // audit 04/11 (SAVE-20) : nom du jeu
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -132,6 +136,28 @@ function looksLikeQuestIdleSave(d) {
     d.talents !== undefined);
 }
 
+/* Audit 04/11 (SAVE-3) : un héros importable a un nom et un numéro de sauvegarde ; « newer » = version du jeu plus récente. */
+function importHeroProblem(d) {
+  if (!looksLikeQuestIdleSave(d) || typeof d.version !== "number" || typeof d.playerName !== "string" || !d.playerName.trim()) return "invalid";
+  if (typeof isNewerGameVersion === "function" && isNewerGameVersion(d.gameVersion)) return "newer";
+  return "";
+}
+
+/* Emplacements valides d'un fichier multi-héros, et nombre d'emplacements écartés. */
+function importValidSlots(data) {
+  var out = { slots: {}, keys: [], skipped: 0, newer: 0 }, maxSlots = window.MAX_HERO_SLOTS || 3;
+  Object.keys(data.slots).forEach(function (k) {
+    var n = parseInt(k, 10), why = importHeroProblem(data.slots[k]);
+    if (!(n >= 1 && n <= maxSlots) || why) { out.skipped++; if (why === "newer") out.newer++; return; }
+    out.slots[n] = data.slots[k]; out.keys.push(String(n));
+  });
+  return out;
+}
+
+function importRefusedMessage(newer) {
+  return newer ? _t("❌ Ce fichier vient d'une version plus récente du jeu : mets le jeu à jour avant de l'importer.") : _t("❌ Fichier invalide (pas une sauvegarde Aethervale)");
+}
+
 /* v3.29 : détecte le nouveau format d'export multi-héros ({ aethervaleMultiSave: true, slots: {...} }), un ou plusieurs héros complets. */
 function looksLikeMultiSave(d) {
   return !!(d && typeof d === "object" && d.aethervaleMultiSave === true &&
@@ -143,25 +169,27 @@ function looksLikeMultiSave(d) {
 function applyImportedSave(data) {
   var isMulti = looksLikeMultiSave(data);
   var isSingle = !isMulti && looksLikeQuestIdleSave(data);
+  // Audit 04/11 (SAVE-3) : seuls les héros complets sont importés ; un fichier sans aucun est refusé
+  var valid = isMulti ? importValidSlots(data) : null;
+  var singleWhy = isSingle ? importHeroProblem(data) : "";
+  var refused = (isMulti && !valid.keys.length) || (isSingle && singleWhy) || (!isMulti && !isSingle);
+  var refusedMsg = importRefusedMessage(isMulti ? valid.newer > 0 : singleWhy === "newer");
   // v3.591.0 : depuis l'accueil, chaque héros importé prend un emplacement libre (rien n'est écrasé)
-  if (typeof titleScreenIsOpen === "function" && titleScreenIsOpen()) return importSaveToFreeSlots(data, isMulti, isSingle);
+  if (typeof titleScreenIsOpen === "function" && titleScreenIsOpen()) return importSaveToFreeSlots(refused ? null : (isMulti ? { slots: valid.slots } : data), isMulti, isSingle, refusedMsg);
 
-  if (!isMulti && !isSingle) {
-    showToast(_t("❌ Fichier invalide (pas une sauvegarde Aethervale)"), 2200);
+  if (refused) {
+    showToast(refusedMsg, 2600);
     return;
   }
 
   var doImport = function () {
     if (isMulti) {
       saveLockedKey = null; // import voulu : les emplacements peuvent de nouveau être écrits
-      // Écrit chaque emplacement du fichier dans sa clé localStorage dédiée ; les emplacements absents du fichier restent inchangés.
-      var maxSlots = window.MAX_HERO_SLOTS || 3;
+      // Écrit chaque emplacement valide dans sa clé localStorage dédiée ; les emplacements absents du fichier restent inchangés.
       var importedCount = 0;
-      Object.keys(data.slots).forEach(function (slotKey) {
+      valid.keys.forEach(function (slotKey) {
         var slotNum = parseInt(slotKey, 10);
-        if (slotNum < 1 || slotNum > maxSlots) return;
-        var slotData = data.slots[slotKey];
-        if (!slotData) return;
+        var slotData = valid.slots[slotKey];
         try {
           localStorage.setItem(getSlotKey(slotNum), JSON.stringify(slotData));
           dropSlotBackup(getSlotKey(slotNum));
@@ -169,7 +197,7 @@ function applyImportedSave(data) {
         } catch (e) { noteErreur("save-system.doImport", e); signalerSauvegardeImpossible(e); } // v3.448.9 : emplacement refusé par le stockage
       });
 
-      var targetSlot = (data.activeSlot && data.slots[data.activeSlot]) ? Number(data.activeSlot) : Number(Object.keys(data.slots)[0]);
+      var targetSlot = (data.activeSlot && valid.slots[data.activeSlot]) ? Number(data.activeSlot) : Number(valid.keys[0]);
       setActiveSlot(targetSlot);
 
       // Repart d'un état neuf avant de charger l'emplacement importé
@@ -187,26 +215,10 @@ function applyImportedSave(data) {
       if (typeof resumeCombatAfterSlotChange === "function") resumeCombatAfterSlotChange();
 
       if (typeof renderAll === "function") renderAll();
-      showToast("✅ " + _t("Sauvegarde importée ({n} héros)", { n: importedCount }), 2000);
+      showToast("✅ " + (valid.skipped ? _t("Sauvegarde importée ({n} héros, {m} ignoré(s))", { n: importedCount, m: valid.skipped }) : _t("Sauvegarde importée ({n} héros)", { n: importedCount })), 2000);
       addLog("📥 " + _t("Sauvegarde multi-héros importée ({n} héros).", { n: importedCount }), "event");
     } else {
-      // Ancien format (un seul héros) — importe dans l'EMPLACEMENT
-      // ACTIF uniquement, comportement identique à avant ce correctif.
-      restoreBaseState(data);
-      reapplyProgressEffects();
-      // v3.327.1 : même passage que loadGame (anciens talents -> points rendus)
-      if (window.TalentManager) { TalentManager.migrate(); TalentManager.afterChange(); TalentManager.showMigrationNotice(); }
-
-      if (window.CombatEngine && typeof CombatEngine.spawnEnemy === "function") {
-        CombatEngine.spawnEnemy();
-      }
-
-      saveLockedKey = null; // import voulu : l'emplacement peut de nouveau être écrit
-      dropSlotBackup(getActiveSaveKey());
-      saveGame();
-      if (typeof renderAll === "function") renderAll();
-      showToast(_t("✅ Sauvegarde importée"), 1800);
-      addLog(_t("📥 Sauvegarde importée."), "event");
+      importSingleSave(data); // ancien format (un seul héros) : dans l'emplacement ACTIF
     }
   };
 
@@ -215,7 +227,7 @@ function applyImportedSave(data) {
   if (typeof closeExportTextModal === "function") closeExportTextModal();
 
   var confirmMsg = isMulti
-    ? _t("Ceci va REMPLACER la progression des héros présents dans ce fichier ({n}). Cette action est irréversible.", { n: Object.keys(data.slots).length })
+    ? _t("Ceci va REMPLACER la progression des héros présents dans ce fichier ({n}). Cette action est irréversible.", { n: valid.keys.length })
     : _t("Ceci va REMPLACER toute la progression de l'emplacement ACTIF par celle importée. Cette action est irréversible.");
 
   if (typeof showConfirmModal === "function") {
@@ -225,11 +237,40 @@ function applyImportedSave(data) {
   }
 }
 
+/* Audit 04/11 (SAVE-4) : l'ancien format passe par le chargement protégé (loadGameFromRaw) avant d'être écrit ;
+   en cas d'échec, la partie d'avant est rechargée telle quelle et le joueur est prévenu. */
+function importSingleSave(data) {
+  var key = getActiveSaveKey(), json = JSON.stringify(data), oldRaw = null;
+  saveGame();
+  try { oldRaw = localStorage.getItem(key); } catch (e) { noteErreur("save-transfer.importSingleSave", e); }
+  resetGameToFreshState();
+  var ok = loadGameFromRaw(json);
+  if (ok) {
+    try { localStorage.setItem(key, json); } catch (e) { noteErreur("save-transfer.importSingleSave", e); signalerSauvegardeImpossible(e); ok = false; }
+  }
+  if (!ok) {
+    resetGameToFreshState();
+    if (oldRaw) loadGameFromRaw(oldRaw);
+  } else {
+    saveLockedKey = null; // import voulu : l'emplacement peut de nouveau être écrit
+    dropSlotBackup(key);
+  }
+  if (typeof ensureGameStateDefaults === "function") ensureGameStateDefaults();
+  if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") StatsSystem.recalcStats();
+  if (typeof resumeCombatAfterSlotChange === "function") resumeCombatAfterSlotChange();
+  if (ok) saveGame();
+  if (typeof renderAll === "function") renderAll();
+  if (ok) { showToast(_t("✅ Sauvegarde importée"), 1800); addLog(_t("📥 Sauvegarde importée."), "event"); }
+  else showToast(_t("❌ Import impossible : ta partie n'a pas changé."), 2600);
+  return ok;
+}
+window.importSingleSave = importSingleSave;
+
 /* v3.591.0 : import depuis l'accueil (feuille des Paramètres). Chaque héros du fichier est écrit dans le
    premier emplacement libre ; aucun emplacement occupé n'est touché. Message dans la feuille (titleSettingsSay). */
-function importSaveToFreeSlots(data, isMulti, isSingle) {
+function importSaveToFreeSlots(data, isMulti, isSingle, refusedMsg) {
   var say = typeof titleSettingsSay === "function" ? titleSettingsSay : function (t) { showToast(t, 2200); };
-  if (!isMulti && !isSingle) { say(_t("❌ Fichier invalide (pas une sauvegarde Aethervale)")); return; }
+  if (!data || (!isMulti && !isSingle)) { say(refusedMsg || _t("❌ Fichier invalide (pas une sauvegarde Aethervale)")); return; } // SAVE-3 : rien de valide
   var heroes = isMulti ? Object.keys(data.slots).map(function (k) { return data.slots[k]; }).filter(Boolean) : [data];
   var maxSlots = window.MAX_HERO_SLOTS || 3, written = 0, next = 1;
   heroes.forEach(function (hero) {

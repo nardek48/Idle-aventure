@@ -208,7 +208,8 @@ var EquipShopManager = {
   checkRefresh: function () {
     this.ensure();
     var now = Date.now();
-    if (!game.equipShopStock.length || now >= game.equipShopResetTime) {
+    // audit 04/11 (SAVE-5) : remise à plus d'une période = horloge avancée puis corrigée, on renouvelle
+    if (!game.equipShopStock.length || now >= game.equipShopResetTime || game.equipShopResetTime - now > EQUIP_SHOP_REFRESH_MS) {
       game.equipShopStock = this.generateStock();
       game.equipShopResetTime = now + EQUIP_SHOP_REFRESH_MS;
       game.equipShopManualRefreshCount = 0;

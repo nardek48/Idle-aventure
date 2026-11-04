@@ -105,6 +105,7 @@ function dismissPwaUpdateBanner() {
 }
 
 function reloadForPwaUpdate() {
+  PwaUpdate.saveFirst(); // audit 04/11 (SAVE-18) : la partie est écrite avant le rechargement de mise à jour
   window.location.reload();
 }
 

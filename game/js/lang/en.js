@@ -10,6 +10,7 @@
    Les textes des données sont traduits par _td() à l'affichage (registre : lang/data-fields.js). */
 I18n.register("en", {
   // index.html
+  "Sauvegarde plus sûre : « Effacer la partie » n'efface que ce héros, la copie de secours suit ta partie, la quantité d'entraînement est gardée, un import abîmé ne touche plus rien.": "Safer saves: \"Erase the game\" erases only this hero, the backup copy follows your game, the training amount is kept, a damaged import no longer touches anything.",
   "Interface : textes pâles relus (défaite, butin du donjon, Vague, conseils), abandon de donjon confirmé, « Entrer » grisé sans vivres, Retour sur la carte vivante.": "Interface: faint texts made readable (defeat, dungeon loot, Wave, tips), dungeon abandon now confirmed, “Enter” greyed out without provisions, Back on the living map.",
   "Abandonner la tentative ?": "Abandon the attempt?",
   "Tu gardes {n} % du butin ramassé ; l'or dépend des vagues passées ({w}).": "You keep {n}% of the loot gathered; the gold depends on the waves cleared ({w}).",
@@ -678,10 +679,15 @@ I18n.register("en", {
 
   // js/systems/save-system.js
   "L'essence et l'Aether de réserve disparaissent : +{n} or": "Essence and reserve Aether are gone: +{n} gold",
-  "Partie réinitialisée": "Game reset",
-  "Réinitialiser TOUT ?": "Reset EVERYTHING?",
-  "Cette action efface toute la progression, y compris l'Aether et la Mémoire. Cette action est irréversible.": "This erases all progress, including Aether and Memory. This cannot be undone.",
-  "Réinitialiser toute la progression ?": "Reset all progress?",
+  "ton héros": "your hero",
+  "Partie de {nom} effacée": "{nom}'s game erased",
+  "Effacer {nom} ?": "Erase {nom}?",
+  "Son village, son équipement et toute sa progression sont supprimés de cet appareil. Tes autres héros sont gardés. C'est définitif.": "Their village, gear and all their progress are deleted from this device. Your other heroes are kept. This cannot be undone.",
+  "Cette partie vient d'une version plus récente du jeu : rien ne sera écrit dessus ici. Mets le jeu à jour (Paramètres › Partie).": "This game comes from a newer version of the game: nothing will be written to it here. Update the game (Settings › Game).",
+  "Ta sauvegarde n'a pas pu être lue et ne peut pas être rechargée. Sa copie brute est gardée à part et jointe à l'export (Paramètres), pour une réparation.": "Your save could not be read and cannot be reloaded. Its raw copy is kept aside and included in the export (Settings), for a repair.",
+  "❌ Ce fichier vient d'une version plus récente du jeu : mets le jeu à jour avant de l'importer.": "❌ This file comes from a newer version of the game: update the game before importing it.",
+  "Sauvegarde importée ({n} héros, {m} ignoré(s))": "Save imported ({n} heroes, {m} skipped)",
+  "❌ Import impossible : ta partie n'a pas changé.": "❌ Import failed: your game has not changed.",
   "Sauvegarde exportée ({n} héros)": "Save exported ({n} heroes)",
   "Code de sauvegarde": "Save code",
   "Copie ce texte et garde-le en lieu sûr. Tu pourras le recoller via \"Coller un code\" pour restaurer cette progression.": "Copy this text and keep it somewhere safe. You can paste it back via \"Paste a code\" to restore this progress.",
@@ -5652,7 +5658,6 @@ I18n.register("en", {
   "Contre le Bouclier : il ne tient qu'un round au lieu de deux et ne retient plus que 25 % des dégâts au lieu de 50 %. S'ajoute à ta règle du Grimoire.": "Counters the Shield: it only lasts one round instead of two and only blocks 25% of damage instead of 50%. Adds to your Grimoire rule.",
   "Contre le Silence : tes techniques ne sont bloquées qu'un round au lieu de deux (jamais moins d'un).": "Counters the Silence: your techniques are only blocked for one round instead of two (never less than one).",
   "Ta sauvegarde était abîmée : la dernière copie saine a été rechargée.": "Your save was damaged: the last healthy copy has been reloaded.",
-  "Ta sauvegarde n'a pas pu être lue. Elle est gardée à part : exporte tes sauvegardes (Paramètres) pour la récupérer.": "Your save could not be read. It has been kept aside: export your saves (Settings) to recover it.",
   "Ta sauvegarde n'a pas pu être lue. Elle reste intacte : rien ne sera écrit dessus pendant cette session.": "Your save could not be read. It is left untouched: nothing will be written over it this session.",
   "Ce qui manque": "What's missing",
   "Pièces Rares : {a} / {b}": "Rare pieces: {a} / {b}",
