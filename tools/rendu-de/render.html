@@ -31,6 +31,39 @@ window.faceQuat = function (fs, i, k, tilt, flip) {
   const q3 = new THREE.Quaternion().setFromEuler(new THREE.Euler(tilt || 0, (tilt || 0) * 0.6, 0));
   return q3.multiply(q2.multiply(q1)).toArray();
 };
+
+// relevé : triangles d'or proches du plan de la face i, distance au centre de la face (rayon dans le plan)
+window.probe = function (fs, i) {
+  const n = new THREE.Vector3(fs[i][0], fs[i][1], fs[i][2]); const out = { gold: [], body: [] };
+  window.model.traverse(o => { if (!o.isMesh) return; const kind = /Gold/.test(o.material.name) ? "gold" : "body";
+    const g = o.geometry, p = g.attributes.position, idx = g.index; const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3();
+    let dmax = 0; for (let v = 0; v < p.count; v++) { a.fromBufferAttribute(p, v); dmax = Math.max(dmax, a.dot(n)); }
+    for (let t = 0; t < idx.count; t += 3) { a.fromBufferAttribute(p, idx.getX(t)); b.fromBufferAttribute(p, idx.getX(t+1)); c.fromBufferAttribute(p, idx.getX(t+2));
+      const m = a.clone().add(b).add(c).divideScalar(3); const h = m.dot(n); const lat = m.clone().addScaledVector(n, -h).length();
+      out[kind].push([+(h).toFixed(4), +(lat).toFixed(4)]); }
+    out[kind + "Max"] = dmax; });
+  return out;
+};
+
+// retire le chiffre d'or de la face i (triangles près du plan et à moins de 0,225 du centre ; la bordure intérieure est à 0,24+)
+window.hideNumber = function (fs, i) {
+  const n = new THREE.Vector3(fs[i][0], fs[i][1], fs[i][2]);
+  window.model.traverse(o => { if (!o.isMesh || !/Gold/.test(o.material.name)) return;
+    const g = o.geometry, p = g.attributes.position; if (!g.userData.idx0) g.userData.idx0 = g.index.array.slice();
+    const src = g.userData.idx0, keep = []; const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3();
+    let dmax = 0; for (let v = 0; v < p.count; v++) { a.fromBufferAttribute(p, v); dmax = Math.max(dmax, a.dot(n)); }
+    for (let t = 0; t < src.length; t += 3) { a.fromBufferAttribute(p, src[t]); b.fromBufferAttribute(p, src[t+1]); c.fromBufferAttribute(p, src[t+2]);
+      const inside = [a, b, c].every(v => { const h = v.dot(n); const lat = v.clone().addScaledVector(n, -h).length(); return h > dmax - 0.03 && lat < 0.215; });
+      if (inside) continue; keep.push(src[t], src[t+1], src[t+2]); }
+    g.setIndex(keep); });
+};
+// centre de la face avant à l'écran (fraction de l'image), pour écrire le chiffre au bon endroit
+window.faceCenter = function (fs, i) {
+  const n = new THREE.Vector3(fs[i][0], fs[i][1], fs[i][2]); let d = 0;
+  window.model.traverse(o => { if (!o.isMesh || /Gold/.test(o.material.name)) return; const p = o.geometry.attributes.position, a = new THREE.Vector3();
+    for (let v = 0; v < p.count; v++) { a.fromBufferAttribute(p, v); d = Math.max(d, a.dot(n)); } });
+  const w = n.clone().multiplyScalar(d); window.model.localToWorld(w); const s = w.project(cam); return [(s.x + 1) / 2, (1 - s.y) / 2];
+};
 window.THREE = THREE;
 window.shot = function (qx, qy, qz, qw) { holder.quaternion.set(qx, qy, qz, qw); renderer.render(scene, cam); return renderer.domElement.toDataURL("image/png"); };
 // normales des faces : regroupe les normales des triangles, pondérées par l'aire, en 20 directions

@@ -12,3 +12,7 @@ Produire :
 - Ensuite, recadrer (80..432) et réduire à 256 px, WebP : faces `d20_<n>.webp`, roulé en bande de 16 images `d20_roll.webp`.
 
 La table `MAP` de `final.js` donne, pour chaque valeur, la face du modèle et son sens de lecture (relevés à l'œil le 04/11). Le 6 et le 9 sont deux faces tournées pour se lire 6 et 9.
+
+Version « chiffre en grand » (04/11, demande de Seb) :
+- `node blank.js` : pour chaque valeur, la même pose (pointe en haut, léger basculement), le chiffre d'or de la face avant retiré du modèle (`hideNumber` : triangles dont les trois sommets sont près du plan et à moins de 0,215 du centre). Sortie `out/blank_<n>.png` et `centres.json` (centre de la face avant à l'écran).
+- Recadrées comme les autres en 256 px : `d20_vide_<n>.webp`. Le jeu écrit le chiffre par-dessus, au centre de la face (54,1 % / 56,8 % de l'image recadrée).
