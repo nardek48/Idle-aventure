@@ -19,6 +19,8 @@ var WorldDays = {
   key: function () { return "J" + this.day(); },             // clé du jour de jeu (règles des cartes)
   left: function () { return WORLD_DAY_SORTIES - this.ensure().done; },
   isDark: function () { return !!this.ensure().dark; },     // la soirée qui suit la nuit, jusqu'à la sortie suivante
+  // v3.655.0 (C3, atelier jour-nuit-camp) : le moment du jour au Camp, selon les sorties faites depuis la nuit.
+  moment: function () { var w = this.ensure(); return w.dark ? "nuit" : w.done <= 0 ? "matin" : w.done === 1 ? "jour" : "soir"; },
 
   // Appelé par SortieManager.end (hors farm libre).
   onSortieEnd: function (context) {

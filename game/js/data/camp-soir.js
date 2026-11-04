@@ -2,29 +2,39 @@
 /* data/camp-soir.js — v3.595.0 (chantier « un camp qui évolue », C1 et C2 validés par Seb le 31/10) :
    la phrase du soir au Camp, et ce que dit chaque compagnon quand on le touche. Ton validé sur la Forêt et le Désert. */
 
-/* Un monde par case (Forêt, Désert, Ruines, Crypte, Montagne, Tour). lieu : phrases sans compagnon ;
+/* Un monde par case (Forêt, Désert, Ruines, Crypte, Montagne, Tour). lieu : phrases sans compagnon (le soir) ; matin, jour (v3.655.0) ;
    une clé par compagnon : ses phrases du soir ; tap : sa phrase au toucher. Textes littéraux pour l'audit i18n. */
 function campSoirData() {
   return [
     { lieu: [_t("Le feu tient. Quelqu'un a rentré du bois avant la pluie."), _t("Une chouette, quelque part. Puis plus rien. Le feu craque."), _t("Orwen a laissé une écuelle au chaud, contre les pierres.")],
+      matin: [_t("La brume traîne entre les troncs. Le feu de la veille fume encore."), _t("Orwen est déjà debout. Il compte les sacs de grain, deux fois.")], // v3.655.0 (C3) : le matin, sans compagnon
+      jour: [_t("Quelqu'un cloue une planche. Le bruit porte loin, entre les arbres."), _t("Le camp se vide à moitié : on est parti chercher du bois.")], // v3.655.0 (C3) : en journée
       wenna: [_t("Wenna compte les braises à voix basse. Elle recommence quand elle se trompe."), _t("Wenna a ramené une pomme de pin. Elle la retourne, cherche par où elle s'ouvre."), _t("Wenna regarde la lisière. Elle demande si les loups dorment, eux aussi.")],
       tap: { wenna: _t("« Toi aussi, tu entends les arbres, la nuit ? Moi, des fois. »") } },
     { lieu: [_t("Le vent tourne. Le sable siffle sous la toile, puis se tait."), _t("Au puits, quelqu'un compte les seaux. Personne ne le contredit."), _t("La nuit est froide, ici. Le feu fait ce qu'il peut.")],
+      matin: [_t("Le sable est encore froid. Il garde la trace de chaque pas de la nuit."), _t("Au puits, la première corde grince. Les seaux remontent pleins.")], // v3.655.0 (C3) : le matin, sans compagnon
+      jour: [_t("Le soleil écrase tout. Le camp se tasse sous les toiles et attend."), _t("Une caravane passe au loin, sans s'arrêter. On compte ses bêtes.")], // v3.655.0 (C3) : en journée
       wenna: [_t("Wenna verse du sable d'une main dans l'autre. Elle dit qu'il est plus fin qu'à la maison."), _t("Wenna a gardé sa part d'eau. Elle la regarde au lieu de la boire."), _t("Wenna demande à Sarkel combien coûte une étoile. Il ne répond pas.")],
       maddoc: [_t("Maddoc s'est assis dos au vent. Il étire sa jambe, lentement, sans un bruit."), _t("Maddoc boit à petites gorgées. Il ne remercie personne. Il garde l'outre près de lui."), _t("Maddoc regarde vers le nord, vers le gouffre. Il ne dit pas ce qu'il cherche.")],
       tap: { wenna: _t("« Sarkel dit qu'il y a quelqu'un sous le sable. Tu crois qu'il a froid ? »"), maddoc: _t("« Le sable avance, la nuit. Le matin, il fait semblant que non. »") } },
     { lieu: [_t("Les colonnes font de longues ombres. Elles ne tombent plus tout à fait au même endroit qu'hier."), _t("Un mur s'écroule quelque part, loin. Personne ne lève la tête."), _t("Le feu éclaire une inscription à moitié effacée. On lit une date, pas le reste.")],
+      matin: [_t("Au réveil, une colonne penche d'un côté qui n'était pas le sien hier."), _t("La lumière entre par une arche et dessine au sol une porte qui n'existe pas.")], // v3.655.0 (C3) : le matin, sans compagnon
+      jour: [_t("On entend la ville travailler : une pierre posée, une autre déplacée."), _t("Un étal a rouvert en bas, au marché. Personne ne sait qui le tient.")], // v3.655.0 (C3) : en journée
       wenna: [_t("Wenna essaie de lire une inscription à voix haute. Elle invente les mots qui manquent."), _t("Wenna a trouvé une tuile peinte. Elle la frotte avec sa manche pour voir la couleur.")],
       maddoc: [_t("Maddoc a calé son dos contre une colonne. Il dit qu'au moins celle-là ne bouge pas."), _t("Maddoc taille un bâton. Il le mesure contre sa jambe, et recommence.")],
       edda: [_t("Edda trace à la craie, sur une dalle, le plan de la journée. Elle efface un couloir, en ajoute deux."), _t("Edda dort assise, sa carte roulée sous le bras."), _t("Edda compte les pas jusqu'à la colonne la plus proche. Elle note le chiffre et fronce les sourcils.")],
       tap: { wenna: _t("« Tu crois qu'ils habitaient là, avant ? Ils mangeaient quoi ? »"), maddoc: _t("« Hier, cette rue menait au puits. Ce matin, elle mène à un mur. »"), edda: _t("« Les murs ont encore bougé cette nuit. J'ai noté où. »") } },
     { lieu: [_t("On parle bas, ici, sans que personne l'ait demandé."), _t("Le froid monte du sol. Le feu tient, mais il ne réchauffe pas loin."), _t("Quelque part sous les dalles, une pierre a bougé. Puis le silence.")],
+      matin: [_t("Le jour se lève mal, ici. La lumière s'arrête à l'entrée des salles."), _t("Les torches de la nuit fument encore. Personne ne les a éteintes.")], // v3.655.0 (C3) : le matin, sans compagnon
+      jour: [_t("En plein jour, on parle toujours bas. Ça ne change rien, au fond."), _t("Une dalle a été remise en place pendant la nuit. Personne ne dit qui l'a fait.")], // v3.655.0 (C3) : en journée
       wenna: [_t("Wenna s'est rapprochée du feu plus que d'habitude. Elle ne pose pas de question, ce soir."), _t("Wenna regarde Ysolt longtemps, puis lui tend la moitié de son pain. Ysolt ne le prend pas.")],
       maddoc: [_t("Maddoc garde sa lame sur les genoux. Il dit que c'est pour le froid."), _t("Maddoc a compté les sorties de la salle. Il y en a toujours autant.")],
       edda: [_t("Edda ne dessine pas, ce soir. Elle dit que les morts n'aiment pas qu'on les mette sur une carte."), _t("Edda recopie les noms gravés sur les dalles, à la lueur des braises.")],
       ysolt: [_t("Ysolt se tient au bord de la lumière. Elle ne s'approche jamais tout à fait du feu."), _t("Ysolt passe les doigts dans son carquois vide, comme si elle comptait des flèches qui n'y sont plus."), _t("Ysolt écoute le sol. Elle dit qu'ils dorment, et qu'il vaut mieux qu'ils continuent.")],
       tap: { wenna: _t("« Elle mange jamais, Ysolt ? »"), maddoc: _t("« J'aime pas les endroits où on chuchote. »"), edda: _t("« Je garde les noms. Quelqu'un doit les garder. »"), ysolt: _t("« Ne marchez pas si fort. Ils dorment, en bas. »") } },
     { lieu: [_t("Le sol est tiède sous les couvertures. Plus haut, la montagne gronde, puis se calme."), _t("La cendre tombe comme une neige grise. Elle ne fond pas."), _t("Le feu brûle un charbon trouvé là. Il brûle trop bien.")],
+      matin: [_t("La cendre de la nuit recouvre les toiles. On la secoue sans un mot."), _t("Le volcan fume moins, le matin. On en profite pour monter l'eau.")], // v3.655.0 (C3) : le matin, sans compagnon
+      jour: [_t("La chaleur monte avec le soleil. Le sol, lui, était chaud bien avant."), _t("On entend les pioches, plus haut. Le métal sonne sur la pierre noire.")], // v3.655.0 (C3) : en journée
       wenna: [_t("Wenna a posé une pierre noire près du feu pour voir si elle fond. Elle attend."), _t("Wenna s'est endormie la tête sur l'épaule de Maddoc. Il ne bouge pas.")],
       maddoc: [_t("Maddoc respire mal, ici. Il le dit une fois, puis plus jamais."), _t("Maddoc a enveloppé sa jambe dans un chiffon mouillé. La vapeur monte.")],
       edda: [_t("Edda trace la pente sur sa carte. Elle dit que la montagne a changé depuis le matin."), _t("Edda a perdu sa craie dans une fissure. Elle en taille une autre dans une pierre blanche.")],
@@ -32,6 +42,8 @@ function campSoirData() {
       sarkel: [_t("Sarkel range ses sacs par prix. Il en déplace un, puis le remet."), _t("Sarkel parle du vieux, à mi-voix, puis change de sujet pour le prix du sel."), _t("Sarkel dit qu'il sait où sont couchés ceux qui sont montés avant. Il ne dit pas combien ça coûte.")],
       tap: { wenna: _t("« On voit la Tour, d'ici ? »"), maddoc: _t("« Au-dessus, ça brûle. En dessous aussi. On est au milieu. »"), edda: _t("« Ma carte s'arrête ici. Après, je n'ai plus de papier. »"), ysolt: _t("« Là-haut, j'ai déjà compté les marches. Je ne me souviens plus du nombre. »"), sarkel: _t("« Tout se vend. Presque tout. Ça, non. »") } },
     { lieu: [_t("Le dernier feu avant la Tour. Personne ne parle de demain."), _t("Le vent siffle entre les pierres. Il vient d'en haut."), _t("Au-dessus du camp, une lumière. Bleue. Froide. Sans forme.")],
+      matin: [_t("La lumière bleue pâlit avec le jour. Elle ne s'éteint pas."), _t("Le matin, la Tour paraît plus proche. Personne ne le fait remarquer.")], // v3.655.0 (C3) : le matin, sans compagnon
+      jour: [_t("Le dernier camp tient ses comptes : l'eau, le bois, les jours."), _t("Le vent ne tombe pas. Il vient toujours d'en haut, même à midi.")], // v3.655.0 (C3) : en journée
       wenna: [_t("Wenna regarde la Tour sans rien demander. C'est la première fois.")],
       maddoc: [_t("Maddoc aiguise sa lame longtemps, plus longtemps qu'il ne faut.")],
       edda: [_t("Edda a laissé blanche la dernière page de sa carte.")],
