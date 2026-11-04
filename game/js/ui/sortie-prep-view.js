@@ -360,12 +360,12 @@ function buildSortiePrepEliteLevelHTML() {
   h += '<button type="button" class="dlvl-step" aria-label="' + esc(_t("Niveau suivant")) + '"' + (L >= c.max ? ' disabled' : '') + ' onclick="sortiePrepEliteLevel(1)">›</button></div>';
   h += '<div class="dgain"><div class="dgain-ttl"><span>' + esc(_t("À gagner")) + '</span></div>';
   h += row(res.icon, esc(_td(res.name || resId)) + ' <strong>+' + LM.getRepeatRewardAt(c.mapId, L) + '</strong>' + (L > 1 ? ' <span class="is-dim">(×' + L + ')</span>' : ''));
-  if (L > 1) h += row("images/Icons/gold_icon.webp", esc(_t("Or +{p} %", { p: pct(m.gold - 1) })));
-  if (eDef.winDrop) h += row(null, esc(_t("Pièce : {n} % par victoire, la {k}e sans pièce en donne une", { n: eDef.winDrop.chancePct, k: Number(eDef.winDrop.pityAfter || 0) + 1 })));
+  if (L > 1) h += row("images/Icons/gold_icon.webp", esc(_t("Or +{p} %", { p: pct(m.gold - 1) })));
+  if (eDef.winDrop) h += row(null, esc(_t("Pièce : {n} % par victoire, la {k}e sans pièce en donne une", { n: eDef.winDrop.chancePct, k: Number(eDef.winDrop.pityAfter || 0) + 1 })));
   h += '</div><div class="dgain"><div class="dgain-ttl"><span>' + esc(_t("Ce qui t'attend")) + '</span></div>';
-  h += row(null, L > 1 ? esc(_t("Niveau {n} : PV +{a} %, dégâts +{b} %", { n: L, a: pct(m.hp - 1), b: pct(m.power - 1) })) : esc(_t("Niveau 1 : l'élite à sa force de base")));
+  h += row(null, L > 1 ? esc(_t("Niveau {n} : PV +{a} %, dégâts +{b} %", { n: L, a: pct(m.hp - 1), b: pct(m.power - 1) })) : esc(_t("Niveau 1 : l'élite à sa force de base")));
   var wins = LM.getDailyWins(c.mapId, c.sectorId);
-  if (wins) h += row(null, esc(_tn(wins, "Aujourd'hui, {n} victoire : encore +{p} % (le frein retombe à la nuit)", "Aujourd'hui, {n} victoires : encore +{p} % (le frein retombe à la nuit)", { n: wins, p: pct(LM.getBrakeMult(c.mapId, c.sectorId) - 1) })));
+  if (wins) h += row(null, esc(_tn(wins, "Aujourd'hui, {n} victoire : encore +{p} % (le frein retombe à la nuit)", "Aujourd'hui, {n} victoires : encore +{p} % (le frein retombe à la nuit)", { n: wins, p: pct(LM.getBrakeMult(c.mapId, c.sectorId) - 1) })));
   return h + '</div></div>';
 }
 function sortiePrepEliteLevel(d) {
