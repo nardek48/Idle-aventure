@@ -484,9 +484,11 @@
     h += '<div class="cbx-card-pt">' + ico((def && def.image) || "") + '<span class="cbx-lvl-badge">' + _t("Niv. {n}", { n: num(game.heroLevel) || 1 }) + '</span>'
       + (marks ? '<span class="cbx-pt-badges">' + marks + '</span>' : '') + '</div>';
     h += '<div class="cbx-card-nm"><span>' + esc(hero.name || "") + '</span></div>';
-    // v3.458.2 (audit C2) : nom et valeur écrits dans la barre ; la célérité a sa propre ligne
+    // v3.458.2 (audit C2) : nom et valeur écrits dans la barre ; v3.702.0 (COMB-7) : le nom dans son span, masqué avec compagnons
+    var resLbl = resDef ? _td(resDef.label) : "", resVal = fmt(res ? res.current : 0) + " / " + fmt(res ? res.max : 0);
     h += '<div class="cbx-res r-' + esc((res && res.resourceId) || "") + '"><i style="width:' + resPct.toFixed(1) + '%"></i>'
-      + '<span class="cbx-res-txt">' + esc(resDef ? _td(resDef.label) : "") + ' ' + fmt(res ? res.current : 0) + '<small> / ' + fmt(res ? res.max : 0) + '</small></span></div>';
+      + '<span class="cbx-res-txt" aria-label="' + esc((resLbl ? resLbl + " " : "") + resVal) + '" title="' + esc(resLbl) + '">'
+      + (resLbl ? '<span class="cbx-res-lbl">' + esc(resLbl) + ' </span>' : '') + fmt(res ? res.current : 0) + '<small> / ' + fmt(res ? res.max : 0) + '</small></span></div>';
     h += '<div class="cbx-cel"><u style="width:' + celPct.toFixed(1) + '%"></u></div>';
     h += '<div class="cbx-hpbar' + (pct < 35 ? ' is-low' : '') + '"><i class="is-trail" style="width:' + Math.max(prev, pct).toFixed(1) + '%" data-to="' + pct.toFixed(1) + '"></i>'
       + '<i class="is-fill" style="width:' + Math.min(prev, pct).toFixed(1) + '%" data-to="' + pct.toFixed(1) + '"></i>'

@@ -106,9 +106,9 @@ window.campRationEmpty = campRationEmpty;
 /* v3.411.0 : onglet ouvert du Campement (retenu pendant la session). */
 var CAMP_TABS = [
   { key: "feu", label: _t("Le feu"), icon: "images/Icons/camp/campfire.webp" }, // v3.594.0 (atelier camp-carte, choix Seb) : santé, rations, compagnons
-  { key: "missions", label: _t("Missions"), icon: "images/Icons/quests/quest_list.webp" },
-  { key: "depart", label: _t("Expéditions"), icon: "images/Icons/quests/start_expedition.webp" }, // v3.426.0 : était « Départ »
-  { key: "grimoire", label: _t("Grimoire"), icon: "images/Icons/system/grimoire.webp" }
+  { key: "missions", label: _t("Mis\u00ADsions", "sous-onglet"), icon: "images/Icons/quests/quest_list.webp" },
+  { key: "depart", label: _t("Expé\u00ADdi\u00ADtions", "sous-onglet"), icon: "images/Icons/quests/start_expedition.webp" }, // v3.426.0 : était « Départ »
+  { key: "grimoire", label: _t("Gri\u00ADmoire", "sous-onglet"), icon: "images/Icons/system/grimoire.webp" }
 ];
 var campTab = "missions";
 var campShownTab = null; // v3.426.0 : l'onglet réellement affiché au dernier rendu

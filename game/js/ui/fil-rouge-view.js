@@ -38,7 +38,7 @@ function openFilRougeBubble() {
   if (also.length) {
     h += '<div class="fr-also"><span>' + _t("Aussi :") + '</span> ' + also.map(function (x, i) {
       return '<button type="button" class="fr-also-btn" onclick="filRougeGo(' + (i + 1) + ')">' + esc(_td(x.title)) + '</button>';
-    }).join(" · ") + '</div>';
+    }).join('<span class="fr-also-sep"> · </span>') + '</div>'; // v3.702.0 (UI-9) : séparateur isolé, masqué quand les liens s'empilent
   }
   h += '</div>';
   h += '<div class="kwin-foot"><button type="button" class="kbtn primary fr-go" onclick="filRougeGo(0)">' + esc(a.goLabel) + '</button></div>';

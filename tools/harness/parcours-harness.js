@@ -1000,6 +1000,7 @@ function cartesNonHabillees() {
     var cls = String(e.className || "").split(/\s+/).filter(Boolean);
     if (cls.some(function (c) { return CONTENEUR.test(c); })) return;
     if ((e.tagName === "BUTTON" || e.closest("button")) && r.height < 70) return;
+    if (e.parentElement && e.parentElement.classList.contains("exp-sum")) return; // v3.702.0 : compteurs d'Expéditions, pas des cartes (plus de 120 px de large avec les marges de 4 px)
     if (!/url\(/.test(s.backgroundImage)) { oublis[cls[0] || e.tagName.toLowerCase()] = 1; return; } // texture, ou illustration propre (mannequin, route)
     // document (dont la carte Missions en PC) hors de toute carte habillée : découpe déchirée attendue
     var doc = cls.some(function (c) { return DOC.test(c); }) || (cls.indexOf("cw-card") >= 0 && !!e.querySelector(".cw-mlist"));

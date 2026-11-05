@@ -10,6 +10,7 @@
    Les textes des données sont traduits par _td() à l'affichage (registre : lang/data-fields.js). */
 I18n.register("en", {
   // index.html
+  "Petits écrans : les pages gagnent de la largeur, les onglets restent sous la main en défilant, « Partir » et « Abandonner » ne se touchent plus, et les petits liens se touchent mieux. En combat avec compagnons, la ressource du héros s'affiche en entier.": "Small screens: pages get wider, tabs stay within reach while scrolling, “Set out” and “Abandon” no longer touch, and small links are easier to tap. In combat with companions, the hero's resource is shown in full.",
   "Les faiblesses et résistances des ennemis disparaissent : chaque arme frappe toutes les créatures de la même façon, et le Bestiaire n'en parle plus.": "Enemy weaknesses and resistances are gone: every weapon hits every creature the same way, and the Bestiary no longer mentions them.",
   "Le Dragon ancien frappe moins fort face au Mage, et le pronostic prévient mieux un Mage sans arme. Le Bestiaire n'affiche plus de faiblesses pour les boss et les élites : elles n'ont pas d'effet sur eux.": "The Ancient Dragon hits the Mage less hard, and the forecast warns an unarmed Mage better. The Bestiary no longer shows weaknesses for bosses and elites: they have no effect on them.",
   "Combat de groupe : la faiblesse ou la résistance de l'ennemi frappé compte enfin, même s'il n'est pas le premier du groupe. L'Entrepôt dit où se cuisinent les rations.": "Group fights: the weakness or resistance of the enemy you hit now counts, even when it isn't the first of the group. The Warehouse now says where rations are cooked.",
@@ -42,8 +43,13 @@ I18n.register("en", {
   "Sac plein : une pièce offerte par l'Histoire n'est plus convertie en Aether, elle entre dans le sac en dépassement.": "Full bag: an item granted by the Story is no longer turned into Aether, it goes into your bag as overflow.",
   "Le feu de camp ne soigne plus pendant un combat d'élite engagé sur la carte, comme pour les donjons et les quêtes.": "The campfire no longer heals during an elite fight in progress on the map, just like dungeons and quests.",
   "onglet|Camp": "Camp",
-  "sous-onglet|Ateliers": "Work\u00ADshops", // CPL3-11 : coupé en deux lignes sous 340 px
-  "sous-onglet|Entrepôt": "Ware\u00ADhouse",
+  "sous-onglet|Ate\u00ADliers": "Work\u00ADshops", // CPL3-11 : coupé en deux lignes sous 340 px
+  "sous-onglet|Entre\u00ADpôt": "Ware\u00ADhouse",
+  "sous-onglet|Bâti\u00ADments": "Build\u00ADings", // v3.702.0 (UI-14) : césures douces des sous-onglets, texte Grande
+  "sous-onglet|Mis\u00ADsions": "Mis\u00ADsions",
+  "sous-onglet|Expé\u00ADdi\u00ADtions": "Expe\u00ADdi\u00ADtions",
+  "sous-onglet|Gri\u00ADmoire": "Gri\u00ADmoire",
+  "sous-onglet|Équi\u00ADpe\u00ADment": "Equip\u00ADment",
   "sous-onglet|Produc\u00ADtion": "Produc\u00ADtion",
   "onglet|Quêtes": "Quests",
   "onglet|Village": "Village",
@@ -4656,7 +4662,6 @@ I18n.register("en", {
   "Renoncer": "Give up",
 
   // v3.414.0 (VUI-1) : rail du Village, vignettes de production, feuille d'un bâtiment
-  "Bâtiments": "Buildings",
   "Niveau {a} → {b}": "Level {a} → {b}",
   "Non construit · chantier possible": "Not built · can start",
   "Plein": "Full",

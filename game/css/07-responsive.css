@@ -20,3 +20,52 @@
 html.text-big #panel-container,
 html.text-big [id$="-modal-root"],
 html.text-big [id$="-sheet-root"] { zoom: 1.12; }
+
+/* ===== v3.702.0 : petits écrans (atelier/petits-ecrans.html, choix de Seb du 05/11) ===== */
+/* MARGES (B) : 4 px de chaque côté au lieu de 22, téléphone seulement, pages à cadre seulement */
+@media (max-width: 430px) {
+  html:not(.pc-mode) #panel-container:has(> .kfp-wrap) { padding-left: 0; padding-right: 0; }
+  html:not(.pc-mode) #panel-container .kframe > .kf-mid { padding-left: 4px; padding-right: 4px; }
+  html:not(.pc-mode) #panel-container .kfb { margin-left: 4px; margin-right: 4px; }
+  html:not(.pc-mode) #panel-container .kfp-top-holder:not(.has-banner) .kf-top { margin-left: 4px; margin-right: 4px; }
+  html:not(.pc-mode) #panel-container :is(.camp-tabs, .village-tabs).kseg.is-stack { margin-left: 0; margin-right: 0; }
+}
+/* UI-10 (A) : sous 600 px de haut, bandeau de 104 px sans la phrase (classe posée par ScreenBanner.fit) */
+.kfb.is-short .kfb-s { display: none; }
+/* UI-10 suite (B) : « Partir » puis « Abandonner » (sans confirmation) l'un sous l'autre, 12 px d'écart */
+.camp-mission-actions { flex-direction: column; align-items: center; gap: 12px; }
+.camp-mission-actions .camp-mission-btn { margin: 8px 0 0; }
+.camp-mission-actions .camp-mission-btn + .camp-mission-btn { margin-top: 0; }
+/* UI-9 + SUIV-12 (A) : 44 px visibles là où les cibles s'empilent, zone invisible de 44 px ailleurs */
+.fr-also { display: grid; justify-items: center; gap: 0; }
+.fr-also > span { margin-bottom: 2px; }
+.fr-also-btn { min-height: 44px; padding: 0 8px; line-height: 1.25; }
+.fr-also-sep { display: none; }
+.cbx-target .cbx-tname { position: relative; z-index: 3; }
+.cbx-foe .cbx-foe-ui { z-index: 8; }
+.cbx-badges, .cbx-dist-badge { position: relative; }
+.kfb-pop::after, .cbx-badges::after, .cbx-dist-badge::after { content: ""; position: absolute; left: 50%; top: 50%; width: max(100%, 44px); height: max(100%, 44px); transform: translate(-50%, -50%); }
+.wk-tile-recipe { gap: 2px 4px; min-height: 44px; }
+.wk-tile-recipe .res-go { position: relative; min-height: 30px; padding: 0 3px; }
+.wk-tile-recipe .res-go::after { content: ""; position: absolute; left: 50%; top: 50%; width: max(100%, 44px); height: 44px; transform: translate(-50%, -50%); }
+.wk-tile-sub.res-go-link { display: flex; align-items: center; min-height: 44px; }
+.tavern-contract-need .res-go { display: inline-flex; align-items: center; min-height: 44px; padding: 0 6px; }
+.cbx-badges::after { top: -2px; transform: translateX(-50%); }
+#cbx-top .cbx-pill::after { height: 48px; }
+/* COMB-7 (A) : avec compagnons, la barre de ressource n'écrit que la valeur ; sous 360 px, « Prêt » devient ✓ */
+.cbx-team.c2 .cbx-res-lbl, .cbx-team.c3 .cbx-res-lbl { display: none; }
+@media (max-width: 359px) {
+  .cbx-team:is(.c2, .c3) .cbx-bars-foot { gap: 2px; }
+  .cbx-team:is(.c2, .c3) .cbx-cd-count.is-ready { font-size: 0; }
+  .cbx-team:is(.c2, .c3) .cbx-cd-count.is-ready::before { content: "✓"; font-size: 12px; font-weight: 900; }
+}
+/* NOV-24 (C) : onglets collés sous le bandeau replié (44 px), compacts tant qu'il est replié */
+html:not(.wide-mode) #panel-container .kfp-scrollzone .kfb ~ .nb-page-frame .kf-mid > .kseg { position: sticky; top: 44px; z-index: 2; background-color: rgba(222, 199, 156, 0.97); }
+html:not(.wide-mode) #panel-container .kfb.is-mini ~ .nb-page-frame .kf-mid > .kseg.is-stack button { min-height: 44px; padding-top: 2px; padding-bottom: 2px; }
+html:not(.wide-mode) #panel-container .kfb.is-mini ~ .nb-page-frame .kf-mid > .kseg.is-stack button img { display: none; }
+/* UI-14 (A) : texte Grande sous 360 px, libellés sur deux lignes (césures douces posées dans les chaînes) */
+@media (max-width: 359px) {
+  html.text-big #panel-container .kseg.is-stack { gap: 2px; padding: 2px; }
+  html.text-big #panel-container .kseg.is-stack button { padding-left: 1px; padding-right: 1px; white-space: normal; letter-spacing: 0; }
+  html.text-big #panel-container .kseg.is-stack button > span:not(.kseg-dot) { overflow: visible; text-overflow: clip; overflow-wrap: normal; hyphens: manual; -webkit-hyphens: manual; text-align: center; }
+}

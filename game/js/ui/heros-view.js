@@ -671,7 +671,7 @@ var HEROS_FRAME_ICON = "images/Icons/menu_icons/heroes_menu.webp";
 function getHerosTabs() {
   var unlocked = function (t) { return typeof isTabUnlocked !== "function" || isTabUnlocked(t); };
   var tabs = [["hero", "images/Icons/subtabs/hero_summary.webp", _t("Résumé")]];
-  if (unlocked("equip")) tabs.push(["equip", "images/Icons/subtabs/equipment.webp", _t("Équipement")]);
+  if (unlocked("equip")) tabs.push(["equip", "images/Icons/subtabs/equipment.webp", _t("Équi\u00ADpe\u00ADment", "sous-onglet")]); // v3.702.0 (UI-14) : césures douces
   if (unlocked("talents")) tabs.push(["talents", "images/Icons/subtabs/talents.webp", _t("Talents")]); // v3.527.0 (IMA-5)
   if (unlocked("companions") && window.CompanionManager && CompanionManager.unlockedIds().length) {
     tabs.push(["companions", "images/Icons/subtabs/companions.webp", _t("Alliés")]); // v3.527.0 (IMA-5) ; v3.648.0 : « Alliés » (plus court, comme Quêtes)

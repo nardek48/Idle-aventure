@@ -2520,7 +2520,7 @@ console.log("\n[UX-PROD] Tableau de bord Production v3.191.0 — routeur, vue At
   // --- v3.244.0 (chantier Navigation) : sous-onglets Résumé / Équipement / Talents ;
   //     Stats et Capacités sont des feuilles basses ouvertes depuis le Résumé ---
   ["Résumé", "Équipement", "Talents"].forEach(function (lbl) {
-    ok(html.indexOf("<span>" + lbl + "</span>") !== -1, "[RESUME] onglet « " + lbl + " » présent");
+    ok(html.replace(/\u00AD/g, "").indexOf("<span>" + lbl + "</span>") !== -1, "[RESUME] onglet « " + lbl + " » présent"); // v3.702.0 : césures douces (UI-14) ignorées
   });
   ["'hero'", "'equip'", "'talents'"].forEach(function (id) {
     ok(html.indexOf("setHerosSubTab(" + id + ")") !== -1,
@@ -13005,6 +13005,7 @@ console.log("\n[186] v3.414.0 — Village : rail à quatre onglets, vignettes, f
     var h = run("buildVillageHTML()");
     ok((h.match(/class="village-tab/g) || []).length === 4 && h.indexOf("kseg is-stack village-tabs") !== -1, "rail du kit en haut : quatre onglets");
     ok(h.indexOf("subtab-bar-wrapper") === -1 && h.indexOf("pc-subtab-bar") === -1, "plus de barre de sous-onglets en bas");
+    h = h.replace(/\u00AD/g, ""); // v3.702.0 : césures douces des libellés (UI-14) ignorées
     ok(h.indexOf("Bâtiments") < h.indexOf("Production") && h.indexOf("Ateliers") < h.indexOf("Entrepôt"), "ordre : Bâtiments · Production · Ateliers · Entrepôt");
     ok((h.match(/production-dash-card prod-tile/g) || []).length === 6 && (h.indexOf("prod-tile-img") !== -1 || (h.match(/row-scene-img/g) || []).length === 6), "Production : six vignettes illustrées (v3.662.0 : ou leurs six scènes de ligne)");
     /* Ruban : plein partout -> « Plein » ; stock local plein, Entrepôt libre -> « Récolter » */
@@ -13502,7 +13503,7 @@ console.log("\n[198] v3.426.0 — Chantier Expéditions : Campement › Expédit
     run("LivingMapManager.__lib = LivingMapManager.isLiberated; LivingMapManager.isLiberated = function (m, s) { return (m === 'forest' && (s === 'gue' || s === 'arbremere')) || (m === 'desert' && s === 'puits_sec'); };");
     // --- l'onglet ---
     var camp = run("buildCampHTML('depart')");
-    ok(camp.indexOf("setCampTab('depart')") !== -1 && camp.indexOf("<span>Expéditions</span>") !== -1 && camp.indexOf("start_expedition.webp") !== -1, "Campement : l'onglet « Départ » devient « Expéditions »");
+    ok(camp.indexOf("setCampTab('depart')") !== -1 && camp.replace(/\u00AD/g, "").indexOf("<span>Expéditions</span>") !== -1 && camp.indexOf("start_expedition.webp") !== -1, "Campement : l'onglet « Départ » devient « Expéditions »");
     ok(camp.indexOf("exp-sum") !== -1 && camp.indexOf("prêts à partir") !== -1 && camp.indexOf("goToPotions()") !== -1 && camp.indexOf("switchTab('map')") !== -1, "tableau des départs : compteurs, « Prêts à partir », Carte et Potions en pied");
     ok(run("getExpeditionEntries().map(function (e) { return e.kind; }).join()") === "dungeon,pa,patrols", "entrées (v3.586.0) : Donjon, Petites Aventures, une ligne Patrouilles (pas de Halle, pas de caravane)");
     run("expSheet = { type: 'patrols' };");
@@ -23393,7 +23394,7 @@ console.log("\n[462] v3.697.0 — Décisions règles et textes (Seb, 05/11, opti
     var vc = fsRead("css/04-panel-village.css"), mq = (vc.match(/@media \(max-width: 339px\) \{[\s\S]*?\n\}/) || [""])[0];
     ok(/village-tabs\.kseg\.is-stack button \{[^}]*white-space: normal/.test(mq) && !/font-size/.test(mq), "CPL3-11 : sous 340 px, libellés du rail du Village sur deux lignes, taille inchangée (12 px)");
     var en = g.I18n.dicts.en;
-    ok(en["sous-onglet|Ateliers"] === "Work­shops" && en["sous-onglet|Entrepôt"] === "Ware­house" && /Produc\\u00ADtion/.test(fsRead("js/ui/village-view.js")), "CPL3-11 : césures douces (Work-shops, Ware-house, Produc-tion)");
+    ok(en["sous-onglet|Ate\u00ADliers"] === "Work\u00ADshops" && en["sous-onglet|Entre\u00ADpôt"] === "Ware\u00ADhouse" /* v3.702.0 : clés FR césurées (UI-14) */ && /Produc\\u00ADtion/.test(fsRead("js/ui/village-view.js")), "CPL3-11 : césures douces (Work-shops, Ware-house, Produc-tion)");
 
     // QUET-9 : « Nef ensevelie »
     var ru = g.WORLDS.filter(function (w) { return w.id === "ruins"; })[0];
@@ -23662,6 +23663,49 @@ console.log("\n[466] v3.701.0 — Faiblesses et résistances retirées partout (
     game = freshCombat("knight"); game.equipped.weapon = null; game.enemy = mk({});
     ok(g.getDamageAffinity().status === "unarmed" && g.getDamageAffinity().mult === g.NO_WEAPON_MULT, "AFFINITÉ : la pénalité sans arme reste (×" + g.NO_WEAPON_MULT + ")");
   } catch (err) { ok(false, "[466] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[467] v3.702.0 — Petits écrans : marges, bandeau court, Partir/Abandonner, cibles de 44 px, ressource, onglets collants, texte Grande (atelier petits-ecrans, Seb 05/11)");
+(function () {
+  try {
+    var rd = function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); };
+    var rc = rd("css/07-responsive.css"), bloc = rc.slice(rc.indexOf("v3.702.0 : petits écrans"));
+    ok(bloc.length > 500 && bloc.indexOf("*/", bloc.indexOf("*/") + 2) > 0 && !/\/\*[^*]*\*\/[^{}]*\*\//.test(bloc), "CSS : bloc « petits écrans » en fin de 07-responsive.css, commentaires bien fermés");
+    // MARGES (B)
+    ok(/@media \(max-width: 430px\) \{\s*html:not\(\.pc-mode\) #panel-container:has\(> \.kfp-wrap\) \{ padding-left: 0; padding-right: 0; \}/.test(bloc)
+      && /html:not\(\.pc-mode\) #panel-container \.kframe > \.kf-mid \{ padding-left: 4px; padding-right: 4px; \}/.test(bloc)
+      && /html:not\(\.pc-mode\) #panel-container \.kfb \{ margin-left: 4px; margin-right: 4px; \}/.test(bloc)
+      && /:is\(\.camp-tabs, \.village-tabs\)\.kseg\.is-stack \{ margin-left: 0; margin-right: 0; \}/.test(bloc), "MARGES (B) : 4 px de chaque côté, téléphone (≤ 430 px) hors mode PC, pages à cadre");
+    // UI-10 (A) : bandeau court sous 600 px de haut
+    var SB = g.ScreenBanner, ih = g.innerHeight, pc = g.document.documentElement.classList.contains("pc-mode");
+    ok(SB.PHONE_H === 150 && SB.PHONE_H_SHORT === 104 && SB.SHORT_MAX_H === 600, "UI-10 : 150 px, 104 px sous 600 px de haut");
+    g.innerHeight = 568; var h568 = SB.phoneH(); g.innerHeight = 844; var h844 = SB.phoneH(); g.innerHeight = ih;
+    ok(pc || (h568 === 104 && h844 === 150), "UI-10 : phoneH() suit la hauteur de l'écran (568 → " + h568 + ", 844 → " + h844 + ")");
+    ok(/el\.classList\.toggle\("is-short", !wide && h === this\.PHONE_H_SHORT\)/.test(rd("js/ui/screen-banner.js")) && /\.kfb\.is-short \.kfb-s \{ display: none; \}/.test(bloc), "UI-10 : bandeau court sans la phrase (is-short)");
+    // UI-10 suite (B)
+    ok(/\.camp-mission-actions \{ flex-direction: column; align-items: center; gap: 12px; \}/.test(bloc) && /\.camp-mission-btn \+ \.camp-mission-btn \{ margin-top: 0; \}/.test(bloc), "UI-10 suite (B) : Partir puis Abandonner, l'un sous l'autre, 12 px d'écart");
+    // UI-9 + SUIV-12 (A)
+    ok(/join\('<span class="fr-also-sep"> · <\/span>'\)/.test(rd("js/ui/fil-rouge-view.js")) && /\.fr-also-sep \{ display: none; \}/.test(bloc) && /\.fr-also-btn \{ min-height: 44px;/.test(bloc), "UI-9 : liens « Aussi » un par ligne (44 px), séparateur isolé dans un span");
+    ok(/\.kfb-pop::after, \.cbx-badges::after, \.cbx-dist-badge::after \{ content: ""; position: absolute;[^}]*width: max\(100%, 44px\); height: max\(100%, 44px\)/.test(bloc)
+      && /\.wk-tile-sub\.res-go-link \{ display: flex; align-items: center; min-height: 44px; \}/.test(bloc)
+      && /\.tavern-contract-need \.res-go \{ display: inline-flex; align-items: center; min-height: 44px;/.test(bloc)
+      && /\.wk-tile-recipe \.res-go::after \{[^}]*height: 44px;/.test(bloc), "UI-9 / SUIV-12 : pastille, badges (zone invisible), recette et Taverne (44 px visibles)");
+    // COMB-7 (A)
+    var cs = rd("js/ui/combat-screen-view.js");
+    ok(/<span class="cbx-res-txt" aria-label="' \+ esc\(\(resLbl \? resLbl \+ " " : ""\) \+ resVal\) \+ '" title="' \+ esc\(resLbl\) \+ '">'/.test(cs) && /'<span class="cbx-res-lbl">' \+ esc\(resLbl\) \+ ' <\/span>'/.test(cs), "COMB-7 : nom de la ressource dans son span, en aria-label et infobulle");
+    ok(/\.cbx-team\.c2 \.cbx-res-lbl, \.cbx-team\.c3 \.cbx-res-lbl \{ display: none; \}/.test(bloc) && /@media \(max-width: 359px\) \{\s*\.cbx-team:is\(\.c2, \.c3\) \.cbx-bars-foot \{ gap: 2px; \}[\s\S]*?content: "✓"/.test(bloc), "COMB-7 : avec compagnons, valeur seule ; « Prêt » → ✓ sous 360 px");
+    // NOV-24 (C)
+    ok(/html:not\(\.wide-mode\) #panel-container \.kfp-scrollzone \.kfb ~ \.nb-page-frame \.kf-mid > \.kseg \{ position: sticky; top: 44px; z-index: 2;/.test(bloc) && /\.kfb\.is-mini ~ \.nb-page-frame \.kf-mid > \.kseg\.is-stack button img \{ display: none; \}/.test(bloc) && SB.MIN_PHONE === 44, "NOV-24 (C) : onglets collés sous le bandeau replié (44 px), compacts tant qu'il est replié");
+    // UI-14 (A) : césures douces, FR et EN
+    var D = g.I18n.dicts.en, SH = "­";
+    var cle = { "Mis­sions": "Mis­sions", "Expé­di­tions": "Expe­di­tions", "Gri­moire": "Gri­moire", "Bâti­ments": "Build­ings", "Ate­liers": "Work­shops", "Entre­pôt": "Ware­house", "Équi­pe­ment": "Equip­ment" }, manq = [];
+    Object.keys(cle).forEach(function (k) { if (D["sous-onglet|" + k] !== cle[k]) manq.push(k.replace(/­/g, "-")); });
+    ok(!manq.length && D["sous-onglet|Ateliers"] === undefined && D["sous-onglet|Entrepôt"] === undefined, "UI-14 : 7 libellés d'onglets à césure douce, traduits (EN césuré aussi)" + (manq.length ? " — manque " + manq.join(", ") : ""));
+    ok(g.CAMP_TABS.map(function (t) { return t.label.replace(/­/g, ""); }).join() === "Le feu,Missions,Expéditions,Grimoire" && g.CAMP_TABS[2].label.indexOf(SH) > 0, "UI-14 : onglets du Camp, même texte à l'écran, césures posées");
+    var vt = g.buildVillageSubTabBarHTML(), ht = g.getHerosTabs().map(function (t) { return t[2]; }).join();
+    ok(vt.indexOf("Bâti" + SH + "ments") > 0 && vt.indexOf("Ate" + SH + "liers") > 0 && vt.indexOf("Entre" + SH + "pôt") > 0 && (ht.indexOf("Équipement") === -1 || ht.indexOf("Équi" + SH + "pe" + SH + "ment") >= 0), "UI-14 : Village (Bâtiments, Ateliers, Entrepôt) et Héros (Équipement) césurés");
+    ok(/@media \(max-width: 359px\) \{\s*html\.text-big #panel-container \.kseg\.is-stack \{ gap: 2px; padding: 2px; \}[\s\S]*?hyphens: manual; -webkit-hyphens: manual; text-align: center; \}/.test(bloc), "UI-14 (A) : texte Grande sous 360 px, libellés sur deux lignes, sans ellipse");
+  } catch (err) { ok(false, "[467] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
 Promise.all(ATTENTES).then(function () {
