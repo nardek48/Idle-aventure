@@ -24157,9 +24157,9 @@ console.log("\n[476] v3.710.0 — Coque du téléphone : bandeau et barre du bas
     var fs = require("fs"), path = require("path");
     var hud = g.buildHudHTML();
     ok(["hk-hp-fill", "hk-hp-text", "hk-xp-fill", "hk-xp-text", "hk-gold", "hk-plus", "hk-pt-img", "hk-lvl"].every(function (id) { return hud.indexOf('id="' + id + '"') > 0; }) && hud.indexOf('id="hud-gold"') > 0, "bandeau : nouveaux éléments du téléphone, ids du format large conservés");
-    var pieces = ["plaque", "anneau", "ecusson", "capsule-or", "plus", "jauge", "jauge-pv", "jauge-xp", "barre", "lueur", "onglet-camp", "onglet-quetes", "onglet-carte", "onglet-village", "onglet-heros", "onglet-menu"];
+    var pieces = ["plaque", "anneau", "ecusson", "capsule-or", "plus", "jauge", "jauge-pv", "jauge-xp", "barre", "onglet-camp", "onglet-quetes", "onglet-carte", "onglet-village", "onglet-heros", "onglet-menu"];
     var css = fs.readFileSync(path.join(ROOT, "css/02-layout.css"), "utf8") + hud;
-    ok(pieces.every(function (n) { return fs.existsSync(path.join(ROOT, "images/UI/coque/" + n + ".webp")) && css.indexOf("coque/" + n + ".webp") > 0; }), "les 16 pièces du kit sont sur disque et utilisées");
+    ok(pieces.every(function (n) { return fs.existsSync(path.join(ROOT, "images/UI/coque/" + n + ".webp")) && css.indexOf("coque/" + n + ".webp") > 0; }), "les 15 pièces du kit sont sur disque et utilisées (v3.712.0 : lueur dessinée en CSS)");
     ok(/html:not\(\.wide-mode\) \.hud-band > :not\(\.hk\)/.test(css) && /^\.hk \{ display: none; \}/m.test(css), "le nouveau bandeau ne s'affiche que sur téléphone, le format large garde l'ancien");
     var sw = fs.readFileSync(path.join(ROOT, "sw.js"), "utf8");
     ok(sw.indexOf("images/UI/coque") === -1, "pièces du kit hors précache (images chargées à la demande)");

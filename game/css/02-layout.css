@@ -122,7 +122,7 @@
    en % pour suivre la largeur. Le bandeau montre 87 px ; le losange et l'écusson débordent dessous.
    ========================= */
 .hk { display: none; }
-html:not(.wide-mode) .hud-band { display: block; min-height: 0; padding: var(--safe-top) 0 0; gap: 0; background: var(--c-brown-950-soft); box-shadow: none; z-index: 30; }
+html:not(.wide-mode) .hud-band { display: block; min-height: 0; padding: var(--safe-top) 0 0; gap: 0; background: none; box-shadow: none; z-index: 30; }
 html:not(.wide-mode) .hud-band::before, html:not(.wide-mode) .hud-band::after { display: none; }
 html:not(.wide-mode) .hud-band > :not(.hk) { display: none; }
 html:not(.wide-mode) .hk { display: block; position: relative; width: 100%; aspect-ratio: 390 / 87; }
@@ -692,8 +692,9 @@ html:not(.wide-mode) #tab-bar .tab-btn[data-tab="more"] .tab-icon-img { content:
 html:not(.wide-mode) #tab-bar .tab-btn[data-tab="menu"] .tab-icon-img { content: url('../images/UI/coque/onglet-menu.webp'); }
 html:not(.wide-mode) .tab-label { position: relative; left: auto; right: auto; bottom: auto; z-index: 1; font-family: "Alegreya", Georgia, serif; font-size: 13px; color: var(--c-cream-100-2); }
 html:not(.wide-mode) .tab-btn.active .tab-label { color: var(--c-cream-100-3); text-shadow: 0 1px 2px var(--c-brown-900), 0 0 4px var(--c-brown-800-vivid); }
-html:not(.wide-mode) .tab-btn.active .tab-icon-frame::before { content: ""; position: absolute; left: -14%; right: -14%; top: -30%; bottom: 0; z-index: 0; pointer-events: none; background: radial-gradient(ellipse 55% 100% at 50% 100%, rgba(255, 205, 100, 0.95), rgba(255, 170, 60, 0.8) 40%, rgba(255, 150, 40, 0.4) 70%, rgba(255, 150, 40, 0) 96%); mix-blend-mode: plus-lighter; }
-html:not(.wide-mode) .tab-btn.active .tab-icon-frame::after { content: ""; position: absolute; left: -4%; right: -4%; bottom: -14%; z-index: 2; height: 12px; pointer-events: none; background: url('../images/UI/coque/lueur.webp') center / 100% 100% no-repeat; }
+html:not(.wide-mode) .tab-btn.active .tab-icon-frame::before { content: ""; position: absolute; left: -14%; right: -14%; top: -30%; bottom: 0; z-index: 0; pointer-events: none; background: radial-gradient(ellipse 46% 100% at 50% 100%, rgba(255, 205, 100, 0.95), rgba(255, 170, 60, 0.8) 40%, rgba(255, 150, 40, 0.4) 70%, rgba(255, 150, 40, 0) 96%); mix-blend-mode: plus-lighter; }
+html:not(.wide-mode) .tab-btn.active .tab-icon-frame::after { content: ""; position: absolute; left: 4%; right: 4%; bottom: -9%; z-index: 2; height: 2px; border-radius: 2px; pointer-events: none; background: linear-gradient(90deg, rgba(255, 190, 80, 0), rgba(255, 200, 90, 0.95) 22%, var(--c-cream-100-3) 50%, rgba(255, 200, 90, 0.95) 78%, rgba(255, 190, 80, 0)); box-shadow: 0 0 8px 2px rgba(255, 185, 70, 0.8); }
+html:not(.wide-mode) #tab-bar .tab-btn.active::after { content: ""; position: absolute; left: 50%; bottom: -9%; z-index: 3; width: 7px; height: 7px; margin-left: -3.5px; margin-bottom: -2.5px; transform: rotate(45deg); pointer-events: none; background: linear-gradient(135deg, var(--c-cream-100-3), var(--c-bronze-450)); box-shadow: 0 0 6px 2px rgba(255, 185, 70, 0.8); }
 /* =========================
    v3.102.2 — combat plein écran (décision Seb) : pendant une sortie on ne
    navigue pas, on rentre (Rentrer / Fuir / mort). Le menu du bas, les
