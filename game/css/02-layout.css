@@ -676,13 +676,14 @@ html:not(.wide-mode) #panel-container .kfp-scrollzone::after { content: ""; disp
 }
 
 /* v3.710.0 (atelier kit-coque-3, Seb 05/11) : barre du bas du téléphone avec le panneau et les icônes
-   du kit de Seb (images/UI/coque/), libellé sous l'icône, halo qui monte du bord sous l'onglet actif. */
+   du kit de Seb (images/UI/coque/), libellé sous l'icône, halo qui monte du bord sous l'onglet actif.
+   v3.711.0 : icônes détourées (fond transparent), plus de masque radial. */
 html:not(.wide-mode) #tab-bar { width: min(404px, 94%); aspect-ratio: 1014 / 229; background-image: url('../images/UI/coque/barre.webp'); }
 html:not(.wide-mode) #tab-bar-row { top: 17%; bottom: 14%; left: 4.5%; right: 4.5%; gap: 0; }
 html:not(.wide-mode) #tab-bar .tab-btn:not(.tab-wide) + .tab-btn:not(.tab-wide)::before { content: ""; position: absolute; left: 0; top: 12%; bottom: 12%; width: 1px; background: linear-gradient(transparent, rgba(226, 177, 74, 0.55), transparent); }
 html:not(.wide-mode) .tab-icon-frame { background: none; flex-direction: column; overflow: visible; }
 html:not(.wide-mode) .tab-btn.active .tab-icon-frame { background-image: none; }
-html:not(.wide-mode) #tab-bar .tab-icon-img { position: relative; z-index: 1; width: 34px; height: 28px; margin: 0 0 4px; object-fit: cover; filter: none; transform: none; -webkit-mask-image: radial-gradient(ellipse 60% 62% at 50% 50%, var(--c-black-950) 62%, transparent 100%); mask-image: radial-gradient(ellipse 60% 62% at 50% 50%, var(--c-black-950) 62%, transparent 100%); }
+html:not(.wide-mode) #tab-bar .tab-icon-img { position: relative; z-index: 1; width: 36px; height: 30px; margin: 0 0 3px; object-fit: contain; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.7)); transform: none; }
 html:not(.wide-mode) #tab-bar .tab-btn[data-tab="campement"] .tab-icon-img { content: url('../images/UI/coque/onglet-camp.webp'); }
 html:not(.wide-mode) #tab-bar .tab-btn[data-tab="quests"] .tab-icon-img { content: url('../images/UI/coque/onglet-quetes.webp'); }
 html:not(.wide-mode) #tab-bar .tab-btn[data-tab="map"] .tab-icon-img { content: url('../images/UI/coque/onglet-carte.webp'); }

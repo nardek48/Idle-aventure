@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.711.0", "menu_icons/menu_menu", _t("Bandeau du haut et barre du bas plus nets : les pièces de Seb sont détourées proprement (plus de liseré clair) et les icônes du bas n'ont plus de fond.")],
     ["3.710.0", "menu_icons/menu_menu", _t("Nouveau bandeau du haut et nouvelle barre du bas, sur les dessins de Seb. Le « + » à côté de l'or ouvre « Ton or peut servir » et pulse quand une dépense t'attend (il remplace la bulle dorée).")],
     ["3.709.0", "special_attacks/attack4", _t("Rôdeur : Tir perforant traverse désormais sa cible, un second ennemi debout reçoit le même coup. Tutoriel de l'Amélioration : Précision et Volonté ont leur propre icône.")],
     ["3.708.0", "system/wrench_settings", _t("Outil d'administration plus fidèle : une étape d'Histoire forcée pose aussi l'équipement, les secteurs et les compteurs qu'elle demande.")],
