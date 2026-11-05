@@ -84,7 +84,7 @@ function buildCompanionRelicsHTML(companionId) {
   var CR = CompanionRelics, open = CR.slotsOpen(companionId), worn = CR.worn(companionId), n = 0;
   var cells = "";
   for (var k = 0; k < 3; k++) {
-    if (k >= open) { cells += '<div class="cp-relic-slot is-lock"><span class="cp-relic-plus"><img class="cp-relic-lock" src="images/Icons/system/lock_closed.webp" alt=""></span><b>' + esc(_t("Palier {n}", { n: COMPANION_RELIC_SLOTS_AT[k] })) + '</b></div>'; continue; } // « Palier 25 » seul : le bloc Entraînement est juste au-dessus
+    if (k >= open) { cells += '<div class="cp-relic-slot is-lock"><span class="cp-relic-plus"><img class="cp-relic-lock" src="images/Icons/system/lock_closed.webp" alt=""></span><b>' + esc(_t("Palier {n}", { n: CR.slotAt(companionId, k) })) + '</b></div>'; continue; } // « Palier 25 » seul : le bloc Entraînement est juste au-dessus
     var r = worn[k] != null ? CR.byId(worn[k]) : null;
     if (!r) { cells += '<button type="button" class="cp-relic-slot is-empty" onclick="companionPickRelic(\'' + companionId + '\', ' + k + ')"><span class="cp-relic-plus">+</span><b>' + esc(_t("Équiper")) + '</b></button>'; continue; }
     n++;
@@ -92,7 +92,7 @@ function buildCompanionRelicsHTML(companionId) {
       + '<b class="rarity-' + CR.rarity(r) + '">' + esc(CR.name(r)) + '</b><small>' + esc(CR.effectText(r)) + '</small></button>';
   }
   return '<div class="cp-relics"><div class="cp-relics-h"><span>' + _t("Reliques") + ' <b>' + n + ' / ' + open + '</b></span><small>'
-    + esc(_t("une par famille · rapportées de patrouille")) + '</small></div><div class="cp-relic-slots">' + cells + '</div></div>';
+    + esc(_t("une par famille · patrouilles, échoppe et quêtes")) + '</small></div><div class="cp-relic-slots">' + cells + '</div></div>';
 }
 
 /* Feuille « Choisir une relique » (variante A) : l'inventaire, relique par relique. */
@@ -111,7 +111,7 @@ function buildCompanionRelicPickHTML() {
     .sort(function (a, b) { return COMPANION_RELIC_ORDER.indexOf(a.f) - COMPANION_RELIC_ORDER.indexOf(b.f) || b.w - a.w; });
   var h = '<div class="hs-sheet"><div class="cp-relic-pick-h"><b>' + esc(_t("Emplacement {n} · {x}", { n: p.slot + 1, x: _td(def.name) })) + '</b>'
     + '<button type="button" class="cp-relic-back" onclick="herosOpenCompanion(\'' + p.id + '\')">‹ ' + esc(_td(def.name)) + '</button></div>';
-  if (!list.length) return h + '<div class="pc-empty">' + esc(_t("Aucune relique pour l'instant. Les compagnons en rapportent de patrouille.")) + '</div></div>';
+  if (!list.length) return h + '<div class="pc-empty">' + esc(_t("Aucune relique pour l'instant. Elles viennent des patrouilles, de l'échoppe et des quêtes de compagnon.")) + '</div></div>';
   h += '<div class="cp-relic-list">';
   list.forEach(function (r) {
     var by = CR.wornBy(r.id), here = by === p.id, idx = worn.indexOf(r.id), famPrise = !here && fams.indexOf(r.f) >= 0;
@@ -159,7 +159,7 @@ function companionSkillDescRanked(companionId, def) {
 
 function companionSkillEffectLines(companionId, a, b) {
   var A = CompanionManager.skillOf(companionId, a), B = CompanionManager.skillOf(companionId, b), out = [];
-  var mult = function (v) { var s = (Math.round(v * 10) / 10).toFixed(1); return (window.I18n && I18n.lang && I18n.lang() === "en") ? s : s.replace(".", ","); };
+  var mult = function (v) { return fmtDec((Math.round(v * 10) / 10).toFixed(1)); };
   if (A.value !== B.value) out.push(A.type === "heal" || A.type === "taunt"
     ? _t("Soin {a} % → {b} %", { a: Math.round(A.value * 100), b: Math.round(B.value * 100) })
     : _t("Frappe ×{a} → ×{b}", { a: mult(A.value), b: mult(B.value) }));
@@ -227,12 +227,24 @@ function companionResetTraining(companionId) {
   if (!window.CompanionManager) return;
   var st = CompanionManager.state(companionId), def = getCompanionDef(companionId);
   var go = function () { CompanionManager.resetTraining(companionId); };
+  var msg = _t("Les {n} paliers Ardeur et Vigueur de {x} sont rendus en or. Les paliers équilibrés restent.", { n: st.ardeur + st.vigueur, x: _td(def.name) });
+  var off = companionRelicsOffAfterReset(companionId, st);
+  if (off.n) msg += " " + _tn(off.n, "Une relique portée cessera d'agir : son emplacement se ferme jusqu'au palier {p}.", "{n} reliques portées cesseront d'agir : leurs emplacements se ferment jusqu'au palier {p}.", { p: off.at });
   if (typeof showConfirmModal === "function") {
-    showConfirmModal(_t("Répartir de nouveau ?"), _t("Les {n} paliers Ardeur et Vigueur de {x} sont rendus en or. Les paliers équilibrés restent.", { n: st.ardeur + st.vigueur, x: _td(def.name) }),
+    showConfirmModal(_t("Répartir de nouveau ?"), msg,
       "images/Icons/system/auto_repeat.webp", go);
   } else go();
 }
 window.companionResetTraining = companionResetTraining;
+/* Audit CPL2-5 : reliques portées dont l'emplacement se ferme après « Répartir de nouveau » (paliers équilibrés seuls). */
+function companionRelicsOffAfterReset(companionId, st) {
+  var out = { n: 0, at: 0 };
+  if (!window.CompanionRelics || !st) return out;
+  var eq = st.upgrades - st.ardeur - st.vigueur, open = CompanionRelics.slotsOpen(companionId), worn = CompanionRelics.worn(companionId);
+  for (var k = 0; k < open; k++) if (worn[k] != null && CompanionRelics.byId(worn[k]) && CompanionRelics.slotAt(companionId, k) > eq) { out.n++; if (!out.at) out.at = CompanionRelics.slotAt(companionId, k); }
+  return out;
+}
+window.companionRelicsOffAfterReset = companionRelicsOffAfterReset;
 window.buildCompanionTrainingHTML = buildCompanionTrainingHTML;
 
 /* v3.311.0 : bloc « Voie » d'un compagnon à voies. Tant que la voie n'est pas choisie

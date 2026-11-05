@@ -1,5 +1,5 @@
 "use strict";
-/* ui/potion-view.js — sous-onglet Potions de la Boutique. Achat ajoute au stock (activation séparée, voir equipment-view.js). Détail : COMMENTAIRES_ORIGINAUX.md */
+/* ui/potion-view.js — sous-onglet Potions de la Boutique. Achat ajoute au stock (activation séparée, voir equipment-view.js). */
 
 
 /* v3.215.0 (lot V-4) — SECONDE VOIE : préparer au lieu d'acheter.
@@ -62,7 +62,7 @@ function buildPotionCardHTML(potion) {
   var isStockCapped = !!potion.perRun && stock >= cap;
   var canBuy = !isStockCapped && (game.gold || 0) >= cost;
 
-  var h = '<div class="nb-purchase-card rarity-' + esc(potion.rarity) + (isLive ? ' is-active' : '') + '">';
+  var h = '<div class="nb-purchase-card rarity-' + esc(potion.rarity) + (isLive ? ' is-active' : '') + (canBuy ? ' affordable' : '') + '">'; // UI-11
   h += '<div class="nb-purchase-icon-col"><div class="nb-purchase-icon-slot">' + renderIconOrEmojiHTML(potion.icon, "nb-purchase-icon", _td(potion.name)) + '</div></div>';
   h += '<div class="nb-purchase-info-col">';
   h += '<div class="nb-purchase-name">' + esc(_td(potion.name)) + '</div>';
@@ -126,7 +126,7 @@ function buildCombatItemShopHTML() {
   COMBAT_ITEM_ORDER.forEach(function (id) {
     var it = COMBAT_ITEMS[id];
     var st = (it.trait && typeof enemyTraitLook === "function") ? enemyTraitLook(it.trait) : {}; // v3.492.15 : les deux registres d'états
-    var c = '<div class="nb-purchase-card">';
+    var c = '<div class="nb-purchase-card affordable">'; // UI-11 : rien à payer sur la carte (préparée à l'Apothicaire), pas de voile
     c += '<div class="nb-purchase-icon-col"><div class="nb-purchase-icon-slot">' + renderIconOrEmojiHTML(it.icon, "nb-purchase-icon", _td(it.name)) + '</div></div>';
     c += '<div class="nb-purchase-info-col">';
     c += '<div class="nb-purchase-name">' + esc(_td(it.name)) + '</div>';
@@ -148,20 +148,24 @@ function buildHealingPotionCardHTML(potion) {
   var cost = PotionManager.getCost(potion);
   // v3.291.0 : limite d'achat quotidienne (Soin majeur : 10)
   var buyLeft = PotionManager.getHealingBuyRemaining(potion.id);
-  var canBuy = (game.gold || 0) >= cost && buyLeft > 0;
+  var gift = PotionManager.isStoryGiftDue(potion.id); // audit 04/11 (NOV-1) : potion offerte à forest_04 sans or
+  var canBuy = ((game.gold || 0) >= cost || gift) && buyLeft > 0;
 
-  var h = '<div class="nb-purchase-card">';
+  var h = '<div class="nb-purchase-card' + (canBuy ? ' affordable' : '') + '">'; // UI-11
   h += '<div class="nb-purchase-icon-col"><div class="nb-purchase-icon-slot">' + renderIconOrEmojiHTML(potion.icon, "nb-purchase-icon", _td(potion.name)) + '</div></div>';
   h += '<div class="nb-purchase-info-col">';
   h += '<div class="nb-purchase-name">' + esc(_td(potion.name)) + '</div>';
   h += '<div class="nb-purchase-desc">' + _t("Restaure {p}% des PV max, à la demande depuis l’écran Combat.", { p: Math.round(potion.healPercent * 100) }) + '</div>';
   h += '<div class="nb-purchase-meta"><img class=ico-inline src=images/Icons/system/potion_heal.webp> ' + _t("Stock : {n}", { n: stock }) + '</div>';
+  if (gift) h += '<div class="nb-purchase-meta">' + _t("Sarkel te la laisse : tu la paieras une autre fois.") + '</div>';
   if (buyLeft !== Infinity) {
     h += '<div class="nb-purchase-meta">' + _t("Colporteur : {a} / {b} aujourd’hui", { a: buyLeft, b: potion.dailyBuyLimit }) + '</div>';
   }
   h += '</div>';
   if (buyLeft <= 0) {
     h += '<div class="nb-purchase-buy-col"><button class="btn-buy kbuy cant-afford" type="button" disabled>' + _t("ÉPUISÉ") + '</button></div>';
+  } else if (gift) {
+    h += '<div class="nb-purchase-buy-col"><button class="btn-buy kbuy" type="button" onclick="PotionManager.buyHealingPotion(\'' + esc(potion.id) + '\')">' + _t("Offerte") + '</button></div>';
   } else {
     h += '<div class="nb-purchase-buy-col"><button class="btn-buy kbuy' + (canBuy ? '' : ' cant-afford') + '" onclick="PotionManager.buyHealingPotion(\'' + esc(potion.id) + '\')"><img class="btn-buy-icon" src="images/Icons/gold_icon.webp" alt="">' + formatNumber(cost) + '</button></div>';
   }

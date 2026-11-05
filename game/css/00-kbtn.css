@@ -20,8 +20,7 @@
    04-panel-village.css sont retirés), .danger, .primary. */
 
 .kbtn,
-.settings-btn,
-.inv-toolbar-btn { /* v3.184.0 : Trier/⚙ de l'inventaire — classe oubliée par la bascule v3.168 (repérée par Seb) */
+.settings-btn { /* v3.184.0 : Trier/⚙ de l'inventaire — classe oubliée par la bascule v3.168 (repérée par Seb) */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -49,8 +48,7 @@
 }
 
 .kbtn:not(:disabled):active,
-.settings-btn:not(:disabled):active,
-.inv-toolbar-btn:not(:disabled):active {
+.settings-btn:not(:disabled):active {
   background-image: url('../images/UI/buttons/btn-rect-pressed.webp');
   transform: translateY(1px);
   box-shadow: none;
@@ -308,9 +306,6 @@
   background-repeat: repeat;
 }
 
-.kfp-top-holder.is-subtab {
-  max-width: 600px; /* aligné sur .subtab-page-content */
-}
 
 /* v3.581.0 : bandeau illustré (ui/screen-banner.js). Il remplace le titre et remonte sur le bas du cap :
    la zone de défilement passe sous le porte-titre de 40 px, le bandeau sticky la couvre toujours. */
@@ -426,8 +421,7 @@
 .kwin .settings-btn:not(.primary):not(.danger),
 .kbtn.is-sec,
 .settings-btn.is-sec,
-.btn-buy.is-sec,
-.kframe .inv-toolbar-btn {
+.btn-buy.is-sec {
   border: 2px solid var(--c-brown-700-vivid);
   border-radius: 10px;
   background: rgba(255, 248, 232, 0.35);
@@ -446,8 +440,7 @@
 .kwin .settings-btn:not(.primary):not(.danger):not(:disabled):active,
 .kbtn.is-sec:not(:disabled):active,
 .settings-btn.is-sec:not(:disabled):active,
-.btn-buy.is-sec:not(:disabled):active,
-.kframe .inv-toolbar-btn:not(:disabled):active {
+.btn-buy.is-sec:not(:disabled):active {
   background: rgba(138, 92, 20, 0.15);
   background-image: none;
 }
@@ -546,7 +539,7 @@
 #panel-container .kframe .kf-mid::before, #panel-container .kframe .kf-mid::after { display: none; }
 #panel-container .kframe > .kf-bot, #panel-container .kframe:not(.kframe-page) > .kf-top { display: none; }
 #panel-container .kframe > .kf-mid { padding: 6px 10px 16px; }
-#panel-container .kfp-scrollzone, #panel-container .subtab-page-content { background: var(--kf-scrim); }
+#panel-container .kfp-scrollzone { background: var(--kf-scrim); }
 #panel-container .kfp-top-holder.has-banner { margin-bottom: 0; }
 #panel-container .kfp-top-holder.has-banner .kf-top { display: none; }
 #panel-container .kfb { margin: 8px 10px 10px; }
@@ -563,9 +556,9 @@
 #panel-container .kfp-top-holder:not(.has-banner) .kf-back { left: 6px; top: 50%; }
 
 /* Filet doré des blocs (les bordures d'état d'origine restent) */
-#panel-container .kframe .kf-mid :is(.camp-card, .kseg, .story-prologue-card, .story-chain, .warehouse-note, .hs-kstrip, .hs-eq,
+#panel-container .kframe .kf-mid :is(.camp-card, .kseg, .story-chain, .warehouse-note, .hs-kstrip, .hs-eq,
   .hs-edetail, .hs-roster-btn, .hst-bar, .hst-tree, .hst-detail, .hst-seg, .hf-top, .hf-tiers, .hf-card, .nb-accordion-section, .set-card,
-  .mem-head, .mem-level, .dungeon-ticket-badge, .dungeon-card, .grimoire-rule-row, .prod-tile, .wh-cell, .story-prologue-card) { box-shadow: var(--kf-ring); }
+  .mem-head, .mem-level, .dungeon-ticket-badge, .grimoire-rule-row, .prod-tile) { box-shadow: var(--kf-ring); }
 /* Blocs qui n'avaient pas de fond propre : parchemin */
 #panel-container .kframe .kf-mid :is(.mem-level, .grimoire-rule-row.is-empty, .hst-seg, .prod-tile, .kseg) { background-color: var(--c-cream-100-soft); }
 #panel-container .kframe .kf-mid .mem-level { border-radius: 12px; padding: 12px; }
@@ -573,8 +566,10 @@
 
 /* Textes posés sur le décor : passent en clair */
 #panel-container .kframe .kf-mid :is(.qb-cap-indicator, .qb-completed-link, .production-dash-hint, .wh-zero-note, .codex-summary, .tutorials-intro,
-  .grimoire-mode-desc, .grimoire-divider, .qw-grp, .hs-wh, .cp-intro), /* v3.642.0 : .cp-intro (Héros › Compagnons), illisible sur le décor */
-#panel-container .kframe .kf-mid > .ksec, #panel-container .kframe .kf-mid > .ksec *,
+  .grimoire-mode-desc, .qw-grp, .hs-wh, .cp-intro), /* v3.642.0 : .cp-intro (Héros › Compagnons), illisible sur le décor */
+/* UI-6 : état vide d'Aventure, « À propos », « Renoncer » posés sur le décor. UI-7 : les .ksec ont la bande crème, encre sombre d'origine */
+#panel-container .kframe .kf-mid > :is(.eq-empty, .set-about), #panel-container .kframe .kf-mid > .set-about *,
+#panel-container .kframe .kf-mid > .set-links > .klink, #panel-container .kframe .kf-mid > .pa2-col > .pa2-link,
 #panel-container .kframe .kf-mid :is(.grimoire-head, .grimoire-foot) :is(span, small, b, div, button:not(.kbtn):not(.settings-btn)) {
   color: var(--kf-ink); text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
 }
@@ -604,7 +599,6 @@
 }
 :is(.kframe, .ksheet, .full-menu, .kwin) :is(.kbtn, .settings-btn).danger:not(:disabled):active,
 :is(.kbtn, .settings-btn).danger.is-sec:not(:disabled):active { background: rgba(179, 38, 30, 0.14); background-image: none; }
-
 
 /* v3.602.0 (atelier jours-du-monde, B) : le jour du monde sur le bandeau du Camp, en bas à droite (visible replié) ; la soirée après la nuit assombrit l'image */
 .kfb-day { position: absolute; right: 10px; bottom: 9px; z-index: 2; display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 999px; background: rgba(18, 14, 9, 0.72); border: 1px solid rgba(226, 177, 74, 0.4); }

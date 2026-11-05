@@ -1,5 +1,5 @@
 "use strict";
-/* ui/settings-view.js — écran Paramètres (v3.408.0 : trois onglets en rail) : sauvegarde/export/import, mode de combat, affichage, langue, reset complet. Détail : COMMENTAIRES_ORIGINAUX.md */
+/* ui/settings-view.js — écran Paramètres (v3.408.0 : trois onglets en rail) : sauvegarde/export/import, mode de combat, affichage, langue, reset complet. */
 
 /* v3.408.0 (refonte de l'onglet, atelier-parametres.html : Seb choisit B · Rail et S1 · glissière) :
    trois onglets en rail du kit — Partie (sauvegarde, zone de danger), Jeu (mode de combat,
@@ -25,12 +25,19 @@ function settingsRowHTML(icon, title, sub, ctrl) {
     + (sub ? '<small>' + sub + '</small>' : '') + '</div>' + (ctrl || '') + '</div>';
 }
 
+/* UI-15 (audit 04/11) : la sauvegarde manuelle dit si elle a réussi. */
+function saveGameFromSettings() {
+  var ok = saveGame();
+  if (typeof showToast === "function") showToast(ok ? _t("Partie sauvegardée") : _t("Sauvegarde impossible pour l'instant. Exporte ta partie (Paramètres) pour ne rien perdre."), ok ? 1600 : 3000);
+}
+window.saveGameFromSettings = saveGameFromSettings;
+
 function buildSettingsPartieHTML() {
   var h = '<div class="set-card">';
   h += '<div class="kkick">' + _t("Sauvegarde") + '</div>';
   h += '<p>' + _t("Le jeu se sauvegarde tout seul toutes les 30 secondes, dans ce navigateur. Exporte une copie de temps en temps : elle te suit sur un autre appareil.") + '</p>';
   h += '<div class="set-stack">';
-  h += '<button class="settings-btn primary" onclick="saveGame()"><img class=ico-inline src=images/Icons/system/save.webp> ' + _t("Sauvegarder maintenant") + '</button>';
+  h += '<button class="settings-btn primary" onclick="saveGameFromSettings()"><img class=ico-inline src=images/Icons/system/save.webp> ' + _t("Sauvegarder maintenant") + '</button>';
   h += '<div class="set-pair"><button class="settings-btn" onclick="exportSaveToFile()"><img class=ico-inline src=images/Icons/system/export.webp> ' + _t("Exporter") + '</button>';
   h += '<button class="settings-btn" onclick="triggerImportFilePicker()"><img class=ico-inline src=images/Icons/system/import.webp> ' + _t("Importer") + '</button></div>';
   h += '<div class="set-links"><button type="button" class="klink" onclick="showExportTextModal()">' + _t("Copier le code de sauvegarde") + '</button>';
@@ -167,7 +174,8 @@ function confirmLanguageChange(lang) {
   if (typeof showConfirmModal === "function") {
     showConfirmModal(lang === "en" ? "Switch to English?" : "Passer en français ?",
       lang === "en" ? "The game will restart. Your progress is saved first." : "Le jeu va redémarrer. Ta progression est sauvegardée avant.",
-      "images/Icons/system/settings.webp", go);
+      "images/Icons/system/settings.webp", go,
+      lang === "en" ? { cancel: "Annuler · Cancel", ok: "Confirmer · Confirm" } : { cancel: "Cancel · Annuler", ok: "Confirm · Confirmer" }); // CPL3-10 : boutons dans les deux langues
   } else go();
 }
 window.confirmLanguageChange = confirmLanguageChange;

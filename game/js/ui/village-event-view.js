@@ -70,7 +70,7 @@ function villageEventSell(res) { if (VillageEvents.sellLot(res) && typeof render
 function villageEventMorningHTML(night) {
   var e = night && night.event && window.VillageEvents ? VillageEvents.get(night.event) : null;
   if (!e) return "";
-  return '<div class="wn-morn">' + villageEventIconHTML(e.type, "wn-morn-ico") + '<div><b>' + esc(_t("Au matin")) + '</b><span>' + esc(_td(e.who) + " : " + VillageEvents.titleOf(e)) + '</span></div></div>';
+  return '<div class="wn-morn">' + villageEventIconHTML(e.type, "wn-morn-ico") + '<div><b>' + esc(_t("Au matin")) + '</b><span>' + esc(_t("{a} : {b}", { a: _td(e.who), b: VillageEvents.titleOf(e) })) + '</span></div></div>';
 }
 
 function villageEventGo() {

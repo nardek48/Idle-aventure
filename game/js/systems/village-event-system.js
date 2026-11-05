@@ -111,6 +111,7 @@ var VillageEvents = {
     var n = this.needs(), gold = this.rewardGold(), gifts = this.rewardGifts(), v = this.active();
     Object.keys(n).forEach(function (r) { WarehouseManager.removeResource(r, n[r]); });
     game.gold = Number(game.gold || 0) + gold;
+    game.totalGoldEarned = Number(game.totalGoldEarned || 0) + gold; // SUIV-6 : compté dans « Or gagné »
     Object.keys(gifts).forEach(function (r) { WarehouseManager.addResource(r, gifts[r], true); });
     v.done = true;
     if (typeof addLog === "function") addLog("🏘️ " + _t("Livré : +{n} or.", { n: formatNumber(gold) }), "event");
@@ -169,6 +170,7 @@ var VillageEvents = {
     if (!this.marketOn() || !B.prices[res] || this.buybackLotsLeft() <= 0 || !window.WarehouseManager || WarehouseManager.getAmount(res) < B.lot) return false;
     WarehouseManager.removeResource(res, B.lot);
     game.gold = Number(game.gold || 0) + B.prices[res] * B.lot;
+    game.totalGoldEarned = Number(game.totalGoldEarned || 0) + B.prices[res] * B.lot; // SUIV-6
     v.sold = Number(v.sold || 0) + 1;
     if (typeof saveGame === "function") saveGame();
     return true;

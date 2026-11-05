@@ -68,13 +68,18 @@ var SleepSystem = {
     for (var i = pool.length - 1; i > 0; i--) { var j = randInt(0, i), t = pool[i]; pool[i] = pool[j]; pool[j] = t; }
     for (var k = 0; k < n; k++) {
       pool[k].asleep = true;
-      pool[k].wakeIn = randInt(SLEEP_WAKE_ROUNDS_MIN, SLEEP_WAKE_ROUNDS_MAX) + this.mem("sommeil_lourd", "sommeil_lourd_rounds") // v3.453.0 : Sommeil lourd
-        + (this.wearsQuiver() ? 1 : 0); // v3.455.0 : le carquois d'Ysolt
+      pool[k].wakeIn = this.wakeRounds();
     }
     if (n) addLog("🌫️ " + _tn(n, "Un des morts dort encore.", "{n} des morts dorment encore."), "event");
     this.encounterLine();
     this.gardeStart(list);
     return n;
+  },
+
+  /* Rounds avant le réveil seul : 3 à 5, + Sommeil lourd (v3.453.0), + carquois d'Ysolt (v3.455.0).
+     Audit CPL2-8 : commun aux dormeurs du départ, aux rendormis et aux renforts endormis. */
+  wakeRounds: function () {
+    return randInt(SLEEP_WAKE_ROUNDS_MIN, SLEEP_WAKE_ROUNDS_MAX) + this.mem("sommeil_lourd", "sommeil_lourd_rounds") + (this.wearsQuiver() ? 1 : 0);
   },
 
   isAsleep: function (e) { return !!(e && e.asleep && Number(e.hp || 0) > 0); },
@@ -96,7 +101,7 @@ var SleepSystem = {
     e.wakeIn = Number(e.wakeIn || 0) - 1;
     if (e.wakeIn <= 0 && this.has("personne_ne_se_leve") && !game._sleepRelapseUsed) { // v3.453.0 : ligne Garder du jalon 16
       game._sleepRelapseUsed = true;
-      e.wakeIn = randInt(SLEEP_WAKE_ROUNDS_MIN, SLEEP_WAKE_ROUNDS_MAX);
+      e.wakeIn = this.wakeRounds();
       addLog("🌫️ " + _t("{x} allait se lever. Il se rendort.", { x: _td(e.name) }), "event");
     }
     if (e.wakeIn <= 0) this.wake(e, false);
@@ -262,12 +267,13 @@ var SleepSystem = {
   /* Phases de boss propres à la Crypte, appelées par BossMomentManager.onPhase (checkPhases). */
   onBossPhase: function (e, ph) {
     if (!e || !ph) return;
-    if (ph.wakeAll) { var self = this; this.sleepers().forEach(function (x) { self.wake(x, false); }); } // v3.456.0 : avant les nouveaux venus
+    var self = this;
+    if (ph.wakeAll) { this.sleepers().forEach(function (x) { self.wake(x, false); }); } // v3.456.0 : avant les nouveaux venus
     if (Array.isArray(ph.sleepAdds) && ph.sleepAdds.length && window.CombatEngine && window.CombatActors) {
       var avant = CombatActors.enemies().slice();
       CombatEngine.summonAdds(e, { adds: ph.sleepAdds, addsHpMult: ph.addsHpMult, addsPowerMult: ph.addsPowerMult });
       CombatActors.enemies().filter(function (x) { return avant.indexOf(x) < 0; }).forEach(function (x) {
-        x.asleep = true; x.wokenByHero = false; x.wakeIn = randInt(SLEEP_WAKE_ROUNDS_MIN, SLEEP_WAKE_ROUNDS_MAX);
+        x.asleep = true; x.wokenByHero = false; x.wakeIn = self.wakeRounds();
       });
     }
     if (ph.chainBoth) e.chainBoth = true; // v3.456.0 : le Nécromancien suprême, sous 25 %

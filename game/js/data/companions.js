@@ -143,7 +143,7 @@ var COMPANIONS_DB = {
         threatMult: 1.8,                   // Garde : il attire (§6.2)
         skill: {
           id: "maddoc_plante", name: "Planté",
-          icon: "images/Icons/companions/maddoc_plante.webp", // à générer
+          icon: "images/Icons/companions/maddoc_plante.webp",
           type: "taunt",
           value: 0.12,                     // se rend 12 % de ses PV max
           cooldown: 4, charges: 0,
@@ -160,7 +160,7 @@ var COMPANIONS_DB = {
         threatMult: 0.6,                   // de loin, il attire peu
         skill: {
           id: "maddoc_tir", name: "Tir ajusté",
-          icon: "images/Icons/companions/maddoc_tir.webp", // à générer
+          icon: "images/Icons/companions/maddoc_tir.webp",
           type: "strike",
           value: 2.5,                      // ×2,5 ses dégâts de base sur la cible
           cooldown: 3, charges: 0,
@@ -185,7 +185,7 @@ var COMPANIONS_DB = {
 /* v3.428.0 (Ruines, acte I étape 3) — EDDA, la cartographe, troisième compagnon. Venue « d'un
    pays où les murs restent en place ». À la pioche, au corps à corps. Rôle : Achever — sa
    compétence frappe un ennemi À TERRE et l'empêche de se relever (systems/rise-system.js).
-   Stats et prix provisoires, au banc (sim/ruines-bench.js). Portrait à fournir par Seb. */
+   Stats et prix provisoires, au banc (sim/ruines-bench.js). */
 COMPANIONS_DB.edda = {
   id: "edda",
   name: "Edda",
@@ -197,7 +197,7 @@ COMPANIONS_DB.edda = {
   skill: {
     id: "edda_dernier_trait",
     name: "Le dernier trait",
-    icon: "images/Icons/companions/edda_dernier_trait.webp", // à générer
+    icon: "images/Icons/companions/edda_dernier_trait.webp",
     type: "finish",
     value: 1.5,                          // ×1,5 ses dégâts de base sur l'ennemi à terre (une frappe l'achève)
     cooldown: 2, charges: 0,
@@ -218,7 +218,7 @@ COMPANIONS_DB.edda = {
 /* v3.452.0 (Crypte, acte I étape 3, CR5) — YSOLT, une Rôdeuse montée neuf fois, revenue huit.
    Elle porte un carquois vide et ne tire plus. Rôle : Garder le sommeil — sa compétence repousse
    le réveil seul d'un dormeur (systems/sleep-system.js), une fois par combat. Stats et prix
-   provisoires, au banc. Portrait à fournir par Seb. */
+   provisoires, au banc. */
 COMPANIONS_DB.ysolt = {
   id: "ysolt",
   name: "Ysolt",
@@ -230,7 +230,7 @@ COMPANIONS_DB.ysolt = {
   skill: {
     id: "ysolt_pas_encore",
     name: "Pas encore",
-    icon: "images/Icons/companions/ysolt_pas_encore.webp", // à générer
+    icon: "images/Icons/companions/ysolt_pas_encore.webp",
     type: "delaySleep",
     value: 2,                            // rounds de plus avant le réveil seul
     cooldown: 0, charges: 1,             // une fois par combat (CR5)
@@ -254,7 +254,7 @@ COMPANIONS_DB.ysolt = {
 
 /* v3.488.0 (Montagne, acte I étape 3, MT5) — SARKEL, le colporteur. Il frappe peu ; il taille. Rôle :
    Celui qui taille — Coup de pioche taille la veine une fois par combat (VeinSystem.cut(false)) : la
-   Cendre et la chaleur, pas la lame. Stats et prix provisoires, au banc. Portrait à fournir par Seb. */
+   Cendre et la chaleur, pas la lame. Stats et prix provisoires, au banc. */
 COMPANIONS_DB.sarkel = {
   id: "sarkel",
   name: "Sarkel",
@@ -266,7 +266,7 @@ COMPANIONS_DB.sarkel = {
   skill: {
     id: "sarkel_coup_de_pioche",
     name: "Coup de pioche",
-    icon: "images/Icons/companions/sarkel_coup_de_pioche.webp", // à générer
+    icon: "images/Icons/companions/sarkel_coup_de_pioche.webp",
     type: "cutVein",
     cooldown: 0, charges: 1,             // une fois par combat (MT5)
     desc: "Une fois par combat, il taille la veine à ta place : +1 Cendre vive, sans perdre ton coup. La chaleur monte."

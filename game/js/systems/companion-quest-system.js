@@ -72,7 +72,7 @@ var CompanionQuestManager = {
   },
   /* Fin d'une Petite Aventure de la carte vivante (pa2-run.js) et victoire sur une élite de carte (living-map-system.js).
      v3.603.0 (demande de Seb) : seul le lieu attribué à la quête compte, et une sortie ne fait avancer qu'une quête. */
-  onRunEnd: function (worldId, how, sectorId) { if (how === "dest") this._count("run", worldId, sectorId); },
+  onRunEnd: function (worldId, how, sectorId) { if (how === "dest" || how === "parcours") this._count("run", worldId, sectorId); }, // audit CPL2-13 : un parcours réussi compte
   onEliteWon: function (worldId, sectorId) { this._count("elite", worldId, sectorId); },
   _count: function (type, worldId, sectorId) {
     if (!sectorId) return;

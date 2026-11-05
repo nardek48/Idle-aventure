@@ -1,5 +1,5 @@
 "use strict";
-/* tools/harness/parcours-harness.js — v3.351.0 (H-0), v3.352.0 (H-1) : harnais de PARCOURS, P1 à P10 ; v3.359.0 : P11 (installer le jeu) ; v3.364.0 : P12 (acte IV du Désert) ; v3.380.0 : P12 déterministe sur la remontée ; v3.618.0 : P14 (habillage des cartes).
+/* tools/harness/parcours-harness.js — v3.351.0 (H-0), v3.352.0 (H-1) : harnais de PARCOURS, P1 à P10 ; v3.359.0 : P11 (installer le jeu) ; v3.364.0 : P12 (acte IV du Désert) ; v3.380.0 : P12 déterministe sur la remontée ; v3.618.0 : P14 (habillage des cartes) ; v3.703.0 : P15 (fenêtres au clavier).
    Carte des systèmes v3.350.0 §7. Complète round-harness.js, ne le remplace pas.
 
    Le VRAI index.html, servi en http://localhost (service worker compris), dans Chromium à la
@@ -71,7 +71,7 @@ async function launch(device, base) {
   lastPage = page;
   page._errors = [];
   page.on("pageerror", function (e) { page._errors.push(e.message); });
-  page.on("console", function (m) { if (m.type() === "error") page._errors.push(m.text()); });
+  page.on("console", function (m) { if (m.type() === "error" || (m.type() === "warning" && /^\[rattrapée\]/.test(m.text()))) page._errors.push(m.text()); }); // v3.692.0 (ARCH-14) : une erreur rattrapée compte
   // window.confirm : le parcours décide (page._answer = true/false), le message est gardé
   page._answer = true; page._dialogs = [];
   page.on("dialog", function (d) { page._dialogs.push(d.message()); if (page._answer) d.accept(); else d.dismiss(); });
@@ -1000,6 +1000,7 @@ function cartesNonHabillees() {
     var cls = String(e.className || "").split(/\s+/).filter(Boolean);
     if (cls.some(function (c) { return CONTENEUR.test(c); })) return;
     if ((e.tagName === "BUTTON" || e.closest("button")) && r.height < 70) return;
+    if (e.parentElement && e.parentElement.classList.contains("exp-sum")) return; // v3.702.0 : compteurs d'Expéditions, pas des cartes (plus de 120 px de large avec les marges de 4 px)
     if (!/url\(/.test(s.backgroundImage)) { oublis[cls[0] || e.tagName.toLowerCase()] = 1; return; } // texture, ou illustration propre (mannequin, route)
     // document (dont la carte Missions en PC) hors de toute carte habillée : découpe déchirée attendue
     var doc = cls.some(function (c) { return DOC.test(c); }) || (cls.indexOf("cw-card") >= 0 && !!e.querySelector(".cw-mlist"));
@@ -1058,9 +1059,135 @@ async function P14(browser, base) {
   await dev.close();
 }
 
+/* v3.703.0 (CPL3-5, TUTO-11) : feuilles et fenêtres au vrai clavier (Tab, Maj+Tab, Échap, Entrée) ;
+   aucun écran ne reste inerte après fermeture ; indice « Suite ↓ » des aides à 320 × 568. */
+function etatFenetre(sel) {
+  var win = document.querySelector(sel), a = document.activeElement, lb = win && win.getAttribute("aria-labelledby"), db = win && win.getAttribute("aria-describedby");
+  var fond = ["panel-container", "tab-bar", "hud"].map(function (id) { return document.getElementById(id); }).filter(Boolean);
+  return { open: !!win && win.getClientRects().length > 0, role: win && win.getAttribute("role"), modal: win && win.getAttribute("aria-modal"),
+    nom: lb && document.getElementById(lb) ? document.getElementById(lb).textContent.trim() : "", desc: db && document.getElementById(db) ? document.getElementById(db).textContent.trim() : "",
+    dedans: !!win && (a === win || win.contains(a)), origine: !!(a && a.hasAttribute && a.hasAttribute("data-origine")),
+    fond: fond.filter(function (e) { return !!e.closest("[inert]"); }).length, nFond: fond.length, toast: !!document.getElementById("toast").closest("[inert]"),
+    inertes: document.querySelectorAll("[inert]").length, pile: window.kDialog ? kDialog.stack().length : -1 };
+}
+async function tabsDedans(page, sel, n) {
+  var k = 0;
+  for (var i = 0; i < n; i++) { await page.keyboard.press("Tab"); if ((await page.evaluate(etatFenetre, sel)).dedans) k++; }
+  return k;
+}
+async function P15(browser, base) {
+  var dev = await newDevice(browser);
+  var page = await launch(dev, base);
+  await makeHero(page, "Seb", "ranger", [prepHabillage]);
+  await page.close();
+  page = await launch(dev, base);
+  await tap(page, ".title-screen-continue");
+  await dismissTutorials(page);
+  var SHEET = "#village-modal-root .full-menu", TUT = "#tutorial-modal-root .kwin";
+  // Feuille : la Taverne, ouverte au toucher de sa carte
+  await page.evaluate(function () { switchTab("village"); setVillageSubTab("buildings"); });
+  await page.waitForTimeout(400); await dismissTutorials(page);
+  await page.evaluate(function () { game.genericTutorialsSeen.tavern_contracts = true; }); // v3.704.0 : la fiche de la Taverne (TUTO-16) est déjà vue ici
+  var carte = page.locator('[onclick*="openVillageBuildingSheet(\'tavern\')"]').first();
+  await carte.evaluate(function (e) { e.setAttribute("data-origine", "1"); });
+  await carte.click(); await page.waitForTimeout(300);
+  var e0 = await page.evaluate(etatFenetre, SHEET);
+  ok(e0.open && e0.role === "dialog" && e0.modal === "true", "feuille Taverne : role=\"dialog\", aria-modal");
+  ok(e0.nom === "Taverne" && /^Niveau \d+ \/ \d+$/.test(e0.desc), "feuille : nom « " + e0.nom + " » (titre seul), sous-titre en description (« " + e0.desc + " »)");
+  ok(e0.dedans, "feuille : focus placé dedans à l'ouverture");
+  ok(e0.fond === e0.nFond && !e0.toast, "feuille : écran, barre et HUD inertes, toast actif");
+  ok(await tabsDedans(page, SHEET, 10) === 10, "feuille : 10 × Tab restent dedans");
+  await page.evaluate(function (sel) { var w = document.querySelector(sel), f = [].filter.call(w.querySelectorAll("button"), function (b) { return b.getClientRects().length; })[0]; f.focus(); }, SHEET);
+  await page.keyboard.press("Shift+Tab");
+  ok((await page.evaluate(etatFenetre, SHEET)).dedans, "feuille : Maj+Tab depuis le premier bouton reste dedans");
+  await page.keyboard.press("Escape"); await page.waitForTimeout(250);
+  var e1 = await page.evaluate(etatFenetre, SHEET);
+  ok(!e1.open && e1.origine && e1.inertes === 0 && e1.pile === 0, "feuille : Échap ferme, focus rendu à la carte, plus rien d'inerte");
+  // Empilées : confirmation ouverte depuis la feuille
+  await carte.click(); await page.waitForTimeout(300);
+  await page.evaluate(function (sel) {
+    var w = document.querySelector(sel), b = [].filter.call(w.querySelectorAll("button:not(.ksheet-x):not([disabled])"), function (x) { return x.getClientRects().length; })[0] || w.querySelector(".ksheet-x");
+    window.__dedans = b.getAttribute("onclick") || b.className; b.focus(); showConfirmModal("Essai", "Fenêtre empilée", null, function () {});
+  }, SHEET);
+  await page.waitForTimeout(150);
+  var c0 = await page.evaluate(function (sel) { var cw = document.querySelector("#confirm-modal .kwin"), w = document.querySelector(sel); return { dedans: cw.contains(document.activeElement) || document.activeElement === cw, feuille: !!w.closest("[inert]") }; }, SHEET);
+  ok(c0.dedans && c0.feuille, "empilées : la confirmation prend le focus, la feuille dessous devient inerte");
+  await page.keyboard.press("Escape"); await page.waitForTimeout(200);
+  var c1 = await page.evaluate(function (sel) { var a = document.activeElement, w = document.querySelector(sel); return { retour: !!(a && w && w.contains(a) && (a.getAttribute("onclick") || a.className) === window.__dedans), feuille: !!(w && w.closest("[inert]")), barre: !!document.getElementById("tab-bar").closest("[inert]") }; }, SHEET);
+  ok(c1.retour && !c1.feuille && c1.barre, "empilées : Échap ferme la confirmation, focus rendu au bouton de la feuille, qui redevient active");
+  await page.keyboard.press("Escape"); await page.waitForTimeout(250);
+  var c2 = await page.evaluate(etatFenetre, SHEET);
+  ok(!c2.open && c2.origine && c2.inertes === 0, "empilées : second Échap, feuille fermée, focus à la carte, plus rien d'inerte");
+  // Calque hors kit (prologue, moment de boss…) posé au-dessus d'une feuille : il reste touchable
+  await carte.click(); await page.waitForTimeout(300);
+  var hk = await page.evaluate(function () {
+    var r = document.createElement("div"); r.id = "essai-calque-root"; r.innerHTML = '<div style="position:fixed;inset:0;z-index:9500"><button type="button">Essai</button></div>'; document.body.appendChild(r);
+    return new Promise(function (res) { setTimeout(function () {
+      var b = r.querySelector("button"), a = { libre: !b.closest("[inert]"), inertes: document.querySelectorAll("[inert]").length };
+      r.remove();
+      setTimeout(function () { a.apres = !!document.getElementById("tab-bar").closest("[inert]"); closeVillageBuildingSheet(); setTimeout(function () { a.fin = document.querySelectorAll("[inert]").length; res(a); }, 60); }, 60);
+    }, 60); });
+  });
+  ok(hk.libre && hk.inertes === 0 && hk.apres && hk.fin === 0, "calque hors kit au-dessus d'une feuille : rien d'inerte tant qu'il est là, fond inerte à nouveau après, rien à la fermeture");
+  await page.evaluate(function () { [].forEach.call(document.querySelectorAll("[data-origine]"), function (e) { e.removeAttribute("data-origine"); }); });
+  // Fenêtre d'aide (sans croix) : Échap ne la ferme pas (v3.536.0, option A), « Compris » au clavier
+  await page.evaluate(function () { game.genericTutorialsSeen.camp_welcome = false; });
+  var onglet = page.locator('#tab-bar .tab-btn[data-tab="campement"]').first();
+  await onglet.evaluate(function (e) { e.setAttribute("data-origine", "1"); });
+  await onglet.click(); await page.waitForTimeout(350);
+  var t0 = await page.evaluate(etatFenetre, TUT);
+  ok(t0.open && t0.role === "dialog" && t0.nom === "Le Campement" && t0.dedans && t0.fond === t0.nFond, "aide « Le Campement » : rôle, nom, focus dedans, fond inerte");
+  ok(await tabsDedans(page, TUT, 10) === 10, "aide : 10 × Tab restent dedans");
+  await page.keyboard.press("Escape"); await page.keyboard.press("Escape"); await page.waitForTimeout(200);
+  ok((await page.evaluate(etatFenetre, TUT)).open, "aide : deux Échap la laissent ouverte (fenêtre sans croix)");
+  await page.evaluate(function (sel) { document.querySelector(sel).querySelector(".kwin-foot .kbtn").focus(); }, TUT);
+  await page.keyboard.press("Enter"); await page.waitForTimeout(300);
+  var t1 = await page.evaluate(etatFenetre, TUT);
+  ok(!t1.open && t1.origine && t1.inertes === 0, "aide : Entrée sur « Compris » ferme, focus rendu à l'onglet Camp, plus rien d'inerte");
+  await page.evaluate(function () { [].forEach.call(document.querySelectorAll("[data-origine]"), function (e) { e.removeAttribute("data-origine"); }); });
+  // Toutes les fiches du parcours d'habillage, puis le menu : ouvertes, fermées par leur code (innerHTML = "")
+  var restes = [];
+  for (var i = 0; i < ECRANS_HABILLAGE.length; i++) {
+    var e = ECRANS_HABILLAGE[i]; if (!/^Fiche/.test(e[0])) continue;
+    var r = await page.evaluate(function (c) {
+      new Function(c)();
+      return new Promise(function (res) { setTimeout(function () {
+        for (var k = 0; k < 4; k++) { var cb = document.querySelector("#tutorial-modal-root .kwin-foot .kbtn"); if (cb) cb.click(); } // aide ouverte par l'onglet : fermée d'abord
+        var n = kDialog.stack().length;
+        ["closeVillageBuildingSheet", "closeHerosSheet", "closeDungeonSheet", "closeExpeditionsSheet", "closeGrandOuvrageSheet"].forEach(function (f) { try { if (typeof window[f] === "function") window[f](); } catch (x) {} });
+        setTimeout(function () { res({ ouverte: n, inertes: document.querySelectorAll("[inert]").length, pile: kDialog.stack().length }); }, 60);
+      }, 120); });
+    }, e[1]);
+    if (!r.ouverte || r.inertes || r.pile) restes.push(e[0] + " (" + r.ouverte + "/" + r.inertes + "/" + r.pile + ")");
+  }
+  await tap(page, '#tab-bar .tab-btn[data-tab="menu"]');
+  var m0 = await page.evaluate(etatFenetre, "#full-menu-root .full-menu");
+  await page.keyboard.press("Escape"); await page.waitForTimeout(250);
+  var m1 = await page.evaluate(etatFenetre, "#full-menu-root .full-menu");
+  if (!m0.open || !m0.dedans || m1.open || m1.inertes) restes.push("Menu");
+  ok(restes.length === 0, "fiches du parcours et menu : chacune prise en charge à l'ouverture, plus rien d'inerte à la fermeture" + (restes.length ? " — " + restes.join(", ") : ""));
+  // TUTO-11 : à 320 × 568, aide resserrée et « Suite ↓ » jusqu'au bas de la liste
+  await page.setViewportSize({ width: 320, height: 568 }); await page.waitForTimeout(250);
+  await page.evaluate(function () { game.genericTutorialsSeen.camp_welcome = false; switchTab("village"); switchTab("campement"); });
+  await page.waitForTimeout(350);
+  var s0 = await page.evaluate(function () {
+    var card = document.querySelector("#tutorial-modal-root .tutorial-card"), body = card.querySelector(".kwin-body"), hint = card.querySelector(".tut-more > i");
+    var vis = function () { return getComputedStyle(hint).visibility !== "hidden" && !card.classList.contains("is-end"); };
+    var r = { ico: Math.round(card.querySelector(".kwin-ico img").getBoundingClientRect().width), cache: body.scrollHeight - body.clientHeight, avant: vis(), font: parseFloat(getComputedStyle(card.querySelector(".tutorial-point-text")).fontSize) };
+    body.scrollTop = body.scrollHeight; body.dispatchEvent(new Event("scroll")); r.fin = !vis();
+    return r;
+  });
+  ok(s0.ico === 36 && s0.font === 13, "aide à 320 × 568 : en-tête en ligne (icône " + s0.ico + " px), texte à " + s0.font + " px");
+  ok(s0.cache > 0 && s0.avant && s0.fin, "aide à 320 × 568 : « Suite ↓ » tant qu'il reste " + s0.cache + " px à lire, effacé en fin de liste");
+  await dismissTutorials(page);
+  ok((await page.evaluate(etatFenetre, TUT)).inertes === 0, "aide fermée : plus rien d'inerte");
+  consoleClean(page);
+  await dev.close();
+}
+
 /* ---------- Lancement ---------- */
 
-var PARCOURS = { P1: P1, P2: P2, P3: P3, P4: P4, P5: P5, P6: P6, P7: P7, P8: P8, P9: P9, P10: P10, P11: P11, P12: P12, P13: P13, P14: P14 };
+var PARCOURS = { P1: P1, P2: P2, P3: P3, P4: P4, P5: P5, P6: P6, P7: P7, P8: P8, P9: P9, P10: P10, P11: P11, P12: P12, P13: P13, P14: P14, P15: P15 };
 
 (async function () {
   var srv = await serve(ROOT);

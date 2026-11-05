@@ -127,7 +127,8 @@ les classes de l'ancien thème pendant la migration progressive.
   opacity: 0.8;
 }
 /* INT-1 : à l'échoppe de la Halle, carte non payable à pleine opacité pour garder les encres lisibles */
-.vb-hall-shop .nb-purchase-card:not(.affordable):not(.locked):not(.is-bought):not(.is-maxed) { opacity: 1; }
+.vb-hall-shop .nb-purchase-card:not(.affordable):not(.locked):not(.is-bought):not(.is-maxed),
+.equip-shop-grid .nb-purchase-card:not(.affordable):not(.locked):not(.is-bought):not(.is-maxed) { opacity: 1; } /* finition : même échoppe dans Héros (2,7:1 sous le voile) */
 
 /* Carte verrouillée (palier/monde non débloqué), déjà achetée ou au
    niveau max : plus estompée, pas d'ambiguïté avec "pas assez cher" */
@@ -540,25 +541,7 @@ button.nb-entry-card {
    références externes au style visuel "pc").
    ========================= */
 
-.subtab-page {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  padding-top: 3px;
-}
-
-.subtab-page-content {
-  flex: 1 1 auto;
-  overflow-y: auto;
-  /* v3.242.0 : le geste ne remonte plus au parent en fin de course (iOS) — c'est
-     ce chaînage qui donnait l'impression de blocages courts dans Potions. */
-  overscroll-behavior-y: contain;
-  -webkit-overflow-scrolling: touch;
-  padding-bottom: 4px;
-  width: 100%;
-  max-width: 600px;
-  margin: 0 auto;
-}
+/* v3.705.0 : .subtab-page et .subtab-page-content retirées (Quêtes, Boutique et Donjon sont des pages à cadre). */
 
 .subtab-bar-wrapper {
   flex: 0 0 auto;
@@ -580,71 +563,14 @@ button.nb-entry-card {
    (Donjon, Ascension) ou 3 (Village, Personnage...). L'état actif garde
    un peu plus de place (flex-grow 1.15) pour rester visuellement mis en
    avant, sans largeur figée en dur. */
-.pc-subtab-btn {
-  flex: 1 1 0;
-  min-width: 0;
-  aspect-ratio: 592 / 224;
-  height: auto;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: 0;
-
-  border: none;
-  border-radius: 0;
-  background: url('../images/UI/buttons/btn-subtab-normal.webp') center / 100% 100% no-repeat;
-
-  color: #e8d9b5;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
-  font-size: 12px;
-  font-weight: 800;
-  cursor: pointer;
-  transition: transform 0.15s ease;
-}
-
-.pc-subtab-btn span {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.pc-subtab-btn:active {
-  transform: scale(0.97);
-}
-
-.pc-subtab-btn.is-active {
-  flex: 1.15 1 0;
-  min-width: 0;
-  aspect-ratio: 592 / 224;
-  height: auto;
-
-  background: url('../images/UI/buttons/btn-subtab-selected.webp') center / 100% 100% no-repeat;
-  border-color: transparent;
-  color: var(--c-brown-900);
-  text-shadow: none;
-}
 
 @media (max-width: 380px) {
   .pc-subtab-bar {
     gap: 1px;
   }
-  .pc-subtab-btn {
-    font-size: 12px;
-  }
+
 }
 
-/* v2.83.45 : variante compacte .has-4, retirée en v2.83.46 — le
-   sous-onglet Potions a fusionné dans Inventaire (filtre au lieu
-   d'un 4e bouton), plus que 3 boutons max sur cet écran comme les
-   autres à sous-onglets. */
-
-@media (prefers-reduced-motion: reduce) {
-  .pc-subtab-btn {
-    transition: none;
-  }
-}
 
 /* =========================
    v2.83.27 : cadre de page générique (fond parchemin bordé,

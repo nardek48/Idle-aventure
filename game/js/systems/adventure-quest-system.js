@@ -1,10 +1,15 @@
 "use strict";
 /* systems/adventure-quest-system.js — quêtes scopées {worldId, adventureIndex} (data/adventure-quests.js), run dédié type Donjon.
    Indépendant de world-quest-system.js. Run éphémère (ne survit pas à l'ascension). v3.260.0 : la progression
-   d'une quête repart de 0 à chaque départ (décision Seb) — elle n'est plus conservée après une mort ou un abandon. Détail : COMMENTAIRES_ORIGINAUX.md */
+   d'une quête repart de 0 à chaque départ (décision Seb) — elle n'est plus conservée après une mort ou un abandon. */
 
 var AdventureQuestManager = {
-  ensureDefaults: function () {
+  /* PERF-4 (reste, v3.700.0) : progression et quêtes finies déjà validées (mêmes objets) ne sont pas
+     repassées ; un état remplacé ou force (départ d'une quête) relance la validation complète. */
+  _ensured: null,
+  ensureDefaults: function (force) {
+    var en = this._ensured;
+    if (!force && en && en.p === game.adventureQuestProgress && en.c === game.adventureQuestsCompleted) return this.ensureRun();
     if (!game.adventureQuestProgress || typeof game.adventureQuestProgress !== "object") {
       game.adventureQuestProgress = {};
     }
@@ -14,7 +19,8 @@ var AdventureQuestManager = {
 
     Object.keys(ADVENTURE_QUESTS).forEach(function (key) {
       var quest = ADVENTURE_QUESTS[key];
-      if (!game.adventureQuestProgress[quest.id]) game.adventureQuestProgress[quest.id] = {};
+      var qp = game.adventureQuestProgress[quest.id]; // audit 04/11 (ARCH-19) : une entrée d'un autre type levait à chaque sortie
+      if (!qp || typeof qp !== "object" || Array.isArray(qp)) game.adventureQuestProgress[quest.id] = {};
       quest.steps.forEach(function (step) {
         if (typeof game.adventureQuestProgress[quest.id][step.id] !== "number") {
           game.adventureQuestProgress[quest.id][step.id] = 0;
@@ -26,6 +32,7 @@ var AdventureQuestManager = {
     });
 
     this.ensureRun();
+    this._ensured = { p: game.adventureQuestProgress, c: game.adventureQuestsCompleted };
   },
 
   ensureRun: function () {
@@ -45,8 +52,8 @@ var AdventureQuestManager = {
   },
 
   getStepProgress: function (quest, step) {
-    this.ensureDefaults();
-    return Math.min(step.target, Number((game.adventureQuestProgress[quest.id] || {})[step.id] || 0));
+    // PERF-4 (Seb 05/11) : lecteur appelé à chaque liste de missions, lecture tolérante sans ensureDefaults
+    return Math.min(step.target, Number(((game.adventureQuestProgress || {})[quest.id] || {})[step.id] || 0));
   },
 
   isStepComplete: function (quest, step) {
@@ -55,29 +62,12 @@ var AdventureQuestManager = {
 
   isReadyToClaim: function (quest) {
     if (!quest) return false;
-    if (game.adventureQuestsCompleted[quest.id]) return false;
+    if ((game.adventureQuestsCompleted || {})[quest.id]) return false;
     var self = this;
     return quest.steps.every(function (step) { return self.isStepComplete(quest, step); });
   },
 
-  isTransitionUnlocked: function (worldId, fromAdventureIndex) {
-    this.ensureDefaults();
-    var targetIndex = fromAdventureIndex + 1;
-    var gateQuest = null;
-    Object.keys(ADVENTURE_QUESTS).some(function (key) {
-      var quest = ADVENTURE_QUESTS[key];
-      if (quest.type === "transition" && quest.worldId === worldId && quest.gatesTransitionTo === targetIndex) {
-        gateQuest = quest;
-        return true;
-      }
-      return false;
-    });
-    if (!gateQuest) return true;
-    return !!game.adventureQuestsCompleted[gateQuest.id];
-  },
-
   isWorldTransitionUnlocked: function (worldId) {
-    this.ensureDefaults();
     var gateQuest = null;
     Object.keys(ADVENTURE_QUESTS).some(function (key) {
       var quest = ADVENTURE_QUESTS[key];
@@ -88,7 +78,7 @@ var AdventureQuestManager = {
       return false;
     });
     if (!gateQuest) return true;
-    return !!game.adventureQuestsCompleted[gateQuest.id];
+    return !!(game.adventureQuestsCompleted || {})[gateQuest.id]; // PERF-4 : lecture tolérante
   },
 
   applyQuestTheme: function (quest) {
@@ -186,7 +176,7 @@ var AdventureQuestManager = {
   },
 
   start: function (questId) {
-    this.ensureDefaults();
+    this.ensureDefaults(true);
 
     var quest = ADVENTURE_QUESTS[questId];
     if (!quest) return showToast(_t("Quête introuvable"), 1200);
@@ -197,9 +187,7 @@ var AdventureQuestManager = {
     if (window.DungeonManager && game.dungeonRun && game.dungeonRun.active) {
       return showToast(_t("Termine ou abandonne ton donjon avant de lancer une quête"), 1600);
     }
-    if (window.HuntQuestManager && game.huntRun && game.huntRun.active) {
-      return showToast(_t("Termine ou arrête ta chasse en cours avant de lancer une quête"), 1600);
-    }
+    if (game.livingMaps && game.livingMaps.fight) return showToast(_t("Termine d'abord le combat engagé sur la carte"), 1600); // audit 04/11 (QA-9) : pas deux sorties à la fois
 
     if (window.heroLockToast && heroLockToast()) return; // v3.307.0 : héros en expédition
     // v3.311.0 : quête qui se joue avec un compagnon dont la voie doit être choisie (étape 8)

@@ -1,5 +1,5 @@
 "use strict";
-/* ui/heros-view.js — écran Personnage (v2.75, fiche façon jeu de rôle), 3 sous-onglets Héros/Amélioration/Stats. Carrousel de 3 emplacements de héros indépendants (v3.25). Détail : COMMENTAIRES_ORIGINAUX.md */
+/* ui/heros-view.js — écran Personnage (v2.75, fiche façon jeu de rôle), 3 sous-onglets Héros/Amélioration/Stats. Carrousel de 3 emplacements de héros indépendants (v3.25). */
 
 /* v3.244.0 (chantier Navigation, décision Seb 14/09/2026) : Héros devient le hub
    « Progresser ». Sous-onglets : Résumé / Équipement / Talents. Les anciens
@@ -21,6 +21,8 @@ function setHerosSubTab(tab) {
   if ((tab === "equip" || tab === "talents") && typeof maybeShowStepTutorial === "function" && window.StoryQuestManager) {
     StoryQuestManager.activeChapterIds().forEach(function (id) { maybeShowStepTutorial(id, tab); });
   }
+  // v3.704.0 (TUTO-16) : fiche de l'équipement au toucher du rail (Sac non vide)
+  if (tab === "equip" && window.GENERIC_TUTORIALS && GENERIC_TUTORIALS.equipment_intro.condition() && typeof openGenericTutorialOnce === "function") openGenericTutorialOnce("equipment_intro");
 }
 
 /* Positionne le sous-onglet sans rendre — pour switchTab('equip'/'talents') (ui-root.js). */
@@ -161,16 +163,16 @@ var HEROS_STAT_ROWS = [
     name: _t("Précision"), icon: "./images/Icons/improvement_icons/accuracy.webp",
     produces: _t("Chance de coup critique"), unit: _t("CRIT", "unité"),
     read: function () { return (typeof EquipmentManager !== "undefined") ? EquipmentManager.effectiveCritChance() : 0; },
-    fmt: function (v) { return _t("CRIT", "unité") + " " + (Math.round(v * 10) / 10) + " %"; },
-    fmtDelta: function (d) { return _t("+{n} % de critique", { n: Math.round(d * 10) / 10 }); }
+    fmt: function (v) { return _t("CRIT", "unité") + " " + fmtPct(formatNumber(Math.round(v * 10) / 10)); }, // v3.683.0 (NOV-20) : 7,5 %
+    fmtDelta: function (d) { return _t("+{n} % de critique", { n: formatNumber(Math.round(d * 10) / 10) }); }
   },
   {
     key: "will", upgradeId: "utrain_will", trainedKey: "will",
     name: _t("Volonté"), icon: "./images/Icons/improvement_icons/will.webp",
     produces: _t("Puissance des coups critiques"), unit: _t("CRIT ×", "unité"),
     read: function () { return (typeof EquipmentManager !== "undefined") ? EquipmentManager.effectiveCritMult() : 0; },
-    fmt: function (v) { return _t("CRIT ×", "unité") + " " + (Math.round(v * 100) / 100); },
-    fmtDelta: function (d) { return _t("+{n} au multiplicateur", { n: Math.round(d * 100) / 100 }); }
+    fmt: function (v) { return _t("CRIT ×", "unité") + " " + fmtDec(Math.round(v * 100) / 100); }, // v3.683.0 (NOV-20) : virgule
+    fmtDelta: function (d) { return _t("+{n} au multiplicateur", { n: fmtDec(Math.round(d * 100) / 100) }); }
   }
 ];
 
@@ -193,7 +195,7 @@ function getHeroStatRowView(row) {
     read: function () { return (typeof EquipmentManager !== "undefined") ? EquipmentManager.effectiveTapDamage() : 0; },
     fmt: function (v) { return _t("ATK", "unité") + " " + formatNumber(Math.round(v)); },
     fmtDelta: function (d) { return "+" + formatNumber(Math.round(d)) + " " + _t("ATK", "unité"); },
-    extra: function () { return universal.produces + " : " + universal.fmt(universal.read()).replace(universal.unit + " ", ""); },
+    extra: function () { return _t("{a} : {b}", { a: universal.produces, b: universal.fmt(universal.read()).replace(universal.unit + " ", "") }); },
     /* Sonde du premier palier visible : un niveau fait déjà bouger le rôle universel (VIT, CRIT ×)
        même quand l'ATK arrondi ne bouge pas encore — sinon « visible à partir de 25 niveaux » mentirait. */
     probeRead: function () { return EquipmentManager.effectiveTapDamage() * 1000 + universal.read(); }
@@ -469,6 +471,9 @@ function buildHerosAmeliorationHTML() {
     return '<div class="pc-empty">' + _t("Entraînement indisponible.") + '</div>';
   }
 
+  // Audit 04/11 (SAVE-17) : la quantité choisie est une préférence de l'appareil, gardée au rechargement
+  var prefAmount = window.Prefs ? Number(Prefs.getValue("shopBuyAmount")) : NaN;
+  if ([1, 10, 25, -1].indexOf(prefAmount) !== -1) game.shopBuyAmount = prefAmount;
   var buyAmount = Number(game.shopBuyAmount || 1);
   if ([1, 10, 25, -1].indexOf(buyAmount) === -1) buyAmount = 1;
 
@@ -486,7 +491,7 @@ function buildHerosAmeliorationHTML() {
   // v3.402.0 (lot B-1) : quantité d'achat = rail du kit (.kseg)
   h += '<div class="kseg shop-buy-toolbar pc-heros-train-toolbar">';
   [[1, "×1"], [10, "×10"], [25, "×25"], [-1, _t("MAX")]].forEach(function (b) {
-    h += '<button type="button" class="' + (buyAmount === b[0] ? 'is-on' : '') + '" onclick="setShopBuyAmount(' + b[0] + ')">' + b[1] + '</button>';
+    h += '<button type="button" class="' + (buyAmount === b[0] ? 'is-on' : '') + '" onclick="setHerosBuyAmount(' + b[0] + ')">' + b[1] + '</button>';
   });
   h += '</div>';
 
@@ -499,8 +504,10 @@ function buildHerosAmeliorationHTML() {
   });
   if (cards.indexOf("is-training-wall") !== -1 && mainWall) {
     var terrain = window.VillageBuildingManager ? VillageBuildingManager.getLevel("training") : 0;
-    h += '<div class="hs-capbanner"><span><b>' + _t("Plafond de l'entraînement : {c}", { c: getTrainingCapLevels() }) + '</b><br>'
-      + _t("Terrain d'entraînement niv. {t} — chaque niveau ouvre +10.", { t: terrain }) + '</span>'
+    // v3.683.0 (audit NOV-17) : les deux plafonds, classe et Endurance d'un côté, les trois autres à 70 %
+    var capMain = getTrainingCapLevels(), capOther = Math.floor(capMain * (window.TRAINING_SECONDARY_SHARE || 1));
+    h += '<div class="hs-capbanner"><span><b>' + _t("Plafond de l'entraînement : {c}", { c: _t("{a} pour ta caractéristique de classe et l'Endurance, {b} pour les autres", { a: capMain, b: capOther }) }) + '</b><br>'
+      + _t("Terrain d'entraînement niv. {t} — chaque niveau ouvre +10, environ +7 pour les autres.", { t: terrain }) + '</span>'
       + '<button type="button" onclick="closeHerosSheet();goToTrainingGround()">' + _t("Terrain") + ' ›</button></div>';
   }
   h += '<div class="pc-stat-list-v2">' + cards + '</div>';
@@ -588,7 +595,7 @@ function buildHeroSkillCardHTML(action) {
     ? '<span class="pc-skill-tag is-cost">' + cost + (resLabel ? ' ' + esc(resLabel) : '') + '</span>'
     : '<span class="pc-skill-tag is-free">' + _t("Sans coût") + '</span>';
   if (!isBasic) h += '<span class="pc-skill-tag is-cd' + (remaining > 0 ? ' is-active' : '') + '">'
-    + (remaining > 0 ? _t("{n} r restants", { n: remaining }) : _tn(Number(action.cooldownRounds || 0), "{n} round", "{n} rounds"))
+    + (remaining > 0 ? _t("{n} r restants", { n: remaining }) : Number(action.cooldownRounds || 0) > 1 ? _tn(Number(action.cooldownRounds) - 1, "{n} round", "{n} rounds") : _t("Sans recharge")) // v3.689.0 (COMB-20) : rounds d'attente
     + '</span>';
   h += '</span>';
   h += '<span class="pc-skill-chev">›</span>';
@@ -666,7 +673,7 @@ var HEROS_FRAME_ICON = "images/Icons/menu_icons/heroes_menu.webp";
 function getHerosTabs() {
   var unlocked = function (t) { return typeof isTabUnlocked !== "function" || isTabUnlocked(t); };
   var tabs = [["hero", "images/Icons/subtabs/hero_summary.webp", _t("Résumé")]];
-  if (unlocked("equip")) tabs.push(["equip", "images/Icons/subtabs/equipment.webp", _t("Équipement")]);
+  if (unlocked("equip")) tabs.push(["equip", "images/Icons/subtabs/equipment.webp", _t("Équi\u00ADpe\u00ADment", "sous-onglet")]); // v3.702.0 (UI-14) : césures douces
   if (unlocked("talents")) tabs.push(["talents", "images/Icons/subtabs/talents.webp", _t("Talents")]); // v3.527.0 (IMA-5)
   if (unlocked("companions") && window.CompanionManager && CompanionManager.unlockedIds().length) {
     tabs.push(["companions", "images/Icons/subtabs/companions.webp", _t("Alliés")]); // v3.527.0 (IMA-5) ; v3.648.0 : « Alliés » (plus court, comme Quêtes)
@@ -807,6 +814,12 @@ window.closeHerosSheet = closeHerosSheet;
 window.setHerosSubTabSilent = setHerosSubTabSilent;
 
 window.buildHerosHTML = buildHerosHTML;
+/* SAVE-17 : retient la quantité d'entraînement dans les préférences, puis l'applique. */
+function setHerosBuyAmount(amount) {
+  if (window.Prefs) Prefs.setValue("shopBuyAmount", Number(amount) || 1);
+  setShopBuyAmount(amount);
+}
+window.setHerosBuyAmount = setHerosBuyAmount;
 window.openHeroSlotsScreen = openHeroSlotsScreen; // v3.202.0
 window.setHerosSubTab = setHerosSubTab;
 window.toggleHeroStat = toggleHeroStat;   // v3.203.0

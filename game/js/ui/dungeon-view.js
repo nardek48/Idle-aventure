@@ -1,7 +1,7 @@
 "use strict";
 /* ui/dungeon-view.js — écran Donjon (v3.245.0, refonte Donjons, doc v1.1 §5) : une carte par monde, feuille basse .ksheet de
    lancement avec les Marques, carte de run actif, sorties du jour, rapport de fin. La Boutique d'éclats vit chez l'Enchanteresse
-   (ui/village-building-view.js). Détail complet : COMMENTAIRES_ORIGINAUX.md */
+   (ui/village-building-view.js). */
 
 var pendingDungeonId = null;   // donjon ouvert dans la feuille de lancement
 var pendingDungeonMarks = [];  // bascules de la feuille — copiées dans game.dungeonRun.marks au start() seulement
@@ -25,15 +25,32 @@ function buildDungeonActiveHTML() {
   if (marks.length) {
     h += '<div class="dungeon-active-marks">';
     marks.forEach(function (m) { h += renderIconOrEmojiHTML(m.icon, "dungeon-active-mark-icon", _td(m.name)); });
-    h += '<span>×' + DungeonManager.getMarkRewardMult(marks.length).toFixed(2).replace(/0$/, "") + '</span></div>';
+    h += '<span>×' + fmtDec(DungeonManager.getMarkRewardMult(marks.length).toFixed(2).replace(/0$/, "")) + '</span></div>';
   }
   var boons = DungeonManager.getRunBoons(); // v3.472.0 : cartes prises aux haltes
   if (boons.length) h += '<div class="dungeon-active-boons">' + boons.map(function (c) { return '<span>' + esc(_td(c.name)) + '</span>'; }).join("") + '</div>';
-  h += '<p class="panel-sub">' + _t("Bats-toi dans l’onglet Combat. Si tes PV tombent à 0, la tentative s’arrête ici (récompense réduite selon les vagues passées).") + '</p>';
-  h += '<button class="settings-btn danger" type="button" onclick="DungeonManager.forfeit()">' + _t("Abandonner la tentative") + '</button>';
+  h += '<p class="panel-sub">' + _t("Le combat continue à l’écran Combat. Si tes PV tombent à 0, la tentative s’arrête ici (récompense réduite selon les vagues passées).") + '</p>';
+  h += '<button class="settings-btn primary" type="button" onclick="switchTab(\'combat\')">' + _t("Reprendre le combat") + '</button>'; // audit 04/11 (QA-2, QA-V1)
+  h += '<button class="settings-btn danger" type="button" onclick="askDungeonForfeit()">' + _t("Abandonner la tentative") + '</button>';
   h += '</div>';
   return h;
 }
+
+/* UI-8 (audit 04/11) : encre de rareté (--rarity-*-ink), lisible sur le corps crème comme à l'en-tête. */
+function dungeonRarityInk(r) {
+  return "var(--rarity-" + (typeof RARITY_COLORS !== "undefined" && RARITY_COLORS[r] ? r : "common") + "-ink)";
+}
+
+/* QA-3 (audit 04/11) : l'abandon passe par une confirmation qui dit la part gardée (même règle que la fuite). */
+function askDungeonForfeit() {
+  if (!game.dungeonRun || !game.dungeonRun.active) return;
+  var keep = (window.SortieManager && typeof SortieManager.fleeKeepPct === "function") ? SortieManager.fleeKeepPct() : 0.5;
+  var cleared = Math.max(0, (game.dungeonRun.wave || 1) - 1);
+  showConfirmModal(_t("Abandonner la tentative ?"),
+    _t("Tu gardes {n} % du butin ramassé ; l'or dépend des vagues passées ({w}).", { n: Math.round(100 * keep), w: cleared }),
+    "images/Icons/system/warning.webp", function () { DungeonManager.forfeit(); });
+}
+window.askDungeonForfeit = askDungeonForfeit;
 
 /* Une carte par donjon : image 96 px à gauche (.is-full existante), monde, nom, rareté max,
    matériau annoncé, raison du verrou ou statut « Boss vaincu ». */
@@ -120,7 +137,12 @@ function buildDungeonLobbyHTML() {
   h += '<div class="dungeon-list">';
   (DUNGEONS || []).forEach(function (dungeon) { h += buildDungeonCardHTML(dungeon); });
   h += '</div>';
-  return '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="' + esc("images/Icons/subtabs/dungeon.webp|" + _t("Donjon")) + '">' + h + '</div>'; // v2.83.28
+  return dungeonPageFrameHTML(h);
+}
+
+/* v3.705.0 : cadre de page standard du Donjon (liste et tentative en cours), comme le Village */
+function dungeonPageFrameHTML(inner) {
+  return '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="' + esc("images/Icons/subtabs/dungeon.webp|" + _t("Donjon")) + '">' + inner + '</div>';
 }
 
 function buildDungeonHTML() {
@@ -128,13 +150,8 @@ function buildDungeonHTML() {
     DungeonManager.checkTicketReset();
   }
   var isActive = !!(game.dungeonRun && game.dungeonRun.active);
-  // v3.245.0 : plus de sous-onglets (la Boutique est chez l'Enchanteresse) — .subtab-page conservé pour le scroll
-  var h = '<div class="subtab-page">';
-  h += '<div class="subtab-page-content">';
-  h += isActive ? buildDungeonActiveHTML() : buildDungeonLobbyHTML();
-  h += '</div>';
-  h += '</div>';
-  return h;
+  // v3.705.0 : page standard à cadre (plus de .subtab-page) ; la tentative en cours garde sa carte, dans le cadre
+  return isActive ? dungeonPageFrameHTML(buildDungeonActiveHTML()) : buildDungeonLobbyHTML();
 }
 window.buildDungeonHTML = buildDungeonHTML;
 
@@ -174,7 +191,7 @@ function buildDungeonGainHTML(d, L, free, nMarks) {
   var src = D.getLevelLootSource(d, L), beyond = D.getLevelBeyond(d, L), mult = D.getMarkRewardMult(nMarks);
   var w = (window.WORLDS || []).find(function (x) { return x.id === src.worldId; });
   var row = function (ico, html) { return '<div class="dgain-row">' + (ico ? renderIconOrEmojiHTML(ico, "dgain-ico", "") : '<span class="dgain-dot" aria-hidden="true"></span>') + '<span>' + html + '</span></div>'; };
-  var h = '<div class="dgain"><div class="dgain-ttl"><span>' + _t("À gagner") + '</span><span>' + _t("Récompenses") + ' <strong>×' + mult.toFixed(2).replace(/0$/, "") + '</strong></span></div>';
+  var h = '<div class="dgain"><div class="dgain-ttl"><span>' + _t("À gagner") + '</span><span>' + _t("Récompenses") + ' <strong>×' + fmtDec(mult.toFixed(2).replace(/0$/, "")) + '</strong></span></div>';
   h += row(null, _t("Butin :") + ' ' + dungeonRarityHTML(src.maxRarity) + (w ? ' · ' + esc(_td(w.name)) : ''));
   var sp = d.specialResourceId && WAREHOUSE_RESOURCES[d.specialResourceId];
   if (free) {
@@ -276,7 +293,7 @@ function buildDungeonSheetHTML(dungeonId) {
 
   // Marques, repliées par défaut : le résumé dit combien et pour quel gain
   h += '<button type="button" class="dsheet-fold" aria-expanded="' + pendingDungeonMarksOpen + '" onclick="toggleDungeonFold(\'marks\')"><b>' + _t("Marques") + '</b><span>'
-    + n + ' / ' + maxMarks + ' · ×' + mult.toFixed(2).replace(/0$/, "") + ' <i aria-hidden="true">' + (pendingDungeonMarksOpen ? '▲' : '▼') + '</i></span></button>';
+    + n + ' / ' + maxMarks + ' · ×' + fmtDec(mult.toFixed(2).replace(/0$/, "")) + ' <i aria-hidden="true">' + (pendingDungeonMarksOpen ? '▲' : '▼') + '</i></span></button>';
   if (pendingDungeonMarksOpen) (DUNGEON_MARKS || []).forEach(function (m) {
     var on = pendingDungeonMarks.indexOf(m.id) !== -1;
     var ok = DungeonManager.isMarkUnlocked(m.id, dungeon.id);
@@ -298,7 +315,14 @@ function buildDungeonSheetHTML(dungeonId) {
   var dDef = (window.DUNGEONS || []).filter(function (x) { return x.id === Number(dungeonId); })[0];
   if (window.ProvisionsManager && dDef) h += ProvisionsManager.buildLineHTML(free ? "dungeonFree" : "dungeon", dDef);
   h += '</div>'; // ksheet-body
-  h += '<div class="ksheet-foot"><button type="button" class="kbtn primary" onclick="confirmDungeonStart()">' + _t("Entrer") + '</button></div>';
+  // QA-12 : sans vivres, « Entrer » est grisé avec la raison et un accès à la ressource (plus de refus après fermeture)
+  var foodKind = free ? "dungeonFree" : "dungeon";
+  var noFood = (window.ProvisionsManager && dDef) ? ProvisionsManager.check(foodKind, dDef) : null;
+  var foodReq = noFood ? ProvisionsManager.getRequirement(foodKind, dDef) : null;
+  h += '<div class="ksheet-foot">';
+  if (noFood) h += '<div class="dsheet-nofood">' + esc(noFood) + '</div>';
+  if (noFood && foodReq && typeof openWarehouseSheet === "function") h += '<button type="button" class="kbtn is-sec" onclick="closeDungeonSheet(); openWarehouseSheet(\'' + esc(foodReq.resourceId) + '\')">' + _t("Voir les vivres") + '</button>';
+  h += '<button type="button" class="kbtn primary" onclick="confirmDungeonStart()"' + (noFood ? ' disabled' : '') + '>' + _t("Entrer") + '</button></div>';
   h += '</div>';
   return h;
 }
@@ -428,7 +452,7 @@ function buildDungeonCampSheetHTML() {
   var sDef = loot.stoneId && WAREHOUSE_RESOURCES[loot.stoneId];
   if (sDef && loot.stone > 0) h += '<span>' + renderIconOrEmojiHTML(sDef.icon, "ico-inline", _td(sDef.name)) + ' +' + loot.stone + ' ' + esc(_td(sDef.name)) + '</span>';
   (loot.items || []).forEach(function (it) {
-    var col = (typeof RARITY_COLORS !== "undefined" && RARITY_COLORS[it.rarity]) || "inherit";
+    var col = dungeonRarityInk(it.rarity); // UI-8 : encre de rareté sur le crème
     h += '<span><img class=ico-inline src=images/Icons/dungeon/dungeon_guaranteed_loot.webp> <span style="color:' + col + '">' + esc(_td(it.name)) + '</span></span>';
   });
   h += '</div>';
@@ -556,7 +580,7 @@ function haltCardLines(card, dungeon) {
   var h = '<span class="dhalt-l is-gain">▲ ' + esc(_td(card.gain)) + '</span>';
   if (card.cost) h += '<span class="dhalt-l is-cost">▼ ' + esc(_td(card.cost)) + '</span>';
   var item = card.counterItem && window.COMBAT_ITEMS ? COMBAT_ITEMS[DungeonManager.getCounterItemId(dungeon)] : null;
-  if (item) h += '<span class="dhalt-l">' + esc(_td(item.name)) + ' : ' + esc(_td(item.desc)) + '</span>';
+  if (item) h += '<span class="dhalt-l">' + esc(_t("{a} : {b}", { a: _td(item.name), b: _td(item.desc) })) + '</span>';
   else if (card.note) h += '<span class="dhalt-l">' + esc(_td(card.note)) + '</span>';
   return h;
 }
@@ -636,7 +660,7 @@ function buildDungeonSummaryHTML(result) {
   h += '      <div class="dungeon-summary-row"><span>' + _t("Vagues passées") + '</span><span>' + Math.min(result.clearedWave, result.wavesTotal) + ' / ' + result.wavesTotal + (result.success ? ' + ' + _t("Boss") : '') + '</span></div>';
   if (result.marks && result.marks.length) {
     var names = result.marks.map(function (id) { var m = DungeonManager.getMark(id); return m ? _td(m.name) : id; }).join(", ");
-    h += '      <div class="dungeon-summary-row"><span>' + _t("Marques") + '</span><span>×' + Number(result.markMult || 1).toFixed(2).replace(/0$/, "") + ' · ' + esc(names) + '</span></div>';
+    h += '      <div class="dungeon-summary-row"><span>' + _t("Marques") + '</span><span>×' + fmtDec(Number(result.markMult || 1).toFixed(2).replace(/0$/, "")) + ' · ' + esc(names) + '</span></div>';
   }
   // v3.472.0 : cartes prises aux haltes
   if (result.boons && result.boons.length) {
@@ -663,14 +687,14 @@ function buildDungeonSummaryHTML(result) {
   // v3.470.0 : l'unique du boss a sa ligne, avec son pouvoir
   if (result.lootedUnique) {
     var uq = result.lootedUnique, uqPow = (typeof getItemPower === "function") ? getItemPower(uq) : null;
-    var uqCol = (typeof RARITY_COLORS !== "undefined" && RARITY_COLORS[uq.rarity]) || "inherit";
-    h += '      <div class="dungeon-summary-row dungeon-summary-loot"><span>✦ ' + _t("Objet unique") + '</span><span><b style="color:' + uqCol + '">' + esc(_td(uq.name)) + '</b>'
+    var uqCol = dungeonRarityInk(uq.rarity); // UI-8
+    h += '      <div class="dungeon-summary-row dungeon-summary-loot"><span>✦ ' + _t("Objet unique") + '</span> <span><b style="color:' + uqCol + '">' + esc(_td(uq.name)) + '</b>'
       + (uqPow ? ' · ' + esc(_td(uqPow.label)) : '') + '</span></div>';
   }
   var objets = [].concat(campLoot.items || [], eliteLoot.items || [], result.wavesItems || [], result.lootedItem ? [result.lootedItem] : [], result.lootedItem2 ? [result.lootedItem2] : []);
   if (objets.length) {
-    h += '      <div class="dungeon-summary-row dungeon-summary-loot"><span><img class=ico-inline src=images/Icons/dungeon/dungeon_guaranteed_loot.webp> ' + _t("Butin") + '</span><span>' + objets.map(function (it) {
-      var col = (typeof RARITY_COLORS !== "undefined" && RARITY_COLORS[it.rarity]) || "inherit";
+    h += '      <div class="dungeon-summary-row dungeon-summary-loot"><span><img class=ico-inline src=images/Icons/dungeon/dungeon_guaranteed_loot.webp> ' + _t("Butin") + '</span> <span>' + objets.map(function (it) {
+      var col = dungeonRarityInk(it.rarity); // UI-8 : encre lisible ; l'espace sépare libellé et liste à la lecture
       return '<span style="color:' + col + '">' + esc(_td(it.name)) + '</span>';
     }).join(', ') + '</span></div>';
   }

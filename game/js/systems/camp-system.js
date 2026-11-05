@@ -12,13 +12,13 @@ var CampManager = {
     if (typeof game.campRegenLastAt !== "number" || game.campRegenLastAt <= 0) game.campRegenLastAt = Date.now();
   },
 
-  /* Run à sortie en cours (donjon / chasse / quête d'aventure) : pas de repos au camp tant qu'il n'est pas clos. */
+  /* Run à sortie en cours (donjon / quête d'aventure / élite de carte) : pas de repos au camp tant qu'il n'est pas clos. */
   _hasActiveRun: function () {
     // v3.307.0 : pas de feu de camp en expédition. v3.429.4 : la préparation (besace, pactes) n'engage pas le héros
     if (window.SceneRunManager && SceneRunManager.isHeroEngaged()) return true;
     if (game.dungeonRun && game.dungeonRun.active) return true;
-    if (game.huntRun && game.huntRun.active) return true;
     if (game.adventureQuestRun && game.adventureQuestRun.active) return true;
+    if (game.livingMaps && game.livingMaps.fight) return true; // audit 04/11 : élite de carte engagée, pas de feu de camp
     return false;
   },
 
@@ -131,9 +131,17 @@ var CampManager = {
     });
   },
 
+  /* audit 04/11 (QA-8) : en sortie de combat (donjon, élite, quête, chasse), pas de repas du Camp ;
+     la règle annoncée : « tu pars avec tes PV actuels ». Raison affichée, ou null. */
+  rationLockReason: function () {
+    if (window.heroLockReason && heroLockReason()) return heroLockReason(); // v3.307.0
+    if (typeof hasCombatQuestContext === "function" && hasCombatQuestContext()) return _t("En pleine sortie, pas de repas : termine ou abandonne d'abord.");
+    return null;
+  },
+
   canEatRation: function (rationId) {
     if (!window.WarehouseManager) return false;
-    if (window.heroLockReason && heroLockReason()) return false; // v3.307.0
+    if (this.rationLockReason()) return false;
     return WarehouseManager.getAmount(rationId) >= 1;
   },
 
@@ -144,6 +152,8 @@ var CampManager = {
     var maxHp = game.heroMaxHp || 1;
     if (this.teamFull()) { showToast(_t("PV déjà au maximum"), 1200); return false; }
     if (window.heroLockToast && heroLockToast()) return false; // v3.307.0
+    var lock = this.rationLockReason(); // audit 04/11 (QA-8)
+    if (lock) { showToast(lock, 1800); return false; }
     if (!this.canEatRation(rationId)) { showToast(_t("Aucune {x} en stock", { x: _td(def.name).toLowerCase() }), 1600); return false; }
     if (!WarehouseManager.removeResource(rationId, 1)) return false;
 
@@ -178,7 +188,7 @@ window.CAMP_REGEN_PCT_PER_MIN = CAMP_REGEN_PCT_PER_MIN;
 
 /* v3.656.0 (atelier festin.html, placement A, choix de Seb du 04/11) — LE FESTIN.
    Blé, viande et eau du village contre +10 % de dégâts et de PV pour tout le groupe, pendant 3 sorties (pas l'exploration libre).
-   Prix par monde : 25 % / 25 % / 10 % de l'Entrepôt au niveau max du monde. État dans le jour de jeu (worldDay.feast, déjà sauvegardé). */
+   Prix par monde (le plus loin atteint) : 25 % / 25 % / 10 % de l'Entrepôt au niveau max du monde. État dans le jour de jeu (worldDay.feast, déjà sauvegardé). */
 var FEAST_SORTIES = 3;
 var FEAST_BONUS = 0.10;
 var FEAST_COST_BY_WORLD = [
@@ -189,7 +199,7 @@ var FEAST_COST_BY_WORLD = [
   { ble: 1500, viande: 1500, eau: 600 },  // Montagne (6 000)
   { ble: 2000, viande: 2000, eau: 800 }   // Tour (8 000)
 ];
-var FEAST_ICON = "images/Icons/camp/festin.webp"; // à générer : icône générique en attendant
+var FEAST_ICON = "images/Icons/camp/festin.webp";
 
 var FeastManager = {
   _w: function () { return window.WorldDays ? WorldDays.ensure() : {}; },
@@ -199,7 +209,9 @@ var FeastManager = {
   mult: function () { return this.isLive() ? 1 + FEAST_BONUS : 1; },
   hpPct: function () { return this.isLive() ? FEAST_BONUS : 0; },
   cost: function () {
-    var w = Math.max(0, Math.min(FEAST_COST_BY_WORLD.length - 1, Number((window.WorldManager && WorldManager.worldIndex) || 0)));
+    // ECON-8 : prix du monde le plus loin atteint (un retour en Forêt ne le divise plus par cinq)
+    var reached = (window.WorldCaps && typeof WorldCaps.getReachedWorldIndex === "function") ? WorldCaps.getReachedWorldIndex() : Number((window.WorldManager && WorldManager.worldIndex) || 0);
+    var w = Math.max(0, Math.min(FEAST_COST_BY_WORLD.length - 1, Number(reached) || 0));
     return FEAST_COST_BY_WORLD[w];
   },
   missing: function () {

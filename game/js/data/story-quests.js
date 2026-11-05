@@ -268,6 +268,12 @@ function storyExplorationDone(questId) {
   return !!(game.explorationProgression[flags.completionFlag] || game.explorationProgression[flags.unlockFlag]);
 }
 
+/* v3.683.0 (audit TUTO-5) : tutoriel d'étape réservé à une Petite Aventure libre (ni Labyrinthe, ni parcours). */
+function storyTutoInPa2() {
+  var run = game.sceneRun;
+  return !!(run && run.pa2 && !run.parcours && !run.lab);
+}
+
 function storyResourceAmount(key) {
   return (window.WarehouseManager && typeof WarehouseManager.getAmount === "function") ? Number(WarehouseManager.getAmount(key) || 0) : 0;
 }
@@ -296,7 +302,7 @@ var STORY_QUESTS = {
         title: "Le feu de camp",
         act: "Acte I — Le feu et la lame",
         narrative: {
-          objective: "Aeswyn n'est plus qu'un cercle de cendres. Le feu tient encore. Il te faudra une lame pour tenir la nuit.",
+          objective: "Aeswyn n'est plus qu'un cercle de cendres. Le feu tient encore. Il te faudra une arme pour tenir la nuit.", // NOV-11 : une arme, pas une lame (bâton, arc)
           completion: "Tu te lèves. Ce qui rôde à la Lisière ne dort jamais." // v3.260.0 : plus de lame remise ici (texte validé Seb)
         },
         objectiveLabel: "Accepter la quête",
@@ -327,7 +333,7 @@ var STORY_QUESTS = {
           icon: "images/Icons/combat_stats/stat_attack.webp",
           title: "Le combat",
           points: [
-            { icon: "images/Icons/combat_stats/stat_attack.webp", text: "Attaque de base — frappe l'ennemi sans coûter de ressource. Toujours disponible." },
+            { icon: "images/Icons/combat_stats/stat_attack.webp", text: "Attaque de base (Trait arcanique pour le Mage) — frappe l'ennemi sans coûter de ressource. Toujours disponible." },
             { icon: "images/Icons/combat_actions/skill_generic.webp", text: "Compétences (1/2/3) — coûtent de la ressource de ta classe (Rage, Concentration ou Mana selon ton héros), pour plus de dégâts ou un effet spécial." },
             { icon: "images/Icons/combat_stats/stat_defense.webp", text: "Défense (Garde, Esquive ou Barrière arcanique selon ta classe) — réduit ou évite le prochain coup. Utile quand ce bandeau apparaît sous la barre de vie de l'ennemi : il prépare une attaque plus forte.", preview: "charge" },
             { icon: "images/Icons/combat_stats/stat_speed.webp", text: "Jauge de célérité — se remplit quand tu frappes (attaque ou compétence de dégâts). Une fois pleine, tu frappes deux fois d'affilée." }
@@ -482,9 +488,9 @@ var STORY_QUESTS = {
           title: "Fabriquer une ration",
           points: [
             { icon: "images/Icons/subtabs/inventory.webp", text: "Cette expédition consomme une Petite ration — la source t'en a donné une. Les suivantes, il faudra les fabriquer." },
-            { icon: "images/Icons/quests/mission_construction.webp", text: "Rends-toi au Village, dans l'atelier Cuisine de camp (bâtiment Chasse)." },
-            { icon: "images/Icons/quests/ration_reward.webp", text: "Choisis la recette Petite ration (8 Viande + 4 Eau) et touche Fabriquer." },
-            { icon: "images/Icons/quests/quest_adventure.webp", text: "Une fois la ration en stock, reviens sur ce tableau et lance l'expédition — elle la consommera automatiquement." }
+            { icon: "images/Icons/quests/mission_construction.webp", text: "Pour la suivante, tu iras au Village, dans l'atelier Cuisine de camp (bâtiment Chasse)." },
+            { icon: "images/Icons/quests/ration_reward.webp", text: "Tu y choisiras la recette Petite ration (8 Viande + 4 Eau) et toucheras Fabriquer." },
+            { icon: "images/Icons/quests/quest_adventure.webp", text: "Une fois la ration en stock, tu lanceras « La veine instable » : elle la consommera automatiquement." }
           ]
         },
         // La ration est consommée par l'expédition : « en stock OU sentier terminé » évite un faux 0/1 après coup.
@@ -543,7 +549,7 @@ var STORY_QUESTS = {
           points: [
             { icon: "images/Icons/scene/node_obstacle.webp", text: "La carte est découpée en secteurs autour d'Aeswyn. Tu libères un secteur en terminant sa Petite Aventure, ou en battant l'élite qui le garde. Seuls ceux qui touchent le foyer ou un secteur libéré sont atteignables." },
             { icon: "images/Icons/resources/seve_aeswyn_icon.webp", text: "Un, deux ou trois points : l'anneau du secteur. Plus il est loin du foyer, plus le parcours est dur, et plus la première libération rapporte de Sève (5, 8 ou 12)." },
-            { icon: "images/Icons/living_map/carte_vivante.webp", text: "Un secteur libéré donne souvent un effet (Puits +10 %, une corde de plus…). Si tu échoues en rejouant un secteur déjà libéré, la brume le reprend : c'est le Recouvrement. Une première tentative ratée ne coûte rien. L'effet revient quand tu le reprends." },
+            { icon: "images/Icons/living_map/carte_vivante.webp", text: "Un secteur libéré donne souvent un effet (Puits +10 %, une corde de plus…). Si tu échoues en rejouant un secteur déjà libéré, la brume le reprend : c'est le Recouvrement. Une première tentative ratée ne coûte rien. La nuit aussi (toutes les 3 sorties), la brume peut reprendre un secteur libéré éloigné, de 2 ou 3 points. L'effet revient quand tu le reprends." },
             { icon: "images/Icons/scene/protective_amulet.webp", text: "La Palissade d'Aeswyn freine le Recouvrement et, dès le niveau 3, tient les secteurs proches du foyer. Le bouton « ? » de la carte rappelle chaque pastille." }
           ]
         },
@@ -785,7 +791,7 @@ var STORY_QUESTS = {
           title: "Les braises d'Aeswyn",
           points: [
             { icon: "images/Icons/scene/path_easy.webp", text: "La Sève d'Aeswyn se trouve en Petite Aventure (carte de la Forêt) : parfois en route, surtout en atteignant une destination." },
-            { icon: "images/Icons/quests/ration_reward.webp", text: "La Ration moyenne se cuisine à la Cuisine de camp (bâtiment Chasse) : 15 Viandes + 1 Pain (Boulangerie du Champs)." },
+            { icon: "images/Icons/quests/ration_reward.webp", text: "La Ration moyenne se cuisine à la Cuisine de camp (bâtiment Chasse) : 15 Viandes + 1 Pain (Boulangerie du Champs ; le Champs s'ouvre par l'expédition « La Terre en Friche », Quêtes › Annexes)." },
             { icon: "images/Icons/camp/campfire.webp", text: "Quand tout est réuni, reviens au Campement : le bloc « Les braises » te laisse faire l'offrande." }
           ]
         },
@@ -1037,7 +1043,7 @@ STORY_QUESTS.desert = {
         title: "L'Ensablement",
         points: [
           { icon: "images/Icons/scene/node_obstacle.webp", text: "La carte du Désert fonctionne comme celle de la Forêt. Tu libères un secteur en terminant son parcours, ou en battant l'élite qui le garde." },
-          { icon: "images/Icons/living_map/carte_vivante.webp", text: "Un parcours raté rend un secteur au sable. Sa récompense de secteur tenu est perdue jusqu'à ce que tu le reprennes." },
+          { icon: "images/Icons/living_map/carte_vivante.webp", text: "Un parcours raté rend un secteur au sable. La nuit aussi (toutes les 3 sorties), le sable peut reprendre un secteur libéré éloigné. Sa récompense de secteur tenu est perdue jusqu'à ce que tu le reprennes." },
           { icon: "images/Icons/scene/protective_amulet.webp", text: "La Palissade d'Aeswyn freine l'Ensablement, comme elle freine la brume." }
         ]
       },
@@ -1537,7 +1543,7 @@ STORY_QUESTS.desert = {
         points: [
           { icon: "images/Icons/scene/node_encounter.webp", text: "Cette bête revient. Tu peux la combattre à nouveau, et son butin avec elle." },
           { icon: "images/Icons/resources/chitine_profondeurs_icon.webp", text: "Chaque victoire donne une Chitine des profondeurs : c'est ce qu'exigent les reforges 5 et 6, ouvertes par la Forge 3." },
-          { icon: "images/Icons/combat_stats/stat_attack.webp", text: "Chaque victoire du jour rend la suivante plus dure. Le lendemain, elle repart à sa force de base." }
+          { icon: "images/Icons/combat_stats/stat_attack.webp", text: "Chaque victoire du jour rend la suivante plus dure. Après la prochaine nuit (toutes les 3 sorties), elle repart à sa force de base." }
         ]
       },
       check: function () { return !!(window.LivingMapManager && LivingMapManager.isLiberated("desert", "bete_dune")); },
@@ -2025,6 +2031,7 @@ STORY_QUESTS.ruins = {
       linkTo: { section: "expedition", cardId: "petite_aventure_ruines" },
       tutorial: {
         tab: "scene",
+        when: storyTutoInPa2, // v3.683.0 (TUTO-5) : jamais dans le Labyrinthe ni un parcours
         icon: "images/Icons/scene/items/item_chalk.webp",
         title: "Les murs bougent",
         points: [
@@ -2210,7 +2217,7 @@ STORY_QUESTS.ruins = {
       storyPa: { worldId: "ruins", targets: ["porte_sanctuaire"] }, // v3.436.4 : Petite aventure offerte par l'Histoire, oubliée à l'acte III
       unlockTabs: [],
       reward: STORY_REWARDS.ruines_11,
-      linkTo: { section: "map", cardId: "livingmap_ruins" },
+      linkTo: { section: "map", cardId: "livingmap_ruins:porte_sanctuaire" },
       check: function () { return storyPorteSanctuaire(); },
       progress: function () { return "Porte du Sanctuaire " + (storyPorteSanctuaire() ? "1/1" : "0/1"); }
     },
@@ -2845,6 +2852,7 @@ STORY_QUESTS.crypt = {
       linkTo: { section: "expedition", cardId: "petite_aventure_crypte" },
       tutorial: {
         tab: "scene",
+        when: storyTutoInPa2, // v3.683.0 (TUTO-5) : jamais dans le Labyrinthe ni un parcours
         icon: "images/Icons/scene/items/item_lantern.webp",
         title: "L'obscurité",
         points: [
@@ -2888,7 +2896,7 @@ STORY_QUESTS.crypt = {
         points: [
           { icon: "images/Icons/scene/node_obstacle.webp", text: "La carte de la Crypte fonctionne comme celle des Ruines : tu libères un couloir en terminant sa Petite Aventure, ou en battant l'élite qui le garde." },
           { icon: "images/Icons/combat_status/asleep.webp", text: "Chaque couloir a ses gisants. Avant de partir, tu choisis : les laisser (plus facile, rapporte moins) ou les réveiller (plus dur, plus de Cire de sépulcre)." },
-          { icon: "images/Icons/living_map/carte_vivante.webp", text: "Un échec réveille le couloir : c'est Le réveil. Il reste hostile, et plus dur, jusqu'au lendemain." },
+          { icon: "images/Icons/living_map/carte_vivante.webp", text: "Un échec réveille le couloir : c'est Le réveil. Il reste hostile, et plus dur, jusqu'à la prochaine nuit (toutes les 3 sorties)." },
           { icon: "images/Icons/resources/cire_sepulcre_icon.webp", text: "Le Marché de la Crypte est sur la carte, à côté de la Veillée." }
         ]
       },
@@ -3030,7 +3038,7 @@ STORY_QUESTS.crypt = {
       storyPa: { worldId: "crypt", targets: ["cotes"] },
       unlockTabs: [],
       reward: STORY_REWARDS.crypte_11,
-      linkTo: { section: "map", cardId: "livingmap_crypt" },
+      linkTo: { section: "map", cardId: "livingmap_crypt:cotes" },
       check: function () { return storyCryptSectorFreed("cotes"); },
       progress: function () { return "Les côtes " + (storyCryptSectorFreed("cotes") ? "1/1" : "0/1"); }
     },
@@ -3144,7 +3152,7 @@ STORY_QUESTS.crypt = {
         title: "Ce qu'elle garde",
         text: "La Pleureuse se tait. Dans la salle, une seule alcôve est occupée : personne dedans, juste une forme dans la pierre, à la taille d'Ysolt. « Montée neuf fois. Revenue huit. La neuvième, je me suis couchée ici. Je me suis réveillée. Je n'aurais pas dû. » Elle attend que quelqu'un décide, et ce ne sera pas elle.",
         options: [
-          { value: "garder", label: "La laisser se recoucher", desc: "Elle reprend sa place. Son carquois reste avec toi." },
+          { value: "garder", label: "La laisser se recoucher", desc: "Elle reprend sa place. Son carquois reste avec toi. Ses quêtes s'arrêtent là." },
           { value: "donner", label: "La garder éveillée", desc: "Elle reste avec toi. Elle s'use, un peu, à chaque combat." }
         ],
         ready: function () { return storyAdvDone(game, "aq_crypte_pleureuse"); },
@@ -3463,8 +3471,9 @@ function storyMissingCostLines(cost, prefix) {
     var def = key === "gold" ? null : (window.WAREHOUSE_RESOURCES || {})[key];
     var nom = key === "gold" ? _t("Or") : (def ? _td(def.name) : key);
     out.push({
-      text: prefix + " : " + nom + " " + formatNumber(Math.floor(have)) + " / " + formatNumber(cost[key]),
-      where: key === "gold" ? "" : (typeof getVillageResourceHint === "function" ? getVillageResourceHint(key) : "")
+      text: _t("{a} : {b}", { a: prefix, b: nom }) + " " + formatNumber(Math.floor(have)) + " / " + formatNumber(cost[key]),
+      // EQUI-2 : un coût que le stock ne peut pas atteindre le dit au lieu de renvoyer à la source
+      where: key === "gold" ? "" : ((window.WarehouseManager && WarehouseManager.capHint(key, cost[key])) || (typeof getVillageResourceHint === "function" ? getVillageResourceHint(key) : ""))
     });
   });
   return out;
@@ -4047,7 +4056,7 @@ STORY_QUESTS.mountain = {
           { who: null, text: "Il garde l'éclat sur l'établi. Il le regarde souvent." }
         ]
       },
-      objectiveLabel: "Tailler 5 veines à la Montagne (toi ou Sarkel), dans « Ça ne fond pas »",
+      objectiveLabel: "Tailler 5 veines à la Montagne (toi ou Sarkel), dans « Ça ne fond pas » ou ailleurs", // v3.684.0 (QUET-7) : toute veine compte (M-2)
       unlockTabs: [],
       reward: STORY_REWARDS.montagne_04,
       linkTo: { section: "adventure", cardId: "adv_aq_montagne_veines" },
@@ -4129,6 +4138,7 @@ STORY_QUESTS.mountain = {
       linkTo: { section: "expedition", cardId: "petite_aventure_montagne" },
       tutorial: {
         tab: "scene",
+        when: storyTutoInPa2, // v3.683.0 (TUTO-5) : jamais dans le Labyrinthe ni un parcours
         icon: "images/Icons/scene/items/item_cold_stone.webp",
         title: "Le sol qui brûle",
         points: [
@@ -4174,7 +4184,7 @@ STORY_QUESTS.mountain = {
         points: [
           { icon: "images/Icons/menu_icons/map_menu.webp", text: "La carte de la Montagne fonctionne comme celle de la Crypte : tu libères un secteur en terminant sa Petite Aventure, ou en battant l'élite qui le garde." },
           { icon: "images/Icons/combat_actions/vein_cut.webp", text: "Chaque secteur a sa veine. Avant de partir, tu choisis : la tailler (plus de Cendre vive, mais le secteur chauffe et ses combats sont plus durs ensuite) ou la laisser (plus facile, rapporte moins)." },
-          { icon: "images/Icons/combat_status/vein_heat.webp", text: "Une Petite Aventure ratée recouvre le secteur de lave : c'est La coulée. Il reste plus dur jusqu'au lendemain. Une élite perdue, elle, se retente le jour même." },
+          { icon: "images/Icons/combat_status/vein_heat.webp", text: "Une Petite Aventure ratée recouvre le secteur de lave : c'est La coulée. Il reste plus dur jusqu'à la prochaine nuit (toutes les 3 sorties). Une élite perdue, elle, se retente le jour même." },
           { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "Le Marché de la Montagne est sur la carte, à côté du Replat. La caravane en rapporte de l'or. Au trajet Long (Halle 3), 2 Cendres vives à coup sûr." }
         ]
       },
@@ -4312,7 +4322,7 @@ STORY_QUESTS.mountain = {
       unlockTabs: [],
       storyPa: { worldId: "mountain", targets: ["antre"] }, // v3.519.0 (audit DUR-5) : Petite aventure offerte par l'Histoire, oubliée
       reward: STORY_REWARDS.montagne_11,
-      linkTo: { section: "map", cardId: "livingmap_mountain" },
+      linkTo: { section: "map", cardId: "livingmap_mountain:antre" },
       check: function () { return storyMountainSectorFreed("antre"); },
       progress: function () { return "Entrée de l'Antre " + (storyMountainSectorFreed("antre") ? "1/1" : "0/1"); }
     },
@@ -4854,6 +4864,14 @@ STORY_QUESTS.tower = {
         doneToast: "Le dernier camp est dressé",
         log: "Tu donnes le bois et les vivres. Sarkel plante ses pieux devant la porte."
       },
+      // v3.684.0 (QUET-6) : tant que l'offrande manque, le bouton mène aux Ateliers (Cuisine de camp), comme desert_07
+      linkTo: {
+        tab: "village", label: "Aller aux Ateliers",
+        afterGo: function () {
+          if (typeof setVillageSubTab === "function") setVillageSubTab("production");
+          if (typeof setProductionViewTab === "function") setProductionViewTab("shops");
+        }
+      },
       check: function (game) { return storyChapterCounter(game, "tower", "campDresse") >= 1; },
       progress: function (game) { return "Camp dressé " + (storyChapterCounter(game, "tower", "campDresse") >= 1 ? "1/1" : "0/1"); }
     },
@@ -4950,7 +4968,7 @@ STORY_QUESTS.tower = {
         points: [
           { icon: "images/Icons/menu_icons/map_menu.webp", text: "La carte de la Tour est en coupe : un étage par secteur. Tu libères un étage en terminant sa Petite Aventure." },
           { icon: "images/Icons/scene/path_easy.webp", text: "Chaque étage se souvient d'un monde : ses obstacles viennent du Désert, des Ruines, de la Crypte ou de la Montagne." },
-          { icon: "images/Icons/living_map/carte_vivante.webp", text: "Une Petite Aventure ratée, et la Tour refait l'étage : c'est La redite. Il reste plus dur jusqu'au lendemain. Rien n'est perdu." },
+          { icon: "images/Icons/living_map/carte_vivante.webp", text: "Une Petite Aventure ratée, et la Tour refait l'étage : c'est La redite. Il reste plus dur jusqu'à la prochaine nuit (toutes les 3 sorties). Rien n'est perdu." },
           { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "Le Marché de la Tour est au dernier camp, devant la porte. La caravane en rapporte de l'or. Au trajet Long (Halle 3), 2 Givres bleus à coup sûr." }
         ]
       },
@@ -5025,7 +5043,7 @@ STORY_QUESTS.tower = {
       storyPa: { worldId: "tower", targets: ["etage_veines"] },
       unlockTabs: [],
       reward: STORY_REWARDS.tour_09,
-      linkTo: { section: "map", cardId: "livingmap_tower" },
+      linkTo: { section: "map", cardId: "livingmap_tower:etage_veines" },
       check: function () { var lm = window.LivingMapManager, st = lm && lm.getState("tower", "etage_veines"); return !!(st && st.liberatedCount > 0); },
       progress: function () { var lm = window.LivingMapManager, st = lm && lm.getState("tower", "etage_veines"); return "Gardien vaincu " + (st && st.liberatedCount > 0 ? "1/1" : "0/1"); }
     },
@@ -5081,7 +5099,7 @@ STORY_QUESTS.tower = {
       objectiveLabel: "Atteindre le campement du Sommet interdit (vaincre le Gardien qui répète dans un même run)",
       unlockTabs: [],
       reward: STORY_REWARDS.tour_11,
-      linkTo: { section: "dungeon" },
+      linkTo: { tab: "dungeon" },
       tutorial: {
         tab: "dungeon",
         icon: "images/Dungeons/Icone_base/palier6.webp",
@@ -5110,7 +5128,7 @@ STORY_QUESTS.tower = {
       objectiveLabel: "Vaincre le Reflet, au bout du Sommet interdit",
       unlockTabs: [],
       reward: STORY_REWARDS.tour_12,
-      linkTo: { section: "dungeon" },
+      linkTo: { tab: "dungeon" },
       check: function (game) { return !!((game.dungeonTierCleared || {})[6]); },
       progress: function (game) { return "Reflet vaincu " + ((game.dungeonTierCleared || {})[6] ? "1/1" : "0/1"); }
     },
@@ -5382,14 +5400,18 @@ STORY_REWARDS.tour_12 = { gold: 23000, equipmentRarity: "legendary", equipmentCo
 STORY_REWARDS.tour_13 = { gold: 24000, resources: { verre_faille: 3 } };
 STORY_REWARDS.tour_14 = { gold: 25000 };
 STORY_REWARDS.tour_15 = { gold: 26000, resources: { givre_bleu: 6 } };
-["tour_11", "tour_12", "tour_13", "tour_14", "tour_15"].forEach(function (id, k) { STORY_QUESTS.tower.steps[10 + k].reward = STORY_REWARDS[id]; });
+/* v3.684.0 (QUET-12) : récompenses de la Tour posées par id d'étape, pas par position (insertion sans décalage). */
+function storyTowerSetRewards(ids) {
+  STORY_QUESTS.tower.steps.forEach(function (s) { if (ids.indexOf(s.id) !== -1 && STORY_REWARDS[s.id]) s.reward = STORY_REWARDS[s.id]; });
+}
+storyTowerSetRewards(["tour_11", "tour_12", "tour_13", "tour_14", "tour_15"]);
 STORY_REWARDS.tour_16 = { gold: 27000, resources: { givre_bleu: 4 } }; // v3.630.0 (Tour, acte IV)
 STORY_REWARDS.tour_17 = { gold: 28000, resources: { grande_ration: 1 } };
 STORY_REWARDS.tour_18 = { gold: 30000, resources: { verre_faille: 3 } };
-["tour_16", "tour_17", "tour_18"].forEach(function (id, k) { STORY_QUESTS.tower.steps[15 + k].reward = STORY_REWARDS[id]; });
+storyTowerSetRewards(["tour_16", "tour_17", "tour_18"]);
 STORY_REWARDS.tour_19 = { gold: 32000 }; // v3.631.0 (Tour, lot T-4b)
 STORY_REWARDS.tour_20 = { gold: 40000 };
-["tour_19", "tour_20"].forEach(function (id, k) { STORY_QUESTS.tower.steps[18 + k].reward = STORY_REWARDS[id]; });
+storyTowerSetRewards(["tour_19", "tour_20"]);
 /* Les quatre réponses (textes validés, atelier) et les deux prix affichés (Seb, 02/11 : un prix par axe). */
 var STORY_QUESTION_OPTIONS = {
   sienne: { label: "La sienne", desc: "Tu prends la forme au sol. Tu seras la silhouette. Elle cessera de casser le monde pour apprendre : elle t'aura." },
@@ -5415,17 +5437,15 @@ window.STORY_PALIER_TOUR = STORY_PALIER_TOUR;
 STORY_REWARDS.tour_08 = { gold: 19500, resources: { givre_bleu: 3 }, equipmentRarity: "legendary", equipmentCount: 1, equipmentFill: true };
 STORY_REWARDS.tour_09 = { gold: 20000, equipmentRarity: "legendary", equipmentCount: 1, equipmentFill: true };
 STORY_REWARDS.tour_10 = { gold: 21000, resources: { givre_bleu: 5 } };
-STORY_QUESTS.tower.steps[7].reward = STORY_REWARDS.tour_08;
-STORY_QUESTS.tower.steps[8].reward = STORY_REWARDS.tour_09;
-STORY_QUESTS.tower.steps[9].reward = STORY_REWARDS.tour_10;
+storyTowerSetRewards(["tour_08", "tour_09", "tour_10"]);
 STORY_REWARDS.tour_06 = { gold: 18500, resources: { givre_bleu: 3 } };
 STORY_REWARDS.tour_07 = { gold: 19000, resources: { givre_bleu: 4 } };
-STORY_QUESTS.tower.steps[5].reward = STORY_REWARDS.tour_06;
-STORY_QUESTS.tower.steps[6].reward = STORY_REWARDS.tour_07;
+storyTowerSetRewards(["tour_06", "tour_07"]);
 function storyTowerFloorsFreed() {
   var lm = window.LivingMapManager, map = lm && lm.getMap("tower");
   if (!map) return 0;
-  return map.sectors.filter(function (d) { var st = lm.getState("tower", d.id); return !!(st && st.liberatedCount > 0); }).length;
+  return map.sectors.filter(function (d) { // v3.684.0 (QUET-11) : les étages seuls, sans l'élite (étape tour_09)
+    var st = lm.getState("tower", d.id); return !!(d.content && d.content.type === "expedition" && st && st.liberatedCount > 0); }).length;
 }
 var STORY_TOUR_ETAGES = 5, STORY_TOUR_PA = 2; // rythme de la Tour (Seb, 03/11) : les 5 étages de l'escalier, 2 escaliers réussis
 window.STORY_TOUR_ETAGES = STORY_TOUR_ETAGES; window.STORY_TOUR_PA = STORY_TOUR_PA;

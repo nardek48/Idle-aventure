@@ -179,7 +179,7 @@ var COMBAT_STATES_SCREEN = {
     desc: "Sous la lave, on ne peut pas le toucher. À son tour, il ressort et frappe tout le groupe.",
     hint: "Garde ta Défense pour ce moment."
   },
-  // v3.636.0 (Tour, TW6) : le round intouchable de la silhouette, annoncé puis actif. Icône à générer (générique en attendant).
+  // v3.636.0 (Tour, TW6) : le round intouchable de la silhouette, annoncé puis actif. Icône livrée en v3.664.0.
   throughIn: {
     famille: "alerte", nom: "La lumière monte", icon: COMBAT_STATE_ICON + "through.webp", mot: "Intouchable au prochain round !",
     desc: "Au prochain round, la lumière passera à travers elle : aucun coup ne la touchera.",

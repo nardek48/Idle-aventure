@@ -1,6 +1,5 @@
 "use strict";
-/* main/boot.js — point d'entrée, dernier script chargé par index.html. Ordre init() : defaults -> load -> quêtes -> 1er ennemi -> offline -> recalc stats -> 1er rendu -> boucles.
-   Détail complet : COMMENTAIRES_ORIGINAUX.md */
+/* main/boot.js — point d'entrée, dernier script chargé par index.html. Ordre init() : defaults -> load -> quêtes -> 1er ennemi -> offline -> recalc stats -> 1er rendu -> boucles. */
 
 var gameStarted = false;
 
@@ -10,8 +9,6 @@ function init() {
 
   if (typeof mountHudAndStatsBar === "function") mountHudAndStatsBar();
   if (typeof mountCombatArea === "function") mountCombatArea();
-  if (typeof renderSpecialAttackButton === "function") renderSpecialAttackButton();
-  if (typeof renderDefenseButton === "function") renderDefenseButton();
   if (typeof renderHealButtons === "function") renderHealButtons();
   if (typeof initHealKeyboardShortcuts === "function") initHealKeyboardShortcuts();
 
@@ -35,13 +32,13 @@ function init() {
     OfflineManager.snapshot();
   }
 
+  // v3.101.0 : régénération au camp accumulée hors ligne, voir systems/camp-system.js.
+  // v3.429.3 : avant tout spawn ; audit 04/11 (CPL1-8) : et avant le rattrapage, dont le renderHud consommait l'absence.
+  if (loaded && window.CampManager && typeof CampManager.applyRegen === "function") CampManager.applyRegen(true);
+
   if (window.ProductionManager && typeof ProductionManager.catchUpOffline === "function") {
     ProductionManager.catchUpOffline();
   }
-
-  // v3.101.0 : régénération au camp accumulée hors ligne (plafond 50 % PV max), voir systems/camp-system.js.
-  // v3.429.3 : avant tout spawn — renderHud soignait sans plafond et consommait l'absence.
-  if (loaded && window.CampManager && typeof CampManager.applyRegen === "function") CampManager.applyRegen(true);
 
 
   if (window.WorldManager && typeof WorldManager.markWorldReached === "function") {
@@ -124,6 +121,7 @@ function init() {
     var offline = OfflineManager.summarize();
     if (offline && typeof OfflineManager.show === "function") OfflineManager.show(offline);
   }
+  if (loaded && window.ReturnManager && typeof ReturnManager.restoreStored === "function") ReturnManager.restoreStored(); // CPL1-6
 
   lastTick = Date.now();
   requestAnimationFrame(gameLoop);

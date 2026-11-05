@@ -12,7 +12,7 @@ STRATÉGIE (volontairement simple, en 2 niveaux) :
      la partie fonctionne, donc on le précharge explicitement plutôt
      que d'attendre que chaque fichier soit visité une fois.
   2. "Runtime" (tout le reste en même origine — concrètement
-     images/, ~38 Mo au total en v3.516) : PAS précaché d'un coup (trop lourd,
+     images/, ~67 Mio au total en v3.692) : PAS précaché d'un coup (trop lourd,
      rendrait l'installation longue et gourmande en stockage/données
      mobiles pour rien — un joueur ne visite pas forcément tous les
      mondes/donjons/bâtiments dès le premier lancement). À la place,
@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.658.0"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.705.0"; // <- à incrémenter à CHAQUE livraison
 var CACHE_NAME = "quest-idle-" + CACHE_VERSION;
 var IMAGE_CACHE = "aethervale-images"; // v3.457.4 : hors du préfixe quest-idle- ; v3.547.0 : images disparues purgées (purgeMissingImages)
 var imagesRevalidated = {};             // URL déjà revérifiées depuis le démarrage de ce service worker
@@ -107,7 +107,6 @@ var PRECACHE_APP_SHELL = [
   "./js/core/state.js",
   "./js/core/utils.js",
   "./js/core/i18n.js",
-  "./js/lang/en.js",
   "./js/data/achievements.js",
   "./js/data/auto-policy-defaults.js",
   "./js/data/elites.js",
@@ -261,7 +260,7 @@ var PRECACHE_APP_SHELL = [
   "./css/04-panel-construction.css",
   "./js/data/enemy-archetypes.js",
   "./js/data/grimoire-conditions.js",
-  "./js/data/hunt-quests.js",
+  "./js/data/warehouse-resources.js",
   "./js/data/scene-nodes.js",
   "./js/data/scene-templates.js",
   "./js/data/production-buildings.js",
@@ -296,7 +295,6 @@ var PRECACHE_APP_SHELL = [
   "./js/systems/workshop-unlock-system.js",
   "./js/systems/village-quest-system.js",
   "./js/systems/quest-enemy-system.js",
-  "./js/systems/hunt-quest-system.js",
   "./js/systems/scene-check-system.js",
   "./js/systems/scene-engine.js",
   "./js/systems/production-system.js",
@@ -383,6 +381,19 @@ self.addEventListener("activate", function (event) {
     })
   );
   purgeMissingImages(); // hors waitUntil : ne retarde pas l'activation
+});
+
+/* PERF-13 : en.js hors du précache (les francophones ne le chargent jamais) ; la page en anglais
+   demande ici qu'il soit gardé dans le cache de la version (js/main/pwa.js). */
+var LANG_EN_URL = "./js/lang/en.js";
+self.addEventListener("message", function (event) {
+  if (!event.data || event.data.type !== "QUEST_IDLE_CACHE_LANG") return;
+  var job = caches.open(CACHE_NAME).then(function (cache) {
+    return cache.match(LANG_EN_URL).then(function (hit) {
+      return hit || cache.add(new Request(LANG_EN_URL, { cache: "no-cache" }));
+    });
+  }).catch(function () { /* hors-ligne : réessayé au prochain lancement */ });
+  if (event.waitUntil) event.waitUntil(job);
 });
 
 /* v3.547.0 (audit IMA-10) : au plus une fois par semaine, retire du cache d'images celles que

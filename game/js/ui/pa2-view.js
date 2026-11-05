@@ -96,9 +96,9 @@ var PA2_ACT_WORD = { 1: _t("Acte I"), 2: _t("Acte II"), 3: _t("Acte III") };
 function pa2Img(src, cls, alt) {
   return '<img class="' + (cls || "pa2-ic") + '" src="' + esc(src) + '" alt="' + esc(alt || "") + '">';
 }
-function pa2Pct(v) { return Math.round(v * 100) + " %"; }
+function pa2Pct(v) { return fmtPct(Math.round(v * 100)); }
 function pa2Num(v) { return String(Math.round(Number(v || 0))); }
-function pa2Mult(v) { return "×" + Number(v).toFixed(2).replace(".", ","); }
+function pa2Mult(v) { return "×" + fmtDec(Number(v).toFixed(2)); } // CPL3-1 : décimale selon la langue
 
 function pa2ItemName(id) {
   var it = PA2_ITEMS[id];
@@ -204,6 +204,7 @@ function pa2AfterRender() {
   body.classList.toggle("pa2-full", onMap && !!document.getElementById("pa2-vp")); // v3.394.0 : carte plein écran
   if (!onScene) { pa2RemoveOverlay(); return; }
   pa2EnsureOverlay();
+  if ((run.status === PA2_STATUS.node || run.status === PA2_STATUS.trap) && !pa2View.sheet && !pa2View.fromKey) pa2View.legend = false; // audit NOV-13 : une fiche qui s'ouvre referme la légende
   pa2RenderLegend();
   if (run.status === PA2_STATUS.node && !pa2View.sheet && !pa2View.fromKey) pa2OpenSheet();
   if (run.status === PA2_STATUS.trap && !pa2View.sheet && !pa2View.fromKey) pa2OpenTrapSheet();
@@ -260,7 +261,7 @@ function buildPa2PrepHTML(run) {
       h += '<p class="pa2-narr pa2-dim">' + esc(_td(hook.lede)) + '</p>';
     }
     if (ringId !== "sentier") {
-      h += '<p class="pa2-ring">' + esc(_t("{r} : ennemis et obstacles plus durs, butin ×{m}.", { r: PA2_RING_WORD[ringId], m: String(ring.lootMult).replace(".", ",") })) + '</p>';
+      h += '<p class="pa2-ring">' + esc(_t("{r} : ennemis et obstacles plus durs, butin ×{m}.", { r: PA2_RING_WORD[ringId], m: fmtDec(ring.lootMult) })) + '</p>';
     }
     h += '</div>';
 
@@ -777,7 +778,7 @@ function pa2Use(id) {
 }
 function pa2RelicInfo(id) {
   var r = PA2_RELICS[id];
-  if (r && typeof showToast === "function") showToast(_td(r.name) + " : " + _td(r.fx), 2600);
+  if (r && typeof showToast === "function") showToast(_t("{a} : {b}", { a: _td(r.name), b: _td(r.fx) }), 2600) // CPL3-2 : deux-points selon la langue;
 }
 
 function pa2AskAbandon() {
@@ -811,7 +812,7 @@ function pa2FxChipsHTML(run) {
   PA2_TRAP_FX_ORDER.forEach(function (id) {
     var left = Pa2Run.fxLeft(run, id), d = PA2_TRAP_FX[id];
     if (!(left > 0)) return;
-    h += '<span class="pa2-chip is-fx" title="' + esc(_td(d.name) + " : " + _td(d.desc)) + '">' + pa2Img(d.icon) + esc(_td(d.name) + (d.steps ? " " + left : "")) + '</span>';
+    h += '<span class="pa2-chip is-fx" title="' + esc(_t("{a} : {b}", { a: _td(d.name), b: _td(d.desc) })) + '">' + pa2Img(d.icon) + esc(_td(d.name) + (d.steps ? " " + left : "")) + '</span>';
   });
   return h;
 }
@@ -892,7 +893,7 @@ function pa2TrapOutcome(run, r, td) {
     var what = r.fx === "besace" ? (r.lost ? _t("Perdu : {x}.", { x: pa2ItemName(r.lost) }) : _t("Ta besace était vide : rien de perdu."))
       : _td(fx.desc) + (fx.steps ? ", " + _tn(fx.steps, "{n} pas", "{n} pas") : "") + ".";
     if (r.muted) what = _t("la Cloche muette l'étouffe, rien ne sonne."); // v3.469.5
-    h += '<p class="pa2-result">' + esc(_td(fx.name) + " : " + what) + '</p>';
+    h += '<p class="pa2-result">' + esc(_t("{a} : {b}", { a: _td(fx.name), b: what })) + '</p>';
     if (r.wound) h += '<p class="pa2-result is-red">' + esc(_t("Et une blessure : −1 cran sur tous les dés.")) + '</p>';
   }
   return h;
@@ -932,17 +933,22 @@ function pa2RenderLegend() {
   if (!run || (run.status !== PA2_STATUS.map && run.status !== PA2_STATUS.node && run.status !== PA2_STATUS.trap)) { box.innerHTML = ""; return; }
   var h = '<button type="button" class="lmx-btn pa2-legend-btn" onclick="pa2ToggleLegend()" aria-label="' + esc(_t("Légende")) + '" aria-expanded="' + !!pa2View.legend + '">?</button>';
   if (pa2View.legend) {
-    var row = function (icon, label, sub) {
+    // audit NOV-13 : dans un parcours, seulement ce que son tracé contient (pas d'actes, pas de destinations)
+    var par = !!run.parcours, has = {};
+    Object.keys(run.nodes || {}).forEach(function (k) { if (run.nodes[k]) has[run.nodes[k].type] = true; });
+    var row = function (type, icon, label, sub) {
+      if (par && !has[type]) return "";
       return '<div class="pa2-legend-row"><span class="pa2-disc">' + pa2Img(icon) + '</span><span>' + esc(label) + '<small>' + esc(sub) + '</small></span></div>';
     };
+    if (par) { has.piege = Object.keys(run.traps || {}).length > 0; has.coupe = Object.keys(run.cuts || {}).length > 0; }
     h += '<div class="pa2-legend" role="dialog" aria-label="' + esc(_t("Légende")) + '"><h5>' + esc(_t("Légende")) + '</h5>' +
-      row(pa2Ico("obstacle", run), _t("Obstacle"), _t("Trois voies, un jet de dé")) + row(PA2_ICONS.combat, _t("Combat"), _t("Charger, Tenir, Ruser ou Fuir")) +
-      row(pa2Ico("source", run), _t("Source"), _t("PV et Souffle")) + row(pa2Ico("autel", run), _t("Autel"), _t("De l'or contre une plaie")) +
-      row(PA2_ICONS.trouvaille, _t("Trouvaille"), _t("Un objet pour ce run")) + row(pa2Ico("evenement", run), _t("Rencontre"), _t("Un choix qui aura des suites")) +
-      row(pa2Ico("camp", run), _t("Le camp"), _t("Fin de l'acte I")) + row(pa2Ico("seuil", run), _t("Le seuil"), _t("Fin de l'acte II")) +
-      row(PA2_TRAP_FX.venin.icon, _t("Piège"), _t("Losange rouge sur un sentier : son effet, à désamorcer ou à éviter")) +
-      row(((PA2_CUTS[run.worldId] || PA2_CUTS.forest)[Object.keys(PA2_CUTS[run.worldId] || PA2_CUTS.forest)[0]]).icon, _t("Sentier coupé"), _t("Rond gris : le passage est fermé pour ce run")) +
-      row(pa2Ico("boss", run), _t("Destinations"), _t("Trois fins possibles, au nord")) + '</div>';
+      row("obstacle", pa2Ico("obstacle", run), _t("Obstacle"), _t("Trois voies, un jet de dé")) + row("combat", PA2_ICONS.combat, _t("Combat"), _t("Charger, Tenir, Ruser ou Fuir")) +
+      row("source", pa2Ico("source", run), _t("Source"), _t("PV et Souffle")) + row("autel", pa2Ico("autel", run), _t("Autel"), _t("De l'or contre une plaie")) +
+      row("trouvaille", PA2_ICONS.trouvaille, _t("Trouvaille"), _t("Un objet pour ce run")) + row("evenement", pa2Ico("evenement", run), _t("Rencontre"), _t("Un choix qui aura des suites")) +
+      row("camp", pa2Ico("camp", run), _t("Le camp"), _t("Fin de l'acte I")) + row("seuil", pa2Ico("seuil", run), _t("Le seuil"), _t("Fin de l'acte II")) +
+      row("piege", PA2_TRAP_FX.venin.icon, _t("Piège"), _t("Losange rouge sur un sentier : son effet, à désamorcer ou à éviter")) +
+      row("coupe", ((PA2_CUTS[run.worldId] || PA2_CUTS.forest)[Object.keys(PA2_CUTS[run.worldId] || PA2_CUTS.forest)[0]]).icon, _t("Sentier coupé"), _t("Rond gris : le passage est fermé pour ce run")) +
+      row("dest", pa2Ico("boss", run), _t("Destinations"), _t("Trois fins possibles, au nord")) + '</div>';
   }
   box.innerHTML = h;
 }
@@ -1028,11 +1034,18 @@ function pa2Head(run, n, title, kicker, big) {
 function pa2OddsHTML(cran) {
   return '<span class="pa2-odds o' + PA2_CRAN_LEVEL[cran] + '"><span class="pa2-cran"><i></i><i></i><i></i><i></i></span><span class="pa2-w">' + esc(PA2_CRAN_WORD[cran]) + '</span></span>';
 }
-/* v3.577.0 : le d20 (dessiné en SVG), la valeur du jet au centre. */
-var PA2_D20_SVG = '<svg viewBox="0 0 100 100" aria-hidden="true"><polygon class="pa2-d20-hex" points="50,3 91,26.5 91,73.5 50,97 9,73.5 9,26.5"/>' +
-  '<path class="pa2-d20-edge" d="M50,22 L77,68 L23,68 Z M50,3 L50,22 M91,26.5 L50,22 L9,26.5 M91,26.5 L77,68 L91,73.5 M77,68 L50,97 L23,68 L9,73.5 M9,26.5 L23,68"/>';
+/* v3.673.0 : le d20 pré-rendu (modèle 3D CC0, tools/rendu-de/) : une pose par valeur, face avant vide,
+   le jeu y écrit le chiffre ; le roulé est une bande de 16 images (images/UI/de/). */
+var PA2_DIE_DIR = "images/UI/de/", pa2DieLoaded = false;
+/* v3.674.0 (atelier de-d20.html, B) : effets du 20 naturel (anneau doré, rayons, étincelles) et du 1 (fêlure) ; joués à la pose seulement */
+var PA2_DIE_FX = '<span class="pa2-fx pa2-fx-halo" aria-hidden="true"></span><span class="pa2-fx pa2-fx-rays" aria-hidden="true"></span><span class="pa2-fx pa2-fx-red" aria-hidden="true"></span>' +
+  '<i class="pa2-sp" style="--dx:0px;--dy:-62px;animation-delay:0ms"></i><i class="pa2-sp" style="--dx:44px;--dy:-44px;animation-delay:40ms"></i><i class="pa2-sp" style="--dx:62px;--dy:0px;animation-delay:80ms"></i><i class="pa2-sp" style="--dx:44px;--dy:44px;animation-delay:20ms"></i><i class="pa2-sp" style="--dx:0px;--dy:62px;animation-delay:60ms"></i><i class="pa2-sp" style="--dx:-44px;--dy:44px;animation-delay:100ms"></i><i class="pa2-sp" style="--dx:-62px;--dy:0px;animation-delay:30ms"></i><i class="pa2-sp" style="--dx:-44px;--dy:-44px;animation-delay:70ms"></i><i class="pa2-sp" style="--dx:24px;--dy:-58px;animation-delay:120ms"></i><i class="pa2-sp" style="--dx:-28px;--dy:58px;animation-delay:90ms"></i>' +
+  '<svg class="pa2-crack" viewBox="0 0 100 100" aria-hidden="true"><path d="M44 34 L52 46 L47 52 L57 63 L53 70 L60 80"/></svg>';
 function pa2DieFace(v) {
-  return PA2_D20_SVG + '<text x="50" y="59" text-anchor="middle">' + esc(v == null ? "?" : String(v)) + '</text></svg>';
+  if (!pa2DieLoaded && typeof Image === "function") { pa2DieLoaded = true; try { new Image().src = PA2_DIE_DIR + "d20_roll.webp"; } catch (e) { noteErreur("pa2-view.pa2DieFace", e); } }
+  var n = Math.max(1, Math.min(20, Number(v) || 20));
+  return '<img class="pa2-die-img" src="' + PA2_DIE_DIR + 'd20_vide_' + n + '.webp" alt=""><span class="pa2-die-roll" aria-hidden="true"></span>' +
+    PA2_DIE_FX + '<span class="pa2-die-num">' + esc(v == null ? "?" : String(v)) + '</span>';
 }
 // « Il faut 9+ » ; au-delà de 20, seul le 20 naturel passe ; le 1 rate toujours.
 function pa2NeedText(thr) { return thr >= 20 ? "20" : Math.max(2, Number(thr || 0)) + "+"; }
@@ -1041,7 +1054,7 @@ function pa2Signed(n) { return (n < 0 ? "−" : "+") + Math.abs(n); }
 function pa2DieBlock(r, shown) {
   var nat = shown && !r.rope && !r.pending && r.nat ? r.nat : 0;
   var h = '<div class="pa2-dierow"><div class="pa2-die' + (nat ? " is-nat" + nat : "") + '" id="pa2-die">' + pa2DieFace(r.rope ? 20 : (shown ? r.roll : null)) + '</div><div class="pa2-target">' + esc(_t("Il faut")) +
-    '<b>' + (r.rope ? esc(_t("corde")) : pa2NeedText(r.thr)) + '</b>' + esc(r.rope ? _t("Assuré") : PA2_CRAN_WORD[r.cran] + (r.chance != null ? " · " + r.chance + " %" : "")) + '</div></div>';
+    '<b>' + (r.rope ? esc(_t("corde")) : pa2NeedText(r.thr)) + '</b>' + esc(r.rope ? _t("Assuré") : PA2_CRAN_WORD[r.cran] + (r.chance != null ? " · " + fmtPct(r.chance) : "")) + '</div></div>';
   return h + '<div class="pa2-nat" id="pa2-nat">' + (shown && !r.rope ? pa2NatHTML(r) : "") + '</div>';
 }
 /* Sous le dé : 20 ou 1 naturel, les deux dés de l'avantage, le premier jet d'une relance (v3.578.0). */
@@ -1057,14 +1070,16 @@ function pa2ClassLabel() {
   var hero = typeof getSelectedHero === "function" ? getSelectedHero() : null, cls = hero && typeof getClassForHero === "function" ? getClassForHero(hero) : null;
   return cls ? _td(cls.label) : "";
 }
-/* Le détail du jet : « Puissance +4 · Chevalier +2 · matériel +3 · blessure −2 · DD 12 ». */
+/* Le détail du jet : « Force +4 · Chevalier +2 · objets +3 · blessure −2 · il faut 8 ou plus ».
+   Audit NOV-14 : sans « DD », ni « +0 » ; le chiffre à faire au dé, comme sous le dé. */
 function pa2WhyHTML(o, run) {
-  var parts = [sceneStatLabel(o.stat) + " " + pa2Signed(o.mod || 0)];
+  var parts = [];
+  if (o.mod) parts.push(sceneStatLabel(o.stat) + " " + pa2Signed(o.mod));
   if (o.mastery) parts.push(pa2ClassLabel() + " " + pa2Signed(o.mastery));
-  if (o.items) parts.push(_t("matériel {m}", { m: pa2Signed(o.items) }));
+  if (o.items) parts.push(_t("objets {m}", { m: pa2Signed(o.items) }));
   if (o.wounds) parts.push(_tn(run.wounds, "blessure {m}", "blessures {m}", { m: pa2Signed(-o.wounds) }));
   if (o.adv) parts.push(_t("avantage"));
-  parts.push(_t("DD {d}", { d: o.dd }));
+  parts.push(o.thr >= 20 ? _t("il faut 20") : _t("il faut {n} ou plus", { n: Math.max(2, Number(o.thr || 0)) }));
   return esc(parts.map(function (x) { return x.replace(/ /g, "\u00a0"); }).join(" · ")); // chaque terme reste d'un bloc
 }
 function pa2ActKicker(n, what) {
@@ -1294,7 +1309,7 @@ function pa2QualityBody(run, n, st) {
   else if (r.kind === "autel") line = _t("+{h} PV", { h: pa2Num(r.healed) }) + (wound ? " · " + wound : "");
   else if (r.kind === "trouvaille") line = _t("{n} rejoint tes trouvailles.", { n: _td(PA2_RELICS[r.relic].name) }) + (r.rare ? " " + _t("Et, au fond : {r} +{n}.", { r: pa2RareName(run.worldId), n: r.rare }) : "");
   else if (r.action === "rest") line = _t("+{h} PV · +{b} Souffle", { h: pa2Num(r.healed), b: r.breath }) + (wound ? " · " + wound : "") + ". " + _t("Avantage au prochain jet.");
-  else if (r.action === "cook") line = pa2ItemName(r.ration) + " : " + _t("+{h} PV", { h: pa2Num(r.healed) }) + (wound ? " · " + wound : "");
+  else if (r.action === "cook") line = _t("{a} : {b}", { a: pa2ItemName(r.ration), b: _t("+{h} PV", { h: pa2Num(r.healed) }) }) + (wound ? " · " + wound : "");
   var h = pa2Head(run, n, pa2NodeLabel(run, n), _t("Jet de qualité"));
   h += '<div class="pa2-dierow"><div class="pa2-die" id="pa2-die">' + pa2DieFace(st.shown ? q.roll : null) + '</div><div class="pa2-target">' + esc(_t("Sans échec")) +
     '<b>' + esc(_t("d20")) + '</b>' + esc(_t("16+ : bon · 20 : parfait")) + '</div></div><div class="pa2-nat" id="pa2-nat"></div>';
@@ -1426,15 +1441,17 @@ function pa2Buzz(p) { try { if (navigator.vibrate) navigator.vibrate(p); } catch
 function pa2RollDie(finalVal, then, res) {
   var die = document.getElementById("pa2-die");
   if (!die) { then(); return; }
-  var txt = die.querySelector("text");
-  die.classList.add("is-rolling");
-  var t = setInterval(function () { if (txt) txt.textContent = String(1 + Math.floor(Math.random() * 20)); }, 70);
-  pa2View.timers.push(t);
+  var num = die.querySelector(".pa2-die-num"), img = die.querySelector(".pa2-die-img");
+  die.classList.remove("is-landed", "is-fx20", "is-fx1", "is-nat20", "is-nat1"); die.classList.add("is-rolling"); // v3.673.0 : le dé roule (bande d'images), puis se pose sur la valeur
   pa2Later(function () {
-    clearInterval(t); die.classList.remove("is-rolling");
-    if (txt) txt.textContent = String(finalVal);
+    die.classList.remove("is-rolling");
+    var n = Math.max(1, Math.min(20, Number(finalVal) || 20));
+    if (img) img.src = PA2_DIE_DIR + "d20_vide_" + n + ".webp";
+    if (num) num.textContent = String(finalVal);
+    void die.offsetWidth; die.classList.add("is-landed");
     var nat = res && !res.pending && !res.rope ? res.nat : 0, el = document.getElementById("pa2-nat");
-    if (nat) die.classList.add("is-nat" + nat); // 20 ou 1 naturel
+    if (nat) die.classList.add("is-nat" + nat, "is-fx" + nat); // 20 ou 1 naturel ; is-fx : l'effet ne joue qu'à la pose (v3.674.0)
+    if (nat === 20) pa2Buzz([20, 40, 20]); else if (nat === 1) pa2Buzz(60);
     if (el && res && !res.rope) el.innerHTML = pa2NatHTML(res);
     then();
   }, 800);

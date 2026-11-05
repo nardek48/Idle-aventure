@@ -12,8 +12,29 @@
    Ce fichier ne fait que LIRE et comparer. Les gestes de l'écran (récolter, livrer)
    délèguent à ProductionManager et TavernManager (voir ui/return-view.js). */
 
+var RETURN_STORE_KEY = "aethervale_return_pending"; // CPL1-6 : stockage local, hors sauvegarde
+
 var ReturnManager = {
   _pending: null,
+  _requested: false,
+
+  /* v3.697.0 (CPL1-6, Seb A) : le résumé non vu survit au rechargement (localStorage, par emplacement) ;
+     effacé une fois l'écran fermé ou au changement de héros. */
+  _slot: function () { return (window.HeroSlotManager && typeof HeroSlotManager.getActiveSlot === "function") ? HeroSlotManager.getActiveSlot() : 1; },
+  _store: function (summary) {
+    try { localStorage.setItem(RETURN_STORE_KEY, JSON.stringify({ slot: this._slot(), s: summary })); } catch (e) { noteErreur("return-system._store", e); }
+  },
+  forget: function () {
+    try { localStorage.removeItem(RETURN_STORE_KEY); } catch (e) { noteErreur("return-system.forget", e); }
+  },
+  /* Fin du démarrage : sans nouveau résumé, rouvre celui resté non vu du même héros. */
+  restoreStored: function () {
+    if (this._requested) return false;
+    var d = null;
+    try { d = JSON.parse(localStorage.getItem(RETURN_STORE_KEY) || "null"); } catch (e) { noteErreur("return-system.restoreStored", e); d = null; }
+    if (!d || !d.s || typeof d.s !== "object" || d.slot !== this._slot()) { this.forget(); return false; }
+    return this.request(d.s);
+  },
 
   /* ---------- Photographie AVANT le rattrapage ---------- */
 
@@ -65,6 +86,7 @@ var ReturnManager = {
   hasContent: function (s) {
     if (!s) return false;
     return Object.keys(s.produced || {}).length > 0 || Object.keys(s.crafted || {}).length > 0
+      || Object.keys(s.lost || {}).length > 0 || Object.keys(s.used || {}).length > 0 // v3.688.0 (CPL1-1, CPL1-3)
       || !!s.siteDone || !!s.tavernNew || s.tavernReady > 0 || s.hpGain > 0 || s.patrolsBack > 0;
   },
 
@@ -77,6 +99,8 @@ var ReturnManager = {
 
   request: function (summary) {
     if (!this.hasContent(summary)) return false;
+    this._requested = true;
+    this._store(summary);
     if (this.isHeroEngaged()) {
       this._pending = summary;
       if (typeof renderReturnPending === "function") renderReturnPending(true);
@@ -89,6 +113,14 @@ var ReturnManager = {
   },
 
   hasPending: function () { return !!this._pending; },
+
+  /* Audit 04/11 (SAVE-14) : changement ou effacement de héros, le retour en attente n'est plus le sien. */
+  clear: function () {
+    this.forget();
+    if (!this._pending) return;
+    this._pending = null;
+    if (typeof renderReturnPending === "function") renderReturnPending(false);
+  },
 
   /* Appelé une fois par seconde par la vue tant qu'un retour attend. */
   flushPending: function () {
@@ -135,4 +167,5 @@ var RETURN_WORLD_LINES = {
 };
 
 window.ReturnManager = ReturnManager;
+window.RETURN_STORE_KEY = RETURN_STORE_KEY;
 window.RETURN_WORLD_LINES = RETURN_WORLD_LINES;

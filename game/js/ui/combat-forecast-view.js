@@ -26,6 +26,7 @@ window.getHeroHpRatio = getHeroHpRatio;
 /* Soigner = aller au Campement (rations, régénération) : ferme l'overlay sans lancer. */
 function goHealFromForecast() {
   closeCombatForecast();
+  if (typeof campTab !== "undefined") campTab = "feu"; // v3.683.0 (audit NOV-8) : droit au feu (santé, rations), pas aux Missions
   if (typeof switchTab === "function") switchTab("campement");
 }
 window.goHealFromForecast = goHealFromForecast;
@@ -134,12 +135,17 @@ function launchWithForecast(mission, action) {
   // v3.265.0 : PV sous le seuil -> avertissement même sur un combat abordable
   var lowHp = getHeroHpRatio() < FORECAST_LOW_HP_PCT;
   if (!lowHp && CombatForecast.getLevelDef(f.id).level < 2) return action();
-  openCombatForecastConfirm(f, {
-    title: mission.title || _t("Avant de partir"),
-    confirmLabel: (f.unwinnable || lowHp) ? _t("Partir quand même") : _t("Partir"),
-    lowHp: lowHp,
-    onConfirm: action
-  });
+  var open = function () {
+    openCombatForecastConfirm(f, {
+      title: mission.title || _t("Avant de partir"),
+      confirmLabel: (f.unwinnable || lowHp) ? _t("Partir quand même") : _t("Partir"),
+      lowHp: lowHp,
+      onConfirm: action
+    });
+  };
+  // v3.704.0 (TUTO-16) : la première fois, la fiche du pronostic d'abord ; « Compris » ouvre le pronostic
+  if (typeof openGenericTutorialOnce === "function" && openGenericTutorialOnce("combat_forecast", { after: open })) return;
+  open();
 }
 window.launchWithForecast = launchWithForecast;
 
@@ -221,10 +227,6 @@ function etCreaturesFor(ctx) {
     var aq = window.ADVENTURE_QUESTS && ADVENTURE_QUESTS[ctx.id];
     return aq ? etQuestCreatures(aq) : [];
   }
-  if (ctx.type === "hunt") {
-    var hq = window.HUNT_QUESTS && HUNT_QUESTS[ctx.id];
-    return hq ? etQuestCreatures(hq) : [];
-  }
   if (ctx.type === "elite") { var eo = []; etPushElite(eo, ctx.id); return eo; }
   if (ctx.type === "dungeon") {
     var d = (window.DUNGEONS || []).filter(function (x) { return x.id === Number(ctx.id); })[0];
@@ -303,7 +305,7 @@ function etDescribe(c) {
 
 /* Mécaniques posées par la quête elle-même, sur ses rencontres (morts qui dorment, chaînes des Nécromanciens). */
 function etQuestTraits(ctx) {
-  var q = ctx && (ctx.type === "adventure" || ctx.type === "hunt") ? (ctx.type === "adventure" ? window.ADVENTURE_QUESTS : window.HUNT_QUESTS || {})[ctx.id] : null;
+  var q = ctx && ctx.type === "adventure" ? (window.ADVENTURE_QUESTS || {})[ctx.id] : null;
   var out = [];
   if (!q) return out;
   if ((q.encounters || []).some(function (e) { return e && e.sleepers; })) out.push({ trait: "asleep", name: _t("Des morts qui dorment") });

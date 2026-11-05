@@ -7,6 +7,7 @@
 
 var PA2_STATUS = { prep: "pa2-prep", map: "pa2-map", node: "pa2-node", trap: "pa2-trap", done: "completed" }; // v3.467.0 : arrêté sur un piège
 
+var PA2_DRAW_FREEZE_MS = 4 * 3600 * 1000; // QA-7 : durée du tirage figé par secteur
 var Pa2Run = {
   /* ---------- Outils ---------- */
 
@@ -250,6 +251,24 @@ var Pa2Run = {
     return id;
   },
 
+  /* v3.697.0 (QA-7, Seb A) : carte, accroche et nuit figées 4 h par secteur, dans le coffre (déjà sauvegardé
+     en entier) ; annuler la préparation et revenir redonne le même tirage. Le départ le consomme. */
+  _drawKey: function (run) { return run.livingMap ? run.livingMap.mapId + "/" + run.livingMap.sectorId : "t/" + run.templateId; },
+  _applyDraw: function (run, maps, hooks, worldId) {
+    var ch = this.ensureChest(), key = this._drawKey(run);
+    if (!ch.draws || typeof ch.draws !== "object") ch.draws = {};
+    var d = ch.draws[key], now = Date.now();
+    var hookOk = d && (d.hookId === null || (PA2_HOOKS[d.hookId] && hooks.indexOf(d.hookId) >= 0 && !(PA2_HOOKS[d.hookId].storyFlag && (game.explorationProgression || {})[PA2_HOOKS[d.hookId].storyFlag.key])));
+    if (d && now - Number(d.at || 0) >= 0 && now - Number(d.at || 0) < PA2_DRAW_FREEZE_MS && maps.indexOf(d.mapId) >= 0 && hookOk) {
+      run.mapId = d.mapId; run.hookId = d.hookId; run.cond = d.cond;
+      return;
+    }
+    run.mapId = this._pick(maps);
+    run.hookId = this._drawHook(hooks);
+    run.cond = this._drawCondition(worldId); // v3.469.0 : condition du run, annoncée sur la préparation
+    ch.draws[key] = { at: now, mapId: run.mapId, hookId: run.hookId, cond: run.cond };
+  },
+
   /* ---------- Démarrage (appelé par SceneRunManager.startRun) ---------- */
 
   start: function (templateId, opts) {
@@ -274,9 +293,7 @@ var Pa2Run = {
       pa2: true,
       status: PA2_STATUS.prep,
       worldId: worldId,
-      mapId: this._pick(maps),
-      hookId: this._drawHook(hooks),
-      cond: this._drawCondition(worldId), // v3.469.0 : condition du run, annoncée sur la préparation
+      mapId: null, hookId: null, cond: null, // tirés plus bas (QA-7 : tirage figé par secteur)
       ring: ringId,
       level: level,
       band: this.levelBand(level, worldId),
@@ -292,6 +309,7 @@ var Pa2Run = {
       livingMapReport: null,
       lastResult: null, end: null
     };
+    this._applyDraw(run, maps, hooks, worldId);
     game.sceneRun = run;
     this.heroScale(run); // v3.423.0 (A) : figé au départ
     this._save();
@@ -465,6 +483,7 @@ var Pa2Run = {
     if (this.worldRule(run, "lava") && !par) { run.lavaRow = this.node(run.at, run).row - Number(PA2_RULES.lavaStartBehind || 1) + Number(this.condFx(run, "lavaStart") || 0); run.lavaSteps = 0; }
     if (!par && !storyFree) { SceneRunManager._consumePetiteAventureSlot(); run.paSlotDay = SceneRunManager._today(); } // offerte : pas de place prise, rien à rendre en cas d'échec
     run.storyFree = storyFree;
+    if (!par && this.ensureChest().draws) delete this.ensureChest().draws[this._drawKey(run)]; // QA-7 : tirage joué, le prochain sera neuf
     if (window.SortieManager) SortieManager.start("scene");
     run.status = PA2_STATUS.map;
     this._save();
@@ -512,10 +531,12 @@ var Pa2Run = {
   },
   // Étapes d'un parcours : gabarit, ennemi, source pleine et texte, posés depuis le canevas.
   _parcoursSteps: function (run, nodes) {
-    var t = SceneEngine.getTemplate(run.templateId), pool = (t.pools && t.pools.obstacle) || PA2_OBSTACLES[run.worldId] || PA2_OBSTACLES.forest, self = this;
+    var t = SceneEngine.getTemplate(run.templateId), pool = (t.pools && t.pools.obstacle) || PA2_OBSTACLES[run.worldId] || PA2_OBSTACLES.forest, self = this, left = [];
+    // audit NOV-26 : tirage sans remise tant que le vivier suffit (plus le même obstacle deux fois de suite)
+    var draw = function () { if (!left.length) left = pool.slice(); var g = self._pick(left); left.splice(left.indexOf(g), 1); return g; };
     t.parcours.steps.forEach(function (st, i) {
       var n = nodes["P" + i];
-      if (st.type === "obstacle") n.gabaritId = st.gabaritId || self._pick(pool);
+      if (st.type === "obstacle") n.gabaritId = st.gabaritId || draw();
       if (st.type === "combat") { n.foeId = st.foe; n.pack = Number(st.pack || 1); }
       if (st.fullBreath) n.fullBreath = true;
       if (st.text) n.narr = st.text;
@@ -1705,4 +1726,5 @@ var Pa2Run = {
 };
 
 window.PA2_STATUS = PA2_STATUS;
+window.PA2_DRAW_FREEZE_MS = PA2_DRAW_FREEZE_MS;
 window.Pa2Run = Pa2Run;

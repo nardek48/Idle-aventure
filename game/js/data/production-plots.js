@@ -17,7 +17,7 @@
    rowUpgradeCostMult = [1.0, 1.8, 3.2], appliqué comme multiplicateur sur le coût de BASE
    (niveau 1->2), la courbe ×upgradeCostMultPerLevel par niveau continue de s'appliquer
    par-dessus sans changement.
-   Logique : systems/production-plots-system.js. Détail : COMMENTAIRES_ORIGINAUX.md */
+   Logique : systems/production-plots-system.js. */
 
 /* Profils et bonus d'amélioration : communs aux 6 bâtiments, valeurs identiques à Champs
    (décision validée avec Seb — même mécanique, mêmes formules, mêmes montants). */

@@ -1,5 +1,5 @@
 "use strict";
-/* data/equipment.js — base équipement procédural (7 emplacements), raretés, bonus de set. Détail complet : COMMENTAIRES_ORIGINAUX.md */
+/* data/equipment.js — base équipement procédural (7 emplacements), raretés, bonus de set. */
 
 var RARITY_COLORS = {
   common: "#9ca3af",

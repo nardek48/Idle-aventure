@@ -196,7 +196,8 @@ var VILLAGE_BUILDINGS = {
     effectLabel: function (level) {
       // v3.248.0 : le socle sans bâtiment est passé à 20 (voir getTrainingCapLevels)
       var base = (typeof TRAINING_BASE_CAP === "number") ? TRAINING_BASE_CAP : 20;
-      return _t("Plafond d'entraînement : {n} par caractéristique", { n: Math.min(window.TRAINING_HARD_CAP || 150, base + 10 * level) }); // H1 : 200
+      var n = Math.min(window.TRAINING_HARD_CAP || 150, base + 10 * level); // H1 : 200 ; v3.683.0 (NOV-17) : les trois autres à 70 %
+      return _t("Plafond d'entraînement : {n}", { n: _t("{a} pour ta caractéristique de classe et l'Endurance, {b} pour les autres", { a: n, b: Math.floor(n * (window.TRAINING_SECONDARY_SHARE || 1)) }) });
     }
   },
 
@@ -421,7 +422,7 @@ var VILLAGE_BUILDINGS = {
        (TavernManager.getSlotCount) — chaque chantier se voit tout de suite sur le tableau. */
     maxLevel: 6, // v3.456.9 (décision Seb) : le niveau 6 à l'acte III de la Crypte (Cire consacrée)
     implemented: true,
-    desc: "Un tableau de contrats de livraison, renouvelé toutes les 6 heures. Avec la caravane de la Halle marchande, c'est le débouché du surplus de Production : l'Entrepôt ne rachète plus rien.",
+    desc: "Un tableau de contrats de livraison, renouvelé toutes les 6 heures. Avec la caravane de la Halle marchande, c'est le débouché du surplus de Production : l'Entrepôt ne rachète rien.",
     costTiers: [
       {
         minLevel: 0, maxLevel: 2,

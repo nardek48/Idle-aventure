@@ -44,6 +44,7 @@ var TutorialCatalogManager = {
       entries.push({
         id: "generic:" + key,
         source: "generic",
+        section: GENERIC_TUTORIALS[key].section || "generic", // v3.704.0 (TUTO-16) : Taverne et événements au « village »
         genericId: key,
         tutorial: GENERIC_TUTORIALS[key]
       });
@@ -73,8 +74,11 @@ var TutorialCatalogManager = {
     return this._collectStory().concat(this._collectGeneric(), this._collectVillage());
   },
 
+  /* v3.704.0 (TUTO-16) : la section vient de entry.section (fiches génériques) ou de la source ;
+     les entrées de la source même passent en tête (quêtes de village avant Taverne et événements). */
   getBySection: function (sectionId) {
-    return this.getAll().filter(function (entry) { return entry.source === sectionId; });
+    var all = this.getAll().filter(function (entry) { return (entry.section || entry.source) === sectionId; });
+    return all.filter(function (e) { return e.source === sectionId; }).concat(all.filter(function (e) { return e.source !== sectionId; }));
   },
 
   getById: function (id) {

@@ -1,8 +1,7 @@
 "use strict";
 /* ui/camp-view.js — écran Campement (page d'accueil, v3.7 ; hub v3.103.1) : feu de camp (repos long/court), tableau de
-   missions (MissionBoard.top(3), LIGNE_DIRECTRICE §3). Accès rapides supprimés v3.181.0. Détail : COMMENTAIRES_ORIGINAUX.md */
+   missions (MissionBoard.top(3), LIGNE_DIRECTRICE §3). Accès rapides supprimés v3.181.0. */
 
-var CAMP_MISSION_TYPE_LABEL = { combat: _t("Combat"), expedition: _t("Expédition"), chasse: _t("Chasse", "quête"), donjon: _t("Donjon") };
 var CAMP_MISSION_STATUS_CLASS = { claimable: "is-claimable", running: "is-running", accepted: "is-running", available: "" };
 
 function buildCampMissionActionHTML(m) {
@@ -22,8 +21,49 @@ function buildCampMissionActionHTML(m) {
   return "";
 }
 
+/* Audit SUIV-11 (ERG-5 point 2) : ce que le départ consomme, et le stock, avant de toucher « Partir ». */
+function buildCampMissionCostHTML(cost) {
+  if (!cost || !cost.resourceId) return "";
+  var def = (window.WAREHOUSE_RESOURCES || {})[cost.resourceId] || {}, need = Number(cost.amount || 0);
+  var have = (window.WarehouseManager && WarehouseManager.getAmount) ? Number(WarehouseManager.getAmount(cost.resourceId) || 0) : 0;
+  return '<div class="camp-mission-cost' + (have < need ? ' is-short' : '') + '">' + renderIconOrEmojiHTML(def.icon || "images/Icons/quests/ration_reward.webp", "ico-inline", "")
+    + ' ' + esc(_t("Départ : {x} ×{n} · stock {h}", { x: def.name ? _td(def.name) : cost.resourceId, n: need, h: formatNumber(have) })) + '</div>';
+}
+window.buildCampMissionCostHTML = buildCampMissionCostHTML;
+
+/* v3.704.0 (NOV-2, Seb A) : récit de l'étape d'Histoire sur la carte du Camp. Pli ouvert par chapitre,
+   gardé le temps de la session (pas d'état sauvegardé). */
+var campStoryFoldOpen = {};
+function campStoryStepOf(m) {
+  if (!m || m.sourceKind !== "story" || !window.StoryQuestManager) return null;
+  var step = StoryQuestManager.getCurrentStep(m.worldId);
+  return step && step.narrative && step.narrative.objective ? step : null;
+}
+// La première phrase du récit (le reste vient avec le pli)
+function campStoryLead(text) {
+  var t = String(text || ""), k = t.search(/[.!?…](\s|$)/);
+  return k >= 0 ? t.slice(0, k + 1) : t;
+}
+function buildCampStoryFoldHTML(m, step) {
+  var open = !!campStoryFoldOpen[m.worldId], acc = m.status !== "available";
+  var lines = acc && step.narrative.dialogue ? step.narrative.dialogue.filter(Boolean).length : 0;
+  var h = '<div class="nv2-recit"><button type="button" class="nv2-fold" aria-expanded="' + open + '" onclick="toggleCampStoryFold(this, \'' + esc(m.worldId) + '\')">'
+    + '<span>' + _t("Récit") + '</span>' + (lines ? '<small>' + esc(_tn(lines, "{n} réplique", "{n} répliques")) + '</small>' : '') + '<i>▸</i></button>';
+  h += '<div class="nv2-body"' + (open ? '' : ' hidden') + '><div class="story-step-text">' + esc(_td(step.narrative.objective)) + '</div>';
+  if (acc && typeof buildStoryDialogueHTML === "function") h += buildStoryDialogueHTML(step); // répliques une fois l'étape acceptée, comme dans Quêtes
+  return h + '</div></div>';
+}
+function toggleCampStoryFold(btn, id) {
+  var open = !campStoryFoldOpen[id], body = btn && btn.parentNode ? btn.parentNode.querySelector(".nv2-body") : null;
+  campStoryFoldOpen[id] = open;
+  if (btn) btn.setAttribute("aria-expanded", String(open));
+  if (body) { if (open) body.removeAttribute("hidden"); else body.setAttribute("hidden", ""); }
+}
+window.toggleCampStoryFold = toggleCampStoryFold;
+
 function buildCampMissionCardHTML(m) {
   var cls = CAMP_MISSION_STATUS_CLASS[m.status] || "";
+  var story = campStoryStepOf(m);
   var h = '<div class="camp-mission-card ' + cls + (m.isMain ? ' is-main' : '') + '">';
   h += '<div class="camp-mission-head">';
   h += '<span class="camp-mission-icon">' + renderIconOrEmojiHTML(MissionBoard.typeIcon(m.type), "camp-mission-icon-img", _td(m.title)) + '</span>';
@@ -35,6 +75,7 @@ function buildCampMissionCardHTML(m) {
   if (m.place) h += '<div class="camp-mission-place">' + esc(_td(m.place)) + '</div>';
   h += '</div>';
   h += '</div>';
+  if (story) h += '<div class="nv2-lead">' + esc(campStoryLead(_td(story.narrative.objective))) + '</div>';
   // v3.234.0 (retour Seb) : le `||` faisait gagner le compteur dès qu'il existait,
   // et objectiveLabel — le seul champ qui dit QUOI FAIRE — disparaissait. Sur une
   // quête de village, progress() renvoie un « 0/2 » nu : la carte ne disait plus rien.
@@ -42,7 +83,9 @@ function buildCampMissionCardHTML(m) {
   var objective = m.objectiveLabel || "";
   if (enCours && m.progressLabel) objective = objective ? (objective + " \u2014 " + m.progressLabel) : m.progressLabel;
   if (objective) h += '<div class="camp-mission-objective">' + esc(objective) + '</div>';
+  if (story) h += buildCampStoryFoldHTML(m, story);
   if (m.rewardSummary) h += '<div class="camp-mission-reward"><img class=ico-inline src=images/Icons/dungeon/dungeon_guaranteed_loot.webp> ' + esc(m.rewardSummary) + '</div>';
+  h += buildCampMissionCostHTML(m.entryCost);
   h += buildCampMissionActionHTML(m);
   h += '</div>';
   return h;
@@ -96,9 +139,9 @@ window.campRationEmpty = campRationEmpty;
 /* v3.411.0 : onglet ouvert du Campement (retenu pendant la session). */
 var CAMP_TABS = [
   { key: "feu", label: _t("Le feu"), icon: "images/Icons/camp/campfire.webp" }, // v3.594.0 (atelier camp-carte, choix Seb) : santé, rations, compagnons
-  { key: "missions", label: _t("Missions"), icon: "images/Icons/quests/quest_list.webp" },
-  { key: "depart", label: _t("Expéditions"), icon: "images/Icons/quests/start_expedition.webp" }, // v3.426.0 : était « Départ »
-  { key: "grimoire", label: _t("Grimoire"), icon: "images/Icons/system/grimoire.webp" }
+  { key: "missions", label: _t("Mis\u00ADsions", "sous-onglet"), icon: "images/Icons/quests/quest_list.webp" },
+  { key: "depart", label: _t("Expé\u00ADdi\u00ADtions", "sous-onglet"), icon: "images/Icons/quests/start_expedition.webp" }, // v3.426.0 : était « Départ »
+  { key: "grimoire", label: _t("Gri\u00ADmoire", "sous-onglet"), icon: "images/Icons/system/grimoire.webp" }
 ];
 var campTab = "missions";
 var campShownTab = null; // v3.426.0 : l'onglet réellement affiché au dernier rendu
@@ -128,6 +171,7 @@ function buildCampHTML(tab) {
 
   if (game.justDied) {
     h += '<div class="camp-death-banner"><img class="ico-lg" src="images/Icons/camp/hero_defeated.webp" alt=""> ' + _t("Tu es à terre. Mange une ration, ou laisse le feu faire son œuvre, avant de repartir.") + '</div>';
+    if (typeof takeDefeatResourceTipHTML === "function") h += takeDefeatResourceTipHTML(); // v3.689.0 (COMB-4) : astuce de défaite
     game.justDied = false;
   }
 
@@ -163,14 +207,14 @@ function buildCampHTML(tab) {
     h += '<div class="camp-mates">';
     campMates.forEach(function (id) {
       var def = getCompanionDef(id), mx = Math.max(1, CompanionManager.maxHpOf(id)), cur = CompanionManager.hpOf(id);
-      h += '<div class="camp-mate">' + renderIconOrEmojiHTML(def.image, "camp-mate-ico", _td(def.name)) + '<span>' + esc(_td(def.name)) + '</span>'
+      h += '<div class="camp-mate">' + smallPortraitHTML(def.image, "camp-mate-ico", _td(def.name)) + '<span>' + esc(_td(def.name)) + '</span>'
         + '<div class="kgauge kgauge-thin kgauge-hp"><div class="kgauge-track"><div class="kgauge-fill" id="camp-comp-hp-' + esc(id) + '" style="width:' + Math.max(0, Math.min(100, cur / mx * 100)) + '%"></div></div></div></div>';
     });
     h += '</div>';
   }
   var teamFull = window.CampManager ? CampManager.teamFull() : hpFull;
 
-  var campLock = (window.heroLockReason && heroLockReason()) || null; // v3.307.0
+  var campLock = (window.CampManager && CampManager.rationLockReason()) || null; // v3.307.0 ; audit 04/11 (QA-8) : sortie de combat
   if (campLock) h += '<div class="camp-lock-note"><img class="ico-inline" src="images/Icons/system/hero_away.webp" alt=""> ' + esc(campLock) + '</div>';
   h += '<div class="camp-ration-row">';
   rationOptions.forEach(function (r) {
@@ -178,7 +222,7 @@ function buildCampHTML(tab) {
     var healValue = Math.floor(maxHp * r.healPct);
     var canEat = r.amount >= 1 && !teamFull && !campLock;
     h += '<button type="button" class="camp-ration-ib' + (r.amount < 1 ? ' is-empty' : '') + '"'
-      + ' title="' + esc(_td(r.name) + " · " + Math.round(r.healPct * 100) + " %") + '" aria-label="' + esc(_t("Manger : {x}", { x: _td(r.name) })) + '"'
+      + ' title="' + esc(_td(r.name) + " · " + fmtPct(Math.round(r.healPct * 100))) + '" aria-label="' + esc(_t("Manger : {x}", { x: _td(r.name) })) + '"'
       // v3.458.3 (audit C9) : une ration à 0 dit où elle se prépare, au lieu d'un bouton muet
       + (canEat ? ' onclick="CampManager.eatRation(\'' + esc(r.id) + '\');"' : (r.amount < 1 ? ' onclick="campRationEmpty()"' : ' disabled')) + '>';
     h += renderIconOrEmojiHTML(def.icon || "images/Icons/quests/ration_reward.webp", "camp-ration-ib-img", _td(r.name));
@@ -374,7 +418,7 @@ function campFeuStoryHTML(campMates) {
     // v3.601.0 (M1) : toucher ouvre la liste des sujets ; « … » quand il a quelque chose de nouveau à dire
     var def = getCompanionDef(id), news = window.CompanionTalkManager && typeof CompanionTalkManager.hasNewTopic === "function" && CompanionTalkManager.hasNewTopic(id);
     return '<button type="button" class="camp-feu-mate" onclick="openCompanionMenu(\'' + esc(id) + '\')">'
-      + renderIconOrEmojiHTML(def.image, "camp-feu-img", _td(def.name)) + (news ? '<i class="camp-feu-talk">…</i>' : '') + '<span>' + esc(_td(def.name)) + '</span></button>';
+      + smallPortraitHTML(def.image, "camp-feu-img", _td(def.name)) + (news ? '<i class="camp-feu-talk">…</i>' : '') + '<span>' + esc(_td(def.name)) + '</span></button>';
   };
   h += '<div class="camp-card camp-feu"><div class="camp-soir-k">' + esc(_t("Au coin du feu")) + '</div><div class="camp-feu-row">'
     + ids.slice(0, half).map(mate).join("") + '<img class="camp-feu-fire" src="images/Icons/camp/campfire.webp" alt="">' + ids.slice(half).map(mate).join("") + '</div>'
@@ -403,13 +447,13 @@ function campWideBar(cur, max, id) { // id : barre tenue à jour par CampManager
 // Le héros et les compagnons qui partent avec lui, puis ceux restés au camp, puis les rations
 function campWideTeamHTML(maxHp, hp, rations, teamFull, campLock, campMates) {
   var hero = typeof getSelectedHero === "function" ? getSelectedHero() : null, cls = hero && typeof getClassForHero === "function" ? getClassForHero(hero) : null;
-  var h = '<div class="cw-team"><div class="cw-mb">' + renderIconOrEmojiHTML((hero && hero.image) || "", "cw-mb-img", "")
+  var h = '<div class="cw-team"><div class="cw-mb">' + smallPortraitHTML((hero && hero.image) || "", "cw-mb-img", "")
     + '<div class="cw-mb-nm"><b>' + esc(game.playerName || "") + '</b><small>' + esc((cls ? _td(cls.label) + " · " : "") + _t("niv. {n}", { n: Number(game.heroLevel || 1) })) + '</small></div>'
     + '<div class="cw-mb-row">' + campWideBar(hp, maxHp, "camp-hp-fill") + '<span id="camp-fire-hp-value">' + formatNumber(Math.floor(hp)) + ' / ' + formatNumber(maxHp) + '</span></div></div>';
   var CM = window.CompanionManager, party = CM ? CM.partyIds() : [];
   party.forEach(function (id) {
     var def = getCompanionDef(id), mx = Math.max(1, CM.maxHpOf(id)), cur = CM.hpOf(id);
-    h += '<div class="cw-mb">' + renderIconOrEmojiHTML(def.image, "cw-mb-img", "")
+    h += '<div class="cw-mb">' + smallPortraitHTML(def.image, "cw-mb-img", "")
       + '<div class="cw-mb-nm"><b>' + esc(_td(def.name)) + '</b><small>' + esc(def.skill ? _td(def.skill.name) : "") + '</small><span class="cw-pill">' + esc(_t("avec toi")) + '</span></div>'
       + '<div class="cw-mb-row">' + campWideBar(cur, mx, "camp-comp-hp-" + esc(id)) + '<span>' + formatNumber(Math.floor(cur)) + ' / ' + formatNumber(mx) + '</span></div></div>';
   });
@@ -419,7 +463,7 @@ function campWideTeamHTML(maxHp, hp, rations, teamFull, campLock, campMates) {
     h += '<div class="cw-others">' + esc(_t("Au camp :"));
     others.forEach(function (id) {
       var def = getCompanionDef(id), mx = Math.max(1, CM.maxHpOf(id)), cur = Math.floor(CM.hpOf(id));
-      h += '<span>' + renderIconOrEmojiHTML(def.image, "", "") + esc(_td(def.name)) + (cur < mx ? ' ' + formatNumber(cur) + ' / ' + formatNumber(mx) : '') + '</span>';
+      h += '<span>' + smallPortraitHTML(def.image, "", "") + esc(_td(def.name)) + (cur < mx ? ' ' + formatNumber(cur) + ' / ' + formatNumber(mx) : '') + '</span>';
     });
     h += '</div>';
   }

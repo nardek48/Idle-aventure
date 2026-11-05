@@ -167,11 +167,12 @@ var MemoryManager = {
   },
 
   /* ---------- Gains d'Aether ---------- */
+  aetherMult: function () { return this.has("memoire_vive") ? 1.25 : 1; },
   gainAether: function (amount, label) {
     amount = Number(amount) || 0;
     if (amount <= 0) return 0;
     var m = this.ensure();
-    var raw = amount * (this.has("memoire_vive") ? 1.25 : 1) + m.carry; // Mémoire vive : tout l'Aether
+    var raw = amount * this.aetherMult() + m.carry; // Mémoire vive : tout l'Aether
     var gained = Math.floor(raw + 1e-9);
     m.carry = raw - gained;
     if (gained <= 0) return 0;
@@ -182,10 +183,12 @@ var MemoryManager = {
     return gained;
   },
 
-  /* Un niveau atteint s'annonce une fois ; le choix se fait dans l'écran de Mémoire. */
+  /* Un niveau atteint s'annonce une fois ; le choix se fait dans l'écran de Mémoire.
+     v3.683.0 (audit TUTO-4) : rien tant que l'écran est fermé ; switchTab rattrape l'annonce (before = -1). */
   announceLevels: function (before) {
     var m = this.ensure(), now = this.getLevel();
     if (now <= before || now <= m.announced) return;
+    if (typeof isTabUnlocked === "function" && !isTabUnlocked("ascension")) return;
     m.announced = now;
     addLog("🌟 " + _t("Niveau de Mémoire {n} atteint : un choix t'attend (Héros › Mémoire).", { n: now }), "event");
     if (typeof showToast === "function") showToast("🌟 " + _t("Mémoire niveau {n} : un choix t'attend", { n: now }), 2600);
@@ -263,10 +266,10 @@ var MemoryManager = {
     return total;
   },
 
-  /* Somme affichée avant « Tout offrir » (valeur sans le hasard de la Main offrante). */
+  /* Somme affichée avant « Tout offrir » (valeur sans le hasard de la Main offrante). Audit CPL2-6 : Mémoire vive comprise. */
   previewOfferAll: function () {
     var self = this;
-    return Math.floor((game.inventory || []).reduce(function (s, it) { return s + (it && !it.unique ? self.rollOfferingValue(it) : 0); }, 0));
+    return Math.floor((game.inventory || []).reduce(function (s, it) { return s + (it && !it.unique ? self.rollOfferingValue(it) : 0); }, 0) * this.aetherMult() + 1e-9);
   }
 };
 

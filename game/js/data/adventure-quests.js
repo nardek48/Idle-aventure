@@ -1,6 +1,6 @@
 "use strict";
 /* data/adventure-quests.js — quêtes scopées à une aventure précise (worldId+adventureIndex), séparées de world-quests.js.
-   Logique : systems/adventure-quest-system.js. Détail complet : COMMENTAIRES_ORIGINAUX.md */
+   Logique : systems/adventure-quest-system.js. */
 
 var ADVENTURE_QUESTS = {
   // v3.109.0 : aq_forest_scout (« Éclaireur de la Lisière ») supprimée — jamais liée à l'Histoire, donc invisible depuis 3.107.4.
@@ -603,7 +603,7 @@ var ADVENTURE_QUESTS = {
     story: "Une porte basse au fond de la maison. Elle se remonte plus vite que les autres.",
     icon: "./images/Icons/quest_icons/exploration/exploration1.webp",
     steps: [
-      { id: "rencontres_salle", type: "encounter", worldId: "ruins", target: 4, desc: "Vaincre {target} rencontres au Sanctuaire enseveli" }
+      { id: "rencontres_salle", type: "encounter", worldId: "ruins", target: 4, desc: "Vaincre {target} rencontres à la Nef ensevelie" }
     ],
     reward: {}
   },
@@ -637,7 +637,7 @@ var ADVENTURE_QUESTS = {
     story: "Sous la ville, une salle qui se refait chaque nuit et n'est jamais finie. Devant, une masse de pierre qui a des bras.",
     icon: "./images/Icons/quest_icons/elite/elite_golem.webp",
     steps: [
-      { id: "rencontres_golem", type: "encounter", worldId: "ruins", target: 3, desc: "Vaincre {target} rencontres au Sanctuaire enseveli" },
+      { id: "rencontres_golem", type: "encounter", worldId: "ruins", target: 3, desc: "Vaincre {target} rencontres à la Nef ensevelie" },
       { id: "elite_golem", type: "eliteKill", eliteId: "golem", target: 1, desc: "Vaincre le Golem" }
     ],
     reward: {}
@@ -993,8 +993,9 @@ var ADVENTURE_QUESTS = {
     bossId: "ancientdragon",
     // banc (montagne-acte3-bench --quetes, sauvegardes de fin de chapitre, 10 runs, Ch. / Rô. / Ma.) : 2,1 / 0,85 -> 60 / 100 / 10 % ;
     // 1,8 / 0,75 -> 100 / 100 / 50 % ; 1,6 / 0,65 -> 100 / 100 / 80 %. Retenu entre les deux, pour le Mage.
-    bossHpMult: 3.5, // H1 (R1) : 1,7 → 2,5 ; audit P1 : → 3,5
-    bossPowerMult: 0.94, // H1 (R1) : 0,7 → 0,75 ; lot 6 (Seb) : +25 % (robot repris à montagne_19 : 38 → 42 % de PV restants, 0 mort sur 30)
+    bossHpMult: 2.6, // audit P1 : 3,5 ; DRAGON-V2 (Seb, 05/11, option A) : → 2,6
+    bossPowerMult: 0.7, // lot 6 : 0,94 ; DRAGON-V2 (Seb, 05/11) : → 0,70, sort Rôdeur et Mage du mur
+    classPowerMult: { mage: 0.8 }, // MAGE-DRAGON (Seb, 05/11, option A) : le Mage encaisse 150 PV/coup contre ~80 ; ×0,8 sur rencontres et Dragon
     bossPhases: [
       { atPct: 1, sorts: true, label: "il regarde vos mains", line: "Ses yeux passent sur chacun, et s'arrêtent sur les mains." },
       { atPct: 0.75, heat: 1, label: "la roche chauffe", line: "Sous lui, les veines battent plus vite." },

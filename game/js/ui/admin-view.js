@@ -100,8 +100,8 @@ function buildAdminHTML() {
   return '<div class="nb-page-frame admin-root kframe-page" data-kf-title="Admin">' + h + '</div>';
 }
 
-/* Catalogue des combats relançables : quêtes d'aventure (kill / boss / élite) et quêtes
-   de chasse. Les étapes d'Histoire ne sont pas listées — elles n'ont pas de run propre,
+/* Catalogue des combats relançables : quêtes d'aventure (kill / boss / élite).
+   Les étapes d'Histoire ne sont pas listées — elles n'ont pas de run propre,
    elles s'appuient sur le farm ou sur l'une de ces quêtes. */
 function getAdminCombatQuests() {
   var out = [];
@@ -115,13 +115,6 @@ function getAdminCombatQuests() {
         label: (q.name || id) + (monde ? " — " + monde.name : ""),
         groupe: Array.isArray(q.group) ? q.group.length : 1
       });
-    });
-  }
-  if (window.HUNT_QUESTS) {
-    Object.keys(HUNT_QUESTS).forEach(function (id) {
-      var q = HUNT_QUESTS[id];
-      if (!q) return;
-      out.push({ id: id, kind: "hunt", label: "🏹 " + (q.name || id), groupe: Array.isArray(q.group) ? q.group.length : 1 });
     });
   }
   out.sort(function (a, b) { return a.label.localeCompare(b.label); });
@@ -155,8 +148,6 @@ function adminReplayCombatQuest() {
   /* Un run déjà en cours doit être abandonné, sinon deux moteurs se disputeraient l'ennemi. */
   if (window.AdventureQuestManager && game.adventureQuestRun && game.adventureQuestRun.active
     && typeof AdventureQuestManager.forfeit === "function") AdventureQuestManager.forfeit();
-  if (window.HuntQuestManager && game.huntRun && game.huntRun.active
-    && typeof HuntQuestManager.stop === "function") HuntQuestManager.stop();
 
   if (kind === "adventure") {
     var q = (window.ADVENTURE_QUESTS || {})[id];
@@ -168,9 +159,6 @@ function adminReplayCombatQuest() {
       (q.steps || []).forEach(function (s) { game.adventureQuestProgress[id][s.id] = 0; });
     }
     AdventureQuestManager.start(id);
-  } else if (kind === "hunt") {
-    if (!window.HuntQuestManager) return;
-    HuntQuestManager.start(id);
   }
 
   if (typeof showToast === "function") showToast("⚔️ Combat relancé", 1400);
@@ -429,13 +417,26 @@ function buildAdminStoryHTML() {
 /* Contenu répétable ou partagé que le check lit, et que l'avance forcée doit poser à la
    place du joueur : ce que la suite du jeu relit (monde, donjons, drapeaux, secteurs). */
 var ADMIN_STORY_EXTRA = {
+  forest_13: function (st) { st.counters.coeurKillsMarked = Math.max(Number(st.counters.coeurKillsMarked || 0), 5); }, // QUET-8
   forest_14: function () { adminSetDungeonCleared(1); },
   forest_15: function (st) { st.counters.offeringDone = 1; },
   desert_03: function () { adminSetFlag("outreFilled"); },
   desert_07: function (st) { st.counters.outreGiven = 1; },
   desert_09: function () { adminSetFlag("verreTrempe"); },
   desert_12: function () { adminSetFlag("citeVague5"); },
-  desert_15: function () { adminSetDungeonCleared(2); }
+  desert_15: function () { adminSetDungeonCleared(2); },
+  // QUET-8 (audit 04/11) : marchés, campements et donjons des mondes suivants, comme en jeu
+  ruines_04: function () { adminSetFlag("ruinsMarketDone"); },
+  ruines_12: function () { adminSetFlag("sanctuaireCamp"); },
+  ruines_15: function () { adminSetDungeonCleared(3); },
+  crypte_04: function () { adminSetFlag("cryptMarketDone"); },
+  crypte_12: function () { adminSetFlag("ossuaireCamp"); },
+  crypte_15: function () { adminSetDungeonCleared(4); },
+  montagne_12: function () { adminSetFlag("gueuleCamp"); },
+  montagne_15: function () { adminSetDungeonCleared(5); },
+  tour_03: function (st) { st.counters.campDresse = 1; },
+  tour_11: function () { adminSetFlag("sommetCamp"); },
+  tour_12: function () { adminSetDungeonCleared(6); }
 };
 
 function adminSetFlag(key) {
@@ -446,6 +447,8 @@ function adminSetFlag(key) {
 function adminSetDungeonCleared(id) {
   if (!game.dungeonTierCleared || typeof game.dungeonTierCleared !== "object") game.dungeonTierCleared = {};
   game.dungeonTierCleared[id] = true;
+  if (!game.dungeonLevelBest || typeof game.dungeonLevelBest !== "object") game.dungeonLevelBest = {};
+  game.dungeonLevelBest[id] = Math.max(Number(game.dungeonLevelBest[id] || 0), 1); // QUET-8 : comme une première victoire
 }
 
 /* Effets de fin d'un canevas de scène (déblocage, drapeau de réussite, voyage), sans le run. */

@@ -54,7 +54,8 @@ body:not(.scene-active) #pa2-overlay { display: none; }
 .pa2-pro { color: var(--pa2-moss); }
 .pa2-con { color: var(--pa2-danger); }
 .pa2-ring { margin: 8px 0 0; font-size: 12.5px; font-weight: 700; color: var(--pa2-gold); }
-.pa2-note { margin: -4px 4px 0; font-size: 12px; font-weight: 600; color: var(--c-brown-850-soft); }
+/* v3.683.0 (audit NOV-6) : la préparation se lit sur le décor sombre, pas sur du parchemin : encre claire et ombre. */
+.pa2-note { margin: -4px 4px 0; font-size: 12px; font-weight: 600; color: var(--pa2-ink); text-shadow: 0 1px 2px var(--c-black-950); }
 /* Hors des panneaux, l'encre suit le fond du cadre : parchemin le jour, pierre sombre la nuit. */
 body.pa2-night .pa2-link, body.pa2-night .pa2-note { color: var(--pa2-ink-dim); }
 .pa2-link { display: block; margin: 0 auto; padding: 6px 10px; border: 0; background: none; color: var(--c-brown-850-soft); font-size: 12.5px; font-weight: 600; text-decoration: underline; cursor: pointer; }
@@ -303,16 +304,36 @@ body.pa2-full .pa2-scrim { background: rgba(5, 3, 2, 0.28); }
 .pa2-odds.o2 .pa2-w { color: #f0a04a; }
 .pa2-odds.o1 .pa2-w { color: var(--c-red-300); }
 
-/* Dé : le d20 en SVG (v3.577.0), glow doré ; vert au 20 naturel, rouge au 1 */
+/* Dé : le d20 pré-rendu (v3.673.0, atelier de-d20.html) ; pose de face, chiffre écrit au centre de la face avant
+   (54,1 % / 56,8 % de l'image) en or vieilli ; roulé = bande de 16 images ; vert au 20 naturel, rouge au 1 */
 .pa2-dierow { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 4px 0 6px; }
-.pa2-die { width: 72px; height: 72px; color: var(--pa2-gold); filter: drop-shadow(0 0 10px rgba(240, 170, 62, .45)); }
-.pa2-die svg { display: block; width: 100%; height: 100%; }
-.pa2-d20-hex { fill: var(--c-brown-950-soft); stroke: var(--pa2-gold-dark); stroke-width: 4; stroke-linejoin: round; }
-.pa2-d20-edge { fill: none; stroke: var(--pa2-gold-dark); stroke-width: 1.6; stroke-linejoin: round; opacity: .75; }
-.pa2-die text { fill: currentColor; font: 800 25px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-.pa2-die.is-rolling { animation: pa2-roll .5s linear infinite; }
-.pa2-die.is-nat20 { color: var(--c-green-400-soft); filter: drop-shadow(0 0 14px rgba(120, 220, 120, .6)); }
-.pa2-die.is-nat1 { color: var(--c-red-300); filter: drop-shadow(0 0 14px rgba(230, 90, 80, .6)); }
+.pa2-die { position: relative; width: 96px; height: 96px; flex: none; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .55)); }
+.pa2-die-img { display: block; width: 100%; height: 100%; }
+.pa2-die-roll { position: absolute; inset: 0; display: none; background: url("../images/UI/de/d20_roll.webp") 0 0 / 1600% 100% no-repeat; }
+.pa2-die-num { position: absolute; left: 54.1%; top: 56.8%; transform: translate(-50%, -50%); font: 700 20px/1 "Cinzel", Georgia, serif; letter-spacing: -.02em;
+  color: rgb(168, 120, 60); text-shadow: 0 -1px 0 rgba(0, 0, 0, .55), 0 1px 0 rgba(255, 214, 150, .18); pointer-events: none; }
+.pa2-die.is-rolling .pa2-die-roll { display: block; animation: pa2-tumble .45s steps(15) infinite; }
+.pa2-die.is-rolling { animation: pa2-hop .8s ease-out 1; }
+.pa2-die.is-rolling .pa2-die-img, .pa2-die.is-rolling .pa2-die-num { visibility: hidden; }
+.pa2-die.is-landed { animation: pa2-settle .35s cubic-bezier(.3, 1.6, .5, 1) 1; }
+.pa2-die.is-nat20 { filter: drop-shadow(0 0 14px rgba(120, 220, 120, .75)) drop-shadow(0 6px 10px rgba(0, 0, 0, .55)); }
+.pa2-die.is-nat20 .pa2-die-num { color: rgb(143, 207, 122); }
+.pa2-die.is-nat1 { filter: drop-shadow(0 0 14px rgba(230, 90, 80, .75)) drop-shadow(0 6px 10px rgba(0, 0, 0, .55)); }
+.pa2-die.is-nat1 .pa2-die-num { color: rgb(224, 122, 98); }
+/* v3.674.0 : effets du 20 et du 1 naturels (atelier, variante B). Anneaux : le centre (le dé) reste transparent */
+.pa2-fx { position: absolute; inset: -40%; pointer-events: none; opacity: 0; }
+.pa2-sp { position: absolute; left: 50%; top: 50%; width: 7px; height: 7px; margin: -3.5px; border-radius: 50%; background: rgb(255, 227, 154); box-shadow: 0 0 8px rgb(255, 201, 74); opacity: 0; pointer-events: none; }
+.pa2-crack { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.pa2-crack path { fill: none; stroke: rgba(15, 8, 4, .9); stroke-width: 2.2; stroke-linecap: round; stroke-dasharray: 120; stroke-dashoffset: 120; opacity: 0; filter: drop-shadow(0 1px 0 rgba(255, 190, 140, .25)); }
+.pa2-die.is-fx20 .pa2-die-num { animation: pa2-numpop .5s cubic-bezier(.3, 1.6, .5, 1) 1; }
+.pa2-die.is-fx20 .pa2-fx-halo { background: radial-gradient(closest-side, transparent 50%, rgba(255, 220, 120, .8) 60%, rgba(255, 200, 80, .2) 72%, transparent 82%); animation: pa2-halo .9s ease-out 2; }
+.pa2-die.is-fx20 .pa2-fx-rays { background: repeating-conic-gradient(from 0deg, rgba(255, 215, 110, .55) 0 6deg, transparent 6deg 30deg);
+  -webkit-mask: radial-gradient(closest-side, transparent 52%, black 60%, transparent 92%); mask: radial-gradient(closest-side, transparent 52%, black 60%, transparent 92%); animation: pa2-rays 1.3s ease-out 1; }
+.pa2-die.is-fx20 .pa2-sp { animation: pa2-spark .9s ease-out 1 both; }
+.pa2-die.is-fx1 { animation: pa2-shudder .5s ease-out 1, pa2-dim .6s .5s ease-out 1 forwards; }
+.pa2-die.is-fx1 .pa2-fx-red { background: radial-gradient(closest-side, transparent 48%, rgba(230, 70, 50, .75) 58%, transparent 80%); animation: pa2-redflash .7s ease-out 1; }
+.pa2-die.is-fx1 .pa2-die-num { animation: pa2-droop .6s .35s ease-in 1 forwards; }
+.pa2-die.is-fx1 .pa2-crack path { animation: pa2-crackin .45s .25s ease-out 1 forwards; }
 .pa2-nat { min-height: 18px; text-align: center; font-size: 13px; font-weight: 700; margin: 0 0 6px; }
 .pa2-nat .is-ok { color: var(--c-green-400-soft); }
 .pa2-nat .is-ko { color: var(--c-red-300); }
@@ -387,7 +408,18 @@ body.pa2-full .pa2-scrim { background: rgba(5, 3, 2, 0.28); }
 @keyframes pa2-rise { from { transform: translateY(30px); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes pa2-fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes pa2-shake { 0%, 100% { transform: none; } 20% { transform: translateX(-7px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); } }
-@keyframes pa2-roll { to { transform: rotate(360deg); } }
+@keyframes pa2-tumble { to { background-position: 100% 0; } }
+@keyframes pa2-hop { 0% { transform: translateY(0); } 30% { transform: translateY(-14px); } 60% { transform: translateY(0); } 80% { transform: translateY(-5px); } 100% { transform: translateY(0); } }
+@keyframes pa2-numpop { 0% { transform: translate(-50%, -50%) scale(.4); } 60% { transform: translate(-50%, -50%) scale(1.45); } 100% { transform: translate(-50%, -50%) scale(1); } }
+@keyframes pa2-halo { 0% { opacity: 0; transform: scale(.6); } 30% { opacity: 1; transform: scale(1.05); } 100% { opacity: 0; transform: scale(1.25); } }
+@keyframes pa2-rays { 0% { opacity: 0; transform: rotate(0) scale(.7); } 25% { opacity: 1; } 100% { opacity: 0; transform: rotate(60deg) scale(1.15); } }
+@keyframes pa2-spark { 0% { opacity: 1; transform: translate(0, 0) scale(1); } 100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(.3); } }
+@keyframes pa2-shudder { 0%, 100% { transform: none; } 15% { transform: translateX(-6px) rotate(-4deg); } 30% { transform: translateX(5px) rotate(3deg); } 45% { transform: translateX(-4px) rotate(-2deg); } 60% { transform: translateX(3px); } 80% { transform: translateX(-1px); } }
+@keyframes pa2-redflash { 0% { opacity: 0; } 20% { opacity: .9; } 100% { opacity: 0; } }
+@keyframes pa2-droop { 0% { transform: translate(-50%, -50%); } 60% { transform: translate(-50%, -38%) rotate(9deg); } 100% { transform: translate(-50%, -42%) rotate(7deg); } }
+@keyframes pa2-crackin { from { opacity: 0; stroke-dashoffset: 120; } to { opacity: 1; stroke-dashoffset: 0; } }
+@keyframes pa2-dim { to { filter: brightness(.7) saturate(.8) drop-shadow(0 0 12px rgba(230, 90, 80, .6)) drop-shadow(0 6px 10px rgba(0, 0, 0, .55)); } }
+@keyframes pa2-settle { 0% { transform: scale(1.12) rotate(-6deg); } 100% { transform: none; } }
 @keyframes pa2-pop { from { transform: scale(.3); } to { transform: scale(1); } }
 @keyframes pa2-float-up { from { transform: translate(-50%, 0); opacity: 1; } to { transform: translate(-50%, -70px); opacity: 0; } }
 @keyframes pa2-glint { 30% { filter: brightness(1.6); } }

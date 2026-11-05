@@ -10,7 +10,22 @@ var StoryQuestManager = {
   ensure: function () {
     if (!game.storyQuests || typeof game.storyQuests !== "object") game.storyQuests = {};
     var self = this;
-    Object.keys(STORY_QUESTS).forEach(function (chapterId) { self._ensureChapter(chapterId); });
+    Object.keys(STORY_QUESTS).forEach(function (chapterId) { self._ensureOnce(chapterId); });
+  },
+
+  /* PERF-4 (Seb 05/11) : un chapitre déjà validé (même objet, migrations notées) n'est pas revalidé
+     à chaque lecture ; un état remplacé ou un drapeau de migration effacé l'est de nouveau. */
+  _ensuredRoot: null,
+  _ensured: {},
+  _ensureOnce: function (chapterId) {
+    var root = game.storyQuests;
+    if (this._ensuredRoot !== root) { this._ensuredRoot = root; this._ensured = {}; }
+    var st = root[chapterId];
+    if (st && this._ensured[chapterId] === st && st.migratedV3109 && st.migratedV3259 && st.migratedV3260
+      && st.migratedV3261 && st.migratedV3268 && st.migratedV3293) return st;
+    st = this._ensureChapter(chapterId);
+    this._ensured[chapterId] = st;
+    return st;
   },
 
   _ensureChapter: function (chapterId) {
@@ -186,10 +201,9 @@ var StoryQuestManager = {
   },
 
   getChoice: function (key) {
-    this.ensure();
     var ids = Object.keys(STORY_QUESTS);
     for (var i = 0; i < ids.length; i++) {
-      var c = game.storyQuests[ids[i]].choices || {};
+      var c = this.getState(ids[i]).choices || {};
       if (c[key] != null) return c[key];
     }
     return null;
@@ -214,8 +228,10 @@ var StoryQuestManager = {
   },
 
   getState: function (chapterId) {
-    this.ensure();
-    return game.storyQuests[chapterId || "forest"];
+    if (!game.storyQuests || typeof game.storyQuests !== "object") game.storyQuests = {};
+    var id = chapterId || "forest";
+    if (!STORY_QUESTS[id]) return game.storyQuests[id]; // chapitre inconnu : rien à créer (comme avant)
+    return this._ensureOnce(id);
   },
 
   /* Étape courante (null si chapitre terminé/court-circuité ou si la suite n'est pas encore livrée). */
@@ -240,7 +256,7 @@ var StoryQuestManager = {
   isCurrentStepReady: function (chapterId) {
     var step = this.getCurrentStep(chapterId);
     if (!step || !this.getState(chapterId).accepted) return false;
-    try { return !!step.check(game); } catch (e) { return false; }
+    try { return !!step.check(game); } catch (e) { noteErreur("story-quest-system.isCurrentStepReady", e); return false; } // audit 04/11 (ARCH-14)
   },
 
   /* Nombre d'étapes réclamables (badge Quêtes / Menu). */
@@ -279,7 +295,9 @@ var StoryQuestManager = {
 
   _describeUnlocks: function (step, onClaim) {
     var labels = window.STORY_TAB_LABELS || {};
-    return ((onClaim ? step.unlockTabsOnClaim : step.unlockTabs) || []).map(function (t) { return labels[t] ? _td(labels[t]) : t; }).join(", ");
+    var noHeros = !(game.unlockedTabs || {}).more; // v3.683.0 (audit NOV-19) : Équipement et Talents vivent dans Héros, pas encore ouvert
+    return ((onClaim ? step.unlockTabsOnClaim : step.unlockTabs) || []).filter(function (t) { return !(noHeros && (t === "equip" || t === "talents")); })
+      .map(function (t) { return labels[t] ? _td(labels[t]) : t; }).join(", ");
   },
 
   /* Vérification opportuniste (renderPanel, throttlée) : signale une seule fois le passage à « réclamable ».
@@ -344,7 +362,6 @@ var StoryQuestManager = {
       var seen = this._companionCombatKeys || (this._companionCombatKeys = {});
       if (key === null || seen[chapterId] !== key) { seen[chapterId] = key; st.counters.companionWins += 1; }
     }
-    if (game.huntRun && game.huntRun.active) return;
     if (game.dungeonRun && game.dungeonRun.active) {
       // v3.245.0 (refonte Donjons, forest_13) : vagues de donjon passées sous ≥ 1 Marque -> compteur coeurKillsMarked
       if (Array.isArray(game.dungeonRun.marks) && game.dungeonRun.marks.length >= 1) {
@@ -493,7 +510,7 @@ var StoryQuestManager = {
         affixes: [],
         worldIndex: 0
       };
-      if (typeof addLootToInventory === "function" && addLootToInventory(fixe)) {
+      if (typeof addLootToInventory === "function" && addLootToInventory(fixe, { keep: true })) {
         addLog("🎁 " + _t("Récompense d'histoire : {x}", { x: _td(fixe.name) }), "event");
         rows.push({ label: "Objet", value: fixe.name });
       }
@@ -520,7 +537,7 @@ var StoryQuestManager = {
           if (trous.length) item = generateEquipmentItem(trous[Math.floor(Math.random() * trous.length)], reward.equipmentRarity);
         }
         if (!item) item = (window.LootSystem && typeof LootSystem.rollDropAtRarity === "function") ? LootSystem.rollDropAtRarity(reward.equipmentRarity) : null;
-        if (item && typeof addLootToInventory === "function" && addLootToInventory(item)) {
+        if (item && typeof addLootToInventory === "function" && addLootToInventory(item, { keep: true })) { // audit 04/11 (QA-4) : jamais offerte d'office
           granted += 1;
           addLog("🎁 " + _t("Récompense d'histoire : {x}", { x: _td(item.name) }), "event");
         }
@@ -640,7 +657,6 @@ var StoryQuestManager = {
       openSceneQuestEntry(cardId.replace("scene_", ""));
       return;
     }
-    if (cardId.indexOf("exploration_") === 0 && typeof openExplorationPrep === "function") { openExplorationPrep(cardId.replace("exploration_", "")); return; }
     if (typeof openQuestsAt === "function") openQuestsAt(step.linkTo.section, step.linkTo.cardId);
   }
 };

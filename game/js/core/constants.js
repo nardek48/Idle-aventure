@@ -1,12 +1,11 @@
 "use strict";
-/* core/constants.js — constantes globales, chargé en premier.
-   DEFAULT_QUEST_PROGRESS n'est déclaré qu'ici (v3.449.1 : data/quests.js, qui le redéclarait, n'existe plus). */
+/* core/constants.js — constantes globales, chargé en premier. */
 
 /* v3.233.0 : numéro de version affiché par l'écran titre. Il était codé en
    dur dans title-screen-view.js et figé à v3.151.0 depuis 81 livraisons.
    DOIT rester égal au CACHE_VERSION de sw.js — le harnais le vérifie et
    échoue si les deux divergent. */
-var GAME_VERSION = "3.658.0";
+var GAME_VERSION = "3.705.0";
 window.GAME_VERSION = GAME_VERSION;
 
 /* v3.358.0 (D7, décision Seb 26/09/2026) : l'essence et le solde d'Aether disparaissent.
@@ -17,16 +16,7 @@ var AETHER_GOLD_RATE = 50;   // 1 Aether de solde = 50 or (au prix des reprises 
 window.ESSENCE_GOLD_RATE = ESSENCE_GOLD_RATE;
 window.AETHER_GOLD_RATE = AETHER_GOLD_RATE;
 
-var DEFAULT_QUEST_PROGRESS = {
-  kills: 0,
-  treasures: 0,
-  bossKills: 0,
-  goldEarned: 0,
-  goldSpent: 0,
-  crits: 0,
-  combatTime: 0,
-  forestChaptersDone: 0,
-  ruinsChaptersDone: 0
-};
-
-window.DEFAULT_QUEST_PROGRESS = DEFAULT_QUEST_PROGRESS;
+/* Potion automatique d'une partie neuve (v3.380.0 : « Tard », meilleur au banc). Lu par
+   createInitialGameState et fullResetState, qui en font une copie (audit 04/11, ARCH-17). */
+var POTION_AUTO_NEW_GAME = { threshold: "tard", keepForBoss: true };
+window.POTION_AUTO_NEW_GAME = POTION_AUTO_NEW_GAME;

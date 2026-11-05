@@ -1,6 +1,6 @@
 "use strict";
 /* data/worlds.js — mondes, chapitres, ambiance et fonds de panneaux. Ordre = progression linéaire (WorldManager.worldIndex).
-   Note : requiredAscension potentiellement vestigial depuis v2.83 (world-quests.js), à vérifier. Détail : COMMENTAIRES_ORIGINAUX.md */
+   Note : requiredAscension potentiellement vestigial depuis v2.83 (world-quests.js), à vérifier. */
 
 /* v3.355.0 : WORLD_PANEL_BACKGROUNDS retiré (six fonds que plus rien n'affichait, images absentes). */
 
@@ -79,7 +79,7 @@ var WORLDS = [
       },
       {
         id: "ruins_2",
-        name: "Sanctuaire enseveli",
+        name: "Nef ensevelie", // v3.697.0 (QUET-9, Seb A) : trois « Sanctuaire » (enseveli, scellé, interdit) ; id inchangé
         introText: "Les murs ont été écrits. Quelqu'un les relit encore.", // v3.197.0
         enemyPool: ["gargoyle", "zombie", "skeleton", "ghoul"],
         enemyCount: 10,

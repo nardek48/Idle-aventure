@@ -7,7 +7,7 @@
    Chaque bâtiment garde son nom de section personnalisé (voir
    PRODUCTION_PLOTS_BUILDINGS.sectionLabel). Panneau/sélection dépliés INDÉPENDAMMENT par
    bâtiment (état local par id, pas un seul état partagé) — ouvrir Champs n'affecte pas
-   l'état de Mine. Détail : COMMENTAIRES_ORIGINAUX.md */
+   l'état de Mine. */
 
 /* v3.191.0 — TABLEAU DE BORD (maquette atelier-ecrans.html validée par Seb, 08/09/2026) :
    l'écran Production devient un routeur à 3 sous-vues :
@@ -287,7 +287,10 @@ function buildZoneActionHTML(opts) {
   if (opts.iconHTML) h += opts.iconHTML;
   h += '<span class="zone-act-t"><b>' + esc(opts.label) + '</b><small>' + esc(opts.desc) + '</small></span>';
   h += opts.done ? '<span class="zone-act-ok">✓</span>' : buildPlotCostRowHTML(opts.cost);
-  return h + '</button>';
+  h += '</button>';
+  // EQUI-2 : un coût hors de portée du stock (plafond ou Grand Ouvrage) le dit sous le bouton
+  var capWhy = !opts.done && !opts.canAfford && opts.cost ? ProductionPlotsSystem.overCapReason(opts.cost) : null;
+  return capWhy ? h + '<p class="zone-win-txt zone-cap-why">' + esc(capWhy) + '</p>' : h;
 }
 
 /* v3.422.0 : un débit sous 1/min garde deux décimales (0,28 et 0,35 s'affichaient tous deux 0,3). */
@@ -295,7 +298,7 @@ function formatRatePerMin(v) {
   v = Number(v || 0);
   var two = Math.round(v * 100) / 100;
   if (two >= 1 || two === 0) return formatNumber(Math.round(v * 10) / 10);
-  return String(two).replace(".", ",");
+  return fmtDec(two);
 }
 window.formatRatePerMin = formatRatePerMin;
 
@@ -307,7 +310,7 @@ function buildZoneWindowHTML(buildingId, index) {
   var resDef = WAREHOUSE_RESOURCES[(PRODUCTION_BUILDINGS[buildingId] || {}).resourceKey] || {};
   var resName = _td(resDef.name || "");
   var zoneName = getProductionZoneName(buildingId, index);
-  var affordable = function (cost) { return !!cost && Object.keys(cost).every(function (k) { return WarehouseManager.getAmount(k) >= cost[k]; }); };
+  var affordable = function (cost) { return !!cost && Object.keys(cost).every(function (k) { return (k === "gold" ? Number(game.gold || 0) : WarehouseManager.getAmount(k)) >= cost[k]; }); };
   var locked = plot.state === "locked";
   var profile = ProductionPlotsSystem.getProfile(index);
 
@@ -363,10 +366,11 @@ function buildPlotCostRowHTML(cost) {
   if (!cost) return "";
   var h = '<span class="production-cost-row">';
   Object.keys(cost).forEach(function (key) {
-    var iconSrc = WAREHOUSE_RESOURCES[key] ? WAREHOUSE_RESOURCES[key].icon : "";
-    var canAffordThis = WarehouseManager.getAmount(key) >= cost[key];
+    // finition : l'or n'est pas une ressource d'Entrepôt, il a sa propre icône et se lit dans game.gold
+    var def = WAREHOUSE_RESOURCES[key], iconSrc = key === "gold" ? "images/Icons/gold_icon.webp" : (def ? def.icon : "");
+    var canAffordThis = (key === "gold" ? Number(game.gold || 0) : WarehouseManager.getAmount(key)) >= cost[key];
     h += '<span class="production-cost-item' + (canAffordThis ? '' : ' is-missing res-go') + '"' + (canAffordThis ? '' : resGoAttr(key)) + '>';
-    h += '<img class="btn-buy-icon" src="' + esc(iconSrc) + '" alt="">' + formatNumber(cost[key]);
+    h += '<img class="btn-buy-icon" src="' + esc(iconSrc) + '" alt="' + esc(key === "gold" ? _t("Or") : (def ? _td(def.name) : "")) + '">' + formatNumber(cost[key]);
     h += '</span>';
   });
   h += '</span>';
@@ -405,7 +409,16 @@ function buildZoneGroupActionsHTML(buildingId) {
   return '<div class="pc3-auto"><span><b>' + esc(_t("Achat automatique")) + '</b><small>'
     + esc(avail ? _t("Monte la parcelle la moins chère avec ce qui dépasse la moitié du plafond. Le village garde le reste.") : _t("S'ouvre au Désert. En Forêt, on apprend à la main."))
     + '</small></span><button type="button" class="kswitch' + (on ? ' is-on' : '') + '" role="switch" aria-checked="' + on + '" aria-label="' + esc(_t("Achat automatique")) + '"'
-    + (avail ? ' onclick="toggleParcelAuto()"' : ' disabled') + '></button></div>';
+    + (avail ? ' onclick="toggleParcelAuto()"' : ' disabled') + '></button></div>' + buildZoneAutoBlockHTML(buildingId);
+}
+/* ECON-11 : l'achat automatique qui ne peut plus rien acheter dit pourquoi. */
+function buildZoneAutoBlockHTML(buildingId) {
+  var PPS = ProductionPlotsSystem, b = PPS.isAuto() && typeof PPS.getAutoBlock === "function" ? PPS.getAutoBlock(buildingId) : null;
+  if (!b) return "";
+  var d = WAREHOUSE_RESOURCES[b.key] || {}, p = { x: _td(d.name || b.key), n: formatNumber(b.need), m: formatNumber(b.room), c: formatNumber(Math.floor(b.usable)) };
+  return '<p class="zone-win-txt zone-cap-why">' + esc(b.need > b.usable
+    ? _t("Achat automatique arrêté : la prochaine parcelle demande {n} {x}, le stock n'en garde que {c}. Monte l'Entrepôt.", p)
+    : _t("Achat automatique arrêté : la prochaine parcelle demande {n} {x}, il ne dépense que ce qui dépasse la moitié du plafond ({m}). Achète-la à la main.", p)) + '</p>';
 }
 function toggleParcelAuto() {
   ProductionPlotsSystem.setAuto(!ProductionPlotsSystem.isAuto());
@@ -588,6 +601,27 @@ function refreshWorkshopQueueDOM(workshopId) {
 }
 window.refreshWorkshopQueueDOM = refreshWorkshopQueueDOM;
 
+/* UI-4 (audit 04/11) : une livraison redessine la seule feuille ouverte qui lit cette ressource
+   (coût du bâtiment, intrant d'un atelier, fiche de stock) ; jamais renderPanel (v3.98.21). */
+function refreshOpenSheetAfterDelivery(resIds) {
+  if (typeof document === "undefined" || !resIds || !resIds.length) return;
+  var host = document.getElementById("village-modal-root");
+  if (!host || !host.firstChild) return;
+  var ae = document.activeElement;
+  if (ae && host.contains(ae) && /^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName)) return; // saisie en cours : on ne la casse pas
+  var has = function (k) { return resIds.indexOf(k) !== -1; };
+  if (typeof openVillageBuildingId !== "undefined" && openVillageBuildingId && host.dataset.vb === openVillageBuildingId && host.querySelector(".vb-sheet-card")) {
+    var cost = VillageBuildingManager.getNextCost(openVillageBuildingId) || {};
+    if (Object.keys(cost).some(has)) openVillageBuildingSheet(openVillageBuildingId);
+  } else if (openWorkshopId && host.querySelector(".wk-sheet")) {
+    var uses = (WORKSHOPS_CONFIG[openWorkshopId].recipes || []).some(function (r) { return (r.inputs || []).some(function (i) { return has(i.resourceId); }); });
+    if (uses) renderWorkshopSheet(true);
+  } else if (typeof selectedWarehouseKey !== "undefined" && selectedWarehouseKey && !warehousePickerOpen && host.querySelector(".wh-sheet") && has(selectedWarehouseKey)) {
+    renderWarehouseSheet(true);
+  }
+}
+window.refreshOpenSheetAfterDelivery = refreshOpenSheetAfterDelivery;
+
 function selectWorkshopRecipe(workshopId, recipeId) {
   selectedWorkshopRecipe[workshopId] = recipeId;
   workshopCraftQty[workshopId] = 1;
@@ -602,7 +636,7 @@ window.selectWorkshopRecipe = selectWorkshopRecipe;
    plus proche, décision validée avec Seb. */
 function setWorkshopCraftQty(workshopId, rawValue) {
   var recipeId = selectedWorkshopRecipe[workshopId];
-  var maxCrafts = WorkshopsSystem.getMaxCraftTimes(workshopId, recipeId);
+  var maxCrafts = WorkshopsSystem.getMaxManualCraftTimes(workshopId, recipeId); // ECON-4 : place en sortie comprise
   if (maxCrafts <= 0) return;
 
   var parsed = Math.floor(Number(rawValue));
@@ -657,7 +691,8 @@ function upgradeWorkshop(workshopId) {
   }
   var lvl = WorkshopsSystem.getLevel(workshopId);
   var eff = recipe ? formatCraftDuration(WorkshopsSystem.getEffectiveCraftTimeMs(workshopId, recipe)) : "";
-  showToast(_t("{x} niv {n}", { x: def ? _td(def.name) : "", n: lvl }) + (eff ? " : " + _t("{d}/lot", { d: eff }) : "") + " · " + _t("file {n}", { n: WorkshopsSystem.getMaxQueueLength(workshopId) }), 1600);
+  var lvTxt = _t("{x} niv {n}", { x: def ? _td(def.name) : "", n: lvl });
+  showToast((eff ? _t("{a} : {b}", { a: lvTxt, b: _t("{d}/lot", { d: eff }) }) : lvTxt) + " · " + _t("file {n}", { n: WorkshopsSystem.getMaxQueueLength(workshopId) }), 1600);
 }
 window.upgradeWorkshop = upgradeWorkshop;
 
@@ -812,7 +847,7 @@ function getWorkshopTileState(w) {
   if (WorkshopsSystem.getQueue(w.id).length) return "run";
   if (autoId && WorkshopsSystem.getMaxAutoCraftTimes(w.id, autoId) <= 0) return "stalled";
   var best = 0;
-  w.recipes.forEach(function (r) { best = Math.max(best, WorkshopsSystem.getMaxCraftTimes(w.id, r.id)); });
+  w.recipes.forEach(function (r) { best = Math.max(best, WorkshopsSystem.getMaxManualCraftTimes(w.id, r.id)); }); // ECON-4
   return best > 0 ? "idle" : "block";
 }
 window.getWorkshopTileState = getWorkshopTileState;
@@ -848,7 +883,7 @@ function buildWorkshopTileHTML(w, backId) {
   else if (state === "block") rib = '<span class="wk-tile-rib is-block">' + _t("Bloqué") + '</span>';
   else if (state === "idle") {
     var n = 0;
-    w.recipes.forEach(function (r) { n = Math.max(n, WorkshopsSystem.getMaxCraftTimes(w.id, r.id)); });
+    w.recipes.forEach(function (r) { n = Math.max(n, WorkshopsSystem.getMaxManualCraftTimes(w.id, r.id)); });
     rib = '<span class="wk-tile-rib is-idle">×' + formatNumber(n) + '</span>';
   }
   h += rib;
@@ -1001,7 +1036,7 @@ function buildWorkshopSheetHTML(workshopId) {
   var recipe = w.recipes.filter(function (r) { return r.id === selectedWorkshopRecipe[workshopId]; })[0] || w.recipes[0];
   var autoId = WorkshopsSystem.getAutoRecipeId(workshopId);
   var isAutoHere = autoId === recipe.id;
-  var maxCrafts = WorkshopsSystem.getMaxCraftTimes(workshopId, recipe.id);
+  var maxCrafts = WorkshopsSystem.getMaxManualCraftTimes(workshopId, recipe.id); // ECON-4 : place en sortie comprise
   var queue = WorkshopsSystem.getQueue(workshopId);
 
   var h = '<div class="full-menu-overlay" onclick="closeWorkshopSheetFromBackdrop(event)">';
@@ -1071,12 +1106,17 @@ function buildWorkshopSheetHTML(workshopId) {
     h += '<div class="wk-alert is-hint">' + esc(_t("déjà active sur {x} — l'activer ici la remplacera.", { x: oD ? _td(oD.name) : autoId })) + '</div>';
   }
   var missing = getWorkshopMissingInput(recipe);
-  if (isAutoHere && !queue.length && WorkshopsSystem.getMaxAutoCraftTimes(workshopId, recipe.id) <= 0 && !missing) {
+  var outFull = !missing && WorkshopsSystem.getOutputRoomTimes(workshopId, recipe.id) <= 0; // ECON-5 : c'est le produit qui est plein
+  if (outFull && (isAutoHere ? !queue.length : maxCrafts <= 0)) {
+    h += '<div class="wk-alert is-reserve">' + esc(_t("En attente : {x} est au plafond de l'Entrepôt.", { x: _td(out.name || recipe.outputs[0].resourceId) })) + '</div>';
+  } else if (isAutoHere && !queue.length && WorkshopsSystem.getMaxAutoCraftTimes(workshopId, recipe.id) <= 0 && !missing) {
     h += '<div class="wk-alert is-reserve">' + _t("En attente : la réserve protégée empêche un nouveau lot — ajustable dans l'Entrepôt.") + '</div>';
   } else if (missing && maxCrafts <= 0) {
     var md = WAREHOUSE_RESOURCES[missing.resourceId] || {};
     var prod = findResourceProducer(missing.resourceId);
-    h += '<div class="wk-alert is-warn"><span>' + esc(_t("{x} insuffisant ({a}/{b})", { x: _td(md.name || missing.resourceId), a: formatNumber(Math.floor(WarehouseManager.getAmount(missing.resourceId))), b: formatNumber(missing.quantity) })) + '</span>';
+    var mdName = _td(md.name || missing.resourceId), elide = /^[aeiouyhàâéèêîôû]/i.test(String(md.name || "")); // v3.683.0 (NOV-21) : « d'Eau », « de Viande »
+    var mdVars = { x: mdName, a: formatNumber(Math.floor(WarehouseManager.getAmount(missing.resourceId))), b: formatNumber(missing.quantity) };
+    h += '<div class="wk-alert is-warn"><span>' + esc(elide ? _t("Pas assez d'{x} ({a}/{b})", mdVars) : _t("Pas assez de {x} ({a}/{b})", mdVars)) + '</span>';
     if (prod) h += '<button type="button" class="kbtn wk-goto" onclick="goToResourceProducer(\'' + prod.kind + '\', \'' + prod.id + '\')">' + esc(_t("Aller à : {x}", { x: prod.name })) + ' ›</button>';
     h += '</div>';
   }

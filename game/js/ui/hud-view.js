@@ -1,5 +1,5 @@
 "use strict";
-/* ui/hud-view.js — barre du haut (ressources, mini-portrait héros) + barre de stats sous combat. Injectés une fois au boot. Détail complet : COMMENTAIRES_ORIGINAUX.md */
+/* ui/hud-view.js — barre du haut (ressources, mini-portrait héros) + barre de stats sous combat. Injectés une fois au boot. */
 
 /* v3.200.0 : HUD_PAGE_TITLES, updateHudPageTitle() et l'élément #hud-page-title sont retirés.
    Le titre de page était redondant depuis v3.190.0 : les bandeaux figés des kframes portent le
@@ -176,6 +176,13 @@ function hudSet(id, prop, val) {
   else if (prop === "src") el.src = val;
 }
 function renderHudBand() {
+  // v3.688.0 (PERF-15) : clé brute posée sur le bandeau ; rien n'est formaté tant qu'aucune valeur ne bouge
+  var key = Math.floor(Number(game.gold) || 0) + "|" + game.heroHp + "|" + game.heroMaxHp + "|" + Math.floor(Number(game.heroXp) || 0) + "|" + game.heroXpToNext + "|" + game.heroLevel + "|" + (window.I18n && I18n.lang ? I18n.lang() : "");
+  var band = document.getElementById("hud-gold");
+  if (!band) return;
+  if (band._bandKey === key) return;
+  if (band._bandKey === undefined) hudBandLast = {}; // bandeau neuf : tout est réécrit
+  band._bandKey = key;
   hudSet("hud-gold", "text", hudNum(game.gold));
   var hp = Math.max(0, Math.ceil(Number(game.heroHp != null ? game.heroHp : game.heroMaxHp || 1)));
   var maxHp = Math.max(1, Math.floor(Number(game.heroMaxHp || 1)));
@@ -216,9 +223,9 @@ function renderHudAchievementTier() {
 function hudHpShort(n) {
   n = Math.max(0, Math.floor(Number(n) || 0));
   if (n < 1000) return String(n);
-  if (n < 10000) return (Math.floor(n / 100) / 10).toFixed(1).replace(/\.0$/, "").replace(".", ",") + "k";
+  if (n < 10000) return (Math.floor(n / 100) / 10).toFixed(1).replace(/\.0$/, "").replace(".", fmtDec(".")) + "k";
   if (n < 1000000) return Math.floor(n / 1000) + "k";
-  return (Math.floor(n / 100000) / 10).toFixed(1).replace(/\.0$/, "").replace(".", ",") + "M";
+  return (Math.floor(n / 100000) / 10).toFixed(1).replace(/\.0$/, "").replace(".", fmtDec(".")) + "M";
 }
 
 function renderHeroHp() {
@@ -262,7 +269,7 @@ function renderCombatHeroMini() {
 
   if (hero && hero.image) {
     if (img) {
-      img.src = hero.image;
+      setSmallPortrait(img, hero.image); // PERF-11 : vignette, portrait entier en repli
       img.alt = hero.name || "";
       img.style.display = "block";
     }
@@ -275,7 +282,7 @@ function renderCombatHeroMini() {
   if (levelEl) levelEl.textContent = _t("Niv. {n}", { n: Number(game.heroLevel || 1) });
   var pt = document.getElementById("hud-pt-img"); // v3.396.0 : portrait du bandeau
   if (pt) {
-    if (hero && hero.image) { if (pt.getAttribute("src") !== hero.image) pt.src = hero.image; pt.alt = hero.name || ""; pt.style.display = "block"; }
+    if (hero && hero.image) { setSmallPortrait(pt, hero.image); pt.alt = hero.name || ""; pt.style.display = "block"; }
     else pt.style.display = "none";
   }
 }
@@ -288,12 +295,12 @@ function renderStats() {
   var gold = document.getElementById("stat-gold-mult");
 
   function fmt2(n) {
-    return (Math.round((Number(n) || 0) * 100) / 100).toFixed(2);
+    return fmtDec((Math.round((Number(n) || 0) * 100) / 100).toFixed(2)); // CPL3-1 : virgule en français
   }
 
   if (tap) tap.textContent = fmt2(EquipmentManager.effectiveTapDamage());
   if (auto) auto.textContent = String(Math.round((window.CombatEngine && typeof CombatEngine.getTotalCelerity === "function") ? CombatEngine.getTotalCelerity() : 0));
-  if (crit) crit.textContent = fmt2(EquipmentManager.effectiveCritChance()) + "%";
+  if (crit) crit.textContent = fmtPct(fmt2(EquipmentManager.effectiveCritChance()));
   if (critPercent) critPercent.textContent = "x" + fmt2(EquipmentManager.effectiveCritMult());
   if (gold) gold.textContent = "x" + fmt2(EquipmentManager.effectiveGoldMult());
 }

@@ -11,8 +11,7 @@
    version) — décision validée avec Seb, cohérente avec le traitement déjà appliqué à
    Champs en v3.96.0 : toute progression de niveau de bâtiment existante sur ces 5
    bâtiments est réinitialisée (zone 0 rouverte niveau 1, les 8 autres verrouillées), pas
-   de conversion de bonus. Remplace systems/farm-plots-system.js (supprimé).
-   Détail : COMMENTAIRES_ORIGINAUX.md */
+   de conversion de bonus. Remplace systems/farm-plots-system.js (supprimé). */
 
 var ProductionPlotsSystem = {
   /* Liste des bâtiments gérés par ce système — source de vérité unique, dérivée de
@@ -263,7 +262,7 @@ var ProductionPlotsSystem = {
     var canAfford = Object.keys(cost).every(function (key) {
       return WarehouseManager.getAmount(key) >= cost[key];
     });
-    if (!canAfford) return { ok: false, reason: _t("Ressources insuffisantes") };
+    if (!canAfford) return { ok: false, reason: this.overCapReason(cost) || _t("Ressources insuffisantes") };
 
     Object.keys(cost).forEach(function (key) { WarehouseManager.removeResource(key, cost[key]); });
     plot.state = "open";
@@ -287,7 +286,7 @@ var ProductionPlotsSystem = {
     var canAfford = Object.keys(cost).every(function (key) {
       return WarehouseManager.getAmount(key) >= cost[key];
     });
-    if (!canAfford) return { ok: false, reason: _t("Ressources insuffisantes") };
+    if (!canAfford) return { ok: false, reason: this.overCapReason(cost) || _t("Ressources insuffisantes") };
 
     Object.keys(cost).forEach(function (key) { WarehouseManager.removeResource(key, cost[key]); });
     plot.level += 1;
@@ -323,26 +322,16 @@ var ProductionPlotsSystem = {
     });
     return st;
   },
-  /* v3.520.0 (audit RES-9) : la première ressource dont le coût dépasse le plafond de l'Entrepôt, ou null. */
+  /* v3.520.0 (audit RES-9) : la première ressource dont le coût dépasse ce que le stock peut atteindre, ou null.
+     Audit 04/11 (EQUI-2, ECON-3) : plafond ou part gardée du Grand Ouvrage (getUsableCap), dite aux refus. */
   overCap: function (cost) {
-    var k = Object.keys(cost || {}).filter(function (r) { return r !== "gold" && Number(cost[r]) > WarehouseManager.getCap(r) && WarehouseManager.getAmount(r) < Number(cost[r]); })[0]; // un stock déjà au-delà du plafond suffit
-    return k ? { key: k, need: Number(cost[k]), cap: WarehouseManager.getCap(k) } : null;
+    var k = Object.keys(cost || {}).filter(function (r) { return r !== "gold" && Number(cost[r]) > WarehouseManager.getUsableCap(r) && WarehouseManager.getAmount(r) < Number(cost[r]); })[0]; // un stock déjà au-delà suffit
+    return k ? { key: k, need: Number(cost[k]), cap: WarehouseManager.getUsableCap(k) } : null;
   },
-  overCapReason: function (cost, kind) {
-    var o = this.overCap(cost), d = o && WAREHOUSE_RESOURCES[o.key];
-    if (!o) return null;
-    var p = { x: d ? _td(d.name) : o.key, n: formatNumber(o.need), c: formatNumber(o.cap) };
-    return kind === "unlock" ? _t("Il faut {n} {x}, mais l'Entrepôt n'en garde que {c}. Monte l'Entrepôt, ou défriche zone par zone.", p)
-      : _t("Il faut {n} {x}, mais l'Entrepôt n'en garde que {c}. Monte l'Entrepôt, ou monte les zones une par une.", p);
+  overCapReason: function (cost) {
+    var o = this.overCap(cost);
+    return o ? WarehouseManager.capHint(o.key, o.need) : null;
   },
-  _payAll: function (cost) {
-    var ok = Object.keys(cost).every(function (k) { return WarehouseManager.getAmount(k) >= cost[k]; });
-    if (ok) Object.keys(cost).forEach(function (k) { WarehouseManager.removeResource(k, cost[k]); });
-    return ok;
-  },
-
-
-
 
   toggleImprovement: function (buildingId, plotIndex, kind) {
     if (kind !== "fertile" && kind !== "irrigated") return { ok: false, reason: _t("Amélioration invalide") };
@@ -358,7 +347,7 @@ var ProductionPlotsSystem = {
     var canAfford = Object.keys(cost).every(function (key) {
       return WarehouseManager.getAmount(key) >= cost[key];
     });
-    if (!canAfford) return { ok: false, reason: _t("Ressources insuffisantes") };
+    if (!canAfford) return { ok: false, reason: this.overCapReason(cost) || _t("Ressources insuffisantes") };
 
     Object.keys(cost).forEach(function (key) { WarehouseManager.removeResource(key, cost[key]); });
     plot[kind] = true;
@@ -385,7 +374,8 @@ var ProductionPlotsSystem = {
   _autoKeep: function (key) {
     var cap = WarehouseManager.getCap(key);
     var reserve = (window.ResourceReserveManager && typeof ResourceReserveManager.getReserve === "function") ? Number(ResourceReserveManager.getReserve(key) || 0) : 0;
-    return Math.max(cap === Infinity ? 0 : Math.ceil(cap * this.AUTO_KEEP), reserve);
+    var forge = (window.GrandOuvrage && typeof GrandOuvrage.storyForgeKeep === "function") ? GrandOuvrage.storyForgeKeep(key) : 0; // ECON-1 : n'entame pas la Forge de l'Histoire
+    return Math.max(cap === Infinity ? 0 : Math.ceil(cap * this.AUTO_KEEP), reserve, forge);
   },
   /* Prochain achat d'une parcelle : { kind, cost } ou null. */
   getNextAction: function (buildingId, i) {
@@ -396,6 +386,23 @@ var ProductionPlotsSystem = {
     if (!p.fertile) return { kind: "fertile", cost: cfg.improvementCost.fertile.cost };
     if (!p.irrigated) return { kind: "irrigated", cost: cfg.improvementCost.irrigated.cost };
     return null;
+  },
+  /* ECON-11 : si aucun achat de ce bâtiment ne tient dans ce que l'automatique peut dépenser (entre la part
+     gardée et ce que le stock peut atteindre), le moins cher : { key, need, room, usable }. Sinon null. */
+  getAutoBlock: function (buildingId) {
+    var self = this, best = null;
+    for (var i = 0; i < 3; i++) {
+      var a = this.getNextAction(buildingId, i);
+      if (!a || !a.cost) continue;
+      var over = null;
+      Object.keys(a.cost).forEach(function (k) {
+        var room = Math.max(0, Math.floor(WarehouseManager.getUsableCap(k) - self._autoKeep(k)));
+        if (!over && a.cost[k] > room) over = { key: k, need: a.cost[k], room: room, usable: WarehouseManager.getUsableCap(k) };
+      });
+      if (!over) return null;
+      if (!best || over.need - over.room < best.need - best.room) best = over;
+    }
+    return best;
   },
   /* Une passe : achète tant que c'est payable au-dessus de la part gardée. Rend le nombre d'achats. */
   autoUpgrade: function () {

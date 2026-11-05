@@ -16,6 +16,7 @@
      journalTest  false  v3.437.0 : journal de test (main/journal-test.js), activé dans Paramètres › Appareil
      textSize     "normal" v3.538.0 (audit ERG-11) : « grand » agrandit pages, feuilles et fenêtres de 12 % (ui/desktop-scale.js)
      chronique    true   v3.503.0 (grand écran) : Chronique ouverte à droite du format large (ui/chronique-view.js)
+     shopBuyAmount (absente) audit 04/11 (SAVE-17) : quantité d'entraînement (1, 10, 25 ou -1 = MAX), texte
      lang         "fr"   v3.368.0 : langue du jeu (core/i18n.js) ; texte, lu par getValue/setValue.
                          v3.376.0 : absente au premier lancement, elle est fixée par I18n.firstLang() (D3) */
 

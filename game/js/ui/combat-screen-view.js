@@ -40,7 +40,8 @@
      s'affiche en générique (ici : un « ? » doré), pour qu'il repère les manquantes. */
   var GENERIC = "data:image/svg+xml;utf8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="#3b2a12" stroke="#e8bf5a" stroke-width="2"/><text x="16" y="22" font-size="17" font-weight="900" text-anchor="middle" fill="#e8bf5a" font-family="sans-serif">?</text></svg>');
   function ico(src, cls) {
-    return '<img' + (cls ? ' class="' + cls + '"' : '') + ' src="' + esc(src || "") + '" alt="" onerror="this.onerror=null;this.dataset.missing=this.src;if(window.MISSING_ICONS&&MISSING_ICONS.indexOf(this.src)<0)MISSING_ICONS.push(this.src);this.src=\'' + GENERIC + '\'">'; // v3.516.0 (IMA-11) : consignée comme ailleurs
+    var t = window.smallPortrait ? smallPortrait(src || "") : (src || ""); // PERF-11 : héros et compagnons en vignette
+    return '<img' + (cls ? ' class="' + cls + '"' : '') + ' src="' + esc(t) + '"' + (t !== (src || "") ? ' data-full="' + esc(src) + '"' : '') + ' alt="" onerror="this.onerror=null;this.dataset.missing=this.src;if(window.MISSING_ICONS&&MISSING_ICONS.indexOf(this.src)<0)MISSING_ICONS.push(this.src);this.src=\'' + GENERIC + '\'">'; // v3.516.0 (IMA-11) : consignée comme ailleurs
   }
   function byId(id) { return (typeof document !== "undefined" && document.getElementById) ? document.getElementById(id) : null; }
   function num(v) { return Number(v || 0); }
@@ -114,6 +115,8 @@
       var cont = !!(game.combatRound && game.combatRound.continueAttack);
       h += '<button type="button" class="cbx-pill is-tempo' + (cont ? ' is-on' : '') + '"' + (downed ? ' disabled' : '') + ' onclick="CombatEngine.toggleContinueAttack()" aria-label="'
         + esc(cont ? _t("Stop") : _t("Continuer")) + '">' + ico(cont ? IC.stop : IC.cont) + '</button>';
+      // v3.689.0 (COMB-11) : la vitesse joue aussi en Tactique (répliques, « Continuer ») : elle se règle ici aussi
+      h += '<button type="button" class="cbx-pill is-tempo is-speed" onclick="cbxCycleSpeed()" aria-label="' + esc(_t("Vitesse")) + '">x' + num(game.combatSpeed || 1) + '</button>';
     }
     if (S && S.active && SortieManager.isMission()) {
       h += '<button type="button" class="cbx-pill is-flee"' + (downed ? ' disabled' : '') + ' onclick="confirmFlee()">' + ico(IC.flee) + _t("Fuir") + '</button>';
@@ -481,9 +484,11 @@
     h += '<div class="cbx-card-pt">' + ico((def && def.image) || "") + '<span class="cbx-lvl-badge">' + _t("Niv. {n}", { n: num(game.heroLevel) || 1 }) + '</span>'
       + (marks ? '<span class="cbx-pt-badges">' + marks + '</span>' : '') + '</div>';
     h += '<div class="cbx-card-nm"><span>' + esc(hero.name || "") + '</span></div>';
-    // v3.458.2 (audit C2) : nom et valeur écrits dans la barre ; la célérité a sa propre ligne
+    // v3.458.2 (audit C2) : nom et valeur écrits dans la barre ; v3.702.0 (COMB-7) : le nom dans son span, masqué avec compagnons
+    var resLbl = resDef ? _td(resDef.label) : "", resVal = fmt(res ? res.current : 0) + " / " + fmt(res ? res.max : 0);
     h += '<div class="cbx-res r-' + esc((res && res.resourceId) || "") + '"><i style="width:' + resPct.toFixed(1) + '%"></i>'
-      + '<span class="cbx-res-txt">' + esc(resDef ? _td(resDef.label) : "") + ' ' + fmt(res ? res.current : 0) + '<small> / ' + fmt(res ? res.max : 0) + '</small></span></div>';
+      + '<span class="cbx-res-txt" aria-label="' + esc((resLbl ? resLbl + " " : "") + resVal) + '" title="' + esc(resLbl) + '">'
+      + (resLbl ? '<span class="cbx-res-lbl">' + esc(resLbl) + ' </span>' : '') + fmt(res ? res.current : 0) + '<small> / ' + fmt(res ? res.max : 0) + '</small></span></div>';
     h += '<div class="cbx-cel"><u style="width:' + celPct.toFixed(1) + '%"></u></div>';
     h += '<div class="cbx-hpbar' + (pct < 35 ? ' is-low' : '') + '"><i class="is-trail" style="width:' + Math.max(prev, pct).toFixed(1) + '%" data-to="' + pct.toFixed(1) + '"></i>'
       + '<i class="is-fill" style="width:' + Math.min(prev, pct).toFixed(1) + '%" data-to="' + pct.toFixed(1) + '"></i>'
@@ -537,10 +542,7 @@
   var SLOTS = ["skill1", "skill2", "skill3", "defense"];
   var KEYS = { skill1: "1", skill2: "2", skill3: "3", defense: "4" };
 
-  function actionIcon(action) {
-    return (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[action.id])
-      || (action.type === "defense" ? "images/Icons/combat_stats/stat_defense.webp" : "images/Icons/combat_actions/skill_generic.webp");
-  }
+  function actionIcon(action) { return getGrimoireActionIcon(action); } // ui/grimoire-view.js (ARCH-17)
 
   /* Le conseil du Grimoire, avec SA RAISON : la condition de la règle qui s'applique. */
   function heroAdvice() {
@@ -553,7 +555,7 @@
   }
   function condInfo(id) {
     var c = (typeof GRIMOIRE_CONDITIONS !== "undefined" && id) ? GRIMOIRE_CONDITIONS[id] : null;
-    return c ? { label: _td(c.label), icon: c.icon } : null;
+    return c ? { label: _td(c.label), short: _td(c.short || c.label), icon: c.icon } : null;
   }
 
   function skillButtonHTML(slot, advice, small) {
@@ -609,8 +611,11 @@
     var stock = PotionManager.getHealingStock(p.id);
     var busy = !!(game.combatRound && game.combatRound.busy);
     var heroDone = isManual() && engine().pendingOf(actorsApi().heroActor());
-    var dis = stock <= 0 || busy || num(game.heroHp) <= 0 || heroDone || waitingTurn();
-    return '<button type="button" class="cbx-pot"' + (dis ? ' disabled' : '') + ' onclick="CombatEngine.heroAction(\'potion\', \'' + esc(p.id) + '\')" aria-label="' + esc(_td(p.name)) + '">'
+    var sel = isManual() ? CombatEngine.selectedActor() : null;
+    // v3.689.0 (COMB-3, COMB-19) : en Grimoire, touchable hors de ton tour (bue au suivant) ; au tour d'un compagnon, grisée
+    var grim = game.combatMode === "grimoire", queued = grim && cbx.potionQueued === p.id;
+    var dis = stock <= 0 || num(game.heroHp) <= 0 || (!grim && (busy || heroDone || waitingTurn() || !!(sel && sel.companionId)));
+    return '<button type="button" class="cbx-pot' + (queued ? ' is-queued' : '') + '"' + (dis ? ' disabled' : '') + ' onclick="cbxPotion(\'' + esc(p.id) + '\')" aria-label="' + esc(_td(p.name)) + '">'
       + ico(p.icon) + '<span class="cbx-pot-count">' + stock + '</span><em class="cbx-key-badge">' + (index + 5) + '</em></button>';
   }
 
@@ -759,13 +764,17 @@
     silenced: 0, notes: [], lastHeroSlot: null, phase: null, lastDeadRect: null };
   window.cbxState = cbx;
 
+  var fxBaseMemo = null;
   function fxBase() {
+    if (fxBaseMemo) return fxBaseMemo; // v3.688.0 (PERF-1) : lu une fois par image, plus de recalcul forcé à chaque chiffre
     var app = byId("cbx");
     if (!app || !app.getBoundingClientRect) return null;
     var r = app.getBoundingClientRect();
     // Mode PC : la colonne est zoomée — on ramène les coordonnées écran à celles du CSS.
     var z = app.offsetWidth ? (r.width / app.offsetWidth) : 1;
-    return { r: r, z: z || 1 };
+    var b = { r: r, z: z || 1 };
+    if (typeof requestAnimationFrame === "function") { fxBaseMemo = b; requestAnimationFrame(function () { fxBaseMemo = null; }); }
+    return b;
   }
   function anchorOf(el, yRatio) {
     var b = fxBase();
@@ -789,7 +798,13 @@
   }
   function foeEl(e) { var s = byId("cbx-stage"); return (s && s.querySelector && e) ? s.querySelector('.cbx-foe[data-k="' + (e.actorId || "") + '"] .cbx-foe-hit') : null; }
   function allyEl(a) { var t = byId("cbx-team"); return (t && t.querySelector && a) ? t.querySelector('.cbx-card[data-who="' + (a.actorId || "a0") + '"]') : null; }
-  function flash(el, cls) { if (!el || !el.classList) return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
+  /* v3.688.0 (PERF-1) : l'animation repart deux images plus tard, sans lire offsetWidth (recalcul forcé). */
+  function flash(el, cls) {
+    if (!el || !el.classList) return;
+    el.classList.remove(cls);
+    if (typeof requestAnimationFrame !== "function") { void el.offsetWidth; el.classList.add(cls); return; }
+    requestAnimationFrame(function () { requestAnimationFrame(function () { el.classList.add(cls); }); });
+  }
   function stamp(el, kind) {
     if (!el) return;
     var s = document.createElement("span");
@@ -874,10 +889,10 @@
     el.innerHTML = cbx.lastRule = notes.map(function (l) {
       var c = condInfo(l.cond);
       return '<div class="cbx-rule-line">' + (l.who ? ico(l.who, "is-who") : '')
-        + (c ? '<span class="cbx-rule-if">' + _t("Si") + '</span>' + ico(c.icon) + '<span class="cbx-rule-c">' + esc(c.label) + '</span>' : '<span class="cbx-rule-if">' + _t("Par défaut") + '</span>')
+        + (c ? '<span class="cbx-rule-if">' + _t("Si") + '</span>' + ico(c.icon) + '<span class="cbx-rule-c" title="' + esc(c.label) + '">' + esc(c.short) + '</span>' : '<span class="cbx-rule-if">' + _t("Par défaut") + '</span>')
         + '<b>→</b>' + ico(l.icon) + '<strong>' + esc(l.label) + '</strong></div>';
     }).join("");
-    el.classList.remove("is-on"); void el.offsetWidth; el.classList.add("is-on");
+    flash(el, "is-on");
     flash(byId("cbx-grim-btn"), "is-firing");
     clearTimeout(ruleTimer);
     ruleTimer = setTimeout(function () { el.classList.remove("is-on"); }, Math.max(700, 1500 / Math.max(1, num(game.combatSpeed) || 1)));
@@ -914,7 +929,8 @@
     if (!on) return;
     if (I.combatKey !== ini.key) {
       ini.key = I.combatKey; ini.nodes = {};
-      ini.rollUntil = Date.now() + (lessMotion() ? 0 : INI_ROLL_MS);
+      // v3.689.0 (COMB-12) : les dés suivent la vitesse, comme le premier pas (1 s ÷ vitesse)
+      ini.rollUntil = Date.now() + (lessMotion() ? 0 : INI_ROLL_MS / (typeof getCombatSpeedMult === "function" ? getCombatSpeedMult() : 1));
       host.innerHTML = '<div class="cbx-ini-rd">' + _t("Round") + '<b></b></div><div class="cbx-ini-row"></div>';
     }
     var row = host.querySelector(".cbx-ini-row"), rb = host.querySelector(".cbx-ini-rd b");
@@ -977,6 +993,7 @@
       if (typeof WeakMap === "function") { cbx.hp = new WeakMap(); cbx.tele = new WeakMap(); }
     }
     applyEpure();
+    drinkQueuedPotion();
     setHtml(byId("cbx-top"), buildTopHTML());
     setHtml(byId("cbx-target"), buildTargetHTML());
     renderStage();
@@ -1013,22 +1030,19 @@
   window.renderAllyRow = renderTeam;
   window.renderActorBand = function () { renderTeam(); renderCmd(); };
   window.renderClassSkillButtons = renderCmd;
-  window.renderClassResourceBar = renderTeam;
   window.renderHealButtons = renderCmd;
   window.renderCombatControls = function () {
     if (window.AchievementManager) AchievementManager.onModeShown(game.combatMode);
     renderCmd();
     if (typeof renderCombatSpeedBar === "function") renderCombatSpeedBar();
   };
-  window.renderCombatMissionProgress = function () { setHtml(byId("cbx-top"), buildTopHTML()); };
-  window.renderHeroHp = function () { if (typeof oldRenderHeroHp === "function") oldRenderHeroHp(); renderTeam(); };
+  window.renderHeroHp = function () { if (typeof oldRenderHeroHp === "function") oldRenderHeroHp(); }; // v3.688.0 (PERF-6) : l'Équipe est déjà redessinée par renderFrame à chaque image
   window.openCombatStatesSheet = openStates;
   window.buildCbxStatesSheetHTML = buildStatesSheetHTML;
   window.buildCbxStatesBodyHTML = buildStatesBodyHTML;
   window.buildCbxTargetHTML = buildTargetHTML;
   window.buildCbxCmdHTML = buildCmdHTML;
   window.buildCbxTopHTML = buildTopHTML;
-  window.cbxStatesOf = statesOf;
   window.cbxLayout = layout;
   window.cbxIsRanged = isRanged;
   window.cbxIsEpure = isEpure;   // v3.473.0 : lu par le harnais
@@ -1043,6 +1057,11 @@
   window.showFloatingDamage = function (amount, isCrit) { onDamageShown(amount, isCrit); };
   window.showDamageTakenPopup = function () { /* repris par watch() sur la carte touchée */ };
   window.showGoldPopup = function (amount) { flyGold(amount); };   // v3.444.0 : vers la pastille du butin
+  // Audit 04/11 (ARCH-V1) : « CONTRÉ ! » sur l'ennemi visé, au style d'un coup bloqué (visuel propre : atelier d'abord)
+  window.showCounterSuccessPopup = function () {
+    var e = target(), el = e ? foeEl(e) : null;
+    if (inCombatScreen() && el) floatAt(anchorOf(el, 0.2), "⚡ " + _t("CONTRÉ !"), "is-blocked", "c" + e.actorId);
+  };
 
   /* Phase de boss : le bandeau bref reste celui du jeu, une pastille le garde lisible ensuite. */
   window.showBossPhase = function (enemy, label, line, full) {
@@ -1055,6 +1074,25 @@
   window.cbxReplayPhase = function () {
     if (cbx.phase && typeof showBossBanner === "function") showBossBanner(cbx.phase.title, cbx.phase.line, 1600, false);
   };
+
+  /* v3.689.0 (COMB-3) : en Grimoire, la potion touchée hors de ton tour attend le suivant (cbx.potionQueued). */
+  window.cbxPotion = function (id) {
+    var E = engine();
+    if (!E) return;
+    if (game.combatMode !== "grimoire" || E.isHeroTurnAvailable()) { cbx.potionQueued = null; E.heroAction("potion", id); renderCmd(); return; }
+    cbx.potionQueued = cbx.potionQueued === id ? null : id;
+    if (cbx.potionQueued && typeof showToast === "function") showToast(_t("Potion bue à ton prochain tour"), 1200);
+    renderCmd();
+  };
+  function drinkQueuedPotion() {
+    var id = cbx.potionQueued, E = engine();
+    if (!id || !E) return;
+    if (game.combatMode !== "grimoire" || num(game.heroHp) <= 0 || !game.enemy || !(window.PotionManager && PotionManager.getHealingStock(id) > 0)) { cbx.potionQueued = null; return; }
+    if (!E.isHeroTurnAvailable()) return;
+    cbx.potionQueued = null;
+    E.heroAction("potion", id);
+    renderCmd();
+  }
 
   window.cbxCycleSpeed = function () {
     var opts = (typeof COMBAT_SPEED_OPTIONS !== "undefined") ? COMBAT_SPEED_OPTIONS : [1, 2, 4];

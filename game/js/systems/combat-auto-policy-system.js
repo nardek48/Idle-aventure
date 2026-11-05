@@ -29,6 +29,20 @@ function isGrimoireSlotAvoided(slot, combatContext) {
 }
 window.isGrimoireSlotAvoided = isGrimoireSlotAvoided;
 
+/* v3.695.0 (COMB-2, Seb 05/11) : l'action contre-t-elle une annonce en cours ? « Varier » ne l'évite jamais. */
+function actionCountersLiveAnnounce(action, combatContext) {
+  return !!(action && Array.isArray(action.counters) && action.counters.some(function (c) { return evaluateGrimoireCondition(c, combatContext); }));
+}
+window.actionCountersLiveAnnounce = actionCountersLiveAnnounce;
+
+/* v3.695.0 (COMB-1, Seb 05/11) : le repli ne joue la Défense que face à une annonce qu'elle contre, ou sous 40 % des PV. */
+function isDefenseFallbackWarranted(kit, combatContext) {
+  var d = kit && kit.actions && kit.actions.defense, ctx = combatContext || {};
+  if (typeof ctx.heroHpPercent === "number" && ctx.heroHpPercent <= HERO_LOW_HP_THRESHOLD_PCT) return true;
+  return actionCountersLiveAnnounce(d, ctx);
+}
+window.isDefenseFallbackWarranted = isDefenseFallbackWarranted;
+
 var HERO_LOW_HP_THRESHOLD_PCT = 0.40;
 
 function evaluateGrimoireCondition(conditionId, combatContext) {
@@ -190,6 +204,12 @@ function isConditionPossibleForEnemy(conditionId, enemy) {
 
 window.isConditionPossibleForEnemy = isConditionPossibleForEnemy;
 
+function isCounterConditionOfAction(action, conditionId) {
+  if (action.counters.indexOf(conditionId) !== -1) return true;
+  var map = window.ARCHETYPE_EFFECT_TO_CONDITION_ID || {};
+  return (action.effects || []).some(function (ef) { return !!ef && map[ef.type] === conditionId; });
+}
+
 function getPrioritaryCounterRule(rules, kit, enemy) {
   if (!rules || !Array.isArray(rules) || !kit || !kit.actions) return null;
 
@@ -199,6 +219,8 @@ function getPrioritaryCounterRule(rules, kit, enemy) {
 
     var action = kit.actions[rule.actionSlot];
     if (!action || !Array.isArray(action.counters) || !action.counters.length) continue;
+    // v3.689.0 (COMB-13) : une règle de contre = une condition que l'action contre (annonce ou trait de ses effets)
+    if (!isCounterConditionOfAction(action, rule.conditionId)) continue;
 
     if (enemy !== undefined && !isConditionPossibleForEnemy(rule.conditionId, enemy)) continue;
     // v3.443.1 : trait tenu par un objet de combat, la règle ne joue pas : ni réserve ni compétence mise de côté

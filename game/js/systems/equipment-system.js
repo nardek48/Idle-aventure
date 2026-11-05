@@ -1,6 +1,6 @@
 "use strict";
 /* systems/equipment-system.js — actions sur l'inventaire (équiper/déséquiper/vendre/trier).
-   EquipmentSystem = logique réelle ; EquipmentManager = façade legacy déléguant à StatsSystem pour les "effective*". Détail : COMMENTAIRES_ORIGINAUX.md */
+   EquipmentSystem = logique réelle ; EquipmentManager = façade legacy déléguant à StatsSystem pour les "effective*". */
 
 /* v3.225.0 — affixes d'un objet, toujours un tableau (objet d'avant v3.225.0 ou Commun : []).
    Seul point de lecture : stats-system.js, equipment-view.js, equip-shop-view.js passent par ici. */
@@ -124,13 +124,14 @@ function getInventoryCap() {
     ? MemoryManager.getInventoryCap() : MAX_INVENTORY_SIZE;
 }
 
-function addLootToInventory(item) {
+function addLootToInventory(item, opts) {
   if (!item) return false;
   if (!Array.isArray(game.inventory)) game.inventory = [];
 
   /* v3.322.0 : sac plein -> l'objet est offert au lieu d'être perdu. Un objet unique
-     (arme d'élite) n'est jamais offert d'office : il entre en dépassement. */
-  if (game.inventory.length >= getInventoryCap() && !item.unique) {
+     (arme d'élite) n'est jamais offert d'office : il entre en dépassement.
+     audit 04/11 (QA-4) : une récompense d'Histoire (opts.keep) non plus, la pièce de palier se perdait. */
+  if (game.inventory.length >= getInventoryCap() && !item.unique && !(opts && opts.keep)) {
     var gained = (window.MemoryManager) ? MemoryManager.offerItem(item, "full") : 0;
     showToast("🎒 " + (gained > 0 ? _t("Sac plein : {x} offert (+{n} Aether)", { x: _td(item.name), n: gained }) : _t("Sac plein : {x} offert", { x: _td(item.name) })), 2000);
     return false;

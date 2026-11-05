@@ -5,7 +5,7 @@
    fin du run (voir hooks dans sortie-system.js). Cumulables : 1 de chaque type par run. Une
    potion bue au camp reste armée indéfiniment jusqu'au prochain run. v3.412.0 : l'ancien
    Élixir d'Aether (pendingPotionBonuses, aetherElixirStackCount) est retiré. Anciennes saves : timestamps normalisés en booléens à
-   ensure(). Ancien système 30 min : COMMENTAIRES_ORIGINAUX.md */
+   ensure(). */
 
 var POTION_CYCLE_PRICE_GROWTH = 0.15;
 
@@ -129,6 +129,16 @@ var PotionManager = {
     saveGame();
   },
 
+  /* ECON-2 (option A, Seb 05/11) : moitié du prix, au plus la valeur des ingrédients de la recette de l'Apothicaire
+     (valeurs du Grand Ouvrage : Soin mineur 12 Eau + 4 Blé = 16 or, Soin majeur 24 Eau + 2 Pain de 20 = 64 or). */
+  getSellValue: function (potion) {
+    var half = Math.floor(this.getCost(potion) / 2);
+    var r = (window.APOTHECARY_RECIPES || []).filter(function (x) { return x.potionId === potion.id; })[0];
+    if (!r || !window.GrandOuvrage || typeof GrandOuvrage.getValue !== "function") return half;
+    var v = Object.keys(r.inputs || {}).reduce(function (a, k) { return a + GrandOuvrage.getValue(k) * Number(r.inputs[k] || 0); }, 0);
+    return v > 0 ? Math.min(half, v) : half;
+  },
+
   sellPotion: function (id) {
     this.ensure();
     this.ensureHealing();
@@ -139,7 +149,7 @@ var PotionManager = {
     var stock = isHealing ? this.getHealingStock(id) : this.getStock(id);
     if (stock <= 0) return showToast(_t("Aucune potion à vendre"), 1000);
 
-    var value = Math.floor(this.getCost(potion) / 2);
+    var value = this.getSellValue(potion);
     if (isHealing) game.healingPotionsOwned[id] = stock - 1;
     else game.potionsOwned[id] = stock - 1;
     game.gold += value;
@@ -191,6 +201,17 @@ var PotionManager = {
     return Math.max(0, potion.dailyBuyLimit - Number(this._shopDaily().bought[id] || 0));
   },
 
+  /* audit 04/11 (NOV-1) : à forest_04, sans potion ni or pour la payer, l'Histoire restait bloquée
+     pour toujours (aucune autre source d'or à ce stade) ; Sarkel laisse alors la Mineure. */
+  isStoryGiftDue: function (id) {
+    if (id !== "potion_soin_mineur" || !window.StoryQuestManager) return false;
+    var step = StoryQuestManager.getCurrentStep("forest");
+    if (!step || step.id !== "forest_04" || !StoryQuestManager.isCurrentStepAccepted("forest")) return false;
+    var owned = function (o) { return Object.keys(o || {}).some(function (k) { return Number(o[k] || 0) > 0; }); };
+    if (owned(game.healingPotionsOwned) || owned(game.potionsOwned)) return false;
+    return (game.gold || 0) < this.getCost(this.getHealingPotion(id));
+  },
+
   buyHealingPotion: function (id) {
     this.ensureHealing();
     var potion = this.getHealingPotion(id);
@@ -205,9 +226,12 @@ var PotionManager = {
     }
 
     var cost = this.getCost(potion);
+    var gift = this.isStoryGiftDue(id);
+    if (gift) cost = 0;
     if ((game.gold || 0) < cost) return showToast(_t("Pas assez d'or"), 1000);
 
     game.gold -= cost;
+    if (gift) addLog("🩹 " + _t("Sarkel te laisse une {x}. « Tu me la paieras une autre fois. »", { x: _td(potion.name) }), "event");
     game.healingPotionsOwned[id] = this.getHealingStock(id) + 1;
     if (typeof potion.dailyBuyLimit === "number") {
       var daily = this._shopDaily();
@@ -218,10 +242,6 @@ var PotionManager = {
     showToast(_td(potion.name) + " +1", 1300);
     if (typeof renderAll === "function") renderAll();
     saveGame();
-  },
-
-  getHealCooldownRemainingMs: function () { // v3.102.0 : conservé pour compatibilité (toujours 0, le tour de round remplace le cooldown)
-    return 0;
   },
 
   /* v3.102.0 (P2) : la potion est l'action « Objet » d'un round (elle consomme le tour, voir CombatEngine.heroAction) —
@@ -292,7 +312,6 @@ var POTION_AUTO_THRESHOLDS = [
   { id: "normal", label: _t("Normal"), value: 0.40, desc: _t("Sous 40 % de tes PV, plus prudent mais plus gourmand.") },
   { id: "tot",    label: _t("Tôt"),    value: 0.55, desc: _t("Sous 55 % de tes PV, pour ne jamais frôler la chute.") }
 ];
-var POTION_AUTO_NEW_GAME = { threshold: "tard", keepForBoss: true };   // partie neuve (v3.380.0 : « Tard », meilleur au banc)
 var POTION_AUTO_OLD_SAVE = { threshold: "jamais", keepForBoss: true };   // sauvegarde sans le réglage
 var POTION_AUTO_TARGET_PCT = 0.60; // « suffit » = te remonte au moins à 60 % de tes PV
 
@@ -374,6 +393,5 @@ var PotionAutoManager = {
 };
 
 window.POTION_AUTO_THRESHOLDS = POTION_AUTO_THRESHOLDS;
-window.POTION_AUTO_NEW_GAME = POTION_AUTO_NEW_GAME;
 window.POTION_AUTO_OLD_SAVE = POTION_AUTO_OLD_SAVE;
 window.PotionAutoManager = PotionAutoManager;

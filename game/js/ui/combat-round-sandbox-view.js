@@ -19,8 +19,6 @@ var rsbState = {
   markdown: ""
 };
 
-var RSB_HERO_BY_CLASS = { knight: "knight", archer: "ranger", mage: "mage" };
-
 function rsbLiveCoefs() {
   return {
     enemyHpCoef: (typeof ENEMY_PV_MULT === "number") ? ENEMY_PV_MULT : 3.33,

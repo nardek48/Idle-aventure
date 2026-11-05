@@ -1,5 +1,5 @@
 "use strict";
-/* ui/ui-root.js — chef d'orchestre UI : switchTab (navigation), renderPanel (routeur par onglet), renderAll (rendu global), helpers transversaux (esc, héros, stats). Détail complet : COMMENTAIRES_ORIGINAUX.md */
+/* ui/ui-root.js — chef d'orchestre UI : switchTab (navigation), renderPanel (routeur par onglet), renderAll (rendu global), helpers transversaux (esc, héros, stats). */
 
 function esc(value) {
   return String(value == null ? "" : value)
@@ -127,6 +127,7 @@ function switchTab(tabName) {
   }
   if (typeof storyTableDesNoms === "function") storyTableDesNoms(); // v3.456.0 : la table des noms, une fois par jour
   if (typeof storyPuitsVeineMere === "function") storyPuitsVeineMere(); // v3.491.0 : le puits de la veine-mère, une fois par jour
+  if (window.MemoryManager) MemoryManager.announceLevels(-1); // v3.683.0 (TUTO-4) : niveau atteint écran fermé, annoncé à son ouverture
 
   // v3.244.0 (chantier Navigation) : Équipement et Talents vivent désormais DANS Héros.
   // Les anciens raccourcis (pastille sac du HUD, bouton du Résumé, toast de butin, quêtes)
@@ -207,7 +208,9 @@ function switchTab(tabName) {
   // v3.458.1 (audit C8) : un écran sans bouton allume l'onglet qui le contient ; à défaut, Menu
   // v3.503.0 (grand écran) : un bouton propre et visible (rail du format large) passe avant le parent
   var ownBtn = document.querySelector('.tab-btn[data-tab="' + tabName + '"]');
-  var directBtn = ownBtn && ownBtn.offsetParent !== null ? ownBtn : document.querySelector('.tab-btn[data-tab="' + (TAB_PARENT[tabName] || tabName) + '"]');
+  var parentTab = TAB_PARENT[tabName] || tabName;
+  if (TAB_PARENT[tabName] && !isTabUnlocked(parentTab)) parentTab = "campement"; // NOV-18 : parent verrouillé = case vide, on allume le Camp
+  var directBtn = ownBtn && ownBtn.offsetParent !== null ? ownBtn : document.querySelector('.tab-btn[data-tab="' + parentTab + '"]');
   if (directBtn) {
     directBtn.classList.add("active");
   } else {
@@ -259,8 +262,6 @@ function renderAll() {
   renderPanel();
   updateQuestBadge();
   if (typeof renderHealButtons === "function") renderHealButtons();
-  if (typeof renderSpecialAttackButton === "function") renderSpecialAttackButton();
-  if (typeof renderDefenseButton === "function") renderDefenseButton();
   if (typeof renderActivePotionsBar === "function") renderActivePotionsBar();
   if (typeof renderCombatHeroMini === "function") renderCombatHeroMini();
   if (typeof renderClassSkillButtons === "function") renderClassSkillButtons(); // v3.241.0 : compétences dès l'entrée en combat
@@ -303,8 +304,6 @@ function renderPanel() {
 
   var sameTab = game.activeTab === lastRenderedTab;
   var savedScrollTop = sameTab ? container.scrollTop : 0;
-  var innerScroll = sameTab ? container.querySelector(".subtab-page-content") : null;
-  var savedInnerScrollTop = innerScroll ? innerScroll.scrollTop : null;
   // v3.425.0 (lot H-2) : la zone de défilement des cadres .kframe-page (.kfp-scrollzone) n'était
   // pas restaurée : toute action dans un cadre (choisir un emplacement, acheter…) renvoyait en
   // haut. On la garde tant que l'écran est le même : même onglet, mêmes boutons « allumés ».
@@ -334,12 +333,7 @@ function renderPanel() {
     case "shop":
       container.innerHTML = buildShopHTML();
       break;
-    case "talents":
-      container.innerHTML = buildTalentsHTML();
-      break;
-    case "equip":
-      container.innerHTML = buildEquipHTML();
-      break;
+    // « talents » et « equip » : switchTab les mène dans Héros (ancien écran retiré, audit 04/11 ARCH-8)
     case "quests":
       container.innerHTML = buildQuestsHTML();
       break;
@@ -397,11 +391,7 @@ function renderPanel() {
   // v3.520.0 (revue) : une feuille d'atelier, de bâtiment ou de l'Entrepôt ouverte hors du Village (refus d'expédition, Héros) se redessine aussi
   if (game.activeTab !== "village" && typeof refreshProductionSheet === "function") refreshProductionSheet();
 
-  // v3.131.0 (retour Seb, mobile) : neutralise le padding-bottom du panel pour les écrans à
-  // sous-onglets (.subtab-page) — voir css/02-layout.css #panel-container.has-subtab-page,
-  // évite le double compte de safe-bottom qui créait un espace vide visible entre la barre de
-  // sous-onglets (Équipement/Inventaire/Boutique, etc.) et la barre de navigation du bas.
-  container.classList.toggle("has-subtab-page", !!container.querySelector(".subtab-page"));
+  // v3.705.0 : plus d'écran .subtab-page (Quêtes, Boutique et Donjon sont des pages à cadre) : classe has-subtab-page retirée
 
   // v3.190.0 : cadre principal v2 — décoration 3 rangées de chaque .nb-page-frame
   // (voir ui/kframe-decorator.js), AVANT la restauration du scroll (les hauteurs changent).
@@ -413,10 +403,6 @@ function renderPanel() {
 
   if (sameTab) {
     container.scrollTop = savedScrollTop;
-    if (savedInnerScrollTop !== null) {
-      var newInnerScroll = container.querySelector(".subtab-page-content");
-      if (newInnerScroll) newInnerScroll.scrollTop = savedInnerScrollTop;
-    }
     if (savedFrameScroll && savedFrameScroll.top) {
       var newZone = container.querySelector(".kfp-scrollzone");
       if (newZone && getPanelScreenKey(container) === savedFrameScroll.key) newZone.scrollTop = savedFrameScroll.top;
@@ -485,7 +471,11 @@ function backNavCloseTop() {
   var o = document.getElementById("offline-modal");
   if (o && o.classList.contains("show")) { closeOfflineModal(); return "closed"; }
   var list = Array.prototype.filter.call(document.querySelectorAll(".ksheet-x, .kwin-veil, .full-menu-overlay, .ksheet-backdrop, .hc-overlay, .title-screen-overlay"), backNavVisible);
-  if (!list.length) return "none";
+  if (!list.length) {
+    // UI-16 : sur la carte vivante, Retour et Échap reviennent à la carte du monde (plus au Camp)
+    if (game.activeTab === "map" && typeof livingMapOpenId !== "undefined" && livingMapOpenId && typeof closeLivingMap === "function") { closeLivingMap(); return "closed"; }
+    return "none";
+  }
   // À z-index égal, le dernier dans la page est dessus (une croix suit son voile).
   var top = list.reduce(function (a, b) { return backNavZ(b) >= backNavZ(a) ? b : a; });
   if (!top.classList.contains("ksheet-x")) return "blocked";
@@ -496,6 +486,14 @@ function backNavCloseTop() {
 function backNavOnPop() {
   backNavArmed = false;
   var r = backNavCloseTop();
+  // audit 04/11 (QA-2) : en combat, le retour menait au Camp et laissait le combat figé, sans chemin
+  // de retour (élite de carte bloquée). Il demande désormais « Fuir ? » et reste au combat sinon.
+  if (r === "none" && game.activeTab === "combat" && typeof hasCombatQuestContext === "function" && hasCombatQuestContext()) {
+    if (window.SortieManager && SortieManager.isActive() && typeof confirmFlee === "function") confirmFlee();
+    else if (typeof showToast === "function") showToast(_t("Termine le combat d'abord."), 1600);
+    backNavArm();
+    return;
+  }
   if (r === "none") {
     if (game.activeTab !== "campement" && typeof isTabUnlocked === "function" && isTabUnlocked("campement")) switchTab("campement");
     else {
@@ -516,6 +514,14 @@ if (typeof window !== "undefined" && window.addEventListener && typeof document 
     var a = document.activeElement, tag = a ? a.tagName : "";
     if (tag === "INPUT" || tag === "TEXTAREA") return;
     backNavCloseTop();
+  });
+  // CPL3-3 : un élément role="button" qui n'est pas un <button> répond à Entrée et Espace comme au toucher
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Enter" && e.key !== " " && e.key !== "Spacebar") return;
+    var t = e.target;
+    if (!t || !t.matches || !t.matches('[role="button"]:not(button)') || t.getAttribute("aria-disabled") === "true") return;
+    e.preventDefault();
+    t.click();
   });
 }
 window.backNavCloseTop = backNavCloseTop;

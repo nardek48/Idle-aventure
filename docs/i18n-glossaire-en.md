@@ -26,6 +26,7 @@ Principe : **les noms propres des personnages et du village restent tels quels.*
 | Forêt enchantée | Enchanted Forest |
 | Désert oublié | Forgotten Desert |
 | Ruines anciennes | Ancient Ruins |
+| Nef ensevelie (Ruines, 2e aventure ; v3.697.0) | Buried Nave |
 | Crypte oubliée | Forgotten Crypt |
 | Montagne brûlante | Burning Mountain |
 | Tour du sorcier | Sorcerer's Tower |

@@ -1,5 +1,5 @@
 "use strict";
-/* ui/equipment-view.js — écran Équipement, 3 sous-onglets Équipement/Inventaire/Boutique. Panneau détail unifié équipement+potions (v2.83.46), comparaison avec équipé, bonus de set. Détail : COMMENTAIRES_ORIGINAUX.md */
+/* ui/equipment-view.js — écran Équipement, 3 sous-onglets Équipement/Inventaire/Boutique. Panneau détail unifié équipement+potions (v2.83.46), comparaison avec équipé, bonus de set. */
 
 var activeEquipSubTab = "equipment"; // "equipment" | "inventory" | "shop" | "potions"
 var selectedEquipSlot = "weapon"; // un des 7 slots réels (voir EQUIPMENT_SLOTS)
@@ -16,35 +16,7 @@ function setEquipSubTab(tab) {
 }
 window.setEquipSubTab = setEquipSubTab;
 
-function selectEquipSlot(slotId) {
-  selectedEquipSlot = slotId;
-  if (typeof renderPanel === "function") renderPanel();
-}
-window.selectEquipSlot = selectEquipSlot;
-
-function selectInventoryKey(key) {
-  selectedInventoryKey = key;
-  if (typeof renderPanel === "function") renderPanel();
-}
-window.selectInventoryKey = selectInventoryKey;
-
 var inventoryFilter = "all"; // "all" | "equipment" | "potions" — v2.83.46
-
-function setInventoryFilter(filter) {
-  inventoryFilter = filter;
-  selectedInventoryKey = null; // évite de garder sélectionné un objet qui sort du filtre
-  if (typeof renderPanel === "function") renderPanel();
-}
-window.setInventoryFilter = setInventoryFilter;
-
-function buildEquipSubTabBarHTML() {
-  var h = '<div class="pc-subtab-bar">';
-  h += '<button type="button" class="pc-subtab-btn' + (activeEquipSubTab === "equipment" ? ' is-active' : '') + '" onclick="setEquipSubTab(\'equipment\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/equipment.webp" alt=""><span>' + _t("Équipement") + '</span></button>';
-  h += '<button type="button" class="pc-subtab-btn' + (activeEquipSubTab === "inventory" ? ' is-active' : '') + '" onclick="setEquipSubTab(\'inventory\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/inventory.webp" alt=""><span>' + _t("Inventaire") + '</span></button>';
-  h += '<button type="button" class="pc-subtab-btn' + (activeEquipSubTab === "shop" ? ' is-active' : '') + '" onclick="setEquipSubTab(\'shop\')"><img class="pc-subtab-ico" src="images/Icons/subtabs/equipment_shop.webp" alt=""><span>' + _t("Boutique") + '</span></button>';
-  h += '</div>';
-  return h;
-}
 
 function formatEquipmentStat(item) {
   if (!item) return "";
@@ -60,7 +32,7 @@ function formatEquipmentStatValue(stat, value) {
   if (stat === "critChance") return _t("+{n}% critique", { n: formatNumber(value) });
   if (stat === "critMult") return _t("+{n}x dégâts crit", { n: formatNumber(value) });
   if (stat === "autoDps") return _t("+{n} célérité", { n: formatNumber(Math.round(value)) });
-  if (stat === "defense") return _t("+{n}% défense", { n: Math.round(value * 1000) / 10 });
+  if (stat === "defense") return _t("+{n}% défense", { n: formatNumber(Math.round(value * 1000) / 10) }); // v3.683.0 (NOV-20) : 1,5
   if (stat === "maxHpPct") return _t("+{n}% PV max", { n: Math.round(value * 100) });
   if (stat === "xpMult") return _t("+{n}% expérience", { n: Math.round(value * 100) });
   if (stat === "dropChance") return _t("+{n}% de butin", { n: formatNumber(value) }); // court : tient sur une ligne à 320 px
@@ -89,21 +61,10 @@ function buildEquipmentAffixLinesHTML(item) {
   return h;
 }
 
-function buildEquipmentSlot(slot, label, icon) {
-  var item = game.equipped[slot];
-  var isSelected = selectedEquipSlot === slot;
-  var h = '<button class="eq-orbit-slot ' + (item ? 'filled' : 'empty') + (isSelected ? ' is-selected' : '') + '" onclick="selectEquipSlot(\'' + esc(slot) + '\')" aria-label="' + esc(_td(label)) + '">';
-  h += item
-    ? buildEquipmentIconHTML(item, "eq-orbit-slot-icon rframe")
-    : '<div class="eq-orbit-slot-icon eq-orbit-slot-placeholder">' + renderIconOrEmojiHTML(icon, "eq-orbit-slot-img", _td(label)) + '</div>';
-  h += '</button>';
-  return h;
-}
-
 function formatStatDelta(stat, delta) {
   var sign = delta > 0 ? "+" : "";
   if (stat === "tapMult" || stat === "goldMult" || stat === "maxHpPct" || stat === "xpMult") return sign + Math.round(delta * 100) + "%";
-  if (stat === "defense") return sign + (Math.round(delta * 1000) / 10) + "%"; // v3.226.0 : 1 décimale, les affixes de défense en ont 3
+  if (stat === "defense") return sign + fmtDec(Math.round(delta * 1000) / 10) + "%"; // NOV-20 : 1,5 en français ; v3.226.0 : 1 décimale, les affixes de défense en ont 3
   if (stat === "critMult") return sign + formatNumber(delta) + "x";
   if (stat === "critChance" || stat === "dropChance") return sign + formatNumber(delta) + "%";
   return sign + formatNumber(stat === "tapDmg" || stat === "autoDps" ? Math.round(delta) : delta); // v3.492.13 : entier
@@ -213,7 +174,7 @@ function buildCompatibleItemsListHTML(slot) {
   });
 
   if (items.length > 5) {
-    h += '<button class="eq-compat-more-btn" type="button" onclick="setEquipSubTab(\'inventory\')">' + _t("Voir les {n} objets dans l’Inventaire →", { n: items.length }) + '</button>';
+    h += '<button class="eq-compat-more-btn" type="button" onclick="setEquipSubTab(\'inventory\')">' + _t("Voir les {n} objets dans le Sac →", { n: items.length }) + '</button>';
   }
 
   h += '</div>';
@@ -304,7 +265,7 @@ function buildEquipDetailPanelHTML() {
   } else {
     h += '<div class="eq-detail-icon eq-detail-icon-empty">' + renderIconOrEmojiHTML(emoji, "eq-detail-empty-img", "") + '</div>';
     h += '<div class="eq-detail-name">' + esc(_t("{x} — vide", { x: label })) + '</div>';
-    h += '<div class="eq-detail-hint">' + _t("Équipe un objet depuis l’Inventaire pour remplir cet emplacement.") + '</div>';
+    h += '<div class="eq-detail-hint">' + _t("Équipe un objet depuis le Sac pour remplir cet emplacement.") + '</div>';
   }
 
   // v3.252.0 : la liste du sac a quitté ce panneau — il fait 50 % de largeur (~150 px utiles),
@@ -359,33 +320,6 @@ function getUnifiedInventoryEntries() {
   }
 
   return entries;
-}
-
-function buildUnifiedTileHTML(entry) {
-  var isSelected = selectedInventoryKey === entry.key;
-
-  if (entry.type === "equipment") {
-    var item = entry.item;
-    var h = '<button class="eq-bag-tile rframe rarity-' + esc(item.rarity) + (isSelected ? ' is-selected' : '') + '" onclick="selectInventoryKey(\'' + esc(entry.key) + '\')" aria-label="' + esc(_td(item.name)) + '">';
-    h += buildEquipmentIconHTML(item, "eq-bag-tile-icon");
-    h += '</button>';
-    return h;
-  }
-
-  if (entry.type === "combatItem") {
-    var ci = entry.item;
-    var h3 = '<button class="eq-bag-tile rframe rarity-common' + (isSelected ? ' is-selected' : '') + '" onclick="selectInventoryKey(\'' + esc(entry.key) + '\')" aria-label="' + esc(_td(ci.name)) + '">';
-    h3 += renderIconOrEmojiHTML(ci.icon, "eq-bag-tile-icon", _td(ci.name));
-    h3 += '<span class="eq-bag-tile-stock">' + entry.stock + '</span>';
-    return h3 + '</button>';
-  }
-
-  var potion = entry.potion;
-  var h2 = '<button class="eq-bag-tile rframe rarity-' + esc(potion.rarity || "common") + (isSelected ? ' is-selected' : '') + '" onclick="selectInventoryKey(\'' + esc(entry.key) + '\')" aria-label="' + esc(_td(potion.name)) + '">';
-  h2 += renderIconOrEmojiHTML(potion.icon, "eq-bag-tile-icon", _td(potion.name));
-  h2 += '<span class="eq-bag-tile-stock">' + entry.stock + '</span>';
-  h2 += '</button>';
-  return h2;
 }
 
 /* v3.220.0 : provenance d'un objet. Avec l'échelle de monde, deux objets de
@@ -473,7 +407,7 @@ function buildUnifiedDetailPanelHTML(entries) {
     h += '<div class="eq-detail-hint">' + (entry.isHealing
       ? _t("Se boit en combat : la préparation de sortie dit combien tu en emportes.")
       : _t("Se boit au départ, dans la préparation de sortie.")) + '</div>';
-    h += '<button class="btn-buy is-sec eq-detail-action" type="button" onclick="PotionManager.sellPotion(\'' + esc(potion.id) + '\')">' + _t("Vendre") + '</button>';
+    h += '<button class="btn-buy is-sec eq-detail-action" type="button" onclick="PotionManager.sellPotion(\'' + esc(potion.id) + '\')">' + _t("Vendre (+{n} or)", { n: formatNumber(PotionManager.getSellValue(potion)) }) + '</button>'; // ECON-2 : le prix sur le bouton
   }
 
   h += '</div>';
@@ -504,88 +438,11 @@ function buildEquippedComparisonHTML(item) {
   return h;
 }
 
-/* v3.244.0 : `topHTML` (optionnel) est inséré EN TÊTE DU CADRE — c'est là que le segment
-   Équipé / Sac de Héros doit vivre. Posé avant le cadre, il tomberait entre le bandeau
-   (que kframe-decorator sort du flux) et le corps. */
-function buildEquipmentTabContentHTML(topHTML) {
-  var h = '';
-
-  h += '<div class="eq-layout">';
-  h += '<div class="eq-hero-card nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="' + esc("images/Icons/combat_stats/stat_defense.webp|" + _t("Équipement")) + '">';
-  h += topHTML || '';
-  h += '<div class="eq-hero-main eq-hero-main-slots-only">';
-
-  h += '<div class="eq-hero-right">';
-  h += '<div class="eq-slot-col">';
-  h += buildEquipmentSlot("weapon", EQUIPMENT_SLOT_LABELS.weapon, EQUIPMENT_SLOT_EMOJI.weapon);
-  h += buildEquipmentSlot("armor", EQUIPMENT_SLOT_LABELS.armor, EQUIPMENT_SLOT_EMOJI.armor);
-  h += buildEquipmentSlot("helmet", EQUIPMENT_SLOT_LABELS.helmet, EQUIPMENT_SLOT_EMOJI.helmet);
-  h += buildEquipmentSlot("gloves", EQUIPMENT_SLOT_LABELS.gloves, EQUIPMENT_SLOT_EMOJI.gloves);
-  h += '</div>';
-  h += '<div class="eq-slot-col">';
-  h += buildEquipmentSlot("boots", EQUIPMENT_SLOT_LABELS.boots, EQUIPMENT_SLOT_EMOJI.boots);
-  h += buildEquipmentSlot("ring", EQUIPMENT_SLOT_LABELS.ring, EQUIPMENT_SLOT_EMOJI.ring);
-  h += buildEquipmentSlot("amulet", EQUIPMENT_SLOT_LABELS.amulet, EQUIPMENT_SLOT_EMOJI.amulet);
-  h += '</div>';
-  h += '</div>';
-
-  h += buildEquipDetailPanelHTML();
-
-  h += '</div>';
-  // v3.252.0 : pleine largeur, hors de la ligne « grille + détail ».
-  h += buildCompatibleItemsListHTML(selectedEquipSlot);
-  h += '</div>';
-  h += '</div>';
-
-  return h;
-}
-
-var showInventorySortMenu = false;
-
-function toggleInventorySortMenu() {
-  showInventorySortMenu = !showInventorySortMenu;
-  if (typeof renderPanel === "function") renderPanel();
-}
-window.toggleInventorySortMenu = toggleInventorySortMenu;
-
 function applyInventorySort(kind) {
-  showInventorySortMenu = false;
   if (kind === "type") sortInventoryByType();
   else sortInventoryByRarity();
 }
 window.applyInventorySort = applyInventorySort;
-
-function buildInventoryCompactToolbarHTML() {
-  var h = '<div class="inv-toolbar">';
-
-  h += '<div class="inv-toolbar-sort-wrap">';
-  h += '<button class="inv-toolbar-btn" type="button" onclick="toggleInventorySortMenu()"><img class=ico-inline src=images/Icons/system/sort.webp> ' + _t("Trier") + '</button>';
-  if (showInventorySortMenu) {
-    h += '<div class="inv-sort-menu">';
-    h += '<button type="button" onclick="applyInventorySort(\'rarity\')">' + _t("Rareté") + '</button>';
-    h += '<button type="button" onclick="applyInventorySort(\'type\')">' + _t("Type") + '</button>';
-    h += '</div>';
-  }
-  h += '</div>';
-
-  // v3.242.0 (retour Seb) : le bouton n'affichait qu'une icône, réduite à 0 px par le
-  // filet `img { font-size: 0 }` — il ne restait qu'une plaque bleue vide. Icône rétablie
-  // (voir css/99-icon-assets.css) et libellé ajouté pour qu'il se lise sans ambiguïté.
-  h += '<button class="inv-toolbar-btn" type="button" onclick="openInventorySettings()"><img class=ico-inline src=images/Icons/system/auto_sell.webp> ' + _t("Autovente") + '</button>';
-
-  h += '</div>';
-  return h;
-}
-
-function buildInventoryFilterRowHTML() {
-  // v3.401.0 (lot O-1) : filtres = pastilles du kit (.kchips), pas des onglets
-  var h = '<div class="kchips inv-filter-row">';
-  h += '<button type="button" class="' + (inventoryFilter === "all" ? 'is-on' : '') + '" onclick="setInventoryFilter(\'all\')">' + _t("Tout") + '</button>';
-  h += '<button type="button" class="' + (inventoryFilter === "equipment" ? 'is-on' : '') + '" onclick="setInventoryFilter(\'equipment\')"><img src="images/Icons/combat_stats/stat_defense.webp" alt="">' + _t("Équipement") + '</button>';
-  h += '<button type="button" class="' + (inventoryFilter === "potions" ? 'is-on' : '') + '" onclick="setInventoryFilter(\'potions\')"><img src="images/Icons/subtabs/potions.webp" alt="">' + _t("Consommables") + '</button>'; // v3.448.11 : potions et objets de combat
-  h += '</div>';
-  return h;
-}
 
 function buildInventorySettingsHTML() {
   var threshold = game.autoSellRarityThreshold || "common";
@@ -691,65 +548,3 @@ function getOwnedPotionsList() {
 
   return list;
 }
-
-function buildInventoryTabContentHTML(topHTML) {
-  var h = '<div class="eq-bag-panel nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="' + esc("images/Icons/subtabs/inventory.webp|" + _t("Inventaire")) + '">';
-  h += topHTML || ''; // v3.244.0 : voir buildEquipmentTabContentHTML
-
-  h += buildInventoryCompactToolbarHTML();
-  h += buildInventoryFilterRowHTML();
-
-  var entries = getUnifiedInventoryEntries();
-  var equipCount = (Array.isArray(game.inventory) ? game.inventory.length : 0);
-
-  h += '<div class="ksec eq-bag-title">' + _t("Sac ({a}/{b})", { a: equipCount, b: (typeof getInventoryCap === "function" ? getInventoryCap() : 25) }) + '</div>'; // v3.322.0
-
-  if (!entries.length) {
-    var emptyMsg = inventoryFilter === "potions"
-      ? _t("Aucune potion ni préparation de combat en stock.")
-      : inventoryFilter === "equipment"
-        ? _t("Sac vide, vainquez des boss pour obtenir du loot.")
-        : _t("Rien à afficher pour l’instant.");
-    h += '<div class="eq-empty">' + emptyMsg + '</div>';
-  } else {
-    if (!entries.some(function (e) { return e.key === selectedInventoryKey; })) {
-      selectedInventoryKey = entries[0].key;
-    }
-
-    h += '<div class="eq-bag-flex">';
-    h += '<div class="eq-bag-inv-grid">';
-    entries.forEach(function (entry) {
-      h += buildUnifiedTileHTML(entry);
-    });
-    h += '</div>';
-    h += buildUnifiedDetailPanelHTML(entries);
-    h += '</div>';
-  }
-
-  h += '</div>';
-  return h;
-}
-
-function buildEquipHTML() {
-  var h = '<div class="subtab-page">';
-  h += '<div class="subtab-page-content">';
-  if (activeEquipSubTab === "inventory") {
-    h += buildInventoryTabContentHTML();
-  } else if (activeEquipSubTab === "shop") {
-    h += '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="' + esc("images/Icons/subtabs/equipment_shop.webp|" + _t("Boutique d’équipement")) + '">';
-    h += (typeof buildEquipShopHTML === "function") ? buildEquipShopHTML() : "";
-    h += '</div>';
-  } else {
-    h += buildEquipmentTabContentHTML();
-  }
-  h += '</div>';
-
-  h += '<div class="subtab-bar-wrapper">';
-  h += buildEquipSubTabBarHTML();
-  h += '</div>';
-
-  h += '</div>';
-  return h;
-}
-
-window.buildEquipHTML = buildEquipHTML;

@@ -177,7 +177,7 @@ function buildCaravanDepartHTML() {
   var reason = CaravanManager.getBlockReason(sel, caravanMarketWorld());
   h += '<div class="car-go"><button type="button" class="kbtn primary"' + (reason ? ' disabled' : ' onclick="departCaravanFromSheet()"') + '>'
     + '<span>' + esc(reason || _t("Partir · {d}", { d: formatTime(t.seconds) })) + '</span>'
-    + (units > 0 ? '<small>' + _t("≈ {g} or au retour", { g: caravanGoldHTML(gold) }) + '</small>' : '')
+    + (units > 0 ? '<small>' + _t("≈ {g} or au retour", { g: caravanGoldHTML(CaravanManager.unloadGold(gold)) }) + '</small>' : '')
     + '</button></div>';
   return h;
 }
@@ -198,7 +198,7 @@ function buildCaravanRouteHTML(c) {
   h += '<div class="car-eta"><img class="ico-sys" src="images/Icons/system/hourglass_waiting.webp" alt="">'
     + '<span class="car-eta-t"><small>' + esc(_t("Trajet {x} · retour dans", { x: caravanTripLabel(t).toLowerCase() })) + '</small>'
     + '<b id="car-left-' + w + '">' + esc(formatTime(CaravanManager.getSecondsLeft(w))) + '</b></span>'
-    + (t.story ? '' : '<span class="car-chip">≈ ' + caravanGoldHTML(c.gold) + '</span>') + '</div>';
+    + (t.story ? '' : '<span class="car-chip">≈ ' + caravanGoldHTML(CaravanManager.unloadGold(c.gold)) + '</span>') + '</div>';
   if (t.story) return h + '<p class="car-why">' + _t("Caravane d'essai : elle part à vide pour ouvrir le marché, et ne prend pas de place.") + '</p>'; // v3.551.0
   h += buildCaravanChancesHTML(t, c);
   // v3.457.5 (audit P17) : une caravane par marché — on annonce celles qui peuvent vraiment partir
@@ -215,7 +215,7 @@ function buildCaravanBackHTML(c) {
     + '<button type="button" class="kbtn primary" onclick="unloadCaravanFromSheet(' + c.world + ')">' + _t("Décharger") + '</button></div>';
   h += '<span class="car-why">' + esc(_t("Trajet {x} · {n} unités vendues", { x: caravanTripLabel(t).toLowerCase(), n: formatNumber(CaravanManager.getLoadUnits(c.cargo)) })) + '</span>';
   h += '<div class="car-loot">';
-  h += '<span class="car-lt"><img src="images/Icons/gold_icon.webp" alt="">' + formatNumber(c.gold) + '<small>' + _t("or") + '</small></span>';
+  h += '<span class="car-lt"><img src="images/Icons/gold_icon.webp" alt="">' + formatNumber(CaravanManager.unloadGold(c.gold)) + '<small>' + _t("or") + '</small></span>';
   if (c.rare && WAREHOUSE_RESOURCES[c.rare.key]) {
     var rd = WAREHOUSE_RESOURCES[c.rare.key];
     h += '<span class="car-lt is-rare"><img src="' + rd.icon + '" alt="">×' + c.rare.n + '<small>' + esc(_td(rd.name)) + '</small></span>';

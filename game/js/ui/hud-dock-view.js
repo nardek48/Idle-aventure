@@ -77,6 +77,13 @@ function refreshTabClaimBadge(fil) {
 }
 window.refreshTabClaimBadge = refreshTabClaimBadge;
 
+var hudDockSpace = 0;
+function setHudDockSpace(root) {
+  var v = root.offsetHeight ? root.offsetHeight + 12 : 0;
+  hudDockSpace = v;
+  if (document.body && document.body.style) document.body.style.setProperty("--hud-dock-space", v + "px");
+}
+
 function renderHudDock() {
   var root = document.getElementById("hud-dock");
   if (!root) { mountHudDock(); root = document.getElementById("hud-dock"); if (!root) return; }
@@ -87,7 +94,7 @@ function renderHudDock() {
   var or = typeof hudDockOr === "function" ? hudDockOr() : null;
   if (or) list.unshift(or);
   var key = list.map(function (it) { return it.k + ":" + (it.badge || "") + ":" + (it.urgent ? 1 : 0) + ":" + (it.id || "") + ":" + it.icon + ":" + (it.tip || ""); }).join("|"); // v3.516.0 (ERG-8) : le titre change sans changer d'id
-  if (key === hudDockLastKey) return;
+  if (key === hudDockLastKey) { if (!hudDockSpace) setHudDockSpace(root); return; } // UI-1 : dock vide au premier rendu, la marge se rattrape ensuite
   hudDockLastKey = key;
   var first = hudDockSeen === null, prev = hudDockSeen || {}, now = {};
   var filChanged = !!fil && hudDockFilId !== null && hudDockFilId !== fil.id;
@@ -100,7 +107,7 @@ function renderHudDock() {
   hudDockSeen = now;
   // v3.650.0 (atelier bulles-flottantes, F0+) : la fin de chaque liste laisse la hauteur des bulles,
   // pour qu'aucun bouton ne reste coincé dessous (css/02-layout.css, zone qui défile ::after)
-  if (document.body && document.body.style) document.body.style.setProperty("--hud-dock-space", (root.offsetHeight ? root.offsetHeight + 12 : 0) + "px");
+  setHudDockSpace(root);
   hudDockFilId = fil ? fil.id : null;
   // Le libellé des nouvelles bulles s'affiche deux secondes, puis s'efface
   Array.prototype.forEach.call(root.querySelectorAll(".hud-bub.is-new"), function (b) {

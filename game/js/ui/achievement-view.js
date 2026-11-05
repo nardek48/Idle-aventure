@@ -7,7 +7,6 @@
 
 var achievementTab = null;       // onglet ouvert (null : monde courant)
 var achievementOldOpen = false;  // « Anciens exploits » dépliés
-var achievementTotalsOpen = false;
 
 function getAchievementDefaultTab() {
   var idx = window.WorldManager ? Number(WorldManager.worldIndex || 0) : 0;

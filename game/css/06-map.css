@@ -90,14 +90,28 @@
   transform: scale(0.94);
 }
 
-.map-node.is-current .map-node-circle {
+/* v3.688.0 (PERF-16) : le halo du monde actuel est un disque derrière le cercle, animé en
+   transform et opacity (composité), et non plus un box-shadow repeint à chaque image. */
+.map-node.is-current .map-node-pic::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  background: rgba(240, 170, 62, 0.55);
+  z-index: -1;
+  pointer-events: none;
   animation: mapNodePulse 1.7s infinite;
+  will-change: transform, opacity;
 }
 
 @keyframes mapNodePulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(240, 170, 62, 0.55), 0 4px 8px rgba(0, 0, 0, 0.45); }
-  50% { box-shadow: 0 0 0 8px rgba(240, 170, 62, 0), 0 4px 8px rgba(0, 0, 0, 0.45); }
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.19); opacity: 0; }
 }
+/* CPL3-7 : mouvement réduit, halo fixe du monde actuel */
+@media (prefers-reduced-motion: reduce) { .map-node.is-current .map-node-pic::before { animation: none; } }
 
 .map-node.is-locked .map-node-circle {
   outline-color: #6b6555;

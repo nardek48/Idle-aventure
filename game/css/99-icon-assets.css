@@ -4,10 +4,8 @@
 /* Classe générique : toute icône posée par renderIconOrEmojiHTML garde son ratio. */
 .ico-sys,
 .ico-lg,
-.pc-subtab-ico,
 .farm-plot-improvement-img,
 .qb-tab-icon-img,
-.eq-orbit-slot-img,
 .active-affliction-img,
 .grimoire-rule-ico,
 .hc-stat-ico-img {
@@ -22,7 +20,6 @@
 .ico-lg { width: 26px; height: 26px; }
 
 /* Barres de sous-onglets : l'emoji faisait ~17px, l'image monte un peu. */
-.pc-subtab-ico { width: 22px; height: 22px; margin-bottom: 1px; }
 
 /* Bâtiments du village (rendus via iconImg + le helper existant). */
 img.vb-card-icon { width: 84px; height: 84px; object-fit: contain; } /* v3.414.0 : grandes vignettes */
@@ -37,8 +34,6 @@ img.vb-card-icon { width: 84px; height: 84px; object-fit: contain; } /* v3.414.0
 .qb-tab-icon-img { width: 22px; height: 22px; }
 
 /* Emplacement d'équipement vide : l'asset porte déjà son cadre rond. */
-.eq-orbit-slot-img { width: 100%; height: 100%; object-fit: contain; }
-.eq-orbit-slot-placeholder { font-size: 0; }
 
 /* Fiche héros et création. */
 .hc-stat-ico-img { width: 16px; height: 16px; }
@@ -100,7 +95,6 @@ img.vb-card-icon { width: 84px; height: 84px; object-fit: contain; } /* v3.414.0
 #panel-container .nb-purchase-desc { color: var(--c-brown-850-2) !important; }
 
 /* Emplacement d'équipement vide : le libellé est déjà dans le panneau de détail. */
-.eq-orbit-slot-placeholder { font-size: 0; }
 
 /* Titres d'affliction et d'ascension : couleur en dur, une règle plus haut
    dans la cascade les rendait quasi invisibles sur le fond crème. */

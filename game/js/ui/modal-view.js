@@ -16,7 +16,7 @@
    de façon synchrone — protégé, pas touché). Seul le rendu change.
 
    Historique v3.22 (2 étapes), v3.29 (bandeau compétences, croix <img class=ico-inline src=images/Icons/system/close.webp>),
-   v3.99.0 (flux écran titre). Détail : COMMENTAIRES_ORIGINAUX.md */
+   v3.99.0 (flux écran titre). */
 
 var pendingHeroId = "";
 var pendingPlayerName = ""; // saisi à l'étape "name", gardé en mémoire jusqu'à confirmation
@@ -29,27 +29,34 @@ var heroAttackPreviewExpanded = false; // v3.29 : bandeau dépliable des compét
    [base, chaos], plutôt que sur cette liste plate. */
 var HERO_SELECTION_BASE_IDS = ["knight", "ranger", "mage", "chaosKnight", "chaosRanger", "chaosMage"];
 
-/* Descriptions courtes par classe (validées par Seb, session v3.149.0). Clé = CLASSES[].id. */
+/* Descriptions courtes par classe (validées par Seb, session v3.149.0). Clé = CLASSES[].id.
+   v3.697.0 (NOV-11, décision du 10/10 option A) : tournures neutres, une seule version. */
 var HERO_CLASS_TAGLINES = {
-  knight: _t("Maître du combat et de la défense, inébranlable en toute situation."),
-  archer: _t("Agile et précis, maître des attaques à distance."),
-  mage: _t("Gardien des savoirs anciens, il manipule les éléments et l'énergie arcanique.")
+  knight: _t("La maîtrise du combat et de la défense, inébranlable en toute situation."),
+  archer: _t("Agilité et précision, la maîtrise des attaques à distance."),
+  mage: _t("Les savoirs anciens en garde, les éléments et l'énergie arcanique en main.")
 };
 
+/* v3.683.0 (audit TUTO-2) : aperçu calculé par le moteur (recalcStats) sur un état neuf temporaire,
+   pour que PV et ATK annoncés soient ceux du héros en jeu ; l'état réel est toujours rétabli. */
 function getHeroPreviewStats(hero) {
-  var s = (hero && hero.stats) || {};
-  var power = Number(s.power || 0);
-  var endurance = Number(s.endurance || 0);
-  var celerity = Number(s.celerity || 0);
-  var precision = Number(s.precision || 0);
-
-  return {
-    pv: Math.max(1, Math.floor(endurance * 6)),           // ENDURANCE_HP_COEF
-    atk: Math.max(1, Math.floor(1 + power * 0.2)),          // base 1 + FORCE_TAP_COEF
-    def: Math.round(Math.min(0.6, endurance * 0.002) * 100), // HERO_DEFENSE_COEF, plafonné 60%
-    vit: Math.round(celerity),
-    crit: Math.round((5 + precision * 0.06) * 10) / 10       // base 5% + PRECISION_CRIT_COEF
-  };
+  var real = window.game, out = null;
+  if (hero && hero.id && window.StatsSystem && typeof createInitialGameState === "function") {
+    try {
+      window.game = createInitialGameState();
+      window.game.heroId = hero.id;
+      StatsSystem.recalcStats();
+      out = {
+        pv: Math.max(1, Math.floor(Number(window.game.heroMaxHp) || 0)),
+        atk: Math.max(1, Math.round(StatsSystem.effectiveTapDamage())),
+        def: Math.round(Number(window.game.heroDefensePct || 0) * 100),
+        vit: Math.round(window.CombatEngine && typeof CombatEngine.getTotalCelerity === "function" ? CombatEngine.getTotalCelerity() : Number((hero.stats || {}).celerity || 0)),
+        crit: Math.round(StatsSystem.effectiveCritChance() * 10) / 10
+      };
+    } catch (e) { out = null; }
+    finally { window.game = real; }
+  }
+  return out || { pv: 0, atk: 0, def: 0, vit: 0, crit: 0 };
 }
 
 function getSelectedHero() {
@@ -139,6 +146,8 @@ function toggleHeroChaosVariant() {
   if (!cls || !cls.heroIds || cls.heroIds.length < 2) return;
   pendingHeroId = isChaosHeroId(pendingHeroId) ? cls.heroIds[0] : cls.heroIds[1];
   openHeroSelection();
+  // v3.704.0 (TUTO-16) : première case cochée, la fiche du Chaos au-dessus de la création (sauvée à la confirmation)
+  if (isChaosHeroId(pendingHeroId) && typeof openGenericTutorialOnce === "function") openGenericTutorialOnce("chaos_variant", { allow: "hero-selection-root", noSave: true });
 }
 
 function goToHeroStep() {
@@ -197,34 +206,45 @@ function cancelHeroSelection() {
   if (window.titleScreenSlotBeingCreated) {
     window.titleScreenSlotBeingCreated = null;
     closeHeroSelection();
+    // audit 04/11 (SAVE-1) : lancée depuis « Mes héros » (jeu déjà démarré), la croix revient au héros
+    // d'origine ; avant, l'emplacement vide restait actif et l'autosauvegarde en faisait un héros fantôme.
+    var fromGame = typeof titleScreenFromGame !== "undefined" && titleScreenFromGame;
+    var hasOrigin = origin && window.HeroSlotManager && HeroSlotManager.hasSlot(origin);
+    if (fromGame && hasOrigin) cancelHeroSelectionRestore(origin);
+    else if (hasOrigin) setActiveSlot(origin);
     if (typeof titleScreenBackToMain === "function") titleScreenBackToMain();
+    if (fromGame && typeof renderAll === "function") renderAll();
     return;
   }
 
   closeHeroSelection();
 
-  if (origin && window.HeroSlotManager && HeroSlotManager.hasSlot(origin)) {
-    setActiveSlot(origin);
-
-    if (typeof createInitialGameState === "function") {
-      var keptSaveSupported = game.saveSupported;
-      var fresh = createInitialGameState();
-      Object.keys(game).forEach(function (k) { delete game[k]; });
-      Object.assign(game, fresh);
-      game.saveSupported = keptSaveSupported;
-    }
-    loadGame();
-    if (typeof ensureGameStateDefaults === "function") ensureGameStateDefaults();
-    if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") StatsSystem.recalcStats();
-    if (typeof resumeCombatAfterSlotChange === "function") resumeCombatAfterSlotChange();
-    // v3.239.0 : ce retour recharge un emplacement à la main, sans passer par
-    // switchToSlot — même omission de rattrapage, même correctif.
-    if (window.ResumeManager) ResumeManager.catchUpAfterSlotLoad();
-  } else {
+  if (origin && window.HeroSlotManager && HeroSlotManager.hasSlot(origin)) cancelHeroSelectionRestore(origin);
+  else {
     console.warn("[Aethervale] cancelHeroSelection: pas d'emplacement d'origine valide (origin=" + origin + ") — la fenêtre va se rouvrir via needsHeroSetup(). Si ça se reproduit alors que save-system.js est à jour, remonte ce message à Claude."); // v3.29.4 : TEMPORAIRE, diagnostic
   }
 
   if (typeof renderAll === "function") renderAll();
+}
+
+/* Recharge l'emplacement quitté pour une création annulée (corps repris tel quel de cancelHeroSelection). */
+function cancelHeroSelectionRestore(origin) {
+  setActiveSlot(origin);
+
+  if (typeof createInitialGameState === "function") {
+    var keptSaveSupported = game.saveSupported;
+    var fresh = createInitialGameState();
+    Object.keys(game).forEach(function (k) { delete game[k]; });
+    Object.assign(game, fresh);
+    game.saveSupported = keptSaveSupported;
+  }
+  loadGame();
+  if (typeof ensureGameStateDefaults === "function") ensureGameStateDefaults();
+  if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") StatsSystem.recalcStats();
+  if (typeof resumeCombatAfterSlotChange === "function") resumeCombatAfterSlotChange();
+  // v3.239.0 : ce retour recharge un emplacement à la main, sans passer par
+  // switchToSlot — même omission de rattrapage, même correctif.
+  if (window.ResumeManager) ResumeManager.catchUpAfterSlotLoad();
 }
 
 /* v3.29 : croix <img class=ico-inline src=images/Icons/system/close.webp> — jamais affichée au tout premier lancement (rien où revenir).

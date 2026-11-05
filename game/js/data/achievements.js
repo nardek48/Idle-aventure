@@ -9,7 +9,7 @@
    - H5 : quelques cachés, jamais ratables.
    Champs : id, category, name, desc, icon, target, track() (progression lue dans l'état),
    reward { gold }, hidden + hint, fresh (compteur neuf, sans rattrapage), title.
-   Icônes des nouveaux : images/Icons/achivement/<id>.webp, à générer (générique d'ici là).
+   Icônes des nouveaux : images/Icons/achivement/<id>.webp (générique si l'une manque).
    Textes PROVISOIRES. Agrégation : systems/achievement-system.js. */
 
 function achievementBestiaryPercent() {
@@ -157,9 +157,9 @@ var ACHIEVEMENTS_DB = [
   { id: "hf_ruines_map", category: "ruins", name: "Les murs reculent", desc: "Tous les quartiers de la carte des Ruines libérés en même temps.",
     target: 14, track: function () { return achMapLiberated("ruins"); }, targetFn: function () { return achMapSize("ruins"); }, reward: { gold: 1500 } },
   { id: "hf_ruines_elites", category: "ruins", name: "Les marques des Ruines", desc: "Vaincre le Contremaître et le Golem.",
-    target: 2, track: function () { return (achKills("contremaitre") > 0 ? 1 : 0) + (achKills("golem") > 0 ? 1 : 0); }, reward: { gold: 1500 } },
+    target: 2, track: function () { return (achKills("contremaitre") > 0 ? 1 : 0) + (achKills("golem") + achKills("golem_tour") + achKills("golem_sanctuaire") > 0 ? 1 : 0); }, reward: { gold: 1500 } },
   { id: "hf_ruines_golem", category: "ruins", name: "Le Golem, encore", desc: "Vaincre le Golem 10 fois.",
-    target: 10, track: function () { return achKills("golem"); }, reward: { gold: 1500 } },
+    target: 10, track: function () { return achKills("golem") + achKills("golem_tour") + achKills("golem_sanctuaire"); }, reward: { gold: 1500 } }, // v3.684.0 (QUET-10) : le Golem de la carte compte aussi
   { id: "hf_ruines_palisade", category: "ruins", name: "Le mur d'en haut", desc: "Palissade niveau 8.",
     target: 8, track: function () { return achBuildingLevel("palisade"); }, reward: { gold: 1500 } },
   { id: "hf_ruines_run", category: "ruins", name: "Une rue qui tourne", desc: "Mener une Petite Aventure des Ruines jusqu'au bout.",
@@ -181,7 +181,7 @@ var ACHIEVEMENTS_DB = [
   { id: "hf_crypte_map", category: "crypt", name: "Tous les couloirs", desc: "Tous les couloirs de la carte de la Crypte libérés en même temps.",
     target: 14, track: function () { return achMapLiberated("crypt"); }, targetFn: function () { return achMapSize("crypt"); }, reward: { gold: 3000 } },
   { id: "hf_crypte_elites", category: "crypt", name: "Les marques de la Crypte", desc: "Vaincre le Porte-couronne et la Pleureuse.",
-    target: 2, track: function () { return (achKills("porte_couronne") > 0 ? 1 : 0) + (achKills("pleureuse") > 0 ? 1 : 0); }, reward: { gold: 3000 } },
+    target: 2, track: function () { return (achKills("porte_couronne") > 0 ? 1 : 0) + (achKills("pleureuse") + achKills("pleureuse_nef") > 0 ? 1 : 0); }, reward: { gold: 3000 } }, // v3.684.0 (QUET-10) : la Pleureuse de la carte aussi
   { id: "hf_crypte_sleepers", category: "crypt", name: "Laisse-les dormir", desc: "Laisser dormir 100 morts.",
     target: 100, fresh: true, track: function () { return achCounter("sleepersLeft"); }, reward: { gold: 3000 } },
   { id: "hf_crypte_woken", category: "crypt", name: "Ceux qu'on réveille", desc: "Réveiller puis vaincre 50 morts.",
@@ -332,7 +332,7 @@ var ACHIEVEMENTS_DB = [
     icon: ACH_ICON + "ach_equip_legendary.webp", target: 1, track: function () { return achievementHasRarityOwned("legendary") ? 1 : 0; }, reward: { gold: 300 } }
 ];
 
-/* Icône par défaut : images/Icons/achivement/<id>.webp (à générer). */
+/* Icône par défaut : images/Icons/achivement/<id>.webp. */
 ACHIEVEMENTS_DB.forEach(function (a) { if (!a.icon) a.icon = ACH_ICON + a.id + ".webp"; }); // v3.459.1 (audit O4) : WebP
 
 /* H1, H4 : catégories. `world` = index du monde (paliers, titre au palier or). */

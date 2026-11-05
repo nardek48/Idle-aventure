@@ -1,5 +1,5 @@
 "use strict";
-/* data/heroes.js — héros jouables, choix définitif à la création. Détail : COMMENTAIRES_ORIGINAUX.md
+/* data/heroes.js — héros jouables, choix définitif à la création.
 
    v3.151.0 : portraits Homme/Femme (Seb) — le genre est un SKIN COSMÉTIQUE,
    pas une nouvelle identité de héros (option A validée par Seb : zéro
@@ -82,7 +82,3 @@ Object.keys(HEROES_DB).forEach(function (key) {
   });
 });
 
-var HERO_LEVELING = {
-  baseXp: 10,
-  xpGrowth: 1.35
-};

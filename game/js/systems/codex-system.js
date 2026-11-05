@@ -1,5 +1,5 @@
 "use strict";
-/* systems/codex-system.js — suivi déblocage/lecture des entrées Codex (data/codex.js). Même principe que les hauts faits. Détail : COMMENTAIRES_ORIGINAUX.md */
+/* systems/codex-system.js — suivi déblocage/lecture des entrées Codex (data/codex.js). Même principe que les hauts faits. */
 
 var CodexManager = {
   ensure: function () {
@@ -19,6 +19,7 @@ var CodexManager = {
       if (entry && game.codexRead && game.codexRead[entry.id]) return true;
       return !!entry.isUnlocked();
     } catch (e) {
+      noteErreur("codex-system.isUnlocked", e); // audit 04/11 (ARCH-14)
       return false;
     }
   },

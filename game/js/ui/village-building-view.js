@@ -87,6 +87,8 @@ function buildVillageCostListHTML(id) {
     h += '</div>';
 
     if (!ok) {
+      var capWhy = key === "gold" ? "" : WarehouseManager.capHint(key, cost[key]); // EQUI-2 : le stock ne peut pas y arriver
+      if (capWhy) { h += '<div class="vb-cost-where res-go-link"' + resGoAttr(key) + '>' + esc(capWhy) + ' ›</div>'; return; }
       var hint = getVillageResourceHint(key);
       if (hint) h += key === "gold" ? '<div class="vb-cost-where">' + esc(hint) + '</div>'
         : '<div class="vb-cost-where res-go-link"' + resGoAttr(key) + '>' + esc(_t("Où en trouver : {x}", { x: hint })) + ' ›</div>';
@@ -363,6 +365,8 @@ function openVillageBuildingSheet(id) {
   host.innerHTML = buildVillageBuildingSheetHTML(id);
   host.dataset.vb = id; delete host.dataset.go;
   setSheetScroll(host, top);
+  // v3.704.0 (TUTO-16) : la fiche des contrats, une fois, au-dessus de la Taverne construite
+  if (id === "tavern" && VillageBuildingManager.getLevel("tavern") >= 1 && typeof openGenericTutorialOnce === "function") openGenericTutorialOnce("tavern_contracts", { allow: "village-modal-root" });
 }
 window.openVillageBuildingSheet = openVillageBuildingSheet;
 
@@ -554,8 +558,8 @@ function buildForgeBoardHTML() {
       h += '</div>';
       // v3.448.6 : où trouver chaque matériau qui manque (comme sur les chantiers du village)
       manquants.forEach(function (key) {
-        var hint = getVillageResourceHint(key);
-        if (hint) h += '<div class="vb-cost-where forge-row-where res-go-link"' + resGoAttr(key) + '>' + esc(_td(getVillageCostMeta(key).label)) + ' : ' + esc(hint) + ' ›</div>';
+        var hint = WarehouseManager.capHint(key, cost[key]) || getVillageResourceHint(key); // EQUI-2
+        if (hint) h += '<div class="vb-cost-where forge-row-where res-go-link"' + resGoAttr(key) + '>' + esc(_t("{a} : {b}", { a: _td(getVillageCostMeta(key).label), b: hint })) + ' ›</div>';
       });
     }
     h += '</div>';
@@ -781,7 +785,7 @@ function buildShardShopBoardHTML() {
     var cost = DungeonManager.getShardShopCost(item);
     var lock = maxed ? 0 : DungeonManager.getShardShopLock(item); // v3.463.0 : palier de la Crypte
     var canBuy = !maxed && !lock && shards >= cost;
-    h += '<div class="nb-purchase-card' + (maxed ? ' is-maxed' : '') + '">';
+    h += '<div class="nb-purchase-card' + (maxed ? ' is-maxed' : '') + (canBuy ? ' affordable' : '') + '">'; // UI-11
     h += '<div class="nb-purchase-icon-col"><div class="nb-purchase-icon-slot">' + renderIconOrEmojiHTML(item.icon, "nb-purchase-icon", _td(item.name)) + '</div></div>';
     h += '<div class="nb-purchase-info-col">';
     h += '<div class="nb-purchase-name">' + esc(_td(item.name)) + '</div>';

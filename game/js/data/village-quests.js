@@ -296,7 +296,7 @@ var MILESTONE_BOOKS = {
     ["images/Icons/gold_icon.webp", "La bulle d'or te signale un rang payable : « J'y vais » ouvre le bon sort."]] },
   ardeur: { title: "Entraîner un compagnon", icon: "images/Companions/wenna.webp", tips: [
     ["images/Icons/subtabs/hero_roster.webp", "Héros › Alliés : chaque palier donne +8 % au choix, en Ardeur (dégâts) ou en Vigueur (PV, et il attire davantage les coups)."],
-    ["images/Icons/system/lock_open.webp", "Les paliers 5, 15 et 25 ouvrent les trois emplacements de relique."],
+    ["images/Icons/system/lock_open.webp", "Les paliers 5, 15 et 25 ouvrent les trois emplacements de relique ; plus tôt pour un compagnon arrivé tard."],
     ["images/Icons/gold_icon.webp", "« Répartir de nouveau » rend l'or et remet les paliers à choisir."]] },
   reliques: { title: "Patrouilles et reliques", icon: "images/Icons/quests/mission_exploration.webp", tips: [
     ["images/Icons/quests/mission_exploration.webp", "Un compagnon resté au camp peut partir en patrouille (2, 4 ou 8 h). Ta première patrouille terminée rapporte toujours une relique."],

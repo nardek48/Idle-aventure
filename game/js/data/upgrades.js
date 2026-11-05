@@ -1,6 +1,6 @@
 "use strict";
 /* data/upgrades.js — UPGRADES (or, apply(lvl) fixe la valeur au niveau TOTAL).
-   unlockWorld = index de monde minimum. Détail complet : COMMENTAIRES_ORIGINAUX.md */
+   unlockWorld = index de monde minimum. */
 
 /* v3.248.0 (décision Seb 15/09/2026) — PRIX DES CINQ ENTRAÎNEMENTS.
    Deux problèmes mesurés (sim/upgrade-economy-bench.js) :

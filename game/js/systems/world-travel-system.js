@@ -1,9 +1,9 @@
 "use strict";
 /* systems/world-travel-system.js — v3.298.0 (W-1b) : CHANGER DE MONDE DE RÉSIDENCE.
    Conception Désert v1.4, D6 et D7. Depuis la v3.293.0 (plus de farm libre), plus rien ne
-   déplace le joueur d'un monde à l'autre : WorldManager.advance n'a plus d'appelant. Ce
-   fichier est désormais le seul point d'écriture durable de worldIndex, avec l'Ascension
-   (retour à 0), le chargement de sauvegarde et l'Admin.
+   déplace le joueur d'un monde à l'autre (WorldManager.advance, sans appelant, retiré en v3.692.0). Ce
+   fichier est le seul point d'écriture durable de worldIndex, avec la partie neuve (retour à 0),
+   le chargement de sauvegarde et l'Admin (les combats de quête et d'élite le rendent après coup).
 
    Deux entrées :
      - arrive()   : appelée par la fin d'un run de traversée (canevas à travelOnSuccess), une
@@ -41,7 +41,6 @@ var WorldTravel = {
   isBusy: function () {
     if (game.dungeonRun && game.dungeonRun.active) return true;
     if (game.adventureQuestRun && game.adventureQuestRun.active) return true;
-    if (game.huntRun && game.huntRun.active) return true;
     if (game.livingMaps && game.livingMaps.fight) return true;
     if (game.sceneRun && game.sceneRun.status && game.sceneRun.status !== "completed") return true;
     return false;

@@ -1,5 +1,5 @@
 "use strict";
-/* ui/map-view.js — Carte du monde v2.90.14 : chemin illustré (nœuds ronds + tracé SVG), popup détail par monde (#map-modal-root). Détail complet : COMMENTAIRES_ORIGINAUX.md */
+/* ui/map-view.js — Carte du monde v2.90.14 : chemin illustré (nœuds ronds + tracé SVG), popup détail par monde (#map-modal-root). */
 
 /* v3.301.0 (W-2b) : un monde est ouvert dès qu'il a été atteint — le voyage permet d'en
    revenir, donc « plus loin que le monde courant » ne veut plus dire « fermé ». */
@@ -89,7 +89,7 @@ function mapDungeonOf(world) {
 function mapDungeonBadgeHTML(world, index) {
   var md = isWorldUnlocked(index) ? mapDungeonOf(world) : null;
   if (!md) return "";
-  return '<span class="map-dungeon is-' + md.state + '" role="button" aria-label="' + esc(_t("Donjon : {d}", { d: _td(md.d.name) })) + '" onclick="event.stopPropagation();tapMapDungeon(' + Number(md.d.id) + ',' + index + ')">'
+  return '<span class="map-dungeon is-' + md.state + '" role="button" tabindex="0" aria-label="' + esc(_t("Donjon : {d}", { d: _td(md.d.name) })) + '" onclick="event.stopPropagation();tapMapDungeon(' + Number(md.d.id) + ',' + index + ')">'
     + dungeonMapIconHTML("map-dungeon-img") + (md.state === "locked" ? '<img class="map-dungeon-lock" src="images/Icons/system/lock_closed.webp" alt="">' : '') + '</span>';
 }
 function tapMapDungeon(id, index) {

@@ -37,7 +37,9 @@ var FORECAST_RATIO_THRESHOLDS = {
 /* v3.429.14 : dégâts réels / estimés, par classe. Mesuré au banc (--frappes) : le Chevalier
    garde 12 à 30 % de ses actions et n'exécute presque jamais, il touche 0,38 à 0,65 de l'estimé
    contre 0,57 à 0,89 à distance. 0,7 le recale sur les classes à distance, sur qui les seuils sont calés. */
-var FORECAST_CLASS_DMG_MULT = { knight: 0.7 };
+// PRONO-MISSION (05/11) : 0,7 → 0,75, avec l'usure moyenne (Chevalier sans arme, 3 potions : 1,47 → 1,14 pour 57 % d'échec réel)
+// PRONO-MAGE (Seb 05/11, option A) : Mage sans arme 3 potions 0,93 « Risqué » → 1,23 « Très difficile » (90 % d'échec réel)
+var FORECAST_CLASS_DMG_MULT = { knight: 0.75, mage: 0.9 };
 
 /* v3.523.0 (audit COM-1) : dégâts réels d'une ÉLITE évaluée / estimés, par archétype (rage triplée par
    l'exaltation, blindage), et son bouclier (−50 % sur 20 à 25 % des rounds) sur les dégâts du héros. Calés au
@@ -48,6 +50,10 @@ var FORECAST_ELITE_HERO_DMG_MULT = 0.88;
 /* v3.429.15 : part des soins de compagnon modélisés qui compte. Au banc, le héros boit ses potions
    avant de passer sous le seuil de Wenna : soins réels 0,3 à 0,8 du modèle pour le Chevalier. */
 var FORECAST_COMPANION_HEAL_MULT = 0.75;
+
+/* v3.695.0 (COMB-9, Seb 05/11) : une potion ne compte plus en PV pleins (boire prend le tour, le soin
+   tombe tard). 0,8 calé au banc : héros sans arme avec potions « Très difficile » ou pire, profils armés inchangés. */
+var FORECAST_POTION_WEIGHT = 0.8;
 
 /* Verdicts, du plus sûr au pire. `level` sert au tri et au style ; `label` est le texte. */
 var COMBAT_FORECAST_LEVELS = [
@@ -171,7 +177,7 @@ var CombatForecast = {
     (window.HEALING_POTIONS_DB || []).forEach(function (po) {
       var stock = PotionManager.getHealingStock(po.id);
       while (stock > 0 && restantes > 0) {
-        total += maxHp * Number(po.healPercent || 0);
+        total += maxHp * Number(po.healPercent || 0) * FORECAST_POTION_WEIGHT; // COMB-9
         stock -= 1; restantes -= 1;
       }
     });
@@ -186,6 +192,7 @@ var CombatForecast = {
     var heroDef = (window.HEROES_DB && game.heroId) ? HEROES_DB[game.heroId] : null;
     var ranged = !!(heroDef && heroDef.weaponType && heroDef.weaponType !== "sword");
     if (!ranged) return heroDef && typeof KNIGHT_CHARGE_ROUNDS === "number" ? KNIGHT_CHARGE_ROUNDS : 0; // v3.477.0 : Charge du Chevalier
+    if (enemy._forecastEngage != null) return enemy._forecastEngage; // PRONO-MISSION : ennemi moyen de la réserve
     return Math.max(0, Number(getEnemyEngageRounds(enemy.id, !!enemy.isBoss) || 0));
   },
 
@@ -362,7 +369,7 @@ var CombatForecast = {
     var healThreshold = this.getHealThreshold(enemy);
     var netDmg = healThreshold > 0 ? (heroDmg - healThreshold) : heroDmg;
 
-    /* Les potions repoussent le moment où l'on tombe : elles comptent comme des PV.
+    /* Les potions repoussent le moment où l'on tombe : elles comptent comme des PV (pondérés, COMB-9).
        L'usure des combats précédents les retire. */
     var reserve = this.getHealingReserve();
     var attrition = Math.max(0, Number(options.attrition || 0));
@@ -460,6 +467,46 @@ var CombatForecast = {
   /* Ennemi de RÉFÉRENCE d'une mission : celui qui décide de l'issue. Pour une quête à étape
      bossKill, c'est le boss ; sinon l'ennemi ordinaire du pool. QuestEnemyManager.spawnFor
      construit l'objet sans toucher à game.enemy — rien n'est modifié ici. */
+  /* PRONO-MISSION (Seb, 05/11, option A) : ids possibles d'un tirage de quête (enemyFilter, sinon
+     réserve de l'aventure). Le pronostic moyenne sur eux : même héros, même verdict. */
+  getQuestPool: function (quest) {
+    if (!quest || !window.WORLDS) return [];
+    var db = window.ENEMY_DB || {};
+    if (Array.isArray(quest.enemyFilter) && quest.enemyFilter.length) {
+      var valid = quest.enemyFilter.filter(function (id) { return !!db[id]; });
+      if (valid.length) return valid;
+    }
+    var w = WORLDS.filter(function (x) { return x.id === quest.worldId; })[0];
+    var adv = w && w.adventures ? (w.adventures[quest.adventureIndex] || w.adventures[0]) : null;
+    return adv && Array.isArray(adv.enemyPool) ? adv.enemyPool.slice() : [];
+  },
+
+  /* Un tirage par id de la réserve (spawnFor sur une copie filtrée), un seul si rien n'est tiré. */
+  spawnEach: function (quest) {
+    var db = window.ENEMY_DB || {};
+    var fixedGroup = Array.isArray(quest.group) && quest.group.length > 1 && quest.group.every(function (m) { return typeof m === "string" && !!db[m]; });
+    var pool = fixedGroup ? [] : this.getQuestPool(quest);
+    if (pool.length <= 1) return [QuestEnemyManager.spawnFor(quest, false)];
+    return pool.map(function (id) { return QuestEnemyManager.spawnFor(Object.assign({}, quest, { enemyFilter: [id] }), false); });
+  },
+
+  /* Ennemi moyen d'une liste : PV, caractéristiques et approche moyennés ; sans nom s'ils diffèrent. */
+  averageEnemy: function (list) {
+    list = (list || []).filter(Boolean);
+    if (list.length <= 1) return list[0] || null;
+    var self = this, n = list.length, out = Object.assign({}, list[0]), st = Object.assign({}, list[0].stats || {});
+    Object.keys(st).forEach(function (k) {
+      if (typeof st[k] !== "number") return;
+      st[k] = list.reduce(function (a, e) { return a + Number((e.stats && e.stats[k]) || 0); }, 0) / n;
+    });
+    out.stats = st;
+    out.maxHp = Math.round(list.reduce(function (a, e) { return a + Number(e.maxHp || 0); }, 0) / n);
+    out.hp = out.maxHp;
+    out._forecastEngage = Math.round(list.reduce(function (a, e) { return a + self.getEngageRounds(e); }, 0) / n);
+    if (list.some(function (e) { return e.id !== list[0].id; })) out.name = null;
+    return out;
+  },
+
   getReferenceEnemy: function (mission) {
     if (!mission || !window.QuestEnemyManager) return null;
     if (mission.sourceKind === "adventure") {
@@ -476,11 +523,8 @@ var CombatForecast = {
       // v3.311.0 : rencontres scriptées -> la rencontre en cours sert de référence.
       // v3.429.9 : sauf si la quête finit sur un boss (le trône de sable) : c'est lui qui décide.
       if (aq.encounters && window.AdventureQuestManager && !hasBoss) return firstOfGroup(QuestEnemyManager.spawnFor(AdventureQuestManager._encounterQuest(aq), false));
-      return firstOfGroup(QuestEnemyManager.spawnFor(aq, hasBoss)); // v3.269.0 : spawnFor peut renvoyer un groupe
-    }
-    if (mission.sourceKind === "hunt") {
-      var hq = (window.HUNT_QUESTS || {})[mission.questId];
-      return hq ? firstOfGroup(QuestEnemyManager.spawnFor(hq, false)) : null;
+      if (hasBoss) return firstOfGroup(QuestEnemyManager.spawnFor(aq, true)); // v3.269.0 : spawnFor peut renvoyer un groupe
+      return this.averageEnemy(this.spawnEach(aq).map(firstOfGroup)); // PRONO-MISSION : moyenne de la réserve
     }
     return null;
   },
@@ -488,14 +532,12 @@ var CombatForecast = {
   /* Nombre de combats ordinaires avant l'ennemi de référence, d'après la donnée de quête. */
   getPrecedingFights: function (mission) {
     if (!mission) return 0;
-    var quest = (mission.sourceKind === "adventure") ? (window.ADVENTURE_QUESTS || {})[mission.questId]
-      : (mission.sourceKind === "hunt") ? (window.HUNT_QUESTS || {})[mission.questId] : null;
+    var quest = (mission.sourceKind === "adventure") ? (window.ADVENTURE_QUESTS || {})[mission.questId] : null;
     if (!quest) return 0;
     var total = 0;
     (quest.steps || []).forEach(function (st) {
       if (st.type === "kill" || st.type === "eliteTrack" || st.type === "encounter") total += Number(st.target || 0); // v3.311.0
     });
-    if (!total && quest.lotSize) total = Number(quest.lotSize) || 0; // chasse : un lot de N
     return total;
   },
 
@@ -508,25 +550,30 @@ var CombatForecast = {
     var attrition = 0, list = [];
     var fights = this.getPrecedingFights(mission);
     if (fights > 0 && window.QuestEnemyManager) {
-      var quest = (mission.sourceKind === "adventure") ? (window.ADVENTURE_QUESTS || {})[mission.questId]
-        : (window.HUNT_QUESTS || {})[mission.questId];
+      var quest = (window.ADVENTURE_QUESTS || {})[mission.questId];
       if (quest && quest.encounters && window.AdventureQuestManager) {
         /* v3.429.9 : rencontres scriptées — l'objectif compte des RENCONTRES (un groupe = un cran) ;
            chacune a son groupe, on les additionne dans l'ordre du run. */
         for (var k = 0; k < fights; k++) {
           list.push(this.getGroupFight([].concat(QuestEnemyManager.spawnFor(AdventureQuestManager._encounterQuest(quest, k), false) || [])));
         }
-      } else {
-        var spawned = quest ? QuestEnemyManager.spawnFor(quest, false) : null;
+        list.forEach(function (f) { attrition += f.cost; });
+        attrition = Math.max(0, attrition - this.getCompanionHeals(list, false)); // v3.429.15 : soins de Wenna et Maddoc
+      } else if (quest) {
         /* v3.429.8 : un groupe (meute, escouade) frappe à plusieurs. On compte les combats de groupe
-           (cible / taille du groupe) et l'usure de chacun membre par membre, comme en donjon. */
-        var group = [].concat(spawned || []).filter(Boolean);
-        var one = group.length > 1 ? this.getGroupFight(group) : (group[0] ? this.getSingleFight(group[0]) : null);
-        var reps = group.length > 1 ? Math.ceil(fights / group.length) : (one ? fights : 0);
-        for (var r = 0; r < reps; r++) list.push(one);
+           (cible / taille du groupe) et l'usure de chacun membre par membre, comme en donjon.
+           PRONO-MISSION : usure moyenne sur la réserve d'ennemis, au lieu d'un seul tirage. */
+        var self = this, tirages = this.spawnEach(quest), somme = 0, nb = 0;
+        tirages.forEach(function (spawned) {
+          var group = [].concat(spawned || []).filter(Boolean), l = [];
+          var one = group.length > 1 ? self.getGroupFight(group) : (group[0] ? self.getSingleFight(group[0]) : null);
+          var reps = group.length > 1 ? Math.ceil(fights / group.length) : (one ? fights : 0);
+          for (var r = 0; r < reps; r++) l.push(one);
+          var a = 0; l.forEach(function (f) { a += f.cost; });
+          somme += Math.max(0, a - self.getCompanionHeals(l, false)); nb++;
+        });
+        attrition = nb ? somme / nb : 0;
       }
-      list.forEach(function (f) { attrition += f.cost; });
-      attrition = Math.max(0, attrition - this.getCompanionHeals(list, false)); // v3.429.15 : soins de Wenna et Maddoc
     }
     var out = this.forEnemy(enemy, { attrition: attrition });
     if (out) { out.enemyName = enemy.name; out.precedingFights = fights; }
@@ -563,6 +610,7 @@ var CombatForecast = {
 window.FORECAST_ELITE_DMG_MULT = FORECAST_ELITE_DMG_MULT;
 window.FORECAST_ELITE_HERO_DMG_MULT = FORECAST_ELITE_HERO_DMG_MULT;
 window.FORECAST_RATIO_THRESHOLDS = FORECAST_RATIO_THRESHOLDS;
+window.FORECAST_POTION_WEIGHT = FORECAST_POTION_WEIGHT; // v3.695.0 (COMB-9)
 window.FORECAST_CLASS_DMG_MULT = FORECAST_CLASS_DMG_MULT;
 window.FORECAST_COMPANION_HEAL_MULT = FORECAST_COMPANION_HEAL_MULT;
 window.COMBAT_FORECAST_LEVELS = COMBAT_FORECAST_LEVELS;
@@ -570,7 +618,8 @@ window.CombatForecast = CombatForecast;
 
 /* v3.459.12 (audit I4) — RÉGLER D'UN COUP. Un combat ordinaire jugé « Sans danger » se joue d'un
    trait : les vrais tours du moteur (horloge du Grimoire), sans attendre l'animation. PV perdus,
-   butin, quêtes et morts sont ceux d'un combat joué. Pas en donjon (à discuter avec Seb). */
+   butin, quêtes et morts sont ceux d'un combat joué. Pas en donjon. v3.697.0 (EQUI-11) : aussi
+   l'élite répétable de carte jugée « Sans danger ». */
 var QUICK_FIGHT_MAX_COST = 0.25;  // usure prévue au plus 25 % des PV : la prévision d'un groupe peut doubler en vrai
 var QUICK_FIGHT_STOP_PCT = 0.30;  // sous 30 % des PV, le combat rend la main au joueur
 var QUICK_FIGHT_MAX_TICKS = 400;  // garde-fou : un combat ordinaire dure quelques rounds
@@ -597,8 +646,10 @@ var CombatQuick = {
     if (game.dungeonRun && game.dungeonRun.active) return false;
     if (typeof hasCombatQuestContext === "function" && !hasCombatQuestContext()) return false;
     if (game.combatRound && game.combatRound.busy) return false;
-    var foes = this._foes();
-    if (!foes.length || foes.some(function (e) { return e.isBoss || e.isElite; })) return false;
+    var foes = this._foes(), fight = game.livingMaps && game.livingMaps.fight;
+    // v3.697.0 (EQUI-11, Seb A) : l'élite répétable de carte en cours compte, pas les autres boss ni élites
+    var mapElite = !!(fight && window.LivingMapManager && LivingMapManager.isRepeatable(fight.mapId, fight.sectorId));
+    if (!foes.length || foes.some(function (e) { return (e.isElite && mapElite && e.id === fight.eliteId) ? false : (e.isBoss || e.isElite); })) return false;
     if (!foes.every(function (e) { var f = CombatForecast.forEnemy(e); return f && f.id === "trivial"; })) return false;
     var cost = CombatForecast.getGroupFight(foes).cost;
     return cost <= Number(game.heroHp || 0) * QUICK_FIGHT_MAX_COST;

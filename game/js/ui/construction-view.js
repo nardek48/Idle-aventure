@@ -1,6 +1,6 @@
 "use strict";
 /* ui/construction-view.js — modale du bâtiment de Construction (#construction-modal-root, hors cycle renderPanel()).
-   Coût généralisé à un nombre variable de ressources selon le palier (v3.40). Détail complet : COMMENTAIRES_ORIGINAUX.md */
+   Coût généralisé à un nombre variable de ressources selon le palier (v3.40). */
 
 var openConstructionId = null;
 

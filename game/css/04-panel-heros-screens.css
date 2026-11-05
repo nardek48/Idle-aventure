@@ -73,6 +73,8 @@ body.hs-on-heros .hud-dock { display: none !important; }
 .hs-dd-grid .wh-dd-n { min-width: 20px; height: 18px; padding: 0 4px; font-size: 12px; line-height: 18px; }
 .hs-bag-auto { flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; min-width: 72px; min-height: 48px; padding: 2px 6px; border: 1.5px solid var(--c-bronze-500); border-radius: 12px; background: linear-gradient(var(--c-white-50), var(--c-cream-150-2)); color: var(--c-brown-750-3); font: inherit; font-size: 12px; font-weight: 800; }
 .hs-bag-auto img { width: 24px; height: 24px; object-fit: contain; }
+/* v3.687.0 (ECON-15) : « Auto-offrande » sur deux lignes sous 360 px, le menu « Afficher » garde sa place */
+@media (max-width: 359px) { .hs-bag-auto { max-width: 76px; line-height: 1.1; } }
 .hs-dd-sort { white-space: nowrap; display: flex; align-items: center; gap: 6px; padding: 6px 10px; font-size: 13px; color: var(--c-brown-800-3); }
 .wh-dd-menu .hs-dd-sort button { width: auto; min-height: 0; flex: 0 0 auto; padding: 3px 10px; border-radius: 8px; border: 1px solid var(--c-bronze-500); background: var(--c-cream-50-soft); font-weight: 700; color: var(--c-brown-800-3); }
 .hs-bgrid { margin-bottom: 10px; }
@@ -93,7 +95,7 @@ body.hs-on-heros .hud-dock { display: none !important; }
 .hst-pips { display: flex; gap: 2px; }
 .hst-pips i { width: 8px; height: 4px; border-radius: 2px; background: var(--c-bronze-400-soft); }
 .hst-pips i.is-on { background: var(--c-brown-550-vivid); }
-.hst-detail { position: sticky; bottom: 0; display: flex; align-items: center; gap: 10px; margin-top: 10px; padding: 10px; border-radius: 14px; border: 2px solid var(--c-bronze-450); background: var(--c-cream-50-soft); box-shadow: 0 -4px 10px rgba(40, 20, 0, .2); color: var(--c-brown-850-3); }
+.hst-detail { position: sticky; bottom: 0; z-index: 2; display: flex; align-items: center; gap: 10px; margin-top: 10px; padding: 10px; border-radius: 14px; border: 2px solid var(--c-bronze-450); background: var(--c-cream-50-soft); box-shadow: 0 -4px 10px rgba(40, 20, 0, .2); color: var(--c-brown-850-3); }
 .hst-detail-ico { flex: 0 0 auto; width: 52px; height: 52px; border-radius: 12px; overflow: hidden; border: 2px solid var(--c-brown-600-soft); }
 .hst-detail-ico img { width: 100%; height: 100%; object-fit: cover; }
 .hst-detail-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
@@ -120,6 +122,8 @@ body.hs-on-heros .hud-dock { display: none !important; }
 /* v3.643.0 (atelier village-heros) : PV et « Avec toi / Au camp » sur une ligne */
 .hs-comp-row { display: flex; align-items: center; gap: 8px; margin: 8px 0 6px; }
 .hs-comp-row .hs-comp-hp { flex: 1 1 auto; min-width: 0; margin: 0; }
+/* finition : PV des compagnons sur une pastille sombre (le crème tombait à 1,2-2,3:1 sur l'orange et le parchemin) */
+.hs-comp-hp .kgauge-text { left: 50%; right: auto; top: 50%; bottom: auto; transform: translate(-50%, -50%); padding: 1px 6px; border-radius: 6px; background: var(--c-brown-900); white-space: nowrap; text-shadow: none; }
 .hs-comp-row .cp-seg { flex: 0 0 auto; width: auto; margin: 0; }
 .hs-comp-row .cp-seg button { padding-left: 10px; padding-right: 10px; }
 .hs-sheet .eq-detail-panel { width: 100%; max-width: none; }

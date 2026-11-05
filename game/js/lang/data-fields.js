@@ -90,7 +90,7 @@ var DATA_TEXT_FIELDS = {
   CLASSES: ["*.label", "*.resource.label"],
   CLASS_SKILLS: ["*.actions.*.label", "*.actions.*.description", "*.resource.label"],
   HEROES_DB: ["*.name"],
-  GRIMOIRE_CONDITIONS: ["*.label", "*.description"],
+  GRIMOIRE_CONDITIONS: ["*.label", "*.short", "*.description"],
   COMPANIONS_DB: ["*.name", "*.lines", "*.skill.name", "*.skill.desc",
     "*.voies.*.label", "*.voies.*.short", "*.voies.*.desc", "*.voies.*.lines", "*.voies.*.skill.name", "*.voies.*.skill.desc"],
   COMPANION_ROLE_LABELS: ["*"],
@@ -99,7 +99,7 @@ var DATA_TEXT_FIELDS = {
   PATROL_STORIES: [""],
   PATROL_STORY_NARRATOR: [""], // v3.457.3 : compagnon hors de son monde
   TALENT_TREES: ["*.trunk.*.name", "*.trunk.*.short", "*.trunk.*.effect",
-    "*.paths.*.name", "*.paths.*.tag", "*.paths.*.nodes.*.name", "*.paths.*.nodes.*.short", "*.paths.*.nodes.*.effect"],
+    "*.paths.*.name", "*.paths.*.tag", "*.paths.*.tip", "*.paths.*.nodes.*.name", "*.paths.*.nodes.*.short", "*.paths.*.nodes.*.effect"],
   TALENT_COMMAND: ["name", "tag", "nodes.*.name", "nodes.*.short", "nodes.*.effect"], // v3.453.0 : voie du Commandement
   TALENT_TOWER: ["name", "tag", "nodes.*.name", "nodes.*.short", "nodes.*.effect"], // v3.633.0 : voie Varier (Tour)
 
@@ -108,7 +108,6 @@ var DATA_TEXT_FIELDS = {
   EQUIPMENT_SLOT_CONFIG: ["*.names", "*.namesByIcon"],
   EQUIP_SHOP_STARTER: ["*.name"],
   RARITY_LABELS: ["*"],
-  RPG_STAT_LABELS: ["*"],
   LEGENDARY_POWERS: ["*.*.label", "*.*.desc"],
   DUNGEON_UNIQUE_POWERS: ["*.label", "*.desc"], // v3.470.0
   LEGENDARY_POWER_BY_ID: ["*.label", "*.desc"],

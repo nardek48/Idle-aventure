@@ -96,13 +96,12 @@ function titleScreenNewGame() {
     return;
   }
 
-  ensureActiveSlotLoadedBeforeSwitch();
-
+  // Audit 04/11 (SAVE-13) : au démarrage, rien n'a été joué ; réécrire le héros quitté effaçait son absence.
   // Crée l'emplacement (repart d'un état neuf) puis ouvre le sélecteur nom -> héros.
   // resolveTitleScreen() est branché sur confirmHeroSelection() ci-dessous, pas ici :
   // tant que la création n'est pas confirmée, le joueur peut encore annuler (✕).
   window.titleScreenSlotBeingCreated = emptySlot;
-  HeroSlotManager.createHeroInSlot(emptySlot);
+  HeroSlotManager.createHeroInSlot(emptySlot, true);
 
   var titleHost = document.getElementById("title-screen-root");
   if (titleHost) titleHost.innerHTML = "";
@@ -179,7 +178,10 @@ function titleScreenConfirmDelete() {
   titleScreenDeleteConfirmSlot = null;
   if (!window.HeroSlotManager || !slot) { renderTitleScreen(); return; }
 
+  var wasActive = HeroSlotManager.getActiveSlot() === slot;
   HeroSlotManager.deleteSlot(slot);
+  // Audit 04/11 (SAVE-21) : depuis le jeu, le héros qui reprend la main rattrape son absence (au démarrage, init() le fait)
+  if (wasActive && titleScreenFromGame && game.heroId && window.ResumeManager) ResumeManager.catchUpAfterSlotLoad();
   if (titleScreenSelectedSlot === slot) titleScreenSelectedSlot = null;
   renderTitleScreen();
 }
@@ -188,10 +190,10 @@ function titleScreenConfirmDelete() {
 function titleScreenCreateInSlot(slotNumber) {
   if (!window.HeroSlotManager || HeroSlotManager.hasSlot(slotNumber)) return;
 
-  ensureActiveSlotLoadedBeforeSwitch(); // v3.99.16 : voir commentaire au-dessus de titleScreenNewGame()
+  if (titleScreenFromGame) ensureActiveSlotLoadedBeforeSwitch(); // v3.99.16 : voir titleScreenNewGame()
 
   window.titleScreenSlotBeingCreated = slotNumber;
-  HeroSlotManager.createHeroInSlot(slotNumber);
+  HeroSlotManager.createHeroInSlot(slotNumber, !titleScreenFromGame); // SAVE-13 : au démarrage, le héros quitté n'est pas réécrit
 
   var titleHost = document.getElementById("title-screen-root");
   if (titleHost) titleHost.innerHTML = "";
@@ -256,14 +258,14 @@ function buildTitleScreenLoadListHTML() {
 
   for (var i = 1; i <= maxSlots; i++) {
     if (!HeroSlotManager.hasSlot(i)) { free++; if (firstFree === null) firstFree = i; continue; }
-    var summary = HeroSlotManager.getSlotSummary(i) || {};
+    var summary = titleScreenSlotSummary(i) || {};
     var worldName = getWorldNameByIndex(summary.worldIndex);
     html += '<div class="title-slot-card occupied lc-row">';
     html += titleScreenHeroImage(summary);
     html += '  <div class="lc-row-tx">';
     html += '    <b class="title-slot-name">' + esc(summary.playerName || _t("Emplacement {n}", { n: i })) + '</b>';
     if (summary.heroTitle) html += '    <small class="title-slot-heroic-title">' + esc(_td(summary.heroTitle)) + '</small>'; // v3.338.0 (H8)
-    html += '    <small>' + esc(_t("Niveau {n}", { n: formatNumber(summary.heroLevel) })) + (worldName ? ' · ' + esc(worldName) : '') + '</small>';
+    html += '    <small>' + esc(titleScreenLevelText(summary, _t("Niveau {n}", { n: formatNumber(summary.heroLevel || 1) }))) + (worldName ? ' · ' + esc(worldName) : '') + '</small>';
     html += '    <small>' + esc(_t("Temps de jeu : {d}", { d: formatPlayTimeClock(summary.playTime) })) + '</small>';
     if (summary.savedAt) html += '    <small>' + esc(_t("Dernière partie : {d}", { d: formatSavedAtDate(summary.savedAt) })) + '</small>';
     html += '  </div>';
@@ -285,7 +287,7 @@ function buildTitleScreenLoadListHTML() {
 
 function buildTitleScreenDeleteConfirmHTML() {
   if (!titleScreenDeleteConfirmSlot) return "";
-  var summary = HeroSlotManager.getSlotSummary(titleScreenDeleteConfirmSlot) || {};
+  var summary = titleScreenSlotSummary(titleScreenDeleteConfirmSlot) || {};
   var name = summary.playerName || _t("Emplacement {n}", { n: titleScreenDeleteConfirmSlot });
 
   // v3.403.0 : fenêtre du kit (.kwin), danger D1 — comme toutes les confirmations du jeu.
@@ -302,6 +304,22 @@ function buildTitleScreenDeleteConfirmHTML() {
   return html;
 }
 
+/* QA-13 (audit 04/11) : emplacement illisible. Le chargement reprend la copie de secours (_bak) :
+   l'écran titre en montre le résumé, marqué, au lieu d'un « niv. 1 » trompeur. */
+function titleScreenSlotSummary(slot) {
+  var sum = HeroSlotManager.getSlotSummary(slot);
+  if (sum || !HeroSlotManager.hasSlot(slot)) return sum;
+  var d = null;
+  try { d = JSON.parse(localStorage.getItem(getSlotKey(slot) + (typeof SAVE_BACKUP_SUFFIX === "string" ? SAVE_BACKUP_SUFFIX : "_bak")) || "null"); } catch (e) { d = null; }
+  if (!d || typeof d !== "object") return { unreadable: true };
+  return { playerName: d.playerName || "", heroLevel: Number(d.heroLevel || 1), worldIndex: Number(d.worldIndex || 0),
+    playTime: Number(d.playTime || 0), savedAt: Number(d.savedAt || d.lastOnline || 0), backup: true };
+}
+function titleScreenLevelText(sum, levelTxt) {
+  if (sum && sum.unreadable) return _t("Sauvegarde illisible");
+  return sum && sum.backup ? levelTxt + " · " + _t("copie de secours") : levelTxt;
+}
+
 /* v3.341.0 : héros à reprendre = l'emplacement actif (le dernier chargé), sinon le plus
    récemment sauvegardé. null s'il n'y a aucune partie. */
 function getTitleScreenContinueSlot() {
@@ -310,7 +328,7 @@ function getTitleScreenContinueSlot() {
   if (HeroSlotManager.hasSlot(active)) return active;
   var best = null, bestAt = -1;
   for (var i = 1; i <= HeroSlotManager.getMaxSlots(); i++) {
-    var sum = HeroSlotManager.hasSlot(i) ? HeroSlotManager.getSlotSummary(i) : null;
+    var sum = HeroSlotManager.hasSlot(i) ? titleScreenSlotSummary(i) : null;
     if (sum && Number(sum.savedAt || 0) > bestAt) { best = i; bestAt = Number(sum.savedAt || 0); }
   }
   return best;
@@ -318,8 +336,8 @@ function getTitleScreenContinueSlot() {
 
 /* « Continuer » : le dernier héros, nommé sur le bouton (plusieurs joueurs sur un appareil). */
 function buildTitleScreenContinueHTML(slot) {
-  var sum = HeroSlotManager.getSlotSummary(slot) || {};
-  var line = esc(sum.playerName || _t("Emplacement {n}", { n: slot })) + ' · ' + esc(_t("niv. {n}", { n: formatNumber(sum.heroLevel || 1) }));
+  var sum = titleScreenSlotSummary(slot) || {};
+  var line = esc(sum.playerName || _t("Emplacement {n}", { n: slot })) + ' · ' + esc(titleScreenLevelText(sum, _t("niv. {n}", { n: formatNumber(sum.heroLevel || 1) })));
   return '<button type="button" class="kbtn primary title-screen-continue" onclick="titleScreenConfirmLoad(' + slot + ')">'
     + '<span class="title-screen-continue-txt"><b>' + _t("Continuer") + '</b><small>' + line + '</small></span></button>';
 }
@@ -334,9 +352,9 @@ function buildTitleScreenWideHTML() {
   html += '<img src="images/TitleScreen/titre_logo.webp" alt="' + esc(_t("Aethervale")) + '" class="ts-wide-logo">';
   html += '<div class="ts-wide-pane"><div class="ts-wide-card">';
   if (continueSlot) {
-    var sum = HeroSlotManager.getSlotSummary(continueSlot) || {}, world = getWorldNameByIndex(sum.worldIndex);
+    var sum = titleScreenSlotSummary(continueSlot) || {}, world = getWorldNameByIndex(sum.worldIndex);
     html += '<div class="ts-cont">' + titleScreenHeroImage(sum) + '<div><b>' + esc(sum.playerName || _t("Emplacement {n}", { n: continueSlot })) + '</b><small>'
-      + esc(_t("Niveau {n}", { n: formatNumber(sum.heroLevel || 1) })) + (world ? ' · ' + esc(world) : '') + '</small></div>'
+      + esc(titleScreenLevelText(sum, _t("Niveau {n}", { n: formatNumber(sum.heroLevel || 1) }))) + (world ? ' · ' + esc(world) : '') + '</small></div>'
       + '<button type="button" class="kbtn primary" onclick="titleScreenConfirmLoad(' + continueSlot + ')">' + _t("Continuer") + '</button></div>';
     html += '<div class="ts-h">' + esc(_t("Tes parties")) + '</div>' + buildTitleScreenLoadListHTML();
   } else {
@@ -358,10 +376,10 @@ function buildTitleScreenMainHTML() {
 
   html += '    <div class="lc-sheet title-screen-frame">';
   if (continueSlot) {
-    var sum = HeroSlotManager.getSlotSummary(continueSlot) || {};
+    var sum = titleScreenSlotSummary(continueSlot) || {};
     var world = getWorldNameByIndex(sum.worldIndex);
     html += kSheetHeadHTML({ icon: titleScreenHeroImage(sum), title: esc(sum.playerName || _t("Emplacement {n}", { n: continueSlot })),
-      sub: esc(_t("Niveau {n}", { n: formatNumber(sum.heroLevel || 1) })) + (world ? ' · ' + esc(world) : '') });
+      sub: esc(titleScreenLevelText(sum, _t("Niveau {n}", { n: formatNumber(sum.heroLevel || 1) }))) + (world ? ' · ' + esc(world) : '') });
   } else {
     html += kSheetHeadHTML({ title: _t("Bienvenue"), sub: _t("Une aventure t'attend au-delà de la Lisière.") });
   }

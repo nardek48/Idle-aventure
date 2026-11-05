@@ -1,5 +1,5 @@
 "use strict";
-/* data/enemies.js — assets, helpers d'icônes, stats RPG, ennemis normaux (hors boss). Détail complet : COMMENTAIRES_ORIGINAUX.md */
+/* data/enemies.js — assets, helpers d'icônes, stats RPG, ennemis normaux (hors boss). */
 
 var ASSETS = {
   enemies: {
@@ -86,14 +86,6 @@ function makeRpgStats(power, endurance, celerity, precision, will) {
   };
 }
 
-var RPG_STAT_LABELS = {
-  power: "Puissance",
-  endurance: "Endurance",
-  celerity: "Célérité",
-  precision: "Précision",
-  will: "Volonté"
-};
-
 var ENEMY_DB = {
   slime: {
     name: "Slime",
@@ -172,7 +164,7 @@ var ENEMY_DB = {
   /* v3.429.0 (Ruines, U-3) — le Bâtisseur : il frappe peu et blinde un allié par télégraphe
      (trait « shielded » détourné vers l'allié, systems/rise-system.js). support : visé par le
      réglage « Cible » sur « Le soutien ». Résiste à la magie, craint l'épée : il compense l'écart
-     épée / magie du bestiaire des Ruines (mesure U-0). Image à générer. */
+     épée / magie du bestiaire des Ruines (mesure U-0). */
   batisseur: {
     name: "Bâtisseur",
     worldId: "ruins", // v3.456.7 : hors des listes d'aventure (quêtes, Sanctuaire) — dit son monde au Bestiaire

@@ -53,6 +53,13 @@ function aeswynExplain() {
 var ScreenBanner = {
   MIN_PHONE: 44, MIN_WIDE: 56, // hauteur gardée une fois replié (ligne de titre)
   PHONE_H: 150,
+  PHONE_H_SHORT: 104, SHORT_MAX_H: 600, // v3.702.0 (UI-10, A) : écran de moins de 600 px de haut, bandeau sans la phrase
+
+  /* Hauteur du bandeau sur téléphone : 104 px sous 600 px de haut (hors mode PC), 150 sinon */
+  phoneH: function () {
+    var vh = (typeof window !== "undefined" && window.innerHeight) || 0;
+    return vh > 0 && vh < this.SHORT_MAX_H && !document.documentElement.classList.contains("pc-mode") ? this.PHONE_H_SHORT : this.PHONE_H;
+  },
 
   clampWorld: function (i) {
     return Math.max(0, Math.min(SCREEN_BANNER_WORLDS.length - 1, Number(i) || 0));
@@ -103,7 +110,9 @@ var ScreenBanner = {
     el.className = "kfb";
     el.setAttribute("role", "img");
     el.setAttribute("aria-label", d[1] + ". " + d[2]);
-    el.style.backgroundImage = "url('" + d[0] + "')";
+    el.setAttribute("data-src", d[0]);
+    var z = (window.DesktopScale && DesktopScale.zoom) || 1; // premier choix sans mise en page ; fit() l'affine
+    this.setImage(el, !document.documentElement.classList.contains("wide-mode") && this.phoneH() * 3 * z * (window.devicePixelRatio || 1) <= this.PHONE_IMG_W);
     var tx = document.createElement("div");
     tx.className = "kfb-tx";
     var t = document.createElement("span");
@@ -159,15 +168,27 @@ var ScreenBanner = {
     this.mini(el, scroller);
   },
 
-  /* Hauteur : 150 px sur téléphone, image entière (3:1) en grand écran ; le haut négatif replie */
+  /* Hauteur : 150 px sur téléphone (104 sur petit écran), image entière (3:1) en grand écran ; le haut négatif replie */
   fit: function (el) {
     var wide = document.documentElement.classList.contains("wide-mode");
-    var h = wide ? Math.round(el.getBoundingClientRect().width / 3) : this.PHONE_H;
+    var h = wide ? Math.round(el.getBoundingClientRect().width / 3) : this.phoneH();
     if (!(h > 0)) h = this.PHONE_H;
+    el.classList.toggle("is-short", !wide && h === this.PHONE_H_SHORT); // phrase masquée (css/07-responsive.css)
     var min = wide ? this.MIN_WIDE : this.MIN_PHONE;
     el.style.height = h + "px";
     el.style.top = (min - h) + "px";
     el.dataset.fold = String(h - min);
+    var b = el.getBoundingClientRect(); // image en cover (3:1) : largeur utile = max(largeur, 3 × hauteur), zoom compris
+    if (b.width > 0) this.setImage(el, Math.max(b.width, b.height * 3) * (window.devicePixelRatio || 1) <= this.PHONE_IMG_W);
+  },
+
+  /* PERF-10 : variante de 1 350 px (Banners/phone/) quand l'écran n'affiche pas plus ; l'image entière sinon */
+  PHONE_IMG_W: 1350,
+  setImage: function (el, phone) {
+    var src = el.getAttribute("data-src") || "", url = phone ? src.replace("images/Banners/", "images/Banners/phone/") : src;
+    if (el.getAttribute("data-img") === url) return;
+    el.setAttribute("data-img", url);
+    el.style.backgroundImage = "url('" + url + "')";
   },
 
   /* Replié : la phrase s'efface, seul le titre reste */

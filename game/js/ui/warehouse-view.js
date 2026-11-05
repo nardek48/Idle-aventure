@@ -8,7 +8,7 @@
      Filtre, sélection et zéros sont des préférences d'AFFICHAGE de l'appareil (Prefs), décision Seb ;
    - toucher une tuile ouvre la FEUILLE de la ressource (#village-modal-root) : plafond, d'où ça
      vient, où ça part, réserve protégée (− / + par 10, nombre saisissable), valeur de référence.
-   La vente reste retirée (v3.330.0, E6). Ancien écran grille + panneau : COMMENTAIRES_ORIGINAUX.md */
+   La vente reste retirée (v3.330.0, E6). */
 
 var selectedWarehouseKey = null;   // ressource dont la feuille est ouverte (nom conservé : resetVillageSubScreenState)
 var warehousePickerOpen = false;   // feuille « Ma sélection » ouverte
@@ -84,8 +84,8 @@ function warehouseOpenDemand() {
   });
   if (window.ProductionManager && window.PRODUCTION_BUILDINGS) Object.keys(PRODUCTION_BUILDINGS).forEach(function (id) {
     if (!ProductionManager.isBuildingUnlocked(id)) return;
-    add(ProductionManager.getNextCost(id));
-    if (!window.ProductionPlotsSystem || !ProductionPlotsSystem.isManaged(id)) return;
+    // ECON-9 : un bâtiment à parcelles ne se monte plus : son ancien coût de niveau n'est pas une demande
+    if (!window.ProductionPlotsSystem || !ProductionPlotsSystem.isManaged(id)) { add(ProductionManager.getNextCost(id)); return; }
     for (var row = 0; row < 3; row++) {
       var st = ProductionPlotsSystem.getRowState(id, row);
       if (st.rowOpen) { add(st.unlockCost); add(st.upCost); add(st.impCost); }
@@ -172,6 +172,13 @@ function getWarehouseOtherUses(key) {
   if (departs.length) out.push({ icon: "images/Icons/quests/start_expedition.webp", text: _t("Départ : {x}", { x: depTxt }) });
   if (Object.keys(window.PA2_ITEMS || {}).some(function (id) { return PA2_ITEMS[id].resource === key; })) out.push({ icon: "images/Icons/subtabs/inventory.webp", text: _t("Besace des Petites Aventures") });
   if (window.VILLAGE_EVENT_BUYBACK && VILLAGE_EVENT_BUYBACK.prices[key]) out.push({ icon: "images/Icons/village_buildings/merchant_hall.webp", text: _t("Marché de Sarkel : il la rachète par lots de {n} ({p} or l'unité)", { n: VILLAGE_EVENT_BUYBACK.lot, p: VILLAGE_EVENT_BUYBACK.prices[key] }) }); // v3.606.0 (D2)
+  // ECON-10 : le Grand Ouvrage (versement automatique ou à la main) et le festin du Campement
+  if (window.GrandOuvrage && GrandOuvrage.isOpen() && GrandOuvrage.getValue(key) > 0) {
+    out.push({ icon: "images/Icons/village_buildings/grand_ouvrage.webp", text: GrandOuvrage.autoKeep(key) !== Infinity
+      ? _t("Grand Ouvrage : versé tout seul au-delà de {p} % du plafond", { p: Math.round(GrandOuvrage.getSeuil() * 100) })
+      : _t("Grand Ouvrage : à verser à la main") });
+  }
+  if (window.FEAST_COST_BY_WORLD && FEAST_COST_BY_WORLD[0] && FEAST_COST_BY_WORLD[0][key]) out.push({ icon: FEAST_ICON, text: _t("Campement : le festin") });
   if (window.COMBAT_ITEMS && COMBAT_ITEMS[key]) out.push({ icon: COMBAT_ITEMS[key].icon, text: _t("Objet de combat : emporté à la préparation d'une sortie") });
   return out;
 }
@@ -238,13 +245,12 @@ function buildWarehouseFilterRowHTML(keys) {
     h += '</div>';
   }
   h += '</div>';
-  h += '<span class="wh-zeros"><button type="button" class="kswitch' + (zeros ? ' is-on' : '') + '" role="switch" aria-checked="' + zeros + '" onclick="toggleWarehouseZeros()"></button>' + _t("Zéros") + '</span>';
+  h += '<span class="wh-zeros"><button type="button" class="kswitch' + (zeros ? ' is-on' : '') + '" role="switch" aria-checked="' + zeros + '" aria-label="' + esc(_t("Zéros")) + '" onclick="toggleWarehouseZeros()"></button>' + _t("Zéros") + '</span>';
   h += '</div>';
   return h;
 }
 
 function buildWarehouseHTML() {
-  if (typeof HuntQuestManager !== "undefined") HuntQuestManager.ensureDefaults();
   if (typeof WarehouseManager !== "undefined") WarehouseManager.ensure();
 
   var all = warehouseListedKeys();
@@ -255,7 +261,7 @@ function buildWarehouseHTML() {
   // v3.330.0 (E6) : à la première visite, le tavernier explique la fin de la vente
   if (!(game.genericTutorialsSeen || {}).warehouse_no_sale) {
     h += '<div class="warehouse-note">'
-       + '<div class="warehouse-note-text"><strong>' + _t("Le tavernier") + '</strong> : « ' + _t("L’Entrepôt ne rachète plus rien. Ce qu’il te reste, porte-le-moi : mes contrats paient mieux, et on sait ce qu’on te demande.") + ' »</div>'
+       + '<div class="warehouse-note-text"><strong>' + _t("Le tavernier") + '</strong> : « ' + _t("L’Entrepôt ne rachète rien. Ce qu’il te reste, porte-le-moi : mes contrats paient mieux, et on sait ce qu’on te demande.") + ' »</div>'
        + '<button type="button" class="settings-btn" onclick="dismissWarehouseNoSaleNote()">' + _t("Compris") + '</button></div>';
   }
   var demand = warehouseOpenDemand(), nFull = all.filter(function (k) { return isWarehouseFull(k) && demand[k]; }).length;

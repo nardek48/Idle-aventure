@@ -255,7 +255,7 @@ var SCENE_TEMPLATES = {
   /* v3.452.0 (Crypte, acte I étape 1, texte validé par Seb le 16/10) — LA DESCENTE. Passage des
      Ruines à la Crypte : parcours v2 de quatre paliers, monde posé à l'arrivée. Sarkel ne fait pas
      payer le chemin ; deux Rations moyennes pour la longueur. Palier 3 : trois morts, un dort — le
-     combat de parcours se joue contre les deux éveillés (pack 2). Fond à fournir : crypte_descente. */
+     combat de parcours se joue contre les deux éveillés (pack 2). Fond : crypte_descente. */
   traversee_crypte: {
     id: "traversee_crypte",
     worldId: "crypt",
@@ -313,7 +313,7 @@ var SCENE_TEMPLATES = {
   },
 
   /* v3.626.0 (Tour, acte I étape 1, texte validé par Seb le 02/11) — LA ROUTE DU NORD. Passage de la Montagne
-     à la Tour, monde posé à l'arrivée. Deux Grandes rations. Fond à fournir (piste provisoire). Au banc. */
+     à la Tour, monde posé à l'arrivée. Deux Grandes rations. Fond livré (piste provisoire). Au banc. */
   traversee_tour: {
     id: "traversee_tour",
     worldId: "tower",
@@ -339,7 +339,7 @@ var SCENE_TEMPLATES = {
   },
 
   /* v3.630.0 (Tour, acte IV étape 17) — LA FAILLE : l'escalier de lumière jusqu'au sommet, seul (TW5).
-     Cinq paliers, journal fixe. Fond à fournir par Seb (images/Maps/parcours/tour_faille.webp, piste provisoire). */
+     Cinq paliers, journal fixe. Fond livré (images/Maps/parcours/tour_faille.webp, piste provisoire). */
   faille_tour: {
     id: "faille_tour",
     worldId: "tower",
@@ -367,7 +367,7 @@ var SCENE_TEMPLATES = {
   },
 
   /* v3.491.0 (Montagne, acte IV étape 17) — LE SENTIER DU DESSUS : de la coupe du lac au plateau du nid.
-     Cinq paliers, journal fixe. Fond à fournir par Seb (piste provisoire). Au banc. */
+     Cinq paliers, journal fixe. Fond livré (piste provisoire). Au banc. */
   sentier_du_dessus: {
     id: "sentier_du_dessus",
     worldId: "mountain",

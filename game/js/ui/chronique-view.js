@@ -190,7 +190,7 @@ var Chronique = {
       rows += '<div class="chr-pr" title="' + esc(_td(def.name)) + ' · ' + Math.floor(s) + ' / ' + cap + '">'
         + '<img src="' + esc((res && res.icon) || def.icon) + '" alt=""><span>' + esc(_td(res ? res.name : def.name)) + '</span>'
         + '<span class="chr-bar' + (pct >= 100 ? ' is-full' : '') + '"><i style="width:' + pct.toFixed(0) + '%"></i></span>'
-        + '<em>+' + (rate < 1 ? rate.toFixed(2) : rate.toFixed(1)).replace(".", ",") + '/min</em></div>';
+        + '<em>+' + fmtDec(rate < 1 ? rate.toFixed(2) : rate.toFixed(1)) + '/min</em></div>';
     });
     if (!rows) return "";
     return '<section class="chr-s"><h4>' + esc(_t("Le village tourne")) + '<a onclick="switchTab(\'village\')">' + esc(_t("Village")) + ' ›</a></h4>'
@@ -235,7 +235,6 @@ function chroniqueKeydown(e) {
 }
 
 window.Chronique = Chronique;
-window.renderChronique = function () { Chronique.render(false); };
 if (typeof document !== "undefined" && typeof window.addEventListener === "function") {
   var chronResizeT = 0;
   window.addEventListener("resize", function () { clearTimeout(chronResizeT); chronResizeT = setTimeout(function () { Chronique.layout(); }, 200); });

@@ -68,7 +68,31 @@ var GrandOuvrage = {
     var cap = WarehouseManager.getCap(key);
     if (!(cap > 0) || cap === Infinity) return Infinity;
     var reserve = (window.ResourceReserveManager && typeof ResourceReserveManager.getReserve === "function") ? Number(ResourceReserveManager.getReserve(key) || 0) : 0;
-    return Math.max(Math.floor(cap * this.getSeuil()), reserve);
+    return Math.min(cap, Math.max(Math.floor(cap * this.getSeuil()), reserve, this.storyForgeKeep(key))); // ECON-6 ; ECON-1 : la Forge de l'Histoire reste payable
+  },
+
+  /* ECON-1 (option A, Seb 05/11) : ce qu'il faut garder de `key` pour le prochain niveau de Forge
+     exigé par une étape d'Histoire en cours ou à venir (0 sinon, ou si ce niveau n'est pas encore ouvert). */
+  storyForgeKeep: function (key) {
+    var SQ = window.StoryQuestManager, V = window.VillageBuildingManager;
+    if (!SQ || !V || typeof V.getNextCost !== "function" || typeof STORY_QUESTS === "undefined") return 0;
+    var lvl = V.getLevel("forge"), paliers = [["ruines_13", window.STORY_PALIER_RUINES_RARE], ["crypte_13", window.STORY_PALIER_CRYPTE_EPIQUE],
+      ["montagne_13", window.STORY_PALIER_MONTAGNE_COMPLET], ["tour_13", window.STORY_PALIER_TOUR_COMPLET]];
+    var exige = paliers.some(function (p) { return p[1] && p[1].forge > lvl && GrandOuvrage._storyStepPending(SQ, p[0]); });
+    var cost = exige ? V.getNextCost("forge") : null; // null au plafond du monde ou de l'acte (forgeActStep)
+    return cost ? Math.max(0, Math.floor(Number(cost[key] || 0))) : 0;
+  },
+
+  /* Étape d'un chapitre ouvert, pas encore validée (le chapitre ouvert est celui du monde atteint). */
+  _storyStepPending: function (SQ, stepId) {
+    var ids = Object.keys(STORY_QUESTS);
+    for (var i = 0; i < ids.length; i++) {
+      var idx = STORY_QUESTS[ids[i]].steps.findIndex(function (s) { return s.id === stepId; });
+      if (idx === -1) continue;
+      if (!SQ.isChapterOpen(ids[i]) || SQ.isChapterCompleted(ids[i])) return false;
+      return SQ.getState(ids[i]).currentStep <= idx;
+    }
+    return false;
   },
 
   /* Appelé par WarehouseManager.addResource : `total` = stock + arrivée ; rend ce qui reste au stock.

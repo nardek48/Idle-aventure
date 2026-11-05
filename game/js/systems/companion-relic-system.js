@@ -6,7 +6,7 @@
      en garantissent une (game.companionRelics.pity). La première patrouille terminée en rapporte toujours une (audit P4). Famille au hasard, monde = celui du secteur patrouillé.
    - Force = rang du monde (Forêt 1 … Montagne 5). Une relique n'est portée que par un compagnon à la fois, une seule
      relique par famille sur un même compagnon.
-   - État : game.companionRelics = { inv: [{ id, f, w }], next, pity } ; ce que porte un compagnon : state(id).relics. */
+   - État : game.companionRelics = { inv: [{ id, f, w }], next, pity, firstPatrolDone } ; ce que porte un compagnon : state(id).relics. */
 
 /* Constantes (familles, paliers, chances) : data/companions.js. */
 /* « Croc de la Forêt » : le nom de famille, puis le monde avec sa préposition (traduits au chargement). */
@@ -20,6 +20,8 @@ var CompanionRelics = {
     r.inv = r.inv.filter(function (x) { return x && CompanionRelics.fam(x) && typeof x.id === "number"; });
     if (typeof r.next !== "number" || r.next < 1) r.next = 1 + r.inv.reduce(function (m, x) { return Math.max(m, x.id); }, 0);
     if (typeof r.pity !== "number" || r.pity < 0) r.pity = 0;
+    // audit CPL2-4 : la garantie suit la 1re patrouille, pas next (une unique reçue avant l'avançait) ; ancienne sauvegarde : faite si une relique ordinaire existe
+    if (typeof r.firstPatrolDone !== "boolean") r.firstPatrolDone = r.inv.some(function (x) { return !CompanionRelics.isUnique(x); });
     return r;
   },
   /* v3.598.0 : une relique ordinaire (famille) ou unique (data/companions.js, COMPANION_RELIC_UNIQUES). */
@@ -62,9 +64,15 @@ var CompanionRelics = {
   },
 
   /* ---------- Emplacements ---------- */
+  /* v3.697.0 (CPL2-2, Seb A) : paliers 5/15/25 rapportés à la ligne d'entraînement depuis l'arrivée
+     (Sarkel 2/5/9, Ysolt 3/8/13) : un compagnon arrivé tard ouvre ses 3 emplacements au bout de sa ligne. */
+  slotAt: function (companionId, k) {
+    var max = COMPANION_TRAINING_HARD_MAX, len = Math.max(COMPANION_TRAINING_PER_WORLD, max - COMPANION_TRAINING_PER_WORLD * (COMPANION_JOIN_WORLD[companionId] || 0));
+    return Math.max(1, Math.ceil(COMPANION_RELIC_SLOTS_AT[k] * len / max));
+  },
   slotsOpen: function (companionId) {
-    var st = window.CompanionManager ? CompanionManager.state(companionId) : null, n = st ? st.upgrades : 0;
-    return COMPANION_RELIC_SLOTS_AT.filter(function (s) { return n >= s; }).length;
+    var st = window.CompanionManager ? CompanionManager.state(companionId) : null, n = st ? st.upgrades : 0, self = this;
+    return COMPANION_RELIC_SLOTS_AT.filter(function (s, k) { return n >= self.slotAt(companionId, k); }).length;
   },
   worn: function (companionId) {
     var st = window.CompanionManager ? CompanionManager.state(companionId) : null;
@@ -132,8 +140,10 @@ var CompanionRelics = {
     var R = this.ensure(), h = Math.max(0, Number(hours || 0));
     var chance = 1 - Math.pow(1 - COMPANION_RELIC_CHANCE_PER_H, h);
     R.pity += h;
-    // audit P4 (26/10) : la toute première patrouille terminée rapporte une relique (next n'a jamais avancé)
-    if (!(R.next === 1 || rng() < chance || R.pity >= COMPANION_RELIC_PITY_H)) return null;
+    // audit P4 (26/10) : la toute première patrouille terminée rapporte une relique
+    var first = !R.firstPatrolDone;
+    R.firstPatrolDone = true;
+    if (!(first || rng() < chance || R.pity >= COMPANION_RELIC_PITY_H)) return null;
     R.pity = 0;
     var w = 0;
     if (typeof WORLDS !== "undefined") WORLDS.forEach(function (x, i) { if (x.id === mapId) w = i; });

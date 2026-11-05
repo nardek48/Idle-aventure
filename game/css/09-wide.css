@@ -104,9 +104,7 @@ html.wide-mode .hud-dock {
 
 /* ---------- Pages : toute la largeur, plus de bornes de téléphone ---------- */
 html.wide-mode #panel-container .nb-page-frame,
-html.wide-mode #panel-container .kfp-top-holder,
-html.wide-mode #panel-container .kfp-top-holder.is-subtab,
-html.wide-mode #panel-container .subtab-page-content {
+html.wide-mode #panel-container .kfp-top-holder {
   max-width: none;
 }
 html.wide-mode #panel-container .subtab-bar-wrapper {
@@ -221,8 +219,6 @@ html.wide-mode .quest-board-list {
 html.wide-mode .quest-board-list > * { margin: 0; }
 
 /* Équipement : emplacements à la taille du téléphone, la fiche prend le reste */
-html.wide-mode .eq-hero-right { flex: 0 0 300px; width: 300px; }
-html.wide-mode .eq-hero-main { gap: 20px; }
 
 /* Village : trois colonnes de bâtiments */
 html.wide-mode .vb-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -233,7 +229,6 @@ html.wide-mode #panel-container .kf-mid .kgauge:not(.kgauge-thin) { max-width: 3
 
 /* ---------- Écrans plein cadre (PC et tablette) : ce qui se lit garde une largeur de tablette étroite ---------- */
 html.pc-mode .lmx-sheet { width: min(480px, 100%); margin: 0 auto; }
-html.wide-mode .eq-hero-main > :not(.eq-hero-right) { flex: 1 1 auto; min-width: 0; }
 
 /* =========================================================
    v3.502.0 (lot GE-1, grand écran) : corrections mesurées au pixel (audit du 26/10/2026,

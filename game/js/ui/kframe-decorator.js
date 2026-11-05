@@ -74,14 +74,8 @@ function decoratePageFrames(root) {
       // v3.581.0 : bandeau illustré (ui/screen-banner.js) à la place du titre, en tête du défilement
       var kfb = window.ScreenBanner && f.getAttribute("data-kf-banner") ? ScreenBanner.build(f.getAttribute("data-kf-banner")) : null;
       if (kfb) holder.classList.add("has-banner");
-      var subtabContent = f.closest ? f.closest(".subtab-page-content") : null;
-      if (subtabContent && subtabContent.parentNode) {
-        // page à sous-onglets : le porte-bandeau se place AU-DESSUS de la zone
-        // scrollable existante, symétrique de la barre de sous-onglets du bas.
-        holder.classList.add("is-subtab");
-        subtabContent.parentNode.insertBefore(holder, subtabContent);
-        if (kfb) ScreenBanner.attach(kfb, subtabContent);
-      } else if (f.parentNode) {
+      // v3.705.0 : branche « page à sous-onglets » (.subtab-page-content) retirée, plus aucun écran ne l'utilise
+      if (f.parentNode) {
         // page simple : le scroll vit dans #panel-container (02-layout, fichier
         // RESYNC intouché) — on enveloppe la page dans une colonne pleine
         // hauteur avec une zone de scroll INTERNE ; le panel ne déborde plus,

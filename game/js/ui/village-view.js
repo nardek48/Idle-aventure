@@ -7,8 +7,7 @@
    bâtiments du rapport de conception du 11/09/2026, chacun dans un des cinq états gérés
    par VillageBuildingManager.getCardState(). Un bâtiment n'est jamais invisible : un
    bâtiment verrouillé affiche ce qu'il faut faire pour l'ouvrir (le mur n'est jamais
-   silencieux). Ancien code (teaser, et avant lui grille 6 cartes + popup) :
-   COMMENTAIRES_ORIGINAUX.md */
+   silencieux). */
 
 /* v3.414.0 (lot VUI-1, atelier village du 01/10/2026) : quatre onglets en rail EN HAUT
    (Bâtiments · Production · Ateliers · Entrepôt) remplacent les trois boutons du bas et le
@@ -19,7 +18,13 @@ var VILLAGE_SUBTABS = ["buildings", "production", "shops", "entrepot"];
 
 /* v3.647.0 (atelier ateliers-maquettes, 50:50) : scènes de ligne livrées dans images/Buildings/scenes/<clé>.webp.
    Clés : prod_<id>, village_<id>, atelier_<id> (forge de la Mine : atelier_forge_mine). Vide tant que rien n'est livré. */
-var BUILDING_SCENES_READY = [];
+var BUILDING_SCENES_READY = [
+  "prod_hunt", "prod_farm", "prod_sawmill", "prod_mine", "prod_quarry", "prod_well", // v3.662.0
+  "village_grand_ouvrage", "village_workshop", "village_training", "village_forge", "village_apothecary", // v3.663.0 : le village
+  "village_enchanter", "village_hall", "village_tavern", "village_warehouse", "village_palisade",
+  "atelier_boulangerie", "atelier_cuisine_de_camp", "atelier_scierie_fine", "atelier_menuiserie", "atelier_fonderie", // v3.663.0 : les ateliers
+  "atelier_forge_mine", "atelier_tailleur_de_pierre", "atelier_maconnerie", "atelier_reservoir"
+];
 /* Moitié droite d'une ligne : la scène si elle est livrée, sinon l'image actuelle du bâtiment (iconHTML) */
 function buildingSceneHTML(key, iconHTML) {
   if (BUILDING_SCENES_READY.indexOf(key) >= 0) return '<span class="row-scene is-scene"><img class="row-scene-img" src="images/Buildings/scenes/' + key + '.webp" alt=""></span>';
@@ -106,10 +111,10 @@ window.getVillageSubTabBadges = getVillageSubTabBadges;
 function buildVillageSubTabBarHTML() {
   var badges = getVillageSubTabBadges();
   var tabs = [
-    ["buildings", "images/Icons/construction_icon.webp", _t("Bâtiments")],
-    ["production", "images/Icons/subtabs/production.webp", _t("Production")],
-    ["shops", "images/Icons/subtabs/workshops.webp", _t("Ateliers")],
-    ["entrepot", "images/Icons/system/warehouse_supplies.webp", _t("Entrepôt")]
+    ["buildings", "images/Icons/construction_icon.webp", _t("Bâti\u00ADments", "sous-onglet")], // v3.702.0 (UI-14) : césures douces, texte Grande sous 360 px
+    ["production", "images/Icons/subtabs/production.webp", _t("Produc\u00ADtion", "sous-onglet")], // CPL3-11 : césure douce, FR et EN
+    ["shops", "images/Icons/subtabs/workshops.webp", _t("Ate\u00ADliers", "sous-onglet")], // CPL3-11 : césure douce en anglais
+    ["entrepot", "images/Icons/system/warehouse_supplies.webp", _t("Entre\u00ADpôt", "sous-onglet")]
   ];
   var h = '<div class="kseg is-stack village-tabs">';
   tabs.forEach(function (t) {

@@ -11,8 +11,7 @@
    Pourquoi le garder plutôt que le supprimer : warehouse-system.js,
    data/workshop-unlock.js et ui/warehouse-view.js appellent encore
    ConstructionManager.getSellBonus()/getLevel(). Une redirection d'une
-   ligne vaut mieux qu'une chasse aux appels dans une même livraison.
-   Ancien code complet : COMMENTAIRES_ORIGINAUX.md */
+   ligne vaut mieux qu'une chasse aux appels dans une même livraison. */
 
 var ConstructionManager = {
   ensure: function () {

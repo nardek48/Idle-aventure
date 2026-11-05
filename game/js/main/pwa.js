@@ -1,7 +1,7 @@
 "use strict";
 /* main/pwa.js — enregistrement Service Worker, voile de garde 1er lancement, bannière de mise à jour en cours de session,
    installation du jeu (v3.359.0, PwaInstall).
-   Sans effet si le navigateur ne supporte pas les service workers. Détail complet : COMMENTAIRES_ORIGINAUX.md */
+   Sans effet si le navigateur ne supporte pas les service workers. */
 
 var pwaHadControllerAtLoad = ("serviceWorker" in navigator) && !!navigator.serviceWorker.controller;
 
@@ -16,6 +16,7 @@ function initPwaServiceWorker() {
   window.addEventListener("load", function () {
     navigator.serviceWorker.register("./sw.js").then(function (reg) {
       watchPwaUpdateOnResume(reg);
+      pwaCacheLangFile();
     }).catch(function (err) {
       console.warn("Service worker non enregistré :", err);
     });
@@ -23,8 +24,17 @@ function initPwaServiceWorker() {
 
   navigator.serviceWorker.addEventListener("message", function (event) {
     if (!event.data || event.data.type !== "QUEST_IDLE_SW_UPDATED") return;
+    pwaCacheLangFile(); // le nouveau cache de version n'a pas en.js
     if (pwaHadControllerAtLoad) showPwaUpdateBanner();
   });
+  navigator.serviceWorker.addEventListener("controllerchange", pwaCacheLangFile);
+}
+
+/* PERF-13 : en.js (≈ 300 Ko, change à chaque version) n'est précaché que chez les joueurs en anglais :
+   la page demande au service worker de le garder, pour jouer hors-ligne. */
+function pwaCacheLangFile() {
+  var c = navigator.serviceWorker && navigator.serviceWorker.controller;
+  if (c && window.I18n && I18n.lang() === "en") c.postMessage({ type: "QUEST_IDLE_CACHE_LANG" });
 }
 
 /* v3.436.3 : le navigateur ne vérifie sw.js qu'au lancement à froid ; une appli restée en mémoire
@@ -65,7 +75,20 @@ function waitForPwaControllerThenHideGate() {
     return;
   }
   navigator.serviceWorker.addEventListener("controllerchange", resolve, { once: true });
+  // v3.688.0 (PERF-V1) : rechargement forcé, un service worker actif ne reprendra pas la main : on lève tout de suite
+  if (navigator.serviceWorker.getRegistration) navigator.serviceWorker.getRegistration().then(function (reg) {
+    if (reg && reg.active && !reg.installing && !reg.waiting) resolve();
+  }).catch(function () { /* rien : les autres sorties lèveront le voile */ });
+  // v3.688.0 (PERF-8) : au plus 1,5 s après que l'écran titre est prêt
+  var poll = setInterval(function () {
+    var title = document.getElementById("title-screen-root");
+    if (resolved) { clearInterval(poll); return; }
+    if (!title || !title.innerHTML) return;
+    clearInterval(poll);
+    setTimeout(resolve, PWA_GATE_AFTER_TITLE_MS);
+  }, 100);
 }
+var PWA_GATE_AFTER_TITLE_MS = 1500;
 
 /* v3.457.4 (audit P9) : la bannière ne couvre plus un combat ni une expédition en cours — elle attend que
    le héros soit libre (même règle que l'écran de retour), et « Plus tard » la ferme pour la session. */
@@ -105,6 +128,7 @@ function dismissPwaUpdateBanner() {
 }
 
 function reloadForPwaUpdate() {
+  PwaUpdate.saveFirst(); // audit 04/11 (SAVE-18) : la partie est écrite avant le rechargement de mise à jour
   window.location.reload();
 }
 

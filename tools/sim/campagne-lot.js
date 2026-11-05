@@ -2,8 +2,9 @@
 /* tools/sim/campagne-lot.js — v3.354.0 : lance un LOT de campagnes (tools/sim/campagne-harness.js) et
    agrège les résultats : murs, temps par étape, qui tue, boss et élites, farm, obstacles.
 
-   USAGE : node tools/sim/campagne-lot.js . [--n 4] [--combats] [--attendre-camp] [--tactique] [--classes knight,ranger,mage]
-           [--chantier] [--avise] [--forge-max] [--seuil-soin 0.7] [--sortie dossier]
+   USAGE : node tools/sim/campagne-lot.js . [--n 4] [--combats] [--joueur] [--attendre-camp] [--tactique] [--classes knight,ranger,mage]
+           [--chantier] [--avise] [--forge-max] [--seuil-soin 0.7] [--releve nom] [--sortie dossier]
+   Référence (audit 04/11) : node tools/sim/campagne-lot.js . --combats --joueur --n 4
    Les fichiers de chaque partie sont écrits dans captures/campagne-lot/ (JSON + sortie texte).
    Compter environ 1 min par partie en --combats, 2 s sans. */
 
@@ -14,10 +15,12 @@ function arg(name, def) { var i = ARGS.indexOf(name); return i >= 0 ? ARGS[i + 1
 var N = Number(arg("--n", 4));
 var CLASSES = arg("--classes", "knight,ranger,mage").split(",");
 // audit (27/10, DUR-6) : --chantier et --avise transmis ; --forge-max (ancien --investi, toujours accepté)
-var PASS = ["--combats", "--attendre-camp", "--tactique", "--compagnons-malins", "--forge-max", "--investi", "--laisser", "--farm-reforges", "--relique-echoppe", "--chantier", "--avise"].filter(function (f) { return ARGS.indexOf(f) >= 0; });
+var PASS = ["--combats", "--attendre-camp", "--tactique", "--compagnons-malins", "--forge-max", "--investi", "--laisser", "--farm-reforges", "--relique-echoppe", "--chantier", "--avise", "--joueur"].filter(function (f) { return ARGS.indexOf(f) >= 0; });
 if (ARGS.indexOf("--seuil-soin") >= 0) PASS.push("--seuil-soin", ARGS[ARGS.indexOf("--seuil-soin") + 1]); // DUR-13
 if (ARGS.indexOf("--apres") >= 0) PASS.push("--apres", ARGS[ARGS.indexOf("--apres") + 1]); // v3.459.10 : après-Histoire (heures)
 if (ARGS.indexOf("--faille") >= 0) PASS.push("--faille"); // lot 0 des niveaux de donjon
+// audit 04/11 (SUIV-1) : relevé par partie (nom_numéro), sinon les parties d'une même classe s'écrasent
+var RELEVE = ARGS.indexOf("--releve") >= 0 ? (ARGS[ARGS.indexOf("--releve") + 1] || "lot") : null;
 var OUT = require("../chemins.js").captures(arg("--sortie", "campagne-lot")); // v3.456.0 : --sortie pour deux lots en parallèle
 if (!fs.existsSync(OUT)) fs.mkdirSync(OUT);
 
@@ -28,10 +31,10 @@ CLASSES.forEach(function (c) {
     var json = path.join(OUT, c + "_" + i + ".json");
     if (RELIRE) { if (fs.existsSync(json)) runs.push(JSON.parse(fs.readFileSync(json, "utf8"))); continue; }
     process.stdout.write("  " + c + " #" + i + " … ");
-    var txt = cp.spawnSync(process.execPath, [path.join(__dirname, "campagne-harness.js"), ROOT, "--classe", c, "--json", json].concat(PASS), { encoding: "utf8", maxBuffer: 1 << 28 }).stdout || "";
+    var txt = cp.spawnSync(process.execPath, [path.join(__dirname, "campagne-harness.js"), ROOT, "--classe", c, "--json", json].concat(PASS, RELEVE ? ["--releve", RELEVE + "_" + i] : []), { encoding: "utf8", maxBuffer: 1 << 28 }).stdout || "";
     fs.writeFileSync(json.replace(/\.json$/, ".txt"), txt);
     var j = fs.existsSync(json) ? JSON.parse(fs.readFileSync(json, "utf8")) : null;
-    console.log(j ? (j.failures ? "ÉCHEC" : "au bout") + ", " + j.totalH.toFixed(0) + " h" + (j.stats.murs.length ? ", murs " + j.stats.murs.map(function (m) { return m.step; }).join(" ") : "") : "pas de résultat");
+    console.log(j ? (j.failures ? "ÉCHEC" + (j.arret ? " (" + j.arret.slice(0, 80) + ")" : "") : "au bout") + ", " + j.totalH.toFixed(0) + " h" + (j.stats.murs.length ? ", murs " + j.stats.murs.map(function (m) { return m.step; }).join(" ") : "") : "pas de résultat");
     if (j) runs.push(j);
   }
 });
@@ -42,11 +45,28 @@ function med(a) { return quant(a, 0.5); }
 function pct(a, b) { return b ? Math.round(a / b * 100) + " %" : "—"; }
 
 console.log("\n== " + runs.length + " parties" + (PASS.length ? " (" + PASS.join(" ") + ")" : ""));
+// audit 04/11 (SUIV-1) : parties au bout ou bloquées (et où), durée et fin de chaque monde, Tour jouée ou non
+var bloquees = runs.filter(function (j) { return j.failures; });
+console.log("Au bout : " + (runs.length - bloquees.length) + "/" + runs.length + (bloquees.length ? " · bloquées : " + bloquees.map(function (j) { var d = j.stats.steps[j.stats.steps.length - 1]; return j.classe + " après " + (d ? d.id : "création") + (j.arret ? " (" + j.arret.slice(0, 60) + ")" : ""); }).join(" ; ") : ""));
+var MONDES = [["forest", "forest_"], ["desert", "desert_"], ["ruins", "ruines_"], ["crypt", "crypte_"], ["mountain", "montagne_"], ["tower", "tour_"]];
+var parMonde = {};
+runs.forEach(function (j) {
+  var prev = 0;
+  MONDES.forEach(function (m) {
+    var st = j.stats.steps.filter(function (x) { return x.id.indexOf(m[1]) === 0; });
+    if (!st.length) return;
+    var fin = st[st.length - 1], finH = fin.finH != null ? fin.finH : fin.totalH, a = parMonde[m[0]] = parMonde[m[0]] || { duree: [], fin: [], n: 0, etapes: [] };
+    a.duree.push(finH - prev); a.fin.push(finH); a.n++; a.etapes.push(st.length); prev = finH;
+  });
+});
+console.log("Par monde (médianes, h) : " + MONDES.filter(function (m) { return parMonde[m[0]]; }).map(function (m) { var a = parMonde[m[0]]; return m[0] + " " + med(a.duree).toFixed(1) + " (fin " + med(a.fin).toFixed(1) + ", " + a.n + " parties, " + Math.max.apply(null, a.etapes) + " étapes au plus)"; }).join(" · "));
+console.log("Tour jouée : " + (parMonde.tower ? parMonde.tower.n + "/" + runs.length + " parties" : "non"));
 var tot = runs.map(function (j) { return j.totalH; });
 console.log("Temps simulé (" + tot.length + " parties) : médiane " + med(tot).toFixed(1) + " h · p25–p75 " + quant(tot, 0.25).toFixed(1) + "–" + quant(tot, 0.75).toFixed(1) + " h (de " + Math.min.apply(null, tot).toFixed(0) + " à " + Math.max.apply(null, tot).toFixed(0) + " h)");
-// Temps actif = combats seuls, à comparer au « Temps de jeu » du journal (le reste avance hors ligne)
-var act = runs.map(function (j) { return j.stats.combatMs / 3600e3; });
-if (PASS.indexOf("--combats") >= 0 && act.length) console.log("Temps actif estimé (combats) : médiane " + med(act).toFixed(1) + " h (de " + Math.min.apply(null, act).toFixed(1) + " à " + Math.max.apply(null, act).toFixed(1) + " h)");
+// EQUI-19 (v3.699.0) : temps actif = rounds + navigation (STATS.actifMs), sans les attentes ; à comparer au « Temps de jeu » du journal
+var act = runs.map(function (j) { return Number(j.stats.actifMs != null ? j.stats.actifMs : j.stats.combatMs) / 3600e3; });
+var actC = runs.map(function (j) { return j.stats.combatMs / 3600e3; });
+if (PASS.indexOf("--combats") >= 0 && act.length) console.log("Temps actif (rounds + navigation) : médiane " + med(act).toFixed(1) + " h (de " + Math.min.apply(null, act).toFixed(1) + " à " + Math.max.apply(null, act).toFixed(1) + " h), dont combat " + med(actC).toFixed(1) + " h");
 
 // où part le temps : médiane par cause, puis les étapes qui pèsent (moyenne du lot)
 if (runs.length && runs[0].stats.attente) {

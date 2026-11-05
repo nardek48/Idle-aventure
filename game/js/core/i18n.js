@@ -132,7 +132,11 @@ var I18n = {
     if (!I18N_LANGS.hasOwnProperty(lang) || lang === this.lang()) return false;
     if (window.Prefs && typeof Prefs.setValue === "function") Prefs.setValue("lang", lang);
     try { if (typeof saveGame === "function" && typeof game !== "undefined" && game && game.heroId) saveGame(); } catch (e) { noteErreur("i18n.setLang", e); /* la relance se fait quand même */ }
-    if (typeof location !== "undefined" && typeof location.reload === "function") location.reload();
+    if (typeof location === "undefined" || typeof location.reload !== "function") return true;
+    var sw = typeof navigator !== "undefined" && navigator.serviceWorker && navigator.serviceWorker.controller;
+    // PERF-13 : en.js n'est plus précaché pour tous ; on le fait passer par le service worker avant la relance
+    if (lang === "en" && sw && typeof fetch === "function") fetch("js/lang/en.js").then(function () { location.reload(); }, function () { location.reload(); });
+    else location.reload();
     return true;
   }
 };

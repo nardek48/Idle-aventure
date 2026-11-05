@@ -4,7 +4,7 @@
    de chasse/quête/donjon — jamais le farm libre, cohérence P4), consommées à la fin du run.
    Prix recalés consommable (~1 sortie de gain Forêt), cumulables (1 de chaque type par run),
    stock libre plafonné. Distribuables en récompense de quête (reward.potions). Logique :
-   systems/potion-system.js. Ancien format (durationMin) : COMMENTAIRES_ORIGINAUX.md */
+   systems/potion-system.js. */
 
 var POTION_STOCK_CAP = 9;
 /* v3.322.0 : Réserve d'alchimiste (Mémoire niveau 1) — 15 au lieu de 9. Lu à l'exécution. */

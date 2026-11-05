@@ -1,6 +1,6 @@
 "use strict";
 /* systems/dungeon-system.js — gauntlet de 15 vagues + boss, séparé de la progression normale des mondes.
-   Branché depuis combat-engine.js (killEnemy/onHeroDefeated délèguent ici si game.dungeonRun.active). Détail complet : COMMENTAIRES_ORIGINAUX.md
+   Branché depuis combat-engine.js (killEnemy/onHeroDefeated délèguent ici si game.dungeonRun.active).
    v3.245.0 (refonte Donjons, doc v1.1) : un donjon par monde (DUNGEONS), Marques de run (DUNGEON_MARKS), élites de données
    aux vagues fixes, boss identitaire à trait signature. dungeonRun.tierId devient dungeonId (repli en lecture dans ensure). */
 
@@ -222,10 +222,11 @@ var DungeonManager = {
 
   checkTicketReset: function () {
     this.ensure();
-    var now = Date.now();
-    if (now >= (game.dungeonTicketResetTime || 0)) {
+    var now = Date.now(), period = DUNGEON_CONFIG.ticketResetHours * 3600 * 1000;
+    // audit 04/11 (SAVE-5) : une remise plus loin qu'une période vient d'une horloge avancée puis corrigée
+    if (now >= (game.dungeonTicketResetTime || 0) || game.dungeonTicketResetTime - now > period) {
       game.dungeonRunsUsed = {};
-      game.dungeonTicketResetTime = now + DUNGEON_CONFIG.ticketResetHours * 3600 * 1000;
+      game.dungeonTicketResetTime = now + period;
     }
   },
 
@@ -754,7 +755,7 @@ var DungeonManager = {
     if (!storyFree && !freeRun && this.getRunsLeft(dungeon.id) <= 0) return showToast(_t("Plus de sortie aujourd'hui dans ce donjon — renouvellement dans {d}", { d: this.timeUntilTicketReset() }), 1800);
     if (game.dungeonRun.active) return showToast(_t("Donjon déjà en cours"), 1200);
     if (game.adventureQuestRun && game.adventureQuestRun.active) return showToast(_t("Termine ou abandonne ta quête en cours avant d'entrer en donjon"), 1600);
-    if (game.huntRun && game.huntRun.active) return showToast(_t("Termine ou arrête ta chasse en cours avant d'entrer en donjon"), 1600);
+    if (game.livingMaps && game.livingMaps.fight) return showToast(_t("Termine d'abord le combat engagé sur la carte"), 1600); // audit 04/11 (QA-9) : pas deux sorties à la fois
     if (window.heroLockToast && heroLockToast()) return; // v3.307.0 : héros en expédition
     // v3.330.0 (E4) : vivres de sortie pour un donjon déjà fini une fois (jamais sur un ticket d'Histoire)
     if (window.ProvisionsManager) {

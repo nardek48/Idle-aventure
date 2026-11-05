@@ -4,8 +4,10 @@
    (frappe, ou impact d'un pattern télégraphié au round précédent) → fin de round (cooldowns, statuts, DoT, mana passif).
    Deux modes : Tactique (attend le choix) et Grimoire (1 round / ROUND_INTERVAL_MS, l'auto-pilote choisit). Plus de tap ni d'auto-DPS. */
 
-var RESIST_DMG_MULT = 0.85;   // v3.102.0 : 0,7 → 0,85 (P1 §D, résistances adoucies)
-var WEAK_DMG_MULT = 1.15;     // v3.102.0 : 1,3 → 1,15
+/* v3.701.0 (Seb 05/11, « on va enlever ») : plus de faiblesses ni de résistances, ×1 pour tous.
+   Constantes gardées à 1 pour les lecteurs existants (pronostic, bancs). */
+var RESIST_DMG_MULT = 1;
+var WEAK_DMG_MULT = 1;
 var NO_WEAPON_MULT = 0.8;
 
 function getPlayerDamageType() {
@@ -14,18 +16,14 @@ function getPlayerDamageType() {
   return (hero && hero.weaponType) || null;
 }
 
-function getDamageAffinity() {
-  if (!game.enemy) return { type: null, status: "neutral", mult: 1 };
+function getDamageAffinity(target) {
+  var foe = target || game.enemy; // v3.699.0 : la cible frappée (groupe), sinon l'ennemi courant
+  if (!foe) return { type: null, status: "neutral", mult: 1 };
 
   var type = getPlayerDamageType();
   if (!type) return { type: null, status: "unarmed", mult: NO_WEAPON_MULT };
 
-  // v3.102.0 : les boss sont neutres (étalon de kit, décision §11) — ni résistance ni faiblesse.
-  var resists = game.enemy.isBoss ? [] : (game.enemy.resists || []);
-  var weak = game.enemy.isBoss ? [] : (game.enemy.weak || []);
-
-  if (resists.indexOf(type) !== -1) return { type: type, status: "resist", mult: RESIST_DMG_MULT };
-  if (weak.indexOf(type) !== -1) return { type: type, status: "weak", mult: WEAK_DMG_MULT };
+  // v3.701.0 : champs resists/weak des ennemis inertes, seule l'absence d'arme pèse encore.
   return { type: type, status: "neutral", mult: 1 };
 }
 
@@ -35,7 +33,6 @@ var BOSS_DMG_MULT = 1.5;      // v3.102.0 : dégâts des boss × 1,5 (calibratio
 var ENEMY_PRECISION_CRIT_COEF = 0.3;
 var ENEMY_CRIT_MULT = 1.5;
 var WILL_CRIT_RESIST_COEF = 0.05;
-var DEFEAT_GOLD_PENALTY = 0; // v3.101.0 (P3-lite) : la mort ne coûte plus d'or (LIGNE_DIRECTRICE §4) — le butin de sortie arrive en P2.1
 
 var ROUND_INTERVAL_MS = 1500;         // tempo du mode Grimoire / « Continuer l'attaque » (× vitesse de combat)
 var CELERITY_GAUGE_MAX = 100;
@@ -53,6 +50,9 @@ var CELERITY_GAUGE_PER_ACTION = 1.0;  // jauge héros += célérité × coef par
    (sim/celerity-curve-bench.js) : laisse la Forêt EXACTEMENT telle qu'elle est (40 → 40). */
 var CELERITY_SOFT_CAP_K = 60;
 var ENEMY_CELERITY_GAUGE_COEF = 1.0;  // idem côté ennemi (le loup mord deux fois)
+/* v3.695.0 (COMB-8, Seb 05/11) : au-delà de 75 (plafond des mondes et donjons 1 à 3), gain = 100 × c / (c + 60),
+   jamais sous 75 : plus de double frappe permanente aux donjons 4 à 6. */
+var ENEMY_CELERITY_KNEE = 75;
 
 var ENEMY_CHARGE_ROUNDS_MIN = 3;      // ex 8-12 s → 3-5 rounds
 var ENEMY_CHARGE_ROUNDS_MAX = 5;
@@ -101,60 +101,12 @@ function getEnemyWillCritPenalty() {
   return Number(stats.will || 0) * WILL_CRIT_RESIST_COEF;
 }
 
-function showFloatingDamage(amount, isCrit) {
-  var container = document.getElementById("enemy-display");
-  if (!container) return;
-
-  var el = document.createElement("div");
-  el.className = "float-dmg " + (isCrit ? "crit" : "normal");
-  el.textContent = (isCrit ? "💥 " : "") + formatNumber(amount);
-  el.style.left = (45 + randFloat(-18, 18)) + "%";
-  el.style.top = (26 + randFloat(-12, 12)) + "%";
-  container.appendChild(el);
-
-  setTimeout(function () {
-    if (el.parentNode) el.parentNode.removeChild(el);
-  }, 800);
-
-  var emoji = document.getElementById("enemy-emoji");
-  if (emoji) {
-    emoji.classList.remove("hit-flash");
-    void emoji.offsetWidth;
-    emoji.classList.add("hit-flash");
-  }
-}
-
-function showGoldPopup(amount) {
-  var container = document.getElementById("enemy-display");
-  if (!container) return;
-
-  var el = document.createElement("div");
-  el.className = "gold-popup";
-  el.textContent = "+" + formatNumber(amount);
-  el.style.left = "50%";
-  el.style.top = "60%";
-  container.appendChild(el);
-
-  setTimeout(function () {
-    if (el.parentNode) el.parentNode.removeChild(el);
-  }, 1000);
-}
-
-function showDamageTakenPopup(amount) {
-  var container = document.getElementById("combat-hero-mini");
-  if (!container) return;
-
-  var el = document.createElement("div");
-  el.className = "damage-taken-popup";
-  el.textContent = "-" + formatNumber(amount);
-  el.style.left = "50%";
-  el.style.top = "30%";
-  container.appendChild(el);
-
-  setTimeout(function () {
-    if (el.parentNode) el.parentNode.removeChild(el);
-  }, 1000);
-}
+/* Points d'accroche de l'affichage : combat-screen-view.js les remplace (audit 04/11, ARCH-7).
+   L'ancien décor du combat n'existe plus : sans l'écran, ils ne font rien. */
+function showFloatingDamage() {}
+function showGoldPopup() {}
+function showDamageTakenPopup() {}
+function showCounterSuccessPopup() {}
 
 function getConfiguredCounterSlotsForCondition(conditionId) {
   if (!window.ClassCombatManager || typeof ClassCombatManager.getCurrentClassId !== "function") return [];
@@ -179,29 +131,6 @@ function getConfiguredCounterSlotsForCondition(conditionId) {
     }
   });
   return slots;
-}
-
-function showCounterSuccessPopup() {
-  var container = document.getElementById("enemy-display");
-  if (!container) return;
-
-  var el = document.createElement("div");
-  el.className = "counter-success-popup";
-  el.textContent = "⚡ " + _t("CONTRÉ !");
-  el.style.left = "50%";
-  el.style.top = "18%";
-  container.appendChild(el);
-
-  setTimeout(function () {
-    if (el.parentNode) el.parentNode.removeChild(el);
-  }, 1400);
-
-  var emoji = document.getElementById("enemy-emoji");
-  if (emoji) {
-    emoji.classList.remove("counter-flash");
-    void emoji.offsetWidth;
-    emoji.classList.add("counter-flash");
-  }
 }
 
 var CombatEngine = {
@@ -420,6 +349,7 @@ var CombatEngine = {
   beginRound: function () {
     var t = this.turn();
     game.combatRound.number += 1;
+    if (window.CombatReportManager) CombatReportManager.logRound(); // v3.689.0 (COMB-10) : dégâts par round au rapport
     t.queue = window.Initiative ? Initiative.order() : [];
     t.acted = [];
     t.played = 0;
@@ -698,6 +628,7 @@ var CombatEngine = {
       };
       self.prepareEnemy(renfort);
       renfort.engageIn = 1;   // annoncé : il arrive au round suivant
+      renfort.charged = false; // v3.689.0 (COMB-16) : il arrive, il n'a pas reçu la Charge du Chevalier
       return renfort;
     }).filter(Boolean);
 
@@ -759,8 +690,6 @@ var CombatEngine = {
     return false;
   },
 
-  advanceSelection: function () {},
-
   /* v3.276.0 (décision Seb) : l'action est RÉSOLUE AU CLIC. v3.447.0 : au tour de l'acteur seulement ;
      ceux qui le précèdent dans l'ordre jouent d'abord. */
   queueChoice: function (slot, arg) {
@@ -791,13 +720,6 @@ var CombatEngine = {
     this.refreshCombatUI();
     if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
     if (typeof renderHealButtons === "function") renderHealButtons();
-    return true;
-  },
-
-  /* Conservé pour les appels existants : termine le round en cours. */
-  finishManualRound: function () {
-    if (this.turn().open) this.runToStop();
-    this.refreshCombatUI();
     return true;
   },
 
@@ -1176,7 +1098,8 @@ var CombatEngine = {
   },
 
   getEnemyGaugeGain: function (e) {
-    return Number((e && e.stats && e.stats.celerity) || 0) * ENEMY_CELERITY_GAUGE_COEF;
+    var c = Number((e && e.stats && e.stats.celerity) || 0) * ENEMY_CELERITY_GAUGE_COEF;
+    return c <= ENEMY_CELERITY_KNEE ? c : Math.max(ENEMY_CELERITY_KNEE, CELERITY_GAUGE_MAX * c / (c + CELERITY_SOFT_CAP_K)); // COMB-8
   },
 
   /* Condition Grimoire « enemyAttackIncoming » : la prochaine frappe ennemie sera doublée (jauge pleine). */
@@ -1192,6 +1115,7 @@ var CombatEngine = {
   enemyDoubleStrikeDangerous: function () {
     var e = game.enemy;
     if (!this.enemyDoubleStrikeNext() || !e.stats) return false;
+    if (Number(e.engageIn || 0) > 0) return false; // v3.689.0 (COMB-17) : en approche (ou sonné), son prochain tour n'est pas une frappe
     var hold = Number(e.patternHoldRounds || 0) > 0; // Clairvoyance : l'annonce attend, la frappe tombe
     if (!hold && (e.chargeTelegraphed || e.silenceTelegraphed)) return false; // bouclier ou soin contrés : la frappe revient (revue)
     var power = Number(e.stats.power || 0);
@@ -1590,10 +1514,8 @@ var CombatEngine = {
     var list = [].concat(actors || []).filter(Boolean);
     if (!list.length) return null;
 
-    /* v3.284.0 : le verrou de spawn vaut AUSSI ici. HuntQuestManager enchaîne son ennemi
-       suivant par CombatEngine.spawnEnemy(), qui passe par spawnGroup et court-circuitait
-       donc assignCurrentEnemy — une meute de chasse se voyait remplacée dès la mort de son
-       premier membre (constaté au banc). */
+    /* v3.284.0 : le verrou de spawn vaut AUSSI ici : un ennemi enchaîné par spawnEnemy() passe par
+       spawnGroup et ne doit pas remplacer un groupe encore vivant (constaté au banc avec les chasses). */
     if (window.CombatActors && CombatActors._holdSpawn && CombatActors.aliveEnemies().length > 0) return;
 
     var self = this;
@@ -1675,11 +1597,6 @@ var CombatEngine = {
       return;
     }
 
-    if (window.HuntQuestManager && game.huntRun && game.huntRun.active) {
-      HuntQuestManager.onDefeat();
-      return;
-    }
-
     // v3.256.0 (Cartes Vivantes, C-2) : mort face à l'élite d'un secteur — même dispatch que les autres runs.
     if (window.LivingMapManager && game.livingMaps && game.livingMaps.fight) {
       LivingMapManager.onFightLost();
@@ -1724,7 +1641,7 @@ var CombatEngine = {
     this.prepareEnemy(foe);
 
     dmg = Math.max(0, Number(dmg || 0));
-    if (!ignoreAffinity) dmg *= getDamageAffinity().mult;
+    if (!ignoreAffinity) dmg *= getDamageAffinity(foe).mult;
 
     if (foe.archetype === "corrupted" && typeof getCorruptedDamageMultiplier === "function") {
       var preCorruptedDmg = dmg;
@@ -1776,32 +1693,6 @@ var CombatEngine = {
     if (!enemy) return;
     if (window.RiseSystem && RiseSystem.tryRise(enemy)) return; // v3.428.0 (Ruines) : à terre, il se relèvera
     if (window.TalentManager) TalentManager.onEnemyKilled(enemy); // v3.327.0 : Soif du bourreau, Brasier
-
-    if (window.HuntQuestManager && game.huntRun && game.huntRun.active) {
-      game.totalKills += 1;
-      game.killCounts[enemy.id] = (game.killCounts[enemy.id] || 0) + 1;
-      if (window.SortieManager) SortieManager.noteKill(false); // la chasse n'a pas de boss (branche séparée avant grantGold/grantMissionXp)
-
-      /* v3.284.0 — MEUTES DE CHASSE. Cette branche précède tout le reste, donc le retrait
-         d'un membre doit se faire ICI aussi : sans ça, la chasse enchaînait son ennemi
-         suivant dès la première mort et remplaçait la meute en cours (constaté au banc).
-         Le kill compte pour le lot dans les deux cas — c'est la meute qui ne doit pas
-         être balayée tant qu'il en reste. */
-      var meute = window.CombatActors && CombatActors.enemies().length > 1;
-      if (meute) CombatActors.removeEnemy(enemy);
-      if (meute) CombatActors.holdSpawn(true);
-      try {
-        HuntQuestManager.onEnemyKilled();
-      } finally {
-        if (meute) CombatActors.holdSpawn(false);
-      }
-      if (meute && CombatActors.aliveEnemies().length) {
-        addLog("⚔️ " + _t("{x} tombe — il en reste {n}.", { x: _td(enemy.name), n: CombatActors.aliveEnemies().length }), "normal");
-      }
-      if (typeof renderAll === "function") renderAll();
-      saveGame();
-      return;
-    }
 
     var goldGain = Number(enemy.goldReward || 0); // v3.358.0 (D7) : plus d'essence au kill
     if (window.SleepSystem) goldGain = Math.floor(goldGain * SleepSystem.goldMult(enemy)); // v3.451.0 : réveillé puis vaincu
@@ -1855,8 +1746,6 @@ var CombatEngine = {
       try {
         if (window.AdventureQuestManager && game.adventureQuestRun && game.adventureQuestRun.active) {
           AdventureQuestManager.onEnemyKilled(enemy);
-        } else if (window.HuntQuestManager && game.huntRun && game.huntRun.active) {
-          HuntQuestManager.onEnemyKilled();
         }
         // v3.293.0 : plus de trackKill de farm libre ici (voir fin de killEnemy)
       } finally {
@@ -2000,6 +1889,7 @@ window.ROUND_INTERVAL_MS = ROUND_INTERVAL_MS;
 window.CELERITY_GAUGE_MAX = CELERITY_GAUGE_MAX;
 window.DOUBLE_STRIKE_DANGER_PCT = DOUBLE_STRIKE_DANGER_PCT;
 window.CELERITY_SOFT_CAP_K = CELERITY_SOFT_CAP_K; // v3.243.0
+window.ENEMY_CELERITY_KNEE = ENEMY_CELERITY_KNEE; // v3.695.0 (COMB-8)
 window.BOSS_DMG_MULT = BOSS_DMG_MULT;
 window.ELITE_SURGE_ROUNDS_MIN = ELITE_SURGE_ROUNDS_MIN;
 window.ELITE_SURGE_ROUNDS_MAX = ELITE_SURGE_ROUNDS_MAX;

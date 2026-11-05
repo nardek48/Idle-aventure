@@ -32,12 +32,34 @@
      _tryAutoEnqueue() est appelée avant de passer à l'entrée suivante de la cascade — si
      la file a de la place ET que la quantité voulue (bornée par la réserve) est >= 1, un
      nouveau lot est poussé, qui participera lui-même à cette même cascade s'il reste du
-     temps écoulé à consommer (rattrapage hors ligne).
-   Détail : COMMENTAIRES_ORIGINAUX.md */
+     temps écoulé à consommer (rattrapage hors ligne). */
 
 var WorkshopsSystem = {
+  /* v3.688.0 (CPL1-1, CPL1-3) : relevé brut du rattrapage hors ligne pour l'écran de retour :
+     sorties rangées, intrants pris par le chaînage, sorties perdues par Entrepôt plein. */
+  _ledger: null,
+  _ledgerLive: false,
+  beginOfflineLedger: function () { this._ledger = { made: {}, used: {}, lost: {} }; this._ledgerLive = false; },
+  takeOfflineLedger: function () { var l = this._ledger; this._ledger = null; this._ledgerLive = false; return l; },
+  _ledgerAdd: function (part, key, n) {
+    if (!this._ledger || !this._ledgerLive || !(n > 0)) return;
+    this._ledger[part][key] = (this._ledger[part][key] || 0) + n;
+  },
   /* v3.303.0 : une recette à firstCraftFlag pose ce drapeau de progression au premier lot
      terminé (ex. « outreFilled » pour l'étape « L'outre »). Permanent, conservé à l'Ascension. */
+  /* Fabrication terminée (en ligne ou hors ligne) : tutoriel des 5 Planches (data/workshop-unlock.js)
+     et compteur par ressource des quêtes d'atelier. Un seul endroit (audit 04/11, doublon). */
+  _notifyCrafted: function (recipe, times) {
+    recipe.outputs.forEach(function (output) {
+      if (output.resourceId === "planche" && window.WorkshopUnlockManager && typeof WorkshopUnlockManager.notifyPlanchesCrafted === "function") {
+        WorkshopUnlockManager.notifyPlanchesCrafted(output.quantity * times);
+      }
+      if (window.VillageQuestManager && typeof VillageQuestManager.notifyRecipeCrafted === "function") {
+        VillageQuestManager.notifyRecipeCrafted(output.resourceId, output.quantity * times);
+      }
+    });
+  },
+
   _markFirstCraft: function (recipe) {
     if (!recipe || !recipe.firstCraftFlag) return;
     if (!game.explorationProgression || typeof game.explorationProgression !== "object") game.explorationProgression = {};
@@ -137,6 +159,30 @@ var WorkshopsSystem = {
     }, Infinity);
   },
 
+  /* Audit 04/11 (ECON-4) : lots que la sortie peut encore recevoir avant le plafond, lots déjà en file
+     compris (Infinity sans plafond). Borne le craft manuel : un lot à sortie pleine était perdu. */
+  getOutputRoomTimes: function (workshopId, recipeId) {
+    var recipe = this.getRecipe(workshopId, recipeId);
+    if (!recipe) return 0;
+    var self = this, queue = this.getQueue(workshopId);
+    return recipe.outputs.reduce(function (min, output) {
+      var cap = WarehouseManager.getCap(output.resourceId);
+      if (cap === Infinity) return min;
+      var pending = 0;
+      queue.forEach(function (e) {
+        var r = self.getRecipe(workshopId, e.recipeId);
+        (r ? r.outputs : []).forEach(function (o) { if (o.resourceId === output.resourceId) pending += o.quantity * Math.max(0, Math.floor(Number(e.times || 0))); });
+      });
+      var room = Math.max(0, cap - WarehouseManager.getAmount(output.resourceId) - pending);
+      return Math.min(min, Math.floor(room / output.quantity));
+    }, Infinity);
+  },
+
+  /* ECON-4 : maximum du craft manuel = intrants et place en sortie. */
+  getMaxManualCraftTimes: function (workshopId, recipeId) {
+    return Math.min(this.getMaxCraftTimes(workshopId, recipeId), this.getOutputRoomTimes(workshopId, recipeId));
+  },
+
   /* v3.98.13 : équivalent de getMaxCraftTimes, mais borné par
      ResourceReserveManager.getAvailableForAutoCraft() plutôt que le stock brut — utilisé
      UNIQUEMENT par le chaînage auto, jamais par le craft manuel.
@@ -144,9 +190,8 @@ var WorkshopsSystem = {
      chaque ressource PRODUITE par la recette (retour Seb — le chaînage continuait de
      consommer des intrants et d'occuper la file même quand la sortie était déjà pleine,
      gaspillant intrants/temps de craft pour un résultat qui aurait été silencieusement
-     écrêté par WarehouseManager.addResource au moment du crédit). Le craft MANUEL n'est
-     jamais concerné par cette borne non plus (cohérent avec la réserve : le joueur reste
-     libre de lancer un craft "à perte" s'il le décide lui-même). */
+     écrêté par WarehouseManager.addResource au moment du crédit). Audit 04/11 (ECON-4) : le
+     craft MANUEL est borné lui aussi par la place en sortie (getMaxManualCraftTimes), jamais par la réserve. */
   getMaxAutoCraftTimes: function (workshopId, recipeId) {
     var recipe = this.getRecipe(workshopId, recipeId);
     if (!recipe) return 0;
@@ -271,6 +316,11 @@ var WorkshopsSystem = {
     if (!recipe) return false;
     times = Math.floor(Number(times || 1));
     if (!this.canCraft(workshopId, recipeId, times)) return false;
+    if (!fromAuto && times > this.getOutputRoomTimes(workshopId, recipe.id)) { // ECON-4 : jamais d'intrants débités pour un produit perdu
+      var fullDef = WAREHOUSE_RESOURCES[recipe.outputs[0].resourceId];
+      if (typeof showToast === "function") showToast(_t("{x} est au plafond de l'Entrepôt", { x: fullDef ? _td(fullDef.name) : recipe.id }), 1600);
+      return false;
+    }
 
     var workshop = this.ensureWorkshop(def.buildingId, workshopId);
     var maxQueueLength = this.getMaxQueueLength(workshopId);
@@ -280,8 +330,10 @@ var WorkshopsSystem = {
     }
 
     // v3.355.0 : débit par l'Entrepôt, seul point d'écriture des ressources (canCraft a vérifié les stocks)
+    var self = this;
     recipe.inputs.forEach(function (input) {
       WarehouseManager.removeResource(input.resourceId, input.quantity * times);
+      self._ledgerAdd("used", input.resourceId, input.quantity * times);
     });
 
     workshop.queue.push({
@@ -410,18 +462,7 @@ var WorkshopsSystem = {
       });
       this._markFirstCraft(recipe); // v3.303.0
 
-      // v3.98.0 : le tutoriel de déblocage de l'Atelier de Construction exige "Fabriquer
-      // 5 Planches" (voir data/workshop-unlock.js) — hook conservé ici, Planche vit
-      // désormais dans l'atelier Scierie fine plutôt que dans l'ancien craft Entrepôt.
-      recipe.outputs.forEach(function (output) {
-        if (output.resourceId === "planche" && window.WorkshopUnlockManager && typeof WorkshopUnlockManager.notifyPlanchesCrafted === "function") {
-          WorkshopUnlockManager.notifyPlanchesCrafted(output.quantity * entry.times);
-        }
-        // v3.112.0 (Lot C) : compteur générique par ressource produite (quêtes d'atelier).
-        if (window.VillageQuestManager && typeof VillageQuestManager.notifyRecipeCrafted === "function") {
-          VillageQuestManager.notifyRecipeCrafted(output.resourceId, output.quantity * entry.times);
-        }
-      });
+      this._notifyCrafted(recipe, entry.times);
 
       var outDef = WAREHOUSE_RESOURCES[recipe.outputs[0].resourceId];
       addLog(_t("{x} fabriquée ×{n} ({y})", { x: outDef ? _td(outDef.name) : recipe.id, n: formatNumber(entry.times), y: _td(def.name) }), "event");
@@ -437,6 +478,7 @@ var WorkshopsSystem = {
     // Le badge "File : X/Y" et le reste (temps, barre) restent couverts par
     // ProductionManager.updateDOM(), déjà appelée chaque seconde indépendamment.
     if (typeof refreshWorkshopQueueDOM === "function") refreshWorkshopQueueDOM(workshopId);
+    if (recipe && typeof refreshOpenSheetAfterDelivery === "function") refreshOpenSheetAfterDelivery(recipe.outputs.map(function (o) { return o.resourceId; })); // UI-4
     if (typeof renderHud === "function") renderHud();
     saveGame();
 
@@ -464,6 +506,12 @@ var WorkshopsSystem = {
     if (elapsedMs <= 1000) return;
 
     var queue = workshop.queue;
+    this._ledgerLive = true;
+    try { this._catchUpQueue(workshopId, def, queue, elapsedMs); } finally { this._ledgerLive = false; }
+  },
+
+  _catchUpQueue: function (workshopId, def, queue, elapsedMs) {
+    var self = this;
     while (queue.length && elapsedMs > 0) {
       var entry = queue[0];
       entry.msRemaining -= elapsedMs;
@@ -474,19 +522,14 @@ var WorkshopsSystem = {
       var recipe = this.getRecipe(workshopId, entry.recipeId);
       if (recipe) {
         recipe.outputs.forEach(function (output) {
-          WarehouseManager.addResource(output.resourceId, output.quantity * entry.times, true);
+          var want = output.quantity * entry.times;
+          var got = Number(WarehouseManager.addResource(output.resourceId, want, true)) || 0;
+          self._ledgerAdd("made", output.resourceId, got);
+          self._ledgerAdd("lost", output.resourceId, want - got);
         });
         this._markFirstCraft(recipe); // v3.303.0
 
-        recipe.outputs.forEach(function (output) {
-          if (output.resourceId === "planche" && window.WorkshopUnlockManager && typeof WorkshopUnlockManager.notifyPlanchesCrafted === "function") {
-            WorkshopUnlockManager.notifyPlanchesCrafted(output.quantity * entry.times);
-          }
-          // v3.112.0 (Lot C) : compteur générique par ressource produite (quêtes d'atelier).
-          if (window.VillageQuestManager && typeof VillageQuestManager.notifyRecipeCrafted === "function") {
-            VillageQuestManager.notifyRecipeCrafted(output.resourceId, output.quantity * entry.times);
-          }
-        });
+        this._notifyCrafted(recipe, entry.times);
 
         var outDef = WAREHOUSE_RESOURCES[recipe.outputs[0].resourceId];
         addLog(_t("{x} fabriquée ×{n} ({y}, hors ligne)", { x: outDef ? _td(outDef.name) : recipe.id, n: formatNumber(entry.times), y: _td(def.name) }), "event");

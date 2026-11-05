@@ -8,8 +8,8 @@
                  permettra au Donjon d'échelonner la même élite sur ses paliers
                  sans la redéfinir (refonte Donjon prévue, non planifiée)
      archetype   identité mécanique (enraged / armored / vampiric / corrupted).
-                 shielded et silenced sont exclus : une élite est isBoss, et le
-                 moteur réserve leur branche de télégraphe aux ennemis normaux
+                 shielded et silenced n'ont pas d'effet propre : une élite est isBoss,
+                 le moteur lui joue la branche d'élite (exaltation + bouclier)
      phases      RÉSERVÉ, non lu par le code. Prévu dès maintenant pour les
                  élites à plusieurs phases (idée Seb), afin que le jour venu
                  EliteManager absorbe le besoin sans rouvrir de fichier protégé
@@ -86,7 +86,7 @@ var ELITE_DB = {
 
   /* v3.258.0 (Cartes Vivantes, C-5) : l'Arbre-mère, élite répétable du secteur 7 de la
      Forêt (data/living-maps.js). Base Troll des forêts (lent, endurant, archétype shielded
-     fixe) — décision Seb 16/09/2026. Aucun butin unique : la récompense est la Sève par
+     fixe : étiquette seule, voir FORME) — décision Seb 16/09/2026. Aucun butin unique : la récompense est la Sève par
      victoire, freinée par la journée (LIVING_MAP_RULES.motherTree). Pas de quête d'aventure :
      elle ne se joue que depuis la carte. */
   /* v3.314.0 (W-4a1, acte III §4) — LE SERMENT SOUS L'ARMURE, élite de la tour de guet.
@@ -202,6 +202,21 @@ var ELITE_DB = {
     repeatable: false
   },
 
+  /* v3.696.0 (EQUI-6, Seb 05/11 option A) : le Golem de la vague 12 du Sanctuaire, à part de celui de
+     l'étape 14 : puissance 4 → 3,4 pour le Rôdeur (banc ruines-acte3-bench, profil Rare). */
+  golem_sanctuaire: {
+    id: "golem_sanctuaire",
+    baseId: "gargoyle",
+    name: "Le Golem",
+    archetype: "armored",
+    statMult: { endurance: 3.5, power: 3.4, celerity: 0.6 },
+    lore: "Il garde une salle du Sanctuaire depuis plus longtemps que la porte n'est scellée.",
+    image: "./images/Enemies/elite_golem.webp",
+    escort: { members: ["zombie"], hpMult: 0.3, goldMult: 0.3 },
+    phases: null,
+    repeatable: false
+  },
+
   /* v3.455.0 (Crypte, acte III, CR11) — LE PORTE-COURONNE, vague élite 8 de l'Ossuaire. Un roi en
      parodie : il porte une couronne de trop. Frappé, il réveille un dormeur de son escorte, une fois
      par round (SleepSystem.onHit, wakesOnHit). Chiffres au banc. */
@@ -211,7 +226,7 @@ var ELITE_DB = {
     name: "Le Porte-couronne",
     archetype: "armored",
     wakesOnHit: true,
-    statMult: { endurance: 3, power: 3, celerity: 1.0 },
+    statMult: { endurance: 3, power: 3.45, celerity: 1.0 }, // v3.696.0 (EQUI-10 B) : puissance 3 → 3,45 (+15 %) ; sa quête garde son calage
     lore: "Il porte deux couronnes, l'une sur l'autre. La seconde n'est pas à lui. Il ne l'enlève pas.",
     image: "./images/Enemies/elite_porte_couronne.webp",
     escort: { members: ["spectre", "wraith"], hpMult: 0.3, goldMult: 0.3 },
@@ -299,7 +314,7 @@ var ELITE_DB = {
   },
 
   /* v3.628.0 (Tour, lot T-2b) — le Gardien qui répète, élite répétable de la carte des étages (la veine du dedans).
-     Le Légendaire de la Tour à 35 %, la 3e victoire sans pièce en donne une. Image à générer (vrai chemin gardé). */
+     Le Légendaire de la Tour à 35 %, la 3e victoire sans pièce en donne une. */
   gardien_qui_repete: {
     id: "gardien_qui_repete",
     baseId: "guardian",

@@ -94,7 +94,9 @@ var TALENT_TREES = {
         effect: "La jauge de célérité se remplit 10 % plus vite : plus de frappes bonus." }
     ],
     paths: [
-      { id: "faucon", name: "Faucon", tag: "Un tir, au bon moment", nodes: [
+      // v3.696.0 (EQUI-7 A, Seb 05/11) : conseil montré dans la fiche de chaque talent de la voie (banc ruines-acte3)
+      { id: "faucon", name: "Faucon", tag: "Un tir, au bon moment",
+        tip: "Conseil : Faucon frappe fort mais protège peu (seule Visée posée donne des PV). Si un boss te met à terre, essaie Ombre : ses esquives t'usent moins, et la remise à zéro est gratuite.", nodes: [
         { id: "a_tir_ajuste", img: "images/Icons/talents/archer/a_tir_ajuste.webp",
         name: "Visée posée", short: "Tir précis +15 % crit., +10 % PV",
           effect: "Tir précis a 15 % de chance de critique en plus. +10 % de PV max.",

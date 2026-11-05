@@ -1,6 +1,5 @@
 "use strict";
-/* systems/equip-shop-system.js — échoppe d'équipement (Boutique) : 6 objets aléatoires, rachetables une fois chacun, stock renouvelé/6h.
-   Détail complet : COMMENTAIRES_ORIGINAUX.md */
+/* systems/equip-shop-system.js — échoppe d'équipement (Boutique) : 6 objets aléatoires, rachetables une fois chacun, stock renouvelé/6h. */
 
 /* Taille de base de la vitrine. v3.216.0 : la Halle marchande l'augmente
    (voir EquipShopManager.getShopSize) — la constante reste le socle. */
@@ -35,7 +34,8 @@ var EQUIP_SHOP_PRICES = {
    les prix. S'applique aussi au refresh manuel. Les potions ne sont PAS concernées. */
 // v3.652.0 (Seb, 03/11) : Crypte 25 → 15, Montagne 90 → 20, Tour 200 → 30. La pièce du sommet coûtait 51 % de l'or
 // gagné à la Crypte et 171 % à la Tour (robot v3.634.0) ; désormais 30 / 8 / 26 %, comme les Ruines (16 %).
-var EQUIP_SHOP_WORLD_PRICE_MULT = [1, 4, 10, 15, 20, 30];
+// v3.696.0 (EQUI-18 A, Seb 05/11) : Ruines 10 → 7 (pièce Rare 17 500, relique 7 000, relance 7 000).
+var EQUIP_SHOP_WORLD_PRICE_MULT = [1, 4, 7, 15, 20, 30];
 // L'Enchanteresse garde l'ancienne grille (seuls les prix de l'échoppe baissent).
 var ENCHANT_WORLD_PRICE_MULT = [1, 4, 10, 25, 90, 200];
 
@@ -143,8 +143,8 @@ var EquipShopManager = {
       stock.push(item);
     }
     this._capTopRarity(stock, size);
-    var self = this;
-    stock.forEach(function (it) { it.price = self.getPrice(it); it.bought = false; });
+    var self = this, mult = getEquipShopWorldPriceMult();
+    stock.forEach(function (it) { it.price = self.getPrice(it); it.bought = false; it.priceMult = mult; }); // ECON-7 : multiplicateur du prix
     var relic = this._relicOffer();
     if (relic) { if (stock.length > 1) stock[1] = relic; else stock.push(relic); } // 2e place : visible sans défiler
     return stock;
@@ -205,16 +205,29 @@ var EquipShopManager = {
     });
   },
 
+  /* Audit 04/11 (CPL2-1 / ECON-7) : vitrine tirée dans un monde plus bas que celui de son prix (voyage en
+     arrière) et le héros est remonté : objets de la Forêt au prix de la Tour. On la retire, comme v3.209.0. */
+  hasStaleWorldStock: function () {
+    var cur = window.WorldManager ? Number(WorldManager.worldIndex || 0) : 0, M = EQUIP_SHOP_WORLD_PRICE_MULT;
+    return (game.equipShopStock || []).some(function (it) {
+      if (!it || it.kind === "relic" || it.starter || it.bought || typeof it.worldIndex !== "number") return false;
+      var base = EQUIP_SHOP_PRICES[it.rarity] || EQUIP_SHOP_PRICES.common; // vitrine d'avant : multiplicateur relu dans le prix
+      var pm = typeof it.priceMult === "number" ? it.priceMult : Number(it.price || 0) / base;
+      return it.worldIndex < cur && (M[it.worldIndex] != null ? M[it.worldIndex] : 1) < pm;
+    });
+  },
+
   checkRefresh: function () {
     this.ensure();
     var now = Date.now();
-    if (!game.equipShopStock.length || now >= game.equipShopResetTime) {
+    // audit 04/11 (SAVE-5) : remise à plus d'une période = horloge avancée puis corrigée, on renouvelle
+    if (!game.equipShopStock.length || now >= game.equipShopResetTime || game.equipShopResetTime - now > EQUIP_SHOP_REFRESH_MS) {
       game.equipShopStock = this.generateStock();
       game.equipShopResetTime = now + EQUIP_SHOP_REFRESH_MS;
       game.equipShopManualRefreshCount = 0;
       return;
     }
-    if (this.hasOutOfTierStock()) {
+    if (this.hasOutOfTierStock() || this.hasStaleWorldStock()) {
       game.equipShopStock = this.generateStock();
       return;
     }
@@ -228,6 +241,7 @@ var EquipShopManager = {
       var extra = window.LootSystem && typeof LootSystem.rollWorldDrop === "function" ? LootSystem.rollWorldDrop() : null;
       if (!extra) break;
       extra.price = this.getPrice(extra);
+      extra.priceMult = getEquipShopWorldPriceMult();
       extra.bought = false;
       game.equipShopStock.push(extra);
     }
@@ -242,8 +256,12 @@ var EquipShopManager = {
       * ((window.MemoryManager && MemoryManager.has("oeil_marchand")) ? 0.5 : 1)); // v3.322.0 : Œil du marchand
   },
 
+  _lastManualRefreshAt: 0,
   manualRefresh: function () {
     this.ensure();
+    var now = Date.now(); // QA-5 : anti-rebond, un double toucher ne paie plus deux fois
+    if (now - this._lastManualRefreshAt < 800) return false;
+    this._lastManualRefreshAt = now;
     var cost = this.getManualRefreshCost();
     if ((game.gold || 0) < cost) return showToast(_t("Pas assez d'or"), 1000);
 
@@ -282,6 +300,7 @@ var EquipShopManager = {
     var owned = Object.assign({}, item);
     delete owned.price;
     delete owned.bought;
+    delete owned.priceMult;
     owned.uid = "itm_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8);
     owned.fromShop = true; // v3.322.0 (O9) : un objet acheté ne porte aucun souvenir, Offrande à 0
 

@@ -28,8 +28,6 @@ var LIVING_MAP_FOG_OPACITY = 0.36; // opacité de la brume (validé C-0)
 
 var LMX_ZOOM_MAX = 2;      // décision Seb (A2) : ×2 par rapport au cadrage Couvrant
 var LMX_TOP_SLACK = 112;   // A3b : la carte peut descendre sous l'en-tête (pastilles)
-var LMX_TAP_SLOP = 8;      // px avant qu'un appui devienne un glissé
-var LMX_DOUBLE_TAP_MS = 300;
 
 /* Vue courante : largeur de la carte en px (w, hauteur = w, cartes carrées) et position. */
 var lmxView = { mapId: null, w: 0, tx: 0, ty: 0 };
@@ -441,7 +439,8 @@ function buildLivingMapHTML(mapId) {
     if (cible) cls += " is-story-cible";
     var gain = lmEliteGainIcon(mapId, d); // v3.549.0 (point 6) : élite signalée, même voilée
     if (gain !== null) cls += " is-elite";
-    h += '<button type="button" class="' + cls + '" style="left:' + d.x + '%;top:' + d.y + '%;" onclick="event.stopPropagation();lmxTapSector(\'' + d.id + '\')">';
+    var anon = s.state === "voile" && cls.indexOf("is-named") < 0; // CPL3-12 : secteur voilé sans nom lu « ? » : nommé sans rien révéler
+    h += '<button type="button" class="' + cls + '" style="left:' + d.x + '%;top:' + d.y + '%;"' + (anon ? ' aria-label="' + esc(_t("Secteur inconnu")) + '"' : '') + ' onclick="event.stopPropagation();lmxTapSector(\'' + d.id + '\')">';
     h += '<span class="lm-node-disc">' + (s.state === "voile" ? "?" : lmRingDots(d.ring)) + '</span>'; // v3.458.2 (audit C10) : l'anneau, pas un numéro
     h += '<span class="lm-node-name">' + esc(_td(d.name)) + '</span>';
     if (chantier) h += '<img class="lm-node-chantier" src="images/Icons/resources/pierre_errante_icon.webp" alt="">';
@@ -536,7 +535,7 @@ function buildLivingMapLegendHTML() {
   h += row(node("is-libere", lmRingDots(1)), _t("Libéré"), _t("son effet s'applique"));
   h += row(node("is-libere", lmRingDots(3)), _t("Points : l'anneau"), _t("1 près du foyer, 3 au plus loin et au plus dur"));
   h += row(node("is-recouvert", lmRingDots(2)), esc(_td(livingMapWords().coveredState)), _t("effet perdu, à reprendre")); // v3.305.0
-  h += row(node("is-libere is-protege", lmRingDots(1)), _t("Tenu par la Palissade"), _t("un échec ne le reprend pas")); // v3.335.0
+  h += row(node("is-libere is-protege", lmRingDots(1)), _t("Tenu par la Palissade"), _t("ni un échec ni la nuit ne le reprennent")); // v3.335.0
   h += row(node("is-libere is-running", lmRingDots(3)), _t("Expédition en cours"), "");
   h += row('<span class="lm-node is-voile is-story-cible"><span class="lm-node-disc">?</span><span class="lm-story-flag"></span></span>', _t("Objectif de l'Histoire"), _t("le trait doré : le chemin offert")); // v3.549.0
   h += row('<span class="lm-node is-voile is-elite"><span class="lm-node-disc">?</span><span class="lm-elite-gain is-repete" style="background-image:url(\'images/Icons/resources/seve_aeswyn_icon.webp\')"></span></span>', _t("Élite"), _t("la pastille : ce qu'elle donne, ↻ se rejoue"));
@@ -714,6 +713,9 @@ function buildLivingMapPanelHTML(mapId, running) {
     // v3.258.0 (C-5) : élite répétable — Sève par victoire, frein du jour affiché avant de partir.
     var wins = LM.getDailyWins(mapId, d.id);
     h += '<p class="lm-panel-line"><b>' + _t("Chaque victoire :") + '</b> ' + esc(_t("+{n} {x}. Chaque combat rejoué prend ses vivres (ci-dessous), hors cap des Petites Aventures. Fuir ou tomber reste un échec.", { n: LM.getRepeatSevePerWin(mapId), x: _td(rName) })) + '</p>';
+    var wr = (d.content && typeof LM.getEliteWinResource === "function") ? LM.getEliteWinResource(d.content.eliteId) : null; // v3.689.0 (COMB-22)
+    var wrDef = wr && (window.WAREHOUSE_RESOURCES || {})[wr.id];
+    if (wr && wr.amount > 0) h += '<p class="lm-panel-line"><b>' + _t("Butin de l'élite :") + '</b> ' + esc(_t("+{n} {x} par victoire.", { n: wr.amount, x: wrDef ? _td(wrDef.name) : wr.id })) + '</p>';
     var lvB = typeof LM.getEliteLevelBest === "function" ? LM.getEliteLevelBest(mapId, d.id) : 0; // v3.657.0 : élites à niveaux
     h += '<p class="lm-panel-line"><b>' + _t("Niveau :") + '</b> ' + esc(lvB ? _t("meilleur {n}. Au départ, choisis un niveau jusqu'à {m} : le {x} de la victoire est multiplié par le niveau.", { n: lvB, m: lvB + 1, x: _td(rName) }) : _t("bats-la une fois pour ouvrir le niveau 2 : le {x} de la victoire est multiplié par le niveau.", { x: _td(rName) })) + '</p>';
     h += '<p class="lm-panel-line"><b>' + _t("Aujourd'hui :") + '</b> ' + _tn(wins, "{n} victoire", "{n} victoires") + ' · ' + (wins ? _t("prochain combat +{p} % PV et dégâts", { p: Math.round((LM.getBrakeMult(mapId, d.id) - 1) * 100) }) : _t("prochain combat à sa force de base")) + '</p>';
@@ -734,7 +736,10 @@ function buildLivingMapPanelHTML(mapId, running) {
   var isElite = content && content.type === "elite";
   // Le verbe ne trahit pas un contenu inconnu : « Affronter l'élite » seulement quand le nom est révélé.
   var verb = s.state === "libere" ? (isElite && repeatable ? _t("Affronter l'élite") : _t("Rejouer le secteur")) : s.state === "recouvert" ? _t("Reprendre le secteur") : (isElite && known ? _t("Affronter l'élite") : _t("Partir"));
-  if (running === d.id) {
+  if (running === d.id && isElite && LM.getFight()) {
+    // audit 04/11 (QA-2) : une élite engagée se reprend d'ici (avant : bouton éteint, carte bloquée)
+    h += '<button class="settings-btn primary" type="button" onclick="switchTab(\'combat\')">' + _t("Reprendre le combat") + '</button>';
+  } else if (running === d.id) {
     h += '<button class="settings-btn is-running" type="button" disabled>' + (isElite ? _t("Combat en cours") : _t("Expédition en cours")) + '</button>';
   } else {
     var cs = LM.canStart(mapId, d.id);

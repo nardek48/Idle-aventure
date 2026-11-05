@@ -63,9 +63,11 @@ var ResumeManager = {
     var before = this._collect();
     var extras = window.ReturnManager ? ReturnManager.capture() : null; // v3.332.0 : chantier, Taverne
 
+    if (window.WorkshopsSystem && typeof WorkshopsSystem.beginOfflineLedger === "function") WorkshopsSystem.beginOfflineLedger(); // v3.688.0 (CPL1-1, CPL1-3)
     if (window.ProductionManager && typeof ProductionManager.catchUpOffline === "function") {
       ProductionManager.catchUpOffline();
     }
+    var ledger = (window.WorkshopsSystem && typeof WorkshopsSystem.takeOfflineLedger === "function") ? WorkshopsSystem.takeOfflineLedger() : null;
 
     var gains = this._diff(before);
 
@@ -75,8 +77,11 @@ var ResumeManager = {
       var now = Date.now();
       if (now - this._lastNoticeAt >= RESUME_NOTICE_COOLDOWN_MS) {
         var fullInfo = window.OfflineManager ? OfflineManager._countFullPlots() : { full: 0, open: 0 };
-        var summary = ReturnManager.complete({ ms: ms, produced: gains ? gains.zones : {}, crafted: gains ? gains.entrepot : {},
-          fullPlots: fullInfo.full, openPlots: fullInfo.open }, extras);
+        // v3.688.0 (CPL1-5) : le feu rend ses PV avant le bilan, sinon la rubrique Héros restait vide
+        if (window.CampManager && typeof CampManager.applyRegen === "function") CampManager.applyRegen(false);
+        var base = { ms: ms, produced: gains ? gains.zones : {}, crafted: gains ? gains.entrepot : {}, fullPlots: fullInfo.full, openPlots: fullInfo.open };
+        if (typeof applyOfflineLedger === "function") applyOfflineLedger(base, ledger);
+        var summary = ReturnManager.complete(base, extras);
         if (ReturnManager.request(summary)) this._lastNoticeAt = now;
       }
     }

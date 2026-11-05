@@ -127,6 +127,13 @@
 /* --- Rail du Village (v3.414.0, lot VUI-1) ---------------------------- */
 /* Quatre onglets en tête de page, comme la Bibliothèque : la barre du bas a disparu. */
 .village-tabs { margin-bottom: 10px; }
+/* v3.697.0 (CPL3-11, Seb A) : sous 340 px, un libellé trop long passe sur deux lignes (césure douce
+   du dictionnaire anglais), 12 px gardés (S-2) ; rail élargi comme celui du Camp. */
+@media (max-width: 339px) {
+  #panel-container .village-tabs.kseg.is-stack { margin-left: -6px; margin-right: -6px; }
+  #panel-container .village-tabs.kseg.is-stack button { padding-left: 0; padding-right: 0; white-space: normal; }
+  #panel-container .village-tabs.kseg.is-stack button > span { max-width: 100%; text-align: center; }
+}
 
 /* --- Grille des bâtiments : grandes vignettes (v3.414.0) --------------- */
 .vb-grid {
@@ -500,7 +507,7 @@
 }
 /* v3.542.0 (CMP-2) : ce que vaut une relance, sur plusieurs lignes au besoin */
 .forge-row-effect.ench-gain { white-space: normal; overflow: visible; }
-.forge-row-empty { font-style: italic; }
+.forge-row-empty { font-style: italic; white-space: normal; overflow: visible; } /* UI-12 : la consigne passe à la ligne au lieu d'être coupée */
 .forge-row-gain { color: #1f7a3d; font-weight: 800; }
 
 .forge-row-cost { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
@@ -579,7 +586,8 @@
 
 /* v3.330.1 (E4) : ligne « Vivres » sur les fiches de départ (chasse, donjon, élite rejouée) */
 .provisions-line { margin: 6px 0 4px; font-size: 12px; font-weight: 700; color: var(--c-green-700-soft); text-align: center; }
-.provisions-line.is-missing { color: var(--c-red-600-soft); }
+.provisions-line.is-missing { color: var(--ink-missing); } /* QA-12 : la ligne de vivres manquants se lit (3,9:1 avant) */
+.provisions-line.is-missing .provisions-have { opacity: 1; }
 .provisions-have { font-weight: 600; opacity: 0.85; }
 
 /* =====================================================================

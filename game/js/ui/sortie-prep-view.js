@@ -60,6 +60,8 @@ function openSortiePrep(opts) {
   if (!sortiePrepGrimoireOpen() && game.combatMode === "grimoire" && window.CombatEngine) CombatEngine.setCombatMode("tactique");
   sortiePrep = { opts: opts, preset: null, buffs: {}, items: [], pick: -1, bare: bare, level: lvlEl ? Math.max(1, lvlEl.best) : null };   // bare : feuille réduite à l'alerte PV
   renderSortiePrep();
+  // v3.704.0 (TUTO-16) : première feuille qui propose un choix, la fiche au-dessus d'elle
+  if (!bare && typeof openGenericTutorialOnce === "function") openGenericTutorialOnce("sortie_prep", { allow: "sortie-prep-root" });
 }
 
 function closeSortiePrep() {
@@ -360,6 +362,9 @@ function buildSortiePrepEliteLevelHTML() {
   h += '<button type="button" class="dlvl-step" aria-label="' + esc(_t("Niveau suivant")) + '"' + (L >= c.max ? ' disabled' : '') + ' onclick="sortiePrepEliteLevel(1)">›</button></div>';
   h += '<div class="dgain"><div class="dgain-ttl"><span>' + esc(_t("À gagner")) + '</span></div>';
   h += row(res.icon, esc(_td(res.name || resId)) + ' <strong>+' + LM.getRepeatRewardAt(c.mapId, L) + '</strong>' + (L > 1 ? ' <span class="is-dim">(×' + L + ')</span>' : ''));
+  var wr = typeof LM.getEliteWinResource === "function" ? LM.getEliteWinResource(sortiePrep.opts.ctx.id) : null; // v3.689.0 (COMB-22) : la Chitine du Dard
+  var wrDef = wr && (window.WAREHOUSE_RESOURCES || {})[wr.id];
+  if (wr && wr.amount > 0) h += row(wrDef ? wrDef.icon : null, esc(wrDef ? _td(wrDef.name) : wr.id) + ' <strong>+' + wr.amount + '</strong>');
   if (L > 1) h += row("images/Icons/gold_icon.webp", esc(_t("Or +{p} %", { p: pct(m.gold - 1) })));
   if (eDef.winDrop) h += row(null, esc(_t("Pièce : {n} % par victoire, la {k}e sans pièce en donne une", { n: eDef.winDrop.chancePct, k: Number(eDef.winDrop.pityAfter || 0) + 1 })));
   h += '</div><div class="dgain"><div class="dgain-ttl"><span>' + esc(_t("Ce qui t'attend")) + '</span></div>';

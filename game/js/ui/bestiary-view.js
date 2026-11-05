@@ -1,5 +1,5 @@
 "use strict";
-/* ui/bestiary-view.js — écran Bestiaire (liste par monde, accordéon) fusionné avec Codex (2 sous-onglets, v2.83.40). Estimation combat resynchronisée sur progression-system.js (v3.46.0). Détail : COMMENTAIRES_ORIGINAUX.md */
+/* ui/bestiary-view.js — écran Bestiaire (liste par monde, accordéon) fusionné avec Codex (2 sous-onglets, v2.83.40). Estimation combat resynchronisée sur progression-system.js (v3.46.0). */
 
 /* v3.405.0 (décision Seb 01/10/2026) : la Bibliothèque regroupe Bestiaire, Codex et Tutoriels
    dans un rail en haut (comme Quêtes) au lieu de la barre du bas. Les onglets "bestiary" et
@@ -19,6 +19,7 @@ function libraryActiveSub() {
 function setBestiaryCodexSubTab(tab) {
   activeBestiaryCodexSubTab = (tab === "codex" || tab === "tutorials") ? tab : "bestiary";
   if (typeof renderPanel === "function") renderPanel();
+  if (libraryActiveSub() === "bestiary" && typeof openGenericTutorialOnce === "function") openGenericTutorialOnce("bestiary_intro"); // v3.704.0 (TUTO-16)
 }
 window.setBestiaryCodexSubTab = setBestiaryCodexSubTab;
 
@@ -106,10 +107,18 @@ function estimateCreatureCombatStats(id, data, isBoss) {
   return { hp: Math.max(1, hp), dmg: dmg, critChance: critChance };
 }
 
+/* BESTIAIRE-GOLEM (Seb, 05/11, option A) : une seule fiche pour une même créature ; ses compteurs
+   d'origine restent tels quels, la fiche les additionne (affichage seulement). */
+var BESTIARY_MERGED = { golem: ["golem_tour", "golem_sanctuaire"] };
+function bestiaryIsMergedAlias(id) {
+  return Object.keys(BESTIARY_MERGED).some(function (k) { return BESTIARY_MERGED[k].indexOf(id) !== -1; });
+}
+
 function getAllBestiaryIds() {
   // v3.205.0 (E5) : les élites ont leur entrée, comme les boss.
   var eliteIds = window.ELITE_DB ? Object.keys(ELITE_DB) : [];
-  return Object.keys(ENEMY_DB).concat(Object.keys(BOSS_DB)).concat(eliteIds).concat(bestiaryDungeonBossIds());
+  return Object.keys(ENEMY_DB).concat(Object.keys(BOSS_DB)).concat(eliteIds).concat(bestiaryDungeonBossIds())
+    .filter(function (id) { return !bestiaryIsMergedAlias(id); });
 }
 
 /* ---------- v3.456.8 (liste de Seb) : boss de donjon, fiche commune, « où la trouver », fiche en grand ---------- */
@@ -154,6 +163,10 @@ function bestiaryDungeonKills(dungeonId) {
   return Number(((game.explorationProgression || {}).dungeonBossKills || {})[dungeonId] || 0);
 }
 function bestiaryKills(id) {
+  if (BESTIARY_MERGED[id]) return [id].concat(BESTIARY_MERGED[id]).reduce(function (a, k) { return a + bestiaryOwnKills(k); }, 0);
+  return bestiaryOwnKills(id);
+}
+function bestiaryOwnKills(id) {
   var dj = bestiaryDungeonOf(id);
   if (dj) return Math.max((game.dungeonTierCleared || {})[dj.id] ? 1 : 0, bestiaryDungeonKills(dj.id));
   var n = Number((game.killCounts || {})[id] || 0);
@@ -168,6 +181,7 @@ function creatureWhere(id) {
   function add(x) { if (x && out.indexOf(x) === -1) out.push(x); }
   var dj = bestiaryDungeonOf(id);
   if (dj) return [_td(dj.name)];
+
   WORLDS.forEach(function (w) { (w.adventures || []).forEach(function (a) { if ((a.enemyPool || []).indexOf(id) !== -1 || a.boss === id) add(_td(a.name)); }); });
   (window.DUNGEONS || []).forEach(function (d) {
     if (d.locked && !d.requiresStoryStep) return;
@@ -184,13 +198,16 @@ function creatureWhere(id) {
     var p = S[k].parcours;
     if (p && (p.steps || []).some(function (st) { return st.foe === id; })) add(_td(S[k].title));
   });
+  (BESTIARY_MERGED[id] || []).forEach(function (k) { creatureWhere(k).forEach(add); }); // BESTIAIRE-GOLEM : lieux des fiches réunies
   return out.slice(0, 3);
 }
 
-/* v3.456.8 : nom lisible d'un type d'attaque (les fiches gardent l'identifiant : sword, bow, magic). */
-function bestiaryAttackLabel(t) {
-  return ({ sword: _t("l'épée"), bow: _t("l'arc"), magic: _t("la magie") })[t] || _td(t);
+/* v3.701.0 (Seb 05/11) : faiblesses et résistances retirées du jeu, la fiche n'en affiche plus aucune.
+   Fonction gardée (point unique) pour ses deux appelants. */
+function bestiaryAffinityLines(d) {
+  return [];
 }
+window.bestiaryAffinityLines = bestiaryAffinityLines;
 
 /* Ce qu'elle fait de particulier, lu sur la fiche (traits des mondes). */
 function creatureTraits(id) {
@@ -234,9 +251,7 @@ function openCreatureSheet(id) {
   } else {
     if (d.lore) h += '<p class="bst-lore">' + esc(_td(d.lore)) + '</p>';
     creatureTraits(id).forEach(function (t) { h += '<p class="bst-line">' + esc(t) + '</p>'; });
-    var resists = Array.isArray(d.resists) ? d.resists : [], weak = Array.isArray(d.weak) ? d.weak : [];
-    if (resists.length) h += '<p class="bst-line">' + esc(_t("Résiste : {liste}", { liste: resists.map(bestiaryAttackLabel).join(", ") })) + '</p>';
-    if (weak.length) h += '<p class="bst-line">' + esc(_t("Faible : {liste}", { liste: weak.map(bestiaryAttackLabel).join(", ") })) + '</p>';
+    bestiaryAffinityLines(d).forEach(function (t) { h += '<p class="bst-line">' + esc(t) + '</p>'; });
     var c = estimateCreatureCombatStats(id, d, d.isBoss);
     if (c) {
       h += '<div class="nb-entry-meta-row bst-stats">';
@@ -306,10 +321,7 @@ function buildBestiaryEntryCardHTML(id) {
   h += '<div class="nb-entry-name">' + esc(met ? _td(data.name) : "???") + (isBoss ? ' <span class="nb-entry-badge">' + _t("BOSS") + '</span>' : '') + '</div>';
 
   if (met) {
-    var resists = Array.isArray(data.resists) ? data.resists : [];
-    var weak = Array.isArray(data.weak) ? data.weak : [];
-    if (resists.length) h += '<div class="nb-entry-desc">' + esc(_t("Résiste : {liste}", { liste: resists.map(bestiaryAttackLabel).join(", ") })) + '</div>';
-    if (weak.length) h += '<div class="nb-entry-desc">' + esc(_t("Faible : {liste}", { liste: weak.map(bestiaryAttackLabel).join(", ") })) + '</div>';
+    bestiaryAffinityLines(data).forEach(function (t) { h += '<div class="nb-entry-desc">' + esc(t) + '</div>'; });
     if (data.lore) h += '<div class="nb-entry-desc nb-entry-lore">' + esc(_td(data.lore)) + '</div>'; // v3.360.0 : une ligne de bestiaire
 
     var combat = estimateCreatureCombatStats(id, data, isBoss);

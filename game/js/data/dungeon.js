@@ -1,6 +1,6 @@
 "use strict";
 /* data/dungeon.js — un donjon PAR MONDE (v3.245.0, refonte Donjons, doc de conception v1.1 §3).
-   Logique : systems/dungeon-system.js. Détail complet : COMMENTAIRES_ORIGINAUX.md */
+   Logique : systems/dungeon-system.js. */
 
 var DUNGEON_CONFIG = {
   waveCount: 15,
@@ -226,7 +226,7 @@ var DUNGEONS = [
        gargouille blindée). Vague 8 : le Contremaître, dont l'escorte blinde l'élite ; vague 12 :
        le Golem, le même qu'à l'étape 14. */
     enemyPool: ["skeleton", "zombie", "ghoul", "gargoyle"],
-    eliteWaves: { 8: "contremaitre", 12: "golem" },
+    eliteWaves: { 8: "contremaitre", 12: "golem_sanctuaire" }, // v3.696.0 (EQUI-6) : Golem propre au Sanctuaire
     groupWaves: { 3: 2, 6: 2, 10: 3, 14: 2 }, // v3.471.0
     haltSlots: [4, 11, 13], // v3.472.0 : jamais au campement (après 8)
     /* v3.430.0 (RU13, validé le 09/10) — LE CAMPEMENT : halte dans le run après la vague
@@ -237,7 +237,7 @@ var DUNGEONS = [
        une fois (rises, systems/rise-system.js) : sa relève vaut une demi-barre, d'où l'endurance
        basse. Banc sim/ruines-acte3-bench.js (24 runs, palier Rare de ruines_13, Wenna + Maddoc) :
        à 1 / 1, 8-42 % ; à 0,8 / 0,6, 71 / 54 / 67 % ; v3.431.0 : à 0,72 / 0,6 -> Chev. 75 /
-       Rôd. 58 / Mage 79 %, 1 à 1,7 potion. Le Rôdeur reste un cran sous 60 %. Portrait à générer. */
+       Rôd. 58 / Mage 79 %, 1 à 1,7 potion. Le Rôdeur reste un cran sous 60 %. */
     // v3.438.2 : Blindé -> Enragé (le Blindé reste aux Gargouille, Contremaître, Golem)
     boss: { baseId: "skeletonlord", name: "Varrek, le Garde scellé", archetype: "enraged", rises: true,
       riseLine: "Varrek se relève. Personne ne lui a dit de rester à terre.",
@@ -272,9 +272,9 @@ var DUNGEONS = [
     /* LA LICHE DES SÉPULCRES (CR11) : Corrupteur. Phases (lues par CombatEngine.checkPhases, effets
        propres à la Crypte dans SleepSystem.onBossPhase) : 80 % elle couche deux morts à ses pieds ;
        60 % elle les réveille tous ; 30 % demi-sommeil, 2 rounds sans frapper, elle se soigne.
-       Portrait propre à fournir (icône générique : ne pas reprendre celui du Nécromancien). Au banc. */
+       Portrait propre (liche_sepulcres.webp, distinct de celui du Nécromancien). Au banc. */
     boss: { baseId: "necrosupreme", name: "Liche des sépulcres", archetype: "corrupted",
-      statMult: { endurance: 0.82, power: 0.72 }, image: "./images/Boss/liche_sepulcres.webp",
+      statMult: { endurance: 0.82, power: 0.83 }, image: "./images/Boss/liche_sepulcres.webp", // v3.696.0 (EQUI-10 B) : puissance 0,72 → 0,83 (+15 %)
       unique: { id: "gants_fossoyeur", slot: "gloves", name: "Gants du fossoyeur", icon: "gants", power: "dun_sepulcre" }, // v3.470.0
       phases: [
         { atPct: 0.8, sleepAdds: ["spectre", "wraith"], addsHpMult: 0.18, addsPowerMult: 0.5, label: "elle couche deux morts à ses pieds" },

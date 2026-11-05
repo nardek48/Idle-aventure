@@ -1,55 +1,7 @@
 /* =========================
    Journal / logs
    ========================= */
-.log-entry {
-  margin-bottom: 4px;
-  padding: 6px 8px;
-  border-left: 3px solid var(--nb-frame);
-  border-radius: var(--nb-radius-md);
-  background: var(--nb-cream);
-  box-shadow: var(--nb-shadow-card);
-  /* v2.90.7 : couleur de texte explicite — sans ça, .log-entry
-     héritait de --text (#e2dce8, un lavande clair pensé pour
-     l'ancien thème sombre d'avant le passage au parchemin/or),
-     illisible sur le fond crème. Même token que partout ailleurs
-     dans le thème actuel (--nb-ink). */
-  color: var(--nb-ink);
-  font-size: 13px;
-  animation: logSlide 0.3s ease;
-}
 
-.log-entry.event {
-  border-left-color: var(--essence);
-}
-
-.log-entry.boss {
-  border-left-color: var(--danger);
-}
-
-.log-entry.zone {
-  border-left-color: var(--nb-gold);
-}
-
-.log-entry.quest {
-  border-left-color: var(--rarity-rare);
-}
-
-@keyframes logSlide {
-  from {
-    opacity: 0;
-    transform: translateX(-12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .log-entry {
-    animation: none;
-  }
-}
 /* v3.649.0 (atelier journal.html, option C) : une carte, une ligne par événement, filtres en pastilles,
    étapes d'Histoire en un bloc (titre, récit, gains). */
 .jx-chips { display: flex; gap: 6px; overflow-x: auto; margin: 0 0 10px; padding: 2px 0; scrollbar-width: none; }

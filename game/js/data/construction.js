@@ -1,5 +1,5 @@
 "use strict";
-/* data/construction.js — 4e système économique : améliore un bâtiment (Or+ressources) pour un bonus passif permanent. Détail : COMMENTAIRES_ORIGINAUX.md */
+/* data/construction.js — 4e système économique : améliore un bâtiment (Or+ressources) pour un bonus passif permanent. */
 
 var CONSTRUCTION_BUILDINGS = {
   workshop: {

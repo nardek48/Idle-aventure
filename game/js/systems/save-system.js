@@ -1,14 +1,12 @@
 "use strict";
-/* Quest Idle — systems/save-system.js : sauvegarde/chargement (localStorage), autosave, migrations, fullResetState().
-   Détail complet : voir save-system_notes.md #1. */
+/* Quest Idle — systems/save-system.js : sauvegarde/chargement (localStorage), autosave, migrations, fullResetState(). */
 
 var SAVE_KEY = "quest_idle_save_v6";
 var SAVE_VERSION = 6;
 var AUTO_SAVE_INTERVAL_MS = 30000;
 var saveIntervalId = null;
 
-/* v3.25 : plusieurs héros = plusieurs sauvegardes indépendantes, une clé localStorage par emplacement (getSlotKey), migration auto de l'ancien format.
-   Détail complet : voir save-system_notes.md #2. */
+/* v3.25 : plusieurs héros = plusieurs sauvegardes indépendantes, une clé localStorage par emplacement (getSlotKey), migration auto de l'ancien format. */
 
 var MAX_HERO_SLOTS = 6;
 var ACTIVE_SLOT_KEY = "quest_idle_active_slot";
@@ -48,12 +46,12 @@ function dropSlotBackup(key) {
   try { localStorage.removeItem(key + SAVE_BACKUP_SUFFIX); } catch (e) { noteErreur("save-system.dropSlotBackup", e); }
 }
 
-/* Migration unique : ancienne sauvegarde à plat -> Emplacement 1, si besoin.
-   Détail : save-system_notes.md #3. */
+/* Migration unique : ancienne sauvegarde à plat -> Emplacement 1, si besoin. */
 function migrateOldSaveToSlot1() {
   try {
     var slot1Key = getSlotKey(1);
     if (localStorage.getItem(slot1Key)) return; // déjà migré / déjà en place
+    if (localStorage.getItem(ACTIVE_SLOT_KEY) != null) return; // audit 04/11 (SAVE-8) : emplacements déjà utilisés, l'ancienne clé ne ressuscite plus
 
     var oldRaw = localStorage.getItem(SAVE_KEY);
     if (!oldRaw) return; // rien à migrer (partie neuve)
@@ -63,11 +61,10 @@ function migrateOldSaveToSlot1() {
   } catch (e) { noteErreur("save-system.migrateOldSaveToSlot1", e); }
 }
 
-/* HeroSlotManager : créer/switcher/supprimer un emplacement de héros (couche fine sur saveGame()/loadGame()).
-   Détail : save-system_notes.md #4. */
-/* v3.26 : réplique la séquence de boot.js après un switch/création de héros pour éviter un combat sans ennemi (spawnEnemy()).
-   Détail : save-system_notes.md #5. */
+/* HeroSlotManager : créer/switcher/supprimer un emplacement de héros (couche fine sur saveGame()/loadGame()). */
+/* v3.26 : réplique la séquence de boot.js après un switch/création de héros pour éviter un combat sans ennemi (spawnEnemy()). */
 function resumeCombatAfterSlotChange(freshState) {
+  if (window.ReturnManager && typeof ReturnManager.clear === "function") ReturnManager.clear(); // audit 04/11 (SAVE-14) : le retour en attente était celui de l'autre héros
   // v3.109.2 (scope validé Seb, remplace la règle v3.41 « toujours monde 1 ») : la position est dans la save
   // (worldIndex/adventureIndex/enemyIndex, restaurée par loadGame comme au boot) — on ne la jette plus au switch.
   // freshState=true (création de héros, suppression du dernier slot) : état neuf SANS loadGame, or WorldManager
@@ -79,8 +76,6 @@ function resumeCombatAfterSlotChange(freshState) {
   if (window.WorldManager && typeof WorldManager.markWorldReached === "function") {
     WorldManager.markWorldReached(WorldManager.worldIndex || 0);
   }
-
-  if (typeof ensureDailyQuests === "function") ensureDailyQuests();
 
   if (game.dungeonRun && game.dungeonRun.active && window.DungeonManager) {
     if (typeof DungeonManager.ensure === "function") DungeonManager.ensure(); // v3.245.0 : tierId -> dungeonId
@@ -108,8 +103,7 @@ var HeroSlotManager = {
     }
   },
 
-  /* Résumé léger pour le sélecteur (nom, classe, niveau, monde) sans charger l'emplacement dans `game`.
-     Détail : save-system_notes.md #6. */
+  /* Résumé léger pour le sélecteur (nom, classe, niveau, monde) sans charger l'emplacement dans `game`. */
   getSlotSummary: function (slotNumber) {
     if (!this.hasSlot(slotNumber)) return null;
     try {
@@ -145,10 +139,8 @@ var HeroSlotManager = {
     }
   },
 
-  /* Bascule vers un autre emplacement : sauvegarde l'actif, charge le demandé. Emplacement vide géré par createHeroInSlot().
-     Détail : save-system_notes.md #7. */
+  /* Bascule vers un autre emplacement : sauvegarde l'actif, charge le demandé. Emplacement vide géré par createHeroInSlot(). */
   // v3.29.5 : `skipSaveCurrent` évite de resauvegarder (et ressusciter) un emplacement qu'on vient de supprimer (deleteSlot()).
-  // Détail : save-system_notes.md #8.
   switchToSlot: function (slotNumber, skipSaveCurrent) {
     if (slotNumber === getActiveSlot()) return true;
     if (!this.hasSlot(slotNumber)) return false;
@@ -161,7 +153,6 @@ var HeroSlotManager = {
     // Repart d'un état par défaut avant de charger, comme au premier boot (évite qu'un champ manquant garde l'ancien héros).
     if (typeof createInitialGameState === "function") {
       // v3.25 : préserve game.saveSupported (détection au boot, pas propre à un héros) pendant le wipe de `game`, sinon saveGame() échoue.
-      // Détail : save-system_notes.md #11.
       var keptSaveSupported = game.saveSupported;
       var fresh = createInitialGameState();
       Object.keys(game).forEach(function (k) { delete game[k]; });
@@ -177,9 +168,8 @@ var HeroSlotManager = {
     return true;
   },
 
-  /* Crée un héros dans un emplacement vide : sauvegarde l'ancien, bascule la clé active, repart d'un état neuf, ouvre la création (modal-view.js).
-     Détail : save-system_notes.md #12. */
-  createHeroInSlot: function (slotNumber) {
+  /* Crée un héros dans un emplacement vide : sauvegarde l'ancien, bascule la clé active, repart d'un état neuf, ouvre la création (modal-view.js). */
+  createHeroInSlot: function (slotNumber, skipSaveCurrent) {
     if (this.hasSlot(slotNumber)) return false; // emplacement déjà occupé, pas de recréation silencieuse
     if (slotNumber < 1 || slotNumber > MAX_HERO_SLOTS) return false;
 
@@ -187,12 +177,12 @@ var HeroSlotManager = {
     var originSlot = getActiveSlot();
     window.pendingHeroCreationOrigin = HeroSlotManager.hasSlot(originSlot) ? originSlot : null;
 
-    if (getActiveSlot() !== slotNumber) saveGame(); // préserve l'emplacement qu'on quitte
+    if (getActiveSlot() !== slotNumber && !skipSaveCurrent) saveGame(); // préserve l'emplacement qu'on quitte ; audit 04/11 (SAVE-13) : sauté au démarrage, rien n'a été joué
 
     setActiveSlot(slotNumber);
 
     if (typeof createInitialGameState === "function") {
-      // v3.25 : préserve game.saveSupported pendant le wipe de `game` (voir save-system_notes.md #13).
+      // v3.25 : préserve game.saveSupported pendant le wipe de `game`.
       var keptSaveSupported = game.saveSupported;
       var fresh = createInitialGameState();
       Object.keys(game).forEach(function (k) { delete game[k]; });
@@ -210,8 +200,7 @@ var HeroSlotManager = {
     return true;
   },
 
-  /* Supprime un emplacement occupé (DESTRUCTIF, confirmation à charge de l'UI). Bascule sur le 1er emplacement restant si c'était l'actif.
-     Détail : save-system_notes.md #15. */
+  /* Supprime un emplacement occupé (DESTRUCTIF, confirmation à charge de l'UI). Bascule sur le 1er emplacement restant si c'était l'actif. */
   deleteSlot: function (slotNumber) {
     if (!this.hasSlot(slotNumber)) return false;
 
@@ -222,6 +211,7 @@ var HeroSlotManager = {
       return false;
     }
     dropSlotBackup(getSlotKey(slotNumber)); // la copie saine d'un héros supprimé ne doit pas revenir
+    try { localStorage.removeItem(getSlotKey(slotNumber) + SAVE_UNREADABLE_SUFFIX); } catch (e) { noteErreur("save-system.deleteSlot", e); } // audit 04/11 (SAVE-12)
 
     if (wasActive) {
       var self = this;
@@ -254,44 +244,8 @@ var HeroSlotManager = {
 window.HeroSlotManager = HeroSlotManager;
 window.MAX_HERO_SLOTS = MAX_HERO_SLOTS;
 
-function getDefaultQuestProgress() {
-  if (typeof DEFAULT_QUEST_PROGRESS !== "undefined" && DEFAULT_QUEST_PROGRESS) {
-    return Object.assign({}, DEFAULT_QUEST_PROGRESS);
-  }
-  return {
-    kills: 0,
-    treasures: 0,
-    bossKills: 0,
-    goldEarned: 0,
-    goldSpent: 0,
-    crits: 0,
-    combatTime: 0,
-    forestChaptersDone: 0,
-    ruinsChaptersDone: 0
-  };
-}
-
 function getDefaultEquipped() {
   return { weapon: null, armor: null, helmet: null, gloves: null, boots: null, ring: null, amulet: null };
-}
-
-/* Fusionne un objet de progression chargé avec un objet de valeurs
-   par défaut : garde les nombres valides de `obj`, comble le reste. */
-function normalizeProgressMap(obj, fallback) {
-  var out = {};
-  var src = obj || {};
-
-  Object.keys(fallback).forEach(function (key) {
-    out[key] = typeof src[key] === "number" ? src[key] : fallback[key];
-  });
-
-  Object.keys(src).forEach(function (key) {
-    if (typeof out[key] === "undefined" && typeof src[key] === "number") {
-      out[key] = src[key];
-    }
-  });
-
-  return out;
 }
 
 /* Anciennes sauvegardes : id du héros du chaos sous un ancien format (ex "ChaosNight") — table de correspondance au chargement. */
@@ -304,8 +258,7 @@ function migrateHeroId(heroId) {
   return map[heroId] || heroId || "";
 }
 
-/* Répare game.upgrades : renomme les vieux ids (upgradeKeyMap) et complète les upgrades manquantes à 0.
-   Détail : save-system_notes.md #17. */
+/* Répare game.upgrades : renomme les vieux ids (upgradeKeyMap) et complète les upgrades manquantes à 0. */
 function ensureUpgradeDefaults() {
   if (!game.upgrades || typeof game.upgrades !== "object") game.upgrades = {};
 
@@ -350,7 +303,6 @@ function initSaveSystem() {
   }
 
   // v3.25 : migration de l'ancienne sauvegarde à plat vers l'Emplacement 1 — doit tourner AVANT le premier loadGame() de boot.js.
-  // Détail : save-system_notes.md #19.
   if (game.saveSupported) migrateOldSaveToSlot1();
 
   if (saveIntervalId) {
@@ -369,12 +321,14 @@ function initSaveSystem() {
   window.addEventListener("beforeunload", function () {
     saveGame();
   });
+  window.addEventListener("pagehide", function () { saveGame(); }); // audit 04/11 (SAVE-18) : iOS ne lance pas toujours beforeunload
 }
 
 /* Construit l'objet JSON stocké dans localStorage. Tout champ persistant de `game` doit être repris ici (voir restoreBaseState pour l'inverse). */
 function buildSaveData() {
   return {
     version: SAVE_VERSION,
+    gameVersion: typeof GAME_VERSION === "string" ? GAME_VERSION : "", // audit 04/11 (SAVE-7) : une version plus ancienne refuse de la réécrire
     savedAt: Date.now(),
     lastOnline: Date.now(),
     gold: Number(game.gold || 0),
@@ -412,14 +366,11 @@ function buildSaveData() {
     upgrades: game.upgrades || {},
     talents: game.talents || {},
     skillRanks: game.skillRanks || {}, // H2 : rangs des sorts
-    companionRelics: game.companionRelics || { inv: [], next: 1, pity: 0 }, // H4 : reliques des compagnons
+    companionRelics: game.companionRelics || { inv: [], next: 1, pity: 0, firstPatrolDone: false }, // H4 : reliques des compagnons
     talentsV2: !!game.talentsV2, // v3.327.0 : talents par classe (migration faite)
     unlockedTabs: game.unlockedTabs || {}, // v3.99.15 : onglets débloqués, voir core/state.js
     inventory: Array.isArray(game.inventory) ? game.inventory : [],
     equipped: game.equipped || getDefaultEquipped(),
-    quests: Array.isArray(game.quests) ? game.quests : [],
-    questProgress: game.questProgress || getDefaultQuestProgress(),
-    questResetTime: Number(game.questResetTime || 0),
     activeTab: game.activeTab || "combat",
     playerName: game.playerName,
     heroId: game.heroId,
@@ -444,7 +395,6 @@ function buildSaveData() {
     dungeonShards: Number(game.dungeonShards || 0),
     dungeonShopLevels: game.dungeonShopLevels || {},
     // v2.90.11 : dungeonTierCleared oublié lors de l'ajout du déblocage séquentiel (v2.90.9) — se perdait à chaque rechargement.
-    // Détail : save-system_notes.md #21.
     dungeonTierCleared: game.dungeonTierCleared || {},
     dungeonLevelBest: Object.assign({}, game.dungeonLevelBest || {}), // v3.460.0 : meilleur niveau terminé, par donjon
     healingPotionsOwned: game.healingPotionsOwned || {},
@@ -496,9 +446,8 @@ function buildSaveData() {
     adventureQuestProgress: game.adventureQuestProgress || {},
     adventureQuestsCompleted: game.adventureQuestsCompleted || {},
     adventureQuestRun: game.adventureQuestRun || { active: false, questId: null },
-    // v3.30 : Chasse en boucle (voir data/hunt-quests.js) — huntStats
-    // est purement informatif (compteur de lots), persiste comme
-    // adventureQuestProgress ; huntRun NE survit PAS (comme dungeonRun).
+    // v3.30 : Chasse en boucle (moteur retiré en v3.699.0, ARCH-9) — huntStats et huntRun
+    // restent écrits tels quels : une ancienne sauvegarde ne perd rien.
     huntStats: game.huntStats || {},
     huntRun: game.huntRun || { active: false, questId: null, killsInLot: 0 },
     // v3.90.0 : explorationProgression (déblocages) est permanent.
@@ -545,7 +494,6 @@ function buildSaveData() {
     dungeonTiersEntered: game.dungeonTiersEntered || {},
     codexChaosSeen: !!game.codexChaosSeen,
     codexRead: game.codexRead || {},
-    hasSeenOnboarding: !!game.hasSeenOnboarding,
     genericTutorialsSeen: game.genericTutorialsSeen || {}
   };
 }
@@ -554,8 +502,12 @@ function buildSaveData() {
 function saveGame() {
   if (!game.saveSupported) return false;
   if (saveLockedKey && saveLockedKey === getActiveSaveKey()) return false;
+  if (typeof instanceLocked !== "undefined" && instanceLocked) return false; // audit 04/11 (QA-1) : fenêtre voilée, aucun emplacement
   try {
-    localStorage.setItem(getActiveSaveKey(), JSON.stringify(buildSaveData()));
+    if (!game.heroId && !localStorage.getItem(getActiveSaveKey())) return false; // audit 04/11 (SAVE-1) : création non confirmée, pas d'emplacement fantôme
+    var json = JSON.stringify(buildSaveData());
+    localStorage.setItem(getActiveSaveKey(), json);
+    refreshSlotBackup(getActiveSaveKey(), json);
     game.lastSave = Date.now();
     game.lastOnline = game.lastSave;
     return true;
@@ -564,6 +516,29 @@ function saveGame() {
     signalerSauvegardeImpossible(e);
     return false;
   }
+}
+
+/* Audit 04/11 (SAVE-11) : la copie saine suit la partie toutes les 10 min, plus seulement au chargement
+   (une récupération effaçait toute la session). */
+var SAVE_BACKUP_EVERY_MS = 10 * 60 * 1000;
+var lastBackupKey = null, lastBackupAt = 0;
+function refreshSlotBackup(key, json, force) {
+  var now = Date.now();
+  if (!force && key === lastBackupKey && now - lastBackupAt >= 0 && now - lastBackupAt < SAVE_BACKUP_EVERY_MS) return;
+  try { localStorage.setItem(key + SAVE_BACKUP_SUFFIX, json); lastBackupKey = key; lastBackupAt = now; } catch (e) { noteErreur("save-system.refreshSlotBackup", e); }
+}
+
+/* Audit 04/11 (SAVE-7) : compare deux versions « 3.685.0 » ; > 0 si a est plus récente que b. */
+function compareGameVersions(a, b) {
+  var pa = String(a || "").split("."), pb = String(b || "").split(".");
+  for (var i = 0; i < Math.max(pa.length, pb.length); i++) {
+    var x = parseInt(pa[i], 10) || 0, y = parseInt(pb[i], 10) || 0;
+    if (x !== y) return x > y ? 1 : -1;
+  }
+  return 0;
+}
+function isNewerGameVersion(v) {
+  return typeof v === "string" && v !== "" && typeof GAME_VERSION === "string" && compareGameVersions(v, GAME_VERSION) > 0;
 }
 
 /* v3.448.9 : une sauvegarde qui échoue (stockage plein le plus souvent) ne passe plus inaperçue. Le joueur
@@ -594,7 +569,6 @@ function restoreLastSortiePrep(v) {
 
 /* Recharge une sauvegarde dans `game`. Aucun recalcul de stats dérivées ici — rôle de StatsSystem.recalcStats(), appelé après. */
 function restoreBaseState(d) {
-  var questDefaults = getDefaultQuestProgress();
 
   game.gold = Number(d.gold || 0);
   game.totalAetherEarned = Number(d.totalAetherEarned != null ? d.totalAetherEarned : d.aether || 0);
@@ -649,7 +623,7 @@ function restoreBaseState(d) {
   game.upgrades = d.upgrades && typeof d.upgrades === "object" ? d.upgrades : {};
   game.talents = d.talents && typeof d.talents === "object" ? d.talents : {};
   game.skillRanks = d.skillRanks && typeof d.skillRanks === "object" ? d.skillRanks : {}; // H2
-  game.companionRelics = d.companionRelics && typeof d.companionRelics === "object" ? d.companionRelics : { inv: [], next: 1, pity: 0 }; // H4 reliques
+  game.companionRelics = d.companionRelics && typeof d.companionRelics === "object" ? d.companionRelics : { inv: [], next: 1, pity: 0, firstPatrolDone: false }; // H4 reliques
   game.talentsV2 = !!d.talentsV2; // v3.327.0 : false = ancienne sauvegarde, migrée par loadGame
   // v3.99.15 : onglets débloqués (voir core/state.js). Migration pour les sauvegardes
   // antérieures à cette version (d.unlockedTabs absent) : une partie déjà entamée
@@ -682,9 +656,7 @@ function restoreBaseState(d) {
   if (game.equipped.boots === undefined) game.equipped.boots = null;
   if (game.equipped.ring === undefined) game.equipped.ring = null;
 
-  game.quests = Array.isArray(d.quests) ? d.quests : [];
-  game.questProgress = normalizeProgressMap(d.questProgress, questDefaults);
-  game.questResetTime = Number(d.questResetTime || 0);
+  // Audit 04/11 (ARCH-10) : quests, questProgress, questResetTime et hasSeenOnboarding ne sont plus lus ni écrits.
 
   game.activeTab = d.activeTab || "combat";
   // v3.107.3 : une save enregistrée avec activeTab="combat" ET heroHp<=0 (ex. autosave juste après une
@@ -784,19 +756,7 @@ function restoreBaseState(d) {
   game.lastSortiePrep = restoreLastSortiePrep(d.lastSortiePrep); // v3.449.0
   game.potionAuto = (window.PotionAutoManager && typeof PotionAutoManager.normalize === "function")
     ? PotionAutoManager.normalize(d.potionAuto, window.POTION_AUTO_OLD_SAVE) : (d.potionAuto || null);
-  game.grimoirePresets = Array.isArray(d.grimoirePresets)
-    ? d.grimoirePresets.filter(function (p) {
-        return p && typeof p === "object" && typeof p.id === "string" && typeof p.name === "string" && Array.isArray(p.rules);
-      }).map(function (p) {
-        return {
-          id: p.id,
-          name: p.name,
-          icon: typeof p.icon === "string" ? p.icon : "📖",
-          rules: (typeof sanitizeGrimoireRules === "function") ? sanitizeGrimoireRules(p.rules, null) : p.rules,
-          lastModified: typeof p.lastModified === "number" ? p.lastModified : 0
-        };
-      })
-    : [];
+  game.grimoirePresets = normalizeGrimoirePresets(d.grimoirePresets); // core/state.js (ARCH-17)
   // v3.34.0 : classResource absent (sauvegarde d'avant ce système, ou
   // valeur invalide) -> null, régénéré automatiquement au premier
   // besoin par ClassCombatManager.ensureForCurrentClass() (voir
@@ -834,9 +794,11 @@ function restoreBaseState(d) {
   game.adventureQuestProgress = d.adventureQuestProgress && typeof d.adventureQuestProgress === "object" ? d.adventureQuestProgress : {};
   game.adventureQuestsCompleted = d.adventureQuestsCompleted && typeof d.adventureQuestsCompleted === "object" ? d.adventureQuestsCompleted : {};
   game.adventureQuestRun = d.adventureQuestRun && typeof d.adventureQuestRun === "object" ? d.adventureQuestRun : { active: false, questId: null };
-  // v3.30 : Chasse en boucle (voir data/hunt-quests.js).
+  // v3.30 : Chasse en boucle (moteur retiré en v3.699.0).
   game.huntStats = d.huntStats && typeof d.huntStats === "object" ? d.huntStats : {};
   game.huntRun = d.huntRun && typeof d.huntRun === "object" ? d.huntRun : { active: false, questId: null, killsInLot: 0 };
+  // ARCH-9 (Seb 05/11) : moteur des chasses retiré, la clé reste lue ; un ancien lot en cours est clos
+  if (game.huntRun.active) { game.huntRun = { active: false, questId: null, killsInLot: 0 }; if (game.sortie && game.sortie.context === "hunt") game.sortie.context = "farm"; }
   // v3.120.0 (Lot S1) : scene-engine générique — ancienne sauvegarde sans ce champ = aucun run à reprendre.
   game.sceneRun = d.sceneRun && typeof d.sceneRun === "object" ? d.sceneRun : null;
   game.expeditionChest = d.expeditionChest && typeof d.expeditionChest === "object" ? d.expeditionChest : { unlocked: {} }; // v3.381.0 (PA2, Q8)
@@ -944,7 +906,6 @@ function restoreBaseState(d) {
   game.dungeonTiersEntered = d.dungeonTiersEntered && typeof d.dungeonTiersEntered === "object" ? d.dungeonTiersEntered : {};
   game.codexChaosSeen = !!d.codexChaosSeen;
   game.codexRead = d.codexRead && typeof d.codexRead === "object" ? d.codexRead : {};
-  game.hasSeenOnboarding = !!d.hasSeenOnboarding;
   game.genericTutorialsSeen = d.genericTutorialsSeen && typeof d.genericTutorialsSeen === "object" ? d.genericTutorialsSeen : {};
 
   ensureUpgradeDefaults();
@@ -966,8 +927,7 @@ function reapplyProgressEffects() {
   }
 }
 
-/* Point d'entrée principal pour charger la partie au démarrage : lit le JSON, restaure l'état, recalcule les stats, vérifie les quêtes du jour.
-   Détail : save-system_notes.md #26. */
+/* Point d'entrée principal pour charger la partie au démarrage : lit le JSON, restaure l'état, recalcule les stats, vérifie les quêtes du jour. */
 function loadGame() {
   if (!game.saveSupported) return false;
 
@@ -977,7 +937,11 @@ function loadGame() {
   if (!raw) return false;
 
   if (loadGameFromRaw(raw)) {
-    try { localStorage.setItem(key + SAVE_BACKUP_SUFFIX, raw); } catch (e) { noteErreur("save-system.loadGame", e); }
+    refreshSlotBackup(key, raw, true);
+    if (lastLoadNewerVersion) { // audit 04/11 (SAVE-7) : réécrire ici effacerait les champs récents
+      saveLockedKey = key;
+      notifySaveRecovery(_t("Cette partie vient d'une version plus récente du jeu : rien ne sera écrit dessus ici. Mets le jeu à jour (Paramètres › Partie)."));
+    }
     return true;
   }
   // v3.457.4 (audit P6) : sauvegarde lisible, erreur du jeu — on ne touche ni à elle ni à sa copie saine
@@ -1008,7 +972,7 @@ function recoverUnreadableSave(key, raw) {
   resetGameToFreshState();
   if (!kept) saveLockedKey = key; // rien n'a pu être mis de côté : on n'écrit plus sur cette partie
   notifySaveRecovery(kept
-    ? _t("Ta sauvegarde n'a pas pu être lue. Elle est gardée à part : exporte tes sauvegardes (Paramètres) pour la récupérer.")
+    ? _t("Ta sauvegarde n'a pas pu être lue et ne peut pas être rechargée. Sa copie brute est gardée à part et jointe à l'export (Paramètres), pour une réparation.")
     : _t("Ta sauvegarde n'a pas pu être lue. Elle reste intacte : rien ne sera écrit dessus pendant cette session."));
   return false;
 }
@@ -1037,11 +1001,14 @@ function notifySaveRecovery(message) {
    v3.457.4 (audit P6) : une exception du CODE pendant la restauration n'est plus une sauvegarde illisible
    (lastLoadCodeError) — elle est tracée, et loadGame protège la partie au lieu de la mettre de côté. */
 var lastLoadCodeError = false;
+var lastLoadNewerVersion = false;
 function loadGameFromRaw(raw) {
   lastLoadCodeError = false;
+  lastLoadNewerVersion = false;
   var d;
   try { d = JSON.parse(raw); } catch (e) { return false; }
-  if (!d || typeof d !== "object") return false;
+  if (!d || typeof d !== "object" || typeof d.version !== "number") return false; // audit 04/11 (SAVE-10) : `{}` n'est pas une partie
+  lastLoadNewerVersion = isNewerGameVersion(d.gameVersion);
   try {
 
     restoreBaseState(d);
@@ -1068,12 +1035,11 @@ function clearSaveData() {
     localStorage.removeItem(getActiveSaveKey());
   } catch (e) { noteErreur("save-system.clearSaveData", e); }
   dropSlotBackup(getActiveSaveKey());
+  try { localStorage.removeItem(getActiveSaveKey() + SAVE_UNREADABLE_SUFFIX); } catch (e) { noteErreur("save-system.clearSaveData", e); } // audit 04/11 (SAVE-12)
 }
 
-/* Reset "complet" (bouton Paramètres) : efface VRAIMENT tout, y compris l'Aether et le héros. Redonne 1M d'or de départ (réglage debug à surveiller).
-   Détail : save-system_notes.md #35. */
+/* Reset "complet" (bouton Paramètres) : efface VRAIMENT tout, y compris l'Aether et le héros. Repart à 0 or (v2.26). */
 function fullResetState() {
-  var questDefaults = getDefaultQuestProgress();
 
   // v2.26 : plus d'or de confort au reset complet (était 1 000 000,
   // un réglage de test qui n'avait pas sa place dans un vrai reset).
@@ -1118,14 +1084,11 @@ function fullResetState() {
   game.upgrades = {};
   game.talents = {};
   game.skillRanks = {}; // H2
-  game.companionRelics = { inv: [], next: 1, pity: 0 }; // H4 reliques
+  game.companionRelics = { inv: [], next: 1, pity: 0, firstPatrolDone: false }; // H4 reliques
   game.talentsV2 = true; // v3.327.0 : une partie neuve n'a rien à migrer
   game.unlockedTabs = { campement: true, quests: true, settings: true, scene: true }; // v3.99.15 / v3.122.0 : "scene" toujours débloqué (infrastructure d'affichage des runs, pas un onglet narratif — même statut que quests/settings)
   game.inventory = [];
   game.equipped = getDefaultEquipped();
-  game.quests = [];
-  game.questProgress = Object.assign({}, questDefaults);
-  game.questResetTime = 0;
   game.activeTab = "combat";
   game.enemy = null;
   game.lastOnline = Date.now();
@@ -1201,12 +1164,11 @@ function fullResetState() {
   game.companions = {}; // v3.268.0 (L-2) : aucun compagnon dans une partie neuve
   // v3.65.0 : presets du Grimoire, même principe.
   game.grimoirePresets = [];
-  // v3.379.0 : partie neuve = potion automatique « Normal », dernière gardée pour le boss
-  game.potionAuto = { threshold: "tard", keepForBoss: true }; // v3.380.0 : « Tard » par défaut
+  // v3.380.0 : partie neuve = potion automatique « Tard », dernière gardée pour le boss (core/constants.js)
+  game.potionAuto = Object.assign({}, POTION_AUTO_NEW_GAME);
   game.grimoireTarget = "proche"; // v3.428.0 (Ruines) : réglage « Cible »
   game.grimoireVarier = false; // v3.653.0
   game.lastSortiePrep = null; // v3.449.0
-  game.hasSeenOnboarding = false;
   game.genericTutorialsSeen = {}; // v3.107.9
 
   WorldManager.worldIndex = 0;
@@ -1226,32 +1188,33 @@ function fullResetState() {
 
 /* Bouton "Réinitialiser tout" des Paramètres : demande confirmation (irréversible) puis efface la sauvegarde et appelle fullResetState(). */
 function resetGame() {
+  var name = game.playerName || _t("ton héros");
   var doReset = function () {
-    clearSaveData();
-    fullResetState();
-
-    if (window.CombatEngine && typeof CombatEngine.spawnEnemy === "function") {
-      CombatEngine.spawnEnemy();
+    var slot = getActiveSlot();
+    if (HeroSlotManager.hasSlot(slot)) {
+      // Audit 04/11 (SAVE-15) : l'emplacement est supprimé (plus de héros vide réécrit) ; un autre héros reprend la main
+      if (typeof gameLog !== "undefined" && Array.isArray(gameLog)) gameLog.length = 0;
+      HeroSlotManager.deleteSlot(slot);
+      if (game.heroId && window.ResumeManager) ResumeManager.catchUpAfterSlotLoad(); // SAVE-21 : son absence est rattrapée
+    } else {
+      clearSaveData();
+      fullResetState();
+      if (window.CombatEngine && typeof CombatEngine.spawnEnemy === "function") CombatEngine.spawnEnemy();
     }
 
     if (typeof renderAll === "function") renderAll();
     // v3.7 : sans cet appel switchTab(), l'affichage restait figé sur l'écran d'où le reset a été déclenché au lieu de refléter activeTab="combat".
-    // Détail : save-system_notes.md #38.
     if (typeof switchTab === "function") switchTab(game.activeTab || "combat");
     if (typeof updateQuestBadge === "function") updateQuestBadge();
 
     saveGame();
-    if (typeof showToast === "function") showToast(_t("Partie réinitialisée"), 1200);
+    if (typeof showToast === "function") showToast(_t("Partie de {nom} effacée", { nom: name }), 1600);
   };
 
+  var body = _t("Son village, son équipement et toute sa progression sont supprimés de cet appareil. Tes autres héros sont gardés. C'est définitif.");
   if (typeof showConfirmModal === "function") {
-    showConfirmModal(
-      _t("Réinitialiser TOUT ?"),
-      _t("Cette action efface toute la progression, y compris l'Aether et la Mémoire. Cette action est irréversible."),
-      "⚠️",
-      doReset
-    );
-  } else if (window.confirm(_t("Réinitialiser toute la progression ?"))) {
+    showConfirmModal(_t("Effacer {nom} ?", { nom: name }), body, "⚠️", doReset);
+  } else if (window.confirm(_t("Effacer {nom} ?", { nom: name }) + " " + body)) {
     doReset();
   }
 }
@@ -1267,5 +1230,7 @@ window.restoreBaseState = restoreBaseState;
 window.reapplyProgressEffects = reapplyProgressEffects;
 window.ensureUpgradeDefaults = ensureUpgradeDefaults;
 window.migrateHeroId = migrateHeroId;
+window.compareGameVersions = compareGameVersions;
+window.isNewerGameVersion = isNewerGameVersion;
 
 /* v3.459.5 (audit O10) : l'interface d'export et d'import vit dans js/ui/save-transfer-view.js. */

@@ -63,7 +63,6 @@ var TouchDebug = {
   contextLabel: function () {
     var parts = [];
     if (game.adventureQuestRun && game.adventureQuestRun.active) parts.push("aventure");
-    if (game.huntRun && game.huntRun.active) parts.push("chasse");
     if (game.dungeonRun && game.dungeonRun.active) parts.push("donjon");
     if (game.livingMaps && game.livingMaps.fight) parts.push("élite carte");
     return parts.length ? parts.join("+") : "aucun run";
@@ -198,7 +197,6 @@ function forceLeaveCombat() {
     SortieManager.flee();
   }
   if (game.adventureQuestRun && game.adventureQuestRun.active && window.AdventureQuestManager) AdventureQuestManager.forfeit();
-  if (game.huntRun && game.huntRun.active && window.HuntQuestManager) HuntQuestManager.stop();
   if (game.dungeonRun && game.dungeonRun.active && window.DungeonManager) DungeonManager.forfeit();
   if (game.livingMaps && game.livingMaps.fight && window.LivingMapManager && typeof LivingMapManager.abandonFight === "function") LivingMapManager.abandonFight();
   if (game.sceneRun && game.sceneRun.status && game.sceneRun.status !== "completed" && window.SceneRunManager) SceneRunManager.abandon();

@@ -1,10 +1,10 @@
 "use strict";
 /* systems/quest-enemy-system.js — génération d'ennemi PARTAGÉE pour les runs de quête à spawn dédié
-   (aventure, chasse — pas les world quests, qui comptent sur le farm libre). Remplace le buildQuestEnemy
-   dupliqué dans adventure-quest-system.js et hunt-quest-system.js. Point d'entrée unique pour le filtrage
+   (aventure — pas les world quests, qui comptent sur le farm libre). Remplace le buildQuestEnemy
+   dupliqué des systèmes de quête. Point d'entrée unique pour le filtrage
    d'ennemis par quête (enemyFilter, décision Seb) : la donnée de quête pilote, le moteur exécute.
 
-   Usage dans une quête (adventure-quests.js / hunt-quests.js) :
+   Usage dans une quête (adventure-quests.js) :
      enemyFilter: ["wolf"]  // seuls les loups sortent du tirage normal (le boss n'est jamais filtré)
    Absent ou vide = comportement inchangé (pool complet de l'aventure). */
 
@@ -106,17 +106,27 @@ var QuestEnemyManager = {
 
   /* v3.326.0 (plan C-2) — enemyPowerMult : PUISSANCE (dégâts) de tous les ennemis de la quête,
      le pendant de enemyHpMult ; bossPowerMult règle le boss à part. Lu sur la donnée d'origine
-     (ADVENTURE_QUESTS / HUNT_QUESTS) : les rencontres scriptées arrivent ici sous une copie
+     (ADVENTURE_QUESTS) : les rencontres scriptées arrivent ici sous une copie
      réduite, fabriquée par adventure-quest-system.js (protégé). Absent = 1, rien ne change.
      v3.457.2 : divisé par le gabarit de la classe, sauf quête à heroRef (le gabarit y est déjà). */
   getPowerMult: function (quest, isBoss) {
     if (!quest) return 1;
-    var src = (window.ADVENTURE_QUESTS && ADVENTURE_QUESTS[quest.id]) || (window.HUNT_QUESTS && HUNT_QUESTS[quest.id]) || quest;
+    var src = (window.ADVENTURE_QUESTS && ADVENTURE_QUESTS[quest.id]) || quest;
     var m = Number(isBoss && src.bossPowerMult != null ? src.bossPowerMult : src.enemyPowerMult);
-    if (!(isFinite(m) && m > 0)) return 1;
+    var cm = this.getClassPowerMult(src);
+    if (!(isFinite(m) && m > 0)) return cm;
     // v3.457.2 (accord de Seb) : gabarit de classe des quêtes fixes (Chevalier ÷1,3), comme heroRef depuis v3.448.7
     if (!src.heroRef) m /= this.getClassGabarit();
-    return m;
+    return m * cm;
+  },
+
+  /* v3.700.0 (MAGE-DRAGON, Seb 05/11) : classPowerMult { classe: mult } de la quête, sur toutes
+     ses rencontres et son boss, pour la classe du héros seulement. Absent = 1. */
+  getClassPowerMult: function (src) {
+    var tab = src && src.classPowerMult;
+    var cls = (tab && typeof getClassByHeroId === "function") ? getClassByHeroId(game.heroId) : null;
+    var c = cls ? Number(tab[cls.id]) : 1;
+    return (isFinite(c) && c > 0) ? c : 1;
   },
 
   /* Diviseur de puissance de la classe du héros (WORLD_HERO_SCALING.classEhpGabarit) ; 1 par défaut. */
@@ -148,7 +158,7 @@ var QuestEnemyManager = {
 
 /* v3.246.0 — reprise d'un run après un rechargement de page (bug remonté par Seb : le Roi Slime
    apparaissait à 3/9). save-system.js et boot.js respawnaient la vague du DONJON mais retombaient
-   sinon sur CombatEngine.spawnEnemy(), qui ignore adventureQuestRun/huntRun et tire un ennemi de
+   sinon sur CombatEngine.spawnEnemy(), qui ignore adventureQuestRun et tire un ennemi de
    FARM selon WorldManager.enemyIndex — donc le boss du monde si l'index y était resté.
    Renvoie true si un ennemi de run a été replacé, false pour laisser l'appelant faire son spawn
    normal. Vit ici plutôt que dans les fichiers protégés : ceux-ci n'appellent qu'une ligne. */
@@ -156,10 +166,6 @@ QuestEnemyManager.respawnActiveRunEnemy = function () {
   if (game.adventureQuestRun && game.adventureQuestRun.active && window.AdventureQuestManager) {
     var aq = (window.ADVENTURE_QUESTS || {})[game.adventureQuestRun.questId];
     if (aq) { AdventureQuestManager.spawnRunEnemy(aq); return true; }
-  }
-  if (game.huntRun && game.huntRun.active && window.HuntQuestManager) {
-    var hq = (window.HUNT_QUESTS || {})[game.huntRun.questId];
-    if (hq) { HuntQuestManager.spawnRunEnemy(hq); return true; }
   }
   // v3.256.0 (Cartes Vivantes, C-2) : combat d'élite de secteur en cours au rechargement.
   if (game.livingMaps && game.livingMaps.fight && window.LivingMapManager) {
@@ -216,7 +222,6 @@ function hasCombatQuestContext() {
   if (typeof game === "undefined" || !game) return false;
   if (game.dungeonRun && game.dungeonRun.active) return true;
   if (game.adventureQuestRun && game.adventureQuestRun.active) return true;
-  if (game.huntRun && game.huntRun.active) return true;
   if (game.livingMaps && game.livingMaps.fight) return true;
   return false;
 }

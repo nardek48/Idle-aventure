@@ -108,7 +108,7 @@
     var c = combatValues();
     var k = function (ico, lbl, val) { return '<span class="hs-kstat">' + img("images/Icons/combat_stats/" + ico + ".webp") + '<b>' + val + '</b><small>' + esc(lbl) + '</small></span>'; };
     return '<button type="button" class="hs-kstrip" onclick="openHerosSheet(\'stats\')">'
-      + k("stat_health", _t("PV"), num(c.hp)) + k("stat_attack", _t("Attaque"), num(c.atk)) + k("stat_defense", _t("Défense"), c.def + " %") + k("stat_critical", _t("Critique"), num(c.crit) + " %")
+      + k("stat_health", _t("PV"), num(c.hp)) + k("stat_attack", _t("Attaque"), num(c.atk)) + k("stat_defense", _t("Défense"), fmtPct(c.def)) + k("stat_critical", _t("Critique"), fmtPct(num(c.crit)))
       + '<i class="hs-chev">›</i></button>';
   }
 
@@ -129,14 +129,14 @@
     { key: "ysolt", value: "donner", icon: "images/Icons/traits/ysolt_eveillee.webp", name: _t("Ysolt éveillée"), desc: _t("Pas encore sert deux fois par combat. Elle s'use un peu.") },
     { key: "bat", value: "reveiller", icon: "images/Icons/traits/les_montes.webp", name: _t("Les montés"), desc: _t("Dans les combats de boss et d'élite, un monté se lève à tes côtés.") },
     { key: "bat", value: "laisser", icon: "images/Icons/traits/table_des_noms.webp", name: _t("La table des noms"), desc: _t("Chez Orwen, chaque jour, de la Cire consacrée.") },
-    // v3.488.0 (Montagne, montagne_05) : icônes à générer
+    // v3.488.0 (Montagne, montagne_05)
     { key: "veine", value: "soi", icon: "images/Icons/traits/veine_dans_la_lame.webp", name: _t("La veine dans la lame"), desc: _t("À la Montagne, chaque taille donne +20 % à ta lame au lieu de +15 %.") },
     { key: "veine", value: "aeswyn", icon: "images/Icons/traits/puits_chaud.webp", name: _t("Le puits chaud"), desc: _t("Chaque veine que tu tailles en combat verse une Cendre vive de plus à l'Entrepôt.") },
-    // v3.491.0 (Montagne, montagne_14 et montagne_20) : icônes à générer
+    // v3.491.0 (Montagne, montagne_14 et montagne_20)
     { key: "ouvrage", value: "donner", icon: "images/Icons/traits/ouvrage_acheve.webp", name: _t("L'ouvrage achevé"), desc: _t("Dans la Gueule, chaque vague commence avec un cran de chaleur, et chaque taille rapporte une Cendre vive de plus.") },
     { key: "droit", value: "prendre", icon: "images/Icons/traits/veine_mere.webp", name: _t("La veine-mère"), desc: _t("Au puits d'Aeswyn, chaque jour, de la Cendre vive.") },
     { key: "droit", value: "laisser", icon: "images/Icons/traits/montagne_apprend.webp", name: _t("Ce que la Montagne apprend"), desc: _t("À la Montagne, chaque cran de chaleur donne aussi +5 % à tes coups.") },
-    // v3.626.0 (Tour, choix « braise ») : icône du pot de terre (Images à générer), l'icône générique en attendant
+    // v3.626.0 (Tour, choix « braise ») : icône du pot de terre
     { key: "braise", value: "garder", icon: "images/Icons/scene/braise_aeswyn.webp", name: _t("La braise d'Aeswyn"), desc: _t("À la Tour, chaque combat gagné te rend 5 % de tes PV.") },
     { key: "braise", value: "poser", icon: "images/Icons/scene/braise_aeswyn.webp", name: _t("La braise sur le palier"), desc: _t("À la Tour, tu frappes 10 % plus fort.") }
   ];
@@ -145,7 +145,7 @@
     var on = SQ ? STORY_TRAITS.filter(function (t) { return SQ.getChoice(t.key) === t.value; }) : [];
     if (!on.length) return "";
     return '<details class="hs-traits"><summary>' + _t("Ce que tu portes") + ' <small>' + on.length + '</small></summary>'
-      + on.map(function (t) { return '<div class="hs-trait">' + img(t.icon, "hs-trait-ico") + '<span><b>' + esc(t.name) + '</b><small>' + esc(t.desc) + '</small></span></div>'; }).join("") + '</details>'; // v3.466.0 : icônes livrées
+      + on.map(function (t) { return '<div class="hs-trait">' + img(t.icon, "hs-trait-ico").replace("<img ", '<img loading="lazy" decoding="async" ') + '<span><b>' + esc(t.name) + '</b><small>' + esc(t.desc) + '</small></span></div>'; }).join("") + '</details>'; // v3.466.0 : icônes livrées ; PERF-18 : chargées en différé (−225 Ko à l'ouverture)
   }
 
   // Grand écran : les capacités du kit, avec leur rang (la fiche Capacités s'ouvre au toucher)
@@ -157,9 +157,9 @@
     var h = '<h4 class="hs-wh">' + esc(_t("Capacités")) + ' <small>' + esc(_t("Rangs {n}/{m}", { n: SR.total(), m: acts.length * SKILL_RANK_MAX })) + '</small></h4><button type="button" class="hs-wskills" onclick="openHerosSheet(\'abilities\')">';
     acts.forEach(function (a) {
       var icon = (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[a.id]) || "images/Icons/combat_actions/skill_generic.webp";
-      var cd = Number(a.cooldownRounds || 0);
+      var cd = Number(a.cooldownRounds || 0), wait = cd - 1; // v3.689.0 (COMB-20) : recharge N = N − 1 rounds d'attente (décompte en fin de round)
       h += '<span class="hs-wsk">' + renderIconOrEmojiHTML(icon, "hs-wsk-ico", "") + '<b>' + esc(a.label ? _td(a.label) : a.id) + '</b>'
-        + '<small>' + esc(cd ? _tn(cd, "recharge {n} round", "recharge {n} rounds") : _t("défense")) + '</small>'
+        + '<small>' + esc(!cd ? _t("défense") : wait > 0 ? _tn(wait, "recharge {n} round", "recharge {n} rounds") : _t("sans recharge")) + '</small>'
         + '<em' + (SR.status(a.id) === "ok" ? ' class="is-go"' : '') + '>' + esc(_t("rang {a} / {b}", { a: SR.get(a.id), b: SR.maxRank() })) + '</em></span>';
     });
     return h + '</button>';
@@ -174,7 +174,7 @@
     var h = '<h4 class="hs-wh">' + esc(_t("Compagnons")) + ' <small>' + esc(_t("{n} avec toi", { n: ids.length })) + '</small></h4><div class="hs-wcomp">';
     ids.forEach(function (id) {
       var def = getCompanionDef(id), mx = Math.max(1, CM.maxHpOf(id)), cur = CM.hpOf(id);
-      h += '<button type="button" class="hs-wc" onclick="setHerosSubTab(\'companions\')">' + renderIconOrEmojiHTML(def.image, "hs-wc-img", "") + '<b>' + esc(_td(def.name)) + '</b>'
+      h += '<button type="button" class="hs-wc" onclick="setHerosSubTab(\'companions\')">' + smallPortraitHTML(def.image, "hs-wc-img", "") + '<b>' + esc(_td(def.name)) + '</b>'
         + (def.skill ? '<small>' + esc(_td(def.skill.name)) + '</small>' : '') + '<span class="hs-wc-bar"><i style="width:' + Math.round(100 * Math.max(0, Math.min(1, cur / mx))) + '%"></i></span></button>';
     });
     return h + '</div>';
@@ -357,7 +357,7 @@
     }
     h += '</div><span class="hs-bagcap"><b>' + n + '</b> / ' + cap + '<small>' + _t("objets") + '</small></span>';
     // v3.429.21 : l'Autovente sort du menu (elle était coupée sous la barre du bas sur iPhone)
-    h += '<button type="button" class="hs-bag-auto" onclick="openInventorySettings()"><img src="images/Icons/system/auto_sell.webp" alt="">' + _t("Autovente") + '</button></div>';
+    h += '<button type="button" class="hs-bag-auto" onclick="openInventorySettings()"><img src="images/Icons/system/auto_sell.webp" alt="">' + _t("Auto-offrande") + '</button></div>';
     var es = bagEntries(bagFilter);
     var eqs = es.filter(function (e) { return e.type === "equipment"; }), pots = es.filter(function (e) { return e.type === "potion"; });
     if (eqs.length) h += '<div class="ksec"><span>' + _t("Équipement") + '</span></div><div class="wh-grid hs-bgrid">' + eqs.map(bagTileHTML).join("") + '</div>';
@@ -417,13 +417,21 @@
     return h + '</div></div>';
   }
 
+  /* v3.704.0 (C13, Seb A) : ce qui limite le prochain point, texte de v3.458.3 (niveau, ou plafond de l'acte et réserve). */
+  function talentBarCapText(TM, cap) {
+    var a = TM.spent(), b = isFinite(cap) ? cap : "∞";
+    if (TM.earned() < cap) return _t("{a} / {b} placés · le prochain au niveau {n}", { a: a, b: b, n: Number(game.heroLevel || 1) + 1 });
+    var r = TM.reserve();
+    return _t("{a} / {b} placés · plafond de l'acte", { a: a, b: b }) + (r > 0 ? " · " + _t("{n} en réserve", { n: r }) : "");
+  }
+
   function buildHerosTalentTreeHTML() {
     var TM = window.TalentManager;
     if (!TM || !TM.getTree()) return '<div class="pc-empty">' + _t("Talents indisponibles.") + '</div>';
     var t = TM.getTree(), gate = window.TALENT_TRUNK_GATE || 2;
     var av = TM.available(), cap = TM.cap(), cls = TM.getClassId ? TM.getClassId() : "knight";
     var h = '<div class="hst-bar"><span class="hst-bar-pts"><b>' + av + '</b> ' + esc(_tn(av, "point à placer", "points à placer")) + '</span>'
-      + '<span class="hst-bar-cap">' + esc(_t("{a} / {b} placés", { a: TM.spent(), b: isFinite(cap) ? cap : "∞" })) + '</span>'
+      + '<span class="hst-bar-cap">' + esc(talentBarCapText(TM, cap)) + '</span>'
       + '<button type="button" class="hst-bar-reset" onclick="respecTalents()"' + (TM.spent() ? '' : ' disabled') + ' aria-label="' + esc(_t("Réinitialiser")) + '">↺</button></div>';
     var C = TM.getCommand(), open = C && TM.commandOpen(), V = window.TALENT_TOWER || null, openV = !!V && TM.towerOpen();
     if ((talentMode === "cmd" && !open) || (talentMode === "tour" && !openV)) talentMode = "classe";
@@ -482,7 +490,7 @@
       h += '<div class="hs-comp"><button type="button" class="hs-comp-head" onclick="herosOpenCompanion(\'' + id + '\')">'
         + img(def.image, "hs-comp-pt") + '<span class="hs-comp-txt"><b>' + esc(_td(def.name)) + '</b><small>' + esc(role) + ' · ' + _t("Dégâts") + ' ' + num(stats.damage) + '</small>'
         + '<span class="hs-comp-st is-' + s.tone + '">' + esc(s.txt) + '</span></span><i class="hs-chev">›</i></button>'
-        + '<div class="hs-comp-row"><div class="kgauge kgauge-thin hs-comp-hp"><div class="kgauge-track"><div class="kgauge-fill" style="width:' + pct.toFixed(1) + '%"></div></div><span class="kgauge-text">' + num(Math.ceil(hp)) + ' / ' + num(stats.maxHp) + ' ' + _t("PV") + '</span></div>';
+        + '<div class="hs-comp-row"><div class="kgauge kgauge-thin hs-comp-hp"><div class="kgauge-track"><div class="kgauge-fill" style="width:' + pct.toFixed(1) + '%"></div></div><span class="kgauge-text" title="' + esc(_t("PV")) + '">' + num(Math.ceil(hp)) + ' / ' + num(stats.maxHp) + '</span></div>'; // audit CPL2-9 : sans « PV », tient dans 82 px à 320 px
       if (!(window.PatrolManager && PatrolManager.isOnPatrol(id))) {
         h += '<div class="kseg cp-seg"><button type="button" class="' + (st.present ? 'is-on' : '') + '" onclick="companionSetPresent(\'' + id + '\', true)">' + _t("Avec toi") + '</button>'
           + '<button type="button" class="' + (!st.present ? 'is-on' : '') + '" onclick="companionSetPresent(\'' + id + '\', false)">' + _t("Au camp") + '</button></div>';

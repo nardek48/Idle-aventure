@@ -1,6 +1,6 @@
 "use strict";
 /* systems/mission-board-system.js — v3.103.0 (P4) : MissionBoard, façade commune au-dessus des moteurs de quêtes existants
-   (story-quest, world-quest, adventure-quest, hunt-quest, dungeon, exploration-engine/mining/well). Ne remplace AUCUN de ces
+   (story-quest, world-quest, adventure-quest, dungeon, exploration-engine/mining/well). Ne remplace AUCUN de ces
    moteurs (protégés ou non) : elle les LIT et normalise leur état en objets « mission » de forme unique pour l'UI (LIGNE_DIRECTRICE
    §3). Aucune mutation de jeu ici — accept/launch/claim/abandon délèguent au manager d'origine. Détail des champs : voir Mission ci-dessous.
 
@@ -25,11 +25,11 @@ var EXPLORATION_BOARD_BLURBS = {
 var MISSION_TYPE_ICON = { combat: "images/Icons/quests/mission_combat.webp", expedition: "images/Icons/quests/mission_exploration.webp", chasse: "images/Icons/quests/mission_hunt.webp", donjon: "images/Icons/quests/mission_dungeon.webp", production: "images/Icons/quests/mission_construction.webp" }; // v3.108.0 : production (Les fondations)
 
 /* v3.131.0 (retour Seb) : cap de 3 quêtes actives simultanées, toutes sources non-Histoire
-   confondues (village/workshop/scene/adventure/hunt) — Donjon et Petite Aventure exclus
+   confondues (village/workshop/scene/adventure) — Donjon et Petite Aventure exclus
    (activités courtes à lancement direct, pas des quêtes qu'on "garde en attente"), worldExpedition
    exclue aussi (jamais d'étape d'acceptation, toujours active dès son apparition, comme l'Histoire). */
 var ACTIVE_QUEST_CAP = 3;
-var ACTIVE_QUEST_CAP_SOURCE_KINDS = ["village", "workshop", "scene", "adventure", "hunt"];
+var ACTIVE_QUEST_CAP_SOURCE_KINDS = ["village", "workshop", "scene", "adventure"];
 
 /* v3.107.1 : une quête secondaire (aventure/chasse) référencée par l'étape Histoire COURANTE et
    ACCEPTÉE (linkTo.section "adventure", cardId "adv_"+questId) est mise en évidence sur le tableau
@@ -132,6 +132,8 @@ var MissionBoard = {
     var cardId = String((!tab && !linkTo.beforeGo && linkTo.cardId) || "");
     var target = /^(adv_|petite_aventure_)/.test(cardId) ? this.getById(cardId) : null;
     var dungeon = tab === "dungeon" && !linkTo.afterGo ? (window.DUNGEONS || []).find(function (d) { return d.worldId === chapterId; }) : null;
+    // v3.684.0 (QUET-2) : quête liée verrouillée (compagnon absent du groupe) -> la raison, puis l'écran Quêtes
+    if (target && target.lockLabel && typeof showToast === "function") showToast(target.lockLabel, 2200);
     if (target && target.status === "available" && target.accept && typeof campMissionAction === "function") campMissionAction(cardId, "accept");
     else if (target && target.status === "running" && target.launch) target.launch();
     else if (dungeon && typeof openDungeonSheet === "function" && window.DungeonManager && DungeonManager.isUnlocked(dungeon.id)) {
@@ -169,10 +171,11 @@ var MissionBoard = {
       if (quest.type === "elite") {
         if (!isRunning && !isEliteQuestUnlocked(quest)) return;
       } else if (!isRunning && quest.category !== "main" && !isStoryLinkedQuest(quest.id)) return;
-      // v3.428.0 (Ruines, ruines_03) : une quête qui exige un compagnon dans le groupe
-      if (!isRunning && quest.requiresParty && window.CompanionManager && CompanionManager.partyIds().indexOf(quest.requiresParty) === -1) return;
+      // v3.428.0 (ruines_03) : quête qui exige un compagnon dans le groupe ; v3.684.0 (QUET-2) : gardée, verrouillée, avec sa raison
+      var lack = !isRunning && quest.requiresParty && window.CompanionManager && CompanionManager.partyIds().indexOf(quest.requiresParty) === -1
+        ? getCompanionDef(quest.requiresParty) : null;
       var stepsDone = quest.steps.filter(function (s) { return AdventureQuestManager.isStepComplete(quest, s); }).length;
-      var status = isRunning ? "running" : (running ? "locked" : "available");
+      var status = isRunning ? "running" : ((running || lack) ? "locked" : "available");
       var m = {
         id: "adv_" + quest.id, sourceKind: "adventure", questId: quest.id, worldId: quest.worldId, // v3.247.0 : questId pour le pronostic
         title: _td(quest.name), blurb: _td(quest.story || ""),
@@ -182,6 +185,7 @@ var MissionBoard = {
         status: status, isMain: quest.category === "main" || isStoryLinkedQuest(quest.id),
         isElite: quest.type === "elite" // v3.205.0 (E5)
       };
+      if (lack) m.lockLabel = _t("Il faut {x} dans le groupe", { x: _td(lack.name) });
       if (status === "available") {
         m.accept = function () {
           // v3.205.0 (E5) : les élites sont HORS du cap de 3 quêtes actives, comme
@@ -196,64 +200,6 @@ var MissionBoard = {
       if (status === "running") {
         m.launch = function () { if (typeof switchTab === "function") switchTab("combat"); };
         m.abandon = function () { return AdventureQuestManager.forfeit(); };
-      }
-      out.push(m);
-    });
-    return out;
-  },
-
-  /* ---------- Chasse (lots répétables) ---------- */
-  _huntMissions: function () {
-    if (!window.HuntQuestManager) return [];
-    var self = this;
-    var quests = HuntQuestManager.getAllQuests();
-    var running = HuntQuestManager.getRunningQuest();
-    var out = [];
-    quests.forEach(function (quest) {
-      if (quest.id === "hq_forest_boar" && !(game.explorationProgression && game.explorationProgression.huntBuildingUnlocked)) return;
-      /* v3.236.0 : « Ce que les bêtes ont bu » se déroule au Cœur de la forêt.
-         Elle s'ouvre donc quand le Cœur s'ouvre, c'est-à-dire à la fin de
-         « Prouver sa valeur » (aq_forest_expedition, gatesTransitionTo: 1) —
-         le même événement qui autorise le joueur à y aller. */
-      if (quest.id === "hq_forest_seve" && !(game.adventureQuestsCompleted && game.adventureQuestsCompleted.aq_forest_expedition)) return;
-      var isRunning = !!(running && running.id === quest.id);
-      /* v3.264.0 (décision Seb) : la Battue s'ouvre avec le Village (« La meute affamée ») —
-         c'est Aldric qui paie, et le Roi des marais ne bloque plus personne (sim/roi-marais-bench.js).
-         Une battue déjà lancée reste visible pour pouvoir la suivre. */
-      if (quest.id === "hq_forest_battue" && !isRunning && !(game.unlockedTabs && game.unlockedTabs.village)) return;
-      // v3.356.0 (D2) : la Battue du Désert s'ouvre à l'arrivée au Désert (étape desert_01)
-      if (quest.id === "hq_desert_battue" && !isRunning && !(game.explorationProgression && game.explorationProgression.desertCrossingCompleted)) return;
-      var status = isRunning ? "running" : (running ? "locked" : "available");
-      var inLot = isRunning ? Number((game.huntRun && game.huntRun.killsInLot) || 0) : 0;
-      var m = {
-        id: "hunt_" + quest.id, sourceKind: "hunt", questId: quest.id, worldId: quest.worldId, // v3.247.0 : questId pour le pronostic
-        title: _td(quest.name), blurb: _td(quest.story || ""),
-        type: "chasse", place: missionWorldName(quest.worldId) || "",
-        objectiveLabel: _t("Lot de {n}", { n: quest.lotSize }), progressLabel: isRunning ? (inLot + "/" + quest.lotSize) : "",
-        // v3.207.0 : une battue affiche sa prime, pas un taux de drop.
-        // v3.236.0 : et un taux de drop nomme sa RESSOURCE — « 3 % par kill »
-        // ne disait pas de quoi, maintenant qu'il y a deux chasses à ressource.
-        rewardSummary: quest.rewardGold
-          ? _t("{n} or par lot", { n: formatNumber(quest.rewardGold) })
-          : (quest.resourcePool && quest.resourcePool.length > 1
-            // v3.260.0 : chasse à ressources multiples — le taux global et la famille, pas six noms
-            ? _t("{p} % de ressource de base par kill", { p: quest.dropChancePct })
-            : _t("{p} % de {x} par kill", { p: quest.dropChancePct,
-               x: (((window.WAREHOUSE_RESOURCES || {})[quest.resourceKey] || {}).name) ? _td(WAREHOUSE_RESOURCES[quest.resourceKey].name) : _t("butin") })),
-        badge: "contract", status: status, isMain: false
-      };
-      if (status === "available") {
-        m.accept = function () {
-          if (self.isActiveQuestCapReached()) {
-            self.showActiveQuestCapToast();
-            return;
-          }
-          if (typeof openHuntQuestIntro === "function") openHuntQuestIntro(quest.id);
-        };
-      }
-      if (status === "running") {
-        m.launch = function () { if (typeof switchTab === "function") switchTab("combat"); };
-        m.abandon = function () { return HuntQuestManager.stop(); };
       }
       out.push(m);
     });
@@ -537,7 +483,8 @@ var MissionBoard = {
         id: "scene_" + templateId, sourceKind: "scene", worldId: template.worldId || null, // v3.301.0 : monde du canevas
         title: _td(template.title), blurb: EXPLORATION_BOARD_BLURBS[legacyId] || "",
         type: "expedition", place: "", objectiveLabel: "", progressLabel: isRunning ? _t("En cours") : "",
-        rewardSummary: "", badge: "contract", status: isRunning ? "running" : (accepted ? "accepted" : "available"), isMain: false
+        rewardSummary: "", badge: "contract", status: isRunning ? "running" : (accepted ? "accepted" : "available"), isMain: false,
+        entryCost: isRunning ? null : (template.entryCost || null) // audit SUIV-11 (ERG-5 point 2) : coût du départ sur la carte
       };
       // v3.289.0 : dotation de l'intendant affichée sur les quêtes qui ouvrent un bâtiment
       var unlockSpec = template.unlockOnSuccess;
@@ -685,7 +632,7 @@ var MissionBoard = {
   list: function (opts) {
     var self = this;
     var groups = [this._storyMissions(), // v3.299.0 (W-1c) : questlines de monde retirées
-      this._adventureMissions(), this._huntMissions(), this._dungeonMissions(), this._sceneMissions(), this._workshopMissions(),
+      this._adventureMissions(), this._dungeonMissions(), this._sceneMissions(), this._workshopMissions(),
       this._villageMissions(), this._petiteAventureMissions(), this._labyrinthMissions()]; // v3.434.0 : le Labyrinthe aux leviers // v3.116.0 : _contractMissions (journalières) retirées
     var all = [].concat.apply([], groups);
     var rank = { story: 0 }; // l'Histoire garde toujours le rang 0 (colonne vertébrale, LIGNE_DIRECTRICE §3)

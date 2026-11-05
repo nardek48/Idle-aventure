@@ -25,8 +25,7 @@
      la Fonderie paient en partie avec leur propre extrant (Planche/Lingot) — pas un
      problème pour Seb, contrairement à la règle "jamais la propre PRODUCTION BRUTE du
      bâtiment" qui s'applique elle aux zones (bois/blé/etc.), pas aux ressources craftées.
-   - Multiplicateur de coût par niveau ×1.40 (les zones sont passées à ×1.15 en v3.507 : courbes distinctes).
-   Détail : COMMENTAIRES_ORIGINAUX.md */
+   - Multiplicateur de coût par niveau ×1.40 (les zones sont passées à ×1.15 en v3.507 : courbes distinctes). */
 
 var WORKSHOP_LEVEL_CONFIG = {
   maxLevel: 5,

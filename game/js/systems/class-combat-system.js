@@ -3,7 +3,7 @@
    v3.102.0 (P2) : tout en ROUNDS. useSkill() = une action de round ; chooseRoundAction() = décision Grimoire/repli
    (exécutée par CombatEngine.tickRoundClock en mode Grimoire, suggérée en Tactique) ; onRoundEnd() = cooldowns + mana passif + défense. */
 var CLASS_ACTION_ICON_FALLBACK = {
-  vein_cut: "images/Icons/combat_actions/vein_cut.webp", // v3.487.0 (Montagne) : Tailler, icône à générer
+  vein_cut: "images/Icons/combat_actions/vein_cut.webp", // v3.487.0 (Montagne) : Tailler
   // v3.458.2 (audit C2) : images des attaques de base, livrées en v3.465.2
   knight_basic: "./images/Icons/special_attacks/basic_knight.webp",
   archer_basic: "./images/Icons/special_attacks/basic_archer.webp",
@@ -72,6 +72,7 @@ function getArchetypeEffectConditionId(action) {
 }
 
 window.ARCHETYPE_EFFECT_TO_ARCHETYPE = ARCHETYPE_EFFECT_TO_ARCHETYPE;
+window.ARCHETYPE_EFFECT_TO_CONDITION_ID = ARCHETYPE_EFFECT_TO_CONDITION_ID;
 
 window.getArchetypeEffectConditionId = getArchetypeEffectConditionId;
 
@@ -99,6 +100,9 @@ var ClassCombatManager = {
     this.ensure();
     var classId = this.getCurrentClassId();
     if (!classId) return null;
+    // v3.689.0 (COMB-21) : ressource abîmée (texte, absente) : remise à 0 plutôt que bloquée à jamais
+    var rs = game.classResource, cur = rs ? rs.current : 0;
+    if (rs && (typeof cur !== "number" || !isFinite(cur))) rs.current = (cur != null && isFinite(Number(cur))) ? Number(cur) : 0;
 
     if (!game.classResource || game.classResource.classId !== classId) {
       game.classResource = (typeof createCombatResourceState === "function") ? createCombatResourceState(classId) : null;
@@ -249,8 +253,10 @@ var ClassCombatManager = {
         } else if (!affordable) {
           CombatReportManager.logFailedAttempt(slot, "resource");
         }
-      } else if (hasCounters && !matchedConditionId) {
-        CombatReportManager.logCounterMissed(slot);
+      } else if (hasCounters && !matchedConditionId && game.enemy && (game.enemy.chargeTelegraphed || game.enemy.shieldTelegraphed
+        || game.enemy.healTelegraphed || game.enemy.silenceTelegraphed || game.enemy.surgeTelegraphed)) {
+        CombatReportManager.logCounterMissed(slot); // v3.689.0 (COMB-10) : « raté » seulement face à une annonce non contrée
+
       }
     }
 
@@ -633,7 +639,8 @@ var ClassCombatManager = {
     if (!resourceState) return null;
 
     var grimoireContext = this.getGrimoireCombatContext();
-    if (avoid) grimoireContext.avoidSlots = avoid;
+    // v3.695.0 (COMB-2) : un contre n'est jamais évité par « Varier »
+    if (avoid) grimoireContext.avoidSlots = avoid.filter(function (s) { return !(typeof actionCountersLiveAnnounce === "function" && actionCountersLiveAnnounce(kit.actions[s], grimoireContext)); });
 
     var unlockedSlotCount = (typeof getGrimoireSlotCount === "function")
       ? getGrimoireSlotCount(game.worldsEverReached)
@@ -664,6 +671,10 @@ var ClassCombatManager = {
     var priorityListForFallback = priorityRule
       ? priorityList.filter(function (s) { return s !== priorityRule.actionSlot; })
       : priorityList;
+    // v3.695.0 (COMB-1, Seb 05/11) : pas de Défense au repli sans annonce qu'elle contre ni PV sous 40 %
+    if (typeof isDefenseFallbackWarranted === "function" && !isDefenseFallbackWarranted(kit, grimoireContext)) {
+      priorityListForFallback = priorityListForFallback.filter(function (s) { return s !== "defense"; });
+    }
 
     if (forExecution && priorityRule && window.CombatReportManager && typeof canUseAction === "function") {
       var excludedAction = kit.actions[priorityRule.actionSlot];

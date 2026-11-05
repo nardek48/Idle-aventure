@@ -1,5 +1,5 @@
 "use strict";
-/* ui/equip-shop-view.js — sous-onglet Équipement de la Boutique (voir shop-view.js pour la bascule d'onglets). Détail : COMMENTAIRES_ORIGINAUX.md */
+/* ui/equip-shop-view.js — sous-onglet Équipement de la Boutique (voir shop-view.js pour la bascule d'onglets). */
 
 function buildEquipShopCardHTML(item) {
   if (item && item.kind === "relic") return buildRelicShopCardHTML(item); // v3.512.0
@@ -7,7 +7,7 @@ function buildEquipShopCardHTML(item) {
   var rarityLabel = (typeof RARITY_LABELS !== "undefined" && RARITY_LABELS[item.rarity]) ? _td(RARITY_LABELS[item.rarity]) : item.rarity;
   var canBuy = !item.bought && (game.gold || 0) >= item.price;
 
-  var h = '<div class="nb-purchase-card rarity-' + esc(item.rarity) + (item.bought ? ' is-bought' : '') + '">';
+  var h = '<div class="nb-purchase-card rarity-' + esc(item.rarity) + (item.bought ? ' is-bought' : '') + (canBuy ? ' affordable' : '') + '">'; // UI-11 : voile sur les seules cartes trop chères
   h += '<div class="nb-purchase-icon-col"><div class="nb-purchase-icon-slot">' + buildEquipmentIconHTML(item, "nb-purchase-icon rframe") + '</div></div>';
   h += '<div class="nb-purchase-info-col">';
   h += '<div class="nb-purchase-name rarity-' + esc(item.rarity) + '">' + esc(_td(item.name)) + '</div>';
@@ -47,7 +47,7 @@ function relicShopFit(cid, item) {
 function buildRelicShopCardHTML(item) {
   var CR = CompanionRelics, r = { f: item.f, w: item.w }, rar = CR.rarity(r), rank = CR.rank(r), monde = (window.WORLDS || [])[item.w];
   var canBuy = !item.bought && (game.gold || 0) >= item.price;
-  var h = '<div class="nb-purchase-card shop-relic rarity-' + rar + (item.bought ? ' is-bought' : '') + '"><span class="shop-relic-ribbon">' + esc(_t("Relique")) + '</span>';
+  var h = '<div class="nb-purchase-card shop-relic rarity-' + rar + (item.bought ? ' is-bought' : '') + (canBuy ? ' affordable' : '') + '"><span class="shop-relic-ribbon">' + esc(_t("Relique")) + '</span>';
   h += '<div class="nb-purchase-icon-col"><div class="nb-purchase-icon-slot shop-relic-ico"><img class="cp-relic-img" src="' + esc(CR.icon(r)) + '" alt=""><span class="shop-relic-rank">' + rank + '</span></div></div>';
   h += '<div class="nb-purchase-info-col"><div class="nb-purchase-name rarity-' + rar + '">' + esc(CR.name(r)) + '</div>';
   h += '<div class="nb-purchase-meta">' + esc(_t("Rang {n}", { n: rank })) + (monde ? ' · ' + esc(_td(monde.name)) : '') + '</div>';

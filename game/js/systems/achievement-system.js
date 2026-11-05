@@ -55,7 +55,7 @@ var AchievementManager = {
   },
 
   getProgress: function (ach) {
-    try { return Number(ach.track()) || 0; } catch (e) { return 0; }
+    try { return Number(ach.track()) || 0; } catch (e) { noteErreur("achievement-system.getProgress", e); return 0; } // ARCH-14
   },
 
   /* Obtenu : déjà atteint une fois, déjà réclamé, ou atteint maintenant. */

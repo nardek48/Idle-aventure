@@ -6,14 +6,6 @@
    variantes) a été retiré — remplacé par le rappel compact sous le
    panneau de détail (.eq-detail-setbonus, voir plus bas). */
 
-.eq-layout {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  align-items: center;
-  min-height: 100%;
-}
-
 /* v2.83.20 : .eq-hero-card repeint en thème parchemin (tokens
    --nb-*) — portait un vieux fond bleu marine (rgba(15,23,42,...))
    datant d'avant la migration parchemin v2.31, jamais nettoyé après
@@ -24,40 +16,17 @@
    css/00-components.css — plus de duplication de la technique de
    bordure ici, ne reste que ce qui est vraiment spécifique à cet
    écran (largeur max, flex pour le layout interne). */
-.eq-hero-card {
-  flex: 1 1 auto;
-}
 
 /* v2.83.20 : .eq-hero-topbar/-level/-name/-left/-avatar/-portrait*
    supprimées d'ici — mortes depuis le retrait du portrait de héros de
    cet écran en v2.24 (doublon avec l'onglet Personnage), aucun JS ne
    les génère plus. */
 
-.eq-hero-main {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.eq-hero-right {
-  flex: 0 0 50%;
-  width: 50%;
-  display: flex;
-  gap: 8px;
-}
-
 /* v2.83.20 : structure a 3 colonnes EXPLICITES demandee - plus de
    grille qui "wrap" toute seule (trop fragile, ecrasee par la media
    query mobile dans les versions precedentes). Colonne 1 = 4
    emplacements empiles, colonne 2 = 3 emplacements empiles, chacune
    flex:1 (soit 25% de la largeur totale du panel, 50%/2). */
-.eq-slot-col {
-  flex: 1 1 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 0;
-}
 
 /* v3.164.0 (reconstruction .rframe, voir css/00-rframe.css) :
    - aspect-ratio 1/1 -> 299/318 (ratio réel des cadres du kit), pour
@@ -71,42 +40,8 @@
      signalé par Seb (la boîte du conteneur ne correspond plus au cadre
      visuel depuis que le cadre est sur l'enfant). La sélection est
      dessinée par 00-rframe.css sur le cadre lui-même. */
-.eq-hero-right .eq-orbit-slot {
-  position: relative;
-  top: auto !important;
-  left: auto !important;
-  right: auto !important;
-  bottom: auto !important;
-  transform: none !important;
-  width: 100%;
-  /* v3.237.0 : 299/318 (ratio des cadres) -> 1/1, le cadre est retiré et
-     l'icône ronde occupe toute la case, comme dans le sac. */
-  aspect-ratio: 1 / 1;
-  min-height: 0;
-  padding: 0;
-  border-radius: 12px;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0;
-}
-
-.eq-hero-right .eq-orbit-slot:active {
-  transform: scale(0.98) !important;
-}
 
 /* v3.237.0 : 88 % -> 100 %, la marge servait à dégager le cadre retiré. */
-.eq-hero-right .eq-orbit-slot-icon {
-  width: 100%;
-  height: 100%;
-  margin-right: 0;
-  font-size: 34px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
 
 /* v3.162.0 (retour Seb, capture avant/après) : bordure/fond/padding
    retirés du CONTENEUR .eq-orbit-slot — ils restaient visibles en trop
@@ -117,45 +52,14 @@
    rareté, juste un "+" ou un cadenas) gardent un style distinct via
    .eq-orbit-slot.empty/.locked plus bas — pas de cadre-image dans ces
    cas, donc un repli visuel reste nécessaire pour indiquer l'état. */
-.eq-orbit-slot {
-  width: 100%;
-  padding: 0;
-  text-align: center;
-  color: var(--nb-ink);
-  cursor: pointer;
-  border: none;
-  border-radius: var(--nb-radius-md);
-  background: none;
-  transition: transform 0.12s ease;
-}
-
-.eq-orbit-slot:active {
-  transform: scale(0.97);
-}
-
-.eq-orbit-slot.filled {
-  background: none;
-}
 
 /* v3.237.0 : les états sans objet gardent leur repli visuel (pas
    d'icône donc rien à montrer), mais en rond pour s'aligner sur les
    médaillons des emplacements remplis. */
-.eq-orbit-slot.empty {
-  border: 2px dashed var(--nb-frame);
-  border-radius: 50%;
-  background: var(--nb-cream-alt);
-  opacity: 0.85;
-}
 
 /* v2.83.15 : emplacement réservé pour un futur type d'objet (voir
    buildLockedEquipmentSlot) — pas cliquable, distinct visuellement
    de ".empty" (qui EST cliquable, juste sans objet dessus). */
-.eq-orbit-slot.locked {
-  border: 2px dotted var(--nb-frame);
-  border-radius: 50%;
-  background: var(--nb-cream-alt);
-  opacity: 0.5;
-}
 
 /* =========================
    v2.83.16 : panneau de détail (colonne de droite, voir
@@ -525,20 +429,6 @@
    fonds de rareté et taille d'icône locaux supprimés (portés par
    .rframe, css/00-rframe.css). Ne reste que le centrage et la taille
    de l'emoji de repli/placeholder. */
-.eq-orbit-slot-icon {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  font-size: 18px;
-  line-height: 1;
-}
-
-.eq-orbit-slot-placeholder {
-  opacity: 0.55;
-}
 
 /* v3.164.0 : les définitions DUPLIQUÉES de .eq-hero-right et
    .eq-slot-col qui se trouvaient ici (copies exactes de celles du haut
@@ -621,16 +511,6 @@
    (classes conservées, encore utilisées ailleurs/dans le panneau de
    réglages).
    ========================= */
-.inv-toolbar {
-  display: flex;
-  gap: 8px;
-  margin: 0 0 12px;
-}
-
-.inv-toolbar-sort-wrap {
-  position: relative;
-  flex: 1 1 auto;
-}
 
 /* v3.184.0 : mystère du "bouton bleu" résolu — Seb désignait le bouton
    du KIT (btn-rect-normal.png, plaque bleue à liseré or, celui de tous
@@ -638,13 +518,6 @@
    été oublié par cette bascule ; il rejoint la source unique
    css/00-kbtn.css. Ne restent ici que les ajustements de la barre
    d'outils (hauteur compacte, pas de marge basse ni de centrage). */
-.inv-toolbar-btn {
-  min-height: 36px;
-  max-width: none;
-  margin-bottom: 0;
-  padding: 8px 12px;
-  font-size: 13px;
-}
 
 /* v2.83.46 : rangée de filtre Tout/Équipement/Potions, sous la
    toolbar — voir buildInventoryFilterRowHTML. */
@@ -654,47 +527,6 @@
    pour l'icône) — .inv-toolbar-sort-wrap prend le reste. */
 /* v3.242.0 : le bouton de droite porte maintenant un libellé (« Autovente »),
    il n'est donc plus dimensionné comme un carré d'icône. */
-.inv-toolbar > .inv-toolbar-btn {
-  width: auto;
-  min-width: 44px;
-  flex: 0 1 auto;
-  white-space: nowrap;
-}
-
-.inv-sort-menu {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  z-index: 5;
-  display: flex;
-  flex-direction: column;
-  border-radius: var(--nb-radius-sm);
-  border: 1px solid var(--nb-frame);
-  background: var(--nb-cream);
-  box-shadow: var(--nb-shadow-card);
-  overflow: hidden;
-}
-
-.inv-sort-menu button {
-  padding: 10px 12px;
-  border: none;
-  border-bottom: 1px solid var(--nb-frame-light);
-  background: none;
-  color: var(--nb-ink);
-  font-size: 13px;
-  font-weight: 700;
-  text-align: left;
-  cursor: pointer;
-}
-
-.inv-sort-menu button:last-child {
-  border-bottom: none;
-}
-
-.inv-sort-menu button:active {
-  background: var(--nb-cream-alt);
-}
 
 /* Panneau de réglages (overlay #full-menu-root) */
 .inv-threshold-label {
@@ -768,20 +600,6 @@
    .eq-bag-grid/.eq-bag-item (conservées telles quelles pour
    compatibilité, plus utilisées).
    ========================= */
-.eq-bag-flex {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.eq-bag-inv-grid {
-  flex: 0 0 50%;
-  width: 50%;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
-  align-content: start;
-}
 
 /* v3.158.0 : cadres slot-{rareté}.png (kit UI, Seb) remplacent le cadre
    CSS uni (nb-cream-alt + bordure colorée). 5 raretés du jeu (voir
@@ -801,61 +619,16 @@
    fond de rareté, centrage et halo de sélection viennent de
    css/00-rframe.css (potions incluses, via potion.rarity). Ne restent
    ici que les spécificités de la tuile. */
-.eq-bag-tile {
-  padding: 0;
-  border: none;
-  border-radius: 0;
-  /* v3.180.0 : background explicite pour tuer le buttonface natif des
-     <button> (le "carré gris" de la capture de Seb).
-     v3.183.0 (RÉGRESSION corrigée, vérifiée sous Playwright) : le
-     raccourci `background: none` réinitialisait AUSSI size/position
-     posés par .rframe (chargé avant) -> les PNG de cadre se peignaient
-     à leur taille NATURELLE (299px) dans des tuiles de ~50px, d'où le
-     "crop de cadre géant" derrière les icônes (capture Seb v3.182).
-     LEÇON : sur un composant qui reçoit son image d'une autre classe,
-     ne jamais utiliser le raccourci `background:` — longhand only. */
-  background-color: transparent;
-  cursor: pointer;
-}
-
-.eq-bag-tile:active {
-  transform: scale(0.97);
-}
 
 /* v2.83.45 : badge de quantité en stock, coin bas-droit des tuiles de
    potion (buildPotionTileHTML) — les tuiles d'équipement n'en ont pas
    besoin (jamais plus d'un exemplaire par objet). */
-.eq-bag-tile-stock {
-  position: absolute;
-  bottom: 6%;
-  right: 6%;
-  min-width: 16px;
-  padding: 1px 3px;
-  border-radius: 8px;
-  background: var(--nb-gold-dark);
-  color: var(--c-white-50-soft);
-  font-size: 12px;
-  font-weight: 800;
-  text-align: center;
-  line-height: 1.4;
-  z-index: 1;
-}
 
 /* v3.164.0 : la règle .eq-bag-tile.is-selected (v3.161) est déplacée
    dans css/00-rframe.css (une seule règle de sélection pour sac ET
    emplacements équipés). L'icône interne suit la variable partagée
    --rframe-icon (64 %, mesurée sur les assets — voir 00-rframe.css)
    au lieu du 52 % en dur. */
-.eq-bag-tile-icon {
-  position: relative;
-  z-index: 1;
-  width: var(--rframe-icon, 64%);
-  height: var(--rframe-icon, 64%);
-  font-size: 26px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
 
 /* =========================
    v3.233.0 (Seb, variante D) : cadre retiré dans les DEUX grilles qui
@@ -878,54 +651,8 @@
    propre à la tuile de grille (icône .eq-bag-tile-icon, qui n'est pas
    un enfant <img> direct du .rframe comme dans les 5 autres usages).
    ========================= */
-.eq-bag-inv-grid > .eq-bag-tile.rframe {
-  aspect-ratio: 1 / 1;
-  /* longhand only — le raccourci `background:` réinitialiserait
-     size/position et ferait réapparaître le PNG à sa taille naturelle
-     (régression v3.180-183, voir plus haut). */
-  background-image: none;
-}
 
-.eq-bag-inv-grid > .eq-bag-tile.rframe .eq-bag-tile-icon {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  overflow: hidden;
-}
 
-/* Icône posée directement en <img> (Entrepôt, potions) : elle n'a pas
-   le conteneur .has-icon-img qui porte object-fit, on le pose ici. */
-.eq-bag-inv-grid > .eq-bag-tile.rframe img.eq-bag-tile-icon {
-  object-fit: cover;
-}
-
-/* Halo de sélection : rond, pour épouser l'icône (00-rframe.css le
-   dessine en 12px, taillé pour un cadre carré). */
-.eq-bag-inv-grid > .eq-bag-tile.rframe.is-selected {
-  border-radius: 50%;
-}
-
-/* === Responsive === */
-
-/* v3.164.0 : références au bloc mort .eq-bag-grid/.eq-bag-main
-   retirées des media queries (bloc supprimé plus haut). */
-@media all { /* v3.367.0 : + mode PC ; v3.406.0 : règles du téléphone partout (tablette comprise) — le jeu est toujours une mise en page de téléphone */
-  .eq-hero-card {
-    padding: 12px;
-  }
-
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .eq-orbit-slot {
-    transition: none;
-  }
-
-  .eq-orbit-slot:hover,
-  .eq-orbit-slot:active {
-    transform: none;
-  }
-}
 
 /* =====================================================================
    v3.252.0 (lot B-2) — liste du sac lisible et feuille de comparaison.
@@ -933,7 +660,7 @@
    les noms étaient tronqués à une lettre et la stat passait à la ligne. Elle est
    désormais rendue en pleine largeur, sous la ligne « grille + détail ».
    ===================================================================== */
-.eq-layout .eq-compat-list { width: 100%; }
+
 .eq-compat-row { cursor: pointer; }
 /* La ligne entière ouvre le détail ; seul le bouton Équiper arrête la propagation. */
 .eq-compat-name { white-space: normal; overflow: visible; font-size: 12px; }
@@ -957,7 +684,7 @@
 .eqs-row-txt { font-size: 12.5px; font-weight: 800; color: var(--nb-ink); }
 .eqs-row-tier { font-size: 12px; color: var(--nb-ink-dim); text-transform: lowercase; }
 .eqs-row-delta { flex: 0 0 auto; font-size: 12px; font-weight: 800; }
-.eqs-row-delta.is-up { color: var(--c-green-650-vivid); }
-.eqs-row-delta.is-down { color: var(--c-red-500); }
+.eqs-row-delta.is-up { color: var(--nb-green-text); } /* UI-21 : vert et rouge de texte, lisibles sur le crème de Comparer */
+.eqs-row-delta.is-down { color: var(--ink-missing); }
 .eqs-row-delta.is-flat { color: var(--nb-ink-dim); }
 .eqs-power { margin: 8px 0 4px; }

@@ -141,7 +141,7 @@ function journalWrap(obj, name, before, after) {
     if (JournalTest.isOn()) { try { if (after) after.call(this, r, arguments, ctx); } catch (e) { noteErreur("journal-test.journalWrap", e); /* relevé seulement */ } }
     return r;
   };
-  obj[name].toString = function () { return orig.toString(); }; // les contrôles qui lisent le code voient l'original
+  obj[name]._journalOrig = orig; // audit 04/11 (ARCH-15) : l'original reste lisible, sans maquiller toString
 }
 
 function initJournalTest() {

@@ -5,7 +5,7 @@
   position: fixed;
   left: 50%;
   bottom: 120px;
-  z-index: 100;
+  z-index: 9500; /* v3.683.0 (audit NOV-10 = UI-3) : au-dessus des feuilles (3 000), sous le voile PWA (9 999) */
   max-width: 90%;
   padding: 10px 24px;
   border-radius: 999px;
@@ -222,6 +222,12 @@
   z-index: 3000;
 }
 
+/* v3.704.0 (TUTO-16) : une fiche d'aide passe devant la création du héros (fiche du Chaos), placée après elle */
+#tutorial-modal-root {
+  position: relative;
+  z-index: 3001;
+}
+
 /* v3.29 : croix ✕ pour annuler la création d'un héros dans un emplacement vide — jamais affichée au tout premier lancement (voir buildHeroPickerCloseButtonHTML, modal-view.js). */
 
 /* =========================
@@ -246,6 +252,7 @@
     padding: 10px 16px;
     font-size: 13px;
   }
+  #toast.is-top { top: 30%; bottom: auto; } /* création du héros : au-dessus de l'illustration, loin du champ du nom */
 
 }
 

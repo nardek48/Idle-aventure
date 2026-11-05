@@ -1,71 +1,82 @@
 "use strict";
 /* data/grimoire-conditions.js — catalogue de cartes-conditions du Grimoire (donnée pure, aucun accès à game.*).
-   Seuils réels dans evaluateGrimoireCondition(), combat-auto-policy-system.js. Détail complet : COMMENTAIRES_ORIGINAUX.md */
+   Seuils réels dans evaluateGrimoireCondition(), combat-auto-policy-system.js. */
 
 var GRIMOIRE_CONDITIONS = {
   chargeIncoming: {
     id: "chargeIncoming",
     label: "L'ennemi prépare une charge",
+    short: "Charge", // v3.689.0 (COMB-18) : ligne de la règle jouée, sans ellipse
     description: "Un ennemi normal s'apprête à charger.",
     icon: "images/Icons/combat_status/charge_incoming.webp"
   },
   shieldIncoming: {
     id: "shieldIncoming",
     label: "L'ennemi invoque un bouclier",
+    short: "Bouclier", // v3.689.0 (COMB-18) : ligne de la règle jouée, sans ellipse
     description: "Il va bientôt réduire les dégâts qu'il subit.",
     icon: "images/Icons/combat_status/shield_incoming.webp"
   },
   healIncoming: {
     id: "healIncoming",
     label: "Le boss va se soigner",
+    short: "Soin du boss", // v3.689.0 (COMB-18) : ligne de la règle jouée, sans ellipse
     description: "Le boss s'apprête à récupérer des PV.",
     icon: "images/Icons/combat_status/heal_incoming.webp"
   },
   eliteSurgeIncoming: {
     id: "eliteSurgeIncoming",
     label: "L'élite s'exalte",
+    short: "Exaltation", // v3.689.0 (COMB-18) : ligne de la règle jouée, sans ellipse
     description: "Sa nature va compter triple pendant quelques rounds.",
     icon: "images/Icons/combat_status/elite_surge.webp"
   },
   heroLowHp: {
     id: "heroLowHp",
     label: "Mes PV sont bas",
+    short: "PV bas", // v3.689.0 (COMB-18) : ligne de la règle jouée, sans ellipse
     description: "Tes PV sont bas.",
     icon: "images/Icons/combat_status/hero_low_hp.webp"
   },
   enemyAttackIncoming: {
     id: "enemyAttackIncoming",
     label: "L'ennemi va frapper deux fois",
+    short: "Deux frappes", // v3.689.0 (COMB-18) : ligne de la règle jouée, sans ellipse
     description: "Sa jauge de célérité sera pleine au prochain tour : il enchaînera deux coups.",
     icon: "images/Icons/combat_status/double_strike.webp"
   },
   enemyEnraged: {
     id: "enemyEnraged",
     label: "L'ennemi est enragé",
+    short: "Enragé", // v3.689.0 (COMB-18) : ligne de la règle jouée, sans ellipse
     description: "Il devient plus dangereux à mesure qu'il perd des PV.",
     icon: "images/Icons/combat_status/rage.webp"
   },
   enemyCorrupted: {
     id: "enemyCorrupted",
     label: "L'ennemi est corrompu",
+    short: "Corrompu", // v3.689.0 (COMB-18) : ligne de la règle jouée, sans ellipse
     description: "Chaque coup reçu réduit un peu tes dégâts.",
     icon: "images/Icons/combat_status/corruption.webp"
   },
   enemySilenceIncoming: {
     id: "enemySilenceIncoming",
     label: "L'ennemi va te réduire au silence",
+    short: "Silence", // v3.689.0 (COMB-18) : ligne de la règle jouée, sans ellipse
     description: "Un ennemi normal s'apprête à bloquer tes techniques.",
     icon: "images/Icons/combat_status/silence_incoming.webp"
   },
   enemyVampiric: {
     id: "enemyVampiric",
     label: "L'ennemi est vampirique",
+    short: "Vampirique", // v3.689.0 (COMB-18) : ligne de la règle jouée, sans ellipse
     description: "Il se soigne à chaque coup qu'il te porte.",
     icon: "images/Icons/combat_status/vampiric.webp"
   },
   enemyArmored: {
     id: "enemyArmored",
     label: "L'ennemi est blindé",
+    short: "Blindé", // v3.689.0 (COMB-18) : ligne de la règle jouée, sans ellipse
     description: "Il subit un peu moins de dégâts en permanence.",
     icon: "images/Icons/combat_status/armored.webp"
   },
@@ -77,28 +88,32 @@ var GRIMOIRE_CONDITIONS = {
   allyLowHp: {
     id: "allyLowHp",
     label: "Un compagnon est en danger",
+    short: "Allié blessé", // v3.689.0 (COMB-18) : ligne de la règle jouée, sans ellipse
     description: "Un de tes compagnons est tombé sous 40 % de ses PV.",
     icon: "images/Icons/combat_status/ally_low_hp.webp"
   },
   multipleEnemies: {
     id: "multipleEnemies",
     label: "Ils sont plusieurs",
+    short: "Plusieurs", // v3.689.0 (COMB-18) : ligne de la règle jouée, sans ellipse
     description: "Au moins deux ennemis sont encore debout.",
     icon: "images/Icons/combat_status/multiple_enemies.webp"
   },
   /* v3.428.0 (Ruines, relève) : un ennemi est à terre et va se relever. L'action de la règle
-     le vise (RiseSystem.aim) : une frappe l'achève. Icône à générer. */
+     le vise (RiseSystem.aim) : une frappe l'achève. */
   enemyRising: {
     id: "enemyRising",
     label: "Un ennemi se relève",
+    short: "Il se relève", // v3.689.0 (COMB-18) : ligne de la règle jouée, sans ellipse
     description: "Un ennemi est à terre et se relèvera au prochain round. Ton action le vise : une frappe l'achève.",
     icon: "images/Icons/combat_status/rising.webp"
   },
   /* v3.451.0 (Crypte, CR2) : un mort dort. L'action de la règle le vise (SleepSystem.aim) : le frapper
-     le réveille, pour plus d'or. Sans règle, on le laisse dormir. Icône à générer. */
+     le réveille, pour plus d'or. Sans règle, on le laisse dormir. */
   enemySleeping: {
     id: "enemySleeping",
     label: "Un ennemi dort",
+    short: "Il dort", // v3.689.0 (COMB-18) : ligne de la règle jouée, sans ellipse
     description: "Un mort dort encore. Ton action le vise : le frapper le réveille, et vaincu il rapporte plus d'or. Sans cette règle, tu le laisses dormir.",
     icon: "images/Icons/combat_status/asleep.webp"
   },
@@ -107,14 +122,16 @@ var GRIMOIRE_CONDITIONS = {
   allyChained: {
     id: "allyChained",
     label: "Un compagnon est enchaîné",
+    short: "Enchaîné", // v3.689.0 (COMB-18) : ligne de la règle jouée, sans ellipse
     description: "Un compagnon est enchaîné et ne joue plus. Ton action vise celui qui tient la chaîne : frappe-le fort pour la faire céder.",
     icon: "images/Icons/combat_status/chained.webp"
   },
   /* v3.487.0 (Montagne, MT2) : la veine du combat n'a pas encore été taillée. Pensée pour l'action
-     « Tailler » (une taille au premier round). Icône à générer. */
+     « Tailler » (une taille au premier round). */
   veinIntact: {
     id: "veinIntact",
     label: "Veine intacte",
+    short: "Veine intacte", // v3.689.0 (COMB-18) : ligne de la règle jouée, sans ellipse
     description: "Une veine affleure et personne ne l'a encore taillée. Avec l'action Tailler : une taille, une Cendre vive, et ta lame plus forte, contre un cran de chaleur.",
     icon: "images/Icons/combat_status/vein_intact.webp"
   }

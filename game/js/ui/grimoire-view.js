@@ -9,8 +9,7 @@
      - FICHE  : ouverte au toucher ; v3.654.0 : feuille des conditions et tuiles d'action, puis le verdict d'appariement.
    Retirés sur décision Seb : le Mode Expert (game.expertModeEnabled reste en sauvegarde, inerte)
    et les badges d'état de règle (prête / en attente / ressource insuffisante) — cette information
-   n'a de sens qu'en combat, et le Rapport de combat la couvre déjà a posteriori.
-   Détail complet : COMMENTAIRES_ORIGINAUX.md */
+   n'a de sens qu'en combat, et le Rapport de combat la couvre déjà a posteriori. */
 
 /* État d'écran volontairement NON persisté (aucun nouveau champ dans save-system.js) :
    quelle règle est ouverte et quelle feuille est déployée n'a pas d'intérêt d'une session

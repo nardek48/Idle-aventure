@@ -141,8 +141,7 @@ var TalentManager = {
   /* ---------- Achat et remise à zéro (T6 : gratuite, hors run) ---------- */
   runLockReason: function () {
     if (typeof heroLockReason === "function" && heroLockReason()) return heroLockReason();
-    var busy = (game.dungeonRun && game.dungeonRun.active) || (game.huntRun && game.huntRun.active)
-      || (game.adventureQuestRun && game.adventureQuestRun.active);
+    var busy = (game.dungeonRun && game.dungeonRun.active) || (game.adventureQuestRun && game.adventureQuestRun.active);
     return busy ? _t("Termine ta sortie en cours d'abord.") : null;
   },
 
