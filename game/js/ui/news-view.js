@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.714.0", "menu_icons/menu_menu", _t("Le cadre du haut et la barre du bas s'alignent sur les cartes : 4 px du bord de l'écran.")],
     ["3.713.0", "special_attacks/attack4", _t("Rôdeur : en combat auto et dans le conseil doré (Grimoire sans règle), Tir perforant passe en priorité dès qu'il est prêt, et la Concentration est gardée pour lui. Contres d'annonce, Défense et règles de ton Grimoire passent toujours devant.")],
     ["3.712.0", "menu_icons/menu_menu", _t("Bandeau du haut sans bordure noire autour du cadre ; sous l'onglet choisi, un filet lumineux et son losange remplacent l'ancienne lueur.")],
     ["3.711.0", "menu_icons/menu_menu", _t("Bandeau du haut et barre du bas plus nets : les pièces de Seb sont détourées proprement (plus de liseré clair) et les icônes du bas n'ont plus de fond.")],

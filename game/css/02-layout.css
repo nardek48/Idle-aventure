@@ -128,7 +128,7 @@ html:not(.wide-mode) .hud-band > :not(.hk) { display: none; }
 html:not(.wide-mode) .hk { display: block; position: relative; width: 100%; aspect-ratio: 390 / 87; }
 .hk-in { position: absolute; left: 0; right: 0; top: 0; height: 114.94%; font-family: "Alegreya", Georgia, serif; color: var(--c-cream-100-2); }
 .hk-in > * { position: absolute; }
-.hk-plate { left: 1.7%; right: 1.2%; top: -9%; height: 106%; background: url('../images/UI/coque/plaque.webp') center / 100% 100% no-repeat; pointer-events: none; }
+.hk-plate { left: calc(4px - 0.35%); right: calc(4px - 0.18%); top: -9%; height: 106%; background: url('../images/UI/coque/plaque.webp') center / 100% 100% no-repeat; pointer-events: none; }
 /* Portrait : ouvre Héros › Résumé ; l'anneau passe par-dessus le cadre */
 .hk-ring { left: 4.2%; top: -1%; width: 22.5%; aspect-ratio: 1; z-index: 4; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer; }
 .hk-ring img { position: absolute; inset: 8.5%; width: 83%; height: 83%; border-radius: 50%; object-fit: cover; object-position: 50% 18%; }
@@ -678,7 +678,7 @@ html:not(.wide-mode) #panel-container .kfp-scrollzone::after { content: ""; disp
 /* v3.710.0 (atelier kit-coque-3, Seb 05/11) : barre du bas du téléphone avec le panneau et les icônes
    du kit de Seb (images/UI/coque/), libellé sous l'icône, halo qui monte du bord sous l'onglet actif.
    v3.711.0 : icônes détourées (fond transparent), plus de masque radial. */
-html:not(.wide-mode) #tab-bar { width: min(404px, 94%); aspect-ratio: 1014 / 229; background-image: url('../images/UI/coque/barre.webp'); }
+html:not(.wide-mode) #tab-bar { width: min(386px, calc(100% - 6px)); aspect-ratio: 1014 / 229; background-image: url('../images/UI/coque/barre.webp'); }
 html:not(.wide-mode) #tab-bar-row { top: 17%; bottom: 14%; left: 4.5%; right: 4.5%; gap: 0; }
 html:not(.wide-mode) #tab-bar .tab-btn:not(.tab-wide) + .tab-btn:not(.tab-wide)::before { content: ""; position: absolute; left: 0; top: 12%; bottom: 12%; width: 1px; background: linear-gradient(transparent, rgba(226, 177, 74, 0.55), transparent); }
 html:not(.wide-mode) .tab-icon-frame { background: none; flex-direction: column; overflow: visible; }
