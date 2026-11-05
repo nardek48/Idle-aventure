@@ -444,7 +444,7 @@ html:not(.wide-mode) #panel-container :is(.kfp-scrollzone, .subtab-page-content)
 }
 
 /* =========================
-   Barre d'onglets — v3.152.0 : cadre menu-bar-gold.png (Seb, ratio réel ; WebP 2032 px depuis v3.448.3, même ratio
+   Barre d'onglets — v3.152.0 : cadre menu-bar-gold.png (Seb, ratio réel ; WebP 2032 px depuis v3.448.3, 1 536 px depuis PERF-12 (430 px × 3, tablette), même ratio
    4064/971), remplace menu-principal.png. Les 5 emplacements de bouton
    sont positionnés dans la zone "ardoise" du cadre (hors bordure dorée et
    têtes de dragon), mesurée par scan de pixels sur l'asset réel :

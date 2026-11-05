@@ -15144,7 +15144,7 @@ console.log("\n[224] v3.448.1 — Précache : index.html et sw.js concordent");
   var html = fs.readFileSync(path.join(ROOT, "index.html"), "utf8");
   var sw = fs.readFileSync(path.join(ROOT, "sw.js"), "utf8");
   var re = /(?:src|href)="(?:\.\/)?((?:js|css)\/[^"?#]+)"/g, m, absents = [], n = 0;
-  while ((m = re.exec(html))) { n++; if (sw.indexOf('"./' + m[1] + '"') === -1) absents.push(m[1]); }
+  while ((m = re.exec(html))) { n++; if (sw.indexOf('"./' + m[1] + '"') === -1 && m[1] !== "js/lang/en.js") absents.push(m[1]); } // PERF-13 : en.js précaché par la page en anglais
   ok(n > 200, "index.html charge " + n + " scripts et feuilles");
   ok(absents.length === 0, "tous sont précachés" + (absents.length ? " — absents : " + absents.join(", ") : ""));
   var pre = sw.match(/"\.\/((?:js|css)\/[^"]+)"/g) || [], fantomes = [];
@@ -15257,7 +15257,7 @@ console.log("\n[228] v3.448.4 — Dictionnaire anglais chargé seulement en angl
   var list = require(path.join(__dirname, "index-scripts.js"))(ROOT);
   var iI = list.indexOf("js/core/i18n.js"), iE = list.indexOf("js/lang/en.js");
   ok(iI !== -1 && iE === iI + 1, "les outils voient en.js juste après i18n.js");
-  ok(fs.readFileSync(path.join(ROOT, "sw.js"), "utf8").indexOf('"./js/lang/en.js"') !== -1, "en.js reste précaché (bascule hors-ligne)");
+  ok(/var LANG_EN_URL = "\.\/js\/lang\/en\.js"/.test(fs.readFileSync(path.join(ROOT, "sw.js"), "utf8")), "en.js gardé par le service worker à la demande de la page (PERF-13)");
 })();
 
 /* [229] v3.448.5 — lisibilité (atelier/lisibilite.html, validé par Seb) : contrastes 4,5:1 sur le parchemin,
@@ -23208,6 +23208,57 @@ console.log("\n[455] v3.690.0 — Anglais, accessibilité et finitions (audit 04
     ok(!/prod-status-|Plein dans \{d\}|"Stock plein"/.test(rd("js/systems/production-system.js") + rd("js/ui/production-view.js")) && !/"Plein dans \{d\}"|"Stock plein"/.test(enSrc), "finition : statut « Plein dans » (aucun élément prod-status-) retiré, clés anglaises comprises");
   } catch (err) { ok(false, "[455] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   g.I18n._lang = null;
+})();
+
+/* [456] v3.691.0 — Images et premier lancement (audit 04/11, lot A3) : PERF-9 à 14, PERF-18. */
+console.log("\n[456] v3.691.0 — Images et premier lancement (audit 04/11, lot A3)");
+(function () {
+  var rd = function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); };
+  var info = function (f) { return imgInfo(fs.readFileSync(path.join(ROOT, f))); };
+  var walk = function (d, out) { fs.readdirSync(path.join(ROOT, d)).forEach(function (n) { var f = d + "/" + n; if (fs.statSync(path.join(ROOT, f)).isDirectory()) walk(f, out); else out.push(f); }); return out; };
+  try {
+    // PERF-9 : plus aucun WebP sans perte (27 images d'interface ré-encodées, mêmes dimensions)
+    var ll = walk("images", []).filter(function (f) { if (!/\.webp$/.test(f)) return false; var b = fs.readFileSync(path.join(ROOT, f)).slice(0, 4096).toString("latin1"); return b.indexOf("VP8L") !== -1 && b.indexOf("VP8 ") === -1; });
+    var ecr = info("images/Borders/ecrantext2.webp"), cadre = info("images/UI/frames/page/Cadre_Haut.webp");
+    ok(ll.length === 0 && ecr.w === 686 && ecr.h === 825 && ecr.a && cadre.w === 1604 && fs.statSync(path.join(ROOT, "images/UI/textures/bg-moss-stone.webp")).size < 100000, "PERF-9 : aucun WebP sans perte, dimensions et transparence gardées (" + ll.join(", ") + ")");
+    // PERF-12 : barre d'onglets à 1 536 px (430 px × 3 = 1 290 ; tablette en colonne 1 376)
+    var bar = info("images/Borders/menu-bar-gold.webp");
+    ok(bar.w >= 1376 && Math.abs(bar.w / bar.h - 4064 / 971) < 0.01 && fs.statSync(path.join(ROOT, "images/Borders/menu-bar-gold.webp")).size < 150000, "PERF-12 : menu-bar-gold " + bar.w + "×" + bar.h + ", même ratio, < 150 Ko");
+    // PERF-14 : icônes PNG allégées, dimensions gardées
+    var ic = { "icon-192": 192, "icon-512": 512, "icon-512-maskable": 512, "apple-touch-icon": 180, "favicon-32": 32 }, tot = 0, dimOk = true;
+    Object.keys(ic).forEach(function (n) { var f = "images/Icons/" + n + ".png"; tot += fs.statSync(path.join(ROOT, f)).size; var i = info(f); if (i.w !== ic[n] || i.h !== ic[n]) dimOk = false; });
+    ok(dimOk && tot < 160000, "PERF-14 : icônes de l'application " + Math.round(tot / 1024) + " Ko (320 avant), mêmes dimensions");
+    // PERF-13 : en.js hors du précache, gardé à la demande de la page en anglais
+    var sw = rd("sw.js"), pwa = rd("js/main/pwa.js");
+    ok(sw.indexOf('  "./js/lang/en.js",') === -1 && /QUEST_IDLE_CACHE_LANG/.test(sw) && /cache\.match\(LANG_EN_URL\)/.test(sw), "PERF-13 : en.js sorti du précache, le service worker le garde sur demande");
+    ok(/function pwaCacheLangFile\(\)[\s\S]{0,200}I18n\.lang\(\) === "en"\) c\.postMessage\(\{ type: "QUEST_IDLE_CACHE_LANG" \}\)/.test(pwa) && /controllerchange", pwaCacheLangFile/.test(pwa) && /pwaCacheLangFile\(\); \/\/ le nouveau cache/.test(pwa), "PERF-13 : la page en anglais le demande à l'enregistrement, à la prise de contrôle et après une mise à jour");
+    ok(/lang === "en" && sw && typeof fetch === "function"\) fetch\("js\/lang\/en\.js"\)/.test(rd("js/core/i18n.js")), "PERF-13 : passer en anglais charge en.js avant la relance");
+    // PERF-10 : variante téléphone de chaque bandeau (1 350 × 450), choisie selon la taille réelle
+    var bans = fs.readdirSync(path.join(ROOT, "images/Banners")).filter(function (n) { return /\.webp$/.test(n); });
+    var sans = bans.filter(function (n) { var f = "images/Banners/phone/" + n; if (!fs.existsSync(path.join(ROOT, f))) return true; var i = info(f); return i.w < 1350 || i.h < 450; });
+    ok(bans.length >= 27 && !sans.length, "PERF-10 : " + bans.length + " bandeaux, chacun avec sa variante téléphone ≥ 1 350 px" + (sans.length ? " — sans : " + sans.join(", ") : ""));
+    var SB = g.ScreenBanner, fake = { a: {}, style: {}, getAttribute: function (k) { return this.a[k] || null; }, setAttribute: function (k, v) { this.a[k] = v; } };
+    fake.a["data-src"] = "images/Banners/camp_forest.webp";
+    SB.setImage(fake, true); var tel = fake.style.backgroundImage;
+    SB.setImage(fake, false); var pc = fake.style.backgroundImage;
+    ok(SB.PHONE_IMG_W === 1350 && tel === "url('images/Banners/phone/camp_forest.webp')" && pc === "url('images/Banners/camp_forest.webp')", "PERF-10 : téléphone → Banners/phone/, grand affichage → image entière");
+    ok(/Math\.max\(b\.width, b\.height \* 3\) \* \(window\.devicePixelRatio \|\| 1\) <= this\.PHONE_IMG_W/.test(rd("js/ui/screen-banner.js")), "PERF-10 : le choix suit la largeur utile en cover × devicePixelRatio (tablette en colonne : image entière)");
+    // PERF-11 : vignettes de 256 px des héros et compagnons, portrait entier en repli
+    var heads = fs.readdirSync(path.join(ROOT, "images/Heroes")).filter(function (n) { return /\.webp$/.test(n); }).map(function (n) { return "images/Heroes/" + n; })
+      .concat(fs.readdirSync(path.join(ROOT, "images/Companions")).filter(function (n) { return /\.webp$/.test(n); }).map(function (n) { return "images/Companions/" + n; }));
+    var noThumb = heads.filter(function (f) { var t = g.smallPortrait(f); if (t === f || !fs.existsSync(path.join(ROOT, t))) return true; var i = info(t); return Math.min(i.w, i.h) < 256; });
+    ok(heads.length >= 17 && !noThumb.length, "PERF-11 : " + heads.length + " portraits, chacun avec sa vignette ≥ 256 px" + (noThumb.length ? " — sans : " + noThumb.join(", ") : ""));
+    ok(g.smallPortrait("./images/Heroes/knight_m.webp") === "./images/Heroes/vignettes/knight_m.webp" && g.smallPortrait("./images/Heroes/full/x.webp") === "./images/Heroes/full/x.webp" && g.smallPortrait("images/Enemies/wolf.webp") === "images/Enemies/wolf.webp"
+      && g.smallPortraitHTML("./images/Companions/wenna.webp", "c", "W") === '<img class="c" src="./images/Companions/vignettes/wenna.webp" data-full="./images/Companions/wenna.webp" alt="W">', "PERF-11 : vignette pour héros et compagnons seulement, data-full = portrait entier");
+    var im = { a: {}, getAttribute: function (k) { return k === "src" ? (this.src || null) : (this.a[k] || null); }, setAttribute: function (k, v) { this.a[k] = v; }, removeAttribute: function (k) { delete this.a[k]; } };
+    g.setSmallPortrait(im, "./images/Heroes/mage_f.webp"); var s1 = im.src, f1 = im.a["data-full"];
+    im.src = "./images/Heroes/mage_f.webp"; g.setSmallPortrait(im, "./images/Heroes/mage_f.webp"); // repli déjà fait : on n'y revient pas
+    ok(s1 === "./images/Heroes/vignettes/mage_f.webp" && f1 === "./images/Heroes/mage_f.webp" && im.src === "./images/Heroes/mage_f.webp", "PERF-11 : portrait du HUD en vignette, le repli sur l'image entière n'est pas annulé au rendu suivant");
+    ok(/var t = window\.smallPortrait \? smallPortrait\(src \|\| ""\)/.test(rd("js/ui/combat-screen-view.js")) && (rd("js/ui/camp-view.js").match(/smallPortraitHTML\(/g) || []).length === 5 && /smallPortraitHTML\(def\.image, "hs-wc-img"/.test(rd("js/ui/heros-screens-view.js")), "PERF-11 : combat, Camp et équipe du Héros passent par la vignette");
+    ["cendre_vive_icon", "obsidienne_taillee_icon"].forEach(function (n) { var i = info("images/Icons/resources/" + n + ".webp"); ok(i.w === 256 && i.h === 256, "PERF-11 : " + n + " à 256 px comme les autres ressources"); });
+    // PERF-18 : traits du héros en chargement différé (gain mesuré : −225 Ko à l'ouverture du Héros)
+    ok(/img\(t\.icon, "hs-trait-ico"\)\.replace\("<img ", '<img loading="lazy" decoding="async" '\)/.test(rd("js/ui/heros-screens-view.js")), "PERF-18 : icônes des traits en loading=lazy");
+  } catch (err) { ok(false, "[456] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
 Promise.all(ATTENTES).then(function () {

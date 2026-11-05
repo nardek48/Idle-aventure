@@ -145,7 +145,7 @@
     var on = SQ ? STORY_TRAITS.filter(function (t) { return SQ.getChoice(t.key) === t.value; }) : [];
     if (!on.length) return "";
     return '<details class="hs-traits"><summary>' + _t("Ce que tu portes") + ' <small>' + on.length + '</small></summary>'
-      + on.map(function (t) { return '<div class="hs-trait">' + img(t.icon, "hs-trait-ico") + '<span><b>' + esc(t.name) + '</b><small>' + esc(t.desc) + '</small></span></div>'; }).join("") + '</details>'; // v3.466.0 : icônes livrées
+      + on.map(function (t) { return '<div class="hs-trait">' + img(t.icon, "hs-trait-ico").replace("<img ", '<img loading="lazy" decoding="async" ') + '<span><b>' + esc(t.name) + '</b><small>' + esc(t.desc) + '</small></span></div>'; }).join("") + '</details>'; // v3.466.0 : icônes livrées ; PERF-18 : chargées en différé (−225 Ko à l'ouverture)
   }
 
   // Grand écran : les capacités du kit, avec leur rang (la fiche Capacités s'ouvre au toucher)
@@ -174,7 +174,7 @@
     var h = '<h4 class="hs-wh">' + esc(_t("Compagnons")) + ' <small>' + esc(_t("{n} avec toi", { n: ids.length })) + '</small></h4><div class="hs-wcomp">';
     ids.forEach(function (id) {
       var def = getCompanionDef(id), mx = Math.max(1, CM.maxHpOf(id)), cur = CM.hpOf(id);
-      h += '<button type="button" class="hs-wc" onclick="setHerosSubTab(\'companions\')">' + renderIconOrEmojiHTML(def.image, "hs-wc-img", "") + '<b>' + esc(_td(def.name)) + '</b>'
+      h += '<button type="button" class="hs-wc" onclick="setHerosSubTab(\'companions\')">' + smallPortraitHTML(def.image, "hs-wc-img", "") + '<b>' + esc(_td(def.name)) + '</b>'
         + (def.skill ? '<small>' + esc(_td(def.skill.name)) + '</small>' : '') + '<span class="hs-wc-bar"><i style="width:' + Math.round(100 * Math.max(0, Math.min(1, cur / mx))) + '%"></i></span></button>';
     });
     return h + '</div>';

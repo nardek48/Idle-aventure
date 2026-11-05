@@ -164,7 +164,7 @@ function buildCampHTML(tab) {
     h += '<div class="camp-mates">';
     campMates.forEach(function (id) {
       var def = getCompanionDef(id), mx = Math.max(1, CompanionManager.maxHpOf(id)), cur = CompanionManager.hpOf(id);
-      h += '<div class="camp-mate">' + renderIconOrEmojiHTML(def.image, "camp-mate-ico", _td(def.name)) + '<span>' + esc(_td(def.name)) + '</span>'
+      h += '<div class="camp-mate">' + smallPortraitHTML(def.image, "camp-mate-ico", _td(def.name)) + '<span>' + esc(_td(def.name)) + '</span>'
         + '<div class="kgauge kgauge-thin kgauge-hp"><div class="kgauge-track"><div class="kgauge-fill" id="camp-comp-hp-' + esc(id) + '" style="width:' + Math.max(0, Math.min(100, cur / mx * 100)) + '%"></div></div></div></div>';
     });
     h += '</div>';
@@ -375,7 +375,7 @@ function campFeuStoryHTML(campMates) {
     // v3.601.0 (M1) : toucher ouvre la liste des sujets ; « … » quand il a quelque chose de nouveau à dire
     var def = getCompanionDef(id), news = window.CompanionTalkManager && typeof CompanionTalkManager.hasNewTopic === "function" && CompanionTalkManager.hasNewTopic(id);
     return '<button type="button" class="camp-feu-mate" onclick="openCompanionMenu(\'' + esc(id) + '\')">'
-      + renderIconOrEmojiHTML(def.image, "camp-feu-img", _td(def.name)) + (news ? '<i class="camp-feu-talk">…</i>' : '') + '<span>' + esc(_td(def.name)) + '</span></button>';
+      + smallPortraitHTML(def.image, "camp-feu-img", _td(def.name)) + (news ? '<i class="camp-feu-talk">…</i>' : '') + '<span>' + esc(_td(def.name)) + '</span></button>';
   };
   h += '<div class="camp-card camp-feu"><div class="camp-soir-k">' + esc(_t("Au coin du feu")) + '</div><div class="camp-feu-row">'
     + ids.slice(0, half).map(mate).join("") + '<img class="camp-feu-fire" src="images/Icons/camp/campfire.webp" alt="">' + ids.slice(half).map(mate).join("") + '</div>'
@@ -404,13 +404,13 @@ function campWideBar(cur, max, id) { // id : barre tenue à jour par CampManager
 // Le héros et les compagnons qui partent avec lui, puis ceux restés au camp, puis les rations
 function campWideTeamHTML(maxHp, hp, rations, teamFull, campLock, campMates) {
   var hero = typeof getSelectedHero === "function" ? getSelectedHero() : null, cls = hero && typeof getClassForHero === "function" ? getClassForHero(hero) : null;
-  var h = '<div class="cw-team"><div class="cw-mb">' + renderIconOrEmojiHTML((hero && hero.image) || "", "cw-mb-img", "")
+  var h = '<div class="cw-team"><div class="cw-mb">' + smallPortraitHTML((hero && hero.image) || "", "cw-mb-img", "")
     + '<div class="cw-mb-nm"><b>' + esc(game.playerName || "") + '</b><small>' + esc((cls ? _td(cls.label) + " · " : "") + _t("niv. {n}", { n: Number(game.heroLevel || 1) })) + '</small></div>'
     + '<div class="cw-mb-row">' + campWideBar(hp, maxHp, "camp-hp-fill") + '<span id="camp-fire-hp-value">' + formatNumber(Math.floor(hp)) + ' / ' + formatNumber(maxHp) + '</span></div></div>';
   var CM = window.CompanionManager, party = CM ? CM.partyIds() : [];
   party.forEach(function (id) {
     var def = getCompanionDef(id), mx = Math.max(1, CM.maxHpOf(id)), cur = CM.hpOf(id);
-    h += '<div class="cw-mb">' + renderIconOrEmojiHTML(def.image, "cw-mb-img", "")
+    h += '<div class="cw-mb">' + smallPortraitHTML(def.image, "cw-mb-img", "")
       + '<div class="cw-mb-nm"><b>' + esc(_td(def.name)) + '</b><small>' + esc(def.skill ? _td(def.skill.name) : "") + '</small><span class="cw-pill">' + esc(_t("avec toi")) + '</span></div>'
       + '<div class="cw-mb-row">' + campWideBar(cur, mx, "camp-comp-hp-" + esc(id)) + '<span>' + formatNumber(Math.floor(cur)) + ' / ' + formatNumber(mx) + '</span></div></div>';
   });
@@ -420,7 +420,7 @@ function campWideTeamHTML(maxHp, hp, rations, teamFull, campLock, campMates) {
     h += '<div class="cw-others">' + esc(_t("Au camp :"));
     others.forEach(function (id) {
       var def = getCompanionDef(id), mx = Math.max(1, CM.maxHpOf(id)), cur = Math.floor(CM.hpOf(id));
-      h += '<span>' + renderIconOrEmojiHTML(def.image, "", "") + esc(_td(def.name)) + (cur < mx ? ' ' + formatNumber(cur) + ' / ' + formatNumber(mx) : '') + '</span>';
+      h += '<span>' + smallPortraitHTML(def.image, "", "") + esc(_td(def.name)) + (cur < mx ? ' ' + formatNumber(cur) + ' / ' + formatNumber(mx) : '') + '</span>';
     });
     h += '</div>';
   }

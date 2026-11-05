@@ -16,6 +16,7 @@ function initPwaServiceWorker() {
   window.addEventListener("load", function () {
     navigator.serviceWorker.register("./sw.js").then(function (reg) {
       watchPwaUpdateOnResume(reg);
+      pwaCacheLangFile();
     }).catch(function (err) {
       console.warn("Service worker non enregistré :", err);
     });
@@ -23,8 +24,17 @@ function initPwaServiceWorker() {
 
   navigator.serviceWorker.addEventListener("message", function (event) {
     if (!event.data || event.data.type !== "QUEST_IDLE_SW_UPDATED") return;
+    pwaCacheLangFile(); // le nouveau cache de version n'a pas en.js
     if (pwaHadControllerAtLoad) showPwaUpdateBanner();
   });
+  navigator.serviceWorker.addEventListener("controllerchange", pwaCacheLangFile);
+}
+
+/* PERF-13 : en.js (≈ 300 Ko, change à chaque version) n'est précaché que chez les joueurs en anglais :
+   la page demande au service worker de le garder, pour jouer hors-ligne. */
+function pwaCacheLangFile() {
+  var c = navigator.serviceWorker && navigator.serviceWorker.controller;
+  if (c && window.I18n && I18n.lang() === "en") c.postMessage({ type: "QUEST_IDLE_CACHE_LANG" });
 }
 
 /* v3.436.3 : le navigateur ne vérifie sw.js qu'au lancement à froid ; une appli restée en mémoire

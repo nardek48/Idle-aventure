@@ -163,8 +163,25 @@ function portraitThumbSrcAttrs(src) {
   var t = portraitThumb(src);
   return 'src="' + esc(t) + '"' + (t !== String(src || "") ? ' data-full="' + esc(src) + '"' : '');
 }
+/* Lot A3 (PERF-11) : héros et compagnons en petit (≤ 46 px, HUD, combat, Camp) → vignette de 256 px ;
+   le portrait entier sert de repli et reste utilisé en grand. */
+function smallPortrait(src) { return String(src || "").replace(/(images\/(?:Heroes|Companions)\/)([^\/]+\.webp)$/, "$1vignettes/$2"); }
+function smallPortraitHTML(src, cls, alt) {
+  var t = smallPortrait(src);
+  if (!/\.webp$/i.test(t)) return renderIconOrEmojiHTML(src, cls, alt);
+  return '<img class="' + cls + '" src="' + esc(t) + '"' + (t !== String(src) ? ' data-full="' + esc(src) + '"' : '') + ' alt="' + esc(alt || "") + '">';
+}
+function setSmallPortrait(img, src) {
+  var t = smallPortrait(src), cur = img.getAttribute("src");
+  if (cur === t || (cur === src && t !== src)) return; // déjà posée, ou déjà repliée sur le portrait entier
+  if (t !== src) img.setAttribute("data-full", src); else img.removeAttribute("data-full");
+  img.src = t;
+}
 window.portraitThumb = portraitThumb;
 window.portraitThumbSrcAttrs = portraitThumbSrcAttrs;
+window.smallPortrait = smallPortrait;
+window.smallPortraitHTML = smallPortraitHTML;
+window.setSmallPortrait = setSmallPortrait;
 window.MISSING_ICON_SRC = MISSING_ICON_SRC;
 window.MISSING_ICONS = MISSING_ICONS;
 window.onMissingImage = onMissingImage;

@@ -269,7 +269,7 @@ function renderCombatHeroMini() {
 
   if (hero && hero.image) {
     if (img) {
-      img.src = hero.image;
+      setSmallPortrait(img, hero.image); // PERF-11 : vignette, portrait entier en repli
       img.alt = hero.name || "";
       img.style.display = "block";
     }
@@ -282,7 +282,7 @@ function renderCombatHeroMini() {
   if (levelEl) levelEl.textContent = _t("Niv. {n}", { n: Number(game.heroLevel || 1) });
   var pt = document.getElementById("hud-pt-img"); // v3.396.0 : portrait du bandeau
   if (pt) {
-    if (hero && hero.image) { if (pt.getAttribute("src") !== hero.image) pt.src = hero.image; pt.alt = hero.name || ""; pt.style.display = "block"; }
+    if (hero && hero.image) { setSmallPortrait(pt, hero.image); pt.alt = hero.name || ""; pt.style.display = "block"; }
     else pt.style.display = "none";
   }
 }

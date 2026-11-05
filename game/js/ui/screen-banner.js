@@ -103,7 +103,9 @@ var ScreenBanner = {
     el.className = "kfb";
     el.setAttribute("role", "img");
     el.setAttribute("aria-label", d[1] + ". " + d[2]);
-    el.style.backgroundImage = "url('" + d[0] + "')";
+    el.setAttribute("data-src", d[0]);
+    var z = (window.DesktopScale && DesktopScale.zoom) || 1; // premier choix sans mise en page ; fit() l'affine
+    this.setImage(el, !document.documentElement.classList.contains("wide-mode") && this.PHONE_H * 3 * z * (window.devicePixelRatio || 1) <= this.PHONE_IMG_W);
     var tx = document.createElement("div");
     tx.className = "kfb-tx";
     var t = document.createElement("span");
@@ -168,6 +170,17 @@ var ScreenBanner = {
     el.style.height = h + "px";
     el.style.top = (min - h) + "px";
     el.dataset.fold = String(h - min);
+    var b = el.getBoundingClientRect(); // image en cover (3:1) : largeur utile = max(largeur, 3 × hauteur), zoom compris
+    if (b.width > 0) this.setImage(el, Math.max(b.width, b.height * 3) * (window.devicePixelRatio || 1) <= this.PHONE_IMG_W);
+  },
+
+  /* PERF-10 : variante de 1 350 px (Banners/phone/) quand l'écran n'affiche pas plus ; l'image entière sinon */
+  PHONE_IMG_W: 1350,
+  setImage: function (el, phone) {
+    var src = el.getAttribute("data-src") || "", url = phone ? src.replace("images/Banners/", "images/Banners/phone/") : src;
+    if (el.getAttribute("data-img") === url) return;
+    el.setAttribute("data-img", url);
+    el.style.backgroundImage = "url('" + url + "')";
   },
 
   /* Replié : la phrase s'efface, seul le titre reste */
