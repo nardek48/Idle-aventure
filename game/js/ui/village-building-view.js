@@ -783,7 +783,7 @@ function buildShardShopBoardHTML() {
     var cost = DungeonManager.getShardShopCost(item);
     var lock = maxed ? 0 : DungeonManager.getShardShopLock(item); // v3.463.0 : palier de la Crypte
     var canBuy = !maxed && !lock && shards >= cost;
-    h += '<div class="nb-purchase-card' + (maxed ? ' is-maxed' : '') + '">';
+    h += '<div class="nb-purchase-card' + (maxed ? ' is-maxed' : '') + (canBuy ? ' affordable' : '') + '">'; // UI-11
     h += '<div class="nb-purchase-icon-col"><div class="nb-purchase-icon-slot">' + renderIconOrEmojiHTML(item.icon, "nb-purchase-icon", _td(item.name)) + '</div></div>';
     h += '<div class="nb-purchase-info-col">';
     h += '<div class="nb-purchase-name">' + esc(_td(item.name)) + '</div>';

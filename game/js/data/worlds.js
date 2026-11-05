@@ -79,7 +79,7 @@ var WORLDS = [
       },
       {
         id: "ruins_2",
-        name: "Sanctuaire enseveli",
+        name: "Nef ensevelie", // v3.697.0 (QUET-9, Seb A) : trois « Sanctuaire » (enseveli, scellé, interdit) ; id inchangé
         introText: "Les murs ont été écrits. Quelqu'un les relit encore.", // v3.197.0
         enemyPool: ["gargoyle", "zombie", "skeleton", "ghoul"],
         enemyCount: 10,

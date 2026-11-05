@@ -603,7 +603,7 @@ var ADVENTURE_QUESTS = {
     story: "Une porte basse au fond de la maison. Elle se remonte plus vite que les autres.",
     icon: "./images/Icons/quest_icons/exploration/exploration1.webp",
     steps: [
-      { id: "rencontres_salle", type: "encounter", worldId: "ruins", target: 4, desc: "Vaincre {target} rencontres au Sanctuaire enseveli" }
+      { id: "rencontres_salle", type: "encounter", worldId: "ruins", target: 4, desc: "Vaincre {target} rencontres à la Nef ensevelie" }
     ],
     reward: {}
   },
@@ -637,7 +637,7 @@ var ADVENTURE_QUESTS = {
     story: "Sous la ville, une salle qui se refait chaque nuit et n'est jamais finie. Devant, une masse de pierre qui a des bras.",
     icon: "./images/Icons/quest_icons/elite/elite_golem.webp",
     steps: [
-      { id: "rencontres_golem", type: "encounter", worldId: "ruins", target: 3, desc: "Vaincre {target} rencontres au Sanctuaire enseveli" },
+      { id: "rencontres_golem", type: "encounter", worldId: "ruins", target: 3, desc: "Vaincre {target} rencontres à la Nef ensevelie" },
       { id: "elite_golem", type: "eliteKill", eliteId: "golem", target: 1, desc: "Vaincre le Golem" }
     ],
     reward: {}

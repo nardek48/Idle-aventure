@@ -174,7 +174,7 @@ function buildCompatibleItemsListHTML(slot) {
   });
 
   if (items.length > 5) {
-    h += '<button class="eq-compat-more-btn" type="button" onclick="setEquipSubTab(\'inventory\')">' + _t("Voir les {n} objets dans l’Inventaire →", { n: items.length }) + '</button>';
+    h += '<button class="eq-compat-more-btn" type="button" onclick="setEquipSubTab(\'inventory\')">' + _t("Voir les {n} objets dans le Sac →", { n: items.length }) + '</button>';
   }
 
   h += '</div>';
@@ -265,7 +265,7 @@ function buildEquipDetailPanelHTML() {
   } else {
     h += '<div class="eq-detail-icon eq-detail-icon-empty">' + renderIconOrEmojiHTML(emoji, "eq-detail-empty-img", "") + '</div>';
     h += '<div class="eq-detail-name">' + esc(_t("{x} — vide", { x: label })) + '</div>';
-    h += '<div class="eq-detail-hint">' + _t("Équipe un objet depuis l’Inventaire pour remplir cet emplacement.") + '</div>';
+    h += '<div class="eq-detail-hint">' + _t("Équipe un objet depuis le Sac pour remplir cet emplacement.") + '</div>';
   }
 
   // v3.252.0 : la liste du sac a quitté ce panneau — il fait 50 % de largeur (~150 px utiles),

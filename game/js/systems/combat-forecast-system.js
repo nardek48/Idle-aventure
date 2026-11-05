@@ -575,7 +575,8 @@ window.CombatForecast = CombatForecast;
 
 /* v3.459.12 (audit I4) — RÉGLER D'UN COUP. Un combat ordinaire jugé « Sans danger » se joue d'un
    trait : les vrais tours du moteur (horloge du Grimoire), sans attendre l'animation. PV perdus,
-   butin, quêtes et morts sont ceux d'un combat joué. Pas en donjon (à discuter avec Seb). */
+   butin, quêtes et morts sont ceux d'un combat joué. Pas en donjon. v3.697.0 (EQUI-11) : aussi
+   l'élite répétable de carte jugée « Sans danger ». */
 var QUICK_FIGHT_MAX_COST = 0.25;  // usure prévue au plus 25 % des PV : la prévision d'un groupe peut doubler en vrai
 var QUICK_FIGHT_STOP_PCT = 0.30;  // sous 30 % des PV, le combat rend la main au joueur
 var QUICK_FIGHT_MAX_TICKS = 400;  // garde-fou : un combat ordinaire dure quelques rounds
@@ -602,8 +603,10 @@ var CombatQuick = {
     if (game.dungeonRun && game.dungeonRun.active) return false;
     if (typeof hasCombatQuestContext === "function" && !hasCombatQuestContext()) return false;
     if (game.combatRound && game.combatRound.busy) return false;
-    var foes = this._foes();
-    if (!foes.length || foes.some(function (e) { return e.isBoss || e.isElite; })) return false;
+    var foes = this._foes(), fight = game.livingMaps && game.livingMaps.fight;
+    // v3.697.0 (EQUI-11, Seb A) : l'élite répétable de carte en cours compte, pas les autres boss ni élites
+    var mapElite = !!(fight && window.LivingMapManager && LivingMapManager.isRepeatable(fight.mapId, fight.sectorId));
+    if (!foes.length || foes.some(function (e) { return (e.isElite && mapElite && e.id === fight.eliteId) ? false : (e.isBoss || e.isElite); })) return false;
     if (!foes.every(function (e) { var f = CombatForecast.forEnemy(e); return f && f.id === "trivial"; })) return false;
     var cost = CombatForecast.getGroupFight(foes).cost;
     return cost <= Number(game.heroHp || 0) * QUICK_FIGHT_MAX_COST;

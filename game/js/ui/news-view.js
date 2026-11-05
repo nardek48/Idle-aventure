@@ -10,6 +10,8 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.697.0", "menu_icons/village_menu", _t("L'écran de retour survit à un rechargement, « Village & Production » s'ouvre dès la première visite du Village, les cartes d'achat payables ne sont plus voilées, et la 2e aventure des Ruines s'appelle « Nef ensevelie ».")],
+    ["3.697.0", "menu_icons/map_menu", _t("Combat : « Régler d'un coup » vaut aussi pour une élite répétable de carte jugée sans danger. Les compagnons arrivés tard ouvrent leurs emplacements de relique plus tôt. Petite Aventure : annuler la préparation garde le même tirage pendant 4 h.")],
     ["3.696.0", "menu_icons/village_menu", _t("Équilibrage : le Golem du Sanctuaire scellé frappe moins fort, la Liche des sépulcres et le Porte-couronne de l'Ossuaire frappent plus fort, et l'échoppe est moins chère aux Ruines (une Rare à 17 500 or au lieu de 25 000). Les talents Faucon du Rôdeur donnent un conseil.")],
     ["3.695.0", "combat_status/counter", _t("Combat : le conseil doré (et le Grimoire sans règle) ne propose plus la Défense sans menace ; « Varier » ne saute plus un contre. Les ennemis très rapides des donjons 4 à 6 ne frappent plus deux fois à chaque round, et le pronostic compte les potions plus prudemment.")],
     ["3.694.0", "menu_icons/village_menu", _t("Économie : le Grand Ouvrage garde toujours assez de pierre pour la Forge que l'Histoire demande. Les potions se revendent au plus la valeur de leurs ingrédients (Soin mineur 16 or), prix affiché sur le bouton.")],

@@ -84,7 +84,7 @@ function buildCompanionRelicsHTML(companionId) {
   var CR = CompanionRelics, open = CR.slotsOpen(companionId), worn = CR.worn(companionId), n = 0;
   var cells = "";
   for (var k = 0; k < 3; k++) {
-    if (k >= open) { cells += '<div class="cp-relic-slot is-lock"><span class="cp-relic-plus"><img class="cp-relic-lock" src="images/Icons/system/lock_closed.webp" alt=""></span><b>' + esc(_t("Palier {n}", { n: COMPANION_RELIC_SLOTS_AT[k] })) + '</b></div>'; continue; } // « Palier 25 » seul : le bloc Entraînement est juste au-dessus
+    if (k >= open) { cells += '<div class="cp-relic-slot is-lock"><span class="cp-relic-plus"><img class="cp-relic-lock" src="images/Icons/system/lock_closed.webp" alt=""></span><b>' + esc(_t("Palier {n}", { n: CR.slotAt(companionId, k) })) + '</b></div>'; continue; } // « Palier 25 » seul : le bloc Entraînement est juste au-dessus
     var r = worn[k] != null ? CR.byId(worn[k]) : null;
     if (!r) { cells += '<button type="button" class="cp-relic-slot is-empty" onclick="companionPickRelic(\'' + companionId + '\', ' + k + ')"><span class="cp-relic-plus">+</span><b>' + esc(_t("Équiper")) + '</b></button>'; continue; }
     n++;
@@ -241,7 +241,7 @@ function companionRelicsOffAfterReset(companionId, st) {
   var out = { n: 0, at: 0 };
   if (!window.CompanionRelics || !st) return out;
   var eq = st.upgrades - st.ardeur - st.vigueur, open = CompanionRelics.slotsOpen(companionId), worn = CompanionRelics.worn(companionId);
-  for (var k = 0; k < open; k++) if (worn[k] != null && CompanionRelics.byId(worn[k]) && COMPANION_RELIC_SLOTS_AT[k] > eq) { out.n++; if (!out.at) out.at = COMPANION_RELIC_SLOTS_AT[k]; }
+  for (var k = 0; k < open; k++) if (worn[k] != null && CompanionRelics.byId(worn[k]) && CompanionRelics.slotAt(companionId, k) > eq) { out.n++; if (!out.at) out.at = CompanionRelics.slotAt(companionId, k); }
   return out;
 }
 window.companionRelicsOffAfterReset = companionRelicsOffAfterReset;

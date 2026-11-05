@@ -41,7 +41,7 @@ function villageEventsData() {
     { id: "m_neuf", type: "marche", who: _t("Marché de Sarkel"), title: _t("Une pièce de plus"), text: _t("« Celle-là, je l'ai gardée pour toi. Ne le dis à personne. Je le dis à tout le monde. »") },
     { id: "m_troc", type: "marche", who: _t("Marché de Sarkel"), title: _t("Jour de troc"), text: _t("« Aujourd'hui, je fais un prix. Demain, je me souviendrai de pourquoi je ne le fais jamais. »") },
     { id: "m_caravane", type: "marche", who: _t("Marché de Sarkel"), title: _t("La caravane est passée"), text: _t("« Une caravane m'a laissé ce qu'elle ne pouvait plus porter. Sa perte, ton prix. »") },
-    { id: "m_pluie", type: "marche", who: _t("Marché de Sarkel"), title: _t("Marché sous la pluie"), text: _t("« Il pleut, personne ne vient. Alors je baisse les prix. Toi, tu es venu. »") },
+    { id: "m_pluie", type: "marche", who: _t("Marché de Sarkel"), title: _t("Marché sous la pluie"), text: _t("« Il pleut, personne ne vient. Alors je baisse les prix. Toi, tu es là. »") },
     /* ---------- Fêtes ---------- */
     { id: "f_moissons", type: "fete", who: _t("Fête"), title: _t("La fête des moissons"), text: _t("« Orwen a sorti les grandes tables. Il ne manque que le pain. »") },
     { id: "f_feu", type: "fete", who: _t("Fête"), title: _t("La nuit du grand feu"), text: _t("« Ce soir, on allume le grand feu. Pas pour se souvenir. Pour danser autour. »") },

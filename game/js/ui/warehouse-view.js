@@ -262,7 +262,7 @@ function buildWarehouseHTML() {
   // v3.330.0 (E6) : à la première visite, le tavernier explique la fin de la vente
   if (!(game.genericTutorialsSeen || {}).warehouse_no_sale) {
     h += '<div class="warehouse-note">'
-       + '<div class="warehouse-note-text"><strong>' + _t("Le tavernier") + '</strong> : « ' + _t("L’Entrepôt ne rachète plus rien. Ce qu’il te reste, porte-le-moi : mes contrats paient mieux, et on sait ce qu’on te demande.") + ' »</div>'
+       + '<div class="warehouse-note-text"><strong>' + _t("Le tavernier") + '</strong> : « ' + _t("L’Entrepôt ne rachète rien. Ce qu’il te reste, porte-le-moi : mes contrats paient mieux, et on sait ce qu’on te demande.") + ' »</div>'
        + '<button type="button" class="settings-btn" onclick="dismissWarehouseNoSaleNote()">' + _t("Compris") + '</button></div>';
   }
   var demand = warehouseOpenDemand(), nFull = all.filter(function (k) { return isWarehouseFull(k) && demand[k]; }).length;

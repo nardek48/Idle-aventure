@@ -33,7 +33,7 @@ g.goToHeroStep();
 ok(/Choix de la classe/.test(host()), "étape 2 rendue");
 ok((host().match(/hc-class-card/g)||[]).length===3, "3 colonnes de classe : "+(host().match(/hc-class-card/g)||[]).length);
 ok(/Chevalier/.test(host()) && /Rôdeur/.test(host()) && /Mage/.test(host()), "noms Chevalier / Rôdeur / Mage affichés");
-ok(/hc-class-card active/.test(host()) && /Maître du combat/.test(host()), "Chevalier actif par défaut + tagline");
+ok(/hc-class-card active/.test(host()) && /La maîtrise du combat/.test(host()), "Chevalier actif par défaut + tagline");
 ok(/hc-chaos-toggle/.test(host()) && !/hc-chaos-toggle on/.test(host()), "toggle Chaos présent, désactivé");
 ok(/hc-stats/.test(host()) && /hc-skills-toggle/.test(host()), "stats + bandeau compétences présents");
 ok(/knight_m\.webp/.test(host()) && /hc-gender-btn active"[^>]*>Homme/.test(host()), "genre par défaut = Homme (knight_m.webp)");

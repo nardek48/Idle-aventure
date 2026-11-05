@@ -127,6 +127,13 @@
 /* --- Rail du Village (v3.414.0, lot VUI-1) ---------------------------- */
 /* Quatre onglets en tête de page, comme la Bibliothèque : la barre du bas a disparu. */
 .village-tabs { margin-bottom: 10px; }
+/* v3.697.0 (CPL3-11, Seb A) : sous 340 px, un libellé trop long passe sur deux lignes (césure douce
+   du dictionnaire anglais), 12 px gardés (S-2) ; rail élargi comme celui du Camp. */
+@media (max-width: 339px) {
+  #panel-container .village-tabs.kseg.is-stack { margin-left: -6px; margin-right: -6px; }
+  #panel-container .village-tabs.kseg.is-stack button { padding-left: 0; padding-right: 0; white-space: normal; }
+  #panel-container .village-tabs.kseg.is-stack button > span { max-width: 100%; text-align: center; }
+}
 
 /* --- Grille des bâtiments : grandes vignettes (v3.414.0) --------------- */
 .vb-grid {

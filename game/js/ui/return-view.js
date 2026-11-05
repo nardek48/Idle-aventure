@@ -162,6 +162,7 @@ function openReturnScreen(summary) {
 
 function closeReturnScreen() {
   returnScreenState = null;
+  if (window.ReturnManager) ReturnManager.forget(); // CPL1-6 : vu, plus rien à rouvrir
   var root = document.getElementById("return-modal-root");
   if (root) root.innerHTML = "";
   if (window.FilRouge) FilRouge.invalidate();

@@ -29,11 +29,12 @@ var heroAttackPreviewExpanded = false; // v3.29 : bandeau dépliable des compét
    [base, chaos], plutôt que sur cette liste plate. */
 var HERO_SELECTION_BASE_IDS = ["knight", "ranger", "mage", "chaosKnight", "chaosRanger", "chaosMage"];
 
-/* Descriptions courtes par classe (validées par Seb, session v3.149.0). Clé = CLASSES[].id. */
+/* Descriptions courtes par classe (validées par Seb, session v3.149.0). Clé = CLASSES[].id.
+   v3.697.0 (NOV-11, décision du 10/10 option A) : tournures neutres, une seule version. */
 var HERO_CLASS_TAGLINES = {
-  knight: _t("Maître du combat et de la défense, inébranlable en toute situation."),
-  archer: _t("Agile et précis, maître des attaques à distance."),
-  mage: _t("Gardien des savoirs anciens, il manipule les éléments et l'énergie arcanique.")
+  knight: _t("La maîtrise du combat et de la défense, inébranlable en toute situation."),
+  archer: _t("Agilité et précision, la maîtrise des attaques à distance."),
+  mage: _t("Les savoirs anciens en garde, les éléments et l'énergie arcanique en main.")
 };
 
 /* v3.683.0 (audit TUTO-2) : aperçu calculé par le moteur (recalcStats) sur un état neuf temporaire,

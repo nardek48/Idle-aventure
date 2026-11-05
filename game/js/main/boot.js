@@ -121,6 +121,7 @@ function init() {
     var offline = OfflineManager.summarize();
     if (offline && typeof OfflineManager.show === "function") OfflineManager.show(offline);
   }
+  if (loaded && window.ReturnManager && typeof ReturnManager.restoreStored === "function") ReturnManager.restoreStored(); // CPL1-6
 
   lastTick = Date.now();
   requestAnimationFrame(gameLoop);

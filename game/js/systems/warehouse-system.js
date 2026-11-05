@@ -207,7 +207,7 @@ var WarehouseManager = {
   sellResource: function (key, amount) {
     this.ensure();
     if (!this.SELLING_ENABLED) {
-      if (typeof showToast === "function") showToast(_t("L'Entrepôt ne rachète plus rien : livre tes ressources à la Taverne"), 2200);
+      if (typeof showToast === "function") showToast(_t("L'Entrepôt ne rachète rien : livre tes ressources à la Taverne"), 2200);
       return 0;
     }
     if (typeof WAREHOUSE_RESOURCES === "undefined" || !WAREHOUSE_RESOURCES[key]) return 0;

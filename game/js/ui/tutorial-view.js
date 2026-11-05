@@ -112,6 +112,20 @@ var GENERIC_TUTORIALS = {
       { icon: "images/Icons/quests/quest_list.webp", text: "Le tableau de missions — l'étape d'Histoire en cours (badge doré « Histoire ») est toujours en tête. Touche « Accepter », puis « Partir » pour ta prochaine quête : c'est elle qui te mènera au combat avec un vrai objectif." }
     ]
   },
+  village_production: {
+    tab: "village",
+    // v3.697.0 (TUTO-6, Seb A) : sans condition, à la première ouverture de l'onglet Village ; déclaré
+    // avant le Terrain pour passer en premier (maybeShowGenericTutorial suit l'ordre de déclaration).
+    icon: "images/Icons/scene/scene_harvest.webp",
+    title: "Village & Production",
+    points: [
+      { icon: "images/Icons/scene/scene_harvest.webp", text: "Les zones produisent une ressource en continu, même hors ligne — mais chaque bâtiment a un stock local limité (la jauge « 0 / 45 » sur sa carte)." },
+      { icon: "images/Icons/subtabs/inventory.webp", text: "Touche « Récolter » pour transférer ce stock vers ton Entrepôt, qui a son propre plafond (plus grand)." },
+      { icon: "images/Icons/system/upgrade.webp", text: "Améliorer une zone augmente sa vitesse de production et sa capacité de stock local." },
+      { icon: "images/Icons/quests/mission_construction.webp", text: "Les Ateliers (comme la Cuisine de camp) transforment des ressources brutes (ex. viande + eau) en objets utiles (ex. rations) — file d'attente, continue même hors ligne." },
+      { icon: "images/Icons/system/warehouse_supplies.webp", text: "Garde un œil sur ton Entrepôt : une ressource pleine ne se produit plus tant que tu ne l'as pas dépensée (l'Entrepôt ne rachète rien)." }
+    ]
+  },
   /* v3.213.1 (lot V-2) : premier plafond d'entraînement. Condition : une
      caractéristique a buté à 20 — le joueur vient de rencontrer le mur, c'est
      le seul moment où l'explication a du sens. */
@@ -131,22 +145,6 @@ var GENERIC_TUTORIALS = {
       { icon: "images/Icons/gold_icon.webp", text: "L'entraînement lui-même se paie toujours en or, dans Héros → Entraînement. Le Terrain décide jusqu'où tu peux monter, pas combien ça coûte." }
     ]
   },
-  village_production: {
-    tab: "village",
-    // Condition d'affichage : seulement une fois la mission "Les fondations" accessible (La veine
-    // instable terminée) — avant, le joueur n'a pas encore vraiment de quoi produire à comprendre.
-    condition: function () { return !!(game.explorationProgression && (game.explorationProgression.unstableVeinDiscoveryCompleted || game.explorationProgression.quarryUnlocked)); }, // v3.124.0 (retrait ancien moteur) : lecture directe du flag, sans MiningManager
-    icon: "images/Icons/scene/scene_harvest.webp",
-    title: "Village & Production",
-    points: [
-      { icon: "images/Icons/scene/scene_harvest.webp", text: "Les zones produisent une ressource en continu, même hors ligne — mais chaque bâtiment a un stock local limité (la jauge « 0 / 45 » sur sa carte)." },
-      { icon: "images/Icons/subtabs/inventory.webp", text: "Touche « Récolter » pour transférer ce stock vers ton Entrepôt, qui a son propre plafond (plus grand)." },
-      { icon: "images/Icons/system/upgrade.webp", text: "Améliorer une zone augmente sa vitesse de production et sa capacité de stock local." },
-      { icon: "images/Icons/quests/mission_construction.webp", text: "Les Ateliers (comme la Cuisine de camp) transforment des ressources brutes (ex. viande + eau) en objets utiles (ex. rations) — file d'attente, continue même hors ligne." },
-      { icon: "images/Icons/system/warehouse_supplies.webp", text: "Garde un œil sur ton Entrepôt : une ressource pleine ne se produit plus tant que tu ne l'as pas dépensée (l'Entrepôt ne rachète rien)." }
-    ]
-  },
-
   /* v3.211.0 : aide du Grimoire. Déclarée ICI et pas dans grimoire-view.js pour une
      seule raison — les trois sources du catalogue de Tutoriels (systems/tutorial-catalog-system.js)
      ramassent GENERIC_TUTORIALS tel quel, donc l'écran Tutoriels la reprend sans code
@@ -173,7 +171,8 @@ var GENERIC_TUTORIALS = {
      un compagnon arrivé. Rejoint le catalogue de tutoriels comme les autres. */
   patrols_intro: {
     tab: "more",
-    condition: function () { return !!(window.PatrolManager && PatrolManager.isUnlocked()); },
+    // v3.697.0 (TUTO-13, Seb A) : après la réclamation de forest_wenna (l'étape qui exige Wenna dans le groupe)
+    condition: function () { return !!(window.PatrolManager && PatrolManager.isUnlocked()) && storyStepClaimed("forest_wenna"); },
     icon: "images/Icons/quests/mission_exploration.webp",
     title: "Les patrouilles",
     points: [
@@ -278,6 +277,19 @@ var GENERIC_TUTORIALS = {
   }
 };
 window.GENERIC_TUTORIALS = GENERIC_TUTORIALS;
+
+/* Étape d'Histoire réclamée : l'étape suivante est atteinte (chapitre fini ou passé compris). */
+function storyStepClaimed(stepId) {
+  if (!window.StoryQuestManager || !window.STORY_QUESTS) return true;
+  var ids = Object.keys(STORY_QUESTS);
+  for (var i = 0; i < ids.length; i++) {
+    var steps = STORY_QUESTS[ids[i]].steps, k = steps.findIndex(function (s) { return s.id === stepId; });
+    if (k === -1) continue;
+    return steps[k + 1] ? StoryQuestManager.isStepReached(steps[k + 1].id) : (StoryQuestManager.getState(ids[i]).skipped || StoryQuestManager.isChapterCompleted(ids[i]));
+  }
+  return true;
+}
+window.storyStepClaimed = storyStepClaimed;
 
 function maybeShowGenericTutorial(tabName) {
   if (pendingTutorial) return; // v3.107.12 : ne jamais écraser un popup déjà ouvert (même conteneur DOM)

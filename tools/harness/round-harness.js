@@ -11383,7 +11383,7 @@ console.log("\n[148] v3.372.0 — Multilangue, lot L-4 : Héros, Talents, Grimoi
   game.talents = {};
   var b = TM.blockInfo("k_elan");
   ok(b && b.kind === "trunk" && /tronc/.test(b.text) && TM.blockReason("k_elan") === b.text, "talents : raison à code stable (kind) + texte français inchangé");
-  ok(g.HERO_CLASS_TAGLINES.knight === "Maître du combat et de la défense, inébranlable en toute situation.", "création : accroche du Chevalier inchangée");
+  ok(g.HERO_CLASS_TAGLINES.knight === "La maîtrise du combat et de la défense, inébranlable en toute situation.", "création : accroche du Chevalier (v3.697.0, NOV-11 : tournure neutre)");
   ok(g.GRIMOIRE_CONDITION_SHORT_LABELS.chargeIncoming === "l'ennemi charge", "Grimoire : libellés courts inchangés");
   var st = g.buildSettingsHTML("appareil");
   ok(st.indexOf("Sauvegarde : ") !== -1 && st.indexOf("⟦") === -1, "Paramètres en français : aucun ⟦ ⟧");
@@ -12327,8 +12327,8 @@ console.log("\n[162] v3.385.0 — Petites Aventures v2 (PA2-4) : quatre accroche
     ok(g.PA2_HOOKS_BY_WORLD.forest.length === 4 && ["gouffre", "pierre", "feu"].every(function (h) { return !!g.PA2_HOOKS[h]; }), "E2 : quatre accroches en Forêt (chasseur, l'homme du gouffre, la pierre, le feu)");
 
     /* E3 : jamais la même accroche deux fois de suite */
-    prep(); var last = null, repeat = 0, seen = {};
-    for (var i = 0; i < 80; i++) { game.sceneRun = null; S.startRun("petite_aventure_foret"); var h = game.sceneRun.hookId; if (h === last) repeat++; seen[h] = 1; last = h; P.abandon(); }
+    prep(); var last = null, repeat = 0, seen = {}; // v3.697.0 (QA-7) : tirage figé levé à chaque tour, on teste le tirage lui-même
+    for (var i = 0; i < 80; i++) { game.sceneRun = null; P.ensureChest().draws = {}; S.startRun("petite_aventure_foret"); var h = game.sceneRun.hookId; if (h === last) repeat++; seen[h] = 1; last = h; P.abandon(); }
     ok(repeat === 0 && Object.keys(seen).length === 4, "E3 : 80 départs, jamais deux fois la même accroche, les quatre sortent");
 
     /* Maddoc */
@@ -14131,7 +14131,7 @@ console.log("\n[204] v3.429.0 — Ruines, acte II : Bâtisseur, murs qui bougent
     /* --- Quêtes de l'acte II --- */
     var qb = g.ADVENTURE_QUESTS.aq_ruines_batisseur, qs = g.ADVENTURE_QUESTS.aq_ruines_salle;
     ok(qb && qb.encounters.length === 5 && qb.encounters.filter(function (e) { return e.group && e.group.indexOf("batisseur") !== -1; }).length === 4, "« Celui qui pose les pierres » : 5 rencontres, 4 avec un Bâtisseur");
-    ok(qs && qs.encounters.length === 4 && qs.adventureIndex === 1, "« La salle qu'il évite » : 4 rencontres au Sanctuaire enseveli");
+    ok(qs && qs.encounters.length === 4 && qs.adventureIndex === 1, "« La salle qu'il évite » : 4 rencontres à la Nef ensevelie");
 
     /* --- Petite Aventure des Ruines : les murs bougent --- */
     var T = g.SCENE_TEMPLATES.petite_aventure_ruines;
@@ -23570,6 +23570,126 @@ console.log("\n[461] v3.696.0 — Décisions d'équilibrage (Seb, 05/11 : EQUI-6
     var cl = function (id) { return g.CLASSES.filter(function (c) { return c.id === id; })[0].balance.hpPct; };
     ok(cl("mage") === 0.05 && cl("knight") === 0 && cl("archer") === 0, "EQUI-8 : PV par classe inchangés (Mage +5 % depuis le 03/11)");
   } catch (err) { ok(false, "[461] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[462] v3.697.0 — Décisions règles et textes (Seb, 05/11, option A : EQUI-11, CPL2-2, QA-7, CPL1-6, UI-11, CPL3-11, QUET-9, TUTO-6, TUTO-9, TUTO-10, TUTO-13, NOV-11)");
+(function () {
+  try {
+    // EQUI-11 : « Régler d'un coup » pour l'élite répétable de carte jugée sans danger
+    var LM = g.LivingMapManager, Q = g.CombatQuick, M = "forest";
+    game = freshCombat("knight"); giveWeapon();
+    game.unlockedTabs.map = true; game.unlockedTabs.village = true;
+    run("WarehouseManager.addResource('petite_ration', 20, true); game.heroLevel = 30; game.equipped.weapon.value = 5000; EquipmentManager.recalcStats(); game.heroMaxHp = game.heroHp = 400000;");
+    LM.onRunEnd(M, "gue", "success");
+    var st = LM.start(M, "arbremere");
+    run("game.activeTab = 'combat'; game.heroMaxHp = game.heroHp = 400000;");
+    ok(st.ok && game.enemy && game.enemy.isElite && LM.isRepeatable(M, "arbremere"), "EQUI-11 : l'Arbre-mère (élite répétable) en combat");
+    var foes = Q._foes(), fc = g.CombatForecast.forEnemy(game.enemy);
+    ok(fc && fc.id === "trivial" && (Q.invalidate(), Q.available()), "EQUI-11 : jugée « Sans danger », la puce « Régler d'un coup » est proposée (" + (fc && fc.id) + ")");
+    var wins0 = LM.getDailyWins(M, "arbremere");
+    ok(Q.resolve() === true && foes.every(function (e) { return e.hp <= 0; }) && LM.getDailyWins(M, "arbremere") === wins0 + 1, "EQUI-11 : réglée d'un coup, la victoire compte comme un combat gagné");
+    var e = { id: "araignee_marquee", isElite: true, isBoss: true, hp: 10, maxHp: 10 };
+    game.livingMaps.fight = { mapId: M, sectorId: "toiles", eliteId: "araignee_marquee" };
+    var f0 = Q._foes; Q._foes = function () { return [e]; };
+    ok(!(Q.invalidate(), Q.available()), "EQUI-11 : élite de carte non répétable : pas de puce");
+    game.livingMaps.fight = null; ok(!(Q.invalidate(), Q.available()), "EQUI-11 : élite hors carte : pas de puce");
+    Q._foes = f0; Q.invalidate();
+
+    // CPL2-2 : paliers rapportés à la ligne depuis l'arrivée
+    var CR = g.CompanionRelics, CM = g.CompanionManager, at = function (c) { return [0, 1, 2].map(function (k) { return CR.slotAt(c, k); }).join("/"); };
+    ok(at("wenna") === "5/15/25" && at("maddoc") === "5/13/21" && at("edda") === "4/10/17" && at("ysolt") === "3/8/13" && at("sarkel") === "2/5/9",
+      "CPL2-2 : paliers Wenna 5/15/25, Maddoc " + at("maddoc") + ", Edda " + at("edda") + ", Ysolt " + at("ysolt") + ", Sarkel " + at("sarkel"));
+    var max = function (c) { return g.COMPANION_TRAINING_HARD_MAX - g.COMPANION_TRAINING_PER_WORLD * g.COMPANION_JOIN_WORLD[c]; };
+    var ow = function (c) { return Object.keys(g.COMPANION_RELIC_UNIQUES).filter(function (k) { return g.COMPANION_RELIC_UNIQUES[k].owner === c; }).length; };
+    ok(["wenna", "maddoc", "edda", "ysolt", "sarkel"].every(function (c) { return CR.slotAt(c, 2) <= max(c) && ow(c) <= 3; }), "CPL2-2 : au bout de sa ligne, chaque compagnon ouvre ses 3 emplacements (toutes ses reliques uniques portables)");
+    CM.unlock("sarkel"); var sk = CM.state("sarkel"), up0 = sk.upgrades;
+    sk.upgrades = 4; var o4 = CR.slotsOpen("sarkel"); sk.upgrades = 9; var o9 = CR.slotsOpen("sarkel"); sk.upgrades = up0;
+    ok(o4 === 1 && o9 === 3, "CPL2-2 : Sarkel, palier 4 → 1 emplacement, palier 9 → 3");
+
+    // QA-7 : tirage de Petite Aventure figé par secteur, consommé au départ
+    var S = g.SceneRunManager, P = g.Pa2Run;
+    game = freshCombat("knight"); giveWeapon(); run("game.enemy = null; game.combat = null;");
+    S.ensureDefaults(); game.explorationProgression.petiteAventure = { spent: 0, since: null }; game.resources.petite_ration = 5;
+    game.heroLevel = 6; game.heroHp = game.heroMaxHp; game.sceneRun = null;
+    if (g.SortieManager.isActive()) g.SortieManager.end("return");
+    var key = function (r) { return r.mapId + "|" + r.hookId + "|" + r.cond; }, same = true, k0 = null;
+    for (var i = 0; i < 6; i++) { game.sceneRun = null; S.startRun("petite_aventure_foret"); var k = key(game.sceneRun); if (k0 === null) k0 = k; else if (k !== k0) same = false; P.abandon(); }
+    ok(same && !!k0, "QA-7 : annuler la préparation et revenir redonne le même tirage, 6 fois (" + k0 + ")");
+    var d = P.ensureChest().draws["t/petite_aventure_foret"];
+    ok(d && d.at > 0 && g.PA2_DRAW_FREEZE_MS === 4 * 3600 * 1000, "QA-7 : tirage noté dans le coffre (sauvegardé en entier), figé 4 h");
+    run("var __b = buildSaveData();"); ok(!!run("__b.expeditionChest && __b.expeditionChest.draws && !!__b.expeditionChest.draws['t/petite_aventure_foret']"), "QA-7 : le tirage figé passe dans la sauvegarde");
+    d.at -= g.PA2_DRAW_FREEZE_MS + 1000; var old = d.at;
+    game.sceneRun = null; S.startRun("petite_aventure_foret");
+    ok(P.ensureChest().draws["t/petite_aventure_foret"].at > old, "QA-7 : au-delà de 4 h, nouveau tirage");
+    P.depart();
+    ok(!P.ensureChest().draws["t/petite_aventure_foret"], "QA-7 : le départ consomme le tirage (le suivant sera neuf)");
+    P.abandon(); if (g.SortieManager.isActive()) g.SortieManager.end("return"); game.sceneRun = null;
+
+    // CPL1-6 : résumé de retour gardé en stockage local
+    var R = g.ReturnManager, sum = { produced: { wood: 12 }, crafted: {}, fullPlots: 0, openPlots: 0 };
+    run("game.activeTab = 'combat';"); R._pending = null; R._requested = false;
+    ok(R.request(sum) && R.hasPending() && JSON.parse(g.localStorage.getItem(g.RETURN_STORE_KEY)).s.produced.wood === 12, "CPL1-6 : héros engagé, résumé en attente et gardé en stockage local (hors sauvegarde)");
+    ok(!run("JSON.stringify(buildSaveData())").includes("return_pending"), "CPL1-6 : rien dans la sauvegarde");
+    R._pending = null; R._requested = false; // rechargement
+    ok(R.restoreStored() && R.hasPending(), "CPL1-6 : après rechargement, le résumé revient");
+    run("game.activeTab = 'campement';"); R.flushPending(); g.closeReturnScreen();
+    ok(g.localStorage.getItem(g.RETURN_STORE_KEY) === null, "CPL1-6 : vu (écran fermé) : effacé");
+    run("game.activeTab = 'combat';"); R._requested = false; R.request(sum); R.clear();
+    ok(g.localStorage.getItem(g.RETURN_STORE_KEY) === null && !R.hasPending(), "CPL1-6 : changement de héros : effacé");
+    g.localStorage.setItem(g.RETURN_STORE_KEY, JSON.stringify({ slot: 99, s: sum })); R._requested = false;
+    ok(!R.restoreStored() && g.localStorage.getItem(g.RETURN_STORE_KEY) === null, "CPL1-6 : résumé d'un autre emplacement : jeté");
+    run("game.activeTab = 'campement';");
+
+    // UI-11 : .affordable sur les cartes payables
+    run("game.gold = 1000;");
+    var it = { uid: "x", name: "Épée", rarity: "common", slot: "weapon", stat: "tapDmg", value: 1, price: 10, worldIndex: 0 };
+    ok(/nb-purchase-card[^"]* affordable/.test(g.buildEquipShopCardHTML(it)) && !/ affordable/.test(g.buildEquipShopCardHTML(Object.assign({}, it, { price: 5000 }))), "UI-11 : boutique, carte payable marquée .affordable, trop chère sans");
+    var pot = (g.POTIONS_DB || [])[0];
+    ok(pot && / affordable/.test(g.buildPotionCardHTML(pot)), "UI-11 : potion payable marquée");
+    ok(/nb-purchase-card' \+ \(maxed \? ' is-maxed' : ''\) \+ \(canBuy \? ' affordable' : ''\)/.test(fsRead("js/ui/village-building-view.js")) && /class="nb-purchase-card affordable"/.test(fsRead("js/ui/potion-view.js")), "UI-11 : boutique d'Éclats et préparations de combat aussi");
+
+    // CPL3-11 : deux lignes sous 340 px, 12 px gardés
+    var vc = fsRead("css/04-panel-village.css"), mq = (vc.match(/@media \(max-width: 339px\) \{[\s\S]*?\n\}/) || [""])[0];
+    ok(/village-tabs\.kseg\.is-stack button \{[^}]*white-space: normal/.test(mq) && !/font-size/.test(mq), "CPL3-11 : sous 340 px, libellés du rail du Village sur deux lignes, taille inchangée (12 px)");
+    var en = g.I18n.dicts.en;
+    ok(en["sous-onglet|Ateliers"] === "Work­shops" && en["sous-onglet|Entrepôt"] === "Ware­house" && /Produc\\u00ADtion/.test(fsRead("js/ui/village-view.js")), "CPL3-11 : césures douces (Work-shops, Ware-house, Produc-tion)");
+
+    // QUET-9 : « Nef ensevelie »
+    var ru = g.WORLDS.filter(function (w) { return w.id === "ruins"; })[0];
+    ok(ru.adventures[1].id === "ruins_2" && ru.adventures[1].name === "Nef ensevelie" && en["Nef ensevelie"] === "Buried Nave", "QUET-9 : ruins_2 s'appelle « Nef ensevelie » (Buried Nave), id inchangé");
+    ok(!/Sanctuaire enseveli/.test(fsRead("js/data/worlds.js") + fsRead("js/data/adventure-quests.js")), "QUET-9 : plus aucun « Sanctuaire enseveli » lu par le joueur");
+
+    // TUTO-6 : « Village & Production » à la première ouverture
+    var GT = g.GENERIC_TUTORIALS, ks = Object.keys(GT);
+    ok(typeof GT.village_production.condition !== "function" && ks.indexOf("village_production") < ks.indexOf("village_training"), "TUTO-6 : sans condition, avant le Terrain");
+    game = freshCombat("knight"); run("pendingTutorial = null; game.genericTutorialsSeen = {};");
+    g.maybeShowGenericTutorial("village");
+    ok(g.pendingTutorial && g.pendingTutorial.genericId === "village_production", "TUTO-6 : première ouverture de l'onglet Village : « Village & Production »");
+    run("closeGenericTutorialModal('village_production');");
+
+    // TUTO-9 : « le lendemain » → « la prochaine nuit »
+    var tut = function (ch, id) { var s = g.STORY_QUESTS[ch].steps.filter(function (x) { return x.id === id; })[0]; return JSON.stringify(s.tutorial || {}); };
+    ok(["crypt|crypte_07", "mountain|montagne_07", "tower|tour_06"].every(function (x) { var p = x.split("|"), t = tut(p[0], p[1]); return /prochaine nuit \(toutes les 3 sorties\)/.test(t) && !/lendemain/.test(t); }), "TUTO-9 : crypte_07, montagne_07, tour_06 disent « la prochaine nuit (toutes les 3 sorties) »");
+
+    // TUTO-10 : mots de l'écran
+    var qv = fsRead("js/ui/quests-view.js");
+    ok(!/_t\("Principale"\)/.test(qv) && (qv.match(/_t\("Histoire", "badge"\)/g) || []).length === 3, "TUTO-10 : un seul badge, « Histoire », comme au Campement");
+    ok(!/_t\("[^"]*Inventaire/.test(fsRead("js/ui/equipment-view.js")) && /Attaque de base \(Trait arcanique pour le Mage\)/.test(tut("forest", "forest_02")), "TUTO-10 : « Sac » comme l'onglet, « Trait arcanique » du Mage nommé");
+    ok(!/ne rachète plus/.test(fsRead("js/ui/warehouse-view.js") + fsRead("js/systems/warehouse-system.js") + fsRead("js/data/village-buildings.js")), "TUTO-10 : « l'Entrepôt ne rachète rien », comme l'aide");
+
+    // TUTO-13 : « Les patrouilles » après la réclamation de forest_wenna
+    game = freshCombat("knight"); g.CompanionManager.unlock("wenna");
+    var SQ = g.StoryQuestManager, fs0 = SQ.getState("forest"), iw = g.STORY_QUESTS.forest.steps.findIndex(function (s) { return s.id === "forest_wenna"; });
+    fs0.currentStep = iw; fs0.accepted = true;
+    ok(!GT.patrols_intro.condition(), "TUTO-13 : pendant forest_wenna, pas de fenêtre « Les patrouilles »");
+    fs0.currentStep = iw + 1;
+    ok(GT.patrols_intro.condition() === true, "TUTO-13 : forest_wenna réclamée, la fenêtre peut venir");
+
+    // NOV-11 : tournures neutres
+    var tg = g.HERO_CLASS_TAGLINES;
+    ok(!/\bil\b|Maître|Gardien|précis,/.test(tg.knight + tg.archer + tg.mage), "NOV-11 : accroches de classe neutres");
+    ok(/Il te faudra une arme/.test(g.STORY_QUESTS.forest.steps[0].narrative.objective) && /Toi, tu es là/.test(fsRead("js/data/village-events.js")), "NOV-11 : « une arme » à forest_01, « tu es là » au marché");
+  } catch (err) { ok(false, "[462] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
 Promise.all(ATTENTES).then(function () {

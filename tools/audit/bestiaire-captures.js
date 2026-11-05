@@ -31,7 +31,7 @@ var LOTS={
  ]},
  ruines:{quete:"aq_ruines_couloirs",monde:"ruins",note:"Le Gardien du plan ne paraît que dans la fiche de combat du Labyrinthe aux leviers, pas sur l'écran de combat : voir les images brutes.",scenes:[
   {k:"skeleton",solo:"skeleton",nom:"Squelette"},{k:"ghoul",solo:"ghoul",nom:"Goule"},{k:"gargoyle",solo:"gargoyle",nom:"Gargouille"},{k:"zombie",solo:"zombie",nom:"Zombie"},{k:"batisseur",solo:"batisseur",nom:"Bâtisseur"},
-  {k:"skeletonlord",boss:"skeletonlord",intro:true,nom:"Seigneur squelette",cap:"Boss des Couloirs effondrés et du Sanctuaire enseveli."},
+  {k:"skeletonlord",boss:"skeletonlord",intro:true,nom:"Seigneur squelette",cap:"Boss des Couloirs effondrés et de la Nef ensevelie."},
   {k:"maitre",q:"aq_ruines_plan",bossQuete:true,intro:true,nom:"Maître d'œuvre",cap:"Le plan fait pierre : le Maître d'œuvre, boss de quête."},
   {k:"varrek",boss:"skeletonlord",nomJeu:"Varrek, le Garde scellé",image:"./images/Boss/varrek.webp",intro:true,nom:"Varrek",cap:"Boss du Sanctuaire scellé (le donjon n'a pas de décor propre : décor des Ruines)."},
   {k:"contremaitre",elite:"contremaitre",intro:true,nom:"Le Contremaître",cap:"Élite des Ruines, avec sa vraie escorte (Bâtisseur, Squelette)."},

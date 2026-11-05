@@ -64,9 +64,15 @@ var CompanionRelics = {
   },
 
   /* ---------- Emplacements ---------- */
+  /* v3.697.0 (CPL2-2, Seb A) : paliers 5/15/25 rapportés à la ligne d'entraînement depuis l'arrivée
+     (Sarkel 2/5/9, Ysolt 3/8/13) : un compagnon arrivé tard ouvre ses 3 emplacements au bout de sa ligne. */
+  slotAt: function (companionId, k) {
+    var max = COMPANION_TRAINING_HARD_MAX, len = Math.max(COMPANION_TRAINING_PER_WORLD, max - COMPANION_TRAINING_PER_WORLD * (COMPANION_JOIN_WORLD[companionId] || 0));
+    return Math.max(1, Math.ceil(COMPANION_RELIC_SLOTS_AT[k] * len / max));
+  },
   slotsOpen: function (companionId) {
-    var st = window.CompanionManager ? CompanionManager.state(companionId) : null, n = st ? st.upgrades : 0;
-    return COMPANION_RELIC_SLOTS_AT.filter(function (s) { return n >= s; }).length;
+    var st = window.CompanionManager ? CompanionManager.state(companionId) : null, n = st ? st.upgrades : 0, self = this;
+    return COMPANION_RELIC_SLOTS_AT.filter(function (s, k) { return n >= self.slotAt(companionId, k); }).length;
   },
   worn: function (companionId) {
     var st = window.CompanionManager ? CompanionManager.state(companionId) : null;

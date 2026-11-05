@@ -147,7 +147,7 @@ function buildQuestBoardCardHTML(m) {
   h += '<div class="qb-card-banner qb-banner-' + esc(m.type || "combat") + '">' + renderIconOrEmojiHTML(MissionBoard.typeIcon(m.type), "qb-card-banner-img", _td(m.title)) + '</div>';
   h += '<div class="qb-card-body">';
   h += '<div class="qb-card-title-row"><span class="qb-card-title">' + esc(_td(m.title)) + '</span>';
-  if (m.isMain) h += '<span class="quest-badge quest-badge-main">' + _t("Principale") + '</span>';
+  if (m.isMain) h += '<span class="quest-badge quest-badge-main">' + _t("Histoire", "badge") + '</span>';
   h += '</div>';
   var desc = m.blurb ? _td(m.blurb) : (m.objectiveLabel || "");
   if (desc) h += '<div class="qb-card-desc">' + esc(desc) + '</div>';
@@ -534,7 +534,7 @@ function buildQuestBadgesHTML(quest) {
     h += '<span class="quest-badge quest-badge-difficulty" style="color:' + (DIFFICULTY_COLORS[quest.difficulty] || 'inherit') + '">' + esc(DIFFICULTY_LABELS[quest.difficulty]) + '</span>';
   }
   if (quest.category === "main") {
-    h += '<span class="quest-badge quest-badge-main">' + _t("Principale") + '</span>';
+    h += '<span class="quest-badge quest-badge-main">' + _t("Histoire", "badge") + '</span>';
   } else if (quest.category === "side") {
     h += '<span class="quest-badge quest-badge-side">' + _t("Annexe") + '</span>';
   }
@@ -777,7 +777,7 @@ function buildStoryCurrentStepHTML(chapterId, chapter, step, index) {
 
   var h = '<div class="story-step story-step-current' + (ready ? ' is-ready' : accepted ? ' is-accepted' : '') + '">';
   if (step.act) h += '<div class="story-step-act">' + esc(_td(step.act)) + '</div>';
-  h += '<div class="story-step-row"><span class="story-step-num">' + (index + 1) + '/' + chapter.steps.length + '</span><span class="story-step-title">' + esc(_td(step.title)) + '</span><span class="quest-badge quest-badge-main">' + _t("Principale") + '</span></div>';
+  h += '<div class="story-step-row"><span class="story-step-num">' + (index + 1) + '/' + chapter.steps.length + '</span><span class="story-step-title">' + esc(_td(step.title)) + '</span><span class="quest-badge quest-badge-main">' + _t("Histoire", "badge") + '</span></div>';
   h += '<div class="story-step-text">' + esc(_td(step.narrative.objective)) + '</div>';
   if (accepted) h += buildStoryDialogueHTML(step); // v3.197.0 : dialogue une fois l'étape acceptée
 

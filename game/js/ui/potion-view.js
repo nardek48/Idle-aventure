@@ -62,7 +62,7 @@ function buildPotionCardHTML(potion) {
   var isStockCapped = !!potion.perRun && stock >= cap;
   var canBuy = !isStockCapped && (game.gold || 0) >= cost;
 
-  var h = '<div class="nb-purchase-card rarity-' + esc(potion.rarity) + (isLive ? ' is-active' : '') + '">';
+  var h = '<div class="nb-purchase-card rarity-' + esc(potion.rarity) + (isLive ? ' is-active' : '') + (canBuy ? ' affordable' : '') + '">'; // UI-11
   h += '<div class="nb-purchase-icon-col"><div class="nb-purchase-icon-slot">' + renderIconOrEmojiHTML(potion.icon, "nb-purchase-icon", _td(potion.name)) + '</div></div>';
   h += '<div class="nb-purchase-info-col">';
   h += '<div class="nb-purchase-name">' + esc(_td(potion.name)) + '</div>';
@@ -126,7 +126,7 @@ function buildCombatItemShopHTML() {
   COMBAT_ITEM_ORDER.forEach(function (id) {
     var it = COMBAT_ITEMS[id];
     var st = (it.trait && typeof enemyTraitLook === "function") ? enemyTraitLook(it.trait) : {}; // v3.492.15 : les deux registres d'états
-    var c = '<div class="nb-purchase-card">';
+    var c = '<div class="nb-purchase-card affordable">'; // UI-11 : rien à payer sur la carte (préparée à l'Apothicaire), pas de voile
     c += '<div class="nb-purchase-icon-col"><div class="nb-purchase-icon-slot">' + renderIconOrEmojiHTML(it.icon, "nb-purchase-icon", _td(it.name)) + '</div></div>';
     c += '<div class="nb-purchase-info-col">';
     c += '<div class="nb-purchase-name">' + esc(_td(it.name)) + '</div>';
@@ -151,7 +151,7 @@ function buildHealingPotionCardHTML(potion) {
   var gift = PotionManager.isStoryGiftDue(potion.id); // audit 04/11 (NOV-1) : potion offerte à forest_04 sans or
   var canBuy = ((game.gold || 0) >= cost || gift) && buyLeft > 0;
 
-  var h = '<div class="nb-purchase-card">';
+  var h = '<div class="nb-purchase-card' + (canBuy ? ' affordable' : '') + '">'; // UI-11
   h += '<div class="nb-purchase-icon-col"><div class="nb-purchase-icon-slot">' + renderIconOrEmojiHTML(potion.icon, "nb-purchase-icon", _td(potion.name)) + '</div></div>';
   h += '<div class="nb-purchase-info-col">';
   h += '<div class="nb-purchase-name">' + esc(_td(potion.name)) + '</div>';

@@ -112,9 +112,9 @@ function buildVillageSubTabBarHTML() {
   var badges = getVillageSubTabBadges();
   var tabs = [
     ["buildings", "images/Icons/construction_icon.webp", _t("Bâtiments")],
-    ["production", "images/Icons/subtabs/production.webp", _t("Production")],
-    ["shops", "images/Icons/subtabs/workshops.webp", _t("Ateliers")],
-    ["entrepot", "images/Icons/system/warehouse_supplies.webp", _t("Entrepôt")]
+    ["production", "images/Icons/subtabs/production.webp", _t("Produc\u00ADtion", "sous-onglet")], // CPL3-11 : césure douce, FR et EN
+    ["shops", "images/Icons/subtabs/workshops.webp", _t("Ateliers", "sous-onglet")], // CPL3-11 : césure douce en anglais
+    ["entrepot", "images/Icons/system/warehouse_supplies.webp", _t("Entrepôt", "sous-onglet")]
   ];
   var h = '<div class="kseg is-stack village-tabs">';
   tabs.forEach(function (t) {

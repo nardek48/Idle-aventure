@@ -302,7 +302,7 @@ var STORY_QUESTS = {
         title: "Le feu de camp",
         act: "Acte I — Le feu et la lame",
         narrative: {
-          objective: "Aeswyn n'est plus qu'un cercle de cendres. Le feu tient encore. Il te faudra une lame pour tenir la nuit.",
+          objective: "Aeswyn n'est plus qu'un cercle de cendres. Le feu tient encore. Il te faudra une arme pour tenir la nuit.", // NOV-11 : une arme, pas une lame (bâton, arc)
           completion: "Tu te lèves. Ce qui rôde à la Lisière ne dort jamais." // v3.260.0 : plus de lame remise ici (texte validé Seb)
         },
         objectiveLabel: "Accepter la quête",
@@ -333,7 +333,7 @@ var STORY_QUESTS = {
           icon: "images/Icons/combat_stats/stat_attack.webp",
           title: "Le combat",
           points: [
-            { icon: "images/Icons/combat_stats/stat_attack.webp", text: "Attaque de base — frappe l'ennemi sans coûter de ressource. Toujours disponible." },
+            { icon: "images/Icons/combat_stats/stat_attack.webp", text: "Attaque de base (Trait arcanique pour le Mage) — frappe l'ennemi sans coûter de ressource. Toujours disponible." },
             { icon: "images/Icons/combat_actions/skill_generic.webp", text: "Compétences (1/2/3) — coûtent de la ressource de ta classe (Rage, Concentration ou Mana selon ton héros), pour plus de dégâts ou un effet spécial." },
             { icon: "images/Icons/combat_stats/stat_defense.webp", text: "Défense (Garde, Esquive ou Barrière arcanique selon ta classe) — réduit ou évite le prochain coup. Utile quand ce bandeau apparaît sous la barre de vie de l'ennemi : il prépare une attaque plus forte.", preview: "charge" },
             { icon: "images/Icons/combat_stats/stat_speed.webp", text: "Jauge de célérité — se remplit quand tu frappes (attaque ou compétence de dégâts). Une fois pleine, tu frappes deux fois d'affilée." }
@@ -2896,7 +2896,7 @@ STORY_QUESTS.crypt = {
         points: [
           { icon: "images/Icons/scene/node_obstacle.webp", text: "La carte de la Crypte fonctionne comme celle des Ruines : tu libères un couloir en terminant sa Petite Aventure, ou en battant l'élite qui le garde." },
           { icon: "images/Icons/combat_status/asleep.webp", text: "Chaque couloir a ses gisants. Avant de partir, tu choisis : les laisser (plus facile, rapporte moins) ou les réveiller (plus dur, plus de Cire de sépulcre)." },
-          { icon: "images/Icons/living_map/carte_vivante.webp", text: "Un échec réveille le couloir : c'est Le réveil. Il reste hostile, et plus dur, jusqu'au lendemain." },
+          { icon: "images/Icons/living_map/carte_vivante.webp", text: "Un échec réveille le couloir : c'est Le réveil. Il reste hostile, et plus dur, jusqu'à la prochaine nuit (toutes les 3 sorties)." },
           { icon: "images/Icons/resources/cire_sepulcre_icon.webp", text: "Le Marché de la Crypte est sur la carte, à côté de la Veillée." }
         ]
       },
@@ -4184,7 +4184,7 @@ STORY_QUESTS.mountain = {
         points: [
           { icon: "images/Icons/menu_icons/map_menu.webp", text: "La carte de la Montagne fonctionne comme celle de la Crypte : tu libères un secteur en terminant sa Petite Aventure, ou en battant l'élite qui le garde." },
           { icon: "images/Icons/combat_actions/vein_cut.webp", text: "Chaque secteur a sa veine. Avant de partir, tu choisis : la tailler (plus de Cendre vive, mais le secteur chauffe et ses combats sont plus durs ensuite) ou la laisser (plus facile, rapporte moins)." },
-          { icon: "images/Icons/combat_status/vein_heat.webp", text: "Une Petite Aventure ratée recouvre le secteur de lave : c'est La coulée. Il reste plus dur jusqu'au lendemain. Une élite perdue, elle, se retente le jour même." },
+          { icon: "images/Icons/combat_status/vein_heat.webp", text: "Une Petite Aventure ratée recouvre le secteur de lave : c'est La coulée. Il reste plus dur jusqu'à la prochaine nuit (toutes les 3 sorties). Une élite perdue, elle, se retente le jour même." },
           { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "Le Marché de la Montagne est sur la carte, à côté du Replat. La caravane en rapporte de l'or. Au trajet Long (Halle 3), 2 Cendres vives à coup sûr." }
         ]
       },
@@ -4968,7 +4968,7 @@ STORY_QUESTS.tower = {
         points: [
           { icon: "images/Icons/menu_icons/map_menu.webp", text: "La carte de la Tour est en coupe : un étage par secteur. Tu libères un étage en terminant sa Petite Aventure." },
           { icon: "images/Icons/scene/path_easy.webp", text: "Chaque étage se souvient d'un monde : ses obstacles viennent du Désert, des Ruines, de la Crypte ou de la Montagne." },
-          { icon: "images/Icons/living_map/carte_vivante.webp", text: "Une Petite Aventure ratée, et la Tour refait l'étage : c'est La redite. Il reste plus dur jusqu'au lendemain. Rien n'est perdu." },
+          { icon: "images/Icons/living_map/carte_vivante.webp", text: "Une Petite Aventure ratée, et la Tour refait l'étage : c'est La redite. Il reste plus dur jusqu'à la prochaine nuit (toutes les 3 sorties). Rien n'est perdu." },
           { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "Le Marché de la Tour est au dernier camp, devant la porte. La caravane en rapporte de l'or. Au trajet Long (Halle 3), 2 Givres bleus à coup sûr." }
         ]
       },

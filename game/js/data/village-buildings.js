@@ -422,7 +422,7 @@ var VILLAGE_BUILDINGS = {
        (TavernManager.getSlotCount) — chaque chantier se voit tout de suite sur le tableau. */
     maxLevel: 6, // v3.456.9 (décision Seb) : le niveau 6 à l'acte III de la Crypte (Cire consacrée)
     implemented: true,
-    desc: "Un tableau de contrats de livraison, renouvelé toutes les 6 heures. Avec la caravane de la Halle marchande, c'est le débouché du surplus de Production : l'Entrepôt ne rachète plus rien.",
+    desc: "Un tableau de contrats de livraison, renouvelé toutes les 6 heures. Avec la caravane de la Halle marchande, c'est le débouché du surplus de Production : l'Entrepôt ne rachète rien.",
     costTiers: [
       {
         minLevel: 0, maxLevel: 2,
