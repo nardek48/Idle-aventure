@@ -29,6 +29,20 @@ function isGrimoireSlotAvoided(slot, combatContext) {
 }
 window.isGrimoireSlotAvoided = isGrimoireSlotAvoided;
 
+/* v3.695.0 (COMB-2, Seb 05/11) : l'action contre-t-elle une annonce en cours ? « Varier » ne l'évite jamais. */
+function actionCountersLiveAnnounce(action, combatContext) {
+  return !!(action && Array.isArray(action.counters) && action.counters.some(function (c) { return evaluateGrimoireCondition(c, combatContext); }));
+}
+window.actionCountersLiveAnnounce = actionCountersLiveAnnounce;
+
+/* v3.695.0 (COMB-1, Seb 05/11) : le repli ne joue la Défense que face à une annonce qu'elle contre, ou sous 40 % des PV. */
+function isDefenseFallbackWarranted(kit, combatContext) {
+  var d = kit && kit.actions && kit.actions.defense, ctx = combatContext || {};
+  if (typeof ctx.heroHpPercent === "number" && ctx.heroHpPercent <= HERO_LOW_HP_THRESHOLD_PCT) return true;
+  return actionCountersLiveAnnounce(d, ctx);
+}
+window.isDefenseFallbackWarranted = isDefenseFallbackWarranted;
+
 var HERO_LOW_HP_THRESHOLD_PCT = 0.40;
 
 function evaluateGrimoireCondition(conditionId, combatContext) {

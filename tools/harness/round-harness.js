@@ -23475,6 +23475,71 @@ console.log("\n[459] v3.694.0 — Décisions économie (Seb, 05/11 : ECON-1 et E
   } catch (err) { ok(false, "[459] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[460] v3.695.0 — Décisions combat (Seb, 05/11 : COMB-1, COMB-2, COMB-8, COMB-9, option A)");
+(function () {
+  var cu = g.canUseAction, sv = { v: g.game.grimoireVarier, r: g.game._varier, m: g.game._towerMirror, rules: g.game.grimoireRules };
+  // Héros Chevalier neuf, ennemi sans annonce ; seules les actions de `prets` sont jouables
+  var poser = function (prets) {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.heroHp = game.heroMaxHp;");
+    g.game.unlockedTabs.combat = true; g.ClassCombatManager.resetForNewHero(); g.CombatEngine.ensureState(); g.CombatEngine.spawnEnemy();
+    var e = g.game.enemy; ["chargeTelegraphed", "shieldTelegraphed", "healTelegraphed", "silenceTelegraphed", "surgeTelegraphed"].forEach(function (k) { e[k] = false; });
+    e.gauge = 0; e.stats.celerity = 0; e.archetype = null; g.game.grimoireRules = [];
+    g.canUseAction = function (r, c, a) { return prets.indexOf(a.slot) >= 0; };
+    return e;
+  };
+  try {
+    var kit = g.getClassSkills("knight");
+    // COMB-1 : la Défense au repli seulement face à une annonce qu'elle contre, ou sous 40 % des PV
+    ok(!g.isDefenseFallbackWarranted(kit, { heroHpPercent: 1 }) && g.isDefenseFallbackWarranted(kit, { heroHpPercent: 0.4 }) && g.isDefenseFallbackWarranted(kit, { heroHpPercent: 1, chargeIncoming: true })
+      && g.isDefenseFallbackWarranted(kit, { heroHpPercent: 1, eliteSurgeIncoming: true }) && !g.isDefenseFallbackWarranted(kit, { heroHpPercent: 1, healIncoming: true }),
+      "COMB-1 : Défense justifiée par une Charge, une exaltation ou PV ≤ 40 % ; pas par un soin qu'elle ne contre pas");
+    var e = poser(["defense", "basic"]);
+    var d = g.ClassCombatManager.chooseRoundAction(false);
+    ok(d === null, "COMB-1 : sans menace, PV pleins, Défense prête : le conseil doré dit Attaque (" + JSON.stringify(d) + ")");
+    e.chargeTelegraphed = true; d = g.ClassCombatManager.chooseRoundAction(false);
+    ok(d && d.slot === "defense", "COMB-1 : « Il charge ! » : la Défense revient");
+    e.chargeTelegraphed = false; g.game.heroHp = Math.floor(g.game.heroMaxHp * 0.35); d = g.ClassCombatManager.chooseRoundAction(false);
+    ok(d && d.slot === "defense", "COMB-1 : sous 40 % des PV : la Défense revient");
+    poser(["skill1", "defense", "basic"]); d = g.ClassCombatManager.chooseRoundAction(false);
+    ok(d && d.slot === "skill1", "COMB-1 : une technique prête passe toujours avant (ordre du repli inchangé)");
+    // COMB-2 : « Varier » ne saute jamais un contre d'une annonce en cours
+    e = poser(["skill1", "skill2", "skill3", "defense", "basic"]);
+    g.game.grimoireVarier = true; g.game._varier = { last: "skill1", used: {} }; g.game._towerMirror = null;
+    g.game.grimoireRules = [{ conditionId: "healIncoming", actionSlot: "skill1" }];
+    e.healTelegraphed = true; d = g.ClassCombatManager.chooseRoundAction(true);
+    ok(d && d.slot === "skill1" && d.matchedConditionId === "healIncoming", "COMB-2 : soin annoncé, contre = technique d'avant : la règle part quand même (" + JSON.stringify(d) + ")");
+    e.healTelegraphed = false; d = g.ClassCombatManager.chooseRoundAction(false);
+    ok(d && d.slot !== "skill1", "COMB-2 : sans annonce, Varier évite toujours la technique d'avant (" + (d && d.slot) + ")");
+    ok(g.actionCountersLiveAnnounce(kit.actions.skill1, { healIncoming: true }) && !g.actionCountersLiveAnnounce(kit.actions.skill1, { shieldIncoming: true }), "COMB-2 : actionCountersLiveAnnounce lit les contres de l'action");
+    g.canUseAction = cu;
+    // COMB-8 : courbe 100 × c / (c + 60) au-delà de 75, jamais sous 75
+    var CE = g.CombatEngine, gain = function (c) { return CE.getEnemyGaugeGain({ stats: { celerity: c } }); };
+    ok(gain(20) === 20 && gain(58) === 58 && gain(75) === 75 && gain(120) === 75 && Math.abs(gain(277) - 100 * 277 / 337) < 1e-9 && gain(5000) < 100,
+      "COMB-8 : gain 20→20, 58→58, 75→75, 120→75, 277→" + gain(277).toFixed(1) + ", toujours < 100");
+    var sauve = g.game.dungeonRun, maxG = {};
+    [1, 2, 3, 4, 5, 6].forEach(function (id) {
+      [1, 20].forEach(function (lvl) {
+        g.game.dungeonRun = { active: true, wave: 0, dungeonId: id, level: lvl, marks: [] };
+        for (var w = 1; w <= g.DUNGEON_CONFIG.waveCount + 1; w++) [].concat(g.DungeonManager.buildWaveEnemy(w)).forEach(function (en) {
+          if (!en || !en.stats) return;
+          var k = id <= 3 ? "bas" : "haut", ecart = Math.abs(CE.getEnemyGaugeGain(en) - en.stats.celerity);
+          maxG[k] = Math.max(maxG[k] || 0, k === "bas" ? ecart : CE.getEnemyGaugeGain(en));
+        });
+      });
+    });
+    g.game.dungeonRun = sauve;
+    ok(maxG.bas === 0, "COMB-8 : donjons 1 à 3 (niv. 1 et 20) : aucun gain de jauge modifié");
+    ok(maxG.haut > 75 && maxG.haut < 100, "COMB-8 : donjons 4 à 6 : gain max " + maxG.haut.toFixed(1) + " < 100, plus de double frappe à chaque round");
+    // COMB-9 : une potion compte pour 80 % de son soin dans le pronostic
+    run("fullResetState(); game.playerName='Test'; game.heroId='mage'; EquipmentManager.recalcStats(); game.heroHp = game.heroMaxHp;");
+    g.PotionManager.ensureHealing(); g.game.healingPotionsOwned = { potion_soin_mineur: 3 };
+    var po = g.PotionManager.getHealingPotion("potion_soin_mineur"), cap = g.getSortiePotionCap();
+    ok(g.FORECAST_POTION_WEIGHT === 0.8 && g.CombatForecast.getHealingReserve() === Math.floor(g.game.heroMaxHp * po.healPercent * 0.8 * Math.min(3, cap)),
+      "COMB-9 : réserve de soin = " + Math.min(3, cap) + " potions × " + Math.round(po.healPercent * 100) + " % × 0,8 (" + g.CombatForecast.getHealingReserve() + " PV)");
+  } catch (err) { ok(false, "[460] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  finally { g.canUseAction = cu; g.game.grimoireVarier = sv.v; g.game._varier = sv.r; g.game._towerMirror = sv.m; g.game.grimoireRules = sv.rules; }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

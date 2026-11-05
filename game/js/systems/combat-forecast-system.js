@@ -49,6 +49,10 @@ var FORECAST_ELITE_HERO_DMG_MULT = 0.88;
    avant de passer sous le seuil de Wenna : soins réels 0,3 à 0,8 du modèle pour le Chevalier. */
 var FORECAST_COMPANION_HEAL_MULT = 0.75;
 
+/* v3.695.0 (COMB-9, Seb 05/11) : une potion ne compte plus en PV pleins (boire prend le tour, le soin
+   tombe tard). 0,8 calé au banc : héros sans arme avec potions « Très difficile » ou pire, profils armés inchangés. */
+var FORECAST_POTION_WEIGHT = 0.8;
+
 /* Verdicts, du plus sûr au pire. `level` sert au tri et au style ; `label` est le texte. */
 var COMBAT_FORECAST_LEVELS = [
   { id: "trivial", level: 0, label: _t("Sans danger"), hint: "" },
@@ -171,7 +175,7 @@ var CombatForecast = {
     (window.HEALING_POTIONS_DB || []).forEach(function (po) {
       var stock = PotionManager.getHealingStock(po.id);
       while (stock > 0 && restantes > 0) {
-        total += maxHp * Number(po.healPercent || 0);
+        total += maxHp * Number(po.healPercent || 0) * FORECAST_POTION_WEIGHT; // COMB-9
         stock -= 1; restantes -= 1;
       }
     });
@@ -362,7 +366,7 @@ var CombatForecast = {
     var healThreshold = this.getHealThreshold(enemy);
     var netDmg = healThreshold > 0 ? (heroDmg - healThreshold) : heroDmg;
 
-    /* Les potions repoussent le moment où l'on tombe : elles comptent comme des PV.
+    /* Les potions repoussent le moment où l'on tombe : elles comptent comme des PV (pondérés, COMB-9).
        L'usure des combats précédents les retire. */
     var reserve = this.getHealingReserve();
     var attrition = Math.max(0, Number(options.attrition || 0));
@@ -563,6 +567,7 @@ var CombatForecast = {
 window.FORECAST_ELITE_DMG_MULT = FORECAST_ELITE_DMG_MULT;
 window.FORECAST_ELITE_HERO_DMG_MULT = FORECAST_ELITE_HERO_DMG_MULT;
 window.FORECAST_RATIO_THRESHOLDS = FORECAST_RATIO_THRESHOLDS;
+window.FORECAST_POTION_WEIGHT = FORECAST_POTION_WEIGHT; // v3.695.0 (COMB-9)
 window.FORECAST_CLASS_DMG_MULT = FORECAST_CLASS_DMG_MULT;
 window.FORECAST_COMPANION_HEAL_MULT = FORECAST_COMPANION_HEAL_MULT;
 window.COMBAT_FORECAST_LEVELS = COMBAT_FORECAST_LEVELS;

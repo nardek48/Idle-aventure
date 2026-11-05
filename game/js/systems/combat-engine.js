@@ -52,6 +52,9 @@ var CELERITY_GAUGE_PER_ACTION = 1.0;  // jauge héros += célérité × coef par
    (sim/celerity-curve-bench.js) : laisse la Forêt EXACTEMENT telle qu'elle est (40 → 40). */
 var CELERITY_SOFT_CAP_K = 60;
 var ENEMY_CELERITY_GAUGE_COEF = 1.0;  // idem côté ennemi (le loup mord deux fois)
+/* v3.695.0 (COMB-8, Seb 05/11) : au-delà de 75 (plafond des mondes et donjons 1 à 3), gain = 100 × c / (c + 60),
+   jamais sous 75 : plus de double frappe permanente aux donjons 4 à 6. */
+var ENEMY_CELERITY_KNEE = 75;
 
 var ENEMY_CHARGE_ROUNDS_MIN = 3;      // ex 8-12 s → 3-5 rounds
 var ENEMY_CHARGE_ROUNDS_MAX = 5;
@@ -1097,7 +1100,8 @@ var CombatEngine = {
   },
 
   getEnemyGaugeGain: function (e) {
-    return Number((e && e.stats && e.stats.celerity) || 0) * ENEMY_CELERITY_GAUGE_COEF;
+    var c = Number((e && e.stats && e.stats.celerity) || 0) * ENEMY_CELERITY_GAUGE_COEF;
+    return c <= ENEMY_CELERITY_KNEE ? c : Math.max(ENEMY_CELERITY_KNEE, CELERITY_GAUGE_MAX * c / (c + CELERITY_SOFT_CAP_K)); // COMB-8
   },
 
   /* Condition Grimoire « enemyAttackIncoming » : la prochaine frappe ennemie sera doublée (jauge pleine). */
@@ -1922,6 +1926,7 @@ window.ROUND_INTERVAL_MS = ROUND_INTERVAL_MS;
 window.CELERITY_GAUGE_MAX = CELERITY_GAUGE_MAX;
 window.DOUBLE_STRIKE_DANGER_PCT = DOUBLE_STRIKE_DANGER_PCT;
 window.CELERITY_SOFT_CAP_K = CELERITY_SOFT_CAP_K; // v3.243.0
+window.ENEMY_CELERITY_KNEE = ENEMY_CELERITY_KNEE; // v3.695.0 (COMB-8)
 window.BOSS_DMG_MULT = BOSS_DMG_MULT;
 window.ELITE_SURGE_ROUNDS_MIN = ELITE_SURGE_ROUNDS_MIN;
 window.ELITE_SURGE_ROUNDS_MAX = ELITE_SURGE_ROUNDS_MAX;

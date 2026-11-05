@@ -639,7 +639,8 @@ var ClassCombatManager = {
     if (!resourceState) return null;
 
     var grimoireContext = this.getGrimoireCombatContext();
-    if (avoid) grimoireContext.avoidSlots = avoid;
+    // v3.695.0 (COMB-2) : un contre n'est jamais évité par « Varier »
+    if (avoid) grimoireContext.avoidSlots = avoid.filter(function (s) { return !(typeof actionCountersLiveAnnounce === "function" && actionCountersLiveAnnounce(kit.actions[s], grimoireContext)); });
 
     var unlockedSlotCount = (typeof getGrimoireSlotCount === "function")
       ? getGrimoireSlotCount(game.worldsEverReached)
@@ -670,6 +671,10 @@ var ClassCombatManager = {
     var priorityListForFallback = priorityRule
       ? priorityList.filter(function (s) { return s !== priorityRule.actionSlot; })
       : priorityList;
+    // v3.695.0 (COMB-1, Seb 05/11) : pas de Défense au repli sans annonce qu'elle contre ni PV sous 40 %
+    if (typeof isDefenseFallbackWarranted === "function" && !isDefenseFallbackWarranted(kit, grimoireContext)) {
+      priorityListForFallback = priorityListForFallback.filter(function (s) { return s !== "defense"; });
+    }
 
     if (forExecution && priorityRule && window.CombatReportManager && typeof canUseAction === "function") {
       var excludedAction = kit.actions[priorityRule.actionSlot];
