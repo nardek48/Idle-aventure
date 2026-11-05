@@ -33,6 +33,7 @@ function buildHudHTML() {
     +     '<button type="button" class="hud-res-item hud-wh" onclick="hudOpenWarehouse()">' + _t("Entrepôt") + ' ›</button>'
     // v3.422.0 (Seb) : la ressource de la carte du monde quitte le bandeau, l'or reste seul
     +   '</div>'
+    +   hudCoqueHTML()
     + '</div>'
     + '<div id="hud-mini-park">'
     +   '<div id="combat-hero-mini" class="combat-hero-mini" role="img">'
@@ -48,6 +49,34 @@ function buildHudHTML() {
     +     '</div>'
     +   '</div>'
     + '</div>';
+}
+
+/* v3.710.0 (atelier kit-coque-3, Seb 05/11) : bandeau du téléphone dessiné avec les pièces du kit de Seb.
+   Le format large garde le bandeau de pierre ci-dessus ; css/02-layout.css montre l'un ou l'autre. */
+function hudCoqueHTML() {
+  var g = function (k, ico) {
+    return '<div class="hk-g is-' + k + '" id="hk-' + k + '"><div class="hk-tr"><i id="hk-' + k + '-fill"></i></div><div class="hk-fr"></div>'
+      + '<div class="hk-ic" style="background-image:url(images/UI/coque/' + ico + '.webp)"></div><span id="hk-' + k + '-text"></span></div>';
+  };
+  return '<div class="hk"><div class="hk-in"><div class="hk-plate"></div>' + g("hp", "jauge-pv") + g("xp", "jauge-xp")
+    + '<div class="hk-cap"></div><span class="hk-gold" id="hk-gold">0</span>'
+    + '<button type="button" class="hk-plus" id="hk-plus" onclick="openOrInvestFromHud()" aria-label="' + _t("Or à investir") + '"></button>'
+    + '<button type="button" class="hk-ring" onclick="openHeroFromHud()" aria-label="' + _t("Héros") + '"><img id="hk-pt-img" alt="" style="display:none"><i></i></button>'
+    + '<span class="hk-lvl"><b id="hk-lvl">1</b></span></div></div>';
+}
+
+/* Le « + » de l'or ouvre la fenêtre « Ton or peut servir » ; il pulse tant qu'une dépense n'a pas été montrée. */
+function openOrInvestFromHud() {
+  if (typeof openOrInvestWindow === "function") openOrInvestWindow();
+}
+window.openOrInvestFromHud = openOrInvestFromHud;
+function renderHudPlus() {
+  var b = document.getElementById("hk-plus"), s = typeof orInvestState === "function" ? orInvestState() : null;
+  if (!b || !s) return;
+  var st = s.fresh ? "is-anim" : (s.list.length ? "" : "is-off");
+  if (b._st === st) return;
+  b._st = st;
+  b.className = "hk-plus" + (st ? " " + st : "");
 }
 
 /* v3.396.0 : toucher le portrait ouvre Héros › Résumé (les Talents ont leur bulle). */
@@ -93,6 +122,7 @@ function renderHud() {
   renderHudBand();
   renderHeroHp();
   if (now - hudDockAt >= 250 && typeof renderHudDock === "function") { hudDockAt = now; renderHudDock(); } // v3.396.0 : fil rouge, sac, talents
+  renderHudPlus(); // v3.710.0 : « + » de l'or (état recalculé une fois par seconde au plus)
   renderHudAchievementTier(); // v3.338.0 (H4)
   if (now - hudWideAt >= 1000 || hudWideTab !== game.activeTab) { hudWideAt = now; hudWideTab = game.activeTab; renderHudWide(); } // v3.503.0 (v3.553.0 : tout de suite au changement d'écran)
   if (window.Chronique && document.documentElement.classList.contains("wide-mode")) { if (!Chronique.el) Chronique.mount(); else Chronique.render(false); }
@@ -196,6 +226,15 @@ function renderHudBand() {
   hudSet("hud-xp-fill", "width", Math.max(0, Math.min(100, Math.round(100 * xp / next))) + "%");
   hudSet("hud-xp-text", "text", _t("{a} / {b} XP", { a: hudNum(xp), b: hudNum(next) }));
   hudSet("hud-pt-lvl", "text", _t("Niv. {n}", { n: Number(game.heroLevel || 1) }));
+  // v3.710.0 : mêmes valeurs dans le bandeau du téléphone
+  hudSet("hk-gold", "text", hudNum(game.gold));
+  hudSet("hk-hp-fill", "width", pct + "%");
+  hudSet("hk-hp-text", "text", _t("{a} / {b} PV", { a: hudNum(hp), b: hudNum(maxHp) }));
+  var hk = document.getElementById("hk-hp");
+  if (hk && hudBandLast.hkLow !== low) { hudBandLast.hkLow = low; hk.classList.toggle("is-low", low); }
+  hudSet("hk-xp-fill", "width", Math.max(0, Math.min(100, Math.round(100 * xp / next))) + "%");
+  hudSet("hk-xp-text", "text", _t("{a} / {b} XP", { a: hudNum(xp), b: hudNum(next) }));
+  hudSet("hk-lvl", "text", String(Number(game.heroLevel || 1)));
 }
 
 /* v3.338.0 (Hauts faits, H4) : liseré du portrait selon le palier du monde courant.
@@ -284,6 +323,11 @@ function renderCombatHeroMini() {
   if (pt) {
     if (hero && hero.image) { setSmallPortrait(pt, hero.image); pt.alt = hero.name || ""; pt.style.display = "block"; }
     else pt.style.display = "none";
+  }
+  var hkp = document.getElementById("hk-pt-img"); // v3.710.0 : portrait du bandeau du téléphone
+  if (hkp) {
+    if (hero && hero.image) { setSmallPortrait(hkp, hero.image); hkp.alt = hero.name || ""; hkp.style.display = "block"; }
+    else hkp.style.display = "none";
   }
 }
 

@@ -117,6 +117,49 @@
 #hud-mini-park { display: none; }
 
 /* =========================
+   v3.710.0 (atelier kit-coque-3, Seb 05/11) : bandeau du téléphone avec les pièces du kit de Seb
+   (images/UI/coque/). Mesures prises au pixel sur sa maquette, ramenées à 390 × 100 px : tout est
+   en % pour suivre la largeur. Le bandeau montre 87 px ; le losange et l'écusson débordent dessous.
+   ========================= */
+.hk { display: none; }
+html:not(.wide-mode) .hud-band { display: block; min-height: 0; padding: var(--safe-top) 0 0; gap: 0; background: var(--c-brown-950-soft); box-shadow: none; z-index: 30; }
+html:not(.wide-mode) .hud-band::before, html:not(.wide-mode) .hud-band::after { display: none; }
+html:not(.wide-mode) .hud-band > :not(.hk) { display: none; }
+html:not(.wide-mode) .hk { display: block; position: relative; width: 100%; aspect-ratio: 390 / 87; }
+.hk-in { position: absolute; left: 0; right: 0; top: 0; height: 114.94%; font-family: "Alegreya", Georgia, serif; color: var(--c-cream-100-2); }
+.hk-in > * { position: absolute; }
+.hk-plate { left: 1.7%; right: 1.2%; top: -9%; height: 106%; background: url('../images/UI/coque/plaque.webp') center / 100% 100% no-repeat; pointer-events: none; }
+/* Portrait : ouvre Héros › Résumé ; l'anneau passe par-dessus le cadre */
+.hk-ring { left: 4.2%; top: -1%; width: 22.5%; aspect-ratio: 1; z-index: 4; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer; }
+.hk-ring img { position: absolute; inset: 8.5%; width: 83%; height: 83%; border-radius: 50%; object-fit: cover; object-position: 50% 18%; }
+.hk-ring i { position: absolute; inset: 0; background: url('../images/UI/coque/anneau.webp') center / 100% 100% no-repeat; pointer-events: none; }
+.hk-lvl { left: 6.4%; top: 63%; width: 7.4%; aspect-ratio: 105 / 138; z-index: 5; pointer-events: none; background: url('../images/UI/coque/ecusson.webp') center / 100% 100% no-repeat; }
+.hk-lvl b { position: absolute; left: 0; right: 0; top: 42%; transform: translateY(-50%); text-align: center; font-size: 14px; font-weight: 700; line-height: 1; text-shadow: 0 1px 2px var(--c-black-950); }
+/* Or : capsule, montant et « + » (pulse tant qu'une dépense n'a pas été montrée) */
+.hk-cap { left: 62.6%; top: 6.5%; width: 29.3%; height: 24%; background: url('../images/UI/coque/capsule-or.webp') center / 100% 100% no-repeat; pointer-events: none; }
+.hk-gold { left: 71.4%; top: 8.5%; width: 12.4%; height: 20%; display: flex; align-items: center; justify-content: center; white-space: nowrap; font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; text-shadow: 0 1px 2px var(--c-black-950); }
+.hk-plus { left: 85%; top: 9%; width: 5.8%; aspect-ratio: 1; padding: 0; border: 0; border-radius: 50%; background: url('../images/UI/coque/plus.webp') center / contain no-repeat; cursor: pointer; }
+.hk-plus::before { content: ""; position: absolute; inset: -10px; } /* zone de toucher élargie */
+.hk-plus.is-anim { animation: hk-plus 1.6s ease-in-out infinite; }
+.hk-plus.is-off { opacity: 0.55; }
+@keyframes hk-plus { 0%, 100% { box-shadow: 0 0 0 0 rgba(255, 200, 80, 0); } 50% { box-shadow: 0 0 6px 3px rgba(255, 200, 80, 0.85); } }
+@media (prefers-reduced-motion: reduce) { .hk-plus.is-anim { animation: none; box-shadow: 0 0 6px 3px rgba(255, 200, 80, 0.85); } }
+/* Jauges PV et XP : cadre du kit, cuvette et remplissage dessinés par le jeu */
+.hk-g { left: 28.4%; width: 60.5%; height: 21%; pointer-events: none; }
+.hk-g.is-hp { top: 31%; }
+.hk-g.is-xp { top: 54%; }
+.hk-tr { position: absolute; left: 12%; right: 3%; top: 31%; bottom: 31%; border-radius: 99px; background: var(--c-brown-950-soft); overflow: hidden; box-shadow: inset 0 1px 3px var(--c-black-950); }
+.hk-tr i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 99px; transition: width 0.3s; }
+.hk-g.is-hp .hk-tr i { background: linear-gradient(var(--c-green-400), var(--c-green-650-vivid) 55%, var(--c-green-700)); }
+.hk-g.is-hp.is-low .hk-tr i { background: linear-gradient(var(--c-red-250), var(--c-red-550) 55%, var(--c-red-700)); }
+.hk-g.is-xp .hk-tr i { background: linear-gradient(var(--c-bronze-300), var(--c-bronze-450) 60%, var(--c-brown-600)); }
+.hk-fr { position: absolute; inset: 0; background: url('../images/UI/coque/jauge.webp') center / 100% 100% no-repeat; }
+.hk-ic { position: absolute; left: 0; top: -14%; height: 128%; aspect-ratio: 108 / 119; background: center / contain no-repeat; }
+.hk-g span { position: absolute; left: 12%; right: 3%; top: 0; bottom: 0; display: flex; align-items: center; justify-content: center; white-space: nowrap; font-size: 13px; font-weight: 700; text-shadow: 0 1px 2px var(--c-black-950), 0 0 3px var(--c-black-950); }
+/* Le premier bloc de l'écran touche le bas de la plaque */
+html:not(.wide-mode) #panel-container .kfp-scrollzone > .kfb:first-child { margin-top: 0; }
+
+/* =========================
    v3.396.0 : bulles de raccourci (ui/hud-dock-view.js), en bas à droite de la colonne de jeu,
    au-dessus de la barre du menu (hauteur = largeur × 971 / 4064, voir #tab-bar).
    ========================= */
@@ -631,6 +674,25 @@ html:not(.wide-mode) #panel-container .kfp-scrollzone::after { content: ""; disp
 .tab-btn.active .tab-label {
   color: #bfe6ff; /* reprend la teinte glacée du cadre actif (tab-slot-active.png) */
 }
+
+/* v3.710.0 (atelier kit-coque-3, Seb 05/11) : barre du bas du téléphone avec le panneau et les icônes
+   du kit de Seb (images/UI/coque/), libellé sous l'icône, halo qui monte du bord sous l'onglet actif. */
+html:not(.wide-mode) #tab-bar { width: min(404px, 94%); aspect-ratio: 1014 / 229; background-image: url('../images/UI/coque/barre.webp'); }
+html:not(.wide-mode) #tab-bar-row { top: 17%; bottom: 14%; left: 4.5%; right: 4.5%; gap: 0; }
+html:not(.wide-mode) #tab-bar .tab-btn:not(.tab-wide) + .tab-btn:not(.tab-wide)::before { content: ""; position: absolute; left: 0; top: 12%; bottom: 12%; width: 1px; background: linear-gradient(transparent, rgba(226, 177, 74, 0.55), transparent); }
+html:not(.wide-mode) .tab-icon-frame { background: none; flex-direction: column; overflow: visible; }
+html:not(.wide-mode) .tab-btn.active .tab-icon-frame { background-image: none; }
+html:not(.wide-mode) #tab-bar .tab-icon-img { position: relative; z-index: 1; width: 34px; height: 28px; margin: 0 0 4px; object-fit: cover; filter: none; transform: none; -webkit-mask-image: radial-gradient(ellipse 60% 62% at 50% 50%, var(--c-black-950) 62%, transparent 100%); mask-image: radial-gradient(ellipse 60% 62% at 50% 50%, var(--c-black-950) 62%, transparent 100%); }
+html:not(.wide-mode) #tab-bar .tab-btn[data-tab="campement"] .tab-icon-img { content: url('../images/UI/coque/onglet-camp.webp'); }
+html:not(.wide-mode) #tab-bar .tab-btn[data-tab="quests"] .tab-icon-img { content: url('../images/UI/coque/onglet-quetes.webp'); }
+html:not(.wide-mode) #tab-bar .tab-btn[data-tab="map"] .tab-icon-img { content: url('../images/UI/coque/onglet-carte.webp'); }
+html:not(.wide-mode) #tab-bar .tab-btn[data-tab="village"] .tab-icon-img { content: url('../images/UI/coque/onglet-village.webp'); }
+html:not(.wide-mode) #tab-bar .tab-btn[data-tab="more"] .tab-icon-img { content: url('../images/UI/coque/onglet-heros.webp'); }
+html:not(.wide-mode) #tab-bar .tab-btn[data-tab="menu"] .tab-icon-img { content: url('../images/UI/coque/onglet-menu.webp'); }
+html:not(.wide-mode) .tab-label { position: relative; left: auto; right: auto; bottom: auto; z-index: 1; font-family: "Alegreya", Georgia, serif; font-size: 13px; color: var(--c-cream-100-2); }
+html:not(.wide-mode) .tab-btn.active .tab-label { color: var(--c-cream-100-3); text-shadow: 0 1px 2px var(--c-brown-900), 0 0 4px var(--c-brown-800-vivid); }
+html:not(.wide-mode) .tab-btn.active .tab-icon-frame::before { content: ""; position: absolute; left: -14%; right: -14%; top: -30%; bottom: 0; z-index: 0; pointer-events: none; background: radial-gradient(ellipse 55% 100% at 50% 100%, rgba(255, 205, 100, 0.95), rgba(255, 170, 60, 0.8) 40%, rgba(255, 150, 40, 0.4) 70%, rgba(255, 150, 40, 0) 96%); mix-blend-mode: plus-lighter; }
+html:not(.wide-mode) .tab-btn.active .tab-icon-frame::after { content: ""; position: absolute; left: -4%; right: -4%; bottom: -14%; z-index: 2; height: 12px; pointer-events: none; background: url('../images/UI/coque/lueur.webp') center / 100% 100% no-repeat; }
 /* =========================
    v3.102.2 — combat plein écran (décision Seb) : pendant une sortie on ne
    navigue pas, on rentre (Rentrer / Fuir / mort). Le menu du bas, les
