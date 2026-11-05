@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.708.0", "system/wrench_settings", _t("Outil d'administration plus fidèle : une étape d'Histoire forcée pose aussi l'équipement, les secteurs et les compteurs qu'elle demande.")],
     ["3.707.0", "menu_icons/camp_menu", _t("Petits écrans : la mission d'Histoire du Camp tient au-dessus de la barre du bas (« Accepter » visible dès l'ouverture), et l'écran de retour montre « Décharger » sans défiler.")],
     ["3.706.1", "menu_icons/camp_menu", _t("Petit écran en texte « Grande » : le bandeau illustré s'efface pour laisser la place aux boutons (« Accepter » du Camp n'est plus caché par la barre du bas).")],
     ["3.706.0", "village_buildings/caravan", _t("Écran de retour : une caravane rentrée s'y décharge d'un toucher. Entrepôt : un repère montre la part gardée par le Grand Ouvrage. Sac : nouveau tri « Intérêt », et le ▼ signale aussi un objet nettement moins bon.")],

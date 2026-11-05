@@ -10,6 +10,7 @@
    Les textes des données sont traduits par _td() à l'affichage (registre : lang/data-fields.js). */
 I18n.register("en", {
   // index.html
+  "Outil d'administration plus fidèle : une étape d'Histoire forcée pose aussi l'équipement, les secteurs et les compteurs qu'elle demande.": "More faithful admin tool: a forced Story step now also sets the gear, sectors and counters it requires.",
   "Petits écrans : la mission d'Histoire du Camp tient au-dessus de la barre du bas (« Accepter » visible dès l'ouverture), et l'écran de retour montre « Décharger » sans défiler.": "Small screens: the Camp's Story mission fits above the bottom bar (\"Accept\" visible right away), and the return screen shows \"Unload\" without scrolling.",
   "Petit écran en texte « Grande » : le bandeau illustré s'efface pour laisser la place aux boutons (« Accepter » du Camp n'est plus caché par la barre du bas).": "Small screen with « Large » text: the illustrated banner steps aside to make room for buttons (the Camp's « Accept » is no longer hidden by the bottom bar).",
   "Écran de retour : une caravane rentrée s'y décharge d'un toucher. Entrepôt : un repère montre la part gardée par le Grand Ouvrage. Sac : nouveau tri « Intérêt », et le ▼ signale aussi un objet nettement moins bon.": "Return screen: a returned caravan unloads in one tap. Warehouse: a marker shows the share the Great Work keeps. Bag: new « Value » sort, and ▼ now also flags a clearly worse item.",
