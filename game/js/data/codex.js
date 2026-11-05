@@ -1,5 +1,5 @@
 "use strict";
-/* data/codex.js — histoire du jeu, déblocage progressif par isUnlocked(). Voir codex-system.js / codex-view.js. Détail : COMMENTAIRES_ORIGINAUX.md */
+/* data/codex.js — histoire du jeu, déblocage progressif par isUnlocked(). Voir codex-system.js / codex-view.js. */
 
 /* v3.621.0 (audit narratif, décision de Seb) : le Codex, ce sont les feuillets du Veilleur (bible A, pilier 6 :
    seule voix qui dit « Aether », « Rupture », « Cycle »). Une fiche d'histoire ne se lit qu'une fois le Veilleur

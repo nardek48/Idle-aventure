@@ -1,6 +1,6 @@
 "use strict";
 /* data/grimoire-conditions.js — catalogue de cartes-conditions du Grimoire (donnée pure, aucun accès à game.*).
-   Seuils réels dans evaluateGrimoireCondition(), combat-auto-policy-system.js. Détail complet : COMMENTAIRES_ORIGINAUX.md */
+   Seuils réels dans evaluateGrimoireCondition(), combat-auto-policy-system.js. */
 
 var GRIMOIRE_CONDITIONS = {
   chargeIncoming: {
@@ -100,7 +100,7 @@ var GRIMOIRE_CONDITIONS = {
     icon: "images/Icons/combat_status/multiple_enemies.webp"
   },
   /* v3.428.0 (Ruines, relève) : un ennemi est à terre et va se relever. L'action de la règle
-     le vise (RiseSystem.aim) : une frappe l'achève. Icône à générer. */
+     le vise (RiseSystem.aim) : une frappe l'achève. */
   enemyRising: {
     id: "enemyRising",
     label: "Un ennemi se relève",
@@ -109,7 +109,7 @@ var GRIMOIRE_CONDITIONS = {
     icon: "images/Icons/combat_status/rising.webp"
   },
   /* v3.451.0 (Crypte, CR2) : un mort dort. L'action de la règle le vise (SleepSystem.aim) : le frapper
-     le réveille, pour plus d'or. Sans règle, on le laisse dormir. Icône à générer. */
+     le réveille, pour plus d'or. Sans règle, on le laisse dormir. */
   enemySleeping: {
     id: "enemySleeping",
     label: "Un ennemi dort",
@@ -127,7 +127,7 @@ var GRIMOIRE_CONDITIONS = {
     icon: "images/Icons/combat_status/chained.webp"
   },
   /* v3.487.0 (Montagne, MT2) : la veine du combat n'a pas encore été taillée. Pensée pour l'action
-     « Tailler » (une taille au premier round). Icône à générer. */
+     « Tailler » (une taille au premier round). */
   veinIntact: {
     id: "veinIntact",
     label: "Veine intacte",

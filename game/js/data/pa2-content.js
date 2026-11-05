@@ -359,7 +359,7 @@ var PA2_CUTS = {
   ruins:  { rue: { name: "Rue effondrée", icon: "images/Icons/scene/cuts/cut_collapsed_street.webp" }, porte: { name: "Porte murée", icon: "images/Icons/scene/cuts/cut_walled_door.webp" } },
   crypt:  { grille: { name: "Grille tombée", icon: "images/Icons/scene/cuts/cut_gate.webp" }, voute: { name: "Voûte écroulée", icon: "images/Icons/scene/cuts/cut_collapse.webp" } },
   mountain: { coulee: { name: "Coulée fraîche", icon: "images/Icons/scene/cuts/cut_lava_flow.webp" }, crevasse: { name: "Crevasse fumante", icon: "images/Icons/scene/cuts/cut_steaming_crevasse.webp" } }, // v3.489.0
-  tower: { marche: { name: "Marche manquante", icon: "images/Icons/scene/cuts/cut_missing_step.webp" }, palier: { name: "Palier muré", icon: "images/Icons/scene/cuts/cut_walled_landing.webp" } } // v3.627.0 (icônes à générer)
+  tower: { marche: { name: "Marche manquante", icon: "images/Icons/scene/cuts/cut_missing_step.webp" }, palier: { name: "Palier muré", icon: "images/Icons/scene/cuts/cut_walled_landing.webp" } } // v3.627.0
 };
 /* v3.469.0 (Condition du run, PG-B1a à PG-B1c) : tirée au lancement, propre au monde, un avantage et un
    inconvénient, annoncée sur la préparation. fx : réglages lus par Pa2Run (cond). « Nuit calme » une fois sur cinq. */

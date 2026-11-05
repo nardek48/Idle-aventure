@@ -1,7 +1,7 @@
 "use strict";
 /* ui/dungeon-view.js — écran Donjon (v3.245.0, refonte Donjons, doc v1.1 §5) : une carte par monde, feuille basse .ksheet de
    lancement avec les Marques, carte de run actif, sorties du jour, rapport de fin. La Boutique d'éclats vit chez l'Enchanteresse
-   (ui/village-building-view.js). Détail complet : COMMENTAIRES_ORIGINAUX.md */
+   (ui/village-building-view.js). */
 
 var pendingDungeonId = null;   // donjon ouvert dans la feuille de lancement
 var pendingDungeonMarks = [];  // bascules de la feuille — copiées dans game.dungeonRun.marks au start() seulement

@@ -16,7 +16,7 @@
    de façon synchrone — protégé, pas touché). Seul le rendu change.
 
    Historique v3.22 (2 étapes), v3.29 (bandeau compétences, croix <img class=ico-inline src=images/Icons/system/close.webp>),
-   v3.99.0 (flux écran titre). Détail : COMMENTAIRES_ORIGINAUX.md */
+   v3.99.0 (flux écran titre). */
 
 var pendingHeroId = "";
 var pendingPlayerName = ""; // saisi à l'étape "name", gardé en mémoire jusqu'à confirmation

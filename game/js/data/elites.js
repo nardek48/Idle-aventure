@@ -299,7 +299,7 @@ var ELITE_DB = {
   },
 
   /* v3.628.0 (Tour, lot T-2b) — le Gardien qui répète, élite répétable de la carte des étages (la veine du dedans).
-     Le Légendaire de la Tour à 35 %, la 3e victoire sans pièce en donne une. Image à générer (vrai chemin gardé). */
+     Le Légendaire de la Tour à 35 %, la 3e victoire sans pièce en donne une. */
   gardien_qui_repete: {
     id: "gardien_qui_repete",
     baseId: "guardian",

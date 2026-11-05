@@ -1,6 +1,6 @@
 "use strict";
 /* data/worlds.js — mondes, chapitres, ambiance et fonds de panneaux. Ordre = progression linéaire (WorldManager.worldIndex).
-   Note : requiredAscension potentiellement vestigial depuis v2.83 (world-quests.js), à vérifier. Détail : COMMENTAIRES_ORIGINAUX.md */
+   Note : requiredAscension potentiellement vestigial depuis v2.83 (world-quests.js), à vérifier. */
 
 /* v3.355.0 : WORLD_PANEL_BACKGROUNDS retiré (six fonds que plus rien n'affichait, images absentes). */
 

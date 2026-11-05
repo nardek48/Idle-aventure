@@ -1,7 +1,6 @@
 "use strict";
 /* systems/combat-report-system.js — rapport post-combat CUMULATIF (game.combatReport, transitoire non persisté).
-   Adaptateur non-pur (lit/écrit game.combatReport). Reset uniquement explicite (bouton). Affichage : ui/combat-report-view.js.
-   Détail complet : COMMENTAIRES_ORIGINAUX.md */
+   Adaptateur non-pur (lit/écrit game.combatReport). Reset uniquement explicite (bouton). Affichage : ui/combat-report-view.js. */
 
 var CombatReportManager = {
   ensure: function () {

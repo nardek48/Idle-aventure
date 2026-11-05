@@ -1,5 +1,5 @@
 "use strict";
-/* data/classes.js — regroupement héros -> classe (Chevalier/Archer/Mage). Détail complet : COMMENTAIRES_ORIGINAUX.md
+/* data/classes.js — regroupement héros -> classe (Chevalier/Archer/Mage).
    Note : champ combat{} déclaré vide à l'origine (v3.33.2) — vérifier s'il est encore utilisé, class-skills.js a pris ce rôle depuis v3.34.0. */
 
 var CLASSES = [

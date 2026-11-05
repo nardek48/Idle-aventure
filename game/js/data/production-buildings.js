@@ -7,8 +7,7 @@
    ci-dessous — tous délégués à ProductionPlotsSystem (9 zones indépendantes chacune son
    niveau/coût propre, voir data/production-plots.js). Laissés en place pour ne pas casser
    getProductionBuildingCost(id, n) si jamais appelé ailleurs, mais ProductionManager.buy(id)
-   est désormais un no-op pour ces 6 bâtiments (voir production-system.js).
-   Détail complet : COMMENTAIRES_ORIGINAUX.md */
+   est désormais un no-op pour ces 6 bâtiments (voir production-system.js). */
 
 var PRODUCTION_CONFIG = {
   baseRatePerMin: 1,

@@ -1,5 +1,5 @@
 "use strict";
-/* ui/codex-view.js — écran Codex : liste par catégorie (accordéon) + mode lecture plein texte. Détail complet : COMMENTAIRES_ORIGINAUX.md */
+/* ui/codex-view.js — écran Codex : liste par catégorie (accordéon) + mode lecture plein texte. */
 
 var CODEX_CATEGORY_LABELS = {
   intro: _t("Prologue"),

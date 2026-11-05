@@ -1,6 +1,6 @@
 "use strict";
 /* systems/equipment-system.js — actions sur l'inventaire (équiper/déséquiper/vendre/trier).
-   EquipmentSystem = logique réelle ; EquipmentManager = façade legacy déléguant à StatsSystem pour les "effective*". Détail : COMMENTAIRES_ORIGINAUX.md */
+   EquipmentSystem = logique réelle ; EquipmentManager = façade legacy déléguant à StatsSystem pour les "effective*". */
 
 /* v3.225.0 — affixes d'un objet, toujours un tableau (objet d'avant v3.225.0 ou Commun : []).
    Seul point de lecture : stats-system.js, equipment-view.js, equip-shop-view.js passent par ici. */

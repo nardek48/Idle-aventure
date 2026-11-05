@@ -12,7 +12,7 @@ STRATÉGIE (volontairement simple, en 2 niveaux) :
      la partie fonctionne, donc on le précharge explicitement plutôt
      que d'attendre que chaque fichier soit visité une fois.
   2. "Runtime" (tout le reste en même origine — concrètement
-     images/, ~38 Mo au total en v3.516) : PAS précaché d'un coup (trop lourd,
+     images/, ~67 Mio au total en v3.692) : PAS précaché d'un coup (trop lourd,
      rendrait l'installation longue et gourmande en stockage/données
      mobiles pour rien — un joueur ne visite pas forcément tous les
      mondes/donjons/bâtiments dès le premier lancement). À la place,
@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.691.0"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.692.0"; // <- à incrémenter à CHAQUE livraison
 var CACHE_NAME = "quest-idle-" + CACHE_VERSION;
 var IMAGE_CACHE = "aethervale-images"; // v3.457.4 : hors du préfixe quest-idle- ; v3.547.0 : images disparues purgées (purgeMissingImages)
 var imagesRevalidated = {};             // URL déjà revérifiées depuis le démarrage de ce service worker
@@ -260,6 +260,7 @@ var PRECACHE_APP_SHELL = [
   "./css/04-panel-construction.css",
   "./js/data/enemy-archetypes.js",
   "./js/data/grimoire-conditions.js",
+  "./js/data/warehouse-resources.js",
   "./js/data/hunt-quests.js",
   "./js/data/scene-nodes.js",
   "./js/data/scene-templates.js",

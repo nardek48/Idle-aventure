@@ -71,7 +71,7 @@ async function launch(device, base) {
   lastPage = page;
   page._errors = [];
   page.on("pageerror", function (e) { page._errors.push(e.message); });
-  page.on("console", function (m) { if (m.type() === "error") page._errors.push(m.text()); });
+  page.on("console", function (m) { if (m.type() === "error" || (m.type() === "warning" && /^\[rattrapée\]/.test(m.text()))) page._errors.push(m.text()); }); // v3.692.0 (ARCH-14) : une erreur rattrapée compte
   // window.confirm : le parcours décide (page._answer = true/false), le message est gardé
   page._answer = true; page._dialogs = [];
   page.on("dialog", function (d) { page._dialogs.push(d.message()); if (page._answer) d.accept(); else d.dismiss(); });

@@ -108,7 +108,6 @@ var DATA_TEXT_FIELDS = {
   EQUIPMENT_SLOT_CONFIG: ["*.names", "*.namesByIcon"],
   EQUIP_SHOP_STARTER: ["*.name"],
   RARITY_LABELS: ["*"],
-  RPG_STAT_LABELS: ["*"],
   LEGENDARY_POWERS: ["*.*.label", "*.*.desc"],
   DUNGEON_UNIQUE_POWERS: ["*.label", "*.desc"], // v3.470.0
   LEGENDARY_POWER_BY_ID: ["*.label", "*.desc"],

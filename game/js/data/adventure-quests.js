@@ -1,6 +1,6 @@
 "use strict";
 /* data/adventure-quests.js — quêtes scopées à une aventure précise (worldId+adventureIndex), séparées de world-quests.js.
-   Logique : systems/adventure-quest-system.js. Détail complet : COMMENTAIRES_ORIGINAUX.md */
+   Logique : systems/adventure-quest-system.js. */
 
 var ADVENTURE_QUESTS = {
   // v3.109.0 : aq_forest_scout (« Éclaireur de la Lisière ») supprimée — jamais liée à l'Histoire, donc invisible depuis 3.107.4.

@@ -35,7 +35,6 @@ var BOSS_DMG_MULT = 1.5;      // v3.102.0 : dégâts des boss × 1,5 (calibratio
 var ENEMY_PRECISION_CRIT_COEF = 0.3;
 var ENEMY_CRIT_MULT = 1.5;
 var WILL_CRIT_RESIST_COEF = 0.05;
-var DEFEAT_GOLD_PENALTY = 0; // v3.101.0 (P3-lite) : la mort ne coûte plus d'or (LIGNE_DIRECTRICE §4) — le butin de sortie arrive en P2.1
 
 var ROUND_INTERVAL_MS = 1500;         // tempo du mode Grimoire / « Continuer l'attaque » (× vitesse de combat)
 var CELERITY_GAUGE_MAX = 100;
@@ -101,60 +100,12 @@ function getEnemyWillCritPenalty() {
   return Number(stats.will || 0) * WILL_CRIT_RESIST_COEF;
 }
 
-function showFloatingDamage(amount, isCrit) {
-  var container = document.getElementById("enemy-display");
-  if (!container) return;
-
-  var el = document.createElement("div");
-  el.className = "float-dmg " + (isCrit ? "crit" : "normal");
-  el.textContent = (isCrit ? "💥 " : "") + formatNumber(amount);
-  el.style.left = (45 + randFloat(-18, 18)) + "%";
-  el.style.top = (26 + randFloat(-12, 12)) + "%";
-  container.appendChild(el);
-
-  setTimeout(function () {
-    if (el.parentNode) el.parentNode.removeChild(el);
-  }, 800);
-
-  var emoji = document.getElementById("enemy-emoji");
-  if (emoji) {
-    emoji.classList.remove("hit-flash");
-    void emoji.offsetWidth;
-    emoji.classList.add("hit-flash");
-  }
-}
-
-function showGoldPopup(amount) {
-  var container = document.getElementById("enemy-display");
-  if (!container) return;
-
-  var el = document.createElement("div");
-  el.className = "gold-popup";
-  el.textContent = "+" + formatNumber(amount);
-  el.style.left = "50%";
-  el.style.top = "60%";
-  container.appendChild(el);
-
-  setTimeout(function () {
-    if (el.parentNode) el.parentNode.removeChild(el);
-  }, 1000);
-}
-
-function showDamageTakenPopup(amount) {
-  var container = document.getElementById("combat-hero-mini");
-  if (!container) return;
-
-  var el = document.createElement("div");
-  el.className = "damage-taken-popup";
-  el.textContent = "-" + formatNumber(amount);
-  el.style.left = "50%";
-  el.style.top = "30%";
-  container.appendChild(el);
-
-  setTimeout(function () {
-    if (el.parentNode) el.parentNode.removeChild(el);
-  }, 1000);
-}
+/* Points d'accroche de l'affichage : combat-screen-view.js les remplace (audit 04/11, ARCH-7).
+   L'ancien décor du combat n'existe plus : sans l'écran, ils ne font rien. */
+function showFloatingDamage() {}
+function showGoldPopup() {}
+function showDamageTakenPopup() {}
+function showCounterSuccessPopup() {}
 
 function getConfiguredCounterSlotsForCondition(conditionId) {
   if (!window.ClassCombatManager || typeof ClassCombatManager.getCurrentClassId !== "function") return [];
@@ -179,29 +130,6 @@ function getConfiguredCounterSlotsForCondition(conditionId) {
     }
   });
   return slots;
-}
-
-function showCounterSuccessPopup() {
-  var container = document.getElementById("enemy-display");
-  if (!container) return;
-
-  var el = document.createElement("div");
-  el.className = "counter-success-popup";
-  el.textContent = "⚡ " + _t("CONTRÉ !");
-  el.style.left = "50%";
-  el.style.top = "18%";
-  container.appendChild(el);
-
-  setTimeout(function () {
-    if (el.parentNode) el.parentNode.removeChild(el);
-  }, 1400);
-
-  var emoji = document.getElementById("enemy-emoji");
-  if (emoji) {
-    emoji.classList.remove("counter-flash");
-    void emoji.offsetWidth;
-    emoji.classList.add("counter-flash");
-  }
 }
 
 var CombatEngine = {
@@ -761,8 +689,6 @@ var CombatEngine = {
     return false;
   },
 
-  advanceSelection: function () {},
-
   /* v3.276.0 (décision Seb) : l'action est RÉSOLUE AU CLIC. v3.447.0 : au tour de l'acteur seulement ;
      ceux qui le précèdent dans l'ordre jouent d'abord. */
   queueChoice: function (slot, arg) {
@@ -793,13 +719,6 @@ var CombatEngine = {
     this.refreshCombatUI();
     if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
     if (typeof renderHealButtons === "function") renderHealButtons();
-    return true;
-  },
-
-  /* Conservé pour les appels existants : termine le round en cours. */
-  finishManualRound: function () {
-    if (this.turn().open) this.runToStop();
-    this.refreshCombatUI();
     return true;
   },
 

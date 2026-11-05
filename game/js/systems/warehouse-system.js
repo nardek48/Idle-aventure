@@ -2,8 +2,7 @@
 /* systems/warehouse-system.js — Entrepôt : SEUL point d'écriture sur game.resources (addResource/removeResource/sellResource).
    v3.218.0 : et SEUL point de vérité du plafond, via getCap() — relevé par le bâtiment « Entrepôt agrandi ».
    v3.98.0 : le craft n'est plus géré ici — remplacé par des ateliers locaux par bâtiment
-   (voir WorkshopsSystem, systems/workshops-system.js). v3.412.0 : game.craftQueue retiré.
-   Détail : COMMENTAIRES_ORIGINAUX.md */
+   (voir WorkshopsSystem, systems/workshops-system.js). v3.412.0 : game.craftQueue retiré. */
 
 /* v3.484.0 (refonte de l'économie, lot S, RE-8) : ressources retirées -> équivalent brut.
    Sert aux stocks et files d'atelier des anciennes sauvegardes, et aux butins encore en route. */

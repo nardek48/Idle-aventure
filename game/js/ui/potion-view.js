@@ -1,5 +1,5 @@
 "use strict";
-/* ui/potion-view.js — sous-onglet Potions de la Boutique. Achat ajoute au stock (activation séparée, voir equipment-view.js). Détail : COMMENTAIRES_ORIGINAUX.md */
+/* ui/potion-view.js — sous-onglet Potions de la Boutique. Achat ajoute au stock (activation séparée, voir equipment-view.js). */
 
 
 /* v3.215.0 (lot V-4) — SECONDE VOIE : préparer au lieu d'acheter.

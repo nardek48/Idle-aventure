@@ -38,7 +38,7 @@ var CHAPTER_OPENINGS = {
     ]
   }
 };
-/* v3.626.0 (Tour, lot T-1) : textes validés par Seb le 02/11/2026 (Chapitre VI : textes v0.1). Images à générer. */
+/* v3.626.0 (Tour, lot T-1) : textes validés par Seb le 02/11/2026 (Chapitre VI : textes v0.1). */
 CHAPTER_OPENINGS.tower = {
   num: "Chapitre VI", step: "tour_01", teinte: ["150,160,190", "50,56,74", "10,11,16"],
   planches: [

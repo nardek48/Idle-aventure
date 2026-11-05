@@ -11,7 +11,6 @@ body.exp-on-board .hud-dock { display: none !important; }
 .exp-sum .is-ready b { color: var(--c-brown-700-vivid); }
 .exp-sum .is-away b { color: #2d5d8a; }
 
-
 /* Une ligne */
 .exp-list { display: flex; flex-direction: column; gap: 6px; }
 .exp-row { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 12px; border: 1px solid var(--c-bronze-350); background: var(--c-cream-50-soft); color: var(--c-brown-850-3); cursor: pointer; }
@@ -26,7 +25,7 @@ body.exp-on-board .hud-dock { display: none !important; }
 .exp-row-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 .exp-row-txt b { font-size: 15px; line-height: 1.15; }
 .exp-row-txt small { font-size: 12px; color: var(--c-brown-700-soft); line-height: 1.25; }
-.exp-kind { font-weight: 600; color: var(--c-brown-600-soft); }
+
 .exp-left { font-weight: 800; color: #2d5d8a; }
 .exp-act { flex: 0 0 auto; max-width: 46%; min-height: 36px; padding: 4px 12px; border-radius: 10px; border: 1px solid var(--c-bronze-500); background: linear-gradient(var(--c-cream-100-vivid), var(--c-cream-200)); font: inherit; font-size: 13px; font-weight: 800; color: var(--c-brown-800-3); line-height: 1.15; }
 .exp-act.is-primary { border-color: var(--c-green-650-soft); background: linear-gradient(#5aa65a, var(--c-green-650-soft)); color: var(--c-white-50-soft); text-shadow: 0 1px 1px rgba(0, 0, 0, .35); }

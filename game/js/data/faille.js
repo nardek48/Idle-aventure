@@ -50,7 +50,7 @@ var FAILLE_CONFIG = {
   echoMirror: 0.25                       // le palier : même approche que le combat précédent, +25 % de coups reçus
 };
 
-/* Tuiles à générer (Images à générer, famille « La faille ») : vrai chemin gardé, l'icône générique en attendant. */
+/* Tuiles de la faille (famille « La faille ») : l'icône générique si l'une manque. */
 var FAILLE_TILES = {
   rooms: ["images/Maps/faille/salle_1.webp", "images/Maps/faille/salle_2.webp", "images/Maps/faille/salle_3.webp"],
   corridor: "images/Maps/faille/couloir.webp",

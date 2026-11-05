@@ -540,10 +540,7 @@
   var SLOTS = ["skill1", "skill2", "skill3", "defense"];
   var KEYS = { skill1: "1", skill2: "2", skill3: "3", defense: "4" };
 
-  function actionIcon(action) {
-    return (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[action.id])
-      || (action.type === "defense" ? "images/Icons/combat_stats/stat_defense.webp" : "images/Icons/combat_actions/skill_generic.webp");
-  }
+  function actionIcon(action) { return getGrimoireActionIcon(action); } // ui/grimoire-view.js (ARCH-17)
 
   /* Le conseil du Grimoire, avec SA RAISON : la condition de la règle qui s'applique. */
   function heroAdvice() {
@@ -1031,14 +1028,12 @@
   window.renderAllyRow = renderTeam;
   window.renderActorBand = function () { renderTeam(); renderCmd(); };
   window.renderClassSkillButtons = renderCmd;
-  window.renderClassResourceBar = renderTeam;
   window.renderHealButtons = renderCmd;
   window.renderCombatControls = function () {
     if (window.AchievementManager) AchievementManager.onModeShown(game.combatMode);
     renderCmd();
     if (typeof renderCombatSpeedBar === "function") renderCombatSpeedBar();
   };
-  window.renderCombatMissionProgress = function () { setHtml(byId("cbx-top"), buildTopHTML()); };
   window.renderHeroHp = function () { if (typeof oldRenderHeroHp === "function") oldRenderHeroHp(); }; // v3.688.0 (PERF-6) : l'Équipe est déjà redessinée par renderFrame à chaque image
   window.openCombatStatesSheet = openStates;
   window.buildCbxStatesSheetHTML = buildStatesSheetHTML;
@@ -1046,7 +1041,6 @@
   window.buildCbxTargetHTML = buildTargetHTML;
   window.buildCbxCmdHTML = buildCmdHTML;
   window.buildCbxTopHTML = buildTopHTML;
-  window.cbxStatesOf = statesOf;
   window.cbxLayout = layout;
   window.cbxIsRanged = isRanged;
   window.cbxIsEpure = isEpure;   // v3.473.0 : lu par le harnais
@@ -1061,6 +1055,11 @@
   window.showFloatingDamage = function (amount, isCrit) { onDamageShown(amount, isCrit); };
   window.showDamageTakenPopup = function () { /* repris par watch() sur la carte touchée */ };
   window.showGoldPopup = function (amount) { flyGold(amount); };   // v3.444.0 : vers la pastille du butin
+  // Audit 04/11 (ARCH-V1) : « CONTRÉ ! » sur l'ennemi visé, au style d'un coup bloqué (visuel propre : atelier d'abord)
+  window.showCounterSuccessPopup = function () {
+    var e = target(), el = e ? foeEl(e) : null;
+    if (inCombatScreen() && el) floatAt(anchorOf(el, 0.2), "⚡ " + _t("CONTRÉ !"), "is-blocked", "c" + e.actorId);
+  };
 
   /* Phase de boss : le bandeau bref reste celui du jeu, une pastille le garde lisible ensuite. */
   window.showBossPhase = function (enemy, label, line, full) {

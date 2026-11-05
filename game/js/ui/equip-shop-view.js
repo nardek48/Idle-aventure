@@ -1,5 +1,5 @@
 "use strict";
-/* ui/equip-shop-view.js — sous-onglet Équipement de la Boutique (voir shop-view.js pour la bascule d'onglets). Détail : COMMENTAIRES_ORIGINAUX.md */
+/* ui/equip-shop-view.js — sous-onglet Équipement de la Boutique (voir shop-view.js pour la bascule d'onglets). */
 
 function buildEquipShopCardHTML(item) {
   if (item && item.kind === "relic") return buildRelicShopCardHTML(item); // v3.512.0

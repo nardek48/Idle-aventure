@@ -1,5 +1,5 @@
 "use strict";
-/* data/auto-policy-defaults.js — priorités d'action par défaut du mode Simulation auto (bac à sable). Donnée pure. Détail : COMMENTAIRES_ORIGINAUX.md */
+/* data/auto-policy-defaults.js — priorités d'action par défaut du mode Simulation auto (bac à sable). Donnée pure. */
 
 var AUTO_POLICY_DEFAULTS = {
   knight: ["skill3", "skill2", "skill1", "defense", "basic"],

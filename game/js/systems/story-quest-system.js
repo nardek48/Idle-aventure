@@ -240,7 +240,7 @@ var StoryQuestManager = {
   isCurrentStepReady: function (chapterId) {
     var step = this.getCurrentStep(chapterId);
     if (!step || !this.getState(chapterId).accepted) return false;
-    try { return !!step.check(game); } catch (e) { return false; }
+    try { return !!step.check(game); } catch (e) { noteErreur("story-quest-system.isCurrentStepReady", e); return false; } // audit 04/11 (ARCH-14)
   },
 
   /* Nombre d'étapes réclamables (badge Quêtes / Menu). */
@@ -642,7 +642,6 @@ var StoryQuestManager = {
       openSceneQuestEntry(cardId.replace("scene_", ""));
       return;
     }
-    if (cardId.indexOf("exploration_") === 0 && typeof openExplorationPrep === "function") { openExplorationPrep(cardId.replace("exploration_", "")); return; }
     if (typeof openQuestsAt === "function") openQuestsAt(step.linkTo.section, step.linkTo.cardId);
   }
 };

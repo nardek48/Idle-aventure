@@ -53,11 +53,8 @@ Deux responsabilités ici :
 .kframe .story-chain,
 .kframe .map-quest-card,
 .kframe .dungeon-tier-card,
-.kframe .farm-plot-card,
-.kframe .farm-plots-panel,
 .kframe .workshop-summary-row,
 .kframe .eq-detail-panel,
-.kframe .eq-hero-card,
 .kframe .scene-landing,
 .kframe .codex-reading-card,
 .kframe .codex-excerpt,
@@ -99,7 +96,6 @@ Deux responsabilités ici :
    tête de ce fichier. */
 .kframe .qb-cap-indicator,
 .kframe .dungeon-ticket-badge,
-.kframe .inv-sort-menu,
 /* v3.256.0 (Cartes Vivantes, C-2) : en-tête, pilules, panneau de secteur et ligne de bilan
    de la carte vivante, tous à fond crème (css/04-panel-living-map.css). */
 .kframe .lm-panel,
@@ -109,8 +105,7 @@ Deux responsabilités ici :
    et se lisait à peine. Les descendants (.cp-portrait, .cp-skill) héritent de celle-ci. */
 .kframe .cp-card,
 /* v3.276.0 : rappel du mode de contrôle sur la fiche de compagnon, à fond crème. */
-.kframe .cp-controlnote,
-.kframe .log-entry  {
+.kframe .cp-controlnote  {
   --nb-ink: var(--c-brown-850-soft);
   --nb-ink-dim: rgba(58, 44, 26, 0.72);
 }

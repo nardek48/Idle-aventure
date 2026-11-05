@@ -223,7 +223,6 @@ var LabyrinthRun = {
     }
     if (run.echo === "gisants") run.guardAsleep = Math.random() < c.echoSleepPct;
   },
-  echoOf: function (run) { run = run || this.getRun(); return run ? run.echo || null : null; },
   /* Le sable : chaque pas coûte plus de Souffle */
   stepCost: function (run) { var c = this.cfg(); return run && run.echo === "sable" ? Math.round(c.step * c.echoSandStep) : c.step; },
   /* Coups reçus en plus sur l'étage : la chaleur de la veine ; le miroir si l'approche est la même que la précédente */

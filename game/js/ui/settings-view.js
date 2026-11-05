@@ -1,5 +1,5 @@
 "use strict";
-/* ui/settings-view.js — écran Paramètres (v3.408.0 : trois onglets en rail) : sauvegarde/export/import, mode de combat, affichage, langue, reset complet. Détail : COMMENTAIRES_ORIGINAUX.md */
+/* ui/settings-view.js — écran Paramètres (v3.408.0 : trois onglets en rail) : sauvegarde/export/import, mode de combat, affichage, langue, reset complet. */
 
 /* v3.408.0 (refonte de l'onglet, atelier-parametres.html : Seb choisit B · Rail et S1 · glissière) :
    trois onglets en rail du kit — Partie (sauvegarde, zone de danger), Jeu (mode de combat,

@@ -7,7 +7,7 @@
    Chaque bâtiment garde son nom de section personnalisé (voir
    PRODUCTION_PLOTS_BUILDINGS.sectionLabel). Panneau/sélection dépliés INDÉPENDAMMENT par
    bâtiment (état local par id, pas un seul état partagé) — ouvrir Champs n'affecte pas
-   l'état de Mine. Détail : COMMENTAIRES_ORIGINAUX.md */
+   l'état de Mine. */
 
 /* v3.191.0 — TABLEAU DE BORD (maquette atelier-ecrans.html validée par Seb, 08/09/2026) :
    l'écran Production devient un routeur à 3 sous-vues :

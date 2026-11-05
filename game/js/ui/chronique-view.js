@@ -235,7 +235,6 @@ function chroniqueKeydown(e) {
 }
 
 window.Chronique = Chronique;
-window.renderChronique = function () { Chronique.render(false); };
 if (typeof document !== "undefined" && typeof window.addEventListener === "function") {
   var chronResizeT = 0;
   window.addEventListener("resize", function () { clearTimeout(chronResizeT); chronResizeT = setTimeout(function () { Chronique.layout(); }, 200); });

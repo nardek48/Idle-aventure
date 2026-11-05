@@ -9,7 +9,6 @@
    Le HUD se redessine à chaque image (renderHud) : le bouton ne réécrit son contenu que si
    la proposition change (leçon v3.329.0), et FilRouge.get() garde son calcul une seconde. */
 
-var filRougeLastKey = null;
 var filRougeShown = []; // propositions affichées dans la bulle : le toucher agit sur CE qui est vu
 
 /* v3.396.0 (lot HUD-1) : le bouton du fil rouge est une bulle de ui/hud-dock-view.js. */
@@ -61,7 +60,6 @@ function filRougeGo(index) {
   closeFilRougeBubble();
   if (a && typeof a.go === "function") a.go();
   FilRouge.invalidate();
-  filRougeLastKey = null;
 }
 
 /* ---------- F-2 (v3.336.0) : un refus qui dit comment avancer ----------

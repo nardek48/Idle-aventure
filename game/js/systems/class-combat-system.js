@@ -3,7 +3,7 @@
    v3.102.0 (P2) : tout en ROUNDS. useSkill() = une action de round ; chooseRoundAction() = décision Grimoire/repli
    (exécutée par CombatEngine.tickRoundClock en mode Grimoire, suggérée en Tactique) ; onRoundEnd() = cooldowns + mana passif + défense. */
 var CLASS_ACTION_ICON_FALLBACK = {
-  vein_cut: "images/Icons/combat_actions/vein_cut.webp", // v3.487.0 (Montagne) : Tailler, icône à générer
+  vein_cut: "images/Icons/combat_actions/vein_cut.webp", // v3.487.0 (Montagne) : Tailler
   // v3.458.2 (audit C2) : images des attaques de base, livrées en v3.465.2
   knight_basic: "./images/Icons/special_attacks/basic_knight.webp",
   archer_basic: "./images/Icons/special_attacks/basic_archer.webp",

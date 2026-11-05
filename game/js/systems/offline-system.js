@@ -5,7 +5,7 @@
    seule le hors-ligne (rattrapage par zone/atelier, ProductionManager.catchUpOffline()).
    Ne subsiste qu'OfflineManager : résumé de retour d'absence basé sur la Production.
    Boot (main/boot.js) : snapshot() AVANT catchUpOffline(), summarize() APRÈS, show() si
-   absence > OFFLINE_SUMMARY_MIN_MS et gains non nuls. Ancien code : COMMENTAIRES_ORIGINAUX.md
+   absence > OFFLINE_SUMMARY_MIN_MS et gains non nuls.
    v3.332.0 (Évolutions, R-1) : la photographie prend aussi chantier, Taverne et PV
    (ReturnManager.capture) ; summarize() est appelé en FIN de boot, après la régénération du
    feu et le solde du chantier ; show() ouvre l'écran de retour unique (ReturnManager). */

@@ -1,6 +1,6 @@
 "use strict";
 /* ui/workshop-quest-modal.js — 2 popups chaîne de déblocage Atelier : 1) objectif (non-bloquant, clic sur bandeau HUD)
-   2) complétion (bloquant, déclenché en temps réel par WorkshopUnlockManager._advanceOneStepIfReady()). Détail : COMMENTAIRES_ORIGINAUX.md */
+   2) complétion (bloquant, déclenché en temps réel par WorkshopUnlockManager._advanceOneStepIfReady()). */
 
 /* v3.530.0 (audit TUT-12, option C) : une étape validée hors du Village (ex. les 60 Bois de la Meute) attend
    l'arrivée au Village et la fermeture des autres fenêtres. En mémoire seulement : le bandeau du Village garde l'objectif. */

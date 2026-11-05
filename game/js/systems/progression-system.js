@@ -1,7 +1,6 @@
 "use strict";
 /* systems/progression-system.js — le plus gros fichier du projet : WorldManager (progression mondes + génération ennemis),
-   achats (upgrades/talents/Aether), XP héros. Journalières retirées en v3.116.0 ; Ascension retirée en v3.322.0 (Offrande et Mémoire).
-   Détail complet (constantes de balance ENEMY_PV_*, historique des exposants) : COMMENTAIRES_ORIGINAUX.md */
+   achats (upgrades/talents/Aether), XP héros. Journalières retirées en v3.116.0 ; Ascension retirée en v3.322.0 (Offrande et Mémoire). */
 // v3.232.0 (périmètre confirmé par Seb) : 3,33 → 6. Mesuré sur un joueur ÉQUIPÉ (sim/balance-bench.js) :
 // un ennemi normal de Forêt coûtait 2 % de PV, il en coûte 4 — les 9 ennemis avant le boss pèsent enfin.
 var ENEMY_PV_MULT = 6;
@@ -176,60 +175,6 @@ var WorldManager = {
       markWorldReached: function (index) {
     if (!game.worldsEverReached || typeof game.worldsEverReached !== "object") game.worldsEverReached = {};
     game.worldsEverReached[index] = true;
-  },
-
-  advance: function () {
-    var world = this.getWorld();
-    var adventure = this.getAdventure();
-    if (!world || !adventure) return { type: "none" };
-
-    this.enemyIndex += 1;
-    if (this.enemyIndex < (adventure.enemyCount || 1)) return { type: "enemy" };
-
-    this.enemyIndex = 0;
-    var justFinishedAdventureIndex = this.adventureIndex;
-    var nextAdventureIndex = this.adventureIndex + 1;
-
-    if (nextAdventureIndex < world.adventures.length) {
-      if (window.AdventureQuestManager && !AdventureQuestManager.isTransitionUnlocked(world.id, justFinishedAdventureIndex)) {
-        return { type: "adventure_locked", world: world, adventure: world.adventures[justFinishedAdventureIndex] };
-      }
-      this.adventureIndex = nextAdventureIndex;
-      return { type: "adventure", world: world, adventure: world.adventures[this.adventureIndex] };
-    }
-
-    this.adventureIndex = 0;
-    var nextIndex = this.worldIndex + 1;
-    var nextWorld = WORLDS[nextIndex];
-
-    if (nextWorld && this.meetsAscensionRequirement(nextIndex)) {
-      this.worldIndex = nextIndex;
-      this.markWorldReached(nextIndex);
-      return { type: "world", world: nextWorld };
-    }
-
-    // v3.109.1 (scope validé Seb) : porte d'aventure (gatesNextWorld) non franchie -> on RESTE sur la dernière
-    // aventure du monde, sans cycle ni retour au début (le boss du Cœur relançait un cycle +45 % en plein Acte III).
-    // Le verrou de questline de monde (WorldQuestManager, Ruines et +) garde le comportement cycle ci-dessous.
-    if (nextWorld && window.AdventureQuestManager && !AdventureQuestManager.isWorldTransitionUnlocked(world.id)) {
-      this.adventureIndex = justFinishedAdventureIndex;
-      var gateQuest = null;
-      Object.keys(window.ADVENTURE_QUESTS || {}).some(function (k) {
-        var q = ADVENTURE_QUESTS[k];
-        if (q.worldId === world.id && q.gatesNextWorld === true) { gateQuest = q; return true; }
-        return false;
-      });
-      return { type: "world_gate_locked", world: world, adventure: adventure, gateQuest: gateQuest };
-    }
-
-    this.worldIndex = 0;
-    game.cycleCount = (game.cycleCount || 0) + 1;
-
-    if (nextWorld && !this.meetsAscensionRequirement(nextIndex)) {
-      return { type: "locked", world: nextWorld };
-    }
-
-    return { type: "cycle" };
   },
 
     resetToCycleStart: function () {

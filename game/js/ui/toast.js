@@ -1,5 +1,5 @@
 "use strict";
-/* ui/toast.js — message temporaire en bas d'écran (2s par défaut), utilisé partout. Détail : COMMENTAIRES_ORIGINAUX.md */
+/* ui/toast.js — message temporaire en bas d'écran (2s par défaut), utilisé partout. */
 
 var toastTimer = null;
 

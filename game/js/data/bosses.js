@@ -1,5 +1,5 @@
 "use strict";
-/* data/bosses.js — boss par monde (voir worlds.js) + config bonus bestiaire. Détail : COMMENTAIRES_ORIGINAUX.md */
+/* data/bosses.js — boss par monde (voir worlds.js) + config bonus bestiaire. */
 
 var BOSS_DB = {
   slimeking: {
@@ -36,7 +36,7 @@ var BOSS_DB = {
        2. à la relève, il appelle deux bâtisseurs (riseAdds) ;
        3. à 30 % de sa seconde vie (15 % des PV max), il se blinde (risePhases).
      Craint l'épée, résiste à la magie (l'écart épée / magie des Ruines, comme le Bâtisseur).
-     Portrait à générer. Chiffres affûtés par bossHpMult / bossPowerMult de sa quête. */
+     Chiffres affûtés par bossHpMult / bossPowerMult de sa quête. */
   maitre_oeuvre: {
     name: "Le Maître d'œuvre",
     asset: "maitre_oeuvre",
@@ -109,7 +109,7 @@ var BOSS_DB = {
   },
 
   /* v3.630.0 (Tour, acte IV, TW6) — LA SILHOUETTE, boss d'Histoire unique (aq_tour_silhouette). Base mécanique de
-     l'Archimage, nom et portrait propres (image à générer : vrai chemin gardé). Phases lues par TowerSystem.onBossPhase. */
+     l'Archimage, nom et portrait propres. Phases lues par TowerSystem.onBossPhase. */
   silhouette: {
     name: "La silhouette",
     asset: "archmage",

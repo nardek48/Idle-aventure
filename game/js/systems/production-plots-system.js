@@ -11,8 +11,7 @@
    version) — décision validée avec Seb, cohérente avec le traitement déjà appliqué à
    Champs en v3.96.0 : toute progression de niveau de bâtiment existante sur ces 5
    bâtiments est réinitialisée (zone 0 rouverte niveau 1, les 8 autres verrouillées), pas
-   de conversion de bonus. Remplace systems/farm-plots-system.js (supprimé).
-   Détail : COMMENTAIRES_ORIGINAUX.md */
+   de conversion de bonus. Remplace systems/farm-plots-system.js (supprimé). */
 
 var ProductionPlotsSystem = {
   /* Liste des bâtiments gérés par ce système — source de vérité unique, dérivée de
@@ -333,14 +332,6 @@ var ProductionPlotsSystem = {
     var o = this.overCap(cost);
     return o ? WarehouseManager.capHint(o.key, o.need) : null;
   },
-  _payAll: function (cost) {
-    var ok = Object.keys(cost).every(function (k) { return WarehouseManager.getAmount(k) >= cost[k]; });
-    if (ok) Object.keys(cost).forEach(function (k) { WarehouseManager.removeResource(k, cost[k]); });
-    return ok;
-  },
-
-
-
 
   toggleImprovement: function (buildingId, plotIndex, kind) {
     if (kind !== "fertile" && kind !== "irrigated") return { ok: false, reason: _t("Amélioration invalide") };

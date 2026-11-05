@@ -509,7 +509,7 @@ var LIVING_MAPS = {
 
   /* v3.627.0 (Tour, lot T-2a, TW9) — LES ÉTAGES. Une carte en coupe, un secteur par étage ; chaque étage rejoue un
      monde comme la Tour s'en souvient (obstacles de l'escalier tirés dans son monde). Échec : « La redite », l'étage
-     raté est refait par la Tour, plus dur jusqu'au lendemain. Rien n'est repris. Image à générer : positions provisoires. */
+     raté est refait par la Tour, plus dur jusqu'au lendemain. Rien n'est repris. Positions provisoires. */
   tower: {
     id: "tower",
     worldId: "tower",

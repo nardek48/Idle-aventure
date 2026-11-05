@@ -1,7 +1,7 @@
 "use strict";
 /* main/pwa.js — enregistrement Service Worker, voile de garde 1er lancement, bannière de mise à jour en cours de session,
    installation du jeu (v3.359.0, PwaInstall).
-   Sans effet si le navigateur ne supporte pas les service workers. Détail complet : COMMENTAIRES_ORIGINAUX.md */
+   Sans effet si le navigateur ne supporte pas les service workers. */
 
 var pwaHadControllerAtLoad = ("serviceWorker" in navigator) && !!navigator.serviceWorker.controller;
 

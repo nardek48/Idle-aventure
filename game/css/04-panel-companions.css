@@ -111,35 +111,6 @@ seules les classes propres aux compagnons sont définies ici.
 
 .cp-seg { margin-bottom: 8px; }
 
-.cp-upgrade {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid var(--nb-frame-light);
-}
-
-.cp-upgrade-label {
-  font-size: 13px;
-  color: var(--nb-ink);
-  min-width: 0;
-}
-
-.cp-upgrade-label b { color: var(--nb-ink); }
-
-.cp-upgrade-hint {
-  display: block;
-  font-size: 12px;
-  color: var(--nb-ink);
-}
-
-.cp-upgrade-done {
-  font-size: 13px;
-  color: var(--nb-ink);
-}
-
 /* 320 px : le portrait rétrécit plutôt que de pousser le nom à la ligne. */
 @media (max-width: 360px) {
   .cp-portrait { width: 44px; height: 44px; flex-basis: 44px; }

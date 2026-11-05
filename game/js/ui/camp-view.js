@@ -1,8 +1,7 @@
 "use strict";
 /* ui/camp-view.js — écran Campement (page d'accueil, v3.7 ; hub v3.103.1) : feu de camp (repos long/court), tableau de
-   missions (MissionBoard.top(3), LIGNE_DIRECTRICE §3). Accès rapides supprimés v3.181.0. Détail : COMMENTAIRES_ORIGINAUX.md */
+   missions (MissionBoard.top(3), LIGNE_DIRECTRICE §3). Accès rapides supprimés v3.181.0. */
 
-var CAMP_MISSION_TYPE_LABEL = { combat: _t("Combat"), expedition: _t("Expédition"), chasse: _t("Chasse", "quête"), donjon: _t("Donjon") };
 var CAMP_MISSION_STATUS_CLASS = { claimable: "is-claimable", running: "is-running", accepted: "is-running", available: "" };
 
 function buildCampMissionActionHTML(m) {

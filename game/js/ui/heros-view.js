@@ -1,5 +1,5 @@
 "use strict";
-/* ui/heros-view.js — écran Personnage (v2.75, fiche façon jeu de rôle), 3 sous-onglets Héros/Amélioration/Stats. Carrousel de 3 emplacements de héros indépendants (v3.25). Détail : COMMENTAIRES_ORIGINAUX.md */
+/* ui/heros-view.js — écran Personnage (v2.75, fiche façon jeu de rôle), 3 sous-onglets Héros/Amélioration/Stats. Carrousel de 3 emplacements de héros indépendants (v3.25). */
 
 /* v3.244.0 (chantier Navigation, décision Seb 14/09/2026) : Héros devient le hub
    « Progresser ». Sous-onglets : Résumé / Équipement / Talents. Les anciens

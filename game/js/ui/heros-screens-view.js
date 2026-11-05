@@ -129,14 +129,14 @@
     { key: "ysolt", value: "donner", icon: "images/Icons/traits/ysolt_eveillee.webp", name: _t("Ysolt éveillée"), desc: _t("Pas encore sert deux fois par combat. Elle s'use un peu.") },
     { key: "bat", value: "reveiller", icon: "images/Icons/traits/les_montes.webp", name: _t("Les montés"), desc: _t("Dans les combats de boss et d'élite, un monté se lève à tes côtés.") },
     { key: "bat", value: "laisser", icon: "images/Icons/traits/table_des_noms.webp", name: _t("La table des noms"), desc: _t("Chez Orwen, chaque jour, de la Cire consacrée.") },
-    // v3.488.0 (Montagne, montagne_05) : icônes à générer
+    // v3.488.0 (Montagne, montagne_05)
     { key: "veine", value: "soi", icon: "images/Icons/traits/veine_dans_la_lame.webp", name: _t("La veine dans la lame"), desc: _t("À la Montagne, chaque taille donne +20 % à ta lame au lieu de +15 %.") },
     { key: "veine", value: "aeswyn", icon: "images/Icons/traits/puits_chaud.webp", name: _t("Le puits chaud"), desc: _t("Chaque veine que tu tailles en combat verse une Cendre vive de plus à l'Entrepôt.") },
-    // v3.491.0 (Montagne, montagne_14 et montagne_20) : icônes à générer
+    // v3.491.0 (Montagne, montagne_14 et montagne_20)
     { key: "ouvrage", value: "donner", icon: "images/Icons/traits/ouvrage_acheve.webp", name: _t("L'ouvrage achevé"), desc: _t("Dans la Gueule, chaque vague commence avec un cran de chaleur, et chaque taille rapporte une Cendre vive de plus.") },
     { key: "droit", value: "prendre", icon: "images/Icons/traits/veine_mere.webp", name: _t("La veine-mère"), desc: _t("Au puits d'Aeswyn, chaque jour, de la Cendre vive.") },
     { key: "droit", value: "laisser", icon: "images/Icons/traits/montagne_apprend.webp", name: _t("Ce que la Montagne apprend"), desc: _t("À la Montagne, chaque cran de chaleur donne aussi +5 % à tes coups.") },
-    // v3.626.0 (Tour, choix « braise ») : icône du pot de terre (Images à générer), l'icône générique en attendant
+    // v3.626.0 (Tour, choix « braise ») : icône du pot de terre
     { key: "braise", value: "garder", icon: "images/Icons/scene/braise_aeswyn.webp", name: _t("La braise d'Aeswyn"), desc: _t("À la Tour, chaque combat gagné te rend 5 % de tes PV.") },
     { key: "braise", value: "poser", icon: "images/Icons/scene/braise_aeswyn.webp", name: _t("La braise sur le palier"), desc: _t("À la Tour, tu frappes 10 % plus fort.") }
   ];

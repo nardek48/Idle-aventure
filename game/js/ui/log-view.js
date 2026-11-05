@@ -1,5 +1,5 @@
 "use strict";
-/* ui/log-view.js — écran Journal : 50 événements les plus récents (window.gameLog). Détail complet : COMMENTAIRES_ORIGINAUX.md */
+/* ui/log-view.js — écran Journal : 50 événements les plus récents (window.gameLog). */
 
 /* v3.365.0 (lot J, demande Seb 28/09/2026) : le Bilan de la partie, venu des Hauts faits, en tête
    du Journal. Ouvert par défaut, repliable ; l'état replié suit l'appareil (Prefs « logTotals »). */

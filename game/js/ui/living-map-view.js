@@ -28,8 +28,6 @@ var LIVING_MAP_FOG_OPACITY = 0.36; // opacité de la brume (validé C-0)
 
 var LMX_ZOOM_MAX = 2;      // décision Seb (A2) : ×2 par rapport au cadrage Couvrant
 var LMX_TOP_SLACK = 112;   // A3b : la carte peut descendre sous l'en-tête (pastilles)
-var LMX_TAP_SLOP = 8;      // px avant qu'un appui devienne un glissé
-var LMX_DOUBLE_TAP_MS = 300;
 
 /* Vue courante : largeur de la carte en px (w, hauteur = w, cartes carrées) et position. */
 var lmxView = { mapId: null, w: 0, tx: 0, ty: 0 };

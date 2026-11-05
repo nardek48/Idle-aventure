@@ -105,7 +105,7 @@ P("- **Un échec ne punit que ce qu'on a tenté** (v3.366.0) : rater une carte n
 /* ---------- 1. Économie ---------- */
 H(1, "Partie 1 — Économie : Entrepôt, Production, Village");
 H(2, "1.1 Entrepôt — ressources et plafonds");
-P("Fichier : `data/hunt-quests.js` (WAREHOUSE_RESOURCES). Point d'écriture unique : `systems/warehouse-system.js`. **Plus de vente depuis la v3.330.0** : le prix est une *valeur de référence* qui calcule les contrats de la Taverne.\n");
+P("Fichier : `data/warehouse-resources.js` (WAREHOUSE_RESOURCES). Point d'écriture unique : `systems/warehouse-system.js`. **Plus de vente depuis la v3.330.0** : le prix est une *valeur de référence* qui calcule les contrats de la Taverne.\n");
 P("Plafond : ressources brutes **" + G.RAW_STOCK_BASE + " + " + G.WAREHOUSE_CAP_PER_LEVEL + " par niveau d'Entrepôt jusqu'au " + G.WAREHOUSE_CAP_HIGH_FROM + ", puis " + G.WAREHOUSE_CAP_PER_LEVEL_HIGH + "** ; ressources fabriquées **cap + le même bonus** ; ressources rares sans plafond. Un stock ancien au-dessus du plafond est conservé, mais rien ne rentre tant qu'on y est.\n");
 var tierLbl = { raw: "Brute", crafted: "Fabriquée", special: "Rare" };
 P(table(["Ressource", "Tier", "Valeur de référence", "Plafond de base", "Soin (Campement)"],

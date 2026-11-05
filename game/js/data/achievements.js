@@ -9,7 +9,7 @@
    - H5 : quelques cachés, jamais ratables.
    Champs : id, category, name, desc, icon, target, track() (progression lue dans l'état),
    reward { gold }, hidden + hint, fresh (compteur neuf, sans rattrapage), title.
-   Icônes des nouveaux : images/Icons/achivement/<id>.webp, à générer (générique d'ici là).
+   Icônes des nouveaux : images/Icons/achivement/<id>.webp (générique si l'une manque).
    Textes PROVISOIRES. Agrégation : systems/achievement-system.js. */
 
 function achievementBestiaryPercent() {
@@ -332,7 +332,7 @@ var ACHIEVEMENTS_DB = [
     icon: ACH_ICON + "ach_equip_legendary.webp", target: 1, track: function () { return achievementHasRarityOwned("legendary") ? 1 : 0; }, reward: { gold: 300 } }
 ];
 
-/* Icône par défaut : images/Icons/achivement/<id>.webp (à générer). */
+/* Icône par défaut : images/Icons/achivement/<id>.webp. */
 ACHIEVEMENTS_DB.forEach(function (a) { if (!a.icon) a.icon = ACH_ICON + a.id + ".webp"; }); // v3.459.1 (audit O4) : WebP
 
 /* H1, H4 : catégories. `world` = index du monde (paliers, titre au palier or). */

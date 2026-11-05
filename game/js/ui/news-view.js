@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.692.0", "combat_status/counter", _t("Combat : un contre réussi affiche de nouveau « CONTRÉ ! » sur l'ennemi. Ménage du code, sans autre changement.")],
     ["3.691.0", "menu_icons/settings_menu", _t("Premier lancement plus léger : images d'interface, icônes et bandeaux allégés sans perte visible ; le dictionnaire anglais n'est plus téléchargé par les joueurs francophones.")],
     ["3.690.0", "menu_icons/settings_menu", _t("Jeu en anglais : nombres à l'anglaise (5,000 · 12.3 k), deux-points et « Defence » corrigés. Lecteurs d'écran : messages annoncés, icônes de coût nommées, Entrée et Espace sur les liens « ressource manquante ».")],
     ["3.689.0", "subtabs/potions", _t("Combat : en Grimoire, la potion touchée hors de ton tour est bue au suivant ; la vitesse se règle aussi en Tactique ; après une défaite, l'astuce de ressource s'affiche au Campement.")],

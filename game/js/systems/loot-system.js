@@ -1,5 +1,5 @@
 "use strict";
-/* systems/loot-system.js — génération procédurale des drops (kill de boss uniquement). Détail complet : COMMENTAIRES_ORIGINAUX.md */
+/* systems/loot-system.js — génération procédurale des drops (kill de boss uniquement). */
 
 /* v3.225.0 — tirage des affixes d'un objet (tables : AFFIX_COUNT_BY_RARITY, AFFIX_POOLS,
    AFFIX_RANGES, data/equipment.js). Sans remise, jamais la stat de base ; les plats

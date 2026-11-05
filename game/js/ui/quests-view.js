@@ -1,7 +1,7 @@
 "use strict";
 /* ui/quests-view.js — écran Quêtes : badge agrégé (Menu), sous-onglets Général/Journalières, filtre Active/Terminée,
    4 catégories repliables (Histoire/Ressources/Aventure/Expéditions) unifiant questlines de monde + quêtes d'aventure
-   + chasses, chaque catégorie groupée par monde en cartes repliables. Détail : COMMENTAIRES_ORIGINAUX.md */
+   + chasses, chaque catégorie groupée par monde en cartes repliables. */
 
 function getTalentsAvailableCount() {
   // v3.327.0 : un talent achetable maintenant (points, plafond d'acte et règles de l'arbre)

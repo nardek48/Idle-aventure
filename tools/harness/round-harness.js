@@ -68,6 +68,8 @@ var section = "", echecs = [], _log = console.log;
 console.log = function (t) { var m = typeof t === "string" && /^\n(\[[^\]]+\])/.exec(t); if (m) section = m[1]; return _log.apply(console, arguments); };
 function ok(cond, msg) { if (cond) { passes++; console.log("  ✔ " + msg); } else { failures++; echecs.push(section + " " + msg); console.log("  ✘ " + section + " " + msg); } }
 function run(code) { return vm.runInContext(code, g); }
+/* v3.692.0 (ARCH-15) : texte d'une méthode, celui de l'original quand le journal de test l'enveloppe. */
+function srcOf(f) { return String((f && f._journalOrig) || f); }
 /* v3.389.0 (chantier P) : joue un parcours (Pa2Run) jusqu'au bout. win : dés forcés au maximum. */
 function playParcours(win) {
   var P = g.Pa2Run, r = g.game.sceneRun, saved = P.rand, guard = 60;
@@ -405,7 +407,7 @@ ok(typeof g.buildSettingsHTML() === "string" && g.buildSettingsHTML("jeu").index
 g.ensureGrimoireRules && g.ensureGrimoireRules();
 ok(typeof g.buildGrimoireHTML() === "string" && g.buildGrimoireHTML().indexOf("grimoire-mode") !== -1, "Grimoire : sélecteur de mode de combat"); // v3.210.0 : remplace l'ancien bandeau « Mode Tactique actif »
 ok(typeof g.buildHerosHTML() === "string", "fiche Héros (cooldowns en rounds)");
-ok(typeof g.buildTalentsHTML() === "string", "arbre de talents (textes reconvertis)");
+ok(typeof g.buildHerosTalentTreeHTML() === "string", "arbre de talents (textes reconvertis)"); // v3.692.0 (ARCH-8) : l'ancien écran Talents est retiré
 g.game.activeTab = "combat"; g.renderAll();
 ok(true, "renderAll() sans exception");
 
@@ -1256,7 +1258,7 @@ var cssFinal = fs.readFileSync(path.join(ROOT, "css/03-combat.css"), "utf8");
 var cssBlockStart = cssFinal.indexOf(".combat-mission-progress {");
 var cssBlockEnd = cssFinal.indexOf("}", cssBlockStart);
 var cssBlock = cssFinal.substring(cssBlockStart, cssBlockEnd);
-ok(cssBlock.indexOf("position: absolute") === -1, "le compteur n'est plus en position absolute (suit le flux flex normal comme le nom/PV/sprite)");
+ok(cssBlockStart === -1 || cssBlock.indexOf("position: absolute") === -1, "le compteur n'est plus en position absolute (suit le flux flex normal comme le nom/PV/sprite)");
 
 console.log("\n[59] Retours de test v3.107.6 : 2 points");
 // Point 1 : /* v3.459.7 (audit O13) : contrôle retiré avec le CSS de l'ancien écran de combat ; l'écran actuel (cbx) a les siens. */
@@ -4516,7 +4518,7 @@ console.log("\n[32b] v3.223.0 \u2014 Donjons : plafond par monde et mat\u00e9ria
 
   /* La r\u00e9compense n'est cr\u00e9dit\u00e9e qu'\u00e0 la r\u00e9ussite compl\u00e8te : une fuite ou
      une mort n'en donne pas, comme pour le butin d'\u00e9quipement. */
-  var src = String(g.DungeonManager.finish);
+  var src = srcOf(g.DungeonManager.finish);
   ok(src.indexOf("success && !freeRun && tier.specialResourceId") !== -1, // v3.462.0 : jamais en mode libre
     "le mat\u00e9riau n'est cr\u00e9dit\u00e9 qu'en cas de r\u00e9ussite");
   ok(src.indexOf("WarehouseManager.addResource") !== -1,
@@ -4674,7 +4676,7 @@ console.log("\n[34b] v3.225.0 \u2014 Affixes d'\u00e9quipement (Lot 1b : donn\u0
   ok(g.game.heroXp === 11, "10 XP \u00d7 1,10 = 11 (arrondi)");
 
   /* --- Chance de butin : killEnemy lit l'accumulateur --- */
-  ok(String(g.CombatEngine.killEnemy).indexOf("equipDropChancePct") !== -1, "killEnemy ajoute game.equipDropChancePct \u00e0 la chance de butin");
+  ok(srcOf(g.CombatEngine.killEnemy).indexOf("equipDropChancePct") !== -1, "killEnemy ajoute game.equipDropChancePct \u00e0 la chance de butin");
 
   /* --- Élite : affixe fixe, copié --- */
   var loot = g.EliteManager.buildUniqueLoot("araignee_marquee");
@@ -4727,7 +4729,7 @@ console.log("\n[35b] v3.226.0 \u2014 Comparaison ligne \u00e0 ligne (Lot 2, D6)"
   run("fullResetState(); game.playerName='Test'; game.heroId='knight';");
   g.game.equipped.gloves = eq; g.game.inventory = [cand];
   run("EquipmentManager.recalcStats(); selectedInventoryKey = 'eq:c'; inventoryFilter = 'all';");
-  var html = run("buildInventoryTabContentHTML()");
+  var html = run("buildUnifiedDetailPanelHTML(getUnifiedInventoryEntries())"); // v3.692.0 (ARCH-8) : la feuille du Sac (Héros), plus l'ancien Inventaire
   ok(html.indexOf("eq-cmp-row is-base") !== -1 && html.indexOf("\u25b2 +20%") !== -1, "ligne de base avec \u25b2 +20%");
   ok(html.indexOf("\u25b2 +20</span>") !== -1 && html.indexOf("\u25b2 +2%") !== -1, "affixes primaires avec leur delta");
   ok(html.indexOf("is-lost") !== -1 && html.indexOf("\u25bc -8%") !== -1, "ligne perdue \u25bc -8% (or)");
@@ -5040,8 +5042,8 @@ console.log("\n[40b] v3.230.0 \u2014 Pouvoirs l\u00e9gendaires : effets c\u00e2b
   ok(g.startCooldown({}, "sk", 4).sk === 4, "...et rien sans le pouvoir");
 
   /* --- Prospecteur : borné au boss, jamais sur un ennemi normal. --- */
-  ok(String(g.CombatEngine.killEnemy).indexOf("leg_prospecteur") !== -1
-    && /isBoss && this\.hasPower\("leg_prospecteur"\)/.test(String(g.CombatEngine.killEnemy)), "Prospecteur : condition limit\u00e9e aux boss");
+  ok(srcOf(g.CombatEngine.killEnemy).indexOf("leg_prospecteur") !== -1
+    && /isBoss && this\.hasPower\("leg_prospecteur"\)/.test(srcOf(g.CombatEngine.killEnemy)), "Prospecteur : condition limit\u00e9e aux boss");
 
   /* --- Clairvoyance : le télégraphe tombe un round plus tôt, l'impact reste à sa date. --- */
   withPower("helmet", "leg_clairvoyance");
@@ -5845,10 +5847,8 @@ console.log("\n[54b] v3.252.0 \u2014 Lisibilit\u00e9 de l'\u00e9quipement");
   /* --- La liste est rendue en pleine largeur, hors du panneau \u00e9troit --- */
   var detail = run("buildEquipDetailPanelHTML()");
   ok(detail.indexOf("eq-compat-list") === -1, "la liste ne vit plus dans le panneau de d\u00e9tail (50 % de large)");
-  /* buildHerosEquipHTML dépend du sous-onglet courant : on vise directement le contenu
-     de l'onglet « Équipé », qui porte la liste en pleine largeur. */
-  var page = run("activeEquipSubTab = 'equipment'; buildEquipmentTabContentHTML('')");
-  ok(page.indexOf("eq-compat-list") !== -1, "...mais bien dans la page, en pleine largeur");
+  /* v3.692.0 (ARCH-8) : l'ancien onglet « Équipé » est retiré ; la liste vit dans la feuille de l'emplacement (Héros). */
+  ok(liste.indexOf("eq-compat-list") !== -1, "...mais bien dans la feuille de l'emplacement, en pleine largeur");
 
   /* --- Feuille de comparaison --- */
   var sheet = run("buildEquipCompareSheetHTML('cd1')");
@@ -6780,7 +6780,7 @@ console.log("\n[64b] v3.261.0 \u2014 Qu\u00eates de combat : chaque d\u00e9part 
 
   /* Chasse et donjon : départ à 0 par construction */
   ok(/game\.huntRun = \{ active: true, questId: questId, killsInLot: 0 \}/.test(String(g.HuntQuestManager.start)), "chasse : chaque lot part de 0 kill");
-  ok(/wave: 0/.test(String(g.DungeonManager.start)), "donjon : chaque run part de la vague 0");
+  ok(/wave: 0/.test(srcOf(g.DungeonManager.start)), "donjon : chaque run part de la vague 0");
 })();
 
 console.log("\n[68b] v3.266.0 (L-0) — socle du combat de groupe : acteurs, alias game.enemy, héros-acteur");
@@ -11400,7 +11400,7 @@ console.log("\n[148] v3.372.0 — Multilangue, lot L-4 : Héros, Talents, Grimoi
   ok(g.buildGrimoireHTML().indexOf("⟦") !== -1, "pseudo-langue : Grimoire extrait");
   ok(g.buildAchievementsHTML().indexOf("⟦") !== -1, "pseudo-langue : Hauts faits extraits");
   ok(g.buildAscensionHTML().indexOf("⟦Mémoire") !== -1, "pseudo-langue : Mémoire extraite");
-  ok(g.buildTalentBoardHTML().indexOf("⟦Tronc⟧") !== -1, "pseudo-langue : arbre de talents extrait");
+  ok(g.buildHerosTalentTreeHTML().indexOf("⟦") !== -1, "pseudo-langue : arbre de talents extrait"); // v3.692.0 : l'arbre de Héros (ancien plateau retiré)
   /* Les titres de page (icône|titre) : l'icône reste hors de la clé traduite. */
   ok(g.buildLogHTML().indexOf("codex_lore.webp|⟦Journal⟧") !== -1, "titre de cadre : chemin d'icône hors de _t()");
   I._lang = null;
@@ -12982,7 +12982,7 @@ console.log("\n[174] v3.401.0 — Lot O-1 : onglets de page (rail), filtres (pas
     ok(css.indexOf("kseg-in-frame") === -1, "plus d'adaptation « posé sur crème » : le rail est dessiné pour le parchemin");
     var js = ["quests-view.js", "production-view.js", "village-view.js", "warehouse-view.js", "equipment-view.js", "achievement-view.js", "grimoire-view.js", "heros-view.js"].map(function (f) { return fs.readFileSync(path.join(ROOT, "js/ui", f), "utf8"); }).join("\n");
     ok(js.indexOf("inv-filter-btn") === -1 && js.indexOf("pc-subtab-bar production-switch") === -1 && js.indexOf("hf-dot") === -1, "anciens dessins d'onglets retirés (filtres sombres, double bouton, pastilles des Hauts faits)");
-    ok(/kseg is-stack village-tabs/.test(js) && /wh-dd-btn/.test(js) && /kchips inv-filter-row/.test(js) && /kchips is-scroll hf-tabs/.test(js), "Village : rail ; Entrepôt : liste déroulante ; Inventaire, Hauts faits : pastilles");
+    ok(/kseg is-stack village-tabs/.test(js) && /wh-dd-btn/.test(js) && /kchips is-scroll hf-tabs/.test(js), "Village : rail ; Entrepôt : liste déroulante ; Hauts faits : pastilles (v3.692.0 : l'ancien Inventaire et ses filtres sont retirés)");
     var lay = fs.readFileSync(path.join(ROOT, "css/02-layout.css"), "utf8");
     ok(/var\(--hud-dock-lift, 0px\)/.test(lay) && typeof g.liftHudDock === "function", "bulles du HUD : remontées au-dessus des sous-onglets du bas");
   } catch (err) {
@@ -13391,7 +13391,7 @@ console.log("\n[189] v3.417.0 — Zones de production : la grille reste, une fen
     ok(run("productionZoneWin") === null, "fermer la feuille ferme la fenêtre");
     ok(typeof g.selectProductionPlot === "undefined" && typeof g.productionSelectFirstLocked === "undefined" && typeof g.buildPlotActionsHTML === "undefined", "ancienne sélection de zone et panneau sous la grille retirés");
     var css = fs.readFileSync(path.join(ROOT, "css/04-panel-production.css"), "utf8");
-    ok(/\.farm-plots-grid \{[^}]*repeat\(3, minmax\(0, 1fr\)\)/.test(css), "la grille ne déborde plus de la feuille (minmax(0, 1fr))");
+    ok(css.indexOf(".farm-plots-grid") === -1, "v3.692.0 (ARCH-8) : l'ancienne grille des parcelles est retirée avec ses règles");
   } catch (err) {
     ok(false, "[189] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
@@ -16454,14 +16454,7 @@ console.log("\n[261] v3.458.3 — Lot 7a : Partir lance la quête, Mémoire sur 
       && /game\.activeTab === "ascension" && typeof memScrollToPending/.test(fs9.readFileSync(ROOT + "/js/ui/ui-root.js", "utf8")), "Mémoire : ouverte sur le choix en attente, la pastille y mène");
     // C9
     ok(/onclick="campRationEmpty\(\)"/.test(fs9.readFileSync(ROOT + "/js/ui/camp-view.js", "utf8")) && typeof g.campRationEmpty === "function", "ration à 0 : dit où elle se prépare");
-    // C13
-    game.heroLevel = 3;
-    run("var _tcap = TalentManager.cap; TalentManager.cap = function () { return 5; };");
-    var d = run("buildTalentPointsHTML()");
-    game.heroLevel = 9;
-    var d2 = run("buildTalentPointsHTML()");
-    run("TalentManager.cap = _tcap;");
-    ok(/le prochain au niveau 4/.test(d) && /plafond de l'acte/.test(d2), "talents : le niveau qui limite est annoncé, sinon le plafond de l'acte (" + d.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").slice(0, 70) + ")");
+    // C13 : vivait dans l'ancien écran Talents, injoignable depuis v3.244 et retiré en v3.692.0 (ARCH-8)
   } catch (err) {
     ok(false, "[261] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
@@ -17912,7 +17905,7 @@ console.log("\n[300] v3.479.0 — Refonte de l'économie RE-2 : zones de product
   var html = g.buildZoneGroupActionsHTML("sawmill");
   ok(html.indexOf("pc3-auto") !== -1 && html.indexOf("Rangée") === -1, "v3.612.0 : sous les parcelles, l'achat automatique");
   var css = fs.readFileSync(path.join(ROOT, "css/04-panel-production.css"), "utf8");
-  ok(/\.farm-plot-card \.farm-plot-card-name, \.farm-plot-card \.farm-plot-card-profile \{ max-width: 100%; overflow: hidden; text-overflow: ellipsis; \}/.test(css), "320 px : nom et monde d'une zone verrouillée coupés par « … »");
+  ok(css.indexOf(".farm-plot-card") === -1, "v3.692.0 (ARCH-8) : les cartes de l'ancienne grille sont retirées avec leurs règles");
   g.game.worldsEverReached = reached; g.WorldManager.worldIndex = wi;
 })();
 
@@ -19401,7 +19394,7 @@ console.log("\n[340] v3.519.0 — lot 4 (règles des mondes) et correctifs en fi
       ok(!!(dep && dep.ok && runv.storyFree && h && h.ok && SR._paState().spent === 100), "Petite aventure offerte rentrée avant le but : sa place est prise (réserve " + SR._paState().spent + ", 99 avant)");
     })();
     // SUI-8 : compteurs de la maîtrise d'arme retirés des valeurs par défaut
-    ok(["swordKills", "bowKills", "magicKills"].every(function (k) { return !(k in g.DEFAULT_QUEST_PROGRESS); }), "compteurs morts swordKills, bowKills, magicKills retirés (une vieille sauvegarde les garde, sans effet)");
+    ok(typeof g.DEFAULT_QUEST_PROGRESS === "undefined", "compteurs morts swordKills, bowKills, magicKills retirés (v3.692.0, ARCH-10 : DEFAULT_QUEST_PROGRESS et questProgress aussi)");
   } catch (err) { ok(false, "[340] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
@@ -21423,7 +21416,7 @@ console.log("\n[415] v3.621.0 — Audit narratif : feuillets du Veilleur, lame d
       "cartes vivantes : plus de « hors du Cycle » avant le Veilleur");
     // audit des tutoriels et objectifs (rapport vérifié ligne à ligne)
     var fs415 = require("fs"), path415 = require("path"), lire = function (f) { return fs415.readFileSync(path415.join(ROOT, f), "utf8"); };
-    var sq = lire("js/data/story-quests.js"), vq = lire("js/data/village-quests.js"), hq = lire("js/data/hunt-quests.js");
+    var sq = lire("js/data/story-quests.js"), vq = lire("js/data/village-quests.js"), hq = lire("js/data/warehouse-resources.js"); // v3.692.0 (ARCH-21) : catalogue sorti de hunt-quests.js
     ok(sq.indexOf("Bouclier au prochain tour") < 0 && sq.indexOf("« Le soutien »") < 0 && sq.indexOf("Dans le Grimoire, le réglage « Cible »") < 0,
       "tutoriels : noms réels du Grimoire (« L'ennemi invoque un bouclier », « Celle qui soutient », réglée dans « Préparer la sortie »)");
     ok(run("Object.keys(GRIMOIRE_CONDITIONS).some(function(k){ return GRIMOIRE_CONDITIONS[k].label === \"L'ennemi invoque un bouclier\"; })")
@@ -21465,7 +21458,7 @@ console.log("\n[416] v3.621.1 — forest_13 : des vagues franchies sous Marque, 
     // v3.621.2 (bug iPhone) : sans « fill », Safari (mask-border standard) jette le centre du masque -> bande vide au milieu des documents
     var cc = require("fs").readFileSync(require("path").join(ROOT, "css/00-cartes.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
     var masques = cc.match(/(-webkit-mask-box-image|mask-border):[^;]*;/g) || [];
-    ok(masques.length >= 4 && masques.every(function (m) { return / 60 fill \//.test(m); }), "parchemin déchiré : les " + masques.length + " déclarations de masque gardent le centre (« fill »)");
+    ok(masques.length >= 2 && masques.every(function (m) { return / 60 fill \//.test(m); }), "parchemin déchiré : les " + masques.length + " déclarations de masque gardent le centre (« fill »)");
     // v3.621.3 : les tutoriels des cinq cartes vivantes disent aussi l'élite qui garde certains secteurs
     var sq416 = require("fs").readFileSync(require("path").join(ROOT, "js/data/story-quests.js"), "utf8");
     var elites = run("Object.keys(LIVING_MAPS).filter(function(m){ return (LIVING_MAPS[m].sectors||[]).some(function(x){ return x.content && x.content.type === 'elite'; }); }).length");
@@ -22747,6 +22740,7 @@ console.log("\n[451] v3.686.0 — Sauvegarde et fiabilité (audit 04/11, lot I7)
     var s = function (v) { if (v && typeof v === "object") { if (Array.isArray(v)) return "[" + v.map(s).join(",") + "]"; return "{" + Object.keys(v).sort().map(function (k) { return JSON.stringify(k) + ":" + s(v[k]); }).join(",") + "}"; } return JSON.stringify(v); };
     return s(c); };
   var DROP = ["savedAt", "lastOnline", "gameVersion"];
+  var DROP_FIX = DROP.concat(["quests", "questProgress", "questResetTime", "hasSeenOnboarding"]); // v3.692.0 (ARCH-10) : jamais lus, plus écrits
   var touched = ["quest_idle_save_v6", "quest_idle_active_slot"], keep = {};
   for (var n = 1; n <= 6; n++) ["", "_bak", "_illisible"].forEach(function (x) { touched.push("quest_idle_save_v6_slot" + n + x); });
   touched.forEach(function (k) { keep[k] = LS.getItem(k); });
@@ -22761,10 +22755,10 @@ console.log("\n[451] v3.686.0 — Sauvegarde et fiabilité (audit 04/11, lot I7)
     LS.setItem("quest_idle_save_v6_slot1", FIX);
     ok(loadSlot(1) === true && g.game.playerName === "Rodeuse" && g.game.heroLevel === 12, "ancienne sauvegarde (v3.685.0) chargée");
     var b1 = g.buildSaveData();
-    ok(canon(b1, DROP) === canon(JSON.parse(FIX), DROP), "chargement de l'ancienne sauvegarde : rien de perdu ni de changé (hors dates)");
+    ok(canon(b1, DROP) === canon(JSON.parse(FIX), DROP_FIX), "chargement de l'ancienne sauvegarde : rien de perdu ni de changé (hors dates)");
     ok(b1.gameVersion === g.GAME_VERSION, "SAVE-7 : la sauvegarde porte la version du jeu (" + b1.gameVersion + ")");
     run("lastBackupKey = null;"); ok(run("saveGame()") === true, "réécriture par la nouvelle version");
-    ok(loadSlot(1) === true && canon(g.buildSaveData(), DROP) === canon(JSON.parse(FIX), DROP), "aller-retour sauvegarde -> chargement : état identique");
+    ok(loadSlot(1) === true && canon(g.buildSaveData(), DROP) === canon(JSON.parse(FIX), DROP_FIX), "aller-retour sauvegarde -> chargement : état identique");
     // SAVE-7 : partie d'une version plus récente -> chargée, mais plus écrite
     var nw = JSON.parse(FIX); nw.gameVersion = "99.0.0"; LS.setItem("quest_idle_save_v6_slot2", JSON.stringify(nw));
     ok(loadSlot(2) === true && run("saveLockedKey") === g.getSlotKey(2) && run("saveGame()") === false, "SAVE-7 : partie plus récente chargée sans être réécrite");
@@ -23259,6 +23253,88 @@ console.log("\n[456] v3.691.0 — Images et premier lancement (audit 04/11, lot 
     // PERF-18 : traits du héros en chargement différé (gain mesuré : −225 Ko à l'ouverture du Héros)
     ok(/img\(t\.icon, "hs-trait-ico"\)\.replace\("<img ", '<img loading="lazy" decoding="async" '\)/.test(rd("js/ui/heros-screens-view.js")), "PERF-18 : icônes des traits en loading=lazy");
   } catch (err) { ok(false, "[456] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[457] v3.692.0 — Ménage du code (audit 04/11, lots A4 et A5)");
+(function () {
+  var rd = function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); };
+  var ex = function (f) { return fs.existsSync(path.join(ROOT, f)); };
+  try {
+    var sw = rd("sw.js"), idx = rd("index.html");
+    // ARCH-4 : fichiers publiés sans usage
+    ok(!ex("vh/vtabs320.png") && !ex("images/Dungeons/donjon_poison/LISEZ-MOI.txt"), "ARCH-4 : capture de travail et LISEZ-MOI faux retirés");
+    // ARCH-5 : globales fantômes en minuscule (boot.js et pwa.js compris)
+    var tous = require("./index-scripts.js")(ROOT), defs = {}, vus = {};
+    ["js/main/pwa.js", "js/main/boot.js"].forEach(function (f) { rd(f).replace(/(?:^|\n)\s*function\s+([A-Za-z_$][\w$]*)|window\.([A-Za-z_$][\w$]*)\s*=[^=]|(?:^|\n)var\s+([A-Za-z_$][\w$]*)/g, function (m, a, b, c) { defs[a || b || c] = 1; }); });
+    var NAV = ["addEventListener", "caches", "cancelAnimationFrame", "devicePixelRatio", "fetch", "getComputedStyle", "history", "innerHeight", "innerWidth", "matchMedia", "module",
+      "pendingHeroCreationOrigin", "titleScreenSlotBeingCreated"]; // API du navigateur ; deux globales posées au clic
+    tous.forEach(function (s) {
+      var t = rd(s.replace(/^\.\//, "")), re = /(?:window\.|typeof\s+)([a-z][A-Za-z0-9_$]*)(?![A-Za-z0-9_$.])/g, m;
+      while ((m = re.exec(t))) {
+        var n = m[1], esc = n.replace(/\$/g, "\\$");
+        if (m[0].indexOf("window.") === 0 && /^\s*=[^=]/.test(t.slice(m.index + m[0].length, m.index + m[0].length + 4))) continue;
+        if (m[0].indexOf("typeof") === 0 && (new RegExp("\\bvar\\s+(?:[^;]*,\\s*)?" + esc + "\\b").test(t) || new RegExp("function\\s*[\\w$]*\\s*\\([^)]*\\b" + esc + "\\b").test(t))) continue; // variable locale
+        (vus[n] = vus[n] || []).indexOf(s) === -1 && vus[n].push(s);
+      }
+    });
+    var fant = Object.keys(vus).filter(function (n) { return typeof g[n] === "undefined" && !defs[n] && NAV.indexOf(n) === -1; });
+    ok(fant.length === 0, "ARCH-5 : aucune globale fantôme en minuscule" + (fant.length ? " — " + fant.map(function (n) { return n + " (" + vus[n].join(", ") + ")"; }).join(" ; ") : ""));
+    // ARCH-7 : ancien affichage du combat et cycles sans appelant
+    ok(typeof g.CombatEngine.advanceSelection === "undefined" && typeof g.CombatEngine.finishManualRound === "undefined" && typeof g.WorldManager.advance === "undefined"
+      && typeof g.AdventureQuestManager.isTransitionUnlocked === "undefined", "ARCH-7 : advanceSelection, finishManualRound, WorldManager.advance (et isTransitionUnlocked, son seul usage) retirés");
+    ok(!/getElementById\("enemy-display"\)/.test(rd("js/systems/combat-engine.js")) && rd("css/03-combat.css").indexOf("#enemy-display") === -1, "ARCH-7 : l'ancien décor du combat (#enemy-display) n'est plus visé, ni par le moteur ni par le CSS");
+    // ARCH-V1 : « CONTRÉ ! » passe par l'écran de combat
+    ok(String(g.showCounterSuccessPopup).indexOf("CONTRÉ") !== -1 && String(g.showCounterSuccessPopup).indexOf("floatAt") !== -1, "ARCH-V1 : le contre réussi s'affiche sur l'ennemi (surcharge de combat-screen-view.js)");
+    // ARCH-8 : code mort hors fichiers protégés
+    var morts = ["buildEquipHTML", "buildTalentsHTML", "buildTalentBoardHTML", "buildTalentPointsHTML", "buildInventoryTabContentHTML", "buildEquipmentTabContentHTML", "renderChronique",
+      "renderClassResourceBar", "renderCombatMissionProgress", "cbxStatesOf", "RPG_STAT_LABELS", "HERO_LEVELING", "DEFEAT_GOLD_PENALTY", "SCENE_STAT_LABELS", "CAMP_MISSION_TYPE_LABEL", "RSB_HERO_BY_CLASS"];
+    var restent = morts.filter(function (n) { return typeof g[n] !== "undefined"; });
+    ok(restent.length === 0, "ARCH-8 : ancien Équipement/Talents, fonctions et constantes sans appel retirés" + (restent.length ? " — " + restent.join(", ") : ""));
+    ok(typeof g.ProductionPlotsSystem._payAll === "undefined" && typeof g.PotionManager.getHealCooldownRemainingMs === "undefined" && typeof g.TowerSystem.axesOf === "undefined" && typeof g.LabyrinthRun.echoOf === "undefined",
+      "ARCH-8 : méthodes sans appel retirées (_payAll, getHealCooldownRemainingMs, axesOf, echoOf)");
+    g.game.activeTab = "equip"; g.renderPanel(); g.game.activeTab = "combat";
+    ok(true, "ARCH-8 : un ancien onglet « equip » sauvegardé se rend sans erreur (switchTab le mène dans Héros)");
+    // ARCH-10 : états sauvegardés jamais lus
+    var b = g.buildSaveData(), ini = g.createInitialGameState();
+    ok(["quests", "questProgress", "questResetTime", "hasSeenOnboarding"].every(function (k) { return !(k in b) && !(k in ini); }), "ARCH-10 : quests, questProgress, questResetTime, hasSeenOnboarding ni sauvegardés ni dans l'état initial");
+    var vieux = JSON.parse(JSON.stringify(b)); vieux.quests = [{ id: "kills" }]; vieux.questProgress = { kills: 5 }; vieux.questResetTime = 9; vieux.hasSeenOnboarding = true;
+    var lu = true; try { g.restoreBaseState(vieux); } catch (e) { lu = false; }
+    ok(lu && !("questProgress" in g.buildSaveData()), "ARCH-10 : une ancienne sauvegarde qui les porte se charge (lecture tolérante), sans les réécrire");
+    // ARCH-12 : plus de renvoi aux deux documents qui n'existent pas
+    var cite = tous.concat(["sw.js"]).filter(function (s) { return /COMMENTAIRES_ORIGINAUX|save-system_notes/.test(rd(s.replace(/^\.\//, ""))); });
+    ok(cite.length === 0, "ARCH-12 : aucun renvoi à COMMENTAIRES_ORIGINAUX.md ni save-system_notes.md" + (cite.length ? " — " + cite.join(", ") : ""));
+    // ARCH-14 : une condition d'étape qui lève est tracée
+    var SQ = g.StoryQuestManager, cid = "forest", st = SQ.getCurrentStep(cid), acc = SQ.getState(cid).accepted, chk = st && st.check;
+    if (st) { SQ.getState(cid).accepted = true; st.check = function () { throw new Error("injectée"); }; delete g.erreursNotees["story-quest-system.isCurrentStepReady"]; }
+    var warn = console.warn; console.warn = function () {};
+    var pret = st ? SQ.isCurrentStepReady(cid) : null;
+    console.warn = warn;
+    if (st) { st.check = chk; SQ.getState(cid).accepted = acc; }
+    ok(st && pret === false && !!g.erreursNotees["story-quest-system.isCurrentStepReady"], "ARCH-14 : une condition d'étape qui lève est notée (noteErreur), l'étape reste non prête");
+    delete g.erreursNotees["story-quest-system.isCurrentStepReady"];
+    ok(/noteErreur\("achievement-system\.getProgress"/.test(rd("js/systems/achievement-system.js")) && /noteErreur\("codex-system\.isUnlocked"/.test(rd("js/systems/codex-system.js")), "ARCH-14 : Hauts faits et Codex tracent aussi leur erreur rattrapée");
+    // ARCH-15 : le journal de test ne maquille plus toString
+    var kE = g.CombatEngine.killEnemy;
+    ok(typeof kE._journalOrig === "function" && String(kE) !== String(kE._journalOrig) && rd("js/main/journal-test.js").indexOf(".toString = function") === -1, "ARCH-15 : méthode enveloppée lisible par _journalOrig, toString non maquillé");
+    // ARCH-16 : surcharges de combat-screen-view.js chargées après les fichiers qu'elles remplacent
+    var csv = tous.filter(function (s) { return /js\/ui\/combat-screen-view\.js$/.test(s); })[0], ic = tous.indexOf(csv), apres = [];
+    rd("js/ui/combat-screen-view.js").replace(/window\.([A-Za-z_$][\w$]*)\s*=[^=]/g, function (m, n) {
+      tous.forEach(function (s, i) { if (s !== csv && new RegExp("(?:^|\\n)function " + n.replace(/\$/g, "\\$") + "\\(").test(rd(s.replace(/^\.\//, ""))) && i > ic) apres.push(n + " (" + s + ")"); });
+    });
+    ok(ic > 0 && apres.length === 0 && g.renderClassSkillButtons === g.renderHealButtons, "ARCH-16 : chaque fonction surchargée par l'écran de combat est définie plus tôt dans index.html" + (apres.length ? " — " + apres.join(", ") : ""));
+    // ARCH-17 : doublons
+    var n1 = g.createInitialGameState().potionAuto;
+    ok(JSON.stringify(n1) === JSON.stringify(g.POTION_AUTO_NEW_GAME) && n1 !== g.POTION_AUTO_NEW_GAME && /POTION_AUTO_NEW_GAME/.test(rd("js/core/constants.js")), "ARCH-17 : partie neuve en potion « Tard » lue dans POTION_AUTO_NEW_GAME (copie)");
+    run("fullResetState();");
+    ok(JSON.stringify(g.game.potionAuto) === JSON.stringify(g.POTION_AUTO_NEW_GAME) && g.game.potionAuto !== g.POTION_AUTO_NEW_GAME, "ARCH-17 : partie effacée = partie neuve (même réglage, copie)");
+    var pr = g.normalizeGrimoirePresets([{ id: "a", name: "A", rules: [] }, { id: 3 }, null]);
+    ok(pr.length === 1 && pr[0].icon === "📖" && pr[0].lastModified === 0 && g.normalizeGrimoirePresets("x").length === 0, "ARCH-17 : presets du Grimoire nettoyés par une seule fonction");
+    ok(/AdventureQuestManager\.applyQuestTheme\(quest\)/.test(String(g.HuntQuestManager.applyQuestTheme)) && /return getGrimoireActionIcon\(action\)/.test(rd("js/ui/combat-screen-view.js")), "ARCH-17 : décor de quête et icônes du Grimoire écrits une seule fois");
+    // ARCH-21 : catalogue de l'Entrepôt dans son fichier
+    var iW = idx.indexOf('src="js/data/warehouse-resources.js"'), iH = idx.indexOf('src="js/data/hunt-quests.js"');
+    ok(iW > 0 && iW < iH && sw.indexOf('"./js/data/warehouse-resources.js"') !== -1 && rd("js/data/hunt-quests.js").indexOf("WAREHOUSE_RESOURCES") === -1 && !!g.WAREHOUSE_RESOURCES.bois,
+      "ARCH-21 : ressources de l'Entrepôt dans data/warehouse-resources.js (index.html et précache)");
+  } catch (err) { ok(false, "[457] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
 Promise.all(ATTENTES).then(function () {

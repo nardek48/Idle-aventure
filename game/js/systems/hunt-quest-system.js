@@ -1,6 +1,6 @@
 "use strict";
 /* systems/hunt-quest-system.js — Chasses (data/hunt-quests.js), run dédié par lots de kills, s'arrête à la fin du lot (popup, relance manuelle).
-   Seules des ressources sont gagnées pendant une chasse (pas d'or/essence/XP/équipement) ; v3.260.0 : resourcePool. Détail complet : COMMENTAIRES_ORIGINAUX.md */
+   Seules des ressources sont gagnées pendant une chasse (pas d'or/essence/XP/équipement) ; v3.260.0 : resourcePool. */
 
 var HuntQuestManager = {
   ensureDefaults: function () {
@@ -34,14 +34,7 @@ var HuntQuestManager = {
     return window.QuestEnemyManager ? QuestEnemyManager.spawnFor(quest, false) : null;
   },
 
-  applyQuestTheme: function (quest) {
-    var root = document.documentElement;
-    if (!root) return;
-    var world = (WORLDS || []).find(function (w) { return w.id === quest.worldId; });
-    if (world && world.combatMap) {
-      root.style.setProperty("--world-combat-map", 'url("' + world.combatMap + '")');
-    }
-  },
+  applyQuestTheme: function (quest) { AdventureQuestManager.applyQuestTheme(quest); }, // même décor (audit 04/11, ARCH-17)
 
   spawnRunEnemy: function (quest) {
     var enemy = this.buildQuestEnemy(quest);

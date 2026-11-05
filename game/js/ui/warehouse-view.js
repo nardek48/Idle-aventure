@@ -8,7 +8,7 @@
      Filtre, sélection et zéros sont des préférences d'AFFICHAGE de l'appareil (Prefs), décision Seb ;
    - toucher une tuile ouvre la FEUILLE de la ressource (#village-modal-root) : plafond, d'où ça
      vient, où ça part, réserve protégée (− / + par 10, nombre saisissable), valeur de référence.
-   La vente reste retirée (v3.330.0, E6). Ancien écran grille + panneau : COMMENTAIRES_ORIGINAUX.md */
+   La vente reste retirée (v3.330.0, E6). */
 
 var selectedWarehouseKey = null;   // ressource dont la feuille est ouverte (nom conservé : resetVillageSubScreenState)
 var warehousePickerOpen = false;   // feuille « Ma sélection » ouverte

@@ -32,8 +32,7 @@
      _tryAutoEnqueue() est appelée avant de passer à l'entrée suivante de la cascade — si
      la file a de la place ET que la quantité voulue (bornée par la réserve) est >= 1, un
      nouveau lot est poussé, qui participera lui-même à cette même cascade s'il reste du
-     temps écoulé à consommer (rattrapage hors ligne).
-   Détail : COMMENTAIRES_ORIGINAUX.md */
+     temps écoulé à consommer (rattrapage hors ligne). */
 
 var WorkshopsSystem = {
   /* v3.688.0 (CPL1-1, CPL1-3) : relevé brut du rattrapage hors ligne pour l'écran de retour :
@@ -48,6 +47,19 @@ var WorkshopsSystem = {
   },
   /* v3.303.0 : une recette à firstCraftFlag pose ce drapeau de progression au premier lot
      terminé (ex. « outreFilled » pour l'étape « L'outre »). Permanent, conservé à l'Ascension. */
+  /* Fabrication terminée (en ligne ou hors ligne) : tutoriel des 5 Planches (data/workshop-unlock.js)
+     et compteur par ressource des quêtes d'atelier. Un seul endroit (audit 04/11, doublon). */
+  _notifyCrafted: function (recipe, times) {
+    recipe.outputs.forEach(function (output) {
+      if (output.resourceId === "planche" && window.WorkshopUnlockManager && typeof WorkshopUnlockManager.notifyPlanchesCrafted === "function") {
+        WorkshopUnlockManager.notifyPlanchesCrafted(output.quantity * times);
+      }
+      if (window.VillageQuestManager && typeof VillageQuestManager.notifyRecipeCrafted === "function") {
+        VillageQuestManager.notifyRecipeCrafted(output.resourceId, output.quantity * times);
+      }
+    });
+  },
+
   _markFirstCraft: function (recipe) {
     if (!recipe || !recipe.firstCraftFlag) return;
     if (!game.explorationProgression || typeof game.explorationProgression !== "object") game.explorationProgression = {};
@@ -450,18 +462,7 @@ var WorkshopsSystem = {
       });
       this._markFirstCraft(recipe); // v3.303.0
 
-      // v3.98.0 : le tutoriel de déblocage de l'Atelier de Construction exige "Fabriquer
-      // 5 Planches" (voir data/workshop-unlock.js) — hook conservé ici, Planche vit
-      // désormais dans l'atelier Scierie fine plutôt que dans l'ancien craft Entrepôt.
-      recipe.outputs.forEach(function (output) {
-        if (output.resourceId === "planche" && window.WorkshopUnlockManager && typeof WorkshopUnlockManager.notifyPlanchesCrafted === "function") {
-          WorkshopUnlockManager.notifyPlanchesCrafted(output.quantity * entry.times);
-        }
-        // v3.112.0 (Lot C) : compteur générique par ressource produite (quêtes d'atelier).
-        if (window.VillageQuestManager && typeof VillageQuestManager.notifyRecipeCrafted === "function") {
-          VillageQuestManager.notifyRecipeCrafted(output.resourceId, output.quantity * entry.times);
-        }
-      });
+      this._notifyCrafted(recipe, entry.times);
 
       var outDef = WAREHOUSE_RESOURCES[recipe.outputs[0].resourceId];
       addLog(_t("{x} fabriquée ×{n} ({y})", { x: outDef ? _td(outDef.name) : recipe.id, n: formatNumber(entry.times), y: _td(def.name) }), "event");
@@ -528,15 +529,7 @@ var WorkshopsSystem = {
         });
         this._markFirstCraft(recipe); // v3.303.0
 
-        recipe.outputs.forEach(function (output) {
-          if (output.resourceId === "planche" && window.WorkshopUnlockManager && typeof WorkshopUnlockManager.notifyPlanchesCrafted === "function") {
-            WorkshopUnlockManager.notifyPlanchesCrafted(output.quantity * entry.times);
-          }
-          // v3.112.0 (Lot C) : compteur générique par ressource produite (quêtes d'atelier).
-          if (window.VillageQuestManager && typeof VillageQuestManager.notifyRecipeCrafted === "function") {
-            VillageQuestManager.notifyRecipeCrafted(output.resourceId, output.quantity * entry.times);
-          }
-        });
+        this._notifyCrafted(recipe, entry.times);
 
         var outDef = WAREHOUSE_RESOURCES[recipe.outputs[0].resourceId];
         addLog(_t("{x} fabriquée ×{n} ({y}, hors ligne)", { x: outDef ? _td(outDef.name) : recipe.id, n: formatNumber(entry.times), y: _td(def.name) }), "event");

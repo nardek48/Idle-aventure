@@ -1,5 +1,5 @@
 "use strict";
-/* ui/bestiary-view.js — écran Bestiaire (liste par monde, accordéon) fusionné avec Codex (2 sous-onglets, v2.83.40). Estimation combat resynchronisée sur progression-system.js (v3.46.0). Détail : COMMENTAIRES_ORIGINAUX.md */
+/* ui/bestiary-view.js — écran Bestiaire (liste par monde, accordéon) fusionné avec Codex (2 sous-onglets, v2.83.40). Estimation combat resynchronisée sur progression-system.js (v3.46.0). */
 
 /* v3.405.0 (décision Seb 01/10/2026) : la Bibliothèque regroupe Bestiaire, Codex et Tutoriels
    dans un rail en haut (comme Quêtes) au lieu de la barre du bas. Les onglets "bestiary" et

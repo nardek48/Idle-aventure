@@ -1,7 +1,6 @@
 "use strict";
 /* core/state.js — objet `game` global et ses valeurs par défaut. Fichier central, lu/modifié par tous les systèmes.
-   Toute nouvelle donnée persistante : l'ajouter ici ET dans ensureGameStateDefaults() (migration des vieilles sauvegardes).
-   Détail complet : COMMENTAIRES_ORIGINAUX.md */
+   Toute nouvelle donnée persistante : l'ajouter ici ET dans ensureGameStateDefaults() (migration des vieilles sauvegardes). */
 
 function createDefaultEquipped() {
   return {
@@ -127,10 +126,6 @@ function createInitialGameState() {
     inventory: [],
     equipped: createDefaultEquipped(),
 
-    quests: [],
-    questProgress: Object.assign({}, DEFAULT_QUEST_PROGRESS),
-    questResetTime: 0,
-
     saveSupported: false,
     lastSave: 0,
     lastOnline: 0,
@@ -168,7 +163,7 @@ function createInitialGameState() {
     grimoirePresets: [],
     grimoireTarget: "proche", // v3.428.0 (Ruines) : réglage « Cible » du Grimoire
     grimoireVarier: false, // v3.653.0 : réglage « Varier » (ne pas refaire la même technique)
-    potionAuto: { threshold: "tard", keepForBoss: true }, // v3.380.0 : « Tard » par défaut sur une partie neuve (banc, potion-system.js)
+    potionAuto: Object.assign({}, POTION_AUTO_NEW_GAME), // v3.380.0 : « Tard » par défaut sur une partie neuve (core/constants.js)
     lastSortiePrep: null, // v3.449.0 : potions à bonus et objets du dernier départ (« Comme la dernière fois »)
 
     classResource: null,
@@ -205,8 +200,6 @@ function createInitialGameState() {
     construction: {}, livingMaps: {}, workshopUnlock: {}, workshopFoundationsCompleted: false, campRegenLastAt: 0, genericTutorialsSeen: {},
     codexChaosSeen: false,
     codexRead: {},
-
-    hasSeenOnboarding: false,
 
     // v3.90.0 : explorationProgression = déblocages persistants (et réserve des Petites Aventures).
     explorationProgression: createDefaultExplorationProgression(),
@@ -246,6 +239,23 @@ function refundRetiredUpgrades() {
 window.refundRetiredUpgrades = refundRetiredUpgrades;
 window.RETIRED_UPGRADES = RETIRED_UPGRADES;
 
+/* Presets du Grimoire nettoyés : partagé avec restoreBaseState (audit 04/11, ARCH-17). */
+function normalizeGrimoirePresets(list) {
+  if (!Array.isArray(list)) return [];
+  return list.filter(function (p) {
+    return p && typeof p === "object" && typeof p.id === "string" && typeof p.name === "string" && Array.isArray(p.rules);
+  }).map(function (p) {
+    return {
+      id: p.id,
+      name: p.name,
+      icon: typeof p.icon === "string" ? p.icon : "📖",
+      rules: (typeof sanitizeGrimoireRules === "function") ? sanitizeGrimoireRules(p.rules, null) : p.rules,
+      lastModified: typeof p.lastModified === "number" ? p.lastModified : 0
+    };
+  });
+}
+window.normalizeGrimoirePresets = normalizeGrimoirePresets;
+
 function ensureGameStateDefaults() {
   if (!game.killCounts) game.killCounts = {};
   if (game.heroGender !== "f" && game.heroGender !== "m") game.heroGender = "m"; // v3.151.0 : migration vieilles saves
@@ -279,7 +289,6 @@ function ensureGameStateDefaults() {
 
   if (typeof game.totalAetherEarned !== "number") game.totalAetherEarned = Number(game.aether || 0);
   if (window.MemoryManager) MemoryManager.ensure(); // v3.322.0
-  if (!Array.isArray(game.quests)) game.quests = [];
 
   // v3.99.15 : garde-fou minimal — la vraie migration pour les sauvegardes
   // antérieures se fait dans systems/save-system.js:restoreBaseState() (après le
@@ -288,16 +297,6 @@ function ensureGameStateDefaults() {
   if (!game.unlockedTabs || typeof game.unlockedTabs !== "object") {
     game.unlockedTabs = { campement: true, quests: true, settings: true };
   }
-
-  if (!game.questProgress || typeof game.questProgress !== "object") {
-    game.questProgress = {};
-  }
-
-  Object.keys(DEFAULT_QUEST_PROGRESS).forEach(function (key) {
-    if (typeof game.questProgress[key] !== "number") {
-      game.questProgress[key] = DEFAULT_QUEST_PROGRESS[key];
-    }
-  });
 
   refundRetiredUpgrades(); // v3.313.0
 
@@ -354,21 +353,7 @@ function ensureGameStateDefaults() {
     game.grimoireRules = sanitizeGrimoireRules(game.grimoireRules, null);
   }
 
-  if (!Array.isArray(game.grimoirePresets)) {
-    game.grimoirePresets = [];
-  } else {
-    game.grimoirePresets = game.grimoirePresets.filter(function (p) {
-      return p && typeof p === "object" && typeof p.id === "string" && typeof p.name === "string" && Array.isArray(p.rules);
-    }).map(function (p) {
-      return {
-        id: p.id,
-        name: p.name,
-        icon: typeof p.icon === "string" ? p.icon : "📖",
-        rules: (typeof sanitizeGrimoireRules === "function") ? sanitizeGrimoireRules(p.rules, null) : p.rules,
-        lastModified: typeof p.lastModified === "number" ? p.lastModified : 0
-      };
-    });
-  }
+  game.grimoirePresets = normalizeGrimoirePresets(game.grimoirePresets);
 
   if (typeof game.lastSpecialUse !== "number") game.lastSpecialUse = 0;
   if (typeof game.specialBuffExpires !== "number") game.specialBuffExpires = 0;
@@ -389,8 +374,6 @@ function ensureGameStateDefaults() {
   if (!game.dungeonTiersEntered || typeof game.dungeonTiersEntered !== "object") game.dungeonTiersEntered = {};
   if (typeof game.codexChaosSeen !== "boolean") game.codexChaosSeen = false;
   if (!game.codexRead || typeof game.codexRead !== "object") game.codexRead = {};
-
-  if (typeof game.hasSeenOnboarding !== "boolean") game.hasSeenOnboarding = false;
 
   // v3.90.0 : sauvegarde ancienne sans déblocages = valeurs par défaut sûres.
   if (!game.explorationProgression || typeof game.explorationProgression !== "object") {

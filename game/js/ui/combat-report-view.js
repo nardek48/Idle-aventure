@@ -1,6 +1,6 @@
 "use strict";
 /* ui/combat-report-view.js — rapport post-combat CUMULATIF (v3.62.0), fiche par capacité (utilisations/contres/réservations).
-   Ouverture auto à la mort (onHeroDefeated), accès permanent depuis le Grimoire. Non bloquant. Détail : COMMENTAIRES_ORIGINAUX.md */
+   Ouverture auto à la mort (onHeroDefeated), accès permanent depuis le Grimoire. Non bloquant. */
 
 /* v3.373.0 (i18n) : le rapport écrit « 0 utilisations » (pluriel dès 0, ≠ 1) — on garde cette
    règle telle quelle plutôt que celle de la langue ; les deux formes sont des phrases entières. */

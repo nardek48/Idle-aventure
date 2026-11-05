@@ -1,6 +1,5 @@
 "use strict";
-/* systems/equip-shop-system.js — échoppe d'équipement (Boutique) : 6 objets aléatoires, rachetables une fois chacun, stock renouvelé/6h.
-   Détail complet : COMMENTAIRES_ORIGINAUX.md */
+/* systems/equip-shop-system.js — échoppe d'équipement (Boutique) : 6 objets aléatoires, rachetables une fois chacun, stock renouvelé/6h. */
 
 /* Taille de base de la vitrine. v3.216.0 : la Halle marchande l'augmente
    (voir EquipShopManager.getShopSize) — la constante reste le socle. */

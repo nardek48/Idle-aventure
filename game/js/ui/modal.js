@@ -1,5 +1,5 @@
 "use strict";
-/* ui/modal.js — 2 modales génériques : confirmation (oui/non+callback) et retour hors-ligne (résumé des gains). Détail : COMMENTAIRES_ORIGINAUX.md */
+/* ui/modal.js — 2 modales génériques : confirmation (oui/non+callback) et retour hors-ligne (résumé des gains). */
 
 var _confirmModalCallback = null;
 

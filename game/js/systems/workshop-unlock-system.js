@@ -1,6 +1,6 @@
 "use strict";
 /* systems/workshop-unlock-system.js — chaîne de déblocage de l'Atelier (data/workshop-unlock.js). Indépendant de QuestManager.
-   Consulté via hooks optionnels depuis warehouse-system.js/construction-system.js, jamais l'inverse. Détail : COMMENTAIRES_ORIGINAUX.md */
+   Consulté via hooks optionnels depuis warehouse-system.js/construction-system.js, jamais l'inverse. */
 
 var WorkshopUnlockManager = {
   ensure: function () {

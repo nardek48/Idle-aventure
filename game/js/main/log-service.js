@@ -1,5 +1,5 @@
 "use strict";
-/* main/log-service.js — journal d'événements (window.gameLog), le plus récent en tête, limité à 100. Lu par ui/log-view.js. Détail : COMMENTAIRES_ORIGINAUX.md */
+/* main/log-service.js — journal d'événements (window.gameLog), le plus récent en tête, limité à 100. Lu par ui/log-view.js. */
 
 var gameLog = window.gameLog || [];
 

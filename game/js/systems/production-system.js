@@ -6,7 +6,7 @@
    v3.93.0 : la Chasse (hunt) suit le même principe, débloquée par la quête "La Meute Affamée"
    (data/adventure-quests.js, AdventureQuestManager existant, aucune nouvelle mécanique de
    combat créée). v3.94.0 : le Puits (well) suit le même principe, débloqué par la quête
-   "La Source Tarie" (systems/well-system.js). Détail complet : COMMENTAIRES_ORIGINAUX.md */
+   "La Source Tarie" (systems/well-system.js). */
 
 var PRODUCTION_UNLOCK_FLAGS = {
   quarry: "quarryUnlocked",

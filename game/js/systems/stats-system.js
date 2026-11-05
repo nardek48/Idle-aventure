@@ -1,7 +1,6 @@
 "use strict";
 /* systems/stats-system.js — StatsSystem.recalcStats() recompose ENTIÈREMENT les stats du joueur à chaque appel (jamais en continu).
-   Ordre : upgrades -> stats RPG héros -> équipement -> sets -> talents -> bestiaire -> potions -> afflictions.
-   Détail complet (constantes de balance, historique des bugs de clamp v3.19/v3.29) : COMMENTAIRES_ORIGINAUX.md */
+   Ordre : upgrades -> stats RPG héros -> équipement -> sets -> talents -> bestiaire -> potions -> afflictions. */
 /* v3.322.0 (O7) : la boutique d'Aether est retirée ; v3.412.0 : ses fonctions (toujours à zéro) aussi.
    Les niveaux achetés autrefois restent dans la sauvegarde, sans effet. */
 function getBestiaryBonus(id) {

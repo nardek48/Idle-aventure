@@ -10,6 +10,7 @@
    Les textes des données sont traduits par _td() à l'affichage (registre : lang/data-fields.js). */
 I18n.register("en", {
   // index.html
+  "Combat : un contre réussi affiche de nouveau « CONTRÉ ! » sur l'ennemi. Ménage du code, sans autre changement.": "Combat: a successful counter shows “COUNTERED!” on the enemy again. Code cleanup, no other change.",
   "Premier lancement plus léger : images d'interface, icônes et bandeaux allégés sans perte visible ; le dictionnaire anglais n'est plus téléchargé par les joueurs francophones.": "Lighter first launch: interface images, icons and banners slimmed down with no visible loss; French-speaking players no longer download the English dictionary.",
   "Jeu en anglais : nombres à l'anglaise (5,000 · 12.3 k), deux-points et « Defence » corrigés. Lecteurs d'écran : messages annoncés, icônes de coût nommées, Entrée et Espace sur les liens « ressource manquante ».": "Game in English: English number format (5,000 · 12.3 k), colons and “Defence” fixed. Screen readers: messages announced, cost icons named, Enter and Space on “missing resource” links.",
   "Combat : en Grimoire, la potion touchée hors de ton tour est bue au suivant ; la vitesse se règle aussi en Tactique ; après une défaite, l'astuce de ressource s'affiche au Campement.": "Combat: in Grimoire, a potion tapped outside your turn is drunk on the next one; speed can also be set in Tactics; after a defeat, the resource tip shows at Camp.",
@@ -1002,7 +1003,6 @@ I18n.register("en", {
   // js/ui/camp-view.js
   "Combat": "Fight",
   "Expédition": "Expedition",
-  "quête|Chasse": "Hunt",
   "Donjon": "Dungeon",
   "Partir": "Set out",
   "Abandonner": "Abandon",
@@ -1267,7 +1267,6 @@ I18n.register("en", {
 
   // js/ui/equipment-view.js
   "Équipement": "Equipment",
-  "Inventaire": "Inventory",
   "Boutique": "Shop",
   "+{n} dégâts par coup": "+{n} damage per hit",
   "+{n}% défense": "+{n}% defence",
@@ -1300,7 +1299,6 @@ I18n.register("en", {
   "Vendre": "Sell",
   "Actuellement équipé": "Currently equipped",
   "Rien d’équipé sur cet emplacement — équiper cet objet sera un pur gain.": "Nothing equipped in this slot — equipping this item is pure gain.",
-  "Trier": "Sort",
   "Rareté": "Rarity",
   "Type": "Type",
   "Tout": "All",
@@ -1315,10 +1313,7 @@ I18n.register("en", {
   "{x} a été acheté : il ne porte aucun souvenir et ne rendra pas d'Aether. L'objet disparaît.": "{x} was bought: it carries no memories and won't return any Aether. The item is gone.",
   "Tout offrir ?": "Offer everything?",
   "Tu donnes les {n} objets de ton sac à l'Aether, pour {v} Aether environ. Les armes d'élite restent. Cette action est irréversible.": "You give the {n} items in your bag to the Aether, for about {v} Aether. Elite weapons stay. This cannot be undone.",
-  "Sac ({a}/{b})": "Bag ({a}/{b})",
-  "Sac vide, vainquez des boss pour obtenir du loot.": "Bag empty — defeat bosses to get loot.",
   "Rien à afficher pour l’instant.": "Nothing to show for now.",
-  "Boutique d’équipement": "Equipment shop",
   "+{n} gain||+{n} gains": ["+{n} gain", "+{n} gains"],
   "−{n} perte||−{n} pertes": ["−{n} loss", "−{n} losses"],
 
@@ -1981,14 +1976,8 @@ I18n.register("en", {
   "Laisse-le dormir, ou touche-le pour le réveiller : vaincu, il rapporte la moitié d'or en plus.": "Let it sleep, or tap it to wake it: defeated, it brings half again as much gold.",
   "Un ennemi dort": "An enemy is sleeping",
   "Un mort dort encore. Ton action le vise : le frapper le réveille, et vaincu il rapporte plus d'or. Sans cette règle, tu le laisses dormir.": "One of the dead is still sleeping. Your action targets it: striking it wakes it, and defeated it brings more gold. Without this rule, you let it sleep.",
-  "{a} / {b} placés · plafond de l'acte": "{a} / {b} placed · act cap",
   "Réinitialiser": "Reset",
-  "gratuit": "free",
   "Tronc": "Trunk",
-  "{a} / {b} pour ouvrir les voies": "{a} / {b} to open the paths",
-  "Voies": "Paths",
-  "une seule clé de voûte": "a single keystone",
-  "voûte|clé": "key",
   "Voie {x}": "{x} path",
   "clé de voûte": "keystone",
   "rang {a} / {b}": "rank {a} / {b}",
@@ -1996,7 +1985,6 @@ I18n.register("en", {
   "Appris.": "Learned.",
   "Rang suivant · 1 point": "Next rank · 1 point",
   "Apprendre · 1 point": "Learn · 1 point",
-  "<b>{n}</b> point à placer||<b>{n}</b> points à placer": ["<b>{n}</b> point to place", "<b>{n}</b> points to place"],
 
   // js/ui/title-screen-view.js
   "Tous les emplacements sont occupés — supprime une partie pour en créer une nouvelle": "All slots are taken — delete a game to create a new one",
@@ -5674,7 +5662,6 @@ I18n.register("en", {
   "Sauvegarde impossible : la mémoire du navigateur est pleine. Exporte ta partie (Paramètres) pour ne rien perdre.": "Cannot save: the browser storage is full. Export your game (Settings) so nothing is lost.",
   "Sauvegarde impossible pour l'instant. Exporte ta partie (Paramètres) pour ne rien perdre.": "Cannot save right now. Export your game (Settings) so nothing is lost.",
   "Consommables": "Consumables",
-  "Aucune potion ni préparation de combat en stock.": "No potions or combat preparations in stock.",
   "Se prépare à l'Apothicaire. S'emporte au départ, dans la préparation de sortie.": "Made at the Apothecary. Taken along when setting out, in the run preparation.",
   "Comme la dernière fois": "Same as last time",
   "Plus en stock : {x}": "Out of stock: {x}",
@@ -6307,8 +6294,6 @@ I18n.register("en", {
   "Tourne ton téléphone": "Turn your phone",
   "Aethervale se joue en hauteur : en paysage, le combat n'a pas la place de s'afficher.": "Aethervale is played upright: in landscape, combat has no room to show.",
   // v3.458.3 (lot 7a)
-  "{a} placés · le prochain au niveau {n}": "{a} placed · the next at level {n}",
-  "{a} / {b} placés · le prochain au niveau {n}": "{a} / {b} placed · the next at level {n}",
   "Les rations se préparent à la Cuisine de camp : Village › Ateliers.": "Rations are cooked at the Camp Kitchen: Village › Workshops.",
   // v3.458.4 (lot 7b) : Mémoire, Ce que tu portes, Palissade, Quêtes, retour, préparation
   "À partir du niveau 9, chaque niveau oppose Garder (prudence, réserves) à Donner (risquer, aller plus vite). Le jalon de chaque monde ajoute une ligne, ouverte si les trois niveaux d'avant sont du même côté.": "From level 9, each level sets Keep (caution, reserves) against Give (risk, go faster). Each world's milestone adds a line, open if the three levels before it are on the same side.",

@@ -4,11 +4,6 @@
    Mobile
    ========================= */
 @media all { /* v3.367.0 : + mode PC ; v3.406.0 : règles du téléphone partout (tablette comprise) — le jeu est toujours une mise en page de téléphone */
-  #enemy-emoji {
-    width: min(74vw, 210px);
-    height: min(74vw, 210px);
-    min-height: 190px;
-  }
 
   .map-adventure-item {
     padding: 10px;
@@ -19,7 +14,6 @@
     min-width: 0;
   }
 }
-
 
 /* v3.538.0 (audit ERG-11, option A) : réglage « Texte grand », +12 % sur les pages, feuilles et fenêtres.
    Le bandeau, la barre du bas, les bulles et l'écran de combat (#game-area) gardent leur taille. */

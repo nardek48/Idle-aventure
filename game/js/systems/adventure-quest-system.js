@@ -1,7 +1,7 @@
 "use strict";
 /* systems/adventure-quest-system.js — quêtes scopées {worldId, adventureIndex} (data/adventure-quests.js), run dédié type Donjon.
    Indépendant de world-quest-system.js. Run éphémère (ne survit pas à l'ascension). v3.260.0 : la progression
-   d'une quête repart de 0 à chaque départ (décision Seb) — elle n'est plus conservée après une mort ou un abandon. Détail : COMMENTAIRES_ORIGINAUX.md */
+   d'une quête repart de 0 à chaque départ (décision Seb) — elle n'est plus conservée après une mort ou un abandon. */
 
 var AdventureQuestManager = {
   ensureDefaults: function () {
@@ -59,22 +59,6 @@ var AdventureQuestManager = {
     if (game.adventureQuestsCompleted[quest.id]) return false;
     var self = this;
     return quest.steps.every(function (step) { return self.isStepComplete(quest, step); });
-  },
-
-  isTransitionUnlocked: function (worldId, fromAdventureIndex) {
-    this.ensureDefaults();
-    var targetIndex = fromAdventureIndex + 1;
-    var gateQuest = null;
-    Object.keys(ADVENTURE_QUESTS).some(function (key) {
-      var quest = ADVENTURE_QUESTS[key];
-      if (quest.type === "transition" && quest.worldId === worldId && quest.gatesTransitionTo === targetIndex) {
-        gateQuest = quest;
-        return true;
-      }
-      return false;
-    });
-    if (!gateQuest) return true;
-    return !!game.adventureQuestsCompleted[gateQuest.id];
   },
 
   isWorldTransitionUnlocked: function (worldId) {

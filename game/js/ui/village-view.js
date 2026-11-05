@@ -7,8 +7,7 @@
    bâtiments du rapport de conception du 11/09/2026, chacun dans un des cinq états gérés
    par VillageBuildingManager.getCardState(). Un bâtiment n'est jamais invisible : un
    bâtiment verrouillé affiche ce qu'il faut faire pour l'ouvrir (le mur n'est jamais
-   silencieux). Ancien code (teaser, et avant lui grille 6 cartes + popup) :
-   COMMENTAIRES_ORIGINAUX.md */
+   silencieux). */
 
 /* v3.414.0 (lot VUI-1, atelier village du 01/10/2026) : quatre onglets en rail EN HAUT
    (Bâtiments · Production · Ateliers · Entrepôt) remplacent les trois boutons du bas et le

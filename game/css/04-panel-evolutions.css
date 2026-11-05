@@ -20,12 +20,6 @@ Maquette de référence : atelier-evolutions.html.
   pointer-events: none;
 }
 
-@keyframes hud-fr-glow {
-  0% { box-shadow: 0 0 0 0 var(--c-bronze-400-vivid); }
-  60% { box-shadow: 0 0 0 9px rgba(240, 170, 62, 0); }
-  100% { box-shadow: 0 1px 3px rgba(0, 0, 0, 0.65); }
-}
-
 /* ---------- 1. Fil rouge : fenêtre centrée (.kwin, v3.400.0 lot F-2) ---------- */
 .fr-bubble-bg.kwin-veil { z-index: 9000; }
 .fr-reason { font-size: 14px; }

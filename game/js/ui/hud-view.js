@@ -1,5 +1,5 @@
 "use strict";
-/* ui/hud-view.js — barre du haut (ressources, mini-portrait héros) + barre de stats sous combat. Injectés une fois au boot. Détail complet : COMMENTAIRES_ORIGINAUX.md */
+/* ui/hud-view.js — barre du haut (ressources, mini-portrait héros) + barre de stats sous combat. Injectés une fois au boot. */
 
 /* v3.200.0 : HUD_PAGE_TITLES, updateHudPageTitle() et l'élément #hud-page-title sont retirés.
    Le titre de page était redondant depuis v3.190.0 : les bandeaux figés des kframes portent le

@@ -5,7 +5,7 @@
    fin du run (voir hooks dans sortie-system.js). Cumulables : 1 de chaque type par run. Une
    potion bue au camp reste armée indéfiniment jusqu'au prochain run. v3.412.0 : l'ancien
    Élixir d'Aether (pendingPotionBonuses, aetherElixirStackCount) est retiré. Anciennes saves : timestamps normalisés en booléens à
-   ensure(). Ancien système 30 min : COMMENTAIRES_ORIGINAUX.md */
+   ensure(). */
 
 var POTION_CYCLE_PRICE_GROWTH = 0.15;
 
@@ -234,10 +234,6 @@ var PotionManager = {
     saveGame();
   },
 
-  getHealCooldownRemainingMs: function () { // v3.102.0 : conservé pour compatibilité (toujours 0, le tour de round remplace le cooldown)
-    return 0;
-  },
-
   /* v3.102.0 (P2) : la potion est l'action « Objet » d'un round (elle consomme le tour, voir CombatEngine.heroAction) —
      plus de cooldown d'horloge. Retourne true si une potion a été bue. */
   useHealingPotion: function (id) {
@@ -306,7 +302,6 @@ var POTION_AUTO_THRESHOLDS = [
   { id: "normal", label: _t("Normal"), value: 0.40, desc: _t("Sous 40 % de tes PV, plus prudent mais plus gourmand.") },
   { id: "tot",    label: _t("Tôt"),    value: 0.55, desc: _t("Sous 55 % de tes PV, pour ne jamais frôler la chute.") }
 ];
-var POTION_AUTO_NEW_GAME = { threshold: "tard", keepForBoss: true };   // partie neuve (v3.380.0 : « Tard », meilleur au banc)
 var POTION_AUTO_OLD_SAVE = { threshold: "jamais", keepForBoss: true };   // sauvegarde sans le réglage
 var POTION_AUTO_TARGET_PCT = 0.60; // « suffit » = te remonte au moins à 60 % de tes PV
 
@@ -388,6 +383,5 @@ var PotionAutoManager = {
 };
 
 window.POTION_AUTO_THRESHOLDS = POTION_AUTO_THRESHOLDS;
-window.POTION_AUTO_NEW_GAME = POTION_AUTO_NEW_GAME;
 window.POTION_AUTO_OLD_SAVE = POTION_AUTO_OLD_SAVE;
 window.PotionAutoManager = PotionAutoManager;

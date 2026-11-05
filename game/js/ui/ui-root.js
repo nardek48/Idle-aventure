@@ -1,5 +1,5 @@
 "use strict";
-/* ui/ui-root.js — chef d'orchestre UI : switchTab (navigation), renderPanel (routeur par onglet), renderAll (rendu global), helpers transversaux (esc, héros, stats). Détail complet : COMMENTAIRES_ORIGINAUX.md */
+/* ui/ui-root.js — chef d'orchestre UI : switchTab (navigation), renderPanel (routeur par onglet), renderAll (rendu global), helpers transversaux (esc, héros, stats). */
 
 function esc(value) {
   return String(value == null ? "" : value)
@@ -262,8 +262,6 @@ function renderAll() {
   renderPanel();
   updateQuestBadge();
   if (typeof renderHealButtons === "function") renderHealButtons();
-  if (typeof renderSpecialAttackButton === "function") renderSpecialAttackButton();
-  if (typeof renderDefenseButton === "function") renderDefenseButton();
   if (typeof renderActivePotionsBar === "function") renderActivePotionsBar();
   if (typeof renderCombatHeroMini === "function") renderCombatHeroMini();
   if (typeof renderClassSkillButtons === "function") renderClassSkillButtons(); // v3.241.0 : compétences dès l'entrée en combat
@@ -337,12 +335,7 @@ function renderPanel() {
     case "shop":
       container.innerHTML = buildShopHTML();
       break;
-    case "talents":
-      container.innerHTML = buildTalentsHTML();
-      break;
-    case "equip":
-      container.innerHTML = buildEquipHTML();
-      break;
+    // « talents » et « equip » : switchTab les mène dans Héros (ancien écran retiré, audit 04/11 ARCH-8)
     case "quests":
       container.innerHTML = buildQuestsHTML();
       break;

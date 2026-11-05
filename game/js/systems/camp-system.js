@@ -200,7 +200,7 @@ var FEAST_COST_BY_WORLD = [
   { ble: 1500, viande: 1500, eau: 600 },  // Montagne (6 000)
   { ble: 2000, viande: 2000, eau: 800 }   // Tour (8 000)
 ];
-var FEAST_ICON = "images/Icons/camp/festin.webp"; // à générer : icône générique en attendant
+var FEAST_ICON = "images/Icons/camp/festin.webp";
 
 var FeastManager = {
   _w: function () { return window.WorldDays ? WorldDays.ensure() : {}; },

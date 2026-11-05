@@ -149,9 +149,8 @@ var TowerSystem = {
       lieu: reg.soi > reg.aeswyn ? "soi" : (reg.aeswyn > reg.soi ? "aeswyn" : departage("aeswyn", "soi"))
     };
   },
-  /* Réponse -> axes, et l'inverse. */
+  /* Axes -> réponse. */
   answerOf: function (don, lieu) { return don === "donner" ? (lieu === "soi" ? "sienne" : "aeswyn") : (lieu === "soi" ? "tienne" : "rien"); },
-  axesOf: function (value) { var a = (window.STORY_CHOICE_AXES && STORY_CHOICE_AXES.question && STORY_CHOICE_AXES.question[value]) || []; return { don: a[0], lieu: a[1] }; },
   /* Les trois réponses proposées, dans l'ordre : pente, bascule Donner/Garder (Le fil bleu), bascule Soi/Aeswyn (Brannoc). */
   questionAnswers: function () {
     var p = this.pente(), flip = function (x, a, b) { return x === a ? b : a; };

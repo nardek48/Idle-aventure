@@ -2,8 +2,7 @@
 /* ui/save-transfer-view.js — v3.459.5 (audit O10) : export et import de la sauvegarde (fichier JSON
    ou code texte), sortis de systems/save-system.js qui garde l'écriture et la lecture. */
 
-/* v2.9 : export/import de sauvegarde (tout repose sur localStorage, rien côté serveur) — fichier JSON téléchargé ou code texte à copier/coller.
-   Détail : save-system_notes.md #39. */
+/* v2.9 : export/import de sauvegarde (tout repose sur localStorage, rien côté serveur) — fichier JSON téléchargé ou code texte à copier/coller. */
 
 /* Génère le JSON de sauvegarde et déclenche son téléchargement comme
    fichier .json (le navigateur choisit où l'enregistrer). */
@@ -43,8 +42,7 @@ function buildMultiSaveExportPayload() {
 
 /* Génère le JSON de sauvegarde et déclenche son téléchargement comme
    fichier .json (le navigateur choisit où l'enregistrer). */
-/* v3.29 : bug corrigé — l'export n'incluait que l'emplacement actif ; exporte maintenant TOUS les emplacements occupés (nouveau format enveloppe).
-   Détail : save-system_notes.md #41. */
+/* v3.29 : bug corrigé — l'export n'incluait que l'emplacement actif ; exporte maintenant TOUS les emplacements occupés (nouveau format enveloppe). */
 function exportSaveToFile() {
   var payload = buildMultiSaveExportPayload();
   var json = JSON.stringify(payload, null, 2);
@@ -164,8 +162,7 @@ function looksLikeMultiSave(d) {
     d.slots && typeof d.slots === "object" && Object.keys(d.slots).length > 0);
 }
 
-/* Applique une sauvegarde importée après confirmation — reconnaît le nouveau format multi-héros ET l'ancien format à un seul héros.
-   Détail : save-system_notes.md #45. */
+/* Applique une sauvegarde importée après confirmation — reconnaît le nouveau format multi-héros ET l'ancien format à un seul héros. */
 function applyImportedSave(data) {
   var isMulti = looksLikeMultiSave(data);
   var isSingle = !isMulti && looksLikeQuestIdleSave(data);

@@ -70,7 +70,7 @@ var MEMORY_VALUES = {
 };
 
 /* Les huit niveaux (conception v1.2 §5.3-5.4). `id` est la clé lue par MemoryManager.has().
-   Icônes : images/Icons/memory/<id>.webp, à générer (icône générique en attendant, règle Seb). */
+   Icônes : images/Icons/memory/<id>.webp (icône générique si l'une manque, règle Seb). */
 var MEMORY_LEVELS = [
   { level: 1, theme: "Confort", options: [
     { id: "sac_profond", name: "Sac profond", icon: "images/Icons/memory/sac_profond.webp",

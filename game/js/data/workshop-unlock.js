@@ -6,7 +6,7 @@
    passage : les planches se fabriquent à la Scierie fine (atelier de la Scierie), plus à
    l'Entrepôt comme le disait l'étape 2 depuis l'arrivée des ateliers ; et l'Atelier se
    construit désormais depuis la grille du Village, plus depuis l'Entrepôt.
-   Logique : systems/workshop-unlock-system.js. Détail complet : COMMENTAIRES_ORIGINAUX.md */
+   Logique : systems/workshop-unlock-system.js. */
 
 var WORKSHOP_UNLOCK_STEPS = [
   {

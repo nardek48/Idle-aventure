@@ -1,5 +1,5 @@
 "use strict";
-/* ui/menu-view.js — menu plein écran (bouton ☰), grille de destinations non couvertes par la barre du bas. Détail : COMMENTAIRES_ORIGINAUX.md */
+/* ui/menu-view.js — menu plein écran (bouton ☰), grille de destinations non couvertes par la barre du bas. */
 
 var MENU_ITEMS = [
   /* v3.244.0 (chantier Navigation, décision Seb 14/09/2026) : le menu ☰ ne garde que la
