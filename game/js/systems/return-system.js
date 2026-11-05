@@ -65,6 +65,7 @@ var ReturnManager = {
   hasContent: function (s) {
     if (!s) return false;
     return Object.keys(s.produced || {}).length > 0 || Object.keys(s.crafted || {}).length > 0
+      || Object.keys(s.lost || {}).length > 0 || Object.keys(s.used || {}).length > 0 // v3.688.0 (CPL1-1, CPL1-3)
       || !!s.siteDone || !!s.tavernNew || s.tavernReady > 0 || s.hpGain > 0 || s.patrolsBack > 0;
   },
 

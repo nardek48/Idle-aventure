@@ -91,6 +91,7 @@ Maquette de référence : atelier-evolutions.html.
 .ret-gain-ico { width: 18px; height: 18px; object-fit: contain; }
 
 .ret-link { font: inherit; font-size: 12px; font-weight: 800; color: var(--c-brown-700-vivid); background: none; border: none; padding: 2px 0; cursor: pointer; text-decoration: underline; }
+.ret-sec-b .ret-link { min-height: 44px; } /* v3.688.0 (CPL1-9) : zone de toucher de 44 px à l'écran de retour */
 .ret-story { font-size: 12px; line-height: 1.5; font-style: italic; color: #4a3a20; border-left: 2px solid var(--c-bronze-400-2); padding-left: 8px; margin-top: 5px; }
 
 .ret-acts { margin-top: 8px; }

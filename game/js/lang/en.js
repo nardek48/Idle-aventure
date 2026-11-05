@@ -10,6 +10,7 @@
    Les textes des données sont traduits par _td() à l'affichage (registre : lang/data-fields.js). */
 I18n.register("en", {
   // index.html
+  "Écran de retour plus complet : ce que les ateliers ont pris, les sorties perdues par Entrepôt plein, le surplus versé au Grand Ouvrage et les PV rendus. Le jeu tourne aussi plus léger, au Camp comme en combat.": "Fuller return screen: what the workshops took, output lost to a full Warehouse, surplus given to the Great Work, and HP restored. The game also runs lighter, at the Camp and in combat.",
   "Entrepôt : quand le Grand Ouvrage limite un stock, les coûts le disent ; plus de fabrication perdue à sortie pleine. L'échoppe se renouvelle après un voyage, le festin coûte le prix de ton monde le plus loin.": "Warehouse: when the Great Work caps a stock, costs now say so; no more crafts lost to a full output. The shop restocks after travelling, and the feast costs the price of your furthest world.",
   "Sauvegarde plus sûre : « Effacer la partie » n'efface que ce héros, la copie de secours suit ta partie, la quantité d'entraînement est gardée, un import abîmé ne touche plus rien.": "Safer saves: \"Erase the game\" erases only this hero, the backup copy follows your game, the training amount is kept, a damaged import no longer touches anything.",
   "Interface : textes pâles relus (défaite, butin du donjon, Vague, conseils), abandon de donjon confirmé, « Entrer » grisé sans vivres, Retour sur la carte vivante.": "Interface: faint texts made readable (defeat, dungeon loot, Wave, tips), dungeon abandon now confirmed, “Enter” greyed out without provisions, Back on the living map.",
@@ -1791,6 +1792,9 @@ I18n.register("en", {
   "+{n} PV au coin du feu ({a} / {b}).": "+{n} HP by the fire ({a} / {b}).",
   "Récolte faite.": "Harvest done.",
   "Contrats livrés.": "Contracts delivered.",
+  "Surplus versé au Grand Ouvrage : <b>+{n} points</b>.": "Surplus given to the Great Work: <b>+{n} points</b>.",
+  "Pris par les ateliers : {x}.": "Taken by the workshops: {x}.",
+  "Entrepôt plein, sorties perdues : {x}.": "Warehouse full, output lost: {x}.",
   "Ensuite": "Next",
   "Retour · après le combat": "Back · after the fight",
   "Termine d'abord ce que tu as commencé": "Finish what you started first",

@@ -66,14 +66,19 @@ function buildReturnScreenHTML() {
       if (lk.length) vb += '<div class="ret-warn">' + _tn(lk.length > 1 ? 2 : left[lk[0]], "Entrepôt plein : {x} reste dans les zones.", "Entrepôt plein : {x} restent dans les zones.",
         { x: lk.map(function (k) { return formatNumber(left[k]) + ' ' + esc(returnResName(k)); }).join(", ") }) + '</div>';
     }
+    if (st.harvested && st.goPoints > 0) vb += '<div>' + _t("Surplus versé au Grand Ouvrage : <b>+{n} points</b>.", { n: formatNumber(st.goPoints) }) + '</div>'; // v3.688.0 (CPL1-4)
     h += buildReturnSectionHTML("images/Icons/menu_icons/village_menu.webp", st.harvested ? _t("Village · récolté") : _t("Village · à récolter"), vb);
   }
 
   // Ateliers et chantier
-  var crafted = Object.keys(s.crafted || {});
-  if (crafted.length || s.siteDone) {
+  var crafted = Object.keys(s.crafted || {}), used = Object.keys(s.used || {}), lost = Object.keys(s.lost || {});
+  var resList = function (o, keys, sign) { return keys.map(function (k) { return sign + formatNumber(o[k]) + ' ' + esc(returnResName(k)); }).join(", "); };
+  if (crafted.length || s.siteDone || used.length || lost.length) {
     var ab = "";
     if (crafted.length) ab += '<div class="ret-gains">' + crafted.map(function (k) { return buildReturnGainHTML(k, s.crafted[k], true); }).join("") + '</div>';
+    // v3.688.0 (CPL1-3, CPL1-1) : ce que les ateliers ont pris, et ce que l'Entrepôt plein a perdu
+    if (used.length) ab += '<div>' + _t("Pris par les ateliers : {x}.", { x: resList(s.used, used, "−") }) + '</div>';
+    if (lost.length) ab += '<div class="ret-warn">' + _t("Entrepôt plein, sorties perdues : {x}.", { x: resList(s.lost, lost, "") }) + '</div>';
     if (s.siteDone) ab += _t("Chantier terminé : <b>{x} niveau {n}</b>.", { x: esc(_td(s.siteDone.name)), n: s.siteDone.level });
     h += buildReturnSectionHTML("images/Icons/construction_icon.webp", _t("Ateliers et chantier"), ab);
   }
@@ -165,7 +170,9 @@ function closeReturnScreen() {
 /* R3 : geste gratuit — la récolte habituelle (plafond de l'Entrepôt compris). */
 function returnHarvestAll() {
   if (!returnScreenState) return;
+  var GO = window.GrandOuvrage, before = GO && typeof GO.getPoints === "function" ? GO.getPoints() : 0;
   if (window.ProductionManager && typeof ProductionManager.harvestAll === "function") ProductionManager.harvestAll();
+  returnScreenState.goPoints = GO && typeof GO.getPoints === "function" ? Math.max(0, GO.getPoints() - before) : 0; // v3.688.0 (CPL1-4)
   returnScreenState.harvested = true;
   renderReturnScreen();
 }

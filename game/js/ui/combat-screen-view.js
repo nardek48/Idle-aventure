@@ -759,13 +759,17 @@
     silenced: 0, notes: [], lastHeroSlot: null, phase: null, lastDeadRect: null };
   window.cbxState = cbx;
 
+  var fxBaseMemo = null;
   function fxBase() {
+    if (fxBaseMemo) return fxBaseMemo; // v3.688.0 (PERF-1) : lu une fois par image, plus de recalcul forcé à chaque chiffre
     var app = byId("cbx");
     if (!app || !app.getBoundingClientRect) return null;
     var r = app.getBoundingClientRect();
     // Mode PC : la colonne est zoomée — on ramène les coordonnées écran à celles du CSS.
     var z = app.offsetWidth ? (r.width / app.offsetWidth) : 1;
-    return { r: r, z: z || 1 };
+    var b = { r: r, z: z || 1 };
+    if (typeof requestAnimationFrame === "function") { fxBaseMemo = b; requestAnimationFrame(function () { fxBaseMemo = null; }); }
+    return b;
   }
   function anchorOf(el, yRatio) {
     var b = fxBase();
@@ -789,7 +793,13 @@
   }
   function foeEl(e) { var s = byId("cbx-stage"); return (s && s.querySelector && e) ? s.querySelector('.cbx-foe[data-k="' + (e.actorId || "") + '"] .cbx-foe-hit') : null; }
   function allyEl(a) { var t = byId("cbx-team"); return (t && t.querySelector && a) ? t.querySelector('.cbx-card[data-who="' + (a.actorId || "a0") + '"]') : null; }
-  function flash(el, cls) { if (!el || !el.classList) return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
+  /* v3.688.0 (PERF-1) : l'animation repart deux images plus tard, sans lire offsetWidth (recalcul forcé). */
+  function flash(el, cls) {
+    if (!el || !el.classList) return;
+    el.classList.remove(cls);
+    if (typeof requestAnimationFrame !== "function") { void el.offsetWidth; el.classList.add(cls); return; }
+    requestAnimationFrame(function () { requestAnimationFrame(function () { el.classList.add(cls); }); });
+  }
   function stamp(el, kind) {
     if (!el) return;
     var s = document.createElement("span");
@@ -877,7 +887,7 @@
         + (c ? '<span class="cbx-rule-if">' + _t("Si") + '</span>' + ico(c.icon) + '<span class="cbx-rule-c">' + esc(c.label) + '</span>' : '<span class="cbx-rule-if">' + _t("Par défaut") + '</span>')
         + '<b>→</b>' + ico(l.icon) + '<strong>' + esc(l.label) + '</strong></div>';
     }).join("");
-    el.classList.remove("is-on"); void el.offsetWidth; el.classList.add("is-on");
+    flash(el, "is-on");
     flash(byId("cbx-grim-btn"), "is-firing");
     clearTimeout(ruleTimer);
     ruleTimer = setTimeout(function () { el.classList.remove("is-on"); }, Math.max(700, 1500 / Math.max(1, num(game.combatSpeed) || 1)));
@@ -1021,7 +1031,7 @@
     if (typeof renderCombatSpeedBar === "function") renderCombatSpeedBar();
   };
   window.renderCombatMissionProgress = function () { setHtml(byId("cbx-top"), buildTopHTML()); };
-  window.renderHeroHp = function () { if (typeof oldRenderHeroHp === "function") oldRenderHeroHp(); renderTeam(); };
+  window.renderHeroHp = function () { if (typeof oldRenderHeroHp === "function") oldRenderHeroHp(); }; // v3.688.0 (PERF-6) : l'Équipe est déjà redessinée par renderFrame à chaque image
   window.openCombatStatesSheet = openStates;
   window.buildCbxStatesSheetHTML = buildStatesSheetHTML;
   window.buildCbxStatesBodyHTML = buildStatesBodyHTML;

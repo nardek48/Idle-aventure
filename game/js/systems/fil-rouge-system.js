@@ -13,7 +13,7 @@
    COÛT : le HUD se redessine à chaque image. get() garde le résultat une seconde ;
    invalidate() force le recalcul après une action. */
 
-var FIL_ROUGE_CACHE_MS = 1000;
+var FIL_ROUGE_CACHE_MS = 2000; // v3.688.0 (PERF-2) : 2 s, invalidate() rafraîchit déjà après chaque action
 var FIL_ROUGE_HEAL_PCT = 0.60;      // en dessous, on propose de se soigner avant un combat d'Histoire
 var FIL_ROUGE_PLOTS_RATIO = 0.5;    // au moins la moitié des zones ouvertes pleines
 
@@ -38,6 +38,7 @@ var FilRouge = {
   _cached: null,
   _cachedAt: 0,
   _alsoCached: [],
+  _listMemo: null,
 
   /* Proposition courante, recalculée au plus une fois par seconde. */
   get: function () {
@@ -81,6 +82,13 @@ var FilRouge = {
   /* Toutes les situations vraies, dans l'ordre F2. La dernière (activité du monde) est
      toujours présente : le fil rouge a toujours quelque chose à dire. */
   all: function () {
+    // v3.688.0 (PERF-2) : un seul tableau des missions par appel (il était reconstruit 4 fois)
+    var own = !this._listMemo;
+    if (own) this._listMemo = { list: null };
+    try { return this._allChecks(); } finally { if (own) this._listMemo = null; }
+  },
+
+  _allChecks: function () {
     var out = [];
     var checks = [this._claim, this._memory, this._heal, this._story, this._patrol, this._tavern, this._pa, this._dungeon, this._plots, this._talents, this._relic, this._zoneUp, this._apres]; // v3.508.0 : talents, relique, zone ; v3.510.0 : petite aventure, donjon
     for (var i = 0; i < checks.length; i++) {
@@ -95,7 +103,11 @@ var FilRouge = {
   /* ---------- Sources ---------- */
 
   _missions: function () {
-    return (window.MissionBoard && typeof MissionBoard.list === "function") ? MissionBoard.list() : [];
+    var memo = this._listMemo;
+    if (memo && memo.list) return memo.list;
+    var list = (window.MissionBoard && typeof MissionBoard.list === "function") ? MissionBoard.list() : [];
+    if (memo) memo.list = list;
+    return list;
   },
 
   _storyMission: function () {

@@ -176,6 +176,13 @@ function hudSet(id, prop, val) {
   else if (prop === "src") el.src = val;
 }
 function renderHudBand() {
+  // v3.688.0 (PERF-15) : clé brute posée sur le bandeau ; rien n'est formaté tant qu'aucune valeur ne bouge
+  var key = Math.floor(Number(game.gold) || 0) + "|" + game.heroHp + "|" + game.heroMaxHp + "|" + Math.floor(Number(game.heroXp) || 0) + "|" + game.heroXpToNext + "|" + game.heroLevel + "|" + (window.I18n && I18n.lang ? I18n.lang() : "");
+  var band = document.getElementById("hud-gold");
+  if (!band) return;
+  if (band._bandKey === key) return;
+  if (band._bandKey === undefined) hudBandLast = {}; // bandeau neuf : tout est réécrit
+  band._bandKey = key;
   hudSet("hud-gold", "text", hudNum(game.gold));
   var hp = Math.max(0, Math.ceil(Number(game.heroHp != null ? game.heroHp : game.heroMaxHp || 1)));
   var maxHp = Math.max(1, Math.floor(Number(game.heroMaxHp || 1)));

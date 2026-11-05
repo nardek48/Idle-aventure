@@ -65,7 +65,20 @@ function waitForPwaControllerThenHideGate() {
     return;
   }
   navigator.serviceWorker.addEventListener("controllerchange", resolve, { once: true });
+  // v3.688.0 (PERF-V1) : rechargement forcé, un service worker actif ne reprendra pas la main : on lève tout de suite
+  if (navigator.serviceWorker.getRegistration) navigator.serviceWorker.getRegistration().then(function (reg) {
+    if (reg && reg.active && !reg.installing && !reg.waiting) resolve();
+  }).catch(function () { /* rien : les autres sorties lèveront le voile */ });
+  // v3.688.0 (PERF-8) : au plus 1,5 s après que l'écran titre est prêt
+  var poll = setInterval(function () {
+    var title = document.getElementById("title-screen-root");
+    if (resolved) { clearInterval(poll); return; }
+    if (!title || !title.innerHTML) return;
+    clearInterval(poll);
+    setTimeout(resolve, PWA_GATE_AFTER_TITLE_MS);
+  }, 100);
 }
+var PWA_GATE_AFTER_TITLE_MS = 1500;
 
 /* v3.457.4 (audit P9) : la bannière ne couvre plus un combat ni une expédition en cours — elle attend que
    le héros soit libre (même règle que l'écran de retour), et « Plus tard » la ferme pour la session. */

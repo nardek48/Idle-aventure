@@ -36,6 +36,16 @@
    Détail : COMMENTAIRES_ORIGINAUX.md */
 
 var WorkshopsSystem = {
+  /* v3.688.0 (CPL1-1, CPL1-3) : relevé brut du rattrapage hors ligne pour l'écran de retour :
+     sorties rangées, intrants pris par le chaînage, sorties perdues par Entrepôt plein. */
+  _ledger: null,
+  _ledgerLive: false,
+  beginOfflineLedger: function () { this._ledger = { made: {}, used: {}, lost: {} }; this._ledgerLive = false; },
+  takeOfflineLedger: function () { var l = this._ledger; this._ledger = null; this._ledgerLive = false; return l; },
+  _ledgerAdd: function (part, key, n) {
+    if (!this._ledger || !this._ledgerLive || !(n > 0)) return;
+    this._ledger[part][key] = (this._ledger[part][key] || 0) + n;
+  },
   /* v3.303.0 : une recette à firstCraftFlag pose ce drapeau de progression au premier lot
      terminé (ex. « outreFilled » pour l'étape « L'outre »). Permanent, conservé à l'Ascension. */
   _markFirstCraft: function (recipe) {
@@ -308,8 +318,10 @@ var WorkshopsSystem = {
     }
 
     // v3.355.0 : débit par l'Entrepôt, seul point d'écriture des ressources (canCraft a vérifié les stocks)
+    var self = this;
     recipe.inputs.forEach(function (input) {
       WarehouseManager.removeResource(input.resourceId, input.quantity * times);
+      self._ledgerAdd("used", input.resourceId, input.quantity * times);
     });
 
     workshop.queue.push({
@@ -493,6 +505,12 @@ var WorkshopsSystem = {
     if (elapsedMs <= 1000) return;
 
     var queue = workshop.queue;
+    this._ledgerLive = true;
+    try { this._catchUpQueue(workshopId, def, queue, elapsedMs); } finally { this._ledgerLive = false; }
+  },
+
+  _catchUpQueue: function (workshopId, def, queue, elapsedMs) {
+    var self = this;
     while (queue.length && elapsedMs > 0) {
       var entry = queue[0];
       entry.msRemaining -= elapsedMs;
@@ -503,7 +521,10 @@ var WorkshopsSystem = {
       var recipe = this.getRecipe(workshopId, entry.recipeId);
       if (recipe) {
         recipe.outputs.forEach(function (output) {
-          WarehouseManager.addResource(output.resourceId, output.quantity * entry.times, true);
+          var want = output.quantity * entry.times;
+          var got = Number(WarehouseManager.addResource(output.resourceId, want, true)) || 0;
+          self._ledgerAdd("made", output.resourceId, got);
+          self._ledgerAdd("lost", output.resourceId, want - got);
         });
         this._markFirstCraft(recipe); // v3.303.0
 

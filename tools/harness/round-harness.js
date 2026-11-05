@@ -22973,6 +22973,84 @@ console.log("\n[452] v3.687.0 — Économie et village (audit 04/11, lot I8)");
   try { run("ResourceReserveManager.ensure(); game.production._resourceReserves = {}; fullResetState();"); } catch (e) {}
 })();
 
+console.log("\n[453] v3.688.0 — Écran de retour et boucle allégée (audit 04/11, lots I9 et I10)");
+(function () {
+  var rd = function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); };
+  var fn = { toast: g.showToast, log: g.addLog, rp: g.renderPanel, save: g.saveGame, req: g.ReturnManager.request, harv: g.ProductionManager.harvestAll, list: g.MissionBoard.list, tick: g.ProductionManager.tick, gid: g.document.getElementById, num: g.hudNum };
+  g.showToast = function () {}; g.addLog = function () {}; g.saveGame = function () {}; g.renderPanel = function () {};
+  var W = g.WarehouseManager, WS = g.WorkshopsSystem;
+  try {
+    // CPL1-1 : sorties perdues par Entrepôt plein, relevées pendant le rattrapage
+    run("fullResetState(); game.playerName='T'; game.heroId='knight'; WorldManager.worldIndex = 1; game.worldsEverReached = {0: true, 1: true}; WarehouseManager.ensure(); VillageBuildingManager.ensure();");
+    run("game.explorationProgression.sawmillUnlocked = true; ProductionManager.unlockBuilding('sawmill'); game.village.buildings.warehouse.level = 0;");
+    var capP = W.getCap("planche"); g.game.resources.planche = capP - 2; g.game.resources.bois = 0;
+    var ws = WS.ensureWorkshop("sawmill", "scierie_fine");
+    ws.autoRecipeId = null; ws.queue = [{ id: "t1", recipeId: "planche", times: 5, msRemaining: 1, auto: false }]; ws.lastTick = Date.now() - 5000;
+    WS.beginOfflineLedger(); WS.catchUpOffline("scierie_fine"); var led = WS.takeOfflineLedger();
+    ok(led && led.made.planche === 2 && led.lost.planche === 3 && g.game.resources.planche === capP, "CPL1-1 : 2 Planches rangées, 3 perdues par Entrepôt plein, relevées (" + JSON.stringify(led) + ")");
+    // CPL1-3 : compte brut, intrants pris par le chaînage automatique
+    g.game.resources.planche = 0; g.game.resources.bois = 400; g.ResourceReserveManager.setReserve("bois", 0);
+    ws.autoRecipeId = "planche"; ws.queue = [{ id: "t2", recipeId: "planche", times: 1, msRemaining: 1, auto: true }]; ws.lastTick = Date.now() - 60000;
+    WS.beginOfflineLedger(); WS.catchUpOffline("scierie_fine"); led = WS.takeOfflineLedger();
+    ok(led && led.made.planche > 1 && led.used.bois > 0 && !led.lost.planche, "CPL1-3 : le relevé compte les Planches fabriquées et le Bois pris (" + JSON.stringify(led) + ")");
+    ws.queue = []; g.game.resources.bois = 400; g.game.resources.planche = 0;
+    var b0 = g.game.resources.bois; run("WorkshopsSystem.enqueueCraft('scierie_fine', 'planche', 1, true);");
+    ok(g.game.resources.bois < b0 && WS._ledger === null, "CPL1-3 : en jeu, hors rattrapage, rien n'est relevé");
+    var sm = g.applyOfflineLedger({ crafted: { lingot: 0 } }, { made: { lingot: 20 }, used: { ble: 390, lingot: 20 }, lost: {} });
+    ok(sm.crafted.lingot === 20 && sm.used.ble === 390 && Object.keys(sm.lost).length === 0, "CPL1-3 : le Lingot coulé puis consommé apparaît, avec −390 Blé");
+    ok(g.ReturnManager.hasContent({ produced: {}, crafted: {}, used: { ble: 1 } }) && g.ReturnManager.hasContent({ produced: {}, crafted: {}, lost: { planche: 1 } }), "CPL1-1, CPL1-3 : une perte ou une consommation suffit à ouvrir l'écran");
+    var off = rd("js/systems/offline-system.js"), res = rd("js/systems/resume-system.js");
+    ok(off.indexOf("beginOfflineLedger") > 0 && off.indexOf("applyOfflineLedger(summary, ledger)") > 0 && res.indexOf("beginOfflineLedger") < res.indexOf("ProductionManager.catchUpOffline();") && res.indexOf("applyOfflineLedger(base, ledger)") > 0, "CPL1-1, CPL1-3 : chargement et reprise passent tous deux par le relevé");
+    g.openReturnScreen({ ms: 3600e3, produced: {}, crafted: { lingot: 20 }, used: { ble: 390 }, lost: { planche: 3 }, fullPlots: 0, openPlots: 3, hpGain: 0 });
+    var h = g.buildReturnScreenHTML();
+    ok(h.indexOf(g._t("Pris par les ateliers : {x}.", { x: "−390 " + g._td(g.WAREHOUSE_RESOURCES.ble.name) })) >= 0 && h.indexOf("Entrepôt plein, sorties perdues : 3 " + g._td(g.WAREHOUSE_RESOURCES.planche.name)) >= 0, "CPL1-1, CPL1-3 : lignes « Pris par les ateliers » et « Entrepôt plein » à l'écran");
+    // CPL1-4 : le surplus versé au Grand Ouvrage par « Tout récolter » est dit
+    g.ProductionManager.harvestAll = function () { g.GrandOuvrage._state().points += 638; };
+    g.openReturnScreen({ ms: 3600e3, produced: { bois: 30 }, crafted: {}, fullPlots: 0, openPlots: 3, hpGain: 0 });
+    g.returnHarvestAll();
+    ok(g.getReturnScreenState().goPoints === 638 && g.buildReturnScreenHTML().indexOf("+638 points") >= 0, "CPL1-4 : « Surplus versé au Grand Ouvrage : +638 points »");
+    g.ProductionManager.harvestAll = fn.harv; g.closeReturnScreen();
+    // CPL1-5 : en reprise, les PV du feu sont rendus avant le bilan
+    var got = null; g.ReturnManager.request = function (s) { got = s; return true; };
+    run("game.activeTab = 'campement'; game.heroMaxHp = 1000; game.heroHp = 300; CampManager.ensureDefaults(); game.campRegenLastAt = Date.now() - 2 * 3600e3; ResumeManager._lastNoticeAt = 0;");
+    g.ResumeManager.catchUpAfterGap(3600);
+    ok(got && got.hpGain > 0 && got.hpGain === Math.floor(g.game.heroHp - 300), "CPL1-5 : la rubrique Héros reçoit les PV rendus en reprise (+" + (got && got.hpGain) + ")");
+    g.ReturnManager.request = fn.req;
+    // CPL1-9 : liens de l'écran de retour à 44 px
+    ok(/\.ret-sec-b \.ret-link \{ min-height: 44px; \}/.test(rd("css/04-panel-evolutions.css")), "CPL1-9 : « Prendre le butin » et les liens du retour font 44 px de haut");
+    // PERF-2 : un seul tableau des missions par passage du fil rouge
+    var calls = 0; g.MissionBoard.list = function () { calls++; return fn.list.apply(this, arguments); };
+    g.FilRouge.all();
+    ok(calls === 1 && g.FilRouge._listMemo === null && g.FIL_ROUGE_CACHE_MS === 2000, "PERF-2 : FilRouge.all() lit le tableau une fois (" + calls + "), cache de 2 s");
+    calls = 0; g.FilRouge._missions(); g.FilRouge._missions();
+    ok(calls === 2, "PERF-2 : hors de all(), chaque lecture reste fraîche");
+    g.MissionBoard.list = fn.list;
+    // PERF-5 : production cumulée à 4 Hz, sans perte de temps
+    var loop = rd("js/main/game-loop.js");
+    ok(/productionAccum \+= dt;\s*\n\s*if \(productionAccum >= 0\.25 && window\.ProductionManager/.test(loop) && /ProductionManager\.tick\(productionAccum\);\s*\n\s*productionAccum = 0;/.test(loop), "PERF-5 : la boucle cumule dt et produit à 4 Hz");
+    // PERF-17 : la feuille ouverte n'est plus sérialisée à chaque image
+    ok(/el && el\.firstChild\) return true;/.test(loop) && !/el\.innerHTML\.length > 0/.test(loop), "PERF-17 : isBlockingModalOpen lit firstChild");
+    // PERF-15 : bandeau du HUD, rien n'est formaté quand rien ne bouge
+    var els = {}; g.document.getElementById = function (id) { return els[id] || (els[id] = fn.gid(id)); };
+    var n = 0; g.hudNum = function (x) { n++; return fn.num(x); };
+    g.game.gold = 1234; g.renderHudBand(); var n1 = n; g.renderHudBand(); var n2 = n; g.game.gold = 1235; g.renderHudBand();
+    ok(n1 > 0 && n2 === n1 && n > n2 && els["hud-gold"].textContent === g.formatNumberGroup("1235"), "PERF-15 : clé brute d'abord, formatage seulement si une valeur change");
+    g.document.getElementById = fn.gid; g.hudNum = fn.num;
+    // PERF-1, PERF-6 : combat
+    var cbv = rd("js/ui/combat-screen-view.js");
+    ok(/if \(fxBaseMemo\) return fxBaseMemo;/.test(cbv) && /requestAnimationFrame\(function \(\) \{ requestAnimationFrame\(function \(\) \{ el\.classList\.add\(cls\); \}\); \}\);/.test(cbv) && !/el\.classList\.remove\("is-on"\); void el\.offsetWidth/.test(cbv), "PERF-1 : repère lu une fois par image, animations relancées sans offsetWidth");
+    ok(/window\.renderHeroHp = function \(\) \{ if \(typeof oldRenderHeroHp === "function"\) oldRenderHeroHp\(\); \};/.test(cbv), "PERF-6 : l'Équipe n'est plus redessinée deux fois par image");
+    // PERF-8, PERF-V1 : voile du premier lancement
+    var pwa = rd("js/main/pwa.js");
+    ok(/var PWA_GATE_AFTER_TITLE_MS = 1500;/.test(pwa) && /reg && reg\.active && !reg\.installing && !reg\.waiting\) resolve\(\)/.test(pwa), "PERF-8, PERF-V1 : voile levé 1,5 s après le titre, ou tout de suite si le service worker actif ne reprendra pas la main");
+    // PERF-16 : halo de la carte en transform et opacity
+    var map = rd("css/06-map.css"), kf = (/@keyframes mapNodePulse \{[^}]*\}[^}]*\}[^}]*\}/.exec(map) || [""])[0];
+    ok(/transform: scale\(1\.19\); opacity: 0;/.test(kf) && kf.indexOf("box-shadow") < 0 && /\.map-node\.is-current \.map-node-pic::before/.test(map), "PERF-16 : le pouls de la carte n'anime plus de box-shadow");
+  } catch (err) { ok(false, "[453] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  g.showToast = fn.toast; g.addLog = fn.log; g.renderPanel = fn.rp; g.saveGame = fn.save; g.ReturnManager.request = fn.req; g.ProductionManager.harvestAll = fn.harv; g.MissionBoard.list = fn.list; g.ProductionManager.tick = fn.tick; g.document.getElementById = fn.gid; g.hudNum = fn.num;
+  try { run("fullResetState();"); } catch (e) {}
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

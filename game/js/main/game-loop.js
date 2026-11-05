@@ -6,12 +6,13 @@ var lastTick = Date.now();
 
 var questBadgeThrottleAccum = 0;
 var villageSiteThrottleAccum = 0; // v3.213.0 : chantier du Village, testé une fois par seconde
+var productionAccum = 0; // v3.688.0 (PERF-5) : production à 4 Hz, le temps est cumulé, rien n'est perdu
 
 var BLOCKING_MODAL_IDS = ["cycle-modal-root", "map-modal-root", "dungeon-modal-root", "village-modal-root", "talent-modal-root", "adventure-quest-modal-root", "tutorial-modal-root"]; // v3.683.0 (TUTO-V1) : le combat attend sous une aide
 function isBlockingModalOpen() {
   for (var i = 0; i < BLOCKING_MODAL_IDS.length; i++) {
     var el = document.getElementById(BLOCKING_MODAL_IDS[i]);
-    if (el && el.innerHTML && el.innerHTML.length > 0) return true;
+    if (el && el.firstChild) return true; // v3.688.0 (PERF-17) : sans sérialiser la feuille ouverte
   }
   return false;
 }
@@ -73,8 +74,10 @@ function gameLoopStep() {
   // v3.113.0 : chasse ambiante du village (VillageManager.tickAmbientHunting) supprimée —
   // plus aucun or/kill passif en continu, l'or est désormais 100 % actif.
 
-  if (window.ProductionManager && typeof ProductionManager.tick === "function") {
-    ProductionManager.tick(dt);
+  productionAccum += dt;
+  if (productionAccum >= 0.25 && window.ProductionManager && typeof ProductionManager.tick === "function") {
+    ProductionManager.tick(productionAccum);
+    productionAccum = 0;
   }
 
   // v3.429.20 (accord Seb) : plus de redessin de la Boutique chaque seconde. Les potions n'ont plus de

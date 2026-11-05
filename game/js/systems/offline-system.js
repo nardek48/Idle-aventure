@@ -24,6 +24,7 @@ var OfflineManager = {
       warehouse: this._collectWarehouseCounts(),
       extras: window.ReturnManager ? ReturnManager.capture() : null // v3.332.0
     };
+    if (window.WorkshopsSystem && typeof WorkshopsSystem.beginOfflineLedger === "function") WorkshopsSystem.beginOfflineLedger(); // v3.688.0 (CPL1-1, CPL1-3)
   },
 
   /* Somme des stocks de zones ouvertes (arrondi PAR ZONE, cohérent avec la récolte) par
@@ -82,6 +83,7 @@ var OfflineManager = {
   summarize: function () {
     var before = this._before;
     this._before = null;
+    var ledger = (window.WorkshopsSystem && typeof WorkshopsSystem.takeOfflineLedger === "function") ? WorkshopsSystem.takeOfflineLedger() : null;
     if (!before || before.ms < OFFLINE_SUMMARY_MIN_MS) return null;
 
     var plotsAfter = this._collectPlotTotals();
@@ -101,6 +103,7 @@ var OfflineManager = {
 
     var fullInfo = this._countFullPlots();
     var summary = { ms: before.ms, produced: produced, crafted: crafted, fullPlots: fullInfo.full, openPlots: fullInfo.open };
+    applyOfflineLedger(summary, ledger);
 
     // v3.332.0 : chantier, Taverne, PV, patrouilles — un retour sans production peut avoir à dire
     if (window.ReturnManager) {
@@ -137,4 +140,16 @@ var OfflineManager = {
   }
 };
 
+/* v3.688.0 (CPL1-1, CPL1-3) : ateliers comptés en brut (le solde net cachait un Lingot fabriqué
+   puis consommé), plus ce que le chaînage a pris et ce que l'Entrepôt plein a perdu. */
+function applyOfflineLedger(summary, ledger) {
+  if (!summary || !ledger) return summary;
+  var pick = function (o) { var r = {}; Object.keys(o || {}).forEach(function (k) { var n = Math.floor(o[k]); if (n > 0) r[k] = n; }); return r; };
+  summary.crafted = pick(ledger.made);
+  summary.used = pick(ledger.used);
+  summary.lost = pick(ledger.lost);
+  return summary;
+}
+
 window.OfflineManager = OfflineManager;
+window.applyOfflineLedger = applyOfflineLedger;
