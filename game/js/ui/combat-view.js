@@ -134,7 +134,10 @@ window.closeSortieSheet = closeSortieSheet;
 
 function confirmFlee() {
   if (!window.SortieManager || !SortieManager.isActive()) return;
-  if (confirm(_t("Fuir ? La mission ne sera pas validée et tu ne rapporteras que {n} % du butin de la sortie.", { n: Math.round(100 * SortieManager.fleeKeepPct()) }))) SortieManager.flee();
+  var msg = _t("Fuir ? La mission ne sera pas validée et tu ne rapporteras que {n} % du butin de la sortie.", { n: Math.round(100 * SortieManager.fleeKeepPct()) });
+  // v3.689.0 (COMB-6) : fuir l'élite d'un secteur libéré peut le faire reprendre : on le dit avant
+  var note = (window.LivingMapManager && typeof LivingMapManager.fleeRegressionNote === "function") ? LivingMapManager.fleeRegressionNote() : "";
+  if (confirm(note ? msg + " " + note : msg)) SortieManager.flee();
 }
 window.confirmFlee = confirmFlee;
 

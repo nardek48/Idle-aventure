@@ -24,6 +24,7 @@ var CombatReportManager = {
       shieldsRemovedCount: 0,
       silencesAvoidedCount: 0,
       totalDamageDealt: 0,
+      rounds: 0, // v3.689.0 (COMB-10) : rounds joués, pour des dégâts par round (plus de DPS à l'horloge murale)
       archetypeImpact: {
         enragedBonusDamageTaken: 0,
         corruptedDamageLost: 0,
@@ -121,11 +122,15 @@ var CombatReportManager = {
     game.combatReport.archetypeImpact[key] += Math.max(0, Number(amount || 0));
   },
 
-  getAverageDps: function () {
+  logRound: function () {
     this.ensure();
-    var elapsedS = (Date.now() - game.combatReport.startedAt) / 1000;
-    if (elapsedS < 1) return 0;
-    return game.combatReport.totalDamageDealt / elapsedS;
+    game.combatReport.rounds = Number(game.combatReport.rounds || 0) + 1;
+  },
+
+  getAverageDamagePerRound: function () {
+    this.ensure();
+    var n = Number(game.combatReport.rounds || 0);
+    return n > 0 ? game.combatReport.totalDamageDealt / n : 0;
   },
 
   getSnapshot: function () {

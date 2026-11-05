@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.689.0", "subtabs/potions", _t("Combat : en Grimoire, la potion touchée hors de ton tour est bue au suivant ; la vitesse se règle aussi en Tactique ; après une défaite, l'astuce de ressource s'affiche au Campement.")],
     ["3.688.0", "system/offline_progress", _t("Écran de retour plus complet : ce que les ateliers ont pris, les sorties perdues par Entrepôt plein, le surplus versé au Grand Ouvrage et les PV rendus. Le jeu tourne aussi plus léger, au Camp comme en combat.")],
     ["3.687.0", "village_buildings/warehouse_expanded", _t("Entrepôt : quand le Grand Ouvrage limite un stock, les coûts le disent ; plus de fabrication perdue à sortie pleine. L'échoppe se renouvelle après un voyage, le festin coûte le prix de ton monde le plus loin.")],
     ["3.686.0", "system/save", _t("Sauvegarde plus sûre : « Effacer la partie » n'efface que ce héros, la copie de secours suit ta partie, la quantité d'entraînement est gardée, un import abîmé ne touche plus rien.")],

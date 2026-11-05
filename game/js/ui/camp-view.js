@@ -128,6 +128,7 @@ function buildCampHTML(tab) {
 
   if (game.justDied) {
     h += '<div class="camp-death-banner"><img class="ico-lg" src="images/Icons/camp/hero_defeated.webp" alt=""> ' + _t("Tu es à terre. Mange une ration, ou laisse le feu faire son œuvre, avant de repartir.") + '</div>';
+    if (typeof takeDefeatResourceTipHTML === "function") h += takeDefeatResourceTipHTML(); // v3.689.0 (COMB-4) : astuce de défaite
     game.justDied = false;
   }
 

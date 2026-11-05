@@ -72,6 +72,7 @@ function getArchetypeEffectConditionId(action) {
 }
 
 window.ARCHETYPE_EFFECT_TO_ARCHETYPE = ARCHETYPE_EFFECT_TO_ARCHETYPE;
+window.ARCHETYPE_EFFECT_TO_CONDITION_ID = ARCHETYPE_EFFECT_TO_CONDITION_ID;
 
 window.getArchetypeEffectConditionId = getArchetypeEffectConditionId;
 
@@ -99,6 +100,9 @@ var ClassCombatManager = {
     this.ensure();
     var classId = this.getCurrentClassId();
     if (!classId) return null;
+    // v3.689.0 (COMB-21) : ressource abîmée (texte, absente) : remise à 0 plutôt que bloquée à jamais
+    var rs = game.classResource, cur = rs ? rs.current : 0;
+    if (rs && (typeof cur !== "number" || !isFinite(cur))) rs.current = (cur != null && isFinite(Number(cur))) ? Number(cur) : 0;
 
     if (!game.classResource || game.classResource.classId !== classId) {
       game.classResource = (typeof createCombatResourceState === "function") ? createCombatResourceState(classId) : null;
@@ -249,8 +253,10 @@ var ClassCombatManager = {
         } else if (!affordable) {
           CombatReportManager.logFailedAttempt(slot, "resource");
         }
-      } else if (hasCounters && !matchedConditionId) {
-        CombatReportManager.logCounterMissed(slot);
+      } else if (hasCounters && !matchedConditionId && game.enemy && (game.enemy.chargeTelegraphed || game.enemy.shieldTelegraphed
+        || game.enemy.healTelegraphed || game.enemy.silenceTelegraphed || game.enemy.surgeTelegraphed)) {
+        CombatReportManager.logCounterMissed(slot); // v3.689.0 (COMB-10) : « raté » seulement face à une annonce non contrée
+
       }
     }
 

@@ -420,6 +420,7 @@ var CombatEngine = {
   beginRound: function () {
     var t = this.turn();
     game.combatRound.number += 1;
+    if (window.CombatReportManager) CombatReportManager.logRound(); // v3.689.0 (COMB-10) : dégâts par round au rapport
     t.queue = window.Initiative ? Initiative.order() : [];
     t.acted = [];
     t.played = 0;
@@ -698,6 +699,7 @@ var CombatEngine = {
       };
       self.prepareEnemy(renfort);
       renfort.engageIn = 1;   // annoncé : il arrive au round suivant
+      renfort.charged = false; // v3.689.0 (COMB-16) : il arrive, il n'a pas reçu la Charge du Chevalier
       return renfort;
     }).filter(Boolean);
 
@@ -1192,6 +1194,7 @@ var CombatEngine = {
   enemyDoubleStrikeDangerous: function () {
     var e = game.enemy;
     if (!this.enemyDoubleStrikeNext() || !e.stats) return false;
+    if (Number(e.engageIn || 0) > 0) return false; // v3.689.0 (COMB-17) : en approche (ou sonné), son prochain tour n'est pas une frappe
     var hold = Number(e.patternHoldRounds || 0) > 0; // Clairvoyance : l'annonce attend, la frappe tombe
     if (!hold && (e.chargeTelegraphed || e.silenceTelegraphed)) return false; // bouclier ou soin contrés : la frappe revient (revue)
     var power = Number(e.stats.power || 0);

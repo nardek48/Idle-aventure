@@ -90,7 +90,7 @@ var DATA_TEXT_FIELDS = {
   CLASSES: ["*.label", "*.resource.label"],
   CLASS_SKILLS: ["*.actions.*.label", "*.actions.*.description", "*.resource.label"],
   HEROES_DB: ["*.name"],
-  GRIMOIRE_CONDITIONS: ["*.label", "*.description"],
+  GRIMOIRE_CONDITIONS: ["*.label", "*.short", "*.description"],
   COMPANIONS_DB: ["*.name", "*.lines", "*.skill.name", "*.skill.desc",
     "*.voies.*.label", "*.voies.*.short", "*.voies.*.desc", "*.voies.*.lines", "*.voies.*.skill.name", "*.voies.*.skill.desc"],
   COMPANION_ROLE_LABELS: ["*"],

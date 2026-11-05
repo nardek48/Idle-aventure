@@ -18,9 +18,8 @@ function renderCombatSpeedBar() {
   var host = document.getElementById("combat-speed-inline") || document.getElementById("combat-speed-bar");
   if (!host) return;
 
-  /* v3.275.0 (retour Seb) : la vitesse ne pilote que l'enchaînement automatique des
-     rounds — elle n'a aucun effet en Tactique, où chaque round attend ton choix. Elle
-     n'apparaît donc qu'en mode Grimoire. */
+  /* v3.275.0 : l'ancien hôte n'apparaît qu'en Grimoire. v3.689.0 (COMB-11) : la vitesse joue aussi en
+     Tactique (répliques des autres) ; sa pastille est dans la barre du haut (combat-screen-view.js). */
   if (host.id === "combat-speed-inline" && game.combatMode !== "grimoire") {
     host.innerHTML = "";
     return;

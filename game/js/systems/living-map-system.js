@@ -674,12 +674,10 @@ var LivingMapManager = {
       report.repeatWin = wins; report.repeatSeve = seve;
       /* v3.317.0 (W-4c) : une élite peut lâcher sa propre ressource à chaque victoire
          (ELITE_DB.winResource) — la Chitine du Dard. Déclaré en donnée, pas ici. */
-      var wr = (window.ELITE_DB && ELITE_DB[f.eliteId] || {}).winResource;
-      if (wr && wr.id && window.WarehouseManager && typeof WarehouseManager.addResource === "function") {
-        // v3.322.0 : Chitine fendue (Mémoire niveau 8) — une de plus par victoire
-        var wrAmount = Number(wr.amount || 0) + ((window.MemoryManager && MemoryManager.has("chitine_fendue")) ? 1 : 0);
-        WarehouseManager.addResource(wr.id, wrAmount, true);
-        report.repeatResource = { id: wr.id, amount: wrAmount };
+      var wr = this.getEliteWinResource(f.eliteId);
+      if (wr && window.WarehouseManager && typeof WarehouseManager.addResource === "function") {
+        WarehouseManager.addResource(wr.id, wr.amount, true);
+        report.repeatResource = wr;
       }
       var eliteDef = window.ELITE_DB && ELITE_DB[f.eliteId];
       if (!report.firstReward) report.message = _t("{x} plie.", { x: eliteDef ? _td(eliteDef.name) : _t("L'élite") }); // reprise : le secteur était déjà libéré
@@ -725,6 +723,24 @@ var LivingMapManager = {
     if (typeof switchTab === "function") switchTab("campement");
     if (typeof saveGame === "function") saveGame();
     return true;
+  },
+
+  /* Ressource propre d'une élite à chaque victoire (ELITE_DB.winResource), ou null. v3.322.0 : Chitine fendue
+     (Mémoire niveau 8), une de plus. v3.689.0 (COMB-22) : lue aussi par la préparation et le panneau. */
+  getEliteWinResource: function (eliteId) {
+    var wr = ((window.ELITE_DB && ELITE_DB[eliteId]) || {}).winResource;
+    if (!wr || !wr.id) return null;
+    return { id: wr.id, amount: Number(wr.amount || 0) + ((window.MemoryManager && MemoryManager.has("chitine_fendue")) ? 1 : 0) };
+  },
+
+  /* v3.689.0 (COMB-6) : ce que la fuite de l'élite en cours coûtera au secteur (règle v3.366 de onRunEnd), ou "". */
+  fleeRegressionNote: function () {
+    var f = this.getFight(), map = f && this.getMap(f.mapId), def = f && this.getSectorDef(f.mapId, f.sectorId);
+    if (!f || !map || !def || map.noRegress) return "";
+    if (!this.isLiberated(f.mapId, f.sectorId) || this.isProtected(f.mapId, f.sectorId)) return "";
+    var brake = this.getBrakeChance(f.mapId), w = this.getWords(f.mapId);
+    if (brake >= 1) return "";
+    return brake > 0 ? _t("{x} peut reprendre {s}.", { x: w.coverCap, s: _td(def.name) }) : _t("{x} reprendra {s}.", { x: w.coverCap, s: _td(def.name) });
   },
 
   /* Fuite (SortieManager.flee, contexte "mapelite") : end("flee") puis échec de secteur. */

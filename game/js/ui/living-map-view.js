@@ -714,6 +714,9 @@ function buildLivingMapPanelHTML(mapId, running) {
     // v3.258.0 (C-5) : élite répétable — Sève par victoire, frein du jour affiché avant de partir.
     var wins = LM.getDailyWins(mapId, d.id);
     h += '<p class="lm-panel-line"><b>' + _t("Chaque victoire :") + '</b> ' + esc(_t("+{n} {x}. Chaque combat rejoué prend ses vivres (ci-dessous), hors cap des Petites Aventures. Fuir ou tomber reste un échec.", { n: LM.getRepeatSevePerWin(mapId), x: _td(rName) })) + '</p>';
+    var wr = (d.content && typeof LM.getEliteWinResource === "function") ? LM.getEliteWinResource(d.content.eliteId) : null; // v3.689.0 (COMB-22)
+    var wrDef = wr && (window.WAREHOUSE_RESOURCES || {})[wr.id];
+    if (wr && wr.amount > 0) h += '<p class="lm-panel-line"><b>' + _t("Butin de l'élite :") + '</b> ' + esc(_t("+{n} {x} par victoire.", { n: wr.amount, x: wrDef ? _td(wrDef.name) : wr.id })) + '</p>';
     var lvB = typeof LM.getEliteLevelBest === "function" ? LM.getEliteLevelBest(mapId, d.id) : 0; // v3.657.0 : élites à niveaux
     h += '<p class="lm-panel-line"><b>' + _t("Niveau :") + '</b> ' + esc(lvB ? _t("meilleur {n}. Au départ, choisis un niveau jusqu'à {m} : le {x} de la victoire est multiplié par le niveau.", { n: lvB, m: lvB + 1, x: _td(rName) }) : _t("bats-la une fois pour ouvrir le niveau 2 : le {x} de la victoire est multiplié par le niveau.", { x: _td(rName) })) + '</p>';
     h += '<p class="lm-panel-line"><b>' + _t("Aujourd'hui :") + '</b> ' + _tn(wins, "{n} victoire", "{n} victoires") + ' · ' + (wins ? _t("prochain combat +{p} % PV et dégâts", { p: Math.round((LM.getBrakeMult(mapId, d.id) - 1) * 100) }) : _t("prochain combat à sa force de base")) + '</p>';

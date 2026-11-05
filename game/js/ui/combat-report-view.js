@@ -105,8 +105,8 @@ function buildCombatReportBodyHTML() {
 
   var h = "";
   var summaryParts = [];
-  var avgDps = (window.CombatReportManager && typeof CombatReportManager.getAverageDps === "function") ? CombatReportManager.getAverageDps() : 0;
-  if (avgDps > 0) summaryParts.push('<img class=ico-inline src=images/Icons/combat_stats/stat_attack.webp> ' + _t("~{n} DPS moyen", { n: formatNumber(Math.round(avgDps)) }));
+  var avgDpr = (window.CombatReportManager && typeof CombatReportManager.getAverageDamagePerRound === "function") ? CombatReportManager.getAverageDamagePerRound() : 0;
+  if (avgDpr > 0) summaryParts.push('<img class=ico-inline src=images/Icons/combat_stats/stat_attack.webp> ' + _t("~{n} dégâts par round", { n: formatNumber(Math.round(avgDpr)) }));
   if (report.damageAvoidedTotal > 0) summaryParts.push('<img class=ico-inline src=images/Icons/combat_stats/stat_defense.webp> ' + _t("~{n} dégâts évités", { n: formatNumber(Math.floor(report.damageAvoidedTotal)) }));
   if (report.healPreventedTotal > 0) summaryParts.push('<img class=ico-inline src=images/Icons/combat_status/heal_incoming.webp> ' + _t("~{n} PV de soin empêchés", { n: formatNumber(Math.floor(report.healPreventedTotal)) }));
   if (report.shieldsRemovedCount > 0) summaryParts.push('<img class=ico-inline src=images/Icons/combat_status/shield_incoming.webp> ' + crPl(report.shieldsRemovedCount, _t("{n} bouclier retiré", { n: report.shieldsRemovedCount }), _t("{n} boucliers retirés", { n: report.shieldsRemovedCount })));
@@ -133,11 +133,18 @@ function buildCombatReportBodyHTML() {
 window.buildCombatReportBodyHTML = buildCombatReportBodyHTML;
 
 /* v3.529.0 (audit TUT-5) : défaite en Tactique avec la ressource de classe pleine → une astuce en tête du rapport. */
-function defeatResourceTipHTML() {
-  if (game.combatMode === "grimoire" || !window.ClassCombatManager) return "";
+function defeatResourceTipSnapshot() {
+  if (game.combatMode === "grimoire" || !window.ClassCombatManager) return null;
   var res = ClassCombatManager.ensureForCurrentClass(), cls = ClassCombatManager.getCurrentClassId();
   var def = (typeof getClassResource === "function") ? getClassResource(cls) : null;
-  if (!res || !def || !(res.max > 0) || res.current < res.max) return "";
+  if (!res || !def || !(res.max > 0) || res.current < res.max) return null;
+  return { cls: cls, label: def.label };
+}
+/* v3.689.0 (COMB-4) : snap = état mémorisé à la mort (lastDefeatTip), lu sous « Tu es à terre » au Campement. */
+function defeatResourceTipHTML(snap) {
+  snap = snap || defeatResourceTipSnapshot();
+  if (!snap) return "";
+  var cls = snap.cls, def = { label: snap.label };
   return '<div class="cr-tip"><img src="images/Icons/classes/class_' + (cls === "archer" ? "ranger" : esc(cls)) + '.webp" alt=""><span><b>' + _t("Astuce") + '</b>'
     + esc(_t("Ta {r} était pleine au moment de la défaite. Dépense-la sur les compétences, sous ton héros : la dorée est conseillée.", { r: _td(def.label) })) + '</span></div>';
 }
@@ -187,6 +194,26 @@ function resetCombatReport() {
     }
   );
 }
+
+/* v3.689.0 (COMB-4) : les défaites de quête ne passent jamais par openCombatReport : la ressource
+   est relevée à la mort (le seuil et la Fiole relèvent le héros : rien n'est gardé). */
+var lastDefeatTip = null;
+if (window.CombatEngine && typeof CombatEngine.onHeroDefeated === "function") {
+  var crOrigDefeated = CombatEngine.onHeroDefeated;
+  CombatEngine.onHeroDefeated = function () {
+    lastDefeatTip = defeatResourceTipSnapshot(); // posé avant : le retour au Campement se dessine pendant l'appel
+    var r = crOrigDefeated.apply(this, arguments);
+    if (Number(game.heroHp || 0) > 0) lastDefeatTip = null;
+    return r;
+  };
+}
+function takeDefeatResourceTipHTML() {
+  var snap = lastDefeatTip;
+  lastDefeatTip = null;
+  return snap ? defeatResourceTipHTML(snap) : "";
+}
+window.takeDefeatResourceTipHTML = takeDefeatResourceTipHTML;
+window.defeatResourceTipHTML = defeatResourceTipHTML;
 
 window.buildCombatReportHTML = buildCombatReportHTML;
 window.openCombatReport = openCombatReport;

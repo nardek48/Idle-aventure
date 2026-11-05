@@ -157,9 +157,9 @@
     var h = '<h4 class="hs-wh">' + esc(_t("Capacités")) + ' <small>' + esc(_t("Rangs {n}/{m}", { n: SR.total(), m: acts.length * SKILL_RANK_MAX })) + '</small></h4><button type="button" class="hs-wskills" onclick="openHerosSheet(\'abilities\')">';
     acts.forEach(function (a) {
       var icon = (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[a.id]) || "images/Icons/combat_actions/skill_generic.webp";
-      var cd = Number(a.cooldownRounds || 0);
+      var cd = Number(a.cooldownRounds || 0), wait = cd - 1; // v3.689.0 (COMB-20) : recharge N = N − 1 rounds d'attente (décompte en fin de round)
       h += '<span class="hs-wsk">' + renderIconOrEmojiHTML(icon, "hs-wsk-ico", "") + '<b>' + esc(a.label ? _td(a.label) : a.id) + '</b>'
-        + '<small>' + esc(cd ? _tn(cd, "recharge {n} round", "recharge {n} rounds") : _t("défense")) + '</small>'
+        + '<small>' + esc(!cd ? _t("défense") : wait > 0 ? _tn(wait, "recharge {n} round", "recharge {n} rounds") : _t("sans recharge")) + '</small>'
         + '<em' + (SR.status(a.id) === "ok" ? ' class="is-go"' : '') + '>' + esc(_t("rang {a} / {b}", { a: SR.get(a.id), b: SR.maxRank() })) + '</em></span>';
     });
     return h + '</button>';

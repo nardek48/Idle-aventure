@@ -16403,7 +16403,7 @@ console.log("\n[260] v3.458.2 — Lot 6b : ressource lisible, compagnons, paysag
     ok(/Coûte 40 Concentration/.test(g.getSkillDescText("archer", kit.actions.skill3)), "Tir perforant : le coût affiché suit le talent (40)");
     kit.actions.skill3.resourceCost = old;
     var basic = g.getSkillDescText("archer", kit.actions.basic);
-    ok(/^Inflige 85% des dégâts\. Chaque attaque de base qui touche rend 15 Concentration, 4 de plus/.test(basic), "attaque de base : la règle de la Concentration en clair");
+    ok(/^Inflige 100% des dégâts\. Chaque attaque de base qui touche rend 15 Concentration, 4 de plus/.test(basic), "attaque de base : la règle de la Concentration en clair");
     ok(/rend Rage : 40 % des dégâts infligés, 20 au plus/.test(g.getSkillDescText("knight", g.getClassSkills("knight").actions.basic)), "Rage : 40 % des dégâts, 20 au plus");
     ok(/\["basic", "skill1"/.test(fs8.readFileSync(ROOT + "/js/ui/heros-view.js", "utf8")), "Capacités : l'attaque de base en tête");
     var cs = fs8.readFileSync(ROOT + "/js/ui/combat-screen-view.js", "utf8");
@@ -23049,6 +23049,110 @@ console.log("\n[453] v3.688.0 — Écran de retour et boucle allégée (audit 04
   } catch (err) { ok(false, "[453] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   g.showToast = fn.toast; g.addLog = fn.log; g.renderPanel = fn.rp; g.saveGame = fn.save; g.ReturnManager.request = fn.req; g.ProductionManager.harvestAll = fn.harv; g.MissionBoard.list = fn.list; g.ProductionManager.tick = fn.tick; g.document.getElementById = fn.gid; g.hudNum = fn.num;
   try { run("fullResetState();"); } catch (e) {}
+})();
+
+console.log("\n[454] v3.689.0 — Combat : aide à la décision et bugs (audit 04/11, lot I3)");
+(function () {
+  var rd = function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); };
+  var E = g.CombatEngine, C = g.ClassCombatManager, LM = g.LivingMapManager;
+  var fn = { toast: g.showToast, log: g.addLog, save: g.saveGame, gid: g.document.getElementById, turn: E.isHeroTurnAvailable, fight: LM.getFight };
+  var toasts = []; g.showToast = function (m) { toasts.push(String(m)); }; g.addLog = function () {}; g.saveGame = function () {};
+  var els = {}; g.document.getElementById = function (id) { return els[id] || (els[id] = fn.gid(id)); };
+  var cmd = function () { return (els["cbx-cmd"] || {}).innerHTML || ""; }, top = function () { return (els["cbx-top"] || {}).innerHTML || ""; };
+  try {
+    // COMB-3 : en Grimoire, la potion touchée hors de ton tour est gardée, puis bue à ton tour
+    var game = freshCombat("knight"); giveWeapon(); game.healingPotionsOwned = { potion_soin_mineur: 3 }; run("SortieManager.start(null);");
+    game.combatMode = "grimoire"; var pid = g.HEALING_POTIONS_DB[0].id;
+    E.isHeroTurnAvailable = function () { return false; };
+    g.renderEnemyHp(true);
+    ok(cmd().indexOf('<button type="button" class="cbx-pot" onclick="cbxPotion(\'' + pid + '\')"') >= 0, "COMB-3 : en Grimoire, hors de ton tour, le bouton de potion reste actif");
+    game.heroHp = Math.floor(game.heroMaxHp / 2); var hpQ = game.heroHp;
+    g.cbxPotion(pid);
+    ok(g.cbxState.potionQueued === pid && game.heroHp === hpQ && toasts.indexOf(g._t("Potion bue à ton prochain tour")) >= 0, "COMB-3 : la potion attend ton tour (rien n'est bu, un message le dit)");
+    g.renderEnemyHp(true);
+    ok(g.cbxState.potionQueued === pid && /cbx-pot is-queued/.test(cmd()), "COMB-3 : tant que ce n'est pas ton tour, elle reste en attente (anneau doré)");
+    E.isHeroTurnAvailable = fn.turn; g.renderEnemyHp(true);
+    ok(g.cbxState.potionQueued === null && game.heroHp > hpQ, "COMB-3 : à ton tour, elle est bue (" + hpQ + " → " + game.heroHp + " PV)");
+    // COMB-19 : au tour d'un compagnon, la potion est grisée en Tactique
+    var csv = rd("js/ui/combat-screen-view.js");
+    ok(/var sel = isManual\(\) \? CombatEngine\.selectedActor\(\) : null;/.test(csv) && /!!\(sel && sel\.companionId\)/.test(csv), "COMB-19 : potion désactivée au tour d'un compagnon (plus de toucher perdu)");
+    // COMB-11 : pastille de vitesse aussi en Tactique ; COMB-12 : dés à la vitesse du combat
+    game.combatMode = "tactique"; g.renderEnemyHp(true);
+    ok(/is-speed" onclick="cbxCycleSpeed\(\)"/.test(top()), "COMB-11 : la pastille de vitesse est aussi en Tactique");
+    ok(/INI_ROLL_MS \/ \(typeof getCombatSpeedMult === "function" \? getCombatSpeedMult\(\) : 1\)/.test(csv), "COMB-12 : les dés de l'initiative défilent à 650 ms ÷ vitesse");
+    // COMB-4 : défaite de quête en Tactique, ressource pleine : l'astuce attend au Campement
+    game = freshCombat("knight"); game.combatMode = "tactique"; g.AdventureQuestManager.start("aq_forest_expedition"); fillResource();
+    game.heroHp = 0; E.onHeroDefeated();
+    var camp = Object.keys(els).filter(function (k) { return /camp-death-banner/.test(els[k].innerHTML) && /class="cr-tip"/.test(els[k].innerHTML); });
+    ok(game.heroHp <= 0 && game.activeTab === "campement" && camp.length === 1 && g.takeDefeatResourceTipHTML() === "", "COMB-4 : défaite de quête, ressource pleine : l'astuce s'affiche sous « Tu es à terre », une fois");
+    ok(/takeDefeatResourceTipHTML\(\)/.test(rd("js/ui/camp-view.js")), "COMB-4 : affichée sous « Tu es à terre » au Campement");
+    game = freshCombat("knight"); game.combatMode = "grimoire"; g.AdventureQuestManager.start("aq_forest_expedition"); fillResource();
+    game.heroHp = 0; E.onHeroDefeated();
+    ok(g.takeDefeatResourceTipHTML() === "", "COMB-4 : en Grimoire, pas d'astuce (règle TUT-5)");
+    // COMB-6 : fuir l'élite d'un secteur libéré le dit avant
+    game = freshCombat("knight"); LM.ensureDefaults();
+    var st = LM.getState("forest", "arbremere"), st0 = st.state; st.state = "libere";
+    game.livingMaps.fight = { mapId: "forest", sectorId: "arbremere", eliteId: "arbre_mere" };
+    var note = LM.fleeRegressionNote();
+    ok(!LM.isProtected("forest", "arbremere") && note === g._t("{x} reprendra {s}.", { x: LM.getWords("forest").coverCap, s: g._td(LM.getSectorDef("forest", "arbremere").name) }), "COMB-6 : « " + note + " »");
+    st.state = st0; ok(LM.fleeRegressionNote() === "", "COMB-6 : secteur pas encore libéré : rien n'est dit (rien n'est perdu)");
+    game.livingMaps.fight = null;
+    ok(/LivingMapManager\.fleeRegressionNote\(\)/.test(rd("js/ui/combat-view.js")), "COMB-6 : la confirmation de fuite ajoute la phrase");
+    // COMB-10 : « raté » seulement face à une annonce ; dégâts par round
+    game = freshCombat("knight"); giveWeapon(); game.combatMode = "tactique"; g.CombatReportManager.resetManual();
+    var e = game.enemy; e.hp = e.maxHp = 1e9; e.chargeIn = e.shieldIn = e.silenceIn = e.healIn = 999; e.engageIn = 0;
+    fillResource(); E.heroAction("skill1");
+    var ps = g.CombatReportManager.getSnapshot().perSlot.skill1;
+    ok(ps.uses === 1 && ps.countersMissed === 0, "COMB-10 : Frappe lourde sans annonce : pas de « raté »");
+    for (var i = 0; i < 3; i++) E.heroAction("basic");
+    fillResource(); e.chargeTelegraphed = true; C.useSkillManual("skill1"); e.chargeTelegraphed = false;
+    ok(g.CombatReportManager.getSnapshot().perSlot.skill1.countersMissed === 1, "COMB-10 : face à une charge annoncée non contrée, elle compte « raté »");
+    var rep = g.CombatReportManager.getSnapshot();
+    ok(rep.rounds === 4 && Math.abs(g.CombatReportManager.getAverageDamagePerRound() - rep.totalDamageDealt / 4) < 1e-9 && /dégâts par round/.test(g.buildCombatReportBodyHTML()) && !/DPS/.test(g.buildCombatReportBodyHTML()), "COMB-10 : rapport en dégâts par round (" + rep.rounds + " rounds)");
+    // COMB-13 : la règle prioritaire est une vraie règle de contre
+    game = freshCombat("knight"); var kit = g.getClassSkills("knight");
+    ok(g.getPrioritaryCounterRule([{ conditionId: "heroLowHp", actionSlot: "skill1" }], kit, game.enemy) === null, "COMB-13 : « PV bas → Frappe lourde » n'est plus une règle de contre");
+    ok(g.getPrioritaryCounterRule([{ conditionId: "enemyAttackIncoming", actionSlot: "skill2" }], kit, game.enemy) === null, "COMB-13 : « Frappe 2 fois → Brise-garde » non plus");
+    game.enemy.archetype = "armored";
+    var rA = g.getPrioritaryCounterRule([{ conditionId: "heroLowHp", actionSlot: "skill1" }, { conditionId: "enemyArmored", actionSlot: "skill2" }], kit, game.enemy);
+    ok(rA && rA.actionSlot === "skill2", "COMB-13 : « Blindé → Brise-garde » reste prioritaire (trait de ses effets, v3.443.1)");
+    game.enemy.isBoss = true; game.enemy.archetype = null;
+    var rH = g.getPrioritaryCounterRule([{ conditionId: "healIncoming", actionSlot: "skill1" }], kit, game.enemy);
+    ok(rH && rH.actionSlot === "skill1", "COMB-13 : « Soin du boss → Frappe lourde » reste prioritaire (annonce contrée)");
+    // COMB-14, COMB-15 : textes des actions
+    ok(g.getClassSkills("archer").actions.basic.damageMultiplier === 1 && /^Inflige 100% des dégâts/.test(g.getClassSkills("archer").actions.basic.description)
+      && g.getClassSkills("mage").actions.basic.damageMultiplier === 1 && /^Inflige 100% des dégâts/.test(g.getClassSkills("mage").actions.basic.description), "COMB-14 : attaque de base du Rôdeur et du Mage : « 100 % », comme damageMultiplier");
+    var ev = g.getClassSkills("archer").actions.defense;
+    ok(ev.effects[0].type === "evasion" && /70% de chances d'éviter chaque frappe/.test(ev.description) && ev.counters.indexOf("chargeIncoming") >= 0, "COMB-15 : Esquive : contre la charge, sinon 70 % par frappe (tout ou rien)");
+    // COMB-16 : un renfort n'est pas « sonné »
+    ok(/renfort\.engageIn = 1;[^\n]*\n\s*renfort\.charged = false;/.test(rd("js/systems/combat-engine.js")), "COMB-16 : renfort marqué en approche, pas sonné");
+    // COMB-17 : pas de « Deux frappes ! » pendant l'approche
+    game = freshCombat("mage"); e = game.enemy; e.stats.power = 1e6; e.chargeTelegraphed = e.silenceTelegraphed = false;
+    e.gauge = 99; e.engageIn = 2;
+    var during = E.enemyDoubleStrikeDangerous(), jauge = E.enemyDoubleStrikeNext();
+    e.engageIn = 0;
+    ok(jauge && !during && E.enemyDoubleStrikeDangerous(), "COMB-17 : en approche, pas de puce (la condition « jauge pleine » du Grimoire ne change pas)");
+    // COMB-18 : libellés courts dans la ligne de la règle jouée
+    ok(Object.keys(g.GRIMOIRE_CONDITIONS).every(function (k) { var c = g.GRIMOIRE_CONDITIONS[k]; return c.short && c.short.length <= 14; }) && /esc\(c\.short\)/.test(csv), "COMB-18 : chaque condition a un libellé court (sans ellipse à 320 px)");
+    // COMB-20 : recharge N = N − 1 rounds d'attente
+    game = freshCombat("knight"); giveWeapon(); e = game.enemy; e.hp = e.maxHp = 1e9; e.chargeIn = e.shieldIn = e.silenceIn = e.healIn = 999; e.engageIn = 0; e.stats.power = 0;
+    fillResource(); var a1 = E.heroAction("skill1"); fillResource(); var a2 = E.heroAction("skill1");
+    ok(kit.actions.skill1.cooldownRounds === 1 && a1 && a2, "COMB-20 : « recharge 1 » se rejoue au round suivant (aucune attente)");
+    ok(/wait > 0 \? _tn\(wait, "recharge \{n\} round"/.test(rd("js/ui/heros-screens-view.js")) && /Number\(action\.cooldownRounds\) - 1, "\{n\} round"/.test(rd("js/ui/heros-view.js")), "COMB-20 : la fiche affiche N − 1 rounds, « sans recharge » à 1");
+    // COMB-21 : ressource abîmée réparée
+    game = freshCombat("knight"); giveWeapon(); e = game.enemy; e.hp = e.maxHp = 1e9; e.stats.power = 0; e.engageIn = 0;
+    C.ensureForCurrentClass(); game.classResource.current = "abc";
+    ok(C.ensureForCurrentClass().current === 0, "COMB-21 : ressource texte remise à 0");
+    game.classResource.current = null; E.heroAction("basic");
+    ok(typeof game.classResource.current === "number" && game.classResource.current > 0, "COMB-21 : ressource absente : elle se remplit de nouveau (" + game.classResource.current + ")");
+    // COMB-22 : la Chitine du Dard dans « À gagner » et le panneau
+    var wr = LM.getEliteWinResource("dard_profondeurs");
+    ok(wr && wr.id === "chitine_profondeurs" && wr.amount === 1 && LM.getEliteWinResource("arbre_mere") === null, "COMB-22 : ressource de victoire de l'élite lue en un endroit");
+    ok(/LM\.getEliteWinResource\(sortiePrep\.opts\.ctx\.id\)/.test(rd("js/ui/sortie-prep-view.js")) && /LM\.getEliteWinResource\(d\.content\.eliteId\)/.test(rd("js/ui/living-map-view.js")), "COMB-22 : écrite dans la préparation et le panneau du secteur");
+  } catch (err) { ok(false, "[454] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  g.showToast = fn.toast; g.addLog = fn.log; g.saveGame = fn.save; g.document.getElementById = fn.gid; E.isHeroTurnAvailable = fn.turn; LM.getFight = fn.fight;
+  if (g.cbxState) g.cbxState.potionQueued = null;
+  try { run("game.livingMaps && (game.livingMaps.fight = null); fullResetState();"); } catch (e) {}
 })();
 
 Promise.all(ATTENTES).then(function () {

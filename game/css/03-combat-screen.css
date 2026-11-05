@@ -366,6 +366,8 @@ html.pc-mode .cbx-key-badge { display: block; }
 .cbx-pot > .cbx-pot-count { position: absolute; right: -4px; bottom: -4px; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 900;
   background: rgba(20, 83, 45, 1); border: 1px solid var(--cbx-green); }
 .cbx-pot:disabled { filter: grayscale(1) brightness(.6); cursor: default; }
+/* v3.689.0 (COMB-3) : potion en attente de ton tour (Grimoire) : anneau doré. */
+.cbx-pot.is-queued { border-color: var(--cbx-gold); box-shadow: 0 0 0 2px var(--cbx-gold-soft), 0 0 10px var(--cbx-gold); }
 /* Mode Grimoire : bande fine. */
 .cbx-strip { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 14px; background: var(--cbx-panel-2); border: 1px solid var(--cbx-line); }
 .cbx-strip .cbx-pot { width: 44px; height: 44px; }

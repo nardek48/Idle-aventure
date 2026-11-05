@@ -114,6 +114,8 @@
       var cont = !!(game.combatRound && game.combatRound.continueAttack);
       h += '<button type="button" class="cbx-pill is-tempo' + (cont ? ' is-on' : '') + '"' + (downed ? ' disabled' : '') + ' onclick="CombatEngine.toggleContinueAttack()" aria-label="'
         + esc(cont ? _t("Stop") : _t("Continuer")) + '">' + ico(cont ? IC.stop : IC.cont) + '</button>';
+      // v3.689.0 (COMB-11) : la vitesse joue aussi en Tactique (répliques, « Continuer ») : elle se règle ici aussi
+      h += '<button type="button" class="cbx-pill is-tempo is-speed" onclick="cbxCycleSpeed()" aria-label="' + esc(_t("Vitesse")) + '">x' + num(game.combatSpeed || 1) + '</button>';
     }
     if (S && S.active && SortieManager.isMission()) {
       h += '<button type="button" class="cbx-pill is-flee"' + (downed ? ' disabled' : '') + ' onclick="confirmFlee()">' + ico(IC.flee) + _t("Fuir") + '</button>';
@@ -553,7 +555,7 @@
   }
   function condInfo(id) {
     var c = (typeof GRIMOIRE_CONDITIONS !== "undefined" && id) ? GRIMOIRE_CONDITIONS[id] : null;
-    return c ? { label: _td(c.label), icon: c.icon } : null;
+    return c ? { label: _td(c.label), short: _td(c.short || c.label), icon: c.icon } : null;
   }
 
   function skillButtonHTML(slot, advice, small) {
@@ -609,8 +611,11 @@
     var stock = PotionManager.getHealingStock(p.id);
     var busy = !!(game.combatRound && game.combatRound.busy);
     var heroDone = isManual() && engine().pendingOf(actorsApi().heroActor());
-    var dis = stock <= 0 || busy || num(game.heroHp) <= 0 || heroDone || waitingTurn();
-    return '<button type="button" class="cbx-pot"' + (dis ? ' disabled' : '') + ' onclick="CombatEngine.heroAction(\'potion\', \'' + esc(p.id) + '\')" aria-label="' + esc(_td(p.name)) + '">'
+    var sel = isManual() ? CombatEngine.selectedActor() : null;
+    // v3.689.0 (COMB-3, COMB-19) : en Grimoire, touchable hors de ton tour (bue au suivant) ; au tour d'un compagnon, grisée
+    var grim = game.combatMode === "grimoire", queued = grim && cbx.potionQueued === p.id;
+    var dis = stock <= 0 || num(game.heroHp) <= 0 || (!grim && (busy || heroDone || waitingTurn() || !!(sel && sel.companionId)));
+    return '<button type="button" class="cbx-pot' + (queued ? ' is-queued' : '') + '"' + (dis ? ' disabled' : '') + ' onclick="cbxPotion(\'' + esc(p.id) + '\')" aria-label="' + esc(_td(p.name)) + '">'
       + ico(p.icon) + '<span class="cbx-pot-count">' + stock + '</span><em class="cbx-key-badge">' + (index + 5) + '</em></button>';
   }
 
@@ -884,7 +889,7 @@
     el.innerHTML = cbx.lastRule = notes.map(function (l) {
       var c = condInfo(l.cond);
       return '<div class="cbx-rule-line">' + (l.who ? ico(l.who, "is-who") : '')
-        + (c ? '<span class="cbx-rule-if">' + _t("Si") + '</span>' + ico(c.icon) + '<span class="cbx-rule-c">' + esc(c.label) + '</span>' : '<span class="cbx-rule-if">' + _t("Par défaut") + '</span>')
+        + (c ? '<span class="cbx-rule-if">' + _t("Si") + '</span>' + ico(c.icon) + '<span class="cbx-rule-c" title="' + esc(c.label) + '">' + esc(c.short) + '</span>' : '<span class="cbx-rule-if">' + _t("Par défaut") + '</span>')
         + '<b>→</b>' + ico(l.icon) + '<strong>' + esc(l.label) + '</strong></div>';
     }).join("");
     flash(el, "is-on");
@@ -924,7 +929,8 @@
     if (!on) return;
     if (I.combatKey !== ini.key) {
       ini.key = I.combatKey; ini.nodes = {};
-      ini.rollUntil = Date.now() + (lessMotion() ? 0 : INI_ROLL_MS);
+      // v3.689.0 (COMB-12) : les dés suivent la vitesse, comme le premier pas (1 s ÷ vitesse)
+      ini.rollUntil = Date.now() + (lessMotion() ? 0 : INI_ROLL_MS / (typeof getCombatSpeedMult === "function" ? getCombatSpeedMult() : 1));
       host.innerHTML = '<div class="cbx-ini-rd">' + _t("Round") + '<b></b></div><div class="cbx-ini-row"></div>';
     }
     var row = host.querySelector(".cbx-ini-row"), rb = host.querySelector(".cbx-ini-rd b");
@@ -987,6 +993,7 @@
       if (typeof WeakMap === "function") { cbx.hp = new WeakMap(); cbx.tele = new WeakMap(); }
     }
     applyEpure();
+    drinkQueuedPotion();
     setHtml(byId("cbx-top"), buildTopHTML());
     setHtml(byId("cbx-target"), buildTargetHTML());
     renderStage();
@@ -1065,6 +1072,25 @@
   window.cbxReplayPhase = function () {
     if (cbx.phase && typeof showBossBanner === "function") showBossBanner(cbx.phase.title, cbx.phase.line, 1600, false);
   };
+
+  /* v3.689.0 (COMB-3) : en Grimoire, la potion touchée hors de ton tour attend le suivant (cbx.potionQueued). */
+  window.cbxPotion = function (id) {
+    var E = engine();
+    if (!E) return;
+    if (game.combatMode !== "grimoire" || E.isHeroTurnAvailable()) { cbx.potionQueued = null; E.heroAction("potion", id); renderCmd(); return; }
+    cbx.potionQueued = cbx.potionQueued === id ? null : id;
+    if (cbx.potionQueued && typeof showToast === "function") showToast(_t("Potion bue à ton prochain tour"), 1200);
+    renderCmd();
+  };
+  function drinkQueuedPotion() {
+    var id = cbx.potionQueued, E = engine();
+    if (!id || !E) return;
+    if (game.combatMode !== "grimoire" || num(game.heroHp) <= 0 || !game.enemy || !(window.PotionManager && PotionManager.getHealingStock(id) > 0)) { cbx.potionQueued = null; return; }
+    if (!E.isHeroTurnAvailable()) return;
+    cbx.potionQueued = null;
+    E.heroAction("potion", id);
+    renderCmd();
+  }
 
   window.cbxCycleSpeed = function () {
     var opts = (typeof COMBAT_SPEED_OPTIONS !== "undefined") ? COMBAT_SPEED_OPTIONS : [1, 2, 4];

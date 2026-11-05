@@ -593,7 +593,7 @@ function buildHeroSkillCardHTML(action) {
     ? '<span class="pc-skill-tag is-cost">' + cost + (resLabel ? ' ' + esc(resLabel) : '') + '</span>'
     : '<span class="pc-skill-tag is-free">' + _t("Sans coût") + '</span>';
   if (!isBasic) h += '<span class="pc-skill-tag is-cd' + (remaining > 0 ? ' is-active' : '') + '">'
-    + (remaining > 0 ? _t("{n} r restants", { n: remaining }) : _tn(Number(action.cooldownRounds || 0), "{n} round", "{n} rounds"))
+    + (remaining > 0 ? _t("{n} r restants", { n: remaining }) : Number(action.cooldownRounds || 0) > 1 ? _tn(Number(action.cooldownRounds) - 1, "{n} round", "{n} rounds") : _t("Sans recharge")) // v3.689.0 (COMB-20) : rounds d'attente
     + '</span>';
   h += '</span>';
   h += '<span class="pc-skill-chev">›</span>';

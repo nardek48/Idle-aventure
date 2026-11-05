@@ -190,6 +190,12 @@ function isConditionPossibleForEnemy(conditionId, enemy) {
 
 window.isConditionPossibleForEnemy = isConditionPossibleForEnemy;
 
+function isCounterConditionOfAction(action, conditionId) {
+  if (action.counters.indexOf(conditionId) !== -1) return true;
+  var map = window.ARCHETYPE_EFFECT_TO_CONDITION_ID || {};
+  return (action.effects || []).some(function (ef) { return !!ef && map[ef.type] === conditionId; });
+}
+
 function getPrioritaryCounterRule(rules, kit, enemy) {
   if (!rules || !Array.isArray(rules) || !kit || !kit.actions) return null;
 
@@ -199,6 +205,8 @@ function getPrioritaryCounterRule(rules, kit, enemy) {
 
     var action = kit.actions[rule.actionSlot];
     if (!action || !Array.isArray(action.counters) || !action.counters.length) continue;
+    // v3.689.0 (COMB-13) : une règle de contre = une condition que l'action contre (annonce ou trait de ses effets)
+    if (!isCounterConditionOfAction(action, rule.conditionId)) continue;
 
     if (enemy !== undefined && !isConditionPossibleForEnemy(rule.conditionId, enemy)) continue;
     // v3.443.1 : trait tenu par un objet de combat, la règle ne joue pas : ni réserve ni compétence mise de côté
