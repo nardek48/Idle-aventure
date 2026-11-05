@@ -25,7 +25,7 @@ function buildDungeonActiveHTML() {
   if (marks.length) {
     h += '<div class="dungeon-active-marks">';
     marks.forEach(function (m) { h += renderIconOrEmojiHTML(m.icon, "dungeon-active-mark-icon", _td(m.name)); });
-    h += '<span>×' + DungeonManager.getMarkRewardMult(marks.length).toFixed(2).replace(/0$/, "") + '</span></div>';
+    h += '<span>×' + fmtDec(DungeonManager.getMarkRewardMult(marks.length).toFixed(2).replace(/0$/, "")) + '</span></div>';
   }
   var boons = DungeonManager.getRunBoons(); // v3.472.0 : cartes prises aux haltes
   if (boons.length) h += '<div class="dungeon-active-boons">' + boons.map(function (c) { return '<span>' + esc(_td(c.name)) + '</span>'; }).join("") + '</div>';
@@ -191,7 +191,7 @@ function buildDungeonGainHTML(d, L, free, nMarks) {
   var src = D.getLevelLootSource(d, L), beyond = D.getLevelBeyond(d, L), mult = D.getMarkRewardMult(nMarks);
   var w = (window.WORLDS || []).find(function (x) { return x.id === src.worldId; });
   var row = function (ico, html) { return '<div class="dgain-row">' + (ico ? renderIconOrEmojiHTML(ico, "dgain-ico", "") : '<span class="dgain-dot" aria-hidden="true"></span>') + '<span>' + html + '</span></div>'; };
-  var h = '<div class="dgain"><div class="dgain-ttl"><span>' + _t("À gagner") + '</span><span>' + _t("Récompenses") + ' <strong>×' + mult.toFixed(2).replace(/0$/, "") + '</strong></span></div>';
+  var h = '<div class="dgain"><div class="dgain-ttl"><span>' + _t("À gagner") + '</span><span>' + _t("Récompenses") + ' <strong>×' + fmtDec(mult.toFixed(2).replace(/0$/, "")) + '</strong></span></div>';
   h += row(null, _t("Butin :") + ' ' + dungeonRarityHTML(src.maxRarity) + (w ? ' · ' + esc(_td(w.name)) : ''));
   var sp = d.specialResourceId && WAREHOUSE_RESOURCES[d.specialResourceId];
   if (free) {
@@ -293,7 +293,7 @@ function buildDungeonSheetHTML(dungeonId) {
 
   // Marques, repliées par défaut : le résumé dit combien et pour quel gain
   h += '<button type="button" class="dsheet-fold" aria-expanded="' + pendingDungeonMarksOpen + '" onclick="toggleDungeonFold(\'marks\')"><b>' + _t("Marques") + '</b><span>'
-    + n + ' / ' + maxMarks + ' · ×' + mult.toFixed(2).replace(/0$/, "") + ' <i aria-hidden="true">' + (pendingDungeonMarksOpen ? '▲' : '▼') + '</i></span></button>';
+    + n + ' / ' + maxMarks + ' · ×' + fmtDec(mult.toFixed(2).replace(/0$/, "")) + ' <i aria-hidden="true">' + (pendingDungeonMarksOpen ? '▲' : '▼') + '</i></span></button>';
   if (pendingDungeonMarksOpen) (DUNGEON_MARKS || []).forEach(function (m) {
     var on = pendingDungeonMarks.indexOf(m.id) !== -1;
     var ok = DungeonManager.isMarkUnlocked(m.id, dungeon.id);
@@ -580,7 +580,7 @@ function haltCardLines(card, dungeon) {
   var h = '<span class="dhalt-l is-gain">▲ ' + esc(_td(card.gain)) + '</span>';
   if (card.cost) h += '<span class="dhalt-l is-cost">▼ ' + esc(_td(card.cost)) + '</span>';
   var item = card.counterItem && window.COMBAT_ITEMS ? COMBAT_ITEMS[DungeonManager.getCounterItemId(dungeon)] : null;
-  if (item) h += '<span class="dhalt-l">' + esc(_td(item.name)) + ' : ' + esc(_td(item.desc)) + '</span>';
+  if (item) h += '<span class="dhalt-l">' + esc(_t("{a} : {b}", { a: _td(item.name), b: _td(item.desc) })) + '</span>';
   else if (card.note) h += '<span class="dhalt-l">' + esc(_td(card.note)) + '</span>';
   return h;
 }
@@ -660,7 +660,7 @@ function buildDungeonSummaryHTML(result) {
   h += '      <div class="dungeon-summary-row"><span>' + _t("Vagues passées") + '</span><span>' + Math.min(result.clearedWave, result.wavesTotal) + ' / ' + result.wavesTotal + (result.success ? ' + ' + _t("Boss") : '') + '</span></div>';
   if (result.marks && result.marks.length) {
     var names = result.marks.map(function (id) { var m = DungeonManager.getMark(id); return m ? _td(m.name) : id; }).join(", ");
-    h += '      <div class="dungeon-summary-row"><span>' + _t("Marques") + '</span><span>×' + Number(result.markMult || 1).toFixed(2).replace(/0$/, "") + ' · ' + esc(names) + '</span></div>';
+    h += '      <div class="dungeon-summary-row"><span>' + _t("Marques") + '</span><span>×' + fmtDec(Number(result.markMult || 1).toFixed(2).replace(/0$/, "")) + ' · ' + esc(names) + '</span></div>';
   }
   // v3.472.0 : cartes prises aux haltes
   if (result.boons && result.boons.length) {

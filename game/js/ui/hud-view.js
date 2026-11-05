@@ -223,9 +223,9 @@ function renderHudAchievementTier() {
 function hudHpShort(n) {
   n = Math.max(0, Math.floor(Number(n) || 0));
   if (n < 1000) return String(n);
-  if (n < 10000) return (Math.floor(n / 100) / 10).toFixed(1).replace(/\.0$/, "").replace(".", ",") + "k";
+  if (n < 10000) return (Math.floor(n / 100) / 10).toFixed(1).replace(/\.0$/, "").replace(".", fmtDec(".")) + "k";
   if (n < 1000000) return Math.floor(n / 1000) + "k";
-  return (Math.floor(n / 100000) / 10).toFixed(1).replace(/\.0$/, "").replace(".", ",") + "M";
+  return (Math.floor(n / 100000) / 10).toFixed(1).replace(/\.0$/, "").replace(".", fmtDec(".")) + "M";
 }
 
 function renderHeroHp() {
@@ -295,12 +295,12 @@ function renderStats() {
   var gold = document.getElementById("stat-gold-mult");
 
   function fmt2(n) {
-    return (Math.round((Number(n) || 0) * 100) / 100).toFixed(2);
+    return fmtDec((Math.round((Number(n) || 0) * 100) / 100).toFixed(2)); // CPL3-1 : virgule en français
   }
 
   if (tap) tap.textContent = fmt2(EquipmentManager.effectiveTapDamage());
   if (auto) auto.textContent = String(Math.round((window.CombatEngine && typeof CombatEngine.getTotalCelerity === "function") ? CombatEngine.getTotalCelerity() : 0));
-  if (crit) crit.textContent = fmt2(EquipmentManager.effectiveCritChance()) + "%";
+  if (crit) crit.textContent = fmtPct(fmt2(EquipmentManager.effectiveCritChance()));
   if (critPercent) critPercent.textContent = "x" + fmt2(EquipmentManager.effectiveCritMult());
   if (gold) gold.textContent = "x" + fmt2(EquipmentManager.effectiveGoldMult());
 }

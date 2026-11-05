@@ -108,7 +108,7 @@
     var c = combatValues();
     var k = function (ico, lbl, val) { return '<span class="hs-kstat">' + img("images/Icons/combat_stats/" + ico + ".webp") + '<b>' + val + '</b><small>' + esc(lbl) + '</small></span>'; };
     return '<button type="button" class="hs-kstrip" onclick="openHerosSheet(\'stats\')">'
-      + k("stat_health", _t("PV"), num(c.hp)) + k("stat_attack", _t("Attaque"), num(c.atk)) + k("stat_defense", _t("Défense"), c.def + " %") + k("stat_critical", _t("Critique"), num(c.crit) + " %")
+      + k("stat_health", _t("PV"), num(c.hp)) + k("stat_attack", _t("Attaque"), num(c.atk)) + k("stat_defense", _t("Défense"), fmtPct(c.def)) + k("stat_critical", _t("Critique"), fmtPct(num(c.crit)))
       + '<i class="hs-chev">›</i></button>';
   }
 

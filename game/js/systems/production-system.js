@@ -301,27 +301,13 @@ var ProductionManager = {
 
       var stock = self.getStock(id);
       var capacity = self.getCapacity(id);
-      var isFull = capacity > 0 && stock >= capacity;
       var pct = capacity > 0 ? Math.min(100, (stock / capacity) * 100) : 0;
       var resDef = WAREHOUSE_RESOURCES[(PRODUCTION_BUILDINGS[id] || {}).resourceKey] || {};
       var hasStock = Math.floor(stock) > 0;
 
       setElementWidth("prod-bar-" + id, pct);
       setElementText("prod-stock-label-" + id, formatNumber(Math.floor(stock)) + " / " + formatNumber(capacity) + " " + (resDef.name ? _td(resDef.name) : ""));
-
-      var statusEl = document.getElementById("prod-status-" + id);
-      if (statusEl) {
-        if (isFull) {
-          statusEl.textContent = "✅ " + _t("Stock plein");
-          statusEl.classList.add("is-full");
-        } else {
-          var ratePerMin = self.getRatePerMin(id);
-          var secondsUntilFull = ratePerMin > 0 ? ((capacity - stock) / ratePerMin) * 60 : 0;
-          statusEl.textContent = ratePerMin > 0 ? "⏳ " + _t("Plein dans {d}", { d: formatTime(secondsUntilFull) }) : "";
-          statusEl.classList.remove("is-full");
-        }
-      }
-
+      // finition : statut de remplissage du bâtiment retiré, aucun écran n'en pose l'élément (code mort)
       var harvestBtn = document.getElementById("prod-harvest-btn-" + id);
       if (harvestBtn) {
         harvestBtn.disabled = !hasStock;

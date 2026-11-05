@@ -3,7 +3,7 @@
 
 var _confirmModalCallback = null;
 
-function showConfirmModal(title, text, icon, onConfirm) {
+function showConfirmModal(title, text, icon, onConfirm, labels) {
   var modal = document.getElementById("confirm-modal");
   if (!modal) {
     if (window.confirm((title ? title + "\n\n" : "") + (text || ""))) {
@@ -18,7 +18,11 @@ function showConfirmModal(title, text, icon, onConfirm) {
 
   if (titleEl) titleEl.textContent = title || _t("Confirmer");
   if (textEl) textEl.textContent = text || "";
-  if (iconEl) iconEl.innerHTML = renderIconOrEmojiHTML(icon || "images/Icons/system/ascension.webp", "confirm-icon-img", title || "");
+  if (iconEl) iconEl.innerHTML = renderIconOrEmojiHTML(icon || "images/Icons/system/ascension.webp", "confirm-icon-img", "");
+  // CPL3-10 : libellés des boutons au choix (fenêtre de langue bilingue), sinon ceux par défaut
+  var btnNo = modal.querySelector(".confirm-btn.cancel"), btnOk = modal.querySelector(".confirm-btn.ok");
+  if (btnNo) btnNo.textContent = (labels && labels.cancel) || _t("Annuler");
+  if (btnOk) btnOk.textContent = (labels && labels.ok) || _t("Confirmer");
 
   _confirmModalCallback = typeof onConfirm === "function" ? onConfirm : null;
   modal.classList.add("show");

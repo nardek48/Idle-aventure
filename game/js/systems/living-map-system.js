@@ -546,7 +546,7 @@ var LivingMapManager = {
       var open = this.getOpenTargets(mapId);
       if (open.length) {
         var next = this.getSectorDef(mapId, open[0]);
-        return { ok: false, reason: this.getWords(mapId).openElsewhere + " : " + (next ? _td(next.name) : open[0]) + ".", content: content, intensity: intensity };
+        return { ok: false, reason: _t("{a} : {b}", { a: this.getWords(mapId).openElsewhere, b: next ? _td(next.name) : open[0] }) + ".", content: content, intensity: intensity };
       }
     }
     // v3.310.0 : seul un canevas de Petite Aventure compte dans le cap (v3.388.0 : mode "pa2")

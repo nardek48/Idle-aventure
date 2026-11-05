@@ -110,6 +110,8 @@
   0%, 100% { transform: scale(1); opacity: 1; }
   50% { transform: scale(1.19); opacity: 0; }
 }
+/* CPL3-7 : mouvement réduit, halo fixe du monde actuel */
+@media (prefers-reduced-motion: reduce) { .map-node.is-current .map-node-pic::before { animation: none; } }
 
 .map-node.is-locked .map-node-circle {
   outline-color: #6b6555;

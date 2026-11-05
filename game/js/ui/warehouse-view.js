@@ -245,7 +245,7 @@ function buildWarehouseFilterRowHTML(keys) {
     h += '</div>';
   }
   h += '</div>';
-  h += '<span class="wh-zeros"><button type="button" class="kswitch' + (zeros ? ' is-on' : '') + '" role="switch" aria-checked="' + zeros + '" onclick="toggleWarehouseZeros()"></button>' + _t("Zéros") + '</span>';
+  h += '<span class="wh-zeros"><button type="button" class="kswitch' + (zeros ? ' is-on' : '') + '" role="switch" aria-checked="' + zeros + '" aria-label="' + esc(_t("Zéros")) + '" onclick="toggleWarehouseZeros()"></button>' + _t("Zéros") + '</span>';
   h += '</div>';
   return h;
 }

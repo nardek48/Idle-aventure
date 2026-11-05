@@ -161,7 +161,7 @@ var HEROS_STAT_ROWS = [
     name: _t("Précision"), icon: "./images/Icons/improvement_icons/accuracy.webp",
     produces: _t("Chance de coup critique"), unit: _t("CRIT", "unité"),
     read: function () { return (typeof EquipmentManager !== "undefined") ? EquipmentManager.effectiveCritChance() : 0; },
-    fmt: function (v) { return _t("CRIT", "unité") + " " + formatNumber(Math.round(v * 10) / 10) + "\u00a0%"; }, // v3.683.0 (NOV-20) : 7,5 %
+    fmt: function (v) { return _t("CRIT", "unité") + " " + fmtPct(formatNumber(Math.round(v * 10) / 10)); }, // v3.683.0 (NOV-20) : 7,5 %
     fmtDelta: function (d) { return _t("+{n} % de critique", { n: formatNumber(Math.round(d * 10) / 10) }); }
   },
   {
@@ -169,8 +169,8 @@ var HEROS_STAT_ROWS = [
     name: _t("Volonté"), icon: "./images/Icons/improvement_icons/will.webp",
     produces: _t("Puissance des coups critiques"), unit: _t("CRIT ×", "unité"),
     read: function () { return (typeof EquipmentManager !== "undefined") ? EquipmentManager.effectiveCritMult() : 0; },
-    fmt: function (v) { return _t("CRIT ×", "unité") + " " + String(Math.round(v * 100) / 100).replace(".", ","); }, // v3.683.0 (NOV-20) : virgule
-    fmtDelta: function (d) { return _t("+{n} au multiplicateur", { n: String(Math.round(d * 100) / 100).replace(".", ",") }); }
+    fmt: function (v) { return _t("CRIT ×", "unité") + " " + fmtDec(Math.round(v * 100) / 100); }, // v3.683.0 (NOV-20) : virgule
+    fmtDelta: function (d) { return _t("+{n} au multiplicateur", { n: fmtDec(Math.round(d * 100) / 100) }); }
   }
 ];
 
@@ -193,7 +193,7 @@ function getHeroStatRowView(row) {
     read: function () { return (typeof EquipmentManager !== "undefined") ? EquipmentManager.effectiveTapDamage() : 0; },
     fmt: function (v) { return _t("ATK", "unité") + " " + formatNumber(Math.round(v)); },
     fmtDelta: function (d) { return "+" + formatNumber(Math.round(d)) + " " + _t("ATK", "unité"); },
-    extra: function () { return universal.produces + " : " + universal.fmt(universal.read()).replace(universal.unit + " ", ""); },
+    extra: function () { return _t("{a} : {b}", { a: universal.produces, b: universal.fmt(universal.read()).replace(universal.unit + " ", "") }); },
     /* Sonde du premier palier visible : un niveau fait déjà bouger le rôle universel (VIT, CRIT ×)
        même quand l'ATK arrondi ne bouge pas encore — sinon « visible à partir de 25 niveaux » mentirait. */
     probeRead: function () { return EquipmentManager.effectiveTapDamage() * 1000 + universal.read(); }

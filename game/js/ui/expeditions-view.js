@@ -166,7 +166,7 @@ var expSheet = null; // null | { type: "patrol" | "caravan", id }
   function kindLabel(k) { return { pa: _t("Petite Aventure"), patrol: _t("Patrouille"), patrols: _t("Patrouilles"), caravan: _t("Caravane"), dungeon: _t("Donjon") }[k]; }
 
   function rowHTML(e) {
-    var h = '<div class="exp-row is-' + e.tone + '"' + (e.open ? ' onclick="' + e.open + '"' : '') + '>';
+    var h = '<div class="exp-row is-' + e.tone + '"' + (e.open ? ' role="button" tabindex="0" onclick="' + e.open + '"' : '') + '>'; // CPL3-12 : ligne ouvrable au clavier
     h += '<span class="exp-row-ico' + (e.portrait ? ' is-portrait' : '') + '">' + img(e.icon) + (e.portrait ? img(ICON.patrol, "exp-row-sub") : '') + '</span>';
     h += '<span class="exp-row-txt"><b>' + esc(e.title) + '</b>'; // v3.586.0 : les compagnons sont dans la feuille « Patrouilles »
     h += '<small>' + esc(e.status) + (e.endAt ? ' · <span class="exp-left" data-exp-end="' + e.endAt + '">' + timeLeft(e.endAt) + '</span>' : '') + '</small>';

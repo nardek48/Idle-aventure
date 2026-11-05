@@ -81,7 +81,7 @@ var CompanionManager = {
     st.voie = voieId;
     if (free) MemoryManager.useVoieFree(); else st.voieChanges += 1;
     st.hp = this.maxHpOf(companionId);
-    if (typeof addLog === "function") addLog("🔁 " + _td(raw.name) + " : " + _td(raw.voies[voieId].label) + ".", "event");
+    if (typeof addLog === "function") addLog("🔁 " + _t("{a} : {b}", { a: _td(raw.name), b: _td(raw.voies[voieId].label) }) + ".", "event");
     if (typeof saveGame === "function") saveGame();
     if (typeof renderAll === "function") renderAll();
     return true;

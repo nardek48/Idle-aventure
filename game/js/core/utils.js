@@ -22,7 +22,7 @@ function renderIconOrEmojiHTML(icon, baseClass, altText) {
   }
   var isImagePath = typeof icon === "string" && /\.(png|jpg|jpeg|svg|gif|webp)$/i.test(icon);
   if (isImagePath) {
-    return '<img class="' + baseClass + '" src="' + esc(icon) + '" alt="">';
+    return '<img class="' + baseClass + '" src="' + esc(icon) + '" alt="' + esc(altText || "") + '">'; // CPL3-4 : nom lu par les lecteurs d'écran
   }
   return '<span class="' + baseClass + ' ' + baseClass + '-emoji">' + esc(icon || "") + '</span>';
 }
@@ -43,21 +43,26 @@ function escPreservingIcons(text) {
    milliers (5 000), virgule décimale (12,5) ; au-delà de 10 000, trois chiffres et l'unité :
    12,3 k · 123 k · 1,23 M · 1,5 Md (avant : 5.00K, 1.23M, 1.50B). */
 var NUM_THIN_SPACE = "\u202f";
-function formatNumberGroup(intStr) { return intStr.replace(/\B(?=(\d{3})+(?!\d))/g, NUM_THIN_SPACE); }
+/* CPL3-1 : en anglais, virgule des milliers et point décimal (5,000 ; 12.3 k ; 1.5 B). */
+function numIsEn() { return !!(window.I18n && typeof I18n.lang === "function" && I18n.lang() === "en"); }
+function formatNumberGroup(intStr) { return intStr.replace(/\B(?=(\d{3})+(?!\d))/g, numIsEn() ? "," : NUM_THIN_SPACE); }
+/* CPL3-1 : décimale d'un nombre déjà arrondi (« 1.5 » → « 1,5 » en français) ; pourcentage collé en anglais. */
+function fmtDec(v) { var s = String(v); return numIsEn() ? s : s.replace(".", ","); }
+function fmtPct(v) { return String(v) + (numIsEn() ? "%" : "\u00a0%"); }
 function formatNumber(value) {
   var n = Number(value || 0), sign = n < 0 ? "-" : "";
   n = Math.abs(n);
   if (n >= 1e4) {
-    var unit = n >= 1e9 ? [1e9, "Md"] : (n >= 1e6 ? [1e6, "M"] : [1e3, "k"]);
+    var unit = n >= 9995e5 ? [1e9, numIsEn() ? "B" : "Md"] : (n >= 9995e2 ? [1e6, "M"] : [1e3, "k"]); // 999 999 → 1 M (plus « 1 000 k »)
     var v = n / unit[0], digits = v >= 100 ? 0 : (v >= 10 ? 1 : 2);
     var txt = v.toFixed(digits);
     if (digits) txt = txt.replace(/\.?0+$/, "");           // 12,0 k → 12 k ; 1,50 M → 1,5 M
     var parts = txt.split(".");
-    return sign + formatNumberGroup(parts[0]) + (parts[1] ? "," + parts[1] : "") + NUM_THIN_SPACE + unit[1];
+    return sign + formatNumberGroup(parts[0]) + (parts[1] ? fmtDec("." + parts[1]) : "") + NUM_THIN_SPACE + unit[1];
   }
   if (n % 1 !== 0) {
     var d = n.toFixed(1).split(".");
-    return sign + formatNumberGroup(d[0]) + (d[1] !== "0" ? "," + d[1] : "");
+    return sign + formatNumberGroup(d[0]) + (d[1] !== "0" ? fmtDec("." + d[1]) : "");
   }
   return sign + formatNumberGroup(String(Math.floor(n)));
 }
@@ -82,7 +87,7 @@ function formatTime(totalSeconds) {
 function formatCraftDuration(ms) {
   var totalSeconds = Math.max(0, Number(ms) || 0) / 1000;
   var roundedToTenth = Math.round(totalSeconds * 10) / 10;
-  if (roundedToTenth < 60) return roundedToTenth.toFixed(1).replace(".", ",") + "\u00a0s"; // v3.683.0 (NOV-20) : 3,0 s
+  if (roundedToTenth < 60) return fmtDec(roundedToTenth.toFixed(1)) + "\u00a0s"; // v3.683.0 (NOV-20) : 3,0 s
 
   var totalSecondsFloor = Math.floor(totalSeconds);
   var m = Math.floor(totalSecondsFloor / 60);
@@ -110,6 +115,9 @@ function vibrate(pattern) {
 
 window.escPreservingIcons = escPreservingIcons;
 window.formatNumber = formatNumber;
+window.fmtDec = fmtDec;
+window.fmtPct = fmtPct;
+window.numIsEn = numIsEn;
 window.formatTime = formatTime;
 window.formatCraftDuration = formatCraftDuration;
 window.chance = chance;

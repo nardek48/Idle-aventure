@@ -122,6 +122,8 @@ body.hs-on-heros .hud-dock { display: none !important; }
 /* v3.643.0 (atelier village-heros) : PV et « Avec toi / Au camp » sur une ligne */
 .hs-comp-row { display: flex; align-items: center; gap: 8px; margin: 8px 0 6px; }
 .hs-comp-row .hs-comp-hp { flex: 1 1 auto; min-width: 0; margin: 0; }
+/* finition : PV des compagnons sur une pastille sombre (le crème tombait à 1,2-2,3:1 sur l'orange et le parchemin) */
+.hs-comp-hp .kgauge-text { left: 50%; right: auto; top: 50%; bottom: auto; transform: translate(-50%, -50%); padding: 1px 6px; border-radius: 6px; background: var(--c-brown-900); white-space: nowrap; text-shadow: none; }
 .hs-comp-row .cp-seg { flex: 0 0 auto; width: auto; margin: 0; }
 .hs-comp-row .cp-seg button { padding-left: 10px; padding-right: 10px; }
 .hs-sheet .eq-detail-panel { width: 100%; max-width: none; }

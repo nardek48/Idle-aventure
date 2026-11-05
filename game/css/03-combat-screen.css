@@ -449,6 +449,10 @@ html.pc-mode .cbx-key-badge { display: block; }
   .cbx-foe-fx, .cbx-foe-healfx { display: none !important; }
   .cbx-foe, .cbx-num, .cbx-foe-hit::before, .cbx-foe-hit::after, .cbx-chip { animation: none !important; transition: none !important; }
 }
+/* CPL3-7 : mouvement réduit, plus de halo, de pouls ni d'oscillation en continu (cible, urgence, charge, attente) */
+@media (prefers-reduced-motion: reduce) {
+  .cbx-badge.is-urgent, .cbx-foe.is-target .cbx-foe-halo, .cbx-foe.tele-charge .cbx-foe-img, .cbx-turn-badge.is-wait, .cbx-foe.is-downed .cbx-foe-halo { animation: none; }
+}
 
 /* v3.428.2 (Ruines) : ennemi à terre, il se relèvera au prochain round */
 .cbx-foe.is-downed .cbx-foe-img { transform: rotate(-78deg) translateY(18%) scale(.82); filter: grayscale(.7) brightness(.75); transition: transform .35s ease, filter .35s ease; }

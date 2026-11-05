@@ -532,6 +532,14 @@ if (typeof window !== "undefined" && window.addEventListener && typeof document 
     if (tag === "INPUT" || tag === "TEXTAREA") return;
     backNavCloseTop();
   });
+  // CPL3-3 : un élément role="button" qui n'est pas un <button> répond à Entrée et Espace comme au toucher
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Enter" && e.key !== " " && e.key !== "Spacebar") return;
+    var t = e.target;
+    if (!t || !t.matches || !t.matches('[role="button"]:not(button)') || t.getAttribute("aria-disabled") === "true") return;
+    e.preventDefault();
+    t.click();
+  });
 }
 window.backNavCloseTop = backNavCloseTop;
 window.backNavOnPop = backNavOnPop;

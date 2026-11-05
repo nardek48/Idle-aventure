@@ -557,7 +557,7 @@ function buildForgeBoardHTML() {
       // v3.448.6 : où trouver chaque matériau qui manque (comme sur les chantiers du village)
       manquants.forEach(function (key) {
         var hint = WarehouseManager.capHint(key, cost[key]) || getVillageResourceHint(key); // EQUI-2
-        if (hint) h += '<div class="vb-cost-where forge-row-where res-go-link"' + resGoAttr(key) + '>' + esc(_td(getVillageCostMeta(key).label)) + ' : ' + esc(hint) + ' ›</div>';
+        if (hint) h += '<div class="vb-cost-where forge-row-where res-go-link"' + resGoAttr(key) + '>' + esc(_t("{a} : {b}", { a: _td(getVillageCostMeta(key).label), b: hint })) + ' ›</div>';
       });
     }
     h += '</div>';

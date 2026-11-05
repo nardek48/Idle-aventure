@@ -3471,7 +3471,7 @@ function storyMissingCostLines(cost, prefix) {
     var def = key === "gold" ? null : (window.WAREHOUSE_RESOURCES || {})[key];
     var nom = key === "gold" ? _t("Or") : (def ? _td(def.name) : key);
     out.push({
-      text: prefix + " : " + nom + " " + formatNumber(Math.floor(have)) + " / " + formatNumber(cost[key]),
+      text: _t("{a} : {b}", { a: prefix, b: nom }) + " " + formatNumber(Math.floor(have)) + " / " + formatNumber(cost[key]),
       // EQUI-2 : un coût que le stock ne peut pas atteindre le dit au lieu de renvoyer à la source
       where: key === "gold" ? "" : ((window.WarehouseManager && WarehouseManager.capHint(key, cost[key])) || (typeof getVillageResourceHint === "function" ? getVillageResourceHint(key) : ""))
     });

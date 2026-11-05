@@ -159,7 +159,8 @@ function buildCombatReportHTML(trigger, enemyName) {
     : trigger === "boss" ? _t("Rapport de combat — boss vaincu")
     : _t("Rapport de combat");
   h += kSheetHeadHTML({ icon: renderIconOrEmojiHTML(icon, "", ""), title: esc(title), sub: enemyName ? esc(_td(enemyName)) : "", close: "closeCombatReport()" });
-  h += '  <div class="ksheet-body">' + (trigger === "defeat" ? defeatResourceTipHTML() : "") + buildCombatReportBodyHTML() + '</div>';
+  // finition : défaite en farm libre, l'astuce relevée à la mort est prise ici, le Campement ne la redit pas
+  h += '  <div class="ksheet-body">' + (trigger === "defeat" ? (lastDefeatTip ? takeDefeatResourceTipHTML() : defeatResourceTipHTML()) : "") + buildCombatReportBodyHTML() + '</div>';
   h += '  <div class="ksheet-foot"><button class="kbtn danger combat-report-reset-btn" type="button" onclick="resetCombatReport()"><img class=ico-inline src=images/Icons/system/trash.webp> ' + _t("Réinitialiser le rapport") + '</button></div>';
   h += '  </div>';
   h += '</div>';

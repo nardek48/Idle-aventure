@@ -159,7 +159,7 @@ function companionSkillDescRanked(companionId, def) {
 
 function companionSkillEffectLines(companionId, a, b) {
   var A = CompanionManager.skillOf(companionId, a), B = CompanionManager.skillOf(companionId, b), out = [];
-  var mult = function (v) { var s = (Math.round(v * 10) / 10).toFixed(1); return (window.I18n && I18n.lang && I18n.lang() === "en") ? s : s.replace(".", ","); };
+  var mult = function (v) { return fmtDec((Math.round(v * 10) / 10).toFixed(1)); };
   if (A.value !== B.value) out.push(A.type === "heal" || A.type === "taunt"
     ? _t("Soin {a} % → {b} %", { a: Math.round(A.value * 100), b: Math.round(B.value * 100) })
     : _t("Frappe ×{a} → ×{b}", { a: mult(A.value), b: mult(B.value) }));

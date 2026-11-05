@@ -7,6 +7,8 @@ function showToast(message, duration) {
   var el = document.getElementById("toast");
   if (!el) return;
   el.textContent = message;
+  // finition : création du héros ouverte, le message monte sur l'illustration (il couvrait le champ du nom)
+  el.classList.toggle("is-top", !!document.querySelector(".hc-overlay"));
   el.classList.add("show");
   // v3.429.13 : les libellés des bulles de raccourci s'effacent le temps du message (chevauchement)
   if (document.body) document.body.classList.add("toast-shown");

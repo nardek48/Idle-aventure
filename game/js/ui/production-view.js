@@ -298,7 +298,7 @@ function formatRatePerMin(v) {
   v = Number(v || 0);
   var two = Math.round(v * 100) / 100;
   if (two >= 1 || two === 0) return formatNumber(Math.round(v * 10) / 10);
-  return String(two).replace(".", ",");
+  return fmtDec(two);
 }
 window.formatRatePerMin = formatRatePerMin;
 
@@ -310,7 +310,7 @@ function buildZoneWindowHTML(buildingId, index) {
   var resDef = WAREHOUSE_RESOURCES[(PRODUCTION_BUILDINGS[buildingId] || {}).resourceKey] || {};
   var resName = _td(resDef.name || "");
   var zoneName = getProductionZoneName(buildingId, index);
-  var affordable = function (cost) { return !!cost && Object.keys(cost).every(function (k) { return WarehouseManager.getAmount(k) >= cost[k]; }); };
+  var affordable = function (cost) { return !!cost && Object.keys(cost).every(function (k) { return (k === "gold" ? Number(game.gold || 0) : WarehouseManager.getAmount(k)) >= cost[k]; }); };
   var locked = plot.state === "locked";
   var profile = ProductionPlotsSystem.getProfile(index);
 
@@ -366,10 +366,11 @@ function buildPlotCostRowHTML(cost) {
   if (!cost) return "";
   var h = '<span class="production-cost-row">';
   Object.keys(cost).forEach(function (key) {
-    var iconSrc = WAREHOUSE_RESOURCES[key] ? WAREHOUSE_RESOURCES[key].icon : "";
-    var canAffordThis = WarehouseManager.getAmount(key) >= cost[key];
+    // finition : l'or n'est pas une ressource d'Entrepôt, il a sa propre icône et se lit dans game.gold
+    var def = WAREHOUSE_RESOURCES[key], iconSrc = key === "gold" ? "images/Icons/gold_icon.webp" : (def ? def.icon : "");
+    var canAffordThis = (key === "gold" ? Number(game.gold || 0) : WarehouseManager.getAmount(key)) >= cost[key];
     h += '<span class="production-cost-item' + (canAffordThis ? '' : ' is-missing res-go') + '"' + (canAffordThis ? '' : resGoAttr(key)) + '>';
-    h += '<img class="btn-buy-icon" src="' + esc(iconSrc) + '" alt="">' + formatNumber(cost[key]);
+    h += '<img class="btn-buy-icon" src="' + esc(iconSrc) + '" alt="' + esc(key === "gold" ? _t("Or") : (def ? _td(def.name) : "")) + '">' + formatNumber(cost[key]);
     h += '</span>';
   });
   h += '</span>';
@@ -690,7 +691,8 @@ function upgradeWorkshop(workshopId) {
   }
   var lvl = WorkshopsSystem.getLevel(workshopId);
   var eff = recipe ? formatCraftDuration(WorkshopsSystem.getEffectiveCraftTimeMs(workshopId, recipe)) : "";
-  showToast(_t("{x} niv {n}", { x: def ? _td(def.name) : "", n: lvl }) + (eff ? " : " + _t("{d}/lot", { d: eff }) : "") + " · " + _t("file {n}", { n: WorkshopsSystem.getMaxQueueLength(workshopId) }), 1600);
+  var lvTxt = _t("{x} niv {n}", { x: def ? _td(def.name) : "", n: lvl });
+  showToast((eff ? _t("{a} : {b}", { a: lvTxt, b: _t("{d}/lot", { d: eff }) }) : lvTxt) + " · " + _t("file {n}", { n: WorkshopsSystem.getMaxQueueLength(workshopId) }), 1600);
 }
 window.upgradeWorkshop = upgradeWorkshop;
 

@@ -103,7 +103,7 @@ function buildEquipmentSlot(slot, label, icon) {
 function formatStatDelta(stat, delta) {
   var sign = delta > 0 ? "+" : "";
   if (stat === "tapMult" || stat === "goldMult" || stat === "maxHpPct" || stat === "xpMult") return sign + Math.round(delta * 100) + "%";
-  if (stat === "defense") return sign + (Math.round(delta * 1000) / 10) + "%"; // v3.226.0 : 1 décimale, les affixes de défense en ont 3
+  if (stat === "defense") return sign + fmtDec(Math.round(delta * 1000) / 10) + "%"; // NOV-20 : 1,5 en français ; v3.226.0 : 1 décimale, les affixes de défense en ont 3
   if (stat === "critMult") return sign + formatNumber(delta) + "x";
   if (stat === "critChance" || stat === "dropChance") return sign + formatNumber(delta) + "%";
   return sign + formatNumber(stat === "tapDmg" || stat === "autoDps" ? Math.round(delta) : delta); // v3.492.13 : entier

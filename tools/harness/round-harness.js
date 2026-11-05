@@ -4739,7 +4739,7 @@ console.log("\n[35b] v3.226.0 \u2014 Comparaison ligne \u00e0 ligne (Lot 2, D6)"
   var card = run("buildEquipShopCardHTML(" + JSON.stringify(Object.assign({}, cand, { price: 10 })) + ")");
   ok(card.indexOf("eq-cmp-row") !== -1 && card.indexOf("\u25b2 +20%") !== -1, "carte d'\u00e9choppe : deltas face \u00e0 l'\u00e9quip\u00e9");
   var d1 = g.formatStatDelta("defense", 0.022), d2 = g.formatStatDelta("maxHpPct", 0.1), d3 = g.formatStatDelta("dropChance", 4);
-  ok(d1 === "+2.2%" && d2 === "+10%" && d3 === "+4%", "formatStatDelta : d\u00e9fense 1 d\u00e9cimale, PV max %, butin %");
+  ok(d1 === "+2,2%" && d2 === "+10%" && d3 === "+4%", "formatStatDelta : d\u00e9fense 1 d\u00e9cimale, PV max %, butin %");
 })();
 
 console.log("\n[36b] v3.232.0 \u2014 Recalibrage For\u00eat (boss \u00d73,9, normaux \u00d71,8), mondes 1-5 compens\u00e9s");
@@ -20310,7 +20310,7 @@ console.log("\n[381] v3.577.0 — Petites Aventures, lot 2 : les jets au d20");
     var why = g.pa2WhyHTML(w, { wounds: 2 }).replace(/\u00a0/g, " ");
     ok(/Puissance \+\d/.test(why) && /Rôdeur|Archer/.test(why) === false && /matériel \+3/.test(why) && /blessures −4/.test(why) && /DD \d+/.test(why), "détail du jet : stat, matériel, blessures et DD (" + why + ")");
     var blk = g.pa2DieBlock({ thr: 9, cran: "probable", chance: 60, roll: 20, nat: 20 }, true);
-    ok(/d20_vide_20\.webp/.test(blk) && /pa2-die-num">20</.test(blk) && /is-nat20/.test(blk) && /9\+/.test(blk) && /60 %/.test(blk), "le dé : d20 pré-rendu (v3.673.0), valeur, seuil et chance");
+    ok(/d20_vide_20\.webp/.test(blk) && /pa2-die-num">20</.test(blk) && /is-nat20/.test(blk) && /9\+/.test(blk) && /60[ \u00a0]%/.test(blk), "le dé : d20 pré-rendu (v3.673.0), valeur, seuil et chance");
   } catch (err) { ok(false, "[381] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   P._int = saveInt; if (CCM) CCM.getCurrentClassId = saveCls;
 })();
@@ -22580,7 +22580,7 @@ console.log("\n[448] v3.683.0 — Tutoriel factuel (audit 04/11, lot I1)");
     ok(d1 === "" && d2 !== "", "NOV-19 : Équipement tu tant que Héros est fermé, annoncé ensuite");
     // NOV-20 : décimales à la française
     ok(g.formatCraftDuration(3000) === "3,0 s" && /1,5/.test(g.formatEquipmentStatValue("defense", 0.015)), "NOV-20 : « 3,0 s » et « +1,5% défense »");
-    ok(/CRIT", "unité"\) \+ " " \+ formatNumber\(Math\.round\(v \* 10\) \/ 10\)/.test(rd("js/ui/heros-view.js")), "NOV-20 : CRIT passe par formatNumber");
+    ok(/CRIT", "unité"\) \+ " " \+ fmtPct\(formatNumber\(Math\.round\(v \* 10\) \/ 10\)/.test(rd("js/ui/heros-view.js")), "NOV-20 : CRIT passe par formatNumber");
     // NOV-21 : « Pas assez de Viande », « Pas assez d'Eau »
     var pv = rd("js/ui/production-view.js");
     ok(/_t\("Pas assez d'\{x\} \(\{a\}\/\{b\}\)"/.test(pv) && /_t\("Pas assez de \{x\} \(\{a\}\/\{b\}\)"/.test(pv) && !/insuffisant \(\{a\}/.test(pv), "NOV-21 : « Pas assez de/d' » remplace « {x} insuffisant »");
@@ -23153,6 +23153,61 @@ console.log("\n[454] v3.689.0 — Combat : aide à la décision et bugs (audit 0
   g.showToast = fn.toast; g.addLog = fn.log; g.saveGame = fn.save; g.document.getElementById = fn.gid; E.isHeroTurnAvailable = fn.turn; LM.getFight = fn.fight;
   if (g.cbxState) g.cbxState.potionQueued = null;
   try { run("game.livingMaps && (game.livingMaps.fight = null); fullResetState();"); } catch (e) {}
+})();
+
+console.log("\n[455] v3.690.0 — Anglais, accessibilité et finitions (audit 04/11, lot A2)");
+(function () {
+  var rd = function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); };
+  var T = " ", N = " ";
+  try {
+    // CPL3-1 : nombres selon la langue
+    var fr = [g.formatNumber(5000), g.formatNumber(12345), g.formatNumber(1.5e9), g.fmtDec("1.5"), g.fmtPct(7), g.formatCraftDuration(3000), g.formatNumber(999999), g.formatStatDelta("defense", 0.015)];
+    ok(fr.join("|") === ["5" + T + "000", "12,3" + T + "k", "1,5" + T + "Md", "1,5", "7" + N + "%", "3,0" + N + "s", "1" + T + "M", "+1,5%"].join("|"), "CPL3-1 : en français, 5 000 · 12,3 k · 1,5 Md · 7 % · 3,0 s · 1 M (plus « 1 000 k ») · +1,5% (" + fr.join(" / ") + ")");
+    g.I18n._lang = "en";
+    var en = [g.formatNumber(5000), g.formatNumber(12345), g.formatNumber(1.5e9), g.fmtDec("1.5"), g.fmtPct(7), g.formatCraftDuration(3000), g.formatRatePerMin(0.35), g.hudHpShort(1234)];
+    g.I18n._lang = null;
+    ok(en.join("|") === ["5,000", "12.3" + T + "k", "1.5" + T + "B", "1.5", "7%", "3.0" + N + "s", "0.35", "1.2k"].join("|"), "CPL3-1 : en anglais, 5,000 · 12.3 k · 1.5 B · 7% · 3.0 s (" + en.join(" / ") + ")");
+    var dur = ["js/ui/pa2-view.js", "js/ui/companions-view.js", "js/ui/hud-view.js", "js/ui/production-view.js", "js/ui/chronique-view.js", "js/ui/heros-view.js", "js/ui/dungeon-view.js"].filter(function (f) { return /\.replace\("\.", ","\)/.test(rd(f)); });
+    ok(!dur.length, "CPL3-1 : plus de virgule décimale posée en dur (" + dur.join(", ") + ")");
+    // CPL3-2 : deux-points selon la langue
+    var colons = ["js/ui/pa2-view.js", "js/ui/village-building-view.js", "js/ui/village-event-view.js", "js/ui/dungeon-view.js", "js/ui/production-view.js", "js/ui/heros-view.js", "js/systems/companion-system.js", "js/systems/living-map-system.js", "js/data/story-quests.js"]
+      .filter(function (f) { return /\+ ?["'] : ["'] ?\+/.test(rd(f)); });
+    g.I18n._lang = "en"; var col = g._t("{a} : {b}", { a: "Steel", b: "Forge" }); g.I18n._lang = null;
+    ok(!colons.length && col === "Steel: Forge" && g._t("{a} : {b}", { a: "Acier", b: "Forge" }) === "Acier : Forge", "CPL3-2 : « Steel: Forge » en anglais, « Acier : Forge » en français, aucun « : » collé en dur (" + colons.join(", ") + ")");
+    // CPL3-3 et CPL3-12 : clavier et noms
+    ok(/matches\('\[role="button"\]:not\(button\)'\)/.test(rd("js/ui/ui-root.js")) && /e\.key !== "Enter" && e\.key !== " "/.test(rd("js/ui/ui-root.js")), "CPL3-3 : Entrée et Espace déclenchent un role=button qui n'est pas un <button>");
+    ok(/role="switch" aria-checked="' \+ zeros \+ '" aria-label="' \+ esc\(_t\("Zéros"\)\)/.test(rd("js/ui/warehouse-view.js")) && /class="map-dungeon is-' \+ md\.state \+ '" role="button" tabindex="0"/.test(rd("js/ui/map-view.js"))
+      && /aria-label="' \+ esc\(_t\("Secteur inconnu"\)\)/.test(rd("js/ui/living-map-view.js")) && /role="button" tabindex="0" onclick="' \+ e\.open/.test(rd("js/ui/expeditions-view.js")), "CPL3-12 : interrupteur « Zéros » nommé, donjon de la carte au clavier, secteur voilé « Secteur inconnu », lignes des départs au clavier");
+    // CPL3-4 : nom des icônes de coût
+    ok(g.renderIconOrEmojiHTML("images/x.webp", "c", "Acier") === '<img class="c" src="images/x.webp" alt="Acier">' && /alt=""/.test(g.renderIconOrEmojiHTML("images/x.webp", "c")), "CPL3-4 : l'icône porte son nom (« 2 Acier » et non « 2 »)");
+    // CPL3-6 : messages annoncés
+    ok(/<div id="toast" role="status" aria-live="polite">/.test(rd("index.html")), "CPL3-6 : #toast en role=status, aria-live=polite");
+    // CPL3-7 : mouvement réduit
+    ok(/prefers-reduced-motion: reduce\) \{\s*\.cbx-badge\.is-urgent, \.cbx-foe\.is-target \.cbx-foe-halo, \.cbx-foe\.tele-charge \.cbx-foe-img, \.cbx-turn-badge\.is-wait/.test(rd("css/03-combat-screen.css"))
+      && /prefers-reduced-motion: reduce\) \{ \.map-node\.is-current \.map-node-pic::before \{ animation: none; \}/.test(rd("css/06-map.css")), "CPL3-7 : halo, pouls, oscillation et pouls de la carte du monde coupés en mouvement réduit");
+    // CPL3-10 : fenêtre de langue bilingue
+    ok(/cancel: "Annuler · Cancel", ok: "Confirmer · Confirm"/.test(rd("js/ui/settings-view.js")) && /btnOk\.textContent = \(labels && labels\.ok\) \|\| _t\("Confirmer"\)/.test(rd("js/ui/modal.js")), "CPL3-10 : boutons de la fenêtre de langue dans les deux langues, libellés par défaut rétablis ensuite");
+    // CPL3-14
+    var enSrc = rd("js/lang/en.js");
+    ok(!/: "[^"]*Defense/.test(enSrc) && !/": "[^"]*(\}|[0-9]) %/.test(enSrc), "CPL3-14 : « Defence » (en-GB) et « 12% » sans espace dans les traductions");
+    // Finitions
+    ok(/\.hs-comp-hp \.kgauge-text \{[^}]*background: var\(--c-brown-900\)/.test(rd("css/04-panel-heros-screens.css")), "finition : PV des compagnons sur pastille sombre");
+    ok(/\.equip-shop-grid \.nb-purchase-card:not\(\.affordable\)[^{]*\{ opacity: 1; \}/.test(rd("css/00-components.css")), "finition : échoppe de Héros à pleine opacité (lignes de stat lisibles)");
+    ok(/\.potion-section-note \{[^}]*color: var\(--c-cream-100-2\)/.test(rd("css/04-panel-upgrades.css")), "finition : note des préparations en encre claire sur le décor");
+    ok(/el\.classList\.toggle\("is-top", !!document\.querySelector\("\.hc-overlay"\)\)/.test(rd("js/ui/toast.js")) && /#toast\.is-top \{ top: 30%; bottom: auto; \}/.test(rd("css/05-overlays.css")), "finition : création ouverte, le message monte loin du champ du nom");
+    var goldAv = g.game.gold; g.game.gold = 50;
+    var row = g.buildPlotCostRowHTML({ gold: 40 }), rowKo = g.buildPlotCostRowHTML({ gold: 400 });
+    g.game.gold = goldAv;
+    ok(/src="images\/Icons\/gold_icon\.webp"/.test(row) && !/is-missing/.test(row) && /is-missing/.test(rowKo) && !/resGo|openResourceFromCost/.test(rowKo), "finition : coût en or d'une zone avec l'icône d'or, lu dans l'or du joueur");
+    var snapAv = g.defeatResourceTipSnapshot;
+    g.defeatResourceTipSnapshot = function () { return { cls: "knight", label: "Rage" }; };
+    run("lastDefeatTip = { cls: 'knight', label: 'Rage' };");
+    var rep = g.buildCombatReportHTML("defeat", null), camp = g.takeDefeatResourceTipHTML();
+    g.defeatResourceTipSnapshot = snapAv;
+    ok(/cr-tip/.test(rep) && camp === "", "finition : défaite en farm libre, l'astuce est dans le rapport et le Campement ne la redit pas");
+    ok(!/prod-status-|Plein dans \{d\}|"Stock plein"/.test(rd("js/systems/production-system.js") + rd("js/ui/production-view.js")) && !/"Plein dans \{d\}"|"Stock plein"/.test(enSrc), "finition : statut « Plein dans » (aucun élément prod-status-) retiré, clés anglaises comprises");
+  } catch (err) { ok(false, "[455] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  g.I18n._lang = null;
 })();
 
 Promise.all(ATTENTES).then(function () {

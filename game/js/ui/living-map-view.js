@@ -441,7 +441,8 @@ function buildLivingMapHTML(mapId) {
     if (cible) cls += " is-story-cible";
     var gain = lmEliteGainIcon(mapId, d); // v3.549.0 (point 6) : élite signalée, même voilée
     if (gain !== null) cls += " is-elite";
-    h += '<button type="button" class="' + cls + '" style="left:' + d.x + '%;top:' + d.y + '%;" onclick="event.stopPropagation();lmxTapSector(\'' + d.id + '\')">';
+    var anon = s.state === "voile" && cls.indexOf("is-named") < 0; // CPL3-12 : secteur voilé sans nom lu « ? » : nommé sans rien révéler
+    h += '<button type="button" class="' + cls + '" style="left:' + d.x + '%;top:' + d.y + '%;"' + (anon ? ' aria-label="' + esc(_t("Secteur inconnu")) + '"' : '') + ' onclick="event.stopPropagation();lmxTapSector(\'' + d.id + '\')">';
     h += '<span class="lm-node-disc">' + (s.state === "voile" ? "?" : lmRingDots(d.ring)) + '</span>'; // v3.458.2 (audit C10) : l'anneau, pas un numéro
     h += '<span class="lm-node-name">' + esc(_td(d.name)) + '</span>';
     if (chantier) h += '<img class="lm-node-chantier" src="images/Icons/resources/pierre_errante_icon.webp" alt="">';

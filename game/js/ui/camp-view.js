@@ -179,7 +179,7 @@ function buildCampHTML(tab) {
     var healValue = Math.floor(maxHp * r.healPct);
     var canEat = r.amount >= 1 && !teamFull && !campLock;
     h += '<button type="button" class="camp-ration-ib' + (r.amount < 1 ? ' is-empty' : '') + '"'
-      + ' title="' + esc(_td(r.name) + " · " + Math.round(r.healPct * 100) + " %") + '" aria-label="' + esc(_t("Manger : {x}", { x: _td(r.name) })) + '"'
+      + ' title="' + esc(_td(r.name) + " · " + fmtPct(Math.round(r.healPct * 100))) + '" aria-label="' + esc(_t("Manger : {x}", { x: _td(r.name) })) + '"'
       // v3.458.3 (audit C9) : une ration à 0 dit où elle se prépare, au lieu d'un bouton muet
       + (canEat ? ' onclick="CampManager.eatRation(\'' + esc(r.id) + '\');"' : (r.amount < 1 ? ' onclick="campRationEmpty()"' : ' disabled')) + '>';
     h += renderIconOrEmojiHTML(def.icon || "images/Icons/quests/ration_reward.webp", "camp-ration-ib-img", _td(r.name));

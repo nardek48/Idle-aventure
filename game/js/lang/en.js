@@ -10,6 +10,7 @@
    Les textes des données sont traduits par _td() à l'affichage (registre : lang/data-fields.js). */
 I18n.register("en", {
   // index.html
+  "Jeu en anglais : nombres à l'anglaise (5,000 · 12.3 k), deux-points et « Defence » corrigés. Lecteurs d'écran : messages annoncés, icônes de coût nommées, Entrée et Espace sur les liens « ressource manquante ».": "Game in English: English number format (5,000 · 12.3 k), colons and “Defence” fixed. Screen readers: messages announced, cost icons named, Enter and Space on “missing resource” links.",
   "Combat : en Grimoire, la potion touchée hors de ton tour est bue au suivant ; la vitesse se règle aussi en Tactique ; après une défaite, l'astuce de ressource s'affiche au Campement.": "Combat: in Grimoire, a potion tapped outside your turn is drunk on the next one; speed can also be set in Tactics; after a defeat, the resource tip shows at Camp.",
   "Écran de retour plus complet : ce que les ateliers ont pris, les sorties perdues par Entrepôt plein, le surplus versé au Grand Ouvrage et les PV rendus. Le jeu tourne aussi plus léger, au Camp comme en combat.": "Fuller return screen: what the workshops took, output lost to a full Warehouse, surplus given to the Great Work, and HP restored. The game also runs lighter, at the Camp and in combat.",
   "Entrepôt : quand le Grand Ouvrage limite un stock, les coûts le disent ; plus de fabrication perdue à sortie pleine. L'échoppe se renouvelle après un voyage, le festin coûte le prix de ton monde le plus loin.": "Warehouse: when the Great Work caps a stock, costs now say so; no more crafts lost to a full output. The shop restocks after travelling, and the feast costs the price of your furthest world.",
@@ -628,8 +629,6 @@ I18n.register("en", {
 
   // js/systems/production-system.js
   "L'intendant livre de quoi bâtir ({x}) : {liste}": "The steward delivers building supplies ({x}): {liste}",
-  "Stock plein": "Stock full",
-  "Plein dans {d}": "Full in {d}",
   "File : {a} / {b}": "Queue: {a} / {b}",
   "Récolte faite, mais l'Entrepôt est plein": "Harvested, but the Warehouse is full",
   "Entrepôt plein": "Warehouse full",
@@ -7121,7 +7120,7 @@ I18n.register("en", {
   "La Forge 6 ouvre les reforges 11 et 12. Elles demandent aussi de l'Obsidienne taillée.": "Forge 6 opens reforges 11 and 12. They also need Cut Obsidian.",
   "Le Wyrm est Enragé : il frappe plus fort à mesure qu'il perd ses PV.": "The Wyrm is Enraged: it hits harder as it loses HP.",
   "À 60 % de ses PV, il secoue le lac : la chaleur monte de deux crans d'un coup.": "At 60% of its HP, it shakes the lake: the heat rises by two levels at once.",
-  "À 30 %, il plonge un round sous la lave : on ne peut pas le toucher. Il ressort en frappant tout le groupe. Garde ta Défense pour ce moment.": "At 30%, it dives under the lava for one round: it can't be hit. It comes out striking the whole party. Save your Defense for that moment.",
+  "À 30 %, il plonge un round sous la lave : on ne peut pas le toucher. Il ressort en frappant tout le groupe. Garde ta Défense pour ce moment.": "At 30%, it dives under the lava for one round: it can't be hit. It comes out striking the whole party. Save your Defence for that moment.",
   "Les façonnés sont tombés. Devant le golem, la Cendre qu'ils portaient fait un tas, encore chaude. Les veines de la salle battent toutes ensemble, et le golem attend. Il a un bras, une jambe, pas de tête.": "The shaped creatures have fallen. In front of the golem, the Ash they carried lies in a heap, still hot. The veins in the chamber all beat together, and the golem waits. It has one arm, one leg, no head.",
   "L'achever": "Finish it",
   "Le défaire": "Undo it",
@@ -7139,7 +7138,7 @@ I18n.register("en", {
   "Sous la lave, on ne peut pas le toucher. À son tour, il ressort et frappe tout le groupe.": "Under the lava, it can't be hit. On its turn, it comes out and strikes the whole party.",
   "Tu perds une part de tes PV à chaque tour de celui qui t'a mis le feu.": "You lose part of your HP on every turn of whoever set you on fire.",
   "Laisse la veine tant qu'il est debout.": "Leave the vein while it's standing.",
-  "Garde ta Défense pour ce moment.": "Save your Defense for that moment.",
+  "Garde ta Défense pour ce moment.": "Save your Defence for that moment.",
   "Le tuer éteint le feu.": "Killing it puts out the fire.",
   "Pas de braise": "No Embers",
   "Chaque cran de chaleur porte les ennemis 30 % de moins.": "Each level of heat empowers enemies 30% less.",
@@ -7371,10 +7370,10 @@ I18n.register("en", {
   "Aucun compagnon n'a encore d'emplacement ouvert": "No companion has an open slot yet",
   "Emblème": "Emblem",
   // v3.513.0 : PV bas au départ (feuille de sortie)
-  "Partir à {n} %": "Set out at {n} %",
+  "Partir à {n} %": "Set out at {n}%",
   "PV bas pour une élite": "Low HP for an elite",
   "PV bas pour un boss": "Low HP for a boss",
-  "Tu pars avec {n} % de tes PV. Ils ne remontent pas d'eux-mêmes pendant la sortie : {p} potions de soin au plus.": "You set out with {n} % of your HP. They don't come back on their own during the outing: {p} healing potions at most.",
+  "Tu pars avec {n} % de tes PV. Ils ne remontent pas d'eux-mêmes pendant la sortie : {p} potions de soin au plus.": "You set out with {n}% of your HP. They don't come back on their own during the outing: {p} healing potions at most.",
   "En stock : {n}": "In stock: {n}",
   "Aucune ration à manger · Cuisine de camp": "No ration to eat · Camp kitchen",
   "Se reposer au Feu de camp": "Rest at the Campfire",
@@ -7410,7 +7409,7 @@ I18n.register("en", {
   "Taille du texte": "Text size",
   "Normale": "Normal",
   "Grande": "Large",
-  "« Grande » agrandit les pages, les feuilles et les fenêtres de 12 %. Réglage propre à cet appareil.": "“Large” enlarges pages, sheets and windows by 12 %. Setting for this device only.",
+  "« Grande » agrandit les pages, les feuilles et les fenêtres de 12 %. Réglage propre à cet appareil.": "“Large” enlarges pages, sheets and windows by 12%. Setting for this device only.",
 
   // v3.540.0 : la veine conseillée par l'étape (CMP-1)
   "Objectif de l'étape": "Step objective",
@@ -7418,7 +7417,7 @@ I18n.register("en", {
   // v3.542.0 : Enchanteresse, ce que vaut une relance (CMP-2)
   "+{n} ATK": "+{n} ATK",
   "+{n} de célérité": "+{n} celerity",
-  "+{n} % de défense": "+{n} % defense",
+  "+{n} % de défense": "+{n}% defence",
   "+{n} aux dégâts critiques": "+{n} crit damage",
   "Une relance, en moyenne : {x}": "One reroll, on average: {x}",
   "Une relance, en moyenne : presque rien": "One reroll, on average: next to nothing",
@@ -8991,5 +8990,7 @@ I18n.register("en", {
   "Il se relève": "Rising",
   "Il dort": "Asleep",
   "Enchaîné": "Chained",
+  // v3.690.0 (lot A2, anglais et accessibilité)
+  "{a} : {b}": "{a}: {b}",
 
 });

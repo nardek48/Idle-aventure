@@ -58,7 +58,8 @@
   text-shadow: 0 1px 2px var(--c-black-950), 0 0 6px var(--c-black-950);
 }
 /* v3.441.0 : note sous la section « Préparations de combat » (ui/potion-view.js). */
-.potion-section-note { margin: 6px 4px 12px; font-size: 12px; color: var(--nb-ink); opacity: 0.85; }
+/* finition : posée sur le décor sombre (1,7:1 en brun), encre claire et ombre comme le titre de section */
+.potion-section-note { margin: 6px 4px 12px; font-size: 12px; color: var(--c-cream-100-2); text-shadow: 0 1px 2px var(--c-black-950), 0 0 6px var(--c-black-950); }
 
 /* =========================
    Échoppe d'équipement

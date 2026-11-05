@@ -174,7 +174,8 @@ function confirmLanguageChange(lang) {
   if (typeof showConfirmModal === "function") {
     showConfirmModal(lang === "en" ? "Switch to English?" : "Passer en français ?",
       lang === "en" ? "The game will restart. Your progress is saved first." : "Le jeu va redémarrer. Ta progression est sauvegardée avant.",
-      "images/Icons/system/settings.webp", go);
+      "images/Icons/system/settings.webp", go,
+      lang === "en" ? { cancel: "Annuler · Cancel", ok: "Confirmer · Confirm" } : { cancel: "Cancel · Annuler", ok: "Confirm · Confirmer" }); // CPL3-10 : boutons dans les deux langues
   } else go();
 }
 window.confirmLanguageChange = confirmLanguageChange;
