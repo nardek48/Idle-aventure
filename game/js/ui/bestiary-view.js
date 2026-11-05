@@ -206,6 +206,17 @@ function bestiaryAttackLabel(t) {
   return ({ sword: _t("l'épée"), bow: _t("l'arc"), magic: _t("la magie") })[t] || _td(t);
 }
 
+/* FAIBLESSES (Seb 05/11, option A) : « Résiste / Faible » seulement pour les ennemis ordinaires, le moteur
+   ignore celles des boss et élites (getDamageAffinity). Point unique : un retrait complet = renvoyer []. */
+function bestiaryAffinityLines(d) {
+  if (!d || d.isBoss || d.isElite) return [];
+  var out = [], resists = Array.isArray(d.resists) ? d.resists : [], weak = Array.isArray(d.weak) ? d.weak : [];
+  if (resists.length) out.push(_t("Résiste : {liste}", { liste: resists.map(bestiaryAttackLabel).join(", ") }));
+  if (weak.length) out.push(_t("Faible : {liste}", { liste: weak.map(bestiaryAttackLabel).join(", ") }));
+  return out;
+}
+window.bestiaryAffinityLines = bestiaryAffinityLines;
+
 /* Ce qu'elle fait de particulier, lu sur la fiche (traits des mondes). */
 function creatureTraits(id) {
   var e = (window.ENEMY_DB || {})[id] || {}, el = (window.ELITE_DB || {})[id] || {}, out = [];
@@ -248,9 +259,7 @@ function openCreatureSheet(id) {
   } else {
     if (d.lore) h += '<p class="bst-lore">' + esc(_td(d.lore)) + '</p>';
     creatureTraits(id).forEach(function (t) { h += '<p class="bst-line">' + esc(t) + '</p>'; });
-    var resists = Array.isArray(d.resists) ? d.resists : [], weak = Array.isArray(d.weak) ? d.weak : [];
-    if (resists.length) h += '<p class="bst-line">' + esc(_t("Résiste : {liste}", { liste: resists.map(bestiaryAttackLabel).join(", ") })) + '</p>';
-    if (weak.length) h += '<p class="bst-line">' + esc(_t("Faible : {liste}", { liste: weak.map(bestiaryAttackLabel).join(", ") })) + '</p>';
+    bestiaryAffinityLines(d).forEach(function (t) { h += '<p class="bst-line">' + esc(t) + '</p>'; });
     var c = estimateCreatureCombatStats(id, d, d.isBoss);
     if (c) {
       h += '<div class="nb-entry-meta-row bst-stats">';
@@ -320,10 +329,7 @@ function buildBestiaryEntryCardHTML(id) {
   h += '<div class="nb-entry-name">' + esc(met ? _td(data.name) : "???") + (isBoss ? ' <span class="nb-entry-badge">' + _t("BOSS") + '</span>' : '') + '</div>';
 
   if (met) {
-    var resists = Array.isArray(data.resists) ? data.resists : [];
-    var weak = Array.isArray(data.weak) ? data.weak : [];
-    if (resists.length) h += '<div class="nb-entry-desc">' + esc(_t("Résiste : {liste}", { liste: resists.map(bestiaryAttackLabel).join(", ") })) + '</div>';
-    if (weak.length) h += '<div class="nb-entry-desc">' + esc(_t("Faible : {liste}", { liste: weak.map(bestiaryAttackLabel).join(", ") })) + '</div>';
+    bestiaryAffinityLines(data).forEach(function (t) { h += '<div class="nb-entry-desc">' + esc(t) + '</div>'; });
     if (data.lore) h += '<div class="nb-entry-desc nb-entry-lore">' + esc(_td(data.lore)) + '</div>'; // v3.360.0 : une ligne de bestiaire
 
     var combat = estimateCreatureCombatStats(id, data, isBoss);

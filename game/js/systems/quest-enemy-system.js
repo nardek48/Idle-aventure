@@ -113,10 +113,20 @@ var QuestEnemyManager = {
     if (!quest) return 1;
     var src = (window.ADVENTURE_QUESTS && ADVENTURE_QUESTS[quest.id]) || quest;
     var m = Number(isBoss && src.bossPowerMult != null ? src.bossPowerMult : src.enemyPowerMult);
-    if (!(isFinite(m) && m > 0)) return 1;
+    var cm = this.getClassPowerMult(src);
+    if (!(isFinite(m) && m > 0)) return cm;
     // v3.457.2 (accord de Seb) : gabarit de classe des quêtes fixes (Chevalier ÷1,3), comme heroRef depuis v3.448.7
     if (!src.heroRef) m /= this.getClassGabarit();
-    return m;
+    return m * cm;
+  },
+
+  /* v3.700.0 (MAGE-DRAGON, Seb 05/11) : classPowerMult { classe: mult } de la quête, sur toutes
+     ses rencontres et son boss, pour la classe du héros seulement. Absent = 1. */
+  getClassPowerMult: function (src) {
+    var tab = src && src.classPowerMult;
+    var cls = (tab && typeof getClassByHeroId === "function") ? getClassByHeroId(game.heroId) : null;
+    var c = cls ? Number(tab[cls.id]) : 1;
+    return (isFinite(c) && c > 0) ? c : 1;
   },
 
   /* Diviseur de puissance de la classe du héros (WORLD_HERO_SCALING.classEhpGabarit) ; 1 par défaut. */

@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.700.0", "menu_icons/bestiaire_menu", _t("Le Dragon ancien frappe moins fort face au Mage, et le pronostic prévient mieux un Mage sans arme. Le Bestiaire n'affiche plus de faiblesses pour les boss et les élites : elles n'ont pas d'effet sur eux.")],
     ["3.699.0", "combat_stats/stat_attack", _t("Combat de groupe : la faiblesse ou la résistance de l'ennemi frappé compte enfin, même s'il n'est pas le premier du groupe. L'Entrepôt dit où se cuisinent les rations.")],
     ["3.698.0", "menu_icons/bestiaire_menu", _t("Le Dragon ancien est moins coriace. Le pronostic d'une mission ne change plus d'une ouverture à l'autre, et le Bestiaire n'a plus qu'une fiche pour le Golem.")],
     ["3.697.0", "menu_icons/village_menu", _t("L'écran de retour survit à un rechargement, « Village & Production » s'ouvre dès la première visite du Village, les cartes d'achat payables ne sont plus voilées, et la 2e aventure des Ruines s'appelle « Nef ensevelie ».")],

@@ -10,6 +10,7 @@
    Les textes des données sont traduits par _td() à l'affichage (registre : lang/data-fields.js). */
 I18n.register("en", {
   // index.html
+  "Le Dragon ancien frappe moins fort face au Mage, et le pronostic prévient mieux un Mage sans arme. Le Bestiaire n'affiche plus de faiblesses pour les boss et les élites : elles n'ont pas d'effet sur eux.": "The Ancient Dragon hits the Mage less hard, and the forecast warns an unarmed Mage better. The Bestiary no longer shows weaknesses for bosses and elites: they have no effect on them.",
   "Combat de groupe : la faiblesse ou la résistance de l'ennemi frappé compte enfin, même s'il n'est pas le premier du groupe. L'Entrepôt dit où se cuisinent les rations.": "Group fights: the weakness or resistance of the enemy you hit now counts, even when it isn't the first of the group. The Warehouse now says where rations are cooked.",
   "Le Dragon ancien est moins coriace. Le pronostic d'une mission ne change plus d'une ouverture à l'autre, et le Bestiaire n'a plus qu'une fiche pour le Golem.": "The Ancient Dragon is less tough. A mission's forecast no longer changes from one look to the next, and the Bestiary has a single entry for the Golem.",
   "L'écran de retour survit à un rechargement, « Village & Production » s'ouvre dès la première visite du Village, les cartes d'achat payables ne sont plus voilées, et la 2e aventure des Ruines s'appelle « Nef ensevelie ».": "The return screen survives a reload, “Village & Production” opens on your first Village visit, affordable shop cards are no longer dimmed, and the Ruins' 2nd adventure is now called the “Buried Nave”.",
@@ -500,19 +501,6 @@ I18n.register("en", {
   "Matériaux manquants": "Missing materials",
   "{x} reforgé — niveau {n}.": "{x} reforged — level {n}.",
   "Niveau {n}": "Level {n}",
-
-  // js/systems/hunt-quest-system.js
-  "Chasse introuvable": "Hunt not found",
-  "Une chasse est déjà en cours": "A hunt is already under way",
-  "Termine ou abandonne ton donjon avant de chasser": "Finish or abandon your dungeon before hunting",
-  "Termine ou abandonne ta quête avant de chasser": "Finish or abandon your quest before hunting",
-  "Départ en chasse : {x}": "Setting out on a hunt: {x}",
-  "Prime de battue : +{n} or": "Beat bounty: +{n} gold",
-  "Chasse terminée : {x} ({n}/{n})": "Hunt complete: {x} ({n}/{n})",
-  "Chasse arrêtée : {x}": "Hunt stopped: {x}",
-  "Chasse arrêtée": "Hunt stopped",
-  "Chasse interrompue : {x} — le butin de la sortie est perdu. Retour au Campement.": "Hunt interrupted: {x} — the run's loot is lost. Back to Camp.",
-  "Chasse interrompue — le butin de la sortie est perdu. Retour au Campement.": "Hunt interrupted — the run's loot is lost. Back to Camp.",
 
   // js/systems/living-map-system.js
   "Secteur inconnu": "Unknown sector",
@@ -3144,8 +3132,6 @@ I18n.register("en", {
   "Pister {target} ronces au Cœur de la forêt": "Track {target} brambles in the Heart of the Forest",
   "Vaincre la Ronce qui se souvient": "Defeat the Bramble That Remembers",
 
-  // HUNT_QUESTS
-
   // LIVING_MAPS
   "Aeswyn": "Aeswyn",
   "Le camp du Portail": "The Portal Camp",
@@ -3655,8 +3641,6 @@ I18n.register("en", {
   "Vaincre {target} rencontres (une nuée compte pour une)": "Defeat {target} encounters (a swarm counts as one)",
   "Vaincre {target} rencontres dans le lit du fleuve": "Defeat {target} encounters in the riverbed",
   "Vaincre Nezzam le Desséché": "Defeat Nezzam the Withered",
-
-  // HUNT_QUESTS
 
   // STORY_QUESTS
   "Ce que le sable garde": "What the Sand Keeps",

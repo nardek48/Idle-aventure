@@ -4,7 +4,12 @@
    d'une quête repart de 0 à chaque départ (décision Seb) — elle n'est plus conservée après une mort ou un abandon. */
 
 var AdventureQuestManager = {
-  ensureDefaults: function () {
+  /* PERF-4 (reste, v3.700.0) : progression et quêtes finies déjà validées (mêmes objets) ne sont pas
+     repassées ; un état remplacé ou force (départ d'une quête) relance la validation complète. */
+  _ensured: null,
+  ensureDefaults: function (force) {
+    var en = this._ensured;
+    if (!force && en && en.p === game.adventureQuestProgress && en.c === game.adventureQuestsCompleted) return this.ensureRun();
     if (!game.adventureQuestProgress || typeof game.adventureQuestProgress !== "object") {
       game.adventureQuestProgress = {};
     }
@@ -27,6 +32,7 @@ var AdventureQuestManager = {
     });
 
     this.ensureRun();
+    this._ensured = { p: game.adventureQuestProgress, c: game.adventureQuestsCompleted };
   },
 
   ensureRun: function () {
@@ -170,7 +176,7 @@ var AdventureQuestManager = {
   },
 
   start: function (questId) {
-    this.ensureDefaults();
+    this.ensureDefaults(true);
 
     var quest = ADVENTURE_QUESTS[questId];
     if (!quest) return showToast(_t("Quête introuvable"), 1200);

@@ -65,7 +65,6 @@ vm.createContext(sandbox);
 
 var FICHIERS = [
   "js/data/warehouse-resources.js", // WAREHOUSE_RESOURCES (v3.692.0 : sorti de hunt-quests.js)
-  "js/data/hunt-quests.js",       // HUNT_QUESTS (vide)
   "js/data/scene-templates.js",   // SCENE_TEMPLATES, SCENE_INTENSITY
   "js/data/workshops.js",         // recette Menuiserie
   "js/data/village-buildings.js", // paliers de construction

@@ -438,7 +438,7 @@ Object.keys(AQ).forEach(function (id) {
   if (q.eliteStatMult) f.push("eliteStatMult " + Object.keys(q.eliteStatMult).map(function (k) { return k + " ×" + fr(q.eliteStatMult[k]); }).join(", "));
   qrows.push([q.name || id, id + (q.bossId ? " (boss : " + ((G.BOSS_DB[q.bossId] || {}).name || q.bossId) + ")" : ""), f.join(" · ") || "×1"]);
 });
-Object.keys(G.HUNT_QUESTS).forEach(function (id) { var q = G.HUNT_QUESTS[id]; qrows.push([q.name, id + " (chasse, lot de " + q.lotSize + ")", q.enemyPowerMult ? "enemyPowerMult ×" + fr(q.enemyPowerMult) : "×1"]); });
+Object.keys(G.HUNT_QUESTS || {}).forEach(function (id) { var q = G.HUNT_QUESTS[id]; qrows.push([q.name, id + " (chasse, lot de " + q.lotSize + ")", q.enemyPowerMult ? "enemyPowerMult ×" + fr(q.enemyPowerMult) : "×1"]); });
 P(table(["Quête", "Identifiant", "Multiplicateurs"], qrows));
 
 H(2, "3.4 Élites");

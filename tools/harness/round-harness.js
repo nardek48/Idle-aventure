@@ -23480,7 +23480,7 @@ console.log("\n[464] v3.699.0 — Code et documents : chasses retirées, ensure*
     // ARCH-9 : moteur des chasses retiré, fichiers hors index.html et précache, encore sur le disque
     var idx = rd("index.html"), sw = rd("sw.js");
     ok(typeof g.HuntQuestManager === "undefined" && typeof g.HUNT_QUESTS === "undefined" && typeof g.openHuntQuestIntro === "undefined" && typeof g.buildHuntLotCompleteHTML === "undefined", "ARCH-9 : moteur, données et vues des chasses absents du jeu chargé");
-    ok(idx.indexOf("hunt-quest") === -1 && sw.indexOf("hunt-quest") === -1 && fs.existsSync(path.join(ROOT, "js/systems/hunt-quest-system.js")) && fs.existsSync(path.join(ROOT, "js/data/hunt-quests.js")), "ARCH-9 : hunt-quest-system.js et hunt-quests.js retirés d'index.html et du précache, gardés sur le disque (à supprimer à la version suivante)");
+    ok(idx.indexOf("hunt-quest") === -1 && sw.indexOf("hunt-quest") === -1 && !fs.existsSync(path.join(ROOT, "js/systems/hunt-quest-system.js")) && !fs.existsSync(path.join(ROOT, "js/data/hunt-quests.js")), "ARCH-9 : hunt-quest-system.js et hunt-quests.js retirés d'index.html, du précache, puis du disque (v3.700.0)");
     var bad = ["js/systems/combat-engine.js", "js/systems/mission-board-system.js", "js/systems/sortie-system.js", "js/systems/quest-enemy-system.js", "js/systems/progression-system.js", "js/ui/quests-view.js", "js/ui/admin-view.js"].filter(function (f) { return /HuntQuestManager|HUNT_QUESTS/.test(rd(f)); });
     ok(bad.length === 0, "ARCH-9 : plus aucun appel au moteur des chasses" + (bad.length ? " (" + bad.join(", ") + ")" : ""));
     // ancienne sauvegarde en pleine chasse : se charge sans perte ni erreur, le lot est clos
@@ -23559,6 +23559,70 @@ console.log("\n[464] v3.699.0 — Code et documents : chasses retirées, ensure*
     var ch = fs.readFileSync(path.join(DEP, "tools/sim/campagne-harness.js"), "utf8");
     ok(/STATS\.actifMs = STATS\.combatMs \+ STATS\.navMs/.test(ch) && /NAV_GESTE_MS = \d+/.test(ch), "EQUI-19 : temps actif défini (rounds + navigation, sans les attentes)");
   } catch (err) { ok(false, "[464] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[465] v3.700.0 — Mage face au Dragon, pronostic du Mage, faiblesses des boss et élites, ensure* du Camp (Seb, 05/11, option A)");
+(function () {
+  try {
+    // MAGE-DRAGON : ×0,8 sur les ennemis de la quête du Dragon, face au Mage seulement
+    var QE = g.QuestEnemyManager, qd = g.ADVENTURE_QUESTS.aq_montagne_dragon, qa = g.ADVENTURE_QUESTS.aq_montagne_tries;
+    ok(qd.classPowerMult && qd.classPowerMult.mage === 0.8 && !qd.classPowerMult.knight && !qd.classPowerMult.ranger, "MAGE-DRAGON : réglage par classe lisible dans la quête (mage 0,8)");
+    var pm = {};
+    ["knight", "ranger", "mage"].forEach(function (c) { game = freshCombat(c); pm[c] = { b: QE.getPowerMult(qd, true), e: QE.getPowerMult(qd, false), g: QE.getClassGabarit(), a: qa ? QE.getPowerMult(qa, false) : 1 }; });
+    var near = function (a, b) { return Math.abs(a - b) < 1e-9; };
+    ok(near(pm.mage.b, 0.7 / pm.mage.g * 0.8) && near(pm.mage.e, 7 / pm.mage.g * 0.8), "MAGE-DRAGON : Dragon et rencontres ×0,8 face au Mage (" + pm.mage.b.toFixed(3) + " / " + pm.mage.e.toFixed(3) + ")");
+    ok(near(pm.knight.b, 0.7 / pm.knight.g) && near(pm.ranger.b, 0.7 / pm.ranger.g) && near(pm.ranger.e, 7 / pm.ranger.g), "MAGE-DRAGON : Chevalier et Rôdeur inchangés");
+    ok(!qa || near(pm.mage.a * pm.mage.g, pm.ranger.a * pm.ranger.g), "MAGE-DRAGON : les autres quêtes ne bougent pas pour le Mage");
+    game = freshCombat("mage");
+    var cpm = qd.classPowerMult, en1, en2;
+    try { qd.classPowerMult = { mage: 1 }; en1 = QE.spawnFor(qd, true); } finally { qd.classPowerMult = cpm; }
+    en2 = QE.spawnFor(qd, true);
+    var rp = en1 && en2 ? en2.stats.power / en1.stats.power : 0;
+    ok(en2 && en2.isBoss && rp > 0.79 && rp < 0.81, "MAGE-DRAGON : le Dragon apparu face au Mage frappe ×0,8 (" + (en1 && en1.stats.power) + " → " + (en2 && en2.stats.power) + ")");
+
+    // PRONO-MAGE : coefficient propre au Mage, Chevalier inchangé, Rôdeur sans coefficient
+    ok(g.FORECAST_CLASS_DMG_MULT.mage === 0.9 && g.FORECAST_CLASS_DMG_MULT.knight === 0.75 && g.FORECAST_CLASS_DMG_MULT.ranger === undefined, "PRONO-MAGE : Mage 0,9, Chevalier 0,75, Rôdeur 1");
+    game = freshCombat("mage"); giveWeapon();
+    var brut = g.CombatForecast.getHeroDamagePerRound(), prono = g.CombatForecast.getForecastHeroDamage();
+    ok(near(prono, Math.max(1, brut * 0.9)), "PRONO-MAGE : dégâts du Mage dans le pronostic ×0,9 (" + Math.round(brut) + " → " + Math.round(prono) + ")");
+
+    // FAIBLESSES : « Résiste / Faible » pour les ennemis ordinaires seulement
+    var lignes = function (id) { return g.bestiaryAffinityLines(g.bestiaryData(id)); };
+    ok(lignes("ancientdragon").length === 0 && g.BOSS_DB.ancientdragon.weak.length > 0, "FAIBLESSES : boss sans « Résiste / Faible » (données gardées)");
+    ok(lignes("ifrit_trieur").length === 0, "FAIBLESSES : élite sans « Résiste / Faible »");
+    ok(lignes("ifrit").length === 2, "FAIBLESSES : ennemi ordinaire, les deux lignes restent");
+    game = freshCombat("knight"); g.game.killCounts = { ancientdragon: 1, ifrit_trieur: 1, ifrit: 1 };
+    var cb = g.buildBestiaryEntryCardHTML("ancientdragon"), ce = g.buildBestiaryEntryCardHTML("ifrit_trieur"), co = g.buildBestiaryEntryCardHTML("ifrit");
+    var lab = g._t("Résiste : {liste}", { liste: "" }).split(":")[0];
+    ok(cb.indexOf(lab) === -1 && ce.indexOf(lab) === -1 && co.indexOf(lab) !== -1, "FAIBLESSES : cartes du Bestiaire (boss, élite sans ; ordinaire avec)");
+    game = freshCombat("mage"); giveWeapon();
+    game.enemy = { id: "ifrit", isBoss: false, hp: 10, maxHp: 10, weak: ["bow"], resists: ["magic"], stats: g.makeRpgStats(1, 1, 1, 1, 1) };
+    ok(g.getDamageAffinity().mult === g.RESIST_DMG_MULT, "FAIBLESSES : rien ne change en combat (l'Ifrit résiste toujours à la magie)");
+
+    // ARCH-9 (fin) : textes des chasses retirés d'en.js
+    var enjs = fs.readFileSync(path.join(ROOT, "js/lang/en.js"), "utf8");
+    ok(enjs.indexOf("hunt-quest-system") === -1 && enjs.indexOf("// HUNT_QUESTS") === -1 && enjs.indexOf("Chasse introuvable") === -1, "ARCH-9 : textes orphelins des chasses retirés d'en.js");
+
+    // PERF-4 (reste) : réserve des Petites Aventures et quêtes d'aventure validées une fois
+    game = freshCombat("knight");
+    var SR = g.SceneRunManager, AQ = g.AdventureQuestManager, egs = 0, egsO = g.ensureGameStateDefaults;
+    g.ensureGameStateDefaults = function () { egs++; return egsO.apply(this, arguments); };
+    try {
+      SR.ensureDefaults(); AQ.ensureDefaults(); egs = 0;
+      for (var i = 0; i < 50; i++) { SR.petiteAventureCountToday(); SR.canStartPetiteAventureToday(); SR.isQuestCompleted("x"); AQ.ensureDefaults(); }
+      ok(egs === 0, "PERF-4 (reste) : 200 appels au Camp, aucune revalidation globale (" + egs + ")");
+      g.game.explorationProgression = {}; SR.petiteAventureCountToday();
+      ok(egs === 1 && g.game.explorationProgression.petiteAventure && typeof g.game.explorationProgression.petiteAventure.spent === "number", "PERF-4 (reste) : état remplacé, réserve revalidée une fois");
+    } finally { g.ensureGameStateDefaults = egsO; }
+    var qid = "aq_forest_expedition", st0 = g.ADVENTURE_QUESTS[qid].steps[0].id;
+    g.game.adventureQuestProgress = {}; g.game.adventureQuestsCompleted = {}; AQ.ensureDefaults();
+    ok(g.game.adventureQuestProgress[qid][st0] === 0 && g.game.adventureQuestsCompleted[qid] === false, "PERF-4 (reste) : nouvelles tables de quêtes revalidées");
+    g.game.adventureQuestProgress[qid] = "x"; AQ.ensureDefaults();
+    ok(g.game.adventureQuestProgress[qid] === "x", "PERF-4 (reste) : mêmes tables, pas de revalidation (appel courant)");
+    run("game.heroHp = game.heroMaxHp;"); AQ.start(qid);
+    ok(g.game.adventureQuestProgress[qid] && g.game.adventureQuestProgress[qid][st0] === 0, "PERF-4 (reste) : le départ d'une quête force la validation complète");
+    AQ.forfeit && AQ.forfeit();
+  } catch (err) { ok(false, "[465] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
 Promise.all(ATTENTES).then(function () {

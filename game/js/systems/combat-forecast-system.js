@@ -38,7 +38,8 @@ var FORECAST_RATIO_THRESHOLDS = {
    garde 12 à 30 % de ses actions et n'exécute presque jamais, il touche 0,38 à 0,65 de l'estimé
    contre 0,57 à 0,89 à distance. 0,7 le recale sur les classes à distance, sur qui les seuils sont calés. */
 // PRONO-MISSION (05/11) : 0,7 → 0,75, avec l'usure moyenne (Chevalier sans arme, 3 potions : 1,47 → 1,14 pour 57 % d'échec réel)
-var FORECAST_CLASS_DMG_MULT = { knight: 0.75 };
+// PRONO-MAGE (Seb 05/11, option A) : Mage sans arme 3 potions 0,93 « Risqué » → 1,23 « Très difficile » (90 % d'échec réel)
+var FORECAST_CLASS_DMG_MULT = { knight: 0.75, mage: 0.9 };
 
 /* v3.523.0 (audit COM-1) : dégâts réels d'une ÉLITE évaluée / estimés, par archétype (rage triplée par
    l'exaltation, blindage), et son bouclier (−50 % sur 20 à 25 % des rounds) sur les dégâts du héros. Calés au

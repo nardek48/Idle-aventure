@@ -5,7 +5,12 @@
    verrou du héros, les quêtes terminées, le déblocage et le compte rendu à la carte vivante. */
 
 var SceneRunManager = {
+  /* PERF-4 (reste, v3.700.0) : appelé ~15 fois/s par le tableau de missions ; la réserve déjà validée
+     (même objet) n'est pas revalidée. Un état remplacé (chargement, remise à zéro) relance tout. */
+  _ensured: null,
   ensureDefaults: function () {
+    var ep0 = game.explorationProgression;
+    if (this._ensured && ep0 && this._ensured === ep0.petiteAventure) return;
     if (typeof ensureGameStateDefaults === "function") ensureGameStateDefaults();
     if (!game.sceneRun) game.sceneRun = null;
     // v3.125.0 (Petites Aventures, Lot PA1) : cap journalier léger, persisté dans
@@ -16,6 +21,7 @@ var SceneRunManager = {
     if (!game.explorationProgression.petiteAventure || typeof game.explorationProgression.petiteAventure !== "object") {
       game.explorationProgression.petiteAventure = { spent: 0, since: null }; // v3.366.0 : réserve rechargeable
     }
+    this._ensured = game.explorationProgression.petiteAventure;
   },
 
   PETITE_AVENTURE_DAILY_CAP: 3,
