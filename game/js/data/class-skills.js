@@ -184,11 +184,12 @@ window.CLASS_SKILLS = {
         id: "archer_piercing_shot",
         slot: "skill3",
         label: "Tir perforant",
-        description: "Inflige 200% des dégâts. Coûte 50 Concentration.",
+        description: "Inflige 200% des dégâts. La flèche traverse : un second ennemi debout reçoit le même coup. Coûte 50 Concentration.",
         type: "damage",
         damageMultiplier: 2.00,
         hits: 1,
         ignoreAffinity: true,
+        traverse: true, // v3.709.0 (Seb 05/11) : second ennemi debout touché du même coup (class-combat-system)
         resourceCost: 50,
         resourceGain: 0,
         cooldownRounds: 4,

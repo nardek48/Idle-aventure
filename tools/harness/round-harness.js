@@ -24107,6 +24107,50 @@ console.log("\n[474] v3.708.0 — QUET-8 : l'Admin fabrique l'état des étapes 
   } catch (err) { ok(false, "[474] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[475] v3.709.0 — Tir perforant « traverse » (Seb 05/11) ; IMG-FOREST03 : icônes Précision et Volonté");
+(function () {
+  var dd0 = g.CombatEngine.dealDamage;
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='ranger'; game.equipped.weapon = generateEquipmentItem('weapon', 'common', 0); EquipmentManager.recalcStats();");
+    var CCM = g.ClassCombatManager, tp = CCM.getAction("skill3"), tir = CCM.getAction("skill1"), coups = [];
+    ok(tp && tp.id === "archer_piercing_shot" && tp.traverse === true && !tir.traverse, "Tir perforant porte le trait « traverse », Tir précis non");
+    g.CombatEngine.dealDamage = function (dmg, crit, tap, ign, cible) { coups.push({ dmg: dmg, crit: crit, cible: cible || g.game.enemy }); return dd0.apply(this, arguments); };
+    function groupe(n) {
+      var l = [];
+      for (var i = 0; i < n; i++) l.push({ id: "slime", name: "M" + i, isBoss: false, hp: 1e9, maxHp: 1e9, stats: g.ENEMY_DB.slime.stats, resists: [], weak: [] });
+      g.CombatEngine.spawnGroup(l);
+      return g.game.combat.enemies;
+    }
+    var en = groupe(3); coups = [];
+    CCM.applyDamageAction(tp, null);
+    ok(coups.length === 2 && coups[0].cible === en[0] && coups[1].cible === en[1] && coups[1].dmg === coups[0].dmg && coups[1].crit === coups[0].crit, "traverse : le second ennemi debout reçoit le même coup (dégât et critique)");
+    ok(en[1].hp < 1e9 && en[2].hp === 1e9, "traverse : un seul ennemi de plus touché, le troisième intact");
+    en = groupe(3); en[1].hp = 0; coups = [];
+    CCM.applyDamageAction(tp, null);
+    ok(coups.length === 2 && coups[1].cible === en[2], "traverse : un ennemi mort est ignoré, la flèche va au suivant debout");
+    en = groupe(3); en[1].downed = true; en[2].asleep = true; coups = [];
+    CCM.applyDamageAction(tp, null);
+    ok(coups.length === 1, "traverse : ni ennemi à terre ni dormeur touché (aucun autre debout = un seul coup)");
+    en = groupe(1); coups = [];
+    CCM.applyDamageAction(tp, null);
+    ok(coups.length === 1 && coups[0].cible === en[0], "traverse : seul ennemi, comportement inchangé (un coup)");
+    en = groupe(3); coups = [];
+    CCM.applyDamageAction(tir, null);
+    ok(coups.length === 1, "traverse : Tir précis ne touche toujours qu'une cible");
+    var fr = "Inflige 200% des dégâts. La flèche traverse : un second ennemi debout reçoit le même coup. Coûte 50 Concentration.";
+    var en1 = fs.readFileSync(path.join(ROOT, "js/lang/en.js"), "utf8");
+    ok(tp.description === fr && en1.indexOf(JSON.stringify(fr) + ": ") >= 0 && en1.indexOf('"Inflige 200% des dégâts. Coûte 50 Concentration."') < 0, "traverse : description FR à jour, clé anglaise remplacée");
+    var st = null;
+    Object.keys(g.STORY_QUESTS).forEach(function (c) { g.STORY_QUESTS[c].steps.forEach(function (x) { if (x.id === "forest_03") st = x; }); });
+    var pts = (st && st.tutorial && st.tutorial.points) || [];
+    function ico(debut) { var p = pts.filter(function (x) { return x.text.indexOf(debut) === 0; })[0]; return p ? p.icon : null; }
+    ok(ico("Précision") === "images/Icons/improvement_icons/accuracy.webp" && ico("Volonté") === "images/Icons/improvement_icons/will.webp", "IMG-FOREST03 : Précision et Volonté ont leur icône d'Amélioration");
+    var vues = {}, dbl = pts.filter(function (x) { if (x.icon === "images/Icons/system/upgrade.webp") return false; var d = vues[x.icon]; vues[x.icon] = 1; return d; });
+    ok(dbl.length === 0 && pts.every(function (x) { return fs.existsSync(path.join(ROOT, x.icon)); }), "IMG-FOREST03 : plus aucune icône de stat en double, toutes présentes sur disque");
+  } catch (err) { ok(false, "[475] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  g.CombatEngine.dealDamage = dd0;
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

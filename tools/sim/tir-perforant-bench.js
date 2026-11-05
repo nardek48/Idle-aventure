@@ -9,6 +9,10 @@
      plein   : critique garanti si la Concentration est pleine au lancement ;
      crit    : critique garanti toujours (borne haute de « plein ») ;
      traverse: la flèche touche aussi un second ennemi debout (--traverse, part du coup, 1 par défaut).
+     Depuis v3.709.0, « traverse » est dans le jeu : « actuel » l'inclut, la variante « traverse » la doublerait.
+     Leviers de fréquence (Seb 05/11, mesure seule) : cout40 (coût de base 50 → 40, le talent Perforation fixe toujours 40/35) ;
+     prio2 / pret : Tir perforant prêt (sans recharge) passe avant Tir précis et Rafale, la Concentration est gardée pour lui
+     (attaque de base), avec au moins 2 ennemis debout (prio2) ou toujours (pret) ; contres et Défense du repli jamais touchés.
    Contenus : --donjon N (vagues, campement « souffler », boss) ou --quete id (ex. aq_montagne_dragon).
 
    USAGE : node tools/sim/tir-perforant-bench.js . --save ranger.json --donjon 3 [--quete id] [--runs N] [--variante actuel,perce,traverse] [--x 0.5] [--traverse 1] */
@@ -54,6 +58,22 @@ var extra = function () {
       }
       return r;
     } finally { tp = false; }
+  };
+  // Leviers prio2 / pret : un contre (annonce ou archétype), la Défense et la veine gardent la main
+  var CCM = g.ClassCombatManager, cr0 = CCM.chooseRoundAction.bind(CCM);
+  CCM.chooseRoundAction = function (forExec) {
+    var r = cr0(forExec);
+    if (V !== "prio2" && V !== "pret") return r;
+    if (r && (r.slot === "skill3" || r.slot === "defense" || r.slot === "vein")) return r;
+    var tpA = CCM.getAction("skill3");
+    if (!tpA || Number((g.game.classCooldowns || {})[TP_ID] || 0) > 0) return r;
+    if (V === "prio2" && (g.CombatActors.standingEnemies() || []).length < 2) return r;
+    if (r && r.slot) {
+      var a = CCM.getAction(r.slot), ctx = CCM.getGrimoireCombatContext();
+      if (g.actionCountersLiveAnnounce(a, ctx) || (r.matchedConditionId && g.isCounterConditionOfAction(a, r.matchedConditionId))) return r;
+    }
+    if (Number((g.game.classResource || {}).current || 0) >= Number(tpA.resourceCost || 0)) return { slot: "skill3", matchedConditionId: null };
+    return null; // attaque de base : la Concentration monte jusqu'au Tir perforant
   };
   var ab0 = g.VeinSystem.absorb.bind(g.VeinSystem);
   g.VeinSystem.absorb = function (foe, dmg) { return (tp && V === "perce") ? dmg : ab0(foe, dmg); };
@@ -133,6 +153,7 @@ var extra = function () {
   var ref = null;
   VARIANTES.forEach(function (v) {
     V = v; M = zero();
+    g.CLASS_SKILLS.archer.actions.skill3.resourceCost = v === "cout40" ? 40 : 50;
     for (var i = 0; i < RUNS; i++) {
       charge(t, 97000 + i);
       var r = DJ ? donjon() : quete();

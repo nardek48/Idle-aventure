@@ -367,8 +367,8 @@ var STORY_QUESTS = {
             { icon: "images/Icons/system/upgrade.webp", text: "Chaque amélioration augmente une statistique de façon permanente contre de l'or. Le prix grimpe à chaque achat — étale tes investissements plutôt que de tout miser sur une seule stat." },
             { icon: "images/Icons/combat_stats/stat_attack.webp", text: "Ta stat principale, marquée à l'écran, fait l'essentiel de tes dégâts : Force pour le Chevalier, Célérité pour le Rôdeur, Volonté pour le Mage." },
             { icon: "images/Icons/improvement_icons/power.webp", text: "Force — dégâts de ton attaque de base." },
-            { icon: "images/Icons/combat_stats/stat_critical.webp", text: "Précision — chance de coup critique." },
-            { icon: "images/Icons/combat_stats/stat_critical.webp", text: "Volonté — dégâts bonus en cas de critique." },
+            { icon: "images/Icons/improvement_icons/accuracy.webp", text: "Précision — chance de coup critique." },
+            { icon: "images/Icons/improvement_icons/will.webp", text: "Volonté — dégâts bonus en cas de critique." },
             { icon: "images/Icons/combat_stats/stat_health.webp", text: "Endurance — PV maximum et une partie de ta défense." },
             { icon: "images/Icons/combat_stats/stat_speed.webp", text: "Célérité — remplit ta jauge de combat plus vite (frappe bonus plus fréquente)." }
           ]
