@@ -1,3 +1,5 @@
+> **Périmé** : voir l'État des chantiers du 05/11 (`Aethervale_Etat_des_chantiers_2026-11-05_v3693_0.md`, dépôt de documentation, v3.693.0). Gardé pour l'historique.
+
 # Passation — conversation du 30/10/2026 (v3.548.0 → v3.566.0)
 
 À coller en ouverture de la prochaine conversation, avec CLAUDE.md.
