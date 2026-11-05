@@ -10,6 +10,7 @@
    Les textes des données sont traduits par _td() à l'affichage (registre : lang/data-fields.js). */
 I18n.register("en", {
   // index.html
+  "Bandeau du haut et barre du bas plus nets : les pièces de Seb sont détourées proprement (plus de liseré clair) et les icônes du bas n'ont plus de fond.": "Sharper top banner and bottom bar: Seb's pieces are now cleanly cut out (no more light fringe) and the bottom icons no longer have a background.",
   "Nouveau bandeau du haut et nouvelle barre du bas, sur les dessins de Seb. Le « + » à côté de l'or ouvre « Ton or peut servir » et pulse quand une dépense t'attend (il remplace la bulle dorée).": "New top banner and bottom bar, from Seb's artwork. The “+” next to your gold opens “Your gold can be put to use” and pulses when a purchase is waiting (it replaces the golden bubble).",
   "Rôdeur : Tir perforant traverse désormais sa cible, un second ennemi debout reçoit le même coup. Tutoriel de l'Amélioration : Précision et Volonté ont leur propre icône.": "Ranger: Piercing Shot now passes through its target, a second standing enemy takes the same hit. Upgrade tutorial: Accuracy and Will have their own icons.",
   "Outil d'administration plus fidèle : une étape d'Histoire forcée pose aussi l'équipement, les secteurs et les compteurs qu'elle demande.": "More faithful admin tool: a forced Story step now also sets the gear, sectors and counters it requires.",
