@@ -23708,6 +23708,40 @@ console.log("\n[467] v3.702.0 — Petits écrans : marges, bandeau court, Partir
   } catch (err) { ok(false, "[467] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[468] v3.703.0 — Fenêtres : aides resserrées et « Suite ↓ » (TUTO-11), feuilles et fenêtres modales au clavier (CPL3-5), marges des pages à sous-onglets (atelier fenêtres, Seb 05/11)");
+(function () {
+  try {
+    var rd = function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); };
+    var rc = rd("css/07-responsive.css"), bloc = rc.slice(rc.indexOf("v3.703.0 : fenêtres"));
+    ok(bloc.length > 500 && !/\/\*[^*]*\*\/[^{}]*\*\//.test(bloc), "CSS : bloc « fenêtres » en fin de 07-responsive.css, commentaires bien fermés");
+    // TUTO-11 (A)
+    ok(/@media \(max-height: 700px\) \{[\s\S]*?\.tutorial-card:not\(\.story-choice-card\) \.kwin-head \{ flex-direction: row; gap: 10px;[\s\S]*?\.kwin-ico img \{ width: 36px; height: 36px; \}[\s\S]*?\.tutorial-point \{ padding: 8px 10px; gap: 8px; \}/.test(bloc)
+      && /\.tutorial-overlay\.kwin-veil:not\(:has\(\.story-choice-card\)\) \{ padding: calc\(10px/.test(bloc) && bloc.indexOf("font-size: 13px") < 0, "TUTO-11 (A) : sous 700 px de haut, en-tête en ligne (36 px), voile de 10 px, cartes resserrées, texte non touché (choix du récit exclu)");
+    ok(/\.tut-more > i \{ position: absolute;[\s\S]*?linear-gradient/.test(bloc) && /\.tutorial-card\.is-end \.tut-more > i \{ opacity: 0; visibility: hidden; \}/.test(bloc), "TUTO-11 : dégradé et pastille « Suite ↓ », effacés en fin de liste (is-end)");
+    var th = g.buildTutorialModalHTML("void 0", g.GENERIC_TUTORIALS.camp_welcome);
+    ok(/<\/div>\s*<div class="tut-more" aria-hidden="true"><i><span>Suite ↓<\/span><\/i><\/div>\s*<div class="kwin-foot">/.test(th), "TUTO-11 : l'indice est posé entre la liste et « Compris », caché aux lecteurs d'écran");
+    var tv = rd("js/ui/tutorial-view.js");
+    ok((tv.match(/host\.innerHTML = buildTutorialModalHTML\([^;]+\); wireTutorialHint\(host\); \}/g) || []).length === 3 && /body\.addEventListener\("scroll", up, \{ passive: true \}\)/.test(tv), "TUTO-11 : écouteur de défilement posé par les 3 ouvertures d'aide");
+    ok(g.I18n.dicts.en["Suite ↓"] === "More ↓", "TUTO-11 : « Suite ↓ » traduit (More ↓)");
+    var t0 = g.GENERIC_TUTORIALS.camp_welcome.points.map(function (x) { return x.text; }).join("|");
+    ok(t0.indexOf("Suis ta barre de vie") > 0 && g.GENERIC_TUTORIALS.camp_welcome.points.length === 4, "TUTO-11 (A) : textes d'aide inchangés (Le Campement, 4 points)");
+    // CPL3-5 (A)
+    var md = rd("js/ui/modal.js"), kd = md.slice(md.indexOf("var kDialog"));
+    ok(typeof g.kDialog === "object" && typeof g.kDialog.open === "function" && typeof g.kDialog.close === "function" && typeof g.kDialog.sync === "function", "CPL3-5 : kDialog.open / close / sync exposés");
+    ok(/setAttribute\("role", "dialog"\)/.test(kd) && /setAttribute\("aria-modal", "true"\)/.test(kd) && /setAttribute\("aria-labelledby", lab\.id\)/.test(kd) && /setAttribute\("aria-describedby", sub\.id\)/.test(kd), "CPL3-5 : role=\"dialog\", aria-modal, nom = titre seul, sous-titre en description");
+    ok(/var SEL = "\.ksheet, \.full-menu, \.kwin";/.test(kd) && /KEEP = \{ "toast": 1, "howto-toast-root": 1, "pwa-update-banner": 1 \}/.test(kd), "CPL3-5 : feuilles et fenêtres prises en charge ; toasts et bandeau de mise à jour jamais inertes");
+    ok(/new MutationObserver/.test(kd) && /childList: true, subtree: true/.test(kd) && /managed = managed\.filter\(function \(c\) \{[\s\S]*?c\.removeAttribute\("inert"\)/.test(kd), "CPL3-5 : observateur du DOM (fermetures par innerHTML = \"\") ; l'inert posé est toujours retiré");
+    ok(/function foreignAbove\(top\)/.test(kd) && /suspended = !!top && foreignAbove\(top\);/.test(kd) && /e\.key !== "Tab" \|\| !stack\.length \|\| suspended/.test(kd), "CPL3-5 : un calque hors kit au-dessus (prologue, moment de boss, conversation) suspend inert et boucle");
+    ok(/e\.key !== "Tab"/.test(kd) && kd.indexOf("Escape") < 0 && /if \(!top\.classList\.contains\("ksheet-x"\)\) return "blocked";/.test(rd("js/ui/ui-root.js")), "CPL3-5 : Tab boucle dans la fenêtre ; Échap inchangé (backNavCloseTop, v3.536 A)");
+    ok(/modal\.classList\.add\("show"\);\s*if \(window\.kDialog\) kDialog\.open\(/.test(md) && /modal\.classList\.remove\("show"\);\s*if \(modal && window\.kDialog\) kDialog\.close\([^\n]*\n\s*var cb = _confirmModalCallback;/.test(md), "CPL3-5 : confirmModal ouvre et ferme par kDialog (fermé avant le rappel)");
+    var nothrow = true; try { g.kDialog.open(null); g.kDialog.close(null); g.kDialog.close(); } catch (e) { nothrow = false; }
+    ok(nothrow && g.kDialog.stack().length === 0 && g.kDialog.inertCount() === 0, "CPL3-5 : open / close sans fenêtre sans effet, pile vide, rien d'inerte");
+    ok(/:is\(\.ksheet, \.full-menu, \.kwin\)\[aria-modal="true"\]:focus \{ outline: none; \}/.test(bloc), "CPL3-5 : la fenêtre focalisée n'a pas de liseré (ses boutons gardent le leur)");
+    // MARGES (suite) : pages à sous-onglets
+    ok(/@media \(max-width: 430px\) \{[\s\S]*?html:not\(\.pc-mode\) #panel-container\.has-subtab-page \{ padding-left: 4px; padding-right: 4px; \}/.test(rc), "MARGES : pages à sous-onglets (Quêtes, Boutique, Donjon) à 4 px sur téléphone, hors mode PC");
+  } catch (err) { ok(false, "[468] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

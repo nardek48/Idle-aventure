@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.703.0", "menu_icons/menu_menu", _t("Fenêtres : sur petit écran, les aides tiennent mieux et une pastille « Suite ↓ » signale qu'il reste à lire ; au clavier, feuilles et fenêtres gardent le focus et le rendent en se fermant. Les Quêtes, la Boutique et le Donjon gagnent aussi de la largeur sur téléphone.")],
     ["3.702.0", "menu_icons/settings_menu", _t("Petits écrans : les pages gagnent de la largeur, les onglets restent sous la main en défilant, « Partir » et « Abandonner » ne se touchent plus, et les petits liens se touchent mieux. En combat avec compagnons, la ressource du héros s'affiche en entier.")],
     ["3.701.0", "menu_icons/bestiaire_menu", _t("Les faiblesses et résistances des ennemis disparaissent : chaque arme frappe toutes les créatures de la même façon, et le Bestiaire n'en parle plus.")],
     ["3.700.0", "menu_icons/bestiaire_menu", _t("Le Dragon ancien frappe moins fort face au Mage, et le pronostic prévient mieux un Mage sans arme. Le Bestiaire n'affiche plus de faiblesses pour les boss et les élites : elles n'ont pas d'effet sur eux.")],

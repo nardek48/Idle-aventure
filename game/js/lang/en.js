@@ -10,6 +10,7 @@
    Les textes des données sont traduits par _td() à l'affichage (registre : lang/data-fields.js). */
 I18n.register("en", {
   // index.html
+  "Fenêtres : sur petit écran, les aides tiennent mieux et une pastille « Suite ↓ » signale qu'il reste à lire ; au clavier, feuilles et fenêtres gardent le focus et le rendent en se fermant. Les Quêtes, la Boutique et le Donjon gagnent aussi de la largeur sur téléphone.": "Windows: on small screens, help windows fit better and a “More ↓” badge shows there is more to read; with a keyboard, sheets and windows keep focus and give it back when they close. Quests, the Shop and the Dungeon also get wider on phones.",
   "Petits écrans : les pages gagnent de la largeur, les onglets restent sous la main en défilant, « Partir » et « Abandonner » ne se touchent plus, et les petits liens se touchent mieux. En combat avec compagnons, la ressource du héros s'affiche en entier.": "Small screens: pages get wider, tabs stay within reach while scrolling, “Set out” and “Abandon” no longer touch, and small links are easier to tap. In combat with companions, the hero's resource is shown in full.",
   "Les faiblesses et résistances des ennemis disparaissent : chaque arme frappe toutes les créatures de la même façon, et le Bestiaire n'en parle plus.": "Enemy weaknesses and resistances are gone: every weapon hits every creature the same way, and the Bestiary no longer mentions them.",
   "Le Dragon ancien frappe moins fort face au Mage, et le pronostic prévient mieux un Mage sans arme. Le Bestiaire n'affiche plus de faiblesses pour les boss et les élites : elles n'ont pas d'effet sur eux.": "The Ancient Dragon hits the Mage less hard, and the forecast warns an unarmed Mage better. The Bestiary no longer shows weaknesses for bosses and elites: they have no effect on them.",
@@ -267,6 +268,7 @@ I18n.register("en", {
   "Or": "Gold",
   "Quête terminée !": "Quest complete!",
   "Fermer": "Close",
+  "Suite ↓": "More ↓",
   "Quête interrompue : {x} — retour au Campement. Au prochain départ, tout est à refaire.": "Quest interrupted: {x} — back to Camp. Next time you set out, everything starts over.",
   "Quête interrompue — retour au Campement. Au prochain départ, tout est à refaire.": "Quest interrupted — back to Camp. Next time you set out, everything starts over.",
   "Quête abandonnée : {x} — au prochain départ, tout est à refaire.": "Quest abandoned: {x} — next time you set out, everything starts over.",

@@ -32,6 +32,7 @@ function buildTutorialModalHTML(closeHandlerJs, tutorial) {
     h += '</div>';
   });
   h += '    </div>';
+  h += '    <div class="tut-more" aria-hidden="true"><i><span>' + esc(_t("Suite ↓")) + '</span></i></div>'; // v3.703.0 (TUTO-11) : indice de suite
   h += '    <div class="kwin-foot">';
   h += '      <button class="kbtn primary" type="button" onclick="' + closeHandlerJs + '">' + _t("Compris") + '</button>';
   h += '    </div>';
@@ -39,6 +40,19 @@ function buildTutorialModalHTML(closeHandlerJs, tutorial) {
   h += '</div>';
   return h;
 }
+
+/* v3.703.0 (TUTO-11, atelier « Fenêtres », Seb A) : dégradé et « Suite ↓ » tant que la liste déborde,
+   effacés en fin de liste (classe is-end) ; posé par chaque ouverture d'une fenêtre d'aide. */
+function wireTutorialHint(host) {
+  var card = host && host.querySelector ? host.querySelector(".tutorial-card") : null;
+  var body = card && card.querySelector(".kwin-body");
+  if (!body || !card.querySelector(".tut-more")) return;
+  var up = function () { card.classList.toggle("is-end", body.scrollTop + body.clientHeight >= body.scrollHeight - 4); };
+  body.addEventListener("scroll", up, { passive: true });
+  up();
+  if (typeof requestAnimationFrame === "function") requestAnimationFrame(up); // après le chargement des icônes et polices
+}
+window.wireTutorialHint = wireTutorialHint;
 
 /* Affiche le popup si cette étape en a un et qu'il n'a jamais été vu. Appelé depuis switchTab(). */
 function maybeShowStepTutorial(chapterId, tabName) {
@@ -53,7 +67,7 @@ function maybeShowStepTutorial(chapterId, tabName) {
 
   pendingTutorial = { chapterId: chapterId, tutorial: step.tutorial };
   var host = document.getElementById("tutorial-modal-root");
-  if (host) host.innerHTML = buildTutorialModalHTML("closeTutorialModal('" + esc(chapterId) + "')", step.tutorial);
+  if (host) { host.innerHTML = buildTutorialModalHTML("closeTutorialModal('" + esc(chapterId) + "')", step.tutorial); wireTutorialHint(host); }
 }
 window.maybeShowStepTutorial = maybeShowStepTutorial;
 
@@ -311,7 +325,7 @@ function maybeShowGenericTutorial(tabName) {
 
   pendingTutorial = { genericId: id, tutorial: tut };
   var host = document.getElementById("tutorial-modal-root");
-  if (host) host.innerHTML = buildTutorialModalHTML("closeGenericTutorialModal('" + esc(id) + "')", tut);
+  if (host) { host.innerHTML = buildTutorialModalHTML("closeGenericTutorialModal('" + esc(id) + "')", tut); wireTutorialHint(host); }
 }
 window.maybeShowGenericTutorial = maybeShowGenericTutorial;
 
@@ -341,7 +355,7 @@ function maybeShowVillageQuestTutorial(tabName) {
 
   pendingTutorial = { villageQuestId: quest.id, tutorial: quest.tutorial };
   var host = document.getElementById("tutorial-modal-root");
-  if (host) host.innerHTML = buildTutorialModalHTML("closeVillageQuestTutorialModal('" + esc(quest.id) + "')", quest.tutorial);
+  if (host) { host.innerHTML = buildTutorialModalHTML("closeVillageQuestTutorialModal('" + esc(quest.id) + "')", quest.tutorial); wireTutorialHint(host); }
 }
 window.maybeShowVillageQuestTutorial = maybeShowVillageQuestTutorial;
 

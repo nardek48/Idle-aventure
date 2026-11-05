@@ -29,6 +29,7 @@ html.text-big [id$="-sheet-root"] { zoom: 1.12; }
   html:not(.pc-mode) #panel-container .kfb { margin-left: 4px; margin-right: 4px; }
   html:not(.pc-mode) #panel-container .kfp-top-holder:not(.has-banner) .kf-top { margin-left: 4px; margin-right: 4px; }
   html:not(.pc-mode) #panel-container :is(.camp-tabs, .village-tabs).kseg.is-stack { margin-left: 0; margin-right: 0; }
+  html:not(.pc-mode) #panel-container.has-subtab-page { padding-left: 4px; padding-right: 4px; } /* v3.703.0 : pages à sous-onglets (Quêtes, Boutique, Donjon) */
 }
 /* UI-10 (A) : sous 600 px de haut, bandeau de 104 px sans la phrase (classe posée par ScreenBanner.fit) */
 .kfb.is-short .kfb-s { display: none; }
@@ -69,3 +70,25 @@ html:not(.wide-mode) #panel-container .kfb.is-mini ~ .nb-page-frame .kf-mid > .k
   html.text-big #panel-container .kseg.is-stack button { padding-left: 1px; padding-right: 1px; white-space: normal; letter-spacing: 0; }
   html.text-big #panel-container .kseg.is-stack button > span:not(.kseg-dot) { overflow: visible; text-overflow: clip; overflow-wrap: normal; hyphens: manual; -webkit-hyphens: manual; text-align: center; }
 }
+
+/* ===== v3.703.0 : fenêtres (atelier/fenetres.html, choix de Seb du 05/11) =====
+   TUTO-11 (A) : sous 700 px de haut, aide resserrée (en-tête en ligne, voile de 10 px), texte gardé à 13 px */
+@media (max-height: 700px) {
+  .tutorial-overlay.kwin-veil:not(:has(.story-choice-card)) { padding: calc(10px + var(--safe-top, 0px)) 10px calc(10px + var(--safe-bottom, 0px)); }
+  .tutorial-card:not(.story-choice-card) { padding-bottom: 10px; }
+  .tutorial-card:not(.story-choice-card) .kwin-head { flex-direction: row; gap: 10px; padding: 10px 18px 10px; }
+  .tutorial-card:not(.story-choice-card) .kwin-ico img { width: 36px; height: 36px; }
+  .tutorial-card:not(.story-choice-card) .kwin-ttl { font-size: 17px; text-align: left; }
+  .tutorial-card:not(.story-choice-card) .kwin-body { padding: 10px 12px 0; }
+  .tutorial-card:not(.story-choice-card) .tutorial-points { gap: 8px; }
+  .tutorial-card:not(.story-choice-card) .tutorial-point { padding: 8px 10px; gap: 8px; }
+  .tutorial-card:not(.story-choice-card) .kwin-foot { padding-top: 8px; }
+}
+/* TUTO-11 (A) : dégradé et pastille « Suite ↓ » tant que la liste déborde (is-end posé par wireTutorialHint) */
+.tut-more { position: relative; height: 0; pointer-events: none; z-index: 1; }
+.tut-more > i { position: absolute; left: 0; right: 0; bottom: 0; height: 52px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 4px;
+  background: linear-gradient(rgba(239, 224, 194, 0), rgba(239, 224, 194, 0.92) 62%); transition: opacity 0.2s; font-style: normal; }
+.tut-more > i > span { font-size: 12px; font-weight: 800; line-height: 1; padding: 5px 12px; border-radius: 999px; color: var(--c-cream-100-2); background: var(--c-brown-700-vivid); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35); }
+.tutorial-card.is-end .tut-more > i { opacity: 0; visibility: hidden; }
+/* CPL3-5 (A) : la fenêtre reçoit le focus (tabindex -1, kDialog) sans liseré ; ses boutons gardent le leur */
+:is(.ksheet, .full-menu, .kwin)[aria-modal="true"]:focus { outline: none; }
