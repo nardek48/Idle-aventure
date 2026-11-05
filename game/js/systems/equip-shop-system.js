@@ -34,7 +34,8 @@ var EQUIP_SHOP_PRICES = {
    les prix. S'applique aussi au refresh manuel. Les potions ne sont PAS concernées. */
 // v3.652.0 (Seb, 03/11) : Crypte 25 → 15, Montagne 90 → 20, Tour 200 → 30. La pièce du sommet coûtait 51 % de l'or
 // gagné à la Crypte et 171 % à la Tour (robot v3.634.0) ; désormais 30 / 8 / 26 %, comme les Ruines (16 %).
-var EQUIP_SHOP_WORLD_PRICE_MULT = [1, 4, 10, 15, 20, 30];
+// v3.696.0 (EQUI-18 A, Seb 05/11) : Ruines 10 → 7 (pièce Rare 17 500, relique 7 000, relance 7 000).
+var EQUIP_SHOP_WORLD_PRICE_MULT = [1, 4, 7, 15, 20, 30];
 // L'Enchanteresse garde l'ancienne grille (seuls les prix de l'échoppe baissent).
 var ENCHANT_WORLD_PRICE_MULT = [1, 4, 10, 25, 90, 200];
 

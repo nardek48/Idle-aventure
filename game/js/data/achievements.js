@@ -157,9 +157,9 @@ var ACHIEVEMENTS_DB = [
   { id: "hf_ruines_map", category: "ruins", name: "Les murs reculent", desc: "Tous les quartiers de la carte des Ruines libérés en même temps.",
     target: 14, track: function () { return achMapLiberated("ruins"); }, targetFn: function () { return achMapSize("ruins"); }, reward: { gold: 1500 } },
   { id: "hf_ruines_elites", category: "ruins", name: "Les marques des Ruines", desc: "Vaincre le Contremaître et le Golem.",
-    target: 2, track: function () { return (achKills("contremaitre") > 0 ? 1 : 0) + (achKills("golem") + achKills("golem_tour") > 0 ? 1 : 0); }, reward: { gold: 1500 } },
+    target: 2, track: function () { return (achKills("contremaitre") > 0 ? 1 : 0) + (achKills("golem") + achKills("golem_tour") + achKills("golem_sanctuaire") > 0 ? 1 : 0); }, reward: { gold: 1500 } },
   { id: "hf_ruines_golem", category: "ruins", name: "Le Golem, encore", desc: "Vaincre le Golem 10 fois.",
-    target: 10, track: function () { return achKills("golem") + achKills("golem_tour"); }, reward: { gold: 1500 } }, // v3.684.0 (QUET-10) : le Golem de la carte compte aussi
+    target: 10, track: function () { return achKills("golem") + achKills("golem_tour") + achKills("golem_sanctuaire"); }, reward: { gold: 1500 } }, // v3.684.0 (QUET-10) : le Golem de la carte compte aussi
   { id: "hf_ruines_palisade", category: "ruins", name: "Le mur d'en haut", desc: "Palissade niveau 8.",
     target: 8, track: function () { return achBuildingLevel("palisade"); }, reward: { gold: 1500 } },
   { id: "hf_ruines_run", category: "ruins", name: "Une rue qui tourne", desc: "Mener une Petite Aventure des Ruines jusqu'au bout.",

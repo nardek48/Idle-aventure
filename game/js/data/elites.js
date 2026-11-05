@@ -202,6 +202,21 @@ var ELITE_DB = {
     repeatable: false
   },
 
+  /* v3.696.0 (EQUI-6, Seb 05/11 option A) : le Golem de la vague 12 du Sanctuaire, à part de celui de
+     l'étape 14 : puissance 4 → 3,4 pour le Rôdeur (banc ruines-acte3-bench, profil Rare). */
+  golem_sanctuaire: {
+    id: "golem_sanctuaire",
+    baseId: "gargoyle",
+    name: "Le Golem",
+    archetype: "armored",
+    statMult: { endurance: 3.5, power: 3.4, celerity: 0.6 },
+    lore: "Il garde une salle du Sanctuaire depuis plus longtemps que la porte n'est scellée.",
+    image: "./images/Enemies/elite_golem.webp",
+    escort: { members: ["zombie"], hpMult: 0.3, goldMult: 0.3 },
+    phases: null,
+    repeatable: false
+  },
+
   /* v3.455.0 (Crypte, acte III, CR11) — LE PORTE-COURONNE, vague élite 8 de l'Ossuaire. Un roi en
      parodie : il porte une couronne de trop. Frappé, il réveille un dormeur de son escorte, une fois
      par round (SleepSystem.onHit, wakesOnHit). Chiffres au banc. */
@@ -211,7 +226,7 @@ var ELITE_DB = {
     name: "Le Porte-couronne",
     archetype: "armored",
     wakesOnHit: true,
-    statMult: { endurance: 3, power: 3, celerity: 1.0 },
+    statMult: { endurance: 3, power: 3.45, celerity: 1.0 }, // v3.696.0 (EQUI-10 B) : puissance 3 → 3,45 (+15 %) ; sa quête garde son calage
     lore: "Il porte deux couronnes, l'une sur l'autre. La seconde n'est pas à lui. Il ne l'enlève pas.",
     image: "./images/Enemies/elite_porte_couronne.webp",
     escort: { members: ["spectre", "wraith"], hpMult: 0.3, goldMult: 0.3 },

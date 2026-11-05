@@ -14252,7 +14252,7 @@ console.log("\n[206] v3.430.0 — Ruines, acte III (livraison 1) : étapes 11-12
     var D = g.DungeonManager, CM = g.CompanionManager;
     /* --- Données --- */
     var d3 = D.getById(3);
-    ok(d3.enemyPool.join() === "skeleton,zombie,ghoul,gargoyle" && d3.eliteWaves[8] === "contremaitre" && d3.eliteWaves[12] === "golem", "Sanctuaire : pool des Ruines, élites en vagues 8 et 12");
+    ok(d3.enemyPool.join() === "skeleton,zombie,ghoul,gargoyle" && d3.eliteWaves[8] === "contremaitre" && d3.eliteWaves[12] === "golem_sanctuaire", "Sanctuaire : pool des Ruines, élites en vagues 8 et 12");
     ok(g.ELITE_DB.contremaitre.baseId === "batisseur" && g.ELITE_DB.contremaitre.escort.members.indexOf("batisseur") !== -1 && g.ELITE_DB.golem.baseId === "gargoyle", "le Contremaître (escorté d'un Bâtisseur) et le Golem");
     ok(d3.camp && d3.camp.afterWave === 8 && d3.boss.rises === true && d3.boss.name === "Varrek, le Garde scellé" && d3.maxRarity === "rare", "campement après la vague 8 ; Varrek se relève ; butin Rare");
     ok(d3.storyChapterId === "ruins" && d3.storyFreeSteps.join() === "ruines_12,ruines_15", "entrée offerte aux étapes 12 et 15");
@@ -23538,6 +23538,38 @@ console.log("\n[460] v3.695.0 — Décisions combat (Seb, 05/11 : COMB-1, COMB-2
       "COMB-9 : réserve de soin = " + Math.min(3, cap) + " potions × " + Math.round(po.healPercent * 100) + " % × 0,8 (" + g.CombatForecast.getHealingReserve() + " PV)");
   } catch (err) { ok(false, "[460] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   finally { g.canUseAction = cu; g.game.grimoireVarier = sv.v; g.game._varier = sv.r; g.game._towerMirror = sv.m; g.game.grimoireRules = sv.rules; }
+})();
+
+console.log("\n[461] v3.696.0 — Décisions d'équilibrage (Seb, 05/11 : EQUI-6 A, EQUI-10 B, EQUI-18 A, EQUI-7 A, EQUI-8 A)");
+(function () {
+  try {
+    var E = g.ELITE_DB, gs = E.golem_sanctuaire, d3 = g.DUNGEONS.filter(function (d) { return d.id === 3; })[0], d4 = g.DUNGEONS.filter(function (d) { return d.id === 4; })[0];
+    // EQUI-6 : Golem propre au Sanctuaire, puissance 3,4 ; celui de l'étape 14 et de la tour inchangés
+    ok(gs && gs.statMult.power === 3.4 && gs.statMult.endurance === 3.5 && d3.eliteWaves[12] === "golem_sanctuaire" && E.golem.statMult.power === 4 && E.golem_tour.statMult.power === 4,
+      "EQUI-6 : vague 12 du Sanctuaire = golem_sanctuaire (puissance 3,4), Golem de l'étape 14 et de la tour à 4");
+    ok(gs.image === E.golem.image && g.BESTIARY_BONUS_CONFIG.golem_sanctuaire, "EQUI-6 : même portrait que le Golem (même créature), paliers de bestiaire présents");
+    run("game.killCounts = { golem_sanctuaire: 10 };");
+    var hf = g.ACHIEVEMENTS_DB.filter(function (a) { return a.id === "hf_ruines_golem"; })[0];
+    ok(hf && hf.track() === 10, "EQUI-6 : « Le Golem, encore » compte aussi le Golem du Sanctuaire");
+    run("game.killCounts = {};");
+    // EQUI-10 : Liche des sépulcres et Porte-couronne +15 % de puissance ; la quête du Porte-couronne garde son calage
+    ok(d4.boss.statMult.power === 0.83 && E.porte_couronne.statMult.power === 3.45 && g.ADVENTURE_QUESTS.aq_crypte_couronne.eliteStatMult.power === 2.1,
+      "EQUI-10 : Liche 0,72 → 0,83, Porte-couronne 3 → 3,45, quête « La couronne de trop » à 2,1");
+    // EQUI-18 : Ruines ×7 (pièce Rare 17 500), les autres mondes et l'Enchanteresse inchangés
+    ok(g.EQUIP_SHOP_WORLD_PRICE_MULT.join() === "1,4,7,15,20,30" && g.ENCHANT_WORLD_PRICE_MULT.join() === "1,4,10,25,90,200", "EQUI-18 : grille de l'échoppe 1, 4, 7, 15, 20, 30 ; Enchanteresse inchangée");
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; game.worldsEverReached = { 0: true, 1: true, 2: true };");
+    ok(g.EquipShopManager.getPrice({ rarity: "rare" }) === 17500 && g.EquipShopManager.getPrice({ rarity: "green" }) === 7000, "EQUI-18 : aux Ruines, Rare 17 500 or, Inhabituelle 7 000");
+    // EQUI-7 : conseil de la voie Faucon, affiché dans la fiche de ses talents, traduit
+    var fau = g.TALENT_TREES.archer.paths.filter(function (p) { return p.id === "faucon"; })[0];
+    run("game.heroId='ranger'; EquipmentManager.recalcStats(); openTalentId = 'a_tir_mortel';");
+    var html = g.buildTalentSheetBodyHTML();
+    ok(fau && fau.tip && html.indexOf("tt-sheet-tip") >= 0 && typeof g.I18n.dicts.en[fau.tip] === "string", "EQUI-7 : conseil de Faucon dans la fiche de Tir mortel, traduit");
+    run("openTalentId = 'a_contre_tir';");
+    ok(g.buildTalentSheetBodyHTML().indexOf("tt-sheet-tip") < 0, "EQUI-7 : pas de conseil dans la voie Ombre");
+    // EQUI-8 : écart Mage < 2× au banc, réglage par classe inchangé
+    var cl = function (id) { return g.CLASSES.filter(function (c) { return c.id === id; })[0].balance.hpPct; };
+    ok(cl("mage") === 0.05 && cl("knight") === 0 && cl("archer") === 0, "EQUI-8 : PV par classe inchangés (Mage +5 % depuis le 03/11)");
+  } catch (err) { ok(false, "[461] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
 Promise.all(ATTENTES).then(function () {

@@ -99,7 +99,7 @@ var DATA_TEXT_FIELDS = {
   PATROL_STORIES: [""],
   PATROL_STORY_NARRATOR: [""], // v3.457.3 : compagnon hors de son monde
   TALENT_TREES: ["*.trunk.*.name", "*.trunk.*.short", "*.trunk.*.effect",
-    "*.paths.*.name", "*.paths.*.tag", "*.paths.*.nodes.*.name", "*.paths.*.nodes.*.short", "*.paths.*.nodes.*.effect"],
+    "*.paths.*.name", "*.paths.*.tag", "*.paths.*.tip", "*.paths.*.nodes.*.name", "*.paths.*.nodes.*.short", "*.paths.*.nodes.*.effect"],
   TALENT_COMMAND: ["name", "tag", "nodes.*.name", "nodes.*.short", "nodes.*.effect"], // v3.453.0 : voie du Commandement
   TALENT_TOWER: ["name", "tag", "nodes.*.name", "nodes.*.short", "nodes.*.effect"], // v3.633.0 : voie Varier (Tour)
 

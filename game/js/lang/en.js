@@ -10,6 +10,7 @@
    Les textes des données sont traduits par _td() à l'affichage (registre : lang/data-fields.js). */
 I18n.register("en", {
   // index.html
+  "Équilibrage : le Golem du Sanctuaire scellé frappe moins fort, la Liche des sépulcres et le Porte-couronne de l'Ossuaire frappent plus fort, et l'échoppe est moins chère aux Ruines (une Rare à 17 500 or au lieu de 25 000). Les talents Faucon du Rôdeur donnent un conseil.": "Balance: the Golem of the Sealed Sanctuary hits less hard, the Lich of the Sepulchres and the Crown-Bearer of the Ossuary hit harder, and the shop is cheaper in the Ruins (a Rare costs 17,500 gold instead of 25,000). The Ranger's Falcon talents now give a tip.",
   "Combat : le conseil doré (et le Grimoire sans règle) ne propose plus la Défense sans menace ; « Varier » ne saute plus un contre. Les ennemis très rapides des donjons 4 à 6 ne frappent plus deux fois à chaque round, et le pronostic compte les potions plus prudemment.": "Combat: the golden hint (and the Grimoire with no rule) no longer suggests Defence without a threat; “Vary” no longer skips a counter. Very fast enemies in dungeons 4 to 6 no longer strike twice every round, and the forecast counts potions more cautiously.",
   "Économie : le Grand Ouvrage garde toujours assez de pierre pour la Forge que l'Histoire demande. Les potions se revendent au plus la valeur de leurs ingrédients (Soin mineur 16 or), prix affiché sur le bouton.": "Economy: the Great Work always keeps enough stone for the Forge the Story asks for. Potions sell for at most the value of their ingredients (Minor Healing Potion: 16 gold), price shown on the button.",
   "Compagnons : la première patrouille rapporte toujours sa relique, « Répartir de nouveau » prévient quand des reliques s'éteignent, et l'aperçu de « Tout offrir » compte la Mémoire vive. Les missions d'expédition affichent leur coût de départ.": "Companions: the first patrol always brings back its relic, “Spread again” warns when relics go dark, and the “Offer all” preview counts Sharp Memory. Expedition missions show their departure cost.",
@@ -2786,6 +2787,7 @@ I18n.register("en", {
   "Soif du bourreau": "Executioner's Thirst",
   "Sentence": "Sentence",
   "Visée posée": "Steady Aim",
+  "Conseil : Faucon frappe fort mais protège peu (seule Visée posée donne des PV). Si un boss te met à terre, essaie Ombre : ses esquives t'usent moins, et la remise à zéro est gratuite.": "Tip: Falcon hits hard but protects little (only Steady Aim adds HP). If a boss keeps knocking you down, try Shadow: its dodges wear you down less, and resetting is free.",
   "Marque du chasseur": "Hunter's Mark",
   "Coup au but": "On Target",
   "Perforation": "Piercing",
@@ -5280,6 +5282,7 @@ I18n.register("en", {
   "Il ne pose plus de pierres. Il regarde où les autres les posent, et il corrige.": "He doesn't lay stones any more. He watches where the others lay them, and he corrects.",
   "Une masse de pierre qui a des bras. Elle ne dort pas. Elle attend qu'on passe devant.": "A mass of stone with arms. It doesn't sleep. It waits for someone to walk past.",
   "Il a trouvé une tour à sa taille. Il ne la garde pas : il attend qu'on monte.": "It found a tower its own size. It isn't guarding it: it waits for someone to climb.",
+  "Il garde une salle du Sanctuaire depuis plus longtemps que la porte n'est scellée.": "It has guarded a hall of the Sanctuary for longer than the door has been sealed.",
   "Varrek, le Garde scellé": "Varrek, the Sealed Guard",
   // v3.431.0 — Ruines, acte III (livraison 2) : étapes 13-15, Clé de voûte, Forge 4, choix « salle », Varrek
   "Sur la table, un anneau de pierre noire. ({x})": "On the table, a ring of black stone. ({x})",

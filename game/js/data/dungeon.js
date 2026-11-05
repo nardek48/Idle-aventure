@@ -226,7 +226,7 @@ var DUNGEONS = [
        gargouille blindée). Vague 8 : le Contremaître, dont l'escorte blinde l'élite ; vague 12 :
        le Golem, le même qu'à l'étape 14. */
     enemyPool: ["skeleton", "zombie", "ghoul", "gargoyle"],
-    eliteWaves: { 8: "contremaitre", 12: "golem" },
+    eliteWaves: { 8: "contremaitre", 12: "golem_sanctuaire" }, // v3.696.0 (EQUI-6) : Golem propre au Sanctuaire
     groupWaves: { 3: 2, 6: 2, 10: 3, 14: 2 }, // v3.471.0
     haltSlots: [4, 11, 13], // v3.472.0 : jamais au campement (après 8)
     /* v3.430.0 (RU13, validé le 09/10) — LE CAMPEMENT : halte dans le run après la vague
@@ -274,7 +274,7 @@ var DUNGEONS = [
        60 % elle les réveille tous ; 30 % demi-sommeil, 2 rounds sans frapper, elle se soigne.
        Portrait propre (liche_sepulcres.webp, distinct de celui du Nécromancien). Au banc. */
     boss: { baseId: "necrosupreme", name: "Liche des sépulcres", archetype: "corrupted",
-      statMult: { endurance: 0.82, power: 0.72 }, image: "./images/Boss/liche_sepulcres.webp",
+      statMult: { endurance: 0.82, power: 0.83 }, image: "./images/Boss/liche_sepulcres.webp", // v3.696.0 (EQUI-10 B) : puissance 0,72 → 0,83 (+15 %)
       unique: { id: "gants_fossoyeur", slot: "gloves", name: "Gants du fossoyeur", icon: "gants", power: "dun_sepulcre" }, // v3.470.0
       phases: [
         { atPct: 0.8, sleepAdds: ["spectre", "wraith"], addsHpMult: 0.18, addsPowerMult: 0.5, label: "elle couche deux morts à ses pieds" },

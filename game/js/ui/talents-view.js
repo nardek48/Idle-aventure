@@ -33,6 +33,7 @@ function buildTalentSheetBodyHTML() {
     + '<div><div class="tt-sheet-title">' + esc(_td(n.name)) + '</div>'
     + '<div class="tt-sheet-where">' + esc(where) + (max > 1 ? ' · ' + _t("rang {a} / {b}", { a: r, b: max }) : '') + '</div></div></div>'
     + '<div class="tt-sheet-effect">' + esc(_td(n.effect)) + '</div>';
+  if (e.path && e.path.tip) h += '<div class="tt-sheet-tip">' + esc(_td(e.path.tip)) + '</div>'; // v3.696.0 (EQUI-7) : conseil de la voie
   if (r > 0) h += '<div class="tt-sheet-now">' + (max > 1 ? _t("Rang {n} appris.", { n: r }) : _t("Appris.")) + '</div>';
   if (r < max) {
     if (reason) h += '<div class="tt-sheet-state">' + esc(reason) + '</div>';
