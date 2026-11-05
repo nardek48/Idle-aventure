@@ -512,10 +512,12 @@ var Pa2Run = {
   },
   // Étapes d'un parcours : gabarit, ennemi, source pleine et texte, posés depuis le canevas.
   _parcoursSteps: function (run, nodes) {
-    var t = SceneEngine.getTemplate(run.templateId), pool = (t.pools && t.pools.obstacle) || PA2_OBSTACLES[run.worldId] || PA2_OBSTACLES.forest, self = this;
+    var t = SceneEngine.getTemplate(run.templateId), pool = (t.pools && t.pools.obstacle) || PA2_OBSTACLES[run.worldId] || PA2_OBSTACLES.forest, self = this, left = [];
+    // audit NOV-26 : tirage sans remise tant que le vivier suffit (plus le même obstacle deux fois de suite)
+    var draw = function () { if (!left.length) left = pool.slice(); var g = self._pick(left); left.splice(left.indexOf(g), 1); return g; };
     t.parcours.steps.forEach(function (st, i) {
       var n = nodes["P" + i];
-      if (st.type === "obstacle") n.gabaritId = st.gabaritId || self._pick(pool);
+      if (st.type === "obstacle") n.gabaritId = st.gabaritId || draw();
       if (st.type === "combat") { n.foeId = st.foe; n.pack = Number(st.pack || 1); }
       if (st.fullBreath) n.fullBreath = true;
       if (st.text) n.narr = st.text;

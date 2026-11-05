@@ -21,6 +21,16 @@ function buildCampMissionActionHTML(m) {
   return "";
 }
 
+/* Audit SUIV-11 (ERG-5 point 2) : ce que le départ consomme, et le stock, avant de toucher « Partir ». */
+function buildCampMissionCostHTML(cost) {
+  if (!cost || !cost.resourceId) return "";
+  var def = (window.WAREHOUSE_RESOURCES || {})[cost.resourceId] || {}, need = Number(cost.amount || 0);
+  var have = (window.WarehouseManager && WarehouseManager.getAmount) ? Number(WarehouseManager.getAmount(cost.resourceId) || 0) : 0;
+  return '<div class="camp-mission-cost' + (have < need ? ' is-short' : '') + '">' + renderIconOrEmojiHTML(def.icon || "images/Icons/quests/ration_reward.webp", "ico-inline", "")
+    + ' ' + esc(_t("Départ : {x} ×{n} · stock {h}", { x: def.name ? _td(def.name) : cost.resourceId, n: need, h: formatNumber(have) })) + '</div>';
+}
+window.buildCampMissionCostHTML = buildCampMissionCostHTML;
+
 function buildCampMissionCardHTML(m) {
   var cls = CAMP_MISSION_STATUS_CLASS[m.status] || "";
   var h = '<div class="camp-mission-card ' + cls + (m.isMain ? ' is-main' : '') + '">';
@@ -42,6 +52,7 @@ function buildCampMissionCardHTML(m) {
   if (enCours && m.progressLabel) objective = objective ? (objective + " \u2014 " + m.progressLabel) : m.progressLabel;
   if (objective) h += '<div class="camp-mission-objective">' + esc(objective) + '</div>';
   if (m.rewardSummary) h += '<div class="camp-mission-reward"><img class=ico-inline src=images/Icons/dungeon/dungeon_guaranteed_loot.webp> ' + esc(m.rewardSummary) + '</div>';
+  h += buildCampMissionCostHTML(m.entryCost);
   h += buildCampMissionActionHTML(m);
   h += '</div>';
   return h;

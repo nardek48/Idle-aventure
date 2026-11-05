@@ -20301,7 +20301,7 @@ console.log("\n[381] v3.577.0 — Petites Aventures, lot 2 : les jets au d20");
     ok(P._check(run, "power", { node: { row: 8 }, base: 5, voie: "power" }).dd > w0.dd && P._check(run, "power", { node: node, base: 7, voie: "power" }).dd === w0.dd + 2, "le DD monte avec la profondeur et la difficulté de l'obstacle");
     ok(g.pa2NeedText(25) === "20" && g.pa2NeedText(1) === "2+" && g.pa2NeedText(9) === "9+", "affichage : « Il faut 9+ », « 2+ » au plus bas, « 20 » quand seul le naturel passe");
     var why = g.pa2WhyHTML(w, { wounds: 2 }).replace(/\u00a0/g, " ");
-    ok(/Puissance \+\d/.test(why) && /Rôdeur|Archer/.test(why) === false && /matériel \+3/.test(why) && /blessures −4/.test(why) && /DD \d+/.test(why), "détail du jet : stat, matériel, blessures et DD (" + why + ")");
+    ok(/Force \+\d/.test(why) && /Rôdeur|Archer/.test(why) === false && /objets \+3/.test(why) && /blessures −4/.test(why) && /il faut \d+ ou plus/.test(why) && !/DD/.test(why), "détail du jet : stat, objets, blessures et chiffre à faire, sans DD (" + why + ")");
     var blk = g.pa2DieBlock({ thr: 9, cran: "probable", chance: 60, roll: 20, nat: 20 }, true);
     ok(/d20_vide_20\.webp/.test(blk) && /pa2-die-num">20</.test(blk) && /is-nat20/.test(blk) && /9\+/.test(blk) && /60[ \u00a0]%/.test(blk), "le dé : d20 pré-rendu (v3.673.0), valeur, seuil et chance");
   } catch (err) { ok(false, "[381] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
@@ -20692,8 +20692,8 @@ console.log("\n[395] v3.598.0 — Quêtes des compagnons et reliques uniques (d�
     M.onRunEnd("forest", "dest", t1);
     ok(t1 && M.stateOf("q_test").n === 0, "Petite Aventure sans Wenna dans l'équipe : ne compte pas (lieu " + t1 + ")");
     CM.partyIds = function () { return ["wenna"]; };
-    M.onRunEnd("desert", "dest", t1); M.onRunEnd("forest", "ko", t1); M.onRunEnd("forest", "dest", t1 === "gue" ? "menhirs" : "gue"); M.onRunEnd("forest", "parcours", t1);
-    ok(M.stateOf("q_test").n === 0, "autre monde, échec, autre lieu ou parcours : ne compte pas (v3.603.0 : seul le lieu attribué)");
+    M.onRunEnd("desert", "dest", t1); M.onRunEnd("forest", "ko", t1); M.onRunEnd("forest", "dest", t1 === "gue" ? "menhirs" : "gue"); M.onRunEnd("forest", "parcours", t1 === "gue" ? "menhirs" : "gue"); M.onRunEnd("forest", "parcours", null);
+    ok(M.stateOf("q_test").n === 0, "autre monde, échec, autre lieu ou parcours hors carte : ne compte pas (v3.603.0 : seul le lieu attribué ; CPL2-13 : un parcours du lieu attribué compte)");
     M.onRunEnd("forest", "dest", t1);
     var mid = run("JSON.stringify(CompanionManager.buildSaveData().wenna.quests)");
     ok(/"s":2,"n":1/.test(mid) && mid.indexOf('"last":"' + t1 + '"') > 0, "la progression part dans la sauvegarde du compagnon (" + mid + ")");
@@ -23335,6 +23335,89 @@ console.log("\n[457] v3.692.0 — Ménage du code (audit 04/11, lots A4 et A5)")
     ok(iW > 0 && iW < iH && sw.indexOf('"./js/data/warehouse-resources.js"') !== -1 && rd("js/data/hunt-quests.js").indexOf("WAREHOUSE_RESOURCES") === -1 && !!g.WAREHOUSE_RESOURCES.bois,
       "ARCH-21 : ressources de l'Entrepôt dans data/warehouse-resources.js (index.html et précache)");
   } catch (err) { ok(false, "[457] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[458] v3.693.0 — Compagnons, fin de partie et méta (audit 04/11, lot A6)");
+(function () {
+  var rd = function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); };
+  var CR = g.CompanionRelics, MM = g.MemoryManager, hasM = MM.has;
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.unlockedTabs.companions = true; CompanionManager.unlock('wenna');");
+    // CPL2-4 : la relique garantie de la 1re patrouille ne dépend plus de next
+    ok(g.createInitialGameState().companionRelics.firstPatrolDone === false && g.buildSaveData().companionRelics.firstPatrolDone === false, "CPL2-4 : firstPatrolDone dans l'état initial et dans la sauvegarde");
+    CR.grantUnique("wenna_pousse");
+    var haut = function () { return 0.999; };
+    var r1 = CR.rollPatrol(0.1, "forest", haut), r2 = CR.rollPatrol(0.1, "forest", haut);
+    ok(CR.ensure().next > 2 && r1 && !CR.isUnique(r1) && r2 === null && CR.ensure().firstPatrolDone === true, "CPL2-4 : unique reçue avant, la 1re patrouille rapporte quand même sa relique, la 2e non (dé haut)");
+    var R = CR.ensure(); delete R.firstPatrolDone; R.inv = R.inv.filter(function (x) { return CR.isUnique(x); });
+    var a = CR.ensure().firstPatrolDone; CR.grant("croc", 0); delete R.firstPatrolDone;
+        ok(a === false && CR.ensure().firstPatrolDone === true, "CPL2-4 : ancienne sauvegarde — garantie due si seules des uniques, faite s'il existe une relique ordinaire");
+    var sv = JSON.parse(JSON.stringify(g.buildSaveData())); sv.companionRelics.firstPatrolDone = false; g.restoreBaseState(sv);
+    ok(g.game.companionRelics.firstPatrolDone === false, "CPL2-4 : le drapeau survit au rechargement");
+    // CPL2-5 : la confirmation dit quelles reliques s'éteignent
+    run("var st = CompanionManager.state('wenna'); st.upgrades = 15; st.ardeur = 10; st.vigueur = 0;");
+    var c1 = CR.grant("croc", 0), c2 = CR.grant("ecorce", 0);
+    ok(CR.equip("wenna", 0, c1.id) && CR.equip("wenna", 1, c2.id), "CPL2-5 : deux reliques portées (paliers 5 et 15)");
+    var off = g.companionRelicsOffAfterReset("wenna", g.CompanionManager.state("wenna")), msg = "", scm = g.showConfirmModal;
+    g.showConfirmModal = function (t, m) { msg = m; };
+    g.companionResetTraining("wenna");
+    g.showConfirmModal = scm;
+    ok(off.n === 1 && off.at === 15 && /cessera d'agir/.test(msg) && /palier 15/.test(msg), "CPL2-5 : « Répartir de nouveau » prévient (1 relique, palier 15) — " + msg);
+    run("var st = CompanionManager.state('wenna'); st.ardeur = 0; st.upgrades = 15; st.vigueur = 0;");
+    ok(g.companionRelicsOffAfterReset("wenna", g.CompanionManager.state("wenna")).n === 0, "CPL2-5 : rien d'annoncé quand aucun emplacement ne se ferme");
+    // CPL2-6 : aperçu de « Tout offrir » avec Mémoire vive
+    run("game.inventory = [{ uid: 'o1', name: 'A', slot: 'weapon', rarity: 'rare', worldTier: 1, itemLevel: 12 }, { uid: 'o2', name: 'B', slot: 'helmet', rarity: 'epic', worldTier: 2, itemLevel: 22 }];");
+    MM.has = function (id) { return id === "memoire_vive" ? false : hasM.call(MM, id); };
+    var p0 = MM.previewOfferAll();
+    MM.has = function (id) { return id === "memoire_vive" ? true : hasM.call(MM, id); };
+    var p1 = MM.previewOfferAll(), carry = MM.ensure().carry; MM.ensure().carry = 0;
+    var recu = MM.offerAll(); MM.ensure().carry = carry;
+    MM.has = hasM;
+    ok(p0 > 0 && p1 === Math.floor(p0 * 1.25 + 1e-9) && Math.abs(recu - p1) <= 1, "CPL2-6 : aperçu ×1,25 avec Mémoire vive (" + p0 + " → " + p1 + ", reçu " + recu + ")");
+    // CPL2-7 : quitter Sac profond avec un sac qui déborde
+    run("game.inventory = []; for (var i = 0; i < 30; i++) game.inventory.push({ uid: 's' + i, name: 'S', slot: 'ring', rarity: 'common' });");
+    var w1 = g.memorySacWarning("sac_profond", "autre"), w2 = g.memorySacWarning("autre", "sac_profond");
+    run("game.inventory.length = 20;");
+    ok(/25 places pour 30 objets/.test(w1) && w2 === "" && g.memorySacWarning("sac_profond", "autre") === "", "CPL2-7 : avertissement seulement en quittant Sac profond avec plus de 25 objets — " + w1);
+    ok(/memorySacWarning\(current, optionId\)/.test(rd("js/ui/ascension-view.js")) && /\+ \(sac \? " " \+ sac : ""\)/.test(rd("js/ui/ascension-view.js")), "CPL2-7 : la reprise payante et la reprise gratuite le montrent");
+    // CPL2-8 : Sommeil lourd et carquois sur tous les dormeurs
+    var SS = g.SleepSystem, minR = 99, maxR = 0;
+    MM.has = function (id) { return id === "sommeil_lourd" ? true : hasM.call(MM, id); };
+    for (var k = 0; k < 200; k++) { var v = SS.wakeRounds(); minR = Math.min(minR, v); maxR = Math.max(maxR, v); }
+    MM.has = hasM;
+    var sl = srcOf(SS.onEnemyTurn) + srcOf(SS.onBossPhase) + srcOf(SS.onGroupSpawn);
+    ok(minR === 4 && maxR === 6 && (sl.match(/\.wakeRounds\(\)/g) || []).length === 3 && rd("js/systems/sleep-system.js").match(/randInt\(SLEEP_WAKE_ROUNDS_MIN/g).length === 1,
+      "CPL2-8 : Sommeil lourd 4 à 6, au départ, au rendormi et aux renforts endormis (wakeRounds commun)");
+    // CPL2-9 : PV des compagnons sans « PV » dans la pastille (tient à 320 px)
+    ok(/<span class="kgauge-text" title="' \+ esc\(_t\("PV"\)\) \+ '">' \+ num\(Math\.ceil\(hp\)\) \+ ' \/ ' \+ num\(stats\.maxHp\) \+ '<\/span>/.test(rd("js/ui/heros-screens-view.js")), "CPL2-9 : pastille « 1 899 / 1 900 » (80 px pour 82 px mesurés à 320 px)");
+    // CPL2-12 : toutes les sources de reliques
+    ok(/patrouilles, échoppe et quêtes/.test(g.buildCompanionRelicsHTML("wenna")), "CPL2-12 : « patrouilles, échoppe et quêtes » sur la fiche");
+    // CPL2-13 : un parcours du lieu attribué compte
+    var CQ = g.CompanionQuestManager, cnt = CQ._count, vu = [];
+    CQ._count = function (t, w, s) { vu.push(t + ":" + s); };
+    CQ.onRunEnd("desert", "parcours", "porte_temple"); CQ.onRunEnd("desert", "ko", "porte_temple"); CQ.onRunEnd("desert", "dest", "x");
+    CQ._count = cnt;
+    ok(vu.join(",") === "run:porte_temple,run:x", "CPL2-13 : fin de parcours sur un secteur (porte du Temple) comptée comme une sortie réussie");
+    // NOV-26 : obstacles tirés sans remise
+    g.SCENE_TEMPLATES.__nov26 = { id: "__nov26", mode: "parcours", parcours: { steps: [{ type: "obstacle" }, { type: "obstacle" }, { type: "obstacle" }] }, pools: { obstacle: ["g1", "g2"] } };
+    var dbl = 0;
+    for (var t = 0; t < 30; t++) { var nodes = { P0: {}, P1: {}, P2: {} }; g.Pa2Run._parcoursSteps({ templateId: "__nov26" }, nodes); if (nodes.P0.gabaritId === nodes.P1.gabaritId) dbl++; }
+    delete g.SCENE_TEMPLATES.__nov26;
+    ok(dbl === 0, "NOV-26 : deux premières étapes jamais sur le même obstacle quand le vivier en a deux (30 tirages)");
+    // NOV-13 : légende du parcours filtrée, refermée à l'ouverture d'une fiche
+    var pv = rd("js/ui/pa2-view.js");
+    ok(/if \(par && !has\[type\]\) return "";/.test(pv) && /pa2View\.legend = false; \/\/ audit NOV-13/.test(pv), "NOV-13 : légende réduite au tracé du parcours, refermée quand une fiche s'ouvre");
+    // NOV-14 : plus de DD ni de +0
+    var why0 = g.pa2WhyHTML({ stat: "power", mod: 0, mastery: 0, items: 0, wounds: 0, thr: 9, dd: 12 }, { wounds: 0 }).replace(/ /g, " ");
+    ok(g.sceneStatLabel("power") === "Force" && why0 === "il faut 9 ou plus" && /il faut 20/.test(g.pa2WhyHTML({ stat: "power", mod: 1, thr: 23 }, {}).replace(/\u00a0/g, " ")), "NOV-14 : « Force », « il faut 9 ou plus », pas de « +0 » (" + why0 + ")");
+    // SUIV-11 : coût du départ sur la carte de mission
+    run("WarehouseManager.removeResource('petite_ration', WarehouseManager.getAmount('petite_ration'));");
+    var cout = g.buildCampMissionCostHTML({ resourceId: "petite_ration", amount: 1 });
+    ok(/camp-mission-cost is-short/.test(cout) && /Départ : Petite ration ×1 · stock 0/.test(cout) && g.buildCampMissionCostHTML(null) === "", "SUIV-11 : « Départ : Petite ration ×1 · stock 0 », en rouge s'il manque");
+    ok(/entryCost: isRunning \? null : \(template\.entryCost \|\| null\)/.test(rd("js/systems/mission-board-system.js")) && /buildCampMissionCostHTML\(m\.entryCost\)/.test(rd("js/ui/camp-view.js")), "SUIV-11 : les missions d'expédition portent leur coût, la carte l'affiche");
+    // SUIV-16 : la Tour demande aussi la Ration moyenne
+    ok(/à la Montagne et à la Tour/.test(g.WAREHOUSE_RESOURCES.ration.desc) && g.PROVISIONS_BY_WORLD.tower === "ration", "SUIV-16 : fiche de la Ration moyenne avec la Tour");
+  } catch (err) { MM.has = hasM; ok(false, "[458] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
 Promise.all(ATTENTES).then(function () {

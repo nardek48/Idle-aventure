@@ -204,6 +204,7 @@ function pa2AfterRender() {
   body.classList.toggle("pa2-full", onMap && !!document.getElementById("pa2-vp")); // v3.394.0 : carte plein écran
   if (!onScene) { pa2RemoveOverlay(); return; }
   pa2EnsureOverlay();
+  if ((run.status === PA2_STATUS.node || run.status === PA2_STATUS.trap) && !pa2View.sheet && !pa2View.fromKey) pa2View.legend = false; // audit NOV-13 : une fiche qui s'ouvre referme la légende
   pa2RenderLegend();
   if (run.status === PA2_STATUS.node && !pa2View.sheet && !pa2View.fromKey) pa2OpenSheet();
   if (run.status === PA2_STATUS.trap && !pa2View.sheet && !pa2View.fromKey) pa2OpenTrapSheet();
@@ -932,17 +933,22 @@ function pa2RenderLegend() {
   if (!run || (run.status !== PA2_STATUS.map && run.status !== PA2_STATUS.node && run.status !== PA2_STATUS.trap)) { box.innerHTML = ""; return; }
   var h = '<button type="button" class="lmx-btn pa2-legend-btn" onclick="pa2ToggleLegend()" aria-label="' + esc(_t("Légende")) + '" aria-expanded="' + !!pa2View.legend + '">?</button>';
   if (pa2View.legend) {
-    var row = function (icon, label, sub) {
+    // audit NOV-13 : dans un parcours, seulement ce que son tracé contient (pas d'actes, pas de destinations)
+    var par = !!run.parcours, has = {};
+    Object.keys(run.nodes || {}).forEach(function (k) { if (run.nodes[k]) has[run.nodes[k].type] = true; });
+    var row = function (type, icon, label, sub) {
+      if (par && !has[type]) return "";
       return '<div class="pa2-legend-row"><span class="pa2-disc">' + pa2Img(icon) + '</span><span>' + esc(label) + '<small>' + esc(sub) + '</small></span></div>';
     };
+    if (par) { has.piege = Object.keys(run.traps || {}).length > 0; has.coupe = Object.keys(run.cuts || {}).length > 0; }
     h += '<div class="pa2-legend" role="dialog" aria-label="' + esc(_t("Légende")) + '"><h5>' + esc(_t("Légende")) + '</h5>' +
-      row(pa2Ico("obstacle", run), _t("Obstacle"), _t("Trois voies, un jet de dé")) + row(PA2_ICONS.combat, _t("Combat"), _t("Charger, Tenir, Ruser ou Fuir")) +
-      row(pa2Ico("source", run), _t("Source"), _t("PV et Souffle")) + row(pa2Ico("autel", run), _t("Autel"), _t("De l'or contre une plaie")) +
-      row(PA2_ICONS.trouvaille, _t("Trouvaille"), _t("Un objet pour ce run")) + row(pa2Ico("evenement", run), _t("Rencontre"), _t("Un choix qui aura des suites")) +
-      row(pa2Ico("camp", run), _t("Le camp"), _t("Fin de l'acte I")) + row(pa2Ico("seuil", run), _t("Le seuil"), _t("Fin de l'acte II")) +
-      row(PA2_TRAP_FX.venin.icon, _t("Piège"), _t("Losange rouge sur un sentier : son effet, à désamorcer ou à éviter")) +
-      row(((PA2_CUTS[run.worldId] || PA2_CUTS.forest)[Object.keys(PA2_CUTS[run.worldId] || PA2_CUTS.forest)[0]]).icon, _t("Sentier coupé"), _t("Rond gris : le passage est fermé pour ce run")) +
-      row(pa2Ico("boss", run), _t("Destinations"), _t("Trois fins possibles, au nord")) + '</div>';
+      row("obstacle", pa2Ico("obstacle", run), _t("Obstacle"), _t("Trois voies, un jet de dé")) + row("combat", PA2_ICONS.combat, _t("Combat"), _t("Charger, Tenir, Ruser ou Fuir")) +
+      row("source", pa2Ico("source", run), _t("Source"), _t("PV et Souffle")) + row("autel", pa2Ico("autel", run), _t("Autel"), _t("De l'or contre une plaie")) +
+      row("trouvaille", PA2_ICONS.trouvaille, _t("Trouvaille"), _t("Un objet pour ce run")) + row("evenement", pa2Ico("evenement", run), _t("Rencontre"), _t("Un choix qui aura des suites")) +
+      row("camp", pa2Ico("camp", run), _t("Le camp"), _t("Fin de l'acte I")) + row("seuil", pa2Ico("seuil", run), _t("Le seuil"), _t("Fin de l'acte II")) +
+      row("piege", PA2_TRAP_FX.venin.icon, _t("Piège"), _t("Losange rouge sur un sentier : son effet, à désamorcer ou à éviter")) +
+      row("coupe", ((PA2_CUTS[run.worldId] || PA2_CUTS.forest)[Object.keys(PA2_CUTS[run.worldId] || PA2_CUTS.forest)[0]]).icon, _t("Sentier coupé"), _t("Rond gris : le passage est fermé pour ce run")) +
+      row("dest", pa2Ico("boss", run), _t("Destinations"), _t("Trois fins possibles, au nord")) + '</div>';
   }
   box.innerHTML = h;
 }
@@ -1064,14 +1070,16 @@ function pa2ClassLabel() {
   var hero = typeof getSelectedHero === "function" ? getSelectedHero() : null, cls = hero && typeof getClassForHero === "function" ? getClassForHero(hero) : null;
   return cls ? _td(cls.label) : "";
 }
-/* Le détail du jet : « Puissance +4 · Chevalier +2 · matériel +3 · blessure −2 · DD 12 ». */
+/* Le détail du jet : « Force +4 · Chevalier +2 · objets +3 · blessure −2 · il faut 8 ou plus ».
+   Audit NOV-14 : sans « DD », ni « +0 » ; le chiffre à faire au dé, comme sous le dé. */
 function pa2WhyHTML(o, run) {
-  var parts = [sceneStatLabel(o.stat) + " " + pa2Signed(o.mod || 0)];
+  var parts = [];
+  if (o.mod) parts.push(sceneStatLabel(o.stat) + " " + pa2Signed(o.mod));
   if (o.mastery) parts.push(pa2ClassLabel() + " " + pa2Signed(o.mastery));
-  if (o.items) parts.push(_t("matériel {m}", { m: pa2Signed(o.items) }));
+  if (o.items) parts.push(_t("objets {m}", { m: pa2Signed(o.items) }));
   if (o.wounds) parts.push(_tn(run.wounds, "blessure {m}", "blessures {m}", { m: pa2Signed(-o.wounds) }));
   if (o.adv) parts.push(_t("avantage"));
-  parts.push(_t("DD {d}", { d: o.dd }));
+  parts.push(o.thr >= 20 ? _t("il faut 20") : _t("il faut {n} ou plus", { n: Math.max(2, Number(o.thr || 0)) }));
   return esc(parts.map(function (x) { return x.replace(/ /g, "\u00a0"); }).join(" · ")); // chaque terme reste d'un bloc
 }
 function pa2ActKicker(n, what) {

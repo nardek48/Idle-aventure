@@ -366,7 +366,7 @@ function buildSaveData() {
     upgrades: game.upgrades || {},
     talents: game.talents || {},
     skillRanks: game.skillRanks || {}, // H2 : rangs des sorts
-    companionRelics: game.companionRelics || { inv: [], next: 1, pity: 0 }, // H4 : reliques des compagnons
+    companionRelics: game.companionRelics || { inv: [], next: 1, pity: 0, firstPatrolDone: false }, // H4 : reliques des compagnons
     talentsV2: !!game.talentsV2, // v3.327.0 : talents par classe (migration faite)
     unlockedTabs: game.unlockedTabs || {}, // v3.99.15 : onglets débloqués, voir core/state.js
     inventory: Array.isArray(game.inventory) ? game.inventory : [],
@@ -624,7 +624,7 @@ function restoreBaseState(d) {
   game.upgrades = d.upgrades && typeof d.upgrades === "object" ? d.upgrades : {};
   game.talents = d.talents && typeof d.talents === "object" ? d.talents : {};
   game.skillRanks = d.skillRanks && typeof d.skillRanks === "object" ? d.skillRanks : {}; // H2
-  game.companionRelics = d.companionRelics && typeof d.companionRelics === "object" ? d.companionRelics : { inv: [], next: 1, pity: 0 }; // H4 reliques
+  game.companionRelics = d.companionRelics && typeof d.companionRelics === "object" ? d.companionRelics : { inv: [], next: 1, pity: 0, firstPatrolDone: false }; // H4 reliques
   game.talentsV2 = !!d.talentsV2; // v3.327.0 : false = ancienne sauvegarde, migrée par loadGame
   // v3.99.15 : onglets débloqués (voir core/state.js). Migration pour les sauvegardes
   // antérieures à cette version (d.unlockedTabs absent) : une partie déjà entamée
@@ -1083,7 +1083,7 @@ function fullResetState() {
   game.upgrades = {};
   game.talents = {};
   game.skillRanks = {}; // H2
-  game.companionRelics = { inv: [], next: 1, pity: 0 }; // H4 reliques
+  game.companionRelics = { inv: [], next: 1, pity: 0, firstPatrolDone: false }; // H4 reliques
   game.talentsV2 = true; // v3.327.0 : une partie neuve n'a rien à migrer
   game.unlockedTabs = { campement: true, quests: true, settings: true, scene: true }; // v3.99.15 / v3.122.0 : "scene" toujours débloqué (infrastructure d'affichage des runs, pas un onglet narratif — même statut que quests/settings)
   game.inventory = [];

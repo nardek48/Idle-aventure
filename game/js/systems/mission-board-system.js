@@ -541,7 +541,8 @@ var MissionBoard = {
         id: "scene_" + templateId, sourceKind: "scene", worldId: template.worldId || null, // v3.301.0 : monde du canevas
         title: _td(template.title), blurb: EXPLORATION_BOARD_BLURBS[legacyId] || "",
         type: "expedition", place: "", objectiveLabel: "", progressLabel: isRunning ? _t("En cours") : "",
-        rewardSummary: "", badge: "contract", status: isRunning ? "running" : (accepted ? "accepted" : "available"), isMain: false
+        rewardSummary: "", badge: "contract", status: isRunning ? "running" : (accepted ? "accepted" : "available"), isMain: false,
+        entryCost: isRunning ? null : (template.entryCost || null) // audit SUIV-11 (ERG-5 point 2) : coût du départ sur la carte
       };
       // v3.289.0 : dotation de l'intendant affichée sur les quêtes qui ouvrent un bâtiment
       var unlockSpec = template.unlockOnSuccess;

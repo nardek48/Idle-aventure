@@ -5,7 +5,7 @@
 /* v3.422.0 : libellé traduit AU RENDU (une table figée au chargement garderait la langue de ce
    moment-là ; la pseudo-langue du scan l'a montré). */
 function sceneStatLabel(stat) {
-  if (stat === "power") return _t("Puissance");
+  if (stat === "power") return _t("Force"); // audit NOV-14 : le nom de l'écran Héros
   if (stat === "precision") return _t("Précision");
   if (stat === "endurance") return _t("Endurance");
   return stat;

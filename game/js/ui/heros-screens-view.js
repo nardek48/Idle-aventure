@@ -482,7 +482,7 @@
       h += '<div class="hs-comp"><button type="button" class="hs-comp-head" onclick="herosOpenCompanion(\'' + id + '\')">'
         + img(def.image, "hs-comp-pt") + '<span class="hs-comp-txt"><b>' + esc(_td(def.name)) + '</b><small>' + esc(role) + ' · ' + _t("Dégâts") + ' ' + num(stats.damage) + '</small>'
         + '<span class="hs-comp-st is-' + s.tone + '">' + esc(s.txt) + '</span></span><i class="hs-chev">›</i></button>'
-        + '<div class="hs-comp-row"><div class="kgauge kgauge-thin hs-comp-hp"><div class="kgauge-track"><div class="kgauge-fill" style="width:' + pct.toFixed(1) + '%"></div></div><span class="kgauge-text">' + num(Math.ceil(hp)) + ' / ' + num(stats.maxHp) + ' ' + _t("PV") + '</span></div>';
+        + '<div class="hs-comp-row"><div class="kgauge kgauge-thin hs-comp-hp"><div class="kgauge-track"><div class="kgauge-fill" style="width:' + pct.toFixed(1) + '%"></div></div><span class="kgauge-text" title="' + esc(_t("PV")) + '">' + num(Math.ceil(hp)) + ' / ' + num(stats.maxHp) + '</span></div>'; // audit CPL2-9 : sans « PV », tient dans 82 px à 320 px
       if (!(window.PatrolManager && PatrolManager.isOnPatrol(id))) {
         h += '<div class="kseg cp-seg"><button type="button" class="' + (st.present ? 'is-on' : '') + '" onclick="companionSetPresent(\'' + id + '\', true)">' + _t("Avec toi") + '</button>'
           + '<button type="button" class="' + (!st.present ? 'is-on' : '') + '" onclick="companionSetPresent(\'' + id + '\', false)">' + _t("Au camp") + '</button></div>';

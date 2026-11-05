@@ -10,6 +10,7 @@
    Les textes des données sont traduits par _td() à l'affichage (registre : lang/data-fields.js). */
 I18n.register("en", {
   // index.html
+  "Compagnons : la première patrouille rapporte toujours sa relique, « Répartir de nouveau » prévient quand des reliques s'éteignent, et l'aperçu de « Tout offrir » compte la Mémoire vive. Les missions d'expédition affichent leur coût de départ.": "Companions: the first patrol always brings back its relic, “Spread again” warns when relics go dark, and the “Offer all” preview counts Sharp Memory. Expedition missions show their departure cost.",
   "Combat : un contre réussi affiche de nouveau « CONTRÉ ! » sur l'ennemi. Ménage du code, sans autre changement.": "Combat: a successful counter shows “COUNTERED!” on the enemy again. Code cleanup, no other change.",
   "Premier lancement plus léger : images d'interface, icônes et bandeaux allégés sans perte visible ; le dictionnaire anglais n'est plus téléchargé par les joueurs francophones.": "Lighter first launch: interface images, icons and banners slimmed down with no visible loss; French-speaking players no longer download the English dictionary.",
   "Jeu en anglais : nombres à l'anglaise (5,000 · 12.3 k), deux-points et « Defence » corrigés. Lecteurs d'écran : messages annoncés, icônes de coût nommées, Entrée et Espace sur les liens « ressource manquante ».": "Game in English: English number format (5,000 · 12.3 k), colons and “Defence” fixed. Screen readers: messages announced, cost icons named, Enter and Space on “missing resource” links.",
@@ -1439,9 +1440,9 @@ I18n.register("en", {
   "une relique : {x}": "a relic: {x}",
   "Palier {n}": "Step {n}",
   "Reliques": "Relics",
-  "une par famille · rapportées de patrouille": "one per family · brought back from patrols",
+  "une par famille · patrouilles, échoppe et quêtes": "one per family · patrols, shop and quests",
   "Emplacement {n} · {x}": "Slot {n} · {x}",
-  "Aucune relique pour l'instant. Les compagnons en rapportent de patrouille.": "No relics yet. Companions bring them back from patrols.",
+  "Aucune relique pour l'instant. Elles viennent des patrouilles, de l'échoppe et des quêtes de compagnon.": "No relics yet. They come from patrols, the shop and companion quests.",
   "Portée ici": "Worn here",
   "Portée par {x}": "Worn by {x}",
   "Famille prise": "Family taken",
@@ -1800,7 +1801,6 @@ I18n.register("en", {
   "Livrer {n} contrat · +{p} or||Livrer {n} contrats · +{p} or": ["Deliver {n} contract · +{p} gold", "Deliver {n} contracts · +{p} gold"],
 
   // js/ui/scene-view.js
-  "Puissance": "Power",
   "Il te manque {x} ×{n}": "You're missing {x} ×{n}",
   "Il te manque une {x}": "You're missing one {x}",
   "{q} consomme {x} ×{n} au départ. Tu en as {h}.": "{q} uses {x} ×{n} when setting out. You have {h}.",
@@ -2367,7 +2367,7 @@ I18n.register("en", {
   "Pierre équarrie et cerclée de fer, à la Maçonnerie de la Carrière. Sert aux constructions du village, du Désert aux derniers paliers.": "Stone squared and bound with iron, at the Quarry's Masonry. Used for village buildings, from the Desert to the last tiers.",
   "Lingot retravaillé à la Forge de la Mine. Sert à reforger l'équipement.": "Ingot reworked at the Mine's Forge. Used to reforge equipment.",
   "Cuit à la Boulangerie (Champs) à partir de Blé et d'Eau.": "Baked at the Bakery (Fields) from Wheat and Water.",
-  "Repas au Campement : restaure 60 % des PV max de toute l'équipe. Vivres pour repartir au Désert, aux Ruines, à la Crypte et à la Montagne (donjon et élite rejoués, traversées, Labyrinthe). Cuisine de camp : 15 Viandes + 1 Pain.": "A meal at Camp: restores 60% of max HP to the whole team. Provisions for setting out again in the Desert, the Ruins, the Crypt and the Mountain (replayed dungeon and elite, crossings, Labyrinth). Camp Kitchen: 15 Meat + 1 Bread.",
+  "Repas au Campement : restaure 60 % des PV max de toute l'équipe. Vivres pour repartir au Désert, aux Ruines, à la Crypte, à la Montagne et à la Tour (donjon et élite rejoués, traversées, Labyrinthe). Cuisine de camp : 15 Viandes + 1 Pain.": "A meal at Camp: restores 60% of max HP to the whole team. Provisions for setting out again in the Desert, the Ruins, the Crypt, the Mountain and the Tower (replayed dungeon and elite, crossings, Labyrinth). Camp Kitchen: 15 Meat + 1 Bread.",
   "Repas au Campement : restaure 35 % des PV max de toute l'équipe. Vivres pour repartir en Forêt (donjon et élite rejoués, expéditions). Crafté à la Cuisine de camp à partir de Viande et d'Eau.": "A meal at Camp: restores 35% of max HP to the whole team. Provisions for setting out again in the Forest (replayed dungeon and elite, expeditions). Crafted at the Camp Kitchen from Meat and Water.",
   "Se remplit au Réservoir (Puits). Emportée dans un parcours du Désert, elle rend du Souffle une fois.": "Filled at the Reservoir (Well). Taken on a Desert route, it restores Breath once.",
   "Repas au Campement : restaure 100 % des PV max de toute l'équipe. Cuisine de camp (Chasse) : 1 Ration moyenne + 15 Viandes + 10 Eau → 1.": "A meal at Camp: restores 100% of max HP to the whole team. Camp Kitchen (Hunting Lodge): 1 Medium ration + 15 Meat + 10 Water → 1.",
@@ -4385,9 +4385,10 @@ I18n.register("en", {
   "il t'en reste {n}||il t'en reste {n}": ["{n} left", "{n} left"],
   "−{n} blessure||−{n} blessures": ["−{n} wound", "−{n} wounds"],
   // v3.577.0 : le jet au d20
-  "matériel {m}": "gear {m}",
+  "objets {m}": "items {m}",
   "blessure {m}||blessures {m}": ["wound {m}", "wounds {m}"],
-  "DD {d}": "DC {d}",
+  "il faut {n} ou plus": "need {n} or more",
+  "il faut 20": "need a 20",
   "20 naturel : réussite d'office": "Natural 20: automatic success",
   "1 naturel : échec d'office": "Natural 1: automatic failure",
   "Destination": "Destination",
@@ -8978,5 +8979,9 @@ I18n.register("en", {
   "Enchaîné": "Chained",
   // v3.690.0 (lot A2, anglais et accessibilité)
   "{a} : {b}": "{a}: {b}",
+  // v3.693.0 (lot A6, compagnons et méta)
+  "Une relique portée cessera d'agir : son emplacement se ferme jusqu'au palier {p}.||{n} reliques portées cesseront d'agir : leurs emplacements se ferment jusqu'au palier {p}.": ["One equipped relic will stop working: its slot closes until tier {p}.", "{n} equipped relics will stop working: their slots close until tier {p}."],
+  "Ton sac repassera à {c} places pour {n} objets : tant qu'il déborde, chaque objet trouvé est offert à l'Aether.": "Your bag will go back to {c} slots for {n} items: while it overflows, every item you find is offered to the Aether.",
+  "Départ : {x} ×{n} · stock {h}": "Departure: {x} ×{n} · stock {h}",
 
 });

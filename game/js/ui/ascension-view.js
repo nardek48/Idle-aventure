@@ -5,19 +5,31 @@
 
 function chooseMemoryOption(level, optionId) {
   if (!window.MemoryManager) return;
-  var current = MemoryManager.getChoice(level);
+  var current = MemoryManager.getChoice(level), sac = memorySacWarning(current, optionId);
   if (current && current !== optionId && !MemoryManager.isLineBroken(level) && !MemoryManager.isFreeReprise(level) && typeof showConfirmModal === "function") { // ligne cassée, reprise offerte : sans frais
     var cost = MemoryManager.getRepriseCost();
     showConfirmModal(
       _t("Reprendre ce choix ?"),
-      _t("Changer d'avis coûte {n} or (tu en as {g}). La prochaine reprise coûtera trois fois plus.", { n: formatNumber(cost), g: formatNumber(game.gold || 0) }),
+      _t("Changer d'avis coûte {n} or (tu en as {g}). La prochaine reprise coûtera trois fois plus.", { n: formatNumber(cost), g: formatNumber(game.gold || 0) }) + (sac ? " " + sac : ""),
       "images/Icons/gold_icon.webp",
       function () { MemoryManager.choose(level, optionId); }
     );
     return;
   }
+  if (sac && typeof showConfirmModal === "function") { // reprise gratuite : l'avertissement du sac reste
+    showConfirmModal(_t("Reprendre ce choix ?"), sac, "images/Icons/memory/sac_profond.webp", function () { MemoryManager.choose(level, optionId); });
+    return;
+  }
   MemoryManager.choose(level, optionId);
 }
+/* Audit CPL2-7 : quitter « Sac profond » avec un sac au-delà du plafond de base, ou "". */
+function memorySacWarning(current, optionId) {
+  if (current !== "sac_profond" || optionId === current) return "";
+  var n = Array.isArray(game.inventory) ? game.inventory.length : 0, cap = window.MEMORY_INVENTORY_BASE || 25;
+  if (n <= cap) return "";
+  return _t("Ton sac repassera à {c} places pour {n} objets : tant qu'il déborde, chaque objet trouvé est offert à l'Aether.", { c: cap, n: n });
+}
+window.memorySacWarning = memorySacWarning;
 window.chooseMemoryOption = chooseMemoryOption;
 
 /* v3.407.0 (audit design, point 1) : l'écran Mémoire rejoint le kit — cadre de page,
