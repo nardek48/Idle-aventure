@@ -251,7 +251,6 @@ function buildWarehouseFilterRowHTML(keys) {
 }
 
 function buildWarehouseHTML() {
-  if (typeof HuntQuestManager !== "undefined") HuntQuestManager.ensureDefaults();
   if (typeof WarehouseManager !== "undefined") WarehouseManager.ensure();
 
   var all = warehouseListedKeys();

@@ -1,7 +1,7 @@
 {
   "name": "Aethervale",
   "short_name": "Aethervale",
-  "description": "Idle RPG fantasy-médiéval — clique, équipe ton héros et laisse-le combattre même hors-ligne.",
+  "description": "RPG d'aventure fantasy-médiéval au tour par tour, avec un village qui produit pendant ton absence.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

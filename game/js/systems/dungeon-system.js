@@ -755,7 +755,6 @@ var DungeonManager = {
     if (!storyFree && !freeRun && this.getRunsLeft(dungeon.id) <= 0) return showToast(_t("Plus de sortie aujourd'hui dans ce donjon — renouvellement dans {d}", { d: this.timeUntilTicketReset() }), 1800);
     if (game.dungeonRun.active) return showToast(_t("Donjon déjà en cours"), 1200);
     if (game.adventureQuestRun && game.adventureQuestRun.active) return showToast(_t("Termine ou abandonne ta quête en cours avant d'entrer en donjon"), 1600);
-    if (game.huntRun && game.huntRun.active) return showToast(_t("Termine ou arrête ta chasse en cours avant d'entrer en donjon"), 1600);
     if (game.livingMaps && game.livingMaps.fight) return showToast(_t("Termine d'abord le combat engagé sur la carte"), 1600); // audit 04/11 (QA-9) : pas deux sorties à la fois
     if (window.heroLockToast && heroLockToast()) return; // v3.307.0 : héros en expédition
     // v3.330.0 (E4) : vivres de sortie pour un donjon déjà fini une fois (jamais sur un ticket d'Histoire)

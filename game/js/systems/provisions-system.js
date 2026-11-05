@@ -3,8 +3,6 @@
    option a de Seb, 24/09/2026).
 
    Une ration pour partir, seulement pour les sorties qu'on REFAIT :
-     - chasse : dès qu'un lot de cette chasse a déjà été bouclé (game.huntStats). Aucune chasse
-       en jeu depuis v3.511.0 : branche gardée pour le moteur et le harnais (hunt-fixture.js) ;
      - run de donjon : dès que ce donjon a déjà été fini une fois (game.dungeonTierCleared),
        sauf ticket d'Histoire (DungeonManager.isStoryTicketFree) ;
      - élite de carte : dès que son secteur est libéré (combat rejoué).
@@ -19,8 +17,8 @@ var PROVISIONS_FREE_UNTIL_STEP = "forest_crossing"; // acte III de la Forêt
 
 var ProvisionsManager = {
   /* Ration demandée pour cette sortie, ou null si elle est gratuite.
-     kind : "dungeon" | "dungeonFree" | "mapelite" | "hunt" (aucune chasse en jeu depuis v3.511.0) ;
-     ref : l'objet de données (donjon, chasse) ou { mapId, sectorId, worldId } pour une élite de carte. */
+     kind : "dungeon" | "dungeonFree" | "mapelite" ;
+     ref : l'objet de données (donjon) ou { mapId, sectorId, worldId } pour une élite de carte. */
   getRequirement: function (kind, ref) {
     if (!ref) return null;
     if (kind === "dungeonFree") return { resourceId: "ration", amount: 1 }; // v3.462.0 (N-L) : mode libre, tous les donjons
@@ -35,7 +33,6 @@ var ProvisionsManager = {
 
   /* Vrai si cette sortie a déjà été réussie une fois. */
   isRepeat: function (kind, ref) {
-    if (kind === "hunt") return Number((game.huntStats || {})[ref.id] || 0) >= 1;
     if (kind === "dungeon") {
       if (window.DungeonManager && typeof DungeonManager.isStoryTicketFree === "function" && DungeonManager.isStoryTicketFree(ref.id)) return false;
       return !!(game.dungeonTierCleared || {})[ref.id];

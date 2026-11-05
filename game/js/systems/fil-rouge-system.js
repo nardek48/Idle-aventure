@@ -154,7 +154,7 @@ var FilRouge = {
     if (!link) return false;
     var card = String(link.cardId || "");
     var tab = (typeof link.tab === "function") ? null : link.tab;
-    return tab === "combat" || link.section === "adventure" || card.indexOf("adv_") === 0 || card.indexOf("hunt_") === 0;
+    return tab === "combat" || link.section === "adventure" || card.indexOf("adv_") === 0;
   },
 
   /* 3. Combat d'Histoire en vue, héros entamé. */

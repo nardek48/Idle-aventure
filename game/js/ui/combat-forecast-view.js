@@ -222,10 +222,6 @@ function etCreaturesFor(ctx) {
     var aq = window.ADVENTURE_QUESTS && ADVENTURE_QUESTS[ctx.id];
     return aq ? etQuestCreatures(aq) : [];
   }
-  if (ctx.type === "hunt") {
-    var hq = window.HUNT_QUESTS && HUNT_QUESTS[ctx.id];
-    return hq ? etQuestCreatures(hq) : [];
-  }
   if (ctx.type === "elite") { var eo = []; etPushElite(eo, ctx.id); return eo; }
   if (ctx.type === "dungeon") {
     var d = (window.DUNGEONS || []).filter(function (x) { return x.id === Number(ctx.id); })[0];
@@ -304,7 +300,7 @@ function etDescribe(c) {
 
 /* Mécaniques posées par la quête elle-même, sur ses rencontres (morts qui dorment, chaînes des Nécromanciens). */
 function etQuestTraits(ctx) {
-  var q = ctx && (ctx.type === "adventure" || ctx.type === "hunt") ? (ctx.type === "adventure" ? window.ADVENTURE_QUESTS : window.HUNT_QUESTS || {})[ctx.id] : null;
+  var q = ctx && ctx.type === "adventure" ? (window.ADVENTURE_QUESTS || {})[ctx.id] : null;
   var out = [];
   if (!q) return out;
   if ((q.encounters || []).some(function (e) { return e && e.sleepers; })) out.push({ trait: "asleep", name: _t("Des morts qui dorment") });

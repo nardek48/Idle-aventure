@@ -212,10 +212,6 @@ var WorldManager = {
     if (aq && aq.active && window.ADVENTURE_QUESTS && ADVENTURE_QUESTS[aq.questId] && window.AdventureQuestManager) {
       AdventureQuestManager.applyQuestTheme(ADVENTURE_QUESTS[aq.questId]); return true;
     }
-    var hr = game.huntRun;
-    if (hr && hr.active && window.HUNT_QUESTS && HUNT_QUESTS[hr.questId] && HUNT_QUESTS[hr.questId].worldId && window.HuntQuestManager) {
-      HuntQuestManager.applyQuestTheme(HUNT_QUESTS[hr.questId]); return true;
-    }
     var lm = game.livingMaps && game.livingMaps.fight;
     if (lm && window.LivingMapManager && LivingMapManager.getMap(lm.mapId)) {
       LivingMapManager._applyFightTheme(LivingMapManager.getMap(lm.mapId)); return true;

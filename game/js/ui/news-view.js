@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.699.0", "combat_stats/stat_attack", _t("Combat de groupe : la faiblesse ou la résistance de l'ennemi frappé compte enfin, même s'il n'est pas le premier du groupe. L'Entrepôt dit où se cuisinent les rations.")],
     ["3.698.0", "menu_icons/bestiaire_menu", _t("Le Dragon ancien est moins coriace. Le pronostic d'une mission ne change plus d'une ouverture à l'autre, et le Bestiaire n'a plus qu'une fiche pour le Golem.")],
     ["3.697.0", "menu_icons/village_menu", _t("L'écran de retour survit à un rechargement, « Village & Production » s'ouvre dès la première visite du Village, les cartes d'achat payables ne sont plus voilées, et la 2e aventure des Ruines s'appelle « Nef ensevelie ».")],
     ["3.697.0", "menu_icons/map_menu", _t("Combat : « Régler d'un coup » vaut aussi pour une élite répétable de carte jugée sans danger. Les compagnons arrivés tard ouvrent leurs emplacements de relique plus tôt. Petite Aventure : annuler la préparation garde le même tirage pendant 4 h.")],

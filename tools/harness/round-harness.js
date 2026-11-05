@@ -48,9 +48,7 @@ scripts.forEach(function (s) {
 console.log("Chargé " + scripts.length + " scripts");
 
 var g = sandbox;
-/* v3.511.0 : le jeu n'a plus de chasse ; le moteur reste testé avec les anciennes (hunt-fixture.js). */
-var HUNT_SHIPPED = Object.keys(g.HUNT_QUESTS || {}).length;
-Object.assign(g.HUNT_QUESTS, require("./hunt-fixture.js"));
+/* v3.699.0 (ARCH-9) : moteur des chasses retiré du jeu ; les contrôles qui le testaient sont retirés. */
 /* v3.447.0 : l'initiative tire l'ordre des tours aux dés. Les contrôles historiques supposent l'ordre
    d'avant (héros, compagnons, ennemis) : on le garde ici ; les contrôles de l'initiative le lèvent. */
 g.Initiative.legacy = true;
@@ -306,7 +304,7 @@ ok(g.CombatEngine.heroAction("basic") === false, "en mode Grimoire, l'Attaque ma
 n = game.combatRound.number;
 g.CombatEngine.tickRoundClock(1.6);
 ok(game.combatRound.number === n, "v3.293.0 : hors run de quête, l'horloge ne joue aucun round");
-game.huntRun = { active: true, questId: "hq_forest_boar", killsInLot: 0 }; // v3.293.0 : l'horloge exige un run de quête
+game.adventureQuestRun = { active: true, questId: "hq_wolf_pack" }; // v3.293.0 : l'horloge exige un run de quête (v3.699.0 : quête au lieu de chasse)
 game.combatRound.clockMs = 0;
 g.CombatEngine.tickRoundClock(1.0);
 ok(game.combatRound.number === n, "horloge : 1,0 s < 1,5 s → pas encore de round");
@@ -463,24 +461,6 @@ game.enemy.chargeIn = 99; game.enemy.hp = 1; g.CombatEngine.heroAction("basic");
 game.sortie.loot.gold = 40;
 g.AdventureQuestManager.forfeit();
 ok(!g.SortieManager.isActive() && game.gold === gold0 + 20 && game.adventureQuestRun.active === false, "abandon = fuite : 20/40 or rapportés, quête non validée");
-// chasse : viande dans le butin, lot terminé = banqué
-game = freshCombat("knight"); giveWeapon();
-var huntId = Object.keys(g.HUNT_QUESTS)[0], hq = g.HUNT_QUESTS[huntId];
-g.HuntQuestManager.start(huntId);
-ok(g.SortieManager.isActive() && game.sortie.context === "hunt", "chasse = sortie 'hunt'");
-// v3.260.0 : la chasse tire dans resourcePool — on compte le total banqué sur le pool
-var huntKeys = hq.resourcePool || [hq.resourceKey];
-var sumHunt = function () { return huntKeys.reduce(function (a, k) { return a + Number(game.resources[k] || 0); }, 0); };
-meat0 = sumHunt();
-var origChance = g.chance; g.chance = function () { return true; }; // drop garanti
-for (var k = 0; k < hq.lotSize; k++) { game.enemy.chargeIn = 99; game.enemy.hp = 1; g.CombatEngine.heroAction("basic"); }
-g.chance = origChance;
-ok(game.huntRun.active === false && !g.SortieManager.isActive() && sumHunt() === meat0 + hq.lotSize, "lot terminé : " + hq.lotSize + " ressources banquées d'un coup");
-// chasse : mort = viande perdue (3a)
-game = freshCombat("knight"); giveWeapon(); g.HuntQuestManager.start(huntId); meat0 = Number(game.resources[hq.resourceKey] || 0);
-g.SortieManager.addResource(hq.resourceKey, 4);
-game.enemy.chargeIn = 99; game.enemy.hp = game.enemy.maxHp = 100000; game.heroHp = 1; g.CombatEngine.heroAction("basic");
-ok(game.heroHp === 0 && Number(game.resources[hq.resourceKey] || 0) === meat0 && game.huntRun.active === false, "mort en chasse : viande de la sortie perdue (3a)");
 // donjon : mort = 0 récompense partielle ; abandon = moitié
 game = freshCombat("knight"); giveWeapon(); game.dungeonRunsUsed = {}; gold0 = game.gold;
 g.DungeonManager.start(1);
@@ -571,16 +551,9 @@ var questId = runningMission.id.replace("adv_", "");
 runningMission.abandon();
 ok(g.game.adventureQuestRun.active === false, "abandon() a bien appelé AdventureQuestManager.forfeit()");
 
-console.log("\n[22] MissionBoard : chasse et donjon");
+console.log("\n[22] MissionBoard : donjon");
 game = freshCombat("knight"); giveWeapon();
 game.explorationProgression = { huntBuildingUnlocked: true };
-var huntMission = g.MissionBoard.list().find(function (m) { return m.sourceKind === "hunt"; });
-ok(!!huntMission && huntMission.status === "available", "chasse visible une fois le bâtiment débloqué");
-huntMission.accept();
-g.confirmHuntQuestStart(); g.confirmSortiePrep(); // v3.440.0 : la préparation de sortie s'ouvre, le joueur part
-var huntRunning = g.MissionBoard.list().find(function (m) { return m.id === huntMission.id; });
-ok(huntRunning.status === "running" && huntRunning.progressLabel === "0/" + g.HUNT_QUESTS[huntMission.id.replace("hunt_", "")].lotSize, "chasse lancée : statut running, progression 0/lot");
-g.HuntQuestManager.stop(); // DungeonManager.start() refuse si une chasse est en cours (comportement préexistant)
 game.dungeonRunsUsed = {};
 // v3.118.0 (retour Seb) : le donjon (palier 1, techniquement "unlocked" en soi) n'apparaît au
 // tableau qu'une fois débloqué narrativement (forest_14, unlockTabs: ["dungeon"]).
@@ -1022,13 +995,6 @@ var qs = g.ADVENTURE_QUESTS.hq_wolf_pack;
 for (var mk = 0; mk < 3; mk++) { var vise = game.enemy; vise.chargeIn = 99; vise.engageIn = 0; vise.hp = 1; g.CombatEngine.heroAction("basic"); }
 ok(g.getCombatMissionProgressLabel().indexOf("3/16") !== -1,
   "quête d'aventure : label avancé à 3/16 après 3 kills (" + g.getCombatMissionProgressLabel() + ")");
-game = freshCombat("knight"); giveWeapon();
-g.HuntQuestManager.start("hq_forest_boar");
-ok(g.getCombatMissionProgressLabel().indexOf("0/16") !== -1 && g.getCombatMissionProgressLabel().indexOf("Chasse") !== -1,
-  "chasse : label 0/16 au lancement (lot porté à 16 en v3.284.0)");
-for (var mh = 0; mh < 4; mh++) { var viseH = game.enemy; viseH.chargeIn = 99; viseH.engageIn = 0; viseH.hp = 1; g.CombatEngine.heroAction("basic"); }
-ok(g.getCombatMissionProgressLabel().indexOf("4/16") !== -1,
-  "chasse : label avancé à 4/16 après 4 kills (" + g.getCombatMissionProgressLabel() + ")");
 game = freshCombat("knight"); giveWeapon(); game.dungeonRunsUsed = {};
 g.DungeonManager.start(1);
 ok(g.getCombatMissionProgressLabel().indexOf("Vague 1/") !== -1, "donjon : label vague 1/N au lancement (start() place directement la vague 1)");
@@ -1149,10 +1115,10 @@ game.heroHp = 0; game.activeTab = "campement";
 g.switchTab("combat");
 ok(game.activeTab === "campement", "point 1 : switchTab('combat') refusé à 0 PV, retombe sur Campement");
 game.heroHp = game.heroMaxHp;
-game.huntRun = { active: true, questId: "hq_forest_boar", killsInLot: 0 }; // v3.293.0 : Combat exige un run de quête
+game.adventureQuestRun = { active: true, questId: "hq_wolf_pack" }; // v3.293.0 : Combat exige un run de quête
 g.switchTab("combat");
 ok(game.activeTab === "combat", "point 1 (contrôle) : switchTab('combat') fonctionne normalement à PV > 0");
-game.huntRun = { active: false, questId: null, killsInLot: 0 };
+game.adventureQuestRun = { active: false, questId: null };
 var dCorrupt = g.buildSaveData();
 dCorrupt.activeTab = "combat"; dCorrupt.heroHp = 0;
 g.restoreBaseState(dCorrupt);
@@ -1439,16 +1405,14 @@ var rationRecipe = cuisineRecipes.find(function (r) { return r.id === "ration"; 
 ok(petiteRecipe.inputs.length === 2 && petiteRecipe.inputs[0].resourceId === "viande" && petiteRecipe.inputs[0].quantity === 8 && petiteRecipe.inputs[1].resourceId === "eau" && petiteRecipe.inputs[1].quantity === 4, "Petite ration inchangée : 8 Viande + 4 Eau brutes");
 ok(rationRecipe.inputs.length === 2 && rationRecipe.inputs[0].resourceId === "viande" && rationRecipe.inputs[0].quantity === 15 /* v3.484.0 (lot S) : 3 viandes séchées -> 15 viandes */ && rationRecipe.inputs[1].resourceId === "pain" && rationRecipe.inputs[1].quantity === 1, "Ration moyenne : 15 Viande + 1 Pain (v3.484.0)");
 
-console.log("\n[67] v3.108.0 — lot 3 : cohérence textes/données Forêt, chasse au Loup, regen coupée en quête, reset sortie");
+console.log("\n[67] v3.108.0 — lot 3 : cohérence textes/données Forêt, regen coupée en quête, reset sortie");
 ok(g.STORY_QUESTS.forest.steps.length === 17, "chaîne Histoire : 17 étapes (en-tête de story-quests.js aligné)");
 ok(g.WAREHOUSE_RESOURCES.ration.desc.indexOf("15 Viandes + 1 Pain") !== -1, "Ration moyenne : description alignée sur la recette réelle (15 Viandes + 1 Pain)");
-ok(g.HUNT_QUESTS.hq_forest_boar.enemyFilter.length === 1 && g.HUNT_QUESTS.hq_forest_boar.enemyFilter[0] === "wolf", "Chasse en Forêt : enemyFilter [wolf]");
 game = freshCombat("knight");
 run("WorldManager.worldIndex = 0; WorldManager.adventureIndex = 0; WorldManager.enemyIndex = 3;");
-var huntIds = {};
-/* v3.284.0 : la chasse sert des MEUTES — spawnFor renvoie un tableau. On aplatit. */
-for (var hi = 0; hi < 60; hi++) { [].concat(g.QuestEnemyManager.spawnFor(g.HUNT_QUESTS.hq_forest_boar, false)).forEach(function (he) { huntIds[he.id] = true; }); }
-ok(Object.keys(huntIds).length === 1 && huntIds.wolf, "spawnFor(chasse) ne sort que des loups (60 tirages) : " + JSON.stringify(Object.keys(huntIds)));
+var wolfIds = {}; // v3.699.0 (ARCH-9) : le filtre se vérifie sur la Meute affamée (quête d'aventure)
+for (var wi = 0; wi < 60; wi++) { [].concat(g.QuestEnemyManager.spawnFor(g.ADVENTURE_QUESTS.hq_wolf_pack, false)).forEach(function (he) { wolfIds[he.id] = true; }); }
+ok(Object.keys(wolfIds).length === 1 && wolfIds.wolf, "spawnFor(Meute affamée) ne sort que des loups (60 tirages) : " + JSON.stringify(Object.keys(wolfIds)));
 ok(g.WorldManager.enemyIndex === 3 && g.WorldManager.adventureIndex === 0 && g.WORLDS[0].adventures[0].enemyPool.indexOf("wolf") === -1, "index WorldManager restaurés et pool de base de la Lisière intact après le filtre");
 ok(g.ADVENTURE_QUESTS.hq_wolf_pack.steps[0].desc.indexOf("loups") !== -1, "La Meute affamée : libellé « loups » (aligné sur son enemyFilter)");
 ok(!g.DUNGEON_MARKS.some(function (m) { return /tap/.test(m.desc); }), "Marques : plus aucune mention « tap » (système retiré en P2)");
@@ -2160,11 +2124,12 @@ m2.accept();
 ok(g.MissionBoard.getActiveQuestCount() === 2, "point 2 : 2 quêtes acceptées (sans run) -> compteur à 2 (" + g.MissionBoard.getActiveQuestCount() + ")");
 ok(g.MissionBoard.isActiveQuestCapReached() === false, "point 2 : cap PAS encore atteint à 2 quêtes");
 
-// 3e quête active : une chasse RÉELLEMENT lancée (status "running", pas juste "available"),
-// source différente (hunt) pour couvrir le périmètre multi-source du cap.
-g.HuntQuestManager.start("hq_forest_boar");
-ok(g.MissionBoard.getActiveQuestCount() === 3, "point 2b : chasse lancée en plus -> compteur à 3 (" + g.MissionBoard.getActiveQuestCount() + ")");
-ok(g.MissionBoard.isActiveQuestCapReached() === true, "point 2b : cap atteint à 3 quêtes actives (2 scene accepted + 1 hunt running)");
+// 3e quête active : une quête d'aventure RÉELLEMENT lancée (status "running", pas juste "available"),
+// source différente (adventure) pour couvrir le périmètre multi-source du cap (v3.699.0 : plus de chasse).
+run("game.heroHp = game.heroMaxHp;");
+g.AdventureQuestManager.start("hq_wolf_pack");
+ok(g.MissionBoard.getActiveQuestCount() === 3, "point 2b : quête lancée en plus -> compteur à 3 (" + g.MissionBoard.getActiveQuestCount() + ")");
+ok(g.MissionBoard.isActiveQuestCapReached() === true, "point 2b : cap atteint à 3 quêtes actives (2 scene accepted + 1 adventure running)");
 
 // Point 3 : un nouvel accept générique est refusé une fois le cap atteint.
 g.MissionBoard.acceptBoardQuest("scene_dummy_blocked_by_cap");
@@ -2172,10 +2137,10 @@ ok(!g.game.explorationProgression.boardAccepted.scene_dummy_blocked_by_cap, "poi
 ok(g.MissionBoard.getActiveQuestCount() === 3, "point 3 : le compteur reste à 3 après la tentative refusée");
 
 // Point 3b (v3.138.0) : le toast de refus liste désormais les titres des 3 quêtes actives —
-// mêmes 3 quêtes que celles qui font le compteur (2 scene + 1 hunt), aucune divergence de périmètre.
+// mêmes 3 quêtes que celles qui font le compteur (2 scene + 1 adventure), aucune divergence de périmètre.
 var titles = g.MissionBoard.getActiveQuestTitles();
 ok(titles.length === 3, "point 3b : getActiveQuestTitles() renvoie 3 titres, alignés sur getActiveQuestCount()");
-ok(titles.indexOf("Le Sentier Obstrué") !== -1 && titles.indexOf("Chasse en Forêt") !== -1, "point 3b : contient bien les titres réels des quêtes actives (scene + hunt)");
+ok(titles.indexOf("Le Sentier Obstrué") !== -1 && titles.indexOf("La Meute Affamée") !== -1, "point 3b : contient bien les titres réels des quêtes actives (scene + adventure)");
 var toastCaptured = null;
 run("window.showToast = function (msg, dur) { window.__lastToast = msg; };");
 // v3.336.0 (F-2) : le refus passe par le toast « Pour y arriver » — même message, capturé aussi
@@ -2183,7 +2148,7 @@ run("(function () { var real = window.showHowToToast; window.showHowToToast = fu
 g.MissionBoard.showActiveQuestCapToast();
 toastCaptured = g.window.__lastToast;
 ok(toastCaptured.indexOf("⛔ 3 quêtes actives max") === 0, "point 3b : le toast garde le message générique en tête");
-ok(toastCaptured.indexOf("Le Sentier Obstrué") !== -1 && toastCaptured.indexOf("Chasse en Forêt") !== -1, "point 3b : le toast détaille les titres (au lieu d'un renvoi muet vers l'écran Quêtes)");
+ok(toastCaptured.indexOf("Le Sentier Obstrué") !== -1 && toastCaptured.indexOf("La Meute Affamée") !== -1, "point 3b : le toast détaille les titres (au lieu d'un renvoi muet vers l'écran Quêtes)");
 // Les 3 sites d'appel (adventure/hunt inline, acceptBoardQuest) délèguent au même toast, plus
 // de message dupliqué en dur — vérifié indirectement : un nouvel accept générique déclenche le même texte.
 run("window.__lastToast = null;");
@@ -3053,58 +3018,6 @@ console.log("\n[ÉLITES] Créatures élite et leurs quêtes");
 })();
 
 
-/* ---------------------------------------------------------------------------
-   [BATTUE] v3.207.0 — farm d'or répétable (data/hunt-quests.js).
-   Réutilise le moteur des chasses : lot de 20, prime versée en une fois à la
-   fin, perdue en cas de mort ou d'arrêt. Aucune ressource ne tombe.
-   --------------------------------------------------------------------------- */
-console.log("\n[BATTUE] Farm d'or répétable en Forêt");
-(function () {
-  game = freshCombat("knight");
-  giveWeapon();
-  g.HuntQuestManager.ensureDefaults();
-
-  var q = g.HUNT_QUESTS.hq_forest_battue;
-  ok(!!q && q.lotSize === 20 && q.rewardGold === 120, "[BATTUE] lot de 20, prime de 120 or");
-  ok(!q.resourceKey && !q.dropChancePct, "[BATTUE] aucune ressource, aucun taux de drop");
-
-  // v3.264.0 : ouverte avec le Village (décision Seb), plus au lancement du jeu.
-  game.explorationProgression.huntBuildingUnlocked = false;
-  game.unlockedTabs.village = false;
-  ok(!g.MissionBoard.list().some(function (m) { return m.id === "hunt_hq_forest_battue"; }), "[BATTUE] absente tant que le Village n'est pas ouvert");
-  game.unlockedTabs.village = true;
-  var missions = g.MissionBoard.list().filter(function (m) { return m.sourceKind === "hunt"; });
-  ok(missions.some(function (m) { return m.id === "hunt_hq_forest_battue"; }), "[BATTUE] visible sans déblocage de bâtiment");
-  ok(!missions.some(function (m) { return m.id === "hunt_hq_forest_boar"; }), "[BATTUE] la chasse, elle, reste gatée");
-  var carte = missions.filter(function (m) { return m.id === "hunt_hq_forest_battue"; })[0];
-  ok(carte.rewardSummary.indexOf("or par lot") !== -1, "[BATTUE] résumé de récompense en or (" + carte.rewardSummary + ")");
-
-  // Un lot complet verse la prime une seule fois, à la fin.
-  g.HuntQuestManager.start("hq_forest_battue");
-  ok(game.huntRun.active === true, "[BATTUE] lot lancé");
-  var or0 = game.gold;
-  var viande0 = Number((game.resources || {}).viande || 0);
-  var i;
-  for (i = 0; i < 19; i++) g.HuntQuestManager.onEnemyKilled();
-  ok(game.gold === or0, "[BATTUE] aucune prime avant le 20e kill");
-  g.HuntQuestManager.onEnemyKilled();
-  ok(game.gold === or0 + 120, "[BATTUE] prime versée à la fin du lot");
-  ok(Number((game.resources || {}).viande || 0) === viande0, "[BATTUE] aucune ressource ramassée");
-  ok(game.huntRun.active === false, "[BATTUE] lot clos");
-  ok(game.huntStats.hq_forest_battue === 1, "[BATTUE] compteur de lots incrémenté");
-
-  // Répétable sans limite.
-  g.HuntQuestManager.start("hq_forest_battue");
-  for (i = 0; i < 20; i++) g.HuntQuestManager.onEnemyKilled();
-  ok(game.gold === or0 + 240, "[BATTUE] second lot : encore 120 or (répétable à volonté)");
-
-  // Mourir en route coûte la prime — c'est ce qui rend le lot engageant.
-  g.HuntQuestManager.start("hq_forest_battue");
-  var orAvant = game.gold;
-  for (i = 0; i < 15; i++) g.HuntQuestManager.onEnemyKilled();
-  g.HuntQuestManager.onDefeat();
-  ok(game.gold === orAvant, "[BATTUE] mort en cours de lot : prime perdue");
-})();
 
 /* ============================================================================
    [16] v3.208.0 — lot de corrections : contres complets, onglets outils,
@@ -3215,16 +3128,6 @@ console.log("\n[BATTUE] Farm d'or répétable en Forêt");
   ok(!g.MENU_ITEMS.some(function (m) { return m.tab === "tutorials" && m.badge; }), "[PASTILLES] pas de pastille sur les Tutoriels");
   ok(g.MENU_ITEMS.some(function (m) { return m.tab === "tutorials"; }), "[PASTILLES] entrée Tutoriels présente dans le menu");
 
-  /* --- Fin de chasse : le bouton Fermer ramène au Campement --- */
-  freshCombat("knight");
-  var popup = g.buildHuntLotCompleteHTML(g.HUNT_QUESTS.hq_forest_battue);
-  ok(popup.indexOf("closeHuntLotComplete()") !== -1, "[CHASSE] Fermer passe par closeHuntLotComplete()");
-  g.game.activeTab = "combat";
-  g.closeHuntLotComplete();
-  ok(g.game.activeTab === "campement", "[CHASSE] fermeture -> retour au Campement");
-  g.game.activeTab = "combat";
-  g.closeHuntLotComplete(false);
-  ok(g.game.activeTab === "combat", "[CHASSE] relance de chasse : on reste en Combat");
 })();
 
 
@@ -4180,12 +4083,14 @@ console.log("\n[27b] v3.218.0 (lot V-7) \u2014 Entrep\u00f4t agrandi : un seul p
   g.game.resources.planche = base; // plein \u00e0 l'ancien plafond
   var place = W.getCap("planche") - W.getAmount("planche");
   ok(place === 6 * par, "la place restante vue par l'Entrep\u00f4t tient compte du b\u00e2timent");
-  /* Contr\u00f4le direct sur la source : le calcul de lots automatiques doit lire
-     WarehouseManager.getCap et non WAREHOUSE_RESOURCES[...].cap. */
-  var src = String(g.WorkshopsSystem.getMaxAutoCraftTimes);
-  ok(src.indexOf("WarehouseManager.getCap") !== -1,
-    "le calcul de lots des ateliers passe par WarehouseManager.getCap");
-  ok(src.indexOf("def.cap") === -1, "...et ne lit plus le plafond brut de la table");
+  /* v3.699.0 (ARCH-15) : contrôle d'effet. Plein à l'ancien plafond, l'atelier compte encore des lots
+     (il lit WarehouseManager.getCap) ; plein au plafond du bâtiment, il n'en compte plus. */
+  var boisAvant = g.game.resources.bois; g.game.resources.bois = 1e6;
+  var lots = g.WorkshopsSystem.getMaxAutoCraftTimes("scierie_fine", "planche");
+  ok(lots > 0 && lots <= place, "le calcul de lots des ateliers suit le plafond du bâtiment (" + lots + " lots, " + place + " places)");
+  g.game.resources.planche = W.getCap("planche");
+  ok(g.WorkshopsSystem.getMaxAutoCraftTimes("scierie_fine", "planche") === 0, "...et s'arrête quand l'Entrepôt est plein");
+  g.game.resources.planche = base; g.game.resources.bois = boisAvant;
 
   /* --- Verrou de rang 4 -------------------------------------------------- */
   g.game.village = {}; M.ensure();
@@ -5141,43 +5046,6 @@ console.log("\n[42b] Libellé d'objectif sur les cartes de mission");
    Périple (10 nœuds, 35 %), donc le risque ne payait pas. La table doit rester
    croissante avec la longueur du parcours, et l'ancienne forme plate doit encore
    être lue pour pouvoir revenir en arrière sans toucher au code. */
-console.log("\n[44b] Chasse à la Sève");
-(function () {
-  var q = g.HUNT_QUESTS.hq_forest_seve;
-  ok(!!q, "la chasse hq_forest_seve existe");
-  ok(q.resourceKey === "seve_aeswyn" && q.dropChancePct > 0,
-    "elle fait tomber de la Sève (" + q.dropChancePct + " % par kill)");
-  ok(Number(q.adventureIndex) === 1,
-    "rattachée au Cœur de la forêt — seul verrou de difficulté lisible par le moteur");
-  ok(!q.rewardGold,
-    "aucune prime d'or : c'est une chasse à ressource, pas une battue");
-
-  /* Le moteur ne lit que sept champs ; un champ inventé serait inerte et
-     donnerait une quête qui ne fait rien. */
-  var lus = { id:1, type:1, section:1, difficulty:1, progressionStage:1, category:1, worldId:1,
-    adventureIndex:1, name:1, story:1, icon:1, resourceKey:1, dropChancePct:1, lotSize:1,
-    rewardGold:1, enemyFilter:1 };
-  var inconnus = Object.keys(q).filter(function (k) { return !lus[k]; });
-  ok(inconnus.length === 0,
-    "aucun champ inerte" + (inconnus.length ? " (trouvés : " + inconnus.join(", ") + ")" : ""));
-
-  /* Verrou d'accès : fermée avant la fin de « Prouver sa valeur », ouverte après. */
-  run("fullResetState(); game.playerName='T'; game.heroId='knight'; EquipmentManager.recalcStats();");
-  run("Object.keys(game.unlockedTabs).forEach(function(k){ game.unlockedTabs[k]=true; });");
-  var visible = function () {
-    return g.MissionBoard.list().some(function (m) { return m.id === "hunt_hq_forest_seve"; });
-  };
-  run("game.adventureQuestsCompleted.aq_forest_expedition = false;");
-  ok(!visible(), "invisible tant que « Prouver sa valeur » n'est pas terminée");
-  run("game.adventureQuestsCompleted.aq_forest_expedition = true;");
-  ok(visible(), "visible une fois le Cœur ouvert");
-
-  /* La ligne de récompense doit nommer la ressource : « 3 % par kill » tout seul
-     ne disait pas de quoi, maintenant qu'il y a deux chasses à ressource. */
-  var m = g.MissionBoard.list().find(function (x) { return x.id === "hunt_hq_forest_seve"; });
-  ok(m && m.rewardSummary.indexOf("Sève") !== -1,
-    "la récompense affichée nomme la ressource : « " + (m ? m.rewardSummary : "") + " »");
-})();
 
 /* [45] v3.238.0 — les icônes de ressources existent vraiment sur le disque.
    L'Acier et la Résine durcie empruntaient l'icône d'une autre ressource (Lingot,
@@ -5438,20 +5306,10 @@ console.log("\n[48b] v3.246.0 \u2014 Compteur de round, reprise de quête, PV de
   var replaced = g.QuestEnemyManager.respawnActiveRunEnemy();
   ok(replaced === true, "reprise : la qu\u00eate reprend la main sur le spawn");
   ok(game.enemy && !game.enemy.isBoss, "apr\u00e8s rechargement : ennemi de QU\u00caTE, pas le boss du farm (" + (game.enemy && game.enemy.name) + ")");
-  run("game.adventureQuestRun = { active: false, questId: null }; game.huntRun = { active: false, questId: null, killsInLot: 0 };");
+  run("game.adventureQuestRun = { active: false, questId: null };");
   ok(g.QuestEnemyManager.respawnActiveRunEnemy() === false, "hors run : rend la main, le farm spawne normalement");
   run("AdventureQuestManager.ensureDefaults(); AdventureQuestManager.start('aq_forest_expedition');");
   run("AdventureQuestManager.forfeit();");
-  // m\u00eame chose pour la chasse
-  run("HuntQuestManager.ensureRun ? HuntQuestManager.ensureRun() : null;");
-  g.HuntQuestManager.start("hq_wolf_pack");
-  if (game.huntRun && game.huntRun.active) {
-    run("WorldManager.enemyIndex = 9;");
-    var saved2 = run("JSON.stringify(buildSaveData())");
-    run("restoreBaseState(" + saved2 + ")");
-    ok(game.huntRun.active === true && game.enemy && !game.enemy.isBoss, "chasse : m\u00eame reprise, ennemi de chasse conserv\u00e9");
-    run("HuntQuestManager.stop();");
-  }
 
   /* --- 3. PV des ennemis de « Prouver sa valeur » --- */
   var q = g.ADVENTURE_QUESTS.aq_forest_expedition;
@@ -6585,34 +6443,6 @@ console.log("\n[62b] v3.260.0 \u2014 Retours de jeu : Brume, Colporteur, arme, c
   g.AdventureQuestManager._resetProgress(g.ADVENTURE_QUESTS.eq_forest_spider);
   ok(game.adventureQuestProgress.eq_forest_spider.track_spider === 0, "qu\u00eate d'\u00e9lite : pistage remis \u00e0 0 aussi (v3.261.0, d\u00e9cision Seb)");
 
-  /* --- Chasse en Forêt : 80 %, six ressources à parts égales --- */
-  var hq = g.HUNT_QUESTS.hq_forest_boar;
-  /* v3.284.0 : 50 % et non plus 80 %, parce que le lot est passé de 10 à 16 crans —
-   le rendement par lot est conservé (16 × 50 % ≈ 10 × 80 %). */
-ok(hq.dropChancePct === 50 && hq.resourcePool.length === 6, "Chasse en For\u00eat : 50 %, six ressources de base");
-  ok(hq.resourcePool.every(function (k) { return g.WAREHOUSE_RESOURCES[k] && g.WAREHOUSE_RESOURCES[k].tier === "raw"; }), "les six sont bien des ressources brutes de l'Entrep\u00f4t");
-  game = freshCombat("knight"); giveWeapon();
-  var tally = {}, total = 0, N = 3000;
-  hq.resourcePool.forEach(function (k) { tally[k] = 0; });
-  run("HuntQuestManager.ensureDefaults();");
-  var addSave = g.SortieManager.addResource, whSave = g.WarehouseManager.addResource;
-  g.SortieManager.addResource = function (k) { tally[k] = (tally[k] || 0) + 1; total++; };
-  g.WarehouseManager.addResource = function (k) { tally[k] = (tally[k] || 0) + 1; total++; return 1; };
-  game.huntRun = { active: true, questId: "hq_forest_boar", killsInLot: 0 };
-  var lotSave = hq.lotSize; hq.lotSize = N + 10;
-  for (var i = 0; i < N; i++) g.HuntQuestManager.onEnemyKilled();
-  hq.lotSize = lotSave;
-  g.SortieManager.addResource = addSave; g.WarehouseManager.addResource = whSave;
-  run("HuntQuestManager.stop();");
-  /* v3.284.0 : 50 % et non 80 %, le lot étant passé de 10 à 16 crans. Le rendement par
-     lot est conservé (16 × 50 % ≈ 10 × 80 %) ; c'est lui qui compte, pas le taux nu. */
-  ok(Math.abs(total / N - 0.50) < 0.04, "taux de butin \u2248 50 % (" + Math.round(100 * total / N) + " %)");
-  ok(hq.resourcePool.every(function (k) { return Math.abs(tally[k] / N - 0.5 / 6) < 0.035; }), "chaque ressource \u2248 8,3 % (" + hq.resourcePool.map(function (k) { return k + " " + Math.round(1000 * tally[k] / N) / 10; }).join(", ") + ")");
-  var board = g.MissionBoard.list().find(function (m) { return m.id === "hunt_hq_forest_boar"; });
-  ok(!board || board.rewardSummary === "50 % de ressource de base par kill", "tableau : « 50 % de ressource de base par kill »");
-  game.lastSortieSummary = { outcome: "success", context: "hunt", kept: { resources: { bois: 2, fer: 1 } } };
-  var lot = g.buildHuntLotCompleteHTML(hq);
-  ok(lot.indexOf("Bois") !== -1 && lot.indexOf("+2") !== -1 && lot.indexOf("en stock") === -1, "fin de lot : le d\u00e9tail du butin, ressource par ressource");
 
   /* --- Départ d'expédition refusé : l'écran dit ce qui manque --- */
   game = freshCombat("knight"); game.unlockedTabs.village = true;
@@ -6657,21 +6487,16 @@ console.log("\n[65b] v3.263.0 \u2014 Ic\u00f4nes, vitrine, Roi des marais");
 })();
 
 /* [66] v3.264.0 — Battue avec le Village, Atelier niveau 1 allégé. */
-console.log("\n[66b] v3.264.0 \u2014 Battue avec le Village, Atelier de Construction niveau 1");
+console.log("\n[66b] v3.264.0 \u2014 Village, Atelier de Construction niveau 1");
 (function () {
   game = freshCombat("knight"); giveWeapon();
-  run("HuntQuestManager.ensureDefaults();");
   game.unlockedTabs.village = false;
-  ok(!g.MissionBoard.list().some(function (m) { return m.id === "hunt_hq_forest_battue"; }), "nouvelle partie : pas de Battue au tableau");
-  g.HuntQuestManager.start("hq_forest_battue");
-  ok(g.MissionBoard.list().some(function (m) { return m.id === "hunt_hq_forest_battue" && m.status === "running"; }), "une battue d\u00e9j\u00e0 lanc\u00e9e (save ant\u00e9rieure) reste visible");
-  run("HuntQuestManager.stop();");
   run("StoryQuestManager.ensure(); StoryQuestManager.getState('forest').currentStep = " + g.STORY_QUESTS.forest.steps.findIndex(function (s) { return s.id === "forest_06"; }) + "; StoryQuestManager.acceptStep('forest');");
   // v3.616.0 (retour Seb) : le Village s'ouvre à la réussite de la Meute, plus à l'acceptation
-  ok(!game.unlockedTabs.village && !g.MissionBoard.list().some(function (m) { return m.id === "hunt_hq_forest_battue"; }), "« La meute affam\u00e9e » accept\u00e9e : ni Village ni Battue avant la r\u00e9ussite (v3.616.0)");
+  ok(!game.unlockedTabs.village, "« La meute affam\u00e9e » accept\u00e9e : pas de Village avant la r\u00e9ussite (v3.616.0)");
   game.adventureQuestsCompleted.hq_wolf_pack = true;
   run("StoryQuestManager.claimStep('forest');");
-  ok(game.unlockedTabs.village === true && g.MissionBoard.list().some(function (m) { return m.id === "hunt_hq_forest_battue"; }), "« La meute affam\u00e9e » r\u00e9ussie : le Village s'ouvre, la Battue appara\u00eet");
+  ok(game.unlockedTabs.village === true, "« La meute affam\u00e9e » r\u00e9ussie : le Village s'ouvre");
 
   var M = g.VillageBuildingManager;
   game.village = {}; M.ensure();
@@ -6778,9 +6603,12 @@ console.log("\n[64b] v3.261.0 \u2014 Qu\u00eates de combat : chaque d\u00e9part 
   game.dungeonRun = { active: false, wave: 0, dungeonId: 1, marks: [] };
   g.CombatActors.aliveEnemies = aeAvant;
 
-  /* Chasse et donjon : départ à 0 par construction */
-  ok(/game\.huntRun = \{ active: true, questId: questId, killsInLot: 0 \}/.test(String(g.HuntQuestManager.start)), "chasse : chaque lot part de 0 kill");
-  ok(/wave: 0/.test(srcOf(g.DungeonManager.start)), "donjon : chaque run part de la vague 0");
+  /* Donjon : départ à 0 (v3.699.0, ARCH-15 : contrôle d'effet au lieu du texte du code) */
+  game = freshCombat("knight"); giveWeapon(); game.dungeonRunsUsed = {};
+  game.dungeonRun = { active: false, wave: 7, dungeonId: 1, marks: [] }; // reste d'un ancien run
+  g.DungeonManager.start(1);
+  ok(game.dungeonRun.active === true && game.dungeonRun.wave === 1, "donjon : chaque run repart de la première vague (pas de la 7e d'avant)");
+  g.DungeonManager.forfeit();
 })();
 
 console.log("\n[68b] v3.266.0 (L-0) — socle du combat de groupe : acteurs, alias game.enemy, héros-acteur");
@@ -7692,7 +7520,7 @@ console.log("\n[77] v3.279.0 — Admin : rejouer un combat, et les deux barres d
   ok(liste.length > 0, "le catalogue liste des combats (" + liste.length + ")");
   ok(liste.some(function (q) { return q.id === "hq_wolf_pack" && q.kind === "adventure"; }),
     "les quêtes d'aventure y sont");
-  ok(liste.some(function (q) { return q.kind === "hunt"; }), "les quêtes de chasse aussi");
+  ok(!liste.some(function (q) { return q.kind === "hunt"; }), "v3.699.0 (ARCH-9) : plus de chasse au catalogue");
   var meute = liste.filter(function (q) { return q.id === "hq_wolf_pack"; })[0];
   ok(meute && meute.groupe === 2, "la taille du groupe est indiquée (La Meute Affamée : 2)");
   ok(liste.every(function (q, i) { return i === 0 || liste[i - 1].label.localeCompare(q.label) <= 0; }),
@@ -7826,42 +7654,6 @@ console.log("\n[81] v3.283.0 — la suggestion du Grimoire redevient visible");
   ok(g.buildCbxCmdHTML().indexOf("is-suggested") === -1,
     "en Grimoire, pas de suggestion : il joue lui-même");
   run("CombatEngine.setCombatMode('tactique');");
-})();
-
-console.log("\n[82] v3.284.0 — la Chasse en Forêt s'ouvre aux meutes");
-(function () {
-  var q = g.HUNT_QUESTS.hq_forest_boar;
-
-  ok(Array.isArray(q.group) && q.group.length === 2, "la Chasse en Forêt sert des meutes de deux");
-  ok(q.groupHpMult === 0.40 && q.groupGoldMult === 0.40, "PV et butin de chaque membre à ×0,40");
-
-  /* Les trois chiffres se tiennent : lot, taux de butin, taille de meute. */
-  ok(q.lotSize === 16, "le lot passe de 10 à 16 crans — sinon il coûterait 40 % moins cher");
-  ok(q.dropChancePct === 50,
-    "et le taux de butin de 80 % à 50 % — sinon le lot rapporterait 60 % de plus");
-  ok(Math.abs(q.lotSize * q.dropChancePct / 100 - 8) < 0.5,
-    "rendement conservé : " + (q.lotSize * q.dropChancePct / 100).toFixed(1) + " ressources par lot, contre 8 avant");
-  ok(q.lotSize % q.group.length === 0, "le lot se termine sur une meute entière");
-
-  /* Le spawn suit bien, et le compteur de lot avance de la taille du groupe. */
-  var game = freshCombat("knight"); giveWeapon();
-  var spawn = g.QuestEnemyManager.spawnFor(q, false);
-  ok(Array.isArray(spawn) && spawn.length === 2, "spawnFor renvoie les deux bêtes");
-
-  run("HuntQuestManager.start('hq_forest_boar');");
-  ok(game.huntRun && game.huntRun.active, "la chasse démarre");
-  ok(game.combat.enemies.length === 2, "avec sa meute");
-  var membres = game.combat.enemies.slice();
-  var avant = game.huntRun.killsInLot;
-  g.CombatEngine.killEnemy(membres[0]);
-  ok(game.huntRun.killsInLot === avant + 1, "chaque bête compte pour le lot");
-  ok(game.combat.enemies.length === 1, "et le combat continue tant qu'il en reste une");
-
-  /* La chasse se joue AVANT que Wenna rejoigne (rappel de Seb) : les mesures qui la
-     calibrent doivent donc être faites sans compagnon. On vérifie qu'aucun compagnon
-     n'est requis pour qu'elle tourne. */
-  run("game.companions = {};");
-  ok(g.CombatActors.allies().length === 1, "elle se joue sans compagnon, comme en jeu à ce stade");
 })();
 
 console.log("\n[83] v3.285.0 — Petites Aventures : la meute de loups en est une");
@@ -8258,7 +8050,6 @@ console.log("\n[89] v3.293.0 — Plus de farm libre : contexte de quête, runs d
   var ctx = [
     ["donjon", function () { game.dungeonRun = { active: true, wave: 1 }; }, function () { game.dungeonRun = { active: false, wave: 0 }; }],
     ["aventure", function () { game.adventureQuestRun = { active: true, questId: "aq_story_premier_sang" }; }, function () { game.adventureQuestRun = { active: false, questId: null }; }],
-    ["chasse", function () { game.huntRun = { active: true, questId: "hq_forest_boar", killsInLot: 0 }; }, function () { game.huntRun = { active: false, questId: null, killsInLot: 0 }; }],
     ["élite de carte", function () { game.livingMaps.fight = { mapId: "forest", sectorId: "gue" }; }, function () { game.livingMaps.fight = null; }]
   ];
   game.sceneRun = { status: "combat" };
@@ -8274,10 +8065,6 @@ console.log("\n[89] v3.293.0 — Plus de farm libre : contexte de quête, runs d
   ok(game.activeTab === "combat" && game.adventureQuestRun.active === true, "départ d'un run : l'écran Combat s'ouvre");
   g.AdventureQuestManager.forfeit();
   ok(game.activeTab === "campement", "abandon depuis le Combat : retour au Campement (plus de farm derrière)");
-  g.HuntQuestManager.start("hq_forest_boar");
-  var huntOn = game.huntRun.active === true && game.activeTab === "combat";
-  g.HuntQuestManager.stop();
-  ok(huntOn && game.activeTab === "campement", "chasse arrêtée depuis le Combat : retour au Campement");
 
   /* killEnemy n'a plus de branche de farm libre ; aucune étape n'envoie sur Combat nu. */
   var ce = fs.readFileSync(path.join(ROOT, "js/systems/combat-engine.js"), "utf8");
@@ -8484,9 +8271,9 @@ console.log("\n[93] v3.298.0 — W-1b : monde du canevas, journal par palier, tr
   ok(g.WorldTravel.arrive("desert", 0) === true && g.WorldManager.worldIndex === 1 && g.WorldManager.adventureIndex === 0 && game.worldsEverReached[1] === true, "arrivée : monde de résidence posé, monde atteint");
   ok(R.getPetiteAventureCap() === 4, "Désert atteint : 4 par jour, recalculé aussitôt");
   ok(g.WorldTravel.travelTo("forest", 0) === true && g.WorldManager.worldIndex === 0 && R.getPetiteAventureCap() === 4, "retour en Forêt : le cap reste celui du plus haut monde atteint (4)");
-  game.huntRun = { active: true, questId: "hq_forest_boar", killsInLot: 0 };
+  game.adventureQuestRun = { active: true, questId: "hq_wolf_pack" };
   ok(g.WorldTravel.travelTo("desert", 0) === false && g.WorldManager.worldIndex === 0, "voyage refusé pendant un run");
-  game.huntRun = { active: false, questId: null, killsInLot: 0 };
+  game.adventureQuestRun = { active: false, questId: null };
   ok(g.WorldTravel.travelTo("ruins", 0) === false, "monde jamais atteint : refusé");
 
   /* Traversée : l'arrivée d'un canevas à travelOnSuccess pose le monde. */
@@ -8903,8 +8690,6 @@ console.log("\n[104] v3.307.0 — verrou héros pendant une expédition (Chemin 
   ok(game.dungeonRun.active !== true && Object.keys(game.dungeonRunsUsed || {}).length === 0, "donjon refusé, aucune sortie décomptée");
   g.AdventureQuestManager.start("hq_wolf_pack");
   ok(game.adventureQuestRun.active !== true, "quête d'aventure refusée");
-  g.HuntQuestManager.start("hq_forest_battue");
-  ok(game.huntRun.active !== true, "chasse refusée");
   ok(game.sortie.active === true && game.sortie.context === "scene", "la sortie de l'expédition est intacte");
   ok(g.SortieManager.end("return") === null && game.sortie.active === true, "filet : end('return') ne clôt pas une expédition en cours");
   var lm = g.LivingMapManager.startEliteFight("forest", "x", { eliteId: Object.keys(g.ELITE_DB)[0] });
@@ -9699,11 +9484,11 @@ console.log("\n[119] v3.324.0 — Admin (compagnons, Petites Aventures, avance d
   ok(!!SQ.getState("forest").tutorialsSeen.forest_wenna, "tutoriels des étapes passées notés comme vus");
 
   /* --- Refus pendant une activité --- */
-  game.huntRun = { active: true };
+  game.dungeonRun = { active: true, wave: 1, dungeonId: 1, marks: [] }; // v3.699.0 : donjon au lieu de chasse
   var before = SQ.getState("desert").currentStep;
   g.adminValidateStoryStep(true);
   ok(SQ.getState("desert").currentStep === before, "activité en cours : validation refusée");
-  game.huntRun = { active: false };
+  game.dungeonRun = { active: false, wave: 0, dungeonId: 1, marks: [] };
 
   /* --- Carte vivante d'un autre héros --- */
   var slot = 1;
@@ -10068,20 +9853,22 @@ console.log("\n[125] v3.330.0 — Plafond de stock brut, niveaux d'Histoire, Blo
     ok(ch.bloc === 45 && ch.planche === 45, "E3 : Halle au Désert : moitié des planches en blocs (" + ch.planche + " / " + ch.bloc + ")");
 
     // --- E4 : vivres de sortie ---
-    var P = g.ProvisionsManager, hunt = g.HUNT_QUESTS.hq_forest_boar;
-    g.game.huntStats = {}; g.game.resources.petite_ration = 0;
+    var P = g.ProvisionsManager; // v3.699.0 (ARCH-9) : contrôles de chasse remplacés par le donjon de la Forêt
+    var tan = g.DUNGEONS.filter(function (d) { return d.id === 1; })[0], sft0 = g.DungeonManager.isStoryTicketFree;
+    g.DungeonManager.isStoryTicketFree = function () { return false; };
+    g.game.dungeonTierCleared = { 1: true }; g.game.resources.petite_ration = 0;
     reached(["forest_01"]);
-    g.game.huntStats[hunt.id] = 3;
-    ok(P.getRequirement("hunt", hunt) === null, "E4 : actes I et II de la Forêt : aucun vivre");
+    ok(P.getRequirement("dungeon", tan) === null, "E4 : actes I et II de la Forêt : aucun vivre");
     reached(true);
-    g.game.huntStats[hunt.id] = 0;
-    ok(P.getRequirement("hunt", hunt) === null, "E4 : première chasse : gratuite");
-    g.game.huntStats[hunt.id] = 1;
-    var req = P.getRequirement("hunt", hunt);
-    ok(req && req.resourceId === "petite_ration", "E4 : chasse refaite en Forêt : 1 petite ration");
-    ok(/Vivres/.test(P.check("hunt", hunt) || ""), "E4 : sans ration, le départ est refusé avec la raison");
+    var req = P.getRequirement("dungeon", tan);
+    ok(req && req.resourceId === "petite_ration", "E4 : donjon refait en Forêt : 1 petite ration");
+    ok(/Vivres/.test(P.check("dungeon", tan) || ""), "E4 : sans ration, le départ est refusé avec la raison");
+    ok(/Vivres : 1 Petite ration/.test(P.buildLineHTML("dungeon", tan)) && /is-missing/.test(P.buildLineHTML("dungeon", tan)), "vivres affichés (manquants)");
     g.game.resources.petite_ration = 2;
-    ok(P.check("hunt", hunt) === null && P.consume("hunt", hunt) && g.game.resources.petite_ration === 1, "E4 : la ration est prélevée au départ");
+    ok(P.check("dungeon", tan) === null && P.consume("dungeon", tan) && g.game.resources.petite_ration === 1, "E4 : la ration est prélevée au départ");
+    g.game.dungeonTierCleared = {};
+    ok(P.buildLineHTML("dungeon", tan) === "", "sortie gratuite : aucune ligne");
+    g.DungeonManager.isStoryTicketFree = sft0;
     var cite = g.DUNGEONS.filter(function (d) { return d.id === 2; })[0];
     g.game.dungeonTierCleared = {};
     ok(P.getRequirement("dungeon", cite) === null, "E4 : donjon jamais fini : gratuit");
@@ -10109,11 +9896,6 @@ console.log("\n[125] v3.330.0 — Plafond de stock brut, niveaux d'Histoire, Blo
     run("dismissWarehouseNoSaleNote();");
     ok(run("buildWarehouseHTML()").indexOf("Le tavernier") === -1, "E6 : ...une seule fois");
 
-    // --- v3.330.1 : lignes « Vivres » à l'écran ---
-    g.game.huntStats[hunt.id] = 1; g.game.resources.petite_ration = 0;
-    ok(/Vivres : 1 Petite ration/.test(P.buildLineHTML("hunt", hunt)) && /is-missing/.test(P.buildLineHTML("hunt", hunt)), "vivres affichés sur la fiche de chasse (manquants)");
-    g.game.huntStats[hunt.id] = 0;
-    ok(P.buildLineHTML("hunt", hunt) === "", "sortie gratuite : aucune ligne");
 
     // --- Or de l'Histoire (banc « or par acte ») ---
     ok(g.STORY_REWARDS.desert_11.gold === 2350 && g.STORY_REWARDS.desert_12.gold === 2425 && g.STORY_REWARDS.desert_13.gold === 2475, "étapes 11 à 13 du Désert : +1 000 or chacune (v3.358.0 : essence ×5 incluse)");
@@ -10615,26 +10397,6 @@ console.log("\n[136] v3.356.0 — Arme de la Cité, Battue du Désert, palier de
   game.equipped = { weapon: recue };
   ok(g.storyPalierDesert(game).armeVerte === true, "elle compte comme l'arme Inhabituelle du palier");
 
-  /* D2 : Battue du Désert */
-  var B = g.HUNT_QUESTS.hq_desert_battue;
-  ok(!!B && B.type === "gold" && B.worldId === "desert" && B.rewardGold === 450 && B.lotSize === 20, "Battue du Désert : 20 bêtes, 450 or");
-  game = freshCombat("knight");
-  run("VillageBuildingManager.ensure(); game.unlockedTabs.village = true;");
-  var vue = function () { return g.MissionBoard._huntMissions().some(function (m) { return m.questId === "hq_desert_battue"; }); };
-  game.explorationProgression.desertCrossingCompleted = false;
-  ok(!vue(), "fermée avant l'arrivée au Désert");
-  game.explorationProgression.desertCrossingCompleted = true;
-  ok(vue(), "ouverte après desert_01");
-  var e = g.QuestEnemyManager.spawnFor(B, false);
-  var e1 = Array.isArray(e) ? e[0] : e;
-  ok(e1 && ["scarab", "scorpion", "sandworm", "sandwarrior"].indexOf(e1.id) !== -1, "des bêtes des Dunes (" + (e1 && e1.id) + ")");
-  var or0 = game.gold;
-  run("HuntQuestManager.start('hq_desert_battue');");
-  ok(game.huntRun.active && game.huntRun.questId === "hq_desert_battue", "elle se lance");
-  run("game.huntRun.killsInLot = 19; HuntQuestManager.onEnemyKilled();");
-  ok(game.gold - or0 >= 450 && !game.huntRun.active, "le lot bouclé verse la prime (+" + (game.gold - or0) + " or)");
-  var req = g.ProvisionsManager.getRequirement("hunt", B);
-  ok(req && req.resourceId === "ration", "la relancer demande une Ration moyenne, vivres du Désert, comme toute chasse refaite");
 })();
 
 /* [130] v3.335.0 — Palissade et Recouvrement : plus de texte sur l'Ascension (option A). */
@@ -11425,7 +11187,7 @@ console.log("\n[149] v3.373.0 — Multilangue, lot L-5 : messages des systèmes 
   try { g.CombatEngine.telegraphPattern({ name: "Loup" }, "charge"); } catch (e) { logs.push("ERR " + e.message); } finally { g.addLog = addLog0; g.showToast = toast0; }
   ok(logs.some(function (t) { return /⟦.*Loup.* prépare une charge !⟧/.test(String(t)); }), "pseudo-langue : télégraphe du moteur de combat extrait (fichier protégé)");
   var fs = require("fs");
-  ["combat-engine", "story-quest-system", "hunt-quest-system", "adventure-quest-system", "dungeon-system", "progression-system", "save-system"].forEach(function (f) {
+  ["combat-engine", "story-quest-system", "adventure-quest-system", "dungeon-system", "progression-system", "save-system"].forEach(function (f) {
     var src = fs.readFileSync(ROOT + "/js/systems/" + f + ".js", "utf8");
     var raw = src.split("\n").filter(function (l) { return /(addLog|showToast)\(\s*"[^"]*[a-zà-ÿ]{3,} [a-zà-ÿ]/.test(l); });
     ok(raw.length === 0, f + ".js : aucun message en dur dans addLog/showToast" + (raw.length ? " (" + raw[0].trim().slice(0, 60) + ")" : ""));
@@ -12946,7 +12708,6 @@ console.log("\n[173] v3.400.0 — Lot F-2 : fenêtres centrées (.kwin)");
     function win(nom, html) { ok(W.test(html) && html.indexOf("dungeon-story-actions") === -1 && html.indexOf("dungeon-story-title") === -1, nom + " : fenêtre du kit (voile, en-tête, pied)"); }
     win("Tutoriel", g.buildTutorialModalHTML("x()", g.GENERIC_TUTORIALS.grimoire_rules));
     win("Quête d'aventure", g.buildAdventureQuestIntroHTML(Object.keys(g.ADVENTURE_QUESTS)[0]));
-    win("Chasse", g.buildHuntQuestIntroHTML(Object.keys(g.HUNT_QUESTS)[0]));
     win("Fin de quête", g.buildQuestCompleteHTML({ title: "T", text: "x" }));
     win("Fin de donjon", g.buildDungeonSummaryHTML({ success: true, tierName: "T", clearedWave: 15, wavesTotal: 15, goldReward: 1, shardsGained: 1 }));
     var fc = g.buildCombatForecastHTML({ id: "tresdur", heroDamagePerRound: 1, enemyDamagePerRound: 1, enemyHp: 1, roundsToKill: 1, roundsToDie: 1 }, { title: "T" });
@@ -13212,21 +12973,6 @@ console.log("\n[185] v3.412.0 — Fin de chasse et de battue : ce que le lot a r
   try {
     var fs = require("fs"), path = require("path");
     freshCombat("knight");
-    var hq = g.HUNT_QUESTS || {}; var quests = Object.keys(hq).map(function (k) { return hq[k]; });
-    var battue = quests.filter(function (q) { return q.rewardGold && !q.resourceKey; })[0];
-    var chasse = quests.filter(function (q) { return q.resourceKey; })[0];
-    ok(!!battue && !!chasse, "données : au moins une battue (prime) et une chasse (ressource)");
-    g.game.lastSortieSummary = { outcome: "success", context: "hunt", kept: { gold: 37, items: [{}, {}], resources: {} } };
-    var hb = g.buildHuntLotCompleteHTML(battue);
-    ok(hb.indexOf("Battue terminée") !== -1 && hb.indexOf("Nouvelle battue") !== -1, "battue : titre et bouton propres à la battue");
-    ok(hb.indexOf("Or gagné") !== -1 && hb.indexOf("+" + g.formatNumber(37 + battue.rewardGold)) !== -1 && hb.indexOf("de prime") !== -1, "battue : l'or gagné (ramassé + prime) est affiché");
-    ok(hb.indexOf("Objets trouvés") !== -1 && hb.indexOf("{x}") === -1 && hb.indexOf("en stock") === -1, "battue : plus de « {x} en stock · 0 »");
-    var res = {}; res[chasse.resourceKey] = 12;
-    g.game.lastSortieSummary = { outcome: "success", context: "hunt", kept: { gold: 0, items: [], resources: res } };
-    var hc = g.buildHuntLotCompleteHTML(chasse);
-    ok(hc.indexOf("Chasse terminée") !== -1 && hc.indexOf("+12") !== -1, "chasse : la ressource rapportée est affichée");
-    g.game.lastSortieSummary = { outcome: "success", context: "dungeon", kept: { gold: 999, items: [], resources: {} } };
-    ok(g.buildHuntLotCompleteHTML(chasse).indexOf("999") === -1, "un bilan d'une autre sortie n'est pas repris");
     var dead = ["selectHeroInline", "equipStarterWeapon", "unequipIncompatibleWeapon", "getGrimoireCounterLabels", "getTalentRespecCost",
       "buildCombatCelerityHTML", "renderHudFilRouge", "getEquipmentSellValue", "buyTalentNode", "openDungeonIntro", "titleScreenContinue", "getHeroByKey"];
     ok(dead.every(function (n) { return typeof g[n] === "undefined"; }), "code mort : les fonctions jamais appelées sont retirées");
@@ -13893,7 +13639,7 @@ console.log("\n[199] v3.427.0 — Nouvel écran de combat (atelier CB, validé p
     g.CombatEngine.setCombatMode("tactique");
     g.cbxState.notes = [];
     // --- Effets du moteur repris par l'écran ---
-    ok(String(g.showFloatingDamage).indexOf("onDamageShown") !== -1 && String(g.showDamageTakenPopup).indexOf("watch") !== -1, "les chiffres du moteur passent par l'écran (le bon ennemi, la bonne carte)");
+    ok(String(g.showFloatingDamage).indexOf("onDamageShown") !== -1 && /^function \(\) \{\s*\}$/.test(String(g.showDamageTakenPopup).replace(/\/\*[\s\S]*?\*\//g, "")), "les chiffres du moteur passent par l'écran (le bon ennemi, la bonne carte)");
     // --- Fichiers ---
     var idx = fsx.readFileSync(px.join(ROOT, "index.html"), "utf8"), sw = fsx.readFileSync(px.join(ROOT, "sw.js"), "utf8");
     ok(idx.indexOf("js/ui/combat-screen-view.js") > idx.indexOf("js/ui/combat-group-view.js") && idx.indexOf("js/ui/combat-screen-view.js") < idx.indexOf("js/ui/ui-root.js")
@@ -16558,7 +16304,7 @@ console.log("\n[266] v3.459.6 — Lot 9b : quêtes, sauvegarde, paliers (audit O
   W.worldIndex = 2; W.adventureIndex = 1; W.enemyIndex = 3; // un autre monde que celui de la quête (Forêt)
   var avant = [W.worldIndex, W.adventureIndex, W.enemyIndex], gen = W.generateEnemy, leve = false;
   W.generateEnemy = function () { throw new Error("injectée"); };
-  try { g.QuestEnemyManager.spawnFor(g.HUNT_QUESTS.hq_forest_boar, false); } catch (e) { leve = true; }
+  try { g.QuestEnemyManager.spawnFor(g.ADVENTURE_QUESTS.hq_wolf_pack, false); } catch (e) { leve = true; }
   W.generateEnemy = gen;
   var apres = [W.worldIndex, W.adventureIndex, W.enemyIndex];
   W.worldIndex = orig[0]; W.adventureIndex = orig[1]; W.enemyIndex = orig[2];
@@ -19171,13 +18917,11 @@ console.log("\n[332] v3.510.0 — petite aventure et donjon dans le fil rouge, p
 console.log("\n[333] v3.511.0 — chasses et battues retirées, onglet Chasse retiré");
 (function () {
   try {
-    ok(HUNT_SHIPPED === 0, "le jeu ne livre plus aucune chasse (HUNT_QUESTS vide)");
+    ok(typeof g.HUNT_QUESTS === "undefined" && typeof g.HuntQuestManager === "undefined", "v3.699.0 (ARCH-9) : ni chasse ni moteur des chasses chargés");
     ok(g.QUEST_CATEGORIES ? !g.QUEST_CATEGORIES.some(function (c) { return c.key === "chasse"; }) : !/key: "chasse"/.test(require("fs").readFileSync(require("path").join(ROOT, "js/ui/quests-view.js"), "utf8")), "onglet Quêtes : plus de catégorie Chasse");
     var R = g.WAREHOUSE_RESOURCES;
     ok(R.seve_aeswyn.sourceHint.indexOf("chasse") === -1 && R.viande.desc.indexOf("Chasse") !== -1, "Sève : plus de chasse citée ; Viande : bâtiment Chasse et patrouilles");
-    var keep = {}; Object.keys(g.HUNT_QUESTS).forEach(function (k) { keep[k] = g.HUNT_QUESTS[k]; delete g.HUNT_QUESTS[k]; });
-    ok(g.MissionBoard._huntMissions().length === 0, "tableau de missions : aucune chasse proposée");
-    Object.keys(keep).forEach(function (k) { g.HUNT_QUESTS[k] = keep[k]; });
+    ok(!g.MissionBoard.list().some(function (m) { return m.sourceKind === "hunt"; }), "tableau de missions : aucune chasse proposée");
   } catch (err) { ok(false, "[333] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
@@ -22475,11 +22219,9 @@ console.log("\n[447] v3.682.0 — Élite de carte engagée : pas de seconde sort
   try {
     run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.heroHp = game.heroMaxHp;");
     run("game.livingMaps = game.livingMaps || {}; game.livingMaps.fight = { mapId: 'forest', sectorId: 'arbremere', eliteId: 'x' };");
-    var aq = Object.keys(g.ADVENTURE_QUESTS)[0], hq = Object.keys(g.HUNT_QUESTS)[0];
+    var aq = Object.keys(g.ADVENTURE_QUESTS)[0];
     g.AdventureQuestManager.start(aq);
     ok(!(g.game.adventureQuestRun && g.game.adventureQuestRun.active), "quête d'aventure refusée");
-    g.HuntQuestManager.start(hq);
-    ok(!(g.game.huntRun && g.game.huntRun.active), "chasse refusée");
     run("game.dungeonTierCleared = {}; DungeonManager.start(1);");
     ok(!(g.game.dungeonRun && g.game.dungeonRun.active), "donjon refusé");
     ok(!!g.game.livingMaps.fight, "l'élite reste engagée");
@@ -22488,7 +22230,7 @@ console.log("\n[447] v3.682.0 — Élite de carte engagée : pas de seconde sort
     run("if (game.dungeonRun) game.dungeonRun.active = false; SortieManager.end('return');");
     ok(dOk, "témoin : sans élite engagée, le même donjon démarre");
   } catch (err) { ok(false, "[447] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
-  try { run("game.livingMaps.fight = null; game.adventureQuestRun = { active: false }; game.huntRun = { active: false }; game.dungeonRun = { active: false };"); } catch (e) {}
+  try { run("game.livingMaps.fight = null; game.adventureQuestRun = { active: false }; game.dungeonRun = { active: false };"); } catch (e) {}
 })();
 
 console.log("\n[448] v3.683.0 — Tutoriel factuel (audit 04/11, lot I1)");
@@ -22957,7 +22699,6 @@ console.log("\n[452] v3.687.0 — Économie et village (audit 04/11, lot I8)");
     VE.marketOn = function () { return true; }; g.game.resources.pierre_errante = 10; VE.sellLot("pierre_errante");
     ok(g.game.totalGoldEarned === tg + 792 + g.VILLAGE_EVENT_BUYBACK.prices.pierre_errante * g.VILLAGE_EVENT_BUYBACK.lot, "SUIV-6 : livraison et rachat de Sarkel comptés dans « Or gagné »");
     VE.canDeliver = keepVE.cd; VE.needs = keepVE.nd; VE.rewardGold = keepVE.rg; VE.rewardGifts = keepVE.gf; VE.active = keepVE.ac; VE.marketOn = keepVE.mo;
-    ok(/game\.totalGoldEarned = Number\(game\.totalGoldEarned \|\| 0\) \+ quest\.rewardGold/.test(rd("js/systems/hunt-quest-system.js")), "SUIV-6 : prime de battue comptée aussi");
     // ARCH-6 : « Files » ouvre la feuille de l'atelier
     var opened = null; g.openWorkshopSheet = function (id) { opened = id; };
     g.jumpToWorkshop("scierie_fine");
@@ -23225,7 +22966,7 @@ console.log("\n[456] v3.691.0 — Images et premier lancement (audit 04/11, lot 
     // PERF-13 : en.js hors du précache, gardé à la demande de la page en anglais
     var sw = rd("sw.js"), pwa = rd("js/main/pwa.js");
     ok(sw.indexOf('  "./js/lang/en.js",') === -1 && /QUEST_IDLE_CACHE_LANG/.test(sw) && /cache\.match\(LANG_EN_URL\)/.test(sw), "PERF-13 : en.js sorti du précache, le service worker le garde sur demande");
-    ok(/function pwaCacheLangFile\(\)[\s\S]{0,200}I18n\.lang\(\) === "en"\) c\.postMessage\(\{ type: "QUEST_IDLE_CACHE_LANG" \}\)/.test(pwa) && /controllerchange", pwaCacheLangFile/.test(pwa) && /pwaCacheLangFile\(\); \/\/ le nouveau cache/.test(pwa), "PERF-13 : la page en anglais le demande à l'enregistrement, à la prise de contrôle et après une mise à jour");
+    ok(/function pwaCacheLangFile\(\)[\s\S]{0,200}I18n\.lang\(\) === "en"\) c\.postMessage\(\{ type: "QUEST_IDLE_CACHE_LANG" \}\)/.test(pwa) && /controllerchange", pwaCacheLangFile/.test(pwa) && /QUEST_IDLE_SW_UPDATED"\) return;\s*pwaCacheLangFile\(\);/.test(pwa), "PERF-13 : la page en anglais le demande à l'enregistrement, à la prise de contrôle et après une mise à jour");
     ok(/lang === "en" && sw && typeof fetch === "function"\) fetch\("js\/lang\/en\.js"\)/.test(rd("js/core/i18n.js")), "PERF-13 : passer en anglais charge en.js avant la relance");
     // PERF-10 : variante téléphone de chaque bandeau (1 350 × 450), choisie selon la taille réelle
     var bans = fs.readdirSync(path.join(ROOT, "images/Banners")).filter(function (n) { return /\.webp$/.test(n); });
@@ -23329,10 +23070,10 @@ console.log("\n[457] v3.692.0 — Ménage du code (audit 04/11, lots A4 et A5)")
     ok(JSON.stringify(g.game.potionAuto) === JSON.stringify(g.POTION_AUTO_NEW_GAME) && g.game.potionAuto !== g.POTION_AUTO_NEW_GAME, "ARCH-17 : partie effacée = partie neuve (même réglage, copie)");
     var pr = g.normalizeGrimoirePresets([{ id: "a", name: "A", rules: [] }, { id: 3 }, null]);
     ok(pr.length === 1 && pr[0].icon === "📖" && pr[0].lastModified === 0 && g.normalizeGrimoirePresets("x").length === 0, "ARCH-17 : presets du Grimoire nettoyés par une seule fonction");
-    ok(/AdventureQuestManager\.applyQuestTheme\(quest\)/.test(String(g.HuntQuestManager.applyQuestTheme)) && /return getGrimoireActionIcon\(action\)/.test(rd("js/ui/combat-screen-view.js")), "ARCH-17 : décor de quête et icônes du Grimoire écrits une seule fois");
+    ok(/return getGrimoireActionIcon\(action\)/.test(rd("js/ui/combat-screen-view.js")), "ARCH-17 : décor de quête et icônes du Grimoire écrits une seule fois");
     // ARCH-21 : catalogue de l'Entrepôt dans son fichier
-    var iW = idx.indexOf('src="js/data/warehouse-resources.js"'), iH = idx.indexOf('src="js/data/hunt-quests.js"');
-    ok(iW > 0 && iW < iH && sw.indexOf('"./js/data/warehouse-resources.js"') !== -1 && rd("js/data/hunt-quests.js").indexOf("WAREHOUSE_RESOURCES") === -1 && !!g.WAREHOUSE_RESOURCES.bois,
+    var iW = idx.indexOf('src="js/data/warehouse-resources.js"');
+    ok(iW > 0 && sw.indexOf('"./js/data/warehouse-resources.js"') !== -1 && !!g.WAREHOUSE_RESOURCES.bois,
       "ARCH-21 : ressources de l'Entrepôt dans data/warehouse-resources.js (index.html et précache)");
   } catch (err) { ok(false, "[457] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
@@ -23406,7 +23147,7 @@ console.log("\n[458] v3.693.0 — Compagnons, fin de partie et méta (audit 04/1
     ok(dbl === 0, "NOV-26 : deux premières étapes jamais sur le même obstacle quand le vivier en a deux (30 tirages)");
     // NOV-13 : légende du parcours filtrée, refermée à l'ouverture d'une fiche
     var pv = rd("js/ui/pa2-view.js");
-    ok(/if \(par && !has\[type\]\) return "";/.test(pv) && /pa2View\.legend = false; \/\/ audit NOV-13/.test(pv), "NOV-13 : légende réduite au tracé du parcours, refermée quand une fiche s'ouvre");
+    ok(/if \(par && !has\[type\]\) return "";/.test(pv) && /!pa2View\.sheet && !pa2View\.fromKey\) pa2View\.legend = false;/.test(pv), "NOV-13 : légende réduite au tracé du parcours, refermée quand une fiche s'ouvre");
     // NOV-14 : plus de DD ni de +0
     var why0 = g.pa2WhyHTML({ stat: "power", mod: 0, mastery: 0, items: 0, wounds: 0, thr: 9, dd: 12 }, { wounds: 0 }).replace(/ /g, " ");
     ok(g.sceneStatLabel("power") === "Force" && why0 === "il faut 9 ou plus" && /il faut 20/.test(g.pa2WhyHTML({ stat: "power", mod: 1, thr: 23 }, {}).replace(/\u00a0/g, " ")), "NOV-14 : « Force », « il faut 9 ou plus », pas de « +0 » (" + why0 + ")");
@@ -23730,6 +23471,94 @@ console.log("\n[463] v3.698.0 — Décisions Dragon ancien, pronostic de mission
     ok(g.bestiaryMet("golem"), "BESTIAIRE-GOLEM : le seul Golem du Sanctuaire suffit à ouvrir la fiche (ancienne sauvegarde)");
     ok(/Ruines|Sanctuaire|Ouvrage|Golem/.test(g.creatureWhere("golem").join(",")) || g.creatureWhere("golem").length > 0, "BESTIAIRE-GOLEM : la fiche dit où la croiser (" + g.creatureWhere("golem").join(", ") + ")");
   } catch (err) { ok(false, "[463] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[464] v3.699.0 — Code et documents : chasses retirées, ensure* ciblés, affinité de la cible, Admin, Entrepôt (Seb, 05/11)");
+(function () {
+  try {
+    var rd = function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); };
+    // ARCH-9 : moteur des chasses retiré, fichiers hors index.html et précache, encore sur le disque
+    var idx = rd("index.html"), sw = rd("sw.js");
+    ok(typeof g.HuntQuestManager === "undefined" && typeof g.HUNT_QUESTS === "undefined" && typeof g.openHuntQuestIntro === "undefined" && typeof g.buildHuntLotCompleteHTML === "undefined", "ARCH-9 : moteur, données et vues des chasses absents du jeu chargé");
+    ok(idx.indexOf("hunt-quest") === -1 && sw.indexOf("hunt-quest") === -1 && fs.existsSync(path.join(ROOT, "js/systems/hunt-quest-system.js")) && fs.existsSync(path.join(ROOT, "js/data/hunt-quests.js")), "ARCH-9 : hunt-quest-system.js et hunt-quests.js retirés d'index.html et du précache, gardés sur le disque (à supprimer à la version suivante)");
+    var bad = ["js/systems/combat-engine.js", "js/systems/mission-board-system.js", "js/systems/sortie-system.js", "js/systems/quest-enemy-system.js", "js/systems/progression-system.js", "js/ui/quests-view.js", "js/ui/admin-view.js"].filter(function (f) { return /HuntQuestManager|HUNT_QUESTS/.test(rd(f)); });
+    ok(bad.length === 0, "ARCH-9 : plus aucun appel au moteur des chasses" + (bad.length ? " (" + bad.join(", ") + ")" : ""));
+    // ancienne sauvegarde en pleine chasse : se charge sans perte ni erreur, le lot est clos
+    game = freshCombat("knight"); giveWeapon();
+    var d = g.buildSaveData();
+    d.huntStats = { hq_forest_battue: 3, hq_forest_boar: 1 }; d.huntRun = { active: true, questId: "hq_forest_boar", killsInLot: 7 };
+    d.sortie = { active: true, context: "hunt", startedAt: Date.now(), loot: { gold: 12, resources: { viande: 2 }, items: [] }, potionsUsed: 0, kills: 7, items: [] };
+    var leve = null; try { g.restoreBaseState(JSON.parse(JSON.stringify(d))); } catch (e) { leve = e.message; }
+    ok(leve === null && g.game.huntRun.active === false && g.game.huntStats.hq_forest_battue === 3 && g.game.sortie.context === "farm", "ARCH-9 : sauvegarde en pleine chasse chargée sans erreur, lot clos, compteurs gardés, sortie rendue au farm");
+    var d2 = g.buildSaveData();
+    ok(d2.huntStats.hq_forest_battue === 3 && d2.huntRun && d2.huntRun.active === false, "ARCH-9 : les clés huntStats et huntRun restent écrites (rien de perdu)");
+    ok(!g.WorldTravel.isBusy() && !g.hasCombatQuestContext() && !g.MissionBoard.list().some(function (m) { return m.sourceKind === "hunt"; }), "ARCH-9 : rien de jouable ne dépend d'une ancienne chasse (voyage libre, pas de combat fantôme, pas de mission)");
+    g.SortieManager.end("return");
+    run("game.dungeonRunsUsed = {}; game.heroHp = game.heroMaxHp;"); g.DungeonManager.start(1);
+    ok(g.game.dungeonRun.active === true, "ARCH-9 : le donjon s'ouvre après une ancienne chasse");
+    g.DungeonManager.forfeit();
+
+    // PERF-4 : un chapitre déjà validé n'est pas revalidé à chaque lecture
+    game = freshCombat("knight");
+    var SQ = g.StoryQuestManager, n = 0, orig = SQ._ensureChapter;
+    SQ._ensureChapter = function () { n++; return orig.apply(this, arguments); };
+    try {
+      SQ.ensure(); n = 0;
+      for (var i = 0; i < 50; i++) { SQ.getState("forest"); SQ.getCurrentStep("desert"); SQ.getChoice("noms"); }
+      ok(n === 0, "PERF-4 : 150 lectures d'Histoire, aucune revalidation (" + n + ")");
+      g.game.storyQuests.forest = { currentStep: 2 };
+      var st = SQ.getState("forest");
+      ok(n === 1 && st.claimedSteps && st.counters && st.migratedV3293 === true && st.currentStep === 2, "PERF-4 : un état remplacé est revalidé une fois, avancée gardée");
+      delete st.migratedV3293; SQ.getState("forest");
+      ok(n === 2 && st.migratedV3293 === true, "PERF-4 : un drapeau de migration effacé relance la validation");
+      g.game.storyQuests = {}; SQ.getState("forest");
+      ok(n === 3 && !!g.game.storyQuests.forest, "PERF-4 : remise à zéro de l'Histoire, état recréé");
+    } finally { SQ._ensureChapter = orig; }
+    var AQ = g.AdventureQuestManager, aqE = 0, aqO = AQ.ensureDefaults, egs = 0, egsO = g.ensureGameStateDefaults;
+    AQ.ensureDefaults = function () { aqE++; return aqO.apply(this, arguments); }; g.ensureGameStateDefaults = function () { egs++; return egsO.apply(this, arguments); };
+    try {
+      var q = g.ADVENTURE_QUESTS.hq_wolf_pack;
+      var p0 = AQ.getStepProgress(q, q.steps[0]); g.SceneRunManager.getRun(); g.SceneRunManager.isHeroEngaged(); AQ.isWorldTransitionUnlocked("forest");
+      ok(aqE === 0 && egs === 0 && p0 === 0, "PERF-4 : lecteurs de tick (progression de quête, run d'expédition, passage de monde) sans ensure* (" + aqE + " / " + egs + ")");
+    } finally { AQ.ensureDefaults = aqO; g.ensureGameStateDefaults = egsO; }
+    var keepP = g.game.adventureQuestProgress; g.game.adventureQuestProgress = undefined;
+    ok(AQ.getStepProgress(g.ADVENTURE_QUESTS.hq_wolf_pack, g.ADVENTURE_QUESTS.hq_wolf_pack.steps[0]) === 0, "PERF-4 : lecture tolérante sans état de quête");
+    g.game.adventureQuestProgress = keepP;
+
+    // Affinité : la cible frappée, pas le premier ennemi du groupe
+    game = freshCombat("knight"); giveWeapon();
+    var type = g.getPlayerDamageType(), mk = function (o) { var e = { id: "wolf", name: "Loup", isBoss: false, hp: 1e6, maxHp: 1e6, resists: [], weak: [], stats: g.makeRpgStats(1, 1, 1, 1, 1) }; Object.keys(o).forEach(function (k) { e[k] = o[k]; }); return e; };
+    var e1 = mk({ resists: [type] }), e2 = mk({ weak: [type] }), e3 = mk({});
+    game.enemy = e1;
+    ok(g.getDamageAffinity(e2).status === "weak" && g.getDamageAffinity().status === "resist", "affinité : lue sur la cible donnée (faible), sinon sur l'ennemi courant (résiste)");
+    g.CombatEngine.dealDamage(1000, false, false, false, e2); g.CombatEngine.dealDamage(1000, false, false, false, e3);
+    var r2 = (1e6 - e2.hp) / Math.max(1, 1e6 - e3.hp);
+    ok(game.enemy === e1 && Math.abs(r2 - g.WEAK_DMG_MULT) < 0.02, "affinité : en groupe, le coup sur la seconde cible prend SA faiblesse (×" + r2.toFixed(2) + ")");
+
+    // QUET-8 : l'Admin pose ce que le jeu aurait posé (campements, donjons, marchés)
+    game = freshCombat("knight");
+    ["ruines_04", "ruines_12", "ruines_15", "crypte_04", "crypte_12", "crypte_15", "montagne_12", "montagne_15", "tour_11", "tour_12"].forEach(function (id) { g.ADMIN_STORY_EXTRA[id]({ counters: {} }); });
+    var ep = g.game.explorationProgression, dc = g.game.dungeonTierCleared;
+    ok(ep.sanctuaireCamp && ep.ossuaireCamp && ep.gueuleCamp && ep.sommetCamp && ep.ruinsMarketDone && ep.cryptMarketDone && dc[3] && dc[4] && dc[5] && dc[6] && g.game.dungeonLevelBest[6] >= 1, "QUET-8 : campements, marchés et donjons 3 à 6 posés par l'Admin");
+    var stepOf = function (c, id) { return g.STORY_QUESTS[c].steps.filter(function (s) { return s.id === id; })[0]; };
+    ok(stepOf("ruins", "ruines_15").check(g.game) && stepOf("crypt", "crypte_12").check(g.game) && stepOf("tower", "tour_12").check(g.game), "QUET-8 : les étapes concernées sont vraiment remplies (check)");
+
+    // ARCH-3, SUIV-23
+    var man = JSON.parse(rd("manifest.json"));
+    ok(!/clique|hors-ligne|Idle/i.test(man.description) && /tour par tour/.test(man.description) && /village/.test(man.description), "ARCH-3 : description du manifeste juste (« " + man.description + " »)");
+    var R = g.WAREHOUSE_RESOURCES;
+    ok(["petite_ration", "ration", "grande_ration"].every(function (k) { return /Cuisine de camp/.test(R[k].sourceHint || ""); }), "SUIV-23 : les trois rations disent d'où elles viennent");
+    game = freshCombat("knight"); g.game.explorationProgression.huntBuildingUnlocked = false;
+    var fiche = run("buildWarehouseSheetHTML('petite_ration')");
+    ok(fiche.indexOf("Cuisine de camp") !== -1 && fiche.indexOf("Butin : expéditions") === -1, "SUIV-23 : fiche de la Petite ration, Chasse fermée : la Cuisine de camp, plus « Butin : expéditions »");
+
+    // PERF-7 et EQUI-19 : outillage
+    var DEP = require("../chemins.js").DEPOT, wf = fs.readFileSync(path.join(DEP, ".github/workflows/pages.yml"), "utf8");
+    var iPub = wf.indexOf("publier:"), iStrip = wf.indexOf("sans-commentaires.js game");
+    ok(fs.existsSync(path.join(DEP, "tools/publication/sans-commentaires.js")) && iPub > 0 && iStrip > iPub && wf.indexOf("needs: harnais") > 0, "PERF-7 : commentaires retirés de la copie publiée seulement, après les harnais");
+    var ch = fs.readFileSync(path.join(DEP, "tools/sim/campagne-harness.js"), "utf8");
+    ok(/STATS\.actifMs = STATS\.combatMs \+ STATS\.navMs/.test(ch) && /NAV_GESTE_MS = \d+/.test(ch), "EQUI-19 : temps actif défini (rounds + navigation, sans les attentes)");
+  } catch (err) { ok(false, "[464] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
 Promise.all(ATTENTES).then(function () {

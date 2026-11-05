@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.698.0"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.699.0"; // <- à incrémenter à CHAQUE livraison
 var CACHE_NAME = "quest-idle-" + CACHE_VERSION;
 var IMAGE_CACHE = "aethervale-images"; // v3.457.4 : hors du préfixe quest-idle- ; v3.547.0 : images disparues purgées (purgeMissingImages)
 var imagesRevalidated = {};             // URL déjà revérifiées depuis le démarrage de ce service worker
@@ -261,7 +261,6 @@ var PRECACHE_APP_SHELL = [
   "./js/data/enemy-archetypes.js",
   "./js/data/grimoire-conditions.js",
   "./js/data/warehouse-resources.js",
-  "./js/data/hunt-quests.js",
   "./js/data/scene-nodes.js",
   "./js/data/scene-templates.js",
   "./js/data/production-buildings.js",
@@ -296,7 +295,6 @@ var PRECACHE_APP_SHELL = [
   "./js/systems/workshop-unlock-system.js",
   "./js/systems/village-quest-system.js",
   "./js/systems/quest-enemy-system.js",
-  "./js/systems/hunt-quest-system.js",
   "./js/systems/scene-check-system.js",
   "./js/systems/scene-engine.js",
   "./js/systems/production-system.js",

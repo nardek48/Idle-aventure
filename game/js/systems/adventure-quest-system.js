@@ -46,8 +46,8 @@ var AdventureQuestManager = {
   },
 
   getStepProgress: function (quest, step) {
-    this.ensureDefaults();
-    return Math.min(step.target, Number((game.adventureQuestProgress[quest.id] || {})[step.id] || 0));
+    // PERF-4 (Seb 05/11) : lecteur appelé à chaque liste de missions, lecture tolérante sans ensureDefaults
+    return Math.min(step.target, Number(((game.adventureQuestProgress || {})[quest.id] || {})[step.id] || 0));
   },
 
   isStepComplete: function (quest, step) {
@@ -56,13 +56,12 @@ var AdventureQuestManager = {
 
   isReadyToClaim: function (quest) {
     if (!quest) return false;
-    if (game.adventureQuestsCompleted[quest.id]) return false;
+    if ((game.adventureQuestsCompleted || {})[quest.id]) return false;
     var self = this;
     return quest.steps.every(function (step) { return self.isStepComplete(quest, step); });
   },
 
   isWorldTransitionUnlocked: function (worldId) {
-    this.ensureDefaults();
     var gateQuest = null;
     Object.keys(ADVENTURE_QUESTS).some(function (key) {
       var quest = ADVENTURE_QUESTS[key];
@@ -73,7 +72,7 @@ var AdventureQuestManager = {
       return false;
     });
     if (!gateQuest) return true;
-    return !!game.adventureQuestsCompleted[gateQuest.id];
+    return !!(game.adventureQuestsCompleted || {})[gateQuest.id]; // PERF-4 : lecture tolérante
   },
 
   applyQuestTheme: function (quest) {
@@ -181,9 +180,6 @@ var AdventureQuestManager = {
     if ((game.heroHp || 0) <= 0) return showToast(_t("Tu es à terre — soigne-toi au Campement avant de repartir."), 2000);
     if (window.DungeonManager && game.dungeonRun && game.dungeonRun.active) {
       return showToast(_t("Termine ou abandonne ton donjon avant de lancer une quête"), 1600);
-    }
-    if (window.HuntQuestManager && game.huntRun && game.huntRun.active) {
-      return showToast(_t("Termine ou arrête ta chasse en cours avant de lancer une quête"), 1600);
     }
     if (game.livingMaps && game.livingMaps.fight) return showToast(_t("Termine d'abord le combat engagé sur la carte"), 1600); // audit 04/11 (QA-9) : pas deux sorties à la fois
 

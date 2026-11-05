@@ -152,10 +152,6 @@ function getCombatMissionProgressLabel() {
       }
     }
   }
-  if (window.HuntQuestManager && game.huntRun && game.huntRun.active) {
-    var hq = HUNT_QUESTS[game.huntRun.questId];
-    if (hq) return _td(hq.name) + " · "+ Math.min(hq.lotSize, Number(game.huntRun.killsInLot || 0)) + "/" + hq.lotSize;
-  }
   if (window.DungeonManager && game.dungeonRun && game.dungeonRun.active) {
     var waveCount = (typeof DUNGEON_CONFIG !== "undefined") ? DUNGEON_CONFIG.waveCount : 0;
     var wave = Math.min(waveCount, Number(game.dungeonRun.wave || 0));

@@ -12,12 +12,11 @@ var CampManager = {
     if (typeof game.campRegenLastAt !== "number" || game.campRegenLastAt <= 0) game.campRegenLastAt = Date.now();
   },
 
-  /* Run à sortie en cours (donjon / chasse / quête d'aventure) : pas de repos au camp tant qu'il n'est pas clos. */
+  /* Run à sortie en cours (donjon / quête d'aventure / élite de carte) : pas de repos au camp tant qu'il n'est pas clos. */
   _hasActiveRun: function () {
     // v3.307.0 : pas de feu de camp en expédition. v3.429.4 : la préparation (besace, pactes) n'engage pas le héros
     if (window.SceneRunManager && SceneRunManager.isHeroEngaged()) return true;
     if (game.dungeonRun && game.dungeonRun.active) return true;
-    if (game.huntRun && game.huntRun.active) return true;
     if (game.adventureQuestRun && game.adventureQuestRun.active) return true;
     if (game.livingMaps && game.livingMaps.fight) return true; // audit 04/11 : élite de carte engagée, pas de feu de camp
     return false;

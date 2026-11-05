@@ -446,9 +446,8 @@ function buildSaveData() {
     adventureQuestProgress: game.adventureQuestProgress || {},
     adventureQuestsCompleted: game.adventureQuestsCompleted || {},
     adventureQuestRun: game.adventureQuestRun || { active: false, questId: null },
-    // v3.30 : Chasse en boucle (voir data/hunt-quests.js) — huntStats
-    // est purement informatif (compteur de lots), persiste comme
-    // adventureQuestProgress ; huntRun NE survit PAS (comme dungeonRun).
+    // v3.30 : Chasse en boucle (moteur retiré en v3.699.0, ARCH-9) — huntStats et huntRun
+    // restent écrits tels quels : une ancienne sauvegarde ne perd rien.
     huntStats: game.huntStats || {},
     huntRun: game.huntRun || { active: false, questId: null, killsInLot: 0 },
     // v3.90.0 : explorationProgression (déblocages) est permanent.
@@ -795,9 +794,11 @@ function restoreBaseState(d) {
   game.adventureQuestProgress = d.adventureQuestProgress && typeof d.adventureQuestProgress === "object" ? d.adventureQuestProgress : {};
   game.adventureQuestsCompleted = d.adventureQuestsCompleted && typeof d.adventureQuestsCompleted === "object" ? d.adventureQuestsCompleted : {};
   game.adventureQuestRun = d.adventureQuestRun && typeof d.adventureQuestRun === "object" ? d.adventureQuestRun : { active: false, questId: null };
-  // v3.30 : Chasse en boucle (voir data/hunt-quests.js).
+  // v3.30 : Chasse en boucle (moteur retiré en v3.699.0).
   game.huntStats = d.huntStats && typeof d.huntStats === "object" ? d.huntStats : {};
   game.huntRun = d.huntRun && typeof d.huntRun === "object" ? d.huntRun : { active: false, questId: null, killsInLot: 0 };
+  // ARCH-9 (Seb 05/11) : moteur des chasses retiré, la clé reste lue ; un ancien lot en cours est clos
+  if (game.huntRun.active) { game.huntRun = { active: false, questId: null, killsInLot: 0 }; if (game.sortie && game.sortie.context === "hunt") game.sortie.context = "farm"; }
   // v3.120.0 (Lot S1) : scene-engine générique — ancienne sauvegarde sans ce champ = aucun run à reprendre.
   game.sceneRun = d.sceneRun && typeof d.sceneRun === "object" ? d.sceneRun : null;
   game.expeditionChest = d.expeditionChest && typeof d.expeditionChest === "object" ? d.expeditionChest : { unlocked: {} }; // v3.381.0 (PA2, Q8)

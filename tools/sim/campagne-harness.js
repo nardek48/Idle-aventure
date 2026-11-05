@@ -84,7 +84,12 @@ if (JOUEUR) CHANTIER = true;
 function dep(k, v) { var D = STATS.depChantier = STATS.depChantier || {}; D[k] = (D[k] || 0) + Number(v || 0); act(k, v); }
 /* v3.613.0 (relevés) : ce que le robot fait pendant une étape et l'entretien qui suit — { geste: { n, or } }, rangé dans STATS.steps[].actions. */
 var ACT = {};
-function act(k, v) { var a = ACT[k] = ACT[k] || { n: 0, or: 0 }; a.n++; a.or += Math.max(0, Math.round(Number(v || 0))); }
+function act(k, v) { var a = ACT[k] = ACT[k] || { n: 0, or: 0 }; a.n++; a.or += Math.max(0, Math.round(Number(v || 0))); geste(); }
+/* v3.699.0 (EQUI-19, Seb 05/11) : TEMPS ACTIF = rounds de combat (STATS.combatMs) + navigation, sans les attentes
+   (soin au camp, production, recharges). Navigation : NAV_GESTE_MS par geste (act(), départ en combat,
+   acceptation et réclamation d'étape) ; elle n'avance pas l'horloge simulée. STATS.actifMs = combatMs + navMs. */
+var NAV_GESTE_MS = 5000;
+function geste(n) { if (typeof STATS === "undefined") return; STATS.gestes = (STATS.gestes || 0) + (n || 1); STATS.navMs = (STATS.navMs || 0) + (n || 1) * NAV_GESTE_MS; STATS.actifMs = STATS.combatMs + STATS.navMs; }
 /* --releve <nom> : la partie est enregistrée dans tools/sim/releves/ (date, version, réglages, étapes, bilans), pour comparer les robots. */
 var RELEVE = ARGS.indexOf("--releve") >= 0 ? (ARGS[ARGS.indexOf("--releve") + 1] || "partie") : null;
 var JUSQUA = ARGS.indexOf("--jusqua") >= 0 ? ARGS[ARGS.indexOf("--jusqua") + 1] : null;
@@ -360,32 +365,8 @@ function heroSnapshot() {
    il repasse à l'échoppe et à l'entraînement. Rien d'autre n'est répétable à volonté. */
 function grindOnce(raison) { var ctx0 = CTX; CTX = "farm"; try { return grindOnceIn(raison); } finally { CTX = ctx0; } }
 function grindOnceIn(raison) {
-  var g = G;
   if (!COMBATS) return false;
-  var dispo = (g.MissionBoard._huntMissions() || []).filter(function (m) { return m.status === "available"; }).map(function (m) { return m.questId; });
-  var id = dispo.indexOf("hq_desert_battue") >= 0 ? "hq_desert_battue" : (dispo.indexOf("hq_forest_battue") >= 0 ? "hq_forest_battue" : dispo[0]);
-  if (!id) return grindDungeon(raison); // v3.511.0 : plus de chasse dans le jeu, le joueur se renforce au donjon
-  healUp();
-  var t0 = CLOCK.offset, xp0 = g.game.heroLevel, or0 = g.game.gold;
-  var q = g.HUNT_QUESTS[id];
-  var faim = g.ProvisionsManager && g.ProvisionsManager.check("hunt", q);
-  if (faim) {   // vivres de sortie : la ration que dit le refus
-    var m = /(\d+) (Petite ration|Ration moyenne|Grande ration)/.exec(faim) || [];
-    obtain({ "Petite ration": "petite_ration", "Ration moyenne": "ration", "Grande ration": "grande_ration" }[m[2]] || "petite_ration", Number(m[1] || 1));
-    STATS.provisions++;
-  }
-  g.HuntQuestManager.start(id);
-  if (!g.game.huntRun || !g.game.huntRun.active) { note("chasse " + id + " refusée : " + (g.ProvisionsManager && g.ProvisionsManager.check("hunt", q))); return false; }
-  winCombat((q.lotSize || 20) + 2);
-  if (g.game.huntRun && g.game.huntRun.active) g.HuntQuestManager.stop();
-  if (g.closeHuntLotComplete) g.closeHuntLotComplete();
-  flushTimers(g);
-  STATS.grinds[raison] = (STATS.grinds[raison] || 0) + 1;
-  STATS.grindMs += CLOCK.offset - t0;
-  var gf = STATS.goldFarm[id] = STATS.goldFarm[id] || { lots: 0, or: 0, h: 0, morts: 0 };
-  gf.lots++; gf.or += g.game.gold - or0; gf.h += (CLOCK.offset - t0) / 3600e3; if (DEFEATED) gf.morts++;
-  entretien();
-  return true;
+  return grindDungeon(raison); // v3.511.0 : plus de chasse ; v3.699.0 (ARCH-9) : moteur des chasses retiré
 }
 /* ---------- v3.613.0 (--joueur, lot 3, demande de Seb) : les donjons comme un joueur ----------
    Niveau « au monde » : le plus petit niveau dont le butin vient du monde où l'on est (paliers levelSteps), borné par le
@@ -606,7 +587,7 @@ function closeRec(rec) {
   rec.hp1 = Math.max(0, G.game.heroHp / (G.game.heroMaxHp || 1));
   rec.hpLost = Math.max(0, rec.hp0 - rec.hp1);
   rec.pat = ANNONCES - rec.pat0; delete rec.pat0;
-  STATS.fights.push(rec);
+  STATS.fights.push(rec); geste(); // départ en combat (préparation de sortie)
 }
 
 /* Potions en poche avant de partir : 3 mineures, et les majeures quand la bourse le permet. */
@@ -1329,7 +1310,7 @@ function run() {
       // v3.423.0 : TRACE_FORCE=1 relève la force du héros à chaque étape (référence des ajustements de difficulté)
       if (process.env.TRACE_FORCE) console.log("  [force] " + step.id + " monde " + G.WorldManager.worldIndex + " aventure " + G.WorldManager.adventureIndex + " niv. " + G.game.heroLevel + " dmg " + Math.round(G.CombatForecast.getHeroDamagePerRound()) + " ehp " + Math.round(G.CombatForecast.getHeroEffectiveHp ? G.CombatForecast.getHeroEffectiveHp() : G.game.heroMaxHp));
       if (COMBATS && /^(desert_12|desert_15|desert_17|forest_14|forest_15|ruines_01|ruines_02|ruines_03|ruines_11|ruines_13|ruines_15|ruines_19|crypte_01|crypte_02|crypte_03|crypte_06|crypte_12|crypte_14|crypte_16|crypte_19|montagne_01|montagne_02|montagne_03|montagne_04|montagne_06|montagne_08|montagne_10|montagne_12|montagne_13|tour_01|tour_02|tour_04|tour_06|tour_07|tour_08|tour_09|tour_10|tour_11|tour_12|tour_13|tour_15|tour_16|tour_18)$/.test(step.id)) { STATS.profils[step.id] = combatLine(); console.log("  ◦ héros à l'entrée de " + step.id + " : " + STATS.profils[step.id]); if (process.env.TRACE_FORGE) console.log("     forge armure : " + G.ForgeManager.getBlockReason("armor") + " " + JSON.stringify(G.ForgeManager.getCost("armor")) + " or " + Math.floor(G.game.gold)); }
-      var t0s = { h: CLOCK.offset, c: STATS.combatMs, s: STATS.healMs, d: STATS.deaths, j: DAYS_WAITED, e: (STATS.secteurs.desert || {}).essais || 0 };
+      var t0s = { h: CLOCK.offset, c: STATS.combatMs, a: STATS.combatMs + (STATS.navMs || 0), s: STATS.healMs, d: STATS.deaths, j: DAYS_WAITED, e: (STATS.secteurs.desert || {}).essais || 0 };
       var snap0 = snapTemps();
       G.StoryQuestManager.acceptStep(cid);
       var solver = SOLVERS[step.id];
@@ -1354,7 +1335,9 @@ function run() {
       if (!G.game.storyQuests[cid].claimedSteps[step.id]) G.StoryQuestManager.claimStep(cid);
       flushTimers(G);
       if (G.closeQuestCompletePopup) G.closeQuestCompletePopup();
+      geste(2); // accepter et réclamer l'étape
       STATS.steps.push({ id: step.id, title: step.title, h: (CLOCK.offset - t0s.h) / 3600e3, combatH: (STATS.combatMs - t0s.c) / 3600e3, healH: (STATS.healMs - t0s.s) / 3600e3,
+        actifH: ((STATS.combatMs + (STATS.navMs || 0)) - t0s.a) / 3600e3,
         deaths: STATS.deaths - t0s.d, capDays: DAYS_WAITED - t0s.j, sorties: ((STATS.secteurs.desert || {}).essais || 0) - t0s.e, level: G.game.heroLevel, gold: Math.floor(G.game.gold), totalH: CLOCK.offset / 3600e3 });
       if (ARME_DESERT && step.id === "desert_12") {
         // Essai de réglage, pas une donnée du jeu : l'arme de Mar (sauvegarde du 23/09), à l'icône de la classe
@@ -2408,9 +2391,9 @@ if (RELEVE) {
   var murR = (STATS.murs || []).map(function (m) { return { step: m.step, notes: (m.notes || []).slice(0, 2) }; });
   fs.writeFileSync(path.join(dirR, nomR), JSON.stringify({
     meta: { nom: RELEVE, version: verR, date: dateR, classe: CLASSE, combats: COMBATS, args: ARGS.join(" ") },
-    resume: { totalH: CLOCK.offset / 3600e3, reussies: STATS.steps.length, echecs: failures, arret: LAST_FAIL, murs: murR, niveau: G.game.heroLevel, morts: STATS.deaths, economie: STATS.economie },
+    resume: { totalH: CLOCK.offset / 3600e3, actifH: STATS.actifMs / 3600e3, reussies: STATS.steps.length, echecs: failures, arret: LAST_FAIL, murs: murR, niveau: G.game.heroLevel, morts: STATS.deaths, economie: STATS.economie },
     etapes: STATS.steps.map(function (st) { return { id: st.id, title: st.title, finH: st.finH != null ? st.finH : st.totalH, h: st.temps ? st.temps.total : st.h, niv: st.niv || st.level, or: st.gold, morts: st.deaths,
-      combatH: st.combatH, soinH: st.healH, temps: st.temps ? st.temps.parts : null, actions: st.actions || {} }; }),
+      combatH: st.combatH, actifH: st.actifH, soinH: st.healH, temps: st.temps ? st.temps.parts : null, actions: st.actions || {} }; }),
     mondes: STATS.mondes, depenses: STATS.depChantier || {}, caravanes: STATS.caravanes || null, donjonLibre: STATS.donjonLibre || 0
   }, null, 1));
   console.log("Relevé enregistré : tools/sim/releves/" + nomR);
@@ -2436,6 +2419,7 @@ if (process.env.MESURE_TOUR && G) {
 if (JSON_OUT) fs.writeFileSync(JSON_OUT, JSON.stringify({ classe: CLASSE, policy: POLICY, combats: COMBATS, passes: passes, failures: failures, totalH: CLOCK.offset / 3600e3, arret: LAST_FAIL, // audit 04/11 (SUIV-1) : où la partie bute
   daysCap: DAYS_WAITED, capWaitH: CAP_WAIT_H, stats: STATS }, null, 1));
 // Comparable au « Temps de jeu » du journal (game.playTime, app ouverte) : seuls les combats exigent l'écran, le reste (soin, production, recharges) avance aussi hors ligne.
-if (COMBATS) console.log("Temps actif estimé (combats, à comparer au journal) : " + (STATS.combatMs / 3600e3).toFixed(1) + " h · attente hors combat : " + ((CLOCK.offset - STATS.combatMs) / 3600e3).toFixed(1) + " h");
+STATS.actifMs = STATS.combatMs + (STATS.navMs || 0); // EQUI-19 : rounds + navigation, sans les attentes
+if (COMBATS) console.log("Temps actif (rounds + navigation, sans les attentes ; à comparer au journal) : " + (STATS.actifMs / 3600e3).toFixed(1) + " h (combat " + (STATS.combatMs / 3600e3).toFixed(1) + " h + navigation " + ((STATS.navMs || 0) / 3600e3).toFixed(1) + " h, " + (STATS.gestes || 0) + " gestes à " + NAV_GESTE_MS / 1000 + " s) · attente hors combat : " + ((CLOCK.offset - STATS.combatMs) / 3600e3).toFixed(1) + " h");
 console.log("\n" + passes + " OK, " + failures + " échec(s) — temps simulé : " + (CLOCK.offset / 3600e3).toFixed(1) + " h (dont " + DAYS_WAITED + " attente(s) de recharge des expéditions, " + CAP_WAIT_H.toFixed(1) + " h)");
 process.exit(failures ? 1 : 0);

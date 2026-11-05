@@ -41,7 +41,6 @@ var WorldTravel = {
   isBusy: function () {
     if (game.dungeonRun && game.dungeonRun.active) return true;
     if (game.adventureQuestRun && game.adventureQuestRun.active) return true;
-    if (game.huntRun && game.huntRun.active) return true;
     if (game.livingMaps && game.livingMaps.fight) return true;
     if (game.sceneRun && game.sceneRun.status && game.sceneRun.status !== "completed") return true;
     return false;

@@ -14,15 +14,16 @@ function getPlayerDamageType() {
   return (hero && hero.weaponType) || null;
 }
 
-function getDamageAffinity() {
-  if (!game.enemy) return { type: null, status: "neutral", mult: 1 };
+function getDamageAffinity(target) {
+  var foe = target || game.enemy; // v3.699.0 : la cible frappée (groupe), sinon l'ennemi courant
+  if (!foe) return { type: null, status: "neutral", mult: 1 };
 
   var type = getPlayerDamageType();
   if (!type) return { type: null, status: "unarmed", mult: NO_WEAPON_MULT };
 
   // v3.102.0 : les boss sont neutres (étalon de kit, décision §11) — ni résistance ni faiblesse.
-  var resists = game.enemy.isBoss ? [] : (game.enemy.resists || []);
-  var weak = game.enemy.isBoss ? [] : (game.enemy.weak || []);
+  var resists = foe.isBoss ? [] : (foe.resists || []);
+  var weak = foe.isBoss ? [] : (foe.weak || []);
 
   if (resists.indexOf(type) !== -1) return { type: type, status: "resist", mult: RESIST_DMG_MULT };
   if (weak.indexOf(type) !== -1) return { type: type, status: "weak", mult: WEAK_DMG_MULT };
@@ -1516,10 +1517,8 @@ var CombatEngine = {
     var list = [].concat(actors || []).filter(Boolean);
     if (!list.length) return null;
 
-    /* v3.284.0 : le verrou de spawn vaut AUSSI ici. HuntQuestManager enchaîne son ennemi
-       suivant par CombatEngine.spawnEnemy(), qui passe par spawnGroup et court-circuitait
-       donc assignCurrentEnemy — une meute de chasse se voyait remplacée dès la mort de son
-       premier membre (constaté au banc). */
+    /* v3.284.0 : le verrou de spawn vaut AUSSI ici : un ennemi enchaîné par spawnEnemy() passe par
+       spawnGroup et ne doit pas remplacer un groupe encore vivant (constaté au banc avec les chasses). */
     if (window.CombatActors && CombatActors._holdSpawn && CombatActors.aliveEnemies().length > 0) return;
 
     var self = this;
@@ -1601,11 +1600,6 @@ var CombatEngine = {
       return;
     }
 
-    if (window.HuntQuestManager && game.huntRun && game.huntRun.active) {
-      HuntQuestManager.onDefeat();
-      return;
-    }
-
     // v3.256.0 (Cartes Vivantes, C-2) : mort face à l'élite d'un secteur — même dispatch que les autres runs.
     if (window.LivingMapManager && game.livingMaps && game.livingMaps.fight) {
       LivingMapManager.onFightLost();
@@ -1650,7 +1644,7 @@ var CombatEngine = {
     this.prepareEnemy(foe);
 
     dmg = Math.max(0, Number(dmg || 0));
-    if (!ignoreAffinity) dmg *= getDamageAffinity().mult;
+    if (!ignoreAffinity) dmg *= getDamageAffinity(foe).mult;
 
     if (foe.archetype === "corrupted" && typeof getCorruptedDamageMultiplier === "function") {
       var preCorruptedDmg = dmg;
@@ -1702,32 +1696,6 @@ var CombatEngine = {
     if (!enemy) return;
     if (window.RiseSystem && RiseSystem.tryRise(enemy)) return; // v3.428.0 (Ruines) : à terre, il se relèvera
     if (window.TalentManager) TalentManager.onEnemyKilled(enemy); // v3.327.0 : Soif du bourreau, Brasier
-
-    if (window.HuntQuestManager && game.huntRun && game.huntRun.active) {
-      game.totalKills += 1;
-      game.killCounts[enemy.id] = (game.killCounts[enemy.id] || 0) + 1;
-      if (window.SortieManager) SortieManager.noteKill(false); // la chasse n'a pas de boss (branche séparée avant grantGold/grantMissionXp)
-
-      /* v3.284.0 — MEUTES DE CHASSE. Cette branche précède tout le reste, donc le retrait
-         d'un membre doit se faire ICI aussi : sans ça, la chasse enchaînait son ennemi
-         suivant dès la première mort et remplaçait la meute en cours (constaté au banc).
-         Le kill compte pour le lot dans les deux cas — c'est la meute qui ne doit pas
-         être balayée tant qu'il en reste. */
-      var meute = window.CombatActors && CombatActors.enemies().length > 1;
-      if (meute) CombatActors.removeEnemy(enemy);
-      if (meute) CombatActors.holdSpawn(true);
-      try {
-        HuntQuestManager.onEnemyKilled();
-      } finally {
-        if (meute) CombatActors.holdSpawn(false);
-      }
-      if (meute && CombatActors.aliveEnemies().length) {
-        addLog("⚔️ " + _t("{x} tombe — il en reste {n}.", { x: _td(enemy.name), n: CombatActors.aliveEnemies().length }), "normal");
-      }
-      if (typeof renderAll === "function") renderAll();
-      saveGame();
-      return;
-    }
 
     var goldGain = Number(enemy.goldReward || 0); // v3.358.0 (D7) : plus d'essence au kill
     if (window.SleepSystem) goldGain = Math.floor(goldGain * SleepSystem.goldMult(enemy)); // v3.451.0 : réveillé puis vaincu
@@ -1781,8 +1749,6 @@ var CombatEngine = {
       try {
         if (window.AdventureQuestManager && game.adventureQuestRun && game.adventureQuestRun.active) {
           AdventureQuestManager.onEnemyKilled(enemy);
-        } else if (window.HuntQuestManager && game.huntRun && game.huntRun.active) {
-          HuntQuestManager.onEnemyKilled();
         }
         // v3.293.0 : plus de trackKill de farm libre ici (voir fin de killEnemy)
       } finally {

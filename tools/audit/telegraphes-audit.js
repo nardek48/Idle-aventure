@@ -84,7 +84,7 @@ Object.keys(g.ADVENTURE_QUESTS).forEach(function (id) {
   (q.encounters || []).forEach(function (e) { if (e && e.sleepers) add(reel, "Dormeurs", "rencontres"); });
   audit("adventure", id, q.name, w, reel);
 });
-Object.keys(g.HUNT_QUESTS).forEach(function (id) {
+Object.keys(g.HUNT_QUESTS || {}).forEach(function (id) { // v3.699.0 : moteur des chasses retiré, liste vide
   var q = g.HUNT_QUESTS[id], w = mondeIndex(q.worldId), reel = {};
   g.etCreaturesFor({ type: "hunt", id: id }).forEach(function (c) { if (c.kind === "enemy") mecaEnnemi(c.id, w, reel); });
   audit("hunt", id, q.name, w, reel);

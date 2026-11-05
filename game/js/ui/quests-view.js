@@ -203,7 +203,7 @@ function questStepsHTML(key, rows) {
 window.questStepsHTML = questStepsHTML;
 
 /* v3.131.0 (retour Seb) : indicateur permanent du cap de 3 quêtes actives (village/workshop/
-   scene/adventure/hunt confondus — voir MissionBoard.ACTIVE_QUEST_CAP). Discret quand il reste
+   scene/adventure confondus — voir MissionBoard.ACTIVE_QUEST_CAP). Discret quand il reste
    de la marge, en alerte visuelle quand le cap est atteint (couleur + icône). */
 function buildActiveQuestCapIndicatorHTML(compact) {
   if (!window.MissionBoard || typeof MissionBoard.getActiveQuestCount !== "function") return "";
@@ -1103,56 +1103,8 @@ function buildCompletedQuestCardsHTML() {
   return buildQuestCardsGroupedBySectionHTML(collectCompletedQuestCardEntries());
 }
 
-var pendingHuntQuestId = null;
-
-function buildHuntQuestIntroHTML(questId) {
-  var quest = window.HUNT_QUESTS ? HUNT_QUESTS[questId] : null;
-  if (!quest) return "";
-
-  var h = '<div class="full-menu-overlay kwin-veil">';
-  h += '  <div class="kwin dungeon-story-card">';
-  h += kWinHeadHTML({ icon: renderIconOrEmojiHTML(quest.icon || "images/Icons/classes/class_ranger.webp", "dungeon-story-icon-img", _td(quest.name)), title: esc(_td(quest.name)) }); // v3.400.0 (F-2)
-  h += '    <div class="kwin-body">';
-  if (quest.story) h += '    <div class="kwin-quote dungeon-story-text">' + esc(_td(quest.story)) + '</div>';
-  if (window.ProvisionsManager) h += ProvisionsManager.buildLineHTML("hunt", quest); // v3.330.1 : vivres de sortie
-  h += '    </div>';
-  h += '    <div class="kwin-foot">';
-  h += '      <button class="kbtn" type="button" onclick="closeHuntQuestIntro()">' + _t("Annuler") + '</button>';
-  h += '      <button class="kbtn primary" type="button" onclick="confirmHuntQuestStart()">' + _t("Commencer") + '</button>';
-  h += '    </div>';
-  h += '  </div>';
-  h += '</div>';
-  return h;
-}
-
-function openHuntQuestIntro(questId) {
-  pendingHuntQuestId = questId;
-  var host = document.getElementById("adventure-quest-modal-root");
-  if (host) host.innerHTML = buildHuntQuestIntroHTML(questId);
-}
-
-function closeHuntQuestIntro() {
-  pendingHuntQuestId = null;
-  var host = document.getElementById("adventure-quest-modal-root");
-  if (host) host.innerHTML = "";
-}
-
-function confirmHuntQuestStart() {
-  var questId = pendingHuntQuestId;
-  closeHuntQuestIntro();
-  if (questId) prepHuntQuestStart(questId);
-}
-
-/* v3.440.0 : préparation de sortie avant chaque chasse (« Chasser à nouveau » compris). */
-function prepHuntQuestStart(questId) {
-  if (!window.HuntQuestManager) return;
-  var quest = window.HUNT_QUESTS ? HUNT_QUESTS[questId] : null;
-  openSortiePrep({ title: quest ? _td(quest.name) : "", icon: "images/Icons/quests/mission_hunt.webp", ctx: { type: "hunt", id: questId },
-    onGo: function () { HuntQuestManager.start(questId); } });
-}
-
 /* --- Template générique popup de fin de quête (titre/texte/récompenses/actions) ---
-   Réutilisé par Chasses, Quêtes d'aventure et Questlines de monde : toute nouvelle
+   Réutilisé par les Quêtes d'aventure et les Questlines de monde : toute nouvelle
    quête doit passer par buildQuestCompleteHTML()/openQuestCompletePopup() plutôt que
    dupliquer son propre HTML de popup. Ancrage partagé "adventure-quest-modal-root"
    (déjà dans BLOCKING_MODAL_IDS du game-loop -> bloquant par nature). */
@@ -1273,75 +1225,6 @@ function closeQuestCompletePopup() {
   if (ouv && window.PrologueView) PrologueView.playChapter(ouv, null);
 }
 window.closeQuestCompletePopup = closeQuestCompletePopup;
-
-/* v3.412.0 (retour Seb) : la fenêtre de fin de chasse ou de battue dit ce que le lot a rapporté,
-   à partir du bilan de sortie (game.lastSortieSummary.kept) : l'or gagné (ramassé + prime de
-   battue), puis chaque ressource et les objets. Avant, une battue (pas de ressource) affichait
-   « {x} en stock · 0 ». */
-function buildHuntLotRewardRows(quest) {
-  var sum = game.lastSortieSummary;
-  // Le bilan ne compte que s'il vient bien de cette chasse (sinon il resterait celui d'une sortie précédente).
-  var kept = (sum && sum.context === "hunt" && sum.outcome === "success" && sum.kept) || {};
-  var rows = [];
-  var gold = Number(kept.gold || 0) + Number(quest.rewardGold || 0);
-  if (gold > 0) rows.push({ label: _t("Or gagné"), value: "+" + formatNumber(gold) + (quest.rewardGold ? " " + _t("(dont {n} de prime)", { n: formatNumber(quest.rewardGold) }) : "") });
-  var res = kept.resources || {};
-  Object.keys(res).forEach(function (key) {
-    var n = Number(res[key] || 0);
-    if (n <= 0) return;
-    var def = (window.WAREHOUSE_RESOURCES || {})[key];
-    rows.push({ label: def ? _td(def.name) : key, value: "+" + formatNumber(n) });
-  });
-  var items = Array.isArray(kept.items) ? kept.items.length : 0;
-  if (items > 0) rows.push({ label: _t("Objets trouvés"), value: "+" + formatNumber(items) });
-  if (!rows.length) rows.push({ label: _t("Butin"), value: _t("rien cette fois") });
-  return rows;
-}
-
-function buildHuntLotCompleteHTML(quest) {
-  if (!quest) return "";
-  var battue = !!quest.rewardGold && !quest.resourceKey;
-  return buildQuestCompleteHTML({
-    icon: quest.icon || "images/Icons/classes/class_ranger.webp",
-    title: battue ? _t("Battue terminée !") : _t("Chasse terminée !"),
-    text: battue
-      ? _t("{n} ennemis vaincus. La prime est à toi — relance une battue quand tu veux.", { n: quest.lotSize })
-      : _t("{n} bêtes abattues. Le gibier se fait plus rare pour l’instant — reviens plus tard, ou relance une nouvelle chasse tout de suite.", { n: quest.lotSize }),
-    rewardRows: buildHuntLotRewardRows(quest),
-    closeLabel: _t("Fermer"),
-    closeOnclick: "closeHuntLotComplete()", // v3.208.0 : ramène au Campement (le lot est fini, plus rien à faire en Combat)
-    extraActionLabel: battue ? _t("Nouvelle battue") : _t("Chasser à nouveau"),
-    extraActionOnclick: "restartHuntQuest(\'" + quest.id + "\')"
-  });
-}
-
-function openHuntLotComplete(quest) {
-  var host = document.getElementById("adventure-quest-modal-root");
-  if (host) host.innerHTML = buildHuntLotCompleteHTML(quest);
-}
-
-/* v3.208.0 : fin d'un lot de chasse/battue = retour au Campement. Le joueur est resté sur
-   l'onglet Combat depuis HuntQuestManager.start() ; sans ce switchTab il retombait sur un
-   combat libre qu'il n'a pas demandé. « Chasser à nouveau » passe par restartHuntQuest(),
-   qui rebascule seul vers Combat via HuntQuestManager.start(). */
-function closeHuntLotComplete(backToCamp) {
-  closeQuestCompletePopup();
-  if (backToCamp !== false && typeof switchTab === "function") switchTab("campement");
-}
-
-function restartHuntQuest(questId) {
-  closeHuntLotComplete(false);
-  if (questId) prepHuntQuestStart(questId);
-}
-
-window.openHuntLotComplete = openHuntLotComplete;
-window.closeHuntLotComplete = closeHuntLotComplete;
-window.restartHuntQuest = restartHuntQuest;
-window.buildHuntLotCompleteHTML = buildHuntLotCompleteHTML;
-
-window.openHuntQuestIntro = openHuntQuestIntro;
-window.closeHuntQuestIntro = closeHuntQuestIntro;
-window.confirmHuntQuestStart = confirmHuntQuestStart;
 
 window.updateQuestBadge = updateQuestBadge;
 window.getTalentsAvailableCount = getTalentsAvailableCount;

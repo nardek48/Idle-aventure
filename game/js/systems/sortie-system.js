@@ -40,7 +40,6 @@ var SortieManager = {
   detectContext: function () {
     if (game.dungeonRun && game.dungeonRun.active) return "dungeon";
     if (game.adventureQuestRun && game.adventureQuestRun.active) return "adventure";
-    if (game.huntRun && game.huntRun.active) return "hunt";
     // v3.120.0 (Lot S1) : scene-engine générique — un sceneRun non "completed" est une sortie en cours.
     if (game.sceneRun && game.sceneRun.status !== "completed") return "scene";
     if (game.livingMaps && game.livingMaps.fight) return "mapelite"; // v3.256.0 (C-2)
@@ -233,7 +232,6 @@ var SortieManager = {
     if (!s.active) return;
     if (s.context === "dungeon" && window.DungeonManager) DungeonManager.forfeit();
     else if (s.context === "adventure" && window.AdventureQuestManager) AdventureQuestManager.forfeit();
-    else if (s.context === "hunt" && window.HuntQuestManager) HuntQuestManager.stop();
     // v3.126.0 (Petites Aventures, Lot PA2) : fuir un combat de nœud scene-engine (profil
     // Bourrin) doit passer par SceneRunManager.abandon() — même règle de fuite que partout
     // (end("flee"), 50% du butin) ET termine proprement game.sceneRun (sinon le run resterait

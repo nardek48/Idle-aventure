@@ -525,24 +525,18 @@ var CombatForecast = {
       if (hasBoss) return firstOfGroup(QuestEnemyManager.spawnFor(aq, true)); // v3.269.0 : spawnFor peut renvoyer un groupe
       return this.averageEnemy(this.spawnEach(aq).map(firstOfGroup)); // PRONO-MISSION : moyenne de la réserve
     }
-    if (mission.sourceKind === "hunt") {
-      var hq = (window.HUNT_QUESTS || {})[mission.questId];
-      return hq ? this.averageEnemy(this.spawnEach(hq).map(firstOfGroup)) : null;
-    }
     return null;
   },
 
   /* Nombre de combats ordinaires avant l'ennemi de référence, d'après la donnée de quête. */
   getPrecedingFights: function (mission) {
     if (!mission) return 0;
-    var quest = (mission.sourceKind === "adventure") ? (window.ADVENTURE_QUESTS || {})[mission.questId]
-      : (mission.sourceKind === "hunt") ? (window.HUNT_QUESTS || {})[mission.questId] : null;
+    var quest = (mission.sourceKind === "adventure") ? (window.ADVENTURE_QUESTS || {})[mission.questId] : null;
     if (!quest) return 0;
     var total = 0;
     (quest.steps || []).forEach(function (st) {
       if (st.type === "kill" || st.type === "eliteTrack" || st.type === "encounter") total += Number(st.target || 0); // v3.311.0
     });
-    if (!total && quest.lotSize) total = Number(quest.lotSize) || 0; // chasse : un lot de N
     return total;
   },
 
@@ -555,8 +549,7 @@ var CombatForecast = {
     var attrition = 0, list = [];
     var fights = this.getPrecedingFights(mission);
     if (fights > 0 && window.QuestEnemyManager) {
-      var quest = (mission.sourceKind === "adventure") ? (window.ADVENTURE_QUESTS || {})[mission.questId]
-        : (window.HUNT_QUESTS || {})[mission.questId];
+      var quest = (window.ADVENTURE_QUESTS || {})[mission.questId];
       if (quest && quest.encounters && window.AdventureQuestManager) {
         /* v3.429.9 : rencontres scriptées — l'objectif compte des RENCONTRES (un groupe = un cran) ;
            chacune a son groupe, on les additionne dans l'ordre du run. */

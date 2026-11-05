@@ -40,6 +40,18 @@ jobs:
       url: ${{ steps.deploiement.outputs.page_url }}
     steps:
       - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+      # PERF-7 (Seb 05/11) : copie publiée sans commentaires JS ; le dépôt garde les siens (O6 : pas de regroupement).
+      - name: Retirer les commentaires des JS publiés
+        run: |
+          npm install --no-save --no-package-lock acorn@8.14.0
+          node tools/publication/sans-commentaires.js game
+      - name: Premier lancement (copie publiée)
+        run: node tools/harness/boot-harness.js game
+      - name: Création du héros (copie publiée)
+        run: node tools/harness/hero-creation-harness.js game
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

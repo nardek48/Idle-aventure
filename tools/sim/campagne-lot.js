@@ -63,9 +63,10 @@ console.log("Par monde (médianes, h) : " + MONDES.filter(function (m) { return 
 console.log("Tour jouée : " + (parMonde.tower ? parMonde.tower.n + "/" + runs.length + " parties" : "non"));
 var tot = runs.map(function (j) { return j.totalH; });
 console.log("Temps simulé (" + tot.length + " parties) : médiane " + med(tot).toFixed(1) + " h · p25–p75 " + quant(tot, 0.25).toFixed(1) + "–" + quant(tot, 0.75).toFixed(1) + " h (de " + Math.min.apply(null, tot).toFixed(0) + " à " + Math.max.apply(null, tot).toFixed(0) + " h)");
-// Temps actif = combats seuls, à comparer au « Temps de jeu » du journal (le reste avance hors ligne)
-var act = runs.map(function (j) { return j.stats.combatMs / 3600e3; });
-if (PASS.indexOf("--combats") >= 0 && act.length) console.log("Temps actif estimé (combats) : médiane " + med(act).toFixed(1) + " h (de " + Math.min.apply(null, act).toFixed(1) + " à " + Math.max.apply(null, act).toFixed(1) + " h)");
+// EQUI-19 (v3.699.0) : temps actif = rounds + navigation (STATS.actifMs), sans les attentes ; à comparer au « Temps de jeu » du journal
+var act = runs.map(function (j) { return Number(j.stats.actifMs != null ? j.stats.actifMs : j.stats.combatMs) / 3600e3; });
+var actC = runs.map(function (j) { return j.stats.combatMs / 3600e3; });
+if (PASS.indexOf("--combats") >= 0 && act.length) console.log("Temps actif (rounds + navigation) : médiane " + med(act).toFixed(1) + " h (de " + Math.min.apply(null, act).toFixed(1) + " à " + Math.max.apply(null, act).toFixed(1) + " h), dont combat " + med(actC).toFixed(1) + " h");
 
 // où part le temps : médiane par cause, puis les étapes qui pèsent (moyenne du lot)
 if (runs.length && runs[0].stats.attente) {

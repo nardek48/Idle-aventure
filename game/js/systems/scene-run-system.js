@@ -145,8 +145,7 @@ var SceneRunManager = {
   },
 
   getRun: function () {
-    this.ensureDefaults();
-    var run = game.sceneRun;
+    var run = game.sceneRun || null; // PERF-4 (Seb 05/11) : lecteur de tick, sans ensureGameStateDefaults
     if (run && !run.pa2 && !run.lab) { this._retireLegacyRun(run); return null; } // v3.434.0 : le labyrinthe est un run à part
     return run;
   },
