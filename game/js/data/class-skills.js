@@ -184,7 +184,7 @@ window.CLASS_SKILLS = {
         id: "archer_piercing_shot",
         slot: "skill3",
         label: "Tir perforant",
-        description: "Inflige 200% des dégâts. Ignore la résistance/faiblesse d'arme de l'ennemi. Coûte 50 Concentration.",
+        description: "Inflige 200% des dégâts. Coûte 50 Concentration.",
         type: "damage",
         damageMultiplier: 2.00,
         hits: 1,

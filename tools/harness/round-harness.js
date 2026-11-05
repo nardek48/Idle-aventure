@@ -122,7 +122,7 @@ ok(game.combatMode === "tactique" && game.autoSkillsEnabled === false, "mode Tac
 ok(game.combatRound && game.combatRound.number === 0 && game.heroGauge === 0, "round 0, jauge 0");
 ok(game.enemy && game.enemy._roundReady && game.enemy.chargeIn >= 3 && game.enemy.chargeIn <= 5, "ennemi préparé (chargeIn 3-5) : " + game.enemy.name);
 ok(g.ENEMY_PV_MULT === 6 && g.BOSS_PV_MULT === 12 && g.BOSS_DMG_MULT === 1.5, "coefficients v3.232.0 : PV 6 / boss 12 / dégâts boss ×1,5");
-ok(g.RESIST_DMG_MULT === 0.85 && g.WEAK_DMG_MULT === 1.15, "résistances 0,85 / 1,15");
+ok(g.RESIST_DMG_MULT === 1 && g.WEAK_DMG_MULT === 1, "résistances / faiblesses retirées (×1, v3.701.0)");
 ok(g.CLASS_SKILLS.archer.resource.generation.value === 15 && g.CLASS_SKILLS.mage.resource.generation.passivePerRound === 8, "Concentration 15/attaque, Mana 8/round");
 ok(g.CLASS_SKILLS.knight.actions.skill3.cooldownRounds === 4 && g.CLASS_SKILLS.knight.actions.defense.cooldownRounds === 3 && g.CLASS_SKILLS.knight.actions.skill1.cooldownRounds === 1, "cooldowns 8000→4, 7000→3, 1500→1");
 ok(g.CLASS_SKILLS.mage.actions.skill2.effects[0].percentPerRound === 0.5 && g.CLASS_SKILLS.mage.actions.skill2.effects[0].durationRounds === 2, "DoT : 50 %/round × 2 rounds");
@@ -23444,7 +23444,7 @@ console.log("\n[463] v3.698.0 — Décisions Dragon ancien, pronostic de mission
     game.enemy = { id: "ancientdragon", isBoss: true, hp: 10, maxHp: 10, weak: ["magic"], resists: ["bow"], stats: g.makeRpgStats(1, 1, 1, 1, 1) };
     ok(g.getDamageAffinity().mult === 1, "DRAGON-MAGE : le Dragon (boss) reste neutre face à la magie (système inchangé)");
     game.enemy = { id: "lavagolem", isBoss: false, hp: 10, maxHp: 10, weak: ["magic"], resists: ["sword"], stats: g.makeRpgStats(1, 1, 1, 1, 1) };
-    ok(g.getDamageAffinity().mult === g.WEAK_DMG_MULT, "DRAGON-MAGE : un ennemi ordinaire faible à la magie prend ×1,15");
+    ok(g.getDamageAffinity().mult === 1, "DRAGON-MAGE : un ennemi ordinaire « faible à la magie » prend ×1 (faiblesses retirées, v3.701.0)");
 
     // PRONO-MISSION : même héros, même verdict, quel que soit le tirage
     var CF = g.CombatForecast, mis = { sourceKind: "adventure", questId: "aq_forest_expedition", title: "x" };
@@ -23530,10 +23530,10 @@ console.log("\n[464] v3.699.0 — Code et documents : chasses retirées, ensure*
     var type = g.getPlayerDamageType(), mk = function (o) { var e = { id: "wolf", name: "Loup", isBoss: false, hp: 1e6, maxHp: 1e6, resists: [], weak: [], stats: g.makeRpgStats(1, 1, 1, 1, 1) }; Object.keys(o).forEach(function (k) { e[k] = o[k]; }); return e; };
     var e1 = mk({ resists: [type] }), e2 = mk({ weak: [type] }), e3 = mk({});
     game.enemy = e1;
-    ok(g.getDamageAffinity(e2).status === "weak" && g.getDamageAffinity().status === "resist", "affinité : lue sur la cible donnée (faible), sinon sur l'ennemi courant (résiste)");
+    ok(g.getDamageAffinity(e2).status === "neutral" && g.getDamageAffinity().status === "neutral", "affinité : neutre sur la cible donnée comme sur l'ennemi courant (v3.701.0)");
     g.CombatEngine.dealDamage(1000, false, false, false, e2); g.CombatEngine.dealDamage(1000, false, false, false, e3);
     var r2 = (1e6 - e2.hp) / Math.max(1, 1e6 - e3.hp);
-    ok(game.enemy === e1 && Math.abs(r2 - g.WEAK_DMG_MULT) < 0.02, "affinité : en groupe, le coup sur la seconde cible prend SA faiblesse (×" + r2.toFixed(2) + ")");
+    ok(game.enemy === e1 && Math.abs(r2 - 1) < 0.02, "affinité : en groupe, la seconde cible « faible » prend ×1 (×" + r2.toFixed(2) + ")");
 
     // QUET-8 : l'Admin pose ce que le jeu aurait posé (campements, donjons, marchés)
     game = freshCombat("knight");
@@ -23590,14 +23590,14 @@ console.log("\n[465] v3.700.0 — Mage face au Dragon, pronostic du Mage, faible
     var lignes = function (id) { return g.bestiaryAffinityLines(g.bestiaryData(id)); };
     ok(lignes("ancientdragon").length === 0 && g.BOSS_DB.ancientdragon.weak.length > 0, "FAIBLESSES : boss sans « Résiste / Faible » (données gardées)");
     ok(lignes("ifrit_trieur").length === 0, "FAIBLESSES : élite sans « Résiste / Faible »");
-    ok(lignes("ifrit").length === 2, "FAIBLESSES : ennemi ordinaire, les deux lignes restent");
+    ok(lignes("ifrit").length === 0, "FAIBLESSES : ennemi ordinaire sans ligne non plus (retrait v3.701.0)");
     game = freshCombat("knight"); g.game.killCounts = { ancientdragon: 1, ifrit_trieur: 1, ifrit: 1 };
     var cb = g.buildBestiaryEntryCardHTML("ancientdragon"), ce = g.buildBestiaryEntryCardHTML("ifrit_trieur"), co = g.buildBestiaryEntryCardHTML("ifrit");
     var lab = g._t("Résiste : {liste}", { liste: "" }).split(":")[0];
-    ok(cb.indexOf(lab) === -1 && ce.indexOf(lab) === -1 && co.indexOf(lab) !== -1, "FAIBLESSES : cartes du Bestiaire (boss, élite sans ; ordinaire avec)");
+    ok(cb.indexOf(lab) === -1 && ce.indexOf(lab) === -1 && co.indexOf(lab) === -1, "FAIBLESSES : cartes du Bestiaire sans « Résiste » (boss, élite, ordinaire)");
     game = freshCombat("mage"); giveWeapon();
     game.enemy = { id: "ifrit", isBoss: false, hp: 10, maxHp: 10, weak: ["bow"], resists: ["magic"], stats: g.makeRpgStats(1, 1, 1, 1, 1) };
-    ok(g.getDamageAffinity().mult === g.RESIST_DMG_MULT, "FAIBLESSES : rien ne change en combat (l'Ifrit résiste toujours à la magie)");
+    ok(g.getDamageAffinity().mult === 1, "FAIBLESSES : l'Ifrit ne résiste plus à la magie (×1, v3.701.0)");
 
     // ARCH-9 (fin) : textes des chasses retirés d'en.js
     var enjs = fs.readFileSync(path.join(ROOT, "js/lang/en.js"), "utf8");
@@ -23623,6 +23623,45 @@ console.log("\n[465] v3.700.0 — Mage face au Dragon, pronostic du Mage, faible
     ok(g.game.adventureQuestProgress[qid] && g.game.adventureQuestProgress[qid][st0] === 0, "PERF-4 (reste) : le départ d'une quête force la validation complète");
     AQ.forfeit && AQ.forfeit();
   } catch (err) { ok(false, "[465] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[466] v3.701.0 — Faiblesses et résistances retirées partout (Seb, 05/11, « on va enlever »)");
+(function () {
+  try {
+    // Moteur : aucun ennemi (ordinaire, élite, boss, données réelles) ne modifie plus un dégât armé
+    var classes = ["knight", "ranger", "mage"], ecarts = 0, vus = 0;
+    classes.forEach(function (c) {
+      game = freshCombat(c); giveWeapon();
+      Object.keys(g.ENEMY_DB).concat(Object.keys(g.BOSS_DB)).forEach(function (id) {
+        var d = g.ENEMY_DB[id] || g.BOSS_DB[id];
+        var e = { id: id, isBoss: !!g.BOSS_DB[id] && !g.ENEMY_DB[id], hp: 10, maxHp: 10, resists: d.resists || [], weak: d.weak || [], stats: d.stats };
+        vus++; if (g.getDamageAffinity(e).mult !== 1) ecarts++;
+      });
+    });
+    ok(vus > 100 && ecarts === 0, "AFFINITÉ : ×1 pour les 3 classes armées face à tout le bestiaire (" + vus + " cas, " + ecarts + " écart)");
+    game = freshCombat("knight"); giveWeapon();
+    var t = g.getPlayerDamageType(), mk = function (o) { return Object.assign({ id: "wolf", name: "Loup", isBoss: false, hp: 1e6, maxHp: 1e6, resists: [], weak: [], stats: g.makeRpgStats(1, 1, 1, 1, 1) }, o); };
+    var ew = mk({ weak: [t] }), er = mk({ resists: [t] }), en = mk({});
+    game.enemy = en;
+    g.CombatEngine.dealDamage(1000, false, false, false, ew); g.CombatEngine.dealDamage(1000, false, false, false, er); g.CombatEngine.dealDamage(1000, false, false, false, en);
+    ok((1e6 - ew.hp) === (1e6 - en.hp) && (1e6 - er.hp) === (1e6 - en.hp), "AFFINITÉ : dealDamage, même dégât sur « faible », « résiste » et neutre (" + (1e6 - ew.hp) + " / " + (1e6 - er.hp) + " / " + (1e6 - en.hp) + ")");
+    ok(g.getPureDamageAffinityMult("sword", ["sword"], []) === 1 && g.getPureDamageAffinityMult("magic", [], ["magic"]) === 1, "AFFINITÉ : version pure (pronostic, auto-pilote) ×1");
+    ok(g.CombatRoundSim.DEFAULTS.resistMult === 1 && g.CombatRoundSim.DEFAULTS.weakMult === 1, "AFFINITÉ : simulateur parallèle aligné (×1 par défaut)");
+    // Bestiaire : plus aucune ligne, sur aucune fiche ni carte
+    var ids = Object.keys(g.ENEMY_DB).concat(Object.keys(g.BOSS_DB), Object.keys(g.ELITE_DB || {})), pleines = 0;
+    ids.forEach(function (id) { var d = g.bestiaryData(id); if (d && g.bestiaryAffinityLines(d).length) pleines++; });
+    ok(pleines === 0, "BESTIAIRE : aucune ligne « Résiste / Faible » sur " + ids.length + " fiches");
+    game = freshCombat("knight"); g.game.killCounts = {}; ids.forEach(function (id) { g.game.killCounts[id] = 1; });
+    var html = ids.map(function (id) { return g.buildBestiaryEntryCardHTML(id); }).join("");
+    ok(html.length > 1000 && html.indexOf("Résiste :") === -1 && html.indexOf("Faible :") === -1, "BESTIAIRE : cartes sans « Résiste : » ni « Faible : »");
+    // Textes : Tir perforant ne promet plus d'ignorer l'affinité, clés EN retirées
+    ok(g.CLASS_SKILLS.archer.actions.skill3.description.indexOf("résistance") === -1, "TEXTES : Tir perforant sans mention de résistance/faiblesse");
+    var enjs = fs.readFileSync(path.join(ROOT, "js/lang/en.js"), "utf8");
+    ok(enjs.indexOf('"Résiste : {liste}"') === -1 && enjs.indexOf('"Faible : {liste}"') === -1 && enjs.indexOf("Ignores the enemy's weapon resistance") === -1, "TEXTES : clés EN « Résiste / Faible » et Tir perforant retirées");
+    // Sans arme : la pénalité reste (ce n'est pas une faiblesse d'ennemi)
+    game = freshCombat("knight"); game.equipped.weapon = null; game.enemy = mk({});
+    ok(g.getDamageAffinity().status === "unarmed" && g.getDamageAffinity().mult === g.NO_WEAPON_MULT, "AFFINITÉ : la pénalité sans arme reste (×" + g.NO_WEAPON_MULT + ")");
+  } catch (err) { ok(false, "[466] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
 Promise.all(ATTENTES).then(function () {

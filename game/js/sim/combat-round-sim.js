@@ -19,8 +19,8 @@ var ROUND_MODEL_DEFAULTS = {
   heroDefenseCap: 0.6,
   heroDefenseCapActive: 0.85,
   willCritResistCoef: 0.05,   // WILL_CRIT_RESIST_COEF actuel
-  resistMult: 0.7,
-  weakMult: 1.3,
+  resistMult: 1,              // v3.701.0 : faiblesses et résistances retirées du jeu (×1), gardées pour l'analyse
+  weakMult: 1,
   enemyHpCoef: 6,             // v3.232.0 : miroir de ENEMY_PV_MULT (le bac à sable le surcharge avec la valeur réelle)
   bossHpCoef: 12,             // v3.232.0 : miroir de BOSS_PV_MULT
   enemyDmgCoef: 0.5,          // (round) ENEMY_POWER_DMG_COEF actuel

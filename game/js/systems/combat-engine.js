@@ -4,8 +4,10 @@
    (frappe, ou impact d'un pattern télégraphié au round précédent) → fin de round (cooldowns, statuts, DoT, mana passif).
    Deux modes : Tactique (attend le choix) et Grimoire (1 round / ROUND_INTERVAL_MS, l'auto-pilote choisit). Plus de tap ni d'auto-DPS. */
 
-var RESIST_DMG_MULT = 0.85;   // v3.102.0 : 0,7 → 0,85 (P1 §D, résistances adoucies)
-var WEAK_DMG_MULT = 1.15;     // v3.102.0 : 1,3 → 1,15
+/* v3.701.0 (Seb 05/11, « on va enlever ») : plus de faiblesses ni de résistances, ×1 pour tous.
+   Constantes gardées à 1 pour les lecteurs existants (pronostic, bancs). */
+var RESIST_DMG_MULT = 1;
+var WEAK_DMG_MULT = 1;
 var NO_WEAPON_MULT = 0.8;
 
 function getPlayerDamageType() {
@@ -21,12 +23,7 @@ function getDamageAffinity(target) {
   var type = getPlayerDamageType();
   if (!type) return { type: null, status: "unarmed", mult: NO_WEAPON_MULT };
 
-  // v3.102.0 : les boss sont neutres (étalon de kit, décision §11) — ni résistance ni faiblesse.
-  var resists = foe.isBoss ? [] : (foe.resists || []);
-  var weak = foe.isBoss ? [] : (foe.weak || []);
-
-  if (resists.indexOf(type) !== -1) return { type: type, status: "resist", mult: RESIST_DMG_MULT };
-  if (weak.indexOf(type) !== -1) return { type: type, status: "weak", mult: WEAK_DMG_MULT };
+  // v3.701.0 : champs resists/weak des ennemis inertes, seule l'absence d'arme pèse encore.
   return { type: type, status: "neutral", mult: 1 };
 }
 

@@ -10,6 +10,7 @@
    Les textes des données sont traduits par _td() à l'affichage (registre : lang/data-fields.js). */
 I18n.register("en", {
   // index.html
+  "Les faiblesses et résistances des ennemis disparaissent : chaque arme frappe toutes les créatures de la même façon, et le Bestiaire n'en parle plus.": "Enemy weaknesses and resistances are gone: every weapon hits every creature the same way, and the Bestiary no longer mentions them.",
   "Le Dragon ancien frappe moins fort face au Mage, et le pronostic prévient mieux un Mage sans arme. Le Bestiaire n'affiche plus de faiblesses pour les boss et les élites : elles n'ont pas d'effet sur eux.": "The Ancient Dragon hits the Mage less hard, and the forecast warns an unarmed Mage better. The Bestiary no longer shows weaknesses for bosses and elites: they have no effect on them.",
   "Combat de groupe : la faiblesse ou la résistance de l'ennemi frappé compte enfin, même s'il n'est pas le premier du groupe. L'Entrepôt dit où se cuisinent les rations.": "Group fights: the weakness or resistance of the enemy you hit now counts, even when it isn't the first of the group. The Warehouse now says where rations are cooked.",
   "Le Dragon ancien est moins coriace. Le pronostic d'une mission ne change plus d'une ouverture à l'autre, et le Bestiaire n'a plus qu'une fiche pour le Golem.": "The Ancient Dragon is less tough. A mission's forecast no longer changes from one look to the next, and the Bestiary has a single entry for the Golem.",
@@ -973,8 +974,6 @@ I18n.register("en", {
   "Codex": "Codex",
   "Créature": "Creature",
   "BOSS": "BOSS",
-  "Résiste : {liste}": "Resists: {liste}",
-  "Faible : {liste}": "Weak to: {liste}",
   "Pas encore rencontrée.": "Not met yet.",
   "tués": "slain",
   "Trophées": "Trophies",
@@ -2135,7 +2134,7 @@ I18n.register("en", {
   "Inflige 100% des dégâts. +15 Concentration sur réussite, +4 supplémentaire sur coup critique.": "Deals 100% damage. +15 Focus on a hit, +4 more on a critical hit.",
   "Inflige 170% des dégâts. Coûte 20 Concentration.": "Deals 170% damage. Costs 20 Focus.",
   "3 coups de 60% des dégâts chacun. Coûte 35 Concentration.": "3 hits of 60% damage each. Costs 35 Focus.",
-  "Inflige 200% des dégâts. Ignore la résistance/faiblesse d'arme de l'ennemi. Coûte 50 Concentration.": "Deals 200% damage. Ignores the enemy's weapon resistance/weakness. Costs 50 Focus.",
+  "Inflige 200% des dégâts. Coûte 50 Concentration.": "Deals 200% damage. Costs 50 Focus.",
   "Contre la charge annoncée. Sinon, 70% de chances d'éviter chaque frappe ennemie pendant 1 round.": "Counters the announced charge. Otherwise, a 70% chance to dodge each enemy strike for 1 round.",
   "Inflige 100% des dégâts. +8 Mana.": "Deals 100% damage. +8 Mana.",
   "Inflige 180% des dégâts. Coûte 18 Mana.": "Deals 180% damage. Costs 18 Mana.",
@@ -6220,9 +6219,6 @@ I18n.register("en", {
   "Endort un compagnon un round.": "Puts a companion to sleep for one round.",
   "Où la trouver :": "Where to find it:",
   "vaincue une fois||vaincue {n} fois": ["defeated once", "defeated {n} times"],
-  "l'épée": "the sword",
-  "l'arc": "the bow",
-  "la magie": "magic",
   "contrats payés +{p} %": "contracts pay +{p}%",
   "jusqu'à {n} caravanes, une par marché": "up to {n} caravans, one per market",
   "Toutes les caravanes sont parties": "All caravans are away",

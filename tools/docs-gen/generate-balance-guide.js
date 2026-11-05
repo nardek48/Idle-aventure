@@ -389,8 +389,8 @@ P(table(["Monde"].concat(G.WORLDS.map(function (w) { return w.name; })), [["M (W
 var enemyIds = [];
 G.WORLDS.slice(0, 3).forEach(function (w) { (w.adventures || []).forEach(function (a) { (a.enemyPool || []).forEach(function (e) { if (enemyIds.indexOf(e) < 0) enemyIds.push(e); }); }); });
 ["wolf", "foresttroll", "bramble", "batisseur"].forEach(function (e) { if (enemyIds.indexOf(e) < 0) enemyIds.push(e); });
-P(table(["Ennemi (Forêt, Désert, Ruines)", "Puissance", "Endurance", "Célérité", "Précision", "Volonté", "Résiste / faible"], enemyIds.filter(function (id) { return G.ENEMY_DB[id]; }).map(function (id) {
-  var e = G.ENEMY_DB[id], s = e.stats; return [e.name, s.power, s.endurance, s.celerity, s.precision, s.will, (e.resists || []).join(",") + " / " + (e.weak || []).join(",")];
+P(table(["Ennemi (Forêt, Désert, Ruines)", "Puissance", "Endurance", "Célérité", "Précision", "Volonté"], enemyIds.filter(function (id) { return G.ENEMY_DB[id]; }).map(function (id) {
+  var e = G.ENEMY_DB[id], s = e.stats; return [e.name, s.power, s.endurance, s.celerity, s.precision, s.will]; // v3.701.0 : faiblesses et résistances retirées du jeu
 })));
 
 H(2, "3.2 Boss");
@@ -399,9 +399,9 @@ var bossUse = {};
 var bossWorld = {};
 G.WORLDS.forEach(function (w) { (w.adventures || []).forEach(function (a) { if (a.boss) { (bossUse[a.boss] = bossUse[a.boss] || []).push(a.name || "aventure"); if (!bossWorld[a.boss]) bossWorld[a.boss] = w.name; } }); });
 Object.keys(G.ADVENTURE_QUESTS).forEach(function (id) { var q = G.ADVENTURE_QUESTS[id]; if (q.bossId) (bossUse[q.bossId] = bossUse[q.bossId] || []).push("quête " + id); });
-P(table(["Boss", "Monde", "Puissance", "Endurance", "Célérité", "Précision", "Volonté", "Résiste / faible", "Où"], Object.keys(G.BOSS_DB).map(function (id) {
+P(table(["Boss", "Monde", "Puissance", "Endurance", "Célérité", "Précision", "Volonté", "Où"], Object.keys(G.BOSS_DB).map(function (id) {
   var b = G.BOSS_DB[id], s = b.stats;
-  return [b.name, b.worldId ? worldName(b.worldId) : (bossWorld[id] || "—"), s.power, s.endurance, s.celerity, s.precision, s.will, (b.resists || []).join(",") + " / " + (b.weak || []).join(","), (bossUse[id] || ["mondes suivants"]).join(" ; ")];
+  return [b.name, b.worldId ? worldName(b.worldId) : (bossWorld[id] || "—"), s.power, s.endurance, s.celerity, s.precision, s.will, (bossUse[id] || ["mondes suivants"]).join(" ; ")];
 })));
 H(3, "Phases de boss");
 P("Une quête peut donner à son boss un archétype (`bossArchetype`) et des phases (`bossPhases`) : à un seuil de PV, des renforts (`adds`, PV et puissance réduits) et/ou un changement d'archétype. Lu par `combat-engine.js` (checkPhases). Un boss Silencieux lance son silence avec un round d'annonce, un seul télégraphe à la fois.\n");

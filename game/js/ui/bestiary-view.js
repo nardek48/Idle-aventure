@@ -201,19 +201,10 @@ function creatureWhere(id) {
   return out.slice(0, 3);
 }
 
-/* v3.456.8 : nom lisible d'un type d'attaque (les fiches gardent l'identifiant : sword, bow, magic). */
-function bestiaryAttackLabel(t) {
-  return ({ sword: _t("l'épée"), bow: _t("l'arc"), magic: _t("la magie") })[t] || _td(t);
-}
-
-/* FAIBLESSES (Seb 05/11, option A) : « Résiste / Faible » seulement pour les ennemis ordinaires, le moteur
-   ignore celles des boss et élites (getDamageAffinity). Point unique : un retrait complet = renvoyer []. */
+/* v3.701.0 (Seb 05/11) : faiblesses et résistances retirées du jeu, la fiche n'en affiche plus aucune.
+   Fonction gardée (point unique) pour ses deux appelants. */
 function bestiaryAffinityLines(d) {
-  if (!d || d.isBoss || d.isElite) return [];
-  var out = [], resists = Array.isArray(d.resists) ? d.resists : [], weak = Array.isArray(d.weak) ? d.weak : [];
-  if (resists.length) out.push(_t("Résiste : {liste}", { liste: resists.map(bestiaryAttackLabel).join(", ") }));
-  if (weak.length) out.push(_t("Faible : {liste}", { liste: weak.map(bestiaryAttackLabel).join(", ") }));
-  return out;
+  return [];
 }
 window.bestiaryAffinityLines = bestiaryAffinityLines;
 

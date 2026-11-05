@@ -82,7 +82,11 @@ FICHIERS.forEach(function (f) {
 var TPL = sandbox.SCENE_TEMPLATES && sandbox.SCENE_TEMPLATES.petite_aventure_foret;
 var CFG = TPL && TPL.seveAeswyn;
 if (!CFG || !CFG.perNodeChancePct) {
-  console.error("ANCRE PERDUE : petite_aventure_foret.seveAeswyn introuvable — le banc refuse de tourner.");
+  /* v3.701.0 : depuis v3.388.0 (PA2), la Sève vient de PA2_RARE.forest (data/pa2-content.js : 25 % par trouvaille
+     × qualité, 2/3/4 à la destination selon l'anneau) ; l'offre de ce banc est à refaire sur ce modèle. */
+  console.error("ANCRE PERDUE : petite_aventure_foret.seveAeswyn n'existe plus depuis v3.388.0 (Petites Aventures PA2).\n"
+    + "  La Sève vient désormais de PA2_RARE.forest (js/data/pa2-content.js), lu par Pa2Run.takeRelic et Pa2Run.finish\n"
+    + "  (js/systems/pa2-run.js). Le modèle d'offre de ce banc (chance par nœud, finale par intensité) est à refaire.");
   process.exit(1);
 }
 var INTENSITES = sandbox.SCENE_INTENSITY;
