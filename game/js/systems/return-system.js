@@ -79,6 +79,10 @@ var ReturnManager = {
     // Patrouilles rentrées (lot P-1)
     s.patrolsBack = (window.PatrolManager && typeof PatrolManager.getReturned === "function") ? PatrolManager.getReturned().length : 0;
 
+    // CPL1-2 (A, Seb 05/11) : caravanes rentrées, à décharger
+    var CM = window.CaravanManager, now2 = CM && typeof CM._now === "function" ? CM._now() : now;
+    s.caravansBack = (CM && typeof CM.list === "function") ? CM.list().filter(function (c) { return now2 >= c.endsAt; }).length : 0;
+
     return s;
   },
 
@@ -87,7 +91,7 @@ var ReturnManager = {
     if (!s) return false;
     return Object.keys(s.produced || {}).length > 0 || Object.keys(s.crafted || {}).length > 0
       || Object.keys(s.lost || {}).length > 0 || Object.keys(s.used || {}).length > 0 // v3.688.0 (CPL1-1, CPL1-3)
-      || !!s.siteDone || !!s.tavernNew || s.tavernReady > 0 || s.hpGain > 0 || s.patrolsBack > 0;
+      || !!s.siteDone || !!s.tavernNew || s.tavernReady > 0 || s.hpGain > 0 || s.patrolsBack > 0 || s.caravansBack > 0; // CPL1-2 : une caravane seule ouvre l'écran
   },
 
   /* ---------- Ouverture, ou attente si le héros est engagé (R1) ---------- */

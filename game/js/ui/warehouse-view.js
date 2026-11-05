@@ -183,18 +183,40 @@ function getWarehouseOtherUses(key) {
   return out;
 }
 
+/* EQUI-2 (A, Seb 05/11) : part d'une matière brute gardée par le versement automatique du Grand Ouvrage,
+   0 s'il ne garde rien en dessous du plafond (pas de repère, pas de faux signal). */
+function warehouseGoKeep(key) {
+  if (warehouseTier(key) !== "raw" || typeof WarehouseManager.getUsableCap !== "function") return 0;
+  var cap = WarehouseManager.getCap(key), use = WarehouseManager.getUsableCap(key);
+  return (cap !== Infinity && use < cap) ? Math.floor(use) : 0;
+}
+/* La matière est à sa part : tout ce qui arrive part en points. */
+function warehouseAtGoKeep(key) {
+  var keep = warehouseGoKeep(key);
+  return keep > 0 && Math.floor(WarehouseManager.getAmount(key)) >= keep;
+}
+/* Titre des matières brutes : « plafond X », plus « Grand Ouvrage dès Y » (la plus basse des parts gardées). */
+function warehouseRawSubtitle(keys) {
+  var t = _t("plafond {n}", { n: formatNumber(WarehouseManager.getCap("bois")) });
+  var keeps = keys.map(warehouseGoKeep).filter(function (n) { return n > 0; });
+  return keeps.length ? t + " · " + _t("Grand Ouvrage dès {n}", { n: formatNumber(Math.min.apply(null, keeps)) }) : t;
+}
+
 /* ---------- Tuile T3 ---------- */
 function buildWarehouseTileHTML(key) {
   var def = WAREHOUSE_RESOURCES[key];
   var stock = Math.floor(WarehouseManager.getAmount(key));
   var cap = WarehouseManager.getCap(key);
   var full = isWarehouseFull(key);
-  var h = '<button type="button" class="wh-tile' + (full ? ' is-full' : '') + (stock === 0 ? ' is-zero' : '') + '" onclick="openWarehouseSheet(\'' + esc(key) + '\')" aria-label="' + esc(_td(def.name)) + '">';
+  var atGo = warehouseAtGoKeep(key);
+  var h = '<button type="button" class="wh-tile' + (full ? ' is-full' : '') + (atGo ? ' is-go' : '') + (stock === 0 ? ' is-zero' : '') + '" onclick="openWarehouseSheet(\'' + esc(key) + '\')" aria-label="' + esc(_td(def.name)) + '">';
   h += renderIconOrEmojiHTML(def.icon, "wh-tile-img", _td(def.name));
   if (isWarehouseBeingMade(key)) h += '<span class="wh-tile-gear"><img src="images/Icons/system/auto_repeat.webp" alt=""></span>';
   h += '<span class="wh-tile-band"><span class="wh-tile-n">' + formatNumber(stock) + '</span><span class="wh-tile-name">' + esc(_td(def.name)) + '</span></span>';
   if (warehouseTier(key) === "raw" && cap !== Infinity) {
-    h += '<span class="wh-tile-bar"><span style="width:' + Math.min(100, (stock / cap) * 100) + '%"></span></span>';
+    var keep = warehouseGoKeep(key); // EQUI-2 (A) : repère à la part gardée par le Grand Ouvrage
+    h += '<span class="wh-tile-bar"><span style="width:' + Math.min(100, (stock / cap) * 100) + '%"></span>'
+      + (keep ? '<i class="wh-go-tick" style="left:' + (keep / cap * 100) + '%"></i>' : '') + '</span>';
   }
   h += '</button>';
   return h;
@@ -274,7 +296,7 @@ function buildWarehouseHTML() {
   if (!zeros) shown = shown.filter(function (k) { return WarehouseManager.getAmount(k) > 0; });
 
   var groups = [
-    ["raw", _t("Matières brutes"), _t("plafond {n}", { n: formatNumber(WarehouseManager.getCap("bois")) })], // v3.643.0 : le plafond en petit, titre sur une ligne
+    ["raw", _t("Matières brutes"), warehouseRawSubtitle(all.filter(function (k) { return warehouseTier(k) === "raw"; }))], // v3.643.0 : plafond en petit ; EQUI-2 : part du Grand Ouvrage
     ["crafted", _t("Fabriqué")],
     ["special", _t("Rare")]
   ];
@@ -448,9 +470,13 @@ function buildWarehouseSheetHTML(key) {
   if (def.desc) h += '<p class="wh-desc">' + esc(_td(def.desc)) + '</p>';
 
   if (cap !== Infinity) {
-    h += '<div class="wh-cap"><div class="kgauge kgauge-thin ' + (full ? 'kgauge-hp' : 'kgauge-xp') + '"><div class="kgauge-track"><div class="kgauge-fill" style="width:' + Math.min(100, (stock / cap) * 100) + '%"></div></div>'
+    var keep = warehouseGoKeep(key), atGo = warehouseAtGoKeep(key); // EQUI-2 (A) : jauge marquée et ligne sous elle
+    h += '<div class="wh-cap"><div class="kgauge kgauge-thin ' + (full ? 'kgauge-hp' : 'kgauge-xp') + (atGo ? ' is-go' : '') + '"><div class="kgauge-track"><div class="kgauge-fill" style="width:' + Math.min(100, (stock / cap) * 100) + '%"></div>'
+      + (keep ? '<i class="wh-go-tick" style="left:' + (keep / cap * 100) + '%"></i>' : '') + '</div>'
       + '<span class="kgauge-text">' + formatNumber(stock) + ' / ' + formatNumber(cap) + '</span></div>';
     if (full && bid) h += '<p class="wh-cap-warn">' + esc(_t("Au plafond : {x} ne produit plus.", { x: _td(PRODUCTION_BUILDINGS[bid].name) })) + '</p>';
+    if (keep) h += '<p class="wh-cap-go"><img src="images/Icons/village_buildings/grand_ouvrage.webp" alt="">'
+      + esc(_t("Au-delà de {n} ({p} %), le surplus part tout seul au Grand Ouvrage.", { n: formatNumber(keep), p: Math.round(keep / cap * 100) })) + '</p>';
     h += '</div>';
   }
 

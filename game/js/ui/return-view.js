@@ -2,7 +2,7 @@
 /* ui/return-view.js — v3.332.0 (Évolutions, lot R-1) : l'écran de retour.
    Maquette validée : atelier-evolutions.html (E-0). Données : systems/return-system.js.
 
-   Rubriques (R2), masquées si vides : Village, Ateliers et chantier, Taverne, Héros,
+   Rubriques (R2), masquées si vides : Village, Caravanes (CPL1-2), Ateliers et chantier, Taverne, Héros,
    Patrouilles. Gestes (R3) : « Tout récolter » ne dépense rien ; « Livrer » affiche ce
    qu'il coûte. Pied d'écran : la proposition du fil rouge. */
 
@@ -69,6 +69,9 @@ function buildReturnScreenHTML() {
     if (st.harvested && st.goPoints > 0) vb += '<div>' + _t("Surplus versé au Grand Ouvrage : <b>+{n} points</b>.", { n: formatNumber(st.goPoints) }) + '</div>'; // v3.688.0 (CPL1-4)
     h += buildReturnSectionHTML("images/Icons/menu_icons/village_menu.webp", st.harvested ? _t("Village · récolté") : _t("Village · à récolter"), vb);
   }
+
+  // CPL1-2 (A, Seb 05/11) : caravanes rentrées, juste après le Village
+  h += buildReturnCaravansHTML();
 
   // Ateliers et chantier
   var crafted = Object.keys(s.crafted || {}), used = Object.keys(s.used || {}), lost = Object.keys(s.lost || {});
@@ -138,6 +141,39 @@ function buildReturnScreenHTML() {
   h += '</div>';
   return h;
 }
+
+/* CPL1-2 (A) : rubrique « Caravanes » : butin de chaque caravane rentrée, « Décharger » d'un toucher
+   (geste gratuit, R3), puis la caravane encore en route. Rien si aucune n'est rentrée ni déchargée ici. */
+function buildReturnCaravansHTML() {
+  var CM = window.CaravanManager, st = returnScreenState || {};
+  if (!CM || typeof CM.list !== "function") return "";
+  var now = CM._now(), list = CM.list();
+  var back = list.filter(function (c) { return now >= c.endsAt; }), road = list.filter(function (c) { return now < c.endsAt; });
+  if (!back.length && !st.caravanLoot) return "";
+  var rareTxt = function (r) { return r && WAREHOUSE_RESOURCES[r.key] ? ' · ' + esc(_td(WAREHOUSE_RESOURCES[r.key].name)) + ' ×' + r.n : ''; };
+  var body = "";
+  if (st.caravanLoot) {
+    var l = st.caravanLoot;
+    body += '<div class="ret-done"><img class="ico-inline" src="images/Icons/system/check_valid.webp" alt=""> '
+      + _t("Déchargée : <b>+{g} or</b>", { g: formatNumber(l.gold) }) + rareTxt(l.rare) + (l.item ? ' · ' + esc(_td(l.item.name)) : '') + '</div>';
+  }
+  back.forEach(function (c) {
+    var w = (window.WORLDS || [])[c.world];
+    body += '<div class="pt-ret-row">' + _t("Rentrée de <b>{x}</b> : <b>+{g} or</b>", { x: esc(w ? _td(w.name) : ""), g: formatNumber(CM.unloadGold(c.gold)) }) + rareTxt(c.rare) + '.</div>';
+  });
+  if (back.length) body += '<button type="button" class="ret-link cpl-unload" onclick="returnUnloadCaravans()">' + _t("Décharger") + '</button>';
+  if (road.length) body += '<div class="ret-road">' + esc(_t("Une autre caravane rentre dans {d}.", { d: formatTime(Math.round((road[0].endsAt - now) / 1000)) })) + '</div>';
+  return buildReturnSectionHTML("images/Icons/village_buildings/caravan.webp", _t("Caravanes"), body);
+}
+
+/* CPL1-2 : geste gratuit, comme « Tout récolter » : décharge toutes les caravanes rentrées. */
+function returnUnloadCaravans() {
+  if (!returnScreenState || !window.CaravanManager) return;
+  var loot = CaravanManager.unload();
+  if (loot) returnScreenState.caravanLoot = loot;
+  renderReturnScreen();
+}
+window.returnUnloadCaravans = returnUnloadCaravans;
 
 function getReturnRoot() {
   var root = document.getElementById("return-modal-root");

@@ -210,7 +210,8 @@
     if (!s || (!s.gains && !s.pertes)) return "same";
     if (s.gains && !s.pertes) return "up";
     if (s.pertes && !s.gains) return "down";
-    return "mix";
+    var p = getEquipmentCompareWeight(it, eq); // SUIV-8 (A) : ▲ reste strict ; des gains trop légers font un ▼
+    return p.G < EQUIP_WEIGH_SEUIL * p.P ? "down" : "mix";
   }
   function cmpLabel(c) { return { up: _t("Mieux"), down: _t("Moins bien"), mix: _t("Des changements"), same: _t("Pareil") }[c]; }
   var CMP_SIGN = { up: "▲", down: "▼", mix: "⇅", same: "=" };
@@ -353,7 +354,8 @@
       h += '<div class="wh-dd-menu">' + item(rows[0]) + '<div class="hs-dd-grid">' + rows.slice(1, 5).map(item).join("") + '</div><hr>';
       rows.slice(5).forEach(function (d) { h += item(d); });
       h += '<div class="hs-dd-sort">' + _t("Trier :") + ' <button type="button" onclick="herosBagSort(\'rarity\')">' + _t("Rareté") + '</button>'
-        + '<button type="button" onclick="herosBagSort(\'type\')">' + _t("Type") + '</button></div></div>';
+        + '<button type="button" onclick="herosBagSort(\'type\')">' + _t("Type") + '</button>'
+        + '<button type="button" onclick="herosBagSort(\'interest\')">' + _t("Intérêt") + '</button></div></div>'; // SUIV-8 (A)
     }
     h += '</div><span class="hs-bagcap"><b>' + n + '</b> / ' + cap + '<small>' + _t("objets") + '</small></span>';
     // v3.429.21 : l'Autovente sort du menu (elle était coupée sous la barre du bas sur iPhone)

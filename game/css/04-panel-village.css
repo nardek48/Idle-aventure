@@ -679,6 +679,12 @@
 .wh-tile.is-full { border-color: var(--c-red-450); box-shadow: 0 0 0 2px rgba(192, 57, 43, 0.5); }
 .wh-tile.is-full .wh-tile-n { color: #ffb4a8; }
 .wh-tile.is-full .wh-tile-bar > span { background: #ff6b5a; }
+/* EQUI-2 (A, Seb 05/11) : repère 2×10 px à la part gardée par le Grand Ouvrage ; barre bleue (le versement) quand la matière y est */
+.wh-tile-bar:has(> .wh-go-tick) { overflow: visible; height: 4px; }
+.wh-tile-bar:has(> .wh-go-tick) > span { border-radius: 2px; }
+.wh-go-tick { position: absolute; top: -3px; width: 2px; height: 10px; margin-left: -1px; background: #f4e9d0; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.75); border-radius: 1px; }
+.wh-tile.is-go { border-color: var(--c-blue-350); }
+.wh-tile.is-go .wh-tile-bar > span { background: var(--c-blue-350); }
 .wh-tile.is-zero .wh-tile-img { filter: grayscale(1) brightness(0.9); opacity: 0.5; }
 .wh-tile.is-zero .wh-tile-n { color: #d6c4a0; }
 .wh-tile-gear { position: absolute; top: 4px; left: 4px; z-index: 1; width: 20px; height: 20px; border-radius: 50%; background: var(--c-green-650-2); border: 1.5px solid var(--c-white-50-soft); display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5); }
@@ -688,6 +694,11 @@
 /* --- Feuille d'une ressource --- */
 .wh-desc { margin: 0 0 10px; font-size: 13px; line-height: 1.45; color: var(--c-brown-750-2); }
 .wh-cap { padding: 10px 12px; margin: 0 0 10px; border: 1px solid var(--c-bronze-500); border-radius: 12px; background: var(--sheet-card-bg, var(--c-cream-100-soft)); }
+.wh-cap .kgauge-track:has(> .wh-go-tick) { overflow: visible; }
+.wh-cap .wh-go-tick { top: -4px; height: calc(100% + 8px); }
+.wh-cap .kgauge.is-go .kgauge-fill { background: linear-gradient(90deg, #3d8fb5, var(--c-blue-350)); }
+.wh-cap-go { display: flex; gap: 8px; align-items: center; margin: 8px 0 0; font-size: 13px; line-height: 1.35; color: var(--nb-ink); }
+.wh-cap-go img { width: 24px; height: 24px; flex: 0 0 24px; }
 .wh-cap-warn { margin: 6px 0 0; font-size: 12.5px; font-weight: 800; color: var(--c-red-600); }
 .wh-line { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; margin: 0 0 6px; border: 1px solid var(--c-bronze-500); border-radius: 12px; background: var(--c-cream-50-soft); color: var(--c-brown-850-2); font: inherit; text-align: left; }
 .wh-line:disabled { opacity: 0.75; }

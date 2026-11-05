@@ -75,8 +75,8 @@ body.hs-on-heros .hud-dock { display: none !important; }
 .hs-bag-auto img { width: 24px; height: 24px; object-fit: contain; }
 /* v3.687.0 (ECON-15) : « Auto-offrande » sur deux lignes sous 360 px, le menu « Afficher » garde sa place */
 @media (max-width: 359px) { .hs-bag-auto { max-width: 76px; line-height: 1.1; } }
-.hs-dd-sort { white-space: nowrap; display: flex; align-items: center; gap: 6px; padding: 6px 10px; font-size: 13px; color: var(--c-brown-800-3); }
-.wh-dd-menu .hs-dd-sort button { width: auto; min-height: 0; flex: 0 0 auto; padding: 3px 10px; border-radius: 8px; border: 1px solid var(--c-bronze-500); background: var(--c-cream-50-soft); font-weight: 700; color: var(--c-brown-800-3); }
+.hs-dd-sort { white-space: nowrap; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px 10px; font-size: 13px; color: var(--c-brown-800-3); }
+.wh-dd-menu .hs-dd-sort button { width: auto; min-height: 44px; flex: 0 0 auto; padding: 3px 10px; border-radius: 8px; border: 1px solid var(--c-bronze-500); background: var(--c-cream-50-soft); font-weight: 700; color: var(--c-brown-800-3); } /* SUIV-8 : boutons « Trier » de 44 px (25 avant) */
 .hs-bgrid { margin-bottom: 10px; }
 .hs-btile.rarity-green { border-color: var(--c-green-650-2); box-shadow: inset 0 0 14px rgba(80, 180, 80, .45); }
 .hs-btile.rarity-rare { border-color: #3a78c2; box-shadow: inset 0 0 14px rgba(70, 140, 230, .5); }

@@ -23859,6 +23859,84 @@ console.log("\n[470] v3.705.0 — Quêtes, Boutique et Donjon au standard des pa
   run("game.dungeonRun = null;");
 })();
 
+console.log("\n[471] v3.706.0 — Atelier 4 « Signaux », variantes A (Seb 05/11) : EQUI-2, CPL1-2, UI-18, SUIV-8, barre de titre des pages sans bandeau");
+(function () {
+  var rd = function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); };
+  var fn = { save: g.saveGame, rp: g.renderPanel, unl: g.CaravanManager.unload, now: g.CaravanManager._now };
+  try {
+    g.saveGame = function () {}; g.renderPanel = function () {};
+    run("fullResetState(); game.playerName='T'; game.heroId='knight'; game.worldsEverReached = {}; for (var i = 0; i <= 1; i++) game.worldsEverReached[i] = true; WorldManager.worldIndex = 1; WarehouseManager.ensure(); VillageBuildingManager.ensure();");
+    var W = g.WarehouseManager, GO = g.GrandOuvrage;
+    // EQUI-2 (A) : jauge marquée, seulement quand le Grand Ouvrage garde quelque chose
+    run("GrandOuvrage._state().auto = false;");
+    var off = g.buildWarehouseHTML();
+    ok(off.indexOf("wh-go-tick") < 0 && off.indexOf("Grand Ouvrage dès") < 0 && g.warehouseGoKeep("pierre") === 0, "EQUI-2 : versement automatique coupé, ni repère ni « Grand Ouvrage dès » (pas de faux signal)");
+    run("GrandOuvrage._state().auto = true; GrandOuvrage._state().seuil = 0.8;");
+    var cap = W.getCap("pierre"), keep = Math.floor(cap * 0.8);
+    g.game.resources.pierre = keep; g.game.resources.bois = keep - 10; g.game.resources.planche = 5;
+    ok(g.warehouseGoKeep("pierre") === keep && g.warehouseGoKeep("pierre") === Math.floor(W.getUsableCap("pierre")) && g.warehouseGoKeep("planche") === 0, "EQUI-2 : part gardée lue sur getUsableCap (" + keep + " / " + cap + "), rien pour le fabriqué");
+    ok(g.warehouseAtGoKeep("pierre") && !g.warehouseAtGoKeep("bois"), "EQUI-2 : barre bleue pour la Pierre à sa part, pas pour le Bois 10 en dessous");
+    var tP = g.buildWarehouseTileHTML("pierre"), tB = g.buildWarehouseTileHTML("bois");
+    ok(/class="wh-tile is-go/.test(tP) && tP.indexOf('<i class="wh-go-tick" style="left:80%"></i>') > 0 && tB.indexOf("is-go") < 0 && tB.indexOf("wh-go-tick") > 0, "EQUI-2 : repère à 80 % sur chaque matière brute, tuile bleue seulement à la part");
+    var on = g.buildWarehouseHTML();
+    ok(on.indexOf(g.esc(g._t("plafond {n}", { n: g.formatNumber(cap) }) + " · " + g._t("Grand Ouvrage dès {n}", { n: g.formatNumber(keep) }))) > 0, "EQUI-2 : titre « plafond " + cap + " · Grand Ouvrage dès " + keep + " »");
+    g.ResourceReserveManager.setReserve("pierre", keep + 50);
+    ok(g.warehouseGoKeep("pierre") === keep + 50 && g.buildWarehouseTileHTML("pierre").indexOf("is-go") < 0, "EQUI-2 : la part relevée (réserve) déplace le repère ; la Pierre n'y est plus");
+    g.ResourceReserveManager.setReserve("pierre", 0);
+    var sh = g.buildWarehouseSheetHTML("pierre");
+    ok(/kgauge kgauge-thin kgauge-xp is-go/.test(sh) && sh.indexOf("wh-go-tick") > 0 && sh.indexOf(g.esc(g._t("Au-delà de {n} ({p} %), le surplus part tout seul au Grand Ouvrage.", { n: g.formatNumber(keep), p: 80 }))) > 0, "EQUI-2 : fiche, jauge bleue marquée et ligne « Au-delà de " + keep + " (80 %) » sous elle");
+    var cv = rd("css/04-panel-village.css");
+    ok(/\.wh-go-tick \{ position: absolute; top: -3px; width: 2px; height: 10px;/.test(cv) && /\.wh-tile\.is-go \.wh-tile-bar > span \{ background: var\(--c-blue-350\); \}/.test(cv), "EQUI-2 : repère 2×10 px, barre bleue (CSS)");
+    // CPL1-2 (A) : rubrique « Caravanes » après « Village », un toucher, la caravane en route
+    var t0 = Date.now(); g.CaravanManager._now = function () { return t0; };
+    run("CaravanManager.ensure(); game.village.caravans = [];");
+    g.game.village.caravans.push({ trip: "moyen", startedAt: t0 - 4 * 3600e3, endsAt: t0 - 60e3, world: 1, cargo: { bois: 10 }, gold: 300, rare: { key: "pierre", n: 2 }, item: null, notified: true, order: null });
+    g.game.village.caravans.push({ trip: "court", startedAt: t0 - 60e3, endsAt: t0 + 72 * 60e3, world: 0, cargo: { ble: 5 }, gold: 50, rare: null, item: null, notified: false, order: null });
+    var s0 = g.ReturnManager.complete({ produced: {}, crafted: {}, ms: 3600e3 }, { at: t0, site: null, tavernReset: 0, hp: g.game.heroHp });
+    ok(s0.caravansBack === 1 && g.ReturnManager.hasContent(s0), "CPL1-2 : une caravane rentrée seule suffit à ouvrir l'écran (hasContent)");
+    g.openReturnScreen({ ms: 3600e3, produced: { bois: 30 }, crafted: {}, siteDone: { name: "Forge", level: 2 }, fullPlots: 0, openPlots: 3, hpGain: 0 });
+    var h = g.buildReturnScreenHTML(), iV = h.indexOf(g._t("Village · à récolter")), iC = h.indexOf(">" + g._t("Caravanes") + "<"), iA = h.indexOf(g._t("Ateliers et chantier"));
+    var gold = g.CaravanManager.unloadGold(300);
+    ok(iV > 0 && iC > iV && iA > iC, "CPL1-2 : « Caravanes » juste après « Village », avant « Ateliers et chantier »");
+    ok(h.indexOf('class="ret-link cpl-unload" onclick="returnUnloadCaravans()"') > 0 && h.indexOf("+" + g.formatNumber(gold) + " or") > 0 && h.indexOf(g._t("Une autre caravane rentre dans {d}.", { d: g.formatTime(72 * 60) })) > 0, "CPL1-2 : butin (+" + gold + " or, bonus compris), lien « Décharger », caravane encore en route");
+    var or0 = g.game.gold; g.returnUnloadCaravans();
+    var h2 = g.buildReturnScreenHTML();
+    ok(g.game.gold - or0 === gold && g.CaravanManager.list().length === 1 && h2.indexOf("cpl-unload") < 0 && h2.indexOf(g._t("Déchargée : <b>+{g} or</b>", { g: g.formatNumber(gold) })) > 0 && h2.indexOf(g._t("Une autre caravane rentre dans {d}.", { d: g.formatTime(72 * 60) })) > 0, "CPL1-2 : un toucher décharge (or versé), « Déchargée » reste affiché avec la caravane en route");
+    g.closeReturnScreen();
+    run("game.village.caravans = [];");
+    ok(g.ReturnManager.complete({ produced: {}, crafted: {} }, {}).caravansBack === 0 && g.buildReturnCaravansHTML() === "", "CPL1-2 : aucune caravane rentrée, pas de rubrique");
+    ok(/\.ret-sec-b \.ret-link \{ min-height: 44px; \}/.test(rd("css/04-panel-evolutions.css")), "CPL1-2 : « Décharger » hérite des 44 px des liens du retour");
+    // UI-18 (A) : la Tour descend et rentre
+    ok(g.MAP_NODE_POSITIONS[5].x === 72 && g.MAP_NODE_POSITIONS[5].y === 85.5 && g.MAP_NODE_POSITIONS[4].x === 65.1 && g.MAP_NODE_POSITIONS[4].y === 64.7, "UI-18 : la Tour en (72 ; 85,5), la Montagne inchangée");
+    // SUIV-8 (A) : pesée, ▲ strict, ⇅ trop léger → ▼, tri « Intérêt »
+    run("fullResetState(); game.playerName='T'; game.heroId='ranger'; WorldManager.worldIndex = 4; EquipmentManager.recalcStats();");
+    var mk = function (slot, value, affixes) { return { uid: "u" + Math.random(), name: "X", slot: slot, rarity: "rare", stat: g.EQUIPMENT_SLOT_CONFIG[slot].stat, value: value, affixes: affixes || [] }; };
+    var cfgA = g.EQUIPMENT_SLOT_CONFIG.amulet, sc = g.getEquipWorldScale(4);
+    g.game.equipped.amulet = mk("amulet", 10, [{ stat: "maxHpPct", value: 0.14, tier: "P" }, { stat: "critMult", value: 0.17, tier: "P" }]);
+    var talis = mk("amulet", 10, [{ stat: "xpMult", value: 0.077, tier: "S" }]);
+    var pw = g.getEquipmentCompareWeight(talis, g.game.equipped.amulet);
+    var uHp = (g.AFFIX_RANGES.maxHpPct.epic[0] + g.AFFIX_RANGES.maxHpPct.epic[1]) / 2, uXp = (g.AFFIX_RANGES.xpMult.epic[0] + g.AFFIX_RANGES.xpMult.epic[1]) / 2;
+    ok(Math.abs(pw.G - Math.round(0.077 / uXp * 0.5 * 100) / 100) < 0.011 && Math.abs(pw.P - (Math.round(0.14 / uHp * 100) / 100 + Math.round(0.17 / 0.325 * 100) / 100)) < 0.011, "SUIV-8 : écart ÷ tirage Épique moyen, poids ½ pour l'XP (G " + pw.G + ", P " + pw.P + ", net " + pw.net + ")");
+    ok(g.herosItemCompareState(talis) === "down", "SUIV-8 : ⇅ dont les gains pèsent moins du tiers des pertes → ▼");
+    var ring = mk("ring", 0, [{ stat: "tapDmg", value: 100, tier: "P" }]);
+    g.game.equipped.ring = mk("ring", 0, [{ stat: "critChance", value: 1, tier: "P" }]);
+    ok(g.herosItemCompareState(ring) === "mix" && g.getEquipmentCompareWeight(ring, g.game.equipped.ring).net > 0, "SUIV-8 : un vrai ⇅ (gros gain, petite perte) reste ⇅ (▲ reste strict)");
+    var up = mk("ring", 0, [{ stat: "critChance", value: 2, tier: "P" }]);
+    ok(g.herosItemCompareState(up) === "up", "SUIV-8 : que des gains → ▲ inchangé");
+    g.game.inventory = [talis, up, ring];
+    g.applyInventorySort("interest");
+    var nets = g.game.inventory.map(function (it) { return g.getEquipmentCompareWeight(it, g.game.equipped[it.slot]).net; });
+    ok(g.game.inventory[2] === talis && nets[0] >= nets[1] && nets[1] >= nets[2], "SUIV-8 : tri « Intérêt », du meilleur bilan pesé au moins bon (" + nets.join(" ; ") + ")");
+    var hs = rd("js/ui/heros-screens-view.js"), ch = rd("css/04-panel-heros-screens.css");
+    ok(/herosBagSort\(\\'interest\\'\)/.test(hs) && g.I18n.dicts.en["Intérêt"], "SUIV-8 : bouton « Intérêt » dans le menu du Sac (traduit)");
+    ok(/\.wh-dd-menu \.hs-dd-sort button \{[^}]*min-height: 44px;/.test(ch) && /\.hs-dd-sort \{[^}]*flex-wrap: wrap;/.test(ch), "SUIV-8 : boutons « Trier » à 44 px, la rangée passe à la ligne au besoin");
+    // Barre de titre des pages sans bandeau : largeur auto, tient dans le cadre
+    ok(/#panel-container \.kfp-top-holder:not\(\.has-banner\) \.kf-top \{\s*aspect-ratio: auto; width: auto;/.test(rd("css/00-kbtn.css")), "Barre de titre (Paramètres, Ascension, Boutique, Donjon) : largeur auto, plus de dépassement de 4 px");
+  } catch (err) { ok(false, "[471] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  g.saveGame = fn.save; g.renderPanel = fn.rp; g.CaravanManager._now = fn.now;
+  try { run("game.village.caravans = []; fullResetState();"); g.closeReturnScreen(); } catch (e) {}
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");
