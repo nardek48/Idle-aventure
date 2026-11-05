@@ -10,6 +10,10 @@
    Les textes des données sont traduits par _td() à l'affichage (registre : lang/data-fields.js). */
 I18n.register("en", {
   // index.html
+  "Outil d'administration plus fidèle : une étape d'Histoire forcée pose aussi l'équipement, les secteurs et les compteurs qu'elle demande.": "More faithful admin tool: a forced Story step now also sets the gear, sectors and counters it requires.",
+  "Petits écrans : la mission d'Histoire du Camp tient au-dessus de la barre du bas (« Accepter » visible dès l'ouverture), et l'écran de retour montre « Décharger » sans défiler.": "Small screens: the Camp's Story mission fits above the bottom bar (\"Accept\" visible right away), and the return screen shows \"Unload\" without scrolling.",
+  "Petit écran en texte « Grande » : le bandeau illustré s'efface pour laisser la place aux boutons (« Accepter » du Camp n'est plus caché par la barre du bas).": "Small screen with « Large » text: the illustrated banner steps aside to make room for buttons (the Camp's « Accept » is no longer hidden by the bottom bar).",
+  "Écran de retour : une caravane rentrée s'y décharge d'un toucher. Entrepôt : un repère montre la part gardée par le Grand Ouvrage. Sac : nouveau tri « Intérêt », et le ▼ signale aussi un objet nettement moins bon.": "Return screen: a returned caravan unloads in one tap. Warehouse: a marker shows the share the Great Work keeps. Bag: new « Value » sort, and ▼ now also flags a clearly worse item.",
   "Quêtes, Boutique et Donjon s'affichent comme le Camp et le Village : un peu plus de largeur sur téléphone, et dans les Quêtes, les onglets (Histoire, Annexes, Aventure…) restent sous le bandeau replié quand on défile.": "Quests, Shop and Dungeon now look like the Camp and the Village: a little more width on phones, and in Quests the tabs (Story, Side quests, Adventure…) stay under the folded banner as you scroll.",
   "Aides : neuf nouvelles fiches (Taverne, événements du village, hauts faits, Bestiaire, quêtes des compagnons, Chaos, pronostic, préparation de sortie, équipement), une seule fois et rangées dans Tutoriels. Au Camp, la carte d'Histoire montre le récit de l'étape (pli « Récit »), et l'arbre de talents dit quand vient le prochain point.": "Help: nine new guides (Tavern, village events, great deeds, Bestiary, companion quests, Chaos, forecast, run preparation, equipment), shown once and kept in Tutorials. At the Camp, the Story card shows the step's story (“Story” fold), and the talent tree says when the next point comes.",
   "Fenêtres : sur petit écran, les aides tiennent mieux et une pastille « Suite ↓ » signale qu'il reste à lire ; au clavier, feuilles et fenêtres gardent le focus et le rendent en se fermant. Les Quêtes, la Boutique et le Donjon gagnent aussi de la largeur sur téléphone.": "Windows: on small screens, help windows fit better and a “More ↓” badge shows there is more to read; with a keyboard, sheets and windows keep focus and give it back when they close. Quests, the Shop and the Dungeon also get wider on phones.",
@@ -9006,4 +9010,12 @@ I18n.register("en", {
   "La couleur dit la rareté : gris Commun, vert Inhabituel, bleu Rare, violet Épique, doré Légendaire ; plus elle monte, plus la pièce a d'effets. 3 pièces portées de même rareté donnent un bonus de panoplie, 7 la panoplie complète.": "The colour shows the rarity: grey Common, green Uncommon, blue Rare, purple Epic, gold Legendary; the higher it is, the more effects the piece has. 3 worn pieces of the same rarity give a set bonus, 7 the full set.",
   "Le Sac tient 25 objets ; plein, le suivant est offert d'office à l'Aether. Une pièce en trop s'offre (« Offrir ») : elle rend de l'Aether à la Mémoire, sauf si elle vient de l'échoppe.": "The Bag holds 25 items; when full, the next one is offered to the Aether automatically. A spare piece can be offered (“Offer”): it gives Aether back to the Memory, unless it came from the shop.",
 
+  // v3.706.0 : EQUI-2, CPL1-2, SUIV-8
+  "Grand Ouvrage dès {n}": "Great Work from {n}",
+  "Au-delà de {n} ({p} %), le surplus part tout seul au Grand Ouvrage.": "Above {n} ({p}%), the surplus goes to the Great Work on its own.",
+  "Caravanes": "Caravans",
+  "Rentrée de <b>{x}</b> : <b>+{g} or</b>": "Back from <b>{x}</b>: <b>+{g} gold</b>",
+  "Déchargée : <b>+{g} or</b>": "Unloaded: <b>+{g} gold</b>",
+  "Une autre caravane rentre dans {d}.": "Another caravan returns in {d}.",
+  "Intérêt": "Value",
 });

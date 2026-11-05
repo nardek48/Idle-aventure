@@ -271,6 +271,7 @@ Maquette de référence : atelier-evolutions.html.
 .pt-hint { font-size: 12px; line-height: 1.35; color: var(--c-brown-650); margin: 3px 0; }
 .pt-box .kbtn { margin-top: 6px; }
 .pt-ret-row { font-size: 12px; margin-top: 3px; }
+.ret-road { font-size: 12px; margin-top: 4px; color: var(--c-brown-750-2); } /* CPL1-2 : la caravane encore en route */
 .cp-patrol-note { font-size: 12px; font-weight: 700; color: var(--c-brown-700-soft); background: var(--c-cream-150-2); border: 1px dashed var(--c-bronze-500); border-radius: 999px; padding: 7px 12px; text-align: center; margin: 6px 0; }
 
 /* ============================================================

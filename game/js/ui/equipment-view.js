@@ -132,6 +132,26 @@ function getEquipmentCompareSummary(candidate, equipped) {
   return { lines: lines, base: base, gains: gains, pertes: pertes };
 }
 
+/* SUIV-8 (A, Seb 05/11) : comparaison PESÉE. Chaque écart divisé par un tirage Épique moyen de sa stat
+   (base : fourchette de l'emplacement ; affixe : AFFIX_RANGES), stats plates à l'échelle du monde ; or, XP, butin : poids ½. */
+var EQUIP_WEIGH_SEUIL = 1 / 3; // des gains qui pèsent moins du tiers des pertes ne font plus un « ⇅ »
+function getEquipmentCompareWeight(candidate, equipped) {
+  var lines = (typeof getEquipmentCompareLines === "function") ? getEquipmentCompareLines(candidate, equipped) : [];
+  var cfg = (window.EQUIPMENT_SLOT_CONFIG || {})[candidate && candidate.slot] || {};
+  var w = window.WorldManager ? Number(WorldManager.worldIndex || 0) : 0;
+  var sc = typeof getEquipWorldScale === "function" ? getEquipWorldScale(w) : 1, G = 0, P = 0;
+  lines.forEach(function (l) {
+    var u = 1, a = (window.AFFIX_RANGES || {})[l.stat];
+    if (l.tier === "B" && cfg.ranges && cfg.ranges.epic) u = (cfg.ranges.epic[0] + cfg.ranges.epic[1]) / 2 * (cfg.scalesWithWorld ? sc : 1);
+    else if (a && a.epic) u = (a.epic[0] + a.epic[1]) / 2 * (a.flat ? sc : 1);
+    var v = Math.round(l.delta / (u || 1) * (l.tier === "S" ? 0.5 : 1) * 100) / 100;
+    if (v > 0) G += v; else P -= v;
+  });
+  G = Math.round(G * 100) / 100; P = Math.round(P * 100) / 100;
+  return { G: G, P: P, net: Math.round((G - P) * 100) / 100 };
+}
+window.getEquipmentCompareWeight = getEquipmentCompareWeight;
+
 /* Une ligne du sac : nom complet, stat de base avec son delta, puis le RESTE chiffré
    (« +2 autres gains », « −1 perte ») au lieu d'un badge « +3 » qui ne disait rien. */
 function buildCompatibleItemsListHTML(slot) {
@@ -440,8 +460,21 @@ function buildEquippedComparisonHTML(item) {
 
 function applyInventorySort(kind) {
   if (kind === "type") sortInventoryByType();
+  else if (kind === "interest") sortInventoryByInterest();
   else sortInventoryByRarity();
 }
+
+/* SUIV-8 (A) : tri « Intérêt » : bilan pesé face à l'équipé, du meilleur au moins bon (ordre gardé à égalité). */
+function sortInventoryByInterest() {
+  if (!Array.isArray(game.inventory)) game.inventory = [];
+  var eq = game.equipped || {};
+  var rows = game.inventory.map(function (it, i) { return { it: it, i: i, net: getEquipmentCompareWeight(it, eq[it.slot] || null).net }; });
+  rows.sort(function (a, b) { return (b.net - a.net) || (a.i - b.i); });
+  rows.forEach(function (r, i) { game.inventory[i] = r.it; }); // trié sur place : les références au tableau restent bonnes
+  if (typeof renderPanel === "function") renderPanel();
+  if (typeof saveGame === "function") saveGame();
+}
+window.sortInventoryByInterest = sortInventoryByInterest;
 window.applyInventorySort = applyInventorySort;
 
 function buildInventorySettingsHTML() {

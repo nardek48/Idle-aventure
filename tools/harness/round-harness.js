@@ -68,6 +68,26 @@ function ok(cond, msg) { if (cond) { passes++; console.log("  ✔ " + msg); } el
 function run(code) { return vm.runInContext(code, g); }
 /* v3.692.0 (ARCH-15) : texte d'une méthode, celui de l'original quand le journal de test l'enveloppe. */
 function srcOf(f) { return String((f && f._journalOrig) || f); }
+/* v3.707.0 (ARCH-15) : outils des contrôles d'effet. hasard(v, f) joue f avec Math.random figé à v. */
+function hasard(v, f) { var r = Math.random; Math.random = function () { return v; }; try { return f(); } finally { Math.random = r; } }
+// Équipe un légendaire portant ce pouvoir, à son emplacement (LEGENDARY_POWERS), puis recalcule.
+function porteLegendaire(id) {
+  var s = null;
+  Object.keys(g.LEGENDARY_POWERS).forEach(function (k) { g.LEGENDARY_POWERS[k].forEach(function (p) { if (p.id === id) s = k; }); });
+  g.game.equipped[s] = { uid: "lp", slot: s, name: "L", icon: "sword", rarity: "legendary", stat: g.EQUIPMENT_SLOT_CONFIG[s].stat, value: 1, affixes: [], power: id };
+  g.EquipmentManager.recalcStats();
+}
+/* Faux écran de combat : #cbx, #cbx-stage et #cbx-fx mesurables ; ce que l'écran pose dans #cbx-fx est relevé.
+   pastille : la pastille du butin existe (l'or y vole). fin() rend le document d'origine. */
+function fauxEcranCombat(pastille) {
+  var d = g.document, gid = d.getElementById, qs = d.querySelector, poses = [];
+  function boite() { var e = el(); e.getBoundingClientRect = function () { return { left: 0, top: 0, width: 100, height: 100 }; }; e.offsetWidth = 100; e.querySelector = function () { return boite(); }; return e; }
+  var ids = { "cbx": boite(), "cbx-stage": boite(), "cbx-fx": boite() };
+  ids["cbx-fx"].appendChild = function (n) { poses.push(n); };
+  d.getElementById = function (id) { return ids[id] || gid.call(d, id); };
+  d.querySelector = function (q) { return (pastille && /cbx-pill/.test(q)) ? boite() : qs.call(d, q); };
+  return { poses: poses, fin: function () { d.getElementById = gid; d.querySelector = qs; } };
+}
 /* v3.389.0 (chantier P) : joue un parcours (Pa2Run) jusqu'au bout. win : dés forcés au maximum. */
 function playParcours(win) {
   var P = g.Pa2Run, r = g.game.sceneRun, saved = P.rand, guard = 60;
@@ -4423,11 +4443,17 @@ console.log("\n[32b] v3.223.0 \u2014 Donjons : plafond par monde et mat\u00e9ria
 
   /* La r\u00e9compense n'est cr\u00e9dit\u00e9e qu'\u00e0 la r\u00e9ussite compl\u00e8te : une fuite ou
      une mort n'en donne pas, comme pour le butin d'\u00e9quipement. */
-  var src = srcOf(g.DungeonManager.finish);
-  ok(src.indexOf("success && !freeRun && tier.specialResourceId") !== -1, // v3.462.0 : jamais en mode libre
-    "le mat\u00e9riau n'est cr\u00e9dit\u00e9 qu'en cas de r\u00e9ussite");
-  ok(src.indexOf("WarehouseManager.addResource") !== -1,
-    "...et cr\u00e9dit\u00e9 par WarehouseManager, seul point d'entr\u00e9e des ressources");
+  // v3.707.0 (ARCH-15) : vrai donjon joué puis clos ; on lit l'Entrepôt (réussite, mort, mode libre).
+  function matDonjon(success, free) {
+    freshCombat("knight"); giveWeapon(); g.game.dungeonRunsUsed = {}; g.game.dungeonTierCleared = { 1: true };
+    g.DungeonManager.start(1, [], undefined, free);
+    var a = g.WarehouseManager.getAmount(t1.specialResourceId);
+    g.DungeonManager.finish(success, success ? g.DUNGEON_CONFIG.waveCount : 1, success ? "success" : "death");
+    return g.WarehouseManager.getAmount(t1.specialResourceId) - a;
+  }
+  var matOk = matDonjon(true, false), matMort = matDonjon(false, false), matLibre = matDonjon(true, true); // v3.462.0 : jamais en mode libre
+  ok(matOk > 0 && matMort === 0, "le mat\u00e9riau n'est cr\u00e9dit\u00e9 qu'en cas de r\u00e9ussite (+" + matOk + " \u00e0 l'Entrep\u00f4t, mort : " + matMort + ")");
+  ok(matLibre === 0, "...et jamais en mode libre");
 
   /* --- L'\u00e9cran annonce le mat\u00e9riau avant d'entrer --------------------- */
   /* Les cartes de palier ne sortent que dans un donjon DÉPLIÉ, hors run : on
@@ -4581,8 +4607,6 @@ console.log("\n[34b] v3.225.0 \u2014 Affixes d'\u00e9quipement (Lot 1b : donn\u0
   ok(g.game.heroXp === 11, "10 XP \u00d7 1,10 = 11 (arrondi)");
 
   /* --- Chance de butin : killEnemy lit l'accumulateur --- */
-  ok(srcOf(g.CombatEngine.killEnemy).indexOf("equipDropChancePct") !== -1, "killEnemy ajoute game.equipDropChancePct \u00e0 la chance de butin");
-
   /* --- Élite : affixe fixe, copié --- */
   var loot = g.EliteManager.buildUniqueLoot("araignee_marquee");
   ok(loot && loot.affixes.length === 1 && loot.affixes[0].stat === "critChance" && loot.affixes[0].value === 2, "arme d'\u00c9lite : +2 % critique fixe (O3)");
@@ -4608,6 +4632,18 @@ console.log("\n[34b] v3.225.0 \u2014 Affixes d'\u00e9quipement (Lot 1b : donn\u0
   ok(card.indexOf("+3% critique") !== -1 && card.indexOf("+20% de butin") !== -1, "carte d'\u00e9choppe : affixes visibles avant l'achat");
   var noAffix = run("buildEquipmentAffixLinesHTML({ stat: 'tapDmg', value: 5 })");
   ok(noAffix === "", "objet sans affixe : aucune ligne, aucun bloc vide");
+  // v3.707.0 (ARCH-15) : boss tué au jet 60 (base 50 %, bestiaire neutralisé) ; seul l'affixe fait tomber l'objet.
+  function tiragesButin(pct) {
+    freshCombat("knight"); var e = forceBoss(); e.hp = 1;
+    var LS = g.LootSystem, rd = LS.rollDrop, bb = g.getBestiaryBonus, n = 0;
+    LS.rollDrop = function () { n++; return rd.apply(this, arguments); };
+    g.getBestiaryBonus = function () { return { goldBonus: 0, essenceBonus: 0, lootBonus: 0 }; };
+    g.game.equipDropChancePct = pct;
+    try { hasard(0.6, function () { g.CombatEngine.killEnemy(); }); } finally { LS.rollDrop = rd; g.getBestiaryBonus = bb; }
+    return n;
+  }
+  ok(tiragesButin(0) === 0 && tiragesButin(25) === 1, "killEnemy ajoute game.equipDropChancePct \u00e0 la chance de butin (jet 60 : rien \u00e0 50 %, un objet \u00e0 75 %)");
+
 })();
 
 console.log("\n[35b] v3.226.0 \u2014 Comparaison ligne \u00e0 ligne (Lot 2, D6)");
@@ -4947,8 +4983,16 @@ console.log("\n[40b] v3.230.0 \u2014 Pouvoirs l\u00e9gendaires : effets c\u00e2b
   ok(g.startCooldown({}, "sk", 4).sk === 4, "...et rien sans le pouvoir");
 
   /* --- Prospecteur : borné au boss, jamais sur un ennemi normal. --- */
-  ok(srcOf(g.CombatEngine.killEnemy).indexOf("leg_prospecteur") !== -1
-    && /isBoss && this\.hasPower\("leg_prospecteur"\)/.test(srcOf(g.CombatEngine.killEnemy)), "Prospecteur : condition limit\u00e9e aux boss");
+  // v3.707.0 (ARCH-15) : jet forcé à 0 (le 10 % passe), or du kill avec et sans le pouvoir.
+  function orDuKill(boss, pouvoir) {
+    freshCombat("knight"); if (pouvoir) porteLegendaire("leg_prospecteur");
+    var e = boss ? forceBoss() : g.game.enemy, o = g.game.gold;
+    e.hp = 1;
+    hasard(0, function () { g.CombatEngine.killEnemy(); });
+    return g.game.gold - o;
+  }
+  var orB0 = orDuKill(true, false), orB1 = orDuKill(true, true), orN0 = orDuKill(false, false), orN1 = orDuKill(false, true);
+  ok(orB0 > 0 && orB1 === orB0 * 2 && orN1 === orN0, "Prospecteur : bourse doubl\u00e9e sur un boss (" + orB0 + " \u2192 " + orB1 + "), jamais sur un ennemi normal (" + orN0 + " / " + orN1 + ")");
 
   /* --- Clairvoyance : le télégraphe tombe un round plus tôt, l'impact reste à sa date. --- */
   withPower("helmet", "leg_clairvoyance");
@@ -4967,12 +5011,31 @@ console.log("\n[40b] v3.230.0 \u2014 Pouvoirs l\u00e9gendaires : effets c\u00e2b
   ok(Number(en2.patternHoldRounds || 0) === 0, "...et aucun round de retenue");
 
   /* --- Œil du faucon : condition bornée aux Élites. --- */
-  ok(/isCrit && game\.enemy\.isElite && this\.hasPower\("leg_faucon"\)/.test(String(g.CombatEngine.playerAttack)), "\u0152il du faucon : condition limit\u00e9e aux critiques sur \u00c9lite");
+  // v3.707.0 (ARCH-15) : même coup critique (critique à 100 %, jet figé), Élite ou non, avec ou sans le pouvoir.
+  function coupCritique(elite, pouvoir, crit) {
+    freshCombat("knight"); if (pouvoir) porteLegendaire("leg_faucon");
+    var e = g.game.enemy; e.isElite = elite; e.hp = e.maxHp = 1e8; g.game.critChance = crit;
+    hasard(0.5, function () { g.CombatEngine.playerAttack(false, 1); });
+    return 1e8 - e.hp;
+  }
+  var fE0 = coupCritique(true, false, 100), fN0 = coupCritique(false, false, 100), fE1 = coupCritique(true, true, 100), fN1 = coupCritique(false, true, 100);
+  ok(fE0 === fN0 && fE1 > fN1 * 1.2 && fE1 <= fN1 * 1.25 + 1, "\u0152il du faucon : critique sur \u00c9lite +25 % (" + Math.round(fN1) + " \u2192 " + Math.round(fE1) + "), rien sans le pouvoir");
+  ok(coupCritique(true, true, 0) === coupCritique(false, true, 0), "...et rien sans critique");
 
   /* --- Collectionneur et Endurance du marcheur : câblés en Sortie. --- */
   // v3.391.0 : l'ancien moteur retiré, les deux pouvoirs sont câblés dans Pa2Run.
-  ok(String(g.Pa2Run._creditResource).indexOf("leg_collectionneur") !== -1, "Collectionneur : c\u00e2bl\u00e9 dans le butin de ressource (Pa2Run)");
-  ok(String(g.Pa2Run.obstacleOptions).indexOf("leg_marcheur") !== -1, "Endurance du marcheur : c\u00e2bl\u00e9e sur le co\u00fbt de Souffle (Pa2Run)");
+  // v3.707.0 (ARCH-15) : vraie Petite Aventure, arrêt sur un obstacle ; coûts et butin lus avec et sans le pouvoir.
+  freshCombat("knight"); g.game.explorationProgression.petiteAventure = { spent: 0, since: null };
+  g.SceneRunManager.startRun("petite_aventure_foret"); g.Pa2Run.depart();
+  var pr = g.game.sceneRun, pk = Object.keys(pr.nodes).filter(function (x) { return pr.nodes[x].type === "obstacle"; })[0];
+  pr.at = pk; pr.status = "pa2-node"; pr.nodes[pk].done = false; g.Pa2Run._prepareNode(pr, pr.nodes[pk]);
+  var cout = function () { return g.Pa2Run.obstacleOptions().map(function (o) { return o.cost; }); };
+  var c0 = cout(); porteLegendaire("leg_marcheur"); var c1 = cout();
+  var sl = g.SortieManager.ensure(); sl.loot.resources = {};
+  g.Pa2Run._creditResource("ble", 2); porteLegendaire("leg_collectionneur"); g.Pa2Run._creditResource("eau", 2);
+  ok(sl.loot.resources.ble === 2 && sl.loot.resources.eau === 3, "Collectionneur : +1 exemplaire au butin de ressource (Pa2Run : 2 \u2192 " + sl.loot.resources.eau + ")");
+  ok(c0.length > 0 && c0.every(function (c, i) { return c1[i] === Math.round(c * 0.85); }) && c1.join() !== c0.join(), "Endurance du marcheur : Souffle des obstacles \u221215 % (" + c0.join("/") + " \u2192 " + c1.join("/") + ")");
+  g.SceneRunManager.clearRun();
 
   /* --- Aucun pouvoir porté : le combat est strictement celui d'avant. --- */
   withPower("weapon", null);
@@ -6410,8 +6473,12 @@ console.log("\n[62b] v3.260.0 \u2014 Retours de jeu : Brume, Colporteur, arme, c
   ok(g.isPerRunPotionShopOpen() === true, "save qui poss\u00e8de d\u00e9j\u00e0 une potion de mission : la section reste visible");
 
   /* --- Arme : plus d'arme de départ à la création --- */
-  var creation = String(g.confirmHeroSelection);
-  ok(creation.indexOf("equipStarterWeapon()") === -1, "cr\u00e9ation de h\u00e9ros : plus d'arme \u00e0 1 d\u00e9g\u00e2t");
+  // v3.707.0 (ARCH-15) : vraie confirmation de création (prologue coupé), puis l'arme portée.
+  var prol = g.PrologueView, prolPlay = prol && prol.play;
+  run("fullResetState(); pendingHeroId = 'knight'; pendingPlayerName = 'Test';");
+  if (prol) prol.play = function () {};
+  try { g.confirmHeroSelection(); } finally { if (prol) prol.play = prolPlay; }
+  ok(g.game.playerName === "Test" && g.game.heroId === "knight" && !g.game.equipped.weapon, "cr\u00e9ation de h\u00e9ros : plus d'arme \u00e0 1 d\u00e9g\u00e2t (aucune arme port\u00e9e)");
   ok(!g.STORY_REWARDS.forest_01.equipmentItem && g.STORY_REWARDS.forest_02.equipmentItem === g.STORY_STARTER_WEAPON, "l'arme +15 est la r\u00e9compense de Premier sang");
   var s02 = chapitre.steps[idxOf("forest_02")];
   ok(s02.objectiveLabel.indexOf("5 ennemis \u00e0 la Lisi\u00e8re") !== -1 && s02.narrative.completion.indexOf("une arme oubli\u00e9e") !== -1, "Premier sang : objectif et texte valid\u00e9s");
@@ -9460,10 +9527,10 @@ console.log("\n[119] v3.324.0 — Admin (compagnons, Petites Aventures, avance d
   run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
   game = g.game;
   var SQ = g.StoryQuestManager;
-  var first = SQ.getCurrentStep("forest").id;
+  var first = SQ.getCurrentStep("forest").id, toast0 = g.showToast, popup0 = g.openQuestCompletePopup;
   ok(g.adminForceStoryStep(true) === first && SQ.getState("forest").currentStep === 1, "valider : l'étape en cours est réclamée");
   ok(SQ.getCurrentStep("forest").check === g.STORY_QUESTS.forest.steps[1].check, "le check d'origine est remis en place");
-  ok(typeof g.openQuestCompletePopup === "function" && g.showToast.toString().indexOf("function () {}") < 0, "popup et toast restaurés après l'avance muette");
+  ok(g.openQuestCompletePopup === popup0 && g.showToast === toast0, "popup et toast restaurés après l'avance muette (les mêmes fonctions)");
 
   /* --- Histoire : avancer jusqu'à desert_09 --- */
   var sel = { value: "desert_09" }, oldGet = g.document.getElementById;
@@ -10339,8 +10406,17 @@ console.log("\n[135] v3.355.0 — Portrait propre, conseil du compagnon, place d
   S._refundPetiteAventureSlot({ status: "gate" });
   ok(game.explorationProgression.petiteAventure.spent === 2, "une sortie qui n'a pas pris de place (hors cap) ne rend rien");
   // v3.391.0 : lu dans Pa2Run (l'ancien moteur est retiré).
-  var prs = String(g.Pa2Run.abandon), pfull = require("fs").readFileSync(ROOT + "/js/systems/pa2-run.js", "utf8");
-  ok(prs.indexOf("_refundPetiteAventureSlot") === -1 && pfull.indexOf("SceneRunManager._refundPetiteAventureSlot") !== -1, "abandon volontaire : place gardée ; échec subi : place rendue");
+  // v3.707.0 (ARCH-15) : vraie sortie lancée puis close par abandon ou par KO ; on lit la réserve.
+  function placeApres(fin) {
+    game.sceneRun = null; game.heroHp = game.heroMaxHp; game.explorationProgression.petiteAventure = { spent: 0, since: null };
+    S.startRun("petite_aventure_foret"); g.Pa2Run.depart();
+    var pris = Number(game.explorationProgression.petiteAventure.spent || 0);
+    if (fin === "abandon") g.Pa2Run.abandon(); else g.Pa2Run.finish("ko");
+    var reste = Number(game.explorationProgression.petiteAventure.spent || 0);
+    S.clearRun(); return pris + "→" + reste;
+  }
+  var pAb = placeApres("abandon"), pKo = placeApres("ko");
+  ok(pAb === "1→1" && pKo === "1→0", "abandon volontaire : place gardée (" + pAb + ") ; échec subi : place rendue (" + pKo + ")");
 
   /* Ateliers : débit et remboursement par l'Entrepôt */
   game = freshCombat("knight");
@@ -13640,7 +13716,11 @@ console.log("\n[199] v3.427.0 — Nouvel écran de combat (atelier CB, validé p
     g.CombatEngine.setCombatMode("tactique");
     g.cbxState.notes = [];
     // --- Effets du moteur repris par l'écran ---
-    ok(String(g.showFloatingDamage).indexOf("onDamageShown") !== -1 && /^function \(\) \{\s*\}$/.test(String(g.showDamageTakenPopup).replace(/\/\*[\s\S]*?\*\//g, "")), "les chiffres du moteur passent par l'écran (le bon ennemi, la bonne carte)");
+    // v3.707.0 (ARCH-15) : faux écran ; le chiffre du moteur est posé par l'écran, les coups reçus restent à watch().
+    var ecr = fauxEcranCombat(false), onglet = game.activeTab, posDmg, posRecu;
+    game.activeTab = "combat";
+    try { g.showFloatingDamage(17, true); posDmg = ecr.poses.map(function (n) { return n.className + "|" + n.textContent; }); ecr.poses.length = 0; g.showDamageTakenPopup(30); posRecu = ecr.poses.length; } finally { ecr.fin(); game.activeTab = onglet; }
+    ok(posDmg.join() === "cbx-num is-crit|17" && posRecu === 0, "les chiffres du moteur passent par l'écran (le bon ennemi, la bonne carte)");
     // --- Fichiers ---
     var idx = fsx.readFileSync(px.join(ROOT, "index.html"), "utf8"), sw = fsx.readFileSync(px.join(ROOT, "sw.js"), "utf8");
     ok(idx.indexOf("js/ui/combat-screen-view.js") > idx.indexOf("js/ui/combat-group-view.js") && idx.indexOf("js/ui/combat-screen-view.js") < idx.indexOf("js/ui/ui-root.js")
@@ -14707,7 +14787,12 @@ console.log("\n[219] v3.444.0 — Coup de grâce (variante B) : arrêt sur image
     ok(/SLAY_STOP_MS = \{ normal: 90, crit: 120, elite: 160 \}/.test(js), "arrêts sur image validés par Seb : 90 / 120 / 160 ms");
     ok(/e\.isBoss && !e\.isElite/.test(js) && /prefers-reduced-motion/.test(js), "boss : son coup final reste ; animations réduites : l'ancien fondu");
     ok(/\.cbx-foe\.is-slain/.test(css) && /\.cbx-foe\.is-stop/.test(css) && /\.cbx-ring/.test(css) && /\.cbx-mote/.test(css) && /\.cbx-coin/.test(css), "styles du coup de grâce présents");
-    ok(String(g.showGoldPopup).indexOf("flyGold") !== -1, "l'or du combat passe par le vol vers la pastille du butin");
+    // v3.707.0 (ARCH-15) : faux écran, avec puis sans la pastille du butin.
+    var ecrOr = fauxEcranCombat(true), posVol, posRepli;
+    try { g.showGoldPopup(42); posVol = ecrOr.poses.map(function (n) { return n.className + "|" + /\+42$/.test(n.innerHTML); }); } finally { ecrOr.fin(); }
+    ecrOr = fauxEcranCombat(false);
+    try { g.showGoldPopup(42); posRepli = ecrOr.poses.map(function (n) { return n.className + "|" + n.textContent; }); } finally { ecrOr.fin(); }
+    ok(posVol.join() === "cbx-coin|true" && posRepli.join() === "cbx-num is-gold|+42", "l'or du combat passe par le vol vers la pastille du butin (sans pastille : chiffre doré sur place)");
   } catch (err) {
     ok(false, "[219] exception : " + err.message);
   }
@@ -23026,7 +23111,10 @@ console.log("\n[457] v3.692.0 — Ménage du code (audit 04/11, lots A4 et A5)")
       && typeof g.AdventureQuestManager.isTransitionUnlocked === "undefined", "ARCH-7 : advanceSelection, finishManualRound, WorldManager.advance (et isTransitionUnlocked, son seul usage) retirés");
     ok(!/getElementById\("enemy-display"\)/.test(rd("js/systems/combat-engine.js")) && rd("css/03-combat.css").indexOf("#enemy-display") === -1, "ARCH-7 : l'ancien décor du combat (#enemy-display) n'est plus visé, ni par le moteur ni par le CSS");
     // ARCH-V1 : « CONTRÉ ! » passe par l'écran de combat
-    ok(String(g.showCounterSuccessPopup).indexOf("CONTRÉ") !== -1 && String(g.showCounterSuccessPopup).indexOf("floatAt") !== -1, "ARCH-V1 : le contre réussi s'affiche sur l'ennemi (surcharge de combat-screen-view.js)");
+    // v3.707.0 (ARCH-15) : faux écran de combat, puis hors de l'onglet Combat.
+    var ecrC = fauxEcranCombat(false), ongC = g.game.activeTab, enC = g.game.enemy, posC, posHors;
+    try { g.game.activeTab = "combat"; g.game.enemy = { id: "slime", name: "Slime", actorId: "e0", hp: 10, maxHp: 10 }; g.showCounterSuccessPopup(); posC = ecrC.poses.map(function (n) { return n.className + "|" + n.textContent; }); ecrC.poses.length = 0; g.game.activeTab = "village"; g.showCounterSuccessPopup(); posHors = ecrC.poses.length; } finally { ecrC.fin(); g.game.activeTab = ongC; g.game.enemy = enC; }
+    ok(posC.join() === "cbx-num is-blocked|⚡ " + g._t("CONTRÉ !") && posHors === 0, "ARCH-V1 : le contre réussi s'affiche sur l'ennemi (surcharge de combat-screen-view.js), rien hors du combat");
     // ARCH-8 : code mort hors fichiers protégés
     var morts = ["buildEquipHTML", "buildTalentsHTML", "buildTalentBoardHTML", "buildTalentPointsHTML", "buildInventoryTabContentHTML", "buildEquipmentTabContentHTML", "renderChronique",
       "renderClassResourceBar", "renderCombatMissionProgress", "cbxStatesOf", "RPG_STAT_LABELS", "HERO_LEVELING", "DEFEAT_GOLD_PENALTY", "SCENE_STAT_LABELS", "CAMP_MISSION_TYPE_LABEL", "RSB_HERO_BY_CLASS"];
@@ -23857,6 +23945,166 @@ console.log("\n[470] v3.705.0 — Quêtes, Boutique et Donjon au standard des pa
     ok(/\.qb-card-action \{[^}]*flex-wrap: wrap;[^}]*max-width: 100%;/.test(css), "Quêtes : « Continuer » + « Abandonner » passent à la ligne (320 px, Grande)");
   } catch (err) { ok(false, "[470] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   run("game.dungeonRun = null;");
+})();
+
+console.log("\n[471] v3.706.0 — Atelier 4 « Signaux », variantes A (Seb 05/11) : EQUI-2, CPL1-2, UI-18, SUIV-8, barre de titre des pages sans bandeau");
+(function () {
+  var rd = function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); };
+  var fn = { save: g.saveGame, rp: g.renderPanel, unl: g.CaravanManager.unload, now: g.CaravanManager._now };
+  try {
+    g.saveGame = function () {}; g.renderPanel = function () {};
+    run("fullResetState(); game.playerName='T'; game.heroId='knight'; game.worldsEverReached = {}; for (var i = 0; i <= 1; i++) game.worldsEverReached[i] = true; WorldManager.worldIndex = 1; WarehouseManager.ensure(); VillageBuildingManager.ensure();");
+    var W = g.WarehouseManager, GO = g.GrandOuvrage;
+    // EQUI-2 (A) : jauge marquée, seulement quand le Grand Ouvrage garde quelque chose
+    run("GrandOuvrage._state().auto = false;");
+    var off = g.buildWarehouseHTML();
+    ok(off.indexOf("wh-go-tick") < 0 && off.indexOf("Grand Ouvrage dès") < 0 && g.warehouseGoKeep("pierre") === 0, "EQUI-2 : versement automatique coupé, ni repère ni « Grand Ouvrage dès » (pas de faux signal)");
+    run("GrandOuvrage._state().auto = true; GrandOuvrage._state().seuil = 0.8;");
+    var cap = W.getCap("pierre"), keep = Math.floor(cap * 0.8);
+    g.game.resources.pierre = keep; g.game.resources.bois = keep - 10; g.game.resources.planche = 5;
+    ok(g.warehouseGoKeep("pierre") === keep && g.warehouseGoKeep("pierre") === Math.floor(W.getUsableCap("pierre")) && g.warehouseGoKeep("planche") === 0, "EQUI-2 : part gardée lue sur getUsableCap (" + keep + " / " + cap + "), rien pour le fabriqué");
+    ok(g.warehouseAtGoKeep("pierre") && !g.warehouseAtGoKeep("bois"), "EQUI-2 : barre bleue pour la Pierre à sa part, pas pour le Bois 10 en dessous");
+    var tP = g.buildWarehouseTileHTML("pierre"), tB = g.buildWarehouseTileHTML("bois");
+    ok(/class="wh-tile is-go/.test(tP) && tP.indexOf('<i class="wh-go-tick" style="left:80%"></i>') > 0 && tB.indexOf("is-go") < 0 && tB.indexOf("wh-go-tick") > 0, "EQUI-2 : repère à 80 % sur chaque matière brute, tuile bleue seulement à la part");
+    var on = g.buildWarehouseHTML();
+    ok(on.indexOf(g.esc(g._t("plafond {n}", { n: g.formatNumber(cap) }) + " · " + g._t("Grand Ouvrage dès {n}", { n: g.formatNumber(keep) }))) > 0, "EQUI-2 : titre « plafond " + cap + " · Grand Ouvrage dès " + keep + " »");
+    g.ResourceReserveManager.setReserve("pierre", keep + 50);
+    ok(g.warehouseGoKeep("pierre") === keep + 50 && g.buildWarehouseTileHTML("pierre").indexOf("is-go") < 0, "EQUI-2 : la part relevée (réserve) déplace le repère ; la Pierre n'y est plus");
+    g.ResourceReserveManager.setReserve("pierre", 0);
+    var sh = g.buildWarehouseSheetHTML("pierre");
+    ok(/kgauge kgauge-thin kgauge-xp is-go/.test(sh) && sh.indexOf("wh-go-tick") > 0 && sh.indexOf(g.esc(g._t("Au-delà de {n} ({p} %), le surplus part tout seul au Grand Ouvrage.", { n: g.formatNumber(keep), p: 80 }))) > 0, "EQUI-2 : fiche, jauge bleue marquée et ligne « Au-delà de " + keep + " (80 %) » sous elle");
+    var cv = rd("css/04-panel-village.css");
+    ok(/\.wh-go-tick \{ position: absolute; top: -3px; width: 2px; height: 10px;/.test(cv) && /\.wh-tile\.is-go \.wh-tile-bar > span \{ background: var\(--c-blue-350\); \}/.test(cv), "EQUI-2 : repère 2×10 px, barre bleue (CSS)");
+    // CPL1-2 (A) : rubrique « Caravanes » après « Village », un toucher, la caravane en route
+    var t0 = Date.now(); g.CaravanManager._now = function () { return t0; };
+    run("CaravanManager.ensure(); game.village.caravans = [];");
+    g.game.village.caravans.push({ trip: "moyen", startedAt: t0 - 4 * 3600e3, endsAt: t0 - 60e3, world: 1, cargo: { bois: 10 }, gold: 300, rare: { key: "pierre", n: 2 }, item: null, notified: true, order: null });
+    g.game.village.caravans.push({ trip: "court", startedAt: t0 - 60e3, endsAt: t0 + 72 * 60e3, world: 0, cargo: { ble: 5 }, gold: 50, rare: null, item: null, notified: false, order: null });
+    var s0 = g.ReturnManager.complete({ produced: {}, crafted: {}, ms: 3600e3 }, { at: t0, site: null, tavernReset: 0, hp: g.game.heroHp });
+    ok(s0.caravansBack === 1 && g.ReturnManager.hasContent(s0), "CPL1-2 : une caravane rentrée seule suffit à ouvrir l'écran (hasContent)");
+    g.openReturnScreen({ ms: 3600e3, produced: { bois: 30 }, crafted: {}, siteDone: { name: "Forge", level: 2 }, fullPlots: 0, openPlots: 3, hpGain: 0 });
+    var h = g.buildReturnScreenHTML(), iV = h.indexOf(g._t("Village · à récolter")), iC = h.indexOf(">" + g._t("Caravanes") + "<"), iA = h.indexOf(g._t("Ateliers et chantier"));
+    var gold = g.CaravanManager.unloadGold(300);
+    ok(iV > 0 && iC > iV && iA > iC, "CPL1-2 : « Caravanes » juste après « Village », avant « Ateliers et chantier »");
+    ok(h.indexOf('class="ret-link cpl-unload" onclick="returnUnloadCaravans()"') > 0 && h.indexOf("+" + g.formatNumber(gold) + " or") > 0 && h.indexOf(g._t("Une autre caravane rentre dans {d}.", { d: g.formatTime(72 * 60) })) > 0, "CPL1-2 : butin (+" + gold + " or, bonus compris), lien « Décharger », caravane encore en route");
+    var or0 = g.game.gold; g.returnUnloadCaravans();
+    var h2 = g.buildReturnScreenHTML();
+    ok(g.game.gold - or0 === gold && g.CaravanManager.list().length === 1 && h2.indexOf("cpl-unload") < 0 && h2.indexOf(g._t("Déchargée : <b>+{g} or</b>", { g: g.formatNumber(gold) })) > 0 && h2.indexOf(g._t("Une autre caravane rentre dans {d}.", { d: g.formatTime(72 * 60) })) > 0, "CPL1-2 : un toucher décharge (or versé), « Déchargée » reste affiché avec la caravane en route");
+    g.closeReturnScreen();
+    run("game.village.caravans = [];");
+    ok(g.ReturnManager.complete({ produced: {}, crafted: {} }, {}).caravansBack === 0 && g.buildReturnCaravansHTML() === "", "CPL1-2 : aucune caravane rentrée, pas de rubrique");
+    ok(/\.ret-sec-b \.ret-link \{ min-height: 44px; \}/.test(rd("css/04-panel-evolutions.css")), "CPL1-2 : « Décharger » hérite des 44 px des liens du retour");
+    // UI-18 (A) : la Tour descend et rentre
+    ok(g.MAP_NODE_POSITIONS[5].x === 72 && g.MAP_NODE_POSITIONS[5].y === 85.5 && g.MAP_NODE_POSITIONS[4].x === 65.1 && g.MAP_NODE_POSITIONS[4].y === 64.7, "UI-18 : la Tour en (72 ; 85,5), la Montagne inchangée");
+    // SUIV-8 (A) : pesée, ▲ strict, ⇅ trop léger → ▼, tri « Intérêt »
+    run("fullResetState(); game.playerName='T'; game.heroId='ranger'; WorldManager.worldIndex = 4; EquipmentManager.recalcStats();");
+    var mk = function (slot, value, affixes) { return { uid: "u" + Math.random(), name: "X", slot: slot, rarity: "rare", stat: g.EQUIPMENT_SLOT_CONFIG[slot].stat, value: value, affixes: affixes || [] }; };
+    var cfgA = g.EQUIPMENT_SLOT_CONFIG.amulet, sc = g.getEquipWorldScale(4);
+    g.game.equipped.amulet = mk("amulet", 10, [{ stat: "maxHpPct", value: 0.14, tier: "P" }, { stat: "critMult", value: 0.17, tier: "P" }]);
+    var talis = mk("amulet", 10, [{ stat: "xpMult", value: 0.077, tier: "S" }]);
+    var pw = g.getEquipmentCompareWeight(talis, g.game.equipped.amulet);
+    var uHp = (g.AFFIX_RANGES.maxHpPct.epic[0] + g.AFFIX_RANGES.maxHpPct.epic[1]) / 2, uXp = (g.AFFIX_RANGES.xpMult.epic[0] + g.AFFIX_RANGES.xpMult.epic[1]) / 2;
+    ok(Math.abs(pw.G - Math.round(0.077 / uXp * 0.5 * 100) / 100) < 0.011 && Math.abs(pw.P - (Math.round(0.14 / uHp * 100) / 100 + Math.round(0.17 / 0.325 * 100) / 100)) < 0.011, "SUIV-8 : écart ÷ tirage Épique moyen, poids ½ pour l'XP (G " + pw.G + ", P " + pw.P + ", net " + pw.net + ")");
+    ok(g.herosItemCompareState(talis) === "down", "SUIV-8 : ⇅ dont les gains pèsent moins du tiers des pertes → ▼");
+    var ring = mk("ring", 0, [{ stat: "tapDmg", value: 100, tier: "P" }]);
+    g.game.equipped.ring = mk("ring", 0, [{ stat: "critChance", value: 1, tier: "P" }]);
+    ok(g.herosItemCompareState(ring) === "mix" && g.getEquipmentCompareWeight(ring, g.game.equipped.ring).net > 0, "SUIV-8 : un vrai ⇅ (gros gain, petite perte) reste ⇅ (▲ reste strict)");
+    var up = mk("ring", 0, [{ stat: "critChance", value: 2, tier: "P" }]);
+    ok(g.herosItemCompareState(up) === "up", "SUIV-8 : que des gains → ▲ inchangé");
+    g.game.inventory = [talis, up, ring];
+    g.applyInventorySort("interest");
+    var nets = g.game.inventory.map(function (it) { return g.getEquipmentCompareWeight(it, g.game.equipped[it.slot]).net; });
+    ok(g.game.inventory[2] === talis && nets[0] >= nets[1] && nets[1] >= nets[2], "SUIV-8 : tri « Intérêt », du meilleur bilan pesé au moins bon (" + nets.join(" ; ") + ")");
+    var hs = rd("js/ui/heros-screens-view.js"), ch = rd("css/04-panel-heros-screens.css");
+    ok(/herosBagSort\(\\'interest\\'\)/.test(hs) && g.I18n.dicts.en["Intérêt"], "SUIV-8 : bouton « Intérêt » dans le menu du Sac (traduit)");
+    ok(/\.wh-dd-menu \.hs-dd-sort button \{[^}]*min-height: 44px;/.test(ch) && /\.hs-dd-sort \{[^}]*flex-wrap: wrap;/.test(ch), "SUIV-8 : boutons « Trier » à 44 px, la rangée passe à la ligne au besoin");
+    // Barre de titre des pages sans bandeau : largeur auto, tient dans le cadre
+    ok(/#panel-container \.kfp-top-holder:not\(\.has-banner\) \.kf-top \{\s*aspect-ratio: auto; width: auto;/.test(rd("css/00-kbtn.css")), "Barre de titre (Paramètres, Ascension, Boutique, Donjon) : largeur auto, plus de dépassement de 4 px");
+  } catch (err) { ok(false, "[471] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  g.saveGame = fn.save; g.renderPanel = fn.rp; g.CaravanManager._now = fn.now;
+  try { run("game.village.caravans = []; fullResetState();"); g.closeReturnScreen(); } catch (e) {}
+})();
+
+console.log("\n[472] v3.706.1 — UI-10, cas restant (Seb 05/11) : texte Grande sous 600 px de haut, pas de bandeau illustré");
+(function () {
+  var rd = function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); };
+  var de = g.document.documentElement, ih = g.innerHeight, SB = g.ScreenBanner;
+  var cl = de.classList, keepCl = cl;
+  try {
+    var set = {}; de.classList = { contains: function (c) { return !!set[c]; }, toggle: function (c, v) { set[c] = v === undefined ? !set[c] : !!v; }, add: function (c) { set[c] = true; }, remove: function (c) { delete set[c]; } };
+    var cas = function (h, big, pc) { g.innerHeight = h; set = {}; if (big) set["text-big"] = true; if (pc) set["pc-mode"] = true; return SB.isOff(); };
+    ok(cas(568, true) && !cas(568, false) && !cas(844, true) && !cas(568, true, true), "UI-10 : bandeau caché seulement en texte Grande sous 600 px, hors mode PC (568 G oui ; 568 N, 844 G, PC non)");
+    g.innerHeight = 568; set = { "text-big": true };
+    var cls = {}, k = { classList: { toggle: function (c, v) { cls[c] = v === undefined ? !cls[c] : !!v; }, remove: function () { [].slice.call(arguments).forEach(function (c) { delete cls[c]; }); }, contains: function (c) { return !!cls[c]; } }, dataset: {}, style: {}, getBoundingClientRect: function () { return { width: 300, height: 0 }; }, getAttribute: function () { return ""; }, setAttribute: function () {} };
+    SB.fit(k); SB.mini(k, { scrollTop: 500 });
+    ok(cls["is-off"] && !cls["is-mini"] && !cls["is-short"] && k.dataset.fold === "0" && !k.style.height, "UI-10 : fit pose is-off, rien à replier (fold 0, jamais is-mini)");
+    g.innerHeight = 568; set = {}; cls = {}; SB.fit(k);
+    ok(!cls["is-off"] && cls["is-short"] && k.style.height === "104px" && k.dataset.fold === "60", "UI-10 : texte Normale sous 600 px, bandeau de 104 px inchangé");
+    g.innerHeight = 844; set = { "text-big": true }; cls = {}; SB.fit(k);
+    ok(!cls["is-off"] && k.style.height === "150px", "UI-10 : texte Grande au-dessus de 600 px, bandeau de 150 px inchangé");
+    var r = rd("css/07-responsive.css");
+    ok(/#panel-container \.kfb\.is-off \{ display: none; \}/.test(r) && /\.kfp-scrollzone \.kfb\.is-off ~ \.nb-page-frame \.kf-mid > \.kseg \{ top: 0; \}/.test(r) && /\.kfp-scrollzone \.kfb ~ \.nb-page-frame \.kf-mid > \.kseg \{ position: sticky; top: 44px;/.test(r), "UI-10 : bandeau caché, onglets collés en haut de la zone ; règle NOV-24 (44 px) gardée ailleurs");
+  } catch (err) { ok(false, "[472] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  de.classList = keepCl; g.innerHeight = ih;
+})();
+
+console.log("\n[473] v3.707.0 — finitions sous 600 px de haut (Seb 05/11) : carte d'Histoire du Camp, écran de retour");
+(function () {
+  try {
+    var r = fs.readFileSync(path.join(ROOT, "css/07-responsive.css"), "utf8");
+    var k = r.indexOf("v3.707.0"), blk = k >= 0 ? r.slice(r.indexOf("@media (max-height: 599px) {", k)) : "";
+    blk = blk.slice(0, blk.indexOf("\n}\n") + 2);
+    ok(k > 0 && blk.length > 0, "UI-10 (fin) : bloc « @media (max-height: 599px) » présent après la marque v3.707.0");
+    ok(/\.camp-mission-card\.is-main \.nv2-lead \{ -webkit-line-clamp: 1;/.test(blk) && /-webkit-line-clamp: 2;/.test(fs.readFileSync(path.join(ROOT, "css/04-panel-camp.css"), "utf8")), "UI-10 (fin) : récit sur 1 ligne sous 600 px, 2 lignes au-dessus (règle de base inchangée)");
+    ok(/\.camp-mission-card\.is-main \.camp-mission-title-row \{ display: contents; \}/.test(blk) && /\.camp-mission-card\.is-main \.camp-mission-badge \{ order: 2;/.test(blk), "UI-10 (fin) : titre seul sur sa ligne, badge « Histoire » à côté du lieu");
+    ok(/> \.nv2-recit \{ order: 1;/.test(blk) && /> \.camp-mission-reward \{ order: 2;/.test(blk) && /:has\(\.nv2-fold\[aria-expanded="true"\]\) > :is\(\.nv2-recit, \.camp-mission-reward\) \{ flex-basis: 100%; \}/.test(blk), "UI-10 (fin) : récompense à droite du pli « Récit », dessous quand le pli est ouvert");
+    ok(/\.camp-mission-card\.is-main > \.camp-mission-btn \{[^}]*margin: 4px auto 0;/.test(blk) && !/min-height/.test(blk), "UI-10 (fin) : « Accepter » reste centré, aucune hauteur de toucher réduite (pli « Récit » à 44 px)");
+    ok(/\.ret-card \.kwin-head \{ flex-direction: row;/.test(blk) && /\.ret-card \.kwin-ico img \{ width: 36px; height: 36px; \}/.test(blk) && /\.ret-card \.ret-line \{/.test(blk), "Retour : en-tête en ligne (icône 36 px) et phrase d'ambiance resserrée sous 600 px");
+    var h = g.buildCampMissionCardHTML({ id: "story_forest", status: "available", isMain: true, badge: "story", type: "combat", title: "T", place: "P", objectiveLabel: "O", rewardSummary: "50 or", worldId: "forest", accept: function () {} });
+    ok(/class="camp-mission-card  is-main"/.test(h) && h.indexOf("camp-mission-reward") > 0 && h.indexOf("Accepter") > 0, "UI-10 (fin) : la carte d'Histoire garde sa structure (rien de retiré : titre, lieu, objectif, récompense, Accepter)");
+  } catch (err) { ok(false, "[473] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[474] v3.708.0 — QUET-8 : l'Admin fabrique l'état des étapes qu'il force ; ARCH-15 : contrôles d'effet");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
+    var SQ = g.StoryQuestManager, LM = g.LivingMapManager, checks = {}, ko = [], horsAtteinte = [], n = 0, claim0 = SQ.claimStep;
+    Object.keys(g.STORY_QUESTS).forEach(function (c) { g.STORY_QUESTS[c].steps.forEach(function (st) { checks[st.id] = st.check; }); });
+    // Le vrai objectif de chaque étape est lu juste avant que l'Admin la réclame
+    SQ.claimStep = function (ch) {
+      var st = SQ.getCurrentStep(ch), bon = false;
+      try { bon = !!checks[st.id].call(st, g.game); } catch (e) { bon = false; }
+      if (!bon) ko.push(st.id);
+      return claim0.apply(this, arguments);
+    };
+    try {
+      for (var i = 0; i < 400; i++) {
+        if (!g.adminForceStoryStep(true)) break;
+        n++;
+        var ch = SQ.activeChapterIds()[0], nx = ch && SQ.getCurrentStep(ch), k = nx && nx.linkTo && nx.linkTo.cardId;
+        if (!k || k.indexOf("livingmap_") !== 0) continue;
+        var pp = k.slice(10).split(":");
+        if (!LM.isMapOpen(pp[0])) horsAtteinte.push(nx.id + " (carte fermée)");
+        else if (pp[1] && !LM.isLiberated(pp[0], pp[1]) && !LM.isReachable(pp[0], pp[1])
+          && !LM.getStoryPath(pp[0], [pp[1]]).some(function (x) { return LM.isReachable(pp[0], x); })) horsAtteinte.push(nx.id + " (" + pp[1] + ")");
+      }
+    } finally { SQ.claimStep = claim0; }
+    var total = Object.keys(checks).length;
+    ok(n === total, "Admin : les " + total + " étapes se forcent d'un bout à l'autre (" + n + ")");
+    ok(ko.join() === "forest_11", "Admin : chaque étape forcée remplit son vrai objectif, sauf forest_11 (talent : aucun point sans niveau)" + (ko.join() !== "forest_11" ? " — " + ko.join(", ") : ""));
+    ok(horsAtteinte.length === 0, "Admin : le secteur visé par l'étape suivante est ouvert, ou un chemin y mène" + (horsAtteinte.length ? " — " + horsAtteinte.join(", ") : ""));
+    var eq = g.game.equipped, leg = g.EQUIPMENT_SLOTS.filter(function (sl) { return eq[sl] && eq[sl].rarity === "legendary"; }).length;
+    ok(leg >= g.STORY_PALIER_TOUR_COMPLET.pieces && g.ForgeManager.getLevel("weapon") >= g.STORY_PALIER_TOUR_COMPLET.reforge && g.VillageBuildingManager.getLevel("forge") >= g.STORY_PALIER_TOUR_COMPLET.forge, "Admin : fin de la Tour, 7 Légendaires, arme reforgée à 13, Forge 7");
+    // Palier : une pièce déjà meilleure n'est jamais remplacée
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
+    var arme = g.generateEquipmentItem("weapon", "epic", 0);
+    g.game.equipped.weapon = arme;
+    g.adminSetPalier("green", 3, 2, 4, 0);
+    ok(g.game.equipped.weapon === arme && g.game.equipped.armor && g.game.equipped.armor.rarity === "green" && g.ForgeManager.getLevel("weapon") === 4 && g.VillageBuildingManager.getLevel("forge") === 2, "palier : l'arme Épique reste, l'armure passe Inhabituelle, reforge 4, Forge 2");
+    g.adminSetPalier("green", 3, 1, 2, 0);
+    ok(g.ForgeManager.getLevel("weapon") === 4 && g.VillageBuildingManager.getLevel("forge") === 2, "palier : rien n'est abaissé");
+  } catch (err) { ok(false, "[474] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
 Promise.all(ATTENTES).then(function () {

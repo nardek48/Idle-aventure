@@ -61,6 +61,9 @@ html.text-big [id$="-sheet-root"] { zoom: 1.12; }
 }
 /* NOV-24 (C) : onglets collés sous le bandeau replié (44 px), compacts tant qu'il est replié */
 html:not(.wide-mode) #panel-container .kfp-scrollzone .kfb ~ .nb-page-frame .kf-mid > .kseg { position: sticky; top: 44px; z-index: 2; background-color: rgba(222, 199, 156, 0.97); }
+/* UI-10 (C restreinte) : texte Grande sous 600 px de haut, bandeau caché (classe posée par ScreenBanner.fit) ; onglets collés en haut */
+#panel-container .kfb.is-off { display: none; }
+html:not(.wide-mode) #panel-container .kfp-scrollzone .kfb.is-off ~ .nb-page-frame .kf-mid > .kseg { top: 0; }
 html:not(.wide-mode) #panel-container .kfb.is-mini ~ .nb-page-frame .kf-mid > .kseg.is-stack button { min-height: 44px; padding-top: 2px; padding-bottom: 2px; }
 html:not(.wide-mode) #panel-container .kfb.is-mini ~ .nb-page-frame .kf-mid > .kseg.is-stack button img { display: none; }
 /* UI-14 (A) : texte Grande sous 360 px, libellés sur deux lignes (césures douces posées dans les chaînes) */
@@ -91,3 +94,29 @@ html:not(.wide-mode) #panel-container .kfb.is-mini ~ .nb-page-frame .kf-mid > .k
 .tutorial-card.is-end .tut-more > i { opacity: 0; visibility: hidden; }
 /* CPL3-5 (A) : la fenêtre reçoit le focus (tabindex -1, kDialog) sans liseré ; ses boutons gardent le leur */
 :is(.ksheet, .full-menu, .kwin)[aria-modal="true"]:focus { outline: none; }
+/* ===== v3.707.0 (Seb 05/11) : finitions sous 600 px de haut, au-dessus rien ne change =====
+   UI-10 (fin) : carte d'Histoire au Camp resserrée (titre seul, lieu + badge, récit sur 1 ligne, récompense à droite du pli « Récit ») */
+@media (max-height: 599px) {
+  .camp-mission-card.is-main { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 0; padding: 6px 12px; }
+  .camp-mission-card.is-main > * { flex: 0 0 100%; min-width: 0; }
+  .camp-mission-card.is-main .camp-mission-head { margin-bottom: 0; }
+  .camp-mission-card.is-main .camp-mission-title-col { display: flex; flex-wrap: wrap; align-items: center; column-gap: 6px; }
+  .camp-mission-card.is-main .camp-mission-title-row { display: contents; }
+  .camp-mission-card.is-main .camp-mission-title { flex: 0 0 100%; }
+  .camp-mission-card.is-main .camp-mission-place { order: 1; }
+  .camp-mission-card.is-main .camp-mission-badge { order: 2; margin-top: 1px; }
+  .camp-mission-card.is-main .nv2-lead { -webkit-line-clamp: 1; margin: 2px 0 0; }
+  .camp-mission-card.is-main > .camp-mission-objective { margin-bottom: 0; }
+  .camp-mission-card.is-main > .nv2-recit { order: 1; flex: 0 0 auto; min-width: 96px; margin: 0; }
+  .camp-mission-card.is-main:has(.nv2-fold[aria-expanded="true"]) > :is(.nv2-recit, .camp-mission-reward) { flex-basis: 100%; } /* pli ouvert : récompense dessous */
+  .camp-mission-card.is-main > .camp-mission-reward { order: 2; flex: 1 1 0; align-self: stretch; display: flex; align-items: center; justify-content: flex-end; gap: 4px; padding-left: 8px; text-align: right; margin: 0; border-top: 1px solid var(--c-bronze-400-soft); }
+  .camp-mission-card.is-main::before { content: ""; order: 3; flex: 0 0 100%; height: 0; } /* saut de ligne avant les boutons */
+  .camp-mission-card.is-main > :is(.camp-mission-cost, .camp-mission-btn, .camp-mission-actions) { order: 4; }
+  .camp-mission-card.is-main > .camp-mission-btn { flex: 0 0 auto; margin: 4px auto 0; }
+  /* Écran de retour : en-tête en ligne (icône 36 px), phrase d'ambiance plus serrée, comme l'aide (TUTO-11) */
+  .ret-card .kwin-head { flex-direction: row; gap: 10px; padding: 10px 18px 10px; }
+  .ret-card .kwin-ico img { width: 36px; height: 36px; }
+  .ret-card .kwin-ttl { font-size: 17px; text-align: left; }
+  .ret-card .kwin-body { padding: 10px 12px 0; }
+  .ret-card .ret-line { margin-bottom: 8px; line-height: 1.4; }
+}

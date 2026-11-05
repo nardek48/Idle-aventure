@@ -47,7 +47,7 @@ var MAP_NODE_POSITIONS = [
   { x: 70.3, y: 43.6 },
   { x: 18.2, y: 60.0 },
   { x: 65.1, y: 64.7 },
-  { x: 76.8, y: 79.9 }
+  { x: 72, y: 85.5 } // UI-18 (A, Seb 05/11) : était (76,8 ; 79,9), le médaillon couvrait le nom de la Montagne
 ];
 var MAP_PATH_VIEWBOX_H = 179.17; // ratio réel de world_map.jpg (2752/1536×100)
 

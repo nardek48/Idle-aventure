@@ -436,8 +436,129 @@ var ADMIN_STORY_EXTRA = {
   montagne_15: function () { adminSetDungeonCleared(5); },
   tour_03: function (st) { st.counters.campDresse = 1; },
   tour_11: function () { adminSetFlag("sommetCamp"); },
-  tour_12: function () { adminSetDungeonCleared(6); }
+  tour_12: function () { adminSetDungeonCleared(6); },
+  // QUET-8 (v3.708.0) : gestes du joueur (équiper, acheter, talent, règle), compteurs, secteurs et paliers d'équipement
+  forest_03: function () { adminEquipFirstItem(); if (!storyCountTrainingUpgrades(game)) { game.upgrades.utrain_power = 1; adminRecalc(); } },
+  forest_04: function () { if (!storyHasShopPurchase(game)) adminGivePotion(); },
+  forest_brume: function () { adminFreeSectors("forest", 1); },
+  forest_11: function () { adminBuyFirstTalent(); },
+  forest_12: function () { adminSetGrimoireRule(); },
+  forest_wenna: function (st) { st.counters.companionWins = Math.max(Number(st.counters.companionWins || 0), 3); },
+  desert_04: function () { adminFreeSectors("desert", 2); },
+  desert_13: function () { adminSetPalier("green", STORY_PALIER_PIECES, STORY_PALIER_FORGE, STORY_PALIER_REFORGE, 0); },
+  ruines_07: function () { adminFreeSectors("ruins", 2); },
+  ruines_09: function () { adminSetPalier("green", STORY_PALIER_RUINES.pieces, 0, STORY_PALIER_RUINES.reforge, STORY_PALIER_RUINES.reforge); },
+  ruines_13: function () { var P = STORY_PALIER_RUINES_RARE; adminSetPalier("rare", P.pieces, P.forge, P.reforge, 0); },
+  ruines_16: function () { adminFreeSectors("ruins", 0, LivingMapManager.getSectorDef("ruins", "coeur").neighbors.slice(0, 3)); },
+  crypte_07: function () { adminFreeSectors("crypt", 2); },
+  crypte_09: function () { var P = STORY_PALIER_CRYPTE_RARE; adminSetPalier("rare", P.pieces, 0, P.reforge, 0); },
+  crypte_13: function () { var P = STORY_PALIER_CRYPTE_EPIQUE; adminSetPalier("epic", P.pieces, P.forge, P.reforge, 0); },
+  crypte_16: function () { adminFreeSectors("crypt", 0, STORY_CHAIN_SECTORS); },
+  montagne_04: function (st) { adminCutVeins(st); },
+  montagne_07: function () { adminFreeSectors("mountain", 2); },
+  montagne_09: function () { var P = STORY_PALIER_MONTAGNE; adminSetPalier("epic", P.pieces, 0, P.reforge, 0); },
+  montagne_13: function () { var P = STORY_PALIER_MONTAGNE_COMPLET; adminSetPalier("epic", P.pieces, P.forge, P.reforge, 0); },
+  montagne_16: function () { adminFreeSectors("mountain", 0, STORY_MONTAGNE_ANNEAU3); },
+  tour_06: function () { adminFreeSectors("tower", STORY_TOUR_ETAGES, null, true); },
+  tour_07: function (st) { var ep = game.explorationProgression || (game.explorationProgression = {}); ep.towerPaWins = Math.max(Number(ep.towerPaWins || 0), Number(st.counters.paBase || 0) + STORY_TOUR_PA); },
+  tour_10: function () { adminSetPalier("legendary", STORY_PALIER_TOUR.pieces, 0, 0, 0); },
+  tour_13: function () { var P = STORY_PALIER_TOUR_COMPLET; adminSetPalier("legendary", P.pieces, P.forge, P.reforge, 0); }
 };
+
+function adminRecalc() { if (window.StatsSystem && typeof StatsSystem.recalcStats === "function") StatsSystem.recalcStats(); }
+
+// Équipe le premier objet du sac (l'arme de Premier sang), seulement si rien n'est porté
+function adminEquipFirstItem() {
+  if (storyHasEquippedItem(game)) return;
+  var it = (game.inventory || []).filter(function (x) { return x && x.slot; })[0];
+  if (it) { game.inventory.splice(game.inventory.indexOf(it), 1); game.equipped[it.slot] = it; adminRecalc(); }
+}
+
+// Une potion de soin en stock, comme un achat à l'échoppe
+function adminGivePotion() {
+  var id = window.HEALING_POTIONS_DB && HEALING_POTIONS_DB[0] && HEALING_POTIONS_DB[0].id;
+  if (!id) return;
+  if (!game.healingPotionsOwned || typeof game.healingPotionsOwned !== "object") game.healingPotionsOwned = {};
+  game.healingPotionsOwned[id] = Number(game.healingPotionsOwned[id] || 0) + 1;
+}
+
+// Premier talent achetable (points du niveau atteint) ; sans point, rien n'est posé
+function adminBuyFirstTalent() {
+  var T = window.TalentManager;
+  if (!T || storyCountTalentsBought(game) > 0) return;
+  var n = (T.getNodes() || []).filter(function (x) { return T.canBuy(x.id); })[0];
+  if (n) T.buy(n.id);
+}
+
+// Une règle du Grimoire : charge annoncée -> Défense (l'exemple du tutoriel)
+function adminSetGrimoireRule() {
+  if (storyCountActiveGrimoireRules(game) > 0 || typeof ensureGrimoireRules !== "function") return;
+  var rules = ensureGrimoireRules(), free = rules.filter(function (r) { return !r.conditionId; })[0];
+  if (free) { free.conditionId = "chargeIncoming"; free.actionSlot = "defense"; }
+}
+
+/* Libère des secteurs : la liste donnée, sinon des secteurs atteignables jusqu'à n libérés, sur le chemin
+   des secteurs visés par l'Histoire d'abord (élites et secteurs visés en dernier). etages : étages de la Tour seuls. */
+function adminFreeSectors(mapId, n, ids, etages) {
+  var LM = window.LivingMapManager, map = LM && LM.getMap(mapId);
+  if (!map) return;
+  LM.ensureDefaults();
+  var libres = function (d) { var s = LM.getState(mapId, d.id); return !!(s && s.liberatedCount > 0); };
+  var compte = function (d) { return !etages || (d.content && d.content.type === "expedition"); };
+  if (ids) { ids.forEach(function (id) { if (!LM.isLiberated(mapId, id)) LM.setState(mapId, id, "libere", "admin"); }); return; }
+  var lies = adminStorySectors(mapId), garde = 60;
+  while (map.sectors.filter(function (d) { return compte(d) && libres(d); }).length < n && garde-- > 0) {
+    var cand = map.sectors.filter(function (d) { return compte(d) && !libres(d) && LM.isReachable(mapId, d.id); });
+    var chemin = LM.getStoryPath(mapId, Object.keys(lies)); // comme le joueur : vers les secteurs que l'Histoire visera
+    cand.sort(function (a, b) { return adminSectorRank(a, lies, chemin) - adminSectorRank(b, lies, chemin); });
+    if (!cand.length) return;
+    LM.setState(mapId, cand[0].id, "libere", "admin");
+  }
+}
+function adminSectorRank(d, lies, chemin) { return (d.content && d.content.type === "elite" ? 4 : 0) + (lies[d.id] ? 2 : 0) + (chemin.indexOf(d.id) < 0 ? 1 : 0) + Number(d.ring || 0) / 10; }
+function adminStorySectors(mapId) {
+  var out = {};
+  Object.keys(STORY_QUESTS).forEach(function (c) {
+    STORY_QUESTS[c].steps.forEach(function (s) {
+      var k = s.linkTo && s.linkTo.cardId;
+      if (k && k.indexOf("livingmap_" + mapId + ":") === 0) out[k.split(":")[1]] = true;
+    });
+  });
+  return out;
+}
+
+// Veines de la Montagne : cinq de plus que la base notée à l'acceptation
+function adminCutVeins(st) {
+  if (!window.AchievementManager || typeof st.counters.veinsBase !== "number") return;
+  var c = AchievementManager.ensure().counters;
+  c.veinsCut = Math.max(Number(c.veinsCut || 0), st.counters.veinsBase + STORY_VEINES_CIBLE);
+}
+
+/* Palier d'équipement : `pieces` emplacements (arme puis armure d'abord) de cette rareté au moins,
+   Forge du village et reforge de l'arme et de l'armure aux niveaux voulus. Rien n'est abaissé. */
+function adminSetPalier(rarete, pieces, forge, arme, armure) {
+  var order = window.RARITY_ORDER || [], rang = order.indexOf(rarete), wi = window.WorldManager ? Number(WorldManager.worldIndex || 0) : 0;
+  var slots = ["weapon", "armor"].concat(EQUIPMENT_SLOTS.filter(function (x) { return x !== "weapon" && x !== "armor"; }));
+  slots.slice(0, pieces).forEach(function (slot) {
+    var it = game.equipped[slot];
+    if (it && order.indexOf(it.rarity) >= rang) return;
+    var neuf = generateEquipmentItem(slot, rarete, wi);
+    if (!neuf) return;
+    if (it) game.inventory.push(it); // l'ancienne pièce reste au sac
+    game.equipped[slot] = neuf;
+  });
+  if (forge && window.VillageBuildingManager) {
+    VillageBuildingManager.ensure();
+    var b = game.village.buildings.forge;
+    if (b) b.level = Math.max(Number(b.level || 0), forge);
+  }
+  if (window.ForgeManager) {
+    ForgeManager.ensure();
+    game.forge.levels.weapon = Math.max(Number(game.forge.levels.weapon || 0), arme || 0);
+    game.forge.levels.armor = Math.max(Number(game.forge.levels.armor || 0), armure || 0);
+  }
+  adminRecalc();
+}
 
 function adminSetFlag(key) {
   if (!game.explorationProgression) game.explorationProgression = {};

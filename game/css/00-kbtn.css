@@ -544,9 +544,10 @@
 #panel-container .kfp-top-holder.has-banner .kf-top { display: none; }
 #panel-container .kfb { margin: 8px 10px 10px; }
 
-/* Titre simple des pages sans bandeau : bande sombre, filet doré, retour « ‹ » conservé */
+/* Titre simple des pages sans bandeau : bande sombre, filet doré, retour « ‹ » conservé.
+   v3.706.0 : largeur auto (100 % + marges dépassait du cadre de la marge droite) */
 #panel-container .kfp-top-holder:not(.has-banner) .kf-top {
-  aspect-ratio: auto; height: auto; min-height: 46px; margin: 6px 10px 0; display: flex; align-items: center; justify-content: center;
+  aspect-ratio: auto; width: auto; height: auto; min-height: 46px; margin: 6px 10px 0; display: flex; align-items: center; justify-content: center;
   background: linear-gradient(rgba(14, 10, 6, 0.88), rgba(14, 10, 6, 0.72)); border-radius: 8px; box-shadow: var(--kf-ring);
 }
 #panel-container .kfp-top-holder:not(.has-banner) .kf-title {
