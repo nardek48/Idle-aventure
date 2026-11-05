@@ -349,7 +349,7 @@ var ClassCombatManager = {
 
     var hits = Math.max(1, Number(action.hits || 1));
     var lastHitDmg = 0;
-    var target = game.enemy;
+    var target = game.enemy, firstHit = null;
     for (var i = 0; i < hits; i++) {
       if (!game.enemy || game.enemy !== target) break; // v3.102.0 : l'ennemi est mort, les coups restants sont perdus
       var dmg = baseDamage * Number(action.damageMultiplier || 1);
@@ -362,6 +362,7 @@ var ClassCombatManager = {
       lastHitDmg = dmg;
       // v3.266.0 (L-0) : la cible est passée explicitement — les coups d'une même action
       // restent sur le même ennemi quand le groupe en comptera plusieurs (L-3).
+      if (!firstHit) firstHit = { dmg: dmg, crit: isCrit };
       CombatEngine.dealDamage(dmg, isCrit, true, !!action.ignoreAffinity, target);
     }
     // v3.328.0 : soin d'action en % des PV max (donnée, posée par un talent : Élan)
@@ -372,6 +373,14 @@ var ClassCombatManager = {
 
     if (game.enemy && game.enemy === target) this.applyActionEffects(action, lastHitDmg, matchedConditionId);
     if (window.TalentManager && game.enemy === target) TalentManager.afterAction(action, target); // v3.327.0 : Attiser
+    if (action.traverse && firstHit) this.applyTraverse(action, firstHit, target);
+  },
+
+  /* v3.709.0 (Seb 05/11) : trait « traverse » (Tir perforant), mécanique du banc tir-perforant-bench : le premier
+     ennemi debout autre que la cible reçoit le même coup (critique compris, sans effets) ; seul, rien ne change. */
+  applyTraverse: function (action, hit, target) {
+    var autre = (window.CombatActors ? CombatActors.standingEnemies() || [] : []).filter(function (e) { return e !== target; })[0];
+    if (autre) CombatEngine.dealDamage(hit.dmg, hit.crit, true, !!action.ignoreAffinity, autre);
   },
 
     applyActionEffects: function (action, lastHitDmg, matchedConditionId) {

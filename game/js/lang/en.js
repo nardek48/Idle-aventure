@@ -10,6 +10,7 @@
    Les textes des données sont traduits par _td() à l'affichage (registre : lang/data-fields.js). */
 I18n.register("en", {
   // index.html
+  "Rôdeur : Tir perforant traverse désormais sa cible, un second ennemi debout reçoit le même coup. Tutoriel de l'Amélioration : Précision et Volonté ont leur propre icône.": "Ranger: Piercing Shot now passes through its target, a second standing enemy takes the same hit. Upgrade tutorial: Accuracy and Will have their own icons.",
   "Outil d'administration plus fidèle : une étape d'Histoire forcée pose aussi l'équipement, les secteurs et les compteurs qu'elle demande.": "More faithful admin tool: a forced Story step now also sets the gear, sectors and counters it requires.",
   "Petits écrans : la mission d'Histoire du Camp tient au-dessus de la barre du bas (« Accepter » visible dès l'ouverture), et l'écran de retour montre « Décharger » sans défiler.": "Small screens: the Camp's Story mission fits above the bottom bar (\"Accept\" visible right away), and the return screen shows \"Unload\" without scrolling.",
   "Petit écran en texte « Grande » : le bandeau illustré s'efface pour laisser la place aux boutons (« Accepter » du Camp n'est plus caché par la barre du bas).": "Small screen with « Large » text: the illustrated banner steps aside to make room for buttons (the Camp's « Accept » is no longer hidden by the bottom bar).",
@@ -2148,7 +2149,7 @@ I18n.register("en", {
   "Inflige 100% des dégâts. +15 Concentration sur réussite, +4 supplémentaire sur coup critique.": "Deals 100% damage. +15 Focus on a hit, +4 more on a critical hit.",
   "Inflige 170% des dégâts. Coûte 20 Concentration.": "Deals 170% damage. Costs 20 Focus.",
   "3 coups de 60% des dégâts chacun. Coûte 35 Concentration.": "3 hits of 60% damage each. Costs 35 Focus.",
-  "Inflige 200% des dégâts. Coûte 50 Concentration.": "Deals 200% damage. Costs 50 Focus.",
+  "Inflige 200% des dégâts. La flèche traverse : un second ennemi debout reçoit le même coup. Coûte 50 Concentration.": "Deals 200% damage. The arrow passes through: a second standing enemy takes the same hit. Costs 50 Focus.",
   "Contre la charge annoncée. Sinon, 70% de chances d'éviter chaque frappe ennemie pendant 1 round.": "Counters the announced charge. Otherwise, a 70% chance to dodge each enemy strike for 1 round.",
   "Inflige 100% des dégâts. +8 Mana.": "Deals 100% damage. +8 Mana.",
   "Inflige 180% des dégâts. Coûte 18 Mana.": "Deals 180% damage. Costs 18 Mana.",

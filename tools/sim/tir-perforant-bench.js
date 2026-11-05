@@ -9,6 +9,7 @@
      plein   : critique garanti si la Concentration est pleine au lancement ;
      crit    : critique garanti toujours (borne haute de « plein ») ;
      traverse: la flèche touche aussi un second ennemi debout (--traverse, part du coup, 1 par défaut).
+     Depuis v3.709.0, « traverse » est dans le jeu : « actuel » l'inclut, la variante « traverse » la doublerait.
    Contenus : --donjon N (vagues, campement « souffler », boss) ou --quete id (ex. aq_montagne_dragon).
 
    USAGE : node tools/sim/tir-perforant-bench.js . --save ranger.json --donjon 3 [--quete id] [--runs N] [--variante actuel,perce,traverse] [--x 0.5] [--traverse 1] */

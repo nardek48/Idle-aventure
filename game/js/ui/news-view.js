@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.709.0", "special_attacks/attack4", _t("Rôdeur : Tir perforant traverse désormais sa cible, un second ennemi debout reçoit le même coup. Tutoriel de l'Amélioration : Précision et Volonté ont leur propre icône.")],
     ["3.708.0", "system/wrench_settings", _t("Outil d'administration plus fidèle : une étape d'Histoire forcée pose aussi l'équipement, les secteurs et les compteurs qu'elle demande.")],
     ["3.707.0", "menu_icons/camp_menu", _t("Petits écrans : la mission d'Histoire du Camp tient au-dessus de la barre du bas (« Accepter » visible dès l'ouverture), et l'écran de retour montre « Décharger » sans défiler.")],
     ["3.706.1", "menu_icons/camp_menu", _t("Petit écran en texte « Grande » : le bandeau illustré s'efface pour laisser la place aux boutons (« Accepter » du Camp n'est plus caché par la barre du bas).")],
