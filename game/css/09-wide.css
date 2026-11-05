@@ -104,9 +104,7 @@ html.wide-mode .hud-dock {
 
 /* ---------- Pages : toute la largeur, plus de bornes de téléphone ---------- */
 html.wide-mode #panel-container .nb-page-frame,
-html.wide-mode #panel-container .kfp-top-holder,
-html.wide-mode #panel-container .kfp-top-holder.is-subtab,
-html.wide-mode #panel-container .subtab-page-content {
+html.wide-mode #panel-container .kfp-top-holder {
   max-width: none;
 }
 html.wide-mode #panel-container .subtab-bar-wrapper {

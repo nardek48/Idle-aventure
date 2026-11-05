@@ -541,25 +541,7 @@ button.nb-entry-card {
    références externes au style visuel "pc").
    ========================= */
 
-.subtab-page {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  padding-top: 3px;
-}
-
-.subtab-page-content {
-  flex: 1 1 auto;
-  overflow-y: auto;
-  /* v3.242.0 : le geste ne remonte plus au parent en fin de course (iOS) — c'est
-     ce chaînage qui donnait l'impression de blocages courts dans Potions. */
-  overscroll-behavior-y: contain;
-  -webkit-overflow-scrolling: touch;
-  padding-bottom: 4px;
-  width: 100%;
-  max-width: 600px;
-  margin: 0 auto;
-}
+/* v3.705.0 : .subtab-page et .subtab-page-content retirées (Quêtes, Boutique et Donjon sont des pages à cadre). */
 
 .subtab-bar-wrapper {
   flex: 0 0 auto;

@@ -137,7 +137,12 @@ function buildDungeonLobbyHTML() {
   h += '<div class="dungeon-list">';
   (DUNGEONS || []).forEach(function (dungeon) { h += buildDungeonCardHTML(dungeon); });
   h += '</div>';
-  return '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="' + esc("images/Icons/subtabs/dungeon.webp|" + _t("Donjon")) + '">' + h + '</div>'; // v2.83.28
+  return dungeonPageFrameHTML(h);
+}
+
+/* v3.705.0 : cadre de page standard du Donjon (liste et tentative en cours), comme le Village */
+function dungeonPageFrameHTML(inner) {
+  return '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="' + esc("images/Icons/subtabs/dungeon.webp|" + _t("Donjon")) + '">' + inner + '</div>';
 }
 
 function buildDungeonHTML() {
@@ -145,13 +150,8 @@ function buildDungeonHTML() {
     DungeonManager.checkTicketReset();
   }
   var isActive = !!(game.dungeonRun && game.dungeonRun.active);
-  // v3.245.0 : plus de sous-onglets (la Boutique est chez l'Enchanteresse) — .subtab-page conservé pour le scroll
-  var h = '<div class="subtab-page">';
-  h += '<div class="subtab-page-content">';
-  h += isActive ? buildDungeonActiveHTML() : buildDungeonLobbyHTML();
-  h += '</div>';
-  h += '</div>';
-  return h;
+  // v3.705.0 : page standard à cadre (plus de .subtab-page) ; la tentative en cours garde sa carte, dans le cadre
+  return isActive ? dungeonPageFrameHTML(buildDungeonActiveHTML()) : buildDungeonLobbyHTML();
 }
 window.buildDungeonHTML = buildDungeonHTML;
 

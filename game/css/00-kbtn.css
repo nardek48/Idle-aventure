@@ -306,9 +306,6 @@
   background-repeat: repeat;
 }
 
-.kfp-top-holder.is-subtab {
-  max-width: 600px; /* aligné sur .subtab-page-content */
-}
 
 /* v3.581.0 : bandeau illustré (ui/screen-banner.js). Il remplace le titre et remonte sur le bas du cap :
    la zone de défilement passe sous le porte-titre de 40 px, le bandeau sticky la couvre toujours. */
@@ -542,7 +539,7 @@
 #panel-container .kframe .kf-mid::before, #panel-container .kframe .kf-mid::after { display: none; }
 #panel-container .kframe > .kf-bot, #panel-container .kframe:not(.kframe-page) > .kf-top { display: none; }
 #panel-container .kframe > .kf-mid { padding: 6px 10px 16px; }
-#panel-container .kfp-scrollzone, #panel-container .subtab-page-content { background: var(--kf-scrim); }
+#panel-container .kfp-scrollzone { background: var(--kf-scrim); }
 #panel-container .kfp-top-holder.has-banner { margin-bottom: 0; }
 #panel-container .kfp-top-holder.has-banner .kf-top { display: none; }
 #panel-container .kfb { margin: 8px 10px 10px; }

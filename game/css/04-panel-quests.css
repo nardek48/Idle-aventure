@@ -561,6 +561,10 @@
   display: flex;
   gap: 6px;
   margin-left: auto;
+  /* v3.705.0 : « Continuer » + « Abandonner » passent à la ligne au lieu de déborder (320 px, texte Grande) */
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: 100%;
 }
 
 .qb-card-btn {

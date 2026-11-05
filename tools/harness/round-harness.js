@@ -23737,8 +23737,8 @@ console.log("\n[468] v3.703.0 — Fenêtres : aides resserrées et « Suite ↓ 
     var nothrow = true; try { g.kDialog.open(null); g.kDialog.close(null); g.kDialog.close(); } catch (e) { nothrow = false; }
     ok(nothrow && g.kDialog.stack().length === 0 && g.kDialog.inertCount() === 0, "CPL3-5 : open / close sans fenêtre sans effet, pile vide, rien d'inerte");
     ok(/:is\(\.ksheet, \.full-menu, \.kwin\)\[aria-modal="true"\]:focus \{ outline: none; \}/.test(bloc), "CPL3-5 : la fenêtre focalisée n'a pas de liseré (ses boutons gardent le leur)");
-    // MARGES (suite) : pages à sous-onglets
-    ok(/@media \(max-width: 430px\) \{[\s\S]*?html:not\(\.pc-mode\) #panel-container\.has-subtab-page \{ padding-left: 4px; padding-right: 4px; \}/.test(rc), "MARGES : pages à sous-onglets (Quêtes, Boutique, Donjon) à 4 px sur téléphone, hors mode PC");
+    // MARGES (suite) : v3.705.0, Quêtes, Boutique et Donjon sont des pages à cadre : la règle .has-subtab-page est retirée, la règle des pages à cadre s'applique (voir [470])
+    ok(/@media \(max-width: 430px\) \{[\s\S]*?html:not\(\.pc-mode\) #panel-container:has\(> \.kfp-wrap\) \{ padding-left: 0; padding-right: 0; \}/.test(rc) && rc.indexOf("has-subtab-page {") < 0, "MARGES : Quêtes, Boutique, Donjon à 4 px sur téléphone par la règle des pages à cadre (v3.705), hors mode PC");
   } catch (err) { ok(false, "[468] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
@@ -23833,6 +23833,30 @@ console.log("\n[469] v3.704.0 — Aides et récit : neuf fiches d'aide (TUTO-16)
     ok(/\.hst-detail \{ position: sticky; bottom: 0; z-index: 2;/.test(rd("css/04-panel-heros-screens.css")) && /\.hst-emb \{[^}]*z-index: 1;/.test(rd("css/04-panel-heros-screens.css")), "Panneau de talent collant (z 2) devant les emblèmes de voie (z 1)");
   } catch (err) { ok(false, "[469] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   g.document.getElementById = keep.gid; g.document.querySelectorAll = keep.qsa; g.saveGame = keep.save; g.openCombatForecastConfirm = keep.ofc; run("pendingTutorial = null;");
+})();
+
+console.log("\n[470] v3.705.0 — Quêtes, Boutique et Donjon au standard des pages à cadre (comme le Village ; demande de Seb du 05/11)");
+(function () {
+  try {
+    var rd = function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); };
+    var nocom = function (t) { return t.replace(/\/\*[\s\S]*?\*\//g, "").split("\n").map(function (l) { return l.replace(/\s\/\/.*$/, ""); }).join("\n"); };
+    var debut = /^<div class="nb-page-frame nb-page-frame-fill kframe-page"/;
+    var q = g.buildQuestsHTML(), sh = g.buildShopHTML(), dl = run("game.dungeonRun = null; buildDungeonHTML()");
+    ok(debut.test(q) && q.indexOf("subtab-page") < 0 && /data-kf-banner="quetes"/.test(q), "Quêtes : page à cadre (bandeau « quetes »), plus de .subtab-page");
+    ok(/^<div class="nb-page-frame[^>]*>\s*<div class="kseg is-stack qb-tabs">/.test(q), "Quêtes : rangée d'onglets en tête du cadre (collée sous le bandeau replié, règle NOV-24)");
+    ok(debut.test(sh) && sh.indexOf("subtab-page") < 0 && /data-kf-title="Potions"/.test(sh), "Boutique : page à cadre « Potions », plus de .subtab-page");
+    ok(debut.test(dl) && dl.indexOf("subtab-page") < 0 && (dl.match(/dungeon-tier-card is-full/g) || []).length === 6 && /dungeon\.webp\|Donjon/.test(dl), "Donjon : page à cadre « Donjon », six cartes");
+    var da = run("game.dungeonRun = { active: true, dungeonId: DUNGEONS[0].id, wave: 2, marks: [] }; var _h = buildDungeonHTML(); game.dungeonRun = null; _h");
+    ok(debut.test(da) && da.indexOf("dungeon-active-card") > 0 && da.indexOf("switchTab('combat')") > 0 && da.indexOf("askDungeonForfeit()") > 0, "Donjon en cours : même cadre, carte de la tentative (reprendre, abandonner) gardée");
+    ok(typeof g.setShopSubTab === "function" && typeof g.setQuestCategory === "function", "liens gardés : setShopSubTab (› potions), setQuestCategory (› aventure)");
+    var js = ["js/ui/quests-view.js", "js/ui/shop-view.js", "js/ui/dungeon-view.js", "js/ui/ui-root.js", "js/ui/kframe-decorator.js"].map(function (f) { return nocom(rd(f)); }).join("\n");
+    ok(js.indexOf("subtab-page") < 0 && js.indexOf("is-subtab") < 0, "JS : plus de .subtab-page, .subtab-page-content, has-subtab-page ni porte-bandeau is-subtab");
+    var css = fs.readdirSync(path.join(ROOT, "css")).map(function (f) { return rd("css/" + f).replace(/\/\*[\s\S]*?\*\//g, ""); }).join("\n");
+    ok(!/\.subtab-page\b|\.subtab-page-content|has-subtab-page|\.kfp-top-holder\.is-subtab/.test(css), "CSS : règles mortes retirées (.subtab-page, .subtab-page-content, .has-subtab-page de v3.703, .is-subtab)");
+    ok(/#panel-container \.kfp-scrollzone::after \{ content: ""/.test(css) && /\.kfp-scrollzone \.kfb ~ \.nb-page-frame \.kf-mid > \.kseg \{ position: sticky; top: 44px;/.test(css), "pages à cadre : espace des bulles et onglets collés (NOV-24) inchangés");
+    ok(/\.qb-card-action \{[^}]*flex-wrap: wrap;[^}]*max-width: 100%;/.test(css), "Quêtes : « Continuer » + « Abandonner » passent à la ligne (320 px, Grande)");
+  } catch (err) { ok(false, "[470] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  run("game.dungeonRun = null;");
 })();
 
 Promise.all(ATTENTES).then(function () {

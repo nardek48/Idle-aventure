@@ -304,8 +304,6 @@ function renderPanel() {
 
   var sameTab = game.activeTab === lastRenderedTab;
   var savedScrollTop = sameTab ? container.scrollTop : 0;
-  var innerScroll = sameTab ? container.querySelector(".subtab-page-content") : null;
-  var savedInnerScrollTop = innerScroll ? innerScroll.scrollTop : null;
   // v3.425.0 (lot H-2) : la zone de défilement des cadres .kframe-page (.kfp-scrollzone) n'était
   // pas restaurée : toute action dans un cadre (choisir un emplacement, acheter…) renvoyait en
   // haut. On la garde tant que l'écran est le même : même onglet, mêmes boutons « allumés ».
@@ -393,11 +391,7 @@ function renderPanel() {
   // v3.520.0 (revue) : une feuille d'atelier, de bâtiment ou de l'Entrepôt ouverte hors du Village (refus d'expédition, Héros) se redessine aussi
   if (game.activeTab !== "village" && typeof refreshProductionSheet === "function") refreshProductionSheet();
 
-  // v3.131.0 (retour Seb, mobile) : neutralise le padding-bottom du panel pour les écrans à
-  // sous-onglets (.subtab-page) — voir css/02-layout.css #panel-container.has-subtab-page,
-  // évite le double compte de safe-bottom qui créait un espace vide visible entre la barre de
-  // sous-onglets (Équipement/Inventaire/Boutique, etc.) et la barre de navigation du bas.
-  container.classList.toggle("has-subtab-page", !!container.querySelector(".subtab-page"));
+  // v3.705.0 : plus d'écran .subtab-page (Quêtes, Boutique et Donjon sont des pages à cadre) : classe has-subtab-page retirée
 
   // v3.190.0 : cadre principal v2 — décoration 3 rangées de chaque .nb-page-frame
   // (voir ui/kframe-decorator.js), AVANT la restauration du scroll (les hauteurs changent).
@@ -409,10 +403,6 @@ function renderPanel() {
 
   if (sameTab) {
     container.scrollTop = savedScrollTop;
-    if (savedInnerScrollTop !== null) {
-      var newInnerScroll = container.querySelector(".subtab-page-content");
-      if (newInnerScroll) newInnerScroll.scrollTop = savedInnerScrollTop;
-    }
     if (savedFrameScroll && savedFrameScroll.top) {
       var newZone = container.querySelector(".kfp-scrollzone");
       if (newZone && getPanelScreenKey(container) === savedFrameScroll.key) newZone.scrollTop = savedFrameScroll.top;

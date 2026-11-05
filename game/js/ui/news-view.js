@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.705.0", "menu_icons/quests_menu", _t("Quêtes, Boutique et Donjon s'affichent comme le Camp et le Village : un peu plus de largeur sur téléphone, et dans les Quêtes, les onglets (Histoire, Annexes, Aventure…) restent sous le bandeau replié quand on défile.")],
     ["3.704.0", "codex/codex_lore", _t("Aides : neuf nouvelles fiches (Taverne, événements du village, hauts faits, Bestiaire, quêtes des compagnons, Chaos, pronostic, préparation de sortie, équipement), une seule fois et rangées dans Tutoriels. Au Camp, la carte d'Histoire montre le récit de l'étape (pli « Récit »), et l'arbre de talents dit quand vient le prochain point.")],
     ["3.703.0", "menu_icons/menu_menu", _t("Fenêtres : sur petit écran, les aides tiennent mieux et une pastille « Suite ↓ » signale qu'il reste à lire ; au clavier, feuilles et fenêtres gardent le focus et le rendent en se fermant. Les Quêtes, la Boutique et le Donjon gagnent aussi de la largeur sur téléphone.")],
     ["3.702.0", "menu_icons/settings_menu", _t("Petits écrans : les pages gagnent de la largeur, les onglets restent sous la main en défilant, « Partir » et « Abandonner » ne se touchent plus, et les petits liens se touchent mieux. En combat avec compagnons, la ressource du héros s'affiche en entier.")],

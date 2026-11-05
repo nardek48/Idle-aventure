@@ -29,7 +29,6 @@ html.text-big [id$="-sheet-root"] { zoom: 1.12; }
   html:not(.pc-mode) #panel-container .kfb { margin-left: 4px; margin-right: 4px; }
   html:not(.pc-mode) #panel-container .kfp-top-holder:not(.has-banner) .kf-top { margin-left: 4px; margin-right: 4px; }
   html:not(.pc-mode) #panel-container :is(.camp-tabs, .village-tabs).kseg.is-stack { margin-left: 0; margin-right: 0; }
-  html:not(.pc-mode) #panel-container.has-subtab-page { padding-left: 4px; padding-right: 4px; } /* v3.703.0 : pages à sous-onglets (Quêtes, Boutique, Donjon) */
 }
 /* UI-10 (A) : sous 600 px de haut, bandeau de 104 px sans la phrase (classe posée par ScreenBanner.fit) */
 .kfb.is-short .kfb-s { display: none; }

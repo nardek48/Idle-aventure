@@ -14,13 +14,10 @@ function setShopSubTab(tab) {
 
 function buildShopHTML() {
   activeShopSubTab = "potions";
-  var h = '<div class="subtab-page">';
-  h += '<div class="subtab-page-content">';
-  h += '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="' + _t("Potions") + '">';
+  // v3.705.0 : page standard à cadre (.kfp-wrap posé par le décorateur), comme le Village
+  var h = '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-title="' + _t("Potions") + '">';
   h += typeof buildPotionShopHTML === "function" ? buildPotionShopHTML() : "";
   h += '</div>'; // fin .nb-page-frame
-  h += '</div>'; // fin .subtab-page-content
-  h += '</div>'; // fin .subtab-page
   return h;
 }
 
