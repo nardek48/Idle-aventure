@@ -4,7 +4,7 @@
 
    Modèle du jeu (depuis v3.388.0) : PA2_RARE.forest (js/data/pa2-content.js), lu par
      - Pa2Run.takeRelic : chaque trouvaille ramassée donne 1 Sève à findChancePct % × qualité du jet (un 20 la garantit) ;
-     - Pa2Run.finish("dest") : 2 / 3 / 4 Sève à la destination selon l'anneau (Sentier, Chemin, Périple).
+     - Pa2Run.finish("dest") : 2 / 3 / 5 Sève (4 avant v3.714.0) à la destination selon l'anneau (Sentier, Chemin, Périple).
    Un KO garde la Sève déjà trouvée et perd celle de la destination. Hors mesure : la récompense de secteur de la
    carte vivante (première libération), les Mémoires (Récolte…) et la rumeur du village.
 

@@ -251,14 +251,15 @@ var PA2_GOLD = {
   tertre: 14
 };
 
-/* Ressource rare (Sève d'Aeswyn en Forêt) : jamais perdue (comme en v1). Banc. */
+/* Ressource rare (Sève d'Aeswyn en Forêt) : jamais perdue (comme en v1). Banc.
+   v3.714.0 (Seb, option A) : destination du Périple 4 → 5 dans tous les mondes. */
 var PA2_RARE = {
-  forest: { resourceId: "seve_aeswyn", findChancePct: 25, dest: { 1: 2, 2: 3, 3: 4 } },
-  desert: { resourceId: "verre_des_dunes", findChancePct: 25, dest: { 1: 2, 2: 3, 3: 4 } }, // v3.387.0
-  ruins: { resourceId: "pierre_errante", findChancePct: 25, dest: { 1: 2, 2: 3, 3: 4 } }, // v3.429.0
-  crypt: { resourceId: "cire_sepulcre", findChancePct: 25, dest: { 1: 2, 2: 3, 3: 4 } },   // v3.454.0
-  mountain: { resourceId: "cendre_vive", findChancePct: 25, dest: { 1: 2, 2: 3, 3: 4 } },   // v3.489.0
-  tower: { resourceId: "givre_bleu", findChancePct: 25, dest: { 1: 2, 2: 3, 3: 4 } }       // v3.627.0
+  forest: { resourceId: "seve_aeswyn", findChancePct: 25, dest: { 1: 2, 2: 3, 3: 5 } },
+  desert: { resourceId: "verre_des_dunes", findChancePct: 25, dest: { 1: 2, 2: 3, 3: 5 } }, // v3.387.0
+  ruins: { resourceId: "pierre_errante", findChancePct: 25, dest: { 1: 2, 2: 3, 3: 5 } }, // v3.429.0
+  crypt: { resourceId: "cire_sepulcre", findChancePct: 25, dest: { 1: 2, 2: 3, 3: 5 } },   // v3.454.0
+  mountain: { resourceId: "cendre_vive", findChancePct: 25, dest: { 1: 2, 2: 3, 3: 5 } },   // v3.489.0
+  tower: { resourceId: "givre_bleu", findChancePct: 25, dest: { 1: 2, 2: 3, 3: 5 } }       // v3.627.0
 };
 
 /* v3.453.0 : choix de Mémoire qui ajoutent 1 matériau rare par destination atteinte, par monde. */
