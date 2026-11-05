@@ -1,4 +1,4 @@
-# v3.714.0 — Coque du téléphone : cadres à 4 px du bord, comme les cartes
+# v3.715.0 — Coque du téléphone : cadres à 4 px du bord, comme les cartes
 
 Demande de Seb (05/11). Aucun état sauvegardé nouveau, aucun fichier ajouté.
 
@@ -12,4 +12,4 @@ Demande de Seb (05/11). Aucun état sauvegardé nouveau, aucun fichier ajouté.
 ## Contrôles
 
 - `node --check` sur chaque JS modifié.
-- `round-harness.js` : 6 635 OK, 0 échec (deux passes) ; `boot-harness.js` 4/0 ; `hero-creation-harness.js` 44/0 ; `parcours-harness.js` 232/0.
+- `round-harness.js` : 6 637 OK, 0 échec (deux passes) ; `boot-harness.js` 4/0 ; `hero-creation-harness.js` 44/0 ; `parcours-harness.js` 232/0.

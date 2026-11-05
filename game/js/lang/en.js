@@ -10,6 +10,7 @@
    Les textes des données sont traduits par _td() à l'affichage (registre : lang/data-fields.js). */
 I18n.register("en", {
   // index.html
+  "Le Périple rapporte davantage : 5 matériaux rares à l'arrivée au lieu de 4.": "The Journey pays more: 5 rare materials on arrival instead of 4.",
   "Rôdeur : en combat auto et dans le conseil doré (Grimoire sans règle), Tir perforant passe en priorité dès qu'il est prêt, et la Concentration est gardée pour lui. Contres d'annonce, Défense et règles de ton Grimoire passent toujours devant.": "Ranger: in auto combat and the golden hint (Grimoire with no rule), Piercing Shot now takes priority as soon as it is ready, and Focus is saved for it. Announcement counters, Defence and your Grimoire rules still come first.",
   "Le cadre du haut et la barre du bas s'alignent sur les cartes : 4 px du bord de l'écran.": "The top frame and the bottom bar now line up with the cards: 4 px from the screen edge.",
   "Bandeau du haut sans bordure noire autour du cadre ; sous l'onglet choisi, un filet lumineux et son losange remplacent l'ancienne lueur.": "Top banner without the black border around its frame; under the selected tab, a glowing line and its diamond replace the old glow.",

@@ -24208,6 +24208,32 @@ console.log("\n[477] v3.713.0 — Tir perforant « dès que prêt » au repli (S
   } catch (err) { ok(false, "[477] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[478] v3.714.0 — Périple : 5 matériaux rares à la destination dans les six mondes (Seb 05/11, option A)");
+(function () {
+  var S = g.SceneRunManager, P = g.Pa2Run, RA = g.PA2_RARE;
+  var TPL = { forest: "petite_aventure_foret", desert: "petite_aventure_desert", ruins: "petite_aventure_ruines", crypt: "petite_aventure_crypte" };
+  try {
+    var mondes = ["forest", "desert", "ruins", "crypt", "mountain", "tower"];
+    ok(mondes.every(function (w) { return RA[w] && RA[w].dest[1] === 2 && RA[w].dest[2] === 3 && RA[w].dest[3] === 5; }), "PA2_RARE : destination 2 / 3 / 5 (Sentier, Chemin, Périple) dans les six mondes");
+    // Vraie destination d'un Périple (gardien abattu), sans Mémoire, rumeur ni accroche : 5 rares crédités à l'Entrepôt.
+    var bad = [];
+    ["forest", "desert", "ruins", "crypt"].forEach(function (w) {
+      game = freshCombat("knight"); giveWeapon(); run("game.enemy = null; game.combat = null;");
+      S.ensureDefaults(); game.explorationProgression.petiteAventure = { spent: 0, since: null };
+      game.resources.petite_ration = 5; game.heroLevel = 12; game.heroHp = game.heroMaxHp; game.sceneRun = null;
+      if (g.SortieManager.isActive()) g.SortieManager.end("return");
+      S.startRun(TPL[w]); var r = game.sceneRun; r.hookId = null; r.ring = "periple"; P.depart(); r.cuts = {}; r.traps = {};
+      var k = Object.keys(r.nodes).filter(function (x) { return r.nodes[x].type === "boss"; })[0];
+      r.at = k; r.status = "pa2-node"; r.nodes[k].done = false; r.flags.bossDown = true;
+      var avant = g.WarehouseManager.getAmount(RA[w].resourceId);
+      P.finish("dest");
+      var gain = g.WarehouseManager.getAmount(RA[w].resourceId) - avant;
+      if (P.ring(r).ring !== 3 || !r.end || r.end.rare !== 5 || gain !== 5) bad.push(w + " (" + (r.end && r.end.rare) + ", +" + gain + ")");
+    });
+    ok(bad.length === 0, "destination réelle d'un Périple : 5 rares rapportés et crédités (Forêt, Désert, Ruines, Crypte)" + (bad.length ? " : " + bad.join(", ") : ""));
+  } catch (err) { ok(false, "[478] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");
