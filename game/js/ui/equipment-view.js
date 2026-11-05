@@ -407,7 +407,7 @@ function buildUnifiedDetailPanelHTML(entries) {
     h += '<div class="eq-detail-hint">' + (entry.isHealing
       ? _t("Se boit en combat : la préparation de sortie dit combien tu en emportes.")
       : _t("Se boit au départ, dans la préparation de sortie.")) + '</div>';
-    h += '<button class="btn-buy is-sec eq-detail-action" type="button" onclick="PotionManager.sellPotion(\'' + esc(potion.id) + '\')">' + _t("Vendre") + '</button>';
+    h += '<button class="btn-buy is-sec eq-detail-action" type="button" onclick="PotionManager.sellPotion(\'' + esc(potion.id) + '\')">' + _t("Vendre (+{n} or)", { n: formatNumber(PotionManager.getSellValue(potion)) }) + '</button>'; // ECON-2 : le prix sur le bouton
   }
 
   h += '</div>';

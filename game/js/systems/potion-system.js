@@ -129,6 +129,16 @@ var PotionManager = {
     saveGame();
   },
 
+  /* ECON-2 (option A, Seb 05/11) : moitié du prix, au plus la valeur des ingrédients de la recette de l'Apothicaire
+     (valeurs du Grand Ouvrage : Soin mineur 12 Eau + 4 Blé = 16 or, Soin majeur 24 Eau + 2 Pain de 20 = 64 or). */
+  getSellValue: function (potion) {
+    var half = Math.floor(this.getCost(potion) / 2);
+    var r = (window.APOTHECARY_RECIPES || []).filter(function (x) { return x.potionId === potion.id; })[0];
+    if (!r || !window.GrandOuvrage || typeof GrandOuvrage.getValue !== "function") return half;
+    var v = Object.keys(r.inputs || {}).reduce(function (a, k) { return a + GrandOuvrage.getValue(k) * Number(r.inputs[k] || 0); }, 0);
+    return v > 0 ? Math.min(half, v) : half;
+  },
+
   sellPotion: function (id) {
     this.ensure();
     this.ensureHealing();
@@ -139,7 +149,7 @@ var PotionManager = {
     var stock = isHealing ? this.getHealingStock(id) : this.getStock(id);
     if (stock <= 0) return showToast(_t("Aucune potion à vendre"), 1000);
 
-    var value = Math.floor(this.getCost(potion) / 2);
+    var value = this.getSellValue(potion);
     if (isHealing) game.healingPotionsOwned[id] = stock - 1;
     else game.potionsOwned[id] = stock - 1;
     game.gold += value;

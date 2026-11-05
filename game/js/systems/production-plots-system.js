@@ -374,7 +374,8 @@ var ProductionPlotsSystem = {
   _autoKeep: function (key) {
     var cap = WarehouseManager.getCap(key);
     var reserve = (window.ResourceReserveManager && typeof ResourceReserveManager.getReserve === "function") ? Number(ResourceReserveManager.getReserve(key) || 0) : 0;
-    return Math.max(cap === Infinity ? 0 : Math.ceil(cap * this.AUTO_KEEP), reserve);
+    var forge = (window.GrandOuvrage && typeof GrandOuvrage.storyForgeKeep === "function") ? GrandOuvrage.storyForgeKeep(key) : 0; // ECON-1 : n'entame pas la Forge de l'Histoire
+    return Math.max(cap === Infinity ? 0 : Math.ceil(cap * this.AUTO_KEEP), reserve, forge);
   },
   /* Prochain achat d'une parcelle : { kind, cost } ou null. */
   getNextAction: function (buildingId, i) {

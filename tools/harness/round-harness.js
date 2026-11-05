@@ -23420,6 +23420,61 @@ console.log("\n[458] v3.693.0 — Compagnons, fin de partie et méta (audit 04/1
   } catch (err) { MM.has = hasM; ok(false, "[458] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[459] v3.694.0 — Décisions économie (Seb, 05/11 : ECON-1 et ECON-2, option A)");
+(function () {
+  var V = g.VillageBuildingManager, GO = g.GrandOuvrage, W = g.WarehouseManager, SQ = g.StoryQuestManager;
+  var ordre = ["forest", "desert", "ruins", "crypt", "mountain", "tower"];
+  // Place l'Histoire à `stepId` (chapitres d'avant terminés), Forge au niveau `forge`, Entrepôt 0, seuil 0,70
+  var placer = function (chap, stepId, forge) {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
+    var w = ordre.indexOf(chap), reached = {};
+    for (var i = 0; i <= w; i++) reached[i] = true;
+    g.game.worldsEverReached = reached; g.WorldManager.worldIndex = w;
+    SQ.ensure();
+    for (var j = 0; j < w; j++) g.game.storyQuests[ordre[j]].skipped = true;
+    g.game.storyQuests[chap].currentStep = g.STORY_QUESTS[chap].steps.findIndex(function (s) { return s.id === stepId; });
+    V.ensure(); var B = g.game.village.buildings; B.forge = B.forge || {}; B.warehouse = B.warehouse || {};
+    B.forge.level = forge; B.warehouse.level = 0;
+    var st = GO._state(); st.auto = true; st.seuil = 0.7;
+    g.game.resources.pierre = 0; W.addResource("pierre", 2000, true);
+  };
+  try {
+    // ECON-1 : à l'Entrepôt 0 et au seuil 0,70, la Forge 5, 6 et 7 payables quand l'Histoire les demande
+    [["crypt", "crypte_13", 4, 400], ["mountain", "montagne_13", 5, 480], ["tower", "tour_13", 6, 480]].forEach(function (c) {
+      placer(c[0], c[1], c[2]);
+      var cost = V.getNextCost("forge") || {}, cap = W.getCap("pierre");
+      ok(cap === 500 && cost.pierre === c[3] && GO.autoKeep("pierre") === c[3] && W.getAmount("pierre") >= cost.pierre && W.capHint("pierre", cost.pierre) === "",
+        "ECON-1 : " + c[1] + ", Forge " + (c[2] + 1) + " (" + cost.pierre + " pierres) payable — gardé " + W.getAmount("pierre") + " / plafond " + cap);
+    });
+    placer("mountain", "montagne_12", 5);
+    ok(GO.autoKeep("pierre") === 480 && GO.storyForgeKeep("acier") === 130, "ECON-1 : montagne_12 (Forge 6 ouverte à montagne_11, exigée à l'étape 13) : 480 pierres gardées ; l'acier, produit, n'est pas versé");
+    // Hors de ces étapes : comportement d'avant
+    placer("mountain", "montagne_05", 5);
+    ok(GO.autoKeep("pierre") === 350 && GO.storyForgeKeep("pierre") === 0, "ECON-1 : montagne_05 (Forge 6 pas encore ouverte) : seuil seul, 350 pierres");
+    placer("mountain", "montagne_13", 6);
+    ok(GO.autoKeep("pierre") === 350, "ECON-1 : Forge 6 déjà bâtie à montagne_13 : seuil seul, 350 pierres");
+    placer("crypt", "crypte_14", 4);
+    ok(GO.autoKeep("pierre") === 350, "ECON-1 : crypte_14 (étape de la Forge 5 passée) : seuil seul");
+    placer("tower", "tour_13", 6); g.game.village.buildings.warehouse.level = 10; W.addResource("pierre", 5000, true);
+    var capT = W.getCap("pierre");
+    ok(GO.autoKeep("pierre") === Math.max(Math.floor(capT * 0.7), 480) && GO.autoKeep("pierre") <= capT, "ECON-1 : jamais au-dessus du plafond de l'Entrepôt (" + GO.autoKeep("pierre") + " / " + capT + ")");
+    placer("mountain", "montagne_13", 5);
+    ok(g.ProductionPlotsSystem._autoKeep("pierre") >= 480, "ECON-1 : l'achat automatique des parcelles n'entame pas les pierres de la Forge 6");
+    // ECON-2 : revente des potions préparées au plus à la valeur des ingrédients
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
+    var PM = g.PotionManager, mineur = PM.getHealingPotion("potion_soin_mineur"), majeur = PM.getHealingPotion("potion_soin_majeur");
+    ok(PM.getSellValue(mineur) === 16 && PM.getSellValue(majeur) === 64, "ECON-2 : Soin mineur 16 or (12 Eau + 4 Blé), Soin majeur 64 or (24 Eau + 2 Pain à " + GO.getValue("pain") + ")");
+    var pw = PM.getPotion("potion_power");
+    ok(PM.getSellValue(pw) === Math.min(Math.floor(PM.getCost(pw) / 2), 16 + 5), "ECON-2 : potion de puissance plafonnée à ses ingrédients (" + PM.getSellValue(pw) + " or)");
+    run("game.cycleCount = 5;");
+    ok(PM.getSellValue(mineur) === 16, "ECON-2 : le plafond tient après des Ascensions (prix d'achat plus haut)");
+    run("game.cycleCount = 0; PotionManager.ensureHealing(); game.healingPotionsOwned.potion_soin_mineur = 2; game.gold = 0;");
+    PM.sellPotion("potion_soin_mineur");
+    ok(g.game.gold === 16 && g.game.healingPotionsOwned.potion_soin_mineur === 1, "ECON-2 : vendre un Soin mineur rapporte 16 or");
+    ok(/_t\("Vendre \(\+\{n\} or\)", \{ n: formatNumber\(PotionManager\.getSellValue\(potion\)\) \}\)/.test(fs.readFileSync(path.join(ROOT, "js/ui/equipment-view.js"), "utf8")), "ECON-2 : le bouton dit « Vendre (+16 or) »");
+  } catch (err) { ok(false, "[459] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

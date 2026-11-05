@@ -10,6 +10,7 @@
    Les textes des données sont traduits par _td() à l'affichage (registre : lang/data-fields.js). */
 I18n.register("en", {
   // index.html
+  "Économie : le Grand Ouvrage garde toujours assez de pierre pour la Forge que l'Histoire demande. Les potions se revendent au plus la valeur de leurs ingrédients (Soin mineur 16 or), prix affiché sur le bouton.": "Economy: the Great Work always keeps enough stone for the Forge the Story asks for. Potions sell for at most the value of their ingredients (Minor Healing Potion: 16 gold), price shown on the button.",
   "Compagnons : la première patrouille rapporte toujours sa relique, « Répartir de nouveau » prévient quand des reliques s'éteignent, et l'aperçu de « Tout offrir » compte la Mémoire vive. Les missions d'expédition affichent leur coût de départ.": "Companions: the first patrol always brings back its relic, “Spread again” warns when relics go dark, and the “Offer all” preview counts Sharp Memory. Expedition missions show their departure cost.",
   "Combat : un contre réussi affiche de nouveau « CONTRÉ ! » sur l'ennemi. Ménage du code, sans autre changement.": "Combat: a successful counter shows “COUNTERED!” on the enemy again. Code cleanup, no other change.",
   "Premier lancement plus léger : images d'interface, icônes et bandeaux allégés sans perte visible ; le dictionnaire anglais n'est plus téléchargé par les joueurs francophones.": "Lighter first launch: interface images, icons and banners slimmed down with no visible loss; French-speaking players no longer download the English dictionary.",
@@ -1298,6 +1299,7 @@ I18n.register("en", {
   "Restaure {p}% des PV max.": "Restores {p}% of max HP.",
   "Stock : {n}": "Stock: {n}",
   "Vendre": "Sell",
+  "Vendre (+{n} or)": "Sell (+{n} gold)",
   "Actuellement équipé": "Currently equipped",
   "Rien d’équipé sur cet emplacement — équiper cet objet sera un pur gain.": "Nothing equipped in this slot — equipping this item is pure gain.",
   "Rareté": "Rarity",
