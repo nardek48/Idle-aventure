@@ -23960,6 +23960,23 @@ console.log("\n[472] v3.706.1 — UI-10, cas restant (Seb 05/11) : texte Grande 
   de.classList = keepCl; g.innerHeight = ih;
 })();
 
+console.log("\n[473] v3.707.0 — finitions sous 600 px de haut (Seb 05/11) : carte d'Histoire du Camp, écran de retour");
+(function () {
+  try {
+    var r = fs.readFileSync(path.join(ROOT, "css/07-responsive.css"), "utf8");
+    var k = r.indexOf("v3.707.0"), blk = k >= 0 ? r.slice(r.indexOf("@media (max-height: 599px) {", k)) : "";
+    blk = blk.slice(0, blk.indexOf("\n}\n") + 2);
+    ok(k > 0 && blk.length > 0, "UI-10 (fin) : bloc « @media (max-height: 599px) » présent après la marque v3.707.0");
+    ok(/\.camp-mission-card\.is-main \.nv2-lead \{ -webkit-line-clamp: 1;/.test(blk) && /-webkit-line-clamp: 2;/.test(fs.readFileSync(path.join(ROOT, "css/04-panel-camp.css"), "utf8")), "UI-10 (fin) : récit sur 1 ligne sous 600 px, 2 lignes au-dessus (règle de base inchangée)");
+    ok(/\.camp-mission-card\.is-main \.camp-mission-title-row \{ display: contents; \}/.test(blk) && /\.camp-mission-card\.is-main \.camp-mission-badge \{ order: 2;/.test(blk), "UI-10 (fin) : titre seul sur sa ligne, badge « Histoire » à côté du lieu");
+    ok(/> \.nv2-recit \{ order: 1;/.test(blk) && /> \.camp-mission-reward \{ order: 2;/.test(blk) && /:has\(\.nv2-fold\[aria-expanded="true"\]\) > :is\(\.nv2-recit, \.camp-mission-reward\) \{ flex-basis: 100%; \}/.test(blk), "UI-10 (fin) : récompense à droite du pli « Récit », dessous quand le pli est ouvert");
+    ok(/\.camp-mission-card\.is-main > \.camp-mission-btn \{[^}]*margin: 4px auto 0;/.test(blk) && !/min-height/.test(blk), "UI-10 (fin) : « Accepter » reste centré, aucune hauteur de toucher réduite (pli « Récit » à 44 px)");
+    ok(/\.ret-card \.kwin-head \{ flex-direction: row;/.test(blk) && /\.ret-card \.kwin-ico img \{ width: 36px; height: 36px; \}/.test(blk) && /\.ret-card \.ret-line \{/.test(blk), "Retour : en-tête en ligne (icône 36 px) et phrase d'ambiance resserrée sous 600 px");
+    var h = g.buildCampMissionCardHTML({ id: "story_forest", status: "available", isMain: true, badge: "story", type: "combat", title: "T", place: "P", objectiveLabel: "O", rewardSummary: "50 or", worldId: "forest", accept: function () {} });
+    ok(/class="camp-mission-card  is-main"/.test(h) && h.indexOf("camp-mission-reward") > 0 && h.indexOf("Accepter") > 0, "UI-10 (fin) : la carte d'Histoire garde sa structure (rien de retiré : titre, lieu, objectif, récompense, Accepter)");
+  } catch (err) { ok(false, "[473] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");
