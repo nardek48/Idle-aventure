@@ -14,5 +14,15 @@ function getAutoPolicyDefault(classId) {
   return found ? found.slice() : fallback.slice();
 }
 
+/* v3.713.0 (Seb 05/11) : technique « dès que prête » du repli, Concentration gardée pour elle (Tir perforant du Rôdeur).
+   Contres d'annonce, Défense et veine passent toujours devant ; une règle explicite du Grimoire prime. */
+var AUTO_POLICY_HOLD_SLOT = { archer: "skill3" };
+
+function getAutoPolicyHoldSlot(classId) {
+  return (classId && AUTO_POLICY_HOLD_SLOT[classId]) || null;
+}
+
 window.AUTO_POLICY_DEFAULTS = AUTO_POLICY_DEFAULTS;
+window.AUTO_POLICY_HOLD_SLOT = AUTO_POLICY_HOLD_SLOT;
+window.getAutoPolicyHoldSlot = getAutoPolicyHoldSlot;
 window.getAutoPolicyDefault = getAutoPolicyDefault;

@@ -24167,6 +24167,47 @@ console.log("\n[476] v3.710.0 — Coque du téléphone : bandeau et barre du bas
   } catch (err) { ok(false, "[476] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[477] v3.713.0 — Tir perforant « dès que prêt » au repli (Seb 05/11) : contres, Défense et Grimoire explicite devant");
+(function () {
+  try {
+    var CCM = g.ClassCombatManager;
+    function prep(hero, res, cd, opts) {
+      opts = opts || {};
+      run("fullResetState(); game.playerName='Test'; game.heroId='" + hero + "'; game.equipped.weapon = generateEquipmentItem('weapon', 'common', 0); EquipmentManager.recalcStats(); game.heroHp = game.heroMaxHp;");
+      var l = [];
+      for (var i = 0; i < (opts.n || 1); i++) l.push({ id: "slime", name: "M" + i, isBoss: false, hp: 1e9, maxHp: 1e9, stats: g.ENEMY_DB.slime.stats, resists: [], weak: [] });
+      g.CombatEngine.spawnGroup(l);
+      CCM.ensureForCurrentClass();
+      g.game.classResource.current = res;
+      g.game.classCooldowns = cd || {};
+      g.game.grimoireRules = opts.rules || [];
+      if (opts.heal) g.game.enemy.healTelegraphed = true;
+      if (opts.charge) g.game.enemy.chargeTelegraphed = true;
+      if (opts.lowHp) g.game.heroHp = Math.floor(g.game.heroMaxHp * 0.3);
+    }
+    function choix() { var d = CCM.chooseRoundAction(false), e = CCM.chooseRoundAction(true); return ((d && d.slot) || "basic") === ((e && e.slot) || "basic") ? ((d && d.slot) || "basic") : "écart"; }
+    ok(g.getAutoPolicyHoldSlot("archer") === "skill3" && g.getAutoPolicyHoldSlot("knight") === null && g.getAutoPolicyHoldSlot("mage") === null, "seul le Rôdeur garde sa technique « dès que prête » (Tir perforant)");
+    prep("ranger", 60);
+    ok(choix() === "skill3", "Concentration suffisante, hors recharge : Tir perforant (conseil doré = robot)");
+    prep("ranger", 30);
+    ok(choix() === "basic", "Tir perforant prêt mais Concentration courte : attaque de base, la Concentration est gardée");
+    prep("ranger", 30, { archer_piercing_shot: 2 });
+    ok(choix() === "skill1", "Tir perforant en recharge : Tir précis comme avant");
+    prep("ranger", 40, null, { heal: true });
+    ok(choix() === "skill2", "annonce de soin : la Rafale qui la contre garde la main");
+    prep("ranger", 30, null, { charge: true });
+    ok(choix() === "defense", "charge annoncée : l'Esquive (COMB-1) garde la main");
+    prep("ranger", 30, null, { lowHp: true });
+    ok(choix() === "defense", "PV sous 40 % : la Défense garde la main");
+    prep("ranger", 30, null, { n: 2, rules: [{ conditionId: "multipleEnemies", actionSlot: "skill1" }] });
+    var d = CCM.chooseRoundAction(false);
+    ok(d && d.slot === "skill1" && d.matchedConditionId === "multipleEnemies", "règle explicite du Grimoire : elle prime, rien ne change pour le joueur");
+    prep("knight", 30);
+    ok(choix() !== "basic", "Chevalier : repli inchangé (pas de ressource gardée)");
+    ok(g.CLASS_SKILLS.archer.actions.skill3.ignoreAffinity === true, "exemption de Tir perforant au malus « sans arme » gardée");
+  } catch (err) { ok(false, "[477] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

@@ -13,6 +13,7 @@
      Leviers de fréquence (Seb 05/11, mesure seule) : cout40 (coût de base 50 → 40, le talent Perforation fixe toujours 40/35) ;
      prio2 / pret : Tir perforant prêt (sans recharge) passe avant Tir précis et Rafale, la Concentration est gardée pour lui
      (attaque de base), avec au moins 2 ennemis debout (prio2) ou toujours (pret) ; contres et Défense du repli jamais touchés.
+     Depuis v3.713.0, « pret » est dans le jeu au repli (règle explicite du Grimoire prioritaire) : « actuel » l'inclut.
    Contenus : --donjon N (vagues, campement « souffler », boss) ou --quete id (ex. aq_montagne_dragon).
 
    USAGE : node tools/sim/tir-perforant-bench.js . --save ranger.json --donjon 3 [--quete id] [--runs N] [--variante actuel,perce,traverse] [--x 0.5] [--traverse 1] */

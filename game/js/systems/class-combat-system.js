@@ -695,8 +695,23 @@ var ClassCombatManager = {
     var slot = (typeof chooseAutoAction === "function")
       ? chooseAutoAction(priorityListForFallback, kit, resourceStateForFallback, game.classCooldowns, grimoireContext)
       : null;
+    var hold = (typeof getAutoPolicyHoldSlot === "function") ? getAutoPolicyHoldSlot(classId) : null;
+    if (hold) slot = this.applyFallbackHold(hold, slot, kit, resourceStateForFallback, grimoireContext, priorityListForFallback);
     if (!slot || slot === "basic") return null;
     return { slot: slot, matchedConditionId: null }; // jamais de contre depuis le repli par défaut
+  },
+
+  /* v3.713.0 (Seb 05/11) : technique « dès que prête » (hors recharge) : passe avant les autres, sinon attaque de base
+     pour garder la ressource ; Défense (COMB-1), veine et contre d'une annonce en cours gardent la main. */
+  applyFallbackHold: function (hold, slot, kit, resourceState, ctx, list) {
+    var a = kit.actions[hold];
+    if (!a || slot === hold || slot === "defense" || slot === "vein") return slot;
+    if (!isCooldownReady(game.classCooldowns, a.id) || isGrimoireSlotAvoided(hold, ctx)) return slot;
+    if (slot && slot !== "basic" && actionCountersLiveAnnounce(kit.actions[slot], ctx)) return slot;
+    if (canUseAction(resourceState, game.classCooldowns, a, ctx)) return hold;
+    if (ctx && ctx.isSilenced) return slot;
+    var def = kit.actions.defense;
+    return (def && (list || []).indexOf("defense") >= 0 && canUseAction(resourceState, game.classCooldowns, def, ctx)) ? "defense" : "basic";
   }
 };
 
