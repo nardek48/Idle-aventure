@@ -37,7 +37,8 @@ var FORECAST_RATIO_THRESHOLDS = {
 /* v3.429.14 : dégâts réels / estimés, par classe. Mesuré au banc (--frappes) : le Chevalier
    garde 12 à 30 % de ses actions et n'exécute presque jamais, il touche 0,38 à 0,65 de l'estimé
    contre 0,57 à 0,89 à distance. 0,7 le recale sur les classes à distance, sur qui les seuils sont calés. */
-var FORECAST_CLASS_DMG_MULT = { knight: 0.7 };
+// PRONO-MISSION (05/11) : 0,7 → 0,75, avec l'usure moyenne (Chevalier sans arme, 3 potions : 1,47 → 1,14 pour 57 % d'échec réel)
+var FORECAST_CLASS_DMG_MULT = { knight: 0.75 };
 
 /* v3.523.0 (audit COM-1) : dégâts réels d'une ÉLITE évaluée / estimés, par archétype (rage triplée par
    l'exaltation, blindage), et son bouclier (−50 % sur 20 à 25 % des rounds) sur les dégâts du héros. Calés au
@@ -190,6 +191,7 @@ var CombatForecast = {
     var heroDef = (window.HEROES_DB && game.heroId) ? HEROES_DB[game.heroId] : null;
     var ranged = !!(heroDef && heroDef.weaponType && heroDef.weaponType !== "sword");
     if (!ranged) return heroDef && typeof KNIGHT_CHARGE_ROUNDS === "number" ? KNIGHT_CHARGE_ROUNDS : 0; // v3.477.0 : Charge du Chevalier
+    if (enemy._forecastEngage != null) return enemy._forecastEngage; // PRONO-MISSION : ennemi moyen de la réserve
     return Math.max(0, Number(getEnemyEngageRounds(enemy.id, !!enemy.isBoss) || 0));
   },
 
@@ -464,6 +466,46 @@ var CombatForecast = {
   /* Ennemi de RÉFÉRENCE d'une mission : celui qui décide de l'issue. Pour une quête à étape
      bossKill, c'est le boss ; sinon l'ennemi ordinaire du pool. QuestEnemyManager.spawnFor
      construit l'objet sans toucher à game.enemy — rien n'est modifié ici. */
+  /* PRONO-MISSION (Seb, 05/11, option A) : ids possibles d'un tirage de quête (enemyFilter, sinon
+     réserve de l'aventure). Le pronostic moyenne sur eux : même héros, même verdict. */
+  getQuestPool: function (quest) {
+    if (!quest || !window.WORLDS) return [];
+    var db = window.ENEMY_DB || {};
+    if (Array.isArray(quest.enemyFilter) && quest.enemyFilter.length) {
+      var valid = quest.enemyFilter.filter(function (id) { return !!db[id]; });
+      if (valid.length) return valid;
+    }
+    var w = WORLDS.filter(function (x) { return x.id === quest.worldId; })[0];
+    var adv = w && w.adventures ? (w.adventures[quest.adventureIndex] || w.adventures[0]) : null;
+    return adv && Array.isArray(adv.enemyPool) ? adv.enemyPool.slice() : [];
+  },
+
+  /* Un tirage par id de la réserve (spawnFor sur une copie filtrée), un seul si rien n'est tiré. */
+  spawnEach: function (quest) {
+    var db = window.ENEMY_DB || {};
+    var fixedGroup = Array.isArray(quest.group) && quest.group.length > 1 && quest.group.every(function (m) { return typeof m === "string" && !!db[m]; });
+    var pool = fixedGroup ? [] : this.getQuestPool(quest);
+    if (pool.length <= 1) return [QuestEnemyManager.spawnFor(quest, false)];
+    return pool.map(function (id) { return QuestEnemyManager.spawnFor(Object.assign({}, quest, { enemyFilter: [id] }), false); });
+  },
+
+  /* Ennemi moyen d'une liste : PV, caractéristiques et approche moyennés ; sans nom s'ils diffèrent. */
+  averageEnemy: function (list) {
+    list = (list || []).filter(Boolean);
+    if (list.length <= 1) return list[0] || null;
+    var self = this, n = list.length, out = Object.assign({}, list[0]), st = Object.assign({}, list[0].stats || {});
+    Object.keys(st).forEach(function (k) {
+      if (typeof st[k] !== "number") return;
+      st[k] = list.reduce(function (a, e) { return a + Number((e.stats && e.stats[k]) || 0); }, 0) / n;
+    });
+    out.stats = st;
+    out.maxHp = Math.round(list.reduce(function (a, e) { return a + Number(e.maxHp || 0); }, 0) / n);
+    out.hp = out.maxHp;
+    out._forecastEngage = Math.round(list.reduce(function (a, e) { return a + self.getEngageRounds(e); }, 0) / n);
+    if (list.some(function (e) { return e.id !== list[0].id; })) out.name = null;
+    return out;
+  },
+
   getReferenceEnemy: function (mission) {
     if (!mission || !window.QuestEnemyManager) return null;
     if (mission.sourceKind === "adventure") {
@@ -480,11 +522,12 @@ var CombatForecast = {
       // v3.311.0 : rencontres scriptées -> la rencontre en cours sert de référence.
       // v3.429.9 : sauf si la quête finit sur un boss (le trône de sable) : c'est lui qui décide.
       if (aq.encounters && window.AdventureQuestManager && !hasBoss) return firstOfGroup(QuestEnemyManager.spawnFor(AdventureQuestManager._encounterQuest(aq), false));
-      return firstOfGroup(QuestEnemyManager.spawnFor(aq, hasBoss)); // v3.269.0 : spawnFor peut renvoyer un groupe
+      if (hasBoss) return firstOfGroup(QuestEnemyManager.spawnFor(aq, true)); // v3.269.0 : spawnFor peut renvoyer un groupe
+      return this.averageEnemy(this.spawnEach(aq).map(firstOfGroup)); // PRONO-MISSION : moyenne de la réserve
     }
     if (mission.sourceKind === "hunt") {
       var hq = (window.HUNT_QUESTS || {})[mission.questId];
-      return hq ? firstOfGroup(QuestEnemyManager.spawnFor(hq, false)) : null;
+      return hq ? this.averageEnemy(this.spawnEach(hq).map(firstOfGroup)) : null;
     }
     return null;
   },
@@ -520,17 +563,23 @@ var CombatForecast = {
         for (var k = 0; k < fights; k++) {
           list.push(this.getGroupFight([].concat(QuestEnemyManager.spawnFor(AdventureQuestManager._encounterQuest(quest, k), false) || [])));
         }
-      } else {
-        var spawned = quest ? QuestEnemyManager.spawnFor(quest, false) : null;
+        list.forEach(function (f) { attrition += f.cost; });
+        attrition = Math.max(0, attrition - this.getCompanionHeals(list, false)); // v3.429.15 : soins de Wenna et Maddoc
+      } else if (quest) {
         /* v3.429.8 : un groupe (meute, escouade) frappe à plusieurs. On compte les combats de groupe
-           (cible / taille du groupe) et l'usure de chacun membre par membre, comme en donjon. */
-        var group = [].concat(spawned || []).filter(Boolean);
-        var one = group.length > 1 ? this.getGroupFight(group) : (group[0] ? this.getSingleFight(group[0]) : null);
-        var reps = group.length > 1 ? Math.ceil(fights / group.length) : (one ? fights : 0);
-        for (var r = 0; r < reps; r++) list.push(one);
+           (cible / taille du groupe) et l'usure de chacun membre par membre, comme en donjon.
+           PRONO-MISSION : usure moyenne sur la réserve d'ennemis, au lieu d'un seul tirage. */
+        var self = this, tirages = this.spawnEach(quest), somme = 0, nb = 0;
+        tirages.forEach(function (spawned) {
+          var group = [].concat(spawned || []).filter(Boolean), l = [];
+          var one = group.length > 1 ? self.getGroupFight(group) : (group[0] ? self.getSingleFight(group[0]) : null);
+          var reps = group.length > 1 ? Math.ceil(fights / group.length) : (one ? fights : 0);
+          for (var r = 0; r < reps; r++) l.push(one);
+          var a = 0; l.forEach(function (f) { a += f.cost; });
+          somme += Math.max(0, a - self.getCompanionHeals(l, false)); nb++;
+        });
+        attrition = nb ? somme / nb : 0;
       }
-      list.forEach(function (f) { attrition += f.cost; });
-      attrition = Math.max(0, attrition - this.getCompanionHeals(list, false)); // v3.429.15 : soins de Wenna et Maddoc
     }
     var out = this.forEnemy(enemy, { attrition: attrition });
     if (out) { out.enemyName = enemy.name; out.precedingFights = fights; }

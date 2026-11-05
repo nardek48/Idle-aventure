@@ -993,8 +993,8 @@ var ADVENTURE_QUESTS = {
     bossId: "ancientdragon",
     // banc (montagne-acte3-bench --quetes, sauvegardes de fin de chapitre, 10 runs, Ch. / Rô. / Ma.) : 2,1 / 0,85 -> 60 / 100 / 10 % ;
     // 1,8 / 0,75 -> 100 / 100 / 50 % ; 1,6 / 0,65 -> 100 / 100 / 80 %. Retenu entre les deux, pour le Mage.
-    bossHpMult: 3.5, // H1 (R1) : 1,7 → 2,5 ; audit P1 : → 3,5
-    bossPowerMult: 0.94, // H1 (R1) : 0,7 → 0,75 ; lot 6 (Seb) : +25 % (robot repris à montagne_19 : 38 → 42 % de PV restants, 0 mort sur 30)
+    bossHpMult: 2.6, // audit P1 : 3,5 ; DRAGON-V2 (Seb, 05/11, option A) : → 2,6
+    bossPowerMult: 0.7, // lot 6 : 0,94 ; DRAGON-V2 (Seb, 05/11) : → 0,70, sort Rôdeur et Mage du mur
     bossPhases: [
       { atPct: 1, sorts: true, label: "il regarde vos mains", line: "Ses yeux passent sur chacun, et s'arrêtent sur les mains." },
       { atPct: 0.75, heat: 1, label: "la roche chauffe", line: "Sous lui, les veines battent plus vite." },

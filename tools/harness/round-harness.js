@@ -19464,7 +19464,7 @@ console.log("\n[342] v3.521.0 — lot 6 : élites de la Montagne (garantie), Dra
     ok(!rep.hostile && !LM.isHostile("mountain", "nid") && rep.message.indexOf(g._t("Soigne-toi, puis retente quand tu veux.")) >= 0 && !/lave/.test(rep.message), "élite perdue : ni coulée ni « jusqu'à demain », on peut retenter");
     var rep2 = LM.onRunEnd("mountain", "ruisseaux", "fail");
     ok(rep2.hostile && /coulée/.test(rep2.message), "Petite Aventure perdue : la coulée reste");
-    ok(g.ADVENTURE_QUESTS.aq_montagne_dragon.bossPowerMult === 0.94, "Dragon ancien : puissance ×0,94 (+25 %, Seb)");
+    ok(g.ADVENTURE_QUESTS.aq_montagne_dragon.bossPowerMult === 0.7, "Dragon ancien : puissance ×0,70 (DRAGON-V2, Seb 05/11)");
     ok(/^Quatre pièces/.test(g.STORY_QUESTS.mountain.steps.filter(function (x) { return x.id === "montagne_09"; })[0].narrative.completion), "fin de montagne_09 : « Quatre pièces » (palier de 4)");
   } catch (err) { ok(false, "[342] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
@@ -23690,6 +23690,46 @@ console.log("\n[462] v3.697.0 — Décisions règles et textes (Seb, 05/11, opti
     ok(!/\bil\b|Maître|Gardien|précis,/.test(tg.knight + tg.archer + tg.mage), "NOV-11 : accroches de classe neutres");
     ok(/Il te faudra une arme/.test(g.STORY_QUESTS.forest.steps[0].narrative.objective) && /Toi, tu es là/.test(fsRead("js/data/village-events.js")), "NOV-11 : « une arme » à forest_01, « tu es là » au marché");
   } catch (err) { ok(false, "[462] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[463] v3.698.0 — Décisions Dragon ancien, pronostic de mission, Bestiaire (Seb, 05/11, option A : DRAGON-V2, DRAGON-MAGE, PRONO-MISSION, BESTIAIRE-GOLEM)");
+(function () {
+  try {
+    // DRAGON-V2 : PV ×2,6, puissance ×0,70 ; rencontres inchangées
+    var qd = g.ADVENTURE_QUESTS.aq_montagne_dragon;
+    ok(qd.bossHpMult === 2.6 && qd.bossPowerMult === 0.7 && qd.encounterHpMult === 3.1 && qd.enemyPowerMult === 7, "DRAGON-V2 : Dragon ancien PV ×2,6 et puissance ×0,70, rencontres inchangées");
+    // DRAGON-MAGE : rien de changé, les boss restent neutres (ni faiblesse ni résistance)
+    game = freshCombat("mage"); giveWeapon();
+    game.enemy = { id: "ancientdragon", isBoss: true, hp: 10, maxHp: 10, weak: ["magic"], resists: ["bow"], stats: g.makeRpgStats(1, 1, 1, 1, 1) };
+    ok(g.getDamageAffinity().mult === 1, "DRAGON-MAGE : le Dragon (boss) reste neutre face à la magie (système inchangé)");
+    game.enemy = { id: "lavagolem", isBoss: false, hp: 10, maxHp: 10, weak: ["magic"], resists: ["sword"], stats: g.makeRpgStats(1, 1, 1, 1, 1) };
+    ok(g.getDamageAffinity().mult === g.WEAK_DMG_MULT, "DRAGON-MAGE : un ennemi ordinaire faible à la magie prend ×1,15");
+
+    // PRONO-MISSION : même héros, même verdict, quel que soit le tirage
+    var CF = g.CombatForecast, mis = { sourceKind: "adventure", questId: "aq_forest_expedition", title: "x" };
+    ok(CF.getQuestPool(g.ADVENTURE_QUESTS.aq_forest_expedition).join(",") === "slime,goblin,spider", "PRONO-MISSION : réserve de la quête lue sur enemyFilter");
+    var vus = {}, us = {};
+    ["slime", "goblin", "spider", "slime", "spider"].forEach(function (forceId, k) {
+      game = freshCombat("mage"); game.healingPotionsOwned = { potion_soin_mineur: 3 };
+      var ri = g.randInt; g.randInt = function (a, b) { return (k % 2) ? b : a; }; // tirages extrêmes, alternés
+      try { var f = CF.forMission(mis); vus[f.id + ":" + (f.ratio || 0).toFixed(3)] = 1; us[Math.round(f.attrition)] = 1; } finally { g.randInt = ri; }
+    });
+    ok(Object.keys(vus).length === 1 && Object.keys(us).length === 1, "PRONO-MISSION : verdict et usure identiques sur 5 tirages (" + Object.keys(vus).join(" | ") + " ; usure " + Object.keys(us).join("/") + ")");
+    var trois = ["slime", "goblin", "spider"].map(function (id) { return { id: id, isBoss: false, maxHp: id === "slime" ? 30 : 60, hp: 1, name: id, stats: { power: id === "spider" ? 9 : 3 } }; });
+    var moy = CF.averageEnemy(trois);
+    ok(moy.maxHp === 50 && moy.stats.power === 5 && moy.name === null && CF.averageEnemy([trois[0]]) === trois[0], "PRONO-MISSION : ennemi moyen de la réserve (PV 50, puissance 5, sans nom annoncé)");
+    ok(g.FORECAST_CLASS_DMG_MULT.knight === 0.75, "PRONO-MISSION : coefficient du Chevalier recalé à 0,75");
+
+    // BESTIAIRE-GOLEM : une fiche, trois compteurs additionnés, aucun compteur touché
+    game = freshCombat("knight");
+    game.killCounts = { golem: 2, golem_tour: 5, golem_sanctuaire: 1 };
+    var ids = g.getAllBestiaryIds();
+    ok(ids.indexOf("golem") !== -1 && ids.indexOf("golem_tour") === -1 && ids.indexOf("golem_sanctuaire") === -1, "BESTIAIRE-GOLEM : une seule fiche « Le Golem »");
+    ok(g.bestiaryKills("golem") === 8 && game.killCounts.golem === 2 && game.killCounts.golem_tour === 5 && game.killCounts.golem_sanctuaire === 1, "BESTIAIRE-GOLEM : la fiche compte les trois Golems (8), les compteurs d'origine restent");
+    game.killCounts = { golem_sanctuaire: 1 };
+    ok(g.bestiaryMet("golem"), "BESTIAIRE-GOLEM : le seul Golem du Sanctuaire suffit à ouvrir la fiche (ancienne sauvegarde)");
+    ok(/Ruines|Sanctuaire|Ouvrage|Golem/.test(g.creatureWhere("golem").join(",")) || g.creatureWhere("golem").length > 0, "BESTIAIRE-GOLEM : la fiche dit où la croiser (" + g.creatureWhere("golem").join(", ") + ")");
+  } catch (err) { ok(false, "[463] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
 Promise.all(ATTENTES).then(function () {

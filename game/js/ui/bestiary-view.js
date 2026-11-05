@@ -106,10 +106,18 @@ function estimateCreatureCombatStats(id, data, isBoss) {
   return { hp: Math.max(1, hp), dmg: dmg, critChance: critChance };
 }
 
+/* BESTIAIRE-GOLEM (Seb, 05/11, option A) : une seule fiche pour une même créature ; ses compteurs
+   d'origine restent tels quels, la fiche les additionne (affichage seulement). */
+var BESTIARY_MERGED = { golem: ["golem_tour", "golem_sanctuaire"] };
+function bestiaryIsMergedAlias(id) {
+  return Object.keys(BESTIARY_MERGED).some(function (k) { return BESTIARY_MERGED[k].indexOf(id) !== -1; });
+}
+
 function getAllBestiaryIds() {
   // v3.205.0 (E5) : les élites ont leur entrée, comme les boss.
   var eliteIds = window.ELITE_DB ? Object.keys(ELITE_DB) : [];
-  return Object.keys(ENEMY_DB).concat(Object.keys(BOSS_DB)).concat(eliteIds).concat(bestiaryDungeonBossIds());
+  return Object.keys(ENEMY_DB).concat(Object.keys(BOSS_DB)).concat(eliteIds).concat(bestiaryDungeonBossIds())
+    .filter(function (id) { return !bestiaryIsMergedAlias(id); });
 }
 
 /* ---------- v3.456.8 (liste de Seb) : boss de donjon, fiche commune, « où la trouver », fiche en grand ---------- */
@@ -154,6 +162,10 @@ function bestiaryDungeonKills(dungeonId) {
   return Number(((game.explorationProgression || {}).dungeonBossKills || {})[dungeonId] || 0);
 }
 function bestiaryKills(id) {
+  if (BESTIARY_MERGED[id]) return [id].concat(BESTIARY_MERGED[id]).reduce(function (a, k) { return a + bestiaryOwnKills(k); }, 0);
+  return bestiaryOwnKills(id);
+}
+function bestiaryOwnKills(id) {
   var dj = bestiaryDungeonOf(id);
   if (dj) return Math.max((game.dungeonTierCleared || {})[dj.id] ? 1 : 0, bestiaryDungeonKills(dj.id));
   var n = Number((game.killCounts || {})[id] || 0);
@@ -168,6 +180,7 @@ function creatureWhere(id) {
   function add(x) { if (x && out.indexOf(x) === -1) out.push(x); }
   var dj = bestiaryDungeonOf(id);
   if (dj) return [_td(dj.name)];
+
   WORLDS.forEach(function (w) { (w.adventures || []).forEach(function (a) { if ((a.enemyPool || []).indexOf(id) !== -1 || a.boss === id) add(_td(a.name)); }); });
   (window.DUNGEONS || []).forEach(function (d) {
     if (d.locked && !d.requiresStoryStep) return;
@@ -184,6 +197,7 @@ function creatureWhere(id) {
     var p = S[k].parcours;
     if (p && (p.steps || []).some(function (st) { return st.foe === id; })) add(_td(S[k].title));
   });
+  (BESTIARY_MERGED[id] || []).forEach(function (k) { creatureWhere(k).forEach(add); }); // BESTIAIRE-GOLEM : lieux des fiches réunies
   return out.slice(0, 3);
 }
 
