@@ -10,6 +10,7 @@
    Les textes des données sont traduits par _td() à l'affichage (registre : lang/data-fields.js). */
 I18n.register("en", {
   // index.html
+  "Nouveau bandeau du haut et nouvelle barre du bas, sur les dessins de Seb. Le « + » à côté de l'or ouvre « Ton or peut servir » et pulse quand une dépense t'attend (il remplace la bulle dorée).": "New top banner and bottom bar, from Seb's artwork. The “+” next to your gold opens “Your gold can be put to use” and pulses when a purchase is waiting (it replaces the golden bubble).",
   "Rôdeur : Tir perforant traverse désormais sa cible, un second ennemi debout reçoit le même coup. Tutoriel de l'Amélioration : Précision et Volonté ont leur propre icône.": "Ranger: Piercing Shot now passes through its target, a second standing enemy takes the same hit. Upgrade tutorial: Accuracy and Will have their own icons.",
   "Outil d'administration plus fidèle : une étape d'Histoire forcée pose aussi l'équipement, les secteurs et les compteurs qu'elle demande.": "More faithful admin tool: a forced Story step now also sets the gear, sectors and counters it requires.",
   "Petits écrans : la mission d'Histoire du Camp tient au-dessus de la barre du bas (« Accepter » visible dès l'ouverture), et l'écran de retour montre « Décharger » sans défiler.": "Small screens: the Camp's Story mission fits above the bottom bar (\"Accept\" visible right away), and the return screen shows \"Unload\" without scrolling.",
@@ -5198,6 +5199,7 @@ I18n.register("en", {
   "Plafond du Terrain : {n}": "Training Ground cap: {n}",
   "Il ouvre la Forge : ton or pourra renforcer ton équipement.": "It opens the Forge: your gold can then strengthen your gear.",
   "{n} or à investir": "{n} gold to invest",
+  "Or à investir": "Gold to invest",
   "Ton or peut servir": "Your gold can be put to use",
   "{n} or en poche": "{n} gold on hand",
   "{x} : il en manque {n}.": "{x}: {n} missing.",

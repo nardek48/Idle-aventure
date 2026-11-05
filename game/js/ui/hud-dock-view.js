@@ -91,7 +91,9 @@ function renderHudDock() {
   refreshTabClaimBadge(fil);
   if (typeof refreshTabVillageBadge === "function") refreshTabVillageBadge(); // v3.604.0 : événement du village
   // v3.429.24 : l'or à investir, en plus des trois situations, tout en haut (loin du pouce)
-  var or = typeof hudDockOr === "function" ? hudDockOr() : null;
+  // v3.710.0 : sur téléphone, le « + » du bandeau remplace la bulle d'or (ui/hud-view.js)
+  var wide = document.documentElement && document.documentElement.classList && document.documentElement.classList.contains("wide-mode");
+  var or = wide && typeof hudDockOr === "function" ? hudDockOr() : null;
   if (or) list.unshift(or);
   var key = list.map(function (it) { return it.k + ":" + (it.badge || "") + ":" + (it.urgent ? 1 : 0) + ":" + (it.id || "") + ":" + it.icon + ":" + (it.tip || ""); }).join("|"); // v3.516.0 (ERG-8) : le titre change sans changer d'id
   if (key === hudDockLastKey) { if (!hudDockSpace) setHudDockSpace(root); return; } // UI-1 : dock vide au premier rendu, la marge se rattrape ensuite
