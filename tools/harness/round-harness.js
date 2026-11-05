@@ -23937,6 +23937,29 @@ console.log("\n[471] v3.706.0 — Atelier 4 « Signaux », variantes A (Seb 05/1
   try { run("game.village.caravans = []; fullResetState();"); g.closeReturnScreen(); } catch (e) {}
 })();
 
+console.log("\n[472] v3.706.1 — UI-10, cas restant (Seb 05/11) : texte Grande sous 600 px de haut, pas de bandeau illustré");
+(function () {
+  var rd = function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); };
+  var de = g.document.documentElement, ih = g.innerHeight, SB = g.ScreenBanner;
+  var cl = de.classList, keepCl = cl;
+  try {
+    var set = {}; de.classList = { contains: function (c) { return !!set[c]; }, toggle: function (c, v) { set[c] = v === undefined ? !set[c] : !!v; }, add: function (c) { set[c] = true; }, remove: function (c) { delete set[c]; } };
+    var cas = function (h, big, pc) { g.innerHeight = h; set = {}; if (big) set["text-big"] = true; if (pc) set["pc-mode"] = true; return SB.isOff(); };
+    ok(cas(568, true) && !cas(568, false) && !cas(844, true) && !cas(568, true, true), "UI-10 : bandeau caché seulement en texte Grande sous 600 px, hors mode PC (568 G oui ; 568 N, 844 G, PC non)");
+    g.innerHeight = 568; set = { "text-big": true };
+    var cls = {}, k = { classList: { toggle: function (c, v) { cls[c] = v === undefined ? !cls[c] : !!v; }, remove: function () { [].slice.call(arguments).forEach(function (c) { delete cls[c]; }); }, contains: function (c) { return !!cls[c]; } }, dataset: {}, style: {}, getBoundingClientRect: function () { return { width: 300, height: 0 }; }, getAttribute: function () { return ""; }, setAttribute: function () {} };
+    SB.fit(k); SB.mini(k, { scrollTop: 500 });
+    ok(cls["is-off"] && !cls["is-mini"] && !cls["is-short"] && k.dataset.fold === "0" && !k.style.height, "UI-10 : fit pose is-off, rien à replier (fold 0, jamais is-mini)");
+    g.innerHeight = 568; set = {}; cls = {}; SB.fit(k);
+    ok(!cls["is-off"] && cls["is-short"] && k.style.height === "104px" && k.dataset.fold === "60", "UI-10 : texte Normale sous 600 px, bandeau de 104 px inchangé");
+    g.innerHeight = 844; set = { "text-big": true }; cls = {}; SB.fit(k);
+    ok(!cls["is-off"] && k.style.height === "150px", "UI-10 : texte Grande au-dessus de 600 px, bandeau de 150 px inchangé");
+    var r = rd("css/07-responsive.css");
+    ok(/#panel-container \.kfb\.is-off \{ display: none; \}/.test(r) && /\.kfp-scrollzone \.kfb\.is-off ~ \.nb-page-frame \.kf-mid > \.kseg \{ top: 0; \}/.test(r) && /\.kfp-scrollzone \.kfb ~ \.nb-page-frame \.kf-mid > \.kseg \{ position: sticky; top: 44px;/.test(r), "UI-10 : bandeau caché, onglets collés en haut de la zone ; règle NOV-24 (44 px) gardée ailleurs");
+  } catch (err) { ok(false, "[472] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  de.classList = keepCl; g.innerHeight = ih;
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

@@ -61,6 +61,13 @@ var ScreenBanner = {
     return vh > 0 && vh < this.SHORT_MAX_H && !document.documentElement.classList.contains("pc-mode") ? this.PHONE_H_SHORT : this.PHONE_H;
   },
 
+  /* UI-10 (C restreinte, Seb 05/11) : texte Grande sur téléphone de moins de 600 px de haut, pas de bandeau
+     (« Accepter » du Camp restait sous la barre du bas) ; partout ailleurs, rien ne change. */
+  isOff: function () {
+    var de = document.documentElement;
+    return de.classList.contains("text-big") && !de.classList.contains("wide-mode") && this.phoneH() === this.PHONE_H_SHORT;
+  },
+
   clampWorld: function (i) {
     return Math.max(0, Math.min(SCREEN_BANNER_WORLDS.length - 1, Number(i) || 0));
   },
@@ -170,7 +177,9 @@ var ScreenBanner = {
 
   /* Hauteur : 150 px sur téléphone (104 sur petit écran), image entière (3:1) en grand écran ; le haut négatif replie */
   fit: function (el) {
-    var wide = document.documentElement.classList.contains("wide-mode");
+    var wide = document.documentElement.classList.contains("wide-mode"), off = this.isOff();
+    el.classList.toggle("is-off", off); // caché (css/07-responsive.css) : rien à replier, onglets collés en haut
+    if (off) { el.classList.remove("is-mini", "is-short"); el.dataset.fold = "0"; return; }
     var h = wide ? Math.round(el.getBoundingClientRect().width / 3) : this.phoneH();
     if (!(h > 0)) h = this.PHONE_H;
     el.classList.toggle("is-short", !wide && h === this.PHONE_H_SHORT); // phrase masquée (css/07-responsive.css)
@@ -194,7 +203,7 @@ var ScreenBanner = {
   /* Replié : la phrase s'efface, seul le titre reste */
   mini: function (el, scroller) {
     var fold = Number(el.dataset.fold) || 0;
-    el.classList.toggle("is-mini", scroller.scrollTop >= fold - 4);
+    el.classList.toggle("is-mini", !el.classList.contains("is-off") && scroller.scrollTop >= fold - 4);
   },
 
   /* Changement de format (rotation, passage PC / téléphone) : recalcul des bandeaux visibles */
