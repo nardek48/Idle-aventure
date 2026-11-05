@@ -23742,6 +23742,99 @@ console.log("\n[468] v3.703.0 — Fenêtres : aides resserrées et « Suite ↓ 
   } catch (err) { ok(false, "[468] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[469] v3.704.0 — Aides et récit : neuf fiches d'aide (TUTO-16), récit au Camp (NOV-2), bandeau des talents (C13), Codex « Le Chaos », panneau de talent (atelier aides-recit, Seb 05/11)");
+(function () {
+  var keep = { gid: g.document.getElementById, qsa: g.document.querySelectorAll, save: g.saveGame, ofc: g.openCombatForecastConfirm };
+  try {
+    var rd = function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); };
+    var GT = g.GENERIC_TUTORIALS, ks = Object.keys(GT), en = g.I18n.dicts.en;
+    var NEW = ["tavern_contracts", "village_events", "achievements_intro", "bestiary_intro", "companion_quests", "chaos_variant", "combat_forecast", "sortie_prep", "equipment_intro"];
+    ok(NEW.every(function (id) { return GT[id] && GT[id].points.length === 3 && GT[id].title; }), "TUTO-16 : neuf fiches de 3 points déclarées dans GENERIC_TUTORIALS");
+    ok(NEW.every(function (id) { return en[GT[id].title] && GT[id].points.every(function (pt) { return !!en[pt.text]; }); }), "TUTO-16 : titres et points traduits en anglais");
+    ok(NEW.every(function (id) { return GT[id].points.reduce(function (n, pt) { return n + (pt.text.match(/[A-Za-zÀ-ÿ0-9’'-]+/g) || []).length; }, 0) <= 100; }), "TUTO-16 : 100 mots au plus par fiche (plafond de l'audit)");
+    ok(GT.village_events.tab === "village" && ks.indexOf("village_events") > ks.indexOf("village_training") && ks.indexOf("village_training") > ks.indexOf("village_production"), "TUTO-16 : « Ce matin à Aeswyn » déclarée après Village & Production et le Terrain");
+    ok(GT.achievements_intro.tab === "achievements" && GT.bestiary_intro.tab === "bestiary" && GT.companion_quests.tab === "quests" && GT.equipment_intro.tab === "more"
+      && ["tavern_contracts", "chaos_variant", "combat_forecast", "sortie_prep"].every(function (id) { return !GT[id].tab; }), "TUTO-16 : déclencheurs par onglet (5) ou par l'écran expliqué (4, sans tab)");
+    ok(["village_events", "achievements_intro", "bestiary_intro", "companion_quests", "equipment_intro"].every(function (id) { return GT[id].solo === true; }), "TUTO-16 : les fiches d'onglet ne s'ouvrent jamais par-dessus une autre fenêtre (solo)");
+    // Textes vérifiés contre le code
+    ok(g.TavernManager.getSlotCount(1) === 2 && g.TavernManager.getSlotCount(6) === 7 && g.TAVERN_REFRESH_MS === 6 * 3600 * 1000 && g.TAVERN_LEVEL6_BONUS === 1.15 && /2 au niveau 1, 7 au niveau 6/.test(GT.tavern_contracts.points[2].text), "TUTO-16 : Taverne, 2 à 7 contrats, 6 h, +15 % au niveau 6");
+    ok(g.VILLAGE_EVENT_CHANCE === 0.5 && g.VILLAGE_EVENT_DAYS === 2 && g.VILLAGE_EVENT_RUMOR.lootMult === 1.5 && g.VILLAGE_EVENT_MARKET.discount === 0.8 && g.WORLD_DAY_SORTIES === 3, "TUTO-16 : événements, 1 sur 2, 2 jours, +50 %, −20 %, nuit toutes les 3 sorties");
+    var bb = g.BESTIARY_BONUS_CONFIG.slime, bk = g.BESTIARY_BONUS_CONFIG[Object.keys(g.BOSS_DB)[0]];
+    ok(bb.map(function (t) { return t.kills + ":" + t.goldBonus; }).join() === "10:0.01,50:0.03,100:0.05" && bk.map(function (t) { return t.kills + ":" + t.goldBonus; }).join() === "3:0.02,10:0.05,25:0.1", "TUTO-16 : bonus d'or du Bestiaire, 10/50/100 et 3/10/25");
+    ok(g.ACHIEVEMENT_CATEGORIES.filter(function (c) { return typeof c.world === "number"; }).every(function (c) { return c.tiers.join() === "3,6,8" && c.tierRewards[2].title; }), "TUTO-16 : paliers 3 / 6 / 8 par monde, titre au palier Or");
+    ok(g.EQUIPMENT_SLOTS.length === 7 && g.MAX_INVENTORY_SIZE === 25 && g.SET_BONUS_CONFIG.tiers.map(function (t) { return t.count; }).join() === "3,7", "TUTO-16 : 7 emplacements, Sac de 25, panoplie à 3 et 7");
+    ok(g.FORECAST_LOW_HP_PCT === 0.6 && /ou partir quand même/.test(GT.combat_forecast.points[1].text) && !/« Partir quand même »/.test(GT.combat_forecast.points[1].text), "TUTO-16 : pronostic sous 60 % des PV ; « Partir quand même » n'est pas toujours le bouton (corrigé)");
+    var H = g.HEROES_DB, sum = function (id) { var st = H[id].stats; return ["power", "endurance", "celerity", "precision", "will"].reduce(function (n, k) { return n + (st[k] || 0); }, 0); };
+    ok(/^Seules leurs cinq caractéristiques de départ changent\./.test(GT.chaos_variant.points[1].text) && sum("chaosKnight") > sum("knight"), "TUTO-16 : Chaos, « seules leurs caractéristiques changent » (le total aussi : Chevalier " + sum("knight") + " → " + sum("chaosKnight") + ")");
+    // Catalogue (A)
+    var CM = g.TutorialCatalogManager, vil = CM.getBySection("village"), gen = CM.getBySection("generic"), ids = function (l) { return l.map(function (e) { return e.id; }); };
+    ok(ids(vil).indexOf("generic:tavern_contracts") > 0 && ids(vil).indexOf("generic:village_events") > 0 && vil[0].source === "village" && ids(gen).indexOf("generic:tavern_contracts") < 0,
+      "Catalogue (A) : Taverne et événements dans « Le village », après les quêtes de village");
+    ok(["achievements_intro", "bestiary_intro", "companion_quests", "chaos_variant", "combat_forecast", "sortie_prep", "equipment_intro"].every(function (id) { return ids(gen).indexOf("generic:" + id) >= 0; }), "Catalogue (A) : les sept autres dans « Les bases »");
+    game = freshCombat("knight"); run("pendingTutorial = null; game.genericTutorialsSeen = {};");
+    ok(!CM.isUnlocked(CM.getById("generic:tavern_contracts")), "Catalogue : fiche non vue verrouillée (état genericTutorialsSeen)");
+    // Ouverture unique, jamais par-dessus une autre fenêtre, suite après « Compris »
+    var roots = {}; ["tutorial-modal-root", "forecast-modal-root", "village-modal-root", "sortie-prep-root", "hero-selection-root"].forEach(function (k) { roots[k] = el(); roots[k].id = k; });
+    g.document.getElementById = function (id) { return roots[id] || keep.gid(id); };
+    g.document.querySelectorAll = function (sel) { return sel === '[id$="-modal-root"]' ? Object.keys(roots).filter(function (k) { return /-modal-root$/.test(k); }).map(function (k) { return roots[k]; }) : keep.qsa(sel); };
+    var saves = 0; g.saveGame = function () { saves++; };
+    roots["village-modal-root"].innerHTML = "<div>Taverne</div>";
+    ok(g.openGenericTutorialOnce("tavern_contracts", { allow: "village-modal-root" }) && /Les contrats de la Taverne/.test(roots["tutorial-modal-root"].innerHTML), "TUTO-16 : la fiche de la Taverne s'ouvre au-dessus de sa feuille");
+    run("closeGenericTutorialModal('tavern_contracts');");
+    ok(g.game.genericTutorialsSeen.tavern_contracts === true && roots["tutorial-modal-root"].innerHTML === "" && saves === 1 && !g.openGenericTutorialOnce("tavern_contracts", { allow: "village-modal-root" }), "TUTO-16 : « Compris » la marque vue (sauvée) ; elle ne se rouvre plus");
+    ok(!g.openGenericTutorialOnce("sortie_prep", { allow: "sortie-prep-root" }) && !g.pendingTutorial, "TUTO-16 : une autre fenêtre ouverte (feuille de bâtiment) : pas de fiche par-dessus");
+    roots["village-modal-root"].innerHTML = "";
+    roots["forecast-modal-root"].innerHTML = "<div>x</div>"; g.maybeShowGenericTutorial("achievements");
+    ok(!g.pendingTutorial, "TUTO-16 : fiche d'onglet (Hauts faits) retenue tant qu'une fenêtre est ouverte");
+    roots["forecast-modal-root"].innerHTML = ""; g.maybeShowGenericTutorial("achievements");
+    ok(g.pendingTutorial && g.pendingTutorial.genericId === "achievements_intro", "TUTO-16 : puis ouverte à l'arrivée suivante sur Hauts faits"); run("closeGenericTutorialModal('achievements_intro');");
+    var opened = 0; g.openCombatForecastConfirm = function () { opened++; };
+    run("game.heroHp = Math.floor(game.heroMaxHp * 0.3);");
+    var adv = { id: "adv_eq_forest_spider", sourceKind: "adventure", questId: "eq_forest_spider", title: "x" };
+    if (!g.CombatForecast.forMission(adv)) adv = null;
+    if (adv) {
+      g.launchWithForecast(adv, function () {});
+      ok(opened === 0 && g.pendingTutorial && g.pendingTutorial.genericId === "combat_forecast", "TUTO-16 : première fenêtre « Avant de partir » : la fiche du pronostic d'abord, seule");
+      run("closeGenericTutorialModal('combat_forecast');");
+      ok(opened === 1 && !g.pendingTutorial, "TUTO-16 : « Compris » ouvre ensuite le pronostic");
+      g.launchWithForecast(adv, function () {}); ok(opened === 2 && !g.pendingTutorial, "TUTO-16 : les fois suivantes, le pronostic seul");
+    } else ok(false, "TUTO-16 : aucune mission à pronostic pour le contrôle");
+    var s0 = saves; roots["hero-selection-root"].innerHTML = "<div>création</div>";
+    ok(g.openGenericTutorialOnce("chaos_variant", { allow: "hero-selection-root", noSave: true }), "TUTO-16 : fiche du Chaos au-dessus de la création");
+    run("closeGenericTutorialModal('chaos_variant');"); ok(saves === s0 && g.game.genericTutorialsSeen.chaos_variant, "TUTO-16 : vue sans sauvegarde pendant la création (sauvée à la confirmation)");
+    roots["hero-selection-root"].innerHTML = "";
+    ok(!GT.village_events.condition(), "TUTO-16 : sans événement, pas de fiche « Ce matin à Aeswyn »");
+    var d = g.WorldDays.day(); g.game.explorationProgression.villageEvent = { id: "f_moissons", from: d, until: d + 2, w: 0, done: false };
+    ok(GT.village_events.condition(), "TUTO-16 : un événement en cours l'ouvre");
+    delete g.game.explorationProgression.villageEvent;
+    run("activeHerosSubTab = 'equip'; game.inventory = [];"); ok(!GT.equipment_intro.condition(), "TUTO-16 : Équipement, Sac vide : pas encore");
+    run("game.inventory = [{ uid: 'x' }];"); ok(GT.equipment_intro.condition(), "TUTO-16 : Équipement avec un objet au Sac"); run("game.inventory = []; activeHerosSubTab = 'hero';");
+    ok(/if \(id === "tavern" && VillageBuildingManager\.getLevel\("tavern"\) >= 1/.test(rd("js/ui/village-building-view.js")) && /isChaosHeroId\(pendingHeroId\) && typeof openGenericTutorialOnce/.test(rd("js/ui/modal-view.js"))
+      && /if \(!bare && typeof openGenericTutorialOnce/.test(rd("js/ui/sortie-prep-view.js")) && /tab === "equip" && window\.GENERIC_TUTORIALS/.test(rd("js/ui/heros-view.js")) && /openGenericTutorialOnce\("bestiary_intro"\)/.test(rd("js/ui/bestiary-view.js")),
+      "TUTO-16 : appels posés (Taverne construite, case du Chaos, feuille avec choix, rail Équipement, sous-onglet Bestiaire)");
+    ok(/#tutorial-modal-root \{\s*position: relative;\s*z-index: 3001;\s*\}/.test(rd("css/05-overlays.css")), "TUTO-16 : #tutorial-modal-root au-dessus de la création du héros (3001 > 3000)");
+    // NOV-2 (A)
+    var cv = rd("js/ui/camp-view.js");
+    ok(g.campStoryLead("Une phrase. La suite.") === "Une phrase." && g.campStoryLead("Sans point") === "Sans point", "NOV-2 : première phrase du récit");
+    var fw = g.STORY_QUESTS.forest.steps.filter(function (x) { return x.id === "forest_wenna"; })[0];
+    var mm = { id: "story_forest", sourceKind: "story", worldId: "forest", title: "t", status: "available", badge: "story", isMain: true };
+    run("StoryQuestManager.ensure(); game.storyQuests.forest.currentStep = STORY_QUESTS.forest.steps.map(function (x) { return x.id; }).indexOf('forest_wenna');");
+    var h1 = g.buildCampMissionCardHTML(mm); mm.status = "accepted"; var h2 = g.buildCampMissionCardHTML(mm);
+    ok(/<div class="nv2-lead">[^<]+<\/div>/.test(h1) && /class="nv2-fold" aria-expanded="false"/.test(h1) && /class="nv2-body" hidden/.test(h1) && h1.indexOf("story-dialogue") < 0, "NOV-2 : étape proposée, récit en italique et pli fermé, sans répliques");
+    ok(h2.indexOf("story-dialogue-line") > 0 && h2.indexOf(g._tn(fw.narrative.dialogue.length, "{n} réplique", "{n} répliques")) > 0, "NOV-2 : étape acceptée, le pli porte les répliques (" + fw.narrative.dialogue.length + ")");
+    ok(/\.nv2-fold \{[^}]*min-height: 44px/.test(rd("css/04-panel-camp.css")) && /-webkit-line-clamp: 2/.test(rd("css/04-panel-camp.css")) && /font-style: italic/.test(rd("css/04-panel-camp.css")) && en["Récit"] === "Story", "NOV-2 : pli de 44 px, récit sur 2 lignes au plus, en italique ; traduit");
+    // C13 (A)
+    var hv = rd("js/ui/heros-screens-view.js");
+    ok(/_t\("\{a\} \/ \{b\} placés · le prochain au niveau \{n\}"/.test(hv) && /_t\("\{a\} \/ \{b\} placés · plafond de l'acte"/.test(hv) && /_t\("\{n\} en réserve"/.test(hv) && !/_t\("\{a\} \/ \{b\} placés"/.test(hv), "C13 (A) : bandeau « prochain au niveau N » ou « plafond de l'acte · r en réserve »");
+    ok(en["{a} / {b} placés · le prochain au niveau {n}"] && en["{a} / {b} placés · plafond de l'acte"] && !en["{a} / {b} placés"], "C13 : textes traduits, ancienne clé retirée");
+    // Corrections sans décision
+    var cx = g.CODEX_ENTRIES ? JSON.stringify(g.CODEX_ENTRIES) : rd("js/data/codex.js");
+    ok(cx.indexOf("il l'a pris de l'autre") < 0 && cx.indexOf("l'Aether a donné un peu plus qu'il n'a pris") > 0 && sum("chaosMage") > sum("mage") && sum("chaosRanger") === sum("ranger"), "Codex « Le Chaos » : texte vrai (Chevalier et Sorcier un peu plus, Rôdeur autant)");
+    ok(/\.hst-detail \{ position: sticky; bottom: 0; z-index: 2;/.test(rd("css/04-panel-heros-screens.css")) && /\.hst-emb \{[^}]*z-index: 1;/.test(rd("css/04-panel-heros-screens.css")), "Panneau de talent collant (z 2) devant les emblèmes de voie (z 1)");
+  } catch (err) { ok(false, "[469] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  g.document.getElementById = keep.gid; g.document.querySelectorAll = keep.qsa; g.saveGame = keep.save; g.openCombatForecastConfirm = keep.ofc; run("pendingTutorial = null;");
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

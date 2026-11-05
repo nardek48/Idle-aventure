@@ -31,8 +31,39 @@ function buildCampMissionCostHTML(cost) {
 }
 window.buildCampMissionCostHTML = buildCampMissionCostHTML;
 
+/* v3.704.0 (NOV-2, Seb A) : récit de l'étape d'Histoire sur la carte du Camp. Pli ouvert par chapitre,
+   gardé le temps de la session (pas d'état sauvegardé). */
+var campStoryFoldOpen = {};
+function campStoryStepOf(m) {
+  if (!m || m.sourceKind !== "story" || !window.StoryQuestManager) return null;
+  var step = StoryQuestManager.getCurrentStep(m.worldId);
+  return step && step.narrative && step.narrative.objective ? step : null;
+}
+// La première phrase du récit (le reste vient avec le pli)
+function campStoryLead(text) {
+  var t = String(text || ""), k = t.search(/[.!?…](\s|$)/);
+  return k >= 0 ? t.slice(0, k + 1) : t;
+}
+function buildCampStoryFoldHTML(m, step) {
+  var open = !!campStoryFoldOpen[m.worldId], acc = m.status !== "available";
+  var lines = acc && step.narrative.dialogue ? step.narrative.dialogue.filter(Boolean).length : 0;
+  var h = '<div class="nv2-recit"><button type="button" class="nv2-fold" aria-expanded="' + open + '" onclick="toggleCampStoryFold(this, \'' + esc(m.worldId) + '\')">'
+    + '<span>' + _t("Récit") + '</span>' + (lines ? '<small>' + esc(_tn(lines, "{n} réplique", "{n} répliques")) + '</small>' : '') + '<i>▸</i></button>';
+  h += '<div class="nv2-body"' + (open ? '' : ' hidden') + '><div class="story-step-text">' + esc(_td(step.narrative.objective)) + '</div>';
+  if (acc && typeof buildStoryDialogueHTML === "function") h += buildStoryDialogueHTML(step); // répliques une fois l'étape acceptée, comme dans Quêtes
+  return h + '</div></div>';
+}
+function toggleCampStoryFold(btn, id) {
+  var open = !campStoryFoldOpen[id], body = btn && btn.parentNode ? btn.parentNode.querySelector(".nv2-body") : null;
+  campStoryFoldOpen[id] = open;
+  if (btn) btn.setAttribute("aria-expanded", String(open));
+  if (body) { if (open) body.removeAttribute("hidden"); else body.setAttribute("hidden", ""); }
+}
+window.toggleCampStoryFold = toggleCampStoryFold;
+
 function buildCampMissionCardHTML(m) {
   var cls = CAMP_MISSION_STATUS_CLASS[m.status] || "";
+  var story = campStoryStepOf(m);
   var h = '<div class="camp-mission-card ' + cls + (m.isMain ? ' is-main' : '') + '">';
   h += '<div class="camp-mission-head">';
   h += '<span class="camp-mission-icon">' + renderIconOrEmojiHTML(MissionBoard.typeIcon(m.type), "camp-mission-icon-img", _td(m.title)) + '</span>';
@@ -44,6 +75,7 @@ function buildCampMissionCardHTML(m) {
   if (m.place) h += '<div class="camp-mission-place">' + esc(_td(m.place)) + '</div>';
   h += '</div>';
   h += '</div>';
+  if (story) h += '<div class="nv2-lead">' + esc(campStoryLead(_td(story.narrative.objective))) + '</div>';
   // v3.234.0 (retour Seb) : le `||` faisait gagner le compteur dès qu'il existait,
   // et objectiveLabel — le seul champ qui dit QUOI FAIRE — disparaissait. Sur une
   // quête de village, progress() renvoie un « 0/2 » nu : la carte ne disait plus rien.
@@ -51,6 +83,7 @@ function buildCampMissionCardHTML(m) {
   var objective = m.objectiveLabel || "";
   if (enCours && m.progressLabel) objective = objective ? (objective + " \u2014 " + m.progressLabel) : m.progressLabel;
   if (objective) h += '<div class="camp-mission-objective">' + esc(objective) + '</div>';
+  if (story) h += buildCampStoryFoldHTML(m, story);
   if (m.rewardSummary) h += '<div class="camp-mission-reward"><img class=ico-inline src=images/Icons/dungeon/dungeon_guaranteed_loot.webp> ' + esc(m.rewardSummary) + '</div>';
   h += buildCampMissionCostHTML(m.entryCost);
   h += buildCampMissionActionHTML(m);

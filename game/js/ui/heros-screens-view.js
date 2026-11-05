@@ -417,13 +417,21 @@
     return h + '</div></div>';
   }
 
+  /* v3.704.0 (C13, Seb A) : ce qui limite le prochain point, texte de v3.458.3 (niveau, ou plafond de l'acte et réserve). */
+  function talentBarCapText(TM, cap) {
+    var a = TM.spent(), b = isFinite(cap) ? cap : "∞";
+    if (TM.earned() < cap) return _t("{a} / {b} placés · le prochain au niveau {n}", { a: a, b: b, n: Number(game.heroLevel || 1) + 1 });
+    var r = TM.reserve();
+    return _t("{a} / {b} placés · plafond de l'acte", { a: a, b: b }) + (r > 0 ? " · " + _t("{n} en réserve", { n: r }) : "");
+  }
+
   function buildHerosTalentTreeHTML() {
     var TM = window.TalentManager;
     if (!TM || !TM.getTree()) return '<div class="pc-empty">' + _t("Talents indisponibles.") + '</div>';
     var t = TM.getTree(), gate = window.TALENT_TRUNK_GATE || 2;
     var av = TM.available(), cap = TM.cap(), cls = TM.getClassId ? TM.getClassId() : "knight";
     var h = '<div class="hst-bar"><span class="hst-bar-pts"><b>' + av + '</b> ' + esc(_tn(av, "point à placer", "points à placer")) + '</span>'
-      + '<span class="hst-bar-cap">' + esc(_t("{a} / {b} placés", { a: TM.spent(), b: isFinite(cap) ? cap : "∞" })) + '</span>'
+      + '<span class="hst-bar-cap">' + esc(talentBarCapText(TM, cap)) + '</span>'
       + '<button type="button" class="hst-bar-reset" onclick="respecTalents()"' + (TM.spent() ? '' : ' disabled') + ' aria-label="' + esc(_t("Réinitialiser")) + '">↺</button></div>';
     var C = TM.getCommand(), open = C && TM.commandOpen(), V = window.TALENT_TOWER || null, openV = !!V && TM.towerOpen();
     if ((talentMode === "cmd" && !open) || (talentMode === "tour" && !openV)) talentMode = "classe";

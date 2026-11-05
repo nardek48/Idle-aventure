@@ -365,6 +365,8 @@ function openVillageBuildingSheet(id) {
   host.innerHTML = buildVillageBuildingSheetHTML(id);
   host.dataset.vb = id; delete host.dataset.go;
   setSheetScroll(host, top);
+  // v3.704.0 (TUTO-16) : la fiche des contrats, une fois, au-dessus de la Taverne construite
+  if (id === "tavern" && VillageBuildingManager.getLevel("tavern") >= 1 && typeof openGenericTutorialOnce === "function") openGenericTutorialOnce("tavern_contracts", { allow: "village-modal-root" });
 }
 window.openVillageBuildingSheet = openVillageBuildingSheet;
 

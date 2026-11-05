@@ -222,6 +222,12 @@
   z-index: 3000;
 }
 
+/* v3.704.0 (TUTO-16) : une fiche d'aide passe devant la création du héros (fiche du Chaos), placée après elle */
+#tutorial-modal-root {
+  position: relative;
+  z-index: 3001;
+}
+
 /* v3.29 : croix ✕ pour annuler la création d'un héros dans un emplacement vide — jamais affichée au tout premier lancement (voir buildHeroPickerCloseButtonHTML, modal-view.js). */
 
 /* =========================

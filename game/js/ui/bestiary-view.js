@@ -19,6 +19,7 @@ function libraryActiveSub() {
 function setBestiaryCodexSubTab(tab) {
   activeBestiaryCodexSubTab = (tab === "codex" || tab === "tutorials") ? tab : "bestiary";
   if (typeof renderPanel === "function") renderPanel();
+  if (libraryActiveSub() === "bestiary" && typeof openGenericTutorialOnce === "function") openGenericTutorialOnce("bestiary_intro"); // v3.704.0 (TUTO-16)
 }
 window.setBestiaryCodexSubTab = setBestiaryCodexSubTab;
 

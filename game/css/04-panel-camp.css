@@ -239,6 +239,16 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
   margin-bottom: 4px;
 }
 
+/* v3.704.0 (NOV-2, Seb A) : récit de l'étape d'Histoire, première phrase en italique et pli « Récit ▸ » (44 px) */
+.nv2-lead { font-size: 13px; line-height: 1.4; font-style: italic; color: var(--nb-ink); margin: 6px 0 2px; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.nv2-recit { margin: 0 0 4px; }
+.nv2-fold { appearance: none; -webkit-appearance: none; background: none; border: 0; border-top: 1px solid var(--c-bronze-400-soft); padding: 0 2px; min-height: 44px; width: 100%; display: flex; align-items: center; gap: 8px; font: inherit; font-size: 13px; font-weight: 700; color: var(--nb-gold-deep); cursor: pointer; text-align: left; }
+.nv2-fold small { font-weight: 600; color: var(--nb-ink-dim); font-size: 12px; }
+.nv2-fold i { margin-left: auto; font-style: normal; }
+.nv2-fold[aria-expanded="true"] i { transform: rotate(90deg); }
+.nv2-body .story-step-text { margin-top: 0; }
+.nv2-body[hidden] { display: none; }
+
 .camp-mission-reward {
   font-size: 12px;
   color: var(--nb-gold-deep); /* v3.404.0 : lisible sur le parchemin */

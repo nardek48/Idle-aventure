@@ -146,6 +146,8 @@ function toggleHeroChaosVariant() {
   if (!cls || !cls.heroIds || cls.heroIds.length < 2) return;
   pendingHeroId = isChaosHeroId(pendingHeroId) ? cls.heroIds[0] : cls.heroIds[1];
   openHeroSelection();
+  // v3.704.0 (TUTO-16) : première case cochée, la fiche du Chaos au-dessus de la création (sauvée à la confirmation)
+  if (isChaosHeroId(pendingHeroId) && typeof openGenericTutorialOnce === "function") openGenericTutorialOnce("chaos_variant", { allow: "hero-selection-root", noSave: true });
 }
 
 function goToHeroStep() {

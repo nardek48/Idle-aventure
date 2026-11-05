@@ -60,6 +60,8 @@ function openSortiePrep(opts) {
   if (!sortiePrepGrimoireOpen() && game.combatMode === "grimoire" && window.CombatEngine) CombatEngine.setCombatMode("tactique");
   sortiePrep = { opts: opts, preset: null, buffs: {}, items: [], pick: -1, bare: bare, level: lvlEl ? Math.max(1, lvlEl.best) : null };   // bare : feuille réduite à l'alerte PV
   renderSortiePrep();
+  // v3.704.0 (TUTO-16) : première feuille qui propose un choix, la fiche au-dessus d'elle
+  if (!bare && typeof openGenericTutorialOnce === "function") openGenericTutorialOnce("sortie_prep", { allow: "sortie-prep-root" });
 }
 
 function closeSortiePrep() {

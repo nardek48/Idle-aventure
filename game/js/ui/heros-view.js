@@ -21,6 +21,8 @@ function setHerosSubTab(tab) {
   if ((tab === "equip" || tab === "talents") && typeof maybeShowStepTutorial === "function" && window.StoryQuestManager) {
     StoryQuestManager.activeChapterIds().forEach(function (id) { maybeShowStepTutorial(id, tab); });
   }
+  // v3.704.0 (TUTO-16) : fiche de l'équipement au toucher du rail (Sac non vide)
+  if (tab === "equip" && window.GENERIC_TUTORIALS && GENERIC_TUTORIALS.equipment_intro.condition() && typeof openGenericTutorialOnce === "function") openGenericTutorialOnce("equipment_intro");
 }
 
 /* Positionne le sous-onglet sans rendre — pour switchTab('equip'/'talents') (ui-root.js). */

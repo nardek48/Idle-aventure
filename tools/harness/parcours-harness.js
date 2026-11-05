@@ -1087,6 +1087,7 @@ async function P15(browser, base) {
   // Feuille : la Taverne, ouverte au toucher de sa carte
   await page.evaluate(function () { switchTab("village"); setVillageSubTab("buildings"); });
   await page.waitForTimeout(400); await dismissTutorials(page);
+  await page.evaluate(function () { game.genericTutorialsSeen.tavern_contracts = true; }); // v3.704.0 : la fiche de la Taverne (TUTO-16) est déjà vue ici
   var carte = page.locator('[onclick*="openVillageBuildingSheet(\'tavern\')"]').first();
   await carte.evaluate(function (e) { e.setAttribute("data-origine", "1"); });
   await carte.click(); await page.waitForTimeout(300);

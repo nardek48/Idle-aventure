@@ -75,7 +75,7 @@ var CODEX_ENTRIES = [
     title: "Le Chaos",
     icon: "images/Icons/camp/campfire.webp",
     category: "system",
-    text: "Le Chevalier du Chaos, le Rôdeur du Chaos, le Sorcier du Chaos ne sont pas un choix esthétique : ce sont des champions qui ont laissé l'Aether s'installer un peu plus profondément en eux. Ils gardent les gestes et les compétences de leur classe. Ce qui a changé, c'est la répartition de leurs forces : ce que l'Aether a donné d'un côté, il l'a pris de l'autre.",
+    text: "Le Chevalier du Chaos, le Rôdeur du Chaos, le Sorcier du Chaos ne sont pas un choix esthétique : ce sont des champions qui ont laissé l'Aether s'installer un peu plus profondément en eux. Ils gardent les gestes et les compétences de leur classe. Ce qui a changé, c'est la répartition de leurs forces, et l'Aether a donné un peu plus qu'il n'a pris : le Chevalier et le Sorcier du Chaos en ont un peu plus que leur classe, le Rôdeur autant, autrement placées.",
     isUnlocked: function () { return codexFeuilletsRecus() && !!game.codexChaosSeen; }
   },
 

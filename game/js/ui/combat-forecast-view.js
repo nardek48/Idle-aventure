@@ -135,12 +135,17 @@ function launchWithForecast(mission, action) {
   // v3.265.0 : PV sous le seuil -> avertissement même sur un combat abordable
   var lowHp = getHeroHpRatio() < FORECAST_LOW_HP_PCT;
   if (!lowHp && CombatForecast.getLevelDef(f.id).level < 2) return action();
-  openCombatForecastConfirm(f, {
-    title: mission.title || _t("Avant de partir"),
-    confirmLabel: (f.unwinnable || lowHp) ? _t("Partir quand même") : _t("Partir"),
-    lowHp: lowHp,
-    onConfirm: action
-  });
+  var open = function () {
+    openCombatForecastConfirm(f, {
+      title: mission.title || _t("Avant de partir"),
+      confirmLabel: (f.unwinnable || lowHp) ? _t("Partir quand même") : _t("Partir"),
+      lowHp: lowHp,
+      onConfirm: action
+    });
+  };
+  // v3.704.0 (TUTO-16) : la première fois, la fiche du pronostic d'abord ; « Compris » ouvre le pronostic
+  if (typeof openGenericTutorialOnce === "function" && openGenericTutorialOnce("combat_forecast", { after: open })) return;
+  open();
 }
 window.launchWithForecast = launchWithForecast;
 
