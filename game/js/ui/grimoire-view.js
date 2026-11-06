@@ -395,7 +395,10 @@ function buildGrimoireEditHTML(index, kit) {
 
     if (isTelegraphCounter) {
       h += '<div class="grimoire-verdict is-counter"><span><img class=ico-inline src=images/Icons/combat_status/counter.webp></span><span><strong>' + _t("Contre parfait.") + '</strong> '
-        + _t("Cette action annulera complètement l'attaque adverse si elle est jouée à temps.") + '</span></div>';
+        + _t("Cette action annulera complètement l'attaque adverse si elle est jouée à temps.")
+        // v3.730.0 (Seb 06/11) : contre protecteur (P1) et contre rapide (P3, Charge seulement)
+        + (action.type === "defense" && window.GROUP_DEFENSE_ANNONCES && GROUP_DEFENSE_ANNONCES[rule.conditionId] ? " " + _t("Elle couvre aussi tes compagnons tant qu'elle dure.") : "")
+        + (action.type === "defense" && rule.conditionId === "chargeIncoming" ? " " + _t("Et tu frappes dans la foulée.") : "") + '</span></div>';
     } else if (isArchetypeCounter) {
       h += '<div class="grimoire-verdict is-counter"><span><img class=ico-inline src=images/Icons/system/ascension.webp></span><span><strong>' + _t("Effet spécial.") + '</strong> '
         + _t("Cette action agit sur cette situation en plus de ses dégâts normaux.") + '</span></div>';

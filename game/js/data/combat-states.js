@@ -29,7 +29,7 @@ var COMBAT_STATES = {
     famille: "alerte", nom: "Charge", icon: COMBAT_STATE_ICON + "charge_incoming.webp",
     mot: "Il charge !",
     desc: "Sa prochaine attaque frappe beaucoup plus fort.",
-    hint: "Défense, ou une compétence qui contre la charge."
+    hint: "Ta Défense la contre, couvre tes compagnons et te rend le tour."
   },
   silence: {
     famille: "alerte", nom: "Silence", icon: COMBAT_STATE_ICON + "silence_incoming.webp",

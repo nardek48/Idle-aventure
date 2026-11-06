@@ -5726,7 +5726,7 @@ console.log("\n[53b] v3.251.0 \u2014 \u00c9tats de combat (bandeau, rang\u00e9e,
   /* esc() échappe l'apostrophe : on cherche un fragment sans apostrophe. */
   ok(sh.indexOf("Au prochain round") !== -1 && sh.indexOf("Ce que porte l") !== -1,
     "la feuille groupe les \u00e9tats par famille");
-  ok(sh.indexOf("st-row-hint") !== -1 && sh.indexOf("D\u00e9fense, ou une comp\u00e9tence") !== -1,
+  ok(sh.indexOf("st-row-hint") !== -1 && sh.indexOf("Ta D\u00e9fense la contre") !== -1, // v3.730.0 : conseil de la Charge reformulé (P1+P3)
     "...et donne un CONSEIL D'ACTION, ce que l'ancien title ne faisait jamais");
   /* Tout \u00e9tat du catalogue doit avoir un effet ET (sauf « Contr\u00e9 ») un conseil. */
   var sansHint = Object.keys(g.COMBAT_STATES).filter(function (id) {
@@ -25298,6 +25298,98 @@ console.log("\n[490] v3.729.0 — Grimoire : seules les situations rencontrées 
     ok(last && last.text === "Une situation apparaît dans le Grimoire la première fois que tu la rencontres en combat. Les emplacements de règles s'ouvrent en atteignant de nouveaux mondes." && last.icon === "images/Icons/quests/quest_resources.webp", "fiche d'aide : la phrase dit comment une situation apparaît (icône inchangée)");
   } catch (err) { ok(false, "[490] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   finally { g.showToast = keep.toast; g.addLog = keep.log; try { run("fullResetState();"); } catch (e) {} }
+})();
+
+console.log("\n[491] v3.730.0 — Contre protecteur et contre rapide (P5 = P1 + P3 du banc des leviers, Seb 06/11)");
+(function () {
+  var CE = g.CombatEngine, CCM = g.ClassCombatManager, keep = { rnd: g.Math.random, pa: CE.playerAttack, log: g.addLog }, logs = [], attaques = 0;
+  try {
+    g.addLog = function (m) { logs.push(String(m)); };
+    CE.playerAttack = function () { attaques++; return keep.pa.apply(this, arguments); };
+    function sac() { return { id: "slime", name: "Sac", isBoss: false, hp: 1e6, maxHp: 1e6, goldReward: 0, essenceReward: 0, resists: [], weak: [], stats: Object.assign({}, g.ENEMY_DB.slime.stats, { power: g.ENEMY_DB.slime.stats.power * 12, precision: 0 }) }; }
+    function prep(cls, mode) {
+      var game = freshCombat(cls); giveWeapon();
+      g.CompanionManager.unlock("wenna");
+      run("game.unlockedTabs.grimoire = true; CombatEngine.setCombatMode('" + (mode || "tactique") + "');");
+      CE.spawnGroup([sac()]);
+      run("game.heroHp = game.heroMaxHp = 100000; game.classCooldowns = {};"); fillResource();
+      logs.length = 0; attaques = 0;
+      return game;
+    }
+    function wen() { return g.game.combat.allies.filter(function (a) { return a.companionId === "wenna"; })[0]; }
+    function frappe() { var w = wen(); w.ko = false; w.hp = w.maxHp; var h0 = w.hp; CE.enemyStrikeCompanion(g.game.enemy, w, 1, true); return h0 - w.hp; }
+    var game = prep("knight"), nu = frappe();
+    ok(nu > 20 && nu < wen().maxHp, "référence : une frappe nue sur Wenna (" + nu + " PV sur " + wen().maxHp + ")");
+
+    // Garde jouée sur une Charge (Grimoire) : couverture et tour rendu, une seule attaque
+    game.enemy.chargeTelegraphed = true;
+    ok(CCM.useSkill("defense", "chargeIncoming") === true && game.classActiveDefense.groupe === true, "Garde sur une Charge : la Défense couvre le groupe (marque dans classActiveDefense)");
+    ok(attaques === 1 && logs.some(function (m) { return m.indexOf("tu frappes dans la foulée") >= 0; }), "Charge contrée : une attaque de base dans le même round, une seule, avec sa ligne de journal");
+    ok(logs.some(function (m) { return m.indexOf("Garde : tu couvres aussi Wenna.") >= 0; }), "journal : « Garde : tu couvres aussi Wenna. »");
+    var gc = frappe();
+    ok(Math.abs(gc - nu * 0.5) <= 2, "Wenna couverte : la frappe est réduite de 50 % (" + nu + " → " + gc + ")");
+
+    // Sauvegarde et rechargement en plein effet
+    var b = JSON.parse(JSON.stringify(g.buildSaveData()));
+    ok(b.classActiveDefense && b.classActiveDefense.groupe === true, "sauvegarde : la marque est écrite avec la Défense active");
+    run("fullResetState();"); g.restoreBaseState(b);
+    CE.ensureState(); CE.spawnGroup([sac()]);
+    ok(!!CCM.groupDefenseEffect() && Math.abs(frappe() - gc) <= 1, "rechargement en plein round : Wenna reste couverte");
+    CCM.tickActiveDefense();
+    ok(!CCM.groupDefenseEffect() && Math.abs(frappe() - nu) <= 1, "fin de la Garde (1 round) : plus de couverture");
+
+    // Défense sans annonce : rien pour le groupe, pas de tour rendu
+    game = prep("knight");
+    ok(CCM.useSkill("defense", null) === true && !game.classActiveDefense.groupe && attaques === 0, "Garde sans annonce : pas de couverture, pas de tour rendu");
+    ok(Math.abs(frappe() - nu) <= 1, "Garde sans annonce : Wenna prend la frappe entière");
+
+    // Silence contré : couverture, pas de tour rendu (P3 = Charge seulement, comme au banc)
+    game = prep("knight"); game.enemy.silenceTelegraphed = true;
+    ok(CCM.useSkill("defense", "enemySilenceIncoming") === true && game.classActiveDefense.groupe === true && attaques === 0 && game.enemy.silenceTelegraphed === false,
+      "Silence contré : couverture du groupe, pas de tour rendu");
+    game = prep("knight"); game.enemy.isElite = true; game.enemy.surgeTelegraphed = true;
+    ok(CCM.useSkill("defense", "eliteSurgeIncoming") === true && game.classActiveDefense.groupe === true && attaques === 0, "Exaltation contrée : couverture du groupe, pas de tour rendu");
+
+    // Tactique et conseil doré : la Défense jouée à la main face à une Charge
+    game = prep("knight"); game.enemy.chargeTelegraphed = true;
+    game.grimoireRules = [{ conditionId: "chargeIncoming", actionSlot: "defense" }, { conditionId: null, actionSlot: null }];
+    ok(CE.suggestAction() === "defense", "conseil doré (Tactique, règle Charge → Défense) : la Défense est conseillée");
+    ok(CCM.useSkillManual("defense") === true && game.classActiveDefense.groupe === true && attaques === 1, "Tactique : le conseil touché (Défense à la main) couvre le groupe et rend le tour (une attaque)");
+    game.grimoireRules = [];
+    game = prep("knight");
+    run("game.combat.allies = game.combat.allies.filter(function (a) { return !a.companionId; });");
+    game.enemy.chargeTelegraphed = true; attaques = 0;
+    ok(CE.heroAction("defense") === true && attaques === 1 && game.enemy.chargeTelegraphed === false, "Tactique, round complet (heroAction) : une seule attaque rendue");
+
+    // Grimoire automatique : la règle Charge → Défense, round complet
+    game = prep("knight", "grimoire"); game.enemy.chargeTelegraphed = true;
+    game.grimoireRules = [{ conditionId: "chargeIncoming", actionSlot: "defense" }, { conditionId: null, actionSlot: null }];
+    var dec = CCM.chooseRoundAction(true);
+    ok(dec && dec.slot === "defense" && dec.matchedConditionId === "chargeIncoming", "Grimoire : la règle Charge → Défense est choisie");
+    var hpE = game.enemy.hp;
+    ok(CE.heroAction(dec.slot, { matchedConditionId: dec.matchedConditionId }, "auto") === true && attaques === 1 && game.enemy.hp < hpE, "Grimoire auto : la Défense contre, le héros frappe dans la foulée (une fois)");
+    game.grimoireRules = [];
+
+    // Esquive (Rôdeur) : même tirage que pour le héros
+    game = prep("ranger"); game.enemy.chargeTelegraphed = true;
+    ok(CCM.useSkill("defense", "chargeIncoming") === true && game.classActiveDefense.effectType === "evasion" && game.classActiveDefense.groupe === true, "Esquive sur une Charge : couvre le groupe");
+    g.Math.random = function () { return 0.10; };
+    ok(frappe() === 0 && logs.some(function (m) { return m.indexOf("Wenna esquive la frappe de") >= 0; }), "Esquive tirée (70 %) : Wenna évite la frappe, ligne de journal");
+    g.Math.random = function () { return 0.95; };
+    ok(frappe() > 0, "Esquive ratée (tirage au-dessus de 70 %) : la frappe passe entière");
+    g.Math.random = keep.rnd;
+
+    // Barrière (Mage) : 40 %, 2 rounds
+    game = prep("mage"); var nuM = frappe(); game.enemy.chargeTelegraphed = true;
+    ok(CCM.useSkill("defense", "chargeIncoming") === true && game.classActiveDefense.groupe === true && game.classActiveDefense.roundsLeft === 2, "Barrière sur une Charge : couvre le groupe 2 rounds");
+    ok(Math.abs(frappe() - nuM * 0.6) <= 2, "Barrière : la frappe sur Wenna est réduite de 40 %");
+    CCM.tickActiveDefense();
+    ok(!!CCM.groupDefenseEffect(), "Barrière : toujours couverte au second round");
+
+    // Talents du coup reçu : aucun sur les compagnons ; Bastion lit la Garde, pas les coups
+    ok(String(CE.enemyStrikeCompanion).indexOf("TalentManager") < 0, "frappe sur un compagnon : aucun talent du coup reçu (Riposte, Écho, Contre-tir) ne joue");
+  } catch (err) { ok(false, "[491] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  finally { g.Math.random = keep.rnd; CE.playerAttack = keep.pa; g.addLog = keep.log; try { run("fullResetState();"); } catch (e) {} }
 })();
 
 Promise.all(ATTENTES).then(function () {

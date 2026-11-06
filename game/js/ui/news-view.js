@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.730.0", "combat_status/counter", _t("Contres : une Défense jouée contre une annonce (Charge, Silence, Exaltation) couvre aussi tes compagnons tant qu'elle dure, et une Charge contrée te rend le tour : tu frappes dans la foulée.")],
     ["3.729.0", "system/grimoire", _t("Grimoire : il ne montre plus que les situations que tu as déjà rencontrées en combat. Chaque nouvelle situation s'y ajoute avec un court message (« Nouvelle règle au Grimoire »).")],
     ["3.728.0", "living_map/carte_vivante", _t("Petites Aventures : l'écran prend le décor du monde de l'aventure (une aventure de la Tour ne s'affiche plus sur le fond de la Forêt), et la fuite a son propre chemin dans chaque monde.")],
     ["3.727.0", "living_map/carte_vivante", _t("Petites Aventures de la Tour : trois accroches à leur tour. Des pas qui redescendent vers un sac caché, une porte que personne ne tient, et une marche en trop qui mène à un palier que l'escalier ne montre pas.")],

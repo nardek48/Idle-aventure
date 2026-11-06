@@ -1285,6 +1285,10 @@ var CombatEngine = {
 
     var dmg = Math.max(1, Math.floor(power * ENEMY_POWER_DMG_COEF * (e.isBoss ? BOSS_DMG_MULT : 1)));
     var patternMult = (typeof dmgMult === "number" && dmgMult > 0) ? dmgMult : 1;
+    // v3.730.0 (Seb 06/11) : P1, la Défense qui a contré une annonce couvre le compagnon (réduction ou esquive)
+    var cover = window.ClassCombatManager && ClassCombatManager.groupDefenseEffect ? ClassCombatManager.groupDefenseEffect() : null;
+    var dodged = !!(cover && cover.effectType === "evasion" && chance(cover.value * 100));
+    if (cover && cover.effectType !== "evasion") patternMult *= (1 - cover.value);
     if (patternMult !== 1) dmg = Math.max(1, Math.floor(dmg * patternMult));
 
     if (e.archetype === "enraged" && typeof getEnragedDamageMultiplier === "function") {
@@ -1293,10 +1297,11 @@ var CombatEngine = {
     }
 
     if (chance(Math.min(40, precision * ENEMY_PRECISION_CRIT_COEF))) dmg = Math.floor(dmg * ENEMY_CRIT_MULT);
-    dmg = Math.max(1, Math.floor(dmg * (1 - COMPANION_FLAT_DEFENSE)));
+    dmg = dodged ? 0 : Math.max(1, Math.floor(dmg * (1 - COMPANION_FLAT_DEFENSE)));
 
     victim.hp = Math.max(0, Number(victim.hp || 0) - dmg);
-    addLog("🩸 " + _t("{x} frappe {y} (-{n} PV)", { x: _td(e.name), y: victim.name ? _td(victim.name) : _t("ton compagnon"), n: formatNumber(dmg) }), "normal");
+    if (dodged) addLog("💨 " + _t("{y} esquive la frappe de {x}.", { x: _td(e.name), y: victim.name ? _td(victim.name) : _t("ton compagnon") }), "normal");
+    else addLog("🩸 " + _t("{x} frappe {y} (-{n} PV)", { x: _td(e.name), y: victim.name ? _td(victim.name) : _t("ton compagnon"), n: formatNumber(dmg) }), "normal");
 
     if (e.archetype === "vampiric" && dmg > 0 && typeof getVampiricLifestealAmount === "function"
       && !(Number(e.vampiricSuppressedRounds || 0) > 0)) {

@@ -22,6 +22,10 @@ var CLASS_ACTION_ICON_FALLBACK = {
   mage_arcane_barrier: "./images/Icons/special_attacks/chaos_fury.webp"
 };
 
+// v3.730.0 (Seb 06/11) : annonces dont le contre par la Défense couvre aussi les compagnons (P1, banc charge-bench)
+var GROUP_DEFENSE_ANNONCES = { chargeIncoming: true, enemySilenceIncoming: true, eliteSurgeIncoming: true };
+window.GROUP_DEFENSE_ANNONCES = GROUP_DEFENSE_ANNONCES;
+
 var ARCHETYPE_EFFECT_TO_CONDITION_ID = {
   enemyRageSuppression: "enemyEnraged",
   enemyCorruptionPurge: "enemyCorrupted",
@@ -419,13 +423,14 @@ var ClassCombatManager = {
 
     if (window.CombatReportManager) CombatReportManager.logUsage(slot);
 
-    this.applyGrimoireCounterIfApplicable(action, matchedConditionId, slot);
+    var contre = this.applyGrimoireCounterIfApplicable(action, matchedConditionId, slot);
 
     if (action.type === "defense") {
       this.activateDefenseEffect(action);
       if (game.enemy) this.applyActionEffects(action, 0, matchedConditionId);
       addLog("🛡️ " + _td(action.label) + " !", "event"); // v3.294.0 : plus de popup, le bandeau de combat suffit (retour Seb)
       if (window.TowerSystem) TowerSystem.noteTechnique(slot); // v3.633.0 : Un pas de côté
+      this.markGroupDefense(action, slot, matchedConditionId);
     } else {
       // v3.629.0 (Tour, le miroir) : la même technique que la précédente contre un reflet perd 25 %
       var mirror = window.TowerSystem ? TowerSystem.mirrorMult(slot) : 1;
@@ -441,7 +446,33 @@ var ClassCombatManager = {
       addLog("✨ " + _td(action.label) + " !", "event"); // v3.294.0 : idem, journal seulement
     }
 
+    // v3.730.0 (Seb 06/11) : P3, contre rapide (banc charge-bench) — une Charge contrée rend le tour :
+    // une attaque de base dans le même round, une seule par contre.
+    if (contre === "chargeIncoming" && game.enemy && (game.heroHp || 0) > 0 && window.CombatEngine) {
+      addLog("⚔️ " + _t("Contre : tu frappes dans la foulée."), "event");
+      CombatEngine.playerAttack(false);
+      CombatEngine.afterOffensiveAction();
+    }
+
     return true;
+  },
+
+  /* v3.730.0 (Seb 06/11) : P1, contre protecteur — une Défense jouée sur une annonce (Charge, Silence, Exaltation)
+     couvre aussi les compagnons tant qu'elle dure ; la marque vit dans classActiveDefense (déjà sauvegardé). */
+  markGroupDefense: function (action, slot, matchedConditionId) {
+    var d = game.classActiveDefense;
+    if (slot !== "defense" || !d || !GROUP_DEFENSE_ANNONCES[matchedConditionId]) return;
+    d.groupe = true;
+    var allies = window.CombatActors ? CombatActors.aliveAllies().filter(function (a) { return !CombatActors.isHero(a); }) : [];
+    if (!allies.length) return;
+    var qui = allies.length === 1 ? (allies[0].name ? _td(allies[0].name) : _t("ton compagnon")) : _t("tes compagnons");
+    addLog("🛡️ " + _t("{x} : tu couvres aussi {y}.", { x: _td(action.label), y: qui }), "event");
+  },
+
+  /* La Défense active si elle couvre le groupe (lue par CombatEngine.enemyStrikeCompanion), sinon null. */
+  groupDefenseEffect: function () {
+    var d = this.getActiveDefenseEffect();
+    return (d && d.groupe) ? d : null;
   },
 
     applyGrimoireCounterIfApplicable: function (action, matchedConditionId, slot) {
@@ -468,6 +499,7 @@ var ClassCombatManager = {
       if (typeof showCounterSuccessPopup === "function") showCounterSuccessPopup();
       if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
     }
+    return countered ? matchedConditionId : null; // v3.730.0 : lu par useSkill (P3, contre rapide)
   },
 
     applyDamageAction: function (action, matchedConditionId) {

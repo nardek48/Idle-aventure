@@ -20,7 +20,9 @@
 
    USAGE : node tools/sim/charge-bench.js . [--runs 200] [--classes knight,ranger,mage] [--scen coeur,gouffre,...]
            [--profils ref,c1,c2,c3,ctrl] [--politiques contre,sans] [--saves dossier]
-           node tools/sim/charge-bench.js . --verif [--runs 40]   Référence enveloppée = moteur nu, run par run */
+           node tools/sim/charge-bench.js . --verif [--runs 40]   Référence enveloppée = moteur nu, run par run
+           node tools/sim/charge-bench.js . --leviers --profils p0,p1,p2,p3,p4 [--p5 p1,p3 --tag leviers-p5]
+             leviers du contre (option C, Seb 06/11) : captures/charge-bench/<tag>-<runs>runs.txt et .json */
 var fs = require("fs"), path = require("path"), vm = require("vm"), cp = require("child_process");
 var CH = require("../chemins.js");
 var ROOT = CH.jeu(process.argv[2]);
@@ -35,8 +37,22 @@ var PROFILS = {
   c1: { label: "C1 ×1,40 +10 %", mult: 1.4, deseq: 0.10 },
   c2: { label: "C2 ×1,50 +15 %", mult: 1.5, deseq: 0.15 },
   c3: { label: "C3 ×1,60 +15 %", mult: 1.6, deseq: 0.15 },
-  ctrl: { label: "Contrôle ×1,70", mult: 1.7, deseq: 0 }
+  ctrl: { label: "Contrôle ×1,70", mult: 1.7, deseq: 0 },
+  // Leviers du contre (Seb 06/11, option C) : Charge ×1,30, seul le contre change (enveloppes, voir installLeviers)
+  p0: { label: "P0 Référence", mult: 1.3, deseq: 0, lev: {} },
+  p1: { label: "P1 Contre protecteur", mult: 1.3, deseq: 0, lev: { groupe: true } },
+  p2: { label: "P2 Contre offensif", mult: 1.3, deseq: 0, lev: { vuln: true } },
+  p3: { label: "P3 Contre rapide", mult: 1.3, deseq: 0, lev: { rejoue: true } },
+  p4: { label: "P4 Barrière 15", mult: 1.3, deseq: 0, lev: { barriere: true } },
+  p5: { label: "P5 combinaison", mult: 1.3, deseq: 0, lev: null },   // posé par --p5 a,b (ex. --p5 p1,p3)
+  // v3.730.0 : le jeu tel quel (P5 en jeu), moteur nu sans enveloppe ; compteurs couvert/rejoués en lecture seule
+  jeu: { label: "Jeu (moteur nu)", nu: true }
 };
+(function () {   // P5 = union des leviers de deux profils
+  var v = opt("--p5", null); if (!v) return;
+  var l = {}; v.split(",").forEach(function (k) { Object.assign(l, PROFILS[k].lev); });
+  PROFILS.p5.lev = l; PROFILS.p5.label = "P5 " + v.replace(",", "+").toUpperCase();
+})();
 // Scénarios : la quête de l'étape, jouée en entier (rencontres enchaînées sans soin, comme en jeu)
 var SCENARIOS = {
   coeur: { step: "forest_12", quest: "aq_story_coeur", label: "Forêt · Tenir le Cœur (10 seuls)" },
@@ -146,7 +162,111 @@ function instrument(g, profil) {
     for (var i = status.length - 1; i >= 0; i--) { status[i].left -= 1; if (status[i].left <= 0 || hpOf(status[i].actor) <= 0) status.splice(i, 1); }
     return r;
   });
-  S.clear = function () { status.length = 0; strike = null; };
+  S.clear = function () { status.length = 0; strike = null; if (S.clearLev) S.clearLev(); };
+  if (P.lev) installLeviers(g, S, P.lev);
+  return S;
+}
+/* Leviers du contre. « Annonce » = Charge, Silence, Exaltation (les annonces que contre la Défense de classe).
+   groupe  (P1) : une Défense jouée sur une règle d'annonce couvre les compagnons tant que CETTE Défense dure
+                  (même fenêtre que pour le héros : Garde/Esquive 1 round, Barrière 2) ; réduction ou absorption =
+                  multiplicateur de la frappe, esquive = tirée par le chance() du jeu (frappe réduite à 1 PV).
+                  La Charge contrée, elle, est déjà annulée pour tout le groupe (rescheduleCounteredPattern) : rien à envelopper.
+   vuln    (P2) : Charge contrée -> l'émetteur prend +25 % de tous les dealDamage (héros, compagnons, DoT), 2 fins de round.
+   rejoue  (P3) : Charge contrée -> après la Défense, le héros joue une attaque de base (playerAttack + jauge de célérité).
+   barriere(P4) : Barrière du Mage à 50 % du coût (30 -> 15) pour une règle d'annonce : choix du Grimoire (règle par règle),
+                  réserve d'approche (règle de contre prioritaire) et dépense réelle (useSkill). */
+var ANNONCES = { chargeIncoming: 1, enemySilenceIncoming: 1, eliteSurgeIncoming: 1 };
+function installLeviers(g, S, L) {
+  var CE = g.CombatEngine, CCM = g.ClassCombatManager, L0 = S.lev = { couvert: 0, rejoues: 0, vulnDeg: 0, remises: 0 };
+  function wrap(obj, name, fn) { var o = obj[name]; obj[name] = function () { return fn.call(this, o, arguments); }; }
+  function rec() { return S.st; }
+  var cover = null, vuln = [], chargeContree = false, remise = false;
+  function isMage() { return CCM.getCurrentClassId() === "mage"; }
+  function remiseKit(kit) {
+    if (!kit || !kit.actions || !kit.actions.defense || !isMage()) return kit;
+    var d = Object.assign({}, kit.actions.defense, { resourceCost: Math.round(Number(kit.actions.defense.resourceCost || 0) * 0.5) });
+    return Object.assign({}, kit, { actions: Object.assign({}, kit.actions, { defense: d }) });
+  }
+  wrap(CE, "rescheduleCounteredPattern", function (o, a) {
+    if (a[0] === "chargeIncoming") {
+      chargeContree = true;
+      if (L.vuln) { var e = a[1] || g.game.enemy; if (e) { vuln = vuln.filter(function (v) { return v.e !== e; }); vuln.push({ e: e, left: 2 }); } }
+    }
+    return o.apply(this, a);
+  });
+  wrap(CCM, "useSkill", function (o, a) {
+    var slot = a[0], cond = a[1], annonce = slot === "defense" && !!ANNONCES[cond];
+    chargeContree = false; remise = !!(L.barriere && annonce);
+    var r;
+    try { r = o.apply(this, a); } finally { remise = false; }
+    if (r && annonce && L.groupe) cover = g.game.classActiveDefense || null;
+    if (r && annonce && L.barriere && isMage() && rec()) rec().remises++;
+    if (r && chargeContree && L.rejoue && g.game.enemy && g.game.heroHp > 0) {
+      CE.playerAttack(false); CE.afterOffensiveAction();
+      if (rec()) rec().rejoues++;
+    }
+    chargeContree = false;
+    return r;
+  });
+  if (L.barriere) {
+    wrap(CCM, "getAction", function (o, a) {
+      var act = o.apply(this, a);
+      if (!remise || a[0] !== "defense" || !act || !isMage()) return act;
+      return Object.assign({}, act, { resourceCost: Math.round(Number(act.resourceCost || 0) * 0.5) });
+    });
+    wrap(g, "chooseGrimoireAction", function (o, a) {   // règle par règle : la remise ne vaut que pour une règle d'annonce
+      var rules = a[0], kit = a[1];
+      if (!Array.isArray(rules)) return o.apply(this, a);
+      for (var i = 0; i < rules.length; i++) {
+        var ru = rules[i], k = (ru && ru.actionSlot === "defense" && ANNONCES[ru.conditionId]) ? remiseKit(kit) : kit;
+        var r = o.call(this, [ru], k, a[2], a[3], a[4]);
+        if (r) return r;
+      }
+      return null;
+    });
+    function prioRemise(rules, kit) {
+      var ru = g.getPrioritaryCounterRule(rules, kit, g.game.enemy);
+      return ru && ru.actionSlot === "defense" && ANNONCES[ru.conditionId];
+    }
+    wrap(g, "getGrimoireCounterReserveAmount", function (o, a) { return o.call(this, a[0], prioRemise(a[0], a[1]) ? remiseKit(a[1]) : a[1], a[2]); });
+    wrap(CCM, "shouldActivateGrimoireReserve", function (o, a) { return o.call(this, a[0], prioRemise(a[0], a[1]) ? remiseKit(a[1]) : a[1], a[2]); });
+  }
+  if (L.groupe) {
+    wrap(CE, "enemyStrikeCompanion", function (o, a) {
+      var act = CCM.getActiveDefenseEffect();
+      if (!cover || act !== cover) return o.apply(this, a);
+      var m = (typeof a[2] === "number" && a[2] > 0) ? a[2] : 1;
+      if (act.effectType === "evasion") { if (g.chance(act.value * 100)) m = 1e-9; }
+      else m = m * (1 - act.value);
+      if (rec()) rec().couvert++;
+      return o.call(this, a[0], a[1], m, a[3]);
+    });
+  }
+  if (L.vuln) {
+    wrap(CE, "dealDamage", function (o, a) {
+      var foe = a[4] || g.game.enemy;
+      for (var i = 0; i < vuln.length; i++) if (vuln[i].e === foe) {
+        var d0 = Math.max(0, Number(a[0] || 0)); a[0] = d0 * 1.25;
+        if (rec()) rec().vulnDeg += d0 * 0.25;
+        break;
+      }
+      return o.apply(this, a);
+    });
+    wrap(CE, "endRoundGroup", function (o, a) {
+      var r = o.apply(this, a);
+      for (var i = vuln.length - 1; i >= 0; i--) { vuln[i].left -= 1; if (vuln[i].left <= 0 || Number(vuln[i].e.hp || 0) <= 0) vuln.splice(i, 1); }
+      return r;
+    });
+  }
+  S.clearLev = function () { cover = null; vuln.length = 0; chargeContree = false; remise = false; };
+}
+/* Moteur nu (profil « jeu ») : compte les frappes couvertes et les tours rendus, sans rien changer au moteur. */
+function compteursJeu(g, S) {
+  var CE = g.CombatEngine, CCM = g.ClassCombatManager, dans = 0;
+  function wrap(obj, name, fn) { var o = obj[name]; obj[name] = function () { return fn.call(this, o, arguments); }; }
+  wrap(CE, "enemyStrikeCompanion", function (o, a) { if (S.st && CCM.groupDefenseEffect && CCM.groupDefenseEffect()) S.st.couvert++; return o.apply(this, a); });
+  wrap(CCM, "useSkill", function (o, a) { dans++; try { return o.apply(this, a); } finally { dans--; } });
+  wrap(CE, "playerAttack", function (o, a) { if (dans && a[0] !== true && S.st) S.st.rejoues++; return o.apply(this, a); });
   return S;
 }
 // Nouveau combat (groupe posé, ou ennemi seul) : relevé par rencontre, Déséquilibré effacé (sans effet sur le moteur)
@@ -188,7 +308,8 @@ function playRun(g, S, saveTxt, quest, politique, s) {
   seed(s); CLOCK.now = Date.UTC(2026, 9, 1, 8);
   prepare(g, saveTxt, politique, quest, CHAPITRE[quest]);
   g.game.adventureQuestsCompleted[quest] = false; delete g.game.adventureQuestsCompleted[quest];
-  var st = S.st = { rounds: 0, annonces: 0, contrees: 0, subies: 0, subiesComp: 0, degatsCharge: 0, poses: 0, declenches: 0, degatsDeseq: 0, ko: 0, potions: 0, mort: false, combats: [], cur: null, trace: 0 };
+  var st = S.st = { rounds: 0, annonces: 0, contrees: 0, subies: 0, subiesComp: 0, degatsCharge: 0, poses: 0, declenches: 0, degatsDeseq: 0, ko: 0, potions: 0, mort: false, combats: [], cur: null, trace: 0,
+    couvert: 0, rejoues: 0, vulnDeg: 0, remises: 0 };
   g.AdventureQuestManager.start(quest);
   g.__flush();
   var CE = g.CombatEngine, stall = 0, last = -1;
@@ -210,7 +331,8 @@ function playRun(g, S, saveTxt, quest, politique, s) {
   S.st = null;
   return { win: win, hp: win ? hp : 0, rounds: st.rounds, combats: st.combats.map(function (c) { return [c.r, c.n]; }), ko: st.ko, potions: st.potions,
     annonces: st.annonces, contrees: st.contrees, subies: st.subies, subiesComp: st.subiesComp, degatsCharge: st.degatsCharge,
-    poses: st.poses, declenches: st.declenches, degatsDeseq: st.degatsDeseq, fige: !!st.fige, trace: st.trace, maxHp: g.game.heroMaxHp };
+    poses: st.poses, declenches: st.declenches, degatsDeseq: st.degatsDeseq, fige: !!st.fige, trace: st.trace, maxHp: g.game.heroMaxHp,
+    couvert: st.couvert, rejoues: st.rejoues, vulnDeg: Math.round(st.vulnDeg), remises: st.remises };
 }
 function saveFor(classe, scen) { return fs.readFileSync(path.join(SAVES, classe + "_" + SCENARIOS[scen].step + ".json"), "utf8"); }
 function seedFor(scenIdx, i) { return 500000 + scenIdx * 10000 + i; }
@@ -227,7 +349,8 @@ function agg(runs) {
     combatMed: q(per, 0.5), combatP90: q(per, 0.9), soloMed: q(solo, 0.5), soloP90: q(solo, 0.9), groupeMed: q(grp, 0.5), groupeP90: q(grp, 0.9), nSolo: solo.length / n, nGroupe: grp.length / n, koParRun: sum("ko") / n, koRuns: runs.filter(function (r) { return r.ko > 0; }).length / n,
     potions: sum("potions") / n, annonces: sum("annonces") / n, contrees: sum("contrees") / n, subies: sum("subies") / n, subiesComp: sum("subiesComp") / n,
     degatsChargePctPv: sum("degatsCharge") / n / (runs[0] ? runs[0].maxHp : 1), declenches: sum("declenches") / n,
-    degatsDeseqPctPv: sum("degatsDeseq") / n / (runs[0] ? runs[0].maxHp : 1), figes: runs.filter(function (r) { return r.fige; }).length };
+    degatsDeseqPctPv: sum("degatsDeseq") / n / (runs[0] ? runs[0].maxHp : 1),
+    couvert: sum("couvert") / n, rejoues: sum("rejoues") / n, vulnDeg: sum("vulnDeg") / n, remises: sum("remises") / n, figes: runs.filter(function (r) { return r.fige; }).length };
 }
 
 /* ---------- Worker : une classe ---------- */
@@ -236,13 +359,13 @@ function worker() {
   var g = launch(), S = instrument(g, null), prof = null;
   // Un bac à sable par profil : les enveloppes ne se cumulent pas
   L_PROF.forEach(function (pid) {
-    g = launch(); S = instrument(g, PROFILS[pid]); suivreCombats(g, S);
+    g = launch(); S = PROFILS[pid].nu ? compteursJeu(g, instrument(g, null)) : instrument(g, PROFILS[pid]); suivreCombats(g, S);
     L_SCEN.forEach(function (sid) {
       var txt = saveFor(classe, sid), si = Object.keys(SCENARIOS).indexOf(sid);
       L_POL.forEach(function (pol) {
         var runs = [];
         for (var i = 0; i < RUNS; i++) runs.push(playRun(g, S, txt, SCENARIOS[sid].quest, pol, seedFor(si, i)));
-        out[[pid, classe, sid, pol].join("|")] = { agg: agg(runs), runs: runs.map(function (r) { delete r.trace; return r; }) };
+        out[[pid, classe, sid, pol].join("|")] = { agg: agg(runs), runs: runs.map(function (r) { if (!PROFILS[pid].lev && !PROFILS[pid].nu) delete r.trace; return r; }) };
         process.stderr.write(".");
       });
     });
@@ -317,5 +440,105 @@ function main() {
   }).catch(function (e) { console.error(e.message); process.exit(1); });
 }
 
+/* ---------- Leviers du contre : une tâche par classe × profil (4 à la fois), puis synthèse ---------- */
+function mainLeviers() {
+  var dir = CH.captures("charge-bench"), t0 = Date.now(), tag = opt("--tag", "leviers");
+  var taches = []; L_CLASSES.forEach(function (c) { L_PROF.forEach(function (pid) { taches.push([c, pid]); }); });
+  var all = {}, k = 0, actifs = 0;
+  return new Promise(function (fin, echec) {
+    function suivante() {
+      if (k >= taches.length) { if (!actifs) fin(); return; }
+      var t = taches[k++], out = path.join(dir, "part-" + tag + "-" + t[0] + "-" + t[1] + ".json"); actifs++;
+      var args = [__filename, ROOT, "--worker", "--classes", t[0], "--runs", String(RUNS), "--scen", L_SCEN.join(","), "--profils", t[1], "--politiques", L_POL.join(","), "--saves", SAVES, "--out", out];
+      if (opt("--p5", null)) args.push("--p5", opt("--p5"));
+      var pr = cp.spawn(process.execPath, args, { stdio: ["ignore", "ignore", "inherit"] });
+      pr.on("exit", function (code) {
+        actifs--;
+        if (code) return echec(new Error("worker " + t.join("/") + " : code " + code));
+        Object.assign(all, JSON.parse(fs.readFileSync(out, "utf8"))); fs.unlinkSync(out);
+        suivante();
+      });
+    }
+    for (var i = 0; i < 4; i++) suivante();
+  }).then(function () {
+    var brut = path.join(dir, tag + "-" + RUNS + "runs.json");
+    fs.writeFileSync(brut, JSON.stringify({ date: new RealDate().toISOString(), runs: RUNS, profils: PROFILS, scenarios: SCENARIOS, cellules: all }));
+    var txt = rapportLeviers(all, RUNS, (Date.now() - t0) / 60000, brut);
+    fs.writeFileSync(path.join(dir, tag + "-" + RUNS + "runs.txt"), txt);
+    console.log(txt);
+  });
+}
+function rapportLeviers(all, runs, minutes, brut) {
+  var out = [], AV = ["gouffre", "nuee", "couloirs", "sepulcres"].filter(function (x) { return L_SCEN.indexOf(x) >= 0; });
+  function A(pid, c, sid, pol) { var x = all[[pid, c, sid, pol].join("|")]; return x ? x.agg : null; }
+  function moy(pid, c, pol, scens, key) { var v = scens.map(function (sid) { return A(pid, c, sid, pol)[key]; }); return v.reduce(function (a, b) { return a + b; }, 0) / v.length; }
+  function p(x) { return (x >= 0 ? " " : "") + (100 * x).toFixed(1).padStart(5); }
+  function sg(x, d) { return (x >= 0 ? "+" : "") + x.toFixed(d); }
+  var KEYS = [["win", "vict", function (x) { return (100 * x).toFixed(1).padStart(5) + "%"; }], ["hpMoy", "PV", function (x) { return (100 * x).toFixed(1).padStart(5) + "%"; }],
+    ["koParRun", "KO/run", function (x) { return x.toFixed(2).padStart(5); }], ["degatsChargePctPv", "dégCh", function (x) { return (100 * x).toFixed(0).padStart(4) + "%"; }],
+    ["roundsRunMed", "r méd", function (x) { return x.toFixed(1).padStart(5); }], ["roundsRunP90", "r p90", function (x) { return x.toFixed(1).padStart(5); }]];
+  out.push("BANC DES LEVIERS DU CONTRE (Charge ×1,30) — " + runs + " runs par cellule, graines fixes, " + minutes.toFixed(1) + " min");
+  out.push("Profils : " + L_PROF.map(function (k) { return k + " = " + PROFILS[k].label; }).join(" · "));
+  function bloc(titre, scens) {
+    out.push("\n=== " + titre + " ===");
+    out.push("classe     prof pol    " + KEYS.map(function (k) { return k[1].padStart(6); }).join(" ") + "   contrées/annoncées  (couvert, rejoués, remises/run)");
+    L_CLASSES.forEach(function (c) {
+      L_PROF.forEach(function (pid) {
+        L_POL.forEach(function (pol) {
+          var l = CLASSES[c].padEnd(10) + " " + pid.padEnd(4) + " " + pol.padEnd(6) + " " + KEYS.map(function (k) { return k[2](moy(pid, c, pol, scens, k[0])).padStart(6); }).join(" ");
+          l += "   " + moy(pid, c, pol, scens, "contrees").toFixed(2) + "/" + moy(pid, c, pol, scens, "annonces").toFixed(2);
+          l += "  (" + moy(pid, c, pol, scens, "couvert").toFixed(1) + ", " + moy(pid, c, pol, scens, "rejoues").toFixed(1) + ", " + moy(pid, c, pol, scens, "remises").toFixed(1) + ")";
+          out.push(l);
+        });
+      });
+      out.push("");
+    });
+    out.push("--- Écart « contre − sans » (" + titre + ") : victoire pts, PV pts, KO/run, rounds méd., rounds p90 ---");
+    L_CLASSES.forEach(function (c) {
+      L_PROF.forEach(function (pid) {
+        function d(key) { return moy(pid, c, "contre", scens, key) - moy(pid, c, "sans", scens, key); }
+        out.push(CLASSES[c].padEnd(10) + " " + pid.padEnd(4) + "  vict " + sg(100 * d("win"), 1).padStart(6) + "   PV " + sg(100 * d("hpMoy"), 1).padStart(6)
+          + "   KO " + sg(d("koParRun"), 2).padStart(6) + "   r méd " + sg(d("roundsRunMed"), 1).padStart(5) + "   r p90 " + sg(d("roundsRunP90"), 1).padStart(5));
+      });
+    });
+  }
+  if (AV.length) bloc("Moyenne des scénarios avec Charge hors Montagne (" + AV.join(", ") + ")", AV);
+  if (L_SCEN.indexOf("pentes") >= 0) bloc("Montagne · Pentes (aq_montagne_pentes), à part", ["pentes"]);
+  // Détail par scénario
+  out.push("\n=== Détail par scénario (victoire / PV / KO/run / dégâts Charge % PV / rounds méd-p90 / contrées-annoncées) ===");
+  L_SCEN.forEach(function (sid) {
+    out.push("\n " + SCENARIOS[sid].label);
+    L_CLASSES.forEach(function (c) {
+      L_PROF.forEach(function (pid) {
+        out.push("   " + CLASSES[c].padEnd(10) + pid.padEnd(4) + L_POL.map(function (pol) {
+          var a = A(pid, c, sid, pol);
+          return pol + " " + (100 * a.win).toFixed(0).padStart(3) + "% " + (100 * a.hpMoy).toFixed(0).padStart(3) + "% KO " + a.koParRun.toFixed(2) + " dég " + (100 * a.degatsChargePctPv).toFixed(0).padStart(3)
+            + "% r " + a.roundsRunMed + "-" + a.roundsRunP90 + " Ch " + a.contrees.toFixed(1) + "/" + a.annonces.toFixed(1);
+        }).join("  |  "));
+      });
+    });
+  });
+  // Invariance de « sans » : même graine, empreinte de chaque tick comparée à P0
+  if (L_PROF.indexOf("p0") >= 0 && L_POL.indexOf("sans") >= 0) {
+    out.push("\n=== Politique « sans » : parties ≠ P0 (empreinte tick par tick, même graine) / " + runs + " — et écart de victoire ===");
+    L_PROF.filter(function (x) { return x !== "p0"; }).forEach(function (pid) {
+      var l = pid.padEnd(4);
+      L_CLASSES.forEach(function (c) {
+        l += "  " + CLASSES[c] + " : " + L_SCEN.map(function (sid) {
+          var a = all[["p0", c, sid, "sans"].join("|")].runs, b = all[[pid, c, sid, "sans"].join("|")].runs, n = 0;
+          for (var i = 0; i < a.length; i++) if (a[i].trace !== b[i].trace) n++;
+          var dw = 100 * (A(pid, c, sid, "sans").win - A("p0", c, sid, "sans").win);
+          return sid.slice(0, 4) + " " + n + (n ? " (" + sg(dw, 1) + ")" : "");
+        }).join(", ");
+      });
+      out.push(l);
+    });
+  }
+  out.push("\nJSON brut : " + brut);
+  return out.join("\n");
+}
+
 if (require.main !== module) module.exports = { launch: launch, instrument: instrument, suivreCombats: suivreCombats, prepare: prepare, playRun: playRun, saveFor: saveFor, PROFILS: PROFILS, SCENARIOS: SCENARIOS };
-else if (WORKER) worker(); else if (VERIF) verif(); else main();
+else if (WORKER) worker(); else if (VERIF) verif();
+else if (ARGS.indexOf("--leviers") >= 0) mainLeviers().catch(function (e) { console.error(e.message); process.exit(1); });
+else main();

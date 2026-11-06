@@ -10,6 +10,7 @@
    Les textes des données sont traduits par _td() à l'affichage (registre : lang/data-fields.js). */
 I18n.register("en", {
   // index.html
+  "Contres : une Défense jouée contre une annonce (Charge, Silence, Exaltation) couvre aussi tes compagnons tant qu'elle dure, et une Charge contrée te rend le tour : tu frappes dans la foulée.": "Counters: a Defence played against a warning (Charge, Silence, Surge) also covers your companions while it lasts, and a countered Charge gives you your turn back: you strike right away.",
   "Grimoire : il ne montre plus que les situations que tu as déjà rencontrées en combat. Chaque nouvelle situation s'y ajoute avec un court message (« Nouvelle règle au Grimoire »).": "Grimoire: it now only shows the situations you have already met in combat. Each new one is added with a short message (\"New rule in the Grimoire\").",
   "Petites Aventures : l'écran prend le décor du monde de l'aventure (une aventure de la Tour ne s'affiche plus sur le fond de la Forêt), et la fuite a son propre chemin dans chaque monde.": "Little Adventures: the screen now uses the adventure's own world backdrop (a Tower adventure no longer shows the Forest background), and fleeing has its own way out in each world.",
   "Petites Aventures de la Tour : trois accroches à leur tour. Des pas qui redescendent vers un sac caché, une porte que personne ne tient, et une marche en trop qui mène à un palier que l'escalier ne montre pas.": "Tower Little Adventures: three hooks of their own. Footsteps going back down to a hidden bag, a door nobody holds, and one step too many leading to a landing the stairs don't show.",
@@ -332,6 +333,10 @@ I18n.register("en", {
 
   // js/systems/class-combat-system.js
   "Contre réussi : {x} annule l'attaque adverse !": "Counter landed: {x} cancels the enemy's attack!",
+  "Contre : tu frappes dans la foulée.": "Counter: you strike right after.",
+  "{x} : tu couvres aussi {y}.": "{x}: you also cover {y}.",
+  "tes compagnons": "your companions",
+  "{y} esquive la frappe de {x}.": "{y} dodges {x}'s strike.",
   "l'action": "the action",
   "La rage de {x} retombe temporairement !": "{x}'s rage subsides for a while!",
   "La corruption de {x} est purgée !": "{x}'s corruption is purged!",
@@ -1384,6 +1389,8 @@ I18n.register("en", {
   "Choisis d'abord un héros pour assigner une action.": "Choose a hero first to assign an action.",
   "Contre parfait.": "Perfect counter.",
   "Cette action annulera complètement l'attaque adverse si elle est jouée à temps.": "This action will fully cancel the enemy's attack if played in time.",
+  "Elle couvre aussi tes compagnons tant qu'elle dure.": "It also covers your companions while it lasts.",
+  "Et tu frappes dans la foulée.": "And you strike right after.",
   "Effet spécial.": "Special effect.",
   "Cette action agit sur cette situation en plus de ses dégâts normaux.": "This action affects this situation on top of its normal damage.",
   "Cette action ne contre pas cette situation — elle sera simplement jouée en priorité.": "This action doesn't counter this situation — it will simply be played first.",
@@ -2165,17 +2172,17 @@ I18n.register("en", {
   "Inflige 165% des dégâts. Coûte 18 Rage.": "Deals 165% damage. Costs 18 Rage.",
   "Inflige 110% des dégâts. Coûte 28 Rage. Rend l'ennemi vulnérable (+20% dégâts subis de TOUS les coups) pendant 2 rounds.": "Deals 110% damage. Costs 28 Rage. Makes the enemy vulnerable (+20% damage taken from ALL hits) for 2 rounds.",
   "Inflige 230% des dégâts. Coûte 50 Rage. Utilisable seulement si l'ennemi est à 35% PV ou moins.": "Deals 230% damage. Costs 50 Rage. Only usable if the enemy is at 35% HP or less.",
-  "Réduit les dégâts reçus de 50% pendant 1 round.": "Reduces damage taken by 50% for 1 round.",
+  "Réduit les dégâts reçus de 50% pendant 1 round. Contre une annonce, couvre aussi tes compagnons ; contre une charge, tu frappes dans la foulée.": "Reduces damage taken by 50% for 1 round. Against an announcement, it also covers your companions; against a charge, you strike right after.",
   "Inflige 100% des dégâts. +15 Concentration sur réussite, +4 supplémentaire sur coup critique.": "Deals 100% damage. +15 Focus on a hit, +4 more on a critical hit.",
   "Inflige 170% des dégâts. Coûte 20 Concentration.": "Deals 170% damage. Costs 20 Focus.",
   "3 coups de 60% des dégâts chacun. Coûte 35 Concentration.": "3 hits of 60% damage each. Costs 35 Focus.",
   "Inflige 200% des dégâts. La flèche traverse : un second ennemi debout reçoit le même coup. Coûte 50 Concentration.": "Deals 200% damage. The arrow passes through: a second standing enemy takes the same hit. Costs 50 Focus.",
-  "Contre la charge annoncée. Sinon, 70% de chances d'éviter chaque frappe ennemie pendant 1 round.": "Counters the announced charge. Otherwise, a 70% chance to dodge each enemy strike for 1 round.",
+  "Contre la charge annoncée. Sinon, 70% de chances d'éviter chaque frappe ennemie pendant 1 round. Contre une annonce, couvre aussi tes compagnons ; contre une charge, tu frappes dans la foulée.": "Counters the announced charge. Otherwise, a 70% chance to dodge each enemy strike for 1 round. Against an announcement, it also covers your companions; against a charge, you strike right after.",
   "Inflige 100% des dégâts. +8 Mana.": "Deals 100% damage. +8 Mana.",
   "Inflige 180% des dégâts. Coûte 18 Mana.": "Deals 180% damage. Costs 18 Mana.",
   "Inflige 90% des dégâts. Coûte 28 Mana. Applique un effet de dégâts sur la durée (50% des dégâts de ce coup par round pendant 2 rounds).": "Deals 90% damage. Costs 28 Mana. Applies damage over time (50% of this hit's damage per round for 2 rounds).",
   "Inflige 240% des dégâts. Coûte 50 Mana — le coup le plus puissant du Mage.": "Deals 240% damage. Costs 50 Mana — the Mage's most powerful hit.",
-  "Absorbe 40% des dégâts reçus pendant 2 rounds. Coûte 30 Mana.": "Absorbs 40% of damage taken for 2 rounds. Costs 30 Mana.",
+  "Absorbe 40% des dégâts reçus pendant 2 rounds. Contre une annonce, couvre aussi tes compagnons ; contre une charge, tu frappes dans la foulée. Coûte 30 Mana.": "Absorbs 40% of damage taken for 2 rounds. Against an announcement, it also covers your companions; against a charge, you strike right after. Costs 30 Mana.",
 
   // RARITY_LABELS
   "Commun": "Common",
@@ -2660,7 +2667,7 @@ I18n.register("en", {
   "Il perd des PV à chaque round, sans que tu aies à agir.": "It loses HP every round, without you having to act.",
   "Tu as contré son attaque : elle n'a rien donné.": "You countered its attack: it came to nothing.",
   "Tes techniques sont bloquées.": "Your techniques are blocked.",
-  "Défense, ou une compétence qui contre la charge.": "Defence, or a skill that counters the charge.",
+  "Ta Défense la contre, couvre tes compagnons et te rend le tour.": "Your Defence counters it, covers your companions and gives you your turn back.",
   "Place ta grosse compétence maintenant, avant d'être muselé.": "Play your big skill now, before you're muzzled.",
   "Garde tes gros coups pour après, ou brise le bouclier.": "Save your big hits for later, or break the shield.",
   "Interromps-le — c'est le télégraphe qui coûte le plus cher.": "Interrupt it — this is the tell that costs the most.",
