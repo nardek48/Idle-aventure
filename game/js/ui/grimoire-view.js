@@ -447,7 +447,7 @@ function buildGrimoireHelpSheetHTML() {
    superposition plein écran garde le même contenu, qu'elle utilise pour l'ouverture
    automatique à la mort. Une seule source, deux habillages. */
 function buildGrimoireReportSheetHTML() {
-  var h = kSheetHeadHTML({ icon: '<img src="images/Icons/subtabs/hero_stats.webp" alt="">', title: _t("Rapport de combat"), close: "closeGrimoireSheet()" });
+  var h = kSheetHeadHTML({ icon: '<img src="images/Icons/system/combat_report.webp" alt="">', title: _t("Rapport de combat"), close: "closeGrimoireSheet()" });
   h += '<div class="ksheet-body grimoire-sheet-body grimoire-report-body">';
   h += (typeof buildCombatReportBodyHTML === "function")
     ? buildCombatReportBodyHTML()
@@ -674,7 +674,7 @@ function buildGrimoireListHTML(kit, unlockedCount) {
   h += '<div class="grimoire-foot">';
   h += '<button type="button" onclick="openGrimoireSheet(\'presets\')"><img class=ico-inline src=images/Icons/system/save.webp> ' + _t("Presets") + '<span class="grimoire-foot-badge">'
     + ensureGrimoirePresets().length + '</span></button>';
-  h += '<button type="button" onclick="openGrimoireSheet(\'report\')"><img class=ico-inline src=images/Icons/subtabs/hero_stats.webp> ' + _t("Rapport") + '</button>';
+  h += '<button type="button" onclick="openGrimoireSheet(\'report\')"><img class=ico-inline src=images/Icons/system/combat_report.webp> ' + _t("Rapport") + '</button>';
   h += '</div>';
 
   return h;

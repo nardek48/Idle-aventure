@@ -6824,6 +6824,21 @@ console.log("\n[69b] v3.267.0 (L-1) — round de groupe : chaque ennemi joue, fi
     && game.combat.enemies[2].chargeTelegraphed !== true,
     "un seul membre télégraphie : les compteurs sont indépendants");
 
+  /* --- v3.716.0 : contre de groupe — l'annonce d'un non-ciblé est vue et contrée sur son émetteur --- */
+  game = freshCombat("knight"); giveWeapon();
+  g.CombatEngine.spawnGroup(trio(4000));
+  run("game.heroHp = game.heroMaxHp = 100000; game.classCooldowns = {};");
+  var cg = game.combat.enemies;
+  g.CombatActors.setTarget(cg[0]);
+  cg[1].chargeTelegraphed = true; cg[2].chargeTelegraphed = true; cg[1].patternHoldRounds = 1; // C frappera avant B (retenue)
+  ok(g.ClassCombatManager.getGrimoireCombatContext().chargeIncoming === true, "contre de groupe : la charge d'un non-ciblé est vue par le Grimoire");
+  ok(g.CombatEngine.findAnnouncer("chargeIncoming") === cg[2], "contre de groupe : l'émetteur retenu est celui qui frappera le premier");
+  game.grimoireRules = [{ conditionId: "chargeIncoming", actionSlot: "defense" }, { conditionId: null, actionSlot: null }];
+  g.CombatEngine.heroAction("defense");
+  ok(cg[2].chargeTelegraphed === false && cg[1].chargeTelegraphed === true && game.enemy === cg[0],
+    "contre de groupe : la charge de C est annulée, celle de B reste, la cible ne change pas");
+  game.grimoireRules = [];
+
   /* --- La cible du joueur est rendue après le tour des ennemis --- */
   var focus = game.combat.enemies[2];
   g.CombatActors.setTarget(focus);
@@ -9181,23 +9196,18 @@ console.log("\n[112] v3.316.0 — Acte III, étape 13 : le palier d'équipement"
   ok(p.pieces === 4 && p.armeVerte && p.forge === 3 && p.reforge === 4, "relevé du palier : 4 pièces, arme verte, Forge 3, reforge 4");
   ok(step.check(game), "palier complet : étape validée");
 
-  poser(4, false, 3, 4);
-  ok(!step.check(game), "quatre pièces mais arme commune : refusé");
-  // v3.356.0 (D1) : 3 pièces dont l'arme, Forge 2, reforge 4
-  poser(3, true, 2, 4);
-  ok(step.check(game), "D1 : trois pièces dont l'arme, Forge 2, reforge 4 : validé");
-  poser(2, true, 2, 4);
-  ok(!step.check(game), "deux pièces : refusé");
-  poser(3, true, 1, 4);
-  ok(!step.check(game), "Forge 1 : refusé");
-  poser(4, true, 3, 3);
-  ok(!step.check(game), "arme reforgée à 3 : refusé");
-  poser(6, true, 3, 6);
-  ok(step.check(game), "au-delà du palier : validé aussi");
-
-  poser(1, true, 1, 1);
-  ok(/Inhabituels 1\/3/.test(step.progress(game)) && /Forge 1\/2/.test(step.progress(game)), "les compteurs disent où on en est (" + step.progress(game) + ")");
-  ok(step.objectiveLabel === "3 emplacements Inhabituels dont l'arme, Forge 2, arme reforgée à 4", "l'objectif affiché suit le palier");
+  // v3.717.0 (Seb 06/11) : plus de palier exigé, une seule reforge de l'arme
+  poser(0, false, 1, 1);
+  ok(step.check(game), "v3.717.0 : arme commune, aucune pièce Inhabituelle, Forge 1, reforge 1 : validé");
+  poser(4, true, 3, 0);
+  ok(!step.check(game), "v3.717.0 : bien équipé mais arme jamais reforgée : refusé");
+  poser(0, false, 0, 0);
+  ok(!step.check(game) && step.progress(game) === "Reforge de l'arme 0/1", "v3.717.0 : les compteurs disent où on en est (" + step.progress(game) + ")");
+  poser(1, true, 2, 4);
+  ok(step.progress(game) === "Reforge de l'arme 1/1", "v3.717.0 : au-delà, le compteur reste à 1/1");
+  ok(step.objectiveLabel === "Reforger l'arme une fois", "l'objectif affiché : une reforge");
+  game.village.buildings.forge = { level: 1 }; game.forge.levels.weapon = 0;
+  ok(g.ForgeManager.getMaxLevel() >= 1 && !!g.ForgeManager.getCost("weapon"), "v3.717.0 : la Forge 1 suffit pour la reforge 1");
   // Une rareté supérieure compte : le palier est un plancher, pas une égalité.
   var avant = g.storyPalierDesert(game).pieces;
   game.equipped.boots = { slot: "boots", rarity: "rare" };
@@ -14017,13 +14027,12 @@ console.log("\n[204] v3.429.0 — Ruines, acte II : Bâtisseur, murs qui bougent
     g.EQUIPMENT_SLOTS.forEach(function (sl) { game.equipped[sl] = { uid: "t_" + sl, slot: sl, rarity: "green", stat: "tapDmg", value: 1, affixes: [] }; });
     game.forge = { levels: { weapon: 4, armor: 3 } };
     var st9 = g.STORY_QUESTS.ruins.steps[8];
-    ok(!st9.check(game) && /armure 3\/4/.test(st9.progress(game)), "palier : l'armure reforgée à 4 manque");
-    game.forge.levels.armor = 4;
-    ok(st9.check(game), "palier : Inhabituels, arme et armure à 4");
+    // v3.717.0 (Seb 06/11) : palier devenu repère du pronostic, l'étape se valide sans équipement
+    ok(g.storyPalierRuines(game).armure === 3 && g.STORY_PALIER_RUINES.reforge === 4, "repère : l'armure reforgée à 3 sur 4");
     game.equipped.ring.rarity = "common";
-    ok(st9.check(game), "six sur sept suffisent");
+    ok(g.storyPalierRuines(game).pieces === 6 && g.STORY_PALIER_RUINES.pieces === 6, "repère : six Inhabituels sur sept");
     game.equipped.amulet.rarity = "common";
-    ok(!st9.check(game), "deux pièces communes : refusé");
+    ok(st9.check(game) && st9.progress(game) === "", "v3.717.0 : deux pièces communes, armure à 3 : l'étape se valide quand même");
     var cap = g.TRAINING_CAP_BY_ACT.filter(function (a) { return a.stepId === "ruines_06"; })[0];
     ok(cap && cap.terrain === 10 && g.WORLD_CAPS[2].village.training >= 10 && g.WORLD_CAPS[2].village.palisade === 8, "acte II : Terrain 10, Palissade 8");
   } catch (err) {
@@ -14187,14 +14196,12 @@ console.log("\n[207] v3.431.0 — Ruines, acte III (livraison 2) : Clé de voût
     g.EQUIPMENT_SLOTS.forEach(function (sl) { game.equipped[sl] = { uid: "t_" + sl, slot: sl, rarity: "green", stat: "tapDmg", value: 1, affixes: [] }; });
     ["weapon", "armor", "helmet", "boots"].forEach(function (sl) { game.equipped[sl].rarity = "rare"; });
     game.forge.levels.weapon = 6;
-    ok(!st13.check(game) && /arme 6\/7/.test(st13.progress(game)), "palier : l'arme reforgée à 7 manque");
-    game.forge.levels.weapon = 7;
-    ok(st13.check(game), "palier : 4 Rares, Forge 4, arme à 7");
+    // v3.717.0 (Seb 06/11) : le palier Rare devient le repère du pronostic, l'étape se valide d'emblée
+    ok(st13.check(game) && st13.progress(game) === "", "v3.717.0 : arme à 6 : l'étape se valide quand même");
     game.equipped.boots.rarity = "green";
-    ok(!st13.check(game), "trois Rares : refusé");
+    ok(g.storyPalierRuinesRare(game).pieces === 3 && g.STORY_PALIER_RUINES_RARE.pieces === 4, "repère : trois Rares sur quatre");
     game.equipped.boots.rarity = "epic";
-    game.village.buildings.forge = { level: 3 };
-    ok(!st13.check(game) && /Forge 3\/4/.test(st13.progress(game)), "Forge 3 : refusé ; une pièce Épique compte comme Rare");
+    ok(g.storyPalierRuinesRare(game).pieces === 4, "repère : une pièce Épique compte comme Rare");
 
     /* --- Étape 14 : le Golem, puis le choix --- */
     var q = g.ADVENTURE_QUESTS.aq_ruines_golem;
@@ -15120,17 +15127,18 @@ console.log("\n[230] v3.448.6 — Palier Rare : « Ce qui manque », et où");
   var sv = { eq: game.equipped, gold: game.gold, vb: JSON.stringify(game.village || {}), fg: JSON.stringify(game.forge || {}), wr: game.worldsEverReached };
   try {
     var step = null; g.STORY_QUESTS.ruins.steps.forEach(function (s) { if (s.id === "ruines_13") step = s; });
-    ok(step && typeof step.missing === "function", "ruines_13 porte missing()");
+    // v3.717.0 (Seb 06/11) : l'étape n'exige plus rien ; le relevé global reste (repère du pronostic)
+    ok(step && typeof step.missing !== "function" && typeof g.storyPalierRuinesRareMissing === "function", "ruines_13 sans missing() ; storyPalierRuinesRareMissing reste");
     g.VillageBuildingManager.ensure(); g.ForgeManager.ensure();
     game.village.buildings.forge = Object.assign({}, game.village.buildings.forge, { level: 3 });
     game.forge.levels.weapon = 6; game.gold = 0; game.worldsEverReached = { 0: true, 1: true, 2: true }; // aux Ruines
     game.equipped = { weapon: { slot: "weapon", rarity: "rare", name: "x", stat: "tapDmg", value: 10 } };
-    var m = step.missing(game), txt = m.map(function (l) { return l.text + " | " + l.where; }).join("\n");
+    var m = g.storyPalierRuinesRareMissing(game), txt = m.map(function (l) { return l.text + " | " + l.where; }).join("\n");
     ok(/Pièces Rares : 1 \/ 4/.test(txt) && /Sanctuaire scellé/.test(txt), "pièces Rares : le compte et d'où elles viennent");
     ok(/Forge 4 : Clé de voûte 0 \/ \d/.test(txt) && /Tailleur de pierre/.test(txt), "Forge 4 : la Clé de voûte et où la tailler");
     ok(/Reforge 7 de l'arme \| Il faut d'abord la Forge 4\./.test(txt), "reforge 7 : la Forge 4 d'abord");
     game.village.buildings.forge.level = 4;
-    m = step.missing(game); txt = m.map(function (l) { return l.text + " | " + l.where; }).join("\n");
+    m = g.storyPalierRuinesRareMissing(game); txt = m.map(function (l) { return l.text + " | " + l.where; }).join("\n");
     ok(/Reforge 7 de l'arme : Clé de voûte/.test(txt), "Forge 4 bâtie : la reforge 7 liste ses matériaux manquants");
     var board = g.buildForgeBoardHTML(), acier = (board.match(/Acier : /g) || []).length;
     ok(acier === 1, "établi : la provenance de l'Acier n'apparaît qu'une fois (" + acier + ")");
@@ -15627,7 +15635,7 @@ console.log("\n[242] v3.454.0 — Crypte, lot C-3 : acte II (obscurité, Lantern
     var st9 = ch.steps.filter(function (x) { return x.id === "crypte_09"; })[0];
     ok(st9.check(game), "palier : 7 Rares et l'arme à 8, l'étape passe");
     game.equipped.ring = g.generateEquipmentItem("ring", "green", 2);
-    ok(!st9.check(game) && g.storyPalierCrypteRareMissing(game).length >= 1, "une pièce Inhabituelle : il manque, et on sait où chercher");
+    ok(st9.check(game) && g.storyPalierCrypteRareMissing(game).length >= 1, "v3.717.0 : une pièce Inhabituelle, l'étape passe ; le relevé dit encore ce qui manque au repère");
     // Mèche longue et l'obélisque tenu
     g.MemoryManager.has = function (id) { return id === "meche_longue"; };
     LM.hasEffect = function (id) { return id === "lanterne_plus"; };
@@ -15726,7 +15734,7 @@ console.log("\n[243] v3.455.0 — Crypte, lot C-4 : acte III (Ossuaire, Porte-co
     var st13 = ch.steps.filter(function (x) { return x.id === "crypte_13"; })[0];
     ok(st13.check(game), "palier Épique : 3 Épiques, Forge 5, arme à 9");
     game.forge.levels.weapon = 8;
-    ok(!st13.check(game) && g.storyPalierCrypteEpiqueMissing(game).length >= 1, "arme à 8 : il manque, et on sait quoi");
+    ok(st13.check(game) && g.storyPalierCrypteEpiqueMissing(game).length >= 1, "v3.717.0 : arme à 8, l'étape passe ; le relevé dit encore ce qui manque au repère");
     var c9 = g.ForgeManager.getCost("weapon");
     ok(c9 && c9.cire_consacree === 1 && c9.cle_de_voute === 1 && c9.verre_trempe === 2, "reforge 9 : Cire consacrée, et (v3.481.0, RE-4) 1 Clé de voûte et 2 Verres trempés");
     game.forge.levels.weapon = 6;
@@ -19295,7 +19303,7 @@ console.log("\n[342] v3.521.0 — lot 6 : élites de la Montagne (garantie), Dra
     var rep2 = LM.onRunEnd("mountain", "ruisseaux", "fail");
     ok(rep2.hostile && /coulée/.test(rep2.message), "Petite Aventure perdue : la coulée reste");
     ok(g.ADVENTURE_QUESTS.aq_montagne_dragon.bossPowerMult === 0.7, "Dragon ancien : puissance ×0,70 (DRAGON-V2, Seb 05/11)");
-    ok(/^Quatre pièces/.test(g.STORY_QUESTS.mountain.steps.filter(function (x) { return x.id === "montagne_09"; })[0].narrative.completion), "fin de montagne_09 : « Quatre pièces » (palier de 4)");
+    ok(/^À Aeswyn, Brannoc regarde l'éclat/.test(g.STORY_QUESTS.mountain.steps.filter(function (x) { return x.id === "montagne_09"; })[0].narrative.completion), "v3.717.0 : fin de montagne_09 sans compte de pièces (palier devenu narratif)");
   } catch (err) { ok(false, "[342] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
@@ -21704,7 +21712,7 @@ console.log("\n[430] Rythme de la Tour (Seb, 03/11 : Terrain 19 à 21, palier de
     ok(P.pieces === 7 && P.forge === 7 && P.reforge === 13, "acte III : 7 Légendaires, Forge 7, arme reforgée à 13");
     var st13 = g.STORY_QUESTS.tower.steps.filter(function (x) { return x.id === "tour_13"; })[0];
     run("fullResetState(); game.playerName='Test'; game.heroId='knight'; StoryQuestManager.ensure();");
-    ok(st13.check(g.game) === false && typeof st13.missing === "function" && st13.missing(g.game).length >= 1, "palier non tenu : « Ce qui manque » le détaille");
+    ok(st13.check(g.game) === true && typeof st13.missing !== "function" && g.storyPalierTourCompletMissing(g.game).length >= 1, "v3.717.0 : palier non tenu, l'étape passe ; le relevé du repère dit encore ce qui manque");
     ok(g.STORY_TOUR_ETAGES === 5 && g.STORY_TOUR_PA === 2, "étapes 6 et 7 : les 5 étages de l'escalier, 2 escaliers réussis");
     var st7 = g.STORY_QUESTS.tower.steps.filter(function (x) { return x.id === "tour_07"; })[0];
     run("game.storyQuests.tower.counters = { paBase: 1 }; game.explorationProgression.towerPaWins = 2;");
@@ -23269,27 +23277,16 @@ console.log("\n[459] v3.694.0 — Décisions économie (Seb, 05/11 : ECON-1 et E
     g.game.resources.pierre = 0; W.addResource("pierre", 2000, true);
   };
   try {
-    // ECON-1 : à l'Entrepôt 0 et au seuil 0,70, la Forge 5, 6 et 7 payables quand l'Histoire les demande
-    [["crypt", "crypte_13", 4, 400], ["mountain", "montagne_13", 5, 480], ["tower", "tour_13", 6, 480]].forEach(function (c) {
+    // v3.717.0 (Seb 06/11) : plus aucune étape n'exige un niveau de Forge, storyForgeKeep rend 0 : seuil seul (350 pierres)
+    [["crypt", "crypte_13", 4], ["mountain", "montagne_12", 5], ["mountain", "montagne_13", 5], ["tower", "tour_13", 6]].forEach(function (c) {
       placer(c[0], c[1], c[2]);
-      var cost = V.getNextCost("forge") || {}, cap = W.getCap("pierre");
-      ok(cap === 500 && cost.pierre === c[3] && GO.autoKeep("pierre") === c[3] && W.getAmount("pierre") >= cost.pierre && W.capHint("pierre", cost.pierre) === "",
-        "ECON-1 : " + c[1] + ", Forge " + (c[2] + 1) + " (" + cost.pierre + " pierres) payable — gardé " + W.getAmount("pierre") + " / plafond " + cap);
+      ok(GO.storyForgeKeep("pierre") === 0 && GO.storyForgeKeep("acier") === 0 && GO.autoKeep("pierre") === 350, "v3.717.0 : " + c[1] + ", Forge " + c[2] + " : storyForgeKeep 0, seuil seul (" + GO.autoKeep("pierre") + ")");
     });
-    placer("mountain", "montagne_12", 5);
-    ok(GO.autoKeep("pierre") === 480 && GO.storyForgeKeep("acier") === 130, "ECON-1 : montagne_12 (Forge 6 ouverte à montagne_11, exigée à l'étape 13) : 480 pierres gardées ; l'acier, produit, n'est pas versé");
-    // Hors de ces étapes : comportement d'avant
-    placer("mountain", "montagne_05", 5);
-    ok(GO.autoKeep("pierre") === 350 && GO.storyForgeKeep("pierre") === 0, "ECON-1 : montagne_05 (Forge 6 pas encore ouverte) : seuil seul, 350 pierres");
-    placer("mountain", "montagne_13", 6);
-    ok(GO.autoKeep("pierre") === 350, "ECON-1 : Forge 6 déjà bâtie à montagne_13 : seuil seul, 350 pierres");
-    placer("crypt", "crypte_14", 4);
-    ok(GO.autoKeep("pierre") === 350, "ECON-1 : crypte_14 (étape de la Forge 5 passée) : seuil seul");
     placer("tower", "tour_13", 6); g.game.village.buildings.warehouse.level = 10; W.addResource("pierre", 5000, true);
     var capT = W.getCap("pierre");
-    ok(GO.autoKeep("pierre") === Math.max(Math.floor(capT * 0.7), 480) && GO.autoKeep("pierre") <= capT, "ECON-1 : jamais au-dessus du plafond de l'Entrepôt (" + GO.autoKeep("pierre") + " / " + capT + ")");
+    ok(GO.autoKeep("pierre") === Math.floor(capT * 0.7) && GO.autoKeep("pierre") <= capT, "ECON-1 : jamais au-dessus du plafond de l'Entrepôt (" + GO.autoKeep("pierre") + " / " + capT + ")");
     placer("mountain", "montagne_13", 5);
-    ok(g.ProductionPlotsSystem._autoKeep("pierre") >= 480, "ECON-1 : l'achat automatique des parcelles n'entame pas les pierres de la Forge 6");
+    ok(g.ProductionPlotsSystem._autoKeep("pierre") < 480, "v3.717.0 : les parcelles ne gardent plus les 480 pierres de la Forge 6 (" + g.ProductionPlotsSystem._autoKeep("pierre") + ")");
     // ECON-2 : revente des potions préparées au plus à la valeur des ingrédients
     run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
     var PM = g.PotionManager, mineur = PM.getHealingPotion("potion_soin_mineur"), majeur = PM.getHealingPotion("potion_soin_majeur");
@@ -24232,6 +24229,65 @@ console.log("\n[478] v3.714.0 — Périple : 5 matériaux rares à la destinatio
     });
     ok(bad.length === 0, "destination réelle d'un Périple : 5 rares rapportés et crédités (Forêt, Désert, Ruines, Crypte)" + (bad.length ? " : " + bad.join(", ") : ""));
   } catch (err) { ok(false, "[478] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[479] v3.717.0 — Paliers de l'Histoire narratifs ; le pronostic conseille d'après le repère de zone (Seb 06/11)");
+(function () {
+  var SQ = g.StoryQuestManager, CF = g.CombatForecast, ordre = ["forest", "desert", "ruins", "crypt", "mountain", "tower"];
+  var paliers = ["desert_13", "ruines_09", "ruines_13", "crypte_09", "crypte_13", "montagne_09", "montagne_13", "tour_10", "tour_13"];
+  var etape = function (id) { var r = null; Object.keys(g.STORY_QUESTS).forEach(function (c) { g.STORY_QUESTS[c].steps.forEach(function (s) { if (s.id === id) r = s; }); }); return r; };
+  // Histoire placée à `stepId` (chapitres d'avant terminés), monde du chapitre ; 7 pièces de `rarete`, arme reforgée à `arme`
+  var placer = function (chap, stepId, rarete, arme) {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
+    var w = ordre.indexOf(chap), reached = {};
+    for (var i = 0; i <= w; i++) reached[i] = true;
+    g.game.worldsEverReached = reached; g.WorldManager.worldIndex = w; SQ.ensure();
+    for (var j = 0; j < w; j++) g.game.storyQuests[ordre[j]].skipped = true;
+    g.game.storyQuests[chap].currentStep = g.STORY_QUESTS[chap].steps.findIndex(function (s) { return s.id === stepId; });
+    g.game.equipped = {};
+    if (rarete) g.EQUIPMENT_SLOTS.forEach(function (sl) { g.game.equipped[sl] = { uid: "t_" + sl, slot: sl, rarity: rarete, stat: "tapDmg", value: 1, affixes: [] }; });
+    g.ForgeManager.ensure(); g.game.forge.levels.weapon = arme || 0;
+  };
+  var wi = g.WorldManager.worldIndex;
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
+    g.game.equipped = {}; g.ForgeManager.ensure();
+    var sans = paliers.filter(function (id) { var s = etape(id); return id !== "desert_13" && !(s && s.check(g.game) === true && s.progress(g.game) === "" && typeof s.missing !== "function"); });
+    ok(sans.length === 0, "les huit paliers (hors desert_13) se valident sans équipement, sans compteur ni « Ce qui manque »" + (sans.length ? " : " + sans.join(", ") : ""));
+    ok(paliers.every(function (id) { var t = etape(id).tutorial; return t && t.title === "Conseil de la Forge" && /^Rien ne l'exige : avant un combat, le pronostic « Avant de partir »/.test(t.points[t.points.length - 1].text); }), "tutoriels : « Conseil de la Forge », dernier point vers le pronostic");
+    ok(paliers.every(function (id) { return !/\b(il faut|doivent)\b/.test(JSON.stringify(etape(id).tutorial.points)); }), "tutoriels : plus de « il faut » ni « doivent »");
+    var d13 = etape("desert_13");
+    ok(d13.check(g.game) === false, "desert_13 : sans reforge, l'étape attend");
+    g.game.forge.levels.weapon = 1;
+    ok(d13.check(g.game) === true, "desert_13 : arme reforgée à 1, l'étape passe (sans pièce Inhabituelle ni Forge 2)");
+    ok(g.GrandOuvrage.storyForgeKeep("pierre") === 0 && g.GrandOuvrage.storyForgeKeep("acier") === 0, "storyForgeKeep rend 0");
+
+    // Crypte, acte II passé crypte_09 : repère Rare (7 pièces, arme à 8, sans Forge)
+    placer("crypt", "crypte_10", "green", 5);
+    var r = CF.zoneRepere(), a = CF.buildAdvice(true);
+    ok(r && r.stepId === "crypte_09" && r.rarity === "rare" && r.pieces === g.STORY_PALIER_CRYPTE_RARE.pieces && r.reforge === g.STORY_PALIER_CRYPTE_RARE.reforge, "repère de la Crypte à crypte_10 : crypte_09 (" + JSON.stringify(r) + ")");
+    ok(a === "Reviens plus fort : 0 pièce Rare sur 7 conseillées ici, ton arme est reforgée à 5, on la monte à 8, monte tes caractéristiques dans Héros → Entraînement.", "conseil : rareté et reforge du repère, sans Forge (" + a + ")");
+    // Crypte, acte III : repère Épique avec Forge 5
+    placer("crypt", "crypte_14", "green", 5);
+    a = CF.buildAdvice(false);
+    ok(/^Pour améliorer tes chances : 0 pièce Épique sur 3 conseillées ici, ton arme est reforgée à 5, on la monte à 9 à la Forge 5, /.test(a), "conseil après crypte_13 : Épiques, reforge 9 à la Forge 5 (" + a + ")");
+    // Début de la Crypte : la dernière étape-palier des Ruines
+    placer("crypt", "crypte_02", "green", 5);
+    r = CF.zoneRepere();
+    ok(r && r.stepId === "ruines_13" && r.forge === 4, "début de la Crypte : repère de ruines_13 (" + (r && r.stepId) + ")");
+    // Désert avant desert_13 : rien dans le chapitre, la Forêt n'a pas de palier
+    placer("desert", "desert_05", "green", 5);
+    ok(CF.zoneRepere() === null && CF.buildAdvice(true).indexOf("conseillées ici") < 0, "Désert avant desert_13 : pas de repère");
+    // Repère atteint : plus de ligne de rareté ni de reforge
+    placer("crypt", "crypte_10", "rare", 8);
+    a = CF.buildAdvice(true);
+    ok(a.indexOf("conseillées ici") < 0 && a.indexOf("reforgée") < 0, "repère tenu : le conseil n'en parle plus (" + a + ")");
+    // Ordre : emplacement vide d'abord, puis la rareté du repère
+    placer("crypt", "crypte_10", "green", 5); delete g.game.equipped.ring;
+    a = CF.buildAdvice(true);
+    ok(a.indexOf("emplacement d'équipement vide") >= 0 && a.indexOf("emplacement d'équipement vide") < a.indexOf("0 pièce Rare") && a.indexOf("tout en commun") < 0, "ordre : vide, puis rareté du repère");
+  } catch (err) { ok(false, "[479] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  finally { g.WorldManager.worldIndex = wi; }
 })();
 
 Promise.all(ATTENTES).then(function () {

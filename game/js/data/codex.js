@@ -73,7 +73,7 @@ var CODEX_ENTRIES = [
   {
     id: "chaos",
     title: "Le Chaos",
-    icon: "images/Icons/camp/campfire.webp",
+    icon: "images/Icons/codex/codex_chaos.webp",
     category: "system",
     text: "Le Chevalier du Chaos, le Rôdeur du Chaos, le Sorcier du Chaos ne sont pas un choix esthétique : ce sont des champions qui ont laissé l'Aether s'installer un peu plus profondément en eux. Ils gardent les gestes et les compétences de leur classe. Ce qui a changé, c'est la répartition de leurs forces, et l'Aether a donné un peu plus qu'il n'a pris : le Chevalier et le Sorcier du Chaos en ont un peu plus que leur classe, le Rôdeur autant, autrement placées.",
     isUnlocked: function () { return codexFeuilletsRecus() && !!game.codexChaosSeen; }
@@ -119,7 +119,7 @@ var CODEX_ENTRIES = [
   {
     id: "village",
     title: "Le Village hors-Cycle",
-    icon: "images/Icons/quests/village_quest.webp",
+    icon: "images/Icons/codex/codex_village.webp",
     category: "system",
     text: "Entre deux incursions, le héros n'est pas seul. Un village s'est formé en marge du Cycle, peuplé de ceux qui ont choisi de ne pas Ascensionner — pas par lâcheté, mais parce que quelqu'un doit rester pour entretenir les relais, cultiver les réserves, et veiller sur ceux qui reviennent blessés. C'est grâce à eux que le temps continue de produire des ressources même quand le héros n'est pas présent : ils ne combattent pas la Rupture, ils s'assurent simplement qu'elle ne consume pas tout pendant qu'on n'y prête pas attention.",
     /* v3.113.0 : les bâtiments hors-ligne du village n'existent plus — débloqué dès

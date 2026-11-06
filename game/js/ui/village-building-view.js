@@ -445,7 +445,7 @@ function buildTavernContractsHTML() {
 
   var contracts = TavernManager.getContracts();
   var h = '<div class="tavern-board">';
-  h += '<div class="tavern-board-head"><img class=ico-inline src=images/Icons/quests/quest_story.webp> ' + _t("Contrats du jour")
+  h += '<div class="tavern-board-head"><img class=ico-inline src=images/Icons/village_buildings/tavern_contracts.webp> ' + _t("Contrats du jour")
      + '<span class="tavern-board-timer">' + esc(_t("Renouvelés dans {d}", { d: formatTime(TavernManager.timeUntilRefresh()) })) + '</span></div>';
 
   if (!contracts.length) {

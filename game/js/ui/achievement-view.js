@@ -101,12 +101,12 @@ function buildAchievementTotalsHTML() {
     ["images/Icons/system/hourglass_waiting.webp", _t("Temps de jeu"), (typeof formatTime === "function") ? formatTime(game.playTime || 0) : String(Math.floor(game.playTime || 0)) + "s"],
     ["images/Icons/combat_stats/stat_attack.webp", _t("Ennemis vaincus"), formatNumber(game.totalKills || 0)],
     ["images/Icons/gold_icon.webp", _t("Or gagné"), formatNumber(game.totalGoldEarned || 0)],
-    ["images/Icons/combat_status/charge_incoming.webp", _t("Dégâts"), formatNumber(game.totalDamageDealt || 0)],
-    ["images/Icons/quests/quest_resources.webp", _t("Monde"), (WorldManager.worldIndex + 1) + " / " + WORLDS.length],
-    ["images/Icons/system/ascension.webp", _t("Mémoire"), formatNumber(window.MemoryManager ? MemoryManager.getLevel() : 0)],
+    ["images/Icons/achivement/totals/total_damage.webp", _t("Dégâts"), formatNumber(game.totalDamageDealt || 0)],
+    ["images/Icons/achivement/totals/total_world.webp", _t("Monde"), (WorldManager.worldIndex + 1) + " / " + WORLDS.length],
+    ["images/Icons/achivement/totals/total_memory.webp", _t("Mémoire"), formatNumber(window.MemoryManager ? MemoryManager.getLevel() : 0)],
     // v3.365.0 (lot J) : trois lignes de plus, sans nouveau compteur
     ["images/Icons/scene/final_reward.webp", _t("Hauts faits"), window.AchievementManager ? AchievementManager.getClaimedCount() + " / " + (window.ACHIEVEMENTS_DB || []).length : "—"],
-    ["images/Icons/system/ascension.webp", _t("Aether gagné"), formatNumber(Math.floor(Number(game.totalAetherEarned || 0)))],
+    ["images/Icons/achivement/totals/total_aether.webp", _t("Aether gagné"), formatNumber(Math.floor(Number(game.totalAetherEarned || 0)))],
     // v3.379.1 : l'Histoire en dernier = seule sur sa ligne (valeur longue, « Hist… » tronqué sur iPhone)
     ["images/Icons/codex/codex_lore.webp", _t("Histoire"), buildTotalsStoryLabel()]
   ];

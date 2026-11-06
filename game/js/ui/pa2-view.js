@@ -48,7 +48,7 @@ var PA2_ICONS = {
   flee: "images/Icons/quests/flee.webp",
   hp: "images/Icons/combat_stats/stat_health.webp",
   gold: "images/Icons/dungeon/dungeon_gold.webp",
-  bag: "images/Icons/subtabs/inventory.webp",
+  bag: "images/Icons/scene/pa2_besace.webp",
   chest: "images/Icons/dungeon/dungeon_guaranteed_loot.webp",
   wound: "images/Icons/scene/ui/ui_wound.webp",
   hero: "images/Icons/scene/ui/ui_hero_marker.webp",

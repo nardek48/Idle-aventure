@@ -145,11 +145,16 @@ var ClassCombatManager = {
     var base = this.getCombatContext();
     var e = game.enemy;
 
-    base.chargeIncoming = !!(e && e.chargeTelegraphed);
-    base.shieldIncoming = !!(e && e.shieldTelegraphed);
-    base.healIncoming = !!(e && e.healTelegraphed);
-    base.enemySilenceIncoming = !!(e && e.silenceTelegraphed);
-    base.eliteSurgeIncoming = !!(e && e.surgeTelegraphed); // v3.204.0 (E4)
+    // v3.716.0 (Seb 06/11) : une annonce de n'importe quel ennemi du groupe compte, pas seulement celle de la cible
+    var announced = function (cond) {
+      return (window.CombatEngine && typeof CombatEngine.findAnnouncer === "function")
+        ? !!CombatEngine.findAnnouncer(cond) : !!(e && e[PATTERN_FLAG_BY_CONDITION[cond]]);
+    };
+    base.chargeIncoming = announced("chargeIncoming");
+    base.shieldIncoming = announced("shieldIncoming");
+    base.healIncoming = announced("healIncoming");
+    base.enemySilenceIncoming = announced("enemySilenceIncoming");
+    base.eliteSurgeIncoming = announced("eliteSurgeIncoming"); // v3.204.0 (E4)
 
     var heroMaxHp = Number(game.heroMaxHp || 0);
     base.heroHpPercent = heroMaxHp > 0 ? Number(game.heroHp || 0) / heroMaxHp : null;
@@ -317,25 +322,22 @@ var ClassCombatManager = {
     if (!matchedConditionId || !game.enemy) return;
     if (!Array.isArray(action.counters) || action.counters.indexOf(matchedConditionId) === -1) return;
 
-    var flagByCondition = {
-      chargeIncoming: "chargeTelegraphed",
-      shieldIncoming: "shieldTelegraphed",
-      healIncoming: "healTelegraphed",
-      enemySilenceIncoming: "silenceTelegraphed",
-      eliteSurgeIncoming: "surgeTelegraphed" // v3.204.0 (E4)
-    };
-    var countered = !!(flagByCondition[matchedConditionId] && game.enemy[flagByCondition[matchedConditionId]]);
+    // v3.716.0 (Seb 06/11, option A) : le contre vise l'ennemi qui annonce et frappera le premier, cible ou non
+    var emitter = (window.CombatEngine && typeof CombatEngine.findAnnouncer === "function")
+      ? CombatEngine.findAnnouncer(matchedConditionId)
+      : (game.enemy[PATTERN_FLAG_BY_CONDITION[matchedConditionId]] ? game.enemy : null);
+    var countered = !!emitter;
 
     if (countered) {
       if (window.CombatReportManager) {
         var estimatedValue = (typeof CombatEngine !== "undefined" && typeof CombatEngine.estimateCounterValue === "function")
-          ? CombatEngine.estimateCounterValue(matchedConditionId)
+          ? CombatEngine.withTarget(emitter, function () { return CombatEngine.estimateCounterValue(matchedConditionId); })
           : 0;
         CombatReportManager.logCounterSuccess(slot, matchedConditionId, estimatedValue);
       }
       addLog("⚡ " + _t("Contre réussi : {x} annule l'attaque adverse !", { x: action.label ? _td(action.label) : _t("l'action") }), "event");
       if (window.CombatEngine && typeof CombatEngine.rescheduleCounteredPattern === "function") {
-        CombatEngine.rescheduleCounteredPattern(matchedConditionId); // annule le pattern, relance son compte à rebours
+        CombatEngine.rescheduleCounteredPattern(matchedConditionId, emitter); // annule le pattern de l'émetteur, relance son compte à rebours
       }
       if (typeof showCounterSuccessPopup === "function") showCounterSuccessPopup();
       if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();

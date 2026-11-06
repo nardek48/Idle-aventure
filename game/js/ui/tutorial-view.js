@@ -117,10 +117,10 @@ var GENERIC_TUTORIALS = {
      condition : affiché une seule fois, dès la toute première arrivée (y compris au boot). */
   camp_welcome: {
     tab: "campement",
-    icon: "images/Icons/plots/hunting_blind.webp",
+    icon: "images/Icons/camp/camp_welcome.webp",
     title: "Le Campement",
     points: [
-      { icon: "images/Icons/plots/hunting_blind.webp", text: "Le Campement est ton point de ralliement entre deux expéditions — c'est ici que tu gères tout ce qui n'est pas le combat." },
+      { icon: "images/Icons/camp/camp_welcome.webp", text: "Le Campement est ton point de ralliement entre deux expéditions — c'est ici que tu gères tout ce qui n'est pas le combat." },
       { icon: "images/Icons/combat_stats/stat_health.webp", text: "Ta santé — hors combat et hors sortie (expédition, donjon, Petite Aventure), tu récupères 5 % de tes PV max par minute, même hors ligne. Suis ta barre de vie et la régénération en haut de l'écran." },
       { icon: "images/Icons/quests/ration_reward.webp", text: "Les rations soignent instantanément un % fixe de tes PV (35/60/100 % selon le type) : utile pour repartir vite sans attendre." },
       { icon: "images/Icons/quests/quest_list.webp", text: "Le tableau de missions — l'étape d'Histoire en cours (badge doré « Histoire ») est toujours en tête. Touche « Accepter », puis « Partir » pour ta prochaine quête : c'est elle qui te mènera au combat avec un vrai objectif." }
@@ -134,7 +134,7 @@ var GENERIC_TUTORIALS = {
     title: "Village & Production",
     points: [
       { icon: "images/Icons/scene/scene_harvest.webp", text: "Les zones produisent une ressource en continu, même hors ligne — mais chaque bâtiment a un stock local limité (la jauge « 0 / 45 » sur sa carte)." },
-      { icon: "images/Icons/subtabs/inventory.webp", text: "Touche « Récolter » pour transférer ce stock vers ton Entrepôt, qui a son propre plafond (plus grand)." },
+      { icon: "images/Icons/system/harvest_transfer.webp", text: "Touche « Récolter » pour transférer ce stock vers ton Entrepôt, qui a son propre plafond (plus grand)." },
       { icon: "images/Icons/system/upgrade.webp", text: "Améliorer une zone augmente sa vitesse de production et sa capacité de stock local." },
       { icon: "images/Icons/quests/mission_construction.webp", text: "Les Ateliers (comme la Cuisine de camp) transforment des ressources brutes (ex. viande + eau) en objets utiles (ex. rations) — file d'attente, continue même hors ligne." },
       { icon: "images/Icons/system/warehouse_supplies.webp", text: "Garde un œil sur ton Entrepôt : une ressource pleine ne se produit plus tant que tu ne l'as pas dépensée (l'Entrepôt ne rachète rien)." }

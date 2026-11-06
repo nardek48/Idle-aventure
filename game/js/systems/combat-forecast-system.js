@@ -435,6 +435,38 @@ var CombatForecast = {
   /* Le conseil pointe le levier le plus rentable pour CE joueur, mesuré, pas générique :
      l'équipement rapporte plus par or que les caractéristiques tant qu'un emplacement est
      vide ou commun ; sinon c'est l'entraînement (et le Terrain, s'il plafonne). */
+  /* v3.717.0 (Seb 06/11) : repère de zone, le palier de la dernière étape-palier atteinte du chapitre du
+     monde (sinon la dernière du chapitre précédent) ; null sans repère. Lit les STORY_PALIER_* (story-quests.js). */
+  zoneRepere: function () {
+    var SQ = window.StoryQuestManager, W = window.WorldManager;
+    if (!SQ || typeof STORY_QUESTS === "undefined" || !window.WORLDS || !W) return null;
+    var g = window, P = {
+      desert_13: [{ pieces: g.STORY_PALIER_PIECES, forge: g.STORY_PALIER_FORGE, reforge: g.STORY_PALIER_REFORGE }, "green"],
+      ruines_09: [g.STORY_PALIER_RUINES, "green"], ruines_13: [g.STORY_PALIER_RUINES_RARE, "rare"],
+      crypte_09: [g.STORY_PALIER_CRYPTE_RARE, "rare"], crypte_13: [g.STORY_PALIER_CRYPTE_EPIQUE, "epic"],
+      montagne_09: [g.STORY_PALIER_MONTAGNE, "epic"], montagne_13: [g.STORY_PALIER_MONTAGNE_COMPLET, "epic"],
+      tour_10: [g.STORY_PALIER_TOUR, "legendary"], tour_13: [g.STORY_PALIER_TOUR_COMPLET, "legendary"]
+    };
+    var world = WORLDS[Number(W.worldIndex || 0)], ids = Object.keys(STORY_QUESTS), at = -1;
+    ids.forEach(function (id, i) { if (world && STORY_QUESTS[id].worldId === world.id) at = i; });
+    if (at < 0) return null;
+    var paliers = function (i) { return STORY_QUESTS[ids[i]].steps.filter(function (s) { return !!P[s.id]; }).map(function (s) { return s.id; }); };
+    var ici = paliers(at).filter(function (id) { return SQ.isStepReached(id); }), avant = at > 0 ? paliers(at - 1) : [];
+    var stepId = ici.length ? ici[ici.length - 1] : avant[avant.length - 1];
+    var r = stepId && P[stepId];
+    if (!r || !r[0]) return null;
+    return { stepId: stepId, rarity: r[1], pieces: r[0].pieces || 0, forge: r[0].forge || 0, reforge: r[0].reforge || 0 };
+  },
+
+  /* Ligne « pièces de la rareté du repère » (formes littérales pour l'audit i18n). */
+  repereRarityLine: function (rarity, n, m) {
+    var p = { m: m };
+    if (rarity === "green") return _tn(n, "{n} pièce Inhabituelle sur {m} conseillées ici", "{n} pièces Inhabituelles sur {m} conseillées ici", p);
+    if (rarity === "rare") return _tn(n, "{n} pièce Rare sur {m} conseillées ici", "{n} pièces Rares sur {m} conseillées ici", p);
+    if (rarity === "epic") return _tn(n, "{n} pièce Épique sur {m} conseillées ici", "{n} pièces Épiques sur {m} conseillées ici", p);
+    return _tn(n, "{n} pièce Légendaire sur {m} conseillées ici", "{n} pièces Légendaires sur {m} conseillées ici", p);
+  },
+
   buildAdvice: function (unwinnable) {
     var empty = 0, commons = 0;
     (window.EQUIPMENT_SLOTS || []).forEach(function (slot) {
@@ -452,9 +484,16 @@ var CombatForecast = {
       });
     }
 
+    // v3.717.0 (Seb 06/11) : ordre vide > rareté du repère (sinon communes) > reforge du repère > entraînement
+    var rep = this.zoneRepere(), have = rep && typeof storyPalier === "function" ? storyPalier(game, rep.rarity) : null;
     var parts = [];
     if (empty > 0) parts.push(_tn(empty, "{n} emplacement d'équipement vide — l'échoppe du village est le gain le plus rapide", "{n} emplacements d'équipement vides — l'échoppe du village est le gain le plus rapide"));
-    else if (commons >= 4) parts.push(_t("ton équipement est encore tout en commun : une pièce de meilleure qualité change plus que dix niveaux d'entraînement"));
+    if (have && have.pieces < rep.pieces) parts.push(this.repereRarityLine(rep.rarity, have.pieces, rep.pieces));
+    else if (empty === 0 && commons >= 4) parts.push(_t("ton équipement est encore tout en commun : une pièce de meilleure qualité change plus que dix niveaux d'entraînement"));
+    if (have && have.arme < rep.reforge) {
+      parts.push(rep.forge ? _t("ton arme est reforgée à {a}, on la monte à {b} à la Forge {f}", { a: have.arme, b: rep.reforge, f: rep.forge })
+        : _t("ton arme est reforgée à {a}, on la monte à {b}", { a: have.arme, b: rep.reforge }));
+    }
     if (capped) parts.push(_t("tes caractéristiques butent sur le plafond : c'est le Terrain d'entraînement qu'il faut monter"));
     else parts.push(_t("monte tes caractéristiques dans Héros → Entraînement"));
 

@@ -84,6 +84,10 @@ var ELITE_SURGE_DURATION_ROUNDS = 4;
 var ELITE_SURGE_INTENSITY_MULT = 3;   // l'archétype compte triple pendant l'exaltation
 
 var COUNTER_CONFIRMATION_ROUNDS = 1;
+// v3.716.0 : drapeau de télégraphe porté par l'ennemi, par condition du Grimoire (contres de groupe)
+var PATTERN_FLAG_BY_CONDITION = { chargeIncoming: "chargeTelegraphed", shieldIncoming: "shieldTelegraphed",
+  healIncoming: "healTelegraphed", enemySilenceIncoming: "silenceTelegraphed", eliteSurgeIncoming: "surgeTelegraphed" };
+window.PATTERN_FLAG_BY_CONDITION = PATTERN_FLAG_BY_CONDITION;
 
 /* v3.268.0 (L-2) — ciblage des alliés par la menace (doc §6.2). Valeurs de départ,
    à confirmer au banc (sim/group-bench.js --ally) : on vise 35 à 50 % des frappes
@@ -1003,9 +1007,26 @@ var CombatEngine = {
     return true;
   },
 
-  /* Après un contre réussi (ClassCombatManager) : le pattern est annulé et son compte à rebours repart. */
-  rescheduleCounteredPattern: function (conditionId) {
-    var e = game.enemy;
+  /* v3.716.0 (Seb 06/11, option A) : l'ennemi du groupe qui porte l'annonce `conditionId` et la jouera le premier
+     (ordre des tours ; une retenue de Clairvoyance passe après). null si personne ne l'annonce. */
+  findAnnouncer: function (conditionId) {
+    var flag = PATTERN_FLAG_BY_CONDITION[conditionId];
+    if (!flag) return null;
+    var group = window.CombatActors ? CombatActors.aliveEnemies() : (game.enemy ? [game.enemy] : []);
+    var best = null, bestKey = Infinity;
+    for (var i = 0; i < group.length; i++) {
+      var f = group[i];
+      if (!f || !f[flag]) continue;
+      var key = (Number(f.patternHoldRounds || 0) > 0 ? 1000 : 0) + i;
+      if (key < bestKey) { best = f; bestKey = key; }
+    }
+    return best;
+  },
+
+  /* Après un contre réussi (ClassCombatManager) : le pattern est annulé et son compte à rebours repart.
+     v3.716.0 : sur l'ennemi qui l'annonçait (`emitter`), la cible par défaut. */
+  rescheduleCounteredPattern: function (conditionId, emitter) {
+    var e = emitter || game.enemy;
     if (!e) return;
     if (conditionId === "chargeIncoming") { e.chargeTelegraphed = false; e.chargeIn = randInt(ENEMY_CHARGE_ROUNDS_MIN, ENEMY_CHARGE_ROUNDS_MAX); }
     else if (conditionId === "enemySilenceIncoming") { e.silenceTelegraphed = false; e.silenceIn = randInt(ENEMY_CHARGE_ROUNDS_MIN, ENEMY_CHARGE_ROUNDS_MAX); }

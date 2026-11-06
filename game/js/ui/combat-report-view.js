@@ -154,7 +154,7 @@ function buildCombatReportHTML(trigger, enemyName) {
   var h = '<div class="full-menu-overlay combat-report-overlay" onclick="if (event.target === this) closeCombatReport();">';
   h += '  <div class="full-menu combat-report-card">';
 
-  var icon = trigger === "defeat" ? "images/Icons/camp/hero_defeated.webp" : trigger === "boss" ? "images/Icons/dungeon/boss_crown.webp" : "images/Icons/subtabs/hero_stats.webp";
+  var icon = trigger === "defeat" ? "images/Icons/camp/hero_defeated.webp" : trigger === "boss" ? "images/Icons/dungeon/boss_crown.webp" : "images/Icons/system/combat_report.webp";
   var title = trigger === "defeat" ? _t("Rapport de combat — défaite")
     : trigger === "boss" ? _t("Rapport de combat — boss vaincu")
     : _t("Rapport de combat");

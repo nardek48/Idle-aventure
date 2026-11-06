@@ -145,14 +145,14 @@ function getWarehouseOtherUses(key) {
   }
   // v3.419.0 (E-2) : la caravane emporte le surplus des matières brutes
   if (window.CaravanManager && CaravanManager.getEligibleKeys().indexOf(key) !== -1) {
-    out.push({ icon: "images/Icons/village_buildings/merchant_hall.webp", text: _t("Caravane de la Halle (au-delà de {p} % du plafond)", { p: Math.round(CaravanManager.getKeepShare() * 100) }) });
+    out.push({ icon: "images/Icons/village_buildings/caravan_market.webp", text: _t("Caravane de la Halle (au-delà de {p} % du plafond)", { p: Math.round(CaravanManager.getKeepShare() * 100) }) });
   }
   // v3.481.0 (RE-4) : Verre trempé, Clé de voûte et Cire consacrée servent aussi aux reforges
   if (["acier", "resine_durcie", "chitine_profondeurs", "verre_trempe", "cle_de_voute", "cire_consacree", "obsidienne_taillee", "verre_faille"].indexOf(key) !== -1) {
     out.push({ icon: "images/Icons/village_buildings/village_forge.webp", text: _t("Forge : reforge de l'équipement") });
   }
   var def = WAREHOUSE_RESOURCES[key] || {};
-  if (def.healPct) out.push({ icon: "images/Icons/quests/village_quest.webp", text: _t("Campement : repas (+{p} % PV)", { p: Math.round(def.healPct * 100) }) });
+  if (def.healPct) out.push({ icon: "images/Icons/camp/camp_meal.webp", text: _t("Campement : repas (+{p} % PV)", { p: Math.round(def.healPct * 100) }) });
   /* v3.520.0 (audit RES-3) : rangs, vivres de sortie, départs d'expédition et besace, lus dans les données */
   if ((window.SKILL_RANK_PRICES || []).some(function (p) { return p.mat === key; })) out.push({ icon: "images/Icons/system/upgrade.webp", text: _t("Rangs des capacités du héros (Héros › Capacités)") });
   if ((window.COMPANION_SKILL_RANK_PRICES || []).some(function (p) { return p.mat === key; })) out.push({ icon: "images/Icons/system/upgrade.webp", text: _t("Rangs des compagnons (Héros › Alliés)") });
@@ -170,8 +170,8 @@ function getWarehouseOtherUses(key) {
     .sort(function (a, b) { return (b.w - a.w) || (a.i - b.i); }).map(function (d) { return d.x; });
   var depTxt = departs.length > 4 ? departs.slice(0, 3).join(", ") + " " + _tn(departs.length - 3, "et {n} autre", "et {n} autres") : departs.join(", "); // liste courte à 320 px
   if (departs.length) out.push({ icon: "images/Icons/quests/start_expedition.webp", text: _t("Départ : {x}", { x: depTxt }) });
-  if (Object.keys(window.PA2_ITEMS || {}).some(function (id) { return PA2_ITEMS[id].resource === key; })) out.push({ icon: "images/Icons/subtabs/inventory.webp", text: _t("Besace des Petites Aventures") });
-  if (window.VILLAGE_EVENT_BUYBACK && VILLAGE_EVENT_BUYBACK.prices[key]) out.push({ icon: "images/Icons/village_buildings/merchant_hall.webp", text: _t("Marché de Sarkel : il la rachète par lots de {n} ({p} or l'unité)", { n: VILLAGE_EVENT_BUYBACK.lot, p: VILLAGE_EVENT_BUYBACK.prices[key] }) }); // v3.606.0 (D2)
+  if (Object.keys(window.PA2_ITEMS || {}).some(function (id) { return PA2_ITEMS[id].resource === key; })) out.push({ icon: "images/Icons/scene/pa2_besace.webp", text: _t("Besace des Petites Aventures") });
+  if (window.VILLAGE_EVENT_BUYBACK && VILLAGE_EVENT_BUYBACK.prices[key]) out.push({ icon: "images/Icons/village_events/sarkel_buyback.webp", text: _t("Marché de Sarkel : il la rachète par lots de {n} ({p} or l'unité)", { n: VILLAGE_EVENT_BUYBACK.lot, p: VILLAGE_EVENT_BUYBACK.prices[key] }) }); // v3.606.0 (D2)
   // ECON-10 : le Grand Ouvrage (versement automatique ou à la main) et le festin du Campement
   if (window.GrandOuvrage && GrandOuvrage.isOpen() && GrandOuvrage.getValue(key) > 0) {
     out.push({ icon: "images/Icons/village_buildings/grand_ouvrage.webp", text: GrandOuvrage.autoKeep(key) !== Infinity
