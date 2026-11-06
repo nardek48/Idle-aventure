@@ -10,6 +10,7 @@
    Les textes des données sont traduits par _td() à l'affichage (registre : lang/data-fields.js). */
 I18n.register("en", {
   // index.html
+  "37 nouvelles icônes : chaque image ne sert plus qu'à une chose (Campement, Boutique des potions, caravanes, hauts faits, pronostic…) et les emojis des conseils sont remplacés par des images.": "37 new icons: each image now has a single purpose (Camp, Potion shop, caravans, achievements, forecast…) and the emojis in tips are replaced by images.",
   "Les paliers d'équipement de l'Histoire ne bloquent plus : ce sont neuf scènes avec tes compagnons et Aeswyn. Le pronostic « Avant de partir » dit ce qui est conseillé dans la zone (rareté, reforge de l'arme).": "The Story's equipment thresholds no longer block you: they are nine scenes with your companions and Aeswyn. The \"Before you set out\" forecast tells you what is advised in the area (rarity, weapon reforge).",
   "Combats de groupe : le Grimoire voit l'annonce de chaque ennemi, pas seulement de ta cible, et contre celui qui frapperait le premier.": "Group fights: the Grimoire now sees every enemy's warning, not just your target's, and counters the one that would strike first.",
   "Le Périple rapporte davantage : 5 matériaux rares à l'arrivée au lieu de 4.": "The Journey pays more: 5 rare materials on arrival instead of 4.",
