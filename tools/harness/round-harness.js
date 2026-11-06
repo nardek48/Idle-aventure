@@ -6824,6 +6824,21 @@ console.log("\n[69b] v3.267.0 (L-1) — round de groupe : chaque ennemi joue, fi
     && game.combat.enemies[2].chargeTelegraphed !== true,
     "un seul membre télégraphie : les compteurs sont indépendants");
 
+  /* --- v3.716.0 : contre de groupe — l'annonce d'un non-ciblé est vue et contrée sur son émetteur --- */
+  game = freshCombat("knight"); giveWeapon();
+  g.CombatEngine.spawnGroup(trio(4000));
+  run("game.heroHp = game.heroMaxHp = 100000; game.classCooldowns = {};");
+  var cg = game.combat.enemies;
+  g.CombatActors.setTarget(cg[0]);
+  cg[1].chargeTelegraphed = true; cg[2].chargeTelegraphed = true; cg[1].patternHoldRounds = 1; // C frappera avant B (retenue)
+  ok(g.ClassCombatManager.getGrimoireCombatContext().chargeIncoming === true, "contre de groupe : la charge d'un non-ciblé est vue par le Grimoire");
+  ok(g.CombatEngine.findAnnouncer("chargeIncoming") === cg[2], "contre de groupe : l'émetteur retenu est celui qui frappera le premier");
+  game.grimoireRules = [{ conditionId: "chargeIncoming", actionSlot: "defense" }, { conditionId: null, actionSlot: null }];
+  g.CombatEngine.heroAction("defense");
+  ok(cg[2].chargeTelegraphed === false && cg[1].chargeTelegraphed === true && game.enemy === cg[0],
+    "contre de groupe : la charge de C est annulée, celle de B reste, la cible ne change pas");
+  game.grimoireRules = [];
+
   /* --- La cible du joueur est rendue après le tour des ennemis --- */
   var focus = game.combat.enemies[2];
   g.CombatActors.setTarget(focus);
