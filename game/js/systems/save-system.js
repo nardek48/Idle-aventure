@@ -429,6 +429,7 @@ function buildSaveData() {
     potionAuto: game.potionAuto || null,
     grimoireTarget: game.grimoireTarget || "proche", // v3.428.0 (Ruines) : réglage « Cible »
     grimoireVarier: !!game.grimoireVarier, // v3.653.0 : réglage « Varier » (accord de Seb)
+    grimoireSeen: (game.grimoireSeen && typeof game.grimoireSeen === "object") ? game.grimoireSeen : null, // v3.729.0 (Seb 06/11) : situations rencontrées
     lastSortiePrep: game.lastSortiePrep || null, // v3.449.0 : « Comme la dernière fois » (potions à bonus, objets)
     // v3.34.0 : lastSpecialUse/specialBuffExpires/specialBuffPct/
     // lastDefenseUse/defenseBuffExpires retirés (ancien système), voir
@@ -753,6 +754,7 @@ function restoreBaseState(d) {
   // v3.379.0 : potion automatique — une sauvegarde d'avant n'a pas le champ : « Jamais » (rien ne change pour elle)
   game.grimoireTarget = (d.grimoireTarget === "faible" || d.grimoireTarget === "soutien") ? d.grimoireTarget : "proche"; // v3.428.0
   game.grimoireVarier = d.grimoireVarier === true; // v3.653.0 : ancienne sauvegarde = éteint
+  game.grimoireSeen = (d.grimoireSeen && typeof d.grimoireSeen === "object" && !Array.isArray(d.grimoireSeen)) ? d.grimoireSeen : null; // v3.729.0 : absent = déduit (GrimoireSeen)
   game.lastSortiePrep = restoreLastSortiePrep(d.lastSortiePrep); // v3.449.0
   game.potionAuto = (window.PotionAutoManager && typeof PotionAutoManager.normalize === "function")
     ? PotionAutoManager.normalize(d.potionAuto, window.POTION_AUTO_OLD_SAVE) : (d.potionAuto || null);
@@ -1168,6 +1170,7 @@ function fullResetState() {
   game.potionAuto = Object.assign({}, POTION_AUTO_NEW_GAME);
   game.grimoireTarget = "proche"; // v3.428.0 (Ruines) : réglage « Cible »
   game.grimoireVarier = false; // v3.653.0
+  game.grimoireSeen = {}; // v3.729.0 (Seb 06/11) : partie neuve, rien de rencontré
   game.lastSortiePrep = null; // v3.449.0
   game.genericTutorialsSeen = {}; // v3.107.9
 

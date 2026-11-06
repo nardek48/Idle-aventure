@@ -22590,7 +22590,7 @@ console.log("\n[451] v3.686.0 — Sauvegarde et fiabilité (audit 04/11, lot I7)
   var canon = function (o, drop) { var c = JSON.parse(JSON.stringify(o)); (drop || []).forEach(function (k) { delete c[k]; });
     var s = function (v) { if (v && typeof v === "object") { if (Array.isArray(v)) return "[" + v.map(s).join(",") + "]"; return "{" + Object.keys(v).sort().map(function (k) { return JSON.stringify(k) + ":" + s(v[k]); }).join(",") + "}"; } return JSON.stringify(v); };
     return s(c); };
-  var DROP = ["savedAt", "lastOnline", "gameVersion"];
+  var DROP = ["savedAt", "lastOnline", "gameVersion", "grimoireSeen"]; // v3.729.0 : grimoireSeen déduit au premier besoin ([490])
   var DROP_FIX = DROP.concat(["quests", "questProgress", "questResetTime", "hasSeenOnboarding"]); // v3.692.0 (ARCH-10) : jamais lus, plus écrits
   var touched = ["quest_idle_save_v6", "quest_idle_active_slot"], keep = {};
   for (var n = 1; n <= 6; n++) ["", "_bak", "_illisible"].forEach(function (x) { touched.push("quest_idle_save_v6_slot" + n + x); });
@@ -25225,6 +25225,79 @@ console.log("\n[489] v3.728.0 — Petites Aventures : décor et fuite selon le m
     var tw = g.WORLDS.filter(function (w) { return w.id === "tower"; })[0];
     ok(String(vu["--world-combat-map"] || "").indexOf(tw.combatMap) >= 0 && vu["--world-bg"] === tw.bg, "décor : le fond suit le monde de l'aventure (Tour)");
   } catch (err) { ok(false, "[489] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[490] v3.729.0 — Grimoire : seules les situations rencontrées en combat (Seb 06/11, option A)");
+(function () {
+  var keep = { toast: g.showToast, log: g.addLog }, toasts = [], logs = [], GS = g.GrimoireSeen, ORDER = g.GRIMOIRE_CONDITION_ORDER;
+  var vis = function () { return ORDER.filter(function (id) { return GS.isVisible(id); }); };
+  var ctx = function () { return g.ClassCombatManager.getGrimoireCombatContext(); };
+  var msgs = function (x) { return toasts.filter(function (t) { return t === "📖 Nouvelle règle au Grimoire : " + x; }).length + "/" + logs.filter(function (t) { return t === "📖 Nouvelle règle au Grimoire : " + x; }).length; };
+  g.showToast = function (t) { toasts.push(String(t)); }; g.addLog = function (t) { logs.push(String(t)); };
+  try {
+    run("game.dungeonRun = { active: false }; fullResetState();");
+    ok(JSON.stringify(g.createInitialGameState().grimoireSeen) === "{}" && JSON.stringify(g.game.grimoireSeen) === "{}", "nouvelle partie : grimoireSeen vide (état initial et reset complet)");
+    ok(vis().join() === "heroLowHp" && GS.hiddenCount() === ORDER.length - 1, "nouvelle partie : seule « Mes PV sont bas » est visible (aucune règle ni preset par défaut)");
+    var gr = g.getGrimoireConditionGroups(), sh = g.buildGrimoireConditionSheetHTML();
+    ok(gr.length === 1 && gr[0].ids.join() === "heroLowHp", "feuille : les groupes vides disparaissent (reste « Ton groupe »)");
+    ok(sh.indexOf("'heroLowHp'") >= 0 && sh.indexOf("'chargeIncoming'") < 0 && sh.indexOf("16 situations encore inconnues") >= 0, "feuille : PV bas seule, « 16 situations encore inconnues »");
+
+    // Une Charge annoncée en combat : visible, un message (toast + journal), une seule fois
+    g.game.heroMaxHp = 100; g.game.heroHp = 100;
+    g.game.enemy = { id: "slime", name: "Slime", hp: 50, maxHp: 50, isBoss: false, archetype: null, stats: { celerity: 0 }, _roundReady: true, gauge: 0, chargeTelegraphed: true };
+    ctx();
+    ok(g.game.grimoireSeen.chargeIncoming === true && GS.isVisible("chargeIncoming") && !GS.isVisible("shieldIncoming"), "Charge annoncée : la situation devient visible, pas les autres");
+    ok(msgs("Charge") === "1/1", "message « Nouvelle règle au Grimoire : Charge » (toast et journal)");
+    ctx(); ctx(); g.ClassCombatManager.getGrimoireCombatContext();
+    ok(msgs("Charge") === "1/1" && toasts.length === 1, "un seul message par condition");
+    sh = g.buildGrimoireConditionSheetHTML();
+    ok(sh.indexOf("'chargeIncoming'") >= 0 && sh.indexOf("15 situations encore inconnues") >= 0 && sh.indexOf("ennemi annonce") >= 0, "feuille : la Charge apparaît dans « L'ennemi annonce », 15 inconnues");
+    g.game.heroHp = 10; ctx();
+    ok(g.game.grimoireSeen.heroLowHp === true && toasts.length === 1, "PV bas rencontrés : notés sans message (toujours visibles)");
+    g.game.heroHp = 100;
+
+    // Conditions des règles et des presets : toujours visibles ; rencontrées ensuite, sans message
+    g.game.grimoireRules = [{ conditionId: "enemyVampiric", actionSlot: "skill1" }];
+    g.game.grimoirePresets = [{ id: "p1", name: "Essai", icon: "", rules: [{ conditionId: "veinIntact", actionSlot: "vein" }] }];
+    ok(GS.isVisible("enemyVampiric") && GS.isVisible("veinIntact") && !g.game.grimoireSeen.enemyVampiric, "condition d'une règle ou d'un preset : visible sans rencontre");
+    g.game.enemy.chargeTelegraphed = false; g.game.enemy.archetype = "vampiric"; ctx();
+    ok(g.game.grimoireSeen.enemyVampiric === true && toasts.length === 1, "vampirique rencontré : noté, sans message (déjà dans le Grimoire)");
+    g.game.grimoireRules = []; g.game.grimoirePresets = [];
+    ok(GS.isVisible("enemyVampiric") && !GS.isVisible("veinIntact"), "règle vidée : une situation rencontrée reste, une jamais vue repart");
+    g.game.enemy.archetype = "armored"; g.CombatItems.holds = (function (h) { var f = function (a) { return a === "armored" || h.apply(this, arguments); }; f._h = h; return f; })(g.CombatItems.holds);
+    var c2 = ctx(); g.CombatItems.holds = g.CombatItems.holds._h;
+    ok(c2.enemyArchetype === null && g.game.grimoireSeen.enemyArmored === true && msgs("Blindé") === "1/1", "blindé tenu par un objet : la règle ne joue pas, la situation est quand même rencontrée");
+    ok(String(g.chooseGrimoireAction).indexOf("GrimoireSeen") < 0 && String(g.evaluateGrimoireCondition).indexOf("GrimoireSeen") < 0 && String(g.ClassCombatManager._chooseRoundAction).indexOf("GrimoireSeen") < 0,
+      "affichage seulement : choix des règles, évaluation et repli inchangés");
+
+    // Sauvegarde et rechargement
+    var b = JSON.parse(JSON.stringify(g.buildSaveData()));
+    ok(b.grimoireSeen && b.grimoireSeen.chargeIncoming === true && b.grimoireSeen.enemyArmored === true, "sauvegarde : grimoireSeen écrit");
+    run("fullResetState();"); g.restoreBaseState(b);
+    ok(g.game.grimoireSeen.chargeIncoming === true && g.game.grimoireSeen.enemyVampiric === true && !g.game.grimoireSeen.shieldIncoming, "rechargement : grimoireSeen retrouvé tel quel");
+
+    // Migration d'une sauvegarde d'avant (v3.685.0, Rôdeuse à la Crypte) : rien de dit, tout déduit
+    var d = JSON.parse(fs.readFileSync(path.join(__dirname, "sauvegarde-v3685.json"), "utf8")); delete d.grimoireSeen;
+    var t0 = toasts.length; run("fullResetState();"); g.restoreBaseState(d);
+    ok(g.game.grimoireSeen === null, "ancienne sauvegarde : champ absent, à déduire");
+    var s = GS.ensure(), want = ["chargeIncoming", "enemyAttackIncoming", "shieldIncoming", "healIncoming", "eliteSurgeIncoming", "enemySilenceIncoming", "enemyArmored", "enemyVampiric", "enemyEnraged", "enemyCorrupted", "enemyRising", "enemySleeping", "multipleEnemies", "allyLowHp", "heroLowHp"];
+    var manque = want.filter(function (id) { return !s[id]; });
+    ok(!manque.length, "migration : Forêt → Crypte atteinte, quêtes, donjons 1-2, compagnons → situations déduites" + (manque.length ? " — manque " + manque.join(", ") : ""));
+    ok(!s.veinIntact && !s.allyChained && !GS.isVisible("veinIntact"), "migration : ni veine (Montagne jamais atteinte) ni chaîne (« Les maillons » pas finie)");
+    ok(toasts.length === t0 && g.game.grimoireSeen === s && g.buildSaveData().grimoireSeen === s, "migration : aucun message, résultat gardé et sauvegardé");
+    d.worldsEverReached = { 0: true }; d.killCounts = {}; d.totalKills = 0; d.adventureQuestsCompleted = {}; d.dungeonTierCleared = {}; d.companions = {}; d.grimoireRules = [{ conditionId: "enemyEnraged", actionSlot: "skill1" }]; d.grimoirePresets = [];
+    run("fullResetState();"); g.restoreBaseState(d);
+    ok(Object.keys(GS.ensure()).sort().join() === "enemyEnraged,heroLowHp", "migration d'une partie à peine commencée : PV bas et la condition de sa règle seulement");
+
+    // Reset complet
+    run("fullResetState();");
+    ok(JSON.stringify(g.game.grimoireSeen) === "{}" && vis().join() === "heroLowHp", "reset complet : grimoireSeen vidé");
+
+    // Fiche d'aide : phrase vraie, même icône
+    var pt = g.GENERIC_TUTORIALS && g.GENERIC_TUTORIALS.grimoire_rules ? g.GENERIC_TUTORIALS.grimoire_rules.points : null, last = pt ? pt[pt.length - 1] : null;
+    ok(last && last.text === "Une situation apparaît dans le Grimoire la première fois que tu la rencontres en combat. Les emplacements de règles s'ouvrent en atteignant de nouveaux mondes." && last.icon === "images/Icons/quests/quest_resources.webp", "fiche d'aide : la phrase dit comment une situation apparaît (icône inchangée)");
+  } catch (err) { ok(false, "[490] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  finally { g.showToast = keep.toast; g.addLog = keep.log; try { run("fullResetState();"); } catch (e) {} }
 })();
 
 Promise.all(ATTENTES).then(function () {

@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.729.0", "system/grimoire", _t("Grimoire : il ne montre plus que les situations que tu as déjà rencontrées en combat. Chaque nouvelle situation s'y ajoute avec un court message (« Nouvelle règle au Grimoire »).")],
     ["3.728.0", "living_map/carte_vivante", _t("Petites Aventures : l'écran prend le décor du monde de l'aventure (une aventure de la Tour ne s'affiche plus sur le fond de la Forêt), et la fuite a son propre chemin dans chaque monde.")],
     ["3.727.0", "living_map/carte_vivante", _t("Petites Aventures de la Tour : trois accroches à leur tour. Des pas qui redescendent vers un sac caché, une porte que personne ne tient, et une marche en trop qui mène à un palier que l'escalier ne montre pas.")],
     ["3.726.0", "living_map/carte_vivante", _t("Petites Aventures de la Crypte et de la Montagne : la boîte à mèches, la niche aux lampes cachée, la chapelle, la veine de la pioche (la lave attend pendant le détour), la source chaude, et des passages secrets.")],

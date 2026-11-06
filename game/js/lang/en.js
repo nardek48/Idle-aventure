@@ -10,6 +10,7 @@
    Les textes des données sont traduits par _td() à l'affichage (registre : lang/data-fields.js). */
 I18n.register("en", {
   // index.html
+  "Grimoire : il ne montre plus que les situations que tu as déjà rencontrées en combat. Chaque nouvelle situation s'y ajoute avec un court message (« Nouvelle règle au Grimoire »).": "Grimoire: it now only shows the situations you have already met in combat. Each new one is added with a short message (\"New rule in the Grimoire\").",
   "Petites Aventures : l'écran prend le décor du monde de l'aventure (une aventure de la Tour ne s'affiche plus sur le fond de la Forêt), et la fuite a son propre chemin dans chaque monde.": "Little Adventures: the screen now uses the adventure's own world backdrop (a Tower adventure no longer shows the Forest background), and fleeing has its own way out in each world.",
   "Petites Aventures de la Tour : trois accroches à leur tour. Des pas qui redescendent vers un sac caché, une porte que personne ne tient, et une marche en trop qui mène à un palier que l'escalier ne montre pas.": "Tower Little Adventures: three hooks of their own. Footsteps going back down to a hidden bag, a door nobody holds, and one step too many leading to a landing the stairs don't show.",
   "Petites Aventures de la Crypte et de la Montagne : la boîte à mèches, la niche aux lampes cachée, la chapelle, la veine de la pioche (la lave attend pendant le détour), la source chaude, et des passages secrets.": "Crypt and Mountain Little Adventures: the wick box, the hidden lamp niche, the chapel, the pickaxe vein (the lava waits during the detour), the hot spring, and secret passages.",
@@ -3389,7 +3390,9 @@ I18n.register("en", {
   "Une action marquée « ⚡ Contre » annule complètement l'attaque adverse. C'est le meilleur appariement possible pour cette situation.": "An action marked “⚡ Counter” fully cancels the enemy attack. It's the best possible match for that situation.",
   "S'il n'y a aucune règle applicable, ton héros continue de se battre normalement — le Grimoire s'ajoute au comportement automatique, il ne le remplace pas.": "If no rule applies, your hero keeps fighting normally — the Grimoire adds to the automatic behaviour, it doesn't replace it.",
   "En combat, ton héros met de côté un peu de ressource pour garantir ton contre le plus prioritaire : il jouera moins d'actions coûteuses en attendant.": "In combat, your hero sets aside a little resource to guarantee your top-priority counter: it will play fewer costly actions while waiting.",
-  "De nouvelles règles se débloquent en atteignant de nouveaux mondes pour la première fois.": "New rules unlock as you reach new worlds for the first time.",
+  "Une situation apparaît dans le Grimoire la première fois que tu la rencontres en combat. Les emplacements de règles s'ouvrent en atteignant de nouveaux mondes.": "A situation appears in the Grimoire the first time you meet it in combat. Rule slots open as you reach new worlds.",
+  "Nouvelle règle au Grimoire : {x}": "New Grimoire rule: {x}",
+  "{n} situation encore inconnue||{n} situations encore inconnues": ["{n} situation still unknown", "{n} situations still unknown"],
 
   // WORKSHOP_UNLOCK_STEPS
   "Récolter 10 Bois": "Harvest 10 Wood",

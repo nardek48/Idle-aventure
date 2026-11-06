@@ -185,16 +185,18 @@ var GRIMOIRE_CONDITION_GROUPS = [
   { title: _t("Le terrain", "grimoire groupe"), ids: ["veinIntact"] }
 ];
 
-/* Groupes de la feuille ; une condition oubliée des groupes tombe dans « Autres » (jamais perdue). */
+/* Groupes de la feuille ; une condition oubliée des groupes tombe dans « Autres » (jamais perdue).
+   v3.729.0 (Seb 06/11) : seulement les situations visibles (GrimoireSeen) ; un groupe vide disparaît. */
 function getGrimoireConditionGroups() {
   var order = (typeof GRIMOIRE_CONDITION_ORDER !== "undefined") ? GRIMOIRE_CONDITION_ORDER : Object.keys(GRIMOIRE_CONDITIONS || {});
+  var shown = function (id) { return getGrimoireCondition(id) && (!window.GrimoireSeen || GrimoireSeen.isVisible(id)); };
   var seen = {}, out = [];
   GRIMOIRE_CONDITION_GROUPS.forEach(function (g) {
-    var ids = g.ids.filter(function (id) { return getGrimoireCondition(id); });
-    ids.forEach(function (id) { seen[id] = true; });
+    g.ids.forEach(function (id) { seen[id] = true; });
+    var ids = g.ids.filter(shown);
     if (ids.length) out.push({ title: g.title, ids: ids });
   });
-  var rest = order.filter(function (id) { return !seen[id] && getGrimoireCondition(id); });
+  var rest = order.filter(function (id) { return !seen[id] && shown(id); });
   if (rest.length) out.push({ title: _t("Autres", "grimoire groupe"), ids: rest });
   return out;
 }
@@ -242,6 +244,8 @@ function buildGrimoireConditionSheetHTML() {
         + '<span><b>' + esc(_td(c.label)) + '</b><span class="grimoire-opt-desc">' + esc(_td(c.description)) + '</span></span></button>';
     });
   });
+  var hidden = window.GrimoireSeen ? GrimoireSeen.hiddenCount() : 0; // v3.729.0 : le reste se découvre en combat
+  if (hidden > 0) h += '<p class="grimoire-hint">' + esc(_tn(hidden, "{n} situation encore inconnue", "{n} situations encore inconnues")) + '</p>';
   return h + '</div>';
 }
 

@@ -76,6 +76,131 @@ window.ARCHETYPE_EFFECT_TO_CONDITION_ID = ARCHETYPE_EFFECT_TO_CONDITION_ID;
 
 window.getArchetypeEffectConditionId = getArchetypeEffectConditionId;
 
+/* v3.729.0 (Seb 06/11, option A) : situations du Grimoire RENCONTRÉES (game.grimoireSeen = { id: true }).
+   Affichage seulement : l'évaluation des règles n'en dépend pas. Toujours visibles : PV bas, règles et presets. */
+var GRIMOIRE_SEEN_ARCH = { enraged: "enemyEnraged", corrupted: "enemyCorrupted", vampiric: "enemyVampiric", armored: "enemyArmored", shielded: "shieldIncoming", silenced: "enemySilenceIncoming" };
+
+var GrimoireSeen = {
+  ensure: function () {
+    var s = game.grimoireSeen;
+    if (!s || typeof s !== "object" || Array.isArray(s)) s = game.grimoireSeen = this.deduce(); // sauvegarde d'avant : déduite une fois
+    return s;
+  },
+
+  /* Conditions des règles et des presets : jamais retirées d'un Grimoire existant. */
+  inRules: function (id) {
+    var has = function (list) { return Array.isArray(list) && list.some(function (r) { return r && r.conditionId === id; }); };
+    return has(game.grimoireRules) || (Array.isArray(game.grimoirePresets) && game.grimoirePresets.some(function (p) { return p && has(p.rules); }));
+  },
+
+  isVisible: function (id) {
+    return id === "heroLowHp" || !!this.ensure()[id] || this.inRules(id);
+  },
+
+  hiddenCount: function () {
+    var self = this;
+    return (window.GRIMOIRE_CONDITION_ORDER || []).filter(function (id) { return !self.isVisible(id); }).length;
+  },
+
+  /* Appelé à chaque contexte de combat : ne teste que les conditions pas encore vues (17 au plus, souvent 0). */
+  note: function (ctx, e) {
+    var s = this.ensure(), order = window.GRIMOIRE_CONDITION_ORDER || [];
+    if (this._full === s || typeof evaluateGrimoireCondition !== "function") return;
+    var raw = e && GRIMOIRE_SEEN_ARCH[e.archetype], left = 0; // trait réel, même tenu par un objet de combat
+    for (var i = 0; i < order.length; i++) {
+      var id = order[i];
+      if (s[id]) continue;
+      if (!(evaluateGrimoireCondition(id, ctx) || (raw === id && /^enemy(Enraged|Corrupted|Vampiric|Armored)$/.test(id)))) { left++; continue; }
+      var known = this.isVisible(id);
+      s[id] = true;
+      if (!known) this.announce(id);
+    }
+    if (!left) this._full = s;
+  },
+
+  announce: function (id) {
+    var c = (typeof getGrimoireCondition === "function") ? getGrimoireCondition(id) : null;
+    if (!c) return;
+    var msg = _t("Nouvelle règle au Grimoire : {x}", { x: _td(c.short || c.label) });
+    if (typeof addLog === "function") addLog("📖 " + msg, "event");
+    if (typeof showToast === "function") showToast("📖 " + msg, 2200);
+  },
+
+  /* Partie d'avant v3.729.0 : ce qui a sûrement été rencontré, tiré des ennemis vaincus, des mondes atteints,
+     des quêtes et donjons finis, des compagnons et des règles. Table complète dans le compte rendu v3.729.0. */
+  deduce: function () {
+    var s = {}, put = function (id) { if (id) s[id] = true; };
+    var E = window.ENEMY_DB || {}, B = window.BOSS_DB || {}, EL = window.ELITE_DB || {}, FX = window.FIXED_ENEMY_ARCHETYPES || {};
+    var foe = function (id) {
+      var n = E[id], b = B[id], el = EL[id], base = n || b || (el && (E[el.baseId] || B[el.baseId])) || null;
+      if (!base) return;
+      if (Number((base.stats && base.stats.celerity) || 0) > 0) put("enemyAttackIncoming");
+      if (n) {
+        if (FX[id] !== "shielded" && FX[id] !== "silenced") put("chargeIncoming");
+        put(GRIMOIRE_SEEN_ARCH[FX[id]]);
+        if (n.rises) put("enemyRising");
+      }
+      if (b) {
+        put("shieldIncoming"); put("healIncoming");
+        if (b.rises) put("enemyRising");
+        if (b.riseAdds) put("multipleEnemies");
+        (b.risePhases || []).forEach(function (p) { put(GRIMOIRE_SEEN_ARCH[p.archetype]); });
+      }
+      if (el) {
+        put("eliteSurgeIncoming"); put("shieldIncoming"); put(GRIMOIRE_SEEN_ARCH[el.archetype]);
+        if (el.escort) put("multipleEnemies");
+      }
+    };
+    var kills = game.killCounts || {};
+    Object.keys(kills).forEach(function (id) { if (Number(kills[id]) > 0) foe(id); });
+    if (Number(game.totalKills || 0) > 0) { put("chargeIncoming"); put("enemyAttackIncoming"); }
+
+    var reached = game.worldsEverReached || {}, worlds = window.WORLDS || [], fought = Number(game.totalKills || 0) > 0;
+    worlds.forEach(function (w, wi) {
+      if (!reached[wi] || !w || !(fought || reached[wi + 1])) return; // monde atteint et combattu
+      (w.adventures || []).forEach(function (a) {
+        (a.enemyPool || []).forEach(foe);
+        if (reached[wi + 1]) foe(a.boss); // monde dépassé : son boss a été vaincu
+      });
+      if (wi >= Number(window.SILENCED_MIN_WORLD_INDEX || 1)) put("enemySilenceIncoming");
+      if (w.id === "crypt") put("enemySleeping");
+      if (w.id === "mountain") put("veinIntact");
+    });
+
+    var done = game.adventureQuestsCompleted || {}, AQ = window.ADVENTURE_QUESTS || {};
+    Object.keys(done).forEach(function (k) {
+      var q = AQ[k];
+      if (done[k] !== true || !q) return;
+      (q.encounters || []).forEach(function (en) {
+        if (Array.isArray(en.group)) { en.group.forEach(foe); if (en.group.length > 1) put("multipleEnemies"); }
+        if (Number(en.sleepers || 0) > 0) put("enemySleeping");
+      });
+      if (q.bossId) foe(q.bossId);
+      if (q.chains || q.bossChains) put("allyChained");
+      if (q.worldId === "mountain") put("veinIntact");
+    });
+
+    var cleared = game.dungeonTierCleared || {};
+    (window.DUNGEONS || []).forEach(function (d) {
+      if (!d || !cleared[d.id] || !d.boss) return;
+      foe(d.boss.baseId); put(GRIMOIRE_SEEN_ARCH[d.boss.archetype]);
+      if (d.boss.rises) put("enemyRising");
+      (d.boss.phases || []).forEach(function (p) { put(GRIMOIRE_SEEN_ARCH[p.archetype]); if (p.adds) put("multipleEnemies"); });
+      Object.keys(d.eliteWaves || {}).forEach(function (k) { foe(d.eliteWaves[k]); });
+    });
+
+    var comps = game.companions || {};
+    if (Object.keys(comps).some(function (k) { return comps[k] && comps[k].unlocked; })) put("allyLowHp");
+    var rule = function (r) { if (r && window.GRIMOIRE_CONDITIONS && GRIMOIRE_CONDITIONS[r.conditionId]) put(r.conditionId); };
+    (game.grimoireRules || []).forEach(rule);
+    (game.grimoirePresets || []).forEach(function (p) { (p && p.rules || []).forEach(rule); });
+    put("heroLowHp");
+    return s;
+  }
+};
+
+window.GrimoireSeen = GrimoireSeen;
+
 var ClassCombatManager = {
     ensure: function () {
     if (!game.classResource || typeof game.classResource !== "object") {
@@ -181,6 +306,7 @@ var ClassCombatManager = {
       });
     }
 
+    if (e) GrimoireSeen.note(base, e); // v3.729.0 (Seb 06/11) : première rencontre d'une situation
     return base;
   },
 

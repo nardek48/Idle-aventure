@@ -163,6 +163,7 @@ function createInitialGameState() {
     grimoirePresets: [],
     grimoireTarget: "proche", // v3.428.0 (Ruines) : réglage « Cible » du Grimoire
     grimoireVarier: false, // v3.653.0 : réglage « Varier » (ne pas refaire la même technique)
+    grimoireSeen: {}, // v3.729.0 (Seb 06/11) : situations du Grimoire rencontrées en combat (GrimoireSeen)
     potionAuto: Object.assign({}, POTION_AUTO_NEW_GAME), // v3.380.0 : « Tard » par défaut sur une partie neuve (core/constants.js)
     lastSortiePrep: null, // v3.449.0 : potions à bonus et objets du dernier départ (« Comme la dernière fois »)
 

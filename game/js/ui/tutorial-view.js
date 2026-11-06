@@ -298,7 +298,7 @@ var GENERIC_TUTORIALS = {
       { icon: "images/Icons/combat_status/counter.webp", text: "Une action marquée « ⚡ Contre » annule complètement l'attaque adverse. C'est le meilleur appariement possible pour cette situation." },
       { icon: "images/Icons/system/ascension.webp", text: "S'il n'y a aucune règle applicable, ton héros continue de se battre normalement — le Grimoire s'ajoute au comportement automatique, il ne le remplace pas." },
       { icon: "images/Icons/system/lock_closed.webp", text: "En combat, ton héros met de côté un peu de ressource pour garantir ton contre le plus prioritaire : il jouera moins d'actions coûteuses en attendant." },
-      { icon: "images/Icons/quests/quest_resources.webp", text: "De nouvelles règles se débloquent en atteignant de nouveaux mondes pour la première fois." }
+      { icon: "images/Icons/quests/quest_resources.webp", text: "Une situation apparaît dans le Grimoire la première fois que tu la rencontres en combat. Les emplacements de règles s'ouvrent en atteignant de nouveaux mondes." }
     ]
   },
   /* v3.704.0 (TUTO-16, atelier « Aides et récit », Seb A) : sept fiches de plus. Sans tab : ouvertes par
