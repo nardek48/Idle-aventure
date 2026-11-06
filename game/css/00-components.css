@@ -1170,6 +1170,63 @@ button.nb-entry-card {
   text-align: left;
 }
 
+/* =====================================================================
+   v3.722.0 (atelier fenetres-parchemin, variante B de Seb) : fenêtres sur le cadre parchemin de Seb.
+   Image découpée en neuf (coins ornés fixes, bords et centre étirés) ; plus d'en-tête de pierre :
+   icône au-dessus, titre en Alegreya 22 px, filet doré à losange, texte 17 px, croix dans le coin.
+   ===================================================================== */
+.kwin {
+  overflow: visible;
+  isolation: isolate;
+  padding: 22px 8px 26px;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  filter: drop-shadow(0 14px 30px rgba(0, 0, 0, 0.6));
+  --sheet-ink: var(--c-brown-900);
+}
+.kwin::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  border: 0 solid transparent;
+  border-image: url('../images/UI/frames/kwin-parchemin.webp') 90 fill / 46px stretch;
+}
+.kwin-head {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 46px 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: var(--sheet-ink);
+}
+.kwin-head::before { display: none; }
+.kwin-head::after {
+  position: static;
+  flex: 0 0 100%;
+  width: 100%;
+  height: 14px;
+  margin: 8px 0 0;
+  transform: none;
+  border: 0;
+  box-shadow: none;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='14' viewBox='0 0 300 14'%3E%3Cdefs%3E%3ClinearGradient id='l' x1='0' x2='1'%3E%3Cstop offset='0' stop-color='%23a87228' stop-opacity='0'/%3E%3Cstop offset='1' stop-color='%23a87228'/%3E%3C/linearGradient%3E%3ClinearGradient id='r' x1='1' x2='0'%3E%3Cstop offset='0' stop-color='%23a87228' stop-opacity='0'/%3E%3Cstop offset='1' stop-color='%23a87228'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='10' y='6' width='126' height='2' fill='url(%23l)'/%3E%3Crect x='164' y='6' width='126' height='2' fill='url(%23r)'/%3E%3Cpath d='M150 1 L157 7 L150 13 L143 7 Z' fill='%23d9a640' stroke='%237a4f14' stroke-width='1'/%3E%3C/svg%3E") center / 100% 14px no-repeat;
+}
+.kwin-ico img, .kwin-ico > * { width: 40px; height: 40px; object-fit: contain; }
+.kwin-ico { font-size: 34px; }
+.kwin-ttl { flex: 0 1 auto; min-width: 0; font-family: "Alegreya", Georgia, serif; font-size: 22px; font-weight: 700; line-height: 1.15; color: var(--sheet-ink); }
+.kwin-ttl .ksheet-sub { font-family: "Alegreya", Georgia, serif; font-style: italic; font-weight: 400; font-size: 16px; opacity: 0.85; }
+.kwin-head .ksheet-x { top: -6px; right: 6px; }
+.kwin-body { padding: 12px 18px 0; }
+.kwin-text { font-family: "Alegreya", Georgia, serif; font-size: 17px; line-height: 1.45; color: var(--sheet-ink); }
+.kwin-foot { padding: 16px 4px 0; justify-content: center; }
+
 @media (prefers-reduced-motion: reduce) {
   .kwin { animation: none; }
 }

@@ -15,6 +15,8 @@ I18n.register("en", {
   "Combats de groupe : le Grimoire voit l'annonce de chaque ennemi, pas seulement de ta cible, et contre celui qui frapperait le premier.": "Group fights: the Grimoire now sees every enemy's warning, not just your target's, and counters the one that would strike first.",
   "Le Périple rapporte davantage : 5 matériaux rares à l'arrivée au lieu de 4.": "The Journey pays more: 5 rare materials on arrival instead of 4.",
   "Rôdeur : en combat auto et dans le conseil doré (Grimoire sans règle), Tir perforant passe en priorité dès qu'il est prêt, et la Concentration est gardée pour lui. Contres d'annonce, Défense et règles de ton Grimoire passent toujours devant.": "Ranger: in auto combat and the golden hint (Grimoire with no rule), Piercing Shot now takes priority as soon as it is ready, and Focus is saved for it. Announcement counters, Defence and your Grimoire rules still come first.",
+  "Les fenêtres passent sur le cadre parchemin de Seb : titre sur le parchemin, filets dorés, texte plus grand. Dans le fil rouge, « Pendant ce temps… » liste les autres choses à faire.": "Windows now use Seb's parchment frame: title on the parchment, golden rules, bigger text. In the guide bubble, “Meanwhile…” lists the other things to do.",
+  "Pendant ce temps…": "Meanwhile…",
   "Texte des boutons agrandi. Les derniers boutons à part (festin, Expéditions, « Tu es ici », Taverne, Hauts faits, reliques) prennent eux aussi le style cuivre et parchemin.": "Bigger button text. The last odd buttons (feast, Expeditions, “You are here”, Tavern, Achievements, relics) now use the copper and parchment style too.",
   "Les prix, « Préparer » et « Relancer » prennent le bouton cuivre en petit. Un bouton au libellé trop long passe proprement sur deux lignes.": "Prices, “Prepare” and “Reroll” now use the small copper button. A button whose label is too long now wraps cleanly onto two lines.",
   "Boutons unifiés sur les dessins de Seb : cuivre pour l'action principale, parchemin pour les autres. Ils prennent la largeur de leur texte (plus de boutons étirés) et une somme passe en deuxième ligne (« Offrir », « +8 Aether »).": "Buttons unified with Seb's artwork: copper for the main action, parchment for the others. They now fit their text (no more stretched buttons) and an amount moves to a second line (“Offer”, “+8 Aether”).",
@@ -1338,7 +1340,6 @@ I18n.register("en", {
   // js/ui/fil-rouge-view.js
   "Fil rouge : que faire maintenant": "Next step: what to do now",
   "Fil rouge": "Next step",
-  "Aussi :": "Also:",
   "Pour y arriver": "To get there",
 
   // js/ui/grimoire-view.js

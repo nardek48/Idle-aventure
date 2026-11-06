@@ -36,9 +36,10 @@ function openFilRougeBubble() {
   h += kWinHeadHTML({ icon: renderIconOrEmojiHTML(a.icon, "fr-row-ico", _td(a.title)), title: esc(_td(a.title)), sub: _t("Fil rouge"), close: "closeFilRougeBubble()" });
   h += '<div class="kwin-body"><p class="kwin-text fr-reason">' + esc(a.reason) + '</p>';
   if (also.length) {
-    h += '<div class="fr-also"><span>' + _t("Aussi :") + '</span> ' + also.map(function (x, i) {
-      return '<button type="button" class="fr-also-btn" onclick="filRougeGo(' + (i + 1) + ')">' + esc(_td(x.title)) + '</button>';
-    }).join('<span class="fr-also-sep"> · </span>') + '</div>'; // v3.702.0 (UI-9) : séparateur isolé, masqué quand les liens s'empilent
+    // v3.722.0 (atelier fenetres-parchemin, Seb) : « Pendant ce temps… », une ligne par proposition (icône, titre, chevron)
+    h += '<div class="fr-also"><div class="fr-also-h">' + _t("Pendant ce temps…") + '</div>' + also.map(function (x, i) {
+      return '<button type="button" class="fr-also-btn" onclick="filRougeGo(' + (i + 1) + ')">' + (x.icon ? renderIconOrEmojiHTML(x.icon, "fr-also-ico", "") : '') + '<span>' + esc(_td(x.title)) + '</span></button>';
+    }).join("") + '</div>';
   }
   h += '</div>';
   h += '<div class="kwin-foot"><button type="button" class="kbtn primary fr-go" onclick="filRougeGo(0)">' + esc(a.goLabel) + '</button></div>';
