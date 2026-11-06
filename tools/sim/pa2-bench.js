@@ -8,6 +8,7 @@
    passages trouvés), --sans-quetes pour comparer, --accroche=<id> et --carte=<foret_1|foret_2> pour isoler un cas. */
 /* v3.726.0 : --montagne (lave, veines laissées), --lave-libre (la lave monte aussi pendant le détour), branche de la quête
    choisie d'abord, rencontre du retour tenue ; le détour du trésor mesuré à part (Souffle annoncé et dépensé, PV, KO). */
+// v3.727.0 : --tour (l'escalier, carte des étages : sable au Sentier, gisants au Chemin, marches de craie au Périple)
 
 var fs = require("fs"), path = require("path");
 var ROOT = require("../chemins.js").jeu(process.argv[2]);
@@ -21,7 +22,8 @@ var RUINES = process.argv.indexOf("--ruines") > 0;        // v3.429.0 : la Petit
 var CRYPTE = process.argv.indexOf("--crypte") > 0;        // v3.454.0 : la Petite Aventure de la Crypte (obscurité, Lanterne, gardien qui dort)
 var REVEIL = process.argv.indexOf("--reveiller") > 0;     // v3.454.0 : gisants réveillés au départ (carte de la Crypte)
 var MONTAGNE = process.argv.indexOf("--montagne") > 0;    // v3.726.0 : la Petite Aventure de la Montagne (lave, veines laissées, Pierre froide)
-var TPL = MONTAGNE ? "petite_aventure_montagne" : CRYPTE ? "petite_aventure_crypte" : RUINES ? "petite_aventure_ruines" : DESERT ? "petite_aventure_desert" : "petite_aventure_foret";
+var TOUR = process.argv.indexOf("--tour") > 0;            // v3.727.0 : la Petite Aventure de la Tour (héros de fin de la Montagne)
+var TPL = TOUR ? "petite_aventure_tour" : MONTAGNE ? "petite_aventure_montagne" : CRYPTE ? "petite_aventure_crypte" : RUINES ? "petite_aventure_ruines" : DESERT ? "petite_aventure_desert" : "petite_aventure_foret";
 var NO_TRAPS = process.argv.indexOf("--sans-pieges") > 0; // v3.467.0 : comparer avec et sans pièges
 var ALL_IN = process.argv.indexOf("--insiste-tout") > 0; // v3.578.0 : le joueur qui insiste dès qu'il peut
 var NO_GOURDE = process.argv.indexOf("--sans-gourde") > 0; // v3.578.0 : la gourde sert-elle ?
@@ -97,7 +99,10 @@ var STAGES_CRYPTE = [
 var STAGES_MONTAGNE = [ // v3.726.0 : repère approché (combats d'acte I « rudes »), pour comparer avant / après
   { id: "montagne1", label: "Montagne, acte II (niv. 20)", level: 20, p: { weapon: 1000, kit: true, train: 300, potions: 0 } }
 ];
-var STAGES = MONTAGNE ? STAGES_MONTAGNE : CRYPTE ? STAGES_CRYPTE : RUINES ? STAGES_RUINES : DESERT ? STAGES_ALL.filter(function (x) { return x.level >= 8; }) : STAGES_ALL.filter(function (x) { return x.id !== "desert10"; });
+var STAGES_TOUR = [ // v3.727.0 : niveau du robot à tour_06 (25), force proche du héros de référence (joueurMontagne) ; avant / après
+  { id: "tour1", label: "Tour, les étages (niv. 25)", level: 25, p: { weapon: 3000, kit: true, train: 500, potions: 0 } }
+];
+var STAGES = TOUR ? STAGES_TOUR : MONTAGNE ? STAGES_MONTAGNE : CRYPTE ? STAGES_CRYPTE : RUINES ? STAGES_RUINES : DESERT ? STAGES_ALL.filter(function (x) { return x.level >= 8; }) : STAGES_ALL.filter(function (x) { return x.id !== "desert10"; });
 
 /* Secondes par action, pour l'estimation de durée : lire, choisir, voir le dé ou le combat. */
 /* v3.383.0 : même base que l'ancien banc v1 (retiré en v3.388.0 ; ses chiffres : CHANGELOG_v3.383.0). */
@@ -118,7 +123,8 @@ function playRun(c, stage) {
   var P = g.Pa2Run, S = g.SceneRunManager, T = g.SCENE_TEMPLATES[TPL];
   prepHero(c, stage);
   var opts = null;
-  if (MONTAGNE) opts = { livingMap: { mapId: "mountain", sectorId: RING === "chemin" ? "nid" : RING === "periple" ? "lac_de_lave" : "pente_grise", wake: false } };
+  if (TOUR) opts = { livingMap: { mapId: "tower", sectorId: RING === "chemin" ? "etage_gisants" : RING === "periple" ? "marches_craie" : "etage_sable" } };
+  else if (MONTAGNE) opts = { livingMap: { mapId: "mountain", sectorId: RING === "chemin" ? "nid" : RING === "periple" ? "lac_de_lave" : "pente_grise", wake: false } };
   else if (CRYPTE) opts = { livingMap: { mapId: "crypt", sectorId: RING === "chemin" ? "fosse" : RING === "periple" ? "nef" : "lac", wake: REVEIL } };
   else if (RING !== "sentier" && RUINES) opts = { livingMap: { mapId: "ruins", sectorId: RING === "chemin" ? "couloirs" : "escalier" } };
   else if (RING !== "sentier") opts = DESERT ? { livingMap: { mapId: "desert", sectorId: RING === "chemin" ? "verrerie" : "bete_dune" } }

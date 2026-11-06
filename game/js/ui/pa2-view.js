@@ -91,6 +91,10 @@ var PA2_ICONS_BY_WORLD = {
   },
   mountain: { // v3.492.10 : ses trois fins ; les autres points gardent les icônes communes
     boss: "images/Icons/scene/dest/dest_mountain_boss.webp", clairiere: "images/Icons/scene/dest/dest_mountain_clairiere.webp", tertre: "images/Icons/scene/dest/dest_mountain_tertre.webp"
+  },
+  tower: { // v3.727.0 (Seb 06/11) : ses propres fins (prenait celles de la Forêt) ; images à faire, icône générique en attendant
+    boss: "images/Icons/scene/dest/dest_tower_boss.webp", clairiere: "images/Icons/scene/dest/dest_tower_clairiere.webp", tertre: "images/Icons/scene/dest/dest_tower_tertre.webp",
+    cachee: "images/Icons/scene/dest/dest_tower_cachee.webp"
   }
 };
 /* Icône d'un point ou d'une destination, au monde du run. */

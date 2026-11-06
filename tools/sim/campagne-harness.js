@@ -804,6 +804,7 @@ function playPa2Step(run) {
     r = P.depart();
     if (!r.ok && /es à terre/.test(r.reason || "")) { if (COMBATS) healUp(1); else g.game.heroHp = max; r = P.depart(); }
     if (!r.ok) { note("Petite Aventure v2 : départ refusé — " + r.reason); return false; }
+    if (run.quest) pa2Note(run, "accroche " + run.hookId); // v3.727.0 : accroches à mini-quête tirées (Tour comprise)
     return true;
   }
   ["grande_ration", "ration", "petite_ration"].forEach(function (id) { if (g.game.heroHp / max < 0.4 && run.stock[id] > 0) P.useItem(id); });
@@ -812,7 +813,8 @@ function playPa2Step(run) {
     r = P.resolveTrap(tc);
     if (r.ok && tc !== "rebrousser") r = P.trapContinue();
   } else if (run.status === "pa2-lock") { // v3.724.0 (Seb 06/11) : verrou de la mini-quête — la clé, sinon forcer (on passe toujours)
-    r = P.resolveLock(P.lockOptions().open ? "ouvrir" : "forcer");
+    var opn = P.lockOptions().open; r = P.resolveLock(opn ? "ouvrir" : "forcer");
+    if (r.ok) pa2Note(run, opn ? "verrou ouvert" : "verrou forcé"); // v3.727.0
     if (r.ok && run.status === "pa2-lock") r = P.lockContinue();
   } else if (run.status === "pa2-node" && !run.pending && (P.questFoeHere(run) || {}).done === false) {
     r = P.fight("tenir", !!(run.lastResult && run.lastResult.surprised)); // la rencontre du retour, sans or
@@ -829,7 +831,8 @@ function playPa2Step(run) {
     if (q && q.kind === "cache" && q.state === "annoncee" && bk.length && (run.at !== q.halt || (run.breath >= 40 + P.cacheCost(run).total / 2 && g.game.heroHp >= max * 0.5))) mv = bk;
     else if (fw.length) mv = fw;
     var sec = mv.filter(function (k) { return P.foundSecrets(run).indexOf(run.at + ">" + k) >= 0; })[0];
-    r = P.moveTo(dest.length ? dest[0] : (sec || mv[Math.floor(Math.random() * mv.length)]));
+    var key = q && q.kind === "lock" && q.keyShown && !P.hasKey(run) && mv.indexOf(q.keyNode) >= 0 ? q.keyNode : null; // v3.727.0 : la clé marquée, comme au banc
+    r = P.moveTo(dest.length ? dest[0] : (key || sec || mv[Math.floor(Math.random() * mv.length)]));
   } else {
     var n = P.node(run.at, run), t = n.type;
     if (t === "obstacle" || t === "tertre") {

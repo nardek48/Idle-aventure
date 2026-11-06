@@ -705,7 +705,10 @@ var PA2_DESTS = {
       win: "Au bord de l'eau, quelque chose qui brille, oublié là." },
     tertre: { name: "La porte murée", line: "Une porte murée, au bout d'un palier. Les pierres sont posées sans mortier, une par une.",
       win: "Le mur a cédé. Derrière, une petite pièce. Il reste ce qu'elle gardait.",
-      fail: "Le mur a tenu. Tu repars avec ce que tu portais. Une pierre a bougé, quand même." }
+      fail: "Le mur a tenu. Tu repars avec ce que tu portais. Une pierre a bougé, quand même." },
+    // v3.727.0 (Seb 06/11) : la fin cachée de l'accroche de la marche en trop, derrière un passage secret
+    cachee: { name: "Le palier en trop", line: "Un palier qui n'est sur aucun plan. Le sol est lisse, jamais taillé. Des marches neuves y mènent, et pas une n'est usée.",
+      win: "Le sol garde la forme de tes pas. Au bord, ce qui est tombé des étages : du sable, une pièce, une pierre taillée. Tu prends ce qui se prend." }
   }
 };
 
@@ -858,7 +861,9 @@ var PA2_QUEST_KEYS = {
   gaffe: { name: "Gaffe de batelier", need: "la gaffe de batelier", icon: "images/Icons/scene/quest/quest_gaffe.webp", found: "Contre un arbre, une gaffe de batelier. Tu la gardes." },
   // v3.725.0 (Seb 06/11) : le pont de l'oued (Maddoc, Désert) et l'arche murée (bâtisseur, Ruines)
   cheville: { name: "Cheville de la poulie", need: "la cheville de la poulie", icon: "images/Icons/scene/quest/quest_cheville.webp", found: "Dans le sable, une cheville de bois dur, usée par la corde. Elle va dans ta poche de quête." },
-  pince: { name: "Pince de bâtisseur", need: "la pince de bâtisseur", icon: "images/Icons/scene/quest/quest_pince.webp", found: "Contre un mur, une pince de bâtisseur, encore blanche de poussière. Tu la gardes." }
+  pince: { name: "Pince de bâtisseur", need: "la pince de bâtisseur", icon: "images/Icons/scene/quest/quest_pince.webp", found: "Contre un mur, une pince de bâtisseur, encore blanche de poussière. Tu la gardes." },
+  // v3.727.0 (Seb 06/11) : la porte sans cadre (accroche de la porte, Tour)
+  cale: { name: "Cale de porte", need: "la cale de porte", icon: "images/Icons/scene/quest/quest_cale.webp", found: "Contre une marche, une cale de pierre, usée d'un seul côté. Elle a tenu une porte, longtemps. Elle va dans ta poche de quête." }
 };
 /* Passages secrets : noms et indices (« de justesse »), par carte. Tracés : PA2_MAPS[carte].secrets. */
 var PA2_SECRETS = {
@@ -903,6 +908,16 @@ var PA2_SECRETS = {
   montagne_2: {
     "L4>L6": { name: "La vire de basalte", hint: "Une vire étroite longe la paroi, vers le haut. La roche y est froide." },
     "R4>R6": { name: "La crête fumante", hint: "Entre deux fumerolles, une crête de roche monte vers le nord." }
+  },
+  tour_1: { // v3.727.0 (Seb 06/11)
+    "C0>CAMP": { name: "L'escalier dans le mur", hint: "Derrière la porte aux deux statues, un escalier droit monte dans l'épaisseur du mur." },
+    "R4>R6": { name: "La galerie aux bannières", hint: "Le long du mur de l'est, sous les bannières, une galerie monte sans passer par la porte." },
+    "C6>PALIER": { name: "La marche en trop", hint: "Une marche plus claire que les autres dépasse du mur, vers le pan de tour dans la brume." }
+  },
+  tour_2: {
+    "C0>CAMP": { name: "L'arche seule", hint: "Une arche seule au bord du chemin, une lueur bleue dedans. De l'autre côté, on est plus haut." },
+    "L4>L6": { name: "Les marches dans la brume", hint: "Le long du rocher de l'ouest, des marches pâles montent à moitié dans les nuages." },
+    "R6>PALIER": { name: "La marche de lumière", hint: "Une des marches bleues ne monte pas vers la porte. Elle penche vers un palier détaché." }
   }
 };
 
@@ -1258,12 +1273,104 @@ PA2_HOOKS.forme.quest = {
     closed: "La fumée s'est refermée sur les autres pentes. Seule la source chaude reste ouverte."
   }
 };
+/* v3.727.0 (Seb 06/11, accroches de la Tour v0.1) : pas A (le sac sous le sable), porte B (la porte sans cadre, clé : cale),
+   marche D cachée (le palier en trop). Rien d'après tour_06 : la carte des étages s'ouvre là. */
+PA2_HOOKS.pas = {
+  id: "pas", worldId: "tower",
+  title: "Des pas qui redescendent",
+  lede: "Wenna a vu des pas dans le sable de l'escalier. Pas les vôtres. Ils montent, ils redescendent un peu, puis ils remontent. Elle demande qui redescend, ici.",
+  event: {
+    name: "Les pas",
+    text: "Du sable sur les marches, venu d'un étage plus bas. Dedans, les pas d'un seul marcheur. Ils montent, s'arrêtent, redescendent de trois marches, puis repartent vers le haut.",
+    branches: {
+      suivre: { label: "Marcher dans ses pas", cost: { breath: 15 }, text: "Tu mets tes pieds dans les siens. Le pas est court, régulier : celui de quelqu'un qui monte depuis longtemps. Là où il redescend, tu redescends." },
+      passer: { label: "Passer", text: "Tu passes à côté. Le sable garde aussi tes pas, maintenant." }
+    }
+  },
+  clairiere: {
+    suivre: "Au bord de la citerne, les pas s'arrêtent. Quelqu'un s'est assis ici longtemps, puis il est reparti vers le haut.",
+    other: "Au bord de la citerne, du sable lisse. Personne n'y a marché."
+  }
+};
+PA2_HOOKS.pas.quest = {
+  kind: "cache", branches: ["suivre"], announce: "halt",
+  cache: { back: { foe: "guardian", pack: 1, foeMult: 0.6 } }, // un gardien sans or, à ×0,6 comme le spectre de la Crypte (banc)
+  text: {
+    name: "Le sac sous le sable",
+    announce: "Sur le palier, les pas reviennent. Ils redescendent vers une marche que tu as dépassée, s'y arrêtent, puis remontent. Quelqu'un a laissé quelque chose en bas.",
+    found: "Sous le sable d'une marche, un sac de toile, noué serré. Dedans, une gourde vide et une bourse.",
+    back: "Sur les traces, un gardien de pierre fait les cent pas. Il a appris ce pas-là.",
+    take: "Prendre le sac", got: "Le sac est à toi"
+  }
+};
+PA2_HOOKS.porte = {
+  id: "porte", worldId: "tower",
+  title: "La porte que personne ne tient",
+  lede: "Maddoc dit qu'en haut, une porte se ferme chaque nuit, et que personne ne la tient. Lui tient la sienne, en bas. Il ne peut pas tenir les deux.",
+  event: {
+    name: "Le gardien arrêté",
+    text: "Un gardien de pierre, arrêté au milieu d'un pas, une jambe levée. Il ne regarde pas l'escalier. Il regarde ceux qui arrivent.",
+    branches: {
+      finir: { label: "Lui finir son pas", cost: { breath: 20 }, text: "Tu pousses la jambe de pierre jusqu'à la dalle. Il pose le pied. Puis il lève le bras vers un palier, sur le côté, et ne bouge plus." },
+      montrer: { label: "Faire le pas devant lui", cost: { breath: 10 }, text: "Tu fais trois pas sur ses dalles, lentement. Il les refait derrière toi, exactement. Au dernier, il tend le bras vers un palier, sur le côté." },
+      passer: { label: "Passer", text: "Tu passes. Il garde la jambe levée. Derrière toi, la pierre craque, une fois." }
+    }
+  },
+  assist: { branches: ["finir", "montrer"] },
+  destGold: { passer: 0.85 },
+  echo: {
+    assist: "Un gardien de pierre traverse le palier sur ses dalles, sans te regarder. Il passe sur l'un d'eux, et finit son pas.",
+    dest: "Des dalles usées jusqu'ici, toujours les mêmes. Il manque ce qu'une main de pierre peut fermer."
+  },
+  clairiere: {
+    finir: "Contre la citerne, deux empreintes de pierre, les pieds à plat. Quelqu'un a fini son pas ici, et il est reparti.",
+    montrer: "Contre la citerne, deux empreintes de pierre, les pieds à plat. Quelqu'un a fini son pas ici, et il est reparti.",
+    other: "Contre la citerne, une seule empreinte de pierre. L'autre pied n'est jamais retombé."
+  }
+};
+PA2_HOOKS.porte.quest = {
+  kind: "lock", showKey: ["finir", "montrer"], announce: "event",
+  force: { voie: "power" },
+  byMap: {
+    tour_1: { lock: "SEUIL", key: "cale", text: { // la porte sans cadre : une case fermée, tous ses accès
+      name: "La porte sans cadre",
+      lock: "La porte sans cadre est fermée. Pas de serrure, pas de verrou : le battant retombe dès qu'on le lâche.",
+      open: "La cale glisse sous le battant. La porte reste ouverte. Tu passes.",
+      force: "Tu tiens le battant de l'épaule, le temps de passer. Il retombe derrière toi.",
+      hint: "Le gardien tend le bras vers un palier, sur le côté, et le garde tendu. Tu marques l'endroit sur ta carte." } }
+  }
+};
+PA2_HOOKS.porte.quest.byMap.tour_2 = PA2_HOOKS.porte.quest.byMap.tour_1; // même tracé, même porte
+PA2_HOOKS.marche = {
+  id: "marche", worldId: "tower",
+  title: "La marche en trop",
+  lede: "Wenna compte les marches en montant. Ce soir, il y en a une de plus qu'hier. Edda ne lui dit pas qu'elle s'est trompée.",
+  event: {
+    name: "La marche en trop",
+    text: "Une marche plus claire que les autres, au bord de l'escalier. Pas une trace d'usure. Elle dépasse dans le vide, et elle tient.",
+    branches: {
+      monter: { label: "Poser le pied dessus", cost: { breath: 10 }, text: "Elle est froide, et lisse comme une pierre que personne n'a taillée. De là, tu vois un palier que l'escalier ne montre pas." },
+      passer: { label: "Passer", text: "Tu passes. Quand tu te retournes, elle n'est plus là. Ou tu as mal compté." }
+    }
+  },
+  mark: { branch: "monter", dmgMult: 1.2 },
+  echo: { mark: "Tu as posé le pied sur une marche neuve. Ce qui garde les paliers sait où." },
+  clairiere: {
+    monter: "Contre la citerne, une marche neuve, posée sur rien. Elle ne mène nulle part.",
+    other: "Autour de la citerne, les marches sont usées. Tu les comptes. Le compte est bon."
+  }
+};
+PA2_HOOKS.marche.quest = {
+  kind: "hiddenEnd", branches: ["monter"], announce: "event", node: "PALIER",
+  text: { found: "Au bord de l'escalier, une marche claire, puis une autre, posées sur rien. Elles mènent au palier que tu as vu d'en haut.", take: "Monter au palier" }
+};
 var PA2_HOOKS_BY_WORLD = {
   forest: ["chasseur", "gouffre", "pierre", "feu"],
   desert: ["maddoc", "caravane", "sentinelle"],
   ruins: ["carnet", "batisseur", "statue"], // v3.469.3 : deux de plus
   crypt: ["lampe", "garcon", "cloche"],      // v3.454.0 ; v3.469.3 : deux de plus
-  mountain: ["pioche", "forme"]              // v3.489.0
+  mountain: ["pioche", "forme"],             // v3.489.0
+  tower: ["pas", "porte", "marche"]          // v3.727.0 (Seb 06/11)
 };
 
 window.PA2_BAG_SIZE = PA2_BAG_SIZE;

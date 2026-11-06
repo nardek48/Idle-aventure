@@ -394,8 +394,14 @@ var PA2_MAPS = {
       L6: { row: 6, x: 380, y: 330 }, C6: { row: 6, x: 560, y: 290 }, R6: { row: 6, x: 730, y: 370 },
       BOSS: { row: 7, x: 560, y: 160, type: "boss" },                  // le gardien du palier
       CLAIRIERE: { row: 7, x: 230, y: 200, type: "clairiere" },        // la citerne haute
-      TERTRE: { row: 7, x: 740, y: 80, type: "tertre" }               // la porte murée
+      TERTRE: { row: 7, x: 740, y: 80, type: "tertre" },              // la porte murée
+      // v3.727.0 (Seb 06/11) : fin cachée (la marche en trop), le pan de tour dans la brume au-dessus du gardien (PIL)
+      PALIER: { row: 7, x: 537, y: 50, type: "cachee", hidden: true }
     },
+    /* v3.727.0 (C) : l'escalier dans le mur (C0 > CAMP, porte aux statues, garde le repos), la galerie aux bannières (R4 > R6,
+       contourne la porte sans cadre) ; la marche en trop passe à droite du gardien. Relevés au pixel. */
+    secrets: { "C0>CAMP": { via: [435, 790] }, "R4>R6": { via: [830, 455] }, "C6>PALIER": { quest: "hiddenEnd", via: [700, 170] } },
+    keySlots: { 2: ["L3", "R3"] },
     links: RUINES_PA_LINKS
   },
   tour_2: {
@@ -418,8 +424,13 @@ var PA2_MAPS = {
       L6: { row: 6, x: 230, y: 240 }, C6: { row: 6, x: 470, y: 240 }, R6: { row: 6, x: 620, y: 270 },
       BOSS: { row: 7, x: 420, y: 110, type: "boss" },
       CLAIRIERE: { row: 7, x: 130, y: 110, type: "clairiere" },
-      TERTRE: { row: 7, x: 740, y: 120, type: "tertre" }
+      TERTRE: { row: 7, x: 740, y: 120, type: "tertre" },
+      // v3.727.0 (Seb 06/11) : fin cachée (la marche en trop), l'îlot à la petite tour, à droite du lacet de l'est (PIL)
+      PALIER: { row: 7, x: 698, y: 378, type: "cachee", hidden: true }
     },
+    // v3.727.0 (C) : l'arche seule (C0 > CAMP, garde le repos), les marches dans la brume (L4 > L6, saute la porte) ; PIL
+    secrets: { "C0>CAMP": { via: [605, 745] }, "L4>L6": { via: [125, 355] }, "R6>PALIER": { quest: "hiddenEnd" } },
+    keySlots: { 2: ["L3", "R3"] },
     links: RUINES_PA_LINKS
   }
 };

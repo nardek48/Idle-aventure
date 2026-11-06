@@ -18386,7 +18386,7 @@ console.log("\n[314] v3.492.0 — Montagne, lot M-6 : hauts faits");
     V.onVictory({ id: "ancientdragon", isBoss: true });
     ok(g.achCounter("dragonNoCut") === 1, "le Dragon ancien vaincu sans taille : « Les mains vides »");
     var parMonde = [];
-    Object.keys(g.PA2_ICONS_BY_WORLD).forEach(function (w) { Object.keys(g.PA2_ICONS_BY_WORLD[w]).forEach(function (k) { if (k !== "cachee") parMonde.push(g.PA2_ICONS_BY_WORLD[w][k]); }); }); // v3.725.0 : fins cachées à dessiner, hors compte
+    Object.keys(g.PA2_ICONS_BY_WORLD).forEach(function (w) { Object.keys(g.PA2_ICONS_BY_WORLD[w]).forEach(function (k) { if (k !== "cachee" && w !== "tower") parMonde.push(g.PA2_ICONS_BY_WORLD[w][k]); }); }); // v3.725.0 : fins cachées à dessiner, hors compte ; v3.727.0 : la Tour aussi ([488])
     ok(parMonde.length === 30 && parMonde.every(function (f) { return fs.existsSync(path.join(ROOT, f)); }) && g.pa2Ico("camp", { worldId: "crypt" }) === g.PA2_ICONS_BY_WORLD.crypt.camp
       && g.pa2Ico("evenement", { worldId: "desert" }) === g.PA2_ICONS.evenement && g.pa2Ico("evenement", { worldId: "mountain" }) === g.PA2_ICONS.evenement
       && g.pa2Ico("boss", { worldId: "mountain" }) === "images/Icons/scene/dest/dest_mountain_boss.webp",
@@ -25019,6 +25019,198 @@ console.log("\n[487] v3.726.0 — Petites Aventures : parcours de la Crypte et d
     ok(!bad.length, "tirages (80 runs au Périple) : ni piège ni coupure sur un passage ; fin imposée accessible ; niche cachée ; lave posée" + (bad.length ? " — " + bad.slice(0, 4).join(", ") : ""));
   } catch (err) { ok(false, "[487] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   finally { P.rand = savedRand; QR.lavaWaits = true; game.sceneRun = null; if (g.SortieManager.isActive()) g.SortieManager.end("return"); }
+})();
+
+console.log("\n[488] v3.727.0 — Petites Aventures : accroches et parcours de la Tour (pas, porte, marche)");
+(function () {
+  var S = g.SceneRunManager, P = g.Pa2Run, QR = g.PA2_QUEST_RULES, LM = g.LivingMapManager, savedRand = P.rand, H = g.PA2_HOOKS, M = g.PA2_MAPS;
+  function prep() {
+    game = freshCombat("knight"); giveWeapon(); run("game.enemy = null; game.combat = null;");
+    game.equipped.weapon.value = 3000; game.upgrades["utrain_" + g.getClassMainStat("knight").stat] = 500; game.upgrades.utrain_endurance = 500; run("EquipmentManager.recalcStats();"); // héros de la Tour (banc)
+    S.ensureDefaults(); LM.ensureDefaults(); game.explorationProgression.petiteAventure = { spent: 0, since: null };
+    game.resources.petite_ration = 6; game.heroLevel = 25; game.heroHp = game.heroMaxHp; game.sceneRun = null;
+    if (g.SortieManager.isActive()) g.SortieManager.end("return");
+    g.pa2View.runId = null; g.pa2View.sheet = null; P.rand = savedRand;
+  }
+  // Comme [487] : carte et accroche imposées, nuit calme, acte I en sources, sans pièges ni coupures.
+  function start(mapId, hookId, bag, keep) { // keep : même partie (la redite du run d'avant reste), héros soigné
+    if (keep) { game.sceneRun = null; game.explorationProgression.petiteAventure = { spent: 0, since: null }; game.heroHp = game.heroMaxHp; g.pa2View.runId = null; if (g.SortieManager.isActive()) g.SortieManager.end("return"); }
+    else prep();
+    S.startRun("petite_aventure_tour"); var r = game.sceneRun;
+    r.mapId = mapId; r.hookId = hookId; r.cond = "calme";
+    (bag || []).forEach(function (id) { P.addItem(id); });
+    P.depart();
+    r.traps = {}; r.cuts = {};
+    var camp = P.rows(P.getMap(r)).camp;
+    Object.keys(r.nodes).forEach(function (k) { var n = r.nodes[k]; if (n.type === "evenement") n.type = "source"; if (n.row >= 0 && n.row < camp) n.type = "source"; });
+    return r;
+  }
+  function step(key) { return P.moveTo(key); }
+  function meet(r, branch) { step("C0"); P.drink(); r.nodes.L1.type = "evenement"; step("L1"); return P.eventChoice(branch); }
+  function rollFor(v) { return function () { return (v - 0.5) / 20; }; }
+  function saveLoad() { var d = JSON.parse(JSON.stringify(g.buildSaveData())); game.sceneRun = null; g.restoreBaseState(d); run("EquipmentManager.recalcStats();"); g.pa2View.runId = null; return game.sceneRun; }
+  function reach(r, to) { var L = P.links(r), seen = { S: true }, todo = ["S"]; while (todo.length) { var a = todo.pop(); (L[a] || []).forEach(function (b) { if (!seen[b]) { seen[b] = true; todo.push(b); } }); } return !!seen[to]; }
+  function hostile(sectorId, on) { var s = LM.getState("tower", sectorId); if (on) s.hostileDay = LM._dayKey(); else delete s.hostileDay; }
+  var MAPS = ["tour_1", "tour_2"];
+  try {
+    /* ---------- Répartition ---------- */
+    ok(g.PA2_HOOKS_BY_WORLD.tower.join() === "pas,porte,marche" && ["pas", "porte", "marche"].every(function (h) { return H[h].worldId === "tower" && !H[h].storyFlag && !H[h].priority; }),
+      "Tour : trois accroches (pas, porte, marche), sans drapeau d'Histoire ni priorité");
+    ok(H.pas.quest.kind === "cache" && H.pas.quest.branches.join() === "suivre" && H.pas.quest.cache.back.foe === "guardian" && H.pas.quest.cache.back.foeMult === 0.6 &&
+      H.porte.quest.kind === "lock" && H.porte.quest.byMap.tour_1.lock === "SEUIL" && H.porte.quest.byMap.tour_2 === H.porte.quest.byMap.tour_1 && H.porte.quest.byMap.tour_1.key === "cale" &&
+      H.marche.quest.kind === "hiddenEnd" && H.marche.quest.node === "PALIER" && H.marche.mark.branch === "monter" && H.marche.mark.dmgMult === 1.2,
+      "répartition : pas A (gardien ×0,6), porte B (seuil, cale, mêmes réglages sur les deux cartes), marche D cachée (marque ×1,2)");
+    var nSec = MAPS.map(function (m) { return Object.keys(M[m].secrets).filter(function (k) { return !M[m].secrets[k].quest; }).length; });
+    var noBack = MAPS.every(function (m) { return Object.keys(M[m].secrets).every(function (k) { var p = k.split(">"); return M[m].nodes[p[1]].row > M[m].nodes[p[0]].row; }); });
+    ok(nSec.join() === "2,2" && noBack && MAPS.every(function (m) { return M[m].nodes.PALIER.hidden && M[m].nodes.PALIER.type === "cachee" && M[m].keySlots[2].join() === "L3,R3" && Object.keys(g.PA2_SECRETS[m]).length === 3; }),
+      "C : deux passages par carte, tous vers l'avant, plus celui du palier caché ; clé sur L3 ou R3");
+
+    /* ---------- Icônes : la Tour a les siennes (elle prenait celles de la Forêt) ---------- */
+    var tw = { worldId: "tower" }, ic = ["boss", "clairiere", "tertre", "cachee"].map(function (k) { return g.pa2Ico(k, tw); });
+    ok(ic.join() === ["boss", "clairiere", "tertre", "cachee"].map(function (k) { return "images/Icons/scene/dest/dest_tower_" + k + ".webp"; }).join() && ic.every(function (f, i) { return f !== g.PA2_ICONS[["boss", "clairiere", "tertre", "cachee"][i]]; }) &&
+      g.PA2_QUEST_KEYS.cale.icon === "images/Icons/scene/quest/quest_cale.webp" && g.pa2Ico("evenement", tw) === g.PA2_ICONS.evenement,
+      "icônes de la Tour à leurs propres chemins (fins, palier caché, cale) ; plus de cerf de la Forêt au gardien ; Rencontre commune");
+
+    /* ---------- A : le sac sous le sable (pas), sur les deux cartes ---------- */
+    MAPS.forEach(function (m) {
+      var r = start(m, "pas");
+      ok(r.quest && r.quest.kind === "cache" && r.quest.state === "rencontre", m + " A : pas → « le sac sous le sable », en attente de la rencontre");
+      var b0 = r.breath; meet(r, "suivre");
+      ok(r.quest.state === "halte" && b0 - r.breath >= 15, m + " A : marcher dans ses pas (15 Souffle) → le sac attend la halte");
+      step("CAMP"); P.placeAction("rest"); var q = r.quest;
+      ok(q.state === "annoncee" && q.back.length >= 1 && q.back[0][0] === "CAMP" && r.nodes[q.node].cache && g.pa2AnnounceBody(r).indexOf(g.esc(H.pas.quest.text.announce)) > 0,
+        m + " A : annoncé au palier large ; sac sur " + q.node + ", " + q.back.length + " pas");
+      var lm0 = P._foe(r, { act: 1, foeId: "guardian", pack: 1 }).maxHp;
+      step(q.back[0][1]); var foe = P.questFoeHere(r);
+      ok(foe && foe.foeId === "guardian" && foe.noGold && foe.foeMult === 0.6 && P._foe(r, foe).maxHp < lm0, m + " A : au retour, un gardien sans or, à ×0,6");
+      var sv = saveLoad();
+      ok(sv && sv.quest.state === "annoncee" && P.questFoeHere(sv) && !P.questFoeHere(sv).done, m + " A : sauvegardé face au gardien, rechargé");
+      r = sv; var fr = P.fight("tenir");
+      ok(fr.ok && !fr.result.gain && game.heroHp > 0, m + " A : gardien tenu, sans or");
+      q.back.slice(1).forEach(function (e) { step(e[1]); });
+      var tc = P.takeCache();
+      ok(tc.ok && tc.result.gain === Math.round(r.refGold * QR.cacheGold * P.lootMult(r)) && g.pa2CacheBody(r, r.nodes[r.quest.node], { cache: true, res: tc.result }).indexOf(g.esc(H.pas.quest.text.got)) > 0,
+        m + " A : sac pris (+" + tc.result.gain + " or) ; « Le sac est à toi »");
+      r.quest.back.slice().reverse().forEach(function (e) { step(e[0]); });
+      ok(r.at === "CAMP" && r.quest.state === "faite" && P.openMoves().every(function (k) { return r.nodes[k].row > r.nodes.CAMP.row; }), m + " A : retour au palier large, seulement l'avant");
+    });
+    var rp = start("tour_1", "pas"); meet(rp, "passer"); step("CAMP"); P.placeAction("rest");
+    ok(rp.quest.state === "sans" && !rp.quest.back, "Tour A : passé à côté des pas, pas de sac");
+
+    /* ---------- B : la porte sans cadre (porte), sur les deux cartes ---------- */
+    MAPS.forEach(function (m) {
+      var rb = start(m, "porte");
+      ok(rb.locks["L4>SEUIL"] === "closed" && rb.locks["R4>SEUIL"] === "closed" && Object.keys(rb.locks).length === 2 && ["L3", "R3"].indexOf(rb.quest.keyNode) >= 0 && rb.quest.key === "cale",
+        m + " B : la porte sans cadre fermée (ses deux accès) ; cale sur L3 ou R3");
+      var b0 = rb.breath; meet(rb, "finir");
+      ok(rb.quest.keyShown && b0 - rb.breath >= 20 && g.pa2SheetBody(rb, rb.nodes.L1, { key: "L1", step: "result", res: { branch: "finir" } }).indexOf(g.esc(H.porte.quest.byMap[m].text.hint)) > 0,
+        m + " B : lui finir son pas (20 Souffle) → le gardien montre la cale");
+      step("CAMP"); P.placeAction("rest");
+      var kn = rb.quest.keyNode; rb.nodes[kn].type = "source"; step(kn); P.drink();
+      ok(P.hasKey(rb) && g.pa2HudHTML(rb).indexOf("quest_cale.webp") > 0, m + " B : cale ramassée sur " + kn + ", dans la poche de quête");
+      var k4 = kn === "L3" ? "L4" : "R4"; rb.nodes[k4].type = "source"; step(k4); P.drink();
+      var ms = step("SEUIL");
+      ok(ms.lock && rb.status === "pa2-lock" && P.lockOptions().open, m + " B : arrêt à la porte, la cale en poche");
+      var sv = saveLoad();
+      ok(sv && sv.status === "pa2-lock" && sv.lock.to === "SEUIL" && P.hasKey(sv), m + " B : sauvegardé arrêté à la porte, rechargé");
+      rb = sv;
+      ok(P.resolveLock("ouvrir").ok && P.lockContinue().ok && rb.at === "SEUIL" && rb.locks[k4 + ">SEUIL"] === "open", m + " B : avec la cale, Ouvrir sans jet");
+    });
+    var rf = start("tour_2", "porte"); meet(rf, "montrer");
+    ok(rf.quest.keyShown, "Tour B : faire le pas devant lui marque aussi la cale");
+    rf = start("tour_1", "porte"); meet(rf, "passer");
+    ok(!rf.quest.keyShown && P.destGoldMult(rf) === 0.85, "Tour B : passé → cale non marquée, −15 % d'or aux fins");
+    rf.at = "L4"; rf.nodes.L4.done = true; rf.status = "pa2-map"; var mf = step("SEUIL");
+    P.rand = rollFor(20); var fk = P.resolveLock("forcer"); P.rand = savedRand;
+    ok(mf.lock && fk.ok && fk.result.kind === "ok" && P.lockContinue().ok && rf.at === "SEUIL" && rf.locks["L4>SEUIL"] === "forced", "Tour B : sans cale, forcé à l'épaule : on passe");
+    // les passages qui contournent la porte (galerie aux bannières, marches dans la brume)
+    [["tour_1", "R3", "R4", "R6"], ["tour_2", "L3", "L4", "L6"]].forEach(function (x) {
+      var rs = start(x[0], "porte"); rs.at = x[1]; rs.nodes[x[1]].done = true; rs.status = "pa2-map"; rs.nodes[x[2]].type = "source"; rs.nodes[x[3]].type = "source";
+      P.rand = rollFor(20); step(x[2]); P.rand = savedRand; P.drink();
+      var s = x[2] + ">" + x[3];
+      ok(rs.secrets[s] === "found" && step(x[3]).ok && rs.at === x[3] && rs.status !== "pa2-lock", x[0] + " C : « " + g.PA2_SECRETS[x[0]][s].name + " » (" + s + ") contourne la porte sans cadre");
+    });
+
+    /* ---------- D cachée : le palier en trop (marche), sur les deux cartes ---------- */
+    [["tour_1", "C6"], ["tour_2", "R6"]].forEach(function (mc) {
+      var m = mc[0], from = mc[1], rl = start(m, "marche");
+      ok(!P.isShown("PALIER", rl) && (P.links(rl)[from] || []).indexOf("PALIER") < 0 && !P._marked(rl), m + " D : le palier n'existe pas sur la carte avant son passage");
+      var b0 = rl.breath; meet(rl, "monter");
+      var ck = P._check(rl, "precision", { node: rl.nodes.CAMP, base: 6, voie: "precision" });
+      ok(rl.quest.state === "active" && b0 - rl.breath >= 10 && P._marked(rl) && ck.bonus === 1 && Math.abs(P._dmgMult(rl, rl.nodes.CAMP, "tenir") / g.PA2_APPROACHES.tenir.dmg - 1.2) < 1e-9,
+        m + " D : pied posé sur la marche (10 Souffle) → le palier se cherche ; marque : +1 cran, dégâts reçus ×1,2");
+      rl.at = "SEUIL"; rl.nodes.SEUIL.done = true; rl.status = "pa2-map"; rl.nodes[from].type = "source";
+      P.rand = rollFor(20); step(from); P.rand = savedRand; P.drink();
+      ok(rl.secrets[from + ">PALIER"] === "found" && P.openMoves().indexOf("PALIER") >= 0 && /is-hidden-end/.test(g.pa2MapHTML(rl)), m + " D : passage trouvé depuis " + from + ", le palier apparaît");
+      var sv = saveLoad();
+      ok(sv && sv.secrets[from + ">PALIER"] === "found" && P.openMoves().indexOf("PALIER") >= 0 && P._marked(sv), m + " D : sauvegardé, rechargé : passage et marque gardés");
+      rl = sv; step("PALIER"); var sh = g.pa2SheetBody(rl, rl.nodes.PALIER, { key: "PALIER", step: "intro" });
+      ok(sh.indexOf("dest_tower_cachee.webp") > 0 && sh.indexOf(g.esc(g.PA2_DESTS.tower.cachee.name)) > 0 && sh.indexOf(g.esc(H.marche.quest.text.take)) > 0, m + " D : fiche du palier en trop, icône propre à la Tour");
+      var he = P.hiddenEnd(), end = g.buildPa2EndHTML(rl);
+      ok(he.ok && rl.end.dest === "cachee" && end.indexOf(g.esc(g.PA2_DESTS.tower.cachee.name)) > 0 && end.indexOf("dest_tower_cachee.webp") > 0, m + " D : le palier atteint, destination comptée, bilan à son icône");
+    });
+    var rn = start("tour_1", "marche"); meet(rn, "passer");
+    rn.at = "SEUIL"; rn.nodes.SEUIL.done = true; rn.status = "pa2-map"; rn.nodes.C6.type = "source";
+    P.rand = rollFor(20); step("C6"); P.rand = savedRand;
+    ok(rn.quest.state === "sans" && !rn.secrets["C6>PALIER"] && !P._marked(rn), "Tour D : passé → ni marque, ni fouille vers le palier");
+
+    /* ---------- Fins de la Tour : chacune à son icône ---------- */
+    var rd = start("tour_1", "pas"), okIc = true;
+    [["BOSS", "boss"], ["CLAIRIERE", "clairiere"], ["TERTRE", "tertre"]].forEach(function (d) { // en-tête de chaque fiche de fin
+      var hd = g.pa2Head(rd, rd.nodes[d[0]], "", "");
+      if (hd.indexOf("dest_tower_" + d[1] + ".webp") < 0 || hd.indexOf("dest_cerf_racine") >= 0) okIc = false;
+    });
+    var gh = g.pa2GuardianHint(rd);
+    rd.at = "CLAIRIERE"; rd.status = "pa2-node"; P.finish("dest");
+    ok(okIc && gh.indexOf("dest_tower_boss.webp") > 0 && g.buildPa2EndHTML(rd).indexOf("dest_tower_clairiere.webp") > 0, "Tour : fiches du gardien, de la citerne et de la porte murée, estimation du gardien et bilan, à leurs icônes");
+
+    /* ---------- C : passages relevés au pixel ---------- */
+    var rc = start("tour_1", "pas"); rc.quest = null;
+    P.rand = rollFor(20); step("C0"); P.rand = savedRand; P.drink();
+    ok(rc.secrets["C0>CAMP"] === "found" && /d="M480 1070 Q435 790 230 630"/.test(g.pa2MapHTML(rc)) && step("CAMP").ok && rc.at === "CAMP" && rc.status === "pa2-node",
+      "tour_1 C : l'escalier dans le mur (C0 → palier large), son repos reste à prendre");
+    rc = start("tour_2", "pas"); rc.quest = null;
+    P.rand = rollFor(20); step("C0"); P.rand = savedRand; P.drink();
+    ok(rc.secrets["C0>CAMP"] === "found" && /d="M420 1060 Q605 745 470 690"/.test(g.pa2MapHTML(rc)), "tour_2 C : l'arche seule (C0 → palier large), tracé par l'arche peinte");
+
+    /* ---------- La redite : un run raté ne touche pas la quête suivante ---------- */
+    hostile("etage_sable", false);
+    var r1 = start("tour_1", "porte"); r1.livingMap = { mapId: "tower", sectorId: "etage_sable" };
+    meet(r1, "finir"); step("CAMP"); P.placeAction("rest"); var kn1 = r1.quest.keyNode; r1.nodes[kn1].type = "source"; step(kn1); P.drink();
+    var hadKey = P.hasKey(r1); P.finish("ko");
+    ok(hadKey && r1.end.how === "ko" && LM.isHostile("tower", "etage_sable"), "redite : run raté avec la cale en poche → l'étage passe en redite");
+    var ch = P.ensureChest(); ch.stats.lastHook = "porte"; var seen = {};
+    for (var i = 0; i < 60; i++) { ch.stats.lastHook = "porte"; seen[P._drawHook(g.PA2_HOOKS_BY_WORLD.tower)] = 1; }
+    ok(!seen.porte && seen.pas && seen.marche, "redite : le tirage suivant ne redonne pas la même accroche");
+    var r2 = start("tour_1", "porte", null, true); r2.livingMap = { mapId: "tower", sectorId: "etage_sable" };
+    ok(r2.quest.state === "active" && !r2.quest.keyShown && !P.hasKey(r2) && (r2.keys || []).length === 0 && r2.locks["L4>SEUIL"] === "closed" && !Object.keys(r2.secrets || {}).length,
+      "redite : la quête suivante repart de zéro (pas de cale, porte fermée, aucun passage)");
+    var r3 = start("tour_2", "pas", null, true); r3.livingMap = { mapId: "tower", sectorId: "etage_sable" };
+    ok(LM.isHostile("tower", "etage_sable") && Math.abs(P.gisantsMult(r3) - 1.25) < 1e-9, "redite : toujours en redite au run suivant, sur la même partie");
+    meet(r3, "suivre"); step("CAMP"); P.placeAction("rest"); var q3 = r3.quest;
+    var g1 = P._foe(r3, { act: 1, foeId: "guardian", pack: 1, foeMult: 0.6 }).maxHp; hostile("etage_sable", false); var g0 = P._foe(r3, { act: 1, foeId: "guardian", pack: 1, foeMult: 0.6 }).maxHp; hostile("etage_sable", true);
+    q3.back.forEach(function (e) { step(e[1]); if (P.questFoeHere(r3) && !P.questFoeHere(r3).done) P.fight("tenir"); });
+    var tc3 = P.takeCache();
+    ok(q3.state === "faite" && g1 > g0 && Math.abs(P.gisantsMult(r3) - 1.25) < 1e-9 && tc3.result.gain === Math.round(r3.refGold * QR.cacheGold * P.lootMult(r3)),
+      "redite : sur l'étage refait, le gardien du retour est plus fort (×1,25), l'or du sac ne change pas");
+    hostile("etage_sable", false);
+
+    /* ---------- Tirages réels (Périple) : pièges, coupures, clé, palier ---------- */
+    var bad = [];
+    MAPS.forEach(function (m) {
+      ["pas", "porte", "marche"].forEach(function (h) {
+        for (var j = 0; j < 8; j++) {
+          prep(); S.startRun("petite_aventure_tour"); var rx = game.sceneRun; rx.mapId = m; rx.hookId = h; rx.ring = "periple"; P.depart();
+          var sec = P.getMap(rx).secrets || {};
+          Object.keys(rx.traps).concat(Object.keys(rx.cuts)).forEach(function (k) { if (sec[k] || rx.locks[k]) bad.push(m + "/" + h + " " + k); });
+          if (rx.quest && rx.quest.keyNode && !reach(rx, rx.quest.keyNode)) bad.push(m + "/" + h + " clé");
+          if (P.isShown("PALIER", rx)) bad.push(m + " palier");
+        }
+      });
+    });
+    ok(!bad.length, "tirages (48 runs au Périple) : ni piège ni coupure sur un passage ou la porte ; cale atteignable ; palier caché" + (bad.length ? " — " + bad.slice(0, 4).join(", ") : ""));
+  } catch (err) { ok(false, "[488] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  finally { P.rand = savedRand; hostile("etage_sable", false); game.sceneRun = null; if (g.SortieManager.isActive()) g.SortieManager.end("return"); }
 })();
 
 Promise.all(ATTENTES).then(function () {
