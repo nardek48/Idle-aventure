@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.719.0", "menu_icons/menu_menu", _t("Boutons unifiés sur les dessins de Seb : cuivre pour l'action principale, parchemin pour les autres. Ils prennent la largeur de leur texte (plus de boutons étirés) et une somme passe en deuxième ligne (« Offrir », « +8 Aether »).")],
     ["3.718.0", "system/forecast", _t("37 nouvelles icônes : chaque image ne sert plus qu'à une chose (Campement, Boutique des potions, caravanes, hauts faits, pronostic…) et les emojis des conseils sont remplacés par des images.")],
     ["3.717.0", "workshops/smithing_station", _t("Les paliers d'équipement de l'Histoire ne bloquent plus : ce sont neuf scènes avec tes compagnons et Aeswyn. Le pronostic « Avant de partir » dit ce qui est conseillé dans la zone (rareté, reforge de l'arme).")],
     ["3.716.0", "combat_status/counter", _t("Combats de groupe : le Grimoire voit l'annonce de chaque ennemi, pas seulement de ta cible, et contre celui qui frapperait le premier.")],

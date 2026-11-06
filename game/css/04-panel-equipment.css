@@ -203,8 +203,7 @@
 }
 
 .eq-detail-action {
-  width: 100%;
-  margin-bottom: 0;
+  margin-bottom: 0; /* v3.719.0 : largeur au texte (pack de boutons), plus de 100 % */
 }
 
 /* v2.83.29 : 2 boutons d'action possibles maintenant (Équiper +

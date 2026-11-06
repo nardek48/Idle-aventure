@@ -383,6 +383,13 @@ function buildItemStoryCountHTML(item, equipped) {
 }
 window.buildItemStoryCountHTML = buildItemStoryCountHTML;
 
+/* v3.719.0 (pack de boutons) : « Offrir (+12 Aether) » → libellé puis somme en dessous (bouton deux lignes). */
+function btnDeuxLignes(txt) {
+  var m = String(txt).match(/^(.+?)\s*\((.+)\)$/);
+  return m ? esc(m[1]) + "<small>" + esc(m[2]) + "</small>" : esc(txt);
+}
+window.btnDeuxLignes = btnDeuxLignes;
+
 function buildUnifiedDetailPanelHTML(entries) {
   var entry = entries.find(function (e) { return e.key === selectedInventoryKey; });
   var h = '<div class="eq-detail-panel">';
@@ -402,7 +409,7 @@ function buildUnifiedDetailPanelHTML(entries) {
     h += '<button class="btn-buy eq-detail-action" type="button" onclick="EquipmentManager.equip(\'' + esc(item.uid) + '\')">' + _t("Équiper") + '</button>';
     // v3.322.0 (O2) : la vente devient l'Offrande ; la valeur s'affiche, 0 compris (O9)
     var offerVal = window.MemoryManager ? Math.floor(MemoryManager.rollOfferingValue(item)) : 0; // v3.453.0 : Main offrante comprise
-    h += '<button class="btn-buy is-sec eq-detail-action" type="button" onclick="confirmSellItem(\'' + esc(item.uid) + '\')">' + (offerVal > 0 ? _t("Offrir (+{n} Aether)", { n: offerVal }) : _t("Offrir (aucun souvenir)")) + '</button>';
+    h += '<button class="btn-buy is-sec eq-detail-action" type="button" onclick="confirmSellItem(\'' + esc(item.uid) + '\')">' + btnDeuxLignes(offerVal > 0 ? _t("Offrir (+{n} Aether)", { n: offerVal }) : _t("Offrir (aucun souvenir)")) + '</button>';
     h += buildEquippedComparisonHTML(item);
   } else if (entry.type === "combatItem") {
     // v3.448.11 : fiche d'un objet de combat — ce qu'il contre, d'où il vient, où il sert
@@ -427,7 +434,7 @@ function buildUnifiedDetailPanelHTML(entries) {
     h += '<div class="eq-detail-hint">' + (entry.isHealing
       ? _t("Se boit en combat : la préparation de sortie dit combien tu en emportes.")
       : _t("Se boit au départ, dans la préparation de sortie.")) + '</div>';
-    h += '<button class="btn-buy is-sec eq-detail-action" type="button" onclick="PotionManager.sellPotion(\'' + esc(potion.id) + '\')">' + _t("Vendre (+{n} or)", { n: formatNumber(PotionManager.getSellValue(potion)) }) + '</button>'; // ECON-2 : le prix sur le bouton
+    h += '<button class="btn-buy is-sec eq-detail-action" type="button" onclick="PotionManager.sellPotion(\'' + esc(potion.id) + '\')">' + btnDeuxLignes(_t("Vendre (+{n} or)", { n: formatNumber(PotionManager.getSellValue(potion)) })) + '</button>'; // ECON-2 : le prix sur le bouton
   }
 
   h += '</div>';

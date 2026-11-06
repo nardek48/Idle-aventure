@@ -121,7 +121,7 @@
 
 .title-screen-btn-row { display: flex; gap: 10px; }
 .title-screen-btn-row .kbtn { flex: 1 1 0; min-width: 0; }
-.title-screen-buttons .kbtn { max-width: none; margin: 0; }
+.title-screen-buttons .kbtn { margin: 0 auto; } /* v3.719.0 : pack de boutons, centrés et à la largeur du texte */
 
 .title-screen-continue-txt { display: flex; flex-direction: column; line-height: 1.15; }
 .title-screen-continue-txt b { font-size: 16px; }
