@@ -432,7 +432,43 @@ var Pa2Run = {
     run = run || this.getRun();
     return 1 + run.pacts.reduce(function (s, id) { return s + Number((PA2_PACTS[id] || {}).bonus || 0); }, 0);
   },
+  /* Multiplicateur final de l'or au bilan : pactes, nuit, Cœur de dune, Carte du braconnier, rumeur (destination), Fiole.
+     v3.723.0 (Seb 06/11) : sorti de finish() pour l'écran « Prêt à partir » ; parts reçoit chaque facteur hors ×1. */
+  endLootMult: function (run, dest, parts) {
+    var add = function (k, m) { if (parts && (m !== 1 || k === "pacts")) parts.push({ k: k, m: m }); return m; };
+    var mult = add("pacts", this.pactMult(run)) * add("cond", Number(this.condFx(run, "lootMult") || 1)) * add("dune", this.hasRelic("dune", run) ? PA2_RULES.duneLoot : 1); // v3.469.0 ; v3.469.5 : Cœur de dune
+    if (this.hasItem("carte", run)) mult *= add("carte", PA2_RULES.carteLoot);
+    if (dest && window.VillageEvents && run.livingMap && VillageEvents.rumorAt(run.livingMap.mapId, run.livingMap.sectorId)) mult *= add("rumor", VillageEvents.rumorLootMult()); // v3.604.0 : la rumeur ; v3.607.0 : la deuxième, plus riche
+    if (run.fioleUsed) mult *= add("fiole", PA2_RULES.fioleLoot);
+    return mult;
+  },
+  // v3.723.0 (Seb 06/11) : butin final affiché au départ = anneau (or gagné en route) × bilan d'une destination atteinte.
+  departLootMult: function (run, parts) {
+    run = run || this.getRun();
+    var ring = this.lootMult(run);
+    if (parts && ring !== 1) parts.push({ k: "ring", m: ring });
+    return ring * this.endLootMult(run, true, parts);
+  },
 
+  /* v3.723.0 (Seb 06/11) : usages emportés par clé d'objet (bonus de la nuit, Mémoire, carte vivante compris).
+     Lu par depart() et par l'écran « Prêt à partir », pour que les deux disent la même chose. */
+  bagStock: function (run) {
+    var st = {};
+    var gUses = this.worldRule(run, "gourdeUses");
+    run.bag.forEach(function (id) { var it = PA2_ITEMS[id], k = it.as || id; if (it.uses) st[k] = (st[k] || 0) + (id === "gourde" && gUses ? gUses : it.uses); }); // v3.606.0 : la version fabriquée s'ajoute à l'objet
+    // Q11 : Seconde gorgée (Mémoire) +1 gorgée, Gué tenu +1 corde.
+    if (st.gourde && window.MemoryManager && MemoryManager.has("seconde_gorgee")) st.gourde += 1;
+    var night = this.nightItem(run);
+    if (night && st[night]) st[night] += 1; // v3.580.0 : l'objet de la nuit, +1 usage
+    if (st.craie && window.LivingMapManager && LivingMapManager.hasEffect("craie_plus")) st.craie += 1; // v3.429.0 : la rue qui tourne tenue
+    if (st.craie && window.MemoryManager && MemoryManager.has("craie_epaisse")) st.craie += 1; // v3.453.0 : Craie épaisse (Mémoire 10)
+    if (this.condFx(run, "chalkBonus")) st.craie = Number(st.craie || 0) + Number(this.condFx(run, "chalkBonus")); // v3.469.0
+    if (st.corde && window.LivingMapManager && LivingMapManager.hasEffect("corde_plus")) {
+      st.corde += Number(LivingMapManager.getEffectValue("ropeBonus", 1));
+    }
+    if (st.pierre_froide && window.MemoryManager && MemoryManager.has("pierre_profonde")) st.pierre_froide += Number(MemoryManager.V("pierre_profonde_uses")); // v3.489.0 : Pierre profonde (Mémoire 18)
+    return st;
+  },
   // depart() : prélève les vivres, tire la carte, prend la place et ouvre la sortie.
   depart: function () {
     var run = this.getRun();
@@ -457,20 +493,7 @@ var Pa2Run = {
       if (!pe.ok) { Object.keys(taken).forEach(function (k) { WarehouseManager.refundResource(k, taken[k]); }); return pe; }
     }
     run.taken = taken;
-    run.stock = {};
-    var gUses = this.worldRule(run, "gourdeUses");
-    run.bag.forEach(function (id) { var it = PA2_ITEMS[id], k = it.as || id; if (it.uses) run.stock[k] = (run.stock[k] || 0) + (id === "gourde" && gUses ? gUses : it.uses); }); // v3.606.0 : la version fabriquée s'ajoute à l'objet
-    // Q11 : Seconde gorgée (Mémoire) +1 gorgée, Gué tenu +1 corde.
-    if (run.stock.gourde && window.MemoryManager && MemoryManager.has("seconde_gorgee")) run.stock.gourde += 1;
-    var night = this.nightItem(run);
-    if (night && run.stock[night]) run.stock[night] += 1; // v3.580.0 : l'objet de la nuit, +1 usage
-    if (run.stock.craie && window.LivingMapManager && LivingMapManager.hasEffect("craie_plus")) run.stock.craie += 1; // v3.429.0 : la rue qui tourne tenue
-    if (run.stock.craie && window.MemoryManager && MemoryManager.has("craie_epaisse")) run.stock.craie += 1; // v3.453.0 : Craie épaisse (Mémoire 10)
-    if (this.condFx(run, "chalkBonus")) run.stock.craie = Number(run.stock.craie || 0) + Number(this.condFx(run, "chalkBonus")); // v3.469.0
-    if (run.stock.corde && window.LivingMapManager && LivingMapManager.hasEffect("corde_plus")) {
-      run.stock.corde += Number(LivingMapManager.getEffectValue("ropeBonus", 1));
-    }
-    if (run.stock.pierre_froide && window.MemoryManager && MemoryManager.has("pierre_profonde")) run.stock.pierre_froide += Number(MemoryManager.V("pierre_profonde_uses")); // v3.489.0 : Pierre profonde (Mémoire 18)
+    run.stock = this.bagStock(run);
     var ref = self._spawn(run, null, false, self.goldBand(run));
     run.refGold = Math.max(1, Number((ref && ref.goldReward) || 1));
     run.nodes = this.generate(run);
@@ -1640,11 +1663,7 @@ var Pa2Run = {
         chest.unlocked[chestItem] = true;
       }
     }
-    // Multiplicateur final de l'or : pactes, Carte du braconnier, Fiole noire.
-    var mult = this.pactMult(run) * Number(this.condFx(run, "lootMult") || 1) * (this.hasRelic("dune", run) ? PA2_RULES.duneLoot : 1); // v3.469.0 ; v3.469.5 : Cœur de dune
-    if (this.hasItem("carte", run)) mult *= PA2_RULES.carteLoot;
-    if (end.dest && window.VillageEvents && run.livingMap && VillageEvents.rumorAt(run.livingMap.mapId, run.livingMap.sectorId)) mult *= VillageEvents.rumorLootMult(); // v3.604.0 : la rumeur ; v3.607.0 : la deuxième, plus riche
-    if (run.fioleUsed) mult *= PA2_RULES.fioleLoot;
+    var mult = this.endLootMult(run, !!end.dest); // v3.723.0 : même calcul que l'écran « Prêt à partir »
     end.mult = mult;
     var s = window.SortieManager ? SortieManager.ensure() : null;
     if (s && s.active) s.loot.gold = Math.floor(Number(s.loot.gold || 0) * mult);

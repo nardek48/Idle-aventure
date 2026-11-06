@@ -11933,16 +11933,15 @@ console.log("\n[159] v3.382.0 — Petites Aventures v2 (PA2-1) : écrans (prépa
     S.startRun("petite_aventure_foret");
     game.sceneRun.hookId = "chasseur"; // v3.385.0 : 4 accroches tirées, le contrôle vise celle-ci
     var runv = game.sceneRun, html = g.buildSceneScreenHTML();
-    ok(html.indexOf('class="pa2-bag"') > 0 && (html.match(/pa2-cell is-free/g) || []).length === 6, "préparation : l'onglet scene route vers l'écran v2, besace vide de 6 cases");
+    ok(html.indexOf('id="pa2-bag"') > 0 && html.indexOf(g.esc("0 / 6 places")) > 0 && html.indexOf("Besace vide") > 0, "préparation : l'onglet scene route vers « Prêt à partir », besace vide de 6 places (v3.722.0)");
     ok(html.indexOf(g.esc("Un chasseur n'est pas revenu")) > 0 && html.indexOf("kframe-page") > 0, "préparation : l'accroche du run et le cadre de page du jeu");
     P.addItem("petite_ration"); P.addItem("ration"); P.addItem("gourde"); P.addItem("corde");
     html = g.buildSceneScreenHTML();
-    ok((html.match(/pa2-cell is-full/g) || []).length === 4 && (html.match(/pa2-cell is-free/g) || []).length === 1 && (html.match(/pa2-cell is-held/g) || []).length === 1 && html.indexOf("span 2") < 0, "besace : un objet par case, la ration moyenne bloque une deuxième case, une case libre (v3.394.0)");
-    g.pa2View.prepStep = "pacts"; P.togglePact("lourd");
+    ok((html.match(/pa2-irow is-in/g) || []).length === 4 && html.indexOf(g.esc("5 / 6 places")) > 0 && (html.split(g.esc(g.pa2ItemName("ration")))[1] || "").split("</b>")[0].match(/<i><\/i>/g).length === 2, "besace : un rang par objet, la ration moyenne compte deux places (v3.722.0)");
+    P.togglePact("lourd");
     html = g.buildSceneScreenHTML();
-    ok(html.indexOf('aria-pressed="true"') > 0 && html.indexOf("×1,20") > 0, "pactes : le pacte choisi est marqué, butin final ×1,20");
+    ok(html.indexOf('aria-pressed="true"') > 0 && html.indexOf("×1,20") > 0 && html.indexOf("pa2Depart()") > 0, "pactes : sur le même écran que la besace, le pacte choisi est marqué, départ ×1,20 (v3.722.0)");
     ok(missing(html).length === 0, "préparation : aucune image manquante" + (missing(html).length ? " (" + missing(html).join(", ") + ")" : ""));
-    g.pa2View.prepStep = "bag";
 
     P.depart();
     html = g.buildSceneScreenHTML();
@@ -12615,8 +12614,8 @@ console.log("\n[168] v3.394.0 — Petites Aventures : carte plein écran, camér
     if (st && st.ok !== false && game.sceneRun && game.sceneRun.pa2) {
       P.addItem("ration"); P.addItem("petite_ration");
       var prep = g.buildSceneScreenHTML();
-      ok((prep.match(/pa2-cell is-full/g) || []).length === 2 && (prep.match(/pa2-cell is-held/g) || []).length === 1 && (prep.match(/pa2-cell is-free/g) || []).length === 3,
-        "besace : la ration tient dans une case et bloque la suivante, trois cases libres");
+      ok((prep.match(/pa2-irow is-in/g) || []).length === 2 && prep.indexOf(g.esc("3 / 6 places")) > 0,
+        "besace : la ration et la petite ration, trois places prises (v3.723.0)");
       P.depart();
       var html = g.buildSceneScreenHTML();
       ok(html.indexOf('id="pa2-vp"') > 0 && html.indexOf('id="pa2-stage"') > 0 && html.indexOf("kframe-page") < 0, "carte : plein écran, plus de cadre de page");
@@ -13792,7 +13791,8 @@ console.log("\n[201] v3.427.2 — Petites Aventures : « Comme la dernière fois
     // préparation suivante : un toucher la remet, ce qui manque est dit
     fake.bag = ["gourde"];
     g.pa2ReuseLastBag();
-    ok(fake.bag.join() === "corde" && /Manque/.test(toast) , "« Comme la dernière fois » : la besace revient, l'objet impossible est signalé");
+    ok(fake.bag.join() === "corde" && /Manque/.test(g.pa2View.notice && g.pa2View.notice.txt) && toast === "", "« Comme la dernière fois » : la besace revient, l'objet impossible est signalé dans la besace, sans toast sur le bouton (v3.722.0)");
+    g.pa2View.notice = null;
     ok(g.pa2LastBag({ worldId: "desert", parcours: null }).length === 0, "chaque monde a sa propre besace retenue");
     P.getRun = keep.getRun; P.addItem = keep.addItem; P.removeItem = keep.removeItem; P.depart = keep.depart; g.pa2Rerender = _rr; g.showToast = _st;
     var src = require("fs").readFileSync(ROOT + "/js/ui/pa2-view.js", "utf8");
@@ -17104,7 +17104,7 @@ console.log("\n[283] v3.469.0 — Petites Aventures : condition du run (PG-B1a �
     g.__cond = false;
     // Écran : en-tête, panneau « Cette nuit », pastille en route
     prep(); S.startRun("petite_aventure_foret"); var r = game.sceneRun; r.cond = "brouillard";
-    run("switchTab('scene')"); g.pa2View.prepStep = "bag";
+    run("switchTab('scene')");
     var hp = g.buildPa2PrepHTML(r);
     ok(/nuit de brouillard/.test(hp) && /pa2-cond/.test(hp) && /Ruser gagne un cran/.test(hp) && /Cette nuit : Torche/.test(hp) && /pa2-nightitem/.test(hp), "préparation : « … · nuit de brouillard », panneau Cette nuit, avantage, inconvénient, objet de la nuit (v3.580.0)");
     r.cond = "calme"; hp = g.buildPa2PrepHTML(r);
@@ -20275,7 +20275,7 @@ console.log("\n[384] v3.580.0 — Petites Aventures, lot 4 : l'objet de la nuit 
       P._refundStock(r);
       ok(g.WarehouseManager.getAmount("outre_pleine") === before, "la gorgée offerte ne revient pas à l'Entrepôt (pas de duplication)");
     }
-    r = go("forest", fw, ["trousse"]); run("switchTab('scene')"); g.pa2View.prepStep = "bag";
+    r = go("forest", fw, ["trousse"]); run("switchTab('scene')");
     var hp = g.buildPa2PrepHTML(r);
     ok(/pa2-nightitem/.test(hp) && /Un usage de plus/.test(hp) && /is-night/.test(hp) && hp.indexOf("undefined") < 0, "préparation : l'objet de la nuit mis en avant, et marqué dans la besace");
     S.abandon();
@@ -24339,6 +24339,109 @@ console.log("\n[483] v3.722.0 — Fenêtres sur le cadre parchemin de Seb (varia
     var fr = fs.readFileSync(path.join(ROOT, "js/ui/fil-rouge-view.js"), "utf8");
     ok(/_t\("Pendant ce temps…"\)/.test(fr) && /renderIconOrEmojiHTML\(x\.icon, "fr-also-ico"/.test(fr), "fil rouge : « Pendant ce temps… » avec l'icône de chaque proposition");
   } catch (err) { ok(false, "[483] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[484] v3.723.0 — Petites Aventures : écran « Prêt à partir » (Seb 06/11, atelier aventure-parcours, variante B)");
+(function () {
+  var S = g.SceneRunManager, P = g.Pa2Run, I = g.PA2_ITEMS, CH = g.PA2_CHEST_REWARDS, savedRand = P.rand;
+  function prep(stock) {
+    game = freshCombat("knight"); giveWeapon(); run("game.enemy = null; game.combat = null;");
+    S.ensureDefaults(); game.explorationProgression.petiteAventure = { spent: 0, since: null };
+    ["petite_ration", "ration", "grande_ration", "corde_tressee", "trousse_maitre", "torche_resinee", "outre_pleine"].forEach(function (k) { game.resources[k] = (stock || {})[k] || 0; });
+    game.heroLevel = 6; game.heroHp = game.heroMaxHp; game.sceneRun = null; game.expeditionChest = { unlocked: {} };
+    if (g.SortieManager.isActive()) g.SortieManager.end("return");
+    g.pa2View.runId = null; g.pa2View.sheet = null; g.pa2View.picker = null; g.pa2View.notice = null;
+  }
+  function sheet() { var h = "", keep = g.pa2SetSheetHTML; g.pa2SetSheetHTML = function (x) { h = x || ""; }; g.pa2View.picker = { mode: "add" }; g.pa2RenderPicker(); g.pa2SetSheetHTML = keep; g.pa2View.picker = null; return h; }
+  function rows(h) { var out = [], re = /pa2AddItem\('([a-z_]+)'\)/g, m; while ((m = re.exec(h))) out.push(m[1]); return out; }
+  function multOf(h) { var m = /pa2-go"[^>]*>.*?<b>×([0-9,]+)<\/b>/.exec(h); return m ? Number(m[1].replace(",", ".")) : NaN; }
+  try {
+    // PB-E : chaque objet du coffre est rattaché au monde qui le donne ; vivres, matériel et objets fabriqués restent communs
+    var bad = [];
+    Object.keys(CH).forEach(function (w) { ["boss", "clairiere"].forEach(function (d) { var it = I[CH[w][d]]; if (!it || !it.worlds || it.worlds.join() !== w) bad.push(CH[w][d]); }); });
+    var communs = ["petite_ration", "ration", "grande_ration", "gourde", "corde", "corde_t", "trousse", "trousse_t", "torche", "torche_t", "armure", "carte", "fiole"];
+    ok(!bad.length && communs.every(function (id) { return !I[id].worlds; }) && Object.keys(I).every(function (id) { return !I[id].unlock || !!I[id].worlds; }), "objets du coffre rattachés à leur monde, objets communs sans monde" + (bad.length ? " (" + bad.join(", ") + ")" : ""));
+
+    // Forêt, coffre entièrement ouvert, rations en stock, rien de fabriqué : la feuille ne montre que ce qu'on a, de ce monde
+    prep({ petite_ration: 4, ration: 2 });
+    Object.keys(I).forEach(function (id) { if (I[id].unlock) game.expeditionChest.unlocked[id] = true; });
+    S.startRun("petite_aventure_foret"); var r = game.sceneRun; r.cond = "calme"; run("switchTab('scene')");
+    var list = rows(sheet());
+    var autres = Object.keys(I).filter(function (id) { return I[id].worlds && I[id].worlds.indexOf("forest") < 0; });
+    ok(autres.length >= 12 && autres.every(function (id) { return list.indexOf(id) < 0; }) && list.indexOf("bois") >= 0 && list.indexOf("veilleurs") >= 0, "Forêt : aucun objet d'un autre monde dans la feuille (Outre, Craie, Lanterne, Pierre froide, 8 objets du coffre), le Bois et la Lanterne des veilleurs y sont");
+    ok(!P.canAdd("ecaille").ok && P.canAdd("bois").ok, "Forêt : l'Écaille du Ver refusée, le Bois de cerf accepté");
+    ok(["grande_ration", "corde_t", "trousse_t", "torche_t"].every(function (id) { return list.indexOf(id) < 0; }) && list.indexOf("petite_ration") >= 0, "rien à l'Entrepôt (grande ration, objets fabriqués) : absent de la feuille");
+    S.abandon();
+    // PB-D : coffre fermé, les objets à gagner sont invisibles
+    prep({ petite_ration: 1 }); S.startRun("petite_aventure_foret"); r = game.sceneRun; r.cond = "calme";
+    list = rows(sheet());
+    ok(list.indexOf("bois") < 0 && list.indexOf("veilleurs") < 0 && list.indexOf("gourde") >= 0 && sheet().indexOf("Coffre d'expédition") < 0, "coffre fermé : Bois de cerf et Lanterne des veilleurs invisibles, aucune raison « Coffre d'expédition »");
+    P.addItem("petite_ration"); game.resources.petite_ration = 1;
+    ok(rows(sheet()).indexOf("petite_ration") >= 0, "la dernière ration de l'Entrepôt, déjà dans la besace, reste dans la feuille (on peut la retirer)");
+    S.abandon();
+
+    // PB-B : l'objet de la nuit en tête de la feuille
+    var nights = Object.keys(g.PA2_CONDITIONS.forest).filter(function (c) { var t = g.PA2_CONDITIONS.forest[c].tip; return t && t !== g.PA2_ITEM_ORDER[0]; });
+    prep({ petite_ration: 2 }); S.startRun("petite_aventure_foret"); r = game.sceneRun; r.cond = nights[0];
+    var tip = g.PA2_CONDITIONS.forest[nights[0]].tip, sh = sheet();
+    ok(rows(sh)[0] === tip && /pa2-irow[^"]*is-night/.test(sh.split("pa2-irow")[0] + "pa2-irow" + sh.split("pa2-irow")[1]), "nuit « " + nights[0] + " » : " + tip + " en tête de la feuille, marqué ★");
+    var hp = g.buildPa2PrepHTML(r);
+    ok(hp.indexOf("pa2-warn") > 0 && hp.indexOf("pa2AddItem('" + tip + "')") > 0, "besace sans l'objet de la nuit : signalé, et « + Prendre » l'ajoute d'un toucher");
+    S.abandon();
+
+    // PB-C : une seule étape, pactes en bascules, départ avec le butin final réellement appliqué au bilan
+    var lc = Object.keys(g.PA2_CONDITIONS.desert).filter(function (c) { return (g.PA2_CONDITIONS.desert[c].fx || {}).lootMult; })[0]; // pillards : butin final +20 %
+    prep({ petite_ration: 2 }); S.startRun("petite_aventure_desert"); r = game.sceneRun; r.ring = "chemin"; r.cond = lc || "calme"; r.hookId = null;
+    P.togglePact("tarie"); P.togglePact("retour"); P.addItem("carte"); P.addItem("petite_ration");
+    hp = g.buildPa2PrepHTML(r);
+    var shown = multOf(hp), attendu = g.PA2_RINGS.chemin.lootMult * 1.55 * ((g.PA2_CONDITIONS.desert[r.cond] || {}).fx || {}).lootMult * g.PA2_RULES.carteLoot;
+    ok((hp.match(/pa2TogglePact\('/g) || []).length === 4 && hp.indexOf("pa2Depart()") > 0 && hp.indexOf("pa2PrepStep") < 0 && hp.indexOf("pa2-recap") > 0, "pactes en bascules sur l'écran de la besace, départ direct (plus d'étape Pactes)");
+    ok(!!lc && Math.abs(shown - Math.round(attendu * 100) / 100) < 0.006 && Math.abs(shown - Math.round(P.departLootMult(r) * 100) / 100) < 0.006, "bouton de départ : anneau × pactes × nuit × Carte = ×" + shown + " (attendu " + attendu.toFixed(3) + ")");
+    ok(/Chemin ×1,55/.test(hp) && /pactes ×1,55/.test(hp) && hp.indexOf(g.esc(g.PA2_CONDITIONS.desert[lc].kicker) + " ×1,20") > 0 && hp.indexOf(g.esc(g.pa2ItemName("carte")) + " ×0,80") > 0, "ligne de calcul : chaque facteur du butin final (anneau, pactes, nuit, Carte)");
+    P.rand = function () { return 0.42; };
+    P.depart();
+    var dk = Object.keys(r.nodes).filter(function (k) { return P.isDest(r.nodes[k], r) && r.nodes[k].type === "clairiere"; })[0];
+    r.at = dk; var end = P.finish("dest");
+    ok(!!end && Math.abs(P.lootMult(r) * end.mult - P.departLootMult(r)) < 1e-9 && Math.abs(Math.round(P.lootMult(r) * end.mult * 100) / 100 - shown) < 0.006, "bilan à la destination : anneau × multiplicateur du bilan = le chiffre du bouton (×" + (P.lootMult(r) * end.mult).toFixed(3) + ")");
+    P.rand = savedRand; game.sceneRun = null; if (g.SortieManager.isActive()) g.SortieManager.end("return");
+
+    // Récapitulatif : les usages affichés sont ceux que le départ met en stock (bonus de la nuit compris)
+    var ng = Object.keys(g.PA2_CONDITIONS.forest).filter(function (c) { return g.PA2_CONDITIONS.forest[c].tip === "gourde"; })[0];
+    prep({ petite_ration: 2 }); S.startRun("petite_aventure_foret"); r = game.sceneRun; r.cond = ng || "calme";
+    P.addItem("gourde"); P.addItem("petite_ration"); P.addItem("petite_ration");
+    hp = g.buildPa2PrepHTML(r); var st = P.bagStock(r);
+    ok(!!ng && hp.indexOf(g.esc(st.gourde + " gorgées (dont 1 de la nuit)")) > 0 && hp.indexOf("2 × " + g.esc(g.pa2ItemName("petite_ration"))) > 0 && hp.indexOf("Soins emportés") > 0 && hp.indexOf("Pris à l") > 0, "récapitulatif : noms, " + st.gourde + " gorgées dont celle de la nuit, 2 petites rations, soins, prise à l'Entrepôt");
+    P.depart();
+    ok(r.stock.gourde === st.gourde, "les gorgées affichées sont celles du départ (" + r.stock.gourde + ")");
+    game.sceneRun = null; if (g.SortieManager.isActive()) g.SortieManager.end("return");
+
+    // Point 7 : un run en préparation se sauvegarde et se reprend tel quel (besace, pactes), sans étape à rejouer
+    prep({ petite_ration: 2 }); S.startRun("petite_aventure_foret"); r = game.sceneRun;
+    P.addItem("corde"); P.togglePact("lourd");
+    var d = JSON.parse(JSON.stringify(g.buildSaveData())); game.sceneRun = null; g.restoreBaseState(d); g.pa2View.runId = null;
+    r = game.sceneRun; hp = g.buildSceneScreenHTML();
+    ok(r && r.status === "pa2-prep" && r.bag.join() === "corde" && r.pacts.join() === "lourd" && /pa2TogglePact\('lourd'\)/.test(hp.split('aria-pressed="true"')[1] || "") && hp.indexOf("pa2Depart()") > 0, "reprise d'un run en préparation : besace et pacte retrouvés, départ sur le même écran");
+    ok(P.depart().ok && r.status === "pa2-map", "puis départ direct vers la carte");
+    game.sceneRun = null; if (g.SortieManager.isActive()) g.SortieManager.end("return");
+
+    // Défauts du relevé : rappels du tutoriel une seule fois, message dans la besace, cibles et textes
+    prep({ petite_ration: 1 }); game.genericTutorialsSeen = {}; S.startRun("petite_aventure_foret"); r = game.sceneRun; game.heroHp = Math.floor(game.heroMaxHp / 2);
+    var pv = g.esc("Tu pars avec tes PV actuels");
+    ok(g.buildSceneScreenHTML().indexOf(pv) > 0, "première préparation (tutoriel pas vu) : rappel des PV");
+    S.abandon(); game.genericTutorialsSeen.pa2_prep = true; g.pa2View.runId = null;
+    S.startRun("petite_aventure_foret"); r = game.sceneRun;
+    ok(g.buildSceneScreenHTML().indexOf(pv) < 0, "préparations suivantes : plus de rappel (le tutoriel le dit)");
+    var rr = g.pa2Rerender; g.pa2Rerender = function () {};
+    P.addItem("corde"); g.pa2RemoveOne("corde");
+    ok(r.bag.length === 0 && /corde/i.test(g.pa2View.notice.txt) && g.buildPa2PrepHTML(r).indexOf("pa2NoticeAct()") > 0, "retrait depuis la besace : message dans la besace avec « Annuler »");
+    g.pa2NoticeAct();
+    ok(r.bag.join() === "corde" && !g.pa2View.notice, "« Annuler » remet l'objet");
+    g.pa2Rerender = rr; S.abandon(); game.sceneRun = null;
+    var css = fs.readFileSync(path.join(ROOT, "css/04-panel-pa2.css"), "utf8"), src = fs.readFileSync(path.join(ROOT, "js/ui/pa2-view.js"), "utf8");
+    ok(/\.pa2-stepbtn \{ width: 44px; height: 44px;/.test(css) && /\.pa2-prep \.pa2-link \{ width: 100%; min-height: 44px;/.test(css) && css.indexOf(".pa2-xclose") < 0 && src.indexOf("pa2-xclose") < 0, "cibles : − / + de 44 px, « Renoncer » de 44 px de haut, plus de croix de 36 px");
+    ok(/\.pa2-foot \{ position: sticky; bottom: 0;/.test(css) && src.indexOf("pa2PrepStep") < 0 && src.indexOf("pa2-cell") < 0, "départ collé en bas ; plus d'étape Pactes ni de cases");
+  } catch (err) { ok(false, "[484] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  finally { P.rand = savedRand; game.sceneRun = null; if (g.SortieManager.isActive()) g.SortieManager.end("return"); }
 })();
 
 Promise.all(ATTENTES).then(function () {

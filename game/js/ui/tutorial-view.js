@@ -219,7 +219,7 @@ var GENERIC_TUTORIALS = {
     icon: "images/Icons/dungeon/dungeon_sacoche.webp",
     title: "Préparer une petite aventure",
     points: [
-      { icon: "images/Icons/dungeon/dungeon_sacoche.webp", text: "La besace : touche une case pour y mettre des rations ou des objets. Chacun a un avantage (en vert) et souvent un prix (en rouge). Les rations que tu ne manges pas retournent à l'Entrepôt." },
+      { icon: "images/Icons/dungeon/dungeon_sacoche.webp", text: "La besace : touche « Ajouter des objets » pour y mettre des rations ou des objets. Chacun a un avantage (en vert) et souvent un prix (en rouge). Les rations que tu ne manges pas retournent à l'Entrepôt." },
       { icon: "images/Icons/combat_stats/stat_health.webp", text: "Tu pars avec tes PV actuels : en route, seuls te soignent les rations de la besace, les sources, le repos (au seuil ou au feu de camp), les autels et quelques reliques." },
       { icon: "images/Icons/scene/pacts/pact_awake.webp", text: "Les pactes ne sont pas obligatoires. Chacun rend la nuit plus dure et le retour plus riche : choisis-les quand tu t'en sens capable." },
       { icon: "images/Icons/scene/node_threshold.webp", text: "« Renoncer à cette aventure » te ramène sans rien perdre, tant que tu n'es pas encore parti." }
@@ -237,7 +237,7 @@ var GENERIC_TUTORIALS = {
     points: [
       { icon: "images/Icons/scene/path_easy.webp", text: "Chaque petite aventure a sa nuit : brouillard, orage, pillards… Elle est annoncée ici, avant que tu remplisses ta besace." },
       { icon: "images/Icons/system/check_valid.webp", text: "En vert, ce qu'elle t'apporte ; en rouge, ce qu'elle te coûte. Les deux valent pour tout le run." },
-      { icon: "images/Icons/dungeon/dungeon_sacoche.webp", text: "« Utile cette nuit » nomme l'objet qui t'aidera le plus. Une nuit sur cinq est calme : rien ne change." },
+      { icon: "images/Icons/dungeon/dungeon_sacoche.webp", text: "L'étoile ★ marque l'objet qui t'aidera le plus. Une nuit sur cinq est calme : rien ne change." },
       { icon: "images/Icons/scene/ui/ui_hero_marker.webp", text: "En route, la pastille dorée en haut de l'écran te rappelle la nuit : touche-la." }
     ]
   },

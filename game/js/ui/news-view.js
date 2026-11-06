@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.723.0", "scene/pa2_besace", _t("Petites Aventures : nouvel écran « Prêt à partir ». La besace se lit d'un coup d'œil (usages, soins emportés), on ajoute plusieurs objets sans fermer, les pactes se règlent sur le même écran et le bouton de départ montre le vrai butin final. Seuls les objets que tu as, et ceux du monde, sont proposés.")],
     ["3.722.0", "menu_icons/menu_menu", _t("Les fenêtres passent sur le cadre parchemin de Seb : titre sur le parchemin, filets dorés, texte plus grand. Dans le fil rouge, « Pendant ce temps… » liste les autres choses à faire.")],
     ["3.721.0", "menu_icons/menu_menu", _t("Texte des boutons agrandi. Les derniers boutons à part (festin, Expéditions, « Tu es ici », Taverne, Hauts faits, reliques) prennent eux aussi le style cuivre et parchemin.")],
     ["3.720.0", "menu_icons/menu_menu", _t("Les prix, « Préparer » et « Relancer » prennent le bouton cuivre en petit. Un bouton au libellé trop long passe proprement sur deux lignes.")],

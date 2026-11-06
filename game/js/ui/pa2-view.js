@@ -4,7 +4,7 @@
    (systems/pa2-run.js). Le moteur applique chaque résultat tout de suite et le sauvegarde ;
    cette vue ne fait que le METTRE EN SCÈNE (dé, échanges de combat, cartes retournées).
    Trois écrans dans l'onglet "scene" (routés par buildSceneScreenHTML) :
-     - préparation (pa2-prep) : besace puis pactes ;
+     - préparation (pa2-prep) : « Prêt à partir », besace et pactes sur un écran (v3.723.0) ;
      - carte (pa2-map / pa2-node) : HUD, carte de nuit, feuille d'action du nœud ;
      - bilan (completed) : destination, butin, coffre d'expédition.
    La feuille d'action et la légende vivent dans #pa2-overlay (enfant de body) : un
@@ -14,8 +14,11 @@
 
 var pa2View = {
   runId: null,
-  prepStep: "bag",      // "bag" | "pacts"
-  picker: null,         // { mode: "add" } | { mode: "item", idx }
+  picker: null,         // { mode: "add" } : feuille d'ajout ouverte (v3.723.0 : plus d'étape Pactes ni de fiche d'objet)
+  detail: null,         // v3.723.0 : objet dont la feuille montre le détail
+  notice: null,         // v3.723.0 : { txt, undo } message dans la besace (retrait, besace reprise)
+  helpRun: null,        // v3.723.0 : run de la première préparation (rappels du tutoriel affichés)
+  folds: {},            // v3.723.0 : plis ouverts de « Prêt à partir » (accroche, trophées)
   sheet: null,          // { key, step, res, ... } : feuille ouverte
   hud: null,            // valeurs affichées pendant une animation (le moteur a déjà tout appliqué)
   fromKey: null,        // nœud quitté : le repère du héros glisse depuis lui
@@ -23,7 +26,6 @@ var pa2View = {
   keepScroll: null,
   cam: { w: 0, tx: 0, ty: 0, key: null }, // v3.394.0 : vue de la carte plein écran (key = run + carte)
   legend: false,
-  justAdded: null,
   timers: []
 };
 
@@ -160,8 +162,11 @@ function pa2SyncViewRun(run) {
   if (pa2View.runId === run.id) return;
   pa2ClearTimers();
   pa2View.runId = run.id;
-  pa2View.prepStep = "bag";
   pa2View.picker = null;
+  pa2View.detail = null;
+  pa2View.notice = null;
+  pa2View.folds = {};
+  pa2View.helpRun = (game.genericTutorialsSeen || {}).pa2_prep ? null : run.id; // v3.723.0 : tutoriel pas encore vu
   pa2View.sheet = null;
   pa2View.hud = null;
   pa2View.fromKey = null;
@@ -239,136 +244,188 @@ function pa2ClearChrome() {
 }
 window.pa2ClearChrome = pa2ClearChrome;
 
-/* ---------- Préparation : besace et pactes ---------- */
+/* ---------- Préparation : « Prêt à partir » ---------- */
+/* v3.723.0 (Seb 06/11, atelier aventure-parcours, variante B « Récap et feuille ») : une seule étape.
+   La besace se lit en récapitulatif ; la feuille d'ajout reste ouverte ; pactes en bascules ; départ collé en bas. */
 
 function pa2PageOpen(title) {
   return '<div class="nb-page-frame kframe-page pa2-page" data-kf-title="' + esc(PA2_ICONS.title + "|" + title) + '">';
 }
 
+// v3.723.0 (PB-D, PB-E) : objet de ce monde que le joueur a (coffre gagné, Entrepôt non vide ou déjà dans la besace).
+function pa2ItemOwned(id, run) {
+  var it = PA2_ITEMS[id];
+  if (!it || !Pa2Run.itemInWorld(id, run) || !Pa2Run.isUnlocked(id)) return false;
+  if (!it.resource || !window.WarehouseManager) return true;
+  return WarehouseManager.getAmount(it.resource) > 0 || run.bag.indexOf(id) >= 0;
+}
+// Liste de la feuille (PB-B) : l'objet de la nuit en tête, puis l'ordre des données (vivres, matériel, coffre).
+function pa2PickList(run) {
+  var night = Pa2Run.nightItem(run), list = PA2_ITEM_ORDER.slice(), i = night ? list.indexOf(night) : -1;
+  if (i > 0) { list.splice(i, 1); list.unshift(night); }
+  return list.filter(function (id) { return pa2ItemOwned(id, run); });
+}
+function pa2Pips(n) {
+  var h = '<span class="pa2-size" role="img" aria-label="' + esc(_tn(n, "{n} place", "{n} places", { n: n })) + '">';
+  for (var k = 0; k < n; k++) h += "<i></i>";
+  return h + "</span>";
+}
+function pa2UsesText(id, n, night) {
+  var w = (id === "gourde" || id === "outre") ? _tn(n, "{n} gorgée", "{n} gorgées", { n: n })
+    : (id === "trousse" ? _tn(n, "{n} crochet", "{n} crochets", { n: n }) : _tn(n, "{n} usage", "{n} usages", { n: n }));
+  return night ? _t("{u} (dont 1 de la nuit)", { u: w }) : w;
+}
+function pa2CountIn(run, id) { return run.bag.filter(function (x) { return x === id; }).length; }
+
+// Récapitulatif de la besace (PB-C) : un rang par objet, usages réels (Pa2Run.bagStock), soins, Entrepôt.
+function pa2RecapHTML(run) {
+  var night = Pa2Run.nightItem(run), stock = Pa2Run.bagStock(run), max = Number(game.heroMaxHp || 1);
+  var seen = {}, rows = "", heal = 0, wounds = 0, taken = [];
+  var owner = {}; // la clé d'usages (corde, corde tressée…) est portée par l'objet de base s'il est là
+  run.bag.forEach(function (id) { var k = PA2_ITEMS[id].as || id; if (!owner[k] || id === k) owner[k] = id; });
+  run.bag.forEach(function (id) {
+    if (seen[id]) return; seen[id] = 1;
+    var it = PA2_ITEMS[id], n = pa2CountIn(run, id), k = it.as || id, isNight = night === k, det;
+    if (it.healPct) {
+      heal += it.healPct * n; wounds += it.healsWound ? n : 0;
+      var pv = { p: pa2Num(it.healPct * max) };
+      det = n > 1 ? (it.healsWound ? _t("Chacune rend {p} PV et efface une blessure", pv) : _t("Chacune rend {p} PV", pv))
+        : (it.healsWound ? _t("Rend {p} PV et efface une blessure", pv) : _t("Rend {p} PV", pv));
+    } else if (it.uses) {
+      var u = it.uses * n;
+      if (owner[k] === id) { u = Number(stock[k] || 0); run.bag.forEach(function (x) { if (x !== id && (PA2_ITEMS[x].as || x) === k) u -= PA2_ITEMS[x].uses; }); }
+      det = pa2UsesText(k, u, isNight && owner[k] === id);
+    } else det = isNight ? pa2NightBonus(k) : _td(it.pro);
+    if (it.resource) taken.push(pa2ItemName(id) + " ×" + n);
+    rows += '<div class="pa2-irow is-in' + (isNight ? ' is-night' : '') + '">' + pa2Img(it.icon, "pa2-irow-ic") +
+      '<div class="pa2-irow-t"><b>' + esc((n > 1 ? n + " × " : "") + pa2ItemName(id)) + (isNight ? ' <span class="pa2-night-tag">★</span>' : '') + ' ' + pa2Pips(it.size * n) + '</b>' +
+      '<span class="pa2-irow-s">' + esc(det) + '</span></div>' +
+      '<span class="pa2-step"><button type="button" class="pa2-stepbtn" onclick="pa2RemoveOne(\'' + id + '\')" aria-label="' + esc(_t("Retirer : {n}", { n: pa2ItemName(id) })) + '">−</button></span></div>';
+  });
+  if (!run.bag.length) rows = '<p class="pa2-recap-empty">' + esc(_t("Besace vide. Tu peux partir ainsi.")) + '</p>';
+  var h = '<div class="pa2-recap">' + rows;
+  if (run.bag.length) {
+    h += '<div class="pa2-recap-r is-tot"><span>' + esc(_t("Soins emportés")) + '</span><span>' + esc(heal
+      ? _t("{p} des PV ({v} PV)", { p: pa2Pct(heal), v: pa2Num(heal * max) }) + (wounds ? ", " + _tn(wounds, "{n} blessure", "{n} blessures", { n: wounds }) : "")
+      : _t("aucun")) + '</span></div>';
+    if (taken.length) h += '<div class="pa2-recap-r"><span>' + esc(_t("Pris à l'Entrepôt")) + '</span><span>' + esc(taken.join(", ") + " " + _t("(rendu s'il ne sert pas)")) + '</span></div>';
+  }
+  if (night && !Pa2Run.hasItem(night, run)) h += '<p class="pa2-warn">' + esc(_t("★ {x}, l'objet de la nuit, n'est pas dans la besace.", { x: pa2ItemName(night) })) + '</p>';
+  return h + '</div>';
+}
+
+function pa2PactsHTML(run) {
+  var h = '<div class="pa2-panel"><div class="pa2-kicker">' + esc(_t("Pactes")) + '</div><div class="pa2-list">';
+  PA2_PACT_ORDER.forEach(function (id) {
+    var p = PA2_PACTS[id], on = Pa2Run.hasPact(id, run);
+    h += '<button type="button" class="pa2-pact" aria-pressed="' + on + '" onclick="pa2TogglePact(\'' + id + '\')">' + pa2Img(p.icon) +
+      '<span><span class="pa2-nm">' + esc(_td(p.name)) + '</span><span class="pa2-ds">' + esc(_td(p.desc)) + '</span></span>' +
+      '<span class="pa2-pact-r"><span class="pa2-bonus">+' + Math.round(p.bonus * 100) + ' %</span><span class="pa2-sw" aria-hidden="true"></span></span></button>';
+  });
+  return h + '</div></div>';
+}
+
+// Bouton de départ : le butin final réellement appliqué au bilan (Pa2Run.departLootMult), facteur par facteur.
+function pa2FootHTML(run) {
+  if (run.parcours) {
+    var tpl = SceneEngine.getTemplate(run.templateId) || {};
+    return '<div class="pa2-foot"><button type="button" class="kbtn primary pa2-go" onclick="pa2Depart()">' + esc(tpl.departLabel ? _td(tpl.departLabel) : _t("Partir")) + '</button></div>';
+  }
+  var parts = [], m = Pa2Run.departLootMult(run, parts), cond = Pa2Run.condition(run);
+  var names = { ring: PA2_RING_WORD[run.ring], pacts: _t("pactes"), cond: cond ? _td(cond.kicker) : "", carte: pa2ItemName("carte"), rumor: _t("rumeur"), dune: "" };
+  var calc = parts.map(function (p) { return names[p.k] + " " + pa2Mult(p.m); }).join(" · ");
+  if (Pa2Run.hasItem("fiole", run)) calc += " · " + _t("Fiole : ÷ 2 si elle sert");
+  return '<div class="pa2-foot"><div class="pa2-calc">' + esc(calc) + '</div>' +
+    '<button type="button" class="kbtn primary pa2-go" onclick="pa2Depart()"><span>' + esc(pa2Words(run).enter) + '</span><b>' + pa2Mult(m) + '</b></button></div>';
+}
+
 function buildPa2PrepHTML(run) {
-  var hook = pa2Hook(run), hero = pa2Hero(), snap = run.heroSnapshot || {};
-  var ring = Pa2Run.ring(run), ringId = run.ring;
-  var tpl = SceneEngine.getTemplate(run.templateId) || {}, par = !!run.parcours, size = Pa2Run.bagSize(run);
-  if (par) pa2View.prepStep = "bag"; // un parcours n'a pas de pactes
-  var h = pa2PageOpen(pa2View.prepStep === "pacts" ? _t("Les pactes") : (par ? _td(tpl.title || "") : _t("Petite aventure"))) + '<div class="pa2-col">';
+  var hook = pa2Hook(run), hero = pa2Hero(), ringId = run.ring;
+  var tpl = SceneEngine.getTemplate(run.templateId) || {}, par = !!run.parcours, size = Pa2Run.bagSize(run), used = Pa2Run.bagUsed(run);
+  var cond = par ? null : Pa2Run.condition(run); // v3.469.0 : la nuit du run remplace « de nuit »
+  var h = pa2PageOpen(par ? _td(tpl.title || "") : _t("Prêt à partir")) + '<div class="pa2-col pa2-prep">';
 
-  if (pa2View.prepStep === "bag") {
-    h += '<div class="pa2-panel pa2-center">';
-    var cond = par ? null : Pa2Run.condition(run); // v3.469.0 : la nuit du run remplace « de nuit »
-    h += '<div class="pa2-kicker">' + esc(par ? pa2WorldName(run.worldId) : (cond ? pa2WorldName(run.worldId) + " · " + _td(cond.kicker) : _t("{w} · de nuit", { w: pa2WorldName(run.worldId) }))) + '</div>';
-    if (hook) {
-      h += '<h1 class="pa2-h1">' + esc(_td(hook.title)) + '</h1>';
-      h += '<p class="pa2-narr pa2-dim">' + esc(_td(hook.lede)) + '</p>';
-    }
-    if (ringId !== "sentier") {
-      h += '<p class="pa2-ring">' + esc(_t("{r} : ennemis et obstacles plus durs, butin ×{m}.", { r: PA2_RING_WORD[ringId], m: fmtDec(ring.lootMult) })) + '</p>';
-    }
-    h += '</div>';
-
-    if (cond) h += pa2CondPanelHTML(cond); // v3.469.0 (atelier conditions-run) : lu avant de remplir la besace
-    // Le héros tel qu'il part : PV actuels (pas de soin gratuit), stats du jet.
-    h += '<div class="pa2-panel pa2-hero">' + pa2Img(hero.image, "pa2-portrait", hero.name);
-    h += '<div class="pa2-hero-info"><div class="pa2-kicker">' + esc(_t("{n}, niveau {l}", { n: hero.name, l: run.level })) + '</div>';
-    h += pa2GaugeHTML("hp", game.heroHp, game.heroMaxHp, _t("{a} / {b} PV", { a: pa2Num(game.heroHp), b: pa2Num(game.heroMaxHp) }));
-    h += '<div class="pa2-stats">';
-    ["power", "precision", "endurance"].forEach(function (s) {
-      h += '<span title="' + esc(sceneStatLabel(s)) + '">' + pa2Img(PA2_ICONS[s]) + '<b>' + pa2Num(snap[s]) + '</b></span>';
-    });
-    h += '</div></div></div>';
-    if (Number(game.heroHp || 0) < Number(game.heroMaxHp || 1)) {
-      h += '<p class="pa2-note">' + esc(_t("Tu pars avec tes PV actuels. Les rations de la besace soignent en route.")) + '</p>';
-    }
-
+  if (!par) { // accroche repliée en une ligne (PB-A) : monde · nuit · anneau, puis le titre
+    var kick = (cond ? pa2WorldName(run.worldId) + " · " + _td(cond.kicker) : _t("{w} · de nuit", { w: pa2WorldName(run.worldId) })) + (ringId !== "sentier" ? " · " + PA2_RING_WORD[ringId] : "");
+    var body = (hook ? '<p class="pa2-narr">' + esc(_td(hook.lede)) + '</p>' : '') +
+      (ringId !== "sentier" ? '<p class="pa2-ring">' + esc(_t("{r} : ennemis et obstacles plus durs, butin ×{m}.", { r: PA2_RING_WORD[ringId], m: fmtDec(Pa2Run.ring(run).lootMult) })) + '</p>' : '');
+    var sum = '<span class="pa2-fold-sum"><span class="pa2-kicker">' + esc(kick) + '</span>' + (hook ? '<b>' + esc(_td(hook.title)) + '</b>' : '') + '</span>';
+    h += body ? '<details class="pa2-panel pa2-fold pa2-hook"' + pa2FoldAttr("hook") + '><summary>' + sum + '</summary>' + body + '</details>' : '<div class="pa2-panel pa2-hook">' + sum + '</div>';
     // v3.429.23 : comme l'entrée de donjon offerte — l'Histoire paie la place
-    if (!par && SceneRunManager.isStoryPaFree(run.worldId, run.livingMap)) {
+    if (SceneRunManager.isStoryPaFree(run.worldId, run.livingMap)) {
       h += '<p class="pa2-note pa2-storyfree"><img class=ico-inline src=images/Icons/dungeon/dungeon_ticket.webp> <b>' + esc(_t("Expédition offerte")) + '</b> ' + esc(_t("— l'Histoire t'y mène : aucune place prise, sauf si tu rentres avant le but")) + '</p>';
     }
-    if (!par) h += pa2TrophiesHTML(run);
-
-    // Besace : l'objet dans une case ; ses autres places sont bloquées (v3.394.0, retour Seb).
-    // Une case libre ouvre la liste ; une case bloquée ouvre la fiche de son objet.
-    var cells = "", used = Pa2Run.bagUsed(run);
-    run.bag.forEach(function (id, idx) {
-      var it = PA2_ITEMS[id], nm = pa2ItemName(id);
-      cells += '<button type="button" class="pa2-cell is-full' + (pa2View.justAdded === idx ? ' is-pop' : '') + (Pa2Run.nightItem(run) === id ? ' is-night' : '') + '" onclick="pa2OpenItem(' + idx + ')" aria-label="' + esc(nm) + '">' + pa2Img(it.icon, "", nm) + '</button>';
-      for (var k = 1; k < it.size; k++) {
-        cells += '<button type="button" class="pa2-cell is-held' + (pa2View.justAdded === idx ? ' is-pop' : '') + '" onclick="pa2OpenItem(' + idx + ')" aria-label="' + esc(_t("Place prise : {n}", { n: nm })) + '"></button>';
-      }
-    });
-    for (var i = used; i < size; i++) {
-      cells += '<button type="button" class="pa2-cell is-free" onclick="pa2OpenPicker()" aria-label="' + esc(_t("Case libre : ajouter un objet")) + '"><span>+</span></button>';
-    }
-    pa2View.justAdded = null;
-    h += '<div class="pa2-panel"><div class="pa2-kicker pa2-kicker-ico">' + pa2Img(PA2_ICONS.bag) + esc(_t("Ta besace")) + '</div>';
-    h += '<div class="pa2-bag" id="pa2-bag">' + cells + '</div>';
-    h += '<div class="pa2-bag-meta"><span>' + esc(_t("{a} / {b} places", { a: used, b: size })) + '</span><span>' +
-      esc(run.bag.length ? _t("Touche un objet pour le retirer") : _t("Touche une case pour la remplir")) + '</span></div>';
-    h += '<p class="pa2-small pa2-dim">' + esc(_t("Les rations viennent de l'Entrepôt ; celles que tu ne manges pas y retournent.")) + '</p>';
-    // v3.427.2 (retour Seb, option A) : la besace du dernier départ, remise en un toucher
-    var last = pa2LastBag(run);
-    if (last.length && pa2BagKey(run.bag) !== pa2BagKey(last) && pa2LastBagAvailable(run, last)) { // v3.616.0 : rien à reprendre, pas de bouton
-      h += '<button type="button" class="kbtn is-sec pa2-lastbag" onclick="pa2ReuseLastBag()">' + pa2Img(PA2_ICONS.bag) + esc(_t("Comme la dernière fois")) + '</button>';
-    }
-    h += '</div>';
-    if (par) h += '<button type="button" class="kbtn primary" onclick="pa2Depart()">' + esc(tpl.departLabel ? _td(tpl.departLabel) : _t("Partir")) + '</button>';
-    else h += '<button type="button" class="kbtn primary" onclick="pa2PrepStep(\'pacts\')">' + esc(_t("Choisir mes pactes")) + '</button>';
-  } else {
-    h += '<div class="pa2-panel"><p class="pa2-narr pa2-dim pa2-center">' + esc(_t("Aucun n'est obligatoire. Chacun rend la nuit plus dure, et le retour plus riche.")) + '</p></div>';
-    h += '<div class="pa2-list">';
-    PA2_PACT_ORDER.forEach(function (id) {
-      var p = PA2_PACTS[id], on = Pa2Run.hasPact(id, run);
-      h += '<button type="button" class="pa2-pact" aria-pressed="' + on + '" onclick="pa2TogglePact(\'' + id + '\')">' + pa2Img(p.icon) +
-        '<span><span class="pa2-nm">' + esc(_td(p.name)) + '</span><span class="pa2-ds">' + esc(_td(p.desc)) + '</span></span>' +
-        '<span class="pa2-bonus">+' + Math.round(p.bonus * 100) + ' %</span></button>';
-    });
-    h += '</div>';
-    h += '<div class="pa2-panel pa2-mult"><span>' + esc(_t("Butin final")) + '</span><b>' + pa2Mult(Pa2Run.pactMult(run)) + '</b></div>';
-    h += '<div class="pa2-btnrow"><button type="button" class="kbtn" onclick="pa2PrepStep(\'bag\')">' + esc(_t("Besace")) + '</button>' +
-      '<button type="button" class="kbtn primary" onclick="pa2Depart()">' + esc(pa2Words(run).enter) + '</button></div>';
+    if (cond) h += pa2CondPanelHTML(cond, run); // la nuit en bande, avec son objet ★
   }
+
+  // Besace en récapitulatif (PB-A, PB-C) : le héros tel qu'il part, chaque objet, soins et Entrepôt.
+  h += '<div class="pa2-panel pa2-bagpanel" id="pa2-bag"><div class="pa2-bag-h"><span class="pa2-kicker pa2-kicker-ico">' + pa2Img(PA2_ICONS.bag) + esc(_t("Ta besace")) + '</span>' +
+    '<span class="pa2-bag-n">' + esc(_t("{a} / {b} places", { a: used, b: size })) + '</span></div>';
+  var hpPct = Math.max(0, Math.min(100, Math.round(100 * Number(game.heroHp || 0) / Math.max(1, Number(game.heroMaxHp || 1)))));
+  h += '<div class="pa2-heroline"><span>' + esc(_t("{n}, niveau {l}", { n: hero.name, l: run.level })) + '</span><span class="pa2-hpbar" aria-hidden="true"><i style="width:' + hpPct + '%"></i></span>' +
+    '<span>' + esc(_t("{a} / {b} PV", { a: pa2Num(game.heroHp), b: pa2Num(game.heroMaxHp) })) + '</span></div>';
+  // Rappel du tutoriel : seulement à la première préparation (ou dans un parcours, qui n'a pas ce tutoriel).
+  if (Number(game.heroHp || 0) < Number(game.heroMaxHp || 1) && (par || pa2View.helpRun === run.id)) {
+    h += '<p class="pa2-help">' + esc(_t("Tu pars avec tes PV actuels. Les rations de la besace soignent en route.")) + '</p>';
+  }
+  if (pa2View.notice) {
+    h += '<div class="pa2-notice" role="status"><span>' + esc(pa2View.notice.txt) + '</span><button type="button" class="kbtn is-sec" onclick="pa2NoticeAct()">' +
+      esc(pa2View.notice.undo ? _t("Annuler") : _t("OK")) + '</button></div>';
+  }
+  h += pa2RecapHTML(run);
+  h += '<button type="button" class="pa2-addbig" onclick="pa2OpenPicker()">' + esc(_t("+ Ajouter des objets")) + '</button>';
+  // v3.427.2 (retour Seb, option A) : la besace du dernier départ, remise en un toucher
+  var last = pa2LastBag(run);
+  if (last.length && pa2BagKey(run.bag) !== pa2BagKey(last) && pa2LastBagAvailable(run, last)) { // v3.616.0 : rien à reprendre, pas de bouton
+    h += '<button type="button" class="kbtn is-sec pa2-lastbag" onclick="pa2ReuseLastBag()">' + pa2Img(PA2_ICONS.bag) + esc(_t("Comme la dernière fois")) + '</button>';
+  }
+  h += '</div>';
+
+  if (!par) h += pa2PactsHTML(run) + pa2TrophiesHTML(run);
   h += '<button type="button" class="pa2-link" onclick="pa2CancelPrep()">' + esc(par ? _t("Renoncer") : _t("Renoncer à cette aventure")) + '</button>';
+  h += pa2FootHTML(run);
   h += '</div></div>';
   return h;
 }
 
-/* Trophées du monde (PA2-2, D3) : destinations atteintes, réussites, record de pactes. */
+/* Trophées du monde (PA2-2, D3), repliés sous les pactes (PB-A) : destinations atteintes, record de pactes. */
 function pa2TrophiesHTML(run) {
-  var t = Pa2Run.trophies(run.worldId), st = Pa2Run.ensureChest().stats, dests = pa2Dests(run);
-  var h = '<div class="pa2-panel"><div class="pa2-kicker">' + esc(_t("Trophées — {w}", { w: pa2WorldName(run.worldId) })) + '</div><div class="pa2-trophies">';
-  ["boss", "clairiere", "tertre"].forEach(function (d) {
-    var n = Number(t.dests[d] || 0);
-    h += '<div class="pa2-troph' + (n ? '' : ' is-empty') + '">' + pa2Img(pa2Ico(d, run), "", _td(dests[d].name)) + '<b>×' + n + '</b><span>' + esc(_td(dests[d].name)) + '</span></div>';
-  });
-  h += '</div><div class="pa2-bag-meta"><span>' + esc(_tn(t.success, "{n} destination atteinte", "{n} destinations atteintes", { n: t.success })) + '</span>' +
-    '<span>' + esc(_tn(Number(st.bestPacts || 0), "Record : {n} pacte tenu", "Record : {n} pactes tenus", { n: Number(st.bestPacts || 0) })) + '</span></div></div>';
-  return h;
+  var t = Pa2Run.trophies(run.worldId), st = Pa2Run.ensureChest().stats, dests = pa2Dests(run), got = 0;
+  var line = ["boss", "clairiere", "tertre"].map(function (d) { var n = Number(t.dests[d] || 0); if (n) got++; return _td(dests[d].name) + " ×" + n; }).join(" · ");
+  var best = Number(st.bestPacts || 0);
+  return '<details class="pa2-panel pa2-fold"' + pa2FoldAttr("troph") + '><summary><span class="pa2-fold-sum"><span class="pa2-kicker">' + esc(_t("Trophées — {w}", { w: pa2WorldName(run.worldId) })) + '</span>' +
+    '<span class="pa2-dim">' + esc(_t("{a} / 3 destinations", { a: got }) + " · " + _tn(best, "Record : {n} pacte tenu", "Record : {n} pactes tenus", { n: best })) + '</span></span></summary>' +
+    '<p class="pa2-trophies">' + esc(line) + ' · ' + esc(_tn(t.success, "{n} destination atteinte", "{n} destinations atteintes", { n: t.success })) + '</p></details>';
 }
 
-function pa2PrepStep(step) {
-  pa2View.prepStep = step === "pacts" ? "pacts" : "bag";
-  pa2View.keepScroll = 0;
-  pa2Rerender();
-  var zone = document.querySelector("#panel-container .kfp-scrollzone");
-  if (zone) zone.scrollTop = 0;
-}
-function pa2OpenPicker() { pa2View.picker = { mode: "add" }; pa2RenderPicker(); }
-function pa2OpenItem(idx) { pa2View.picker = { mode: "item", idx: idx }; pa2RenderPicker(); }
-function pa2ClosePicker() { pa2View.picker = null; pa2RenderPicker(); }
+// Un pli ouvert le reste quand l'écran se redessine (ajout, pacte).
+function pa2FoldAttr(key) { return (pa2View.folds[key] ? ' open' : '') + ' ontoggle="pa2View.folds.' + key + '=this.open"'; }
+function pa2OpenPicker() { pa2View.picker = { mode: "add" }; pa2View.notice = null; pa2RenderPicker(); }
+function pa2ClosePicker() { pa2View.picker = null; pa2View.detail = null; pa2RenderPicker(); pa2Rerender(); }
+function pa2ItemDetail(id) { pa2View.detail = pa2View.detail === id ? null : id; pa2RenderPicker(); }
+// La feuille reste ouverte : on ajoute plusieurs objets d'affilée (PB-B).
 function pa2AddItem(id) {
   var r = Pa2Run.addItem(id);
   if (!r.ok) { if (typeof showToast === "function") showToast(r.reason, 1600); return; }
-  pa2View.justAdded = Pa2Run.getRun().bag.length - 1;
-  pa2View.picker = null;
+  pa2View.notice = null;
   pa2RenderPicker();
   pa2Rerender();
 }
-function pa2RemoveItem(idx) {
-  Pa2Run.removeItem(idx);
-  pa2View.picker = null;
+// Retire un exemplaire ; hors de la feuille, « Annuler » le remet.
+function pa2RemoveOne(id) {
+  var run = Pa2Run.getRun(), idx = run ? run.bag.lastIndexOf(id) : -1;
+  if (idx < 0 || !Pa2Run.removeItem(idx).ok) return;
+  pa2View.notice = pa2View.picker ? null : { txt: _t("Retiré de la besace : {x}.", { x: pa2ItemName(id) }), undo: id };
   pa2RenderPicker();
   pa2Rerender();
 }
-function pa2TogglePact(id) { Pa2Run.togglePact(id); pa2Rerender(); }
+function pa2NoticeAct() {
+  var u = pa2View.notice && pa2View.notice.undo;
+  pa2View.notice = null;
+  if (u) Pa2Run.addItem(u);
+  pa2Rerender();
+}
+function pa2TogglePact(id) { Pa2Run.togglePact(id); pa2View.notice = null; pa2Rerender(); }
 
 /* v3.427.2 (retour Seb, option A) : « Comme la dernière fois ». La besace du dernier départ est retenue
    par monde — et par parcours pour les parcours à besace.
@@ -389,6 +446,7 @@ function pa2LastBagAvailable(run, last) {
     return !it.resource || !window.WarehouseManager || WarehouseManager.getAmount(it.resource) > 0;
   });
 }
+// v3.723.0 : le message s'affiche dans la besace (le toast couvrait le bouton de départ) ; l'objet de la nuit absent y est signalé.
 function pa2ReuseLastBag() {
   var run = Pa2Run.getRun();
   if (!run || run.status !== PA2_STATUS.prep) return;
@@ -398,9 +456,7 @@ function pa2ReuseLastBag() {
     var r = Pa2Run.addItem(id);
     if (!r.ok) missing.push(pa2ItemName(id));
   });
-  if (typeof showToast === "function") {
-    showToast(missing.length ? _tn(missing.length, "Besace reprise. Manque : {x}.", "Besace reprise. Manquent : {x}.", { x: missing.join(", ") }) : _t("Besace reprise."), missing.length ? 2600 : 1400);
-  }
+  pa2View.notice = { txt: missing.length ? _tn(missing.length, "Besace reprise. Manque : {x}.", "Besace reprise. Manquent : {x}.", { x: missing.join(", ") }) : _t("Besace reprise."), undo: null };
   pa2Rerender();
 }
 window.pa2ReuseLastBag = pa2ReuseLastBag;
@@ -410,6 +466,7 @@ function pa2Depart() {
   var r = Pa2Run.depart();
   if (!r.ok) { if (typeof showToast === "function") showToast(r.reason, 2200); return; }
   if (key && bag.length) { Pa2Run.ensureChest().lastBag[key] = bag; if (typeof saveGame === "function") saveGame(); } // v3.616.0 : dans la partie
+  pa2View.picker = null; pa2View.notice = null;
   pa2Rerender();
 }
 function pa2CancelPrep() {
@@ -418,42 +475,30 @@ function pa2CancelPrep() {
   if (typeof leaveSceneScreen === "function") leaveSceneScreen();
 }
 
-// Feuille de la besace : ajouter (liste) ou retirer (fiche de l'objet).
+// Rang de la feuille : nom, ★, encombrement, une ligne utile ; détail au toucher du nom ; − / + à droite.
+function pa2PickRowHTML(run, id) {
+  var it = PA2_ITEMS[id], c = Pa2Run.canAdd(id), n = pa2CountIn(run, id), k = it.as || id, isNight = Pa2Run.nightItem(run) === k, open = pa2View.detail === id;
+  var line = isNight ? "★ " + _t("cette nuit") + " · " + (it.uses ? pa2UsesText(k, it.uses + 1, true) : pa2NightBonus(k))
+    : (it.healPct ? _t("Soigne {p}", { p: pa2Pct(it.healPct) }) + (it.healsWound ? ", " + _tn(1, "{n} blessure", "{n} blessures", { n: 1 }) : "") : (it.uses ? pa2UsesText(k, it.uses, false) : ""));
+  if (it.resource && window.WarehouseManager) line += (line ? " · " : "") + _t("Entrepôt : {n}", { n: Math.max(0, WarehouseManager.getAmount(it.resource) - n) });
+  var why = c.ok || n ? "" : (c.reason === _t("La besace est pleine.") ? _tn(it.size, "Trop grand : {n} place.", "Trop grand : {n} places.", { n: it.size }) : c.reason);
+  var h = '<div class="pa2-irow' + (n ? ' is-in' : '') + (isNight ? ' is-night' : '') + '">' + pa2Img(it.icon, "pa2-irow-ic") +
+    '<button type="button" class="pa2-irow-t" onclick="pa2ItemDetail(\'' + id + '\')" aria-expanded="' + open + '"><b>' + esc(pa2ItemName(id)) + (isNight ? ' <span class="pa2-night-tag">★</span>' : '') + ' ' + pa2Pips(it.size) + '</b>' +
+    (line ? '<span class="pa2-irow-s' + (isNight ? ' pa2-night-tag' : '') + '">' + esc(line) + '</span>' : '') + (why ? '<span class="pa2-why">' + esc(why) + '</span>' : '') + '</button>' +
+    '<span class="pa2-step"><button type="button" class="pa2-stepbtn" onclick="pa2RemoveOne(\'' + id + '\')" aria-label="' + esc(_t("Retirer : {n}", { n: pa2ItemName(id) })) + '"' + (n ? '' : ' disabled') + '>−</button>' +
+    '<span class="pa2-stepn">' + (n || "") + '</span><button type="button" class="pa2-stepbtn" onclick="pa2AddItem(\'' + id + '\')" aria-label="' + esc(_t("Ajouter : {n}", { n: pa2ItemName(id) })) + '"' + (c.ok ? '' : ' disabled') + '>+</button></span>';
+  if (open) h += '<div class="pa2-irow-x"><span class="pa2-pro">' + esc(_td(it.pro)) + '</span>' + (it.con ? ' <span class="pa2-con">' + esc(_td(it.con)) + '</span>' : '') + '</div>';
+  return h + '</div>';
+}
+// Feuille « Ajouter à la besace » : ouverte tant qu'on ajoute, « Fini » la referme (PB-B).
 function pa2RenderPicker() {
   var run = Pa2Run.getRun();
   if (!run || run.status !== PA2_STATUS.prep || !pa2View.picker) { pa2SetSheetHTML(null); return; }
-  var h = "", free = Pa2Run.bagSize(run) - Pa2Run.bagUsed(run);
-  if (pa2View.picker.mode === "add") {
-    h += '<div class="pa2-sheet-head"><div class="pa2-medal">' + pa2Img(PA2_ICONS.bag) + '</div><div><div class="pa2-kicker">' +
-      esc(_tn(free, "{n} place libre", "{n} places libres", { n: free })) + '</div><h2 class="pa2-h2">' + esc(_t("Ajouter à la besace")) + '</h2></div></div><div class="pa2-choices">';
-    PA2_ITEM_ORDER.forEach(function (id) {
-      if (!Pa2Run.itemInWorld(id, run)) return; // v3.387.0 : l'Outre n'existe qu'au Désert
-      var it = PA2_ITEMS[id], c = Pa2Run.canAdd(id), n = run.bag.filter(function (x) { return x === id; }).length, sz = "";
-      for (var k = 0; k < it.size; k++) sz += "<i></i>";
-      var locked = !Pa2Run.isUnlocked(id);
-      var stock = it.resource && window.WarehouseManager ? WarehouseManager.getAmount(it.resource) : null;
-      if (it.as && !stock && !n) return; // v3.606.0 : une version fabriquée n'apparaît que si l'Entrepôt en a
-      var why = c.ok ? "" : (c.reason === _t("La besace est pleine.") ? _tn(it.size, "Trop grand : {n} place.", "Trop grand : {n} places.", { n: it.size }) : c.reason);
-      h += '<button type="button" class="pa2-choice pa2-pickrow' + (locked ? ' is-locked' : '') + '"' + (c.ok ? '' : ' disabled') + ' onclick="pa2AddItem(\'' + id + '\')">' +
-        pa2Img(it.icon) + '<span class="pa2-t">' + esc(pa2ItemName(id)) + (n ? ' <span class="pa2-dim">(×' + n + ')</span>' : '') +
-        (Pa2Run.nightItem(run) === id ? ' <span class="pa2-night-tag">' + esc("★ " + _t("cette nuit")) + '</span>' : '') + '</span>' +
-        '<span class="pa2-size">' + sz + '</span><span class="pa2-s">' +
-        (why ? '<span class="pa2-dim">' + esc(why) + '</span>'
-          : '<span class="pa2-pro">' + esc(_td(it.pro)) + '</span>' + (it.con ? ' <span class="pa2-con">' + esc(_td(it.con)) + '</span>' : '') +
-            (Pa2Run.nightItem(run) === id ? ' <span class="pa2-night-tag">' + esc(pa2NightBonus(id)) + '</span>' : '')) +
-        (stock != null && !locked ? ' <span class="pa2-dim">' + esc(_t("Entrepôt : {n}", { n: stock })) + '</span>' : '') + '</span></button>';
-    });
-    h += '</div>';
-  } else {
-    var id = run.bag[pa2View.picker.idx], it = PA2_ITEMS[id];
-    if (!it) { pa2View.picker = null; pa2SetSheetHTML(null); return; }
-    h += '<div class="pa2-sheet-head"><div class="pa2-medal is-big">' + pa2Img(it.icon) + '</div><div><div class="pa2-kicker">' +
-      esc(_tn(it.size, "{n} place", "{n} places", { n: it.size })) + '</div><h2 class="pa2-h2">' + esc(pa2ItemName(id)) + '</h2></div></div>';
-    h += '<p class="pa2-pro pa2-p">' + esc(_td(it.pro)) + '</p>' + (it.con ? '<p class="pa2-con pa2-p">' + esc(_td(it.con)) + '</p>' : '');
-    h += '<div class="pa2-btnrow"><button type="button" class="kbtn" onclick="pa2ClosePicker()">' + esc(_t("Garder")) + '</button>' +
-      '<button type="button" class="kbtn danger" onclick="pa2RemoveItem(' + pa2View.picker.idx + ')">' + esc(_t("Retirer")) + '</button></div>';
-  }
-  pa2SetSheetHTML(h, _t("Besace"), true);
+  var h = '<div class="pa2-pick-head"><div class="pa2-medal">' + pa2Img(PA2_ICONS.bag) + '</div><div class="pa2-pick-title"><h2 class="pa2-h2">' + esc(_t("Ajouter à la besace")) + '</h2>' +
+    '<span class="pa2-pick-sub">' + esc(_t("{a} / {b} places", { a: Pa2Run.bagUsed(run), b: Pa2Run.bagSize(run) }) + " · " + pa2WorldName(run.worldId)) + '</span></div>' +
+    '<button type="button" class="kbtn is-sec pa2-done" onclick="pa2ClosePicker()">' + esc(_t("Fini")) + '</button></div><div class="pa2-pick">';
+  pa2PickList(run).forEach(function (id) { h += pa2PickRowHTML(run, id); });
+  pa2SetSheetHTML(h + '</div>', _t("Besace"), true);
 }
 
 /* ---------- Écran de la carte ---------- */
@@ -816,14 +861,17 @@ function pa2FxChipsHTML(run) {
   });
   return h;
 }
-/* v3.469.0 (Condition du run, atelier conditions-run validé le 24/10/2026) */
-function pa2CondPanelHTML(cond) {
-  var h = '<div class="pa2-panel pa2-cond"><div class="pa2-cond-head"><div class="pa2-kicker">' + esc(_t("Cette nuit")) + '</div><h3 class="pa2-h3">' + esc(_td(cond.name)) + '</h3></div>';
-  h += '<p class="pa2-narr pa2-dim">' + esc(_td(cond.line)) + '</p>';
+/* v3.469.0 (Condition du run, atelier conditions-run validé le 24/10/2026)
+   v3.723.0 (Seb 06/11, PB-A) : une bande, + / −, et l'objet ★ qu'on prend d'un toucher. Nuit calme : sa phrase seule. */
+function pa2CondPanelHTML(cond, run) {
+  var h = '<div class="pa2-panel pa2-cond"><div class="pa2-kicker">' + esc(_t("Cette nuit · {n}", { n: _td(cond.name) })) + '</div>';
   if (cond.pro) h += '<ul><li class="pa2-pro"><span>+</span><span>' + esc(_td(cond.pro)) + '</span></li><li class="pa2-con"><span>−</span><span>' + esc(_td(cond.con)) + '</span></li></ul>';
+  else h += '<p class="pa2-narr pa2-dim">' + esc(_td(cond.line)) + '</p>';
   if (cond.tip && PA2_ITEMS[cond.tip]) { // v3.580.0 (lot 4, A) : l'objet de la nuit, renforcé pour ce run
+    var has = run && Pa2Run.hasItem(cond.tip, run), c = run ? Pa2Run.canAdd(cond.tip) : { ok: false };
     h += '<div class="pa2-nightitem">' + pa2Img(PA2_ITEMS[cond.tip].icon) + '<div><b>' + esc("★ " + _t("Cette nuit : {x}", { x: pa2ItemName(cond.tip) })) + '</b>' +
-      '<span>' + esc(pa2NightBonus(cond.tip)) + '</span></div></div>';
+      '<span>' + esc(pa2NightBonus(cond.tip)) + (has ? ' <span class="pa2-pro">' + esc(_t("Dans la besace.")) + '</span>' : '') + '</span></div>' +
+      (has || !run ? '' : '<button type="button" class="kbtn is-sec pa2-take" onclick="pa2AddItem(\'' + cond.tip + '\')"' + (c.ok ? '' : ' disabled') + '>' + esc(_t("+ Prendre")) + '</button>') + '</div>';
   }
   return h + '</div>';
 }
@@ -956,14 +1004,15 @@ function pa2ToggleLegend() { pa2View.legend = !pa2View.legend; pa2RenderLegend()
 
 /* ---------- Feuille d'action ---------- */
 
-// Pose (ou retire) la feuille du bas dans le calque. keep=true : remplace le contenu sans rejouer l'entrée.
+// Pose (ou retire) la feuille du bas dans le calque ; déjà ouverte, le contenu change sans rejouer l'entrée.
+// closable : le voile la referme (feuille de la besace).
 function pa2SetSheetHTML(inner, label, closable) {
   var box = document.getElementById("pa2-sheetbox");
   if (!box) return;
   if (inner == null) { box.innerHTML = ""; pa2CamSheetChanged(); return; }
   var sheet = box.querySelector(".pa2-sheet");
-  var body = (closable ? '<button type="button" class="pa2-xclose" onclick="pa2ClosePicker()" aria-label="' + esc(_t("Fermer")) + '"></button>' : '') + inner;
-  if (sheet) { sheet.innerHTML = body; pa2CamSheetChanged(); return; }
+  var body = inner; // v3.723.0 : plus de croix de 36 px, la feuille de la besace a son bouton « Fini » ; le voile ferme
+  if (sheet) { var top = sheet.scrollTop; sheet.innerHTML = body; sheet.scrollTop = top; pa2CamSheetChanged(); return; }
   pa2CamSheetChanged();
   box.innerHTML = '<div class="pa2-scrim"' + (closable ? ' onclick="if(event.target===this)pa2ClosePicker()"' : '') + '><div class="pa2-sheet" role="dialog" aria-modal="true" aria-label="' + esc(label || "") + '">' + body + '</div></div>';
 }
@@ -1719,12 +1768,12 @@ function pa2Leave() {
 }
 
 /* Fonctions appelées par les onclick des écrans. */
-window.pa2PrepStep = pa2PrepStep;
 window.pa2OpenPicker = pa2OpenPicker;
-window.pa2OpenItem = pa2OpenItem;
 window.pa2ClosePicker = pa2ClosePicker;
+window.pa2ItemDetail = pa2ItemDetail;
 window.pa2AddItem = pa2AddItem;
-window.pa2RemoveItem = pa2RemoveItem;
+window.pa2RemoveOne = pa2RemoveOne;
+window.pa2NoticeAct = pa2NoticeAct;
 window.pa2TogglePact = pa2TogglePact;
 window.pa2Depart = pa2Depart;
 window.pa2CancelPrep = pa2CancelPrep;

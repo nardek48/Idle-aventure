@@ -557,14 +557,18 @@ async function P7(browser, base) {
   await dismissTutorials(page); // le tutoriel « Préparer une petite aventure » recouvre la besace
   await page.waitForTimeout(400); await dismissTutorials(page); // v3.469.2 : puis « La nuit du run » quand la nuit a une condition
 
-  // Besace : une case libre ouvre la liste, on y choisit une petite ration puis une gourde
-  await tap(page, ".pa2-cell.is-free");
-  ok(await visible(page, "#pa2-overlay .pa2-sheet"), "une case libre ouvre la liste de la besace");
+  // v3.723.0 : « Prêt à partir ». La feuille d'ajout reste ouverte : petite ration puis gourde, puis « Fini »
+  ok(await page.evaluate(function () { var b = document.querySelector("#pa2-bag"), z = document.querySelector("#panel-container .kfp-scrollzone"); return !!b && !!z && b.getBoundingClientRect().top < z.getBoundingClientRect().bottom; }), "la besace est dans le premier écran");
+  await tap(page, ".pa2-addbig");
+  ok(await visible(page, "#pa2-overlay .pa2-sheet"), "« Ajouter des objets » ouvre la feuille de la besace");
   await tap(page, "#pa2-overlay button[onclick=\"pa2AddItem('petite_ration')\"]");
-  await tap(page, ".pa2-cell.is-free");
+  ok(await visible(page, "#pa2-overlay .pa2-sheet"), "la feuille reste ouverte après un ajout");
   await tap(page, "#pa2-overlay button[onclick=\"pa2AddItem('gourde')\"]");
-  ok(await page.locator(".pa2-cell.is-full").count() === 2, "deux objets posés dans la besace");
-  await tap(page, "button[onclick=\"pa2PrepStep('pacts')\"]");
+  await tap(page, "#pa2-overlay .pa2-done");
+  ok(await page.locator("#pa2-bag .pa2-irow.is-in").count() === 2, "deux objets dans le récapitulatif de la besace");
+  await tap(page, "button[onclick=\"pa2TogglePact('lourd')\"]");
+  await tap(page, "button[onclick=\"pa2TogglePact('lourd')\"]");
+  ok(await page.locator(".pa2-pact[aria-pressed=\"true\"]").count() === 0 && await visible(page, ".pa2-go"), "pactes en bascules sur le même écran, bouton de départ visible");
   // v3.386.0 : Math.random graine (carte, dés, combats) : le héros sans arme ramasse toujours de l'or. v3.422.0 : graine changée (le pool du secteur consomme un tirage de plus).
   await page.evaluate(function () { var t = 20261001; Math.random = function () { t = (t + 0x6D2B79F5) | 0; var x = Math.imul(t ^ (t >>> 15), 1 | t); x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x; return ((x ^ (x >>> 14)) >>> 0) / 4294967296; }; });
   await tap(page, "button[onclick=\"pa2Depart()\"]");

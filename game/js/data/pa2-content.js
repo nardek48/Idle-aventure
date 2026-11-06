@@ -7,6 +7,8 @@
 /* Besace : 6 places (V11). */
 var PA2_BAG_SIZE = 6;
 
+/* v3.723.0 (Seb 06/11, PB-E) : chaque objet du coffre ne sert que dans le monde qui le donne (PA2_CHEST_REWARDS) ;
+   les objets sans worlds (vivres, matériel, versions fabriquées au village) restent communs. */
 /* Objets de besace (V11, Q5). size = places occupées. uses = charges (consommables).
    resource = pris dans l'Entrepôt au départ, rendu s'il n'a pas servi (Q5). Sans resource :
    matériel gratuit et illimité. unlock = objet du coffre d'expédition (V12, Q8), gagné à la
@@ -67,36 +69,36 @@ var PA2_ITEMS = {
   fiole: { id: "fiole", name: "Fiole noire", size: 1,
     icon: "images/Icons/scene/items/item_black_vial.webp",
     pro: "À 0 PV, tu te relèves avec 40 % des PV.", con: "Si elle sert : butin final divisé par deux." },
-  bois: { id: "bois", name: "Bois de cerf", size: 2, unlock: "boss",
+  bois: { id: "bois", name: "Bois de cerf", size: 2, unlock: "boss", worlds: ["forest"],
     icon: "images/Icons/scene/items/item_stag_antler.webp",
     pro: "+1 cran sur la voie force et en chargeant.",
     lockedHint: "Coffre d'expédition : abattre le gardien de la forêt." },
-  veilleurs: { id: "veilleurs", name: "Lanterne des veilleurs", size: 1, unlock: "clairiere",
+  veilleurs: { id: "veilleurs", name: "Lanterne des veilleurs", size: 1, unlock: "clairiere", worlds: ["forest"],
     icon: "images/Icons/scene/items/item_watch_lantern.webp",
     pro: "Toute la carte est visible, et les sources rendent +10.",
     lockedHint: "Coffre d'expédition : atteindre la Clairière aux lanternes." },
   // v3.469.4 (PA-R1) : le coffre d'expédition des autres mondes, deux objets chacun (gardien, clairière)
-  ecaille: { id: "ecaille", name: "Écaille du Ver", size: 2, unlock: "boss",
+  ecaille: { id: "ecaille", name: "Écaille du Ver", size: 2, unlock: "boss", worlds: ["desert"],
     icon: "images/Icons/scene/items/item_worm_scale.webp",
     pro: "+1 cran sur la voie endurance, et la marche coûte 1 Souffle de moins par pas.",
     lockedHint: "Coffre d'expédition : abattre le Ver du plateau." },
-  natte: { id: "natte", name: "Natte de caravane", size: 1, unlock: "clairiere",
+  natte: { id: "natte", name: "Natte de caravane", size: 1, unlock: "clairiere", worlds: ["desert"],
     icon: "images/Icons/scene/items/item_caravan_mat.webp",
     pro: "Se reposer au camp ou au seuil rend le double (PV et Souffle).",
     lockedHint: "Coffre d'expédition : atteindre le campement des tentes." },
-  pierre_gardien: { id: "pierre_gardien", name: "Pierre taillée du gardien", size: 2, unlock: "boss",
+  pierre_gardien: { id: "pierre_gardien", name: "Pierre taillée du gardien", size: 2, unlock: "boss", worlds: ["ruins"],
     icon: "images/Icons/scene/items/item_guardian_stone.webp",
     pro: "+1 cran sur la voie précision, et pour désamorcer un piège.",
     lockedHint: "Coffre d'expédition : abattre le gardien de la porte." },
-  pierre_puits: { id: "pierre_puits", name: "Pierre du puits", size: 1, unlock: "clairiere",
+  pierre_puits: { id: "pierre_puits", name: "Pierre du puits", size: 1, unlock: "clairiere", worlds: ["ruins"],
     icon: "images/Icons/scene/items/item_well_stone.webp",
     pro: "Les pièges cachés se voient dans toute ta vue.",
     lockedHint: "Coffre d'expédition : atteindre la cour au puits." },
-  epee_gisant: { id: "epee_gisant", name: "Épée du gisant", size: 2, unlock: "boss",
+  epee_gisant: { id: "epee_gisant", name: "Épée du gisant", size: 2, unlock: "boss", worlds: ["crypt"],
     icon: "images/Icons/scene/items/item_sleeper_sword.webp",
     pro: "Combats : en Tenant, −20 % de dégâts reçus.",
     lockedHint: "Coffre d'expédition : combattre le gardien couché." },
-  cierge: { id: "cierge", name: "Cierge de la chapelle", size: 1, unlock: "clairiere",
+  cierge: { id: "cierge", name: "Cierge de la chapelle", size: 1, unlock: "clairiere", worlds: ["crypt"],
     icon: "images/Icons/scene/items/item_chapel_candle.webp",
     pro: "Les effets des pièges ne durent qu'un pas au lieu de trois.",
     lockedHint: "Coffre d'expédition : atteindre la chapelle de l'ouest." },
@@ -104,11 +106,11 @@ var PA2_ITEMS = {
   pierre_froide: { id: "pierre_froide", name: "Pierre froide", size: 1, uses: 2, worlds: ["mountain"], coldStone: true,
     icon: "images/Icons/scene/items/item_cold_stone.webp",
     pro: "Posée, elle te fait traverser une case brûlante sans dommage. Deux fois par parcours.", con: "Ne sert qu'à la Montagne." },
-  eclat_trieur: { id: "eclat_trieur", name: "Éclat du trieur", size: 2, unlock: "boss",
+  eclat_trieur: { id: "eclat_trieur", name: "Éclat du trieur", size: 2, unlock: "boss", worlds: ["mountain"],
     icon: "images/Icons/scene/items/item_sorter_shard.webp",
     pro: "+1 cran sur la voie force, et les cases brûlantes coûtent moitié moins de Souffle.",
     lockedHint: "Coffre d'expédition : combattre le gardien qui trie." },
-  galet_source: { id: "galet_source", name: "Galet de la source", size: 1, unlock: "clairiere",
+  galet_source: { id: "galet_source", name: "Galet de la source", size: 1, unlock: "clairiere", worlds: ["mountain"],
     icon: "images/Icons/scene/items/item_spring_pebble.webp",
     pro: "La lave avance moins vite : une rangée tous les deux pas.",
     lockedHint: "Coffre d'expédition : atteindre la source chaude." }

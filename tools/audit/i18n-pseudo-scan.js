@@ -89,13 +89,13 @@ var SCREENS = {
     await p.waitForTimeout(400);
     await p.evaluate(function () { var d = LivingMapManager.getMap("forest").sectors[0]; selectLivingMapSector(d.id); lmxToggleLegend(); });
   },
-  /* v3.422.0 : Petite Aventure v2 — préparation (sac, pactes), départ, puis deux pas sur la
+  /* v3.422.0 : Petite Aventure v2 — préparation (besace, pactes : un seul écran depuis v3.723.0), départ, puis deux pas sur la
      carte et l'écran du nœud atteint (les boutons v1 « Bourrin / Prudent » n'existent plus). */
   aventure: async function (p) {
     await newHero(p);
     await p.evaluate(function () { switchTab("campement"); SceneRunManager.startRun("petite_aventure_foret"); switchTab("scene"); });
     await p.waitForTimeout(300);
-    await p.evaluate(function () { pa2PrepStep("pacts"); });
+    await p.evaluate(function () { pa2OpenPicker(); }); // v3.723.0 : plus d'étape Pactes, la feuille d'ajout de la besace
     await p.waitForTimeout(200);
     await p.evaluate(function () { pa2Depart(); });
     await p.waitForTimeout(300);
