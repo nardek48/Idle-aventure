@@ -443,25 +443,9 @@
 }
 .tavern-contract-gold { width: 14px; height: 14px; object-fit: contain; }
 
-.tavern-contract-btn {
-  min-height: 32px;   /* v3.458.2 (audit P27) : 25 → 32 px, touchable sur 44 */
-  padding: 6px 12px;
-  border-radius: 8px;
-  border: 1px solid var(--nb-frame);
-  background: var(--nb-gold);
-  color: var(--c-brown-950-vivid);
-  font-size: 12px;
-  font-weight: 800;
-  cursor: pointer;
-  white-space: nowrap;
-}
+.tavern-contract-btn { cursor: pointer; } /* v3.721.0 : pastille cuivre du pack (00-kbtn.css) */
 .tavern-contract-btn.is-poor,
-.tavern-contract-btn.is-done {
-  background: var(--nb-cream-deep);
-  color: var(--nb-ink-dim);
-  border-color: var(--nb-frame-light);
-  cursor: default;
-}
+.tavern-contract-btn.is-done { cursor: default; }
 
 /* =====================================================================
    v3.221.0 (lot V-8) — Forge : établi rendu DANS la fiche du bâtiment.

@@ -27,9 +27,7 @@ body.exp-on-board .hud-dock { display: none !important; }
 .exp-row-txt small { font-size: 12px; color: var(--c-brown-700-soft); line-height: 1.25; }
 
 .exp-left { font-weight: 800; color: #2d5d8a; }
-.exp-act { flex: 0 0 auto; max-width: 46%; min-height: 36px; padding: 4px 12px; border-radius: 10px; border: 1px solid var(--c-bronze-500); background: linear-gradient(var(--c-cream-100-vivid), var(--c-cream-200)); font: inherit; font-size: 13px; font-weight: 800; color: var(--c-brown-800-3); line-height: 1.15; }
-.exp-act.is-primary { border-color: var(--c-green-650-soft); background: linear-gradient(#5aa65a, var(--c-green-650-soft)); color: var(--c-white-50-soft); text-shadow: 0 1px 1px rgba(0, 0, 0, .35); }
-.exp-row.is-ready .exp-act.is-primary { border-color: var(--c-brown-700-vivid); background: linear-gradient(var(--c-bronze-400-3), var(--c-brown-550-3)); color: var(--c-brown-850-vivid); text-shadow: none; } /* UI-21 : encre sombre sur l'or (2,5:1 en blanc) */
+.exp-act { flex: 0 0 auto; max-width: 46%; } /* v3.721.0 : pastille du pack (00-kbtn.css), cuivre si is-primary, parchemin sinon */
 .exp-chev { font-style: normal; font-size: 20px; color: var(--c-brown-700-vivid); }
 .exp-pips { display: flex; gap: 3px; margin-top: 2px; }
 .exp-pips i { width: 14px; height: 6px; border-radius: 3px; background: var(--c-bronze-250-soft); }
@@ -71,8 +69,7 @@ body.exp-on-board .hud-dock { display: none !important; }
 .exp-res b { font-weight: 800; }
 .exp-res small { font-size: 12px; color: var(--c-brown-700-soft); }
 .exp-go { position: sticky; bottom: 0; display: flex; flex-direction: column; gap: 4px; padding: 8px 0 2px; background: linear-gradient(rgba(251, 243, 223, 0), var(--c-cream-50-soft) 30%); }
-.exp-go-btn { max-width: none; width: 100%; min-height: 44px; font-size: 14px; }
-.exp-go-btn:disabled { opacity: .5; }
+/* v3.721.0 : .exp-go-btn prend le bouton cuivre du pack (00-kbtn.css) */
 .exp-why { font-size: 12px; color: #8a3a0c; text-align: center; }
 .exp-hint { font-size: 12px; color: var(--c-brown-700-soft); text-align: center; }
 .exp-last { margin: 0 0 8px; padding: 6px 8px; border-radius: 10px; background: rgba(63, 143, 63, .08); border: 1px solid rgba(63, 143, 63, .3); }

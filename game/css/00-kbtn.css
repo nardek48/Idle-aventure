@@ -46,7 +46,7 @@
   color: var(--c-brown-900);
   text-shadow: 0 1px 0 rgba(255, 245, 220, 0.6);
   font-family: "Alegreya", Georgia, serif;
-  font-size: 15px;
+  font-size: 17px; /* v3.721.0 (Seb, option B) : 15 → 17 px */
   font-weight: 700;
   line-height: 1.15;
   text-align: center;
@@ -77,7 +77,7 @@
 }
 .kbtn small,
 .btn-buy.eq-detail-action small,
-.settings-btn small { font-size: 13px; font-weight: 700; opacity: 0.9; }
+.settings-btn small { font-size: 14px; font-weight: 700; opacity: 0.9; }
 
 /* ----- Désactivé / verrouillé (variante filtre, choix Seb) ----- */
 .kbtn:disabled,
@@ -528,7 +528,7 @@ button.forge-row-btn {
   color: var(--c-cream-100-2);
   text-shadow: 0 1px 2px rgba(20, 8, 0, 0.9);
   font-family: "Alegreya", Georgia, serif;
-  font-size: 15px;
+  font-size: 16px; /* v3.721.0 : 15 → 16 px */
   font-weight: 700;
   font-variant-numeric: lining-nums tabular-nums;
   line-height: 1;
@@ -661,3 +661,42 @@ button.forge-row-btn:not(.is-off):active {
 /* v3.656.0 : le festin en cours, en haut à droite du bandeau du Camp */
 .kfb-feast { position: absolute; right: 10px; top: 9px; z-index: 2; display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px 3px 4px; border-radius: 999px; background: rgba(18, 14, 9, 0.78); border: 1px solid rgba(240, 160, 80, 0.7); font: 700 12px/1.2 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: var(--c-cream-150-vivid); white-space: nowrap; }
 .kfb-feast-ico { width: 20px; height: 20px; object-fit: contain; }
+
+/* =====================================================================
+   v3.721.0 (retour Seb sur iPhone) : les boutons d'action qui avaient leur propre style passent au pack.
+   Préfixe « html body » : ces règles doivent passer devant celles des écrans, chargées après ce fichier.
+   ===================================================================== */
+/* Principal, taille normale : « Préparer le festin », « Envoyer » d'une patrouille */
+html body button.camp-feast-go,
+html body .exp-act.exp-go-btn {
+  display: flex; align-items: center; justify-content: center; width: fit-content; min-width: 140px; max-width: 100%;
+  min-height: 44px; margin: 0 auto; padding: 4px 6px; box-sizing: border-box;
+  border: solid transparent; border-width: 0 22px; border-radius: 0;
+  border-image: url('../images/UI/buttons/btn-cuivre-1l.webp') 0 66 fill / 0 22px stretch;
+  background: none; box-shadow: none; color: var(--c-cream-100-2); text-shadow: 0 1px 2px rgba(20, 8, 0, 0.9);
+  font-family: "Alegreya", Georgia, serif; font-size: 17px; font-weight: 700; line-height: 1.15; text-align: center; text-wrap: balance;
+}
+/* Pastilles d'action de ligne : cuivre (action conseillée) ou parchemin (les autres) */
+html body span.camp-here-go,
+html body .camp-talk-go,
+html body .exp-act,
+html body .hf-btn,
+html body .tavern-contract-btn,
+html body .cp-relic-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 5px; width: auto; max-width: 100%;
+  min-width: 96px; min-height: 36px; padding: 0 2px; box-sizing: border-box;
+  border: solid transparent; border-width: 0 18px; border-radius: 0;
+  border-image: url('../images/UI/buttons/btn-cuivre-1l.webp') 0 66 fill / 0 18px stretch;
+  background: none; box-shadow: none; color: var(--c-cream-100-2); text-shadow: 0 1px 2px rgba(20, 8, 0, 0.9);
+  font-family: "Alegreya", Georgia, serif; font-size: 16px; font-weight: 700; line-height: 1.05; white-space: nowrap;
+}
+html body .exp-row .exp-act.is-primary { color: var(--c-cream-100-2); text-shadow: 0 1px 2px rgba(20, 8, 0, 0.9); }
+html body .exp-act:not(.is-primary),
+html body .exp-row.is-ready .exp-act:not(.is-primary),
+html body .cp-relic-btn.is-ghost {
+  border-image-source: url('../images/UI/buttons/btn-parch-1l.webp');
+  color: var(--c-brown-900); text-shadow: 0 1px 0 rgba(255, 245, 220, 0.6);
+}
+html body :is(button.camp-feast-go, .exp-act, .camp-talk-go, .hf-btn, .tavern-contract-btn, .cp-relic-btn):not(:disabled):active { transform: translateY(1px); filter: brightness(0.88); }
+html body :is(button.camp-feast-go, .exp-act, .cp-relic-btn):disabled,
+html body .tavern-contract-btn:is(.is-poor, .is-done) { filter: grayscale(0.85); opacity: 0.6; cursor: not-allowed; }
