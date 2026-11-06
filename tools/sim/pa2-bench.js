@@ -67,8 +67,9 @@ var NO_QUEST = process.argv.indexOf("--sans-quetes") > 0; // v3.724.0 : sans min
 var FORCE_HOOK = (process.argv.filter(function (x) { return x.indexOf("--accroche=") === 0; })[0] || "").slice(11);
 var FORCE_MAP = (process.argv.filter(function (x) { return x.indexOf("--carte=") === 0; })[0] || "").slice(8);
 if (NO_QUEST) { Object.keys(g.PA2_HOOKS).forEach(function (h) { delete g.PA2_HOOKS[h].quest; }); Object.keys(g.PA2_MAPS).forEach(function (m) { delete g.PA2_MAPS[m].secrets; }); }
+if (process.argv.indexOf("--sans-passages") > 0) Object.keys(g.PA2_MAPS).forEach(function (m) { var sc = g.PA2_MAPS[m].secrets; if (sc) Object.keys(sc).forEach(function (k) { if (!sc[k].quest) delete sc[k]; }); }); // v3.725.0 : quêtes sans les passages de la carte
 if (FORCE_HOOK) g.Pa2Run._drawHook = function () { return FORCE_HOOK; };
-if (FORCE_MAP) g.PA2_MAPS_BY_WORLD.forest = [FORCE_MAP];
+if (FORCE_MAP) g.PA2_MAPS_BY_WORLD[g.PA2_MAPS[FORCE_MAP].worldId] = [FORCE_MAP]; // v3.725.0 : toute carte (desert_1, ruines_1…)
 var FORCE_COND = (process.argv.filter(function (x) { return x.indexOf("--condition=") === 0; })[0] || "").slice(12); // v3.469.0 : une condition imposée
 if (FORCE_COND) g.Pa2Run._drawCondition = function () { return FORCE_COND; };
 
@@ -129,7 +130,7 @@ function playRun(c, stage) {
   var lossByAct = { 1: 0, 2: 0, 3: 0 }, guard = 200, koAt = null;
   var traps = { met: 0, back: 0, hit: {}, placed: Object.keys(run.traps || {}).length };
   var target = ["BOSS", "CLAIRIERE", "TERTRE"][Math.floor(Math.random() * 3)];
-  if (P.isClosed(target, run)) target = "TERTRE"; // v3.724.0 : fin imposée (feu)
+  if (P.isClosed(target, run)) target = Object.keys(run.nodes).filter(function (k) { return P.isDest(run.nodes[k], run) && !run.nodes[k].hidden && !P.isClosed(k, run); })[0] || target; // v3.724.0 : fin imposée ; v3.725.0 : quelle qu'elle soit
   var qs = { announced: 0, cache: 0, keyShown: 0, key: 0, opened: 0, forced: 0, again: 0, hidden: 0 }; // v3.724.0
   function eat() {
     if (g.game.heroHp / max >= 0.4) return;

@@ -18386,7 +18386,7 @@ console.log("\n[314] v3.492.0 — Montagne, lot M-6 : hauts faits");
     V.onVictory({ id: "ancientdragon", isBoss: true });
     ok(g.achCounter("dragonNoCut") === 1, "le Dragon ancien vaincu sans taille : « Les mains vides »");
     var parMonde = [];
-    Object.keys(g.PA2_ICONS_BY_WORLD).forEach(function (w) { Object.keys(g.PA2_ICONS_BY_WORLD[w]).forEach(function (k) { parMonde.push(g.PA2_ICONS_BY_WORLD[w][k]); }); });
+    Object.keys(g.PA2_ICONS_BY_WORLD).forEach(function (w) { Object.keys(g.PA2_ICONS_BY_WORLD[w]).forEach(function (k) { if (k !== "cachee") parMonde.push(g.PA2_ICONS_BY_WORLD[w][k]); }); }); // v3.725.0 : fins cachées à dessiner, hors compte
     ok(parMonde.length === 30 && parMonde.every(function (f) { return fs.existsSync(path.join(ROOT, f)); }) && g.pa2Ico("camp", { worldId: "crypt" }) === g.PA2_ICONS_BY_WORLD.crypt.camp
       && g.pa2Ico("evenement", { worldId: "desert" }) === g.PA2_ICONS.evenement && g.pa2Ico("evenement", { worldId: "mountain" }) === g.PA2_ICONS.evenement
       && g.pa2Ico("boss", { worldId: "mountain" }) === "images/Icons/scene/dest/dest_mountain_boss.webp",
@@ -24657,6 +24657,187 @@ console.log("\n[485] v3.724.0 — Petites Aventures : parcours de la Forêt (car
     ok(/--c-blue-150-pale:/.test(fs.readFileSync(path.join(ROOT, "css/00-tokens.css"), "utf8")) && css.indexOf("#a9dcff") < 0, "couleurs des passages sur jetons");
   } catch (err) { ok(false, "[485] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   finally { P.rand = savedRand; g.PA2_MAPS_BY_WORLD.forest = savedMaps; game.sceneRun = null; if (g.SortieManager.isActive()) g.SortieManager.end("return"); }
+})();
+
+console.log("\n[486] v3.725.0 — Petites Aventures : parcours du Désert et des Ruines (accroches, passages, murs qui bougent)");
+(function () {
+  var S = g.SceneRunManager, P = g.Pa2Run, QR = g.PA2_QUEST_RULES, savedRand = P.rand, savedPct = g.PA2_RULES.wallShiftPct;
+  var TPL = { desert_1: "petite_aventure_desert", ruines_1: "petite_aventure_ruines", ruines_2: "petite_aventure_ruines" };
+  function prep() {
+    game = freshCombat("knight"); giveWeapon(); run("game.enemy = null; game.combat = null;");
+    game.equipped.weapon.value = 400; run("EquipmentManager.recalcStats();");
+    S.ensureDefaults(); game.explorationProgression.petiteAventure = { spent: 0, since: null };
+    game.resources.petite_ration = 6; game.heroLevel = 12; game.heroHp = game.heroMaxHp; game.sceneRun = null;
+    if (g.SortieManager.isActive()) g.SortieManager.end("return");
+    g.pa2View.runId = null; g.pa2View.sheet = null; P.rand = savedRand;
+  }
+  // Comme [485] : carte et accroche imposées, nuit calme, acte I en sources, sans pièges ni coupures, murs immobiles.
+  function start(mapId, hookId, bag) {
+    prep(); g.PA2_RULES.wallShiftPct = 0; S.startRun(TPL[mapId]); var r = game.sceneRun;
+    r.mapId = mapId; r.hookId = hookId; r.cond = "calme";
+    (bag || []).forEach(function (id) { P.addItem(id); });
+    P.depart();
+    r.traps = {}; r.cuts = {}; r.walls = {};
+    var camp = P.rows(P.getMap(r)).camp;
+    Object.keys(r.nodes).forEach(function (k) { var n = r.nodes[k]; if (n.type === "evenement") n.type = "source"; if (n.row >= 0 && n.row < camp) n.type = "source"; });
+    return r;
+  }
+  function step(key) { return P.moveTo(key); }
+  function rollFor(v) { return function () { return (v - 0.5) / 20; }; }
+  function saveLoad() { var d = JSON.parse(JSON.stringify(g.buildSaveData())); game.sceneRun = null; g.restoreBaseState(d); g.pa2View.runId = null; return game.sceneRun; }
+  function reach(r, to) { var L = P.links(r), seen = { S: true }, todo = ["S"]; while (todo.length) { var a = todo.pop(); (L[a] || []).forEach(function (b) { if (!seen[b]) { seen[b] = true; todo.push(b); } }); } return !!seen[to]; }
+  function shift(from) { return P.getMap(game.sceneRun).shifts.filter(function (sh) { return sh.from === from; })[0]; }
+  try {
+    /* ---------- Répartition ---------- */
+    var H = g.PA2_HOOKS;
+    ok(H.maddoc.quest.kind === "lock" && H.caravane.quest.kind === "cache" && H.sentinelle.quest.kind === "hiddenEnd" &&
+      H.batisseur.quest.kind === "lock" && H.statue.quest.kind === "cache" && H.carnet.quest.kind === "end", "répartition : Désert B / A / D cachée, Ruines B / A / D imposée");
+    var noShiftFrom = true;
+    ["ruines_1", "ruines_2"].forEach(function (m) { var M = g.PA2_MAPS[m]; Object.keys(M.secrets).forEach(function (sk) { if (M.shifts.some(function (sh) { return sh.from === sk.split(">")[0]; })) noShiftFrom = false; }); });
+    ok(noShiftFrom && Object.keys(g.PA2_MAPS.desert_1.secrets).length === 3 && Object.keys(g.PA2_MAPS.ruines_1.secrets).length === 2 && Object.keys(g.PA2_MAPS.ruines_2.secrets).length === 2, "C : passages déclarés par carte ; aucun ne part d'une case dont les murs bougent");
+
+    /* ---------- Désert, A : le bât enterré (caravane) ---------- */
+    var r = start("desert_1", "caravane");
+    ok(r.quest && r.quest.kind === "cache" && r.quest.state === "rencontre", "Désert A : caravane → « le bât enterré », en attente de la rencontre");
+    step("C0"); P.drink(); r.nodes.C1.type = "evenement"; step("C1");
+    ok(P.eventChoice("suivre").ok && r.quest.state === "halte", "Désert A : traces suivies → le bât attend la halte");
+    step("L2"); P.drink(); step("CAMP");
+    var hr = P.placeAction("rest"), q = r.quest;
+    ok(hr.ok && q.state === "annoncee" && q.node === "L1" && JSON.stringify(q.back) === '[["CAMP","L2"],["L2","L1"]]', "Désert A : annoncé à l'oasis ; cache sur L1, 2 pas");
+    run("switchTab('scene')");
+    ok(g.pa2AnnounceBody(r).indexOf(g.esc(H.caravane.quest.text.announce)) > 0 && g.buildPa2ScreenHTML(r).indexOf("pa2-flow") > 0, "Désert A : fiche d'annonce et trace du retour");
+    step("L2");
+    var foe = P.questFoeHere(r);
+    ok(foe && foe.foeId === "scarab" && foe.noGold && P.fight("tenir").ok && r.status === "pa2-map", "Désert A : un scarabée sans or au premier pas du retour");
+    step("L1"); var tc = P.takeCache();
+    ok(tc.ok && tc.result.gain === Math.round(r.refGold * QR.cacheGold * P.lootMult(r)) && r.quest.state === "faite" && g.pa2CacheBody(r, r.nodes.L1, { cache: true, res: tc.result }).indexOf(g.esc(H.caravane.quest.text.got)) > 0, "Désert A : bât déterré (+" + tc.result.gain + " or) ; « Le bât est à toi »");
+    step("L2"); step("CAMP");
+    ok(P.openMoves().sort().join() === "C4,L4,R4", "Désert A : retour à l'oasis, plus de chemin arrière");
+
+    /* ---------- Désert, B : le pont de l'oued (Maddoc) ---------- */
+    r = start("desert_1", "maddoc", ["gourde"]);
+    ok(r.locks["L6>SEUIL"] === "closed" && r.locks["R6>SEUIL"] === "closed" && r.quest.key === "cheville" && ["L5", "R5"].indexOf(r.quest.keyNode) >= 0, "Désert B : le pont fermé sur ses deux sentiers ; cheville sur L5 ou R5");
+    step("C0"); P.drink(); r.nodes.C1.type = "evenement"; step("C1"); P.eventChoice("gourde");
+    ok(r.quest.keyShown && g.pa2QuestLineHTML(r).indexOf(g.esc(g.PA2_QUEST_KEYS.cheville.name)) > 0, "Désert B : Maddoc aidé → la cheville est marquée");
+    r.at = "R6"; r.nodes.R6.done = true; r.status = "pa2-map";
+    var mt = step("SEUIL");
+    ok(mt.lock && r.status === "pa2-lock" && !P.lockOptions().open, "Désert B : arrêt au pont, sans clé");
+    var sv = saveLoad();
+    ok(sv.status === "pa2-lock" && sv.lock.to === "SEUIL", "Désert B : sauvegardé arrêté au pont, rechargé");
+    r = sv; P.rand = rollFor(20); var fk = P.resolveLock("forcer"); P.rand = savedRand;
+    ok(fk.ok && fk.result.kind === "ok" && P.lockContinue().ok && r.at === "SEUIL" && r.locks["L6>SEUIL"] === "forced", "Désert B : forcé, on passe ; le pont reste ouvert");
+    r = start("desert_1", "maddoc"); var kn = r.quest.keyNode;
+    r.at = kn; r.nodes[kn].type = "autel"; r.status = "pa2-node"; P.altar(false);
+    r.at = "L6"; r.nodes.L6.done = true; r.status = "pa2-map"; step("SEUIL");
+    ok(P.hasKey(r) && P.resolveLock("ouvrir").ok && P.lockContinue().ok && r.locks["R6>SEUIL"] === "open", "Désert B : avec la cheville, Ouvrir sans jet");
+
+    /* ---------- Désert, C : la faille ---------- */
+    r = start("desert_1", "caravane"); r.quest = null;
+    r.at = "CAMP"; r.nodes.CAMP.done = true; r.status = "pa2-map"; r.nodes.L4.type = "source";
+    P.rand = rollFor(20); step("L4"); P.rand = savedRand; P.drink();
+    ok(r.secrets["L4>L6"] === "found" && P.openMoves().indexOf("L6") >= 0 && /d="M310 650 Q275 548 300 440"/.test(g.pa2MapHTML(r)), "Désert C : la faille trouvée depuis L4, tracé courbe relevé sur l'image");
+    r.at = "R5"; r.nodes.R5.done = true; r.status = "pa2-map"; r.nodes.R6.type = "source";
+    P.rand = rollFor(20); step("R6"); P.rand = savedRand; P.drink();
+    ok(!r.searched.R6 && P.openMoves().join() === "SEUIL", "Désert C : pas de gué sous le pont (retiré au banc) : rien à fouiller en R6");
+
+    /* ---------- Désert, D cachée : la tour de guet (sentinelle) ---------- */
+    r = start("desert_1", "sentinelle");
+    ok(!P.isShown("TOUR", r) && (P.links(r).C8 || []).indexOf("TOUR") < 0, "Désert D : la tour n'existe pas sur la carte avant son passage");
+    r.nodes.C1.type = "evenement"; step("C0"); P.drink(); step("C1"); P.eventChoice("veiller");
+    ok(r.quest.state === "active", "Désert D : la garde prise avec la sentinelle → la fin cachée se cherche");
+    r.at = "SEUIL"; r.nodes.SEUIL.done = true; r.status = "pa2-map"; r.nodes.R8.type = "source";
+    P.rand = rollFor(20); step("R8"); P.rand = savedRand; P.drink();
+    ok(r.secrets["R8>TOUR"] === "found" && P.openMoves().indexOf("TOUR") >= 0 && /is-hidden-end/.test(g.pa2MapHTML(r)), "Désert D : le gué de pierres trouvé depuis R8, la tour apparaît");
+    step("TOUR"); var sh0 = g.pa2SheetBody(r, r.nodes.TOUR, { key: "TOUR", step: "intro" });
+    ok(sh0.indexOf("dest_desert_cachee.webp") > 0 && sh0.indexOf(g.esc(g.PA2_DESTS.desert.cachee.name)) > 0, "Désert D : fiche de la tour, icône propre au Désert");
+    var he = P.hiddenEnd();
+    ok(he.ok && r.end.dest === "cachee" && g.buildPa2EndHTML(r).indexOf(g.esc(g.PA2_DESTS.desert.cachee.name)) > 0 && P.trophies("desert").dests.cachee >= 1, "Désert D : la tour atteinte, destination comptée, bilan et trophée");
+    r = start("desert_1", "sentinelle"); r.nodes.C1.type = "evenement"; step("C0"); P.drink(); step("C1"); P.eventChoice("passer");
+    r.at = "SEUIL"; r.nodes.SEUIL.done = true; r.status = "pa2-map"; r.nodes.C8.type = "source";
+    P.rand = rollFor(20); step("C8"); P.rand = savedRand;
+    ok(r.quest.state === "sans" && !r.secrets["C8>TOUR"], "Désert D : sans la garde, pas de fouille vers la tour");
+
+    /* ---------- Ruines, B : l'arche murée (bâtisseur), sur les deux cartes ---------- */
+    ["ruines_1", "ruines_2"].forEach(function (m) {
+      var rb = start(m, "batisseur", ["gourde"]);
+      ok(rb.locks["L4>SEUIL"] === "closed" && rb.locks["R4>SEUIL"] === "closed" && Object.keys(rb.locks).length === 2 && ["L3", "R3"].indexOf(rb.quest.keyNode) >= 0, m + " B : l'arche fermée (ses deux accès) ; pince sur L3 ou R3");
+      ok(P._wallFrozen(rb, shift("L3")) && !P._wallFrozen(rb, shift("C3")) && !P._wallFrozen(rb, shift("L6")), m + " B : le mur de L3 (qui ouvrirait la rue vers l'arche) est figé, les autres bougent");
+    });
+    r = start("ruines_1", "batisseur", ["gourde"]);
+    r.nodes.L1.type = "evenement"; step("C0"); P.drink(); step("L1"); P.eventChoice("gourde");
+    ok(r.quest.keyShown && g.pa2SheetBody(r, r.nodes.L1, { key: "L1", step: "result", res: { branch: "gourde" } }).indexOf(g.esc(H.batisseur.quest.byMap.ruines_1.text.hint)) > 0, "Ruines B : bâtisseur aidé → il dit où est sa pince");
+    step("CAMP"); P.placeAction("rest");
+    g.PA2_RULES.wallShiftPct = 1; var l3ok = true;
+    for (var i = 0; i < 60; i++) { P._shiftWalls(r); if ((P.links(r).L3 || []).indexOf("SEUIL") >= 0) l3ok = false; }
+    g.PA2_RULES.wallShiftPct = 0;
+    ok(l3ok && Object.keys(r.walls).length > 0, "Ruines B : 60 bascules depuis la cour, aucune n'ouvre une rue vers l'arche fermée");
+    r.walls = {}; var kr = r.quest.keyNode; r.nodes[kr].type = "source"; step(kr); P.drink();
+    ok(P.hasKey(r) && /is-quest/.test(g.pa2HudHTML(r)), "Ruines B : pince ramassée sur " + kr);
+    var k4 = kr === "L3" ? "L4" : "R4"; r.nodes[k4].type = "source"; step(k4); P.drink();
+    var ms = step("SEUIL");
+    ok(ms.lock && P.resolveLock("ouvrir").ok && P.lockContinue().ok && r.at === "SEUIL", "Ruines B : avec la pince, l'arche s'ouvre");
+    r = start("ruines_1", "batisseur"); r.at = "L3"; r.nodes.L3.done = true; r.status = "pa2-map"; r.nodes.L4.type = "source";
+    P.rand = rollFor(20); step("L4"); P.rand = savedRand; P.drink();
+    ok(r.secrets["L4>C6"] === "found" && step("C6").ok && r.at === "C6" && r.status !== "pa2-lock", "ruines_1 C : la voûte de l'ouest (L4 → C6) évite l'arche murée");
+    r = start("ruines_1", "batisseur"); r.at = "R3"; r.nodes.R3.done = true; r.status = "pa2-map"; r.nodes.R4.type = "source"; r.secrets["R4>C6"] = "found"; step("R4");
+    ok(/d="M690 500 Q588 374 425 330"/.test(g.pa2MapHTML(r)), "ruines_1 C : la voûte de l'est, tracé courbe par la voûte peinte");
+
+    /* ---------- Ruines, A : les pièces du socle (statue) ---------- */
+    r = start("ruines_2", "statue");
+    r.nodes.L0.type = "evenement"; step("L0"); P.eventChoice("prendre");
+    ok(r.quest.state === "halte", "Ruines A : pièce prise → la statue attend la halte");
+    step("L1"); P.drink(); step("CAMP"); P.placeAction("rest"); q = r.quest;
+    ok(q.state === "annoncee" && q.node === "C0" && JSON.stringify(q.back) === '[["CAMP","L1"],["L1","C0"]]', "Ruines A : cache sur C0 (case dont les murs bougent), 2 pas");
+    ok(P._wallFrozen(r, shift("C0")) && !P._wallFrozen(r, shift("R0")), "Ruines A : le mur de C0 est figé tant que le retour existe");
+    g.PA2_RULES.wallShiftPct = 1; step("L1"); P.fight("tenir"); var w0 = JSON.stringify(r.walls);
+    for (i = 0; i < 30; i++) P._shiftWalls(r);
+    g.PA2_RULES.wallShiftPct = 0;
+    ok(!r.walls.C0 && JSON.stringify(P.openMoves().sort()) === '["C0","CAMP"]', "Ruines A : murs agités pendant le retour (" + w0 + " → " + JSON.stringify(r.walls) + ") : le chemin du trésor tient");
+    var rr = saveLoad();
+    ok(rr && rr.quest.state === "annoncee" && JSON.stringify(P.openMoves().sort()) === '["C0","CAMP"]', "Ruines A : sauvegardé au milieu du retour, rechargé");
+    r = rr; step("C0"); tc = P.takeCache();
+    ok(tc.ok && r.quest.state === "faite" && !P._wallFrozen(r, shift("C0")), "Ruines A : pièces prises ; le mur de C0 bouge de nouveau");
+    step("L1"); step("CAMP");
+    ok(P.openMoves().every(function (k) { return r.nodes[k].row > r.nodes.CAMP.row; }), "Ruines A : de retour à la cour, seulement l'avant");
+    // Murs déjà basculés à l'annonce : le retour suit le tracé du moment (C0 muré vers R1 ne sert pas de retour)
+    r = start("ruines_2", "statue"); r.walls = { C0: ["L1"] };
+    r.nodes.R0.type = "evenement"; step("R0"); P.eventChoice("prendre"); step("R1"); P.drink(); step("CAMP"); P.placeAction("rest");
+    ok(r.quest.state === "annoncee" && r.quest.back.every(function (e) { return (P.links(r)[e[1]] || []).indexOf(e[0]) >= 0; }) && r.quest.node !== "C0", "Ruines A : murs déjà basculés, le retour prend un sentier ouvert (" + JSON.stringify(r.quest.back) + ")");
+
+    /* ---------- Ruines, D imposée : la cour au puits (carnet) ---------- */
+    ["ruines_1", "ruines_2"].forEach(function (m) {
+      var rd = start(m, "carnet");
+      ok(rd.closedEnds.sort().join() === "BOSS,TERTRE" && P.isClosed("R6", rd) && P.links(rd).SEUIL.sort().join() === "C6,L6" && P.links(rd).L6.join() === "CLAIRIERE", m + " D : seule la cour au puits ; R6 fermée");
+      ok(P._wallFrozen(rd, shift("L6")) && P._wallFrozen(rd, shift("R6")) && !P._wallFrozen(rd, shift("C3")), m + " D : les murs de L6 et R6 (vers les fins écartées) sont figés");
+    });
+    r = start("ruines_1", "carnet"); r.at = "CAMP"; r.nodes.CAMP.done = true; r.status = "pa2-map";
+    g.PA2_RULES.wallShiftPct = 1; var cl = true;
+    for (i = 0; i < 60; i++) { P._shiftWalls(r); if (!reach(r, "CLAIRIERE") || (P.links(r).L6 || []).indexOf("CLAIRIERE") < 0) cl = false; }
+    g.PA2_RULES.wallShiftPct = 0;
+    ok(cl, "Ruines D : 60 bascules, la cour au puits reste accessible, L6 garde sa sortie");
+    r.at = "SEUIL"; r.status = "pa2-map";
+    ok(g.pa2QuestLineHTML(r).indexOf(g.esc(g._td(g.PA2_DESTS.ruins.clairiere.name))) > 0 && !P.isShown("BOSS", r) && !P.isShown("TERTRE", r), "Ruines D : HUD « une seule fin » ; fins écartées effacées");
+    prep(); S.startRun("petite_aventure_ruines"); r = game.sceneRun; r.hookId = "carnet"; r.cond = "calme"; r.mapId = "ruines_2";
+    var hp = g.buildPa2PrepHTML(r);
+    ok(hp.indexOf('class="pa2-endline"') > 0 && hp.indexOf(g.esc(H.carnet.quest.text.prep)) > 0, "Ruines D : « Prêt à partir » annonce la fin imposée");
+    S.abandon();
+
+    /* ---------- Tirages réels : verrous, pièges, coupures, fins (Périple, murs qui bougent) ---------- */
+    var bad = [];
+    ["desert_1", "ruines_1", "ruines_2"].forEach(function (m) {
+      (m === "desert_1" ? ["maddoc", "caravane", "sentinelle"] : ["batisseur", "statue", "carnet"]).forEach(function (h) {
+        for (var j = 0; j < 8; j++) {
+          prep(); g.PA2_RULES.wallShiftPct = savedPct; S.startRun(TPL[m]); var rx = game.sceneRun; rx.mapId = m; rx.hookId = h; rx.ring = "periple"; P.depart();
+          var sec = P.getMap(rx).secrets || {};
+          Object.keys(rx.traps).concat(Object.keys(rx.cuts)).forEach(function (k) { if (sec[k] || rx.locks[k]) bad.push(m + "/" + h + " " + k); });
+          if (rx.quest && rx.quest.keyNode && !reach(rx, rx.quest.keyNode)) bad.push(m + "/" + h + " clé");
+          if (h === "carnet" && !reach(rx, "CLAIRIERE")) bad.push(m + " cour");
+        }
+      });
+    });
+    ok(!bad.length, "tirages (72 runs au Périple) : ni piège ni coupure sur un passage ou un verrou ; clé et fin imposée toujours accessibles" + (bad.length ? " — " + bad.slice(0, 4).join(", ") : ""));
+  } catch (err) { ok(false, "[486] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  finally { P.rand = savedRand; g.PA2_RULES.wallShiftPct = savedPct; game.sceneRun = null; if (g.SortieManager.isActive()) g.SortieManager.end("return"); }
 })();
 
 Promise.all(ATTENTES).then(function () {

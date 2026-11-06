@@ -681,7 +681,7 @@ var Pa2Run = {
     var map = this.getMap(run), here = this.node(run.at, run), self = this;
     if (!map || !map.shifts || !here || this.isParcours(run) || this.hasRelic("fil", run)) return null; // v3.469.5 : Fil d'Edda
     if (this.rand() >= Number(PA2_RULES.wallShiftPct || 0) * Number(this.condFx(run, "wallShiftMult") || 1)) return null; // v3.469.0 : les murs s'agitent
-    var cand = map.shifts.filter(function (sh) { var n = map.nodes[sh.from]; return n && n.row > here.row && !self._walked(run, sh.from); });
+    var cand = map.shifts.filter(function (sh) { var n = map.nodes[sh.from]; return n && n.row > here.row && !self._walked(run, sh.from) && !self._wallFrozen(run, sh); });
     if (!cand.length) return null;
     var sh = this._pick(cand), from = map.nodes[sh.from];
     if (!run.walls) run.walls = {};
@@ -698,6 +698,17 @@ var Pa2Run = {
     run.wallNote = opened.length ? _t("Un mur a bougé devant toi : un passage s'est fermé, un autre s'est ouvert.") : _t("Un mur a bougé devant toi : un passage s'est fermé.");
     this._log("🧱 " + run.wallNote);
     return { from: sh.from, closed: closed, opened: opened };
+  },
+
+  /* v3.725.0 (Seb 06/11, parcours PA v0.2, lot 4) : pendant une mini-quête, un mur ne bascule pas s'il touche une fin écartée
+     (D), un verrou fermé (B, il ouvrirait un détour) ou le chemin du trésor (A). Les passages secrets s'ajoutent après les murs. */
+  _wallFrozen: function (run, sh) {
+    var q = run.quest, closed = this._closedSet(run), locks = run.locks || {}, to = sh.a.concat(sh.b), shut = {};
+    if (!q) return false;
+    if (closed[sh.from] || to.some(function (k) { return closed[k]; })) return true;
+    Object.keys(locks).forEach(function (l) { if (locks[l] === "closed") shut[l.split(">")[1]] = true; });
+    if (to.some(function (k) { return shut[k]; })) return true;
+    return !!(q.back && q.state === "annoncee" && q.back.some(function (e) { return e[0] === sh.from || e[1] === sh.from; }));
   },
 
   moveTo: function (key) {
@@ -1741,7 +1752,9 @@ var Pa2Run = {
   // PP-Q1 b : case non jouée, voisine du chemin parcouru, rangée dépassée, maxBack pas au plus ; jamais par un sentier coupé ou piégé.
   _cacheSpot: function (run, halt) {
     var map = this.getMap(run), self = this, max = Number(PA2_QUEST_RULES.maxBack || 2), two = [], one = [];
-    var preds = function (k) { return Object.keys(map.links).filter(function (a) { return map.links[a].indexOf(k) >= 0; }); };
+    // v3.725.0 (Ruines) : le retour suit le tracé du moment, murs compris (un sentier muré ne sert pas de retour)
+    var cur = function (a) { return (run.walls && run.walls[a]) || map.links[a]; };
+    var preds = function (k) { return Object.keys(map.links).filter(function (a) { return cur(a).indexOf(k) >= 0; }); };
     var free = function (a, b) { var t = run.traps && run.traps[a + ">" + b]; return !(run.cuts && run.cuts[a + ">" + b]) && !(t && !t.done); };
     var fresh = function (k) { var n = run.nodes[k]; return !!n && !n.done && !n.hidden && n.row >= 0 && !self._walked(run, k) && ["obstacle", "combat", "source", "autel", "trouvaille"].indexOf(n.type) >= 0; };
     preds(halt).forEach(function (p1) {

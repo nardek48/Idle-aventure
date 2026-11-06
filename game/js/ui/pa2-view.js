@@ -75,7 +75,8 @@ var PA2_ICONS_BY_WORLD = {
   desert: {
     obstacle: "images/Icons/scene/desert/node_obstacle.webp", source: "images/Icons/scene/desert/node_spring.webp",
     autel: "images/Icons/scene/desert/node_altar.webp", camp: "images/Icons/scene/desert/node_camp.webp", seuil: "images/Icons/scene/desert/node_threshold.webp",
-    boss: "images/Icons/scene/dest/dest_desert_boss.webp", clairiere: "images/Icons/scene/dest/dest_desert_clairiere.webp", tertre: "images/Icons/scene/dest/dest_desert_tertre.webp"
+    boss: "images/Icons/scene/dest/dest_desert_boss.webp", clairiere: "images/Icons/scene/dest/dest_desert_clairiere.webp", tertre: "images/Icons/scene/dest/dest_desert_tertre.webp",
+    cachee: "images/Icons/scene/dest/dest_desert_cachee.webp" // v3.725.0 : la tour de guet (fin cachée), image à faire
   },
   ruins: {
     evenement: "images/Icons/scene/ruins/node_event.webp", obstacle: "images/Icons/scene/ruins/node_obstacle.webp", source: "images/Icons/scene/ruins/node_spring.webp",
@@ -1060,7 +1061,7 @@ function pa2RenderLegend() {
     };
     // v3.724.0 : passages secrets (cartes qui en ont) et marques de la mini-quête du run
     var qk = run.quest ? run.quest.kind : "", qrows = (Pa2Run.getMap(run).secrets ? row("secret", null, _t("Passage secret"), _t("Points bleu pâle : trouvé en fouillant ; « ? » : un indice"), PA2_QMARK.hint) : "") +
-      (qk === "cache" ? row("cache", null, _t("Le carnier"), _t("Un détour facultatif, derrière toi"), PA2_QMARK.chest) : "") +
+      (qk === "cache" ? row("cache", null, _td(Pa2Run.questText(run).name || ""), _t("Un détour facultatif, derrière toi"), PA2_QMARK.chest) : "") + // v3.725.0 : le nom du trésor de l'accroche
       (qk === "lock" ? row("lock", null, _t("Verrou"), _t("Ouvrir avec la clé, ou forcer : on passe toujours"), PA2_QMARK.lock) : "");
     if (par) { has.piege = Object.keys(run.traps || {}).length > 0; has.coupe = Object.keys(run.cuts || {}).length > 0; }
     h += '<div class="pa2-legend" role="dialog" aria-label="' + esc(_t("Légende")) + '"><h5>' + esc(_t("Légende")) + '</h5>' +
@@ -1427,7 +1428,7 @@ function pa2SheetBody(run, n, st) {
       var hGain = Math.round(run.refGold * QR.hiddenGold * Pa2Run.lootMult(run) * Pa2Run.destGoldMult(run) * (Pa2Run.hasRelic("ronce", run) ? R.ronceLoot : 1));
       h += pa2Head(run, n, _td(hd.name || ""), _t("Destination cachée"));
       h += '<p class="pa2-narr">' + esc(_td(hd.line || "")) + '</p><div class="pa2-choices">';
-      h += '<button type="button" class="pa2-choice is-q" onclick="pa2HiddenEnd()">' + pa2Img(PA2_ICONS.cachee) + '<span class="pa2-t">' + esc(_td(Pa2Run.questText(run).take || "")) + '</span>' +
+      h += '<button type="button" class="pa2-choice is-q" onclick="pa2HiddenEnd()">' + pa2Img(pa2Ico("cachee", run)) + '<span class="pa2-t">' + esc(_td(Pa2Run.questText(run).take || "")) + '</span>' +
         '<span class="pa2-cost is-gold">' + esc(_t("Trophée")) + '</span><span class="pa2-s">' + esc(_t("Fin cachée · +{n} or · +{r} {x}", { n: hGain, r: QR.hiddenRare, x: pa2RareName(run.worldId) })) + '</span></button></div>';
       break;
     }
@@ -1819,7 +1820,7 @@ function pa2AnnounceBody(run) {
   h += '<div class="pa2-choices"><button type="button" class="pa2-choice is-q" onclick="pa2AnnounceGo()">' + pa2Img(PA2_ICONS.cache) + '<span class="pa2-t">' + esc(_t("Y retourner")) + '</span>' +
     '<span class="pa2-cost">' + esc(_t("{n} Souffle", { n: cost })) + '</span><span class="pa2-s">' + esc(_t("Le chemin du retour s'affiche ; tu fais le premier pas.")) + '</span></button>' +
     '<button type="button" class="pa2-choice is-noicon is-q" onclick="pa2AnnounceLater()"><span class="pa2-t">' + esc(_t("Voir la carte")) + '</span>' +
-    '<span class="pa2-s">' + esc(_t("Tu décides sur la carte. Repartir vers l'avant laisse le carnier.")) + '</span></button></div>';
+    '<span class="pa2-s">' + esc(_t("Tu décides sur la carte. Repartir vers l'avant, c'est y renoncer.")) + '</span></button></div>'; // v3.725.0 : texte commun à tous les trésors
   return h;
 }
 function pa2AnnounceLater() { Pa2Run.questSeen(); pa2CloseSheet(); }
@@ -1840,7 +1841,7 @@ function pa2CacheBody(run, n, st) {
     return h + '<div class="pa2-choices"><button type="button" class="pa2-choice is-q" onclick="pa2TakeCache()">' + pa2Img(PA2_ICONS.cache) + '<span class="pa2-t">' + esc(_td(t.take)) + '</span>' +
       '<span class="pa2-cost is-gold">+' + g + ' ' + esc(_t("or")) + '</span><span class="pa2-s">' + esc(_t("Et peut-être un peu de {x}.", { x: pa2RareName(run.worldId) })) + '</span></button></div>';
   }
-  h += '<div class="pa2-verdict is-ok">' + esc(_t("Le carnier est à toi")) + '</div><p class="pa2-result">+' + pa2Num(r.gain) + ' ' + esc(_t("or")) + (r.rare ? ' · ' + esc(pa2RareName(run.worldId)) + ' +' + r.rare : '') + '</p>';
+  h += '<div class="pa2-verdict is-ok">' + esc(_td(t.got || t.name || "")) + '</div><p class="pa2-result">+' + pa2Num(r.gain) + ' ' + esc(_t("or")) + (r.rare ? ' · ' + esc(pa2RareName(run.worldId)) + ' +' + r.rare : '') + '</p>'; // v3.725.0 : verdict propre au trésor (quest.text.got)
   h += '<p class="pa2-sim is-q">' + esc(_t("Le chemin du retour s'efface. Reviens à la halte, puis repars vers l'avant.")) + '</p>';
   return h + pa2ContinueButton(run);
 }
@@ -1934,7 +1935,7 @@ function buildPa2EndHTML(run) {
   } else if (e.dest === "boss") {
     icon = pa2Ico("boss", run); title = _t("{n} est tombé", { n: _td(dests.boss.name) }); text = _td(dests.boss.win);
   } else if (e.dest === "cachee") { // v3.724.0
-    icon = PA2_ICONS.cachee; title = _td(dests.cachee.name); text = _td(dests.cachee.win);
+    icon = pa2Ico("cachee", run); title = _td(dests.cachee.name); text = _td(dests.cachee.win);
   } else if (e.dest === "clairiere") {
     icon = pa2Ico("clairiere", run); title = _td(dests.clairiere.name); text = _td(dests.clairiere.win);
   } else {

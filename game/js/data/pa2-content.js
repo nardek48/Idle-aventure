@@ -660,7 +660,10 @@ var PA2_DESTS = {
       win: "Sous une natte, quelqu'un a laissé de l'eau." },
     tertre: { name: "Les colonnes ensablées", line: "Des colonnes qui ne portent plus rien. Entre elles, une dalle scellée. Le sceau est tiède.",
       win: "La dalle a glissé. Dessous, un escalier que le sable n'a pas rempli. Il reste ce qu'il gardait.",
-      fail: "La dalle n'a pas bougé. Tu repars avec ce que tu portais, et du sable plein les yeux." }
+      fail: "La dalle n'a pas bougé. Tu repars avec ce que tu portais, et du sable plein les yeux." },
+    // v3.725.0 (Seb 06/11) : la fin cachée de l'accroche de la sentinelle, derrière un passage secret
+    cachee: { name: "La tour de guet", line: "Une tour de guet taillée dans l'aiguille de roche. En haut, le feu est froid. Personne.",
+      win: "Tu rallumes le feu du sommet. Au loin, le camp répond. Sous la natte du guetteur, sa réserve, intacte." }
   },
   ruins: { // v3.429.0 (U-6) : la porte gardée, la cour au puits, la chambre scellée
     boss: { name: "Le gardien de la porte", line: "Devant la grille, un squelette plus grand que les autres, assis sur une marche. Il se lève. Il se relèvera.",
@@ -813,7 +816,7 @@ PA2_HOOKS.chasseur.quest = {
     announce: "Le chasseur montre le sentier d'où tu viens. « Mon carnier. Je l'ai laissé au collet, en bas. Prends-le, il est à toi. »",
     found: "Le carnier est là, pendu à une branche basse. Dedans, de la viande séchée et une bourse.",
     back: "Quelque chose a suivi l'odeur du carnier avant toi.",
-    take: "Prendre le carnier"
+    take: "Prendre le carnier", got: "Le carnier est à toi" // v3.725.0 : verdict, propre à chaque trésor
   }
 };
 PA2_HOOKS.gouffre.quest = {
@@ -848,7 +851,10 @@ PA2_HOOKS.pierre.quest = {
 /* Clés des verrous : rangées dans une poche de quête, hors besace (la Besace percée ne les prend pas). */
 var PA2_QUEST_KEYS = {
   crochet: { name: "Crochet de la passerelle", need: "le crochet de la passerelle", icon: "images/Icons/scene/quest/quest_crochet.webp", found: "Dans l'herbe, un crochet de fer, au bout d'un bout de chaîne. Il va dans ta poche de quête." },
-  gaffe: { name: "Gaffe de batelier", need: "la gaffe de batelier", icon: "images/Icons/scene/quest/quest_gaffe.webp", found: "Contre un arbre, une gaffe de batelier. Tu la gardes." }
+  gaffe: { name: "Gaffe de batelier", need: "la gaffe de batelier", icon: "images/Icons/scene/quest/quest_gaffe.webp", found: "Contre un arbre, une gaffe de batelier. Tu la gardes." },
+  // v3.725.0 (Seb 06/11) : le pont de l'oued (Maddoc, Désert) et l'arche murée (bâtisseur, Ruines)
+  cheville: { name: "Cheville de la poulie", need: "la cheville de la poulie", icon: "images/Icons/scene/quest/quest_cheville.webp", found: "Dans le sable, une cheville de bois dur, usée par la corde. Elle va dans ta poche de quête." },
+  pince: { name: "Pince de bâtisseur", need: "la pince de bâtisseur", icon: "images/Icons/scene/quest/quest_pince.webp", found: "Contre un mur, une pince de bâtisseur, encore blanche de poussière. Tu la gardes." }
 };
 /* Passages secrets : noms et indices (« de justesse »), par carte. Tracés : PA2_MAPS[carte].secrets. */
 var PA2_SECRETS = {
@@ -862,6 +868,19 @@ var PA2_SECRETS = {
     "L7>W10": { name: "La sente du col", hint: "Un courant d'air entre deux rochers, du côté du col." },
     "R4>R6": { name: "La ravine", hint: "Des cailloux roulent le long de la paroi. Quelqu'un est passé par là-haut." },
     "W9>PIERRE": { name: "Le trait qui luit", hint: "Un trait luit sur un tronc, puis s'éteint." }
+  },
+  desert_1: { // v3.725.0 (Seb 06/11)
+    "L4>L6": { name: "La faille", hint: "Un courant d'air sort d'une fente dans la falaise." },
+    "C8>TOUR": { name: "La sente du guet", hint: "Au nord, une lueur, une seule fois. Comme un feu de guet." },
+    "R8>TOUR": { name: "Le gué de pierres", hint: "Sous l'eau de l'oued, des pierres plates, alignées comme des marches." }
+  },
+  ruines_1: {
+    "L4>C6": { name: "La voûte de l'ouest", hint: "Sous une voûte noire, un courant d'air froid. La rue continue dessous." },
+    "R4>C6": { name: "La voûte de l'est", hint: "Une voûte basse entre deux murs. Au fond, de la lumière." }
+  },
+  ruines_2: {
+    "R1>R3": { name: "La herse de l'arène", hint: "La herse de l'arène n'est pas scellée. Derrière, une rue que tu ne connais pas." },
+    "R4>R6": { name: "Le dessus de l'aqueduc", hint: "Des marches taillées montent le long d'une pile de l'aqueduc." }
   }
 };
 
@@ -1024,6 +1043,66 @@ PA2_HOOKS.statue = {
     prendre: "Au milieu de la cour, la statue. Sa main est ouverte, tendue vers toi.",
     offrir: "Au bord du puits, une ration posée, intacte. Quelqu'un te la rend.",
     other: "Au milieu de la cour, un socle vide."
+  }
+};
+/* v3.725.0 (Seb 06/11, parcours PA v0.2, lot 4) : Désert — Maddoc B (pont), caravane A (bât), sentinelle D cachée (tour) ;
+   Ruines — bâtisseur B (arche murée), statue A (pièces du socle), carnet D imposée (cour au puits). */
+PA2_HOOKS.maddoc.quest = {
+  kind: "lock", showKey: ["gourde", "epaule"], announce: "event",
+  force: { voie: "power" },
+  byMap: {
+    desert_1: { lock: ["L6>SEUIL", "R6>SEUIL"], key: "cheville", text: {
+      name: "Le pont de l'oued",
+      lock: "Le pont est relevé contre l'autre rive. Sa corde passe dans une poulie, bloquée faute de cheville.",
+      open: "La cheville entre dans la poulie. La corde file, le pont descend.",
+      force: "Tu tires sur la corde jusqu'à ce que la poulie lâche. Elle lâche.",
+      hint: "« Le pont de l'oued est relevé. La cheville de la poulie, je l'ai perdue en route. Là. » Il te montre l'endroit sur ta carte." } }
+  }
+};
+PA2_HOOKS.caravane.quest = {
+  kind: "cache", branches: ["suivre"], announce: "halt",
+  cache: { back: { foe: "scarab", pack: 1 } },
+  text: {
+    name: "Le bât enterré",
+    announce: "Au bord du sentier, des traces de bât repartent d'où tu viens. Ceux de la caravane ont enterré quelque chose, en bas, avant de partir.",
+    found: "Sous le sable, un bât de sel, ficelé serré. Dans le sel, une bourse.",
+    back: "Quelque chose a gratté le sable autour du bât avant toi.",
+    take: "Déterrer le bât", got: "Le bât est à toi"
+  }
+};
+PA2_HOOKS.sentinelle.quest = {
+  kind: "hiddenEnd", branches: ["veiller"], announce: "event", node: "TOUR",
+  text: { found: "Entre deux rochers, un passage que tu n'avais pas vu. Au bout, la tour de guet.", take: "Monter à la tour" }
+};
+PA2_HOOKS.batisseur.quest = {
+  kind: "lock", showKey: ["gourde", "chemin"], announce: "event",
+  force: { voie: "power" },
+  byMap: {
+    ruines_1: { lock: "SEUIL", key: "pince", text: { // l'arche : une case fermée, tous ses accès
+      name: "L'arche murée",
+      lock: "L'arche est murée de pierres neuves, posées sans mortier. Une seule tient les autres, calée par un coin de fer.",
+      open: "La pince fait sauter le coin. Le mur s'ouvre, pierre par pierre.",
+      force: "Tu pousses la pierre du milieu jusqu'à ce que le mur cède. Il cède.",
+      hint: "« L'arche, on l'a murée hier. Ma pince est restée en route. Là. » Il te montre l'endroit sur ta carte." } }
+  }
+};
+PA2_HOOKS.batisseur.quest.byMap.ruines_2 = PA2_HOOKS.batisseur.quest.byMap.ruines_1; // même tracé, même arche
+PA2_HOOKS.statue.quest = {
+  kind: "cache", branches: ["prendre"], announce: "halt",
+  cache: { back: { foe: "skeleton", pack: 1 } },
+  text: {
+    name: "Les pièces du socle",
+    announce: "Au bord de la place, la statue. Sa main est vide. Elle montre la rue d'où tu viens. Là-bas, sur un socle, d'autres pièces.",
+    found: "Un socle vide, au coin d'une rue. Dessus, des pièces froides, empilées droit.",
+    back: "Ce qui vit dans les murs savait que tu reviendrais pour elles.",
+    take: "Prendre les pièces", got: "Les pièces sont à toi"
+  }
+};
+PA2_HOOKS.carnet.quest = {
+  kind: "end", end: "clairiere", announce: "prep",
+  text: {
+    prep: "Edda dit que cette nuit, toutes les rues mènent à la cour au puits. Une seule fin.",
+    closed: "Les murs se sont refermés sur les autres rues. Seule la cour au puits reste ouverte."
   }
 };
 PA2_HOOKS.garcon = {

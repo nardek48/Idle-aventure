@@ -165,8 +165,14 @@ var PA2_MAPS = {
       L8: { row: 8, x: 370, y: 320 }, C8: { row: 8, x: 330, y: 195 }, R8: { row: 8, x: 600, y: 320 },
       BOSS: { row: 9, x: 255, y: 95, type: "boss" }, // le plateau du nord
       CLAIRIERE: { row: 9, x: 125, y: 280, type: "clairiere" }, // le campement de tentes
-      TERTRE: { row: 9, x: 660, y: 225, type: "tertre" } // les colonnes du nord-est
+      TERTRE: { row: 9, x: 660, y: 225, type: "tertre" }, // les colonnes du nord-est
+      // v3.725.0 (Seb 06/11) : fin cachée (accroche de la sentinelle), l'aiguille de roche au bord de l'oued (scan PIL)
+      TOUR: { row: 9, x: 415, y: 152, type: "cachee", hidden: true }
     },
+    /* v3.725.0 (Seb 06/11, parcours PA v0.2, C) : passages relevés au pixel (PIL, recadrages) : la faille traverse la mesa
+       sans sentier peint, le gué de pierres passe l'oued. Pas de « gué » R6>R8 ici : au banc, or/min +15 % au Périple. */
+    secrets: { "L4>L6": { via: [275, 548] }, "C8>TOUR": { quest: "hiddenEnd" }, "R8>TOUR": { quest: "hiddenEnd" } },
+    keySlots: { 2: ["L5", "R5"] },
     links: {
       S: ["L0", "C0", "R0"],
       L0: ["L1", "C1"],
@@ -215,6 +221,10 @@ var PA2_MAPS = {
       CLAIRIERE: { row: 7, x: 420, y: 175, type: "clairiere" },
       TERTRE: { row: 7, x: 690, y: 170, type: "tertre" }
     },
+    /* v3.725.0 (Seb 06/11, C) : les deux voûtes noires peintes entre les places (relevées au pixel) ; aucun passage ne part
+       d'une case dont les murs bougent. keySlots : places latérales après la cour, toujours ouvertes depuis elle. */
+    secrets: { "L4>C6": {}, "R4>C6": { via: [588, 374] } },
+    keySlots: { 2: ["L3", "R3"] },
     links: RUINES_PA_LINKS,
     shifts: RUINES_PA_SHIFTS
   },
@@ -241,6 +251,9 @@ var PA2_MAPS = {
       CLAIRIERE: { row: 7, x: 425, y: 150, type: "clairiere" },
       TERTRE: { row: 7, x: 690, y: 190, type: "tertre" }
     },
+    // v3.725.0 (C) : la herse de l'arène (R1, saute la cour) et le dessus de l'aqueduc (R4, saute l'arche), relevés au pixel
+    secrets: { "R1>R3": {}, "R4>R6": { via: [760, 340] } },
+    keySlots: { 2: ["L3", "R3"] },
     links: RUINES_PA_LINKS,
     shifts: RUINES_PA_SHIFTS
   },

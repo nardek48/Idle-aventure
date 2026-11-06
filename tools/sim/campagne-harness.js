@@ -818,7 +818,9 @@ function playPa2Step(run) {
     r = P.takeCache();
   } else if (run.status === "pa2-map") {
     var gp = P.guardianPreview(), bossOk = gp && !gp.tenir.unwinnable && gp.tenir.hpLoss < g.game.heroHp * 0.8;
-    var mv = avoidTraps(P, run, P.openMoves()), dest = mv.filter(function (k) { return P.node(k, run).row === 9 && (bossOk || P.node(k, run).type !== "boss"); });
+    // v3.725.0 (Seb 06/11) : destinations lues sur la carte (Ruines : rangée 7), la fin cachée d'abord quand elle est ouverte
+    var mv = avoidTraps(P, run, P.openMoves()), dest = mv.filter(function (k) { return P.isDest(P.node(k, run), run) && (bossOk || P.node(k, run).type !== "boss"); });
+    dest.sort(function (a, b) { return (P.node(b, run).hidden ? 1 : 0) - (P.node(a, run).hidden ? 1 : 0); });
     r = P.moveTo(dest.length ? dest[0] : mv[Math.floor(Math.random() * mv.length)]);
   } else {
     var n = P.node(run.at, run), t = n.type;
