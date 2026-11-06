@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.717.0", "workshops/smithing_station", _t("Les paliers d'équipement de l'Histoire ne bloquent plus : ce sont neuf scènes avec tes compagnons et Aeswyn. Le pronostic « Avant de partir » dit ce qui est conseillé dans la zone (rareté, reforge de l'arme).")],
     ["3.716.0", "combat_status/counter", _t("Combats de groupe : le Grimoire voit l'annonce de chaque ennemi, pas seulement de ta cible, et contre celui qui frapperait le premier.")],
     ["3.715.0", "menu_icons/menu_menu", _t("Le cadre du haut et la barre du bas s'alignent sur les cartes : 4 px du bord de l'écran.")],
     ["3.714.0", "living_map/carte_vivante", _t("Le Périple rapporte davantage : 5 matériaux rares à l'arrivée au lieu de 4.")],
