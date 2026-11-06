@@ -13424,7 +13424,7 @@ console.log("\n[193] v3.422.0 — Débit des zones, pools des secteurs, groupe d
 console.log("\n[194] v3.423.0 — Difficulté : les ennemis suivent un peu la force réelle du héros, Souffle et repos");
 (function () {
   try {
-    run("fullResetState(); game.playerName='Test'; game.heroId='mage'; EquipmentManager.recalcStats(); game.heroHp = game.heroMaxHp;"); // v3.448.7 : Mage, la formule sans gabarit de classe (le Chevalier est vu en [231])
+    run("fullResetState(); game.playerName='Test'; game.heroId='ranger'; EquipmentManager.recalcStats(); game.heroHp = game.heroMaxHp;"); // v3.448.7 : formule sans gabarit de classe (Chevalier en [231]) ; v3.731.0 : Rôdeur, le Mage a le sien ([492])
     run("WorldManager.worldIndex = 1; WorldManager.adventureIndex = 1; WorldManager.enemyIndex = 3;");
     var h0 = run("WorldManager.getHeroScale()");
     ok(h0.hp === 1 && h0.power === 1, "héros neuf au Désert : aucun ajustement (jamais sous ×1)");
@@ -15176,11 +15176,11 @@ console.log("\n[231] v3.448.7 — Ajustement au héros : gabarit de PV effectifs
     CF.getHeroDamagePerRound = function () { return 300; }; CF.getHeroEffectiveHp = function () { return 1500; };
     var heroDe = function (cid) { var c = null; g.CLASSES.forEach(function (k) { if (k.id === cid) c = k; }); return c.heroIds[0]; };
     game.heroId = heroDe("knight"); var k = CF.getHeroScale("joueurDesert2", g.WORLD_HERO_SCALING);
-    game.heroId = heroDe("mage"); var m = CF.getHeroScale("joueurDesert2", g.WORLD_HERO_SCALING);
-    ok(Math.abs(m.power - Math.sqrt(1500 / 971 / 1.15)) < 1e-9, "Mage : puissance × (PV eff. / réf. / 1,15)^0,5 (×" + m.power.toFixed(3) + ")");
+    game.heroId = heroDe("archer"); var m = CF.getHeroScale("joueurDesert2", g.WORLD_HERO_SCALING); // v3.731.0 : Rôdeur (le Mage a son gabarit de puissance, [492])
+    ok(Math.abs(m.power - Math.sqrt(1500 / 971 / 1.15)) < 1e-9, "Rôdeur : puissance × (PV eff. / réf. / 1,15)^0,5 (×" + m.power.toFixed(3) + ")");
     ok(Math.abs(k.power - Math.max(1, Math.sqrt(1500 / 1.3 / 971 / 1.15))) < 1e-9 && k.power < m.power, "Chevalier : mêmes PV effectifs, puissance ramenée au gabarit (×" + k.power.toFixed(3) + ")");
     ok(k.hp === m.hp, "la part « PV des ennemis » ne dépend pas de la classe");
-    var pa = CF.getHeroScale("joueurDesert2", { exp: 0.5, margin: 1.15, cap: 2.5 });
+    game.heroId = heroDe("knight"); var pa = CF.getHeroScale("joueurDesert2", { exp: 0.5, margin: 1.15, cap: 2.5 });
     ok(pa.power === m.power, "sans classEhpGabarit (Petites Aventures, Labyrinthe), rien ne change");
   } catch (err) {
     ok(false, "[231] exception : " + err.message);
@@ -25390,6 +25390,41 @@ console.log("\n[491] v3.730.0 — Contre protecteur et contre rapide (P5 = P1 + 
     ok(String(CE.enemyStrikeCompanion).indexOf("TalentManager") < 0, "frappe sur un compagnon : aucun talent du coup reçu (Riposte, Écho, Contre-tir) ne joue");
   } catch (err) { ok(false, "[491] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   finally { g.Math.random = keep.rnd; CE.playerAttack = keep.pa; g.addLog = keep.log; try { run("fullResetState();"); } catch (e) {} }
+})();
+
+console.log("\n[492] v3.731.0 — Mise à l'échelle D : gabarit de puissance du Mage 1,2 (piste C Mage × Montagne, Seb 06/11)");
+(function () {
+  var CF = g.CombatForecast, W = g.WorldManager, H = g.WORLD_HERO_SCALING, keep = { d: CF.getHeroDamagePerRound, e: CF.getHeroEffectiveHp, h: game.heroId, wi: W.worldIndex, ai: W.adventureIndex, cy: game.cycleCount };
+  var heroDe = function (cid) { var c = null; g.CLASSES.forEach(function (k) { if (k.id === cid) c = k; }); return c.heroIds[0]; };
+  var ehp = 1e5;
+  try {
+    ok(H.classPowerGabarit && H.classPowerGabarit.mage === 1.2 && Object.keys(H.classPowerGabarit).join() === "mage", "classPowerGabarit : Mage 1,2, et lui seul");
+    ok(JSON.stringify(H.classEhpGabarit) === JSON.stringify({ knight: 1.3 }), "classEhpGabarit inchangé (Chevalier 1,3)");
+    CF.getHeroDamagePerRound = function () { return 1e5; }; CF.getHeroEffectiveHp = function () { return ehp; };
+    function sc(cid, ref, cfg) { game.heroId = heroDe(cid); return CF.getHeroScale(ref, cfg || H); }
+    Object.keys(H.refByWorld).forEach(function (wid) {
+      var wi = -1; g.WORLDS.forEach(function (w, i) { if (w.id === wid) wi = i; }); W.worldIndex = wi;
+      var bw = (H.byWorld && H.byWorld[wid]) || {}, mg = bw.margin || H.margin, ex = bw.exp != null ? bw.exp : H.exp, ref = H.refByWorld[wid][1], re = g.HERO_SCALING_REFS[ref].ehp;
+      var f = function (x) { return Math.min(H.cap, Math.max(1, Math.pow(x / mg, ex))); };
+      ehp = re * 2; var m = sc("mage", ref), r = sc("archer", ref), k = sc("knight", ref);
+      ok(Math.abs(m.power - f(ehp / 1.2 / re)) < 1e-9 && m.power < r.power, wid + " : Mage, puissance × (PV eff. ÷ 1,2 / réf. / marge)^exp (×" + m.power.toFixed(3) + " contre ×" + r.power.toFixed(3) + " au Rôdeur)");
+      ok(Math.abs(r.power - f(ehp / re)) < 1e-9 && Math.abs(k.power - f(ehp / 1.3 / re)) < 1e-9, wid + " : Rôdeur et Chevalier inchangés");
+      ok(m.hp === r.hp && m.hp === k.hp, wid + " : PV des ennemis identiques pour les trois classes");
+      ehp = re * 0.9; ok(sc("mage", ref).power === 1, wid + " : héros sous la référence, aucun ajustement (×1)");
+    });
+    W.worldIndex = keep.wi; ehp = 1e5;
+    // Là où l'échelle ne joue pas : Cycles, Petites Aventures et Labyrinthe (PA2_HERO_SCALING, sans gabarit)
+    game.cycleCount = 1; game.heroId = heroDe("mage"); var cy = W.getHeroScale(); game.cycleCount = keep.cy;
+    ok(cy.hp === 1 && cy.power === 1, "Cycles : pas d'ajustement, pas de gabarit");
+    ok(sc("mage", "joueurCrypte", g.PA2_HERO_SCALING).power === sc("archer", "joueurCrypte", g.PA2_HERO_SCALING).power, "Petites Aventures / Labyrinthe : le Mage comme le Rôdeur");
+    // Quêtes fixes : enemyPowerMult ÷ classEhpGabarit seulement (getClassGabarit), le Mage n'y est pas divisé
+    var QE = g.QuestEnemyManager, q = g.ADVENTURE_QUESTS.aq_montagne_pentes;
+    game.heroId = heroDe("mage");
+    ok(QE.getClassGabarit() === 1 && Math.abs(QE.getPowerMult(q, false) - q.enemyPowerMult * QE.getClassPowerMult(q)) < 1e-9, "quête fixe (Pentes) : Mage, enemyPowerMult non divisé (gabarit 1)");
+    game.heroId = heroDe("knight");
+    ok(QE.getClassGabarit() === 1.3, "quête fixe : Chevalier toujours ÷1,3");
+  } catch (err) { ok(false, "[492] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  finally { CF.getHeroDamagePerRound = keep.d; CF.getHeroEffectiveHp = keep.e; game.heroId = keep.h; W.worldIndex = keep.wi; W.adventureIndex = keep.ai; game.cycleCount = keep.cy; }
 })();
 
 Promise.all(ATTENTES).then(function () {

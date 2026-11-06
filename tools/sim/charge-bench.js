@@ -60,9 +60,11 @@ var SCENARIOS = {
   nuee: { step: "desert_10", quest: "aq_desert_nuee", label: "Désert · La nuée (5 groupes + 1 seul)" },
   couloirs: { step: "ruines_02", quest: "aq_ruines_couloirs", label: "Ruines · Couloirs (3 seuls + 2 groupes)" },
   sepulcres: { step: "crypte_02", quest: "aq_crypte_sepulcres", label: "Crypte · Sépulcres (4 groupes + 1 seul)" },
-  pentes: { step: "montagne_02", quest: "aq_montagne_pentes", label: "Montagne · Pentes (4 groupes + 1 seul)" }
+  pentes: { step: "montagne_02", quest: "aq_montagne_pentes", label: "Montagne · Pentes (4 groupes + 1 seul)" },
+  // v3.731.0 (Seb 06/11, piste C) : ajouté en dernier, les graines des autres scénarios ne bougent pas
+  tries: { step: "montagne_18", quest: "aq_montagne_tries", label: "Montagne · Ceux qu'il a triés (4 groupes)" }
 };
-var CHAPITRE = { aq_story_coeur: "forest", aq_desert_gouffre: "desert", aq_desert_nuee: "desert", aq_ruines_couloirs: "ruins", aq_crypte_sepulcres: "crypt", aq_montagne_pentes: "mountain" };
+var CHAPITRE = { aq_story_coeur: "forest", aq_desert_gouffre: "desert", aq_desert_nuee: "desert", aq_ruines_couloirs: "ruins", aq_crypte_sepulcres: "crypt", aq_montagne_pentes: "mountain", aq_montagne_tries: "mountain" };
 var CLASSES = { knight: "Chevalier", ranger: "Rôdeur", mage: "Mage" };
 var POLITIQUES = { contre: "Grimoire avec contre de Charge", sans: "Grimoire sans contre de Charge" };
 function liste(k, all) { var v = opt(k, null); return v ? v.split(",") : Object.keys(all); }

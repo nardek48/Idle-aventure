@@ -160,6 +160,9 @@ var CombatForecast = {
        mieux par nature, il n'est plus frappé plus fort pour cela (décision de Seb du 12/10, option B). */
     var cls = (cfg.classEhpGabarit && typeof getClassByHeroId === "function") ? getClassByHeroId(game.heroId) : null;
     var gab = (cls && Number(cfg.classEhpGabarit[cls.id])) || 1;
+    // v3.731.0 (Seb 06/11) : gabarit de puissance seule (cfg.classPowerGabarit, Mage 1,2), à part de classEhpGabarit
+    var pg = (cfg.classPowerGabarit && typeof getClassByHeroId === "function") ? getClassByHeroId(game.heroId) : null;
+    gab *= (pg && Number(cfg.classPowerGabarit[pg.id])) || 1;
     return { hp: f(this.getHeroDamagePerRound() / ref.dmg), power: f(this.getHeroEffectiveHp() / gab / ref.ehp) };
   },
 
