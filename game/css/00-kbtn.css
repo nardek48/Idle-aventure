@@ -63,10 +63,12 @@
   filter: brightness(0.88);
   box-shadow: none;
 }
-/* Deux lignes (libellé puis somme en <small>) : la version haute du pack */
+/* Deux lignes (libellé puis somme en <small>, ou libellé trop long : is-2l, js/ui/ui-root.js) : la version haute du pack */
 .kbtn:has(small),
 .btn-buy.eq-detail-action:has(small),
-.settings-btn:has(small) {
+.settings-btn:has(small),
+.kbtn.is-2l,
+.settings-btn.is-2l {
   min-height: 60px;
   flex-direction: column;
   gap: 1px;
@@ -110,7 +112,9 @@
 }
 .kbtn.primary:has(small),
 .btn-buy.eq-detail-action:not(.is-sec):has(small),
-.settings-btn.primary:has(small) { border-image-source: url('../images/UI/buttons/btn-cuivre-2l.webp'); }
+.settings-btn.primary:has(small),
+.kbtn.primary.is-2l,
+.settings-btn.primary.is-2l { border-image-source: url('../images/UI/buttons/btn-cuivre-2l.webp'); }
 /* Primary désactivé : le filter de .primary écrasait le gris de l'état désactivé, seule l'opacité restait */
 .kbtn.primary:disabled,
 .kbtn.primary.is-locked,
@@ -462,6 +466,14 @@
   max-width: none;
   margin: 0;
 }
+/* Dans une rangée de deux, si l'un passe en deux lignes, l'autre prend la même version (même hauteur, même dessin) */
+:is(.ksheet-foot, .kwin-foot, .set-pair, .story-step-actions, .vb-sheet-actions, .hc-actions, .title-screen-btn-row,
+  .map-quest-run-actions, .rsb-actions, .lab-actions, .wh-pick-q, .pa2-btnrow):has(> .is-2l) > :is(.kbtn, .settings-btn) {
+  border-width: 0 23px;
+  border-image: url('../images/UI/buttons/btn-parch-2l.webp') 0 70 fill / 0 23px stretch;
+}
+:is(.ksheet-foot, .kwin-foot, .set-pair, .story-step-actions, .vb-sheet-actions, .hc-actions, .title-screen-btn-row,
+  .map-quest-run-actions, .rsb-actions, .lab-actions, .wh-pick-q, .pa2-btnrow):has(> .is-2l) > .primary { border-image-source: url('../images/UI/buttons/btn-cuivre-2l.webp'); }
 /* Un bouton seul dans sa rangée : largeur au texte, centré */
 :is(.ksheet-foot, .kwin-foot, .set-pair, .story-step-actions, .vb-sheet-actions, .hc-actions, .title-screen-btn-row,
   .map-quest-run-actions, .rsb-actions, .lab-actions, .wh-pick-q, .pa2-btnrow, .go-go, .car-go, .car-back) > :is(.kbtn, .settings-btn):only-child {
@@ -494,27 +506,37 @@
    Tout bouton qui affiche un prix : .kbuy (avec .btn-buy pour le gabarit
    existant). Grisé quand le prix n'est pas payable. */
 .kbuy,
-.btn-buy.kbuy {
+.btn-buy.kbuy,
+.btn-buy.potion-craft-btn,
+button.forge-row-btn {
+  /* v3.720.0 (atelier boutons-pastilles, P1 de Seb) : le bouton cuivre du pack en miniature (36 px),
+     pour les prix et les actions de ligne (Préparer, Relancer) */
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 5px;
-  min-width: 72px;
-  min-height: 38px;
-  padding: 4px 12px;
-  border: 1px solid var(--c-brown-700-vivid);
-  border-radius: 19px;
-  background: linear-gradient(var(--c-bronze-300-soft), var(--c-bronze-450));
-  color: var(--c-brown-900);
-  text-shadow: none;
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 800;
+  width: auto;
+  min-width: 96px;
+  min-height: 36px;
+  padding: 0 2px;
+  box-sizing: border-box;
+  border: solid transparent;
+  border-width: 0 18px;
+  border-radius: 0;
+  border-image: url('../images/UI/buttons/btn-cuivre-1l.webp') 0 66 fill / 0 18px stretch;
+  background: none;
+  color: var(--c-cream-100-2);
+  text-shadow: 0 1px 2px rgba(20, 8, 0, 0.9);
+  font-family: "Alegreya", Georgia, serif;
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: lining-nums tabular-nums;
   line-height: 1;
   white-space: nowrap;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 2px 4px rgba(0, 0, 0, 0.3);
+  box-shadow: none;
   cursor: pointer;
 }
+button.forge-row-btn.is-off { color: var(--c-cream-100-2); filter: grayscale(0.8); opacity: 0.6; cursor: default; }
 /* Zone de toucher de 44 px sur les boutons d'achat, taille visible inchangée (pseudo-élément transparent) */
 .btn-buy.kbuy { position: relative; }
 .btn-buy.kbuy::after { content: ""; position: absolute; left: 50%; top: 50%; width: max(100%, 44px); height: max(100%, 44px); transform: translate(-50%, -50%); }
@@ -526,13 +548,16 @@
 .kbuy small { font-size: 12px; font-weight: 700; opacity: 0.8; }
 
 .kbuy:not(:disabled):active,
-.btn-buy.kbuy:not(:disabled):active {
-  background: linear-gradient(var(--c-bronze-450), var(--c-brown-600));
-  background-image: linear-gradient(var(--c-bronze-450), var(--c-brown-600));
+.btn-buy.kbuy:not(:disabled):active,
+.btn-buy.potion-craft-btn:not(:disabled):active,
+button.forge-row-btn:not(.is-off):active {
   transform: translateY(1px);
+  filter: brightness(0.88);
 }
 
 .kbuy:disabled,
+.btn-buy.potion-craft-btn:disabled,
+.btn-buy.potion-craft-btn.cant-afford,
 .kbuy.cant-afford,
 .kbuy.is-poor,
 .kbuy.is-maxed,

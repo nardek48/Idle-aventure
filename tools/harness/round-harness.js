@@ -12844,7 +12844,7 @@ console.log("\n[175] v3.402.0 — Lot B-1 : boutons (bleu + filaire, pièce d'or
     var kb = unpal(fs.readFileSync(path.join(ROOT, "css/00-kbtn.css"), "utf8"));
     ok(/btn-parch-1l\.webp'\) 0 66 fill \/ 0 22px stretch/.test(kb) && /\.kbtn\.primary,[\s\S]*?btn-cuivre-1l\.webp/.test(kb) && !/border: 2px solid #8a5c14/.test(kb),
       "v3.716.0 : pack de Seb, parchemin par défaut, cuivre pour le principal (le secondaire filaire est retiré)");
-    ok(/\.kbuy,\n\.btn-buy\.kbuy \{[\s\S]*?linear-gradient\(#f6d27a, #d99a34\)/.test(kb), "achat : pastille pièce d'or (.kbuy)");
+    ok(/\.kbuy,\n\.btn-buy\.kbuy,[\s\S]*?btn-cuivre-1l\.webp'\) 0 66 fill \/ 0 18px stretch/.test(kb), "achat : pastille cuivre du pack (P1, v3.720.0)");
     var co = unpal(fs.readFileSync(path.join(ROOT, "css/00-components.css"), "utf8"));
     ok(/\.ksec \{[\s\S]*?justify-content: center;[\s\S]*?color: #3a2c1a;/.test(co) && /\.ksec::before,\n\.ksec::after/.test(co) && /\.kkick \{/.test(co), "titre de section centré à filets (.ksec) et surtitre (.kkick)");
     ok(/settings-btn primary" onclick="saveGame(FromSettings)?\(\)"/.test(fs.readFileSync(path.join(ROOT, "js/ui/settings-view.js"), "utf8")), "Paramètres : « Sauvegarder » est le bouton principal");
@@ -16381,7 +16381,7 @@ console.log("\n[265] v3.459.5 — Globales fantômes (audit O3)");
 (function () {
   /* Un objet du jeu testé par window.X ou typeof X doit exister une fois tous les scripts chargés.
      Les API du navigateur et les globales posées plus tard (au clic, au boot) sont en liste blanche. */
-  var BLANCHE = ["Intl", "Image", "WeakMap"]; // v3.459.6 : QuestManager, WorldQuestManager, QUEST_CONFIG retirés (lot 9b)
+  var BLANCHE = ["Intl", "Image", "WeakMap", "ResizeObserver", "MutationObserver"]; // v3.720.0 : API du navigateur (boutons deux lignes, ui-root.js) // v3.459.6 : QuestManager, WorldQuestManager, QUEST_CONFIG retirés (lot 9b)
   var vus = {};
   scripts.forEach(function (s) {
     var t = fs.readFileSync(path.join(ROOT, s), "utf8"), re = /(?:window\.|typeof\s+)([A-Z][A-Za-z0-9_$]*)(?![A-Za-z0-9_$.])/g, m;
@@ -24297,13 +24297,25 @@ console.log("\n[480] v3.719.0 — Pack de boutons de Seb : cuivre (principal), p
     var kb = fs.readFileSync(path.join(ROOT, "css/00-kbtn.css"), "utf8");
     ok(["cuivre-1l", "cuivre-2l", "parch-1l", "parch-2l"].every(function (n) { return fs.existsSync(path.join(ROOT, "images/UI/buttons/btn-" + n + ".webp")) && kb.indexOf("btn-" + n + ".webp") > 0; }), "les 4 pièces du pack sont sur disque et utilisées");
     ok(/width: fit-content;\s*min-width: 140px;\s*max-width: 100%;\s*min-height: 44px;/.test(kb), "largeur au texte, 140 px au moins, 44 px de haut");
-    ok(/\.settings-btn:has\(small\) \{\s*min-height: 60px;/.test(kb) && /btn-parch-2l\.webp'\) 0 70 fill/.test(kb), "deux lignes (somme en <small>) : version haute, 60 px");
+    ok(/\.settings-btn:has\(small\),[\s\S]*?\{\s*min-height: 60px;/.test(kb) && /btn-parch-2l\.webp'\) 0 70 fill/.test(kb), "deux lignes (somme en <small>) : version haute, 60 px");
     ok(/\.combat-report-reset-btn \{\s*color: var\(--c-red-700\);\s*\}/.test(kb), "danger : parchemin, texte rouge foncé");
     ok(/grid-auto-columns: minmax\(min\(140px, calc\(50vw - 40px\)\), 1fr\)/.test(kb), "deux boutons côte à côte : même largeur, centrés");
     ok(g.btnDeuxLignes("Offrir (+12 Aether)") === "Offrir<small>+12 Aether</small>" && g.btnDeuxLignes("Équiper") === "Équiper", "« Offrir (+12 Aether) » passe en deux lignes, un libellé simple reste tel quel");
     var eq = fs.readFileSync(path.join(ROOT, "css/04-panel-equipment.css"), "utf8"), st = fs.readFileSync(path.join(ROOT, "css/04-panel-settings.css"), "utf8");
     ok(!/\.eq-detail-action \{\s*width: 100%/.test(eq) && !/\.set-card \.settings-btn \{ width: 100%/.test(st), "plus de bouton à 100 % (fiche d'objet, Paramètres)");
   } catch (err) { ok(false, "[480] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[481] v3.720.0 — Pastilles d'achat P1, actions de ligne, deux lignes automatiques, format large");
+(function () {
+  try {
+    var fs = require("fs"), path = require("path");
+    var kb = fs.readFileSync(path.join(ROOT, "css/00-kbtn.css"), "utf8"), ge = fs.readFileSync(path.join(ROOT, "css/10-grand-ecran.css"), "utf8"), ui = fs.readFileSync(path.join(ROOT, "js/ui/ui-root.js"), "utf8");
+    ok(/\.kbuy,\n\.btn-buy\.kbuy,\n\.btn-buy\.potion-craft-btn,\nbutton\.forge-row-btn \{[\s\S]*?min-width: 96px;[\s\S]*?min-height: 36px;/.test(kb), "prix, « Préparer » et « Relancer » : pastille cuivre de 36 px (96 px au moins)");
+    ok(/\.kbtn\.is-2l,\n\.settings-btn\.is-2l \{/.test(kb) && /function btnCompteLignes\(b\)/.test(ui) && /classList\.toggle\("is-2l", deux\)/.test(ui), "libellé sur deux lignes : version haute du pack posée automatiquement");
+    ok(/:has\(> \.is-2l\) > :is\(\.kbtn, \.settings-btn\)/.test(kb), "rangée de deux : le voisin prend la même version");
+    ok(/\.chr-harvest \{[\s\S]*?btn-parch-1l\.webp/.test(ge) && /\.cw-btn \{[\s\S]*?btn-parch-1l\.webp/.test(ge), "format large : « Tout récolter » et « Voir le tableau complet » au parchemin du pack");
+  } catch (err) { ok(false, "[481] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
 Promise.all(ATTENTES).then(function () {

@@ -526,3 +526,49 @@ if (typeof window !== "undefined" && window.addEventListener && typeof document 
 }
 window.backNavCloseTop = backNavCloseTop;
 window.backNavOnPop = backNavOnPop;
+
+/* v3.720.0 (pack de boutons) : un bouton dont le libellé passe sur deux lignes prend la version haute
+   du pack (classe is-2l, css/00-kbtn.css). Les boutons à <small> l'ont déjà ; mesuré à chaque changement de taille. */
+var btn2lListe = [], btn2lRO = null, btn2lPlan = 0;
+function btnCompteLignes(b) {
+  if (!document.createRange) return 1;
+  var r = document.createRange(), tops = [];
+  r.selectNodeContents(b);
+  [].forEach.call(r.getClientRects(), function (q) {
+    if (q.width < 2 || q.height < 4) return;
+    if (!tops.some(function (t) { return Math.abs(t - q.top) < 6; })) tops.push(q.top);
+  });
+  return tops.length || 1;
+}
+function btnAjuste(b) {
+  if (!b.isConnected || !b.offsetWidth || b.querySelector("small")) return;
+  var deux = btnCompteLignes(b) > 1;
+  if (deux !== b.classList.contains("is-2l")) b.classList.toggle("is-2l", deux);
+}
+function btn2lScan() {
+  btn2lPlan = 0;
+  // les boutons retirés de la page ne sont plus observés (le jeu redessine souvent ses écrans)
+  btn2lListe = btn2lListe.filter(function (b) { if (b.isConnected) return true; btn2lRO.unobserve(b); return false; });
+  Array.prototype.forEach.call(document.querySelectorAll(".kbtn, .settings-btn"), function (b) {
+    if (btn2lListe.indexOf(b) >= 0) return;
+    btn2lListe.push(b);
+    btn2lRO.observe(b);
+  });
+}
+function btn2lDemarre() {
+  if (typeof ResizeObserver !== "function" || typeof MutationObserver !== "function" || !document.body) return;
+  btn2lRO = new ResizeObserver(function (es) { es.forEach(function (e) { btnAjuste(e.target); }); });
+  new MutationObserver(function (recs) {
+    if (btn2lPlan) return;
+    for (var i = 0; i < recs.length; i++) {
+      for (var j = 0; j < recs[i].addedNodes.length; j++) {
+        if (recs[i].addedNodes[j].nodeType === 1) { btn2lPlan = requestAnimationFrame(btn2lScan); return; }
+      }
+    }
+  }).observe(document.body, { childList: true, subtree: true });
+  btn2lScan();
+}
+if (typeof document !== "undefined" && document.addEventListener) {
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", btn2lDemarre);
+  else btn2lDemarre();
+}
