@@ -584,11 +584,11 @@ html.wide-mode.ge-arena-wide body.combat-active .cbx-foe.is-target .cbx-foe-halo
 /* ---------- Option D : boutons de page à la taille de la maquette (le bleu pour l'action principale,
    un bouton cerclé d'or pour les autres) ; le téléphone garde ses boutons ---------- */
 html.wide-mode #panel-container .kbtn,
-html.wide-mode #panel-container .settings-btn { width: auto; min-width: 150px; max-width: 100%; min-height: 38px; padding: 0 22px; white-space: nowrap; }
+html.wide-mode #panel-container .settings-btn { width: fit-content; min-width: 150px; max-width: 100%; white-space: nowrap; } /* v3.719.0 : peau du pack (00-kbtn.css) */
 html.wide-mode #panel-container .kbtn:not(.primary):not(.danger):not(:disabled),
-html.wide-mode #panel-container .settings-btn:not(.primary):not(.danger):not(:disabled) { min-width: 0; min-height: 34px; padding: 0 16px; border-radius: 10px; background: rgba(255, 250, 240, 0.75); border: 1.5px solid var(--c-bronze-450); color: var(--c-brown-850-3); text-shadow: none; font-weight: 700; font-size: 13px; }
+html.wide-mode #panel-container .settings-btn:not(.primary):not(.danger):not(:disabled) { min-width: 140px; }
 html.wide-mode #panel-container .kbtn:not(.primary):not(.danger):not(:disabled):hover,
-html.wide-mode #panel-container .settings-btn:not(.primary):not(.danger):not(:disabled):hover { background: var(--c-white-50-soft); }
+html.wide-mode #panel-container .settings-btn:not(.primary):not(.danger):not(:disabled):hover { filter: brightness(1.06); }
 html.wide-mode #panel-container .story-step-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-start; }
 html.wide-mode #panel-container .story-step-actions .settings-btn { flex: 0 0 auto; margin: 0; }
 html.wide-mode #panel-container .qw-done .story-step-title { font-size: 14px; font-weight: 700; }

@@ -21,7 +21,7 @@
 .set-card p { margin: 0 0 10px; font-size: 13px; line-height: 1.45; color: var(--c-brown-750-2); }
 .set-card p:last-child { margin-bottom: 0; }
 .set-card .kseg { margin-bottom: 8px; }
-.set-card .settings-btn { width: 100%; margin: 0; }
+.set-card .settings-btn { margin: 0 auto; } /* v3.719.0 : largeur au texte (pack de boutons) */
 .set-stack { display: flex; flex-direction: column; gap: 8px; }
 .set-pair { display: flex; gap: 8px; }
 .set-pair > * { flex: 1 1 0; min-width: 0; }

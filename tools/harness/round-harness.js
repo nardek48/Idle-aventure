@@ -12842,8 +12842,8 @@ console.log("\n[175] v3.402.0 — Lot B-1 : boutons (bleu + filaire, pièce d'or
   try {
     var fs = require("fs"), path = require("path");
     var kb = unpal(fs.readFileSync(path.join(ROOT, "css/00-kbtn.css"), "utf8"));
-    ok(/\.kframe \.settings-btn:not\(\.primary\):not\(\.danger\)/.test(kb) && /\.kwin \.kbtn:not\(\.primary\):not\(\.danger\)/.test(kb) && /border: 2px solid #8a5c14/.test(kb),
-      "secondaire filaire : tout bouton non principal d'une page, feuille ou fenêtre");
+    ok(/btn-parch-1l\.webp'\) 0 66 fill \/ 0 22px stretch/.test(kb) && /\.kbtn\.primary,[\s\S]*?btn-cuivre-1l\.webp/.test(kb) && !/border: 2px solid #8a5c14/.test(kb),
+      "v3.716.0 : pack de Seb, parchemin par défaut, cuivre pour le principal (le secondaire filaire est retiré)");
     ok(/\.kbuy,\n\.btn-buy\.kbuy \{[\s\S]*?linear-gradient\(#f6d27a, #d99a34\)/.test(kb), "achat : pastille pièce d'or (.kbuy)");
     var co = unpal(fs.readFileSync(path.join(ROOT, "css/00-components.css"), "utf8"));
     ok(/\.ksec \{[\s\S]*?justify-content: center;[\s\S]*?color: #3a2c1a;/.test(co) && /\.ksec::before,\n\.ksec::after/.test(co) && /\.kkick \{/.test(co), "titre de section centré à filets (.ksec) et surtitre (.kkick)");
@@ -24288,6 +24288,22 @@ console.log("\n[479] v3.717.0 — Paliers de l'Histoire narratifs ; le pronostic
     ok(a.indexOf("emplacement d'équipement vide") >= 0 && a.indexOf("emplacement d'équipement vide") < a.indexOf("0 pièce Rare") && a.indexOf("tout en commun") < 0, "ordre : vide, puis rareté du repère");
   } catch (err) { ok(false, "[479] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   finally { g.WorldManager.worldIndex = wi; }
+})();
+
+console.log("\n[480] v3.719.0 — Pack de boutons de Seb : cuivre (principal), parchemin (secondaire), largeur au texte");
+(function () {
+  try {
+    var fs = require("fs"), path = require("path");
+    var kb = fs.readFileSync(path.join(ROOT, "css/00-kbtn.css"), "utf8");
+    ok(["cuivre-1l", "cuivre-2l", "parch-1l", "parch-2l"].every(function (n) { return fs.existsSync(path.join(ROOT, "images/UI/buttons/btn-" + n + ".webp")) && kb.indexOf("btn-" + n + ".webp") > 0; }), "les 4 pièces du pack sont sur disque et utilisées");
+    ok(/width: fit-content;\s*min-width: 140px;\s*max-width: 100%;\s*min-height: 44px;/.test(kb), "largeur au texte, 140 px au moins, 44 px de haut");
+    ok(/\.settings-btn:has\(small\) \{\s*min-height: 60px;/.test(kb) && /btn-parch-2l\.webp'\) 0 70 fill/.test(kb), "deux lignes (somme en <small>) : version haute, 60 px");
+    ok(/\.combat-report-reset-btn \{\s*color: var\(--c-red-700\);\s*\}/.test(kb), "danger : parchemin, texte rouge foncé");
+    ok(/grid-auto-columns: minmax\(min\(140px, calc\(50vw - 40px\)\), 1fr\)/.test(kb), "deux boutons côte à côte : même largeur, centrés");
+    ok(g.btnDeuxLignes("Offrir (+12 Aether)") === "Offrir<small>+12 Aether</small>" && g.btnDeuxLignes("Équiper") === "Équiper", "« Offrir (+12 Aether) » passe en deux lignes, un libellé simple reste tel quel");
+    var eq = fs.readFileSync(path.join(ROOT, "css/04-panel-equipment.css"), "utf8"), st = fs.readFileSync(path.join(ROOT, "css/04-panel-settings.css"), "utf8");
+    ok(!/\.eq-detail-action \{\s*width: 100%/.test(eq) && !/\.set-card \.settings-btn \{ width: 100%/.test(st), "plus de bouton à 100 % (fiche d'objet, Paramètres)");
+  } catch (err) { ok(false, "[480] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
 Promise.all(ATTENTES).then(function () {

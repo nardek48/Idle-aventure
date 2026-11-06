@@ -81,7 +81,7 @@ body.scene-active.lab-run .lab-page { position: fixed; inset: 0; z-index: 60; ma
 .lab-actions { display: flex; gap: 8px; }
 .lab-actions .kbtn { flex: 1; }
 /* Sur le fond de nuit, le bouton secondaire du kit paraissait éteint */
-.lab-actions .kbtn.is-sec { background: rgba(27, 21, 16, 0.95); border-color: var(--lab-gold); color: var(--lab-ink); opacity: 1; }
+.lab-actions .kbtn.is-sec { opacity: 1; } /* v3.719.0 : parchemin du pack, plus de fond sombre propre */
 
 /* Feuilles basses */
 .lab-scrim { position: fixed; inset: 0; z-index: 900; background: rgba(5, 3, 2, 0.66); }

@@ -20,39 +20,62 @@
    04-panel-village.css sont retirés), .danger, .primary. */
 
 .kbtn,
+.btn-buy.eq-detail-action,
 .settings-btn { /* v3.184.0 : Trier/⚙ de l'inventaire — classe oubliée par la bascule v3.168 (repérée par Seb) */
+  /* v3.719.0 (atelier boutons-pack, Seb 06/11) : pack de Seb, bouts fixes de 22 px et milieu étiré ;
+     largeur au texte (140 px au moins), parchemin par défaut, cuivre pour le principal. */
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  width: 100%;
-  max-width: 260px;
-  min-height: 48px;
+  width: fit-content;
+  min-width: 140px;
+  max-width: 100%;
+  min-height: 44px;
   margin-left: auto;
   margin-right: auto;
   margin-bottom: 8px;
-  padding: 10px 18px;
-
-  border: none;
-  background: url('../images/UI/buttons/btn-rect-normal.webp') center / 100% 100% no-repeat;
+  padding: 4px 6px;
+  box-sizing: border-box;
+  border: solid transparent;
+  border-width: 0 22px;
+  border-radius: 0;
+  border-image: url('../images/UI/buttons/btn-parch-1l.webp') 0 66 fill / 0 22px stretch;
+  background: none;
   box-shadow: none;
-  color: var(--c-white-50-soft);
-  text-shadow: 0 1px 2px rgba(30, 15, 0, 0.75);
-
-  font-size: 14px;
-  font-weight: 800;
-  line-height: 1.2;
+  color: var(--c-brown-900);
+  text-shadow: 0 1px 0 rgba(255, 245, 220, 0.6);
+  font-family: "Alegreya", Georgia, serif;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+  text-wrap: balance;
   cursor: pointer;
 
   transition: transform 0.08s ease, filter 0.15s ease;
 }
 
 .kbtn:not(:disabled):active,
+.btn-buy.eq-detail-action:not(:disabled):active,
 .settings-btn:not(:disabled):active {
-  background-image: url('../images/UI/buttons/btn-rect-pressed.webp');
   transform: translateY(1px);
+  filter: brightness(0.88);
   box-shadow: none;
 }
+/* Deux lignes (libellé puis somme en <small>) : la version haute du pack */
+.kbtn:has(small),
+.btn-buy.eq-detail-action:has(small),
+.settings-btn:has(small) {
+  min-height: 60px;
+  flex-direction: column;
+  gap: 1px;
+  border-width: 0 23px;
+  border-image: url('../images/UI/buttons/btn-parch-2l.webp') 0 70 fill / 0 23px stretch;
+}
+.kbtn small,
+.btn-buy.eq-detail-action small,
+.settings-btn small { font-size: 13px; font-weight: 700; opacity: 0.9; }
 
 /* ----- Désactivé / verrouillé (variante filtre, choix Seb) ----- */
 .kbtn:disabled,
@@ -72,19 +95,22 @@
 .kbtn.danger,
 .settings-btn.danger,
 .combat-report-reset-btn {
-  color: #ffb0a6;
-  text-shadow: 0 1px 2px rgba(60, 8, 0, 0.85);
+  color: var(--c-red-700);
 }
 
 /* ----- Primary (CTA — ex-dégradé or de 04-panel-settings.css) -----
    Sur cadre déjà doré : texte or clair + léger boost de luminosité.
    À confirmer par Seb dans l'atelier (spécimen dédié section 9). */
 .kbtn.primary,
-.settings-btn.primary {
-  color: var(--c-bronze-300);
-  text-shadow: 0 1px 2px rgba(30, 15, 0, 0.85);
-  filter: brightness(1.08) saturate(1.05);
+.settings-btn.primary,
+.btn-buy.eq-detail-action:not(.is-sec) {
+  border-image-source: url('../images/UI/buttons/btn-cuivre-1l.webp');
+  color: var(--c-cream-100-2);
+  text-shadow: 0 1px 2px rgba(20, 8, 0, 0.9);
 }
+.kbtn.primary:has(small),
+.btn-buy.eq-detail-action:not(.is-sec):has(small),
+.settings-btn.primary:has(small) { border-image-source: url('../images/UI/buttons/btn-cuivre-2l.webp'); }
 /* Primary désactivé : le filter de .primary écrasait le gris de l'état désactivé, seule l'opacité restait */
 .kbtn.primary:disabled,
 .kbtn.primary.is-locked,
@@ -401,7 +427,7 @@
 /* =====================================================================
    v3.402.0 (lot B-1, choix de Seb dans atelier-boutons.html) :
    HIÉRARCHIE DES BOUTONS « H2 · bleu + filaire », ACHAT « P2 · pièce d'or »,
-   DANGER « D1 » inchangé (bleu, texte rouge) ; v3.590.0 : contour rouge, voir la fin du fichier.
+   DANGER « D1 » inchangé (bleu, texte rouge) ; v3.590.0 : contour rouge ; v3.719.0 : pack de Seb, voir le haut du fichier.
    - Principal : le bouton bleu serti (.kbtn.primary / .settings-btn.primary),
      un seul par carte.
    - Secondaire : filaire bronze sur le parchemin. Par défaut, tout .kbtn ou
@@ -411,38 +437,39 @@
      Hors de ces conteneurs : classe .is-sec.
    - Discret : .klink (lien souligné bronze).
    ===================================================================== */
-.kframe .kbtn:not(.primary):not(.danger),
-.kframe .settings-btn:not(.primary):not(.danger),
-.ksheet .kbtn:not(.primary):not(.danger),
-.ksheet .settings-btn:not(.primary):not(.danger),
-.full-menu .kbtn:not(.primary):not(.danger),
-.full-menu .settings-btn:not(.primary):not(.danger),
-.kwin .kbtn:not(.primary):not(.danger),
-.kwin .settings-btn:not(.primary):not(.danger),
-.kbtn.is-sec,
-.settings-btn.is-sec,
-.btn-buy.is-sec {
-  border: 2px solid var(--c-brown-700-vivid);
-  border-radius: 10px;
-  background: rgba(255, 248, 232, 0.35);
-  color: var(--c-brown-800-2);
-  text-shadow: none;
-  box-shadow: none;
-}
+/* v3.719.0 : le secondaire filaire est retiré, tout bouton non principal prend le parchemin du pack (base en haut du fichier). */
 
-.kframe .kbtn:not(.primary):not(.danger):not(:disabled):active,
-.kframe .settings-btn:not(.primary):not(.danger):not(:disabled):active,
-.ksheet .kbtn:not(.primary):not(.danger):not(:disabled):active,
-.ksheet .settings-btn:not(.primary):not(.danger):not(:disabled):active,
-.full-menu .kbtn:not(.primary):not(.danger):not(:disabled):active,
-.full-menu .settings-btn:not(.primary):not(.danger):not(:disabled):active,
-.kwin .kbtn:not(.primary):not(.danger):not(:disabled):active,
-.kwin .settings-btn:not(.primary):not(.danger):not(:disabled):active,
-.kbtn.is-sec:not(:disabled):active,
-.settings-btn.is-sec:not(:disabled):active,
-.btn-buy.is-sec:not(:disabled):active {
-  background: rgba(138, 92, 20, 0.15);
-  background-image: none;
+/* v3.719.0 (atelier boutons-pack) : deux boutons côte à côte, centrés et de même largeur (celle du plus long,
+   140 px au moins, moins sur un écran de 320 px). Seulement les rangées faites de deux boutons. */
+:is(.ksheet-foot, .kwin-foot, .set-pair, .story-step-actions, .vb-sheet-actions, .hc-actions, .title-screen-btn-row,
+  .map-quest-run-actions, .rsb-actions, .lab-actions, .wh-pick-q, .pa2-btnrow):has(> :nth-child(2)):not(:has(> :nth-child(3))):not(:has(> :not(.kbtn, .settings-btn))) {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(min(140px, calc(50vw - 40px)), 1fr);
+  justify-content: center;
+  gap: 10px;
+  width: fit-content;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+}
+:is(.ksheet-foot, .kwin-foot, .set-pair, .story-step-actions, .vb-sheet-actions, .hc-actions, .title-screen-btn-row,
+  .map-quest-run-actions, .rsb-actions, .lab-actions, .wh-pick-q, .pa2-btnrow):has(> :nth-child(2)):not(:has(> :nth-child(3))):not(:has(> :not(.kbtn, .settings-btn))) > * {
+  flex: none;
+  width: auto;
+  min-width: 0;
+  max-width: none;
+  margin: 0;
+}
+/* Un bouton seul dans sa rangée : largeur au texte, centré */
+:is(.ksheet-foot, .kwin-foot, .set-pair, .story-step-actions, .vb-sheet-actions, .hc-actions, .title-screen-btn-row,
+  .map-quest-run-actions, .rsb-actions, .lab-actions, .wh-pick-q, .pa2-btnrow, .go-go, .car-go, .car-back) > :is(.kbtn, .settings-btn):only-child {
+  flex: 0 0 auto;
+  width: fit-content;
+  min-width: 140px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* Lien discret */
@@ -584,22 +611,8 @@
 #panel-container .kframe .kf-mid > .ksec + .wh-grid { margin-top: 0; padding: 6px 12px 12px; background-color: var(--c-cream-100-soft); border-radius: 0 0 10px 10px; box-shadow: var(--kf-ring); clip-path: inset(0 -20px -20px -20px); }
 /* Sac et Boutique de l'équipement : légende, minuteur et note de la Halle sur parchemin ; bouton grisé lisible */
 #panel-container .kframe .kf-mid :is(.hs-cmp-legend, .equip-shop-timer, .equip-shop-hall-note) { background-color: var(--c-cream-100-soft); border-radius: 10px; padding: 8px 10px; box-shadow: var(--kf-ring); }
-#panel-container .kframe .kf-mid > .settings-btn:disabled { background-color: var(--c-cream-100-soft); }
 
-/* v3.590.0 (relevé boutons-releve.html, choix de Seb) : le DANGER quitte le bleu serti (D1) pour un contour rouge,
-   comme un secondaire ; à côté d'un principal, l'action normale ressort seule. Mêmes conteneurs que le secondaire. */
-:is(.kframe, .ksheet, .full-menu, .kwin) :is(.kbtn, .settings-btn).danger,
-:is(.kbtn, .settings-btn).danger.is-sec {
-  border: 2px solid var(--c-red-600-soft);
-  border-radius: 10px;
-  background: rgba(255, 236, 228, 0.55);
-  color: var(--c-red-700);
-  text-shadow: none;
-  box-shadow: none;
-  filter: none;
-}
-:is(.kframe, .ksheet, .full-menu, .kwin) :is(.kbtn, .settings-btn).danger:not(:disabled):active,
-:is(.kbtn, .settings-btn).danger.is-sec:not(:disabled):active { background: rgba(179, 38, 30, 0.14); background-image: none; }
+/* v3.590.0 → v3.719.0 : le danger garde le parchemin du pack, texte rouge foncé (plus de contour rouge). */
 
 /* v3.602.0 (atelier jours-du-monde, B) : le jour du monde sur le bandeau du Camp, en bas à droite (visible replié) ; la soirée après la nuit assombrit l'image */
 .kfb-day { position: absolute; right: 10px; bottom: 9px; z-index: 2; display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 999px; background: rgba(18, 14, 9, 0.72); border: 1px solid rgba(226, 177, 74, 0.4); }
