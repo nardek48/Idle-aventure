@@ -10,6 +10,7 @@
    Les textes des données sont traduits par _td() à l'affichage (registre : lang/data-fields.js). */
 I18n.register("en", {
   // index.html
+  "Petites Aventures : l'écran prend le décor du monde de l'aventure (une aventure de la Tour ne s'affiche plus sur le fond de la Forêt), et la fuite a son propre chemin dans chaque monde.": "Little Adventures: the screen now uses the adventure's own world backdrop (a Tower adventure no longer shows the Forest background), and fleeing has its own way out in each world.",
   "Petites Aventures de la Tour : trois accroches à leur tour. Des pas qui redescendent vers un sac caché, une porte que personne ne tient, et une marche en trop qui mène à un palier que l'escalier ne montre pas.": "Tower Little Adventures: three hooks of their own. Footsteps going back down to a hidden bag, a door nobody holds, and one step too many leading to a landing the stairs don't show.",
   "Petites Aventures de la Crypte et de la Montagne : la boîte à mèches, la niche aux lampes cachée, la chapelle, la veine de la pioche (la lave attend pendant le détour), la source chaude, et des passages secrets.": "Crypt and Mountain Little Adventures: the wick box, the hidden lamp niche, the chapel, the pickaxe vein (the lava waits during the detour), the hot spring, and secret passages.",
   "Petites Aventures du Désert et des Ruines : à leur tour, les accroches agissent sur la carte. Le bât enterré, le pont de l'oued, la tour de guet cachée, l'arche murée, les pièces du socle, la cour au puits, et des passages secrets.": "Desert and Ruins Little Adventures: hooks now shape their maps too. The buried pack, the wadi bridge, the hidden watchtower, the walled-up arch, the plinth coins, the well courtyard, and secret passages.",
@@ -4436,6 +4437,11 @@ I18n.register("en", {
   "Ruser": "Trick",
   "Réussi : pas de combat, un peu de butin. Raté : il frappe le premier.": "Success: no fight, a little loot. Failure: he strikes first.",
   "Fuir par les fourrés": "Flee through the thickets",
+  "Fuir par les dunes": "Flee across the dunes",
+  "Fuir par les ruelles": "Flee through the alleys",
+  "Fuir par les couloirs": "Flee down the corridors",
+  "Fuir par les éboulis": "Flee over the scree",
+  "Fuir par l'escalier": "Flee down the stairs",
   "Aucun butin.": "No loot.",
   "+{n} % PV · +{n} Souffle": "+{n}% HP · +{n} Breath",
   "Poser la main sur la pierre": "Lay your hand on the stone",

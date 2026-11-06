@@ -225,6 +225,7 @@ function pa2AfterRender() {
   body.classList.toggle("pa2-night", onMap);
   body.classList.toggle("pa2-full", onMap && !!document.getElementById("pa2-vp")); // v3.394.0 : carte plein écran
   if (!onScene) { pa2RemoveOverlay(); return; }
+  pa2ApplyWorldTheme(run);
   pa2EnsureOverlay();
   if ((run.status === PA2_STATUS.node || run.status === PA2_STATUS.trap || run.status === PA2_STATUS.lock) && !pa2View.sheet && !pa2View.fromKey) pa2View.legend = false; // audit NOV-13 : une fiche qui s'ouvre referme la légende
   pa2RenderLegend();
@@ -255,8 +256,23 @@ function pa2RemoveOverlay() {
   var root = document.getElementById("pa2-overlay");
   if (root && root.parentNode) root.parentNode.removeChild(root);
 }
+// v3.728.0 (Seb 06/11) : le décor de l'écran suit le monde de l'aventure, pas le monde où vit le héros
+// (une Petite Aventure de la Tour s'affichait sur le fond de la Forêt) ; rendu au monde courant à la sortie.
+function pa2ApplyWorldTheme(run) {
+  var root = document.documentElement, w = run && window.WORLDS ? WORLDS.find(function (x) { return x.id === run.worldId; }) : null;
+  if (!root || !root.style || !w) return;
+  root.style.setProperty("--world-bg", w.bg || "#111");
+  if (w.combatMap) root.style.setProperty("--world-combat-map", 'url("' + w.combatMap + '")');
+}
+// Verbe de fuite selon le monde (« les fourrés » n'existent qu'en Forêt).
+function pa2FleeLabel(worldId) {
+  var t = { desert: _t("Fuir par les dunes"), ruins: _t("Fuir par les ruelles"), crypt: _t("Fuir par les couloirs"), mountain: _t("Fuir par les éboulis"), tower: _t("Fuir par l'escalier") };
+  return t[worldId] || _t("Fuir par les fourrés");
+}
+
 // Quitte l'habillage v2 (bilan fermé, préparation abandonnée).
 function pa2ClearChrome() {
+  if (window.WorldManager && typeof WorldManager.applyWorldTheme === "function" && document.body && document.body.classList.contains("pa2-run")) WorldManager.applyWorldTheme();
   pa2ClearTimers();
   pa2RemoveOverlay();
   if (document.body && document.body.classList) { document.body.classList.remove("pa2-run"); document.body.classList.remove("pa2-night"); document.body.classList.remove("pa2-full"); }
@@ -1299,7 +1315,7 @@ function pa2SheetBody(run, n, st) {
           } else if (!boss) {
             h += '<button type="button" class="pa2-choice" onclick="pa2Ruse()">' + pa2Img(PA2_ICONS.ruse) + '<span class="pa2-t">' + esc(_t("Ruser")) + '</span>' + pa2OddsHTML(pv.ruse.cran) +
               '<span class="pa2-s">' + pa2WhyHTML(pv.ruse, run) + '. ' + esc(_t("Réussi : pas de combat, un peu de butin. Raté : il frappe le premier.")) + '</span></button>';
-            h += '<button type="button" class="pa2-choice"' + (pv.flee.affordable ? '' : ' disabled') + ' onclick="pa2Flee()">' + pa2Img(PA2_ICONS.flee) + '<span class="pa2-t">' + esc(_t("Fuir par les fourrés")) + '</span>' +
+            h += '<button type="button" class="pa2-choice"' + (pv.flee.affordable ? '' : ' disabled') + ' onclick="pa2Flee()">' + pa2Img(PA2_ICONS.flee) + '<span class="pa2-t">' + esc(pa2FleeLabel(run.worldId)) + '</span>' +
               '<span class="pa2-cost">' + esc(_t("{n} Souffle", { n: pv.flee.cost })) + '</span><span class="pa2-s">' + esc(_t("Aucun butin.")) + '</span></button>';
           }
         }

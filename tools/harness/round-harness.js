@@ -25213,6 +25213,20 @@ console.log("\n[488] v3.727.0 — Petites Aventures : accroches et parcours de l
   finally { P.rand = savedRand; hostile("etage_sable", false); game.sceneRun = null; if (g.SortieManager.isActive()) g.SortieManager.end("return"); }
 })();
 
+console.log("\n[489] v3.728.0 — Petites Aventures : décor et fuite selon le monde de l'aventure");
+(function () {
+  try {
+    ok(g.pa2FleeLabel("tower") === "Fuir par l'escalier" && g.pa2FleeLabel("forest") === "Fuir par les fourrés" && g.pa2FleeLabel("desert") === "Fuir par les dunes", "fuite : verbe propre à chaque monde (la Tour ne fuit plus « par les fourrés »)");
+    var root = g.document.documentElement, vu = {}, orig = root.style && root.style.setProperty;
+    if (!root.style) root.style = {};
+    root.style.setProperty = function (k, v) { vu[k] = v; };
+    g.pa2ApplyWorldTheme({ worldId: "tower" });
+    if (orig) root.style.setProperty = orig; else delete root.style.setProperty;
+    var tw = g.WORLDS.filter(function (w) { return w.id === "tower"; })[0];
+    ok(String(vu["--world-combat-map"] || "").indexOf(tw.combatMap) >= 0 && vu["--world-bg"] === tw.bg, "décor : le fond suit le monde de l'aventure (Tour)");
+  } catch (err) { ok(false, "[489] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");
