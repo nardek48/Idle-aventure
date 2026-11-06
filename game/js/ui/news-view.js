@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.722.0", "menu_icons/menu_menu", _t("Les fenêtres passent sur le cadre parchemin de Seb : titre sur le parchemin, filets dorés, texte plus grand. Dans le fil rouge, « Pendant ce temps… » liste les autres choses à faire.")],
     ["3.721.0", "menu_icons/menu_menu", _t("Texte des boutons agrandi. Les derniers boutons à part (festin, Expéditions, « Tu es ici », Taverne, Hauts faits, reliques) prennent eux aussi le style cuivre et parchemin.")],
     ["3.720.0", "menu_icons/menu_menu", _t("Les prix, « Préparer » et « Relancer » prennent le bouton cuivre en petit. Un bouton au libellé trop long passe proprement sur deux lignes.")],
     ["3.719.0", "menu_icons/menu_menu", _t("Boutons unifiés sur les dessins de Seb : cuivre pour l'action principale, parchemin pour les autres. Ils prennent la largeur de leur texte (plus de boutons étirés) et une somme passe en deuxième ligne (« Offrir », « +8 Aether »).")],

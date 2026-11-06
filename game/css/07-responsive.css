@@ -36,11 +36,7 @@ html.text-big [id$="-sheet-root"] { zoom: 1.12; }
 .camp-mission-actions { flex-direction: column; align-items: center; gap: 12px; }
 .camp-mission-actions .camp-mission-btn { margin: 8px 0 0; }
 .camp-mission-actions .camp-mission-btn + .camp-mission-btn { margin-top: 0; }
-/* UI-9 + SUIV-12 (A) : 44 px visibles là où les cibles s'empilent, zone invisible de 44 px ailleurs */
-.fr-also { display: grid; justify-items: center; gap: 0; }
-.fr-also > span { margin-bottom: 2px; }
-.fr-also-btn { min-height: 44px; padding: 0 8px; line-height: 1.25; }
-.fr-also-sep { display: none; }
+/* UI-9 + SUIV-12 (A) : 44 px visibles là où les cibles s'empilent, zone invisible de 44 px ailleurs (v3.722.0 : les « Aussi » du fil rouge sont des lignes de 48 px, 04-panel-evolutions.css) */
 .cbx-target .cbx-tname { position: relative; z-index: 3; }
 .cbx-foe .cbx-foe-ui { z-index: 8; }
 .cbx-badges, .cbx-dist-badge { position: relative; }

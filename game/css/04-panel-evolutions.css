@@ -23,18 +23,18 @@ Maquette de référence : atelier-evolutions.html.
 /* ---------- 1. Fil rouge : fenêtre centrée (.kwin, v3.400.0 lot F-2) ---------- */
 .fr-bubble-bg.kwin-veil { z-index: 9000; }
 .fr-reason { font-size: 14px; }
-.fr-also { font-size: 13px; color: var(--sheet-ink-dim); margin: 0 0 4px; line-height: 1.5; }
-.fr-also > span { font-weight: 800; }
+.fr-also { display: grid; gap: 8px; margin: 4px 0 0; text-align: left; } /* v3.722.0 : lignes « Pendant ce temps… » */
+.fr-also-h { display: flex; align-items: center; gap: 8px; margin: 0 0 2px; font: italic 700 18px "Alegreya", Georgia, serif; color: var(--sheet-ink); }
+.fr-also-h::before, .fr-also-h::after { content: ""; flex: 1; height: 2px; background: linear-gradient(90deg, transparent, var(--c-brown-600)); }
+.fr-also-h::after { background: linear-gradient(90deg, var(--c-brown-600), transparent); }
 .fr-also-btn {
-  font: inherit;
-  font-weight: 700;
-  color: var(--c-brown-700-vivid);
-  background: none;
-  border: none;
-  padding: 0;
-  text-decoration: underline;
-  cursor: pointer;
+  display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 4px 10px 4px 6px; box-sizing: border-box;
+  border: 0; border-radius: 10px; background: rgba(150, 100, 40, 0.1); color: var(--sheet-ink);
+  font: 400 16px "Alegreya", Georgia, serif; text-align: left; text-decoration: none; cursor: pointer;
 }
+.fr-also-btn span { flex: 1; min-width: 0; }
+.fr-also-btn::after { content: "›"; font-size: 24px; line-height: 1; color: var(--c-brown-600); }
+.fr-also-ico { width: 36px; height: 36px; object-fit: contain; flex: 0 0 auto; font-size: 28px; }
 
 /* ---------- 1 bis. Or à investir (v3.429.24, ui/or-a-investir-view.js) ---------- */
 .oi-bg.kwin-veil { z-index: 9000; }

@@ -23770,7 +23770,7 @@ console.log("\n[467] v3.702.0 — Petits écrans : marges, bandeau court, Partir
     // UI-10 suite (B)
     ok(/\.camp-mission-actions \{ flex-direction: column; align-items: center; gap: 12px; \}/.test(bloc) && /\.camp-mission-btn \+ \.camp-mission-btn \{ margin-top: 0; \}/.test(bloc), "UI-10 suite (B) : Partir puis Abandonner, l'un sous l'autre, 12 px d'écart");
     // UI-9 + SUIV-12 (A)
-    ok(/join\('<span class="fr-also-sep"> · <\/span>'\)/.test(rd("js/ui/fil-rouge-view.js")) && /\.fr-also-sep \{ display: none; \}/.test(bloc) && /\.fr-also-btn \{ min-height: 44px;/.test(bloc), "UI-9 : liens « Aussi » un par ligne (44 px), séparateur isolé dans un span");
+    ok(/class="fr-also-btn" onclick="filRougeGo\(/.test(rd("js/ui/fil-rouge-view.js")) && /\.fr-also-btn \{[^}]*min-height: 48px;/.test(rd("css/04-panel-evolutions.css")), "UI-9 → v3.722.0 : « Pendant ce temps… », une ligne de 48 px par proposition");
     ok(/\.kfb-pop::after, \.cbx-badges::after, \.cbx-dist-badge::after \{ content: ""; position: absolute;[^}]*width: max\(100%, 44px\); height: max\(100%, 44px\)/.test(bloc)
       && /\.wk-tile-sub\.res-go-link \{ display: flex; align-items: center; min-height: 44px; \}/.test(bloc)
       && /\.tavern-contract-need \.res-go \{ display: inline-flex; align-items: center; min-height: 44px;/.test(bloc)
@@ -24327,6 +24327,18 @@ console.log("\n[482] v3.721.0 — Boutons propres aux écrans passés au pack ; 
     var vieux = [["css/04-panel-camp.css", /\.camp-feast-go \{[^}]*linear-gradient/], ["css/04-panel-expeditions.css", /\.exp-act\.is-primary \{/], ["css/04-panel-village.css", /\.tavern-contract-btn \{[^}]*background/], ["css/04-panel-achievements.css", /\.hf-btn \{[^}]*background/]];
     ok(vieux.every(function (v) { return !v[1].test(fs.readFileSync(path.join(ROOT, v[0]), "utf8")); }), "les anciens styles de ces boutons sont retirés des écrans");
   } catch (err) { ok(false, "[482] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[483] v3.722.0 — Fenêtres sur le cadre parchemin de Seb (variante B)");
+(function () {
+  try {
+    var fs = require("fs"), path = require("path"), co = fs.readFileSync(path.join(ROOT, "css/00-components.css"), "utf8");
+    ok(fs.existsSync(path.join(ROOT, "images/UI/frames/kwin-parchemin.webp")) && /\.kwin::before \{[\s\S]*?kwin-parchemin\.webp'\) 90 fill \/ 46px stretch/.test(co), "cadre parchemin découpé en neuf (coins fixes) sous chaque fenêtre");
+    ok(/\.kwin-head \{\s*flex-direction: row;[\s\S]*?background: none;/.test(co) && /\.kwin-ttl \{[^}]*"Alegreya"[^}]*font-size: 22px/.test(co), "variante B : plus d'en-tête de pierre, titre Alegreya 22 px");
+    ok(/\.kwin-text \{[^}]*font-size: 17px/.test(co), "texte des fenêtres en 17 px");
+    var fr = fs.readFileSync(path.join(ROOT, "js/ui/fil-rouge-view.js"), "utf8");
+    ok(/_t\("Pendant ce temps…"\)/.test(fr) && /renderIconOrEmojiHTML\(x\.icon, "fr-also-ico"/.test(fr), "fil rouge : « Pendant ce temps… » avec l'icône de chaque proposition");
+  } catch (err) { ok(false, "[483] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
 Promise.all(ATTENTES).then(function () {
