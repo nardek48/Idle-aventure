@@ -795,6 +795,8 @@ function avoidTraps(P, run, mv) {
 
 /* v3.382.0 (PA2-1) : Petite Aventure v2 (la Forêt). Un pas du robot : besace raisonnable,
    route vers une destination, chaque nœud joué comme un joueur prudent (soin sous 40 %). */
+// v3.726.0 : compte des mini-quêtes jouées par monde (trésor, fin cachée, fin imposée atteinte)
+function pa2Note(run, what) { var w = (STATS.pa2q = STATS.pa2q || {})[run.worldId] = (STATS.pa2q || {})[run.worldId] || {}; w[what] = (w[what] || 0) + 1; }
 function playPa2Step(run) {
   var g = G, P = g.Pa2Run, max = g.game.heroMaxHp, r = { ok: true };
   if (run.status === "pa2-prep") {
@@ -815,13 +817,19 @@ function playPa2Step(run) {
   } else if (run.status === "pa2-node" && !run.pending && (P.questFoeHere(run) || {}).done === false) {
     r = P.fight("tenir", !!(run.lastResult && run.lastResult.surprised)); // la rencontre du retour, sans or
   } else if (run.status === "pa2-node" && P.node(run.at, run).cache && !P.node(run.at, run).done) {
-    r = P.takeCache();
+    r = P.takeCache(); pa2Note(run, "trésor");
   } else if (run.status === "pa2-map") {
     var gp = P.guardianPreview(), bossOk = gp && !gp.tenir.unwinnable && gp.tenir.hpLoss < g.game.heroHp * 0.8;
     // v3.725.0 (Seb 06/11) : destinations lues sur la carte (Ruines : rangée 7), la fin cachée d'abord quand elle est ouverte
     var mv = avoidTraps(P, run, P.openMoves()), dest = mv.filter(function (k) { return P.isDest(P.node(k, run), run) && (bossOk || P.node(k, run).type !== "boss"); });
     dest.sort(function (a, b) { return (P.node(b, run).hidden ? 1 : 0) - (P.node(a, run).hidden ? 1 : 0); });
-    r = P.moveTo(dest.length ? dest[0] : mv[Math.floor(Math.random() * mv.length)]);
+    // v3.726.0 (Seb 06/11) : il joue la mini-quête — « Chercher encore » après un indice, le trésor si Souffle et PV le permettent
+    if (run.hint && run.hint.node === run.at && run.breath >= 40 && P.searchAgain().ok) return true;
+    var q = run.quest, bk = mv.filter(function (k) { return P.isBackMove(k, run); }), fw = mv.filter(function (k) { return !P.isBackMove(k, run); });
+    if (q && q.kind === "cache" && q.state === "annoncee" && bk.length && (run.at !== q.halt || (run.breath >= 40 + P.cacheCost(run).total / 2 && g.game.heroHp >= max * 0.5))) mv = bk;
+    else if (fw.length) mv = fw;
+    var sec = mv.filter(function (k) { return P.foundSecrets(run).indexOf(run.at + ">" + k) >= 0; })[0];
+    r = P.moveTo(dest.length ? dest[0] : (sec || mv[Math.floor(Math.random() * mv.length)]));
   } else {
     var n = P.node(run.at, run), t = n.type;
     if (t === "obstacle" || t === "tertre") {
@@ -846,16 +854,20 @@ function playPa2Step(run) {
     } else if (t === "source") r = P.drink();
     else if (t === "autel") r = P.altar(run.wounds > 0 && (P.altarCost() === 0 || run.loot >= P.altarCost()));
     else if (t === "trouvaille") r = P.takeRelic();
-    else if (t === "evenement") r = P.eventChoice(P.hookBranches().filter(function (b) { return b.ok; })[0].id);
+    else if (t === "evenement") { // v3.726.0 : la branche qui lance la mini-quête d'abord (pioche : « laisser »)
+      var okB = P.hookBranches().filter(function (b) { return b.ok; }), qdB = P.questDef(run), qB = okB.filter(function (b) { return qdB && qdB.def.branches && qdB.def.branches.indexOf(b.id) >= 0; })[0];
+      r = P.eventChoice((qB || okB[0]).id);
+    }
     else if (t === "camp" || t === "seuil") r = P.placeAction(g.game.heroHp / max < 0.5 && P._rationInStock(run) ? "cook" : "rest");
     else if (t === "clairiere") r = P.clairiere();
     else if (t === "veine") r = P.cutVein(!!process.env.TAILLER_PA); // v3.489.0 (Montagne) : laissées par défaut
-    else if (t === "cachee") r = P.hiddenEnd(); // v3.724.0 : la fin cachée
+    else if (t === "cachee") { r = P.hiddenEnd(); pa2Note(run, "fin cachée"); } // v3.724.0 : la fin cachée
     else { note("Petite Aventure v2 : nœud inconnu " + t); return false; }
   }
   if (!r.ok) { note("Petite Aventure v2 : " + r.reason); return false; }
   var fin = g.game.sceneRun;
   if (fin && fin.status === "completed" && fin.end) LAST_END = "v2 " + fin.end.how + (fin.end.dest ? " " + fin.end.dest : "");
+  if (fin && fin.status === "completed" && fin.end && fin.quest && fin.quest.kind === "end" && fin.end.how === "dest" && !fin.questNoted) { fin.questNoted = true; pa2Note(fin, "fin imposée"); }
   return true;
 }
 
@@ -2304,6 +2316,7 @@ if (STATS.donjonsEquipement) console.log("Runs de donjon pour l'équipement : " 
 console.log("Sorties au campement, objectif atteint : " + (STATS.sortiesObjectif || 0) + " · élites de carte pour une rareté : " + (STATS.elitesRarete || 0) + " · productions arrêtées sans progrès : " + (STATS.sansProgres || 0) + " · mode libre au donjon : " + (STATS.donjonLibre || 0));
 if (STATS.armes) console.log("Armes vues pendant la recherche d'Inhabituels : " + JSON.stringify(STATS.armes));
 console.log("Obstacles (estimation → réussis/ratés) : " + JSON.stringify(STATS.obstacles) + " · niveau du héros : " + G.game.heroLevel);
+if (STATS.pa2q) console.log("Mini-quêtes de Petite Aventure (par monde) : " + JSON.stringify(STATS.pa2q)); // v3.726.0
 if (STATS.expeditionFails.length) console.log("Expéditions ratées : " + STATS.expeditionFails.join(", "));
 if (COMBATS) {
   console.log("\nÉtape                         durée   combat  soin   morts  niv.  (cumul)");

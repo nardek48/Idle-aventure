@@ -6,6 +6,8 @@
    Usage : node tools/sim/pa2-bench.js . [runs=300] [anneau=sentier|chemin|periple] */
 /* v3.724.0 (Seb 06/11, parcours PA v0.2, lot 3) : politique de quête (carnier si Souffle ≥ 40 et PV ≥ 50 %, clé marquée,
    passages trouvés), --sans-quetes pour comparer, --accroche=<id> et --carte=<foret_1|foret_2> pour isoler un cas. */
+/* v3.726.0 : --montagne (lave, veines laissées), --lave-libre (la lave monte aussi pendant le détour), branche de la quête
+   choisie d'abord, rencontre du retour tenue ; le détour du trésor mesuré à part (Souffle annoncé et dépensé, PV, KO). */
 
 var fs = require("fs"), path = require("path");
 var ROOT = require("../chemins.js").jeu(process.argv[2]);
@@ -18,7 +20,8 @@ var DESERT = process.argv.indexOf("--desert") > 0;        // v3.387.0 : la Petit
 var RUINES = process.argv.indexOf("--ruines") > 0;        // v3.429.0 : la Petite Aventure des Ruines (murs qui bougent, Craie)
 var CRYPTE = process.argv.indexOf("--crypte") > 0;        // v3.454.0 : la Petite Aventure de la Crypte (obscurité, Lanterne, gardien qui dort)
 var REVEIL = process.argv.indexOf("--reveiller") > 0;     // v3.454.0 : gisants réveillés au départ (carte de la Crypte)
-var TPL = CRYPTE ? "petite_aventure_crypte" : RUINES ? "petite_aventure_ruines" : DESERT ? "petite_aventure_desert" : "petite_aventure_foret";
+var MONTAGNE = process.argv.indexOf("--montagne") > 0;    // v3.726.0 : la Petite Aventure de la Montagne (lave, veines laissées, Pierre froide)
+var TPL = MONTAGNE ? "petite_aventure_montagne" : CRYPTE ? "petite_aventure_crypte" : RUINES ? "petite_aventure_ruines" : DESERT ? "petite_aventure_desert" : "petite_aventure_foret";
 var NO_TRAPS = process.argv.indexOf("--sans-pieges") > 0; // v3.467.0 : comparer avec et sans pièges
 var ALL_IN = process.argv.indexOf("--insiste-tout") > 0; // v3.578.0 : le joueur qui insiste dès qu'il peut
 var NO_GOURDE = process.argv.indexOf("--sans-gourde") > 0; // v3.578.0 : la gourde sert-elle ?
@@ -68,6 +71,7 @@ var FORCE_HOOK = (process.argv.filter(function (x) { return x.indexOf("--accroch
 var FORCE_MAP = (process.argv.filter(function (x) { return x.indexOf("--carte=") === 0; })[0] || "").slice(8);
 if (NO_QUEST) { Object.keys(g.PA2_HOOKS).forEach(function (h) { delete g.PA2_HOOKS[h].quest; }); Object.keys(g.PA2_MAPS).forEach(function (m) { delete g.PA2_MAPS[m].secrets; }); }
 if (process.argv.indexOf("--sans-passages") > 0) Object.keys(g.PA2_MAPS).forEach(function (m) { var sc = g.PA2_MAPS[m].secrets; if (sc) Object.keys(sc).forEach(function (k) { if (!sc[k].quest) delete sc[k]; }); }); // v3.725.0 : quêtes sans les passages de la carte
+if (process.argv.indexOf("--lave-libre") > 0) g.PA2_QUEST_RULES.lavaWaits = false; // v3.726.0 : la lave monte aussi pendant le détour (comparaison)
 if (FORCE_HOOK) g.Pa2Run._drawHook = function () { return FORCE_HOOK; };
 if (FORCE_MAP) g.PA2_MAPS_BY_WORLD[g.PA2_MAPS[FORCE_MAP].worldId] = [FORCE_MAP]; // v3.725.0 : toute carte (desert_1, ruines_1…)
 var FORCE_COND = (process.argv.filter(function (x) { return x.indexOf("--condition=") === 0; })[0] || "").slice(12); // v3.469.0 : une condition imposée
@@ -90,7 +94,10 @@ var STAGES_RUINES = [
 var STAGES_CRYPTE = [
   { id: "crypte1", label: "Crypte, acte II (niv. 17)", level: 17, p: { weapon: 65, kit: true, train: 130, potions: 0 } }
 ];
-var STAGES = CRYPTE ? STAGES_CRYPTE : RUINES ? STAGES_RUINES : DESERT ? STAGES_ALL.filter(function (x) { return x.level >= 8; }) : STAGES_ALL.filter(function (x) { return x.id !== "desert10"; });
+var STAGES_MONTAGNE = [ // v3.726.0 : repère approché (combats d'acte I « rudes »), pour comparer avant / après
+  { id: "montagne1", label: "Montagne, acte II (niv. 20)", level: 20, p: { weapon: 1000, kit: true, train: 300, potions: 0 } }
+];
+var STAGES = MONTAGNE ? STAGES_MONTAGNE : CRYPTE ? STAGES_CRYPTE : RUINES ? STAGES_RUINES : DESERT ? STAGES_ALL.filter(function (x) { return x.level >= 8; }) : STAGES_ALL.filter(function (x) { return x.id !== "desert10"; });
 
 /* Secondes par action, pour l'estimation de durée : lire, choisir, voir le dé ou le combat. */
 /* v3.383.0 : même base que l'ancien banc v1 (retiré en v3.388.0 ; ses chiffres : CHANGELOG_v3.383.0). */
@@ -111,7 +118,8 @@ function playRun(c, stage) {
   var P = g.Pa2Run, S = g.SceneRunManager, T = g.SCENE_TEMPLATES[TPL];
   prepHero(c, stage);
   var opts = null;
-  if (CRYPTE) opts = { livingMap: { mapId: "crypt", sectorId: RING === "chemin" ? "fosse" : RING === "periple" ? "nef" : "lac", wake: REVEIL } };
+  if (MONTAGNE) opts = { livingMap: { mapId: "mountain", sectorId: RING === "chemin" ? "nid" : RING === "periple" ? "lac_de_lave" : "pente_grise", wake: false } };
+  else if (CRYPTE) opts = { livingMap: { mapId: "crypt", sectorId: RING === "chemin" ? "fosse" : RING === "periple" ? "nef" : "lac", wake: REVEIL } };
   else if (RING !== "sentier" && RUINES) opts = { livingMap: { mapId: "ruins", sectorId: RING === "chemin" ? "couloirs" : "escalier" } };
   else if (RING !== "sentier") opts = DESERT ? { livingMap: { mapId: "desert", sectorId: RING === "chemin" ? "verrerie" : "bete_dune" } }
     : { livingMap: { mapId: "forest", sectorId: RING === "chemin" ? "menhirs" : "portail" } };
@@ -122,6 +130,7 @@ function playRun(c, stage) {
   if (DESERT) { g.game.resources.outre_pleine = 5; P.addItem("outre"); } // la place libre : l'Outre
   if (RUINES) P.addItem("craie"); // la place libre : la Craie d'Edda (gratuite)
   if (CRYPTE) P.addItem("lanterne"); // la place libre : la Lanterne de Sarkel (gratuite)
+  if (MONTAGNE) P.addItem("pierre_froide"); // v3.726.0 : la place libre, la Pierre froide
   var pr0 = g.game.resources.petite_ration;
   P.depart();
   if (CRYPTE && run.stock.lanterne > 0) P.useItem("lanterne"); // allumée au départ
@@ -162,6 +171,8 @@ function playRun(c, stage) {
       seconds += SECONDS.move + 10; continue;
     }
     if (run.status === "pa2-map") {
+      // v3.726.0 : le détour du trésor mesuré à part (Souffle et PV de la halte à la halte)
+      if (qs.det && !qs.det.done && run.at === (run.quest || {}).halt) { qs.det.done = true; qs.det.spent = qs.det.b0 - run.breath; qs.det.hpLost = (qs.det.hp0 - g.game.heroHp) / max; }
       if (run.hint && run.hint.node === run.at && run.breath >= 40 && P.searchAgain().ok) { qs.again++; seconds += 10; continue; } // v3.724.0
       var mv = avoidTraps(P, run, P.openMoves());
       var pickMove = mv[Math.floor(Math.random() * mv.length)];
@@ -187,6 +198,7 @@ function playRun(c, stage) {
       } else { res = P.bruteForce(); br.brute++; }
     } else if (t === "combat") {
       if (run.lastResult && run.lastResult.surprised) res = P.fight("tenir", true);
+      else if (qfoe && !qfoe.done) res = P.fight("tenir"); // v3.726.0 : la rencontre du retour ne paie pas, on ne charge pas
       else {
         var pv = P.combatPreview();
         // Annoncé mortel : le joueur mange d'abord, puis fuit ou ruse s'il le faut.
@@ -209,7 +221,10 @@ function playRun(c, stage) {
     else if (t === "source") { var b0 = run.breath; res = P.drink(); br.src++; br.srcBr += run.breath - b0; }
     else if (t === "autel") res = P.altar(run.wounds > 0 && run.loot >= P.altarCost());
     else if (t === "trouvaille") res = P.takeRelic();
-    else if (t === "evenement") res = P.eventChoice(P.hookBranches().filter(function (b) { return b.ok; })[0].id);
+    else if (t === "evenement") { // v3.726.0 : la branche qui lance la mini-quête d'abord (pioche : « laisser »), sinon la première
+      var okB = P.hookBranches().filter(function (b) { return b.ok; }), qdB = P.questDef(run), qB = okB.filter(function (b) { return qdB && qdB.def.branches && qdB.def.branches.indexOf(b.id) >= 0; })[0];
+      res = P.eventChoice((qB || okB[0]).id);
+    }
     else if (t === "camp" || t === "seuil") {
       if (t === "seuil" && target === "BOSS") {
         // Le joueur lit l'estimation du gardien au seuil (C1) : trop cher, il vise une autre fin.
@@ -225,6 +240,7 @@ function playRun(c, stage) {
     } else if (t === "clairiere") res = P.clairiere();
     else if (t === "cache") { res = P.takeCache(); qs.cache++; } // v3.724.0
     else if (t === "cachee") { res = P.hiddenEnd(); qs.hidden++; }
+    else if (t === "veine") res = P.cutVein(false); // v3.726.0 (Montagne) : veines laissées, comme le robot de campagne
     if (run.status === "completed" && run.end && run.end.how === "ko") koAt = (t === "boss" || t === "tertre" ? t : t + n.act);
     var lost = Math.max(0, hp0 - g.game.heroHp);
     lossByAct[n.act <= 3 ? n.act : 3] += lost;
@@ -235,6 +251,7 @@ function playRun(c, stage) {
   var q = run.quest || {};
   qs.keyShown = q.keyShown ? 1 : 0; qs.key = P.hasKey(run) ? 1 : 0; qs.kind = q.kind || ""; qs.state = q.state || "";
   qs.searched = Object.keys(run.searched || {}).length; qs.found = P.foundSecrets(run).length;
+  if (qs.det && !qs.det.done && end.how === "ko") qs.det.ko = true; // KO pendant le détour
   return {
     how: end.how || "stuck", dest: end.dest, target: target, koAt: koAt, gold: kept, eaten: pr0 - g.game.resources.petite_ration, seve: Number(run.rareFound || 0), // Sève du run seul (hors récompense de secteur)
     br: br, brEnd: run.breath, gourdeUsed: br.gourde0 - (run.stock.gourde || 0),
@@ -250,7 +267,7 @@ function questMove(P, run, mv, pick, qs) {
   if (q && q.kind === "cache" && q.state === "annoncee" && run.at === q.halt && !q.seen) {
     q.seen = true; qs.announced++;
     var back = mv.filter(function (k) { return P.isBackMove(k, run); })[0];
-    if (back && run.breath >= 40 && g.game.heroHp >= max * 0.5) return back;
+    if (back && run.breath >= 40 && g.game.heroHp >= max * 0.5) { qs.det = { b0: run.breath, hp0: g.game.heroHp, cost: P.cacheCost(run) }; return back; }
     return mv.filter(function (k) { return !P.isBackMove(k, run); })[0] || pick;
   }
   if (q && q.kind === "cache" && q.state === "annoncee" && run.at !== q.halt) return mv.filter(function (k) { return P.isBackMove(k, run); })[0] || pick;
@@ -325,7 +342,8 @@ function summary() {
         if (x.how === "ko") ko++;
         t.eaten += x.eaten; t.brMin = (t.brMin || 0) + x.br.min; t.brEnd = (t.brEnd || 0) + x.brEnd; t.brute = (t.brute || 0) + x.br.brute; t.gourde = (t.gourde || 0) + x.gourdeUsed; t.rest = (t.rest || 0) + x.br.rest; t.cook = (t.cook || 0) + x.br.cook; t.healRest = (t.healRest || 0) + x.br.healRest; t.healCook = (t.healCook || 0) + x.br.healCook; t.under30 = (t.under30 || 0) + (x.br.min < 30 ? 1 : 0); t.insist = (t.insist || 0) + x.br.insist; t.gold += x.gold; t.seve += x.seve; t.sec += x.seconds; t.n++;
         tp.placed += x.traps.placed; tp.met += x.traps.met; tp.back += x.traps.back;
-        var qq = x.qs; qz.n[qq.kind || "-"] = (qz.n[qq.kind || "-"] || 0) + 1; qz.ann += qq.announced; qz.cache += qq.cache; qz.again += qq.again;
+        var qq = x.qs; if (qq.det) { qz.det = (qz.det || 0) + 1; qz.detKo = (qz.detKo || 0) + (qq.det.ko ? 1 : 0); if (qq.det.done) { qz.detN = (qz.detN || 0) + 1; qz.detBr = (qz.detBr || 0) + qq.det.spent; qz.detHp = (qz.detHp || 0) + qq.det.hpLost; qz.detAnn = (qz.detAnn || 0) + qq.det.cost.total; qz.detBurn = (qz.detBurn || 0) + qq.det.cost.burn; } }
+        qz.n[qq.kind || "-"] = (qz.n[qq.kind || "-"] || 0) + 1; qz.ann += qq.announced; qz.cache += qq.cache; qz.again += qq.again;
         if (qq.kind === "lock") { qz.locks++; qz.keyShown += qq.keyShown; qz.key += qq.key; if (qq.keyShown) qz.keyShownGot += qq.key; qz.opened += qq.opened; qz.forced += qq.forced; }
         if (qq.kind === "hiddenEnd" && (qq.state === "active" || qq.state === "faite")) { qz.hiddenRuns++; qz.hidden += qq.hidden; }
         var bc = qz.byCls[c.label] = qz.byCls[c.label] || { s: 0, f: 0 }; bc.s += qq.searched; bc.f += qq.found;
@@ -343,6 +361,7 @@ function summary() {
   if (!NO_QUEST) {
     console.log("  quêtes (runs) : " + JSON.stringify(qz.n) + " | carnier : annoncé " + qz.ann + ", pris " + qz.cache + " (" + pct(qz.cache / Math.max(1, qz.ann)) + ") | verrou : clé marquée " + qz.keyShown + "/" + qz.locks + ", clé prise " + qz.key + " (marquée et prise " + qz.keyShownGot + "), ouvert " + qz.opened + ", forcé " + qz.forced +
       " | fin cachée atteinte " + qz.hidden + "/" + qz.hiddenRuns + " | « Chercher encore » " + qz.again);
+    if (qz.det) console.log("  détour du trésor : " + qz.det + " partis, " + (qz.detKo || 0) + " KO pendant le détour | Souffle annoncé " + Math.round((qz.detAnn || 0) / Math.max(1, qz.detN)) + " (dont brûlures " + Math.round((qz.detBurn || 0) / Math.max(1, qz.detN)) + "), dépensé " + Math.round((qz.detBr || 0) / Math.max(1, qz.detN)) + " | PV perdus " + pct((qz.detHp || 0) / Math.max(1, qz.detN)));
     console.log("  fouilles réussies (passage trouvé / case fouillée) : " + Object.keys(qz.byCls).map(function (k) { var b = qz.byCls[k]; return k + " " + pct(b.f / Math.max(1, b.s)) + " (" + b.s + ")"; }).join(" · "));
   }
   console.log("  pièges : " + (tp.placed / t.n).toFixed(1) + " posés, " + (tp.met / t.n).toFixed(2) + " rencontrés, " + (tp.back / t.n).toFixed(2) + " rebroussés par run | effets subis : " + (hits || "aucun"));

@@ -621,10 +621,11 @@ var Pa2Run = {
     return Math.max(0, c);
   },
   // Le pas fait avancer la lave (Galet de la source : un pas sur deux) ; au camp et au seuil, on la distance.
-  _advanceLava: function (run, n) {
+  _advanceLava: function (run, n, jump) {
     if (run.lavaRow == null) return;
     run.lavaSteps = Number(run.lavaSteps || 0) + 1;
     if (!this.hasItem("galet_source", run) || run.lavaSteps % Number(PA2_RULES.galetEvery || 2) === 0) run.lavaRow += 1;
+    if (jump > 0) run.lavaRow += jump; // v3.726.0 (Seb 06/11) : un passage secret saute des rangées, la lave aussi
     if (n && (n.type === "camp" || n.type === "seuil")) run.lavaRow = Math.min(run.lavaRow, n.row - Number(PA2_RULES.lavaStartBehind || 1));
   },
   // Entrer sur une case qui brûle : la Pierre froide d'abord, sinon du Souffle.
@@ -746,7 +747,8 @@ var Pa2Run = {
   // Le pas lui-même : Souffle de marche, effets en cours (sauf le pas du piège), nœud préparé.
   _step: function (run, key, fromTrap) {
     run.fxNote = null; run.searchNote = null; run.revisit = null; run.hint = null;
-    var q = run.quest, from = run.at, back = this.isBackMove(key, run);
+    var q = run.quest, from = run.at, back = this.isBackMove(key, run), detour = this._onDetour(run, from, key);
+    var fromN = this.node(from, run), toN = this.node(key, run), jump = this.foundSecrets(run).indexOf(from + ">" + key) >= 0 && fromN && toN ? Math.max(0, toN.row - fromN.row - 1) : 0;
     // v3.724.0 (A) : repartir vers l'avant depuis la halte laisse le carnier au collet
     if (q && q.state === "annoncee" && from === q.halt && !back) { q.state = "abandonnee"; if (run.nodes[q.node]) delete run.nodes[q.node].cache; }
     run.path.push([from, key]);
@@ -756,7 +758,8 @@ var Pa2Run = {
     if (step) run.breath = Math.max(0, run.breath - step);
     if (this.hasRelic("braise", run)) this._heal(game.heroMaxHp * PA2_RULES.braiseHealPct);
     if (!fromTrap && !this._tickFx(run)) return { ok: true, reason: null, ko: true }; // le Venin peut achever
-    this._advanceLava(run, this.node(key, run)); // v3.489.0 (Montagne) : la lave avance, puis le sol brûle peut-être
+    // v3.489.0 (Montagne) : la lave avance, puis le sol brûle peut-être ; v3.726.0 : elle attend pendant le détour du trésor
+    if (!(detour && PA2_QUEST_RULES.lavaWaits)) this._advanceLava(run, this.node(key, run), jump);
     this._burn(run, key);
     var arrived = this.node(key, run);
     if (!revisit && !arrived.cache) this._prepareNode(run, arrived);
@@ -1781,6 +1784,23 @@ var Pa2Run = {
     var q = run && run.quest;
     return !!(q && q.state === "annoncee" && q.back && q.back.some(function (e) { return e[0] === run.at && e[1] === key; }));
   },
+  // v3.726.0 : un pas du détour du trésor, à l'aller comme au retour (la lave l'attend, voir _step).
+  _onDetour: function (run, from, key) {
+    var q = run.quest;
+    if (!q || !q.back || (q.state !== "annoncee" && q.state !== "faite")) return false;
+    return q.back.some(function (e) { return (q.state === "annoncee" && e[0] === from && e[1] === key) || (e[1] === from && e[0] === key); });
+  },
+  /* v3.726.0 (Montagne) : Souffle du détour, aller et retour : la marche, plus les cases qui brûlent à la lave du moment
+     (elle ne monte pas pendant le détour), Pierre froide déduite. { march, burn, total } */
+  cacheCost: function (run) {
+    run = run || this.getRun();
+    var q = run && run.quest, self = this, stones = Number((run && run.stock && run.stock.pierre_froide) || 0), burn = 0;
+    if (!q || !q.back) return { march: 0, burn: 0, total: 0 };
+    var walk = q.back.map(function (e) { return e[1]; }).concat(q.back.slice(1).reverse().map(function (e) { return e[0]; }));
+    walk.forEach(function (k) { var lv = self.burnLevel(k, run); if (!lv) return; if (stones > 0) stones--; else burn += self.burnCost(lv, run); });
+    var march = q.back.length * 2 * this.stepCost(run);
+    return { march: march, burn: burn, total: march + burn };
+  },
   questSeen: function () { var run = this.getRun(); if (run && run.quest) { run.quest.seen = true; this._save(); } return { ok: true, reason: null }; },
   // Premier pas du retour : la rencontre fixe (PP-Q2 b), un ennemi sans or, une seule fois.
   _questFoe: function (run, key) {
@@ -1788,6 +1808,7 @@ var Pa2Run = {
     if (!q || !back || q.foeDone || !q.back || q.back[0][1] !== key || !n) return;
     q.foeDone = true;
     q.foe = { key: key, row: n.row, act: n.act, type: "combat", foeId: back.foe, pack: Number(back.pack || 1), noGold: true, questFoe: true, done: false };
+    if (back.foeMult) q.foe.foeMult = Number(back.foeMult); // v3.726.0 (Crypte) : le gisant du retour, à demi réveillé
     run.status = PA2_STATUS.node;
   },
   _nodeAt: function (run, key) { var f = run.quest && run.quest.foe; return f && !f.done && f.key === key ? f : this.node(key, run); },
@@ -1886,7 +1907,9 @@ var Pa2Run = {
     });
   },
   // Avantage à la fouille : ce qui éclaire (torche, Lanterne allumée) ; l'Œil de chouette et la Lanterne des veilleurs aussi.
-  searchLight: function (run) { return this.hasItem("torche", run) || Number(run.lanternLeft || 0) > 0 || this.hasItem("veilleurs", run) || this.hasRelic("oeil", run); },
+  searchLight: function (run) { return this.hasItem("torche", run) || Number(run.lanternLeft || 0) > 0 || this.hasItem("veilleurs", run) || this.hasRelic("oeil", run) || this._questLight(run); },
+  // v3.726.0 : la lampe portée (accroche de la lampe) éclaire aussi la fouille, tant que sa fin cachée se cherche
+  _questLight: function (run) { var q = run && run.quest, qd = q && q.state === "active" ? this.questDef(run) : null; return !!(qd && qd.def.light); },
   searchCheck: function (run, n) { return this._check(run, "precision", { node: n, base: PA2_QUEST_RULES.searchBase, voie: "precision" }); },
   _search: function (run, key) {
     if (this.isParcours(run)) return null;

@@ -279,8 +279,13 @@ var PA2_MAPS = {
       L6: { row: 6, x: 290, y: 400 }, C6: { row: 6, x: 515, y: 315 }, R6: { row: 6, x: 690, y: 280 },
       BOSS: { row: 7, x: 420, y: 125, type: "boss" },
       CLAIRIERE: { row: 7, x: 140, y: 150, type: "clairiere" },
-      TERTRE: { row: 7, x: 660, y: 150, type: "tertre" }
+      TERTRE: { row: 7, x: 660, y: 150, type: "tertre" },
+      // v3.726.0 (Seb 06/11) : fin cachée (accroche de la lampe), le petit mausolée de l'ouest (relevé au pixel, PIL)
+      NICHE: { row: 7, x: 125, y: 335, type: "cachee", hidden: true }
     },
+    /* v3.726.0 (C) : le caveau du milieu (C0 > CAMP, saute une rangée, garde le repos), l'allée des gisants (R4 > R6, par la
+       cour aux sarcophages, saute la place) ; relevés au pixel. Banc : sauter la salle aux lampes coûtait +4 points de KO. */
+    secrets: { "C0>CAMP": { via: [425, 880] }, "R4>R6": { via: [765, 440] }, "L6>NICHE": { quest: "hiddenEnd", via: [210, 330] } },
     links: RUINES_PA_LINKS
   },
   /* v3.454.0 : le gouffre aux cascades (image de Seb du 19/10/2026) : la tour au crâne (camp), la place
@@ -305,8 +310,12 @@ var PA2_MAPS = {
       L6: { row: 6, x: 150, y: 310 }, C6: { row: 6, x: 530, y: 410 }, R6: { row: 6, x: 660, y: 300 },
       BOSS: { row: 7, x: 440, y: 120, type: "boss" },
       CLAIRIERE: { row: 7, x: 150, y: 130, type: "clairiere" },
-      TERTRE: { row: 7, x: 720, y: 210, type: "tertre" }
+      TERTRE: { row: 7, x: 720, y: 210, type: "tertre" },
+      // v3.726.0 (Seb 06/11) : fin cachée (lampe), le bassin au pied de la cascade, entre le gardien et la rotonde (PIL)
+      NICHE: { row: 7, x: 478, y: 240, type: "cachee", hidden: true }
     },
+    // v3.726.0 (C) : l'escalier de la tour (C0 > CAMP, peint, garde le repos), la rampe de la grotte (L4 > L6, saute l'obélisque)
+    secrets: { "C0>CAMP": { via: [412, 900] }, "L4>L6": { via: [200, 400] }, "C6>NICHE": { quest: "hiddenEnd" } },
     links: RUINES_PA_LINKS
   },
   /* v3.489.0 (Montagne, MT10) : deux pentes de cendre. v3.492.7 : images de Seb du 26/10/2026, places relevées
@@ -333,6 +342,9 @@ var PA2_MAPS = {
       CLAIRIERE: { row: 7, x: 160, y: 170, type: "clairiere" },        // la source chaude
       TERTRE: { row: 7, x: 715, y: 175, type: "tertre" }               // la paroi à la fente
     },
+    /* v3.726.0 (Seb 06/11, C) : la sente de la coulée (L4 > L6) et la croûte froide (R1 > R3), sur la roche, hors lave (PIL).
+       La lave suit un passage (Pa2Run._advanceLava) : il fait gagner une case, jamais de l'avance sur elle. */
+    secrets: { "L4>L6": {}, "R1>R3": {} },
     links: RUINES_PA_LINKS
   },
   montagne_2: {
@@ -357,6 +369,8 @@ var PA2_MAPS = {
       CLAIRIERE: { row: 7, x: 150, y: 175, type: "clairiere" },
       TERTRE: { row: 7, x: 720, y: 170, type: "tertre" }
     },
+    // v3.726.0 (C) : la vire de basalte (L4 > L6) et la crête fumante (R4 > R6), sur la roche, hors lave (PIL)
+    secrets: { "L4>L6": {}, "R4>R6": {} },
     links: RUINES_PA_LINKS
   },
   /* v3.627.0 (Tour, lot T-2a) : l'escalier. v3.660.0 : places relevées sur les images de Seb (04/11). */

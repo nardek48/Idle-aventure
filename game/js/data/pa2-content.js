@@ -682,7 +682,10 @@ var PA2_DESTS = {
       win: "Au pied de l'autel, quelqu'un a laissé de la cire, encore tiède." },
     tertre: { name: "La rotonde", line: "Une rotonde sous une coupole, un sarcophage au milieu. Une porte basse le ferme.",
       win: "La porte a cédé. Dans le sarcophage, personne. Il reste ce qu'il gardait.",
-      fail: "La porte a tenu. Tu repars avec ce que tu portais. Derrière toi, quelqu'un se retourne dans son sommeil." }
+      fail: "La porte a tenu. Tu repars avec ce que tu portais. Derrière toi, quelqu'un se retourne dans son sommeil." },
+    // v3.726.0 (Seb 06/11) : la fin cachée de l'accroche de la lampe, derrière un passage secret
+    cachee: { name: "La niche aux lampes", line: "Une niche basse, taillée dans le mur. Des lampes éteintes, alignées. Entre deux, une place vide.",
+      win: "Tu poses la lampe à la place vide. Les autres s'allument, une à une. Derrière elles, une offrande que personne n'est venu prendre." }
   },
   mountain: { // v3.489.0 : le trieur, la source chaude, la paroi fermée
     boss: { name: "Le trieur", line: "Au sommet, un golem de lave plus grand que les autres, assis sur un coffre. Il regarde tes mains.",
@@ -806,7 +809,8 @@ var PA2_QUEST_RULES = {
   cacheGold: 8, cacheRarePct: 50, maxBack: 2,  // A : or × G × anneau, chance de Sève, pas d'aller au plus (banc)
   searchBase: 6, searchAgainBreath: 10,        // C : base du DD de fouille (précision) ; banc du 06/11 : 4 → 6 (trop facile)
   forceBase: 6, forceMidBreath: 10,            // B : forcer un verrou (force, base de la porte scellée)
-  hiddenGold: 16, hiddenRare: 1                // D : or et Sève de la fin cachée (banc)
+  hiddenGold: 16, hiddenRare: 1,               // D : or et Sève de la fin cachée (banc)
+  lavaWaits: true                              // v3.726.0 (Montagne) : la lave ne monte pas pendant le détour du trésor
 };
 PA2_HOOKS.chasseur.quest = {
   kind: "cache", branches: ["ration", "mains"], announce: "halt",
@@ -881,6 +885,24 @@ var PA2_SECRETS = {
   ruines_2: {
     "R1>R3": { name: "La herse de l'arène", hint: "La herse de l'arène n'est pas scellée. Derrière, une rue que tu ne connais pas." },
     "R4>R6": { name: "Le dessus de l'aqueduc", hint: "Des marches taillées montent le long d'une pile de l'aqueduc." }
+  },
+  crypte_1: { // v3.726.0 (Seb 06/11)
+    "C0>CAMP": { name: "Le caveau du milieu", hint: "Un caveau ouvert au bord du chemin. Au fond, une autre porte, et de la lumière." },
+    "R4>R6": { name: "L'allée des gisants", hint: "Entre les gisants, une allée assez large pour passer. Ils ne bougent pas." },
+    "L6>NICHE": { name: "Le passage de la lampe", hint: "Sur le mur, la lumière de la lampe tremble, comme s'il y avait de l'air derrière." }
+  },
+  crypte_2: {
+    "C0>CAMP": { name: "L'escalier de la tour", hint: "Un escalier raide monte droit vers la tour au crâne. Personne ne le prend." },
+    "L4>L6": { name: "La rampe de la grotte", hint: "Des marches usées montent vers la grotte aux cristaux." },
+    "C6>NICHE": { name: "Derrière la cascade", hint: "Derrière l'eau qui tombe, la lumière de la lampe accroche quelque chose." }
+  },
+  montagne_1: {
+    "L4>L6": { name: "La sente de la coulée", hint: "Le long de la coulée, une sente de roche refroidie monte vers le haut." },
+    "R1>R3": { name: "La croûte froide", hint: "Une croûte noire, froide en surface, monte le long de la coulée de l'est." }
+  },
+  montagne_2: {
+    "L4>L6": { name: "La vire de basalte", hint: "Une vire étroite longe la paroi, vers le haut. La roche y est froide." },
+    "R4>R6": { name: "La crête fumante", hint: "Entre deux fumerolles, une crête de roche monte vers le nord." }
   }
 };
 
@@ -1191,6 +1213,49 @@ PA2_HOOKS.forme = {
   clairiere: {
     ration: "Au bord de la source, la petite forme est assise. Elle tient encore la ration.",
     other: "Au bord de la source, des traces dans la cendre. Petites."
+  }
+};
+/* v3.726.0 (Seb 06/11, parcours PA v0.2, lot 4) : Crypte — garçon A (boîte à mèches), lampe D cachée (niche aux lampes),
+   cloche D imposée (chapelle) ; Montagne — pioche A (veine de la pioche, retour vers la lave), forme D imposée (source chaude). */
+PA2_HOOKS.garcon.quest = {
+  kind: "cache", branches: ["reveiller"], announce: "halt",
+  // au retour, un seul gisant se réveille, à demi (×0,6), sans or ; banc : le Chevalier mort, puis le spectre entier, trop durs
+  cache: { back: { foe: "spectre", pack: 1, foeMult: 0.6 } },
+  text: {
+    name: "La boîte à mèches",
+    announce: "À la salle aux lampes, le garçon montre le couloir d'où tu viens. « Ma boîte à mèches. Je l'ai posée en bas, contre un gisant. Prends-la, moi je n'y retourne pas. »",
+    found: "Contre un gisant, une boîte en fer. Dedans, des mèches neuves, et une bourse que personne n'a réclamée.",
+    back: "Au-dessus d'un gisant, ce qui dormait avec lui s'est levé. Un seul. Les autres dorment encore.",
+    take: "Prendre la boîte", got: "La boîte à mèches est à toi"
+  }
+};
+PA2_HOOKS.lampe.quest = {
+  kind: "hiddenEnd", branches: ["porter"], announce: "event", node: "NICHE", light: true, // elle éclaire : avantage à la fouille
+  text: { found: "La lampe éclaire un passage que tu n'avais pas vu. Au bout, une niche, et des lampes alignées.", take: "Poser la lampe à sa place" }
+};
+PA2_HOOKS.cloche.quest = {
+  kind: "end", end: "clairiere", announce: "prep", // banc : la rotonde imposée rapportait +55 % d'or/min au Périple
+  text: {
+    prep: "La cloche a sonné à la chapelle de l'ouest. Cette nuit, tous les couloirs y mènent. Une seule fin.",
+    closed: "Des grilles sont tombées sur les autres couloirs. Seule la chapelle reste ouverte."
+  }
+};
+PA2_HOOKS.pioche.quest = {
+  kind: "cache", branches: ["laisser"], announce: "halt",
+  cache: { back: { foe: "dragonling", pack: 1 } },
+  text: {
+    name: "La veine de la pioche",
+    announce: "En bas, derrière toi, la veine où la pioche est restée plantée bat plus fort. Elle a poussé quelque chose au jour, au bord d'un sentier. La lave monte vers elle.",
+    found: "La veine affleure entre deux pierres. Dans la fente, des grains de Cendre, et la bourse d'un tailleur qui n'est pas remonté.",
+    back: "Un dragonnet est venu boire à la veine avant toi.",
+    take: "Gratter la veine", got: "Ce que tenait la veine est à toi"
+  }
+};
+PA2_HOOKS.forme.quest = {
+  kind: "end", end: "clairiere", announce: "prep",
+  text: {
+    prep: "Edda dit que la forme descend chaque nuit vers la source chaude. Cette nuit, toutes les pentes y mènent. Une seule fin.",
+    closed: "La fumée s'est refermée sur les autres pentes. Seule la source chaude reste ouverte."
   }
 };
 var PA2_HOOKS_BY_WORLD = {

@@ -24840,6 +24840,187 @@ console.log("\n[486] v3.725.0 — Petites Aventures : parcours du Désert et des
   finally { P.rand = savedRand; g.PA2_RULES.wallShiftPct = savedPct; game.sceneRun = null; if (g.SortieManager.isActive()) g.SortieManager.end("return"); }
 })();
 
+console.log("\n[487] v3.726.0 — Petites Aventures : parcours de la Crypte et de la Montagne (gisants, lave, passages)");
+(function () {
+  var S = g.SceneRunManager, P = g.Pa2Run, QR = g.PA2_QUEST_RULES, LM = g.LivingMapManager, savedRand = P.rand;
+  var TPL = { crypte_1: "petite_aventure_crypte", crypte_2: "petite_aventure_crypte", montagne_1: "petite_aventure_montagne", montagne_2: "petite_aventure_montagne" };
+  function prep() {
+    game = freshCombat("knight"); giveWeapon(); run("game.enemy = null; game.combat = null;");
+    game.equipped.weapon.value = 1500; game.upgrades["utrain_" + g.getClassMainStat("knight").stat] = 300; game.upgrades.utrain_endurance = 300; run("EquipmentManager.recalcStats();"); // héros de la Crypte et de la Montagne
+    S.ensureDefaults(); game.explorationProgression.petiteAventure = { spent: 0, since: null };
+    game.resources.petite_ration = 6; game.heroLevel = 20; game.heroHp = game.heroMaxHp; game.sceneRun = null;
+    if (g.SortieManager.isActive()) g.SortieManager.end("return");
+    g.pa2View.runId = null; g.pa2View.sheet = null; P.rand = savedRand;
+  }
+  // Comme [486] : carte et accroche imposées, nuit calme, acte I en sources, sans pièges ni coupures ; brûlures retirées.
+  function start(mapId, hookId, bag) {
+    prep(); S.startRun(TPL[mapId]); var r = game.sceneRun;
+    r.mapId = mapId; r.hookId = hookId; r.cond = "calme";
+    (bag || []).forEach(function (id) { P.addItem(id); });
+    P.depart();
+    r.traps = {}; r.cuts = {};
+    var camp = P.rows(P.getMap(r)).camp;
+    Object.keys(r.nodes).forEach(function (k) { var n = r.nodes[k]; delete n.burning; if (n.type === "evenement" || n.type === "veine") n.type = "source"; if (n.row >= 0 && n.row < camp) n.type = "source"; });
+    return r;
+  }
+  function step(key) { return P.moveTo(key); }
+  function rollFor(v) { return function () { return (v - 0.5) / 20; }; }
+  function saveLoad() { var d = JSON.parse(JSON.stringify(g.buildSaveData())); game.sceneRun = null; g.restoreBaseState(d); run("EquipmentManager.recalcStats();"); g.pa2View.runId = null; return game.sceneRun; } // stats refaites, comme au chargement
+  function reach(r, to) { var L = P.links(r), seen = { S: true }, todo = ["S"]; while (todo.length) { var a = todo.pop(); (L[a] || []).forEach(function (b) { if (!seen[b]) { seen[b] = true; todo.push(b); } }); } return !!seen[to]; }
+  function hostile(mapId, sectorId, on) { var s = LM.getState(mapId, sectorId); if (on) s.hostileDay = LM._dayKey(); else delete s.hostileDay; }
+  try {
+    /* ---------- Répartition ---------- */
+    var H = g.PA2_HOOKS, M = g.PA2_MAPS;
+    ok(H.garcon.quest.kind === "cache" && H.lampe.quest.kind === "hiddenEnd" && H.cloche.quest.kind === "end" && H.cloche.quest.end === "clairiere" &&
+      H.pioche.quest.kind === "cache" && H.pioche.quest.branches.join() === "laisser" && H.forme.quest.kind === "end" && H.forme.quest.end === "clairiere",
+      "répartition : Crypte A (garçon) / D cachée (lampe) / D imposée (cloche) ; Montagne A (pioche, « laisser ») / D imposée (forme)");
+    var nSec = ["crypte_1", "crypte_2", "montagne_1", "montagne_2"].map(function (m) { return Object.keys(M[m].secrets).filter(function (k) { return !M[m].secrets[k].quest; }).length; });
+    var noBack = ["crypte_1", "crypte_2", "montagne_1", "montagne_2"].every(function (m) { return Object.keys(M[m].secrets).every(function (k) { var p = k.split(">"); return M[m].nodes[p[1]].row > M[m].nodes[p[0]].row; }); });
+    ok(nSec.join() === "2,2,2,2" && noBack && M.crypte_1.nodes.NICHE.hidden && M.crypte_2.nodes.NICHE.hidden && !M.montagne_1.nodes.NICHE, "C : deux passages par carte, tous vers l'avant ; la niche cachée sur les deux cryptes");
+
+    /* ---------- Crypte, A : la boîte à mèches (garçon) — le gisant du retour ---------- */
+    var r = start("crypte_1", "garcon");
+    ok(r.quest && r.quest.kind === "cache" && r.quest.state === "rencontre", "Crypte A : garçon → « la boîte à mèches », en attente de la rencontre");
+    step("C0"); P.drink(); r.nodes.L1.type = "evenement"; step("L1");
+    ok(P.eventChoice("reveiller").ok && r.quest.state === "halte", "Crypte A : garçon réveillé → la boîte attend la halte");
+    step("CAMP"); var hr = P.placeAction("rest"), q = r.quest;
+    ok(hr.ok && q.state === "annoncee" && q.node === "L0" && JSON.stringify(q.back) === '[["CAMP","L1"],["L1","L0"]]', "Crypte A : annoncé à la salle aux lampes ; boîte sur L0, 2 pas");
+    run("switchTab('scene')");
+    ok(g.pa2AnnounceBody(r).indexOf(g.esc(H.garcon.quest.text.announce)) > 0 && P.cacheCost(r).burn === 0, "Crypte A : fiche d'annonce, sans brûlure (Crypte)");
+    var gis0 = P._foe(r, { act: 1, foeId: "spectre", pack: 1 }).maxHp;
+    step("L1"); var foe = P.questFoeHere(r);
+    ok(foe && foe.foeId === "spectre" && foe.noGold && foe.foeMult === 0.6 && P._foe(r, foe).maxHp < gis0, "Crypte A : un seul gisant se lève au retour, à demi réveillé (×0,6), sans or");
+    r.livingMap = { mapId: "crypt", sectorId: "lac", wake: true }; var gw = P._foe(r, foe).maxHp; hostile("crypt", "lac", true); var gh = P._foe(r, foe).maxHp;
+    ok(Math.abs(P.gisantsMult(r) - 1.3 * 1.25) < 1e-9 && gw > P._foe(Object.assign({}, r, { livingMap: null }), foe).maxHp && gh > gw, "Crypte A : gisants réveillés au départ, puis « Le réveil » du jour : le gisant du retour se renforce comme le reste");
+    hostile("crypt", "lac", false); r.livingMap = null;
+    var sv = saveLoad();
+    ok(sv && sv.quest.state === "annoncee" && P.questFoeHere(sv) && JSON.stringify(P.openMoves()) === "[]", "Crypte A : sauvegardé face au gisant, rechargé");
+    r = sv; var fr = P.fight("tenir");
+    ok(fr.ok && !fr.result.gain && r.status === "pa2-map" && P.openMoves().sort().join() === "CAMP,L0", "Crypte A : gisant tenu, sans or ; la case revisitée reste vide (rien d'autre ne se lève)");
+    r.livingMap = { mapId: "crypt", sectorId: "lac", wake: false }; hostile("crypt", "lac", true); // « Le réveil » tombe pendant la quête
+    step("L0"); var tc = P.takeCache();
+    ok(tc.ok && tc.result.gain === Math.round(r.refGold * QR.cacheGold * P.lootMult(r)) && g.pa2CacheBody(r, r.nodes.L0, { cache: true, res: tc.result }).indexOf(g.esc(H.garcon.quest.text.got)) > 0, "Crypte A : boîte prise (+" + tc.result.gain + " or), réveil du jour compris ; « La boîte à mèches est à toi »");
+    step("L1");
+    ok(r.revisit === "L1" && P.questFoeHere(r).done && r.status === "pa2-map", "Crypte A : repassé par L1 : le gisant ne se relève pas une seconde fois");
+    step("CAMP"); hostile("crypt", "lac", false);
+    ok(P.openMoves().every(function (k) { return r.nodes[k].row > r.nodes.CAMP.row; }), "Crypte A : retour à la salle aux lampes, seulement l'avant");
+
+    /* ---------- Crypte, D cachée : la niche aux lampes (lampe), sur les deux cartes ---------- */
+    [["crypte_1", "L6"], ["crypte_2", "C6"]].forEach(function (mc) {
+      var m = mc[0], from = mc[1], rl = start(m, "lampe");
+      ok(!P.isShown("NICHE", rl) && (P.links(rl)[from] || []).indexOf("NICHE") < 0, m + " D : la niche n'existe pas sur la carte avant son passage");
+      rl.nodes.L1.type = "evenement"; step("C0"); P.drink(); step("L1"); P.eventChoice("porter");
+      ok(rl.quest.state === "active" && P.searchLight(rl) && P._questLight(rl), m + " D : la lampe portée → la niche se cherche, avec l'avantage (elle éclaire)");
+      rl.at = "SEUIL"; rl.nodes.SEUIL.done = true; rl.status = "pa2-map"; rl.nodes[from].type = "source";
+      P.rand = rollFor(20); step(from); P.rand = savedRand; P.drink();
+      ok(rl.secrets[from + ">NICHE"] === "found" && P.openMoves().indexOf("NICHE") >= 0 && /is-hidden-end/.test(g.pa2MapHTML(rl)), m + " D : passage trouvé depuis " + from + ", la niche apparaît");
+      step("NICHE"); var sh = g.pa2SheetBody(rl, rl.nodes.NICHE, { key: "NICHE", step: "intro" });
+      ok(sh.indexOf("dest_crypt_cachee.webp") > 0 && sh.indexOf(g.esc(g.PA2_DESTS.crypt.cachee.name)) > 0, m + " D : fiche de la niche, icône propre à la Crypte");
+      var he = P.hiddenEnd();
+      ok(he.ok && rl.end.dest === "cachee" && g.buildPa2EndHTML(rl).indexOf(g.esc(g.PA2_DESTS.crypt.cachee.name)) > 0, m + " D : la niche atteinte, destination comptée, bilan");
+    });
+    r = start("crypte_2", "lampe"); r.nodes.L1.type = "evenement"; step("C0"); P.drink(); step("L1"); P.eventChoice("laisser");
+    r.at = "SEUIL"; r.nodes.SEUIL.done = true; r.status = "pa2-map"; r.nodes.C6.type = "source";
+    P.rand = rollFor(20); step("C6"); P.rand = savedRand;
+    ok(r.quest.state === "sans" && !r.secrets["C6>NICHE"] && !P._questLight(r), "Crypte D : lampe laissée, ni fouille vers la niche ni avantage");
+
+    /* ---------- Crypte, D imposée : la chapelle (cloche) ---------- */
+    ["crypte_1", "crypte_2"].forEach(function (m) {
+      var rd = start(m, "cloche");
+      ok(rd.closedEnds.sort().join() === "BOSS,TERTRE" && P.isClosed("R6", rd) && P.links(rd).SEUIL.sort().join() === "C6,L6" && reach(rd, "CLAIRIERE"), m + " D : seule la chapelle ; R6 fermée, la chapelle accessible");
+    });
+    r = start("crypte_1", "cloche"); r.at = "R3"; r.nodes.R3.done = true; r.status = "pa2-map"; r.nodes.R4.type = "source";
+    P.rand = rollFor(20); step("R4"); P.rand = savedRand;
+    ok(!r.secrets["R4>R6"] && P._secretsFrom(r, "R4").length === 0, "Crypte D : l'allée des gisants (vers R6, fermée) ne se cherche pas");
+    prep(); S.startRun("petite_aventure_crypte"); r = game.sceneRun; r.hookId = "cloche"; r.cond = "calme"; r.mapId = "crypte_2";
+    ok(g.buildPa2PrepHTML(r).indexOf(g.esc(H.cloche.quest.text.prep)) > 0, "Crypte D : « Prêt à partir » annonce la chapelle");
+    S.abandon();
+
+    /* ---------- Crypte, C : passages relevés au pixel ---------- */
+    r = start("crypte_1", "cloche"); r.quest = null; r.closedEnds = [];
+    P.rand = rollFor(20); step("C0"); P.rand = savedRand; P.drink();
+    ok(r.secrets["C0>CAMP"] === "found" && P.openMoves().indexOf("CAMP") >= 0 && /d="M430 940 Q425 880 430 800"/.test(g.pa2MapHTML(r)), "crypte_1 C : le caveau du milieu (C0 → salle aux lampes), tracé par le caveau peint");
+    step("CAMP");
+    ok(r.at === "CAMP" && r.status === "pa2-node", "crypte_1 C : le passage mène à la halte : son repos reste à prendre");
+    r = start("crypte_2", "garcon"); r.at = "L3"; r.nodes.L3.done = true; r.status = "pa2-map"; r.nodes.L4.type = "source";
+    P.rand = rollFor(20); step("L4"); P.rand = savedRand; P.drink();
+    ok(r.secrets["L4>L6"] === "found" && /d="M90 470 Q200 400 150 310"/.test(g.pa2MapHTML(r)), "crypte_2 C : la rampe de la grotte (L4 → L6)");
+
+    /* ---------- Montagne, A : la veine de la pioche — le retour vers la lave ---------- */
+    r = start("montagne_1", "pioche");
+    ok(r.quest && r.quest.state === "rencontre" && r.lavaRow === -2, "Montagne A : pioche → « la veine de la pioche » ; la lave part sous le départ");
+    step("C0"); P.drink(); r.nodes.L1.type = "evenement"; step("L1");
+    ok(P.eventChoice("laisser").ok && r.quest.state === "halte", "Montagne A : pioche laissée → la veine attend la halte");
+    step("CAMP"); P.placeAction("rest"); q = r.quest;
+    var cc = P.cacheCost(r);
+    ok(q.state === "annoncee" && q.node === "L0" && r.lavaRow === 1 && cc.march === 16 && cc.burn === 40 && cc.total === 56, "Montagne A : annoncé à l'abri, veine sur L0 ; détour 16 de marche + 40 de brûlures (L1 10, L0 20, L1 10)");
+    ok(g.pa2AnnounceBody(r).indexOf(g.esc(g._t("Dont {n} Souffle de brûlures : la lave ne monte pas pendant le détour, mais elle est déjà là.", { n: 40 }))) > 0, "Montagne A : la fiche chiffre les brûlures");
+    var b0 = r.breath; step("L1"); foe = P.questFoeHere(r);
+    ok(r.lavaRow === 1 && foe && foe.foeId === "dragonling" && foe.noGold, "Montagne A : premier pas du retour, la lave attend (rangée 1) ; un dragonnet sans or");
+    r.livingMap = { mapId: "mountain", sectorId: "pente_grise", wake: false }; hostile("mountain", "pente_grise", true);
+    ok(Math.abs(P.gisantsMult(r) - 1.25) < 1e-9, "Montagne A : la coulée du jour tombe pendant la quête (×1,25)");
+    var mr = saveLoad();
+    ok(mr && mr.lavaRow === 1 && mr.quest.state === "annoncee" && P.questFoeHere(mr), "Montagne A : sauvegardé au milieu du retour (lave comprise), rechargé");
+    r = mr; P.fight("tenir"); step("L0"); tc = P.takeCache();
+    ok(tc.ok && r.quest.state === "faite" && r.lavaRow === 1, "Montagne A : veine grattée (+" + tc.result.gain + " or) sous la coulée du jour ; la lave n'a pas bougé");
+    step("L1"); step("CAMP");
+    ok(b0 - r.breath === 56 && r.lavaRow === 1 && P.openMoves().every(function (k) { return r.nodes[k].row > 2; }), "Montagne A : de retour à l'abri, 56 Souffle dépensés comme annoncé ; la lave reprend à la rangée 1");
+    hostile("mountain", "pente_grise", false);
+    r = start("montagne_1", "pioche"); step("C0"); P.drink(); r.nodes.L1.type = "evenement"; step("L1"); P.eventChoice("laisser"); step("CAMP"); P.placeAction("rest");
+    QR.lavaWaits = false; step("L1"); QR.lavaWaits = true;
+    ok(r.lavaRow === 2, "Montagne A : sans la règle (banc --lave-libre), le pas du retour fait monter la lave");
+    r = start("montagne_2", "pioche"); step("C0"); P.drink(); r.nodes.R1.type = "evenement"; step("R1"); P.eventChoice("arracher"); step("CAMP"); P.placeAction("rest");
+    ok(r.quest.state === "sans" && !r.quest.back, "Montagne A : pioche arrachée, pas de veine à aller gratter");
+
+    // A sur l'autre carte de chaque monde : annonce, retour, trésor, retour à la halte
+    [["crypte_2", "garcon", "reveiller"], ["montagne_2", "pioche", "laisser"]].forEach(function (x) {
+      var ra = start(x[0], x[1]); step("C0"); P.drink(); ra.nodes.R1.type = "evenement"; step("R1"); P.eventChoice(x[2]); step("CAMP"); P.placeAction("rest");
+      var qa = ra.quest, okA = qa.state === "annoncee" && qa.back.length >= 1;
+      if (okA) { qa.back.forEach(function (e) { step(e[1]); if (P.questFoeHere(ra) && !P.questFoeHere(ra).done) P.fight("tenir"); }); okA = P.takeCache().ok; qa.back.slice().reverse().forEach(function (e) { step(e[0]); }); }
+      ok(okA && qa.state === "faite" && ra.at === "CAMP" && ra.status === "pa2-map", x[0] + " A : " + x[1] + ", trésor annoncé, pris (" + qa.node + "), retour à la halte");
+    });
+
+    /* ---------- Montagne, C : la lave suit les passages ---------- */
+    r = start("montagne_1", "forme"); r.quest = null; r.closedEnds = [];
+    r.at = "L3"; r.nodes.L3.done = true; r.status = "pa2-map"; r.nodes.L4.type = "source"; r.nodes.L6.type = "source"; r.lavaRow = 2;
+    P.rand = rollFor(20); step("L4"); P.rand = savedRand; P.drink();
+    ok(r.secrets["L4>L6"] === "found" && r.lavaRow === 3, "montagne_1 C : la sente de la coulée trouvée depuis L4");
+    step("L6");
+    ok(r.lavaRow === 5 && P.burnLevel("L6", r) === 0, "Montagne C : le passage saute une rangée, la lave aussi (3 → 5, comme par le seuil) : aucune avance gagnée");
+    r = start("montagne_1", "forme"); r.quest = null; r.closedEnds = []; r.at = "L4"; r.nodes.L4.done = true; r.status = "pa2-map"; r.lavaRow = 3;
+    step("SEUIL"); P.placeAction("rest"); r.nodes.L6.type = "source"; step("L6");
+    ok(r.lavaRow === 5, "Montagne C : par le seuil, la lave est aussi en 5 (le passage ne coûte que le repos)");
+
+    /* ---------- Montagne, D imposée : la source chaude (forme) ---------- */
+    ["montagne_1", "montagne_2"].forEach(function (m) {
+      var rf = start(m, "forme");
+      ok(rf.closedEnds.sort().join() === "BOSS,TERTRE" && P.isClosed("R6", rf) && reach(rf, "CLAIRIERE"), m + " D : seule la source chaude ; R6 fermée");
+    });
+    r = start("montagne_2", "forme"); r.at = "R3"; r.nodes.R3.done = true; r.status = "pa2-map"; r.nodes.R4.type = "source";
+    P.rand = rollFor(20); step("R4"); P.rand = savedRand;
+    ok(!r.secrets["R4>R6"] && P._secretsFrom(r, "R4").length === 0, "Montagne D : la crête fumante (vers R6, fermée) ne se cherche pas");
+    r.at = "SEUIL"; r.status = "pa2-map";
+    ok(g.pa2QuestLineHTML(r).indexOf(g.esc(g._td(g.PA2_DESTS.mountain.clairiere.name))) > 0 && !P.isShown("BOSS", r) && !P.isShown("TERTRE", r), "Montagne D : HUD « une seule fin » ; fins écartées effacées");
+
+    /* ---------- Tirages réels (Périple) : pièges, coupures, fins, lave ---------- */
+    var bad = [];
+    ["crypte_1", "crypte_2", "montagne_1", "montagne_2"].forEach(function (m) {
+      (m.indexOf("crypte") === 0 ? ["garcon", "lampe", "cloche"] : ["pioche", "forme"]).forEach(function (h) {
+        for (var j = 0; j < 8; j++) {
+          prep(); S.startRun(TPL[m]); var rx = game.sceneRun; rx.mapId = m; rx.hookId = h; rx.ring = "periple"; P.depart();
+          var sec = P.getMap(rx).secrets || {};
+          Object.keys(rx.traps).concat(Object.keys(rx.cuts)).forEach(function (k) { if (sec[k]) bad.push(m + "/" + h + " " + k); });
+          if ((h === "cloche" || h === "forme") && !reach(rx, "CLAIRIERE")) bad.push(m + "/" + h + " fin");
+          if (P.isShown("NICHE", rx)) bad.push(m + " niche");
+          if (m.indexOf("montagne") === 0 && rx.lavaRow == null) bad.push(m + " lave");
+        }
+      });
+    });
+    ok(!bad.length, "tirages (80 runs au Périple) : ni piège ni coupure sur un passage ; fin imposée accessible ; niche cachée ; lave posée" + (bad.length ? " — " + bad.slice(0, 4).join(", ") : ""));
+  } catch (err) { ok(false, "[487] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  finally { P.rand = savedRand; QR.lavaWaits = true; game.sceneRun = null; if (g.SortieManager.isActive()) g.SortieManager.end("return"); }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

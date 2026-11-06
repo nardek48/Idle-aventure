@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.726.0", "living_map/carte_vivante", _t("Petites Aventures de la Crypte et de la Montagne : la boîte à mèches, la niche aux lampes cachée, la chapelle, la veine de la pioche (la lave attend pendant le détour), la source chaude, et des passages secrets.")],
     ["3.725.0", "living_map/carte_vivante", _t("Petites Aventures du Désert et des Ruines : à leur tour, les accroches agissent sur la carte. Le bât enterré, le pont de l'oued, la tour de guet cachée, l'arche murée, les pièces du socle, la cour au puits, et des passages secrets.")],
     ["3.724.0", "living_map/carte_vivante", _t("Petites Aventures de la Forêt : les accroches agissent sur la carte. Un trésor à aller chercher en arrière, une passerelle fermée à ouvrir ou forcer, une fin imposée, une fin cachée, et des passages secrets qu'une fouille peut révéler.")],
     ["3.723.0", "scene/pa2_besace", _t("Petites Aventures : nouvel écran « Prêt à partir ». La besace se lit d'un coup d'œil (usages, soins emportés), on ajoute plusieurs objets sans fermer, les pactes se règlent sur le même écran et le bouton de départ montre le vrai butin final. Seuls les objets que tu as, et ceux du monde, sont proposés.")],

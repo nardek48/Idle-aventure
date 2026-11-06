@@ -86,7 +86,8 @@ var PA2_ICONS_BY_WORLD = {
   crypt: {
     evenement: "images/Icons/scene/crypt/node_event.webp", obstacle: "images/Icons/scene/crypt/node_obstacle.webp", source: "images/Icons/scene/crypt/node_spring.webp",
     autel: "images/Icons/scene/crypt/node_altar.webp", camp: "images/Icons/scene/crypt/node_camp.webp", seuil: "images/Icons/scene/crypt/node_threshold.webp",
-    boss: "images/Icons/scene/dest/dest_crypt_boss.webp", clairiere: "images/Icons/scene/dest/dest_crypt_clairiere.webp", tertre: "images/Icons/scene/dest/dest_crypt_tertre.webp"
+    boss: "images/Icons/scene/dest/dest_crypt_boss.webp", clairiere: "images/Icons/scene/dest/dest_crypt_clairiere.webp", tertre: "images/Icons/scene/dest/dest_crypt_tertre.webp",
+    cachee: "images/Icons/scene/dest/dest_crypt_cachee.webp" // v3.726.0 : la niche aux lampes (fin cachée), image à faire
   },
   mountain: { // v3.492.10 : ses trois fins ; les autres points gardent les icônes communes
     boss: "images/Icons/scene/dest/dest_mountain_boss.webp", clairiere: "images/Icons/scene/dest/dest_mountain_clairiere.webp", tertre: "images/Icons/scene/dest/dest_mountain_tertre.webp"
@@ -1813,10 +1814,11 @@ function pa2AnnounceDue(run) {
 }
 function pa2OpenAnnounce() { pa2View.sheet = { announce: true }; pa2RenderSheet(); }
 function pa2AnnounceBody(run) {
-  var q = run.quest, t = Pa2Run.questText(run), steps = q.back.length, cost = steps * 2 * Pa2Run.stepCost(run), halt = Pa2Run.node(q.halt, run);
+  var q = run.quest, t = Pa2Run.questText(run), steps = q.back.length, cc = Pa2Run.cacheCost(run), cost = cc.total, halt = Pa2Run.node(q.halt, run); // v3.726.0 : brûlures comprises
   var h = '<div class="pa2-sheet-head"><div class="pa2-medal">' + pa2Img(PA2_ICONS.cache) + '</div><div><div class="pa2-kicker">' + esc(halt ? pa2NodeLabel(run, halt) : "") + '</div><h2 class="pa2-h2">' + esc(_td(t.name)) + '</h2></div></div>';
   h += '<p class="pa2-narr">' + esc(_td(t.announce)) + '</p>';
   h += '<p class="pa2-sim is-q">' + esc(_tn(steps, "{n} pas derrière toi, sur une case que tu n'as pas jouée. Aller et retour : {b} Souffle. Facultatif.", "{n} pas derrière toi, sur une case que tu n'as pas jouée. Aller et retour : {b} Souffle. Facultatif.", { n: steps, b: cost })) + '</p>';
+  if (cc.burn > 0) h += '<p class="pa2-sim is-q">' + esc(_t("Dont {n} Souffle de brûlures : la lave ne monte pas pendant le détour, mais elle est déjà là.", { n: cc.burn })) + '</p>'; // v3.726.0 (Montagne)
   h += '<div class="pa2-choices"><button type="button" class="pa2-choice is-q" onclick="pa2AnnounceGo()">' + pa2Img(PA2_ICONS.cache) + '<span class="pa2-t">' + esc(_t("Y retourner")) + '</span>' +
     '<span class="pa2-cost">' + esc(_t("{n} Souffle", { n: cost })) + '</span><span class="pa2-s">' + esc(_t("Le chemin du retour s'affiche ; tu fais le premier pas.")) + '</span></button>' +
     '<button type="button" class="pa2-choice is-noicon is-q" onclick="pa2AnnounceLater()"><span class="pa2-t">' + esc(_t("Voir la carte")) + '</span>' +
