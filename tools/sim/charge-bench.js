@@ -540,7 +540,7 @@ function rapportLeviers(all, runs, minutes, brut) {
   return out.join("\n");
 }
 
-if (require.main !== module) module.exports = { launch: launch, instrument: instrument, suivreCombats: suivreCombats, prepare: prepare, playRun: playRun, saveFor: saveFor, PROFILS: PROFILS, SCENARIOS: SCENARIOS };
+if (require.main !== module) module.exports = { launch: launch, seed: seed, CLOCK: CLOCK, instrument: instrument, suivreCombats: suivreCombats, prepare: prepare, playRun: playRun, saveFor: saveFor, PROFILS: PROFILS, SCENARIOS: SCENARIOS };
 else if (WORKER) worker(); else if (VERIF) verif();
 else if (ARGS.indexOf("--leviers") >= 0) mainLeviers().catch(function (e) { console.error(e.message); process.exit(1); });
 else main();
