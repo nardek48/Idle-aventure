@@ -70,5 +70,5 @@ node tools/audit/missing-icons.js
 La liste des scripts est lue dans `game/index.html` (`tools/harness/index-scripts.js`) : rien à régénérer.
 
 ## Documentation
-- Dépôt de conception : `/home/user/Idle-Aventure-Documentation`. Le document de conception fait foi sur les **décisions** ; l'État des chantiers (en cours : `Aethervale_Etat_des_chantiers_2026-11-05_v3707_0.md`) fait foi sur l'**état du code** ; le suivi d'audit (`Aethervale_Suivi_Audit_2026-11-04.md`) dit où en est chaque constat.
+- Dépôt de conception : `/home/user/Idle-Aventure-Documentation`. Le document de conception fait foi sur les **décisions** ; l'État des chantiers (en cours : `Aethervale_Etat_des_chantiers_2026-11-06_v3718_0.md`) fait foi sur l'**état du code** ; le suivi d'audit (`Aethervale_Suivi_Audit_2026-11-04.md`) dit où en est chaque constat.
 - Ne pas régénérer les références (fonctions, équilibrage) à chaque version : le code est la source de vérité.
