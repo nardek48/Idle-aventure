@@ -4,6 +4,8 @@
    pour des héros de référence par étape de la campagne. Mesure : issue, PV perdus par acte, or,
    Sève d'Aeswyn, nombre de nœuds joués (base de l'estimation de durée).
    Usage : node tools/sim/pa2-bench.js . [runs=300] [anneau=sentier|chemin|periple] */
+/* v3.724.0 (Seb 06/11, parcours PA v0.2, lot 3) : politique de quête (carnier si Souffle ≥ 40 et PV ≥ 50 %, clé marquée,
+   passages trouvés), --sans-quetes pour comparer, --accroche=<id> et --carte=<foret_1|foret_2> pour isoler un cas. */
 
 var fs = require("fs"), path = require("path");
 var ROOT = require("../chemins.js").jeu(process.argv[2]);
@@ -61,6 +63,12 @@ if (process.argv.indexOf("--sans-coupes") > 0) { g.PA2_CUT_RULES.min = 0; g.PA2_
 if (OBJ) g.Pa2Run.isUnlocked = function () { return true; }; // objet du coffre : débloqué pour le banc
 if (process.argv.indexOf("--sans-reliques-monde") > 0) Object.keys(g.PA2_RELICS).forEach(function (id) { if (g.PA2_RELICS[id].world) delete g.PA2_RELICS[id]; }); // v3.469.5
 if (process.argv.indexOf("--sans-conditions") > 0) g.PA2_CONDITION_RULES.calmPct = 1; // v3.469.0 : toujours Nuit calme
+var NO_QUEST = process.argv.indexOf("--sans-quetes") > 0; // v3.724.0 : sans mini-quêtes ni passages secrets
+var FORCE_HOOK = (process.argv.filter(function (x) { return x.indexOf("--accroche=") === 0; })[0] || "").slice(11);
+var FORCE_MAP = (process.argv.filter(function (x) { return x.indexOf("--carte=") === 0; })[0] || "").slice(8);
+if (NO_QUEST) { Object.keys(g.PA2_HOOKS).forEach(function (h) { delete g.PA2_HOOKS[h].quest; }); Object.keys(g.PA2_MAPS).forEach(function (m) { delete g.PA2_MAPS[m].secrets; }); }
+if (FORCE_HOOK) g.Pa2Run._drawHook = function () { return FORCE_HOOK; };
+if (FORCE_MAP) g.PA2_MAPS_BY_WORLD.forest = [FORCE_MAP];
 var FORCE_COND = (process.argv.filter(function (x) { return x.indexOf("--condition=") === 0; })[0] || "").slice(12); // v3.469.0 : une condition imposée
 if (FORCE_COND) g.Pa2Run._drawCondition = function () { return FORCE_COND; };
 
@@ -121,6 +129,8 @@ function playRun(c, stage) {
   var lossByAct = { 1: 0, 2: 0, 3: 0 }, guard = 200, koAt = null;
   var traps = { met: 0, back: 0, hit: {}, placed: Object.keys(run.traps || {}).length };
   var target = ["BOSS", "CLAIRIERE", "TERTRE"][Math.floor(Math.random() * 3)];
+  if (P.isClosed(target, run)) target = "TERTRE"; // v3.724.0 : fin imposée (feu)
+  var qs = { announced: 0, cache: 0, keyShown: 0, key: 0, opened: 0, forced: 0, again: 0, hidden: 0 }; // v3.724.0
   function eat() {
     if (g.game.heroHp / max >= 0.4) return;
     ["grande_ration", "ration", "petite_ration"].forEach(function (id) { if (g.game.heroHp / max < 0.4 && run.stock[id] > 0) P.useItem(id); });
@@ -143,13 +153,25 @@ function playRun(c, stage) {
       if (tc !== "rebrousser") P.trapContinue(); else traps.back++;
       seconds += SECONDS.move; continue;
     }
+    if (run.status === "pa2-lock") { // v3.724.0 : la clé si on l'a, sinon forcer (on passe toujours)
+      var lo = P.lockOptions(), lr = P.resolveLock(lo.open ? "ouvrir" : "forcer");
+      if (!lr.ok) break;
+      if (lo.open) qs.opened++; else qs.forced++;
+      if (run.status === "pa2-lock") P.lockContinue();
+      seconds += SECONDS.move + 10; continue;
+    }
     if (run.status === "pa2-map") {
+      if (run.hint && run.hint.node === run.at && run.breath >= 40 && P.searchAgain().ok) { qs.again++; seconds += 10; continue; } // v3.724.0
       var mv = avoidTraps(P, run, P.openMoves());
       var pickMove = mv[Math.floor(Math.random() * mv.length)];
       if (mv.indexOf(target) >= 0) pickMove = target;
+      pickMove = questMove(P, run, mv, pickMove, qs);
       P.moveTo(pickMove); seconds += SECONDS.move; continue;
     }
     var n = P.node(run.at), t = n.type, hp0 = g.game.heroHp, res;
+    var qfoe = P.questFoeHere(run); // v3.724.0 : la rencontre du retour se joue comme un combat
+    if (qfoe && !qfoe.done) { n = qfoe; t = "combat"; }
+    else if (n.cache && !n.done) t = "cache";
     nodes++; seconds += SECONDS[t] || 20; br.min = Math.min(br.min, run.breath);
     eat();
     if (t === "obstacle" || t === "tertre") {
@@ -200,6 +222,8 @@ function playRun(c, stage) {
       if (res && res.result && res.result.action === "rest") { br.rest++; br.healRest += (res.result.healed || 0) / max; }
       if (res && res.result && res.result.action === "cook") { br.cook++; br.healCook += (res.result.healed || 0) / max; }
     } else if (t === "clairiere") res = P.clairiere();
+    else if (t === "cache") { res = P.takeCache(); qs.cache++; } // v3.724.0
+    else if (t === "cachee") { res = P.hiddenEnd(); qs.hidden++; }
     if (run.status === "completed" && run.end && run.end.how === "ko") koAt = (t === "boss" || t === "tertre" ? t : t + n.act);
     var lost = Math.max(0, hp0 - g.game.heroHp);
     lossByAct[n.act <= 3 ? n.act : 3] += lost;
@@ -207,12 +231,38 @@ function playRun(c, stage) {
   }
   var end = run.end || {};
   var kept = (end.summary && end.summary.kept) ? end.summary.kept.gold : 0;
+  var q = run.quest || {};
+  qs.keyShown = q.keyShown ? 1 : 0; qs.key = P.hasKey(run) ? 1 : 0; qs.kind = q.kind || ""; qs.state = q.state || "";
+  qs.searched = Object.keys(run.searched || {}).length; qs.found = P.foundSecrets(run).length;
   return {
     how: end.how || "stuck", dest: end.dest, target: target, koAt: koAt, gold: kept, eaten: pr0 - g.game.resources.petite_ration, seve: Number(run.rareFound || 0), // Sève du run seul (hors récompense de secteur)
     br: br, brEnd: run.breath, gourdeUsed: br.gourde0 - (run.stock.gourde || 0),
     nodes: nodes, seconds: seconds, shifts: Object.keys(run.walls || {}).length, traps: traps,
-    loss: { 1: lossByAct[1] / max, 2: lossByAct[2] / max, 3: lossByAct[3] / max }
+    loss: { 1: lossByAct[1] / max, 2: lossByAct[2] / max, 3: lossByAct[3] / max }, qs: qs
   };
+}
+
+/* v3.724.0 : le robot et les mini-quêtes. Carnier : y retourner si Souffle ≥ 40 et PV ≥ 50 % ; clé marquée : la viser ;
+   passage trouvé ou fin cachée en vue : les prendre. Sinon, le choix d'avant. */
+function questMove(P, run, mv, pick, qs) {
+  var q = run.quest, max = g.game.heroMaxHp;
+  if (q && q.kind === "cache" && q.state === "annoncee" && run.at === q.halt && !q.seen) {
+    q.seen = true; qs.announced++;
+    var back = mv.filter(function (k) { return P.isBackMove(k, run); })[0];
+    if (back && run.breath >= 40 && g.game.heroHp >= max * 0.5) return back;
+    return mv.filter(function (k) { return !P.isBackMove(k, run); })[0] || pick;
+  }
+  if (q && q.kind === "cache" && q.state === "annoncee" && run.at !== q.halt) return mv.filter(function (k) { return P.isBackMove(k, run); })[0] || pick;
+  if (q && q.kind === "cache" && q.state === "annoncee" && run.at === q.halt) { var fw = mv.filter(function (k) { return !P.isBackMove(k, run); }); if (fw.indexOf(pick) < 0) pick = fw[0] || pick; }
+  var hid = mv.filter(function (k) { return P.node(k, run) && P.node(k, run).hidden; })[0];
+  if (hid) return hid;
+  var sec = mv.filter(function (k) { return P.foundSecrets(run).indexOf(run.at + ">" + k) >= 0; })[0];
+  if (sec && !(P.node(sec, run).type === "source" && run.breath > 80)) return sec;
+  if (q && q.kind === "lock" && q.keyShown && !P.hasKey(run)) {
+    var L = P.links(run), toKey = mv.filter(function (k) { var seen = {}, todo = [k]; while (todo.length) { var a = todo.pop(); if (a === q.keyNode) return true; (L[a] || []).forEach(function (b) { if (!seen[b]) { seen[b] = true; todo.push(b); } }); } return false; });
+    if (toKey.length && toKey.indexOf(pick) < 0) return toKey[Math.floor(Math.random() * toKey.length)];
+  }
+  return pick;
 }
 
 /* v3.467.0 (Pièges) : le robot évite un sentier piégé quand il peut ; dessus, trousse, sinon désamorcer
@@ -264,6 +314,7 @@ function main() {
 function summary() {
   var t = { ko: 0, eaten: 0, gold: 0, seve: 0, sec: 0, n: 0, worst: 0, worstAt: "" };
   var tp = { placed: 0, met: 0, back: 0, hit: {} };
+  var qz = { n: {}, ann: 0, cache: 0, keyShown: 0, keyShownGot: 0, key: 0, opened: 0, forced: 0, locks: 0, hidden: 0, hiddenRuns: 0, again: 0, byCls: {} }; // v3.724.0
   B.CLASSES.forEach(function (c) {
     STAGES.forEach(function (st) {
       var ko = 0;
@@ -273,6 +324,10 @@ function summary() {
         if (x.how === "ko") ko++;
         t.eaten += x.eaten; t.brMin = (t.brMin || 0) + x.br.min; t.brEnd = (t.brEnd || 0) + x.brEnd; t.brute = (t.brute || 0) + x.br.brute; t.gourde = (t.gourde || 0) + x.gourdeUsed; t.rest = (t.rest || 0) + x.br.rest; t.cook = (t.cook || 0) + x.br.cook; t.healRest = (t.healRest || 0) + x.br.healRest; t.healCook = (t.healCook || 0) + x.br.healCook; t.under30 = (t.under30 || 0) + (x.br.min < 30 ? 1 : 0); t.insist = (t.insist || 0) + x.br.insist; t.gold += x.gold; t.seve += x.seve; t.sec += x.seconds; t.n++;
         tp.placed += x.traps.placed; tp.met += x.traps.met; tp.back += x.traps.back;
+        var qq = x.qs; qz.n[qq.kind || "-"] = (qz.n[qq.kind || "-"] || 0) + 1; qz.ann += qq.announced; qz.cache += qq.cache; qz.again += qq.again;
+        if (qq.kind === "lock") { qz.locks++; qz.keyShown += qq.keyShown; qz.key += qq.key; if (qq.keyShown) qz.keyShownGot += qq.key; qz.opened += qq.opened; qz.forced += qq.forced; }
+        if (qq.kind === "hiddenEnd" && (qq.state === "active" || qq.state === "faite")) { qz.hiddenRuns++; qz.hidden += qq.hidden; }
+        var bc = qz.byCls[c.label] = qz.byCls[c.label] || { s: 0, f: 0 }; bc.s += qq.searched; bc.f += qq.found;
         Object.keys(x.traps.hit).forEach(function (k) { tp.hit[k] = (tp.hit[k] || 0) + x.traps.hit[k]; });
       }
       t.ko += ko;
@@ -284,6 +339,11 @@ function summary() {
   console.log("  Souffle : plus bas " + Math.round(t.brMin / t.n) + " en moyenne, sous 30 dans " + pct(t.under30 / t.n) + " des runs, fin " + Math.round(t.brEnd / t.n) + " | force brute " + (t.brute / t.n).toFixed(2) + " | gorgées de gourde " + (t.gourde / t.n).toFixed(2) + " par run | relances " + ((t.insist || 0) / t.n).toFixed(2));
   console.log("  Camp et seuil : repos " + (t.rest / t.n).toFixed(2) + " (soigne " + pct(t.healRest / Math.max(1, t.rest)) + " des PV max) · cuisine " + (t.cook / t.n).toFixed(2) + " (soigne " + pct(t.healCook / Math.max(1, t.cook)) + ")");
   var hits = Object.keys(tp.hit).map(function (k) { return k + " " + (tp.hit[k] / t.n).toFixed(2); }).join(", ");
+  if (!NO_QUEST) {
+    console.log("  quêtes (runs) : " + JSON.stringify(qz.n) + " | carnier : annoncé " + qz.ann + ", pris " + qz.cache + " (" + pct(qz.cache / Math.max(1, qz.ann)) + ") | verrou : clé marquée " + qz.keyShown + "/" + qz.locks + ", clé prise " + qz.key + " (marquée et prise " + qz.keyShownGot + "), ouvert " + qz.opened + ", forcé " + qz.forced +
+      " | fin cachée atteinte " + qz.hidden + "/" + qz.hiddenRuns + " | « Chercher encore » " + qz.again);
+    console.log("  fouilles réussies (passage trouvé / case fouillée) : " + Object.keys(qz.byCls).map(function (k) { var b = qz.byCls[k]; return k + " " + pct(b.f / Math.max(1, b.s)) + " (" + b.s + ")"; }).join(" · "));
+  }
   console.log("  pièges : " + (tp.placed / t.n).toFixed(1) + " posés, " + (tp.met / t.n).toFixed(2) + " rencontrés, " + (tp.back / t.n).toFixed(2) + " rebroussés par run | effets subis : " + (hits || "aucun"));
 }
 

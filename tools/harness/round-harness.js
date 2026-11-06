@@ -112,6 +112,16 @@ function playTrap(P) {
   if (r.ok && r.result && r.result.pending) r = P.insist(Math.random() < 0.5); // v3.578.0 : insister ou accepter
   return (r.ok && c !== "rebrousser") ? P.trapContinue() : r;
 }
+/* v3.724.0 (Seb 06/11) : mini-quêtes de parcours pour les robots — verrou (ouvrir, sinon forcer), rencontre du retour, carnier, fin cachée. */
+function playQuest(P, r) {
+  if (r.status === "pa2-lock") { var lo = P.lockOptions(), x = P.resolveLock(lo && lo.open ? "ouvrir" : "forcer"); if (x.ok && r.status === "pa2-lock") P.lockContinue(); return true; }
+  if (r.status !== "pa2-node" || r.pending) return false;
+  var f = P.questFoeHere(r), n = P.node(r.at, r);
+  if (f && !f.done) { P.fight("tenir", !!(r.lastResult && r.lastResult.surprised)); return true; }
+  if (n && n.cache && !n.done) { P.takeCache(); return true; }
+  if (n && n.type === "cachee" && !n.done) { P.hiddenEnd(); return true; }
+  return false;
+}
 
 /* Nouvelle partie prête à combattre, sur l'onglet Combat, ennemi généré. */
 function fsRead(rel) { return fs.readFileSync(path.join(ROOT, rel), "utf8"); }
@@ -11723,6 +11733,7 @@ console.log("\n[158] v3.381.0 — Petites Aventures v2 (PA2-0) : moteur sans éc
 
     /* Départ */
     ok(P.depart().ok && runv.status === "pa2-map", "départ : le run passe sur la carte");
+    runv.closedEnds = []; // v3.724.0 : l'accroche est tirée au hasard ; la fin imposée du feu fermerait le gardien
     ok(game.resources.petite_ration === pr0 - 2 && runv.stock.petite_ration === 2 && runv.stock.gourde === 2 && runv.stock.corde === 1, "vivres prélevés à l'Entrepôt, charges en besace (gourde 2, corde 1)");
     ok(S.petiteAventureCountToday() === spent0 + 1 && g.SortieManager.isActive() && runv.refGold >= 1, "la place et la sortie sont prises au départ");
     var nodes = runv.nodes, keys = Object.keys(nodes);
@@ -11839,7 +11850,7 @@ console.log("\n[158] v3.381.0 — Petites Aventures v2 (PA2-0) : moteur sans éc
 
     /* Destination : le gardien abattu débloque le Bois de cerf, compte « Un Périple » et donne la Sève */
     prep(); S.startRun("petite_aventure_foret");
-    runv = game.sceneRun; P.depart();
+    runv = game.sceneRun; P.depart(); runv.closedEnds = []; // v3.724.0 : pas de fin imposée (feu) pour ce contrôle
     run("game.achievementStats = game.achievementStats || {}; ");
     var ach0 = g.AchievementManager ? Number(((game.achievementStats || {}).counters || {}).runForest || 0) : 0;
     var seve0 = Number(game.resources.seve_aeswyn || 0);
@@ -11881,6 +11892,7 @@ console.log("\n[158] v3.381.0 — Petites Aventures v2 (PA2-0) : moteur sans éc
         if (runv.pending) { if (!P.insist(Math.random() < 0.5).ok) break; continue; } // v3.578.0 : jet en suspens
         if (runv.status === "pa2-map") { var mv = P.openMoves(); P.moveTo(mv[Math.floor(Math.random() * mv.length)]); continue; }
         if (runv.status === "pa2-trap") { if (!playTrap(P).ok) break; continue; }
+        if (playQuest(P, runv)) continue; // v3.724.0
         var n = P.node(runv.at), t = n.type, res = null;
         if (t === "obstacle" || t === "tertre") { var o = P.obstacleOptions().filter(function (x) { return x.affordable; }), rp = P.obstacleOptions().filter(function (x) { return x.rope; })[0]; res = o.length ? P.resolveObstacle(o[0].voie) : (rp ? P.resolveObstacle(rp.voie, true) : P.bruteForce()); }
         else if (t === "combat") { res = (runv.lastResult && runv.lastResult.surprised) ? P.fight("tenir", true) : P.fight(Math.random() < 0.5 ? "charger" : "tenir"); }
@@ -12010,6 +12022,7 @@ console.log("\n[159] v3.382.0 — Petites Aventures v2 (PA2-1) : écrans (prépa
     // v3.454.0 : icônes demandées à Seb, affichées en icône générique en attendant (règle « icône manquante »)
     // v3.492.5 : toutes les icônes du mode v2 sont livrées (la Montagne comprise) ; plus rien à fournir
     var aFournir = ["images/Icons/resources/corde_tressee_icon.webp", "images/Icons/resources/trousse_maitre_icon.webp", "images/Icons/resources/torche_resinee_icon.webp"]; // v3.606.0 : l'artisan d'Aeswyn (atelier des images)
+    aFournir = aFournir.concat(["cache", "lock", "hint", "secret"].map(function (k) { return "images/Icons/scene/quest/quest_" + k + ".webp"; }), ["images/Icons/scene/dest/dest_forest_cachee.webp"]); // v3.724.0 : mini-quêtes, à dessiner
     var absent = dataIcons.filter(function (s) { return !fs.existsSync(path.join(ROOT, s)) && aFournir.indexOf(s) < 0; });
     ok(absent.length === 0, "icônes du mode v2 : toutes présentes, hors celles à fournir (" + dataIcons.length + ")" + (absent.length ? " — manquent " + absent.join(", ") : ""));
   } catch (e) {
@@ -12051,7 +12064,7 @@ console.log("\n[160] v3.383.0 — Petites Aventures v2 (PA2-3) : gardien recalé
     var r3 = start(3);
     ok(P.goldBand(r3) === r3.band && r3.band.foeScale === 0.8, "C3 : sous la tranche du monde, l'or suit la tranche ; niveaux 1 à 4 adoucis ×0,8");
     var seuil = Object.keys(r3.nodes).filter(function (k) { return r3.nodes[k].type === "seuil"; })[0];
-    r3.at = seuil; r3.status = "pa2-node";
+    r3.at = seuil; r3.status = "pa2-node"; r3.closedEnds = []; // v3.724.0 : sans fin imposée (accroche du feu), le gardien reste annoncé
     var h = g.pa2SheetBody(r3, r3.nodes[seuil], { key: seuil, step: "intro" });
     ok(h.indexOf("pa2-guardian") > 0 && h.indexOf(g.esc(g._t("Les deux autres destinations ne demandent pas de combat."))) > 0, "C1 : la feuille du seuil annonce le coût du gardien");
     ok(g.PA2_RULES.campRestPct < 0.3 && g.PA2_RULES.seuilRestPct < 0.2, "C2 : le camp et le seuil soignent moins (les rations comptent)");
@@ -12259,7 +12272,7 @@ console.log("\n[163] v3.386.0 — Petites Aventures v2 (PA2-4) : deuxième carte
     ok(!!M && savedMaps.indexOf("foret_2") >= 0 && savedMaps.indexOf("foret_1") >= 0, "foret_2 est proposée en Forêt, à côté de foret_1");
     ok(fs.existsSync(path.join(ROOT, M.image)), "l'image de foret_2 est livrée (" + M.image + ")");
     /* Tracé : liens de rangée en rangée, tout nœud atteignable depuis le départ et menant à une destination */
-    var keys = Object.keys(M.nodes), badLink = 0, seen = { S: true }, todo = ["S"];
+    var keys = Object.keys(M.nodes).filter(function (k) { return !M.nodes[k].hidden; }), badLink = 0, seen = { S: true }, todo = ["S"]; // v3.724.0 : hors fin cachée
     keys.forEach(function (k) { (M.links[k] || []).forEach(function (t) { if (!M.nodes[t] || M.nodes[t].row !== M.nodes[k].row + 1) badLink++; }); });
     while (todo.length) (M.links[todo.pop()] || []).forEach(function (t) { if (!seen[t]) { seen[t] = true; todo.push(t); } });
     var dead = keys.filter(function (k) { return M.nodes[k].row < M.rows.dest && !(M.links[k] || []).length; });
@@ -12291,6 +12304,7 @@ console.log("\n[163] v3.386.0 — Petites Aventures v2 (PA2-4) : deuxième carte
         if (r.pending) { if (!P.insist(Math.random() < 0.5).ok) break; continue; } // v3.578.0 : jet en suspens
         if (r.status === "pa2-map") { var mv = P.openMoves(); P.moveTo(mv[Math.floor(Math.random() * mv.length)]); played++; continue; }
         if (r.status === "pa2-trap") { if (!playTrap(P).ok) break; continue; }
+        if (playQuest(P, r)) continue; // v3.724.0
         var n = P.node(r.at), t = n.type, res = null;
         if (t === "obstacle" || t === "tertre") { var o = P.obstacleOptions().filter(function (x) { return x.affordable; }), rp = P.obstacleOptions().filter(function (x) { return x.rope; })[0]; res = o.length ? P.resolveObstacle(o[0].voie) : (rp ? P.resolveObstacle(rp.voie, true) : P.bruteForce()); }
         else if (t === "combat") { res = (r.lastResult && r.lastResult.surprised) ? P.fight("tenir", true) : P.fight("tenir"); }
@@ -12305,7 +12319,7 @@ console.log("\n[163] v3.386.0 — Petites Aventures v2 (PA2-4) : deuxième carte
       }
       if (guard <= 0) { bad++; noteRun(k, "200 actions sans fin, nœud " + r.at + ", statut " + r.status); }
       if (r.status === "completed") finished++;
-      if (r.end && r.end.dest) { dests++; lens.push(r.path.length); } // v3.467.0 : un pas arrêté par un piège ne compte pas
+      if (r.end && r.end.dest && r.path.every(function (e) { return (M.links[e[0]] || []).indexOf(e[1]) >= 0; })) { dests++; lens.push(r.path.length); } // v3.467.0 : un pas arrêté par un piège ne compte pas ; v3.724.0 : sans passage secret ni détour du carnier
       if (!(game.heroHp >= 0) || !isFinite(r.loot) || r.breath < 0) { bad++; noteRun(k, "valeur absurde : PV " + game.heroHp + ", butin " + r.loot + ", souffle " + r.breath); }
     }
     g.__traps = false; g.__cond = false;
@@ -12355,6 +12369,7 @@ console.log("\n[164] v3.387.0 — Petites Aventures v2 (PA2-5) : le Désert (car
       if (r.pending) { if (!P.insist(Math.random() < 0.5).ok) break; continue; } // v3.578.0 : jet en suspens
       if (r.status === "pa2-map") { var mv = P.openMoves(); P.moveTo(pick ? pick(mv) : mv[Math.floor(Math.random() * mv.length)]); continue; }
       if (r.status === "pa2-trap") { if (!playTrap(P).ok) break; continue; }
+      if (playQuest(P, r)) continue; // v3.724.0
       var n = P.node(r.at), t = n.type, res = null;
       if (t === "obstacle" || t === "tertre") { var o = P.obstacleOptions().filter(function (x) { return x.affordable; }), rp = P.obstacleOptions().filter(function (x) { return x.rope; })[0]; res = o.length ? P.resolveObstacle(o[0].voie) : (rp ? P.resolveObstacle(rp.voie, true) : P.bruteForce()); }
       else if (t === "combat") res = (r.lastResult && r.lastResult.surprised) ? P.fight("tenir", true) : P.fight("tenir");
@@ -12372,7 +12387,7 @@ console.log("\n[164] v3.387.0 — Petites Aventures v2 (PA2-5) : le Désert (car
   try {
     ok(T.mode === "pa2" && g.PA2_MAPS_BY_WORLD.desert[0] === "desert_1", "F1 : le Désert est livré en v2, sur la carte desert_1");
     ok(fs.existsSync(path.join(ROOT, M.image)), "l'image de desert_1 est livrée");
-    var keys = Object.keys(M.nodes), badLink = 0, seen = { S: true }, todo = ["S"];
+    var keys = Object.keys(M.nodes).filter(function (k) { return !M.nodes[k].hidden; }), badLink = 0, seen = { S: true }, todo = ["S"]; // v3.724.0 : hors fin cachée
     keys.forEach(function (k) { (M.links[k] || []).forEach(function (t) { if (!M.nodes[t] || M.nodes[t].row !== M.nodes[k].row + 1) badLink++; }); });
     while (todo.length) (M.links[todo.pop()] || []).forEach(function (t) { if (!seen[t]) { seen[t] = true; todo.push(t); } });
     var fin = keys.filter(function (k) { return M.nodes[k].row === 9; }).map(function (k) { return M.nodes[k].type; }).sort().join(",");
@@ -17028,7 +17043,7 @@ console.log("\n[282] v3.468.0 — Petites Aventures : sentiers coupés au dépar
   function reach(r) { // destinations atteignables depuis le départ, sur le tracé du run
     var L = P.links(r), M = P.getMap(r), seen = {}, todo = [M.start]; seen[M.start] = true;
     while (todo.length) { var a = todo.pop(); (L[a] || []).forEach(function (b) { if (!seen[b]) { seen[b] = true; todo.push(b); } }); }
-    return Object.keys(r.nodes).filter(function (k) { return P.isDest(r.nodes[k], r); }).every(function (d) { return seen[d]; });
+    return Object.keys(r.nodes).filter(function (k) { return P.isDest(r.nodes[k], r) && !r.nodes[k].hidden && !P.isClosed(k, r); }).every(function (d) { return seen[d]; }); // v3.724.0 : fins ouvertes
   }
   try {
     var okN = true, okExit = true, okReach = true, okTrap = true, okWall = true, okKind = true, n = 0;
@@ -17039,7 +17054,7 @@ console.log("\n[282] v3.468.0 — Petites Aventures : sentiers coupés au dépar
         var keys = Object.keys(r.cuts), M = P.getMap(r), L = P.links(r), mv = {};
         (M.shifts || []).forEach(function (sh) { mv[sh.from] = true; });
         if (keys.length < CR.min || keys.length > CR.max) okN = false;
-        Object.keys(M.links).forEach(function (a) { if (!(L[a] || []).length) okExit = false; });
+        Object.keys(M.links).forEach(function (a) { if (!P.isClosed(a, r) && !(L[a] || []).length) okExit = false; }); // v3.724.0 : hors cases fermées par une fin imposée
         if (!reach(r)) okReach = false;
         Object.keys(r.traps).forEach(function (t) { if (r.cuts[t]) okTrap = false; var a = t.split(">")[0]; if (!(L[a] || []).some(function (b) { return !r.traps[a + ">" + b]; })) okTrap = false; });
         keys.forEach(function (key) { if (mv[key.split(">")[0]]) okWall = false; if (!P.cutDef(key, r)) okKind = false; });
@@ -24442,6 +24457,206 @@ console.log("\n[484] v3.723.0 — Petites Aventures : écran « Prêt à partir 
     ok(/\.pa2-foot \{ position: sticky; bottom: 0;/.test(css) && src.indexOf("pa2PrepStep") < 0 && src.indexOf("pa2-cell") < 0, "départ collé en bas ; plus d'étape Pactes ni de cases");
   } catch (err) { ok(false, "[484] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   finally { P.rand = savedRand; game.sceneRun = null; if (g.SortieManager.isActive()) g.SortieManager.end("return"); }
+})();
+
+console.log("\n[485] v3.724.0 — Petites Aventures : parcours de la Forêt (carnier, verrou, passages secrets, fins imposée et cachée)");
+(function () {
+  var S = g.SceneRunManager, P = g.Pa2Run, QR = g.PA2_QUEST_RULES, savedRand = P.rand, savedMaps = g.PA2_MAPS_BY_WORLD.forest;
+  function prep() {
+    game = freshCombat("knight"); giveWeapon(); run("game.enemy = null; game.combat = null;");
+    game.equipped.weapon.value = 400; run("EquipmentManager.recalcStats();");
+    S.ensureDefaults(); game.explorationProgression.petiteAventure = { spent: 0, since: null };
+    game.resources.petite_ration = 6; game.heroLevel = 6; game.heroHp = game.heroMaxHp; game.sceneRun = null;
+    if (g.SortieManager.isActive()) g.SortieManager.end("return");
+    g.pa2View.runId = null; g.pa2View.sheet = null; P.rand = savedRand;
+  }
+  // Run réglé à la main : carte, accroche, nuit calme ; cases d'acte I en sources (rien d'aléatoire à résoudre), sans pièges ni coupures.
+  function start(mapId, hookId, bag) {
+    prep(); S.startRun("petite_aventure_foret"); var r = game.sceneRun;
+    r.mapId = mapId; r.hookId = hookId; r.cond = "calme";
+    (bag || []).forEach(function (id) { P.addItem(id); });
+    P.depart();
+    r.traps = {}; r.cuts = {};
+    Object.keys(r.nodes).forEach(function (k) { var n = r.nodes[k]; if (n.type === "evenement") n.type = "source"; if (n.row >= 0 && n.row <= 2 && n.type !== "camp") n.type = "source"; });
+    return r;
+  }
+  function step(key) { var m = P.moveTo(key); return m; }
+  function playSource() { return P.drink(); }
+  function rollFor(v) { return function () { return (v - 0.5) / 20; }; } // le d20 tombe sur v
+  function saveLoad() { var d = JSON.parse(JSON.stringify(g.buildSaveData())); game.sceneRun = null; g.restoreBaseState(d); g.pa2View.runId = null; return game.sceneRun; }
+  try {
+    /* ---------- A : le carnier (chasseur) ---------- */
+    var r = start("foret_1", "chasseur", ["petite_ration"]);
+    ok(r.quest && r.quest.kind === "cache" && r.quest.state === "rencontre", "A : chasseur → mini-quête « carnier », en attente de la rencontre");
+    step("C0"); playSource();
+    r.nodes.C1.type = "evenement"; step("C1");
+    ok(P.eventChoice("ration").ok && r.quest.state === "halte", "A : chasseur sauvé (ration) → le carnier attend la halte");
+    step("L2"); playSource(); step("CAMP");
+    var hr = P.placeAction("rest");
+    var q = r.quest;
+    ok(hr.ok && hr.result.quest && q.state === "annoncee" && q.halt === "CAMP" && q.node === "L1" && JSON.stringify(q.back) === '[["CAMP","L2"],["L2","L1"]]' && r.nodes.L1.cache && !r.nodes.L1.done,
+      "A : annoncé à la halte (camp) ; cache sur L1, case non jouée voisine du chemin, 2 pas (" + JSON.stringify(q.back) + ")");
+    var mv = P.openMoves();
+    ok(mv.indexOf("L2") >= 0 && mv.indexOf("L4") >= 0 && mv.indexOf("C4") >= 0 && P.isBackMove("L2", r) && P.isShown("L1", r), "A : au camp, le retour s'ajoute aux sentiers ; la cache est marquée sur la carte");
+    run("switchTab('scene')");
+    var hm = g.buildPa2ScreenHTML(r);
+    ok(g.pa2AnnounceDue(r) && /class="pa2-flow"/.test(hm) && /pa2-node t-[a-z]+ is-cache/.test(hm.replace(/ is-open| is-done/g, "")) && hm.indexOf("pa2-qline") > 0, "A : fiche d'annonce due à la halte ; trace claire qui coule, coffre dessiné, ligne de quête au HUD");
+    ok(g.pa2AnnounceBody(r).indexOf("pa2AnnounceGo()") > 0 && g.pa2AnnounceBody(r).indexOf(g.esc(g.PA2_HOOKS.chasseur.quest.text.announce)) > 0, "A : la fiche dit le carnier, avec « Y retourner » et « Voir la carte »");
+    var b0 = r.breath, loot0 = r.loot, sc = P.stepCost(r);
+    step("L2");
+    var foe = P.questFoeHere(r);
+    ok(r.at === "L2" && r.breath === b0 - sc && r.status === "pa2-node" && foe && foe.noGold && foe.foeId === g.PA2_HOOKS.chasseur.quest.cache.back.foe && r.nodes.L2.done, "A : premier pas du retour (−" + sc + " Souffle) : la rencontre fixe, un loup, la case reste faite");
+    var pv = P.combatPreview();
+    ok(pv && pv.tenir.gold === 0 && pv.charger.gold === 0 && P.drink().ok === false, "A : rencontre du retour sans or ; la case revisitée ne se rejoue pas");
+    var fr = P.fight("tenir");
+    ok(fr.ok && r.loot === loot0 && r.status === "pa2-map" && JSON.stringify(P.openMoves().sort()) === '["CAMP","L1"]', "A : combat gagné, pas d'or ; seuls la cache et le camp sont permis (pas d'écart)");
+    var rr = saveLoad();
+    ok(rr && rr.quest.state === "annoncee" && rr.quest.foe.done && rr.nodes.L1.cache && JSON.stringify(P.openMoves().sort()) === '["CAMP","L1"]', "A : run sauvegardé et rechargé au milieu du retour : la quête et le chemin sont là");
+    r = rr;
+    step("L1");
+    ok(r.status === "pa2-node" && P._current(["source"]) === null && P.drink().ok === false, "A : la case du carnier ne se joue pas comme sa case d'origine");
+    var seve0 = Number(game.resources.seve_aeswyn || 0);
+    P.rand = rollFor(1); // la Sève tombe (tirage sous 50 %)
+    var tc = P.takeCache();
+    P.rand = savedRand;
+    var attendu = Math.round(r.refGold * QR.cacheGold * P.lootMult(r));
+    ok(tc.ok && tc.result.gain === attendu && tc.result.rare === 1 && Number(game.resources.seve_aeswyn || 0) === seve0 + 1 && r.quest.state === "faite", "A : carnier pris : +" + attendu + " or (" + QR.cacheGold + " G × anneau) et 1 Sève");
+    ok(!P.takeCache().ok && JSON.stringify(P.openMoves()) === '["L2"]', "A : une seule cache ; retour vers la halte seulement");
+    loot0 = r.loot; var src0 = r.breath; step("L2");
+    ok(r.status === "pa2-map" && r.loot === loot0 && r.breath === src0 - P.stepCost(r) && !P.questFoeHere(r).done === false, "A : case revisitée au retour : vide, ni or, ni source, ni nouvelle rencontre");
+    step("CAMP");
+    ok(r.status === "pa2-map" && !P.placeAction("rest").ok && P.openMoves().sort().join() === "C4,L4,R4", "A : de retour au camp : pas de second repos, plus de chemin arrière");
+    step("C4");
+    ok(P.openMoves().every(function (k) { return r.nodes[k].row > r.nodes.C4.row; }), "A : hors quête, aucun retour en arrière possible");
+    // Abandon : repartir vers l'avant depuis la halte
+    r = start("foret_1", "chasseur"); step("C0"); playSource(); r.nodes.C1.type = "evenement"; step("C1"); P.eventChoice("mains"); step("L2"); playSource(); step("CAMP"); P.placeAction("rest");
+    var cn = r.quest.node; step("C4");
+    ok(r.quest.state === "abandonnee" && !r.nodes[cn].cache && P.openMoves().indexOf("CAMP") < 0, "A : repartir vers l'avant laisse le carnier : la quête ne revient pas");
+    r = start("foret_1", "chasseur"); step("C0"); playSource(); r.nodes.C1.type = "evenement"; step("C1"); P.eventChoice("arc"); step("L2"); playSource(); step("CAMP"); P.placeAction("rest");
+    ok(r.quest.state === "sans" && P.openMoves().every(function (k) { return r.nodes[k].row > 3; }), "A : arc pris, pas de carnier ; au camp, seulement l'avant");
+
+    /* ---------- B : la passerelle (gouffre) ---------- */
+    var placeOk = true, keyOk = true, n40 = 0;
+    for (var i = 0; i < 40; i++) {
+      prep(); S.startRun("petite_aventure_foret"); var rb = game.sceneRun; rb.mapId = i % 2 ? "foret_1" : "foret_2"; rb.hookId = "gouffre"; rb.ring = "periple"; P.depart(); n40++;
+      var lk = Object.keys(rb.locks);
+      lk.forEach(function (k) { if (rb.cuts[k] || rb.traps[k]) placeOk = false; });
+      if (!lk.length || ["L5", "R5"].indexOf(rb.quest.keyNode) < 0) keyOk = false;
+      var L = P.links(rb), seen = {}, todo = ["S"]; seen.S = true;
+      while (todo.length) { var a = todo.pop(); (L[a] || []).forEach(function (b2) { if (!seen[b2]) { seen[b2] = true; todo.push(b2); } }); }
+      if (!seen[rb.quest.keyNode]) keyOk = false;
+    }
+    ok(placeOk && keyOk, "B : verrou et clé posés au départ (" + n40 + " runs au Périple) ; ni coupure ni piège sur le verrou ; la clé reste accessible");
+    r = start("foret_1", "gouffre", ["gourde"]);
+    ok(r.locks["L6>SEUIL"] === "closed" && r.locks["R6>SEUIL"] === "closed" && r.quest.key === "crochet", "B : foret_1, la passerelle fermée sur ses deux sentiers ; clé « crochet »");
+    step("C0"); playSource(); r.nodes.C1.type = "evenement"; step("C1"); P.eventChoice("gourde");
+    ok(r.quest.keyShown && g.pa2QuestLineHTML(r).indexOf(g.esc(g._td(g.PA2_QUEST_KEYS.crochet.name))) > 0, "B : homme aidé (gourde) → la clé est marquée (HUD et carte)");
+    r.at = "L6"; r.nodes.L6.done = true; r.status = "pa2-map";
+    var mt = step("SEUIL");
+    ok(mt.ok && mt.lock && r.status === "pa2-lock" && r.at === "L6" && r.lock.to === "SEUIL" && !P.lockOptions().open, "B : le verrou arrête le héros au milieu du sentier ; sans clé, « Ouvrir » est fermé");
+    var lsh = g.pa2LockSheetBody(r, { lock: true, step: "intro" });
+    ok(/pa2Lock\('ouvrir'\)/.test(lsh) && /disabled onclick="pa2Lock\('ouvrir'\)"/.test(lsh) && /pa2Lock\('forcer'\)/.test(lsh) && /pa2Lock\('rebrousser'\)/.test(lsh), "B : fiche du verrou : Ouvrir (grisé sans clé), Forcer, Rebrousser");
+    ok(P.resolveLock("rebrousser").ok && r.status === "pa2-map" && r.at === "L6" && r.locks["L6>SEUIL"] === "closed", "B : rebrousser : on reste de ce côté, le verrou reste");
+    step("SEUIL"); var w0 = r.wounds, hp0 = game.heroHp;
+    P.rand = rollFor(1); var fk = P.resolveLock("forcer"); P.rand = savedRand;
+    ok(fk.ok && fk.result.kind === "ko" && r.wounds === w0 + 1 && game.heroHp === hp0 - fk.result.dmg && fk.result.dmg === Math.round(game.heroMaxHp * g.PA2_ACTS[2].failPct), "B : forcer raté : une blessure et les dégâts de l'acte (−" + fk.result.dmg + " PV)…");
+    var lc = P.lockContinue();
+    ok(lc.ok && r.at === "SEUIL" && r.locks["R6>SEUIL"] === "forced", "B : … mais on passe toujours ; la passerelle reste ouverte");
+    // Avec la clé : ramassée en finissant sa case, quelle qu'en soit l'issue
+    r = start("foret_1", "gouffre"); var kn = r.quest.keyNode;
+    r.at = kn; r.nodes[kn].type = "autel"; r.status = "pa2-node";
+    ok(P.altar(false).ok && r.keys.indexOf("crochet") >= 0 && r.bag.indexOf("crochet") < 0 && P.hasKey(r) && /is-quest/.test(g.pa2HudHTML(r)), "B : la clé se ramasse en finissant sa case (même en passant), dans la poche de quête, hors besace");
+    r.at = "L6"; r.nodes.L6.done = true; r.status = "pa2-map"; step("SEUIL");
+    ok(P.lockOptions().open && P.resolveLock("ouvrir").ok && P.lockContinue().ok && r.at === "SEUIL" && r.locks["L6>SEUIL"] === "open", "B : avec la clé : Ouvrir, sans jet ni blessure");
+    r = start("foret_1", "gouffre"); r.at = "L6"; r.nodes.L6.done = true; r.status = "pa2-map"; step("SEUIL");
+    var sv = saveLoad();
+    ok(sv.status === "pa2-lock" && sv.lock && sv.lock.to === "SEUIL" && P.lockOptions() && P.resolveLock("forcer").ok, "B : run sauvegardé arrêté sur le verrou : la fiche se reprend");
+    r = start("foret_2", "gouffre");
+    ok(r.locks["N9>N10"] === "closed" && r.quest.key === "gaffe" && Object.keys(r.locks).length === 1, "B : foret_2, la rive du lac fermée (case N10) ; clé « gaffe »");
+
+    /* ---------- C : passages secrets ---------- */
+    r = start("foret_1", "feu"); r.closedEnds = []; r.quest = null; // sans fin imposée
+    r.at = "CAMP"; r.nodes.CAMP.done = true; r.status = "pa2-map"; r.nodes.L4.type = "source";
+    var thr = P.searchCheck(r, r.nodes.L4).thr, bb = r.breath;
+    P.rand = rollFor(20); step("L4"); P.rand = savedRand;
+    ok(r.secrets["L4>L6"] === "found" && r.searched.L4 === "ok" && r.breath === bb - P.stepCost(r) && r.searchNote.kind === "ok", "C : fouille automatique et gratuite à l'arrivée ; réussie : la sente des cerfs est trouvée (il fallait " + thr + "+)");
+    var sh = g.pa2SheetBody(r, r.nodes.L4, { key: "L4", step: "intro" });
+    playSource();
+    ok(sh.indexOf("pa2-echo is-secret") > 0 && P.openMoves().indexOf("L6") >= 0 && /pa2-secret-edge/.test(g.pa2MapHTML(r)), "C : la fiche le dit ; le passage s'ouvre, en points bleu pâle sur la carte");
+    step("L6");
+    ok(r.at === "L6" && r.path.some(function (e) { return e[0] === "L4" && e[1] === "L6"; }), "C : on le prend : une rangée sautée");
+    // De justesse : un indice et « Chercher encore »
+    r = start("foret_1", "feu"); r.closedEnds = []; r.quest = null; r.at = "CAMP"; r.nodes.CAMP.done = true; r.status = "pa2-map"; r.nodes.L4.type = "source";
+    thr = P.searchCheck(r, r.nodes.L4).thr;
+    P.rand = rollFor(Math.max(2, thr - 1)); step("L4"); P.rand = savedRand;
+    ok(thr - 1 >= 2 && r.searched.L4 === "mid" && r.hint && r.hint.node === "L4" && !r.secrets["L4>L6"], "C : de justesse : un indice, pas encore le passage");
+    playSource(); hm = g.buildPa2ScreenHTML(r);
+    ok(hm.indexOf("pa2-hintbox") > 0 && hm.indexOf("pa2SearchAgain()") > 0 && /aria-label="Indice"/.test(hm), "C : sur la carte, le « ? » et le panneau « Chercher encore »");
+    bb = r.breath; P.rand = rollFor(20); var sa = P.searchAgain(); P.rand = savedRand;
+    ok(sa.ok && sa.result.adv && sa.result.r2 != null && r.breath === bb - QR.searchAgainBreath && r.secrets["L4>L6"] === "found", "C : « Chercher encore » : −" + QR.searchAgainBreath + " Souffle, avec l'avantage (deux dés) ; trouvé");
+    ok(!P.searchAgain().ok && r.searched.L4 === "again", "C : une seule fois");
+    // Raté : rien ne se voit
+    r = start("foret_1", "feu"); r.closedEnds = []; r.quest = null; r.at = "CAMP"; r.nodes.CAMP.done = true; r.status = "pa2-map"; r.nodes.L4.type = "source";
+    P.rand = rollFor(1); step("L4"); P.rand = savedRand;
+    ok(r.searched.L4 === "ko" && !r.hint && !r.searchNote && g.pa2SheetBody(r, r.nodes.L4, { key: "L4", step: "intro" }).indexOf("is-secret") < 0, "C : raté : le joueur ne voit rien");
+    // Avantage des lumières, pas de piège ni de coupure sur un passage
+    r = start("foret_1", "feu", ["torche"]);
+    ok(P.searchLight(r) && !P.searchLight(start("foret_1", "feu")), "C : la torche donne l'avantage à la fouille");
+    var noTrap = true;
+    for (i = 0; i < 20; i++) { prep(); S.startRun("petite_aventure_foret"); var rs = game.sceneRun; rs.ring = "periple"; P.depart(); Object.keys(rs.traps).concat(Object.keys(rs.cuts)).forEach(function (k) { if ((P.getMap(rs).secrets || {})[k]) noTrap = false; }); }
+    ok(noTrap, "C : aucun piège ni coupure sur un passage secret (20 runs au Périple)");
+    r = start("foret_2", "feu"); r.closedEnds = []; r.quest = null; r.secrets["R4>R6"] = "found";
+    ok(/d="M934 892 Q1035 735 885 584"/.test(g.pa2MapHTML(r)), "C : foret_2, la ravine se dessine en courbe (relevée sur l'image, contourne R5)");
+
+    /* ---------- D : fin imposée (feu) ---------- */
+    r = start("foret_1", "feu");
+    var Lf = P.links(r);
+    ok(r.closedEnds.sort().join() === "BOSS,CLAIRIERE" && P.isClosed("L8", r) && Lf.SEUIL.sort().join() === "C8,R8" && Lf.C8.join() === "TERTRE", "D : feu, foret_1 : la colline et la cabane fermées, L8 aussi ; il reste C8 et R8 vers le Tertre");
+    r.at = "SEUIL"; r.status = "pa2-map";
+    hm = g.pa2MapHTML(r);
+    ok(!P.isShown("BOSS", r) && !P.isShown("CLAIRIERE", r) && hm.indexOf(g.esc(g._td(g.PA2_DESTS.forest.boss.name))) < 0 && hm.indexOf(g.esc(g._td(g.PA2_DESTS.forest.tertre.name))) > 0, "D : fins écartées effacées de la carte (choix B)");
+    ok(g.pa2QuestLineHTML(r).indexOf("Une seule fin cette nuit") > 0 && g.pa2SheetBody(r, r.nodes.SEUIL, { key: "SEUIL", step: "intro" }).indexOf("pa2-guardian") < 0, "D : HUD « une seule fin » ; au seuil, pas d'annonce du gardien");
+    prep(); S.startRun("petite_aventure_foret"); r = game.sceneRun; r.hookId = "feu"; r.cond = "calme";
+    var hp = g.buildPa2PrepHTML(r);
+    ok(hp.indexOf('class="pa2-endline"') > 0 && hp.indexOf(g.esc(g.PA2_HOOKS.feu.quest.text.prep)) > 0 && hp.indexOf("<summary>") < hp.indexOf("pa2-endline") && hp.indexOf("pa2-endline") < hp.indexOf("</summary>"), "D : « Prêt à partir » annonce la fin imposée, lisible sans déplier l'accroche (PP-Q5 a)");
+    S.abandon();
+    r = start("foret_2", "feu");
+    ok(P.links(r).SEUIL.join() === "E9" && P.isClosed("W9", r) && P.isClosed("N10", r), "D : feu, foret_2 : il reste le fort");
+    var reachT = true;
+    for (i = 0; i < 20; i++) { prep(); S.startRun("petite_aventure_foret"); var rf = game.sceneRun; rf.hookId = "feu"; rf.ring = "periple"; P.depart(); var Lr = P.links(rf), sn = { S: true }, td = ["S"]; while (td.length) { var a2 = td.pop(); (Lr[a2] || []).forEach(function (x2) { if (!sn[x2]) { sn[x2] = true; td.push(x2); } }); } if (!sn.TERTRE) reachT = false; }
+    ok(reachT, "D : avec les coupures, le Tertre reste toujours accessible (20 runs au Périple)");
+
+    /* ---------- D : fin cachée (pierre) ---------- */
+    r = start("foret_1", "pierre");
+    ok(!P.isShown("PIERRE", r) && P.links(r).C8.indexOf("PIERRE") < 0, "D : la fin cachée n'existe pas sur la carte avant son passage");
+    r.nodes.C1.type = "evenement"; step("C0"); playSource(); step("C1"); P.eventChoice("main");
+    ok(r.quest.state === "active", "D : main posée sur le trait : la fin cachée se cherche");
+    r.at = "SEUIL"; r.nodes.SEUIL.done = true; r.status = "pa2-map"; r.nodes.C8.type = "source";
+    P.rand = rollFor(20); step("C8"); P.rand = savedRand; playSource();
+    ok(r.secrets["C8>PIERRE"] === "found" && P.isShown("PIERRE", r) && P.openMoves().indexOf("PIERRE") >= 0 && /is-hidden-end/.test(g.pa2MapHTML(r)), "D : trouvée en fouillant depuis C8 : le passage et la pierre apparaissent");
+    step("PIERRE"); var gold0 = r.loot, sv0 = Number(game.resources.seve_aeswyn || 0);
+    var he = P.hiddenEnd();
+    ok(he.ok && r.end && r.end.how === "dest" && r.end.dest === "cachee" && he.result.gain > 0 && Number(game.resources.seve_aeswyn || 0) >= sv0 + QR.hiddenRare + g.PA2_RARE.forest.dest[1] && !r.end.chest, "D : la pierre atteinte : destination comptée, or, Sève de la fin + " + QR.hiddenRare + ", pas d'objet du coffre");
+    ok(g.buildPa2EndHTML(r).indexOf(g.esc(g._td(g.PA2_DESTS.forest.cachee.name))) > 0 && P.trophies("forest").dests.cachee >= 1, "D : bilan et trophées de la fin cachée");
+    r = start("foret_1", "pierre"); r.nodes.C1.type = "evenement"; step("C0"); playSource(); step("C1"); P.eventChoice("tour");
+    r.at = "SEUIL"; r.nodes.SEUIL.done = true; r.status = "pa2-map"; r.nodes.C8.type = "source";
+    P.rand = rollFor(20); step("C8"); P.rand = savedRand;
+    ok(r.quest.state === "sans" && !r.searched.C8 && !r.secrets["C8>PIERRE"], "D : sans la marque (détour), pas de fouille vers la pierre");
+
+    /* ---------- Migration douce : un run d'avant la version, sans les nouveaux champs ---------- */
+    r = start("foret_1", "gouffre");
+    ["quest", "secrets", "searched", "keys", "locks", "closedEnds", "lock", "hint"].forEach(function (k) { delete r[k]; });
+    r.at = "CAMP"; r.nodes.CAMP.done = true; r.status = "pa2-map";
+    var okOld = true;
+    try { P.links(r); P.openMoves(); step("L4"); g.buildPa2ScreenHTML(r); g.pa2HudHTML(r); } catch (e) { okOld = false; }
+    ok(okOld && r.at === "L4" && r.status === "pa2-node", "migration : un run sans les champs de la quête se joue (sans quête, sans verrou)");
+
+    /* ---------- Écran : cibles et textes ---------- */
+    var css = fs.readFileSync(path.join(ROOT, "css/04-panel-pa2.css"), "utf8");
+    ok(/\.pa2-hintbox \.pa2-choice \{ min-height: 44px;/.test(css) && /\.pa2-choice\.is-q \.pa2-s, \.pa2-choice\.is-q \.pa2-cost \{ font-size: 13px; \}/.test(css) && /\.pa2-hintln \{[^}]*font-size: 13px/.test(css) && /\.pa2-qline \{[^}]*font-size: 13px/.test(css), "cibles de 44 px, textes des fiches de quête ≥ 13 px");
+    ok(/--c-blue-150-pale:/.test(fs.readFileSync(path.join(ROOT, "css/00-tokens.css"), "utf8")) && css.indexOf("#a9dcff") < 0, "couleurs des passages sur jetons");
+  } catch (err) { ok(false, "[485] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  finally { P.rand = savedRand; g.PA2_MAPS_BY_WORLD.forest = savedMaps; game.sceneRun = null; if (g.SortieManager.isActive()) g.SortieManager.end("return"); }
 })();
 
 Promise.all(ATTENTES).then(function () {

@@ -648,7 +648,10 @@ var PA2_DESTS = {
       win: "Sur une pierre, une lanterne t'attendait." },
     tertre: { name: "Le Tertre scellé", line: "Un tertre de pierres moussues. Sur le sceau, une écriture que tu connais. La tienne.",
       win: "Le sceau a cédé. Ce qui dormait dessous n'est plus là. Il reste ce qu'il gardait.",
-      fail: "Le sceau a tenu. Tu repars avec ce que tu portais, et la sensation d'avoir été regardé." }
+      fail: "Le sceau a tenu. Tu repars avec ce que tu portais, et la sensation d'avoir été regardé." },
+    // v3.724.0 (Seb 06/11) : la fin cachée de l'accroche de la pierre, derrière un passage secret
+    cachee: { name: "La pierre qui luit", line: "Une pierre levée, seule entre les arbres. Le trait de ta paume luit en même temps qu'elle.",
+      win: "La lueur passe de la pierre à ta main, puis s'éteint. À ses pieds, ce que d'autres ont laissé avant toi." }
   },
   desert: { // v3.387.0 (PA2-5) : le plateau, le campement de tentes, les colonnes ensablées
     boss: { name: "Le Ver du plateau", line: "Le plateau est lisse, comme balayé. Au centre, le sable tourne sur lui-même.",
@@ -794,6 +797,74 @@ PA2_HOOKS.feu = {
     other: "Une lanterne est éteinte, au pied de l'arbre du centre."
   }
 };
+/* v3.724.0 (Seb 06/11, conception Parcours PA v0.2, lot 2) : mini-quêtes de parcours portées par les accroches de la Forêt.
+   kind : cache (A, trésor en arrière), lock (B, clé et verrou), end (D, fin imposée), hiddenEnd (D, fin cachée). */
+var PA2_QUEST_RULES = {
+  cacheGold: 8, cacheRarePct: 50, maxBack: 2,  // A : or × G × anneau, chance de Sève, pas d'aller au plus (banc)
+  searchBase: 6, searchAgainBreath: 10,        // C : base du DD de fouille (précision) ; banc du 06/11 : 4 → 6 (trop facile)
+  forceBase: 6, forceMidBreath: 10,            // B : forcer un verrou (force, base de la porte scellée)
+  hiddenGold: 16, hiddenRare: 1                // D : or et Sève de la fin cachée (banc)
+};
+PA2_HOOKS.chasseur.quest = {
+  kind: "cache", branches: ["ration", "mains"], announce: "halt",
+  cache: { back: { foe: "wolf", pack: 1 } }, // la rencontre fixe du retour, sans or (PP-Q2 b)
+  text: {
+    name: "Le carnier du chasseur",
+    announce: "Le chasseur montre le sentier d'où tu viens. « Mon carnier. Je l'ai laissé au collet, en bas. Prends-le, il est à toi. »",
+    found: "Le carnier est là, pendu à une branche basse. Dedans, de la viande séchée et une bourse.",
+    back: "Quelque chose a suivi l'odeur du carnier avant toi.",
+    take: "Prendre le carnier"
+  }
+};
+PA2_HOOKS.gouffre.quest = {
+  kind: "lock", showKey: ["gourde", "epaule"], announce: "event",
+  force: { voie: "power" },
+  byMap: {
+    foret_1: { lock: ["L6>SEUIL", "R6>SEUIL"], key: "crochet", text: {
+      name: "La passerelle",
+      lock: "La passerelle est relevée. Une chaîne la tient, fermée par un crochet qui n'est plus là.",
+      open: "Le crochet entre dans l'anneau. La passerelle descend.",
+      force: "Tu tires sur la chaîne jusqu'à ce qu'elle cède. Elle cède.",
+      hint: "« La passerelle du pont est relevée. Le crochet de la chaîne, je l'ai perdu en route. Là. » Il te montre l'endroit sur ta carte." } },
+    foret_2: { lock: "N10", key: "gaffe", text: {
+      name: "La rive du lac",
+      lock: "Une palissade ferme la rive. Sa porte tient par une barre qu'on soulève avec une gaffe, de l'autre côté.",
+      open: "La gaffe passe entre deux pieux et soulève la barre. La porte s'ouvre sur la rive.",
+      force: "Tu secoues la porte jusqu'à ce que la barre saute. Elle saute.",
+      hint: "« Au lac, la porte de la rive. La gaffe pour la barre, je l'ai laissée en route. Là. » Il te montre l'endroit sur ta carte." } }
+  }
+};
+PA2_HOOKS.feu.quest = {
+  kind: "end", end: "tertre", announce: "prep",
+  text: {
+    prep: "La lueur mène au Tertre scellé. Cette nuit, une seule fin.",
+    closed: "La brume s'est refermée sur les autres chemins. Seul le Tertre reste ouvert."
+  }
+};
+PA2_HOOKS.pierre.quest = {
+  kind: "hiddenEnd", branches: ["main"], announce: "event", node: "PIERRE",
+  text: { found: "Entre les arbres, un passage que tu n'avais pas vu. Au bout, la même lueur que sur ta paume.", take: "Poser la main sur la pierre" }
+};
+/* Clés des verrous : rangées dans une poche de quête, hors besace (la Besace percée ne les prend pas). */
+var PA2_QUEST_KEYS = {
+  crochet: { name: "Crochet de la passerelle", need: "le crochet de la passerelle", icon: "images/Icons/scene/quest/quest_crochet.webp", found: "Dans l'herbe, un crochet de fer, au bout d'un bout de chaîne. Il va dans ta poche de quête." },
+  gaffe: { name: "Gaffe de batelier", need: "la gaffe de batelier", icon: "images/Icons/scene/quest/quest_gaffe.webp", found: "Contre un arbre, une gaffe de batelier. Tu la gardes." }
+};
+/* Passages secrets : noms et indices (« de justesse »), par carte. Tracés : PA2_MAPS[carte].secrets. */
+var PA2_SECRETS = {
+  foret_1: {
+    "L4>L6": { name: "La sente des cerfs", hint: "Des traces de sabots quittent le sentier, vers le nord." },
+    "R6>R8": { name: "Le gué sous le pont", hint: "Sous le pont, un bruit d'eau plus calme, entre deux rochers." },
+    "C8>PIERRE": { name: "Le trait qui luit", hint: "Un trait luit sur un tronc, puis s'éteint." },
+    "L8>PIERRE": { name: "Le trait qui luit", hint: "Un trait luit sur un tronc, puis s'éteint." }
+  },
+  foret_2: {
+    "L7>W10": { name: "La sente du col", hint: "Un courant d'air entre deux rochers, du côté du col." },
+    "R4>R6": { name: "La ravine", hint: "Des cailloux roulent le long de la paroi. Quelqu'un est passé par là-haut." },
+    "W9>PIERRE": { name: "Le trait qui luit", hint: "Un trait luit sur un tronc, puis s'éteint." }
+  }
+};
+
 /* v3.387.0 (PA2-5, F3-F4) : les accroches du Désert. Maddoc reprend l'événement de la v1 : il
    passe avant les autres tant que l'Histoire le permet (priority + eligible), une fois par partie
    (storyFlag : drapeau permanent de l'Histoire, lu par storyMaddocMet). */
@@ -1093,4 +1164,7 @@ window.PA2_OBSTACLE_LINES = PA2_OBSTACLE_LINES;
 window.PA2_PLACES = PA2_PLACES;
 window.PA2_DESTS = PA2_DESTS;
 window.PA2_HOOKS = PA2_HOOKS;
+window.PA2_QUEST_RULES = PA2_QUEST_RULES;
+window.PA2_QUEST_KEYS = PA2_QUEST_KEYS;
+window.PA2_SECRETS = PA2_SECRETS;
 window.PA2_HOOKS_BY_WORLD = PA2_HOOKS_BY_WORLD;

@@ -55,7 +55,18 @@ var PA2_ICONS = {
   wound: "images/Icons/scene/ui/ui_wound.webp",
   hero: "images/Icons/scene/ui/ui_hero_marker.webp",
   title: "images/Icons/scene/path_easy.webp",
-  veine: "images/Icons/scene/node_vein.webp" // v3.489.0 (Montagne)
+  veine: "images/Icons/scene/node_vein.webp", // v3.489.0 (Montagne)
+  // v3.724.0 (Seb 06/11) : mini-quêtes de parcours ; images à faire, l'icône générique les remplace en attendant
+  cache: "images/Icons/scene/quest/quest_cache.webp", lock: "images/Icons/scene/quest/quest_lock.webp",
+  hint: "images/Icons/scene/quest/quest_hint.webp", secret: "images/Icons/scene/quest/quest_secret.webp",
+  cachee: "images/Icons/scene/dest/dest_forest_cachee.webp"
+};
+/* v3.724.0 (atelier aventure-parcours, choix de Seb) : marques dessinées sur la carte — coffre (A), clé, cadenas (A), « ? » (A). */
+var PA2_QMARK = {
+  chest: '<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="19" fill="rgba(20,14,6,.85)" stroke="#f0c64a" stroke-width="2"/><rect x="9" y="17" width="22" height="13" rx="2" fill="#8a5c14" stroke="#ffe08a" stroke-width="1.5"/><path d="M9 18 Q20 7 31 18" fill="#b07a3c" stroke="#ffe08a" stroke-width="1.5"/><rect x="18" y="19" width="4" height="5" fill="#ffe08a"/></svg>',
+  key: '<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="19" fill="rgba(20,14,6,.85)" stroke="#f0c64a" stroke-width="2"/><circle cx="14" cy="16" r="5" fill="none" stroke="#ffe08a" stroke-width="3"/><path d="M18 19 L30 30 M25 25 L28 22 M28 28 L31 25" stroke="#ffe08a" stroke-width="3" stroke-linecap="round"/></svg>',
+  lock: '<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="19" fill="rgba(40,10,6,.9)" stroke="#e0806a" stroke-width="2"/><path d="M14 18 V14 a6 6 0 0 1 12 0 V18" fill="none" stroke="#ffd0c0" stroke-width="3"/><rect x="11" y="18" width="18" height="13" rx="2" fill="#e0806a"/><circle cx="20" cy="24" r="2" fill="#2a0a06"/></svg>',
+  hint: '<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18" fill="rgba(10,20,30,.9)" stroke="#a9dcff" stroke-width="2"/><text x="20" y="27" text-anchor="middle" font-size="21" font-weight="800" fill="#dff1ff" font-family="Georgia,serif">?</text></svg>'
 };
 /* v3.492.3 (décision Seb du 24/10, images livrées le 26/10) : icônes propres à chaque monde. Un monde sans entrée
    prend la Forêt. Le Désert et la Montagne (v3.492.10, ses trois fins) gardent les autres icônes communes. */
@@ -204,15 +215,17 @@ function pa2AfterRender() {
   var body = document.body;
   if (!body || !body.classList) return;
   body.classList.toggle("pa2-run", onScene);
-  var onMap = onScene && (run.status === PA2_STATUS.map || run.status === PA2_STATUS.node || run.status === PA2_STATUS.trap || (run.status === PA2_STATUS.done && !!pa2View.sheet));
+  var onMap = onScene && (run.status === PA2_STATUS.map || run.status === PA2_STATUS.node || run.status === PA2_STATUS.trap || run.status === PA2_STATUS.lock || (run.status === PA2_STATUS.done && !!pa2View.sheet));
   body.classList.toggle("pa2-night", onMap);
   body.classList.toggle("pa2-full", onMap && !!document.getElementById("pa2-vp")); // v3.394.0 : carte plein écran
   if (!onScene) { pa2RemoveOverlay(); return; }
   pa2EnsureOverlay();
-  if ((run.status === PA2_STATUS.node || run.status === PA2_STATUS.trap) && !pa2View.sheet && !pa2View.fromKey) pa2View.legend = false; // audit NOV-13 : une fiche qui s'ouvre referme la légende
+  if ((run.status === PA2_STATUS.node || run.status === PA2_STATUS.trap || run.status === PA2_STATUS.lock) && !pa2View.sheet && !pa2View.fromKey) pa2View.legend = false; // audit NOV-13 : une fiche qui s'ouvre referme la légende
   pa2RenderLegend();
   if (run.status === PA2_STATUS.node && !pa2View.sheet && !pa2View.fromKey) pa2OpenSheet();
   if (run.status === PA2_STATUS.trap && !pa2View.sheet && !pa2View.fromKey) pa2OpenTrapSheet();
+  if (run.status === PA2_STATUS.lock && !pa2View.sheet && !pa2View.fromKey) pa2OpenLockSheet(); // v3.724.0
+  if (pa2AnnounceDue(run) && !pa2View.sheet && !pa2View.fromKey) pa2OpenAnnounce();
   if (run.status === PA2_STATUS.prep) pa2RenderPicker();
   else if (!pa2View.sheet) pa2SetSheetHTML(null);
   // v3.469.2 (PA-T1) : la nuit du run, les pièges et sentiers coupés s'expliquent au premier contact
@@ -349,7 +362,9 @@ function buildPa2PrepHTML(run) {
     var kick = (cond ? pa2WorldName(run.worldId) + " · " + _td(cond.kicker) : _t("{w} · de nuit", { w: pa2WorldName(run.worldId) })) + (ringId !== "sentier" ? " · " + PA2_RING_WORD[ringId] : "");
     var body = (hook ? '<p class="pa2-narr">' + esc(_td(hook.lede)) + '</p>' : '') +
       (ringId !== "sentier" ? '<p class="pa2-ring">' + esc(_t("{r} : ennemis et obstacles plus durs, butin ×{m}.", { r: PA2_RING_WORD[ringId], m: fmtDec(Pa2Run.ring(run).lootMult) })) + '</p>' : '');
-    var sum = '<span class="pa2-fold-sum"><span class="pa2-kicker">' + esc(kick) + '</span>' + (hook ? '<b>' + esc(_td(hook.title)) + '</b>' : '') + '</span>';
+    var qt = hook && hook.quest && hook.quest.kind === "end" && Pa2Run.questDef(run) ? hook.quest.text : null; // v3.724.0 (PP-Q5 a) : la fin imposée, annoncée ici
+    var sum = '<span class="pa2-fold-sum"><span class="pa2-kicker">' + esc(kick) + '</span>' + (hook ? '<b>' + esc(_td(hook.title)) + '</b>' : '') +
+      (qt ? '<span class="pa2-endline">★ ' + esc(_td(qt.prep)) + '</span>' : '') + '</span>';
     h += body ? '<details class="pa2-panel pa2-fold pa2-hook"' + pa2FoldAttr("hook") + '><summary>' + sum + '</summary>' + body + '</details>' : '<div class="pa2-panel pa2-hook">' + sum + '</div>';
     // v3.429.23 : comme l'entrée de donjon offerte — l'Histoire paie la place
     if (SceneRunManager.isStoryPaFree(run.worldId, run.livingMap)) {
@@ -536,6 +551,7 @@ function pa2HudHTML(run) {
     var r = PA2_RELICS[id];
     return '<button type="button" class="pa2-chip is-relic is-' + r.rar + '" onclick="pa2RelicInfo(\'' + id + '\')" aria-label="' + esc(_td(r.name)) + '">' + pa2Img(r.icon) + '</button>';
   }).join("");
+  if (Pa2Run.hasKey(run)) { var kd = PA2_QUEST_KEYS[run.quest.key]; chips += '<span class="pa2-chip is-quest" title="' + esc(_td(kd.name)) + '" role="img" aria-label="' + esc(_t("Poche de quête : {k}", { k: _td(kd.name) })) + '">' + pa2Img(kd.icon) + '</span>'; } // v3.724.0
   var act = n && n.row >= 0 ? (run.parcours ? _t("Étape {a}/{b}", { a: n.row + 1, b: Pa2Run.rows(Pa2Run.getMap(run)).dest + 1 }) : PA2_ACT_WORD[n.act]) : _t("Départ");
   // v3.394.0 : plus de cadre de page — le monde (ou le parcours) se lit dans l'en-tête.
   var where = (run.parcours ? _td((SceneEngine.getTemplate(run.templateId) || {}).title || "") : pa2WorldName(run.worldId)) + " · " + act;
@@ -545,7 +561,17 @@ function pa2HudHTML(run) {
     pa2Img(hero.image, "pa2-portrait", hero.name) +
     '<div class="pa2-gauges">' + pa2GaugeHTML("hp", v.hp, v.max, _t("{a} / {b} PV", { a: pa2Num(v.hp), b: pa2Num(v.max) })) +
     pa2GaugeHTML("breath", v.breath, 100, _t("Souffle {n}", { n: pa2Num(v.breath) })) + '</div>' +
-    (chips || rel ? '<div class="pa2-hud-row">' + chips + '<span class="pa2-spacer"></span>' + rel + '</div>' : '') + '</div>';
+    (chips || rel ? '<div class="pa2-hud-row">' + chips + '<span class="pa2-spacer"></span>' + rel + '</div>' : '') + pa2QuestLineHTML(run) + '</div>';
+}
+/* v3.724.0 (Seb 06/11) : la ligne de quête du HUD — carnier annoncé, clé marquée, fin imposée. */
+function pa2QuestLineHTML(run) {
+  var q = run.quest, t = Pa2Run.questText(run), line = "", ico = "";
+  if (!q) return "";
+  if (q.kind === "cache" && q.state === "annoncee") { ico = PA2_QMARK.chest; line = _tn(q.back.length, "{t} : {n} pas derrière toi. Facultatif.", "{t} : {n} pas derrière toi. Facultatif.", { t: _td(t.name), n: q.back.length }); }
+  else if (q.kind === "cache" && q.state === "faite" && run.at !== q.halt) { ico = PA2_QMARK.chest; line = _t("{t} est dans ton sac. Retour à la halte.", { t: _td(t.name) }); }
+  else if (q.kind === "lock" && q.keyShown && !Pa2Run.hasKey(run)) { ico = PA2_QMARK.key; line = _t("{k} : marqué sur ta carte.", { k: _td(PA2_QUEST_KEYS[q.key].name) }); }
+  else if (q.kind === "end") line = "★ " + _t("Une seule fin cette nuit : {d}.", { d: _td(pa2Dests(run)[q.end].name) });
+  return line ? '<div class="pa2-qline">' + (ico ? '<span class="pa2-qi">' + ico + '</span>' : '') + '<span>' + esc(line) + '</span></div>' : "";
 }
 function pa2RefreshHud() {
   var run = Pa2Run.getRun(), el = document.getElementById("pa2-hud");
@@ -571,6 +597,13 @@ function buildPa2MapScreenHTML(run) {
   if (run.status === PA2_STATUS.map && !run.path.length) {
     var hint = run.parcours ? _t("Touche l'étape suivante pour avancer.") : (n.type === "depart" ? _t("Touche un sentier doré pour quitter le village.") : _t("Choisis ta route. Les trois destinations brillent au nord."));
     h += '<p class="pa2-maphint">' + esc(hint) + '</p>';
+  }
+  // v3.724.0 (indice A : « ? » et panneau) : un passage presque trouvé, on peut chercher encore une fois
+  if (run.status === PA2_STATUS.map && run.hint && run.hint.node === run.at) {
+    var sd = Pa2Run.secretDef(run.hint.secret, run), cost = PA2_QUEST_RULES.searchAgainBreath, can = run.breath >= cost;
+    h += '<div class="pa2-hintbox" role="status"><p class="pa2-hintln">' + esc(sd ? _td(sd.hint) : "") + '</p>' +
+      '<button type="button" class="pa2-choice is-noicon is-q"' + (can ? '' : ' disabled') + ' onclick="pa2SearchAgain()"><span class="pa2-t">' + esc(_t("Chercher encore")) + '</span>' +
+      '<span class="pa2-cost">' + esc(_t("{n} Souffle", { n: cost })) + '</span><span class="pa2-s">' + esc(can ? _t("Avec l'avantage. Une seule fois.") : _t("pas assez de Souffle")) + '</span></button></div>';
   }
   h += '<button type="button" class="pa2-offmark" id="pa2-offmark" onclick="pa2CamFollow(true)" aria-label="' + esc(_t("Revenir au héros")) + '"><i id="pa2-offarrow"></i>' + pa2Img(PA2_ICONS.hero) + '</button>';
   h += '<button type="button" class="lmx-btn pa2-fs-btn is-quit" onclick="pa2AskAbandon()" aria-label="' + esc(run.parcours ? _t("Abandonner le parcours") : _t("Abandonner l'aventure")) + '">⚑</button>';
@@ -701,6 +734,7 @@ function pa2MapHTML(run) {
   run.path.forEach(function (e) { var q = map.nodes[e[1]]; svg += '<circle cx="' + q.x + '" cy="' + q.y + '" r="' + Math.round(75 * K) + '" fill="url(#pa2-halo)" opacity=".75"/>'; });
   Object.keys(map.nodes).forEach(function (k) {
     var d = map.nodes[k];
+    if (run.nodes && run.nodes[k] && !Pa2Run.isShown(k, run) && (d.hidden || Pa2Run.isClosed(k, run))) return; // v3.724.0 : fin cachée ou écartée, pas de lueur
     if (Pa2Run.isDest(run.nodes[k], run)) svg += '<circle cx="' + d.x + '" cy="' + d.y + '" r="' + Math.round(66 * K) + '" fill="url(#pa2-halo)" opacity=".6"/>';
     else if (d.row >= 0 && run.reveal[Pa2Run.actOf(d.row, map)]) svg += '<circle cx="' + d.x + '" cy="' + d.y + '" r="' + Math.round(58 * K) + '" fill="url(#pa2-halo)" opacity=".45"/>';
   });
@@ -715,16 +749,36 @@ function pa2MapHTML(run) {
   });
   // Seuls les sentiers possibles (pointillés dorés) et la trace parcourue sont dessinés.
   var runLinks = Pa2Run.links(run); // v3.429.0 : les murs qui ont bougé
+  var found = {}, q = run.quest;
+  Pa2Run.foundSecrets(run).forEach(function (sk) { found[sk] = true; });
   Object.keys(runLinks).forEach(function (a) {
     runLinks[a].forEach(function (b) {
       var w = walked[a + ">" + b], o = a === run.at && open.indexOf(b) >= 0;
       if (!w && !o) return;
+      if (found[a + ">" + b]) return; // v3.724.0 : un passage secret a son propre tracé
       var A = map.nodes[a], B = map.nodes[b];
       var isNew = pa2View.fromKey && a === pa2View.fromKey && b === run.at;
       var st = w ? 'stroke="#ffcf7a" stroke-width="' + (5 * K).toFixed(1) + '" stroke-opacity=".9"' : 'stroke="#f0aa3e" stroke-width="' + (4.5 * K).toFixed(1) + '" stroke-dasharray="' + (2 * K).toFixed(1) + ' ' + (12 * K).toFixed(1) + '"';
       svg += '<line class="pa2-edge' + (isNew ? ' is-drawing' : '') + '" x1="' + A.x + '" y1="' + A.y + '" x2="' + B.x + '" y2="' + B.y + '" ' + st + ' stroke-linecap="round"/>';
     });
   });
+  // v3.724.0 (passage A : points bleu pâle) : passages trouvés, tracé courbe s'il a un point de contrôle (via)
+  Object.keys(found).forEach(function (sk) {
+    var p = sk.split(">"), sd = Pa2Run.secretDef(sk, run), A = map.nodes[p[0]], B = map.nodes[p[1]];
+    if (!sd || !A || !B || Pa2Run.isClosed(p[1], run)) return;
+    var dd = sd.via ? 'M' + A.x + ' ' + A.y + ' Q' + sd.via[0] + ' ' + sd.via[1] + ' ' + B.x + ' ' + B.y : 'M' + A.x + ' ' + A.y + ' L' + B.x + ' ' + B.y;
+    if (walked[sk]) svg += '<path d="' + dd + '" fill="none" stroke="#ffcf7a" stroke-width="' + (5 * K).toFixed(1) + '" stroke-opacity=".9" stroke-linecap="round"/>';
+    svg += '<path class="pa2-secret-edge" d="' + dd + '" fill="none" stroke="#a9dcff" stroke-width="' + (7 * K).toFixed(1) + '" stroke-dasharray="0.1 ' + (16 * K).toFixed(1) + '" stroke-linecap="round"/>';
+  });
+  // v3.724.0 (retour B : trace claire qui coule) : le chemin du carnier, de la halte vers la cache
+  if (q && q.state === "annoncee" && q.back) {
+    svg += '<defs><marker id="pa2-arr" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="3" markerHeight="3" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#fff4cf"/></marker></defs>';
+    q.back.forEach(function (e) {
+      var A = map.nodes[e[0]], B = map.nodes[e[1]];
+      svg += '<line x1="' + A.x + '" y1="' + A.y + '" x2="' + B.x + '" y2="' + B.y + '" stroke="#fff4cf" stroke-width="' + (9 * K).toFixed(1) + '" stroke-opacity=".25" stroke-linecap="round"/>' +
+        '<line class="pa2-flow" x1="' + A.x + '" y1="' + A.y + '" x2="' + B.x + '" y2="' + B.y + '" stroke="#fff4cf" stroke-width="' + (4 * K).toFixed(1) + '" stroke-dasharray="12 10" stroke-linecap="round" marker-end="url(#pa2-arr)"/>';
+    });
+  }
   svg += '</svg>';
 
   var nodes = "";
@@ -733,10 +787,11 @@ function pa2MapHTML(run) {
     var d = map.nodes[k], n = Pa2Run.node(k, run), isOpen = open.indexOf(k) >= 0, isCur = k === run.at;
     var vis = Pa2Run.isVisible(k, run), type = vis ? n.type : "unknown";
     var cls = "pa2-node t-" + type + (Pa2Run.isDest(n, run) ? " is-dest" : "") + (n.type === "camp" || n.type === "seuil" || n.type === "depart" ? " is-mark" : "") +
-      (isOpen ? " is-open" : "") + (isCur ? " is-cur" : "") + (n.done && !isCur ? " is-done" : "") + (Pa2Run.burnLevel(k, run) ? " is-burning" : "");
-    var label = vis ? pa2NodeLabel(run, n) : _t("Inconnu");
+      (isOpen ? " is-open" : "") + (isCur ? " is-cur" : "") + (n.done && !isCur ? " is-done" : "") + (Pa2Run.burnLevel(k, run) ? " is-burning" : "") +
+      (n.cache ? " is-cache" : "") + (n.hidden ? " is-hidden-end" : "") + (isOpen && Pa2Run.isBackMove(k, run) ? " is-back" : ""); // v3.724.0
+    var label = n.cache ? _td(Pa2Run.questText(run).name || "") : (vis ? pa2NodeLabel(run, n) : _t("Inconnu"));
     nodes += '<button type="button" class="' + cls + '" style="left:' + (100 * d.x / W).toFixed(2) + '%;top:' + (100 * d.y / H).toFixed(2) + '%"' +
-      (isOpen ? ' onclick="pa2Move(\'' + k + '\')"' : ' tabindex="-1"') + ' aria-label="' + esc(label) + '">' + pa2Img(pa2Ico(type, run) || PA2_ICONS.unknown) + '</button>';
+      (isOpen ? ' onclick="pa2Move(\'' + k + '\')"' : ' tabindex="-1"') + ' aria-label="' + esc(label) + '">' + (n.cache ? PA2_QMARK.chest : pa2Img(pa2Ico(type, run) || PA2_ICONS.unknown)) + '</button>';
   });
   // v3.467.0 (Pièges) : losange rouge au milieu des sentiers piégés en vue ; le héros arrêté au milieu.
   var trapSvg = "", traps = "";
@@ -755,8 +810,21 @@ function pa2MapHTML(run) {
     traps += pa2TrapMarkHTML(run.traps[key].fx, m, W, H, !near);
   });
   if (run.trap) traps += pa2TrapMarkHTML(run.traps[run.trap.key].fx, pa2Mid(map, run.trap.key), W, H, false);
+  // v3.724.0 (verrou A : cadenas) : au milieu du sentier fermé, trait rouge pâle ; clé marquée et indice en badge sur leur case
+  Object.keys(run.locks || {}).forEach(function (key) {
+    if (!Pa2Run.isLockShown(key, run) && !(run.lock && run.lock.key === key)) return;
+    var p = key.split(">"), A = map.nodes[p[0]], B = map.nodes[p[1]], m = pa2Mid(map, key);
+    trapSvg += '<line x1="' + A.x + '" y1="' + A.y + '" x2="' + B.x + '" y2="' + B.y + '" stroke="#e0806a" stroke-opacity=".55" stroke-width="' + (3 * K).toFixed(1) + '" stroke-dasharray="' + (2 * K).toFixed(1) + ' ' + (10 * K).toFixed(1) + '" stroke-linecap="round"/>';
+    traps += '<span class="pa2-qmark is-mid" style="left:' + (100 * m.x / W).toFixed(2) + '%;top:' + (100 * m.y / H).toFixed(2) + '%" role="img" aria-label="' + esc(_t("Verrou : {x}", { x: _td(Pa2Run.questText(run).name || "") })) + '">' + PA2_QMARK.lock + '</span>';
+  });
+  var badge = function (k, svgMark, label) {
+    var d = map.nodes[k];
+    return d ? '<span class="pa2-qmark is-pulse" style="left:' + (100 * d.x / W).toFixed(2) + '%;top:' + (100 * d.y / H).toFixed(2) + '%" role="img" aria-label="' + esc(label) + '">' + svgMark + '</span>' : "";
+  };
+  if (q && q.kind === "lock" && q.keyShown && !Pa2Run.hasKey(run) && Pa2Run.isShown(q.keyNode, run)) traps += badge(q.keyNode, PA2_QMARK.key, _td(PA2_QUEST_KEYS[q.key].name));
+  if (run.hint && run.hint.node === run.at) traps += badge(run.at, PA2_QMARK.hint, _t("Indice"));
   if (trapSvg) trapSvg = '<svg class="pa2-trap-svg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true">' + trapSvg + '</svg>';
-  var from = pa2View.fromKey ? (pa2View.fromMid ? pa2Mid(map, pa2View.fromKey + ">" + run.at) : map.nodes[pa2View.fromKey]) : (run.trap ? pa2Mid(map, run.trap.key) : cur);
+  var from = pa2View.fromKey ? (pa2View.fromMid ? pa2Mid(map, pa2View.fromKey + ">" + run.at) : map.nodes[pa2View.fromKey]) : (run.trap ? pa2Mid(map, run.trap.key) : (run.lock ? pa2Mid(map, run.lock.key) : cur));
   var marker = '<img class="pa2-hero-mark" id="pa2-hero-mark" src="' + esc(PA2_ICONS.hero) + '" alt="" style="left:' + (100 * from.x / W).toFixed(2) + '%;top:' + (100 * from.y / H).toFixed(2) + '%">';
   // v3.489.0 : image pas encore livrée (Montagne) -> le fond parchemin
   return '<div class="pa2-map" id="pa2-map">' +
@@ -778,7 +846,7 @@ function pa2AnimateMove() {
   var run = Pa2Run.getRun(), map = run ? Pa2Run.getMap(run) : null, mark = document.getElementById("pa2-hero-mark");
   pa2View.fromKey = null; pa2View.fromMid = false;
   if (!run || !map || !mark) return;
-  var cur = run.trap ? pa2Mid(map, run.trap.key) : map.nodes[run.at]; // v3.467.0 : arrêt sur le piège
+  var cur = run.trap ? pa2Mid(map, run.trap.key) : (run.lock ? pa2Mid(map, run.lock.key) : map.nodes[run.at]); // v3.467.0 : arrêt sur le piège ; v3.724.0 : sur le verrou
   pa2CamFollow(true); // la caméra suit le héros
   var edge = document.querySelector("#pa2-map .pa2-edge.is-drawing");
   if (edge) {
@@ -797,6 +865,8 @@ function pa2AnimateMove() {
     var r = Pa2Run.getRun();
     if (r && r.status === PA2_STATUS.node) pa2OpenSheet();
     else if (r && r.status === PA2_STATUS.trap) pa2OpenTrapSheet();
+    else if (r && r.status === PA2_STATUS.lock) pa2OpenLockSheet(); // v3.724.0
+    else if (r && r.status === PA2_STATUS.map && r.revisit === r.at && typeof showToast === "function") showToast(_t("Déjà passé par ici : rien de neuf."), 1800);
   }, 700);
 }
 
@@ -978,16 +1048,20 @@ function pa2TrapGo() {
 function pa2RenderLegend() {
   var box = document.getElementById("pa2-legendbox"), run = Pa2Run.getRun();
   if (!box) return;
-  if (!run || (run.status !== PA2_STATUS.map && run.status !== PA2_STATUS.node && run.status !== PA2_STATUS.trap)) { box.innerHTML = ""; return; }
+  if (!run || (run.status !== PA2_STATUS.map && run.status !== PA2_STATUS.node && run.status !== PA2_STATUS.trap && run.status !== PA2_STATUS.lock)) { box.innerHTML = ""; return; }
   var h = '<button type="button" class="lmx-btn pa2-legend-btn" onclick="pa2ToggleLegend()" aria-label="' + esc(_t("Légende")) + '" aria-expanded="' + !!pa2View.legend + '">?</button>';
   if (pa2View.legend) {
     // audit NOV-13 : dans un parcours, seulement ce que son tracé contient (pas d'actes, pas de destinations)
     var par = !!run.parcours, has = {};
     Object.keys(run.nodes || {}).forEach(function (k) { if (run.nodes[k]) has[run.nodes[k].type] = true; });
-    var row = function (type, icon, label, sub) {
+    var row = function (type, icon, label, sub, mark) {
       if (par && !has[type]) return "";
-      return '<div class="pa2-legend-row"><span class="pa2-disc">' + pa2Img(icon) + '</span><span>' + esc(label) + '<small>' + esc(sub) + '</small></span></div>';
+      return '<div class="pa2-legend-row"><span class="pa2-disc' + (mark ? ' is-mark' : '') + '">' + (mark || pa2Img(icon)) + '</span><span>' + esc(label) + '<small>' + esc(sub) + '</small></span></div>';
     };
+    // v3.724.0 : passages secrets (cartes qui en ont) et marques de la mini-quête du run
+    var qk = run.quest ? run.quest.kind : "", qrows = (Pa2Run.getMap(run).secrets ? row("secret", null, _t("Passage secret"), _t("Points bleu pâle : trouvé en fouillant ; « ? » : un indice"), PA2_QMARK.hint) : "") +
+      (qk === "cache" ? row("cache", null, _t("Le carnier"), _t("Un détour facultatif, derrière toi"), PA2_QMARK.chest) : "") +
+      (qk === "lock" ? row("lock", null, _t("Verrou"), _t("Ouvrir avec la clé, ou forcer : on passe toujours"), PA2_QMARK.lock) : "");
     if (par) { has.piege = Object.keys(run.traps || {}).length > 0; has.coupe = Object.keys(run.cuts || {}).length > 0; }
     h += '<div class="pa2-legend" role="dialog" aria-label="' + esc(_t("Légende")) + '"><h5>' + esc(_t("Légende")) + '</h5>' +
       row("obstacle", pa2Ico("obstacle", run), _t("Obstacle"), _t("Trois voies, un jet de dé")) + row("combat", PA2_ICONS.combat, _t("Combat"), _t("Charger, Tenir, Ruser ou Fuir")) +
@@ -996,7 +1070,7 @@ function pa2RenderLegend() {
       row("camp", pa2Ico("camp", run), _t("Le camp"), _t("Fin de l'acte I")) + row("seuil", pa2Ico("seuil", run), _t("Le seuil"), _t("Fin de l'acte II")) +
       row("piege", PA2_TRAP_FX.venin.icon, _t("Piège"), _t("Losange rouge sur un sentier : son effet, à désamorcer ou à éviter")) +
       row("coupe", ((PA2_CUTS[run.worldId] || PA2_CUTS.forest)[Object.keys(PA2_CUTS[run.worldId] || PA2_CUTS.forest)[0]]).icon, _t("Sentier coupé"), _t("Rond gris : le passage est fermé pour ce run")) +
-      row("dest", pa2Ico("boss", run), _t("Destinations"), _t("Trois fins possibles, au nord")) + '</div>';
+      qrows + row("dest", pa2Ico("boss", run), _t("Destinations"), qk === "end" ? _t("Une seule fin cette nuit") : _t("Trois fins possibles, au nord")) + '</div>';
   }
   box.innerHTML = h;
 }
@@ -1041,9 +1115,11 @@ function pa2CamSheetChanged() {
 function pa2OpenSheet() {
   var run = Pa2Run.getRun();
   if (!run || run.status !== PA2_STATUS.node) return;
-  var n = Pa2Run.node(run.at, run);
+  var n = Pa2Run.node(run.at, run), f = Pa2Run.questFoeHere(run);
   pa2View.sheet = { key: n.key, step: (run.lastResult && run.lastResult.surprised) ? "surprised" : "intro" };
-  if (run.pending && run.pending.key === n.key) pa2View.sheet = { key: n.key, step: run.pending.type === "ruse" ? "ruse" : "roll", res: run.pending.res, shown: true }; // v3.578.0 : jet en suspens
+  if (f && !f.done) pa2View.sheet.foe = true; // v3.724.0 : la rencontre du retour
+  else if (n.cache && !n.done) pa2View.sheet.cache = true; // v3.724.0 : le carnier
+  if (run.pending && run.pending.key === n.key) pa2View.sheet = { key: n.key, foe: !!pa2View.sheet.foe, step: run.pending.type === "ruse" ? "ruse" : "roll", res: run.pending.res, shown: true }; // v3.578.0 : jet en suspens
   pa2RenderSheet();
 }
 function pa2Insist(accept) {
@@ -1064,6 +1140,8 @@ function pa2CloseSheet() {
   pa2View.sheet = null;
   pa2View.hud = null;
   pa2SetSheetHTML(null);
+  var run = Pa2Run.getRun(), kd = run && run.keyNote ? PA2_QUEST_KEYS[run.keyNote] : null;
+  if (kd) { run.keyNote = null; if (typeof showToast === "function") showToast(_td(kd.found), 3000); } // v3.724.0 : la clé ramassée
   pa2Rerender();
 }
 window.pa2CloseSheet = pa2CloseSheet;
@@ -1072,7 +1150,10 @@ function pa2RenderSheet() {
   var run = Pa2Run.getRun(), st = pa2View.sheet;
   if (!run || !st) { pa2SetSheetHTML(null); return; }
   if (st.trap) { var td = Pa2Run.trapDef(run); pa2SetSheetHTML(pa2TrapSheetBody(run, st), td ? _td(td.name) : "", false); return; }
-  var n = Pa2Run.node(st.key, run);
+  if (st.lock) { pa2SetSheetHTML(pa2LockSheetBody(run, st), _td(Pa2Run.questText(run).name || ""), false); return; } // v3.724.0
+  if (st.announce) { pa2SetSheetHTML(pa2AnnounceBody(run), _td(Pa2Run.questText(run).name || ""), false); return; }
+  if (st.search) { pa2SetSheetHTML(pa2SearchBody(run, st), _t("Chercher encore"), false); return; }
+  var n = st.foe && run.quest && run.quest.foe ? run.quest.foe : Pa2Run.node(st.key, run);
   pa2SetSheetHTML(pa2SheetBody(run, n, st), pa2NodeLabel(run, n), false);
 }
 
@@ -1141,7 +1222,9 @@ function pa2SheetBody(run, n, st) {
   var h = pa2EchoHTML(n, st) + (run.wallNote && st && st.step === "intro" ? '<p class="pa2-echo">' + esc(run.wallNote) + '</p>' : ""), dests = pa2Dests(run), hook = pa2Hook(run), R = PA2_RULES;
   if (run.fxNote && st && st.step === "intro") h += '<p class="pa2-echo is-red">' + esc(run.fxNote) + '</p>'; // v3.467.0 : le Venin
   if (run.burnNote && st && st.step === "intro") h += '<p class="pa2-echo is-red">' + esc(run.burnNote) + '</p>'; // v3.489.0 : le sol qui brûle
+  if (st && st.step === "intro" && run.searchNote) h += pa2SearchNoteHTML(run); // v3.724.0 : la fouille de l'arrivée, réussie ou de justesse
   if (st && st.step === "quality") return h + pa2QualityBody(run, n, st); // v3.578.0
+  if (st && st.cache) return h + pa2CacheBody(run, n, st); // v3.724.0 : le carnier
   switch (n.type) {
     case "obstacle":
     case "tertre": {
@@ -1182,7 +1265,8 @@ function pa2SheetBody(run, n, st) {
       var boss = n.type === "boss", pv = st.step === "intro" || st.step === "surprised" ? Pa2Run.combatPreview() : null;
       var foe = pa2FoeInfo(run, n, pv);
       if (st.step === "intro" || st.step === "surprised") {
-        h += pa2FoeHead(foe, boss ? _t("Destination · gardien") : (n.revenge ? _t("Combat · conséquence") : pa2ActKicker(n, _t("Combat"))), true);
+        h += pa2FoeHead(foe, boss ? _t("Destination · gardien") : (n.revenge ? _t("Combat · conséquence") : (n.questFoe ? _t("Combat · sur le retour") : pa2ActKicker(n, _t("Combat")))), true);
+        if (n.questFoe) h += '<p class="pa2-sim is-red is-q">' + esc(_td(Pa2Run.questText(run).back || "") + " " + _t("Rencontre de la quête : pas d'or.")) + '</p>'; // v3.724.0
         if (n.revenge) h += '<p class="pa2-sim is-red">' + esc(_t("Tu lui as pris son arc, plus tôt. Il frappe 30 % plus fort.")) + '</p>';
         if (n.alarm) h += '<p class="pa2-sim is-red">' + esc(_t("L'alarme a sonné plus tôt : ils sont un de plus, et ils t'attendent.")) + '</p>';
         if (n.condExtra) h += '<p class="pa2-sim is-red">' + esc(_t("Cette nuit, le premier combat de l'acte compte un ennemi de plus.")) + '</p>';
@@ -1303,6 +1387,7 @@ function pa2SheetBody(run, n, st) {
       } else {
         h += pa2Head(run, n, _td(ev.name), _t("Rencontre"));
         h += '<p class="pa2-narr">' + esc(_td(ev.branches[st.res.branch].text)) + '</p>';
+        if (run.quest && run.quest.kind === "lock" && run.quest.keyShown && Pa2Run.questText(run).hint) h += '<p class="pa2-echo">' + esc(_td(Pa2Run.questText(run).hint)) + '</p>'; // v3.724.0 (B) : la clé, marquée
         h += pa2ContinueButton(run);
       }
       break;
@@ -1314,7 +1399,8 @@ function pa2SheetBody(run, n, st) {
       var hasR = !!Pa2Run._rationInStock(run);
       h += pa2Head(run, n, _td(pl.name), camp ? _t("Fin de l'acte I") : _t("Fin de l'acte II"), true);
       h += '<p class="pa2-narr">' + esc(_td(pl.text)) + '</p>';
-      if (!camp) h += pa2GuardianHint(run);
+      if (!camp && run.quest && run.quest.kind === "end" && Pa2Run.questText(run).closed) h += '<p class="pa2-echo">' + esc(_td(Pa2Run.questText(run).closed)) + '</p>'; // v3.724.0 : les fins écartées
+      if (!camp && !Pa2Run.isClosed(Object.keys(run.nodes).filter(function (k) { return run.nodes[k].type === "boss"; })[0], run)) h += pa2GuardianHint(run); // v3.724.0 : pas de gardien si sa fin est écartée
       if (camp && Pa2Run.campGiftDue(run)) {
         h += '<div class="pa2-panel pa2-trophy">' + pa2Img(PA2_RELICS[hook.campGift.relic].icon) + '<div><div class="pa2-dim pa2-small">' + esc(_td(hook.campGift.text)) + '</div></div></div>';
       }
@@ -1333,6 +1419,16 @@ function pa2SheetBody(run, n, st) {
       h += '<button type="button" class="pa2-choice is-noicon" onclick="pa2Place(\'home\')"><span class="pa2-t">' + esc(_t("Rentrer au village")) + '</span>' +
         '<span class="pa2-cost is-gold">' + esc(_t("Tout le butin")) + '</span><span class="pa2-s">' + esc(_t("Pas de destination, pas de trophée.")) + '</span></button>';
       h += '</div>';
+      break;
+    }
+
+    case "cachee": { // v3.724.0 (D) : la fin cachée, derrière son passage secret
+      var hd = dests.cachee || {}, QR = PA2_QUEST_RULES;
+      var hGain = Math.round(run.refGold * QR.hiddenGold * Pa2Run.lootMult(run) * Pa2Run.destGoldMult(run) * (Pa2Run.hasRelic("ronce", run) ? R.ronceLoot : 1));
+      h += pa2Head(run, n, _td(hd.name || ""), _t("Destination cachée"));
+      h += '<p class="pa2-narr">' + esc(_td(hd.line || "")) + '</p><div class="pa2-choices">';
+      h += '<button type="button" class="pa2-choice is-q" onclick="pa2HiddenEnd()">' + pa2Img(PA2_ICONS.cachee) + '<span class="pa2-t">' + esc(_td(Pa2Run.questText(run).take || "")) + '</span>' +
+        '<span class="pa2-cost is-gold">' + esc(_t("Trophée")) + '</span><span class="pa2-s">' + esc(_t("Fin cachée · +{n} or · +{r} {x}", { n: hGain, r: QR.hiddenRare, x: pa2RareName(run.worldId) })) + '</span></button></div>';
       break;
     }
 
@@ -1676,6 +1772,148 @@ function pa2Place(action, rationId) {
 }
 function pa2Clairiere() { if (pa2Quick(function () { return Pa2Run.clairiere(); })) pa2CloseSheet(); }
 
+/* ---------- v3.724.0 (Seb 06/11, atelier aventure-parcours, partie 2) : mini-quêtes de parcours ---------- */
+
+// La fouille de l'arrivée : montrée seulement réussie (le passage est sur la carte) ou de justesse (un indice).
+function pa2SearchNoteHTML(run) {
+  var sn = run.searchNote, sd = sn ? Pa2Run.secretDef(sn.secret, run) : null;
+  if (!sd) return "";
+  if (sn.kind === "ok") return '<p class="pa2-echo is-secret">' + esc(_t("Tu remarques un passage : {x}. Il est sur ta carte.", { x: _td(sd.name) })) + '</p>';
+  return '<p class="pa2-echo is-secret">' + esc(_td(sd.hint)) + ' ' + esc(_t("(Un indice : tu pourras chercher encore, depuis la carte.)")) + '</p>';
+}
+function pa2SearchAgain() {
+  var run = Pa2Run.getRun();
+  if (!run || pa2View.sheet) return;
+  pa2Snapshot(run);
+  var r = Pa2Run.searchAgain();
+  if (pa2Fail(r)) { pa2View.hud = null; return; }
+  pa2View.hud.breath = Math.max(0, pa2View.hud.breath - PA2_QUEST_RULES.searchAgainBreath); // payé avant le dé
+  pa2RefreshHud();
+  pa2View.sheet = { search: true, step: "result", res: r.result, shown: false };
+  pa2Rerender(); // la carte perd son panneau d'indice
+  pa2RenderSheet();
+  pa2Later(function () { pa2RollDie(r.result.roll, function () { if (r.result.found) pa2Buzz(30); pa2Reveal(Pa2Run.getRun() || run); }, r.result); }, 60);
+}
+function pa2SearchBody(run, st) {
+  var r = st.res, sd = r.found ? Pa2Run.secretDef(r.found, run) : null;
+  var h = '<div class="pa2-sheet-head"><div class="pa2-medal">' + pa2Img(PA2_ICONS.secret) + '</div><div><div class="pa2-kicker">' + esc(_t("Fouille · avec l'avantage")) + '</div><h2 class="pa2-h2">' + esc(_t("Chercher encore")) + '</h2></div></div>';
+  h += pa2DieBlock(r, st.shown);
+  h += '<div id="pa2-outcome" class="' + (st.shown ? "" : "is-hidden") + '">' + (sd
+    ? '<div class="pa2-verdict is-ok">' + esc(_t("Trouvé")) + '</div><p class="pa2-result">' + esc(_t("Tu remarques un passage : {x}. Il est sur ta carte.", { x: _td(sd.name) })) + '</p>'
+    : '<div class="pa2-verdict is-ko">' + esc(_t("Rien")) + '</div><p class="pa2-result">' + esc(_t("Tu cherches encore. Rien, cette fois.")) + '</p>') +
+    '<button type="button" class="kbtn primary" onclick="pa2CloseSheet()">' + esc(_t("Continuer")) + '</button></div>';
+  return h;
+}
+
+// A — l'annonce du carnier, une fiche à la halte (choix B de Seb), une seule fois.
+function pa2AnnounceDue(run) {
+  var q = run && run.quest;
+  return !!(q && q.kind === "cache" && q.state === "annoncee" && !q.seen && run.at === q.halt && run.status === PA2_STATUS.map);
+}
+function pa2OpenAnnounce() { pa2View.sheet = { announce: true }; pa2RenderSheet(); }
+function pa2AnnounceBody(run) {
+  var q = run.quest, t = Pa2Run.questText(run), steps = q.back.length, cost = steps * 2 * Pa2Run.stepCost(run), halt = Pa2Run.node(q.halt, run);
+  var h = '<div class="pa2-sheet-head"><div class="pa2-medal">' + pa2Img(PA2_ICONS.cache) + '</div><div><div class="pa2-kicker">' + esc(halt ? pa2NodeLabel(run, halt) : "") + '</div><h2 class="pa2-h2">' + esc(_td(t.name)) + '</h2></div></div>';
+  h += '<p class="pa2-narr">' + esc(_td(t.announce)) + '</p>';
+  h += '<p class="pa2-sim is-q">' + esc(_tn(steps, "{n} pas derrière toi, sur une case que tu n'as pas jouée. Aller et retour : {b} Souffle. Facultatif.", "{n} pas derrière toi, sur une case que tu n'as pas jouée. Aller et retour : {b} Souffle. Facultatif.", { n: steps, b: cost })) + '</p>';
+  h += '<div class="pa2-choices"><button type="button" class="pa2-choice is-q" onclick="pa2AnnounceGo()">' + pa2Img(PA2_ICONS.cache) + '<span class="pa2-t">' + esc(_t("Y retourner")) + '</span>' +
+    '<span class="pa2-cost">' + esc(_t("{n} Souffle", { n: cost })) + '</span><span class="pa2-s">' + esc(_t("Le chemin du retour s'affiche ; tu fais le premier pas.")) + '</span></button>' +
+    '<button type="button" class="pa2-choice is-noicon is-q" onclick="pa2AnnounceLater()"><span class="pa2-t">' + esc(_t("Voir la carte")) + '</span>' +
+    '<span class="pa2-s">' + esc(_t("Tu décides sur la carte. Repartir vers l'avant laisse le carnier.")) + '</span></button></div>';
+  return h;
+}
+function pa2AnnounceLater() { Pa2Run.questSeen(); pa2CloseSheet(); }
+function pa2AnnounceGo() {
+  var run = Pa2Run.getRun(), q = run && run.quest;
+  Pa2Run.questSeen();
+  pa2ClearTimers(); pa2View.sheet = null; pa2SetSheetHTML(null);
+  if (q && q.back) pa2Move(q.back[0][1]);
+  else pa2Rerender();
+}
+// Le carnier, sur sa case : il remplace ce que la case contenait.
+function pa2CacheBody(run, n, st) {
+  var t = Pa2Run.questText(run), hook = pa2Hook(run), R = PA2_QUEST_RULES, r = st.res;
+  var h = '<div class="pa2-sheet-head"><div class="pa2-medal">' + pa2Img(PA2_ICONS.cache) + '</div><div><div class="pa2-kicker">' + esc(_t("Quête · {t}", { t: hook ? _td(hook.title) : "" })) + '</div><h2 class="pa2-h2">' + esc(_td(t.name)) + '</h2></div></div>';
+  h += '<p class="pa2-narr">' + esc(_td(t.found)) + '</p>';
+  if (!r) {
+    var g = Math.round(run.refGold * R.cacheGold * Pa2Run.lootMult(run) * (Pa2Run.hasRelic("ronce", run) ? PA2_RULES.ronceLoot : 1));
+    return h + '<div class="pa2-choices"><button type="button" class="pa2-choice is-q" onclick="pa2TakeCache()">' + pa2Img(PA2_ICONS.cache) + '<span class="pa2-t">' + esc(_td(t.take)) + '</span>' +
+      '<span class="pa2-cost is-gold">+' + g + ' ' + esc(_t("or")) + '</span><span class="pa2-s">' + esc(_t("Et peut-être un peu de {x}.", { x: pa2RareName(run.worldId) })) + '</span></button></div>';
+  }
+  h += '<div class="pa2-verdict is-ok">' + esc(_t("Le carnier est à toi")) + '</div><p class="pa2-result">+' + pa2Num(r.gain) + ' ' + esc(_t("or")) + (r.rare ? ' · ' + esc(pa2RareName(run.worldId)) + ' +' + r.rare : '') + '</p>';
+  h += '<p class="pa2-sim is-q">' + esc(_t("Le chemin du retour s'efface. Reviens à la halte, puis repars vers l'avant.")) + '</p>';
+  return h + pa2ContinueButton(run);
+}
+function pa2TakeCache() {
+  var run = Pa2Run.getRun(), st = pa2View.sheet;
+  pa2Snapshot(run);
+  var r = Pa2Run.takeCache();
+  if (pa2Fail(r)) { pa2View.hud = null; return; }
+  st.res = r.result;
+  pa2RenderSheet();
+  pa2Reveal(Pa2Run.getRun() || run);
+}
+function pa2HiddenEnd() { if (pa2Quick(function () { return Pa2Run.hiddenEnd(); })) pa2CloseSheet(); }
+
+// B — le verrou : arrêt au milieu du sentier, Ouvrir (la clé), Forcer (on passe toujours), Rebrousser.
+function pa2OpenLockSheet() {
+  var run = Pa2Run.getRun();
+  if (!run || run.status !== PA2_STATUS.lock || !run.lock) return;
+  var r = run.lock.result;
+  pa2View.sheet = { lock: true, step: r ? "result" : "intro", res: r || null, shown: !!r };
+  pa2RenderSheet();
+}
+function pa2LockSheetBody(run, st) {
+  var t = Pa2Run.questText(run), q = run.quest, kd = q && PA2_QUEST_KEYS[q.key], h;
+  h = '<div class="pa2-sheet-head"><div class="pa2-medal is-trap">' + pa2Img(PA2_ICONS.lock) + '</div><div><div class="pa2-kicker">' + esc(_t("Verrou")) + '</div><h2 class="pa2-h2">' + esc(_td(t.name || "")) + '</h2></div></div>';
+  if (st.step === "intro") {
+    var o = Pa2Run.lockOptions(), kn = kd ? _td(kd.need) : "";
+    h += '<p class="pa2-narr">' + esc(_td(t.lock || "")) + '</p><div class="pa2-choices">';
+    h += '<button type="button" class="pa2-choice is-q"' + (o.open ? '' : ' disabled') + ' onclick="pa2Lock(\'ouvrir\')">' + pa2Img(kd ? kd.icon : PA2_ICONS.lock) + '<span class="pa2-t">' + esc(_t("Ouvrir")) + '</span>' +
+      '<span class="pa2-odds o4"><span class="pa2-w">' + esc(_t("Assuré")) + '</span></span><span class="pa2-s">' + esc(o.open ? _t("Avec {k} : sans jet, sans risque.", { k: kn }) : _t("Il te faut {k}.", { k: kn })) + '</span></button>';
+    h += '<button type="button" class="pa2-choice is-q" onclick="pa2Lock(\'forcer\')">' + pa2Img(PA2_ICONS.power) + '<span class="pa2-t">' + esc(_t("Forcer")) + '</span>' + pa2OddsHTML(o.force.cran) +
+      '<span class="pa2-s">' + pa2WhyHTML(o.force, run) + '. ' + esc(_t("Tu passes toujours. De justesse : −{b} Souffle. Raté : une blessure et −{d} PV.", { b: o.midBreath, d: o.dmg })) + '</span></button>';
+    h += '<button type="button" class="pa2-choice is-q" onclick="pa2Lock(\'rebrousser\')">' + pa2Img(PA2_ICONS.flee) + '<span class="pa2-t">' + esc(_t("Rebrousser")) + '</span>' +
+      '<span class="pa2-s">' + esc(_t("Tu restes de ce côté. Le verrou reste.")) + '</span></button></div>';
+    return h;
+  }
+  var r = st.res, out;
+  if (r.choice === "forcer") h += pa2DieBlock(r, st.shown);
+  if (r.kind === "open") out = '<div class="pa2-verdict is-ok">' + esc(_t("Ouvert")) + '</div><p class="pa2-narr">' + esc(_td(t.open || "")) + '</p>';
+  else if (r.kind === "ok") out = '<div class="pa2-verdict is-ok">' + esc(_t("Forcé")) + '</div><p class="pa2-narr">' + esc(_td(t.force || "")) + '</p>';
+  else if (r.kind === "mid") out = '<div class="pa2-verdict is-mid">' + esc(_t("De justesse")) + '</div><p class="pa2-narr">' + esc(_td(t.force || "")) + '</p><p class="pa2-result">' + esc(_t("Tu passes, épuisé. −{b} Souffle", { b: PA2_QUEST_RULES.forceMidBreath })) + '</p>';
+  else out = '<div class="pa2-verdict is-ko">' + esc(_t("Raté")) + '</div><p class="pa2-result">' + esc(_t("Tu passes quand même, mais pas entier. −{d} PV · une blessure", { d: r.dmg })) + '</p>';
+  var ended = run.status === PA2_STATUS.done;
+  h += '<div id="pa2-outcome" class="' + (st.shown ? "" : "is-hidden") + '">' + out + '<button type="button" class="kbtn primary" onclick="' + (ended ? 'pa2CloseSheet()' : 'pa2LockGo()') + '">' + esc(ended ? _t("Voir le bilan") : _t("Continuer")) + '</button></div>';
+  return h;
+}
+function pa2Lock(choice) {
+  var run = Pa2Run.getRun();
+  pa2Snapshot(run);
+  var r = Pa2Run.resolveLock(choice);
+  if (pa2Fail(r)) { pa2View.hud = null; return; }
+  if (choice === "rebrousser") {
+    pa2View.hud = null; pa2View.sheet = null; pa2SetSheetHTML(null);
+    if (typeof showToast === "function") showToast(_t("Tu rebrousses chemin. Le verrou reste."), 1600);
+    pa2Rerender();
+    return;
+  }
+  pa2View.sheet = { lock: true, step: "result", res: r.result, shown: choice !== "forcer" };
+  pa2RenderSheet();
+  if (choice === "forcer") pa2RollDie(r.result.roll, function () { if (r.result.kind === "ok") pa2Buzz(30); pa2Reveal(Pa2Run.getRun() || run); }, r.result);
+  else { pa2Reveal(run); pa2RefreshHud(); }
+}
+// Le pas reprend du milieu du sentier jusqu'au point visé.
+function pa2LockGo() {
+  var run = Pa2Run.getRun(), from = run && run.lock ? run.lock.from : null;
+  var r = Pa2Run.lockContinue();
+  if (pa2Fail(r)) return;
+  pa2ClearTimers();
+  pa2View.sheet = null; pa2View.hud = null; pa2SetSheetHTML(null);
+  pa2View.fromKey = from; pa2View.fromMid = true;
+  pa2Rerender();
+}
+
 /* ---------- Bilan ---------- */
 
 function buildPa2EndHTML(run) {
@@ -1695,6 +1933,8 @@ function buildPa2EndHTML(run) {
     icon = pa2Ico("boss", run); title = Pa2Run.guardianSorts(run) ? _t("{n} te laisse passer", { n: _td(dests.boss.name) }) : _t("{n} dort encore", { n: _td(dests.boss.name) }); text = _td(dests.boss.pass || "");
   } else if (e.dest === "boss") {
     icon = pa2Ico("boss", run); title = _t("{n} est tombé", { n: _td(dests.boss.name) }); text = _td(dests.boss.win);
+  } else if (e.dest === "cachee") { // v3.724.0
+    icon = PA2_ICONS.cachee; title = _td(dests.cachee.name); text = _td(dests.cachee.win);
   } else if (e.dest === "clairiere") {
     icon = pa2Ico("clairiere", run); title = _td(dests.clairiere.name); text = _td(dests.clairiere.win);
   } else {
@@ -1799,3 +2039,10 @@ window.pa2Place = pa2Place;
 window.pa2Clairiere = pa2Clairiere;
 window.pa2Leave = pa2Leave;
 window.pa2View = pa2View;
+window.pa2SearchAgain = pa2SearchAgain; // v3.724.0 : mini-quêtes de parcours
+window.pa2AnnounceGo = pa2AnnounceGo;
+window.pa2AnnounceLater = pa2AnnounceLater;
+window.pa2TakeCache = pa2TakeCache;
+window.pa2HiddenEnd = pa2HiddenEnd;
+window.pa2Lock = pa2Lock;
+window.pa2LockGo = pa2LockGo;

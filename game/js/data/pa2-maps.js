@@ -53,8 +53,14 @@ var PA2_MAPS = {
       L8: { row: 8, x: 355, y: 302 }, C8: { row: 8, x: 383, y: 226 }, R8: { row: 8, x: 609, y: 304 },
       BOSS: { row: 9, x: 255, y: 125, type: "boss" },          // la colline aux rochers
       CLAIRIERE: { row: 9, x: 125, y: 275, type: "clairiere" }, // la cabane de l'ouest
-      TERTRE: { row: 9, x: 665, y: 228, type: "tertre" }       // le cercle de pierres de l'est
+      TERTRE: { row: 9, x: 665, y: 228, type: "tertre" },      // le cercle de pierres de l'est
+      // v3.724.0 (Seb 06/11) : fin cachée (accroche de la pierre), seule case libre entre cabane, colline, C8 et L8 (scan PIL)
+      PIERRE: { row: 9, x: 265, y: 245, type: "cachee", hidden: true }
     },
+    /* v3.724.0 (Seb 06/11, parcours PA v0.2, C) : passages secrets, trouvés en fouillant (textes : PA2_SECRETS).
+       Tracés relevés au pixel (PIL) : aucun repère ni sentier sous le pointillé. quest : seulement pour cette mini-quête. */
+    secrets: { "L4>L6": {}, "R6>R8": {}, "C8>PIERRE": { quest: "hiddenEnd" }, "L8>PIERRE": { quest: "hiddenEnd" } },
+    keySlots: { 2: ["L5", "R5"] }, // v3.724.0 (B) : cases où la clé d'un verrou peut tomber, par acte
     links: {
       S: ["L0", "C0", "R0"],
       L0: ["L1", "C1"], C0: ["L1", "C1", "R1"], R0: ["C1", "R1"],
@@ -113,8 +119,13 @@ var PA2_MAPS = {
       E10: { row: 10, x: 802, y: 218, type: "obstacle" },  // la montée au fort
       BOSS: { row: 11, x: 90, y: 233, type: "boss" },
       CLAIRIERE: { row: 11, x: 497, y: 64, type: "clairiere" },
-      TERTRE: { row: 11, x: 858, y: 94, type: "tertre" }
+      TERTRE: { row: 11, x: 858, y: 94, type: "tertre" },
+      // v3.724.0 (Seb 06/11) : fin cachée, la pierre pâle du pré au nord (scan PIL : aucun repère ni sentier dessous)
+      PIERRE: { row: 11, x: 425, y: 228, type: "cachee", hidden: true }
     },
+    /* v3.724.0 (C) : via = point de contrôle d'un tracé courbe (L7 et W10 se touchent presque ; la ravine contourne R5). */
+    secrets: { "L7>W10": { via: [105, 345] }, "R4>R6": { via: [1035, 735] }, "W9>PIERRE": { quest: "hiddenEnd" } },
+    keySlots: { 2: ["L5", "R5"] },
     links: {
       S: ["L0", "C0", "R0"],
       L0: ["L1", "C1"], C0: ["L1", "C1", "R1"], R0: ["C1", "R1"],

@@ -5,7 +5,7 @@
    run.pa2 = true. Statuts : pa2-prep (besace, pactes) -> pa2-map <-> pa2-node -> completed.
    Données : data/pa2-maps.js (tracés), data/pa2-content.js (contenu, réglages « banc »). */
 
-var PA2_STATUS = { prep: "pa2-prep", map: "pa2-map", node: "pa2-node", trap: "pa2-trap", done: "completed" }; // v3.467.0 : arrêté sur un piège
+var PA2_STATUS = { prep: "pa2-prep", map: "pa2-map", node: "pa2-node", trap: "pa2-trap", lock: "pa2-lock", done: "completed" }; // v3.467.0 : arrêté sur un piège ; v3.724.0 : sur un verrou
 
 var PA2_DRAW_FREEZE_MS = 4 * 3600 * 1000; // QA-7 : durée du tirage figé par secteur
 var Pa2Run = {
@@ -497,6 +497,9 @@ var Pa2Run = {
     var ref = self._spawn(run, null, false, self.goldBand(run));
     run.refGold = Math.max(1, Number((ref && ref.goldReward) || 1));
     run.nodes = this.generate(run);
+    // v3.724.0 (Seb 06/11) : mini-quête de parcours (clé et verrou, fin imposée), posée avant coupures et pièges
+    run.quest = null; run.secrets = {}; run.searched = {}; run.keys = []; run.locks = {}; run.closedEnds = []; run.lock = null; run.hint = null;
+    if (!par) this._setupQuest(run);
     run.cuts = this._placeCuts(run);   // v3.468.0 : sentiers coupés, avant les pièges
     run.traps = this._placeTraps(run); // v3.467.0 : pièges sur les sentiers
     run.fx = {};
@@ -520,6 +523,7 @@ var Pa2Run = {
     Object.keys(map.nodes).forEach(function (key) {
       var d = map.nodes[key];
       var n = { key: key, row: d.row, act: d.act || self.actOf(d.row, map), type: d.type || null, done: false };
+      if (d.hidden) n.hidden = true; // v3.724.0 : fin cachée, montrée par son passage secret
       nodes[key] = n;
       if (!n.type) free.push(n);
     });
@@ -576,6 +580,8 @@ var Pa2Run = {
     var n = this.node(key, run), here = this.node(run.at, run);
     if (!n || !here) return false;
     if (this.isParcours(run)) return true; // un parcours se voit en entier
+    if (!this._questShows(run, key, n)) return false; // v3.724.0 : fin écartée, fin cachée pas encore trouvée
+    if (n.cache && key !== run.at) return true;
     if (this.hasItem("veilleurs", run) || this.hasRelic("oeil", run)) return true;
     if (this.isDest(n, run) || n.type === "camp" || n.type === "seuil" || n.type === "depart") return true;
     if (key === run.at || this._walked(run, key)) return true;
@@ -592,6 +598,8 @@ var Pa2Run = {
     run = run || this.getRun();
     var n = this.node(key, run), here = this.node(run.at, run);
     if (!n || !here) return false;
+    if (!this.isParcours(run) && !this._questShows(run, key, n)) return false; // v3.724.0 : fins écartées effacées (choix B de Seb)
+    if (n.cache) return true; // la cache du carnier, marquée derrière soi
     if (key === run.at || this._walked(run, key) || n.type === "depart" || this.isParcours(run)) return true;
     if (this.isDest(n, run) || n.type === "camp" || n.type === "seuil") return true;
     return n.row > here.row && this.isVisible(key, run);
@@ -637,7 +645,14 @@ var Pa2Run = {
   openMoves: function () {
     var run = this.getRun();
     if (!run || run.status !== PA2_STATUS.map) return [];
-    return (this.links(run)[run.at] || []).slice();
+    var base = (this.links(run)[run.at] || []).slice(), q = run.quest;
+    // v3.724.0 (A) : en route vers le carnier, pas d'écart ; à la halte, le retour s'ajoute aux sentiers
+    if (q && q.back && (q.state === "annoncee" || q.state === "faite")) {
+      var qm = this.questMoves(run);
+      if (q.back.some(function (e) { return e[1] === run.at; })) return qm; // sur le chemin du carnier
+      if (q.state === "annoncee") qm.forEach(function (k) { if (base.indexOf(k) < 0) base.push(k); });
+    }
+    return base;
   },
 
   /* v3.429.0 (Ruines, U-6) — LES MURS BOUGENT. Le tracé du run : celui de la carte, sauf les
@@ -645,11 +660,17 @@ var Pa2Run = {
   links: function (run) {
     run = run || this.getRun();
     var base = (this.getMap(run) || {}).links || {};
-    if (!run || (!run.walls && !run.cuts)) return base;
+    var closed = run ? this._closedSet(run) : {}, found = this.foundSecrets(run); // v3.724.0 : fins écartées, passages trouvés
+    if (!run || (!run.walls && !run.cuts && !Object.keys(closed).length && !found.length)) return base;
     var out = {}, cuts = run.cuts || {};
     Object.keys(base).forEach(function (k) {
-      out[k] = (run.walls && run.walls[k]) || base[k];
-      if (run.cuts) out[k] = out[k].filter(function (b) { return !cuts[k + ">" + b]; }); // v3.468.0 : sentiers coupés
+      out[k] = ((run.walls && run.walls[k]) || base[k]).filter(function (b) { return !cuts[k + ">" + b] && !closed[b]; }); // v3.468.0 : sentiers coupés
+    });
+    found.forEach(function (sk) {
+      var p = sk.split(">");
+      if (closed[p[1]]) return;
+      if (!out[p[0]]) out[p[0]] = [];
+      if (out[p[0]].indexOf(p[1]) < 0) out[p[0]].push(p[1]);
     });
     return out;
   },
@@ -682,8 +703,16 @@ var Pa2Run = {
   moveTo: function (key) {
     var run = this.getRun();
     if (this.openMoves().indexOf(key) < 0) return { ok: false, reason: _t("Ce chemin n'est pas praticable d'ici.") };
-    // v3.467.0 (Pièges) : un sentier piégé arrête le héros au milieu, avant le pas
     var tk = run.at + ">" + key, tr = run.traps && run.traps[tk];
+    // v3.724.0 (B) : un verrou arrête le héros au milieu du sentier, comme un piège
+    if (run.locks && run.locks[tk] === "closed") {
+      run.lock = { key: tk, from: run.at, to: key, result: null };
+      run.status = PA2_STATUS.lock;
+      run.lastResult = null;
+      this._save();
+      return { ok: true, reason: null, lock: true };
+    }
+    // v3.467.0 (Pièges) : un sentier piégé arrête le héros au milieu, avant le pas
     if (tr && !tr.done) {
       run.trap = { key: tk, from: run.at, to: key, unseen: !this.isTrapShown(tk, run), result: null };
       tr.seen = true;
@@ -694,28 +723,40 @@ var Pa2Run = {
     }
     return this._step(run, key, false);
   },
-  // Le pas lui-même : Souffle de marche, effets en cours (sauf le pas du piège), nœud préparé.
-  _step: function (run, key, fromTrap) {
-    run.fxNote = null;
-    run.path.push([run.at, key]);
-    run.at = key;
-    var step = (this.hasPact("lourd", run) ? PA2_RULES.heavyStep : 0) + (this.hasRelic("ronce", run) ? PA2_RULES.ronceStep : 0)
+  // Souffle d'un pas (v3.724.0 : sorti de _step, l'annonce du carnier chiffre son détour).
+  stepCost: function (run) {
+    run = run || this.getRun();
+    return Math.max(0, (this.hasPact("lourd", run) ? PA2_RULES.heavyStep : 0) + (this.hasRelic("ronce", run) ? PA2_RULES.ronceStep : 0)
       + Number(this.worldRule(run, "stepBreath") || 0) // v3.387.0 : la soif du Désert
       + Number(this.condFx(run, "stepBreath") || 0) // v3.469.0 : canicule, nuit fraîche, courants d'air
       - (this.hasItem("ecaille", run) ? PA2_RULES.ecailleStep : 0) // v3.469.4 : Écaille du Ver
-      - (this.hasRelic("perle", run) ? PA2_RULES.perleStep : 0); // v3.469.5 : Perle de rosée
-    step = Math.max(0, step);
+      - (this.hasRelic("perle", run) ? PA2_RULES.perleStep : 0)); // v3.469.5 : Perle de rosée
+  },
+  // Le pas lui-même : Souffle de marche, effets en cours (sauf le pas du piège), nœud préparé.
+  _step: function (run, key, fromTrap) {
+    run.fxNote = null; run.searchNote = null; run.revisit = null; run.hint = null;
+    var q = run.quest, from = run.at, back = this.isBackMove(key, run);
+    // v3.724.0 (A) : repartir vers l'avant depuis la halte laisse le carnier au collet
+    if (q && q.state === "annoncee" && from === q.halt && !back) { q.state = "abandonnee"; if (run.nodes[q.node]) delete run.nodes[q.node].cache; }
+    run.path.push([from, key]);
+    run.at = key;
+    var revisit = !!(this.node(key, run) || {}).done; // v3.724.0 : case déjà faite, rien ne s'y rejoue
+    var step = this.stepCost(run);
     if (step) run.breath = Math.max(0, run.breath - step);
     if (this.hasRelic("braise", run)) this._heal(game.heroMaxHp * PA2_RULES.braiseHealPct);
     if (!fromTrap && !this._tickFx(run)) return { ok: true, reason: null, ko: true }; // le Venin peut achever
     this._advanceLava(run, this.node(key, run)); // v3.489.0 (Montagne) : la lave avance, puis le sol brûle peut-être
     this._burn(run, key);
-    this._prepareNode(run, this.node(key, run));
+    var arrived = this.node(key, run);
+    if (!revisit && !arrived.cache) this._prepareNode(run, arrived);
     run.wallNote = null;
     this._shiftWalls(run); // v3.429.0 (Ruines) : les murs bougent
     if (Number(run.lanternLeft || 0) > 0) run.lanternLeft -= 1; // v3.454.0 : la mèche brûle à chaque pas
     run.status = PA2_STATUS.node;
     run.lastResult = null;
+    if (revisit) { run.status = PA2_STATUS.map; run.revisit = key; }
+    if (back) this._questFoe(run, key); // v3.724.0 (PP-Q2 b) : la rencontre fixe du retour, une fois
+    if (!revisit) this._search(run, key); // v3.724.0 (PP-Q3 a) : fouille automatique et gratuite
     this._save();
     return { ok: true, reason: null, node: this.node(key, run) };
   },
@@ -824,8 +865,10 @@ var Pa2Run = {
   },
   _done: function (run, n, result) {
     n.done = true;
+    this._takeKey(run, n, result); // v3.724.0 (B) : la clé se ramasse en finissant sa case, quelle qu'en soit l'issue
     run.lastResult = result || null;
     if (run.status !== PA2_STATUS.done) run.status = PA2_STATUS.map;
+    if (n.questFoe && run.status === PA2_STATUS.map && (this.node(run.at, run) || {}).cache && !this.node(run.at, run).done) run.status = PA2_STATUS.node; // puis le carnier
     if (this.isParcours(run) && run.status !== PA2_STATUS.done && this.isDest(n, run)) this._finishParcours(run);
     this._save();
     return { ok: true, reason: null, result: result || null };
@@ -833,7 +876,9 @@ var Pa2Run = {
   _current: function (types) {
     var run = this.getRun();
     if (!run || run.status !== PA2_STATUS.node || run.pending) return null; // v3.578.0 : un jet attend « Insister » ou « Accepter »
-    var n = this.node(run.at, run);
+    var n = this.node(run.at, run), f = run.quest && run.quest.foe;
+    if (f && !f.done && f.key === run.at) return (!types || types.indexOf("combat") >= 0) ? f : null; // v3.724.0 : la rencontre du retour
+    if (n && !n.done && n.cache) return (types && types.indexOf("cache") >= 0) ? n : null; // v3.724.0 : le carnier remplace la case
     if (!n || n.done || (types && types.indexOf(n.type) < 0)) return null;
     return n;
   },
@@ -841,7 +886,7 @@ var Pa2Run = {
   // Objets de besace utilisables à tout moment du run (rations, gourde).
   useItem: function (itemId) {
     var run = this.getRun(), it = PA2_ITEMS[itemId];
-    if (!run || (run.status !== PA2_STATUS.map && run.status !== PA2_STATUS.node && run.status !== PA2_STATUS.trap) || !it || !(run.stock[itemId] > 0)) {
+    if (!run || (run.status !== PA2_STATUS.map && run.status !== PA2_STATUS.node && run.status !== PA2_STATUS.trap && run.status !== PA2_STATUS.lock) || !it || !(run.stock[itemId] > 0)) {
       return { ok: false, reason: _t("Choix impossible") };
     }
     if (it.light) { // v3.454.0 (Crypte) : allumer la Lanterne ; Mèche longue (Mémoire 14) +2 pas
@@ -962,7 +1007,7 @@ var Pa2Run = {
       res = r2;
     }
     if (p.type === "trap") return this._applyTrap(run, res);
-    var n = this.node(p.key, run);
+    var n = this._nodeAt(run, p.key);
     return p.type === "ruse" ? this._applyRuse(run, n, res) : this._applyObstacle(run, n, res);
   },
   _profiles: function (run) {
@@ -983,11 +1028,11 @@ var Pa2Run = {
     var pa = (PA2_TRAP_RULES.perAct || {})[run.ring], per = pa != null ? Number(pa) : 1, moving = {};
     if (per > 0) per += Number(this.condFx(run, "trapsPerAct") || 0); // v3.469.0 : braconniers, pillards, guetteurs, veillée
     (map.shifts || []).forEach(function (sh) { moving[sh.from] = true; });
-    var byAct = { 1: [], 2: [], 3: [] }, used = {}, links = this.links(run); // v3.468.0 : sans les sentiers coupés
+    var byAct = { 1: [], 2: [], 3: [] }, used = {}, links = this.links(run), locks = run.locks || {}; // v3.468.0 : sans les sentiers coupés
     Object.keys(links).forEach(function (a) {
       var exits = links[a] || [];
       if (exits.length < 2 || moving[a]) return;
-      exits.forEach(function (b) { var n = run.nodes[b]; if (n && byAct[n.act]) byAct[n.act].push([a, b]); });
+      exits.forEach(function (b) { var n = run.nodes[b]; if (n && byAct[n.act] && !locks[a + ">" + b]) byAct[n.act].push([a, b]); }); // v3.724.0 : pas sur un verrou
     });
     var weights = PA2_TRAP_WEIGHTS[run.worldId] || PA2_TRAP_WEIGHTS.forest, dark = !!this.worldRule(run, "trapsHidden");
     if (this.condFx(run, "alarmWeight")) { weights = JSON.parse(JSON.stringify(weights)); weights.alarme *= Number(this.condFx(run, "alarmWeight")); }
@@ -1010,27 +1055,29 @@ var Pa2Run = {
     var map = this.getMap(run), cuts = {}, self = this, R = PA2_CUT_RULES;
     var kinds = Object.keys((window.PA2_CUTS || {})[run.worldId] || {});
     if (!map || !map.links || this.isParcours(run) || !kinds.length) return cuts;
-    var moving = {};
+    var moving = {}, locks = run.locks || {}, closed = this._closedSet(run); // v3.724.0 : ni sur un verrou, ni vers une fin écartée
     (map.shifts || []).forEach(function (sh) { moving[sh.from] = true; });
     var pool = [];
-    Object.keys(map.links).forEach(function (a) { if (!moving[a]) map.links[a].forEach(function (b) { pool.push(a + ">" + b); }); });
+    Object.keys(map.links).forEach(function (a) { if (!moving[a] && !closed[a]) map.links[a].forEach(function (b) { if (!locks[a + ">" + b] && !closed[b]) pool.push(a + ">" + b); }); });
     var extra = Number(this.condFx(run, "extraCuts") || 0); // v3.469.0 : orage, bâtisseurs
-    var want = this._int(R.min, R.max) + (R.max > 0 ? extra : 0), dests = Object.keys(run.nodes).filter(function (k) { return self.isDest(run.nodes[k], run); });
+    var want = this._int(R.min, R.max) + (R.max > 0 ? extra : 0), dests = Object.keys(run.nodes).filter(function (k) { return self.isDest(run.nodes[k], run) && !run.nodes[k].hidden && !closed[k]; });
+    if (run.quest && run.quest.keyNode) dests.push(run.quest.keyNode); // v3.724.0 (B) : la clé reste accessible
     while (pool.length && Object.keys(cuts).length < want) {
       var key = pool.splice(Math.floor(this.rand() * pool.length), 1)[0], a = key.split(">")[0];
-      var left = map.links[a].filter(function (b) { return !cuts[a + ">" + b]; });
+      var left = map.links[a].filter(function (b) { return !cuts[a + ">" + b] && !closed[b]; });
       if (left.length < 2) continue; // le point garde une sortie
       cuts[key] = this._pick(kinds);
-      if (!this._destsReachable(map, cuts, dests)) delete cuts[key];
+      if (!this._destsReachable(map, cuts, dests, closed)) delete cuts[key];
     }
     return cuts;
   },
-  _destsReachable: function (map, cuts, dests) {
+  _destsReachable: function (map, cuts, dests, closed) {
     var seen = {}, todo = [map.start];
     seen[map.start] = true;
+    closed = closed || {};
     while (todo.length) {
       var a = todo.pop();
-      (map.links[a] || []).forEach(function (b) { if (!cuts[a + ">" + b] && !seen[b]) { seen[b] = true; todo.push(b); } });
+      (map.links[a] || []).forEach(function (b) { if (!cuts[a + ">" + b] && !closed[b] && !seen[b]) { seen[b] = true; todo.push(b); } });
     }
     return dests.every(function (d) { return seen[d]; });
   },
@@ -1305,7 +1352,7 @@ var Pa2Run = {
     var unwinnable = !(rounds <= PA2_RULES.maxRounds);
     var pack = Number(n.pack || 1);
     var hpLoss = unwinnable ? Number(game.heroHp || 0) : Math.round(rounds * foeDmg * pack * this._dmgMult(run, n, apId));
-    var gold = (n.type === "boss")
+    var gold = n.noGold ? 0 : (n.type === "boss") // v3.724.0 : la rencontre du retour ne paie pas
       ? run.refGold * PA2_GOLD.boss * this.lootMult(run) * this.destGoldMult(run)
       : run.refGold * PA2_GOLD.combat * pack * PA2_APPROACHES[apId].loot * this.lootMult(run); // C3 : or de la carte
     return {
@@ -1528,6 +1575,7 @@ var Pa2Run = {
       run.flags.vole = true;
       res.gain = this._gold(run, run.refGold * PA2_GOLD.event * this.lootMult(run));
     }
+    this._questOnEvent(run, branch);
     return this._done(run, n, res);
   },
 
@@ -1559,6 +1607,7 @@ var Pa2Run = {
       if (!game.explorationProgression) game.explorationProgression = {};
       game.explorationProgression[hook.storyFlag.key] = hook.storyFlag.values[branch] || branch;
     }
+    this._questOnEvent(run, branch); // v3.724.0 : la branche lance la mini-quête (ou non)
     return this._done(run, n, res);
   },
 
@@ -1611,6 +1660,7 @@ var Pa2Run = {
       return { ok: false, reason: _t("Choix impossible") };
     }
     res.cured = w0 - run.wounds;
+    if (this._announceCache(run, n)) res.quest = true; // v3.724.0 (A) : le chasseur parle du carnier à la halte
     return this._done(run, n, res);
   },
   // Au feu, une ration soigne ×1,5 son effet, plafonné aux PV max (v3.578.0, 2A).
@@ -1624,6 +1674,263 @@ var Pa2Run = {
     var run = this.getRun();
     var share = run.flags.sauve ? PA2_GOLD.clairiereSauve : PA2_GOLD.clairiere;
     var res = { kind: "clairiere", gain: this._gold(run, run.refGold * share * this.lootMult(run) * this.destGoldMult(run)) };
+    n.done = true; run.lastResult = res;
+    this.finish("dest");
+    return { ok: true, reason: null, result: res };
+  },
+
+  /* ---------- v3.724.0 (Seb 06/11, conception Parcours PA v0.2, lot 2) : mini-quêtes de parcours ---------- */
+  /* Une accroche porte au plus une mécanique (PA2_HOOKS.*.quest) ; tout l'état vit dans le run (quest, secrets,
+     searched, keys, locks, closedEnds, lock, hint). Un run d'avant la version n'a pas ces champs : il se joue sans quête. */
+
+  // Mini-quête de l'accroche pour la carte du run : { def, map } (map : réglages byMap de la carte), ou null.
+  questDef: function (run) {
+    run = run || this.getRun();
+    var h = this._hook(run), q = h && h.quest, map = run ? this.getMap(run) : null;
+    if (!q || !map || this.isParcours(run)) return null;
+    var bm = q.byMap ? q.byMap[run.mapId] : null;
+    if (q.byMap && !bm) return null;
+    if (q.kind === "hiddenEnd" && !(map.nodes[q.node] && map.nodes[q.node].hidden)) return null;
+    return { def: q, map: bm || {} };
+  },
+  questText: function (run) { var qd = this.questDef(run); return qd ? (qd.map.text || qd.def.text || {}) : {}; },
+  // Posée au départ, avec le contenu des cases : verrou et clé (B), fins écartées (D) ; A et D cachée attendent la rencontre.
+  _setupQuest: function (run) {
+    var qd = this.questDef(run), map = this.getMap(run), self = this;
+    if (!qd) return;
+    var q = qd.def, base = { hookId: run.hookId, kind: q.kind, state: "rencontre" };
+    if (q.kind === "end") {
+      run.closedEnds = Object.keys(map.nodes).filter(function (k) { var n = run.nodes[k]; return !n.hidden && self.isDest(n, run) && n.type !== q.end; });
+      base.state = "active"; base.end = q.end;
+    } else if (q.kind === "lock") {
+      var links = [], slots = [];
+      [].concat(qd.map.lock || []).forEach(function (x) {
+        if (x.indexOf(">") > 0) links.push(x);
+        else Object.keys(map.links).forEach(function (a) { if (map.links[a].indexOf(x) >= 0) links.push(a + ">" + x); }); // case fermée : tous ses accès
+      });
+      Object.keys(map.keySlots || {}).forEach(function (a) { slots = slots.concat(map.keySlots[a]); });
+      slots = slots.filter(function (k) { return run.nodes[k] && run.nodes[k].type !== "evenement"; });
+      if (!links.length || !slots.length) return;
+      links.forEach(function (l) { run.locks[l] = "closed"; });
+      base.key = qd.map.key; base.keyNode = this._pick(slots); base.keyShown = false; base.state = "active";
+      run.nodes[base.keyNode].questKey = base.key;
+    } else if (q.kind === "hiddenEnd") base.node = q.node;
+    run.quest = base;
+  },
+  // La branche de la rencontre lance la mini-quête (carnier, fin cachée) ou marque la clé (gouffre aidé).
+  _questOnEvent: function (run, branch) {
+    var q = run.quest, qd = this.questDef(run);
+    if (!q || !qd) return;
+    var d = qd.def, ok = !d.branches || d.branches.indexOf(branch) >= 0;
+    if (q.kind === "lock" && (d.showKey || []).indexOf(branch) >= 0) q.keyShown = true;
+    if (q.state !== "rencontre") return;
+    if (q.kind === "cache") q.state = ok ? "halte" : "sans";
+    if (q.kind === "hiddenEnd") q.state = ok ? "active" : "sans";
+  },
+
+  /* A — le carnier : annoncé à la première halte après la rencontre (camp, ou seuil si le camp n'a pas servi). */
+  _announceCache: function (run, halt) {
+    var q = run.quest;
+    if (!q || q.kind !== "cache" || q.state !== "halte" || !halt) return false;
+    var c = this._cacheSpot(run, halt.key);
+    if (!c) return false; // pas de case possible ici : la halte suivante
+    q.state = "annoncee"; q.halt = halt.key; q.node = c.node; q.back = c.back; q.seen = false; q.foeDone = false;
+    run.nodes[c.node].cache = true;
+    return true;
+  },
+  // PP-Q1 b : case non jouée, voisine du chemin parcouru, rangée dépassée, maxBack pas au plus ; jamais par un sentier coupé ou piégé.
+  _cacheSpot: function (run, halt) {
+    var map = this.getMap(run), self = this, max = Number(PA2_QUEST_RULES.maxBack || 2), two = [], one = [];
+    var preds = function (k) { return Object.keys(map.links).filter(function (a) { return map.links[a].indexOf(k) >= 0; }); };
+    var free = function (a, b) { var t = run.traps && run.traps[a + ">" + b]; return !(run.cuts && run.cuts[a + ">" + b]) && !(t && !t.done); };
+    var fresh = function (k) { var n = run.nodes[k]; return !!n && !n.done && !n.hidden && n.row >= 0 && !self._walked(run, k) && ["obstacle", "combat", "source", "autel", "trouvaille"].indexOf(n.type) >= 0; };
+    preds(halt).forEach(function (p1) {
+      if (!free(p1, halt)) return;
+      if (fresh(p1)) one.push({ node: p1, back: [[halt, p1]] });
+      else if (max >= 2 && run.nodes[p1].done && self._walked(run, p1)) preds(p1).forEach(function (p2) { if (fresh(p2) && free(p2, p1)) two.push({ node: p2, back: [[halt, p1], [p1, p2]] }); });
+    });
+    var list = two.length ? two : one;
+    return list.length ? this._pick(list) : null;
+  },
+  // Pas du carnier depuis la case du héros : vers la cache (tant qu'elle est annoncée), ou vers la halte.
+  questMoves: function (run) {
+    run = run || this.getRun();
+    var q = run && run.quest, out = [];
+    if (!q || !q.back) return out;
+    q.back.forEach(function (e) {
+      if (q.state === "annoncee" && e[0] === run.at) out.push(e[1]);
+      if (e[1] === run.at && out.indexOf(e[0]) < 0) out.push(e[0]);
+    });
+    return out;
+  },
+  isBackMove: function (key, run) {
+    run = run || this.getRun();
+    var q = run && run.quest;
+    return !!(q && q.state === "annoncee" && q.back && q.back.some(function (e) { return e[0] === run.at && e[1] === key; }));
+  },
+  questSeen: function () { var run = this.getRun(); if (run && run.quest) { run.quest.seen = true; this._save(); } return { ok: true, reason: null }; },
+  // Premier pas du retour : la rencontre fixe (PP-Q2 b), un ennemi sans or, une seule fois.
+  _questFoe: function (run, key) {
+    var q = run.quest, qd = this.questDef(run), back = qd && qd.def.cache && qd.def.cache.back, n = this.node(key, run);
+    if (!q || !back || q.foeDone || !q.back || q.back[0][1] !== key || !n) return;
+    q.foeDone = true;
+    q.foe = { key: key, row: n.row, act: n.act, type: "combat", foeId: back.foe, pack: Number(back.pack || 1), noGold: true, questFoe: true, done: false };
+    run.status = PA2_STATUS.node;
+  },
+  _nodeAt: function (run, key) { var f = run.quest && run.quest.foe; return f && !f.done && f.key === key ? f : this.node(key, run); },
+  questFoeHere: function (run) { run = run || this.getRun(); var f = run && run.quest && run.quest.foe; return f && f.key === run.at ? f : null; },
+  takeCache: function () {
+    var n = this._current(["cache"]), run = this.getRun(), q = run && run.quest;
+    if (!n || !q || q.state !== "annoncee" || q.node !== n.key) return { ok: false, reason: _t("Choix impossible") };
+    var R = PA2_QUEST_RULES, res = { kind: "cache" };
+    res.gain = this._gold(run, run.refGold * Number(R.cacheGold || 0) * this.lootMult(run));
+    res.rare = this.rand() * 100 < Number(R.cacheRarePct || 0) ? this._creditRare(run, 1) : 0;
+    q.state = "faite";
+    return this._done(run, n, res);
+  },
+
+  /* B — clé et verrou. Forcer passe toujours (PP-Q4 a) ; la clé évite le jet et la blessure. */
+  _takeKey: function (run, n, res) {
+    var q = run.quest;
+    if (!q || q.kind !== "lock" || n.questFoe || q.keyNode !== n.key || !run.keys || run.keys.indexOf(q.key) >= 0) return;
+    run.keys.push(q.key);
+    run.keyNote = q.key;
+    if (res) res.key = q.key;
+  },
+  hasKey: function (run) { run = run || this.getRun(); var q = run && run.quest; return !!(q && q.key && run.keys && run.keys.indexOf(q.key) >= 0); },
+  isLockShown: function (key, run) {
+    run = run || this.getRun();
+    if (!run || !run.locks || run.locks[key] !== "closed") return false;
+    var p = key.split(">"), here = this.node(run.at, run), to = this.node(p[1], run);
+    if (!here || !to) return false;
+    if (p[0] === run.at) return true;
+    return to.row > here.row && this.isShown(p[0], run) && this.isVisible(p[1], run);
+  },
+  _lockCheck: function (run) {
+    var to = run.lock ? this.node(run.lock.to, run) : null;
+    if (!to) return null;
+    var bonus = (this.hasRelic("pierre", run) ? 1 : 0) + (this.hasItem("bois", run) ? 1 : 0) + (this.hasRelic("marteau", run) ? 1 : 0); // crans de la voie force
+    return this._check(run, "power", { node: to, base: PA2_QUEST_RULES.forceBase, voie: "power", bonus: bonus });
+  },
+  lockOptions: function () {
+    var run = this.getRun();
+    if (!run || run.status !== PA2_STATUS.lock || !run.lock || run.lock.result) return null;
+    var to = this.node(run.lock.to, run);
+    return { open: this.hasKey(run), force: this._lockCheck(run), dmg: Math.round(game.heroMaxHp * PA2_ACTS[to.act].failPct), midBreath: PA2_QUEST_RULES.forceMidBreath };
+  },
+  _setLocks: function (run, state) { Object.keys(run.locks || {}).forEach(function (k) { if (run.locks[k] === "closed") run.locks[k] = state; }); },
+  resolveLock: function (choice) {
+    var run = this.getRun(), o = this.lockOptions();
+    if (!o) return { ok: false, reason: _t("Choix impossible") };
+    var lk = run.lock, res;
+    if (choice === "rebrousser") { // rien n'est payé : on n'a pas encore passé
+      run.lock = null; run.status = PA2_STATUS.map; run.lastResult = { kind: "back" };
+      this._save();
+      return { ok: true, reason: null, result: run.lastResult };
+    }
+    if (choice === "ouvrir") {
+      if (!o.open) return { ok: false, reason: _t("Il te faut la clé.") };
+      res = { kind: "open", choice: choice };
+      this._setLocks(run, "open");
+    } else if (choice === "forcer") {
+      res = this._riskRoll(run, o.force.thr);
+      res.choice = choice; res.thr = o.force.thr; res.cran = o.force.cran; res.chance = o.force.chance;
+      this._setLocks(run, "forced");
+      if (res.kind === "mid") run.breath = Math.max(0, run.breath - Number(o.midBreath || 0));
+      if (res.kind === "ko") {
+        run.wounds += 1; res.wound = true; res.dmg = o.dmg;
+        lk.result = res;
+        if (!this._hurt(run, res.dmg)) return { ok: true, reason: null, result: res };
+      }
+    } else return { ok: false, reason: _t("Choix impossible") };
+    lk.result = res;
+    this._save();
+    return { ok: true, reason: null, result: res };
+  },
+  // Après le verrou : le pas reprend jusqu'au point visé.
+  lockContinue: function () {
+    var run = this.getRun();
+    if (!run || run.status !== PA2_STATUS.lock || !run.lock || !run.lock.result) return { ok: false, reason: _t("Choix impossible") };
+    var to = run.lock.to;
+    run.lock = null;
+    return this._step(run, to, false);
+  },
+
+  /* C — passages secrets (fixes par carte) : fouille automatique et gratuite à l'arrivée, montrée si réussie ou de justesse. */
+  foundSecrets: function (run) { var s = (run && run.secrets) || {}; return Object.keys(s).filter(function (k) { return s[k] === "found"; }); },
+  secretDef: function (key, run) {
+    run = run || this.getRun();
+    var m = this.getMap(run), t = ((window.PA2_SECRETS || {})[run.mapId] || {})[key];
+    return m && m.secrets && m.secrets[key] ? { key: key, via: m.secrets[key].via || null, name: t ? t.name : "", hint: t ? t.hint : "" } : null;
+  },
+  // Passages qu'on peut encore chercher depuis cette case (fin cachée : seulement pour sa mini-quête, lancée).
+  _secretsFrom: function (run, key) {
+    var map = this.getMap(run), sec = (map && map.secrets) || {}, q = run.quest, closed = this._closedSet(run), got = run.secrets || {};
+    return Object.keys(sec).filter(function (s) {
+      var p = s.split(">"), d = sec[s];
+      if (p[0] !== key || closed[p[1]] || got[s]) return false;
+      return !d.quest || !!(q && q.kind === d.quest && q.state === "active");
+    });
+  },
+  // Avantage à la fouille : ce qui éclaire (torche, Lanterne allumée) ; l'Œil de chouette et la Lanterne des veilleurs aussi.
+  searchLight: function (run) { return this.hasItem("torche", run) || Number(run.lanternLeft || 0) > 0 || this.hasItem("veilleurs", run) || this.hasRelic("oeil", run); },
+  searchCheck: function (run, n) { return this._check(run, "precision", { node: n, base: PA2_QUEST_RULES.searchBase, voie: "precision" }); },
+  _search: function (run, key) {
+    if (this.isParcours(run)) return null;
+    if (!run.searched) run.searched = {};
+    if (run.searched[key]) return null;
+    var list = this._secretsFrom(run, key);
+    if (!list.length) return null;
+    var r = this.roll(this.searchCheck(run, this.node(key, run)).thr, this.searchLight(run));
+    run.searched[key] = r.kind;
+    if (r.kind === "ok") { this._reveal(run, list); run.searchNote = { kind: "ok", secret: list[0] }; }
+    else if (r.kind === "mid") { run.hint = { node: key, secret: list[0] }; run.searchNote = { kind: "mid", secret: list[0] }; } // un indice
+    return r;
+  },
+  _reveal: function (run, list) { if (!run.secrets) run.secrets = {}; list.forEach(function (s) { run.secrets[s] = "found"; }); },
+  // « Chercher encore » après un indice : une seule fois, du Souffle, avec l'avantage.
+  searchAgain: function () {
+    var run = this.getRun(), cost = Number(PA2_QUEST_RULES.searchAgainBreath || 0);
+    if (!run || !run.hint || run.hint.node !== run.at || (run.status !== PA2_STATUS.map && run.status !== PA2_STATUS.node)) return { ok: false, reason: _t("Choix impossible") };
+    if (run.breath < cost) return { ok: false, reason: _t("Pas assez de Souffle pour cette approche") };
+    var list = this._secretsFrom(run, run.at), ck = this.searchCheck(run, this.node(run.at, run));
+    run.breath -= cost;
+    var r = this.roll(ck.thr, true);
+    r.adv = true; r.thr = ck.thr; r.cran = ck.cran; r.chance = Math.round((1 - Math.pow(1 - this.chanceOf(ck.thr), 2)) * 100);
+    run.hint = null; run.searched[run.at] = "again";
+    if (r.kind === "ok" && list.length) { this._reveal(run, list); r.found = list[0]; }
+    this._save();
+    return { ok: true, reason: null, result: r };
+  },
+
+  /* D — fin imposée (fins écartées fermées au départ) et fin cachée (derrière un passage secret). */
+  _closedSet: function (run) {
+    var out = {}, map = run ? this.getMap(run) : null, ends = (run && run.closedEnds) || [], more = true;
+    if (!ends.length || !map) return out;
+    ends.forEach(function (k) { out[k] = true; });
+    while (more) { // une case qui n'a plus de sortie est fermée elle aussi, et ainsi de suite
+      more = false;
+      Object.keys(map.links).forEach(function (a) {
+        var ex = map.links[a];
+        if (!out[a] && ex.length && ex.every(function (b) { return out[b]; })) { out[a] = true; more = true; }
+      });
+    }
+    return out;
+  },
+  isClosed: function (key, run) { return !!this._closedSet(run || this.getRun())[key]; },
+  _hiddenOpen: function (run, key) { return this.foundSecrets(run).some(function (s) { return s.split(">")[1] === key; }); },
+  // Ce que la mini-quête laisse voir : une fin écartée s'efface, une fin cachée attend son passage.
+  _questShows: function (run, key, n) {
+    if (this._closedSet(run)[key]) return false;
+    return !n.hidden || key === run.at || this._hiddenOpen(run, key);
+  },
+  hiddenEnd: function () {
+    var n = this._current(["cachee"]);
+    if (!n) return { ok: false, reason: _t("Choix impossible") };
+    var run = this.getRun(), R = PA2_QUEST_RULES;
+    var res = { kind: "cachee", gain: this._gold(run, run.refGold * Number(R.hiddenGold || 0) * this.lootMult(run) * this.destGoldMult(run)) };
+    res.rare = this._creditRare(run, Number(R.hiddenRare || 0));
+    if (run.quest) run.quest.state = "faite";
     n.done = true; run.lastResult = res;
     this.finish("dest");
     return { ok: true, reason: null, result: res };

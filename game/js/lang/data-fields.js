@@ -157,7 +157,10 @@ var DATA_TEXT_FIELDS = {
   PA2_CONDITIONS: ["*.*.name", "*.*.kicker", "*.*.line", "*.*.pro", "*.*.con"], // v3.469.0 (condition du run)
   PA2_CONDITION_CALM: ["name", "kicker", "line"],
   PA2_HOOKS: ["*.title", "*.lede", "*.event.name", "*.event.text", "*.event.branches.*.label", "*.event.branches.*.text",
-    "*.campGift.text", "*.revenge.name", "*.revenge.line", "*.clairiere.*", "*.echo.*"],
+    "*.campGift.text", "*.revenge.name", "*.revenge.line", "*.clairiere.*", "*.echo.*",
+    "*.quest.text.*", "*.quest.byMap.*.text.*"], // v3.724.0 : mini-quêtes de parcours
+  PA2_QUEST_KEYS: ["*.name", "*.need", "*.found"],  // v3.724.0 : clés des verrous
+  PA2_SECRETS: ["*.*.name", "*.*.hint"],  // v3.724.0 : passages secrets
 
   /* --- Hors js/data/ (DATA_TEXT_SOURCES) --- */
   RETIRED_UPGRADES: ["*.name"],                                   // core/state.js : remboursement des anciennes améliorations
@@ -180,6 +183,7 @@ var DATA_TEXT_IGNORED = {
   PA2_MAPS: ["**"],                   // v3.381.0 : identifiants de nœuds des tracés (« CAMP », « SEUIL »…)
   RUINES_PA_LINKS: ["**"],            // v3.429.0 : tracé partagé des deux cartes des Ruines
   RUINES_PA_SHIFTS: ["**"],           // v3.429.0 : bascules « les murs bougent »
+  PA2_HOOKS: ["*.quest.node", "*.quest.byMap.*.lock", "*.quest.byMap.*.lock.*"], // v3.724.0 : nœuds et sentiers des mini-quêtes
   VILLAGE_MILESTONES: ["*.go", "*.kind", "*.arg", "*.book", "*.g", "*.id", "*.icon"], // v3.509.0 : champs techniques des jalons
   MILESTONE_BOOKS: ["*.icon", "*.tips.*.0"]
 };

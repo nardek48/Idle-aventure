@@ -809,6 +809,13 @@ function playPa2Step(run) {
     var tc = trapChoice(P, run);
     r = P.resolveTrap(tc);
     if (r.ok && tc !== "rebrousser") r = P.trapContinue();
+  } else if (run.status === "pa2-lock") { // v3.724.0 (Seb 06/11) : verrou de la mini-quête — la clé, sinon forcer (on passe toujours)
+    r = P.resolveLock(P.lockOptions().open ? "ouvrir" : "forcer");
+    if (r.ok && run.status === "pa2-lock") r = P.lockContinue();
+  } else if (run.status === "pa2-node" && !run.pending && (P.questFoeHere(run) || {}).done === false) {
+    r = P.fight("tenir", !!(run.lastResult && run.lastResult.surprised)); // la rencontre du retour, sans or
+  } else if (run.status === "pa2-node" && P.node(run.at, run).cache && !P.node(run.at, run).done) {
+    r = P.takeCache();
   } else if (run.status === "pa2-map") {
     var gp = P.guardianPreview(), bossOk = gp && !gp.tenir.unwinnable && gp.tenir.hpLoss < g.game.heroHp * 0.8;
     var mv = avoidTraps(P, run, P.openMoves()), dest = mv.filter(function (k) { return P.node(k, run).row === 9 && (bossOk || P.node(k, run).type !== "boss"); });
@@ -841,6 +848,7 @@ function playPa2Step(run) {
     else if (t === "camp" || t === "seuil") r = P.placeAction(g.game.heroHp / max < 0.5 && P._rationInStock(run) ? "cook" : "rest");
     else if (t === "clairiere") r = P.clairiere();
     else if (t === "veine") r = P.cutVein(!!process.env.TAILLER_PA); // v3.489.0 (Montagne) : laissées par défaut
+    else if (t === "cachee") r = P.hiddenEnd(); // v3.724.0 : la fin cachée
     else { note("Petite Aventure v2 : nœud inconnu " + t); return false; }
   }
   if (!r.ok) { note("Petite Aventure v2 : " + r.reason); return false; }
