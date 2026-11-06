@@ -233,8 +233,8 @@ var PA2_GUARDIAN = {
 
 /* Approches de combat (V17, Q2). dmg : dégâts reçus ; loot : or gagné. Ruser = jet de précision. */
 var PA2_APPROACHES = {
-  charger: { id: "charger", dmg: 1.3, loot: 1.4, rounds: 2, icon: "images/Icons/combat_status/charge_incoming.webp" },
-  tenir:   { id: "tenir",   dmg: 0.7, loot: 1.0, rounds: 3, icon: "images/Icons/combat_status/shield_active.webp" }
+  charger: { id: "charger", dmg: 1.3, loot: 1.4, rounds: 2, icon: "images/Icons/scene/ways/approach_charge.webp" },
+  tenir:   { id: "tenir",   dmg: 0.7, loot: 1.0, rounds: 3, icon: "images/Icons/scene/ways/approach_hold.webp" }
 };
 
 /* Or, en multiples de l'or d'un ennemi de référence (G, indexé sur le niveau). Banc. */

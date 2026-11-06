@@ -100,7 +100,7 @@ function buildStatsBarHTML() {
     + '<div class="stat-item"><span class="stat-label"><img class=ico-inline src=images/Icons/combat_stats/stat_attack.webp> ' + _t("Attaque") + '</span><span class="stat-value" id="stat-tap-dmg">1</span></div>'
     + '<div class="stat-item"><span class="stat-label"><img class=ico-inline src=images/Icons/combat_stats/stat_speed.webp> ' + _t("Célérité") + '</span><span class="stat-value" id="stat-auto-dps">0</span></div>'
     + '<div class="stat-item"><span class="stat-label"><img class=ico-inline src=images/Icons/combat_stats/stat_critical.webp> ' + _t("Critique") + '</span><span class="stat-value" id="stat-crit">5%</span></div>'
-    + '<div class="stat-item"><span class="stat-label"><img class=ico-inline src=images/Icons/combat_stats/stat_critical.webp> ' + _t("Dégâts crit.") + '</span><span class="stat-value" id="stat-crit-percent">x2.00</span></div>'
+    + '<div class="stat-item"><span class="stat-label"><img class=ico-inline src=images/Icons/combat_stats/stat_crit_damage.webp> ' + _t("Dégâts crit.") + '</span><span class="stat-value" id="stat-crit-percent">x2.00</span></div>'
     + '<div class="stat-item"><span class="stat-label"><img class="stat-label-icon" src="images/Icons/gold_icon.webp" alt="' + _t("Or") + '"> ' + _t("Or") + '</span><span class="stat-value" id="stat-gold-mult">x1.00</span></div>';
 }
 

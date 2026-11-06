@@ -395,10 +395,10 @@ var STORY_QUESTS = {
         // v3.107.9 : potions détaillées (décision Seb).
         tutorial: {
           tab: "shop",
-          icon: "images/Icons/subtabs/equipment_shop.webp",
+          icon: "images/Icons/subtabs/potion_shop.webp",
           title: "La Boutique",
           points: [
-            { icon: "images/Icons/subtabs/equipment_shop.webp", text: "La Boutique vend des potions contre de l'or." },
+            { icon: "images/Icons/subtabs/potion_shop.webp", text: "La Boutique vend des potions contre de l'or." },
             { icon: "images/Icons/subtabs/potions.webp", text: "Potions de soin : Mineure (35 % PV, 150 or) ou Majeure (60 % PV, 600 or). Utilisables en combat comme une action à part entière — elles consomment ton tour." },
             { icon: "images/Icons/system/warning.webp", text: "Maximum 2 potions par sortie — pense à te ménager pour la suite du combat." }
           ]
@@ -484,10 +484,10 @@ var STORY_QUESTS = {
         // pas sur l'écran de l'expédition elle-même — le craft doit se faire AVANT de lancer.
         tutorial: {
           tab: "village",
-          icon: "images/Icons/subtabs/inventory.webp",
+          icon: "images/Icons/quests/ration_needed.webp",
           title: "Fabriquer une ration",
           points: [
-            { icon: "images/Icons/subtabs/inventory.webp", text: "Cette expédition consomme une Petite ration — la source t'en a donné une. Les suivantes, il faudra les fabriquer." },
+            { icon: "images/Icons/quests/ration_needed.webp", text: "Cette expédition consomme une Petite ration — la source t'en a donné une. Les suivantes, il faudra les fabriquer." },
             { icon: "images/Icons/quests/mission_construction.webp", text: "Pour la suivante, tu iras au Village, dans l'atelier Cuisine de camp (bâtiment Chasse)." },
             { icon: "images/Icons/quests/ration_reward.webp", text: "Tu y choisiras la recette Petite ration (8 Viande + 4 Eau) et toucheras Fabriquer." },
             { icon: "images/Icons/quests/quest_adventure.webp", text: "Une fois la ration en stock, tu lanceras « La veine instable » : elle la consommera automatiquement." }
@@ -649,8 +649,8 @@ var STORY_QUESTS = {
           title: "Le Grimoire",
           points: [
             { icon: "images/Icons/system/grimoire.webp", text: "Le Grimoire automatise tes actions en combat selon des règles conditionnelles que tu définis (ex. « si une charge est annoncée → Défense »)." },
-            { icon: "🎚️", text: "Tu commences avec 2 règles disponibles, et tu en débloqueras d'autres au fil de ta progression dans le jeu." },
-            { icon: "🔀", text: "Choisis le mode Tactique (manuel, tu joues chaque round) ou le mode Grimoire (automatique, tes règles décident) au départ de chaque sortie, ou au Campement : il ne change plus avant le retour." }
+            { icon: "images/Icons/system/grimoire_rules.webp", text: "Tu commences avec 2 règles disponibles, et tu en débloqueras d'autres au fil de ta progression dans le jeu." },
+            { icon: "images/Icons/system/mode_choice.webp", text: "Choisis le mode Tactique (manuel, tu joues chaque round) ou le mode Grimoire (automatique, tes règles décident) au départ de chaque sortie, ou au Campement : il ne change plus avant le retour." }
           ]
         },
         check: function (game) { return storyAdvDone(game, "aq_story_coeur") && storyCountActiveGrimoireRules(game) >= 1; },
@@ -680,7 +680,7 @@ var STORY_QUESTS = {
           title: "Les Marques",
           points: [
             { icon: "images/Icons/afflictions/aff_plague.webp", text: "Une Marque est un handicap volontaire pour un run de donjon (boss plus dur, potions interdites, PV réduits...) en échange de récompenses plus riches." },
-            { icon: "➕", text: "Jusqu'à 3 Marques par run. Chaque Marque ajoute +15 % aux récompenses et +2 matériau de monde, en plus de ses effets propres." },
+            { icon: "images/Icons/afflictions/marks_stack.webp", text: "Jusqu'à 3 Marques par run. Chaque Marque ajoute +15 % aux récompenses et +2 matériau de monde, en plus de ses effets propres." },
             { icon: "images/Icons/subtabs/dungeon.webp", text: "Elles se choisissent à l'entrée du donjon, dans la feuille de lancement, et restent figées pour le run." },
             { icon: "images/Icons/combat_stats/stat_attack.webp", text: "Pour cette étape : entre dans la Tanière sous au moins une Marque et passe 5 vagues. L'entrée est offerte tant que l'étape est en cours." }
           ]
@@ -1937,7 +1937,7 @@ STORY_QUESTS.ruins = {
         icon: "images/Icons/resources/pierre_errante_icon.webp",
         title: "Le Marché des Ruines",
         points: [
-          { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "La caravane de la Halle marchande peut maintenant partir vers le Marché des Ruines, dans Campement › Expéditions. La première est une caravane d'essai : elle part à vide, revient en 10 minutes et ne prend pas de place." }, // v3.551.0
+          { icon: "images/Icons/village_buildings/caravan_market.webp", text: "La caravane de la Halle marchande peut maintenant partir vers le Marché des Ruines, dans Campement › Expéditions. La première est une caravane d'essai : elle part à vide, revient en 10 minutes et ne prend pas de place." }, // v3.551.0
           { icon: "images/Icons/resources/pierre_errante_icon.webp", text: "Elle en rapporte de l'or. Au trajet Long (Halle 3), 2 Pierres errantes à coup sûr, la pierre des Ruines." }
         ]
       },
@@ -2749,7 +2749,7 @@ STORY_QUESTS.crypt = {
         icon: "images/Icons/resources/cire_sepulcre_icon.webp",
         title: "Le Marché de la Crypte",
         points: [
-          { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "La caravane de la Halle marchande peut maintenant partir vers le Marché de la Crypte, dans Campement › Expéditions. La première est une caravane d'essai : elle part à vide, revient en 10 minutes et ne prend pas de place." }, // v3.551.0
+          { icon: "images/Icons/village_buildings/caravan_market.webp", text: "La caravane de la Halle marchande peut maintenant partir vers le Marché de la Crypte, dans Campement › Expéditions. La première est une caravane d'essai : elle part à vide, revient en 10 minutes et ne prend pas de place." }, // v3.551.0
           { icon: "images/Icons/resources/cire_sepulcre_icon.webp", text: "Elle en rapporte de l'or. Au trajet Long (Halle 3), 2 Cires de sépulcre à coup sûr." }
         ]
       },
@@ -4148,7 +4148,7 @@ STORY_QUESTS.mountain = {
           { icon: "images/Icons/menu_icons/map_menu.webp", text: "La carte de la Montagne fonctionne comme celle de la Crypte : tu libères un secteur en terminant sa Petite Aventure, ou en battant l'élite qui le garde." },
           { icon: "images/Icons/combat_actions/vein_cut.webp", text: "Chaque secteur a sa veine. Avant de partir, tu choisis : la tailler (plus de Cendre vive, mais le secteur chauffe et ses combats sont plus durs ensuite) ou la laisser (plus facile, rapporte moins)." },
           { icon: "images/Icons/combat_status/vein_heat.webp", text: "Une Petite Aventure ratée recouvre le secteur de lave : c'est La coulée. Il reste plus dur jusqu'à la prochaine nuit (toutes les 3 sorties). Une élite perdue, elle, se retente le jour même." },
-          { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "Le Marché de la Montagne est sur la carte, à côté du Replat. La caravane en rapporte de l'or. Au trajet Long (Halle 3), 2 Cendres vives à coup sûr." }
+          { icon: "images/Icons/village_buildings/caravan_market.webp", text: "Le Marché de la Montagne est sur la carte, à côté du Replat. La caravane en rapporte de l'or. Au trajet Long (Halle 3), 2 Cendres vives à coup sûr." }
         ]
       },
       check: function () { return storyMountainSectorsFreed() >= 2; },
@@ -4218,7 +4218,7 @@ STORY_QUESTS.mountain = {
         title: "Conseil de la Forge",
         points: [
           { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Plus loin dans la Montagne, quatre emplacements sur sept avec une pièce Épique, de n'importe quel monde, sont un bon repère." },
-          { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "Les étapes de l'acte t'en ont donné trois, et celles de la Crypte comptent aussi. Sinon : les élites de la carte de la Montagne, 35 % de chance par victoire, et jamais plus de deux victoires de suite sans pièce." }, // v3.552.0
+          { icon: "images/Icons/equipment_slots/piece_sources.webp", text: "Les étapes de l'acte t'en ont donné trois, et celles de la Crypte comptent aussi. Sinon : les élites de la carte de la Montagne, 35 % de chance par victoire, et jamais plus de deux victoires de suite sans pièce." }, // v3.552.0
           { icon: "images/Icons/workshops/smithing_station.webp", text: "L'arme se reforge jusqu'au niveau 10 à la Forge 5." },
           { icon: "images/Icons/system/forecast.webp", text: "Rien ne l'exige : avant un combat, le pronostic « Avant de partir » te dit s'il est trop dur et quoi améliorer." }
         ]
@@ -4918,7 +4918,7 @@ STORY_QUESTS.tower = {
           { icon: "images/Icons/menu_icons/map_menu.webp", text: "La carte de la Tour est en coupe : un étage par secteur. Tu libères un étage en terminant sa Petite Aventure." },
           { icon: "images/Icons/scene/path_easy.webp", text: "Chaque étage se souvient d'un monde : ses obstacles viennent du Désert, des Ruines, de la Crypte ou de la Montagne." },
           { icon: "images/Icons/living_map/carte_vivante.webp", text: "Une Petite Aventure ratée, et la Tour refait l'étage : c'est La redite. Il reste plus dur jusqu'à la prochaine nuit (toutes les 3 sorties). Rien n'est perdu." },
-          { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "Le Marché de la Tour est au dernier camp, devant la porte. La caravane en rapporte de l'or. Au trajet Long (Halle 3), 2 Givres bleus à coup sûr." }
+          { icon: "images/Icons/village_buildings/caravan_market.webp", text: "Le Marché de la Tour est au dernier camp, devant la porte. La caravane en rapporte de l'or. Au trajet Long (Halle 3), 2 Givres bleus à coup sûr." }
         ]
       },
       check: function () { return storyTowerFloorsFreed() >= STORY_TOUR_ETAGES; }, // rythme de la Tour (Seb, 03/11) : 3 -> 5
@@ -5022,7 +5022,7 @@ STORY_QUESTS.tower = {
         title: "Conseil de la Forge",
         points: [
           { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Pour monter plus haut, trois pièces Légendaires sont un bon repère." },
-          { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "Les étapes 8 et 9 t'en donnent deux. Sinon : le Gardien qui répète, 35 % de chance par victoire, et jamais plus de deux victoires de suite sans pièce. L'échoppe de la Tour en propose aussi." },
+          { icon: "images/Icons/equipment_slots/piece_sources.webp", text: "Les étapes 8 et 9 t'en donnent deux. Sinon : le Gardien qui répète, 35 % de chance par victoire, et jamais plus de deux victoires de suite sans pièce. L'échoppe de la Tour en propose aussi." },
           { icon: "images/Icons/system/forecast.webp", text: "Rien ne l'exige : avant un combat, le pronostic « Avant de partir » te dit s'il est trop dur et quoi améliorer." }
         ]
       },

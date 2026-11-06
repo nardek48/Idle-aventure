@@ -95,7 +95,7 @@ function openSortieSheet() {
 
   var h = '<div class="ksheet-backdrop" onclick="closeSortieSheet()"></div>';
   h += '<div class="ksheet">';
-  h += kSheetHeadHTML({ icon: '<img src="images/Icons/subtabs/inventory.webp" alt="">', title: _t("Sortie en cours"), close: "closeSortieSheet()" });
+  h += kSheetHeadHTML({ icon: '<img src="images/Icons/system/sortie_loot.webp" alt="">', title: _t("Sortie en cours"), close: "closeSortieSheet()" });
   h += '<div class="ksheet-body">';
 
   h += '<div class="cbs-sub">' + _t("Butin ramassé") + '</div>';
@@ -105,7 +105,7 @@ function openSortieSheet() {
     var q = Math.floor(loot.resources[k]);
     if (q <= 0) return;
     var def = (window.WAREHOUSE_RESOURCES && WAREHOUSE_RESOURCES[k]) || null;
-    lignes += buildSortieLineHTML((def && def.icon) || "images/Icons/subtabs/inventory.webp", (def && def.name) ? _td(def.name) : k, "×" + q);
+    lignes += buildSortieLineHTML((def && def.icon) || "images/Icons/system/sortie_loot.webp", (def && def.name) ? _td(def.name) : k, "×" + q);
   });
   (loot.items || []).forEach(function (it) {
     lignes += buildSortieLineHTML("images/Icons/subtabs/equipment.webp", it.name ? _td(it.name) : _t("Objet"), it.rarity || "");

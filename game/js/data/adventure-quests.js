@@ -109,7 +109,7 @@ var ADVENTURE_QUESTS = {
     enemyHpMult: 0.8,
     name: "Premier sang",
     story: "Les bêtes viennent flairer les braises. Écarte-les du feu, une à une.",
-    icon: "./images/Icons/quest_icons/exploration/exploration1.webp",
+    icon: "./images/Icons/quest_icons/exploration/premier_sang.webp",
     steps: [
       { id: "kills_premier_sang", type: "kill", worldId: "forest", target: 5, desc: "Vaincre {target} ennemis à la Lisière" }
     ],

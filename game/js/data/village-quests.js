@@ -43,7 +43,7 @@ var VILLAGE_QUESTS = [
       points: [
         { icon: "images/Icons/quests/quest_resources.webp", text: "Chaque bâtiment de production possède 3 zones (les « Parcelles » pour le Champs). Seule la première est ouverte au départ ; les deux autres s'ouvrent contre des ressources. Dans les mondes suivants, elles montent plus haut." },
         { icon: "images/Icons/scene/scene_harvest.webp", text: "Chaque zone ouverte produit en continu, indépendamment des autres, avec son propre stock local — plus de zones, plus de blé à chaque récolte." },
-        { icon: "⚖️", text: "Les zones ont des profils différents (rapide, équilibrée, lente) : une zone lente produit moins vite mais stocke davantage — pratique si tu récoltes rarement." },
+        { icon: "images/Icons/system/zone_profiles.webp", text: "Les zones ont des profils différents (rapide, équilibrée, lente) : une zone lente produit moins vite mais stocke davantage — pratique si tu récoltes rarement." },
         { icon: "images/Icons/workshops/fine_sawmill.webp", text: "Le déblocage du Champ Béni coûte du bois et de la pierre : la Scierie et la Carrière (ouverte par l'expédition de la Veine instable) alimentent le Champs — chaque bâtiment nourrit les autres." }
       ]
     }
@@ -76,7 +76,7 @@ var VILLAGE_QUESTS = [
       points: [
         { icon: "images/Icons/system/upgrade.webp", text: "Chaque zone ouverte peut monter de niveau : jusqu'au 5 en Forêt, et le plafond monte à chaque monde. Chaque niveau augmente à la fois sa vitesse de production et sa capacité de stock local." },
         { icon: "images/Icons/scene/node_clear_spring.webp", text: "Pour le Champs, l'amélioration coûte du bois et de l'eau — le Puits n'est pas là que pour les rations." },
-        { icon: "📈", text: "Le coût grimpe un peu à chaque niveau (×1,15)." },
+        { icon: "images/Icons/system/cost_rising.webp", text: "Le coût grimpe un peu à chaque niveau (×1,15)." },
         { icon: "images/Icons/system/upgrade.webp", text: "Conseil : améliore d'abord la zone que tu récoltes le plus souvent — c'est elle qui convertit le mieux chaque ressource dépensée." }
       ]
     }
@@ -107,7 +107,7 @@ var VILLAGE_QUESTS = [
       title: "Les améliorations permanentes",
       points: [
         { icon: "images/Icons/plots/enriched_soil.webp", text: "« Terre enrichie » (+8 % de rendement) et « Sillon irrigué » (+10 %) sont des améliorations PERMANENTES, distinctes des niveaux — elles s'achètent une fois par zone." },
-        { icon: "➕", text: "Les deux se cumulent sur la même zone, et se cumulent aussi avec les niveaux : une parcelle niveau 5, enrichie et irriguée, est la meilleure terre d'Aeswyn." },
+        { icon: "images/Icons/plots/improvements_stack.webp", text: "Les deux se cumulent sur la même zone, et se cumulent aussi avec les niveaux : une parcelle niveau 5, enrichie et irriguée, est la meilleure terre d'Aeswyn." },
         { icon: "images/Icons/system/warning.webp", text: "Elles ne sont pas réversibles — mais il n'y a aucun piège : c'est toujours un gain net pour la zone." },
         { icon: "images/Icons/codex/world_ruins.webp", text: "Tous les bâtiments de production ont leurs deux améliorations, sous d'autres noms — ce que tu apprends ici vaut pour la Scierie, la Mine et les autres." }
       ]
@@ -146,7 +146,7 @@ var VILLAGE_QUESTS = [
       title: "Les ateliers : transformer les ressources",
       points: [
         { icon: "images/Icons/quests/mission_construction.webp", text: "Chaque bâtiment possède ses ateliers (la Boulangerie pour le Champs). Un atelier transforme des ressources brutes en produits via des recettes." },
-        { icon: "🧾", text: "Une recette peut demander PLUSIEURS ingrédients, venus de bâtiments différents : le pain prend 15 blé du Champs et 5 eau du Puits. Plus loin, il entre dans la Ration de la Cuisine de camp." },
+        { icon: "images/Icons/workshops/recipe_ingredients.webp", text: "Une recette peut demander PLUSIEURS ingrédients, venus de bâtiments différents : le pain prend 15 blé du Champs et 5 eau du Puits. Plus loin, il entre dans la Ration de la Cuisine de camp." },
         { icon: "images/Icons/system/import.webp", text: "Les intrants sont déduits de l'Entrepôt dès que tu lances le craft — le produit est crédité à la FIN du temps de fabrication." },
         { icon: "images/Icons/system/hourglass_waiting.webp", text: "Chaque atelier a sa propre file d'attente : tu peux empiler plusieurs lots, ils s'enchaînent tout seuls — même hors ligne." },
         { icon: "images/Icons/system/auto_repeat.webp", text: "Le mode Auto d'une recette relance un lot dès que les ingrédients sont là (une seule recette auto par atelier) — parfait pendant que tu joues ailleurs." },
@@ -187,7 +187,7 @@ var VILLAGE_QUESTS = [
         { icon: "images/Icons/workshops/fine_sawmill.webp", text: "Chaque bâtiment a ses propres ateliers : la Scierie fine (Scierie) transforme 5 bois en 1 planche, la Fonderie (Mine) coule 5 fer en 1 lingot." },
         { icon: "images/Icons/plots/reinforced_gallery.webp", text: "Planches et lingots sont les matériaux « travaillés » d'Aeswyn : c'est avec eux que s'améliorent les ateliers — et que se bâtiront les projets à venir." },
         { icon: "images/Icons/workshops/masonry.webp", text: "Tu as déjà croisé la planche avec « Les fondations » : chaque planche fabriquée compte, quelle que soit la raison pour laquelle tu la fabriques." },
-        { icon: "⚖️", text: "Conseil : garde toujours quelques planches et lingots d'avance — les besoins arrivent souvent d'un coup." }
+        { icon: "images/Icons/system/stock_reserve.webp", text: "Conseil : garde toujours quelques planches et lingots d'avance — les besoins arrivent souvent d'un coup." }
       ]
     }
   },
