@@ -22520,7 +22520,7 @@ console.log("\n[450] v3.685.0 — Interface (audit 04/11, lot I6)");
     ok(/is-horsportee \.cf-line-verdict \{ color: var\(--ink-missing\)/.test(rd("css/04-panel-forecast.css")) && /\.cf-lowhp b \{ color: var\(--ink-missing\)/.test(rd("css/04-panel-forecast.css")), "UI-21 : « Hors de portée » et « il faut te soigner » en --ink-missing");
     ok(/\.eqs-row-delta\.is-up \{ color: var\(--nb-green-text\)/.test(rd("css/04-panel-equipment.css")), "UI-21 : ▲ de Comparer en --nb-green-text");
     ok(/\.st-row-hint \{[^}]*color: var\(--c-brown-700-soft\)/.test(rd("css/03-combat-v2.css")) && /\.camp-soir-k \{[^}]*color: var\(--c-brown-700-soft\)/.test(camp), "UI-21 : conseils de combat et titres du soir lisibles");
-    ok(/\.exp-row\.is-ready \.exp-act\.is-primary \{[^}]*color: var\(--c-brown-850-vivid\)/.test(rd("css/04-panel-expeditions.css")), "UI-21 : « Carte › » à l'encre sombre sur l'or");
+    ok(/html body \.exp-row \.exp-act\.is-primary \{ color: var\(--c-cream-100-2\)/.test(rd("css/00-kbtn.css")), "UI-21 → v3.721.0 : « Carte › » texte crème sur la pastille cuivre du pack");
     // QA-3 : l'abandon demande confirmation et dit la part gardée
     var asked = null, forf = 0; g.showConfirmModal = function (t, x, i, cb) { asked = { t: t, x: x, cb: cb }; }; g.DungeonManager.forfeit = function () { forf++; };
     run("game.dungeonRun = game.dungeonRun || {}; game.dungeonRun.active = true; game.dungeonRun.wave = 4;");
@@ -24316,6 +24316,17 @@ console.log("\n[481] v3.720.0 — Pastilles d'achat P1, actions de ligne, deux l
     ok(/:has\(> \.is-2l\) > :is\(\.kbtn, \.settings-btn\)/.test(kb), "rangée de deux : le voisin prend la même version");
     ok(/\.chr-harvest \{[\s\S]*?btn-parch-1l\.webp/.test(ge) && /\.cw-btn \{[\s\S]*?btn-parch-1l\.webp/.test(ge), "format large : « Tout récolter » et « Voir le tableau complet » au parchemin du pack");
   } catch (err) { ok(false, "[481] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[482] v3.721.0 — Boutons propres aux écrans passés au pack ; texte agrandi (option B)");
+(function () {
+  try {
+    var fs = require("fs"), path = require("path"), kb = fs.readFileSync(path.join(ROOT, "css/00-kbtn.css"), "utf8");
+    ok(/font-size: 17px; \/\* v3\.721\.0/.test(kb) && /\.settings-btn small \{ font-size: 14px;/.test(kb) && /font-size: 16px; \/\* v3\.721\.0/.test(kb), "texte : 17 px (bouton), 14 px (2e ligne), 16 px (pastille)");
+    ok(["camp-here-go", "camp-talk-go", "exp-act", "hf-btn", "tavern-contract-btn", "cp-relic-btn"].every(function (c) { return kb.indexOf("." + c) > 0; }) && /html body button\.camp-feast-go,\nhtml body \.exp-act\.exp-go-btn \{/.test(kb), "festin, Tu es ici, Parler, Expéditions, Réclamer, Livrer, reliques : boutons du pack");
+    var vieux = [["css/04-panel-camp.css", /\.camp-feast-go \{[^}]*linear-gradient/], ["css/04-panel-expeditions.css", /\.exp-act\.is-primary \{/], ["css/04-panel-village.css", /\.tavern-contract-btn \{[^}]*background/], ["css/04-panel-achievements.css", /\.hf-btn \{[^}]*background/]];
+    ok(vieux.every(function (v) { return !v[1].test(fs.readFileSync(path.join(ROOT, v[0]), "utf8")); }), "les anciens styles de ces boutons sont retirés des écrans");
+  } catch (err) { ok(false, "[482] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
 Promise.all(ATTENTES).then(function () {

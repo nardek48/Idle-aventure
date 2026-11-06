@@ -276,9 +276,7 @@ seules les classes propres aux compagnons sont définies ici.
 .cp-relic-txt b { display: block; font-size: 13px; }
 .cp-relic-txt small { display: block; font-size: 12px; color: var(--nb-ink-dim); }
 .cp-relic-txt small.is-fx { color: var(--nb-green-text); font-weight: 800; }
-.cp-relic-btn { min-height: 40px; padding: 4px 12px; border-radius: 20px; border: 2px solid var(--nb-gold-dark); background: linear-gradient(var(--c-bronze-400-vivid), var(--nb-gold-dark)); color: var(--nb-ink); font: inherit; font-size: 13px; font-weight: 900; white-space: nowrap; cursor: pointer; }
-.cp-relic-btn:disabled { filter: grayscale(0.85); opacity: 0.55; cursor: not-allowed; }
-.cp-relic-btn.is-ghost { background: transparent; color: var(--nb-gold-deep); }
+.cp-relic-btn { cursor: pointer; } /* v3.721.0 : pastille du pack (00-kbtn.css), parchemin si is-ghost */
 .cp-relic-lock { width: 24px; height: 24px; object-fit: contain; }
 /* v3.512.0 : nom de relique à la couleur de son monde, comme l'équipement ; INT-1 : en encre de rareté. */
 .cp-relic-slot b.rarity-common, .cp-relic-txt b.rarity-common { color: var(--rarity-common-ink); }

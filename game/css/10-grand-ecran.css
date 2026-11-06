@@ -132,7 +132,7 @@ html.chron-min:not(.chron-over) .chr-h strong { display: none; }
   display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;
   border: solid transparent; border-width: 0 22px; border-radius: 0; border-image: url('../images/UI/buttons/btn-parch-1l.webp') 0 66 fill / 0 22px stretch;
   background: none; box-shadow: none; color: var(--c-brown-900); text-shadow: 0 1px 0 rgba(255, 245, 220, 0.6);
-  font-family: "Alegreya", Georgia, serif; font-size: 15px; font-weight: 700;
+  font-family: "Alegreya", Georgia, serif; font-size: 17px; font-weight: 700;
 }
 .chr-harvest img { width: 20px; height: 20px; }
 .chr-harvest:disabled { opacity: 0.45; cursor: default; }
@@ -513,7 +513,7 @@ html.wide-mode #panel-container .cw-rule img { width: 26px; height: 26px; object
 html.wide-mode #panel-container .cw-btn { /* v3.720.0 : parchemin du pack de boutons */
   display: inline-flex; align-items: center; justify-content: center; min-width: 140px; min-height: 44px; margin-top: 10px; padding: 4px 6px; box-sizing: border-box;
   border: solid transparent; border-width: 0 22px; border-radius: 0; border-image: url('../images/UI/buttons/btn-parch-1l.webp') 0 66 fill / 0 22px stretch;
-  background: none; color: var(--c-brown-900); text-shadow: 0 1px 0 rgba(255, 245, 220, 0.6); font: 700 15px "Alegreya", Georgia, serif; cursor: pointer; }
+  background: none; color: var(--c-brown-900); text-shadow: 0 1px 0 rgba(255, 245, 220, 0.6); font: 700 17px "Alegreya", Georgia, serif; cursor: pointer; }
 html.wide-mode #panel-container .cw-btn:hover { filter: brightness(1.06); }
 html.wide-mode #panel-container .cw-card:has(.cw-mlist) { padding-left: 0; padding-right: 0; padding-bottom: 0; }
 html.wide-mode #panel-container .cw-card:has(.cw-mlist) > .cw-h { padding: 0 16px; }
@@ -542,7 +542,7 @@ html.wide-mode #panel-container .cw .exp-row { display: grid; grid-template-colu
 html.wide-mode #panel-container .cw .exp-row-ico { grid-row: span 2; width: 52px; height: 52px; }
 html.wide-mode #panel-container .cw .exp-row-txt b { font-size: 14px; }
 html.wide-mode #panel-container .cw .exp-row-txt small { display: block; font-size: 12.5px; }
-html.wide-mode #panel-container .cw .exp-act { grid-column: 2; justify-self: start; min-height: 30px; padding: 0 12px; font-size: 12.5px; }
+html.wide-mode #panel-container .cw .exp-act { grid-column: 2; justify-self: start; } /* v3.721.0 : pastille du pack (00-kbtn.css) */
 html.wide-mode #panel-container .cw .exp-row > .exp-chev { display: none; }
 html.wide-mode #panel-container .cw .exp-act { width: auto; max-width: none; white-space: nowrap; }
 

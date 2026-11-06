@@ -440,7 +440,7 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
 .camp-here-tx { min-width: 0; display: grid; gap: 1px; }
 .camp-here-tx b { font-size: 14px; }
 .camp-here-tx small { font-size: 12.5px; color: var(--c-brown-550-soft); }
-.camp-here-go { font-weight: 800; font-size: 13px; padding: 8px 12px; border-radius: 9px; border: 1px solid var(--nb-gold); background: var(--nb-gold); color: var(--c-brown-850-vivid); white-space: nowrap; }
+/* v3.721.0 : .camp-here-go prend la pastille cuivre du pack (00-kbtn.css) */
 .camp-here:focus-visible { outline: 2px solid var(--nb-gold); outline-offset: 2px; }
 
 /* v3.595.0 (C1 et C2) : la phrase du soir, et les compagnons autour du feu */
@@ -463,7 +463,7 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
 .camp-talk-tx { min-width: 0; display: grid; gap: 2px; }
 .camp-talk-tx b { font-size: 14px; }
 .camp-talk-tx small { font: italic 400 14px/1.35 "Alegreya", Georgia, serif; color: var(--c-brown-550-soft); }
-.camp-talk-go { font-weight: 800; font-size: 13px; padding: 8px 12px; border-radius: 9px; border: 1px solid var(--nb-gold); background: var(--nb-gold); color: var(--c-brown-850-vivid); white-space: nowrap; }
+/* v3.721.0 : .camp-talk-go prend la pastille cuivre du pack (00-kbtn.css) */
 .camp-talk:focus-visible { outline: 2px solid var(--nb-gold); outline-offset: 2px; }
 .camp-feu-mate { position: relative; }
 .camp-feu-talk { position: absolute; top: -4px; right: -6px; width: 22px; height: 22px; border-radius: 50%; background: var(--nb-gold); color: var(--c-brown-850-vivid); font: 900 13px/20px -apple-system, BlinkMacSystemFont, sans-serif; font-style: normal; text-align: center; border: 1px solid var(--c-brown-850-vivid); }
@@ -538,8 +538,7 @@ Réutilise .nb-page-frame (00-components.css) comme tous les autres
 .camp-feast-cost small { font-weight: 600; color: var(--nb-ink-dim); }
 .camp-feast-cost.is-short { color: var(--c-red-600-soft); border-color: var(--c-red-250-soft); background: rgba(200, 60, 60, 0.1); }
 .camp-feast-res { width: 22px; height: 22px; object-fit: contain; }
-.camp-feast-go { min-height: 46px; border-radius: 12px; border: 2px solid var(--c-brown-750-3); background: linear-gradient(var(--c-bronze-400-vivid), var(--c-brown-600-vivid)); color: var(--c-cream-50-soft); font-family: inherit; font-size: 15px; font-weight: 800; line-height: 1.2; }
-.camp-feast-go:disabled { opacity: .55; }
+/* v3.721.0 : .camp-feast-go prend le bouton cuivre du pack (00-kbtn.css) */
 .camp-feast-on { padding: 8px 10px; border-radius: 10px; background: rgba(240, 170, 62, 0.16); border: 1.5px solid var(--c-bronze-450); font-size: 14px; color: var(--nb-ink); }
 .camp-feast-on b { color: var(--c-brown-600-vivid); }
 .camp-feast-pips { display: inline-flex; gap: 4px; margin-left: auto; }
