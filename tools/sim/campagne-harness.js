@@ -449,7 +449,7 @@ function developVillage() {
      plafond du monde, si le chantier coûte moins de 50 % de la bourse. */
   if (INVESTI) {
     var wf = V.getBlockReason("forge"), cf = V.getNextCost("forge");
-    if (V.getLevel("forge") >= 4 && !g.StoryQuestManager.isStepReached("crypte_13")) cf = null; // audit (27/10, DUR-6) : palier de l'Histoire
+    if (V.getLevel("forge") >= 4 && !g.StoryQuestManager.isStepReached("crypte_13")) cf = null; // DUR-6 : la Forge 5 ouvre à crypte_13 (forgeActStep), plus exigée par l'étape
     if (cf && (!wf || wf === "Matériaux manquants" || /^Atelier niveau/.test(wf)) && Number(cf.gold || 0) <= g.game.gold * 0.5) {
       if (upgradeBuilding("forge", V.getLevel("forge") + 1)) STATS.village.push("Forge " + V.getLevel("forge") + " (" + CURRENT_STEP + ")");
     }
@@ -1907,16 +1907,15 @@ var SOLVERS = {
   desert_11: choiceStep,
   desert_12: function (g) { playDungeon(2, false, function () { return g.storyCiteWave5(g.game); }); },
   desert_13: function (g) {
-    // chaque morceau du palier est chronométré (temps simulé, or dépensé)
+    // v3.717.0 (Seb 06/11) : seule exigence restante, une reforge de l'arme (Forge 1 d'abord) ; chronométrée
     function part(nom, fn) {
       var t0 = CLOCK.offset, o0 = g.game.gold, farm0 = STATS.grindMs;
       var verts0 = g.EQUIPMENT_SLOTS.filter(function (s2) { var it = g.game.equipped[s2]; return it && g.RARITY_ORDER.indexOf(it.rarity) >= 1; }).length;
       fn();
       STATS.d13.push({ part: nom, h: (CLOCK.offset - t0) / 3600e3, farmH: (STATS.grindMs - farm0) / 3600e3, verts0: verts0, orAvant: Math.floor(o0), orApres: Math.floor(g.game.gold) });
     }
-    part(g.STORY_PALIER_PIECES + " Inhabituels dont l'arme", function () { gearRarity("green", g.STORY_PALIER_PIECES, true); });
-    part("Forge " + g.STORY_PALIER_FORGE, function () { upgradeBuilding("forge", g.STORY_PALIER_FORGE); });
-    part("reforge arme " + g.STORY_PALIER_REFORGE, function () { reforgeTo("weapon", g.STORY_PALIER_REFORGE); });
+    if (g.VillageBuildingManager.getLevel("forge") < 1) part("Forge 1", function () { upgradeBuilding("forge", 1); });
+    if (g.ForgeManager.getLevel("weapon") < 1) part("reforge arme 1", function () { reforgeTo("weapon", 1); });
   },
   desert_14: function (g) { freeSector("desert", "bete_dune"); },
   desert_15: function (g) { if (!(g.game.dungeonTierCleared || {})[2]) playDungeon(2, false); },
@@ -1969,31 +1968,12 @@ var SOLVERS = {
   montagne_06: function (g) { playExpedition("petite_aventure_montagne", function () { return g.storyDesertFlag("mountainPaCompleted"); }); },
   montagne_07: function (g) { for (var i = 0; i < 6 && g.storyMountainSectorsFreed() < 2; i++) freeSector("mountain"); },
   montagne_08: function (g) { playAdventure("aq_montagne_tri"); },
-  montagne_09: function (g) {
-    var P = g.STORY_PALIER_MONTAGNE;
-    function part(nom, fn) {
-      var t0 = CLOCK.offset, o0 = g.game.gold, farm0 = STATS.grindMs;
-      fn();
-      (STATS.m09 = STATS.m09 || []).push({ part: nom, h: (CLOCK.offset - t0) / 3600e3, farmH: (STATS.grindMs - farm0) / 3600e3, orAvant: Math.floor(o0), orApres: Math.floor(g.game.gold) });
-    }
-    part(P.pieces + " Épiques de la Montagne", function () { gearRarity("epic", P.pieces, false, 4); });
-    part("reforge arme " + P.reforge, function () { reforgeTo("weapon", P.reforge); });
-  },
+  montagne_09: function () {}, // v3.717.0 (Seb 06/11) : palier devenu narratif, validé à l'acceptation
   montagne_10: function (g) { playAdventure("aq_montagne_ouvrage"); },
   // v3.490.0 (Montagne, acte III, lot M-4)
   montagne_11: function (g) { freeSector("mountain", "antre"); },
   montagne_12: function (g) { playDungeon(5, false, function () { return !!(g.game.explorationProgression || {}).gueuleCamp; }); },
-  montagne_13: function (g) {
-    var P = g.STORY_PALIER_MONTAGNE_COMPLET;
-    function part(nom, fn) {
-      var t0 = CLOCK.offset, o0 = g.game.gold, farm0 = STATS.grindMs;
-      fn();
-      (STATS.m13 = STATS.m13 || []).push({ part: nom, h: (CLOCK.offset - t0) / 3600e3, farmH: (STATS.grindMs - farm0) / 3600e3, orAvant: Math.floor(o0), orApres: Math.floor(g.game.gold) });
-    }
-    part(P.pieces + " Épiques de la Montagne", function () { gearRarity("epic", P.pieces, true, 4); });
-    part("Forge " + P.forge, function () { upgradeBuilding("forge", P.forge); });
-    part("reforge arme " + P.reforge, function () { reforgeTo("weapon", P.reforge); });
-  },
+  montagne_13: function () {}, // v3.717.0 (Seb 06/11) : palier devenu narratif, validé à l'acceptation
   montagne_14: function (g) {
     playAdventure("aq_montagne_salle_ronde");
     var val = ARGS.indexOf("--ouvrage-garder") >= 0 ? "garder" : "donner";
@@ -2022,16 +2002,11 @@ var SOLVERS = {
   },
   tour_08: function (g) { playAdventure("aq_tour_gisants"); },
   tour_09: function (g) { freeSector("tower", "etage_veines"); },
-  tour_10: function (g) { gearRarity("legendary", g.STORY_PALIER_TOUR.pieces, false, 0); },
+  tour_10: function () {}, // v3.717.0 (Seb 06/11) : palier devenu narratif, validé à l'acceptation
   // v3.629.0 (Tour, acte III) : --defaire = la copie défaite
   tour_11: function (g) { playDungeon(6, false, function () { return !!(g.game.explorationProgression || {}).sommetCamp; }); },
   tour_12: function (g) { if (!(g.game.dungeonTierCleared || {})[6]) playDungeon(6, false); },
-  tour_13: function (g) { // rythme de la Tour (03/11) : + Forge 7 et arme reforgée à 13, comme montagne_13
-    var P = g.STORY_PALIER_TOUR_COMPLET;
-    gearRarity("legendary", P.pieces, false, 0);
-    upgradeBuilding("forge", P.forge);
-    reforgeTo("weapon", P.reforge);
-  },
+  tour_13: function () {}, // v3.717.0 (Seb 06/11) : palier devenu narratif, validé à l'acceptation
   tour_14: function (g) {
     var val = ARGS.indexOf("--defaire") >= 0 ? "defaire" : "laisser";
     if (!g.storyMakeChoice("tower", val)) note("choix refusé (copie)");
@@ -2066,34 +2041,11 @@ var SOLVERS = {
   crypte_06: function (g) { playExpedition("petite_aventure_crypte", function () { return g.storyDesertFlag("cryptPaCompleted"); }); },
   crypte_07: function (g) { for (var i = 0; i < 6 && g.storyCryptSectorsFreed() < 2; i++) freeSector("crypt"); },
   crypte_08: function (g) { playAdventure("aq_crypte_appel"); },
-  crypte_09: function (g) {
-    var P = g.STORY_PALIER_CRYPTE_RARE;
-    function part(nom, fn) {
-      var t0 = CLOCK.offset, o0 = g.game.gold, farm0 = STATS.grindMs;
-      fn();
-      (STATS.c09 = STATS.c09 || []).push({ part: nom, h: (CLOCK.offset - t0) / 3600e3, farmH: (STATS.grindMs - farm0) / 3600e3, orAvant: Math.floor(o0), orApres: Math.floor(g.game.gold) });
-    }
-    part(P.pieces + " Rares", function () { gearRarity("rare", P.pieces, true); });
-    part("reforge arme " + P.reforge, function () { reforgeTo("weapon", P.reforge); });
-  },
+  crypte_09: function () {}, // v3.717.0 (Seb 06/11) : palier devenu narratif, validé à l'acceptation
   crypte_10: function (g) { playAdventure("aq_crypte_chaines"); },
   crypte_11: function (g) { freeSector("crypt", "cotes"); },
   crypte_12: function (g) { playDungeon(4, false, function () { return !!(g.game.explorationProgression || {}).ossuaireCamp; }); },
-  crypte_13: function (g) {
-    var P = g.STORY_PALIER_CRYPTE_EPIQUE;
-    function part(nom, fn) {
-      var t0 = CLOCK.offset, o0 = g.game.gold, farm0 = STATS.grindMs;
-      fn();
-      (STATS.c13 = STATS.c13 || []).push({ part: nom, h: (CLOCK.offset - t0) / 3600e3, farmH: (STATS.grindMs - farm0) / 3600e3, orAvant: Math.floor(o0), orApres: Math.floor(g.game.gold) });
-      if (process.env.TRACE_EPIC) console.log("      [palier] " + nom + " : " + ((CLOCK.offset - t0) / 3600e3).toFixed(1) + " h · obtention " + JSON.stringify(Object.keys(STATS.obtainH || {}).filter(function (k) { return /crypte_13/.test(k); }).map(function (k) { return k + " " + STATS.obtainH[k].toFixed(0); })) + " · attentes " + JSON.stringify(STATS.attente));
-    }
-    if (process.env.TRACE_EPIC) console.log("      [mémoire] niveau " + g.MemoryManager.getLevel() + " · choix " + JSON.stringify(g.MemoryManager.ensure().choices) + " · Aether " + g.game.totalAetherEarned + " · sac " + g.getInventoryCap());
-    if (process.env.TRACE_EPIC) console.log("      [épiques] portées " + g.EQUIPMENT_SLOTS.map(function (sl) { var it = g.game.equipped[sl]; return sl + ":" + (it ? it.rarity : "-"); }).join(" ") + " · sac " + (g.game.inventory || []).filter(function (it) { return it.rarity === "epic"; }).map(function (it) { return it.slot + "/" + it.name; }).join(", ") + " · sac " + (g.game.inventory || []).length + "/" + g.getInventoryCap() + " · verrou « " + (g.heroLockReason() || "") + " » · sceneRun " + !!g.game.sceneRun + " · sortie " + g.SortieManager.isActive());
-    part("La couronne de trop", function () { playAdventure("aq_crypte_couronne"); }); // v3.456.3 : le casque Épique sûr
-    part(P.pieces + " Épiques", function () { gearRarity("epic", P.pieces, true); });
-    part("Forge " + P.forge, function () { upgradeBuilding("forge", P.forge); });
-    part("reforge arme " + P.reforge, function () { reforgeTo("weapon", P.reforge); });
-  },
+  crypte_13: function () {}, // v3.717.0 (Seb 06/11) : palier devenu narratif, validé à l'acceptation
   crypte_14: function (g, step) {
     withCompanion(g, "ysolt");
     playAdventure("aq_crypte_pleureuse");
@@ -2115,32 +2067,12 @@ var SOLVERS = {
   ruines_06: function (g) { playExpedition("petite_aventure_ruines", function () { return g.storyDesertFlag("ruinsPaCompleted"); }); },
   ruines_07: function (g) { for (var i = 0; i < 5 && g.storyRuinsSectorsFreed() < 2; i++) freeSector("ruins"); },
   ruines_08: function (g) { playAdventure("aq_ruines_batisseur"); },
-  ruines_09: function (g) {
-    var P = g.STORY_PALIER_RUINES;
-    function part(nom, fn) {
-      var t0 = CLOCK.offset, o0 = g.game.gold, farm0 = STATS.grindMs;
-      fn();
-      STATS.r09.push({ part: nom, h: (CLOCK.offset - t0) / 3600e3, farmH: (STATS.grindMs - farm0) / 3600e3, orAvant: Math.floor(o0), orApres: Math.floor(g.game.gold) });
-    }
-    part(P.pieces + " Inhabituels", function () { gearRarity("green", P.pieces, true); });
-    part("reforge arme " + P.reforge, function () { reforgeTo("weapon", P.reforge); });
-    part("reforge armure " + P.reforge, function () { reforgeTo("armor", P.reforge); });
-  },
+  ruines_09: function () {}, // v3.717.0 (Seb 06/11) : palier devenu narratif, validé à l'acceptation
   ruines_10: function (g) { playAdventure("aq_ruines_salle"); },
   // v3.433.0 (Ruines, actes III et IV)
   ruines_11: function (g) { freeSector("ruins", "porte_sanctuaire"); },
   ruines_12: function (g) { playDungeon(3, false, function () { return g.storySanctuaireCamp(g.game); }); },
-  ruines_13: function (g) {
-    var P = g.STORY_PALIER_RUINES_RARE;
-    function part(nom, fn) {
-      var t0 = CLOCK.offset, o0 = g.game.gold, farm0 = STATS.grindMs;
-      fn();
-      (STATS.r13 = STATS.r13 || []).push({ part: nom, h: (CLOCK.offset - t0) / 3600e3, farmH: (STATS.grindMs - farm0) / 3600e3, orAvant: Math.floor(o0), orApres: Math.floor(g.game.gold) });
-    }
-    part(P.pieces + " Rares", function () { gearRarity("rare", P.pieces, true); });
-    part("Forge " + P.forge, function () { upgradeBuilding("forge", P.forge); });
-    part("reforge arme " + P.reforge, function () { reforgeTo("weapon", P.reforge); });
-  },
+  ruines_13: function () {}, // v3.717.0 (Seb 06/11) : palier devenu narratif, validé à l'acceptation
   ruines_14: function (g, step) { playAdventure("aq_ruines_golem"); choiceStep(g, step); },
   ruines_15: function (g) { if (!(g.game.dungeonTierCleared || {})[3]) playDungeon(3, false); },
   ruines_16: function (g) {

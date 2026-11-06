@@ -39,7 +39,8 @@ window.getVillageBuildSeconds = getVillageBuildSeconds;
      - Terrain d'entraînement : jusqu'au plafond de l'acte (TRAINING_CAP_BY_ACT) ;
      - Forge : niveaux 1 à 3 (v3.356.0 : l'étape 13 n'en demande plus que 2, STORY_PALIER_FORGE ;
        le 3e reste aidé, pour ne pas renchérir ce qui l'était) ;
-     - reforge de l'ARME : niveaux 1 à 4 (même palier, STORY_PALIER_REFORGE). */
+     - reforge de l'ARME : niveaux 1 à 4 (même palier, STORY_PALIER_REFORGE).
+     v3.717.0 (Seb 06/11) : ces paliers ne sont plus exigés (desert_13 : une reforge), l'aide reste. */
 var STORY_PROVIDED_MATERIALS = ["bois", "planche", "pierre", "fer", "lingot", "acier", "bloc", "eau", "ble", "viande"];
 var STORY_FORGE_LEVELS = 4; // v3.431.0 : la Forge 4 du palier Rare (ruines_13), aidée comme les trois premières
 var STORY_WEAPON_REFORGE_LEVELS = 4;

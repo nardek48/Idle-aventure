@@ -1458,10 +1458,8 @@ STORY_QUESTS.desert = {
       progress: function (game) { return "Vague 5 " + (storyCiteWave5(game) ? "1/1" : "0/1"); }
     },
 
-    /* v3.316.0 (W-4b) — acte III §6. LE PALIER D'ÉQUIPEMENT, demandé par Seb (« les combats
-       sont trop faciles », 20/09/2026). Trois compteurs, remplis dans n'importe quel ordre.
-       C'est à partir d'ici que le contenu se cale au banc EN SUPPOSANT le palier atteint, et
-       sur les dégâts des ennemis — les PV ne font qu'allonger (mesure du lot W-4a1). */
+    /* v3.316.0 (W-4b) — acte III §6, le palier d'équipement : le contenu suivant se cale au banc en le
+       supposant atteint. v3.717.0 (Seb 06/11) : plus exigé (une reforge seulement), le pronostic conseille. */
     {
       id: "desert_13",
       title: "Le verre et le fer",
@@ -1478,34 +1476,26 @@ STORY_QUESTS.desert = {
         completionDialogue: [
           { who: "Maddoc", text: "Là." },
           { who: "Wenna", text: "C'est tout ?" },
-          { who: "Maddoc", text: "Chez moi, c'était un compliment." }
+          { who: "Maddoc", text: "Chez moi, c'était un compliment." },
+          { who: "Brannoc", text: "Il forgeait comme ça, lui aussi. Sans appuyer… enfin. Ça tiendra." } // v3.717.0 (Seb 06/11)
         ]
       },
-      objectiveLabel: "3 emplacements Inhabituels dont l'arme, Forge 2, arme reforgée à 4", // v3.356.0 (D1)
+      objectiveLabel: "Reforger l'arme une fois", // v3.717.0 (Seb 06/11) : une reforge, le reste passe au conseil du pronostic
       unlockTabs: [],
       reward: STORY_REWARDS.desert_13,
       linkTo: { tab: "equip" },
       tutorial: {
         tab: "equip",
         icon: "images/Icons/workshops/smithing_station.webp",
-        title: "Le palier",
+        title: "Conseil de la Forge",
         points: [
-          { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Pour aller plus loin au Désert, il faut être équipé pour. Les trois compteurs de l'étape te disent où tu en es." },
-          { icon: "images/Icons/dungeon/dungeon_weapon.webp", text: "L'arme de la Cité compte déjà. Les autres pièces Inhabituelles : élites de la Forêt, heaume du guet, donjon, boutique, butin des Petites Aventures." },
-          { icon: "images/Icons/workshops/smithing_station.webp", text: "La Forge 2 reforge l'arme jusqu'au niveau 4. Le Verre trempé ouvre la Forge 3, pour aller plus loin ensuite. Le niveau de reforge reste à l'emplacement quand tu changes de pièce." }
+          { icon: "images/Icons/workshops/smithing_station.webp", text: "Construis la Forge au Village, puis reforge l'arme une fois. La Forge 1 ouvre la reforge jusqu'au niveau 2, la Forge 2 jusqu'au niveau 4, et le Verre trempé ouvre la Forge 3. Le niveau de reforge reste à l'emplacement quand tu changes de pièce." },
+          { icon: "images/Icons/dungeon/dungeon_weapon.webp", text: "Des pièces Inhabituelles aident aussi. L'arme de la Cité en est une ; les autres : élites de la Forêt, heaume du guet, donjon, boutique, butin des Petites Aventures." },
+          { icon: "images/Icons/system/forecast.webp", text: "Rien ne l'exige : avant un combat, le pronostic « Avant de partir » te dit s'il est trop dur et quoi améliorer." }
         ]
       },
-      check: function (game) {
-        var p = storyPalierDesert(game);
-        return p.pieces >= STORY_PALIER_PIECES && p.armeVerte && p.forge >= STORY_PALIER_FORGE && p.reforge >= STORY_PALIER_REFORGE;
-      },
-      progress: function (game) {
-        var p = storyPalierDesert(game);
-        return "Inhabituels " + Math.min(p.pieces, STORY_PALIER_PIECES) + "/" + STORY_PALIER_PIECES
-          + (p.armeVerte ? "" : " (arme comprise)")
-          + " · Forge " + Math.min(p.forge, STORY_PALIER_FORGE) + "/" + STORY_PALIER_FORGE
-          + " · Reforge de l'arme " + Math.min(p.reforge, STORY_PALIER_REFORGE) + "/" + STORY_PALIER_REFORGE;
-      }
+      check: function (game) { return storyPalier(game, "green").arme >= 1; }, // v3.717.0 (Seb 06/11) : seule exigence restante, une reforge
+      progress: function (game) { return "Reforge de l'arme " + Math.min(1, storyPalier(game, "green").arme) + "/1"; }
     },
 
     /* v3.317.0 (W-4c) — acte III §7. La bête sous la dune, anneau 3, atteignable par l'oasis
@@ -2116,7 +2106,7 @@ STORY_QUESTS.ruins = {
       check: function (game) { return storyAdvDone(game, "aq_ruines_batisseur"); },
       progress: function (game) { return "Rencontres " + storyAdvProgress(game, "aq_ruines_batisseur", "rencontres_batisseur", 5) + "/5"; }
     },
-    /* Étape 9 (§4) : premier palier des Ruines (RU6) — équipement Inhabituel complet et reforgé. */
+    /* Étape 9 (§4) : premier palier des Ruines (RU6), repère du pronostic (v3.717.0 : plus exigé). */
     {
       id: "ruines_09",
       title: "La porte trop haute",
@@ -2129,37 +2119,30 @@ STORY_QUESTS.ruins = {
           { who: "Le Veilleur", text: "Elle était là avant ta carte." },
           { who: "Wenna", text: "Tu la connais ?" },
           { who: "Le Veilleur", text: "Je connais la hauteur de la porte." },
-          { who: "Maddoc", text: "Pour entrer là-dedans, pas avec ce que tu portes." }
+          { who: "Maddoc", text: "Première porte de ma vie où je n'ai pas à baisser la tête." }
         ],
         completionDialogue: [
           { who: "Wenna", text: "Quelqu'un vivait seul ici." },
           { who: "Le Veilleur", text: "Quelqu'un attendait." }
         ]
       },
-      objectiveLabel: "6 emplacements Inhabituels sur 7, arme et armure reforgées à 4",
+      objectiveLabel: "Passer la porte",
       unlockTabs: [],
       reward: STORY_REWARDS.ruines_09,
       linkTo: { tab: "equip" },
       tutorial: {
         tab: "equip",
         icon: "images/Icons/workshops/smithing_station.webp",
-        title: "Le premier palier",
+        title: "Conseil de la Forge",
         points: [
-          { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Pour aller plus loin aux Ruines, six emplacements sur sept doivent être au moins Inhabituels. L'arme du Fleuve compte." },
+          { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Plus loin aux Ruines, six emplacements sur sept au moins Inhabituels sont un bon repère. L'arme du Fleuve compte." },
           { icon: "images/Icons/dungeon/dungeon_weapon.webp", text: "Les étapes de l'acte t'en ont donné trois. Les autres : échoppe, donjon, élites." },
-          { icon: "images/Icons/workshops/smithing_station.webp", text: "La Forge reforge l'arme et l'armure jusqu'au niveau 4 avec ce que tu as déjà. Le niveau de reforge reste à l'emplacement." }
+          { icon: "images/Icons/workshops/smithing_station.webp", text: "La Forge reforge l'arme et l'armure jusqu'au niveau 4 avec ce que tu as déjà. Le niveau de reforge reste à l'emplacement." },
+          { icon: "images/Icons/system/forecast.webp", text: "Rien ne l'exige : avant un combat, le pronostic « Avant de partir » te dit s'il est trop dur et quoi améliorer." }
         ]
       },
-      check: function (game) {
-        var p = storyPalierRuines(game);
-        return p.pieces >= STORY_PALIER_RUINES.pieces && p.arme >= STORY_PALIER_RUINES.reforge && p.armure >= STORY_PALIER_RUINES.reforge;
-      },
-      progress: function (game) {
-        var p = storyPalierRuines(game), P = STORY_PALIER_RUINES;
-        return "Inhabituels " + Math.min(p.pieces, P.pieces) + "/" + P.pieces
-          + " · Reforge de l'arme " + Math.min(p.arme, P.reforge) + "/" + P.reforge
-          + " · de l'armure " + Math.min(p.armure, P.reforge) + "/" + P.reforge;
-      }
+      check: function () { return true; }, // v3.717.0 (Seb 06/11) : moment narratif, plus d'exigence ; le pronostic conseille
+      progress: function () { return ""; }
     },
     /* Étape 10 (§5) : fin de l'acte II. Le Veilleur dit ce qu'il veut : que la cité tienne. */
     {
@@ -2259,18 +2242,19 @@ STORY_QUESTS.ruins = {
       check: function (game) { return storySanctuaireCamp(game); },
       progress: function (game) { return "Campement " + (storySanctuaireCamp(game) ? "1/1" : "0/1"); }
     },
-    /* Étape 13 (§3) : le palier Rare (RU6) — Clé de voûte, Forge 4, pièces Rares, reforge de l'arme. */
+    /* Étape 13 (§3) : le palier Rare (RU6), repère du pronostic (v3.717.0 : plus exigé). */
     {
       id: "ruines_13",
       title: "La clé de voûte",
       act: "Acte III — Le cœur de pierre",
       narrative: {
         objective: "Au retour, Edda pose sur la table de la Borne une pierre taillée en coin, plus large en haut qu'en bas.",
-        completion: "Le marteau de la Forge sonne plus grave. Le fer prend. La pierre aussi.",
+        completion: "Le soir, Orwen la pose au milieu de la table, entre le pain et la lampe. Personne ne la déplace.",
         dialogue: [
           { who: "Edda", text: "Trouvée sous la ville. Elle tient une arche à elle seule." },
           { who: "Maddoc", text: "Une seule pierre, et tout tient." },
           { who: "Sarkel", text: "Une seule pierre, et tout tombe. Ça dépend du côté où on se tient." },
+          { who: "Aldric", text: "Une pierre. Je la note quand même." },
           { who: "Edda", text: "La Pierre errante se taille comme ça. Il faut savoir où frapper." },
           { who: "Maddoc", text: "En bas, ils tiennent mieux que nous. Il faut tenir mieux qu'eux." }
         ],
@@ -2278,32 +2262,24 @@ STORY_QUESTS.ruins = {
           { who: "Maddoc", text: "Maintenant, on descend." }
         ]
       },
-      objectiveLabel: "4 emplacements Rares sur 7, Forge 4, arme reforgée à 7",
+      objectiveLabel: "Écouter Edda à la Borne",
       unlockTabs: [],
       reward: STORY_REWARDS.ruines_13,
       linkTo: { tab: "equip" },
       tutorial: {
         tab: "equip",
         icon: "images/Icons/resources/cle_de_voute_icon.webp",
-        title: "Le palier Rare",
+        title: "Conseil de la Forge",
         points: [
-          { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Pour descendre au bout du Sanctuaire, quatre emplacements sur sept doivent être Rares. L'arme du Fleuve compte." },
+          { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Pour descendre au bout du Sanctuaire, quatre emplacements Rares sur sept sont un bon repère. L'arme du Fleuve compte." },
           { icon: "images/Icons/resources/cle_de_voute_icon.webp", text: "La Clé de voûte se taille au Tailleur de pierre, avec des Pierres errantes. Elle construit la Forge 4." },
           { icon: "images/Icons/workshops/smithing_station.webp", text: "La Forge 4 ouvre la reforge jusqu'au niveau 8. Les derniers niveaux demandent aussi des Clés de voûte." },
-          { icon: "images/Icons/dungeon/dungeon_weapon.webp", text: "Les pièces Rares viennent du Sanctuaire, de l'échoppe et des élites. Les étapes 11 et 12 t'en ont donné une chacune." }
+          { icon: "images/Icons/dungeon/dungeon_weapon.webp", text: "Les pièces Rares viennent du Sanctuaire, de l'échoppe et des élites. Les étapes 11 et 12 t'en ont donné une chacune." },
+          { icon: "images/Icons/system/forecast.webp", text: "Rien ne l'exige : avant un combat, le pronostic « Avant de partir » te dit s'il est trop dur et quoi améliorer." }
         ]
       },
-      check: function (game) {
-        var p = storyPalierRuinesRare(game), P = STORY_PALIER_RUINES_RARE;
-        return p.pieces >= P.pieces && p.forge >= P.forge && p.arme >= P.reforge;
-      },
-      progress: function (game) {
-        var p = storyPalierRuinesRare(game), P = STORY_PALIER_RUINES_RARE;
-        return "Rares " + Math.min(p.pieces, P.pieces) + "/" + P.pieces
-          + " · Forge " + Math.min(p.forge, P.forge) + "/" + P.forge
-          + " · Reforge de l'arme " + Math.min(p.arme, P.reforge) + "/" + P.reforge;
-      },
-      missing: function (game) { return storyPalierRuinesRareMissing(game); } // v3.448.6 : ce qui manque, et où
+      check: function () { return true; }, // v3.717.0 (Seb 06/11) : moment narratif, plus d'exigence ; le pronostic conseille
+      progress: function () { return ""; }
     },
     /* Étape 14 (§4) : le Golem, puis le deuxième choix pesant (clé « salle », Donner / Garder).
        Fermer -> La salle scellée (frein de l'Éboulement, living-maps.js choiceBrakes).
@@ -2941,7 +2917,7 @@ STORY_QUESTS.crypt = {
       check: function (game) { return storyAdvDone(game, "aq_crypte_appel"); },
       progress: function (game) { return "Rencontres " + storyAdvProgress(game, "aq_crypte_appel", "rencontres_appel", 5) + "/5"; }
     },
-    /* Étape 9 (§6) : palier Rare de la Crypte (CR7) — 7 emplacements Rares ou mieux (l'Épique compte), arme à 8. */
+    /* Étape 9 (§6) : palier Rare de la Crypte (CR7), repère du pronostic (v3.717.0 : plus exigé). */
     {
       id: "crypte_09",
       title: "Les alcôves du fond",
@@ -2950,9 +2926,10 @@ STORY_QUESTS.crypt = {
         objective: "Au fond de la salle longue, une grille. Derrière, des alcôves plus hautes, plus larges. Ceux qui y dorment portent encore leur armure.",
         completion: "Tu passes la grille. Dans la plus haute alcôve, une armure vide, posée comme si on l'avait ôtée pour dormir. À côté, un carquois. Vide aussi.",
         dialogue: [
-          { who: "Maddoc", text: "Si l'un d'eux se lève, on ne le tiendra pas avec ce qu'on porte." },
+          { who: "Maddoc", text: "Si l'un d'eux se lève ?" },
           { who: "Ysolt", text: "Ils se lèvent toujours, un jour." },
-          { who: "Sarkel", text: "Alors équipe-toi avant ce jour-là. Ici, je ne vends rien. En haut, si." }
+          { who: "Wenna", text: "Et ce jour-là, on fait quoi ?" },
+          { who: "Ysolt", text: "On les recouche. Doucement." }
         ],
         completionDialogue: [
           { who: "Ysolt", text: "C'était la mienne. Je dormais là." },
@@ -2960,29 +2937,23 @@ STORY_QUESTS.crypt = {
           { who: "Ysolt", text: "Je me suis réveillée. Ce n'est pas pareil." }
         ]
       },
-      objectiveLabel: "7 emplacements Rares ou mieux sur 7, arme reforgée à 8",
+      objectiveLabel: "Passer la grille",
       unlockTabs: [],
       reward: STORY_REWARDS.crypte_09,
       linkTo: { tab: "equip" },
       tutorial: {
         tab: "equip",
         icon: "images/Icons/equipment_slots/slot_weapon.webp",
-        title: "Le palier Rare",
+        title: "Conseil de la Forge",
         points: [
-          { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Pour aller plus loin dans la Crypte, tes sept emplacements doivent être au moins Rares. L'arme du Cœur, Épique, compte." },
+          { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Plus loin dans la Crypte, sept emplacements au moins Rares sont un bon repère. L'arme du Cœur, Épique, compte." },
           { icon: "images/Icons/dungeon/dungeon_weapon.webp", text: "Les étapes de l'acte t'en ont donné trois. Les autres : l'échoppe, le Sanctuaire scellé, les élites des Ruines." },
-          { icon: "images/Icons/resources/cle_de_voute_icon.webp", text: "L'arme se reforge jusqu'au niveau 8 à la Forge 4, avec des Clés de voûte." }
+          { icon: "images/Icons/resources/cle_de_voute_icon.webp", text: "L'arme se reforge jusqu'au niveau 8 à la Forge 4, avec des Clés de voûte." },
+          { icon: "images/Icons/system/forecast.webp", text: "Rien ne l'exige : avant un combat, le pronostic « Avant de partir » te dit s'il est trop dur et quoi améliorer." }
         ]
       },
-      check: function (game) {
-        var p = storyPalierRuinesRare(game), P = STORY_PALIER_CRYPTE_RARE;
-        return p.pieces >= P.pieces && p.arme >= P.reforge;
-      },
-      progress: function (game) {
-        var p = storyPalierRuinesRare(game), P = STORY_PALIER_CRYPTE_RARE;
-        return "Rares " + Math.min(p.pieces, P.pieces) + "/" + P.pieces + " · Reforge de l'arme " + Math.min(p.arme, P.reforge) + "/" + P.reforge;
-      },
-      missing: function (game) { return storyPalierCrypteRareMissing(game); }
+      check: function () { return true; }, // v3.717.0 (Seb 06/11) : moment narratif, plus d'exigence ; le pronostic conseille
+      progress: function () { return ""; }
     },
     /* Étape 10 (§7) : fin de l'acte II — la chaîne, la porte basse ; quelque chose bat derrière. */
     {
@@ -3078,14 +3049,14 @@ STORY_QUESTS.crypt = {
       check: function (game) { return !!(game && game.explorationProgression && game.explorationProgression.ossuaireCamp); },
       progress: function (game) { return "Campement " + ((game && game.explorationProgression && game.explorationProgression.ossuaireCamp) ? "1/1" : "0/1"); }
     },
-    /* Étape 13 (§5) : palier Épique partiel (CR7) — 3 Épiques portées (l'arme du Cœur compte), Forge 5, arme à 9. */
+    /* Étape 13 (§5) : palier Épique partiel (CR7), repère du pronostic (v3.717.0 : plus exigé). */
     {
       id: "crypte_13",
       title: "La cire qui ne coule plus",
       act: "Acte III — L'Ossuaire",
       narrative: {
         objective: "À la Veillée, Sarkel fait fondre un pain de cire dans une gamelle. La cire ne fume pas. Quand il la verse, elle prend tout de suite.",
-        completion: "La lame sort de la Forge avec un filet de cire pris dans le métal. Il ne fond pas. Ysolt passe le doigt dessus.",
+        completion: "Sarkel verse le reste de la cire sur la porte de la salle d'Ysolt. Elle prend tout de suite.",
         dialogue: [
           { who: "Sarkel", text: "Celle-là ne coule plus, même au feu. Ils la faisaient comme ça, en bas." },
           { who: "Maddoc", text: "Pour quoi faire ?" },
@@ -3094,35 +3065,28 @@ STORY_QUESTS.crypt = {
           { who: "Sarkel", text: "Je ne vends pas la recette. Je te la donne. C'est différent." }
         ],
         completionDialogue: [
-          { who: "Ysolt", text: "Celle-là, elle tiendra jusqu'en bas." },
-          { who: "Wenna", text: "Et au-delà ?" },
-          { who: "Ysolt", text: "Au-delà, on ne porte plus rien." }
+          { who: "Ysolt", text: "Personne n'y entrera plus." },
+          { who: "Wenna", text: "Même pas toi ?" },
+          { who: "Ysolt", text: "Moi, j'en suis sortie." }
         ]
       },
-      objectiveLabel: "3 pièces Épiques portées, Forge 5, arme reforgée à 9",
+      objectiveLabel: "Rentrer à la Veillée",
       unlockTabs: [],
       reward: STORY_REWARDS.crypte_13,
       linkTo: { tab: "equip" },
       tutorial: {
         tab: "equip",
         icon: "images/Icons/resources/cire_consacree_icon.webp",
-        title: "Le palier Épique",
+        title: "Conseil de la Forge",
         points: [
-          { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Pour aller au bout de l'Ossuaire, il faut trois pièces Épiques. L'arme du Cœur en est une ; les étapes 11 et 12 t'en ont donné une chacune. La quête d'élite « La couronne de trop » en donne une de plus : un casque." },
+          { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Pour aller au bout de l'Ossuaire, trois pièces Épiques sont un bon repère. L'arme du Cœur en est une ; les étapes 11 et 12 t'en ont donné une chacune. La quête d'élite « La couronne de trop » en donne une de plus : un casque." },
           { icon: "images/Icons/resources/cire_consacree_icon.webp", text: "La Cire consacrée se coule à la Fonderie, avec de la Cire de sépulcre. Elle construit la Forge 5." },
-          { icon: "images/Icons/workshops/smithing_station.webp", text: "La Forge 5 ouvre les reforges 9 et 10. Elles demandent aussi de la Cire consacrée." }
+          { icon: "images/Icons/workshops/smithing_station.webp", text: "La Forge 5 ouvre les reforges 9 et 10. Elles demandent aussi de la Cire consacrée." },
+          { icon: "images/Icons/system/forecast.webp", text: "Rien ne l'exige : avant un combat, le pronostic « Avant de partir » te dit s'il est trop dur et quoi améliorer." }
         ]
       },
-      check: function (game) {
-        var p = storyPalierCrypteEpique(game), P = STORY_PALIER_CRYPTE_EPIQUE;
-        return p.pieces >= P.pieces && p.forge >= P.forge && p.arme >= P.reforge;
-      },
-      progress: function (game) {
-        var p = storyPalierCrypteEpique(game), P = STORY_PALIER_CRYPTE_EPIQUE;
-        return "Épiques " + Math.min(p.pieces, P.pieces) + "/" + P.pieces + " · Forge " + Math.min(p.forge, P.forge) + "/" + P.forge
-          + " · Reforge de l'arme " + Math.min(p.arme, P.reforge) + "/" + P.reforge;
-      },
-      missing: function (game) { return storyPalierCrypteEpiqueMissing(game); }
+      check: function () { return true; }, // v3.717.0 (Seb 06/11) : moment narratif, plus d'exigence ; le pronostic conseille
+      progress: function () { return ""; }
     },
     /* Étape 14 (§6) : la Pleureuse, puis le deuxième choix pesant (clé « ysolt », Garder / Donner).
        Garder -> Le repos d'Ysolt (elle part, le carquois reste). Donner -> Ysolt reste (deux charges, −15 % PV). */
@@ -3760,9 +3724,8 @@ window.storySanctuaireCamp = storySanctuaireCamp;
 window.storyEddaInParty = storyEddaInParty;
 window.STORY_SEUIL_TEXTS = STORY_SEUIL_TEXTS;
 
-/* v3.316.0 (W-4b) — le palier de l'étape 13, en un seul endroit pour que check et progress
-   ne puissent pas diverger. Lecture seule : équipement porté, niveau du bâtiment Forge,
-   niveau de reforge de l'arme. Aucun compteur ajouté nulle part. */
+/* v3.316.0 (W-4b) — le palier de l'étape 13. Lecture seule : équipement porté, niveau du bâtiment Forge,
+   reforge de l'arme. v3.717.0 (Seb 06/11) : plus exigé, repère du pronostic (CombatForecast.zoneRepere). */
 /* v3.356.0 (D1, décision Seb 26/09/2026) : 4 -> 3 pièces et Forge 3 -> 2. Les deux élites de
    la Forêt, le heaume du Serment et l'arme de la Cité (D4) en donnent déjà trois ; la Forge 2
    suffit pour la reforge 4. Mesuré : 152 h de farm d'or sur cette étape, visé 10 à 40 h. */
@@ -4228,17 +4191,16 @@ STORY_QUESTS.mountain = {
       check: function (game) { return storyAdvDone(game, "aq_montagne_tri"); },
       progress: function (game) { return "Rencontres " + storyAdvProgress(game, "aq_montagne_tri", "rencontres_tri", 5) + "/5"; }
     },
-    /* Étape 9 (§6) : palier Épique de la Montagne (MT7, décision Seb du 25/10 : option A) — 5 emplacements avec un
-       Épique de la Montagne, arme à 10. */
+    /* Étape 9 (§6) : palier Épique de la Montagne (MT7), repère du pronostic (v3.717.0 : plus exigé). */
     {
       id: "montagne_09",
       title: "Ce qui tient au feu",
       act: "Acte II — Ce qui trie",
       narrative: {
         objective: "Au Replat, Maddoc pose sa lame à côté d'un éclat de Cendre vive. La lame a l'air plus petite.",
-        completion: "Quatre pièces qui tiennent au feu. À Aeswyn, Brannoc les regarde une à une, sans rien dire. Puis il pose l'éclat de Cendre vive à côté, sur l'établi.",
+        completion: "À Aeswyn, Brannoc regarde l'éclat de Cendre vive longtemps. Puis il le pose sur l'établi, à la place de ses meilleurs outils.",
         dialogue: [
-          { who: "Maddoc", text: "Ce qu'on porte de tout-venant ne tiendra pas, ici. Il faut le meilleur qu'on a, d'où qu'il vienne." }, // v3.564.0 : un Épique de tout monde compte (point 3)
+          { who: "Maddoc", text: "Ma lame a l'air petite, à côté." },
           { who: "Sarkel", text: "En bas, je vendais. Ici, je cherche encore ce qui vaut." },
           { who: "Edda", text: "Ce qui tient au feu." }
         ],
@@ -4246,29 +4208,23 @@ STORY_QUESTS.mountain = {
           { who: "Brannoc", text: "Encore un peu, et je saurai quoi en faire." }
         ]
       },
-      objectiveLabel: "4 emplacements avec une pièce Épique, arme reforgée à 10",
+      objectiveLabel: "Écouter Brannoc",
       unlockTabs: [],
       reward: STORY_REWARDS.montagne_09,
       linkTo: { tab: "equip" },
       tutorial: {
         tab: "equip",
         icon: "images/Icons/equipment_slots/slot_weapon.webp",
-        title: "Le palier Épique",
+        title: "Conseil de la Forge",
         points: [
-          { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Pour aller plus loin dans la Montagne, quatre de tes sept emplacements doivent porter une pièce Épique, de n'importe quel monde." }, // v3.552.0
+          { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Plus loin dans la Montagne, quatre emplacements sur sept avec une pièce Épique, de n'importe quel monde, sont un bon repère." },
           { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "Les étapes de l'acte t'en ont donné trois, et celles de la Crypte comptent aussi. Sinon : les élites de la carte de la Montagne, 35 % de chance par victoire, et jamais plus de deux victoires de suite sans pièce." }, // v3.552.0
-          { icon: "images/Icons/workshops/smithing_station.webp", text: "L'arme se reforge jusqu'au niveau 10 à la Forge 5." }
+          { icon: "images/Icons/workshops/smithing_station.webp", text: "L'arme se reforge jusqu'au niveau 10 à la Forge 5." },
+          { icon: "images/Icons/system/forecast.webp", text: "Rien ne l'exige : avant un combat, le pronostic « Avant de partir » te dit s'il est trop dur et quoi améliorer." }
         ]
       },
-      check: function (game) {
-        var p = storyPalierMontagne(game), P = STORY_PALIER_MONTAGNE;
-        return p.pieces >= P.pieces && p.arme >= P.reforge;
-      },
-      progress: function (game) {
-        var p = storyPalierMontagne(game), P = STORY_PALIER_MONTAGNE;
-        return "Pièces Épiques " + Math.min(p.pieces, P.pieces) + "/" + P.pieces + " · Reforge de l'arme " + Math.min(p.arme, P.reforge) + "/" + P.reforge;
-      },
-      missing: function (game) { return storyPalierMontagneMissing(game); }
+      check: function () { return true; }, // v3.717.0 (Seb 06/11) : moment narratif, plus d'exigence ; le pronostic conseille
+      progress: function () { return ""; }
     },
     /* Étape 10 (§7) : fin de l'acte II — l'ouvrage inachevé (le choix 14) et la Gueule du volcan (acte III). */
     {
@@ -4362,14 +4318,14 @@ STORY_QUESTS.mountain = {
       check: function (game) { return !!(game && game.explorationProgression && game.explorationProgression.gueuleCamp); },
       progress: function (game) { return "Campement " + ((game && game.explorationProgression && game.explorationProgression.gueuleCamp) ? "1/1" : "0/1"); }
     },
-    /* Étape 13 (§5) : l'Épique complet (MT7) — 7 sur 7 de la Montagne, Forge 6, arme reforgée à 11. */
+    /* Étape 13 (§5) : l'Épique complet (MT7), repère du pronostic (v3.717.0 : plus exigé). */
     {
       id: "montagne_13",
       title: "Ce qui ne fond pas",
       act: "Acte III — La Gueule",
       narrative: {
-        objective: "Brannoc a monté la Forge 6 contre la vieille. Le foyer est en Obsidienne taillée. Le feu y brûle bleu.",
-        completion: "Sept pièces qui tiennent au feu. Tu tends le bras au-dessus de la rigole de lave. La manche ne fume pas.",
+        objective: "Brannoc a monté un foyer d'Obsidienne contre la vieille forge. Le feu y brûle bleu.",
+        completion: "Tu lui racontes l'enclume du Golem, juste à la bonne hauteur. Brannoc écoute jusqu'au bout. Pas une fois il ne dit « enfin ».",
         dialogue: [
           { who: "Brannoc", text: "Celle-là, la Cendre ne la mange pas." },
           { who: "Maddoc", text: "Et nous ?" },
@@ -4380,30 +4336,23 @@ STORY_QUESTS.mountain = {
           { who: "Edda", text: "Ici, ça sert." }
         ]
       },
-      objectiveLabel: "7 emplacements avec une pièce Épique, Forge 6, arme reforgée à 11",
+      objectiveLabel: "Revoir Brannoc",
       unlockTabs: [],
       reward: STORY_REWARDS.montagne_13,
       linkTo: { tab: "equip" },
       tutorial: {
         tab: "equip",
         icon: "images/Icons/resources/obsidienne_taillee_icon.webp",
-        title: "L'Épique complet",
+        title: "Conseil de la Forge",
         points: [
-          { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Pour descendre au bout de la Gueule, tes sept emplacements doivent porter une pièce Épique, de n'importe quel monde." }, // v3.552.0
+          { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Pour descendre au bout de la Gueule, une pièce Épique à chacun des sept emplacements, de n'importe quel monde, est un bon repère." },
           { icon: "images/Icons/resources/obsidienne_taillee_icon.webp", text: "L'Obsidienne taillée se fait à la Fonderie, avec de la Cendre vive. Elle construit la Forge 6." },
-          { icon: "images/Icons/workshops/smithing_station.webp", text: "La Forge 6 ouvre les reforges 11 et 12. Elles demandent aussi de l'Obsidienne taillée." }
+          { icon: "images/Icons/workshops/smithing_station.webp", text: "La Forge 6 ouvre les reforges 11 et 12. Elles demandent aussi de l'Obsidienne taillée." },
+          { icon: "images/Icons/system/forecast.webp", text: "Rien ne l'exige : avant un combat, le pronostic « Avant de partir » te dit s'il est trop dur et quoi améliorer." }
         ]
       },
-      check: function (game) {
-        var p = storyPalierMontagne(game), P = STORY_PALIER_MONTAGNE_COMPLET;
-        return p.pieces >= P.pieces && p.forge >= P.forge && p.arme >= P.reforge;
-      },
-      progress: function (game) {
-        var p = storyPalierMontagne(game), P = STORY_PALIER_MONTAGNE_COMPLET;
-        return "Pièces Épiques " + Math.min(p.pieces, P.pieces) + "/" + P.pieces + " · Forge " + Math.min(p.forge, P.forge) + "/" + P.forge
-          + " · Reforge de l'arme " + Math.min(p.arme, P.reforge) + "/" + P.reforge;
-      },
-      missing: function (game) { return storyPalierMontagneCompletMissing(game); }
+      check: function () { return true; }, // v3.717.0 (Seb 06/11) : moment narratif, plus d'exigence ; le pronostic conseille
+      progress: function () { return ""; }
     },
     /* Étape 14 (§6) : la salle ronde (3 rencontres), puis le deuxième choix pesant (clé « ouvrage », Garder / Donner).
        Donner -> la Gueule plus chaude et plus riche (VeinSystem.mawFinished). Garder -> sa matière, tout de suite. */
@@ -5047,7 +4996,7 @@ STORY_QUESTS.tower = {
       check: function () { var lm = window.LivingMapManager, st = lm && lm.getState("tower", "etage_veines"); return !!(st && st.liberatedCount > 0); },
       progress: function () { var lm = window.LivingMapManager, st = lm && lm.getState("tower", "etage_veines"); return "Gardien vaincu " + (st && st.liberatedCount > 0 ? "1/1" : "0/1"); }
     },
-    /* Étape 10 : le palier Légendaire de l'acte II (TW7), puis les feuillets du Veilleur au Codex. */
+    /* Étape 10 : le palier Légendaire de l'acte II (TW7, repère du pronostic, plus exigé), puis les feuillets au Codex. */
     {
       id: "tour_10",
       title: "Les feuillets",
@@ -5063,21 +5012,22 @@ STORY_QUESTS.tower = {
           { who: "Ysolt", text: "Il savait qu'on lirait." }
         ]
       },
-      objectiveLabel: "Porter 3 pièces Légendaires",
+      objectiveLabel: "Lire les feuillets",
       unlockTabs: [],
       reward: STORY_REWARDS.tour_10,
       linkTo: { tab: "equip" },
       tutorial: {
         tab: "equip",
         icon: "images/Icons/equipment_slots/slot_weapon.webp",
-        title: "Le palier Légendaire",
+        title: "Conseil de la Forge",
         points: [
-          { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Pour monter plus haut, trois de tes sept emplacements doivent porter une pièce Légendaire." },
-          { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "Les étapes 8 et 9 t'en donnent deux. Sinon : le Gardien qui répète, 35 % de chance par victoire, et jamais plus de deux victoires de suite sans pièce. L'échoppe de la Tour en propose aussi." }
+          { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Pour monter plus haut, trois pièces Légendaires sont un bon repère." },
+          { icon: "images/Icons/village_buildings/merchant_hall.webp", text: "Les étapes 8 et 9 t'en donnent deux. Sinon : le Gardien qui répète, 35 % de chance par victoire, et jamais plus de deux victoires de suite sans pièce. L'échoppe de la Tour en propose aussi." },
+          { icon: "images/Icons/system/forecast.webp", text: "Rien ne l'exige : avant un combat, le pronostic « Avant de partir » te dit s'il est trop dur et quoi améliorer." }
         ]
       },
-      check: function (game) { return storyPalier(game, "legendary").pieces >= STORY_PALIER_TOUR.pieces; },
-      progress: function (game) { return "Pièces Légendaires " + Math.min(STORY_PALIER_TOUR.pieces, storyPalier(game, "legendary").pieces) + "/" + STORY_PALIER_TOUR.pieces; }
+      check: function () { return true; }, // v3.717.0 (Seb 06/11) : moment narratif, plus d'exigence ; le pronostic conseille
+      progress: function () { return ""; }
     },
     /* ---------- Acte III — Ce qu'elle a appris (lot T-3) ---------- */
     /* Étape 11 : le Sommet interdit s'ouvre (donjon 6) ; atteindre son campement dans un run. */
@@ -5132,7 +5082,7 @@ STORY_QUESTS.tower = {
       check: function (game) { return !!((game.dungeonTierCleared || {})[6]); },
       progress: function (game) { return "Reflet vaincu " + ((game.dungeonTierCleared || {})[6] ? "1/1" : "0/1"); }
     },
-    /* Étape 13 : le Légendaire complet (TW7) ; la Forge 7 s'ouvre avec l'étape (forgeActStep). */
+    /* Étape 13 : le Légendaire complet (TW7, repère du pronostic, plus exigé) ; la Forge 7 s'ouvre avec l'étape (forgeActStep). */
     {
       id: "tour_13",
       title: "Ce qui ne se forge pas",
@@ -5146,25 +5096,22 @@ STORY_QUESTS.tower = {
         ],
         completionDialogue: []
       },
-      objectiveLabel: "7 emplacements avec une pièce Légendaire, Forge 7, arme reforgée à 13",
+      objectiveLabel: "Rentrer à Aeswyn",
       unlockTabs: [],
       reward: STORY_REWARDS.tour_13,
       linkTo: { tab: "equip" },
       tutorial: {
         tab: "equip",
         icon: "images/Icons/workshops/smithing_station.webp",
-        title: "Le Légendaire complet",
+        title: "Conseil de la Forge",
         points: [
-          { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Pour la suite, tes sept emplacements doivent porter une pièce Légendaire. Le Sommet interdit en laisse tomber, comme le Gardien qui répète." },
-          { icon: "images/Icons/workshops/smithing_station.webp", text: "La Forge 7 s'ouvre maintenant, au Verre de faille (Givre bleu fondu à la Fonderie) : reforges 13 et 14. L'étape demande la Forge 7 et l'arme reforgée à 13." }
+          { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Pour la suite, une pièce Légendaire à chacun des sept emplacements est un bon repère. Le Sommet interdit en laisse tomber, comme le Gardien qui répète." },
+          { icon: "images/Icons/workshops/smithing_station.webp", text: "La Forge 7 s'ouvre maintenant, au Verre de faille (Givre bleu fondu à la Fonderie) : reforges 13 et 14." },
+          { icon: "images/Icons/system/forecast.webp", text: "Rien ne l'exige : avant un combat, le pronostic « Avant de partir » te dit s'il est trop dur et quoi améliorer." }
         ]
       },
-      check: function (game) { var p = storyPalier(game, "legendary"), P = STORY_PALIER_TOUR_COMPLET; return p.pieces >= P.pieces && p.forge >= P.forge && p.arme >= P.reforge; },
-      progress: function (game) {
-        var p = storyPalier(game, "legendary"), P = STORY_PALIER_TOUR_COMPLET;
-        return "Pièces Légendaires " + Math.min(p.pieces, P.pieces) + "/" + P.pieces + " · Forge " + Math.min(p.forge, P.forge) + "/" + P.forge + " · Reforge de l'arme " + Math.min(p.arme, P.reforge) + "/" + P.reforge;
-      },
-      missing: function (game) { return storyPalierTourCompletMissing(game); }
+      check: function () { return true; }, // v3.717.0 (Seb 06/11) : moment narratif, plus d'exigence ; le pronostic conseille
+      progress: function () { return ""; }
     },
     /* Étape 14 : deuxième choix pesant, clé « copie » : laisser le village d'avant (Donner) ou le défaire (Garder). */
     {
