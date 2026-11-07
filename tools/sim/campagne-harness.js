@@ -1453,8 +1453,8 @@ function objetsUtiles(g, monde) {
   var W = g.WORLDS || [], AQ = g.ADVENTURE_QUESTS || {}, fait = g.game.adventureQuestsCompleted || {}, atteint = mondeCourant(g), out = [];
   var wi = function (id) { for (var i = 0; i < W.length; i++) if (W[i].id === id) return i; return 99; };
   var ids = Object.keys(AQ).map(function (id, k) { return { id: id, w: wi(AQ[id].worldId), k: k }; })
-    .filter(function (x) { return !fait[x.id] && x.w <= atteint; }).sort(function (a, b) { return a.w - b.w || a.k - b.k; });
-  ids = monde ? ids.filter(function (x) { return x.w === atteint; }) : ids.slice(0, 3); // monde : toutes les quêtes restantes du monde atteint
+    .filter(function (x) { return !fait[x.id] && x.w <= atteint + (monde ? 1 : 0); }).sort(function (a, b) { return a.w - b.w || a.k - b.k; });
+  ids = monde ? ids.filter(function (x) { return x.w >= atteint; }) : ids.slice(0, 3); // monde : quêtes restantes du monde atteint et du suivant (piste a, Seb 07/11)
   var demande = {}; // nombre de ces quêtes qui conseillent chaque objet (un emporté par sortie)
   ids.forEach(function (x) { g.sortieAdvisedItems({ type: "adventure", id: x.id }, true).slice(0, g.CombatItems.slotCount()).forEach(function (id) { demande[id] = (demande[id] || 0) + 1; if (out.indexOf(id) < 0) out.push(id); }); });
   out.sort(function (a, b) { return objetRang(g, a) - objetRang(g, b); }); // tri stable : neutralisants, atténuants, le reste
@@ -1463,9 +1463,10 @@ function objetsUtiles(g, monde) {
 /* Seb 07/11 : le plafond du jour sert d'abord aux objets qui neutralisent un trait (sans « soften » dans les données),
    puis aux atténuants (soften), puis au reste (Fiole noire), et les potions en dernier. */
 function objetRang(g, id) { var it = g.COMBAT_ITEMS[id] || {}; return it.trait && !it.soften ? 0 : it.soften ? 1 : 2; }
-/* Places gardées aux neutralisants des quêtes restantes du monde (recette sue ou commande ouverte), sauf `sauf`. */
-function apoReserveNeutre(g, A, sauf) {
-  return objetsUtiles(g, true).items.filter(function (id) { return id !== sauf && objetRang(g, id) === 0 && A.getRecipe(id) && (A.isLearned(id) || A.isOrderOpen(id)); })
+/* Places gardées aux neutralisants des quêtes restantes du monde et du suivant (recette sue ou commande ouverte), sauf `sauf`
+   et sauf `exclus` (les objets des prochaines quêtes, fabriqués eux-mêmes). */
+function apoReserveNeutre(g, A, sauf, exclus) {
+  return objetsUtiles(g, true).items.filter(function (id) { return id !== sauf && (!exclus || exclus.indexOf(id) < 0) && objetRang(g, id) === 0 && A.getRecipe(id) && (A.isLearned(id) || A.isOrderOpen(id)); })
     .reduce(function (n, id) { return n + Math.max(0, OBJETS_STOCK_CIBLE - g.CombatItems.getStock(id)); }, 0);
 }
 /* Réunit un coût sans dépense déraisonnable : récolte, atelier avec le stock, au plus APO_ATTENTE_MIN de production en tout
@@ -1515,7 +1516,8 @@ function objetsAvance(g, A) {
     if (A.deliverOrder(id)) { O.appris[id] = CURRENT_STEP; act("apothicaire:commande", 0); if (process.env.TRACE_OBJETS) console.log("      [objets] " + CURRENT_STEP + " recette apprise : " + id + " (" + JSON.stringify(r.order) + ", prochaines " + u.quetes.join(",") + ")"); }
   });
   u.items.forEach(function (id) {
-    var reserve = objetRang(g, id) > 0 ? apoReserveNeutre(g, A, id) : 0; // un atténuant laisse leur place aux neutralisants à venir
+    // un atténuant laisse leur place aux neutralisants à venir ; un neutralisant, à ceux des quêtes plus lointaines (Baume de la Silhouette)
+    var reserve = objetRang(g, id) > 0 ? apoReserveNeutre(g, A, id) : apoReserveNeutre(g, A, id, u.items);
     if (process.env.TRACE_OBJETS && reserve && A.isLearned(id) && g.CombatItems.getStock(id) < OBJETS_STOCK_CIBLE && A.getDailyRemaining() > 0 && A.getDailyRemaining() <= reserve) console.log("      [objets] " + CURRENT_STEP + " " + id + " : " + reserve + " préparation(s) gardée(s) aux neutralisants");
     for (var k = 0; k < OBJETS_STOCK_CIBLE && A.isLearned(id) && g.CombatItems.getStock(id) < OBJETS_STOCK_CIBLE && A.getDailyRemaining() > reserve; k++) {
       if (!A.canAfford(id) && !apoReunir(g, A.getInputs(id), budget)) { if (process.env.TRACE_OBJETS) console.log("      [objets] " + CURRENT_STEP + " " + id + " pas fabriqué : " + JSON.stringify(A.getInputs(id)) + " (attente restante " + budget.min + " min)"); break; }
