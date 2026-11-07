@@ -13,7 +13,7 @@
 
 /* v3.265.0 (retour Seb) : sous ce seuil de PV, le départ en mission est précédé d'un
    avertissement « soigne-toi », quel que soit le verdict du pronostic. */
-var FORECAST_LOW_HP_PCT = 0.60;
+var FORECAST_LOW_HP_PCT = 0.50; // v3.735.0 (Seb 07/11) : aligné sur le rappel à l'acceptation (STORY_LOW_HP_PCT)
 window.FORECAST_LOW_HP_PCT = FORECAST_LOW_HP_PCT;
 
 function getHeroHpRatio() {

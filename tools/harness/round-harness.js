@@ -6600,17 +6600,17 @@ console.log("\n[67b] v3.265.0 \u2014 Avertissement PV bas, b\u00e2timents manqua
   g.openCombatForecastConfirm = function (f, opts) { ouvert = opts; };
   g.launchWithForecast(mission, function () { parti++; });
   ok(parti === 1 && ouvert === null, "PV pleins, combat facile : d\u00e9part direct, aucun \u00e9cran");
-  game.heroHp = Math.floor(game.heroMaxHp * 0.55);
+  game.heroHp = Math.floor(game.heroMaxHp * 0.45);
   g.launchWithForecast(mission, function () { parti++; });
-  ok(parti === 1 && ouvert && ouvert.lowHp === true && ouvert.confirmLabel === "Partir quand m\u00eame", "PV \u00e0 55 % : avertissement avant le d\u00e9part, rien n'est lanc\u00e9");
+  ok(parti === 1 && ouvert && ouvert.lowHp === true && ouvert.confirmLabel === "Partir quand m\u00eame", "PV \u00e0 45 % (seuil 50 %, v3.735.0) : avertissement avant le d\u00e9part, rien n'est lanc\u00e9");
   g.openCombatForecastConfirm = openSave;
   var html = g.buildCombatForecastHTML(g.CombatForecast.forMission(mission), ouvert);
-  ok(html.indexOf("Attention, il faut te soigner") !== -1 && html.indexOf("55 %") !== -1 && html.indexOf("goHealFromForecast") !== -1, "l'\u00e9cran dit de se soigner, avec le pourcentage et le bouton « Me soigner »");
-  game.heroHp = Math.ceil(game.heroMaxHp * 0.6);
+  ok(html.indexOf("Attention, il faut te soigner") !== -1 && html.indexOf("45 %") !== -1 && html.indexOf("goHealFromForecast") !== -1, "l'\u00e9cran dit de se soigner, avec le pourcentage et le bouton « Me soigner »");
+  game.heroHp = Math.ceil(game.heroMaxHp * 0.5);
   ouvert = null; g.openCombatForecastConfirm = function (f, opts) { ouvert = opts; };
   g.launchWithForecast(mission, function () { parti++; });
   g.openCombatForecastConfirm = openSave;
-  ok(parti === 2 && ouvert === null, "\u00e0 60 % pile : plus d'avertissement (seuil strict)");
+  ok(parti === 2 && ouvert === null, "\u00e0 50 % pile : plus d'avertissement (seuil strict)");
   run("closeCombatForecast(); goHealFromForecast();");
   ok(game.activeTab === "campement", "« Me soigner » ram\u00e8ne au Campement");
 
@@ -23863,7 +23863,7 @@ console.log("\n[469] v3.704.0 — Aides et récit : neuf fiches d'aide (TUTO-16)
     ok(bb.map(function (t) { return t.kills + ":" + t.goldBonus; }).join() === "10:0.01,50:0.03,100:0.05" && bk.map(function (t) { return t.kills + ":" + t.goldBonus; }).join() === "3:0.02,10:0.05,25:0.1", "TUTO-16 : bonus d'or du Bestiaire, 10/50/100 et 3/10/25");
     ok(g.ACHIEVEMENT_CATEGORIES.filter(function (c) { return typeof c.world === "number"; }).every(function (c) { return c.tiers.join() === "3,6,8" && c.tierRewards[2].title; }), "TUTO-16 : paliers 3 / 6 / 8 par monde, titre au palier Or");
     ok(g.EQUIPMENT_SLOTS.length === 7 && g.MAX_INVENTORY_SIZE === 25 && g.SET_BONUS_CONFIG.tiers.map(function (t) { return t.count; }).join() === "3,7", "TUTO-16 : 7 emplacements, Sac de 25, panoplie à 3 et 7");
-    ok(g.FORECAST_LOW_HP_PCT === 0.6 && /ou partir quand même/.test(GT.combat_forecast.points[1].text) && !/« Partir quand même »/.test(GT.combat_forecast.points[1].text), "TUTO-16 : pronostic sous 60 % des PV ; « Partir quand même » n'est pas toujours le bouton (corrigé)");
+    ok(g.FORECAST_LOW_HP_PCT === 0.5 && /ou partir quand même/.test(GT.combat_forecast.points[1].text) && !/« Partir quand même »/.test(GT.combat_forecast.points[1].text), "TUTO-16 : pronostic sous 50 % des PV (v3.735.0) ; « Partir quand même » n'est pas toujours le bouton (corrigé)");
     var H = g.HEROES_DB, sum = function (id) { var st = H[id].stats; return ["power", "endurance", "celerity", "precision", "will"].reduce(function (n, k) { return n + (st[k] || 0); }, 0); };
     ok(/^Seules leurs cinq caractéristiques de départ changent\./.test(GT.chaos_variant.points[1].text) && sum("chaosKnight") > sum("knight"), "TUTO-16 : Chaos, « seules leurs caractéristiques changent » (le total aussi : Chevalier " + sum("knight") + " → " + sum("chaosKnight") + ")");
     // Catalogue (A)

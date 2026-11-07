@@ -359,7 +359,7 @@ var GENERIC_TUTORIALS = {
     title: "Le pronostic",
     points: [
       { icon: "images/Icons/combat_stats/stat_attack.webp", text: "Avant une mission, un donjon ou une élite de la carte, le pronostic compare tes dégâts et tes PV, potions comprises, à ceux de l'adversaire : Sans danger, Abordable, Risqué, Très difficile ou Hors de portée." },
-      { icon: "images/Icons/combat_stats/stat_health.webp", text: "Au départ d'une mission, il ne t'arrête que si c'est Risqué ou pire, ou sous 60 % de tes PV : « Annuler » (ou « Me soigner ») ou partir quand même. Il écarte l'impossible, sans prédire l'issue." },
+      { icon: "images/Icons/combat_stats/stat_health.webp", text: "Au départ d'une mission, il ne t'arrête que si c'est Risqué ou pire, ou sous 50 % de tes PV : « Annuler » (ou « Me soigner ») ou partir quand même. Il écarte l'impossible, sans prédire l'issue." },
       { icon: "images/Icons/combat_status/heal_incoming.webp", text: "Un boss qui se soigne demande un minimum de dégâts par round (« il faut plus de N dégâts / round ») : en dessous, il est intuable. Monte tes caractéristiques ou ton équipement avant." }
     ]
   },
