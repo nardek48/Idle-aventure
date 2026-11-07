@@ -10,6 +10,7 @@
    Les textes des données sont traduits par _td() à l'affichage (registre : lang/data-fields.js). */
 I18n.register("en", {
   // v3.736.0 (Seb 07/11) : Grimoire vivant (3 règles, jeux, pronostic)
+  "Journal de test : il note aussi où part ton or (entraînement du héros, rangs de techniques, niveaux et sorts des compagnons).": "Test log: it now also records where your gold goes (hero training, technique ranks, companion levels and spells).",
   "La caravane d'essai que l'Histoire demande (Ruines, Crypte) revient maintenant en 3 minutes au lieu de 10.": "The trial caravan the Story asks for (Ruins, Crypt) now comes back in 3 minutes instead of 10.",
   "Préparer la sortie : « Tout préparer » n'emporte plus l'Huile de lame d'office (elle reste proposée) ; seul le Baume froid, utile face à un miroir, est ajouté automatiquement.": "Prepare the outing: \"Prepare all\" no longer takes the Blade oil automatically (it is still suggested); only the Cold balm, useful against a mirror, is added automatically.",
   "Préparer la sortie : « Ce que tu vas affronter » propose aussi les objets de combat qui contrent une situation (« Ou emporte : Baume froid »), avec ton stock ou l'endroit où le préparer, et un bouton pour l'emporter.": "Prepare the outing: \"What you will face\" now also suggests the combat items that counter a situation (\"Or take: Cold balm\"), with your stock or where to prepare it, and a button to take it.",

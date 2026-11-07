@@ -192,6 +192,13 @@ function initJournalTest() {
   journalWrap(window.Pa2Run, "finish", paCtx, function (r, a, ctx) { if (ctx) { ctx.how = a[0]; paFin(r, a, ctx); } });
   journalWrap(window.Pa2Run, "abandon", paCtx, function (r, a, ctx) { if (ctx && r && r.ok) { ctx.how = ctx.status === "pa2-prep" ? "renonce_prep" : "fuite"; paFin(r, a, ctx); } });
 
+  // v3.741.0 (Seb 07/11) : où part l'or — entraînement du héros, rangs de techniques, compagnons (niveaux et rangs de sort)
+  var orAvant = function () { return Number(g().gold || 0); };
+  var depense = function (type, champs) { return function (r, a, or0) { var d = or0 - Number(g().gold || 0); if (d > 0) J.log(type, Object.assign({ or: d }, champs(a))); }; };
+  journalWrap(window, "buyUpgrade", orAvant, depense("entrainement", function (a) { return { id: a[0], n: a[1] || 1 }; }));
+  journalWrap(window.SkillRanks, "buy", orAvant, depense("rang_technique", function (a) { return { id: a[0] }; }));
+  journalWrap(window.CompanionManager, "buyUpgrade", orAvant, depense("compagnon_niveau", function (a) { return { id: a[0], type: a[1] || null }; }));
+  journalWrap(window.CompanionManager, "buySkillRank", orAvant, depense("compagnon_sort", function (a) { return { id: a[0] }; }));
   journalWrap(window.EquipShopManager, "buy",
     function (uid) {
       var it = (g().equipShopStock || []).filter(function (x) { return x.uid === uid; })[0];
