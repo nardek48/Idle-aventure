@@ -264,8 +264,8 @@ var ACHIEVEMENTS_DB = [
   /* ===================== Grimoire ===================== */
   { id: "hf_grim_rule", category: "grimoire", name: "Première règle", desc: "Écrire une règle du Grimoire.",
     target: 1, track: function () { return Array.isArray(game.grimoireRules) && game.grimoireRules.length ? 1 : 0; }, reward: { gold: 150 } },
-  { id: "hf_grim_preset", category: "grimoire", name: "Un plan de rechange", desc: "Sauvegarder un préréglage du Grimoire.",
-    target: 1, track: function () { return Array.isArray(game.grimoirePresets) && game.grimoirePresets.length ? 1 : 0; }, reward: { gold: 150 } },
+  { id: "hf_grim_preset", category: "grimoire", name: "Un plan de rechange", desc: "Créer un deuxième jeu de règles au Grimoire.", // v3.736.0 : le premier jeu existe d'office
+    target: 1, track: function () { return Array.isArray(game.grimoirePresets) && game.grimoirePresets.length >= 2 ? 1 : 0; }, reward: { gold: 150 } },
   { id: "hf_grim_wins", category: "grimoire", name: "La main qui ne tremble pas", desc: "Vaincre 50 ennemis en mode Grimoire.",
     target: 50, fresh: true, track: function () { return achCounter("grimoireKills"); }, reward: { gold: 300 } },
   { id: "hf_grim_boss", category: "grimoire", name: "Laisser faire", desc: "Vaincre un boss en mode Grimoire, sans passer en Tactique pendant le combat.",

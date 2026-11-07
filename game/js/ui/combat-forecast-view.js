@@ -200,6 +200,7 @@ var ENEMY_TRAIT_DEFS = {
   shielded:  { cond: "shieldIncoming",       state: "shieldIncoming" },
   heal:      { cond: "healIncoming",         state: "healIncoming" },
   surge:     { cond: "eliteSurgeIncoming",   state: "surge" },
+  charge:    { cond: "chargeIncoming",       state: "charge" }, // v3.736.0 : la Charge des ennemis ordinaires
   silenced:  { cond: "enemySilenceIncoming", state: "silence" },
   armored:   { cond: "enemyArmored",         state: "armored" },
   enraged:   { cond: "enemyEnraged",         state: "enraged" },
@@ -210,14 +211,15 @@ var ENEMY_TRAIT_DEFS = {
   rising:    { cond: "enemyRising",          state: "rising", nom: _t("Se relève") },
   asleep:    { cond: "enemySleeping",        state: "asleep", nom: _t("Dormeurs") },
   chaining:  { cond: "allyChained",          state: "chaining", nom: _t("Chaînes") },
+  vein:      { cond: "veinIntact",           state: null, nom: _t("Veine intacte"), icon: "images/Icons/combat_status/vein_intact.webp" }, // v3.736.0
   sorting:   { cond: null,                   state: "sorting" },
   shell:     { cond: null,                   state: "shell" },
   burning:   { cond: null,                   state: "burning", nom: _t("Brûlure") },
   heat:      { cond: null,                   state: null, nom: _t("Chaleur"), icon: "images/Icons/combat_status/vein_heat.webp" },
   diving:    { cond: null,                   state: "diving", nom: _t("Plongée") }
 };
-var ENEMY_TRAIT_ORDER = ["heal", "shielded", "surge", "silenced", "armored", "enraged", "vampiric", "corrupted",
-  "adds", "calling", "rising", "asleep", "chaining", "sorting", "shell", "burning", "heat", "diving"];
+var ENEMY_TRAIT_ORDER = ["heal", "shielded", "surge", "charge", "silenced", "armored", "enraged", "vampiric", "corrupted",
+  "adds", "calling", "rising", "asleep", "chaining", "vein", "sorting", "shell", "burning", "heat", "diving"];
 /* Nom et icône d'un trait (état de combat, ou nom/icône propres). */
 function enemyTraitLook(trait) {
   var def = ENEMY_TRAIT_DEFS[trait] || {};
@@ -249,7 +251,9 @@ function etQuestCreatures(quest) {
   (Array.isArray(quest.group) ? quest.group : []).forEach(add);
   (Array.isArray(quest.enemyFilter) ? quest.enemyFilter : []).forEach(add);
   if (!ids.length) etAdventurePool(quest.worldId, quest.adventureIndex).forEach(add);
-  var out = ids.map(function (id) { return { kind: "enemy", id: id }; });
+  // v3.736.0 : quête faite seulement de boss ou d'élite (nextSpawnIsBoss) : aucun ennemi ordinaire ne paraît
+  var seul = (quest.steps || []).length && quest.steps.every(function (s) { return s.type === "bossKill" || s.type === "eliteKill"; });
+  var out = seul ? [] : ids.map(function (id) { return { kind: "enemy", id: id }; });
   if (quest.eliteId) etPushElite(out, quest.eliteId);
   if (quest.bossId) out.push({ kind: "boss", id: quest.bossId, archetype: quest.bossArchetype || null, phases: quest.bossPhases || null });
   return out;
@@ -306,7 +310,7 @@ function etDungeonPool(d) {
 
 /* Nom, traits et « déjà vaincu » d'une créature. v3.492.14 : tous ses traits, comme le moteur les joue
    (combat-engine.js : un boss se soigne et se protège, une élite se protège et s'exalte). */
-// Les phases (renforts, chaleur, plongée, trait qui change…) restent une surprise : décision v3.378.0, inchangée.
+// Les phases (renforts, chaleur, plongée, trait qui change…) restent une surprise : décision v3.378.0, sauf celles du round 1 (v3.736.0).
 function etBossTraits(archetype) {
   var t = ["heal", "shielded"];
   if (archetype) t.push(archetype);
@@ -343,6 +347,8 @@ function etDescribe(c) {
 function etQuestTraits(ctx) {
   var q = ctx && ctx.type === "adventure" ? (window.ADVENTURE_QUESTS || {})[ctx.id] : null;
   var out = [];
+  var d = ctx && ctx.type === "dungeon" ? (window.DUNGEONS || []).filter(function (x) { return x.id === Number(ctx.id); })[0] : null;
+  if ((q && q.worldId === "mountain") || (d && d.worldId === "mountain") || (ctx && ctx.type === "elite" && ctx.mapId === "mountain")) out.push({ trait: "vein", name: _t("La Montagne"), opt: true }); // v3.736.0 : une veine par combat
   if (!q) return out;
   if ((q.encounters || []).some(function (e) { return e && e.sleepers; })) out.push({ trait: "asleep", name: _t("Des morts qui dorment") });
   if (q.chains) out.push({ trait: "chaining", name: _t("Les Nécromanciens") });
@@ -355,10 +361,17 @@ function etActiveRules(rules) {
   return (Array.isArray(rules) ? rules : []).slice(0, n).filter(function (r) { return r && r.conditionId && r.actionSlot; });
 }
 
+/* v3.736.0 : la règle répond-elle vraiment ? Contre ou effet du kit, ou « Tailler » sur la veine intacte. */
+function etRuleCovers(rule, kit) {
+  if (!rule || !rule.conditionId || !rule.actionSlot) return false;
+  if (rule.conditionId === "veinIntact") return rule.actionSlot === "vein";
+  return typeof isGrimoireRuleCounter === "function" && isGrimoireRuleCounter(rule, kit);
+}
+
 /* Réponse des règles à une condition : "counter" (⚡), "react" (sans contre) ou "none". */
 function etRuleResponse(condId, rules, kit) {
   var hits = etActiveRules(rules).filter(function (r) { return r.conditionId === condId; });
-  var counter = hits.filter(function (r) { return typeof isGrimoireRuleCounter === "function" && isGrimoireRuleCounter(r, kit); })[0];
+  var counter = hits.filter(function (r) { return etRuleCovers(r, kit); })[0];
   if (counter) return { status: "counter", rule: counter };
   if (hits.length) return { status: "react", rule: hits[0] };
   return { status: "none", rule: null };
@@ -366,28 +379,215 @@ function etRuleResponse(condId, rules, kit) {
 
 function etRuleLabel(rule, kit) {
   var cond = (typeof getGrimoireConditionShortLabel === "function") ? getGrimoireConditionShortLabel(rule.conditionId) : rule.conditionId;
-  var action = kit && kit.actions ? kit.actions[rule.actionSlot] : null;
+  var action = (typeof getGrimoireActionDef === "function") ? getGrimoireActionDef(kit, rule.actionSlot) : (kit && kit.actions ? kit.actions[rule.actionSlot] : null);
   return cond + " → " + (action ? _td(action.label) : rule.actionSlot);
 }
 
-/* Donnée de l'encart : traits connus (groupés), et nombre de créatures jamais vaincues. */
+/* v3.736.0 (Seb 07/11, pronostic B) : règle conseillée par situation, « Ajouter », « Tout préparer ».
+   Écrit dans game.grimoireRules puis dans le jeu actif (syncGrimoireActiveJeu) ; verrou de sortie respecté. */
+// Ordre de « Tout préparer » : contres d'annonce d'abord (Charge, Bouclier, Soin…), puis les traits, la veine en dernier.
+var GRIMOIRE_PREP_ORDER = ["chargeIncoming", "shieldIncoming", "healIncoming", "eliteSurgeIncoming", "enemySilenceIncoming",
+  "enemyEnraged", "enemyCorrupted", "enemyVampiric", "enemyArmored", "enemyRising", "enemySleeping", "allyChained", "multipleEnemies", "veinIntact"];
+window.GRIMOIRE_PREP_ORDER = GRIMOIRE_PREP_ORDER;
+
+/* Action conseillée : le contre d'annonce du kit, sinon l'effet qui vise ce trait ; « Tailler » pour la veine. */
+function etAdvisedSlot(cond, kit) {
+  if (cond === "veinIntact") return "vein";
+  if (!kit || !kit.actions) return null;
+  var slots = ["defense", "skill1", "skill2", "skill3"], i, a;
+  for (i = 0; i < slots.length; i++) { a = kit.actions[slots[i]]; if (a && Array.isArray(a.counters) && a.counters.indexOf(cond) !== -1) return slots[i]; }
+  for (i = 0; i < slots.length; i++) { a = kit.actions[slots[i]]; if (a && typeof getAllGrimoireCounterIds === "function" && getAllGrimoireCounterIds(a).indexOf(cond) !== -1) return slots[i]; }
+  return null;
+}
+window.etAdvisedSlot = etAdvisedSlot;
+
+function etKit() { return (typeof getGrimoireCurrentKit === "function") ? getGrimoireCurrentKit() : null; }
+
+/* Situations de la sortie auxquelles une règle répond, dans l'ordre de préparation : { cond, slot, opt, trait }. */
+function grimoireSortieSituations(ctx) {
+  var kit = etKit(), out = [], seen = {};
+  getEnemyTraitsPreview(ctx).traits.forEach(function (t) {
+    var cond = ENEMY_TRAIT_DEFS[t.trait].cond, slot = cond ? etAdvisedSlot(cond, kit) : null;
+    if (!slot || seen[cond]) return;
+    seen[cond] = true;
+    out.push({ cond: cond, slot: slot, opt: !!t.opt, trait: t.trait, phase: t.phase });
+  });
+  var rank = function (c) { var i = GRIMOIRE_PREP_ORDER.indexOf(c); return i < 0 ? 99 : i; };
+  return out.sort(function (a, b) { return (a.opt ? 1 : 0) - (b.opt ? 1 : 0) || rank(a.cond) - rank(b.cond); });
+}
+window.grimoireSortieSituations = grimoireSortieSituations;
+
+/* Combien des situations (non facultatives) un jeu couvre. */
+function grimoireJeuScore(rules, ctx) {
+  var kit = etKit(), want = grimoireSortieSituations(ctx).filter(function (x) { return !x.opt; });
+  return { n: want.filter(function (x) { return etRuleResponse(x.cond, rules, kit).status === "counter"; }).length, of: want.length };
+}
+window.grimoireJeuScore = grimoireJeuScore;
+
+function etCopyRules() { return (game.grimoireRules || []).map(function (r) { return { conditionId: (r && r.conditionId) || null, actionSlot: (r && r.actionSlot) || null }; }); }
+function etCommitRules(rules) {
+  game.grimoireRules = rules;
+  if (typeof ensureGrimoireRules === "function") ensureGrimoireRules();
+  if (typeof syncGrimoireActiveJeu === "function") syncGrimoireActiveJeu();
+  if (typeof saveGame === "function") saveGame();
+}
+function etEditable() { return typeof isGrimoireEditable !== "function" || isGrimoireEditable(); }
+/* Situations que la sortie PEUT présenter, toutes phases comprises (données, rien n'est affiché) : { cond: true }. */
+function etPossibleConds(ctx) {
+  var out = {}, add = function (t) { var d = ENEMY_TRAIT_DEFS[t]; if (d && d.cond) out[d.cond] = true; };
+  var arch = function (ph) { return ph.copyClass ? ((window.TOWER_CLASS_ARCHETYPE || {})[window.TowerSystem ? TowerSystem.baseHeroId(game.heroId) : game.heroId] || "enraged") : ph.archetype; };
+  etCreaturesFor(ctx).forEach(function (c) {
+    etDescribe(c).traits.forEach(add);
+    etCertainTraits(c, ctx).forEach(function (x) { add(x.trait); });
+    var b = c.kind === "boss" ? (window.BOSS_DB || {})[c.id] : null;
+    if (b && b.rises) add("rising");
+    (c.phases || []).concat((b && b.risePhases) || []).forEach(function (ph) { if (!ph) return; add(arch(ph)); if (ph.sleepAdds) add("asleep"); });
+  });
+  etQuestTraits(ctx).forEach(function (x) { add(x.trait); });
+  return out;
+}
+// Situations dont le pronostic peut dire l'absence ; PV bas, compagnon, double frappe, groupe : jamais « sans objet ».
+var ET_KNOWABLE_CONDS = ["chargeIncoming", "shieldIncoming", "healIncoming", "eliteSurgeIncoming", "enemySilenceIncoming", "enemyEnraged", "enemyCorrupted",
+  "enemyVampiric", "enemyArmored", "enemyRising", "enemySleeping", "allyChained", "veinIntact"];
+/* Une règle sans objet ici : sa situation ne peut pas se présenter dans cette sortie. */
+function etRuleUseless(rule, possible) {
+  return !!(rule && rule.conditionId && ET_KNOWABLE_CONDS.indexOf(rule.conditionId) !== -1 && !possible[rule.conditionId]);
+}
+window.etPossibleConds = etPossibleConds;
+window.etRuleUseless = etRuleUseless;
+
+/* « Tout préparer » : les situations dans l'ordre, autant que d'emplacements ouverts ; le reste des règles suit. */
+function grimoirePrepareAll(ctx) {
+  if (!etEditable()) return null;
+  var kit = etKit(), sits = grimoireSortieSituations(ctx), open = (typeof getGrimoireSlotCount === "function") ? getGrimoireSlotCount(game.worldsEverReached) : 3;
+  var before = etCopyRules(), active = before.slice(0, open);
+  var want = sits.filter(function (x) { return !x.opt; }).slice(0, open);
+  var res = want.map(function (x) {
+    return active.filter(function (r) { return r.conditionId === x.cond && etRuleCovers(r, kit); })[0] || { conditionId: x.cond, actionSlot: x.slot };
+  });
+  var store = Math.max(open, (typeof GRIMOIRE_SLOT_COUNT === "number") ? GRIMOIRE_SLOT_COUNT : 3);
+  var has = function (r) { return res.some(function (y) { return y.conditionId === r.conditionId; }); };
+  var rest = before.slice(0, store).filter(function (r) { return r.conditionId && r.actionSlot && !has(r); });
+  var possible = etPossibleConds(ctx);
+  rest.filter(function (r) { return !etRuleUseless(r, possible); }).concat(rest.filter(function (r) { return etRuleUseless(r, possible); })).forEach(function (r) { if (!has(r)) res.push(r); });
+  res = res.slice(0, store);
+  while (res.length < store) res.push({ conditionId: null, actionSlot: null });
+  res = res.concat(before.slice(store)); // règles d'avant pas encore migrées : gardées, non jouées
+  var pad = function (l) { l = l.slice(0, open); while (l.length < open) l.push({ conditionId: null, actionSlot: null }); return JSON.stringify(l); };
+  if (pad(res) === pad(active)) return { changed: false, before: before };
+  etCommitRules(res);
+  return { changed: true, before: before };
+}
+window.grimoirePrepareAll = grimoirePrepareAll;
+
+/* « Ajouter » (Seb 07/11, plein A) : corrige la règle de la même situation, sinon prend une place libre, sinon remplace
+   une règle sans objet ici (la dernière) ; sinon { pick: true } : le joueur choisit laquelle remplacer. */
+function grimoireAddRule(ctx, cond) {
+  if (!etEditable()) return null;
+  var kit = etKit(), slot = etAdvisedSlot(cond, kit);
+  if (!slot) return null;
+  var open = (typeof getGrimoireSlotCount === "function") ? getGrimoireSlotCount(game.worldsEverReached) : 3;
+  var before = etCopyRules(), rules = etCopyRules(), nr = { conditionId: cond, actionSlot: slot }, i;
+  while (rules.length < open) rules.push({ conditionId: null, actionSlot: null });
+  for (i = 0; i < open; i++) if (rules[i].conditionId === cond) {
+    if (etRuleCovers(rules[i], kit)) return { kind: "same", index: i, before: before };
+    var o = rules[i]; rules[i] = nr; etCommitRules(rules); return { kind: "fixed", index: i, old: o, rule: nr, before: before };
+  }
+  for (i = 0; i < open; i++) if (!rules[i].conditionId || !rules[i].actionSlot) { rules[i] = nr; etCommitRules(rules); return { kind: "added", index: i, rule: nr, before: before }; }
+  var possible = etPossibleConds(ctx);
+  for (i = open - 1; i >= 0; i--) if (etRuleUseless(rules[i], possible)) { var u = rules[i]; rules[i] = nr; etCommitRules(rules); return { kind: "replaced", index: i, old: u, rule: nr, before: before }; }
+  return { kind: "pick", pick: true, rule: nr, before: before };
+}
+window.grimoireAddRule = grimoireAddRule;
+
+/* Remplacement choisi par le joueur (aucune règle sans objet). */
+function grimoireReplaceRule(index, cond) {
+  if (!etEditable()) return null;
+  var slot = etAdvisedSlot(cond, etKit()), before = etCopyRules(), rules = etCopyRules();
+  if (!slot || !rules[index]) return null;
+  var o = rules[index]; rules[index] = { conditionId: cond, actionSlot: slot };
+  etCommitRules(rules);
+  return { kind: "replaced", index: index, old: o, rule: rules[index], before: before };
+}
+window.grimoireReplaceRule = grimoireReplaceRule;
+
+/* « Annuler » : les règles d'avant le geste reviennent (dans le jeu actif aussi). */
+function grimoireUndoRules(before) {
+  if (!etEditable() || !Array.isArray(before)) return false;
+  etCommitRules(before.map(function (r) { return { conditionId: r.conditionId, actionSlot: r.actionSlot }; }));
+  return true;
+}
+window.grimoireUndoRules = grimoireUndoRules;
+window.etRuleCovers = etRuleCovers;
+window.etRuleLabel = etRuleLabel;
+
+/* v3.736.0 (Seb 07/11, Grimoire vivant) : situations CERTAINES d'une créature, même jamais vaincue (données du moteur) :
+   un boss se soigne et se protège, une élite se protège et s'exalte, un ennemi ordinaire charge ou, dès le Désert, muselle. */
+function etWorldIndex(ctx) {
+  var q = ctx && ctx.type === "adventure" ? (window.ADVENTURE_QUESTS || {})[ctx.id] : null;
+  var d = ctx && ctx.type === "dungeon" ? (window.DUNGEONS || []).filter(function (x) { return x.id === Number(ctx.id); })[0] : null;
+  var wid = (q && q.worldId) || (d && d.worldId) || null, W = window.WORLDS || [];
+  for (var i = 0; wid && i < W.length; i++) if (W[i].id === wid) return i;
+  return window.WorldManager ? Number(WorldManager.worldIndex || 0) : 0;
+}
+function etCertainTraits(c, ctx) {
+  if (c.kind === "boss" || c.kind === "dungeonBoss") return [{ trait: "heal" }, { trait: "shielded" }];
+  if (c.kind === "elite") return [{ trait: "shielded" }, { trait: "surge" }];
+  if (c.kind !== "enemy") return [];
+  var fixed = (typeof FIXED_ENEMY_ARCHETYPES !== "undefined" && FIXED_ENEMY_ARCHETYPES[c.id]) || null;
+  var silence = !fixed && !c.inDungeon && etWorldIndex(ctx) >= Number(window.SILENCED_MIN_WORLD_INDEX || 1), out = [];
+  if (fixed !== "shielded" && fixed !== "silenced") out.push({ trait: "charge", ou: silence });
+  if (silence) out.push({ trait: "silenced", ou: true });
+  return out;
+}
+/* Phases actives dès le round 1 (atPct 1) : annoncées (Seb 07/11, g1-phase A) ; « elle se bat comme toi » = trait de ta classe. */
+function etRoundOnePhaseTraits(c) {
+  var out = [];
+  (Array.isArray(c.phases) ? c.phases : []).forEach(function (ph) {
+    if (!ph || Number(ph.atPct) < 1) return;
+    var arch = ph.copyClass ? ((window.TOWER_CLASS_ARCHETYPE || {})[window.TowerSystem ? TowerSystem.baseHeroId(game.heroId) : game.heroId] || "enraged") : ph.archetype;
+    var t = [];
+    if (arch && ENEMY_TRAIT_DEFS[arch]) t.push(arch);
+    if (ph.sleepAdds) t.push("asleep");
+    if (ph.sorts) t.push("sorting");
+    if (ph.adds && !ph.sleepAdds) t.push("adds");
+    t.forEach(function (x) { out.push({ trait: x, phase: ph.label || "" }); });
+  });
+  return out;
+}
+
+/* Traits connus (groupés) et créatures jamais vaincues ; v3.736.0 : + situations certaines et phases du round 1,
+   une situation certaine jamais rencontrée (GrimoireSeen) compte dans « unknown » sans être nommée. */
 function getEnemyTraitsPreview(ctx) {
   var traits = {}, unmet = 0, seen = {};
+  var put = function (t, name, x) {
+    if (!ENEMY_TRAIT_DEFS[t]) return;
+    var e = traits[t] = traits[t] || { names: [], ou: true, opt: true, phase: null, sure: true };
+    if (name && e.names.indexOf(name) === -1) e.names.push(name);
+    if (!(x && x.sure)) e.sure = false; // vu sur une créature vaincue : rencontré, jamais caché
+    if (!(x && x.ou)) e.ou = false;
+    if (!(x && x.opt)) e.opt = false;
+    if (x && x.phase != null && e.phase == null) e.phase = x.phase;
+  };
   etCreaturesFor(ctx).forEach(function (c) {
     var key = c.kind + ":" + c.id;
     if (seen[key]) return;
     seen[key] = true;
-    var d = etDescribe(c);
+    var d = etDescribe(c), nom = d.met ? d.name : (c.kind === "enemy" ? _t("créatures jamais vaincues") : c.kind === "elite" ? _t("l'élite") : _t("le boss"));
+    etCertainTraits(c, ctx).forEach(function (x) { x.sure = true; put(x.trait, nom, x); });
+    etRoundOnePhaseTraits(c).forEach(function (x) { x.sure = true; put(x.trait, nom, x); });
     if (!d.met) { unmet++; return; }
-    d.traits.forEach(function (t) {
-      if (!ENEMY_TRAIT_DEFS[t]) return;
-      traits[t] = traits[t] || [];
-      if (traits[t].indexOf(d.name) === -1) traits[t].push(d.name);
-    });
+    d.traits.forEach(function (t) { put(t, d.name); });
   });
-  etQuestTraits(ctx).forEach(function (x) { (traits[x.trait] = traits[x.trait] || []).push(x.name); });
-  var list = ENEMY_TRAIT_ORDER.filter(function (t) { return traits[t]; }).map(function (t) { return { trait: t, names: traits[t] }; });
-  return { traits: list, unmet: unmet };
+  etQuestTraits(ctx).forEach(function (x) { if (x.trait === "vein") x.sure = true; put(x.trait, x.name, x); });
+  var unknown = 0;
+  var list = ENEMY_TRAIT_ORDER.filter(function (t) { return traits[t]; }).filter(function (t) {
+    var cond = ENEMY_TRAIT_DEFS[t].cond, hide = !!(traits[t].sure && cond && window.GrimoireSeen && !GrimoireSeen.isVisible(cond));
+    if (hide) unknown++;
+    return !hide;
+  }).map(function (t) { var e = traits[t]; return { trait: t, names: e.names, ou: e.ou, opt: e.opt, phase: e.phase }; });
+  list.sort(function (a, b) { return (a.phase != null ? 0 : 1) - (b.phase != null ? 0 : 1); }); // la phase du round 1 en tête
+  return { traits: list, unmet: unmet, unknown: unknown };
 }
 window.getEnemyTraitsPreview = getEnemyTraitsPreview;
 

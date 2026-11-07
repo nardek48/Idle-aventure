@@ -80,7 +80,7 @@ var MEMORY_LEVELS = [
   ] },
   { level: 2, theme: "Façon de jouer", options: [
     { id: "grimoire_etendu", name: "Grimoire étendu", icon: "images/Icons/memory/grimoire_etendu.webp",
-      desc: "Une règle active de plus dans le Grimoire." },
+      desc: "Une règle active de plus dans le Grimoire, jusqu'à 3 : la troisième avant les Ruines." }, // v3.736.0 (Seb 07/11) : plafond de 3
     { id: "repos_camp", name: "Repos du camp", icon: "images/Icons/memory/repos_camp.webp",
       desc: "Tu récupères 50 % plus vite au Campement." }
   ] },

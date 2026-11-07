@@ -1,6 +1,6 @@
 "use strict";
-/* ui/grimoire-view.js — écran Grimoire : 6 règles conditionnelles {Si condition -> Alors action},
-   déblocage par jalon de monde, presets nommés (v3.65).
+/* ui/grimoire-view.js — écran Grimoire : 3 règles conditionnelles {Si condition -> Alors action} (v3.736.0, 6 avant),
+   déblocage par jalon de monde, jeux de règles en onglets (presets nommés v3.65, jeu actif v3.736.0).
    v3.210.0 — REFONTE VISUELLE (atelier Seb). L'écran mesurait 3 462 px à 390 px de large, dont
    1 429 px de préambule avant la première règle : chaque règle affichait en permanence tout ce
    qu'il faut pour la MODIFIER (deux libellés, deux listes, deux descriptions, un badge d'état).
@@ -17,16 +17,15 @@
 var grimoireEditIndex = null;
 var grimoireOpenSheet = null;
 
-var GRIMOIRE_SLOT_COUNT = 6;
+var GRIMOIRE_SLOT_COUNT = 3; // v3.736.0 (Seb 07/11) : 6 -> 3 emplacements
 
+/* Complète à 3 ; v3.736.0 : ne tronque plus (règles 4 à 6 d'avant gardées tant que migrateGrimoireExtraRules n'a pas de place). */
 function ensureGrimoireRules() {
   if (!Array.isArray(game.grimoireRules)) game.grimoireRules = [];
+  if (typeof migrateGrimoireExtraRules === "function") migrateGrimoireExtraRules(); // boot : loadGame() ne repasse pas par ensureGameStateDefaults
 
   while (game.grimoireRules.length < GRIMOIRE_SLOT_COUNT) {
     game.grimoireRules.push({ conditionId: null, actionSlot: null });
-  }
-  if (game.grimoireRules.length > GRIMOIRE_SLOT_COUNT) {
-    game.grimoireRules = game.grimoireRules.slice(0, GRIMOIRE_SLOT_COUNT);
   }
   return game.grimoireRules;
 }
@@ -51,63 +50,93 @@ function saveGrimoirePreset(name, icon) {
   if (!trimmedName) return;
 
   var presets = ensureGrimoirePresets();
-  if (presets.length >= GRIMOIRE_PRESET_MAX_COUNT) return;
+  ensureGrimoireJeux(); // le jeu en cours garde ses règles avant d'en créer un autre
+  if (!canCreateGrimoireJeu()) return;
+  var rulesSnapshot = grimoireFirstRules(game.grimoireRules);
 
-  ensureGrimoireRules();
-  var rulesSnapshot = (typeof sanitizeGrimoireRules === "function")
-    ? sanitizeGrimoireRules(game.grimoireRules, getGrimoireCurrentKit())
-    : game.grimoireRules.slice();
-
+  presets.forEach(function (p) { delete p.actif; });
   presets.push({
     id: generateGrimoirePresetId(),
     name: trimmedName.slice(0, 30), // même esprit que maxlength sur le nom du héros (modal-view.js)
     icon: (icon && GRIMOIRE_PRESET_ICON_CHOICES.indexOf(icon) !== -1) ? icon : GRIMOIRE_PRESET_ICON_CHOICES[0],
     rules: rulesSnapshot,
-    lastModified: Date.now()
+    lastModified: Date.now(),
+    actif: true // v3.736.0 : le nouveau jeu devient le jeu actif (mêmes règles)
   });
 
   saveGame();
   if (typeof renderPanel === "function") renderPanel();
 }
 
-function loadGrimoirePreset(presetId) {
-  // v3.212.0 : charger un preset REMPLACE les 6 règles — c'est une modification,
-  // donc soumis au même verrou de sortie que les listes déroulantes.
-  if (typeof isGrimoireEditable === "function" && !isGrimoireEditable()) return;
+/* v3.736.0 (Seb 07/11, jeux A) : le jeu actif (game.grimoirePresets[i].actif) ; game.grimoireRules en est la copie jouée.
+   Aucun jeu marqué (partie d'avant) : celui qui a les mêmes 3 règles, sinon un jeu « Mes règles » créé en tête. */
+function grimoireFirstRules(list) {
+  var max = GRIMOIRE_SLOT_COUNT, out = (typeof sanitizeGrimoireRules === "function") ? sanitizeGrimoireRules((list || []).slice(0, max), getGrimoireCurrentKit()) : (list || []).slice(0, max);
+  out = out.map(function (r) { return { conditionId: (r && r.conditionId) || null, actionSlot: (r && r.actionSlot) || null }; });
+  while (out.length < max) out.push({ conditionId: null, actionSlot: null });
+  return out;
+}
+function grimoireSameRules(a, b) {
+  var x = grimoireFirstRules(a), y = grimoireFirstRules(b);
+  return x.every(function (r, i) { return r.conditionId === y[i].conditionId && r.actionSlot === y[i].actionSlot; });
+}
+function ensureGrimoireJeux() {
+  ensureGrimoireRules(); // migration des règles 4 à 6 d'abord
+  var presets = ensureGrimoirePresets(), act = presets.filter(function (p) { return p && p.actif; });
+  act.slice(1).forEach(function (p) { delete p.actif; });
+  if (act.length) return act[0];
+  var same = presets.filter(function (p) { return grimoireSameRules(p.rules, game.grimoireRules); })[0];
+  if (same) { same.actif = true; return same; }
+  var mine = { id: generateGrimoirePresetId(), name: GRIMOIRE_MY_RULES_NAME, icon: "images/Icons/system/grimoire.webp", rules: grimoireFirstRules(game.grimoireRules), lastModified: Date.now(), actif: true };
+  presets.unshift(mine);
+  return mine;
+}
+function getActiveGrimoireJeu() { return ensureGrimoireJeux(); }
+/* Jeux permis par les mondes atteints (3 -> 6) ; les jeux déjà enregistrés au-delà restent. */
+function getGrimoireJeuxCap() {
+  var n = (typeof getGrimoireJeuxCount === "function") ? getGrimoireJeuxCount(game.worldsEverReached) : GRIMOIRE_PRESET_MAX_COUNT;
+  return Math.min(GRIMOIRE_PRESET_MAX_COUNT, n);
+}
+function canCreateGrimoireJeu() { return ensureGrimoirePresets().length < getGrimoireJeuxCap(); }
+
+/* Ce qu'on modifie s'écrit dans le jeu actif (ses règles 4 à 6 d'avant restent stockées). */
+function syncGrimoireActiveJeu() {
+  var j = ensureGrimoireJeux(), cur = grimoireFirstRules(game.grimoireRules);
+  if (!Array.isArray(j.rules)) j.rules = [];
+  cur.forEach(function (r, i) { j.rules[i] = { conditionId: r.conditionId, actionSlot: r.actionSlot }; });
+  j.lastModified = Date.now();
+  return j;
+}
+
+/* Un toucher change de jeu : ses 3 premières règles deviennent celles du combat. Verrou de sortie comme toute modification. */
+function activateGrimoireJeu(presetId) {
+  if (typeof isGrimoireEditable === "function" && !isGrimoireEditable()) return false;
   var presets = ensureGrimoirePresets();
   var preset = presets.filter(function (p) { return p.id === presetId; })[0];
-  if (!preset) return;
-
-  game.grimoireRules = (typeof sanitizeGrimoireRules === "function")
-    ? sanitizeGrimoireRules(preset.rules, getGrimoireCurrentKit())
-    : preset.rules.slice();
-  ensureGrimoireRules(); // complète/tronque à GRIMOIRE_SLOT_COUNT si le preset provient d'une version différente
-
+  if (!preset) return false;
+  ensureGrimoireJeux();
+  presets.forEach(function (p) { delete p.actif; });
+  preset.actif = true;
+  game.grimoireRules = grimoireFirstRules(preset.rules);
+  grimoireEditIndex = null;
   saveGame();
   if (typeof renderPanel === "function") renderPanel();
+  return true;
 }
 
-function confirmLoadGrimoirePreset(presetId) {
-  var presets = ensureGrimoirePresets();
-  var preset = presets.filter(function (p) { return p.id === presetId; })[0];
-  if (!preset) return;
+function loadGrimoirePreset(presetId) { return activateGrimoireJeu(presetId); }
 
-  showConfirmModal(
-    _t("Charger « {x} » ?", { x: _td(preset.name) }),
-    _t("Les 6 règles actuellement configurées seront remplacées par celles de ce preset. Enregistre ta configuration actuelle comme preset avant de continuer si tu veux la garder."),
-    preset.icon || "images/Icons/system/grimoire.webp",
-    function () { loadGrimoirePreset(presetId); }
-  );
-}
+// v3.736.0 : plus de confirmation, rien n'est perdu en changeant de jeu
+function confirmLoadGrimoirePreset(presetId) { return activateGrimoireJeu(presetId); }
 
 function confirmDeleteGrimoirePreset(presetId) {
   var presets = ensureGrimoirePresets();
   var preset = presets.filter(function (p) { return p.id === presetId; })[0];
-  if (!preset) return;
+  if (!preset || preset.actif) return; // v3.736.0 : le jeu actif ne se supprime pas
 
   showConfirmModal(
     _t("Supprimer « {x} » ?", { x: _td(preset.name) }),
-    _t("Cette action est irréversible. Le preset sera définitivement supprimé (la config actuellement active n'est pas affectée)."),
+    _t("Ce jeu de règles sera définitivement supprimé. Ton jeu actif n'est pas touché."),
     "images/Icons/system/trash.webp",
     function () {
       game.grimoirePresets = presets.filter(function (p) { return p.id !== presetId; });
@@ -117,21 +146,15 @@ function confirmDeleteGrimoirePreset(presetId) {
   );
 }
 
-function getSuggestedGrimoirePreset() {
-  var presets = ensureGrimoirePresets();
-  if (!presets.length) return null;
-  if (typeof WORLDS === "undefined" || !window.WorldManager) return null;
-
-  var world = WORLDS[WorldManager.worldIndex];
-  if (!world || !world.name) return null;
-
-  var keyword = world.name.split(" ")[0].toLowerCase();
-  if (!keyword) return null;
-
-  var match = presets.filter(function (p) {
-    return typeof p.name === "string" && p.name.toLowerCase().indexOf(keyword) !== -1;
-  })[0];
-  return match || null;
+/* v3.736.0 : jeu conseillé pour une sortie = celui qui couvre le plus de ses situations (le jeu actif à égalité). */
+function getSuggestedGrimoirePreset(ctx) {
+  if (!ctx || typeof grimoireJeuScore !== "function") return null;
+  var best = null, bestN = -1;
+  ensureGrimoirePresets().forEach(function (p) {
+    var n = grimoireJeuScore(p.rules, ctx).n;
+    if (n > bestN || (n === bestN && p.actif)) { best = p; bestN = n; }
+  });
+  return best;
 }
 
 window.GRIMOIRE_PRESET_MAX_COUNT = GRIMOIRE_PRESET_MAX_COUNT;
@@ -140,6 +163,13 @@ window.ensureGrimoirePresets = ensureGrimoirePresets;
 window.saveGrimoirePreset = saveGrimoirePreset;
 window.loadGrimoirePreset = loadGrimoirePreset;
 window.confirmLoadGrimoirePreset = confirmLoadGrimoirePreset;
+window.ensureGrimoireJeux = ensureGrimoireJeux;
+window.getActiveGrimoireJeu = getActiveGrimoireJeu;
+window.activateGrimoireJeu = activateGrimoireJeu;
+window.syncGrimoireActiveJeu = syncGrimoireActiveJeu;
+window.getGrimoireJeuxCap = getGrimoireJeuxCap;
+window.canCreateGrimoireJeu = canCreateGrimoireJeu;
+window.grimoireFirstRules = grimoireFirstRules;
 window.confirmDeleteGrimoirePreset = confirmDeleteGrimoirePreset;
 window.getSuggestedGrimoirePreset = getSuggestedGrimoirePreset;
 
@@ -464,27 +494,23 @@ function buildGrimoireReportSheetHTML() {
   return h;
 }
 
+/* v3.736.0 (Seb 07/11, jeux A) : la feuille des jeux — prendre, supprimer (sauf l'actif), en créer un. */
 function buildGrimoirePresetsSheetHTML() {
-  var presets = ensureGrimoirePresets();
-  var suggested = (typeof getSuggestedGrimoirePreset === "function") ? getSuggestedGrimoirePreset() : null;
+  ensureGrimoireJeux();
+  var presets = ensureGrimoirePresets(), cap = getGrimoireJeuxCap();
 
-  var h = kSheetHeadHTML({ icon: '<img src="images/Icons/system/save.webp" alt="">', title: _t("Presets"), close: "closeGrimoireSheet()" });
+  var h = kSheetHeadHTML({ icon: '<img src="images/Icons/system/save.webp" alt="">', title: _t("Jeux de règles"), close: "closeGrimoireSheet()" });
   h += '<div class="ksheet-body grimoire-sheet-body">';
-  h += '<p class="grimoire-hint" style="margin-top:0">' + _t("Enregistre ta configuration sous un nom pour la retrouver selon le contexte.") + '</p>';
+  h += '<p class="grimoire-hint" style="margin-top:0">' + _t("Un jeu garde 3 règles sous un nom. Change de jeu d'un toucher avant de partir : ce que tu modifies s'écrit dans le jeu actif.") + '</p>';
 
-  if (presets.length) {
-    presets.forEach(function (preset) {
-      h += buildGrimoirePresetCardHTML(preset, !!(suggested && suggested.id === preset.id));
-    });
-  } else {
-    h += '<p class="grimoire-hint">' + _t("Aucun preset enregistré pour l'instant.") + '</p>';
-  }
+  presets.forEach(function (preset) { h += buildGrimoirePresetCardHTML(preset, false); });
 
-  if (presets.length >= GRIMOIRE_PRESET_MAX_COUNT) {
-    h += '<p class="grimoire-hint">' + _t("Limite de {n} presets atteinte — supprime-en un pour en enregistrer un nouveau.", { n: GRIMOIRE_PRESET_MAX_COUNT }) + '</p>';
+  if (presets.length >= cap) {
+    h += '<p class="grimoire-hint">' + esc(_t("{a} / {b} jeux.", { a: presets.length, b: cap })) + ' '
+      + (cap < GRIMOIRE_PRESET_MAX_COUNT ? _t("La Crypte, la Montagne et la Tour en donnent chacune un de plus.") : _t("Supprime un jeu pour en créer un autre.")) + '</p>';
   } else {
     h += buildGrimoirePresetCreateFormHTML();
-    h += '<p class="grimoire-hint">' + _t("{a} / {b} presets enregistrés.", { a: presets.length, b: GRIMOIRE_PRESET_MAX_COUNT }) + '</p>';
+    h += '<p class="grimoire-hint">' + esc(_t("{a} / {b} jeux.", { a: presets.length, b: cap })) + '</p>';
   }
 
   h += '</div>';
@@ -569,6 +595,7 @@ function clearGrimoireRule(index) {
   ensureGrimoireRules();
   if (!game.grimoireRules[index]) return;
   game.grimoireRules[index] = { conditionId: null, actionSlot: null };
+  syncGrimoireActiveJeu(); // v3.736.0
   saveGame();
   if (typeof renderPanel === "function") renderPanel();
 }
@@ -600,18 +627,30 @@ function buildGrimoirePresetCardHTML(preset, isSuggested) {
     h += '<p class="panel-sub grimoire-preset-date">' + esc(_t("Modifié le {d}", { d: dateLabel })) + '</p>';
   }
   h += '<div class="grimoire-preset-actions">';
-  h += '<button class="settings-btn grimoire-preset-load-btn" type="button"'
-    + ((typeof isGrimoireEditable === "function" && !isGrimoireEditable()) ? ' disabled' : '')
-    + ' onclick="confirmLoadGrimoirePreset(\'' + esc(preset.id) + '\')">' + _t("Charger") + '</button>';
-  h += '<button class="settings-btn grimoire-preset-delete-btn" type="button" onclick="confirmDeleteGrimoirePreset(\'' + esc(preset.id) + '\')"><img class=ico-inline src=images/Icons/system/trash.webp></button>';
+  if (preset.actif) {
+    h += '<span class="grimoire-preset-active">' + _t("Jeu actif") + '</span>'; // v3.736.0
+  } else {
+    h += '<button class="settings-btn grimoire-preset-load-btn" type="button"'
+      + ((typeof isGrimoireEditable === "function" && !isGrimoireEditable()) ? ' disabled' : '')
+      + ' onclick="activateGrimoireJeu(\'' + esc(preset.id) + '\')">' + _t("Prendre ce jeu") + '</button>';
+    h += '<button class="settings-btn grimoire-preset-delete-btn" type="button" aria-label="' + esc(_t("Supprimer")) + '" onclick="confirmDeleteGrimoirePreset(\'' + esc(preset.id) + '\')"><img class=ico-inline src=images/Icons/system/trash.webp></button>';
+  }
   h += '</div>';
   h += '</div>';
   return h;
 }
 
+/* Nom proposé d'après les situations du jeu (« Charge, Soin »), modifiable. */
+function grimoireJeuAutoName(rules) {
+  var n = grimoireFirstRules(rules).filter(function (r) { return r.conditionId; }).slice(0, 2).map(function (r) {
+    var c = getGrimoireCondition(r.conditionId); return c ? _td(c.short || c.label) : "";
+  }).filter(Boolean);
+  return n.join(", ").slice(0, 30);
+}
+
 function buildGrimoirePresetCreateFormHTML() {
   var h = '<div class="grimoire-preset-create-form">';
-  h += '<input id="grimoire-preset-name-input" type="text" maxlength="30" placeholder="' + esc(_t("Nom du preset (ex. Farm Forêt)")) + '">';
+  h += '<input id="grimoire-preset-name-input" type="text" maxlength="30" value="' + esc(grimoireJeuAutoName(game.grimoireRules)) + '" placeholder="' + esc(_t("Nom du jeu (ex. Boss)")) + '">';
   h += '<div class="grimoire-preset-icon-picker">';
   GRIMOIRE_PRESET_ICON_CHOICES.forEach(function (icon, index) {
     h += '<label class="grimoire-preset-icon-choice">';
@@ -620,7 +659,7 @@ function buildGrimoirePresetCreateFormHTML() {
     h += '</label>';
   });
   h += '</div>';
-  h += '<button class="settings-btn primary" type="button" onclick="handleSaveGrimoirePresetClick()"><img class=ico-inline src=images/Icons/system/save.webp> ' + _t("Enregistrer comme preset") + '</button>';
+  h += '<button class="settings-btn primary" type="button" onclick="handleSaveGrimoirePresetClick()"><img class=ico-inline src=images/Icons/system/save.webp> ' + _t("Créer un jeu avec ces règles") + '</button>';
   h += '</div>';
   return h;
 }
@@ -639,6 +678,8 @@ function handleSaveGrimoirePresetClick() {
 }
 
 window.buildGrimoirePresetCardHTML = buildGrimoirePresetCardHTML;
+window.buildGrimoireJeuxRowHTML = buildGrimoireJeuxRowHTML;
+window.grimoireJeuAutoName = grimoireJeuAutoName;
 window.buildGrimoirePresetCreateFormHTML = buildGrimoirePresetCreateFormHTML;
 window.handleSaveGrimoirePresetClick = handleSaveGrimoirePresetClick;
 
@@ -667,10 +708,37 @@ function buildGrimoireModeHTML() {
   return h;
 }
 
+/* v3.736.0 (Seb 07/11, jeux A) : la rangée des jeux, un toucher change de jeu ; ＋ ouvre la feuille des jeux.
+   suggestedId : le jeu conseillé (préparation de sortie), marqué ★. onPick : fonction appelée avec l'id. */
+function buildGrimoireJeuxRowHTML(suggestedId, onPick) {
+  var active = ensureGrimoireJeux(), editable = isGrimoireEditable(), pick = onPick || "activateGrimoireJeu";
+  var h = '<div class="grimoire-jeux" role="tablist" aria-label="' + esc(_t("Jeux de règles")) + '">';
+  ensureGrimoirePresets().forEach(function (p) {
+    var on = p.id === active.id, sugg = suggestedId && p.id === suggestedId;
+    h += '<button type="button" role="tab" aria-selected="' + on + '" class="grimoire-jeu' + (on ? ' is-on' : '') + (sugg ? ' is-sugg' : '') + '"'
+      + (editable && !on ? ' onclick="' + pick + '(\'' + esc(p.id) + '\')"' : (on ? '' : ' disabled')) + '>'
+      + (sugg ? '<span class="grimoire-jeu-star" aria-label="' + esc(_t("Conseillé")) + '">★</span>' : '')
+      + renderIconOrEmojiHTML(p.icon || "images/Icons/system/grimoire.webp", "grimoire-jeu-ico", "") + '<span>' + esc(_td(p.name)) + '</span></button>';
+  });
+  if (editable && canCreateGrimoireJeu()) h += '<button type="button" class="grimoire-jeu is-new" aria-label="' + esc(_t("Nouveau jeu")) + '" onclick="openGrimoireSheet(\'presets\')">＋</button>';
+  return h + '</div>';
+}
+
+/* « Ce jeu répond à : Charge · Soin » : ses situations, d'un coup d'œil. */
+function buildGrimoireJeuCoversHTML() {
+  var n = grimoireFirstRules(game.grimoireRules).filter(function (r) { return r.conditionId && r.actionSlot; }).map(function (r) {
+    var c = getGrimoireCondition(r.conditionId); return c ? _td(c.short || c.label) : "";
+  }).filter(Boolean);
+  return '<p class="grimoire-jeu-covers">' + esc(_t("Ce jeu répond à : {x}", { x: n.length ? n.join(" · ") : _t("rien pour l'instant") })) + '</p>';
+}
+
 function buildGrimoireListHTML(kit, unlockedCount) {
   var h = buildGrimoireModeHTML();
+  var jeu = ensureGrimoireJeux();
+  h += '<div class="grimoire-jeu-box">' + buildGrimoireJeuxRowHTML(null) + buildGrimoireJeuCoversHTML()
+    + '<p class="grimoire-jeu-note">' + esc(_t("Ce que tu modifies s'enregistre dans « {x} ». Le combat joue le jeu actif.", { x: _td(jeu.name) })) + '</p></div>';
 
-  game.grimoireRules.forEach(function (rule, index) {
+  game.grimoireRules.slice(0, GRIMOIRE_SLOT_COUNT).forEach(function (rule, index) {
     if (index === unlockedCount) {
       h += '<div class="ksec grimoire-divider">' + _t("Emplacements à venir") + '</div>';
     }
@@ -679,7 +747,7 @@ function buildGrimoireListHTML(kit, unlockedCount) {
 
   // v3.440.0 : Cible et potion automatique se règlent à la préparation de sortie
   h += '<div class="grimoire-foot">';
-  h += '<button type="button" onclick="openGrimoireSheet(\'presets\')"><img class=ico-inline src=images/Icons/system/save.webp> ' + _t("Presets") + '<span class="grimoire-foot-badge">'
+  h += '<button type="button" onclick="openGrimoireSheet(\'presets\')"><img class=ico-inline src=images/Icons/system/save.webp> ' + _t("Jeux") + '<span class="grimoire-foot-badge">'
     + ensureGrimoirePresets().length + '</span></button>';
   h += '<button type="button" onclick="openGrimoireSheet(\'report\')"><img class=ico-inline src=images/Icons/system/combat_report.webp> ' + _t("Rapport") + '</button>';
   h += '</div>';
@@ -710,6 +778,7 @@ function setGrimoireRuleCondition(index, conditionId) {
   ensureGrimoireRules();
   if (!game.grimoireRules[index]) return;
   game.grimoireRules[index].conditionId = conditionId || null;
+  syncGrimoireActiveJeu(); // v3.736.0 : écrit dans le jeu actif
   saveGame();
   if (typeof renderPanel === "function") renderPanel();
 }
@@ -727,6 +796,7 @@ function setGrimoireRuleAction(index, actionSlot) {
   ensureGrimoireRules();
   if (!game.grimoireRules[index]) return;
   game.grimoireRules[index].actionSlot = actionSlot || null;
+  syncGrimoireActiveJeu(); // v3.736.0
   saveGame();
   if (typeof renderPanel === "function") renderPanel();
 }

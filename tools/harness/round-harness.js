@@ -3228,16 +3228,14 @@ console.log("\n[ÉLITES] Créatures élite et leurs quêtes");
   // du Campement ne s'affiche pas — les deux respectent le même verrou.
   g.game.unlockedTabs.grimoire = true;
   g.game.activeTab = "grimoire"; // renderGrimoireSheet() referme la feuille hors de l'écran
-  // GRIMOIRE_BASE_SLOT_COUNT = 2, +1 par monde atteint parmi [2,3,4,5] :
-  // il faut donc les mondes 2 ET 3 pour obtenir 4 emplacements, dont un libre.
-  g.game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true };
+  // v3.736.0 : GRIMOIRE_BASE_SLOT_COUNT = 2, +1 aux Ruines (monde 2), 3 au plus : au Désert, 2 ouverts et 1 verrouillé.
+  g.game.worldsEverReached = { 0: true, 1: true };
   var nbSlots = g.getGrimoireSlotCount(g.game.worldsEverReached);
-  ok(nbSlots === 4, "[GRIMOIRE] 4 emplacements débloqués sur ce jalon (2 de base + mondes 2 et 3)");
+  ok(nbSlots === 2, "[GRIMOIRE] 2 emplacements débloqués au Désert (le 3e aux Ruines)");
   g.ensureGrimoireRules();
   g.game.grimoireRules[0] = { conditionId: "chargeIncoming", actionSlot: "defense" };
-  g.game.grimoireRules[1] = { conditionId: "healIncoming", actionSlot: "skill1" };
+  g.game.grimoireRules[1] = { conditionId: null, actionSlot: null }; // emplacement libre mais débloqué
   g.game.grimoireRules[2] = { conditionId: "heroLowHp", actionSlot: "skill2" };
-  g.game.grimoireRules[3] = { conditionId: null, actionSlot: null }; // emplacement libre mais débloqué
 
   /* --- La liste est la vue par défaut --- */
   g.closeGrimoireRule();
@@ -3250,7 +3248,7 @@ console.log("\n[ÉLITES] Créatures élite et leurs quêtes");
   ok(list.indexOf("is-locked") !== -1, "[GRIMOIRE] emplacements verrouillés rendus");
   ok(list.indexOf("is-empty") !== -1, "[GRIMOIRE] emplacement libre rendu");
 
-  // Six lignes exactement, une par emplacement, verrouillés compris.
+  // Trois lignes exactement (v3.736.0), une par emplacement, verrouillés compris.
   var rows = list.split("grimoire-rule-row").length - 1;
   ok(rows === g.GRIMOIRE_SLOT_COUNT, "[GRIMOIRE] " + g.GRIMOIRE_SLOT_COUNT + " lignes, une par emplacement");
 
@@ -3295,7 +3293,7 @@ console.log("\n[ÉLITES] Créatures élite et leurs quêtes");
   g.game.grimoireRules[0] = { conditionId: "chargeIncoming", actionSlot: "defense" };
 
   // Une règle ouverte au-delà des emplacements débloqués ne reste pas affichée.
-  g.openGrimoireRule(5);
+  g.openGrimoireRule(2);
   ok(g.buildGrimoireHTML().indexOf("grimoire-rule-row") !== -1, "[GRIMOIRE] règle verrouillée : retour forcé à la liste");
   g.closeGrimoireRule();
 
@@ -3311,7 +3309,7 @@ console.log("\n[ÉLITES] Créatures élite et leurs quêtes");
 
   g.openGrimoireSheet("presets");
   var sheet = g.buildGrimoireSheetHTML();
-  ok(sheet.indexOf("Presets") !== -1, "[GRIMOIRE] feuille Presets ouverte");
+  ok(sheet.indexOf("Jeux de règles") !== -1, "[GRIMOIRE] feuille des jeux ouverte");
   ok(sheet.indexOf("grimoire-preset-create-form") !== -1, "[GRIMOIRE] formulaire de création présent");
   g.saveGrimoirePreset("Farm Forêt", "⚔️");
   g.openGrimoireSheet("presets");
@@ -11443,18 +11441,19 @@ console.log("\n[154] v3.378.0 (v3.446.0 : à la préparation de sortie) — « C
   G.killCounts = {};
   G.grimoireRules = [];
   G.grimoirePresets = [];
+  G.grimoireSeen = {}; // v3.736.0 : rien de rencontré, les situations certaines restent anonymes (GrimoireSeen)
   G.combatMode = "grimoire";
-  var card = function (ctx) { g.sortiePrep = { opts: { ctx: ctx }, preset: null, buffs: {}, items: [], pick: -1 }; return g.buildSortiePrepTraitsHTML(G.combatMode === "grimoire"); };
+  var card = function (ctx) { g.sortiePrep = { opts: { ctx: ctx }, buffs: {}, items: [], pick: -1 }; return g.buildSortiePrepTraitsHTML(G.combatMode === "grimoire"); };
   var coeur = { type: "adventure", id: "aq_story_coeur" };   // filtre : slime, gobelin, araignée, troll (bouclier), ronce (silence)
 
-  ok(card(coeur) === "", "aucune créature vaincue : pas d'encart");
+  ok(card(coeur).indexOf("sp-trait ") === -1 && /situation encore inconnue/.test(card(coeur)), "aucune créature vaincue, rien de rencontré : aucun trait nommé, la Charge comptée comme inconnue (v3.736.0)");
   G.killCounts.slime = 3;
-  ok(card(coeur) === "", "créatures vaincues sans trait fixe : pas d'encart");
+  ok(card(coeur).indexOf("sp-trait ") === -1, "créatures vaincues sans trait fixe : aucun trait nommé");
   G.killCounts.foresttroll = 1;
   var h = card(coeur);
   ok(h.indexOf("Ce que tu vas affronter") !== -1 && h.indexOf("Bouclier") !== -1 && h.indexOf(g._td(g.ENEMY_DB.foresttroll.name)) !== -1, "troll vaincu : son trait « Bouclier » s'affiche");
   ok(h.indexOf("Silence") === -1 && /créatures jamais vaincues/.test(h), "ronce jamais vaincue : trait caché, compté parmi les créatures jamais vaincues");
-  ok(h.indexOf("Aucune règle ni objet ne répond") !== -1 && h.indexOf("sortiePrepEditRules()") !== -1, "aucune règle : « Aucune règle ni objet ne répond », raccourci vers le Grimoire");
+  ok(/Pas couvert\. Conseillé : /.test(h) && h.indexOf("sortiePrepAdd('shieldIncoming')") !== -1, "aucune règle : « Pas couvert. Conseillé : … », bouton « Ajouter » (v3.736.0)");
 
   // Une règle qui CONTRE le bouclier, et une qui y réagit sans contrer
   var kit = g.getClassSkills(g.ClassCombatManager.getCurrentClassId());
@@ -11469,14 +11468,15 @@ console.log("\n[154] v3.378.0 (v3.446.0 : à la préparation de sortie) — « C
   }
   // Règle au-delà des emplacements débloqués : ne compte pas
   G.grimoireRules = [{ conditionId: null, actionSlot: null }, { conditionId: null, actionSlot: null }, { conditionId: "shieldIncoming", actionSlot: contre || neutre }];
-  ok(/Aucune règle ni objet ne répond/.test(card(coeur)), "règle hors des emplacements actifs : ignorée");
+  ok(/Pas couvert/.test(card(coeur)) && !/le contre\./.test(card(coeur)), "règle hors des emplacements actifs : ignorée");
 
-  // Preset choisi à la préparation : la réponse suit SES règles
+  // v3.736.0 : jeu pris à la préparation (un toucher) : la réponse suit SES règles
   G.grimoireRules = [];
   G.grimoirePresets = [{ id: "p1", name: "Forêt", icon: "", rules: [{ conditionId: "shieldIncoming", actionSlot: contre || neutre }], lastModified: 0 }];
-  card(coeur); g.sortiePrep.preset = "p1";
+  card(coeur); var rsp = g.renderSortiePrep; g.renderSortiePrep = function () {}; g.sortiePrepJeu("p1"); g.renderSortiePrep = rsp;
   h = g.buildSortiePrepTraitsHTML(true);
-  ok(contre ? /le contre\./.test(h) : /réagit/.test(h), "preset choisi : les traits sont lus avec ses règles");
+  ok(contre ? /le contre\./.test(h) : /réagit/.test(h), "jeu pris : les traits sont lus avec ses règles");
+  G.grimoirePresets = [];
 
   // Mode Tactique : rien
   G.combatMode = "tactique";
@@ -14634,7 +14634,7 @@ console.log("\n[214] v3.440.0 — Préparation de sortie : mode figé, équipe, 
     g.openSortiePrep({ title: "t", onGo: go });
     g.sortiePrep.tuneOpen = true;
     var html = g.buildSortiePrepHTML();
-    ok(html.indexOf("sortiePrepMode('grimoire')") !== -1 && html.indexOf("sortiePrepPreset('p1')") !== -1, "Grimoire ouvert : choix du mode et des presets");
+    ok(html.indexOf("sortiePrepMode('grimoire')") !== -1 && html.indexOf("Tes règles") !== -1, "Grimoire ouvert : choix du mode et section « Tes règles » (v3.736.0)");
     g.closeSortiePrep();
     ok(parti === 2 && !g.sortiePrep, "« Renoncer » : rien ne part");
     g.CombatEngine.setCombatMode("tactique");
@@ -25295,7 +25295,8 @@ console.log("\n[490] v3.729.0 — Grimoire : seules les situations rencontrées 
 
     // Fiche d'aide : phrase vraie, même icône
     var pt = g.GENERIC_TUTORIALS && g.GENERIC_TUTORIALS.grimoire_rules ? g.GENERIC_TUTORIALS.grimoire_rules.points : null, last = pt ? pt[pt.length - 1] : null;
-    ok(last && last.text === "Une situation apparaît dans le Grimoire la première fois que tu la rencontres en combat. Les emplacements de règles s'ouvrent en atteignant de nouveaux mondes." && last.icon === "images/Icons/quests/quest_resources.webp", "fiche d'aide : la phrase dit comment une situation apparaît (icône inchangée)");
+    last = pt ? pt.filter(function (p) { return /^Une situation apparaît/.test(p.text); })[0] : null; // v3.736.0 : un point sur les jeux le suit
+    ok(last && last.text === "Une situation apparaît dans le Grimoire la première fois que tu la rencontres en combat. Trois règles au plus : la troisième s'ouvre aux Ruines." && last.icon === "images/Icons/quests/quest_resources.webp", "fiche d'aide : la phrase dit comment une situation apparaît (icône inchangée)");
   } catch (err) { ok(false, "[490] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   finally { g.showToast = keep.toast; g.addLog = keep.log; try { run("fullResetState();"); } catch (e) {} }
 })();
@@ -25553,6 +25554,158 @@ console.log("\n[495] v3.734.0 — Rappels d'entrée : Marque exigée par l'étap
     g.game.unlockedTabs.dungeon = keep.tab; g.pendingDungeonId = null; g.pendingDungeonMarks = [];
     var restored = JSON.parse(sv); Object.keys(restored).forEach(function (k) { st[k] = restored[k]; });
   }
+})();
+
+console.log("\n[496] v3.736.0 — Grimoire vivant : 3 règles, jeux en onglets, pronostic coché (Seb 07/11)");
+(function () {
+  var keep = { render: g.renderSortiePrep, active: g.SortieManager.isActive };
+  try {
+    game = freshCombat("knight");
+    var G = g.game;
+    G.unlockedTabs.grimoire = true; G.combatMode = "grimoire"; G.grimoirePresets = []; G.killCounts = {};
+    G.grimoireSeen = { chargeIncoming: true, shieldIncoming: true, healIncoming: true, enemySilenceIncoming: true, enemyEnraged: true, enemyArmored: true };
+    g.renderSortiePrep = function () {};
+    var R = function (c, a) { return { conditionId: c || null, actionSlot: a || null }; };
+    var W = function (n) { var o = {}; for (var i = 0; i <= n; i++) o[i] = true; return o; };
+
+    // Plafond de 3 règles actives ; la 3e aux Ruines, ou avant par la Mémoire
+    ok(g.GRIMOIRE_ACTIVE_MAX === 3 && g.GRIMOIRE_SLOT_COUNT === 3 && JSON.stringify(g.GRIMOIRE_UNLOCK_WORLD_INDEXES) === "[2]", "plafond : 3 règles, 3 emplacements stockés, la 3e aux Ruines");
+    ok(g.getGrimoireSlotCount(W(0)) === 2 && g.getGrimoireSlotCount(W(1)) === 2 && g.getGrimoireSlotCount(W(2)) === 3 && g.getGrimoireSlotCount(W(5)) === 3, "emplacements : 2 en Forêt et au Désert, 3 dès les Ruines, jamais plus (Tour : 3)");
+    var hasM = g.MemoryManager.has; g.MemoryManager.has = function (id) { return id === "grimoire_etendu" || hasM.call(g.MemoryManager, id); };
+    ok(g.getGrimoireSlotCount(W(0)) === 3 && g.getGrimoireSlotCount(W(5)) === 3, "Grimoire étendu : la 3e dès la Forêt, toujours 3 au plus");
+    g.MemoryManager.has = hasM;
+    ok(/jusqu'à 3/.test((g.MEMORY_LEVELS || []).concat([]).map(function (x) { return JSON.stringify(x); }).join("") + fsRead("js/data/memory.js")), "Mémoire : « Grimoire étendu » dit la limite de 3");
+
+    // Jeux débloqués par monde : 3 au début, +1 Crypte, Montagne, Tour
+    ok(g.getGrimoireJeuxCount(W(0)) === 3 && g.getGrimoireJeuxCount(W(2)) === 3 && g.getGrimoireJeuxCount(W(3)) === 4 && g.getGrimoireJeuxCount(W(4)) === 5 && g.getGrimoireJeuxCount(W(5)) === 6, "jeux : 3 au début, 4 à la Crypte, 5 à la Montagne, 6 à la Tour");
+
+    // Jeux en onglets : le jeu actif, un toucher change de jeu, ce qu'on modifie s'écrit dans le jeu actif
+    G.worldsEverReached = W(2);
+    G.grimoireRules = [R("chargeIncoming", "defense"), R("healIncoming", "skill1"), R()];
+    var html = g.buildGrimoireHTML();
+    var j0 = G.grimoirePresets[0];
+    ok(G.grimoirePresets.length === 1 && j0.actif === true && j0.name === "Mes règles" && html.indexOf("grimoire-jeux") !== -1 && html.indexOf("aria-selected=\"true\"") !== -1, "Grimoire : rangée des jeux, « Mes règles » créé d'office et actif");
+    ok(html.indexOf("Ce jeu répond à : Charge · Soin") !== -1 || html.indexOf("Ce jeu répond à") !== -1, "Grimoire : « Ce jeu répond à : … »");
+    g.saveGrimoirePreset("Boss", g.GRIMOIRE_PRESET_ICON_CHOICES[4]);
+    var j1 = G.grimoirePresets[1];
+    ok(j1 && j1.actif && !j0.actif && g.getActiveGrimoireJeu().id === j1.id, "nouveau jeu : il devient le jeu actif");
+    g.setGrimoireRuleCondition(2, "shieldIncoming"); g.setGrimoireRuleAction(2, "skill2");
+    ok(j1.rules[2].conditionId === "shieldIncoming" && !(j0.rules[2] && j0.rules[2].conditionId), "modifier une règle : écrit dans le jeu actif seulement");
+    g.activateGrimoireJeu(j0.id);
+    ok(j0.actif && !j1.actif && !G.grimoireRules[2].conditionId && G.grimoireRules[0].conditionId === "chargeIncoming", "un toucher sur un jeu : ses règles deviennent celles du combat");
+    var keepAct = g.SortieManager.isActive; g.SortieManager.isActive = function () { return true; };
+    ok(g.activateGrimoireJeu(j1.id) === false && j0.actif, "sortie en cours : on ne change pas de jeu (Grimoire figé)");
+    g.SortieManager.isActive = keepAct;
+    g.saveGrimoirePreset("Trois", ""); ok(G.grimoirePresets.length === 3, "Ruines : 3 jeux");
+    g.saveGrimoirePreset("Quatre", ""); ok(G.grimoirePresets.length === 3 && !g.canCreateGrimoireJeu(), "Ruines : pas de 4e jeu avant la Crypte");
+    G.worldsEverReached = W(3); ok(g.canCreateGrimoireJeu(), "Crypte atteinte : un jeu de plus");
+    g.confirmDeleteGrimoirePreset(g.getActiveGrimoireJeu().id);
+    ok(G.grimoirePresets.length === 3, "le jeu actif ne se supprime pas");
+
+    // Sauvegarde et rechargement du jeu actif (champ « actif » de grimoirePresets, save-system.js inchangé)
+    g.activateGrimoireJeu(j1.id);
+    run("localStorage.setItem(getActiveSaveKey(), JSON.stringify(buildSaveData()));");
+    G.grimoirePresets.forEach(function (p) { delete p.actif; });
+    run("loadGame();");
+    G = g.game;
+    var act = G.grimoirePresets.filter(function (p) { return p.actif; });
+    ok(act.length === 1 && act[0].id === j1.id && G.grimoireRules[2].conditionId === "shieldIncoming", "rechargement : le jeu actif et ses règles reviennent");
+    ok(g.normalizeGrimoirePresets([{ id: "a", name: "A", rules: [], actif: true }, { id: "b", name: "B", rules: [], actif: true }]).filter(function (p) { return p.actif; }).length === 1, "normalizeGrimoirePresets : un seul jeu actif");
+    ok(!/\.actif\b|\bactif\s*:/.test(fsRead("js/systems/save-system.js")), "save-system.js ne connaît pas le champ (il passe avec grimoirePresets)");
+
+    // Migration d'un Grimoire à 6 règles : 1 à 3 actives, 4 à 6 en jeu « Mes autres règles », préréglage à 6 gardé
+    G.grimoirePresets = [{ id: "p6", name: "Six", icon: "", rules: [R("healIncoming", "skill1"), R("chargeIncoming", "defense"), R("enemyArmored", "skill2"), R("enemyVampiric", "skill2"), R("enemyRising", "skill1"), R("heroLowHp", "defense")], lastModified: 1 }];
+    G.grimoireRules = [R("enemyRising", "skill1"), R("healIncoming", "skill1"), R("enemyArmored", "skill2"), R("chargeIncoming", "defense"), R("enemySilenceIncoming", "defense"), R("enemyVampiric", "skill2")];
+    run("localStorage.setItem(getActiveSaveKey(), JSON.stringify(buildSaveData()));");
+    run("loadGame(); ensureGameStateDefaults();");
+    G = g.game;
+    var autres = G.grimoirePresets.filter(function (p) { return p.name === "Mes autres règles"; })[0];
+    ok(G.grimoireRules.length === 3 && G.grimoireRules.map(function (r) { return r.conditionId; }).join() === "enemyRising,healIncoming,enemyArmored", "migration : les règles 1 à 3 restent actives");
+    ok(autres && autres.rules.map(function (r) { return r.conditionId; }).join() === "chargeIncoming,enemySilenceIncoming,enemyVampiric" && !autres.actif, "migration : les règles 4 à 6 deviennent le jeu « Mes autres règles »");
+    var p6 = G.grimoirePresets.filter(function (p) { return p.id === "p6"; })[0];
+    ok(p6.rules.length === 6, "préréglage à 6 règles : les 6 restent stockées");
+    ok(g.migrateGrimoireExtraRules() === false && G.grimoirePresets.length === 2, "migration une seule fois : rien à refaire");
+    g.activateGrimoireJeu("p6");
+    ok(G.grimoireRules.length === 3 && G.grimoireRules[2].conditionId === "enemyArmored" && p6.rules.length === 6, "préréglage à 6 pris : ses 3 premières jouent, les suivantes restent stockées");
+    g.setGrimoireRuleAction(0, "skill2");
+    ok(p6.rules.length === 6 && p6.rules[5].conditionId === "heroLowHp", "modifier ce jeu : ses règles 4 à 6 restent");
+    // pas de place (6 jeux) : rien n'est perdu, la combat lit les 3 premières
+    G.grimoirePresets = [1, 2, 3, 4, 5, 6].map(function (i) { return { id: "q" + i, name: "Q" + i, icon: "", rules: [R()], lastModified: 0 }; });
+    G.grimoireRules = [R("healIncoming", "skill1"), R(), R(), R("chargeIncoming", "defense")];
+    ok(g.migrateGrimoireExtraRules() === false && G.grimoireRules.length === 4 && G.grimoireRules[3].conditionId === "chargeIncoming", "6 jeux déjà : les règles 4 à 6 restent stockées (rien n'est perdu)");
+    G.grimoireRules = [R("healIncoming", "skill1"), R(), R(), R(), R()];
+    ok(g.migrateGrimoireExtraRules() === true && G.grimoireRules.length === 3, "places 4 à 6 vides : simplement retirées");
+
+    // Pronostic : la Silhouette, situations cochées, phase du round 1, « Ajouter », « Tout préparer »
+    G.grimoirePresets = []; G.worldsEverReached = W(5);
+    var sil = { type: "adventure", id: "aq_tour_silhouette" };
+    var prev = g.getEnemyTraitsPreview(sil);
+    var ph = prev.traits.filter(function (t) { return t.phase != null; });
+    ok(ph.length === 1 && ph[0].trait === "enraged" && ph[0].phase === "elle se bat comme toi" && prev.traits[0] === ph[0], "Silhouette (Chevalier) : la phase « elle se bat comme toi » annonce Enragé, en tête");
+    ok(prev.traits.some(function (t) { return t.trait === "heal"; }) && prev.traits.some(function (t) { return t.trait === "shielded"; }), "boss jamais vaincu : son Soin et son Bouclier (certains) sont annoncés");
+    ok(prev.traits.every(function (t) { return t.trait !== "mirror" && t.trait !== "through"; }), "les autres phases restent une surprise");
+    G.grimoireRules = [R("enemyRising", "skill1"), R("chargeIncoming", "defense"), R("enemyVampiric", "skill2")];
+    g.openSortiePrep({ title: "Silhouette", ctx: sil, onGo: function () {} });
+    html = g.buildSortiePrepHTML();
+    ok(html.indexOf("sp-chk") !== -1 && html.indexOf("Tout préparer") !== -1 && html.indexOf("sortiePrepAdd('healIncoming')") !== -1 && html.indexOf("sortiePrepAdd('enemyEnraged')") !== -1, "pronostic : liste cochée, « Ajouter » sur chaque situation non couverte, « Tout préparer »");
+    ok(html.indexOf("sp-flag is-phase") !== -1 && html.indexOf("dès le round 1 : « elle se bat comme toi »") !== -1, "pronostic : la phase marquée « phase », dès le round 1");
+    ok(html.indexOf("sans objet ici") !== -1, "règles : celles sans objet pour ce combat sont marquées");
+    // remplacement d'une règle sans objet, puis Annuler
+    g.sortiePrepAdd("shieldIncoming");
+    ok(G.grimoireRules[2].conditionId === "shieldIncoming" && /inutile ici/.test(g.sortiePrep.msg.text) && g.sortiePrep.msg.before, "plein : « Ajouter » remplace la dernière règle sans objet et le dit");
+    ok(g.getActiveGrimoireJeu().rules[2].conditionId === "shieldIncoming", "le remplacement s'écrit dans le jeu actif");
+    ok(g.buildSortiePrepHTML().indexOf("sortiePrepUndo()") !== -1, "« Annuler » proposé");
+    g.sortiePrepUndo();
+    ok(G.grimoireRules[2].conditionId === "enemyVampiric" && !g.sortiePrep.msg, "« Annuler » : la règle d'avant revient");
+    // aucune règle sans objet : il demande laquelle
+    G.grimoireRules = [R("healIncoming", "skill1"), R("shieldIncoming", "skill2"), R("heroLowHp", "defense")];
+    g.sortiePrepAdd("enemyEnraged");
+    ok(g.sortiePrep.msg && g.sortiePrep.msg.pick === "enemyEnraged" && G.grimoireRules[2].conditionId === "heroLowHp", "plein sans règle sans objet : il demande laquelle remplacer");
+    html = g.buildSortiePrepHTML();
+    ok(html.indexOf("sortiePrepReplace(2)") !== -1 && html.indexOf("Ne rien changer") !== -1, "les 3 règles proposées au remplacement, « Ne rien changer »");
+    g.sortiePrepReplace(2);
+    ok(G.grimoireRules[2].conditionId === "enemyEnraged" && G.grimoireRules[2].actionSlot === "skill1", "remplacement choisi : Enragé → Frappe lourde (effet)");
+    html = g.buildSortiePrepHTML();
+    ok(html.indexOf("Tes règles répondent à ce combat") !== -1 && html.indexOf("3 / 3 couvertes") !== -1, "Silhouette préparée : 3 / 3 couvertes");
+    // Tout préparer
+    G.grimoireRules = [R("enemyRising", "skill1"), R(), R()];
+    g.sortiePrepAll();
+    ok(G.grimoireRules.slice(0, 3).map(function (r) { return r.conditionId; }).sort().join() === "enemyEnraged,healIncoming,shieldIncoming", "« Tout préparer » (Silhouette, Chevalier) : Bouclier, Soin, Enragé");
+    g.closeSortiePrep();
+    // le trait de phase suit la classe
+    var trait = function (hid) { G.heroId = hid; return g.getEnemyTraitsPreview(sil).traits.filter(function (t) { return t.phase != null; }).map(function (t) { return t.trait; }).join(); };
+    ok(trait("ranger") === "armored" && trait("mage") === "silenced", "Silhouette : Blindé pour le Rôdeur, Silence pour le Mage");
+    G.heroId = "knight";
+    // situations jamais rencontrées : pas nommées
+    G.grimoireSeen = { shieldIncoming: true, healIncoming: true }; G.grimoireRules = [R(), R(), R()]; G.grimoirePresets = [];
+    prev = g.getEnemyTraitsPreview(sil);
+    ok(!prev.traits.some(function (t) { return t.trait === "enraged"; }) && prev.unknown === 1, "Enragé jamais rencontré : non nommé, compté comme « situation encore inconnue » (v3.729.0)");
+    G.grimoireSeen = { chargeIncoming: true, shieldIncoming: true, healIncoming: true, enemySilenceIncoming: true };
+    // Dragon : Charge et Silence des ennemis ordinaires (l'un ou l'autre), Veine facultative ; 3 places : Charge, Bouclier, Soin
+    var dragon = { type: "adventure", id: "aq_montagne_dragon" };
+    G.grimoireSeen.veinIntact = true;
+    prev = g.getEnemyTraitsPreview(dragon);
+    var tr = function (k) { return prev.traits.filter(function (t) { return t.trait === k; })[0]; };
+    ok(tr("charge") && tr("charge").ou && tr("silenced") && tr("silenced").ou && tr("vein") && tr("vein").opt, "Dragon : Charge et Silence (l'un ou l'autre), Veine intacte facultative");
+    G.grimoireRules = [R(), R(), R()];
+    g.grimoirePrepareAll(dragon);
+    ok(G.grimoireRules.slice(0, 3).map(function (r) { return r.conditionId; }).join() === "chargeIncoming,shieldIncoming,healIncoming", "« Tout préparer » (Dragon) : Charge, Bouclier, Soin (le Silence reste au repli)");
+    ok(g.grimoireJeuScore(G.grimoireRules, dragon).n === 3 && g.grimoireJeuScore(G.grimoireRules, dragon).of === 4, "jeu conseillé : score couvert / situations (3 / 4)");
+    // préparation de sortie : la rangée des jeux, le conseillé marqué
+    G.grimoirePresets = [];
+    g.ensureGrimoireJeux(); g.saveGrimoirePreset("Vide", ""); G.grimoireRules = [R(), R(), R()]; g.syncGrimoireActiveJeu();
+    g.openSortiePrep({ title: "Dragon", ctx: dragon, onGo: function () {} });
+    html = g.buildSortiePrepHTML();
+    ok(html.indexOf("sortiePrepJeu('") !== -1 && html.indexOf("sp-star") !== -1 && html.indexOf("3/4") !== -1, "préparation : rangée des jeux, ★ sur le conseillé, couvertes / situations");
+    g.closeSortiePrep();
+
+    // Textes : plus de « 6 règles » ; anglais
+    ["js/ui/grimoire-view.js", "js/ui/tutorial-view.js", "js/data/memory.js", "js/ui/sortie-prep-view.js"].forEach(function (f) { ok(!/6 règles|six règles/.test(fsRead(f).replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, "")), f + " : plus de « 6 règles »"); });
+    ["Tout préparer", "Jeux de règles", "Mes autres règles", "Mes règles", "Remplace « {r} », inutile ici.", "dès le round 1 : « {x} »", "Tes emplacements sont pleins. Remplacer laquelle par « {r} » ?"].forEach(function (k) {
+      ok(fsRead("js/lang/en.js").indexOf(JSON.stringify(k)) >= 0, "en.js : « " + k + " » traduit");
+    });
+  } catch (err) { ok(false, "[496] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  finally { g.renderSortiePrep = keep.render; g.SortieManager.isActive = keep.active; g.sortiePrep = null; game = freshCombat("knight"); }
 })();
 
 Promise.all(ATTENTES).then(function () {

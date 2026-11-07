@@ -31,6 +31,7 @@ var DATA_TEXT_FIELDS = {
 
   /* --- Quêtes, Histoire, village --- */
   GRIMOIRE_TARGET_POLICIES: ["*.label", "*.desc"], // v3.428.0 (Ruines)
+  GRIMOIRE_OTHER_RULES_NAME: [""], GRIMOIRE_MY_RULES_NAME: [""], // v3.736.0 : noms des jeux créés d'office (core/state.js, ui/grimoire-view.js)
   STORY_SEUIL_TEXTS: ["*.completion", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.428.0 (Ruines) : les deux branches du choix « seuil »
   STORY_PORTENT_TEXTS: ["*.completion", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.452.0 (Crypte) : les deux branches du choix « portent »
   STORY_VEINE_TEXTS: ["*.completion", "*.dialogue.*.text", "*.dialogue.*.who"], // v3.488.0 (Montagne) : les deux branches du choix « veine »

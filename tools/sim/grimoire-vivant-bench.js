@@ -7,6 +7,7 @@
      vide     aucune règle (repli seul)
      adapte   règles construites pour CE scénario : situations relevées au pilote (robot, 20 parties), contre du kit, rangées par fréquence
      robot3 / adapte3   les mêmes, limitées à 3 emplacements (piste « moins d'emplacements »)
+     prepare3  v3.736.0 : Grimoire du robot réduit à 3, puis « Tout préparer » du pronostic du jeu (grimoirePrepareAll)
    Profils (enveloppes, non cumulés sauf mention) :
      jeu  moteur nu
      A    contres dédiés : la Défense ne contre plus que la Charge ; Silence → technique 1, Exaltation → technique 2
@@ -49,7 +50,7 @@ var PROFILS = {
   jeu: {}, A: { A: true }, B: { hp: 1.5 }, B2: { hp: 1.5, pow: 0.8 }, B3: { hp: 2, pow: 0.7 }, D: { D: true },
   AD: { A: true, D: true }, ABD: { A: true, D: true, hp: 1.5, pow: 0.8 }
 };
-var POLS = ["robot", "vide", "adapte", "robot3", "adapte3"];
+var POLS = ["robot", "vide", "adapte", "robot3", "adapte3", "prepare3"];
 var CLASSES = { knight: "Chevalier", ranger: "Rôdeur", mage: "Mage" };
 function liste(k, all) { var v = opt(k, null); return v ? v.split(",") : (Array.isArray(all) ? all : Object.keys(all)); }
 var L_CLASSES = liste("--classes", CLASSES), L_SCEN = liste("--scen", SCENARIOS), L_PROF = liste("--profils", ["jeu"]), L_POL = liste("--pols", POLS);
@@ -193,6 +194,7 @@ function prepare(g, saveTxt, sc, pol, adapte) {
   else if (pol === "vide") setRules(g, [], 0);
   else if (pol === "adapte") setRules(g, adapte || robot, slots);
   else if (pol === "adapte3") setRules(g, adapte || robot, Math.min(3, slots));
+  else if (pol === "prepare3") setRules(g, robot, Math.min(3, slots));
   if (sc.dungeon && g.game.dungeonTierCleared) delete g.game.dungeonTierCleared[sc.dungeon];
   var st = g.StoryQuestManager.getCurrentStep(sc.chap);
   if (st && st.id === sc.step) { try { g.StoryQuestManager.acceptStep(sc.chap); } catch (e) {} }
@@ -203,6 +205,8 @@ function prepare(g, saveTxt, sc, pol, adapte) {
   var q = sc.quest && g.ADVENTURE_QUESTS[sc.quest];
   st = g.StoryQuestManager.getCurrentStep(sc.chap);
   if (q && q.requiresVoie && st && st.choice && !g.CompanionManager.state(q.requiresVoie).voie) g.storyMakeChoice(sc.chap, st.choice.options[0].value);
+  // v3.736.0 : le joueur suit le pronostic, « Tout préparer » juste avant de partir
+  if (pol === "prepare3" && typeof g.grimoirePrepareAll === "function") g.grimoirePrepareAll(sc.dungeon ? { type: "dungeon", id: sc.dungeon } : { type: "adventure", id: sc.quest });
   return { slots: slots, rules: g.game.grimoireRules.filter(function (r) { return r && r.conditionId; }).map(function (r) { return r.conditionId + ">" + r.actionSlot; }) };
 }
 function playRun(g, S, saveTxt, sc, s, pol, adapte) {
@@ -354,7 +358,7 @@ function rapport(all, minutes, brut) {
           if (a.bossVu) l += "  | boss " + a.bossMed + " (" + a.bossP10 + "-" + a.bossP90 + ")  mort " + p0(a.bossMort) + "  règle " + p0(a.bossRegle);
           if (a.figes) l += "  FIGÉS " + a.figes;
           out.push(l);
-          if (pol === "adapte" || pol === "robot") out.push("        " + "".padEnd(10) + pol + " (" + a.slots + " empl.) : " + a.rules.join(" · "));
+          if (pol === "adapte" || pol === "robot" || pol === "prepare3") out.push("        " + "".padEnd(10) + pol + " (" + a.slots + " empl.) : " + a.rules.join(" · "));
         });
         var r = all[[pid, "robot", c, sid].join("|")] || all[[pid, L_POL[0], c, sid].join("|")];
         if (r && r.agg.ph) {

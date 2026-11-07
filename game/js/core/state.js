@@ -243,19 +243,41 @@ window.RETIRED_UPGRADES = RETIRED_UPGRADES;
 /* Presets du Grimoire nettoyés : partagé avec restoreBaseState (audit 04/11, ARCH-17). */
 function normalizeGrimoirePresets(list) {
   if (!Array.isArray(list)) return [];
+  var actif = false;
   return list.filter(function (p) {
     return p && typeof p === "object" && typeof p.id === "string" && typeof p.name === "string" && Array.isArray(p.rules);
   }).map(function (p) {
-    return {
+    var o = {
       id: p.id,
       name: p.name,
       icon: typeof p.icon === "string" ? p.icon : "📖",
       rules: (typeof sanitizeGrimoireRules === "function") ? sanitizeGrimoireRules(p.rules, null) : p.rules,
       lastModified: typeof p.lastModified === "number" ? p.lastModified : 0
     };
+    if (p.actif === true && !actif) { o.actif = actif = true; } // v3.736.0 (Seb 07/11) : le jeu actif, un seul
+    return o;
   });
 }
 window.normalizeGrimoirePresets = normalizeGrimoirePresets;
+
+/* v3.736.0 (Seb 07/11, migration A) : Grimoire d'avant à 6 règles. Les 3 premières restent actives ; les règles 4 à 6
+   deviennent le jeu « Mes autres règles » s'il reste une place, puis leurs places se vident. Sans place : gardées. */
+var GRIMOIRE_OTHER_RULES_NAME = "Mes autres règles";
+var GRIMOIRE_MY_RULES_NAME = "Mes règles"; // jeu créé d'office pour les règles en cours (ui/grimoire-view.js)
+function migrateGrimoireExtraRules() {
+  var max = (typeof GRIMOIRE_ACTIVE_MAX === "number") ? GRIMOIRE_ACTIVE_MAX : 3, rules = game.grimoireRules;
+  if (!Array.isArray(rules) || rules.length <= max) return false;
+  var used = function (r) { return !!(r && (r.conditionId || r.actionSlot)); }, extra = rules.slice(max).filter(used);
+  if (extra.length) {
+    if (!Array.isArray(game.grimoirePresets) || game.grimoirePresets.length >= 6) return false;
+    extra = extra.slice(0, max).map(function (r) { return { conditionId: r.conditionId || null, actionSlot: r.actionSlot || null }; });
+    while (extra.length < max) extra.push({ conditionId: null, actionSlot: null });
+    game.grimoirePresets.push({ id: "preset_autres_" + Date.now(), name: GRIMOIRE_OTHER_RULES_NAME, icon: "images/Icons/system/grimoire.webp", rules: extra, lastModified: Date.now() });
+  }
+  game.grimoireRules = rules.slice(0, max);
+  return true;
+}
+window.migrateGrimoireExtraRules = migrateGrimoireExtraRules;
 
 function ensureGameStateDefaults() {
   if (!game.killCounts) game.killCounts = {};
@@ -355,6 +377,7 @@ function ensureGameStateDefaults() {
   }
 
   game.grimoirePresets = normalizeGrimoirePresets(game.grimoirePresets);
+  migrateGrimoireExtraRules(); // v3.736.0 : une fois, au chargement ; ensuite il n'y a plus rien à migrer
 
   if (typeof game.lastSpecialUse !== "number") game.lastSpecialUse = 0;
   if (typeof game.specialBuffExpires !== "number") game.specialBuffExpires = 0;

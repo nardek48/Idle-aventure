@@ -58,7 +58,7 @@ function openSortiePrep(opts) {
   var bare = !sortiePrepHasChoice() && !(lvlEl && lvlEl.best > 0);
   if (bare && !sortieLowHp(opts)) return opts.onGo();
   if (!sortiePrepGrimoireOpen() && game.combatMode === "grimoire" && window.CombatEngine) CombatEngine.setCombatMode("tactique");
-  sortiePrep = { opts: opts, preset: null, buffs: {}, items: [], pick: -1, bare: bare, level: lvlEl ? Math.max(1, lvlEl.best) : null };   // bare : feuille réduite à l'alerte PV
+  sortiePrep = { opts: opts, buffs: {}, items: [], pick: -1, bare: bare, level: lvlEl ? Math.max(1, lvlEl.best) : null, msg: null };   // bare : feuille réduite à l'alerte PV ; msg : geste du pronostic (v3.736.0)
   renderSortiePrep();
   // v3.704.0 (TUTO-16) : première feuille qui propose un choix, la fiche au-dessus d'elle
   if (!bare && typeof openGenericTutorialOnce === "function") openGenericTutorialOnce("sortie_prep", { allow: "sortie-prep-root" });
@@ -107,6 +107,7 @@ function buildSortiePrepHTML() {
   h += buildSortiePrepEliteLevelHTML();   // v3.657.0 : élites à niveaux (atelier elites-niveaux.html, A)
   h += buildSortiePrepForecastHTML();   // v3.523.0 : le verdict de l'élite, frein du jour compris
   h += buildSortiePrepTraitsHTML(grim);   // v3.446.1 : la menace d'abord (décision Seb), la préparation ensuite
+  if (grimOpen) h += buildSortiePrepRulesHTML(grim);   // v3.736.0 (Seb 07/11, Grimoire vivant) : jeux et règles juste sous le pronostic
 
   /* Mode, figé jusqu'au retour au Campement */
   if (grimOpen) {
@@ -123,16 +124,6 @@ function buildSortiePrepHTML() {
     // v3.458.4 (audit C14) : règles, cible et potions automatiques rejoignent les réglages repliés
     var main = h; h = '';
 
-    var presets = (typeof ensureGrimoirePresets === "function") ? ensureGrimoirePresets() : [];
-    if (presets.length) {
-      h += '<div class="cp-behavior-row"><span>' + _t("Règles") + '</span></div><div class="sp-presets">';
-      h += '<button type="button" class="' + (!sortiePrep.preset ? 'is-on' : '') + '" onclick="sortiePrepPreset(\'\')"><img src="images/Icons/system/grimoire.webp" alt="">' + _t("Mes règles actuelles") + '</button>';
-      presets.forEach(function (p) {
-        h += '<button type="button" class="' + (sortiePrep.preset === p.id ? 'is-on' : '') + '" onclick="sortiePrepPreset(\'' + esc(p.id) + '\')"><img src="' + esc(p.icon || "images/Icons/system/grimoire.webp") + '" alt="">' + esc(_td(p.name)) + '</button>';
-      });
-      h += '</div>';
-    }
-    h += buildSortiePrepRulesHTML();
     if (grim) {
       if (window.RiseSystem) {
         var pol = RiseSystem.getPolicy();
@@ -248,33 +239,64 @@ function sortiePrepRest() {
   if (typeof switchTab === "function") switchTab("campement");
 }
 
-/* v3.445.0 : les règles avec lesquelles on part (celles du preset choisi, sinon les actuelles), en lecture ;
-   « Modifier » ouvre l'onglet Grimoire, qui garde le chemin du retour vers cette feuille. */
+/* v3.445.0 : les règles avec lesquelles on part, en lecture ; « Modifier » ouvre l'onglet Grimoire, qui garde le chemin du retour.
+   v3.736.0 (Seb 07/11, jeux A) : ce sont celles du jeu actif ; la rangée des jeux en change d'un toucher (★ : le conseillé). */
 function sortiePrepRules() {
-  var id = sortiePrep && sortiePrep.preset;
-  var p = id ? ensureGrimoirePresets().filter(function (x) { return x.id === id; })[0] : null;
-  var rules = p ? p.rules : (game.grimoireRules || []);
+  var rules = game.grimoireRules || [];
   return (typeof sanitizeGrimoireRules === "function") ? sanitizeGrimoireRules(rules, getGrimoireCurrentKit()) : rules;
 }
 
-function buildSortiePrepRulesHTML() {
-  if (typeof getGrimoireCurrentKit !== "function") return "";
-  var kit = getGrimoireCurrentKit(), rules = sortiePrepRules();
-  var open = (typeof getGrimoireSlotCount === "function") ? getGrimoireSlotCount(game.worldsEverReached) : rules.length;
-  var h = '<div class="sp-rules">', n = 0;
-  rules.slice(0, open).forEach(function (r, i) {
-    var cond = getGrimoireCondition(r.conditionId), act = (kit && kit.actions && r.actionSlot) ? kit.actions[r.actionSlot] : null;
-    if (!cond || !act) return;
-    n++;
-    h += '<div class="sp-rule"><i>' + (i + 1) + '</i>' + renderIconOrEmojiHTML(cond.icon, "", "")
-      + '<span>' + esc(_t("Si {x}", { x: getGrimoireConditionShortLabel(r.conditionId) })) + ' <b>→</b> ' + esc(_td(act.label)) + '</span>'
-      + (isGrimoireRuleCounter(r, kit) ? '<em>' + _t("Contre") + '</em>' : '') + '</div>';
+function buildSortiePrepJeuxHTML() {
+  if (typeof ensureGrimoireJeux !== "function") return "";
+  var active = ensureGrimoireJeux(), presets = ensureGrimoirePresets(), ctx = sortiePrep.opts.ctx;
+  if (presets.length < 2) return "";
+  var sugg = ctx && typeof getSuggestedGrimoirePreset === "function" ? getSuggestedGrimoirePreset(ctx) : null;
+  var h = '<div class="sp-presets" role="tablist" aria-label="' + esc(_t("Jeux de règles")) + '">';
+  presets.forEach(function (p) {
+    var on = p.id === active.id, sc = ctx && typeof grimoireJeuScore === "function" ? grimoireJeuScore(p.rules, ctx) : null;
+    h += '<button type="button" role="tab" aria-selected="' + on + '" class="' + (on ? 'is-on' : '') + (sugg && sugg.id === p.id ? ' is-sugg' : '') + '"' + (on ? '' : ' onclick="sortiePrepJeu(\'' + esc(p.id) + '\')"') + '>'
+      + (sugg && sugg.id === p.id ? '<span class="sp-star" aria-label="' + esc(_t("Conseillé")) + '">★</span>' : '')
+      + renderIconOrEmojiHTML(p.icon || "images/Icons/system/grimoire.webp", "", "") + esc(_td(p.name))
+      + (sc && sc.of ? ' <small>' + sc.n + '/' + sc.of + '</small>' : '') + '</button>';
   });
-  if (!n) h += '<div class="cp-behavior-hint">' + _t("Aucune règle : le Grimoire attaque à chaque round.") + '</div>';
-  else if (open - n > 0) h += '<div class="cp-behavior-hint">' + esc(_tn(open - n, "{n} emplacement libre.", "{n} emplacements libres.")) + '</div>';
-  h += '<button type="button" class="kbtn sp-rules-edit" onclick="sortiePrepEditRules()"><img class="ico-inline" src="images/Icons/system/grimoire.webp" alt=""> '
-    + (sortiePrep.preset ? _t("Modifier ces règles") : _t("Modifier mes règles")) + '</button>';
-  if (sortiePrep.preset) h += '<div class="cp-behavior-hint">' + _t("Le preset devient tes règles actuelles, puis s'ouvre dans le Grimoire.") + '</div>';
+  return h + '</div>';
+}
+
+/* Message du dernier geste du pronostic (ajout, remplacement, « Tout préparer ») avec « Annuler » ; en choix, les règles à remplacer. */
+function buildSortiePrepMsgHTML(kit) {
+  var m = sortiePrep.msg;
+  if (!m) return "";
+  var h = '<div class="sp-msg" role="status"><span>' + esc(m.text) + '</span><div class="sp-msg-acts">';
+  if (m.before) h += '<button type="button" class="kbtn" onclick="sortiePrepUndo()">' + _t("Annuler") + '</button>';
+  if (m.pick) h += '<button type="button" class="kbtn" onclick="sortiePrepCloseMsg()">' + _t("Ne rien changer") + '</button>';
+  return h + '</div></div>';
+}
+
+function buildSortiePrepRulesHTML(grim) {
+  if (typeof getGrimoireCurrentKit !== "function") return "";
+  var kit = getGrimoireCurrentKit(), rules = sortiePrepRules(), ctx = sortiePrep.opts.ctx, pick = sortiePrep.msg && sortiePrep.msg.pick;
+  var open = (typeof getGrimoireSlotCount === "function") ? getGrimoireSlotCount(game.worldsEverReached) : rules.length;
+  var possible = ctx && typeof etPossibleConds === "function" ? etPossibleConds(ctx) : null;
+  var active = typeof ensureGrimoireJeux === "function" ? ensureGrimoireJeux() : null;
+  var h = '<div class="sp-sec"><div class="sp-title">' + _t("Tes règles") + '<small>' + esc(active ? _td(active.name) : "") + '</small></div>';
+  h += buildSortiePrepJeuxHTML();
+  h += buildSortiePrepMsgHTML(kit);
+  h += '<div class="sp-rules">';
+  var n = 0;
+  rules.slice(0, open).forEach(function (r, i) {
+    var cond = getGrimoireCondition(r.conditionId), act = (typeof getGrimoireActionDef === "function") ? getGrimoireActionDef(kit, r.actionSlot) : null;
+    var useless = !!(possible && cond && etRuleUseless(r, possible));
+    var tag = useless ? '<em class="is-nul">' + _t("sans objet ici") + '</em>' : (cond && act && etRuleCovers(r, kit) ? '<em>' + _t("Contre") + '</em>' : '');
+    var inner = '<i>' + (i + 1) + '</i>' + (cond && act ? renderIconOrEmojiHTML(cond.icon, "", "")
+      + '<span>' + esc(_t("Si {x}", { x: getGrimoireConditionShortLabel(r.conditionId) })) + ' <b>→</b> ' + esc(_td(act.label)) + '</span>' + tag
+      : '<span class="is-free">' + _t("Emplacement libre") + '</span>');
+    if (cond && act) n++;
+    h += pick ? '<button type="button" class="sp-rule is-pick" onclick="sortiePrepReplace(' + i + ')">' + inner + '<em class="is-new">' + _t("Remplacer") + '</em></button>'
+      : '<div class="sp-rule">' + inner + '</div>';
+  });
+  h += '</div>';
+  if (!n) h += '<div class="cp-behavior-hint">' + (grim ? _t("Aucune règle : le Grimoire attaque à chaque round.") : _t("Aucune règle : rien n'est surligné en Tactique.")) + '</div>';
+  h += '<button type="button" class="kbtn sp-rules-edit" onclick="sortiePrepEditRules()"><img class="ico-inline" src="images/Icons/system/grimoire.webp" alt=""> ' + _t("Modifier mes règles") + '</button>';
   return h + '</div>';
 }
 
@@ -282,8 +304,7 @@ function buildSortiePrepRulesHTML() {
 function sortiePrepEditRules() {
   if (!sortiePrep) return;
   var saved = sortiePrep, fromTab = game.activeTab;
-  if (saved.preset && typeof loadGrimoirePreset === "function") loadGrimoirePreset(saved.preset);
-  saved.preset = null;
+  saved.msg = null;
   closeSortiePrep();
   if (typeof switchTab === "function") switchTab("grimoire");
   if (game.activeTab !== "grimoire") return;
@@ -396,30 +417,106 @@ function sortiePrepTraitsPreview() {
   return (sortiePrep.opts.ctx && typeof getEnemyTraitsPreview === "function") ? getEnemyTraitsPreview(sortiePrep.opts.ctx) : { traits: [], unmet: 0 };
 }
 
-/* v3.446.0 : « Ce que tu vas affronter », section à part en tête de feuille (seul endroit depuis le retrait de
-   l'encart des écrans de lancement) : la réponse à chaque trait connu, par l'objet emporté ou la règle du départ. */
+/* v3.446.0 : « Ce que tu vas affronter », la réponse à chaque trait connu (objet emporté ou règle du départ).
+   v3.736.0 (Seb 07/11, pronostic B) : coche couvert / pas couvert, « Ajouter » ou « Corriger », « Tout préparer » en tête. */
 function buildSortiePrepTraitsHTML(grim) {
   var prev = sortiePrepTraitsPreview();
-  if (!prev.traits.length) return "";
+  if (!prev.traits.length && !prev.unknown) return "";
   var kit = (typeof getGrimoireCurrentKit === "function") ? getGrimoireCurrentKit() : null, chosen = sortiePrep.items;
-  var h = '<div class="sp-sec"><div class="sp-title">' + _t("Ce que tu vas affronter") + '</div>';
+  var ctx = sortiePrep.opts.ctx, rules = sortiePrepRules();
+  var open = (typeof getGrimoireSlotCount === "function") ? getGrimoireSlotCount(game.worldsEverReached) : 3;
+  var want = grim && typeof grimoireSortieSituations === "function" ? grimoireSortieSituations(ctx).filter(function (x) { return !x.opt; }) : [];
+  var miss = want.filter(function (x) { return etRuleResponse(x.cond, rules, kit).status !== "counter"; });
+  var h = '<div class="sp-sec"><div class="sp-title">' + _t("Ce que tu vas affronter")
+    + (want.length ? '<small>' + esc(_t("{a} / {b} couvertes", { a: want.length - miss.length, b: want.length })) + '</small>' : '') + '</div>';
+  if (grim && want.length) {
+    var top = want.slice(0, open), topMiss = top.filter(function (x) { return miss.indexOf(x) !== -1; });
+    if (topMiss.length) {
+      h += '<div class="sp-prep"><span>' + esc(_tn(topMiss.length, "{n} situation sans réponse.", "{n} situations sans réponse.")) + '</span>'
+        + '<button type="button" class="kbtn primary" onclick="sortiePrepAll()">' + _t("Tout préparer") + '</button></div>';
+    } else {
+      var rest = miss.map(function (x) { return sortiePrepTraitName(x.trait); });
+      h += '<div class="sp-prep is-ok"><span>' + esc(rest.length
+        ? _t("✓ Tes emplacements répondent aux situations les plus fréquentes. Pas de place pour : {x} (la Défense de repli joue sur une annonce).", { x: rest.join(", ") })
+        : _t("✓ Tes règles répondent à ce combat.")) + '</span></div>';
+    }
+  }
   prev.traits.forEach(function (t) {
     var def = ENEMY_TRAIT_DEFS[t.trait], st = enemyTraitLook(t.trait); // v3.492.14 : nom et icône, état de combat ou propres
     var item = chosen.filter(function (id) { return id && COMBAT_ITEMS[id] && COMBAT_ITEMS[id].trait === t.trait; })[0];
-    var r = grim && def.cond ? etRuleResponse(def.cond, sortiePrepRules(), kit) : { status: "none" };
+    var r = grim && def.cond ? etRuleResponse(def.cond, rules, kit) : { status: "none" };
+    var slot = grim && def.cond && typeof etAdvisedSlot === "function" ? etAdvisedSlot(def.cond, kit) : null;
     var sansRegle = !def.cond && !item; // aucune règle du Grimoire ne vise cette mécanique
     var cls = item ? "is-item" : (r.status === "counter" ? "is-rule" : (grim && !sansRegle ? "is-none" : "is-free"));
+    var conseil = slot && r.status !== "counter" ? sortiePrepActionLabel(kit, slot) : "";
     var resp = item ? (COMBAT_ITEMS[item].soften ? _t("{o} l'atténue.", { o: _td(COMBAT_ITEMS[item].name) }) : _t("{o} le tient.", { o: _td(COMBAT_ITEMS[item].name) }))
-      : r.status === "counter" ? _t("Ta règle « {r} » le contre.", { r: etRuleLabel(r.rule, kit) })
-      : r.status === "react" ? _t("Ta règle « {r} » réagit, sans le contrer.", { r: etRuleLabel(r.rule, kit) })
+      : r.status === "counter" ? (def.cond === "veinIntact" ? _t("Ta règle « {r} » y répond.", { r: etRuleLabel(r.rule, kit) }) : _t("Ta règle « {r} » le contre.", { r: etRuleLabel(r.rule, kit) }))
+      : r.status === "react" ? _t("Ta règle « {r} » réagit, sans le contrer.", { r: etRuleLabel(r.rule, kit) }) + (conseil ? " " + _t("Conseillé : {a}.", { a: conseil }) : "")
       : sansRegle ? _t("Ni règle ni objet n'y répond : à toi de le gérer en combat.")
-      : grim ? _t("Aucune règle ni objet ne répond.") : _t("À toi de le contrer en combat.");
-    h += '<div class="sp-trait ' + cls + '"><img src="' + esc(st.icon || "") + '" alt=""><span><b>' + esc(_td(st.nom)) + '</b> · '
-      + esc(t.names.map(function (n) { return _td(n); }).join(", ")) + '<em>' + esc(resp) + '</em></span>'
-      + (cls === "is-none" ? '<button type="button" class="sp-trait-fix" onclick="sortiePrepEditRules()">' + _t("Règle") + ' ›</button>' : '') + '</div>';
+      : grim ? (conseil ? _t("Pas couvert. Conseillé : {a}.", { a: conseil }) : _t("Aucune règle ni objet ne répond."))
+      : _t("À toi de le contrer en combat.");
+    var chk = !grim || sansRegle ? '' : '<i class="sp-chk' + (cls === "is-rule" || cls === "is-item" ? ' is-ok">✓' : '">✗') + '</i>';
+    var tags = (t.phase != null ? ' <span class="sp-flag is-phase">' + _t("phase") + '</span>' : '')
+      + (t.ou ? ' <span class="sp-flag">' + _t("l'un ou l'autre") + '</span>' : '')
+      + (t.opt ? ' <span class="sp-flag">' + _t("facultatif") + '</span>' : '');
+    var src = t.phase != null ? _t("dès le round 1 : « {x} »", { x: _td(t.phase) }) : t.names.map(function (n) { return _td(n); }).join(", ");
+    var btn = cls === "is-none" && slot ? '<button type="button" class="sp-trait-fix" onclick="sortiePrepAdd(\'' + esc(def.cond) + '\')">' + (r.status === "react" ? _t("Corriger") : _t("Ajouter")) + '</button>' : '';
+    h += '<div class="sp-trait ' + cls + '">' + chk + '<img src="' + esc(st.icon || "") + '" alt=""><span><b>' + esc(_td(st.nom)) + '</b>' + tags + ' · '
+      + esc(src) + '<em>' + esc(resp) + '</em></span>' + btn + '</div>';
   });
+  if (prev.unknown) h += '<div class="cp-behavior-hint">' + esc(_tn(prev.unknown, "{n} situation encore inconnue", "{n} situations encore inconnues")) + ' · ' + _t("elle se révélera en combat.") + '</div>';
   if (prev.unmet) h += '<div class="cp-behavior-hint">' + esc(_tn(prev.unmet, "{n} créature jamais vaincue : ses traits se révéleront au premier combat.", "{n} créatures jamais vaincues : leurs traits se révéleront au premier combat.")) + '</div>';
   return h + '</div>';
+}
+
+/* Nom de l'action conseillée (« Garde », « Tailler »…). */
+function sortiePrepActionLabel(kit, slot) {
+  var a = typeof getGrimoireActionDef === "function" ? getGrimoireActionDef(kit, slot) : null;
+  return a ? _td(a.label) : slot;
+}
+
+/* Gestes du pronostic : le message dit ce qui a changé, « Annuler » remet les règles d'avant. */
+function sortiePrepRuleText(rule) {
+  var kit = getGrimoireCurrentKit();
+  return _t("Si {x}", { x: getGrimoireConditionShortLabel(rule.conditionId) }) + " → " + sortiePrepActionLabel(kit, rule.actionSlot);
+}
+function sortiePrepAdd(cond) {
+  if (!sortiePrep || typeof grimoireAddRule !== "function") return;
+  var r = grimoireAddRule(sortiePrep.opts.ctx, cond), m = null;
+  if (!r) return;
+  if (r.kind === "added") m = { text: _t("Ajoutée en {n} : « {r} ».", { n: r.index + 1, r: sortiePrepRuleText(r.rule) }), before: r.before };
+  else if (r.kind === "fixed") m = { text: _t("Corrigée : « {a} » devient « {b} ».", { a: sortiePrepRuleText(r.old), b: sortiePrepRuleText(r.rule) }), before: r.before };
+  else if (r.kind === "replaced") m = { text: _t("Remplace « {r} », inutile ici.", { r: sortiePrepRuleText(r.old) }), before: r.before };
+  else if (r.kind === "pick") m = { text: _t("Tes emplacements sont pleins. Remplacer laquelle par « {r} » ?", { r: sortiePrepRuleText(r.rule) }), pick: cond };
+  sortiePrep.msg = m;
+  renderSortiePrep();
+}
+function sortiePrepReplace(index) {
+  if (!sortiePrep || !sortiePrep.msg || !sortiePrep.msg.pick) return;
+  var r = grimoireReplaceRule(index, sortiePrep.msg.pick);
+  sortiePrep.msg = r ? { text: _t("Remplace « {r} ».", { r: sortiePrepRuleText(r.old) }), before: r.before } : null;
+  renderSortiePrep();
+}
+function sortiePrepAll() {
+  if (!sortiePrep || typeof grimoirePrepareAll !== "function") return;
+  var r = grimoirePrepareAll(sortiePrep.opts.ctx);
+  if (!r) return;
+  sortiePrep.msg = r.changed ? { text: _t("Grimoire préparé pour ce combat : les contres d'annonce d'abord."), before: r.before } : { text: _t("Rien à changer : tes règles répondent déjà au mieux.") };
+  renderSortiePrep();
+}
+function sortiePrepUndo() {
+  if (!sortiePrep || !sortiePrep.msg || !sortiePrep.msg.before) return;
+  grimoireUndoRules(sortiePrep.msg.before);
+  sortiePrep.msg = null;
+  renderSortiePrep();
+}
+function sortiePrepCloseMsg() { if (sortiePrep) sortiePrep.msg = null; renderSortiePrep(); }
+/* Un toucher sur un jeu : il devient actif (ses 3 règles jouent) ; le message en cours ne vaut plus. */
+function sortiePrepJeu(id) {
+  if (!sortiePrep || typeof activateGrimoireJeu !== "function") return;
+  activateGrimoireJeu(id);
+  sortiePrep.msg = null;
+  renderSortiePrep();
 }
 
 function buildSortiePrepItemsHTML(grim) {
@@ -547,8 +644,8 @@ function sortiePrepFold() { if (sortiePrep) sortiePrep.tuneOpen = !sortiePrep.tu
 function sortiePrepTuneSummary(grim) {
   var parts = [];
   if (grim) {
-    var pr = sortiePrep.preset && typeof ensureGrimoirePresets === "function" ? ensureGrimoirePresets().filter(function (p) { return p.id === sortiePrep.preset; })[0] : null;
-    parts.push(pr ? _td(pr.name) : _t("Mes règles actuelles"));
+    var pr = typeof ensureGrimoireJeux === "function" ? ensureGrimoireJeux() : null; // v3.736.0 : le jeu actif
+    if (pr) parts.push(_td(pr.name));
   }
   var items = (sortiePrep.items || []).filter(Boolean).length;
   parts.push(_tn(items, "{n} objet", "{n} objets"));
@@ -559,7 +656,7 @@ function sortiePrepTuneSummary(grim) {
   return parts.join(" · ");
 }
 function sortiePrepMode(mode) { if (window.CombatEngine) CombatEngine.setCombatMode(mode); renderSortiePrep(); }
-function sortiePrepPreset(id) { if (sortiePrep) sortiePrep.preset = id || null; renderSortiePrep(); }
+function sortiePrepPreset(id) { if (id) sortiePrepJeu(id); } // v3.736.0 : ancien nom, le jeu se prend d'un toucher
 function sortiePrepTarget(id) { if (window.RiseSystem) RiseSystem.setPolicy(id); renderSortiePrep(); }
 function sortiePrepVarier(on) { game.grimoireVarier = !!on; if (typeof saveGame === "function") saveGame(); renderSortiePrep(); } // v3.653.0
 function sortiePrepPotAuto(id) { if (window.PotionAutoManager) PotionAutoManager.set("threshold", id); renderSortiePrep(); }
@@ -582,7 +679,6 @@ function confirmSortiePrep() {
   if (!sortiePrep) return;
   var s = sortiePrep;
   closeSortiePrep();
-  if (s.preset && typeof loadGrimoirePreset === "function") loadGrimoirePreset(s.preset);
   // v3.449.0 : on retient ce départ s'il emportait des potions à bonus ou des objets
   var buffsPris = Object.keys(s.buffs).filter(function (id) { return s.buffs[id] && !PotionManager.isArmed(id); });
   var objetsPris = s.items.filter(Boolean);
@@ -613,3 +709,9 @@ window.sortiePrepPick = sortiePrepPick;
 window.sortiePrepItem = sortiePrepItem;
 window.sortiePrepAgain = sortiePrepAgain;
 window.sortiePrepEditRules = sortiePrepEditRules;
+window.sortiePrepAdd = sortiePrepAdd;
+window.sortiePrepReplace = sortiePrepReplace;
+window.sortiePrepAll = sortiePrepAll;
+window.sortiePrepUndo = sortiePrepUndo;
+window.sortiePrepCloseMsg = sortiePrepCloseMsg;
+window.sortiePrepJeu = sortiePrepJeu;

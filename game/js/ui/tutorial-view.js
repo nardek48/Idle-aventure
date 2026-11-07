@@ -298,7 +298,8 @@ var GENERIC_TUTORIALS = {
       { icon: "images/Icons/combat_status/counter.webp", text: "Une action marquée « ⚡ Contre » annule complètement l'attaque adverse. C'est le meilleur appariement possible pour cette situation." },
       { icon: "images/Icons/system/ascension.webp", text: "S'il n'y a aucune règle applicable, ton héros continue de se battre normalement — le Grimoire s'ajoute au comportement automatique, il ne le remplace pas." },
       { icon: "images/Icons/system/lock_closed.webp", text: "En combat, ton héros met de côté un peu de ressource pour garantir ton contre le plus prioritaire : il jouera moins d'actions coûteuses en attendant." },
-      { icon: "images/Icons/quests/quest_resources.webp", text: "Une situation apparaît dans le Grimoire la première fois que tu la rencontres en combat. Les emplacements de règles s'ouvrent en atteignant de nouveaux mondes." }
+      { icon: "images/Icons/quests/quest_resources.webp", text: "Une situation apparaît dans le Grimoire la première fois que tu la rencontres en combat. Trois règles au plus : la troisième s'ouvre aux Ruines." },
+      { icon: "images/Icons/system/save.webp", text: "Tes jeux de règles changent d'un toucher avant de partir, et « Ce que tu vas affronter » pose la règle utile. La Crypte, la Montagne et la Tour t'offrent chacune un jeu de plus." }
     ]
   },
   /* v3.704.0 (TUTO-16, atelier « Aides et récit », Seb A) : sept fiches de plus. Sans tab : ouvertes par

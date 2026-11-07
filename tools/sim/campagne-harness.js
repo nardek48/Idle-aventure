@@ -1105,6 +1105,7 @@ function freeSector(mapId, sectorId) {
     if (!cs.ok && cs.missingResource) obtain(cs.missingResource, 1);
     if (!cs.ok && /PV/.test(cs.reason || "")) { if (COMBATS) healUp(1); else g.game.heroHp = g.game.heroMaxHp; }
     if (COMBATS) healUp();
+    preparerSortieCarte(g, mapId, cible, cs);
     var r = LM.start(mapId, cible);
     if (!r.ok && CAP_RE.test(r.reason || "")) { if (SANS_LENDEMAIN) return false; waitCap(); r = LM.start(mapId, cible); }
     if (!r.ok && /Petite ration/.test(r.reason || "")) { obtain("petite_ration", 1); r = LM.start(mapId, cible); }
@@ -1170,6 +1171,7 @@ function playDungeonOnce(id, withMark, libreOk, niveau, libreForce) {
   // audit (26/10) : les vivres de sortie d'un donjon déjà fini (les runs de matériau les oubliaient)
   var viv = !libre && g.ProvisionsManager && D.getById(id) && g.ProvisionsManager.check("dungeon", D.getById(id)) && g.ProvisionsManager.getRequirement("dungeon", D.getById(id));
   if (viv) obtain(viv.resourceId, viv.amount);
+  preparerSortie(g, { type: "dungeon", id: id });
   if (libre) D.start(id, [], niveau || 1, true); else D.start(id, marks, niveau);
   act((libre ? "donjonLibre" : "donjon") + ":" + id + (niveau > 1 ? " niv. " + niveau : ""), 0);
   if (!g.game.dungeonRun.active) { note("donjon " + id + " : entrée refusée (sorties restantes " + D.getRunsLeft(id) + ", PV " + Math.floor(g.game.heroHp) + ", verrou " + (g.heroLockReason ? g.heroLockReason() : "") + ", quête " + !!(g.game.adventureQuestRun && g.game.adventureQuestRun.active) + ", chasse " + !!(g.game.huntRun && g.game.huntRun.active) + ")"); return null; }
@@ -1194,6 +1196,7 @@ function freeSectorAgain(mapId, sectorId) {
   }
   if (!cs.ok && cs.missingResource) obtain(cs.missingResource, 1);
   if (COMBATS) healUp(); else g.game.heroHp = g.game.heroMaxHp;
+  preparerSortieCarte(g, mapId, sectorId, cs);
   var r = LM.start(mapId, sectorId);
   if (!r.ok && /Vivres/.test(r.reason || "")) {       // vivres de sortie : une ration, comme le dit le refus
     var m = /(\d+) (Petite ration|Ration moyenne|Grande ration)/.exec(r.reason) || [];
@@ -1272,6 +1275,7 @@ function playAdventure(id) {
   for (var essai = 0; essai < 10; essai++) {
     if (g.game.adventureQuestsCompleted[id]) return true;
     if (COMBATS) healUp();
+    preparerSortie(g, { type: "adventure", id: id });
     g.AdventureQuestManager.start(id);
     if (!g.game.adventureQuestRun.active) { note("quête " + id + " : départ refusé"); return false; }
     var nf = STATS.fights.length;
@@ -2148,6 +2152,18 @@ function reglesAvisees(g) {
   if (REGLE_EN_TETE) g.game.grimoireRules = [REGLE_EN_TETE].concat((g.game.grimoireRules || []).filter(function (r) { return r && r.conditionId && r.conditionId !== REGLE_EN_TETE.conditionId; })).slice(0, Math.max(1, places));
 }
 var REGLE_EN_TETE = null;
+
+/* v3.736.0 (Grimoire vivant, Seb 07/11) : 3 règles au plus. Avant chaque sortie, le joueur appliqué suit le pronostic
+   (« Tout préparer » de la préparation de sortie) : les règles de la sortie, puis celles de l'entretien. */
+function preparerSortie(g, ctx) {
+  if (!AVISE || !g.game.unlockedTabs || !g.game.unlockedTabs.grimoire || typeof g.grimoirePrepareAll !== "function") return;
+  var r = g.grimoirePrepareAll(ctx);
+  if (r && r.changed) { STATS.preparations = (STATS.preparations || 0) + 1; act("grimoirePrepare", 0); }
+}
+function preparerSortieCarte(g, mapId, sectorId, cs) {
+  var c = cs && cs.content;
+  if (c && c.eliteId) preparerSortie(g, { type: "elite", id: c.eliteId, mapId: mapId, sectorId: sectorId });
+}
 
 /* v3.654.0 : les actions proposées par la fiche du Grimoire (tuiles), dans leur ordre ; counter = badge « Contre » ou « Effet » (l'ancien ⚡). */
 function grimoireActionOptions(g, cond) {

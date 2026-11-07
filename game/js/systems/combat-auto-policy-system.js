@@ -160,7 +160,9 @@ window.sanitizeGrimoireRules = sanitizeGrimoireRules;
 
 var GRIMOIRE_BASE_SLOT_COUNT = 2;
 
-var GRIMOIRE_UNLOCK_WORLD_INDEXES = [2, 3, 4, 5];
+// v3.736.0 (Seb 07/11, Grimoire vivant) : 3 règles actives au plus, la 3e aux Ruines (ou plus tôt par la Mémoire)
+var GRIMOIRE_ACTIVE_MAX = 3;
+var GRIMOIRE_UNLOCK_WORLD_INDEXES = [2];
 
 function getGrimoireSlotCount(worldsEverReached) {
   var reached = (worldsEverReached && typeof worldsEverReached === "object") ? worldsEverReached : {};
@@ -170,13 +172,25 @@ function getGrimoireSlotCount(worldsEverReached) {
   }
   // v3.322.0 : Grimoire étendu (Mémoire niveau 2) — une règle active de plus, dans la limite stockée
   if (window.MemoryManager && MemoryManager.has("grimoire_etendu")) extra++;
-  var stored = (typeof GRIMOIRE_SLOT_COUNT === "number") ? GRIMOIRE_SLOT_COUNT : 6;
-  return Math.min(stored, GRIMOIRE_BASE_SLOT_COUNT + extra);
+  var stored = (typeof GRIMOIRE_SLOT_COUNT === "number") ? GRIMOIRE_SLOT_COUNT : GRIMOIRE_ACTIVE_MAX;
+  return Math.min(GRIMOIRE_ACTIVE_MAX, stored, GRIMOIRE_BASE_SLOT_COUNT + extra);
+}
+
+/* v3.736.0 (Seb 07/11, récompenses A) : jeux de règles — 3 au début, un de plus à la Crypte, la Montagne et la Tour. */
+var GRIMOIRE_JEUX_BASE = 3;
+var GRIMOIRE_JEUX_WORLD_INDEXES = [3, 4, 5];
+function getGrimoireJeuxCount(worldsEverReached) {
+  var reached = (worldsEverReached && typeof worldsEverReached === "object") ? worldsEverReached : {};
+  return GRIMOIRE_JEUX_BASE + GRIMOIRE_JEUX_WORLD_INDEXES.filter(function (w) { return !!reached[w]; }).length;
 }
 
 window.GRIMOIRE_BASE_SLOT_COUNT = GRIMOIRE_BASE_SLOT_COUNT;
+window.GRIMOIRE_ACTIVE_MAX = GRIMOIRE_ACTIVE_MAX;
 window.GRIMOIRE_UNLOCK_WORLD_INDEXES = GRIMOIRE_UNLOCK_WORLD_INDEXES;
 window.getGrimoireSlotCount = getGrimoireSlotCount;
+window.GRIMOIRE_JEUX_BASE = GRIMOIRE_JEUX_BASE;
+window.GRIMOIRE_JEUX_WORLD_INDEXES = GRIMOIRE_JEUX_WORLD_INDEXES;
+window.getGrimoireJeuxCount = getGrimoireJeuxCount;
 
 function isConditionPossibleForEnemy(conditionId, enemy) {
   if (conditionId === "heroLowHp") return true;
