@@ -1449,13 +1449,23 @@ function apothicaireJoueur(g) {
 /* v3.739.0 (Seb 07/11) : les 3 prochaines quêtes d'aventure (mondes atteints, pas finies, dans l'ordre des mondes) ;
    leurs objets conseillés, stock compris ou non (sortieAdvisedItems(ctx, true)), bornés aux places d'objet. */
 var OBJETS_STOCK_CIBLE = 2, APO_ATTENTE_MIN = 60; // 2 de chaque (sortie + reprise) ; attente de production bornée par entretien
-function objetsUtiles(g) {
+function objetsUtiles(g, monde) {
   var W = g.WORLDS || [], AQ = g.ADVENTURE_QUESTS || {}, fait = g.game.adventureQuestsCompleted || {}, atteint = mondeCourant(g), out = [];
   var wi = function (id) { for (var i = 0; i < W.length; i++) if (W[i].id === id) return i; return 99; };
   var ids = Object.keys(AQ).map(function (id, k) { return { id: id, w: wi(AQ[id].worldId), k: k }; })
-    .filter(function (x) { return !fait[x.id] && x.w <= atteint; }).sort(function (a, b) { return a.w - b.w || a.k - b.k; }).slice(0, 3);
+    .filter(function (x) { return !fait[x.id] && x.w <= atteint; }).sort(function (a, b) { return a.w - b.w || a.k - b.k; });
+  ids = monde ? ids.filter(function (x) { return x.w === atteint; }) : ids.slice(0, 3); // monde : toutes les quêtes restantes du monde atteint
   ids.forEach(function (x) { g.sortieAdvisedItems({ type: "adventure", id: x.id }, true).slice(0, g.CombatItems.slotCount()).forEach(function (id) { if (out.indexOf(id) < 0) out.push(id); }); });
+  out.sort(function (a, b) { return objetRang(g, a) - objetRang(g, b); }); // tri stable : neutralisants, atténuants, le reste
   return { items: out, quetes: ids.map(function (x) { return x.id; }) };
+}
+/* Seb 07/11 : le plafond du jour sert d'abord aux objets qui neutralisent un trait (sans « soften » dans les données),
+   puis aux atténuants (soften), puis au reste (Fiole noire), et les potions en dernier. */
+function objetRang(g, id) { var it = g.COMBAT_ITEMS[id] || {}; return it.trait && !it.soften ? 0 : it.soften ? 1 : 2; }
+/* Places gardées aux neutralisants des quêtes restantes du monde (recette sue ou commande ouverte), sauf `sauf`. */
+function apoReserveNeutre(g, A, sauf) {
+  return objetsUtiles(g, true).items.filter(function (id) { return id !== sauf && objetRang(g, id) === 0 && A.getRecipe(id) && (A.isLearned(id) || A.isOrderOpen(id)); })
+    .reduce(function (n, id) { return n + Math.max(0, OBJETS_STOCK_CIBLE - g.CombatItems.getStock(id)); }, 0);
 }
 /* Réunit un coût sans dépense déraisonnable : récolte, atelier avec le stock, au plus APO_ATTENTE_MIN de production en tout
    par entretien ; un matériau de carte ou de donjon (cendre, obsidienne, chitine) se prend seulement en stock. */
@@ -1504,7 +1514,9 @@ function objetsAvance(g, A) {
     if (A.deliverOrder(id)) { O.appris[id] = CURRENT_STEP; act("apothicaire:commande", 0); if (process.env.TRACE_OBJETS) console.log("      [objets] " + CURRENT_STEP + " recette apprise : " + id + " (" + JSON.stringify(r.order) + ", prochaines " + u.quetes.join(",") + ")"); }
   });
   u.items.forEach(function (id) {
-    for (var k = 0; k < OBJETS_STOCK_CIBLE && A.isLearned(id) && g.CombatItems.getStock(id) < OBJETS_STOCK_CIBLE && A.getDailyRemaining() > 0; k++) {
+    var reserve = objetRang(g, id) > 0 ? apoReserveNeutre(g, A, id) : 0; // un atténuant laisse leur place aux neutralisants à venir
+    if (process.env.TRACE_OBJETS && reserve && A.isLearned(id) && g.CombatItems.getStock(id) < OBJETS_STOCK_CIBLE && A.getDailyRemaining() > 0 && A.getDailyRemaining() <= reserve) console.log("      [objets] " + CURRENT_STEP + " " + id + " : " + reserve + " préparation(s) gardée(s) aux neutralisants");
+    for (var k = 0; k < OBJETS_STOCK_CIBLE && A.isLearned(id) && g.CombatItems.getStock(id) < OBJETS_STOCK_CIBLE && A.getDailyRemaining() > reserve; k++) {
       if (!A.canAfford(id) && !apoReunir(g, A.getInputs(id), budget)) { if (process.env.TRACE_OBJETS) console.log("      [objets] " + CURRENT_STEP + " " + id + " pas fabriqué : " + JSON.stringify(A.getInputs(id)) + " (attente restante " + budget.min + " min)"); break; }
       if (!A.craft(id)) break;
       O.fabriques[id] = (O.fabriques[id] || 0) + 1; act("apothicaire", 0);
@@ -1513,7 +1525,7 @@ function objetsAvance(g, A) {
     if (process.env.TRACE_OBJETS && A.isLearned(id) && g.CombatItems.getStock(id) < OBJETS_STOCK_CIBLE && A.getDailyRemaining() <= 0) console.log("      [objets] " + CURRENT_STEP + " " + id + " : préparations du jour épuisées");
   });
   // les objets qui manquent gardent leurs préparations du jour (jour suivant compris) ; les potions prennent le reste
-  return u.items.reduce(function (n, id) { return n + (A.isLearned(id) ? Math.max(0, OBJETS_STOCK_CIBLE - g.CombatItems.getStock(id)) : 0); }, 0);
+  return apoReserveNeutre(g, A, null) + u.items.reduce(function (n, id) { return n + (A.isLearned(id) && objetRang(g, id) > 0 ? Math.max(0, OBJETS_STOCK_CIBLE - g.CombatItems.getStock(id)) : 0); }, 0);
 }
 /* v3.613.0 (lot 1) : les compagnons comme un joueur — chaque conversation prête (premier choix), puis jusqu'à deux étapes de
    quêtes personnelles par entretien : scène, livraison (ressources obtenues), ou le lieu de la carte vivante marqué pour la quête,
