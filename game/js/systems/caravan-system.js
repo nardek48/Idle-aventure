@@ -39,8 +39,8 @@ var CARAVAN_TRIPS = {
   moyen: { id: "moyen", name: "Moyen", seconds: 4 * 3600,  units: 400, valuePct: 0.80, rareChance: 0,    itemChance: 0,    minHall: 1 },
   long:  { id: "long",  name: "Long",  seconds: 8 * 3600,  units: 800, valuePct: 1.00, rareChance: 1, itemChance: 0.10, minHall: 3 }, // v3.611.0 (R1) : rare garanti
   /* v3.551.0 (retour Seb, point 2) : la caravane d'essai que l'Histoire demande (ruines_04, crypte_04) :
-     10 min, vide, sans gain, sans prendre de place. Hors CARAVAN_TRIP_ORDER : jamais proposée ailleurs. */
-  essai: { id: "essai", name: "Essai", seconds: 600,       units: 0,   valuePct: 0,    rareChance: 0,    itemChance: 0,    minHall: 1, story: true }
+     10 min, vide, sans gain, sans prendre de place. v3.740.0 (Seb 07/11) : 3 min, l'étape enseigne le geste. Hors CARAVAN_TRIP_ORDER : jamais proposée ailleurs. */
+  essai: { id: "essai", name: "Essai", seconds: 180,       units: 0,   valuePct: 0,    rareChance: 0,    itemChance: 0,    minHall: 1, story: true }
 };
 /* v3.551.0 : marchés où l'Histoire demande une caravane, et le drapeau que pose son retour. */
 var CARAVAN_STORY_FLAGS = { 2: "ruinsMarketDone", 3: "cryptMarketDone" };

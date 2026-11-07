@@ -10,6 +10,7 @@
    Les textes des données sont traduits par _td() à l'affichage (registre : lang/data-fields.js). */
 I18n.register("en", {
   // v3.736.0 (Seb 07/11) : Grimoire vivant (3 règles, jeux, pronostic)
+  "La caravane d'essai que l'Histoire demande (Ruines, Crypte) revient maintenant en 3 minutes au lieu de 10.": "The trial caravan the Story asks for (Ruins, Crypt) now comes back in 3 minutes instead of 10.",
   "Préparer la sortie : « Tout préparer » n'emporte plus l'Huile de lame d'office (elle reste proposée) ; seul le Baume froid, utile face à un miroir, est ajouté automatiquement.": "Prepare the outing: \"Prepare all\" no longer takes the Blade oil automatically (it is still suggested); only the Cold balm, useful against a mirror, is added automatically.",
   "Préparer la sortie : « Ce que tu vas affronter » propose aussi les objets de combat qui contrent une situation (« Ou emporte : Baume froid »), avec ton stock ou l'endroit où le préparer, et un bouton pour l'emporter.": "Prepare the outing: \"What you will face\" now also suggests the combat items that counter a situation (\"Or take: Cold balm\"), with your stock or where to prepare it, and a button to take it.",
   "La Silhouette, face au Rôdeur : « elle se bat comme toi », elle ne se soigne donc pas, et elle a moins de PV. Le Rôdeur n'était plus capable de la battre ; il gagne maintenant près de 9 fois sur 10 (Chevalier et Mage inchangés).": "The Silhouette, against the Ranger: \"it fights like you\", so it does not heal, and it has less HP. The Ranger could no longer beat it; it now wins nearly 9 times in 10 (Knight and Mage unchanged).",
@@ -884,7 +885,7 @@ I18n.register("en", {
   "Rien à charger": "Nothing to load",
   "La caravane part : {n} unités, retour dans {d}": "The caravan sets off: {n} units, back in {d}",
   "La caravane est rentrée : décharge-la dans Campement › Expéditions": "The caravan is back: unload it in Camp › Expeditions",
-  "Caravane d'essai prête : 10 minutes, depuis Campement › Expéditions": "Trial caravan ready: 10 minutes, from Camp › Expeditions",
+  "Caravane d'essai prête : 3 minutes, depuis Campement › Expéditions": "Trial caravan ready: 3 minutes, from Camp › Expeditions",
   "La caravane d'essai part, à vide : retour dans {d}": "The trial caravan sets out empty: back in {d}",
   "Essai": "Trial",
   "Caravane d'essai : elle part à vide pour ouvrir le marché, et ne prend pas de place.": "Trial caravan: it leaves empty to open the market, and doesn't take up a slot.",
@@ -2009,7 +2010,7 @@ I18n.register("en", {
   "Un coup de zone réveille tous les dormeurs. Dans le Grimoire, c'est la condition « Un ennemi dort ».": "An area attack wakes every sleeper. In the Grimoire, it's the condition \"An enemy is sleeping\".",
   "Tu as maintenant quatre compagnons. Deux seulement t'accompagnent en combat : choisis-les avant de partir, dans Héros › Alliés.": "You now have four companions. Only two go into battle with you: choose them before you set out, in Hero › Allies.",
   "Ysolt garde le sommeil : une fois par combat, elle retarde le réveil d'un dormeur.": "Ysolt keeps the sleep: once per battle, she delays a sleeper's waking.",
-  "La caravane de la Halle marchande peut maintenant partir vers le Marché de la Crypte, dans Campement › Expéditions. La première est une caravane d'essai : elle part à vide, revient en 10 minutes et ne prend pas de place.": "The Merchant Hall's caravan can now set out for the Crypt Market, from Camp › Expeditions. The first one is a trial caravan: it leaves empty, returns in 10 minutes and doesn't take up a slot.",
+  "La caravane de la Halle marchande peut maintenant partir vers le Marché de la Crypte, dans Campement › Expéditions. La première est une caravane d'essai : elle part à vide, revient en 3 minutes et ne prend pas de place.": "The Merchant Hall's caravan can now set out for the Crypt Market, from Camp › Expeditions. The first one is a trial caravan: it leaves empty, returns in 3 minutes and doesn't take up a slot.",
   "Elle en rapporte de l'or. Au trajet Long (Halle 3), 2 Cires de sépulcre à coup sûr.": "It brings back gold. On the Long trip (Hall 3), 2 Sepulchre Waxes guaranteed.",
   "Ysolt vient avec toi. Une seule autre place au combat : qui la prend ?": "Ysolt comes with you. Only one other place in battle: who takes it?",
   "Ysolt dit que personne ne prend rien, ici. Wenna pense à Orwen. Personne ne choisira pour toi.": "Ysolt says no one takes anything here. Wenna thinks of Orwen. No one will choose for you.",
@@ -5294,7 +5295,7 @@ I18n.register("en", {
   "Tu as maintenant trois compagnons, mais deux seulement t'accompagnent en combat. Choisis-les avant de partir, dans Héros › Alliés.": "You now have three companions, but only two go into battle with you. Choose them before you set out, in Hero › Allies.",
   "Celui qui ne se bat pas garde le camp, et peut partir en patrouille.": "The one who doesn't fight keeps the camp, and can go on patrol.",
   "Chacun a sa place : Wenna soigne, Maddoc tient ou frappe de loin, Edda achève ceux qui veulent se relever.": "Each has a place: Wenna heals, Maddoc holds or strikes from afar, Edda finishes those who would rise.",
-  "La caravane de la Halle marchande peut maintenant partir vers le Marché des Ruines, dans Campement › Expéditions. La première est une caravane d'essai : elle part à vide, revient en 10 minutes et ne prend pas de place.": "The Merchant Hall's caravan can now set out for the Ruins Market, from Camp › Expeditions. The first one is a trial caravan: it leaves empty, returns in 10 minutes and doesn't take up a slot.",
+  "La caravane de la Halle marchande peut maintenant partir vers le Marché des Ruines, dans Campement › Expéditions. La première est une caravane d'essai : elle part à vide, revient en 3 minutes et ne prend pas de place.": "The Merchant Hall's caravan can now set out for the Ruins Market, from Camp › Expeditions. The first one is a trial caravan: it leaves empty, returns in 3 minutes and doesn't take up a slot.",
   "Elle en rapporte de l'or. Au trajet Long (Halle 3), 2 Pierres errantes à coup sûr, la pierre des Ruines.": "It brings back gold. On the Long trip (Hall 3), 2 Wandering Stones guaranteed, the stone of the Ruins.",
   "On y passe à trois": "Three can pass",
   "Le couloir est étroit : on s'y bat à trois. Edda prend une place. Qui reste en retrait ?": "The corridor is narrow: three can fight in it. Edda takes a place. Who stays back?",

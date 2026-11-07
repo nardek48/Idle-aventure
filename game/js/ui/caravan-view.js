@@ -256,7 +256,7 @@ function buildCaravanHTML() {
 }
 window.buildCaravanHTML = buildCaravanHTML;
 
-/* v3.551.0 (retour Seb, point 2) : départ de la caravane d'essai (10 min, à vide) vers le marché
+/* v3.551.0 (retour Seb, point 2) : départ de la caravane d'essai (3 min, à vide) vers le marché
    que l'Histoire attend ; elle ne prend pas de place et son retour valide l'étape. */
 function buildCaravanStoryHTML() {
   var h = "";

@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.740.0", "village_buildings/caravan_market", _t("La caravane d'essai que l'Histoire demande (Ruines, Crypte) revient maintenant en 3 minutes au lieu de 10.")],
     ["3.739.0", "system/sortie_prep", _t("Préparer la sortie : « Tout préparer » n'emporte plus l'Huile de lame d'office (elle reste proposée) ; seul le Baume froid, utile face à un miroir, est ajouté automatiquement.")],
     ["3.738.0", "system/sortie_prep", _t("Préparer la sortie : « Ce que tu vas affronter » propose aussi les objets de combat qui contrent une situation (« Ou emporte : Baume froid »), avec ton stock ou l'endroit où le préparer, et un bouton pour l'emporter.")],
     ["3.737.0", "classes/class_ranger", _t("La Silhouette, face au Rôdeur : « elle se bat comme toi », elle ne se soigne donc pas, et elle a moins de PV. Le Rôdeur n'était plus capable de la battre ; il gagne maintenant près de 9 fois sur 10 (Chevalier et Mage inchangés).")],

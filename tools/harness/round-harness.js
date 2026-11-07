@@ -19849,9 +19849,9 @@ console.log("\n[368] v3.551.0 — Caravane d'essai de l'Histoire : 10 min, à vi
     var stock = g.WarehouseManager.getAmount("ble");
     ok(C.depart("essai", 2) === true && g.WarehouseManager.getAmount("ble") === stock, "départ à vide : rien ne quitte l'Entrepôt");
     var c = C.get(2);
-    ok(c && c.endsAt - c.startedAt === 600e3 && c.gold === 0 && !c.rare && !c.item, "10 minutes, sans gain");
+    ok(c && c.endsAt - c.startedAt === 180e3 && c.gold === 0 && !c.rare && !c.item, "3 minutes, sans gain (v3.740.0)");
     ok(C._regularCount() === 1 && !C.hasFreeSlot(), "elle ne prend pas de place (la caravane du Désert reste la seule comptée)");
-    ok(/Caravane en route, de retour dans 10m/.test(g.storyMarketCaravanProgress(2, "Caravane du Marché des Ruines", false)), "ruines_04 : « de retour dans 10m » (" + g.storyMarketCaravanProgress(2, "X", false) + ")");
+    ok(/Caravane en route, de retour dans 3m/.test(g.storyMarketCaravanProgress(2, "Caravane du Marché des Ruines", false)), "ruines_04 : « de retour dans 3m » (" + g.storyMarketCaravanProgress(2, "X", false) + ")");
     T += 600e3;
     var l = C.unload(2);
     ok(l && l.gold === 0 && game.explorationProgression.ruinsMarketDone === true && !C.isStoryTripFor(2), "retour : déchargée, l'étape est faite, plus d'essai");
