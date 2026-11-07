@@ -1463,10 +1463,9 @@ function objetsUtiles(g, monde) {
 /* Seb 07/11 : le plafond du jour sert d'abord aux objets qui neutralisent un trait (sans « soften » dans les données),
    puis aux atténuants (soften), puis au reste (Fiole noire), et les potions en dernier. */
 function objetRang(g, id) { var it = g.COMBAT_ITEMS[id] || {}; return it.trait && !it.soften ? 0 : it.soften ? 1 : 2; }
-/* Places gardées aux neutralisants des quêtes restantes du monde et du suivant (recette sue ou commande ouverte), sauf `sauf`
-   et sauf `exclus` (les objets des prochaines quêtes, fabriqués eux-mêmes). */
-function apoReserveNeutre(g, A, sauf, exclus) {
-  return objetsUtiles(g, true).items.filter(function (id) { return id !== sauf && (!exclus || exclus.indexOf(id) < 0) && objetRang(g, id) === 0 && A.getRecipe(id) && (A.isLearned(id) || A.isOrderOpen(id)); })
+/* Places gardées aux neutralisants des quêtes restantes du monde et du suivant (recette sue ou commande ouverte), sauf `sauf`. */
+function apoReserveNeutre(g, A, sauf) {
+  return objetsUtiles(g, true).items.filter(function (id) { return id !== sauf && objetRang(g, id) === 0 && A.getRecipe(id) && (A.isLearned(id) || A.isOrderOpen(id)); })
     .reduce(function (n, id) { return n + Math.max(0, OBJETS_STOCK_CIBLE - g.CombatItems.getStock(id)); }, 0);
 }
 /* Réunit un coût sans dépense déraisonnable : récolte, atelier avec le stock, au plus APO_ATTENTE_MIN de production en tout
@@ -1515,11 +1514,11 @@ function objetsAvance(g, A) {
     if (!A.canDeliver(id) && !apoReunir(g, r.order, budget)) { if (process.env.TRACE_OBJETS) console.log("      [objets] " + CURRENT_STEP + " commande " + id + " pas encore : " + JSON.stringify(r.order) + " (prochaines " + u.quetes.join(",") + ")"); return; }
     if (A.deliverOrder(id)) { O.appris[id] = CURRENT_STEP; act("apothicaire:commande", 0); if (process.env.TRACE_OBJETS) console.log("      [objets] " + CURRENT_STEP + " recette apprise : " + id + " (" + JSON.stringify(r.order) + ", prochaines " + u.quetes.join(",") + ")"); }
   });
-  // piste a1 (Seb 07/11) : les neutralisants de la réserve (monde atteint et suivant) se fabriquent dès leur recette sue
+  // piste a1 (Seb 07/11) : les neutralisants de la réserve (monde atteint et suivant) se fabriquent dès leur recette sue,
+  // après ceux des 3 prochaines quêtes
   var loin = objetsUtiles(g, true).items.filter(function (id) { return u.items.indexOf(id) < 0 && objetRang(g, id) === 0 && A.isLearned(id); });
   u.items.concat(loin).forEach(function (id) {
-    // un atténuant laisse leur place aux neutralisants à venir ; un neutralisant, à ceux des quêtes plus lointaines (Baume de la Silhouette)
-    var reserve = objetRang(g, id) > 0 ? apoReserveNeutre(g, A, id) : apoReserveNeutre(g, A, id, u.items);
+    var reserve = objetRang(g, id) > 0 ? apoReserveNeutre(g, A, id) : 0; // un atténuant laisse leur place aux neutralisants à venir
     if (process.env.TRACE_OBJETS && reserve && A.isLearned(id) && g.CombatItems.getStock(id) < OBJETS_STOCK_CIBLE && A.getDailyRemaining() > 0 && A.getDailyRemaining() <= reserve) console.log("      [objets] " + CURRENT_STEP + " " + id + " : " + reserve + " préparation(s) gardée(s) aux neutralisants");
     for (var k = 0; k < OBJETS_STOCK_CIBLE && A.isLearned(id) && g.CombatItems.getStock(id) < OBJETS_STOCK_CIBLE && A.getDailyRemaining() > reserve; k++) {
       if (!A.canAfford(id) && !apoReunir(g, A.getInputs(id), budget)) { if (process.env.TRACE_OBJETS) console.log("      [objets] " + CURRENT_STEP + " " + id + " pas fabriqué : " + JSON.stringify(A.getInputs(id)) + " (attente restante " + budget.min + " min)"); break; }
@@ -2253,9 +2252,10 @@ function preparerSortie(g, ctx) {
   if (!AVISE) return;
   // v3.738.0 (Seb 07/11) : il emporte aussi les objets de combat conseillés en stock (pris au départ, emporterObjets)
   if (g.CombatItems && typeof g.sortieAdvisedItems === "function") OBJETS_SORTIE = g.sortieAdvisedItems(ctx).slice(0, g.CombatItems.slotCount());
-  // option B (Seb 07/11) : en donjon ou en élite, il garde aux 3 prochaines quêtes d'aventure les objets qu'elles conseillent, sauf surplus
+  // option B (Seb 07/11) : en donjon ou en élite, il garde aux quêtes d'aventure restantes (monde atteint et suivant, comme la réserve)
+  // les objets qu'elles conseillent, sauf surplus
   if (OBJETS_SORTIE.length && (ctx.type === "dungeon" || ctx.type === "elite")) {
-    var u = objetsUtiles(g), gardes = OBJETS_SORTIE.filter(function (id) { return g.CombatItems.getStock(id) <= (u.demande[id] || 0) * OBJETS_STOCK_CIBLE; }); // 2 par quête : sortie + reprise
+    var u = objetsUtiles(g, true), gardes = OBJETS_SORTIE.filter(function (id) { return g.CombatItems.getStock(id) <= (u.demande[id] || 0) * OBJETS_STOCK_CIBLE; }); // 2 par quête : sortie + reprise
     if (process.env.TRACE_OBJETS && gardes.length) console.log("      [objets] " + CURRENT_STEP + " " + gardes.join(",") + " gardé(s) pour " + u.quetes.join(",") + " (" + ctx.type + " " + ctx.id + ")");
     OBJETS_SORTIE = OBJETS_SORTIE.filter(function (id) { return gardes.indexOf(id) < 0; });
   }

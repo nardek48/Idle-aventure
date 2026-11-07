@@ -55,7 +55,7 @@ function wrap(obj, name, fn) { var o = obj[name]; obj[name] = function () { retu
 /* ---------- Enveloppes du profil ---------- */
 function installProfil(g) {
   // forge actuelle : niveau imposé par emplacement (le calcul de la pièce reste celui du jeu)
-  wrap(g.ForgeManager, "getLevel", function (o, a) { return CUR.lv ? CUR.lv : o.apply(this, a); });
+  wrap(g.ForgeManager, "getLevel", function (o, a) { return CUR.lv != null ? CUR.lv : o.apply(this, a); });
   // refonte : bonus posés APRÈS la recomposition ; les PV courants suivent le plafond agrandi (même règle que le jeu)
   wrap(g.StatsSystem, "recalcStats", function (o, a) {
     var G = g.game, hp0 = G.heroHp, r = o.apply(this, a), B = CUR.bonus;
