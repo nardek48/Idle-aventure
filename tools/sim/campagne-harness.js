@@ -1455,9 +1455,10 @@ function objetsUtiles(g, monde) {
   var ids = Object.keys(AQ).map(function (id, k) { return { id: id, w: wi(AQ[id].worldId), k: k }; })
     .filter(function (x) { return !fait[x.id] && x.w <= atteint; }).sort(function (a, b) { return a.w - b.w || a.k - b.k; });
   ids = monde ? ids.filter(function (x) { return x.w === atteint; }) : ids.slice(0, 3); // monde : toutes les quêtes restantes du monde atteint
-  ids.forEach(function (x) { g.sortieAdvisedItems({ type: "adventure", id: x.id }, true).slice(0, g.CombatItems.slotCount()).forEach(function (id) { if (out.indexOf(id) < 0) out.push(id); }); });
+  var demande = {}; // nombre de ces quêtes qui conseillent chaque objet (un emporté par sortie)
+  ids.forEach(function (x) { g.sortieAdvisedItems({ type: "adventure", id: x.id }, true).slice(0, g.CombatItems.slotCount()).forEach(function (id) { demande[id] = (demande[id] || 0) + 1; if (out.indexOf(id) < 0) out.push(id); }); });
   out.sort(function (a, b) { return objetRang(g, a) - objetRang(g, b); }); // tri stable : neutralisants, atténuants, le reste
-  return { items: out, quetes: ids.map(function (x) { return x.id; }) };
+  return { items: out, quetes: ids.map(function (x) { return x.id; }), demande: demande };
 }
 /* Seb 07/11 : le plafond du jour sert d'abord aux objets qui neutralisent un trait (sans « soften » dans les données),
    puis aux atténuants (soften), puis au reste (Fiole noire), et les potions en dernier. */
@@ -2248,6 +2249,12 @@ function preparerSortie(g, ctx) {
   if (!AVISE) return;
   // v3.738.0 (Seb 07/11) : il emporte aussi les objets de combat conseillés en stock (pris au départ, emporterObjets)
   if (g.CombatItems && typeof g.sortieAdvisedItems === "function") OBJETS_SORTIE = g.sortieAdvisedItems(ctx).slice(0, g.CombatItems.slotCount());
+  // option B (Seb 07/11) : en donjon ou en élite, il garde aux 3 prochaines quêtes d'aventure les objets qu'elles conseillent, sauf surplus
+  if (OBJETS_SORTIE.length && (ctx.type === "dungeon" || ctx.type === "elite")) {
+    var u = objetsUtiles(g), gardes = OBJETS_SORTIE.filter(function (id) { return g.CombatItems.getStock(id) <= (u.demande[id] || 0); });
+    if (process.env.TRACE_OBJETS && gardes.length) console.log("      [objets] " + CURRENT_STEP + " " + gardes.join(",") + " gardé(s) pour " + u.quetes.join(",") + " (" + ctx.type + " " + ctx.id + ")");
+    OBJETS_SORTIE = OBJETS_SORTIE.filter(function (id) { return gardes.indexOf(id) < 0; });
+  }
   // TRACE_OBJETS=1 : conseil, stock (« ? » : recette pas sue) et traits annoncés de chaque sortie
   if (process.env.TRACE_OBJETS && g.CombatItems) console.log("      [objets " + JSON.stringify(ctx) + "] conseillés " + OBJETS_SORTIE.join(",") + " · stock " + g.COMBAT_ITEM_ORDER.map(function (id) { return id + ":" + g.CombatItems.getStock(id) + (g.ApothecaryManager.isLearned(id) ? "" : "?"); }).join(" ") + " · traits " + g.getEnemyTraitsPreview(ctx).traits.map(function (t) { return t.trait; }).join(","));
   if (!g.game.unlockedTabs || !g.game.unlockedTabs.grimoire || typeof g.grimoirePrepareAll !== "function") return;
