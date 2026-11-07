@@ -2253,7 +2253,7 @@ function preparerSortie(g, ctx) {
   if (g.CombatItems && typeof g.sortieAdvisedItems === "function") OBJETS_SORTIE = g.sortieAdvisedItems(ctx).slice(0, g.CombatItems.slotCount());
   // option B (Seb 07/11) : en donjon ou en élite, il garde aux 3 prochaines quêtes d'aventure les objets qu'elles conseillent, sauf surplus
   if (OBJETS_SORTIE.length && (ctx.type === "dungeon" || ctx.type === "elite")) {
-    var u = objetsUtiles(g), gardes = OBJETS_SORTIE.filter(function (id) { return g.CombatItems.getStock(id) <= (u.demande[id] || 0); });
+    var u = objetsUtiles(g), gardes = OBJETS_SORTIE.filter(function (id) { return g.CombatItems.getStock(id) <= (u.demande[id] || 0) * OBJETS_STOCK_CIBLE; }); // 2 par quête : sortie + reprise
     if (process.env.TRACE_OBJETS && gardes.length) console.log("      [objets] " + CURRENT_STEP + " " + gardes.join(",") + " gardé(s) pour " + u.quetes.join(",") + " (" + ctx.type + " " + ctx.id + ")");
     OBJETS_SORTIE = OBJETS_SORTIE.filter(function (id) { return gardes.indexOf(id) < 0; });
   }
