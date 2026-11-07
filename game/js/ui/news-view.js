@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.737.0", "classes/class_ranger", _t("La Silhouette, face au Rôdeur : « elle se bat comme toi », elle ne se soigne donc pas, et elle a moins de PV. Le Rôdeur n'était plus capable de la battre ; il gagne maintenant près de 9 fois sur 10 (Chevalier et Mage inchangés).")],
     ["3.736.0", "system/grimoire", _t("Grimoire vivant : 3 règles actives, rangées en jeux que tu changes d'un toucher (un jeu de plus par monde). Avant chaque sortie, le pronostic coche les situations couvertes et propose d'ajouter la règle qui manque (« Tout préparer »). Tes règles 4 à 6 sont gardées dans un jeu « Mes autres règles ».")],
     ["3.735.0", "combat_stats/stat_health", _t("Pronostic « Avant de partir » : l'avertissement de PV bas se déclenche maintenant sous 50 % de tes PV, comme le rappel à l'acceptation d'une étape.")],
     ["3.734.0", "dungeon/dungeon_entrance", _t("Donjon : quand l'étape demande une Marque, l'écran d'entrée le rappelle, et partir sans Marque demande confirmation. Accepter une étape de combat sous 50 % de PV propose d'aller d'abord au feu.")],

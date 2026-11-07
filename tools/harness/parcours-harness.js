@@ -586,7 +586,14 @@ async function P7(browser, base) {
   for (var i = 0; i < 8 && avant <= 0; i++) {
     await dismissTutorials(page); // v3.469.2 : « Pièges et sentiers coupés » au premier piège en vue
     // v3.467.0 : après un piège, la feuille du nœud est déjà ouverte (pas de sentier à toucher)
-    if (await page.evaluate(function () { return game.sceneRun && game.sceneRun.status === "pa2-map"; })) await tap(page, ".pa2-node.is-open");
+    if (await page.evaluate(function () { return game.sceneRun && game.sceneRun.status === "pa2-map"; })) {
+      // v3.737.0 : échec intermittent (aucune case ouverte sous 6 s en série complète) : on attend plus, et on décrit l'état s'il manque
+      if (!(await visible(page, ".pa2-node.is-open", 10000))) {
+        ok(false, "P7 : aucune case ouverte sur la carte — " + await page.evaluate(function () { var r = game.sceneRun; return JSON.stringify({ at: r.at, st: r.status, ouverts: Pa2Run.openMoves(), quete: r.quest && r.quest.state, feuille: !!document.querySelector("#pa2-overlay .pa2-sheet"), noeuds: document.querySelectorAll(".pa2-node").length }); }));
+        break;
+      }
+      await tap(page, ".pa2-node.is-open");
+    }
     await page.waitForTimeout(900);
     if (!(await visible(page, "#pa2-overlay .pa2-sheet", 2000))) break;
     var card = page.locator("#pa2-overlay .pa2-card");

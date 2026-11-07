@@ -25714,12 +25714,12 @@ console.log("\n[497] v3.737.0 — La silhouette face au Rôdeur : sans soin, PV 
   var sil = { type: "adventure", id: "aq_tour_silhouette" };
   try {
     g.addLog = function (m) { logs.push(String(m)); };
-    ok(Q.bossHpMult === 4.25 && JSON.stringify(g.TOWER_SILHOUETTE_VS_CLASS) === '{"ranger":{"bossHpMult":3.5,"noHeal":true}}', "règle : Rôdeur seul, PV ×3,5 au lieu de ×4,25, sans soin");
+    ok(Q.bossHpMult === 4.25 && JSON.stringify(g.TOWER_SILHOUETTE_VS_CLASS) === '{"ranger":{"bossHpMult":3.1,"noHeal":true}}', "règle : Rôdeur seul, PV ×3,1 au lieu de ×4,25, sans soin");
     // PV au spawn : ×3,5 face au Rôdeur (Rôdeur du Chaos compris), ×4,25 sinon
     var spawn = function (hid) { game = freshCombat(hid); var e = g.QuestEnemyManager.spawnFor(Q, true); return Array.isArray(e) ? e[0] : e; };
     var eR = spawn("ranger"), rule = g.TOWER_SILHOUETTE_VS_CLASS.ranger;
     delete g.TOWER_SILHOUETTE_VS_CLASS.ranger; var eR0 = spawn("ranger"); g.TOWER_SILHOUETTE_VS_CLASS.ranger = rule;
-    ok(eR.isBoss && eR.noHeal === true && !eR0.noHeal && Math.abs(eR.maxHp / eR0.maxHp - 3.5 / 4.25) < 1e-4, "Rôdeur : silhouette sans soin, PV ×3,5 (" + eR.maxHp + " contre " + eR0.maxHp + " à ×4,25)");
+    ok(eR.isBoss && eR.noHeal === true && !eR0.noHeal && Math.abs(eR.maxHp / eR0.maxHp - 3.1 / 4.25) < 1e-4, "Rôdeur : silhouette sans soin, PV ×3,1 (" + eR.maxHp + " contre " + eR0.maxHp + " à ×4,25)");
     ok(spawn("chaosRanger").noHeal === true, "Rôdeur du Chaos : même règle");
     var eK = spawn("knight"), eM = spawn("mage");
     ok(!eK.noHeal && !eM.noHeal && TS.copyClassRule(Q) === null, "Chevalier et Mage : soin gardé, PV ×4,25 (inchangés)");

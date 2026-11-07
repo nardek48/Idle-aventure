@@ -10,6 +10,7 @@
    Les textes des données sont traduits par _td() à l'affichage (registre : lang/data-fields.js). */
 I18n.register("en", {
   // v3.736.0 (Seb 07/11) : Grimoire vivant (3 règles, jeux, pronostic)
+  "La Silhouette, face au Rôdeur : « elle se bat comme toi », elle ne se soigne donc pas, et elle a moins de PV. Le Rôdeur n'était plus capable de la battre ; il gagne maintenant près de 9 fois sur 10 (Chevalier et Mage inchangés).": "The Silhouette, against the Ranger: \"it fights like you\", so it does not heal, and it has less HP. The Ranger could no longer beat it; it now wins nearly 9 times in 10 (Knight and Mage unchanged).",
   "Grimoire vivant : 3 règles actives, rangées en jeux que tu changes d'un toucher (un jeu de plus par monde). Avant chaque sortie, le pronostic coche les situations couvertes et propose d'ajouter la règle qui manque (« Tout préparer »). Tes règles 4 à 6 sont gardées dans un jeu « Mes autres règles ».": "Living Grimoire: 3 active rules, grouped in sets you switch with one tap (one more set per world). Before each outing, the forecast ticks the covered situations and offers to add the missing rule (\"Prepare all\"). Your rules 4 to 6 are kept in a \"My other rules\" set.",
   "Mes autres règles": "My other rules",
   "Mes règles": "My rules",

@@ -14,8 +14,8 @@ var TOWER_SUMMIT_HARD = 1.2, TOWER_SUMMIT_LOOT = 2;
    Rôdeur : blindée, pas corruptrice (au banc, la corruption rendait le combat impossible quel que soit le réglage). */
 var TOWER_CLASS_ARCHETYPE = { knight: "enraged", ranger: "armored", mage: "silenced" };
 // v3.737.0 (Seb 07/11, piste E du banc silhouette-rodeur) : face au Rôdeur, elle ne se soigne pas (il ne se soigne pas)
-// et n'a que ×3,5 PV au lieu de ×4,25 ; Chevalier et Mage inchangés.
-var TOWER_SILHOUETTE_VS_CLASS = { ranger: { bossHpMult: 3.5, noHeal: true } };
+// et n'a que ×3,1 PV au lieu de ×4,25 ; Chevalier et Mage inchangés.
+var TOWER_SILHOUETTE_VS_CLASS = { ranger: { bossHpMult: 3.1, noHeal: true } };
 var TOWER_NO_HEAL_ROUNDS = 1e9; // minuteur de soin repoussé hors du combat (fini : survit à JSON)
 
 var TowerSystem = {
