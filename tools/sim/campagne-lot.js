@@ -97,6 +97,9 @@ CLASSES.forEach(function (c) {
   var r = runs.filter(function (j) { return j.classe === c; });
   if (!r.length) return;
   console.log("  " + c.padEnd(7) + " morts " + r.map(function (j) { return j.stats.deaths || 0; }).join("/") + " · combat " + med(r.map(function (j) { return j.stats.combatMs / 3600e3; })).toFixed(1) + " h · soin " + med(r.map(function (j) { return j.stats.healMs / 3600e3; })).toFixed(1) + " h · farm " + med(r.map(function (j) { return j.stats.grindMs / 3600e3; })).toFixed(0) + " h");
+  // v3.739.0 (Seb 07/11) : objets de combat par partie (recettes apprises, fabriqués, emportés)
+  var somme = function (o) { return Object.keys(o || {}).map(function (k) { return k + " " + o[k]; }).join(", ") || "—"; };
+  r.forEach(function (j, i) { var a = j.stats.objetsApo || {}; console.log("          #" + (i + 1) + " objets : appris " + (Object.keys(a.appris || {}).join(", ") || "—") + " · fabriqués " + somme(a.fabriques) + " · emportés " + somme(j.stats.objets)); });
 });
 
 // murs

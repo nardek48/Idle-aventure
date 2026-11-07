@@ -25801,6 +25801,13 @@ console.log("\n[498] v3.738.0 — Objets de combat dans le pronostic de sortie (
     stock("huile_de_lame", 2); G.heroId = "ranger"; G.grimoireRules = [R(), R(), R()];
     html = open(sil); g.sortiePrep.items = ["baume_froid"]; html = g.buildSortiePrepHTML();
     ok(html.indexOf(E("Tes places d'objet sont prises.")) !== -1 && html.indexOf("sortiePrepTake('huile_de_lame')") === -1, "place prise : proposé, sans bouton (« Tes places d'objet sont prises. »)");
+    // v3.739.0 (Seb 07/11) : Huile de lame sans gain mesuré (Rôdeur 91 → 91 %) : proposée, jamais ajoutée par « Tout préparer »
+    html = open(sil);
+    ok(html.indexOf("Ou emporte : Huile de lame (×2).") !== -1 && html.indexOf("sortiePrepTake('huile_de_lame')") !== -1 && html.indexOf("Mieux contre son miroir : emporte Huile") === -1, "Rôdeur, Silhouette : « Ou emporte : Huile de lame (×2). » et « Emporter », sans « Mieux contre son miroir »");
+    ok(g.grimoireAutoItems(sil, []).indexOf("huile_de_lame") === -1 && !g.etItemBeatsRule(sil, { trait: "armored", cond: "enemyArmored", slot: "skill1" }, []), "Huile de lame : ni « meilleure que la règle » ni ajout automatique");
+    g.sortiePrepAll();
+    ok(g.sortiePrep.items.indexOf("huile_de_lame") === -1 && !/Emporté aussi/.test(g.sortiePrep.msg.text), "« Tout préparer » (Rôdeur, Huile en stock) : les règles seules, l'Huile n'est pas emportée");
+    G.grimoireRules = [R(), R(), R()];
     // hors stock : où il se prépare, sans bouton
     stock("huile_de_lame", 0); html = open(sil);
     ok(html.indexOf("Ou emporte : Huile de lame.") !== -1 && html.indexOf("sortiePrepTake('huile_de_lame')") === -1, "hors stock : « Ou emporte : Huile de lame. », sans bouton");
@@ -25840,6 +25847,9 @@ console.log("\n[498] v3.738.0 — Objets de combat dans le pronostic de sortie (
     stock("acide_mordant", 1);
     var adv = g.sortieAdvisedItems(sil);
     ok(adv[0] === "baume_froid" && adv.indexOf("acide_mordant") > 0 && g.sortieAdvisedItems(dragon).indexOf("baume_froid") === -1, "objets conseillés : Baume d'abord (miroir), Acide ensuite ; rien d'inutile (" + adv.join() + ")");
+    stock("baume_froid", 0);
+    ok(g.sortieAdvisedItems(sil).indexOf("baume_froid") === -1 && g.sortieAdvisedItems(sil, true)[0] === "baume_froid", "v3.739.0 : conseil sans stock (le robot fabrique à l'avance) : Baume d'abord, même hors stock");
+    ok(/sortieAdvisedItems\([^)]*, true\)/.test(fsRead("../tools/sim/campagne-harness.js")) && /deliverOrder/.test(fsRead("../tools/sim/campagne-harness.js")), "robot de campagne : il livre les commandes des objets conseillés aux prochains boss et les fabrique");
     ok(/sortieAdvisedItems\(ctx\)/.test(fsRead("../tools/sim/campagne-harness.js")) && /emporterObjets\(g\)/.test(fsRead("../tools/sim/campagne-harness.js")), "robot de campagne : il emporte les objets conseillés (takeForSortie)");
     g.closeSortiePrep();
 

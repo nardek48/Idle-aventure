@@ -1431,17 +1431,89 @@ function villageJoueur(g) {
   if (ids.length && V.getBlockReason(ids[0]) === "Matériaux manquants") { SANS_LENDEMAIN++; SANS_ATTENTE++; try { ensureCost(V.getNextCost(ids[0])); } finally { SANS_LENDEMAIN--; SANS_ATTENTE--; } }
   if (ids.length && !V.getBlockReason(ids[0]) && V.startBuild(ids[0])) { act("chantier:" + ids[0], (V.getNextCost(ids[0]) || {}).gold || 0); STATS.village.push(ids[0] + " " + (V.getLevel(ids[0]) + 1) + " (" + CURRENT_STEP + ")"); }
 }
-/* Apothicaire : les commandes livrables (recettes apprises), puis les préparations du jour, soins d'abord. */
+/* Apothicaire : les commandes livrables (recettes apprises), puis les préparations du jour, soins d'abord.
+   v3.739.0 (Seb 07/11) : objets de combat comme un joueur, ceux que le pronostic conseille aux prochaines quêtes (objetsUtiles). */
 function apothicaireJoueur(g) {
   var A = g.ApothecaryManager;
+  if (A && A.getLevel() < 1 && AVISE && g.CombatItems) apothicaireBatir(g);
   if (!A || A.getLevel() < 1) return;
-  (g.APOTHECARY_RECIPES || []).forEach(function (r) { if (A.isOrderOpen && A.isOrderOpen(r.potionId) && A.canDeliver(r.potionId) && A.deliverOrder(r.potionId)) act("apothicaire:commande", 0); });
-  var list = A.getUnlockedRecipes().slice().sort(function (a, b) { return (a.kind === "healing" ? 0 : 1) - (b.kind === "healing" ? 0 : 1); });
+  (g.APOTHECARY_RECIPES || []).forEach(function (r) { if (r.kind !== "item" && A.isOrderOpen && A.isOrderOpen(r.potionId) && A.canDeliver(r.potionId) && A.deliverOrder(r.potionId)) act("apothicaire:commande", 0); });
+  var garde = AVISE && g.CombatItems ? objetsAvance(g, A) : 0; // préparations du jour gardées aux objets conseillés
+  var list = A.getUnlockedRecipes().filter(function (x) { return x.kind !== "item"; }).sort(function (a, b) { return (a.kind === "healing" ? 0 : 1) - (b.kind === "healing" ? 0 : 1); });
   for (var k = 0; k < 20 && A.getDailyRemaining() > 0; k++) {
-    var r = list.filter(function (x) { return A.canAfford(x.potionId); })[k % Math.max(1, list.length)];
+    var r = list.filter(function (x) { return A.canAfford(x.potionId) && (!x.capped || A.getDailyRemaining() > garde); })[k % Math.max(1, list.length)];
     if (!r || !A.craft(r.potionId)) break;
     act("apothicaire", 0);
   }
+}
+/* v3.739.0 (Seb 07/11) : les 3 prochaines quêtes d'aventure (mondes atteints, pas finies, dans l'ordre des mondes) ;
+   leurs objets conseillés, stock compris ou non (sortieAdvisedItems(ctx, true)), bornés aux places d'objet. */
+var OBJETS_STOCK_CIBLE = 2, APO_ATTENTE_MIN = 60; // 2 de chaque (sortie + reprise) ; attente de production bornée par entretien
+function objetsUtiles(g) {
+  var W = g.WORLDS || [], AQ = g.ADVENTURE_QUESTS || {}, fait = g.game.adventureQuestsCompleted || {}, atteint = mondeCourant(g), out = [];
+  var wi = function (id) { for (var i = 0; i < W.length; i++) if (W[i].id === id) return i; return 99; };
+  var ids = Object.keys(AQ).map(function (id, k) { return { id: id, w: wi(AQ[id].worldId), k: k }; })
+    .filter(function (x) { return !fait[x.id] && x.w <= atteint; }).sort(function (a, b) { return a.w - b.w || a.k - b.k; }).slice(0, 3);
+  ids.forEach(function (x) { g.sortieAdvisedItems({ type: "adventure", id: x.id }, true).slice(0, g.CombatItems.slotCount()).forEach(function (id) { if (out.indexOf(id) < 0) out.push(id); }); });
+  return { items: out, quetes: ids.map(function (x) { return x.id; }) };
+}
+/* Réunit un coût sans dépense déraisonnable : récolte, atelier avec le stock, au plus APO_ATTENTE_MIN de production en tout
+   par entretien ; un matériau de carte ou de donjon (cendre, obsidienne, chitine) se prend seulement en stock. */
+function apoReunir(g, cost, budget) {
+  var WM = g.WarehouseManager, PB = g.PRODUCTION_BUILDINGS, mins = 0, ok = true;
+  harvest();
+  Object.keys(cost).forEach(function (k) {
+    var manque = cost[k] - WM.getAmount(k);
+    if (manque <= 0 || !ok) return;
+    var bid = Object.keys(PB).filter(function (id) { return PB[id].resourceKey === k; })[0];
+    if (bid) {
+      var keep = g.GrandOuvrage && g.GrandOuvrage.autoKeep ? g.GrandOuvrage.autoKeep(k) : Infinity, parMin = Number(g.ProductionManager.getRatePerMin(bid) || 0);
+      if (!g.ProductionManager.isBuildingUnlocked(bid) || parMin <= 0 || Math.min(keep, WM.getCap(k)) < cost[k]) { ok = false; return; }
+      mins = Math.max(mins, Math.ceil(manque / parMin));
+      return;
+    }
+    var atelier = Object.keys(g.WORKSHOPS_CONFIG).some(function (id) { return (g.WORKSHOPS_CONFIG[id].recipes || []).some(function (r) { return r.outputs[0].resourceId === k; }); });
+    if (!atelier) { ok = false; return; }
+    SANS_LENDEMAIN++; SANS_ATTENTE++; try { ok = obtain(k, cost[k]) && ok; } finally { SANS_LENDEMAIN--; SANS_ATTENTE--; }
+  });
+  if (!ok || mins > budget.min) return false;
+  if (mins > 0) { budget.min -= mins; wait(mins * 60e3, "apothicaire"); harvest(); }
+  return Object.keys(cost).every(function (k) { return WM.getAmount(k) >= cost[k]; });
+}
+/* Un objet conseillé aux prochaines quêtes : le joueur bâtit l'Apothicaire (rang atteint, or sous 30 %, matériaux réunis sans
+   dépense déraisonnable) ; sinon villageJoueur, bloqué sur le chantier le moins cher, ne le bâtit qu'à la Tour. */
+function apothicaireBatir(g) {
+  var V = g.VillageBuildingManager, why = V.getBlockReason("apothecary"), c = V.getNextCost("apothecary") || {}, mat = {};
+  if (V.getLevel("apothecary") > 0 || V.isBuilding() || (why && why !== "Matériaux manquants") || Number(c.gold || 0) > g.game.gold * 0.3) return;
+  var u = objetsUtiles(g);
+  if (!u.items.length) return;
+  Object.keys(c).forEach(function (k) { if (k !== "gold") mat[k] = c[k]; });
+  if (!apoReunir(g, mat, { min: APO_ATTENTE_MIN }) || V.getBlockReason("apothecary") || !V.startBuild("apothecary")) return;
+  act("chantier:apothecary", c.gold || 0); STATS.village.push("apothecary 1 (" + CURRENT_STEP + ", objets)");
+  if (process.env.TRACE_OBJETS) console.log("      [objets] " + CURRENT_STEP + " Apothicaire bâti pour " + u.items.join(",") + " (prochaines " + u.quetes.join(",") + ")");
+}
+function objetsAvance(g, A) {
+  var u = objetsUtiles(g), budget = { min: APO_ATTENTE_MIN }, O = STATS.objetsApo = STATS.objetsApo || { appris: {}, fabriques: {} };
+  var cle = u.items.join(",") + "|" + u.quetes.join(",");
+  if (process.env.TRACE_OBJETS && cle !== O.dernier) console.log("      [objets] " + CURRENT_STEP + " utiles " + (u.items.join(",") || "—") + " (prochaines " + u.quetes.join(",") + ")");
+  O.dernier = cle;
+  u.items.forEach(function (id) {
+    var r = A.getRecipe(id);
+    if (!r || A.isLearned(id) || !A.isOrderOpen(id)) return;
+    if (!A.canDeliver(id) && !apoReunir(g, r.order, budget)) { if (process.env.TRACE_OBJETS) console.log("      [objets] " + CURRENT_STEP + " commande " + id + " pas encore : " + JSON.stringify(r.order) + " (prochaines " + u.quetes.join(",") + ")"); return; }
+    if (A.deliverOrder(id)) { O.appris[id] = CURRENT_STEP; act("apothicaire:commande", 0); if (process.env.TRACE_OBJETS) console.log("      [objets] " + CURRENT_STEP + " recette apprise : " + id + " (" + JSON.stringify(r.order) + ", prochaines " + u.quetes.join(",") + ")"); }
+  });
+  u.items.forEach(function (id) {
+    for (var k = 0; k < OBJETS_STOCK_CIBLE && A.isLearned(id) && g.CombatItems.getStock(id) < OBJETS_STOCK_CIBLE && A.getDailyRemaining() > 0; k++) {
+      if (!A.canAfford(id) && !apoReunir(g, A.getInputs(id), budget)) { if (process.env.TRACE_OBJETS) console.log("      [objets] " + CURRENT_STEP + " " + id + " pas fabriqué : " + JSON.stringify(A.getInputs(id)) + " (attente restante " + budget.min + " min)"); break; }
+      if (!A.craft(id)) break;
+      O.fabriques[id] = (O.fabriques[id] || 0) + 1; act("apothicaire", 0);
+      if (process.env.TRACE_OBJETS) console.log("      [objets] " + CURRENT_STEP + " fabriqué : " + id + " (stock " + g.CombatItems.getStock(id) + ")");
+    }
+    if (process.env.TRACE_OBJETS && A.isLearned(id) && g.CombatItems.getStock(id) < OBJETS_STOCK_CIBLE && A.getDailyRemaining() <= 0) console.log("      [objets] " + CURRENT_STEP + " " + id + " : préparations du jour épuisées");
+  });
+  // les objets qui manquent gardent leurs préparations du jour (jour suivant compris) ; les potions prennent le reste
+  return u.items.reduce(function (n, id) { return n + (A.isLearned(id) ? Math.max(0, OBJETS_STOCK_CIBLE - g.CombatItems.getStock(id)) : 0); }, 0);
 }
 /* v3.613.0 (lot 1) : les compagnons comme un joueur — chaque conversation prête (premier choix), puis jusqu'à deux étapes de
    quêtes personnelles par entretien : scène, livraison (ressources obtenues), ou le lieu de la carte vivante marqué pour la quête,
@@ -2339,6 +2411,7 @@ if (COMBATS) {
   console.log("Quêtes d'élite : " + (STATS.elites.map(function (e) { return e.quest + (e.ok ? " ✔" : " ✘") + " (" + e.step + ", " + e.essais + " essai" + (e.essais > 1 ? "s" : "") + ")"; }).join(" · ") || "aucune"));
   console.log("Village pour la puissance : " + (STATS.village.join(" · ") || "rien"));
   if (STATS.objets) console.log("Objets de combat emportés (v3.738.0) : " + Object.keys(STATS.objets).map(function (k) { return k + " " + STATS.objets[k]; }).join(" · "));
+  if (STATS.objetsApo) console.log("Objets de combat (v3.739.0) : recettes apprises " + (Object.keys(STATS.objetsApo.appris).map(function (k) { return k + " (" + STATS.objetsApo.appris[k] + ")"; }).join(" · ") || "aucune") + " · fabriqués " + (Object.keys(STATS.objetsApo.fabriques).map(function (k) { return k + " " + STATS.objetsApo.fabriques[k]; }).join(" · ") || "aucun"));
   console.log("Morts : " + STATS.deaths + " · potions bues : " + STATS.potions + " à la main, " + (STATS.potionsBues || 0) + " en tout · or en potions : " + (STATS.potionGold || 0) + " · temps de combat : " + (STATS.combatMs / 3600e3).toFixed(1) + " h · temps de soin au camp : " + (STATS.healMs / 3600e3).toFixed(1) + " h");
   if (STATS.rations) console.log("Rations au camp : mangées " + JSON.stringify(STATS.rations.mangees) + " · cuisinées " + JSON.stringify(STATS.rations.cuisinees) + " · attente évitée " + (STATS.rations.minutesEvitees / 60).toFixed(1) + " h");
   if (VERBOSE) STATS.fights.slice(-12).forEach(function (f) { console.log("    " + f.step + " · " + f.kind + " " + f.name + " : " + f.rounds + " rounds, PV " + Math.round(f.hp0 * 100) + "→" + Math.round((f.hp1 || 0) * 100) + " %" + (f.died ? " †" : "") + (f.potions ? " (" + f.potions + " potion)" : "")); });

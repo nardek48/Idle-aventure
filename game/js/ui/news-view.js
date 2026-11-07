@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.739.0", "system/sortie_prep", _t("Préparer la sortie : « Tout préparer » n'emporte plus l'Huile de lame d'office (elle reste proposée) ; seul le Baume froid, utile face à un miroir, est ajouté automatiquement.")],
     ["3.738.0", "system/sortie_prep", _t("Préparer la sortie : « Ce que tu vas affronter » propose aussi les objets de combat qui contrent une situation (« Ou emporte : Baume froid »), avec ton stock ou l'endroit où le préparer, et un bouton pour l'emporter.")],
     ["3.737.0", "classes/class_ranger", _t("La Silhouette, face au Rôdeur : « elle se bat comme toi », elle ne se soigne donc pas, et elle a moins de PV. Le Rôdeur n'était plus capable de la battre ; il gagne maintenant près de 9 fois sur 10 (Chevalier et Mage inchangés).")],
     ["3.736.0", "system/grimoire", _t("Grimoire vivant : 3 règles actives, rangées en jeux que tu changes d'un toucher (un jeu de plus par monde). Avant chaque sortie, le pronostic coche les situations couvertes et propose d'ajouter la règle qui manque (« Tout préparer »). Tes règles 4 à 6 sont gardées dans un jeu « Mes autres règles ».")],

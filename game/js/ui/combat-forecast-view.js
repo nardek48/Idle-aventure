@@ -554,9 +554,11 @@ function etMirrorFoe(ctx) {
 }
 /* L'objet fait-il mieux que la règle ? Cas mesuré (banc silhouette-rodeur, Baume froid 81 → 94 %) : trait permanent tenu,
    face à un miroir où la règle ferait rejouer la même technique. Situation s de grimoireSortieSituations. */
+// v3.739.0 (Seb 07/11) : seuls les objets au gain mesuré (Huile de lame : 91 → 91 %, sans gain, reste « Ou emporte »)
+var ET_ITEMS_MESURES = { baume_froid: true };
 function etItemBeatsRule(ctx, s, rules) {
   var it = s && etItemForTrait(s.trait);
-  if (!it || it.soften || !etMirrorFoe(ctx)) return false;
+  if (!it || it.soften || !ET_ITEMS_MESURES[it.id] || !etMirrorFoe(ctx)) return false;
   var r = etRuleResponse(s.cond, rules || game.grimoireRules, etKit()), slot = r.status === "counter" ? r.rule.actionSlot : s.slot;
   return /^skill[123]$/.test(slot || "");
 }
@@ -572,14 +574,15 @@ function grimoireAutoItems(ctx, items) {
   return out;
 }
 /* Objets conseillés pour une sortie, en stock, du plus utile au moins utile : traits sans place au Grimoire, objets meilleurs
-   que leur règle, autres traits tenus, puis ceux qui atténuent (Bouclier, Silence, Tri, Carapace). Suivi par le robot. */
-function sortieAdvisedItems(ctx) {
+   que leur règle, autres traits tenus, puis ceux qui atténuent (Bouclier, Silence, Tri, Carapace). Suivi par le robot.
+   v3.739.0 (Seb 07/11) : sansStock, ce qu'il faudrait avoir (le robot fabrique à l'avance pour les prochains boss). */
+function sortieAdvisedItems(ctx, sansStock) {
   var out = [], open = (typeof getGrimoireSlotCount === "function") ? getGrimoireSlotCount(game.worldsEverReached) : 3;
   if (!window.CombatItems || !ctx) return out;
-  var push = function (it) { if (it && out.indexOf(it.id) === -1 && etItemStock(it.id) > 0) out.push(it.id); };
+  var push = function (it) { if (it && out.indexOf(it.id) === -1 && (sansStock || etItemStock(it.id) > 0)) out.push(it.id); };
   var sits = grimoireSortieSituations(ctx).filter(function (x) { return !x.opt; }), prev = getEnemyTraitsPreview(ctx).traits;
   sits.slice(open).forEach(function (s) { var it = etItemForTrait(s.trait); if (it && !it.soften) push(it); });
-  grimoireAutoItems(ctx, []).forEach(function (id) { push(COMBAT_ITEMS[id]); });
+  grimoireSortieSituations(ctx).forEach(function (s) { if (!s.opt && etItemBeatsRule(ctx, s)) push(etItemForTrait(s.trait)); });
   prev.forEach(function (t) { var it = etItemForTrait(t.trait); if (!t.opt && it && !it.soften) push(it); });
   prev.forEach(function (t) { var it = etItemForTrait(t.trait); if (!t.opt && it && it.soften) push(it); });
   return out;
