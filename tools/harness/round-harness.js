@@ -25491,6 +25491,70 @@ console.log("\n[494] v3.733.0 — forest_15 : la carte de mission fait l'offrand
   } catch (err) { ok(false, "[494] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[495] v3.734.0 — Rappels d'entrée : Marque exigée par l'étape, PV bas à l'acceptation d'une étape de combat (Seb 07/11)");
+(function () {
+  var SQ = g.StoryQuestManager, st = SQ.getState("forest"), sv = JSON.stringify(st);
+  var keep = { conf: g.showConfirmModal, prep: g.openSortiePrep, hp: g.game.heroHp, max: g.game.heroMaxHp, tab: g.game.unlockedTabs && g.game.unlockedTabs.dungeon };
+  var conf = null; g.showConfirmModal = function (t, x, i, ok2, l) { conf = { title: t, text: x, ok: ok2, labels: l || {} }; };
+  var prep = null; g.openSortiePrep = function (o) { prep = o; };
+  var poser = function (id, acc) { st.currentStep = g.STORY_QUESTS.forest.steps.findIndex(function (s) { return s.id === id; }); st.accepted = acc; st.counters = {}; };
+  try {
+    // A — rappel près des Marques
+    g.game.unlockedTabs.dungeon = true;
+    poser("forest_13", true);
+    ok(g.dungeonStoryMarkStep(1) && g.dungeonStoryMarkStep(1).id === "forest_13", "forest_13 acceptée : la Tanière sait que l'étape exige une Marque");
+    g.pendingDungeonMarks = []; var html = g.buildDungeonSheetHTML(1);
+    ok(html.indexOf("dsheet-markreq") >= 0 && html.indexOf("tape « Marques du corrompu » demande au moins une Marque.") >= 0, "feuille : rappel présent, près du choix des Marques");
+    ok(html.indexOf("dsheet-markreq") >= 0 && html.indexOf("dsheet-markreq") < html.indexOf("toggleDungeonFold('marks')"), "rappel placé juste avant le repli « Marques »");
+    poser("forest_13", false);
+    ok(!g.dungeonStoryMarkStep(1) && g.buildDungeonSheetHTML(1).indexOf("dsheet-markreq") < 0, "étape non acceptée : pas de rappel");
+    poser("forest_14", true);
+    ok(!g.dungeonStoryMarkStep(1) && g.buildDungeonSheetHTML(1).indexOf("dsheet-markreq") < 0, "forest_14 (sans Marque exigée) : pas de rappel");
+    var autres = []; Object.keys(g.STORY_QUESTS).forEach(function (c) { g.STORY_QUESTS[c].steps.forEach(function (s2) { if (/coeurKillsMarked/.test(String(s2.check || ""))) autres.push(s2.id); }); });
+    ok(autres.join(",") === "forest_13", "détection générique : seule forest_13 lit le compteur des vagues sous Marque (" + autres.join(",") + ")");
+    // A — départ sans Marque : confirmation, rien de bloquant
+    poser("forest_13", true);
+    g.pendingDungeonId = 1; g.pendingDungeonMarks = []; g.pendingDungeonLevel = 1; g.pendingDungeonFree = false; conf = null; prep = null;
+    g.confirmDungeonStart();
+    ok(conf && conf.text === "Sans Marque, cette descente ne comptera pas pour l'étape." && conf.labels.ok === "Partir quand même" && conf.labels.cancel === "Choisir une Marque" && !prep, "sans Marque : confirmation « Partir quand même » / « Choisir une Marque », rien n'est lancé");
+    conf.ok();
+    ok(prep && prep.ctx && prep.ctx.id === 1, "« Partir quand même » : la préparation de sortie s'ouvre, le départ suit");
+    var sw = g.switchTab; g.switchTab = function () {}; var rs = g.renderDungeonSheet; g.renderDungeonSheet = function () {};
+    g.pendingDungeonId = 1; g.pendingDungeonMarks = []; conf = null; g.confirmDungeonStart(); conf.labels.onCancel();
+    ok(g.pendingDungeonId === 1 && g.pendingDungeonMarksOpen === true, "« Choisir une Marque » : la feuille revient, Marques dépliées");
+    g.switchTab = sw; g.renderDungeonSheet = rs;
+    var mk = (g.DUNGEON_MARKS || [])[0]; g.pendingDungeonId = 1; g.pendingDungeonMarks = [mk.id]; conf = null; prep = null; g.confirmDungeonStart();
+    ok(!conf && prep, "avec une Marque : départ direct, pas de confirmation");
+    poser("forest_14", true); g.pendingDungeonId = 1; g.pendingDungeonMarks = []; conf = null; prep = null; g.confirmDungeonStart();
+    ok(!conf && prep, "étape sans Marque exigée : départ direct");
+    // B — PV bas à l'acceptation d'une étape de combat
+    g.game.heroMaxHp = 400; g.game.heroHp = 110;
+    poser("forest_02", false); conf = null;
+    ok(g.acceptStoryStepWithCheck("forest") === true && conf && conf.text === "Tes PV sont bas : repose-toi au feu ou mange une ration avant de partir." && conf.labels.ok === "Aller au feu", "forest_02 acceptée à 27 % : rappel, bouton « Aller au feu »");
+    ok(conf.ok === g.goHealFromForecast, "le bouton mène au feu du Campement (goHealFromForecast)");
+    conf = null; ok(g.maybeStoryLowHpReminder("forest") === true, "rappel déclenché par l'acceptation seulement (appel direct possible)");
+    poser("forest_02", false); g.game.heroHp = 220; conf = null; g.acceptStoryStepWithCheck("forest");
+    ok(!conf, "forest_02 acceptée à 55 % : pas de rappel");
+    poser("forest_04", false); g.game.heroHp = 110; conf = null; g.acceptStoryStepWithCheck("forest");
+    ok(!conf && !g.storyStepIsCombat(g.STORY_QUESTS.forest.steps.filter(function (s2) { return s2.id === "forest_04"; })[0]), "forest_04 (boutique, sans combat) : pas de rappel");
+    poser("forest_13", false); ok(g.storyLowHpReminderNeeded("forest") === true, "forest_13 (donjon) comptée comme étape de combat");
+    poser("forest_02", false); conf = null; g.game.adventureQuestRun = { active: true };
+    g.acceptStoryStepWithCheck("forest"); ok(!conf, "activité en cours (combat) : pas de rappel");
+    g.game.adventureQuestRun = null;
+    poser("forest_02", false); conf = null; g.campMissionAction("story_forest", "accept");
+    ok(SQ.getState("forest").accepted === true && conf && conf.labels.ok === "Aller au feu", "acceptation depuis la carte du Camp : même rappel");
+    ok(fsRead("js/ui/quests-view.js").indexOf("onclick=\"acceptStoryStepWithCheck(") >= 0, "Quêtes › Histoire : « Accepter » passe par le rappel");
+    ["L'étape « {x} » demande au moins une Marque.", "Sans Marque, cette descente ne comptera pas pour l'étape.", "Choisir une Marque", "Aucune Marque choisie", "PV bas", "Tes PV sont bas : repose-toi au feu ou mange une ration avant de partir.", "Aller au feu", "Plus tard"].forEach(function (k) {
+      ok(fsRead("js/lang/en.js").indexOf(JSON.stringify(k)) >= 0, "en.js : « " + k + " » traduit");
+    });
+  } catch (err) { ok(false, "[495] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  finally {
+    g.showConfirmModal = keep.conf; g.openSortiePrep = keep.prep; g.game.heroHp = keep.hp; g.game.heroMaxHp = keep.max; g.game.adventureQuestRun = null;
+    g.game.unlockedTabs.dungeon = keep.tab; g.pendingDungeonId = null; g.pendingDungeonMarks = [];
+    var restored = JSON.parse(sv); Object.keys(restored).forEach(function (k) { st[k] = restored[k]; });
+  }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

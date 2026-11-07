@@ -31,6 +31,42 @@ function goHealFromForecast() {
 }
 window.goHealFromForecast = goHealFromForecast;
 
+/* v3.734.0 (Seb 07/11) : accepter une étape d'Histoire de combat sous la moitié des PV rappelle de se soigner.
+   Une fois par acceptation, jamais pendant une activité en cours ; rien de bloquant (l'étape reste acceptée). */
+var STORY_LOW_HP_PCT = 0.50;
+window.STORY_LOW_HP_PCT = STORY_LOW_HP_PCT;
+
+/* Étape de combat : liée à une quête d'aventure, une Petite Aventure ou un donjon, ou comptant des victoires. */
+function storyStepIsCombat(step) {
+  if (!step) return false;
+  if (step.killTarget) return true;
+  var l = step.linkTo || {}, tab = typeof l.tab === "function" ? l.tab(game) : l.tab;
+  return tab === "dungeon" || /^(adv_|petite_aventure_)/.test(String(l.cardId || ""));
+}
+window.storyStepIsCombat = storyStepIsCombat;
+
+function storyLowHpReminderNeeded(chapterId) {
+  if (!window.StoryQuestManager || (window.WorldTravel && WorldTravel.isBusy())) return false;
+  return storyStepIsCombat(StoryQuestManager.getCurrentStep(chapterId)) && getHeroHpRatio() < STORY_LOW_HP_PCT;
+}
+window.storyLowHpReminderNeeded = storyLowHpReminderNeeded;
+
+function maybeStoryLowHpReminder(chapterId) {
+  if (!storyLowHpReminderNeeded(chapterId)) return false;
+  showConfirmModal(_t("PV bas"), _t("Tes PV sont bas : repose-toi au feu ou mange une ration avant de partir."),
+    "images/Icons/combat_stats/stat_health.webp", goHealFromForecast, { ok: _t("Aller au feu"), cancel: _t("Plus tard") });
+  return true;
+}
+window.maybeStoryLowHpReminder = maybeStoryLowHpReminder;
+
+/* Bouton « Accepter » de la carte d'étape (Quêtes › Histoire). */
+function acceptStoryStepWithCheck(chapterId) {
+  var ok = StoryQuestManager.acceptStep(chapterId);
+  if (ok) maybeStoryLowHpReminder(chapterId);
+  return ok;
+}
+window.acceptStoryStepWithCheck = acceptStoryStepWithCheck;
+
 function getForecastLevelClass(f) {
   return f ? ("is-" + f.id) : "";
 }

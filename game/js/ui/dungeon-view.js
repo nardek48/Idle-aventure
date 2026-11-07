@@ -291,6 +291,10 @@ function buildDungeonSheetHTML(dungeonId) {
   h += buildDungeonGainHTML(dungeon, level, free, n);
   h += buildDungeonAheadHTML(dungeon, level, storyFree);
 
+  // v3.734.0 (Seb 07/11) : l'étape d'Histoire en cours ne compte que sous Marque -> rappel près du choix
+  var markStep = dungeonStoryMarkStep(dungeon.id);
+  if (markStep) h += '<div class="dsheet-markreq' + (n ? ' is-ok' : '') + '"><img class=ico-inline src=images/Icons/system/' + (n ? 'check_valid' : 'warning') + '.webp> '
+    + esc(_t("L'étape « {x} » demande au moins une Marque.", { x: _td(markStep.title) })) + '</div>';
   // Marques, repliées par défaut : le résumé dit combien et pour quel gain
   h += '<button type="button" class="dsheet-fold" aria-expanded="' + pendingDungeonMarksOpen + '" onclick="toggleDungeonFold(\'marks\')"><b>' + _t("Marques") + '</b><span>'
     + n + ' / ' + maxMarks + ' · ×' + fmtDec(mult.toFixed(2).replace(/0$/, "")) + ' <i aria-hidden="true">' + (pendingDungeonMarksOpen ? '▲' : '▼') + '</i></span></button>';
@@ -373,11 +377,42 @@ function toggleDungeonMark(markId) {
   renderDungeonSheet();
 }
 
-function confirmDungeonStart() {
+/* v3.734.0 (Seb 07/11) : étape d'Histoire en cours (acceptée, pas finie) du monde de ce donjon qui exige une Marque.
+   Lue sur le compteur que l'étape vérifie (coeurKillsMarked : vagues passées sous Marque), sans toucher aux données protégées. */
+function dungeonStoryMarkStep(dungeonId) {
+  var d = window.DungeonManager ? DungeonManager.getById(dungeonId) : null;
+  if (!d || !window.StoryQuestManager) return null;
+  var chapterId = d.storyChapterId || d.worldId, step = StoryQuestManager.getCurrentStep(chapterId);
+  if (!step || !StoryQuestManager.isCurrentStepAccepted(chapterId) || StoryQuestManager.isCurrentStepReady(chapterId)) return null;
+  return /coeurKillsMarked/.test(String(step.check || "")) ? step : null;
+}
+window.dungeonStoryMarkStep = dungeonStoryMarkStep;
+
+/* v3.734.0 : départ sans Marque alors que l'étape en exige une -> confirmation, rien de bloquant. */
+function askDungeonNoMark(go, pick) {
+  showConfirmModal(_t("Aucune Marque choisie"), _t("Sans Marque, cette descente ne comptera pas pour l'étape."),
+    "images/Icons/system/warning.webp", go, { ok: _t("Partir quand même"), cancel: _t("Choisir une Marque"), onCancel: pick });
+}
+window.askDungeonNoMark = askDungeonNoMark;
+
+/* v3.734.0 : « Choisir une Marque » rouvre la feuille telle qu'elle était, Marques dépliées. */
+function reopenDungeonSheetForMarks(id, level, free) {
+  pendingDungeonId = Number(id); pendingDungeonMarks = []; pendingDungeonLevel = level; pendingDungeonFree = free;
+  pendingDungeonMarksOpen = true;
+  if (typeof switchTab === "function" && game.activeTab !== "dungeon") switchTab("dungeon");
+  renderDungeonSheet();
+}
+window.reopenDungeonSheetForMarks = reopenDungeonSheetForMarks;
+
+function confirmDungeonStart(force) {
   var id = pendingDungeonId;
   var marks = pendingDungeonMarks.slice(), level = pendingDungeonLevel, free = pendingDungeonFree;
   closeDungeonSheet();
   if (id == null) return;
+  if (force !== true && !marks.length && dungeonStoryMarkStep(id)) {
+    return askDungeonNoMark(function () { pendingDungeonId = id; pendingDungeonMarks = []; pendingDungeonLevel = level; pendingDungeonFree = free; confirmDungeonStart(true); },
+      function () { reopenDungeonSheetForMarks(id, level, free); });
+  }
   var d = DungeonManager.getById(id);
   // v3.440.0 : préparation de sortie avant le départ
   openSortiePrep({ title: d ? _td(d.name) : "", icon: (d && d.icon) || "images/Icons/quests/mission_dungeon.webp", ctx: { type: "dungeon", id: id },

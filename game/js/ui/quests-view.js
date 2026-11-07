@@ -802,7 +802,7 @@ function buildStoryCurrentStepHTML(chapterId, chapter, step, index) {
 
   h += '<div class="story-step-actions" data-story-actions="' + esc(chapterId) + '">';
   if (!accepted) {
-    h += '<button class="settings-btn primary" type="button" onclick="StoryQuestManager.acceptStep(\'' + esc(chapterId) + '\')">' + _t("Accepter") + '</button>';
+    h += '<button class="settings-btn primary" type="button" onclick="acceptStoryStepWithCheck(\'' + esc(chapterId) + '\')">' + _t("Accepter") + '</button>'; // v3.734.0 : rappel PV bas si étape de combat
   } else if (ready) {
     h += '<button class="settings-btn primary" type="button" onclick="StoryQuestManager.claimStep(\'' + esc(chapterId) + '\')"><img class=ico-inline src=images/Icons/dungeon/dungeon_guaranteed_loot.webp> ' + _t("Réclamer") + '</button>';
   } else {

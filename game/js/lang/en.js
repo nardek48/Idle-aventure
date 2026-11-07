@@ -10,6 +10,7 @@
    Les textes des données sont traduits par _td() à l'affichage (registre : lang/data-fields.js). */
 I18n.register("en", {
   // index.html
+  "Donjon : quand l'étape demande une Marque, l'écran d'entrée le rappelle, et partir sans Marque demande confirmation. Accepter une étape de combat sous 50 % de PV propose d'aller d'abord au feu.": "Dungeon: when the step requires a Mark, the entry screen reminds you, and setting out without one asks for confirmation. Accepting a combat step below 50% HP suggests going to the fire first.",
   "Correctif : à l'étape « Les braises s'éveillent », le bouton de la carte de mission fait maintenant l'offrande aux braises. Avant, « Partir » renvoyait au Campement sans rien faire et on restait bloqué.": "Fix: at the \"The embers awaken\" step, the mission card button now makes the offering to the embers. Before, \"Set out\" sent you back to the Camp and did nothing, leaving you stuck.",
   "Boss : leur soin rend maintenant 10 % de leurs PV max (au lieu de 15 % des PV qui leur restent). Un boss presque vaincu se soigne autant qu'un boss en pleine forme : contrer son soin compte à chaque phase.": "Bosses: their heal now restores 10% of their max HP (instead of 15% of their remaining HP). A nearly beaten boss heals as much as a fresh one: countering the heal matters in every phase.",
   "Mage : les ennemis ne se renforcent plus en reprenant ses PV en plus (ils tapaient jusqu'à 12 % plus fort que pour les autres classes). Sur « Les pentes » de la Montagne, il gagne près de 4 fois sur 5 au lieu de 3 sur 5.": "Mage: enemies no longer scale up by taking back the Mage's extra HP (they hit up to 12% harder than for other classes). On the Mountain's \"The slopes\", the Mage now wins nearly 4 times in 5 instead of 3 in 5.",
@@ -9318,4 +9319,11 @@ I18n.register("en", {
   "Pour la suite, une pièce Légendaire à chacun des sept emplacements est un bon repère. Le Sommet interdit en laisse tomber, comme le Gardien qui répète.": "From here on, a Legendary piece in each of the seven slots is a good benchmark. The Forbidden Summit drops them, as does the Repeating Guardian.",
   "La Forge 7 s'ouvre maintenant, au Verre de faille (Givre bleu fondu à la Fonderie) : reforges 13 et 14.": "Forge 7 opens now, with Riftglass (Blue Frost melted at the Foundry): reforges 13 and 14.",
   "Pour aller au bout de l'Ossuaire, trois pièces Épiques sont un bon repère. L'arme du Cœur en est une ; les étapes 11 et 12 t'en ont donné une chacune. La quête d'élite « La couronne de trop » en donne une de plus : un casque.": "To reach the end of the Ossuary, three Epic pieces are a good benchmark. The Heart weapon is one; steps 11 and 12 gave you one each. The elite quest \"The Crown Too Many\" gives one more: a helmet.",
+  // v3.734.0 (Seb 07/11) : rappels d'entrée (Marque exigée, PV bas)
+  "L'étape « {x} » demande au moins une Marque.": "The step “{x}” requires at least one Mark.",
+  "Aucune Marque choisie": "No Mark chosen",
+  "Sans Marque, cette descente ne comptera pas pour l'étape.": "Without a Mark, this descent will not count for the step.",
+  "Choisir une Marque": "Choose a Mark",
+  "Tes PV sont bas : repose-toi au feu ou mange une ration avant de partir.": "Your HP is low: rest by the fire or eat a ration before setting out.",
+  "Aller au feu": "Go to the fire",
 });

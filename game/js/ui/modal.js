@@ -2,6 +2,7 @@
 /* ui/modal.js — 2 modales génériques : confirmation (oui/non+callback) et retour hors-ligne (résumé des gains). */
 
 var _confirmModalCallback = null;
+var _confirmModalCancel = null; // v3.734.0 : action du bouton de refus (labels.onCancel), facultative
 
 function showConfirmModal(title, text, icon, onConfirm, labels) {
   var modal = document.getElementById("confirm-modal");
@@ -25,6 +26,7 @@ function showConfirmModal(title, text, icon, onConfirm, labels) {
   if (btnOk) btnOk.textContent = (labels && labels.ok) || _t("Confirmer");
 
   _confirmModalCallback = typeof onConfirm === "function" ? onConfirm : null;
+  _confirmModalCancel = labels && typeof labels.onCancel === "function" ? labels.onCancel : null; // v3.734.0 (Seb 07/11) : le refus peut aussi agir
   modal.classList.add("show");
   if (window.kDialog) kDialog.open(modal.querySelector(".kwin"), document.activeElement); // CPL3-5
 }
@@ -35,9 +37,11 @@ function closeConfirmModal(confirmed) {
   if (modal && window.kDialog) kDialog.close(modal.querySelector(".kwin")); // CPL3-5 : avant le rappel, qui peut rouvrir une fenêtre
 
   var cb = _confirmModalCallback;
-  _confirmModalCallback = null;
+  var no = _confirmModalCancel;
+  _confirmModalCallback = null; _confirmModalCancel = null;
 
   if (confirmed && typeof cb === "function") cb();
+  else if (!confirmed && typeof no === "function") no();
 }
 
 window.showConfirmModal = showConfirmModal;

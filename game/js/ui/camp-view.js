@@ -103,8 +103,10 @@ function campMissionAction(missionId, action) {
   var m = window.MissionBoard ? MissionBoard.getById(missionId) : null;
   if (!m || typeof m[action] !== "function") return;
   var run = function () {
-    m[action]();
+    var done = m[action]();
     if (typeof renderPanel === "function") renderPanel();
+    // v3.734.0 (Seb 07/11) : étape d'Histoire de combat acceptée PV bas -> rappel de se soigner (une fois)
+    if (action === "accept" && m.sourceKind === "story" && done && typeof maybeStoryLowHpReminder === "function") maybeStoryLowHpReminder(m.worldId);
   };
   // v3.440.0 : le Donjon du tableau part sans feuille, la préparation de sortie passe ici
   if (action === "accept" && m.sourceKind === "dungeon" && typeof openSortiePrep === "function") {
@@ -112,6 +114,11 @@ function campMissionAction(missionId, action) {
     var dCtx = { type: "dungeon", id: Number(String(m.id).replace("dungeon_", "")) };
     run = function () { openSortiePrep({ title: m.title, icon: "images/Icons/quests/mission_dungeon.webp", ctx: dCtx,
       food: { kind: "dungeon", ref: window.DungeonManager ? DungeonManager.getById(dCtx.id) : null }, onGo: go }); }; // v3.513.0
+    // v3.734.0 (Seb 07/11) : le tableau part sans Marque ; si l'étape en exige une, on le dit avant
+    if (typeof dungeonStoryMarkStep === "function" && dungeonStoryMarkStep(dCtx.id)) {
+      var prep = run;
+      run = function () { askDungeonNoMark(prep, function () { if (typeof switchTab === "function") switchTab("dungeon"); if (typeof openDungeonSheet === "function") { openDungeonSheet(dCtx.id); pendingDungeonMarksOpen = true; renderDungeonSheet(); } }); };
+    }
   }
   /* v3.247.0 : avant de PARTIR (accept), on montre le pronostic si le combat est risqué ou
      pire, avec possibilité d'annuler. Les autres actions (réclamer, abandonner) passent direct. */
