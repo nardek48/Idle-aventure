@@ -10,7 +10,7 @@
    Profils (enveloppes, non cumulés sauf mention) :
      jeu  moteur nu
      A    contres dédiés : la Défense ne contre plus que la Charge ; Silence → technique 1, Exaltation → technique 2
-     B    boss (non élite) PV ×1,5          B2  boss PV ×1,5 et puissance ×0,8
+     B    boss (non élite) PV ×1,5          B2  boss PV ×1,5 et puissance ×0,8   B3  boss PV ×2 et puissance ×0,7
      D    annonces durcies : Charge ×1,6, bouclier 65 %, soin 15 % PV max, silence 3 rounds
      AD   A + D           ABD  A + B2 + D
 
@@ -46,7 +46,7 @@ var SCENARIOS = {
   tries: { step: "montagne_18", chap: "mountain", quest: "aq_montagne_tries", sv: SV_CB, label: "Montagne · Ceux qu'il a triés" }
 };
 var PROFILS = {
-  jeu: {}, A: { A: true }, B: { hp: 1.5 }, B2: { hp: 1.5, pow: 0.8 }, D: { D: true },
+  jeu: {}, A: { A: true }, B: { hp: 1.5 }, B2: { hp: 1.5, pow: 0.8 }, B3: { hp: 2, pow: 0.7 }, D: { D: true },
   AD: { A: true, D: true }, ABD: { A: true, D: true, hp: 1.5, pow: 0.8 }
 };
 var POLS = ["robot", "vide", "adapte", "robot3", "adapte3"];
@@ -68,7 +68,8 @@ function applyProfil(g, P) {
     });
   }
   if (P.D) { g.ENEMY_CHARGE_DMG_MULT = 1.6; g.BOSS_SHIELD_REDUCTION = 0.65; g.BOSS_HEAL_PERCENT = 0.15; g.SILENCE_DURATION_ROUNDS = 3; }
-  if (P.hp || P.pow) wrap(g.CombatEngine, "spawnGroup", function (o, a) {
+  // un boss seul passe par game.enemy = boss (CombatActors.setEnemies), un groupe par spawnGroup → setEnemies : on enveloppe setEnemies
+  if (P.hp || P.pow) wrap(g.CombatActors, "setEnemies", function (o, a) {
     [].concat(a[0] || []).forEach(function (e) {
       if (!e || !e.isBoss || e.isElite || e._gvScaled) return;
       e._gvScaled = true;
