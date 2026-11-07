@@ -17,7 +17,8 @@ var SV_BS = path.join(CH.DEPOT, "captures", "bouclier-soin", "saves"), SV_CB = p
 
 var SCENARIOS = {
   orc: { step: "forest_15", chap: "forest", quest: "aq_forest_depths", sv: SV_BS, boss: true, label: "Forêt · Seigneur de guerre orc (sans phase)",
-    PH2: [{ atPct: 0.5, archetype: "enraged", label: "il entre en rage" }] },
+    PH2: [{ atPct: 0.5, archetype: "enraged", label: "il entre en rage" }],
+    PH3: [{ atPct: 0.5, archetype: "armored", label: "il serre sa garde" }] },
   basilic: { step: "forest_14", chap: "forest", dungeon: 1, sv: SV_BS, boss: true, label: "Donjon 1 · Basilic (renfort 75 %, rage 25 %)",
     PH2: [{ atPct: 0.75, adds: ["spider"], addsHpMult: 0.16, addsPowerMult: 0.45, label: "des fileuses descendent des voûtes" },
       { atPct: 0.5, archetype: "enraged", label: "il entre en rage" }] },
@@ -33,8 +34,8 @@ var SCENARIOS = {
 // profils : « jeu » ou hX[pY][ph] (PV ×X, puissance ×Y, phases PH2)
 function profil(id) {
   if (id === "jeu") return {};
-  var m = /^h([\d.]+)(?:p([\d.]+))?(ph)?$/.exec(id); if (!m) throw new Error("profil inconnu : " + id);
-  return { hp: Number(m[1]), pow: m[2] ? Number(m[2]) : 0, ph: !!m[3] };
+  var m = /^h([\d.]+)(?:p([\d.]+))?(ph3?)?$/.exec(id); if (!m) throw new Error("profil inconnu : " + id);
+  return { hp: Number(m[1]), pow: m[2] ? Number(m[2]) : 0, ph: !!m[3], phk: m[3] === "ph3" ? "PH3" : "PH2" };
 }
 var POLS = ["robot", "vide", "adapte", "robot3", "adapte3", "prepare3", "prepare3o", "prepare3ph"];
 var CLASSES = { knight: "Chevalier", ranger: "Rôdeur", mage: "Mage" };
@@ -54,16 +55,16 @@ function applyProfil(g, P) {
       e._gvScaled = true;
       if (P.hp) { e.maxHp = Math.floor(e.maxHp * P.hp); e.hp = Math.floor(e.hp * P.hp); }
       if (P.pow && e.stats) e.stats = Object.assign({}, e.stats, { power: Math.max(1, Math.floor(Number(e.stats.power || 0) * P.pow)) });
-      if (P.ph && CUR.sc && CUR.sc.PH2) { e.phases = JSON.parse(JSON.stringify(CUR.sc.PH2)); e._phasesDone = {}; }
+      if (P.ph && CUR.sc && CUR.sc[P.phk]) { e.phases = JSON.parse(JSON.stringify(CUR.sc[P.phk])); e._phasesDone = {}; }
     });
     return o.apply(this, a);
   });
 }
-// phases V2 aussi dans la donnée (le pronostic lit DUNGEONS / ADVENTURE_QUESTS) ; l'orc n'a pas de bossPhases lues : injection seule
+// phases V2 aussi dans la donnée (le pronostic lit DUNGEONS / ADVENTURE_QUESTS) ; ph3 = jeu de phases PH3 (orc Blindé)
 function applyDataPhases(g, sc, P) {
-  if (!P.ph || !sc.PH2) return;
-  if (sc.dungeon) g.DUNGEONS.filter(function (d) { return d.id === sc.dungeon; })[0].boss.phases = sc.PH2;
-  else if (g.ADVENTURE_QUESTS[sc.quest].bossPhases) g.ADVENTURE_QUESTS[sc.quest].bossPhases = sc.PH2;
+  var PH = P.ph && sc[P.phk]; if (!PH) return;
+  if (sc.dungeon) g.DUNGEONS.filter(function (d) { return d.id === sc.dungeon; })[0].boss.phases = PH;
+  else { var q = g.ADVENTURE_QUESTS[sc.quest]; q.bossPhases = PH; if (sc.quest === "aq_forest_depths") q.bossId = "orcwarlord"; } // l'orc : bossId + bossPhases, comme en jeu
 }
 
 /* ---------- Compteurs (lecture seule) ---------- */
@@ -199,7 +200,7 @@ function prepare(g, saveTxt, sc, pol, adapte) {
   if (/^prepare3/.test(pol) && typeof g.grimoirePrepareAll === "function") g.grimoirePrepareAll(ctx, items);
   // prepare3ph : comme si le pronostic annonçait aussi les traits des phases (en tête, 3 emplacements)
   if (pol === "prepare3ph") {
-    var phs = (CUR.P && CUR.P.ph && sc.PH2) || (sc.dungeon ? g.DUNGEONS.filter(function (d) { return d.id === sc.dungeon; })[0].boss.phases : g.ADVENTURE_QUESTS[sc.quest].bossPhases) || [];
+    var phs = (CUR.P && CUR.P.ph && sc[CUR.P.phk]) || (sc.dungeon ? g.DUNGEONS.filter(function (d) { return d.id === sc.dungeon; })[0].boss.phases : g.ADVENTURE_QUESTS[sc.quest].bossPhases) || [];
     var kit = g.getGrimoireCurrentKit(), cur = g.game.grimoireRules.filter(function (r) { return r && r.conditionId; }), add = [];
     phs.forEach(function (ph) { var d = ph && ph.archetype && g.ENEMY_TRAIT_DEFS[ph.archetype]; var sl = d && counterSlotFor(g, kit, d.cond); if (sl && !add.some(function (r) { return r.conditionId === d.cond; })) add.push({ conditionId: d.cond, actionSlot: sl }); });
     setRules(g, add.concat(cur.filter(function (r) { return !add.some(function (x) { return x.conditionId === r.conditionId; }); })), Math.min(3, slots));
