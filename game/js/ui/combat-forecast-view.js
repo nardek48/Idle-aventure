@@ -418,10 +418,10 @@ function grimoireSortieSituations(ctx) {
 }
 window.grimoireSortieSituations = grimoireSortieSituations;
 
-/* Combien des situations (non facultatives) un jeu couvre. */
-function grimoireJeuScore(rules, ctx) {
+/* Combien des situations (non facultatives) un jeu couvre ; v3.738.0 : items, objets choisis (un trait tenu compte). */
+function grimoireJeuScore(rules, ctx, items) {
   var kit = etKit(), want = grimoireSortieSituations(ctx).filter(function (x) { return !x.opt; });
-  return { n: want.filter(function (x) { return etRuleResponse(x.cond, rules, kit).status === "counter"; }).length, of: want.length };
+  return { n: want.filter(function (x) { return etItemHolds(x.trait, items) || etRuleResponse(x.cond, rules, kit).status === "counter"; }).length, of: want.length };
 }
 window.grimoireJeuScore = grimoireJeuScore;
 
@@ -457,12 +457,13 @@ function etRuleUseless(rule, possible) {
 window.etPossibleConds = etPossibleConds;
 window.etRuleUseless = etRuleUseless;
 
-/* « Tout préparer » : les situations dans l'ordre, autant que d'emplacements ouverts ; le reste des règles suit. */
-function grimoirePrepareAll(ctx) {
+/* « Tout préparer » : les situations dans l'ordre, autant que d'emplacements ouverts ; le reste des règles suit.
+   v3.738.0 (Seb 07/11) : items, objets emportés ; un trait qu'ils tiennent ne prend plus d'emplacement. */
+function grimoirePrepareAll(ctx, items) {
   if (!etEditable()) return null;
   var kit = etKit(), sits = grimoireSortieSituations(ctx), open = (typeof getGrimoireSlotCount === "function") ? getGrimoireSlotCount(game.worldsEverReached) : 3;
   var before = etCopyRules(), active = before.slice(0, open);
-  var want = sits.filter(function (x) { return !x.opt; }).slice(0, open);
+  var want = sits.filter(function (x) { return !x.opt && !etItemHolds(x.trait, items); }).slice(0, open);
   var res = want.map(function (x) {
     return active.filter(function (r) { return r.conditionId === x.cond && etRuleCovers(r, kit); })[0] || { conditionId: x.cond, actionSlot: x.slot };
   });
@@ -521,6 +522,75 @@ function grimoireUndoRules(before) {
 window.grimoireUndoRules = grimoireUndoRules;
 window.etRuleCovers = etRuleCovers;
 window.etRuleLabel = etRuleLabel;
+
+/* v3.738.0 (Seb 07/11, « on peut crafter des contres dans les potions ») : objets de combat dans le pronostic.
+   L'objet d'un trait (data/combat-items.js), son stock, où il se prépare ; « soften » : il atténue sans couvrir. */
+function etItemForTrait(trait) {
+  if (!trait || !window.COMBAT_ITEMS) return null;
+  var id = (window.COMBAT_ITEM_ORDER || []).filter(function (k) { return COMBAT_ITEMS[k] && COMBAT_ITEMS[k].trait === trait; })[0];
+  return id ? COMBAT_ITEMS[id] : null;
+}
+/* Un objet de la liste tient-il ce trait (Baume, Encens, Huile, Sel) ? Les objets qui atténuent ne comptent pas. */
+function etItemHolds(trait, items) {
+  return (Array.isArray(items) ? items : []).some(function (id) { var it = id && window.COMBAT_ITEMS && COMBAT_ITEMS[id]; return !!(it && trait && it.trait === trait && !it.soften); });
+}
+function etItemStock(id) { return window.CombatItems ? CombatItems.getStock(id) : 0; }
+/* Où se prépare un objet absent de l'Entrepôt (Apothicaire : recette sue, commande à livrer, ou monde à atteindre). */
+function etItemWhere(id) {
+  var A = window.ApothecaryManager, r = A && A.getRecipe ? A.getRecipe(id) : null;
+  if (!A) return "";
+  if (A.getLevel() <= 0) return _t("Se prépare à l'Apothicaire, une fois construit.");
+  if (A.isLearned(id)) return _t("Se prépare à l'Apothicaire.");
+  if (A.isOrderOpen(id)) return _t("Recette à commander à l'Apothicaire.");
+  return _t("Recette de l'Apothicaire, qui s'ouvre {lieu}.", { lieu: window.WorldCaps ? WorldCaps.withPrep(Number((r && r.worldIndex) || 0)) : _t("plus tard") });
+}
+/* Le combat compte-t-il un miroir (TowerSystem.isMirror) : boss à phase « mirror », Gardien qui répète, boss du Sommet interdit. */
+function etMirrorFoe(ctx) {
+  return etCreaturesFor(ctx).some(function (c) {
+    if (c.kind === "elite") return c.id === "gardien_qui_repete";
+    if (c.kind === "dungeonBoss") return Number(c.id) === 6;
+    return c.kind === "boss" && (c.phases || []).some(function (ph) { return ph && ph.mirror; });
+  });
+}
+/* L'objet fait-il mieux que la règle ? Cas mesuré (banc silhouette-rodeur, Baume froid 81 → 94 %) : trait permanent tenu,
+   face à un miroir où la règle ferait rejouer la même technique. Situation s de grimoireSortieSituations. */
+function etItemBeatsRule(ctx, s, rules) {
+  var it = s && etItemForTrait(s.trait);
+  if (!it || it.soften || !etMirrorFoe(ctx)) return false;
+  var r = etRuleResponse(s.cond, rules || game.grimoireRules, etKit()), slot = r.status === "counter" ? r.rule.actionSlot : s.slot;
+  return /^skill[123]$/.test(slot || "");
+}
+/* « Tout préparer » (point 3) : objets en stock, non choisis, qui font mieux que leur règle. */
+function grimoireAutoItems(ctx, items) {
+  var out = [];
+  if (!window.CombatItems) return out;
+  grimoireSortieSituations(ctx).forEach(function (s) {
+    var it = etItemForTrait(s.trait);
+    if (s.opt || !it || (items || []).indexOf(it.id) !== -1 || out.indexOf(it.id) !== -1 || etItemStock(it.id) <= 0) return;
+    if (etItemBeatsRule(ctx, s)) out.push(it.id);
+  });
+  return out;
+}
+/* Objets conseillés pour une sortie, en stock, du plus utile au moins utile : traits sans place au Grimoire, objets meilleurs
+   que leur règle, autres traits tenus, puis ceux qui atténuent (Bouclier, Silence, Tri, Carapace). Suivi par le robot. */
+function sortieAdvisedItems(ctx) {
+  var out = [], open = (typeof getGrimoireSlotCount === "function") ? getGrimoireSlotCount(game.worldsEverReached) : 3;
+  if (!window.CombatItems || !ctx) return out;
+  var push = function (it) { if (it && out.indexOf(it.id) === -1 && etItemStock(it.id) > 0) out.push(it.id); };
+  var sits = grimoireSortieSituations(ctx).filter(function (x) { return !x.opt; }), prev = getEnemyTraitsPreview(ctx).traits;
+  sits.slice(open).forEach(function (s) { var it = etItemForTrait(s.trait); if (it && !it.soften) push(it); });
+  grimoireAutoItems(ctx, []).forEach(function (id) { push(COMBAT_ITEMS[id]); });
+  prev.forEach(function (t) { var it = etItemForTrait(t.trait); if (!t.opt && it && !it.soften) push(it); });
+  prev.forEach(function (t) { var it = etItemForTrait(t.trait); if (!t.opt && it && it.soften) push(it); });
+  return out;
+}
+window.etItemForTrait = etItemForTrait;
+window.etItemHolds = etItemHolds;
+window.etItemWhere = etItemWhere;
+window.etMirrorFoe = etMirrorFoe;
+window.etItemBeatsRule = etItemBeatsRule;
+window.grimoireAutoItems = grimoireAutoItems;
+window.sortieAdvisedItems = sortieAdvisedItems;
 
 /* v3.736.0 (Seb 07/11, Grimoire vivant) : situations CERTAINES d'une créature, même jamais vaincue (données du moteur) :
    un boss se soigne et se protège, une élite se protège et s'exalte, un ennemi ordinaire charge ou, dès le Désert, muselle. */

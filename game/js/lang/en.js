@@ -10,6 +10,7 @@
    Les textes des données sont traduits par _td() à l'affichage (registre : lang/data-fields.js). */
 I18n.register("en", {
   // v3.736.0 (Seb 07/11) : Grimoire vivant (3 règles, jeux, pronostic)
+  "Préparer la sortie : « Ce que tu vas affronter » propose aussi les objets de combat qui contrent une situation (« Ou emporte : Baume froid »), avec ton stock ou l'endroit où le préparer, et un bouton pour l'emporter.": "Prepare the outing: \"What you will face\" now also suggests the combat items that counter a situation (\"Or take: Cold balm\"), with your stock or where to prepare it, and a button to take it.",
   "La Silhouette, face au Rôdeur : « elle se bat comme toi », elle ne se soigne donc pas, et elle a moins de PV. Le Rôdeur n'était plus capable de la battre ; il gagne maintenant près de 9 fois sur 10 (Chevalier et Mage inchangés).": "The Silhouette, against the Ranger: \"it fights like you\", so it does not heal, and it has less HP. The Ranger could no longer beat it; it now wins nearly 9 times in 10 (Knight and Mage unchanged).",
   "Grimoire vivant : 3 règles actives, rangées en jeux que tu changes d'un toucher (un jeu de plus par monde). Avant chaque sortie, le pronostic coche les situations couvertes et propose d'ajouter la règle qui manque (« Tout préparer »). Tes règles 4 à 6 sont gardées dans un jeu « Mes autres règles ».": "Living Grimoire: 3 active rules, grouped in sets you switch with one tap (one more set per world). Before each outing, the forecast ticks the covered situations and offers to add the missing rule (\"Prepare all\"). Your rules 4 to 6 are kept in a \"My other rules\" set.",
   "Mes autres règles": "My other rules",
@@ -5928,7 +5929,6 @@ I18n.register("en", {
   "Choisir un objet": "Choose an item",
   "Aucun objet": "No item",
   "Aucun {t} connu dans cette sortie": "No known {t} on this run",
-  "Déjà contré par ta règle": "Already countered by your rule",
   "Utile ici : {t}": "Useful here: {t}",
   "Aucun objet en stock : prépare-les à l'Apothicaire (Boutique, Potions).": "No items in stock: prepare them at the Apothecary (Shop, Potions).",
   "Un objet agit seul, en Tactique comme en Grimoire. Il est consommé au retour, qu'il ait servi ou non.": "An item acts on its own, in Tactics as in Grimoire. It is used up on your return, whether it served or not.",
@@ -9364,4 +9364,20 @@ I18n.register("en", {
   "Choisir une Marque": "Choose a Mark",
   "Tes PV sont bas : repose-toi au feu ou mange une ration avant de partir.": "Your HP is low: rest by the fire or eat a ration before setting out.",
   "Aller au feu": "Go to the fire",
+  // v3.738.0 (Seb 07/11) : objets de combat dans le pronostic
+  "Se prépare à l'Apothicaire, une fois construit.": "Made at the Apothecary, once it is built.",
+  "Se prépare à l'Apothicaire.": "Made at the Apothecary.",
+  "Recette à commander à l'Apothicaire.": "Recipe to order from the Apothecary.",
+  "Recette de l'Apothicaire, qui s'ouvre {lieu}.": "Apothecary recipe, which opens {lieu}.",
+  "Mieux contre son miroir : emporte {o} (×{n}), ta règle ne rejouera plus la même technique.": "Better against its mirror: take {o} (×{n}), your rule will no longer repeat the same technique.",
+  "En plus : {o} (×{n}), il l'atténue.": "Also: {o} (×{n}) softens it.",
+  "En plus : {o}, il l'atténue.": "Also: {o} softens it.",
+  "Ou emporte : {o} (×{n}).": "Or take: {o} (×{n}).",
+  "Ou emporte : {o}.": "Or take: {o}.",
+  "Tes places d'objet sont prises.": "Your item slots are full.",
+  "Emporter": "Take",
+  "{o} emporté : il tient ce trait tout le combat.": "{o} taken: it holds this trait the whole fight.",
+  "{o} emporté : il s'ajoute à ta règle.": "{o} taken: it adds to your rule.",
+  "Emporté aussi : {o}.": "Also taken: {o}.",
+  "Ta règle le contre aussi": "Your rule counters it too",
 });

@@ -25759,6 +25759,98 @@ console.log("\n[497] v3.737.0 — La silhouette face au Rôdeur : sans soin, PV 
   finally { g.addLog = keep.log; try { run("fullResetState();"); } catch (e2) {} game = freshCombat("knight"); }
 })();
 
+console.log("\n[498] v3.738.0 — Objets de combat dans le pronostic de sortie (« on peut crafter des contres dans les potions », Seb 07/11)");
+(function () {
+  var keep = { render: g.renderSortiePrep, active: g.SortieManager.isActive };
+  try {
+    game = freshCombat("knight");
+    var G = g.game, W = g.WarehouseManager, html;
+    G.unlockedTabs.grimoire = true; G.combatMode = "grimoire"; G.grimoirePresets = []; G.killCounts = {};
+    G.grimoireSeen = { chargeIncoming: true, shieldIncoming: true, healIncoming: true, enemySilenceIncoming: true, enemyEnraged: true, enemyArmored: true };
+    G.worldsEverReached = { 0: true, 1: true, 2: true, 3: true, 4: true, 5: true };
+    g.VillageBuildingManager.ensure(); G.village.buildings.apothecary.level = 1;
+    g.renderSortiePrep = function () {};
+    var R = function (c, a) { return { conditionId: c || null, actionSlot: a || null }; };
+    var E = function (x) { return x.replace(/'/g, "&#39;"); }; // texte tel qu'échappé par esc()
+    var stock = function (id, n) { W.removeResource(id, W.getAmount(id)); if (n) W.addResource(id, n, true); };
+    g.COMBAT_ITEM_ORDER.forEach(function (id) { stock(id, 0); });
+    var sil = { type: "adventure", id: "aq_tour_silhouette" }, dragon = { type: "adventure", id: "aq_montagne_dragon" };
+    var open = function (ctx) { g.closeSortiePrep(); g.openSortiePrep({ title: "Test", ctx: ctx, onGo: function () {} }); return g.buildSortiePrepHTML(); };
+
+    // Données : l'objet de chaque trait, ceux qui tiennent et ceux qui atténuent
+    ok(g.etItemForTrait("enraged").id === "baume_froid" && g.etItemForTrait("armored").id === "huile_de_lame" && g.etItemForTrait("vampiric").id === "sel_de_fer" && g.etItemForTrait("silenced").id === "pastille_de_miel" && !g.etItemForTrait("heal"), "objet de chaque trait (Baume, Huile, Sel, Pastille ; rien pour le Soin)");
+    ok(g.etItemHolds("enraged", ["baume_froid"]) && !g.etItemHolds("silenced", ["pastille_de_miel"]) && !g.etItemHolds("enraged", []), "un objet qui tient couvre ; un objet qui atténue, non");
+    ok(g.etMirrorFoe(sil) && !g.etMirrorFoe(dragon), "miroir : la silhouette oui, le Dragon non");
+
+    // Silhouette (Chevalier) : Enragé couvert par « Enragé → Frappe lourde », Baume froid en stock -> « Mieux contre son miroir »
+    G.grimoireRules = [R("shieldIncoming", "skill2"), R("healIncoming", "skill1"), R("enemyEnraged", "skill1")];
+    stock("baume_froid", 3);
+    html = open(sil);
+    ok(html.indexOf("sp-offer is-better") !== -1 && html.indexOf("Mieux contre son miroir : emporte Baume froid (×3)") !== -1 && html.indexOf("sortiePrepTake('baume_froid')") !== -1, "règle couverte, miroir : « Mieux contre son miroir : emporte Baume froid (×3) » et « Emporter »");
+    ok(html.indexOf("Tes règles répondent à ce combat") !== -1 && html.indexOf('onclick="sortiePrepAll()"') !== -1, "toutes couvertes : « Tout préparer » reste offert pour l'objet meilleur que la règle");
+    // emport en un toucher : la place libre se remplit ; la ligne passe à l'objet
+    g.sortiePrepTake("baume_froid");
+    ok(g.sortiePrep.items[0] === "baume_froid" && /Baume froid emporté/.test(g.sortiePrep.msg.text), "« Emporter » : Baume froid dans la 1re place, message");
+    html = g.buildSortiePrepHTML();
+    ok(html.indexOf("Baume froid le tient.") !== -1 && html.indexOf("sortiePrepTake('baume_froid')") === -1, "ligne Enragé : « Baume froid le tient. », plus de proposition");
+    // couverture comptée : sans règle d'Enragé, l'objet couvre
+    G.grimoireRules = [R("shieldIncoming", "skill2"), R("healIncoming", "skill1"), R()];
+    html = g.buildSortiePrepHTML();
+    ok(html.indexOf("3 / 3 couvertes") !== -1 && g.grimoireJeuScore(G.grimoireRules, sil, ["baume_froid"]).n === 3 && g.grimoireJeuScore(G.grimoireRules, sil).n === 2, "un trait tenu par l'objet compte comme couvert (3 / 3 ; score du jeu 3 avec l'objet, 2 sans)");
+    // place prise : pas de bouton
+    stock("huile_de_lame", 2); G.heroId = "ranger"; G.grimoireRules = [R(), R(), R()];
+    html = open(sil); g.sortiePrep.items = ["baume_froid"]; html = g.buildSortiePrepHTML();
+    ok(html.indexOf(E("Tes places d'objet sont prises.")) !== -1 && html.indexOf("sortiePrepTake('huile_de_lame')") === -1, "place prise : proposé, sans bouton (« Tes places d'objet sont prises. »)");
+    // hors stock : où il se prépare, sans bouton
+    stock("huile_de_lame", 0); html = open(sil);
+    ok(html.indexOf("Ou emporte : Huile de lame.") !== -1 && html.indexOf("sortiePrepTake('huile_de_lame')") === -1, "hors stock : « Ou emporte : Huile de lame. », sans bouton");
+    var A = g.ApothecaryManager, r0 = A.ensureState().learned.huile_de_lame;
+    A.ensureState().learned.huile_de_lame = true;
+    ok(g.etItemWhere("huile_de_lame") === "Se prépare à l'Apothicaire." && open(sil).indexOf(E("Se prépare à l'Apothicaire.")) !== -1, "recette sue : « Se prépare à l'Apothicaire. »");
+    delete A.ensureState().learned.huile_de_lame;
+    ok(g.etItemWhere("huile_de_lame") === "Recette à commander à l'Apothicaire.", "recette non sue, commande ouverte : « Recette à commander à l'Apothicaire. »");
+    G.village.buildings.apothecary.level = 0;
+    ok(g.etItemWhere("huile_de_lame") === "Se prépare à l'Apothicaire, une fois construit.", "Apothicaire absent : « une fois construit »");
+    G.village.buildings.apothecary.level = 1; if (r0) A.ensureState().learned.huile_de_lame = r0;
+    // objet qui atténue (Mage, Pastille de miel) : « En plus », il ne couvre pas
+    G.heroId = "mage"; stock("pastille_de_miel", 2); G.grimoireRules = [R(), R(), R()];
+    html = open(sil);
+    ok(html.indexOf(E("En plus : Pastille de miel (×2), il l'atténue.")) !== -1, "Silence (Mage) : « En plus : Pastille de miel (×2), il l'atténue. »");
+    g.sortiePrepTake("pastille_de_miel"); html = g.buildSortiePrepHTML();
+    ok(/il s'ajoute à ta règle/.test(g.sortiePrep.msg.text) && html.indexOf(E("Pastille de miel l'atténue.")) !== -1 && html.indexOf("0 / 3 couvertes") !== -1, "Pastille emportée : elle atténue, la situation reste à couvrir (0 / 3)");
+    ok(g.grimoireAutoItems(sil, []).indexOf("pastille_de_miel") === -1, "« Tout préparer » n'ajoute pas un objet qui atténue");
+
+    // Étiquette du sélecteur : plus de « Déjà contré par ta règle »
+    G.heroId = "knight"; G.grimoireRules = [R("shieldIncoming", "skill2"), R("healIncoming", "skill1"), R("enemyEnraged", "skill1")];
+    open(sil); g.sortiePrep.tuneOpen = true; g.sortiePrep.pick = 0; html = g.buildSortiePrepHTML();
+    ok(html.indexOf("Déjà contré") === -1 && html.indexOf("Utile ici : Enragé") !== -1 && html.indexOf("Ta règle le contre aussi") !== -1, "sélecteur : « Utile ici : Enragé » et « Ta règle le contre aussi » (neutre), plus « Déjà contré »");
+
+    // « Tout préparer » : règles d'abord ; l'objet seulement en stock et meilleur que la règle (miroir)
+    G.grimoireRules = [R("enemyRising", "skill1"), R(), R()];
+    open(sil); g.sortiePrepAll();
+    var conds = G.grimoireRules.slice(0, 3).map(function (r) { return r.conditionId; });
+    ok(g.sortiePrep.items[0] === "baume_froid" && conds.indexOf("enemyEnraged") === -1 && conds.indexOf("shieldIncoming") !== -1 && conds.indexOf("healIncoming") !== -1 && /Emporté aussi : Baume froid/.test(g.sortiePrep.msg.text), "« Tout préparer » (Silhouette, Baume en stock) : Baume emporté, Enragé laissé à l'objet (" + conds.join() + ")");
+    stock("baume_froid", 0); G.grimoireRules = [R("enemyRising", "skill1"), R(), R()];
+    open(sil); g.sortiePrepAll();
+    ok(!g.sortiePrep.items.filter(Boolean).length && G.grimoireRules.slice(0, 3).some(function (r) { return r.conditionId === "enemyEnraged"; }), "hors stock : aucun objet, la règle d'Enragé revient");
+    stock("baume_froid", 3); G.grimoireRules = [R(), R(), R()];
+    ok(g.grimoireAutoItems(dragon, []).length === 0, "sans miroir : « Tout préparer » n'ajoute aucun objet");
+
+    // Conseil suivi par le robot : en stock, borné aux places
+    stock("acide_mordant", 1);
+    var adv = g.sortieAdvisedItems(sil);
+    ok(adv[0] === "baume_froid" && adv.indexOf("acide_mordant") > 0 && g.sortieAdvisedItems(dragon).indexOf("baume_froid") === -1, "objets conseillés : Baume d'abord (miroir), Acide ensuite ; rien d'inutile (" + adv.join() + ")");
+    ok(/sortieAdvisedItems\(ctx\)/.test(fsRead("../tools/sim/campagne-harness.js")) && /emporterObjets\(g\)/.test(fsRead("../tools/sim/campagne-harness.js")), "robot de campagne : il emporte les objets conseillés (takeForSortie)");
+    g.closeSortiePrep();
+
+    ["Ou emporte : {o} (×{n}).", "Ou emporte : {o}.", "Mieux contre son miroir : emporte {o} (×{n}), ta règle ne rejouera plus la même technique.", "Emporter", "Ta règle le contre aussi", "Emporté aussi : {o}.", "Se prépare à l'Apothicaire."].forEach(function (k) {
+      ok(fsRead("js/lang/en.js").indexOf(JSON.stringify(k)) >= 0, "en.js : « " + k + " » traduit");
+    });
+    ok(fsRead("js/lang/en.js").indexOf("Déjà contré par ta règle") === -1, "en.js : l'ancienne étiquette retirée");
+  } catch (err) { ok(false, "[498] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  finally { g.renderSortiePrep = keep.render; g.SortieManager.isActive = keep.active; g.sortiePrep = null; try { run("fullResetState();"); } catch (e2) {} game = freshCombat("knight"); }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

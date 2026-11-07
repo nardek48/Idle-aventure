@@ -1110,6 +1110,7 @@ function freeSector(mapId, sectorId) {
     if (!r.ok && CAP_RE.test(r.reason || "")) { if (SANS_LENDEMAIN) return false; waitCap(); r = LM.start(mapId, cible); }
     if (!r.ok && /Petite ration/.test(r.reason || "")) { obtain("petite_ration", 1); r = LM.start(mapId, cible); }
     if (!r.ok) { note("secteur " + cible + " : " + r.reason); wait(3600e3, "échec à rejouer"); continue; }
+    emporterObjets(g);
     LAST_END = null;
     if (g.SceneRunManager.isRunActive()) { if (!playScene() && g.SceneRunManager.isRunActive()) g.SceneRunManager.abandon(); }
     else winCombat();
@@ -1173,6 +1174,7 @@ function playDungeonOnce(id, withMark, libreOk, niveau, libreForce) {
   if (viv) obtain(viv.resourceId, viv.amount);
   preparerSortie(g, { type: "dungeon", id: id });
   if (libre) D.start(id, [], niveau || 1, true); else D.start(id, marks, niveau);
+  emporterObjets(g);
   act((libre ? "donjonLibre" : "donjon") + ":" + id + (niveau > 1 ? " niv. " + niveau : ""), 0);
   if (!g.game.dungeonRun.active) { note("donjon " + id + " : entrée refusée (sorties restantes " + D.getRunsLeft(id) + ", PV " + Math.floor(g.game.heroHp) + ", verrou " + (g.heroLockReason ? g.heroLockReason() : "") + ", quête " + !!(g.game.adventureQuestRun && g.game.adventureQuestRun.active) + ", chasse " + !!(g.game.huntRun && g.game.huntRun.active) + ")"); return null; }
   winCombat(200);
@@ -1204,6 +1206,7 @@ function freeSectorAgain(mapId, sectorId) {
     r = LM.start(mapId, sectorId);
   }
   if (!r.ok) { note(sectorId + " rejoué : " + r.reason); return false; }
+  emporterObjets(g);
   // rythme de la Tour (03/11) : un secteur d'expédition rejoué se joue comme une Petite aventure, pas comme un combat d'élite
   if (g.SceneRunManager.isRunActive()) { var fini = playScene(); if (!fini && g.SceneRunManager.isRunActive()) g.SceneRunManager.abandon(); flushTimers(g); return !!fini; }
   var gagne = winCombat();
@@ -1277,6 +1280,7 @@ function playAdventure(id) {
     if (COMBATS) healUp();
     preparerSortie(g, { type: "adventure", id: id });
     g.AdventureQuestManager.start(id);
+    emporterObjets(g);
     if (!g.game.adventureQuestRun.active) { note("quête " + id + " : départ refusé"); return false; }
     var nf = STATS.fights.length;
     var fin = winCombat(80);
@@ -2156,9 +2160,22 @@ var REGLE_EN_TETE = null;
 /* v3.736.0 (Grimoire vivant, Seb 07/11) : 3 règles au plus. Avant chaque sortie, le joueur appliqué suit le pronostic
    (« Tout préparer » de la préparation de sortie) : les règles de la sortie, puis celles de l'entretien. */
 function preparerSortie(g, ctx) {
-  if (!AVISE || !g.game.unlockedTabs || !g.game.unlockedTabs.grimoire || typeof g.grimoirePrepareAll !== "function") return;
-  var r = g.grimoirePrepareAll(ctx);
+  OBJETS_SORTIE = [];
+  if (!AVISE) return;
+  // v3.738.0 (Seb 07/11) : il emporte aussi les objets de combat conseillés en stock (pris au départ, emporterObjets)
+  if (g.CombatItems && typeof g.sortieAdvisedItems === "function") OBJETS_SORTIE = g.sortieAdvisedItems(ctx).slice(0, g.CombatItems.slotCount());
+  // TRACE_OBJETS=1 : conseil, stock (« ? » : recette pas sue) et traits annoncés de chaque sortie
+  if (process.env.TRACE_OBJETS && g.CombatItems) console.log("      [objets " + JSON.stringify(ctx) + "] conseillés " + OBJETS_SORTIE.join(",") + " · stock " + g.COMBAT_ITEM_ORDER.map(function (id) { return id + ":" + g.CombatItems.getStock(id) + (g.ApothecaryManager.isLearned(id) ? "" : "?"); }).join(" ") + " · traits " + g.getEnemyTraitsPreview(ctx).traits.map(function (t) { return t.trait; }).join(","));
+  if (!g.game.unlockedTabs || !g.game.unlockedTabs.grimoire || typeof g.grimoirePrepareAll !== "function") return;
+  var r = g.grimoirePrepareAll(ctx, OBJETS_SORTIE);
   if (r && r.changed) { STATS.preparations = (STATS.preparations || 0) + 1; act("grimoirePrepare", 0); }
+}
+var OBJETS_SORTIE = [];
+/* Juste après le départ (comme confirmSortiePrep) : les objets choisis quittent l'Entrepôt pour la sortie. */
+function emporterObjets(g) {
+  var ids = OBJETS_SORTIE; OBJETS_SORTIE = [];
+  if (!ids.length || !g.CombatItems || !g.SortieManager || !g.SortieManager.isMission()) return;
+  g.CombatItems.takeForSortie(ids).forEach(function (id) { var o = STATS.objets = STATS.objets || {}; o[id] = (o[id] || 0) + 1; act("objet:" + id, 0); });
 }
 function preparerSortieCarte(g, mapId, sectorId, cs) {
   var c = cs && cs.content;
@@ -2321,6 +2338,7 @@ if (COMBATS) {
   if (STATS.d13.length) console.log("desert_13 : " + STATS.d13.map(function (d) { return d.part + " " + d.h.toFixed(0) + " h (farm " + d.farmH.toFixed(0) + " h, Inhabituels portés au départ " + d.verts0 + ", or " + d.orAvant + " → " + d.orApres + ")"; }).join(" · "));
   console.log("Quêtes d'élite : " + (STATS.elites.map(function (e) { return e.quest + (e.ok ? " ✔" : " ✘") + " (" + e.step + ", " + e.essais + " essai" + (e.essais > 1 ? "s" : "") + ")"; }).join(" · ") || "aucune"));
   console.log("Village pour la puissance : " + (STATS.village.join(" · ") || "rien"));
+  if (STATS.objets) console.log("Objets de combat emportés (v3.738.0) : " + Object.keys(STATS.objets).map(function (k) { return k + " " + STATS.objets[k]; }).join(" · "));
   console.log("Morts : " + STATS.deaths + " · potions bues : " + STATS.potions + " à la main, " + (STATS.potionsBues || 0) + " en tout · or en potions : " + (STATS.potionGold || 0) + " · temps de combat : " + (STATS.combatMs / 3600e3).toFixed(1) + " h · temps de soin au camp : " + (STATS.healMs / 3600e3).toFixed(1) + " h");
   if (STATS.rations) console.log("Rations au camp : mangées " + JSON.stringify(STATS.rations.mangees) + " · cuisinées " + JSON.stringify(STATS.rations.cuisinees) + " · attente évitée " + (STATS.rations.minutesEvitees / 60).toFixed(1) + " h");
   if (VERBOSE) STATS.fights.slice(-12).forEach(function (f) { console.log("    " + f.step + " · " + f.kind + " " + f.name + " : " + f.rounds + " rounds, PV " + Math.round(f.hp0 * 100) + "→" + Math.round((f.hp1 || 0) * 100) + " %" + (f.died ? " †" : "") + (f.potions ? " (" + f.potions + " potion)" : "")); });

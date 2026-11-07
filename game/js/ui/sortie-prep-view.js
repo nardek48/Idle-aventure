@@ -253,7 +253,7 @@ function buildSortiePrepJeuxHTML() {
   var sugg = ctx && typeof getSuggestedGrimoirePreset === "function" ? getSuggestedGrimoirePreset(ctx) : null;
   var h = '<div class="sp-presets" role="tablist" aria-label="' + esc(_t("Jeux de règles")) + '">';
   presets.forEach(function (p) {
-    var on = p.id === active.id, sc = ctx && typeof grimoireJeuScore === "function" ? grimoireJeuScore(p.rules, ctx) : null;
+    var on = p.id === active.id, sc = ctx && typeof grimoireJeuScore === "function" ? grimoireJeuScore(p.rules, ctx, sortiePrep.items) : null; // v3.738.0 : objets choisis comptés
     h += '<button type="button" role="tab" aria-selected="' + on + '" class="' + (on ? 'is-on' : '') + (sugg && sugg.id === p.id ? ' is-sugg' : '') + '"' + (on ? '' : ' onclick="sortiePrepJeu(\'' + esc(p.id) + '\')"') + '>'
       + (sugg && sugg.id === p.id ? '<span class="sp-star" aria-label="' + esc(_t("Conseillé")) + '">★</span>' : '')
       + renderIconOrEmojiHTML(p.icon || "images/Icons/system/grimoire.webp", "", "") + esc(_td(p.name))
@@ -426,7 +426,8 @@ function buildSortiePrepTraitsHTML(grim) {
   var ctx = sortiePrep.opts.ctx, rules = sortiePrepRules();
   var open = (typeof getGrimoireSlotCount === "function") ? getGrimoireSlotCount(game.worldsEverReached) : 3;
   var want = grim && typeof grimoireSortieSituations === "function" ? grimoireSortieSituations(ctx).filter(function (x) { return !x.opt; }) : [];
-  var miss = want.filter(function (x) { return etRuleResponse(x.cond, rules, kit).status !== "counter"; });
+  // v3.738.0 (Seb 07/11) : un trait tenu par un objet choisi compte comme couvert
+  var miss = want.filter(function (x) { return !etItemHolds(x.trait, chosen) && etRuleResponse(x.cond, rules, kit).status !== "counter"; });
   var h = '<div class="sp-sec"><div class="sp-title">' + _t("Ce que tu vas affronter")
     + (want.length ? '<small>' + esc(_t("{a} / {b} couvertes", { a: want.length - miss.length, b: want.length })) + '</small>' : '') + '</div>';
   if (grim && want.length) {
@@ -436,9 +437,12 @@ function buildSortiePrepTraitsHTML(grim) {
         + '<button type="button" class="kbtn primary" onclick="sortiePrepAll()">' + _t("Tout préparer") + '</button></div>';
     } else {
       var rest = miss.map(function (x) { return sortiePrepTraitName(x.trait); });
+      // v3.738.0 : un objet en stock ferait mieux que sa règle (miroir) : « Tout préparer » l'emporte
+      var auto = typeof grimoireAutoItems === "function" && sortiePrepFreeItemSlot() >= 0 ? grimoireAutoItems(ctx, chosen) : [];
       h += '<div class="sp-prep is-ok"><span>' + esc(rest.length
         ? _t("✓ Tes emplacements répondent aux situations les plus fréquentes. Pas de place pour : {x} (la Défense de repli joue sur une annonce).", { x: rest.join(", ") })
-        : _t("✓ Tes règles répondent à ce combat.")) + '</span></div>';
+        : _t("✓ Tes règles répondent à ce combat.")) + '</span>'
+        + (auto.length ? '<button type="button" class="kbtn primary" onclick="sortiePrepAll()">' + _t("Tout préparer") + '</button>' : '') + '</div>';
     }
   }
   prev.traits.forEach(function (t) {
@@ -447,14 +451,17 @@ function buildSortiePrepTraitsHTML(grim) {
     var r = grim && def.cond ? etRuleResponse(def.cond, rules, kit) : { status: "none" };
     var slot = grim && def.cond && typeof etAdvisedSlot === "function" ? etAdvisedSlot(def.cond, kit) : null;
     var sansRegle = !def.cond && !item; // aucune règle du Grimoire ne vise cette mécanique
-    var cls = item ? "is-item" : (r.status === "counter" ? "is-rule" : (grim && !sansRegle ? "is-none" : "is-free"));
+    // v3.738.0 : un objet qui atténue (Acide, Pastille) ne couvre pas une annonce : seule la règle l'annule
+    var soft = item && COMBAT_ITEMS[item].soften && def.cond ? item : null, tient = item && !soft;
+    var cls = tient ? "is-item" : (r.status === "counter" ? "is-rule" : (grim && !sansRegle ? "is-none" : "is-free"));
     var conseil = slot && r.status !== "counter" ? sortiePrepActionLabel(kit, slot) : "";
-    var resp = item ? (COMBAT_ITEMS[item].soften ? _t("{o} l'atténue.", { o: _td(COMBAT_ITEMS[item].name) }) : _t("{o} le tient.", { o: _td(COMBAT_ITEMS[item].name) }))
+    var resp = tient ? (COMBAT_ITEMS[item].soften ? _t("{o} l'atténue.", { o: _td(COMBAT_ITEMS[item].name) }) : _t("{o} le tient.", { o: _td(COMBAT_ITEMS[item].name) }))
       : r.status === "counter" ? (def.cond === "veinIntact" ? _t("Ta règle « {r} » y répond.", { r: etRuleLabel(r.rule, kit) }) : _t("Ta règle « {r} » le contre.", { r: etRuleLabel(r.rule, kit) }))
       : r.status === "react" ? _t("Ta règle « {r} » réagit, sans le contrer.", { r: etRuleLabel(r.rule, kit) }) + (conseil ? " " + _t("Conseillé : {a}.", { a: conseil }) : "")
       : sansRegle ? _t("Ni règle ni objet n'y répond : à toi de le gérer en combat.")
       : grim ? (conseil ? _t("Pas couvert. Conseillé : {a}.", { a: conseil }) : _t("Aucune règle ni objet ne répond."))
       : _t("À toi de le contrer en combat.");
+    if (soft) resp = _t("{o} l'atténue.", { o: _td(COMBAT_ITEMS[soft].name) }) + " " + resp;
     var chk = !grim || sansRegle ? '' : '<i class="sp-chk' + (cls === "is-rule" || cls === "is-item" ? ' is-ok">✓' : '">✗') + '</i>';
     var tags = (t.phase != null ? ' <span class="sp-flag is-phase">' + _t("phase") + '</span>' : '')
       + (t.ou ? ' <span class="sp-flag">' + _t("l'un ou l'autre") + '</span>' : '')
@@ -463,10 +470,45 @@ function buildSortiePrepTraitsHTML(grim) {
     var btn = cls === "is-none" && slot ? '<button type="button" class="sp-trait-fix" onclick="sortiePrepAdd(\'' + esc(def.cond) + '\')">' + (r.status === "react" ? _t("Corriger") : _t("Ajouter")) + '</button>' : '';
     h += '<div class="sp-trait ' + cls + '">' + chk + '<img src="' + esc(st.icon || "") + '" alt=""><span><b>' + esc(_td(st.nom)) + '</b>' + tags + ' · '
       + esc(src) + '<em>' + esc(resp) + '</em></span>' + btn + '</div>';
+    if (!item) h += sortiePrepOfferHTML(ctx, t, cls, rules);
   });
   if (prev.unknown) h += '<div class="cp-behavior-hint">' + esc(_tn(prev.unknown, "{n} situation encore inconnue", "{n} situations encore inconnues")) + ' · ' + _t("elle se révélera en combat.") + '</div>';
   if (prev.unmet) h += '<div class="cp-behavior-hint">' + esc(_tn(prev.unmet, "{n} créature jamais vaincue : ses traits se révéleront au premier combat.", "{n} créatures jamais vaincues : leurs traits se révéleront au premier combat.")) + '</div>';
   return h + '</div>';
+}
+
+/* v3.738.0 (Seb 07/11) : « ou emporte » sous un trait qu'un objet de combat contre. En stock : un toucher l'emporte (place
+   libre) ; sinon, où il se prépare. Déjà couvert par une règle : proposé seulement en stock. */
+function sortiePrepFreeItemSlot() {
+  var n = window.CombatItems ? CombatItems.slotCount() : 1;
+  for (var i = 0; i < n; i++) if (!sortiePrep.items[i]) return i;
+  return -1;
+}
+function sortiePrepOfferHTML(ctx, t, cls, rules) {
+  var it = typeof etItemForTrait === "function" ? etItemForTrait(t.trait) : null;
+  if (!it || t.opt || !window.CombatItems) return "";
+  var n = CombatItems.getStock(it.id), o = _td(it.name), libre = sortiePrepFreeItemSlot() >= 0;
+  var couvert = cls === "is-rule" || cls === "is-item";
+  if (couvert && n <= 0) return "";
+  var sit = { trait: t.trait, cond: ENEMY_TRAIT_DEFS[t.trait].cond, slot: typeof etAdvisedSlot === "function" ? etAdvisedSlot(ENEMY_TRAIT_DEFS[t.trait].cond, getGrimoireCurrentKit()) : null };
+  var mieux = n > 0 && game.combatMode === "grimoire" && etItemBeatsRule(ctx, sit, rules);
+  var txt = mieux ? _t("Mieux contre son miroir : emporte {o} (×{n}), ta règle ne rejouera plus la même technique.", { o: o, n: n })
+    : it.soften ? (n > 0 ? _t("En plus : {o} (×{n}), il l'atténue.", { o: o, n: n }) : _t("En plus : {o}, il l'atténue.", { o: o }) + " " + etItemWhere(it.id))
+    : (n > 0 ? _t("Ou emporte : {o} (×{n}).", { o: o, n: n }) : _t("Ou emporte : {o}.", { o: o }) + " " + etItemWhere(it.id));
+  if (n > 0 && !libre) txt += " " + _t("Tes places d'objet sont prises.");
+  var btn = n > 0 && libre ? '<button type="button" class="sp-trait-fix" onclick="sortiePrepTake(\'' + esc(it.id) + '\')">' + _t("Emporter") + '</button>' : '';
+  return '<div class="sp-offer' + (mieux ? ' is-better' : '') + '"><img src="' + esc(it.icon) + '" alt=""><span>' + esc(txt) + '</span>' + btn + '</div>';
+}
+/* Emporte l'objet dans la première place libre (pris de l'Entrepôt au départ, comme depuis « Objets »). */
+function sortiePrepTake(id) {
+  if (!sortiePrep || !window.COMBAT_ITEMS || !COMBAT_ITEMS[id] || !window.CombatItems || CombatItems.getStock(id) <= 0) return;
+  if (sortiePrep.items.indexOf(id) !== -1) return;
+  var i = sortiePrepFreeItemSlot();
+  if (i < 0) return;
+  sortiePrep.items[i] = id;
+  sortiePrep.msg = { text: _t("{o} emporté : il tient ce trait tout le combat.", { o: _td(COMBAT_ITEMS[id].name) }) };
+  if (COMBAT_ITEMS[id].soften) sortiePrep.msg = { text: _t("{o} emporté : il s'ajoute à ta règle.", { o: _td(COMBAT_ITEMS[id].name) }) };
+  renderSortiePrep();
 }
 
 /* Nom de l'action conseillée (« Garde », « Tailler »…). */
@@ -499,9 +541,16 @@ function sortiePrepReplace(index) {
 }
 function sortiePrepAll() {
   if (!sortiePrep || typeof grimoirePrepareAll !== "function") return;
-  var r = grimoirePrepareAll(sortiePrep.opts.ctx);
+  // v3.738.0 (Seb 07/11) : les règles d'abord ; l'objet seulement en stock et meilleur que sa règle (miroir), place libre
+  var ctx = sortiePrep.opts.ctx, pris = [];
+  (typeof grimoireAutoItems === "function" ? grimoireAutoItems(ctx, sortiePrep.items) : []).forEach(function (id) {
+    var i = sortiePrepFreeItemSlot();
+    if (i >= 0) { sortiePrep.items[i] = id; pris.push(_td(COMBAT_ITEMS[id].name)); }
+  });
+  var r = grimoirePrepareAll(ctx, sortiePrep.items);
   if (!r) return;
   sortiePrep.msg = r.changed ? { text: _t("Grimoire préparé pour ce combat : les contres d'annonce d'abord."), before: r.before } : { text: _t("Rien à changer : tes règles répondent déjà au mieux.") };
+  if (pris.length) sortiePrep.msg.text += " " + _t("Emporté aussi : {o}.", { o: pris.join(", ") });
   renderSortiePrep();
 }
 function sortiePrepUndo() {
@@ -556,7 +605,8 @@ function buildSortiePrepItemsHTML(grim) {
       var tag = !o.trait ? '<span class="sp-tag is-cost">' + esc(_td(o.con || "")) + '</span>'   // v3.442.0 : objet à contrepartie
         : !known[o.trait] ? '<span class="sp-tag is-meh">' + esc(_t("Aucun {t} connu dans cette sortie", { t: tn })) + '</span>'
         : (counters[o.trait] && o.soften) ? '<span class="sp-tag is-good">' + esc(_t("Utile ici : {t}, en plus de ta règle", { t: tn })) + '</span>'
-        : counters[o.trait] ? '<span class="sp-tag is-meh">' + esc(_t("Déjà contré par ta règle")) + '</span>'
+        // v3.738.0 (Seb 07/11) : l'objet reste « Utile ici » ; la règle qui le contre aussi est dite, sans dissuader
+        : counters[o.trait] ? '<span class="sp-tag is-good">' + esc(_t("Utile ici : {t}", { t: tn })) + '</span> <span class="sp-tag is-note">' + esc(_t("Ta règle le contre aussi")) + '</span>'
         : '<span class="sp-tag is-good">' + esc(_t("Utile ici : {t}", { t: tn })) + '</span>';
       h += '<button type="button" class="sp-item" onclick="sortiePrepItem(' + slot + ', \'' + oid + '\')"><img src="' + esc(o.icon) + '" alt="">'
         + '<span><b>' + esc(_td(o.name)) + '</b>' + esc(_td(o.desc)) + tag + '</span><i>×' + CombatItems.getStock(oid) + '</i></button>';
@@ -712,6 +762,7 @@ window.sortiePrepEditRules = sortiePrepEditRules;
 window.sortiePrepAdd = sortiePrepAdd;
 window.sortiePrepReplace = sortiePrepReplace;
 window.sortiePrepAll = sortiePrepAll;
+window.sortiePrepTake = sortiePrepTake;
 window.sortiePrepUndo = sortiePrepUndo;
 window.sortiePrepCloseMsg = sortiePrepCloseMsg;
 window.sortiePrepJeu = sortiePrepJeu;

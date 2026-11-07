@@ -8,6 +8,7 @@
      adapte   règles construites pour CE scénario : situations relevées au pilote (robot, 20 parties), contre du kit, rangées par fréquence
      robot3 / adapte3   les mêmes, limitées à 3 emplacements (piste « moins d'emplacements »)
      prepare3  v3.736.0 : Grimoire du robot réduit à 3, puis « Tout préparer » du pronostic du jeu (grimoirePrepareAll)
+     prepare3o v3.738.0 : prepare3 + objets de combat conseillés (sortieAdvisedItems, un de chaque en stock) emportés au départ
    Profils (enveloppes, non cumulés sauf mention) :
      jeu  moteur nu
      A    contres dédiés : la Défense ne contre plus que la Charge ; Silence → technique 1, Exaltation → technique 2
@@ -16,7 +17,7 @@
      AD   A + D           ABD  A + B2 + D
 
    USAGE : node tools/sim/grimoire-vivant-bench.js . [--runs 100] [--classes knight,ranger,mage] [--scen orc,...] [--profils jeu,A] [--pols robot,vide,adapte]
-             [--jobs 3] [--tag nom]   sorties : captures/grimoire-vivant/<tag>-<runs>runs.{txt,json} */
+             [--jobs 3] [--tag nom] [--objets sel_de_fer]   sorties : captures/grimoire-vivant/<tag>-<runs>runs.{txt,json} */
 var fs = require("fs"), path = require("path"), cp = require("child_process");
 var CB = require("./charge-bench.js");
 var CH = require("../chemins.js");
@@ -50,7 +51,7 @@ var PROFILS = {
   jeu: {}, A: { A: true }, B: { hp: 1.5 }, B2: { hp: 1.5, pow: 0.8 }, B3: { hp: 2, pow: 0.7 }, D: { D: true },
   AD: { A: true, D: true }, ABD: { A: true, D: true, hp: 1.5, pow: 0.8 }
 };
-var POLS = ["robot", "vide", "adapte", "robot3", "adapte3", "prepare3"];
+var POLS = ["robot", "vide", "adapte", "robot3", "adapte3", "prepare3", "prepare3o"];
 var CLASSES = { knight: "Chevalier", ranger: "Rôdeur", mage: "Mage" };
 function liste(k, all) { var v = opt(k, null); return v ? v.split(",") : (Array.isArray(all) ? all : Object.keys(all)); }
 var L_CLASSES = liste("--classes", CLASSES), L_SCEN = liste("--scen", SCENARIOS), L_PROF = liste("--profils", ["jeu"]), L_POL = liste("--pols", POLS);
@@ -194,7 +195,7 @@ function prepare(g, saveTxt, sc, pol, adapte) {
   else if (pol === "vide") setRules(g, [], 0);
   else if (pol === "adapte") setRules(g, adapte || robot, slots);
   else if (pol === "adapte3") setRules(g, adapte || robot, Math.min(3, slots));
-  else if (pol === "prepare3") setRules(g, robot, Math.min(3, slots));
+  else if (pol === "prepare3" || pol === "prepare3o") setRules(g, robot, Math.min(3, slots));
   if (sc.dungeon && g.game.dungeonTierCleared) delete g.game.dungeonTierCleared[sc.dungeon];
   var st = g.StoryQuestManager.getCurrentStep(sc.chap);
   if (st && st.id === sc.step) { try { g.StoryQuestManager.acceptStep(sc.chap); } catch (e) {} }
@@ -206,8 +207,13 @@ function prepare(g, saveTxt, sc, pol, adapte) {
   st = g.StoryQuestManager.getCurrentStep(sc.chap);
   if (q && q.requiresVoie && st && st.choice && !g.CompanionManager.state(q.requiresVoie).voie) g.storyMakeChoice(sc.chap, st.choice.options[0].value);
   // v3.736.0 : le joueur suit le pronostic, « Tout préparer » juste avant de partir
-  if (pol === "prepare3" && typeof g.grimoirePrepareAll === "function") g.grimoirePrepareAll(sc.dungeon ? { type: "dungeon", id: sc.dungeon } : { type: "adventure", id: sc.quest });
-  return { slots: slots, rules: g.game.grimoireRules.filter(function (r) { return r && r.conditionId; }).map(function (r) { return r.conditionId + ">" + r.actionSlot; }) };
+  var ctx = sc.dungeon ? { type: "dungeon", id: sc.dungeon } : { type: "adventure", id: sc.quest }, items = [];
+  if (pol === "prepare3o") {   // v3.738.0 : un de chaque objet en stock, le joueur emporte ceux que le pronostic conseille
+    g.COMBAT_ITEM_ORDER.forEach(function (id) { if (id !== "fiole_noire" && g.WarehouseManager.getAmount(id) < 1) g.WarehouseManager.addResource(id, 1, true); });
+    items = (opt("--objets", null) ? opt("--objets").split(",") : g.sortieAdvisedItems(ctx)).slice(0, g.CombatItems.slotCount()); // --objets : imposés
+  }
+  if ((pol === "prepare3" || pol === "prepare3o") && typeof g.grimoirePrepareAll === "function") g.grimoirePrepareAll(ctx, items);
+  return { items: items, slots: slots, rules: g.game.grimoireRules.filter(function (r) { return r && r.conditionId; }).map(function (r) { return r.conditionId + ">" + r.actionSlot; }) };
 }
 function playRun(g, S, saveTxt, sc, s, pol, adapte) {
   CB.seed(s); CB.CLOCK.now = Date.UTC(2026, 9, 1, 8);
@@ -216,6 +222,7 @@ function playRun(g, S, saveTxt, sc, s, pol, adapte) {
   var D = g.DungeonManager, active;
   if (sc.dungeon) { D.start(sc.dungeon, []); active = function () { return g.game.dungeonRun && g.game.dungeonRun.active; }; }
   else { delete g.game.adventureQuestsCompleted[sc.quest]; g.AdventureQuestManager.start(sc.quest); active = function () { return g.game.adventureQuestRun.active; }; }
+  if (info.items.length) g.CombatItems.takeForSortie(info.items);
   g.__flush();
   var CE = g.CombatEngine, stall = 0, last = -1, t;
   for (t = 0; t < 12000 && active() && !st.mort && g.game.heroHp > 0; t++) {
@@ -242,7 +249,7 @@ function playRun(g, S, saveTxt, sc, s, pol, adapte) {
   var tous = st.combats.filter(function (c) { return c.r > 0; });
   var sum = function (k) { return tous.reduce(function (x, c) { return x + c[k]; }, 0); };
   return { win: win, hp: win ? hp : 0, rounds: st.rounds, potions: st.potions, mort: st.mort, fige: !!st.fige, tel: st.tel, ctr: st.ctr, subi: st.subi, vu: st.vu,
-    dec: sum("dec"), regle: sum("regle"), repli: sum("repli"), nComb: tous.length, slots: info.slots, rules: info.rules,
+    dec: sum("dec"), regle: sum("regle"), repli: sum("repli"), nComb: tous.length, slots: info.slots, rules: info.rules, items: info.items,
     boss: b ? { r: b.r, mort: b.mort, pot: b.pot, dec: b.dec, regle: b.regle, repli: b.repli, regles: b.regles, tel: b.tel, ctr: b.ctr, phases: b.phases, parPhase: b.parPhase, telK: b.telK, arch: b.arch } : null };
 }
 function saveFor(classe, sid) { var sc = SCENARIOS[sid]; return fs.readFileSync(path.join(sc.sv, classe + "_" + sc.step + ".json"), "utf8"); }
@@ -258,7 +265,7 @@ function agg(runs) {
     runMed: q(W.map(function (r) { return r.rounds; }), 0.5), regleShare: moy(function (r) { return r.dec ? r.regle / r.dec : 0; }), repliShare: moy(function (r) { return r.dec ? r.repli / r.dec : 0; }),
     tel: moy(function (r) { return Object.keys(r.tel).reduce(function (a, k) { return a + r.tel[k]; }, 0); }),
     ctr: moy(function (r) { return Object.keys(r.ctr).reduce(function (a, k) { return a + r.ctr[k]; }, 0); }),
-    figes: runs.filter(function (r) { return r.fige; }).length, slots: runs[0] ? runs[0].slots : 0, rules: runs[0] ? runs[0].rules : [] };
+    figes: runs.filter(function (r) { return r.fige; }).length, slots: runs[0] ? runs[0].slots : 0, rules: runs[0] ? runs[0].rules : [], items: runs[0] ? runs[0].items : [] };
   var vu = {}; runs.forEach(function (r) { Object.keys(r.vu).forEach(function (k) { vu[k] = (vu[k] || 0) + r.vu[k] / n; }); }); o.vu = vu;
   if (B.length) {
     o.bossVu = B.length / n; o.bossMed = q(BW.map(function (r) { return r.boss.r; }), 0.5); o.bossP10 = q(BW.map(function (r) { return r.boss.r; }), 0.1); o.bossP90 = q(BW.map(function (r) { return r.boss.r; }), 0.9);
@@ -323,7 +330,7 @@ function main() {
     function suivante() {
       if (k >= taches.length) { if (!actifs) fin(); return; }
       var t = taches[k++], out = path.join(dir, "part-" + tag + "-" + t[0] + "-" + t[1] + ".json"); actifs++;
-      var args = [__filename, ROOT, "--worker", "--classes", t[0], "--profils", t[1], "--pols", L_POL.join(","), "--runs", String(RUNS), "--runs-donjon", opt("--runs-donjon", "60"), "--scen", L_SCEN.join(","), "--out", out];
+      var args = [__filename, ROOT, "--worker", "--classes", t[0], "--profils", t[1], "--pols", L_POL.join(","), "--runs", String(RUNS), "--runs-donjon", opt("--runs-donjon", "60"), "--scen", L_SCEN.join(","), "--out", out].concat(opt("--objets", null) ? ["--objets", opt("--objets")] : []);
       var pr = cp.spawn(process.execPath, args, { stdio: ["ignore", "ignore", "inherit"] });
       pr.on("exit", function (code) {
         actifs--;
@@ -358,7 +365,7 @@ function rapport(all, minutes, brut) {
           if (a.bossVu) l += "  | boss " + a.bossMed + " (" + a.bossP10 + "-" + a.bossP90 + ")  mort " + p0(a.bossMort) + "  règle " + p0(a.bossRegle);
           if (a.figes) l += "  FIGÉS " + a.figes;
           out.push(l);
-          if (pol === "adapte" || pol === "robot" || pol === "prepare3") out.push("        " + "".padEnd(10) + pol + " (" + a.slots + " empl.) : " + a.rules.join(" · "));
+          if (pol === "adapte" || pol === "robot" || pol === "prepare3" || pol === "prepare3o") out.push("        " + "".padEnd(10) + pol + " (" + a.slots + " empl.) : " + a.rules.join(" · ") + (a.items && a.items.length ? " · objets " + a.items.join(",") : ""));
         });
         var r = all[[pid, "robot", c, sid].join("|")] || all[[pid, L_POL[0], c, sid].join("|")];
         if (r && r.agg.ph) {
