@@ -186,6 +186,11 @@ function initJournalTest() {
     function (r, a) { J.log("carte", { carte: a[0], secteur: a[1], issue: a[2] }); });
   journalWrap(window.SceneRunManager, "startRun", null,
     function (r, a) { if (r && r.ok) J.log("expedition", { id: a[0] }); });
+  // v3.737.0 (Seb 07/11) : pourquoi une Petite Aventure s'arrête (dest, ko, retour, renoncement en préparation, fuite)
+  var paFin = function (r, a, ctx) { if (ctx) J.log("expedition_fin", { id: ctx.id, issue: ctx.how || (a && a[0]) || null, etape: ctx.status, case: ctx.at }); };
+  var paCtx = function () { var run = window.Pa2Run && Pa2Run.getRun(); return run ? { id: run.templateId, status: run.status, at: run.at } : null; };
+  journalWrap(window.Pa2Run, "finish", paCtx, function (r, a, ctx) { if (ctx) { ctx.how = a[0]; paFin(r, a, ctx); } });
+  journalWrap(window.Pa2Run, "abandon", paCtx, function (r, a, ctx) { if (ctx && r && r.ok) { ctx.how = ctx.status === "pa2-prep" ? "renonce_prep" : "fuite"; paFin(r, a, ctx); } });
 
   journalWrap(window.EquipShopManager, "buy",
     function (uid) {
