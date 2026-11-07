@@ -1515,7 +1515,9 @@ function objetsAvance(g, A) {
     if (!A.canDeliver(id) && !apoReunir(g, r.order, budget)) { if (process.env.TRACE_OBJETS) console.log("      [objets] " + CURRENT_STEP + " commande " + id + " pas encore : " + JSON.stringify(r.order) + " (prochaines " + u.quetes.join(",") + ")"); return; }
     if (A.deliverOrder(id)) { O.appris[id] = CURRENT_STEP; act("apothicaire:commande", 0); if (process.env.TRACE_OBJETS) console.log("      [objets] " + CURRENT_STEP + " recette apprise : " + id + " (" + JSON.stringify(r.order) + ", prochaines " + u.quetes.join(",") + ")"); }
   });
-  u.items.forEach(function (id) {
+  // piste a1 (Seb 07/11) : les neutralisants de la réserve (monde atteint et suivant) se fabriquent dès leur recette sue
+  var loin = objetsUtiles(g, true).items.filter(function (id) { return u.items.indexOf(id) < 0 && objetRang(g, id) === 0 && A.isLearned(id); });
+  u.items.concat(loin).forEach(function (id) {
     // un atténuant laisse leur place aux neutralisants à venir ; un neutralisant, à ceux des quêtes plus lointaines (Baume de la Silhouette)
     var reserve = objetRang(g, id) > 0 ? apoReserveNeutre(g, A, id) : apoReserveNeutre(g, A, id, u.items);
     if (process.env.TRACE_OBJETS && reserve && A.isLearned(id) && g.CombatItems.getStock(id) < OBJETS_STOCK_CIBLE && A.getDailyRemaining() > 0 && A.getDailyRemaining() <= reserve) console.log("      [objets] " + CURRENT_STEP + " " + id + " : " + reserve + " préparation(s) gardée(s) aux neutralisants");
