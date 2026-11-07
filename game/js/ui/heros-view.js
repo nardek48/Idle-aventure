@@ -324,6 +324,11 @@ var HEROS_STAT_SOURCES = [
     id: "talents", label: _t("Talents"),
     off: function () { var saved = game.talents; game.talents = {}; return saved; },
     on: function (saved) { game.talents = saved; }
+  },
+  { // Forge des mondes : les reforges renforcent le héros
+    id: "forge", label: _t("Forge"),
+    off: function () { var saved = game.forge; game.forge = { levels: {} }; return saved; },
+    on: function (saved) { game.forge = saved; }
   }
   // v3.322.0 : Ascension et Aether ne sont plus des sources de stats (Offrande)
 ];

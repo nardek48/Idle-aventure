@@ -397,7 +397,7 @@ var FilRouge = {
       if (isFinite(top) && top > 0) {
         var n = slots.filter(function (sl) { return ForgeManager.getLevel(sl) >= top; }).length;
         obj("forge", FIL_ROUGE_ICONS.forge, _t("Reforges"), n, slots.length,
-          _t("Pièces reforgées au niveau {n}, le plus haut de ce monde.", { n: top }), _t("Voir la Forge"), sheet("forge"));
+          _t("Emplacements reforgés {n} fois, le plus haut de ce monde.", { n: top }), _t("Voir la Forge"), sheet("forge"));
       }
     }
     if (window.MemoryManager && window.MEMORY_LEVEL_COSTS) {

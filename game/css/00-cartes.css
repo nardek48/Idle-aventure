@@ -53,7 +53,8 @@ Lot 1 : les classes .kc-*. Lot 2 : listes de cartes d'interface. Lot 3 (fin du f
    ============================================================ */
 
 /* Texture : toutes les cartes listées (interface et lignes fines). v3.619.1 : sans .hs-eq (mannequin)
-   ni .exp-world (route de la Caravane), qui ont leur propre image de fond. */
+   ni .exp-world (route de la Caravane), qui ont leur propre image de fond.
+   Forge des mondes : .forge-world (cartes par monde de la Forge), texture seule, son liseré de couleur reste. */
 :root :is(
   .camp-card:not(.camp-missions-card), .hs-kstrip, .hs-roster-btn, .hs-tile, .wk-bigrec, .car-load, .car-order, .car-trip, .pc-skill-card, .pc-stat-card, .cw-card:not(:has(.cw-mlist)), .dgain, .dprep, .exp-row, .forge-board,
   .full-menu-card, .go-auto, .go-bonus, .hf-card, .hf-tiers, .hf-top, .hs-comp, .hs-edetail,
@@ -61,7 +62,7 @@ Lot 1 : les classes .kc-*. Lot 2 : listes de cartes d'interface. Lot 3 (fin du f
   .pc3-auto, .prod-sheet-harvest, .production-dash-card, .quest-section-card, .set-card,
   .vb-card, .vb-cost-list, .vb-site-banner, .warehouse-note, .wh-filter, .wh-grid, .wk-banner, .wk-tile,
   .achievement-total, .camp-mission-card, .cf-line, .equip-shop-hall-note, .equip-shop-timer, .hs-cmp-legend,
-  .hs-traits, .ksec, .ms-row, .mw-card, .vb-chain-banner, .wk-act, .vb-sheet-effect
+  .hs-traits, .ksec, .ms-row, .mw-card, .vb-chain-banner, .wk-act, .vb-sheet-effect, .forge-world
 ) {
   background-image: linear-gradient(var(--kc-voile), var(--kc-voile)), var(--kc-tex) !important;
   background-size: auto, 256px !important;
@@ -147,7 +148,7 @@ Lot 1 : les classes .kc-*. Lot 2 : listes de cartes d'interface. Lot 3 (fin du f
   .pc3-auto, .prod-sheet-harvest, .production-dash-card, .quest-section-card, .set-card,
   .vb-card, .vb-cost-list, .vb-site-banner, .warehouse-note, .wh-filter, .wh-grid, .wk-banner, .wk-tile,
   .achievement-total, .camp-mission-card, .cf-line, .equip-shop-hall-note, .equip-shop-timer, .hs-cmp-legend,
-  .hs-traits, .ksec, .ms-row, .mw-card, .vb-chain-banner, .wk-act, .vb-sheet-effect,
+  .hs-traits, .ksec, .ms-row, .mw-card, .vb-chain-banner, .wk-act, .vb-sheet-effect, .forge-world,
   .story-chain, .story-step, .camp-missions-card, .cw-card:has(.cw-mlist), .ms-block, .qb-card, .tavern-board, .chr-obj
 ) :is(
   .construction-popup-delta,
@@ -163,7 +164,7 @@ Lot 1 : les classes .kc-*. Lot 2 : listes de cartes d'interface. Lot 3 (fin du f
   .pc3-auto, .prod-sheet-harvest, .production-dash-card, .quest-section-card, .set-card,
   .vb-card, .vb-cost-list, .vb-site-banner, .warehouse-note, .wh-filter, .wh-grid, .wk-banner, .wk-tile,
   .achievement-total, .camp-mission-card, .cf-line, .equip-shop-hall-note, .equip-shop-timer, .hs-cmp-legend,
-  .hs-traits, .ksec, .ms-row, .mw-card, .vb-chain-banner, .wk-act, .vb-sheet-effect,
+  .hs-traits, .ksec, .ms-row, .mw-card, .vb-chain-banner, .wk-act, .vb-sheet-effect, .forge-world,
   .story-chain, .story-step, .camp-missions-card, .cw-card:has(.cw-mlist), .ms-block, .qb-card, .tavern-board, .chr-obj
 ):is(
   .construction-popup-delta,
@@ -179,7 +180,7 @@ Lot 1 : les classes .kc-*. Lot 2 : listes de cartes d'interface. Lot 3 (fin du f
   .pc3-auto, .prod-sheet-harvest, .production-dash-card, .quest-section-card, .set-card,
   .vb-card, .vb-cost-list, .vb-site-banner, .warehouse-note, .wh-filter, .wh-grid, .wk-banner, .wk-tile,
   .achievement-total, .camp-mission-card, .cf-line, .equip-shop-hall-note, .equip-shop-timer, .hs-cmp-legend,
-  .hs-traits, .ksec, .ms-row, .mw-card, .vb-chain-banner, .wk-act, .vb-sheet-effect,
+  .hs-traits, .ksec, .ms-row, .mw-card, .vb-chain-banner, .wk-act, .vb-sheet-effect, .forge-world,
   .story-chain, .story-step, .camp-missions-card, .cw-card:has(.cw-mlist), .ms-block, .qb-card, .tavern-board, .chr-obj
 ) :is(
   .hf-meta,
@@ -193,7 +194,7 @@ Lot 1 : les classes .kc-*. Lot 2 : listes de cartes d'interface. Lot 3 (fin du f
   .pc3-auto, .prod-sheet-harvest, .production-dash-card, .quest-section-card, .set-card,
   .vb-card, .vb-cost-list, .vb-site-banner, .warehouse-note, .wh-filter, .wh-grid, .wk-banner, .wk-tile,
   .achievement-total, .camp-mission-card, .cf-line, .equip-shop-hall-note, .equip-shop-timer, .hs-cmp-legend,
-  .hs-traits, .ksec, .ms-row, .mw-card, .vb-chain-banner, .wk-act, .vb-sheet-effect,
+  .hs-traits, .ksec, .ms-row, .mw-card, .vb-chain-banner, .wk-act, .vb-sheet-effect, .forge-world,
   .story-chain, .story-step, .camp-missions-card, .cw-card:has(.cw-mlist), .ms-block, .qb-card, .tavern-board, .chr-obj
 ):is(
   .hf-meta,
@@ -207,7 +208,7 @@ Lot 1 : les classes .kc-*. Lot 2 : listes de cartes d'interface. Lot 3 (fin du f
   .pc3-auto, .prod-sheet-harvest, .production-dash-card, .quest-section-card, .set-card,
   .vb-card, .vb-cost-list, .vb-site-banner, .warehouse-note, .wh-filter, .wh-grid, .wk-banner, .wk-tile,
   .achievement-total, .camp-mission-card, .cf-line, .equip-shop-hall-note, .equip-shop-timer, .hs-cmp-legend,
-  .hs-traits, .ksec, .ms-row, .mw-card, .vb-chain-banner, .wk-act, .vb-sheet-effect,
+  .hs-traits, .ksec, .ms-row, .mw-card, .vb-chain-banner, .wk-act, .vb-sheet-effect, .forge-world,
   .story-chain, .story-step, .camp-missions-card, .cw-card:has(.cw-mlist), .ms-block, .qb-card, .tavern-board, .chr-obj
 ) :is(
   .ksec small,
@@ -259,7 +260,7 @@ Lot 1 : les classes .kc-*. Lot 2 : listes de cartes d'interface. Lot 3 (fin du f
   .pc3-auto, .prod-sheet-harvest, .production-dash-card, .quest-section-card, .set-card,
   .vb-card, .vb-cost-list, .vb-site-banner, .warehouse-note, .wh-filter, .wh-grid, .wk-banner, .wk-tile,
   .achievement-total, .camp-mission-card, .cf-line, .equip-shop-hall-note, .equip-shop-timer, .hs-cmp-legend,
-  .hs-traits, .ksec, .ms-row, .mw-card, .vb-chain-banner, .wk-act, .vb-sheet-effect,
+  .hs-traits, .ksec, .ms-row, .mw-card, .vb-chain-banner, .wk-act, .vb-sheet-effect, .forge-world,
   .story-chain, .story-step, .camp-missions-card, .cw-card:has(.cw-mlist), .ms-block, .qb-card, .tavern-board, .chr-obj
 ):is(
   .ksec small,
@@ -312,7 +313,7 @@ Lot 1 : les classes .kc-*. Lot 2 : listes de cartes d'interface. Lot 3 (fin du f
   .pc3-auto, .prod-sheet-harvest, .production-dash-card, .quest-section-card, .set-card,
   .vb-card, .vb-cost-list, .vb-site-banner, .warehouse-note, .wh-filter, .wh-grid, .wk-banner, .wk-tile,
   .achievement-total, .camp-mission-card, .cf-line, .equip-shop-hall-note, .equip-shop-timer, .hs-cmp-legend,
-  .hs-traits, .ksec, .ms-row, .mw-card, .vb-chain-banner, .wk-act, .vb-sheet-effect,
+  .hs-traits, .ksec, .ms-row, .mw-card, .vb-chain-banner, .wk-act, .vb-sheet-effect, .forge-world,
   .story-chain, .story-step, .camp-missions-card, .cw-card:has(.cw-mlist), .ms-block, .qb-card, .tavern-board, .chr-obj
 ) { --nb-ink-dim: var(--c-brown-750-soft) !important; } /* sous-titres à 72 % d'opacité ailleurs */
 

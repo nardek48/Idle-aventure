@@ -38,7 +38,7 @@ function orInvestReforges() {
     var cost = ForgeManager.getCost(slot) || {}, lvl = ForgeManager.getLevel(slot);
     var name = (window.EQUIPMENT_SLOT_LABELS && EQUIPMENT_SLOT_LABELS[slot]) ? _td(EQUIPMENT_SLOT_LABELS[slot]) : slot;
     out.push({ id: "r:" + slot + ":" + (lvl + 1), rank: 3, gold: Number(cost.gold || 0), icon: VILLAGE_BUILDINGS.forge.iconImg || VILLAGE_BUILDINGS.forge.icon,
-      title: _t("Reforger : {x}", { x: name }), sub: _t("niv. {a} → {b}", { a: lvl, b: lvl + 1 }), cost: cost, go: function () { orInvestGoBuilding("forge"); } });
+      title: _t("Reforger : {x}", { x: name }), sub: ForgeManager.getNextGainLabel(slot) || "", cost: cost, go: function () { orInvestGoBuilding("forge"); } });
   });
   return out;
 }

@@ -503,46 +503,111 @@ function goToWarehouse() {
 window.goToWarehouse = goToWarehouse;
 
 /* --- Établi de la Forge (rendu DANS la fiche) ---------------------------- */
+// Forge des mondes (atelier forge-mondes.html, choix C et A) : monde en cours en grand, mondes finis en une ligne, gain sur le bouton
+
+var FORGE_BAND_CLASSES = ["", "is-w1", "is-w2", "is-w3", "is-w4", "is-w5"];
+
+/* Valeur affichable d'une stat du héros pour une bande (PV, Défense, critique, ATK, ×crit). */
+function forgeHeroStatText(band) {
+  var S = window.StatsSystem;
+  if (!S) return "";
+  if (band === 1) return formatNumber(Math.floor(game.heroMaxHp || 0));
+  if (band === 2) return fmtPct(fmtDec(Math.round((game.heroDefensePct || 0) * 1000) / 10));
+  if (band === 3) return fmtPct(fmtDec(Math.round(S.effectiveCritChance() * 10) / 10));
+  if (band === 4) return formatNumber(Math.round(S.effectiveTapDamage()));
+  return "×" + fmtDec(Math.round(S.effectiveCritMult() * 100) / 100);
+}
+
+/* Stat du héros sans les reforges de la bande, puis avec (recalcul remis en place, PV courants compris). */
+function forgeHeroBandDelta(band) {
+  if (!window.StatsSystem || !game.forge || !game.forge.levels) return null;
+  var lv = game.forge.levels, saved = {}, hp = game.heroHp, lo = FORGE_REFORGES_PER_WORLD * (band - 1), out = null;
+  var avec = forgeHeroStatText(band);
+  try {
+    Object.keys(lv).forEach(function (k) { saved[k] = lv[k]; lv[k] = Math.min(lv[k], lo); });
+    StatsSystem.recalcStats();
+    out = { sans: forgeHeroStatText(band), avec: avec };
+  } catch (e) { noteErreur("forgeHeroBandDelta", e); }
+  finally {
+    Object.keys(saved).forEach(function (k) { lv[k] = saved[k]; });
+    StatsSystem.recalcStats(); game.heroHp = Math.min(hp, game.heroMaxHp);
+  }
+  return out;
+}
+
+/* Une carte de monde : grande (le monde en cours), « mini » (fini ou entamé) ou fermée (le suivant). */
+function forgeWorldCardHTML(band, kind) {
+  var F = ForgeManager, def = F.getBandDef(band), n = F.getBandCount(band), full = F.getBandMaxCount();
+  var per = FORGE_REFORGES_PER_WORLD, first = per * (band - 1) + 1, fMin = 2 * band - 1, top = F.formatPct(full * FORGE_WORLD_BONUS_PER_REFORGE);
+  var cls = 'forge-world ' + FORGE_BAND_CLASSES[band], ico = '<img class="forge-world-ico" src="' + esc(def.icon) + '" alt="">';
+  if (kind === "lock") {
+    return '<div class="' + cls + ' is-lock"><div class="forge-world-title">' + ico + esc(def.world) + ' · ' + esc(def.label) + '</div>'
+      + '<div class="forge-world-line">' + esc(_t("S'ouvre à la Forge {f} : reforges {a} à {b}, +{p} à chacune, jusqu'à {t}.", { f: fMin, a: first, b: first + per - 1, p: F.formatPct(FORGE_WORLD_BONUS_PER_REFORGE), t: top })) + '</div></div>';
+  }
+  if (kind === "mini") {
+    return '<div class="' + cls + ' is-mini"><div class="forge-world-title">' + ico + (n >= full ? '✓ ' : '') + esc(_t("{w} : {s}", { w: def.world, s: def.label }))
+      + '<span>' + esc("+" + F.formatPct(F.getWorldBonus(band)) + (n < full ? " / " + top : "")) + '</span></div></div>';
+  }
+  var ticks = "";
+  for (var t = 1; t < EQUIPMENT_SLOTS.length; t++) ticks += '<u style="left:' + (t * 100 / EQUIPMENT_SLOTS.length).toFixed(2) + '%"></u>';
+  var d = forgeHeroBandDelta(band);
+  var h = '<div class="' + cls + '"><div class="forge-world-title">' + ico + esc(def.world) + '<span>' + esc("+" + F.formatPct(F.getWorldBonus(band)) + " / " + top) + '</span></div>';
+  h += '<div class="forge-world-bar"><i style="width:' + Math.round(n / full * 1000) / 10 + '%"></i>' + ticks + '</div>';
+  h += '<div class="forge-world-line"><b>' + esc(_t("+{p} de {s} à chaque reforge", { p: F.formatPct(FORGE_WORLD_BONUS_PER_REFORGE), s: def.label })) + '</b> · '
+    + esc(_t("reforges {a} à {b} (Forge {f}-{g}), {n} / {m}", { a: first, b: first + per - 1, f: fMin, g: fMin + 1, n: n, m: full })) + '</div>';
+  if (d) h += '<div class="forge-world-line">' + esc(d.sans === d.avec ? _t("Ton héros : {s} {a}", { s: def.label, a: d.avec }) : _t("Ton héros : {s} {a} → {b}", { s: def.label, a: d.sans, b: d.avec }))
+    + esc(n < full ? " · " + _t("encore +{p} à gagner", { p: F.formatPct((full - n) * FORGE_WORLD_BONUS_PER_REFORGE) }) : " · " + _t("complet")) + '</div>';
+  return h + '</div>';
+}
+
+/* 4 crans à la couleur du monde de la prochaine reforge : ceux déjà faits dans cette bande. */
+function forgePipsHTML(level) {
+  var F = ForgeManager, per = FORGE_REFORGES_PER_WORLD, last = FORGE_WORLD_BONUSES.length;
+  var band = F.getBand(Math.min(level + 1, per * last)), on = Math.max(0, Math.min(per, level - per * (band - 1)));
+  var h = '<span class="forge-pips ' + FORGE_BAND_CLASSES[band] + '" title="' + esc(F.getBandDef(band).world) + '">';
+  for (var i = 0; i < per; i++) h += '<i' + (i < on ? ' class="on"' : '') + '></i>';
+  return h + '</span>';
+}
+
 function buildForgeBoardHTML() {
   if (!window.ForgeManager) return "";
   ForgeManager.ensure();
 
-  var max = ForgeManager.getMaxLevel();
-  var h = '<div class="forge-board">';
+  var F = ForgeManager, max = F.getMaxLevel(), last = FORGE_WORLD_BONUSES.length;
+  var cur = Math.max(1, F.getBand(Math.min(max, FORGE_REFORGES_PER_WORLD * last)));
+  var h = '<div class="forge-worlds">';
+  for (var b = 1; b < cur; b++) h += forgeWorldCardHTML(b, "mini");
+  h += forgeWorldCardHTML(cur, "big");
+  if (cur < last) h += forgeWorldCardHTML(cur + 1, "lock");
+  h += '</div>';
+
+  h += '<div class="forge-board">';
   h += '<div class="forge-board-head"><img class=ico-inline src=images/Icons/workshops/smithing_station.webp> ' + _t("Établi")
-     + '<span class="forge-board-max">' + _t("Niveau maximum : {n}", { n: max }) + '</span></div>';
-  h += '<div class="forge-board-note">' + _t("Le niveau appartient à l'emplacement : changer de pièce ne fait rien perdre.") + '</div>';
+     + '<span class="forge-board-max">' + _t("Reforges jusqu'à {n}", { n: max }) + '</span></div>';
+  h += '<div class="forge-board-note">' + _t("La reforge ne touche plus la pièce : elle renforce ton héros, pour toujours. Le niveau reste à l'emplacement.") + '</div>';
 
   var provenancesVues = {}; // v3.448.6 : chaque provenance une seule fois sur l'établi
   EQUIPMENT_SLOTS.forEach(function (slot) {
-    var level = ForgeManager.getLevel(slot);
+    var level = F.getLevel(slot);
     var item = (game.equipped || {})[slot];
-    var cost = ForgeManager.getCost(slot);
-    var reason = ForgeManager.getBlockReason(slot);
+    var cost = F.getCost(slot);
+    var reason = F.getBlockReason(slot);
 
     h += '<div class="forge-row">';
     h += '<div class="forge-row-main">';
-    /* Le libellé vit dans EQUIPMENT_SLOT_LABELS, pas dans la config d'emplacement
-       (relevé au rendu : la ligne sortait sans nom). */
-    h += '<div class="forge-row-name">' + esc(_td(EQUIPMENT_SLOT_LABELS[slot] || slot))
-       + ' <span class="forge-row-level">' + _t("niv. {a} / {b}", { a: level, b: max }) + '</span></div>';
+    h += '<div class="forge-row-name">' + esc(_td(EQUIPMENT_SLOT_LABELS[slot] || slot)) + ' ' + forgePipsHTML(level)
+       + ' <span class="forge-row-level">' + esc(_tn(level, "{n} reforge", "{n} reforges")) + '</span></div>';
 
     if (item) {
-      /* On montre l'effet réel sur la pièce portée : un pourcentage abstrait
-         ne dirait pas au joueur ce qu'il gagne. */
-      var brut = Number(item.value || 0);
-      var forge = ForgeManager.getForgedValue(item);
-      h += '<div class="forge-row-effect">' + esc(_td(item.name)) + ' : '
-         + esc(formatEquipmentStat({ slot: slot, stat: item.stat, value: forge }))
-         + (forge > brut ? ' <span class="forge-row-gain">(+' + Math.round((forge / brut - 1) * 100) + ' %)</span>' : '')
-         + '</div>';
+      // La pièce garde sa valeur de butin : la reforge renforce le héros
+      h += '<div class="forge-row-effect">' + esc(_t("{a} : {b}", { a: _td(item.name), b: formatEquipmentStat(item) })) + '</div>';
     } else {
-      h += '<div class="forge-row-effect forge-row-empty">' + _t("Vide — le niveau attend sa pièce.") + '</div>';
+      h += '<div class="forge-row-effect forge-row-empty">' + _t("Vide — le niveau reste à l'emplacement.") + '</div>';
     }
 
     if (cost) {
-      if (ForgeManager.isStoryReforge && ForgeManager.isStoryReforge(slot, level + 1)) {
-        // v3.437.3 : seul l'acier est fourni (STORY_PROVIDED_MATERIALS) ; Résine, Chitine, Clé restent dues
+      if (F.isStoryReforge && F.isStoryReforge(slot, level + 1)) {
+        // v3.437.3 : seul l'acier est fourni (STORY_PROVIDED_MATERIALS) ; Résine et Chitine restent dues
         h += '<div class="forge-board-note">' + _t("Acier fourni par le village (reforge exigée par l’Histoire)") + '</div>';
       }
       h += '<div class="forge-row-cost">';
@@ -566,11 +631,11 @@ function buildForgeBoardHTML() {
 
     h += '<div class="forge-row-side">';
     if (!cost) {
-      h += '<div class="forge-row-btn is-off">' + (level >= 30 ? _t("Maximum") : _t("Améliore") + '<br>' + _t("la Forge")) + '</div>';
+      h += '<div class="forge-row-btn is-off">' + (level >= FORGE_REFORGES_PER_WORLD * last ? _t("Maximum") : _t("Améliore") + '<br>' + _t("la Forge")) + '</div>';
     } else if (reason) {
       h += '<div class="forge-row-btn is-off">' + esc(reason) + '</div>';
     } else {
-      h += '<button type="button" class="forge-row-btn" onclick="reforgeSlot(\'' + esc(slot) + '\')">' + _t("Reforger") + '</button>';
+      h += '<button type="button" class="forge-row-btn" onclick="reforgeSlot(\'' + esc(slot) + '\')">' + _t("Reforger") + '<small>' + esc(F.getNextGainShort(slot) || "") + '</small></button>';
     }
     h += '</div>';
 
@@ -581,6 +646,74 @@ function buildForgeBoardHTML() {
   return h;
 }
 window.buildForgeBoardHTML = buildForgeBoardHTML;
+
+/* Forge des mondes, fenêtre « La Forge a changé » (choix A) : une fois par appareil (Prefs forgeMondesSeen), pièces
+   (valeur reforgée → butin) contre bonus du héros. Héros sans reforge : marquée vue sans rien montrer. */
+function forgeChangeTotal() {
+  var lv = (game.forge && game.forge.levels) || {};
+  return Object.keys(lv).reduce(function (a, k) { return a + Math.max(0, Number(lv[k]) || 0); }, 0);
+}
+
+function forgeChangeHTML() {
+  var F = ForgeManager, total = forgeChangeTotal(), lis = "";
+  FORGE_WORLD_BONUSES.forEach(function (def, i) {
+    var n = F.getBandCount(i + 1);
+    if (!n) return;
+    lis += '<li><img src="' + esc(def.icon) + '" alt=""><span><b>' + esc(_tn(n, "{w} · {n} reforge", "{w} · {n} reforges", { w: def.world })) + '</b><small>'
+      + esc(_t("+{p} de {s}, pour toujours", { p: F.formatPct(F.getWorldBonus(i + 1)), s: def.label })) + '</small></span></li>';
+  });
+  var pertes = [];
+  EQUIPMENT_SLOTS.forEach(function (slot) {
+    var it = (game.equipped || {})[slot];
+    if (!it || F.getLevel(slot) <= 0) return;
+    var avant = formatEquipmentStat(Object.assign({}, it, { value: F.getLegacyForgedValue(it) })), apres = formatEquipmentStat(it);
+    if (avant !== apres) pertes.push(_t("{x} : {a} → {b}", { x: _td(it.name), a: avant, b: apres }));
+  });
+  if (pertes.length) lis += '<li><img src="images/Icons/equipment_slots/slot_weapon.webp" alt=""><span><b>' + esc(_t("Tes pièces reprennent leur valeur")) + '</b><small>' + esc(pertes.join(" · ")) + '</small></span></li>';
+  var h = '<div class="full-menu-overlay kwin-veil"><div class="kwin news-win forge-news-win" role="dialog" aria-label="' + esc(_t("La Forge a changé")) + '">';
+  h += kWinHeadHTML({ icon: '<img src="images/Icons/workshops/smithing_station.webp" alt="">', title: esc(_t("La Forge a changé")), sub: esc(_tn(total, "Ta {n} reforge est gardée", "Tes {n} reforges sont gardées")) });
+  h += '<div class="kwin-body"><p class="forge-news-txt">' + esc(_t("Une reforge ne renforce plus la pièce : elle renforce ton héros, pour toujours. Chaque monde a sa stat ; tes reforges sont rangées par monde.")) + '</p>';
+  h += '<ul class="news-list">' + lis + '</ul>';
+  h += '<div class="forge-news-btns"><button type="button" class="kbtn" onclick="closeForgeChange()">' + esc(_t("Fermer")) + '</button>'
+    + '<button type="button" class="kbtn primary" onclick="closeForgeChange(true)">' + esc(_t("Voir la Forge")) + '</button></div></div></div></div>';
+  return h;
+}
+
+function openForgeChange() {
+  if (!window.ForgeManager || !document.body) return;
+  var root = document.getElementById("forge-news-root");
+  if (!root) { root = document.createElement("div"); root.id = "forge-news-root"; document.body.appendChild(root); }
+  root.innerHTML = forgeChangeHTML();
+  if (window.Prefs) Prefs.setValue("forgeMondesSeen", "1"); // vue une fois sur cet appareil
+}
+
+function closeForgeChange(voir) {
+  var root = document.getElementById("forge-news-root");
+  if (root) root.innerHTML = "";
+  if (!voir) return;
+  if (typeof switchTab === "function") switchTab("village");
+  if (typeof setVillageSubTab === "function") setVillageSubTab("village");
+  if (typeof openVillageBuildingSheet === "function") openVillageBuildingSheet("forge");
+}
+
+// Au lancement, comme « Quoi de neuf » : attend que le héros soit libre et qu'aucune fenêtre ne soit ouverte
+var forgeChangeTimer = null;
+function forgeChangeWatch() {
+  if (forgeChangeTimer || typeof setInterval !== "function" || !window.Prefs || Prefs.has("forgeMondesSeen")) return;
+  forgeChangeTimer = setInterval(function () {
+    if (typeof titleScreenResolved !== "undefined" && !titleScreenResolved) return;
+    if (!window.game || !game.heroId || !window.ForgeManager) return;
+    var stop = function () { clearInterval(forgeChangeTimer); forgeChangeTimer = null; };
+    if (Prefs.has("forgeMondesSeen")) return stop();
+    if (!forgeChangeTotal()) { Prefs.setValue("forgeMondesSeen", "1"); return stop(); }
+    if (typeof newsCanShow === "function" && !newsCanShow()) return;
+    stop(); openForgeChange();
+  }, 2500);
+}
+if (typeof window !== "undefined" && typeof window.addEventListener === "function") window.addEventListener("load", forgeChangeWatch);
+window.openForgeChange = openForgeChange;
+window.closeForgeChange = closeForgeChange;
+window.forgeChangeHTML = forgeChangeHTML;
 
 function reforgeSlot(slot) {
   if (ForgeManager.reforge(slot) && openVillageBuildingId === "forge") {

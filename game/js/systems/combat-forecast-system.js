@@ -495,8 +495,9 @@ var CombatForecast = {
     if (have && have.pieces < rep.pieces) parts.push(this.repereRarityLine(rep.rarity, have.pieces, rep.pieces));
     else if (empty === 0 && commons >= 4) parts.push(_t("ton équipement est encore tout en commun : une pièce de meilleure qualité change plus que dix niveaux d'entraînement"));
     if (have && have.arme < rep.reforge) {
-      parts.push(rep.forge ? _t("ton arme est reforgée à {a}, on la monte à {b} à la Forge {f}", { a: have.arme, b: rep.reforge, f: rep.forge })
-        : _t("ton arme est reforgée à {a}, on la monte à {b}", { a: have.arme, b: rep.reforge }));
+      // Forge des mondes : chaque reforge renforce le héros, plus l'arme
+      parts.push(rep.forge ? _t("l'arme est reforgée {a} fois, monte-la à {b} à la Forge {f} : chaque reforge renforce ton héros", { a: have.arme, b: rep.reforge, f: rep.forge })
+        : _t("l'arme est reforgée {a} fois, monte-la à {b} : chaque reforge renforce ton héros", { a: have.arme, b: rep.reforge }));
     }
     if (capped) parts.push(_t("tes caractéristiques butent sur le plafond : c'est le Terrain d'entraînement qu'il faut monter"));
     else parts.push(_t("monte tes caractéristiques dans Héros → Entraînement"));

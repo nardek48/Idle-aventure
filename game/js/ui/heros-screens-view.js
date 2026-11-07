@@ -232,7 +232,12 @@
     var portes = Object.keys(game.equipped || {}).map(function (k) { return game.equipped[k]; }).filter(Boolean);
     var moy = portes.length && typeof getItemLevel === "function" ? Math.round(portes.reduce(function (a, it) { return a + getItemLevel(it); }, 0) / portes.length) : 0;
     var ilv = moy ? '<div class="hs-set hs-ilvl">' + esc(_t("Équipement porté : ilvl moyen {n}", { n: moy })) + '</div>' : ""; // v3.615.0
-    return ilv + setLineHTML0();
+    return ilv + forgeLineHTML() + setLineHTML0();
+  }
+  // Forge des mondes (choix A de Seb) : rien sur la pièce, une ligne des bonus de la Forge
+  function forgeLineHTML() {
+    var txt = window.ForgeManager && ForgeManager.getBonusSummary ? ForgeManager.getBonusSummary() : "";
+    return txt ? '<div class="hs-set hs-forge">' + img("images/Icons/workshops/smithing_station.webp", "hs-mini-ico") + esc(_t("Forge, pour toujours : {x}", { x: txt })) + '</div>' : "";
   }
   function setLineHTML0() {
     var active = (EquipmentManager.getActiveSetBonuses ? EquipmentManager.getActiveSetBonuses() : []);

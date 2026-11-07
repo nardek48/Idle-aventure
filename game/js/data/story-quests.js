@@ -1489,7 +1489,7 @@ STORY_QUESTS.desert = {
         icon: "images/Icons/workshops/smithing_station.webp",
         title: "Conseil de la Forge",
         points: [
-          { icon: "images/Icons/workshops/smithing_station.webp", text: "Construis la Forge au Village, puis reforge l'arme une fois. La Forge 1 ouvre la reforge jusqu'au niveau 2, la Forge 2 jusqu'au niveau 4, et le Verre trempé ouvre la Forge 3. Le niveau de reforge reste à l'emplacement quand tu changes de pièce." },
+          { icon: "images/Icons/workshops/smithing_station.webp", text: "Construis la Forge au Village, puis reforge l'arme une fois. Chaque reforge renforce ton héros, pour toujours : au Désert, +0,5 % de PV max. La Forge 1 ouvre deux reforges par emplacement, la Forge 2 quatre ; le Verre trempé construit la Forge 2. Le niveau de reforge reste à l'emplacement quand tu changes de pièce." },
           { icon: "images/Icons/dungeon/dungeon_weapon.webp", text: "Des pièces Inhabituelles aident aussi. L'arme de la Cité en est une ; les autres : élites de la Forêt, heaume du guet, donjon, boutique, butin des Petites Aventures." },
           { icon: "images/Icons/system/forecast.webp", text: "Rien ne l'exige : avant un combat, le pronostic « Avant de partir » te dit s'il est trop dur et quoi améliorer." }
         ]
@@ -1532,7 +1532,7 @@ STORY_QUESTS.desert = {
         title: "Une bête qui revient",
         points: [
           { icon: "images/Icons/scene/node_encounter.webp", text: "Cette bête revient. Tu peux la combattre à nouveau, et son butin avec elle." },
-          { icon: "images/Icons/resources/chitine_profondeurs_icon.webp", text: "Chaque victoire donne une Chitine des profondeurs : c'est ce qu'exigent les reforges 5 et 6, ouvertes par la Forge 3." },
+          { icon: "images/Icons/resources/chitine_profondeurs_icon.webp", text: "Chaque victoire donne une Chitine des profondeurs : c'est ce qu'exige la reforge 4 de chaque emplacement." },
           { icon: "images/Icons/combat_stats/stat_attack.webp", text: "Chaque victoire du jour rend la suivante plus dure. Après la prochaine nuit (toutes les 3 sorties), elle repart à sa force de base." }
         ]
       },
@@ -2137,7 +2137,7 @@ STORY_QUESTS.ruins = {
         points: [
           { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Plus loin aux Ruines, six emplacements sur sept au moins Inhabituels sont un bon repère. L'arme du Fleuve compte." },
           { icon: "images/Icons/dungeon/dungeon_weapon.webp", text: "Les étapes de l'acte t'en ont donné trois. Les autres : échoppe, donjon, élites." },
-          { icon: "images/Icons/workshops/smithing_station.webp", text: "La Forge reforge l'arme et l'armure jusqu'au niveau 4 avec ce que tu as déjà. Le niveau de reforge reste à l'emplacement." },
+          { icon: "images/Icons/workshops/smithing_station.webp", text: "La Forge 2 reforge chaque emplacement jusqu'au niveau 4 avec ce que tu as déjà : +0,5 % de PV max à chaque fois. Le niveau de reforge reste à l'emplacement." },
           { icon: "images/Icons/system/forecast.webp", text: "Rien ne l'exige : avant un combat, le pronostic « Avant de partir » te dit s'il est trop dur et quoi améliorer." }
         ]
       },
@@ -2272,7 +2272,7 @@ STORY_QUESTS.ruins = {
         title: "Conseil de la Forge",
         points: [
           { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Pour descendre au bout du Sanctuaire, quatre emplacements Rares sur sept sont un bon repère. L'arme du Fleuve compte." },
-          { icon: "images/Icons/resources/cle_de_voute_icon.webp", text: "La Clé de voûte se taille au Tailleur de pierre, avec des Pierres errantes. Elle construit la Forge 4." },
+          { icon: "images/Icons/resources/cle_de_voute_icon.webp", text: "La Clé de voûte se taille au Tailleur de pierre, avec des Pierres errantes. Elle construit les Forges 3 et 4." },
           { icon: "images/Icons/workshops/smithing_station.webp", text: "La Forge 4 ouvre la reforge jusqu'au niveau 8. Les derniers niveaux demandent aussi des Clés de voûte." },
           { icon: "images/Icons/dungeon/dungeon_weapon.webp", text: "Les pièces Rares viennent du Sanctuaire, de l'échoppe et des élites. Les étapes 11 et 12 t'en ont donné une chacune." },
           { icon: "images/Icons/system/forecast.webp", text: "Rien ne l'exige : avant un combat, le pronostic « Avant de partir » te dit s'il est trop dur et quoi améliorer." }
@@ -3080,7 +3080,7 @@ STORY_QUESTS.crypt = {
         title: "Conseil de la Forge",
         points: [
           { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Pour aller au bout de l'Ossuaire, trois pièces Épiques sont un bon repère. L'arme du Cœur en est une ; les étapes 11 et 12 t'en ont donné une chacune. La quête d'élite « La couronne de trop » en donne une de plus : un casque." },
-          { icon: "images/Icons/resources/cire_consacree_icon.webp", text: "La Cire consacrée se coule à la Fonderie, avec de la Cire de sépulcre. Elle construit la Forge 5." },
+          { icon: "images/Icons/resources/cire_consacree_icon.webp", text: "La Cire consacrée se coule à la Fonderie, avec de la Cire de sépulcre. Elle construit les Forges 5 et 6." },
           { icon: "images/Icons/workshops/smithing_station.webp", text: "La Forge 5 ouvre les reforges 9 et 10. Elles demandent aussi de la Cire consacrée." },
           { icon: "images/Icons/system/forecast.webp", text: "Rien ne l'exige : avant un combat, le pronostic « Avant de partir » te dit s'il est trop dur et quoi améliorer." }
         ]
@@ -4346,8 +4346,8 @@ STORY_QUESTS.mountain = {
         title: "Conseil de la Forge",
         points: [
           { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Pour descendre au bout de la Gueule, une pièce Épique à chacun des sept emplacements, de n'importe quel monde, est un bon repère." },
-          { icon: "images/Icons/resources/obsidienne_taillee_icon.webp", text: "L'Obsidienne taillée se fait à la Fonderie, avec de la Cendre vive. Elle construit la Forge 6." },
-          { icon: "images/Icons/workshops/smithing_station.webp", text: "La Forge 6 ouvre les reforges 11 et 12. Elles demandent aussi de l'Obsidienne taillée." },
+          { icon: "images/Icons/resources/obsidienne_taillee_icon.webp", text: "L'Obsidienne taillée se fait à la Fonderie, avec de la Cendre vive. Elle construit les Forges 7 et 8." },
+          { icon: "images/Icons/workshops/smithing_station.webp", text: "Les Forges 7 et 8 ouvrent les reforges 13 à 16. Elles demandent aussi de l'Obsidienne taillée, et renforcent tes dégâts." },
           { icon: "images/Icons/system/forecast.webp", text: "Rien ne l'exige : avant un combat, le pronostic « Avant de partir » te dit s'il est trop dur et quoi améliorer." }
         ]
       },
@@ -4604,7 +4604,7 @@ function storyMountainSectorFreed(id) {
   return !!(st && st.liberatedCount > 0);
 }
 /* Palier de montagne_13 (MT7) : l'Épique complet, mêmes pièces comptées qu'à montagne_09. Au banc : repli 6 sur 7. */
-var STORY_PALIER_MONTAGNE_COMPLET = { pieces: 7, forge: 6, reforge: 11 };
+var STORY_PALIER_MONTAGNE_COMPLET = { pieces: 7, forge: 8, reforge: 15 }; // Forge des mondes (Seb 07/11) : 6 / 11 -> 8 / 15
 function storyPalierMontagneCompletMissing(game) {
   var p = storyPalierMontagne(game), P = STORY_PALIER_MONTAGNE_COMPLET, out = [];
   if (p.pieces < P.pieces) out.push({ text: _t("Pièces Épiques : {a} / {b}", { a: p.pieces, b: P.pieces }), where: storyMontagneTrousTexte(game) + _t("La Gueule du volcan, les élites de la carte de la Montagne et l'échoppe de la Halle marchande.") });
@@ -5106,7 +5106,7 @@ STORY_QUESTS.tower = {
         title: "Conseil de la Forge",
         points: [
           { icon: "images/Icons/equipment_slots/slot_weapon.webp", text: "Pour la suite, une pièce Légendaire à chacun des sept emplacements est un bon repère. Le Sommet interdit en laisse tomber, comme le Gardien qui répète." },
-          { icon: "images/Icons/workshops/smithing_station.webp", text: "La Forge 7 s'ouvre maintenant, au Verre de faille (Givre bleu fondu à la Fonderie) : reforges 13 et 14." },
+          { icon: "images/Icons/workshops/smithing_station.webp", text: "La Forge 10 s'ouvre maintenant, au Verre de faille (Givre bleu fondu à la Fonderie) : reforges 19 et 20." },
           { icon: "images/Icons/system/forecast.webp", text: "Rien ne l'exige : avant un combat, le pronostic « Avant de partir » te dit s'il est trop dur et quoi améliorer." }
         ]
       },
@@ -5319,7 +5319,7 @@ STORY_QUESTS.tower = {
   ]
 };
 /* v3.629.0 (Tour, TW7) : le Légendaire complet de l'acte III. Au banc. */
-var STORY_PALIER_TOUR_COMPLET = { pieces: 7, forge: 7, reforge: 13 }; // rythme de la Tour (Seb, 03/11) : + Forge 7 et arme reforgée à 13
+var STORY_PALIER_TOUR_COMPLET = { pieces: 7, forge: 10, reforge: 19 }; // rythme de la Tour (Seb, 03/11) ; Forge des mondes : Forge 10, arme reforgée à 19
 function storyPalierTourCompletMissing(game) {
   var P = STORY_PALIER_TOUR_COMPLET;
   return storyPalierManques(game, "legendary", P, function (a, b) {
@@ -5327,7 +5327,7 @@ function storyPalierTourCompletMissing(game) {
   }).filter(Boolean);
 }
 window.storyPalierTourCompletMissing = storyPalierTourCompletMissing;
-var STORY_COPIE_VERRE = 6; // défaire Aeswyn d'avant : sa matière, de quoi la Forge 7 et une reforge
+var STORY_COPIE_VERRE = 6; // défaire Aeswyn d'avant : sa matière, de quoi la Forge 10 (4) et une reforge
 var STORY_COPIE_TEXTS = {
   laisser: {
     completion: "Wenna touche la porte. Elle ne l'ouvre pas.",

@@ -4279,40 +4279,43 @@ console.log("\n[30b] v3.221.0 (lot V-8) \u2014 Forge : 30 niveaux = un cran de r
   });
   ok(tousAuMoins, "aucun emplacement ne gagne moins que le plancher sur 30 niveaux");
 
-  /* --- 30 niveaux = exactement un cran --------------------------------- */
-  g.game.village.buildings.forge.level = 6; // plafond th\u00e9orique : 30
+  /* --- Forge des mondes (Seb 07/11) : la reforge ne touche plus la pièce ------------
+     L'ancienne règle (30 niveaux = un cran) ne sert plus qu'à chiffrer la fenêtre « La Forge a changé ». */
+  g.game.village.buildings.forge.level = 10;
   var arme = { slot: "weapon", rarity: "green", stat: "tapDmg", value: confArme.green[1] };
   g.game.forge.levels.weapon = 30;
   var pas = F.getRarityStep("weapon", "green");
-  ok(Math.abs(F.getForgedValue(arme) - Math.round(arme.value * pas)) <= 1,
-    "\u00e0 30 niveaux, une inhabituelle atteint le haut de la rarit\u00e9 sup\u00e9rieure");
-
-  /* Une commune forg\u00e9e \u00e0 fond ne rattrape PAS une inhabituelle forg\u00e9e :
-     la forge rattrape la malchance, elle ne remplace pas le loot. */
-  var commune = { slot: "weapon", rarity: "common", stat: "tapDmg", value: confArme.common[1] };
-  var inhab = { slot: "weapon", rarity: "green", stat: "tapDmg", value: confArme.green[1] };
-  ok(F.getForgedValue(commune) < F.getForgedValue(inhab),
-    "une commune au maximum reste sous une inhabituelle au maximum");
-  g.game.forge.levels.weapon = 0;
-  ok(F.getForgedValue(commune) < inhab.value,
-    "...et une commune non forg\u00e9e reste sous une inhabituelle brute");
-
-  /* --- Progression lin\u00e9aire, sans \u00e0-coup -------------------------------- */
-  var precedent = 0, croissant = true;
-  for (var lv = 0; lv <= 30; lv++) {
+  ok(Math.abs(F.getLegacyForgedValue(arme) - Math.round(arme.value * pas)) <= 1,
+    "ancienne règle (migration) : à 30 niveaux, une inhabituelle valait le haut de la rarité supérieure");
+  var pure = true;
+  for (var lv = 0; lv <= 20; lv++) {
     g.game.forge.levels.weapon = lv;
-    var v = F.getForgedValue(arme);
-    if (v < precedent) croissant = false;
-    precedent = v;
+    if (F.getForgedValue(arme) !== arme.value || F.getMultiplier(arme) !== 1) pure = false;
   }
-  ok(croissant, "la valeur ne redescend jamais quand le niveau monte");
+  ok(pure, "Forge des mondes : la valeur de la pièce reste celle du butin, quel que soit le niveau");
+  ok(F.getBand(0) === 0 && F.getBand(1) === 1 && F.getBand(4) === 1 && F.getBand(5) === 2 && F.getBand(8) === 2 && F.getBand(9) === 3 && F.getBand(16) === 4 && F.getBand(20) === 5,
+    "Forge des mondes : le niveau L tombe dans la bande ⌈L/4⌉ (Désert 1-4 … Tour 17-20)");
 
-  /* --- Le niveau appartient \u00e0 l'EMPLACEMENT ---------------------------
-     C'est la d\u00e9cision qui \u00e9vite d'h\u00e9siter \u00e0 \u00e9quiper un meilleur drop. */
+  /* --- Le niveau appartient à l'EMPLACEMENT --------------------------- */
   g.game.forge.levels.weapon = 10;
   var autre = { slot: "weapon", rarity: "rare", stat: "tapDmg", value: 40 };
-  ok(F.getMultiplier(autre) > 1, "une pi\u00e8ce neuve profite imm\u00e9diatement du niveau de l'emplacement");
+  ok(F.getLevel("weapon") === 10 && F.getForgedValue(autre) === 40, "une pièce neuve garde sa valeur, le niveau reste à l'emplacement");
   ok(F.getLevel("armor") === 0, "...et le niveau d'un autre emplacement n'a pas boug\u00e9");
+
+  /* --- Bonus par bande : 0,5 % par reforge, 4 par emplacement et par monde --- */
+  g.EQUIPMENT_SLOTS.forEach(function (sl) { g.game.forge.levels[sl] = 6; });
+  var hb = F.getHeroBonuses();
+  ok(Math.abs(hb.hpPct - 0.14) < 1e-9 && Math.abs(hb.defPct - 0.07) < 1e-9 && hb.critPct === 0 && hb.dmgPct === 0 && hb.critMultPct === 0,
+    "7 emplacements à 6 : Désert complet (+14 % PV max), Ruines à moitié (+7 % Défense)");
+  g.EQUIPMENT_SLOTS.forEach(function (sl) { g.game.forge.levels[sl] = 20; });
+  hb = F.getHeroBonuses();
+  ok(["hpPct", "defPct", "critPct", "dmgPct", "critMultPct"].every(function (k) { return Math.abs(hb[k] - 0.14) < 1e-9; }) && F.getBandCount(5) === 28,
+    "7 emplacements à 20 : +14 % sur chacune des 5 stats (PV, Défense, critique, dégâts, dégâts critiques)");
+  g.EQUIPMENT_SLOTS.forEach(function (sl) { g.game.forge.levels[sl] = 0; });
+  g.game.forge.levels.ring = 5;
+  ok(Math.abs(F.getWorldBonus(1) - 0.02) < 1e-9 && Math.abs(F.getWorldBonus(2) - 0.005) < 1e-9 && F.getNextGainLabel("ring") === "+0,5\u00a0% de Défense",
+    "un seul emplacement à 5 : +2 % PV, +0,5 % Défense ; sa prochaine reforge donne encore de la Défense");
+  g.game.forge.levels.ring = 0; g.game.forge.levels.weapon = 0;
 
   /* --- Plafond donn\u00e9 par le b\u00e2timent ---------------------------------- */
   g.game.village.buildings.forge.level = 0;
@@ -4349,17 +4352,30 @@ console.log("\n[30b] v3.221.0 (lot V-8) \u2014 Forge : 30 niveaux = un cran de r
     && g.WORKSHOPS_CONFIG.forge.recipes[0].outputs[0].resourceId === "acier",
     "Forge de la Mine activ\u00e9e, elle produit l'acier");
 
-  /* --- Les stats lisent bien la valeur forg\u00e9e ------------------------- */
+  /* --- Forge des mondes : les bonus s'appliquent au héros, une fois, dans recalcStats --- */
   run("fullResetState(); game.playerName='F'; game.heroId='knight';");
   g.VillageBuildingManager.ensure(); g.ForgeManager.ensure();
-  g.game.equipped = { weapon: { uid: "w", slot: "weapon", name: "x", icon: "sword", rarity: "rare", stat: "tapDmg", value: 40 } };
+  g.game.equipped = { weapon: { uid: "w", slot: "weapon", name: "x", icon: "sword", rarity: "rare", stat: "tapDmg", value: 40 },
+    armor: { uid: "a", slot: "armor", name: "y", icon: "armor", rarity: "rare", stat: "defense", value: 0.1 } };
   run("StatsSystem.recalcStats();");
-  var sansForge = Number(g.game.equipFlatTapBonus || 0);
+  var S = g.StatsSystem, nu = { pv: g.game.heroMaxHp, def: g.game.heroDefensePct, cc: S.effectiveCritChance(), cm: S.effectiveCritMult(), plat: g.game.equipFlatTapBonus, td: g.game.tapDamage };
+  g.game.village.buildings.forge.level = 10;
+  g.EQUIPMENT_SLOTS.forEach(function (sl) { g.game.forge.levels[sl] = 20; });
+  run("StatsSystem.recalcStats();");
+  ok(Math.abs(Number(g.game.equipFlatTapBonus) - 40 * 1.14) < 1e-9 && Math.abs(g.game.tapDamage - nu.td * 1.14) < 1e-9,
+    "Montagne : dégâts en multiplicateur final (Force et arme ×1,14), la pièce reste à 40");
+  ok(g.game.heroMaxHp === Math.floor(nu.pv * 1.14), "Désert : PV max ×1,14 (" + nu.pv + " → " + g.game.heroMaxHp + ")");
+  ok(Math.abs(g.game.heroDefensePct - Math.min(0.6, nu.def * 1.14)) < 1e-9, "Ruines : Défense relative ×1,14 de la Défense totale");
+  ok(Math.abs(S.effectiveCritChance() - nu.cc * 1.14) < 1e-9 && Math.abs(S.effectiveCritMult() - nu.cm * 1.14) < 1e-9,
+    "Crypte : chance de critique ×1,14 ; Tour : dégâts critiques ×1,14");
+  g.game.equipped.armor.value = 0.58;
+  run("StatsSystem.recalcStats();");
+  ok(g.game.heroDefensePct === 0.6, "Ruines : la Défense relative bute sur le plafond de 60 % (HERO_DEFENSE_CAP)");
+  g.game.equipped.armor.value = 0.1;
+  g.EQUIPMENT_SLOTS.forEach(function (sl) { g.game.forge.levels[sl] = 0; });
+  run("StatsSystem.recalcStats();");
+  ok(g.game.heroMaxHp === nu.pv && g.game.equipFlatTapBonus === 40, "sans reforge : rien ne bouge");
   g.game.village.buildings.forge.level = 6;
-  g.game.forge.levels.weapon = 30;
-  run("StatsSystem.recalcStats();");
-  ok(Number(g.game.equipFlatTapBonus || 0) > sansForge,
-    "StatsSystem compose bien la valeur FORG\u00c9E, pas la valeur brute");
 
   /* --- L'\u00e9tabli s'affiche, et seulement une fois le b\u00e2timent b\u00e2ti ----- */
   var fiche = g.buildVillageBuildingSheetHTML("forge");
@@ -4367,6 +4383,43 @@ console.log("\n[30b] v3.221.0 (lot V-8) \u2014 Forge : 30 niveaux = un cran de r
   g.game.village.buildings.forge.level = 0;
   ok(g.buildVillageBuildingSheetHTML("forge").indexOf("forge-board") === -1,
     "pas d'\u00e9tabli tant que la Forge n'est pas b\u00e2tie");
+})();
+
+console.log("\n[30c] Forge des mondes (Seb 07/11) — grille par monde, écran, fenêtre de migration, paliers");
+(function () {
+  try {
+    run("fullResetState(); game.playerName='F'; game.heroId='ranger';");
+    var WC = g.WorldCaps, SQ = g.StoryQuestManager, rw = WC.getReachedWorldIndex, sr = SQ.isStepReached, F = g.ForgeManager;
+    var avant = [], apres = [];
+    [1, 2, 3, 4, 5].forEach(function (wi) {
+      WC.getReachedWorldIndex = function () { return wi; };
+      SQ.isStepReached = function () { return false; }; avant.push(WC.getVillageCap("forge"));
+      SQ.isStepReached = function () { return true; }; apres.push(WC.getVillageCap("forge"));
+    });
+    WC.getReachedWorldIndex = rw; SQ.isStepReached = sr;
+    ok(apres.join() === "2,4,6,8,10" && avant.join() === "2,4,5,7,9", "grille : 2 niveaux de Forge par monde (2/4/6/8/10), le second à l'acte III dès la Crypte (" + avant.join() + " → " + apres.join() + ")");
+    ok(g.STORY_PALIER_MONTAGNE_COMPLET.forge === 8 && g.STORY_PALIER_MONTAGNE_COMPLET.reforge === 15 && g.STORY_PALIER_TOUR_COMPLET.forge === 10 && g.STORY_PALIER_TOUR_COMPLET.reforge === 19,
+      "paliers recalés : Montagne Forge 8 / reforge 15, Tour Forge 10 / reforge 19");
+    // Écran : le monde en cours en grand, les mondes finis en une ligne, le gain sur le bouton
+    g.VillageBuildingManager.ensure(); F.ensure();
+    g.game.village.buildings.forge.level = 4; g.game.gold = 1e9;
+    g.EQUIPMENT_SLOTS.forEach(function (sl) { g.game.forge.levels[sl] = 4; });
+    g.game.forge.levels.weapon = 6;
+    g.game.equipped = { weapon: { uid: "w", slot: "weapon", name: "Arc", icon: "bow", rarity: "green", stat: "tapDmg", value: 50 } };
+    ["acier", "cle_de_voute", "verre_trempe"].forEach(function (k) { g.WarehouseManager.addResource(k, 60, true); });
+    run("StatsSystem.recalcStats();");
+    var h = g.buildForgeBoardHTML();
+    ok(/forge-world is-w1 is-mini/.test(h) && /forge-world is-w2"/.test(h) && /forge-world is-w3 is-lock/.test(h) && /\+1 % \/ 14 %/.test(h),
+      "écran : Désert fini en une ligne, Ruines en grand (+1 % / 14 %), Crypte fermée");
+    ok(/Reforger<small>\+0,5 % Défense<\/small>/.test(h) && /2 reforges|6 reforges/.test(h) && /Arc : \+50 dégâts par coup/.test(h),
+      "écran : le gain sur le bouton (+0,5 % Défense), « n reforges », la pièce à sa valeur de butin" + (/Reforger<small>/.test(h) ? "" : " — " + h.slice(h.indexOf("forge-row\""), h.indexOf("forge-row\"") + 900)));
+    // Fenêtre « La Forge a changé » : la pièce perd sa valeur reforgée, le héros gagne ses bonus
+    var m = g.forgeChangeHTML();
+    ok(/La Forge a changé/.test(m) && /Tes 30 reforges sont gardées/.test(m) && /Désert · 28 reforges/.test(m) && /\+14 % de PV max/.test(m) && /Arc : \+5\d dégâts par coup → \+50 dégâts par coup/.test(m),
+      "migration : reforges gardées, rangées par monde (+14 % PV max), l'arme reprend sa valeur (" + (m.match(/Arc : [^<]*/) || [""])[0] + ")");
+    ok(/Forge, pour toujours : \+14 % de PV max · \+1 % de Défense/.test(g.buildHerosEquipHTML ? g.buildHerosEquipHTML() : ""),
+      "Équipé : une ligne « Forge, pour toujours » sous l'équipement");
+  } catch (err) { ok(false, "[30c] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
 console.log("\n[31b] v3.222.0 \u2014 R\u00e9initialisation compl\u00e8te et retour aux pages d'accueil");
@@ -7947,9 +8000,9 @@ console.log("\n[86] v3.289.0 — Plafonds par monde du village et de la producti
     "Palissade 3 en Forêt : plafond atteint, la suite est annoncée");
   ok(M.getCardState("palisade") === "maxed", "...carte au plafond");
   monde(1);
-  // v3.316.0 (W-4b) : la Forge passe à 3 au Désert, son matériau de monde existe (Verre trempé).
-  ok(M.getMaxLevel("palisade") === 7 && !M.isMaxLevel("palisade") && M.getMaxLevel("forge") === 3 && M.getMaxLevel("enchanter") === 1,
-    "Désert atteint : Palissade 7, Forge 3, Enchanteresse 1");
+  // Forge des mondes (Seb 07/11) : 2 niveaux de Forge par monde, la Forge 2 au Verre trempé
+  ok(M.getMaxLevel("palisade") === 7 && !M.isMaxLevel("palisade") && M.getMaxLevel("forge") === 2 && M.getMaxLevel("enchanter") === 1,
+    "Désert atteint : Palissade 7, Forge 2, Enchanteresse 1");
   monde(0);
 
   /* --- Rien n'est repris --- */
@@ -9176,11 +9229,12 @@ console.log("\n[111] v3.315.0 — Acte III, étape 12 : la Cité engloutie");
 console.log("\n[112] v3.316.0 — Acte III, étape 13 : le palier d'équipement");
 (function () {
   var F = g.VILLAGE_BUILDINGS.forge;
-  ok(F.maxLevel >= 3 && g.WORLD_CAPS[1].village.forge === 3, "la Forge monte au niveau 3 au Désert"); // v3.431.0 : 4 aux Ruines
-  var t3 = F.costTiers.filter(function (t) { return t.minLevel === 2; })[0];
-  ok(!!t3 && t3.baseCost.verre_trempe > 0, "le niveau 3 se paie en Verre trempé");
-  ok(g.WORLD_CAPS[1].village.forge === 3, "le plafond du Désert suit");
-  ok(F.effectLabel(3) === "Reforge jusqu'au niveau 6 sur chaque emplacement", "Forge 3 : reforge jusqu'à 6");
+  // Forge des mondes (Seb 07/11) : 2 niveaux par monde ; le Verre trempé passe sur la Forge 2 du Désert
+  ok(F.maxLevel === 10 && g.WORLD_CAPS[1].village.forge === 2, "la Forge monte au niveau 2 au Désert (10 en tout)");
+  var t2 = F.costTiers.filter(function (t) { return t.minLevel === 1; })[0];
+  ok(!!t2 && t2.baseCost.verre_trempe > 0 && t2.baseCost.resine_durcie > 0, "le niveau 2 se paie en Résine et Verre trempé");
+  ok(F.effectLabel(2) === "Reforge jusqu'au niveau 4 sur chaque emplacement : PV max (Désert)", "Forge 2 : reforge jusqu'à 4, la stat du Désert");
+  ok(F.effectLabel(3) === "Reforge jusqu'au niveau 6 sur chaque emplacement : Défense (Ruines)", "Forge 3 : reforge jusqu'à 6, la stat des Ruines");
 
   game = freshCombat("knight");
   var step = g.STORY_QUESTS.desert.steps.filter(function (st) { return st.id === "desert_13"; })[0];
@@ -9235,7 +9289,7 @@ console.log("\n[113] v3.317.0 — Acte III, étape 14 : le Dard des profondeurs"
   var sect = g.LIVING_MAPS.desert.sectors.filter(function (x) { return x.id === "bete_dune"; })[0];
   ok(sect.requiresStoryStep === "desert_14" && sect.content.repeatable === true, "la dune attend l'étape 14 et se rejoue");
 
-  // Barème de reforge : la Chitine n'arrive qu'au-delà du niveau 4.
+  // Forge des mondes : la Chitine n'est plus demandée qu'à la reforge 4 (1), la dernière du Désert.
   game = freshCombat("knight");
   game.village = game.village || {}; game.village.buildings = game.village.buildings || {};
   game.village.buildings.forge = { level: 3 };
@@ -9246,8 +9300,8 @@ console.log("\n[113] v3.317.0 — Acte III, étape 14 : le Dard des profondeurs"
     var c = g.ForgeManager.getCost("weapon");
     attendus.push(c && c.chitine_profondeurs ? c.chitine_profondeurs : 0);
   }
-  ok(attendus[0] === 0 && attendus[1] === 0 && attendus[2] === 0 && attendus[3] === 0, "niveaux 1 à 4 : pas de Chitine");
-  ok(attendus[4] === 1 && attendus[5] === 2, "niveau 5 : 1 Chitine ; niveau 6 : 2");
+  ok(attendus[0] === 0 && attendus[1] === 0 && attendus[2] === 0 && attendus[4] === 0 && attendus[5] === 0, "reforges 1 à 3 et 5-6 : pas de Chitine");
+  ok(attendus[3] === 1, "reforge 4 : 1 Chitine");
   game.village.buildings.forge = { level: 2 };
   game.forge.levels.weapon = 4;
   ok(g.ForgeManager.getCost("weapon") === null, "Forge 2 : la reforge 5 reste fermée");
@@ -9914,9 +9968,9 @@ console.log("\n[125] v3.330.0 — Plafond de stock brut, niveaux d'Histoire, Blo
     var ct = VBM.getNextCost("training");
     ok(ct && ct.gold > 0 && !ct.planche && !ct.pierre && !ct.lingot, "E2 : Terrain au plafond de l'acte -> or seulement (" + JSON.stringify(ct) + ")");
     ok(VBM.isNextLevelStoryProvided("training"), "E2 : l'écran sait que les matériaux sont fournis");
-    g.game.village.buildings.forge = { level: 2 };
+    g.game.village.buildings.forge = { level: 1 }; // Forge des mondes : le Verre trempé paie la Forge 2
     var cf = VBM.getNextCost("forge");
-    ok(cf && cf.verre_trempe === 3 && !cf.pierre && !cf.acier, "E2 : Forge 2 -> 3 : or et Verre trempé, sans pierre ni acier");
+    ok(cf && cf.verre_trempe === 3 && cf.resine_durcie === 4 && !cf.pierre && !cf.acier && !cf.planche, "E2 : Forge 1 -> 2 : or, Résine et Verre trempé, sans pierre ni acier");
     g.game.village.buildings.workshop = { level: 5 };
     ok(!VBM.isNextLevelStoryProvided("workshop") && VBM.getNextCost("workshop").pierre > 0, "E2 : un autre bâtiment garde son coût");
     var F = g.ForgeManager; F.ensure(); g.game.forge.levels.weapon = 0; g.game.forge.levels.armor = 0;
@@ -13930,7 +13984,7 @@ console.log("\n[203] v3.428.0 — Ruines, acte I : relève, réglage « Cible »
     /* --- Chapitre, plafonds, Halle, Marché, seuil d'Aeswyn --- */
     var ch = g.STORY_QUESTS.ruins;
     ok(ch && ch.requiresChapter === "desert" && ch.steps.length >= 10 && ch.steps[0].id === "ruines_01" && ch.steps[9].id === "ruines_10", "chapitre 3 : ouvert après le Désert, les étapes des actes I et II en tête");
-    ok(!!g.WORLD_CAPS[2] && g.WORLD_CAPS[2].village.forge === g.WORLD_CAPS[1].village.forge + 1, "plafonds du monde 3 posés (v3.431.0 : la Forge 4 de l'acte III)");
+    ok(!!g.WORLD_CAPS[2] && g.WORLD_CAPS[2].village.forge === g.WORLD_CAPS[1].village.forge + 2, "plafonds du monde 3 posés (Forge des mondes : 2 niveaux de Forge par monde)");
     ok(g.STORY_AXES_OK !== false && g.STORY_CHOICE_AXES.seuil.soi.indexOf("soi") !== -1, "choix « seuil » sur l'axe Soi / Aeswyn");
     ok(g.WAREHOUSE_RESOURCES.pierre_errante && g.CARAVAN_RARE_BY_WORLD[2] === "pierre_errante", "Pierre errante : ressource du monde 3, rare du Marché des Ruines");
     var VB = g.VillageBuildingManager;
@@ -14191,14 +14245,15 @@ console.log("\n[207] v3.431.0 — Ruines, acte III (livraison 2) : Clé de voût
     var rec = g.WORKSHOPS_CONFIG.tailleur_de_pierre.recipes.filter(function (r) { return r.id === "cle_de_voute"; })[0];
     ok(rec && rec.inputs[0].resourceId === "pierre_errante" && rec.outputs[0].resourceId === "cle_de_voute", "taillée au Tailleur de pierre, à partir de Pierres errantes");
     var F = g.VILLAGE_BUILDINGS.forge, t4 = g.VillageBuildingManager.getCostTierForLevel(F, 3);
-    ok(F.maxLevel >= 5 && t4 && t4.baseCost.cle_de_voute === 3 && g.WORLD_CAPS[2].village.forge === 4 && g.WORLD_CAPS[1].village.forge === 3, "Forge 4 aux Ruines, payée en Clés de voûte ; 3 au Désert (v3.455.0 : 5 à la Crypte)");
+    var t3r = g.VillageBuildingManager.getCostTierForLevel(F, 2);
+    ok(F.maxLevel === 10 && t4 && t4.baseCost.cle_de_voute === 3 && t3r && t3r.baseCost.cle_de_voute === 2 && g.WORLD_CAPS[2].village.forge === 4 && g.WORLD_CAPS[1].village.forge === 2, "Forges 3 et 4 aux Ruines, payées en Clés de voûte (2 puis 3) ; 2 au Désert (Forge des mondes)");
     ok(g.isStoryVillageLevel("forge", 4), "la Forge 4 est un niveau d'Histoire (matériaux communs fournis)");
     g.VillageBuildingManager.ensure();
     game.village.buildings.forge = { level: 4 };
     game.forge = { levels: { weapon: 6, armor: 5 } };
     var c7 = g.ForgeManager.getCost ? g.ForgeManager.getCost("weapon") : null, c6 = g.ForgeManager.getCost ? g.ForgeManager.getCost("armor") : null;
     ok(g.ForgeManager.getMaxLevel() === 8, "Forge 4 : reforge jusqu'au niveau 8");
-    ok(c7 && c7.cle_de_voute === 1 && !c7.chitine_profondeurs && c6 && c6.chitine_profondeurs === 2 && !c6.cle_de_voute, "reforge 7 : une Clé de voûte ; reforge 6 : la Chitine, comme avant");
+    ok(c7 && c7.cle_de_voute === 2 && c7.verre_trempe === 1 && !c7.chitine_profondeurs && c6 && c6.cle_de_voute === 1 && !c6.chitine_profondeurs && !c6.verre_trempe, "Forge des mondes : reforge 7 : 2 Clés et 1 Verre trempé ; reforge 6 : 1 Clé");
 
     /* --- Plafonds de l'acte III --- */
     var tc = g.TRAINING_CAP_BY_ACT.filter(function (a) { return a.stepId === "ruines_11"; })[0], pc = g.TALENT_CAP_BY_ACT.filter(function (a) { return a.stepId === "ruines_11"; })[0];
@@ -14388,9 +14443,9 @@ console.log("\n[209] v3.433.0 — Ruines, acte IV (livraison 2) : le Maître d'�
     var cf = g.VillageBuildingManager.getLevelCost("forge", 3); // coût du niveau 3 -> 4 (sans le plafond du monde de ce héros)
     ok(cf && cf.cle_de_voute === 2, "la clé du Cœur : la Forge 4 coûte 2 Clés de voûte au lieu de 3");
     game.village.buildings.forge = { level: 4 };
-    game.forge = { levels: { weapon: 6 } };
-    var c7 = g.ForgeManager.getCost("weapon");
-    ok(c7 && !c7.cle_de_voute, "la clé du Cœur : la reforge 7 ne coûte plus de Clé de voûte");
+    game.forge = { levels: { weapon: 6, armor: 4 } };
+    var c7 = g.ForgeManager.getCost("weapon"), c5 = g.ForgeManager.getCost("armor");
+    ok(c7 && c7.cle_de_voute === 1 && c5 && !c5.cle_de_voute, "la clé du Cœur (Forge des mondes) : une Clé de moins, la reforge 7 en coûte 1, la 5 aucune");
     ok(/Au milieu de quoi/.test(JSON.stringify(st20.narrative.completionDialogue)) && /violet/.test(JSON.stringify(st20.narrative.completionDialogue)), "tomber : Orwen pose la pierre au milieu ; l'arme d'Edda dans les deux branches");
     game.storyQuests.ruins.choices = {};
   } catch (err) {
@@ -15752,11 +15807,11 @@ console.log("\n[243] v3.455.0 — Crypte, lot C-4 : acte III (Ossuaire, Porte-co
     game.forge.levels.weapon = 8;
     ok(st13.check(game) && g.storyPalierCrypteEpiqueMissing(game).length >= 1, "v3.717.0 : arme à 8, l'étape passe ; le relevé dit encore ce qui manque au repère");
     var c9 = g.ForgeManager.getCost("weapon");
-    ok(c9 && c9.cire_consacree === 1 && c9.cle_de_voute === 1 && c9.verre_trempe === 2, "reforge 9 : Cire consacrée, et (v3.481.0, RE-4) 1 Clé de voûte et 2 Verres trempés");
+    ok(c9 && c9.cire_consacree === 1 && !c9.cle_de_voute && !c9.verre_trempe, "Forge des mondes : reforge 9 (1er cran de la Crypte) : 1 Cire consacrée seule");
     game.forge.levels.weapon = 6;
     var c7 = g.ForgeManager.getCost("weapon");
     ok(c7 && c7.cle_de_voute >= 1 && !c7.cire_consacree, "reforge 7 : toujours la Clé de voûte");
-    ok(g.VILLAGE_BUILDINGS.forge.maxLevel >= 5 && g.WORLD_CAPS[3].village.forge === 5, "Forge 5, plafond de la Crypte (v3.490.0 : bâtiment à 6 pour la Montagne)");
+    ok(g.VILLAGE_BUILDINGS.forge.maxLevel === 10 && g.WORLD_CAPS[3].village.forge === 6, "Forge 6, plafond de la Crypte (Forge des mondes : Forges 5-6)");
     ok(g.WORKSHOPS && JSON.stringify(g.WORKSHOPS).indexOf("cire_consacree") >= 0 || fs.readFileSync(path.join(ROOT, "js/data/workshops.js"), "utf8").indexOf('id: "cire_consacree"') >= 0, "recette de la Cire consacrée à la Fonderie");
     var aq = g.ADVENTURE_QUESTS.aq_crypte_pleureuse;
     ok(aq && aq.eliteId === "pleureuse" && aq.requiresStoryStep === "crypte_14" && aq.requiresParty === "ysolt", "quête de la Pleureuse : à crypte_14, avec Ysolt");
@@ -17784,25 +17839,33 @@ console.log("\n[302] v3.481.0 — Refonte de l'économie RE-4 : les matériaux d
   run("fullResetState(); game.playerName='T'; game.heroId='knight';");
   var F = g.ForgeManager, V = g.VillageBuildingManager, sc = g.StoryQuestManager.getChoice;
   g.StoryQuestManager.getChoice = function () { return null; };
-  run("VillageBuildingManager.ensure(); game.village.buildings.forge.level = 5; game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true };");
+  /* Forge des mondes (Seb 07/11, matériaux A) : par bande, le matériau du monde 1/1/2/2 et 1 du monde d'avant
+     aux crans 3-4 ; Désert : Résine 1/2 aux reforges 3-4, Chitine à la 4. Or et Acier inchangés. */
+  run("VillageBuildingManager.ensure(); game.village.buildings.forge.level = 10; game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true, 4: true, 5: true };");
   g.game.forge = { levels: {} };
-  var want = { 7: [1, 0], 8: [2, 0], 9: [2, 1], 10: [3, 2] }, okF = true;
-  Object.keys(want).forEach(function (t) {
+  var grille = { 1: {}, 2: {}, 3: { resine_durcie: 1 }, 4: { resine_durcie: 2, chitine_profondeurs: 1 },
+    5: { cle_de_voute: 1 }, 6: { cle_de_voute: 1 }, 7: { cle_de_voute: 2, verre_trempe: 1 }, 8: { cle_de_voute: 2, verre_trempe: 1 },
+    9: { cire_consacree: 1 }, 10: { cire_consacree: 1 }, 11: { cire_consacree: 2, cle_de_voute: 1 }, 12: { cire_consacree: 2, cle_de_voute: 1 },
+    13: { obsidienne_taillee: 1 }, 14: { obsidienne_taillee: 1 }, 15: { obsidienne_taillee: 2, cire_consacree: 1 }, 16: { obsidienne_taillee: 2, cire_consacree: 1 },
+    17: { verre_faille: 1 }, 18: { verre_faille: 1 }, 19: { verre_faille: 2, obsidienne_taillee: 1 }, 20: { verre_faille: 2, obsidienne_taillee: 1 } };
+  var okF = true, faux = "";
+  Object.keys(grille).forEach(function (t) {
     g.game.forge.levels.ring = Number(t) - 1;
-    var c = F.getCost("ring");
-    var cle = (c && c.cle_de_voute) || 0, band = Number(t) <= 8 ? Number(t) - 6 : 0;
-    if (!c || c.verre_trempe !== want[t][0] || cle !== band + want[t][1]) okF = false;
+    var c = F.getCost("ring") || {}, w = grille[t], L = Number(t) - 1;
+    var mats = Object.keys(c).filter(function (k) { return k !== "gold" && k !== "acier"; });
+    var bon = c.gold === Math.floor(400 * Math.pow(1.35, L)) && c.acier === Math.max(2, Math.floor(2 + L * 1.5))
+      && mats.length === Object.keys(w).length && mats.every(function (k) { return c[k] === w[k]; });
+    if (!bon) { okF = false; faux = faux || t + " " + JSON.stringify(c); }
   });
-  ok(okF, "reforges 7 à 10 : Verre trempé 1 / 2 / 2 / 3, Clé de voûte de la bande (7-8) puis 1 / 2 (9-10)");
-  g.game.forge.levels.ring = 5;
-  var c6 = F.getCost("ring");
-  ok(c6 && !c6.verre_trempe && !c6.cle_de_voute && c6.chitine_profondeurs === 2, "reforge 6 : inchangée (Chitine)");
+  ok(okF, "Forge des mondes : coûts des 20 reforges par bande (monde 1/1/2/2, monde d'avant aux crans 3-4, or 400 × 1,35^n)" + (faux ? " — " + faux : ""));
+  g.game.forge.levels.ring = 20;
+  ok(F.getCost("ring") === null, "Forge 10 : rien au-delà de la reforge 20");
   ok(V.getLevelCost("training", 10).verre_trempe === 6 && V.getLevelCost("enchanter", 1).verre_trempe === 5
     && V.getLevelCost("warehouse", 6).verre_trempe === 4 && V.getLevelCost("palisade", 7).verre_trempe === 6, "Ruines : Terrain 11, Enchanteresse 2, Entrepôt 7, Palissade 8 au Verre trempé (6 / 5 / 4 / 6)");
   ok(V.getLevelCost("warehouse", 5).resine_durcie === 3 && V.getLevelCost("palisade", 6).resine_durcie === 4, "Désert : Entrepôt 6 et Palissade 7 gardent la Résine");
   var h9 = V.getLevelCost("hall", 8), h10 = V.getLevelCost("hall", 9), h8 = V.getLevelCost("hall", 7);
   ok(h9.cle_de_voute === 3 && h10.cle_de_voute === 4 && h9.gold === 11453 && h10.gold === 16263 && !h8.cle_de_voute, "Halle 9 et 10 (Crypte) : 3 et 4 Clés, les autres coûts inchangés ; Halle 8 sans Clé");
-  ok(g.WAREHOUSE_RESOURCES.verre_trempe.desc.indexOf("reforges 7 à 12") !== -1 && g.WAREHOUSE_RESOURCES.cle_de_voute.desc.indexOf("Halle 9 et 10") !== -1, "descriptions du Verre trempé et de la Clé à jour");
+  ok(g.WAREHOUSE_RESOURCES.verre_trempe.desc.indexOf("reforges 7 et 8") !== -1 && g.WAREHOUSE_RESOURCES.cle_de_voute.desc.indexOf("reforges 5 à 12") !== -1 && g.WAREHOUSE_RESOURCES.cle_de_voute.desc.indexOf("Halle 9 et 10") !== -1, "descriptions du Verre trempé et de la Clé à jour (Forge des mondes)");
   g.StoryQuestManager.getChoice = sc;
 })();
 
@@ -17951,7 +18014,7 @@ console.log("\n[308] v3.486.0 — Montagne, lot M-0 : socle et passage entre les
   var reachedAvant = game.worldsEverReached, wiAvant = g.WorldManager.worldIndex, advAvant = g.WorldManager.adventureIndex;
   try {
     var e4 = g.WORLD_CAPS[4];
-    ok(!!e4 && e4.zoneRows === 1 && e4.zoneLevel === 17 && e4.village.forge === 6 && e4.forgeActStep === "montagne_11" && e4.petiteAventureCap === 4, "WORLD_CAPS[4] écrit avant d'ouvrir le monde (égal à la Crypte, Forge 6 à l'acte III)");
+    ok(!!e4 && e4.zoneRows === 1 && e4.zoneLevel === 17 && e4.village.forge === 8 && e4.forgeActStep === "montagne_11" && e4.petiteAventureCap === 4, "WORLD_CAPS[4] écrit avant d'ouvrir le monde (Forge des mondes : Forge 8 à l'acte III)");
     ok(g.TRAINING_CAP_BY_ACT.some(function (a) { return a.worldIndex === 4 && a.stepId === "montagne_01"; })
       && g.TALENT_CAP_BY_ACT.some(function (a) { return a.worldIndex === 4 && a.stepId === "montagne_01"; }), "Terrain et talents : entrée d'acte I à la Montagne");
     var R = g.WAREHOUSE_RESOURCES;
@@ -17963,16 +18026,16 @@ console.log("\n[308] v3.486.0 — Montagne, lot M-0 : socle et passage entre les
     ok(src.indexOf("le froid mord") === -1 && src.indexOf("la lave éclaire les pentes") !== -1, "codex de la Montagne : un monde de feu (plus de froid)");
     // Forge : la bande 11-12 demande l'Obsidienne, la Cire s'arrête aux 9-10 puis continue d'une unité
     var FM = g.ForgeManager, maxAvant = FM.getMaxLevel, lvAvant = FM.getLevel;
-    FM.getMaxLevel = function () { return 12; };
-    FM.getLevel = function () { return 10; };
-    var c11 = FM.getCost("armor");
-    FM.getLevel = function () { return 8; };
-    var c9 = FM.getCost("armor");
+    // Forge des mondes : la bande 13-16 demande l'Obsidienne, 1 Cire aux crans 3-4
+    FM.getMaxLevel = function () { return 16; };
+    FM.getLevel = function () { return 14; };
+    var c15 = FM.getCost("armor");
+    FM.getLevel = function () { return 12; };
+    var c13 = FM.getCost("armor");
     FM.getMaxLevel = maxAvant; FM.getLevel = lvAvant;
-    ok(c11.obsidienne_taillee === 1 && c11.cire_consacree === 1 && c9.cire_consacree === 1 && !c9.obsidienne_taillee, "reforge 11 : 1 Obsidienne taillée (+1 Cire) ; reforge 9 : Cire seule");
-    var tier6 = g.VillageBuildingManager.getLevelCost ? g.VillageBuildingManager.getLevelCost("forge", 5) : null; // coût du niveau 5 au niveau 6
-    var tier7 = g.VillageBuildingManager.getLevelCost ? g.VillageBuildingManager.getLevelCost("forge", 6) : null;
-    ok(g.VILLAGE_BUILDINGS.forge.maxLevel === 7 && tier6 && tier6.obsidienne_taillee === 3 && tier7 && tier7.verre_faille === 3, "Forge 6 à l'Obsidienne, Forge 7 au Verre de faille (v3.625.0), bâtiment à 7");
+    ok(c15.obsidienne_taillee === 2 && c15.cire_consacree === 1 && c13.obsidienne_taillee === 1 && !c13.cire_consacree, "reforge 15 : 2 Obsidiennes taillées (+1 Cire) ; reforge 13 : 1 Obsidienne seule");
+    var VBM = g.VillageBuildingManager, tier7 = VBM.getLevelCost("forge", 6), tier8 = VBM.getLevelCost("forge", 7), tier9 = VBM.getLevelCost("forge", 8); // coût du niveau n au niveau n+1
+    ok(g.VILLAGE_BUILDINGS.forge.maxLevel === 10 && tier7 && tier7.obsidienne_taillee === 3 && tier8 && tier8.obsidienne_taillee === 4 && tier9 && tier9.verre_faille === 3, "Forges 7-8 à l'Obsidienne (3 puis 4), Forge 9 au Verre de faille, bâtiment à 10");
     // Le passage : arrivée, monde posé, plafonds de la Montagne, Gueule du volcan fermée, voyage retour
     game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true };
     ok(g.WorldTravel.arrive("mountain", 0) === true && g.WorldManager.worldIndex === 4 && game.worldsEverReached[4] === true, "arrivée : la Montagne devient le monde de résidence, notée atteinte");
@@ -18242,9 +18305,9 @@ console.log("\n[312] v3.490.0 — Montagne, lot M-4 : acte III « La Gueule »")
     SQ.isStepReached = function () { return false; };
     var avant = g.WorldCaps.getVillageCap("forge");
     SQ.isStepReached = function (id) { return id === "montagne_11" || sr.call(SQ, id); };
-    ok(avant === 5 && g.WorldCaps.getVillageCap("forge") === 6, "Forge 6 : 5 avant montagne_11, 6 après");
-    var f6 = g.VillageBuildingManager.getLevelCost("forge", 5);
-    ok(f6 && f6.pierre <= 500, "Forge 6 : " + (f6 && f6.pierre) + " Pierre, tient dans l'Entrepôt de la Montagne (500)");
+    ok(avant === 7 && g.WorldCaps.getVillageCap("forge") === 8, "Forge des mondes : Forge 7 avant montagne_11, 8 après");
+    var f6 = g.VillageBuildingManager.getLevelCost("forge", 7);
+    ok(f6 && f6.pierre <= 500, "Forge 8 : " + (f6 && f6.pierre) + " Pierre, tient dans l'Entrepôt de la Montagne (500)");
     var rec = g.WORKSHOPS_CONFIG.fonderie.recipes.filter(function (r) { return r.id === "obsidienne_taillee"; })[0];
     ok(rec && rec.inputs[0].resourceId === "cendre_vive" && rec.outputs[0].resourceId === "obsidienne_taillee", "l'Obsidienne taillée se fait à la Fonderie, avec de la Cendre vive");
     // Les veines dans la Gueule
@@ -19125,7 +19188,7 @@ console.log("\n[338] v3.517.0 — correctifs de l'audit, lot 1 : textes factuels
     ok(/^Basilic /.test(f14.progress(g.game)) && /^Ennemis /.test(f02.progress(g.game)), "progressions nommées (« Basilic 0/1 », « Ennemis 0/5 »)");
     var res = g.WAREHOUSE_RESOURCES, chasse = Object.keys(res).filter(function (k) { return /\(chasse/.test(res[k].desc || ""); });
     ok(chasse.length === 0, "ressources : plus de « chasse » dans les vivres (" + chasse.join(", ") + ")");
-    ok(/reforges 5 et 6/.test(res.chitine_profondeurs.desc) && /7 à 12/.test(res.verre_trempe.desc) && /7 à 12/.test(res.cle_de_voute.desc), "Chitine 5-6, Verre trempé et Clé de voûte 7 à 12 (forge-system)");
+    ok(/reforge 4/.test(res.chitine_profondeurs.desc) && /reforges 7 et 8/.test(res.verre_trempe.desc) && /5 à 12/.test(res.cle_de_voute.desc), "Forge des mondes : Chitine à la reforge 4, Verre trempé 7-8, Clé de voûte 5 à 12 (forge-system)");
     ok(/Fonderie/.test(res.cire_consacree.sourceHint) && /Marché de la Montagne/.test(res.cendre_vive.sourceHint), "Cire consacrée : la Fonderie ; Cendre vive : la caravane longue");
     var pa = g.DUNGEON_SHOP.filter(function (x) { return /Petite Aventure/.test(x.desc || ""); });
     ok(pa.length && pa.every(function (x) { return /en réserve/.test(x.desc); }), "boutique du donjon : la place de Petite Aventure va en réserve (pas « par jour »)");
@@ -19133,7 +19196,7 @@ console.log("\n[338] v3.517.0 — correctifs de l'audit, lot 1 : textes factuels
     ok(vq.indexOf("×" + String(g.PRODUCTION_PLOTS_SHARED.upgradeCostMultPerLevel).replace(".", ",") + ")") >= 0 && vq.indexOf("(×1,4)") < 0, "zones : le coût annoncé suit upgradeCostMultPerLevel (×1,15)");
     ok(vq.indexOf("jusqu'à -32 %") < 0 && vq.indexOf("comme les zones de production") < 0 && (g.WORLD_CAPS || [])[0] && g.WORLD_CAPS[0].workshopLevel === 2, "ateliers : niveau 2 en Forêt, plus de −32 % ni « comme les zones »");
     var ce = (g.MEMORY_LEVELS || []).reduce(function (a, l) { return a.concat(l.options || l.choices || []); }, []).filter(function (o) { return o.id === "cle_econome"; })[0];
-    ok(!ce || (/reforge 8/.test(ce.desc) && !/reforges 7 et 8/.test(ce.desc)), "Clé économe : la description suit le moteur (reforge 8, pas la 7)");
+    ok(!ce || (/reforges 7 et 8/.test(ce.desc) && /Forges 3 et 4/.test(ce.desc)), "Clé économe : la description suit le moteur (Forges 3-4, reforges 7 et 8, celles à 2 Clés)");
     ok(!/Taverne/.test(g.buildWarehouseSheetHTML("petite_ration")), "Entrepôt : la Petite ration ne cite pas la Taverne (aucun contrat)");
     ok(/Taverne/.test(g.buildWarehouseSheetHTML("bois")), "Entrepôt : le Bois cite la Taverne (contrat « Charpente à refaire »)");
     var m09 = JSON.stringify(st("montagne_09").tutorial.points);
@@ -19682,7 +19745,7 @@ console.log("\n[361] v3.543.0 — Forge 5 de la Crypte ouverte à crypte_13 (aud
     var avant = WC.getVillageCap("forge");
     SQ.isStepReached = function () { return true; };
     var apres = WC.getVillageCap("forge");
-    ok(avant === 4 && apres === 5, "Crypte : Forge 4 avant crypte_13, Forge 5 à crypte_13 (" + avant + " → " + apres + ")");
+    ok(avant === 5 && apres === 6, "Forge des mondes : Crypte, Forge 5 avant crypte_13, Forge 6 à crypte_13 (" + avant + " → " + apres + ")");
   } catch (err) { ok(false, "[361] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   WC.getReachedWorldIndex = rw; SQ.isStepReached = sr;
 })();
@@ -21406,13 +21469,13 @@ console.log("\n[420] v3.625.0 — Tour, lot T-0 : le socle");
 (function () {
   try {
     var WC = g.WORLD_CAPS[5];
-    ok(WC && WC.village.workshop === 10 && WC.village.enchanter === 3 && WC.village.warehouse === 20 && WC.village.palisade === 10 && WC.village.forge === 7 && WC.forgeActStep === "tour_13" && WC.zoneLevel === 20,
-      "plafonds de la Tour : Atelier 10, Enchanteresse 3, Entrepôt 20, Palissade 10, zones 20, Forge 7 à l'acte III");
+    ok(WC && WC.village.workshop === 10 && WC.village.enchanter === 3 && WC.village.warehouse === 20 && WC.village.palisade === 10 && WC.village.forge === 10 && WC.forgeActStep === "tour_13" && WC.zoneLevel === 20,
+      "plafonds de la Tour : Atelier 10, Enchanteresse 3, Entrepôt 20, Palissade 10, zones 20, Forge 10 à l'acte III (Forge des mondes)");
     ok(g.WAREHOUSE_RESOURCES.givre_bleu && g.WAREHOUSE_RESOURCES.givre_bleu.tier === "special" && g.WAREHOUSE_RESOURCES.verre_faille && g.WAREHOUSE_RESOURCES.verre_faille.tier === "crafted",
       "matières : Givre bleu (brute) et Verre de faille (raffinée)");
-    var FM = g.ForgeManager || g.ForgeSystem, maxAv = FM.getMaxLevel, lvAv = FM.getLevel, at = function (lv) { FM.getMaxLevel = function () { return 14; }; FM.getLevel = function () { return lv; }; return FM.getCost("armor"); };
-    var c13 = at(12), c11 = at(10); FM.getMaxLevel = maxAv; FM.getLevel = lvAv;
-    ok(c13.verre_faille === 1 && c13.obsidienne_taillee === 1 && c11.obsidienne_taillee === 1 && !c11.verre_faille, "reforge 13 : 1 Verre de faille (+1 Obsidienne) ; reforge 11 : Obsidienne seule");
+    var FM = g.ForgeManager || g.ForgeSystem, maxAv = FM.getMaxLevel, lvAv = FM.getLevel, at = function (lv) { FM.getMaxLevel = function () { return 20; }; FM.getLevel = function () { return lv; }; return FM.getCost("armor"); };
+    var c19 = at(18), c17 = at(16); FM.getMaxLevel = maxAv; FM.getLevel = lvAv;
+    ok(c19.verre_faille === 2 && c19.obsidienne_taillee === 1 && c17.verre_faille === 1 && !c17.obsidienne_taillee, "Forge des mondes : reforge 19 : 2 Verres de faille (+1 Obsidienne) ; reforge 17 : 1 Verre de faille seul");
     ok(g.HERO_SCALING_REFS.joueurMontagne && g.WORLD_HERO_SCALING.refByWorld.tower[0] === "joueurMontagne", "ajustement au héros : la Tour se mesure au héros de fin de Montagne");
     ok(g.DUNGEONS.filter(function (d) { return d.id === 6; })[0].requiresStoryStep === "tour_11", "Sommet interdit : s'ouvre à l'acte III (tour_11, v3.629.0)");
     ok(g.EQUIP_WORLD_SCALE[5] === 6, "échelle d'équipement de la Tour : ×6, comme la Montagne (décision de Seb, v3.625.1)");
@@ -21502,7 +21565,7 @@ console.log("\n[424] v3.629.0 — Tour, lot T-3 : Sommet interdit, le Reflet, L�
     ok(ch.steps.slice(10, 15).map(function (x) { return x.id; }).join() === "tour_11,tour_12,tour_13,tour_14,tour_15", "acte III : étapes 11 à 15");
     var d6 = D.getById(6);
     ok(d6.boss.name === "Le Reflet" && d6.eliteWaves[8] === "gardien_qui_repete" && d6.camp && d6.camp.storyFlag === "sommetCamp", "Sommet interdit : le Reflet au bout, le Gardien qui répète à la vague 8, une halte");
-    ok(g.STORY_PALIER_TOUR_COMPLET.pieces === 7 && g.STORY_REWARDS.tour_12.equipmentRarity === "legendary" && g.WORLD_CAPS[5].village.forge === 7 && g.WORLD_CAPS[5].forgeActStep === "tour_13", "palier : 7 Légendaires, Forge 7 à l'acte III");
+    ok(g.STORY_PALIER_TOUR_COMPLET.pieces === 7 && g.STORY_REWARDS.tour_12.equipmentRarity === "legendary" && g.WORLD_CAPS[5].village.forge === 10 && g.WORLD_CAPS[5].forgeActStep === "tour_13", "palier : 7 Légendaires, Forge 10 à l'acte III (Forge des mondes)");
     var cx = g.STORY_CHOICE_AXES.copie;
     ok(cx && cx.laisser.join() === "donner" && cx.defaire.join() === "garder", "choix « copie » inscrit au bilan (laisser = donner, défaire = garder)");
     // le miroir : même technique deux fois de suite contre le Reflet
@@ -21725,7 +21788,7 @@ console.log("\n[430] Rythme de la Tour (Seb, 03/11 : Terrain 19 à 21, palier de
     var tier = g.VILLAGE_BUILDINGS.training.costTiers.filter(function (t) { return t.minLevel === 18; })[0];
     ok(tier && tier.maxLevel === 20 && tier.baseCost.givre_bleu > 0 && tier.baseCost.verre_faille > 0, "Terrain 19 à 21 au Givre bleu et au Verre de faille");
     var P = g.STORY_PALIER_TOUR_COMPLET;
-    ok(P.pieces === 7 && P.forge === 7 && P.reforge === 13, "acte III : 7 Légendaires, Forge 7, arme reforgée à 13");
+    ok(P.pieces === 7 && P.forge === 10 && P.reforge === 19, "acte III : 7 Légendaires, Forge 10, arme reforgée à 19 (Forge des mondes : 1re reforge de la Forge 10)");
     var st13 = g.STORY_QUESTS.tower.steps.filter(function (x) { return x.id === "tour_13"; })[0];
     run("fullResetState(); game.playerName='Test'; game.heroId='knight'; StoryQuestManager.ensure();");
     ok(st13.check(g.game) === true && typeof st13.missing !== "function" && g.storyPalierTourCompletMissing(g.game).length >= 1, "v3.717.0 : palier non tenu, l'étape passe ; le relevé du repère dit encore ce qui manque");
@@ -24282,11 +24345,11 @@ console.log("\n[479] v3.717.0 — Paliers de l'Histoire narratifs ; le pronostic
     placer("crypt", "crypte_10", "green", 5);
     var r = CF.zoneRepere(), a = CF.buildAdvice(true);
     ok(r && r.stepId === "crypte_09" && r.rarity === "rare" && r.pieces === g.STORY_PALIER_CRYPTE_RARE.pieces && r.reforge === g.STORY_PALIER_CRYPTE_RARE.reforge, "repère de la Crypte à crypte_10 : crypte_09 (" + JSON.stringify(r) + ")");
-    ok(a === "Reviens plus fort : 0 pièce Rare sur 7 conseillées ici, ton arme est reforgée à 5, on la monte à 8, monte tes caractéristiques dans Héros → Entraînement.", "conseil : rareté et reforge du repère, sans Forge (" + a + ")");
+    ok(a === "Reviens plus fort : 0 pièce Rare sur 7 conseillées ici, l'arme est reforgée 5 fois, monte-la à 8 : chaque reforge renforce ton héros, monte tes caractéristiques dans Héros → Entraînement.", "conseil : rareté et reforge du repère, sans Forge (" + a + ")");
     // Crypte, acte III : repère Épique avec Forge 5
     placer("crypt", "crypte_14", "green", 5);
     a = CF.buildAdvice(false);
-    ok(/^Pour améliorer tes chances : 0 pièce Épique sur 3 conseillées ici, ton arme est reforgée à 5, on la monte à 9 à la Forge 5, /.test(a), "conseil après crypte_13 : Épiques, reforge 9 à la Forge 5 (" + a + ")");
+    ok(/^Pour améliorer tes chances : 0 pièce Épique sur 3 conseillées ici, l'arme est reforgée 5 fois, monte-la à 9 à la Forge 5 : chaque reforge renforce ton héros, /.test(a), "conseil après crypte_13 : Épiques, reforge 9 à la Forge 5 (" + a + ")");
     // Début de la Crypte : la dernière étape-palier des Ruines
     placer("crypt", "crypte_02", "green", 5);
     r = CF.zoneRepere();

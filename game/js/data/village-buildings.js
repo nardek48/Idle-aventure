@@ -208,22 +208,13 @@ var VILLAGE_BUILDINGS = {
     icon: "images/Icons/workshops/smithing_station.webp",
     iconImg: "images/Icons/village_buildings/village_forge.webp",
     rank: 2,
-    /* Conception : 6 niveaux, un par monde. v3.289.0 : chacun ouvre 2 niveaux de
-       reforge (5 avant, plafond qui ne mordait jamais — voir systems/forge-system.js).
-       Fermée en Forêt, ouverte au Désert (data/world-caps.js).
-
-       v3.221.0 : limité à 2 pour l'instant (10 niveaux de forge). Les niveaux 3
-       à 6 exigent les matériaux des mondes 2 à 5, qui n'existent pas encore —
-       même règle que le Terrain d'entraînement en v3.213.1, relevé en v3.214.0
-       quand son matériau est arrivé.
-
-       v3.316.0 (W-4b, acte III §6) : relevé à 3, le matériau du Désert existe. Le niveau 3
-       coûte du Verre trempé (étape 9) et ouvre la reforge jusqu'au niveau 6 — c'est le
-       deuxième compteur du palier de l'étape 13. Les niveaux 4 à 6 attendent les mondes
-       suivants, comme avant. */
-    maxLevel: 7, // v3.625.0 : la Forge 7 au Verre de faille, ouverte à l'acte III de la Tour ; v3.431.0 : la Forge 4 à la Clé de voûte ; v3.455.0 : la Forge 5 à la Cire consacrée ; v3.490.0 : la Forge 6 à l'Obsidienne, ouverte à l'acte III de la Montagne (world-caps.js)
+    /* Fermée en Forêt, ouverte au Désert (data/world-caps.js). Chaque niveau ouvre 2 reforges par emplacement
+       (systems/forge-system.js) ; une reforge renforce le héros, plus la pièce. */
+    maxLevel: 10, // Forge des mondes (Seb 07/11) : 2 niveaux par monde, Désert 1-2 … Tour 9-10 (plafonds : world-caps.js)
     implemented: true,
     desc: "Reforge une pièce d'équipement. Le niveau appartient à l'emplacement, pas à l'objet : changer de pièce ne fait rien perdre.",
+    /* Forge des mondes : chaque monde paie ses deux niveaux dans son matériau (Désert : Résine et Verre trempé).
+       Les niveaux 6, 8 et 10 suivent les précédents (or +15 à 20 %, un matériau de monde de plus). */
     costTiers: [
       {
         minLevel: 0, maxLevel: 0,
@@ -231,58 +222,74 @@ var VILLAGE_BUILDINGS = {
         baseCost: { gold: 600, planche: 30, pierre: 40, acier: 6 },
         costMult: 1.40
       },
+      // Forge 2 : la Résine, et le Verre trempé (étape 9) qui payait la Forge 3 du Désert
       {
         minLevel: 1, maxLevel: 1,
-        resources: ["gold", "planche", "pierre", "acier", "resine_durcie"],
-        baseCost: { gold: 2400, planche: 70, pierre: 85, acier: 18, resine_durcie: 4 },
+        resources: ["gold", "planche", "pierre", "acier", "resine_durcie", "verre_trempe"],
+        baseCost: { gold: 2400, planche: 70, pierre: 85, acier: 18, resine_durcie: 4, verre_trempe: 3 },
         costMult: 1.45
       },
-      /* v3.316.0 (W-4b) : palier du Désert. Or et pierre suivent la progression des deux
-         premiers (×~2,2) ; le Verre trempé est la marche neuve. 3 verres = 6 Verre des dunes
-         et 30 Pierre au Tailleur, soit deux à trois passages. Provisoire, à caler au banc. */
+      // Ruines : Forges 3 et 4 à la Clé de voûte (Pierres errantes au Tailleur de pierre)
       {
         minLevel: 2, maxLevel: 2,
-        resources: ["gold", "pierre", "acier", "verre_trempe"],
-        baseCost: { gold: 5200, pierre: 180, acier: 40, verre_trempe: 3 },
+        resources: ["gold", "pierre", "acier", "cle_de_voute"],
+        baseCost: { gold: 5200, pierre: 180, acier: 40, cle_de_voute: 2 },
         costMult: 1.50
       },
-      /* v3.431.0 (Ruines, acte III §3) : palier des Ruines, deuxième compteur du palier Rare
-         (ruines_13). 3 Clés = 9 Pierres errantes et 30 Pierre au Tailleur. Provisoire, au banc. */
       {
         minLevel: 3, maxLevel: 3,
         resources: ["gold", "pierre", "acier", "cle_de_voute"],
         baseCost: { gold: 8000, pierre: 300, acier: 70, cle_de_voute: 3 },
         costMult: 1.50
       },
-      /* v3.455.0 (Crypte, acte III) : palier de la Crypte, la Forge 5 à la Cire consacrée (crypte_13).
-         3 Cires consacrées = 9 Cires de sépulcre à la Fonderie. Provisoire, au banc. */
+      // Crypte : Forges 5 et 6 à la Cire consacrée (la 6 à l'acte III)
       {
         minLevel: 4, maxLevel: 4,
         resources: ["gold", "pierre", "acier", "cire_consacree"],
         baseCost: { gold: 11000, pierre: 400, acier: 100, cire_consacree: 3 },
         costMult: 1.50
       },
-      /* v3.486.0 (Montagne, M-0) : palier de la Montagne, la Forge 6 à l'Obsidienne taillée (acte III, MT7).
-         v3.490.0 : 520 -> 480 Pierre, l'Entrepôt de la Montagne n'en tient que 500 (campagne : Forge 6 impossible). */
       {
         minLevel: 5, maxLevel: 5,
+        resources: ["gold", "pierre", "acier", "cire_consacree"],
+        baseCost: { gold: 13000, pierre: 440, acier: 115, cire_consacree: 4 },
+        costMult: 1.50
+      },
+      /* Montagne : Forges 7 et 8 à l'Obsidienne taillée (la 8 à l'acte III).
+         v3.490.0 : 480 Pierre au plus, l'Entrepôt de la Montagne n'en tient que 500. */
+      {
+        minLevel: 6, maxLevel: 6,
         resources: ["gold", "pierre", "acier", "obsidienne_taillee"],
         baseCost: { gold: 15000, pierre: 480, acier: 130, obsidienne_taillee: 3 },
         costMult: 1.50
       },
-      /* v3.625.0 (Tour, T-0, TW7) : palier de la Tour, la Forge 7 au Verre de faille (acte III). Provisoire, au banc. */
       {
-        minLevel: 6, maxLevel: 6,
+        minLevel: 7, maxLevel: 7,
+        resources: ["gold", "pierre", "acier", "obsidienne_taillee"],
+        baseCost: { gold: 18000, pierre: 480, acier: 150, obsidienne_taillee: 4 },
+        costMult: 1.50
+      },
+      // Tour : Forges 9 et 10 au Verre de faille (la 10 à l'acte III)
+      {
+        minLevel: 8, maxLevel: 8,
         resources: ["gold", "pierre", "acier", "verre_faille"],
         baseCost: { gold: 21000, pierre: 480, acier: 170, verre_faille: 3 },
+        costMult: 1.50
+      },
+      {
+        minLevel: 9, maxLevel: 9,
+        resources: ["gold", "pierre", "acier", "verre_faille"],
+        baseCost: { gold: 25000, pierre: 480, acier: 190, verre_faille: 4 },
         costMult: 1.50
       }
     ],
     effectLabel: function (level) {
-      // v3.289.0 : 2 niveaux de reforge par niveau de bâtiment (FORGE_LEVELS_PER_BUILDING_LEVEL)
+      // Forge des mondes : 2 reforges par niveau ; la bande du niveau dit la stat que ses reforges renforcent
       var per = (typeof FORGE_LEVELS_PER_BUILDING_LEVEL === "number") ? FORGE_LEVELS_PER_BUILDING_LEVEL : 2;
       var max = level * per;
-      return max <= 0 ? _t("Aucune reforge possible")
+      if (max <= 0) return _t("Aucune reforge possible");
+      var def = (window.ForgeManager && typeof ForgeManager.getBandDef === "function") ? ForgeManager.getBandDef(ForgeManager.getBand(max)) : null;
+      return def ? _t("Reforge jusqu'au niveau {n} sur chaque emplacement : {s} ({w})", { n: max, s: def.label, w: def.world })
         : _t("Reforge jusqu'au niveau {n} sur chaque emplacement", { n: max });
     }
   },

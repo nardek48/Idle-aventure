@@ -1,20 +1,18 @@
 "use strict";
-/* tools/sim/forge-mondes-bench.js — refonte de la Forge « remplacer » (Seb 07/11) : la reforge ne touche plus la pièce,
-   chaque reforge donne +X % d'une stat héros liée au monde de sa bande (4 reforges par emplacement et par monde, 7 emplacements).
-   Vrai moteur dans un vm (socle de charge-bench.js) ; rien du jeu ne change : profils posés par ENVELOPPES dans le contexte du banc
-   (ForgeManager.getLevel pour la forge actuelle, StatsSystem.recalcStats pour les bonus de la refonte, appliqués après la recomposition).
+/* tools/sim/forge-mondes-bench.js — Forge des mondes (Seb 07/11) : la reforge ne touche plus la pièce, chaque reforge donne +0,5 %
+   d'une stat héros liée au monde de sa bande. Le banc lit désormais le VRAI code (ForgeManager.getHeroBonuses, appliqué par
+   StatsSystem.recalcStats) : un profil ne fait que poser game.forge.levels après le chargement de la sauvegarde.
 
    Héros : sauvegardes du robot (--joueur) à l'entrée de la quête de boss de fin de monde (captures/bouclier-soin/saves).
-   Profils : save (forge de la sauvegarde) · nf (aucune forge) · actuel (7 emplacements au plafond du monde : Forge 3/4/5/6/7 ×2)
-             · r04 / r05 / r06 (refonte, 0,4 / 0,5 / 0,6 % par reforge, toutes les bandes des mondes finis, pièces nues)
-             · r05dr (r05, Défense relative ×(1+b) au lieu de points) · r05x<stat> (r05 sans la stat <stat> : hp, def, cm, dmg, cc).
-   Bandes (proposition) : Désert PV max (multiplicatif, comme maxHpPct) · Ruines Défense (points, sous le plafond 60 %)
-             · Crypte dégâts critiques (critMult ×(1+b)) · Montagne dégâts (tapMult +b, comme les gants : Force seule) · Tour critique (points).
-   Combats repères : la quête de boss de fin de monde jouée en entier, et l'élite répétable de la carte du monde (niveau 1, 0 victoire du jour).
+   Profils : save (niveaux de la sauvegarde, lus avec la nouvelle règle) · nf (aucune reforge)
+             · jeu (7 emplacements reforgés 4 × monde fini : toutes les bandes des mondes finis, +14 % chacune)
+             · jeuN (N reforges par emplacement, ex. jeu8).
+   Combats repères : la quête de boss de fin de monde jouée en entier, et l'élite répétable de la carte du monde.
    Politique : « Tout préparer » (pronostic, 3 règles), potion à la main sous 30 %, comme boss-courts-bench.js (prepare3).
 
    USAGE : node tools/sim/forge-mondes-bench.js . [--runs 60] [--classes knight,ranger,mage] [--mondes desert,ruines,crypte,montagne,tour]
-             [--profils save,nf,actuel,r04,r05,r06] [--jobs 4] [--tag fm]     sorties : captures/forge-mondes/<tag>-<runs>runs.{txt,json} */
+             [--profils save,nf,jeu] [--niv desert:5,ruines:8,crypte:8,montagne:10,tour:11] [--jobs 4] [--tag fm]
+           sorties : captures/forge-mondes/<tag>-<runs>runs.{txt,json} */
 var fs = require("fs"), path = require("path"), cp = require("child_process");
 var CB = require("./charge-bench.js");
 var CH = require("../chemins.js");
@@ -37,47 +35,29 @@ var BANDES = ["hp", "def", "cm", "dmg", "cc"];   // bande 1 = Désert … bande 
 var NOM_BANDE = { hp: "PV max", def: "Défense", cm: "dégâts crit.", dmg: "dégâts", cc: "critique" };
 var CLASSES = { knight: "Chevalier", ranger: "Rôdeur", mage: "Mage" };
 function profil(id) {
-  if (id === "save") return { forge: "save" };
-  if (id === "nf") return { forge: "zero" };
-  if (id === "actuel") return { forge: "cap" };
-  var m = /^r(\d\d)(dr)?(?:x(hp|def|cm|dmg|cc))?$/.exec(id); if (!m) throw new Error("profil inconnu : " + id);
-  return { forge: "zero", pct: Number(m[1]) / 1000, defRel: !!m[2], sans: m[3] || null };
+  if (id === "save") return { lv: null };
+  if (id === "nf") return { lv: 0 };
+  if (id === "jeu") return { lv: "monde" };
+  var m = /^jeu(\d+)$/.exec(id); if (!m) throw new Error("profil inconnu : " + id);
+  return { lv: Number(m[1]) };
 }
 function liste(k, all) { var v = opt(k, null); return v ? v.split(",") : (Array.isArray(all) ? all : Object.keys(all)); }
-var L_CLASSES = liste("--classes", CLASSES), L_MONDES = liste("--mondes", MONDES), L_PROF = liste("--profils", ["save", "nf", "actuel", "r04", "r05", "r06"]);
-var CUR = { lv: null, bonus: null };
+var L_CLASSES = liste("--classes", CLASSES), L_MONDES = liste("--mondes", MONDES), L_PROF = liste("--profils", ["save", "nf", "jeu"]);
+var CUR = { lv: null };
 // niveau de l'élite repère par monde (--niv desert:6,ruines:6,…) : au niveau 1 elles tombent en quelques rounds
 var NIV = { desert: 1, ruines: 1, crypte: 1, montagne: 1, tour: 1 };
 (opt("--niv", "") || "").split(",").filter(Boolean).forEach(function (x) { var a = x.split(":"); NIV[a[0]] = Number(a[1]) || 1; });
 
 function wrap(obj, name, fn) { var o = obj[name]; obj[name] = function () { return fn.call(this, o, arguments); }; }
 
-/* ---------- Enveloppes du profil ---------- */
-function installProfil(g) {
-  // forge actuelle : niveau imposé par emplacement (le calcul de la pièce reste celui du jeu)
-  wrap(g.ForgeManager, "getLevel", function (o, a) { return CUR.lv != null ? CUR.lv : o.apply(this, a); });
-  // refonte : bonus posés APRÈS la recomposition ; les PV courants suivent le plafond agrandi (même règle que le jeu)
-  wrap(g.StatsSystem, "recalcStats", function (o, a) {
-    var G = g.game, hp0 = G.heroHp, r = o.apply(this, a), B = CUR.bonus;
-    if (!B) return r;
-    if (B.hp) G.heroMaxHp = Math.max(1, Math.floor(G.heroMaxHp * (1 + B.hp)));
-    if (B.def) G.heroDefensePct = B.defRel ? Math.min(0.6, G.heroDefensePct * (1 + B.def)) : Math.min(0.6, G.heroDefensePct + B.def);
-    if (B.cm) G.critMult = G.critMult * (1 + B.cm);
-    if (B.dmg) G.tapMult += B.dmg;
-    if (B.cc) G.critChance += B.cc * 100;
-    G.heroHp = (hp0 == null) ? G.heroMaxHp : Math.min(hp0, G.heroMaxHp);
-    return r;
-  });
-}
+/* ---------- Profil : niveaux de reforge posés après le chargement (le vrai code fait le reste) ---------- */
 function poserProfil(g, P, M) {
-  CUR.lv = null; CUR.bonus = null;
-  if (P.forge === "zero") CUR.lv = 0;
-  if (P.forge === "cap") CUR.lv = g.WORLD_CAPS[M.wi].village.forge * g.FORGE_LEVELS_PER_BUILDING_LEVEL;
-  if (P.pct) {   // mondes finis = bandes 1..wi, 4 reforges × 7 emplacements chacune
-    var B = { defRel: P.defRel }, n = 4 * g.EQUIPMENT_SLOTS.length;
-    for (var b = 0; b < M.wi; b++) if (BANDES[b] !== P.sans) B[BANDES[b]] = n * P.pct;
-    CUR.bonus = B;
-  }
+  CUR.lv = P.lv === "monde" ? g.FORGE_REFORGES_PER_WORLD * M.wi : P.lv;   // monde wi fini = bandes 1..wi complètes
+}
+function appliquerNiveaux(g) {
+  if (CUR.lv == null) return;
+  g.ForgeManager.ensure();
+  g.EQUIPMENT_SLOTS.forEach(function (sl) { g.game.forge.levels[sl] = CUR.lv; });
 }
 
 /* ---------- Compteurs (lecture seule) ---------- */
@@ -115,6 +95,7 @@ function setRules(g, rules, n) { var R = rules.slice(0, n); while (R.length < 6)
 function prepare(g, saveTxt, M, kind) {
   g.fullResetState();
   g.restoreBaseState(JSON.parse(saveTxt));
+  appliquerNiveaux(g);
   g.ensureGrimoireRules();
   g.game.unlockedTabs.grimoire = true;
   g.game.combatMode = "grimoire";
@@ -196,7 +177,7 @@ function agg(runs) {
 /* ---------- Worker : une classe × un profil ---------- */
 function worker() {
   var classe = L_CLASSES[0], pid = L_PROF[0], P = profil(pid), out = {};
-  var g = CB.launch(); installProfil(g); var S = instrument(g);
+  var g = CB.launch(); var S = instrument(g);
   L_MONDES.forEach(function (mid) {
     var M = MONDES[mid], txt, mi = Object.keys(MONDES).indexOf(mid);
     M.key = mid; txt = saveFor(classe, M);
@@ -242,7 +223,7 @@ function main() {
 function rapport(all, minutes, brut) {
   var out = [], p0 = function (x) { return (100 * x).toFixed(0).padStart(3) + "%"; };
   out.push("BANC FORGE PAR MONDE — " + RUNS + " parties par cellule, graines fixes (mêmes graines pour tous les profils), " + minutes.toFixed(1) + " min");
-  out.push("Profils : " + L_PROF.join(", ") + "   (save = forge de la sauvegarde du robot ; nf = sans forge ; actuel = 7 emplacements au plafond ; rXX = refonte XX ‰ par reforge)");
+  out.push("Profils : " + L_PROF.join(", ") + "   (save = niveaux de la sauvegarde du robot ; nf = aucune reforge ; jeu = 7 emplacements à 4 × monde fini, vrai code ; jeuN = N reforges)");
   out.push("Héros : ATK effective · PV max · DEF · critique % ×mult · frappe moyenne (ATK × (1 + p·(m−1)))");
   out.push("Combats : victoires · PV restants (victoires) · potions · rounds de la sortie (méd.) · rounds du combat repère (méd.)");
   L_MONDES.forEach(function (mid) {

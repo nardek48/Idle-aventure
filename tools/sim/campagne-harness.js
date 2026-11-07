@@ -449,7 +449,7 @@ function developVillage() {
      plafond du monde, si le chantier coûte moins de 50 % de la bourse. */
   if (INVESTI) {
     var wf = V.getBlockReason("forge"), cf = V.getNextCost("forge");
-    if (V.getLevel("forge") >= 4 && !g.StoryQuestManager.isStepReached("crypte_13")) cf = null; // DUR-6 : la Forge 5 ouvre à crypte_13 (forgeActStep), plus exigée par l'étape
+    // Forge des mondes (Seb 07/11) : le second niveau de chaque monde attend l'acte III (WorldCaps, forgeActStep)
     if (cf && (!wf || wf === "Matériaux manquants" || /^Atelier niveau/.test(wf)) && Number(cf.gold || 0) <= g.game.gold * 0.5) {
       if (upgradeBuilding("forge", V.getLevel("forge") + 1)) STATS.village.push("Forge " + V.getLevel("forge") + " (" + CURRENT_STEP + ")");
     }

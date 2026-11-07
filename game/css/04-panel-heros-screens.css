@@ -40,6 +40,8 @@ body.hs-on-heros .hud-dock { display: none !important; }
 .hs-banner-sub { font-size: 13px; color: var(--c-cream-200); margin-bottom: 4px; }
 .hs-set { margin: 0 0 8px; padding: 6px 10px; border-radius: 10px; background: rgba(63, 143, 63, .1); border: 1px solid rgba(63, 143, 63, .4); font-size: 13px; color: var(--c-green-750-soft); }
 .hs-set.is-off { background: rgba(0, 0, 0, .04); border-color: var(--c-bronze-400-2); color: var(--c-brown-650-soft); }
+.hs-set.hs-forge { display: flex; align-items: center; gap: 6px; } /* Forge des mondes : les bonus du héros, icône à gauche */
+.hs-set.hs-forge .hs-mini-ico { flex: 0 0 auto; margin: 0; }
 .hs-eslot { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; background: none; border: 0; padding: 0; color: var(--c-brown-850-3); }
 .hs-eslot-ico { width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; border-radius: 12px; }
 .hs-eslot-ico.is-empty { border: 1px dashed var(--c-bronze-500); background: rgba(255, 248, 234, .75); }

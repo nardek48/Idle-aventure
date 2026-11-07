@@ -164,14 +164,8 @@ var StatsSystem = {
       .map(function (slot) { return equipped[slot]; })
       .forEach(function(item) {
       if (!item) return;
-      /* v3.221.0 (périmètre confirmé par Seb) : la valeur lue passe par la
-         Forge du village. Le niveau de forge appartient à l'EMPLACEMENT, pas à
-         l'objet — il ne peut donc pas être figé dans item.value, et c'est ici,
-         au seul endroit qui compose les stats, qu'il doit s'appliquer.
-         Sans Forge construite, getForgedValue() renvoie item.value inchangé. */
-      var value = (window.ForgeManager && typeof ForgeManager.getForgedValue === "function")
-        ? ForgeManager.getForgedValue(item)
-        : item.value;
+      // Forge des mondes (Seb 07/11) : la reforge ne touche plus la pièce, son bonus va au héros (fin de recalcStats)
+      var value = item.value;
 
       var aff = typeof getItemAffinityMult === "function" ? getItemAffinityMult(item) : 1; // v3.492.12 (P1, accord Seb) : affinité de monde
       applyEquipmentStat(item.stat, value * aff);
@@ -261,6 +255,15 @@ var StatsSystem = {
     }
 
     // v3.322.0 : le bonus caché de +0,5 % par Aether gagné est retiré (hors calibrage, sans plafond)
+
+    /* Forge des mondes (Seb 07/11) : bonus de monde des reforges, tous relatifs, appliqués ici seulement.
+       Défense avant le plafond ; dégâts = multiplicateur final de l'ATK (Force et arme). */
+    var forge = (window.ForgeManager && typeof ForgeManager.getHeroBonuses === "function") ? ForgeManager.getHeroBonuses() : {};
+    if (forge.hpPct) game.heroMaxHp = Math.max(1, Math.floor(game.heroMaxHp * (1 + forge.hpPct)));
+    if (forge.defPct) game.heroDefensePct = Math.min(HERO_DEFENSE_CAP, game.heroDefensePct * (1 + forge.defPct));
+    if (forge.critPct) game.critChance *= 1 + forge.critPct;
+    if (forge.critMultPct) game.critMult *= 1 + forge.critMultPct;
+    if (forge.dmgPct) { game.tapDamage *= 1 + forge.dmgPct; game.equipFlatTapBonus *= 1 + forge.dmgPct; }
   },
 
         effectiveTapDamage: function () {
