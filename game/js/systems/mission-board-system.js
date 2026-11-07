@@ -108,12 +108,20 @@ var MissionBoard = {
       var cardChoice = status === "accepted" && typeof storyPendingCardChoice === "function" ? storyPendingCardChoice(chapterId) : null;
       // v3.518.0 (audit QUE-5) : une offrande faisable sur la carte d'étape (l'Outre du Veilleur) se fait d'ici
       var offer = status === "accepted" && !cardChoice ? StoryQuestManager.getOfferingInfo(chapterId, "story") : null;
+      // v3.733.0 (bug Seb 07/11) : offrande du Campement (forest_15) : le bouton de la carte la fait, au lieu d'un
+      // « Partir » qui renvoyait au Campement sans rien faire (le bloc « Les braises » était sous la carte, hors écran).
+      var linkTab = step.linkTo ? (typeof step.linkTo.tab === "function" ? step.linkTo.tab(game) : step.linkTo.tab) : null;
+      var campOffer = status === "accepted" && !cardChoice && !offer && (!step.linkTo || linkTab === "campement")
+        ? StoryQuestManager.getOfferingInfo(chapterId, "camp") : null; // seulement quand le reste de l'étape est fait
       if (cardChoice) {
         m.launch = function () { if (typeof openStoryStepActions === "function") openStoryStepActions(chapterId); else if (typeof openQuestsAt === "function") openQuestsAt("worldexpedition"); };
         m.launchLabel = cardChoice.choice.buttonLabel ? _td(cardChoice.choice.buttonLabel) : _t("Choisir");
       } else if (offer && offer.canOffer) {
         m.launch = function () { StoryQuestManager.offerToEmbers(chapterId); };
         m.launchLabel = _td(offer.step.offeringUi.buttonLabel);
+      } else if (campOffer) {
+        m.launch = function () { StoryQuestManager.offerToEmbers(chapterId); }; // il manque quelque chose : le toast le dit
+        m.launchLabel = _t("Offrir aux braises");
       } else if (status === "accepted" && step.linkTo) {
         m.launch = function () { MissionBoard.launchStoryLink(chapterId, step.linkTo); };
         m.launchLabel = MissionBoard.storyLinkLabel(step.linkTo); // v3.518.0 (QUE-11) : le verbe de la destination

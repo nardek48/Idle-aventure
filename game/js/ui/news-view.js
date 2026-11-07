@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.733.0", "camp/campfire", _t("Correctif : à l'étape « Les braises s'éveillent », le bouton de la carte de mission fait maintenant l'offrande aux braises. Avant, « Partir » renvoyait au Campement sans rien faire et on restait bloqué.")],
     ["3.732.0", "combat_status/heal_incoming", _t("Boss : leur soin rend maintenant 10 % de leurs PV max (au lieu de 15 % des PV qui leur restent). Un boss presque vaincu se soigne autant qu'un boss en pleine forme : contrer son soin compte à chaque phase.")],
     ["3.731.0", "classes/class_mage", _t("Mage : les ennemis ne se renforcent plus en reprenant ses PV en plus (ils tapaient jusqu'à 12 % plus fort que pour les autres classes). Sur « Les pentes » de la Montagne, il gagne près de 4 fois sur 5 au lieu de 3 sur 5.")],
     ["3.730.0", "combat_status/counter", _t("Contres : une Défense jouée contre une annonce (Charge, Silence, Exaltation) couvre aussi tes compagnons tant qu'elle dure, et une Charge contrée te rend le tour : tu frappes dans la foulée.")],

@@ -25472,6 +25472,25 @@ console.log("\n[493] v3.732.0 — Soin des boss : 10 % des PV max, plafonné aux
   finally { g.uniquePowerMult = keep.up; g.addLog = keep.log; try { run("fullResetState();"); } catch (e2) {} }
 })();
 
+console.log("\n[494] v3.733.0 — forest_15 : la carte de mission fait l'offrande aux braises (bug Seb 07/11)");
+(function () {
+  try {
+    var SQ = g.StoryQuestManager, st = SQ.getState("forest"), sv = JSON.stringify(st), aq = JSON.stringify(g.game.adventureQuestsCompleted || {});
+    st.currentStep = g.STORY_QUESTS.forest.steps.findIndex(function (s) { return s.id === "forest_15"; }); st.accepted = true; st.counters = {};
+    g.game.adventureQuestsCompleted = {};
+    var m = g.MissionBoard.getById("story_forest");
+    ok(m && m.launchLabel !== "Offrir aux braises", "Orc pas encore battu : la carte mène à la quête d'aventure, pas à l'offrande");
+    g.game.adventureQuestsCompleted = { aq_forest_depths: true };
+    var cur = function (k) { return g.WarehouseManager.getAmount(k); };
+    var need = g.STORY_STEP15_OFFERING; Object.keys(need).forEach(function (k) { var d = need[k] - cur(k); if (d > 0) g.WarehouseManager.addResource(k, d); else if (d < 0) g.WarehouseManager.removeResource(k, -d); });
+    m = g.MissionBoard.getById("story_forest");
+    ok(m && m.launchLabel === "Offrir aux braises" && typeof m.launch === "function", "Orc battu : le bouton de la carte devient « Offrir aux braises »");
+    m.launch();
+    ok(Number(SQ.getState("forest").counters.offeringDone || 0) === 1, "le bouton fait l'offrande (3 Sève + 1 Ration moyenne, juste ce qu'il faut)");
+    var restored = JSON.parse(sv); Object.keys(restored).forEach(function (k) { st[k] = restored[k]; }); g.game.adventureQuestsCompleted = JSON.parse(aq);
+  } catch (err) { ok(false, "[494] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");
