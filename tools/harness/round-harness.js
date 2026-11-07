@@ -25708,6 +25708,57 @@ console.log("\n[496] v3.736.0 — Grimoire vivant : 3 règles, jeux en onglets, 
   finally { g.renderSortiePrep = keep.render; g.SortieManager.isActive = keep.active; g.sortiePrep = null; game = freshCombat("knight"); }
 })();
 
+console.log("\n[497] v3.737.0 — La silhouette face au Rôdeur : sans soin, PV ×3,5 (piste E du banc silhouette-rodeur, Seb 07/11)");
+(function () {
+  var CE = g.CombatEngine, CF = g.CombatForecast, TS = g.TowerSystem, Q = g.ADVENTURE_QUESTS.aq_tour_silhouette, keep = { log: g.addLog }, logs = [];
+  var sil = { type: "adventure", id: "aq_tour_silhouette" };
+  try {
+    g.addLog = function (m) { logs.push(String(m)); };
+    ok(Q.bossHpMult === 4.25 && JSON.stringify(g.TOWER_SILHOUETTE_VS_CLASS) === '{"ranger":{"bossHpMult":3.5,"noHeal":true}}', "règle : Rôdeur seul, PV ×3,5 au lieu de ×4,25, sans soin");
+    // PV au spawn : ×3,5 face au Rôdeur (Rôdeur du Chaos compris), ×4,25 sinon
+    var spawn = function (hid) { game = freshCombat(hid); var e = g.QuestEnemyManager.spawnFor(Q, true); return Array.isArray(e) ? e[0] : e; };
+    var eR = spawn("ranger"), rule = g.TOWER_SILHOUETTE_VS_CLASS.ranger;
+    delete g.TOWER_SILHOUETTE_VS_CLASS.ranger; var eR0 = spawn("ranger"); g.TOWER_SILHOUETTE_VS_CLASS.ranger = rule;
+    ok(eR.isBoss && eR.noHeal === true && !eR0.noHeal && Math.abs(eR.maxHp / eR0.maxHp - 3.5 / 4.25) < 1e-4, "Rôdeur : silhouette sans soin, PV ×3,5 (" + eR.maxHp + " contre " + eR0.maxHp + " à ×4,25)");
+    ok(spawn("chaosRanger").noHeal === true, "Rôdeur du Chaos : même règle");
+    var eK = spawn("knight"), eM = spawn("mage");
+    ok(!eK.noHeal && !eM.noHeal && TS.copyClassRule(Q) === null, "Chevalier et Mage : soin gardé, PV ×4,25 (inchangés)");
+    ok(TS.copyClassRule(g.ADVENTURE_QUESTS.aq_montagne_dragon) === null, "autre quête : aucune règle");
+    // Combat : la phase du round 1 repousse le minuteur ; aucune annonce de soin, jamais
+    var combat = function (hid) {
+      var e = spawn(hid); logs = []; game.enemy = e; CE.prepareEnemy(e); g.CombatActors.setEnemies([e]);
+      e.hp = Math.floor(e.maxHp * 0.99); CE.checkPhases(e);
+      var annonce = 0;
+      for (var i = 0; i < 40; i++) { e.shieldTelegraphed = false; e.shieldIn = 99; CE.tickEnemyTelegraphs(e); if (e.healTelegraphed) { annonce++; e.healTelegraphed = false; e.healIn = 5; } }
+      return { e: e, annonce: annonce, log: logs.join("\n") };
+    };
+    var cR = combat("ranger");
+    ok(cR.e.archetype === "armored" && cR.e.healIn > 1e8 && cR.annonce === 0, "Rôdeur : 40 rounds, aucune annonce de soin (minuteur repoussé à la phase « elle se bat comme toi »)");
+    ok(cR.log.indexOf("se prépare à se soigner") === -1 && cR.log.indexOf("Elle se bat comme toi : elle ne se soignera pas.") !== -1, "Rôdeur : le journal le dit, aucun « se prépare à se soigner »");
+    ok(CF.getHealThreshold(cR.e) === 0 && CF.getHealThreshold(spawn("knight")) > 0, "pronostic chiffré : pas de seuil de soin face au Rôdeur, gardé pour le Chevalier");
+    var cK = combat("knight");
+    ok(cK.e.archetype === "enraged" && cK.annonce >= 7 && cK.log.indexOf("ne se soignera pas") === -1, "Chevalier : le soin s'annonce comme avant (" + cK.annonce + " annonces en 40 rounds)");
+    // « Ce que tu vas affronter » : pas de Soin face au Rôdeur, ni de règle de contre du soin
+    game = freshCombat("ranger"); var G = g.game;
+    G.unlockedTabs.grimoire = true; G.combatMode = "grimoire"; G.grimoirePresets = []; G.killCounts = {};
+    G.grimoireSeen = { chargeIncoming: true, shieldIncoming: true, healIncoming: true, enemySilenceIncoming: true, enemyEnraged: true, enemyArmored: true };
+    G.worldsEverReached = { 0: true, 1: true, 2: true, 3: true, 4: true, 5: true };
+    var R = function (c, a) { return { conditionId: c || null, actionSlot: a || null }; };
+    var traits = function () { return g.getEnemyTraitsPreview(sil).traits.map(function (t) { return t.trait; }); };
+    ok(traits().indexOf("heal") === -1 && traits().indexOf("shielded") !== -1 && traits().indexOf("armored") !== -1, "Rôdeur : Bouclier et Blindé annoncés, pas de Soin (" + traits().join() + ")");
+    ok(g.grimoireSortieSituations(sil).every(function (x) { return x.cond !== "healIncoming"; }) && !g.etPossibleConds(sil).healIncoming, "Rôdeur : le Soin n'est ni une situation, ni possible");
+    G.grimoireRules = [R(), R(), R()]; g.grimoirePrepareAll(sil);
+    ok(G.grimoireRules.slice(0, 3).every(function (r) { return r.conditionId !== "healIncoming"; }), "« Tout préparer » (Rôdeur) : aucune règle de Soin (" + G.grimoireRules.slice(0, 3).map(function (r) { return r.conditionId; }).join() + ")");
+    ok(g.etRuleUseless(R("healIncoming", "skill2"), g.etPossibleConds(sil)), "Rôdeur : une règle de Soin déjà posée est « sans objet ici »");
+    G.heroId = "knight";
+    ok(traits().indexOf("heal") !== -1 && g.etPossibleConds(sil).healIncoming === true, "Chevalier : le Soin reste annoncé");
+    G.heroId = "mage";
+    ok(traits().indexOf("heal") !== -1, "Mage : le Soin reste annoncé");
+    ok(fsRead("js/lang/en.js").indexOf(JSON.stringify("Elle se bat comme toi : elle ne se soignera pas.")) >= 0, "en.js : la ligne de la phase traduite");
+  } catch (err) { ok(false, "[497] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  finally { g.addLog = keep.log; try { run("fullResetState();"); } catch (e2) {} game = freshCombat("knight"); }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

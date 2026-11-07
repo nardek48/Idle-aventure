@@ -255,7 +255,8 @@ function etQuestCreatures(quest) {
   var seul = (quest.steps || []).length && quest.steps.every(function (s) { return s.type === "bossKill" || s.type === "eliteKill"; });
   var out = seul ? [] : ids.map(function (id) { return { kind: "enemy", id: id }; });
   if (quest.eliteId) etPushElite(out, quest.eliteId);
-  if (quest.bossId) out.push({ kind: "boss", id: quest.bossId, archetype: quest.bossArchetype || null, phases: quest.bossPhases || null });
+  var vs = (quest.bossId && window.TowerSystem) ? TowerSystem.copyClassRule(quest) : null; // v3.737.0 : la silhouette face au Rôdeur, sans soin
+  if (quest.bossId) out.push({ kind: "boss", id: quest.bossId, archetype: quest.bossArchetype || null, phases: quest.bossPhases || null, noHeal: !!(vs && vs.noHeal) });
   return out;
 }
 
@@ -311,8 +312,8 @@ function etDungeonPool(d) {
 /* Nom, traits et « déjà vaincu » d'une créature. v3.492.14 : tous ses traits, comme le moteur les joue
    (combat-engine.js : un boss se soigne et se protège, une élite se protège et s'exalte). */
 // Les phases (renforts, chaleur, plongée, trait qui change…) restent une surprise : décision v3.378.0, sauf celles du round 1 (v3.736.0).
-function etBossTraits(archetype) {
-  var t = ["heal", "shielded"];
+function etBossTraits(archetype, phases, noHeal) {
+  var t = noHeal ? ["shielded"] : ["heal", "shielded"]; // v3.737.0 : noHeal, boss qui ne se soigne pas
   if (archetype) t.push(archetype);
   return t;
 }
@@ -335,7 +336,7 @@ function etDescribe(c) {
   }
   if (c.kind === "boss") {
     var b = window.BOSS_DB && BOSS_DB[c.id];
-    return { name: b ? b.name : c.id, traits: etBossTraits(c.archetype, c.phases), met: etKilled(c.id) };
+    return { name: b ? b.name : c.id, traits: etBossTraits(c.archetype, c.phases, c.noHeal), met: etKilled(c.id) };
   }
   if (c.kind === "dungeonBoss") {
     return { name: c.name || "Boss", traits: etBossTraits(c.archetype, c.phases).concat(c.rises ? ["rising"] : []), met: !!(game.dungeonTierCleared && game.dungeonTierCleared[c.id]) };
@@ -531,7 +532,7 @@ function etWorldIndex(ctx) {
   return window.WorldManager ? Number(WorldManager.worldIndex || 0) : 0;
 }
 function etCertainTraits(c, ctx) {
-  if (c.kind === "boss" || c.kind === "dungeonBoss") return [{ trait: "heal" }, { trait: "shielded" }];
+  if (c.kind === "boss" || c.kind === "dungeonBoss") return c.noHeal ? [{ trait: "shielded" }] : [{ trait: "heal" }, { trait: "shielded" }]; // v3.737.0
   if (c.kind === "elite") return [{ trait: "shielded" }, { trait: "surge" }];
   if (c.kind !== "enemy") return [];
   var fixed = (typeof FIXED_ENEMY_ARCHETYPES !== "undefined" && FIXED_ENEMY_ARCHETYPES[c.id]) || null;

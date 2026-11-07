@@ -85,6 +85,8 @@ var QuestEnemyManager = {
          pour les trois classes ; à 0,4 (÷2,5) il tombe à 0 / 7 / 0 %. */
       /* v3.263.0 : bossHpMult (optionnel) règle le boss à part ; absent, le boss suit enemyHpMult. */
       var hpMult = Number(enemy && enemy.isBoss && quest.bossHpMult != null ? quest.bossHpMult : quest.enemyHpMult);
+      var vs = (enemy && enemy.isBoss && window.TowerSystem) ? TowerSystem.copyClassRule(src) : null; // v3.737.0 (Seb 07/11) : la silhouette
+      if (vs) { if (vs.bossHpMult) hpMult = Number(vs.bossHpMult); if (vs.noHeal) enemy.noHeal = true; } // face au Rôdeur : PV ×3,5, sans soin
       if (enemy && isFinite(hpMult) && hpMult > 0 && hpMult !== 1) {
         enemy.hp = Math.max(1, Math.floor(enemy.maxHp * hpMult));
         enemy.maxHp = enemy.hp;

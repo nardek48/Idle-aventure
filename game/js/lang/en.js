@@ -8428,6 +8428,7 @@ I18n.register("en", {
   "La Tour prend son temps : Terrain d'entraînement 19 à 21 (jusqu'à 230), les 5 étages et 2 escaliers, et à l'acte III la Forge 7 avec l'arme reforgée à 13.": "The Tower takes its time: Training Ground 19 to 21 (up to 230), all 5 floors and 2 staircases, and in act III Forge 7 with the weapon reforged to 13.",
   "Au camp, le soir : trois phrases de Maddoc et d'Ysolt réécrites.": "At camp, in the evening: three lines from Maddoc and Ysolt rewritten.",
   "La lumière va passer à travers elle : au prochain round, rien ne la touchera.": "The light is about to pass through it: next round, nothing will touch it.",
+  "Elle se bat comme toi : elle ne se soignera pas.": "It fights like you: it won't heal itself.",
   "La lumière se retire : on peut de nouveau la toucher.": "The light withdraws: it can be touched again.",
   "La lumière passe à travers elle : rien ne la touche jusqu'à son prochain tour.": "The light passes through it: nothing touches it until its next turn.",
   "La lumière monte": "The light rises",

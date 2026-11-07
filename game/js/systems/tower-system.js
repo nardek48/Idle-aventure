@@ -13,6 +13,10 @@ var TOWER_SUMMIT_HARD = 1.2, TOWER_SUMMIT_LOOT = 2;
 /* v3.630.0 (TW6) : le trait que la silhouette prend à chaque classe (un contre connu du Grimoire pour chacun).
    Rôdeur : blindée, pas corruptrice (au banc, la corruption rendait le combat impossible quel que soit le réglage). */
 var TOWER_CLASS_ARCHETYPE = { knight: "enraged", ranger: "armored", mage: "silenced" };
+// v3.737.0 (Seb 07/11, piste E du banc silhouette-rodeur) : face au Rôdeur, elle ne se soigne pas (il ne se soigne pas)
+// et n'a que ×3,5 PV au lieu de ×4,25 ; Chevalier et Mage inchangés.
+var TOWER_SILHOUETTE_VS_CLASS = { ranger: { bossHpMult: 3.5, noHeal: true } };
+var TOWER_NO_HEAL_ROUNDS = 1e9; // minuteur de soin repoussé hors du combat (fini : survit à JSON)
 
 var TowerSystem = {
   /* Le héros se bat à la Tour (monde de résidence). */
@@ -111,11 +115,21 @@ var TowerSystem = {
     var cls = typeof getClassByHeroId === "function" ? getClassByHeroId(heroId) : null;
     return cls && cls.heroIds && cls.heroIds[0] ? cls.heroIds[0] : heroId;
   },
+  /* v3.737.0 : règle de la silhouette (boss à phase copyClass) contre la classe du héros, ou null. */
+  copyClassRule: function (quest) {
+    var src = (quest && window.ADVENTURE_QUESTS && ADVENTURE_QUESTS[quest.id]) || quest;
+    var copie = !!(src && Array.isArray(src.bossPhases) && src.bossPhases.some(function (p) { return p && p.copyClass; }));
+    return copie ? (TOWER_SILHOUETTE_VS_CLASS[this.baseHeroId(game.heroId)] || null) : null;
+  },
   /* v3.630.0 (TW6) : phases de la silhouette, appelées par BossMomentManager.onPhase. */
   onBossPhase: function (e, ph) {
     if (!e || !ph) return;
     // elle prend le trait de ta classe : posé sur la phase, que checkPhases applique juste après (silence compris)
     if (ph.copyClass) ph.archetype = TOWER_CLASS_ARCHETYPE[TowerSystem.baseHeroId(game.heroId)] || "enraged";
+    if (ph.copyClass && e.noHeal) { // v3.737.0 : posé au spawn (QuestEnemyManager) ; phase du round 1, avant toute annonce de soin
+      e.healTelegraphed = false; e.healIn = TOWER_NO_HEAL_ROUNDS;
+      if (typeof addLog === "function") addLog(_t("Elle se bat comme toi : elle ne se soignera pas."), "event");
+    }
     if (ph.mirror) e.mirror = true;
     if (ph.through) { // v3.636.0 (TW6, Seb 03/11) : le round intouchable, annoncé ; il commence à son prochain tour
       e.throughIn = true;
@@ -229,3 +243,5 @@ window.TOWER_BRAISE_HEAL = TOWER_BRAISE_HEAL;
 window.TOWER_BRAISE_DMG = TOWER_BRAISE_DMG;
 window.TOWER_MIRROR_PENALTY = TOWER_MIRROR_PENALTY;
 window.TOWER_CLASS_ARCHETYPE = TOWER_CLASS_ARCHETYPE;
+window.TOWER_SILHOUETTE_VS_CLASS = TOWER_SILHOUETTE_VS_CLASS;
+window.TOWER_NO_HEAL_ROUNDS = TOWER_NO_HEAL_ROUNDS;

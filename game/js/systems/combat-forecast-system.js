@@ -222,6 +222,7 @@ var CombatForecast = {
      sur un cycle de 4 à 6), soit environ +25 %. Renvoie 0 si l'ennemi ne se soigne pas. */
   getHealThreshold: function (enemy) {
     if (!enemy || !enemy.isBoss || enemy.isElite) return 0; // une élite troque son soin contre l'exaltation
+    if (enemy.noHeal) return 0; // v3.737.0 : la silhouette face au Rôdeur ne se soigne pas
     var pct = (typeof BOSS_HEAL_PERCENT === "number") ? BOSS_HEAL_PERCENT : 0;
     var every = (typeof BOSS_HEAL_ROUNDS === "number") ? BOSS_HEAL_ROUNDS : 5;
     if (!(pct > 0) || !(every > 0)) return 0;
