@@ -2,7 +2,7 @@
 /* js/sim/combat-round-sim.js — simulateur PUR de combat par rounds (P1, ligne directrice §5). Zéro accès à game.* :
    données (héros, ennemis, boss, kits) et coefficients injectés. Chargé par index.html (bac à sable) et par les harnais Node.
    v3.102.3 : aligné sur le moteur réel (P2) — kits en rounds (cooldownRounds/durationRounds/percentPerRound), patterns
-   télégraphe→impact (charge ×1,3, bouclier boss 2 rounds −50 %, soin boss 15 %), contres par les actions `counters`. */
+   télégraphe→impact (charge ×1,3, bouclier boss 2 rounds −50 %, soin boss 10 % des PV max), contres par les actions `counters`. */
 
 /* Coefficients du modèle par rounds. Les formules de stats-system.js sont conservées ; seuls les
    coefficients marqués (round) sont nouveaux ou recalibrés par P1. */
@@ -32,7 +32,7 @@ var ROUND_MODEL_DEFAULTS = {
                               // gain = 100 * célérité / (célérité + K), miroir de CombatEngine.getGaugeGainPerAction()
   enemyCelerityGaugeCoef: 1.0, // (round) idem côté ennemi
   bossHealEveryRounds: 5,     // (round) soin boss : télégraphe au round 5, impact (remplace la frappe) au round 6
-  bossHealPercent: 0.15,
+  bossHealPercent: 0.10,     // v3.732.0 (Seb 07/11) : part des PV max, plafonnée aux PV manquants (miroir de resolveBossHeal)
   chargeRoundsMin: 3,         // (round) charge des ennemis normaux : compte à rebours 3-5, télégraphe puis impact ×1,3
   chargeRoundsMax: 5,
   chargeDmgMult: 1.3,
@@ -333,7 +333,7 @@ function simulateFight(hero, enemy, cfg, opts) {
     var impact = false;
     if (cfg.patternsEnabled) {
       if (enemy.healTelegraphed) {
-        enemy.hp = Math.min(enemy.maxHp, enemy.hp + Math.floor(enemy.hp * cfg.bossHealPercent));
+        enemy.hp = Math.min(enemy.maxHp, enemy.hp + Math.max(1, Math.floor(enemy.maxHp * cfg.bossHealPercent))); // v3.732.0 : PV max
         enemy.healTelegraphed = false; enemy.healIn = cfg.bossHealEveryRounds; impact = true;
       } else if (enemy.shieldTelegraphed) {
         enemy.shieldRounds = cfg.shieldDurationRounds;

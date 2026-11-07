@@ -69,7 +69,7 @@ var BOSS_SHIELD_DURATION_ROUNDS = 2;  // ex 4 000 ms
 var BOSS_SHIELD_REDUCTION = 0.5;
 
 var BOSS_HEAL_ROUNDS = 5;             // fixe, comme le sim P1
-var BOSS_HEAL_PERCENT = 0.15;
+var BOSS_HEAL_PERCENT = 0.10;         // v3.732.0 (Seb 07/11) : part des PV MAX (ex 15 % des PV actuels), plafonnée aux PV manquants
 
 /* v3.204.0 (E4) — EXALTATION D'ÉLITE. Une élite (enemy.isElite) ne se soigne
    pas : son second minuteur porte ce pattern à la place. Télégraphe au round N,
@@ -1111,7 +1111,9 @@ var CombatEngine = {
     }
     e.healTelegraphed = false;
     e.healIn = BOSS_HEAL_ROUNDS;
-    var healAmount = Math.max(1, Math.floor(Number(e.hp || 0) * BOSS_HEAL_PERCENT * uniquePowerMult("dun_sepulcre"))); // v3.470.0 : Sépulcre
+    // v3.732.0 (Seb 07/11) : 10 % des PV max, plafonné aux PV manquants (profil S1 du banc bouclier-soin) ; Sépulcre (v3.470.0)
+    var maxHp = Number(e.maxHp || 0);
+    var healAmount = Math.max(1, Math.min(Math.max(0, maxHp - Number(e.hp || 0)), Math.floor(maxHp * BOSS_HEAL_PERCENT * uniquePowerMult("dun_sepulcre"))));
     e.hp = Math.min(e.maxHp, e.hp + healAmount);
     addLog("💚 " + _t("{x} récupère {n} PV !", { x: _td(e.name), n: formatNumber(healAmount) }), "event");
     if (typeof renderEnemyHp === "function") renderEnemyHp();
@@ -1516,7 +1518,8 @@ var CombatEngine = {
       return Math.max(1, Math.floor(power * ENEMY_POWER_DMG_COEF * bossMult));
     }
     if (conditionId === "healIncoming") {
-      return Math.max(1, Math.floor(Number(game.enemy.hp || 0) * BOSS_HEAL_PERCENT));
+      var hm = Number(game.enemy.maxHp || 0); // v3.732.0 (Seb 07/11) : même règle que resolveBossHeal (PV max, plafonné)
+      return Math.max(1, Math.min(Math.max(0, hm - Number(game.enemy.hp || 0)), Math.floor(hm * BOSS_HEAL_PERCENT)));
     }
     if (conditionId === "enemySilenceIncoming") {
       if (typeof getHeroSilenceRounds === "function") return getHeroSilenceRounds(); // v3.363.0

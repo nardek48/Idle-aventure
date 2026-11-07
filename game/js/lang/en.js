@@ -10,6 +10,7 @@
    Les textes des données sont traduits par _td() à l'affichage (registre : lang/data-fields.js). */
 I18n.register("en", {
   // index.html
+  "Boss : leur soin rend maintenant 10 % de leurs PV max (au lieu de 15 % des PV qui leur restent). Un boss presque vaincu se soigne autant qu'un boss en pleine forme : contrer son soin compte à chaque phase.": "Bosses: their heal now restores 10% of their max HP (instead of 15% of their remaining HP). A nearly beaten boss heals as much as a fresh one: countering the heal matters in every phase.",
   "Mage : les ennemis ne se renforcent plus en reprenant ses PV en plus (ils tapaient jusqu'à 12 % plus fort que pour les autres classes). Sur « Les pentes » de la Montagne, il gagne près de 4 fois sur 5 au lieu de 3 sur 5.": "Mage: enemies no longer scale up by taking back the Mage's extra HP (they hit up to 12% harder than for other classes). On the Mountain's \"The slopes\", the Mage now wins nearly 4 times in 5 instead of 3 in 5.",
   "Contres : une Défense jouée contre une annonce (Charge, Silence, Exaltation) couvre aussi tes compagnons tant qu'elle dure, et une Charge contrée te rend le tour : tu frappes dans la foulée.": "Counters: a Defence played against a warning (Charge, Silence, Surge) also covers your companions while it lasts, and a countered Charge gives you your turn back: you strike right away.",
   "Grimoire : il ne montre plus que les situations que tu as déjà rencontrées en combat. Chaque nouvelle situation s'y ajoute avec un court message (« Nouvelle règle au Grimoire »).": "Grimoire: it now only shows the situations you have already met in combat. Each new one is added with a short message (\"New rule in the Grimoire\").",
@@ -2656,7 +2657,7 @@ I18n.register("en", {
   "Sa prochaine attaque frappe beaucoup plus fort.": "Its next attack hits much harder.",
   "Il s'apprête à bloquer tes techniques.": "It's about to block your techniques.",
   "Il va réduire de moitié les dégâts qu'il subit.": "It will halve the damage it takes.",
-  "Il récupère une partie de ses PV : ton travail est effacé.": "It recovers some of its HP: your work is undone.",
+  "Il récupère 10 % de ses PV max : une partie de ton travail est effacée.": "It recovers 10% of its max HP: part of your work is undone.",
   "Sa jauge est pleine : il frappera deux fois au prochain tour.": "Its gauge is full: it will strike twice next turn.",
   "Il n'est pas encore au contact et ne frappe pas — mais il arrive lancé.": "It isn't in contact yet and doesn't strike — but it's coming in fast.",
   "Plus il perd de PV, plus il frappe fort.": "The more HP it loses, the harder it hits.",

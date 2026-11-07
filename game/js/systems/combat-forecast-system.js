@@ -7,7 +7,7 @@ function firstOfGroup(x) { return Array.isArray(x) ? (x[0] || null) : x; }
 /* systems/combat-forecast-system.js — PRONOSTIC DE COMBAT (v3.247.0, demande Seb 15/09/2026).
 
    Pourquoi ce module existe : rien n'avertissait le joueur qu'un combat était hors de portée.
-   Le cas extrême est réel — un boss se soigne de BOSS_HEAL_PERCENT de ses PV tous les
+   Le cas extrême est réel — un boss se soigne de BOSS_HEAL_PERCENT de ses PV MAX (v3.732.0) tous les
    BOSS_HEAL_ROUNDS rounds ; sous un certain seuil de dégâts, il est MATHÉMATIQUEMENT
    intuable et le joueur peut frapper indéfiniment sans le savoir (constaté sur forest_05).
 

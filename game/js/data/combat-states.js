@@ -46,7 +46,7 @@ var COMBAT_STATES = {
   healIncoming: {
     famille: "alerte", nom: "Soin", icon: COMBAT_STATE_ICON + "heal_incoming.webp",
     mot: "Il va se soigner !", teinte: "is-heal",
-    desc: "Il récupère une partie de ses PV : ton travail est effacé.",
+    desc: "Il récupère 10 % de ses PV max : une partie de ton travail est effacée.", // v3.732.0 (Seb 07/11)
     hint: "Interromps-le — c'est le télégraphe qui coûte le plus cher."
   },
   doubleStrike: {

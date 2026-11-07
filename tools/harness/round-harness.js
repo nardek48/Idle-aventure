@@ -25427,6 +25427,51 @@ console.log("\n[492] v3.731.0 — Mise à l'échelle D : gabarit de puissance du
   finally { CF.getHeroDamagePerRound = keep.d; CF.getHeroEffectiveHp = keep.e; game.heroId = keep.h; W.worldIndex = keep.wi; W.adventureIndex = keep.ai; game.cycleCount = keep.cy; }
 })();
 
+console.log("\n[493] v3.732.0 — Soin des boss : 10 % des PV max, plafonné aux PV manquants (profil S1 du banc bouclier-soin, Seb 07/11)");
+(function () {
+  var CE = g.CombatEngine, CF = g.CombatForecast, keep = { up: g.uniquePowerMult, log: g.addLog };
+  try {
+    g.addLog = function () {};
+    ok(g.BOSS_HEAL_PERCENT === 0.10 && g.BOSS_HEAL_ROUNDS === 5, "constantes : 10 %, tous les 5 rounds (fréquence inchangée)");
+    game = freshCombat("knight"); var e = forceBoss(), M = e.maxHp, pas = Math.floor(M * 0.10);
+    ok(e.isBoss && M > 100, "boss de référence (" + e.name + ", " + M + " PV)");
+    function soin(pv) { e.hp = pv; e.healTelegraphed = true; CE.resolveBossHeal(); return e.hp - pv; }
+    ok(soin(Math.floor(M * 0.5)) === pas, "à 50 % : rend 10 % des PV max (" + pas + ")");
+    ok(soin(Math.floor(M * 0.1)) === pas, "à 10 % : rend toujours 10 % des PV max (l'ancienne règle en rendait 1,5 %)");
+    var haut = M - Math.floor(pas / 2);
+    ok(soin(haut) === M - haut && e.hp === M, "à 95 % : plafonné aux PV manquants, le boss finit plein");
+    ok(soin(M) === 0 && e.hp === M, "plein : rien à rendre");
+    ok(e.healTelegraphed === false && e.healIn === 5, "après le soin : télégraphe levé, minuteur à 5 rounds");
+    g.uniquePowerMult = function (id) { return id === "dun_sepulcre" ? 0.5 : keep.up(id); };
+    ok(soin(Math.floor(M * 0.5)) === Math.floor(M * 0.10 * 0.5), "Sépulcre : soin réduit de moitié (5 % des PV max)");
+    g.uniquePowerMult = keep.up;
+    // Valeur du contre (rapport de combat) : même règle, plafonnée
+    e.hp = Math.floor(M * 0.5);
+    ok(CE.estimateCounterValue("healIncoming") === pas, "valeur du contre : 10 % des PV max à mi-vie");
+    e.hp = M - 3;
+    ok(CE.estimateCounterValue("healIncoming") === 3, "valeur du contre : plafonnée aux PV manquants (3)");
+    // Pronostic : seuil = 10 % des PV max / 5 rounds, marge du bouclier ×1,25
+    ok(Math.abs(CF.getHealThreshold(e) - M * 0.10 / 5 * 1.25) < 1e-9, "pronostic : seuil de soin sur les PV max (" + Math.ceil(CF.getHealThreshold(e)) + " / round)");
+    // Contre : la Frappe lourde annule toujours le soin annoncé
+    e.hp = Math.floor(M * 0.5); e.healTelegraphed = true; fillResource(); var h0 = e.hp;
+    ok(g.ClassCombatManager.useSkill("skill1", "healIncoming") === true && e.healTelegraphed === false && e.healIn === 5 && e.hp <= h0, "contre (Frappe lourde) : soin annulé, aucun PV rendu, minuteur relancé");
+    // Suspension pendant les renforts de phase (moteur inchangé)
+    var add = { id: "slime", name: "Renfort", isBoss: false, hp: 50, maxHp: 50, resists: [], weak: [], stats: g.ENEMY_DB.slime.stats };
+    e.phases = [{ atPct: 0.5, adds: [], label: "t" }]; e.healTelegraphed = false; e.healIn = 1; e.shieldIn = 99; e.shieldTelegraphed = false;
+    game.enemy = e; CE.prepareEnemy(add); g.CombatActors.setEnemies([e, add]); // game.enemy remet le groupe à [e] : posé avant
+    ok(CE.bossHealSuspended(e) === true, "renfort debout : soin suspendu");
+    CE.tickEnemyTelegraphs(e);
+    ok(e.healTelegraphed === false, "renfort debout : le soin ne s'annonce pas");
+    add.hp = 0; g.CombatActors.setEnemies([e]); CE.tickEnemyTelegraphs(e);
+    ok(CE.bossHealSuspended(e) === false && e.healTelegraphed === true, "salle nettoyée : le soin s'annonce de nouveau");
+    // Simulateur de round (bac à sable) aligné
+    var RC = g.CombatRoundSim.config({});
+    ok(RC.bossHealPercent === 0.10 && fsRead("js/sim/combat-round-sim.js").indexOf("Math.floor(enemy.maxHp * cfg.bossHealPercent))); // v3.732.0") >= 0, "simulateur de round : 10 % des PV max");
+    ok(fsRead("js/data/combat-states.js").indexOf("Il récupère 10 % de ses PV max") >= 0 && fsRead("js/lang/en.js").indexOf("It recovers 10% of its max HP") >= 0, "état « Soin » : le texte dit la règle");
+  } catch (err) { ok(false, "[493] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  finally { g.uniquePowerMult = keep.up; g.addLog = keep.log; try { run("fullResetState();"); } catch (e2) {} }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");
