@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.742.0", "dungeon/boss_crown", _t("Boss plus longs : le Basilic, le Sphinx, Varrek, Nezzam et l'Orc tiennent plus longtemps et changent de rythme plus tôt. Un boss déjà vaincu annonce ses phases au pronostic : prépare-toi à sa rage.")],
     ["3.741.0", "system/settings_game", _t("Journal de test : il note aussi où part ton or (entraînement du héros, rangs de techniques, niveaux et sorts des compagnons).")],
     ["3.740.0", "village_buildings/caravan_market", _t("La caravane d'essai que l'Histoire demande (Ruines, Crypte) revient maintenant en 3 minutes au lieu de 10.")],
     ["3.739.0", "system/sortie_prep", _t("Préparer la sortie : « Tout préparer » n'emporte plus l'Huile de lame d'office (elle reste proposée) ; seul le Baume froid, utile face à un miroir, est ajouté automatiquement.")],

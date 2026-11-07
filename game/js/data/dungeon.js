@@ -119,7 +119,7 @@ var DUNGEONS = [
        sinon les renforts allongeraient le combat et multiplieraient les soins. */
     boss: {
       baseId: "slimeking", name: "Basilic", archetype: "corrupted",
-      statMult: { endurance: 1.2, power: 1.5 }, image: "./images/Boss/basilic.webp", // v3.348.0
+      statMult: { endurance: 1.8, power: 1.2 }, image: "./images/Boss/basilic.webp", // v3.742.0 (boss courts V3) : PV ×1,5, puissance ×0,8
       unique: { id: "ecailles_basilic", slot: "armor", name: "Écailles du Basilic", icon: "armor", power: "dun_mue" }, // v3.470.0
       phases: [
         /* Seb parlait de serpents : il n'y en a pas au bestiaire. On prend l'araignée,
@@ -127,7 +127,7 @@ var DUNGEONS = [
            ajouté à ENEMY_DB, il suffit de changer cet identifiant. */
         { atPct: 0.75, adds: ["spider"], addsHpMult: 0.16, addsPowerMult: 0.45,
           label: "des fileuses descendent des voûtes" },
-        { atPct: 0.25, archetype: "enraged", label: "il entre en rage" }
+        { atPct: 0.5, archetype: "enraged", label: "il entre en rage" } // v3.742.0 : 0,25 → 0,5 (rage jouée 6-11 rounds)
       ]
     },
     locked: false,
@@ -192,12 +192,12 @@ var DUNGEONS = [
          ses deux potions, Rôdeur et Mage 100 % pour 0,6 à 0,9. Multiplicateurs sous 1 parce
          que la base est déjà un boss (104 d'endurance) : on ne le gonfle pas, on l'aiguise.
          L'écart entre classes sur un run long est un chantier à part (voir le changelog). */
-      statMult: { endurance: 0.8, power: 1.6 }, image: null,
+      statMult: { endurance: 1.2, power: 1.28 }, image: null, // v3.742.0 (boss courts V3) : PV ×1,5, puissance ×0,8
       unique: { id: "amulette_enigme", slot: "amulet", name: "Amulette de l'énigme", icon: "amulet", power: "dun_enigme" }, // v3.470.0
       phases: [
-        { atPct: 0.66, adds: ["sandwarrior", "sandwarrior"], addsHpMult: 0.18, addsPowerMult: 0.5,
+        { atPct: 0.75, adds: ["sandwarrior", "sandwarrior"], addsHpMult: 0.18, addsPowerMult: 0.5,
           label: "il n'attend plus de réponse" },
-        { atPct: 0.33, archetype: "enraged", label: "il regarde la rue" }
+        { atPct: 0.5, archetype: "enraged", label: "il regarde la rue" } // v3.742.0 : 0,66/0,33 → 0,75/0,5
       ]
     },
     /* v3.300.0 (W-2) : fermé jusqu'au lot W-4, faute de pool, d'élites et de boss calibré.
@@ -242,7 +242,8 @@ var DUNGEONS = [
     boss: { baseId: "skeletonlord", name: "Varrek, le Garde scellé", archetype: "enraged", rises: true,
       riseLine: "Varrek se relève. Personne ne lui a dit de rester à terre.",
       unique: { id: "bottes_garde", slot: "boots", name: "Bottes du Garde scellé", icon: "bottes", power: "dun_garde" }, // v3.470.0
-      statMult: { endurance: 0.6, power: 0.58 }, image: "./images/Boss/varrek.webp" }, // v3.438.2 : 0,72 -> 0,58, Enragé (Rare : 80 / 55 / 83 %)
+      statMult: { endurance: 0.9, power: 0.46 }, image: "./images/Boss/varrek.webp", // v3.742.0 (boss courts V3) : PV ×1,5, puissance ×0,8
+      phases: [{ atPct: 0.5, archetype: "armored", label: "il ferme sa garde", line: "Varrek lève son écu scellé. Les coups glissent." }] },
     /* v3.429.2 : fermé dès l'arrivée aux Ruines, faute de contenu. v3.430.0 : verrou d'Histoire,
        comme la Cité — il s'ouvre à ruines_12 ; entrée offerte pendant les étapes 12 et 15. */
     locked: false,

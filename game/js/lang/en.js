@@ -10,6 +10,7 @@
    Les textes des données sont traduits par _td() à l'affichage (registre : lang/data-fields.js). */
 I18n.register("en", {
   // v3.736.0 (Seb 07/11) : Grimoire vivant (3 règles, jeux, pronostic)
+  "Boss plus longs : le Basilic, le Sphinx, Varrek, Nezzam et l'Orc tiennent plus longtemps et changent de rythme plus tôt. Un boss déjà vaincu annonce ses phases au pronostic : prépare-toi à sa rage.": "Longer bosses: the Basilisk, the Sphinx, Varrek, Nezzam and the Orc hold out longer and change pace sooner. A boss you have already beaten announces its phases in the forecast: get ready for its rage.",
   "Journal de test : il note aussi où part ton or (entraînement du héros, rangs de techniques, niveaux et sorts des compagnons).": "Test log: it now also records where your gold goes (hero training, technique ranks, companion levels and spells).",
   "La caravane d'essai que l'Histoire demande (Ruines, Crypte) revient maintenant en 3 minutes au lieu de 10.": "The trial caravan the Story asks for (Ruins, Crypt) now comes back in 3 minutes instead of 10.",
   "Préparer la sortie : « Tout préparer » n'emporte plus l'Huile de lame d'office (elle reste proposée) ; seul le Baume froid, utile face à un miroir, est ajouté automatiquement.": "Prepare the outing: \"Prepare all\" no longer takes the Blade oil automatically (it is still suggested); only the Cold balm, useful against a mirror, is added automatically.",
@@ -53,6 +54,7 @@ I18n.register("en", {
   "l'un ou l'autre": "one or the other",
   "facultatif": "optional",
   "dès le round 1 : « {x} »": "from round 1: \"{x}\"",
+  "en cours de combat : « {x} »": "mid-fight: \"{x}\"", // v3.742.0
   "Corriger": "Fix",
   "Ajouter": "Add",
   "elle se révélera en combat.": "it will show itself in combat.",
@@ -3003,6 +3005,10 @@ I18n.register("en", {
   "il entre en rage": "it flies into a rage",
   "il n'attend plus de réponse": "it no longer waits for an answer",
   "il regarde la rue": "it watches the street",
+  "il serre sa garde": "it tightens its guard", // v3.742.0
+  "il ferme sa garde": "he closes his guard",
+  "Il ramasse son bouclier. Il ne rit plus.": "He picks up his shield. He is not laughing any more.",
+  "Varrek lève son écu scellé. Les coups glissent.": "Varrek raises his sealed shield. Blows slide off.",
 
   // DUNGEON_MARKS
   "Colosses": "Colossi",

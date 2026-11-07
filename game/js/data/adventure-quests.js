@@ -60,6 +60,10 @@ var ADVENTURE_QUESTS = {
     worldId: "forest",
     adventureIndex: 1,
     gatesNextWorld: true,
+    // v3.742.0 (boss courts, version douce) : PV du boss ×1,25 et Blindé à 50 %, il n'avait aucune phase
+    bossId: "orcwarlord",
+    bossHpMult: 1.75,
+    bossPhases: [{ atPct: 0.5, archetype: "armored", label: "il serre sa garde", line: "Il ramasse son bouclier. Il ne rit plus." }],
     // v3.109.0 : + étape boss (Seigneur de guerre orc), liée à forest_15 — même patron que « Prouver sa valeur ».
     // Run dédié (spawnFor restaure les index) : plus de kill du boss en farm libre, qui relançait un cycle (+45 % de scale).
     name: "Le Cœur de la Forêt",
@@ -284,12 +288,13 @@ var ADVENTURE_QUESTS = {
     bossId: "nezzam",
     bossArchetype: "vampiric",
     bossPhases: [
-      { atPct: 0.6, adds: ["sandworm"], addsHpMult: 0.18, addsPowerMult: 0.5,
+      { atPct: 0.75, adds: ["sandworm"], addsHpMult: 0.18, addsPowerMult: 0.5,
         label: "le lit se remplit", line: "Le lit se remplit. Pas d'eau." },
-      { atPct: 0.3, archetype: "silenced", label: "il prend ta voix", line: "« Ici, on ne parle pas au roi. »" }
+      { atPct: 0.5, archetype: "silenced", label: "il prend ta voix", line: "« Ici, on ne parle pas au roi. »" }
     ],
-    bossHpMult: 4,
-    bossPowerMult: 1.4,
+    // v3.742.0 (boss courts V3) : PV 4 → 6, puissance 1,4 → 1,12, phases 0,6/0,3 → 0,75/0,5
+    bossHpMult: 6,
+    bossPowerMult: 1.12,
     bossLog: "Il revient par le fleuve. Il n'y a plus de fleuve.",
     name: "Le trône de sable",
     story: "Il revient par le lit du fleuve. Tiens le lit jusqu'au trône, puis tiens le trône.",

@@ -119,7 +119,7 @@ var DATA_TEXT_FIELDS = {
   COMBAT_ITEMS: ["*.name", "*.desc", "*.con"], // v3.441.0 : objets de combat (v3.442.0 : contrepartie)
   HEALING_POTIONS_DB: ["*.name"],
   UPGRADES: ["*.name", "*.desc"],
-  DUNGEONS: ["*.name", "*.desc", "*.story", "*.lockedHint", "*.prepHint", "*.boss.name", "*.boss.phases.*.label", "*.boss.riseLine", "*.boss.unique.name"],
+  DUNGEONS: ["*.name", "*.desc", "*.story", "*.lockedHint", "*.prepHint", "*.boss.name", "*.boss.phases.*.label", "*.boss.phases.*.line", "*.boss.riseLine", "*.boss.unique.name"],
   DUNGEON_MARKS: ["*.name", "*.desc"],
   DUNGEON_SHOP: ["*.name", "*.desc"],
   DUNGEON_HALT_CARDS: ["*.name", "*.gain", "*.cost", "*.note"], // v3.472.0

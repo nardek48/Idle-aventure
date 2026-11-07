@@ -311,7 +311,8 @@ function etDungeonPool(d) {
 
 /* Nom, traits et « déjà vaincu » d'une créature. v3.492.14 : tous ses traits, comme le moteur les joue
    (combat-engine.js : un boss se soigne et se protège, une élite se protège et s'exalte). */
-// Les phases (renforts, chaleur, plongée, trait qui change…) restent une surprise : décision v3.378.0, sauf celles du round 1 (v3.736.0).
+// Les phases (renforts, chaleur, plongée, trait qui change…) restent une surprise : décision v3.378.0, sauf celles du round 1 (v3.736.0)
+// et, une fois le boss vaincu, celles qui viennent en cours de combat (v3.742.0).
 function etBossTraits(archetype, phases, noHeal) {
   var t = noHeal ? ["shielded"] : ["heal", "shielded"]; // v3.737.0 : noHeal, boss qui ne se soigne pas
   if (archetype) t.push(archetype);
@@ -414,7 +415,8 @@ function grimoireSortieSituations(ctx) {
     out.push({ cond: cond, slot: slot, opt: !!t.opt, trait: t.trait, phase: t.phase });
   });
   var rank = function (c) { var i = GRIMOIRE_PREP_ORDER.indexOf(c); return i < 0 ? 99 : i; };
-  return out.sort(function (a, b) { return (a.opt ? 1 : 0) - (b.opt ? 1 : 0) || rank(a.cond) - rank(b.cond); });
+  // v3.742.0 : les phases d'abord (mesuré au banc : c'est là que préparer paie)
+  return out.sort(function (a, b) { return (a.opt ? 1 : 0) - (b.opt ? 1 : 0) || (a.phase != null ? 0 : 1) - (b.phase != null ? 0 : 1) || rank(a.cond) - rank(b.cond); });
 }
 window.grimoireSortieSituations = grimoireSortieSituations;
 
@@ -630,18 +632,25 @@ function etRoundOnePhaseTraits(c) {
   return out;
 }
 
+/* v3.742.0 (Seb 07/11, boss courts) : boss déjà vaincu, ses phases en cours de combat sont annoncées (later). */
+function etLaterPhaseTraits(c) {
+  return etRoundOnePhaseTraits({ phases: (Array.isArray(c.phases) ? c.phases : []).filter(function (ph) { return ph && Number(ph.atPct) < 1; })
+    .map(function (ph) { var o = {}; for (var k in ph) o[k] = ph[k]; o.atPct = 1; return o; }) })
+    .map(function (x) { x.later = true; return x; });
+}
+
 /* Traits connus (groupés) et créatures jamais vaincues ; v3.736.0 : + situations certaines et phases du round 1,
    une situation certaine jamais rencontrée (GrimoireSeen) compte dans « unknown » sans être nommée. */
 function getEnemyTraitsPreview(ctx) {
   var traits = {}, unmet = 0, seen = {};
   var put = function (t, name, x) {
     if (!ENEMY_TRAIT_DEFS[t]) return;
-    var e = traits[t] = traits[t] || { names: [], ou: true, opt: true, phase: null, sure: true };
+    var e = traits[t] = traits[t] || { names: [], ou: true, opt: true, phase: null, later: false, sure: true };
     if (name && e.names.indexOf(name) === -1) e.names.push(name);
     if (!(x && x.sure)) e.sure = false; // vu sur une créature vaincue : rencontré, jamais caché
     if (!(x && x.ou)) e.ou = false;
     if (!(x && x.opt)) e.opt = false;
-    if (x && x.phase != null && e.phase == null) e.phase = x.phase;
+    if (x && x.phase != null && (e.phase == null || (e.later && !x.later))) { e.phase = x.phase; e.later = !!x.later; } // le round 1 prime
   };
   etCreaturesFor(ctx).forEach(function (c) {
     var key = c.kind + ":" + c.id;
@@ -652,6 +661,7 @@ function getEnemyTraitsPreview(ctx) {
     etRoundOnePhaseTraits(c).forEach(function (x) { x.sure = true; put(x.trait, nom, x); });
     if (!d.met) { unmet++; return; }
     d.traits.forEach(function (t) { put(t, d.name); });
+    if (c.kind === "boss" || c.kind === "dungeonBoss") etLaterPhaseTraits(c).forEach(function (x) { put(x.trait, d.name, x); });
   });
   etQuestTraits(ctx).forEach(function (x) { if (x.trait === "vein") x.sure = true; put(x.trait, x.name, x); });
   var unknown = 0;
@@ -659,7 +669,7 @@ function getEnemyTraitsPreview(ctx) {
     var cond = ENEMY_TRAIT_DEFS[t].cond, hide = !!(traits[t].sure && cond && window.GrimoireSeen && !GrimoireSeen.isVisible(cond));
     if (hide) unknown++;
     return !hide;
-  }).map(function (t) { var e = traits[t]; return { trait: t, names: e.names, ou: e.ou, opt: e.opt, phase: e.phase }; });
+  }).map(function (t) { var e = traits[t]; return { trait: t, names: e.names, ou: e.ou, opt: e.opt, phase: e.phase, later: e.later }; });
   list.sort(function (a, b) { return (a.phase != null ? 0 : 1) - (b.phase != null ? 0 : 1); }); // la phase du round 1 en tête
   return { traits: list, unmet: unmet, unknown: unknown };
 }

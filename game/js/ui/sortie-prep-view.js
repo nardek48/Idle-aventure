@@ -466,7 +466,7 @@ function buildSortiePrepTraitsHTML(grim) {
     var tags = (t.phase != null ? ' <span class="sp-flag is-phase">' + _t("phase") + '</span>' : '')
       + (t.ou ? ' <span class="sp-flag">' + _t("l'un ou l'autre") + '</span>' : '')
       + (t.opt ? ' <span class="sp-flag">' + _t("facultatif") + '</span>' : '');
-    var src = t.phase != null ? _t("dès le round 1 : « {x} »", { x: _td(t.phase) }) : t.names.map(function (n) { return _td(n); }).join(", ");
+    var src = t.phase != null ? (t.later ? _t("en cours de combat : « {x} »", { x: _td(t.phase) }) : _t("dès le round 1 : « {x} »", { x: _td(t.phase) })) : t.names.map(function (n) { return _td(n); }).join(", ");
     var btn = cls === "is-none" && slot ? '<button type="button" class="sp-trait-fix" onclick="sortiePrepAdd(\'' + esc(def.cond) + '\')">' + (r.status === "react" ? _t("Corriger") : _t("Ajouter")) + '</button>' : '';
     h += '<div class="sp-trait ' + cls + '">' + chk + '<img src="' + esc(st.icon || "") + '" alt=""><span><b>' + esc(_td(st.nom)) + '</b>' + tags + ' · '
       + esc(src) + '<em>' + esc(resp) + '</em></span>' + btn + '</div>';

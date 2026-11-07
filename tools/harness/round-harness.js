@@ -7880,8 +7880,8 @@ console.log("\n[85 bis] v3.288.0 — Donjon : élites escortées et phases du Ba
     "le Basilic porte deux seuils de phase");
   ok(boss.phases[0].atPct === 0.75 && Array.isArray(boss.phases[0].adds),
     "à 75 %, des renforts");
-  ok(boss.phases[1].atPct === 0.25 && boss.phases[1].archetype === "enraged",
-    "à 25 %, la rage — l'archétype existant, pas un système neuf");
+  ok(boss.phases[1].atPct === 0.5 && boss.phases[1].archetype === "enraged",
+    "à 50 %, la rage — l'archétype existant, pas un système neuf (v3.742.0 : 0,25 → 0,5)");
 
   /* --- Le seuil déclenche vraiment, et une seule fois --- */
   g.CombatEngine.spawnGroup([boss]);
@@ -9288,7 +9288,7 @@ console.log("\n[115] v3.319.0 — Acte III, étape 15 : le sphinx");
   ok(!!g.BOSS_DB.sphinx && g.BOSS_DB.sphinx.weak.indexOf("sword") >= 0 && g.BOSS_DB.sphinx.resists.indexOf("magic") >= 0,
     "le sphinx est dans BOSS_DB : la pierre boit les sorts, la lame trouve les joints");
   ok(cite.boss.baseId === "sphinx" && !!g.BOSS_DB[cite.boss.baseId], "le boss de la Cité pointe sur une entrée de BOSS_DB");
-  ok(cite.boss.phases.length === 2 && cite.boss.phases[0].atPct === 0.66 && cite.boss.phases[1].atPct === 0.33, "deux seuils de phase");
+  ok(cite.boss.phases.length === 2 && cite.boss.phases[0].atPct === 0.75 && cite.boss.phases[1].atPct === 0.5, "deux seuils de phase (v3.742.0 : 75 / 50 %)");
   ok(cite.boss.phases[0].adds.length === 2 && cite.boss.phases[0].adds[0] === "sandwarrior", "à 66 % : deux armures sortent des rues");
   ok(cite.boss.phases[1].archetype === "enraged", "à 33 % : il change d'archétype");
   ok(cite.difficultyMult === 2.6, "v3.326.0 (lot C-2) : la Cité remonte à 2,6, calée sur le profil de fin d'acte III");
@@ -11488,10 +11488,11 @@ console.log("\n[154] v3.378.0 (v3.446.0 : à la préparation de sortie) — « C
   G.killCounts = { sandwarrior: 2, scarab: 5, sandworm: 1 };
   h = card(trone);
   ok(h.indexOf("Blindé") !== -1 && h.indexOf("Vampirique") === -1 && /1 créature jamais vaincue/.test(h), "Nezzam jamais vaincu : trait caché ; Guerrier des sables : Blindé");
+  ok(h.indexOf("Silence") === -1 && h.indexOf("en cours de combat") === -1, "Nezzam jamais vaincu : ses phases restent une surprise (v3.742.0)");
   G.killCounts.nezzam = 1;
   h = card(trone);
-  ok(h.indexOf("Vampirique") !== -1 && h.indexOf("Silence") === -1, "Nezzam vaincu : « Vampirique » ; sa phase de silence reste une surprise");
-  ok(h.split("sp-trait ").length - 1 === 4 && /Soin<\/b> · [^<]*Nezzam/.test(h) && /Bouclier<\/b> · [^<]*Nezzam/.test(h),
+  ok(h.indexOf("Vampirique") !== -1 && /Silence<\/b> <span class="sp-flag is-phase">[^·]*· en cours de combat : « il prend ta voix »/.test(h), "Nezzam vaincu : « Vampirique » ; sa phase de silence annoncée « en cours de combat » (v3.742.0)");
+  ok(h.split("sp-trait ").length - 1 === 6 && /Soin<\/b> · [^<]*Nezzam/.test(h) && /Bouclier<\/b> · [^<]*Nezzam/.test(h),
     "scarabée et ver des sables (silence tiré au hasard) : aucun trait ; Nezzam : Soin et Bouclier de boss (v3.492.14)");
 
   // Donjon : élites et boss seulement ; boss connu une fois le donjon terminé
@@ -15071,7 +15072,7 @@ console.log("\n[226] v3.448.2 — Trône de sable : référence de l'ajustement 
     ok(W._heroRefKey === null, "la référence de quête est rendue après la génération");
     W.worldIndex = 1; W.adventureIndex = 0;
     ok(W.getHeroScale().hp > 1.1, "hors quête, l'aventure 0 garde sa référence (début de Désert)");
-    ok(Q.enemyPowerMult === 6 && Q.bossPowerMult === 1.4, "calage v3.448.2 : rencontres ×6, Nezzam ×1,4");
+    ok(Q.enemyPowerMult === 6 && Q.bossPowerMult === 1.12 && Q.bossHpMult === 6, "calage v3.742.0 (boss courts) : rencontres ×6, Nezzam PV ×6, puissance ×1,12");
   } catch (err) {
     ok(false, "[226] exception : " + err.message);
   } finally {
@@ -18514,7 +18515,7 @@ console.log("\n[318] v3.492.14 — préparation : soin, bouclier et exaltation a
     ok(/is-free/.test(tri) && /Ni r\u00e8gle ni objet/.test(tri) && tri.indexOf("sortiePrepEditRules") === -1, "mécanique sans règle de Grimoire : « Ni règle ni objet », sans raccourci vers une règle impossible");
     ok(k.indexOf("shielded") !== -1, "Acide mordant : le Bouclier des boss et des élites compte, plus d'étiquette « Aucun Bouclier connu » en donjon");
     var kd = keys({ type: "adventure", id: "aq_montagne_dragon" });
-    ok(kd.indexOf("heal") !== -1 && kd.indexOf("shielded") !== -1 && kd.indexOf("adds") === -1 && kd.indexOf("enraged") === -1, "Dragon ancien : Soin et Bouclier ; ses renforts et sa rage de phase restent une surprise");
+    ok(kd.indexOf("heal") !== -1 && kd.indexOf("shielded") !== -1 && kd.indexOf("adds") !== -1 && kd.indexOf("enraged") !== -1, "Dragon ancien vaincu : Soin et Bouclier ; ses renforts et sa rage de phase annoncés (v3.742.0)");
     var ko = keys({ type: "adventure", id: "aq_crypte_appel" });
     ok(ko.indexOf("calling") !== -1 && ko.indexOf("asleep") !== -1, "L'appel du Nécromancien : Appel et Dormeurs annoncés");
     G.killCounts = {}; G.dungeonTierCleared = {};
