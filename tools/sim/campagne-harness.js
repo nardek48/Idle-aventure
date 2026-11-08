@@ -17,7 +17,7 @@
        bouton mis en avant tout le jeu, compagnons compris) ; une potion de soin sous 30 % ;
      - avant chaque sortie : PV pleins au feu de camp (le temps passe), potions en poche ;
      - entre deux étapes : meilleur objet porté, talents, échoppe (pièce meilleure < 40 % de la
-       bourse), Terrain quand la caractéristique de classe bute, reforge arme/armure, puis
+       bourse), Terrain quand la caractéristique de classe bute, reforge (le moins reforgé d'abord), puis
        entraînement (caractéristique de classe et Endurance d'abord) avec 60 % de l'or ;
      - bloqué : il réessaie, et entre deux essais il va se renforcer (lots de Battue) ;
      - toujours bloqué : l'étape est notée MUR, puis rejouée combats gagnés d'office pour
@@ -430,7 +430,7 @@ function grindDungeon(raison) {
   return true;
 }
 /* B : ce qu'un joueur construit pour sa puissance. Le Terrain quand la caractéristique de classe
-   bute au plafond ; la reforge de l'arme et de l'armure quand la Forge est là. Un cran à la fois,
+   bute au plafond ; la reforge (l'emplacement le moins reforgé d'abord) quand la Forge est là. Un cran à la fois,
    et seulement si l'or du cran reste raisonnable : le temps de production et de chantier s'écoule. */
 function developVillage() {
   var g = G, V = g.VillageBuildingManager, F = g.ForgeManager;
@@ -477,13 +477,13 @@ function developVillage() {
       if (r.ok) STATS.zones = (STATS.zones || 0) + 1;
     });
   });
-  /* Forge : l'arme et l'armure d'abord (30 % de la bourse), les autres pièces ensuite (15 %). */
-  if (F && F.getBuildingLevel() > 0) g.EQUIPMENT_SLOTS.forEach(function (slot) {
+  /* Forge des mondes (v3.743.0) : tous les emplacements rapportent la même stat ; le moins reforgé d'abord
+     (le moins cher), un seul peut attendre ses matériaux (option A de Seb : les autres, stock seulement). */
+  if (F && F.getBuildingLevel() > 0) g.EQUIPMENT_SLOTS.slice().sort(function (a, b) { return F.getLevel(a) - F.getLevel(b); }).forEach(function (slot, rang) {
     var why2 = F.getBlockReason(slot), c2 = F.getCost(slot);
-    var part = (slot === "weapon" || slot === "armor") ? (INVESTI ? 0.5 : 0.3) : (INVESTI ? 0.3 : 0.15);
+    var part = rang === 0 ? (INVESTI ? 0.5 : 0.3) : (INVESTI ? 0.3 : 0.15);
     if (!c2 || (why2 && why2 !== "Matériaux manquants") || Number(c2.gold || 0) > g.game.gold * part) return;
-    // décision Seb (option A) : les pièces hors arme/armure ne se reforgent qu'avec les matériaux en stock, sans farm
-    if (why2 === "Matériaux manquants" && slot !== "weapon" && slot !== "armor" && !FARM_REFORGES) return;
+    if (why2 === "Matériaux manquants" && rang !== 0 && !FARM_REFORGES) return;
     SANS_LENDEMAIN++;
     var oR = g.game.gold, okR = reforgeTo(slot, F.getLevel(slot) + 1);
     dep("forge", Math.max(0, oR - g.game.gold));
