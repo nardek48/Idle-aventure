@@ -41,7 +41,9 @@ var COMBATS = ARGS.indexOf("--combats") >= 0;   // option B : vrais combats, rou
 var POLICY = ARGS.indexOf("--tactique") >= 0 ? "attentif" : "grimoire";   // B : Grimoire dès qu'il est ouvert (défaut), ou --tactique : le bouton mis en avant, à chaque round
 var SERMENT = ARGS.indexOf("--laisser") >= 0 ? "laisser" : "relever";   // desert_11 : relever le Serment (heaume) par défaut
 var ELITES_SECONDAIRES = ARGS.indexOf("--sans-elites") < 0;           // les quêtes d'élite du tableau (butin unique)
-var INVESTI = ARGS.indexOf("--forge-max") >= 0 || ARGS.indexOf("--investi") >= 0;   // B : Forge bâtie dès qu'elle ouvre et tout reforgé ; audit (27/10, DUR-6) : nom « forge-max », --investi reste un alias
+// v3.745 (Seb 08/11) : --batisseur = le joueur monte davantage ses bâtiments (chantier sous 60 % de la bourse) et la Forge au plafond
+var BATISSEUR = ARGS.indexOf("--batisseur") >= 0;
+var INVESTI = ARGS.indexOf("--forge-max") >= 0 || ARGS.indexOf("--investi") >= 0 || BATISSEUR;   // B : Forge bâtie dès qu'elle ouvre et tout reforgé ; audit (27/10, DUR-6) : nom « forge-max », --investi reste un alias
 // audit 04/11 (EQUI-13) : soin avant une sortie sous 70 % (l'alerte du jeu), et non plus 95 % ; --seuil-soin 0.95 pour l'ancien robot
 var SEUIL_SOIN = ARGS.indexOf("--seuil-soin") >= 0 ? Number(ARGS[ARGS.indexOf("--seuil-soin") + 1]) || 0.70 : 0.70;
 var FARM_REFORGES = ARGS.indexOf("--farm-reforges") >= 0;   // ancien comportement : farmer les matériaux de toutes les reforges
@@ -1427,7 +1429,7 @@ function villageJoueur(g) {
   var okWhy = function (id) { var w = V.getBlockReason(id); return !w || w === "Matériaux manquants"; };
   var ids = (g.VILLAGE_BUILDING_ORDER || Object.keys(g.VILLAGE_BUILDINGS)).filter(function (id) { return !V.isMaxLevel(id) && okWhy(id); });
   var cost = function (id) { var c = V.getNextCost(id) || {}; return Object.keys(c).reduce(function (a, k) { return a + Number(c[k] || 0); }, 0); };
-  ids = ids.filter(function (id) { return Number((V.getNextCost(id) || {}).gold || 0) <= g.game.gold * 0.3; }).sort(function (a, b) { return (plein && b === "warehouse") - (plein && a === "warehouse") || cost(a) - cost(b); });
+  ids = ids.filter(function (id) { return Number((V.getNextCost(id) || {}).gold || 0) <= g.game.gold * (BATISSEUR ? 0.6 : 0.3); }).sort(function (a, b) { return (plein && b === "warehouse") - (plein && a === "warehouse") || cost(a) - cost(b); });
   if (ids.length && V.getBlockReason(ids[0]) === "Matériaux manquants") { SANS_LENDEMAIN++; SANS_ATTENTE++; try { ensureCost(V.getNextCost(ids[0])); } finally { SANS_LENDEMAIN--; SANS_ATTENTE--; } }
   if (ids.length && !V.getBlockReason(ids[0]) && V.startBuild(ids[0])) { act("chantier:" + ids[0], (V.getNextCost(ids[0]) || {}).gold || 0); STATS.village.push(ids[0] + " " + (V.getLevel(ids[0]) + 1) + " (" + CURRENT_STEP + ")"); }
 }
