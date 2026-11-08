@@ -20126,6 +20126,12 @@ console.log("\n[377] v3.562.0 — Difficulté de la Crypte et de la Montagne : e
     ok(bd.maxHp === 100, "boss du Désert : inchangé");
     var bs = mk(true); Q.applyWorldMult({ id: "aq_tour_silhouette" }, bs);
     ok(bs.maxHp === 100 && g.ADVENTURE_QUESTS.aq_tour_silhouette.worldId === "tower", "la Silhouette : hors du +15 % (déjà réglée par classe)");
+    // v3.744.0 (Seb 08/11, option C) : élites par monde après la Forge des mondes
+    var EH = g.ELITE_HP_BY_WORLD, EP = g.ELITE_POWER_BY_WORLD, eid = Object.keys(g.ELITE_DB)[0];
+    ok(EH.crypt === 1.2 && EH.mountain === 1.2 && EH.tower === 1.25 && !EH.desert && !EH.ruins && EP.tower === 1.15 && !EP.crypt, "élites : Crypte et Montagne +20 % PV, Tour +25 % PV et +15 % puissance, Désert et Ruines inchangés");
+    var e0 = g.EliteManager.make(eid, "desert", 0), e1 = g.EliteManager.make(eid, "tower", 0);
+    var sv = EH.tower, svp = EP.tower; EH.tower = 1; EP.tower = 1; var e2 = g.EliteManager.make(eid, "tower", 0); EH.tower = sv; EP.tower = svp;
+    ok(e0 && e1 && e2 && e1.maxHp === Math.round(e2.maxHp * 1.25) && e1.stats.power === Math.round(e2.stats.power * 1.15), "élite de la Tour : PV ×1,25 et puissance ×1,15 à la fabrication");
     ok(d.maxHp === 100 && d.stats.power === 50, "quête du Désert : inchangée");
     ok(/selfG\.applyWorldMult\(quest, m\)/.test(fs.readFileSync(path.join(ROOT, "js/systems/quest-enemy-system.js"), "utf8")), "les groupes aussi");
   } catch (err) { ok(false, "[377] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }

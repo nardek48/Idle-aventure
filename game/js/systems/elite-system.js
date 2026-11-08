@@ -12,8 +12,11 @@
    l'appelant). C'est ce qui permettra au Donjon d'échelonner la même élite sur
    son palier au lieu du monde, sans redéfinir la créature. */
 
-var ELITE_HP_BY_WORLD = {}; // v3.744.0 : multiplicateur de PV des élites par monde (id de monde)
+// v3.744.0 (Seb 08/11, option C) : PV et puissance des élites par monde, la Forge des mondes les rendait plus faciles
+var ELITE_HP_BY_WORLD = { crypt: 1.2, mountain: 1.2, tower: 1.25 };
+var ELITE_POWER_BY_WORLD = { tower: 1.15 };
 window.ELITE_HP_BY_WORLD = ELITE_HP_BY_WORLD;
+window.ELITE_POWER_BY_WORLD = ELITE_POWER_BY_WORLD;
 
 var EliteManager = {
   get: function (eliteId) {
@@ -119,9 +122,11 @@ var EliteManager = {
     } finally {
       if (multSauve) def.statMult = multSauve;
     }
-    // v3.744.0 (Forge des mondes) : PV des élites par monde, la Forge les rendait plus faciles
+    // v3.744.0 : PV et puissance des élites par monde (ELITE_HP_BY_WORLD, ELITE_POWER_BY_WORLD)
     var hm = window.ELITE_HP_BY_WORLD ? Number(ELITE_HP_BY_WORLD[worldId]) : 1;
     if (enemy && hm > 0 && hm !== 1) { enemy.maxHp = Math.max(1, Math.round(enemy.maxHp * hm)); enemy.hp = enemy.maxHp; }
+    var pm = window.ELITE_POWER_BY_WORLD ? Number(ELITE_POWER_BY_WORLD[worldId]) : 1;
+    if (enemy && enemy.stats && pm > 0 && pm !== 1) enemy.stats.power = Math.max(1, Math.round(enemy.stats.power * pm));
     return enemy || null;
   },
 
