@@ -453,7 +453,10 @@ function developVillage() {
     var wf = V.getBlockReason("forge"), cf = V.getNextCost("forge");
     // Forge des mondes (Seb 07/11) : le second niveau de chaque monde attend l'acte III (WorldCaps, forgeActStep)
     if (cf && (!wf || wf === "Matériaux manquants" || /^Atelier niveau/.test(wf)) && Number(cf.gold || 0) <= g.game.gold * 0.5) {
-      if (upgradeBuilding("forge", V.getLevel("forge") + 1)) STATS.village.push("Forge " + V.getLevel("forge") + " (" + CURRENT_STEP + ")");
+      // v3.745 : sans attendre le lendemain d'une carte (le Verre trempé, le Verre de faille ne s'ouvrent qu'en cours de monde)
+      SANS_LENDEMAIN++;
+      try { if (upgradeBuilding("forge", V.getLevel("forge") + 1)) STATS.village.push("Forge " + V.getLevel("forge") + " (" + CURRENT_STEP + ")"); }
+      finally { SANS_LENDEMAIN--; }
     }
   }
   /* Compagnons : une amélioration par compagnon et par passage, si elle coûte moins de 30 % de la bourse. */
