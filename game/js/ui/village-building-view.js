@@ -669,9 +669,9 @@ function forgeChangeHTML() {
     var avant = formatEquipmentStat(Object.assign({}, it, { value: F.getLegacyForgedValue(it) })), apres = formatEquipmentStat(it);
     if (avant !== apres) pertes.push(_t("{x} : {a} → {b}", { x: _td(it.name), a: avant, b: apres }));
   });
-  if (pertes.length) lis += '<li><img src="images/Icons/equipment_slots/slot_weapon.webp" alt=""><span><b>' + esc(_t("Tes pièces reprennent leur valeur")) + '</b><small>' + esc(pertes.join(" · ")) + '</small></span></li>';
+  if (pertes.length) lis += '<li><img src="images/Icons/equipment_slots/pieces_loot.webp" alt=""><span><b>' + esc(_t("Tes pièces reprennent leur valeur")) + '</b><small>' + esc(pertes.join(" · ")) + '</small></span></li>';
   var h = '<div class="full-menu-overlay kwin-veil"><div class="kwin news-win forge-news-win" role="dialog" aria-label="' + esc(_t("La Forge a changé")) + '">';
-  h += kWinHeadHTML({ icon: '<img src="images/Icons/workshops/smithing_station.webp" alt="">', title: esc(_t("La Forge a changé")), sub: esc(_tn(total, "Ta {n} reforge est gardée", "Tes {n} reforges sont gardées")) });
+  h += kWinHeadHTML({ icon: '<img src="images/Icons/village_buildings/forge_mondes.webp" alt="">', title: esc(_t("La Forge a changé")), sub: esc(_tn(total, "Ta {n} reforge est gardée", "Tes {n} reforges sont gardées")) });
   h += '<div class="kwin-body"><p class="forge-news-txt">' + esc(_t("Une reforge ne renforce plus la pièce : elle renforce ton héros, pour toujours. Chaque monde a sa stat ; tes reforges sont rangées par monde.")) + '</p>';
   h += '<ul class="news-list">' + lis + '</ul>';
   h += '<div class="forge-news-btns"><button type="button" class="kbtn" onclick="closeForgeChange()">' + esc(_t("Fermer")) + '</button>'

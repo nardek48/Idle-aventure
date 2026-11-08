@@ -237,7 +237,7 @@
   // Forge des mondes (choix A de Seb) : rien sur la pièce, une ligne des bonus de la Forge
   function forgeLineHTML() {
     var txt = window.ForgeManager && ForgeManager.getBonusSummary ? ForgeManager.getBonusSummary() : "";
-    return txt ? '<div class="hs-set hs-forge">' + img("images/Icons/workshops/smithing_station.webp", "hs-mini-ico") + esc(_t("Forge, pour toujours : {x}", { x: txt })) + '</div>' : "";
+    return txt ? '<div class="hs-set hs-forge">' + img("images/Icons/village_buildings/forge_mondes.webp", "hs-mini-ico") + esc(_t("Forge, pour toujours : {x}", { x: txt })) + '</div>' : "";
   }
   function setLineHTML0() {
     var active = (EquipmentManager.getActiveSetBonuses ? EquipmentManager.getActiveSetBonuses() : []);

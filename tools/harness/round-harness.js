@@ -20119,7 +20119,11 @@ console.log("\n[377] v3.562.0 — Difficulté de la Crypte et de la Montagne : e
     var b = mk(true); Q.applyWorldMult({ id: qc }, b);
     var d = mk(false); Q.applyWorldMult({ id: qd }, d);
     ok(e.maxHp === 120 && e.hp === 120 && e.stats.power === 70, "ennemi ordinaire d'une quête de la Crypte : 120 PV, puissance 70");
-    ok(b.maxHp === 100 && b.stats.power === 50, "boss ou élite : inchangé");
+    ok(b.maxHp === 115 && b.stats.power === 50, "boss de la Crypte : PV +15 %, puissance inchangée (v3.743.0, Forge des mondes)");
+    var el = mk(true); el.isElite = true; Q.applyWorldMult({ id: qc }, el);
+    ok(el.maxHp === 100 && el.stats.power === 50, "élite : inchangée");
+    var bd = mk(true); Q.applyWorldMult({ id: qd }, bd);
+    ok(bd.maxHp === 100, "boss du Désert : inchangé");
     ok(d.maxHp === 100 && d.stats.power === 50, "quête du Désert : inchangée");
     ok(/selfG\.applyWorldMult\(quest, m\)/.test(fs.readFileSync(path.join(ROOT, "js/systems/quest-enemy-system.js"), "utf8")), "les groupes aussi");
   } catch (err) { ok(false, "[377] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }

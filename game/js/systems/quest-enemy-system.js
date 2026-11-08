@@ -142,9 +142,15 @@ var QuestEnemyManager = {
   /* v3.562.0 (retour Seb, point 1, option B) : PV et puissance des ennemis ordinaires (ni boss ni élite)
      des quêtes d'un monde, lus dans WORLD_HERO_SCALING.questEnemyByWorld. */
   applyWorldMult: function (quest, enemy) {
-    if (!enemy || enemy.isBoss) return;
-    var tab = window.WORLD_HERO_SCALING && WORLD_HERO_SCALING.questEnemyByWorld;
+    if (!enemy) return;
     var d = (window.ADVENTURE_QUESTS && quest && ADVENTURE_QUESTS[quest.id]) || quest || {};
+    if (enemy.isBoss && enemy.isElite) return;   // élite : inchangée
+    if (enemy.isBoss) { // v3.743.0 : PV des boss de quête par monde (Forge des mondes)
+      var bm = window.WORLD_HERO_SCALING && WORLD_HERO_SCALING.questBossHpByWorld && d.worldId ? Number(WORLD_HERO_SCALING.questBossHpByWorld[d.worldId]) : 1;
+      if (bm > 0 && bm !== 1) { enemy.maxHp = Math.max(1, Math.round(enemy.maxHp * bm)); enemy.hp = enemy.maxHp; }
+      return;
+    }
+    var tab = window.WORLD_HERO_SCALING && WORLD_HERO_SCALING.questEnemyByWorld;
     var m = tab && d.worldId ? tab[d.worldId] : null;
     if (!m) return;
     if (Number(m.hp) > 0 && m.hp !== 1) { enemy.maxHp = Math.max(1, Math.floor(enemy.maxHp * m.hp)); enemy.hp = enemy.maxHp; }

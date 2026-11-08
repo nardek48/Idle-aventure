@@ -275,7 +275,7 @@ var DUNGEONS = [
        60 % elle les réveille tous ; 30 % demi-sommeil, 2 rounds sans frapper, elle se soigne.
        Portrait propre (liche_sepulcres.webp, distinct de celui du Nécromancien). Au banc. */
     boss: { baseId: "necrosupreme", name: "Liche des sépulcres", archetype: "corrupted",
-      statMult: { endurance: 0.82, power: 0.83 }, image: "./images/Boss/liche_sepulcres.webp", // v3.696.0 (EQUI-10 B) : puissance 0,72 → 0,83 (+15 %)
+      statMult: { endurance: 0.94, power: 0.83 }, image: "./images/Boss/liche_sepulcres.webp", // v3.696.0 : puissance 0,83 ; v3.743.0 (Forge des mondes) : endurance 0,82 → 0,94 (+15 %)
       unique: { id: "gants_fossoyeur", slot: "gloves", name: "Gants du fossoyeur", icon: "gants", power: "dun_sepulcre" }, // v3.470.0
       phases: [
         { atPct: 0.8, sleepAdds: ["spectre", "wraith"], addsHpMult: 0.18, addsPowerMult: 0.5, label: "elle couche deux morts à ses pieds" },
@@ -312,7 +312,7 @@ var DUNGEONS = [
        Banc (montagne-acte3-bench, sauvegardes de campagne, 8-10 runs) : à 1 / 1, 0 / 100 / 0 % (Ch. / Rô. / Ma.) ;
        0,8 / 0,7 -> 63 / 100 / 63 % ; 0,75 / 0,62 -> 90 / 100 / 100 %. Retenu entre les deux. */
     boss: { baseId: "ancientdragon", name: "Wyrm de cendres", archetype: "enraged",
-      statMult: { endurance: 0.94, power: 0.66 }, image: "./images/Boss/wyrm_cendres.webp", // audit P1 : endurance 0,78 → 0,94 (puissance +15 % : mur à l'acte III)
+      statMult: { endurance: 1.08, power: 0.66 }, image: "./images/Boss/wyrm_cendres.webp", // audit P1 : 0,78 → 0,94 ; v3.743.0 (Forge des mondes) : 0,94 → 1,08 (+15 %)
       unique: { id: "heaume_wyrm", slot: "helmet", name: "Heaume du Wyrm", icon: "casque", power: "dun_braise" },
       phases: [
         { atPct: 0.6, heat: 2, label: "il secoue le lac" },
@@ -342,7 +342,7 @@ var DUNGEONS = [
     haltSlots: [4, 11, 13],
     camp: { afterWave: 8, healPct: 0.4, stoneAmount: 2, storyFlag: "sommetCamp" },
     /* LE REFLET (TW6) : base Archimage, il garde ta dernière technique (TowerSystem.isMirror : -25 % si tu la répètes). */
-    boss: { baseId: "archmage", name: "Le Reflet", archetype: "vampiric", statMult: { endurance: 0.5, power: 0.6 }, image: "./images/Boss/reflet.webp" },
+    boss: { baseId: "archmage", name: "Le Reflet", archetype: "vampiric", statMult: { endurance: 0.58, power: 0.6 }, image: "./images/Boss/reflet.webp" }, // v3.743.0 (Forge des mondes) : endurance 0,5 → 0,58 (+15 %)
     locked: false,
     requiresStoryStep: "tour_11",
     storyChapterId: "tower",

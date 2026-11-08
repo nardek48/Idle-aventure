@@ -233,6 +233,8 @@ var WORLD_HERO_SCALING = {
   /* v3.562.0 (option B) : ennemis ORDINAIRES des quêtes (ni boss ni élite), PV et puissance, par monde.
      Banc (12 campagnes) : Crypte 6-10 % des PV par combat ; la Montagne plus douce (B1 y faisait 15-20 morts). */
   questEnemyByWorld: { crypt: { hp: 1.2, power: 1.4 }, mountain: { hp: 1.1, power: 1.2 }, tower: { hp: 1.1, power: 1.2 } }, // v3.626.0 : la Tour comme la Montagne, au banc
+  // v3.743.0 (Seb 08/11, Forge des mondes) : boss de quête +15 % de PV là où la Forge les raccourcit
+  questBossHpByWorld: { crypt: 1.15, mountain: 1.15, tower: 1.15 },
   /* v3.428.0 (Ruines, U-1) : le héros de fin du chapitre II. Gardé par décision de Seb du 09/10/2026 :
      tous les bancs des Ruines ont été faits avec cette référence. */
   refByWorld: { forest: ["joueurForet", "joueurForet"], desert: ["joueurDesert1", "joueurDesert2"], ruins: ["joueurDesert2", "joueurDesert2"],
