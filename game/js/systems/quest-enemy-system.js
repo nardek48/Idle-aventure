@@ -146,7 +146,7 @@ var QuestEnemyManager = {
     var d = (window.ADVENTURE_QUESTS && quest && ADVENTURE_QUESTS[quest.id]) || quest || {};
     if (enemy.isBoss && enemy.isElite) return;   // élite : inchangée
     if (enemy.isBoss) { // v3.743.0 : PV des boss de quête par monde (Forge des mondes)
-      var bm = window.WORLD_HERO_SCALING && WORLD_HERO_SCALING.questBossHpByWorld && d.worldId ? Number(WORLD_HERO_SCALING.questBossHpByWorld[d.worldId]) : 1;
+      var bm = !d.noWorldBossHp && window.WORLD_HERO_SCALING && WORLD_HERO_SCALING.questBossHpByWorld && d.worldId ? Number(WORLD_HERO_SCALING.questBossHpByWorld[d.worldId]) : 1;
       if (bm > 0 && bm !== 1) { enemy.maxHp = Math.max(1, Math.round(enemy.maxHp * bm)); enemy.hp = enemy.maxHp; }
       return;
     }

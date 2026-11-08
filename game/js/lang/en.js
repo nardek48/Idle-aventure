@@ -10,6 +10,7 @@
    Les textes des données sont traduits par _td() à l'affichage (registre : lang/data-fields.js). */
 I18n.register("en", {
   // Forge des mondes (Seb 07/11) : la reforge renforce le héros, une stat par monde
+  "Forge des mondes : une reforge renforce ton héros pour toujours (+0,5 % par reforge : PV au Désert, Défense aux Ruines, critique à la Crypte, dégâts à la Montagne, dégâts critiques à la Tour). 2 niveaux de Forge par monde, jusqu'à la Forge 10. Les boss de la Crypte, de la Montagne et de la Tour ont un peu plus de PV.": "World Forge: a reforge strengthens your hero for good (+0.5% per reforge: HP in the Desert, Defence in the Ruins, critical chance in the Crypt, damage in the Mountain, critical damage in the Tower). 2 Forge levels per world, up to Forge 10. The Crypt, Mountain and Tower bosses have a little more HP.",
   "Reforge jusqu'au niveau {n} sur chaque emplacement : {s} ({w})": "Reforge up to level {n} on every slot: {s} ({w})",
   "PV max": "max HP",
   "chance de critique": "critical chance",

@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.743.0", "village_buildings/village_forge", _t("Forge des mondes : une reforge renforce ton héros pour toujours (+0,5 % par reforge : PV au Désert, Défense aux Ruines, critique à la Crypte, dégâts à la Montagne, dégâts critiques à la Tour). 2 niveaux de Forge par monde, jusqu'à la Forge 10. Les boss de la Crypte, de la Montagne et de la Tour ont un peu plus de PV.")],
     ["3.742.0", "dungeon/boss_crown", _t("Boss plus longs : le Basilic, le Sphinx, Varrek, Nezzam et l'Orc tiennent plus longtemps et changent de rythme plus tôt. Un boss déjà vaincu annonce ses phases au pronostic : prépare-toi à sa rage.")],
     ["3.741.0", "system/settings_game", _t("Journal de test : il note aussi où part ton or (entraînement du héros, rangs de techniques, niveaux et sorts des compagnons).")],
     ["3.740.0", "village_buildings/caravan_market", _t("La caravane d'essai que l'Histoire demande (Ruines, Crypte) revient maintenant en 3 minutes au lieu de 10.")],

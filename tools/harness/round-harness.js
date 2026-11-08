@@ -20124,6 +20124,8 @@ console.log("\n[377] v3.562.0 — Difficulté de la Crypte et de la Montagne : e
     ok(el.maxHp === 100 && el.stats.power === 50, "élite : inchangée");
     var bd = mk(true); Q.applyWorldMult({ id: qd }, bd);
     ok(bd.maxHp === 100, "boss du Désert : inchangé");
+    var bs = mk(true); Q.applyWorldMult({ id: "aq_tour_silhouette" }, bs);
+    ok(bs.maxHp === 100 && g.ADVENTURE_QUESTS.aq_tour_silhouette.worldId === "tower", "la Silhouette : hors du +15 % (déjà réglée par classe)");
     ok(d.maxHp === 100 && d.stats.power === 50, "quête du Désert : inchangée");
     ok(/selfG\.applyWorldMult\(quest, m\)/.test(fs.readFileSync(path.join(ROOT, "js/systems/quest-enemy-system.js"), "utf8")), "les groupes aussi");
   } catch (err) { ok(false, "[377] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }

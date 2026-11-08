@@ -1338,6 +1338,7 @@ var ADVENTURE_QUESTS = {
      ta dernière technique (le miroir, 60 %), puis la lumière passe à travers elle (bouclier, 30 %). Au banc. */
   aq_tour_silhouette: {
     id: "aq_tour_silhouette",
+    noWorldBossHp: true, // v3.743.0 (Seb 08/11) : hors du +15 % de PV des boss, déjà réglée classe par classe
     type: "kill",
     section: "adventure",
     difficulty: "hard",
