@@ -201,8 +201,7 @@ function orInvestLater() {
   }
   var ck = CM && typeof CM.skillRankMax === "function" ? CM.skillRankMax() + 1 : 0, ids = CM ? CM.unlockedIds() : [];
   if (SR && ck && ck <= COMPANION_SKILL_RANK_MAX && ids.length) {
-    var d0 = typeof getCompanionDef === "function" ? getCompanionDef(ids[0]) : null;
-    out.push({ interet: I.compRank, icon: (d0 && d0.image) || OR_INVEST_ICON, title: _t("Compétences des compagnons : rang {n}", { n: ck }), sub: SR.openingText(ck) });
+    out.push({ interet: I.compRank, icon: "images/Icons/companions/competences_compagnons.webp", title: _t("Compétences des compagnons : rang {n}", { n: ck }), sub: SR.openingText(ck) });
   }
   var V = window.VillageBuildingManager;
   if (V && Array.isArray(window.VILLAGE_BUILDING_ORDER) && !(typeof isTabUnlocked === "function" && !isTabUnlocked("village"))) VILLAGE_BUILDING_ORDER.forEach(function (id) {
