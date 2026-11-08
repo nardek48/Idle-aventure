@@ -65,7 +65,8 @@ function hudCoqueHTML() {
     + '<span class="hk-lvl"><b id="hk-lvl">1</b></span></div></div>';
 }
 
-/* Le « + » de l'or ouvre la fenêtre « Ton or peut servir » ; il pulse tant qu'une dépense n'a pas été montrée. */
+/* Le « + » de l'or ouvre « Ton or peut servir » ; il pulse pour une dépense pas encore montrée, ou quand
+   l'or a doublé depuis la dernière ouverture (orInvestState().fresh, atelier bulle-or.html, choix A). */
 function openOrInvestFromHud() {
   if (typeof openOrInvestWindow === "function") openOrInvestWindow();
 }

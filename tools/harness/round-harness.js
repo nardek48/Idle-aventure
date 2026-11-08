@@ -25937,6 +25937,76 @@ console.log("\n[498] v3.738.0 — Objets de combat dans le pronostic de sortie (
   finally { g.renderSortiePrep = keep.render; g.SortieManager.isActive = keep.active; g.sortiePrep = null; try { run("fullResetState();"); } catch (e2) {} game = freshCombat("knight"); }
 })();
 
+console.log("\n[499] Bulle d'or (atelier bulle-or.html, choix de Seb) : l'or qui double, trois groupes, une carte par matériau, échoppe et Enchanteresse");
+(function () {
+  var d = g.document, gid = d.getElementById, root = { innerHTML: "" };
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
+    var game = g.game, CM = g.CompanionManager, W = g.WarehouseManager;
+    d.getElementById = function (id) { return id === "or-invest-root" ? root : gid.call(d, id); };
+    var vu = function () { g.orInvestReset(); g.orInvestList().forEach(function (x) { g.orInvestSeen[x.id] = true; }); g.orInvestReset(); };
+    // or-retour A : le « + » repulse quand l'or a doublé depuis la dernière ouverture, au-dessus de 10 k
+    game.gold = 12000; g.orInvestSeen = {}; g.orInvestGoldRef = null; vu();
+    ok(!g.orInvestState().fresh, "tout déjà vu, aucun repère : le « + » reste calme");
+    g.orInvestGoldRef = 7000; g.orInvestReset();
+    ok(!g.orInvestState().fresh, "12 000 or, repère 7 000 : pas encore doublé, calme");
+    g.orInvestGoldRef = 6000; g.orInvestReset();
+    ok(g.orInvestState().fresh && g.orInvestState().doubled && !!g.hudDockOr(), "12 000 or, repère 6 000 : l'or a doublé, le « + » repulse");
+    game.gold = 9000; vu(); g.orInvestGoldRef = 4000; g.orInvestReset();
+    ok(!g.orInvestState().fresh, "9 000 or, repère 4 000 : doublé mais sous 10 k, calme");
+    game.gold = 12000; vu(); g.orInvestGoldRef = 6000; g.openOrInvestWindow(); g.orInvestReset();
+    ok(g.orInvestGoldRef === 12000 && !g.orInvestState().fresh, "l'ouverture pose le repère (12 000) et le « + » se tait");
+    ok(!/orInvestGoldRef/.test(fsRead("js/systems/save-system.js")) && !/orInvestGoldRef/.test(fsRead("js/core/state.js")), "repère en mémoire vive : rien dans la sauvegarde");
+    // or-liste B : trois groupes ; or-bloque B : une carte par matériau manquant
+    game.worldsEverReached = { 0: true, 1: true, 2: true };
+    ["wenna", "maddoc"].forEach(function (c) { CM.state(c).unlocked = true; CM.state(c).present = true; CM.state(c).skillRank = 2; });
+    var acts = g.SkillRanks.kitActions(); acts.forEach(function (a) { game.skillRanks[a.id] = 2; });
+    W.removeResource("cle_de_voute", W.getAmount("cle_de_voute")); W.addResource("pierre_errante", 4, true); W.addResource("pierre", 100, true);
+    game.gold = 95000; g.orInvestReset(); g.openOrInvestWindow();
+    var h = root.innerHTML;
+    ok(/Tout de suite/.test(h) && /Il manque quelque chose/.test(h) && /Plus tard/.test(h), "fenêtre : trois groupes (Tout de suite, Il manque quelque chose, Plus tard)");
+    var need = acts.length * 3 + 2 * 2, mats = g.orInvestGate(), cle = mats.filter(function (m) { return m.res === "cle_de_voute"; })[0];
+    ok(!!cle && cle.miss === need && cle.items.length === acts.length + 2 && (h.match(/class="oi-mat"/g) || []).length === Math.min(3, mats.length), "une carte par matériau : Clé de voûte, il en manque " + (cle && cle.miss) + " (" + need + " attendues), " + (cle && cle.items.length) + " achats retenus");
+    ok(/Clé de voûte : il en manque/.test(h) && new RegExp(acts.length + " rangs de sorts, 2 compétences de compagnon").test(h), "carte : « il en manque », l'or retenu et qui l'attend (rangs de sorts, compétences)");
+    ok(/Tailleur de pierre : Pierre errante ×3 \+ Pierre ×10 → 1\./.test(h) && /Avec ton Entrepôt : 1 tout de suite\./.test(h) && /Produire : Tailleur de pierre/.test(h), "carte : recette du producteur, ce qui se taille tout de suite, lien vers le producteur");
+    var prod = g.findResourceProducer("cle_de_voute"), seen = null, keepGo = g.goToResourceProducer;
+    g.goToResourceProducer = function (k, id) { seen = k + ":" + id; };
+    var ix = g.orInvestShown.length; g.orInvestShown.forEach(function (x, i) { if (ix === g.orInvestShown.length && x && !x.title && typeof x.go === "function") ix = i; });
+    g.orInvestGo(ix); g.goToResourceProducer = keepGo;
+    ok(seen === prod.kind + ":" + prod.id, "le lien de la carte mène au producteur (" + seen + ")");
+    var later = g.orInvestLater();
+    ok(later.some(function (x) { return /Rangs de sorts : rang 4/.test(x.title) && /Crypte/.test(x.sub); }), "Plus tard : « Rangs de sorts : rang 4 », s'ouvrent à la Crypte");
+    CM.state("wenna").upgrades = CM.trainingMax("wenna"); g.orInvestReset();
+    ok(g.orInvestLater().some(function (x) { return /^Wenna, niveaux 17 à 21$/.test(x.title) && /s'ouvrent à la Crypte/.test(x.sub); }), "Plus tard : « Wenna, niveaux 17 à 21 : s'ouvrent à la Crypte des dormeurs »");
+    // Échoppe (Rare en vitrine, relique, relance) et Enchanteresse
+    game.equipped.weapon = { uid: "w1", slot: "weapon", name: "Épée", icon: "sword", rarity: "green", stat: "tapDamage", value: 10, affixes: [{ stat: "critChance", value: 1 }] };
+    game.equipShopStock = [{ uid: "s1", slot: "weapon", name: "Épée rare", icon: "sword", rarity: "rare", stat: "tapDamage", value: 20, affixes: [], price: 17500, bought: false },
+      { uid: "s2", slot: "weapon", name: "Épée commune", icon: "sword", rarity: "common", stat: "tapDamage", value: 5, affixes: [], price: 300, bought: false }];
+    game.equipShopResetTime = Date.now() + 3600000; g.orInvestReset();
+    var all = g.orInvestAll(), ids = all.map(function (x) { return x.id; });
+    ok(ids.indexOf("sh:s1") === 0 && ids.indexOf("sh:s2") === -1, "échoppe : la Rare qui monte l'arme est en tête, la Commune n'est pas proposée");
+    ok(!ids.some(function (i) { return /^v:/.test(i); }), "échoppe : pas de relance de vitrine tant qu'une pièce utile y est");
+    game.equipShopStock[0].bought = true; g.orInvestReset();
+    var v = g.orInvestAll().filter(function (x) { return /^v:/.test(x.id); })[0];
+    ok(!!v && v.quiet && !g.orInvestState().list.some(function (x) { return x.id === v.id; }), "échoppe : relance de la vitrine proposée, muette (ne rallume jamais le « + »)");
+    game.equipShopStock[0].bought = false;
+    game.companionRelics = { inv: [], next: 1, pity: 0 }; CM.state("wenna").relics = [null, null, null];
+    game.equipShopStock.push({ uid: "rel1", kind: "relic", f: "croc", w: 2, price: 7000, bought: false });
+    g.orInvestReset();
+    ok(g.orInvestAll().some(function (x) { return x.id === "sh:rel1" && x.ok; }), "échoppe : relique utile à un compagnon (emplacement libre) proposée");
+    game.village.buildings.enchanter = { level: 1 }; g.orInvestReset();
+    var en = g.orInvestAll().filter(function (x) { return x.kind === "e"; })[0];
+    ok(!!en && en.ok && en.gold > 0 && /Épée/.test(en.sub), "Enchanteresse bâtie : relance d'une ligne portée proposée (" + (en && en.gold) + " or)");
+    ok(!g.orInvestAll().some(function (x) { return x.id.indexOf("b:enchanter:1") === 0; }), "Enchanteresse bâtie : plus de « Construire »");
+    game.gold = 1500; g.orInvestReset(); g.openOrInvestWindow(); h = root.innerHTML;
+    ok(/Échoppe : Épée rare/.test(h) && /Il te manque/.test(h), "pas assez d'or : la Rare passe dans « Il manque quelque chose » (il te manque … or)");
+    ["Tout de suite", "Il manque quelque chose", "Retient {g} or : {x}.", "{x}, niveaux {a} à {b}", "Échoppe : {x}", "Enchanteresse : relancer une ligne"].forEach(function (k) {
+      ok(fsRead("js/lang/en.js").indexOf(JSON.stringify(k)) >= 0, "en.js : « " + k + " » traduit");
+    });
+  } catch (err) { ok(false, "[499] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  finally { d.getElementById = gid; g.orInvestSeen = {}; g.orInvestGoldRef = null; g.orInvestShown = []; try { run("fullResetState();"); } catch (e2) {} game = freshCombat("knight"); }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

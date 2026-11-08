@@ -139,7 +139,7 @@ html:not(.wide-mode) .hk { display: block; position: relative; width: 100%; aspe
 .hk-cap { left: 62.6%; top: 6.5%; width: 29.3%; height: 24%; background: url('../images/UI/coque/capsule-or.webp') center / 100% 100% no-repeat; pointer-events: none; }
 .hk-gold { left: 71.4%; top: 8.5%; width: 12.4%; height: 20%; display: flex; align-items: center; justify-content: center; white-space: nowrap; font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; text-shadow: 0 1px 2px var(--c-black-950); }
 .hk-plus { left: 85%; top: 9%; width: 5.8%; aspect-ratio: 1; padding: 0; border: 0; border-radius: 50%; background: url('../images/UI/coque/plus.webp') center / contain no-repeat; cursor: pointer; }
-.hk-plus::before { content: ""; position: absolute; inset: -10px; } /* zone de toucher élargie */
+.hk-plus::before { content: ""; position: absolute; left: 50%; top: 50%; width: max(calc(100% + 20px), 46px); height: max(calc(100% + 20px), 46px); transform: translate(-50%, -50%); } /* zone de toucher élargie, 46 px au moins (320 px : bouton de 19 px) */
 .hk-plus.is-anim { animation: hk-plus 1.6s ease-in-out infinite; }
 .hk-plus.is-off { opacity: 0.55; }
 @keyframes hk-plus { 0%, 100% { box-shadow: 0 0 0 0 rgba(255, 200, 80, 0); } 50% { box-shadow: 0 0 6px 3px rgba(255, 200, 80, 0.85); } }
