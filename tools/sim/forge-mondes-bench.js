@@ -52,6 +52,7 @@ function wrap(obj, name, fn) { var o = obj[name]; obj[name] = function () { retu
 
 /* ---------- Profil : niveaux de reforge posés après le chargement (le vrai code fait le reste) ---------- */
 function poserProfil(g, P, M) {
+  if (opt("--elite-hp", null)) { var eh = JSON.parse(opt("--elite-hp")); Object.keys(eh).forEach(function (w) { g.ELITE_HP_BY_WORLD[w] = eh[w]; }); } // ex. {"crypt":1.2}
   CUR.lv = P.lv === "monde" ? g.FORGE_REFORGES_PER_WORLD * M.wi : P.lv;   // monde wi fini = bandes 1..wi complètes
 }
 function appliquerNiveaux(g) {
@@ -202,7 +203,7 @@ function main() {
     function suivante() {
       if (k >= taches.length) { if (!actifs) fin(); return; }
       var t = taches[k++], out = path.join(dir, "part-" + tag + "-" + t[0] + "-" + t[1] + ".json"); actifs++;
-      var args = [__filename, ROOT, "--worker", "--classes", t[0], "--profils", t[1], "--runs", String(RUNS), "--mondes", L_MONDES.join(","), "--saves", SAVES, "--out", out].concat(opt("--niv", null) ? ["--niv", opt("--niv")] : []).concat(opt("--kinds", null) ? ["--kinds", opt("--kinds")] : []);
+      var args = [__filename, ROOT, "--worker", "--classes", t[0], "--profils", t[1], "--runs", String(RUNS), "--mondes", L_MONDES.join(","), "--saves", SAVES, "--out", out].concat(opt("--niv", null) ? ["--niv", opt("--niv")] : []).concat(opt("--kinds", null) ? ["--kinds", opt("--kinds")] : []).concat(opt("--elite-hp", null) ? ["--elite-hp", opt("--elite-hp")] : []);
       var pr = cp.spawn(process.execPath, args, { stdio: ["ignore", "ignore", "inherit"] });
       pr.on("exit", function (code) {
         actifs--;

@@ -12,6 +12,9 @@
    l'appelant). C'est ce qui permettra au Donjon d'échelonner la même élite sur
    son palier au lieu du monde, sans redéfinir la créature. */
 
+var ELITE_HP_BY_WORLD = {}; // v3.744.0 : multiplicateur de PV des élites par monde (id de monde)
+window.ELITE_HP_BY_WORLD = ELITE_HP_BY_WORLD;
+
 var EliteManager = {
   get: function (eliteId) {
     return (window.ELITE_DB && ELITE_DB[eliteId]) || null;
@@ -116,6 +119,9 @@ var EliteManager = {
     } finally {
       if (multSauve) def.statMult = multSauve;
     }
+    // v3.744.0 (Forge des mondes) : PV des élites par monde, la Forge les rendait plus faciles
+    var hm = window.ELITE_HP_BY_WORLD ? Number(ELITE_HP_BY_WORLD[worldId]) : 1;
+    if (enemy && hm > 0 && hm !== 1) { enemy.maxHp = Math.max(1, Math.round(enemy.maxHp * hm)); enemy.hp = enemy.maxHp; }
     return enemy || null;
   },
 
