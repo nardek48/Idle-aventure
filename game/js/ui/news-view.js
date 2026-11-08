@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.746.0", "dungeon/boss_crown", _t("La Liche des sépulcres retrouve ses PV d'avant : elle était devenue trop dure pour le Rôdeur.")],
     ["3.745.0", "gold_icon", _t("Bulle d'or : le « + » doré se rallume aussi quand ton or a doublé. Ses achats sont rangés en trois groupes (tout de suite, il manque quelque chose, plus tard), avec l'échoppe et l'Enchanteresse, et une carte par matériau qui bloque ton or.")],
     ["3.744.0", "combat_status/elite_surge", _t("Élites : celles de la Crypte et de la Montagne ont plus de PV, celles de la Tour plus de PV et frappent plus fort, pour rester un vrai défi avec la Forge des mondes.")],
     ["3.743.0", "village_buildings/village_forge", _t("Forge des mondes : une reforge renforce ton héros pour toujours (+0,5 % par reforge : PV au Désert, Défense aux Ruines, critique à la Crypte, dégâts à la Montagne, dégâts critiques à la Tour). 2 niveaux de Forge par monde, jusqu'à la Forge 10. Les boss de la Crypte, de la Montagne et de la Tour ont un peu plus de PV.")],

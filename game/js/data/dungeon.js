@@ -275,7 +275,7 @@ var DUNGEONS = [
        60 % elle les réveille tous ; 30 % demi-sommeil, 2 rounds sans frapper, elle se soigne.
        Portrait propre (liche_sepulcres.webp, distinct de celui du Nécromancien). Au banc. */
     boss: { baseId: "necrosupreme", name: "Liche des sépulcres", archetype: "corrupted",
-      statMult: { endurance: 0.94, power: 0.83 }, image: "./images/Boss/liche_sepulcres.webp", // v3.696.0 : puissance 0,83 ; v3.743.0 (Forge des mondes) : endurance 0,82 → 0,94 (+15 %)
+      statMult: { endurance: 0.82, power: 0.83 }, image: "./images/Boss/liche_sepulcres.webp", // v3.696.0 : puissance 0,83 ; v3.746.0 : +15 % de v3.743 retiré (Rôdeur 40 → 65 %, crypte-acte3-bench)
       unique: { id: "gants_fossoyeur", slot: "gloves", name: "Gants du fossoyeur", icon: "gants", power: "dun_sepulcre" }, // v3.470.0
       phases: [
         { atPct: 0.8, sleepAdds: ["spectre", "wraith"], addsHpMult: 0.18, addsPowerMult: 0.5, label: "elle couche deux morts à ses pieds" },
