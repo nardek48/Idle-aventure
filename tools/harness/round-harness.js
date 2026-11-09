@@ -26173,6 +26173,52 @@ console.log("\n[505] Alpha (v3.752.0) : clés de stockage préfixées, Ruines fe
   finally { run('GAME_EDITION = "jeu";'); SQ.isChapterOpen = isOpen0; WT.arrive = arrive0; try { run("fullResetState();"); } catch (e2) {} game = freshCombat("knight"); }
 })();
 
+console.log("\n[506] Alpha (v3.753.0) : journal actif par défaut, fenêtres de début et de fin, avis noté, export sans nom, pas d'Admin");
+(function () {
+  var J = g.JournalTest, Prefs = g.Prefs, onAvant = Prefs.get("journalTest"), render0 = run("renderAlphaFin"), SQ = g.StoryQuestManager, isOpen0 = SQ.isChapterOpen, arrive0 = g.WorldTravel.arrive;
+  try {
+    ok(/journalTest: !!\(typeof isAlphaEdition === "function" && isAlphaEdition\(\)\)/.test(fsRead("js/systems/prefs-system.js")) && run("PREFS_DEFAULTS.journalTest") === false, "journal : coupé par défaut au jeu, actif par défaut en Alpha");
+    var idx = fsRead("index.html");
+    ok(idx.indexOf("js/ui/alpha-view.js") > idx.indexOf("js/ui/admin-view.js") && fsRead("sw.js").indexOf('"./js/ui/alpha-view.js"') > 0, "alpha-view.js chargé après l'Admin, précaché");
+    ok(run("buildAdminHTML()").indexOf("Outils de test indisponibles") === -1, "édition « jeu » : Admin inchangé");
+    ok(J._payload().heros.nom !== undefined && J._payload().edition === "jeu" && /^aethervale-journal-/.test(J.fileName()), "édition « jeu » : export inchangé (nom gardé)");
+    // Édition Alpha, Désert fini
+    run("fullResetState();"); game = freshCombat("knight"); game.playerName = "Seb";
+    run('GAME_EDITION = "alpha";'); g.AlphaEdition.install();
+    ["forest", "desert"].forEach(function (c) { SQ.getState(c).currentStep = SQ.getChapter(c).steps.length; });
+    var p = J._payload();
+    ok(p.edition === "alpha" && p.heros.nom === undefined && /^aethervale-alpha-journal-\d{4}-\d\d-\d\d\.json$/.test(J.fileName()), "Alpha : export sans nom du héros, fichier « aethervale-alpha-journal »");
+    var intro = run("alphaIntroHTML()");
+    ok(intro.indexOf("closeAlphaIntro(true)") > 0 && intro.indexOf("closeAlphaIntro(false)") > 0 && intro.indexOf("Maddoc") > 0, "premier lancement : « D'accord » et « Ne pas enregistrer » (ton B)");
+    Prefs.set("journalTest", false);
+    var off = run("alphaFinHTML()");
+    ok(off.indexOf("sans carnet") > 0 && off.indexOf("alphaFinGo") === -1 && off.indexOf("closeAlphaFin()") > 0, "fin, journal coupé : rien à envoyer, seulement « Continuer à jouer »");
+    Prefs.set("journalTest", true); J._lines = []; J.log("releve", { motif: "test" });
+    run('renderAlphaFin = function () {}; alphaFinStep = "fin"; alphaAvis = {};');
+    var fin = run("alphaFinHTML()");
+    ok(fin.indexOf("alphaFinGo('avis')") > 0 && fin.indexOf("alphaFinGo('passer')") > 0 && fin.indexOf("La route du nord attendra") > 0, "fin, journal actif : « Donner mon avis » puis « Passer »");
+    run("alphaFinGo('avis')"); var avis = run("alphaFinHTML()");
+    ok((avis.match(/class="alpha-q"/g) || []).length === 8 && (avis.match(/class="alpha-q-n"/g) || []).length === 6 && avis.indexOf("<textarea") > 0, "avis : 8 questions, 6 notes de 1 à 10, un texte libre");
+    run("alphaAvisSet('aime', 8); alphaAvisSet('difficulte', 'juste'); alphaAvisSet('combats', 3); alphaAvisSet('combats', 3);");
+    run("alphaAvisText('gene', '  Le Désert un peu long  ')");
+    ok(run("alphaAvisCount()") === 3 && run("alphaAvis.combats") === null, "avis : une note touchée deux fois s'efface (3 réponses)");
+    run("alphaFinGo('envoi')");
+    var la = J._load().filter(function (l) { return l.type === "avis"; });
+    ok(la.length === 1 && la[0].d.aime === 8 && la[0].d.difficulte === "juste" && la[0].d.gene === "Le Désert un peu long", "avis validé : une ligne « avis » dans le journal");
+    var env = run("alphaFinHTML()");
+    ok(run("alphaFinStep") === "envoi" && env.indexOf("alphaSendJournal()") > 0 && env.indexOf("dernière page") > 0, "envoi : « Envoyer mon journal », avis compris");
+    run('alphaFinStep = "avis"; alphaAvis = { aime: 5 };'); run("alphaFinGo('passer')");
+    ok(J._load().filter(function (l) { return l.type === "avis"; }).length === 1 && run("alphaAvisCount()") === 0, "« Passer » depuis l'avis : rien de noté");
+    var sv = fsRead("js/ui/settings-view.js");
+    ok(/isAlphaEdition\(\)\)\) h \+= '<div class="set-links">/.test(sv) && sv.indexOf("onclick=\"openAlphaFin()\"") > 0 && sv.indexOf("JournalTest.shareFile()") > 0, "Paramètres : Admin retiré en Alpha, fin de l'Alpha et envoi du journal");
+    ok(/navigator\.canShare\(\{ files: \[file\] \}\)/.test(fsRead("js/main/journal-test.js")) && /AbortError/.test(fsRead("js/main/journal-test.js")), "envoi : menu de partage du téléphone, annulation sans téléchargement, repli sinon");
+  } catch (err) { ok(false, "[506] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  finally {
+    run('GAME_EDITION = "jeu";'); g.renderAlphaFin = render0; SQ.isChapterOpen = isOpen0; g.WorldTravel.arrive = arrive0;
+    Prefs.set("journalTest", onAvant); J._lines = []; try { run("fullResetState();"); } catch (e2) {} game = freshCombat("knight");
+  }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

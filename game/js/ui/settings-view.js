@@ -139,16 +139,23 @@ function buildSettingsAppareilHTML(where) {
       kSwitchHTML(jOn, "JournalTest.setOn(" + !jOn + ")", _t("Enregistrer ma partie")));
     h += '<p class="set-note">' + _tn(jN, "{n} ligne enregistrée sur cet appareil.", "{n} lignes enregistrées sur cet appareil.") + '</p>';
     if (jN > 0) {
+      if (typeof isAlphaEdition === "function" && isAlphaEdition()) h += '<button class="settings-btn" onclick="JournalTest.shareFile()"><img class=ico-inline src=images/Icons/system/export.webp> ' + _t("Envoyer mon journal") + '</button>'; // v3.753.0
       h += '<div class="set-pair"><button class="settings-btn" onclick="JournalTest.exportFile()"><img class=ico-inline src=images/Icons/system/export.webp> ' + _t("Exporter") + '</button>';
       h += '<button class="settings-btn" onclick="JournalTest.clear()"><img class=ico-inline src=images/Icons/system/trash.webp> ' + _t("Effacer") + '</button></div>';
     }
     h += '</div>';
   }
 
+  // v3.753.0 : l'Alpha finie, son écran de fin se rouvre ici
+  if (window.AlphaEdition && AlphaEdition.isFinished() && typeof openAlphaFin === "function") {
+    h += '<div class="set-card"><div class="kkick">' + _t("Version Alpha") + '</div><p class="set-note">' + _t("Tu as fini le Désert : c'est la fin de cette version.") + '</p>';
+    h += '<button class="settings-btn" onclick="openAlphaFin()">' + _t("Fin de l'Alpha") + '</button></div>';
+  }
+
   h += '<div class="set-about"><b>' + _t("Aethervale") + '</b>'
-    + _t("Version {v}", { v: (typeof GAME_VERSION === "string" ? GAME_VERSION : "") }) + ' · '
+    + _t("Version {v}", { v: (typeof GAME_VERSION === "string" ? GAME_VERSION : "") }) + (typeof isAlphaEdition === "function" && isAlphaEdition() ? " " + _t("Alpha") : "") + ' · '
     + (game.saveSupported ? _t("Sauvegarde : locale navigateur.") : _t("Sauvegarde : indisponible.")) + '</div>';
-  h += '<div class="set-links"><button type="button" class="klink" onclick="switchTab(\'admin\')">' + _t("Outils de test (Admin)") + '</button></div>';
+  if (!(typeof isAlphaEdition === "function" && isAlphaEdition())) h += '<div class="set-links"><button type="button" class="klink" onclick="switchTab(\'admin\')">' + _t("Outils de test (Admin)") + '</button></div>'; // v3.753.0 : pas d'Admin pour les testeurs
   return h;
 }
 

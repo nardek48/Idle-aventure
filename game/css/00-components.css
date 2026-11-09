@@ -1231,3 +1231,27 @@ button.nb-entry-card {
   .kwin { animation: none; }
 }
 
+
+/* =====================================================================
+   v3.753.0 : fenêtres de l'Alpha (ui/alpha-view.js, atelier alpha-fenetres.html, ton B) :
+   premier lancement, fin de l'Alpha, questionnaire (notes de 1 à 10, difficulté en 3 choix, texte libre).
+   ===================================================================== */
+.alpha-ico { display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 50%; font-size: 24px; font-weight: 800; color: var(--c-brown-550-3); border: 2px solid var(--c-brown-550-3); background: var(--c-cream-50-soft); }
+.alpha-win .kwin-body { display: flex; flex-direction: column; gap: 10px; }
+.alpha-win .kwin-quote, .alpha-win .kwin-text { margin: 0; }
+.alpha-win .kwin-body.alpha-long { max-height: 62vh; }
+.alpha-mini { margin: 0; font-size: 12px; line-height: 1.45; color: var(--sheet-ink-dim); }
+.alpha-stat { margin: 0; font-size: 12px; font-weight: 700; color: var(--sheet-ink-dim); font-variant-numeric: tabular-nums; }
+.kwin.alpha-win.alpha-still { animation: none; } /* une note touchée redessine la fenêtre sans rejouer son ouverture */
+.alpha-q { display: flex; flex-direction: column; gap: 6px; text-align: left; padding-top: 10px; border-top: 1px solid rgba(138, 74, 20, 0.2); }
+.alpha-q:first-child { border-top: 0; padding-top: 0; }
+.alpha-q-l { font-size: 13px; font-weight: 800; }
+.alpha-q-n { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
+.alpha-q-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+.alpha-q-n button, .alpha-q-3 button { min-height: 40px; border-radius: 9px; border: 1px solid var(--c-brown-550-3); background: var(--c-cream-50-soft); color: var(--sheet-ink); font-weight: 800; font-size: 14px; font-variant-numeric: tabular-nums; cursor: pointer; }
+.alpha-q-3 button { font-size: 13px; }
+.alpha-q-n button[aria-pressed="true"], .alpha-q-3 button[aria-pressed="true"] { background: var(--c-brown-550-3); color: var(--c-cream-100-2); }
+.alpha-q-n button:focus-visible, .alpha-q-3 button:focus-visible, .alpha-q textarea:focus-visible { outline: 2px solid var(--c-brown-550-3); outline-offset: 1px; }
+.alpha-q-bornes { display: flex; justify-content: space-between; font-size: 12px; color: var(--sheet-ink-dim); }
+.alpha-q textarea { width: 100%; min-height: 64px; resize: vertical; box-sizing: border-box; border-radius: 9px; border: 1px solid var(--c-brown-550-3); background: var(--c-cream-50-soft); color: var(--sheet-ink); font-family: inherit; font-size: 16px; line-height: 1.4; padding: 8px 10px; }
+.alpha-q-compte { margin: 0; font-size: 12px; font-weight: 700; color: var(--sheet-ink-dim); text-align: center; }

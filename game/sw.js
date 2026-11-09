@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.752.0"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.753.0"; // <- à incrémenter à CHAQUE livraison
 /* v3.751.0 : l'Alpha (/alpha/) partage l'origine du jeu ; ses caches portent un autre préfixe, sinon chaque
    service worker effacerait ceux de l'autre à l'activation. */
 var IS_ALPHA_SW = /\/alpha\/$/.test(self.registration ? self.registration.scope : "");
@@ -325,6 +325,7 @@ var PRECACHE_APP_SHELL = [
   "./js/ui/kframe-decorator.js",
   "./js/ui/screen-banner.js",
   "./js/ui/news-view.js",
+  "./js/ui/alpha-view.js", // v3.753.0 : NOUVEAU fichier (fenêtres de l'Alpha)
   "./images/Icons/icon-192.png",
   "./images/Icons/icon-512.png",
   "./images/Icons/icon-512-maskable.png",

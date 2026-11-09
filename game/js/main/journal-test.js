@@ -119,16 +119,42 @@ var JournalTest = {
     if (typeof renderPanel === "function") renderPanel();
   },
 
+  /* v3.753.0 : en Alpha, édition notée et nom du héros retiré (le joueur envoie le fichier à un tiers) */
+  _payload: function () {
+    var alpha = typeof isAlphaEdition === "function" && isAlphaEdition();
+    return {
+      aethervaleJournalTest: 1, version: (typeof GAME_VERSION === "string" ? GAME_VERSION : ""), edition: alpha ? "alpha" : "jeu", exporte: Date.now(),
+      heros: alpha ? { id: game.heroId } : { id: game.heroId, nom: game.playerName }, lignes: this._load()
+    };
+  },
+
+  fileName: function () {
+    var alpha = typeof isAlphaEdition === "function" && isAlphaEdition();
+    return (alpha ? "aethervale-alpha-journal-" : "aethervale-journal-") + new Date().toISOString().slice(0, 10) + ".json";
+  },
+
+  /* v3.753.0 : menu de partage du téléphone (le joueur choisit le canal) ; sans lui, téléchargement */
+  shareFile: function () {
+    this.flush();
+    var self = this, file = null;
+    try { file = new File([JSON.stringify(this._payload())], this.fileName(), { type: "application/json" }); } catch (e) { file = null; }
+    if (!file || !navigator.canShare || !navigator.share || !navigator.canShare({ files: [file] })) { this.exportFile(); if (typeof showToast === "function") showToast(_t("Journal téléchargé"), 1600); return; }
+    navigator.share({ files: [file], title: _t("Journal d'Aethervale") }).then(function () {
+      self.log("journal_envoye", {});
+      if (typeof showToast === "function") showToast(_t("Journal partagé. Merci !"), 1600);
+    }).catch(function (e) {
+      if (e && e.name === "AbortError") return; // partage annulé par le joueur
+      noteErreur("journal-test.shareFile", e); self.exportFile();
+    });
+  },
+
   exportFile: function () {
     this.flush();
-    var payload = {
-      aethervaleJournalTest: 1, version: (typeof GAME_VERSION === "string" ? GAME_VERSION : ""), exporte: Date.now(),
-      heros: { id: game.heroId, nom: game.playerName }, lignes: this._load()
-    };
+    var payload = this._payload();
     var blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
     var url = URL.createObjectURL(blob), a = document.createElement("a");
     a.href = url;
-    a.download = "aethervale-journal-" + new Date().toISOString().slice(0, 10) + ".json";
+    a.download = this.fileName();
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
   },
