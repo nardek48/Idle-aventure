@@ -59,6 +59,7 @@ I18n.register("en", {
   "Tu as fini le Désert : c'est la fin de cette version.": "You finished the Desert: this is the end of this version.",
   "Alpha": "Alpha",
   "Village : les pastilles de niveau des cartes ne passent plus par-dessus les onglets quand la liste défile.": "Village: card level badges no longer slide over the tabs when the list scrolls.",
+  "Talents : le bouton « Apprendre » ne déborde plus de l'écran.": "Talents: the “Learn” button no longer runs off the screen.",
   // v3.756.0 : dés instantanés des Petites Aventures
   "Jets de dés instantanés": "Instant dice rolls",
   "Petites Aventures : le dé se pose tout de suite sur sa valeur, sans rouler.": "Small Adventures: the die lands on its value right away, without rolling.",

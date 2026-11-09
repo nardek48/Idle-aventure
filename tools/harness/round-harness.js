@@ -26317,6 +26317,12 @@ console.log("\n[509] Petites Aventures (v3.756.0, Seb 09/11, A + B) : jets de d�
   finally { Prefs.set("desInstant", avant); }
 })();
 
+console.log("\n[510] Talents (v3.758.0) : le bouton du panneau de détail tient dans sa colonne (plus de minimum de 140 px)");
+(function () {
+  var css = fsRead("css/04-panel-heros-screens.css");
+  ok(/\.hst-detail-act \{[^}]*width: 128px; max-width: 128px;/.test(css) && /\.hst-detail-act \.kbtn \{[^}]*width: 100%; min-width: 0;/.test(css), "colonne d'action de 128 px, bouton à sa largeur (mesuré dans Chromium à 320, 390 et 430 px)");
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");
