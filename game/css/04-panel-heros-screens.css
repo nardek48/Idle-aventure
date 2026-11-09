@@ -88,12 +88,14 @@ body.hs-on-heros .hud-dock { display: none !important; }
 .hs-btile .wh-tile-name.rarity-rare { color: #8fc0ff; }
 .hs-btile .wh-tile-name.rarity-epic { color: #d2a6ff; }
 .hs-btile .wh-tile-name.rarity-legendary { color: var(--c-bronze-300); }
-.hst-bar { display: flex; align-items: center; gap: 10px; margin: 0 0 10px; padding: 6px 10px; border-radius: 12px; background: var(--c-cream-50-soft); border: 1px solid var(--c-bronze-400-2); color: var(--c-brown-850-3); }
-.hst-bar-pts { font-size: 14px; }
-.hst-bar-pts b { font-size: 20px; color: var(--c-brown-750-3); }
-.hst-bar-cap { margin-left: auto; font-size: 12px; color: var(--c-brown-650-soft); }
-.hst-bar-reset { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--c-bronze-500); background: var(--c-cream-50-soft); font-size: 18px; font-weight: 800; color: var(--c-brown-800-3); }
-.hst-bar-reset:disabled { opacity: .4; }
+/* v3.759.0 (atelier talents-kit, B) : la ligne des points ouvre l'arbre, sur une bande parchemin ; points en pastille cuivre, ↺ du pack */
+.hst-bar { position: relative; z-index: 2; display: flex; align-items: center; gap: 10px; margin: 0 0 10px; padding: 6px 8px; border-radius: 12px; color: var(--c-brown-850-3);
+  background-color: var(--c-cream-100-soft); background-image: linear-gradient(var(--kc-voile), var(--kc-voile)), var(--kc-tex); background-size: auto, 256px; box-shadow: 0 0 0 1px rgba(194, 127, 31, 0.75), 0 2px 6px rgba(0, 0, 0, 0.35); }
+.hst-bar-pts { flex: 0 0 auto; display: inline-flex; align-items: baseline; gap: 5px; padding: 3px 12px 4px; border-radius: 999px; white-space: nowrap; font-size: 13px; font-weight: 800;
+  background: linear-gradient(#cf8231, var(--c-brown-550-3) 55%, #8a4a14); color: var(--c-cream-100-2); text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35); }
+.hst-bar-pts b { font-size: 18px; }
+.hst-bar-cap { flex: 1 1 auto; min-width: 0; font-size: 12px; line-height: 1.25; color: var(--c-brown-650-soft); }
+.hst-bar .kbtn.hst-bar-reset { flex: 0 0 auto; width: auto; min-width: 0; min-height: 40px; margin: 0; padding: 0 2px; border-width: 0 16px; border-image-width: 0 16px; font-size: 17px; }
 .hst-pips { display: flex; gap: 2px; }
 .hst-pips i { width: 8px; height: 4px; border-radius: 2px; background: var(--c-bronze-400-soft); }
 .hst-pips i.is-on { background: var(--c-brown-550-vivid); }
@@ -204,12 +206,10 @@ body.hs-on-heros .hud-dock { display: none !important; }
 .hst-node.is-key.is-sel .hst-art::after { border-radius: 50%; }
 .hst-chain { position: absolute; left: 50%; bottom: 6px; width: 30px; height: 50px; transform: translateX(-50%) rotate(-50deg); object-fit: contain; }
 .hst-tree .hst-pips i { background: var(--c-brown-550-soft); }
-/* v3.453.0 : sélecteur « Classe · Commandement » et colonne du Commandement (atelier talents-commandement) ; v3.453.1 : fond parchemin, titre en brun */
-.hst-seg { display: flex; gap: 4px; padding: 3px; margin: 0 0 8px; border-radius: 12px; background: rgba(60, 40, 15, .08); } /* INT-4 : voile allégé (0,14 avant) */
-.hst-seg button { flex: 1 1 0; min-height: 40px; border: 0; border-radius: 9px; background: none; font: inherit; font-weight: 800; font-size: 13px; color: var(--nb-ink); }
-.hst-seg button[aria-pressed="true"] { background: linear-gradient(var(--c-bronze-400-4), var(--c-brown-550-3)); color: var(--c-brown-850-3); box-shadow: 0 2px 0 var(--c-brown-750-3); }
-.hst-seg button:disabled { opacity: .55; }
-.hst-seg button small { display: block; font-size: 12px; font-weight: 700; }   /* v3.458.2 (audit P14) : sans transparence, 3,4 → 5,2:1 */
+/* v3.453.0 : sélecteur « Classe · Commandement » et colonne du Commandement (atelier talents-commandement) ; v3.453.1 : fond parchemin, titre en brun.
+   v3.759.0 (atelier talents-kit, B) : le sélecteur prend les onglets du kit (.kseg.hst-mode), son style propre (.hst-seg) est retiré. */
+.kseg.hst-mode button { flex-direction: column; gap: 1px; white-space: normal; }
+.kseg.hst-mode button small { display: block; font-size: 12px; font-weight: 700; }
 .hst-cmd { position: relative; display: flex; flex-direction: column; align-items: center; padding: 14px 10px 16px; border-radius: 16px; border: 2px solid var(--c-brown-700-vivid);
   background-image: url(../images/UI/talents/bg_commandement.webp); background-size: cover; background-position: 50% 0; box-shadow: inset 0 0 30px rgba(40, 20, 0, .45); }
 .hst-cmd-banner { display: flex; flex-direction: column; align-items: center; gap: 2px; margin-bottom: 6px; }

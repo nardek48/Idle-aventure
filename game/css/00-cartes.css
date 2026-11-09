@@ -368,3 +368,31 @@ Lot 1 : les classes .kc-*. Lot 2 : listes de cartes d'interface. Lot 3 (fin du f
 /* v3.628.1 (bug Seb) : le cadre secondaire passait le détail de l'équipement en relative ; il reste collé
    en bas de l'écran (sticky, comme les Talents). L'identifiant fictif donne la priorité sans !important. */
 .hs-edetail:not(#kc-sticky) { position: sticky; }
+
+/* ============================================================
+   v3.759.0 (atelier talents-kit, B, Seb 09/11) : l'écran Talents reçoit les cadres du jeu.
+   Arbre de classe et colonne du Commandement : cadre secondaire seul (ils gardent leur image, comme le mannequin .hs-eq).
+   Panneau du talent : texture et cadre, comme le panneau de l'Équipement (.hs-edetail) ; il reste collé en bas (sticky).
+   ============================================================ */
+:root :is(.hst-tree, .hst-cmd, .hst-detail) {
+  border: var(--kc-sec-clip) solid transparent !important;
+  background-clip: padding-box !important;
+  border-radius: 0 !important;
+}
+:root :is(.hst-tree, .hst-cmd) { position: relative; box-shadow: inset 0 0 30px rgba(40, 20, 0, 0.55) !important; }
+:root .hst-detail {
+  background-image: linear-gradient(var(--kc-voile), var(--kc-voile)), var(--kc-tex) !important;
+  background-size: auto, 256px !important;
+  background-repeat: repeat !important;
+  box-shadow: inset 0 0 24px rgba(70, 44, 14, 0.64), 0 -4px 10px rgba(40, 20, 0, 0.2) !important;
+}
+:root :is(.hst-tree, .hst-cmd, .hst-detail)::before {
+  content: "";
+  position: absolute;
+  inset: calc(var(--kc-sec-clip) * -1);
+  z-index: 1;
+  pointer-events: none;
+  border: var(--kc-sec-coin) solid transparent;
+  border-image: url('../images/UI/frames/kc-secondaire.webp') 48 / var(--kc-sec-coin) stretch;
+}
+:root .hst-detail-txt b { font-family: "Alegreya", Georgia, serif; font-size: 17px; }

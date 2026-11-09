@@ -26323,6 +26323,18 @@ console.log("\n[510] Talents (v3.758.0) : le bouton du panneau de détail tient 
   ok(/\.hst-detail-act \{[^}]*width: 128px; max-width: 128px;/.test(css) && /\.hst-detail-act \.kbtn \{[^}]*width: 100%; min-width: 0;/.test(css), "colonne d'action de 128 px, bouton à sa largeur (mesuré dans Chromium à 320, 390 et 430 px)");
 })();
 
+console.log("\n[511] Talents au kit (v3.759.0, atelier talents-kit, B) : onglets du kit, points en tête de l'arbre, cadres du jeu");
+(function () {
+  try {
+    var src = fsRead("js/ui/heros-screens-view.js"), css = fsRead("css/04-panel-heros-screens.css"), cartes = fsRead("css/00-cartes.css");
+    ok(/'<div class="kseg hst-mode'/.test(src) && !/class="hst-seg/.test(src) && !/^\.hst-seg/m.test(css), "sélecteur Classe / Commandement : onglets du kit (.kseg.hst-mode), ancien .hst-seg retiré");
+    ok(/'<div class="hst-tree"[^\n]*\+ bar/.test(src) && /'<div class="hst-cmd">' \+ \(bar \|\| ''\)/.test(src), "ligne des points en tête de l'arbre (classe, Commandement, Varier)");
+    ok(/class="kbtn hst-bar-reset"/.test(src) && /\.hst-bar \.kbtn\.hst-bar-reset \{[^}]*min-width: 0;/.test(css), "↺ : bouton parchemin du pack, sans le minimum de 140 px");
+    ok(/:root :is\(\.hst-tree, \.hst-cmd, \.hst-detail\)::before \{[^}]*kc-secondaire\.webp/.test(cartes) && /:root \.hst-detail \{[^}]*var\(--kc-tex\)/.test(cartes), "cadre secondaire sur l'arbre, le Commandement et le panneau ; texture sur le panneau");
+    ok(fsRead("css/09-wide.css").indexOf("#panel-container .hst-mode,") > 0 && fsRead("css/00-kbtn.css").indexOf(".hst-seg") === -1, "format large et filet du kit suivent le nouveau sélecteur");
+  } catch (err) { ok(false, "[511] exception : " + err.message); }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

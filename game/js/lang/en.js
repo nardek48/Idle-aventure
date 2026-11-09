@@ -60,6 +60,7 @@ I18n.register("en", {
   "Alpha": "Alpha",
   "Village : les pastilles de niveau des cartes ne passent plus par-dessus les onglets quand la liste défile.": "Village: card level badges no longer slide over the tabs when the list scrolls.",
   "Talents : le bouton « Apprendre » ne déborde plus de l'écran.": "Talents: the “Learn” button no longer runs off the screen.",
+  "Talents : l'écran prend le style du reste du jeu. Onglets Classe / Commandement du kit, points en tête de l'arbre, cadres sur l'arbre et le panneau du talent.": "Talents: the screen now matches the rest of the game. Class / Command tabs from the kit, points at the top of the tree, frames on the tree and the talent panel.",
   // v3.756.0 : dés instantanés des Petites Aventures
   "Jets de dés instantanés": "Instant dice rolls",
   "Petites Aventures : le dé se pose tout de suite sur sa valeur, sans rouler.": "Small Adventures: the die lands on its value right away, without rolling.",
@@ -5236,7 +5237,7 @@ I18n.register("en", {
   "Avec toi au combat": "With you in combat",
   "Emplacement": "Slot",
   "{n} niveau à acheter||{n} niveaux à acheter": ["{n} level to buy", "{n} levels to buy"],
-  "point à placer||points à placer": ["point to spend", "points to spend"],
+  "point||points": ["point", "points"], // v3.759.0 : ligne des points des Talents (« 9 points »)
   "Plafond": "Cap",
   "Plafond de l'entraînement : {c}": "Training cap: {c}",
   "Terrain d'entraînement niv. {t} — chaque niveau ouvre +10, environ +7 pour les autres.": "Training Ground lv. {t} — each level opens +10, about +7 for the others.",
