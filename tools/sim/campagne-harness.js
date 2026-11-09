@@ -78,7 +78,8 @@ var CHANTIER = ARGS.indexOf("--chantier") >= 0;
    compagnons du groupe, patrouilles, reliques) et --avise (talents, Grimoire), et ajoute : Taverne, tous les bâtiments du village
    (chantier en fond), Entrepôt agrandi quand un coût dépasse le stockable, Apothicaire ; puis compagnons et donjons (lots 1 et 3). */
 var JOUEUR = ARGS.indexOf("--joueur") >= 0;
-var STOCK_FORGE = ARGS.indexOf("--forge-active") < 0; // v3.748 (journaux de Seb) : le joueur bâtit la Forge avec son stock ; --forge-active : il fabrique ce qui manque
+var STOCK_FORGE = ARGS.indexOf("--forge-stock") >= 0; // --forge-stock : Forge bâtie avec le stock seulement (borne basse)
+var REFORGE_STOCK = JOUEUR && ARGS.indexOf("--forge-active") < 0; // calage sur Seb (Forge 4 aux Ruines, 24 reforges en Montagne) : reforges avec le stock seulement
 var SECONDAIRES = ARGS.indexOf("--secondaires") >= 0 ? Number(ARGS[ARGS.indexOf("--secondaires") + 1]) || 1 : 1; // essai option B (stats du héros)
 // --lots 2 | 21 | 213 : les lots actifs du joueur appliqué (tous par défaut), pour un relevé par lot
 var LOTS = ARGS.indexOf("--lots") >= 0 ? String(ARGS[ARGS.indexOf("--lots") + 1] || "") : "123";
@@ -498,7 +499,7 @@ function developVillage() {
     var why2 = F.getBlockReason(slot), c2 = F.getCost(slot);
     var part = rang === 0 ? (INVESTI ? 0.5 : 0.3) : (INVESTI ? 0.3 : 0.15);
     if (!c2 || (why2 && why2 !== "Matériaux manquants") || Number(c2.gold || 0) > g.game.gold * part) return;
-    if (why2 === "Matériaux manquants" && rang !== 0 && !FARM_REFORGES) return;
+    if (why2 === "Matériaux manquants" && (rang !== 0 || REFORGE_STOCK) && !FARM_REFORGES) return;
     SANS_LENDEMAIN++;
     var oR = g.game.gold, okR = reforgeTo(slot, F.getLevel(slot) + 1);
     dep("forge", Math.max(0, oR - g.game.gold));
