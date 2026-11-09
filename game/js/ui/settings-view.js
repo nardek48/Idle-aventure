@@ -73,6 +73,9 @@ function buildSettingsJeuHTML() {
     // v3.473.0 : vue épurée du combat en Grimoire (atelier grimoire-epure.html)
     h += settingsRowHTML("images/Icons/system/grimoire.webp", _t("Combat épuré en Grimoire"), _t("Seuls l'ennemi, tes PV, la règle jouée et les potions restent à l'écran."),
       kSwitchHTML(Prefs.get("grimEpure"), "setDisplayPref('grimEpure', " + !Prefs.get("grimEpure") + ")", _t("Combat épuré en Grimoire")));
+    // v3.756.0 (Seb 09/11) : dés des Petites Aventures sans roulement
+    h += settingsRowHTML("images/UI/de/d20_vide_20.webp", _t("Jets de dés instantanés"), _t("Petites Aventures : le dé se pose tout de suite sur sa valeur, sans rouler."),
+      kSwitchHTML(Prefs.get("desInstant"), "setDisplayPref('desInstant', " + !Prefs.get("desInstant") + ")", _t("Jets de dés instantanés")));
     h += '<p class="set-note">' + _t("Réglages propres à cet appareil.") + '</p>';
     h += '</div>';
   }

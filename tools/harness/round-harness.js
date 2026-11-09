@@ -13054,7 +13054,7 @@ console.log("\n[181] v3.408.0 — Paramètres refondus (B · Rail, S1 · glissi�
     var p = g.buildSettingsHTML("partie"), j = g.buildSettingsHTML("jeu"), a = g.buildSettingsHTML("appareil");
     ok(/kseg is-stack set-tabs/.test(p) && (p.match(/setSettingsTab\('/g) || []).length === 3 && /Paramètres/.test(p), "trois onglets en rail : Partie, Jeu, Appareil ; titre « Paramètres »");
     ok(/settings-btn primary" onclick="saveGame(FromSettings)?\(\)"/.test(p) && /exportSaveToFile/.test(p) && /showImportTextModal/.test(p) && /settings-btn danger" onclick="resetGame\(\)"/.test(p), "Partie : sauvegarder, exporter/importer, codes, effacer en zone de danger");
-    ok(!/toggleAutoSkills\(/.test(j) && j.indexOf("Il se choisit au départ de chaque sortie.") !== -1 && (j.match(/class="kswitch/g) || []).length === 3 && j.indexOf('type="checkbox"') === -1, "Jeu : le mode se lit (préparation de sortie, v3.440.0), interrupteurs du kit (3 depuis v3.473.0), plus de case à cocher");
+    ok(!/toggleAutoSkills\(/.test(j) && j.indexOf("Il se choisit au départ de chaque sortie.") !== -1 && (j.match(/class="kswitch/g) || []).length === 4 && j.indexOf('type="checkbox"') === -1, "Jeu : le mode se lit (préparation de sortie, v3.440.0), interrupteurs du kit (4 depuis v3.756.0, dés instantanés), plus de case à cocher");
     ok(/confirmLanguageChange\('en'\)/.test(a) && /switchTab\('admin'\)/.test(a) && a.indexOf("atelier-ui.html") === -1 && a.indexOf("switchTab('log')") === -1, "Appareil : langue, lien Admin ; ateliers morts et bouton Journal retirés");
   } catch (err) {
     ok(false, "[181] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
@@ -26296,6 +26296,26 @@ console.log("\n[508] Donjons (v3.755.0, Seb 09/11, option A) : objectif de l'His
   finally { try { if (game.dungeonRun && game.dungeonRun.active) D.forfeit(); run("fullResetState();"); } catch (e2) {} game = freshCombat("knight"); }
 })();
 function formatNumberSafe(n) { return String(Math.round(n)); }
+
+console.log("\n[509] Petites Aventures (v3.756.0, Seb 09/11, A + B) : jets de dés instantanés");
+(function () {
+  var Prefs = g.Prefs, avant = Prefs.get("desInstant");
+  try {
+    ok(run("PREFS_DEFAULTS.desInstant") === false, "réglage coupé par défaut");
+    Prefs.set("desInstant", false);
+    var mm = g.matchMedia; g.matchMedia = undefined;
+    ok(run("pa2DiceInstant()") === false, "réglage coupé, appareil sans préférence : le dé roule");
+    Prefs.set("desInstant", true);
+    ok(run("pa2DiceInstant()") === true, "réglage actif : dé instantané");
+    Prefs.set("desInstant", false); g.matchMedia = function (q) { return { matches: /prefers-reduced-motion: reduce/.test(q) }; };
+    ok(run("pa2DiceInstant()") === true, "appareil qui demande moins d'animations : dé instantané (B)");
+    g.matchMedia = mm;
+    var src = fsRead("js/ui/pa2-view.js");
+    ok(/if \(!instant\) die\.classList\.add\("is-rolling"\)/.test(src) && /\}, instant \? 0 : 800\);/.test(src), "pa2RollDie : pas de roulement, pose immédiate ; effets du 20 et du 1 gardés");
+    ok(/setDisplayPref\('desInstant', /.test(fsRead("js/ui/settings-view.js")), "Paramètres : interrupteur « Jets de dés instantanés »");
+  } catch (err) { ok(false, "[509] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  finally { Prefs.set("desInstant", avant); }
+})();
 
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));

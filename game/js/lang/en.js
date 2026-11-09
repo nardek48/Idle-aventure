@@ -58,6 +58,10 @@ I18n.register("en", {
   "Version Alpha": "Alpha version",
   "Tu as fini le Désert : c'est la fin de cette version.": "You finished the Desert: this is the end of this version.",
   "Alpha": "Alpha",
+  // v3.756.0 : dés instantanés des Petites Aventures
+  "Jets de dés instantanés": "Instant dice rolls",
+  "Petites Aventures : le dé se pose tout de suite sur sa valeur, sans rouler.": "Small Adventures: the die lands on its value right away, without rolling.",
+  "Petites Aventures : nouveau réglage « Jets de dés instantanés » (Paramètres) : le dé se pose tout de suite sur sa valeur. Il est aussi instantané si ton téléphone demande moins d'animations.": "Small Adventures: new “Instant dice rolls” setting (Settings): the die lands on its value right away. It is also instant if your phone asks for fewer animations.",
   // v3.755.0 : objectif de l'Histoire tenu en plein donjon (Seb 09/11, option A)
   "Objectif de l'Histoire tenu : tu peux sortir avec ton butin, ou continuer.": "Story objective met: you can leave with your loot, or keep going.",
   "Tu continues vers le boss.": "You press on toward the boss.",

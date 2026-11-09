@@ -14,6 +14,7 @@
                          (format tablette, menu à gauche) ; lu par ui/desktop-scale.js
      grimEpure    true   v3.473.0 : combat épuré en Grimoire (atelier grimoire-epure.html), Paramètres › Jeu
      journalTest  false  v3.437.0 : journal de test (main/journal-test.js), activé dans Paramètres › Appareil ; v3.753.0 : true en Alpha
+     desInstant   false  v3.756.0 (Seb 09/11, A + B) : jets de dés des Petites Aventures sans roulement (ui/pa2-view.js)
      alphaIntroSeen, alphaFinSeen (absentes) v3.753.0 : fenêtres de l'Alpha déjà montrées (ui/alpha-view.js)
      textSize     "normal" v3.538.0 (audit ERG-11) : « grand » agrandit pages, feuilles et fenêtres de 12 % (ui/desktop-scale.js)
      chronique    true   v3.503.0 (grand écran) : Chronique ouverte à droite du format large (ui/chronique-view.js)
@@ -23,7 +24,7 @@
                          v3.376.0 : absente au premier lancement, elle est fixée par I18n.firstLang() (D3) */
 
 var PREFS_STORAGE_KEY = (typeof STORAGE_PREFIX === "string" ? STORAGE_PREFIX : "") + "aethervale_prefs"; // v3.752.0 : préfixe de l'Alpha
-var PREFS_DEFAULTS = { filRouge: true, bossMoments: true, installHint: true, logTotals: true, lang: "fr", tabletPortrait: "zoom", journalTest: !!(typeof isAlphaEdition === "function" && isAlphaEdition()), grimEpure: true, chronique: true, textSize: "normal" };
+var PREFS_DEFAULTS = { filRouge: true, bossMoments: true, installHint: true, logTotals: true, lang: "fr", tabletPortrait: "zoom", journalTest: !!(typeof isAlphaEdition === "function" && isAlphaEdition()), grimEpure: true, desInstant: false, chronique: true, textSize: "normal" };
 
 var Prefs = {
   _cache: null,

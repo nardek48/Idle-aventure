@@ -1605,11 +1605,19 @@ function pa2Shake() {
 function pa2Buzz(p) { try { if (navigator.vibrate) navigator.vibrate(p); } catch (e) { noteErreur("pa2-view.pa2Buzz", e); /* vibration indisponible */ } }
 
 // Dé qui roule, puis se pose sur la valeur déjà tirée par le moteur.
+/* v3.756.0 (Seb 09/11, A + B) : dé posé sans roulement si le joueur l'a choisi (Paramètres) ou si l'appareil
+   demande moins d'animations. Les effets du 20 et du 1 naturels restent. */
+function pa2DiceInstant() {
+  if (window.Prefs && Prefs.get("desInstant")) return true;
+  return !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+}
+
 function pa2RollDie(finalVal, then, res) {
   var die = document.getElementById("pa2-die");
   if (!die) { then(); return; }
-  var num = die.querySelector(".pa2-die-num"), img = die.querySelector(".pa2-die-img");
-  die.classList.remove("is-landed", "is-fx20", "is-fx1", "is-nat20", "is-nat1"); die.classList.add("is-rolling"); // v3.673.0 : le dé roule (bande d'images), puis se pose sur la valeur
+  var num = die.querySelector(".pa2-die-num"), img = die.querySelector(".pa2-die-img"), instant = pa2DiceInstant();
+  die.classList.remove("is-landed", "is-fx20", "is-fx1", "is-nat20", "is-nat1");
+  if (!instant) die.classList.add("is-rolling"); // v3.673.0 : le dé roule (bande d'images), puis se pose sur la valeur
   pa2Later(function () {
     die.classList.remove("is-rolling");
     var n = Math.max(1, Math.min(20, Number(finalVal) || 20));
@@ -1621,7 +1629,7 @@ function pa2RollDie(finalVal, then, res) {
     if (nat === 20) pa2Buzz([20, 40, 20]); else if (nat === 1) pa2Buzz(60);
     if (el && res && !res.rope) el.innerHTML = pa2NatHTML(res);
     then();
-  }, 800);
+  }, instant ? 0 : 800);
 }
 // Fin d'animation : la feuille montre l'issue, le HUD reprend les vraies valeurs.
 function pa2Reveal(run) {
