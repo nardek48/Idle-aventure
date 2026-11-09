@@ -26022,6 +26022,26 @@ console.log("\n[500] Journal de test (v3.747.0, Crypte de Seb) : boss à terre, 
   } catch (err) { ok(false, "[500] exception : " + err.message); }
 })();
 
+console.log("\n[501] Rafale sur une élite de carte (v3.748.0, journal de Seb) : une seule mort, l'or une seule fois");
+(function () {
+  var CE = g.CombatEngine, orig = CE.killEnemy, n = 0;
+  try {
+    freshCombat("ranger");
+    g.game.heroMaxHp *= 20; g.game.heroHp = g.game.heroMaxHp;
+    var c = (g.LIVING_MAPS.forest.sectors || []).filter(function (x) { return x.id === "arbremere"; })[0].content;
+    var r = g.LivingMapManager.startEliteFight("forest", "arbremere", c, 1), e0 = g.game.enemy;
+    ok(r && r.ok !== false && e0 && e0.isElite, "combat de carte lancé : " + (e0 && e0.name));
+    CE.killEnemy = function (e) { if ((e || g.game.enemy) === e0) n++; return orig.apply(this, arguments); };
+    e0.hp = 1; var or0 = g.game.gold;
+    var st = g.ClassCombatManager.ensureForCurrentClass(); g.game.classResource = Object.assign({}, st, { current: st.max });
+    CE.heroAction("skill2");
+    ok(n === 1, "Rafale (3 coups) : l'élite meurt une fois (" + n + " appel(s) à killEnemy)");
+    ok(g.game.gold - or0 === Number(e0.goldReward || 0) || g.game.gold - or0 < 2 * Math.max(1, Number(e0.goldReward || 0)), "or versé une seule fois (" + (g.game.gold - or0) + ")");
+    ok(CE.dealDamage(50, false, false, true, e0) === 0, "dealDamage sur un ennemi à 0 PV : sans effet");
+  } catch (err) { ok(false, "[501] exception : " + err.message); }
+  finally { CE.killEnemy = orig; try { g.game.livingMaps.fight = null; if (g.SortieManager) g.SortieManager.end("return"); } catch (e) {} game = freshCombat("knight"); }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

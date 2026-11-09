@@ -1664,6 +1664,7 @@ var CombatEngine = {
   dealDamage: function (dmg, isCrit, fromTap, ignoreAffinity, target) {
     var foe = target || game.enemy;
     if (!foe) return;
+    if (Number(foe.hp) <= 0) return 0; // v3.748.0 : déjà mort (Rafale sur une élite de carte) : ni second kill ni or en double
     if (window.RiseSystem && RiseSystem.blocksHit(foe)) return; // v3.428.3 (Ruines) : à terre, seule une décision l'achève
     if (window.VeinSystem && VeinSystem.blocksHit(foe)) return; // v3.490.0 (Montagne) : le Wyrm sous la lave
     if (window.SleepSystem) SleepSystem.onHit(foe); // v3.451.0 (Crypte) : le frapper le réveille

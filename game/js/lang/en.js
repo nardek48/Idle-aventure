@@ -10,6 +10,7 @@
    Les textes des données sont traduits par _td() à l'affichage (registre : lang/data-fields.js). */
 I18n.register("en", {
   // Forge des mondes (Seb 07/11) : la reforge renforce le héros, une stat par monde
+  "Rafale : une élite de carte ne meurt plus deux fois, son or n'est plus compté en double.": "Volley: a map elite no longer dies twice, and its gold is no longer counted twice.",
   "La Liche des sépulcres retrouve ses PV d'avant : elle était devenue trop dure pour le Rôdeur.": "The Lich of the Sepulchres is back to its former HP: it had become too hard for the Ranger.",
   "Bulle d'or : le « + » doré se rallume aussi quand ton or a doublé. Ses achats sont rangés en trois groupes (tout de suite, il manque quelque chose, plus tard), avec l'échoppe et l'Enchanteresse, et une carte par matériau qui bloque ton or.": "Gold bubble: the golden “+” also lights up when your gold has doubled. Its purchases are sorted into three groups (right now, something missing, later), with the shop and the Enchantress, and a card for each material holding your gold back.",
   "Élites : celles de la Crypte et de la Montagne ont plus de PV, celles de la Tour plus de PV et frappent plus fort, pour rester un vrai défi avec la Forge des mondes.": "Elites: those of the Crypt and the Mountain have more HP, and those of the Tower have more HP and hit harder, so they stay a real challenge with the World Forge.",
