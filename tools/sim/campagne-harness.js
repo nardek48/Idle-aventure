@@ -451,14 +451,21 @@ function developVillage() {
   }
   /* Forge (profil --investi) : construite dès qu'elle est ouverte, un niveau par passage, jusqu'au
      plafond du monde, si le chantier coûte moins de 50 % de la bourse. */
-  if (INVESTI) {
+  /* audit A (ECO-4, journal Crypte de Seb : Forge 4) : le joueur appliqué bâtit aussi la Forge, à la même règle,
+     mais sans attendre l'atelier ni un matériau (SANS_ATTENTE) : ce qui manque attend le passage suivant. */
+  if (INVESTI || JOUEUR) {
     var wf = V.getBlockReason("forge"), cf = V.getNextCost("forge");
     // Forge des mondes (Seb 07/11) : le second niveau de chaque monde attend l'acte III (WorldCaps, forgeActStep)
-    if (cf && (!wf || wf === "Matériaux manquants" || /^Atelier niveau/.test(wf)) && Number(cf.gold || 0) <= g.game.gold * 0.5) {
+    if (cf && (!wf || wf === "Matériaux manquants" || (INVESTI && /^Atelier niveau/.test(wf))) && Number(cf.gold || 0) <= g.game.gold * 0.5) {
       // v3.745 : sans attendre le lendemain d'une carte (le Verre trempé, le Verre de faille ne s'ouvrent qu'en cours de monde)
-      SANS_LENDEMAIN++;
-      try { if (upgradeBuilding("forge", V.getLevel("forge") + 1)) STATS.village.push("Forge " + V.getLevel("forge") + " (" + CURRENT_STEP + ")"); }
-      finally { SANS_LENDEMAIN--; }
+      SANS_LENDEMAIN++; if (!INVESTI) SANS_ATTENTE++;
+      try {
+        if (INVESTI) { if (upgradeBuilding("forge", V.getLevel("forge") + 1)) STATS.village.push("Forge " + V.getLevel("forge") + " (" + CURRENT_STEP + ")"); }
+        else if (!V.isBuilding()) { // joueur : il lance le chantier et fait autre chose pendant qu'il tourne
+          if (wf === "Matériaux manquants") ensureCost(cf);
+          if (!V.getBlockReason("forge") && V.startBuild("forge")) { act("chantier:forge", Number(cf.gold || 0)); STATS.village.push("Forge " + (V.getLevel("forge") + 1) + " (" + CURRENT_STEP + ")"); }
+        }
+      } finally { SANS_LENDEMAIN--; if (!INVESTI) SANS_ATTENTE--; }
     }
   }
   /* Compagnons : une amélioration par compagnon et par passage, si elle coûte moins de 30 % de la bourse. */
