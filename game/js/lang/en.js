@@ -61,6 +61,14 @@ I18n.register("en", {
   "Village : les pastilles de niveau des cartes ne passent plus par-dessus les onglets quand la liste défile.": "Village: card level badges no longer slide over the tabs when the list scrolls.",
   "Talents : le bouton « Apprendre » ne déborde plus de l'écran.": "Talents: the “Learn” button no longer runs off the screen.",
   "Talents : l'écran prend le style du reste du jeu. Onglets Classe / Commandement du kit, points en tête de l'arbre, cadres sur l'arbre et le panneau du talent.": "Talents: the screen now matches the rest of the game. Class / Command tabs from the kit, points at the top of the tree, frames on the tree and the talent panel.",
+  // v3.760.0 : fil rouge, village et quêtes annexes
+  "Améliorer : {x}": "Upgrade: {x}",
+  "Niveau {a} → {b}. Tu as tout ce qu'il faut.": "Level {a} → {b}. You have everything you need.",
+  "Tu as tout ce qu'il faut pour le construire.": "You have everything you need to build it.",
+  "Quête annexe : {x}": "Side quest: {x}",
+  "En cours. {x}": "In progress. {x}",
+  "Une quête annexe t'attend.": "A side quest is waiting for you.",
+  "Fil rouge : il propose aussi de construire ou d'améliorer un bâtiment du village dès que tu as de quoi le faire, et la prochaine quête annexe.": "Guiding thread: it now also suggests building or upgrading a village building as soon as you can afford it, and the next side quest.",
   // v3.756.0 : dés instantanés des Petites Aventures
   "Jets de dés instantanés": "Instant dice rolls",
   "Petites Aventures : le dé se pose tout de suite sur sa valeur, sans rouler.": "Small Adventures: the die lands on its value right away, without rolling.",

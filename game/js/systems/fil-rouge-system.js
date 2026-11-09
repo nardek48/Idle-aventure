@@ -31,8 +31,13 @@ var FIL_ROUGE_ICONS = {
   bestiary: "images/Icons/subtabs/bestiary.webp",
   achievement: "images/Icons/menu_icons/achivment_menu.webp",
   pa: "images/Icons/scene/journey_long.webp",          // v3.510.0 : ex-bulles du dock
-  dungeon: "images/Icons/subtabs/dungeon.webp"
+  dungeon: "images/Icons/subtabs/dungeon.webp",
+  build: "images/Icons/system/upgrade.webp",          // v3.760.0 : repli si le bâtiment n'a pas d'icône
+  annexe: "images/Icons/quests/quest_side.webp"       // v3.760.0 : l'icône de l'onglet Annexes
 };
+/* v3.760.0 (Seb 09/11, option A) : bâtiments proposés d'abord au débutant, puis l'ordre de la grille */
+var FIL_ROUGE_BUILD_FIRST = ["training", "warehouse", "hall", "workshop"];
+var FIL_ROUGE_ANNEXE_KINDS = ["village", "workshop", "exploration", "scene"]; // l'onglet Annexes (QUEST_BOARD_CATEGORIES)
 
 var FilRouge = {
   _cached: null,
@@ -90,7 +95,7 @@ var FilRouge = {
 
   _allChecks: function () {
     var out = [];
-    var checks = [this._claim, this._memory, this._heal, this._story, this._patrol, this._tavern, this._pa, this._dungeon, this._plots, this._talents, this._relic, this._zoneUp, this._apres]; // v3.508.0 : talents, relique, zone ; v3.510.0 : petite aventure, donjon
+    var checks = [this._claim, this._memory, this._heal, this._story, this._patrol, this._build, this._annexe, this._tavern, this._pa, this._dungeon, this._plots, this._talents, this._relic, this._zoneUp, this._apres]; // v3.508.0 : talents, relique, zone ; v3.510.0 : petite aventure, donjon
     for (var i = 0; i < checks.length; i++) {
       var r = null;
       try { r = checks[i].call(this); } catch (e) { r = null; } // une source cassée ne doit pas éteindre le fil
@@ -204,6 +209,53 @@ var FilRouge = {
       go: function () {
         if (typeof m.launch === "function") m.launch();
         else if (typeof switchTab === "function") switchTab("quests");
+      }
+    };
+  },
+
+  /* 5 bis. v3.760.0 (Seb 09/11, option A) : un bâtiment du village à construire ou améliorer TOUT DE SUITE
+     (même règle que la fiche : getBlockReason nul, donc or et matériaux réunis, aucun chantier en cours). */
+  _build: function () {
+    var V = window.VillageBuildingManager, D = window.VILLAGE_BUILDINGS;
+    if (!V || !D || typeof V.getBlockReason !== "function") return null;
+    if (typeof isTabUnlocked === "function" && !isTabUnlocked("village")) return null;
+    var order = FIL_ROUGE_BUILD_FIRST.concat((window.VILLAGE_BUILDING_ORDER || []).filter(function (x) { return FIL_ROUGE_BUILD_FIRST.indexOf(x) === -1; }));
+    var id = order.filter(function (x) { return D[x] && V.getBlockReason(x) === null; })[0];
+    if (!id) return null;
+    var lvl = V.getLevel(id), name = _td(D[id].name);
+    return {
+      id: "build", urgent: false, icon: D[id].icon || FIL_ROUGE_ICONS.build,
+      title: lvl > 0 ? _t("Améliorer : {x}", { x: name }) : _t("Construire : {x}", { x: name }),
+      reason: lvl > 0 ? _t("Niveau {a} → {b}. Tu as tout ce qu'il faut.", { a: lvl, b: lvl + 1 }) : _t("Tu as tout ce qu'il faut pour le construire."),
+      goLabel: _t("Voir"),
+      go: function () {
+        if (typeof switchTab === "function") switchTab("village");
+        if (typeof setVillageSubTab === "function") setVillageSubTab("village");
+        if (typeof openVillageBuildingSheet === "function") openVillageBuildingSheet(id);
+      }
+    };
+  },
+
+  /* 5 ter. v3.760.0 : une quête annexe en cours, sinon disponible (onglet Annexes ; les Petites Aventures et le
+     Labyrinthe ont leur propre proposition). Une annexe terminée passe déjà par « Réclamer ». */
+  _annexe: function () {
+    var list = this._missions().filter(function (x) {
+      return FIL_ROUGE_ANNEXE_KINDS.indexOf(x.sourceKind) !== -1 && !x.isPetiteAventure && !x.isLabyrinth
+        && (x.status === "running" || x.status === "accepted" || x.status === "available");
+    });
+    var m = list.filter(function (x) { return x.status !== "available"; })[0] || list[0];
+    if (!m) return null;
+    var engaged = m.status !== "available";
+    return {
+      id: "annexe", urgent: false, icon: FIL_ROUGE_ICONS.annexe,
+      title: _t("Quête annexe : {x}", { x: m.title }),
+      reason: engaged ? _t("En cours. {x}", { x: m.objectiveLabel || m.progressLabel || "" }).trim()
+        : (m.rewardSummary ? _t("Récompense : {x}.", { x: m.rewardSummary }) : _t("Une quête annexe t'attend.")),
+      goLabel: engaged && typeof m.launch === "function" ? _t("Reprendre") : _t("Voir"),
+      go: function () {
+        if (engaged && typeof m.launch === "function") { m.launch(); return; }
+        if (typeof switchTab === "function") switchTab("quests");
+        if (typeof setQuestCategory === "function") setQuestCategory("secondaires");
       }
     };
   },
@@ -449,7 +501,8 @@ var FilRouge = {
   /* 8. Rien ne presse : une activité engagée ou disponible du monde, sinon le tableau. */
   _idle: function () {
     var m = this._missions().filter(function (x) {
-      return x.sourceKind !== "story" && (x.status === "running" || x.status === "accepted" || x.status === "available");
+      return x.sourceKind !== "story" && (x.status === "running" || x.status === "accepted" || x.status === "available")
+        && !(FIL_ROUGE_ANNEXE_KINDS.indexOf(x.sourceKind) !== -1 && !x.isPetiteAventure && !x.isLabyrinth); // v3.760.0 : les annexes ont leur proposition
     })[0];
     if (m) {
       var engaged = m.status !== "available";

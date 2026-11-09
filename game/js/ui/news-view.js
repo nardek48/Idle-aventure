@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.760.0", "aether_icon", _t("Fil rouge : il propose aussi de construire ou d'améliorer un bâtiment du village dès que tu as de quoi le faire, et la prochaine quête annexe.")],
     ["3.759.0", "subtabs/talents", _t("Talents : l'écran prend le style du reste du jeu. Onglets Classe / Commandement du kit, points en tête de l'arbre, cadres sur l'arbre et le panneau du talent.")],
     ["3.758.0", "subtabs/talents", _t("Talents : le bouton « Apprendre » ne déborde plus de l'écran.")],
     ["3.757.0", "village_buildings/village_forge", _t("Village : les pastilles de niveau des cartes ne passent plus par-dessus les onglets quand la liste défile.")],

@@ -26335,6 +26335,38 @@ console.log("\n[511] Talents au kit (v3.759.0, atelier talents-kit, B) : onglets
   } catch (err) { ok(false, "[511] exception : " + err.message); }
 })();
 
+console.log("\n[512] Fil rouge (v3.760.0, Seb 09/11, option A) : construire au village, quête annexe");
+(function () {
+  var F = g.FilRouge, V = g.VillageBuildingManager, W = g.WarehouseManager;
+  try {
+    run("fullResetState();"); game = freshCombat("knight");
+    var src = fsRead("js/systems/fil-rouge-system.js");
+    ok(/this\._story, this\._patrol, this\._build, this\._annexe, this\._tavern/.test(src), "ordre : après l'Histoire et la patrouille rentrée, avant la Taverne");
+    // Village fermé : rien
+    game.unlockedTabs = Object.assign({}, game.unlockedTabs, { village: false });
+    ok(F._build() === null, "village pas encore ouvert : pas de « Construire »");
+    // Village ouvert, de quoi construire : le premier de la liste qui passe getBlockReason
+    game.unlockedTabs.village = true; V.ensure();
+    game.village.buildings.workshop.level = 3; game.village.buildings.training.level = 1; // l'Atelier construit (rang), le Terrain déjà posé
+    game.gold = 1e9; Object.keys(g.WAREHOUSE_RESOURCES || {}).forEach(function (k) { try { W.addResource(k, 5000, true); } catch (e) {} });
+    var ids = ["training", "warehouse", "hall", "workshop"].concat(g.VILLAGE_BUILDING_ORDER), attendu = ids.filter(function (x) { return g.VILLAGE_BUILDINGS[x] && V.getBlockReason(x) === null; })[0];
+    var b = F._build();
+    if (!attendu) console.log("    raisons : " + ids.map(function (x) { return x + "=" + V.getBlockReason(x); }).join(", "));
+    ok(!!attendu && b && b.id === "build" && b.title.indexOf(g._td(g.VILLAGE_BUILDINGS[attendu].name)) > 0 && typeof b.go === "function", "de quoi construire : « " + (b && b.title) + " » (ordre Terrain, Entrepôt, Halle, Atelier, puis la grille)");
+    ok(F.all().some(function (x) { return x.id === "build"; }), "la proposition entre dans la liste du fil rouge");
+    // Sans or : rien
+    game.gold = 0;
+    ok(F._build() === null, "sans or ni matériaux : pas de « Construire » (même règle que la fiche)");
+    // Annexes
+    var annexes = F._missions().filter(function (x) { return ["village", "workshop", "exploration", "scene"].indexOf(x.sourceKind) !== -1 && !x.isPetiteAventure && !x.isLabyrinth && x.status !== "claimable"; });
+    var a = F._annexe();
+    ok(annexes.length ? (a && a.id === "annexe" && /Quête annexe : /.test(a.title)) : a === null, "quête annexe : " + (a ? "« " + a.title + " »" : "aucune disponible dans cet état") + " (" + annexes.length + " au tableau)");
+    var idle = F._idle();
+    ok(!annexes.some(function (x) { return idle.title === x.title; }), "« Rien ne presse » ne reprend plus une annexe (pas de doublon)");
+  } catch (err) { ok(false, "[512] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  finally { try { run("fullResetState();"); } catch (e2) {} game = freshCombat("knight"); }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");
