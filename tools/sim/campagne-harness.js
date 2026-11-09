@@ -499,7 +499,8 @@ function developVillage() {
     var why2 = F.getBlockReason(slot), c2 = F.getCost(slot);
     var part = rang === 0 ? (INVESTI ? 0.5 : 0.3) : (INVESTI ? 0.3 : 0.15);
     if (!c2 || (why2 && why2 !== "Matériaux manquants") || Number(c2.gold || 0) > g.game.gold * part) return;
-    if (why2 === "Matériaux manquants" && (rang !== 0 || REFORGE_STOCK) && !FARM_REFORGES) return;
+    // calage sur Seb : l'arme peut attendre ses matériaux (elle monte d'abord), les autres pièces se reforgent avec le stock
+    if (why2 === "Matériaux manquants" && (REFORGE_STOCK ? slot !== "weapon" : rang !== 0) && !FARM_REFORGES) return;
     SANS_LENDEMAIN++;
     var oR = g.game.gold, okR = reforgeTo(slot, F.getLevel(slot) + 1);
     dep("forge", Math.max(0, oR - g.game.gold));
