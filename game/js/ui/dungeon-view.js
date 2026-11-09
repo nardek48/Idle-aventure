@@ -470,6 +470,8 @@ function buildDungeonCampSheetHTML() {
     sub: _t("Salle de garde · étape 1 sur 2 passée")
   });
   h += '<div class="ksheet-body">';
+  var tenus = DungeonManager.newlyReadySteps(); // v3.755.0 : le campement tient l'objectif de l'Histoire
+  if (tenus.length) h += '<p class="dobj-tenu">' + esc(_t("Objectif de l'Histoire tenu : « {s} ». Tu peux sortir.", { s: _td(tenus[0].title) })) + '</p>';
   h += '<p class="dcamp-quote">' + _t("Des lits de pierre, trop courts pour Maddoc. Tu fais du feu. La fumée monte droit, par un trou percé exprès pour elle.") + '</p>';
 
   h += '<div class="dcamp-lbl">' + _t("Le groupe") + '</div><div class="dcamp-card">';
@@ -595,6 +597,40 @@ function buildDungeonPrepHTML(dungeon) {
    Feuille sans croix : trois cartes, une à prendre, ou Passer. Le combat attend derrière (modale bloquante). */
 var haltPick = null;
 
+/* v3.755.0 (Seb 09/11, option A) : objectif de l'Histoire tenu en plein run. Feuille sans croix : Sortir (tout le
+   butin gardé, comme au campement) ou Continuer vers le boss. Le combat attend derrière (modale bloquante). */
+function openDungeonObjectiveSheet() {
+  var host = document.getElementById("dungeon-modal-root");
+  if (!host) return;
+  if (!DungeonManager.isObjectivePending()) { host.innerHTML = ""; return; }
+  host.innerHTML = buildDungeonObjectiveSheetHTML();
+}
+
+function buildDungeonObjectiveSheetHTML() {
+  var run = game.dungeonRun || {}, dungeon = DungeonManager.getById(run.dungeonId), tenus = DungeonManager.newlyReadySteps();
+  var wave = Math.max(0, Number(run.wave || 1) - 1), total = DUNGEON_CONFIG.waveCount;
+  var h = '<div class="ksheet-backdrop"></div><div class="ksheet dungeon-objective-sheet" role="dialog" aria-modal="true">';
+  h += kSheetHeadHTML({ icon: renderIconOrEmojiHTML("images/Icons/quests/quest_story.webp", "", ""), title: _t("Objectif tenu"),
+    sub: _t("{x} · vague {a} sur {b}", { x: _td(dungeon ? dungeon.name : ""), a: wave, b: total }) });
+  h += '<div class="ksheet-body">';
+  if (tenus.length) h += '<p class="dobj-tenu">' + esc(_t("« {s} » est rempli. Tu peux le rendre en sortant.", { s: _td(tenus[0].title) })) + '</p>';
+  h += '<p class="dobj-txt">' + esc(_t("Sortir : tu remontes maintenant avec tout ce que tu portes.")) + '</p>';
+  h += '<p class="dobj-txt">' + esc(_t("Continuer : la sortie reprend jusqu'au boss. Si tu tombes, seul le butin mis en sûreté reste à toi.")) + '</p>';
+  h += '</div><div class="ksheet-foot">';
+  h += '<button type="button" class="kbtn primary" onclick="dungeonObjectiveAction(\'sortir\')">' + esc(_t("Sortir, butin gardé")) + '</button>';
+  h += '<button type="button" class="kbtn" onclick="dungeonObjectiveAction(\'continuer\')">' + esc(_t("Continuer")) + '</button>';
+  return h + '</div></div>';
+}
+
+function dungeonObjectiveAction(action) {
+  var host = document.getElementById("dungeon-modal-root");
+  if (host) host.innerHTML = "";
+  DungeonManager.objectiveAction(action);
+}
+window.openDungeonObjectiveSheet = openDungeonObjectiveSheet;
+window.dungeonObjectiveAction = dungeonObjectiveAction;
+window.buildDungeonObjectiveSheetHTML = buildDungeonObjectiveSheetHTML;
+
 function openDungeonHaltSheet() {
   if (!DungeonManager.isHaltPending()) return;
   haltPick = null;
@@ -689,6 +725,7 @@ function buildDungeonSummaryHTML(result) {
   h += '    <div class="kwin-quote dungeon-story-text">' + (result.success
     ? _t("Le boss s’effondre. La salle retrouve son calme — pour cette fois.")
     : result.outcome === "camp" ? _t("Tu remontes du campement. Ce que tu portais est à toi.")
+    : result.outcome === "objectif" ? _t("Objectif tenu. Tu remontes avec tout ce que tu portais.") // v3.755.0
     : _t("La tentative s’arrête à la vague {a} sur {b}. Tu récupères quand même quelque chose avant de te replier.", { a: result.clearedWave, b: result.wavesTotal })) + '</div>';
 
   h += '    <div class="dungeon-summary-rewards">';

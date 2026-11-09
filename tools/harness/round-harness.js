@@ -26240,6 +26240,63 @@ console.log("\n[507] Audit A, MES-6 (v3.754.0) : Verre trempé introuvable tant 
   finally { try { run("fullResetState();"); } catch (e2) {} game = freshCombat("knight"); }
 })();
 
+console.log("\n[508] Donjons (v3.755.0, Seb 09/11, option A) : objectif de l'Histoire tenu en plein run, sortir (tout le butin) ou continuer");
+(function () {
+  var SQ = g.StoryQuestManager, D = g.DungeonManager;
+  try {
+    run("fullResetState();"); game = freshCombat("knight");
+    var desert = SQ.getChapter("desert"), i12 = desert.steps.findIndex(function (s) { return s.id === "desert_12"; });
+    SQ.getState("forest").currentStep = SQ.getChapter("forest").steps.length;
+    SQ.getState("desert").currentStep = i12; SQ.getState("desert").accepted = true;
+    game.worldsEverReached = { 0: true, 1: true };
+    var go = function () {
+      game.heroHp = game.heroMaxHp; game.dungeonRunsUsed = {}; game.dungeonTierCleared = { 1: true }; game.inventory = [];
+      D.start(2, []); game.dungeonRun.halts = [];
+      D.spawnWave(5); D.onEnemyKilled();
+    };
+    go();
+    var r = game.dungeonRun;
+    ok(r.active && Array.isArray(r.storyReady0) && r.storyReady0.indexOf("desert_12") === -1, "départ : desert_12 pas encore tenue");
+    ok(D.isObjectivePending() && r.wave === 6, "vague 5 passée : « Objectif tenu » en attente, la vague 6 attend derrière (pas une vague trop tard)");
+    var html = run("buildDungeonObjectiveSheetHTML()");
+    ok(/Objectif tenu/.test(html) && /dungeonObjectiveAction\('sortir'\)/.test(html) && /dungeonObjectiveAction\('continuer'\)/.test(html) && html.indexOf(desert.steps[i12].title) > 0, "feuille : l'étape nommée, « Sortir, butin gardé » et « Continuer »");
+    ok(fsRead("js/main/game-loop.js").indexOf('"dungeon-modal-root"') > 0 && /getElementById\("dungeon-modal-root"\)/.test(fsRead("js/ui/dungeon-view.js")), "la feuille s'ouvre dans dungeon-modal-root : le combat attend");
+    ok(D.objectiveAction("continuer") === true && !D.isObjectivePending() && r.objective === "done" && r.active, "Continuer : la sortie reprend");
+    D.spawnWave(6); D.onEnemyKilled();
+    ok(!D.isObjectivePending() && r.wave === 7, "une seule fois par run");
+    D.forfeit();
+    // Sortir : fin comme au campement (tout le butin gardé)
+    game.explorationProgression.citeVague5 = false; go();
+    var logs0 = (game.logs || []).length, gold0 = Number(game.gold || 0);
+    ok(D.objectiveAction("sortir") === true && !game.dungeonRun.active, "Sortir : la sortie se termine");
+    var src = fsRead("js/systems/dungeon-system.js");
+    ok(/\(outcome === "camp" \|\| outcome === "objectif"\) && window\.SortieManager\) SortieManager\.end\("return"\)/.test(src) && /outcome === "camp" \|\| outcome === "objectif"\) \{/.test(src), "Sortir : traité comme le campement (sac rendu en entier, pas la moitié de la fuite)");
+    ok(Number(game.gold || 0) > gold0, "Sortir : or de la sortie versé (" + formatNumberSafe(Number(game.gold || 0) - gold0) + ")");
+    // Rejeu : l'étape déjà tenue au départ ne rouvre pas la pause
+    game.explorationProgression.citeVague5 = true; go();
+    ok(!D.isObjectivePending() && game.dungeonRun.wave === 6, "étape déjà tenue au départ : pas de pause");
+    D.forfeit();
+    // Ancien run rechargé (sans storyReady0) : rien
+    game.explorationProgression.citeVague5 = false; game.heroHp = game.heroMaxHp; game.dungeonRunsUsed = {}; D.start(2, []); game.dungeonRun.halts = []; delete game.dungeonRun.storyReady0;
+    D.spawnWave(5); D.onEnemyKilled();
+    ok(!D.isObjectivePending(), "run d'avant la mise à jour : pas de pause");
+    D.forfeit();
+    // Tanière (forest_13) : 5 vagues sous une Marque, compteur lu au moment de la vague
+    SQ.getState("desert").currentStep = 0; SQ.getState("desert").accepted = false;
+    var forest = SQ.getChapter("forest"), i13 = forest.steps.findIndex(function (s) { return s.id === "forest_13"; });
+    SQ.getState("forest").currentStep = i13; SQ.acceptStep("forest");
+    var mark = (g.DUNGEON_MARKS || [])[0];
+    game.heroHp = game.heroMaxHp; game.dungeonRunsUsed = {}; game.dungeonTierCleared = {}; game.inventory = [];
+    D.start(1, mark ? [mark.id] : []); game.dungeonRun.halts = [];
+    for (var w = 1; w <= 5; w++) { D.spawnWave(w); [].concat(g.CombatActors.enemies()).forEach(function (e) { e.hp = 0; }); game.totalKills = Number(game.totalKills || 0) + 1; if (!D.isObjectivePending()) D.onEnemyKilled(); } // vague vaincue : ennemis à 0 PV
+    ok(!!mark && D.isObjectivePending() && game.dungeonRun.wave === 6 && g.storyCounter(game, "coeurKillsMarked") === 5, "Tanière sous Marque : pause après la vague 5 (compteur " + g.storyCounter(game, "coeurKillsMarked") + ")");
+    D.objectiveAction("sortir");
+    ok(/Objectif de l'Histoire tenu : « \{s\} »\. Tu peux sortir\./.test(fsRead("js/ui/dungeon-view.js")), "campement : la ligne « Objectif de l'Histoire tenu » quand il tient l'étape");
+  } catch (err) { ok(false, "[508] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  finally { try { if (game.dungeonRun && game.dungeonRun.active) D.forfeit(); run("fullResetState();"); } catch (e2) {} game = freshCombat("knight"); }
+})();
+function formatNumberSafe(n) { return String(Math.round(n)); }
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

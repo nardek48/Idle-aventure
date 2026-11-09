@@ -498,6 +498,7 @@ var DungeonManager = {
     // v3.430.0 : run rechargé à la halte (save-system respawne la vague) : la feuille du campement revient
     if (this.isCampPending() && typeof openDungeonCampSheet === "function") setTimeout(openDungeonCampSheet, 0);
     if (this.isHaltPending() && typeof openDungeonHaltSheet === "function") setTimeout(openDungeonHaltSheet, 0); // v3.472.0
+    if (this.isObjectivePending() && typeof openDungeonObjectiveSheet === "function") setTimeout(openDungeonObjectiveSheet, 0); // v3.755.0
   },
 
   /* ---------- Le campement (v3.430.0, RU13 — Conception Ruines v1.4, validé le 09/10) ----------
@@ -703,6 +704,54 @@ var DungeonManager = {
     return true;
   },
 
+  /* ---------- Objectif tenu (v3.755.0, Seb 09/11, option A) ----------
+     Une étape de l'Histoire remplie en plein run : la vague suivante attend derrière une feuille, « Sortir, butin
+     gardé » (comme le campement) ou « Continuer ». Une fois par run ; le campement de la même vague s'en charge. */
+  storyReadyIds: function () {
+    var SQ = window.StoryQuestManager;
+    if (!SQ || !window.STORY_QUESTS) return [];
+    return Object.keys(STORY_QUESTS).filter(function (c) { return SQ.isCurrentStepReady(c); }).map(function (c) { return SQ.getCurrentStep(c).id; });
+  },
+
+  // Étapes tenues pendant ce run (absentes au départ)
+  newlyReadySteps: function () {
+    var run = game.dungeonRun, SQ = window.StoryQuestManager;
+    if (!run || !run.active || !SQ) return [];
+    var before = Array.isArray(run.storyReady0) ? run.storyReady0 : [];
+    return Object.keys(STORY_QUESTS).filter(function (c) { return SQ.isCurrentStepReady(c) && before.indexOf(SQ.getCurrentStep(c).id) === -1; })
+      .map(function (c) { return SQ.getCurrentStep(c); });
+  },
+
+  isObjectivePending: function () {
+    return !!(game.dungeonRun && game.dungeonRun.active && game.dungeonRun.objective === "pending");
+  },
+
+  reachObjective: function (clearedWave) {
+    var run = game.dungeonRun;
+    if (run.objective || !Array.isArray(run.storyReady0)) return false;
+    if (window.StoryQuestManager && typeof StoryQuestManager._trackKills === "function") StoryQuestManager._trackKills(); // vagues sous Marque (forest_13) à jour
+    var w0 = run.wave; run.wave = clearedWave + 1; // « passer la vague 5 » se lit au seuil de la vague 6 (storyCiteWave5)
+    var tenus = this.newlyReadySteps(); run.wave = w0;
+    if (!tenus.length) return false;
+    run.objective = "pending";
+    addLog("📜 " + _t("Objectif de l'Histoire tenu : tu peux sortir avec ton butin, ou continuer."), "event");
+    this.spawnWave(clearedWave + 1);   // la vague suivante attend ; la feuille bloque le combat
+    saveGame();
+    return true;
+  },
+
+  /* "sortir" : fin comme au campement, tout le butin gardé (Seb 09/11) ; "continuer" : la vague attend son tour */
+  objectiveAction: function (action) {
+    if (!this.isObjectivePending()) return false;
+    var run = game.dungeonRun;
+    run.objective = "done";
+    if (action === "sortir") { this.finish(false, Math.max(0, (run.wave || 1) - 1), "objectif"); return true; }
+    addLog("📜 " + _t("Tu continues vers le boss."), "event");
+    if (typeof renderAll === "function") renderAll();
+    saveGame();
+    return true;
+  },
+
   /* cardId : une carte du tirage, ou null pour passer. La vague en attente est refaite avec la carte. */
   haltAction: function (cardId) {
     if (!this.isHaltPending()) return false;
@@ -770,7 +819,7 @@ var DungeonManager = {
     var runLevel = storyFree ? 1 : Math.max(1, Math.min(this.getMaxLevel(dungeon.id), Math.floor(Number(level) || 1)));
     // v3.472.0 : haltes tirées au lancement, seulement sur un donjon déjà terminé et hors sortie de l'Histoire (option 1 de Seb)
     var halts = (!storyFree && game.dungeonTierCleared[dungeon.id]) ? this.drawHalts(dungeon) : [];
-    game.dungeonRun = { active: true, wave: 0, dungeonId: dungeon.id, level: runLevel, free: freeRun, marks: runMarks, shardsEarned: 0, halts: halts, boons: [] };
+    game.dungeonRun = { active: true, wave: 0, dungeonId: dungeon.id, level: runLevel, free: freeRun, marks: runMarks, shardsEarned: 0, halts: halts, boons: [], storyReady0: this.storyReadyIds() }; // v3.755.0 : étapes déjà tenues au départ
     if (!game.dungeonTiersEntered || typeof game.dungeonTiersEntered !== "object") game.dungeonTiersEntered = {};
     game.dungeonTiersEntered[dungeon.id] = true;
     // v3.102.1 : le donjon est une sortie. SortieManager.start recalcule les stats : les Marques héros (Fragilité,
@@ -806,6 +855,7 @@ var DungeonManager = {
     var nextWave = clearedWave + 1;
     // v3.430.0 (RU13) : le campement, halte après la vague de la première étape
     if (this.reachCamp(clearedWave)) return;
+    if (this.reachObjective(clearedWave)) return; // v3.755.0 : objectif de l'Histoire tenu, sortir ou continuer
     if (this.reachHalt(clearedWave)) return; // v3.472.0 : une halte, trois cartes
     if (nextWave > DUNGEON_CONFIG.waveCount) {
       addLog(_t("🏰 Vagues terminées ! Le boss du donjon apparaît..."), "event");
@@ -870,7 +920,7 @@ var DungeonManager = {
     // v3.449.2 : Fiole noire bue, or de fin ÷ 2 ; lue avant la clôture (l'abandon a déjà clos la sortie : son résumé)
     var fioleMult = !window.CombatItems ? 1 : CombatItems.lootMultOf(game.sortie && game.sortie.active ? game.sortie : game.lastSortieSummary);
     if (success && window.SortieManager) SortieManager.end("success");
-    if (outcome === "camp" && window.SortieManager) SortieManager.end("return"); // v3.430.0 : rien à perdre, le sac de l'étape 1 est banqué
+    if ((outcome === "camp" || outcome === "objectif") && window.SortieManager) SortieManager.end("return"); // v3.430.0 : rien à perdre, le sac de l'étape 1 est banqué
     var campLoot = game.dungeonRun.campLoot || null; // v3.430.0 : pour le rapport de fin
     var eliteLoot = game.dungeonRun.eliteLoot || null; // v3.474.0 : mis en sûreté par les élites
     var wavesTotal = DUNGEON_CONFIG.waveCount;
@@ -906,7 +956,7 @@ var DungeonManager = {
       goldReward = 0;
       grantLoot = false;
       lootRarity = null;
-    } else if (outcome === "camp") {
+    } else if (outcome === "camp" || outcome === "objectif") { // v3.755.0 : sortie à l'objectif, comme au campement
       // v3.430.0 (RU13) : Sortir au campement — la part de l'étape 1, sans la moitié de la fuite
       goldReward = Math.floor(DUNGEON_CONFIG.fullClearGoldBase * worldBonus * progress * 0.6);
       grantLoot = chance(DUNGEON_CONFIG.partialLootChance);
@@ -989,6 +1039,8 @@ var DungeonManager = {
 
     var msg = success
       ? "🏆 " + _t("{x} : sortie terminée ! +{g} or", { x: _td(tier.name), g: formatNumber(goldReward) })
+      : outcome === "objectif"
+        ? "📜 " + _t("{x} : objectif tenu, tu sors avec ton butin (vague {a}/{b}) : +{g} or", { x: _td(tier.name), a: clearedWave, b: wavesTotal, g: formatNumber(goldReward) })
       : outcome === "camp"
         ? "🔥 " + _t("{x} : tu remontes du campement (vague {a}/{b}) : +{g} or", { x: _td(tier.name), a: clearedWave, b: wavesTotal, g: formatNumber(goldReward) })
       : (outcome === "death"

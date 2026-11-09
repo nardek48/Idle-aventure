@@ -478,3 +478,7 @@ body.dg-on-list .hud-dock { display: none !important; }
 /* QA-12 (audit 04/11) : raison du « Entrer » grisé, au-dessus des boutons du pied de feuille */
 .ksheet-foot:has(> .dsheet-nofood) { flex-wrap: wrap; }
 .ksheet-foot > .dsheet-nofood { flex: 1 0 100%; font-size: 12.5px; font-weight: 700; line-height: 1.3; color: var(--ink-missing); text-align: center; }
+
+/* v3.755.0 (Seb 09/11, option A) : objectif de l'Histoire tenu en plein run (feuille « Objectif tenu », ligne du campement) */
+.dobj-tenu { margin: 0 0 10px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--c-brown-550-3); background: var(--c-cream-50-soft); color: var(--nb-ink); font-weight: 700; line-height: 1.35; }
+.dobj-txt { margin: 0 0 8px; color: var(--nb-ink); line-height: 1.4; }
