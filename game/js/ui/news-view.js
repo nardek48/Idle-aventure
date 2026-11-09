@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.749.0", "village_buildings/apothecary", _t("Apothicaire : la journée finie, « Presser » prépare une potion ou un objet de plus contre de l'or. Le prix double à chaque fois et revient le lendemain.")],
     ["3.748.0", "gold_icon", _t("Rafale : une élite de carte ne meurt plus deux fois, son or n'est plus compté en double.")],
     ["3.746.0", "dungeon/boss_crown", _t("La Liche des sépulcres retrouve ses PV d'avant : elle était devenue trop dure pour le Rôdeur.")],
     ["3.745.0", "gold_icon", _t("Bulle d'or : le « + » doré se rallume aussi quand ton or a doublé. Ses achats sont rangés en trois groupes (tout de suite, il manque quelque chose, plus tard), avec l'échoppe et l'Enchanteresse, et une carte par matériau qui bloque ton or.")],

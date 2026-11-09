@@ -90,6 +90,13 @@ var APOTHECARY_RECIPES = [
   { potionId: "fiole_noire", kind: "item", inputs: { eau: 48, chitine_profondeurs: 2 }, order: { chitine_profondeurs: 6, eau: 240 }, worldIndex: 1, capped: true }
 ];
 
+/* v3.749.0 (étude L'or et la Forge, piste D, atelier apothicaire-pressee.html, Seb 09/11) : la préparation pressée.
+   Journée finie : une de plus contre 1 000 or × rang du monde atteint (Forêt 1 … Tour 6), doublé à chaque pressée du jour. */
+var APOTHECARY_PRESS_BASE = 1000;
+var APOTHECARY_PRESS_MULT = 2;
+window.APOTHECARY_PRESS_BASE = APOTHECARY_PRESS_BASE;
+window.APOTHECARY_PRESS_MULT = APOTHECARY_PRESS_MULT;
+
 // v3.363.0 (acte IV) : le puits du roi (choix « roi » = rapporter) ajoute 2 préparations par jour
 var APOTHECARY_PUITS_ROI_BONUS = 2;
 window.APOTHECARY_PUITS_ROI_BONUS = APOTHECARY_PUITS_ROI_BONUS;

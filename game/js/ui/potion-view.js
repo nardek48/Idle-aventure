@@ -39,7 +39,11 @@ function buildApothecaryCraftRowHTML(potionId) {
   if (!unlocked) {
     h += '<span class="potion-craft-locked"><img class=ico-inline src=images/Icons/system/lock_closed.webp> ' + esc(ApothecaryManager.getLockReason(potionId)) + '</span>';
   } else if (capped && remaining <= 0) {
-    h += '<span class="potion-craft-locked">' + _t("Fini pour aujourd’hui ({a}/{b})", { a: ApothecaryManager.getDailyCap(), b: ApothecaryManager.getDailyCap() }) + '</span>';
+    // v3.749.0 (atelier apothicaire-pressee.html, A + Presser + prix ×2) : la journée finie, on presse contre de l'or
+    var pc = ApothecaryManager.getPressCost(), okP = ApothecaryManager.canPress(potionId);
+    h += '<button type="button" class="btn-buy kbuy potion-craft-btn potion-press-btn' + (okP ? '' : ' cant-afford') + '"' + (okP ? ' onclick="ApothecaryManager.press(\'' + esc(potionId) + '\')"' : ' disabled')
+      + '><img class="btn-buy-icon" src="images/Icons/gold_icon.webp" alt="">' + _t("Presser · {n}", { n: formatNumber(pc) }) + '</button>';
+    h += '<span class="potion-press-note">' + _t("Journée finie ({a}/{b}). L'Apothicaire en fait une de plus contre de l'or ; la suivante : {n} or.", { a: ApothecaryManager.getDailyCap(), b: ApothecaryManager.getDailyCap(), n: formatNumber(ApothecaryManager.getPressCost(ApothecaryManager.getPressedToday() + 1)) }) + '</span>';
   } else if (ApothecaryManager.canAfford(potionId)) {
     h += '<button type="button" class="btn-buy potion-craft-btn" onclick="ApothecaryManager.craft(\'' + esc(potionId) + '\')">' + _t("Préparer") + '</button>';
   } else {

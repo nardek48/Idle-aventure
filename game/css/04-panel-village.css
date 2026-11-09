@@ -358,6 +358,8 @@
 .potion-craft-item { display: inline-flex; align-items: center; gap: 3px; font-weight: 700; }
 .potion-craft-item.is-missing { color: var(--ink-missing); }
 .potion-craft-icon { width: 16px; height: 16px; object-fit: contain; }
+/* v3.749.0 : préparation pressée, la ligne d'explication passe sous les ingrédients */
+.potion-press-note { flex-basis: 100%; font-size: 12px; line-height: 1.35; color: var(--nb-ink-dim); }
 .potion-craft-locked { font-size: 12px; font-weight: 700; color: var(--nb-ink-dim); flex: 0 0 auto; }
 .potion-craft-btn { flex: 0 0 auto; }
 

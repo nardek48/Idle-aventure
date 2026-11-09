@@ -29,6 +29,8 @@ var ApothecaryManager = {
     if (!st.learned || typeof st.learned !== "object") st.learned = {};
     if (typeof st.dailyCount !== "number") st.dailyCount = 0;
     if (typeof st.dailyKey !== "string") st.dailyKey = "";
+    if (typeof st.pressCount !== "number") st.pressCount = 0;   // v3.749.0 : pressées du jour (game.village, déjà sauvegardé)
+    if (typeof st.pressKey !== "string") st.pressKey = "";
     /* Migration « déjà en jeu = acquis » : une partie d'avant v3.291.0 garde les recettes
        que son niveau ouvrait (les N premières). Une seule fois ; à niveau 0, rien. */
     if (!st.migrated) {
@@ -156,6 +158,47 @@ var ApothecaryManager = {
     st.dailyCount += 1;
   },
 
+  /* ---------- v3.749.0 : préparation pressée (piste D) ---------- */
+
+  getPressedToday: function () {
+    var st = this.ensureState();
+    return st.pressKey === this._todayKey() ? st.pressCount : 0;
+  },
+
+  /* Rang du monde le plus loin atteint (comme l'échoppe) : revenir en Forêt ne fait pas baisser le prix. */
+  _pressWorldRank: function () {
+    var max = window.WorldManager ? Number(WorldManager.worldIndex || 0) : 0;
+    Object.keys(game.worldsEverReached || {}).forEach(function (k) { if (game.worldsEverReached[k] && Number(k) > max) max = Number(k); });
+    return max + 1;
+  },
+
+  getPressCost: function (n) {
+    var k = (typeof n === "number") ? n : this.getPressedToday();
+    return Math.round(APOTHECARY_PRESS_BASE * this._pressWorldRank() * Math.pow(APOTHECARY_PRESS_MULT, k));
+  },
+
+  /* Pressée possible : recette apprise et plafonnée, journée finie, or et ingrédients réunis. */
+  canPress: function (potionId) {
+    var recipe = this.getRecipe(potionId);
+    if (!recipe || !recipe.capped || !this.isUnlocked(potionId) || this.getDailyRemaining() > 0) return false;
+    return (game.gold || 0) >= this.getPressCost() && this.canAfford(potionId);
+  },
+
+  press: function (potionId) {
+    var recipe = this.getRecipe(potionId);
+    if (!recipe || !recipe.capped || this.getDailyRemaining() > 0) return this.craft(potionId);
+    var cost = this.getPressCost();
+    if ((game.gold || 0) < cost) { showToast(_t("Il te manque {n} or", { n: formatNumber(cost - Math.floor(game.gold || 0)) }), 1400); return false; }
+    this._pressCost = cost;
+    try { return this.craft(potionId); } finally { this._pressCost = 0; }
+  },
+
+  _countPress: function () {
+    var st = this.ensureState(), today = this._todayKey();
+    if (st.pressKey !== today) { st.pressKey = today; st.pressCount = 0; }
+    st.pressCount += 1;
+  },
+
   getRecipe: function (potionId) {
     return (APOTHECARY_RECIPES || []).find(function (r) { return r.potionId === potionId; }) || null;
   },
@@ -204,7 +247,7 @@ var ApothecaryManager = {
     }
 
     // v3.291.0 : plafond quotidien, Soin mineur libre
-    if (recipe.capped && this.getDailyRemaining() <= 0) {
+    if (recipe.capped && this.getDailyRemaining() <= 0 && !this._pressCost) {
       showToast(_t("L'Apothicaire a fini pour aujourd'hui ({n} max)", { n: this.getDailyCap() }), 1600);
       return false;
     }
@@ -244,7 +287,8 @@ var ApothecaryManager = {
       WarehouseManager.removeResource(key, inputs[key]);
     });
 
-    if (recipe.capped) this._countDaily();
+    if (this._pressCost) { game.gold = Math.max(0, Number(game.gold || 0) - this._pressCost); this._countPress(); } // v3.749.0 : pressée
+    else if (recipe.capped) this._countDaily();
 
     if (recipe.kind === "item") {
       WarehouseManager.addResource(potionId, 1, true);   // v3.441.0 : objet de combat, rangé dans l'Entrepôt

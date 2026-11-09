@@ -26042,6 +26042,43 @@ console.log("\n[501] Rafale sur une élite de carte (v3.748.0, journal de Seb) :
   finally { CE.killEnemy = orig; try { g.game.livingMaps.fight = null; if (g.SortieManager) g.SortieManager.end("return"); } catch (e) {} game = freshCombat("knight"); }
 })();
 
+console.log("\n[502] Préparation pressée à l'Apothicaire (v3.749.0, atelier apothicaire-pressee.html : A, P1, Presser)");
+(function () {
+  var A = g.ApothecaryManager, W = g.WarehouseManager;
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='ranger'; EquipmentManager.recalcStats();");
+    var game = g.game;
+    game.village.buildings = game.village.buildings || {}; game.village.buildings.apothecary = { level: 1 };
+    var st = A.ensureState(); st.learned.potion_soin_majeur = true; st.learned.baume_froid = true;
+    W.addResource("eau", 400, true); W.addResource("pain", 20, true); W.addResource("ble", 100, true);
+    g.WorldManager.worldIndex = 4; game.worldsEverReached = { 0: true, 4: true };
+    ok(A.getPressCost(0) === 5000 && A.getPressCost(1) === 10000 && A.getPressCost(2) === 20000, "prix : 1 000 × rang du monde (Montagne 5), ×2 par pressée : 5 000 / 10 000 / 20 000");
+    g.WorldManager.worldIndex = 0;
+    ok(A.getPressCost(0) === 5000, "revenu en Forêt : le prix suit le monde le plus loin atteint (5 000)");
+    game.gold = 100000;
+    ok(!A.canPress("baume_froid") && A.getDailyRemaining() > 0, "journée pas finie : pas de pressée");
+    st.dailyKey = A._todayKey(); st.dailyCount = A.getDailyCap();
+    ok(A.craft("baume_froid") === false, "journée finie : « Préparer » reste refusé");
+    var stock0 = W.getAmount("baume_froid"), eau0 = W.getAmount("eau");
+    ok(A.canPress("baume_froid") && A.press("baume_froid") === true, "pressée : acceptée");
+    ok(W.getAmount("baume_froid") === stock0 + 1 && W.getAmount("eau") === eau0 - 32 && game.gold === 95000, "pressée : +1 Baume froid, ingrédients dus (32 eau), 5 000 or payés");
+    ok(A.getPressedToday() === 1 && A.getPressCost() === 10000 && A.getDailyUsed() === A.getDailyCap(), "compteur de pressées à 1, prix suivant 10 000, plafond du jour inchangé");
+    game.gold = 9000;
+    ok(!A.canPress("baume_froid") && A.press("baume_froid") === false && game.gold === 9000, "or insuffisant : refusée, rien de payé");
+    game.gold = 100000; W.removeResource("eau", W.getAmount("eau"));
+    var o2 = game.gold;
+    ok(A.press("baume_froid") === false && game.gold === o2, "ingrédient manquant : refusée, l'or n'est pas pris");
+    st.pressKey = "autre jour";
+    ok(A.getPressedToday() === 0 && A.getPressCost() === 5000, "nouveau jour : le prix revient à 5 000");
+    ok(A.canPress("potion_soin_mineur") === false, "Soin mineur (sans plafond) : jamais pressé");
+    W.addResource("eau", 100, true);
+    var h = g.buildApothecaryCraftRowHTML("baume_froid");
+    ok(/potion-press-btn/.test(h) && /Presser · 5/.test(h) && /la suivante : 10/.test(h) && !/Fini pour aujourd/.test(h), "ligne « Préparer » : bouton « Presser · 5 000 » et prix suivant, plus de « Fini pour aujourd'hui »");
+    ["Presser · {n}", "Il te manque {n} or"].forEach(function (k) { ok(fsRead("js/lang/en.js").indexOf(JSON.stringify(k)) >= 0, "en.js : « " + k + " » traduit"); });
+  } catch (err) { ok(false, "[502] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  finally { try { run("fullResetState();"); } catch (e2) {} game = freshCombat("knight"); }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

@@ -10,6 +10,10 @@
    Les textes des données sont traduits par _td() à l'affichage (registre : lang/data-fields.js). */
 I18n.register("en", {
   // Forge des mondes (Seb 07/11) : la reforge renforce le héros, une stat par monde
+  "Apothicaire : la journée finie, « Presser » prépare une potion ou un objet de plus contre de l'or. Le prix double à chaque fois et revient le lendemain.": "Apothecary: once the day's work is done, \"Rush\" makes one more potion or item for gold. The price doubles each time and resets the next day.",
+  "Presser · {n}": "Rush · {n}",
+  "Journée finie ({a}/{b}). L'Apothicaire en fait une de plus contre de l'or ; la suivante : {n} or.": "Day's work done ({a}/{b}). The Apothecary will make one more for gold; the next one: {n} gold.",
+  "Il te manque {n} or": "You are {n} gold short",
   "Rafale : une élite de carte ne meurt plus deux fois, son or n'est plus compté en double.": "Volley: a map elite no longer dies twice, and its gold is no longer counted twice.",
   "La Liche des sépulcres retrouve ses PV d'avant : elle était devenue trop dure pour le Rôdeur.": "The Lich of the Sepulchres is back to its former HP: it had become too hard for the Ranger.",
   "Bulle d'or : le « + » doré se rallume aussi quand ton or a doublé. Ses achats sont rangés en trois groupes (tout de suite, il manque quelque chose, plus tard), avec l'échoppe et l'Enchanteresse, et une carte par matériau qui bloque ton or.": "Gold bubble: the golden “+” also lights up when your gold has doubled. Its purchases are sorted into three groups (right now, something missing, later), with the shop and the Enchantress, and a card for each material holding your gold back.",
@@ -1792,7 +1796,6 @@ I18n.register("en", {
   "Patrouilles": "Patrols",
 
   // js/ui/potion-view.js
-  "Fini pour aujourd’hui ({a}/{b})": "Done for today ({a}/{b})",
   "Stock : {n} / {c}": "Stock: {n} / {c}",
   "Active — mission en cours": "Active — mission in progress",
   "Armée pour la prochaine mission": "Armed for the next mission",
