@@ -61,7 +61,7 @@ var JournalTest = {
     this.log("releve", {
       motif: reason || "temps",
       niv: g.heroLevel, or: Math.floor(g.gold || 0), pv: Math.round(g.heroHp || 0), pvMax: Math.round(g.heroMaxHp || 0),
-      monde: window.WorldManager ? WorldManager.worldIndex : null, histoire: steps, equip: equip, forge: forge,
+      monde: window.WorldManager ? WorldManager.worldIndex : null, histoire: steps, equip: equip, forge: forge, mat: this._mats(),
       classe: (window.ClassCombatManager && ClassCombatManager.getCurrentClassId) ? ClassCombatManager.getCurrentClassId() : null
     });
     this._lastSnapPt = Number(g.playTime || 0);
@@ -73,6 +73,16 @@ var JournalTest = {
     this.log("mort", where);
     this._lastHp = 0; // le tick ne la note pas une seconde fois
   },
+
+  /* v3.750.0 : matériaux qui freinent la Forge et les rangs (stock au relevé) */
+  _mats: function () {
+    var W = window.WarehouseManager, out = {};
+    if (!W) return out;
+    ["acier", "verre_trempe", "cle_de_voute", "cire_consacree", "obsidienne_taillee", "verre_faille"].forEach(function (k) { try { out[k] = W.getAmount(k); } catch (e) { noteErreur("journal-test._mats", e); /* relevé seulement */ } });
+    return out;
+  },
+  /* v3.750.0 : compagnons présents au départ */
+  _groupe: function () { try { return window.CompanionManager ? CompanionManager.partyIds().slice() : []; } catch (e) { return []; } },
 
   _pvPct: function () { var g = window.game; return Math.round(100 * Number(g.heroHp || 0) / Math.max(1, Number(g.heroMaxHp || 1))); },
 
@@ -156,16 +166,19 @@ function initJournalTest() {
     function (r, a) { J.log("choix", { chapitre: a[0], cle: a[1], valeur: a[2] }); });
 
   journalWrap(window.DungeonManager, "start", null,
-    function (r, a) { if (g().dungeonRun && g().dungeonRun.active) J.log("donjon_debut", { id: a[0], marques: a[1] || [], pv0: J._pvPct() }); });
+    function (r, a) { if (g().dungeonRun && g().dungeonRun.active) J.log("donjon_debut", { id: a[0], marques: a[1] || [], pv0: J._pvPct(), groupe: J._groupe() }); });
   // v3.747.0 (Crypte de Seb) : l'or rapporté par le run, récompense de fin comprise
   journalWrap(window.DungeonManager, "finish",
     function () { return { id: g().dungeonRun ? g().dungeonRun.dungeonId : null, or0: Number(g().gold || 0) }; },
     function (r, a, c) { J.log("donjon_fin", { id: c.id, reussi: !!a[0], vague: a[1], issue: a[2] || (a[0] ? "victoire" : null), or: Math.round(Number(g().gold || 0) - c.or0) }); });
 
   journalWrap(window.AdventureQuestManager, "start", null,
-    function (r, a) { if (g().adventureQuestRun && g().adventureQuestRun.active) J.log("quete_debut", { id: a[0], pv0: J._pvPct() }); });
-  journalWrap(window.AdventureQuestManager, "finish", null,
-    function (r, a) { J.log("quete_fin", { id: a[0] && a[0].id, reussi: !!a[1] }); });
+    function (r, a) { if (g().adventureQuestRun && g().adventureQuestRun.active) J.log("quete_debut", { id: a[0], pv0: J._pvPct(), groupe: J._groupe() }); });
+  // v3.750.0 : pourquoi la quête s'arrête (victoire, fuite, mort), PV et rounds du dernier combat
+  journalWrap(window.AdventureQuestManager, "forfeit", function () { J._fuite = true; }, function () { J._fuite = false; });
+  journalWrap(window.AdventureQuestManager, "finish",
+    function () { return { fuite: !!J._fuite, rounds: g().combatRound ? g().combatRound.number : null }; },
+    function (r, a, c) { J.log("quete_fin", { id: a[0] && a[0].id, reussi: !!a[1], issue: a[1] ? "victoire" : (c.fuite ? "fuite" : (Number(g().heroHp || 0) <= 0 || g().justDied ? "mort" : "echec")), pv: J._pvPct(), rounds: c.rounds }); });
 
   // v3.747.0 : rounds du combat ; un boss qui se relève (Varrek) est noté « a_terre », pas vaincu
   journalWrap(window.CombatEngine, "killEnemy",
@@ -192,7 +205,7 @@ function initJournalTest() {
   journalWrap(window.LivingMapManager, "onRunEnd", null,
     function (r, a) { J.log("carte", { carte: a[0], secteur: a[1], issue: a[2] }); });
   journalWrap(window.SceneRunManager, "startRun", null,
-    function (r, a) { if (r && r.ok) J.log("expedition", { id: a[0], pv0: J._pvPct() }); });
+    function (r, a) { if (r && r.ok) { var lm = a[1] && a[1].livingMap; J.log("expedition", lm ? { id: a[0], pv0: J._pvPct(), secteur: lm.sectorId, reveil: !!lm.wake } : { id: a[0], pv0: J._pvPct() }); } });
   // v3.737.0 (Seb 07/11) : pourquoi une Petite Aventure s'arrête (dest, ko, retour, renoncement en préparation, fuite)
   var paFin = function (r, a, ctx) { if (ctx) J.log("expedition_fin", { id: ctx.id, issue: ctx.how || (a && a[0]) || null, etape: ctx.status, case: ctx.at }); };
   var paCtx = function () { var run = window.Pa2Run && Pa2Run.getRun(); return run ? { id: run.templateId, status: run.status, at: run.at } : null; };
@@ -227,6 +240,38 @@ function initJournalTest() {
     function (r, a) { if (r) J.log("talent", { id: a[0] }); });
   journalWrap(window.PotionManager, "useHealingPotion", null,
     function (r, a) { if (r === true) J.log("potion", { id: a[0] || null, pvPct: Math.round(100 * Number(g().heroHp || 0) / Math.max(1, Number(g().heroMaxHp || 1))) }); });
+
+  // v3.750.0 : préparations de l'Apothicaire (pressée ou non, or payé) et potions achetées en or
+  journalWrap(window.ApothecaryManager, "craft",
+    function () { return { or0: orAvant(), pressee: !!ApothecaryManager._pressCost }; },
+    function (r, a, c) { if (r === true) J.log("preparation", { id: a[0], pressee: c.pressee, or: Math.round(c.or0 - orAvant()) }); });
+  journalWrap(window.PotionManager, "buyPotion", orAvant, depense("achat_potion", function (a) { return { id: a[0] }; }));
+  journalWrap(window.PotionManager, "buyHealingPotion", orAvant, depense("achat_potion", function (a) { return { id: a[0] }; }));
+  // v3.750.0 : changement d'équipement, avec les PV max avant et après
+  journalWrap(window.EquipmentManager, "equip",
+    function (uid) {
+      var it = (g().inventory || []).filter(function (x) { return x.uid === uid; })[0];
+      if (!it || !it.slot) return null;
+      var old = g().equipped && g().equipped[it.slot];
+      return { uid: uid, emplacement: it.slot, avant: old ? old.rarity : null, apres: it.rarity, pvMaxAvant: Math.round(Number(g().heroMaxHp || 0)) };
+    },
+    function (r, a, c) {
+      var now = c && g().equipped && g().equipped[c.emplacement];
+      if (!now || now.uid !== c.uid) return;
+      J.log("equipement", { emplacement: c.emplacement, avant: c.avant, apres: c.apres, pvMaxAvant: c.pvMaxAvant, pvMaxApres: Math.round(Number(g().heroMaxHp || 0)) });
+    });
+  // v3.750.0 : objets de combat emportés, puis chaque contre posé (une fois par ennemi et par objet)
+  journalWrap(window.CombatItems, "takeForSortie", null,
+    function (r) { if (r && r.length) J.log("objets_emportes", { ids: r.slice() }); });
+  journalWrap(window.CombatItems, "applyTo", null,
+    function (r, a) {
+      var e = a[0], it = a[1];
+      if (r !== true || !e || !it) return;
+      var vus = J._contresVus = J._contresVus || []; // hors de l'ennemi : rien d'ajouté à la sauvegarde
+      if (vus.some(function (v) { return v.e === e && v.id === it.id; })) return;
+      vus.push({ e: e, id: it.id }); if (vus.length > 40) vus.shift();
+      J.log("objet_contre", { id: it.id, ennemi: e.name || e.id || null, round: g().combatRound ? g().combatRound.number : null });
+    });
 
   // Sessions : ouverture, passage en fond, retour (le temps hors app se lit entre deux lignes)
   if (typeof document !== "undefined" && document.addEventListener) document.addEventListener("visibilitychange", function () {

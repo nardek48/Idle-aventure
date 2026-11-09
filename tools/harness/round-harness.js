@@ -26014,7 +26014,7 @@ console.log("\n[500] Journal de test (v3.747.0, Crypte de Seb) : boss à terre, 
     ok(typeof g.CaravanManager.depart._journalOrig === "function" && typeof g.CaravanManager.unload._journalOrig === "function", "caravanes : départ et déchargement enveloppés");
     ok(/"a_terre" : "victoire"/.test(src) && /ctx\.e\.downed/.test(src), "un boss qui se relève (downed, PV > 0) est noté « a_terre », pas « victoire »");
     ok(/rounds: g\(\)\.combatRound/.test(src), "victoire : nombre de rounds du combat");
-    ok(/donjon_debut[^\n]*pv0: J\._pvPct\(\)/.test(src) && /quete_debut[^\n]*pv0/.test(src) && /"expedition", \{ id: a\[0\], pv0/.test(src), "PV d'entrée : donjon, quête, expédition");
+    ok(/donjon_debut[^\n]*pv0: J\._pvPct\(\)/.test(src) && /quete_debut[^\n]*pv0/.test(src) && /"expedition", lm \? \{ id: a\[0\], pv0[^\n]*: \{ id: a\[0\], pv0/.test(src), "PV d'entrée : donjon, quête, expédition");
     ok(/w\.pvAvant/.test(src) && /w\.reveil/.test(src) && /gisantsMult\(run\)/.test(src), "Petite Aventure : PV avant le coup, coup reçu, gisants réveillés, difficulté du secteur");
     ok(/"reforge", \{ emplacement: a\[0\], niveau: n, or:/.test(src) && /"chantier", \{ batiment: a\[0\], or:/.test(src) && /"donjon_fin", \{[^\n]*or: Math\.round/.test(src), "or : reforge, chantier et fin de donjon");
     g.game.heroHp = 50; g.game.heroMaxHp = 200;
@@ -26077,6 +26077,57 @@ console.log("\n[502] Préparation pressée à l'Apothicaire (v3.749.0, atelier a
     ["Presser · {n}", "Il te manque {n} or"].forEach(function (k) { ok(fsRead("js/lang/en.js").indexOf(JSON.stringify(k)) >= 0, "en.js : « " + k + " » traduit"); });
   } catch (err) { ok(false, "[502] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   finally { try { run("fullResetState();"); } catch (e2) {} game = freshCombat("knight"); }
+})();
+
+console.log("\n[503] Journal de test (v3.750.0) : préparations, potions achetées, issue des quêtes, équipement, objets de combat, groupe, matériaux, gisants");
+(function () {
+  var J = g.JournalTest, Prefs = g.Prefs, onAvant = Prefs.get("journalTest"), lignes = [];
+  var lastOf = function (t) { var L = J._load().filter(function (l) { return l.type === t; }); return L[L.length - 1]; };
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='ranger'; EquipmentManager.recalcStats();");
+    var game = g.game; Prefs.set("journalTest", true); J._lines = []; J._dirty = false;
+    // 7. matériaux au relevé
+    g.WarehouseManager.addResource("acier", 7, true); J.snapshot("test");
+    var rel = lastOf("releve");
+    ok(rel && rel.d.mat && rel.d.mat.acier === 7 && "cire_consacree" in rel.d.mat && "verre_faille" in rel.d.mat, "relevé : matériaux clés (Acier 7, Cire consacrée, Verre de faille…)");
+    // 1. préparation pressée
+    game.village.buildings = game.village.buildings || {}; game.village.buildings.apothecary = { level: 1 };
+    var A = g.ApothecaryManager, st = A.ensureState(); st.learned.baume_froid = true;
+    g.WarehouseManager.addResource("eau", 200, true); g.WarehouseManager.addResource("ble", 50, true);
+    game.gold = 50000; st.dailyKey = A._todayKey(); st.dailyCount = A.getDailyCap(); st.pressKey = "";
+    A.press("baume_froid");
+    var pr = lastOf("preparation");
+    ok(pr && pr.d.id === "baume_froid" && pr.d.pressee === true && pr.d.or === A.getPressCost(0), "préparation : pressée notée avec l'or payé (" + (pr && pr.d.or) + ")");
+    st.dailyCount = 0; A.craft("baume_froid"); pr = lastOf("preparation");
+    ok(pr && pr.d.pressee === false && pr.d.or === 0, "préparation : simple, sans or");
+    // 2. potion achetée en or
+    var hp = (g.HEALING_POTIONS_DB || [])[0]; game.gold = 50000;
+    if (hp) g.PotionManager.buyHealingPotion(hp.id);
+    var ap = lastOf("achat_potion");
+    ok(hp && ap && ap.d.id === hp.id && ap.d.or > 0, "achat de potion en or noté (" + (ap && ap.d.id) + ", " + (ap && ap.d.or) + " or)");
+    // 4. équipement
+    game.inventory = [{ uid: "jt1", slot: "helmet", name: "Casque", icon: "helmet", rarity: "legendary", stat: "maxHp", value: 1, affixes: [] }];
+    game.equipped.helmet = { uid: "jt0", slot: "helmet", name: "Casque", icon: "helmet", rarity: "epic", stat: "maxHp", value: 500, affixes: [] };
+    g.EquipmentManager.recalcStats(); g.EquipmentManager.equip("jt1");
+    var eq = lastOf("equipement");
+    ok(eq && eq.d.emplacement === "helmet" && eq.d.avant === "epic" && eq.d.apres === "legendary" && typeof eq.d.pvMaxAvant === "number" && typeof eq.d.pvMaxApres === "number", "équipement : rareté avant/après et PV max (" + (eq && eq.d.pvMaxAvant) + " → " + (eq && eq.d.pvMaxApres) + ")");
+    // 5. objet de combat : un contre noté une seule fois par ennemi
+    var e = { name: "Brute", archetype: "enraged", hp: 50, maxHp: 100 }, it = g.COMBAT_ITEMS.baume_froid;
+    g.CombatItems.applyTo(e, it); e.rageFreezeRounds = 0; g.CombatItems.applyTo(e, it);
+    var oc = J._load().filter(function (l) { return l.type === "objet_contre"; });
+    ok(oc.length === 1 && oc[0].d.id === "baume_froid" && oc[0].d.ennemi === "Brute", "objet de combat : contre noté une fois par ennemi (" + oc.length + ")");
+    // 3 et 6. quête : groupe au départ, fuite notée « fuite »
+    var AQ = g.AdventureQuestManager; game.heroHp = game.heroMaxHp;
+    AQ.start("aq_forest_expedition");
+    var qd = lastOf("quete_debut");
+    ok(qd && Array.isArray(qd.d.groupe), "quête : groupe noté au départ (" + JSON.stringify(qd && qd.d.groupe) + ")");
+    AQ.forfeit();
+    var qf = lastOf("quete_fin");
+    ok(qf && qf.d.issue === "fuite" && qf.d.reussi === false && typeof qf.d.pv === "number", "quête abandonnée : issue « fuite », PV notés");
+    // 8. gisants au départ d'une Petite Aventure (champ noté si la carte le passe)
+    ok(/secteur: lm\.sectorId, reveil: !!lm\.wake/.test(fsRead("js/main/journal-test.js")), "Petite Aventure : secteur et gisants réveillés notés au départ");
+  } catch (err) { ok(false, "[503] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  finally { Prefs.set("journalTest", onAvant); J._lines = []; try { run("fullResetState();"); } catch (e2) {} game = freshCombat("knight"); }
 })();
 
 Promise.all(ATTENTES).then(function () {
