@@ -229,6 +229,7 @@ function orInvestGate(ko) {
     var m = by[k];
     m.miss = Math.max(0, m.need - orInvestHave(k));
     m.prod = typeof findResourceProducer === "function" ? findResourceProducer(k) : null;
+    m.lock = typeof getResourceStoryLock === "function" ? getResourceStoryLock(k) : ""; // v3.754.0 (MES-6) : atelier pas encore ouvert
     return m;
   }).sort(function (a, b) { return b.gold - a.gold; });
 }
@@ -295,7 +296,7 @@ function orInvestRowHTML(x, cls, more) {
 }
 
 function orInvestMatHTML(m) {
-  var res = window.WAREHOUSE_RESOURCES && WAREHOUSE_RESOURCES[m.res], name = orInvestResName(m.res), rec = orInvestRecipe(m.res, m.prod);
+  var res = window.WAREHOUSE_RESOURCES && WAREHOUSE_RESOURCES[m.res], name = orInvestResName(m.res), rec = m.lock ? null : orInvestRecipe(m.res, m.prod); // MES-6 : atelier fermé, pas de recette promise
   var h = '<div class="oi-mat"><div class="oi-mat-t">' + (res && res.icon ? renderIconOrEmojiHTML(res.icon, "oi-mat-ico", name) : "") +
     '<span>' + esc(_t("{x} : il en manque {n}", { x: name, n: formatNumber(m.miss) })) + '</span></div>';
   h += '<p>' + esc(_t("Retient {g} or : {x}.", { g: formatNumber(m.gold), x: orInvestWhoText(m.items) })) + '</p>';
@@ -304,9 +305,10 @@ function orInvestMatHTML(m) {
     h += '<p>' + esc(rec.now > 0 ? _t("Avec ton Entrepôt : {n} tout de suite.", { n: formatNumber(rec.now) }) : _t("Ton Entrepôt n'a pas de quoi en produire.")) + '</p>';
     var lr = rec.lack && window.WAREHOUSE_RESOURCES && WAREHOUSE_RESOURCES[rec.lack];
     if (!rec.now && lr && lr.sourceHint) h += '<p>' + esc(_t("{x} : {s}.", { x: _td(lr.name), s: _td(lr.sourceHint) })) + '</p>';
-  } else if (m.prod) h += '<p>' + esc(_t("Production : {x}.", { x: m.prod.name })) + '</p>';
+  } else if (m.prod && !m.lock) h += '<p>' + esc(_t("Production : {x}.", { x: m.prod.name })) + '</p>';
   else if (res && res.sourceHint) h += '<p>' + esc(_td(res.sourceHint)) + '.</p>';
-  if (m.prod) {
+  if (m.lock) h += '<p>' + esc(_t("S'ouvre avec l'Histoire : « {s} ».", { s: _td(m.lock) })) + '</p>'; // v3.754.0 (MES-6) : pas de « Produire » vers un atelier fermé
+  else if (m.prod) {
     var i = orInvestShown.push({ go: function () { orInvestGoProducer(m.res); } }) - 1;
     h += '<button type="button" class="oi-go" onclick="orInvestGo(' + i + ')">' + esc(_t("Produire : {x}", { x: m.prod.name })) + ' ›</button>';
   }

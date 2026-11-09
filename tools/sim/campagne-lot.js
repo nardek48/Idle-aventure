@@ -3,7 +3,7 @@
    agrège les résultats : murs, temps par étape, qui tue, boss et élites, farm, obstacles.
 
    USAGE : node tools/sim/campagne-lot.js . [--n 4] [--combats] [--joueur] [--attendre-camp] [--tactique] [--classes knight,ranger,mage]
-           [--chantier] [--avise] [--forge-max] [--seuil-soin 0.7] [--releve nom] [--sortie dossier]
+           [--chantier] [--avise] [--forge-max] [--seuil-soin 0.7] [--releve nom] [--sortie dossier] [--jusqua ruines_01]
    Référence (audit 04/11) : node tools/sim/campagne-lot.js . --combats --joueur --n 4
    Les fichiers de chaque partie sont écrits dans captures/campagne-lot/ (JSON + sortie texte).
    Compter environ 1 min par partie en --combats, 2 s sans. */
@@ -19,6 +19,7 @@ var PASS = ["--combats", "--attendre-camp", "--tactique", "--compagnons-malins",
 if (ARGS.indexOf("--seuil-soin") >= 0) PASS.push("--seuil-soin", ARGS[ARGS.indexOf("--seuil-soin") + 1]); // DUR-13
 if (ARGS.indexOf("--apres") >= 0) PASS.push("--apres", ARGS[ARGS.indexOf("--apres") + 1]); // v3.459.10 : après-Histoire (heures)
 if (ARGS.indexOf("--faille") >= 0) PASS.push("--faille"); // lot 0 des niveaux de donjon
+if (ARGS.indexOf("--jusqua") >= 0) PASS.push("--jusqua", ARGS[ARGS.indexOf("--jusqua") + 1]); // v3.753.0 (Alpha) : lot arrêté à une étape, ex. ruines_01
 // audit 04/11 (SUIV-1) : relevé par partie (nom_numéro), sinon les parties d'une même classe s'écrasent
 var RELEVE = ARGS.indexOf("--releve") >= 0 ? (ARGS[ARGS.indexOf("--releve") + 1] || "lot") : null;
 var OUT = require("../chemins.js").captures(arg("--sortie", "campagne-lot")); // v3.456.0 : --sortie pour deux lots en parallèle

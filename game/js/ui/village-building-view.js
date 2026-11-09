@@ -104,7 +104,20 @@ function buildVillageCostListHTML(id) {
    c'est CE mécanisme qui plafonne la construction, à la place d'un verrou
    abstrait. worldsEverReached n'est jamais lu comme un verrou, seulement pour
    formuler la phrase. */
+/* v3.754.0 (audit A, MES-6) : matériau fait par un atelier que l'Histoire n'a pas encore ouvert (Verre trempé
+   avant desert_09) : introuvable pour l'instant, avec l'étape qui l'ouvre. Renvoie le titre de l'étape, sinon "". */
+function getResourceStoryLock(key) {
+  var prod = typeof findResourceProducer === "function" ? findResourceProducer(key) : null;
+  var w = prod && prod.kind === "workshop" && window.WORKSHOPS_CONFIG ? WORKSHOPS_CONFIG[prod.id] : null;
+  if (!w || !w.openAtStoryStep || w.active) return "";
+  var q = window.STORY_QUESTS || {}, titre = "";
+  Object.keys(q).forEach(function (c) { (q[c].steps || []).forEach(function (s) { if (s.id === w.openAtStoryStep) titre = s.title; }); });
+  return titre || w.openAtStoryStep;
+}
+window.getResourceStoryLock = getResourceStoryLock;
+
 function isVillageResourceUnreachable(key) {
+  if (getResourceStoryLock(key)) return true; // v3.754.0 (MES-6)
   var def = WAREHOUSE_RESOURCES[key];
   if (!def || typeof def.worldIndex !== "number") return false;
   if (def.worldIndex <= 0) return false; // monde de départ : toujours atteignable
@@ -119,6 +132,8 @@ window.isVillageResourceUnreachable = isVillageResourceUnreachable;
 function getVillageResourceHint(key) {
   var def = WAREHOUSE_RESOURCES[key];
   if (!def) return "";
+  var lock = getResourceStoryLock(key);
+  if (lock) return _t("S'ouvre avec l'Histoire : « {s} ».", { s: _td(lock) }); // v3.754.0 (MES-6)
   if (isVillageResourceUnreachable(key)) {
     return def.worldName ? _t("Se trouve en {w}.", { w: _td(def.worldName) }) : _t("Pas encore accessible.");
   }

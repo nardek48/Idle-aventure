@@ -15203,6 +15203,7 @@ console.log("\n[230] v3.448.6 — Palier Rare : « Ce qui manque », et où");
     g.VillageBuildingManager.ensure(); g.ForgeManager.ensure();
     game.village.buildings.forge = Object.assign({}, game.village.buildings.forge, { level: 3 });
     game.forge.levels.weapon = 6; game.gold = 0; game.worldsEverReached = { 0: true, 1: true, 2: true }; // aux Ruines
+    var sq230 = JSON.stringify(game.storyQuests || {}); ["forest", "desert"].forEach(function (c) { g.StoryQuestManager.getState(c).currentStep = g.StoryQuestManager.getChapter(c).steps.length; }); // v3.754.0 : aux Ruines, le Désert est fini (Tailleur ouvert, MES-6)
     game.equipped = { weapon: { slot: "weapon", rarity: "rare", name: "x", stat: "tapDmg", value: 10 } };
     var m = g.storyPalierRuinesRareMissing(game), txt = m.map(function (l) { return l.text + " | " + l.where; }).join("\n");
     ok(/Pièces Rares : 1 \/ 4/.test(txt) && /Sanctuaire scellé/.test(txt), "pièces Rares : le compte et d'où elles viennent");
@@ -15217,7 +15218,7 @@ console.log("\n[230] v3.448.6 — Palier Rare : « Ce qui manque », et où");
     ok(/step\.missing\(game\)/.test(q) && /story-missing-title/.test(q), "la carte d'étape affiche « Ce qui manque »");
   } catch (err) {
     ok(false, "[230] exception : " + err.message);
-  } finally {
+  } finally { try { game.storyQuests = JSON.parse(sq230); } catch (e3) {}
     game.equipped = sv.eq; game.gold = sv.gold; game.village = JSON.parse(sv.vb); game.forge = JSON.parse(sv.fg); game.worldsEverReached = sv.wr;
   }
 })();
@@ -25959,6 +25960,7 @@ console.log("\n[499] Bulle d'or (atelier bulle-or.html, choix de Seb) : l'or qui
     ok(!/orInvestGoldRef/.test(fsRead("js/systems/save-system.js")) && !/orInvestGoldRef/.test(fsRead("js/core/state.js")), "repère en mémoire vive : rien dans la sauvegarde");
     // or-liste B : trois groupes ; or-bloque B : une carte par matériau manquant
     game.worldsEverReached = { 0: true, 1: true, 2: true };
+    var sq499 = JSON.stringify(game.storyQuests || {}); ["forest", "desert"].forEach(function (c) { g.StoryQuestManager.getState(c).currentStep = g.StoryQuestManager.getChapter(c).steps.length; }); // v3.754.0 : aux Ruines, le Désert est fini (MES-6)
     ["wenna", "maddoc"].forEach(function (c) { CM.state(c).unlocked = true; CM.state(c).present = true; CM.state(c).skillRank = 2; });
     var acts = g.SkillRanks.kitActions(); acts.forEach(function (a) { game.skillRanks[a.id] = 2; });
     W.removeResource("cle_de_voute", W.getAmount("cle_de_voute")); W.addResource("pierre_errante", 4, true); W.addResource("pierre", 100, true);
@@ -26004,7 +26006,7 @@ console.log("\n[499] Bulle d'or (atelier bulle-or.html, choix de Seb) : l'or qui
       ok(fsRead("js/lang/en.js").indexOf(JSON.stringify(k)) >= 0, "en.js : « " + k + " » traduit");
     });
   } catch (err) { ok(false, "[499] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
-  finally { d.getElementById = gid; g.orInvestSeen = {}; g.orInvestGoldRef = null; g.orInvestShown = []; try { run("fullResetState();"); } catch (e2) {} game = freshCombat("knight"); }
+  finally { try { game.storyQuests = JSON.parse(sq499); } catch (e3) {} d.getElementById = gid; g.orInvestSeen = {}; g.orInvestGoldRef = null; g.orInvestShown = []; try { run("fullResetState();"); } catch (e2) {} game = freshCombat("knight"); }
 })();
 
 console.log("\n[500] Journal de test (v3.747.0, Crypte de Seb) : boss à terre, rounds, PV d'entrée, coup fatal en Petite Aventure, caravanes, or");
@@ -26217,6 +26219,25 @@ console.log("\n[506] Alpha (v3.753.0) : journal actif par défaut, fenêtres de 
     run('GAME_EDITION = "jeu";'); g.renderAlphaFin = render0; SQ.isChapterOpen = isOpen0; g.WorldTravel.arrive = arrive0;
     Prefs.set("journalTest", onAvant); J._lines = []; try { run("fullResetState();"); } catch (e2) {} game = freshCombat("knight");
   }
+})();
+
+console.log("\n[507] Audit A, MES-6 (v3.754.0) : Verre trempé introuvable tant que desert_09 n'a pas ouvert le Tailleur de pierre");
+(function () {
+  var SQ = g.StoryQuestManager;
+  try {
+    run("fullResetState();"); game = freshCombat("knight");
+    var desert = SQ.getChapter("desert"), i9 = desert.steps.findIndex(function (s) { return s.id === "desert_09"; });
+    SQ.getState("forest").currentStep = SQ.getChapter("forest").steps.length; SQ.getState("desert").currentStep = i9 - 1;
+    game.worldsEverReached = { 0: true, 1: true };
+    ok(g.WORKSHOPS_CONFIG.tailleur_de_pierre.active === false && g.getResourceStoryLock("verre_trempe") === "Le verre des dunes", "avant desert_09 : Tailleur fermé, l'étape qui l'ouvre est nommée");
+    ok(g.isVillageResourceUnreachable("verre_trempe") === true && /S'ouvre avec l'Histoire : « Le verre des dunes »/.test(g.getVillageResourceHint("verre_trempe")), "Forge 2 : le Verre trempé est introuvable, avec l'étape (pas d'atelier fermé proposé)");
+    ok(g.getResourceStoryLock("planche") === "" && g.isVillageResourceUnreachable("planche") === false, "matériau d'un atelier ouvert : inchangé");
+    SQ.getState("desert").currentStep = i9;
+    ok(g.WORKSHOPS_CONFIG.tailleur_de_pierre.active === true && g.getResourceStoryLock("verre_trempe") === "" && g.isVillageResourceUnreachable("verre_trempe") === false, "desert_09 atteinte : le Verre trempé redevient productible");
+    var oi = fsRead("js/ui/or-a-investir-view.js"), pv = fsRead("js/ui/production-view.js");
+    ok(/if \(m\.lock\) h \+= /.test(oi) && /rec = m\.lock \? null : orInvestRecipe/.test(oi) && /w\.openAtStoryStep && !w\.active/.test(pv), "bulle d'or sans « Produire » vers un atelier fermé ; le lien vers l'atelier dit pourquoi");
+  } catch (err) { ok(false, "[507] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  finally { try { run("fullResetState();"); } catch (e2) {} game = freshCombat("knight"); }
 })();
 
 Promise.all(ATTENTES).then(function () {

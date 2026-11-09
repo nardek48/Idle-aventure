@@ -58,6 +58,9 @@ I18n.register("en", {
   "Version Alpha": "Alpha version",
   "Tu as fini le Désert : c'est la fin de cette version.": "You finished the Desert: this is the end of this version.",
   "Alpha": "Alpha",
+  // v3.754.0 (audit A, MES-6) : matériau d'un atelier que l'Histoire n'a pas encore ouvert
+  "S'ouvre avec l'Histoire : « {s} ».": "Opens with the Story: “{s}”.",
+  "Forge : un matériau fait par un atelier que l'Histoire n'a pas encore ouvert (le Verre trempé avant « Le verre des dunes ») est marqué introuvable, avec l'étape qui l'ouvre, au lieu d'envoyer vers un atelier fermé.": "Forge: a material made by a workshop the Story hasn't opened yet (Tempered glass before “The glass of the dunes”) is marked as not yet available, with the step that opens it, instead of sending you to a closed workshop.",
   // Forge des mondes (Seb 07/11) : la reforge renforce le héros, une stat par monde
   "Apothicaire : la journée finie, « Presser » prépare une potion ou un objet de plus contre de l'or. Le prix double à chaque fois et revient le lendemain.": "Apothecary: once the day's work is done, \"Rush\" makes one more potion or item for gold. The price doubles each time and resets the next day.",
   "Presser · {n}": "Rush · {n}",

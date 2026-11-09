@@ -1010,6 +1010,12 @@ function findResourceProducer(resKey) {
 window.findResourceProducer = findResourceProducer;
 
 function goToResourceProducer(kind, id) {
+  var w = kind === "workshop" && window.WORKSHOPS_CONFIG ? WORKSHOPS_CONFIG[id] : null; // v3.754.0 (MES-6) : atelier fermé, on dit pourquoi
+  if (w && w.openAtStoryStep && !w.active) {
+    var lock = (w.recipes || [])[0] && typeof getResourceStoryLock === "function" ? getResourceStoryLock(w.recipes[0].outputs[0].resourceId) : "";
+    if (typeof showToast === "function") showToast(_t("S'ouvre avec l'Histoire : « {s} ».", { s: _td(lock || w.openAtStoryStep) }), 2200);
+    return;
+  }
   if (kind === "building") { openWorkshopId = null; openProductionBuildingDetail(id); }
   else openWorkshopSheet(id, workshopSheetBackId);
 }

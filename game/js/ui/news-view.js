@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.754.0", "village_buildings/village_forge", _t("Forge : un matériau fait par un atelier que l'Histoire n'a pas encore ouvert (le Verre trempé avant « Le verre des dunes ») est marqué introuvable, avec l'étape qui l'ouvre, au lieu d'envoyer vers un atelier fermé.")],
     ["3.749.0", "village_buildings/apothecary", _t("Apothicaire : la journée finie, « Presser » prépare une potion ou un objet de plus contre de l'or. Le prix double à chaque fois et revient le lendemain.")],
     ["3.748.0", "gold_icon", _t("Rafale : une élite de carte ne meurt plus deux fois, son or n'est plus compté en double.")],
     ["3.746.0", "dungeon/boss_crown", _t("La Liche des sépulcres retrouve ses PV d'avant : elle était devenue trop dure pour le Rôdeur.")],
