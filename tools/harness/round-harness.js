@@ -26144,6 +26144,35 @@ console.log("\n[504] Édition jeu / alpha (v3.751.0) : edition.js en tête, « j
   } catch (err) { ok(false, "[504] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
+console.log("\n[505] Alpha (v3.752.0) : clés de stockage préfixées, Ruines fermées après desert_18, voyage borné au Désert");
+(function () {
+  var SQ = g.StoryQuestManager, WT = g.WorldTravel, isOpen0 = SQ.isChapterOpen, arrive0 = WT.arrive, wi0 = g.WorldManager.worldIndex;
+  try {
+    // Édition « jeu » : aucune clé préfixée, aucune enveloppe
+    ok(run("STORAGE_PREFIX") === "" && run("SAVE_KEY") === "quest_idle_save_v6" && run("ACTIVE_SLOT_KEY") === "quest_idle_active_slot" && run("PREFS_STORAGE_KEY") === "aethervale_prefs" && run("INSTANCE_KEY") === "aethervale_instance" && run("JOURNAL_TEST_KEY") === "aethervale_journal_test" && run("RETURN_STORE_KEY") === "aethervale_return_pending", "édition « jeu » : clés de stockage inchangées");
+    ["js/systems/save-system.js", "js/systems/prefs-system.js", "js/systems/return-system.js", "js/main/instance-unique.js", "js/main/journal-test.js"].forEach(function (f) {
+      ok(/_KEY = \(typeof STORAGE_PREFIX === "string" \? STORAGE_PREFIX : ""\) \+ "/.test(fsRead(f)), "clé préfixée en Alpha : " + f);
+    });
+    ok(/STORAGE_PREFIX = GAME_EDITION === "alpha" \? "alpha:" : ""/.test(fsRead("js/core/edition.js")), "préfixe « alpha: » en édition Alpha");
+    ok(SQ.isChapterOpen === isOpen0 && g.AlphaEdition.isChapterBlocked("ruins") === false, "édition « jeu » : Histoire non touchée");
+    var idx = fsRead("index.html"), sw = fsRead("sw.js");
+    ok(idx.indexOf("js/systems/alpha-system.js") > idx.indexOf("js/systems/world-travel-system.js") && idx.indexOf("js/systems/alpha-system.js") > idx.indexOf("js/systems/story-quest-system.js") && sw.indexOf('"./js/systems/alpha-system.js"') > 0, "alpha-system.js chargé après l'Histoire et le voyage, précaché");
+    // Édition « alpha » : Forêt et Désert finis
+    run("fullResetState();"); game = freshCombat("knight");
+    run('GAME_EDITION = "alpha";'); g.AlphaEdition.install();
+    ["forest", "desert"].forEach(function (c) { SQ.getState(c).currentStep = SQ.getChapter(c).steps.length; });
+    ok(g.AlphaEdition.isFinished() === true, "Alpha : finie quand le Désert est terminé (desert_18)");
+    ok(SQ.isChapterOpen("desert") === true && SQ.isChapterOpen("ruins") === false && SQ.activeChapterIds().indexOf("ruins") === -1, "Alpha : les Ruines restent fermées");
+    ok(SQ.isStepReached("ruines_01") === false, "Alpha : ruines_01 jamais atteinte");
+    var cartes = g.MissionBoard.list({}) || [];
+    ok(!cartes.some(function (m) { return m.worldId === "ruins" || /ruines|ruins/.test(String(m.id)); }), "Alpha : aucune carte des Ruines au tableau (" + cartes.length + " cartes)");
+    ok(WT.arrive("ruins", 0) === false && g.WorldManager.worldIndex === wi0, "Alpha : pas de voyage vers les Ruines");
+    ok(WT.arrive("desert", 0) === true && g.WorldManager.worldIndex === 1, "Alpha : le Désert reste accessible");
+    ok(g.AlphaEdition.lastWorldIndex() === 1, "Alpha : dernier monde, le Désert");
+  } catch (err) { ok(false, "[505] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  finally { run('GAME_EDITION = "jeu";'); SQ.isChapterOpen = isOpen0; WT.arrive = arrive0; try { run("fullResetState();"); } catch (e2) {} game = freshCombat("knight"); }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

@@ -12,7 +12,7 @@
    Ce fichier ne fait que LIRE et comparer. Les gestes de l'écran (récolter, livrer)
    délèguent à ProductionManager et TavernManager (voir ui/return-view.js). */
 
-var RETURN_STORE_KEY = "aethervale_return_pending"; // CPL1-6 : stockage local, hors sauvegarde
+var RETURN_STORE_KEY = (typeof STORAGE_PREFIX === "string" ? STORAGE_PREFIX : "") + "aethervale_return_pending"; // CPL1-6 : stockage local, hors sauvegarde
 
 var ReturnManager = {
   _pending: null,

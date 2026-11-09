@@ -3,7 +3,7 @@
    Relevé toutes les 5 min de jeu + événements clés, stockés hors sauvegarde ; l'export JSON se compare au banc
    (tools/sim/compare-journal.js). Branché par enveloppes autour des systèmes : aucun fichier protégé modifié. */
 
-var JOURNAL_TEST_KEY = "aethervale_journal_test";
+var JOURNAL_TEST_KEY = (typeof STORAGE_PREFIX === "string" ? STORAGE_PREFIX : "") + "aethervale_journal_test"; // v3.752.0 : préfixe de l'Alpha
 var JOURNAL_TEST_MAX = 5000;      // ~150 o par ligne : moins de 1 Mo, loin du quota de l'iPhone
 var JOURNAL_TEST_SNAP_S = 300;    // un relevé toutes les 5 min de jeu actif (game.playTime)
 

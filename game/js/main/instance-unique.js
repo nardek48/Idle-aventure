@@ -5,7 +5,7 @@
    localStorage ; les autres, prévenues par l'événement « storage », cessent d'écrire
    (saveLockedKey, save-system.js) et se couvrent d'un voile « Recharger ici ». */
 
-var INSTANCE_KEY = "aethervale_instance";
+var INSTANCE_KEY = (typeof STORAGE_PREFIX === "string" ? STORAGE_PREFIX : "") + "aethervale_instance"; // v3.752.0 : l'Alpha ne verrouille pas le jeu
 var instanceId = String(Date.now()) + "-" + Math.floor(Math.random() * 1e9);
 var instanceLocked = false;
 var instanceSlot = null; // audit 04/11 (QA-1) : emplacement de CETTE fenêtre au moment du verrou

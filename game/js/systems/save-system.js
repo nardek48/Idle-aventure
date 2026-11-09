@@ -1,7 +1,7 @@
 "use strict";
 /* Quest Idle — systems/save-system.js : sauvegarde/chargement (localStorage), autosave, migrations, fullResetState(). */
 
-var SAVE_KEY = "quest_idle_save_v6";
+var SAVE_KEY = (typeof STORAGE_PREFIX === "string" ? STORAGE_PREFIX : "") + "quest_idle_save_v6"; // v3.752.0 : « alpha: » en édition Alpha (même origine que le jeu)
 var SAVE_VERSION = 6;
 var AUTO_SAVE_INTERVAL_MS = 30000;
 var saveIntervalId = null;
@@ -9,7 +9,7 @@ var saveIntervalId = null;
 /* v3.25 : plusieurs héros = plusieurs sauvegardes indépendantes, une clé localStorage par emplacement (getSlotKey), migration auto de l'ancien format. */
 
 var MAX_HERO_SLOTS = 6;
-var ACTIVE_SLOT_KEY = "quest_idle_active_slot";
+var ACTIVE_SLOT_KEY = (typeof STORAGE_PREFIX === "string" ? STORAGE_PREFIX : "") + "quest_idle_active_slot"; // v3.752.0 : idem
 
 function getSlotKey(slotNumber) {
   return SAVE_KEY + "_slot" + slotNumber;

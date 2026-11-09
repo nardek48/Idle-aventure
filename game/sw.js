@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.751.0"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.752.0"; // <- à incrémenter à CHAQUE livraison
 /* v3.751.0 : l'Alpha (/alpha/) partage l'origine du jeu ; ses caches portent un autre préfixe, sinon chaque
    service worker effacerait ceux de l'autre à l'activation. */
 var IS_ALPHA_SW = /\/alpha\/$/.test(self.registration ? self.registration.scope : "");
@@ -309,6 +309,7 @@ var PRECACHE_APP_SHELL = [
   "./js/systems/combat-report-system.js",
   "./js/systems/scene-run-system.js",
   "./js/systems/class-combat-system.js",
+  "./js/systems/alpha-system.js", // v3.752.0 : NOUVEAU fichier (règles de l'Alpha)
   "./js/ui/workshop-quest-modal.js",
   "./js/ui/combat-speed-view.js",
   "./js/ui/combat-report-view.js",
