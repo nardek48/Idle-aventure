@@ -16185,7 +16185,7 @@ console.log("\n[254] v3.457.4 — Sauvegarde et mise à jour (audit P3, P4, P6, 
     run("saveLockedKey = null; instanceLocked = false;");
     // O2, P8 : service worker
     ok(/new Request\(url, \{ cache: "no-cache" \}\)/.test(sw) && sw.indexOf('cache: "reload"') === -1, "précache en no-cache (fichiers inchangés en 304)");
-    ok(/var IMAGE_CACHE = "aethervale-images"/.test(sw) && sw.indexOf('name.indexOf("quest-idle-") === 0') > 0, "images dans un cache durable, hors du nettoyage des versions");
+    ok(/IMAGE_CACHE = IS_ALPHA_SW \? "aethervale-alpha-images" : "aethervale-images"/.test(sw) && /CACHE_PREFIX = IS_ALPHA_SW \? "aethervale-alpha-" : "quest-idle-"/.test(sw) && sw.indexOf("name.indexOf(CACHE_PREFIX) === 0") > 0, "images dans un cache durable, hors du nettoyage des versions"); // v3.751.0 : préfixes jeu / alpha
     var pwa = fs4.readFileSync(ROOT + "/js/main/pwa.js", "utf8");
     ok(/function dismissPwaUpdateBanner/.test(pwa) && /pwaHeroEngaged\(\)/.test(pwa) && idx.indexOf("dismissPwaUpdateBanner()") > 0, "bannière de mise à jour : reportée pendant un combat, « Plus tard »");
     ok(/function checkPwaIosStorageHint/.test(pwa), "rappel Safari (7 jours)");
@@ -26128,6 +26128,20 @@ console.log("\n[503] Journal de test (v3.750.0) : préparations, potions acheté
     ok(/secteur: lm\.sectorId, reveil: !!lm\.wake/.test(fsRead("js/main/journal-test.js")), "Petite Aventure : secteur et gisants réveillés notés au départ");
   } catch (err) { ok(false, "[503] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   finally { Prefs.set("journalTest", onAvant); J._lines = []; try { run("fullResetState();"); } catch (e2) {} game = freshCombat("knight"); }
+})();
+
+console.log("\n[504] Édition jeu / alpha (v3.751.0) : edition.js en tête, « jeu » au dépôt, caches séparés, publication sous /alpha/");
+(function () {
+  try {
+    var idx = fsRead("index.html"), sw = fsRead("sw.js"), ed = fsRead("js/core/edition.js"), wfp = path.join(ROOT, "..", ".github/workflows/pages.yml"), wf = fs.existsSync(wfp) ? fs.readFileSync(wfp, "utf8") : null; // absent hors du dépôt (copie du jeu seule)
+    ok(idx.indexOf("js/core/edition.js") > 0 && idx.indexOf("js/core/edition.js") < idx.indexOf("js/systems/prefs-system.js") && idx.indexOf("js/core/edition.js") < idx.indexOf("</head>"), "edition.js chargé dans le <head>, avant les préférences");
+    ok(sw.indexOf('"./js/core/edition.js"') > 0, "edition.js précaché");
+    ok(/^var GAME_EDITION = "jeu";$/m.test(ed) && run("GAME_EDITION") === "jeu" && run("isAlphaEdition()") === false, "le dépôt garde l'édition « jeu »");
+    ok(run("ALPHA_LAST_CHAPTER") === "desert", "l'Alpha s'arrête après le chapitre du Désert");
+    ok(/IS_ALPHA_SW = \/\\\/alpha\\\/\$\/\.test\(/.test(sw) && /if \(!IS_ALPHA_SW && url\.pathname\.indexOf\(.*"alpha\/"\) === 0\) return;/.test(sw), "service worker : l'Alpha repérée à sa portée, celui du jeu laisse passer /alpha/");
+    if (wf) ok(wf.indexOf('sed -i \'s/^var GAME_EDITION = "jeu";/var GAME_EDITION = "alpha";/\' game/alpha/js/core/edition.js') > 0 && wf.indexOf("grep -q '^var GAME_EDITION = \"alpha\";' game/alpha/js/core/edition.js") > 0, "publication : édition « alpha » écrite et vérifiée dans la copie /alpha/");
+    if (wf) ok(/branches: \[main\]/.test(wf) && wf.indexOf("git ls-remote --exit-code --heads origin alpha") > 0, "publication : déclenchée par main, branche alpha facultative");
+  } catch (err) { ok(false, "[504] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
 Promise.all(ATTENTES).then(function () {

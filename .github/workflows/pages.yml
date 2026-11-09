@@ -1,4 +1,6 @@
 # Publie game/ sur GitHub Pages à chaque push sur main, si les harnais passent.
+# v3.751.0 : la branche alpha (figée, testeurs) est publiée sous /alpha/, en édition « alpha » ; absente, rien sous /alpha/.
+# Un correctif poussé sur alpha se publie au prochain push sur main, ou à la main (Actions › Publier le jeu › Run workflow, sur main).
 # Réglage requis une fois : Settings › Pages › Source = « GitHub Actions ».
 name: Publier le jeu
 
@@ -40,16 +42,34 @@ jobs:
       url: ${{ steps.deploiement.outputs.page_url }}
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: main
       - uses: actions/setup-node@v5
         with:
           node-version: 24
+      # v3.751.0 : l'Alpha, depuis sa branche, harnais compris ; édition et nom écrits dans la copie publiée seulement
+      - name: Préparer l'Alpha (branche alpha)
+        run: |
+          if git ls-remote --exit-code --heads origin alpha >/dev/null; then
+            git fetch --depth 1 origin alpha
+            git worktree add alpha-src FETCH_HEAD
+            (cd alpha-src && node tools/harness/round-harness.js >/dev/null && node tools/harness/boot-harness.js && node tools/harness/hero-creation-harness.js)
+            cp -r alpha-src/game game/alpha
+            sed -i 's/^var GAME_EDITION = "jeu";/var GAME_EDITION = "alpha";/' game/alpha/js/core/edition.js
+            grep -q '^var GAME_EDITION = "alpha";' game/alpha/js/core/edition.js
+            sed -i 's/"name": "Aethervale"/"name": "Aethervale Alpha"/; s/"short_name": "Aethervale"/"short_name": "Aethervale α"/' game/alpha/manifest.json
+          else
+            echo "Pas de branche alpha : rien sous /alpha/."
+          fi
       # PERF-7 (Seb 05/11) : copie publiée sans commentaires JS ; le dépôt garde les siens (O6 : pas de regroupement).
       - name: Retirer les commentaires des JS publiés
         run: |
           npm install --no-save --no-package-lock acorn@8.14.0
           node tools/publication/sans-commentaires.js game
       - name: Premier lancement (copie publiée)
-        run: node tools/harness/boot-harness.js game
+        run: |
+          node tools/harness/boot-harness.js game
+          if [ -d game/alpha ]; then node tools/harness/boot-harness.js game/alpha; fi
       - name: Création du héros (copie publiée)
         run: node tools/harness/hero-creation-harness.js game
       - uses: actions/configure-pages@v5

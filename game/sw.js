@@ -45,9 +45,13 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.750.0"; // <- à incrémenter à CHAQUE livraison
-var CACHE_NAME = "quest-idle-" + CACHE_VERSION;
-var IMAGE_CACHE = "aethervale-images"; // v3.457.4 : hors du préfixe quest-idle- ; v3.547.0 : images disparues purgées (purgeMissingImages)
+var CACHE_VERSION = "3.751.0"; // <- à incrémenter à CHAQUE livraison
+/* v3.751.0 : l'Alpha (/alpha/) partage l'origine du jeu ; ses caches portent un autre préfixe, sinon chaque
+   service worker effacerait ceux de l'autre à l'activation. */
+var IS_ALPHA_SW = /\/alpha\/$/.test(self.registration ? self.registration.scope : "");
+var CACHE_PREFIX = IS_ALPHA_SW ? "aethervale-alpha-" : "quest-idle-";
+var CACHE_NAME = CACHE_PREFIX + CACHE_VERSION;
+var IMAGE_CACHE = IS_ALPHA_SW ? "aethervale-alpha-images" : "aethervale-images"; // v3.457.4 : hors du préfixe quest-idle- ; v3.547.0 : images disparues purgées (purgeMissingImages)
 var imagesRevalidated = {};             // URL déjà revérifiées depuis le démarrage de ce service worker
 
 var PRECACHE_APP_SHELL = [
@@ -102,6 +106,7 @@ var PRECACHE_APP_SHELL = [
   "./fonts/alegreya-latin-400-normal.woff2", // v3.553.0 : NOUVEAU fichier (police du récit)
   "./fonts/alegreya-latin-400-italic.woff2", // v3.553.0 : NOUVEAU fichier (police du récit, italique)
   "./css/99-icon-assets.css",
+  "./js/core/edition.js", // v3.751.0 : NOUVEAU fichier (édition jeu / alpha)
   "./js/core/constants.js",
   "./js/core/combat-actors.js",
   "./js/core/state.js",
@@ -367,7 +372,7 @@ self.addEventListener("activate", function (event) {
     caches.keys().then(function (names) {
       return Promise.all(
         names
-          .filter(function (name) { return name.indexOf("quest-idle-") === 0 && name !== CACHE_NAME; })
+          .filter(function (name) { return name.indexOf(CACHE_PREFIX) === 0 && name !== CACHE_NAME; })
           .map(function (name) { return caches.delete(name); })
       );
     }).then(function () {
@@ -441,6 +446,7 @@ self.addEventListener("fetch", function (event) {
   var url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
   if (url.protocol !== "http:" && url.protocol !== "https:") return;
+  if (!IS_ALPHA_SW && url.pathname.indexOf(self.registration.scope.replace(self.location.origin, "") + "alpha/") === 0) return; // v3.751.0 : l'Alpha a son propre service worker
 
   // v3.457.4 (audit P8) : images d'abord depuis leur cache durable, revérifiées une fois en arrière-plan
   if (url.pathname.indexOf("/images/") !== -1) {
