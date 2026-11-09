@@ -56,7 +56,7 @@ html.text-big [id$="-sheet-root"] { zoom: 1.12; }
   .cbx-team:is(.c2, .c3) .cbx-cd-count.is-ready::before { content: "✓"; font-size: 12px; font-weight: 900; }
 }
 /* NOV-24 (C) : onglets collés sous le bandeau replié (44 px), compacts tant qu'il est replié */
-html:not(.wide-mode) #panel-container .kfp-scrollzone .kfb ~ .nb-page-frame .kf-mid > .kseg { position: sticky; top: 44px; z-index: 2; background-color: rgba(222, 199, 156, 0.97); }
+html:not(.wide-mode) #panel-container .kfp-scrollzone .kfb ~ .nb-page-frame .kf-mid > .kseg { position: sticky; top: 44px; z-index: 3; /* v3.757.0 : au-dessus des pastilles des cartes (z-index 2) qui défilent dessous */ background-color: rgba(222, 199, 156, 0.97); }
 /* UI-10 (C restreinte) : texte Grande sous 600 px de haut, bandeau caché (classe posée par ScreenBanner.fit) ; onglets collés en haut */
 #panel-container .kfb.is-off { display: none; }
 html:not(.wide-mode) #panel-container .kfp-scrollzone .kfb.is-off ~ .nb-page-frame .kf-mid > .kseg { top: 0; }
