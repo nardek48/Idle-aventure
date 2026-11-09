@@ -78,6 +78,7 @@ var CHANTIER = ARGS.indexOf("--chantier") >= 0;
    compagnons du groupe, patrouilles, reliques) et --avise (talents, Grimoire), et ajoute : Taverne, tous les bâtiments du village
    (chantier en fond), Entrepôt agrandi quand un coût dépasse le stockable, Apothicaire ; puis compagnons et donjons (lots 1 et 3). */
 var JOUEUR = ARGS.indexOf("--joueur") >= 0;
+var STOCK_FORGE = ARGS.indexOf("--forge-active") < 0; // v3.748 (journaux de Seb) : le joueur bâtit la Forge avec son stock ; --forge-active : il fabrique ce qui manque
 var SECONDAIRES = ARGS.indexOf("--secondaires") >= 0 ? Number(ARGS[ARGS.indexOf("--secondaires") + 1]) || 1 : 1; // essai option B (stats du héros)
 // --lots 2 | 21 | 213 : les lots actifs du joueur appliqué (tous par défaut), pour un relevé par lot
 var LOTS = ARGS.indexOf("--lots") >= 0 ? String(ARGS[ARGS.indexOf("--lots") + 1] || "") : "123";
@@ -462,7 +463,7 @@ function developVillage() {
       try {
         if (INVESTI) { if (upgradeBuilding("forge", V.getLevel("forge") + 1)) STATS.village.push("Forge " + V.getLevel("forge") + " (" + CURRENT_STEP + ")"); }
         else if (!V.isBuilding()) { // joueur : il lance le chantier et fait autre chose pendant qu'il tourne
-          if (wf === "Matériaux manquants") ensureCost(cf);
+          if (wf === "Matériaux manquants" && !STOCK_FORGE) ensureCost(cf); // calage sur Seb : Forge bâtie avec le stock seulement
           if (!V.getBlockReason("forge") && V.startBuild("forge")) { act("chantier:forge", Number(cf.gold || 0)); STATS.village.push("Forge " + (V.getLevel("forge") + 1) + " (" + CURRENT_STEP + ")"); }
         }
       } finally { SANS_LENDEMAIN--; if (!INVESTI) SANS_ATTENTE--; }
