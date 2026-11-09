@@ -71,6 +71,21 @@ section { display: grid; gap: 12px; }
 .share-x { border: 0; background: #fff; border-radius: 12px; min-height: 44px; font-weight: 700; color: #0a60d8; cursor: pointer; }
 .toast { position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%); background: rgba(20, 14, 8, .92); color: var(--parchemin); border: 1px solid var(--trait); padding: 10px 14px; border-radius: 12px; font-size: 13px; font-weight: 700; white-space: nowrap; }
 
+/* Questionnaire : notes de 1 à 10 en deux rangées de 5, difficulté en 3 choix, texte libre */
+.q { display: grid; gap: 6px; text-align: left; padding: 10px 0; border-top: 1px solid rgba(138, 74, 20, .2); }
+.q:first-child { border-top: 0; padding-top: 0; }
+.q-l { font-size: 13px; font-weight: 800; }
+.q-n { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
+.q-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+.q-n button, .q-3 button { min-height: 40px; border-radius: 9px; border: 1px solid var(--bord-creme); background: rgba(255, 250, 238, .8); color: var(--encre); font-weight: 800; font-size: 14px; cursor: pointer; font-variant-numeric: tabular-nums; }
+.q-3 button { font-size: 12px; }
+.q-n button[aria-pressed="true"], .q-3 button[aria-pressed="true"] { background: var(--cuivre); border-color: var(--cuivre-2); color: var(--cuivre-ink); }
+.q-n button:focus-visible, .q-3 button:focus-visible, .q textarea:focus-visible { outline: 2px solid var(--cuivre); outline-offset: 1px; }
+.q-bornes { display: flex; justify-content: space-between; font-size: 11px; color: var(--encre-dim); }
+.q textarea { width: 100%; min-height: 64px; resize: vertical; border-radius: 9px; border: 1px solid var(--bord-creme); background: rgba(255, 250, 238, .9); color: var(--encre); font: 14px/1.4 var(--f-texte); padding: 8px 10px; }
+.q-compte { font-size: 12px; font-weight: 700; color: var(--encre-dim); text-align: center; }
+.kwin-body.long { max-height: 470px; }
+
 .notes { display: grid; gap: 8px; padding: 12px 14px; border-radius: 12px; background: var(--pierre); border: 1px solid var(--trait); font-size: 13px; color: var(--sourd); }
 .notes b { color: var(--parchemin); }
 .notes ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
@@ -79,7 +94,7 @@ section { display: grid; gap: 12px; }
 <div class="wrap">
   <header style="display:grid;gap:6px">
     <h1>Fenêtres de l'Alpha</h1>
-    <p class="sourd">Deux fenêtres à choisir, maquette à 390 px : le journal au premier lancement, puis la fin de l'Alpha après desert_18. Le partage montré ici est simulé ; dans le jeu, c'est le menu de partage du téléphone, et le joueur choisit le canal.</p>
+    <p class="sourd">Maquette à 390 px : le journal au premier lancement, puis la fin de l'Alpha après desert_18 (avis, puis envoi). Le partage montré ici est simulé ; dans le jeu, c'est le menu de partage du téléphone, et le joueur choisit le canal.</p>
   </header>
 
   <section class="ctls" aria-label="Réglages de la maquette">
@@ -91,8 +106,8 @@ section { display: grid; gap: 12px; }
     </div>
     <div class="ctl"><span>Ton</span>
       <div class="seg" data-k="ton">
-        <button type="button" id="t-sobre" data-v="sobre" aria-pressed="true">A · Sobre</button>
-        <button type="button" id="t-voix" data-v="voix" aria-pressed="false">B · Voix du jeu</button>
+        <button type="button" id="t-sobre" data-v="sobre" aria-pressed="false">A · Sobre</button>
+        <button type="button" id="t-voix" data-v="voix" aria-pressed="true">B · Voix du jeu (choisi)</button>
       </div>
     </div>
     <div class="ctl" id="ctl-journal" hidden><span>Journal du joueur</span>
@@ -106,10 +121,11 @@ section { display: grid; gap: 12px; }
   <div class="tel" id="tel"></div>
 
   <div class="notes">
-    <p><b>À trancher :</b> le ton (A ou B), et pour la fin, si « Envoyer mon journal » reste proposé quand le joueur avait coupé le journal (la maquette « Coupé au départ » propose alors de le rallumer pour la suite).</p>
+    <p><b>Choisi (Seb 09/11) :</b> ton B ; rien à envoyer quand le journal est coupé ; questionnaire en option A (l'avis d'abord, puis l'envoi). <b>À regarder :</b> la lecture des notes à 390 px et la longueur du questionnaire.</p>
     <ul>
       <li>Premier lancement : la fenêtre s'ouvre une fois, après la création du héros. « Ne pas enregistrer » coupe le journal ; Paramètres › Appareil le rallume.</li>
       <li>Fin : la fenêtre s'ouvre une fois, à la fin de desert_18. Elle se rouvre depuis Paramètres › Appareil (« Fin de l'Alpha »).</li>
+      <li>Avis : 6 notes de 1 à 10, la difficulté en 3 choix, un texte libre (500 caractères au plus). Tout est facultatif ; toucher une note déjà choisie l'efface. Les réponses deviennent une ligne « avis » du journal : elles ne partent qu'avec lui.</li>
       <li>Envoyer : le fichier <code>aethervale-alpha-journal-AAAA-MM-JJ.json</code> part par le menu de partage (mail, messages, Discord…). Sans menu de partage (certains navigateurs d'ordinateur), il se télécharge comme aujourd'hui.</li>
       <li>Le journal ne contient ni nom ni adresse : l'identifiant de classe du héros, les étapes, les combats, l'or, l'équipement.</li>
     </ul>
@@ -119,7 +135,7 @@ section { display: grid; gap: 12px; }
 <script>
 "use strict";
 /* État de la maquette ; textes dans TEXTES, rendu dans render() */
-var S = { win: "debut", ton: "sobre", journal: "on", share: false, toast: "" };
+var S = { win: "debut", ton: "voix", journal: "on", etape: "fin", avis: {}, share: false, toast: "" };
 
 var TEXTES = {
   debut: {
@@ -153,8 +169,25 @@ var TEXTES = {
         ["stat", "Carnet : 1 284 lignes · 46 Ko · 4 h 12 de route"],
         ["mini", "Le village, les donjons et les Petites Aventures restent ouverts."]
       ] },
-    foot: [["cuivre plein", "Envoyer mon journal", "envoyer"], ["", "Continuer à jouer", "continuer"]]
+    foot: [["cuivre plein", "Donner mon avis · 1 min", "avis"], ["", "Passer", "passer"]]
   }
+};
+/* Option A (Seb 09/11) : l'avis d'abord, puis l'envoi ; tout est facultatif, « Passer » mène à l'envoi */
+var AVIS = {
+  sobre: { ico: "✎", ttl: "Ton avis", sub: "8 questions · tout est facultatif" },
+  voix: { ico: "✎", ttl: "Ce que tu en as pensé", sub: "8 questions · aucune n'est obligatoire" },
+  questions: [
+    ["n", "q1", "Globalement, tu as aimé ?"], ["n", "q2", "Les combats"], ["n", "q3", "Le village (bâtiments, production, Forge)"],
+    ["n", "q4", "L'Histoire et les personnages"], ["n", "q5", "Tu comprenais ce qu'il fallait faire ?"], ["n", "q6", "Tu aurais envie de jouer la suite ?"],
+    ["3", "q7", "La difficulté", ["Trop facile", "Juste bien", "Trop dur"]], ["t", "q8", "Ce qui t'a le plus gêné"]
+  ]
+};
+var ENVOI = {
+  sobre: { ico: "✓", ttl: "Envoyer le journal", sub: "Dernière étape", avec: "Ton avis est ajouté au journal.", sans: "Pas d'avis cette fois : seul le journal part.",
+    texte: "Choisis comment l'envoyer : mail, messages, Discord…" },
+  voix: { ico: "✓", ttl: "Le carnet est prêt", sub: "Dernière étape", avec: "Tes mots sont glissés à la dernière page du carnet.", sans: "Pas de mots cette fois : le carnet part tel quel.",
+    texte: "Envoie-le par le moyen que tu veux : mail, messages, Discord…" },
+  foot: [["cuivre plein", "Envoyer mon journal", "envoyer"], ["", "Continuer à jouer", "continuer"]]
 };
 /* Fin sans journal : rien à envoyer, proposition de le rallumer pour la suite */
 var FIN_OFF = {
@@ -169,12 +202,36 @@ function bloc(b) {
   return '<p class="kwin-' + b[0] + '">' + esc(b[1]) + "</p>";
 }
 
+function nbReponses() { return Object.keys(S.avis).filter(function (k) { return S.avis[k] !== "" && S.avis[k] != null; }).length; }
+
+function questionHTML(q) {
+  var v = S.avis[q[1]], h = '<div class="q"><div class="q-l" id="l-' + q[1] + '">' + esc(q[2]) + "</div>";
+  if (q[0] === "n") {
+    h += '<div class="q-n" role="group" aria-labelledby="l-' + q[1] + '">';
+    for (var i = 1; i <= 10; i++) h += '<button type="button" data-q="' + q[1] + '" data-v="' + i + '" aria-pressed="' + (v === i) + '">' + i + "</button>";
+    h += '</div><div class="q-bornes"><span>1 · pas du tout</span><span>10 · énormément</span></div>';
+  } else if (q[0] === "3") {
+    h += '<div class="q-3" role="group" aria-labelledby="l-' + q[1] + '">' + q[3].map(function (x) { return '<button type="button" data-q="' + q[1] + '" data-v="' + esc(x) + '" aria-pressed="' + (v === x) + '">' + esc(x) + "</button>"; }).join("") + "</div>";
+  } else {
+    h += '<textarea id="' + q[1] + '" data-q="' + q[1] + '" maxlength="500" aria-labelledby="l-' + q[1] + '" placeholder="Facultatif">' + esc(v || "") + "</textarea>";
+  }
+  return h + "</div>";
+}
+
 function render() {
-  var T = TEXTES[S.win], t = T[S.ton], corps = t.corps, foot = T.foot;
+  var T = TEXTES[S.win], t = T[S.ton], corps = t.corps, foot = T.foot, bodyHTML = null, long = false;
   if (S.win === "fin" && S.journal === "off") { corps = FIN_OFF[S.ton]; foot = [["cuivre plein", "Continuer à jouer", "continuer"]]; }
+  else if (S.win === "fin" && S.etape === "avis") {
+    t = AVIS[S.ton]; long = true;
+    bodyHTML = AVIS.questions.map(questionHTML).join("") + '<p class="q-compte">' + nbReponses() + " réponse(s) sur 8</p>";
+    foot = [["cuivre", "Valider", "valider"], ["", "Passer", "passer"]];
+  } else if (S.win === "fin" && S.etape === "envoi") {
+    t = ENVOI[S.ton]; foot = ENVOI.foot;
+    corps = [["text", nbReponses() ? t.avec : t.sans], ["text", t.texte], ["stat", "Journal : 1 284 lignes · 46 Ko" + (nbReponses() ? " · avis compris" : "")]];
+  }
   var h = '<div class="veil"><div class="kwin" role="dialog" aria-modal="true" aria-labelledby="kttl">';
   h += '<div class="kwin-head"><div class="kwin-ico" aria-hidden="true">' + t.ico + '</div><div class="kwin-ttl" id="kttl">' + esc(t.ttl) + '</div><div class="kwin-sub">' + esc(t.sub) + "</div></div>";
-  h += '<div class="kwin-body">' + corps.map(bloc).join("") + "</div>";
+  h += '<div class="kwin-body' + (long ? " long" : "") + '">' + (bodyHTML || corps.map(bloc).join("")) + "</div>";
   h += '<div class="kwin-foot">' + foot.map(function (b) { return '<button type="button" class="kbtn ' + b[0] + '" data-act="' + b[2] + '">' + esc(b[1]) + "</button>"; }).join("") + "</div>";
   h += "</div></div>";
   if (S.share) {
@@ -192,15 +249,19 @@ function flash(msg) { S.toast = msg; render(); setTimeout(function () { S.toast 
 document.querySelectorAll(".seg").forEach(function (seg) {
   seg.addEventListener("click", function (e) {
     var b = e.target.closest("button"); if (!b) return;
-    S[seg.dataset.k] = b.dataset.v; S.share = false; S.toast = "";
+    S[seg.dataset.k] = b.dataset.v; S.share = false; S.toast = ""; if (seg.dataset.k !== "ton") { S.etape = "fin"; S.avis = {}; }
     seg.querySelectorAll("button").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
     render();
   });
 });
 
 document.getElementById("tel").addEventListener("click", function (e) {
+  var qb = e.target.closest("button[data-q]");
+  if (qb) { var v = isNaN(Number(qb.dataset.v)) ? qb.dataset.v : Number(qb.dataset.v); S.avis[qb.dataset.q] = S.avis[qb.dataset.q] === v ? null : v; var sc = document.querySelector(".kwin-body").scrollTop; render(); document.querySelector(".kwin-body").scrollTop = sc; return; }
   var b = e.target.closest("[data-act]"); if (!b) return;
   var a = b.dataset.act;
+  if (a === "avis") { S.etape = "avis"; render(); return; }
+  if (a === "valider" || a === "passer") { if (a === "passer" && S.etape === "avis") S.avis = {}; S.etape = "envoi"; render(); return; }
   if (a === "ok") flash("Journal actif. Bonne route !");
   else if (a === "non") flash("Journal coupé");
   else if (a === "envoyer") { S.share = true; render(); }
@@ -208,6 +269,8 @@ document.getElementById("tel").addEventListener("click", function (e) {
   else if (a === "app") { S.share = false; flash("Journal partagé. Merci !"); }
   else if (a === "continuer") flash("Retour au Camp");
 });
+
+document.getElementById("tel").addEventListener("input", function (e) { if (e.target.dataset && e.target.dataset.q) { S.avis[e.target.dataset.q] = e.target.value.trim(); var c = document.querySelector(".q-compte"); if (c) c.textContent = nbReponses() + " réponse(s) sur 8"; } });
 
 render();
 </script>
