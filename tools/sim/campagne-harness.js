@@ -287,6 +287,8 @@ function fightCombat(maxKills) {
     var e = g.game.enemy;
     if (!e || !g.hasCombatQuestContext()) { if (rec) closeRec(rec); return true; }
     if (e !== cur) {
+      // audit A (DIF-1 B) : objectif du run tenu et boss de donjon en face, sans campement : le joueur abandonne
+      if (e.isBoss && !e.isElite && OBJECTIF_DONJON && OBJECTIF_DONJON() && g.game.dungeonRun && g.game.dungeonRun.active) { if (rec) closeRec(rec); g.DungeonManager.forfeit(); STATS.sortiesObjectif = (STATS.sortiesObjectif || 0) + 1; flushTimers(g); return true; }
       if (rec) closeRec(rec);
       cur = e; kills++;
       if (kills > (maxKills || 60) + 1) { note("combat : plus de " + maxKills + " ennemis"); return false; }
@@ -994,9 +996,9 @@ function obtainPierre(qty) {
   for (var k = 0; k < 60 && have() < qty; k++) {
     var c = LM.getChantier && LM.getChantier("ruins");
     if (c && c.sectorId && !c.done && LM.canStart("ruins", c.sectorId).ok) { freeSector("ruins", c.sectorId); continue; }
-    if (g.DungeonManager.isUnlocked(3)) { if (COMBATS) healUp(); if (avecObjectif(function () { return playDungeonOnce(3, false); }, function () { return have() >= qty; }) === null) wait(3600e3, "pierre errante"); continue; }
+    if (g.DungeonManager.isUnlocked(3)) { if (COMBATS) healUp(); if (avecObjectif(function () { return playDungeonOnce(3, false); }, function () { return have() >= qty; }) === null) { if (SANS_LENDEMAIN) break; wait(3600e3, "pierre errante"); } continue; }
     if (!paAuTableau("petite_aventure_ruines")) { note("pierre errante : ni donjon ni Petite Aventure au tableau (petite_aventure_ruines)"); break; } // audit (27/10) : boardRequires
-    if (!playExpedition("petite_aventure_ruines", null)) wait(3600e3, "pierre errante");
+    if (!playExpedition("petite_aventure_ruines", null)) { if (SANS_LENDEMAIN) break; wait(3600e3, "pierre errante"); }
   }
   STATS.pierreH = (STATS.pierreH || 0) + (CLOCK.offset - t0) / 3600e3;
   if (have() < qty) note("pierre_errante : " + have() + " / " + qty);
@@ -1008,9 +1010,9 @@ function obtainCire(qty) {
   var g = G, have = function () { return g.WarehouseManager.getAmount("cire_sepulcre"); };
   var t0 = CLOCK.offset;
   for (var k = 0; k < 60 && have() < qty; k++) {
-    if (g.DungeonManager.isUnlocked(4)) { if (COMBATS) healUp(); if (avecObjectif(function () { return playDungeonOnce(4, false); }, function () { return have() >= qty; }) === null) wait(3600e3, "cire de sépulcre"); continue; }
+    if (g.DungeonManager.isUnlocked(4)) { if (COMBATS) healUp(); if (avecObjectif(function () { return playDungeonOnce(4, false); }, function () { return have() >= qty; }) === null) { if (SANS_LENDEMAIN) break; wait(3600e3, "cire de sépulcre"); } continue; }
     if (!paAuTableau("petite_aventure_crypte")) { note("cire de sépulcre : ni donjon ni Petite Aventure au tableau (petite_aventure_crypte)"); break; } // audit (27/10) : boardRequires
-    if (!playExpedition("petite_aventure_crypte", null)) wait(3600e3, "cire de sépulcre");
+    if (!playExpedition("petite_aventure_crypte", null)) { if (SANS_LENDEMAIN) break; wait(3600e3, "cire de sépulcre"); }
   }
   STATS.cireH = (STATS.cireH || 0) + (CLOCK.offset - t0) / 3600e3;
   if (have() < qty) note("cire_sepulcre : " + have() + " / " + qty);
@@ -1022,9 +1024,9 @@ function obtainCendre(qty) {
   var g = G, have = function () { return g.WarehouseManager.getAmount("cendre_vive"); };
   var t0 = CLOCK.offset;
   for (var k = 0; k < 60 && have() < qty; k++) {
-    if (g.DungeonManager.isUnlocked(5)) { if (COMBATS) healUp(); if (avecObjectif(function () { return playDungeonOnce(5, false); }, function () { return have() >= qty; }) === null) wait(3600e3, "cendre vive"); continue; }
+    if (g.DungeonManager.isUnlocked(5)) { if (COMBATS) healUp(); if (avecObjectif(function () { return playDungeonOnce(5, false); }, function () { return have() >= qty; }) === null) { if (SANS_LENDEMAIN) break; wait(3600e3, "cendre vive"); } continue; }
     if (!paAuTableau("petite_aventure_montagne")) { note("cendre vive : ni donjon ni Petite Aventure au tableau (petite_aventure_montagne)"); break; } // audit (27/10) : boardRequires
-    if (!playExpedition("petite_aventure_montagne", null)) wait(3600e3, "cendre vive");
+    if (!playExpedition("petite_aventure_montagne", null)) { if (SANS_LENDEMAIN) break; wait(3600e3, "cendre vive"); }
   }
   STATS.cendreH = (STATS.cendreH || 0) + (CLOCK.offset - t0) / 3600e3;
   if (have() < qty) note("cendre_vive : " + have() + " / " + qty);
@@ -1233,7 +1235,7 @@ function caravaneMarcheRuines(g, world, flagKey) {
     // v3.457.3 : caravanes multiples — on suit celle de CE marché ; une place prise ailleurs se libère au retour
     if (C.isBack(m.world)) { C.unload(m.world); continue; }
     if (C.get(m.world)) { wait(Math.max(60e3, C.getSecondsLeft(m.world) * 1000 + 1000), "caravane"); continue; }
-    // v3.551.0 : la caravane d'essai (10 min, à vide, hors places) que l'Histoire offre
+    // v3.551.0 : la caravane d'essai (3 min depuis v3.740, à vide, hors places) que l'Histoire offre
     if (C.isStoryTripFor && C.isStoryTripFor(m.world) && !C.getBlockReason("essai", m.world)) {
       C.depart("essai", m.world);
       wait(Math.max(60e3, C.getSecondsLeft(m.world) * 1000 + 1000), "caravane");
@@ -1433,8 +1435,12 @@ function villageJoueur(g) {
   var ids = (g.VILLAGE_BUILDING_ORDER || Object.keys(g.VILLAGE_BUILDINGS)).filter(function (id) { return !V.isMaxLevel(id) && okWhy(id); });
   var cost = function (id) { var c = V.getNextCost(id) || {}; return Object.keys(c).reduce(function (a, k) { return a + Number(c[k] || 0); }, 0); };
   ids = ids.filter(function (id) { return Number((V.getNextCost(id) || {}).gold || 0) <= g.game.gold * (BATISSEUR ? 0.6 : 0.3); }).sort(function (a, b) { return (plein && b === "warehouse") - (plein && a === "warehouse") || cost(a) - cost(b); });
-  if (ids.length && V.getBlockReason(ids[0]) === "Matériaux manquants") { SANS_LENDEMAIN++; SANS_ATTENTE++; try { ensureCost(V.getNextCost(ids[0])); } finally { SANS_LENDEMAIN--; SANS_ATTENTE--; } }
-  if (ids.length && !V.getBlockReason(ids[0]) && V.startBuild(ids[0])) { act("chantier:" + ids[0], (V.getNextCost(ids[0]) || {}).gold || 0); STATS.village.push(ids[0] + " " + (V.getLevel(ids[0]) + 1) + " (" + CURRENT_STEP + ")"); }
+  // audit A (MES-1) : si le moins cher reste bloqué faute de matériau, le joueur passe au suivant (deux essais)
+  for (var p = 0; p < Math.min(2, ids.length); p++) {
+    var id = ids[p];
+    if (V.getBlockReason(id) === "Matériaux manquants") { SANS_LENDEMAIN++; SANS_ATTENTE++; try { ensureCost(V.getNextCost(id)); } finally { SANS_LENDEMAIN--; SANS_ATTENTE--; } }
+    if (!V.getBlockReason(id) && V.startBuild(id)) { act("chantier:" + id, (V.getNextCost(id) || {}).gold || 0); STATS.village.push(id + " " + (V.getLevel(id) + 1) + " (" + CURRENT_STEP + ")"); return; }
+  }
 }
 /* Apothicaire : les commandes livrables (recettes apprises), puis les préparations du jour, soins d'abord.
    v3.739.0 (Seb 07/11) : objets de combat comme un joueur, ceux que le pronostic conseille aux prochaines quêtes (objetsUtiles). */
@@ -1554,6 +1560,9 @@ function compagnonsJoueur(g) {
       if (CQM.deliver(q.id)) act("compagnon:livraison", 0);
       return;
     }
+    // audit A (MES-2) : une sortie de compagnon garde 2 places du jour pour l'Histoire (STORY_TOUR_PA)
+    var SR = g.SceneRunManager;
+    if (st.type === "run" && SR && SR.getPetiteAventureCap && SR.getPetiteAventureCap() - SR.petiteAventureCountToday() <= 2) return;
     var sec = CQM.targetOf(q), map = LM && LM.getMapForWorld(st.world);
     if (!sec || !map) return;
     var avant = CM.partyIds().slice();

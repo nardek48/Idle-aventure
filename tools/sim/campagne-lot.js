@@ -96,7 +96,9 @@ if (runs.length && runs[0].stats.attente) {
 CLASSES.forEach(function (c) {
   var r = runs.filter(function (j) { return j.classe === c; });
   if (!r.length) return;
-  console.log("  " + c.padEnd(7) + " morts " + r.map(function (j) { return j.stats.deaths || 0; }).join("/") + " · combat " + med(r.map(function (j) { return j.stats.combatMs / 3600e3; })).toFixed(1) + " h · soin " + med(r.map(function (j) { return j.stats.healMs / 3600e3; })).toFixed(1) + " h · farm " + med(r.map(function (j) { return j.stats.grindMs / 3600e3; })).toFixed(0) + " h");
+  // audit A (MES-4) : morts du chemin (Histoire + élites) et morts d'entretien comptées à part
+  var mortsCtx = function (j, chemin) { return (j.stats.fights || []).filter(function (f) { return f.died && ((f.ctx === "histoire" || f.ctx === "élites") === chemin); }).length; };
+  console.log("  " + c.padEnd(7) + " morts " + r.map(function (j) { return j.stats.deaths || 0; }).join("/") + " (chemin " + r.map(function (j) { return mortsCtx(j, true); }).join("/") + ", entretien " + r.map(function (j) { return mortsCtx(j, false); }).join("/") + ")" + " · combat " + med(r.map(function (j) { return j.stats.combatMs / 3600e3; })).toFixed(1) + " h · soin " + med(r.map(function (j) { return j.stats.healMs / 3600e3; })).toFixed(1) + " h · farm " + med(r.map(function (j) { return j.stats.grindMs / 3600e3; })).toFixed(0) + " h");
   // v3.739.0 (Seb 07/11) : objets de combat par partie (recettes apprises, fabriqués, emportés)
   var somme = function (o) { return Object.keys(o || {}).map(function (k) { return k + " " + o[k]; }).join(", ") || "—"; };
   r.forEach(function (j, i) { var a = j.stats.objetsApo || {}; console.log("          #" + (i + 1) + " objets : appris " + (Object.keys(a.appris || {}).join(", ") || "—") + " · fabriqués " + somme(a.fabriques) + " · emportés " + somme(j.stats.objets)); });
@@ -110,19 +112,19 @@ Object.keys(murs).forEach(function (k) { console.log("  " + k + " « " + murs[k]
 
 // étapes
 var steps = {};
-runs.forEach(function (j) { j.stats.steps.forEach(function (s) { var a = steps[s.id] = steps[s.id] || { h: [], lvl: [], d: [] }; a.h.push(s.h); a.lvl.push(s.level); a.d.push(s.deaths || 0); }); });
+runs.forEach(function (j) { j.stats.steps.forEach(function (s) { var a = steps[s.id] = steps[s.id] || { h: [], lvl: [], d: [] }; a.h.push(s.temps ? s.temps.total : s.h); a.lvl.push(s.level); a.d.push(s.deaths || 0); }); });
 console.log("\nÉtapes (médianes) :        durée    niv.  morts");
 Object.keys(steps).forEach(function (k) { var a = steps[k]; console.log("  " + k.padEnd(22) + (med(a.h).toFixed(1) + " h").padStart(9) + String(med(a.lvl)).padStart(7) + String(med(a.d)).padStart(7)); });
 
-// qui tue
+// qui tue — audit A (MES-4, BOS-7) : le contexte du combat (histoire, élites, entretien, farm) est dit
 var killers = {};
-runs.forEach(function (j) { j.stats.fights.forEach(function (f) { if (f.died) { var k = f.step + " · " + f.name; killers[k] = (killers[k] || 0) + 1; } }); });
-console.log("\nQui tue (étape · ennemi : morts sur le lot) :");
+runs.forEach(function (j) { j.stats.fights.forEach(function (f) { if (f.died) { var k = f.step + " · " + f.name + " [" + (f.ctx || "?") + "]"; killers[k] = (killers[k] || 0) + 1; } }); });
+console.log("\nQui tue (étape · ennemi [contexte] : morts sur le lot) :");
 Object.keys(killers).sort(function (a, b) { return killers[b] - killers[a]; }).slice(0, 15).forEach(function (k) { console.log("  " + k + " : " + killers[k]); });
 
-// boss et élites
+// boss et élites — audit A (BOS-7) : hors Histoire et élites, le contexte suit le nom
 var bosses = {};
-runs.forEach(function (j) { j.stats.fights.forEach(function (f) { if (f.kind === "normal") return; var k = f.name; var a = bosses[k] = bosses[k] || { n: 0, lost: 0, died: 0, rounds: 0 }; a.n++; a.lost += f.hpLost || 0; a.rounds += f.rounds; if (f.died) a.died++; }); });
+runs.forEach(function (j) { j.stats.fights.forEach(function (f) { if (f.kind === "normal") return; var k = f.name + ((f.ctx === "histoire" || f.ctx === "élites") ? "" : " (" + (f.ctx || "?") + ")"); var a = bosses[k] = bosses[k] || { n: 0, lost: 0, died: 0, rounds: 0 }; a.n++; a.lost += f.hpLost || 0; a.rounds += f.rounds; if (f.died) a.died++; }); });
 console.log("\nBoss et élites :                          combats  PV perdus  morts   rounds");
 Object.keys(bosses).sort(function (a, b) { return bosses[b].n - bosses[a].n; }).forEach(function (k) { var a = bosses[k]; console.log("  " + k.padEnd(40) + String(a.n).padStart(6) + pct(a.lost, a.n).padStart(10) + pct(a.died, a.n).padStart(8) + (a.rounds / a.n).toFixed(1).padStart(8)); });
 
