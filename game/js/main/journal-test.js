@@ -74,6 +74,8 @@ var JournalTest = {
     this._lastHp = 0; // le tick ne la note pas une seconde fois
   },
 
+  _pvPct: function () { var g = window.game; return Math.round(100 * Number(g.heroHp || 0) / Math.max(1, Number(g.heroMaxHp || 1))); },
+
   /* Où se trouvait le héros : sert au contexte d'une mort. */
   _where: function () {
     var g = window.game, e = g.enemy;
@@ -154,19 +156,21 @@ function initJournalTest() {
     function (r, a) { J.log("choix", { chapitre: a[0], cle: a[1], valeur: a[2] }); });
 
   journalWrap(window.DungeonManager, "start", null,
-    function (r, a) { if (g().dungeonRun && g().dungeonRun.active) J.log("donjon_debut", { id: a[0], marques: a[1] || [] }); });
+    function (r, a) { if (g().dungeonRun && g().dungeonRun.active) J.log("donjon_debut", { id: a[0], marques: a[1] || [], pv0: J._pvPct() }); });
+  // v3.747.0 (Crypte de Seb) : l'or rapporté par le run, récompense de fin comprise
   journalWrap(window.DungeonManager, "finish",
-    function () { return g().dungeonRun ? g().dungeonRun.dungeonId : null; },
-    function (r, a, id) { J.log("donjon_fin", { id: id, reussi: !!a[0], vague: a[1], issue: a[2] || (a[0] ? "victoire" : null) }); });
+    function () { return { id: g().dungeonRun ? g().dungeonRun.dungeonId : null, or0: Number(g().gold || 0) }; },
+    function (r, a, c) { J.log("donjon_fin", { id: c.id, reussi: !!a[0], vague: a[1], issue: a[2] || (a[0] ? "victoire" : null), or: Math.round(Number(g().gold || 0) - c.or0) }); });
 
   journalWrap(window.AdventureQuestManager, "start", null,
-    function (r, a) { if (g().adventureQuestRun && g().adventureQuestRun.active) J.log("quete_debut", { id: a[0] }); });
+    function (r, a) { if (g().adventureQuestRun && g().adventureQuestRun.active) J.log("quete_debut", { id: a[0], pv0: J._pvPct() }); });
   journalWrap(window.AdventureQuestManager, "finish", null,
     function (r, a) { J.log("quete_fin", { id: a[0] && a[0].id, reussi: !!a[1] }); });
 
+  // v3.747.0 : rounds du combat ; un boss qui se relève (Varrek) est noté « a_terre », pas vaincu
   journalWrap(window.CombatEngine, "killEnemy",
-    function (e) { e = e || g().enemy; return e && (e.isBoss || e.isElite) ? { nom: e.name || e.id, boss: !!e.isBoss, elite: !!e.isElite } : null; },
-    function (r, a, ctx) { if (ctx) { ctx.pvPct = Math.round(100 * Number(g().heroHp || 0) / Math.max(1, Number(g().heroMaxHp || 1))); J.log("victoire", ctx); } });
+    function (e) { e = e || g().enemy; return e && (e.isBoss || e.isElite) ? { e: e, d: { nom: e.name || e.id, boss: !!e.isBoss, elite: !!e.isElite, rounds: g().combatRound ? g().combatRound.number : null } } : null; },
+    function (r, a, ctx) { if (ctx) { ctx.d.pvPct = J._pvPct(); J.log(ctx.e.downed && Number(ctx.e.hp || 0) > 0 ? "a_terre" : "victoire", ctx.d); } });
 
   // v3.522.0 : la mort au moment où elle tombe (contexte encore ouvert) ; le Seuil et la Fiole noire relèvent : rien
   journalWrap(window.CombatEngine, "onHeroDefeated",
@@ -178,6 +182,9 @@ function initJournalTest() {
       w.expedition = run ? run.templateId || true : w.expedition;
       w.ennemi = n && n.type === "boss" ? "boss" : (n && n.foeId) || null; // Petite Aventure : pas de game.enemy
       w.boss = !!(n && n.type === "boss");
+      // v3.747.0 : PV avant le coup, coup reçu, gisants réveillés, difficulté du secteur
+      w.pvAvant = Math.round(Number(g().heroHp || 0)); w.coup = Math.round(Number(arguments[1] || 0));
+      w.reveil = !!(run && run.livingMap && run.livingMap.wake); w.mult = Pa2Run.gisantsMult ? Number(Pa2Run.gisantsMult(run).toFixed(2)) : null;
       return w;
     },
     function (r, a, where) { if (r === false) J.logDeath(where); });
@@ -185,7 +192,7 @@ function initJournalTest() {
   journalWrap(window.LivingMapManager, "onRunEnd", null,
     function (r, a) { J.log("carte", { carte: a[0], secteur: a[1], issue: a[2] }); });
   journalWrap(window.SceneRunManager, "startRun", null,
-    function (r, a) { if (r && r.ok) J.log("expedition", { id: a[0] }); });
+    function (r, a) { if (r && r.ok) J.log("expedition", { id: a[0], pv0: J._pvPct() }); });
   // v3.737.0 (Seb 07/11) : pourquoi une Petite Aventure s'arrête (dest, ko, retour, renoncement en préparation, fuite)
   var paFin = function (r, a, ctx) { if (ctx) J.log("expedition_fin", { id: ctx.id, issue: ctx.how || (a && a[0]) || null, etape: ctx.status, case: ctx.at }); };
   var paCtx = function () { var run = window.Pa2Run && Pa2Run.getRun(); return run ? { id: run.templateId, status: run.status, at: run.at } : null; };
@@ -207,10 +214,15 @@ function initJournalTest() {
     },
     function (r, a, it) { var s = (g().equipShopStock || []).filter(function (x) { return x.uid === a[0]; })[0]; if (it && s && s.bought) J.log("achat", it); });
   journalWrap(window.ForgeManager, "reforge",
-    function (slot) { return ForgeManager.getLevel(slot); },
-    function (r, a, avant) { var n = ForgeManager.getLevel(a[0]); if (n > avant) J.log("reforge", { emplacement: a[0], niveau: n }); });
-  journalWrap(window.VillageBuildingManager, "startBuild", null,
-    function (r, a) { if (r) J.log("chantier", { batiment: a[0] }); });
+    function (slot) { return { n: ForgeManager.getLevel(slot), or0: orAvant() }; },
+    function (r, a, c) { var n = ForgeManager.getLevel(a[0]); if (n > c.n) J.log("reforge", { emplacement: a[0], niveau: n, or: Math.round(c.or0 - orAvant()) }); });
+  journalWrap(window.VillageBuildingManager, "startBuild", orAvant,
+    function (r, a, or0) { if (r) J.log("chantier", { batiment: a[0], or: Math.round(or0 - orAvant()) }); });
+  // v3.747.0 (Crypte de Seb) : départ et déchargement des caravanes (l'or rapporté)
+  journalWrap(window.CaravanManager, "depart", null,
+    function (r, a) { if (r) J.log("caravane", { trajet: a[0], monde: typeof a[1] === "number" ? a[1] : null }); });
+  journalWrap(window.CaravanManager, "unload", orAvant,
+    function (r, a, or0) { if (r) J.log("caravane_retour", { n: r.count || 1, trajet: r.trip || null, or: Math.round(orAvant() - or0) }); });
   journalWrap(window.TalentManager, "buy", null,
     function (r, a) { if (r) J.log("talent", { id: a[0] }); });
   journalWrap(window.PotionManager, "useHealingPotion", null,

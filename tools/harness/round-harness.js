@@ -26007,6 +26007,21 @@ console.log("\n[499] Bulle d'or (atelier bulle-or.html, choix de Seb) : l'or qui
   finally { d.getElementById = gid; g.orInvestSeen = {}; g.orInvestGoldRef = null; g.orInvestShown = []; try { run("fullResetState();"); } catch (e2) {} game = freshCombat("knight"); }
 })();
 
+console.log("\n[500] Journal de test (v3.747.0, Crypte de Seb) : boss à terre, rounds, PV d'entrée, coup fatal en Petite Aventure, caravanes, or");
+(function () {
+  try {
+    var J = g.JournalTest, src = fsRead("js/main/journal-test.js");
+    ok(typeof g.CaravanManager.depart._journalOrig === "function" && typeof g.CaravanManager.unload._journalOrig === "function", "caravanes : départ et déchargement enveloppés");
+    ok(/"a_terre" : "victoire"/.test(src) && /ctx\.e\.downed/.test(src), "un boss qui se relève (downed, PV > 0) est noté « a_terre », pas « victoire »");
+    ok(/rounds: g\(\)\.combatRound/.test(src), "victoire : nombre de rounds du combat");
+    ok(/donjon_debut[^\n]*pv0: J\._pvPct\(\)/.test(src) && /quete_debut[^\n]*pv0/.test(src) && /"expedition", \{ id: a\[0\], pv0/.test(src), "PV d'entrée : donjon, quête, expédition");
+    ok(/w\.pvAvant/.test(src) && /w\.reveil/.test(src) && /gisantsMult\(run\)/.test(src), "Petite Aventure : PV avant le coup, coup reçu, gisants réveillés, difficulté du secteur");
+    ok(/"reforge", \{ emplacement: a\[0\], niveau: n, or:/.test(src) && /"chantier", \{ batiment: a\[0\], or:/.test(src) && /"donjon_fin", \{[^\n]*or: Math\.round/.test(src), "or : reforge, chantier et fin de donjon");
+    g.game.heroHp = 50; g.game.heroMaxHp = 200;
+    ok(J._pvPct() === 25, "_pvPct : 50 / 200 = 25 %");
+  } catch (err) { ok(false, "[500] exception : " + err.message); }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");
