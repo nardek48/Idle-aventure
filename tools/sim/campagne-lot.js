@@ -15,7 +15,7 @@ function arg(name, def) { var i = ARGS.indexOf(name); return i >= 0 ? ARGS[i + 1
 var N = Number(arg("--n", 4));
 var CLASSES = arg("--classes", "knight,ranger,mage").split(",");
 // audit (27/10, DUR-6) : --chantier et --avise transmis ; --forge-max (ancien --investi, toujours accepté)
-var PASS = ["--combats", "--attendre-camp", "--tactique", "--compagnons-malins", "--forge-max", "--investi", "--laisser", "--farm-reforges", "--relique-echoppe", "--chantier", "--avise", "--joueur", "--batisseur", "--forge-active", "--forge-stock"].filter(function (f) { return ARGS.indexOf(f) >= 0; });
+var PASS = ["--combats", "--attendre-camp", "--tactique", "--compagnons-malins", "--forge-max", "--investi", "--laisser", "--farm-reforges", "--relique-echoppe", "--chantier", "--avise", "--joueur", "--batisseur", "--forge-active", "--forge-stock", "--reforge-stock"].filter(function (f) { return ARGS.indexOf(f) >= 0; });
 if (ARGS.indexOf("--seuil-soin") >= 0) PASS.push("--seuil-soin", ARGS[ARGS.indexOf("--seuil-soin") + 1]); // DUR-13
 if (ARGS.indexOf("--apres") >= 0) PASS.push("--apres", ARGS[ARGS.indexOf("--apres") + 1]); // v3.459.10 : après-Histoire (heures)
 if (ARGS.indexOf("--faille") >= 0) PASS.push("--faille"); // lot 0 des niveaux de donjon
