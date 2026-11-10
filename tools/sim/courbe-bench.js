@@ -10,9 +10,9 @@ var ROOT = require("../chemins.js").jeu(process.argv[2]);
 var ARGS = process.argv.slice(3);
 function arg(n, d) { var i = ARGS.indexOf(n); return i >= 0 ? ARGS[i + 1] : d; }
 var mod = { exports: {} };
-new Function("require", "process", "module", "__dirname", src + "\nmodule.exports = { g: g, run: run };")(
+new Function("require", "process", "module", "__dirname", src + "\nmodule.exports = { g: g, run: run, seedRng: seedRng };")(
   require, { argv: [process.argv[0], "x", ROOT], env: process.env }, mod, __dirname);
-var g = mod.exports.g, run = mod.exports.run;
+var g = mod.exports.g, run = mod.exports.run, seedRng = mod.exports.seedRng; // tirage fixé : mêmes ennemis d'un relevé à l'autre
 
 run("fullResetState(); game.playerName='Banc'; game.heroId='ranger';");
 var W = g.WorldManager, AQ = g.AdventureQuestManager, Q = g.ADVENTURE_QUESTS, H = g.WORLD_HERO_SCALING;
@@ -40,7 +40,7 @@ function courbe(w, rang) {
 }
 function refOf(q) {
   var pl = PLACE[q.id];
-  if (!pl) return { key: "?", r: null };
+  if (!pl) return { key: "hors-Histoire", r: { dmg: 1, ehp: 1 } }; // rounds / coup sans unité : seuls PV et coup comptent
   return { key: pl.etape, r: courbe(pl.monde, pl.rang) };
 }
 /* Coup brut d'un ennemi : puissance × coef (× boss), comme CombatEngine.enemyStrike avant la défense. */
@@ -49,7 +49,7 @@ function mesure(list, ref) {
   list = [].concat(list).filter(Boolean);
   var hp = 0, hit = 0, bossy = false;
   list.forEach(function (e) { hp += Number(e.maxHp || 0); hit = Math.max(hit, coup(e)); if (e.isBoss) bossy = true; });
-  return { n: list.length, rounds: hp / ref.r.dmg, pct: 100 * hit / ref.r.ehp, boss: bossy, nom: list.map(function (e) { return e.name; }).join(" + ") };
+  return { n: list.length, hp: hp, coup: hit, rounds: hp / ref.r.dmg, pct: 100 * hit / ref.r.ehp, boss: bossy, nom: list.map(function (e) { return e.name; }).join(" + ") };
 }
 
 var COURBE_ORDRE = ["forest", "desert", "ruins", "crypt", "mountain", "tower"];
@@ -62,13 +62,13 @@ Object.keys(Q).forEach(function (id) {
   try {
     if (Array.isArray(q.encounters) && q.encounters.length) {
       q.encounters.forEach(function (enc, i) {
-        var e = g.QuestEnemyManager.spawnFor(AQ._encounterQuest(q, i), false);
+        seedRng(7); var e = g.QuestEnemyManager.spawnFor(AQ._encounterQuest(q, i), false);
         lignes.push({ q: id, monde: q.worldId, ref: ref.key, cran: "rencontre " + (i + 1), m: mesure(e, ref) });
       });
     } else if (types.indexOf("kill") >= 0) {
-      lignes.push({ q: id, monde: q.worldId, ref: ref.key, cran: "ennemi", m: mesure(AQ.buildQuestEnemy(q, false), ref) });
+      seedRng(7); lignes.push({ q: id, monde: q.worldId, ref: ref.key, cran: "ennemi", m: mesure(AQ.buildQuestEnemy(q, false), ref) });
     }
-    if (types.indexOf("bossKill") >= 0) lignes.push({ q: id, monde: q.worldId, ref: ref.key, cran: "boss", m: mesure(AQ.buildQuestEnemy(q, true), ref) });
+    if (types.indexOf("bossKill") >= 0 && (seedRng(7) || true)) lignes.push({ q: id, monde: q.worldId, ref: ref.key, cran: "boss", m: mesure(AQ.buildQuestEnemy(q, true), ref) });
   } catch (err) { lignes.push({ q: id, monde: q.worldId, ref: ref.key, cran: "ERREUR " + err.message, m: null }); }
 });
 
@@ -82,7 +82,7 @@ console.log("\nPAR QUÊTE (médiane des rencontres, boss à part) — dégâts/r
 var parQ = {};
 lignes.forEach(function (l) { if (!l.m) return; var k = l.q; (parQ[k] = parQ[k] || { monde: l.monde, ref: l.ref, r: [], c: [], boss: null }); if (l.cran === "boss") parQ[k].boss = l.m; else { parQ[k].r.push(l.m.rounds); parQ[k].c.push(l.m.pct); } });
 function med(a) { a = a.slice().sort(function (x, y) { return x - y; }); return a.length ? a[Math.floor(a.length / 2)] : NaN; }
-Object.keys(parQ).sort(function (a, b) { var A = PLACE[a], B = PLACE[b]; return (CHAP.indexOf(A.monde) - CHAP.indexOf(B.monde)) || (A.rang - B.rang); }).forEach(function (k) {
+Object.keys(parQ).filter(function (k) { return !!PLACE[k]; }).sort(function (a, b) { var A = PLACE[a], B = PLACE[b]; return (CHAP.indexOf(A.monde) - CHAP.indexOf(B.monde)) || (A.rang - B.rang); }).forEach(function (k) {
   var p = parQ[k], c = courbe(PLACE[k].monde, PLACE[k].rang);
   console.log(k.padEnd(27) + p.ref.padEnd(16) + ("réf " + Math.round(c.dmg) + "/" + Math.round(c.ehp)).padEnd(16) + "rounds " + (p.r.length ? med(p.r).toFixed(1) : "  - ").padStart(5) + "  coup " + (p.c.length ? med(p.c).toFixed(1) : "  - ").padStart(5) + " %" + (p.boss ? "   boss " + p.boss.rounds.toFixed(1) + " r, " + p.boss.pct.toFixed(1) + " %" : ""));
 });

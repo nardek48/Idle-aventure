@@ -5437,23 +5437,23 @@ console.log("\n[48b] v3.246.0 \u2014 Compteur de round, reprise de quête, PV de
 
   /* --- 3. PV des ennemis de « Prouver sa valeur » --- */
   var q = g.ADVENTURE_QUESTS.aq_forest_expedition;
-  ok(q.enemyHpMult === 0.8 && q.bossHpMult === 0.4, "aq_forest_expedition : ennemis \u00d70,8 (doubl\u00e9s en v3.263.0), boss \u00d70,4");
+  ok(q.target.rounds === 0.91 && q.bossTarget.rounds === 3.18, "aq_forest_expedition : cibles de la courbe (v3.764.0, ex-×0,8 / boss ×0,4)");
   run("WorldManager.worldIndex = 0; WorldManager.adventureIndex = 0; WorldManager.enemyIndex = 0;");
   var farmNormal = run("WorldManager.generateEnemy()").maxHp;
   run("WorldManager.enemyIndex = 9;");
   var farmBoss = run("WorldManager.generateEnemy()").maxHp;
   var qNormal = g.QuestEnemyManager.spawnFor(q, false).maxHp;
   var qBoss = g.QuestEnemyManager.spawnFor(q, true).maxHp;
-  ok(qBoss === Math.floor(farmBoss * 0.4), "boss de la qu\u00eate : " + qBoss + " PV au lieu de " + farmBoss);
+  ok(qBoss === Math.floor(farmBoss * g.QuestEnemyManager.levelOf(q, true).hp), "boss de la qu\u00eate : " + qBoss + " PV au lieu de " + farmBoss + " (cible de la courbe)");
   // v3.263.0 : ennemi tiré au sort -> comparaison à tirage fixé (même ennemi fabriqué deux fois)
   var genSave = g.WorldManager.generateEnemy;
   g.WorldManager.generateEnemy = function () { return { id: "slime", hp: 100, maxHp: 100, isBoss: false }; };
   var qFixe = g.QuestEnemyManager.spawnFor(q, false).maxHp;
   g.WorldManager.generateEnemy = genSave;
-  ok(qFixe === 80 && qNormal > 0 && farmNormal > 0, "ennemis ordinaires de la qu\u00eate \u00e0 \u00d70,8 (100 PV -> " + qFixe + ")");
+  ok(qFixe === Math.floor(100 * g.QuestEnemyManager.levelOf(q, false).hp) && qFixe < 100 && qNormal > 0 && farmNormal > 0, "ennemis ordinaires de la qu\u00eate sous le farm (100 PV -> " + qFixe + ", cible de la courbe)");
   ok(farmBoss === 696, "le Roi Slime du FARM reste \u00e0 " + farmBoss + " PV (la r\u00e9duction est propre \u00e0 la qu\u00eate)");
   var other = g.ADVENTURE_QUESTS.hq_wolf_pack; // v3.326.0 : aq_forest_depths a désormais son réglage (lot C-2)
-  ok(!other || other.enemyHpMult === undefined, "les autres qu\u00eates n'ont pas de enemyHpMult : comportement inchang\u00e9");
+  ok(!other || (other.enemyHpMult === undefined && other.target), "v3.764.0 : plus de enemyHpMult, chaque qu\u00eate porte sa cible");
 })();
 
 /* [49] v3.247.0 — groupe A : vitrine de départ figée, pronostic de combat. */
@@ -6609,9 +6609,8 @@ console.log("\n[63b] v3.261.0 \u2014 Bandeau h\u00e9ros du combat, variante B");
 console.log("\n[65b] v3.263.0 \u2014 Ic\u00f4nes, vitrine, Roi des marais");
 (function () {
   ok(g.buildTutorialPreviewHTML("inconnu") === "", "aper\u00e7u de tutoriel : un \u00e9tat inconnu ne rend rien");
-  var boss = g.QuestEnemyManager.spawnFor({ worldId: "forest", adventureIndex: 0, enemyHpMult: 0.8 }, true);
-  var bossSolo = g.QuestEnemyManager.spawnFor({ worldId: "forest", adventureIndex: 0, enemyHpMult: 0.8, bossHpMult: 0.4 }, true);
-  ok(bossSolo.maxHp === Math.floor(boss.maxHp / 0.8 * 0.4) || Math.abs(bossSolo.maxHp * 2 - boss.maxHp) <= 2, "bossHpMult r\u00e8gle le boss \u00e0 part (" + bossSolo.maxHp + " contre " + boss.maxHp + ")");
+  var qx = g.ADVENTURE_QUESTS.aq_forest_expedition, lvN = g.QuestEnemyManager.levelOf(qx, false), lvB = g.QuestEnemyManager.levelOf(qx, true); // v3.764.0
+  ok(lvN && lvB && lvB.hp !== lvN.hp && qx.bossTarget.rounds !== qx.target.rounds, "bossTarget r\u00e8gle le boss \u00e0 part (cible de la courbe, v3.764.0)");
 })();
 
 /* [66] v3.264.0 — Battue avec le Village, Atelier niveau 1 allégé. */
@@ -8218,7 +8217,7 @@ console.log("\n[89] v3.293.0 — Plus de farm libre : contexte de quête, runs d
   /* Les trois runs : composition identique à l'ancien farm. */
   var A = g.ADVENTURE_QUESTS;
   ok(A.aq_story_premier_sang.adventureIndex === 0 && A.aq_story_premier_sang.steps[0].target === 5, "Premier sang : 5 ennemis à la Lisière");
-  ok(A.aq_story_lisiere.steps[0].target === 9 && A.aq_story_lisiere.steps[1].bossId === "slimeking" && !A.aq_story_lisiere.bossHpMult && A.aq_story_lisiere.enemyHpMult === 1.3, "Franchir la Lisière : 9 + Roi Slime, PV ×1,3 (v3.326.0, lot C-2)");
+  ok(A.aq_story_lisiere.steps[0].target === 9 && A.aq_story_lisiere.steps[1].bossId === "slimeking" && !!A.aq_story_lisiere.bossTarget && A.aq_story_lisiere.target.rounds === 1.02, "Franchir la Lisière : 9 + Roi Slime, cibles de la courbe (v3.764.0, ex-PV ×1,3)");
   ok(A.aq_story_coeur.adventureIndex === 1 && JSON.stringify(A.aq_story_coeur.enemyFilter) === JSON.stringify(g.STORY_COEUR_ACT3_POOL), "Tenir le Cœur : pool de l'Acte III");
   ["aq_story_premier_sang", "aq_story_lisiere", "aq_story_coeur"].forEach(function (id) {
     ok(Object.keys(A[id].reward || {}).length === 0 && !A[id].gatesNextWorld && A[id].type === "kill", id + " : sans récompense propre, n'ouvre aucun monde");
@@ -9702,19 +9701,16 @@ console.log("\n[121] v3.326.0 — Lot C-2 : enemyPowerMult et recalage des comba
   var Q = g.QuestEnemyManager, A = g.ADVENTURE_QUESTS;
   var genSave = g.WorldManager.generateEnemy;
   g.WorldManager.generateEnemy = function () { return { id: "x", hp: 100, maxHp: 100, isBoss: false, stats: { power: 20 } }; };
-  var e = Q.spawnFor(A.aq_desert_dunes, false);
-  ok(e.stats.power === 80 && e.maxHp === 150, "dunes : puissance ×4 (20 -> " + e.stats.power + "), PV ×1,5");
-  var sans = Q.spawnFor(A.aq_story_premier_sang, false);
-  ok(sans.stats.power === 20, "quête sans enemyPowerMult : puissance inchangée");
-  // Rencontre scriptée : la copie réduite porte l'id, la puissance est lue sur la donnée d'origine
+  var lv = Q.levelOf(A.aq_desert_dunes, false), e = Q.spawnFor(A.aq_desert_dunes, false);
+  ok(e.stats.power === Math.floor(20 * lv.power) && e.maxHp === Math.floor(100 * lv.hp), "dunes : niveau de la cible (puissance ×" + lv.power.toFixed(2) + ", PV ×" + lv.hp.toFixed(2) + ")");
+  ok(Q.spawnFor({ worldId: "desert", adventureIndex: 0 }, false).stats.power === 20, "pas une quête du jeu (Petites Aventures, Labyrinthe) : ennemi du monde tel quel");
+  // Rencontre scriptée : la copie réduite porte l'id, la cible est lue sur la donnée d'origine
   var copie = { id: "aq_desert_nuee", worldId: "desert", adventureIndex: 0 };
-  ok(Q.spawnFor(copie, false).stats.power === 130, "rencontre scriptée (nuée) : ×6,5 lu sur ADVENTURE_QUESTS");
+  ok(Q.spawnFor(copie, false).stats.power === Math.floor(20 * Q.levelOf(A.aq_desert_nuee, false).power), "rencontre scriptée (nuée) : cible lue sur ADVENTURE_QUESTS");
   g.WorldManager.generateEnemy = function () { return { id: "b", hp: 100, maxHp: 100, isBoss: true, stats: { power: 20 } }; };
-  A.aq_desert_dunes.bossPowerMult = 2;
-  ok(Q.spawnFor(A.aq_desert_dunes, true).stats.power === 40, "bossPowerMult règle le boss à part");
-  delete A.aq_desert_dunes.bossPowerMult;
+  ok(Q.spawnFor(A.aq_desert_trone, true).stats.power === Math.floor(20 * Q.levelOf(A.aq_desert_trone, true).power), "bossTarget règle le boss à part");
   g.WorldManager.generateEnemy = genSave;
-  ok(Q.getPowerMult(null) === 1 && Q.getPowerMult({ id: "inconnue" }) === 1, "sans donnée : ×1");
+  ok(Q.levelOf(null, false) === null && Q.levelOf({ id: "inconnue" }, false) === null, "sans donnée : pas de niveau (ennemi tel quel)");
 
   // Les réglages mesurés au banc (tools/sim/plafond-bench.js)
   var E = g.ELITE_DB, D = g.DUNGEONS;
@@ -9722,9 +9718,8 @@ console.log("\n[121] v3.326.0 — Lot C-2 : enemyPowerMult et recalage des comba
   ok(E.dard_profondeurs.statMult.power === 3.5 && E.dard_profondeurs.statMult.endurance === 3.5, "dard des profondeurs : 3,5 / 3,5 (v3.357.0, réglé sur le héros de campagne)");
   ok(E.ronce_ardente.statMult.power === 1.4 && E.ronce_ardente.statMult.endurance === 2.8, "ronce ardente : 1,4 / 2,8");
   ok(D.filter(function (d) { return d.id === 1; })[0].difficultyMult === 1.8, "Tanière du Basilic : difficulté 1,8");
-  ok(A.aq_story_coeur.enemyPowerMult === 2.5 && A.aq_forest_depths.enemyPowerMult === 6, "Cœur ×2,5, orc de l'étape 15 ×6");
-  ok(A.aq_desert_gouffre.encounterHpMult === 2.4 && A.aq_desert_gouffre.enemyPowerMult === 5.5, "gouffre : PV ×2,4, puissance ×5,5");
-  ok(A.aq_desert_nuee.encounterHpMult === 1.9 && A.aq_desert_nuee.enemyPowerMult === 6.5, "nuée : PV ×1,9, puissance ×6,5");
+  ok(A.aq_story_coeur.target.hit === 0.0407 && A.aq_forest_depths.target.hit === 0.0839, "Cœur et orc de l'étape 15 : cibles (v3.764.0, ex-×2,5 / ×6)");
+  ok(A.aq_desert_gouffre.target.rounds === 5.91 && A.aq_desert_nuee.target.rounds === 3.65, "gouffre et nuée : cibles (v3.764.0, ex-PV ×2,4 / ×1,9)");
 })();
 
 /* [122] v3.327.0 — Talents par classe (conception Talents v1.1, T1 à T14). */
@@ -11049,7 +11044,7 @@ console.log("\n[140] v3.362.0 — Acte IV, étape 17 : le trône de sable, Nezza
   ok(g.BossMomentManager.getMoment({ id: "nezzam", name: "Nezzam le Desséché", isBoss: true }).intro.indexOf("Qui a pris mes noms") !== -1, "noms déterrés : « Qui a pris mes noms ? »");
   game.storyQuests.desert.choices.noms = "laisser";
   ok(g.BossMomentManager.getMoment({ id: "nezzam", name: "Nezzam le Desséché", isBoss: true }).intro.indexOf("Je les ai tous gardés") !== -1, "noms laissés : « Je les ai tous gardés. Tous. »");
-  ok(Q.bossPowerMult > 1 && Q.bossHpMult > 1 && fs.existsSync(path.join(__dirname, "../sim/nezzam-bench.js")), "réglé au banc (tools/sim/nezzam-bench.js)");
+  ok(Q.bossTarget && Q.bossTarget.rounds > 10 && fs.existsSync(path.join(__dirname, "../sim/nezzam-bench.js")), "réglé au banc (tools/sim/nezzam-bench.js), cible de la courbe (v3.764.0)");
 })();
 
 console.log("\n[141] v3.363.0 — Acte IV, étape 18 : ce qui reste du roi, fin du chapitre II");
@@ -15127,7 +15122,7 @@ console.log("\n[226] v3.448.2 — Trône de sable : référence de l'ajustement 
     ok(W._heroRefKey === null, "la référence de quête est rendue après la génération");
     W.worldIndex = 1; W.adventureIndex = 0;
     ok(W.getHeroScale().hp > 1.1, "hors quête, l'aventure 0 garde sa référence (début de Désert)");
-    ok(Q.enemyPowerMult === 6 && Q.bossPowerMult === 1.12 && Q.bossHpMult === 6, "calage v3.742.0 (boss courts) : rencontres ×6, Nezzam PV ×6, puissance ×1,12");
+    ok(Q.target.hit === 0.0677 && Q.bossTarget.rounds === 25.03 && Q.bossTarget.hit === 0.0467, "calage v3.742.0 (boss courts) en cibles de la courbe (v3.764.0) : Nezzam 25 rounds, 4,7 % par coup");
   } catch (err) {
     ok(false, "[226] exception : " + err.message);
   } finally {
@@ -16107,12 +16102,11 @@ console.log("\n[252] v3.457.2 → v3.763.0 — Quêtes à multiplicateur fixe : 
   try {
     var Q = g.QuestEnemyManager, A = g.ADVENTURE_QUESTS;
     run("fullResetState(); game.playerName='Test'; game.heroId='knight';");
-    ok(Q.getPowerMult(A.aq_forest_depths) === 6 && Q.getPowerMult(A.aq_crypte_retient, true) === A.aq_crypte_retient.bossPowerMult, "Chevalier : ×6 et bossPowerMult tels quels (v3.763.0 : plus de ÷1,3 côté ennemis)");
-    ok(Q.getPowerMult(A.aq_desert_trone) === A.aq_desert_trone.enemyPowerMult, "quête à heroRef (Trône) : multiplicateur tel quel");
-    ok(Q.getPowerMult(A.aq_story_premier_sang) === 1, "quête sans multiplicateur : ×1");
-    run("game.heroId='ranger';"); var r6 = Q.getPowerMult(A.aq_forest_depths);
+    var lk = JSON.stringify(Q.levelOf(A.aq_forest_depths, false)) + JSON.stringify(Q.levelOf(A.aq_crypte_retient, true));
+    ok(Q.levelOf(A.aq_story_premier_sang, false) !== null && Q.levelOf({ id: "inconnue" }, false) === null, "chaque quête a son niveau (cible), une quête inconnue aucun");
+    run("game.heroId='ranger';"); var lr = JSON.stringify(Q.levelOf(A.aq_forest_depths, false)) + JSON.stringify(Q.levelOf(A.aq_crypte_retient, true));
     run("game.heroId='mage';");
-    ok(r6 === 6 && Q.getPowerMult(A.aq_forest_depths) === 6, "Rôdeur et Mage : ×6, comme le Chevalier");
+    ok(lk === lr && lr === JSON.stringify(Q.levelOf(A.aq_forest_depths, false)) + JSON.stringify(Q.levelOf(A.aq_crypte_retient, true)), "Chevalier, Rôdeur et Mage : même niveau d'ennemis");
   } catch (err) {
     ok(false, "[252] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
@@ -19368,7 +19362,7 @@ console.log("\n[342] v3.521.0 — lot 6 : élites de la Montagne (garantie), Dra
     ok(!rep.hostile && !LM.isHostile("mountain", "nid") && rep.message.indexOf(g._t("Soigne-toi, puis retente quand tu veux.")) >= 0 && !/lave/.test(rep.message), "élite perdue : ni coulée ni « jusqu'à demain », on peut retenter");
     var rep2 = LM.onRunEnd("mountain", "ruisseaux", "fail");
     ok(rep2.hostile && /coulée/.test(rep2.message), "Petite Aventure perdue : la coulée reste");
-    ok(g.ADVENTURE_QUESTS.aq_montagne_dragon.bossPowerMult === 0.7, "Dragon ancien : puissance ×0,70 (DRAGON-V2, Seb 05/11)");
+    ok(g.ADVENTURE_QUESTS.aq_montagne_dragon.bossTarget.hit === 0.0364, "Dragon ancien : DRAGON-V2 (Seb 05/11) en cible de la courbe (v3.764.0)");
     ok(/^À Aeswyn, Brannoc regarde l'éclat/.test(g.STORY_QUESTS.mountain.steps.filter(function (x) { return x.id === "montagne_09"; })[0].narrative.completion), "v3.717.0 : fin de montagne_09 sans compte de pièces (palier devenu narratif)");
   } catch (err) { ok(false, "[342] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
@@ -20098,29 +20092,14 @@ console.log("\n[377] v3.562.0 — Difficulté de la Crypte et de la Montagne : e
   var Q = g.QuestEnemyManager, H = g.WORLD_HERO_SCALING;
   try {
     ok(H.byWorld.crypt.exp === 0.75 && H.byWorld.crypt.margin === 1.05 && H.byWorld.mountain.exp === 0.75 && !H.byWorld.desert, "A : Crypte et Montagne seulement (suivi 0,75, marge 5 %)");
-    ok(H.questEnemyByWorld.crypt.hp === 1.2 && H.questEnemyByWorld.crypt.power === 1.4 && H.questEnemyByWorld.mountain.hp === 1.1 && H.questEnemyByWorld.mountain.power === 1.2, "B : Crypte +20 % PV / +40 % puissance, Montagne +10 % / +20 %");
-    var qc = Object.keys(g.ADVENTURE_QUESTS).filter(function (id) { return g.ADVENTURE_QUESTS[id].worldId === "crypt"; })[0];
-    var qd = Object.keys(g.ADVENTURE_QUESTS).filter(function (id) { return g.ADVENTURE_QUESTS[id].worldId === "desert"; })[0];
-    var mk = function (boss) { return { isBoss: boss, hp: 100, maxHp: 100, stats: { power: 50 } }; };
-    var e = mk(false); Q.applyWorldMult({ id: qc }, e);
-    var b = mk(true); Q.applyWorldMult({ id: qc }, b);
-    var d = mk(false); Q.applyWorldMult({ id: qd }, d);
-    ok(e.maxHp === 120 && e.hp === 120 && e.stats.power === 70, "ennemi ordinaire d'une quête de la Crypte : 120 PV, puissance 70");
-    ok(b.maxHp === 115 && b.stats.power === 50, "boss de la Crypte : PV +15 %, puissance inchangée (v3.743.0, Forge des mondes)");
-    var el = mk(true); el.isElite = true; Q.applyWorldMult({ id: qc }, el);
-    ok(el.maxHp === 100 && el.stats.power === 50, "élite : inchangée");
-    var bd = mk(true); Q.applyWorldMult({ id: qd }, bd);
-    ok(bd.maxHp === 100, "boss du Désert : inchangé");
-    var bs = mk(true); Q.applyWorldMult({ id: "aq_tour_silhouette" }, bs);
-    ok(bs.maxHp === 100 && g.ADVENTURE_QUESTS.aq_tour_silhouette.worldId === "tower", "la Silhouette : hors du +15 % (déjà réglée par classe)");
+    ok(!H.questEnemyByWorld && !H.questBossHpByWorld && typeof Q.applyWorldMult === "undefined", "B : fondu dans les cibles des quêtes (v3.764.0, C1)");
     // v3.744.0 (Seb 08/11, option C) : élites par monde après la Forge des mondes
     var EH = g.ELITE_HP_BY_WORLD, EP = g.ELITE_POWER_BY_WORLD, eid = Object.keys(g.ELITE_DB)[0];
     ok(EH.crypt === 1.2 && EH.mountain === 1.2 && EH.tower === 1.25 && !EH.desert && !EH.ruins && EP.tower === 1.15 && !EP.crypt, "élites : Crypte et Montagne +20 % PV, Tour +25 % PV et +15 % puissance, Désert et Ruines inchangés");
     var e0 = g.EliteManager.make(eid, "desert", 0), e1 = g.EliteManager.make(eid, "tower", 0);
     var sv = EH.tower, svp = EP.tower; EH.tower = 1; EP.tower = 1; var e2 = g.EliteManager.make(eid, "tower", 0); EH.tower = sv; EP.tower = svp;
     ok(e0 && e1 && e2 && e1.maxHp === Math.round(e2.maxHp * 1.25) && e1.stats.power === Math.round(e2.stats.power * 1.15), "élite de la Tour : PV ×1,25 et puissance ×1,15 à la fabrication");
-    ok(d.maxHp === 100 && d.stats.power === 50, "quête du Désert : inchangée");
-    ok(/selfG\.applyWorldMult\(quest, m\)/.test(fs.readFileSync(path.join(ROOT, "js/systems/quest-enemy-system.js"), "utf8")), "les groupes aussi");
+    ok(/selfG\.applyTarget\(quest, m\)/.test(fs.readFileSync(path.join(ROOT, "js/systems/quest-enemy-system.js"), "utf8")), "les groupes aussi (cible de la courbe)");
   } catch (err) { ok(false, "[377] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
@@ -23600,7 +23579,7 @@ console.log("\n[463] v3.698.0 — Décisions Dragon ancien, pronostic de mission
   try {
     // DRAGON-V2 : PV ×2,6, puissance ×0,70 ; rencontres inchangées
     var qd = g.ADVENTURE_QUESTS.aq_montagne_dragon;
-    ok(qd.bossHpMult === 2.6 && qd.bossPowerMult === 0.7 && qd.encounterHpMult === 3.1 && qd.enemyPowerMult === 7, "DRAGON-V2 : Dragon ancien PV ×2,6 et puissance ×0,70, rencontres inchangées");
+    ok(qd.bossTarget.rounds === 10.97 && qd.bossTarget.hit === 0.0364 && qd.target.rounds === 1.75, "DRAGON-V2 en cibles de la courbe (v3.764.0) : Dragon 11 rounds, 3,6 % par coup");
     // DRAGON-MAGE : rien de changé, les boss restent neutres (ni faiblesse ni résistance)
     game = freshCombat("mage"); giveWeapon();
     game.enemy = { id: "ancientdragon", isBoss: true, hp: 10, maxHp: 10, weak: ["magic"], resists: ["bow"], stats: g.makeRpgStats(1, 1, 1, 1, 1) };
@@ -23729,8 +23708,8 @@ console.log("\n[465] v3.700.0 — Mage face au Dragon, pronostic du Mage, faible
     // MAGE-DRAGON (v3.763.0) : l'exception du Dragon est fondue dans balance.damageTakenMult du Mage (data/classes.js)
     var QE = g.QuestEnemyManager, qd = g.ADVENTURE_QUESTS.aq_montagne_dragon, near = function (a, b) { return Math.abs(a - b) < 1e-9; };
     ok(!qd.classPowerMult, "MAGE-DRAGON : plus de réglage par classe dans la quête (v3.763.0)");
-    var pm = {}; ["knight", "ranger", "mage"].forEach(function (c) { game = freshCombat(c); pm[c] = QE.getPowerMult(qd, true); });
-    ok(pm.knight === 0.7 && pm.ranger === 0.7 && pm.mage === 0.7, "MAGE-DRAGON : le Dragon est le même pour les trois classes (×0,7)");
+    var pm = {}; ["knight", "ranger", "mage"].forEach(function (c) { game = freshCombat(c); pm[c] = JSON.stringify(QE.levelOf(qd, true)); });
+    ok(pm.knight === pm.ranger && pm.ranger === pm.mage, "MAGE-DRAGON : le Dragon est le même pour les trois classes");
     // PRONO-MAGE : coefficient propre au Mage, Chevalier inchangé, Rôdeur sans coefficient
     ok(g.FORECAST_CLASS_DMG_MULT.mage === 0.9 && g.FORECAST_CLASS_DMG_MULT.knight === 0.75 && g.FORECAST_CLASS_DMG_MULT.ranger === undefined, "PRONO-MAGE : Mage 0,9, Chevalier 0,75, Rôdeur 1");
     game = freshCombat("mage"); giveWeapon();
@@ -25754,7 +25733,7 @@ console.log("\n[497] v3.737.0 — La silhouette face au Rôdeur : sans soin, PV 
   var sil = { type: "adventure", id: "aq_tour_silhouette" };
   try {
     g.addLog = function (m) { logs.push(String(m)); };
-    ok(Q.bossHpMult === 4.25 && JSON.stringify(g.TOWER_SILHOUETTE_VS_CLASS) === '{"ranger":{"bossHpMult":3.1,"noHeal":true}}', "règle : Rôdeur seul, PV ×3,1 au lieu de ×4,25, sans soin");
+    ok(Q.bossTarget.rounds === 8.8 && JSON.stringify(g.TOWER_SILHOUETTE_VS_CLASS) === '{"ranger":{"bossHpFactor":0.7294,"noHeal":true}}', "règle : Rôdeur seul, PV ×3,1 / 4,25 de sa cible, sans soin");
     // PV au spawn : ×3,5 face au Rôdeur (Rôdeur du Chaos compris), ×4,25 sinon
     var spawn = function (hid) { game = freshCombat(hid); var e = g.QuestEnemyManager.spawnFor(Q, true); return Array.isArray(e) ? e[0] : e; };
     var eR = spawn("ranger"), rule = g.TOWER_SILHOUETTE_VS_CLASS.ranger;
@@ -26371,6 +26350,37 @@ console.log("\n[514] Équilibre des classes en un seul tableau (v3.763.0, Seb 10
     var en = { stats: { power: 1000 } }, att = 1000 * g.ENEMY_POWER_DMG_COEF * (1 - Math.min(0.9, Number(game.heroDefensePct || 0))) * C.mage.damageTakenMult;
     ok(Math.abs(g.CombatForecast.getEnemyDamagePerRound(en) - att) < 1e-6, "pronostic : dégâts reçus de la classe pris en compte, comme le moteur");
   } catch (err) { ok(false, "[514] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  finally { game = freshCombat("knight"); }
+})();
+
+console.log("\n[515] Courbe de référence : cibles des quêtes (v3.764.0, C1, Seb 10/11, option A2)");
+(function () {
+  try {
+    var Q = g.QuestEnemyManager, A = g.ADVENTURE_QUESTS, ids = Object.keys(A);
+    var vieux = ids.filter(function (id) { return ["enemyHpMult", "bossHpMult", "enemyPowerMult", "bossPowerMult", "encounterHpMult", "noWorldBossHp"].some(function (k) { return k in A[id]; }); });
+    ok(!vieux.length, "plus aucun multiplicateur de quête (" + (vieux.join(", ") || "aucun") + ")");
+    var mal = ids.filter(function (id) {
+      var t = (A[id].steps || []).map(function (s) { return s.type; });
+      var veutN = t.indexOf("kill") >= 0 || t.indexOf("encounter") >= 0, veutB = t.indexOf("bossKill") >= 0;
+      var okT = function (x) { return x && x.rounds > 0 && x.hit > 0 && x.hit < 1; };
+      return (veutN && !okT(A[id].target)) || (veutB && !okT(A[id].bossTarget));
+    });
+    ok(!mal.length, "chaque quête porte target (rencontres) et bossTarget (boss) valides (" + (mal.join(", ") || "toutes") + ")");
+    var hors = ids.filter(function (id) { return Q._places && !Q._places[id] && (Q.placeOf(A[id]), !Q._places[id]); });
+    ok(hors.length <= 3, "quêtes placées sur une étape de l'Histoire : toutes sauf " + hors.join(", "));
+    var serie = ["forest", "desert", "ruins", "crypt", "mountain", "tower"].map(function (w) { return Q.courbeRef(w, 20, 20); });
+    ok(serie.every(function (r, i) { return r && (i === 0 || (r.dmg > serie[i - 1].dmg && r.ehp > serie[i - 1].ehp)); }), "la courbe monte de chapitre en chapitre (dégâts et PV effectifs)");
+    var d0 = Q.courbeRef("desert", 0, 18), dF = Q.courbeRef("desert", 18, 18), R = g.HERO_SCALING_REFS;
+    ok(Math.abs(d0.dmg - R.joueurForet.dmg) < 1e-9 && Math.abs(dF.ehp - R.joueurDesert2.ehp) < 1e-9, "un chapitre va du héros de fin du précédent au sien");
+    // le niveau suit la courbe : un héros attendu plus fort donne des ennemis plus forts
+    var q = A.aq_desert_nuee, lv = Q.levelOf(q, false), keep = R.joueurDesert2;
+    R.joueurDesert2 = { dmg: keep.dmg * 2, ehp: keep.ehp * 2 };
+    var lv2 = Q.levelOf(q, false); R.joueurDesert2 = keep;
+    ok(lv2.hp > lv.hp && lv2.power > lv.power, "cible fixe, héros attendu plus fort : ennemis plus forts");
+    var b = Q.baseline(1, 0, null);
+    ok(b && b.hp > 0 && b.coup > 0 && Q.baseline(1, 0, null) === b, "ennemi moyen de l'aventure : calculé une fois (cache)");
+    ok(g.WorldManager._heroScaleOff === false && !game.cycleCount, "ennemi moyen : l'état du monde est rendu (suivi du héros, Cycles)");
+  } catch (err) { ok(false, "[515] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   finally { game = freshCombat("knight"); }
 })();
 

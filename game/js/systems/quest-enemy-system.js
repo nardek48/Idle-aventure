@@ -56,7 +56,7 @@ var QuestEnemyManager = {
       if (!forceBoss && Array.isArray(quest.group) && quest.group.length > 1) {
         var groupe = this.buildGroup(quest, adventure);
         var selfG = this;
-        groupe.forEach(function (m) { selfG.applyPowerMult(quest, m); selfG.applyWorldMult(quest, m); }); // v3.326.0 ; v3.562.0
+        groupe.forEach(function (m) { selfG.applyTarget(quest, m); }); // v3.764.0 : cible de la courbe
         return groupe;
       }
 
@@ -78,22 +78,16 @@ var QuestEnemyManager = {
         if (Array.isArray(src.bossPhases)) enemy.phases = JSON.parse(JSON.stringify(src.bossPhases));
       }
 
-      /* v3.246.0 (retour Seb 15/09/2026) — enemyHpMult : PV de TOUS les ennemis de la quête
-         (normaux et boss). « Prouver sa valeur » est la 4e étape de l'Histoire : elle doit se
-         gagner avec l'équipement de départ, sans or à dépenser. Mesuré dans
-         sim/lisiere-quest-bench.js, profil sortie de tutoriel : à 1,0 l'échec est de 100 %
-         pour les trois classes ; à 0,4 (÷2,5) il tombe à 0 / 7 / 0 %. */
-      /* v3.263.0 : bossHpMult (optionnel) règle le boss à part ; absent, le boss suit enemyHpMult. */
-      var hpMult = Number(enemy && enemy.isBoss && quest.bossHpMult != null ? quest.bossHpMult : quest.enemyHpMult);
+      /* enemyHpMult : forme d'une rencontre scriptée (hpMult de la rencontre, copie d'adventure-quest-system.js),
+         jamais le niveau de la quête, qui vient de sa cible (v3.764.0, applyTarget). */
+      var shape = Number(enemy && !enemy.isBoss ? quest.enemyHpMult : 1);
+      if (enemy && isFinite(shape) && shape > 0 && shape !== 1) { enemy.hp = Math.max(1, Math.floor(enemy.maxHp * shape)); enemy.maxHp = enemy.hp; }
+      this.applyTarget(quest, enemy);
       var vs = (enemy && enemy.isBoss && window.TowerSystem) ? TowerSystem.copyClassRule(src) : null; // v3.737.0 (Seb 07/11) : la silhouette
-      if (vs) { if (vs.bossHpMult) hpMult = Number(vs.bossHpMult); if (vs.noHeal) enemy.noHeal = true; } // face au Rôdeur : PV ×3,5, sans soin
-      if (enemy && isFinite(hpMult) && hpMult > 0 && hpMult !== 1) {
-        enemy.hp = Math.max(1, Math.floor(enemy.maxHp * hpMult));
-        enemy.maxHp = enemy.hp;
+      if (vs) { // face au Rôdeur : moins de PV, sans soin
+        if (vs.bossHpFactor) { enemy.maxHp = Math.max(1, Math.floor(enemy.maxHp * Number(vs.bossHpFactor))); enemy.hp = enemy.maxHp; }
+        if (vs.noHeal) enemy.noHeal = true;
       }
-
-      this.applyPowerMult(quest, enemy); // v3.326.0
-      this.applyWorldMult(quest, enemy); // v3.562.0 (accord Seb) : Crypte et Montagne durcies
 
       return enemy;
     } finally {
@@ -106,39 +100,26 @@ var QuestEnemyManager = {
     }
   },
 
-  /* v3.326.0 (plan C-2) — enemyPowerMult : PUISSANCE (dégâts) de tous les ennemis de la quête,
-     le pendant de enemyHpMult ; bossPowerMult règle le boss à part. Lu sur la donnée d'origine
-     (ADVENTURE_QUESTS) : les rencontres scriptées arrivent ici sous une copie
-     réduite, fabriquée par adventure-quest-system.js (protégé). Absent = 1, rien ne change. */
-  getPowerMult: function (quest, isBoss) {
-    if (!quest) return 1;
-    var src = (window.ADVENTURE_QUESTS && ADVENTURE_QUESTS[quest.id]) || quest;
-    var m = Number(isBoss && src.bossPowerMult != null ? src.bossPowerMult : src.enemyPowerMult);
-    return (isFinite(m) && m > 0) ? m : 1; // v3.763.0 : plus de gabarit de classe, voir data/classes.js (balance)
+  /* v3.764.0 (C1, Seb 10/11, option A2) : niveau d'un ennemi de quête tiré de sa cible (data/adventure-quests.js,
+     target / bossTarget) et du héros attendu à l'étape (courbeRef) ; ennemi moyen de l'aventure en référence. */
+  levelOf: function (quest, isBoss) {
+    var src = (window.ADVENTURE_QUESTS && quest && ADVENTURE_QUESTS[quest.id]) || null;
+    var t = src ? (isBoss ? src.bossTarget : src.target) : null;
+    if (!t) return null;   // pas une quête du jeu (Petites Aventures, Labyrinthe) : ennemi du monde tel quel
+    var pl = this.placeOf(src), ref = this.courbeRef(pl.monde, pl.rang, pl.longueur);
+    var wi = WORLDS.findIndex(function (w) { return w.id === src.worldId; }), ai = Number(src.adventureIndex || 0);
+    var adv = WORLDS[wi] && WORLDS[wi].adventures[ai];
+    var base = ref && adv ? this.baseline(wi, ai, isBoss ? (src.bossId || adv.boss) : null) : null;
+    if (!base || !(base.hp > 0) || !(base.coup > 0)) return null;
+    return { hp: Number(t.rounds) * ref.dmg / base.hp, power: Number(t.hit) * ref.ehp / base.coup };
   },
 
-  /* v3.562.0 (retour Seb, point 1, option B) : PV et puissance des ennemis ordinaires (ni boss ni élite)
-     des quêtes d'un monde, lus dans WORLD_HERO_SCALING.questEnemyByWorld. */
-  applyWorldMult: function (quest, enemy) {
-    if (!enemy) return;
-    var d = (window.ADVENTURE_QUESTS && quest && ADVENTURE_QUESTS[quest.id]) || quest || {};
-    if (enemy.isBoss && enemy.isElite) return;   // élite : inchangée
-    if (enemy.isBoss) { // v3.743.0 : PV des boss de quête par monde (Forge des mondes)
-      var bm = !d.noWorldBossHp && window.WORLD_HERO_SCALING && WORLD_HERO_SCALING.questBossHpByWorld && d.worldId ? Number(WORLD_HERO_SCALING.questBossHpByWorld[d.worldId]) : 1;
-      if (bm > 0 && bm !== 1) { enemy.maxHp = Math.max(1, Math.round(enemy.maxHp * bm)); enemy.hp = enemy.maxHp; }
-      return;
-    }
-    var tab = window.WORLD_HERO_SCALING && WORLD_HERO_SCALING.questEnemyByWorld;
-    var m = tab && d.worldId ? tab[d.worldId] : null;
-    if (!m) return;
-    if (Number(m.hp) > 0 && m.hp !== 1) { enemy.maxHp = Math.max(1, Math.floor(enemy.maxHp * m.hp)); enemy.hp = enemy.maxHp; }
-    if (enemy.stats && Number(m.power) > 0 && m.power !== 1) enemy.stats.power = Math.floor(enemy.stats.power * m.power);
-  },
-
-  applyPowerMult: function (quest, enemy) {
-    if (!enemy || !enemy.stats) return;
-    var m = this.getPowerMult(quest, !!enemy.isBoss);
-    if (m !== 1) enemy.stats.power = Math.max(1, Math.floor(Number(enemy.stats.power || 0) * m));
+  applyTarget: function (quest, enemy) {
+    if (!enemy || (enemy.isBoss && enemy.isElite)) return;   // élite : inchangée (C2)
+    var lv = this.levelOf(quest, !!enemy.isBoss);
+    if (!lv) return;
+    enemy.maxHp = Math.max(1, Math.floor(enemy.maxHp * lv.hp)); enemy.hp = enemy.maxHp;
+    if (enemy.stats) enemy.stats.power = Math.max(1, Math.floor(Number(enemy.stats.power || 0) * lv.power));
   }
 };
 

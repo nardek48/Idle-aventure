@@ -2,6 +2,9 @@
 /* data/adventure-quests.js — quêtes scopées à une aventure précise (worldId+adventureIndex), séparées de world-quests.js.
    Logique : systems/adventure-quest-system.js. */
 
+/* v3.764.0 (C1, Seb 10/11, option A2) : la force des ennemis d'une quête se règle dans les unités de la courbe
+   de référence (QuestEnemyManager.courbeRef) : target = ennemi moyen, bossTarget = boss ; rounds = PV ÷ dégâts par
+   round du héros attendu à l'étape, hit = part de ses PV effectifs par coup. Remplace les multiplicateurs (×PV, ×puissance). */
 var ADVENTURE_QUESTS = {
   // v3.109.0 : aq_forest_scout (« Éclaireur de la Lisière ») supprimée — jamais liée à l'Histoire, donc invisible depuis 3.107.4.
   aq_forest_expedition: {
@@ -23,8 +26,8 @@ var ADVENTURE_QUESTS = {
        trop facile. PV des ennemis ORDINAIRES doublés (×0,8), le Roi Slime reste à ×0,4.
        sim/roi-marais-bench.js : 0 % d'échec toujours, mais 23-26 rounds au lieu de 16-18 et
        53-67 % des PV à l'arrivée au lieu de 70-78 %. */
-    enemyHpMult: 0.8,
-    bossHpMult: 0.4,
+    target: { rounds: 0.91, hit: 0.0214 }, // v3.764.0 (C1) : avant enemyHpMult 0,8, bossHpMult 0,4
+    bossTarget: { rounds: 3.18, hit: 0.0515 },
     name: "Prouver sa valeur",
     story: "Le Roi Slime géant règne sur la Lisière depuis des lunes, gardant jalousement le passage vers le cœur de la forêt. Pour qu'on te laisse poursuivre, il faudra d'abord montrer que tu n'es pas qu'un simple aventurier de passage.",
     icon: "./images/Icons/quest_icons/exploration/exploration1.webp",
@@ -53,8 +56,8 @@ var ADVENTURE_QUESTS = {
     section: "adventure",
     difficulty: "medium",
     // v3.326.0 (C-2) : uniques + Wenna +5, entr. 60 : 95-100 %, 41-50 rounds, 52-61 % de PV (Wenna soigne beaucoup)
-    enemyPowerMult: 6,
-    enemyHpMult: 1.4,
+    target: { rounds: 0.98, hit: 0.0839 }, // v3.764.0 (C1) : avant enemyPowerMult 6, enemyHpMult 1,4, bossHpMult 1,75
+    bossTarget: { rounds: 6.36, hit: 0.1823 },
     progressionStage: "world_end",
     category: "side", // v3.100.1 : « Principale » réservée à la chaîne Histoire
     worldId: "forest",
@@ -62,7 +65,6 @@ var ADVENTURE_QUESTS = {
     gatesNextWorld: true,
     // v3.742.0 (boss courts, version douce) : PV du boss ×1,25 et Blindé à 50 %, il n'avait aucune phase
     bossId: "orcwarlord",
-    bossHpMult: 1.75,
     bossPhases: [{ atPct: 0.5, archetype: "armored", label: "il serre sa garde", line: "Il ramasse son bouclier. Il ne rit plus." }],
     // v3.109.0 : + étape boss (Seigneur de guerre orc), liée à forest_15 — même patron que « Prouver sa valeur ».
     // Run dédié (spawnFor restaure les index) : plus de kill du boss en farm libre, qui relançait un cycle (+45 % de scale).
@@ -110,7 +112,7 @@ var ADVENTURE_QUESTS = {
     /* v3.293.0 : ×0,8 sur les PV. En farm libre une mort ne retirait aucun kill ; dans un run,
        elle fait tout recommencer. À ×1, le Rôdeur à mains nues échoue 44 % des départs
        (sim/story-runs-bench.js) ; à ×0,8 : 95-100 %, fin à 32-44 % des PV. */
-    enemyHpMult: 0.8,
+    target: { rounds: 1.1, hit: 0.024 }, // v3.764.0 (C1) : avant enemyHpMult 0,8
     name: "Premier sang",
     story: "Les bêtes viennent flairer les braises. Écarte-les du feu, une à une.",
     icon: "./images/Icons/quest_icons/exploration/premier_sang.webp",
@@ -127,11 +129,10 @@ var ADVENTURE_QUESTS = {
     type: "kill",
     section: "adventure",
     difficulty: "medium",
-    /* v3.326.0 (plan C-2, décision Seb : plus long, plus dur) — enemyPowerMult : dégâts des ennemis
-       (systems/quest-enemy-system.js). Première étape de l'acte III : calée à 40 d'entraînement
+    /* v3.326.0 (plan C-2, décision Seb : plus long, plus dur). Première étape de l'acte III : calée à 40 d'entraînement
        (plafond de l'acte II), vitrine : 93-100 %, 54-95 rounds, 32-52 % de PV, 1,3-2 potions. */
-    enemyPowerMult: 1.3,
-    enemyHpMult: 1.3,
+    target: { rounds: 1.02, hit: 0.0221 }, // v3.764.0 (C1) : avant enemyPowerMult 1,3, enemyHpMult 1,3
+    bossTarget: { rounds: 7.11, hit: 0.0532 },
     progressionStage: "world_mid",
     category: "side",
     worldId: "forest",
@@ -155,8 +156,7 @@ var ADVENTURE_QUESTS = {
     section: "adventure",
     difficulty: "medium",
     // v3.326.0 (C-2) : entr. 60 vitrine 100 %, ~50 % de PV ; à 50, 97-100 %, 0,9-1,9 potion
-    enemyPowerMult: 2.5,
-    enemyHpMult: 1.3,
+    target: { rounds: 1.17, hit: 0.0407 }, // v3.764.0 (C1) : avant enemyPowerMult 2,5, enemyHpMult 1,3
     progressionStage: "world_mid",
     category: "side",
     worldId: "forest",
@@ -181,8 +181,7 @@ var ADVENTURE_QUESTS = {
     section: "adventure",
     difficulty: "medium",
     // v3.326.0 (C-2) : acte I (entr. 70) 97-100 %, 32-47 rounds ; à 60 (arrivée) 87-100 %, 0,5-1,8 potion
-    enemyPowerMult: 4,
-    enemyHpMult: 1.5,
+    target: { rounds: 3.92, hit: 0.0599 }, // v3.764.0 (C1) : avant enemyPowerMult 4, enemyHpMult 1,5
     progressionStage: "world_start",
     category: "side",
     worldId: "desert",
@@ -214,9 +213,8 @@ var ADVENTURE_QUESTS = {
     encounters: [{ enemy: "sandwarrior" }, { enemy: "sandworm" }, { enemy: "scorpion" }],
     /* ×1,6 (banc, arme 30 + vitrine, entr. 40, Wenna et Maddoc) : ~12 rounds par bête, 67-83 %
        de PV à l'arrivée, aucune potion. Le tronc rend la remontée plus sûre, l'affût plus courte. */
-    encounterHpMult: 2.4, // v3.326.0 (C-2) : 1,6 -> 2,4
+    target: { rounds: 5.91, hit: 0.0761 }, // v3.764.0 (C1) : avant encounterHpMult 2,4, enemyPowerMult 5,5
     // v3.326.0 (C-2) : acte II (entr. 90, Maddoc +1) 97-100 %, 26-37 rounds ; à 75, 97-100 %, 0,1-1,8 potion
-    enemyPowerMult: 5.5,
     name: "Remonter à trois",
     story: "Derrière la porte, le gouffre. Maddoc boite devant, ou derrière. L'escalier est long.",
     icon: "./images/Icons/quest_icons/exploration/exploration1.webp",
@@ -247,9 +245,8 @@ var ADVENTURE_QUESTS = {
       { group: ["sandwarrior", "sandwarrior"], groupHpMult: 0.55 }
     ],
     // ×1,3 (même banc) : 32-52 rounds, ~70 % de PV à l'arrivée, aucune potion
-    encounterHpMult: 1.9, // v3.326.0 (C-2) : 1,3 -> 1,9
+    target: { rounds: 3.65, hit: 0.0837 }, // v3.764.0 (C1) : avant encounterHpMult 1,9, enemyPowerMult 6,5
     // v3.326.0 (C-2) : acte II (entr. 90) 100 %, 36-47 rounds, ~50 % de PV ; à 80, 100 %, 0,3-1,7 potion
-    enemyPowerMult: 6.5,
     name: "La nuée",
     story: "Le sable crépite, au sud du camp. Les petites viennent par trois, les grands par deux.",
     icon: "./images/Icons/quest_icons/exploration/exploration1.webp",
@@ -283,8 +280,8 @@ var ADVENTURE_QUESTS = {
     ],
     // v3.448.2 (heroRef fin de Désert, recalé) : banc campagne 40 runs 75 / 88 / 98 % (Ch./Rô./Ma.),
     // 63-68 % de PV à l'arrivée, 27-46 % à la fin, 1,4-2 potions, Nezzam en 23-28 rounds. Avant : 6,5 et 1,7.
-    encounterHpMult: 2.4,
-    enemyPowerMult: 6,
+    target: { rounds: 3.51, hit: 0.0677 }, // v3.764.0 (C1) : avant encounterHpMult 2,4, enemyPowerMult 6, bossHpMult 6, bossPowerMult 1,12
+    bossTarget: { rounds: 25.03, hit: 0.0467 },
     bossId: "nezzam",
     bossArchetype: "vampiric",
     bossPhases: [
@@ -293,8 +290,6 @@ var ADVENTURE_QUESTS = {
       { atPct: 0.5, archetype: "silenced", label: "il prend ta voix", line: "« Ici, on ne parle pas au roi. »" }
     ],
     // v3.742.0 (boss courts V3) : PV 4 → 6, puissance 1,4 → 1,12, phases 0,6/0,3 → 0,75/0,5
-    bossHpMult: 6,
-    bossPowerMult: 1.12,
     bossLog: "Il revient par le fleuve. Il n'y a plus de fleuve.",
     name: "Le trône de sable",
     story: "Il revient par le lit du fleuve. Tiens le lit jusqu'au trône, puis tiens le trône.",
@@ -327,8 +322,7 @@ var ADVENTURE_QUESTS = {
     ],
     // banc (crypte-acte1-bench, 30 runs, sans potion, laisser dormir) : 100 % de réussite, 4,9 à 5,7 rounds
     // par combat, 43 / 58 / 50 % des PV restants (Ch. / Rô. / Ma.). Plus dur, le Chevalier meurt sans potion.
-    encounterHpMult: 2.2,
-    enemyPowerMult: 5,
+    target: { rounds: 5.71, hit: 0.1363 }, // v3.764.0 (C1) : avant encounterHpMult 2,2, enemyPowerMult 5
     name: "Les Sépulcres silencieux",
     story: "Ici, il n'y a pas de matin. Certains morts dorment encore dans le passage.",
     icon: "./images/Icons/quest_icons/exploration/exploration1.webp",
@@ -358,8 +352,7 @@ var ADVENTURE_QUESTS = {
     ],
     // banc (30 runs, sans potion) : avec Ysolt et Wenna 77 / 97 / 90 % de réussite, 39 / 43 / 33 % des PV
     // restants ; avec Ysolt et Maddoc 97 / 100 / 97 %, 53 / 58 / 52 %. 3,6 à 4,3 rounds par combat.
-    encounterHpMult: 1.9,
-    enemyPowerMult: 4.4,
+    target: { rounds: 4.62, hit: 0.1182 }, // v3.764.0 (C1) : avant encounterHpMult 1,9, enemyPowerMult 4,4
     name: "Le carquois vide",
     story: "Une femme assise devant une alcôve vide. Elle connaît la place de chaque dormeur.",
     icon: "./images/Icons/quest_icons/exploration/exploration4.webp",
@@ -390,8 +383,7 @@ var ADVENTURE_QUESTS = {
     ],
     // banc (crypte-acte2-bench, 20 runs, sans potion, laisser dormir) : 100 % de réussite, 3,7 à 5,2 rounds,
     // 43 à 70 % des PV restants. Plus bas, le Chevalier meurt sans potion (même limite qu'à l'acte I).
-    encounterHpMult: 1.6,
-    enemyPowerMult: 4.0,
+    target: { rounds: 2.88, hit: 0.1006 }, // v3.764.0 (C1) : avant encounterHpMult 1,6, enemyPowerMult 4,0
     name: "Celui qui appelle",
     story: "Dans la Chambre funéraire, une voix dit des noms. Dans les alcôves, on se retourne.",
     icon: "./images/Icons/quest_icons/exploration/exploration4.webp",
@@ -419,8 +411,7 @@ var ADVENTURE_QUESTS = {
       { group: ["necromancer", "deadknight", "wraith"], groupHpMult: 0.35, sleepers: 2 }
     ],
     // banc (profil du palier Rare, 20 runs) : 95 à 100 % de réussite, 3,7 à 5,1 rounds, 54 à 72 % des PV restants.
-    encounterHpMult: 1.8,
-    enemyPowerMult: 4.4,
+    target: { rounds: 2.84, hit: 0.1075 }, // v3.764.0 (C1) : avant encounterHpMult 1,8, enemyPowerMult 4,4
     name: "Ceux qui sont tenus",
     story: "Une chaîne court d'alcôve en alcôve. Au bout, une porte basse, fermée de l'intérieur.",
     icon: "./images/Icons/quest_icons/exploration/exploration3.webp",
@@ -454,8 +445,7 @@ var ADVENTURE_QUESTS = {
     ],
     // banc (crypte-acte3-bench --quete --profil rare, 12 runs, Chev. / Rôd. / Mage) : 2,0 / 5,0 / p2,8 e2,6 -> 0 / 8 / 25 % ;
     // 1,6 / 4,0 / p1,9 e1,7 -> 92 / 100 / 92 % ; 1,8 / 4,5 / p2,3 e2,1 -> 50 / 58 / 58 %. Retenu le milieu.
-    encounterHpMult: 1.7,
-    enemyPowerMult: 4.2,
+    target: { rounds: 1.94, hit: 0.0953 }, // v3.764.0 (C1) : avant encounterHpMult 1,7, enemyPowerMult 4,2
     eliteStatMult: { power: 2.1, endurance: 1.9 },
     name: "La couronne de trop",
     story: "Dans l'Ossuaire, un couloir où toutes les niches sont vides. Au bout, quelqu'un porte deux couronnes, l'une sur l'autre.",
@@ -484,8 +474,7 @@ var ADVENTURE_QUESTS = {
       { group: ["necromancer", "spectre"], groupHpMult: 0.55, sleepers: 1 },
       { group: ["wraith", "deadknight", "spectre"], groupHpMult: 0.35, sleepers: 2 }
     ],
-    encounterHpMult: 2.1, // v3.455.0 : au banc (crypte-acte3-bench --pleureuse), 75-92 %
-    enemyPowerMult: 5.3,
+    target: { rounds: 2.55, hit: 0.1221 }, // v3.764.0 (C1) : avant encounterHpMult 2,1, enemyPowerMult 5,3
     eliteStatMult: { power: 3.3, endurance: 3.0 },
     name: "Ce qu'elle garde",
     story: "Au fond de l'Ossuaire, des pleurs. Une salle où toutes les alcôves sont vides, sauf une.",
@@ -516,8 +505,7 @@ var ADVENTURE_QUESTS = {
       { enemy: "gargoyle" },
       { group: ["ghoul", "zombie", "zombie"], groupHpMult: 0.35 }
     ],
-    encounterHpMult: 1.75, // banc (fin2, sans potion) : 44 / 34 / 29 % de PV perdus, 100 % de réussite
-    enemyPowerMult: 4.4,
+    target: { rounds: 3.49, hit: 0.0883 }, // v3.764.0 (C1) : avant encounterHpMult 1,75, enemyPowerMult 4,4
     name: "Les couloirs qui changent",
     story: "Un couloir avec un toit, là où il y avait une rue. Ce qui tombe dedans ne reste pas à terre.",
     icon: "./images/Icons/quest_icons/exploration/exploration1.webp",
@@ -545,8 +533,7 @@ var ADVENTURE_QUESTS = {
       { group: ["skeleton", "skeleton", "zombie"], groupHpMult: 0.35 },
       { group: ["ghoul", "skeleton"], groupHpMult: 0.55 }
     ],
-    encounterHpMult: 1.6, // banc (fin2, sans potion) : 33 à 39 % de PV perdus selon la classe et le compagnon laissé
-    enemyPowerMult: 4.0,
+    target: { rounds: 3.06, hit: 0.0782 }, // v3.764.0 (C1) : avant encounterHpMult 1,6, enemyPowerMult 4,0
     name: "Le couloir de midi",
     story: "Le mur s'ouvre à midi, comme Edda l'a dit. Le couloir est étroit : on y passe à trois.",
     icon: "./images/Icons/quest_icons/exploration/exploration1.webp",
@@ -574,8 +561,7 @@ var ADVENTURE_QUESTS = {
       { group: ["batisseur", "skeleton", "skeleton"], groupHpMult: 0.35 },
       { group: ["batisseur", "ghoul"], groupHpMult: 0.55 }
     ],
-    encounterHpMult: 1.6, // banc (fin2, sans potion, 12 runs) : 100 %, 30 à 46 % de PV perdus selon la classe et la paire
-    enemyPowerMult: 4.0,
+    target: { rounds: 2.47, hit: 0.0689 }, // v3.764.0 (C1) : avant encounterHpMult 1,6, enemyPowerMult 4,0
     name: "Celui qui pose les pierres",
     story: "Il pose une pierre, la regarde, la repose ailleurs. Devant ceux qui se relèvent, il monte des murs.",
     icon: "./images/Icons/quest_icons/exploration/exploration1.webp",
@@ -602,8 +588,7 @@ var ADVENTURE_QUESTS = {
       { group: ["gargoyle", "gargoyle"], groupHpMult: 0.55 },
       { group: ["batisseur", "batisseur", "gargoyle"], groupHpMult: 0.35 }
     ],
-    encounterHpMult: 1.8, // banc (palier, sans potion) : Wenna + Maddoc 100 %, 34-46 % ; sans Wenna, Chevalier 92 %, 69 %
-    enemyPowerMult: 4.3,
+    target: { rounds: 2.77, hit: 0.0717 }, // v3.764.0 (C1) : avant encounterHpMult 1,8, enemyPowerMult 4,3
     name: "La salle qu'il évite",
     story: "Une porte basse au fond de la maison. Elle se remonte plus vite que les autres.",
     icon: "./images/Icons/quest_icons/exploration/exploration1.webp",
@@ -632,8 +617,7 @@ var ADVENTURE_QUESTS = {
       { group: ["skeleton", "gargoyle", "batisseur"], groupHpMult: 0.35 },
       { group: ["gargoyle", "gargoyle"], groupHpMult: 0.55 }
     ],
-    encounterHpMult: 2.0,
-    enemyPowerMult: 4.8,
+    target: { rounds: 2.59, hit: 0.0723 }, // v3.764.0 (C1) : avant encounterHpMult 2,0, enemyPowerMult 4,8
     /* Le Golem de la quête, à l'échelle du monde (celui du donjon garde ses chiffres, à l'échelle
        de la vague). Banc (profil Rare, Wenna + Maddoc, 24 runs) : à 4 / 3,5, 0 / 13 / 25 % ;
        à 2,9 / 2,6 -> 71 / 79 / 96 % (Chev. / Rôd. / Mage), 38-49 % de PV à la fin. */
@@ -669,8 +653,7 @@ var ADVENTURE_QUESTS = {
     ],
     /* Banc (fin d'acte III, Wenna + Maddoc, 24 runs) : aux chiffres de l'étape 14, 96 / 92 / 100 % ;
        à 2,2 / 5,4 et Golem 3,3 / 2,9, 42 / 58 / 79 % ; retenu : 79 / 88 / 96 % (Chev. / Rôd. / Mage). */
-    encounterHpMult: 2.1,
-    enemyPowerMult: 5.0,
+    target: { rounds: 2.29, hit: 0.068 }, // v3.764.0 (C1) : avant encounterHpMult 2,1, enemyPowerMult 5,0
     eliteStatMult: { power: 3.0, endurance: 2.7 },
     name: "Le dernier trait",
     story: "Dans le Cœur, ils sont des dizaines. Des bâtisseurs, chacun avec sa pierre. Ils se battent contre ce qui n'est pas dans le plan.",
@@ -713,8 +696,7 @@ var ADVENTURE_QUESTS = {
     ],
     // banc (crypte-acte3-bench --quete, profil Épique, 12 runs) : à 2,2 / 5,4, 100 % et 60-69 % des PV ;
     // à 2,8 / 6,8, toujours 100 %, 41-59 % des PV (même limite qu'aux actes I et II), 2,6 à 3,4 tours enchaînés
-    encounterHpMult: 2.8,
-    enemyPowerMult: 6.8,
+    target: { rounds: 2.62, hit: 0.1477 }, // v3.764.0 (C1) : avant encounterHpMult 2,8, enemyPowerMult 6,8
     name: "Les maillons",
     story: "Dans la salle, les petites chaînes passent au-dessus de vos têtes comme du linge tendu. Sous chaque alcôve, un nom gravé.",
     icon: "./images/Icons/quest_icons/exploration/exploration3.webp",
@@ -743,13 +725,11 @@ var ADVENTURE_QUESTS = {
       { group: ["necromancer", "wraith", "spectre"], groupHpMult: 0.35, sleepers: 1 },
       { group: ["deadknight", "deadknight", "necromancer"], groupHpMult: 0.35, sleepers: 1 }
     ],
-    encounterHpMult: 2.2,
-    enemyPowerMult: 5.4,
+    target: { rounds: 1.93, hit: 0.1156 }, // v3.764.0 (C1) : avant encounterHpMult 2,2, enemyPowerMult 5,4, bossHpMult 2,1, bossPowerMult 0,85
+    bossTarget: { rounds: 13.99, hit: 0.0448 },
     bossId: "necrosupreme",
     // banc (12 runs) : à 1,8 / 0,9, 58 / 100 / 100 % ; à 2,1 / 0,8 -> 75 / 92 / 100 % (Chev. / Rôd. / Mage), 38-50 % des PV.
     // v3.456.2 (lot C-6) : campagne avec le Terrain 13, 0 % de morts à 0,8 ; banc à 0,9 -> 58 / 67 / 83 %. Retenu 0,85.
-    bossHpMult: 2.1,
-    bossPowerMult: 0.85,
     bossChains: { every: 3 },
     bossPhases: [
       { atPct: 1, sleepAdds: ["spectre", "wraith"], addsHpMult: 0.15, addsPowerMult: 0.45, label: "à ses pieds, deux morts enchaînés", line: "À ses pieds, deux morts, enchaînés. Ils dorment." },
@@ -789,8 +769,7 @@ var ADVENTURE_QUESTS = {
     ],
     // banc (montagne-acte1-bench, sauvegardes de fin de Crypte, 12 runs, sans potion, veines laissées) :
     // 100 / 92 / 92 % de réussite, 4,9 / 3,5 / 4,2 rounds par combat, 41 / 53 / 36 % des PV (Ch. / Rô. / Ma.)
-    encounterHpMult: 2.24, // audit P5 (26/10) : 1,6 → 2,24, combats plus longs
-    enemyPowerMult: 8,
+    target: { rounds: 4.27, hit: 0.2211 }, // v3.764.0 (C1) : avant encounterHpMult 2,24, enemyPowerMult 8
     name: "Ce qui affleure",
     story: "Aux Pentes de cendres, une veine bat dans la roche. Les bêtes d'ici se tiennent autour.",
     icon: "./images/Icons/quest_icons/exploration/exploration1.webp",
@@ -820,8 +799,7 @@ var ADVENTURE_QUESTS = {
     ],
     // banc (12 runs, sans potion) : avec Sarkel et Wenna 100 / 100 / 75 %, 53 / 60 / 30 % des PV ; avec Sarkel et
     // Maddoc 100 %, 62 / 66 / 31 %. 3,2 à 4,8 rounds. Sarkel n'a ni soin ni garde : plus dur, le Mage tombe.
-    encounterHpMult: 2.1, // audit P5 (26/10) : 1,5 → 2,1, combats plus longs
-    enemyPowerMult: 4,
+    target: { rounds: 3.72, hit: 0.1082 }, // v3.764.0 (C1) : avant encounterHpMult 2,1, enemyPowerMult 4
     name: "Celui qui taille",
     story: "Sarkel tient la pioche à deux mains, plus bas. Il taille entre deux coups des autres.",
     icon: "./images/Icons/quest_icons/exploration/exploration4.webp",
@@ -851,8 +829,7 @@ var ADVENTURE_QUESTS = {
       { group: ["minordemon", "ifrit", "lavagolem"], groupHpMult: 0.35 }
     ],
     // banc (12 runs, Sarkel et Wenna, sans potion) : 100 / 92 / 92 %, 53 / 58 / 19 % des PV, 4,7 à 5 veines taillées
-    encounterHpMult: 2.1, // audit P5 (26/10) : 1,5 → 2,1, combats plus longs
-    enemyPowerMult: 4,
+    target: { rounds: 3.46, hit: 0.106 }, // v3.764.0 (C1) : avant encounterHpMult 2,1, enemyPowerMult 4
     name: "Ça ne fond pas",
     story: "Des éclats noirs, avec une ligne bleue dedans. Il en faut plus : Brannoc voudra voir.",
     icon: "./images/Icons/quest_icons/exploration/exploration3.webp",
@@ -881,8 +858,7 @@ var ADVENTURE_QUESTS = {
       { group: ["lavagolem", "minordemon", "dragonling"], groupHpMult: 0.35 },
       { group: ["minordemon", "minordemon"], groupHpMult: 0.55 }
     ],
-    encounterHpMult: 1.6,
-    enemyPowerMult: 6,
+    target: { rounds: 2, hit: 0.1469 }, // v3.764.0 (C1) : avant encounterHpMult 1,6, enemyPowerMult 6
     name: "Ce qui trie",
     story: "À l'Antre du volcan, les façonnés ne se jettent pas sur le premier venu. Ils regardent tes mains.",
     icon: "./images/Icons/quest_icons/exploration/exploration4.webp",
@@ -909,8 +885,7 @@ var ADVENTURE_QUESTS = {
       { group: ["lavagolem", "lavagolem"], groupHpMult: 0.55 },
       { group: ["minordemon", "ifrit", "lavagolem"], groupHpMult: 0.35 }
     ],
-    encounterHpMult: 1.7,
-    enemyPowerMult: 6.5,
+    target: { rounds: 1.84, hit: 0.1526 }, // v3.764.0 (C1) : avant encounterHpMult 1,7, enemyPowerMult 6,5
     name: "L'ouvrage",
     story: "Au fond de l'Antre, une salle ronde. Au milieu, un golem à moitié sorti de la paroi. Les veines autour battent ensemble.",
     icon: "./images/Icons/quest_icons/exploration/exploration1.webp",
@@ -936,8 +911,7 @@ var ADVENTURE_QUESTS = {
       { group: ["ifrit", "lavagolem"], groupHpMult: 0.55 },
       { group: ["minordemon", "ifrit", "lavagolem"], groupHpMult: 0.35 }
     ],
-    encounterHpMult: 3.1, // H1 (R1) : 1,8 → 2,6 ; audit P1 (26/10) : → 3,1
-    enemyPowerMult: 7, // audit P1 : 6,5 → 7. Avant : à 7,5, 100 / 100 / 63 % ; à 6,5, 90 / 100 / 80 %, 46 à 72 % des PV (Ch. / Rô. / Ma.)
+    target: { rounds: 2.51, hit: 0.1511 }, // v3.764.0 (C1) : avant encounterHpMult 3,1, enemyPowerMult 7
     name: "L'ouvrage inachevé",
     story: "Dans la salle ronde, le golem inachevé a bougé. Des façonnés montent de la Gueule. Ils portent de la Cendre.",
     icon: "./images/Icons/quest_icons/exploration/exploration3.webp",
@@ -965,8 +939,7 @@ var ADVENTURE_QUESTS = {
       { group: ["ifrit", "minordemon", "dragonling"], groupHpMult: 0.35 },
       { group: ["lavagolem", "lavagolem", "minordemon"], groupHpMult: 0.35 }
     ],
-    encounterHpMult: 3.1, // H1 (R1) : 1,8 → 2,6 ; audit P1 (26/10) : → 3,1
-    enemyPowerMult: 7, // audit P1 : 6,5 → 7. Avant : 80 / 100 / 90 %, 30 à 59 % des PV (Ch. / Rô. / Ma.)
+    target: { rounds: 1.88, hit: 0.1389 }, // v3.764.0 (C1) : avant encounterHpMult 3,1, enemyPowerMult 7
     name: "Ceux qu'il a triés",
     story: "Sur le plateau, des façonnés, chacun à sa place, comme des outils rangés.",
     icon: "./images/Icons/quest_icons/exploration/exploration3.webp",
@@ -993,13 +966,11 @@ var ADVENTURE_QUESTS = {
       { group: ["dragonling", "lavagolem", "ifrit"], groupHpMult: 0.35 },
       { group: ["minordemon", "ifrit"], groupHpMult: 0.55 }
     ],
-    encounterHpMult: 3.1, // H1 (R1) : 1,8 → 2,6 ; audit P1 (26/10) : → 3,1
-    enemyPowerMult: 7, // audit P1 : 6,5 → 7
+    target: { rounds: 1.75, hit: 0.136 }, // v3.764.0 (C1) : avant encounterHpMult 3,1, enemyPowerMult 7, bossHpMult 2,6, bossPowerMult 0,7
+    bossTarget: { rounds: 10.97, hit: 0.0364 },
     bossId: "ancientdragon",
     // banc (montagne-acte3-bench --quetes, sauvegardes de fin de chapitre, 10 runs, Ch. / Rô. / Ma.) : 2,1 / 0,85 -> 60 / 100 / 10 % ;
     // 1,8 / 0,75 -> 100 / 100 / 50 % ; 1,6 / 0,65 -> 100 / 100 / 80 %. Retenu entre les deux, pour le Mage.
-    bossHpMult: 2.6, // audit P1 : 3,5 ; DRAGON-V2 (Seb, 05/11, option A) : → 2,6
-    bossPowerMult: 0.7, // lot 6 : 0,94 ; DRAGON-V2 (Seb, 05/11) : → 0,70, sort Rôdeur et Mage du mur
     bossPhases: [
       { atPct: 1, sorts: true, label: "il regarde vos mains", line: "Ses yeux passent sur chacun, et s'arrêtent sur les mains." },
       { atPct: 0.75, heat: 1, label: "la roche chauffe", line: "Sous lui, les veines battent plus vite." },
@@ -1030,14 +1001,12 @@ var ADVENTURE_QUESTS = {
       { group: ["batisseur", "gargoyle"], groupHpMult: 0.55 },
       { group: ["batisseur", "batisseur", "gargoyle"], groupHpMult: 0.35 }
     ],
-    encounterHpMult: 2.1,
-    enemyPowerMult: 5.0,
+    target: { rounds: 2.2, hit: 0.0663 }, // v3.764.0 (C1) : avant encounterHpMult 2,1, enemyPowerMult 5,0, bossHpMult 1,8, bossPowerMult 0,9
+    bossTarget: { rounds: 12.15, hit: 0.0407 },
     bossId: "maitre_oeuvre",
     /* Banc (fin d'acte, Wenna + Maddoc, 24 runs) : à 4 / 1,7 (les chiffres de Nezzam), 0 % ; à 2 / 1,
        13 / 38 / 81 % ; à 1,6 / 0,8, 88 / 100 / 100 % ; retenu 1,8 / 0,9 -> 71 / 88 / 100 %
        (Chev. / Rôd. / Mage), 41-55 % de PV à la fin. Sa relève vaut déjà une demi-barre. */
-    bossHpMult: 1.8,
-    bossPowerMult: 0.9,
     bossLog: "Au milieu du Cœur, les pierres se lèvent ensemble.",
     name: "Le plan fait pierre",
     story: "Au milieu du Cœur, les pierres se lèvent ensemble. Ce n'est pas un homme. C'est la cité, debout.",
@@ -1054,6 +1023,7 @@ var ADVENTURE_QUESTS = {
     type: "kill",
     section: "adventure",
     difficulty: "easy",
+    target: { rounds: 1.07, hit: 0.0206 }, // v3.764.0 (C1) : avant aucun multiplicateur
     progressionStage: "world_start",
     category: "side", // v3.100.1 : « Principale » réservée à la chaîne Histoire (story-quests.js)
     worldId: "forest",
@@ -1123,6 +1093,7 @@ var ADVENTURE_QUESTS = {
     type: "elite",
     section: "adventure",
     difficulty: "medium",
+    target: { rounds: 1.22, hit: 0.0222 }, // v3.764.0 (C1) : avant aucun multiplicateur
     progressionStage: "world_end",
     category: "side",
     worldId: "forest",
@@ -1159,6 +1130,7 @@ var ADVENTURE_QUESTS = {
     type: "elite",
     section: "adventure",
     difficulty: "hard",
+    target: { rounds: 0.9, hit: 0.0163 }, // v3.764.0 (C1) : avant aucun multiplicateur
     progressionStage: "world_end",
     category: "side",
     worldId: "forest",
@@ -1209,8 +1181,7 @@ var ADVENTURE_QUESTS = {
     ],
     // banc (tour-acte1-bench, sauvegardes d'entrée de la Tour, 6 runs, sans potion) : 100 % de réussite pour les trois classes,
     // 85-97 % des PV restants, 4,3 à 7,5 rounds par combat. Plus dur que ×6 en puissance, le Mage tombe d'un coup (17 % à ×8).
-    encounterHpMult: 2.5,
-    enemyPowerMult: 6,
+    target: { rounds: 3.04, hit: 0.1364 }, // v3.764.0 (C1) : avant encounterHpMult 2,5, enemyPowerMult 6
     name: "Le pied de la Tour",
     story: "Au pied de la Tour, des gardiens de pierre font les cent pas. Ils regardent ceux qui arrivent.",
     icon: "./images/Icons/quest_icons/exploration/exploration1.webp",
@@ -1237,8 +1208,7 @@ var ADVENTURE_QUESTS = {
       { enemy: "sandworm" },
       { group: ["sandwarrior", "sandworm"], groupHpMult: 0.55 }
     ],
-    encounterHpMult: 2.5, // banc : 100 % de réussite, 90-95 % des PV restants, 4,4 à 7,8 rounds par combat
-    enemyPowerMult: 6,
+    target: { rounds: 2.63, hit: 0.1308 }, // v3.764.0 (C1) : avant encounterHpMult 2,5, enemyPowerMult 6
     name: "L'étage du sable",
     story: "Derrière la porte, un escalier, puis du sable. Le Désert comme quelqu'un s'en souvient.",
     icon: "./images/Icons/quest_icons/exploration/exploration1.webp",
@@ -1265,8 +1235,7 @@ var ADVENTURE_QUESTS = {
       { enemy: "deadknight" },
       { group: ["deadknight", "necromancer"], groupHpMult: 0.55 }
     ],
-    encounterHpMult: 2.5,
-    enemyPowerMult: 6,
+    target: { rounds: 1.97, hit: 0.1202 }, // v3.764.0 (C1) : avant encounterHpMult 2,5, enemyPowerMult 6
     name: "L'étage des gisants",
     story: "Un étage de gisants debout contre les murs, les yeux fermés. Certains se décollent du mur quand on passe.",
     icon: "./images/Icons/quest_icons/exploration/exploration1.webp",
@@ -1293,8 +1262,7 @@ var ADVENTURE_QUESTS = {
       { group: ["arcanegolem", "hybrid"], groupHpMult: 0.55 },
       { group: ["guardian", "corruptmage"], groupHpMult: 0.55 }
     ],
-    encounterHpMult: 4.5,
-    enemyPowerMult: 9, // v3.629.0 : banc, réussite 94 à 100 % (au-delà, la quête bascule net)
+    target: { rounds: 2.15, hit: 0.156 }, // v3.764.0 (C1) : avant encounterHpMult 4,5, enemyPowerMult 9
     name: "Le haut de l'escalier",
     story: "Plus haut, l'escalier se rétrécit. Une personne de front, puis une personne tout court.",
     icon: "./images/Icons/quest_icons/exploration/exploration1.webp",
@@ -1322,8 +1290,7 @@ var ADVENTURE_QUESTS = {
       { group: ["arcanegolem", "hybrid"], groupHpMult: 0.55 },
       { enemy: "corruptmage" }
     ],
-    encounterHpMult: 2.75, // banc (sauvegardes de fin d'acte III) : réussite 94 à 100 % ; ×3,5 / ×8 : Mage 25 %
-    enemyPowerMult: 6.5,
+    target: { rounds: 1.22, hit: 0.1103 }, // v3.764.0 (C1) : avant encounterHpMult 2,75, enemyPowerMult 6,5
     name: "Seul",
     story: "Tu montes seul. En bas, très loin, Maddoc tient une porte contre rien.",
     icon: "./images/Icons/quest_icons/exploration/exploration1.webp",
@@ -1337,7 +1304,7 @@ var ADVENTURE_QUESTS = {
      ta dernière technique (le miroir, 60 %), puis la lumière passe à travers elle (bouclier, 30 %). Au banc. */
   aq_tour_silhouette: {
     id: "aq_tour_silhouette",
-    noWorldBossHp: true, // v3.743.0 (Seb 08/11) : hors du +15 % de PV des boss, déjà réglée classe par classe
+    bossTarget: { rounds: 8.8, hit: 0.0561 }, // v3.764.0 (C1) : avant noWorldBossHp true, bossHpMult 4,25, bossPowerMult 1,1
     type: "kill",
     section: "adventure",
     difficulty: "hard",
@@ -1350,8 +1317,6 @@ var ADVENTURE_QUESTS = {
     bossId: "silhouette",
     // banc, contre de la classe au Grimoire : ×3,75 / ×1 -> 100 % de réussite pour les trois classes ; au-delà le combat bascule net
     // (×4,5 / ×1,1 : Chevalier 0 %, Rôdeur 25 %). Sans le contre de la rage, le Chevalier tombe à 63 %.
-    bossHpMult: 4.25, // rythme de la Tour (03/11, Terrain 21) : 3,75 / 1 -> 4,25 / 1,1 ; à 5 / 1,3 le Chevalier tombe à 0 % (pas d'entre-deux)
-    bossPowerMult: 1.1,
     bossPhases: [
       { atPct: 1, copyClass: true, label: "elle se bat comme toi", line: "Elle a tes gestes. Elle les fait avant toi." },
       { atPct: 0.6, mirror: true, label: "elle garde tes gestes", line: "Elle garde ce que tu annonces. Ne refais pas deux fois la même chose." },
