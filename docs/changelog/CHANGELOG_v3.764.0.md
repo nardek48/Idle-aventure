@@ -19,7 +19,7 @@ Décision de Seb (10/11, équilibrage propre C, étape C1, option A puis A2). Au
 - Options d'essai des bancs (`--enc`, `--qboss`, `--hp`…) : multiplicateurs de la cible (×1 = réglage actuel). `ESSAI_B` du robot retiré.
 
 ## Contrôles
-- `round-harness` 7284 OK sur 3 passes ([48b], [65b], [89], [121], [141], [226], [252], [342], [377], [465], [496] mis à jour ; [515] nouveau) ; boot 4 OK ; création du héros 44 OK ; parcours P11 15 OK ; i18n 100 %.
+- `round-harness` 7284 OK sur 3 passes ([48b], [65b], [89], [121], [140], [226], [252], [342], [377], [463], [465], [497] mis à jour ; [515] nouveau) ; boot 4 OK ; création du héros 44 OK ; parcours P11 15 OK ; i18n 100 %.
 
 ## Pour la suite
 - Badge facile / moyen / difficile : à tirer des PV perdus par quête au robot (la cible seule ne compte ni le nombre de rencontres ni les mécaniques de boss).
