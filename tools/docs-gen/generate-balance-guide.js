@@ -645,7 +645,6 @@ P(table(["Banc", "Mesure"], [
   ["campagne-lot.js", "Lot de parties de campagne (médianes, murs, qui tue, farm) ; --recharge, --tag"],
   ["parcours-harness.js", "Douze parcours joués dans Chromium (Playwright), P1 à P12"],
   ["revente-bench.js", "Production horaire par monde et dépenses d'or"],
-  ["village-acte-bench.js", "Modèle de conception du village par acte — non branché sur le code"],
   ["offrande-bench.js", "Aether par monde et rythme des niveaux de Mémoire"],
   ["cite-vague5-bench.js, desert-*-bench.js", "Contenus du Désert"],
   ["dungeon-bench.js, map-bench.js", "Donjons ; carte et Palissade"],

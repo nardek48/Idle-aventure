@@ -22,8 +22,10 @@ ok(w.resists.indexOf("sword") !== -1, "Loup résiste à l'épée (données réel
 // résist/faiblesse
 var m = Sim.buildHero(hd("mage", "mage"), K.mage, cfg);
 var slimeVsMage = Sim.duelBudget(hd("mage", "mage"), K.mage, ed("slime"), false, cfg, 1);
-var slimeVsKnight = Sim.duelBudget(hd("knight", "knight"), K.knight, ed("slime"), false, cfg, 1);
-ok(slimeVsMage.heroDmg < slimeVsKnight.heroDmg, "Slime résiste à la magie, faible à l'épée → mage frappe moins que chevalier");
+var slimeNeutre = ed("slime"); slimeNeutre.resists = []; slimeNeutre.weak = [];
+var slimeVsMageNeutre = Sim.duelBudget(hd("mage", "mage"), K.mage, slimeNeutre, false, cfg, 1);
+// v3.701.0 : faiblesses et résistances inertes (×1) → la résistance du Slime ne change plus rien
+ok(slimeVsMage.heroDmg === slimeVsMageNeutre.heroDmg, "Slime : résistance à la magie inerte (v3.701.0), mêmes dégâts qu'un Slime neutre");
 // déterminisme
 var a = Sim.simulateSortie(hd("ranger", "archer"), K.archer, pool, boss, cfg, { seed: 42 });
 var b = Sim.simulateSortie(hd("ranger", "archer"), K.archer, pool, boss, cfg, { seed: 42 });

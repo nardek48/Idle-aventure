@@ -401,11 +401,12 @@ function hpTable(g, run, heroId, stage, profile, tierId) {
   var out = {};
   [1, 7, 12, 15, 16].forEach(function (w) {
     var e = ORIGINAL.buildWaveEnemy ? ORIGINAL.buildWaveEnemy.call(g.DungeonManager, w) : g.DungeonManager.buildWaveEnemy(w);
+    if (Array.isArray(e)) e = e[0]; // v3.471.0 : vague de groupe → tableau, on relève le meneur
     out["n" + w] = { hp: e.maxHp, power: e.stats.power, name: e.name };
   });
   out.n5 = out.n7; out.n10 = out.n12; // rangs voisins des vagues élites (5 et 10 sont élites dans le jeu)
-  out.e5 = LEGACY ? buildDungeonElite(g, "araignee_marquee", 5) : g.DungeonManager.buildWaveEnemy(5);
-  out.e10 = LEGACY ? buildDungeonElite(g, "ronce_ardente", 10) : g.DungeonManager.buildWaveEnemy(10);
+  out.e5 = LEGACY ? buildDungeonElite(g, "araignee_marquee", 5) : g.DungeonManager.buildWaveEnemy(5); if (Array.isArray(out.e5)) out.e5 = out.e5[0];
+  out.e10 = LEGACY ? buildDungeonElite(g, "ronce_ardente", 10) : g.DungeonManager.buildWaveEnemy(10); if (Array.isArray(out.e10)) out.e10 = out.e10[0];
   out.hero = { hp: g.game.heroMaxHp, dmg: g.StatsSystem.effectiveTapDamage() };
   g.DungeonManager.forfeit();
   /* Référence MONDE au même stade : ennemi de farm et boss d'aventure du monde du joueur

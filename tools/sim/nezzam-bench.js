@@ -36,7 +36,7 @@ var vi = ARGS.indexOf("--voie"); if (vi !== -1) passArgs.push("--voie", ARGS[vi 
 var api = {};
 new Function("require", "process", "__dirname", "api", BENCH.slice(0, CUT)
   + "\napi.g = g; api.B = B; api.prepare = prepare; api.autoRound = autoRound; api.PROFILS = PROFILS;")(
-  require, { argv: passArgs }, __dirname, api);
+  require, { argv: passArgs, env: process.env }, __dirname, api);
 var g = api.g, B = api.B;
 
 var Q = g.ADVENTURE_QUESTS.aq_desert_trone;
