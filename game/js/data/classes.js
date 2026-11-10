@@ -7,7 +7,7 @@ var CLASSES = [
     id: "knight",
     /* Équilibre de la classe, seul réglage par classe (getHeroClassBalance) : dégâts infligés, reçus, PV.
        v3.763.0 : « reçus » remplace les gabarits côté ennemis (Chevalier ÷1,3, Mage ÷1,2, Dragon ×0,8). */
-    balance: { damageMult: 1.15, damageTakenMult: 0.85, hpPct: 0 },
+    balance: { damageMult: 1.15, damageTakenMult: 0.77, hpPct: 0 },
     label: "Chevalier",
     icon: "images/Icons/classes/class_knight.webp",
     weaponType: "sword",
