@@ -45,7 +45,7 @@ if (OVR) {
   if (o.fail) [1, 2, 3].forEach(function (a, i) { g.PA2_ACTS[a].failPct = o.fail[i]; });
   if (o.camp != null) g.PA2_RULES.campRestPct = o.camp;
   if (o.seuil != null) g.PA2_RULES.seuilRestPct = o.seuil;
-  if (o.scale1 != null) g.PA2_LEVEL_BANDS[0].foeScale = o.scale1;
+  if (o.scale1 != null) { var b0 = g.PA2_LEVEL_BANDS[0], t0 = b0.target0 = b0.target0 || b0.target; b0.target = { rounds: t0.rounds * o.scale1 / 0.8, hit: t0.hit * o.scale1 / 0.8 }; } // v3.766.0 : sur la cible (0,8 = réglage actuel)
   if (o.guard) { g.PA2_GUARDIAN.forest.hpMult = o.guard[0]; g.PA2_GUARDIAN.forest.powMult = o.guard[1]; }
   if (o.gold) Object.keys(g.PA2_GOLD).forEach(function (k) { if (!/Mid$/.test(k) && k !== "ruse") g.PA2_GOLD[k] *= o.gold; });
   if (o.rings) ["sentier", "chemin", "periple"].forEach(function (r, i) { g.PA2_RINGS[r].lootMult = o.rings[i]; });

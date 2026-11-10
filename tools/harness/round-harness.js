@@ -12103,7 +12103,8 @@ console.log("\n[160] v3.383.0 — Petites Aventures v2 (PA2-3) : gardien recalé
     ok(est && gp.tenir.hpLoss === est.hpLoss && gp.tenir.gold === est.gold, "C1 : l'estimation montrée au seuil est celle du combat");
     ok(P.goldBand(r12).worldId === "forest" && r12.band.worldId === "desert", "C3 : au niveau 12 les ennemis sont du Désert, l'or de référence reste celui de la Forêt");
     var r3 = start(3);
-    ok(P.goldBand(r3) === r3.band && r3.band.foeScale === 0.8, "C3 : sous la tranche du monde, l'or suit la tranche ; niveaux 1 à 4 adoucis ×0,8");
+    var lv3 = P.levelOf(r3.band);
+    ok(P.goldBand(r3) === r3.band && lv3 && Math.abs(lv3.hp - 0.8) < 0.005, "C3 : sous la tranche du monde, l'or suit la tranche ; niveaux 1 à 4 adoucis ×0,8 (v3.766.0 : par la cible de la tranche)");
     var seuil = Object.keys(r3.nodes).filter(function (k) { return r3.nodes[k].type === "seuil"; })[0];
     r3.at = seuil; r3.status = "pa2-node"; r3.closedEnds = []; // v3.724.0 : sans fin imposée (accroche du feu), le gardien reste annoncé
     var h = g.pa2SheetBody(r3, r3.nodes[seuil], { key: seuil, step: "intro" });
@@ -26394,6 +26395,24 @@ console.log("\n[516] Courbe de référence : donjons et élites (v3.765.0, C2, S
     ok(el && lvE && lvE.hp > 0 && E.levelOf("contremaitre", "ruins") === null, "élite sans cible (vagues de donjon seulement) : inchangée");
   } catch (err) { ok(false, "[516] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   finally { game = freshCombat("knight"); }
+})();
+
+console.log("\n[517] Courbe de référence : Petites Aventures, Labyrinthe et Faille (v3.766.0, C3a, Seb 10/11)");
+(function () {
+  try {
+    var P = g.Pa2Run, L = g.LabyrinthRun, okT = function (t) { return t && t.rounds > 0 && t.hit > 0 && t.hit < 1; };
+    ok(g.PA2_LEVEL_BANDS.every(function (b) { return okT(b.target) && !("foeScale" in b); }), "chaque tranche des Petites Aventures porte sa cible (foeScale retiré)");
+    var copie = JSON.parse(JSON.stringify(g.PA2_LEVEL_BANDS[0])); delete copie.target;
+    ok(JSON.stringify(P.levelOf(copie)) === JSON.stringify(P.levelOf(g.PA2_LEVEL_BANDS[0])), "tranche d'un run sauvegardé (copie sans cible) : la cible est relue dans les données");
+    ok(P.levelOf({ minLevel: 3, worldId: "ruins", adventureIndex: 0 }) === null, "tranche de repli (hors données) : pas de niveau, ennemis tels quels");
+    var cfgs = [g.LABYRINTH_CONFIG, g.FAILLE_CONFIG];
+    ok(cfgs.every(function (c) { return okT(c.guardTarget) && okT(c.bossTarget) && !("guardMult" in c) && !("bossHpMult" in c) && !("foeHpMult" in c); }), "Labyrinthe et Faille : cibles des gardes et du gardien, multiplicateurs retirés");
+    ok(okT(g.LABYRINTH_CONFIG.foeTarget) && g.FAILLE_CONFIG.etape === "tour_20", "Contremaître du Labyrinthe en cible ; la Faille placée à la fin de la Tour");
+    game.sceneRun = { lab: true, kind: "faille" };
+    var lf = L.levelOf("guard"); game.sceneRun = { lab: true, kind: "labyrinthe" }; var ll = L.levelOf("guard"); game.sceneRun = null;
+    ok(lf && ll && Math.abs(ll.hp - 1.8) < 0.01 && Math.abs(lf.hp - 1.2) < 0.01, "gardes : même force qu'avant (Labyrinthe ×1,8, Faille ×1,2)");
+  } catch (err) { ok(false, "[517] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  finally { game.sceneRun = null; game = freshCombat("knight"); }
 })();
 
 Promise.all(ATTENTES).then(function () {

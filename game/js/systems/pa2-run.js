@@ -1319,13 +1319,24 @@ var Pa2Run = {
     // Le gardien a ses propres multiplicateurs : régler les actes ne le touche pas.
     var rf = this.ring(run).foeMult; // v3.469.6 (Périple, choix Seb) : le gardien ne prend que la moitié du renfort de l'anneau
     if (guard) rf = 1 + (rf - 1) * Number(PA2_RULES.guardRingShare != null ? PA2_RULES.guardRingShare : 1);
-    var mult = (guard ? 1 : PA2_ACTS[boss ? 3 : n.act].foeMult * this.tune(run, "foeMult") * Number(n.foeMult || 1)) * rf * Number(run.band.foeScale || 1);
+    var mult = (guard ? 1 : PA2_ACTS[boss ? 3 : n.act].foeMult * this.tune(run, "foeMult") * Number(n.foeMult || 1)) * rf;
     e = JSON.parse(JSON.stringify(e));
-    var hs = this.heroScale(run); // v3.423.0 (A)
-    e.maxHp = Math.max(1, Math.round(Number(e.maxHp || 1) * mult * (guard ? guard.hpMult : 1) * hs.hp));
+    var hs = this.heroScale(run), lv = this.levelOf(run.band) || { hp: 1, power: 1 }; // v3.423.0 (A) ; v3.766.0 (C3a) : niveau de la tranche
+    e.maxHp = Math.max(1, Math.round(Number(e.maxHp || 1) * mult * lv.hp * (guard ? guard.hpMult : 1) * hs.hp));
     e.hp = e.maxHp;
-    if (e.stats) e.stats.power = Math.max(1, Math.round(Number(e.stats.power || 1) * mult * (guard ? guard.powMult : 1) * hs.power));
+    if (e.stats) e.stats.power = Math.max(1, Math.round(Number(e.stats.power || 1) * mult * lv.power * (guard ? guard.powMult : 1) * hs.power));
     return e;
+  },
+  /* v3.766.0 (C3a, Seb 10/11) : niveau des ennemis d'une tranche, tiré de sa cible { rounds, hit } en unités de son héros
+     de référence (heroRef) ; ennemi moyen = pool brut de l'aventure de la tranche (QuestEnemyManager.baseline). Le gardien garde
+     ses multiplicateurs (forme), les actes, anneaux et nœuds aussi. */
+  levelOf: function (band) {
+    var src = band ? (window.PA2_LEVEL_BANDS || []).filter(function (x) { return x.worldId === band.worldId && x.adventureIndex === band.adventureIndex && x.minLevel === band.minLevel; })[0] : null;
+    var t = src && src.target, ref = src && window.HERO_SCALING_REFS ? HERO_SCALING_REFS[src.heroRef] : null; // tranche des données (un run sauvegardé garde une copie)
+    if (!t || !ref || !window.QuestEnemyManager) return null;
+    var b = QuestEnemyManager.baseline(this._worldIndex(band.worldId), Number(band.adventureIndex || 0), null);
+    if (!b || !(b.hp > 0) || !(b.coup > 0)) return null;
+    return { hp: Number(t.rounds) * ref.dmg / b.hp, power: Number(t.hit) * ref.ehp / b.coup };
   },
   _dmgMult: function (run, n, apId) {
     var R = PA2_RULES, m = PA2_APPROACHES[apId].dmg;

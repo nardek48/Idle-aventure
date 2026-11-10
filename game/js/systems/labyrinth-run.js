@@ -391,22 +391,51 @@ var LabyrinthRun = {
   _enemy: function (run, kind) {
     var c = this.cfg(), e, hpM = 1, powM = 1;
     if (kind === "foe" && window.EliteManager) {
-      e = EliteManager.build(c.foeEliteId, EliteManager.scaleFor(this._worldIdx(), c.adventureIndex), { noMilestone: true });
-      e = e ? JSON.parse(JSON.stringify(e)) : null; hpM = c.foeHpMult; powM = c.foePowMult;
+      e = this._foeRaw();
     } else if (kind === "boss") {
-      e = this._spawn(c.bossFoe, false); hpM = c.bossHpMult; powM = c.bossPowMult;
+      e = this._spawn(c.bossFoe, false);
       if (c.bossCompound) { hpM *= this.floorGrowth(run); powM *= this.floorGrowth(run); } // v3.638.0 : le Reflet suit l'étage
       if (e) e.name = c.bossName;
     } else {
       var gf = run.guardFoe || c.guardFoes[0];
       e = this._spawn(gf, false);
-      hpM = powM = c.guardMult * this.floorGrowth(run) * Math.sqrt(Number((c.guardFoeMult || {})[gf] || 1));
+      hpM = powM = this.floorGrowth(run) * Math.sqrt(Number((c.guardFoeMult || {})[gf] || 1)); // forme : étage, type de garde
     }
     if (!e) return null;
+    var lv = this.levelOf(kind === "foe" || kind === "boss" ? kind : "guard"); // v3.765.0 (C3a) : niveau tiré de la cible
+    if (lv) { hpM *= lv.hp; powM *= lv.power; }
     var hs = this.heroScale(run);
     e.maxHp = Math.max(1, Math.round(Number(e.maxHp || 1) * hpM * hs.hp)); e.hp = e.maxHp;
     if (e.stats) e.stats.power = Math.max(1, Math.round(Number(e.stats.power || 1) * powM * hs.power));
     return e;
+  },
+  /* v3.766.0 (C3a, Seb 10/11) : gardes, Contremaître et gardien en cibles { rounds, hit } dans les unités de la courbe,
+     à l'étape d'ouverture (requiresStoryStep, sinon etape) ; ennemi moyen brut de la sorte, sans Cycle, en cache. */
+  _foeRaw: function () {
+    var c = this.cfg(), e = EliteManager.build(c.foeEliteId, EliteManager.scaleFor(this._worldIdx(), c.adventureIndex), { noMilestone: true });
+    return e ? JSON.parse(JSON.stringify(e)) : null;
+  },
+  levelOf: function (kind) {
+    var c = this.cfg(), t = kind === "boss" ? c.bossTarget : (kind === "foe" ? c.foeTarget : c.guardTarget), Q = window.QuestEnemyManager;
+    if (!t || !Q || typeof Q.courbeRef !== "function") return null;
+    var pl = Q.placeOf({ etape: c.requiresStoryStep || c.etape, worldId: c.worldId }), ref = Q.courbeRef(pl.monde, pl.rang, pl.longueur);
+    var b = this.baseline()[kind];
+    if (!ref || !b || !(b.hp > 0) || !(b.coup > 0)) return null;
+    return { hp: Number(t.rounds) * ref.dmg / b.hp, power: Number(t.hit) * ref.ehp / b.coup };
+  },
+  baseline: function () {
+    var c = this.cfg(), cache = (this._baseCache = this._baseCache || {}), key = c.worldId + "|" + c.adventureIndex;
+    if (cache[key]) return cache[key];
+    var self = this, cy = game.cycleCount, out = {}, coef = (typeof ENEMY_POWER_DMG_COEF === "number") ? ENEMY_POWER_DMG_COEF : 0.5;
+    var bm = (typeof BOSS_DMG_MULT === "number") ? BOSS_DMG_MULT : 1.5;
+    var mes = function (list) { var hp = 0, cp = 0; list.forEach(function (e) { hp += e.maxHp; cp += Number(e.stats.power || 0) * coef * (e.isBoss ? bm : 1); }); return list.length ? { hp: hp / list.length, coup: cp / list.length } : null; };
+    try {
+      game.cycleCount = 0;
+      out.guard = mes(c.guardFoes.map(function (id) { return self._spawn(id, false); }).filter(Boolean));
+      out.foe = c.foeEliteId && window.EliteManager ? mes([this._foeRaw()].filter(Boolean)) : null;
+      out.boss = mes([this._spawn(c.bossFoe, false)].filter(Boolean));
+    } finally { game.cycleCount = cy; }
+    return (cache[key] = out);
   },
   /* Force des gardes à l'étage : +guardPerFloor par étage, linéaire (Labyrinthe) ou composé (guardCompound, faille). */
   floorGrowth: function (run) {

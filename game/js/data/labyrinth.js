@@ -24,11 +24,13 @@ var LABYRINTH_CONFIG = {
   springBreath: 25, springHealPct: 0.20,
 
   /* Combats résolus comme les Petites Aventures (CombatForecast, héros seul) */
-  guardFoes: ["skeleton", "batisseur", "gargoyle"], guardPack: 2, guardMult: 1.8, guardPerFloor: 0.04,
+  guardFoes: ["skeleton", "batisseur", "gargoyle"], guardPack: 2, guardPerFloor: 0.04,
   guardFoeMult: { skeleton: 1, batisseur: 1.2, gargoyle: 0.65 }, // banc : chaque garde vaut 12 à 20 % des PV
   foeEliteId: "contremaitre", foeFrom: 2, foeEvery: 2, foeEveryFast: 1, foeFastFrom: 5, foeStun: 4, // banc (robot) : 1 salle / 2 pas, puis 1 / pas dès l'étage 5
-  foeHpMult: 0.55, foePowMult: 0.80,  // le Contremaître du labyrinthe : un coup (~30 % des PV), pas un combat d'élite entier
-  bossEvery: 5, bossFoe: "skeleton", bossHpMult: 8, bossPowMult: 2.4, // le Gardien du plan : bâti comme le gardien des Petites Aventures des Ruines, un cran au-dessus (banc : ~40 % des PV)
+  /* v3.766.0 (C3a) : force des combats en cibles { rounds, hit } (unités de la courbe à l'étape d'ouverture), au lieu de
+     guardMult, foeHpMult / foePowMult et bossHpMult / bossPowMult. Étage, type de garde et suivi du héros restent la forme. */
+  guardTarget: { rounds: 2.79, hit: 0.0266 }, foeTarget: { rounds: 6.76, hit: 0.0416 }, bossTarget: { rounds: 10.54, hit: 0.0355 },
+  bossEvery: 5, bossFoe: "skeleton", // le Gardien du plan : bâti comme le gardien des Petites Aventures des Ruines, un cran au-dessus (banc : ~40 % des PV)
   bossName: "Le Gardien du plan",
   /* v3.436.0 : combats comme les Petites Aventures — Charger (×1,3 dégâts, ×1,4 or) ou Tenir ; Ruse sur la garde, Fuir le Contremaître */
   combatGold: { guard: 1.7, foe: 2.5, boss: 6 },   // × or d'un squelette des Ruines × approche

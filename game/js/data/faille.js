@@ -21,14 +21,17 @@ var FAILLE_CONFIG = {
   springBreath: 25, springHealPct: 0.20,
 
   /* Gardes : ennemis de la Tour ; FA4 : +6 % composés par étage (pas de fond, la montée doit finir par fermer) */
-  guardFoes: ["guardian", "corruptmage", "hybrid"], guardPack: 2, guardMult: 1.2, guardPerFloor: 0.06, guardCompound: true,
+  guardFoes: ["guardian", "corruptmage", "hybrid"], guardPack: 2, guardPerFloor: 0.06, guardCompound: true,
   guardFoeMult: { guardian: 1, corruptmage: 1, hybrid: 1 },
 
   /* FA6 : la forme au sol suit (tous les 3 pas, dès l'étage 3). Elle ne se bat pas : elle prend du Souffle et recule. */
   foeTouch: 10, foeFrom: 3, foeEvery: 3, foeEveryFast: 3, foeFastFrom: 9999, foeStun: 4,
 
   /* FA5 : le Reflet garde l'escalier tous les 5 étages ; sa force suit l'étage, comme les gardes */
-  bossEvery: 5, bossFoe: "corruptmage", bossHpMult: 5.3, bossPowMult: 1.6, bossCompound: true,
+  /* v3.766.0 (C3a) : force des combats en cibles { rounds, hit } (unités de la courbe à l'étape d'ouverture), au lieu de
+     guardMult, foeHpMult / foePowMult et bossHpMult / bossPowMult. Étage, type de garde et suivi du héros restent la forme. */
+  guardTarget: { rounds: 0.32, hit: 0.0155 }, bossTarget: { rounds: 0.75, hit: 0.0171 }, etape: "tour_20", // ouverte une fois la Question répondue (fin de la Tour)
+  bossEvery: 5, bossFoe: "corruptmage", bossCompound: true,
   bossName: "Le Reflet",
   combatGold: { guard: 1.7, foe: 2.5, boss: 6 },
   ruseBase: 0.6, rusePerFloor: 0.05, ruseMin: 0.3, ruseBreath: 10,

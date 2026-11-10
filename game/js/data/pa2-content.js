@@ -187,17 +187,19 @@ var PA2_RINGS = {
    l'échelle des obstacles (même forme que heroScaling v1 : 1 + 0,6 × (bonus attendu − 21) / 10).
    Plancher : le monde de la carte. Repères de campagne (sim/campagne-lot.js, v3.365.0) : niveau 8
    à l'arrivée au Désert, 12 à la fin du chapitre II. Au-delà, la dernière tranche s'applique. */
+/* v3.766.0 (C3a) : target = niveau des ennemis de la tranche, { rounds, hit } en unités de son héros de référence
+   (heroRef) ; remplace foeScale (0,8 en tranche 1). Actes, anneaux, nœuds et gardien restent la forme. */
 var PA2_LEVEL_BANDS = [
-  { minLevel: 1,  worldId: "forest", adventureIndex: 0, obstacleScale: 1.0, foeScale: 0.8, heroRef: "foret1" }, // v3.383.0 : héros sans vitrine (banc)
-  { minLevel: 5,  worldId: "forest", adventureIndex: 1, obstacleScale: 1.5, heroRef: "foret2" },
-  { minLevel: 8,  worldId: "desert", adventureIndex: 0, obstacleScale: 2.1, heroRef: "desert10" },
-  { minLevel: 11, worldId: "desert", adventureIndex: 1, obstacleScale: 2.7, heroRef: "desert12" },
+  { minLevel: 1,  worldId: "forest", adventureIndex: 0, obstacleScale: 1.0, heroRef: "foret1", target: { rounds: 1.25, hit: 0.0207 } }, // v3.383.0 : héros sans vitrine (banc)
+  { minLevel: 5,  worldId: "forest", adventureIndex: 1, obstacleScale: 1.5, heroRef: "foret2", target: { rounds: 1.11, hit: 0.0194 } },
+  { minLevel: 8,  worldId: "desert", adventureIndex: 0, obstacleScale: 2.1, heroRef: "desert10", target: { rounds: 3.46, hit: 0.0145 } },
+  { minLevel: 11, worldId: "desert", adventureIndex: 1, obstacleScale: 2.7, heroRef: "desert12", target: { rounds: 3.49, hit: 0.0132 } },
   // v3.429.0 (Ruines) : tranche PLANCHER de la carte des Ruines seulement (levelBand) — minLevel hors
   // d'atteinte pour ne pas changer les Petites Aventures de la Forêt et du Désert d'un héros avancé
-  { minLevel: 99, worldId: "ruins", adventureIndex: 0, obstacleScale: 3.3, heroRef: "joueurDesert2" },
-  { minLevel: 99, worldId: "crypt", adventureIndex: 0, obstacleScale: 3.9, heroRef: "joueurRuines" }, // v3.454.0 (Crypte) : plancher de la carte, au banc
-  { minLevel: 99, worldId: "mountain", adventureIndex: 0, obstacleScale: 4.5, heroRef: "joueurCrypte" }, // v3.489.0 (Montagne) : plancher, au banc
-  { minLevel: 99, worldId: "tower", adventureIndex: 0, obstacleScale: 5.1, heroRef: "joueurMontagne" } // v3.627.0 (Tour) : plancher, au banc
+  { minLevel: 99, worldId: "ruins", adventureIndex: 0, obstacleScale: 3.3, heroRef: "joueurDesert2", target: { rounds: 2.17, hit: 0.0211 } },
+  { minLevel: 99, worldId: "crypt", adventureIndex: 0, obstacleScale: 3.9, heroRef: "joueurRuines", target: { rounds: 2.46, hit: 0.02 } }, // v3.454.0 (Crypte) : plancher de la carte, au banc
+  { minLevel: 99, worldId: "mountain", adventureIndex: 0, obstacleScale: 4.5, heroRef: "joueurCrypte", target: { rounds: 2, hit: 0.024 } }, // v3.489.0 (Montagne) : plancher, au banc
+  { minLevel: 99, worldId: "tower", adventureIndex: 0, obstacleScale: 5.1, heroRef: "joueurMontagne", target: { rounds: 1.28, hit: 0.0198 } } // v3.627.0 (Tour) : plancher, au banc
 ];
 
 /* v3.423.0 (chantier Difficulté, A, décision Seb) : la tranche donne les ennemis et les obstacles
