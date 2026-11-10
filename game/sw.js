@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.760.0"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.761.0"; // <- à incrémenter à CHAQUE livraison
 /* v3.751.0 : l'Alpha (/alpha/) partage l'origine du jeu ; ses caches portent un autre préfixe, sinon chaque
    service worker effacerait ceux de l'autre à l'activation. */
 var IS_ALPHA_SW = /\/alpha\/$/.test(self.registration ? self.registration.scope : "");
@@ -314,6 +314,7 @@ var PRECACHE_APP_SHELL = [
   "./js/ui/combat-speed-view.js",
   "./js/ui/combat-report-view.js",
   "./js/ui/tutorial-view.js",
+  "./js/ui/coach-view.js", // v3.761.0 : NOUVEAU fichier (tutoriels sur l'écran)
   "./js/ui/scene-view.js",
   "./js/ui/village-building-view.js",
   "./js/ui/warehouse-view.js",

@@ -468,3 +468,31 @@
 .forge-news-win .news-list b { display: block; }
 .forge-news-win .news-list small { display: block; margin-top: 2px; font-size: 13px; color: var(--c-brown-700-soft); }
 .forge-news-btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+/* =====================================================================
+   v3.761.0 (atelier tutoriels-ecran, Seb 10/11, bulle A) : tutoriels sur l'écran (ui/coach-view.js).
+   Voile par une ombre géante autour de l'élément éclairé ; bulle parchemin du kit au-dessus ou au-dessous.
+   ===================================================================== */
+.coach { position: fixed; inset: 0; z-index: 3000; }
+.coach-veil { position: absolute; inset: 0; }
+.coach-spot { position: absolute; padding: 0; border: 0; border-radius: 14px; background: transparent; box-shadow: 0 0 0 2000px rgba(8, 5, 2, 0.72); cursor: pointer; }
+.coach-spot::after { content: ""; position: absolute; inset: -4px; border-radius: 16px; border: 2px solid rgba(240, 198, 74, 0.95); box-shadow: 0 0 14px rgba(240, 198, 74, 0.8); animation: coach-pulse 1.4s ease-in-out infinite; }
+@keyframes coach-pulse { 50% { box-shadow: 0 0 2px rgba(240, 198, 74, 0.3); opacity: 0.7; } }
+@media (prefers-reduced-motion: reduce) { .coach-spot::after { animation: none; } }
+.coach-bub { position: absolute; left: max(12px, env(safe-area-inset-left, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); max-width: 420px; margin: 0 auto; display: flex; flex-direction: column; gap: 8px; padding: 12px 14px 10px; border-radius: 14px;
+  background: linear-gradient(rgba(246, 236, 217, 0.55), rgba(239, 224, 194, 0.4)), url('../images/UI/frames/parchment-cream.webp') 0 0 / 300px, var(--c-cream-100-soft);
+  color: var(--c-brown-900); box-shadow: 0 0 0 1px rgba(194, 127, 31, 0.8), 0 10px 30px rgba(0, 0, 0, 0.6); }
+.coach-arrow { position: absolute; left: var(--ax, 50%); width: 14px; height: 14px; transform: rotate(45deg); background: var(--c-cream-100-soft); }
+.coach-bub.is-above .coach-arrow { bottom: -7px; box-shadow: 1px 1px 0 rgba(194, 127, 31, 0.8); }
+.coach-bub.is-below .coach-arrow { top: -7px; box-shadow: -1px -1px 0 rgba(194, 127, 31, 0.8); }
+.coach-top { display: flex; align-items: baseline; gap: 8px; }
+.coach-t { font-family: "Alegreya", Georgia, serif; font-size: 18px; line-height: 1.15; }
+.coach-n { margin-left: auto; font-size: 12px; font-weight: 800; color: var(--c-brown-650-soft); font-variant-numeric: tabular-nums; }
+.coach-x { margin: 0; font-size: 14px; line-height: 1.4; }
+.coach-foot { display: flex; align-items: center; gap: 10px; }
+.coach-dots { display: flex; gap: 5px; }
+.coach-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--c-brown-900); opacity: 0.25; }
+.coach-dots i.is-on { opacity: 0.9; }
+.coach-skip { margin-left: auto; min-height: 44px; padding: 0 10px; border: 0; background: none; color: var(--c-brown-900); font-size: 13px; font-weight: 700; text-decoration: underline; cursor: pointer; }
+.coach-foot .kbtn.coach-next { margin: 0; min-width: 120px; }
+.coach-wait { position: fixed; inset: 0; z-index: 3000; } /* le temps que l'écran se pose : bloque les touches, invisible */

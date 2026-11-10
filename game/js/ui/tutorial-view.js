@@ -54,6 +54,16 @@ function wireTutorialHint(host) {
 }
 window.wireTutorialHint = wireTutorialHint;
 
+/* v3.761.0 (atelier tutoriels-ecran, Seb 10/11) : le tutoriel s'ouvre sur l'écran (ui/coach-view.js) s'il y est décrit
+   et que ses éléments sont visibles ; sinon la fenêtre classique. key : id de l'étape ou du tutoriel générique. */
+function renderTutorialInto(host, closeJs, tutorial, key) {
+  if (!host) return;
+  if (key && window.CoachTutorial && CoachTutorial.show(host, key, closeJs, tutorial)) return;
+  host.innerHTML = buildTutorialModalHTML(closeJs, tutorial);
+  wireTutorialHint(host);
+}
+window.renderTutorialInto = renderTutorialInto;
+
 /* Affiche le popup si cette étape en a un et qu'il n'a jamais été vu. Appelé depuis switchTab(). */
 function maybeShowStepTutorial(chapterId, tabName) {
   if (!window.StoryQuestManager || pendingTutorial) return; // v3.683.0 (TUTO-5) : jamais par-dessus une autre aide
@@ -67,7 +77,7 @@ function maybeShowStepTutorial(chapterId, tabName) {
 
   pendingTutorial = { chapterId: chapterId, tutorial: step.tutorial };
   var host = document.getElementById("tutorial-modal-root");
-  if (host) { host.innerHTML = buildTutorialModalHTML("closeTutorialModal('" + esc(chapterId) + "')", step.tutorial); wireTutorialHint(host); }
+  renderTutorialInto(host, "closeTutorialModal('" + esc(chapterId) + "')", step.tutorial, step.id);
 }
 window.maybeShowStepTutorial = maybeShowStepTutorial;
 
@@ -421,7 +431,7 @@ function maybeShowGenericTutorial(tabName) {
 
   pendingTutorial = { genericId: id, tutorial: tut };
   var host = document.getElementById("tutorial-modal-root");
-  if (host) { host.innerHTML = buildTutorialModalHTML("closeGenericTutorialModal('" + esc(id) + "')", tut); wireTutorialHint(host); }
+  renderTutorialInto(host, "closeGenericTutorialModal('" + esc(id) + "')", tut, id);
 }
 window.maybeShowGenericTutorial = maybeShowGenericTutorial;
 
@@ -444,8 +454,7 @@ function openGenericTutorialOnce(id, opts) {
   if (!game.genericTutorialsSeen || typeof game.genericTutorialsSeen !== "object") game.genericTutorialsSeen = {};
   if (game.genericTutorialsSeen[id] || tutorialOtherWindowOpen(opts.allow)) return false;
   pendingTutorial = { genericId: id, tutorial: tut, after: opts.after || null, noSave: !!opts.noSave };
-  host.innerHTML = buildTutorialModalHTML("closeGenericTutorialModal('" + esc(id) + "')", tut);
-  wireTutorialHint(host);
+  renderTutorialInto(host, "closeGenericTutorialModal('" + esc(id) + "')", tut, id);
   return true;
 }
 window.openGenericTutorialOnce = openGenericTutorialOnce;

@@ -143,7 +143,7 @@ window.kWinHeadHTML = kWinHeadHTML;
 /* v3.703.0 (CPL3-5, atelier « Fenêtres », Seb A) : feuilles et fenêtres modales au clavier et au lecteur d'écran.
    Un observateur du DOM appelle open/close pour chaque fenêtre (innerHTML = "" compris) ; Échap reste à backNavCloseTop. */
 var kDialog = (function () {
-  var SEL = ".ksheet, .full-menu, .kwin";
+  var SEL = ".ksheet, .full-menu, .kwin, .coach"; // v3.761.0 : tutoriel sur l’écran (ui/coach-view.js)
   var LAYER = ".kwin-veil, .full-menu-overlay, .hf-sheet-bg, .pwa-install-layer";
   var KEEP = { "toast": 1, "howto-toast-root": 1, "pwa-update-banner": 1 }; // jamais inertes (toasts, mise à jour)
   var FOCUSABLE = 'a[href], button, input:not([type="hidden"]), select, textarea, summary, [tabindex], [contenteditable="true"]';

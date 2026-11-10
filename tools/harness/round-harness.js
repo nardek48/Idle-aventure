@@ -23898,7 +23898,7 @@ console.log("\n[468] v3.703.0 — Fenêtres : aides resserrées et « Suite ↓ 
     var th = g.buildTutorialModalHTML("void 0", g.GENERIC_TUTORIALS.camp_welcome);
     ok(/<\/div>\s*<div class="tut-more" aria-hidden="true"><i><span>Suite ↓<\/span><\/i><\/div>\s*<div class="kwin-foot">/.test(th), "TUTO-11 : l'indice est posé entre la liste et « Compris », caché aux lecteurs d'écran");
     var tv = rd("js/ui/tutorial-view.js");
-    ok((tv.match(/host\.innerHTML = buildTutorialModalHTML\([^;]+\); wireTutorialHint\(host\); \}/g) || []).length === 3 && /body\.addEventListener\("scroll", up, \{ passive: true \}\)/.test(tv), "TUTO-11 : écouteur de défilement posé par les 3 ouvertures d'aide");
+    ok(/function renderTutorialInto[\s\S]*?host\.innerHTML = buildTutorialModalHTML\(closeJs, tutorial\);\s*wireTutorialHint\(host\);/.test(tv) && (tv.match(/renderTutorialInto\(host, "close/g) || []).length === 3 && (tv.match(/host\.innerHTML = buildTutorialModalHTML\([^;]+\); wireTutorialHint\(host\); \}/g) || []).length === 1 && /wireTutorialHint\(host\)/.test(rd("js/ui/coach-view.js")) && /body\.addEventListener\("scroll", up, \{ passive: true \}\)/.test(tv), "TUTO-11 : écouteur de défilement posé par les 3 ouvertures d'aide");
     ok(g.I18n.dicts.en["Suite ↓"] === "More ↓", "TUTO-11 : « Suite ↓ » traduit (More ↓)");
     var t0 = g.GENERIC_TUTORIALS.camp_welcome.points.map(function (x) { return x.text; }).join("|");
     ok(t0.indexOf("Suis ta barre de vie") > 0 && g.GENERIC_TUTORIALS.camp_welcome.points.length === 4, "TUTO-11 (A) : textes d'aide inchangés (Le Campement, 4 points)");
@@ -23906,7 +23906,7 @@ console.log("\n[468] v3.703.0 — Fenêtres : aides resserrées et « Suite ↓ 
     var md = rd("js/ui/modal.js"), kd = md.slice(md.indexOf("var kDialog"));
     ok(typeof g.kDialog === "object" && typeof g.kDialog.open === "function" && typeof g.kDialog.close === "function" && typeof g.kDialog.sync === "function", "CPL3-5 : kDialog.open / close / sync exposés");
     ok(/setAttribute\("role", "dialog"\)/.test(kd) && /setAttribute\("aria-modal", "true"\)/.test(kd) && /setAttribute\("aria-labelledby", lab\.id\)/.test(kd) && /setAttribute\("aria-describedby", sub\.id\)/.test(kd), "CPL3-5 : role=\"dialog\", aria-modal, nom = titre seul, sous-titre en description");
-    ok(/var SEL = "\.ksheet, \.full-menu, \.kwin";/.test(kd) && /KEEP = \{ "toast": 1, "howto-toast-root": 1, "pwa-update-banner": 1 \}/.test(kd), "CPL3-5 : feuilles et fenêtres prises en charge ; toasts et bandeau de mise à jour jamais inertes");
+    ok(/var SEL = "\.ksheet, \.full-menu, \.kwin, \.coach";/.test(kd) && /KEEP = \{ "toast": 1, "howto-toast-root": 1, "pwa-update-banner": 1 \}/.test(kd), "CPL3-5 : feuilles et fenêtres prises en charge ; toasts et bandeau de mise à jour jamais inertes");
     ok(/new MutationObserver/.test(kd) && /childList: true, subtree: true/.test(kd) && /managed = managed\.filter\(function \(c\) \{[\s\S]*?c\.removeAttribute\("inert"\)/.test(kd), "CPL3-5 : observateur du DOM (fermetures par innerHTML = \"\") ; l'inert posé est toujours retiré");
     ok(/function foreignAbove\(top\)/.test(kd) && /suspended = !!top && foreignAbove\(top\);/.test(kd) && /e\.key !== "Tab" \|\| !stack\.length \|\| suspended/.test(kd), "CPL3-5 : un calque hors kit au-dessus (prologue, moment de boss, conversation) suspend inert et boucle");
     ok(/e\.key !== "Tab"/.test(kd) && kd.indexOf("Escape") < 0 && /if \(!top\.classList\.contains\("ksheet-x"\)\) return "blocked";/.test(rd("js/ui/ui-root.js")), "CPL3-5 : Tab boucle dans la fenêtre ; Échap inchangé (backNavCloseTop, v3.536 A)");
@@ -26365,6 +26365,25 @@ console.log("\n[512] Fil rouge (v3.760.0, Seb 09/11, option A) : construire au v
     ok(!annexes.some(function (x) { return idle.title === x.title; }), "« Rien ne presse » ne reprend plus une annexe (pas de doublon)");
   } catch (err) { ok(false, "[512] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   finally { try { run("fullResetState();"); } catch (e2) {} game = freshCombat("knight"); }
+})();
+
+console.log("\n[513] Tutoriels sur l'écran (v3.761.0, atelier tutoriels-ecran, Seb 10/11 : bulle A, « Suivant » ou toucher)");
+(function () {
+  try {
+    var C = g.COACH_TUTORIALS, keys = ["camp_welcome", "forest_02", "village_production", "forest_brume", "pa2_prep", "forest_12", "forest_11"];
+    ok(keys.every(function (k) { return C[k] && C[k].steps.length >= 3 && C[k].steps.every(function (st) { return st.sel && st.title && st.text; }); }) && Object.keys(C).length === 7, "les 7 tutoriels retenus, 3 à 6 étapes chacun (sélecteur, titre, texte)");
+    ok(!!g.GENERIC_TUTORIALS.camp_welcome && !!g.GENERIC_TUTORIALS.village_production && !!g.GENERIC_TUTORIALS.pa2_prep, "les clés génériques existent (Campement, Village, Petite Aventure)");
+    var steps = ["forest_02", "forest_brume", "forest_12", "forest_11"].map(function (id) { var f = null; Object.keys(g.STORY_QUESTS).forEach(function (c) { g.STORY_QUESTS[c].steps.forEach(function (st) { if (st.id === id) f = st; }); }); return f; });
+    ok(steps.every(function (st) { return st && st.tutorial; }), "les étapes d'Histoire visées ont toutes un tutoriel (la fenêtre reste le repli)");
+    var src = fsRead("js/ui/coach-view.js");
+    ok(/wide-mode[\s\S]*?pc-mode[\s\S]*?return false;/.test(src) && /steps\.length < 2[\s\S]*?buildTutorialModalHTML\(closeJs, tutorial\)/.test(src), "repli : fenêtre classique en grand écran, ou si moins de deux éléments sont visibles");
+    ok(/COACH_SETTLE_MS = \d+/.test(src) && /COACH_RETRIES = \d+/.test(src) && /elementFromPoint/.test(src), "mesure après la pose de l'écran, remesure si un élément est couvert (prologue, fenêtre)");
+    ok(/class="coach-skip" onclick="CoachTutorial\.finish\(\)"/.test(src) && /class="coach-spot"[^>]*onclick="CoachTutorial\.next\(\)"/.test(src) && /class="kbtn primary coach-next" onclick="CoachTutorial\.next\(\)"/.test(src), "avancer : « Suivant » ou toucher l'éclairage ; « Passer » termine");
+    ok(/\(new Function\(js\)\)\(\)/.test(src) && /renderTutorialInto\(host, "closeTutorialModal\(/.test(fsRead("js/ui/tutorial-view.js")), "fin : même clôture que la fenêtre (tutoriel noté vu, sauvegarde)");
+    var idx = fsRead("index.html");
+    ok(idx.indexOf("js/ui/coach-view.js") > idx.indexOf("js/ui/tutorial-view.js") && fsRead("sw.js").indexOf('"./js/ui/coach-view.js"') > 0, "coach-view.js chargé après tutorial-view.js, précaché");
+    ok(/\.coach-spot \{[^}]*box-shadow: 0 0 0 2000px/.test(fsRead("css/05-overlays.css")) && /prefers-reduced-motion[^{]*\{ \.coach-spot::after \{ animation: none; \}/.test(fsRead("css/05-overlays.css")), "éclairage par ombre géante, sans pulsation si l'appareil demande moins d'animations");
+  } catch (err) { ok(false, "[513] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
 Promise.all(ATTENTES).then(function () {

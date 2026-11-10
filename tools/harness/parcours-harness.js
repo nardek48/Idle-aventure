@@ -59,8 +59,11 @@ function ok(cond, msg) {
 
 /* Un « appareil » = un contexte de navigateur : localStorage et service worker persistent
    entre ses pages, comme sur l'iPhone entre deux ouvertures de la PWA. */
-async function newDevice(browser, ua) {
-  return browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: "fr-FR", userAgent: ua || undefined }); // v3.359.0 : ua optionnel (P11, iPhone)
+async function newDevice(browser, ua, opts) {
+  var ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: "fr-FR", userAgent: ua || undefined }); // v3.359.0 : ua optionnel (P11, iPhone)
+  // v3.761.0 : tutoriels sur l'écran coupés (fenêtre classique) sauf pour les parcours qui les testent (opts.coach)
+  if (!(opts && opts.coach)) await ctx.addInitScript(function () { window.COACH_OFF = true; });
+  return ctx;
 }
 
 /* Ouvre la PWA et attend l'écran titre. Tuer l'app = page.close(). */
@@ -101,7 +104,14 @@ async function tap(page, selector) {
 
 /* Les tutoriels d'un héros neuf s'ouvrent par-dessus : on les ferme comme un joueur. */
 async function dismissTutorials(page) {
+  // v3.761.0 : un tutoriel sur l'écran se mesure après la pose de l'écran (voile d'attente) : on l'attend
+  for (var w = 0; w < 30 && await page.locator("#tutorial-modal-root .coach-wait").count(); w++) await page.waitForTimeout(100);
   for (var i = 0; i < 6; i++) {
+    var sk = page.locator("#tutorial-modal-root .coach-skip"); // v3.761.0 : tutoriel sur l'écran, « Passer » comme un joueur pressé
+    if (await sk.count() && await sk.first().isVisible()) {
+      (page._coachLog = page._coachLog || []).push(await page.evaluate(function () { var c = document.querySelector("#tutorial-modal-root .coach"); return c ? c.querySelector(".coach-t").textContent + " " + c.querySelector(".coach-n").textContent + " " + isBlockingModalOpen() : ""; }));
+      await sk.first().click(); await page.waitForTimeout(250); continue;
+    }
     var b = page.locator("#tutorial-modal-root button", { hasText: "Compris" });
     if (!(await b.count()) || !(await b.first().isVisible())) return;
     await b.first().click();
@@ -383,7 +393,7 @@ async function P5(browser, base) {
    Campement, première mission, premier combat gagné. Couture C8.
    ==================================================================================== */
 async function P1(browser, base) {
-  var dev = await newDevice(browser);
+  var dev = await newDevice(browser, undefined, { coach: true }); // v3.761.0 : le vrai premier lancement garde les tutoriels sur l'écran
   var page = await launch(dev, base);
   ok(!(await visible(page, ".title-screen-continue", 500)), "tout premier lancement : pas de « Continuer »");
   await tap(page, ".title-screen-img-btn");                          // « Nouvelle Partie »
@@ -407,7 +417,10 @@ async function P1(browser, base) {
   await conf.first().click(); await page.waitForTimeout(800);
   ok(await page.evaluate(function () { return PrologueView.active && PrologueView.idx === 4; }), "prologue : planche 5 après la création");
   await tap(page, ".prologue-skip");
-  ok(await visible(page, "#tutorial-modal-root button", 3000), "tutoriel d'accueil affiché");
+  ok(await visible(page, "#tutorial-modal-root .coach-next", 4000), "tutoriel d'accueil affiché sur l'écran (éclairage et bulle)");
+  ok(await page.evaluate(function () { var c = document.querySelector("#tutorial-modal-root .coach"); return !!c && c.getAttribute("role") === "dialog" && c.contains(document.activeElement) && !!document.getElementById("tab-bar").closest("[inert]"); }), "tutoriel sur l'écran : fenêtre au lecteur d'écran, focus dedans, fond inerte");
+  await page.locator("#tutorial-modal-root .coach-spot").click(); await page.waitForTimeout(300);
+  ok(await page.evaluate(function () { var n = document.querySelector("#tutorial-modal-root .coach-n"); return !!n && /^2 \/ /.test(n.textContent); }), "toucher l'élément éclairé passe à l'étape suivante");
   await shot(page, "2_accueil");
   await dismissTutorials(page);
   ok(!(await visible(page, "#tutorial-modal-root button", 400)), "« Compris » ferme les tutoriels");
@@ -438,6 +451,11 @@ async function P1(browser, base) {
   }
   var enCombat = await page.evaluate(function () { return game.activeTab === "combat" && !!game.enemy; });
   ok(enCombat, "« Premier sang » mène au combat");
+  if (enCombat) {
+    await dismissTutorials(page);
+    ok((page._coachLog || []).some(function (l) { return /^Attaquer 1 \/ 6 true$/.test(l); }), "tutoriel du combat sur l'écran : 6 étapes, le combat attend (" + (page._coachLog || []).join(" ; ") + ")");
+    ok(await page.evaluate(function () { var st = StoryQuestManager.getState("forest"); return !!(st.tutorialsSeen || {}).forest_02 && !document.querySelector("#tutorial-modal-root").innerHTML; }), "« Passer » : tutoriel noté vu, combat rendu");
+  }
   if (enCombat) {
     var kills0 = await page.evaluate(function () { return game.totalKills || 0; });
     ok(await winFight(page, new Function("return (game.totalKills || 0) > " + kills0 + ";")), "premier ennemi vaincu au bouton ATTAQUER");
