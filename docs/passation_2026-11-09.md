@@ -1,3 +1,5 @@
+> **Périmé** : voir `docs/passation_2026-11-10.md` et l’État des chantiers du 10/11. Gardé pour l’historique.
+
 # Passation du 09/11 (v3.750.0)
 
 Pour reprendre dans une nouvelle conversation. Le code fait foi ; ce mot dit où on en est.
