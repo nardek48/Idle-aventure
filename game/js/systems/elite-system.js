@@ -12,11 +12,7 @@
    l'appelant). C'est ce qui permettra au Donjon d'échelonner la même élite sur
    son palier au lieu du monde, sans redéfinir la créature. */
 
-// v3.744.0 (Seb 08/11, option C) : PV et puissance des élites par monde, la Forge des mondes les rendait plus faciles
-var ELITE_HP_BY_WORLD = { crypt: 1.2, mountain: 1.2, tower: 1.25 };
-var ELITE_POWER_BY_WORLD = { tower: 1.15 };
-window.ELITE_HP_BY_WORLD = ELITE_HP_BY_WORLD;
-window.ELITE_POWER_BY_WORLD = ELITE_POWER_BY_WORLD;
+// v3.765.0 (C2) : ELITE_HP_BY_WORLD et ELITE_POWER_BY_WORLD (v3.744.0) fondus dans les cibles des élites (data/elites.js, target)
 
 var EliteManager = {
   get: function (eliteId) {
@@ -122,12 +118,34 @@ var EliteManager = {
     } finally {
       if (multSauve) def.statMult = multSauve;
     }
-    // v3.744.0 : PV et puissance des élites par monde (ELITE_HP_BY_WORLD, ELITE_POWER_BY_WORLD)
-    var hm = window.ELITE_HP_BY_WORLD ? Number(ELITE_HP_BY_WORLD[worldId]) : 1;
-    if (enemy && hm > 0 && hm !== 1) { enemy.maxHp = Math.max(1, Math.round(enemy.maxHp * hm)); enemy.hp = enemy.maxHp; }
-    var pm = window.ELITE_POWER_BY_WORLD ? Number(ELITE_POWER_BY_WORLD[worldId]) : 1;
-    if (enemy && enemy.stats && pm > 0 && pm !== 1) enemy.stats.power = Math.max(1, Math.round(enemy.stats.power * pm));
+    var lv = enemy ? this.levelOf(eliteId, worldId) : null; // v3.765.0 (C2) : niveau tiré de la cible de l'élite
+    if (lv) {
+      enemy.maxHp = Math.max(1, Math.round(enemy.maxHp * lv.hp)); enemy.hp = enemy.maxHp;
+      if (enemy.stats) enemy.stats.power = Math.max(1, Math.round(enemy.stats.power * lv.power));
+    }
     return enemy || null;
+  },
+
+  /* v3.765.0 (C2, Seb 10/11) : élite hors donjon (carte, quête) : cible { rounds, hit } dans les unités de la courbe,
+     à l'étape de l'élite (etape, sinon le milieu du chapitre du monde où elle se bat). Ennemi moyen = son duel neutre, aventure 0. */
+  levelOf: function (eliteId, worldId) {
+    var def = this.get(eliteId), t = def && def.target, Q = window.QuestEnemyManager;
+    if (!t || !Q || typeof Q.courbeRef !== "function") return null;
+    var wi = WORLDS.findIndex(function (w) { return w.id === worldId; });
+    var pl = Q.placeOf({ etape: def.etape, worldId: worldId, adventureIndex: 0 });
+    if (!def.etape) pl.rang = Math.round(pl.longueur / 2);
+    var ref = Q.courbeRef(pl.monde, pl.rang, pl.longueur), base = this.baseline(eliteId, Math.max(0, wi));
+    if (!ref || !base || !(base.hp > 0) || !(base.coup > 0)) return null;
+    return { hp: Number(t.rounds) * ref.dmg / base.hp, power: Number(t.hit) * ref.ehp / base.coup };
+  },
+
+  baseline: function (eliteId, worldIndex) {
+    var c = (this._baseCache = this._baseCache || {}), key = eliteId + "|" + worldIndex;
+    if (c[key]) return c[key];
+    var cy = game.cycleCount, e;
+    try { game.cycleCount = 0; e = this.build(eliteId, this.scaleFor(worldIndex, 0), { noMilestone: true }); } finally { game.cycleCount = cy; }
+    var coef = (typeof ENEMY_POWER_DMG_COEF === "number") ? ENEMY_POWER_DMG_COEF : 0.5, bm = (typeof BOSS_DMG_MULT === "number") ? BOSS_DMG_MULT : 1.5;
+    return (c[key] = e ? { hp: e.maxHp, coup: Number(e.stats.power || 0) * coef * bm } : null);
   },
 
   /* Spawn dans le combat courant. worldId/adventureIndex viennent de la quête. */

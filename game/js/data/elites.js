@@ -37,6 +37,7 @@
 
 var ELITE_DB = {
   araignee_marquee: {
+    target: { rounds: 7.16, hit: 0.0457 }, // v3.765.0 (C2) : carte et quêtes (forest), hors bonus de monde
     id: "araignee_marquee",
     baseId: "spider",
     name: "Fileuse aux yeux blancs",
@@ -69,6 +70,7 @@ var ELITE_DB = {
   },
 
   ronce_ardente: {
+    target: { rounds: 4.7, hit: 0.053 }, // v3.765.0 (C2) : carte et quêtes (forest), hors bonus de monde
     id: "ronce_ardente",
     baseId: "bramble",
     name: "Ronce qui se souvient",
@@ -104,6 +106,7 @@ var ELITE_DB = {
 
      Chiffres : provisoires, à trancher au banc (sim/desert-elite-bench.js --sweep). */
   serment_armure: {
+    target: { rounds: 18.09, hit: 0.0925 }, // v3.765.0 (C2) : carte et quêtes (desert), hors bonus de monde
     id: "serment_armure",
     baseId: "sandwarrior",
     name: "Le Serment sous l'armure",
@@ -140,6 +143,7 @@ var ELITE_DB = {
      Premier contenu calé SUR LE PALIER de l'étape 13. Chiffres au banc (--profil palier).
      winResource : lu par LivingMapManager à chaque victoire, en plus de la Sève du secteur. */
   dard_profondeurs: {
+    target: { rounds: 24.38, hit: 0.0879 }, // v3.765.0 (C2) : carte et quêtes (desert), hors bonus de monde
     id: "dard_profondeurs",
     baseId: "sandworm",
     name: "Le Dard des profondeurs",
@@ -190,6 +194,7 @@ var ELITE_DB = {
      Gargouille (Blindée en trait fixe). Vague élite 12 du Sanctuaire ; gardien de la salle de
      l'étape 14 (livraison 2). Chiffres au banc. */
   golem: {
+    target: { rounds: 17.49, hit: 0.1312 }, // v3.765.0 (C2) : carte et quêtes (ruins), hors bonus de monde
     id: "golem",
     baseId: "gargoyle",
     name: "Le Golem",
@@ -221,6 +226,7 @@ var ELITE_DB = {
      parodie : il porte une couronne de trop. Frappé, il réveille un dormeur de son escorte, une fois
      par round (SleepSystem.onHit, wakesOnHit). Chiffres au banc. */
   porte_couronne: {
+    target: { rounds: 27.06, hit: 0.1332 }, // v3.765.0 (C2) : carte et quêtes (crypt), avant ELITE_HP_BY_WORLD 1,2
     id: "porte_couronne",
     baseId: "deadknight",
     name: "Le Porte-couronne",
@@ -237,6 +243,7 @@ var ELITE_DB = {
   /* v3.455.0 (Crypte, acte III) — LA PLEUREUSE, vague élite 12 de l'Ossuaire ; gardienne de l'étape 14.
      Elle annonce, puis endort un compagnon un round (SleepSystem.onEnemyTurn, lulls). Chiffres au banc. */
   pleureuse: {
+    target: { rounds: 12.56, hit: 0.1039 }, // v3.765.0 (C2) : carte et quêtes (crypt), avant ELITE_HP_BY_WORLD 1,2
     id: "pleureuse",
     baseId: "wraith",
     name: "La Pleureuse",
@@ -287,6 +294,7 @@ var ELITE_DB = {
      du 25/10 : leur image est celle de la base, exception signalée). Chaque victoire : de la Cendre vive,
      et une chance d'une pièce Épique de la Montagne (winDrop), pour le palier de montagne_09. Au banc. */
   vieux_golem: {
+    target: { rounds: 5.74, hit: 0.128 }, // v3.765.0 (C2) : carte et quêtes (mountain), avant ELITE_HP_BY_WORLD 1,2
     id: "vieux_golem",
     baseId: "lavagolem",
     name: "Le Vieux Golem",
@@ -300,6 +308,7 @@ var ELITE_DB = {
     winDrop: { rarity: "epic", chancePct: 35, pityAfter: 2 } // lot 6 (Seb, option A) : après 2 victoires sans pièce, la 3e en donne une
   },
   mere_dragonnets: {
+    target: { rounds: 4.7, hit: 0.0831 }, // v3.765.0 (C2) : carte et quêtes (mountain), avant ELITE_HP_BY_WORLD 1,2
     id: "mere_dragonnets",
     baseId: "dragonling",
     name: "La Mère des dragonnets",
@@ -316,6 +325,7 @@ var ELITE_DB = {
   /* v3.628.0 (Tour, lot T-2b) — le Gardien qui répète, élite répétable de la carte des étages (la veine du dedans).
      Le Légendaire de la Tour à 35 %, la 3e victoire sans pièce en donne une. */
   gardien_qui_repete: {
+    target: { rounds: 3.05, hit: 0.1122 }, // v3.765.0 (C2) : carte et quêtes (tower), avant ELITE_HP_BY_WORLD 1,25, ELITE_POWER_BY_WORLD 1,15
     id: "gardien_qui_repete",
     baseId: "guardian",
     name: "Le Gardien qui répète",
@@ -333,6 +343,7 @@ var ELITE_DB = {
      reprises des élites d'Histoire (nom et portrait). Pièce du palier du monde à 35 %, la 3e victoire sans pièce
      en donne une (comme la Montagne). Force au banc (campagne-harness, BANC_ELITE). */
   golem_tour: {
+    target: { rounds: 6.98, hit: 0.1312 }, // v3.765.0 (C2) : carte et quêtes (ruins), hors bonus de monde
     id: "golem_tour",
     baseId: "gargoyle",
     name: "Le Golem",
@@ -346,6 +357,7 @@ var ELITE_DB = {
     winDrop: { rarity: "rare", chancePct: 35, pityAfter: 2 }
   },
   pleureuse_nef: {
+    target: { rounds: 12.56, hit: 0.1039 }, // v3.765.0 (C2) : carte et quêtes (crypt), avant ELITE_HP_BY_WORLD 1,2
     id: "pleureuse_nef",
     baseId: "wraith",
     name: "La Pleureuse",
@@ -361,6 +373,7 @@ var ELITE_DB = {
   },
 
   arbre_mere: {
+    target: { rounds: 14.11, hit: 0.1105 }, // v3.765.0 (C2) : carte et quêtes (forest), hors bonus de monde
     id: "arbre_mere",
     baseId: "foresttroll",
     name: "L'Arbre-mère",

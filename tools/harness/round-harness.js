@@ -5333,8 +5333,8 @@ console.log("\n[47b] v3.245.0 \u2014 Refonte des Donjons");
   D.start(1, ["aff_colossus", "aff_elite"]);
   var b2 = tete(D.buildWaveEnemy(16)), w7b = tete(D.buildWaveEnemy(7)), w5b = tete(D.buildWaveEnemy(5));
   ok(b2.maxHp === Math.floor(bossHpNu * 2), "Colosses : boss \u00e0 2\u00d7 PV (" + b2.maxHp + ")");
-  var w7base = Math.floor(g.ENEMY_DB[w7b.id].stats.endurance * 1.5 * D.getWaveScale(D.getById(1), 7)); // l'ennemi de la vague est tir\u00e9 au sort : on recalcule sur SON endurance
-  ok(w7b.isBoss === true && !w7b.isElite && w7b.maxHp === Math.floor(w7base * 2.4), "Traque : vague normale devenue \u00e9lite g\u00e9n\u00e9rique (isBoss, PV \u00d72,4)");
+  var w7base = Math.floor(Math.floor(g.ENEMY_DB[w7b.id].stats.endurance * 1.5 * D.getWaveScale(D.getById(1), 7)) * 2.4); // l'ennemi de la vague est tir\u00e9 au sort : on recalcule sur SON endurance
+  ok(w7b.isBoss === true && !w7b.isElite && w7b.maxHp === Math.floor(w7base * D.levelOf(D.getById(1), "vague").hp), "Traque : vague normale devenue \u00e9lite g\u00e9n\u00e9rique (isBoss, PV \u00d72,4, puis cible du donjon)");
   ok(w5b.isElite === true && w5b.maxHp === w5.maxHp, "Traque : la vague 5 reste l'\u00e9lite de donn\u00e9es, sans cumul");
   ok(game.enemy && game.enemy.isBoss === true && game.dungeonRun.wave === 1, "vague 1 sous Traque : \u00e9lite d\u00e8s l'entr\u00e9e");
   run("DungeonManager.forfeit();");
@@ -5869,23 +5869,14 @@ console.log("\n[55b] v3.253.0 \u2014 \u00c9chelle des vagues du donjon");
   run("DungeonManager.ensure(); game.dungeonRunsUsed = {}; game.dungeonTierCleared = { 1: true };");
 
   var foret = D.getById(1);
-  // v3.438.0 : 2,8 -> 3,2, pool fixe sans Troll ni Ronce (2 traits pour 2 règles)
-  ok(foret.wavePremiumMult === 3.2, "la Tani\u00e8re d\u00e9clare wavePremiumMult 3,2");
+  // v3.438.0 : 2,8 -> 3,2 ; v3.765.0 (C2) : wavePremiumMult fondu dans les cibles du donjon
+  ok(foret.wavePremiumMult === undefined && foret.target && foret.bossTarget && foret.eliteTarget, "la Tani\u00e8re r\u00e8gle ses vagues, ses \u00e9lites et son boss par ses cibles (v3.765.0)");
   ok(Array.isArray(foret.enemyPool) && foret.enemyPool.indexOf("foresttroll") === -1 && foret.enemyPool.indexOf("bramble") === -1,
     "la Tani\u00e8re a son pool fixe, sans Troll ni Ronce");
-  ok(g.DUNGEON_CONFIG.basePremiumMult === 1.3, "le d\u00e9faut global reste 1,3 pour les donjons sans surcharge");
-  var autres = (g.DUNGEONS || []).filter(function (d) { return d.id !== 1 && typeof d.wavePremiumMult === "number"; });
-  ok(autres.length === 0, "aucun autre donjon n'est touch\u00e9 : leur monde aura son propre chantier");
-
-  /* L'\u00e9chelle des vagues suit la surcharge, celle du boss non. */
-  var scaleV = D.getWaveScale(foret, 7);
-  var scaleB = D.getWaveScale(foret, g.DUNGEON_CONFIG.waveCount + 1);
-  // v3.326.0 : la Tanière passe à difficultyMult 1,8 (lot C-2) — on compare à difficulté égale
-  var sansSurcharge = D.getWaveScale({ worldPower: 0, difficultyMult: foret.difficultyMult }, 7);
-  ok(Math.abs(scaleV / sansSurcharge - (3.2 / 1.3)) < 0.001,
-    "vague 7 : \u00e9chelle multipli\u00e9e par 3,2/1,3 face \u00e0 un donjon sans surcharge");
-  var scaleBSans = D.getWaveScale({ worldPower: 0, difficultyMult: foret.difficultyMult }, g.DUNGEON_CONFIG.waveCount + 1);
-  ok(Math.abs(scaleB - scaleBSans) < 0.001, "le boss garde bossPremiumMult : wavePremiumMult ne le touche pas");
+  ok(g.DUNGEON_CONFIG.basePremiumMult === 1.3, "le d\u00e9faut global reste 1,3 (forme des vagues)");
+  ok((g.DUNGEONS || []).every(function (d) { return d.wavePremiumMult === undefined && d.difficultyMult === undefined && d.speedMult >= 1 && d.rewardRank >= 1; }), "aucun donjon ne garde difficultyMult ni wavePremiumMult ; speedMult et rewardRank partout");
+  var lvV = D.levelOf(foret, "vague"), lvB = D.levelOf(foret, "boss"), lvE = D.levelOf(foret, "elite");
+  ok(lvV && lvB && lvE && lvV.hp !== lvB.hp && lvE.hp !== lvV.hp, "vagues, élites et boss : trois niveaux distincts");
 
   /* Les vagues atteignent l'ordre de grandeur d'un ennemi de farm de la For\u00eat. */
   D.start(1, []);
@@ -9344,7 +9335,7 @@ console.log("\n[115] v3.319.0 — Acte III, étape 15 : le sphinx");
   ok(cite.boss.phases.length === 2 && cite.boss.phases[0].atPct === 0.75 && cite.boss.phases[1].atPct === 0.5, "deux seuils de phase (v3.742.0 : 75 / 50 %)");
   ok(cite.boss.phases[0].adds.length === 2 && cite.boss.phases[0].adds[0] === "sandwarrior", "à 66 % : deux armures sortent des rues");
   ok(cite.boss.phases[1].archetype === "enraged", "à 33 % : il change d'archétype");
-  ok(cite.difficultyMult === 2.6, "v3.326.0 (lot C-2) : la Cité remonte à 2,6, calée sur le profil de fin d'acte III");
+  ok(cite.rewardRank === 2.6 && cite.bossTarget.rounds === 17.78, "v3.326.0 (lot C-2) : la Cité calée sur le profil de fin d'acte III (v3.765.0 : cibles, rewardRank 2,6)");
   ok(cite.storyFreeSteps.indexOf("desert_15") >= 0, "l'entrée est offerte pendant l'étape 15");
 
   game = freshCombat("knight");
@@ -9717,7 +9708,7 @@ console.log("\n[121] v3.326.0 — Lot C-2 : enemyPowerMult et recalage des comba
   ok(E.serment_armure.statMult.power === 4 && E.serment_armure.statMult.endurance === 3.5, "serment sous l'armure : 4 / 3,5");
   ok(E.dard_profondeurs.statMult.power === 3.5 && E.dard_profondeurs.statMult.endurance === 3.5, "dard des profondeurs : 3,5 / 3,5 (v3.357.0, réglé sur le héros de campagne)");
   ok(E.ronce_ardente.statMult.power === 1.4 && E.ronce_ardente.statMult.endurance === 2.8, "ronce ardente : 1,4 / 2,8");
-  ok(D.filter(function (d) { return d.id === 1; })[0].difficultyMult === 1.8, "Tanière du Basilic : difficulté 1,8");
+  ok(D.filter(function (d) { return d.id === 1; })[0].rewardRank === 1.8, "Tanière du Basilic : rang de récompense 1,8 (ex-difficulté, v3.765.0)");
   ok(A.aq_story_coeur.target.hit === 0.0407 && A.aq_forest_depths.target.hit === 0.0839, "Cœur et orc de l'étape 15 : cibles (v3.764.0, ex-×2,5 / ×6)");
   ok(A.aq_desert_gouffre.target.rounds === 5.91 && A.aq_desert_nuee.target.rounds === 3.65, "gouffre et nuée : cibles (v3.764.0, ex-PV ×2,4 / ×1,9)");
 })();
@@ -20093,12 +20084,8 @@ console.log("\n[377] v3.562.0 — Difficulté de la Crypte et de la Montagne : e
   try {
     ok(H.byWorld.crypt.exp === 0.75 && H.byWorld.crypt.margin === 1.05 && H.byWorld.mountain.exp === 0.75 && !H.byWorld.desert, "A : Crypte et Montagne seulement (suivi 0,75, marge 5 %)");
     ok(!H.questEnemyByWorld && !H.questBossHpByWorld && typeof Q.applyWorldMult === "undefined", "B : fondu dans les cibles des quêtes (v3.764.0, C1)");
-    // v3.744.0 (Seb 08/11, option C) : élites par monde après la Forge des mondes
-    var EH = g.ELITE_HP_BY_WORLD, EP = g.ELITE_POWER_BY_WORLD, eid = Object.keys(g.ELITE_DB)[0];
-    ok(EH.crypt === 1.2 && EH.mountain === 1.2 && EH.tower === 1.25 && !EH.desert && !EH.ruins && EP.tower === 1.15 && !EP.crypt, "élites : Crypte et Montagne +20 % PV, Tour +25 % PV et +15 % puissance, Désert et Ruines inchangés");
-    var e0 = g.EliteManager.make(eid, "desert", 0), e1 = g.EliteManager.make(eid, "tower", 0);
-    var sv = EH.tower, svp = EP.tower; EH.tower = 1; EP.tower = 1; var e2 = g.EliteManager.make(eid, "tower", 0); EH.tower = sv; EP.tower = svp;
-    ok(e0 && e1 && e2 && e1.maxHp === Math.round(e2.maxHp * 1.25) && e1.stats.power === Math.round(e2.stats.power * 1.15), "élite de la Tour : PV ×1,25 et puissance ×1,15 à la fabrication");
+    // v3.744.0 (Seb 08/11, option C) : élites par monde ; v3.765.0 (C2) : fondues dans les cibles des élites
+    ok(!g.ELITE_HP_BY_WORLD && !g.ELITE_POWER_BY_WORLD && g.ELITE_DB.gardien_qui_repete.target && g.ELITE_DB.pleureuse_nef.target, "élites : bonus par monde fondus dans leurs cibles (v3.765.0)");
     ok(/selfG\.applyTarget\(quest, m\)/.test(fs.readFileSync(path.join(ROOT, "js/systems/quest-enemy-system.js"), "utf8")), "les groupes aussi (cible de la courbe)");
   } catch (err) { ok(false, "[377] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
@@ -23435,8 +23422,8 @@ console.log("\n[461] v3.696.0 — Décisions d'équilibrage (Seb, 05/11 : EQUI-6
     ok(hf && hf.track() === 10, "EQUI-6 : « Le Golem, encore » compte aussi le Golem du Sanctuaire");
     run("game.killCounts = {};");
     // EQUI-10 : Liche des sépulcres et Porte-couronne +15 % de puissance ; la quête du Porte-couronne garde son calage
-    ok(d4.boss.statMult.power === 0.83 && E.porte_couronne.statMult.power === 3.45 && g.ADVENTURE_QUESTS.aq_crypte_couronne.eliteStatMult.power === 2.1,
-      "EQUI-10 : Liche 0,72 → 0,83, Porte-couronne 3 → 3,45, quête « La couronne de trop » à 2,1");
+    ok(!d4.boss.statMult && d4.bossTarget.hit === 0.0593 && E.porte_couronne.statMult.power === 3.45 && g.ADVENTURE_QUESTS.aq_crypte_couronne.eliteStatMult.power === 2.1,
+      "EQUI-10 : Liche (v3.765.0 : en cible, 5,9 % par coup), Porte-couronne 3 → 3,45, quête « La couronne de trop » à 2,1");
     // EQUI-18 : Ruines ×7 (pièce Rare 17 500), les autres mondes et l'Enchanteresse inchangés
     ok(g.EQUIP_SHOP_WORLD_PRICE_MULT.join() === "1,4,7,15,20,30" && g.ENCHANT_WORLD_PRICE_MULT.join() === "1,4,10,25,90,200", "EQUI-18 : grille de l'échoppe 1, 4, 7, 15, 20, 30 ; Enchanteresse inchangée");
     run("fullResetState(); game.playerName='Test'; game.heroId='knight'; game.worldsEverReached = { 0: true, 1: true, 2: true };");
@@ -26381,6 +26368,31 @@ console.log("\n[515] Courbe de référence : cibles des quêtes (v3.764.0, C1, S
     ok(b && b.hp > 0 && b.coup > 0 && Q.baseline(1, 0, null) === b, "ennemi moyen de l'aventure : calculé une fois (cache)");
     ok(g.WorldManager._heroScaleOff === false && !game.cycleCount, "ennemi moyen : l'état du monde est rendu (suivi du héros, Cycles)");
   } catch (err) { ok(false, "[515] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  finally { game = freshCombat("knight"); }
+})();
+
+console.log("\n[516] Courbe de référence : donjons et élites (v3.765.0, C2, Seb 10/11)");
+(function () {
+  try {
+    var D = g.DungeonManager, E = g.EliteManager, okT = function (t) { return t && t.rounds > 0 && t.hit > 0 && t.hit < 1; };
+    ok(g.DUNGEONS.every(function (d) { return okT(d.target) && okT(d.bossTarget) && (!d.eliteWaves || okT(d.eliteTarget)) && !("difficultyMult" in d) && !(d.boss && d.boss.statMult); }), "chaque donjon : target, eliteTarget, bossTarget ; plus de difficultyMult ni de statMult de boss");
+    var d = D.getById(2), keep = game.dungeonRun;
+    var b = D.baseline(d);
+    ok(b.vague && b.elite && b.boss && D._neutre === false && game.dungeonRun === keep, "ennemis moyens neutres d'un donjon : vague, élite, boss ; état rendu");
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight';");
+    D.ensure(); game.dungeonRun = { active: true, dungeonId: 2, wave: 3, level: 1, marks: [] };
+    var w = [].concat(D.buildWaveEnemy(3)), bo = [].concat(D.buildWaveEnemy(16))[0];
+    ok(w.every(function (e) { return e._powRaw === undefined && !("_raw" in e.stats); }) && bo._powRaw === undefined, "aucune valeur de calcul ne reste sur les ennemis");
+    var vit = Math.floor(g.ENEMY_DB[w[0].id].stats.celerity * (1 + 3 / 15 * 0.5) * d.speedMult * 0.65);
+    ok(w[0].stats.celerity === vit, "vitesse : speedMult du donjon (×" + d.speedMult + ")");
+    var R = g.HERO_SCALING_REFS, k0 = R.joueurDesert2, lv = D.levelOf(d, "boss"); R.joueurDesert2 = { dmg: k0.dmg * 2, ehp: k0.ehp * 2 };
+    var lv2 = D.levelOf(d, "boss"); R.joueurDesert2 = k0;
+    ok(lv2.hp > lv.hp && lv2.power > lv.power, "le donjon suit la courbe : héros attendu plus fort, boss plus fort");
+    game.dungeonRun = { active: false };
+    ok(!g.ELITE_HP_BY_WORLD && Object.keys(g.ELITE_DB).filter(function (k) { return g.ELITE_DB[k].target; }).length >= 13, "élites de carte et de quête : cibles (13), bonus par monde retirés");
+    var el = E.make("pleureuse_nef", "crypt", 0), lvE = E.levelOf("pleureuse_nef", "crypt");
+    ok(el && lvE && lvE.hp > 0 && E.levelOf("contremaitre", "ruins") === null, "élite sans cible (vagues de donjon seulement) : inchangée");
+  } catch (err) { ok(false, "[516] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   finally { game = freshCombat("knight"); }
 })();
 

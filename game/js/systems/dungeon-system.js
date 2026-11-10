@@ -260,17 +260,16 @@ var DungeonManager = {
     return h + "h " + m + "m";
   },
 
-  /* Échelle des vagues : formule inchangée (worldScale × rampe × premium × difficultyMult).
+  /* Échelle des vagues (worldScale × rampe × premium) : la forme du donjon, son niveau vient des cibles (v3.765.0).
      Les mondes 2 à 6 seront rebasés sur l'échelle du monde avec leur monde (rapport D-0 §5). */
   getWaveScale: function (dungeon, wave) {
     var isBossWave = wave > DUNGEON_CONFIG.waveCount;
     var worldScale = 1 + Math.max(0, dungeon.worldPower || 0) * 0.6;
     var waveProgress = Math.min(1, wave / DUNGEON_CONFIG.waveCount);
-    // v3.253.0 : les vagues normales suivent le donjon quand il le déclare (wavePremiumMult).
-    var wavePremium = (typeof dungeon.wavePremiumMult === "number") ? dungeon.wavePremiumMult : DUNGEON_CONFIG.basePremiumMult;
-    var premium = isBossWave ? DUNGEON_CONFIG.bossPremiumMult : wavePremium;
-    return worldScale * (1 + waveProgress * DUNGEON_CONFIG.waveRampMult) * premium * Math.max(1, dungeon.difficultyMult || 1)
-      * (window.TowerSystem ? TowerSystem.summitHardMult(dungeon) : 1); // v3.629.0 (Tour, choix « copie ») : le Sommet plus dur
+    // v3.765.0 (C2) : le niveau du donjon vient de ses cibles (applyTargets) ; difficultyMult et wavePremiumMult retirés
+    var premium = isBossWave ? DUNGEON_CONFIG.bossPremiumMult : DUNGEON_CONFIG.basePremiumMult;
+    return worldScale * (1 + waveProgress * DUNGEON_CONFIG.waveRampMult) * premium
+      * (window.TowerSystem && !this._neutre ? TowerSystem.summitHardMult(dungeon) : 1); // v3.629.0 (Tour, choix « copie ») : le Sommet plus dur
   },
 
   /* Élite de données à l'échelle du donjon (doc §4.5) : EliteManager.build calcule
@@ -321,7 +320,6 @@ var DungeonManager = {
        ceux d'un ennemi de vague ordinaire. */
     var scale = this.getWaveScale(dungeon, wave);
     var waveProgress = Math.min(1, wave / DUNGEON_CONFIG.waveCount);
-    var difficultyMult = Math.max(1, (dungeon && dungeon.difficultyMult) || 1);
 
     return spec.members.slice(0, Math.max(0, max)).map(function (id) {
       var data = (window.ENEMY_DB || {})[id];
@@ -342,7 +340,8 @@ var DungeonManager = {
         resists: data.resists || [],
         weak: data.weak || [],
         stats: {
-          power: Math.floor((stats.power || 0) * (1 + waveProgress) * Math.sqrt(difficultyMult) * 0.4),
+          power: Math.floor((stats.power || 0) * (1 + waveProgress) * 0.4),
+          _raw: (stats.power || 0) * (1 + waveProgress) * 0.4,
           endurance: stats.endurance || 0,
           celerity: Math.floor((stats.celerity || 0) * 0.65),
           precision: Math.floor((stats.precision || 0) * 0.75),
@@ -355,6 +354,7 @@ var DungeonManager = {
   // v3.460.0 : toute vague (élite, escorte, boss) passe ici, mise au niveau du run
   buildWaveEnemy: function (wave) {
     var built = this.buildWaveEnemyBase(wave), m = this.getLevelMult(this.getRunLevel()), gm = this.getRunGoldMult();
+    this.applyTargets(built, wave); // v3.765.0 (C2) : niveau de la vague tiré des cibles du donjon
     // v3.472.0 : PV des cartes de halte (Pacte de sang, Rempart ; Autel brisé sur le boss)
     var bh = this.getBoonEnemyHpMult(false), bb = wave > DUNGEON_CONFIG.waveCount ? this.getBoonEnemyHpMult(true) : bh;
     if (m.hp === 1 && m.power === 1 && gm === 1 && bh === 1 && bb === 1) return built;
@@ -367,6 +367,62 @@ var DungeonManager = {
     return built;
   },
 
+  /* v3.765.0 (C2, Seb 10/11) : cibles du donjon dans les unités de la courbe (QuestEnemyManager.courbeRef) :
+     target = vague ordinaire (escortes et groupes compris), eliteTarget = élites des vagues, bossTarget = boss.
+     Niveau = cible × héros attendu à l'étape du donjon ÷ ennemi moyen neutre (baseline). */
+  applyTargets: function (built, wave) {
+    var d = this.getById(game.dungeonRun.dungeonId), self = this;
+    if (!d || this._neutre) return;
+    var nettoie = function () { [].concat(built).forEach(function (e) { if (e) { delete e._powRaw; if (e.stats) delete e.stats._raw; } }); };
+    [].concat(built).forEach(function (e) {
+      if (!e) return;
+      var kind = e.isElite ? "elite" : (wave > DUNGEON_CONFIG.waveCount ? "boss" : "vague");
+      var lv = self.levelOf(d, kind);
+      if (!lv) return;
+      e.hp = e.maxHp = Math.max(1, Math.floor(e.maxHp * lv.hp));
+      var raw = (typeof e._powRaw === "number") ? e._powRaw : (e.stats && typeof e.stats._raw === "number" ? e.stats._raw : (e.stats ? e.stats.power : 0));
+      if (e.stats) e.stats.power = Math.max(1, Math.floor(Number(raw || 0) * lv.power));
+    });
+    nettoie();
+  },
+
+  levelOf: function (d, kind) {
+    var t = kind === "boss" ? d.bossTarget : (kind === "elite" ? d.eliteTarget : d.target);
+    var Q = window.QuestEnemyManager;
+    if (!t || !Q || typeof Q.courbeRef !== "function") return null;
+    var pl = Q.placeOf({ etape: d.requiresStoryStep || d.etape, worldId: d.worldId });
+    var ref = Q.courbeRef(pl.monde, pl.rang, pl.longueur), base = this.baseline(d)[kind];
+    if (!ref || !base || !(base.hp > 0) || !(base.coup > 0)) return null;
+    return { hp: Number(t.rounds) * ref.dmg / base.hp, power: Number(t.hit) * ref.ehp / base.coup };
+  },
+
+  /* Ennemis moyens neutres d'un donjon (niveau 1, sans Marque, sans cible ni Sommet) : vague 1 (moyenne du pool),
+     élites des vagues (moyenne), boss. PV et coup brut (puissance × coef, × boss pour élites et boss). En cache. */
+  baseline: function (d) {
+    var c = (this._baseCache = this._baseCache || {});
+    if (c[d.id]) return c[d.id];
+    var keep = game.dungeonRun, coef = (typeof ENEMY_POWER_DMG_COEF === "number") ? ENEMY_POWER_DMG_COEF : 0.5;
+    var bm = (typeof BOSS_DMG_MULT === "number") ? BOSS_DMG_MULT : 1.5, self = this, out = {};
+    var moy = function (list, boss) {
+      var hp = 0, cp = 0;
+      list.forEach(function (e) { hp += e.maxHp; cp += Number(e.stats.power || 0) * coef * (boss ? bm : 1); });
+      return list.length ? { hp: hp / list.length, coup: cp / list.length } : null;
+    };
+    try {
+      this._neutre = true;
+      game.dungeonRun = { active: true, dungeonId: d.id, wave: 1, level: 1, marks: [] };
+      var pool = Array.isArray(d.enemyPool) && d.enemyPool.length ? d.enemyPool : null, normaux = [];
+      if (pool) { var sauve = d.enemyPool; pool.forEach(function (id) { d.enemyPool = [id]; normaux.push(self.buildWaveEnemyBase(1, true)); }); d.enemyPool = sauve; }
+      else normaux.push(this.buildWaveEnemyBase(1, true));
+      out.vague = moy(normaux, false);
+      var elites = [];
+      Object.keys(d.eliteWaves || {}).forEach(function (w) { var e = [].concat(self.buildEliteWave(d.eliteWaves[w], d, Number(w)) || [])[0]; if (e) elites.push(e); });
+      out.elite = moy(elites, true);
+      out.boss = moy([this.buildWaveEnemyBase(DUNGEON_CONFIG.waveCount + 1, true)], true);
+    } finally { this._neutre = false; game.dungeonRun = keep; }
+    return (c[d.id] = out);
+  },
+
   // noGroup (v3.471.0) : un seul ennemi, même sur une vague de groupe (membres de buildGroupWave)
   buildWaveEnemyBase: function (wave, noGroup) {
     this.ensure();
@@ -374,7 +430,7 @@ var DungeonManager = {
     var isBossWave = wave > DUNGEON_CONFIG.waveCount;
     var scale = this.getWaveScale(dungeon, wave);
     var waveProgress = Math.min(1, wave / DUNGEON_CONFIG.waveCount);
-    var difficultyMult = Math.max(1, dungeon.difficultyMult || 1);
+    var speedMult = Math.max(1, Number(dungeon.speedMult) || 1); // v3.765.0 : vitesse des ennemis du donjon, explicite
     var traque = this.hasRunMark("aff_elite");
     var colossus = this.hasRunMark("aff_colossus");
 
@@ -440,13 +496,15 @@ var DungeonManager = {
       resists: (data && data.resists) || [],
       weak: (data && data.weak) || [],
       stats: {
-        power: Math.floor((stats.power || 0) * statMult.power * (1 + waveProgress) * Math.sqrt(difficultyMult) * damageScale),
+        power: Math.floor((stats.power || 0) * statMult.power * (1 + waveProgress) * damageScale),
         endurance: stats.endurance || 0,
-        celerity: Math.floor((stats.celerity || 0) * (1 + waveProgress * 0.5) * Math.sqrt(difficultyMult) * speedScale),
+        celerity: Math.floor((stats.celerity || 0) * (1 + waveProgress * 0.5) * speedMult * speedScale),
         precision: Math.floor((stats.precision || 0) * (1 + waveProgress * 0.5) * precisionScale),
         will: stats.will || 0
       }
     };
+
+    enemy._powRaw = (stats.power || 0) * statMult.power * (1 + waveProgress) * damageScale; // v3.765.0 : arrondi une seule fois, après la cible
 
     /* Traque : chaque vague normale est une élite GÉNÉRIQUE (isBoss + multiplicateurs relatifs,
        sans archétype). Les élites de données gardent leurs vagues fixes, traitées plus haut. */
@@ -457,6 +515,7 @@ var DungeonManager = {
       enemy.hp = Math.max(1, Math.floor(enemy.hp * (Number(gm.endurance) || 1)));
       enemy.maxHp = enemy.hp;
       enemy.stats.power = Math.max(1, Math.floor(enemy.stats.power * (Number(gm.power) || 1)));
+      enemy._powRaw *= (Number(gm.power) || 1);
     }
 
     return enemy;
@@ -482,6 +541,7 @@ var DungeonManager = {
       var e = this.buildWaveEnemyBase(wave, true);
       e.hp = e.maxHp = Math.max(1, Math.floor(e.maxHp * mult.hp));
       if (e.stats) e.stats.power = Math.max(1, Math.floor((e.stats.power || 0) * mult.power));
+      if (typeof e._powRaw === "number") e._powRaw *= mult.power;
       e.goldReward = Math.max(1, Math.floor((e.goldReward || 0) * mult.hp));
       out.push(e);
     }
@@ -928,7 +988,7 @@ var DungeonManager = {
 
     var runLevel = this.getRunLevel(), beyond = this.getLevelBeyond(tier, runLevel); // v3.461.0 : or au-delà du plafond (N-I)
     var freeRun = !!game.dungeonRun.free, goldMult = this.getRunGoldMult(); // v3.462.0 : ÷ 4 en mode libre (N-H)
-    var worldBonus = (1 + Math.max(0, tier.worldPower || 0) * 0.5 + Math.sqrt(Math.max(1, tier.difficultyMult || 1)) * 0.4) * markMult * goldMult
+    var worldBonus = (1 + Math.max(0, tier.worldPower || 0) * 0.5 + Math.sqrt(Math.max(1, tier.rewardRank || 1)) * 0.4) * markMult * goldMult
       * this.getBoonProduct("endGoldMult"); // v3.472.0 : Pacte de sang
     var goldReward, grantLoot, lootRarity; // v3.358.0 (D7) : l'essence de fin est fondue dans l'or (fullClearGoldBase)
 

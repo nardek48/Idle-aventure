@@ -47,9 +47,9 @@ function refOf(q) {
 function coup(e) { return Number(e.stats.power || 0) * g.ENEMY_POWER_DMG_COEF * (e.isBoss ? g.BOSS_DMG_MULT : 1); }
 function mesure(list, ref) {
   list = [].concat(list).filter(Boolean);
-  var hp = 0, hit = 0, bossy = false;
-  list.forEach(function (e) { hp += Number(e.maxHp || 0); hit = Math.max(hit, coup(e)); if (e.isBoss) bossy = true; });
-  return { n: list.length, hp: hp, coup: hit, rounds: hp / ref.r.dmg, pct: 100 * hit / ref.r.ehp, boss: bossy, nom: list.map(function (e) { return e.name; }).join(" + ") };
+  var hp = 0, hit = 0, bossy = false, vit = 0;
+  list.forEach(function (e) { hp += Number(e.maxHp || 0); hit = Math.max(hit, coup(e)); vit = Math.max(vit, Number((e.stats && e.stats.celerity) || 0)); if (e.isBoss) bossy = true; });
+  return { n: list.length, hp: hp, coup: hit, vit: vit, rounds: hp / ref.r.dmg, pct: 100 * hit / ref.r.ehp, boss: bossy, nom: list.map(function (e) { return e.name; }).join(" + ") };
 }
 
 var COURBE_ORDRE = ["forest", "desert", "ruins", "crypt", "mountain", "tower"];
@@ -116,4 +116,69 @@ if (ARGS.indexOf("--implicite") >= 0) {
     console.log(r.id.padEnd(26) + r.monde.padEnd(9) + String(r.rang).padStart(3) + "  " + r.diff.padEnd(7) + "rounds " + r.T.toFixed(2).padStart(6) + "  coup " + r.h.toFixed(1).padStart(5) + " %" + (r.Tb != null ? "   boss " + r.Tb.toFixed(1).padStart(5) + " r  " + r.hb.toFixed(1).padStart(5) + " %" : ""));
   });
   var oj = arg("--json-implicite", null); if (oj) fs.writeFileSync(oj, JSON.stringify(rows, null, 1));
+}
+
+/* --donjons (C2, relevé) : chaque vague des donjons au niveau 1, sans Marque, en unités de la courbe.
+   Étape du donjon : requiresStoryStep, sinon la première étape du chapitre qui mène à l'onglet Donjon. */
+if (ARGS.indexOf("--donjons") >= 0) {
+  var QE2 = g.QuestEnemyManager, DM = g.DungeonManager;
+  QE2.placeOf({ id: "_amorce" }); // construit la table des étapes
+  var etapeDonjon = function (d) {
+    if (d.requiresStoryStep && QE2._places["step:" + d.requiresStoryStep]) return QE2._places["step:" + d.requiresStoryStep];
+    var sq = null; Object.keys(g.STORY_QUESTS).forEach(function (c) { if (g.STORY_QUESTS[c].worldId === d.worldId) sq = g.STORY_QUESTS[c]; });
+    var st = sq && (sq.steps || []).filter(function (x) { return x.linkTo && x.linkTo.tab === "dungeon"; })[0];
+    return st ? QE2._places["step:" + st.id] : { monde: d.worldId, rang: 10 };
+  };
+  var resume = [];
+  console.log("\nDONJONS — niveau 1, sans Marque ; rounds = PV de la vague ÷ dégâts/round du héros attendu ; coup = % de ses PV effectifs");
+  g.DUNGEONS.forEach(function (d) {
+    var pl = etapeDonjon(d), lg = QE2._longueurs[pl.monde] || 20, ref = QE2.courbeRef(pl.monde, pl.rang, lg);
+    DM.ensure(); g.game.dungeonRun = { active: true, dungeonId: d.id, wave: 1, level: 1, marks: [] };
+    var vagues = [];
+    for (var w = 1; w <= g.DUNGEON_CONFIG.waveCount + 1; w++) {
+      seedRng(11 + w); g.game.dungeonRun.wave = w;
+      var e = DM.buildWaveEnemy(w), m = mesure(e, { r: ref });
+      var kind = w > g.DUNGEON_CONFIG.waveCount ? "boss" : (d.eliteWaves && d.eliteWaves[w] ? "élite" : (d.groupWaves && d.groupWaves[w] ? "groupe" : "vague"));
+      vagues.push({ w: w, kind: kind, m: m });
+    }
+    g.game.dungeonRun = { active: false };
+    var norm = vagues.filter(function (v) { return v.kind === "vague" || v.kind === "groupe"; });
+    var medR = norm.map(function (v) { return v.m.rounds; }).sort(function (a, b) { return a - b; })[Math.floor(norm.length / 2)];
+    var medC = norm.map(function (v) { return v.m.pct; }).sort(function (a, b) { return a - b; })[Math.floor(norm.length / 2)];
+    var tot = norm.reduce(function (s, v) { return s + v.m.rounds; }, 0);
+    console.log("\n" + d.id + " " + (d.key || "").padEnd(9) + " étape " + (pl.monde + ":" + pl.rang).padEnd(12) + " diff ×" + d.difficultyMult + "  — vagues : médiane " + medR.toFixed(1) + " r, " + medC.toFixed(1) + " %  (total " + tot.toFixed(0) + " r)");
+    vagues.forEach(function (v) {
+      if (v.kind === "vague" && v.w !== 1 && v.w !== g.DUNGEON_CONFIG.waveCount) return;
+      console.log("    v" + String(v.w).padStart(2) + " " + v.kind.padEnd(7) + v.m.rounds.toFixed(1).padStart(6) + " r " + v.m.pct.toFixed(1).padStart(6) + " %   " + v.m.nom.slice(0, 60));
+    });
+    resume.push({ id: d.id, key: d.key, monde: pl.monde, rang: pl.rang, vagues: vagues });
+  });
+  var od = arg("--json-donjons", null); if (od) fs.writeFileSync(od, JSON.stringify(resume, null, 1));
+}
+
+/* --elites (C2, relevé) : élites de la carte (niveau 1, sans frein) et élites de quête (eliteKill), escorte comprise. */
+if (ARGS.indexOf("--elites") >= 0) {
+  var EM = g.EliteManager, sortie = [];
+  var avecEscorte = function (eid, worldId, ai, opts) {
+    var e = EM.make(eid, worldId, ai, opts), def = g.ELITE_DB[eid], wi = g.WORLDS.findIndex(function (w) { return w.id === worldId; });
+    var esc = (def && def.escort) ? EM.buildEscort(def.escort, Math.max(0, wi), ai) : [];
+    return [e].concat(esc || []);
+  };
+  Object.keys(g.LIVING_MAPS).forEach(function (mid) {
+    var map = g.LIVING_MAPS[mid];
+    (map.sectors || []).forEach(function (sec) {
+      var c = sec.content || {};
+      if (c.type !== "elite" || !c.eliteId) return;
+      seedRng(5); var l = avecEscorte(c.eliteId, map.worldId, 0, { brakeMult: 1, levelMult: { hp: 1, power: 1, gold: 1 } });
+      sortie.push({ ctx: "carte", id: c.eliteId, monde: map.worldId, m: mesure(l, { r: { dmg: 1, ehp: 1 } }) });
+    });
+  });
+  Object.keys(Q).forEach(function (id) {
+    var q = Q[id]; if (!q.eliteId) return;
+    seedRng(5); var l = avecEscorte(q.eliteId, q.worldId, q.adventureIndex || 0, q.eliteStatMult ? { statMult: q.eliteStatMult } : null);
+    sortie.push({ ctx: "quête " + id, id: q.eliteId, monde: q.worldId, m: mesure(l, { r: { dmg: 1, ehp: 1 } }) });
+  });
+  console.log("\nÉLITES — PV totaux, coup brut maximal, vitesse maximale");
+  sortie.forEach(function (x) { console.log(x.ctx.padEnd(30) + x.id.padEnd(22) + x.monde.padEnd(9) + String(Math.round(x.m.hp)).padStart(8) + String(Math.round(x.m.coup)).padStart(7) + String(x.m.vit).padStart(6) + "   " + x.m.nom.slice(0, 50)); });
+  var oe = arg("--json-elites", null); if (oe) fs.writeFileSync(oe, JSON.stringify(sortie, null, 1));
 }

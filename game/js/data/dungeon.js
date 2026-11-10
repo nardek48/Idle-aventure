@@ -11,7 +11,7 @@ var DUNGEON_CONFIG = {
   ticketResetHours: 24,
 
   /* Multiplicateur par défaut des vagues normales. v3.253.0 : chaque donjon peut le
-     surcharger par wavePremiumMult — la Forêt est passée à 2,8, les autres mondes gardent
+     surcharger par wavePremiumMult (retiré en v3.765.0, fondu dans les cibles) — la Forêt est passée à 2,8, les autres mondes gardent
      1,3 en attendant leur propre chantier d'équilibrage. */
   basePremiumMult: 1.3,
   waveRampMult: 1,
@@ -65,7 +65,8 @@ var DUNGEON_CONFIG = {
 
    worldRequired      index du monde à avoir atteint (plus haut jamais atteint, worldsEverReached)
    worldPower         échelle des vagues et pool d'ennemis (mondes 0..worldPower), inchangé
-   difficultyMult     réglé au banc pour chaque donjon ouvert (Tanière à l'Ossuaire), sur les cibles de
+   difficultyMult     (v3.765.0 : retiré ; rewardRank pour les récompenses, speedMult pour la vitesse, target / eliteTarget /
+                      bossTarget pour la force, dans les unités de la courbe) réglé au banc (Tanière à l'Ossuaire), sur les cibles de
                       l'Histoire ; l'écart entre mondes est voulu (point 6 du bilan, clos le 24/10/2026).
                       Gueule du volcan réglée au banc avec la Montagne (audit P1) ; Sommet, fermé : à régler quand la Tour ouvrira
    eliteWaves         vague -> id de ELITE_DB ; null tant que le monde n'a pas ses élites
@@ -80,7 +81,9 @@ var DUNGEONS = [
        deux élites : Basilic 100 %, 42-53 rounds, 48-52 % de PV, 0,3-0,7 potion. Objectif de
        l'étape 13 (5 vagues sous une Marque) tenu à 100 % même en vitrine. ATTENTION : sans arme
        unique ni équivalent (vitrine seule), le run complet tombe à 0 % dès 1,4. */
-    worldId: "forest", worldRequired: 0, worldPower: 0, difficultyMult: 1.8,
+    worldId: "forest", worldRequired: 0, worldPower: 0, rewardRank: 1.8, speedMult: 1.3416, // v3.765.0 (C2) : ex-difficultyMult 1,8 (récompenses ; vitesse = √)
+    target: { rounds: 0.99, hit: 0.0083 }, eliteTarget: { rounds: 4.2, hit: 0.039 }, bossTarget: { rounds: 12.33, hit: 0.047 }, // cibles de la courbe (C2)
+    etape: "forest_13", // étape de la courbe (la Tanière n'a pas de requiresStoryStep)
     /* v3.253.0 (retour de jeu de Seb : « le donjon un peu facile »). Les vagues faisaient
        37 à 54 PV quand un ennemi de farm de la Forêt en fait 109 à 140 : elles valaient un
        tiers d'un combat ordinaire, tombaient en un ou deux rounds et n'usaient rien. Le boss
@@ -92,7 +95,6 @@ var DUNGEONS = [
        servent enfin, et les Marques restent jouables.
        v3.438.0 : 2,8 -> 3,2 avec le pool fixe ci-dessous (plafond-bench, profil foret :
        42-48 % de PV, 0,6 à 1,9 potion, 100 % de réussite). */
-    wavePremiumMult: 3.2,
     maxRarity: "common",
     /* v3.460.0 (N-A) : au niveau dit, le butin devient celui du donjon visé (rareté et monde),
        s'il est débloqué. Niveaux mesurés au lot 0 : celui où ce donjon devient aussi dur que l'autre. */
@@ -119,7 +121,7 @@ var DUNGEONS = [
        sinon les renforts allongeraient le combat et multiplieraient les soins. */
     boss: {
       baseId: "slimeking", name: "Basilic", archetype: "corrupted",
-      statMult: { endurance: 1.8, power: 1.2 }, image: "./images/Boss/basilic.webp", // v3.742.0 (boss courts V3) : PV ×1,5, puissance ×0,8
+      image: "./images/Boss/basilic.webp", // v3.742.0 (boss courts V3) : PV ×1,5, puissance ×0,8
       unique: { id: "ecailles_basilic", slot: "armor", name: "Écailles du Basilic", icon: "armor", power: "dun_mue" }, // v3.470.0
       phases: [
         /* Seb parlait de serpents : il n'y en a pas au bestiaire. On prend l'araignée,
@@ -159,7 +161,8 @@ var DUNGEONS = [
        sim/plafond-bench.js, fin d'acte III (Mar) : sphinx 75 / 95 / 95 %, 53-66 rounds, 1,1-1,9
        potion. Début d'acte III : vague 5 passée à 100 % (objectif de l'étape 12), sphinx 0 %.
        Le Chevalier reste en retrait : chantier des arbres de talents par classe. */
-    worldId: "desert", worldRequired: 1, worldPower: 1, difficultyMult: 2.6,
+    worldId: "desert", worldRequired: 1, worldPower: 1, rewardRank: 2.6, speedMult: 1.6125, // v3.765.0 (C2) : ex-difficultyMult 2,6 (récompenses ; vitesse = √)
+    target: { rounds: 1.6, hit: 0.0067 }, eliteTarget: { rounds: 10.36, hit: 0.0709 }, bossTarget: { rounds: 17.78, hit: 0.0571 }, // cibles de la courbe (C2)
     maxRarity: "green",
     /* v3.460.0 (N-A) : au niveau dit, le butin devient celui du donjon visé (rareté et monde),
        s'il est débloqué. Niveaux mesurés au lot 0 : celui où ce donjon devient aussi dur que l'autre. */
@@ -192,7 +195,7 @@ var DUNGEONS = [
          ses deux potions, Rôdeur et Mage 100 % pour 0,6 à 0,9. Multiplicateurs sous 1 parce
          que la base est déjà un boss (104 d'endurance) : on ne le gonfle pas, on l'aiguise.
          L'écart entre classes sur un run long est un chantier à part (voir le changelog). */
-      statMult: { endurance: 1.2, power: 1.28 }, image: null, // v3.742.0 (boss courts V3) : PV ×1,5, puissance ×0,8
+      image: null, // v3.742.0 (boss courts V3) : PV ×1,5, puissance ×0,8
       unique: { id: "amulette_enigme", slot: "amulet", name: "Amulette de l'énigme", icon: "amulet", power: "dun_enigme" }, // v3.470.0
       phases: [
         { atPct: 0.75, adds: ["sandwarrior", "sandwarrior"], addsHpMult: 0.18, addsPowerMult: 0.5,
@@ -212,7 +215,8 @@ var DUNGEONS = [
   {
     id: 3, key: "ruins",
     name: "Sanctuaire scellé",
-    worldId: "ruins", worldRequired: 2, worldPower: 2, difficultyMult: 6,
+    worldId: "ruins", worldRequired: 2, worldPower: 2, rewardRank: 6, speedMult: 2.4495, // v3.765.0 (C2) : ex-difficultyMult 6 (récompenses ; vitesse = √)
+    target: { rounds: 1.68, hit: 0.0109 }, eliteTarget: { rounds: 9.92, hit: 0.0706 }, bossTarget: { rounds: 15.87, hit: 0.0276 }, // cibles de la courbe (C2)
     maxRarity: "rare",
     /* v3.460.0 (N-A) : au niveau dit, le butin devient celui du donjon visé (rareté et monde),
        s'il est débloqué. Niveaux mesurés au lot 0 : celui où ce donjon devient aussi dur que l'autre. */
@@ -242,7 +246,7 @@ var DUNGEONS = [
     boss: { baseId: "skeletonlord", name: "Varrek, le Garde scellé", archetype: "enraged", rises: true,
       riseLine: "Varrek se relève. Personne ne lui a dit de rester à terre.",
       unique: { id: "bottes_garde", slot: "boots", name: "Bottes du Garde scellé", icon: "bottes", power: "dun_garde" }, // v3.470.0
-      statMult: { endurance: 0.9, power: 0.46 }, image: "./images/Boss/varrek.webp", // v3.742.0 (boss courts V3) : PV ×1,5, puissance ×0,8
+      image: "./images/Boss/varrek.webp", // v3.742.0 (boss courts V3) : PV ×1,5, puissance ×0,8
       phases: [{ atPct: 0.5, archetype: "armored", label: "il ferme sa garde", line: "Varrek lève son écu scellé. Les coups glissent." }] },
     /* v3.429.2 : fermé dès l'arrivée aux Ruines, faute de contenu. v3.430.0 : verrou d'Histoire,
        comme la Cité — il s'ouvre à ruines_12 ; entrée offerte pendant les étapes 12 et 15. */
@@ -255,7 +259,8 @@ var DUNGEONS = [
   {
     id: 4, key: "crypt",
     name: "Ossuaire",
-    worldId: "crypt", worldRequired: 3, worldPower: 3, difficultyMult: 14,
+    worldId: "crypt", worldRequired: 3, worldPower: 3, rewardRank: 14, speedMult: 3.7417, // v3.765.0 (C2) : ex-difficultyMult 14 (récompenses ; vitesse = √)
+    target: { rounds: 1.28, hit: 0.0124 }, eliteTarget: { rounds: 7.99, hit: 0.0963 }, bossTarget: { rounds: 12.94, hit: 0.0593 }, // cibles de la courbe (C2)
     maxRarity: "epic",
     // v3.455.0 (Crypte, acte III) : la Cire de sépulcre en fin de run
     specialResourceId: "cire_sepulcre", specialResourceAmount: 3,
@@ -275,7 +280,7 @@ var DUNGEONS = [
        60 % elle les réveille tous ; 30 % demi-sommeil, 2 rounds sans frapper, elle se soigne.
        Portrait propre (liche_sepulcres.webp, distinct de celui du Nécromancien). Au banc. */
     boss: { baseId: "necrosupreme", name: "Liche des sépulcres", archetype: "corrupted",
-      statMult: { endurance: 0.82, power: 0.83 }, image: "./images/Boss/liche_sepulcres.webp", // v3.696.0 : puissance 0,83 ; v3.746.0 : +15 % de v3.743 retiré (Rôdeur 40 → 65 %, crypte-acte3-bench)
+      image: "./images/Boss/liche_sepulcres.webp", // v3.696.0 : puissance 0,83 ; v3.746.0 : +15 % de v3.743 retiré (Rôdeur 40 → 65 %, crypte-acte3-bench)
       unique: { id: "gants_fossoyeur", slot: "gloves", name: "Gants du fossoyeur", icon: "gants", power: "dun_sepulcre" }, // v3.470.0
       phases: [
         { atPct: 0.8, sleepAdds: ["spectre", "wraith"], addsHpMult: 0.18, addsPowerMult: 0.5, label: "elle couche deux morts à ses pieds" },
@@ -293,7 +298,8 @@ var DUNGEONS = [
   {
     id: 5, key: "mountain",
     name: "Gueule du volcan",
-    worldId: "mountain", worldRequired: 4, worldPower: 4, difficultyMult: 38, // H1 (R1) : 22 → 30 ; audit P1 (26/10) : 30 → 38, combats plus longs (Wyrm à l'acte III, entraînement 170)
+    worldId: "mountain", worldRequired: 4, worldPower: 4, rewardRank: 38, speedMult: 6.1644, // v3.765.0 (C2) : ex-difficultyMult 38 (récompenses ; vitesse = √)
+    target: { rounds: 1.53, hit: 0.0183 }, eliteTarget: { rounds: 8.44, hit: 0.1034 }, bossTarget: { rounds: 17.71, hit: 0.0646 }, // cibles de la courbe (C2) // H1 (R1) : 22 → 30 ; audit P1 (26/10) : 30 → 38, combats plus longs (Wyrm à l'acte III, entraînement 170)
     maxRarity: "epic", // le légendaire ne tombe qu'à la Tour (décision 12.1)
     // v3.490.0 (Montagne, acte III) : la Cendre vive en fin de run ; une veine à chaque vague (vein-system)
     specialResourceId: "cendre_vive", specialResourceAmount: 3,
@@ -312,7 +318,7 @@ var DUNGEONS = [
        Banc (montagne-acte3-bench, sauvegardes de campagne, 8-10 runs) : à 1 / 1, 0 / 100 / 0 % (Ch. / Rô. / Ma.) ;
        0,8 / 0,7 -> 63 / 100 / 63 % ; 0,75 / 0,62 -> 90 / 100 / 100 %. Retenu entre les deux. */
     boss: { baseId: "ancientdragon", name: "Wyrm de cendres", archetype: "enraged",
-      statMult: { endurance: 1.08, power: 0.66 }, image: "./images/Boss/wyrm_cendres.webp", // audit P1 : 0,78 → 0,94 ; v3.743.0 (Forge des mondes) : 0,94 → 1,08 (+15 %)
+      image: "./images/Boss/wyrm_cendres.webp", // audit P1 : 0,78 → 0,94 ; v3.743.0 (Forge des mondes) : 0,94 → 1,08 (+15 %)
       unique: { id: "heaume_wyrm", slot: "helmet", name: "Heaume du Wyrm", icon: "casque", power: "dun_braise" },
       phases: [
         { atPct: 0.6, heat: 2, label: "il secoue le lac" },
@@ -328,7 +334,8 @@ var DUNGEONS = [
   {
     id: 6, key: "tower",
     name: "Sommet interdit",
-    worldId: "tower", worldRequired: 5, worldPower: 5, difficultyMult: 70, // v3.629.0 : mesuré au banc (Chevalier 42 % de PV en fin, Mage 73 %)
+    worldId: "tower", worldRequired: 5, worldPower: 5, rewardRank: 70, speedMult: 8.3666, // v3.765.0 (C2) : ex-difficultyMult 70 (récompenses ; vitesse = √)
+    target: { rounds: 1, hit: 0.0164 }, eliteTarget: { rounds: 1.7, hit: 0.0872 }, bossTarget: { rounds: 5.01, hit: 0.0607 }, // cibles de la courbe (C2) // v3.629.0 : mesuré au banc (Chevalier 42 % de PV en fin, Mage 73 %)
     maxRarity: "legendary",
     icon: "images/Dungeons/Icone_base/palier6.webp", banner: null, combatMap: "../images/Maps/tower-combat.webp",
     desc: "Le sommet de la Tour, et ce qui s'y reflète.",
@@ -342,7 +349,7 @@ var DUNGEONS = [
     haltSlots: [4, 11, 13],
     camp: { afterWave: 8, healPct: 0.4, stoneAmount: 2, storyFlag: "sommetCamp" },
     /* LE REFLET (TW6) : base Archimage, il garde ta dernière technique (TowerSystem.isMirror : -25 % si tu la répètes). */
-    boss: { baseId: "archmage", name: "Le Reflet", archetype: "vampiric", statMult: { endurance: 0.58, power: 0.6 }, image: "./images/Boss/reflet.webp" }, // v3.743.0 (Forge des mondes) : endurance 0,5 → 0,58 (+15 %)
+    boss: { baseId: "archmage", name: "Le Reflet", archetype: "vampiric", image: "./images/Boss/reflet.webp" }, // v3.743.0 (Forge des mondes) : endurance 0,5 → 0,58 (+15 %)
     locked: false,
     requiresStoryStep: "tour_11",
     storyChapterId: "tower",
