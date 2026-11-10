@@ -32,7 +32,7 @@ p { margin: 0; }
 .notes ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
 
 /* ---------- Téléphone ---------- */
-.tel-box { width: min(390px, 100%); margin: 0 auto; }
+.tel-box { width: min(390px, 100%); max-width: 100%; margin: 0 auto; overflow: hidden; border-radius: 26px; }
 .tel { position: relative; width: 390px; height: 844px; transform-origin: 0 0; border-radius: 26px; overflow: hidden; border: 1px solid var(--trait); background: #000 center top / 390px 844px no-repeat; }
 /* Éclairage : un trou arrondi, tout le reste voilé (box-shadow géante) */
 .spot { position: absolute; border-radius: 14px; box-shadow: 0 0 0 2000px rgba(8, 5, 2, .72); transition: all .35s ease; pointer-events: auto; cursor: pointer; }
@@ -73,7 +73,7 @@ p { margin: 0; }
       <button type="button" id="t-village" data-v="village" aria-pressed="false">Village et production</button>
     </div></div>
     <div class="ctl"><span>Bulle</span><div class="seg" data-k="bulle">
-      <button type="button" id="b-a" data-v="a" aria-pressed="true">A · Parchemin du kit</button>
+      <button type="button" id="b-a" data-v="a" aria-pressed="true">A · Parchemin du kit (choisi)</button>
       <button type="button" id="b-b" data-v="b" aria-pressed="false">B · Bande sombre compacte</button>
     </div></div>
     <div class="ctl"><span>Avancer</span><div class="seg" data-k="avance">
@@ -153,7 +153,12 @@ document.querySelectorAll(".seg").forEach(function (seg) {
   });
 });
 /* Téléphone à l'échelle sous 390 px de large */
-function fit() { var box = document.getElementById("tel-box"), tel = document.getElementById("tel"), k = Math.min(1, box.clientWidth / 390); tel.style.transform = "scale(" + k + ")"; box.style.height = (844 * k) + "px"; }
-window.addEventListener("resize", fit); fit();
+function fit() {   // largeur réelle de la page, moins les gouttières : relue après chargement (iPhone)
+  var box = document.getElementById("tel-box"), tel = document.getElementById("tel");
+  var avail = Math.min(box.getBoundingClientRect().width || 390, (document.documentElement.clientWidth || window.innerWidth || 390) - 32);
+  var k = Math.min(1, Math.max(0.5, avail / 390));
+  tel.style.transform = "scale(" + k + ")"; box.style.height = (844 * k) + "px"; box.style.width = (390 * k) + "px";
+}
+window.addEventListener("resize", fit); window.addEventListener("load", fit); fit(); setTimeout(fit, 300);
 render();
 </script>
