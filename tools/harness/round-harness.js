@@ -23570,7 +23570,7 @@ console.log("\n[463] v3.698.0 — Décisions Dragon ancien, pronostic de mission
     var trois = ["slime", "goblin", "spider"].map(function (id) { return { id: id, isBoss: false, maxHp: id === "slime" ? 30 : 60, hp: 1, name: id, stats: { power: id === "spider" ? 9 : 3 } }; });
     var moy = CF.averageEnemy(trois);
     ok(moy.maxHp === 50 && moy.stats.power === 5 && moy.name === null && CF.averageEnemy([trois[0]]) === trois[0], "PRONO-MISSION : ennemi moyen de la réserve (PV 50, puissance 5, sans nom annoncé)");
-    ok(g.FORECAST_CLASS_DMG_MULT.knight === 0.75, "PRONO-MISSION : coefficient du Chevalier recalé à 0,75");
+    ok(g.FORECAST_CLASS_DMG_MULT.knight === 0.72, "PRONO-MISSION : rendement du Chevalier mesuré (0,75 en v3.700.0, 0,72 en v3.768.0)");
 
     // BESTIAIRE-GOLEM : une fiche, trois compteurs additionnés, aucun compteur touché
     game = freshCombat("knight");
@@ -23681,10 +23681,10 @@ console.log("\n[465] v3.700.0 — Mage face au Dragon, pronostic du Mage, faible
     var pm = {}; ["knight", "ranger", "mage"].forEach(function (c) { game = freshCombat(c); pm[c] = JSON.stringify(QE.levelOf(qd, true)); });
     ok(pm.knight === pm.ranger && pm.ranger === pm.mage, "MAGE-DRAGON : le Dragon est le même pour les trois classes");
     // PRONO-MAGE : coefficient propre au Mage, Chevalier inchangé, Rôdeur sans coefficient
-    ok(g.FORECAST_CLASS_DMG_MULT.mage === 0.9 && g.FORECAST_CLASS_DMG_MULT.knight === 0.75 && g.FORECAST_CLASS_DMG_MULT.ranger === undefined, "PRONO-MAGE : Mage 0,9, Chevalier 0,75, Rôdeur 1");
+    ok(g.FORECAST_CLASS_DMG_MULT.mage === 0.81 && g.FORECAST_CLASS_DMG_MULT.knight === 0.72 && g.FORECAST_CLASS_DMG_MULT.archer === 0.67, "rendement du kit mesuré pour les trois classes (v3.768.0) : Chevalier 0,72, Rôdeur 0,67, Mage 0,81");
     game = freshCombat("mage"); giveWeapon();
     var brut = g.CombatForecast.getHeroDamagePerRound(), prono = g.CombatForecast.getForecastHeroDamage();
-    ok(near(prono, Math.max(1, brut * 0.9)), "PRONO-MAGE : dégâts du Mage dans le pronostic ×0,9 (" + Math.round(brut) + " → " + Math.round(prono) + ")");
+    ok(near(prono, Math.max(1, brut * 0.81)), "PRONO-MAGE : dégâts du Mage dans le pronostic ×0,81 (" + Math.round(brut) + " → " + Math.round(prono) + ")");
 
     // FAIBLESSES : « Résiste / Faible » pour les ennemis ordinaires seulement
     var lignes = function (id) { return g.bestiaryAffinityLines(g.bestiaryData(id)); };
