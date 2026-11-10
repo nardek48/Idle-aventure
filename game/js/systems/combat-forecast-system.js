@@ -156,14 +156,8 @@ var CombatForecast = {
     var bw = (cfg.byWorld && wid && cfg.byWorld[wid]) || {};
     var margin = Number(bw.margin || cfg.margin || 1), exp = Number(bw.exp != null ? bw.exp : (cfg.exp || 0)), cap = Number(bw.cap || cfg.cap || 1);
     var f = function (ratio) { return Math.min(cap, Math.max(1, Math.pow(Math.max(0, ratio) / margin, exp))); };
-    /* v3.448.7 : PV effectifs ramenés au gabarit de la classe (cfg.classEhpGabarit) : le Chevalier encaisse
-       mieux par nature, il n'est plus frappé plus fort pour cela (décision de Seb du 12/10, option B). */
-    var cls = (cfg.classEhpGabarit && typeof getClassByHeroId === "function") ? getClassByHeroId(game.heroId) : null;
-    var gab = (cls && Number(cfg.classEhpGabarit[cls.id])) || 1;
-    // v3.731.0 (Seb 06/11) : gabarit de puissance seule (cfg.classPowerGabarit, Mage 1,2), à part de classEhpGabarit
-    var pg = (cfg.classPowerGabarit && typeof getClassByHeroId === "function") ? getClassByHeroId(game.heroId) : null;
-    gab *= (pg && Number(cfg.classPowerGabarit[pg.id])) || 1;
-    return { hp: f(this.getHeroDamagePerRound() / ref.dmg), power: f(this.getHeroEffectiveHp() / gab / ref.ehp) };
+    // v3.763.0 : plus de gabarit de classe ici, l'équilibre des classes vit dans data/classes.js (balance)
+    return { hp: f(this.getHeroDamagePerRound() / ref.dmg), power: f(this.getHeroEffectiveHp() / ref.ehp) };
   },
 
   /* Soin disponible pendant le combat : les potions de soin en stock, dans la limite du cap
@@ -207,7 +201,8 @@ var CombatForecast = {
     var fleau = (this._markMods && this._markMods.enemyMult) || 1; // v3.429.16 : Fléau, appliqué par le moteur à chaque coup
     var raw = Math.max(1, Number(enemy.stats.power || 0) * coef * bossMult * fleau);
     var def = Math.min(0.9, Number(game.heroDefensePct || 0));
-    return Math.max(1, raw * (1 - def));
+    var recu = (typeof getHeroClassBalance === "function") ? getHeroClassBalance("damageTakenMult") : 1; // v3.763.0 : comme le moteur
+    return Math.max(1, raw * (1 - def) * recu);
   },
 
   /* v3.523.0 : facteur d'archétype d'une élite évaluée (FORECAST_ELITE_DMG_MULT), 1 sinon. */

@@ -1000,7 +1000,6 @@ var ADVENTURE_QUESTS = {
     // 1,8 / 0,75 -> 100 / 100 / 50 % ; 1,6 / 0,65 -> 100 / 100 / 80 %. Retenu entre les deux, pour le Mage.
     bossHpMult: 2.6, // audit P1 : 3,5 ; DRAGON-V2 (Seb, 05/11, option A) : → 2,6
     bossPowerMult: 0.7, // lot 6 : 0,94 ; DRAGON-V2 (Seb, 05/11) : → 0,70, sort Rôdeur et Mage du mur
-    classPowerMult: { mage: 0.8 }, // MAGE-DRAGON (Seb, 05/11, option A) : le Mage encaisse 150 PV/coup contre ~80 ; ×0,8 sur rencontres et Dragon
     bossPhases: [
       { atPct: 1, sorts: true, label: "il regarde vos mains", line: "Ses yeux passent sur chacun, et s'arrêtent sur les mains." },
       { atPct: 0.75, heat: 1, label: "la roche chauffe", line: "Sous lui, les veines battent plus vite." },

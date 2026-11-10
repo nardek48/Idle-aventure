@@ -15220,13 +15220,14 @@ console.log("\n[231] v3.448.7 — Ajustement au héros : gabarit de PV effectifs
 (function () {
   var CF = g.CombatForecast, d0 = CF.getHeroDamagePerRound, e0 = CF.getHeroEffectiveHp, h0 = game.heroId;
   try {
-    ok(g.WORLD_HERO_SCALING.classEhpGabarit && g.WORLD_HERO_SCALING.classEhpGabarit.knight === 1.3, "gabarit du Chevalier : 1,3");
+    // v3.763.0 : gabarits retirés, l'équilibre des classes vit dans data/classes.js (balance.damageTakenMult)
+    ok(!("classEhpGabarit" in g.WORLD_HERO_SCALING) && !("classPowerGabarit" in g.WORLD_HERO_SCALING), "plus de gabarit de classe dans WORLD_HERO_SCALING (v3.763.0)");
     CF.getHeroDamagePerRound = function () { return 300; }; CF.getHeroEffectiveHp = function () { return 1500; };
     var heroDe = function (cid) { var c = null; g.CLASSES.forEach(function (k) { if (k.id === cid) c = k; }); return c.heroIds[0]; };
     game.heroId = heroDe("knight"); var k = CF.getHeroScale("joueurDesert2", g.WORLD_HERO_SCALING);
-    game.heroId = heroDe("archer"); var m = CF.getHeroScale("joueurDesert2", g.WORLD_HERO_SCALING); // v3.731.0 : Rôdeur (le Mage a son gabarit de puissance, [492])
+    game.heroId = heroDe("archer"); var m = CF.getHeroScale("joueurDesert2", g.WORLD_HERO_SCALING);
     ok(Math.abs(m.power - Math.sqrt(1500 / 971 / 1.15)) < 1e-9, "Rôdeur : puissance × (PV eff. / réf. / 1,15)^0,5 (×" + m.power.toFixed(3) + ")");
-    ok(Math.abs(k.power - Math.max(1, Math.sqrt(1500 / 1.3 / 971 / 1.15))) < 1e-9 && k.power < m.power, "Chevalier : mêmes PV effectifs, puissance ramenée au gabarit (×" + k.power.toFixed(3) + ")");
+    ok(k.power === m.power, "Chevalier : mêmes PV effectifs, même puissance (×" + k.power.toFixed(3) + ")");
     ok(k.hp === m.hp, "la part « PV des ennemis » ne dépend pas de la classe");
     game.heroId = heroDe("knight"); var pa = CF.getHeroScale("joueurDesert2", { exp: 0.5, margin: 1.15, cap: 2.5 });
     ok(pa.power === m.power, "sans classEhpGabarit (Petites Aventures, Labyrinthe), rien ne change");
@@ -16101,19 +16102,17 @@ console.log("\n[251] v3.457.1 — Boss de donjon comptés à part au Bestiaire ;
   }
 })();
 
-console.log("\n[252] v3.457.2 — Gabarit du Chevalier sur les quêtes à multiplicateur fixe");
+console.log("\n[252] v3.457.2 → v3.763.0 — Quêtes à multiplicateur fixe : mêmes ennemis pour les trois classes");
 (function () {
   try {
     var Q = g.QuestEnemyManager, A = g.ADVENTURE_QUESTS;
     run("fullResetState(); game.playerName='Test'; game.heroId='knight';");
-    ok(Q.getClassGabarit() === 1.3 && Math.abs(Q.getPowerMult(A.aq_forest_depths) - 6 / 1.3) < 1e-9, "Chevalier : le Cœur de la Forêt à ×6 ÷ 1,3");
-    ok(Math.abs(Q.getPowerMult(A.aq_crypte_retient, true) - A.aq_crypte_retient.bossPowerMult / 1.3) < 1e-9, "Chevalier : bossPowerMult divisé aussi");
-    ok(Q.getPowerMult(A.aq_desert_trone) === A.aq_desert_trone.enemyPowerMult, "quête à heroRef (Trône) : pas de second gabarit");
+    ok(Q.getPowerMult(A.aq_forest_depths) === 6 && Q.getPowerMult(A.aq_crypte_retient, true) === A.aq_crypte_retient.bossPowerMult, "Chevalier : ×6 et bossPowerMult tels quels (v3.763.0 : plus de ÷1,3 côté ennemis)");
+    ok(Q.getPowerMult(A.aq_desert_trone) === A.aq_desert_trone.enemyPowerMult, "quête à heroRef (Trône) : multiplicateur tel quel");
     ok(Q.getPowerMult(A.aq_story_premier_sang) === 1, "quête sans multiplicateur : ×1");
-    run("game.heroId='ranger';");
-    ok(Q.getClassGabarit() === 1 && Q.getPowerMult(A.aq_forest_depths) === 6, "Rôdeur : ×6 inchangé");
+    run("game.heroId='ranger';"); var r6 = Q.getPowerMult(A.aq_forest_depths);
     run("game.heroId='mage';");
-    ok(Q.getPowerMult(A.aq_forest_depths) === 6, "Mage : ×6 inchangé");
+    ok(r6 === 6 && Q.getPowerMult(A.aq_forest_depths) === 6, "Rôdeur et Mage : ×6, comme le Chevalier");
   } catch (err) {
     ok(false, "[252] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
@@ -19419,7 +19418,7 @@ console.log("\n[344] v3.524.0 — « Deux frappes ! » qui compte (audit COM-6, 
     game.enemy.engageIn = 0; game.enemy.chargeIn = 99; game.enemy.stats.celerity = 60; game.enemy.gauge = 60; game.heroDefensePct = 0;
     game.enemy.archetype = null; game.heroHp = game.heroMaxHp = 100000; game.enemy.stats.power = 100;
     ok(CE.enemyDoubleStrikeNext() === true && g.evaluateGrimoireCondition("enemyAttackIncoming", g.ClassCombatManager.getGrimoireCombatContext()) === true && CE.enemyDoubleStrikeDangerous() === false && CE.shouldStopContinueAttack() === false, "jauge pleine, deux frappes légères : ni puce ni arrêt de « Continuer l'attaque » (la condition Grimoire reste vraie)");
-    game.heroHp = game.heroMaxHp = 400; // PV pleins : seul l'arrêt de la double frappe peut jouer (revue)
+    game.heroHp = game.heroMaxHp = 300; // PV pleins : seul l'arrêt (v3.763.0 : 300, le Chevalier reçoit ×0,77)
     ok(CE.enemyDoubleStrikeDangerous() === true && CE.shouldStopContinueAttack() === true, "deux frappes ≥ 20 % des PV : la puce s'allume et « Continuer l'attaque » s'arrête");
     game.enemy.chargeTelegraphed = true;
     ok(CE.enemyDoubleStrikeDangerous() === false, "une charge annoncée remplace la frappe : pas de puce « Deux frappes ! » en plus");
@@ -23727,22 +23726,11 @@ console.log("\n[464] v3.699.0 — Code et documents : chasses retirées, ensure*
 console.log("\n[465] v3.700.0 — Mage face au Dragon, pronostic du Mage, faiblesses des boss et élites, ensure* du Camp (Seb, 05/11, option A)");
 (function () {
   try {
-    // MAGE-DRAGON : ×0,8 sur les ennemis de la quête du Dragon, face au Mage seulement
-    var QE = g.QuestEnemyManager, qd = g.ADVENTURE_QUESTS.aq_montagne_dragon, qa = g.ADVENTURE_QUESTS.aq_montagne_tries;
-    ok(qd.classPowerMult && qd.classPowerMult.mage === 0.8 && !qd.classPowerMult.knight && !qd.classPowerMult.ranger, "MAGE-DRAGON : réglage par classe lisible dans la quête (mage 0,8)");
-    var pm = {};
-    ["knight", "ranger", "mage"].forEach(function (c) { game = freshCombat(c); pm[c] = { b: QE.getPowerMult(qd, true), e: QE.getPowerMult(qd, false), g: QE.getClassGabarit(), a: qa ? QE.getPowerMult(qa, false) : 1 }; });
-    var near = function (a, b) { return Math.abs(a - b) < 1e-9; };
-    ok(near(pm.mage.b, 0.7 / pm.mage.g * 0.8) && near(pm.mage.e, 7 / pm.mage.g * 0.8), "MAGE-DRAGON : Dragon et rencontres ×0,8 face au Mage (" + pm.mage.b.toFixed(3) + " / " + pm.mage.e.toFixed(3) + ")");
-    ok(near(pm.knight.b, 0.7 / pm.knight.g) && near(pm.ranger.b, 0.7 / pm.ranger.g) && near(pm.ranger.e, 7 / pm.ranger.g), "MAGE-DRAGON : Chevalier et Rôdeur inchangés");
-    ok(!qa || near(pm.mage.a * pm.mage.g, pm.ranger.a * pm.ranger.g), "MAGE-DRAGON : les autres quêtes ne bougent pas pour le Mage");
-    game = freshCombat("mage");
-    var cpm = qd.classPowerMult, en1, en2;
-    try { qd.classPowerMult = { mage: 1 }; en1 = QE.spawnFor(qd, true); } finally { qd.classPowerMult = cpm; }
-    en2 = QE.spawnFor(qd, true);
-    var rp = en1 && en2 ? en2.stats.power / en1.stats.power : 0;
-    ok(en2 && en2.isBoss && rp > 0.79 && rp < 0.81, "MAGE-DRAGON : le Dragon apparu face au Mage frappe ×0,8 (" + (en1 && en1.stats.power) + " → " + (en2 && en2.stats.power) + ")");
-
+    // MAGE-DRAGON (v3.763.0) : l'exception du Dragon est fondue dans balance.damageTakenMult du Mage (data/classes.js)
+    var QE = g.QuestEnemyManager, qd = g.ADVENTURE_QUESTS.aq_montagne_dragon, near = function (a, b) { return Math.abs(a - b) < 1e-9; };
+    ok(!qd.classPowerMult, "MAGE-DRAGON : plus de réglage par classe dans la quête (v3.763.0)");
+    var pm = {}; ["knight", "ranger", "mage"].forEach(function (c) { game = freshCombat(c); pm[c] = QE.getPowerMult(qd, true); });
+    ok(pm.knight === 0.7 && pm.ranger === 0.7 && pm.mage === 0.7, "MAGE-DRAGON : le Dragon est le même pour les trois classes (×0,7)");
     // PRONO-MAGE : coefficient propre au Mage, Chevalier inchangé, Rôdeur sans coefficient
     ok(g.FORECAST_CLASS_DMG_MULT.mage === 0.9 && g.FORECAST_CLASS_DMG_MULT.knight === 0.75 && g.FORECAST_CLASS_DMG_MULT.ranger === undefined, "PRONO-MAGE : Mage 0,9, Chevalier 0,75, Rôdeur 1");
     game = freshCombat("mage"); giveWeapon();
@@ -25455,14 +25443,13 @@ console.log("\n[491] v3.730.0 — Contre protecteur et contre rapide (P5 = P1 + 
   finally { g.Math.random = keep.rnd; CE.playerAttack = keep.pa; g.addLog = keep.log; try { run("fullResetState();"); } catch (e) {} }
 })();
 
-console.log("\n[492] v3.731.0 — Mise à l'échelle D : gabarit de puissance du Mage 1,2 (piste C Mage × Montagne, Seb 06/11)");
+console.log("\n[492] v3.731.0 → v3.763.0 — Mise à l'échelle D : la même pour les trois classes (gabarits retirés)");
 (function () {
   var CF = g.CombatForecast, W = g.WorldManager, H = g.WORLD_HERO_SCALING, keep = { d: CF.getHeroDamagePerRound, e: CF.getHeroEffectiveHp, h: game.heroId, wi: W.worldIndex, ai: W.adventureIndex, cy: game.cycleCount };
   var heroDe = function (cid) { var c = null; g.CLASSES.forEach(function (k) { if (k.id === cid) c = k; }); return c.heroIds[0]; };
   var ehp = 1e5;
   try {
-    ok(H.classPowerGabarit && H.classPowerGabarit.mage === 1.2 && Object.keys(H.classPowerGabarit).join() === "mage", "classPowerGabarit : Mage 1,2, et lui seul");
-    ok(JSON.stringify(H.classEhpGabarit) === JSON.stringify({ knight: 1.3 }), "classEhpGabarit inchangé (Chevalier 1,3)");
+    ok(!H.classPowerGabarit && !H.classEhpGabarit, "v3.763.0 : plus de gabarit de classe (data/classes.js, balance)");
     CF.getHeroDamagePerRound = function () { return 1e5; }; CF.getHeroEffectiveHp = function () { return ehp; };
     function sc(cid, ref, cfg) { game.heroId = heroDe(cid); return CF.getHeroScale(ref, cfg || H); }
     Object.keys(H.refByWorld).forEach(function (wid) {
@@ -25470,22 +25457,13 @@ console.log("\n[492] v3.731.0 — Mise à l'échelle D : gabarit de puissance du
       var bw = (H.byWorld && H.byWorld[wid]) || {}, mg = bw.margin || H.margin, ex = bw.exp != null ? bw.exp : H.exp, ref = H.refByWorld[wid][1], re = g.HERO_SCALING_REFS[ref].ehp;
       var f = function (x) { return Math.min(H.cap, Math.max(1, Math.pow(x / mg, ex))); };
       ehp = re * 2; var m = sc("mage", ref), r = sc("archer", ref), k = sc("knight", ref);
-      ok(Math.abs(m.power - f(ehp / 1.2 / re)) < 1e-9 && m.power < r.power, wid + " : Mage, puissance × (PV eff. ÷ 1,2 / réf. / marge)^exp (×" + m.power.toFixed(3) + " contre ×" + r.power.toFixed(3) + " au Rôdeur)");
-      ok(Math.abs(r.power - f(ehp / re)) < 1e-9 && Math.abs(k.power - f(ehp / 1.3 / re)) < 1e-9, wid + " : Rôdeur et Chevalier inchangés");
+      ok(Math.abs(r.power - f(ehp / re)) < 1e-9 && m.power === r.power && k.power === r.power, wid + " : puissance × (PV eff. / réf. / marge)^exp, la même pour les trois classes (×" + r.power.toFixed(3) + ")");
       ok(m.hp === r.hp && m.hp === k.hp, wid + " : PV des ennemis identiques pour les trois classes");
       ehp = re * 0.9; ok(sc("mage", ref).power === 1, wid + " : héros sous la référence, aucun ajustement (×1)");
     });
     W.worldIndex = keep.wi; ehp = 1e5;
-    // Là où l'échelle ne joue pas : Cycles, Petites Aventures et Labyrinthe (PA2_HERO_SCALING, sans gabarit)
     game.cycleCount = 1; game.heroId = heroDe("mage"); var cy = W.getHeroScale(); game.cycleCount = keep.cy;
-    ok(cy.hp === 1 && cy.power === 1, "Cycles : pas d'ajustement, pas de gabarit");
-    ok(sc("mage", "joueurCrypte", g.PA2_HERO_SCALING).power === sc("archer", "joueurCrypte", g.PA2_HERO_SCALING).power, "Petites Aventures / Labyrinthe : le Mage comme le Rôdeur");
-    // Quêtes fixes : enemyPowerMult ÷ classEhpGabarit seulement (getClassGabarit), le Mage n'y est pas divisé
-    var QE = g.QuestEnemyManager, q = g.ADVENTURE_QUESTS.aq_montagne_pentes;
-    game.heroId = heroDe("mage");
-    ok(QE.getClassGabarit() === 1 && Math.abs(QE.getPowerMult(q, false) - q.enemyPowerMult * QE.getClassPowerMult(q)) < 1e-9, "quête fixe (Pentes) : Mage, enemyPowerMult non divisé (gabarit 1)");
-    game.heroId = heroDe("knight");
-    ok(QE.getClassGabarit() === 1.3, "quête fixe : Chevalier toujours ÷1,3");
+    ok(cy.hp === 1 && cy.power === 1, "Cycles : pas d'ajustement");
   } catch (err) { ok(false, "[492] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   finally { CF.getHeroDamagePerRound = keep.d; CF.getHeroEffectiveHp = keep.e; game.heroId = keep.h; W.worldIndex = keep.wi; W.adventureIndex = keep.ai; game.cycleCount = keep.cy; }
 })();
@@ -26369,6 +26347,31 @@ console.log("\n[513] Tutoriels sur l'écran (v3.761.0, atelier tutoriels-ecran, 
     ok(idx.indexOf("js/ui/coach-view.js") > idx.indexOf("js/ui/tutorial-view.js") && fsRead("sw.js").indexOf('"./js/ui/coach-view.js"') > 0, "coach-view.js chargé après tutorial-view.js, précaché");
     ok(/\.coach-spot \{[^}]*box-shadow: 0 0 0 2000px/.test(fsRead("css/05-overlays.css")) && /prefers-reduced-motion[^{]*\{ \.coach-spot::after \{ animation: none; \}/.test(fsRead("css/05-overlays.css")), "éclairage par ombre géante, sans pulsation si l'appareil demande moins d'animations");
   } catch (err) { ok(false, "[513] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
+console.log("\n[514] Équilibre des classes en un seul tableau (v3.763.0, Seb 10/11, option B)");
+(function () {
+  try {
+    var C = {}; g.CLASSES.forEach(function (c) { C[c.id] = c.balance; });
+    ok(["knight", "archer", "mage"].every(function (id) { return C[id] && ["damageMult", "damageTakenMult", "hpPct"].every(function (k) { return typeof C[id][k] === "number"; }); }), "chaque classe porte damageMult, damageTakenMult, hpPct (data/classes.js)");
+    var src = fsRead("js/data/worlds.js") + fsRead("js/data/adventure-quests.js") + fsRead("js/systems/quest-enemy-system.js") + fsRead("js/systems/combat-forecast-system.js");
+    ok(!/classEhpGabarit|classPowerGabarit|classPowerMult|getClassGabarit/.test(src), "plus aucun réglage de classe côté ennemis (gabarits, Dragon)");
+    // le moteur : même ennemi, même coup, le Chevalier reçoit damageTakenMult
+    var coup = {};
+    ["knight", "ranger"].forEach(function (h) {
+      var game = freshCombat(h), CE = g.CombatEngine, r0 = g.Math.random;
+      game.enemy.engageIn = 0; game.enemy.archetype = null; game.enemy.stats.power = 1000; game.enemy.stats.precision = 0; game.heroDefensePct = 0;
+      game.heroHp = game.heroMaxHp = 1e7; g.Math.random = function () { return 0.99; };
+      try { CE.enemyStrike(1, false); } finally { g.Math.random = r0; }
+      coup[h] = 1e7 - game.heroHp;
+    });
+    ok(coup.ranger > 0 && Math.abs(coup.knight / coup.ranger - C.knight.damageTakenMult) < 0.01, "moteur : le Chevalier reçoit ×" + C.knight.damageTakenMult + " (" + coup.knight + " contre " + coup.ranger + ")");
+    game = freshCombat("mage");
+    ok(g.getHeroClassBalance("damageTakenMult") === C.mage.damageTakenMult && g.getHeroClassBalance("absent") === 1 && g.getHeroClassBalance("hpPct") === C.mage.hpPct, "getHeroClassBalance : valeur du héros courant, neutre si absente");
+    var en = { stats: { power: 1000 } }, att = 1000 * g.ENEMY_POWER_DMG_COEF * (1 - Math.min(0.9, Number(game.heroDefensePct || 0))) * C.mage.damageTakenMult;
+    ok(Math.abs(g.CombatForecast.getEnemyDamagePerRound(en) - att) < 1e-6, "pronostic : dégâts reçus de la classe pris en compte, comme le moteur");
+  } catch (err) { ok(false, "[514] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  finally { game = freshCombat("knight"); }
 })();
 
 Promise.all(ATTENTES).then(function () {

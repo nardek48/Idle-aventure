@@ -291,8 +291,7 @@ var TalentManager = {
     });
     if (window.FeastManager) out.hpPct += FeastManager.hpPct(); // v3.656.0 : le festin
     if (window.TowerSystem) out.hpPct += TowerSystem.hpPct(); // v3.632.0 : Ton nom (Mémoire 24), +10 % de PV à la Tour
-    var cb = (typeof getClassByHeroId === "function") ? getClassByHeroId(game.heroId) : null; // équilibre des classes (03/11) : Mage +5 % PV
-    if (cb && cb.balance && cb.balance.hpPct) out.hpPct += cb.balance.hpPct;
+    if (typeof getHeroClassBalance === "function") out.hpPct += getHeroClassBalance("hpPct"); // équilibre des classes (data/classes.js)
     return out;
   },
 

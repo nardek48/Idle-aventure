@@ -5,9 +5,9 @@
 var CLASSES = [
   {
     id: "knight",
-    /* Équilibre des classes (Seb, 03/11 : converger au milieu) : multiplicateur de tous les dégâts du héros et PV en plus.
-       Mesuré au banc (Dragon ancien, Couronne) : le Rôdeur tapait 1,35 à 1,7 fois plus que les autres. */
-    balance: { damageMult: 1.15, hpPct: 0 },
+    /* Équilibre de la classe, seul réglage par classe (getHeroClassBalance) : dégâts infligés, reçus, PV.
+       v3.763.0 : « reçus » remplace les gabarits côté ennemis (Chevalier ÷1,3, Mage ÷1,2, Dragon ×0,8). */
+    balance: { damageMult: 1.15, damageTakenMult: 0.77, hpPct: 0 },
     label: "Chevalier",
     icon: "images/Icons/classes/class_knight.webp",
     weaponType: "sword",
@@ -30,9 +30,9 @@ var CLASSES = [
   },
   {
     id: "archer",
-    /* Équilibre des classes (Seb, 03/11 : converger au milieu) : multiplicateur de tous les dégâts du héros et PV en plus.
-       Mesuré au banc (Dragon ancien, Couronne) : le Rôdeur tapait 1,35 à 1,7 fois plus que les autres. */
-    balance: { damageMult: 0.85, hpPct: 0 },
+    /* Équilibre de la classe, seul réglage par classe (getHeroClassBalance) : dégâts infligés, reçus, PV.
+       v3.763.0 : « reçus » remplace les gabarits côté ennemis (Chevalier ÷1,3, Mage ÷1,2, Dragon ×0,8). */
+    balance: { damageMult: 0.85, damageTakenMult: 1, hpPct: 0 },
     label: "Rôdeur", // v3.429.10 : le nom de la classe partout ailleurs (création, CLAUDE.md)
     icon: "images/Icons/classes/class_ranger.webp",
     weaponType: "bow",
@@ -58,9 +58,9 @@ var CLASSES = [
   },
   {
     id: "mage",
-    /* Équilibre des classes (Seb, 03/11 : converger au milieu) : multiplicateur de tous les dégâts du héros et PV en plus.
-       Mesuré au banc (Dragon ancien, Couronne) : le Rôdeur tapait 1,35 à 1,7 fois plus que les autres. */
-    balance: { damageMult: 1, hpPct: 0.05 },
+    /* Équilibre de la classe, seul réglage par classe (getHeroClassBalance) : dégâts infligés, reçus, PV.
+       v3.763.0 : « reçus » remplace les gabarits côté ennemis (Chevalier ÷1,3, Mage ÷1,2, Dragon ×0,8). */
+    balance: { damageMult: 1, damageTakenMult: 0.9, hpPct: 0.05 },
     label: "Mage",
     icon: "images/Icons/classes/class_mage.webp",
     weaponType: "magic",
@@ -130,6 +130,15 @@ var FORCE_UNIVERSAL_TAP_COEF = 0.06;
 var DEFAULT_MAIN_STAT_RULE = { stat: "power", coef: 0.14 };
 
 /* Règle { stat, coef } d'une classe ; repli Chevalier si classe absente/inconnue. */
+/* v3.763.0 (Seb 10/11, équilibrage propre B) : SEUL réglage d'équilibre par classe, lu par le moteur et
+   les pronostics — damageMult (dégâts infligés), damageTakenMult (dégâts reçus), hpPct (PV). Absent = neutre. */
+function getHeroClassBalance(key) {
+  var neutre = key === "hpPct" ? 0 : 1;
+  var cls = (window.game && game.heroId) ? getClassByHeroId(game.heroId) : null;
+  var v = cls && cls.balance ? Number(cls.balance[key]) : NaN;
+  return isFinite(v) ? v : neutre;
+}
+
 function getClassMainStat(classId) {
   var cls = getClassById(classId);
   if (!cls || typeof cls.mainStat !== "string" || typeof cls.mainStatTapCoef !== "number") {
@@ -150,5 +159,6 @@ window.getClassMainStat = getClassMainStat;
 window.getHeroMainStat = getHeroMainStat;
 window.getClassById = getClassById;
 window.getClassByHeroId = getClassByHeroId;
+window.getHeroClassBalance = getHeroClassBalance;
 window.getClassForHero = getClassForHero;
 window.getAllowedWeaponIconsForCurrentHero = getAllowedWeaponIconsForCurrentHero;

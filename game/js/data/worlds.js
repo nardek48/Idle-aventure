@@ -221,12 +221,6 @@ var HERO_SCALING_REFS = {
    Référence par aventure du monde. */
 var WORLD_HERO_SCALING = {
   exp: 0.5, margin: 1.15, cap: 2.5,
-  /* v3.448.7 : gabarit de PV effectifs par classe (la puissance ennemie suit PV effectifs ÷ gabarit).
-     Chevalier ÷1,3, calé au banc : Nuée 53 → 88 %, Trône 70 → 100 % ; Rôdeur et Mage inchangés. */
-  classEhpGabarit: { knight: 1.3 },
-  /* v3.731.0 (Seb 06/11, piste C Mage × Montagne) : gabarit de la PUISSANCE ennemie seule (getHeroScale), Mage 1,2.
-     Pas lu par les quêtes fixes (getClassGabarit). Banc : Pentes, Mage 59 → 78 %. */
-  classPowerGabarit: { mage: 1.2 },
   /* v3.562.0 (retour Seb, point 1, option A) : à la Crypte et à la Montagne, les ennemis suivent davantage
      un héros en avance (marge 15 % -> 5 %, suivi 0,5 -> 0,75). Au banc. */
   byWorld: { crypt: { exp: 0.75, margin: 1.05 }, mountain: { exp: 0.75, margin: 1.05 }, tower: { exp: 0.75, margin: 1.05 } }, // v3.626.0 : la Tour comme la Montagne

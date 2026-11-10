@@ -1128,7 +1128,7 @@ var CombatEngine = {
     // l'exaltation annoncée tombe avant la frappe : la rage sera triplée (revue)
     var surge = (e.isBoss && e.surgeTelegraphed && !hold) ? ELITE_SURGE_DURATION_ROUNDS : Math.max(0, Number(e.surgeRounds || 0) - 1);
     var rage = (e.archetype === "enraged" && typeof getEnragedDamageMultiplier === "function") ? getEnragedDamageMultiplier(this.getEnragedEffectivePctHpLost(), { surgeRounds: surge }) : 1;
-    var def = 1 - Math.min(0.6, Number(game.heroDefensePct || 0));
+    var def = (1 - Math.min(0.6, Number(game.heroDefensePct || 0))) * (typeof getHeroClassBalance === "function" ? getHeroClassBalance("damageTakenMult") : 1); // v3.763.0
     var hit = function (m) { var d = Math.max(1, Math.floor(base * m)); if (rage !== 1) d = Math.max(1, Math.floor(d * rage)); return Math.max(1, Math.floor(d * def)); };
     return hit(heat * sort) + hit(heat) >= DOUBLE_STRIKE_DANGER_PCT * Math.max(1, Number(game.heroHp || 0));
   },
@@ -1181,6 +1181,7 @@ var CombatEngine = {
     var barkBonus = (Number(game._legBarkRounds || 0) > 0 && this.hasPower("leg_ecorce")) ? 0.05 : 0;
     var defense = Math.min(defenseCapNow, Number(game.heroDefensePct || 0) + barkBonus);
     dmg = Math.max(1, Math.floor(dmg * (1 - defense)));
+    if (typeof getHeroClassBalance === "function") dmg = Math.max(1, Math.floor(dmg * getHeroClassBalance("damageTakenMult"))); // v3.763.0 : dégâts reçus de la classe (data/classes.js)
 
     var preClassDmg = dmg, evaded = false; // v3.327.0 : lu par les talents (Riposte, Écho, Contre-tir)
     if (activeDefense) {

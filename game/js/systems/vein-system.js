@@ -100,8 +100,7 @@ var VeinSystem = {
   /* Multiplicateur des dégâts du héros (attaque de base et compétences). Taille franche (Mémoire 17) : +10 % à la première. */
   /* Équilibre des classes (Seb, 03/11) : multiplicateur de dégâts de la classe du héros (data/classes.js, balance). */
   classMult: function () {
-    var cb = (typeof getClassByHeroId === "function" && window.game) ? getClassByHeroId(game.heroId) : null;
-    return (cb && cb.balance && cb.balance.damageMult) ? Number(cb.balance.damageMult) : 1;
+    return (typeof getHeroClassBalance === "function") ? getHeroClassBalance("damageMult") : 1;
   },
   bladeMult: function () {
     var tour = window.TowerSystem ? TowerSystem.dmgMult() : 1; // v3.626.0 : la braise posée, à la Tour
