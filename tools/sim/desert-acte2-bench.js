@@ -13,7 +13,7 @@ var RUNS = 150, QUEST = null, HP = null;
 for (var ai = 3; ai < process.argv.length; ai++) {
   if (process.argv[ai] === "--runs") RUNS = Number(process.argv[ai + 1]) || RUNS;
   if (process.argv[ai] === "--quest") QUEST = process.argv[ai + 1];
-  if (process.argv[ai] === "--hp") HP = Number(process.argv[ai + 1]); // essai d'encounterHpMult
+  if (process.argv[ai] === "--hp") HP = Number(process.argv[ai + 1]); // essai : PV de la cible des rencontres (×1 = réglage actuel, v3.764.0)
 }
 var mod = { exports: {} };
 new Function("require", "process", "module", "__dirname", src + "\nmodule.exports = { g: g, run: run, seedRng: seedRng, setup: setup, CLASSES: CLASSES };")(
@@ -47,7 +47,7 @@ function jouer(c, p, q) {
   g.CompanionManager.healAll();
   g.AdventureQuestManager.ensureDefaults();
   g.game.adventureQuestsCompleted[q.id] = false;
-  if (HP) g.ADVENTURE_QUESTS[q.id].encounterHpMult = HP;
+  if (HP) { var T0 = g.ADVENTURE_QUESTS[q.id].target; g.ADVENTURE_QUESTS[q.id].target = { rounds: T0.rounds * HP, hit: T0.hit }; }
   var pot0 = Number(g.game.healingPotionsOwned.potion_soin_mineur || 0);
   g.AdventureQuestManager.start(q.id);
   var rounds = 0, guard = 2000;
@@ -62,7 +62,7 @@ function jouer(c, p, q) {
 
 QUETES.forEach(function (q) {
   if (QUEST && q.key !== QUEST) return;
-  console.log(q.label + " — " + RUNS + " runs par cellule, PV ×" + (HP || g.ADVENTURE_QUESTS[q.id].encounterHpMult) + "\n");
+  console.log(q.label + " — " + RUNS + " runs par cellule, cible " + JSON.stringify(g.ADVENTURE_QUESTS[q.id].target) + "\n");
   PROFILS.forEach(function (p) {
     console.log(" " + p.label);
     B.CLASSES.forEach(function (c) {

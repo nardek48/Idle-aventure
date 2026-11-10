@@ -52,7 +52,8 @@ function runOnce(c, p, policy) {
 
 console.log("ROI DES MARAIS — run complet (9 ennemis + boss), " + RUNS + " runs par cellule\n");
 REGLAGES.forEach(function (r) {
-  q.enemyHpMult = r.mult; q.bossHpMult = r.boss;
+  q.target0 = q.target0 || q.target; q.bossTarget0 = q.bossTarget0 || q.bossTarget; // v3.764.0 : multiplicateurs relatifs à l'ancien réglage (0,8 / 0,4)
+  q.target = { rounds: q.target0.rounds * r.mult / 0.8, hit: q.target0.hit }; q.bossTarget = { rounds: q.bossTarget0.rounds * r.boss / 0.4, hit: q.bossTarget0.hit };
   console.log(r.label);
   ["opti", "tape"].forEach(function (policy) {
     PROFILS.forEach(function (p) {

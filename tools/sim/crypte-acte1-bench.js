@@ -9,7 +9,7 @@
    Maddoc +5).
 
    USAGE : node tools/sim/crypte-acte1-bench.js . [--runs N] [--enc hp,power] [--reveiller]
-     --enc       : multiplicateurs d'essai des rencontres (encounterHpMult, enemyPowerMult) ; --enc2 : ceux de l'étape 3 seule
+     --enc       : multiplicateurs d'essai de la cible des rencontres (PV, coup ; ×1 = réglage actuel, v3.764.0) ; --enc2 : ceux de l'étape 3 seule
      --reveiller : le héros a la règle « Un ennemi dort » (il réveille les dormeurs)
      --cmd N     : v3.453.0, les N premiers nœuds du Commandement (plafond 15 de l'acte I = 13 + 2) */
 var fs = require("fs"), path = require("path");
@@ -40,7 +40,7 @@ var extra = function () {
   };
   [["aq_crypte_sepulcres", ENC], ["aq_crypte_ysolt", ENC2]].forEach(function (x) {
     if (!x[1]) return;
-    g.ADVENTURE_QUESTS[x[0]].encounterHpMult = x[1][0]; g.ADVENTURE_QUESTS[x[0]].enemyPowerMult = x[1][1];
+    g.ADVENTURE_QUESTS[x[0]].target0 = g.ADVENTURE_QUESTS[x[0]].target0 || g.ADVENTURE_QUESTS[x[0]].target; g.ADVENTURE_QUESTS[x[0]].target = { rounds: g.ADVENTURE_QUESTS[x[0]].target0.rounds * x[1][0], hit: g.ADVENTURE_QUESTS[x[0]].target0.hit * x[1][1] };
   });
 
   function party(ids) {

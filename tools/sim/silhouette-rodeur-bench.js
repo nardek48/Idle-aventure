@@ -7,7 +7,7 @@
             perfore (Tir perforant ignore le Blindé) · regleT3 (règle « Blindé → Tir perforant » au lieu de « → Rafale »)
             swap (Rôdeur : Tir précis contre le Soin, Rafale le Bouclier) · rafaleCd1 (Rafale recharge 1)
             objet (l'objet du trait de la classe : Baume froid / Huile de lame / Pastille de miel) · acide (Acide mordant)
-            potionSage (pas de potion pendant une annonce contrée, au-dessus de 10 %) · hp350, hp300… (bossHpMult du Rôdeur)
+            potionSage (pas de potion pendant une annonce contrée, au-dessus de 10 %) · hp350, hp300… (PV de la silhouette face au Rôdeur, sur l'ancienne échelle ×4,25)
             vamp / enrage (autre trait pris au Rôdeur) · hp375 (PV ×3,75 au lieu de ×4,25, Rôdeur seul)
    USAGE : node tools/sim/silhouette-rodeur-bench.js . [--runs 200] [--classes ranger,knight,mage] [--pistes jeu,huile] [--tag t] */
 var fs = require("fs"), path = require("path");

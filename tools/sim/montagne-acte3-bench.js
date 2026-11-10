@@ -23,7 +23,7 @@ var WYRM = opt("--boss") ? opt("--boss").split(",").map(Number) : null;
 var QUETE = opt("--quete") ? opt("--quete").split(",").map(Number) : null;
 var SANS_POTION = ARGV.indexOf("--sans-potion") >= 0;
 var QUETES = opt("--quetes") ? opt("--quetes").split(",") : null; // v3.491.0 : quêtes seules (acte IV : aq_montagne_tries, aq_montagne_dragon)
-var QBOSS = opt("--qboss") ? opt("--qboss").split(",").map(Number) : null; // essai bossHpMult,bossPowerMult (aq_montagne_dragon)
+var QBOSS = opt("--qboss") ? opt("--qboss").split(",").map(Number) : null; // essai : multiplicateurs de la cible du boss (PV, coup ; ×1 = réglage actuel, v3.764.0) (aq_montagne_dragon)
 var P1_AFF = opt("--affinite") !== null ? Number(opt("--affinite")) : null;
 var P1_KIT = opt("--kit");
 var P1_STATS = ARGV.indexOf("--stats") >= 0;
@@ -78,7 +78,7 @@ var extra = function () {
   }
   if (opt("--miroir") !== null) g.TOWER_MIRROR_PENALTY = Number(opt("--miroir")); // v3.629.0 : pénalité du miroir (Reflet)
   if (WYRM) { d.boss.statMult.power = WYRM[0]; d.boss.statMult.endurance = WYRM[1]; }
-  if (QUETE) { g.ADVENTURE_QUESTS.aq_montagne_salle_ronde.encounterHpMult = QUETE[0]; g.ADVENTURE_QUESTS.aq_montagne_salle_ronde.enemyPowerMult = QUETE[1]; }
+  if (QUETE) { g.ADVENTURE_QUESTS.aq_montagne_salle_ronde.target0 = g.ADVENTURE_QUESTS.aq_montagne_salle_ronde.target0 || g.ADVENTURE_QUESTS.aq_montagne_salle_ronde.target; g.ADVENTURE_QUESTS.aq_montagne_salle_ronde.target = { rounds: g.ADVENTURE_QUESTS.aq_montagne_salle_ronde.target0.rounds * QUETE[0], hit: g.ADVENTURE_QUESTS.aq_montagne_salle_ronde.target0.hit * QUETE[1] }; }
   // v3.492.12 : l'affinité est dans le jeu ; --affinite en change seulement le bonus
   if (P1_AFF !== null) g.EQUIP_WORLD_AFFINITY.bonus = P1_AFF;
   if (PLAFOND.indexOf("heal") >= 0) g.BOSS_HEAL_PERCENT = 0;
@@ -196,12 +196,12 @@ var extra = function () {
     return;
   }
   if (QUETES) {
-    if (QBOSS) { g.ADVENTURE_QUESTS.aq_montagne_dragon.bossHpMult = QBOSS[0]; g.ADVENTURE_QUESTS.aq_montagne_dragon.bossPowerMult = QBOSS[1]; }
+    if (QBOSS) { g.ADVENTURE_QUESTS.aq_montagne_dragon.bossTarget0 = g.ADVENTURE_QUESTS.aq_montagne_dragon.bossTarget0 || g.ADVENTURE_QUESTS.aq_montagne_dragon.bossTarget; g.ADVENTURE_QUESTS.aq_montagne_dragon.bossTarget = { rounds: g.ADVENTURE_QUESTS.aq_montagne_dragon.bossTarget0.rounds * QBOSS[0], hit: g.ADVENTURE_QUESTS.aq_montagne_dragon.bossTarget0.hit * QBOSS[1] }; }
     var txt = SAVES.map(function (f) { return fs.readFileSync(f, "utf8"); });
     QUETES.forEach(function (qid) {
       console.log(qid + (QBOSS ? " · essai boss PV ×" + QBOSS[0] + " puissance ×" + QBOSS[1] : "") + (QUETE ? " · essai rencontres PV ×" + QUETE[0] + " puissance ×" + QUETE[1] : ""));
-      if (QUETE) { g.ADVENTURE_QUESTS[qid].encounterHpMult = QUETE[0]; g.ADVENTURE_QUESTS[qid].enemyPowerMult = QUETE[1]; }
-      if (QBOSS && g.ADVENTURE_QUESTS[qid].bossId) { g.ADVENTURE_QUESTS[qid].bossHpMult = QBOSS[0]; g.ADVENTURE_QUESTS[qid].bossPowerMult = QBOSS[1]; } // v3.630.0 : tout boss de quête
+      if (QUETE) { g.ADVENTURE_QUESTS[qid].target0 = g.ADVENTURE_QUESTS[qid].target0 || g.ADVENTURE_QUESTS[qid].target; g.ADVENTURE_QUESTS[qid].target = { rounds: g.ADVENTURE_QUESTS[qid].target0.rounds * QUETE[0], hit: g.ADVENTURE_QUESTS[qid].target0.hit * QUETE[1] }; }
+      if (QBOSS && g.ADVENTURE_QUESTS[qid].bossId) { g.ADVENTURE_QUESTS[qid].bossTarget0 = g.ADVENTURE_QUESTS[qid].bossTarget0 || g.ADVENTURE_QUESTS[qid].bossTarget; g.ADVENTURE_QUESTS[qid].bossTarget = { rounds: g.ADVENTURE_QUESTS[qid].bossTarget0.rounds * QBOSS[0], hit: g.ADVENTURE_QUESTS[qid].bossTarget0.hit * QBOSS[1] }; } // v3.630.0 : tout boss de quête
       txt.forEach(function (t, k) {
         var cls = JSON.parse(t).heroId || path.basename(SAVES[k]), n = 0, ok = 0, hp = 0, bloque = 0, rd = 0;
         if (process.__dt) process.__dt = { hero: 0, crit: 0, comp: 0, taken: 0, hits: 0, evaded: 0, compTaken: 0, slots: {} };

@@ -22,8 +22,8 @@ var PARTY = (arg("--party") || "wenna,maddoc").split(",");
 var CAMP = arg("--camp") || "souffler";
 var GOLEM = ARGV.indexOf("--golem") >= 0;   // v3.431.0 : la quête de l'étape 14 au lieu du Sanctuaire
 var QUETE = arg("--quete") || "aq_ruines_golem"; // v3.432.0 : ou aq_ruines_coeur (étape 18), aq_ruines_plan (19)
-var QBOSS = arg("--qboss") ? arg("--qboss").split(",").map(Number) : null; // v3.433.0 : essai bossHpMult,bossPowerMult
-var QENC = arg("--enc") ? arg("--enc").split(",").map(Number) : null; // essai : encounterHpMult,enemyPowerMult
+var QBOSS = arg("--qboss") ? arg("--qboss").split(",").map(Number) : null; // essai : multiplicateurs de la cible du boss (PV, coup ; ×1 = réglage actuel, v3.764.0)
+var QENC = arg("--enc") ? arg("--enc").split(",").map(Number) : null; // essai : multiplicateurs de la cible des rencontres (PV, coup ; ×1 = réglage actuel, v3.764.0)
 var GOLEM_MULT = arg("--golemmult") ? arg("--golemmult").split(",").map(Number) : null; // essai : puissance,endurance
 
 var extra = function () {
@@ -108,8 +108,8 @@ var extra = function () {
   /* v3.431.0 — étape 14 : « Ce que la cité ne finit pas » (3 rencontres puis le Golem), au palier Rare. */
   if (GOLEM) {
     var Q = g.ADVENTURE_QUESTS[QUETE];
-    if (QENC) { Q.encounterHpMult = QENC[0]; Q.enemyPowerMult = QENC[1]; }
-    if (QBOSS) { Q.bossHpMult = QBOSS[0]; Q.bossPowerMult = QBOSS[1]; }
+    if (QENC) { Q.target0 = Q.target0 || Q.target; Q.target = { rounds: Q.target0.rounds * QENC[0], hit: Q.target0.hit * QENC[1] }; }
+    if (QBOSS) { Q.bossTarget0 = Q.bossTarget0 || Q.bossTarget; Q.bossTarget = { rounds: Q.bossTarget0.rounds * QBOSS[0], hit: Q.bossTarget0.hit * QBOSS[1] }; }
     if (GOLEM_MULT) Q.eliteStatMult = { power: GOLEM_MULT[0], endurance: GOLEM_MULT[1] }; // v3.431.0 : le Golem de la quête
     var garde = Q.requiresStoryStep; Q.requiresStoryStep = null;
     console.log(Q.name.toUpperCase() + " — " + RUNS + " runs, profil Rare, " + PARTY.join(" + ") + ", potions du profil"

@@ -40,8 +40,8 @@ new Function("require", "process", "__dirname", "api", BENCH.slice(0, CUT)
 var g = api.g, B = api.B;
 
 var Q = g.ADVENTURE_QUESTS.aq_desert_trone;
-if (ENC) { Q.encounterHpMult = ENC[0]; Q.enemyPowerMult = ENC[1]; }
-if (BOSS) { Q.bossHpMult = BOSS[0]; Q.bossPowerMult = BOSS[1]; }
+if (ENC) { Q.target0 = Q.target0 || Q.target; Q.target = { rounds: Q.target0.rounds * ENC[0], hit: Q.target0.hit * ENC[1] }; }
+if (BOSS) { Q.bossTarget0 = Q.bossTarget0 || Q.bossTarget; Q.bossTarget = { rounds: Q.bossTarget0.rounds * BOSS[0], hit: Q.bossTarget0.hit * BOSS[1] }; }
 
 /* Sonde du vol de vie : on enveloppe la fonction du moteur (lecture seule, aucun effet). */
 var stolen = { withAdd: 0, alone: 0 }, silences = 0;
@@ -81,8 +81,7 @@ function playTrone() {
 
 var P = api.PROFILS[PROFIL];
 console.log("LE TRÔNE DE SABLE — " + RUNS + " runs par classe, profil " + PROFIL + " (" + P.label + ")");
-console.log("Rencontres : PV ×" + Q.encounterHpMult + ", puissance ×" + Q.enemyPowerMult
-  + " · Nezzam : PV ×" + Q.bossHpMult + ", puissance ×" + Q.bossPowerMult + "\n");
+console.log("Rencontres : cible " + JSON.stringify(Q.target) + " · Nezzam : cible " + JSON.stringify(Q.bossTarget) + " (rounds du héros attendu, part de ses PV par coup)\n");
 B.CLASSES.forEach(function (c) {
   var n = 0, ok = 0, hpEnd = 0, arr = 0, arrN = 0, pots = 0, br = 0;
   stolen = { withAdd: 0, alone: 0 }; silences = 0;

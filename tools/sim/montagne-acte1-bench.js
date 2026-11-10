@@ -27,9 +27,9 @@ if (!SAVES.length) { console.log("--save <fichier> attendu (sauvegarde de fin de
 var extra = function () {
   [["aq_montagne_pentes", ENC], ["aq_montagne_sarkel", ENC2], ["aq_montagne_veines", ENC3]].forEach(function (x) {
     if (!x[1]) return;
-    g.ADVENTURE_QUESTS[x[0]].encounterHpMult = x[1][0]; g.ADVENTURE_QUESTS[x[0]].enemyPowerMult = x[1][1];
+    g.ADVENTURE_QUESTS[x[0]].target0 = g.ADVENTURE_QUESTS[x[0]].target0 || g.ADVENTURE_QUESTS[x[0]].target; g.ADVENTURE_QUESTS[x[0]].target = { rounds: g.ADVENTURE_QUESTS[x[0]].target0.rounds * x[1][0], hit: g.ADVENTURE_QUESTS[x[0]].target0.hit * x[1][1] };
   });
-  SET.forEach(function (x) { g.ADVENTURE_QUESTS[x[0]].encounterHpMult = x[1][0]; g.ADVENTURE_QUESTS[x[0]].enemyPowerMult = x[1][1]; });
+  SET.forEach(function (x) { g.ADVENTURE_QUESTS[x[0]].target0 = g.ADVENTURE_QUESTS[x[0]].target0 || g.ADVENTURE_QUESTS[x[0]].target; g.ADVENTURE_QUESTS[x[0]].target = { rounds: g.ADVENTURE_QUESTS[x[0]].target0.rounds * x[1][0], hit: g.ADVENTURE_QUESTS[x[0]].target0.hit * x[1][1] }; });
   function party(ids) {
     Object.keys(g.COMPANIONS_DB).forEach(function (id) { var st = g.CompanionManager.state(id); if (st) st.present = ids.indexOf(id) !== -1; });
     g.CompanionManager.refreshParty();

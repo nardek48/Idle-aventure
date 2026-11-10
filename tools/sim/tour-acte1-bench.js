@@ -16,7 +16,7 @@ var SEULE = opt("--quete"), BRAISE = opt("--braise");
 if (!SAVES.length) { console.log("--save <fichier> attendu (sauvegarde d'entrée de la Tour)"); process.exit(1); }
 
 var extra = function () {
-  SET.forEach(function (x) { g.ADVENTURE_QUESTS[x[0]].encounterHpMult = x[1][0]; g.ADVENTURE_QUESTS[x[0]].enemyPowerMult = x[1][1]; });
+  SET.forEach(function (x) { g.ADVENTURE_QUESTS[x[0]].target0 = g.ADVENTURE_QUESTS[x[0]].target0 || g.ADVENTURE_QUESTS[x[0]].target; g.ADVENTURE_QUESTS[x[0]].target = { rounds: g.ADVENTURE_QUESTS[x[0]].target0.rounds * x[1][0], hit: g.ADVENTURE_QUESTS[x[0]].target0.hit * x[1][1] }; });
   function party(ids) {
     Object.keys(g.COMPANIONS_DB).forEach(function (id) { var st = g.CompanionManager.state(id); if (st) st.present = ids.indexOf(id) !== -1; });
     g.CompanionManager.refreshParty();

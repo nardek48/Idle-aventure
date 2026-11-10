@@ -299,7 +299,7 @@ function main() {
   var g = buildSandbox();
   function run(code) { return vm.runInContext(code, g); }
   console.log("Calibrage de « Prouver sa valeur » — " + RUNS + " runs par cellule. Soin du boss CONSERV\u00c9.");
-  console.log("Le diviseur s'applique \u00e0 TOUS les ennemis de la qu\u00eate (normaux + boss), comme le fera enemyHpMult.\n");
+  console.log("Le diviseur s'applique \u00e0 TOUS les ennemis de la qu\u00eate (normaux + boss), comme la cible de la quête (target, v3.764.0).\n");
 
   var DIVISORS = [1, 2, 2.5, 3];
   var POLICIES = [{ id: "opti", label: "contres" }, { id: "grimoire", label: "Grimoire" }, { id: "tape", label: "sans contrer" }];

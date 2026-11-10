@@ -8,7 +8,7 @@
    arme du Fleuve en main, Wenna +5, Maddoc +2 (tronc), Edda +0.
 
    USAGE : node tools/sim/ruines-acte1-bench.js . [--runs N] [--enc hp,power] [--regle]
-     --enc   : multiplicateurs d'essai des rencontres (encounterHpMult, enemyPowerMult)
+     --enc   : multiplicateurs d'essai de la cible des rencontres (PV, coup ; ×1 = réglage actuel, v3.764.0)
      --regle : le héros a la règle « Un ennemi se relève » (première compétence) */
 var fs = require("fs"), path = require("path");
 var base = fs.readFileSync(path.join(__dirname, "plafond-bench.js"), "utf8");
@@ -27,7 +27,7 @@ var extra = function () {
     if (it) g.game.equipped.weapon = it;
   };
   if (ENC) ["aq_ruines_couloirs", "aq_ruines_edda"].forEach(function (id) {
-    g.ADVENTURE_QUESTS[id].encounterHpMult = ENC[0]; g.ADVENTURE_QUESTS[id].enemyPowerMult = ENC[1];
+    g.ADVENTURE_QUESTS[id].target0 = g.ADVENTURE_QUESTS[id].target0 || g.ADVENTURE_QUESTS[id].target; g.ADVENTURE_QUESTS[id].target = { rounds: g.ADVENTURE_QUESTS[id].target0.rounds * ENC[0], hit: g.ADVENTURE_QUESTS[id].target0.hit * ENC[1] };
   });
 
   function party(ids) {

@@ -20,7 +20,7 @@ var PROFIL_ARG = arg("--profil");
 var QUETE = arg("--quete");   // v3.456.0 : une quête de l'acte IV (aq_crypte_maillons, aq_crypte_retient), même profil
 var PLEUREUSE = ARGV.indexOf("--pleureuse") >= 0 || !!QUETE;
 var PARTY = (arg("--party") || (PLEUREUSE && !QUETE ? "ysolt,maddoc" : "wenna,maddoc")).split(",");
-var QBOSS4 = arg("--qboss") ? arg("--qboss").split(",").map(Number) : null; // essai bossHpMult,bossPowerMult
+var QBOSS4 = arg("--qboss") ? arg("--qboss").split(",").map(Number) : null; // essai : multiplicateurs de la cible du boss (PV, coup ; ×1 = réglage actuel, v3.764.0)
 var CAMP = arg("--camp") || "souffler";
 var QENC = arg("--enc") ? arg("--enc").split(",").map(Number) : null;
 var QELITE = arg("--elite") ? arg("--elite").split(",").map(Number) : null;
@@ -64,8 +64,8 @@ var extra = function () {
 
   if (PLEUREUSE) {
     var QID = QUETE || "aq_crypte_pleureuse", Q = g.ADVENTURE_QUESTS[QID];
-    if (QBOSS4) { Q.bossHpMult = QBOSS4[0]; Q.bossPowerMult = QBOSS4[1]; }
-    if (QENC) { Q.encounterHpMult = QENC[0]; Q.enemyPowerMult = QENC[1]; }
+    if (QBOSS4) { Q.bossTarget0 = Q.bossTarget0 || Q.bossTarget; Q.bossTarget = { rounds: Q.bossTarget0.rounds * QBOSS4[0], hit: Q.bossTarget0.hit * QBOSS4[1] }; }
+    if (QENC) { Q.target0 = Q.target0 || Q.target; Q.target = { rounds: Q.target0.rounds * QENC[0], hit: Q.target0.hit * QENC[1] }; }
     if (QELITE) Q.eliteStatMult = { power: QELITE[0], endurance: QELITE[1] };
     var garde = Q.requiresStoryStep; Q.requiresStoryStep = null;
     console.log(Q.name.toUpperCase() + " — " + RUNS + " runs, profil " + (PROFIL_ARG || "epique") + ", " + PARTY.join(" + ") + ", potions du profil"
