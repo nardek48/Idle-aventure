@@ -372,9 +372,9 @@ var LabyrinthRun = {
 
   heroScale: function (run) {
     if (run.heroScale && typeof run.heroScale.hp === "number") return run.heroScale;
-    // v3.636.0 : profil de référence du monde de la sorte (Labyrinthe : Ruines, seconde aventure, comme avant)
-    var c = this.cfg(), cfg = window.PA2_HERO_SCALING, key = c.heroRef || (window.WORLD_HERO_SCALING && WORLD_HERO_SCALING.refByWorld[c.worldId] || [])[c.adventureIndex];
-    var hs = (cfg && key && window.CombatForecast && typeof CombatForecast.getHeroScale === "function") ? CombatForecast.getHeroScale(key, cfg) : { hp: 1, power: 1 };
+    // v3.767.0 (C3b) : le suivi unique (HERO_TRACKING), face au héros attendu à l'étape d'ouverture, figé au départ
+    var c = this.cfg(), Q = window.QuestEnemyManager;
+    var hs = (Q && typeof Q.trackAt === "function") ? Q.trackAt(Q.placeOf({ etape: c.requiresStoryStep || c.etape, worldId: c.worldId }), c.worldId) : { hp: 1, power: 1 };
     run.heroScale = { hp: hs.hp, power: hs.power };
     return run.heroScale;
   },

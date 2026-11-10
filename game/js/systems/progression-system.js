@@ -45,7 +45,7 @@ var WorldManager = {
     }
 
     var milestoneMult = this.getCycleMilestoneMult();
-    var heroScale = this.getHeroScale(); // v3.423.0 (D) : les ennemis suivent un peu le héros
+    var heroScale = { hp: 1, power: 1 }; // v3.767.0 (C3b) : le suivi du héros est appliqué par chaque combat (CombatForecast.getHeroScale)
 
     var forceAllBosses = window.AfflictionManager && typeof AfflictionManager.shouldForceAllBosses === "function" && AfflictionManager.shouldForceAllBosses();
     var isBoss = forceAllBosses || this.enemyIndex >= Math.max(0, (adventure.enemyCount || 1) - 1);
@@ -135,21 +135,8 @@ var WorldManager = {
     };
   },
 
-  /* v3.423.0 (chantier Difficulté, D, décision Seb) : multiplicateurs { hp, power } du monde et
-     de l'aventure en cours face au héros (data/worlds.js, WORLD_HERO_SCALING). Coupé par
-     _heroScaleOff (les Petites Aventures appliquent leur propre ajustement) et dans les Cycles. */
+  /* v3.767.0 (C3b) : _heroScaleOff gardé (appelants des Petites Aventures et du Labyrinthe), sans effet ici. */
   _heroScaleOff: false,
-  _heroRefKey: null, // v3.448.2 : référence imposée par la quête en cours de génération (heroRef)
-  getHeroScale: function () {
-    var none = { hp: 1, power: 1 };
-    if (this._heroScaleOff || (game.cycleCount || 0) > 0) return none;
-    if (!window.WORLD_HERO_SCALING || !window.CombatForecast || typeof CombatForecast.getHeroScale !== "function") return none;
-    var w = WORLDS[this.worldIndex], refs = w ? WORLD_HERO_SCALING.refByWorld[w.id] : null;
-    if (!refs) return none;
-    var key = (this._heroRefKey && HERO_SCALING_REFS[this._heroRefKey]) ? this._heroRefKey
-      : refs[Math.min(refs.length - 1, Math.max(0, Number(this.adventureIndex || 0)))];
-    return CombatForecast.getHeroScale(key, WORLD_HERO_SCALING);
-  },
 
   CYCLE_MILESTONE_BONUS_PER_STEP: 0.25,
   getCycleMilestoneMult: function () {

@@ -13463,44 +13463,39 @@ console.log("\n[193] v3.422.0 — Débit des zones, pools des secteurs, groupe d
   }
 })();
 
-console.log("\n[194] v3.423.0 — Difficulté : les ennemis suivent un peu la force réelle du héros, Souffle et repos");
+console.log("\n[194] v3.423.0 → v3.767.0 — Difficulté : les ennemis suivent un peu la force réelle du héros (suivi unique), Souffle et repos");
 (function () {
   try {
-    run("fullResetState(); game.playerName='Test'; game.heroId='ranger'; EquipmentManager.recalcStats(); game.heroHp = game.heroMaxHp;"); // v3.448.7 : formule sans gabarit de classe (Chevalier en [231]) ; v3.731.0 : Rôdeur, le Mage a le sien ([492])
-    run("WorldManager.worldIndex = 1; WorldManager.adventureIndex = 1; WorldManager.enemyIndex = 3;");
-    var h0 = run("WorldManager.getHeroScale()");
-    ok(h0.hp === 1 && h0.power === 1, "héros neuf au Désert : aucun ajustement (jamais sous ×1)");
-    // Héros très fort : on gonfle ses dégâts et ses PV
+    run("fullResetState(); game.playerName='Test'; game.heroId='ranger'; EquipmentManager.recalcStats(); game.heroHp = game.heroMaxHp;");
+    var R = g.HERO_SCALING_REFS, CF = g.CombatForecast;
+    var h0 = CF.getHeroScale(R.joueurDesert2, "desert");
+    ok(h0.hp === 1 && h0.power === 1, "héros neuf face au héros de fin de Désert : aucun ajustement (jamais sous ×1)");
     run("window.__d = CombatForecast.getHeroDamagePerRound; CombatForecast.getHeroDamagePerRound = function () { return 371 * 4; }; game.heroMaxHp = 971 * 2; game.heroDefensePct = 0;");
-    var h1 = run("WorldManager.getHeroScale()");
+    var h1 = CF.getHeroScale(R.joueurDesert2, "desert");
     ok(Math.abs(h1.hp - Math.sqrt(4 / 1.15)) < 1e-9 && Math.abs(h1.power - Math.sqrt(2 / 1.15)) < 1e-9, "D : PV × (dégâts / réf. / 1,15)^0,5, Puissance × (PV effectifs / réf. / 1,15)^0,5");
-    run("WorldManager._heroScaleOff = true;"); var e0 = run("WorldManager.generateEnemy()"); run("WorldManager._heroScaleOff = false;");
     run("Math.__r = Math.random; Math.random = function () { return 0.3; };");
     run("WorldManager._heroScaleOff = true;"); var eA = run("WorldManager.generateEnemy()"); run("WorldManager._heroScaleOff = false;"); var eB = run("WorldManager.generateEnemy()");
     run("Math.random = Math.__r;");
-    ok(eB.maxHp > eA.maxHp * 1.7 && eB.stats.power > eA.stats.power * 1.2 && eB.goldReward === eA.goldReward, "l'ennemi du monde a plus de PV et de Puissance, pas plus d'or");
-    run("game.cycleCount = 1;"); var hc = run("WorldManager.getHeroScale()"); run("game.cycleCount = 0;");
+    ok(eB.maxHp === eA.maxHp && eB.stats.power === eA.stats.power, "v3.767.0 : l'ennemi brut du monde ne suit plus le héros (le suivi est appliqué par chaque combat)");
+    run("game.cycleCount = 1;"); var hc = CF.getHeroScale(R.joueurDesert2, "desert"); run("game.cycleCount = 0;");
     ok(hc.hp === 1 && hc.power === 1, "dans les Cycles : pas d'ajustement (les Cycles ont le leur)");
-    run("WorldManager.worldIndex = 3;"); var hr = run("WorldManager.getHeroScale()");
-    var hrRef = run("CombatForecast.getHeroScale('joueurRuines', WORLD_HERO_SCALING)"); run("WorldManager.worldIndex = 1;"); // v3.562.0 : réglage de la Crypte (byWorld)
-    ok(hr.hp === hrRef.hp && hr.power === hrRef.power, "Crypte : ajustement sur la référence de fin des Ruines (joueurRuines)"); // v3.450.0
-    run("WorldManager.worldIndex = 4;"); var hm = run("WorldManager.getHeroScale()"); run("WorldManager.worldIndex = 1;");
-    ok(hm.hp === 1 && hm.power === 1, "Montagne : pas encore de référence, pas d'ajustement");
-    var cap = run("CombatForecast.getHeroScale('desert12', { exp: 1, margin: 1, cap: 2.5 })");
-    ok(cap.hp === 2.5, "plafond : ×2,5 au plus");
+    var hr = CF.getHeroScale(R.joueurRuines, "crypt");
+    ok(Math.abs(hr.power - Math.pow(971 * 2 / R.joueurRuines.ehp / 1.05, 0.75)) < 1e-9 || hr.power === 1, "Crypte : réglage du chapitre (0,75, marge 5 %)");
+    run("CombatForecast.getHeroDamagePerRound = function () { return 1e9; };");
+    ok(CF.getHeroScale(R.desert12, "desert").hp === 2.5, "plafond : ×2,5 au plus");
 
-    /* A : Petites Aventures */
+    /* A : Petites Aventures, même suivi (réglage du chapitre de la tranche) */
     run("CombatForecast.getHeroDamagePerRound = function () { return 178 * 4; };");
     run("game.heroLevel = 16; SceneRunManager.ensureDefaults(); game.explorationProgression.petiteAventure = { spent: 0, since: null }; game.sceneRun = null; SceneRunManager.startRun('petite_aventure_desert');");
     var hs = run("game.sceneRun.heroScale");
     ok(hs && hs.hp > 1 && hs.power >= 1 && hs.obstacle > 1, "PA : ajustement calculé au départ (niveau 16, tranche du niveau 11)");
-    ok(Math.abs(hs.hp - Math.pow(4 / 1.1, 0.75)) < 1e-9 && Math.abs(hs.obstacle - Math.pow(Math.sqrt(hs.hp * hs.power), 0.6)) < 1e-9, "PA : exp 0,75, marge 10 %, obstacles × (moyenne)^0,6");
+    ok(Math.abs(hs.hp - Math.sqrt(4 / 1.15)) < 1e-9 && Math.abs(hs.obstacle - Math.pow(Math.sqrt(hs.hp * hs.power), 0.6)) < 1e-9, "PA : suivi unique du Désert (0,5, marge 15 %), obstacles × (moyenne)^0,6");
     run("CombatForecast.getHeroDamagePerRound = function () { return 1; };");
     ok(run("Pa2Run.heroScale(game.sceneRun).hp") === hs.hp, "figé au départ : changer d'arme en route ne le refait pas");
     run("CombatForecast.getHeroDamagePerRound = function () { return 178 * 4; };");
     var raw = run("(function () { WorldManager._heroScaleOff = true; var q = QuestEnemyManager.spawnFor({ worldId: 'desert', adventureIndex: 1, enemyFilter: ['scarab'] }, false); WorldManager._heroScaleOff = false; return Array.isArray(q) ? q[0] : q; })()");
     var sp = run("Pa2Run._spawn(game.sceneRun, 'scarab', false)");
-    ok(Math.abs(sp.maxHp - raw.maxHp) <= 1, "PA : l'ajustement du monde est coupé au tirage (pas de double ajustement)");
+    ok(Math.abs(sp.maxHp - raw.maxHp) <= 1, "PA : un seul ajustement (pas de double suivi au tirage)");
     run("Pa2Run.abandon(); SceneRunManager.clearRun && SceneRunManager.clearRun(); game.sceneRun = null; CombatForecast.getHeroDamagePerRound = window.__d;");
 
     /* B et C */
@@ -15099,32 +15094,25 @@ console.log("\n[225] v3.448.1 — Sauvegarde illisible : copie saine, mise de c�
 
 /* [226] v3.448.2 — le Trône de sable (fin du chapitre II, déclaré sur l'aventure 0) ajuste ses ennemis
    au héros de FIN de Désert (heroRef), plus au héros de début de Désert : Nezzam passait à 0-15 %. */
-console.log("\n[226] v3.448.2 — Trône de sable : référence de l'ajustement au héros (heroRef)");
+console.log("\n[226] v3.448.2 → v3.767.0 — Trône de sable : le suivi du héros sur la courbe à son étape (heroRef retiré)");
 (function () {
-  var W = g.WorldManager, CF = g.CombatForecast, Q = g.ADVENTURE_QUESTS.aq_desert_trone;
-  var dmg0 = CF.getHeroDamagePerRound, ehp0 = CF.getHeroEffectiveHp, gen0 = W.generateEnemy, vus = [];
+  var CF = g.CombatForecast, QE = g.QuestEnemyManager, Q = g.ADVENTURE_QUESTS.aq_desert_trone;
+  var dmg0 = CF.getHeroDamagePerRound, ehp0 = CF.getHeroEffectiveHp;
   try {
     CF.getHeroDamagePerRound = function () { return 340; };   // héros du profil campagne
     CF.getHeroEffectiveHp = function () { return 1400; };
-    W.generateEnemy = function () { vus.push(W.getHeroScale()); return gen0.apply(this, arguments); };
-    ok(Q.heroRef === "joueurDesert2" && Q.adventureIndex === 0, "le Trône déclare heroRef joueurDesert2 (aventure 0)");
-    var boss = g.QuestEnemyManager.spawnFor(Q, true);
+    ok(!Q.heroRef && Q.adventureIndex === 0, "le Trône n'a plus de heroRef : sa référence est la courbe à son étape (desert_17)");
+    var pl = QE.placeOf(Q), ref = QE.courbeRef(pl.monde, pl.rang, pl.longueur), tr = QE.trackAt(pl, "desert");
+    ok(pl.monde === "desert" && ref.dmg > g.HERO_SCALING_REFS.joueurDesert1.dmg && ref.dmg < g.HERO_SCALING_REFS.joueurDesert2.dmg, "héros attendu au Trône : entre le début et la fin du Désert (" + Math.round(ref.dmg) + " / " + Math.round(ref.ehp) + ")");
+    ok(tr.hp === 1 && tr.power > 1, "héros du profil campagne : PV de Nezzam inchangés (dégâts sous la marge), puissance suivie (×" + tr.power.toFixed(2) + ")");
+    var boss = QE.spawnFor(Q, true);
     ok(boss && boss.id === "nezzam", "spawnFor donne Nezzam");
-    ok(vus.length && vus[0].hp === 1, "PV de Nezzam : pas d'ajustement (340 < 371 × 1,15), ×" + (vus[0] && vus[0].hp.toFixed(2)));
-    ok(W._heroRefKey === null, "la référence de quête est rendue après la génération");
-    W.worldIndex = 1; W.adventureIndex = 0;
-    ok(W.getHeroScale().hp > 1.1, "hors quête, l'aventure 0 garde sa référence (début de Désert)");
     ok(Q.target.hit === 0.0677 && Q.bossTarget.rounds === 25.03 && Q.bossTarget.hit === 0.0467, "calage v3.742.0 (boss courts) en cibles de la courbe (v3.764.0) : Nezzam 25 rounds, 4,7 % par coup");
   } catch (err) {
     ok(false, "[226] exception : " + err.message);
-  } finally {
-    CF.getHeroDamagePerRound = dmg0; CF.getHeroEffectiveHp = ehp0; W.generateEnemy = gen0;
-    W._heroRefKey = null; W.worldIndex = 0; W.adventureIndex = 0;
-  }
+  } finally { CF.getHeroDamagePerRound = dmg0; CF.getHeroEffectiveHp = ehp0; }
 })();
 
-/* [227] v3.448.3 — images lourdes : l'écran titre et la barre d'onglets passent en WebP (15,4 Mo → 0,5 Mo),
-   les gros JPG sont recompressés. Garde-fou : plus aucune référence aux PNG lourds, et rien d'énorme ne revient. */
 console.log("\n[227] v3.448.3 — Images allégées : écran titre et barre d'onglets en WebP");
 (function () {
   var lourds = ["title_background_new.png", "titre_logo.png", "menu-bar-gold.png"], trouves = [];
@@ -15203,28 +15191,22 @@ console.log("\n[230] v3.448.6 — Palier Rare : « Ce qui manque », et où");
 
 /* [231] v3.448.7 — la puissance ennemie suit les PV effectifs ramenés au gabarit de la classe : le
    Chevalier n'est plus frappé plus fort parce qu'il encaisse mieux (Nuée 53 → 88 %). */
-console.log("\n[231] v3.448.7 — Ajustement au héros : gabarit de PV effectifs par classe");
+console.log("\n[231] v3.448.7 → v3.767.0 — Suivi du héros : le même pour les trois classes");
 (function () {
-  var CF = g.CombatForecast, d0 = CF.getHeroDamagePerRound, e0 = CF.getHeroEffectiveHp, h0 = game.heroId;
+  var CF = g.CombatForecast, d0 = CF.getHeroDamagePerRound, e0 = CF.getHeroEffectiveHp, h0 = game.heroId, R = g.HERO_SCALING_REFS;
   try {
-    // v3.763.0 : gabarits retirés, l'équilibre des classes vit dans data/classes.js (balance.damageTakenMult)
-    ok(!("classEhpGabarit" in g.WORLD_HERO_SCALING) && !("classPowerGabarit" in g.WORLD_HERO_SCALING), "plus de gabarit de classe dans WORLD_HERO_SCALING (v3.763.0)");
+    ok(!g.WORLD_HERO_SCALING && !g.PA2_HERO_SCALING && g.HERO_TRACKING && !("classEhpGabarit" in g.HERO_TRACKING), "un seul suivi (HERO_TRACKING), sans gabarit de classe (v3.763.0, v3.767.0)");
     CF.getHeroDamagePerRound = function () { return 300; }; CF.getHeroEffectiveHp = function () { return 1500; };
     var heroDe = function (cid) { var c = null; g.CLASSES.forEach(function (k) { if (k.id === cid) c = k; }); return c.heroIds[0]; };
-    game.heroId = heroDe("knight"); var k = CF.getHeroScale("joueurDesert2", g.WORLD_HERO_SCALING);
-    game.heroId = heroDe("archer"); var m = CF.getHeroScale("joueurDesert2", g.WORLD_HERO_SCALING);
+    game.heroId = heroDe("knight"); var k = CF.getHeroScale(R.joueurDesert2, "desert");
+    game.heroId = heroDe("archer"); var m = CF.getHeroScale(R.joueurDesert2, "desert");
     ok(Math.abs(m.power - Math.sqrt(1500 / 971 / 1.15)) < 1e-9, "Rôdeur : puissance × (PV eff. / réf. / 1,15)^0,5 (×" + m.power.toFixed(3) + ")");
-    ok(k.power === m.power, "Chevalier : mêmes PV effectifs, même puissance (×" + k.power.toFixed(3) + ")");
-    ok(k.hp === m.hp, "la part « PV des ennemis » ne dépend pas de la classe");
-    game.heroId = heroDe("knight"); var pa = CF.getHeroScale("joueurDesert2", { exp: 0.5, margin: 1.15, cap: 2.5 });
-    ok(pa.power === m.power, "sans classEhpGabarit (Petites Aventures, Labyrinthe), rien ne change");
+    ok(k.power === m.power && k.hp === m.hp, "Chevalier : mêmes PV effectifs, même suivi");
   } catch (err) {
     ok(false, "[231] exception : " + err.message);
   } finally { CF.getHeroDamagePerRound = d0; CF.getHeroEffectiveHp = e0; game.heroId = h0; }
 })();
 
-/* [232] v3.448.8 — une erreur dans un pas de boucle ne fige plus la partie : l'image suivante est
-   toujours demandée, et chaque message n'est écrit qu'une fois en console. */
 console.log("\n[232] v3.448.8 — Boucle de jeu protégée");
 (function () {
   var raf0 = g.requestAnimationFrame, hud0 = g.renderHud, err0 = console.error, demandes = 0, ecrits = 0;
@@ -15394,7 +15376,7 @@ console.log("\n[238] v3.450.0 — Crypte, lot C-0 : socle et passage entre les m
       && g.TALENT_CAP_BY_ACT.some(function (a) { return a.worldIndex === 3 && a.stepId === "crypte_01"; }), "Terrain et talents : entrée d'acte I à la Crypte");
     var R = g.WAREHOUSE_RESOURCES;
     ok(R.cire_sepulcre && R.cire_sepulcre.worldIndex === 3 && R.cire_consacree && R.cire_consacree.worldIndex === 3, "Cire de sépulcre et Cire consacrée : matériaux du monde 4");
-    ok(g.WORLD_HERO_SCALING.refByWorld.crypt && g.HERO_SCALING_REFS.joueurRuines, "ajustement au héros : référence de fin des Ruines");
+    ok(g.COURBE_FIN_DE_CHAPITRE.ruins === "joueurRuines" && g.HERO_SCALING_REFS.joueurRuines, "courbe : la Crypte part du héros de fin des Ruines (v3.767.0)");
     var d4 = g.DUNGEONS.filter(function (d) { return d.id === 4; })[0];
     ok(!d4.locked && d4.requiresStoryStep === "crypte_12" && d4.storyChapterId === "crypt", "Ossuaire : derrière son étape d'Histoire (acte III, v3.455.0)");
     // Le passage : arrivée, monde posé, plafonds de la Crypte, Ossuaire toujours fermé, voyage retour
@@ -17996,8 +17978,8 @@ console.log("\n[308] v3.486.0 — Montagne, lot M-0 : socle et passage entre les
       && g.TALENT_CAP_BY_ACT.some(function (a) { return a.worldIndex === 4 && a.stepId === "montagne_01"; }), "Terrain et talents : entrée d'acte I à la Montagne");
     var R = g.WAREHOUSE_RESOURCES;
     ok(R.cendre_vive && R.cendre_vive.worldIndex === 4 && R.cendre_vive.tier === "special" && R.obsidienne_taillee && R.obsidienne_taillee.tier === "crafted", "Cendre vive et Obsidienne taillée : matériaux du monde 5");
-    var ref = g.WORLD_HERO_SCALING.refByWorld.mountain, J = g.HERO_SCALING_REFS.joueurCrypte;
-    ok(ref && ref[0] === "joueurCrypte" && J && J.dmg > g.HERO_SCALING_REFS.joueurRuines.dmg, "ajustement au héros : référence de fin de la Crypte (" + (J && J.dmg) + " / " + (J && J.ehp) + ")");
+    var J = g.HERO_SCALING_REFS.joueurCrypte;
+    ok(g.COURBE_FIN_DE_CHAPITRE.crypt === "joueurCrypte" && J && J.dmg > g.HERO_SCALING_REFS.joueurRuines.dmg, "courbe : la Montagne part du héros de fin de la Crypte (" + (J && J.dmg) + " / " + (J && J.ehp) + ")");
     var codex = g.CODEX_ENTRIES ? g.CODEX_ENTRIES.filter(function (c) { return c.id === "world_mountain"; })[0] : null;
     var src = fs.readFileSync(path.join(ROOT, "js/data/codex.js"), "utf8");
     ok(src.indexOf("le froid mord") === -1 && src.indexOf("la lave éclaire les pentes") !== -1, "codex de la Montagne : un monde de feu (plus de froid)");
@@ -20081,10 +20063,10 @@ console.log("\n[376] v3.561.0 — Le Grand Ouvrage : verser le surplus, +1 % d'o
 
 console.log("\n[377] v3.562.0 — Difficulté de la Crypte et de la Montagne : ennemis qui suivent le héros (A), ennemis ordinaires des quêtes plus forts (B)");
 (function () {
-  var Q = g.QuestEnemyManager, H = g.WORLD_HERO_SCALING;
+  var Q = g.QuestEnemyManager, H = g.HERO_TRACKING;
   try {
-    ok(H.byWorld.crypt.exp === 0.75 && H.byWorld.crypt.margin === 1.05 && H.byWorld.mountain.exp === 0.75 && !H.byWorld.desert, "A : Crypte et Montagne seulement (suivi 0,75, marge 5 %)");
-    ok(!H.questEnemyByWorld && !H.questBossHpByWorld && typeof Q.applyWorldMult === "undefined", "B : fondu dans les cibles des quêtes (v3.764.0, C1)");
+    ok(H.byWorld.crypt.exp === 0.75 && H.byWorld.crypt.margin === 1.05 && H.byWorld.mountain.exp === 0.75 && H.byWorld.desert.exp === 0.5, "A : suivi 0,75 / marge 5 % de la Crypte à la Tour, 0,5 / 15 % avant (v3.767.0 : suivi unique)");
+    ok(!g.WORLD_HERO_SCALING && typeof Q.applyWorldMult === "undefined", "B : fondu dans les cibles des quêtes (v3.764.0, C1)");
     // v3.744.0 (Seb 08/11, option C) : élites par monde ; v3.765.0 (C2) : fondues dans les cibles des élites
     ok(!g.ELITE_HP_BY_WORLD && !g.ELITE_POWER_BY_WORLD && g.ELITE_DB.gardien_qui_repete.target && g.ELITE_DB.pleureuse_nef.target, "élites : bonus par monde fondus dans leurs cibles (v3.765.0)");
     ok(/selfG\.applyTarget\(quest, m\)/.test(fs.readFileSync(path.join(ROOT, "js/systems/quest-enemy-system.js"), "utf8")), "les groupes aussi (cible de la courbe)");
@@ -21442,7 +21424,7 @@ console.log("\n[420] v3.625.0 — Tour, lot T-0 : le socle");
     var FM = g.ForgeManager || g.ForgeSystem, maxAv = FM.getMaxLevel, lvAv = FM.getLevel, at = function (lv) { FM.getMaxLevel = function () { return 20; }; FM.getLevel = function () { return lv; }; return FM.getCost("armor"); };
     var c19 = at(18), c17 = at(16); FM.getMaxLevel = maxAv; FM.getLevel = lvAv;
     ok(c19.verre_faille === 2 && c19.obsidienne_taillee === 1 && c17.verre_faille === 1 && !c17.obsidienne_taillee, "Forge des mondes : reforge 19 : 2 Verres de faille (+1 Obsidienne) ; reforge 17 : 1 Verre de faille seul");
-    ok(g.HERO_SCALING_REFS.joueurMontagne && g.WORLD_HERO_SCALING.refByWorld.tower[0] === "joueurMontagne", "ajustement au héros : la Tour se mesure au héros de fin de Montagne");
+    ok(g.HERO_SCALING_REFS.joueurMontagne && g.COURBE_FIN_DE_CHAPITRE.mountain === "joueurMontagne", "courbe : la Tour part du héros de fin de Montagne (v3.767.0)");
     ok(g.DUNGEONS.filter(function (d) { return d.id === 6; })[0].requiresStoryStep === "tour_11", "Sommet interdit : s'ouvre à l'acte III (tour_11, v3.629.0)");
     ok(g.EQUIP_WORLD_SCALE[5] === 6, "échelle d'équipement de la Tour : ×6, comme la Montagne (décision de Seb, v3.625.1)");
   } catch (err) { ok(false, "[420] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
@@ -25410,29 +25392,26 @@ console.log("\n[491] v3.730.0 — Contre protecteur et contre rapide (P5 = P1 + 
   finally { g.Math.random = keep.rnd; CE.playerAttack = keep.pa; g.addLog = keep.log; try { run("fullResetState();"); } catch (e) {} }
 })();
 
-console.log("\n[492] v3.731.0 → v3.763.0 — Mise à l'échelle D : la même pour les trois classes (gabarits retirés)");
+console.log("\n[492] v3.731.0 → v3.767.0 — Suivi du héros : même règle pour les trois classes, réglage par chapitre");
 (function () {
-  var CF = g.CombatForecast, W = g.WorldManager, H = g.WORLD_HERO_SCALING, keep = { d: CF.getHeroDamagePerRound, e: CF.getHeroEffectiveHp, h: game.heroId, wi: W.worldIndex, ai: W.adventureIndex, cy: game.cycleCount };
+  var CF = g.CombatForecast, H = g.HERO_TRACKING, R = g.HERO_SCALING_REFS, keep = { d: CF.getHeroDamagePerRound, e: CF.getHeroEffectiveHp, h: game.heroId, cy: game.cycleCount };
   var heroDe = function (cid) { var c = null; g.CLASSES.forEach(function (k) { if (k.id === cid) c = k; }); return c.heroIds[0]; };
   var ehp = 1e5;
   try {
-    ok(!H.classPowerGabarit && !H.classEhpGabarit, "v3.763.0 : plus de gabarit de classe (data/classes.js, balance)");
     CF.getHeroDamagePerRound = function () { return 1e5; }; CF.getHeroEffectiveHp = function () { return ehp; };
-    function sc(cid, ref, cfg) { game.heroId = heroDe(cid); return CF.getHeroScale(ref, cfg || H); }
-    Object.keys(H.refByWorld).forEach(function (wid) {
-      var wi = -1; g.WORLDS.forEach(function (w, i) { if (w.id === wid) wi = i; }); W.worldIndex = wi;
-      var bw = (H.byWorld && H.byWorld[wid]) || {}, mg = bw.margin || H.margin, ex = bw.exp != null ? bw.exp : H.exp, ref = H.refByWorld[wid][1], re = g.HERO_SCALING_REFS[ref].ehp;
-      var f = function (x) { return Math.min(H.cap, Math.max(1, Math.pow(x / mg, ex))); };
-      ehp = re * 2; var m = sc("mage", ref), r = sc("archer", ref), k = sc("knight", ref);
+    function sc(cid, ref, wid) { game.heroId = heroDe(cid); return CF.getHeroScale(ref, wid); }
+    Object.keys(H.byWorld).forEach(function (wid) {
+      var bw = H.byWorld[wid], ref = g.QuestEnemyManager.courbeRef(wid, 20, 20), re = ref.ehp;
+      var f = function (x) { return Math.min(H.cap, Math.max(1, Math.pow(x / bw.margin, bw.exp))); };
+      ehp = re * 2; var m = sc("mage", ref, wid), r = sc("archer", ref, wid), k = sc("knight", ref, wid);
       ok(Math.abs(r.power - f(ehp / re)) < 1e-9 && m.power === r.power && k.power === r.power, wid + " : puissance × (PV eff. / réf. / marge)^exp, la même pour les trois classes (×" + r.power.toFixed(3) + ")");
       ok(m.hp === r.hp && m.hp === k.hp, wid + " : PV des ennemis identiques pour les trois classes");
-      ehp = re * 0.9; ok(sc("mage", ref).power === 1, wid + " : héros sous la référence, aucun ajustement (×1)");
+      ehp = re * 0.9; ok(sc("mage", ref, wid).power === 1, wid + " : héros sous la référence, aucun ajustement (×1)");
     });
-    W.worldIndex = keep.wi; ehp = 1e5;
-    game.cycleCount = 1; game.heroId = heroDe("mage"); var cy = W.getHeroScale(); game.cycleCount = keep.cy;
+    ehp = 1e5; game.cycleCount = 1; var cy = CF.getHeroScale(R.joueurDesert2, "desert"); game.cycleCount = keep.cy;
     ok(cy.hp === 1 && cy.power === 1, "Cycles : pas d'ajustement");
   } catch (err) { ok(false, "[492] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
-  finally { CF.getHeroDamagePerRound = keep.d; CF.getHeroEffectiveHp = keep.e; game.heroId = keep.h; W.worldIndex = keep.wi; W.adventureIndex = keep.ai; game.cycleCount = keep.cy; }
+  finally { CF.getHeroDamagePerRound = keep.d; CF.getHeroEffectiveHp = keep.e; game.heroId = keep.h; game.cycleCount = keep.cy; }
 })();
 
 console.log("\n[493] v3.732.0 — Soin des boss : 10 % des PV max, plafonné aux PV manquants (profil S1 du banc bouclier-soin, Seb 07/11)");
@@ -26413,6 +26392,27 @@ console.log("\n[517] Courbe de référence : Petites Aventures, Labyrinthe et Fa
     ok(lf && ll && Math.abs(ll.hp - 1.8) < 0.01 && Math.abs(lf.hp - 1.2) < 0.01, "gardes : même force qu'avant (Labyrinthe ×1,8, Faille ×1,2)");
   } catch (err) { ok(false, "[517] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   finally { game.sceneRun = null; game = freshCombat("knight"); }
+})();
+
+console.log("\n[518] Suivi du héros unique, sur la courbe, étendu aux donjons et aux élites (v3.767.0, C3b, Seb 10/11, option A)");
+(function () {
+  var CF = g.CombatForecast, d0 = CF.getHeroDamagePerRound, e0 = CF.getHeroEffectiveHp;
+  try {
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.heroHp = game.heroMaxHp;");
+    var D = g.DungeonManager, QE = g.QuestEnemyManager, E = g.EliteManager;
+    var mk = function () { D.ensure(); game.dungeonRun = { active: true, dungeonId: 2, wave: 16, level: 1, marks: [] }; var b = [].concat(D.buildWaveEnemy(16))[0]; game.dungeonRun = { active: false }; return b; };
+    var bNeuf = mk();
+    CF.getHeroDamagePerRound = function () { return 1e6; }; CF.getHeroEffectiveHp = function () { return 1e6; };
+    var bFort = mk(), eFort = E.make("pleureuse_nef", "crypt", 0);
+    var qFort = QE.spawnFor(g.ADVENTURE_QUESTS.aq_desert_dunes, false); qFort = Array.isArray(qFort) ? qFort[0] : qFort;
+    CF.getHeroDamagePerRound = d0; CF.getHeroEffectiveHp = e0;
+    var eNeuf = E.make("pleureuse_nef", "crypt", 0), qNeuf = QE.spawnFor(g.ADVENTURE_QUESTS.aq_desert_dunes, false); qNeuf = Array.isArray(qNeuf) ? qNeuf[0] : qNeuf;
+    ok(Math.abs(bFort.maxHp / bNeuf.maxHp - 2.5) < 0.02, "donjon : un héros très en avance porte le boss au plafond (×2,5 de PV)");
+    ok(Math.abs(eFort.maxHp / eNeuf.maxHp - 2.5) < 0.02, "élite de carte : même suivi (×2,5)");
+    ok(qFort.maxHp > qNeuf.maxHp * 2, "quête : même suivi");
+    ok(!g.ADVENTURE_QUESTS.aq_desert_trone.heroRef && typeof g.WorldManager.getHeroScale === "undefined", "plus de heroRef ni de suivi dans WorldManager (un seul suivi)");
+  } catch (err) { ok(false, "[518] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  finally { CF.getHeroDamagePerRound = d0; CF.getHeroEffectiveHp = e0; game = freshCombat("knight"); }
 })();
 
 Promise.all(ATTENTES).then(function () {

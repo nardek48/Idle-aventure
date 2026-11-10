@@ -15,7 +15,7 @@ new Function("require", "process", "module", "__dirname", src + "\nmodule.export
 var g = mod.exports.g, run = mod.exports.run, seedRng = mod.exports.seedRng; // tirage fixé : mêmes ennemis d'un relevé à l'autre
 
 run("fullResetState(); game.playerName='Banc'; game.heroId='ranger';");
-var W = g.WorldManager, AQ = g.AdventureQuestManager, Q = g.ADVENTURE_QUESTS, H = g.WORLD_HERO_SCALING;
+var W = g.WorldManager, AQ = g.AdventureQuestManager, Q = g.ADVENTURE_QUESTS, H = g.WORLD_HERO_SCALING || {}; // v3.767.0 : retiré (--implicite lit l'avant C1)
 W._heroScaleOff = true; // la courbe remplace le suivi : on lit l'ennemi « nu » de la quête
 
 /* Place de chaque quête dans l'Histoire : l'étape dont le lien vise « adv_<quête> » (chapitre, rang). */

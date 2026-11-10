@@ -271,7 +271,6 @@ var ADVENTURE_QUESTS = {
     category: "side",
     worldId: "desert",
     adventureIndex: 0,
-    heroRef: "joueurDesert2", // v3.448.2 : fin du chapitre II, pas le héros de début de Désert (aventure 0)
     requiresVoie: "maddoc",
     encounters: [
       { group: ["sandwarrior", "sandwarrior"], groupHpMult: 0.55 },

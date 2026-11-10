@@ -145,16 +145,13 @@ var CombatForecast = {
     return Math.max(1, Number(game.heroMaxHp || 1) / (1 - def));
   },
 
-  /* Multiplicateurs d'un ennemi face au héros actuel (data/worlds.js, HERO_SCALING_REFS).
-     refKey : héros de référence ; cfg : { exp, margin, cap }. Rend { hp, power } (>= 1) :
-     PV de l'ennemi selon les dégâts du héros, Puissance selon ses PV effectifs. */
-  getHeroScale: function (refKey, cfg) {
-    var ref = window.HERO_SCALING_REFS ? HERO_SCALING_REFS[refKey] : null;
-    if (!ref || !cfg) return { hp: 1, power: 1 };
-    // v3.562.0 (retour Seb, point 1, option A) : réglage propre au monde (cfg.byWorld), Crypte et Montagne
-    var wid = (window.WorldManager && window.WORLDS && WORLDS[WorldManager.worldIndex]) ? WORLDS[WorldManager.worldIndex].id : null;
-    var bw = (cfg.byWorld && wid && cfg.byWorld[wid]) || {};
-    var margin = Number(bw.margin || cfg.margin || 1), exp = Number(bw.exp != null ? bw.exp : (cfg.exp || 0)), cap = Number(bw.cap || cfg.cap || 1);
+  /* v3.767.0 (C3b) : LE suivi du héros en avance (data/worlds.js, HERO_TRACKING), pour tous les combats.
+     ref : héros attendu { dmg, ehp } (la courbe à l'étape du combat) ; worldId : chapitre du réglage. Rend { hp, power } (>= 1). */
+  getHeroScale: function (ref, worldId) {
+    var cfg = window.HERO_TRACKING;
+    if (!ref || !cfg || !(ref.dmg > 0) || !(ref.ehp > 0) || (window.game && (game.cycleCount || 0) > 0)) return { hp: 1, power: 1 }; // pas dans les Cycles
+    var bw = (cfg.byWorld && cfg.byWorld[worldId]) || { exp: 0, margin: 1 };
+    var margin = Number(bw.margin || 1), exp = Number(bw.exp || 0), cap = Number(cfg.cap || 1);
     var f = function (ratio) { return Math.min(cap, Math.max(1, Math.pow(Math.max(0, ratio) / margin, exp))); };
     // v3.763.0 : plus de gabarit de classe ici, l'équilibre des classes vit dans data/classes.js (balance)
     return { hp: f(this.getHeroDamagePerRound() / ref.dmg), power: f(this.getHeroEffectiveHp() / ref.ehp) };

@@ -383,11 +383,10 @@ P("Dégâts par frappe = Puissance × " + fr(G.COMPANION_POWER_DMG_COEF) + " × 
 
 /* ---------- 3. Combat ---------- */
 H(2, "2.8 Difficulté : les ennemis suivent la force du héros");
-var WS = G.WORLD_HERO_SCALING;
-P("Fichiers : `data/worlds.js` (HERO_SCALING_REFS, WORLD_HERO_SCALING), `CombatForecast.getHeroScale`. Le héros est comparé à un **héros de référence** (dégâts par round, PV effectifs = PV / (1 − défense)) : PV ennemis × (dmg / dmg de réf. / " + fr(WS.margin) + ")^" + fr(WS.exp) + ", puissance × (ehp / ehp de réf. / " + fr(WS.margin) + ")^" + fr(WS.exp) + ", jamais sous ×1, plafond ×" + fr(WS.cap) + ". L'or et l'XP ne changent pas.\n");
+var HT = G.HERO_TRACKING;
+P("Fichiers : `data/worlds.js` (HERO_SCALING_REFS, COURBE_FIN_DE_CHAPITRE, HERO_TRACKING), `QuestEnemyManager.courbeRef`, `CombatForecast.getHeroScale`. **v3.767.0 : un seul suivi**, pour tous les combats (quêtes, élites et escortes, donjons, Petites Aventures, Labyrinthe, Faille). Le héros est comparé au **héros attendu à l'étape du combat** (la courbe de référence, interpolée entre les héros du robot de fin de chapitre ; tranche de son héros de référence pour les Petites Aventures) : PV ennemis × (dégâts / réf. / marge)^exp, puissance × (PV effectifs / réf. / marge)^exp, de ×1 à ×" + fr(HT.cap) + ", coupé dans les Cycles ; obstacles des Petites Aventures × (moyenne)^" + fr(HT.obstacleExp) + ".\n");
 P(table(["Référence", "Dégâts par round", "PV effectifs"], Object.keys(G.HERO_SCALING_REFS).map(function (k) { var r = G.HERO_SCALING_REFS[k]; return [k, r.dmg, r.ehp]; })));
-P(table(["Monde", "Référence par aventure"], Object.keys(WS.refByWorld).map(function (w) { return [worldName(w), WS.refByWorld[w].join(" · ")]; })));
-P("*Ruines : le héros de fin du chapitre II (`joueurDesert2`). Posé provisoirement en v3.428.0, **gardé par décision de Seb du 09/10** : tous les bancs des Ruines ont été faits avec cette référence. L'ajustement compare donc le héros des Ruines au héros de fin du Désert.*\n");
+P(table(["Chapitre", "Suivi (exp)", "Marge"], Object.keys(HT.byWorld).map(function (w) { return [worldName(w), fr(HT.byWorld[w].exp), pct(HT.byWorld[w].margin - 1)]; })));
 H(2, "2.9 Équilibre des classes (v3.634.0)");
 P("Fichier : `data/classes.js` (`balance`). Le multiplicateur de dégâts porte sur **tous** les dégâts du héros (attaque de base et techniques), par `VeinSystem.classMult()` lu dans `bladeMult` ; les PV passent par `TalentManager.getStatBonuses()`. Décision de Seb (03/11) : « converger au milieu ».\n");
 P(table(["Classe", "Caractéristique principale", "Dégâts", "PV en plus"], G.CLASSES.map(function (c) { var b = c.balance || {}; return [c.label, ({ power: "Puissance", celerity: "Célérité", will: "Volonté" })[c.mainStat] || c.mainStat, "×" + fr(b.damageMult || 1), pct(b.hpPct || 0)]; })));

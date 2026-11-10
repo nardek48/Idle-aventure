@@ -23,14 +23,10 @@ var QuestEnemyManager = {
 
     /* v3.459.5 (audit P24) : le monde, l'aventure, le pool et le boss empruntés reviennent même
        si la génération lève une erreur — sinon la sauvegarde suivante écrirait le monde de la quête. */
-    var savedPool = null, savedBoss = null, savedHeroRef = WorldManager._heroRefKey;
+    var savedPool = null, savedBoss = null;
     try {
       WorldManager.worldIndex = worldIdx;
       WorldManager.adventureIndex = quest.adventureIndex;
-      /* v3.448.2 : heroRef de quête = héros de référence de l'ajustement D (fin de chapitre jouée sur
-         l'aventure 0, ex. le Trône de sable). Absent : la référence de l'aventure, comme avant. */
-      var quDef = (window.ADVENTURE_QUESTS && ADVENTURE_QUESTS[quest.id]) || quest;
-      WorldManager._heroRefKey = quDef.heroRef || null;
       var adventure = WorldManager.getAdventure();
       var enemyCount = (adventure && adventure.enemyCount) || 1;
       WorldManager.enemyIndex = forceBoss ? Math.max(0, enemyCount - 1) : 0;
@@ -96,7 +92,6 @@ var QuestEnemyManager = {
       WorldManager.worldIndex = savedWorldIndex;
       WorldManager.adventureIndex = savedAdventureIndex;
       WorldManager.enemyIndex = savedEnemyIndex;
-      WorldManager._heroRefKey = savedHeroRef;
     }
   },
 
@@ -118,8 +113,16 @@ var QuestEnemyManager = {
     if (!enemy || (enemy.isBoss && enemy.isElite)) return;   // élite : inchangée (C2)
     var lv = this.levelOf(quest, !!enemy.isBoss);
     if (!lv) return;
-    enemy.maxHp = Math.max(1, Math.floor(enemy.maxHp * lv.hp)); enemy.hp = enemy.maxHp;
-    if (enemy.stats) enemy.stats.power = Math.max(1, Math.floor(Number(enemy.stats.power || 0) * lv.power));
+    var src = ADVENTURE_QUESTS[quest.id], tr = this.trackAt(this.placeOf(src), src.worldId); // v3.767.0 (C3b) : suivi du héros
+    enemy.maxHp = Math.max(1, Math.floor(enemy.maxHp * lv.hp * tr.hp)); enemy.hp = enemy.maxHp;
+    if (enemy.stats) enemy.stats.power = Math.max(1, Math.floor(Number(enemy.stats.power || 0) * lv.power * tr.power));
+  },
+
+  /* v3.767.0 (C3b) : suivi du héros en avance face au héros attendu à cette étape (courbeRef), réglage du chapitre worldId. */
+  trackAt: function (pl, worldId) {
+    var none = { hp: 1, power: 1 };
+    if (!pl || !window.CombatForecast || typeof CombatForecast.getHeroScale !== "function") return none;
+    return CombatForecast.getHeroScale(this.courbeRef(pl.monde, pl.rang, pl.longueur), worldId);
   }
 };
 

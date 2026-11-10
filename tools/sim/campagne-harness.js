@@ -166,8 +166,8 @@ function launch() {
   // Essai (option B du bonus « % dégâts ») : tapMult multiplie aussi le plat d'équipement ;
   // ESSAI_TAPMULT_ECHELLE réduit la part du bonus (0,5 = bonus divisés par deux)
   // v3.764.0 (C1) : ESSAI_B retiré, questEnemyByWorld est fondu dans les cibles des quêtes (target)
-  // v3.562.0 (point 1) : ESSAI_HS=exp,marge (Crypte et Montagne) ; ESSAI_HS=off coupe le réglage par monde
-  if (process.env.ESSAI_HS) { if (process.env.ESSAI_HS === "off") delete sb.WORLD_HERO_SCALING.byWorld; else { var hsv = process.env.ESSAI_HS.split(",").map(Number); ["crypt", "mountain"].forEach(function (w) { sb.WORLD_HERO_SCALING.byWorld[w] = { exp: hsv[0], margin: hsv[1] }; }); } }
+  // v3.767.0 (C3b) : ESSAI_HS=exp,marge (Crypte et Montagne) sur le suivi unique HERO_TRACKING ; off = suivi coupé
+  if (process.env.ESSAI_HS) { if (process.env.ESSAI_HS === "off") sb.HERO_TRACKING.byWorld = {}; else { var hsv = process.env.ESSAI_HS.split(",").map(Number); ["crypt", "mountain"].forEach(function (w) { sb.HERO_TRACKING.byWorld[w] = { exp: hsv[0], margin: hsv[1] }; }); } }
   if (process.env.ESSAI_TAPMULT_TOTAL) (function (X) {
     var k = Number(process.env.ESSAI_TAPMULT_ECHELLE || 1);
     X.EquipmentManager.effectiveTapDamage = function () {

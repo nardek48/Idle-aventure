@@ -215,22 +215,15 @@ var HERO_SCALING_REFS = {
      (le robot --avise ne monte pas l'Entrepôt et bute sur la Forge 6). Chevalier 14403 / 3780, Rôdeur 13034 / 2694, Mage 13328 / 3413. */
   joueurMontagne: { dmg: 13588, ehp: 3296 }
 };
-/* D : les mondes. « Un peu » (Seb) : exp 0,5, et une marge de 15 % au-dessus du joueur
-   appliqué de fin de segment : le robot de campagne ne voit aucune différence (mesuré : avec
-   les héros du banc comme référence, il prenait 11 morts et butait sur le Trône de sable).
-   Référence par aventure du monde. */
-var WORLD_HERO_SCALING = {
-  exp: 0.5, margin: 1.15, cap: 2.5,
-  /* v3.562.0 (retour Seb, point 1, option A) : à la Crypte et à la Montagne, les ennemis suivent davantage
-     un héros en avance (marge 15 % -> 5 %, suivi 0,5 -> 0,75). Au banc. */
-  byWorld: { crypt: { exp: 0.75, margin: 1.05 }, mountain: { exp: 0.75, margin: 1.05 }, tower: { exp: 0.75, margin: 1.05 } }, // v3.626.0 : la Tour comme la Montagne
-  // v3.764.0 (C1) : questEnemyByWorld et questBossHpByWorld fondus dans les cibles des quêtes (target, bossTarget)
-  /* v3.428.0 (Ruines, U-1) : le héros de fin du chapitre II. Gardé par décision de Seb du 09/10/2026 :
-     tous les bancs des Ruines ont été faits avec cette référence. */
-  refByWorld: { forest: ["joueurForet", "joueurForet"], desert: ["joueurDesert1", "joueurDesert2"], ruins: ["joueurDesert2", "joueurDesert2"],
-    crypt: ["joueurRuines", "joueurRuines"], // v3.450.0 : le héros de fin des Ruines
-    mountain: ["joueurCrypte", "joueurCrypte"], // v3.486.0 : le héros de fin de la Crypte
-    tower: ["joueurMontagne", "joueurMontagne"] } // v3.625.0 : le héros de fin de la Montagne
+/* v3.767.0 (C3b, Seb 10/11, option A) : UN SEUL suivi du héros en avance, pour tous les combats (quêtes, élites et
+   escortes, donjons, Petites Aventures, Labyrinthe, Faille). Référence : le héros attendu à l'étape du combat (la courbe) ;
+   ennemi : PV × (dégâts/round du héros ÷ réf. ÷ marge)^exp, Puissance × (PV effectifs ÷ réf. ÷ marge)^exp, de ×1 à ×cap.
+   Réglage par chapitre (repris des quêtes : « un peu » en Forêt, Désert, Ruines, davantage ensuite, v3.562.0). Coupé dans les Cycles.
+   obstacleExp : part du suivi reportée sur les obstacles des Petites Aventures. Logique : CombatForecast.getHeroScale. */
+var HERO_TRACKING = {
+  cap: 2.5, obstacleExp: 0.6,
+  byWorld: { forest: { exp: 0.5, margin: 1.15 }, desert: { exp: 0.5, margin: 1.15 }, ruins: { exp: 0.5, margin: 1.15 },
+    crypt: { exp: 0.75, margin: 1.05 }, mountain: { exp: 0.75, margin: 1.05 }, tower: { exp: 0.75, margin: 1.05 } }
 };
 /* v3.764.0 (C1, Seb 10/11, option A) : la courbe de référence (QuestEnemyManager.courbeRef) part de foret1 et passe
    par le héros du robot en fin de chaque chapitre ; la Tour prolonge la pente de la Montagne. */
@@ -238,5 +231,5 @@ var COURBE_DEBUT = "foret1";
 var COURBE_FIN_DE_CHAPITRE = { forest: "joueurForet", desert: "joueurDesert2", ruins: "joueurRuines", crypt: "joueurCrypte", mountain: "joueurMontagne" };
 window.COURBE_DEBUT = COURBE_DEBUT;
 window.COURBE_FIN_DE_CHAPITRE = COURBE_FIN_DE_CHAPITRE;
+window.HERO_TRACKING = HERO_TRACKING;
 window.HERO_SCALING_REFS = HERO_SCALING_REFS;
-window.WORLD_HERO_SCALING = WORLD_HERO_SCALING;

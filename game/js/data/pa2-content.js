@@ -209,7 +209,7 @@ var PA2_LEVEL_BANDS = [
    exp 0,75 : le héros garde environ un quart de son avance (log). Obstacles : difficulté ×
    (moyenne des deux multiplicateurs)^obstacleExp. Marge de 10 % : les écarts entre classes d'un héros normal ne comptent pas.
    Banc (sim/_campagne… non livré, sauvegarde « Luca ») : voir CHANGELOG_v3.423.0. */
-var PA2_HERO_SCALING = { exp: 0.75, margin: 1.1, cap: 3, obstacleExp: 0.6 };
+// v3.767.0 (C3b) : PA2_HERO_SCALING fondu dans le suivi unique (data/worlds.js, HERO_TRACKING)
 
 /* Obstacles : gabarits partagés (SCENE_NODES.obstacles) et pas de difficulté par rangée.
    Les voies reprennent le triangle de la Forêt v1 (optionProfiles du canevas). */
@@ -1398,7 +1398,6 @@ window.PA2_NODE_WEIGHTS = PA2_NODE_WEIGHTS;
 window.PA2_ACTS = PA2_ACTS;
 window.PA2_RINGS = PA2_RINGS;
 window.PA2_LEVEL_BANDS = PA2_LEVEL_BANDS;
-window.PA2_HERO_SCALING = PA2_HERO_SCALING;
 window.PA2_OBSTACLES = PA2_OBSTACLES;
 window.PA2_OBSTACLE_TERTRE = PA2_OBSTACLE_TERTRE;
 window.PA2_GUARDIAN = PA2_GUARDIAN;

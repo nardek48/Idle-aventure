@@ -5,7 +5,7 @@
 
 var FAILLE_CONFIG = {
   worldId: "tower",
-  adventureIndex: 1,                 // ennemis et héros de référence : la Tour (WORLD_HERO_SCALING.refByWorld.tower)
+  adventureIndex: 1,                 // ennemis de référence : la Tour (suivi du héros : HERO_TRACKING, à l'étape etape)
   reserve: 2,                        // FA7 : 2 montées, une revient toutes les 6 h
   rechargeMs: 6 * 3600e3,
   entryCost: { resourceId: "grande_ration", amount: 1 }, // FA7 : même coût que la faille de l'étape 17

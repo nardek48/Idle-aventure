@@ -217,9 +217,10 @@ var Pa2Run = {
     run = run || this.getRun();
     if (!run) return { hp: 1, power: 1, obstacle: 1 };
     if (run.heroScale && typeof run.heroScale.hp === "number") return run.heroScale;
-    var cfg = window.PA2_HERO_SCALING, key = run.band && run.band.heroRef;
-    var hs = (cfg && key && window.CombatForecast && typeof CombatForecast.getHeroScale === "function")
-      ? CombatForecast.getHeroScale(key, cfg) : { hp: 1, power: 1 };
+    // v3.767.0 (C3b) : le suivi unique (HERO_TRACKING), face au héros de référence de la tranche, réglage de son chapitre
+    var cfg = window.HERO_TRACKING, ref = run.band && window.HERO_SCALING_REFS ? HERO_SCALING_REFS[run.band.heroRef] : null;
+    var hs = (cfg && ref && window.CombatForecast && typeof CombatForecast.getHeroScale === "function")
+      ? CombatForecast.getHeroScale(ref, run.band.worldId) : { hp: 1, power: 1 };
     var obs = cfg ? Math.pow(Math.sqrt(hs.hp * hs.power), Number(cfg.obstacleExp || 0)) : 1;
     run.heroScale = { hp: hs.hp, power: hs.power, obstacle: obs };
     return run.heroScale;
