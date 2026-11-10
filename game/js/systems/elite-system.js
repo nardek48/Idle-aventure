@@ -142,8 +142,11 @@ var EliteManager = {
   baseline: function (eliteId, worldIndex) {
     var c = (this._baseCache = this._baseCache || {}), key = eliteId + "|" + worldIndex;
     if (c[key]) return c[key];
-    var cy = game.cycleCount, e;
-    try { game.cycleCount = 0; e = this.build(eliteId, this.scaleFor(worldIndex, 0), { noMilestone: true }); } finally { game.cycleCount = cy; }
+    var cy = game.cycleCount, def = this.get(eliteId), sm = def ? def.statMult : null, e;
+    try { // statMult d'origine : un essai de banc sur l'élite garde son effet
+      game.cycleCount = 0; if (def && this._statOrigine[eliteId]) def.statMult = this._statOrigine[eliteId];
+      e = this.build(eliteId, this.scaleFor(worldIndex, 0), { noMilestone: true });
+    } finally { game.cycleCount = cy; if (def) def.statMult = sm; }
     var coef = (typeof ENEMY_POWER_DMG_COEF === "number") ? ENEMY_POWER_DMG_COEF : 0.5, bm = (typeof BOSS_DMG_MULT === "number") ? BOSS_DMG_MULT : 1.5;
     return (c[key] = e ? { hp: e.maxHp, coup: Number(e.stats.power || 0) * coef * bm } : null);
   },
@@ -321,4 +324,7 @@ var EliteManager = {
   }
 };
 
+/* v3.765.0 : statMult des élites pris au chargement, pour l'ennemi moyen (baseline). */
+EliteManager._statOrigine = {};
+Object.keys(window.ELITE_DB || {}).forEach(function (k) { if (ELITE_DB[k].statMult) EliteManager._statOrigine[k] = Object.assign({}, ELITE_DB[k].statMult); });
 window.EliteManager = EliteManager;

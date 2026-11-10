@@ -52,7 +52,7 @@ function wrap(obj, name, fn) { var o = obj[name]; obj[name] = function () { retu
 
 /* ---------- Profil : niveaux de reforge posés après le chargement (le vrai code fait le reste) ---------- */
 function poserProfil(g, P, M) {
-  if (opt("--elite-hp", null)) { var eh = JSON.parse(opt("--elite-hp")); Object.keys(eh).forEach(function (w) { g.ELITE_HP_BY_WORLD[w] = eh[w]; }); } // ex. {"crypt":1.2}
+  if (opt("--elite-hp", null)) { var eh = JSON.parse(opt("--elite-hp")); Object.keys(eh).forEach(function (id) { require("./essai-cible.js").elite(g.ELITE_DB[id], eh[id], 1); }); } // v3.765.0 : {"pleureuse_nef":1.2}, PV de la cible ×k
   if (opt("--elite-pow", null)) { var ep = JSON.parse(opt("--elite-pow")); Object.keys(ep).forEach(function (w) { g.ELITE_POWER_BY_WORLD[w] = ep[w]; }); }
   CUR.lv = P.lv === "monde" ? g.FORGE_REFORGES_PER_WORLD * M.wi : P.lv;   // monde wi fini = bandes 1..wi complètes
 }

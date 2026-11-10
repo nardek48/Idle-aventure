@@ -349,8 +349,8 @@ function playDungeon(dungeonId) {
   g.DungeonManager.ensure();
   g.game.dungeonRunsUsed = {}; // v3.358.0 : sorties du jour remises à zéro
   d.requiresStoryStep = null;
-  if (DIFF) d.difficultyMult = DIFF;
-  if (BOSS && d.boss && d.boss.statMult) { d.boss.statMult.power = BOSS.power; d.boss.statMult.endurance = BOSS.endurance; }
+  if (DIFF) require("./essai-cible.js").donjon(d, DIFF, DIFF); // v3.765.0 : multiplicateur des cibles
+  if (BOSS) require("./essai-cible.js").donjon(d, BOSS.endurance, BOSS.power, "boss"); // relatif au réglage actuel
   var boss0 = Number(g.game.dungeonBossClears || 0);
   g.DungeonManager.start(dungeonId, MARKS.slice());
   d.requiresStoryStep = garde;
@@ -422,7 +422,7 @@ function mesure(ct, profilId, c) {
       prono = fm ? fm.id + " (ratio " + (fm.ratio != null ? fm.ratio.toFixed(2) : "—") + ", usure " + fm.attrition + " / PV " + Math.round(g.game.heroMaxHp) + "+" + fm.healingReserve + ", " + (fm.precedingFights || 0) + " combats)" : "—";
     }
     if (PRONO && i === 0 && ct.kind === "dungeon") {
-      if (DIFF) g.DUNGEONS.filter(function (x) { return x.id === ct.ref; })[0].difficultyMult = DIFF;
+      if (DIFF) require("./essai-cible.js").donjon(g.DUNGEONS.filter(function (x) { return x.id === ct.ref; })[0], DIFF, DIFF);
       var fp = g.CombatForecast.forDungeon(ct.ref, MARKS.slice());
       prono = fp ? fp.id + " (ratio " + (fp.ratio != null ? fp.ratio.toFixed(2) : "—") + ", usure " + fp.attrition + " / PV " + Math.round(g.game.heroMaxHp) + "+" + fp.healingReserve + ")" : "—";
     }

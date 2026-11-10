@@ -99,8 +99,8 @@ var extra = function () {
     g.DungeonManager.ensure();
     g.game.dungeonRunsUsed = {};
     d.requiresStoryStep = null;
-    if (DIFF3) d.difficultyMult = DIFF3;
-    if (BOSS3) { d.boss.statMult.power = BOSS3[0]; d.boss.statMult.endurance = BOSS3[1]; }
+    if (DIFF3) require("./essai-cible.js").donjon(d, DIFF3, DIFF3); // v3.765.0 : multiplicateur des cibles
+    if (BOSS3) require("./essai-cible.js").donjon(d, BOSS3[1], BOSS3[0], "boss"); // relatif au réglage actuel
     var boss0 = Number(g.game.dungeonBossClears || 0);
     g.DungeonManager.start(4, []);
     d.requiresStoryStep = garde;
@@ -123,7 +123,7 @@ var extra = function () {
 
   var profils = PROFIL_ARG ? [PROFIL_ARG] : ["rare", "epique"];
   console.log("OSSUAIRE — " + RUNS + " runs, Grimoire auto, potions du profil, campement : " + CAMP + " · groupe : " + PARTY.join(" + ")
-    + (DIFF3 ? " · essai difficultyMult " + DIFF3 : "") + (BOSS3 ? " · essai Liche p" + BOSS3[0] + " e" + BOSS3[1] : ""));
+    + (DIFF3 ? " · essai cibles ×" + DIFF3 : "") + (BOSS3 ? " · essai Liche p" + BOSS3[0] + " e" + BOSS3[1] : ""));
   console.log("Cible : campement au palier Rare (étape 12), la Liche 65-80 % au palier Épique, Rôdeur ≥ 60 %.\n");
   profils.forEach(function (pid) {
     console.log(PROFILS[pid].label);

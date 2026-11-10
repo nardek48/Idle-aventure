@@ -64,8 +64,8 @@ var extra = function () {
     g.DungeonManager.ensure();
     g.game.dungeonRunsUsed = {};
     d.requiresStoryStep = null;
-    if (DIFF) d.difficultyMult = DIFF;
-    if (BOSS) { d.boss.statMult.power = BOSS.power; d.boss.statMult.endurance = BOSS.endurance; }
+    if (DIFF) require("./essai-cible.js").donjon(d, DIFF, DIFF); // v3.765.0 : multiplicateur des cibles
+    if (BOSS) require("./essai-cible.js").donjon(d, BOSS.endurance, BOSS.power, "boss"); // relatif au réglage actuel
     var boss0 = Number(g.game.dungeonBossClears || 0);
     g.DungeonManager.start(3, []);
     d.requiresStoryStep = garde;
@@ -137,7 +137,7 @@ var extra = function () {
 
   var profils = PROFIL_ARG ? [PROFIL_ARG] : ["palier", "rare"];
   console.log("SANCTUAIRE SCELLÉ — " + RUNS + " runs, Grimoire auto, potions du profil, campement : " + CAMP + " · groupe : " + PARTY.join(" + ")
-    + (DIFF ? " · essai difficultyMult " + DIFF : "") + (BOSS ? " · essai boss p" + BOSS.power + " e" + BOSS.endurance : ""));
+    + (DIFF ? " · essai cibles ×" + DIFF : "") + (BOSS ? " · essai boss p" + BOSS.power + " e" + BOSS.endurance : ""));
   console.log("Cible (RU6) : combats d'Histoire 65-80 % par classe, Rôdeur ≥ 60 %.\n");
   profils.forEach(function (pid) {
     console.log(PROFILS[pid].label);

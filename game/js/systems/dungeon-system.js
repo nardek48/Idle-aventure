@@ -416,7 +416,11 @@ var DungeonManager = {
       else normaux.push(this.buildWaveEnemyBase(1, true));
       out.vague = moy(normaux, false);
       var elites = [];
-      Object.keys(d.eliteWaves || {}).forEach(function (w) { var e = [].concat(self.buildEliteWave(d.eliteWaves[w], d, Number(w)) || [])[0]; if (e) elites.push(e); });
+      Object.keys(d.eliteWaves || {}).forEach(function (w) {
+        var id = d.eliteWaves[w], def = (window.ELITE_DB || {})[id], sm = def && def.statMult, o = window.EliteManager && EliteManager._statOrigine && EliteManager._statOrigine[id];
+        try { if (o) def.statMult = o; var e = [].concat(self.buildEliteWave(id, d, Number(w)) || [])[0]; if (e) elites.push(e); } // statMult d'origine (essais de banc)
+        finally { if (def) def.statMult = sm; }
+      });
       out.elite = moy(elites, true);
       out.boss = moy([this.buildWaveEnemyBase(DUNGEON_CONFIG.waveCount + 1, true)], true);
     } finally { this._neutre = false; game.dungeonRun = keep; }

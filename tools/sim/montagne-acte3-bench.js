@@ -52,7 +52,7 @@ if (!SAVES.length) { console.log("--save <fichier> attendu (sauvegarde de campag
 
 var extra = function () {
   var d = g.DUNGEONS.filter(function (x) { return x.id === DJ; })[0];
-  if (DIFF5) d.difficultyMult = DIFF5;
+  if (DIFF5) require("./essai-cible.js").donjon(d, DIFF5, DIFF5); // v3.765.0 : multiplicateur des cibles
   /* Équilibre des classes (03/11) : --detail décompose les combats d'une quête (dégâts infligés héros / compagnons,
      reçus, esquivés, techniques). Compteurs remis à zéro par sauvegarde, affichés sous la ligne de la classe. */
   if (ARGV.indexOf("--detail") >= 0) {
@@ -77,7 +77,7 @@ var extra = function () {
     ["takeTurn", "playTurn", "companionTurn", "actTurn"].forEach(function (k) { if (typeof CM[k] === "function") { var f = CM[k].bind(CM); CM[k] = function () { g.game._dtComp = true; try { return f.apply(CM, arguments); } finally { g.game._dtComp = false; } }; } });
   }
   if (opt("--miroir") !== null) g.TOWER_MIRROR_PENALTY = Number(opt("--miroir")); // v3.629.0 : pénalité du miroir (Reflet)
-  if (WYRM) { d.boss.statMult.power = WYRM[0]; d.boss.statMult.endurance = WYRM[1]; }
+  if (WYRM) require("./essai-cible.js").donjon(d, WYRM[1], WYRM[0], "boss"); // relatif au réglage actuel
   if (QUETE) { g.ADVENTURE_QUESTS.aq_montagne_salle_ronde.target0 = g.ADVENTURE_QUESTS.aq_montagne_salle_ronde.target0 || g.ADVENTURE_QUESTS.aq_montagne_salle_ronde.target; g.ADVENTURE_QUESTS.aq_montagne_salle_ronde.target = { rounds: g.ADVENTURE_QUESTS.aq_montagne_salle_ronde.target0.rounds * QUETE[0], hit: g.ADVENTURE_QUESTS.aq_montagne_salle_ronde.target0.hit * QUETE[1] }; }
   // v3.492.12 : l'affinité est dans le jeu ; --affinite en change seulement le bonus
   if (P1_AFF !== null) g.EQUIP_WORLD_AFFINITY.bonus = P1_AFF;
@@ -226,7 +226,7 @@ var extra = function () {
     return;
   }
   console.log("GUEULE DU VOLCAN — " + RUNS + " runs par sauvegarde, Grimoire, " + (SANS_POTION ? "SANS potion" : "potions de la sauvegarde")
-    + (DIFF5 ? " · essai difficultyMult " + DIFF5 : " · difficultyMult " + d.difficultyMult) + (WYRM ? " · essai Wyrm p" + WYRM[0] + " e" + WYRM[1] : ""));
+    + (DIFF5 ? " · essai cibles ×" + DIFF5 : " · boss " + JSON.stringify(d.bossTarget)) + (WYRM ? " · essai Wyrm p" + WYRM[0] + " e" + WYRM[1] : ""));
   console.log("Cible (MT7, 26/10) : avec potions, 25 à 40 % des PV restants, moins de 10 % de défaites.\n");
   var textes = SAVES.map(function (f) { return fs.readFileSync(f, "utf8"); });
   textes.forEach(function (t, k) {

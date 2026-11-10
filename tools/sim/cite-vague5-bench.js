@@ -15,7 +15,7 @@ var RUNS = 60, PROFIL_ID = "acte2", DIFF = null, BOSS = null;
 for (var ai = 3; ai < process.argv.length; ai++) {
   if (process.argv[ai] === "--runs") RUNS = Number(process.argv[ai + 1]) || RUNS;
   if (process.argv[ai] === "--profil") PROFIL_ID = process.argv[ai + 1] || PROFIL_ID; // acte2 | palier
-  if (process.argv[ai] === "--diff") DIFF = Number(process.argv[ai + 1]); // essai de difficultyMult
+  if (process.argv[ai] === "--diff") DIFF = Number(process.argv[ai + 1]); // essai : multiplicateur des cibles du donjon (×1 = réglage actuel, v3.765.0)
   if (process.argv[ai] === "--boss") { var b = String(process.argv[ai + 1]).split(","); BOSS = { power: Number(b[0]), endurance: Number(b[1]) }; }
 }
 var mod = { exports: {} };
@@ -70,8 +70,8 @@ function unRun(c) {
   // Verrou d'Histoire levé le temps de la mesure : le banc joue le donjon, pas l'étape.
   var d2 = g.DUNGEONS.filter(function (d) { return d.id === 2; })[0], garde = d2.requiresStoryStep;
   d2.requiresStoryStep = null;
-  if (DIFF) d2.difficultyMult = DIFF;
-  if (BOSS) { d2.boss.statMult.power = BOSS.power; d2.boss.statMult.endurance = BOSS.endurance; }
+  if (DIFF) require("./essai-cible.js").donjon(d2, DIFF, DIFF);
+  if (BOSS) require("./essai-cible.js").donjon(d2, BOSS.endurance, BOSS.power, "boss"); // relatif au réglage actuel
   g.DungeonManager.start(2, []);
   d2.requiresStoryStep = garde;
   if (!g.game.dungeonRun.active) return null;
@@ -92,7 +92,7 @@ function unRun(c) {
 }
 
 console.log("CITÉ ENGLOUTIE — vague 5 (étape 12) et sphinx (étape 15)"
-  + (DIFF ? " · difficultyMult d'essai " + DIFF : ""));
+  + (DIFF ? " · cibles ×" + DIFF : ""));
 console.log("Profil : " + PROFIL.label + " · Wenna et Maddoc · " + RUNS + " runs par classe, sans Marque"
   + (MEMOIRE.length ? " · Mémoire : " + MEMOIRE.join(", ") : "") + "\n");
 B.CLASSES.forEach(function (c) {

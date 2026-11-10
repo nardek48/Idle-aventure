@@ -65,13 +65,14 @@ var DUNGEON_CONFIG = {
 
    worldRequired      index du monde à avoir atteint (plus haut jamais atteint, worldsEverReached)
    worldPower         échelle des vagues et pool d'ennemis (mondes 0..worldPower), inchangé
-   difficultyMult     (v3.765.0 : retiré ; rewardRank pour les récompenses, speedMult pour la vitesse, target / eliteTarget /
-                      bossTarget pour la force, dans les unités de la courbe) réglé au banc (Tanière à l'Ossuaire), sur les cibles de
-                      l'Histoire ; l'écart entre mondes est voulu (point 6 du bilan, clos le 24/10/2026).
-                      Gueule du volcan réglée au banc avec la Montagne (audit P1) ; Sommet, fermé : à régler quand la Tour ouvrira
+   target, eliteTarget, bossTarget   (v3.765.0, C2) force des vagues ordinaires, des élites des vagues et du boss,
+                      en { rounds, hit } : rounds du héros attendu à l'étape du donjon (requiresStoryStep, sinon etape),
+                      part de ses PV effectifs par coup. Remplacent difficultyMult, wavePremiumMult et le statMult du boss.
+   speedMult          vitesse des ennemis du donjon (= √ de l'ancien difficultyMult)
+   rewardRank         poids des récompenses de fin de run (= l'ancien difficultyMult, formule inchangée)
    eliteWaves         vague -> id de ELITE_DB ; null tant que le monde n'a pas ses élites
    boss               identité du boss final : baseId dans BOSS_DB, nom propre, trait signature
-                      (archetype lu tel quel par combat-engine.js), statMult relatif, image optionnelle
+                      (archetype lu tel quel par combat-engine.js), image optionnelle (sa force : bossTarget)
    locked             donjon déclaré mais pas encore ouvert (art et banc manquants) */
 var DUNGEONS = [
   {
