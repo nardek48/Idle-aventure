@@ -1,3 +1,6 @@
 # Sorties des outils (captures, lots de campagne, audits) : jetables, régénérables.
 captures/
 node_modules/
+
+# Sortie détaillée de tools/sim/dungeon-bench.js, régénérée à chaque passe.
+tools/sim/dungeon-bench-out.json
