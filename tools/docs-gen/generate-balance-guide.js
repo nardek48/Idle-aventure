@@ -77,7 +77,7 @@ var PA_RECHARGE_H = G.SceneRunManager.PETITE_AVENTURE_RECHARGE_MS / 3600000;
 H(1, "Aethervale — Guide d'équilibrage");
 var NOW = new Date(), DATE = ("0" + NOW.getDate()).slice(-2) + "/" + ("0" + (NOW.getMonth() + 1)).slice(-2) + "/" + NOW.getFullYear();
 P("**État du code au " + DATE + " — v" + V + ".** Toutes les tables sont **extraites automatiquement du code** (scripts d'`index.html` chargés dans le bac à sable du harnais, par `tools/docs-gen/generate-balance-guide.js`) ; aucune valeur n'est recopiée à la main. Les commentaires et les mesures viennent des bancs de `sim/`.\n");
-P("La version précédente datait de la v3.433.0 (fin du chapitre III) ; ce guide la remplace et couvre les six chapitres. Parties : 0 Changements · 1 Économie · 2 Héros et progression · 3 Combat · 4 Cartes Vivantes · 5 Combat de groupe · 6 Outils et points ouverts. Les mesures de la partie 3.8 antérieures à la v3.634.0 sont gardées comme historique.\n");
+P("Versions précédentes : v3.433.0 (fin du chapitre III), puis v3.637.0 ; ce guide les remplace et couvre les six chapitres. Parties : 0 Changements · 1 Économie · 2 Héros et progression · 3 Combat · 4 Cartes Vivantes · 5 Combat de groupe · 6 Outils et points ouverts. Les mesures de la partie 3.8 antérieures à la v3.634.0 sont gardées comme historique.\n");
 
 /* ---------- 0. Changements ---------- */
 H(1, "0. Changements depuis la v3.433.0");
@@ -93,7 +93,18 @@ P(table(["Période", "Chantier", "Ce qui change pour l'équilibrage"], [
   ["v3.633.0", "Voie « Varier »", "5 talents communs ouverts à la Tour ; plafond des talents **23 → 28** (§2.6)"],
   ["v3.634.0", "**Équilibre des classes**", "Dégâts : Chevalier ×" + fr(CLB.knight.damageMult) + ", Rôdeur ×" + fr(CLB.archer.damageMult) + ", Mage ×" + fr(CLB.mage.damageMult) + " ; PV du Mage +" + pct(CLB.mage.hpPct || 0) + " (§2.9)"],
   ["v3.635.0", "Rythme de la Tour", "Terrain **19 à 21** (entraînement " + G.TRAINING_HARD_CAP + "), palier de l'acte III avec Forge 7 et reforge 13, 5 étages et 2 escaliers ; silhouette ×4,25 / ×1,1"],
-  ["v3.637.0", "Silhouette", "Le vrai round intouchable à 30 % (annoncé un round avant), par les accroches du Wyrm"]
+  ["v3.637.0", "Silhouette", "Le vrai round intouchable à 30 % (annoncé un round avant), par les accroches du Wyrm"],
+  // v3.761.0 : changements depuis le guide de la v3.637.0 (sources : changelogs, État des chantiers du 10/11)
+  ["v3.638 → v3.644", "La faille", "Montées sans fond après la Tour, échos par étage (v3.640), Souffle +50 par escalier, Mémoire 25 à 28 au record de faille"],
+  ["v3.652 → v3.657", "Échoppe, festin, élites à niveaux", "Échoppe moins chère dès la Crypte (×1 à ×30) ; festin du Camp (+10 % dégâts et PV, 3 sorties) ; élites de carte rejouables par niveau (PV ×1,15, puissance ×1,10 par niveau)"],
+  ["v3.723 → v3.728", "Parcours des Petites Aventures", "Cache, verrou, passages secrets, fins imposées ou cachées dans les six mondes"],
+  ["v3.729 → v3.739", "Combat", "Grimoire : 3 règles actives et jeux de règles ; contre protecteur et contre rapide (Charge ×1,30) ; Mage : `classPowerGabarit` 1,2 sur la puissance des ennemis ; soin des boss à 10 % des PV max ; Silhouette sans soin face au Rôdeur (PV ×3,1) ; objets de combat dans la préparation"],
+  ["v3.742.0", "Boss courts allongés", "Basilic, Sphinx, Varrek (phase Blindé), Nezzam, Orc : PV ×1,5, puissance ×0,8, traits plus tôt"],
+  ["v3.743.0", "**Forge des mondes**", "Une reforge renforce le héros : +" + String(Math.round((G.FORGE_WORLD_BONUS_PER_REFORGE || 0.005) * 1000) / 10).replace(".", ",") + " % par reforge de la stat du monde de sa bande (PV, Défense, critique, dégâts, dégâts critiques), 14 % par monde au plus ; Forge 2 / 4 / 6 / 8 / 10 ; boss de quête Crypte, Montagne, Tour +15 % de PV (sauf la Silhouette)"],
+  ["v3.744.0", "Élites recalées", "Crypte et Montagne PV ×1,2 ; Tour PV ×1,25 et puissance ×1,15"],
+  ["v3.746.0", "Liche", "Endurance revenue à 0,82 (Rôdeur 40 → 65 % au banc)"],
+  ["v3.749.0", "Préparation pressée", "Apothicaire : une préparation de plus contre 1 000 or × rang du monde, ×2 par pressée du jour (débouché de l'or de fin de partie)"],
+  ["v3.755.0", "Objectif tenu", "Donjon : objectif d'Histoire tenu en plein run, pause « Sortir, butin gardé » ou « Continuer » (Tanière, Cité) ; aucun effet sur les chiffres"]
 ]));
 P("**Principes posés par Seb**, à garder pour tout réglage futur :\n");
 P("- **Calibrer au plafond atteignable de l'acte**, et vérifier les premiers contenus d'un acte au plafond de l'acte précédent (plan C).");
@@ -478,6 +489,11 @@ P(table(["Règle", "Valeur"], [
 ]));
 
 H(2, "3.8 État mesuré");
+// v3.761.0 : mesures de l'audit d'équilibrage A (v3.746.0) et du lot Alpha (v3.755.0)
+H(3, "Campagne de référence (audit d'équilibrage A, v3.746.0)");
+P("`node tools/sim/campagne-lot.js . --combats --joueur --n 4` : 12 parties (4 par classe), de zéro jusqu'à la fin de l'Histoire. **12/12 au bout, aucun mur.** Durée simulée médiane **34,2 h** (30,9 à 36,1 h), dont 6,3 h de jeu actif ; 32 morts sur le chemin. Deux attentes propres au robot faisaient alors un tiers du temps (recharge des Petites Aventures à tour_07 : 7,5 h ; Cire de sépulcre à crypte_05 : 4,0 h) ; robot corrigé le 09/11 (tour_07 1,4 à 3,1 h, crypte_05 0,3 h). Rapport : `Aethervale_Audit_Equilibrage_A_2026-11-08_v3746_0.md` (dépôt de documentation).\n");
+H(3, "Forêt et Désert (lot Alpha, v3.755.0)");
+P("`node tools/sim/campagne-lot.js . --combats --joueur --n 4 --jusqua ruines_01` : 12/12 jusqu'à ruines_01, aucun mur. Forêt 2,0 h, Désert 4,3 h (6,4 h simulées), temps actif 1,9 h ; 3 morts, toutes face à l'Orc de forest_15.\n");
 H(3, "Campagne complète, classes recalées (robot joueur, v3.634.0)");
 P("Banc `tools/sim/campagne-harness.js . --combats --joueur --classe <c>`, une partie par classe, de zéro jusqu'à la fin de l'Histoire (122 contrôles, 0 échec chacune). Durées simulées par chapitre.\n");
 P(table(["Chapitre", "Chevalier", "Rôdeur", "Mage"], [
