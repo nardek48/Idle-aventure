@@ -7,7 +7,7 @@ var CLASSES = [
     id: "knight",
     /* Équilibre de la classe, seul réglage par classe (getHeroClassBalance) : dégâts infligés, reçus, PV.
        v3.763.0 : « reçus » remplace les gabarits côté ennemis (Chevalier ÷1,3, Mage ÷1,2, Dragon ×0,8). */
-    balance: { damageMult: 1.15, damageTakenMult: 0.77, hpPct: 0 },
+    balance: { damageMult: 1.15, damageTakenMult: 0.85, hpPct: 0 },
     label: "Chevalier",
     icon: "images/Icons/classes/class_knight.webp",
     weaponType: "sword",
@@ -32,7 +32,7 @@ var CLASSES = [
     id: "archer",
     /* Équilibre de la classe, seul réglage par classe (getHeroClassBalance) : dégâts infligés, reçus, PV.
        v3.763.0 : « reçus » remplace les gabarits côté ennemis (Chevalier ÷1,3, Mage ÷1,2, Dragon ×0,8). */
-    balance: { damageMult: 0.85, damageTakenMult: 1, hpPct: 0 },
+    balance: { damageMult: 0.85, damageTakenMult: 0.9, hpPct: 0 },
     label: "Rôdeur", // v3.429.10 : le nom de la classe partout ailleurs (création, CLAUDE.md)
     icon: "images/Icons/classes/class_ranger.webp",
     weaponType: "bow",
@@ -60,7 +60,7 @@ var CLASSES = [
     id: "mage",
     /* Équilibre de la classe, seul réglage par classe (getHeroClassBalance) : dégâts infligés, reçus, PV.
        v3.763.0 : « reçus » remplace les gabarits côté ennemis (Chevalier ÷1,3, Mage ÷1,2, Dragon ×0,8). */
-    balance: { damageMult: 1, damageTakenMult: 0.9, hpPct: 0.05 },
+    balance: { damageMult: 1, damageTakenMult: 0.85, hpPct: 0.05 },
     label: "Mage",
     icon: "images/Icons/classes/class_mage.webp",
     weaponType: "magic",
