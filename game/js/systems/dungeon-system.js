@@ -374,14 +374,14 @@ var DungeonManager = {
     var d = this.getById(game.dungeonRun.dungeonId), self = this;
     if (!d || this._neutre) return;
     var nettoie = function () { [].concat(built).forEach(function (e) { if (e) { delete e._powRaw; if (e.stats) delete e.stats._raw; } }); };
-    var Q = window.QuestEnemyManager, tr = (Q && typeof Q.trackAt === "function") ? Q.trackAt(Q.placeOf({ etape: d.requiresStoryStep || d.etape, worldId: d.worldId }), d.worldId) : { hp: 1, power: 1 }; // v3.767.0 (C3b)
+    // v3.767.0 (C3b, Seb A1) : pas de suivi du héros dans les donjons, la difficulté se choisit par les niveaux
     [].concat(built).forEach(function (e) {
       if (!e) return;
       var kind = e.isElite ? "elite" : (wave > DUNGEON_CONFIG.waveCount ? "boss" : "vague");
       var lv = self.levelOf(d, kind) || { hp: 1, power: 1 };
-      e.hp = e.maxHp = Math.max(1, Math.floor(e.maxHp * lv.hp * tr.hp));
+      e.hp = e.maxHp = Math.max(1, Math.floor(e.maxHp * lv.hp));
       var raw = (typeof e._powRaw === "number") ? e._powRaw : (e.stats && typeof e.stats._raw === "number" ? e.stats._raw : (e.stats ? e.stats.power : 0));
-      if (e.stats) e.stats.power = Math.max(1, Math.floor(Number(raw || 0) * lv.power * tr.power));
+      if (e.stats) e.stats.power = Math.max(1, Math.floor(Number(raw || 0) * lv.power));
     });
     nettoie();
   },

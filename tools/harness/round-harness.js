@@ -26394,22 +26394,20 @@ console.log("\n[517] Courbe de référence : Petites Aventures, Labyrinthe et Fa
   finally { game.sceneRun = null; game = freshCombat("knight"); }
 })();
 
-console.log("\n[518] Suivi du héros unique, sur la courbe, étendu aux donjons et aux élites (v3.767.0, C3b, Seb 10/11, option A)");
+console.log("\n[518] Suivi du héros unique, sur la courbe ; ni donjons ni élites (v3.767.0, C3b, Seb 10/11, option A1)");
 (function () {
   var CF = g.CombatForecast, d0 = CF.getHeroDamagePerRound, e0 = CF.getHeroEffectiveHp;
   try {
     run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.heroHp = game.heroMaxHp;");
     var D = g.DungeonManager, QE = g.QuestEnemyManager, E = g.EliteManager;
     var mk = function () { D.ensure(); game.dungeonRun = { active: true, dungeonId: 2, wave: 16, level: 1, marks: [] }; var b = [].concat(D.buildWaveEnemy(16))[0]; game.dungeonRun = { active: false }; return b; };
-    var bNeuf = mk();
+    var q = function () { var r0 = g.Math.random; g.Math.random = function () { return 0.3; }; try { var e = QE.spawnFor(g.ADVENTURE_QUESTS.aq_desert_dunes, false); return Array.isArray(e) ? e[0] : e; } finally { g.Math.random = r0; } }; // tirage fixé
+    var bNeuf = mk(), eNeuf = E.make("pleureuse_nef", "crypt", 0), qNeuf = q();
     CF.getHeroDamagePerRound = function () { return 1e6; }; CF.getHeroEffectiveHp = function () { return 1e6; };
-    var bFort = mk(), eFort = E.make("pleureuse_nef", "crypt", 0);
-    var qFort = QE.spawnFor(g.ADVENTURE_QUESTS.aq_desert_dunes, false); qFort = Array.isArray(qFort) ? qFort[0] : qFort;
+    var bFort = mk(), eFort = E.make("pleureuse_nef", "crypt", 0), qFort = q();
     CF.getHeroDamagePerRound = d0; CF.getHeroEffectiveHp = e0;
-    var eNeuf = E.make("pleureuse_nef", "crypt", 0), qNeuf = QE.spawnFor(g.ADVENTURE_QUESTS.aq_desert_dunes, false); qNeuf = Array.isArray(qNeuf) ? qNeuf[0] : qNeuf;
-    ok(Math.abs(bFort.maxHp / bNeuf.maxHp - 2.5) < 0.02, "donjon : un héros très en avance porte le boss au plafond (×2,5 de PV)");
-    ok(Math.abs(eFort.maxHp / eNeuf.maxHp - 2.5) < 0.02, "élite de carte : même suivi (×2,5)");
-    ok(qFort.maxHp > qNeuf.maxHp * 2, "quête : même suivi");
+    ok(bFort.maxHp === bNeuf.maxHp && eFort.maxHp === eNeuf.maxHp, "donjons et élites : pas de suivi du héros (contenu répétable, difficulté choisie par les niveaux)");
+    ok(Math.abs(qFort.maxHp / qNeuf.maxHp - 2.5) < 0.05, "quête : le suivi unique, jusqu'au plafond ×2,5");
     ok(!g.ADVENTURE_QUESTS.aq_desert_trone.heroRef && typeof g.WorldManager.getHeroScale === "undefined", "plus de heroRef ni de suivi dans WorldManager (un seul suivi)");
   } catch (err) { ok(false, "[518] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   finally { CF.getHeroDamagePerRound = d0; CF.getHeroEffectiveHp = e0; game = freshCombat("knight"); }

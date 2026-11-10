@@ -119,21 +119,11 @@ var EliteManager = {
       if (multSauve) def.statMult = multSauve;
     }
     var lv = enemy ? this.levelOf(eliteId, worldId) : null; // v3.765.0 (C2) : niveau tiré de la cible de l'élite
-    var tr = enemy ? this.trackOf(eliteId, worldId) : { hp: 1, power: 1 }; // v3.767.0 (C3b) : suivi du héros
-    if (enemy) {
-      enemy.maxHp = Math.max(1, Math.round(enemy.maxHp * (lv ? lv.hp : 1) * tr.hp)); enemy.hp = enemy.maxHp;
-      if (enemy.stats) enemy.stats.power = Math.max(1, Math.round(enemy.stats.power * (lv ? lv.power : 1) * tr.power));
+    if (lv) { // v3.767.0 (C3b, Seb A1) : pas de suivi du héros sur les élites (contenu répétable), escorte comprise
+      enemy.maxHp = Math.max(1, Math.round(enemy.maxHp * lv.hp)); enemy.hp = enemy.maxHp;
+      if (enemy.stats) enemy.stats.power = Math.max(1, Math.round(enemy.stats.power * lv.power));
     }
     return enemy || null;
-  },
-
-  /* v3.767.0 (C3b) : suivi du héros d'une élite hors donjon (et de son escorte), à l'étape de l'élite. */
-  trackOf: function (eliteId, worldId) {
-    var def = this.get(eliteId), Q = window.QuestEnemyManager;
-    if (!def || !Q || typeof Q.trackAt !== "function") return { hp: 1, power: 1 };
-    var pl = Q.placeOf({ etape: def.etape, worldId: worldId, adventureIndex: 0 });
-    if (!def.etape) pl.rang = Math.round(pl.longueur / 2);
-    return Q.trackAt(pl, worldId);
   },
 
   /* v3.765.0 (C2, Seb 10/11) : élite hors donjon (carte, quête) : cible { rounds, hit } dans les unités de la courbe,
@@ -184,8 +174,7 @@ var EliteManager = {
        eliteKill ne reconnaît qu'elle (isElite + id), donc l'escorte ne peut pas valider
        la quête à sa place. */
     var escorte = this.buildEscort(specEscorte, worldIndex, adventureIndex || 0);
-    var trE = this.trackOf(eliteId, worldId); // v3.767.0 (C3b) : l'escorte suit le héros comme son élite
-    escorte.forEach(function (m) { m.maxHp = Math.max(1, Math.round(m.maxHp * trE.hp)); m.hp = m.maxHp; if (m.stats) m.stats.power = Math.max(1, Math.round(m.stats.power * trE.power)); });
+
     if (escorte.length && window.CombatEngine && typeof CombatEngine.spawnGroup === "function") {
       CombatEngine.spawnGroup([enemy].concat(escorte));
       if (typeof renderEnemy === "function") renderEnemy();
