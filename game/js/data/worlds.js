@@ -236,5 +236,11 @@ var WORLD_HERO_SCALING = {
     mountain: ["joueurCrypte", "joueurCrypte"], // v3.486.0 : le héros de fin de la Crypte
     tower: ["joueurMontagne", "joueurMontagne"] } // v3.625.0 : le héros de fin de la Montagne
 };
+/* v3.764.0 (C1, Seb 10/11, option A) : la courbe de référence (QuestEnemyManager.courbeRef) part de foret1 et passe
+   par le héros du robot en fin de chaque chapitre ; la Tour prolonge la pente de la Montagne. */
+var COURBE_DEBUT = "foret1";
+var COURBE_FIN_DE_CHAPITRE = { forest: "joueurForet", desert: "joueurDesert2", ruins: "joueurRuines", crypt: "joueurCrypte", mountain: "joueurMontagne" };
+window.COURBE_DEBUT = COURBE_DEBUT;
+window.COURBE_FIN_DE_CHAPITRE = COURBE_FIN_DE_CHAPITRE;
 window.HERO_SCALING_REFS = HERO_SCALING_REFS;
 window.WORLD_HERO_SCALING = WORLD_HERO_SCALING;

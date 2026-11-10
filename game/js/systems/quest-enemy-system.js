@@ -200,6 +200,78 @@ QuestEnemyManager.buildGroup = function (quest, adventure) {
   return out;
 };
 
+/* ---------- v3.764.0 (C1, Seb 10/11, option A) : la courbe de référence du héros ----------
+   Force attendue du héros à chaque étape de l'Histoire (dégâts par round, PV effectifs), interpolée entre
+   les héros du robot de fin de chapitre (HERO_SCALING_REFS, COURBE_FIN_DE_CHAPITRE, data/worlds.js). */
+var COURBE_CHAPITRES = ["forest", "desert", "ruins", "crypt", "mountain", "tower"];
+
+/* Étape de l'Histoire d'une quête : celle dont le lien vise « adv_<quête> », sinon quest.etape (id d'étape). */
+QuestEnemyManager.placeOf = function (quest) {
+  if (!this._places && window.STORY_QUESTS) {
+    var places = {}, longueurs = {};
+    Object.keys(STORY_QUESTS).forEach(function (c) {
+      var sq = STORY_QUESTS[c], steps = sq.steps || [];
+      longueurs[sq.worldId] = steps.length;
+      steps.forEach(function (st, i) {
+        var card = String((st.linkTo && st.linkTo.cardId) || "");
+        places["step:" + st.id] = { monde: sq.worldId, rang: i + 1 };
+        if (card.indexOf("adv_") === 0 && !places[card.slice(4)]) places[card.slice(4)] = { monde: sq.worldId, rang: i + 1 };
+      });
+    });
+    this._places = places; this._longueurs = longueurs;
+  }
+  var src = (window.ADVENTURE_QUESTS && quest && ADVENTURE_QUESTS[quest.id]) || quest || {};
+  var P = this._places || {};
+  var pl = P[src.id] || (src.etape && P["step:" + src.etape]) || null;
+  if (!pl) pl = { monde: src.worldId, rang: Math.round((this._longueurs && this._longueurs[src.worldId] || 20) * (src.adventureIndex ? 0.75 : 0.25)) };
+  return { monde: pl.monde, rang: pl.rang, longueur: (this._longueurs && this._longueurs[pl.monde]) || 20 };
+};
+
+/* Héros de référence à une étape : interpolation géométrique entre le début et la fin du chapitre ;
+   chapitre sans héros de fin (la Tour) : on prolonge la pente du chapitre précédent. */
+QuestEnemyManager.courbeRef = function (monde, rang, longueur) {
+  var R = window.HERO_SCALING_REFS || {}, FIN = window.COURBE_FIN_DE_CHAPITRE || {};
+  var i = COURBE_CHAPITRES.indexOf(monde);
+  var a = R[i <= 0 ? COURBE_DEBUT : FIN[COURBE_CHAPITRES[i - 1]]], b = R[FIN[monde]];
+  if (!a) return null;
+  if (!b) { var p = R[FIN[COURBE_CHAPITRES[i - 2]]] || a; b = { dmg: a.dmg * a.dmg / p.dmg, ehp: a.ehp * a.ehp / p.ehp }; }
+  var t = Math.max(0, Math.min(1, rang / Math.max(1, longueur || 20)));
+  return { dmg: a.dmg * Math.pow(b.dmg / a.dmg, t), ehp: a.ehp * Math.pow(b.ehp / a.ehp, t) };
+};
+
+/* Ennemi « moyen » d'une aventure, sans suivi du héros ni Cycle : PV et coup bruts (puissance × coef, × boss).
+   Normal : moyenne du pool d'origine (data/worlds.js) ; boss : le boss lui-même. En cache. */
+QuestEnemyManager.baseline = function (worldIdx, advIdx, bossId) {
+  var key = worldIdx + "|" + advIdx + "|" + (bossId || ""), c = (this._baseCache = this._baseCache || {});
+  if (c[key]) return c[key];
+  var W = WorldManager, world = WORLDS[worldIdx], adv = world && world.adventures && world.adventures[advIdx];
+  if (!adv) return null;
+  var keep = { wi: W.worldIndex, ai: W.adventureIndex, ei: W.enemyIndex, off: W._heroScaleOff, cy: game.cycleCount, pool: adv.enemyPool, boss: adv.boss };
+  var coef = (typeof ENEMY_POWER_DMG_COEF === "number") ? ENEMY_POWER_DMG_COEF : 0.5, bm = (typeof BOSS_DMG_MULT === "number") ? BOSS_DMG_MULT : 1.5;
+  var out = { hp: 0, coup: 0 };
+  try {
+    W.worldIndex = worldIdx; W.adventureIndex = advIdx; W._heroScaleOff = true; game.cycleCount = 0;
+    if (bossId) {
+      if (window.BOSS_DB && BOSS_DB[bossId]) adv.boss = bossId;
+      W.enemyIndex = Math.max(0, (adv.enemyCount || 1) - 1);
+      var b = W.generateEnemy();
+      out = { hp: b.maxHp, coup: Number(b.stats.power || 0) * coef * bm };
+    } else {
+      var pool = (this._poolsOrigine[worldIdx + "|" + advIdx] || adv.enemyPool || []), n = 0;
+      W.enemyIndex = 0;
+      pool.forEach(function (id) { adv.enemyPool = [id]; var e = W.generateEnemy(); if (e) { out.hp += e.maxHp; out.coup += Number(e.stats.power || 0) * coef; n++; } });
+      if (n) { out.hp /= n; out.coup /= n; }
+    }
+  } finally {
+    W.worldIndex = keep.wi; W.adventureIndex = keep.ai; W.enemyIndex = keep.ei; W._heroScaleOff = keep.off; game.cycleCount = keep.cy;
+    adv.enemyPool = keep.pool; adv.boss = keep.boss;
+  }
+  return (c[key] = out);
+};
+/* Pools d'origine, pris au chargement : l'Histoire en change certains en cours de partie (Cœur, acte III). */
+QuestEnemyManager._poolsOrigine = {};
+(window.WORLDS || []).forEach(function (w, wi) { (w.adventures || []).forEach(function (a, ai) { QuestEnemyManager._poolsOrigine[wi + "|" + ai] = (a.enemyPool || []).slice(); }); });
+
 window.QuestEnemyManager = QuestEnemyManager;
 
 /* v3.293.0 (règle Seb 18/09/2026) : plus de farm libre — un combat n'existe que dans une quête

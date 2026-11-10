@@ -52,6 +52,7 @@ function mesure(list, ref) {
   return { n: list.length, rounds: hp / ref.r.dmg, pct: 100 * hit / ref.r.ehp, boss: bossy, nom: list.map(function (e) { return e.name; }).join(" + ") };
 }
 
+var COURBE_ORDRE = ["forest", "desert", "ruins", "crypt", "mountain", "tower"];
 var lignes = [], seule = arg("--quete", null);
 Object.keys(Q).forEach(function (id) {
   if (seule && id !== seule) return;
@@ -87,3 +88,32 @@ Object.keys(parQ).sort(function (a, b) { var A = PLACE[a], B = PLACE[b]; return 
 });
 var out = arg("--json", null);
 if (out) { fs.writeFileSync(out, JSON.stringify(lignes, null, 1)); console.log("\nJSON : " + out); }
+
+/* --implicite : valeurs de chaque quête dans les unités de la courbe (mêmes fonctions que le jeu,
+   QuestEnemyManager.placeOf / courbeRef / baseline) — rounds et coup d'un ennemi moyen, puis du boss. */
+if (ARGS.indexOf("--implicite") >= 0) {
+  var QE = g.QuestEnemyManager, QEW = H.questEnemyByWorld || {}, QBW = H.questBossHpByWorld || {};
+  var rows = [];
+  Object.keys(Q).forEach(function (id) {
+    var q = Q[id], pl = QE.placeOf(q), ref = QE.courbeRef(pl.monde, pl.rang, pl.longueur);
+    var wi = g.WORLDS.findIndex(function (w) { return w.id === q.worldId; }), ai = Number(q.adventureIndex || 0);
+    var b0 = QE.baseline(wi, ai, null), wm = QEW[q.worldId] || {};
+    var hpN = Number(Array.isArray(q.encounters) ? (q.encounterHpMult || 1) : (q.enemyHpMult || 1)) * Number(wm.hp || 1);
+    var pwN = Number(q.enemyPowerMult || 1) * Number(wm.power || 1);
+    var r = { id: id, monde: q.worldId, rang: pl.rang, diff: q.difficulty || "-", T: hpN * b0.hp / ref.dmg, h: 100 * pwN * b0.coup / ref.ehp };
+    var types = (q.steps || []).map(function (s) { return s.type; });
+    if (types.indexOf("bossKill") >= 0) {
+      var adv = g.WORLDS[wi].adventures[ai], bb = QE.baseline(wi, ai, q.bossId || adv.boss);
+      var hpB = Number(q.bossHpMult != null ? q.bossHpMult : (q.enemyHpMult || 1)) * (q.noWorldBossHp ? 1 : Number(QBW[q.worldId] || 1));
+      var pwB = Number(q.bossPowerMult != null ? q.bossPowerMult : (q.enemyPowerMult || 1));
+      r.Tb = hpB * bb.hp / ref.dmg; r.hb = 100 * pwB * bb.coup / ref.ehp;
+    }
+    rows.push(r);
+  });
+  rows.sort(function (a, b) { return (COURBE_ORDRE.indexOf(a.monde) - COURBE_ORDRE.indexOf(b.monde)) || (a.rang - b.rang); });
+  console.log("\nIMPLICITE — ennemi moyen de la quête : rounds (PV ÷ dégâts/round de la réf.) et coup (% PV eff.) ; boss à part");
+  rows.forEach(function (r) {
+    console.log(r.id.padEnd(26) + r.monde.padEnd(9) + String(r.rang).padStart(3) + "  " + r.diff.padEnd(7) + "rounds " + r.T.toFixed(2).padStart(6) + "  coup " + r.h.toFixed(1).padStart(5) + " %" + (r.Tb != null ? "   boss " + r.Tb.toFixed(1).padStart(5) + " r  " + r.hb.toFixed(1).padStart(5) + " %" : ""));
+  });
+  var oj = arg("--json-implicite", null); if (oj) fs.writeFileSync(oj, JSON.stringify(rows, null, 1));
+}
