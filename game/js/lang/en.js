@@ -61,6 +61,8 @@ I18n.register("en", {
   "Village : les pastilles de niveau des cartes ne passent plus par-dessus les onglets quand la liste défile.": "Village: card level badges no longer slide over the tabs when the list scrolls.",
   "Talents : le bouton « Apprendre » ne déborde plus de l'écran.": "Talents: the “Learn” button no longer runs off the screen.",
   "Talents : l'écran prend le style du reste du jeu. Onglets Classe / Commandement du kit, points en tête de l'arbre, cadres sur l'arbre et le panneau du talent.": "Talents: the screen now matches the rest of the game. Class / Command tabs from the kit, points at the top of the tree, frames on the tree and the talent panel.",
+  // v3.763.0 : équilibre des classes en un seul tableau (data/classes.js)
+  "Équilibre des classes : le Rôdeur encaisse un peu mieux et le Mage aussi, le Chevalier garde sa solidité. Les boss sont maintenant les mêmes pour les trois classes ; c'est le héros qui porte sa différence.": "Class balance: the Ranger and the Mage now take a little less damage, the Knight keeps his sturdiness. Bosses are now the same for all three classes; the hero carries the difference.",
   // v3.761.0 : tutoriels sur l'écran (ui/coach-view.js)
   "Tutoriels : les premiers (Campement, premier combat, Village, carte, Petite Aventure, Grimoire, talents) s'affichent sur l'écran lui-même. L'élément est éclairé, une bulle explique, « Suivant » ou un toucher sur l'élément pour avancer.": "Tutorials: the first ones (Camp, first fight, Village, map, Little Adventure, Grimoire, talents) now show on the screen itself. The element is highlighted, a bubble explains, “Next” or a tap on the element to move on.",
   "tuto|Passer": "Skip",

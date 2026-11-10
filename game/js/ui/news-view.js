@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.763.0", "classes/class_ranger", _t("Équilibre des classes : le Rôdeur encaisse un peu mieux et le Mage aussi, le Chevalier garde sa solidité. Les boss sont maintenant les mêmes pour les trois classes ; c'est le héros qui porte sa différence.")],
     ["3.761.0", "codex/codex_lore", _t("Tutoriels : les premiers (Campement, premier combat, Village, carte, Petite Aventure, Grimoire, talents) s'affichent sur l'écran lui-même. L'élément est éclairé, une bulle explique, « Suivant » ou un toucher sur l'élément pour avancer.")],
     ["3.760.0", "aether_icon", _t("Fil rouge : il propose aussi de construire ou d'améliorer un bâtiment du village dès que tu as de quoi le faire, et la prochaine quête annexe.")],
     ["3.759.0", "subtabs/talents", _t("Talents : l'écran prend le style du reste du jeu. Onglets Classe / Commandement du kit, points en tête de l'arbre, cadres sur l'arbre et le panneau du talent.")],

@@ -26365,7 +26365,7 @@ console.log("\n[514] Équilibre des classes en un seul tableau (v3.763.0, Seb 10
       try { CE.enemyStrike(1, false); } finally { g.Math.random = r0; }
       coup[h] = 1e7 - game.heroHp;
     });
-    ok(coup.ranger > 0 && Math.abs(coup.knight / coup.ranger - C.knight.damageTakenMult) < 0.01, "moteur : le Chevalier reçoit ×" + C.knight.damageTakenMult + " (" + coup.knight + " contre " + coup.ranger + ")");
+    ok(coup.ranger > 0 && Math.abs(coup.knight / coup.ranger - C.knight.damageTakenMult / C.archer.damageTakenMult) < 0.01, "moteur : même coup, Chevalier ×" + C.knight.damageTakenMult + " et Rôdeur ×" + C.archer.damageTakenMult + " (" + coup.knight + " contre " + coup.ranger + ")");
     game = freshCombat("mage");
     ok(g.getHeroClassBalance("damageTakenMult") === C.mage.damageTakenMult && g.getHeroClassBalance("absent") === 1 && g.getHeroClassBalance("hpPct") === C.mage.hpPct, "getHeroClassBalance : valeur du héros courant, neutre si absente");
     var en = { stats: { power: 1000 } }, att = 1000 * g.ENEMY_POWER_DMG_COEF * (1 - Math.min(0.9, Number(game.heroDefensePct || 0))) * C.mage.damageTakenMult;
