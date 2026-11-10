@@ -4,7 +4,7 @@
 
    Découpage volontaire : ce fichier tient TOUT ce qui est propre aux compagnons
    (roster persistant, acteurs de combat, politique automatique, KO, améliorations).
-   combat-engine.js ne gagne qu'un appel — alliesTurn() — et ne connaît rien de Wenna.
+   combat-engine.js donne la main aux compagnons à leur tour d'initiative et ne connaît rien de Wenna.
 
    PERSISTANCE : un seul objet, game.companions, câblé aux quatre points obligatoires
    de save-system.js. Les acteurs de combat (game.combat.allies) ne sont PAS sauvegardés,

@@ -494,7 +494,6 @@
 /* v3.542.0 (CMP-2) : ce que vaut une relance, sur plusieurs lignes au besoin */
 .forge-row-effect.ench-gain { white-space: normal; overflow: visible; }
 .forge-row-empty { font-style: italic; white-space: normal; overflow: visible; } /* UI-12 : la consigne passe à la ligne au lieu d'être coupée */
-.forge-row-gain { color: #1f7a3d; font-weight: 800; }
 
 .forge-row-cost { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
 .forge-cost-item { display: inline-flex; align-items: center; gap: 3px; font-size: 12px; font-weight: 700; color: var(--nb-ink); }

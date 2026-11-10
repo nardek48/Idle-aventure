@@ -19,7 +19,6 @@ var OR_INVEST_INTERET = { shopUp: 100, skill: 90, workshop: 85, companion: 80, c
 
 function orInvestHeroBusy() { return !!(window.heroLockReason && heroLockReason()); }
 function orInvestHave(k) { return k === "gold" ? Number(game.gold || 0) : (window.WarehouseManager ? WarehouseManager.getAmount(k) : 0); }
-function orInvestCanPay(cost) { return Object.keys(cost || {}).every(function (k) { return orInvestHave(k) >= cost[k]; }); }
 function orInvestResName(k) { var r = window.WAREHOUSE_RESOURCES && WAREHOUSE_RESOURCES[k]; return k === "gold" ? _t("or") : (r ? _td(r.name) : k); }
 
 /* Chantiers du village : payables, ou bloqués par l'or ou un matériau (les autres verrous restent muets). */

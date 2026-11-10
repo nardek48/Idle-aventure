@@ -111,12 +111,6 @@ MapCameraInstance.prototype = {
     v.ty = (this.top() + H) / 2 - yf * v.w * this.ratio();
     this.clamp(); this.apply(anim);
   },
-  /* Après un rendu : bornes de zoom relues (l'écran a pu changer), position bornée. */
-  refit: function () {
-    var v = this.view;
-    v.w = Math.max(this.coverW(), Math.min(this.maxW(), v.w || 0));
-    this.clamp(); this.apply(false);
-  },
   resetCover: function () { this.view.w = this.coverW(); },
 
   /* ---------- Gestes ---------- */

@@ -3424,24 +3424,6 @@ function storySalleBranch() {
    Chiffres provisoires (document « Ruines — Acte III » v1.0, à mesurer au robot). */
 var STORY_PALIER_RUINES_RARE = { pieces: 4, forge: 4, reforge: 7 };
 
-/* v3.448.6 (audit du 11/10) : « Ce qui manque » d'une étape. Les lignes d'un coût qui manquent, avec
-   l'endroit où trouver chaque matériau (sourceHint, getVillageResourceHint). Lecture seule. */
-function storyMissingCostLines(cost, prefix) {
-  var out = [];
-  Object.keys(cost || {}).forEach(function (key) {
-    var have = key === "gold" ? Number((window.game && game.gold) || 0)
-      : (window.WarehouseManager ? WarehouseManager.getAmount(key) : 0);
-    if (have >= cost[key]) return;
-    var def = key === "gold" ? null : (window.WAREHOUSE_RESOURCES || {})[key];
-    var nom = key === "gold" ? _t("Or") : (def ? _td(def.name) : key);
-    out.push({
-      text: _t("{a} : {b}", { a: prefix, b: nom }) + " " + formatNumber(Math.floor(have)) + " / " + formatNumber(cost[key]),
-      // EQUI-2 : un coût que le stock ne peut pas atteindre le dit au lieu de renvoyer à la source
-      where: key === "gold" ? "" : ((window.WarehouseManager && WarehouseManager.capHint(key, cost[key])) || (typeof getVillageResourceHint === "function" ? getVillageResourceHint(key) : ""))
-    });
-  });
-  return out;
-}
 
 /* v3.459.5 (audit O8) : un seul relevé de palier pour les quatre étapes (Désert, Ruines ×2, Crypte).
    Pièces portées au moins de la rareté demandée (l'arme comprise), Forge du Village, reforges. */
@@ -3456,32 +3438,8 @@ function storyPalier(game, rarete) {
   return { pieces: pieces, armeOk: armeOk, forge: (V && typeof V.getLevel === "function") ? V.getLevel("forge") : 0, arme: niv("weapon"), armure: niv("armor") };
 }
 
-/* Ce qui manque à un palier P ({ pieces, forge?, reforge }) : les pièces (ligne fournie par l'étape),
-   puis le prochain niveau de Forge, puis la prochaine reforge de l'arme. */
-function storyPalierManques(game, rarete, P, lignePieces) {
-  var p = storyPalier(game, rarete), out = [], V = window.VillageBuildingManager, F = window.ForgeManager;
-  if (p.pieces < P.pieces) out.push(lignePieces(p.pieces, P.pieces));
-  if (P.forge && p.forge < P.forge && V && typeof V.getNextCost === "function") {
-    var fl = storyMissingCostLines(V.getNextCost("forge"), _t("Forge {n}", { n: p.forge + 1 }));
-    out = out.concat(fl.length ? fl : [{ text: _t("Forge {n}", { n: p.forge + 1 }), where: _t("Tout est là : à construire au Village, Bâtiments.") }]);
-  }
-  if (p.arme < P.reforge && F && typeof F.getCost === "function") {
-    var c = F.getCost("weapon"), lab = _t("Reforge {n} de l'arme", { n: p.arme + 1 });
-    if (!c) out.push({ text: lab, where: _t("Il faut d'abord la Forge {n}.", { n: p.forge + 1 }) });
-    else {
-      var rl = storyMissingCostLines(c, lab);
-      out = out.concat(rl.length ? rl : [{ text: lab, where: _t("Tout est là : à la Forge, Établi.") }]);
-    }
-  }
-  return out;
-}
 
 /* ruines_13 : pièces Rares, Forge, reforge de l'arme. */
-function storyPalierRuinesRareMissing(game) {
-  return storyPalierManques(game, "rare", STORY_PALIER_RUINES_RARE, function (a, b) {
-    return { text: _t("Pièces Rares : {a} / {b}", { a: a, b: b }), where: _t("Le Sanctuaire scellé, l'échoppe de la Halle marchande et les élites des Ruines.") };
-  });
-}
 function storyPalierRuinesRare(game) { return storyPalier(game, "rare"); }
 
 /* v3.430.0 (Ruines, ruines_11) — la porte du Sanctuaire libérée au moins une fois. */
@@ -3506,12 +3464,6 @@ function storyCryptSectorFreed(id) {
 /* v3.455.0 (Crypte, crypte_13) — palier Épique partiel (CR7) : pièces Épiques portées (l'arme du Cœur
    compte), niveau de la Forge, reforge de l'arme. Lecture seule. Au banc. */
 var STORY_PALIER_CRYPTE_EPIQUE = { pieces: 3, forge: 5, reforge: 9 };
-function storyPalierCrypteEpique(game) { return storyPalier(game, "epic"); }
-function storyPalierCrypteEpiqueMissing(game) {
-  return storyPalierManques(game, "epic", STORY_PALIER_CRYPTE_EPIQUE, function (a, b) {
-    return { text: _t("Pièces Épiques : {a} / {b}", { a: a, b: b }), where: _t("Les étapes 11 et 12, la quête d'élite « La couronne de trop » et l'Ossuaire.") };
-  });
-}
 
 /* v3.456.0 (Crypte, acte IV) — répliques des étapes 16 à 19 selon le choix « ysolt » : Ysolt les dit
    (Donner), ou Edda rapporte ce qu'elle disait (Garder). */
@@ -3653,11 +3605,6 @@ function storyCryptSectorsFreed() {
 /* v3.454.0 (Crypte, crypte_09) — palier Rare de la Crypte (CR7, décision Seb du 15/10 : « 7 Rares ou mieux »,
    l'Épique compte). Lecture par storyPalierRuinesRare (pièces au moins Rares, reforge de l'arme). Au banc. */
 var STORY_PALIER_CRYPTE_RARE = { pieces: 7, reforge: 8 };
-function storyPalierCrypteRareMissing(game) {
-  return storyPalierManques(game, "rare", STORY_PALIER_CRYPTE_RARE, function (a, b) {
-    return { text: _t("Pièces Rares ou mieux : {a} / {b}", { a: a, b: b }), where: _t("Le Sanctuaire scellé, l'échoppe de la Halle marchande et les élites des Ruines.") };
-  });
-}
 
 function storyRuinsSectorsFreed() {
   var lm = window.LivingMapManager, map = lm && lm.getMap("ruins");
@@ -3696,12 +3643,9 @@ window.storyCoeurVoisins = storyCoeurVoisins;
 window.storyPalierRuinesRare = storyPalierRuinesRare;
 window.STORY_PALIER_RUINES_RARE = STORY_PALIER_RUINES_RARE;
 window.STORY_PALIER_CRYPTE_RARE = STORY_PALIER_CRYPTE_RARE;
-window.storyPalierCrypteRareMissing = storyPalierCrypteRareMissing;
 window.storyCryptSectorsFreed = storyCryptSectorsFreed;
 window.storyCryptSectorFreed = storyCryptSectorFreed;
 window.STORY_PALIER_CRYPTE_EPIQUE = STORY_PALIER_CRYPTE_EPIQUE;
-window.storyPalierCrypteEpique = storyPalierCrypteEpique;
-window.storyPalierCrypteEpiqueMissing = storyPalierCrypteEpiqueMissing;
 window.STORY_YSOLT_TEXTS = STORY_YSOLT_TEXTS;
 window.storyYsoltBranch = storyYsoltBranch;
 window.STORY_CHAINE_YS = STORY_CHAINE_YS;
@@ -3714,10 +3658,7 @@ window.STORY_BAT_TAKE_PCT = STORY_BAT_TAKE_PCT;
 window.storyBatTake = storyBatTake;
 window.STORY_TABLE_NOMS_WAX = STORY_TABLE_NOMS_WAX;
 window.storyTableDesNoms = storyTableDesNoms;
-window.storyMissingCostLines = storyMissingCostLines;
 window.storyPalier = storyPalier;
-window.storyPalierManques = storyPalierManques;
-window.storyPalierRuinesRareMissing = storyPalierRuinesRareMissing;
 window.STORY_SALLE_TEXTS = STORY_SALLE_TEXTS;
 window.STORY_PLAN_TEXTS = STORY_PLAN_TEXTS;
 window.storySanctuaireCamp = storySanctuaireCamp;
@@ -3814,7 +3755,7 @@ function storyPalierMontagne(game) {
   return p;
 }
 /* v3.492.11 (L3, retour Seb) : un objet compte pour le palier de la Montagne (Épique ou mieux ; v3.552.0 : de tout monde) ;
-   les emplacements qui n'en portent pas encore, et leurs noms pour « Ce qui manque ». */
+   les emplacements qui n'en portent pas encore (marque « Compte pour l'Histoire »). */
 function storyItemCompteMontagne(it) {
   var order = window.RARITY_ORDER || [];
   return !!it && order.indexOf(it.rarity) >= order.indexOf("epic") && Number(it.worldIndex || 0) >= STORY_PALIER_MONTAGNE.worldIndex;
@@ -3823,22 +3764,12 @@ function storyMontagneTrous(game) {
   var portes = (game && game.equipped) || {};
   return (window.EQUIPMENT_SLOTS || []).filter(function (slot) { return !storyItemCompteMontagne(portes[slot]); });
 }
-function storyMontagneTrousTexte(game) {
-  var noms = storyMontagneTrous(game).map(function (slot) { return _td((window.EQUIPMENT_SLOT_LABELS || {})[slot] || slot); });
-  return noms.length ? _t("Sans pièce Épique : {s}.", { s: noms.join(", ") }) + " " : "";
-}
 /* Palier en cours (étapes 9 et 13, acceptées) : l'objet comblerait-il un emplacement ? equipped : il est porté. */
 function storyItemComptePourPalier(it, equipped) {
   var M = window.StoryQuestManager, step = M && typeof M.getCurrentStep === "function" ? M.getCurrentStep("mountain") : null;
   if (!step || (step.id !== "montagne_09" && step.id !== "montagne_13") || !M.isCurrentStepAccepted("mountain")) return false;
   if (!storyItemCompteMontagne(it)) return false;
   return equipped ? true : storyMontagneTrous(game).indexOf(it.slot) !== -1;
-}
-function storyPalierMontagneMissing(game) {
-  var p = storyPalierMontagne(game), out = [];
-  if (p.pieces < STORY_PALIER_MONTAGNE.pieces) out.push({ text: _t("Pièces Épiques : {a} / {b}", { a: p.pieces, b: STORY_PALIER_MONTAGNE.pieces }), where: storyMontagneTrousTexte(game) + _t("Les étapes 6 à 8, les élites de la carte de la Montagne (35 % par victoire, la 3e victoire sans pièce en donne une) et l'échoppe de la Halle marchande.") });
-  // la reforge : même lecture que les autres paliers (pièces déjà comptées ci-dessus)
-  return out.concat(storyPalierManques(game, "epic", { pieces: 0, reforge: STORY_PALIER_MONTAGNE.reforge }, function () { return null; }).filter(Boolean));
 }
 
 /* « Deux sur cinq » : Sarkel et un seul des autres (composition, hors registre). Ysolt seulement si elle est restée. */
@@ -4605,11 +4536,6 @@ function storyMountainSectorFreed(id) {
 }
 /* Palier de montagne_13 (MT7) : l'Épique complet, mêmes pièces comptées qu'à montagne_09. Au banc : repli 6 sur 7. */
 var STORY_PALIER_MONTAGNE_COMPLET = { pieces: 7, forge: 8, reforge: 15 }; // Forge des mondes (Seb 07/11) : 6 / 11 -> 8 / 15
-function storyPalierMontagneCompletMissing(game) {
-  var p = storyPalierMontagne(game), P = STORY_PALIER_MONTAGNE_COMPLET, out = [];
-  if (p.pieces < P.pieces) out.push({ text: _t("Pièces Épiques : {a} / {b}", { a: p.pieces, b: P.pieces }), where: storyMontagneTrousTexte(game) + _t("La Gueule du volcan, les élites de la carte de la Montagne et l'échoppe de la Halle marchande.") });
-  return out.concat(storyPalierManques(game, "epic", { pieces: 0, forge: P.forge, reforge: P.reforge }, function () { return null; }).filter(Boolean));
-}
 /* montagne_14 : le choix « ouvrage ». Garder (le défaire) verse sa matière tout de suite. */
 var STORY_OUVRAGE_MATIERE = { obsidienne_taillee: 4, cendre_vive: 10 };
 var STORY_OUVRAGE_TEXTS = {
@@ -4627,7 +4553,6 @@ function storyOuvrageBranch() {
 }
 window.storyMountainSectorFreed = storyMountainSectorFreed;
 window.STORY_PALIER_MONTAGNE_COMPLET = STORY_PALIER_MONTAGNE_COMPLET;
-window.storyPalierMontagneCompletMissing = storyPalierMontagneCompletMissing;
 window.STORY_OUVRAGE_MATIERE = STORY_OUVRAGE_MATIERE;
 window.STORY_OUVRAGE_TEXTS = STORY_OUVRAGE_TEXTS;
 window.storyOuvrageBranch = storyOuvrageBranch;
@@ -4674,7 +4599,6 @@ window.STORY_DROIT_TEXTS = STORY_DROIT_TEXTS;
 window.storyDroitBranch = storyDroitBranch;
 window.STORY_PALIER_MONTAGNE = STORY_PALIER_MONTAGNE;
 window.storyPalierMontagne = storyPalierMontagne;
-window.storyPalierMontagneMissing = storyPalierMontagneMissing;
 window.storyItemCompteMontagne = storyItemCompteMontagne;
 window.storyMontagneTrous = storyMontagneTrous;
 window.storyItemComptePourPalier = storyItemComptePourPalier;
@@ -5320,13 +5244,6 @@ STORY_QUESTS.tower = {
 };
 /* v3.629.0 (Tour, TW7) : le Légendaire complet de l'acte III. Au banc. */
 var STORY_PALIER_TOUR_COMPLET = { pieces: 7, forge: 10, reforge: 19 }; // rythme de la Tour (Seb, 03/11) ; Forge des mondes : Forge 10, arme reforgée à 19
-function storyPalierTourCompletMissing(game) {
-  var P = STORY_PALIER_TOUR_COMPLET;
-  return storyPalierManques(game, "legendary", P, function (a, b) {
-    return { text: _t("Pièces Légendaires : {a} / {b}", { a: a, b: b }), where: _t("Le Sommet interdit, le Gardien qui répète et l'échoppe de la Halle marchande.") };
-  }).filter(Boolean);
-}
-window.storyPalierTourCompletMissing = storyPalierTourCompletMissing;
 var STORY_COPIE_VERRE = 6; // défaire Aeswyn d'avant : sa matière, de quoi la Forge 10 (4) et une reforge
 var STORY_COPIE_TEXTS = {
   laisser: {

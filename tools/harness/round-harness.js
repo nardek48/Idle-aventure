@@ -15199,23 +15199,14 @@ console.log("\n[230] v3.448.6 — Palier Rare : « Ce qui manque », et où");
   try {
     var step = null; g.STORY_QUESTS.ruins.steps.forEach(function (s) { if (s.id === "ruines_13") step = s; });
     // v3.717.0 (Seb 06/11) : l'étape n'exige plus rien ; le relevé global reste (repère du pronostic)
-    ok(step && typeof step.missing !== "function" && typeof g.storyPalierRuinesRareMissing === "function", "ruines_13 sans missing() ; storyPalierRuinesRareMissing reste");
+    ok(step && typeof step.missing !== "function", "ruines_13 sans missing()"); // v3.762.0 : le relevé « Ce qui manque » des paliers est retiré (plus aucune étape ne l'affiche)
     g.VillageBuildingManager.ensure(); g.ForgeManager.ensure();
     game.village.buildings.forge = Object.assign({}, game.village.buildings.forge, { level: 3 });
     game.forge.levels.weapon = 6; game.gold = 0; game.worldsEverReached = { 0: true, 1: true, 2: true }; // aux Ruines
     var sq230 = JSON.stringify(game.storyQuests || {}); ["forest", "desert"].forEach(function (c) { g.StoryQuestManager.getState(c).currentStep = g.StoryQuestManager.getChapter(c).steps.length; }); // v3.754.0 : aux Ruines, le Désert est fini (Tailleur ouvert, MES-6)
     game.equipped = { weapon: { slot: "weapon", rarity: "rare", name: "x", stat: "tapDmg", value: 10 } };
-    var m = g.storyPalierRuinesRareMissing(game), txt = m.map(function (l) { return l.text + " | " + l.where; }).join("\n");
-    ok(/Pièces Rares : 1 \/ 4/.test(txt) && /Sanctuaire scellé/.test(txt), "pièces Rares : le compte et d'où elles viennent");
-    ok(/Forge 4 : Clé de voûte 0 \/ \d/.test(txt) && /Tailleur de pierre/.test(txt), "Forge 4 : la Clé de voûte et où la tailler");
-    ok(/Reforge 7 de l'arme \| Il faut d'abord la Forge 4\./.test(txt), "reforge 7 : la Forge 4 d'abord");
-    game.village.buildings.forge.level = 4;
-    m = g.storyPalierRuinesRareMissing(game); txt = m.map(function (l) { return l.text + " | " + l.where; }).join("\n");
-    ok(/Reforge 7 de l'arme : Clé de voûte/.test(txt), "Forge 4 bâtie : la reforge 7 liste ses matériaux manquants");
     var board = g.buildForgeBoardHTML(), acier = (board.match(/Acier : /g) || []).length;
     ok(acier === 1, "établi : la provenance de l'Acier n'apparaît qu'une fois (" + acier + ")");
-    var q = fs.readFileSync(path.join(ROOT, "js/ui/quests-view.js"), "utf8");
-    ok(/step\.missing\(game\)/.test(q) && /story-missing-title/.test(q), "la carte d'étape affiche « Ce qui manque »");
   } catch (err) {
     ok(false, "[230] exception : " + err.message);
   } finally { try { game.storyQuests = JSON.parse(sq230); } catch (e3) {}
@@ -15707,7 +15698,7 @@ console.log("\n[242] v3.454.0 — Crypte, lot C-3 : acte II (obscurité, Lantern
     var st9 = ch.steps.filter(function (x) { return x.id === "crypte_09"; })[0];
     ok(st9.check(game), "palier : 7 Rares et l'arme à 8, l'étape passe");
     game.equipped.ring = g.generateEquipmentItem("ring", "green", 2);
-    ok(st9.check(game) && g.storyPalierCrypteRareMissing(game).length >= 1, "v3.717.0 : une pièce Inhabituelle, l'étape passe ; le relevé dit encore ce qui manque au repère");
+    ok(st9.check(game), "v3.717.0 : une pièce Inhabituelle, l'étape passe");
     // Mèche longue et l'obélisque tenu
     g.MemoryManager.has = function (id) { return id === "meche_longue"; };
     LM.hasEffect = function (id) { return id === "lanterne_plus"; };
@@ -15806,7 +15797,7 @@ console.log("\n[243] v3.455.0 — Crypte, lot C-4 : acte III (Ossuaire, Porte-co
     var st13 = ch.steps.filter(function (x) { return x.id === "crypte_13"; })[0];
     ok(st13.check(game), "palier Épique : 3 Épiques, Forge 5, arme à 9");
     game.forge.levels.weapon = 8;
-    ok(st13.check(game) && g.storyPalierCrypteEpiqueMissing(game).length >= 1, "v3.717.0 : arme à 8, l'étape passe ; le relevé dit encore ce qui manque au repère");
+    ok(st13.check(game), "v3.717.0 : arme à 8, l'étape passe");
     var c9 = g.ForgeManager.getCost("weapon");
     ok(c9 && c9.cire_consacree === 1 && !c9.cle_de_voute && !c9.verre_trempe, "Forge des mondes : reforge 9 (1er cran de la Crypte) : 1 Cire consacrée seule");
     game.forge.levels.weapon = 6;
@@ -15972,7 +15963,7 @@ console.log("\n[246] v3.456.3 — Crypte, lot C-6 : la quête d'élite du Porte-
     var pris = game.inventory.filter(function (it) { return it.eliteId === "porte_couronne"; })[0];
     ok(pris && pris.rarity === "epic" && game.inventory.length === n0 + 1, "sac plein : la couronne entre quand même (objet unique)");
     game.equipped = { weapon: g.EliteManager.buildUniqueLoot("arme_coeur"), helmet: pris };
-    ok(g.storyPalierCrypteEpique(game).pieces === 2, "elle compte au palier Épique");
+    ok(g.storyPalier(game, "epic").pieces === 2, "elle compte au palier Épique");
   } catch (err) {
     ok(false, "[246] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
@@ -18361,8 +18352,7 @@ console.log("\n[312] v3.490.0 — Montagne, lot M-4 : acte III « La Gueule »")
     // Le palier de montagne_13 : 7 sur 7, Forge 6, arme à 11
     game.equipped = {};
     g.EQUIPMENT_SLOTS.forEach(function (sl, i) { game.equipped[sl] = { slot: sl, rarity: i < 6 ? "epic" : "rare", worldIndex: i < 3 ? 4 : 3 }; }); // v3.552.0 : tout monde
-    var m = g.storyPalierMontagneCompletMissing(game);
-    ok(g.STORY_PALIER_MONTAGNE_COMPLET.pieces === 7 && g.storyPalierMontagne(game).pieces === 6 && m.length >= 1 && /6 \/ 7/.test(m[0].text), "palier de l'étape 13 : 6 sur 7, « ce qui manque » le dit");
+    ok(g.STORY_PALIER_MONTAGNE_COMPLET.pieces === 7 && g.storyPalierMontagne(game).pieces === 6, "palier de l'étape 13 : 6 sur 7");
     ok(g.STORY_REWARDS.montagne_12.equipmentSlot === "weapon" && /reward\.equipmentSlot/.test(fs.readFileSync(path.join(ROOT, "js/systems/story-quest-system.js"), "utf8")), "étape 12 : une arme Épique de la Montagne (equipmentSlot), à la classe du héros");
     var src = fs.readFileSync(path.join(ROOT, "js/systems/combat-engine.js"), "utf8");
     ok(/VeinSystem\.blocksHit\(foe\)/.test(src) && /VeinSystem\.absorb\(foe, dmg\)/.test(src) && /VeinSystem\.onEnemyTurn\(e\)\) return/.test(src), "combat-engine.js : plongée, carapace et tour du Wyrm branchés");
@@ -18483,9 +18473,6 @@ console.log("\n[315] v3.492.11 — pièces de la Montagne lisibles (L1, L3)");
       "une pièce compte : Épique ou mieux, de n'importe quel monde (v3.552.0)");
     game.equipped = { weapon: mk("weapon", "epic", 4), armor: mk("armor", "epic", 4), helmet: mk("helmet", "epic", 3), gloves: null, boots: mk("boots", "epic", 4), ring: mk("ring", "rare", 4), amulet: mk("amulet", "epic", 2) };
     ok(g.storyMontagneTrous(game).join() === "gloves,ring", "emplacements sans pièce Épique : gants, anneau (le casque et l'amulette d'en bas comptent)");
-    var manque = g.storyPalierMontagneMissing(game)[0];
-    var trousTxt = g.storyMontagneTrousTexte(game);
-    ok(/Gants/.test(trousTxt) && /Anneau/.test(trousTxt) && !/Casque/.test(trousTxt) && /Sans pièce Épique/.test(trousTxt), "L3 : « Ce qui manque » nomme les emplacements à combler (" + trousTxt.trim() + ")");
     ok(g.buildItemStoryCountHTML(mk("gloves", "epic", 4), false) === "", "hors palier : pas de mention « Compte pour l'Histoire »");
     SQ.getCurrentStep = function (c) { return c === "mountain" ? { id: "montagne_09" } : null; };
     SQ.isCurrentStepAccepted = function () { return true; };
@@ -21804,7 +21791,7 @@ console.log("\n[430] Rythme de la Tour (Seb, 03/11 : Terrain 19 à 21, palier de
     ok(P.pieces === 7 && P.forge === 10 && P.reforge === 19, "acte III : 7 Légendaires, Forge 10, arme reforgée à 19 (Forge des mondes : 1re reforge de la Forge 10)");
     var st13 = g.STORY_QUESTS.tower.steps.filter(function (x) { return x.id === "tour_13"; })[0];
     run("fullResetState(); game.playerName='Test'; game.heroId='knight'; StoryQuestManager.ensure();");
-    ok(st13.check(g.game) === true && typeof st13.missing !== "function" && g.storyPalierTourCompletMissing(g.game).length >= 1, "v3.717.0 : palier non tenu, l'étape passe ; le relevé du repère dit encore ce qui manque");
+    ok(st13.check(g.game) === true && typeof st13.missing !== "function", "v3.717.0 : palier non tenu, l'étape passe");
     ok(g.STORY_TOUR_ETAGES === 5 && g.STORY_TOUR_PA === 2, "étapes 6 et 7 : les 5 étages de l'escalier, 2 escaliers réussis");
     var st7 = g.STORY_QUESTS.tower.steps.filter(function (x) { return x.id === "tour_07"; })[0];
     run("game.storyQuests.tower.counters = { paBase: 1 }; game.explorationProgression.towerPaWins = 2;");
@@ -22843,8 +22830,6 @@ console.log("\n[452] v3.687.0 — Économie et village (audit 04/11, lot I8)");
     ok(W.getUsableCap("pierre") === keepS && W.getUsableCap("planche") === W.getCap("planche"), "EQUI-2 : getUsableCap = min(plafond, part gardée) (" + keepS + ")");
     var hint = W.capHint("pierre", keepS + 80);
     ok(hint === g._t("Le Grand Ouvrage n'en laisse que {c} : monte l'Entrepôt, ou relève la réserve protégée de {x}.", { c: g.formatNumber(keepS), x: g._td(g.WAREHOUSE_RESOURCES.pierre.name) }) && W.capHint("pierre", keepS) === "" && /^L'Entrepôt n'en garde que/.test(W.capHint("pierre", capS + 1)), "EQUI-2 : la phrase dit qui limite (Grand Ouvrage ou plafond), rien sous la limite");
-    var ml = g.storyMissingCostLines({ pierre: keepS + 80 }, "Forge 6");
-    ok(ml.length === 1 && ml[0].where === hint, "EQUI-2 : le palier dit la limite au lieu de « Carrière »");
     ok(g.ProductionPlotsSystem.overCapReason({ pierre: keepS + 80 }) === hint && /zone-cap-why/.test(g.buildZoneActionHTML({ cost: { pierre: keepS + 80 }, canAfford: false, label: "x", desc: "y" })), "ECON-3 : le refus des parcelles reprend la raison, sous le bouton grisé");
     g.ResourceReserveManager.setReserve("pierre", keepS + 80);
     ok(W.getUsableCap("pierre") === keepS + 80 && W.capHint("pierre", keepS + 80) === "", "EQUI-2 : relever la réserve protégée lève bien la limite");

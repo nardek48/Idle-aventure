@@ -283,7 +283,7 @@ var CombatForecast = {
   /* v3.429.15 : PV que les compagnons rendent pendant les combats [{ cost, rounds }], selon
      leurs vraies règles : Wenna (heal) sous son seuil, charges et recharge ; Maddoc (taunt)
      dès qu'un allié est touché. Groupe approché en un seul réservoir de PV. Un compagnon ne
-     joue plus une fois l'ennemi tombé (alliesTurn) : un combat d'un round ne lui laisse aucun soin. */
+     joue plus une fois l'ennemi tombé : un combat d'un round ne lui laisse aucun soin. */
   getCompanionHeals: function (fights, fullParty) {
     if (!window.CompanionManager || typeof CompanionManager.partyIds !== "function" || typeof getCompanionDef !== "function") return 0;
     var heroMax = Number(game.heroMaxHp || 1), poolMax = heroMax, deficit = fullParty ? 0 : Math.max(0, heroMax - Number(game.heroHp != null ? game.heroHp : heroMax));

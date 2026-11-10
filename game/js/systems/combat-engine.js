@@ -751,29 +751,6 @@ var CombatEngine = {
 
   /* ---------- Tours alliés (groupe) ---------- */
 
-  /* v3.268.0 (L-2) : après l'action du héros, chaque compagnon vivant joue la sienne.
-     Le moteur ne connaît rien des compagnons : il délègue à CompanionManager, qui
-     porte la politique automatique, les cooldowns et les compétences. Sans compagnon
-     présent, cette boucle est vide et le round est celui d'avant. */
-  alliesTurn: function () {
-    if (!window.CombatActors || !window.CompanionManager) return;
-    if ((game.heroHp || 0) <= 0) return;
-
-    var allies = CombatActors.allies().slice();
-    for (var i = 0; i < allies.length; i++) {
-      var a = allies[i];
-      if (!a || !a.companionId) continue;        // le héros a déjà joué
-      if (Number(a.hp || 0) <= 0) continue;      // KO
-      if (!CombatActors.aliveEnemies().length) break;
-      /* v3.276.0 : en Manuel, le compagnon a DÉJÀ joué au clic (queueChoice) — on ne le
-         rejoue pas ici. Cette boucle ne sert donc plus qu'au mode automatique. */
-      if (a.control === "manual") continue;
-      this._actingAlly = a;
-      try { CompanionManager.takeTurn(a, null, null); }
-      finally { this._actingAlly = null; }
-    }
-  },
-
   /* Qui encaisse la frappe : tirage au prorata de la menace (§6.2). Un Garde attire,
      un Soutien peu, un KO sort du tirage ; le plancher garantit que le héros reste
      exposé — sans lui, un compagnon à forte menace ferait de lui un spectateur. */
@@ -803,8 +780,8 @@ var CombatEngine = {
     return hero;
   },
 
-  /* Menace de l'allié en train d'agir. _actingAlly est posé par alliesTurn pendant le
-     tour d'un compagnon ; hors de cette fenêtre, c'est le héros qui frappe. */
+  /* Menace de l'allié en train d'agir. _actingAlly est posé pendant le tour d'un compagnon
+     (initiative) ; hors de cette fenêtre, c'est le héros qui frappe. */
   noteThreat: function (dmg) {
     if (!window.CombatActors) return;
     var actor = this._actingAlly || CombatActors.heroActor();

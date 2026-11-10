@@ -50,7 +50,6 @@ body:not(.scene-active) #pa2-overlay { display: none; }
 .pa2-h2 { margin: 0; font-size: 18px; line-height: 1.2; font-weight: 800; color: var(--pa2-ink); }
 .pa2-h3 { margin: 0; font-size: 15px; font-weight: 800; color: var(--pa2-ink); }
 .pa2-narr { margin: 8px 0 0; font-style: italic; color: var(--pa2-ink); }
-.pa2-p { margin: 0 0 6px; }
 .pa2-pro { color: var(--pa2-moss); }
 .pa2-con { color: var(--pa2-danger); }
 .pa2-ring { margin: 8px 0 0; font-size: 12.5px; font-weight: 700; color: var(--pa2-gold); }
@@ -429,7 +428,6 @@ body.pa2-full .pa2-scrim { background: rgba(5, 3, 2, 0.28); }
 .pa2-nightitem b { display: block; color: var(--pa2-gold); font-size: 14px; }
 .pa2-nightitem span { display: block; font-size: 13px; color: var(--pa2-ink-dim); }
 .pa2-night-tag { color: var(--pa2-gold); font-weight: 700; }
-.pa2-cond-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .pa2-cond ul { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 4px; font-size: 13.5px; font-weight: 700; }
 .pa2-cond li { display: grid; grid-template-columns: 18px 1fr; gap: 4px; }
 .pa2-cond .pa2-small { margin-top: 8px; }

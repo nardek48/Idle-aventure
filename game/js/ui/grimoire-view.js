@@ -127,8 +127,6 @@ function activateGrimoireJeu(presetId) {
 function loadGrimoirePreset(presetId) { return activateGrimoireJeu(presetId); }
 
 // v3.736.0 : plus de confirmation, rien n'est perdu en changeant de jeu
-function confirmLoadGrimoirePreset(presetId) { return activateGrimoireJeu(presetId); }
-
 function confirmDeleteGrimoirePreset(presetId) {
   var presets = ensureGrimoirePresets();
   var preset = presets.filter(function (p) { return p.id === presetId; })[0];
@@ -162,7 +160,6 @@ window.GRIMOIRE_PRESET_ICON_CHOICES = GRIMOIRE_PRESET_ICON_CHOICES;
 window.ensureGrimoirePresets = ensureGrimoirePresets;
 window.saveGrimoirePreset = saveGrimoirePreset;
 window.loadGrimoirePreset = loadGrimoirePreset;
-window.confirmLoadGrimoirePreset = confirmLoadGrimoirePreset;
 window.ensureGrimoireJeux = ensureGrimoireJeux;
 window.getActiveGrimoireJeu = getActiveGrimoireJeu;
 window.activateGrimoireJeu = activateGrimoireJeu;
