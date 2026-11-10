@@ -233,7 +233,7 @@ function setup(g, run, heroId, profile, potions) {
   Object.keys(profile.levels).forEach(function (st) { g.game.upgrades["utrain_" + st] = profile.levels[st]; });
   g.game.heroLevel = profile.level;
   g.game.talents = spendTalents(Math.max(0, profile.level - 1));
-  /* Potions de SOIN : game.healingPotionsOwned (et non game.inventory — voir note de dungeon-bench). */
+  /* Potions de SOIN : game.healingPotionsOwned (et non game.inventory, où le moteur ne les lit pas). */
   g.PotionManager.ensureHealing();
   g.game.healingPotionsOwned = { potion_soin_mineur: (potions == null ? 3 : potions) };
   g.game.worldsEverReached = { 0: true };

@@ -647,7 +647,6 @@ P(table(["Banc", "Mesure"], [
   ["revente-bench.js", "Production horaire par monde et dépenses d'or"],
   ["offrande-bench.js", "Aether par monde et rythme des niveaux de Mémoire"],
   ["cite-vague5-bench.js, desert-*-bench.js", "Contenus du Désert"],
-  ["dungeon-bench.js, map-bench.js", "Donjons ; carte et Palissade"],
   ["seve-bench.js, upgrade-economy-bench.js, offline-bench.js", "Sève ; entraînement ; hors ligne"],
   ["group-bench.js, quest-cost-bench.js", "Combat de groupe"],
   ["missing-icons.js", "Chemins d'images cités dans le code et absents du dossier"],
