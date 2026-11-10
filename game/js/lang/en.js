@@ -61,6 +61,8 @@ I18n.register("en", {
   "Village : les pastilles de niveau des cartes ne passent plus par-dessus les onglets quand la liste défile.": "Village: card level badges no longer slide over the tabs when the list scrolls.",
   "Talents : le bouton « Apprendre » ne déborde plus de l'écran.": "Talents: the “Learn” button no longer runs off the screen.",
   "Talents : l'écran prend le style du reste du jeu. Onglets Classe / Commandement du kit, points en tête de l'arbre, cadres sur l'arbre et le panneau du talent.": "Talents: the screen now matches the rest of the game. Class / Command tabs from the kit, points at the top of the tree, frames on the tree and the talent panel.",
+  // v3.768.0 : badges tirés du robot, rendement du kit au pronostic
+  "Quêtes : le badge Facile, Moyen ou Difficile dit maintenant la vraie difficulté, mesurée sur des dizaines de parties. Le pronostic de combat est recalé pour les trois classes, il prévient mieux le Rôdeur.": "Quests: the Easy, Medium or Hard badge now shows the real difficulty, measured over dozens of runs. The fight forecast is recalibrated for all three classes and warns the Ranger better.",
   // v3.763.0 : équilibre des classes en un seul tableau (data/classes.js)
   "Équilibre des classes : le Rôdeur encaisse un peu mieux et le Mage aussi, le Chevalier garde sa solidité. Les boss sont maintenant les mêmes pour les trois classes ; c'est le héros qui porte sa différence.": "Class balance: the Ranger and the Mage now take a little less damage, the Knight keeps his sturdiness. Bosses are now the same for all three classes; the hero carries the difference.",
   // v3.761.0 : tutoriels sur l'écran (ui/coach-view.js)
