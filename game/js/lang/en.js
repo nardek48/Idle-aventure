@@ -61,6 +61,8 @@ I18n.register("en", {
   "Village : les pastilles de niveau des cartes ne passent plus par-dessus les onglets quand la liste défile.": "Village: card level badges no longer slide over the tabs when the list scrolls.",
   "Talents : le bouton « Apprendre » ne déborde plus de l'écran.": "Talents: the “Learn” button no longer runs off the screen.",
   "Talents : l'écran prend le style du reste du jeu. Onglets Classe / Commandement du kit, points en tête de l'arbre, cadres sur l'arbre et le panneau du talent.": "Talents: the screen now matches the rest of the game. Class / Command tabs from the kit, points at the top of the tree, frames on the tree and the talent panel.",
+  // v3.770.0 : Givre bleu et Verre de faille fermés avant tour_06
+  "Forge de la Tour : avant « La rue qui tient », le Givre bleu et le Verre de faille sont marqués introuvables, avec l'étape qui les ouvre, au lieu de paraître à portée.": "Tower Forge: before “The Street That Holds”, Blue Frost and Rift Glass are marked as not yet found, with the step that opens them, instead of looking within reach.",
   // v3.769.0 : le Seigneur de guerre orc ramené vers les autres boss
   "Le Seigneur de guerre orc frappe moins fort (comme les autres boss) mais tient plus longtemps : toujours un vrai combat, beaucoup moins de défaites sèches.": "The Orc Warlord hits less hard (like the other bosses) but lasts longer: still a real fight, far fewer sudden defeats.",
   // v3.768.0 : badges tirés du robot, rendement du kit au pronostic
@@ -9442,7 +9444,7 @@ I18n.register("en", {
   "Grand Ouvrage : à verser à la main": "Great Work: pour by hand",
   "Campement : le festin": "Camp: the feast",
   "Auto-offrande": "Auto-offer",
-  "Étages de la Tour : combats, carte des étages, Petites Aventures et Sommet interdit · caravane longue au Marché de la Tour": "Tower floors: fights, the floor map, Small Adventures and the Forbidden Summit · long caravan to the Tower Market",
+  "Étages de la Tour : carte des étages, Petites Aventures et Sommet interdit · caravane longue au Marché de la Tour": "Tower floors: the floor map, Small Adventures and the Forbidden Summit · long caravan to the Tower Market",
   // v3.689.0 (lot I3, combat)
   "Potion bue à ton prochain tour": "Potion drunk on your next turn",
   "{x} peut reprendre {s}.": "{x} may take {s} back.",

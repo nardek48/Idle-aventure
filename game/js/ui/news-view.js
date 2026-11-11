@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.770.0", "menu_icons/village_menu", _t("Forge de la Tour : avant « La rue qui tient », le Givre bleu et le Verre de faille sont marqués introuvables, avec l'étape qui les ouvre, au lieu de paraître à portée.")],
     ["3.769.0", "menu_icons/quests_menu", _t("Le Seigneur de guerre orc frappe moins fort (comme les autres boss) mais tient plus longtemps : toujours un vrai combat, beaucoup moins de défaites sèches.")],
     ["3.768.0", "menu_icons/quests_menu", _t("Quêtes : le badge Facile, Moyen ou Difficile dit maintenant la vraie difficulté, mesurée sur des dizaines de parties. Le pronostic de combat est recalé pour les trois classes, il prévient mieux le Rôdeur.")],
     ["3.763.0", "classes/class_ranger", _t("Équilibre des classes : le Rôdeur encaisse un peu mieux et le Mage aussi, le Chevalier garde sa solidité. Les boss sont maintenant les mêmes pour les trois classes ; c'est le héros qui porte sa différence.")],

@@ -106,13 +106,24 @@ function buildVillageCostListHTML(id) {
    formuler la phrase. */
 /* v3.754.0 (audit A, MES-6) : matériau fait par un atelier que l'Histoire n'a pas encore ouvert (Verre trempé
    avant desert_09) : introuvable pour l'instant, avec l'étape qui l'ouvre. Renvoie le titre de l'étape, sinon "". */
-function getResourceStoryLock(key) {
+/* v3.770.0 : aussi une ressource brute ouverte par l'Histoire (openAtStoryStep, le Givre bleu à tour_06) et un matériau
+   fabriqué dont un ingrédient est encore fermé (le Verre de faille). Rend le titre de l'étape qui l'ouvre, sinon "". */
+function getResourceStoryLock(key, prof) {
+  if ((prof || 0) > 3) return "";
+  var titreDe = function (id) {
+    var q = window.STORY_QUESTS || {}, titre = "";
+    Object.keys(q).forEach(function (c) { (q[c].steps || []).forEach(function (s) { if (s.id === id) titre = s.title; }); });
+    return titre || id;
+  };
+  var def = window.WAREHOUSE_RESOURCES ? WAREHOUSE_RESOURCES[key] : null;
+  if (def && def.openAtStoryStep && window.StoryQuestManager && !StoryQuestManager.isStepReached(def.openAtStoryStep)) return titreDe(def.openAtStoryStep);
   var prod = typeof findResourceProducer === "function" ? findResourceProducer(key) : null;
   var w = prod && prod.kind === "workshop" && window.WORKSHOPS_CONFIG ? WORKSHOPS_CONFIG[prod.id] : null;
-  if (!w || !w.openAtStoryStep || w.active) return "";
-  var q = window.STORY_QUESTS || {}, titre = "";
-  Object.keys(q).forEach(function (c) { (q[c].steps || []).forEach(function (s) { if (s.id === w.openAtStoryStep) titre = s.title; }); });
-  return titre || w.openAtStoryStep;
+  if (!w) return "";
+  if (w.openAtStoryStep && !w.active) return titreDe(w.openAtStoryStep);
+  var rec = (w.recipes || []).filter(function (r) { return r.outputs[0].resourceId === key; })[0], lock = "";
+  (rec ? rec.inputs : []).forEach(function (i) { if (!lock && i.resourceId !== key) lock = getResourceStoryLock(i.resourceId, (prof || 0) + 1); });
+  return lock;
 }
 window.getResourceStoryLock = getResourceStoryLock;
 

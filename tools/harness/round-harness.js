@@ -26413,6 +26413,23 @@ console.log("\n[518] Suivi du héros unique, sur la courbe ; ni donjons ni élit
   finally { CF.getHeroDamagePerRound = d0; CF.getHeroEffectiveHp = e0; game = freshCombat("knight"); }
 })();
 
+console.log("\n[519] Forge 9 de la Tour : Givre bleu et Verre de faille fermés avant tour_06 (v3.770.0, audit A, MES-6)");
+(function () {
+  var SQ = g.StoryQuestManager, keep = SQ.isStepReached;
+  try {
+    var W = g.WAREHOUSE_RESOURCES;
+    ok(W.givre_bleu.openAtStoryStep === "tour_06" && !/combats/.test(W.givre_bleu.sourceHint), "Givre bleu : ouvert à tour_06, l'aide n'annonce plus de butin de combat");
+    SQ.isStepReached = function (id) { return id !== "tour_06"; };
+    var lg = g.getResourceStoryLock("givre_bleu"), lv = g.getResourceStoryLock("verre_faille");
+    ok(lg && lv && lg === lv, "avant tour_06 : Givre bleu et Verre de faille (fait de Givre) fermés, avec l'étape qui les ouvre (« " + lg + " »)");
+    ok(g.isVillageResourceUnreachable("verre_faille") && /S'ouvre avec l'Histoire/.test(g.getVillageResourceHint("verre_faille")), "Forge 9 : le Verre de faille est introuvable, l'aide dit l'étape");
+    SQ.isStepReached = function () { return true; };
+    ok(g.getResourceStoryLock("givre_bleu") === "" && g.getResourceStoryLock("verre_faille") === "", "après tour_06 : plus de verrou");
+    ok(g.getResourceStoryLock("acier") === "" && g.getResourceStoryLock("planche") === "", "les autres matériaux ne bougent pas");
+  } catch (err) { ok(false, "[519] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  finally { SQ.isStepReached = keep; }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");
