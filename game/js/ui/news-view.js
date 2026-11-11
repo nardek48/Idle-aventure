@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.769.0", "menu_icons/quests_menu", _t("Le Seigneur de guerre orc frappe moins fort (comme les autres boss) mais tient plus longtemps : toujours un vrai combat, beaucoup moins de défaites sèches.")],
     ["3.768.0", "menu_icons/quests_menu", _t("Quêtes : le badge Facile, Moyen ou Difficile dit maintenant la vraie difficulté, mesurée sur des dizaines de parties. Le pronostic de combat est recalé pour les trois classes, il prévient mieux le Rôdeur.")],
     ["3.763.0", "classes/class_ranger", _t("Équilibre des classes : le Rôdeur encaisse un peu mieux et le Mage aussi, le Chevalier garde sa solidité. Les boss sont maintenant les mêmes pour les trois classes ; c'est le héros qui porte sa différence.")],
     ["3.761.0", "codex/codex_lore", _t("Tutoriels : les premiers (Campement, premier combat, Village, carte, Petite Aventure, Grimoire, talents) s'affichent sur l'écran lui-même. L'élément est éclairé, une bulle explique, « Suivant » ou un toucher sur l'élément pour avancer.")],

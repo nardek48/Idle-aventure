@@ -58,7 +58,7 @@ var ADVENTURE_QUESTS = {
     difficulty: "hard",
     // v3.326.0 (C-2) : uniques + Wenna +5, entr. 60 : 95-100 %, 41-50 rounds, 52-61 % de PV (Wenna soigne beaucoup)
     target: { rounds: 0.98, hit: 0.0839 }, // v3.764.0 (C1) : avant enemyPowerMult 6, enemyHpMult 1,4, bossHpMult 1,75
-    bossTarget: { rounds: 6.36, hit: 0.1823 },
+    bossTarget: { rounds: 8, hit: 0.11 }, // v3.769.0 (Seb 11/11, A) : 18,2 % par coup → 11 %, 6,4 → 8 rounds (les autres boss : 4 à 6 %)
     progressionStage: "world_end",
     category: "side", // v3.100.1 : « Principale » réservée à la chaîne Histoire
     worldId: "forest",
