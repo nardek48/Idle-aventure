@@ -449,6 +449,11 @@ function profilStats(profilId, c) {
     + " % · CRIT " + E.effectiveCritChance().toFixed(1) + " % ×" + E.effectiveCritMult().toFixed(2);
 }
 
+/* v3.770.0 (mesure Silence et Exaltation) : ESSAI_SANS=surge,silence coupe ces annonces (le compteur repart, rien ne tombe). */
+if (process.env.ESSAI_SANS) (function (sans) {
+  var CE = g.CombatEngine, orig = CE.telegraphPattern;
+  CE.telegraphPattern = function (e, kind) { if (sans.indexOf(kind) >= 0) { if (kind === "surge") e.surgeIn = 99; if (kind === "silence") e.silenceIn = 99; return; } return orig.apply(this, arguments); };
+})(String(process.env.ESSAI_SANS).split(","));
 console.log("COMBATS DE L'HISTOIRE AU PLAFOND ATTEIGNABLE — " + RUNS + " runs par cellule, 2 potions, Grimoire auto · talents " + (NO_TALENTS ? "aucun" : "voie " + VOIE + (TALENT_POINTS != null ? ", " + TALENT_POINTS + " points" : "")) + (TRAIN != null ? " · entraînement imposé " + TRAIN : "") + "\n");
 Object.keys(PROFILS).forEach(function (pid) {
   console.log("Profil " + pid + " : " + PROFILS[pid].label);
