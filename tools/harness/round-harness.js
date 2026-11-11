@@ -26430,6 +26430,23 @@ console.log("\n[519] Forge 9 de la Tour : Givre bleu et Verre de faille fermés 
   finally { SQ.isStepReached = keep; }
 })();
 
+console.log("\n[520] Petites Aventures : tutoriel des petites quêtes du chemin (v3.771.0)");
+(function () {
+  var keep = game.sceneRun, P = g.Pa2Run, fs0 = P.foundSecrets;
+  try {
+    var T = g.GENERIC_TUTORIALS.pa2_quests;
+    ok(T && T.tab === "scene" && T.points.length === 5 && T.points.every(function (p) { return p.icon && p.text; }), "tutoriel posé : 5 points (quête, verrou, cache, passages secrets, fins)");
+    P.foundSecrets = function () { return []; };
+    game.sceneRun = { pa2: true, status: "pa2-map", quest: { kind: "cache", state: "rencontre" } };
+    ok(!T.condition(), "pas avant la rencontre qui lance la quête");
+    game.sceneRun.quest.state = "halte"; ok(T.condition(), "la cache annoncée : il s'ouvre");
+    game.sceneRun = { pa2: true, status: "pa2-lock", quest: { kind: "lock", state: "active" } }; ok(T.condition(), "devant un verrou : il s'ouvre");
+    game.sceneRun = { pa2: true, status: "pa2-map", quest: null }; P.foundSecrets = function () { return ["L4>L6"]; }; ok(T.condition(), "premier passage secret trouvé : il s'ouvre");
+    game.sceneRun = { pa2: true, parcours: true, status: "pa2-map", quest: { kind: "lock", state: "active" } }; ok(!T.condition(), "pas dans les parcours d'Histoire");
+  } catch (err) { ok(false, "[520] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  finally { P.foundSecrets = fs0; game.sceneRun = keep; }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

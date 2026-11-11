@@ -271,6 +271,27 @@ var GENERIC_TUTORIALS = {
       { icon: "images/Icons/scene/cuts/cut_fallen_tree.webp", text: "Un rond gris barré : le sentier est coupé pour ce run. Il reste toujours un autre chemin." }
     ]
   },
+  /* v3.771.0 (point ouvert v3.724.0) : la première petite quête du chemin (carnier, verrou, fins) ou le premier passage
+     secret trouvé, dans une petite aventure (pas les parcours d'Histoire). */
+  pa2_quests: {
+    tab: "scene",
+    condition: function () {
+      var run = game.sceneRun, P = window.Pa2Run;
+      if (!run || !run.pa2 || run.parcours || !P) return false;
+      if (["pa2-map", "pa2-node", "pa2-lock"].indexOf(run.status) < 0) return false;
+      var q = run.quest;
+      return run.status === "pa2-lock" || !!(q && q.state && q.state !== "rencontre" && q.state !== "sans") || P.foundSecrets(run).length > 0;
+    },
+    icon: "images/Icons/scene/node_discovery.webp",
+    title: "Les petites quêtes du chemin",
+    points: [
+      { icon: "images/Icons/scene/node_encounter.webp", text: "Une rencontre peut lancer une petite quête : une cache à récupérer, une porte à ouvrir avec sa clé, une fin imposée ou une fin cachée. Elle est rappelée en haut de l'écran." },
+      { icon: "images/Icons/scene/items/item_lockpicks.webp", text: "Le verrou : la clé attend sur une case du chemin, dans une poche à part. Devant la porte : Ouvrir avec la clé, Forcer (ça passe toujours, mais ça coûte) ou Rebrousser." },
+      { icon: "images/Icons/scene/pa2_besace.webp", text: "La cache : annoncée à une halte, à deux pas du chemin au plus. Le retour se fait par une trace claire, et une bête sans or le garde." },
+      { icon: "images/Icons/scene/torch.webp", text: "Les passages secrets : chaque case est fouillée gratuitement à ton arrivée. Un « ? » est un indice : « Chercher encore » coûte 10 de Souffle. La torche et la lanterne aident." },
+      { icon: "images/Icons/scene/node_threshold.webp", text: "Les fins : une fin imposée laisse une seule sortie ouverte ; une fin cachée se révèle par son passage secret, et paie mieux." }
+    ]
+  },
   /* v3.435.0 (Ruines, RU12) : première descente dans le Labyrinthe aux leviers. Edda explique. */
   labyrinth_first: {
     tab: "scene",
