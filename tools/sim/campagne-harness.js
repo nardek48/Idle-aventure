@@ -381,9 +381,16 @@ function grindOnceIn(raison) {
    niveau jouable (meilleur fini + 1). */
 function mondeCourant(g) { return g.WorldCaps && g.WorldCaps.getReachedWorldIndex ? g.WorldCaps.getReachedWorldIndex() : Number(g.WorldManager.worldIndex || 0); }
 function niveauAuMonde(g, d) {
-  var D = g.DungeonManager, w = mondeCourant(g), max = D.getMaxLevel(d.id);
-  for (var L = 1; L <= max; L++) if (Number((D.getLevelLootSource(d, L) || d).worldRequired || 0) >= w) return L;
-  return max;
+  var D = g.DungeonManager, w = mondeCourant(g), max = D.getMaxLevel(d.id), cible = max;
+  for (var L = 1; L <= max; L++) if (Number((D.getLevelLootSource(d, L) || d).worldRequired || 0) >= w) { cible = L; break; }
+  /* v3.771.0 (Seb 11/11, point f) : comme un joueur prudent, il descend tant que le pronostic du donjon entier dit plus que
+     « Abordable » (niveau 1 au pire). NIVEAU_AU_MONDE=1 : l'ancien choix (niveau du butin du monde, sans pronostic). */
+  if (process.env.NIVEAU_AU_MONDE === "1" || !g.CombatForecast || typeof g.CombatForecast.forDungeon !== "function") return cible;
+  for (var N = cible; N > 1; N--) {
+    var f = g.CombatForecast.forDungeon(d.id, [], N);
+    if (!f || f.id === "trivial" || f.id === "abordable") return N;
+  }
+  return 1;
 }
 /* À chaque entretien : une sortie dans CHAQUE donjon ouvert qui a encore des sorties du jour, au niveau du monde s'il est
    déjà fini. Les sorties du jour sont toutes utilisées, comme un joueur qui passe chaque jour. */
