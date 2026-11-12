@@ -52,6 +52,7 @@ function aeswynExplain() {
 
 var ScreenBanner = {
   MIN_PHONE: 44, MIN_WIDE: 56, // hauteur gardée une fois replié (ligne de titre)
+  WIDE_H: 140, // v3.772.0 (atelier mode-pc, A) : bandeau bas en mode PC, l'image entière (3:1) prenait ~430 px
   PHONE_H: 150,
   PHONE_H_SHORT: 104, SHORT_MAX_H: 600, // v3.702.0 (UI-10, A) : écran de moins de 600 px de haut, bandeau sans la phrase
 
@@ -175,12 +176,12 @@ var ScreenBanner = {
     this.mini(el, scroller);
   },
 
-  /* Hauteur : 150 px sur téléphone (104 sur petit écran), image entière (3:1) en grand écran ; le haut négatif replie */
+  /* Hauteur : 150 px sur téléphone (104 sur petit écran), bandeau de 140 px en grand écran ; le haut négatif replie */
   fit: function (el) {
     var wide = document.documentElement.classList.contains("wide-mode"), off = this.isOff();
     el.classList.toggle("is-off", off); // caché (css/07-responsive.css) : rien à replier, onglets collés en haut
     if (off) { el.classList.remove("is-mini", "is-short"); el.dataset.fold = "0"; return; }
-    var h = wide ? Math.round(el.getBoundingClientRect().width / 3) : this.phoneH();
+    var h = wide ? this.WIDE_H : this.phoneH();
     if (!(h > 0)) h = this.PHONE_H;
     el.classList.toggle("is-short", !wide && h === this.PHONE_H_SHORT); // phrase masquée (css/07-responsive.css)
     var min = wide ? this.MIN_WIDE : this.MIN_PHONE;

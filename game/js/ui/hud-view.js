@@ -28,8 +28,8 @@ function buildHudHTML() {
     // v3.503.0 (grand écran, GE-2) : lieu dans l'Histoire et 4 ressources, montrés au format large seulement
     +   '<div class="hud-where" id="hud-where"><img id="hud-where-ico" alt=""><span class="hud-where-txt"><strong id="hud-where-t"></strong><small id="hud-where-s"></small></span></div>'
     +   '<div class="hud-res">'
-    +     '<span class="hud-res-item"><img src="images/Icons/gold_icon.webp" alt="' + _t("Or") + '"><span id="hud-gold">0</span></span>'
-    +     [0, 1, 2, 3].map(function (i) { return '<span class="hud-res-item hud-res-x" id="hud-rx-' + i + '"><img alt=""><span></span></span>'; }).join("")
+    +     '<span class="hud-res-item"><img src="images/Icons/gold_icon.webp" alt="' + _t("Or") + '"><span id="hud-gold">0</span><small class="hud-res-n">' + _t("Or") + '</small></span>'
+    +     [0, 1, 2, 3].map(function (i) { return '<span class="hud-res-item hud-res-x" id="hud-rx-' + i + '"><img alt=""><span></span><small class="hud-res-n"></small></span>'; }).join("")
     +     '<button type="button" class="hud-res-item hud-wh" onclick="hudOpenWarehouse()">' + _t("Entrepôt") + ' ›</button>'
     // v3.422.0 (Seb) : la ressource de la carte du monde quitte le bandeau, l'or reste seul
     +   '</div>'
@@ -151,14 +151,16 @@ function renderHudWide() {
   keys.forEach(function (k, i) {
     var el = document.getElementById("hud-rx-" + i), def = k && WAREHOUSE_RESOURCES[k];
     if (!el) return;
-    hudSet("hud-rx-" + i, "display", def ? "" : "none");
-    if (!def) return;
-    var n = Math.floor(WarehouseManager.getAmount(k) || 0), cap = WarehouseManager.getCap(k);
+    var n = def ? Math.floor(WarehouseManager.getAmount(k) || 0) : 0;
+    hudSet("hud-rx-" + i, "display", def && n > 0 ? "" : "none"); // v3.772.0 (atelier mode-pc) : une ressource à 0 n'occupe pas le bandeau
+    if (!def || n <= 0) return;
+    var cap = WarehouseManager.getCap(k);
     var key = k + "|" + n + "|" + cap;
     if (el.dataset.k === key) return;
     el.dataset.k = key;
     el.querySelector("img").src = def.icon;
     el.querySelector("span").textContent = hudNum(n);
+    el.querySelector("small").textContent = _td(def.name); // nom affiché en mode PC (css/10-grand-ecran.css)
     el.title = _td(def.name) + " · " + hudNum(n) + (cap ? " / " + hudNum(cap) : "");
   });
 }

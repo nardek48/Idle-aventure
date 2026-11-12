@@ -10,6 +10,8 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.772.0", "menu_icons/village_menu", _t("Mode PC : l'en-tête de chaque écran devient un bandeau bas, le contenu commence plus haut. Bibliothèque, Journal et Paramètres sont groupés au bas du menu, la fiche des bâtiments passe en parchemin.")],
+    ["3.772.0", "menu_icons/camp_menu", _t("Mode PC : les notifications s'affichent en bas à droite (à droite du combat), les ressources du haut portent leur nom, et le Camp range les Expéditions sous le feu.")],
     ["3.771.0", "menu_icons/map_menu", _t("Petites Aventures : un nouveau tutoriel explique les petites quêtes du chemin (la cache, le verrou et sa clé, les passages secrets, les fins imposées et cachées), à la première que tu croises.")],
     ["3.770.0", "menu_icons/village_menu", _t("Forge de la Tour : avant « La rue qui tient », le Givre bleu et le Verre de faille sont marqués introuvables, avec l'étape qui les ouvre, au lieu de paraître à portée.")],
     ["3.769.0", "menu_icons/quests_menu", _t("Le Seigneur de guerre orc frappe moins fort (comme les autres boss) mais tient plus longtemps : toujours un vrai combat, beaucoup moins de défaites sèches.")],

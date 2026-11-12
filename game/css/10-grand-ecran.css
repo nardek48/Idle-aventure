@@ -682,3 +682,58 @@ html.wide-mode #panel-container .kframe .kf-mid > .hs-eq .pin-ring { left: calc(
 /* v3.585.0 : Quêtes — le bandeau illustré montre déjà le lieu ; l'en-tête de chapitre garde titre et compteur, sans la vignette du monde */
 html.wide-mode #panel-container .qw-chap { grid-template-columns: minmax(0, 1fr) auto; }
 html.wide-mode #panel-container .qw-chap-img { display: none; }
+
+/* =========================================================
+   v3.772.0 (atelier atelier/mode-pc.html, variante A validée par Seb 12/11) : le mode PC à la hauteur du mobile.
+   Bandeau bas (140 px, ui/screen-banner.js), entrées du bas du rail groupées, fiche du Village en parchemin,
+   notifications en bas à droite de la page, ressources du bandeau nommées. Le téléphone ne lit rien de ceci.
+   ========================================================= */
+/* Bandeau bas : image centrée, titre au milieu de la hauteur, voile de gauche pour la lecture */
+html.wide-mode #panel-container .kfb { background-position: center 50%; }
+html.wide-mode #panel-container .kfb::after { background: linear-gradient(90deg, rgba(10, 7, 4, 0.78) 0, rgba(10, 7, 4, 0.3) 55%, rgba(10, 7, 4, 0.1)); }
+html.wide-mode #panel-container .kfb:not(.is-mini) .kfb-tx { top: 50%; bottom: auto; transform: translateY(-50%); }
+html.wide-mode #panel-container .kfb-t { font-size: 24px; }
+
+/* Rail : Hauts faits, Bibliothèque, Journal, Paramètres dans un petit cadre au bas (icône sur libellé : rien ne dépasse) */
+.tab-minis { display: contents; }
+html.wide-mode body:not(.lab-run) .tab-sep { display: none !important; }
+html.wide-mode body:not(.lab-run) .tab-minis {
+  display: flex; flex-direction: column; gap: 2px; margin-top: auto; padding: 4px 3px;
+  border: 1px solid rgba(226, 177, 74, 0.3); border-radius: 10px; background: rgba(0, 0, 0, 0.28);
+}
+html.wide-mode body:not(.lab-run) .tab-minis .tab-btn.tab-mini { height: 46px; }
+html.wide-mode .tab-minis .tab-btn.tab-mini .tab-label { max-width: 100%; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html.wide-mode #tab-bar .tab-minis .tab-btn.tab-mini .tab-icon-img { width: 24px; height: 24px; }
+
+/* Village : la fiche du bâtiment en parchemin, comme les cartes (elle était blanche) */
+html.wide-mode #panel-container .pw-sheet {
+  background: linear-gradient(var(--kc-voile), var(--kc-voile)), var(--kc-tex) 0 0 / 256px, var(--c-cream-100-soft);
+  border: 1px solid var(--c-bronze-400-2);
+  box-shadow: inset 0 0 24px rgba(70, 44, 14, 0.64), 0 4px 12px rgba(0, 0, 0, 0.45);
+}
+
+/* Notifications : en bas à droite de la page, plus au milieu du contenu */
+html.wide-mode body:not(.lab-run) #toast:not(.is-top) {
+  left: auto;
+  right: calc(50% - min(var(--wide-w), 100vw / var(--pc-zoom, 1)) / 2 + var(--wide-chron) + 22px);
+  bottom: calc(var(--safe-bottom) + 22px);
+  max-width: 460px;
+  transform: none;
+  border: 1px solid rgba(226, 177, 74, 0.45);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+}
+
+/* Bandeau du haut : chaque ressource avec son nom (celles à 0 sont cachées par ui/hud-view.js) */
+.hud-res-n { display: none; }
+html.wide-mode .hud-res-n { display: inline; font-size: 12px; font-weight: 600; color: var(--c-bronze-350); }
+/* Rail : une entrée encore fermée ne laisse pas de case vide dans le petit cadre */
+html.wide-mode body:not(.lab-run) .tab-minis .tab-btn.is-locked { display: none !important; }
+/* Camp : Expéditions sous le feu (colonne étroite) ; une ligne par sorte, bouton à droite */
+html.wide-mode #panel-container .cw .exp-list,
+html.wide-mode #panel-container .cw .exp-foot { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+html.wide-mode #panel-container .cw .exp-row { grid-template-columns: 52px minmax(0, 1fr) auto; }
+html.wide-mode #panel-container .cw .exp-row > .exp-act { grid-column: 3; grid-row: 1 / span 2; justify-self: end; }
+/* La rangée du rail prend toute la hauteur : le petit cadre se pose au bas (margin-top: auto) */
+html.wide-mode body:not(.lab-run) #tab-bar-row { box-sizing: border-box; min-height: 100%; }
+/* En combat, le bas porte les techniques et « Attaquer », le haut la jauge : la notification se pose à droite, à mi-hauteur */
+html.wide-mode body.combat-active:not(.lab-run) #toast:not(.is-top) { top: calc(var(--safe-top) + 330px); bottom: auto; max-width: 340px; }

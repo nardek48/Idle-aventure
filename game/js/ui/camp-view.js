@@ -300,8 +300,9 @@ function buildCampHTML(tab) {
     var sub = esc(_t("+{n} % PV/min", { n: regenPct })) + ' · <span id="camp-fire-eta">' + esc(hpFull ? _t("PV au maximum") : _t("Max dans {d}", { d: formatTime(Math.ceil(minutesToFull * 60)) })) + '</span>';
     return h + '<div class="cw"><div class="cw-col">'
       + titled(_t("Le feu de camp"), sub, campWideTeamHTML(maxHp, hp, rationOptions, teamFull, campLock, campMates)) + eh
+      + titled(_t("Expéditions"), "", tabsHTML.depart || "") // v3.772.0 (atelier mode-pc) : sous le feu, elle était coupée sous les missions
       + titled(_t("Grimoire"), tabsHTML.grimoire ? esc(campWideRulesCount()) : "", tabsHTML.grimoire ? campWideGrimoireHTML() : "") + '</div>'
-      + '<div class="cw-col">' + titled(_t("Missions"), "", campWideMissionsHTML()) + titled(_t("Expéditions"), "", tabsHTML.depart || "") + '</div></div></div>';
+      + '<div class="cw-col">' + titled(_t("Missions"), "", campWideMissionsHTML()) + '</div></div></div>';
   }
   var order = CAMP_TABS.filter(function (t) { return !!tabsHTML[t.key]; });
   var want = tab || campTab;
