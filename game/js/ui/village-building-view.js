@@ -240,10 +240,7 @@ function buildVillageBuildingSheetHTML(id) {
     h += (level > 0 && seg === "relance") ? buildEnchantBoardHTML() : (level > 0 && seg === "transmute") ? buildTransmuteBoardHTML() : buildShardShopBoardHTML();
   }
 
-  /* La Taverne est le seul bâtiment dont la fiche porte du contenu jouable :
-     ses contrats n'ont pas d'écran ailleurs, contrairement à l'entraînement,
-     aux potions ou à l'échoppe. Les envoyer au tableau de missions les
-     mélangerait à des quêtes qui racontent quelque chose. */
+  /* v3.778.0 : les contrats se livrent au tableau des missions ; la fiche en garde le résumé. */
   if (id === "tavern" && level > 0) {
     h += buildTavernContractsHTML();
   }
@@ -465,60 +462,32 @@ function goToPotions() {
 }
 window.goToPotions = goToPotions;
 
-/* --- Tableau de contrats de la Taverne (rendu DANS la fiche) -------------- */
+/* --- Contrats de la Taverne : résumé dans la fiche (v3.778.0, lot 4 Seb A) ---- */
+/* Les contrats vivent au tableau des missions (Quêtes › Annexes) ; la fiche dit combien et renvoie. */
 function buildTavernContractsHTML() {
   if (!window.TavernManager) return "";
-
-  var contracts = TavernManager.getContracts();
+  var open = TavernManager.getContracts().filter(function (c) { return !c.done; });
+  var ready = open.filter(function (c) { return TavernManager.canDeliver(c.id); });
+  var gold = open.reduce(function (s, c) { return s + TavernManager.getPayout(c); }, 0);
   var h = '<div class="tavern-board">';
   h += '<div class="tavern-board-head"><img class=ico-inline src=images/Icons/village_buildings/tavern_contracts.webp> ' + _t("Contrats du jour")
      + '<span class="tavern-board-timer">' + esc(_t("Renouvelés dans {d}", { d: formatTime(TavernManager.timeUntilRefresh()) })) + '</span></div>';
-
-  if (!contracts.length) {
-    h += '<div class="tavern-empty">' + _t("Le tableau est vide pour l'instant.") + '</div>';
-  }
-
-  contracts.forEach(function (c) {
-    var def = WAREHOUSE_RESOURCES[c.resourceId] || { name: c.resourceId, icon: "" };
-    var have = WarehouseManager.getAmount(c.resourceId);
-    var enough = have >= c.quantity;
-
-    h += '<div class="tavern-contract' + (c.done ? ' is-done' : '') + '">';
-    h += '<div class="tavern-contract-main">';
-    h += '<div class="tavern-contract-title">' + esc(_td(c.title)) + '</div>';
-    h += '<div class="tavern-contract-need">';
-    h += renderIconOrEmojiHTML(def.icon, "tavern-contract-icon", _td(def.name));
-    h += '<span class="' + (enough || c.done ? '' : 'is-missing res-go') + '"' + (enough || c.done ? '' : resGoAttr(c.resourceId)) + '>'
-       + formatNumber(Math.floor(have)) + ' / ' + formatNumber(c.quantity) + ' ' + esc(_td(def.name)) + (enough || c.done ? '' : ' ›') + '</span>';
-    h += '</div></div>';
-
-    h += '<div class="tavern-contract-side">';
-    h += '<div class="tavern-contract-reward">'
-       + '<img class="tavern-contract-gold" src="images/Icons/gold_icon.webp" alt="">'
-       + formatNumber(TavernManager.getPayout(c)) + '</div>';
-    if (c.done) {
-      h += '<div class="tavern-contract-btn is-done">' + _t("Honoré") + '</div>';
-    } else if (enough) {
-      h += '<button type="button" class="tavern-contract-btn" onclick="deliverTavernContract(\'' + esc(c.id) + '\')">' + _t("Livrer") + '</button>';
-    } else {
-      h += '<button type="button" class="tavern-contract-btn is-poor" disabled>' + _t("Livrer") + '</button>';
-    }
-    h += '</div>';
-
-    h += '</div>';
-  });
-
-  h += '</div>';
-  return h;
+  h += '<div class="tavern-empty">' + (open.length
+    ? esc(_tn(open.length, "{n} contrat ouvert, {g} or à gagner.", "{n} contrats ouverts, {g} or à gagner.", { g: formatNumber(gold) }))
+      + (ready.length ? ' <b>' + esc(_tn(ready.length, "{n} livrable maintenant.", "{n} livrables maintenant.")) + '</b>' : '')
+    : esc(_t("Tous les contrats du jour sont honorés."))) + '</div>';
+  h += '<div class="vb-sheet-effect vb-sheet-link" onclick="goToTavernMissions()"><img class=ico-inline src=images/Icons/quests/quest_side.webp> '
+     + esc(_t("Voir les contrats au tableau des missions ›")) + '</div>';
+  return h + '</div>';
 }
 window.buildTavernContractsHTML = buildTavernContractsHTML;
 
-function deliverTavernContract(id) {
-  if (TavernManager.deliver(id) && openVillageBuildingId === "tavern") {
-    openVillageBuildingSheet("tavern");
-  }
+/* Fiche fermée, puis Quêtes › Annexes où les contrats se livrent. */
+function goToTavernMissions() {
+  closeVillageBuildingSheet();
+  if (typeof openQuestsAt === "function") openQuestsAt("resource");
 }
-window.deliverTavernContract = deliverTavernContract;
+window.goToTavernMissions = goToTavernMissions;
 
 /* Renvoi de la fiche de l'Entrepôt agrandi vers l'Entrepôt. */
 function goToWarehouse() {

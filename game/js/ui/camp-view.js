@@ -5,7 +5,7 @@
 var CAMP_MISSION_STATUS_CLASS = { claimable: "is-claimable", running: "is-running", accepted: "is-running", available: "" };
 
 function buildCampMissionActionHTML(m) {
-  if (m.claim) return '<button class="settings-btn primary camp-mission-btn" type="button" onclick="event.stopPropagation(); campMissionAction(\'' + esc(m.id) + '\', \'claim\')"><img class=ico-inline src=images/Icons/dungeon/dungeon_guaranteed_loot.webp> ' + _t("Réclamer") + '</button>';
+  if (m.claim) return '<button class="settings-btn primary camp-mission-btn" type="button" onclick="event.stopPropagation(); campMissionAction(\'' + esc(m.id) + '\', \'claim\')"><img class=ico-inline src=images/Icons/dungeon/dungeon_guaranteed_loot.webp> ' + (m.claimLabel ? esc(m.claimLabel) : _t("Réclamer")) + '</button>';
   if (m.status === "running" || m.status === "accepted") {
     var h = '<div class="camp-mission-actions">';
     // v3.117.0 : "accepted" = acceptée mais pas encore lancée (ex. expédition à mini-jeu juste

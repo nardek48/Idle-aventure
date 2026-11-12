@@ -454,6 +454,26 @@ var MissionBoard = {
     return [m];
   },
 
+  /* ---------- Contrats de la Taverne (v3.778.0, simplification lot 4, Seb A) ---------- */
+  /* Un contrat non honoré = une mission « Livrer » sur place ; pas d'acceptation, hors cap des 3 quêtes. */
+  _tavernMissions: function () {
+    if (!window.TavernManager || TavernManager.getLevel() <= 0) return [];
+    return TavernManager.getContracts().filter(function (c) { return !c.done; }).map(function (c) {
+      var def = (window.WAREHOUSE_RESOURCES || {})[c.resourceId] || {}, name = def.name ? _td(def.name) : c.resourceId;
+      var have = Math.floor(WarehouseManager.getAmount(c.resourceId)), ready = TavernManager.canDeliver(c.id);
+      return {
+        id: "tavern_" + c.id, sourceKind: "tavern", worldId: null, isTavern: true,
+        title: _td(c.title), blurb: "", type: "production", place: _t("Taverne"),
+        objectiveLabel: _t("Livrer {n} {x}", { n: formatNumber(c.quantity), x: name }),
+        progressLabel: formatNumber(have) + " / " + formatNumber(c.quantity),
+        rewardSummary: _t("{n} or", { n: formatNumber(TavernManager.getPayout(c)) }), badge: "contract",
+        status: ready ? "claimable" : "available", isMain: false, claimLabel: _t("Livrer"),
+        shortLabel: ready ? "" : _t("Il manque {n} {x}", { n: formatNumber(c.quantity - have), x: name }),
+        claim: ready ? function () { return TavernManager.deliver(c.id); } : null
+      };
+    });
+  },
+
   /* ---------- Quêtes de déblocage sur le scene-engine (v3.122.0 Lot S2a, v3.123.0 Lot S2b) --- */
   /* Sentier Obstrué, Bosquet Silencieux, Terre en Friche (S2a) + Veine Instable, Éboulis
      Ferreux, Source Tarie (S2b) — toutes migrées vers SceneRunManager (mécanique paliers/
@@ -615,7 +635,7 @@ var MissionBoard = {
      est partagé), ce qui n'a pas de monde, et tout ce qui est engagé — acceptée, en cours ou
      prête à réclamer. hiddenByWorld() compte ce qui est masqué, pour le dire au joueur.
      list({ allWorlds: true }) rend tout (recherche par id, compteurs). */
-  _WORLD_FREE_KINDS: { story: 1, village: 1, workshop: 1 },
+  _WORLD_FREE_KINDS: { story: 1, village: 1, workshop: 1, tavern: 1 },
   _ENGAGED_STATUS: { accepted: 1, running: 1, claimable: 1, ready: 1 },
 
   _currentWorldId: function () {
@@ -641,7 +661,7 @@ var MissionBoard = {
     var self = this;
     var groups = [this._storyMissions(), // v3.299.0 (W-1c) : questlines de monde retirées
       this._adventureMissions(), this._dungeonMissions(), this._sceneMissions(), this._workshopMissions(),
-      this._villageMissions(), this._petiteAventureMissions(), this._labyrinthMissions()]; // v3.434.0 : le Labyrinthe aux leviers // v3.116.0 : _contractMissions (journalières) retirées
+      this._villageMissions(), this._petiteAventureMissions(), this._labyrinthMissions(), this._tavernMissions()]; // v3.434.0 : le Labyrinthe aux leviers // v3.116.0 : _contractMissions (journalières) retirées
     var all = [].concat.apply([], groups);
     var rank = { story: 0 }; // l'Histoire garde toujours le rang 0 (colonne vertébrale, LIGNE_DIRECTRICE §3)
     var statusRank = { claimable: 0, ready: 0, running: 1, accepted: 1, available: 2, locked: 3 };

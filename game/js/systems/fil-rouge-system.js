@@ -126,7 +126,8 @@ var FilRouge = {
 
   /* 1. Une récompense à réclamer (Histoire d'abord, puis le reste du tableau). */
   _claim: function () {
-    var m = this._missions().filter(function (x) { return x.status === "claimable" && typeof x.claim === "function"; })[0];
+    // v3.778.0 : les contrats de Taverne gardent leur étape à eux (_tavern, non urgente)
+    var m = this._missions().filter(function (x) { return x.status === "claimable" && typeof x.claim === "function" && x.sourceKind !== "tavern"; })[0];
     if (!m) return null;
     var self = this;
     return {
@@ -286,12 +287,8 @@ var FilRouge = {
       id: "tavern", urgent: false, icon: FIL_ROUGE_ICONS.tavern,
       title: _t("Livrer à la Taverne"),
       reason: _tn(ready.length, "{n} contrat livrable : {g} or.", "{n} contrats livrables : {g} or.", { g: formatNumber(gold) }),
-      goLabel: _t("Aller à la Taverne"),
-      go: function () {
-        if (typeof switchTab === "function") switchTab("village");
-        if (typeof setVillageSubTab === "function") setVillageSubTab("village");
-        if (typeof openVillageBuildingSheet === "function") openVillageBuildingSheet("tavern");
-      }
+      goLabel: _t("Voir les contrats"),
+      go: function () { FilRouge._tavernGo(); }
     };
   },
 
@@ -595,10 +592,9 @@ FilRouge._nextTalentAct = function () {
   return null;
 };
 
+/* v3.778.0 : les contrats se livrent au tableau des missions (Quêtes › Annexes). */
 FilRouge._tavernGo = function () {
-  if (typeof switchTab === "function") switchTab("village");
-  if (typeof setVillageSubTab === "function") setVillageSubTab("village");
-  if (typeof openVillageBuildingSheet === "function") openVillageBuildingSheet("tavern");
+  if (typeof openQuestsAt === "function") openQuestsAt("resource");
 };
 
 window.FilRouge = FilRouge;

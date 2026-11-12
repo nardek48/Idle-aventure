@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.778.0", "village_buildings/tavern", _t("Simplification : les contrats de la Taverne passent au tableau des missions (Quêtes › Annexes), avec « Livrer » sur place. La fiche de la Taverne en garde le résumé, ses niveaux donnent toujours plus de contrats.")],
     ["3.777.0", "subtabs/dungeon", _t("Simplification : les Marques du donjon sont retirées, le niveau du donjon règle déjà la difficulté. L'étape « Sous les racines » demande 5 vagues de la Tanière.")],
     ["3.776.0", "system/sortie_prep", _t("Simplification : les objets de combat contre les traits (Baume froid, Huile de lame, Acide mordant…) sont retirés, le Grimoire contre les traits. La Fiole noire reste.")],
     ["3.775.0", "quest_icons/exploration/faille", _t("Simplification : le Labyrinthe aux leviers des Ruines est retiré. La Faille, après la fin de l'Histoire, garde ses salles dans le noir et ses leviers.")],

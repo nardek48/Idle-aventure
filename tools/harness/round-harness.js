@@ -6249,7 +6249,14 @@ console.log("\n[59b] v3.257.0 \u2014 Cartes Vivantes C-3 : Palissade, effets ten
   var gold0 = g.game.gold;
   ok(g.TavernManager.deliver(c0.id) === true && g.game.gold === gold0 + Math.floor(c0.reward * 1.10), "livraison : l'or vers\u00e9 est le paiement major\u00e9");
   var c1 = g.TavernManager.getContracts()[1];
-  ok(new RegExp(String(Math.floor(c1.reward * 1.10))).test(run("buildTavernContractsHTML()")), "le tableau affiche le paiement major\u00e9 (" + Math.floor(c1.reward * 1.10) + " or), pas la valeur de base");
+  // v3.778.0 (lot 4) : les contrats sont des missions du tableau, « Livrer » sur place
+  var mc1 = g.MissionBoard.getById("tavern_" + c1.id), mc0 = g.MissionBoard.getById("tavern_" + c0.id);
+  ok(mc1 && new RegExp(String(Math.floor(c1.reward * 1.10))).test(mc1.rewardSummary) && mc1.sourceKind === "tavern" && !mc0, "le tableau affiche le paiement major\u00e9 (" + Math.floor(c1.reward * 1.10) + " or), pas la valeur de base ; contrat honor\u00e9 retir\u00e9");
+  run("WarehouseManager.addResource('" + c1.resourceId + "', " + c1.quantity + ", true);");
+  mc1 = g.MissionBoard.getById("tavern_" + c1.id);
+  var gold1 = g.game.gold, html1 = run("buildQuestBoardActionHTML(MissionBoard.getById('tavern_" + c1.id + "'))");
+  ok(mc1.status === "claimable" && /Livrer/.test(html1) && !/R\u00e9clamer/.test(html1) && mc1.claim() === true && g.game.gold === gold1 + Math.floor(c1.reward * 1.10) && !g.MissionBoard.getById("tavern_" + c1.id), "contrat livrable : bouton Livrer, or vers\u00e9, mission retir\u00e9e");
+  ok(/tableau des missions/.test(run("buildTavernContractsHTML()")) && g.QUEST_BOARD_CATEGORIES.some(function (c) { return c.key === "secondaires" && c.kinds.indexOf("tavern") !== -1; }), "fiche de la Taverne : r\u00e9sum\u00e9 et renvoi ; contrats dans Annexes");
 
   /* Corde +1 (Pont du gué), gourde 40 (Autel de pierre), autel gratuit (Menhirs) — v3.388.0 : sur la Petite Aventure v2. */
   var P = g.Pa2Run;

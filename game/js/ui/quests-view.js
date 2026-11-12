@@ -21,7 +21,7 @@ var activeQuestCategory = "histoire"; // histoire | secondaires | chasse | avent
 /* v3.370.0 : libellés traduits à la définition (changer de langue relance le jeu, i18n D2). */
 var QUEST_BOARD_CATEGORIES = [
   { key: "histoire", label: _t("Histoire", "catégorie"), icon: "images/Icons/quests/quest_story.webp", kinds: ["story"], emptyText: _t("Aucune quête d'histoire pour le moment.") },
-  { key: "secondaires", label: _t("Annexes"), icon: "images/Icons/quests/quest_side.webp", kinds: ["village", "workshop", "exploration", "scene"], emptyText: _t("Aucune quête annexe disponible pour le moment.") }, // v3.122.0 (Lot S2a) : "scene" ajouté ; v3.641.0 : « Secondaires » devient « Annexes » (Seb, plus court)
+  { key: "secondaires", label: _t("Annexes"), icon: "images/Icons/quests/quest_side.webp", kinds: ["village", "workshop", "exploration", "scene", "tavern"], emptyText: _t("Aucune quête annexe disponible pour le moment.") }, // v3.122.0 (Lot S2a) : "scene" ajouté ; v3.641.0 : « Secondaires » devient « Annexes » (Seb, plus court)
   // v3.639.0 (atelier onglets-alleges, idée de Seb) : les quêtes des compagnons ont leur onglet, affiché dès la première ; v3.641.0 : « Alliés »
   { key: "compagnons", label: _t("Alliés"), icon: "images/Icons/subtabs/companions.webp", kinds: [], emptyText: _t("Aucune quête de compagnon pour le moment.") },
   // v3.511.0 : catégorie « Chasse » retirée avec les chasses et les battues
@@ -106,7 +106,7 @@ function buildQuestCategoryTabsHTML(missions) {
 
 /* Bouton d'action d'une carte du tableau — mêmes verbes que le Campement (campMissionAction). */
 function buildQuestBoardActionHTML(m) {
-  if (m.claim) return '<button class="settings-btn primary qb-card-btn" type="button" onclick="event.stopPropagation(); campMissionAction(\'' + esc(m.id) + '\', \'claim\')"><img class=ico-inline src=images/Icons/dungeon/dungeon_guaranteed_loot.webp> ' + _t("Réclamer") + '</button>';
+  if (m.claim) return '<button class="settings-btn primary qb-card-btn" type="button" onclick="event.stopPropagation(); campMissionAction(\'' + esc(m.id) + '\', \'claim\')"><img class=ico-inline src=images/Icons/dungeon/dungeon_guaranteed_loot.webp> ' + (m.claimLabel ? esc(m.claimLabel) : _t("Réclamer")) + '</button>';
   if (m.status === "running" || m.status === "accepted") {
     var h = '';
     // v3.117.0 : "accepted" (pas encore lancée) -> Partir ; "running" (déjà en cours) -> Continuer.
@@ -117,6 +117,7 @@ function buildQuestBoardActionHTML(m) {
     return h;
   }
   if (m.accept) return '<button class="settings-btn primary qb-card-btn" type="button" onclick="event.stopPropagation(); campMissionAction(\'' + esc(m.id) + '\', \'accept\')">' + _t("Accepter") + '</button>';
+  if (m.shortLabel) return '<span class="qb-card-locked">' + esc(m.shortLabel) + '</span>'; // v3.778.0 : contrat de Taverne pas encore livrable
   if (m.status === "locked") return '<span class="qb-card-locked">' + (m.lockLabel ? esc(m.lockLabel) : _t("Occupé ailleurs")) + '</span>'; // v3.684.0 (QUET-2)
   // v3.141.0 (audit Forêt, cap journalier de la Petite Aventure) : sans ce cas, une carte
   // "unavailable" (cap des 3 runs/jour atteint) retombait dans le "" final — ni bouton ni texte,

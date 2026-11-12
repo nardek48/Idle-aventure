@@ -326,8 +326,8 @@ var GENERIC_TUTORIALS = {
     icon: "images/Icons/village_buildings/tavern.webp",
     title: "Les contrats de la Taverne",
     points: [
-      { icon: "images/Icons/village_buildings/tavern.webp", text: "La Taverne affiche des contrats : livre la quantité demandée d'une ressource de l'Entrepôt (« Livrer ») et touche l'or annoncé. C'est le débouché de ton surplus : l'Entrepôt ne rachète rien." },
-      { icon: "images/Icons/system/hourglass_waiting.webp", text: "Le tableau se renouvelle toutes les 6 heures. Un contrat honoré reste barré jusque-là, et jamais deux contrats ne demandent la même ressource." },
+      { icon: "images/Icons/village_buildings/tavern.webp", text: "La Taverne poste des contrats au tableau des missions (Quêtes › Annexes) : livre la quantité demandée d'une ressource de l'Entrepôt (« Livrer ») et touche l'or annoncé. C'est le débouché de ton surplus : l'Entrepôt ne rachète rien." },
+      { icon: "images/Icons/system/hourglass_waiting.webp", text: "Les contrats se renouvellent toutes les 6 heures. Un contrat honoré quitte le tableau jusque-là, et jamais deux contrats ne demandent la même ressource." },
       { icon: "images/Icons/system/upgrade.webp", text: "Chaque niveau ajoute un contrat (2 au niveau 1, 7 au niveau 6) et ouvre des commandes mieux payées : planches, puis lingots et pain, puis rations. Au niveau 6, tout est payé 15 % de plus." }
     ]
   },
