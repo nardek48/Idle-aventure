@@ -153,6 +153,9 @@ var SceneRunManager = {
   getRun: function () {
     var run = game.sceneRun || null; // PERF-4 (Seb 05/11) : lecteur de tick, sans ensureGameStateDefaults
     if (run && !run.pa2 && !run.lab) { this._retireLegacyRun(run); return null; } // v3.434.0 : le labyrinthe est un run à part
+    // v3.775.0 : une descente du Labyrinthe (retiré) reprise d'une vieille sauvegarde se clôt, sans remboursement (Seb 12/11)
+    var K = run && run.lab && window.LAB_KINDS ? LAB_KINDS[run.kind || "labyrinthe"] : null;
+    if (K && K.retired) { game.sceneRun = null; return null; }
     return run;
   },
 

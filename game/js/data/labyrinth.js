@@ -80,8 +80,10 @@ var LABYRINTH_TEXTS = {
 
 /* v3.636.0 (Faille, F-0) : les sortes de run du moteur à leviers (systems/labyrinth-run.js). Une sorte = config,
    tuiles, textes (texts.say : textes propres, sinon ceux du Labyrinthe) et clé d'état dans explorationProgression. */
+/* v3.775.0 (simplification, Seb 12/11) : le Labyrinthe aux leviers est retiré du jeu. Ses réglages, cases et textes
+   restent : ils sont la base du moteur à leviers que la Faille reprend (data/faille.js). La sorte n'ouvre plus jamais. */
 var LAB_KINDS = {
-  labyrinthe: { config: LABYRINTH_CONFIG, tiles: LABYRINTH_TILES, texts: LABYRINTH_TEXTS, stateKey: "labyrinth" }
+  labyrinthe: { config: LABYRINTH_CONFIG, tiles: LABYRINTH_TILES, texts: LABYRINTH_TEXTS, stateKey: "labyrinth", retired: true, isUnlocked: function () { return false; } }
 };
 
 window.LABYRINTH_CONFIG = LABYRINTH_CONFIG;

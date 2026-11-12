@@ -292,20 +292,6 @@ var GENERIC_TUTORIALS = {
       { icon: "images/Icons/scene/node_threshold.webp", text: "Les fins : une fin imposée laisse une seule sortie ouverte ; une fin cachée se révèle par son passage secret, et paie mieux." }
     ]
   },
-  /* v3.435.0 (Ruines, RU12) : première descente dans le Labyrinthe aux leviers. Edda explique. */
-  labyrinth_first: {
-    tab: "scene",
-    condition: function () { var run = game.sceneRun; return !!(run && run.lab && (run.kind || "labyrinthe") === "labyrinthe" && run.status === "lab-map"); }, // v3.638.0 : pas dans la faille
-    icon: "images/Icons/quest_icons/exploration/labyrinthe.webp",
-    title: "Le Labyrinthe aux leviers",
-    points: [
-      { icon: "images/Maps/labyrinthe/salle_1.webp", text: "Il fait noir : tu ne vois que ta salle et celles qui s'ouvrent à côté. Touche une salle voisine pour avancer. Chaque pas coûte du Souffle." },
-      { icon: "images/Maps/labyrinthe/levier.webp", text: "Un levier fait tourner des pans de mur : un passage s'ouvre, un autre se ferme. Le tirer encore remet tout comme avant. L'un des deux leviers de l'étage est gardé." },
-      { icon: "images/Maps/labyrinthe/papier.webp", text: "Edda dessine la carte dans le coin. Ce que les leviers font tourner, même au loin, y est noté en violet. Touche une salle dessinée sur la grande carte pour y retourner." },
-      { icon: "images/Maps/labyrinthe/escalier_bas.webp", text: "À l'escalier : descends pour un sac plus lourd, ou remonte avec tout ce que tu portes. Tomber ou t'essouffler en bas n'en garde que la moitié." },
-      { icon: "images/Enemies/elite_contremaitre.webp", text: "Dès l'étage 2, le Contremaître te cherche. Tu l'entends avant de le voir : écoute de quel côté viennent ses pas." }
-    ]
-  },
   /* v3.638.0 (Faille, F-1) : première montée dans la faille, après la Question. */
   faille_first: {
     tab: "scene",
@@ -313,7 +299,7 @@ var GENERIC_TUTORIALS = {
     icon: "images/Icons/quest_icons/exploration/faille.webp",
     title: "La faille",
     points: [
-      { icon: "images/Maps/faille/salle_1.webp", text: "La faille se parcourt comme le Labyrinthe des Ruines : des salles dans le noir, des leviers qui font tourner des pans, du Souffle à chaque pas." },
+      { icon: "images/Maps/faille/salle_1.webp", text: "Il fait noir : tu ne vois que ta salle et celles qui s'ouvrent à côté. Touche une salle voisine pour avancer, chaque pas coûte du Souffle. Un levier fait tourner des pans de mur : un passage s'ouvre, un autre se ferme." },
       { icon: "images/Maps/faille/escalier_1.webp", text: "Elle n'a pas de fond. Chaque étage est plus dur que le précédent, et ton record est gardé. Redescends quand tu veux avec tout le sac : tomber ou t'essouffler n'en garde que la moitié." },
       { icon: "images/Boss/reflet.webp", text: "Tous les cinq étages, le Reflet garde l'escalier." },
       { icon: "images/Maps/faille/salle_3.webp", text: "Dès l'étage 2, chaque étage se souvient d'un monde, et son nom dit sa règle : la soif, la relève, le sommeil, la chaleur ou le miroir." },

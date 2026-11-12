@@ -14438,6 +14438,10 @@ console.log("\n[209] v3.433.0 — Ruines, acte IV (livraison 2) : le Maître d'�
   }
 })();
 
+/* v3.775.0 : le Labyrinthe est retiré du jeu, son moteur sert la Faille. De [210] à [435], la sorte « labyrinthe »
+   est rouverte comme banc d'essai du moteur ; elle est refermée avant [522], qui vérifie le retrait. */
+var LAB_BANC = g.LAB_KINDS.labyrinthe, LAB_BANC_UNL = LAB_BANC.isUnlocked;
+LAB_BANC.retired = false; delete LAB_BANC.isUnlocked;
 console.log("\n[210] v3.434.0 — Ruines : le Labyrinthe aux leviers (livraison 1)");
 (function () {
   var SQ = g.StoryQuestManager, L = g.LabyrinthRun, savedReach = SQ.isStepReached;
@@ -14554,15 +14558,11 @@ console.log("\n[210] v3.434.0 — Ruines : le Labyrinthe aux leviers (livraison 
 console.log("\n[211] v3.435.0 — Ruines : le Labyrinthe aux leviers (livraison 2) : réglages du banc, tutoriel");
 (function () {
   try {
-    var game = freshCombat("knight"), C = g.LABYRINTH_CONFIG, T = g.GENERIC_TUTORIALS.labyrinth_first;
+    var game = freshCombat("knight"), C = g.LABYRINTH_CONFIG;
     ok(C.step === 3 && C.pull === 4 && C.breathFloor === 30, "Souffle : 3 par pas, 4 par tirage, +30 en descendant (banc du robot explorateur)");
     ok(C.foeEvery === 2 && C.foeEveryFast === 1 && C.foeFastFrom === 5, "le Contremaître : une salle tous les 2 pas, puis à chaque pas dès l'étage 5");
     ok(C.stairsStones === 1 && !C.stairsStonesPerFloor && C.chestStones === 1 && !C.chestStonesPerTwoFloors && C.bossStones === 3, "gains : 1 Pierre par escalier et par coffre, 3 au Gardien (environ 5 par descente au banc)");
-    ok(T && T.tab === "scene" && T.points.length === 5, "tutoriel de la première descente : 5 points, sur l'écran du labyrinthe");
-    game.sceneRun = null; ok(!T.condition(), "le tutoriel attend une descente");
-    game.sceneRun = { lab: true, status: "lab-map" }; ok(T.condition(), "il s'ouvre à la première descente");
-    game.sceneRun = { pa2: true, status: "pa2-map" }; ok(!T.condition(), "pas pendant une Petite Aventure");
-    game.sceneRun = null;
+    game.sceneRun = null; // v3.775.0 : le tutoriel du Labyrinthe est retiré avec lui
   } catch (err) {
     ok(false, "[211] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
@@ -21814,7 +21814,7 @@ console.log("\n[432] v3.638.0 — Faille, lot F-1 : la faille sans fond, après 
     var gr = g.WarehouseManager.getAmount("grande_ration"), r = L.start("faille"), run = game.sceneRun;
     ok(r.ok && run.kind === "faille" && run.floor === 1 && g.WarehouseManager.getAmount("grande_ration") === gr - 1 && L.reserveLeft() === 1, "départ : run « faille » à l'étage 1, 1 Grande ration et une montée prises");
     ok(run.note && run.note.text === g.FAILLE_TEXTS.entryLines.aeswyn, "FA1 : le premier étage dit la fin choisie");
-    ok(g.GENERIC_TUTORIALS.faille_first.condition() && !g.GENERIC_TUTORIALS.labyrinth_first.condition(), "tutoriel de la faille, pas celui du Labyrinthe");
+    ok(g.GENERIC_TUTORIALS.faille_first.condition() && !g.GENERIC_TUTORIALS.labyrinth_first, "tutoriel de la faille (celui du Labyrinthe est retiré, v3.775.0)");
     ok(L.cfg().stoneResource === "givre_bleu" && L.say("bag", "x", { s: 1, g: 2 }) === "Sac : 1 Givre bleu · 2 or", "le sac rapporte du Givre bleu");
     /* FA4 : croissance composée ; le Labyrinthe garde sa croissance linéaire */
     run.floor = 11;
@@ -22071,6 +22071,7 @@ console.log("\n[435] v3.644.0 — Faille, lot F-3 : Mémoire 25 à 28, Souvenirs
   }
 })();
 
+LAB_BANC.retired = true; LAB_BANC.isUnlocked = LAB_BANC_UNL; // fin du banc d'essai du moteur à leviers
 console.log("\n[436] v3.649.0 — Journal : filtres et étapes d'Histoire en un bloc (atelier journal.html)");
 (function () {
   try {
@@ -26461,6 +26462,24 @@ console.log("\n[521] Variante du Chaos : ouverte quand un héros a fini l'Histoi
     ok(/variante du Chaos s'ouvre à la création/.test(fsRead("js/systems/prefs-system.js")), "clé chaosUnlocked documentée dans prefs-system.js");
   } catch (err) { ok(false, "[521] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   finally { TS.ending = end0; game.playerName = name0; if (had) raw.chaosUnlocked = v0; else delete raw.chaosUnlocked; }
+})();
+
+console.log("\n[522] Le Labyrinthe aux leviers est retiré du jeu (v3.775.0, simplification, Seb 12/11)");
+(function () {
+  var keep = game.sceneRun, SQ = g.StoryQuestManager, reached = SQ.isStepReached;
+  try {
+    SQ.isStepReached = function () { return true; };
+    ok(!g.LabyrinthRun.isUnlocked("labyrinthe") && !g.LabyrinthRun.canStart("labyrinthe").ok, "fermé, même l'Histoire passée");
+    ok(!g.MissionBoard._labyrinthMissions().some(function (m) { return m.id === "labyrinthe"; }), "plus de carte « Labyrinthe » au tableau des missions");
+    ok(!g.GENERIC_TUTORIALS.labyrinth_first && !/Labyrinthe/.test(JSON.stringify(g.GENERIC_TUTORIALS.faille_first)), "tutoriel retiré ; celui de la faille ne le cite plus");
+    game.sceneRun = { lab: true, kind: "labyrinthe", status: "lab-map", floor: 2 };
+    ok(g.SceneRunManager.getRun() === null && game.sceneRun === null, "une descente d'une vieille sauvegarde se clôt au chargement");
+    game.sceneRun = { lab: true, kind: "faille", status: "lab-map", floor: 2 };
+    ok(g.SceneRunManager.getRun() === game.sceneRun, "une montée de la faille reste");
+    ok(g.LAB_KINDS.faille && g.LABYRINTH_CONFIG && g.LABYRINTH_TEXTS, "les réglages du moteur restent (base de la faille)");
+    ok(!/Labyrinthe/.test(g.WAREHOUSE_RESOURCES.ration.desc), "la Ration moyenne ne cite plus le Labyrinthe");
+  } catch (err) { ok(false, "[522] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  finally { SQ.isStepReached = reached; game.sceneRun = keep; }
 })();
 
 Promise.all(ATTENTES).then(function () {

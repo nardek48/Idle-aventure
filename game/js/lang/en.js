@@ -61,6 +61,8 @@ I18n.register("en", {
   "Village : les pastilles de niveau des cartes ne passent plus par-dessus les onglets quand la liste défile.": "Village: card level badges no longer slide over the tabs when the list scrolls.",
   "Talents : le bouton « Apprendre » ne déborde plus de l'écran.": "Talents: the “Learn” button no longer runs off the screen.",
   "Talents : l'écran prend le style du reste du jeu. Onglets Classe / Commandement du kit, points en tête de l'arbre, cadres sur l'arbre et le panneau du talent.": "Talents: the screen now matches the rest of the game. Class / Command tabs from the kit, points at the top of the tree, frames on the tree and the talent panel.",
+  // v3.775.0 : retrait du Labyrinthe
+  "Simplification : le Labyrinthe aux leviers des Ruines est retiré. La Faille, après la fin de l'Histoire, garde ses salles dans le noir et ses leviers.": "Simplification: the Ruins' Labyrinth of Levers has been removed. The rift, after the end of the Story, keeps its dark rooms and levers.",
   // v3.774.0 : la variante du Chaos s'ouvre à la fin de l'Histoire
   "Création du héros : la variante du Chaos s'ouvre maintenant quand un de tes héros a fini l'Histoire. Les héros du Chaos déjà créés ne changent pas.": "Hero creation: the Chaos variant now opens once one of your heroes has finished the Story. Chaos heroes you already created are unchanged.",
   "Nouveau : la variante du Chaos s'ouvre pour tes prochains héros (Héros › Mes héros).": "New: the Chaos variant is now open for your next heroes (Hero › My heroes).",
@@ -2641,7 +2643,7 @@ I18n.register("en", {
   "Pierre équarrie et cerclée de fer, à la Maçonnerie de la Carrière. Sert aux constructions du village, du Désert aux derniers paliers.": "Stone squared and bound with iron, at the Quarry's Masonry. Used for village buildings, from the Desert to the last tiers.",
   "Lingot retravaillé à la Forge de la Mine. Sert à reforger l'équipement.": "Ingot reworked at the Mine's Forge. Used to reforge equipment.",
   "Cuit à la Boulangerie (Champs) à partir de Blé et d'Eau.": "Baked at the Bakery (Fields) from Wheat and Water.",
-  "Repas au Campement : restaure 60 % des PV max de toute l'équipe. Vivres pour repartir au Désert, aux Ruines, à la Crypte, à la Montagne et à la Tour (donjon et élite rejoués, traversées, Labyrinthe). Cuisine de camp : 15 Viandes + 1 Pain.": "A meal at Camp: restores 60% of max HP to the whole team. Provisions for setting out again in the Desert, the Ruins, the Crypt, the Mountain and the Tower (replayed dungeon and elite, crossings, Labyrinth). Camp Kitchen: 15 Meat + 1 Bread.",
+  "Repas au Campement : restaure 60 % des PV max de toute l'équipe. Vivres pour repartir au Désert, aux Ruines, à la Crypte, à la Montagne et à la Tour (donjon et élite rejoués, traversées). Cuisine de camp : 15 Viandes + 1 Pain.": "A meal at Camp: restores 60% of max HP to the whole team. Provisions for setting out again in the Desert, the Ruins, the Crypt, the Mountain and the Tower (replayed dungeon and elite, crossings). Camp Kitchen: 15 Meat + 1 Bread.",
   "Repas au Campement : restaure 35 % des PV max de toute l'équipe. Vivres pour repartir en Forêt (donjon et élite rejoués, expéditions). Crafté à la Cuisine de camp à partir de Viande et d'Eau.": "A meal at Camp: restores 35% of max HP to the whole team. Provisions for setting out again in the Forest (replayed dungeon and elite, expeditions). Crafted at the Camp Kitchen from Meat and Water.",
   "Se remplit au Réservoir (Puits). Emportée dans un parcours du Désert, elle rend du Souffle une fois.": "Filled at the Reservoir (Well). Taken on a Desert route, it restores Breath once.",
   "Repas au Campement : restaure 100 % des PV max de toute l'équipe. Cuisine de camp (Chasse) : 1 Ration moyenne + 15 Viandes + 10 Eau → 1.": "A meal at Camp: restores 100% of max HP to the whole team. Camp Kitchen (Hunting Lodge): 1 Medium ration + 15 Meat + 10 Water → 1.",
@@ -6090,11 +6092,6 @@ I18n.register("en", {
   "Il est fait des marches qu'il garde. Quand il bouge, l'escalier bouge avec lui.": "He is made of the steps he guards. When he moves, the staircase moves with him.",
   "Le Gardien du plan": "The Keeper of the Plan",
   // v3.435.0 : tutoriel de la première descente
-  "Il fait noir : tu ne vois que ta salle et celles qui s'ouvrent à côté. Touche une salle voisine pour avancer. Chaque pas coûte du Souffle.": "It's dark: you only see your room and the ones that open next to it. Tap a neighbouring room to move on. Every step costs Breath.",
-  "Un levier fait tourner des pans de mur : un passage s'ouvre, un autre se ferme. Le tirer encore remet tout comme avant. L'un des deux leviers de l'étage est gardé.": "A lever turns wall panels: one passage opens, another closes. Pulling it again puts everything back. One of the floor's two levers is guarded.",
-  "Edda dessine la carte dans le coin. Ce que les leviers font tourner, même au loin, y est noté en violet. Touche une salle dessinée sur la grande carte pour y retourner.": "Edda draws the map in the corner. Whatever the levers turn, even far away, is marked on it in violet. Tap a drawn room on the big map to go back there.",
-  "À l'escalier : descends pour un sac plus lourd, ou remonte avec tout ce que tu portes. Tomber ou t'essouffler en bas n'en garde que la moitié.": "At the stairs: go down for a heavier bag, or go back up with everything you carry. Falling or running out of breath down there keeps only half of it.",
-  "Dès l'étage 2, le Contremaître te cherche. Tu l'entends avant de le voir : écoute de quel côté viennent ses pas.": "From floor 2, the Foreman is looking for you. You hear him before you see him: listen to which side his footsteps come from.",
   // v3.436.0 — Labyrinthe : combats comme les Petites Aventures, bilan
   "Le Contremaître te rattrape.": "The Foreman catches up with you.",
   "Le Contremaître recule dans le noir… pour l'instant. PV −{n}.": "The Foreman backs into the dark… for now. HP −{n}.",
@@ -9261,7 +9258,7 @@ I18n.register("en", {
   "Resté là-haut : {s} Givre bleu, {g} or.": "Left up there: {s} Blue Frost, {g} gold.",
   "Rejoint par la forme au sol": "Reached by the shape on the ground",
   "Ta carte · étage {n}": "Your map · floor {n}",
-  "La faille se parcourt comme le Labyrinthe des Ruines : des salles dans le noir, des leviers qui font tourner des pans, du Souffle à chaque pas.": "The rift plays like the Labyrinth of the Ruins: rooms in the dark, levers that turn wall panels, Breath at every step.",
+  "Il fait noir : tu ne vois que ta salle et celles qui s'ouvrent à côté. Touche une salle voisine pour avancer, chaque pas coûte du Souffle. Un levier fait tourner des pans de mur : un passage s'ouvre, un autre se ferme.": "It is dark: you only see your room and the ones that open beside it. Tap a neighbouring room to move on; each step costs Breath. A lever turns sections of wall: one passage opens, another closes.",
   "Elle n'a pas de fond. Chaque étage est plus dur que le précédent, et ton record est gardé. Redescends quand tu veux avec tout le sac : tomber ou t'essouffler n'en garde que la moitié.": "It has no end. Each floor is harder than the last, and your record is kept. Go back down whenever you like with the whole bag: falling or running out of breath keeps only half.",
   "Tous les cinq étages, le Reflet garde l'escalier.": "Every five floors, the Reflection guards the stairs.",
   "Dès l'étage 3, la forme au sol te suit. Elle ne se bat pas : si elle te rejoint, elle prend du Souffle et recule. Sa lumière froide te prévient quand elle approche.": "From floor 3, the shape on the ground follows you. It does not fight: if it reaches you, it takes Breath and backs away. Its cold light warns you when it comes near.",
