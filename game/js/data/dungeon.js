@@ -385,7 +385,7 @@ var DUNGEON_MARKS = [
 /* v3.472.0 — CARTES DE HALTE (atelier/halte-donjon.html, validé par Seb). Aucune ne soigne.
    modifiers : canal des Marques (AfflictionManager), sans compter comme une Marque. enemyHpMult : PV de tous les
    ennemis du run ; bossHpMult : PV du boss ; endGoldMult : or de fin ; shards : Éclats tout de suite ;
-   counterItem : objet de combat contre le trait du boss ; noUnique : pas d'objet unique. Icônes absentes : générique. */
+   counterItem (v3.776.0 : plus aucune carte, le Râtelier est retiré avec les objets de combat) ; noUnique : pas d'objet unique. Icônes absentes : générique. */
 var DUNGEON_HALT_CARDS = [
   { id: "lame", name: "Lame bénie", kind: "bonus", icon: "images/Icons/dungeon/halte_lame.webp",
     gain: "+10 % de dégâts de base jusqu'à la fin du run", modifiers: { tapMult: 0.10 } },
@@ -395,8 +395,6 @@ var DUNGEON_HALT_CARDS = [
     gain: "Or du run +30 %", cost: "Ennemis +25 % de PV", modifiers: { goldMult: 1.3 }, endGoldMult: 1.3, enemyHpMult: 1.25 },
   { id: "dement", name: "Pacte du dément", kind: "echange", icon: "images/Icons/dungeon/halte_pacte_dement.webp",
     gain: "+20 % de dégâts de base", cost: "Plus de potions jusqu'à la fin du run", modifiers: { tapMult: 0.20, forbidPotions: true } },
-  { id: "ratelier", name: "Râtelier", kind: "prep", icon: null,
-    gain: "Un objet de combat contre le trait du boss, pour ce run", counterItem: true },
   { id: "coffre", name: "Coffre", kind: "butin", icon: "images/Icons/dungeon/halte_coffre.webp", // v3.492.10 : icône propre
     gain: "+5 Éclats tout de suite", note: "Acquis même si tu tombes ensuite.", shards: 5 },
   { id: "autel", name: "Autel brisé", kind: "echange", icon: "images/Icons/dungeon/halte_autel.webp",

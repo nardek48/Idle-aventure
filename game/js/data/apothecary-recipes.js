@@ -76,17 +76,9 @@ var APOTHECARY_RECIPES = [
   },
   /* v3.441.0 : objets de combat (data/combat-items.js), rangés dans l'Entrepôt. Prix : le double
      d'une potion à bonus (décision Seb) ; la commande s'ouvre avec le monde de leur trait. */
-  { potionId: "baume_froid", kind: "item", inputs: { eau: 32, ble: 12 }, order: { ble: 80, eau: 120 }, worldIndex: 0, capped: true },
-  { potionId: "encens_amer", kind: "item", inputs: { eau: 32, bois: 12 }, order: { bois: 80, eau: 120 }, worldIndex: 0, capped: true },
-  { potionId: "huile_de_lame", kind: "item", inputs: { eau: 40, fer: 8 }, order: { fer: 60, eau: 200 }, worldIndex: 1, capped: true },
-  { potionId: "sel_de_fer", kind: "item", inputs: { eau: 48, lingot: 4 }, order: { lingot: 24, eau: 240 }, worldIndex: 2, capped: true },
   // v3.443.0 : contre les coups annoncés (Troll, Arbre-mère, Ronce animée : dès la Forêt)
-  { potionId: "acide_mordant", kind: "item", inputs: { eau: 32, pierre: 12 }, order: { pierre: 80, eau: 120 }, worldIndex: 0, capped: true },
-  { potionId: "pastille_de_miel", kind: "item", inputs: { eau: 32, ble: 60 }, order: { ble: 400, eau: 120 }, worldIndex: 0, capped: true },
   // v3.442.0 : la Fiole noire, au Désert (mur de Nezzam) ; la Chitine la rend rare, elle revient si elle n'a pas servi
   // v3.492.15 : la Montagne, pour qui taille ; payés en Cendre vive et en Obsidienne taillée (fiche v0.1)
-  { potionId: "leurre_de_cendre", kind: "item", inputs: { eau: 48, cendre_vive: 2 }, order: { cendre_vive: 8, eau: 240 }, worldIndex: 4, capped: true },
-  { potionId: "coin_obsidienne", kind: "item", inputs: { eau: 48, obsidienne_taillee: 1 }, order: { obsidienne_taillee: 4, eau: 240 }, worldIndex: 4, capped: true },
   { potionId: "fiole_noire", kind: "item", inputs: { eau: 48, chitine_profondeurs: 2 }, order: { chitine_profondeurs: 6, eau: 240 }, worldIndex: 1, capped: true }
 ];
 

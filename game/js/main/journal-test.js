@@ -286,18 +286,9 @@ function initJournalTest() {
       if (!now || now.uid !== c.uid) return;
       J.log("equipement", { emplacement: c.emplacement, avant: c.avant, apres: c.apres, pvMaxAvant: c.pvMaxAvant, pvMaxApres: Math.round(Number(g().heroMaxHp || 0)) });
     });
-  // v3.750.0 : objets de combat emportés, puis chaque contre posé (une fois par ennemi et par objet)
+  // v3.750.0 : objets de combat emportés (v3.776.0 : la Fiole noire seule, plus de contre posé)
   journalWrap(window.CombatItems, "takeForSortie", null,
     function (r) { if (r && r.length) J.log("objets_emportes", { ids: r.slice() }); });
-  journalWrap(window.CombatItems, "applyTo", null,
-    function (r, a) {
-      var e = a[0], it = a[1];
-      if (r !== true || !e || !it) return;
-      var vus = J._contresVus = J._contresVus || []; // hors de l'ennemi : rien d'ajouté à la sauvegarde
-      if (vus.some(function (v) { return v.e === e && v.id === it.id; })) return;
-      vus.push({ e: e, id: it.id }); if (vus.length > 40) vus.shift();
-      J.log("objet_contre", { id: it.id, ennemi: e.name || e.id || null, round: g().combatRound ? g().combatRound.number : null });
-    });
 
   // Sessions : ouverture, passage en fond, retour (le temps hors app se lit entre deux lignes)
   if (typeof document !== "undefined" && document.addEventListener) document.addEventListener("visibilitychange", function () {

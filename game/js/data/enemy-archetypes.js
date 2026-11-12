@@ -27,8 +27,6 @@ var SILENCE_DURATION_ROUNDS_ROI = 1;
 function getHeroSilenceRounds() {
   var soi = !!(window.StoryQuestManager && typeof StoryQuestManager.getChoice === "function" && StoryQuestManager.getChoice("roi") === "soi");
   var n = soi ? SILENCE_DURATION_ROUNDS_ROI : SILENCE_DURATION_ROUNDS;
-  // v3.443.0 : Pastille de miel (objet de combat), un round de moins, jamais sous un (décision Seb)
-  if (window.CombatItems && CombatItems.holds("silenced")) n = Math.max(1, n - 1);
   return n;
 }
 

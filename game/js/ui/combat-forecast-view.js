@@ -557,7 +557,7 @@ function etMirrorFoe(ctx) {
 /* L'objet fait-il mieux que la règle ? Cas mesuré (banc silhouette-rodeur, Baume froid 81 → 94 %) : trait permanent tenu,
    face à un miroir où la règle ferait rejouer la même technique. Situation s de grimoireSortieSituations. */
 // v3.739.0 (Seb 07/11) : seuls les objets au gain mesuré (Huile de lame : 91 → 91 %, sans gain, reste « Ou emporte »)
-var ET_ITEMS_MESURES = { baume_froid: true };
+var ET_ITEMS_MESURES = {}; // v3.776.0 : les objets contre les traits sont retirés ; ces aides ne proposent plus rien
 function etItemBeatsRule(ctx, s, rules) {
   var it = s && etItemForTrait(s.trait);
   if (!it || it.soften || !ET_ITEMS_MESURES[it.id] || !etMirrorFoe(ctx)) return false;

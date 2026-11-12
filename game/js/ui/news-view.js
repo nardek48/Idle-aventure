@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.776.0", "system/sortie_prep", _t("Simplification : les objets de combat contre les traits (Baume froid, Huile de lame, Acide mordant…) sont retirés, le Grimoire contre les traits. La Fiole noire reste.")],
     ["3.775.0", "quest_icons/exploration/faille", _t("Simplification : le Labyrinthe aux leviers des Ruines est retiré. La Faille, après la fin de l'Histoire, garde ses salles dans le noir et ses leviers.")],
     ["3.774.0", "classes/chaos", _t("Création du héros : la variante du Chaos s'ouvre maintenant quand un de tes héros a fini l'Histoire. Les héros du Chaos déjà créés ne changent pas.")],
     ["3.773.0", "menu_icons/map_menu", _t("Nouvelles images : les objets et les fins cachées des Petites Aventures, les fins de la Tour, la Forge des mondes, et une image propre pour le campement et la sortie du donjon, le repos, le stock, l'objectif et les fenêtres de confirmation.")],

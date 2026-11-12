@@ -303,7 +303,7 @@ var MILESTONE_BOOKS = {
     ["images/Icons/codex/world_forest.webp", "La relique vient du monde patrouillé : plus le monde est loin, plus elle est forte (rang 1 à 5)."],
     ["images/Companions/wenna.webp", "Fiche du compagnon › Reliques, une par famille : Croc (dégâts), Écorce (PV), Sceau (menace), Sablier (recharge), Emblème (dégâts du héros), Besace (butin)."]] },
   apothicaire: { title: "L'Apothicaire", icon: "images/Icons/village_buildings/apothecary.webp", tips: [
-    ["images/Icons/village_buildings/apothecary.webp", "L'Apothicaire prépare des potions et des objets de combat avec tes ressources, à côté de l'achat en or."],
+    ["images/Icons/village_buildings/apothecary.webp", "L'Apothicaire prépare des potions et la Fiole noire avec tes ressources, à côté de l'achat en or."],
     ["images/Icons/system/hourglass_waiting.webp", "Il fait 4 préparations par jour, 2 de plus par niveau."]] },
   competence: { title: "La compétence d'un compagnon", icon: "images/Companions/wenna.webp", tips: [
     ["images/Icons/subtabs/hero_roster.webp", "Fiche du compagnon : sa compétence signature monte du rang 0 au rang 5 (soin plus fort, frappe plus dure, une charge de plus…)."],

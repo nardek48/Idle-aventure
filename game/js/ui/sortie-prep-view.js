@@ -583,12 +583,7 @@ function buildSortiePrepItemsHTML(grim) {
   var known = {};
   prev.traits.forEach(function (t) { known[t.trait] = true; });
   h += '<div class="sp-slots">';
-  for (var i = 0; i < 2; i++) {
-    if (i >= slots) {
-      h += '<div class="sp-slot is-locked"><img src="images/Icons/system/lock_closed.webp" alt="">' + _t("2e place")
-        + '<small>' + _t("Apothicaire niveau {n}", { n: COMBAT_ITEM_SECOND_SLOT_APOTHECARY_LEVEL }) + '</small></div>';
-      continue;
-    }
+  for (var i = 0; i < slots; i++) { // v3.776.0 : une seule place (la Fiole noire)
     var id = chosen[i], it = id ? COMBAT_ITEMS[id] : null;
     h += '<button type="button" class="sp-slot' + (it ? ' is-full' : '') + (sortiePrep.pick === i ? ' is-open' : '') + '" onclick="sortiePrepPick(' + i + ')">'
       + (it ? '<img src="' + esc(it.icon) + '" alt="">' + esc(_td(it.name)) + '<small>' + _t("Touche pour changer") + '</small>'
@@ -614,8 +609,7 @@ function buildSortiePrepItemsHTML(grim) {
     if (!owned.length) h += '<div class="cp-behavior-hint">' + _t("Aucun objet en stock : prépare-les à l'Apothicaire (Boutique, Potions).") + '</div>';
     h += '</div>';
   }
-  h += '<div class="cp-behavior-hint">' + _t("Un objet agit seul, en Tactique comme en Grimoire. Il est consommé au retour, qu'il ait servi ou non.")
-    + (COMBAT_ITEMS.fiole_noire && owned.indexOf("fiole_noire") !== -1 ? ' ' + _t("La Fiole noire revient si elle n'a pas servi.") : '') + '</div>';
+  h += '<div class="cp-behavior-hint">' + _t("La Fiole noire revient si elle n'a pas servi.") + '</div>'; // v3.776.0
   return h + '</div>';
 }
 

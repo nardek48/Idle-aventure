@@ -14687,64 +14687,25 @@ console.log("\n[214] v3.440.0 — Préparation de sortie : mode figé, équipe, 
   }
 })();
 
-console.log("\n[215] v3.441.0 — Objets de combat : préparations de l'Apothicaire, emportés à la sortie, passifs");
+console.log("\n[215] v3.441.0 — Objets de combat ; v3.776.0 : la Fiole noire seule (les 8 objets contre les traits sont retirés)");
 (function () {
   var CI = g.CombatItems, A = g.ApothecaryManager, W = g.WarehouseManager;
+  var RETIRES = ["baume_froid", "encens_amer", "huile_de_lame", "sel_de_fer", "acide_mordant", "pastille_de_miel", "leurre_de_cendre", "coin_obsidienne"];
   try {
     game = freshCombat("knight");
-    ok(g.COMBAT_ITEM_ORDER.length === 9 && g.COMBAT_ITEM_ORDER.every(function (id) { return g.WAREHOUSE_RESOURCES[id] && g.WAREHOUSE_RESOURCES[id].tier === "crafted" && A.getRecipe(id) && A.getRecipe(id).kind === "item"; }),
-      "9 objets (v3.442.0 : Fiole noire ; v3.443.0 : Acide, Pastille ; v3.492.15 : Leurre, Coin) : rangés à l'Entrepôt (fabriqués) et préparés à l'Apothicaire");
-    ok(A.getRecipe("baume_froid").worldIndex === 0 && A.getRecipe("huile_de_lame").worldIndex === 1 && A.getRecipe("sel_de_fer").worldIndex === 2, "recettes ouvertes avec le monde de leur trait");
-    var CV = g.CaravanSystem || g.CaravanManager;
-    ok(g.WAREHOUSE_RESOURCES.huile_de_lame.sellPrice === 0 && !!CV && CV.getEligibleKeys().indexOf("huile_de_lame") === -1, "ni caravane ni vente");
-    /* Préparer : commande livrée, ingrédients retirés, objet +1, compté dans le plafond du jour */
+    ok(g.COMBAT_ITEM_ORDER.join() === "fiole_noire" && g.WAREHOUSE_RESOURCES.fiole_noire.tier === "crafted" && A.getRecipe("fiole_noire").kind === "item", "un seul objet : la Fiole noire, rangée à l'Entrepôt et préparée à l'Apothicaire");
+    ok(RETIRES.every(function (id) { return !g.COMBAT_ITEMS[id] && !g.WAREHOUSE_RESOURCES[id] && !A.getRecipe(id); }), "les 8 objets contre les traits sont retirés : ni objet, ni ressource, ni recette");
+    ok(!g.DUNGEON_HALT_CARDS.some(function (c) { return c.counterItem; }), "la halte « Râtelier » est retirée avec eux");
     g.game.village = {}; A.ensureState();
-    g.game.village.buildings = g.game.village.buildings || {}; g.game.village.buildings.apothecary = { level: 2 };
-    if (A.getLevel() !== 2 && g.VillageBuildingManager && g.VillageBuildingManager.ensure) { g.VillageBuildingManager.ensure(); g.game.village.buildings.apothecary.level = 2; }
-    A.ensureState().learned.baume_froid = true;
-    W.addResource("eau", 200, true); W.addResource("ble", 50, true);
-    var used0 = A.getDailyUsed();
-    ok(A.craft("baume_froid") === true && W.getAmount("baume_froid") === 1 && A.getDailyUsed() === used0 + 1, "préparer un Baume froid : +1 à l'Entrepôt, une préparation du jour");
-    ok(CI.slotCount() === 1, "Apothicaire niveau 2 : une place");
-    g.game.village.buildings.apothecary.level = 4;
-    ok(CI.slotCount() === 2, "Apothicaire niveau 4 : deux places");
-    g.game.village.buildings.apothecary.level = 2;
-    /* Emporter : retiré au départ, noté dans la sortie, une place */
-    W.addResource("huile_de_lame", 2, true);
+    g.game.village.buildings = g.game.village.buildings || {}; g.game.village.buildings.apothecary = { level: 4 };
+    ok(CI.slotCount() === 1, "une seule place, même à l'Apothicaire niveau 4");
+    W.addResource("fiole_noire", 1, true);
     g.SortieManager.start("hunt");
-    var pris = CI.takeForSortie(["huile_de_lame", "baume_froid"]);
-    ok(pris.length === 1 && pris[0] === "huile_de_lame" && W.getAmount("huile_de_lame") === 1 && W.getAmount("baume_froid") === 1 && game.sortie.items.length === 1, "départ : un objet pris (une place), retiré de l'Entrepôt");
-    ok(CI.holds("armored") && !CI.holds("enraged"), "l'Huile tient le Blindé, rien d'autre");
-    /* Le premier combat est ouvert avant la prise des objets (départ) : le contre est posé à la prise */
-    game.sortie.items = []; W.addResource("huile_de_lame", 1, true);
-    var e0 = g.CombatEngine.prepareEnemy({ id: "sandwarrior", name: "Guerrier des sables", isBoss: false, archetype: "armored", hp: 500, maxHp: 500, stats: g.ENEMY_DB.goblin.stats, resists: [], weak: [] });
-    game.enemy = e0; if (g.CombatActors) g.CombatActors.setEnemies([e0]);
-    CI.takeForSortie(["huile_de_lame"]);
-    ok(e0.armorSuppressedRounds === g.ARMORED_SUPPRESSION_DURATION_ROUNDS, "premier combat déjà ouvert au départ : le blindage est fissuré dès la prise de l'objet");
-    /* Effet : contre posé à l'ouverture et reposé, condition du Grimoire fausse */
-    var e = g.CombatEngine.prepareEnemy({ id: "sandwarrior", name: "Guerrier des sables", isBoss: false, archetype: "armored", hp: 500, maxHp: 500, stats: g.ENEMY_DB.sandwarrior ? g.ENEMY_DB.sandwarrior.stats : g.ENEMY_DB.goblin.stats, resists: [], weak: [] });
-    game.enemy = e; if (g.CombatActors) g.CombatActors.setEnemies([e]);
-    CI.onCombatStart();
-    ok(e.armorSuppressedRounds === g.ARMORED_SUPPRESSION_DURATION_ROUNDS && g.getArmoredEffectiveDamageReduction(e) === g.ARMORED_SUPPRESSION_REDUCTION_PCT, "ouverture : le blindage est fissuré (−5 % au lieu de −10 %)");
-    e.armorSuppressedRounds = 1; CI.onRoundEnd();
-    ok(e.armorSuppressedRounds === g.ARMORED_SUPPRESSION_DURATION_ROUNDS, "il retombe : reposé avant le décompte du round, sans trou");
-    var ctx = g.ClassCombatManager.getGrimoireCombatContext();
-    ok(ctx.enemyArchetype === null && g.evaluateGrimoireCondition("enemyArmored", ctx) === false, "Grimoire : la condition « blindé » est fausse tant que l'Huile le tient");
-    /* Les trois autres traits */
-    var mk2 = function (arch, hpPct) { var x = g.CombatEngine.prepareEnemy({ id: "goblin", name: "Gobelin", isBoss: false, archetype: arch, hp: Math.round(500 * hpPct), maxHp: 500, stats: g.ENEMY_DB.goblin.stats, resists: [], weak: [] }); return x; };
-    game.sortie.items = ["baume_froid", "encens_amer", "sel_de_fer"];
-    var en = mk2("enraged", 0.4), co = mk2("corrupted", 1), va = mk2("vampiric", 1);
-    co.corruptedStacks = 3;
-    if (g.CombatActors) g.CombatActors.setEnemies([en, co, va]);
-    CI.apply();
-    ok(en.rageFreezeRounds === g.ENRAGED_FREEZE_DURATION_ROUNDS && Math.abs(en.rageFrozenPct - 0.4) < 1e-9, "Baume : rage figée 4 rounds, 20 points sous ses 60 % perdus");
-    ok(co.corruptedStacks === 0 && va.vampiricSuppressedRounds === g.VAMPIRIC_SUPPRESSION_DURATION_ROUNDS, "Encens : corruption purgée à 3 charges ; Sel : vol de vie bloqué");
-    /* Sortie terminée ou suivante : plus rien d'emporté */
+    var pris = CI.takeForSortie(["fiole_noire", "huile_de_lame"]);
+    ok(pris.join() === "fiole_noire" && W.getAmount("fiole_noire") === 0 && game.sortie.items.length === 1, "départ : la Fiole est prise ; un objet retiré est ignoré");
+    ok(["armored", "enraged", "corrupted", "vampiric", "shielded", "silenced", "sorting", "shell"].every(function (t) { return !CI.holds(t); }), "plus aucun trait tenu par un objet : le Grimoire seul les contre");
     g.SortieManager.end("return");
     ok(CI.carried().length === 0, "sortie finie : plus aucun objet actif");
-    g.SortieManager.start("hunt");
-    ok(game.sortie.items.length === 0, "nouvelle sortie : les objets se reprennent à la préparation");
-    g.SortieManager.end("return");
   } catch (err) {
     ok(false, "[215] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
@@ -14788,51 +14749,37 @@ console.log("\n[216] v3.442.0 — Fiole noire : relevé à 40 % une fois par sor
   }
 })();
 
-console.log("\n[217] v3.443.0 — Acide mordant et Pastille de miel : Bouclier et Silence atténués (1 round au lieu de 2)");
+console.log("\n[217] v3.443.0 — Acide mordant et Pastille de miel ; v3.776.0 : retirés, Bouclier et Silence gardent leur durée");
 (function () {
-  var CI = g.CombatItems, S = g.SortieManager, SQ = g.StoryQuestManager, savedChoice = SQ.getChoice;
+  var CI = g.CombatItems, S = g.SortieManager;
   try {
     game = freshCombat("knight");
     var mk = function (arch, id) { return g.CombatEngine.prepareEnemy({ id: id || "goblin", name: "Gobelin", isBoss: false, archetype: arch, hp: 500, maxHp: 500, stats: g.ENEMY_DB.goblin.stats, resists: [], weak: [] }); };
-    ok(g.getHeroSilenceRounds() === 2, "sans objet : le Silence bloque 2 rounds");
     S.start("hunt");
-    game.sortie.items = ["acide_mordant", "pastille_de_miel"];
-    var troll = mk("shielded", "foresttroll"), allie = mk(null, "slime");
-    game.enemy = troll; if (g.CombatActors) g.CombatActors.setEnemies([troll, allie]);   // game.enemy d'abord : l'affecter refait un groupe d'un seul
-    troll.shieldRounds = 2; allie.shieldRounds = 2;   // son bouclier, et un mur posé sur un allié (Bâtisseur)
-    CI.onRoundEnd();
-    ok(troll.shieldRounds === 1 && allie.shieldRounds === 1, "Acide mordant : tout bouclier posé ne tient qu'un round (le sien, le mur sur un allié)");
-    ok(g.getHeroSilenceRounds() === 1, "Pastille de miel : le Silence ne bloque qu'un round");
-    SQ.getChoice = function (k) { return k === "roi" ? "soi" : savedChoice.call(SQ, k); };
-    ok(g.getHeroSilenceRounds() === 1, "avec « La forme du roi » (déjà 1 round) : jamais moins d'un round");
-    SQ.getChoice = savedChoice;
-    var ctxRule = g.evaluateGrimoireCondition("shieldIncoming", { shieldIncoming: true });
-    ok(ctxRule === true, "la règle « Bouclier au prochain tour » joue toujours : l'objet s'y ajoute");
+    game.sortie.items = ["acide_mordant", "pastille_de_miel"];   // une vieille sortie : objets retirés, ignorés
+    var troll = mk("shielded", "foresttroll");
+    game.enemy = troll; if (g.CombatActors) g.CombatActors.setEnemies([troll]);
+    troll.shieldRounds = 2; CI.onRoundEnd();
+    ok(troll.shieldRounds === 2 && g.getHeroSilenceRounds() === 2, "objets d'une vieille sortie ignorés : le bouclier tient 2 rounds, le Silence bloque 2 rounds");
+    ok(g.evaluateGrimoireCondition("shieldIncoming", { shieldIncoming: true }) === true, "la règle « Bouclier au prochain tour » reste le contre");
     S.end("return");
-    ok(g.getHeroSilenceRounds() === 2, "sortie finie : le Silence revient à 2 rounds");
   } catch (err) {
     ok(false, "[217] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
-  } finally { SQ.getChoice = savedChoice; }
+  }
 })();
 
-console.log("\n[218] v3.443.1 — Réserve de contre du Grimoire : un trait tenu par un objet ne bloque plus sa compétence");
+console.log("\n[218] v3.443.1 — Réserve de contre du Grimoire ; v3.776.0 : plus aucun objet ne la lève");
 (function () {
-  var CI = g.CombatItems, S = g.SortieManager;
+  var S = g.SortieManager;
   try {
     game = freshCombat("knight");
     var kit = g.getGrimoireCurrentKit();
     var rules = [{ conditionId: "enemyArmored", actionSlot: "skill2" }];
     var e = g.CombatEngine.prepareEnemy({ id: "sandwarrior", name: "Guerrier des sables", isBoss: false, archetype: "armored", hp: 500, maxHp: 500, stats: g.ENEMY_DB.goblin.stats, resists: [], weak: [] });
     game.enemy = e; if (g.CombatActors) g.CombatActors.setEnemies([e]);
-    var sans = g.getPrioritaryCounterRule(rules, kit, e);
-    ok(!!sans && sans.actionSlot === "skill2", "sans objet : la règle Blindé → Brise-garde est la règle de contre prioritaire (compétence gardée de côté)");
+    ok(g.getPrioritaryCounterRule(rules, kit, e).actionSlot === "skill2", "la règle Blindé → Brise-garde est la règle de contre prioritaire");
     S.start("hunt"); game.sortie.items = ["huile_de_lame"];
-    ok(g.getPrioritaryCounterRule(rules, kit, e) === null && CI.holdsCondition("enemyArmored") && !CI.holdsCondition("shieldIncoming"),
-      "avec l'Huile de lame : plus de règle prioritaire, Brise-garde revient dans la priorité par défaut");
-    game.sortie.items = ["acide_mordant"];
-    var rulesB = [{ conditionId: "shieldIncoming", actionSlot: "skill2" }];
-    e.archetype = "shielded";
-    ok(!!g.getPrioritaryCounterRule(rulesB, kit, e), "Acide mordant : la règle Bouclier garde sa réserve (elle seule annule le coup)");
+    ok(g.getPrioritaryCounterRule(rules, kit, e).actionSlot === "skill2" && !g.CombatItems.holdsCondition, "une Huile de lame d'une vieille sortie ne change rien");
     S.end("return");
   } catch (err) {
     ok(false, "[218] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
@@ -15280,48 +15227,47 @@ console.log("\n[234] v3.448.10 — Images allégées (icônes), texte de la Clé
 
 /* [235] v3.448.11 — les objets de combat se montrent dans le Sac (Consommables), avec les potions ; leur
    stock reste tenu par l'Entrepôt, qui ne les liste plus. */
-console.log("\n[235] v3.448.11 — Objets de combat dans le Sac");
+console.log("\n[235] v3.448.11 — Objets de combat dans le Sac (v3.776.0 : la Fiole noire)");
 (function () {
-  var avant = g.WarehouseManager.getAmount("baume_froid");
+  var avant = g.WarehouseManager.getAmount("fiole_noire");
   try {
-    g.WarehouseManager.addResource("baume_froid", 2, true);
-    var e = g.getUnifiedInventoryEntries().filter(function (x) { return x.key === "item:baume_froid"; })[0];
-    ok(e && e.type === "combatItem" && e.stock === avant + 2, "le Baume froid est une entrée du Sac, stock lu dans l'Entrepôt");
-    run("selectedInventoryKey = 'item:baume_froid';");
+    g.WarehouseManager.addResource("fiole_noire", 2, true);
+    var e = g.getUnifiedInventoryEntries().filter(function (x) { return x.key === "item:fiole_noire"; })[0];
+    ok(e && e.type === "combatItem" && e.stock === avant + 2, "la Fiole noire est une entrée du Sac, stock lu dans l'Entrepôt");
+    run("selectedInventoryKey = 'item:fiole_noire';");
     var fiche = g.buildUnifiedDetailPanelHTML(g.getUnifiedInventoryEntries());
-    ok(/Baume froid/.test(fiche) && /Contre l(?:'|&#39;|&#x27;)Enragé/.test(fiche) && /Se prépare à l'Apothicaire/.test(fiche), "sa fiche : ce qu'il contre, d'où il vient, où il sert");
-    ok(g.warehouseListedKeys().indexOf("baume_froid") === -1 && g.warehouseListedKeys().indexOf("ble") !== -1, "l'Entrepôt ne le liste plus (les ressources, si)");
+    ok(/Fiole noire/.test(fiche) && /40 %/.test(fiche) && /Se prépare à l'Apothicaire/.test(fiche), "sa fiche : ce qu'elle fait, d'où elle vient");
+    ok(g.warehouseListedKeys().indexOf("fiole_noire") === -1 && g.warehouseListedKeys().indexOf("ble") !== -1, "l'Entrepôt ne la liste pas (les ressources, si)");
     var src = fs.readFileSync(path.join(ROOT, "js/ui/heros-screens-view.js"), "utf8");
-    ok(/\["potion", _t\("Consommables"\)/.test(src) && /COMBAT_ITEM_ORDER/.test(src), "Sac Héros : filtre « Consommables », objets de combat compris");
+    ok(/\["potion", _t\("Consommables"\)/.test(src) && /COMBAT_ITEM_ORDER/.test(src), "Sac Héros : filtre « Consommables », Fiole comprise");
   } catch (err) {
     ok(false, "[235] exception : " + err.message);
-  } finally { g.WarehouseManager.removeResource("baume_froid", 2); run("selectedInventoryKey = null;"); }
+  } finally { g.WarehouseManager.removeResource("fiole_noire", 2); run("selectedInventoryKey = null;"); }
 })();
 
 /* [236] v3.449.0 — « Comme la dernière fois » : le dernier départ (potions à bonus, objets) est gardé dans la
    sauvegarde ; un toucher recoche ce qui est en stock et nomme ce qui manque. */
 console.log("\n[236] v3.449.0 — « Comme la dernière fois » dans la préparation de sortie");
 (function () {
-  var sv = { last: game.lastSortiePrep, pots: JSON.stringify(game.potionsOwned || {}), huile: g.WarehouseManager.getAmount("huile_de_lame"), baume: g.WarehouseManager.getAmount("baume_froid") };
+  var sv = { last: game.lastSortiePrep, pots: JSON.stringify(game.potionsOwned || {}), fiole: g.WarehouseManager.getAmount("fiole_noire") };
   try {
     var buff = g.POTIONS_DB.filter(function (p) { return p.perRun; })[0].id;
-    game.lastSortiePrep = { buffs: [buff], items: ["huile_de_lame", "baume_froid"] };
+    game.lastSortiePrep = { buffs: [buff], items: ["fiole_noire"] };
     var data = JSON.parse(JSON.stringify(run("buildSaveData()")));
-    ok(data.lastSortiePrep && data.lastSortiePrep.items.length === 2, "buildSaveData garde le dernier départ");
+    ok(data.lastSortiePrep && data.lastSortiePrep.items.length === 1, "buildSaveData garde le dernier départ");
     game.lastSortiePrep = null;
     run("game.lastSortiePrep = restoreLastSortiePrep(" + JSON.stringify(data.lastSortiePrep) + ");");
     ok(game.lastSortiePrep && game.lastSortiePrep.buffs[0] === buff, "le chargement le rend");
     ok(run("restoreLastSortiePrep({ buffs: ['inconnue'], items: ['pas_un_objet'] })") === null, "le chargement écarte les identifiants inconnus");
-    // État de stock : 1 potion, 1 Huile, 0 Baume
+    // État de stock : 1 potion, 0 Fiole
     game.potionsOwned[buff] = 1;
-    g.WarehouseManager.removeResource("baume_froid", g.WarehouseManager.getAmount("baume_froid"));
-    if (g.WarehouseManager.getAmount("huile_de_lame") < 1) g.WarehouseManager.addResource("huile_de_lame", 1, true);
+    g.WarehouseManager.removeResource("fiole_noire", g.WarehouseManager.getAmount("fiole_noire"));
     run("sortiePrep = { opts: { onGo: function () {} }, preset: null, buffs: {}, items: [], pick: -1 };");
     ok(/Comme la dernière fois/.test(run("buildSortiePrepAgainHTML()")), "le bouton s'affiche quand un départ est gardé");
     run("sortiePrepAgain();");
     var sp = run("sortiePrep");
-    ok(sp.buffs[buff] === true && sp.items.indexOf("huile_de_lame") !== -1, "un toucher recoche la potion et l'Huile en stock");
-    ok(sp.items.indexOf("baume_froid") === -1 && sp.againMissing.indexOf("baume_froid") !== -1, "le Baume, absent du stock, est nommé « Plus en stock »");
+    ok(sp.buffs[buff] === true, "un toucher recoche la potion en stock");
+    ok(sp.items.indexOf("fiole_noire") === -1 && sp.againMissing.indexOf("fiole_noire") !== -1, "la Fiole, absente du stock, est nommée « Plus en stock »");
     run("closeSortiePrep(); fullResetState();");
     ok(game.lastSortiePrep === null, "« Effacer la partie » oublie le dernier départ");
     var src = fs.readFileSync(path.join(ROOT, "js/ui/sortie-prep-view.js"), "utf8");
@@ -15333,14 +15279,12 @@ console.log("\n[236] v3.449.0 — « Comme la dernière fois » dans la prépara
   }
 })();
 
-console.log("\n[237] v3.449.2 — Acide mordant renforcé (bouclier rongé à 25 %), Fiole noire sur l'or de fin de donjon");
+console.log("\n[237] v3.449.2 — Fiole noire sur l'or de fin de donjon (v3.776.0 : l'Acide mordant est retiré)");
 (function () {
   try {
     var fs = require("fs");
-    ok(g.COMBAT_ITEM_ACID_SHIELD_REDUCTION === 0.25 && g.BOSS_SHIELD_REDUCTION === 0.5, "bouclier : 50 % sans objet, 25 % rongé par l'Acide (option A1)");
-    var eng = fs.readFileSync(ROOT + "/js/systems/combat-engine.js", "utf8");
-    ok(/CombatItems\.holds\("shielded"\)\) \? COMBAT_ITEM_ACID_SHIELD_REDUCTION : BOSS_SHIELD_REDUCTION/.test(eng), "moteur : la réduction du bouclier lit l'Acide emporté");
-    ok(/25 %/.test(g.COMBAT_ITEMS.acide_mordant.desc) && /donjon/.test(g.COMBAT_ITEMS.fiole_noire.con), "descriptions à jour (Acide, Fiole)");
+    ok(g.BOSS_SHIELD_REDUCTION === 0.5 && !g.COMBAT_ITEMS.acide_mordant, "bouclier : 50 %, plus d'Acide pour le ronger");
+    ok(/donjon/.test(g.COMBAT_ITEMS.fiole_noire.con), "description de la Fiole à jour");
     // Or de fin d'un donjon terminé, sans puis avec la Fiole bue
     function finDonjon(fiole) {
       game = freshCombat("knight"); giveWeapon(); game.dungeonRunsUsed = {};
@@ -17617,12 +17561,9 @@ console.log("\n[293] v3.472.0 — Donjons : les haltes (1 à 3 par run, 3 cartes
   D.forfeit();
   // Coffre, Râtelier, Pacte du dément
   fresh(); var sh0 = game.dungeonShards;
-  game.dungeonRun.haltDraw = ["coffre", "ratelier", "dement"]; D.haltAction("coffre");
+  game.dungeonRun.haltDraw = ["coffre", "dement", "lame"]; D.haltAction("coffre");
   ok(game.dungeonShards - sh0 === 5, "Coffre : +5 Éclats tout de suite");
-  game.dungeonRun.halt = "pending"; game.dungeonRun.haltDraw = ["ratelier", "dement", "lame"];
-  ok(D.getCounterItemId(D.getById(1)) === "encens_amer", "Râtelier à la Tanière : l'Encens amer (le Basilic est Corrupteur)");
-  D.haltAction("ratelier");
-  ok(game.sortie.items.indexOf("encens_amer") >= 0 && D.getCounterItemId(D.getById(1)) === null, "l'Encens amer est emporté, le Râtelier ne se propose plus");
+  ok(D.getCounterItemId(D.getById(1)) === null && !g.DUNGEON_HALT_CARDS.some(function (c) { return c.id === "ratelier"; }), "v3.776.0 : plus de Râtelier (objets contre les traits retirés)");
   game.dungeonRun.halt = "pending"; game.dungeonRun.haltDraw = ["dement", "lame", "rempart"];
   D.haltAction("dement");
   ok(g.AfflictionManager.arePotionsForbidden() === true, "Pacte du dément : plus de potions");
@@ -18543,43 +18484,27 @@ console.log("\n[318] v3.492.14 — préparation : soin, bouclier et exaltation a
   }
 })();
 
-console.log("\n[319] v3.492.15 — objets de combat de la Montagne : Leurre de cendre (Tri), Coin d'obsidienne (Carapace)");
+console.log("\n[319] v3.492.15 — objets de combat de la Montagne ; v3.776.0 : Leurre et Coin retirés, Tri et Carapace à leur valeur");
 (function () {
-  var V = g.VeinSystem, CI = g.CombatItems, carried0 = CI.carried, sortTarget0 = V.sortTarget, wi0 = g.WorldManager.worldIndex, step0 = g.StoryQuestManager.isStepReached;
+  var V = g.VeinSystem, CI = g.CombatItems, carried0 = CI.carried, sortTarget0 = V.sortTarget, step0 = g.StoryQuestManager.isStepReached;
   try {
     game = freshCombat("knight");
-    var A = g.ApothecaryManager, L = A.getRecipe("leurre_de_cendre"), C = A.getRecipe("coin_obsidienne");
-    ok(L && L.worldIndex === 4 && L.inputs.cendre_vive === 2 && L.order.cendre_vive === 8 && C && C.worldIndex === 4 && C.inputs.obsidienne_taillee === 1 && C.order.obsidienne_taillee === 4,
-      "recettes : commande à la Montagne, Cendre vive (Leurre) et Obsidienne taillée (Coin)");
-    ok(g.COMBAT_ITEMS.leurre_de_cendre.trait === "sorting" && g.COMBAT_ITEMS.coin_obsidienne.trait === "shell" && g.COMBAT_ITEMS.leurre_de_cendre.soften && g.COMBAT_ITEMS.coin_obsidienne.soften,
-      "ils atténuent (soften) le Tri et la Carapace, les traits annoncés par la préparation");
-    // Tri : multiplicateur lu par takeSort
+    ok(!g.ApothecaryManager.getRecipe("leurre_de_cendre") && !g.ApothecaryManager.getRecipe("coin_obsidienne"), "recettes du Leurre et du Coin retirées");
     g.StoryQuestManager.isStepReached = function () { return true; };
-    var cible = { name: "Héros" };
-    V.sortTarget = function () { return cible; };
+    var cible = { name: "Héros" }; V.sortTarget = function () { return cible; };
     var dem = { id: "minordemon", name: "Démon", _sortNow: true, hp: 10 };
-    CI.carried = function () { return []; };
-    var sans = V.takeSort(dem); dem._sortNow = true;
-    CI.carried = function () { return ["leurre_de_cendre"]; };
-    var avec = V.takeSort(dem);
-    ok(sans && sans.mult === 1.5 && avec && avec.mult === 1.2, "Tri : ×1,5 sans objet, ×1,2 avec le Leurre de cendre");
-    // Carapace : growShells
+    CI.carried = function () { return ["leurre_de_cendre"]; };   // une vieille sortie
+    var t = V.takeSort(dem);
+    ok(t && t.mult === 1.5, "Tri : ×1,5, même avec un Leurre d'une vieille sortie");
     var golem = { id: "golem_forge", isElite: true, name: "Golem-forge", hp: 1000, maxHp: 1000, shell: 0 };
     var vivants = g.CombatActors.aliveEnemies; g.CombatActors.aliveEnemies = function () { return [golem]; };
-    CI.carried = function () { return []; }; V.growShells(); var s8 = golem.shell; golem.shell = 0;
-    CI.carried = function () { return ["coin_obsidienne"]; }; V.growShells(); var s4 = golem.shell;
+    CI.carried = function () { return ["coin_obsidienne"]; }; V.growShells();
     g.CombatActors.aliveEnemies = vivants;
-    ok(s8 === 80 && s4 === 40, "Carapace : +8 % des PV max par taille sans objet, +4 % avec le Coin d'obsidienne");
-    // préparation : l'objet répond à la ligne
-    var G = g.game; G.unlockedTabs.grimoire = true; G.grimoireRules = []; G.combatMode = "grimoire";
-    G.killCounts = {}; Object.keys(g.ENEMY_DB).concat(Object.keys(g.ELITE_DB)).forEach(function (id) { G.killCounts[id] = 1; }); G.dungeonTierCleared = { 5: true };
-    g.sortiePrep = { opts: { ctx: { type: "dungeon", id: 5 } }, preset: null, buffs: {}, items: ["leurre_de_cendre", "coin_obsidienne"], pick: -1 };
-    var h = g.buildSortiePrepTraitsHTML(true);
-    ok(/Tri<\/b>[^]*?Leurre de cendre l(&#39;|')att\u00e9nue/.test(h) && /Carapace<\/b>[^]*?Coin d(&#39;|')obsidienne l(&#39;|')att\u00e9nue/.test(h), "préparation de la Gueule : « Leurre de cendre l'atténue », « Coin d'obsidienne l'atténue »");
+    ok(golem.shell === 80, "Carapace : +8 % des PV max par taille, même avec un Coin d'une vieille sortie");
   } catch (err) {
     ok(false, "[319] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   } finally {
-    CI.carried = carried0; g.WorldManager.worldIndex = wi0; g.StoryQuestManager.isStepReached = step0; V.sortTarget = sortTarget0;
+    CI.carried = carried0; g.StoryQuestManager.isStepReached = step0; V.sortTarget = sortTarget0;
   }
 })();
 
@@ -19285,7 +19210,7 @@ console.log("\n[341] v3.520.0 — correctifs de l'audit, lot 5 : fiches et coût
     ok(!sans.length, "Entrepôt : aucune ressource sans débouché (« Rien pour l'instant »)");
     ok(/Traversée|Départ/.test(txt("outre_pleine")) && /Besace/.test(txt("outre_pleine")), "Outre pleine : départ de la traversée et besace (" + txt("outre_pleine") + ")");
     ok(/Vivres pour rejouer/.test(txt("ration")) && /mode libre/.test(txt("ration")) && /Départ : .+[^,] et \d+ autres/.test(txt("ration")), "Ration moyenne : vivres de sortie, mode libre, départs (liste courte)");
-    ok(/Objet de combat/.test(txt("baume_froid")), "objets de combat de l'Apothicaire : leur usage est dit");
+    ok(/Objet de combat/.test(txt("fiole_noire")), "la Fiole noire (seul objet de combat, v3.776.0) : son usage est dit");
     ok(/Rangs des capacités/.test(txt("resine_durcie")) && /Rangs des compagnons/.test(txt("resine_durcie")), "Résine durcie : rangs du héros et des compagnons");
     ok(g.buildWarehouseSheetHTML("resine_durcie").indexOf(g._t("Ne se vend pas.")) >= 0 && g.buildWarehouseSheetHTML("resine_durcie").indexOf("sert aux constructions et aux ateliers") < 0, "phrase du bas : plus de « sert aux constructions et aux ateliers »");
     // RES-9 : un coût au-delà du plafond de l'Entrepôt le dit
@@ -25746,106 +25671,27 @@ console.log("\n[497] v3.737.0 — La silhouette face au Rôdeur : sans soin, PV 
   finally { g.addLog = keep.log; try { run("fullResetState();"); } catch (e2) {} game = freshCombat("knight"); }
 })();
 
-console.log("\n[498] v3.738.0 — Objets de combat dans le pronostic de sortie (« on peut crafter des contres dans les potions », Seb 07/11)");
+console.log("\n[498] v3.738.0 — Objets de combat dans le pronostic de sortie ; v3.776.0 : retirés, plus rien n'est proposé");
 (function () {
-  var keep = { render: g.renderSortiePrep, active: g.SortieManager.isActive };
+  var keep = { render: g.renderSortiePrep };
   try {
     game = freshCombat("knight");
-    var G = g.game, W = g.WarehouseManager, html;
+    var G = g.game, html;
     G.unlockedTabs.grimoire = true; G.combatMode = "grimoire"; G.grimoirePresets = []; G.killCounts = {};
     G.grimoireSeen = { chargeIncoming: true, shieldIncoming: true, healIncoming: true, enemySilenceIncoming: true, enemyEnraged: true, enemyArmored: true };
     G.worldsEverReached = { 0: true, 1: true, 2: true, 3: true, 4: true, 5: true };
     g.VillageBuildingManager.ensure(); G.village.buildings.apothecary.level = 1;
     g.renderSortiePrep = function () {};
-    var R = function (c, a) { return { conditionId: c || null, actionSlot: a || null }; };
-    var E = function (x) { return x.replace(/'/g, "&#39;"); }; // texte tel qu'échappé par esc()
-    var stock = function (id, n) { W.removeResource(id, W.getAmount(id)); if (n) W.addResource(id, n, true); };
-    g.COMBAT_ITEM_ORDER.forEach(function (id) { stock(id, 0); });
-    var sil = { type: "adventure", id: "aq_tour_silhouette" }, dragon = { type: "adventure", id: "aq_montagne_dragon" };
-    var open = function (ctx) { g.closeSortiePrep(); g.openSortiePrep({ title: "Test", ctx: ctx, onGo: function () {} }); return g.buildSortiePrepHTML(); };
-
-    // Données : l'objet de chaque trait, ceux qui tiennent et ceux qui atténuent
-    ok(g.etItemForTrait("enraged").id === "baume_froid" && g.etItemForTrait("armored").id === "huile_de_lame" && g.etItemForTrait("vampiric").id === "sel_de_fer" && g.etItemForTrait("silenced").id === "pastille_de_miel" && !g.etItemForTrait("heal"), "objet de chaque trait (Baume, Huile, Sel, Pastille ; rien pour le Soin)");
-    ok(g.etItemHolds("enraged", ["baume_froid"]) && !g.etItemHolds("silenced", ["pastille_de_miel"]) && !g.etItemHolds("enraged", []), "un objet qui tient couvre ; un objet qui atténue, non");
-    ok(g.etMirrorFoe(sil) && !g.etMirrorFoe(dragon), "miroir : la silhouette oui, le Dragon non");
-
-    // Silhouette (Chevalier) : Enragé couvert par « Enragé → Frappe lourde », Baume froid en stock -> « Mieux contre son miroir »
-    G.grimoireRules = [R("shieldIncoming", "skill2"), R("healIncoming", "skill1"), R("enemyEnraged", "skill1")];
-    stock("baume_froid", 3);
-    html = open(sil);
-    ok(html.indexOf("sp-offer is-better") !== -1 && html.indexOf("Mieux contre son miroir : emporte Baume froid (×3)") !== -1 && html.indexOf("sortiePrepTake('baume_froid')") !== -1, "règle couverte, miroir : « Mieux contre son miroir : emporte Baume froid (×3) » et « Emporter »");
-    ok(html.indexOf("Tes règles répondent à ce combat") !== -1 && html.indexOf('onclick="sortiePrepAll()"') !== -1, "toutes couvertes : « Tout préparer » reste offert pour l'objet meilleur que la règle");
-    // emport en un toucher : la place libre se remplit ; la ligne passe à l'objet
-    g.sortiePrepTake("baume_froid");
-    ok(g.sortiePrep.items[0] === "baume_froid" && /Baume froid emporté/.test(g.sortiePrep.msg.text), "« Emporter » : Baume froid dans la 1re place, message");
-    html = g.buildSortiePrepHTML();
-    ok(html.indexOf("Baume froid le tient.") !== -1 && html.indexOf("sortiePrepTake('baume_froid')") === -1, "ligne Enragé : « Baume froid le tient. », plus de proposition");
-    // couverture comptée : sans règle d'Enragé, l'objet couvre
-    G.grimoireRules = [R("shieldIncoming", "skill2"), R("healIncoming", "skill1"), R()];
-    html = g.buildSortiePrepHTML();
-    ok(html.indexOf("3 / 3 couvertes") !== -1 && g.grimoireJeuScore(G.grimoireRules, sil, ["baume_froid"]).n === 3 && g.grimoireJeuScore(G.grimoireRules, sil).n === 2, "un trait tenu par l'objet compte comme couvert (3 / 3 ; score du jeu 3 avec l'objet, 2 sans)");
-    // place prise : pas de bouton
-    stock("huile_de_lame", 2); G.heroId = "ranger"; G.grimoireRules = [R(), R(), R()];
-    html = open(sil); g.sortiePrep.items = ["baume_froid"]; html = g.buildSortiePrepHTML();
-    ok(html.indexOf(E("Tes places d'objet sont prises.")) !== -1 && html.indexOf("sortiePrepTake('huile_de_lame')") === -1, "place prise : proposé, sans bouton (« Tes places d'objet sont prises. »)");
-    // v3.739.0 (Seb 07/11) : Huile de lame sans gain mesuré (Rôdeur 91 → 91 %) : proposée, jamais ajoutée par « Tout préparer »
-    html = open(sil);
-    ok(html.indexOf("Ou emporte : Huile de lame (×2).") !== -1 && html.indexOf("sortiePrepTake('huile_de_lame')") !== -1 && html.indexOf("Mieux contre son miroir : emporte Huile") === -1, "Rôdeur, Silhouette : « Ou emporte : Huile de lame (×2). » et « Emporter », sans « Mieux contre son miroir »");
-    ok(g.grimoireAutoItems(sil, []).indexOf("huile_de_lame") === -1 && !g.etItemBeatsRule(sil, { trait: "armored", cond: "enemyArmored", slot: "skill1" }, []), "Huile de lame : ni « meilleure que la règle » ni ajout automatique");
-    g.sortiePrepAll();
-    ok(g.sortiePrep.items.indexOf("huile_de_lame") === -1 && !/Emporté aussi/.test(g.sortiePrep.msg.text), "« Tout préparer » (Rôdeur, Huile en stock) : les règles seules, l'Huile n'est pas emportée");
-    G.grimoireRules = [R(), R(), R()];
-    // hors stock : où il se prépare, sans bouton
-    stock("huile_de_lame", 0); html = open(sil);
-    ok(html.indexOf("Ou emporte : Huile de lame.") !== -1 && html.indexOf("sortiePrepTake('huile_de_lame')") === -1, "hors stock : « Ou emporte : Huile de lame. », sans bouton");
-    var A = g.ApothecaryManager, r0 = A.ensureState().learned.huile_de_lame;
-    A.ensureState().learned.huile_de_lame = true;
-    ok(g.etItemWhere("huile_de_lame") === "Se prépare à l'Apothicaire." && open(sil).indexOf(E("Se prépare à l'Apothicaire.")) !== -1, "recette sue : « Se prépare à l'Apothicaire. »");
-    delete A.ensureState().learned.huile_de_lame;
-    ok(g.etItemWhere("huile_de_lame") === "Recette à commander à l'Apothicaire.", "recette non sue, commande ouverte : « Recette à commander à l'Apothicaire. »");
-    G.village.buildings.apothecary.level = 0;
-    ok(g.etItemWhere("huile_de_lame") === "Se prépare à l'Apothicaire, une fois construit.", "Apothicaire absent : « une fois construit »");
-    G.village.buildings.apothecary.level = 1; if (r0) A.ensureState().learned.huile_de_lame = r0;
-    // objet qui atténue (Mage, Pastille de miel) : « En plus », il ne couvre pas
-    G.heroId = "mage"; stock("pastille_de_miel", 2); G.grimoireRules = [R(), R(), R()];
-    html = open(sil);
-    ok(html.indexOf(E("En plus : Pastille de miel (×2), il l'atténue.")) !== -1, "Silence (Mage) : « En plus : Pastille de miel (×2), il l'atténue. »");
-    g.sortiePrepTake("pastille_de_miel"); html = g.buildSortiePrepHTML();
-    ok(/il s'ajoute à ta règle/.test(g.sortiePrep.msg.text) && html.indexOf(E("Pastille de miel l'atténue.")) !== -1 && html.indexOf("0 / 3 couvertes") !== -1, "Pastille emportée : elle atténue, la situation reste à couvrir (0 / 3)");
-    ok(g.grimoireAutoItems(sil, []).indexOf("pastille_de_miel") === -1, "« Tout préparer » n'ajoute pas un objet qui atténue");
-
-    // Étiquette du sélecteur : plus de « Déjà contré par ta règle »
-    G.heroId = "knight"; G.grimoireRules = [R("shieldIncoming", "skill2"), R("healIncoming", "skill1"), R("enemyEnraged", "skill1")];
-    open(sil); g.sortiePrep.tuneOpen = true; g.sortiePrep.pick = 0; html = g.buildSortiePrepHTML();
-    ok(html.indexOf("Déjà contré") === -1 && html.indexOf("Utile ici : Enragé") !== -1 && html.indexOf("Ta règle le contre aussi") !== -1, "sélecteur : « Utile ici : Enragé » et « Ta règle le contre aussi » (neutre), plus « Déjà contré »");
-
-    // « Tout préparer » : règles d'abord ; l'objet seulement en stock et meilleur que la règle (miroir)
-    G.grimoireRules = [R("enemyRising", "skill1"), R(), R()];
-    open(sil); g.sortiePrepAll();
-    var conds = G.grimoireRules.slice(0, 3).map(function (r) { return r.conditionId; });
-    ok(g.sortiePrep.items[0] === "baume_froid" && conds.indexOf("enemyEnraged") === -1 && conds.indexOf("shieldIncoming") !== -1 && conds.indexOf("healIncoming") !== -1 && /Emporté aussi : Baume froid/.test(g.sortiePrep.msg.text), "« Tout préparer » (Silhouette, Baume en stock) : Baume emporté, Enragé laissé à l'objet (" + conds.join() + ")");
-    stock("baume_froid", 0); G.grimoireRules = [R("enemyRising", "skill1"), R(), R()];
-    open(sil); g.sortiePrepAll();
-    ok(!g.sortiePrep.items.filter(Boolean).length && G.grimoireRules.slice(0, 3).some(function (r) { return r.conditionId === "enemyEnraged"; }), "hors stock : aucun objet, la règle d'Enragé revient");
-    stock("baume_froid", 3); G.grimoireRules = [R(), R(), R()];
-    ok(g.grimoireAutoItems(dragon, []).length === 0, "sans miroir : « Tout préparer » n'ajoute aucun objet");
-
-    // Conseil suivi par le robot : en stock, borné aux places
-    stock("acide_mordant", 1);
-    var adv = g.sortieAdvisedItems(sil);
-    ok(adv[0] === "baume_froid" && adv.indexOf("acide_mordant") > 0 && g.sortieAdvisedItems(dragon).indexOf("baume_froid") === -1, "objets conseillés : Baume d'abord (miroir), Acide ensuite ; rien d'inutile (" + adv.join() + ")");
-    stock("baume_froid", 0);
-    ok(g.sortieAdvisedItems(sil).indexOf("baume_froid") === -1 && g.sortieAdvisedItems(sil, true)[0] === "baume_froid", "v3.739.0 : conseil sans stock (le robot fabrique à l'avance) : Baume d'abord, même hors stock");
-    ok(/sortieAdvisedItems\([^)]*, true\)/.test(fsRead("../tools/sim/campagne-harness.js")) && /deliverOrder/.test(fsRead("../tools/sim/campagne-harness.js")), "robot de campagne : il livre les commandes des objets conseillés aux prochains boss et les fabrique");
-    ok(/sortieAdvisedItems\(ctx\)/.test(fsRead("../tools/sim/campagne-harness.js")) && /emporterObjets\(g\)/.test(fsRead("../tools/sim/campagne-harness.js")), "robot de campagne : il emporte les objets conseillés (takeForSortie)");
+    var sil = { type: "adventure", id: "aq_tour_silhouette" };
+    ok(["enraged", "armored", "vampiric", "corrupted", "silenced", "shielded", "sorting", "shell"].every(function (t) { return !g.etItemForTrait(t); }), "aucun objet pour aucun trait");
+    G.grimoireRules = [];
+    g.closeSortiePrep(); g.openSortiePrep({ title: "Test", ctx: sil, onGo: function () {} }); html = g.buildSortiePrepHTML();
+    ok(html.indexOf("Ou emporte") === -1 && html.indexOf("Mieux contre son miroir") === -1 && html.indexOf("sortiePrepTake(") === -1, "préparation : plus de « Ou emporte » ni d'objet proposé");
+    ok(g.grimoireAutoItems(sil, []).length === 0 && g.sortieAdvisedItems(sil, true).length === 0, "« Tout préparer » et les conseils n'emportent plus d'objet");
     g.closeSortiePrep();
-
-    ["Ou emporte : {o} (×{n}).", "Ou emporte : {o}.", "Mieux contre son miroir : emporte {o} (×{n}), ta règle ne rejouera plus la même technique.", "Emporter", "Ta règle le contre aussi", "Emporté aussi : {o}.", "Se prépare à l'Apothicaire."].forEach(function (k) {
-      ok(fsRead("js/lang/en.js").indexOf(JSON.stringify(k)) >= 0, "en.js : « " + k + " » traduit");
-    });
-    ok(fsRead("js/lang/en.js").indexOf("Déjà contré par ta règle") === -1, "en.js : l'ancienne étiquette retirée");
-  } catch (err) { ok(false, "[498] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
-  finally { g.renderSortiePrep = keep.render; g.SortieManager.isActive = keep.active; g.sortiePrep = null; try { run("fullResetState();"); } catch (e2) {} game = freshCombat("knight"); }
+  } catch (err) {
+    ok(false, "[498] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
+  } finally { g.renderSortiePrep = keep.render; }
 })();
 
 console.log("\n[499] Bulle d'or (atelier bulle-or.html, choix de Seb) : l'or qui double, trois groupes, une carte par matériau, échoppe et Enchanteresse");
@@ -25961,30 +25807,30 @@ console.log("\n[502] Préparation pressée à l'Apothicaire (v3.749.0, atelier a
     run("fullResetState(); game.playerName='Test'; game.heroId='ranger'; EquipmentManager.recalcStats();");
     var game = g.game;
     game.village.buildings = game.village.buildings || {}; game.village.buildings.apothecary = { level: 1 };
-    var st = A.ensureState(); st.learned.potion_soin_majeur = true; st.learned.baume_froid = true;
-    W.addResource("eau", 400, true); W.addResource("pain", 20, true); W.addResource("ble", 100, true);
+    var st = A.ensureState(); st.learned.potion_soin_majeur = true; st.learned.fiole_noire = true; // v3.776.0 : la Fiole noire, seul objet de combat
+    W.addResource("eau", 400, true); W.addResource("pain", 20, true); W.addResource("chitine_profondeurs", 40, true);
     g.WorldManager.worldIndex = 4; game.worldsEverReached = { 0: true, 4: true };
     ok(A.getPressCost(0) === 5000 && A.getPressCost(1) === 10000 && A.getPressCost(2) === 20000, "prix : 1 000 × rang du monde (Montagne 5), ×2 par pressée : 5 000 / 10 000 / 20 000");
     g.WorldManager.worldIndex = 0;
     ok(A.getPressCost(0) === 5000, "revenu en Forêt : le prix suit le monde le plus loin atteint (5 000)");
     game.gold = 100000;
-    ok(!A.canPress("baume_froid") && A.getDailyRemaining() > 0, "journée pas finie : pas de pressée");
+    ok(!A.canPress("fiole_noire") && A.getDailyRemaining() > 0, "journée pas finie : pas de pressée");
     st.dailyKey = A._todayKey(); st.dailyCount = A.getDailyCap();
-    ok(A.craft("baume_froid") === false, "journée finie : « Préparer » reste refusé");
-    var stock0 = W.getAmount("baume_froid"), eau0 = W.getAmount("eau");
-    ok(A.canPress("baume_froid") && A.press("baume_froid") === true, "pressée : acceptée");
-    ok(W.getAmount("baume_froid") === stock0 + 1 && W.getAmount("eau") === eau0 - 32 && game.gold === 95000, "pressée : +1 Baume froid, ingrédients dus (32 eau), 5 000 or payés");
+    ok(A.craft("fiole_noire") === false, "journée finie : « Préparer » reste refusé");
+    var stock0 = W.getAmount("fiole_noire"), eau0 = W.getAmount("eau");
+    ok(A.canPress("fiole_noire") && A.press("fiole_noire") === true, "pressée : acceptée");
+    ok(W.getAmount("fiole_noire") === stock0 + 1 && W.getAmount("eau") === eau0 - 48 && game.gold === 95000, "pressée : +1 Fiole noire, ingrédients dus (48 eau), 5 000 or payés");
     ok(A.getPressedToday() === 1 && A.getPressCost() === 10000 && A.getDailyUsed() === A.getDailyCap(), "compteur de pressées à 1, prix suivant 10 000, plafond du jour inchangé");
     game.gold = 9000;
-    ok(!A.canPress("baume_froid") && A.press("baume_froid") === false && game.gold === 9000, "or insuffisant : refusée, rien de payé");
+    ok(!A.canPress("fiole_noire") && A.press("fiole_noire") === false && game.gold === 9000, "or insuffisant : refusée, rien de payé");
     game.gold = 100000; W.removeResource("eau", W.getAmount("eau"));
     var o2 = game.gold;
-    ok(A.press("baume_froid") === false && game.gold === o2, "ingrédient manquant : refusée, l'or n'est pas pris");
+    ok(A.press("fiole_noire") === false && game.gold === o2, "ingrédient manquant : refusée, l'or n'est pas pris");
     st.pressKey = "autre jour";
     ok(A.getPressedToday() === 0 && A.getPressCost() === 5000, "nouveau jour : le prix revient à 5 000");
     ok(A.canPress("potion_soin_mineur") === false, "Soin mineur (sans plafond) : jamais pressé");
     W.addResource("eau", 100, true);
-    var h = g.buildApothecaryCraftRowHTML("baume_froid");
+    var h = g.buildApothecaryCraftRowHTML("fiole_noire");
     ok(/potion-press-btn/.test(h) && /Presser · 5/.test(h) && /la suivante : 10/.test(h) && !/Fini pour aujourd/.test(h), "ligne « Préparer » : bouton « Presser · 5 000 » et prix suivant, plus de « Fini pour aujourd'hui »");
     ["Presser · {n}", "Il te manque {n} or"].forEach(function (k) { ok(fsRead("js/lang/en.js").indexOf(JSON.stringify(k)) >= 0, "en.js : « " + k + " » traduit"); });
   } catch (err) { ok(false, "[502] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
@@ -26004,13 +25850,13 @@ console.log("\n[503] Journal de test (v3.750.0) : préparations, potions acheté
     ok(rel && rel.d.mat && rel.d.mat.acier === 7 && "cire_consacree" in rel.d.mat && "verre_faille" in rel.d.mat, "relevé : matériaux clés (Acier 7, Cire consacrée, Verre de faille…)");
     // 1. préparation pressée
     game.village.buildings = game.village.buildings || {}; game.village.buildings.apothecary = { level: 1 };
-    var A = g.ApothecaryManager, st = A.ensureState(); st.learned.baume_froid = true;
-    g.WarehouseManager.addResource("eau", 200, true); g.WarehouseManager.addResource("ble", 50, true);
+    var A = g.ApothecaryManager, st = A.ensureState(); st.learned.fiole_noire = true;
+    g.WarehouseManager.addResource("eau", 200, true); g.WarehouseManager.addResource("chitine_profondeurs", 20, true);
     game.gold = 50000; st.dailyKey = A._todayKey(); st.dailyCount = A.getDailyCap(); st.pressKey = "";
-    A.press("baume_froid");
+    A.press("fiole_noire");
     var pr = lastOf("preparation");
-    ok(pr && pr.d.id === "baume_froid" && pr.d.pressee === true && pr.d.or === A.getPressCost(0), "préparation : pressée notée avec l'or payé (" + (pr && pr.d.or) + ")");
-    st.dailyCount = 0; A.craft("baume_froid"); pr = lastOf("preparation");
+    ok(pr && pr.d.id === "fiole_noire" && pr.d.pressee === true && pr.d.or === A.getPressCost(0), "préparation : pressée notée avec l'or payé (" + (pr && pr.d.or) + ")");
+    st.dailyCount = 0; A.craft("fiole_noire"); pr = lastOf("preparation");
     ok(pr && pr.d.pressee === false && pr.d.or === 0, "préparation : simple, sans or");
     // 2. potion achetée en or
     var hp = (g.HEALING_POTIONS_DB || [])[0]; game.gold = 50000;
@@ -26023,11 +25869,8 @@ console.log("\n[503] Journal de test (v3.750.0) : préparations, potions acheté
     g.EquipmentManager.recalcStats(); g.EquipmentManager.equip("jt1");
     var eq = lastOf("equipement");
     ok(eq && eq.d.emplacement === "helmet" && eq.d.avant === "epic" && eq.d.apres === "legendary" && typeof eq.d.pvMaxAvant === "number" && typeof eq.d.pvMaxApres === "number", "équipement : rareté avant/après et PV max (" + (eq && eq.d.pvMaxAvant) + " → " + (eq && eq.d.pvMaxApres) + ")");
-    // 5. objet de combat : un contre noté une seule fois par ennemi
-    var e = { name: "Brute", archetype: "enraged", hp: 50, maxHp: 100 }, it = g.COMBAT_ITEMS.baume_froid;
-    g.CombatItems.applyTo(e, it); e.rageFreezeRounds = 0; g.CombatItems.applyTo(e, it);
-    var oc = J._load().filter(function (l) { return l.type === "objet_contre"; });
-    ok(oc.length === 1 && oc[0].d.id === "baume_froid" && oc[0].d.ennemi === "Brute", "objet de combat : contre noté une fois par ennemi (" + oc.length + ")");
+    // 5. v3.776.0 : plus de contre posé par un objet (objets contre les traits retirés)
+    ok(!g.CombatItems.applyTo && !J._load().some(function (l) { return l.type === "objet_contre"; }), "objets de combat : plus de contre posé, rien de noté");
     // 3 et 6. quête : groupe au départ, fuite notée « fuite »
     var AQ = g.AdventureQuestManager; game.heroHp = game.heroMaxHp;
     AQ.start("aq_forest_expedition");

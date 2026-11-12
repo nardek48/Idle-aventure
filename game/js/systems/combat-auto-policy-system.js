@@ -238,7 +238,6 @@ function getPrioritaryCounterRule(rules, kit, enemy) {
 
     if (enemy !== undefined && !isConditionPossibleForEnemy(rule.conditionId, enemy)) continue;
     // v3.443.1 : trait tenu par un objet de combat, la règle ne joue pas : ni réserve ni compétence mise de côté
-    if (window.CombatItems && CombatItems.holdsCondition(rule.conditionId)) continue;
 
     return rule;
   }

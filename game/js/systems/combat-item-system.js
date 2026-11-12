@@ -1,5 +1,5 @@
 "use strict";
-/* systems/combat-item-system.js — v3.441.0 : OBJETS DE COMBAT (data/combat-items.js).
+/* systems/combat-item-system.js — v3.441.0 : OBJETS DE COMBAT (data/combat-items.js). v3.776.0 : la Fiole noire seule.
    Emportés à la préparation de sortie (retirés de l'Entrepôt au départ, consommés quoi qu'il arrive),
    notés dans game.sortie.items : la sauvegarde garde déjà la sortie en entier.
    Passifs, en Tactique comme en Grimoire : à l'ouverture du combat et à chaque fin de round, le contre
@@ -8,11 +8,8 @@
 
 var CombatItems = {
 
-  /* Places : 1, puis 2 à l'Apothicaire niveau 4 (décision Seb). */
-  slotCount: function () {
-    var lvl = window.ApothecaryManager ? ApothecaryManager.getLevel() : 0;
-    return COMBAT_ITEM_SLOTS_BASE + (lvl >= COMBAT_ITEM_SECOND_SLOT_APOTHECARY_LEVEL ? 1 : 0);
-  },
+  /* v3.776.0 : une seule place (la Fiole noire, seul objet restant). */
+  slotCount: function () { return COMBAT_ITEM_SLOTS_BASE; },
 
   getStock: function (id) {
     return window.WarehouseManager ? WarehouseManager.getAmount(id) : 0;
@@ -37,12 +34,6 @@ var CombatItems = {
     return this.carried().some(function (id) { return COMBAT_ITEMS[id].trait === trait; });
   },
 
-  /* v3.443.1 : condition du Grimoire d'un trait PERMANENT tenu par un objet (Bouclier et Silence : la règle reste utile). */
-  holdsCondition: function (conditionId) {
-    var trait = { enemyArmored: "armored", enemyEnraged: "enraged", enemyCorrupted: "corrupted", enemyVampiric: "vampiric" }[conditionId];
-    return !!trait && this.holds(trait);
-  },
-
   /* Au départ, une fois la sortie ouverte : prend les objets choisis (en stock, sans doublon, places max). */
   takeForSortie: function (ids) {
     if (!window.SortieManager || !SortieManager.isMission()) return [];
@@ -55,68 +46,15 @@ var CombatItems = {
     s.items = out;
     if (out.length) {
       addLog("🎒 " + _t("Objets emportés : {x}.", { x: out.map(function (id) { return _td(COMBAT_ITEMS[id].name); }).join(", ") }), "event");
-      this.apply();   // le premier combat est déjà ouvert au départ : le contre est posé tout de suite
       if (typeof saveGame === "function") saveGame();
     }
     return out;
   },
 
-  onCombatStart: function () { this.apply(); },
-  onRoundEnd: function () { this.apply(); },
-
-  /* Pose (ou repose) le contre sur chaque ennemi en lice. Reposé dès qu'il ne reste qu'un round :
-     la fin de round décompte ensuite, le trait reste tenu sans trou. */
-  apply: function () {
-    var ids = this.carried();
-    if (!ids.length) return;
-    var list = window.CombatActors ? CombatActors.enemies() : (game.enemy ? [game.enemy] : []);
-    var self = this;
-    list.forEach(function (e) {
-      if (!e || Number(e.hp || 0) <= 0) return;
-      ids.forEach(function (id) { self.applyTo(e, COMBAT_ITEMS[id]); });
-    });
-  },
-
-  /* v3.443.0 : Acide mordant. Un bouclier posé pendant le tour ennemi vaut 2 rounds ; ramené à 1 en fin
-     de round, il ne couvre plus qu'un tour du héros. Tout bouclier : le sien, d'un boss, le mur du Bâtisseur. */
-  softenShield: function (e, item) {
-    if (Number(e.shieldRounds || 0) <= 1) return false;
-    e.shieldRounds = 1;
-    addLog("🧪 " + _t("{o} : le bouclier de {x} ne tiendra qu'un round, rongé (25 %).", { o: _td(item.name), x: _td(e.name || "") }), "event");
-    if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
-    return true;
-  },
-
-  applyTo: function (e, item) {
-    if (!e || !item || !item.trait) return false;
-    if (item.trait === "shielded") return this.softenShield(e, item);   // v3.443.0 : tout bouclier
-    if (item.soften) return false;   // le Silence se règle à sa durée (getHeroSilenceRounds)
-    if (e.archetype !== item.trait) return false;
-    var posed = false;
-    if (item.trait === "armored" && Number(e.armorSuppressedRounds || 0) <= 1) {
-      e.armorSuppressedReduction = ARMORED_SUPPRESSION_REDUCTION_PCT;
-      e.armorSuppressedRounds = ARMORED_SUPPRESSION_DURATION_ROUNDS;
-      posed = true;
-    } else if (item.trait === "enraged" && Number(e.rageFreezeRounds || 0) <= 1 && e.maxHp > 0) {
-      var lost = 1 - (Number(e.hp || 0) / Number(e.maxHp || 1));
-      e.rageFrozenPct = Math.max(0, lost - ENRAGED_SUPPRESSION_REDUCTION_PCT);
-      e.rageFreezeRounds = ENRAGED_FREEZE_DURATION_ROUNDS;
-      posed = true;
-    } else if (item.trait === "corrupted" && Number(e.corruptedStacks || 0) >= COMBAT_ITEM_CORRUPTION_PURGE_STACKS) {
-      e.corruptedStacks = 0;
-      posed = true;
-    } else if (item.trait === "vampiric" && Number(e.vampiricSuppressedRounds || 0) <= 1) {
-      e.vampiricSuppressedRounds = VAMPIRIC_SUPPRESSION_DURATION_ROUNDS;
-      posed = true;
-    }
-    // Une ligne de journal par ennemi, la première fois : le reste du combat, l'icône « contré » suffit.
-    if (posed && !e._itemNoted) {
-      e._itemNoted = true;
-      addLog("🧪 " + _t("{o} : le trait de {x} est tenu.", { o: _td(item.name), x: _td(e.name || "") }), "event");
-      if (typeof renderEnemyStatusBar === "function") renderEnemyStatusBar();
-    }
-    return posed;
-  }
+  /* v3.776.0 : plus aucun objet ne tient un trait (retirés, le Grimoire les contre) ; appelés par les talents et la classe. */
+  onCombatStart: function () {},
+  onRoundEnd: function () {},
+  apply: function () {}   // encore appelé par dungeon-system.js (halte retirée) : sans effet
 };
 
 /* ---------- v3.442.0 : la Fiole noire ----------
