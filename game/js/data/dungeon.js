@@ -364,23 +364,9 @@ var DUNGEONS = [
    lus par AfflictionManager.getCombinedModifiers() (Fragilité, Ascétisme, Fléau, cumul) ;
    Colosses et Traque agissent dans DungeonManager.buildWaveEnemy().
    unlock : null = libre ; "cleared" = disponible une fois le donjon terminé une fois. */
-var DUNGEON_MARKS = [
-  { id: "aff_colossus", name: "Colosses", icon: "images/Icons/afflictions/aff_colossus.webp",
-    desc: "Boss 2× PV · +50 % d'or sur le boss", unlock: null,
-    modifiers: { bossHpMult: 2, bossGoldBonusPct: 0.50 } },
-  { id: "aff_asceticism", name: "Ascétisme", icon: "images/Icons/afflictions/aff_asceticism.webp",
-    desc: "Potions interdites · +15 % dégâts de base", unlock: null,
-    modifiers: { tapMult: 0.15, forbidPotions: true } },
-  { id: "aff_fragility", name: "Fragilité", icon: "images/Icons/afflictions/aff_fragility.webp",
-    desc: "−30 % PV max · +30 % dégâts de base", unlock: null,
-    modifiers: { heroMaxHpMult: 0.70, tapMult: 0.30 } },
-  { id: "aff_plague", name: "Fléau", icon: "images/Icons/afflictions/aff_plague.webp",
-    desc: "Dégâts ennemis +30 % · +20 % or", unlock: "cleared",
-    modifiers: { enemyPowerMult: 1.30, goldMult: 1.20 } },
-  { id: "aff_elite", name: "Traque", icon: "images/Icons/afflictions/aff_elite.webp",
-    desc: "Chaque vague est une élite · +20 % or", unlock: "cleared",
-    modifiers: { forceAllBosses: true, goldMult: 1.20 } }
-];
+/* v3.777.0 (simplification, Seb 12/11) : les Marques sont retirées (le niveau du donjon règle déjà la difficulté).
+   La table reste vide : le moteur (dungeon-system.js, AfflictionManager) lit encore ce canal, que les haltes utilisent. */
+var DUNGEON_MARKS = [];
 
 /* v3.472.0 — CARTES DE HALTE (atelier/halte-donjon.html, validé par Seb). Aucune ne soigne.
    modifiers : canal des Marques (AfflictionManager), sans compter comme une Marque. enemyHpMult : PV de tous les

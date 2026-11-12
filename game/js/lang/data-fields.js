@@ -120,7 +120,6 @@ var DATA_TEXT_FIELDS = {
   HEALING_POTIONS_DB: ["*.name"],
   UPGRADES: ["*.name", "*.desc"],
   DUNGEONS: ["*.name", "*.desc", "*.story", "*.lockedHint", "*.prepHint", "*.boss.name", "*.boss.phases.*.label", "*.boss.phases.*.line", "*.boss.riseLine", "*.boss.unique.name"],
-  DUNGEON_MARKS: ["*.name", "*.desc"],
   DUNGEON_SHOP: ["*.name", "*.desc"],
   DUNGEON_HALT_CARDS: ["*.name", "*.gain", "*.cost", "*.note"], // v3.472.0
   DUNGEON_HALT_KIND_LABELS: ["*"],

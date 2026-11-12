@@ -7,7 +7,6 @@ var pendingDungeonId = null;   // donjon ouvert dans la feuille de lancement
 var pendingDungeonMarks = [];  // bascules de la feuille — copiées dans game.dungeonRun.marks au start() seulement
 var pendingDungeonLevel = 1;   // v3.464.0 : niveau choisi (atelier/niveaux-donjon.html, validé le 23/10)
 var pendingDungeonFree = false; // v3.464.0 : mode libre (sorties illimitées, 1 Ration moyenne)
-var pendingDungeonMarksOpen = false; // v3.476.0 : Marques repliées par défaut (point 5 du bilan)
 var pendingDungeonLoreOpen = false;  // v3.476.0 : récit et Sceau repliés
 
 function buildDungeonActiveHTML() {
@@ -191,7 +190,7 @@ function buildDungeonGainHTML(d, L, free, nMarks) {
   var src = D.getLevelLootSource(d, L), beyond = D.getLevelBeyond(d, L), mult = D.getMarkRewardMult(nMarks);
   var w = (window.WORLDS || []).find(function (x) { return x.id === src.worldId; });
   var row = function (ico, html) { return '<div class="dgain-row">' + (ico ? renderIconOrEmojiHTML(ico, "dgain-ico", "") : '<span class="dgain-dot" aria-hidden="true"></span>') + '<span>' + html + '</span></div>'; };
-  var h = '<div class="dgain"><div class="dgain-ttl"><span>' + _t("À gagner") + '</span><span>' + _t("Récompenses") + ' <strong>×' + fmtDec(mult.toFixed(2).replace(/0$/, "")) + '</strong></span></div>';
+  var h = '<div class="dgain"><div class="dgain-ttl"><span>' + _t("À gagner") + '</span></div>'; // v3.777.0 : plus de multiplicateur des Marques
   h += row(null, _t("Butin :") + ' ' + dungeonRarityHTML(src.maxRarity) + (w ? ' · ' + esc(_td(w.name)) : ''));
   var sp = d.specialResourceId && WAREHOUSE_RESOURCES[d.specialResourceId];
   if (free) {
@@ -260,9 +259,7 @@ function buildDungeonSheetHTML(dungeonId) {
   var lootRarity = DungeonManager.getLevelLootSource(dungeon, level).maxRarity; // v3.464.0 : l'en-tête suit le niveau
   var rarityLabel = (typeof RARITY_LABELS !== "undefined" && RARITY_LABELS[lootRarity]) ? _td(RARITY_LABELS[lootRarity]) : lootRarity;
   var rarityColor = (typeof RARITY_COLORS !== "undefined" && RARITY_COLORS[lootRarity]) || "#9ca3af";
-  var n = pendingDungeonMarks.length;
-  var maxMarks = DUNGEON_CONFIG.maxMarks || 3;
-  var mult = DungeonManager.getMarkRewardMult(n);
+  var n = 0; // v3.777.0 : plus de Marques
 
   var h = '<div class="ksheet-backdrop" onclick="closeDungeonSheet()"></div>';
   h += '<div class="ksheet dungeon-sheet">';
@@ -290,22 +287,6 @@ function buildDungeonSheetHTML(dungeonId) {
   }
   h += buildDungeonGainHTML(dungeon, level, free, n);
   h += buildDungeonAheadHTML(dungeon, level, storyFree);
-
-  // v3.734.0 (Seb 07/11) : l'étape d'Histoire en cours ne compte que sous Marque -> rappel près du choix
-  var markStep = dungeonStoryMarkStep(dungeon.id);
-  if (markStep) h += '<div class="dsheet-markreq' + (n ? ' is-ok' : '') + '"><img class=ico-inline src=images/Icons/system/' + (n ? 'check_valid' : 'warning') + '.webp> '
-    + esc(_t("L'étape « {x} » demande au moins une Marque.", { x: _td(markStep.title) })) + '</div>';
-  // Marques, repliées par défaut : le résumé dit combien et pour quel gain
-  h += '<button type="button" class="dsheet-fold" aria-expanded="' + pendingDungeonMarksOpen + '" onclick="toggleDungeonFold(\'marks\')"><b>' + _t("Marques") + '</b><span>'
-    + n + ' / ' + maxMarks + ' · ×' + fmtDec(mult.toFixed(2).replace(/0$/, "")) + ' <i aria-hidden="true">' + (pendingDungeonMarksOpen ? '▲' : '▼') + '</i></span></button>';
-  if (pendingDungeonMarksOpen) (DUNGEON_MARKS || []).forEach(function (m) {
-    var on = pendingDungeonMarks.indexOf(m.id) !== -1;
-    var ok = DungeonManager.isMarkUnlocked(m.id, dungeon.id);
-    h += '<button type="button" class="dmark' + (on ? ' is-on' : '') + (ok ? '' : ' is-locked') + '" onclick="toggleDungeonMark(\'' + esc(m.id) + '\')">';
-    h += renderIconOrEmojiHTML(m.icon, "dmark-img", _td(m.name));
-    h += '<span class="dmark-body"><span class="dmark-name">' + esc(_td(m.name)) + '</span><br><span class="dmark-desc">' + (ok ? esc(_td(m.desc)) : _t("Termine ce donjon une fois")) + '</span></span>';
-    h += '<span class="dmark-state"></span></button>';
-  });
 
   // Histoire : le récit et le Sceau, repliés
   var lore = (dungeon.story ? '<div class="dsheet-story">' + esc(_td(dungeon.story)) + '</div>' : '') + buildDungeonSceauLoreHTML(dungeon.id);
@@ -349,13 +330,12 @@ function openDungeonSheet(dungeonId) {
   pendingDungeonMarks = [];
   pendingDungeonLevel = Math.max(1, Math.min(DungeonManager.getMaxLevel(dungeonId), DungeonManager.getLevelBest(dungeonId))); // le meilleur niveau tenu
   pendingDungeonFree = !storyFree && DungeonManager.getRunsLeft(dungeonId) <= 0;
-  pendingDungeonMarksOpen = false; pendingDungeonLoreOpen = false; // v3.476.0
+  pendingDungeonLoreOpen = false; // v3.476.0
   renderDungeonSheet();
 }
 
 function toggleDungeonFold(which) {
-  if (which === "marks") pendingDungeonMarksOpen = !pendingDungeonMarksOpen;
-  else pendingDungeonLoreOpen = !pendingDungeonLoreOpen;
+  pendingDungeonLoreOpen = !pendingDungeonLoreOpen; // v3.777.0 : seul pli restant, l'Histoire
   renderDungeonSheet();
 }
 window.toggleDungeonFold = toggleDungeonFold;
@@ -367,52 +347,11 @@ function closeDungeonSheet() {
   if (host) host.innerHTML = "";
 }
 
-function toggleDungeonMark(markId) {
-  if (pendingDungeonId == null) return;
-  if (!DungeonManager.isMarkUnlocked(markId, pendingDungeonId)) return;
-  var i = pendingDungeonMarks.indexOf(markId);
-  if (i !== -1) pendingDungeonMarks.splice(i, 1);
-  else if (pendingDungeonMarks.length >= (DUNGEON_CONFIG.maxMarks || 3)) return showToast(_t("{n} Marques au plus", { n: DUNGEON_CONFIG.maxMarks || 3 }), 1200);
-  else pendingDungeonMarks.push(markId);
-  renderDungeonSheet();
-}
-
-/* v3.734.0 (Seb 07/11) : étape d'Histoire en cours (acceptée, pas finie) du monde de ce donjon qui exige une Marque.
-   Lue sur le compteur que l'étape vérifie (coeurKillsMarked : vagues passées sous Marque), sans toucher aux données protégées. */
-function dungeonStoryMarkStep(dungeonId) {
-  var d = window.DungeonManager ? DungeonManager.getById(dungeonId) : null;
-  if (!d || !window.StoryQuestManager) return null;
-  var chapterId = d.storyChapterId || d.worldId, step = StoryQuestManager.getCurrentStep(chapterId);
-  if (!step || !StoryQuestManager.isCurrentStepAccepted(chapterId) || StoryQuestManager.isCurrentStepReady(chapterId)) return null;
-  return /coeurKillsMarked/.test(String(step.check || "")) ? step : null;
-}
-window.dungeonStoryMarkStep = dungeonStoryMarkStep;
-
-/* v3.734.0 : départ sans Marque alors que l'étape en exige une -> confirmation, rien de bloquant. */
-function askDungeonNoMark(go, pick) {
-  showConfirmModal(_t("Aucune Marque choisie"), _t("Sans Marque, cette descente ne comptera pas pour l'étape."),
-    "images/Icons/system/warning.webp", go, { ok: _t("Partir quand même"), cancel: _t("Choisir une Marque"), onCancel: pick });
-}
-window.askDungeonNoMark = askDungeonNoMark;
-
-/* v3.734.0 : « Choisir une Marque » rouvre la feuille telle qu'elle était, Marques dépliées. */
-function reopenDungeonSheetForMarks(id, level, free) {
-  pendingDungeonId = Number(id); pendingDungeonMarks = []; pendingDungeonLevel = level; pendingDungeonFree = free;
-  pendingDungeonMarksOpen = true;
-  if (typeof switchTab === "function" && game.activeTab !== "dungeon") switchTab("dungeon");
-  renderDungeonSheet();
-}
-window.reopenDungeonSheetForMarks = reopenDungeonSheetForMarks;
-
 function confirmDungeonStart(force) {
   var id = pendingDungeonId;
   var marks = pendingDungeonMarks.slice(), level = pendingDungeonLevel, free = pendingDungeonFree;
   closeDungeonSheet();
   if (id == null) return;
-  if (force !== true && !marks.length && dungeonStoryMarkStep(id)) {
-    return askDungeonNoMark(function () { pendingDungeonId = id; pendingDungeonMarks = []; pendingDungeonLevel = level; pendingDungeonFree = free; confirmDungeonStart(true); },
-      function () { reopenDungeonSheetForMarks(id, level, free); });
-  }
   var d = DungeonManager.getById(id);
   // v3.440.0 : préparation de sortie avant le départ
   openSortiePrep({ title: d ? _td(d.name) : "", icon: (d && d.icon) || "images/Icons/quests/mission_dungeon.webp", ctx: { type: "dungeon", id: id },
@@ -792,7 +731,6 @@ function closeDungeonSummary() {
 
 window.openDungeonSheet = openDungeonSheet;
 window.closeDungeonSheet = closeDungeonSheet;
-window.toggleDungeonMark = toggleDungeonMark;
 window.confirmDungeonStart = confirmDungeonStart;
 window.openDungeonSummary = openDungeonSummary;
 window.closeDungeonSummary = closeDungeonSummary;

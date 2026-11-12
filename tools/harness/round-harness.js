@@ -2298,12 +2298,13 @@ console.log("\n== v3.245.0 : forest_13, compteur coeurKillsMarked en donjon ==")
   ok(step13.unlockTabs.indexOf("dungeon") !== -1 && step13.linkTo.tab === "dungeon" && step13.tutorial.tab === "dungeon", "forest_13 ouvre le Donjon et y mène (afflictions parquées)");
   game.storyQuests.forest.currentStep = idx13; game.storyQuests.forest.accepted = true;
   game.storyQuests.forest.counters.coeurKills = 10;
-  ok(step13.check(game) === false, "coeurKills = 10 : non prête (il faut des vagues sous Marque)");
+  game.dungeonBestWave = 0;
+  ok(step13.check(game) === false, "coeurKills = 10 : non prête (il faut 5 vagues de la Tanière)");
   ok(g.DungeonManager.isStoryTicketFree(1) === true, "forest_13 acceptée : entrée de la Tanière offerte");
+  ok(step13.title === "Sous les racines" && !/Marque/.test(JSON.stringify(step13.narrative) + step13.objectiveLabel + JSON.stringify(step13.tutorial)), "v3.777.0 : l'étape ne parle plus de Marque (accord de Seb)");
   game.dungeonRunsUsed = {};
-  // Run NU : les vagues ne comptent pas.
-  g.DungeonManager.start(1, []);
-  ok(game.dungeonRun.active === true && game.dungeonRun.marks.length === 0 && !((game.dungeonRunsUsed || {})[1]), "run nu lancé sur ticket offert");
+  g.DungeonManager.start(1, ["aff_fragility"]);
+  ok(game.dungeonRun.active === true && game.dungeonRun.marks.length === 0 && !((game.dungeonRunsUsed || {})[1]), "run lancé sur ticket offert ; une Marque demandée est écartée (retirées)");
   /* Une frappe peut manquer (précision) ou buter sur un bouclier : on rejoue jusqu'à ce que
      la vague avance réellement, sinon le test dépend du tirage. */
   function passerVague() {
@@ -2314,24 +2315,17 @@ console.log("\n== v3.245.0 : forest_13, compteur coeurKillsMarked en donjon ==")
     }
     run("StoryQuestManager._trackKills();");
   }
-  for (var k = 0; k < 3; k++) passerVague();
-  ok(game.dungeonRun.wave === 4 && game.storyQuests.forest.counters.coeurKillsMarked === 0, "3 vagues à nu : non comptées");
-  run("DungeonManager.forfeit();");
-  // Run sous 1 Marque : chaque vague passée compte.
-  g.DungeonManager.start(1, ["aff_fragility"]);
-  ok(game.dungeonRun.active === true && game.dungeonRun.marks.length === 1, "run sous Fragilité lancé (ticket offert, forest_13 en cours)");
-  /* La jauge de célérité peut déclencher une frappe bonus qui enchaîne deux vagues dans la
-     même action : on compte les VAGUES PASSÉES, jamais le nombre d'appels. */
   passerVague();
-  var marque1 = game.storyQuests.forest.counters.coeurKillsMarked;
-  ok(marque1 >= 1 && step13.check(game) === false, "1re vague sous Marque compt\u00e9e (" + marque1 + "/5), \u00e9tape pas encore pr\u00eate");
+  ok(game.dungeonBestWave >= 1 && step13.check(game) === false && step13.killTarget.counter(game) === game.dungeonBestWave, "1re vague passée : comptée (" + game.dungeonBestWave + "/5), étape pas encore prête");
   var garde5 = 12;
-  while (game.dungeonRun.active && game.storyQuests.forest.counters.coeurKillsMarked < 5 && garde5-- > 0) passerVague();
-  ok(game.storyQuests.forest.counters.coeurKillsMarked >= 5 && step13.check(game) === true, "5 vagues sous Marque : forest_13 prête");
+  while (game.dungeonRun.active && game.dungeonBestWave < 5 && garde5-- > 0) passerVague();
+  ok(game.dungeonBestWave >= 5 && step13.check(game) === true, "5 vagues dans le même run : forest_13 prête");
   run("DungeonManager.forfeit();");
-  ok(step13.check(game) === true && !game.dungeonRun.active, "run abandonné après coup : reste prête (compteur acquis)");
+  ok(step13.check(game) === true && !game.dungeonRun.active, "run abandonné après coup : reste prête (record acquis)");
   var saved = run("buildSaveData()");
-  ok(saved.storyQuests.forest.counters.coeurKillsMarked >= 5, "coeurKillsMarked persisté dans storyQuests.forest.counters");
+  ok(saved.dungeonBestWave >= 5, "record de vague persisté (dungeonBestWave)");
+  game.dungeonBestWave = 0; game.storyQuests.forest.counters.coeurKillsMarked = 5;
+  ok(step13.check(game) === true, "vieille sauvegarde : 5 vagues sous Marque déjà comptées, l'étape reste prête");
 })();
 
 /* ================= v3.136.0 — ticket Donjon I offert (forest_14) + afflictions farm libre uniquement ================= */
@@ -2373,20 +2367,12 @@ console.log("\n== v3.136.0 → v3.245.0 : Marques actives en run de donjon seule
   ok(g.AfflictionManager.isContextActive() === false && game.heroMaxHp === baseMaxHp, "sortie farm : toujours neutre, PV max de base");
   run("SortieManager.end('return');");
   game.dungeonRunsUsed = {};
-  g.DungeonManager.start(1, ["aff_plague", "aff_fragility"]);
-  ok(game.dungeonRun.marks.length === 1 && game.dungeonRun.marks[0] === "aff_fragility", "Tani\u00e8re jamais termin\u00e9e : Fl\u00e9au (unlock cleared) refus\u00e9, Fragilit\u00e9 gard\u00e9e");
-  run("DungeonManager.forfeit();");
+  /* v3.777.0 : les Marques sont retirées ; une Marque demandée (vieille feuille, robot) est écartée. */
   game.dungeonTierCleared[1] = true;
-  g.DungeonManager.start(1, ["aff_plague", "aff_fragility"]);
-  ok(game.dungeonRun.active && game.dungeonRun.marks.length === 2 && g.AfflictionManager.getActiveCount() === 2 && g.AfflictionManager.isActive("aff_plague"), "run sous Fléau + Fragilité : 2 Marques actives");
+  g.DungeonManager.start(1, ["aff_plague", "aff_fragility", "aff_asceticism"]);
+  ok(game.dungeonRun.active && game.dungeonRun.marks.length === 0 && g.AfflictionManager.getActiveCount() === 0, "Marques demandées : toutes écartées");
   var m2 = g.AfflictionManager.getCombinedModifiers();
-  ok(m2.enemyPowerMult === 1.3 && m2.heroMaxHpMult === 0.7 && Math.abs(g.AfflictionManager.getStackRewardMult() - 1.3) < 1e-9, "run : modificateurs appliqués (dégâts ennemis 1.3, PV 0.7, cumul 1.30)");
-  ok(game.heroMaxHp === Math.max(1, Math.floor(baseMaxHp * 0.7)) && game.heroHp === game.heroMaxHp, "PV max réduits par Fragilité, entrée à PV pleins (" + game.heroHp + "/" + game.heroMaxHp + ")");
-  ok(g.AfflictionManager.arePotionsForbidden() === false, "sans Ascétisme : potions autorisées");
-  run("DungeonManager.forfeit();");
-  ok(!game.dungeonRun.active && g.AfflictionManager.getActiveCount() === 0 && game.heroMaxHp === baseMaxHp, "fin de run : Marques retirées, PV max restaurés");
-  g.DungeonManager.start(1, ["aff_asceticism", "aff_colossus", "aff_fragility", "aff_plague"]);
-  ok(game.dungeonRun.marks.length === 3 && g.AfflictionManager.arePotionsForbidden() === true, "4 Marques demandées : plafond 3 appliqué, Ascétisme interdit les potions");
+  ok(m2.enemyPowerMult === 1 && m2.heroMaxHpMult === 1 && g.AfflictionManager.getStackRewardMult() === 1 && game.heroMaxHp === baseMaxHp && !g.AfflictionManager.arePotionsForbidden(), "run : modificateurs neutres, PV max de base, potions permises");
   run("DungeonManager.forfeit();");
 })();
 
@@ -2930,8 +2916,7 @@ console.log("\n[ÉLITES] Créatures élite et leurs quêtes");
   ok(!!g.EliteManager, "[ÉLITES] EliteManager exposé");
   ok(!!g.ADVENTURE_QUESTS.eq_forest_spider && !!g.ADVENTURE_QUESTS.eq_forest_bramble, "[ÉLITES] deux quêtes élite déclarées");
 
-  var aff = (g.DUNGEON_MARKS || []).find(function (m) { return m.id === "aff_elite"; });
-  ok(aff && aff.name === "Traque", "[ÉLITES] Marque aff_elite nomm\u00e9e Traque (id inchang\u00e9)");
+  ok(Array.isArray(g.DUNGEON_MARKS) && g.DUNGEON_MARKS.length === 0, "[ÉLITES] v3.777.0 : plus de Marque « Traque » (Marques retirées)");
 
   // Gating : invisible avant l'étape requise, visible après. Par ID, jamais par index.
   game.storyQuests.forest.currentStep = 0;
@@ -5304,17 +5289,12 @@ console.log("\n[47b] v3.245.0 \u2014 Refonte des Donjons");
   ok(typeof g.DUNGEON_TIERS === "undefined", "DUNGEON_TIERS a disparu (absorb\u00e9 dans DUNGEONS)");
   ok(g.DUNGEONS[5].locked === false && g.DUNGEONS[5].requiresStoryStep === "tour_11" && D.getLockReason(6) === "data", "le Sommet interdit s'ouvre par l'Histoire (tour_11, v3.629.0), raison 'data' avant");
   ok(g.DUNGEONS.every(function (d) { return d.boss && g.BOSS_DB[d.boss.baseId] && d.boss.name && d.boss.archetype; }), "chaque donjon porte un boss identitaire (baseId connu, nom, trait)");
-  ok(g.DUNGEON_MARKS.length === 5 && !g.DUNGEON_MARKS.some(function (m) { return m.id === "aff_greed"; }), "cinq Marques, Avarice parqu\u00e9e");
-  ok(g.DUNGEON_MARKS.every(function (m) { return /^aff_/.test(m.id) && /afflictions\//.test(m.icon); }), "id et ic\u00f4nes h\u00e9rit\u00e9s des anciennes afflictions (aucune migration)");
+  ok(Array.isArray(g.DUNGEON_MARKS) && g.DUNGEON_MARKS.length === 0, "v3.777.0 : Marques retirées (table vide)");
   ok(g.DUNGEON_CONFIG.maxMarks === 3 && g.DUNGEON_CONFIG.markStackBonus === 0.15 && g.DUNGEON_CONFIG.specialPerMark === 2, "config : 3 Marques max, +15 %/Marque, +2 mat\u00e9riau/Marque");
 
-  /* --- Verrous de Marques --- */
-  game.dungeonTierCleared = {};
-  ok(D.isMarkUnlocked("aff_colossus", 1) && D.isMarkUnlocked("aff_asceticism", 1) && D.isMarkUnlocked("aff_fragility", 1), "Colosses, Asc\u00e9tisme, Fragilit\u00e9 libres");
-  ok(!D.isMarkUnlocked("aff_elite", 1) && !D.isMarkUnlocked("aff_plague", 1), "Traque et Fl\u00e9au verrouill\u00e9es tant que le donjon n'est pas termin\u00e9");
-  game.dungeonTierCleared[1] = true;
-  ok(D.isMarkUnlocked("aff_elite", 1) && D.isMarkUnlocked("aff_plague", 1) && !D.isMarkUnlocked("aff_elite", 2), "termin\u00e9 une fois : d\u00e9bloqu\u00e9es sur CE donjon seulement");
-  ok(D.sanitizeMarks(["aff_elite", "aff_elite", "aff_inconnue", "aff_colossus", "aff_fragility", "aff_asceticism"], 1).join(",") === "aff_elite,aff_colossus,aff_fragility", "sanitizeMarks : doublons et inconnues \u00e9cart\u00e9s, plafond 3");
+  /* --- v3.777.0 : plus aucune Marque ne passe --- */
+  game.dungeonTierCleared = { 1: true };
+  ok(D.sanitizeMarks(["aff_elite", "aff_colossus", "aff_fragility"], 1).length === 0, "sanitizeMarks : toute Marque demandée est écartée");
 
   /* --- Vagues : \u00e9lites de donn\u00e9es, boss identitaire, Colosses, Traque --- */
   game.dungeonRunsUsed = {};
@@ -5331,12 +5311,8 @@ console.log("\n[47b] v3.245.0 \u2014 Refonte des Donjons");
   ok(w5.maxHp > w7.maxHp && b.maxHp > w5.maxHp, "\u00e9chelle : \u00e9lite > vague normale, boss > \u00e9lite (" + w7.maxHp + " < " + w5.maxHp + " < " + b.maxHp + ")");
   run("DungeonManager.forfeit();");
   D.start(1, ["aff_colossus", "aff_elite"]);
-  var b2 = tete(D.buildWaveEnemy(16)), w7b = tete(D.buildWaveEnemy(7)), w5b = tete(D.buildWaveEnemy(5));
-  ok(b2.maxHp === Math.floor(bossHpNu * 2), "Colosses : boss \u00e0 2\u00d7 PV (" + b2.maxHp + ")");
-  var w7base = Math.floor(Math.floor(g.ENEMY_DB[w7b.id].stats.endurance * 1.5 * D.getWaveScale(D.getById(1), 7)) * 2.4); // l'ennemi de la vague est tir\u00e9 au sort : on recalcule sur SON endurance
-  ok(w7b.isBoss === true && !w7b.isElite && w7b.maxHp === Math.floor(w7base * D.levelOf(D.getById(1), "vague").hp), "Traque : vague normale devenue \u00e9lite g\u00e9n\u00e9rique (isBoss, PV \u00d72,4, puis cible du donjon)");
-  ok(w5b.isElite === true && w5b.maxHp === w5.maxHp, "Traque : la vague 5 reste l'\u00e9lite de donn\u00e9es, sans cumul");
-  ok(game.enemy && game.enemy.isBoss === true && game.dungeonRun.wave === 1, "vague 1 sous Traque : \u00e9lite d\u00e8s l'entr\u00e9e");
+  var b2 = tete(D.buildWaveEnemy(16)), w7b = tete(D.buildWaveEnemy(7));
+  ok(game.dungeonRun.marks.length === 0 && b2.maxHp === bossHpNu && !w7b.isBoss, "Marques demandées écartées : boss et vagues inchangés");
   run("DungeonManager.forfeit();");
 
   /* --- Fin de run : cumul, S\u00e8ve, \u00e9clats d'\u00e9lite --- */
@@ -5363,19 +5339,12 @@ console.log("\n[47b] v3.245.0 \u2014 Refonte des Donjons");
   run("game.resources.seve_aeswyn = 0;");
   gold0 = game.gold;
   clearRun(["aff_asceticism", "aff_fragility", "aff_colossus"]);
-  var goldM = game.gold - gold0;
-  ok(!game.dungeonRun.active && Number(game.resources.seve_aeswyn || 0) === 8, "3 Marques : S\u00e8ve +8 (2 + 3 \u00d7 2)");
-  ok(goldM > goldNu * 1.3, "3 Marques : or de fin \u00d71,45 et bonus de boss (" + goldNu + " -> " + goldM + ")");
+  ok(!game.dungeonRun.active && Number(game.resources.seve_aeswyn || 0) === 2, "Marques demandées écartées : Sève +2, comme à nu");
   ok(game.heroMaxHp === (function () { var m = game.heroMaxHp; return m; })() && g.AfflictionManager.getActiveCount() === 0, "apr\u00e8s le run : aucune Marque active");
 
   /* --- Feuille de lancement --- */
-  var sheet = run("pendingDungeonMarks = ['aff_fragility']; pendingDungeonMarksOpen = true; buildDungeonSheetHTML(1)"); // v3.476.0 : Marques repliées par défaut
-  ok(sheet.indexOf("dmark is-on") !== -1 && sheet.indexOf("1 / 3") !== -1 && sheet.indexOf("+4") !== -1, "feuille : Fragilit\u00e9 activ\u00e9e, 1/3, S\u00e8ve +4 projet\u00e9e");
-  ok(sheet.indexOf("Termine ce donjon une fois") === -1, "donjon termin\u00e9 : Traque et Fl\u00e9au propos\u00e9es");
-  game.dungeonTierCleared = {};
-  sheet = run("pendingDungeonMarks = []; buildDungeonSheetHTML(1)");
-  run("pendingDungeonMarksOpen = false;");
-  ok((sheet.match(/dmark is-locked/g) || []).length === 2, "donjon jamais termin\u00e9 : deux Marques gris\u00e9es");
+  var sheet = run("buildDungeonSheetHTML(1)");
+  ok(sheet.indexOf("dmark") === -1 && sheet.indexOf("toggleDungeonFold('marks')") === -1 && sheet.indexOf("dsheet-markreq") === -1, "feuille : plus de bloc Marques ni de rappel (v3.777.0)");
   var lobby = run("buildDungeonHTML()");
   ok(lobby.indexOf("pc-subtab-bar") === -1 && (lobby.match(/dungeon-tier-card is-full/g) || []).length === 6, "\u00e9cran Donjon : six cartes, plus de sous-onglets");
 
@@ -5908,7 +5877,7 @@ console.log("\n[56b] v3.254.0 \u2014 Suppression des afflictions parqu\u00e9es")
   game = freshCombat("knight");
   ok(typeof g.AFFLICTIONS === "undefined", "data/afflictions.js supprim\u00e9 : AFFLICTIONS n'existe plus");
   ok(typeof g.buildAfflictionsHTML === "undefined", "afflictions-view.js supprim\u00e9");
-  ok(!!g.DUNGEON_MARKS && g.DUNGEON_MARKS.length === 5, "DUNGEON_MARKS est la seule table (5 Marques)");
+  ok(!!g.DUNGEON_MARKS && g.DUNGEON_MARKS.length === 0, "DUNGEON_MARKS reste la seule table, vide depuis v3.777.0 (Marques retirées)");
   ok(!!g.AfflictionManager && typeof g.AfflictionManager.getCombinedModifiers === "function",
     "AfflictionManager reste l'API unique des modificateurs, aliment\u00e9e par les Marques");
 
@@ -5927,12 +5896,11 @@ console.log("\n[56b] v3.254.0 \u2014 Suppression des afflictions parqu\u00e9es")
   try { run("renderPanel()"); } catch (e) { ok1 = false; }
   ok(ok1, "activeTab = 'afflictions' : le rendu tient, avec l'\u00e9cran de repli");
 
-  /* Les Marques restent pleinement fonctionnelles apr\u00e8s la suppression. */
+  /* v3.777.0 : les Marques sont retirées ; le canal reste (haltes), neutre sans carte. */
   run("DungeonManager.ensure(); game.dungeonRunsUsed = {}; game.dungeonTierCleared = { 1: true }; game.activeTab = 'combat';");
   g.DungeonManager.start(1, ["aff_fragility"]);
-  ok(game.dungeonRun.active && g.AfflictionManager.getActiveCount() === 1,
-    "run sous Fragilit\u00e9 : la Marque s'applique toujours");
-  ok(g.AfflictionManager.getCombinedModifiers().heroMaxHpMult === 0.7, "...et son modificateur est lu");
+  ok(game.dungeonRun.active && g.AfflictionManager.getActiveCount() === 0 && g.AfflictionManager.getCombinedModifiers().heroMaxHpMult === 1,
+    "run avec une Marque demandée : aucune Marque active, aucun modificateur");
   run("DungeonManager.forfeit();");
 })();
 
@@ -9361,15 +9329,15 @@ console.log("\n[116] v3.320.0 — Menu sans pastille, préparatifs du run dans l
   run("updateQuestBadge()");
   ok(true, "updateQuestBadge() reste appelable (4 fichiers l'appellent) et ne fait rien");
 
-  /* Préparatifs simulés : une Marque active, sans toucher au donjon. */
-  var saved = g.AfflictionManager.getActiveList;
-  g.AfflictionManager.getActiveList = function () { return [g.DUNGEON_MARKS[0]]; };
+  /* Préparatifs simulés : un préparatif de run actif (v3.777.0 : les Marques sont retirées, un préparatif fictif les remplace). */
+  var saved = g.AfflictionManager.getActiveList, PREP = { id: "aff_essai", name: "Préparatif test", icon: "images/Icons/dungeon/halte_lame.webp", desc: "essai" };
+  g.AfflictionManager.getActiveList = function () { return [PREP]; };
   var bar = g.buildActivePotionsBarHTML();
   ok(/^<button type="button" class="active-potions-btn" onclick="openCombatStatesSheet\(\)"/.test(bar),
     "la barre du haut est un vrai bouton qui ouvre la feuille");
   ok(bar.indexOf("title=") === -1, "plus aucun title (invisible sur mobile)");
   var sh = g.buildCbxStatesSheetHTML();
-  ok(sh.indexOf("Pour ce run") !== -1 && sh.indexOf(g.DUNGEON_MARKS[0].name) !== -1,
+  ok(sh.indexOf("Pour ce run") !== -1 && sh.indexOf(PREP.name) !== -1,
     "la feuille liste la Marque sous « Pour ce run »");
   ok(sh.indexOf("st-empty") === -1, "une Marque active suffit à remplir la feuille");
   g.AfflictionManager.getActiveList = function () { return []; };
@@ -17659,12 +17627,12 @@ console.log("\n[297] v3.476.0 — Feuille de lancement réorganisée (point 5, a
   var h = g.buildDungeonSheetHTML(1);
   ok(h.indexOf("À gagner") >= 0 && h.indexOf("Écailles du Basilic") >= 0 && h.indexOf("5 % par victoire") >= 0 && h.indexOf("Peau de mue") >= 0, "« À gagner » : l'unique du boss, son taux et son pouvoir");
   ok(h.indexOf("Ce qui t'attend") >= 0 && h.indexOf("15 vagues, dont 4 en groupe") >= 0 && h.indexOf("élites aux vagues 5 et 10") >= 0 && h.indexOf("1 à 3 haltes") >= 0, "« Ce qui t'attend » : vagues de groupe, élites, haltes");
-  ok(h.indexOf('class="dmark') < 0 && /Marques<\/b><span>0 \/ 3 · ×1/.test(h), "Marques repliées, résumé 0 / 3");
+  ok(h.indexOf('class="dmark') < 0 && h.indexOf("toggleDungeonFold('marks')") < 0, "v3.777.0 : plus de bloc Marques");
   ok(h.indexOf("dsheet-story") < 0 && h.indexOf("Sorties restantes") < 0, "récit replié, plus de « Sorties restantes » en double");
-  g.toggleDungeonFold("marks"); g.toggleDungeonFold("lore"); h = g.buildDungeonSheetHTML(1);
-  ok((h.match(/class="dmark[ "]/g) || []).length === 5 && h.indexOf("dsheet-story") >= 0, "ouvertes : les 5 Marques et le récit");
+  g.toggleDungeonFold("lore"); h = g.buildDungeonSheetHTML(1);
+  ok(h.indexOf("dsheet-story") >= 0, "ouvert : le récit");
   g.closeDungeonSheet(); g.openDungeonSheet(1);
-  ok(run("pendingDungeonMarksOpen") === false && run("pendingDungeonLoreOpen") === false, "à la réouverture, tout est replié");
+  ok(run("pendingDungeonLoreOpen") === false, "à la réouverture, le récit est replié");
   g.closeDungeonSheet();
   game.dungeonTierCleared = {}; g.openDungeonSheet(1); h = g.buildDungeonSheetHTML(1);
   ok(h.indexOf("Des haltes, après une première victoire") >= 0, "jamais terminé : les haltes viendront après une victoire");
@@ -25412,34 +25380,14 @@ console.log("\n[495] v3.734.0 — Rappels d'entrée : Marque exigée par l'étap
   var prep = null; g.openSortiePrep = function (o) { prep = o; };
   var poser = function (id, acc) { st.currentStep = g.STORY_QUESTS.forest.steps.findIndex(function (s) { return s.id === id; }); st.accepted = acc; st.counters = {}; };
   try {
-    // A — rappel près des Marques
+    // A — v3.777.0 : Marques retirées, plus de rappel ni de confirmation « sans Marque »
     g.game.unlockedTabs.dungeon = true;
     poser("forest_13", true);
-    ok(g.dungeonStoryMarkStep(1) && g.dungeonStoryMarkStep(1).id === "forest_13", "forest_13 acceptée : la Tanière sait que l'étape exige une Marque");
-    g.pendingDungeonMarks = []; var html = g.buildDungeonSheetHTML(1);
-    ok(html.indexOf("dsheet-markreq") >= 0 && html.indexOf("tape « Marques du corrompu » demande au moins une Marque.") >= 0, "feuille : rappel présent, près du choix des Marques");
-    ok(html.indexOf("dsheet-markreq") >= 0 && html.indexOf("dsheet-markreq") < html.indexOf("toggleDungeonFold('marks')"), "rappel placé juste avant le repli « Marques »");
-    poser("forest_13", false);
-    ok(!g.dungeonStoryMarkStep(1) && g.buildDungeonSheetHTML(1).indexOf("dsheet-markreq") < 0, "étape non acceptée : pas de rappel");
-    poser("forest_14", true);
-    ok(!g.dungeonStoryMarkStep(1) && g.buildDungeonSheetHTML(1).indexOf("dsheet-markreq") < 0, "forest_14 (sans Marque exigée) : pas de rappel");
-    var autres = []; Object.keys(g.STORY_QUESTS).forEach(function (c) { g.STORY_QUESTS[c].steps.forEach(function (s2) { if (/coeurKillsMarked/.test(String(s2.check || ""))) autres.push(s2.id); }); });
-    ok(autres.join(",") === "forest_13", "détection générique : seule forest_13 lit le compteur des vagues sous Marque (" + autres.join(",") + ")");
-    // A — départ sans Marque : confirmation, rien de bloquant
-    poser("forest_13", true);
+    var html = g.buildDungeonSheetHTML(1);
+    ok(typeof g.dungeonStoryMarkStep === "undefined" && html.indexOf("dsheet-markreq") < 0, "forest_13 acceptée : plus de rappel de Marque");
     g.pendingDungeonId = 1; g.pendingDungeonMarks = []; g.pendingDungeonLevel = 1; g.pendingDungeonFree = false; conf = null; prep = null;
     g.confirmDungeonStart();
-    ok(conf && conf.text === "Sans Marque, cette descente ne comptera pas pour l'étape." && conf.labels.ok === "Partir quand même" && conf.labels.cancel === "Choisir une Marque" && !prep, "sans Marque : confirmation « Partir quand même » / « Choisir une Marque », rien n'est lancé");
-    conf.ok();
-    ok(prep && prep.ctx && prep.ctx.id === 1, "« Partir quand même » : la préparation de sortie s'ouvre, le départ suit");
-    var sw = g.switchTab; g.switchTab = function () {}; var rs = g.renderDungeonSheet; g.renderDungeonSheet = function () {};
-    g.pendingDungeonId = 1; g.pendingDungeonMarks = []; conf = null; g.confirmDungeonStart(); conf.labels.onCancel();
-    ok(g.pendingDungeonId === 1 && g.pendingDungeonMarksOpen === true, "« Choisir une Marque » : la feuille revient, Marques dépliées");
-    g.switchTab = sw; g.renderDungeonSheet = rs;
-    var mk = (g.DUNGEON_MARKS || [])[0]; g.pendingDungeonId = 1; g.pendingDungeonMarks = [mk.id]; conf = null; prep = null; g.confirmDungeonStart();
-    ok(!conf && prep, "avec une Marque : départ direct, pas de confirmation");
-    poser("forest_14", true); g.pendingDungeonId = 1; g.pendingDungeonMarks = []; conf = null; prep = null; g.confirmDungeonStart();
-    ok(!conf && prep, "étape sans Marque exigée : départ direct");
+    ok(!conf && prep && prep.ctx && prep.ctx.id === 1, "départ direct vers la préparation de sortie, sans confirmation");
     // B — PV bas à l'acceptation d'une étape de combat
     g.game.heroMaxHp = 400; g.game.heroHp = 110;
     poser("forest_02", false); conf = null;
@@ -25457,7 +25405,7 @@ console.log("\n[495] v3.734.0 — Rappels d'entrée : Marque exigée par l'étap
     poser("forest_02", false); conf = null; g.campMissionAction("story_forest", "accept");
     ok(SQ.getState("forest").accepted === true && conf && conf.labels.ok === "Aller au feu", "acceptation depuis la carte du Camp : même rappel");
     ok(fsRead("js/ui/quests-view.js").indexOf("onclick=\"acceptStoryStepWithCheck(") >= 0, "Quêtes › Histoire : « Accepter » passe par le rappel");
-    ["L'étape « {x} » demande au moins une Marque.", "Sans Marque, cette descente ne comptera pas pour l'étape.", "Choisir une Marque", "Aucune Marque choisie", "PV bas", "Tes PV sont bas : repose-toi au feu ou mange une ration avant de partir.", "Aller au feu", "Plus tard"].forEach(function (k) {
+    ["PV bas", "Tes PV sont bas : repose-toi au feu ou mange une ration avant de partir.", "Aller au feu", "Plus tard"].forEach(function (k) {
       ok(fsRead("js/lang/en.js").indexOf(JSON.stringify(k)) >= 0, "en.js : « " + k + " » traduit");
     });
   } catch (err) { ok(false, "[495] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
@@ -26034,15 +25982,14 @@ console.log("\n[508] Donjons (v3.755.0, Seb 09/11, option A) : objectif de l'His
     D.spawnWave(5); D.onEnemyKilled();
     ok(!D.isObjectivePending(), "run d'avant la mise à jour : pas de pause");
     D.forfeit();
-    // Tanière (forest_13) : 5 vagues sous une Marque, compteur lu au moment de la vague
+    // Tanière (forest_13) : 5 vagues (v3.777.0 : sans Marque, record de vague du donjon)
     SQ.getState("desert").currentStep = 0; SQ.getState("desert").accepted = false;
     var forest = SQ.getChapter("forest"), i13 = forest.steps.findIndex(function (s) { return s.id === "forest_13"; });
     SQ.getState("forest").currentStep = i13; SQ.acceptStep("forest");
-    var mark = (g.DUNGEON_MARKS || [])[0];
-    game.heroHp = game.heroMaxHp; game.dungeonRunsUsed = {}; game.dungeonTierCleared = {}; game.inventory = [];
-    D.start(1, mark ? [mark.id] : []); game.dungeonRun.halts = [];
+    game.heroHp = game.heroMaxHp; game.dungeonRunsUsed = {}; game.dungeonTierCleared = {}; game.inventory = []; game.dungeonBestWave = 0;
+    D.start(1, []); game.dungeonRun.halts = [];
     for (var w = 1; w <= 5; w++) { D.spawnWave(w); [].concat(g.CombatActors.enemies()).forEach(function (e) { e.hp = 0; }); game.totalKills = Number(game.totalKills || 0) + 1; if (!D.isObjectivePending()) D.onEnemyKilled(); } // vague vaincue : ennemis à 0 PV
-    ok(!!mark && D.isObjectivePending() && game.dungeonRun.wave === 6 && g.storyCounter(game, "coeurKillsMarked") === 5, "Tanière sous Marque : pause après la vague 5 (compteur " + g.storyCounter(game, "coeurKillsMarked") + ")");
+    ok(D.isObjectivePending() && game.dungeonRun.wave === 6 && game.dungeonBestWave >= 5, "Tanière : pause après la vague 5 (record " + game.dungeonBestWave + ")");
     D.objectiveAction("sortir");
     ok(/Objectif de l'Histoire tenu : « \{s\} »\. Tu peux sortir\./.test(fsRead("js/ui/dungeon-view.js")), "campement : la ligne « Objectif de l'Histoire tenu » quand il tient l'étape");
   } catch (err) { ok(false, "[508] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }

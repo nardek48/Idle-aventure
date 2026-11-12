@@ -660,36 +660,35 @@ var STORY_QUESTS = {
       },
       {
         id: "forest_13",
-        title: "Marques du corrompu",
+        title: "Sous les racines",
         act: "Acte III — Le héros s'affirme",
         narrative: {
-          objective: "Sous les racines, une tanière. Entre sous une Marque — la tienne, choisie — et vois ce qu'elle t'apporte. Cinq salles, et tu sauras.",
-          completion: "La Marque pique, mais elle paie. Souviens-t'en."
+          objective: "Sous les racines, une tanière. Entre, et vois ce qu'elle garde. Cinq salles, et tu sauras.",
+          completion: "La Tanière se défend, mais elle paie. Souviens-t'en."
         },
-        // v3.245.0 (refonte Donjons, doc v1.1 §6.3) : les afflictions sont devenues les MARQUES d'un run de donjon.
-        // L'étape ouvre le Donjon (avancé d'une étape) et se joue dans la Tanière : 5 vagues passées avec ≥ 1 Marque.
-        // Même id, même position, même compteur coeurKillsMarked (réutilisé : vagues de donjon sous Marque) — les
-        // parties en cours ne sont pas décalées ; l'entrée est offerte par l'Histoire (DungeonManager.isStoryTicketFree).
-        objectiveLabel: "Entrer dans la Tanière du Basilic sous au moins une Marque et passer 5 vagues dans le même run",
+        // v3.245.0 (refonte Donjons) : l'étape ouvre le Donjon et se joue dans la Tanière.
+        // v3.777.0 (simplification, accord Seb 12/11) : les Marques sont retirées ; 5 vagues passées dans un même run suffisent
+        // (record de vague du donjon, dungeonBestWave). Même id, même position ; l'ancien compteur coeurKillsMarked compte encore.
+        objectiveLabel: "Entrer dans la Tanière du Basilic et passer 5 vagues dans le même run",
         unlockTabs: ["dungeon"],
         reward: STORY_REWARDS.forest_13,
         linkTo: { tab: "dungeon" },
         tutorial: {
           tab: "dungeon",
-          icon: "images/Icons/afflictions/aff_plague.webp",
-          title: "Les Marques",
+          icon: "images/Icons/subtabs/dungeon.webp",
+          title: "Le Donjon",
           points: [
-            { icon: "images/Icons/afflictions/aff_plague.webp", text: "Une Marque est un handicap volontaire pour un run de donjon (boss plus dur, potions interdites, PV réduits...) en échange de récompenses plus riches." },
-            { icon: "images/Icons/afflictions/marks_stack.webp", text: "Jusqu'à 3 Marques par run. Chaque Marque ajoute +15 % aux récompenses et +2 matériau de monde, en plus de ses effets propres." },
-            { icon: "images/Icons/subtabs/dungeon.webp", text: "Elles se choisissent à l'entrée du donjon, dans la feuille de lancement, et restent figées pour le run." },
-            { icon: "images/Icons/combat_stats/stat_attack.webp", text: "Pour cette étape : entre dans la Tanière sous au moins une Marque et passe 5 vagues. L'entrée est offerte tant que l'étape est en cours." }
+            { icon: "images/Icons/subtabs/dungeon.webp", text: "Un donjon, c'est 15 vagues d'ennemis puis un boss, d'une traite. Tu y entres avec tes PV du moment." },
+            { icon: "images/Icons/dungeon/halte.webp", text: "En route, des haltes : choisis une carte (un bonus, un échange, un coffre) ou passe ton chemin." },
+            { icon: "images/Icons/dungeon/wave_record.webp", text: "Trois sorties par jour et par donjon. Une fois le donjon fini, battre un niveau ouvre le suivant : plus dur, plus riche." },
+            { icon: "images/Icons/combat_stats/stat_attack.webp", text: "Pour cette étape : entre dans la Tanière et passe 5 vagues. L'entrée est offerte tant que l'étape est en cours." }
           ]
         },
-        killTarget: { label: "Sous la Marque", counter: function (g) { return storyCounter(g, "coeurKillsMarked"); }, target: 5, autoReturn: false },
-        onAccept: function (game, st) { st.counters.coeurKillsMarked = 0; st.markedRunTag = null; }, // v3.260.0 : idem forest_12 ; v3.261.0 : 5 vagues dans un même run
-        check: function (game) { return storyCounter(game, "coeurKillsMarked") >= 5; },
+        killTarget: { label: "Vagues de la Tanière", counter: function (g) { return Math.max(storyCounter(g, "coeurKillsMarked"), Number(g.dungeonBestWave || 0)); }, target: 5, autoReturn: false },
+        onAccept: function (game, st) { st.counters.coeurKillsMarked = 0; st.markedRunTag = null; },
+        check: function (game) { return Math.max(storyCounter(game, "coeurKillsMarked"), Number(game.dungeonBestWave || 0)) >= 5; },
         progress: function (game) {
-          return "Vagues sous Marque " + Math.min(5, storyCounter(game, "coeurKillsMarked")) + "/5";
+          return "Vagues de la Tanière " + Math.min(5, Math.max(storyCounter(game, "coeurKillsMarked"), Number(game.dungeonBestWave || 0))) + "/5";
         }
       },
       {
