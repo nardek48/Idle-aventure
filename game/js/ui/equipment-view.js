@@ -372,7 +372,7 @@ function buildItemOriginHTML(item) {
     var n = Math.round(A.bonus * 100), actif = typeof getItemAffinityMult === "function" && getItemAffinityMult(item) > 1;
     aff = '<div class="eq-detail-hint">✦ ' + esc(actif ? _t("Affinité : +{n} % ici, dans son monde", { n: n }) : _t("Affinité : +{n} % en {w}", { n: n, w: _td(world) })) + '</div>';
   }
-  return buildItemLevelLineHTML(item) + '<div class="eq-detail-hint"><img class=ico-inline src=images/Icons/quests/quest_resources.webp> ' + esc(_t("Trouvé en {w}", { w: _td(world) })) + '</div>' + aff + aether;
+  return buildItemLevelLineHTML(item) + '<div class="eq-detail-hint"><img class=ico-inline src=images/Icons/system/found_in_world.webp> ' + esc(_t("Trouvé en {w}", { w: _td(world) })) + '</div>' + aff + aether;
 }
 window.buildItemOriginHTML = buildItemOriginHTML;
 
@@ -417,7 +417,7 @@ function buildUnifiedDetailPanelHTML(entries) {
     h += '<div class="eq-detail-icon">' + renderIconOrEmojiHTML(ci.icon, "eq-detail-icon-img", _td(ci.name)) + '</div>';
     h += '<div class="eq-detail-name">' + esc(_td(ci.name)) + '</div>';
     h += '<div class="eq-detail-stat">' + esc(_td(ci.desc)) + (ci.con ? ' ' + esc(_td(ci.con)) : '') + '</div>';
-    h += '<div class="eq-detail-hint"><img class=ico-inline src=images/Icons/subtabs/inventory.webp> ' + _t("Stock : {n}", { n: entry.stock }) + '</div>';
+    h += '<div class="eq-detail-hint"><img class=ico-inline src=images/Icons/system/stock.webp> ' + _t("Stock : {n}", { n: entry.stock }) + '</div>';
     h += '<div class="eq-detail-hint">' + _t("Se prépare à l'Apothicaire. S'emporte au départ, dans la préparation de sortie.") + '</div>';
   } else {
     var potion = entry.potion;
@@ -428,7 +428,7 @@ function buildUnifiedDetailPanelHTML(entries) {
     h += '<div class="eq-detail-icon">' + renderIconOrEmojiHTML(potion.icon, "eq-detail-icon-img", _td(potion.name)) + '</div>';
     h += '<div class="eq-detail-name">' + esc(_td(potion.name)) + '</div>';
     h += '<div class="eq-detail-stat">' + esc(descText) + '</div>';
-    h += '<div class="eq-detail-hint"><img class=ico-inline src=images/Icons/subtabs/inventory.webp> ' + _t("Stock : {n}", { n: entry.stock }) + '</div>';
+    h += '<div class="eq-detail-hint"><img class=ico-inline src=images/Icons/system/stock.webp> ' + _t("Stock : {n}", { n: entry.stock }) + '</div>';
 
     // v3.466.1 (retour Seb) : plus de bouton Utiliser ici, les potions se prennent dans la préparation de sortie
     h += '<div class="eq-detail-hint">' + (entry.isHealing

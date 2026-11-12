@@ -41,7 +41,7 @@ var VILLAGE_QUESTS = [
       icon: "images/Icons/plots/enriched_soil.webp",
       title: "Agrandir un bâtiment : les zones",
       points: [
-        { icon: "images/Icons/quests/quest_resources.webp", text: "Chaque bâtiment de production possède 3 zones (les « Parcelles » pour le Champs). Seule la première est ouverte au départ ; les deux autres s'ouvrent contre des ressources. Dans les mondes suivants, elles montent plus haut." },
+        { icon: "images/Icons/plots/plot_zones.webp", text: "Chaque bâtiment de production possède 3 zones (les « Parcelles » pour le Champs). Seule la première est ouverte au départ ; les deux autres s'ouvrent contre des ressources. Dans les mondes suivants, elles montent plus haut." },
         { icon: "images/Icons/scene/scene_harvest.webp", text: "Chaque zone ouverte produit en continu, indépendamment des autres, avec son propre stock local — plus de zones, plus de blé à chaque récolte." },
         { icon: "images/Icons/system/zone_profiles.webp", text: "Les zones ont des profils différents (rapide, équilibrée, lente) : une zone lente produit moins vite mais stocke davantage — pratique si tu récoltes rarement." },
         { icon: "images/Icons/workshops/fine_sawmill.webp", text: "Le déblocage du Champ Béni coûte du bois et de la pierre : la Scierie et la Carrière (ouverte par l'expédition de la Veine instable) alimentent le Champs — chaque bâtiment nourrit les autres." }

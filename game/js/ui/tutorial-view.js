@@ -327,9 +327,9 @@ var GENERIC_TUTORIALS = {
       { icon: "images/Icons/system/grimoire.webp", text: "Le Grimoire programme ton combat automatique : si une situation se présente, ton héros joue l'action que tu as choisie en priorité." },
       { icon: "images/Icons/system/sort.webp", text: "Les règles sont lues dans l'ordre, de haut en bas. La première qui s'applique l'emporte." },
       { icon: "images/Icons/combat_status/counter.webp", text: "Une action marquée « ⚡ Contre » annule complètement l'attaque adverse. C'est le meilleur appariement possible pour cette situation." },
-      { icon: "images/Icons/system/ascension.webp", text: "S'il n'y a aucune règle applicable, ton héros continue de se battre normalement — le Grimoire s'ajoute au comportement automatique, il ne le remplace pas." },
+      { icon: "images/Icons/system/grimoire_fallback.webp", text: "S'il n'y a aucune règle applicable, ton héros continue de se battre normalement — le Grimoire s'ajoute au comportement automatique, il ne le remplace pas." },
       { icon: "images/Icons/system/lock_closed.webp", text: "En combat, ton héros met de côté un peu de ressource pour garantir ton contre le plus prioritaire : il jouera moins d'actions coûteuses en attendant." },
-      { icon: "images/Icons/quests/quest_resources.webp", text: "Une situation apparaît dans le Grimoire la première fois que tu la rencontres en combat. Trois règles au plus : la troisième s'ouvre aux Ruines." },
+      { icon: "images/Icons/system/rules_unlock.webp", text: "Une situation apparaît dans le Grimoire la première fois que tu la rencontres en combat. Trois règles au plus : la troisième s'ouvre aux Ruines." },
       { icon: "images/Icons/system/save.webp", text: "Tes jeux de règles changent d'un toucher avant de partir, et « Ce que tu vas affronter » pose la règle utile. La Crypte, la Montagne et la Tour t'offrent chacune un jeu de plus." }
     ]
   },

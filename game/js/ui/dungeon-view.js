@@ -465,7 +465,7 @@ function buildDungeonCampSheetHTML() {
   var h = '<div class="ksheet-backdrop"></div>';
   h += '<div class="ksheet dungeon-camp-sheet">';
   h += kSheetHeadHTML({
-    icon: '<img src="images/Icons/camp/campfire.webp" alt="">',
+    icon: '<img src="images/Icons/dungeon/dungeon_camp.webp" alt="">',
     title: _t("Le campement"),
     sub: _t("Salle de garde · étape 1 sur 2 passée")
   });
@@ -506,7 +506,7 @@ function buildDungeonCampSheetHTML() {
   }
   h += buildCampOptionHTML("changer", "images/Icons/subtabs/companions.webp", _t("Changer de compagnon"),
     canSwap ? _t("Deux sur trois, selon ce qui attend en bas. Celui qui arrive est frais.") : _t("Aucun autre compagnon ne peut descendre."), campSwapText(now), sw, canSwap);
-  h += buildCampOptionHTML("sortir", "images/Icons/camp/campfire.webp", _t("Sortir"), _t("Tu remontes avec le butin de l’étape 1. Il est à toi."), campPick === "sortir" ? _t("La sortie s’arrête là.") : "", "", true);
+  h += buildCampOptionHTML("sortir", "images/Icons/dungeon/dungeon_exit.webp", _t("Sortir"), _t("Tu remontes avec le butin de l’étape 1. Il est à toi."), campPick === "sortir" ? _t("La sortie s’arrête là.") : "", "", true);
   h += '<p class="dcamp-next">' + _t("En bas : vagues {a} à {b}, une élite, puis le boss. Tomber en bas ne coûte que le butin d’en bas.", { a: (Number(camp.afterWave) || 8) + 1, b: DUNGEON_CONFIG.waveCount }) + '</p>';
   h += '</div>';
 
@@ -745,7 +745,7 @@ function buildDungeonSummaryHTML(result) {
   campGold += eliteGold; // compté avec le campement dans les totaux
   var goldIco = '<img class=ico-inline src=images/Icons/gold_icon.webp> ';
   if (wavesGold > 0) h += '      <div class="dungeon-summary-row"><span>' + goldIco + _t("Butin des vagues") + '</span><span>+' + formatNumber(wavesGold) + '</span></div>';
-  if (campGold - eliteGold > 0) h += '      <div class="dungeon-summary-row"><span><img class=ico-inline src=images/Icons/camp/campfire.webp> ' + _t("En sûreté au campement") + '</span><span>+' + formatNumber(campGold - eliteGold) + '</span></div>';
+  if (campGold - eliteGold > 0) h += '      <div class="dungeon-summary-row"><span><img class=ico-inline src=images/Icons/dungeon/dungeon_camp.webp> ' + _t("En sûreté au campement") + '</span><span>+' + formatNumber(campGold - eliteGold) + '</span></div>';
   if (eliteGold > 0) h += '      <div class="dungeon-summary-row"><span>' + goldIco + _t("En sûreté après les élites") + '</span><span>+' + formatNumber(eliteGold) + '</span></div>';
   h += '      <div class="dungeon-summary-row"><span>' + goldIco + (wavesGold > 0 || campGold > 0 ? _t("Prime de fin") : _t("Or")) + '</span><span>+' + formatNumber(result.goldReward) + '</span></div>';
   if (wavesGold > 0 || campGold > 0) h += '      <div class="dungeon-summary-row"><span><b>' + _t("Total or") + '</b></span><span><b>+' + formatNumber(wavesGold + campGold + Number(result.goldReward || 0)) + '</b></span></div>';

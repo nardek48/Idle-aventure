@@ -19,7 +19,7 @@ function showConfirmModal(title, text, icon, onConfirm, labels) {
 
   if (titleEl) titleEl.textContent = title || _t("Confirmer");
   if (textEl) textEl.textContent = text || "";
-  if (iconEl) iconEl.innerHTML = renderIconOrEmojiHTML(icon || "images/Icons/system/ascension.webp", "confirm-icon-img", "");
+  if (iconEl) iconEl.innerHTML = renderIconOrEmojiHTML(icon || "images/Icons/system/confirm.webp", "confirm-icon-img", "");
   // CPL3-10 : libellés des boutons au choix (fenêtre de langue bilingue), sinon ceux par défaut
   var btnNo = modal.querySelector(".confirm-btn.cancel"), btnOk = modal.querySelector(".confirm-btn.ok");
   if (btnNo) btnNo.textContent = (labels && labels.cancel) || _t("Annuler");

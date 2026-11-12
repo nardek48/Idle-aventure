@@ -37,7 +37,7 @@ var PA2_ICONS = {
   trouvaille: "images/Icons/scene/node_discovery.webp",
   evenement: "images/Icons/scene/node_event.webp",
   unknown: "images/Icons/scene/node_unknown.webp",
-  camp: "images/Icons/camp/campfire.webp",
+  camp: "images/Icons/scene/pa2_camp.webp", // v3.773.0 : image propre (le feu reste au Campement)
   seuil: "images/Icons/scene/node_threshold.webp",
   depart: "images/Icons/menu_icons/village_menu.webp",
   boss: "images/Icons/scene/dest/dest_cerf_racine.webp",

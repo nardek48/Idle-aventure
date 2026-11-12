@@ -424,7 +424,7 @@ window.travelToWorldFromUI = travelToWorldFromUI;
 
 function buildQuestsHTML() {
   // v3.705.0 : page standard à cadre (bandeau qui se replie, onglets collés dessous), comme le Village
-  var h = '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-banner="quetes" data-kf-title="images/Icons/quests/quest_story.webp|' + _t("Quêtes") + '">';
+  var h = '<div class="nb-page-frame nb-page-frame-fill kframe-page" data-kf-banner="quetes" data-kf-title="images/Icons/quests/quests_title.webp|' + _t("Quêtes") + '">';
 
   h += buildQuestsGeneralSubTabHTML();
 

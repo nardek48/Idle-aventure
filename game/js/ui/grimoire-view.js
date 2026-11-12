@@ -427,7 +427,7 @@ function buildGrimoireEditHTML(index, kit) {
         + (action.type === "defense" && window.GROUP_DEFENSE_ANNONCES && GROUP_DEFENSE_ANNONCES[rule.conditionId] ? " " + _t("Elle couvre aussi tes compagnons tant qu'elle dure.") : "")
         + (action.type === "defense" && rule.conditionId === "chargeIncoming" ? " " + _t("Et tu frappes dans la foulée.") : "") + '</span></div>';
     } else if (isArchetypeCounter) {
-      h += '<div class="grimoire-verdict is-counter"><span><img class=ico-inline src=images/Icons/system/ascension.webp></span><span><strong>' + _t("Effet spécial.") + '</strong> '
+      h += '<div class="grimoire-verdict is-counter"><span><img class=ico-inline src=images/Icons/system/special_effect.webp></span><span><strong>' + _t("Effet spécial.") + '</strong> '
         + _t("Cette action agit sur cette situation en plus de ses dégâts normaux.") + '</span></div>';
     } else {
       h += '<div class="grimoire-verdict is-neutral"><span>○</span><span>' + _t("Cette action ne contre pas cette situation — elle sera simplement jouée en priorité.") + '</span></div>';

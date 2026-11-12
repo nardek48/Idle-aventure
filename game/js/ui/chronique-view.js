@@ -146,7 +146,7 @@ var Chronique = {
       return '<button type="button" onclick="Chronique.openOver()" title="' + esc(tip) + '"><img src="' + ico + '" alt="">' + (badge ? '<span class="chr-badge">' + badge + '</span>' : '') + '</button>';
     };
     return '<div class="chr-strip">'
-      + (fight ? "" : b("images/Icons/quests/quest_story.webp", _t("Objectif"), "")
+      + (fight ? "" : b("images/Icons/system/objective.webp", _t("Objectif"), "")
         + b("images/Icons/quests/quest_list.webp", _t("À faire"), n ? String(n) : "")
         + b("images/Icons/menu_icons/village_menu.webp", _t("Le village"), ""))
       + b("images/Icons/menu_icons/journal_menu.webp", _t("Journal"), "")

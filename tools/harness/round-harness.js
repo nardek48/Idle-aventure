@@ -25295,7 +25295,7 @@ console.log("\n[490] v3.729.0 — Grimoire : seules les situations rencontrées 
     // Fiche d'aide : phrase vraie, même icône
     var pt = g.GENERIC_TUTORIALS && g.GENERIC_TUTORIALS.grimoire_rules ? g.GENERIC_TUTORIALS.grimoire_rules.points : null, last = pt ? pt[pt.length - 1] : null;
     last = pt ? pt.filter(function (p) { return /^Une situation apparaît/.test(p.text); })[0] : null; // v3.736.0 : un point sur les jeux le suit
-    ok(last && last.text === "Une situation apparaît dans le Grimoire la première fois que tu la rencontres en combat. Trois règles au plus : la troisième s'ouvre aux Ruines." && last.icon === "images/Icons/quests/quest_resources.webp", "fiche d'aide : la phrase dit comment une situation apparaît (icône inchangée)");
+    ok(last && last.text === "Une situation apparaît dans le Grimoire la première fois que tu la rencontres en combat. Trois règles au plus : la troisième s'ouvre aux Ruines." && last.icon === "images/Icons/system/rules_unlock.webp", "fiche d'aide : la phrase dit comment une situation apparaît (icône propre, v3.773.0)");
   } catch (err) { ok(false, "[490] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   finally { g.showToast = keep.toast; g.addLog = keep.log; try { run("fullResetState();"); } catch (e) {} }
 })();

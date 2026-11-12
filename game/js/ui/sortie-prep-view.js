@@ -207,7 +207,7 @@ function buildSortiePrepLowHpHTML() {
       + '<span>' + esc(_t("Manger : {x}", { x: _td(r.name) })) + '<small>' + _t("En stock : {n}", { n: r.free }) + '</small></span><em>+' + gain + ' %</em></button>';
   });
   if (!rations.length) h += '<div class="sp-lowhp-none">' + _t("Aucune ration à manger · Cuisine de camp") + '</div>';
-  h += '<button type="button" class="sp-lowhp-act" onclick="sortiePrepRest()"><img src="images/Icons/camp/campfire.webp" alt="">'
+  h += '<button type="button" class="sp-lowhp-act" onclick="sortiePrepRest()"><img src="images/Icons/camp/rest.webp" alt="">'
     + '<span>' + _t("Se reposer au Feu de camp") + '<small>' + _t("PV au maximum dans {d}", { d: formatTime(Math.ceil(CampManager.getMinutesToFull() * 60)) }) + '</small></span></button>';
   return h + '</div></div>';
 }

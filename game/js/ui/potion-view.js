@@ -71,7 +71,7 @@ function buildPotionCardHTML(potion) {
   h += '<div class="nb-purchase-info-col">';
   h += '<div class="nb-purchase-name">' + esc(_td(potion.name)) + '</div>';
   h += '<div class="nb-purchase-desc">' + esc(_td(potion.desc)) + '</div>';
-  h += '<div class="nb-purchase-meta"><img class=ico-inline src=images/Icons/subtabs/inventory.webp> ' + (potion.perRun ? _t("Stock : {n} / {c}", { n: stock, c: cap }) : _t("Stock : {n}", { n: stock })) + '</div>';
+  h += '<div class="nb-purchase-meta"><img class=ico-inline src=images/Icons/system/stock.webp> ' + (potion.perRun ? _t("Stock : {n} / {c}", { n: stock, c: cap }) : _t("Stock : {n}", { n: stock })) + '</div>';
 
   if (isLive) {
     h += '<div class="nb-purchase-meta"><img class=ico-inline src=images/Icons/village_buildings/apothecary.webp> ' + _t("Active — mission en cours") + '</div>';
