@@ -1890,7 +1890,7 @@ STORY_QUESTS.ruins = {
         title: "Deux sur trois",
         points: [
           { icon: "images/Icons/subtabs/companions.webp", text: "Tu as maintenant trois compagnons, mais deux seulement t'accompagnent en combat. Choisis-les avant de partir, dans Héros › Alliés." },
-          { icon: "images/Icons/camp/campfire.webp", text: "Celui qui ne se bat pas garde le camp, et peut partir en patrouille." },
+          { icon: "images/Icons/companions/companions_pick.webp", text: "Celui qui ne se bat pas garde le camp, et peut partir en patrouille." },
           { icon: "images/Icons/companions/edda_dernier_trait.webp", text: "Chacun a sa place : Wenna soigne, Maddoc tient ou frappe de loin, Edda achève ceux qui veulent se relever." }
         ]
       },
@@ -2100,7 +2100,7 @@ STORY_QUESTS.ruins = {
           { icon: "images/Icons/combat_status/shield_incoming.webp", text: "Le Bâtisseur frappe peu. Il annonce un mur, puis blinde un de ses alliés : tes coups sur lui passent mal pendant quelques rounds." },
           { icon: "images/Icons/system/grimoire.webp", text: "Contre l'annonce, la même réponse qu'au bouclier : la condition « L'ennemi invoque un bouclier » du Grimoire." },
           { icon: "images/Icons/combat_stats/stat_attack.webp", text: "Mieux : le tuer en premier. Dans « Préparer la sortie », le réglage « Cible » sur « Celle qui soutient » le vise d'abord." },
-          { icon: "images/Icons/camp/campfire.webp", text: "Deux compagnons sur trois : Wenna soigne, Maddoc frappe de loin, Edda achève. Choisis selon ce qui t'attend." }
+          { icon: "images/Icons/companions/companions_pick.webp", text: "Deux compagnons sur trois : Wenna soigne, Maddoc frappe de loin, Edda achève. Choisis selon ce qui t'attend." }
         ]
       },
       check: function (game) { return storyAdvDone(game, "aq_ruines_batisseur"); },
@@ -2230,12 +2230,12 @@ STORY_QUESTS.ruins = {
       linkTo: { tab: "dungeon" },
       tutorial: {
         tab: "dungeon",
-        icon: "images/Icons/camp/campfire.webp",
+        icon: "images/Icons/dungeon/dungeon_camp.webp",
         title: "Le campement",
         points: [
           { icon: "images/Icons/subtabs/dungeon.webp", text: "Le Sanctuaire scellé se joue en deux étapes. Entre les deux, le campement : une halte, un seul choix." },
           { icon: "images/Icons/combat_stats/stat_health.webp", text: "Souffler : tu reprends une partie de tes PV. Changer de compagnon : deux sur trois, selon ce qui attend en bas." },
-          { icon: "images/Icons/camp/campfire.webp", text: "Sortir : tu remontes avec le butin de la première étape. Il est à toi, quoi qu'il arrive ensuite." },
+          { icon: "images/Icons/dungeon/dungeon_exit.webp", text: "Sortir : tu remontes avec le butin de la première étape. Il est à toi, quoi qu'il arrive ensuite." },
           { icon: "images/Icons/dungeon/dungeon_guaranteed_loot.webp", text: "Tomber dans la deuxième étape ne coûte que le butin de la deuxième étape." }
         ]
       },
@@ -2911,7 +2911,7 @@ STORY_QUESTS.crypt = {
         points: [
           { icon: "images/Icons/combat_status/calling.webp", text: "Le Nécromancien annonce un appel, puis réveille un dormeur au tour suivant. Celui-là ne rapporte pas d'or en plus : ce n'est pas toi qui l'as réveillé." },
           { icon: "images/Icons/combat_stats/stat_attack.webp", text: "Le tuer en premier coupe l'appel. Dans « Préparer la sortie », le réglage « Cible » sur « Celle qui soutient » le vise d'abord." },
-          { icon: "images/Icons/camp/campfire.webp", text: "Ysolt retarde un réveil, Wenna soigne, Maddoc frappe de loin, Edda achève. Deux sur quatre : choisis selon ce qui t'attend." }
+          { icon: "images/Icons/companions/companions_pick.webp", text: "Ysolt retarde un réveil, Wenna soigne, Maddoc frappe de loin, Edda achève. Deux sur quatre : choisis selon ce qui t'attend." }
         ]
       },
       check: function (game) { return storyAdvDone(game, "aq_crypte_appel"); },
@@ -3041,7 +3041,7 @@ STORY_QUESTS.crypt = {
         icon: "images/Dungeons/Icone_base/palier4.webp",
         title: "L'Ossuaire",
         points: [
-          { icon: "images/Icons/camp/campfire.webp", text: "L'Ossuaire se joue en deux étapes, comme le Sanctuaire scellé. Entre les deux, le campement : une halte, un seul choix." },
+          { icon: "images/Icons/dungeon/dungeon_camp.webp", text: "L'Ossuaire se joue en deux étapes, comme le Sanctuaire scellé. Entre les deux, le campement : une halte, un seul choix." },
           { icon: "images/Icons/combat_status/asleep.webp", text: "Ici aussi, des morts dorment. Le Porte-couronne, frappé, en réveille un : tue-le vite, ou garde Ysolt près de toi." },
           { icon: "images/Icons/dungeon/dungeon_weapon.webp", text: "Les pièces Épiques sortent d'ici. L'arme du Cœur en est une." }
         ]
@@ -4241,7 +4241,7 @@ STORY_QUESTS.mountain = {
         icon: "images/Dungeons/Icone_base/palier5.webp",
         title: "La Gueule du volcan",
         points: [
-          { icon: "images/Icons/camp/campfire.webp", text: "La Gueule se joue en deux étapes, comme l'Ossuaire. Entre les deux, le campement de la forge." },
+          { icon: "images/Icons/dungeon/dungeon_camp.webp", text: "La Gueule se joue en deux étapes, comme l'Ossuaire. Entre les deux, le campement de la forge." },
           { icon: "images/Icons/combat_status/shell.webp", text: "Une veine affleure à chaque vague. La chaleur repart de zéro à la vague suivante. Le Golem-forge se fait une carapace à chaque taille : laisse la veine tant qu'il est debout." },
           { icon: "images/Icons/combat_status/burning.webp", text: "L'Ifrit qui trie frappe celui qui a taillé, et le fait brûler deux rounds. Le tuer éteint le feu." }
         ]
