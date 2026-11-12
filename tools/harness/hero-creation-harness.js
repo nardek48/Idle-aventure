@@ -34,7 +34,11 @@ ok(/Choix de la classe/.test(host()), "étape 2 rendue");
 ok((host().match(/hc-class-card/g)||[]).length===3, "3 colonnes de classe : "+(host().match(/hc-class-card/g)||[]).length);
 ok(/Chevalier/.test(host()) && /Rôdeur/.test(host()) && /Mage/.test(host()), "noms Chevalier / Rôdeur / Mage affichés");
 ok(/hc-class-card active/.test(host()) && /La maîtrise du combat/.test(host()), "Chevalier actif par défaut + tagline");
-ok(/hc-chaos-toggle/.test(host()) && !/hc-chaos-toggle on/.test(host()), "toggle Chaos présent, désactivé");
+ok(!/hc-chaos-toggle/.test(host()), "v3.774.0 : variante du Chaos fermée tant qu'aucun héros n'a fini l'Histoire (pas de case)");
+g.toggleHeroChaosVariant();
+ok(g.pendingHeroId==="knight", "fermée : la bascule ne fait rien");
+g.Prefs.setValue("chaosUnlocked","1"); g.openHeroSelection();
+ok(/hc-chaos-toggle/.test(host()) && !/hc-chaos-toggle on/.test(host()), "ouverte (Prefs chaosUnlocked) : toggle Chaos présent, désactivé");
 ok(/hc-stats/.test(host()) && /hc-skills-toggle/.test(host()), "stats + bandeau compétences présents");
 ok(/knight_m\.webp/.test(host()) && /hc-gender-btn active"[^>]*>Homme/.test(host()), "genre par défaut = Homme (knight_m.webp)");
 

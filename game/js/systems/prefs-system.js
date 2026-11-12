@@ -18,6 +18,7 @@
      alphaIntroSeen, alphaFinSeen (absentes) v3.753.0 : fenêtres de l'Alpha déjà montrées (ui/alpha-view.js)
      textSize     "normal" v3.538.0 (audit ERG-11) : « grand » agrandit pages, feuilles et fenêtres de 12 % (ui/desktop-scale.js)
      chronique    true   v3.503.0 (grand écran) : Chronique ouverte à droite du format large (ui/chronique-view.js)
+     chaosUnlocked (absente) v3.774.0 (Seb 12/11) : un héros a fini l'Histoire, la variante du Chaos s'ouvre à la création
      forgeMondesSeen (absente) Forge des mondes (Seb 07/11) : fenêtre « La Forge a changé » déjà montrée (une fois)
      shopBuyAmount (absente) audit 04/11 (SAVE-17) : quantité d'entraînement (1, 10, 25 ou -1 = MAX), texte
      lang         "fr"   v3.368.0 : langue du jeu (core/i18n.js) ; texte, lu par getValue/setValue.

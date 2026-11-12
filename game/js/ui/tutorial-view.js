@@ -383,7 +383,7 @@ var GENERIC_TUTORIALS = {
     points: [
       { icon: "images/Icons/classes/chaos.webp", text: "Le Chevalier, le Rôdeur et le Sorcier du Chaos gardent leur classe : mêmes compétences, même ressource (Rage, Concentration, Mana), même caractéristique principale." },
       { icon: "images/Icons/classes/chaos.webp", text: "Seules leurs cinq caractéristiques de départ changent. L'aperçu (PV, ATK, DEF, VIT, CRIT) suit la case cochée : compare avant de choisir." },
-      { icon: "images/Icons/system/lock_closed.webp", text: "La variante se choisit ici, à la création, et reste celle de ce héros. Tu pourras créer d'autres héros plus tard (Héros › Mes héros)." }
+      { icon: "images/Icons/system/lock_closed.webp", text: "Elle s'ouvre quand un de tes héros a fini l'Histoire. Elle se choisit à la création et reste celle de ce héros." }
     ]
   },
   combat_forecast: {

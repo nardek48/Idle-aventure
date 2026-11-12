@@ -26447,6 +26447,22 @@ console.log("\n[520] Petites Aventures : tutoriel des petites quêtes du chemin 
   finally { P.foundSecrets = fs0; game.sceneRun = keep; }
 })();
 
+console.log("\n[521] Variante du Chaos : ouverte quand un héros a fini l'Histoire (v3.774.0, Seb 12/11)");
+(function () {
+  var TS = g.TowerSystem, end0 = TS.ending, raw = g.Prefs._load(), had = Object.prototype.hasOwnProperty.call(raw, "chaosUnlocked"), v0 = raw.chaosUnlocked, name0 = game.playerName;
+  try {
+    delete raw.chaosUnlocked; game.playerName = name0 || "Test";
+    TS.ending = function () { return null; };
+    ok(!g.isChaosUnlocked() && !g.Prefs.has("chaosUnlocked"), "Histoire pas finie : fermée, rien de noté");
+    TS.ending = function () { return Object.keys(g.TOWER_FINS)[0]; };
+    ok(g.isChaosUnlocked() && g.Prefs.has("chaosUnlocked"), "fin de la Tour : ouverte et notée sur l'appareil");
+    TS.ending = function () { return null; };
+    ok(g.isChaosUnlocked(), "une fois notée, elle reste ouverte (autre emplacement, partie non finie)");
+    ok(/variante du Chaos s'ouvre à la création/.test(fsRead("js/systems/prefs-system.js")), "clé chaosUnlocked documentée dans prefs-system.js");
+  } catch (err) { ok(false, "[521] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  finally { TS.ending = end0; game.playerName = name0; if (had) raw.chaosUnlocked = v0; else delete raw.chaosUnlocked; }
+})();
+
 Promise.all(ATTENTES).then(function () {
   if (echecs.length) console.log("\nÉchecs :\n" + echecs.map(function (e) { return "  ✘ " + e; }).join("\n"));
   console.log("\n" + passes + " OK, " + failures + " échec(s)");

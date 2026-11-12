@@ -903,6 +903,8 @@ function buildStoryEndHTML() {
     { label: _t("Hauts faits"), value: hf + " / " + db.length }
   ];
   var fin = window.TowerSystem && TowerSystem.ending(); // v3.631.0 : la vraie fin, celle de la Question
+  var chaosNew = fin && window.Prefs && !Prefs.has("chaosUnlocked"); // v3.774.0 : la fin ouvre la variante du Chaos
+  if (fin && typeof noteChaosUnlock === "function") noteChaosUnlock();
   var h = '<div class="full-menu-overlay kwin-veil"><div class="kwin dungeon-story-card is-success story-end-win">';
   h += kWinHeadHTML({ icon: renderIconOrEmojiHTML("images/Icons/quests/quest_story.webp", "dungeon-story-icon-img", ""),
     title: esc(fin ? _t("Fin de l'Histoire") : _t("Fin du chapitre {n}", { n: ids.length })), sub: esc(fin ? _td(TOWER_FINS[fin].num) : _t("L'Histoire s'arrête ici, pour l'instant")) });
@@ -913,6 +915,7 @@ function buildStoryEndHTML() {
     h += '<div class="story-end-h">' + esc(_t("Tes choix")) + '</div>';
     choix.forEach(function (g) { h += '<div class="story-end-ch">' + esc(_td(g.chapter)) + '</div>' + storyEndRowsHTML(g.rows, "story-end-rows"); });
   }
+  if (fin) h += '<p class="story-end-note"><b>' + esc(chaosNew ? _t("Nouveau : la variante du Chaos s'ouvre pour tes prochains héros (Héros › Mes héros).") : _t("La variante du Chaos est ouverte pour tes prochains héros (Héros › Mes héros).")) + '</b></p>';
   h += '<p class="story-end-note">' + esc(fin ? _t("Le jeu continue : donjons, cartes, village. Ce bilan, la vision et l'épilogue restent dans Quêtes › Histoire.") : _t("Ce bilan reste dans Quêtes › Histoire. Au Camp, le fil rouge propose la suite.")) + '</p></div>';
   h += '<div class="kwin-foot"><button class="kbtn primary" type="button" onclick="closeQuestCompletePopup()">' + esc(_t("Continuer")) + '</button></div></div></div>';
   return h;
@@ -926,6 +929,7 @@ function openStoryEndPopup() {
 /* Carte en tête de Quêtes › Histoire, une fois l'Histoire finie. */
 function buildStoryEndCardHTML() {
   var fin = window.TowerSystem && TowerSystem.ending(); // v3.631.0 : la fin choisie, l'épilogue et la vision à revoir
+  if (fin && typeof noteChaosUnlock === "function") noteChaosUnlock(); // v3.774.0 : une partie déjà finie ouvre aussi le Chaos
   if (fin) return '<div class="story-end-card"><b>' + esc(_td(TOWER_FINS[fin].num)) + '</b><p>' + esc(TowerSystem.bannerLine()) + '</p>'
     + '<button class="story-end-link" type="button" onclick="openStoryEndPopup()">' + esc(_t("Revoir le bilan")) + ' ▸</button>'
     + '<button class="story-end-link" type="button" onclick="TowerSystem.playEpilogue(null)">' + esc(_t("Revoir l'épilogue")) + ' ▸</button></div>';

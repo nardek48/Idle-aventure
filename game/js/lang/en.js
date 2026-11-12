@@ -61,6 +61,10 @@ I18n.register("en", {
   "Village : les pastilles de niveau des cartes ne passent plus par-dessus les onglets quand la liste défile.": "Village: card level badges no longer slide over the tabs when the list scrolls.",
   "Talents : le bouton « Apprendre » ne déborde plus de l'écran.": "Talents: the “Learn” button no longer runs off the screen.",
   "Talents : l'écran prend le style du reste du jeu. Onglets Classe / Commandement du kit, points en tête de l'arbre, cadres sur l'arbre et le panneau du talent.": "Talents: the screen now matches the rest of the game. Class / Command tabs from the kit, points at the top of the tree, frames on the tree and the talent panel.",
+  // v3.774.0 : la variante du Chaos s'ouvre à la fin de l'Histoire
+  "Création du héros : la variante du Chaos s'ouvre maintenant quand un de tes héros a fini l'Histoire. Les héros du Chaos déjà créés ne changent pas.": "Hero creation: the Chaos variant now opens once one of your heroes has finished the Story. Chaos heroes you already created are unchanged.",
+  "Nouveau : la variante du Chaos s'ouvre pour tes prochains héros (Héros › Mes héros).": "New: the Chaos variant is now open for your next heroes (Hero › My heroes).",
+  "La variante du Chaos est ouverte pour tes prochains héros (Héros › Mes héros).": "The Chaos variant is open for your next heroes (Hero › My heroes).",
   // v3.773.0 : images de Seb
   "Nouvelles images : les objets et les fins cachées des Petites Aventures, les fins de la Tour, la Forge des mondes, et une image propre pour le campement et la sortie du donjon, le repos, le stock, l'objectif et les fenêtres de confirmation.": "New artwork: Small Adventure quest items and hidden endings, the Tower's endings, the Forge of worlds, and dedicated images for the dungeon camp and exit, resting, stock, the objective and confirmation windows.",
   // v3.772.0 : mode PC (atelier mode-pc, variante A)
@@ -9504,7 +9508,7 @@ I18n.register("en", {
   "La variante du Chaos": "The Chaos variant",
   "Le Chevalier, le Rôdeur et le Sorcier du Chaos gardent leur classe : mêmes compétences, même ressource (Rage, Concentration, Mana), même caractéristique principale.": "The Chaos Knight, Chaos Ranger and Chaos Sorcerer keep their class: same skills, same resource (Rage, Focus, Mana), same main attribute.",
   "Seules leurs cinq caractéristiques de départ changent. L'aperçu (PV, ATK, DEF, VIT, CRIT) suit la case cochée : compare avant de choisir.": "Only their five starting attributes change. The preview (HP, ATK, DEF, SPD, CRIT) follows the ticked box: compare before you choose.",
-  "La variante se choisit ici, à la création, et reste celle de ce héros. Tu pourras créer d'autres héros plus tard (Héros › Mes héros).": "The variant is chosen here, at creation, and stays with this hero. You can create other heroes later (Hero › My heroes).",
+  "Elle s'ouvre quand un de tes héros a fini l'Histoire. Elle se choisit à la création et reste celle de ce héros.": "It opens once one of your heroes has finished the Story. It is chosen at creation and stays with that hero.",
   "Le pronostic": "The forecast",
   "Avant une mission, un donjon ou une élite de la carte, le pronostic compare tes dégâts et tes PV, potions comprises, à ceux de l'adversaire : Sans danger, Abordable, Risqué, Très difficile ou Hors de portée.": "Before a mission, a dungeon or a map elite, the forecast compares your damage and HP, potions included, with your opponent's: No danger, Manageable, Risky, Very hard or Out of reach.",
   "Au départ d'une mission, il ne t'arrête que si c'est Risqué ou pire, ou sous 50 % de tes PV : « Annuler » (ou « Me soigner ») ou partir quand même. Il écarte l'impossible, sans prédire l'issue.": "When a mission starts, it only stops you if it is Risky or worse, or below 50% of your HP: “Cancel” (or “Heal me”) or set out anyway. It rules out the impossible, without predicting the outcome.",

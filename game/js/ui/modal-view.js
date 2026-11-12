@@ -101,6 +101,20 @@ function isChaosHeroId(heroId) {
   return typeof heroId === "string" && heroId.indexOf("chaos") === 0;
 }
 
+/* v3.774.0 (Seb 12/11, A) : la variante du Chaos s'ouvre quand un héros a fini l'Histoire (fin de la Tour).
+   Noté sur l'appareil (Prefs chaosUnlocked), les héros étant des emplacements séparés ; ceux du Chaos déjà créés restent. */
+function isChaosUnlocked() {
+  if (window.Prefs && Prefs.has("chaosUnlocked")) return true;
+  return noteChaosUnlock();
+}
+function noteChaosUnlock() {
+  var fin = window.TowerSystem && typeof TowerSystem.ending === "function" && typeof game !== "undefined" && game && game.playerName && TowerSystem.ending();
+  if (fin && window.Prefs) Prefs.setValue("chaosUnlocked", "1");
+  return !!fin;
+}
+window.isChaosUnlocked = isChaosUnlocked;
+window.noteChaosUnlock = noteChaosUnlock;
+
 /* v3.151.0 : lit imageM/imageF directement (pas via le getter hero.image,
    qui lit game.heroGender déjà CONFIRMÉ) — utilisé dans le picker pour
    refléter pendingHeroGender avant toute confirmation, sans écrire dans
@@ -144,6 +158,7 @@ function selectHeroClass(classId) {
 function toggleHeroChaosVariant() {
   var cls = getHeroClassEntry(pendingHeroId);
   if (!cls || !cls.heroIds || cls.heroIds.length < 2) return;
+  if (!isChaosHeroId(pendingHeroId) && !isChaosUnlocked()) return; // fermée tant qu'aucun héros n'a fini l'Histoire
   pendingHeroId = isChaosHeroId(pendingHeroId) ? cls.heroIds[0] : cls.heroIds[1];
   openHeroSelection();
   // v3.704.0 (TUTO-16) : première case cochée, la fiche du Chaos au-dessus de la création (sauvée à la confirmation)
@@ -467,8 +482,8 @@ function buildHeroStepHTML(selectedHero) {
   // v3.403.0 : la description de la classe choisie, sous le rail (une seule, plus lisible que trois)
   if (selectedClass && HERO_CLASS_TAGLINES[selectedClass.id]) html += '<p class="hc-class-tagline">' + esc(HERO_CLASS_TAGLINES[selectedClass.id]) + '</p>';
 
-  // Toggle Chaos — uniquement si la classe active a bien 2 variantes.
-  if (selectedClass && selectedClass.heroIds && selectedClass.heroIds.length >= 2) {
+  // Toggle Chaos — uniquement si la classe active a bien 2 variantes, et une fois l'Histoire finie (v3.774.0).
+  if (selectedClass && selectedClass.heroIds && selectedClass.heroIds.length >= 2 && (selectedIsChaos || isChaosUnlocked())) {
     var chaosHero = getHeroById(selectedClass.heroIds[1]);
     html += '<button type="button" class="hc-chaos-toggle' + (selectedIsChaos ? ' on' : '') + '" onclick="toggleHeroChaosVariant()">';
     html += '  <span class="hc-chaos-toggle-box">' + (selectedIsChaos ? '<img class=ico-inline src=images/Icons/system/check_valid.webp>' : '') + '</span>';

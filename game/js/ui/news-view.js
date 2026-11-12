@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.774.0", "classes/chaos", _t("Création du héros : la variante du Chaos s'ouvre maintenant quand un de tes héros a fini l'Histoire. Les héros du Chaos déjà créés ne changent pas.")],
     ["3.773.0", "menu_icons/map_menu", _t("Nouvelles images : les objets et les fins cachées des Petites Aventures, les fins de la Tour, la Forge des mondes, et une image propre pour le campement et la sortie du donjon, le repos, le stock, l'objectif et les fenêtres de confirmation.")],
     ["3.772.0", "menu_icons/village_menu", _t("Mode PC : l'en-tête de chaque écran devient un bandeau bas, le contenu commence plus haut. Bibliothèque, Journal et Paramètres sont groupés au bas du menu, la fiche des bâtiments passe en parchemin.")],
     ["3.772.0", "menu_icons/camp_menu", _t("Mode PC : les notifications s'affichent en bas à droite (à droite du combat), les ressources du haut portent leur nom, et le Camp range les Expéditions sous le feu.")],
