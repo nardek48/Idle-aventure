@@ -79,9 +79,9 @@
   function heroTiles(noAbilities) {
     var tr = trainingStatus();
     var t = tileHTML({ icon: "images/Icons/subtabs/hero_stats.webp", title: _t("Entraînement"), line: esc(tr.line), sub: esc(tr.sub), tone: tr.tone, onclick: "openHerosSheet('stats')" });
-    // H2 : rangs des sorts sur la tuile (total, et rangs achetables en vert)
-    var SR = window.SkillRanks, nb = SR ? SR.buyableCount() : 0;
-    var cap = SR ? _t("Rangs {n}/{m}", { n: SR.total(), m: SR.kitActions().length * SKILL_RANK_MAX }) + (nb ? " · " + _t("{n} à acheter", { n: nb }) : "") : _t("Quand s'en servir");
+    // H2 : rang des sorts sur la tuile (v3.779.0 : automatique, rien à acheter)
+    var SR = window.SkillRanks, nb = 0;
+    var cap = SR ? _t("Rangs {n}/{m}", { n: SR.total(), m: SR.kitActions().length * SKILL_RANK_MAX }) : _t("Quand s'en servir");
     if (!noAbilities) t += tileHTML({ icon: "images/Icons/subtabs/hero_abilities.webp", title: _t("Capacités"), line: '<span class="hs-icons">' + skillIcons() + '</span>', sub: esc(cap), tone: nb ? "go" : "plain", badge: nb || 0, onclick: "openHerosSheet('abilities')" });
     if (typeof isTabUnlocked !== "function" || isTabUnlocked("ascension")) {
       var mp = window.MemoryManager ? MemoryManager.getProgress() : { level: 0 };

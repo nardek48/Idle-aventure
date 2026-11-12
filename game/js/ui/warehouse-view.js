@@ -154,7 +154,6 @@ function getWarehouseOtherUses(key) {
   var def = WAREHOUSE_RESOURCES[key] || {};
   if (def.healPct) out.push({ icon: "images/Icons/camp/camp_meal.webp", text: _t("Campement : repas (+{p} % PV)", { p: Math.round(def.healPct * 100) }) });
   /* v3.520.0 (audit RES-3) : rangs, vivres de sortie, départs d'expédition et besace, lus dans les données */
-  if ((window.SKILL_RANK_PRICES || []).some(function (p) { return p.mat === key; })) out.push({ icon: "images/Icons/system/upgrade.webp", text: _t("Rangs des capacités du héros (Héros › Capacités)") });
   if ((window.COMPANION_SKILL_RANK_PRICES || []).some(function (p) { return p.mat === key; })) out.push({ icon: "images/Icons/system/upgrade.webp", text: _t("Rangs des compagnons (Héros › Alliés)") });
   var vivres = Object.keys(window.PROVISIONS_BY_WORLD || {}).filter(function (w) { return PROVISIONS_BY_WORLD[w] === key; })
     .map(function (w) { var wd = (window.WORLDS || []).filter(function (x) { return x.id === w; })[0]; return wd ? _td(wd.name) : w; });

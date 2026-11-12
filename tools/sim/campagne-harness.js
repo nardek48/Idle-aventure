@@ -1610,13 +1610,7 @@ function entrepotPour(res, qty) {
 function chantierHeros(g) {
   var SR = g.SkillRanks, CM = g.CompanionManager, WM = g.WarehouseManager;
   function mat(m, q) { if (WM.getAmount(m) >= q) return true; SANS_LENDEMAIN++; if (JOUEUR) SANS_ATTENTE++; var r; try { r = obtain(m, q); } finally { SANS_LENDEMAIN--; if (JOUEUR) SANS_ATTENTE--; } return r && WM.getAmount(m) >= q; }
-  if (SR) for (var k = 0; k < 20; k++) {
-    var acts = SR.kitActions().filter(function (a) { return SR.get(a.id) < SR.maxRank(); }).sort(function (a, b) { return SR.get(a.id) - SR.get(b.id); });
-    var a = acts[0], p = a && SR.nextCost(a.id);
-    if (!p || p.gold > g.game.gold * 0.35 || !mat(p.mat, p.qty) || p.gold > g.game.gold) break;
-    if (!SR.buy(a.id)) break;
-    dep("rangsSorts", p.gold);
-  }
+  // v3.779.0 : rangs des sorts automatiques (monde atteint), rien à acheter
   if (CM && CM.buySkillRank) CM.partyIds().forEach(function (cid) {
     for (var n = 0; n < 5; n++) {
       var stt = CM.skillRankStatus(cid); if (stt === "max" || stt === "lock") break;
@@ -1662,12 +1656,7 @@ function jalonsEntrepot(g) {
 function rangsDuStock(g) {
   var SR = g.SkillRanks, CM = g.CompanionManager, WM = g.WarehouseManager;
   if (SAVING) return;
-  if (SR) for (var k = 0; k < 8; k++) {
-    var a = SR.kitActions().filter(function (x) { return SR.status(x.id) === "ok"; }).sort(function (x, y) { return SR.get(x.id) - SR.get(y.id); })[0];
-    var p = a && SR.nextCost(a.id);
-    if (!p || p.gold > g.game.gold * 0.2 || !SR.buy(a.id)) break;
-    dep("rangsSorts", p.gold);
-  }
+  // v3.779.0 : rangs des sorts automatiques, seuls les compagnons s'achètent
   if (CM && CM.buySkillRank) CM.partyIds().forEach(function (cid) {
     var stt = CM.skillRankStatus(cid); if (stt === "max" || stt === "lock") return;
     var pc = g.COMPANION_SKILL_RANK_PRICES[CM.skillRank(cid)];
@@ -2473,10 +2462,7 @@ function finDePartie() {
     for (var k = 0; k < 60; k++) { var why = F.getBlockReason(sl); if (why !== null && why !== "Matériaux manquants") break; payer("reforges", F.getCost(sl)); if (F.reforge(sl) === false) break; }
   });
   var or0 = game.gold; buyTraining(g, 100000, true); D["entraînement"] = { or: Math.round(or0 - game.gold), achats: "—" }; game.gold = 1e15;
-  if (SR) for (var k = 0; k < 200; k++) {
-    var acts = SR.kitActions().filter(function (a) { return SR.get(a.id) < SR.maxRank(); }); if (!acts.length) break;
-    var p = SR.nextCost(acts[0].id); if (!p) break; var c = { gold: p.gold }; c[p.mat] = p.qty; payer("rangs des sorts", c); if (!SR.buy(acts[0].id)) break;
-  }
+  // v3.779.0 : rangs des sorts automatiques, plus rien à payer
   if (CM && CM.buySkillRank) CM.unlockedIds().forEach(function (cid) {
     for (var n = 0; n < 6; n++) { var st = CM.skillRankStatus(cid); if (st === "max" || st === "lock") break; var pc = g.COMPANION_SKILL_RANK_PRICES[CM.skillRank(cid)]; var c = { gold: pc.gold }; c[pc.mat] = pc.qty; payer("rangs des compagnons", c); if (!CM.buySkillRank(cid)) break; }
     for (var m = 0; m < 60; m++) { var cost = typeof g.getCompanionUpgradeCost === "function" ? g.getCompanionUpgradeCost(cid) : null; if (!cost) break; payer("entraînement des compagnons", { gold: cost }); if (!CM.buyUpgrade(cid, "damage")) break; }

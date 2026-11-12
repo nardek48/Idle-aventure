@@ -542,30 +542,21 @@ function toggleHeroSkill(id) {
   if (typeof renderPanel === "function") renderPanel();
 }
 
-/* H2 (chantier du héros) : pastilles de rang sous le nom, et bloc « rang suivant » dans la carte dépliée (atelier rangs-sorts.html, variante A). */
+/* H2 : pastilles de rang sous le nom (v3.779.0 : rang donné par le monde atteint). */
 function buildHeroSkillPipsHTML(id) {
-  var SR = window.SkillRanks, r = SR.get(id), max = SR.maxRank(), h = '<span class="pc-skill-rk"><span class="pc-skill-pips" aria-hidden="true">';
+  var SR = window.SkillRanks, r = SR.get(id), max = r, h = '<span class="pc-skill-rk"><span class="pc-skill-pips" aria-hidden="true">';
   for (var i = 1; i <= SKILL_RANK_MAX; i++) h += '<i class="' + (i <= r ? "is-on" : (i > max ? "is-lock" : "")) + '"></i>';
   return h + '</span>' + esc(_t("Rang {n}/{m}", { n: r, m: SKILL_RANK_MAX })) + '</span>';
 }
 
+/* v3.779.0 (lot 5) : rang automatique, donné par le monde atteint ; la carte dit la valeur et le monde du rang suivant. */
 function buildHeroSkillRankHTML(action) {
-  var SR = window.SkillRanks, id = String(action.id), r = SR.get(id), st = SR.status(id), isDef = action.type === "defense";
+  var SR = window.SkillRanks, id = String(action.id), r = SR.get(id), isDef = action.type === "defense";
   var lbl = isDef ? _t("Effet") : _t("Dégâts");
-  if (st === "max") return '<div class="pc-skill-max">★ ' + esc(_t("Rang maximum : {v} %", { v: SR.valueAt(action, r) })) + '</div>';
-  if (st === "lock") return '<div class="pc-skill-lock">' + esc(_t("Rang {n} : {w}.", { n: r + 1, w: SR.openingText(r + 1) })) + '</div>';
-  var p = SR.nextCost(id), def = (typeof WAREHOUSE_RESOURCES !== "undefined" && WAREHOUSE_RESOURCES[p.mat]) || {};
-  var stock = window.WarehouseManager ? WarehouseManager.getAmount(p.mat) : 0, goldOk = Number(game.gold || 0) >= p.gold;
-  var h = '<div class="pc-skill-next"><span class="pc-skill-next-t">' + esc(_t("Rang {a} → {b}", { a: r, b: r + 1 })) + '</span>';
-  h += '<span class="pc-skill-next-v">' + esc(lbl) + ' ' + SR.valueAt(action, r) + ' % → <b>' + SR.valueAt(action, r + 1) + ' %</b></span>';
-  h += '<span class="pc-skill-cost"><span class="pc-skill-chip' + (goldOk ? '' : ' is-short') + '"><img src="images/Icons/gold_icon.webp" alt="">' + esc(_t("{n} or", { n: formatNumber(p.gold) })) + '</span>';
-  h += '<span class="pc-skill-chip' + (stock >= p.qty ? '' : ' is-short res-go') + '"' + (stock >= p.qty ? '' : resGoAttr(p.mat)) + '>' + renderIconOrEmojiHTML(def.icon || "", "pc-skill-chip-img", "") + p.qty + ' ' + esc(_td(def.name || p.mat)) + ' <small>(' + formatNumber(stock) + ')</small></span></span>';
-  h += '<button type="button" class="kbtn" onclick="buySkillRank(\'' + esc(id) + '\')"' + (st === "ok" ? '' : ' disabled') + '>' + esc(_t("Monter au rang {n}", { n: r + 1 })) + '</button>';
-  return h + '</div>';
+  if (r >= SKILL_RANK_MAX) return '<div class="pc-skill-max">★ ' + esc(_t("Rang maximum : {v} %", { v: SR.valueAt(action, r) })) + '</div>';
+  return '<div class="pc-skill-lock">' + esc(_t("Rang {n} : {w}.", { n: r + 1, w: SR.worldText(r + 1) })) + ' '
+    + esc(lbl) + ' ' + SR.valueAt(action, r) + ' % → ' + SR.valueAt(action, r + 1) + ' %</div>';
 }
-
-function buySkillRank(id) { if (window.SkillRanks) SkillRanks.buy(id); }
-window.buySkillRank = buySkillRank;
 
 function buildHeroSkillCardHTML(action) {
   if (!action) return "";
@@ -590,7 +581,7 @@ function buildHeroSkillCardHTML(action) {
   // des CHEMINS d'image pour certaines actions et des emojis pour d'autres.
   var rankable = !!window.SkillRanks && action.slot !== "basic"; // H2 : l'attaque de base n'a pas de rang
   h += '<span class="pc-skill-ico">' + renderIconOrEmojiHTML(icon, "pc-skill-ico-img", _td(action.label))
-    + (rankable && SkillRanks.status(id) === "ok" ? '<span class="pc-skill-up" title="' + esc(_t("Rang à acheter")) + '">↑</span>' : '') + '</span>';
+ + '</span>';
   h += '<span class="pc-skill-name">' + esc(_td(action.label)) + (rankable ? buildHeroSkillPipsHTML(id) : '') + '</span>';
   h += '<span class="pc-skill-tags">';
   var isBasic = action.slot === "basic";

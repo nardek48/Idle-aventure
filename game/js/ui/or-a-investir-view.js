@@ -70,23 +70,6 @@ function orInvestCompanions() {
   return out;
 }
 
-/* Rangs des sorts (H2), ouverts sur la fiche Capacités au sort concerné. */
-function orInvestSkillRanks() {
-  if (!window.SkillRanks || orInvestHeroBusy()) return [];
-  var out = [];
-  SkillRanks.kitActions().forEach(function (a) {
-    var s = SkillRanks.status(a.id);
-    if (s !== "ok" && s !== "short") return;
-    var r = SkillRanks.get(a.id), cost = SkillRanks.nextCost(a.id), c = { gold: cost.gold };
-    c[cost.mat] = cost.qty;
-    out.push({ id: "s:" + a.id + ":" + (r + 1), kind: "s", ok: s === "ok", interet: OR_INVEST_INTERET.skill, gold: cost.gold,
-      icon: (typeof CLASS_ACTION_ICON_FALLBACK !== "undefined" && CLASS_ACTION_ICON_FALLBACK[a.id]) || (a.type === "defense" ? "images/Icons/combat_stats/stat_defense.webp" : "images/Icons/combat_actions/skill_generic.webp"),
-      title: _t("{x} : rang {n}", { x: _td(a.label || a.id), n: r + 1 }), sub: _t("Rang de sort"), cost: c,
-      go: function () { orInvestGoSkill(a.id); } });
-  });
-  return out;
-}
-
 /* Rangs de compétence des compagnons (H4 partie C). */
 function orInvestCompanionRanks() {
   if (!window.CompanionManager || typeof CompanionManager.skillRankStatus !== "function" || orInvestHeroBusy()) return [];
@@ -176,7 +159,7 @@ function orInvestSort(list) {
 
 /* Tout ce que l'or peut acheter, payable (ok) ou non. */
 function orInvestAll() {
-  return orInvestSort([].concat(orInvestShop(), orInvestBuildings(), orInvestSkillRanks(), orInvestCompanions(), orInvestCompanionRanks(),
+  return orInvestSort([].concat(orInvestShop(), orInvestBuildings(), orInvestCompanions(), orInvestCompanionRanks(),
     orInvestEnchant(), orInvestTraining(), orInvestReforges()));
 }
 /* Dépenses payables tout de suite, la meilleure d'abord. */
@@ -192,12 +175,6 @@ function orInvestLater() {
     var hi = Math.min(max + COMPANION_TRAINING_PER_WORLD, COMPANION_TRAINING_HARD_MAX);
     out.push({ interet: I.companion, icon: def ? def.image : OR_INVEST_ICON, title: _t("{x}, niveaux {a} à {b}", { x: def ? _td(def.name) : cid, a: max + 2, b: hi + 1 }), sub: _t("s'ouvrent {w}", { w: next }) });
   });
-  var rk = SR ? SR.maxRank() + 1 : 0, acts = SR ? SR.kitActions() : [];
-  if (SR && rk <= SKILL_RANK_MAX && acts.length) {
-    var p = SKILL_RANK_PRICES[rk - 1];
-    out.push({ interet: I.skill, icon: "images/Icons/combat_actions/skill_generic.webp", title: _t("Rangs de sorts : rang {n}", { n: rk }),
-      sub: SR.openingText(rk) + " · " + _tn(acts.length, "{g} or + {q} {m}", "{g} or + {q} {m} chacun", { g: formatNumber(p.gold), q: p.qty, m: orInvestResName(p.mat) }) });
-  }
   var ck = CM && typeof CM.skillRankMax === "function" ? CM.skillRankMax() + 1 : 0, ids = CM ? CM.unlockedIds() : [];
   if (SR && ck && ck <= COMPANION_SKILL_RANK_MAX && ids.length) {
     out.push({ interet: I.compRank, icon: "images/Icons/companions/competences_compagnons.webp", title: _t("Compétences des compagnons : rang {n}", { n: ck }), sub: SR.openingText(ck) });

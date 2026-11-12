@@ -1297,10 +1297,6 @@ function milestoneGo(id) {
   if (go === "production") { switchTab("village"); if (typeof setVillageSubTab === "function") setVillageSubTab("production"); return; }
   if (go.indexOf("b:") === 0 && typeof orInvestGoBuilding === "function") { orInvestGoBuilding(go.slice(2)); return; }
   if (go === "training" && typeof orInvestGoHeros === "function") { orInvestGoHeros("amelioration"); return; }
-  if (go === "skills" && window.SkillRanks && typeof orInvestGoSkill === "function") {
-    var acts = SkillRanks.kitActions().slice().sort(function (a, b) { return SkillRanks.get(a.id) - SkillRanks.get(b.id); });
-    if (acts.length) { orInvestGoSkill(acts[0].id); return; }
-  }
   switchTab("more");
   if (typeof setHerosSubTab === "function") setHerosSubTab("companions");
   var cid = go.indexOf("c:") === 0 ? go.slice(2) : null;

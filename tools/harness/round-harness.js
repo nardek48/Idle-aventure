@@ -18556,41 +18556,30 @@ console.log("\n[322] Chantier du héros, H1 — entraînement au-delà de 150 (�
   }
 })();
 
-console.log("\n[323] Chantier du héros, H2 — rangs des sorts (+8 % de dégâts, +2 points de défense, prix par monde)");
+console.log("\n[323] Chantier du héros, H2 — rangs des sorts automatiques (v3.779.0 : rang = monde atteint)");
 (function () {
   try {
     run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
     var game = g.game, SR = g.SkillRanks;
-    ok(JSON.stringify(game.skillRanks) === "{}" && SR.maxRank() === 1, "partie neuve : aucun rang, rang 1 au plus (Forêt)");
+    ok(SR.get("knight_heavy_strike") === 0 && SR.status("knight_heavy_strike") === "lock" && typeof SR.buy === "undefined" && typeof g.SKILL_RANK_PRICES === "undefined", "Forêt : rang 0, rien à acheter");
     ok(g.getClassAction("knight", "skill1").damageMultiplier === 1.65, "sans rang : le kit tel quel (Frappe lourde 165 %)");
-    game.skillRanks = { knight_heavy_strike: 3, knight_guard: 2 };
+    game.skillRanks = { knight_heavy_strike: 5 };
+    ok(g.getClassAction("knight", "skill1").damageMultiplier === 1.65, "rangs payés avant v3.779.0 : ignorés");
+    game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true };
     var a = g.getClassAction("knight", "skill1"), d = g.getClassAction("knight", "defense");
-    ok(a.damageMultiplier === 2.046 && a.rank === 3, "Frappe lourde rang 3 : 165 % × 1,24 = 204,6 %");
+    ok(SR.get("knight_guard") === 3 && a.damageMultiplier === 2.046 && a.rank === 3, "Crypte atteinte : rang 3 partout, Frappe lourde 165 % × 1,24 = 204,6 %");
     ok(g.getSkillDescText("knight", a).indexOf("205%") !== -1, "la description montre la valeur classée (205 %)");
-    ok(d.effects.filter(function (e) { return e.type === "damageReduction"; })[0].value === 0.54, "Garde rang 2 : 50 % + 2 × 2 points = 54 %");
+    ok(d.effects.filter(function (e) { return e.type === "damageReduction"; })[0].value === 0.56, "Garde rang 3 : 50 % + 3 × 2 points = 56 %");
     game.talents = { k_mur: 1 };
     var dm = g.getClassAction("knight", "defense").effects.filter(function (e) { return e.type === "damageReduction"; })[0].value;
-    ok(dm === 0.69, "après les talents : Mur (65 %) + 2 rangs = 69 %");
+    ok(dm === 0.71, "après les talents : Mur (65 %) + 3 rangs = 71 %");
     game.talents = {};
-    // prix, monde, achat
-    game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true };
-    game.skillRanks = { knight_execute: 4 };
-    ok(SR.maxRank() === 4 && SR.status("knight_execute") === "lock", "Crypte atteinte : rang 4 au plus, le 5 est fermé");
-    game.worldsEverReached[4] = true; game.gold = 100000;
-    ok(SR.status("knight_execute") === "short", "Montagne : rang 5 ouvert, mais pas d'Obsidienne");
-    g.WarehouseManager.addResource("obsidienne_taillee", 3, true);
-    ok(SR.status("knight_execute") === "ok" && SR.buy("knight_execute") === true, "achat du rang 5");
-    ok(SR.get("knight_execute") === 5 && game.gold === 20000 && g.WarehouseManager.getAmount("obsidienne_taillee") === 0, "rang 5 payé 80 000 or et 3 Obsidiennes taillées");
-    ok(SR.status("knight_execute") === "max" && SR.buy("knight_execute") === false, "rang maximum : plus d'achat");
-    var tot = 0; g.SKILL_RANK_PRICES.forEach(function (p) { tot += p.gold; });
-    ok(tot === 131000, "un sort de 0 à 5 : 131 000 or");
-    // sauvegarde
+    var html = run("buildHeroSkillRankHTML(getClassAction('knight', 'skill1'))");
+    ok(/Rang 4/.test(html) && /204 % → 218 %|205 % → 218 %/.test(html) && !/kbtn/.test(html), "carte : rang suivant au monde suivant, sans bouton d'achat");
+    game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true, 4: true, 5: true };
+    ok(SR.get("knight_execute") === 5 && SR.status("knight_execute") === "max" && SR.total() === 20, "Tour : rang 5 partout (20 rangs)");
     var sv = g.buildSaveData();
-    ok(sv.skillRanks && sv.skillRanks.knight_execute === 5, "buildSaveData garde les rangs");
-    run("fullResetState();");
-    ok(JSON.stringify(g.game.skillRanks) === "{}", "fullResetState les efface");
-    g.restoreBaseState(JSON.parse(JSON.stringify(sv)));
-    ok(g.game.skillRanks.knight_execute === 5, "restoreBaseState les rend");
+    ok(sv.skillRanks && sv.skillRanks.knight_heavy_strike === 5, "buildSaveData garde l'ancien champ (sauvegarde inchangée)");
   } catch (err) {
     ok(false, "[323] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
@@ -18869,7 +18858,7 @@ console.log("\n[329] v3.508.0 (lot C) — bulle d'or : rangs des sorts et des co
     game.gold = 50000; g.WarehouseManager.addResource("resine_durcie", 10, true); game.worldsEverReached = { 0: true };
     CM.state("wenna").unlocked = true; CM.state("wenna").present = true;
     var ids = g.orInvestList().map(function (x) { return x.id; });
-    ok(ids.some(function (i) { return /^s:/.test(i); }), "bulle d'or : un rang de sort payable apparaît");
+    ok(!ids.some(function (i) { return /^s:/.test(i); }), "bulle d'or : plus de rang de sort à payer (v3.779.0, rangs automatiques)");
     ok(ids.indexOf("cr:wenna:1") !== -1, "bulle d'or : le rang 1 de Wenna apparaît");
     g.WarehouseManager.removeResource("resine_durcie", 10);
     ok(!g.orInvestList().some(function (x) { return /^s:|^cr:/.test(x.id); }), "sans Résine : ni rang de sort ni rang de compagnon");
@@ -19005,8 +18994,8 @@ console.log("\n[336] v3.515.0 — une ressource qui manque ouvre sa fiche Entrep
     ok(g.getVillageResourceHint("planche").indexOf(g._td(g.WORKSHOPS_CONFIG.scierie_fine.name)) >= 0, "Planche (sans texte de provenance) : l'atelier qui la fabrique est nommé");
     ok(g.getVillageResourceHint("seve_aeswyn") === g._td(g.WAREHOUSE_RESOURCES.seve_aeswyn.sourceHint), "Sève : son texte de provenance reste");
     var vb = rd0("js/ui/village-building-view.js"), pv = rd0("js/ui/production-view.js");
-    ok((vb.match(/resGoAttr\(/g) || []).length >= 6 && (pv.match(/resGoAttr\(/g) || []).length >= 5 && /resGoAttr\(/.test(rd0("js/ui/potion-view.js")) && /resGoAttr\(/.test(rd0("js/ui/heros-view.js")) && /resGoAttr\(/.test(rd0("js/ui/companions-view.js")),
-      "le geste est posé sur tous les coûts : chantiers, Apothicaire, Taverne, Forge, zones, ateliers, préparations, rangs");
+    ok((vb.match(/resGoAttr\(/g) || []).length >= 6 && (pv.match(/resGoAttr\(/g) || []).length >= 5 && /resGoAttr\(/.test(rd0("js/ui/potion-view.js")) && /resGoAttr\(/.test(rd0("js/ui/companions-view.js")),
+      "le geste est posé sur tous les coûts : chantiers, Apothicaire, Taverne, Forge, zones, ateliers, préparations, rangs des compagnons");
   } catch (err) { ok(false, "[336] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   function rd0(f) { return require("fs").readFileSync(require("path").join(ROOT, f), "utf8"); }
 })();
@@ -19186,7 +19175,7 @@ console.log("\n[341] v3.520.0 — correctifs de l'audit, lot 5 : fiches et coût
     ok(/Traversée|Départ/.test(txt("outre_pleine")) && /Besace/.test(txt("outre_pleine")), "Outre pleine : départ de la traversée et besace (" + txt("outre_pleine") + ")");
     ok(/Vivres pour rejouer/.test(txt("ration")) && /mode libre/.test(txt("ration")) && /Départ : .+[^,] et \d+ autres/.test(txt("ration")), "Ration moyenne : vivres de sortie, mode libre, départs (liste courte)");
     ok(/Objet de combat/.test(txt("fiole_noire")), "la Fiole noire (seul objet de combat, v3.776.0) : son usage est dit");
-    ok(/Rangs des capacités/.test(txt("resine_durcie")) && /Rangs des compagnons/.test(txt("resine_durcie")), "Résine durcie : rangs du héros et des compagnons");
+    ok(!/Rangs des capacités/.test(txt("resine_durcie")) && /Rangs des compagnons/.test(txt("resine_durcie")), "Résine durcie : rangs des compagnons (ceux du héros sont automatiques, v3.779.0)");
     ok(g.buildWarehouseSheetHTML("resine_durcie").indexOf(g._t("Ne se vend pas.")) >= 0 && g.buildWarehouseSheetHTML("resine_durcie").indexOf("sert aux constructions et aux ateliers") < 0, "phrase du bas : plus de « sert aux constructions et aux ateliers »");
     // RES-9 : un coût au-delà du plafond de l'Entrepôt le dit
     var PPS = g.ProductionPlotsSystem, cap = g.WarehouseManager.getCap("bois");
@@ -25673,14 +25662,13 @@ console.log("\n[499] Bulle d'or (atelier bulle-or.html, choix de Seb) : l'or qui
     game.worldsEverReached = { 0: true, 1: true, 2: true };
     var sq499 = JSON.stringify(game.storyQuests || {}); ["forest", "desert"].forEach(function (c) { g.StoryQuestManager.getState(c).currentStep = g.StoryQuestManager.getChapter(c).steps.length; }); // v3.754.0 : aux Ruines, le Désert est fini (MES-6)
     ["wenna", "maddoc"].forEach(function (c) { CM.state(c).unlocked = true; CM.state(c).present = true; CM.state(c).skillRank = 2; });
-    var acts = g.SkillRanks.kitActions(); acts.forEach(function (a) { game.skillRanks[a.id] = 2; });
     W.removeResource("cle_de_voute", W.getAmount("cle_de_voute")); W.addResource("pierre_errante", 4, true); W.addResource("pierre", 100, true);
     game.gold = 95000; g.orInvestReset(); g.openOrInvestWindow();
     var h = root.innerHTML;
     ok(/Tout de suite/.test(h) && /Il manque quelque chose/.test(h) && /Plus tard/.test(h), "fenêtre : trois groupes (Tout de suite, Il manque quelque chose, Plus tard)");
-    var need = acts.length * 3 + 2 * 2, mats = g.orInvestGate(), cle = mats.filter(function (m) { return m.res === "cle_de_voute"; })[0];
-    ok(!!cle && cle.miss === need && cle.items.length === acts.length + 2 && (h.match(/class="oi-mat"/g) || []).length === Math.min(3, mats.length), "une carte par matériau : Clé de voûte, il en manque " + (cle && cle.miss) + " (" + need + " attendues), " + (cle && cle.items.length) + " achats retenus");
-    ok(/Clé de voûte : il en manque/.test(h) && new RegExp(acts.length + " rangs de sorts, 2 compétences de compagnon").test(h), "carte : « il en manque », l'or retenu et qui l'attend (rangs de sorts, compétences)");
+    var need = 2 * 2, mats = g.orInvestGate(), cle = mats.filter(function (m) { return m.res === "cle_de_voute"; })[0];
+    ok(!!cle && cle.miss === need && cle.items.length === 2 && (h.match(/class="oi-mat"/g) || []).length === Math.min(3, mats.length), "une carte par matériau : Clé de voûte, il en manque " + (cle && cle.miss) + " (" + need + " attendues), " + (cle && cle.items.length) + " achats retenus");
+    ok(/Clé de voûte : il en manque/.test(h) && /2 compétences de compagnon/.test(h) && !/rangs de sorts/.test(h), "carte : « il en manque », l'or retenu et qui l'attend (compétences des compagnons)");
     ok(/Tailleur de pierre : Pierre errante ×3 \+ Pierre ×10 → 1\./.test(h) && /Avec ton Entrepôt : 1 tout de suite\./.test(h) && /Produire : Tailleur de pierre/.test(h), "carte : recette du producteur, ce qui se taille tout de suite, lien vers le producteur");
     var prod = g.findResourceProducer("cle_de_voute"), seen = null, keepGo = g.goToResourceProducer;
     g.goToResourceProducer = function (k, id) { seen = k + ":" + id; };
@@ -25688,7 +25676,7 @@ console.log("\n[499] Bulle d'or (atelier bulle-or.html, choix de Seb) : l'or qui
     g.orInvestGo(ix); g.goToResourceProducer = keepGo;
     ok(seen === prod.kind + ":" + prod.id, "le lien de la carte mène au producteur (" + seen + ")");
     var later = g.orInvestLater();
-    ok(later.some(function (x) { return /Rangs de sorts : rang 4/.test(x.title) && /Crypte/.test(x.sub); }), "Plus tard : « Rangs de sorts : rang 4 », s'ouvrent à la Crypte");
+    ok(!later.some(function (x) { return /Rangs de sorts/.test(x.title); }) && later.some(function (x) { return /Compétences des compagnons : rang 4/.test(x.title) && /Crypte/.test(x.sub); }), "Plus tard : plus de rangs de sorts ; « Compétences des compagnons : rang 4 » s'ouvrent à la Crypte");
     CM.state("wenna").upgrades = CM.trainingMax("wenna"); g.orInvestReset();
     ok(g.orInvestLater().some(function (x) { return /^Wenna, niveaux 17 à 21$/.test(x.title) && /s'ouvrent à la Crypte/.test(x.sub); }), "Plus tard : « Wenna, niveaux 17 à 21 : s'ouvrent à la Crypte des dormeurs »");
     // Échoppe (Rare en vitrine, relique, relance) et Enchanteresse
