@@ -2333,6 +2333,7 @@ function activateGrimoireRule(g) {
 try { run(); }
 catch (e) { ok(false, "interrompu : " + e.message + "\n" + String(e.stack).split("\n").slice(1, 4).join("\n")); }
 if (APRES_H > 0) { try { apresHistoire(APRES_H); } catch (e) { ok(false, "après-Histoire interrompu : " + e.message); } }
+if (ARGS.indexOf("--fin") >= 0) { try { finDePartie(); } catch (e) { ok(false, "relevé de fin de partie interrompu : " + e.message + " " + String(e.stack).split("\n")[1]); } }
 if (FAILLE) { try { failleBench(); } catch (e) { ok(false, "faille interrompue : " + e.message + " " + String(e.stack).split("\n")[1]); } }
 // v3.463.0 : SAVE_OUT=<fichier> écrit la sauvegarde de fin de partie (héros de fin d'Histoire pour les ateliers)
 if (process.env.SAVE_OUT) { try { require("fs").writeFileSync(process.env.SAVE_OUT, JSON.stringify(G.buildSaveData())); } catch (e) { note("sauvegarde non écrite : " + e.message); } }
@@ -2406,6 +2407,88 @@ function failleBench() {
     console.log("  donjon " + id + " : niveau tenu (≥ 50 %) " + dernier + " · " + Object.keys(lignes).map(Number).sort(function (a, b) { return a - b; }).map(function (n) { var x = lignes[n]; return "N" + n + " " + x.ok + "/" + x.n + (x.ok ? " (" + x.rounds + " r, " + x.combatMin + " min, " + x.or + " or, " + x.eclats + " éc.)" : ""); }).join(" · ")
       + " · libre N" + dernier + " " + out[id].libre.n + " ok, " + out[id].libre.or + " or, " + out[id].libre.eclats + " éc.");
   });
+}
+
+/* Relevé de fin de partie (--fin, 12/11, demande de Seb) : à lancer sur une sauvegarde de fin d'Histoire (SAVE_IN).
+   1. inventaire du héros et du village ; 2. jusqu'où il tient en donjon et en élite (pronostic du jeu) ;
+   3. ce qui reste à acheter jusqu'aux plafonds (or et matériaux versés d'office, état rendu après) et le gain de puissance. */
+function finDePartie() {
+  var g = G, game = g.game, V = g.VillageBuildingManager, F = g.ForgeManager, SR = g.SkillRanks, CM = g.CompanionManager, WM = g.WarehouseManager;
+  var R = STATS.fin = {}, OKF = { trivial: 1, abordable: 1 };
+  CURRENT_STEP = "fin de partie";
+  // 1. Inventaire
+  var bat = (g.VILLAGE_BUILDING_ORDER || []).map(function (id) { var l = V.getLevel(id), max = V.isMaxLevel(id); return id + " " + l + (max ? "" : "<" + (g.WorldCaps.getVillageCap ? g.WorldCaps.getVillageCap(id) : "?")); });
+  var res = Object.keys(g.WAREHOUSE_RESOURCES), pleins = res.filter(function (k) { var c = WM.getCap(k); return c && WM.getAmount(k) >= c; });
+  var ach = (g.ACHIEVEMENTS_DB || []).filter(function (a) { return g.AchievementManager.isClaimed(a.id); }).length;
+  var ilvl = typeof g.getItemLevel === "function" ? g.EQUIPMENT_SLOTS.map(function (sl) { var it = game.equipped[sl]; return it ? g.getItemLevel(it) : 0; }) : [];
+  R.inventaire = { heros: heroSnapshot(), combat: combatLine(), or: Math.floor(game.gold), memoire: g.MemoryManager.getLevel() + "/" + ((g.MEMORY_LEVELS || []).length || "?"),
+    hautsFaits: ach + "/" + (g.ACHIEVEMENTS_DB || []).length, batiments: bat.join(" · "), entrepotPlein: pleins.length + "/" + res.length,
+    ilvl: ilvl.join(" "), donjons: JSON.stringify(game.dungeonLevelBest || {}), finHistoire: !!(g.TowerSystem && g.TowerSystem.ending()) };
+  console.log("\n=== FIN DE PARTIE · " + CLASSE + " ===");
+  Object.keys(R.inventaire).forEach(function (k) { console.log("  " + k + " : " + R.inventaire[k]); });
+  // 2. Jusqu'où il tient (pronostic du jeu ; sûr = Trivial/Abordable, risqué = tout sauf Très dur / Hors de portée)
+  R.donjons = {};
+  (g.DUNGEONS || []).forEach(function (d) {
+    if (!g.DungeonManager.isUnlocked(d.id)) return;
+    var sur = 0, risque = 0, keep = game.dungeonLevelBest[d.id];
+    for (var L = 1; L <= 300; L += (L < 20 ? 1 : 5)) {
+      game.dungeonLevelBest[d.id] = L - 1;
+      var f = g.CombatForecast.forDungeon(d.id, [], L); if (!f) break;
+      if (OKF[f.id]) sur = L;
+      if (f.id !== "tresdur" && f.id !== "horsportee") risque = L; else break;
+    }
+    game.dungeonLevelBest[d.id] = keep;
+    R.donjons[d.key] = { sur: sur, risque: risque };
+  });
+  console.log("  donjons (niveau sûr / risqué) : " + Object.keys(R.donjons).map(function (k) { return k + " " + R.donjons[k].sur + "/" + R.donjons[k].risque; }).join(" · "));
+  var LM = g.LivingMapManager, el = [];
+  Object.keys(g.LIVING_MAPS).forEach(function (mapId) {
+    (g.LIVING_MAPS[mapId].sectors || []).forEach(function (d) {
+      if (!LM.isRepeatable(mapId, d.id)) return;
+      var sur = 0, risque = 0;
+      for (var L = 1; L <= 120; L++) { var fc = g.CombatForecast.forMapElite(mapId, d.id, d.content.eliteId, L); if (!fc) break; if (OKF[fc.id]) sur = L; if (fc.id !== "tresdur" && fc.id !== "horsportee") risque = L; else break; }
+      el.push(d.content.eliteId + " " + sur + "/" + risque);
+    });
+  });
+  R.elites = el; console.log("  élites de carte (niveau sûr / risqué) : " + (el.join(" · ") || "aucune répétable"));
+  // 3. Ce qui reste à acheter : on verse or et matériaux d'office, puis tout est rendu
+  var sauve = JSON.stringify(g.buildSaveData()), clock0 = CLOCK.offset, avant = combatLine();
+  var D = R.depenses = {}, mats = {};
+  function payer(cat, cost) {
+    D[cat] = D[cat] || { or: 0, achats: 0 }; D[cat].achats++; D[cat].or += Number((cost && cost.gold) || 0);
+    Object.keys(cost || {}).forEach(function (k) { if (k === "gold") return; var need = Number(cost[k]) - WM.getAmount(k); if (need > 0) { game.resources[k] = Number(cost[k]); mats[k] = (mats[k] || 0) + need; } });
+    game.gold = 1e15;
+  }
+  game.gold = 1e15;
+  var bloques = [];
+  (g.VILLAGE_BUILDING_ORDER || []).forEach(function (id) {
+    for (var k = 0; k < 40; k++) {
+      if (V.isBuilding()) { CLOCK.offset += V.getSiteSecondsLeft() * 1000 + 1000; V.tick(); }
+      var why = V.getBlockReason(id); if (why !== null && why !== "Matériaux manquants") { if (k === 0 && !V.isMaxLevel(id)) bloques.push(id + " : " + why); break; }
+      payer("bâtiments", V.getNextCost(id)); if (!V.startBuild(id) && !V.isBuilding()) break;
+      CLOCK.offset += V.getSiteSecondsLeft() * 1000 + 1000; V.tick();
+    }
+  });
+  (g.EQUIPMENT_SLOTS || []).forEach(function (sl) {
+    for (var k = 0; k < 60; k++) { var why = F.getBlockReason(sl); if (why !== null && why !== "Matériaux manquants") break; payer("reforges", F.getCost(sl)); if (F.reforge(sl) === false) break; }
+  });
+  var or0 = game.gold; buyTraining(g, 100000, true); D["entraînement"] = { or: Math.round(or0 - game.gold), achats: "—" }; game.gold = 1e15;
+  if (SR) for (var k = 0; k < 200; k++) {
+    var acts = SR.kitActions().filter(function (a) { return SR.get(a.id) < SR.maxRank(); }); if (!acts.length) break;
+    var p = SR.nextCost(acts[0].id); if (!p) break; var c = { gold: p.gold }; c[p.mat] = p.qty; payer("rangs des sorts", c); if (!SR.buy(acts[0].id)) break;
+  }
+  if (CM && CM.buySkillRank) CM.unlockedIds().forEach(function (cid) {
+    for (var n = 0; n < 6; n++) { var st = CM.skillRankStatus(cid); if (st === "max" || st === "lock") break; var pc = g.COMPANION_SKILL_RANK_PRICES[CM.skillRank(cid)]; var c = { gold: pc.gold }; c[pc.mat] = pc.qty; payer("rangs des compagnons", c); if (!CM.buySkillRank(cid)) break; }
+    for (var m = 0; m < 60; m++) { var cost = typeof g.getCompanionUpgradeCost === "function" ? g.getCompanionUpgradeCost(cid) : null; if (!cost) break; payer("entraînement des compagnons", { gold: cost }); if (!CM.buyUpgrade(cid, "damage")) break; }
+  });
+  R.apres = combatLine(); R.materiaux = mats; R.bloques = bloques;
+  var tot = Object.keys(D).reduce(function (a, k) { return a + D[k].or; }, 0);
+  console.log("  reste à acheter jusqu'aux plafonds : " + Math.round(tot).toLocaleString("fr-FR") + " or, soit " + (tot / Math.max(1, R.inventaire.or)).toFixed(1) + " × l'or en poche");
+  Object.keys(D).forEach(function (k) { console.log("    " + k + " : " + Math.round(D[k].or).toLocaleString("fr-FR") + " or (" + D[k].achats + " achats)"); });
+  console.log("    matériaux à réunir : " + (Object.keys(mats).map(function (k) { return k + " " + mats[k]; }).join(" · ") || "rien"));
+  if (bloques.length) console.log("    bâtiments bloqués : " + bloques.join(" · "));
+  console.log("  puissance avant : " + avant + "\n  puissance aux plafonds : " + R.apres);
+  g.restoreBaseState(JSON.parse(sauve)); g.StatsSystem.recalcStats(); CLOCK.offset = clock0;
 }
 
 /* Après-Histoire (--apres) : l'or qui dort part-il à l'Enchanteresse quand on va chercher sa Sève ? */
