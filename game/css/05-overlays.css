@@ -463,11 +463,6 @@
 .news-list img { width: 30px; height: 30px; object-fit: contain; }
 .news-more { justify-self: center; }
 .news-v { margin: 6px 2px 0; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--c-brown-700-vivid); }
-/* Forge des mondes : fenêtre « La Forge a changé » (ui/village-building-view.js), sur le gabarit de Quoi de neuf */
-.forge-news-txt { margin: 0; font-size: 14px; line-height: 1.4; color: var(--c-brown-850-2); }
-.forge-news-win .news-list b { display: block; }
-.forge-news-win .news-list small { display: block; margin-top: 2px; font-size: 13px; color: var(--c-brown-700-soft); }
-.forge-news-btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
 
 /* =====================================================================
    v3.761.0 (atelier tutoriels-ecran, Seb 10/11, bulle A) : tutoriels sur l'écran (ui/coach-view.js).

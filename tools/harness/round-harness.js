@@ -4398,10 +4398,8 @@ console.log("\n[30c] Forge des mondes (Seb 07/11) — grille par monde, écran, 
       "écran : Désert fini en une ligne, Ruines en grand (+1 % / 14 %), Crypte fermée");
     ok(/Reforger<small>\+0,5 % Défense<\/small>/.test(h) && /2 reforges|6 reforges/.test(h) && /Arc : \+50 dégâts par coup/.test(h),
       "écran : le gain sur le bouton (+0,5 % Défense), « n reforges », la pièce à sa valeur de butin" + (/Reforger<small>/.test(h) ? "" : " — " + h.slice(h.indexOf("forge-row\""), h.indexOf("forge-row\"") + 900)));
-    // Fenêtre « La Forge a changé » : la pièce perd sa valeur reforgée, le héros gagne ses bonus
-    var m = g.forgeChangeHTML();
-    ok(/La Forge a changé/.test(m) && /Tes 30 reforges sont gardées/.test(m) && /Désert · 28 reforges/.test(m) && /\+14 % de PV max/.test(m) && /Arc : \+5\d dégâts par coup → \+50 dégâts par coup/.test(m),
-      "migration : reforges gardées, rangées par monde (+14 % PV max), l'arme reprend sa valeur (" + (m.match(/Arc : [^<]*/) || [""])[0] + ")");
+    // v3.783.0 (Seb 13/11) : la fenêtre « La Forge a changé » est retirée (elle ne servait qu'aux parties d'avant la v3.743)
+    ok(typeof g.forgeChangeHTML === "undefined" && typeof g.openForgeChange === "undefined", "la fenêtre « La Forge a changé » est retirée");
     ok(/Forge, pour toujours : \+14 % de PV max · \+1 % de Défense/.test(g.buildHerosEquipHTML ? g.buildHerosEquipHTML() : ""),
       "Équipé : une ligne « Forge, pour toujours » sous l'équipement");
   } catch (err) { ok(false, "[30c] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
@@ -10121,6 +10119,12 @@ console.log("\n[127] v3.332.0 — Écran de retour unique et fil rouge");
   var html = g.buildReturnScreenHTML();
   ok(html.indexOf("Pendant ton absence") !== -1 && html.indexOf("Chantier terminé") !== -1 && html.indexOf("au coin du feu") !== -1, "R2 : rubriques Chantier et Héros rendues");
   ok(/class="kbtn primary ret-go" onclick="returnGoFilRouge\(\)"/.test(html) && html.indexOf(g._t("Plus tard")) !== -1 && html.indexOf("Tout récolter") === -1, "R2 (v3.782.0, variante C) : la suite du fil rouge en bouton principal, « Plus tard » ; plus de « Tout récolter »");
+  // v3.783.0 (Seb 13/11, option A) : les nouveautés passent par une ligne de la fenêtre de retour, plus par « Quoi de neuf » tout seul
+  g.closeReturnScreen(); g.Prefs.setValue("newsSeen", "3.700.0");
+  g.openReturnScreen(s);
+  var hN = g.buildReturnScreenHTML();
+  ok(/class="ret-news" onclick="returnOpenNews\(\)"/.test(hN) && g.Prefs.getValue("newsSeen") === g.GAME_VERSION && g.newsUnseen().length === 0, "nouveautés : une ligne dans la fenêtre de retour, notées vues");
+  ok(!/openNewsWindow\(\);\s*\}, 2000\)/.test(fs.readFileSync(path.join(ROOT, "js/ui/news-view.js"), "utf8")) && /les nouveautés sont dans Paramètres/.test(fs.readFileSync(path.join(ROOT, "js/ui/news-view.js"), "utf8")), "« Quoi de neuf » ne s'ouvre plus tout seul (une notification à la place)");
   g.closeReturnScreen();
 
   // --- R3 : Livrer affiche le coût, Tout récolter ne dépense rien ---

@@ -640,73 +640,7 @@ function buildForgeBoardHTML() {
 }
 window.buildForgeBoardHTML = buildForgeBoardHTML;
 
-/* Forge des mondes, fenêtre « La Forge a changé » (choix A) : une fois par appareil (Prefs forgeMondesSeen), pièces
-   (valeur reforgée → butin) contre bonus du héros. Héros sans reforge : marquée vue sans rien montrer. */
-function forgeChangeTotal() {
-  var lv = (game.forge && game.forge.levels) || {};
-  return Object.keys(lv).reduce(function (a, k) { return a + Math.max(0, Number(lv[k]) || 0); }, 0);
-}
-
-function forgeChangeHTML() {
-  var F = ForgeManager, total = forgeChangeTotal(), lis = "";
-  FORGE_WORLD_BONUSES.forEach(function (def, i) {
-    var n = F.getBandCount(i + 1);
-    if (!n) return;
-    lis += '<li><img src="' + esc(def.icon) + '" alt=""><span><b>' + esc(_tn(n, "{w} · {n} reforge", "{w} · {n} reforges", { w: def.world })) + '</b><small>'
-      + esc(_t("+{p} de {s}, pour toujours", { p: F.formatPct(F.getWorldBonus(i + 1)), s: def.label })) + '</small></span></li>';
-  });
-  var pertes = [];
-  EQUIPMENT_SLOTS.forEach(function (slot) {
-    var it = (game.equipped || {})[slot];
-    if (!it || F.getLevel(slot) <= 0) return;
-    var avant = formatEquipmentStat(Object.assign({}, it, { value: F.getLegacyForgedValue(it) })), apres = formatEquipmentStat(it);
-    if (avant !== apres) pertes.push(_t("{x} : {a} → {b}", { x: _td(it.name), a: avant, b: apres }));
-  });
-  if (pertes.length) lis += '<li><img src="images/Icons/equipment_slots/pieces_loot.webp" alt=""><span><b>' + esc(_t("Tes pièces reprennent leur valeur")) + '</b><small>' + esc(pertes.join(" · ")) + '</small></span></li>';
-  var h = '<div class="full-menu-overlay kwin-veil"><div class="kwin news-win forge-news-win" role="dialog" aria-label="' + esc(_t("La Forge a changé")) + '">';
-  h += kWinHeadHTML({ icon: '<img src="images/Icons/village_buildings/forge_mondes.webp" alt="">', title: esc(_t("La Forge a changé")), sub: esc(_tn(total, "Ta {n} reforge est gardée", "Tes {n} reforges sont gardées")) });
-  h += '<div class="kwin-body"><p class="forge-news-txt">' + esc(_t("Une reforge ne renforce plus la pièce : elle renforce ton héros, pour toujours. Chaque monde a sa stat ; tes reforges sont rangées par monde.")) + '</p>';
-  h += '<ul class="news-list">' + lis + '</ul>';
-  h += '<div class="forge-news-btns"><button type="button" class="kbtn" onclick="closeForgeChange()">' + esc(_t("Fermer")) + '</button>'
-    + '<button type="button" class="kbtn primary" onclick="closeForgeChange(true)">' + esc(_t("Voir la Forge")) + '</button></div></div></div></div>';
-  return h;
-}
-
-function openForgeChange() {
-  if (!window.ForgeManager || !document.body) return;
-  var root = document.getElementById("forge-news-root");
-  if (!root) { root = document.createElement("div"); root.id = "forge-news-root"; document.body.appendChild(root); }
-  root.innerHTML = forgeChangeHTML();
-  if (window.Prefs) Prefs.setValue("forgeMondesSeen", "1"); // vue une fois sur cet appareil
-}
-
-function closeForgeChange(voir) {
-  var root = document.getElementById("forge-news-root");
-  if (root) root.innerHTML = "";
-  if (!voir) return;
-  if (typeof switchTab === "function") switchTab("village");
-  if (typeof setVillageSubTab === "function") setVillageSubTab("village");
-  if (typeof openVillageBuildingSheet === "function") openVillageBuildingSheet("forge");
-}
-
-// Au lancement, comme « Quoi de neuf » : attend que le héros soit libre et qu'aucune fenêtre ne soit ouverte
-var forgeChangeTimer = null;
-function forgeChangeWatch() {
-  if (forgeChangeTimer || typeof setInterval !== "function" || !window.Prefs || Prefs.has("forgeMondesSeen")) return;
-  forgeChangeTimer = setInterval(function () {
-    if (typeof titleScreenResolved !== "undefined" && !titleScreenResolved) return;
-    if (!window.game || !game.heroId || !window.ForgeManager) return;
-    var stop = function () { clearInterval(forgeChangeTimer); forgeChangeTimer = null; };
-    if (Prefs.has("forgeMondesSeen")) return stop();
-    if (!forgeChangeTotal()) { Prefs.setValue("forgeMondesSeen", "1"); return stop(); }
-    if (typeof newsCanShow === "function" && !newsCanShow()) return;
-    stop(); openForgeChange();
-  }, 2500);
-}
-if (typeof window !== "undefined" && typeof window.addEventListener === "function") window.addEventListener("load", forgeChangeWatch);
-window.openForgeChange = openForgeChange;
-window.closeForgeChange = closeForgeChange;
-window.forgeChangeHTML = forgeChangeHTML;
+/* v3.783.0 (Seb 13/11) : la fenêtre « La Forge a changé » (migration v3.743) est retirée : elle ne servait qu'aux parties d'avant. */
 
 function reforgeSlot(slot) {
   if (ForgeManager.reforge(slot) && openVillageBuildingId === "forge") {

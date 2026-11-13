@@ -104,6 +104,12 @@ Maquette de référence : atelier-evolutions.html.
 .ret-sec-ok { width: 16px !important; height: 16px !important; margin-left: auto; }
 .ret-note { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--c-brown-750-2); margin: 2px 0 6px; }
 .ret-note img { width: 20px; height: 20px; object-fit: contain; }
+/* v3.783.0 : nouveautés de la version, une ligne qui ouvre « Quoi de neuf » */
+.ret-news { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; margin: 0 0 6px; padding: 6px 10px; border-radius: 12px; cursor: pointer;
+  border: 1.5px solid var(--sheet-card-bd); background: var(--sheet-card-bg); font: inherit; font-size: 13px; font-weight: 800; color: var(--c-brown-700-vivid); text-align: left; }
+.ret-news img { width: 24px; height: 24px; object-fit: contain; }
+.ret-news span { flex: 1 1 auto; min-width: 0; }
+.ret-news i { font-style: normal; font-size: 18px; }
 .ret-foot { display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .ret-foot .ret-go { width: 100%; max-width: 320px; }
 .ret-foot .ret-link { min-height: 44px; font-size: 13px; }

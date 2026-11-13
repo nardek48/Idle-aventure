@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.783.0", "system/upgrade", _t("« Quoi de neuf » ne s'ouvre plus tout seul : une ligne « Nouveautés » dans la fenêtre de retour, sinon une notification. La liste reste dans Paramètres. La fenêtre « La Forge a changé » est retirée.")],
     ["3.782.0", "system/offline_progress", _t("Pendant ton absence : la récolte et le butin des patrouilles sont faits à l'ouverture. La fenêtre n'est plus qu'un bilan, avec un bouton vers la suite ; la ration n'est proposée que si tes PV sont bas.")],
     ["3.781.0", "codex/codex_lore", _t("Tutoriels : sept aides de plus s'affichent sur l'écran, en éclairant les vrais boutons (Amélioration, Boutique, ration, Donjon, compagnons, braises, préparation de la sortie).")],
     ["3.780.0", "village_buildings/merchant_hall", _t("Simplification : les caravanes sont retirées. Aux Ruines et à la Crypte, la marchandise de Sarkel se livre depuis la carte d'étape (« Livrer au Marché »). La Halle marchande garde l'échoppe ; une caravane encore en route est livrée au chargement.")],
@@ -324,7 +325,10 @@ function newsWatch() {
     if (!newsUnseen().length) { clearInterval(newsTimer); newsTimer = null; return; }
     if (!newsCanShow()) return;
     clearInterval(newsTimer); newsTimer = null;
-    openNewsWindow();
+    // v3.783.0 (Seb 13/11, option A) : plus de fenêtre automatique ; la fenêtre de retour porte la ligne
+    // « Nouveautés », sinon une notification, et la liste reste dans Paramètres › Voir les nouveautés
+    newsMarkSeen();
+    if (typeof showToast === "function") showToast(_t("Version {v} : les nouveautés sont dans Paramètres.", { v: String(GAME_VERSION).replace(/\.0$/, "") }), 3200);
   }, 2000);
 }
 if (typeof window !== "undefined" && typeof window.addEventListener === "function") window.addEventListener("load", newsWatch);

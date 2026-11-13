@@ -57,6 +57,8 @@ function buildReturnScreenHTML() {
     sub: esc(_t("{d} d'absence · tout est rentré.", { d: window.ResumeManager ? ResumeManager.formatAbsence(s.ms || 0) : "" })) });
   h += '<div class="kwin-body">';
   if (st.line) h += '<div class="kwin-quote ret-line">' + esc(_td(st.line)) + '</div>';
+  if (st.news && st.news.length) h += '<button type="button" class="ret-news" onclick="returnOpenNews()"><img src="images/Icons/system/upgrade.webp" alt=""><span>'
+    + esc(_tn(st.news.length, "{n} nouveauté depuis ta dernière visite", "{n} nouveautés depuis ta dernière visite")) + '</span><i>›</i></button>';
 
   // Village : déjà récolté
   var produced = Object.keys(s.produced || {});
@@ -139,6 +141,10 @@ function renderReturnScreen() {
 
 function openReturnScreen(summary) {
   returnScreenState = { summary: summary, harvested: false, line: window.ReturnManager ? ReturnManager.pickLine() : "" };
+  // v3.783.0 : les nouveautés non vues passent par une ligne de cette fenêtre (plus de « Quoi de neuf » à part)
+  returnScreenState.news = typeof newsUnseen === "function" ? newsUnseen() : [];
+  if (typeof newsSeenVersion === "function" && !newsSeenVersion()) returnScreenState.news = []; // appareil sans repère : rien à rattraper
+  if (typeof newsMarkSeen === "function") newsMarkSeen();
   returnHarvestAll(true);                                                     // v3.782.0 (C) : gestes gratuits faits d'office
   if (window.PatrolManager && PatrolManager.getReturned().length && typeof returnCollectPatrols === "function") returnCollectPatrols(true);
   renderReturnScreen();
@@ -160,6 +166,13 @@ function returnHarvestAll(quiet) {
   returnScreenState.goPoints = GO && typeof GO.getPoints === "function" ? Math.max(0, GO.getPoints() - before) : 0; // v3.688.0 (CPL1-4)
   returnScreenState.harvested = true;
   if (!quiet) renderReturnScreen();
+}
+
+/* La ligne « Nouveautés » : la fenêtre de retour se ferme, « Quoi de neuf » s'ouvre avec ce qui était nouveau. */
+function returnOpenNews() {
+  var list = returnScreenState && returnScreenState.news;
+  closeReturnScreen();
+  if (typeof openNewsWindow === "function") openNewsWindow(list && list.length ? list : undefined);
 }
 
 function returnGoFilRouge() {
@@ -200,6 +213,7 @@ window.closeReturnScreen = closeReturnScreen;
 window.renderReturnScreen = renderReturnScreen;
 window.returnHarvestAll = returnHarvestAll;
 window.returnGoFilRouge = returnGoFilRouge;
+window.returnOpenNews = returnOpenNews;
 window.renderReturnPending = renderReturnPending;
 window.returnPendingTap = returnPendingTap;
 window.buildReturnScreenHTML = buildReturnScreenHTML;
