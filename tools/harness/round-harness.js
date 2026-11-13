@@ -4762,7 +4762,7 @@ console.log("\n[37b] v3.228.0 \u2014 Finitions (fiche R\u00e9sum\u00e9, aide aut
   ok(set.indexOf("rareté seule") !== -1, "R\u00e9glages du sac : l'autovente pr\u00e9vient qu'elle ignore les affixes");
 })();
 
-console.log("\n[38b] v3.229.0 \u2014 Enchanteresse : relance de la valeur d'un bonus (Lot 5)");
+console.log("\n[38b] v3.229.0 \u2014 Enchanteresse (v3.784.0 : transmutation seule, relance retirée)");
 (function () {
   run("fullResetState(); game.playerName='Test'; game.heroId='knight';");
   function setLevel(n) { g.VillageBuildingManager.ensure(); g.game.village.buildings.enchanter = { level: n }; }
@@ -4789,84 +4789,27 @@ console.log("\n[38b] v3.229.0 \u2014 Enchanteresse : relance de la valeur d'un b
   g.game.equipped.gloves = item;
   g.game.worldsEverReached = { 0: true };
 
-  /* Fourchette : celle du tirage, jamais plus. */
-  var rg = g.EnchantManager.getRange(item, 0);
-  ok(rg.min === 2 && rg.max === 4, "fourchette de la ligne = celle de sa raret\u00e9 (critChance rare : 2-4)");
-  var flatItem = { slot: "gloves", rarity: "rare", worldIndex: 2, affixes: [{ stat: "tapDmg", value: 20, tier: "P" }] };
-  var rgFlat = g.EnchantManager.getRange(flatItem, 0);
-  ok(rgFlat.max === 15 * 2.2, "valeur plate : fourchette \u00e0 l'\u00e9chelle du monde de l'objet (monde 2 : \u00d72,2)");
+  /* v3.784.0 (Seb 13/11) : la relance est retirée, l'Enchanteresse ne fait plus que transmuer. */
+  ok(typeof g.EnchantManager.reroll === "undefined" && typeof g.EnchantManager.getCost === "undefined" && typeof g.buildEnchantBoardHTML === "undefined" && typeof g.rerollAffix === "undefined",
+    "relance retirée : ni reroll, ni coût de relance, ni établi Relance");
+  ok(g.EnchantManager.getTransmuteCost(item, 0).gold === 400, "transmutation d'un Rare en Forêt : 2 relances de base (400 or)");
 
-  /* Coût : croissant sur la même ligne, indexé sur le monde. */
-  var c0 = g.EnchantManager.getCost(item, 0);
-  ok(c0.gold === 200 && c0.seve_aeswyn === undefined, "1re relance d'un Rare en For\u00eat : 200 or, sans S\u00e8ve (v3.459.10)");
-  item.affixes[0].rerolls = 1;
-  ok(g.EnchantManager.getCost(item, 0).gold === 310, "2e relance : \u00d71,55 (310 or)");
-  item.affixes[0].rerolls = 3;
-  ok(g.EnchantManager.getCost(item, 0).gold === 744 && g.EnchantManager.getCost(item, 0).seve_aeswyn === undefined, "4e relance : 744 or (\u00d71,55\u00b3), toujours sans S\u00e8ve");
-  ok(g.EnchantManager.getCost(item, 1).gold === 200, "le compteur est par LIGNE : l'autre bonus reste au prix de d\u00e9part");
-  item.affixes[0].rerolls = 0;
-  g.game.worldsEverReached = { 0: true, 1: true };
-  ok(g.EnchantManager.getCost(item, 0).gold === 800, "index\u00e9 sur le monde max atteint comme l'\u00e9choppe (D\u00e9sert : \u00d74)");
-  g.game.worldsEverReached = { 0: true };
-
-  /* Blocages lisibles. */
+  /* Blocages lisibles (communs à la transmutation). */
   setLevel(0);
   ok(g.EnchantManager.getBlockReason(item, 0) === "Enchanteresse non construite", "blocage : non construite");
   setLevel(1);
   g.game.gold = 0;
-  ok(g.EnchantManager.getBlockReason(item, 0) === "Pas assez d'or", "blocage : l'or (v3.483.0 : « Pas assez d'or », la relance se paie en or seul)");
+  ok(g.EnchantManager.getBlockReason(item, 0) === null && g.EnchantManager.getTransmuteBlockReason(item, 0) === "Pas assez d'or", "l'or se vérifie au prix de la transmutation");
   ok(g.EnchantManager.getBlockReason(item, 9) === "Aucun bonus", "blocage : ligne inexistante, jamais d'erreur");
   var epic = { slot: "ring", rarity: "epic", worldIndex: 0, affixes: [{ stat: "tapDmg", value: 10, tier: "P" }] };
-  ok(g.EnchantManager.getBlockReason(epic, 0) === "Niveau 2 requis", "blocage : dit QUEL niveau ouvre cette raret\u00e9");
-  ok(g.EnchantManager.getRequiredLevel("legendary") === 3 && g.EnchantManager.getRequiredLevel("common") === 0, "niveau requis par raret\u00e9");
+  ok(g.EnchantManager.getBlockReason(epic, 0) === "Niveau 2 requis", "blocage : dit QUEL niveau ouvre cette rareté");
+  ok(g.EnchantManager.getRequiredLevel("legendary") === 3 && g.EnchantManager.getRequiredLevel("common") === 0, "niveau requis par rareté");
 
-  /* Relance : la valeur ne descend jamais, la stat ne change jamais. */
+  /* Fiche : segments Transmuer et Éclats seulement. */
   g.game.gold = 100000;
-  g.WarehouseManager.addResource("seve_aeswyn", 500);
-  var statBefore = item.affixes[0].stat;
-  var best = item.affixes[0].value;
-  var wentDown = false, moved = false, done = 0;
-  for (var i = 0; i < 40; i++) {
-    var prev = item.affixes[0].value;
-    if (g.EnchantManager.reroll(item, 0)) done += 1;
-    var now = item.affixes[0].value;
-    if (now < prev) wentDown = true;
-    if (now > prev) moved = true;
-    if (now > best) best = now;
-  }
-  ok(!wentDown, "relances r\u00e9p\u00e9t\u00e9es : la valeur ne baisse JAMAIS (on garde la meilleure)");
-  ok(moved, "...mais elle monte bien");
-  ok(item.affixes[0].stat === statBefore, "la stat de la ligne n'a jamais chang\u00e9");
-  ok(item.affixes[0].value <= 4, "et ne d\u00e9passe jamais le haut de fourchette");
-  ok(item.affixes[0].rerolls === done, "compteur de relances = nombre de relances r\u00e9ussies (" + done + ")");
-  ok(done < 40 && done > 5, "le co\u00fbt croissant finit par bloquer de lui-m\u00eame, sans verrou : " + done + " relances pour 100 000 or");
-  ok(item.affixes[1].value === 0.05 && !item.affixes[1].rerolls, "l'autre ligne n'a pas boug\u00e9");
-
-  /* Une relance refusée ne coûte rien. */
-  var goldBefore = g.game.gold;
-  setLevel(0);
-  ok(g.EnchantManager.reroll(item, 0) === false && g.game.gold === goldBefore, "relance refus\u00e9e : rien n'est d\u00e9pens\u00e9");
-  setLevel(1);
-
-  /* La relance passe par recalcStats : la stat du héros suit. */
-  run("EquipmentManager.recalcStats();");
-  var critBefore = g.game.critChance;
-  item.affixes[0].value = 2;
-  run("EquipmentManager.recalcStats();");
-  ok(Math.abs((critBefore - g.game.critChance) - (4 - 2)) < 1e-9 || critBefore >= g.game.critChance, "la valeur relanc\u00e9e alimente bien critChance");
-
-  /* Objet sans affixe (Commun, ou d'avant v3.225.0). */
-  ok(g.EnchantManager.getCost({ slot: "ring", rarity: "common", affixes: [] }, 0) === null, "objet sans bonus : aucun co\u00fbt, aucune relance");
-  ok(g.EnchantManager.getRange({ slot: "ring", rarity: "rare", value: 5 }, 0) === null, "objet d'avant v3.225.0 : null, jamais d'erreur");
-
-  /* Rendu de l'établi. */
-  g.game.equipped.gloves = makeItem();
-  setLevel(1);
-  var html = run("buildEnchantBoardHTML()");
-  ok(html.indexOf("rerollAffix(&#039;gloves&#039;,0)") !== -1 || html.indexOf("rerollAffix('gloves',0)") !== -1, "\u00e9tabli : un bouton Relancer par ligne");
-  ok(html.indexOf("Maximum possible") !== -1, "\u00e9tabli : le haut de fourchette est annonc\u00e9");
-  g.game.equipped = {};
-  ok(run("buildEnchantBoardHTML()").indexOf("Aucune pi\u00e8ce \u00e9quip\u00e9e ne porte de bonus") !== -1, "\u00e9tabli vide : message, pas une page blanche");
+  run("openVillageBuildingId = null; enchanterSheetSegment = null;");
+  var fiche = run("buildVillageBuildingSheetHTML ? buildVillageBuildingSheetHTML('enchanter') : ''");
+  ok(!fiche || (fiche.indexOf("setEnchanterSheetSegment('relance')") === -1 && fiche.indexOf("setEnchanterSheetSegment('transmute')") !== -1), "fiche : plus de segment Relance, Transmuer par défaut");
 })();
 
 console.log("\n[39b] v3.230.0 \u2014 Pouvoirs l\u00e9gendaires : donn\u00e9es, tirage, lecture (Lot 4, partie A)");
@@ -5355,10 +5298,10 @@ console.log("\n[47b] v3.245.0 \u2014 Refonte des Donjons");
   ok(!g.MENU_ITEMS.some(function (m) { return m.tab === "afflictions"; }) && g.MENU_ITEMS.length === 4, "menu \u2630 : Afflictions retir\u00e9es, 4 cases (v3.405.0 : Bestiaire et Tutoriels r\u00e9unis dans la Biblioth\u00e8que)");
   run("VillageBuildingManager.ensure(); game.village.buildings.enchanter = { level: 0 };");
   var fiche0 = run("openVillageBuildingId = 'enchanter'; buildVillageBuildingSheetHTML('enchanter')");
-  ok(fiche0.indexOf("vb-sheet-seg") !== -1 && fiche0.indexOf("nb-purchase-card") !== -1 && /Relance<\/button>/.test(fiche0) && fiche0.indexOf("disabled") !== -1, "Enchanteresse non construite : segment, Relance gris\u00e9e, Boutique d'\u00e9clats visible");
+  ok(fiche0.indexOf("vb-sheet-seg") !== -1 && fiche0.indexOf("nb-purchase-card") !== -1 && /Transmuer<\/button>/.test(fiche0) && !/Relance<\/button>/.test(fiche0) && fiche0.indexOf("disabled") !== -1, "Enchanteresse non construite : segment, Transmuer gris\u00e9 (v3.784.0 : plus de Relance), Boutique d'\u00e9clats visible");
   run("game.village.buildings.enchanter = { level: 1 }; enchanterSheetSegment = null;");
   var fiche1 = run("buildVillageBuildingSheetHTML('enchanter')");
-  ok(fiche1.indexOf("forge-board") !== -1 && fiche1.indexOf("nb-purchase-card") === -1, "Enchanteresse construite : Relance par d\u00e9faut, \u00e9tabli affich\u00e9");
+  ok(fiche1.indexOf("forge-board") !== -1 && fiche1.indexOf("nb-purchase-card") === -1, "Enchanteresse construite : Transmuer par d\u00e9faut (v3.784.0), \u00e9tabli affich\u00e9");
   run("setEnchanterSheetSegment('eclats');");
   var fiche2 = run("buildVillageBuildingSheetHTML('enchanter')");
   ok(fiche2.indexOf("nb-purchase-card") !== -1, "segment \u00c9clats : les quatre am\u00e9liorations");
@@ -9385,20 +9328,17 @@ console.log("\n[117] v3.321.0 — Boutique d'Éclats : plus de puissance, quatre
   game.dungeonShopLevels = { d_cle: 2 };
   ok(D.getRunsPerDay() === c0 + 2, "Clé 2 : +2 sorties par jour (" + c0 + " → " + D.getRunsPerDay() + ")");
 
-  /* Doigté (v3.459.10) : −10 % d'or par niveau, plus de Sève */
-  var item = { rarity: "rare", affixes: [{ stat: "tapMult", value: 0.05 }] };
+  /* Doigté (v3.459.10) : −10 % d'or par niveau ; v3.784.0 : sur la transmutation (la relance est retirée) */
+  var item = { rarity: "rare", slot: "gloves", worldIndex: 0, affixes: [{ stat: "critChance", value: 2, tier: "P" }] };
   var savedCan = g.EnchantManager.canRerollRarity;
   g.EnchantManager.canRerollRarity = function () { return true; }; // niveau de l'Enchanteresse hors sujet ici
   game.dungeonShopLevels = {};
-  var cost0 = g.EnchantManager.getCost(item, 0);
+  var cost0 = g.EnchantManager.getTransmuteCost(item, 0);
   game.dungeonShopLevels = { d_doigte: 3 };
-  var cost3 = g.EnchantManager.getCost(item, 0);
-  ok(Math.abs(cost3.gold - cost0.gold * 0.7) <= 1 && cost3.seve_aeswyn === undefined, "Doigté 3 : relance d'un Rare à " + cost3.gold + " or au lieu de " + cost0.gold + " (−30 %), sans Sève");
-  item.affixes[0].rerolls = 9;
-  var c9 = g.EnchantManager.getCost(item, 0).gold; game.dungeonShopLevels = {};
-  var c9sans = g.EnchantManager.getCost(item, 0).gold;
-  ok(Math.abs(c9 - c9sans * 0.7) <= 1, "10e relance du même affixe : −30 % aussi (" + c9sans + " → " + c9 + " or)");
+  var cost3 = g.EnchantManager.getTransmuteCost(item, 0);
+  ok(Math.abs(cost3.gold - cost0.gold * 0.7) <= 1, "Doigté 3 : transmutation d'un Rare à " + cost3.gold + " or au lieu de " + cost0.gold + " (−30 %)");
   ok(g.DUNGEON_SHOP.filter(function (x) { return x.id === "d_doigte"; })[0].effect === "enchantDiscount", "le Doigté porte l'effet sur l'or");
+  game.dungeonShopLevels = {};
   g.EnchantManager.canRerollRarity = savedCan;
 
   /* Carte de l'éclaireur */
@@ -16663,7 +16603,6 @@ console.log("\n[279] v3.465.0 — Enchanteresse : la transmutation (conception v
   ok(EM.transmute(w, 0, "critMult") === true && w.affixes[0].stat === "critMult" && w.affixes[0].value === 0.25 && w.affixes[0].transmutes === 1 && w.affixes[0].rerolls === 2 && game.gold === 165000,
     "transmuter : la ligne devient dégâts crit (0,25), compteur 1, relances gardées, 35 000 or payés");
   ok(EM.getTransmuteCost(w, 0).gold === Math.floor(35000 * 1.55), "la suivante coûte ×1,55 (" + EM.getTransmuteCost(w, 0).gold + ")");
-  ok(EM.getCost(w, 0).gold === Math.floor(700 * 25 * Math.pow(1.55, 2)), "le prix des relances de la ligne ne bouge pas");
   ok(EM.transmute(w, 0, "tapDmg") === false && w.affixes[0].stat === "critMult", "la stat de base de la pièce est refusée");
   game.dungeonShopLevels = { d_doigte: 1 };
   ok(EM.getTransmuteCost(w, 1).gold === 31500, "Doigté 1 : −10 % (31 500)");
@@ -16680,8 +16619,8 @@ console.log("\n[279] v3.465.0 — Enchanteresse : la transmutation (conception v
   g.setEnchanterSheetSegment("transmute");
   var h = g.buildTransmuteBoardHTML();
   ok(/ench-tr-chip/.test(h) && /askTransmuteAffix\('weapon',1,'goldMult'\)/.test(h), "onglet Transmuer : une puce par stat possible");
-  ok(/Relance et transmute les bonus/.test(g.VILLAGE_BUILDINGS.enchanter.effectLabel(2)) && /ou change sa nature/.test(g.VILLAGE_BUILDINGS.enchanter.desc), "textes du bâtiment mis à jour");
-  g.setEnchanterSheetSegment("relance");
+  ok(/^Transmute les bonus/.test(g.VILLAGE_BUILDINGS.enchanter.effectLabel(2)) && /bonus indésirable/.test(g.VILLAGE_BUILDINGS.enchanter.desc), "textes du bâtiment : transmutation seule (v3.784.0)");
+  g.setEnchanterSheetSegment("transmute");
 })();
 
 console.log("\n[280] v3.466.1 — Sac du héros : plus de bouton Utiliser sur les potions (retour Seb)");
@@ -19439,16 +19378,9 @@ console.log("\n[359] v3.541.0 — La veine suit le monde de la quête, pas le mo
   g.WorldManager.worldIndex = wi; G.adventureQuestRun = run; G.dungeonRun = dr;
 })();
 
-console.log("\n[360] v3.542.0 — Enchanteresse : ce que vaut une relance (audit CMP-2, option 1B)");
+console.log("\n[360] v3.542.0 — Enchanteresse : ce que vaut une relance (v3.784.0 : relance retirée)");
 (function () {
-  try {
-    var src = fs.readFileSync(path.join(ROOT, "js/ui/village-building-view.js"), "utf8");
-    ok(typeof g.enchantGainHTML === "function" && typeof g.enchantHeroDelta === "function", "enchantGainHTML et enchantHeroDelta définies");
-    ok(/\(hi - v\) \* \(hi - v\) \/ \(2 \* \(hi - lo\)\)/.test(src), "gain moyen d'une relance qui ne baisse jamais : (max − v)² / 2 (max − min)");
-    var G = g.game, hp = G.heroHp, it = { stat: "maxHpPct", value: 0 };
-    var d = g.enchantHeroDelta({ stat: "maxHpPct", value: 0 }, 0.5);
-    ok(G.heroHp === hp, "le calcul remet le héros en place (PV courants inchangés)");
-  } catch (err) { ok(false, "[360] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  ok(typeof g.enchantGainHTML === "undefined" && typeof g.enchantHeroDelta === "undefined", "relance retirée : plus de calcul du gain d'une relance");
 })();
 
 console.log("\n[361] v3.543.0 — Forge 5 de la Crypte ouverte à crypte_13 (audit PLA-7)");
@@ -25437,11 +25369,11 @@ console.log("\n[499] Bulle d'or (atelier bulle-or.html, choix de Seb) : l'or qui
     ok(g.orInvestAll().some(function (x) { return x.id === "sh:rel1" && x.ok; }), "échoppe : relique utile à un compagnon (emplacement libre) proposée");
     game.village.buildings.enchanter = { level: 1 }; g.orInvestReset();
     var en = g.orInvestAll().filter(function (x) { return x.kind === "e"; })[0];
-    ok(!!en && en.ok && en.gold > 0 && /Épée/.test(en.sub), "Enchanteresse bâtie : relance d'une ligne portée proposée (" + (en && en.gold) + " or)");
+    ok(!en, "Enchanteresse bâtie : plus de relance proposée par la bulle d'or (v3.784.0)");
     ok(!g.orInvestAll().some(function (x) { return x.id.indexOf("b:enchanter:1") === 0; }), "Enchanteresse bâtie : plus de « Construire »");
     game.gold = 1500; g.orInvestReset(); g.openOrInvestWindow(); h = root.innerHTML;
     ok(/Échoppe : Épée rare/.test(h) && /Il te manque/.test(h), "pas assez d'or : la Rare passe dans « Il manque quelque chose » (il te manque … or)");
-    ["Tout de suite", "Il manque quelque chose", "Retient {g} or : {x}.", "{x}, niveaux {a} à {b}", "Échoppe : {x}", "Enchanteresse : relancer une ligne"].forEach(function (k) {
+    ["Tout de suite", "Il manque quelque chose", "Retient {g} or : {x}.", "{x}, niveaux {a} à {b}", "Échoppe : {x}"].forEach(function (k) {
       ok(fsRead("js/lang/en.js").indexOf(JSON.stringify(k)) >= 0, "en.js : « " + k + " » traduit");
     });
   } catch (err) { ok(false, "[499] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }

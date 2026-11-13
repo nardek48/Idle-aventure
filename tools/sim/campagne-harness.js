@@ -554,28 +554,7 @@ function depensesOr(g) {
     V.startBuild("enchanter"); wait(V.getSiteSecondsLeft() * 1000 + 1000, "chantier"); V.tick();
     STATS.village.push("Enchanteresse " + V.getLevel("enchanter") + " (" + CURRENT_STEP + ")");
   }
-  var E = g.EnchantManager, ORD = g.RARITY_ORDER;
-  if (!E || E.getBuildingLevel() <= 0) return;
-  for (var n = 0; n < 12; n++) {
-    var best = null;
-    g.EQUIPMENT_SLOTS.forEach(function (sl) {
-      var it = g.game.equipped[sl];
-      if (!it || ORD.indexOf(it.rarity) < ORD.indexOf("epic")) return;
-      (it.affixes || []).forEach(function (a, i) {
-        var r = E.getRange(it, i), c = E.getCost(it, i);
-        if (!r || !c || r.max <= r.min) return;
-        var part = (Number(a.value) - r.min) / (r.max - r.min);
-        if (part >= 0.85 || c.gold > g.game.gold * 0.1 || g.WarehouseManager.getAmount("seve_aeswyn") - (c.seve_aeswyn || 0) < 20) return;
-        if (E.getBlockReason(it, i)) return;
-        if (!best || part < best.part) best = { it: it, i: i, part: part, gold: c.gold };
-      });
-    });
-    if (!best) break;
-    E._rolling = false;
-    if (!E.reroll(best.it, best.i)) break;
-    E._rolling = false;
-    ST.relances++; ST.relancesOr += best.gold;
-  }
+  // v3.784.0 : la relance de l'Enchanteresse est retirée ; le robot ne transmute pas (choix de stat, pas un gain sûr)
 }
 
 
@@ -2429,32 +2408,7 @@ function apresHistoire(h) {
   }
   A.chantier = V.getLevel("enchanter") >= cible;
   A.avant = combatLine();
-  // plafond théorique : toutes les lignes des pièces portées au maximum de leur fourchette, puis retour
-  var sauve = [];
-  g.EQUIPMENT_SLOTS.forEach(function (sl) { var it = g.game.equipped[sl]; (it && it.affixes || []).forEach(function (a, i) { var r = E.getRange(it, i); if (r) { sauve.push([a, a.value]); a.value = r.max; } }); });
-  g.StatsSystem.recalcStats(); A.maximum = combatLine();
-  sauve.forEach(function (x) { x[0].value = x[1]; }); g.StatsSystem.recalcStats();
-  while (A.chantier && CLOCK.offset - t0 < h * 3600e3) {
-    var best = null;
-    g.EQUIPMENT_SLOTS.forEach(function (sl) {
-      var it = g.game.equipped[sl];
-      if (!it || ORD.indexOf(it.rarity) < ORD.indexOf("epic")) return;
-      (it.affixes || []).forEach(function (a, i) {
-        var r = E.getRange(it, i), c = E.getCost(it, i);
-        if (!r || !c || r.max <= r.min || c.gold > g.game.gold) return;
-        var part = (Number(a.value) - r.min) / (r.max - r.min);
-        if (part >= 0.95) return;
-        if (!best || part < best.part) best = { it: it, i: i, part: part, c: c };
-      });
-    });
-    if (!best) break;
-    if (best.c.seve_aeswyn && !obtain("seve_aeswyn", best.c.seve_aeswyn)) break; // v3.459.10 : relances en or seul
-    if (E.getBlockReason(best.it, best.i)) break;
-    E._rolling = false;
-    if (!E.reroll(best.it, best.i)) break;
-    E._rolling = false;
-    A.relances++; A.orRelances += best.c.gold; A.seve += best.c.seve_aeswyn || 0;
-  }
+  // v3.784.0 : relance retirée ; le relevé garde le chantier de l'Enchanteresse et la ligne de combat
   A.apres = combatLine();
   if (!A.chantier) A.raison = "Enchanteresse " + V.getLevel("enchanter") + " : " + (V.getBlockReason("enchanter") || "?") + " " + JSON.stringify(V.getNextCost("enchanter")) + " · Sève " + g.WarehouseManager.getAmount("seve_aeswyn") + " · Résine " + g.WarehouseManager.getAmount("resine_durcie");
   A.h = (CLOCK.offset - t0) / 3600e3; A.or1 = Math.floor(g.game.gold); A.victoiresCarte = (STATS.carte ? STATS.carte.victoires : 0) - vic0;

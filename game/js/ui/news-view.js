@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.784.0", "village_buildings/enchantress_tower", _t("Simplification : l'Enchanteresse ne relance plus la valeur des bonus. Elle remplace un bonus indésirable (Transmuer). Le Doigté de la boutique d'Éclats réduit maintenant le prix des transmutations.")],
     ["3.783.0", "system/upgrade", _t("« Quoi de neuf » ne s'ouvre plus tout seul : une ligne « Nouveautés » dans la fenêtre de retour, sinon une notification. La liste reste dans Paramètres. La fenêtre « La Forge a changé » est retirée.")],
     ["3.782.0", "system/offline_progress", _t("Pendant ton absence : la récolte et le butin des patrouilles sont faits à l'ouverture. La fenêtre n'est plus qu'un bilan, avec un bouton vers la suite ; la ration n'est proposée que si tes PV sont bas.")],
     ["3.781.0", "codex/codex_lore", _t("Tutoriels : sept aides de plus s'affichent sur l'écran, en éclairant les vrais boutons (Amélioration, Boutique, ration, Donjon, compagnons, braises, préparation de la sortie).")],

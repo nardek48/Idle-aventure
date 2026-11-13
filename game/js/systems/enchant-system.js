@@ -1,7 +1,8 @@
 "use strict";
 /* systems/enchant-system.js — v3.229.0 (Lot 5 du chantier Équipement multi-affixes) : EnchantManager.
 
-   RÈGLES FIGÉES AVEC SEB (12/09/2026) :
+   v3.784.0 (Seb 13/11) : la RELANCE des valeurs est retirée. L'Enchanteresse ne fait plus que la
+   TRANSMUTATION (remplacer un affixe indésirable). Règles d'origine de la relance (12/09/2026), pour mémoire :
    - Le joueur CHOISIT la ligne à relancer (pas de tirage aveugle sur l'objet).
    - La relance change la VALEUR SEULE : la stat de l'affixe ne bouge jamais.
      Le joueur ne peut donc pas perdre un bonus qu'il aime.
@@ -10,7 +11,7 @@
      C'est ce qui rend le coût croissant lisible — on paie de la progression
      garantie mais de plus en plus chère, pas un pari.
 
-   Le niveau du bâtiment ouvre les RARETÉS relançables (ENCHANT_RARITY_BY_LEVEL),
+   Le niveau du bâtiment ouvre les RARETÉS transmuables (ENCHANT_RARITY_BY_LEVEL),
    comme la Forge ouvre des niveaux de reforge.
 
    ÉTAT EN SAUVEGARDE : aucun. Le compteur vit dans l'affixe lui-même
@@ -29,11 +30,11 @@ var ENCHANT_RARITY_BY_LEVEL = [
    deviendrait gratuite dès le Désert. Environ 8 % du prix d'achat de la pièce. */
 var ENCHANT_BASE_GOLD = { green: 80, rare: 200, epic: 700, legendary: 2800 };
 
-/* Croissance du coût à chaque relance de la MÊME ligne. */
+/* Croissance du coût à chaque transmutation de la MÊME ligne. */
 var ENCHANT_COST_MULT = 1.55;
 
 /* v3.459.10 (audit I2, décision Seb) : les relances se paient en or seul — la Sève reste à la
-   fin de jeu. Doigté de l'Enchanteresse (boutique d'Éclats) : −10 % d'or par niveau. */
+   fin de jeu. Doigté de l'Enchanteresse (boutique d'Éclats) : −10 % d'or par niveau (sur la transmutation depuis v3.784.0). */
 var ENCHANT_DOIGTE_PCT = 0.10;
 
 /* v3.465.0 (conception Enchanteresse v0.1, E-B) : une transmutation vaut 2 relances de base,
@@ -68,34 +69,6 @@ var EnchantManager = {
     return 0;
   },
 
-  /* Nombre de relances déjà faites sur cette ligne. */
-  getRerollCount: function (item, index) {
-    var affixes = getItemAffixes(item);
-    var a = affixes[index];
-    return (a && Number(a.rerolls)) || 0;
-  },
-
-  /* Coût de la PROCHAINE relance de cette ligne, ou null si impossible. */
-  getCost: function (item, index) {
-    if (!item || !this.canRerollRarity(item.rarity)) return null;
-    var affixes = getItemAffixes(item);
-    if (!affixes[index]) return null;
-
-    var n = this.getRerollCount(item, index);
-    var worldMult = (typeof getEquipShopWorldPriceMult === "function") ? getEquipShopWorldPriceMult(window.ENCHANT_WORLD_PRICE_MULT) : 1; // v3.652.0 : grille propre
-    var gold = (ENCHANT_BASE_GOLD[item.rarity] || 80) * Math.pow(ENCHANT_COST_MULT, n) * worldMult;
-    if (window.DungeonManager && typeof DungeonManager.getShardEffect === "function") {
-      gold *= Math.max(0, 1 - ENCHANT_DOIGTE_PCT * DungeonManager.getShardEffect("enchantDiscount"));
-    }
-    return { gold: Math.floor(gold) };
-  },
-
-  canAfford: function (item, index) {
-    var cost = this.getCost(item, index);
-    if (!cost) return false;
-    return Number(game.gold || 0) >= cost.gold;
-  },
-
   /* Raison de blocage lisible, jamais un simple faux : l'écran doit dire quoi faire. */
   /* v3.307.0 : pièce portée (même objet ou même uid) — seule celle-ci est gelée en expédition. */
   _isEquipped: function (item) {
@@ -112,21 +85,7 @@ var EnchantManager = {
       var need = this.getRequiredLevel(item.rarity);
       return need ? _t("Niveau {n} requis", { n: need }) : _t("Aucun bonus");
     }
-    if (!this.canAfford(item, index)) return _t("Pas assez d'or"); // v3.483.0 (audit) : la relance se paie en or seul
-    return null;
-  },
-
-  /* Fourchette de la ligne, échelle de monde comprise pour les valeurs plates.
-     Même source que la génération : une relance ne peut pas sortir du cadre
-     dans lequel l'affixe a été tiré. */
-  getRange: function (item, index) {
-    var a = getItemAffixes(item)[index];
-    if (!a) return null;
-    var rule = (typeof AFFIX_RANGES !== "undefined") ? AFFIX_RANGES[a.stat] : null;
-    if (!rule) return null;
-    var range = rule[item.rarity] || rule.green;
-    var scale = rule.flat ? getEquipWorldScale(Number(item.worldIndex) || 0) : 1;
-    return { min: range[0] * scale, max: range[1] * scale, decimals: rule.decimals || 0 };
+    return null; // l'or se vérifie au prix de la transmutation (getTransmuteBlockReason)
   },
 
   /* ---------- Transmutation (v3.465.0, E-A) : changer la stat d'une ligne ----------
@@ -170,10 +129,10 @@ var EnchantManager = {
     return { gold: Math.floor(gold) };
   },
 
-  // Mêmes verrous que la relance, au prix de la transmutation ; null si possible
+  // Verrous communs, puis le prix de la transmutation ; null si possible
   getTransmuteBlockReason: function (item, index) {
     var reason = this.getBlockReason(item, index);
-    if (reason && reason !== _t("Pas assez d'or")) return reason;
+    if (reason) return reason;
     if (!this.getTransmuteOptions(item, index).length) return _t("Aucune autre stat possible sur cette pièce");
     var cost = this.getTransmuteCost(item, index);
     if (!cost || Number(game.gold || 0) < cost.gold) return _t("Pas assez d'or");
@@ -197,56 +156,8 @@ var EnchantManager = {
     if (typeof renderAll === "function") renderAll();
     saveGame();
     return true;
-  },
-
-  _rolling: false,
-
-  /* Relance la ligne `index` de `item`. Renvoie true si la relance a eu lieu,
-     même quand le tirage est moins bon que la valeur en place (l'or est dépensé,
-     la valeur conservée). */
-  reroll: function (item, index) {
-    if (this._rolling) return false;
-
-    var reason = this.getBlockReason(item, index);
-    if (reason) {
-      showToast(reason, 1400);
-      return false;
-    }
-
-    var affix = item.affixes[index];
-    var range = this.getRange(item, index);
-    if (!range) return false;
-
-    var cost = this.getCost(item, index);
-    this._rolling = true;
-
-    game.gold -= cost.gold;
-
-    var factor = Math.pow(10, range.decimals);
-    var rolled = Math.round(randFloat(range.min, range.max) * factor) / factor;
-    var before = Number(affix.value) || 0;
-    var kept = Math.max(before, rolled);
-
-    affix.value = kept;
-    affix.rerolls = this.getRerollCount(item, index) + 1;
-
-    var label = (typeof formatEquipmentStatValue === "function")
-      ? formatEquipmentStatValue(affix.stat, kept) : String(kept);
-    if (kept > before) {
-      addLog("✨ " + _t("{x} : {y} (relance réussie).", { x: _td(item.name), y: label }), "event");
-      showToast("✨ " + label, 1300);
-    } else {
-      addLog("✨ " + _t("{x} : la relance n'a pas fait mieux, le bonus est conservé.", { x: _td(item.name) }), "event");
-      showToast(_t("Pas mieux — bonus conservé"), 1300);
-    }
-
-    if (typeof StatsSystem !== "undefined") StatsSystem.recalcStats();
-    if (typeof renderAll === "function") renderAll();
-    saveGame();
-
-    this._rolling = false;
-    return true;
   }
+
 };
 
 window.ENCHANT_RARITY_BY_LEVEL = ENCHANT_RARITY_BY_LEVEL;

@@ -136,22 +136,7 @@ function orInvestShop() {
   return out;
 }
 
-/* Enchanteresse bâtie : la relance la moins chère d'une ligne d'une pièce portée (une ligne par niveau du bâtiment). */
-function orInvestEnchant() {
-  var EM = window.EnchantManager;
-  if (!EM || EM.getBuildingLevel() <= 0 || orInvestHeroBusy() || typeof getItemAffixes !== "function") return [];
-  var best = null, eq = game.equipped || {};
-  Object.keys(eq).forEach(function (slot) {
-    var it = eq[slot];
-    if (it) getItemAffixes(it).forEach(function (a, i) { var c = EM.getCost(it, i); if (c && (!best || c.gold < best.gold)) best = { it: it, gold: c.gold }; });
-  });
-  if (!best) return [];
-  var def = VILLAGE_BUILDINGS.enchanter;
-  return [{ id: "e:" + EM.getBuildingLevel(), kind: "e", ok: Number(game.gold || 0) >= best.gold, interet: OR_INVEST_INTERET.enchanter, gold: best.gold, icon: def.iconImg || def.icon,
-    title: _t("Enchanteresse : relancer une ligne"), sub: _t("{x} : la pièce ne peut jamais empirer", { x: _td(best.it.name) }), cost: { gold: best.gold },
-    go: function () { orInvestGoBuilding("enchanter"); } }];
-}
-
+/* v3.784.0 : la relance de l'Enchanteresse est retirée ; la transmutation est un choix, pas un achat de la bulle d'or. */
 function orInvestSort(list) {
   list.sort(function (a, b) { return (b.interet - a.interet) || (a.gold - b.gold); });
   return list;
@@ -160,7 +145,7 @@ function orInvestSort(list) {
 /* Tout ce que l'or peut acheter, payable (ok) ou non. */
 function orInvestAll() {
   return orInvestSort([].concat(orInvestShop(), orInvestBuildings(), orInvestCompanions(), orInvestCompanionRanks(),
-    orInvestEnchant(), orInvestTraining(), orInvestReforges()));
+    orInvestTraining(), orInvestReforges()));
 }
 /* Dépenses payables tout de suite, la meilleure d'abord. */
 function orInvestList() { return orInvestAll().filter(function (x) { return x.ok; }); }

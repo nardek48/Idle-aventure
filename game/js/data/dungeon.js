@@ -407,7 +407,7 @@ var DUNGEON_SHOP = [
     desc: "+1 sortie par jour dans chaque donjon, par niveau.",
     effect: "runsBonus", perLevel: 1, baseCost: 15, costMult: 1.4, maxLevel: 2 },
   { id: "d_doigte", name: "Doigté de l'Enchanteresse", icon: "images/Icons/dungeon/dungeon_doigte.webp",
-    desc: "−10 % d'or par relance d'affixe, par niveau.",
+    desc: "−10 % d'or par transmutation, par niveau.",
     effect: "enchantDiscount", perLevel: 1, baseCost: 30, costMult: 1.6, maxLevel: 3 },
   { id: "d_eclaireur", name: "Carte de l'éclaireur", icon: "images/Icons/dungeon/dungeon_eclaireur.webp",
     desc: "+1 place de Petite Aventure en réserve, par niveau.",

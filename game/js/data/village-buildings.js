@@ -339,7 +339,7 @@ var VILLAGE_BUILDINGS = {
     rank: 2,
     maxLevel: 3,
     implemented: true,
-    desc: "Relance la valeur d'un bonus d'une pièce équipée, ou change sa nature. La pièce ne peut jamais empirer.", // v3.465.0 : transmutation
+    desc: "Change la nature d'un bonus indésirable d'une pièce équipée. La valeur garde sa place dans la fourchette.", // v3.784.0 : transmutation seule
     costTiers: [
       {
         minLevel: 0, maxLevel: 0,
@@ -364,11 +364,11 @@ var VILLAGE_BUILDINGS = {
     ],
     effectLabel: function (level) {
       var labels = (typeof ENCHANT_RARITY_BY_LEVEL !== "undefined") ? ENCHANT_RARITY_BY_LEVEL : null;
-      if (level <= 0 || !labels) return _t("Aucune relance possible");
+      if (level <= 0 || !labels) return _t("Aucune transmutation possible");
       var list = labels.slice(0, level).map(function (group) {
         return group.map(function (r) { return (RARITY_LABELS && RARITY_LABELS[r]) ? _td(RARITY_LABELS[r]) : r; }).join(", ");
       }).join(", ");
-      return _t("Relance et transmute les bonus : {liste}", { liste: list });
+      return _t("Transmute les bonus : {liste}", { liste: list });
     }
   },
 

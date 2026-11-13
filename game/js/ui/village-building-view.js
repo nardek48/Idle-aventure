@@ -225,17 +225,16 @@ function buildVillageBuildingSheetHTML(id) {
 
   /* L'Enchanteresse, comme la Forge, porte son établi dans sa fiche.
      v3.245.0 (refonte Donjons, décision 12.5) : la Boutique d'éclats du Donjon vit ici aussi, derrière
-     un segment Relance / Éclats. Éclats reste accessible bâtiment NON construit — les éclats arrivent
+     un segment Transmuer / Éclats (v3.784.0 : la Relance est retirée). Éclats reste accessible bâtiment NON construit — les éclats arrivent
      dès forest_13, bien avant l'Atelier niveau 3 : c'est une invitation à construire, pas une porte fermée. */
   if (id === "enchanter") {
-    var seg = enchanterSheetSegment || (level > 0 ? "relance" : "eclats");
+    var seg = enchanterSheetSegment || (level > 0 ? "transmute" : "eclats");
     if (level <= 0) seg = "eclats";
     h += '<div class="kseg vb-sheet-seg">';
-    h += '<button type="button"' + (level > 0 ? '' : ' disabled') + ' class="' + (seg === "relance" ? 'is-on' : '') + '" onclick="setEnchanterSheetSegment(\'relance\')">' + _t("Relance") + '</button>';
     h += '<button type="button"' + (level > 0 ? '' : ' disabled') + ' class="' + (seg === "transmute" ? 'is-on' : '') + '" onclick="setEnchanterSheetSegment(\'transmute\')">' + _t("Transmuer") + '</button>'; // v3.465.0
     h += '<button type="button" class="' + (seg === "eclats" ? 'is-on' : '') + '" onclick="setEnchanterSheetSegment(\'eclats\')">' + _t("Éclats") + '<span class="kseg-count">' + formatNumber(game.dungeonShards || 0) + '</span></button>';
     h += '</div>';
-    h += (level > 0 && seg === "relance") ? buildEnchantBoardHTML() : (level > 0 && seg === "transmute") ? buildTransmuteBoardHTML() : buildShardShopBoardHTML();
+    h += (level > 0 && seg === "transmute") ? buildTransmuteBoardHTML() : buildShardShopBoardHTML();
   }
 
   /* v3.778.0 : les contrats se livrent au tableau des missions ; la fiche en garde le résumé. */
@@ -649,124 +648,6 @@ function reforgeSlot(slot) {
 }
 window.reforgeSlot = reforgeSlot;
 
-/* v3.542.0 (audit CMP-2, option 1B) : ce que vaut une relance avant de payer. Gain moyen (la valeur ne baisse
-   jamais : E[max(v, x)] − v, x uniforme sur la fourchette) et effet sur le héros si le bonus monte au maximum. */
-function enchantHeroSnapshot() {
-  var S = StatsSystem;
-  return { pv: Math.floor(game.heroMaxHp || 0), atk: Math.round(S.effectiveTapDamage()), vit: Math.round(CombatEngine.getTotalCelerity()),
-    def: Math.round((game.heroDefensePct || 0) * 1000) / 10, crit: Math.round(S.effectiveCritChance() * 10) / 10, critx: Math.round(S.effectiveCritMult() * 100) / 100 };
-}
-/* Recalcule le héros avec la ligne posée à `value`, puis remet tout en place (PV courants compris). */
-function enchantHeroDelta(affix, value) {
-  if (!window.StatsSystem || !window.CombatEngine) return null;
-  var before = enchantHeroSnapshot(), old = affix.value, hp = game.heroHp, after = null;
-  try {
-    affix.value = value; StatsSystem.recalcStats(); after = enchantHeroSnapshot();
-  } catch (e) { noteErreur("enchantHeroDelta", e); }
-  finally { affix.value = old; StatsSystem.recalcStats(); game.heroHp = Math.min(hp, game.heroMaxHp); }
-  if (!after) return null;
-  var parts = [], fmt = function (x) { return formatNumber(Math.round(x * 100) / 100); };
-  if (after.pv > before.pv) parts.push(_t("+{n} PV", { n: fmt(after.pv - before.pv) }));
-  if (after.atk > before.atk) parts.push(_t("+{n} ATK", { n: fmt(after.atk - before.atk) }));
-  if (after.vit > before.vit) parts.push(_t("+{n} de célérité", { n: fmt(after.vit - before.vit) }));
-  if (after.def > before.def) parts.push(_t("+{n} % de défense", { n: fmt(after.def - before.def) }));
-  if (after.crit > before.crit) parts.push(_t("+{n} % de critique", { n: fmt(after.crit - before.crit) }));
-  if (after.critx > before.critx) parts.push(_t("+{n} aux dégâts critiques", { n: "×" + fmt(after.critx - before.critx) }));
-  return parts.join(" · ");
-}
-function enchantGainHTML(item, index, affix, range) {
-  var v = Number(affix.value) || 0, lo = range.min, hi = range.max, f = Math.pow(10, range.decimals);
-  var mean = hi > lo ? (v <= lo ? (lo + hi) / 2 - v : (hi - v) * (hi - v) / (2 * (hi - lo))) : 0;
-  mean = Math.round(mean * f) / f;
-  var h = '<div class="forge-row-effect ench-gain">';
-  var txt = mean > 0 ? formatEquipmentStatValue(affix.stat, mean) : "";
-  h += esc(txt && !/\+0(?![.,\d])/.test(txt) ? _t("Une relance, en moyenne : {x}", { x: txt }) : _t("Une relance, en moyenne : presque rien"));
-  var hero = enchantHeroDelta(affix, hi);
-  if (hero) h += '<br>' + esc(_t("Au maximum, ton héros gagne {x}", { x: hero }));
-  return h + '</div>';
-}
-
-/* --- Établi de l'Enchanteresse (rendu DANS la fiche) --------------------- */
-/* Ne liste que les pièces ÉQUIPÉES qui portent des bonus : une grille de tout
-   l'inventaire serait illisible dans une fiche, et on enchante ce qu'on porte. */
-function buildEnchantBoardHTML() {
-  if (!window.EnchantManager) return "";
-
-  var allowed = EnchantManager.getAllowedRarities().map(function (r) {
-    return _td((typeof RARITY_LABELS !== "undefined" && RARITY_LABELS[r]) || r);
-  });
-  var h = '<div class="forge-board">';
-  h += '<div class="forge-board-head"><img class=ico-inline src=images/Icons/workshops/workbench.webp> ' + _t("Établi")
-     + '<span class="forge-board-max">' + (allowed.length ? esc(allowed.join(", ")) : _t("Aucune rareté")) + '</span></div>';
-  h += '<div class="forge-board-note">' + _t("La ligne garde sa nature : seule sa valeur est relancée, et jamais vers le bas. Chaque relance de la même ligne coûte plus cher.") + '</div>';
-
-  var rows = 0;
-  EQUIPMENT_SLOTS.forEach(function (slot) {
-    var item = (game.equipped || {})[slot];
-    var affixes = item ? getItemAffixes(item) : [];
-    if (!affixes.length) return;
-    rows += 1;
-
-    h += '<div class="ench-item">';
-    /* Le libellé d'emplacement n'est repris que s'il n'est pas déjà le nom de la pièce
-       (« Gants Gants » sortait au rendu). */
-    var slotLabel = _td(EQUIPMENT_SLOT_LABELS[slot] || slot);
-    h += '<div class="ench-item-name rarity-' + esc(item.rarity) + '">' + esc(_td(item.name))
-       + (slotLabel === _td(item.name) ? '' : ' <span class="forge-row-level">' + esc(slotLabel) + '</span>')
-       + '</div>';
-
-    affixes.forEach(function (a, index) {
-      var range = EnchantManager.getRange(item, index);
-      var cost = EnchantManager.getCost(item, index);
-      var reason = EnchantManager.getBlockReason(item, index);
-      var n = EnchantManager.getRerollCount(item, index);
-
-      h += '<div class="forge-row">';
-      h += '<div class="forge-row-main">';
-      h += '<div class="forge-row-name">' + esc(formatEquipmentStatValue(a.stat, a.value))
-         + (n > 0 ? ' <span class="forge-row-level">' + _tn(n, "{n} relance", "{n} relances") + '</span>' : '') + '</div>';
-      if (range) {
-        /* Le haut de fourchette dit au joueur ce qu'il peut encore espérer —
-           sans lui, la relance serait un pari sur un plafond invisible. */
-        h += '<div class="forge-row-effect">'
-           + esc(_t("Maximum possible : {x}", { x: formatEquipmentStatValue(a.stat, Math.round(range.max * Math.pow(10, range.decimals)) / Math.pow(10, range.decimals)) }))
-           + '</div>';
-      }
-      if (range && Number(a.value) < range.max) h += enchantGainHTML(item, index, a, range); // v3.542.0 (CMP-2, 1B)
-      if (cost) {
-        h += '<div class="forge-row-cost">';
-        [["gold", cost.gold]].forEach(function (pair) { // v3.459.10 : relance en or seul
-          var meta = getVillageCostMeta(pair[0]);
-          var have = (pair[0] === "gold") ? Number(game.gold || 0) : WarehouseManager.getAmount(pair[0]);
-          h += '<span class="forge-cost-item' + (have >= pair[1] ? '' : ' is-missing') + '">'
-             + meta.iconHTML + formatNumber(pair[1]) + '</span>';
-        });
-        h += '</div>';
-      }
-      h += '</div>';
-
-      h += '<div class="forge-row-side">';
-      if (reason) {
-        h += '<div class="forge-row-btn is-off">' + esc(reason) + '</div>';
-      } else {
-        h += '<button type="button" class="forge-row-btn" onclick="rerollAffix(\'' + esc(slot) + '\',' + index + ')">' + _t("Relancer") + '</button>';
-      }
-      h += '</div>';
-      h += '</div>';
-    });
-
-    h += '</div>';
-  });
-
-  if (!rows) {
-    h += '<div class="forge-row-effect forge-row-empty">' + _t("Aucune pièce équipée ne porte de bonus. Les objets inhabituels et au-dessus en ont.") + '</div>';
-  }
-
-  h += '</div>';
-  return h;
-}
-window.buildEnchantBoardHTML = buildEnchantBoardHTML;
-
 /* v3.465.0 (atelier/enchanteresse.html, validé le 23/10) : onglet Transmuer. Chaque bonus montre en
    puces les stats qu'il peut devenir, valeur comprise ; une puce demande confirmation. */
 function buildTransmuteBoardHTML() {
@@ -827,7 +708,7 @@ window.askTransmuteAffix = askTransmuteAffix;
 var enchanterSheetSegment = null; // variable de vue, non sauvegardée
 
 function setEnchanterSheetSegment(seg) {
-  enchanterSheetSegment = (seg === "eclats" || seg === "transmute") ? seg : "relance";
+  enchanterSheetSegment = seg === "eclats" ? "eclats" : "transmute";
   if (openVillageBuildingId === "enchanter") openVillageBuildingSheet("enchanter");
 }
 window.setEnchanterSheetSegment = setEnchanterSheetSegment;
@@ -876,10 +757,3 @@ function buyShardUpgradeFromSheet(id) {
 }
 window.buyShardUpgradeFromSheet = buyShardUpgradeFromSheet;
 
-function rerollAffix(slot, index) {
-  var item = (game.equipped || {})[slot];
-  if (EnchantManager.reroll(item, index) && openVillageBuildingId === "enchanter") {
-    openVillageBuildingSheet("enchanter");
-  }
-}
-window.rerollAffix = rerollAffix;

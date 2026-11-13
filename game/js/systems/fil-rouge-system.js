@@ -459,22 +459,8 @@ var FilRouge = {
       var ecap = Math.min(2, WorldCaps.getVillageCap("enchanter")), elvl = VillageBuildingManager.getLevel("enchanter");
       if (elvl < ecap) {
         obj("enchanteresse", FIL_ROUGE_ICONS.enchant, _t("Enchanteresse"), elvl, ecap,
-          _t("Au niveau 2, elle relance les bonus des pièces Épiques, contre de l'or seul."), _t("Voir l'Enchanteresse"), sheet("enchanter"));
-      } else {
-        var lignes = 0, aMax = 0;
-        slots.forEach(function (sl) {
-          var it = (game.equipped || {})[sl];
-          if (!it || !EnchantManager.canRerollRarity(it.rarity)) return;
-          (it.affixes || []).forEach(function (a, i) {
-            var r = EnchantManager.getRange(it, i);
-            if (!r) return;
-            lignes++;
-            if (Number(a.value) >= r.max - Math.pow(10, -r.decimals) / 2) aMax++;
-          });
-        });
-        obj("relances", FIL_ROUGE_ICONS.enchant, _t("Bonus au maximum"), aMax, lignes,
-          _t("L'Enchanteresse relance un bonus contre de l'or ; il ne baisse jamais."), _t("Voir l'Enchanteresse"), sheet("enchanter"));
-      }
+          _t("Au niveau 2, elle transmute les bonus des pièces Épiques, contre de l'or seul."), _t("Voir l'Enchanteresse"), sheet("enchanter"));
+      } // v3.784.0 : plus d'objectif « Bonus au maximum » (relance retirée)
     }
     if (typeof BESTIARY_BONUS_CONFIG !== "undefined") {
       var ids = Object.keys(BESTIARY_BONUS_CONFIG), faits = ids.filter(function (id) {
