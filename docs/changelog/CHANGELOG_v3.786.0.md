@@ -29,5 +29,7 @@ Décisions de Seb (13/11, atelier `repas-camp.html`) : repas option C, festin en
 ## Contrôles
 - `round-harness` 7094 OK, 0 échec, sur 2 passes. Les contrôles des rations deviennent des contrôles du repas : [49], [62b], [104], [145], [184], [223], [439], [443], [456], [482], Mémoire.
 - boot 4 OK ; création du héros 46 OK ; i18n 100 %, 0 orphelin.
+- Parcours complet (Chromium) 236 OK, 0 échec.
+- Robot, 9 parties (3 par classe) : 9 au bout, aucun mur, médiane 23,4 h (17 à 34 h) ; 4 KO sur des boss d'Histoire (tour_18 ×2, montagne_15, crypte_03).
 - Captures : 390 × 844, 320 × 640 et 320 × 568 avec 5 compagnons (une ligne), mode PC.
 - Quoi de neuf : une ligne (FR + EN).
