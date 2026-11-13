@@ -179,7 +179,14 @@ function launchWithForecast(mission, action) {
       onConfirm: action
     });
   };
-  // v3.704.0 (TUTO-16) : la première fois, la fiche du pronostic d'abord ; « Compris » ouvre le pronostic
+  // v3.704.0 (TUTO-16) : la première fois, la fiche du pronostic d'abord ; « Compris » ouvre le pronostic.
+  // Tutoriels sur l'écran (lot 2) : le pronostic s'ouvre d'abord, les bulles se posent sur lui (repli : la fiche, par-dessus)
+  if (window.COACH_TUTORIALS && COACH_TUTORIALS.combat_forecast && !window.COACH_OFF) {
+    open();
+    var fr = getForecastHost();
+    if (typeof openGenericTutorialOnce === "function") openGenericTutorialOnce("combat_forecast", { allow: fr && fr.id });
+    return;
+  }
   if (typeof openGenericTutorialOnce === "function" && openGenericTutorialOnce("combat_forecast", { after: open })) return;
   open();
 }

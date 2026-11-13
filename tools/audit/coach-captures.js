@@ -32,9 +32,12 @@ function serve() {
 /* Déclencheurs des tutoriels génériques (même geste que le jeu). Un id absent d'ici est cherché dans l'Histoire. */
 var GENERIC = {
   sortie_prep: "CompanionManager.state('wenna').unlocked = true; CompanionManager.state('wenna').present = true; switchTab('campement'); openSortiePrep({ title: 'Test', icon: 'images/Icons/quests/mission_dungeon.webp', ctx: { type: 'dungeon', id: 1 }, food: { kind: 'dungeon', ref: DungeonManager.getById(1) }, onGo: function () {} });",
-  combat_forecast: "switchTab('campement'); var m = MissionBoard.list().filter(function (x) { return x.sourceKind === 'story'; })[0]; launchWithForecast(m || { title: 'Test' }, function () {});",
+  // lot 2 : PV bas pour que le pronostic s'ouvre (il ne s'ouvre que si c'est Risqué ou sous 50 % de PV)
+  combat_forecast: "game.heroHp = Math.floor(game.heroMaxHp * 0.3); switchTab('campement'); var m = MissionBoard.list().filter(function (x) { try { return !!CombatForecast.forMission(x); } catch (e) { return false; } })[0]; launchWithForecast(m || { title: 'Test' }, function () {});",
+  pa2_night: "switchTab('campement'); SceneRunManager.startRun('petite_aventure_desert'); game.sceneRun.cond = 'vent'; switchTab('scene');",
+  pa2_traps: "switchTab('campement'); SceneRunManager.startRun('petite_aventure_desert'); game.sceneRun.cond = 'pillards'; Pa2Run.addItem('torche'); game.genericTutorialsSeen.pa2_night = true; Pa2Run.depart(); switchTab('scene');",
   equipment_intro: "switchTab('more'); if (typeof setHerosSubTab === 'function') setHerosSubTab('equip'); switchTab('equip');",
-  village_training: "switchTab('village'); setVillageSubTab('village'); openVillageBuildingSheet('training');"
+  village_training: "switchTab('campement'); switchTab('village');" // lot 2 : le geste du jeu (onglet Village), la feuille n'est plus ouverte
 };
 
 /* Mise en place d'une étape d'Histoire : chapitres d'avant finis, étape courante, acceptée par le vrai geste. */
@@ -80,6 +83,20 @@ var ACCEPT_SAVED = function (id) {
   return tab || "sans-tutoriel";
 };
 
+/* Lot 2 : étape de combat — « Partir » sur la carte d'Histoire, puis les boutons de départ, jusqu'à l'écran de combat. */
+var GO_COMBAT = function (id) {
+  var cid = Object.keys(STORY_QUESTS).filter(function (c) { var s = StoryQuestManager.getCurrentStep(c); return s && s.id === id; })[0];
+  var m = MissionBoard.getById("story_" + cid); if (m) (m.launch || m.accept)();
+  var sel = [".kwin-foot .kbtn.primary", ".sp-foot .kbtn.primary", ".sp-foot .kbtn.danger", "button.kbtn.primary"];
+  return new Promise(function (ok) {
+    var n = 0, t = setInterval(function () {
+      if (game.activeTab === "combat") { clearInterval(t); setTimeout(ok, 300); return; }
+      for (var i = 0; i < sel.length; i++) { var b = document.querySelector(sel[i]); if (b && b.offsetParent) { b.click(); break; } }
+      if (++n > 30) { clearInterval(t); ok(); }
+    }, 300);
+  });
+};
+
 (async function () {
   if (!IDS.length) { console.error("Donner au moins un id de tutoriel (ex. forest_03,sortie_prep)."); process.exit(2); }
   var srv = await serve(), base = "http://127.0.0.1:" + srv.address().port + "/index.html";
@@ -121,8 +138,11 @@ var ACCEPT_SAVED = function (id) {
     else {
       tab = await page.evaluate(fromSave ? "(" + ACCEPT_SAVED.toString() + ")(" + JSON.stringify(id) + ")" : "(" + SETUP_STORY.toString() + ")(" + JSON.stringify(id) + ")");
       await page.waitForTimeout(300);
-      if (DUMP) await page.evaluate("switchTab(" + JSON.stringify(tab) + ")"); // l'écran, pour le relevé des éléments
-      await page.evaluate("switchTab(" + JSON.stringify(tab) + "); if (typeof renderPanel === 'function') renderPanel();");
+      if (tab === "combat") await page.evaluate("(" + GO_COMBAT.toString() + ")(" + JSON.stringify(id) + ")"); // lot 2 : on part vraiment au combat
+      else {
+        if (DUMP) await page.evaluate("switchTab(" + JSON.stringify(tab) + ")"); // l'écran, pour le relevé des éléments
+        await page.evaluate("switchTab(" + JSON.stringify(tab) + "); if (typeof renderPanel === 'function') renderPanel();");
+      }
     }
     await page.waitForTimeout(1300);
     for (var w = 0; w < 30 && await page.locator("#tutorial-modal-root .coach-wait").count(); w++) await page.waitForTimeout(100);

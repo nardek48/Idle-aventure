@@ -112,6 +112,77 @@ var COACH_TUTORIALS = {
       { sel: ".sortie-prep .sp-foot", title: _t("Partir ou renoncer"), text: _t("« Renoncer » ne lance rien. Après « Partir », le mode de combat reste figé jusqu'au retour, et tes PV ne remontent pas d'eux-mêmes.") }
     ]
   },
+  /* Lot 2 (Seb 13/11) : écrans du Désert (silence, outre, nuée, Forge) et génériques (pronostic, équipement, nuit et pièges, Terrain). */
+  desert_02: {
+    steps: [
+      { sel: ".cbx-badges", title: _t("Ses traits"), text: _t("Touche-les pour lire ce que fait l'ennemi. Un Silencieux annonce son silence sous sa barre de vie : s'il va au bout, tes compétences sont bloquées 2 rounds.") },
+      { sel: ".cbx-skills .cbx-skill:last-child", title: _t("Ta Défense"), text: _t("Jouée au bon moment, elle empêche le silence.") },
+      { sel: ".cbx-rule", title: _t("En Grimoire"), text: _t("La condition « L'ennemi va te réduire au silence » joue ta Défense à ta place.") },
+      { sel: ".cbx-card.is-hero", title: _t("Ce qui reste"), text: _t("Ton attaque de base, ta Défense et Wenna ne sont jamais réduites au silence.") },
+      { sel: ".cbx-pot", title: _t("Tes potions"), text: _t("Au Désert, les bêtes encaissent plus et frappent moins : les combats sont longs, garde tes potions pour la fin.") }
+    ]
+  },
+  desert_03: {
+    prepare: function () { if (typeof setVillageSubTab === "function") setVillageSubTab("shops"); },
+    steps: [
+      { sel: "#wk-tile-reservoir", title: _t("Le Réservoir"), text: _t("Un atelier du Puits : il change ton eau en Outres pleines. Touche-le pour en fabriquer.") },
+      { sel: "#wk-tile-reservoir .wk-tile-recipe", title: _t("La recette"), text: _t("16 Eau et 2 Viandes donnent une Outre pleine.") },
+      { sel: ".village-tabs .village-tab:nth-child(4)", title: _t("Avant de partir"), text: _t("L'Outre attend à l'Entrepôt. Au Désert, chaque pas coûte du Souffle : mets-en une dans ta besace, elle t'en rend quand tu en manques.") }
+    ]
+  },
+  desert_10: {
+    steps: [
+      { sel: ".cbx-foe.is-target", title: _t("Ta cible"), text: _t("Touche un ennemi pour le cibler : sa vie s'affiche en haut.") },
+      { sel: ".cbx-foe:not(.is-target)", title: _t("La nuée"), text: _t("Les scarabées vont par trois, les guerriers des sables par deux. Une nuée tue par le nombre de ses coups : chaque bête abattue en retire un.") },
+      { sel: ".cbx-ctx", title: _t("Le compteur"), text: _t("Dans cette quête, un groupe compte pour une seule rencontre.") },
+      { sel: ".cbx-rule", title: _t("En Grimoire"), text: _t("La condition « Ils sont plusieurs » règle ton kit face à un groupe.") }
+    ]
+  },
+  desert_13: {
+    prepare: function () { if (typeof setHerosSubTab === "function") setHerosSubTab("equip"); },
+    steps: [
+      { sel: ".hs-eslot.pin-helmet", title: _t("Tes pièces"), text: _t("Construis la Forge au Village, puis reforge ton arme une fois. Chaque reforge renforce ton héros pour toujours : au Désert, +0,5 % de PV max.") },
+      { sel: ".hs-edetail", title: _t("Le niveau de reforge"), text: _t("La Forge 1 ouvre deux reforges par emplacement, la Forge 2 quatre (le Verre trempé la construit). Le niveau reste à l'emplacement quand tu changes de pièce.") },
+      { sel: ".hs-subseg button:nth-child(2)", title: _t("Des pièces vertes"), text: _t("Les pièces Inhabituelles aident aussi : élites de la Forêt, heaume du guet, donjon, boutique, Petites Aventures. Rien ne l'exige : le pronostic dit si un combat est trop dur.") }
+    ]
+  },
+  combat_forecast: {
+    steps: [
+      { sel: ".cf-verdict", title: _t("Le pronostic"), text: _t("Il compare tes dégâts et tes PV, potions comprises, à ceux de l'adversaire : Sans danger, Abordable, Risqué, Très difficile ou Hors de portée.") },
+      { sel: ".cf-rows", title: _t("Le détail"), text: _t("Un boss qui se soigne demande un minimum de dégâts par round : en dessous, il est intuable. Monte tes caractéristiques ou ton équipement avant.") },
+      { sel: ".cf-card .kwin-foot", title: _t("Partir ou non"), text: _t("Il ne t'arrête que si c'est Risqué ou pire, ou sous 50 % de tes PV. Il écarte l'impossible, sans prédire l'issue.") }
+    ]
+  },
+  equipment_intro: {
+    steps: [
+      { sel: ".hs-eslot.pin-helmet", title: _t("Tes emplacements"), text: _t("Sept autour de ta silhouette. Touche-en un pour voir la pièce portée et la comparer.") },
+      { sel: ".hs-edetail", title: _t("La pièce portée"), text: _t("La couleur dit la rareté : gris, vert, bleu, violet, doré. Plus elle monte, plus la pièce a d'effets ; 3 pièces de même rareté donnent un bonus.") },
+      { sel: ".hs-subseg button:nth-child(2)", title: _t("Le Sac"), text: _t("25 objets au plus, une pastille par objet : ▲ mieux, ▼ moins bien. Une pièce en trop s'offre à l'Aether ; plein, le suivant y part tout seul.") }
+    ]
+  },
+  pa2_night: {
+    steps: [
+      { sel: ".pa2-cond .pa2-kicker", title: _t("La nuit du run"), text: _t("Chaque petite aventure a sa nuit : brouillard, orage, pillards… Elle vaut pour tout le run.") },
+      { sel: ".pa2-cond .pa2-pro", title: _t("Ce qu'elle apporte"), text: _t("En vert, son avantage.") },
+      { sel: ".pa2-cond .pa2-con", title: _t("Ce qu'elle coûte"), text: _t("En rouge, son prix. Une nuit sur cinq est calme : rien ne change.") },
+      { sel: ".pa2-nightitem", title: _t("L'objet de la nuit"), text: _t("L'étoile ★ marque l'objet qui t'aidera le plus. En route, la pastille dorée en haut de l'écran te rappelle la nuit.") }
+    ]
+  },
+  pa2_traps: {
+    steps: [
+      { sel: ".pa2-trap", noHit: true, title: _t("Un piège"), text: _t("Un losange rouge sur un sentier. Son icône dit ce qu'il fait : venin, alarme, entrave, aveuglement ou besace percée. La torche montre les pièges cachés.") },
+      { sel: ".pa2-trap", noHit: true, title: _t("Sur un piège"), text: _t("Désamorcer (un dé ; raté, il joue et te blesse), la Trousse (à coup sûr), Subir (sans blessure) ou Rebrousser (10 Souffle). Ses effets s'affichent en rouge en haut.") },
+      { sel: ".pa2-cut", title: _t("Un sentier coupé"), text: _t("Rond gris barré : coupé pour ce run. Il reste toujours un autre chemin.") }
+    ]
+  },
+  village_training: {
+    prepare: function () { if (typeof setVillageSubTab === "function") setVillageSubTab("buildings"); },
+    steps: [
+      { sel: ".vb-card[onclick*=\"'training'\"]", title: _t("Le Terrain d'entraînement"), text: _t("Sans lui, ta caractéristique de classe et l'Endurance butent à 20, les trois autres à 14. Il se bâtit ici, comme l'Atelier, et chaque niveau relève les cinq plafonds.") },
+      { sel: ".village-tabs .village-tab:first-child", title: _t("Un chantier à la fois"), text: _t("Bâtir ou monter un niveau, c'est un chantier : des matériaux, puis un peu de temps. Le village n'en mène qu'un à la fois.") },
+      { sel: ".tab-btn[data-tab=\"more\"]", title: _t("L'entraînement"), text: _t("Il se paie toujours en or, dans Héros › Entraînement. Le Terrain dit jusqu'où monter, pas combien ça coûte.") }
+    ]
+  },
   forest_11: {
     steps: [
       { sel: ".hst-bar", title: _t("Tes points"), text: _t("Chaque niveau donne un point de talent. Chaque acte fixe combien tu peux en placer : le surplus attend en réserve.") },
@@ -150,7 +221,7 @@ var CoachTutorial = {
 
   /* L'élément est-il au premier plan à son centre ? (une fenêtre posée dessus le cache : étape sautée) */
   _onTop: function (st) {
-    if (!document.elementFromPoint) return true;
+    if (!document.elementFromPoint || st.noHit) return true; // noHit : élément de décor (pointer-events: none), pas de test de toucher
     var els = [].slice.call(document.querySelectorAll(st.sel)), self = this;
     return els.some(function (el) {
       var b = el.getBoundingClientRect();
