@@ -4,11 +4,11 @@
 var gameLog = window.gameLog || [];
 
 function addLog(message, type) {
-  gameLog.unshift({
-    text: String(message || ""),
-    type: type || "event",
-    at: Date.now()
-  });
+  var e = { text: String(message || ""), type: type || "event", at: Date.now() };
+  // Round du combat en cours : la Chronique groupe son journal par round (maquette grand-ecran)
+  var r = window.game && game.combatRound ? Number(game.combatRound.number) || 0 : 0;
+  if (r > 0) e.round = r;
+  gameLog.unshift(e);
 
   if (gameLog.length > 100) {
     gameLog.length = 100;

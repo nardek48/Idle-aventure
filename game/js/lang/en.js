@@ -2540,6 +2540,7 @@ I18n.register("en", {
   "(max)": "(max)",
   "Le critique est plafonné à 100 % : tu as {n} %, le surplus ne sert plus. Mets tes points ailleurs.": "Critical chance is capped at 100%: you have {n}%, the surplus is wasted. Put your points elsewhere.",
   "La chance de critique est plafonnée à 100 % : au-delà, la fiche du Héros l'indique (« 100 % max ») pour que tu mettes tes points ailleurs.": "Critical chance is capped at 100%: beyond that, the Hero sheet says so (“100% max”) so you can put your points elsewhere.",
+  "Grand écran : le journal du combat de la Chronique se range par round (« Round 3 », « Round 2 »…), le plus récent en haut.": "Wide screen: the Chronicle's combat log is grouped by round (\"Round 3\", \"Round 2\"…), newest at the top.",
   "Contrats du jour": "Today's contracts",
   "Renouvelés dans {d}": "Renewed in {d}",
   "Livrer": "Deliver",

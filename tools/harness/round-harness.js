@@ -25686,6 +25686,21 @@ console.log("\n[513c] v3.794.0 — en.js : aucune clé en double (la dernière l
   ok(dup.length === 0, "en.js : aucune clé en double" + (dup.length ? " (" + dup.slice(0, 3).join(" | ") + ")" : ""));
 })();
 
+console.log("\n[513e] v3.795.0 — Chronique (grand écran) : journal du combat groupé par round");
+(function () {
+  var cr = g.game.combatRound, n0 = cr ? cr.number : 0, len = g.gameLog.length, t0 = Date.now();
+  if (!cr) g.game.combatRound = { number: 0 };
+  g.game.combatRound.number = 9; g.addLog("essai périmé", "event"); // numéro resté d'un combat d'avant
+  g.game.combatRound.number = 1; g.addLog("essai r1", "event"); g.addLog("essai r1 bis", "event");
+  g.game.combatRound.number = 2; g.addLog("essai r2", "event");
+  ok(g.gameLog[0].round === 2 && g.gameLog[1].round === 1, "addLog note le round du combat en cours");
+  var h = g.Chronique.journalHTML(t0), rounds = (h.match(/class="chr-round"/g) || []).length;
+  ok(rounds === 2 && h.indexOf("Round 2") < h.indexOf("Round 1") && !/Round 9/.test(h), "intertitres « Round 2 » puis « Round 1 », pas de round périmé (" + rounds + ")");
+  ok(!/chr-round/.test(g.Chronique.journalHTML()), "hors combat : pas d'intertitre");
+  g.gameLog.splice(0, g.gameLog.length - len); g.game.combatRound.number = n0;
+  if (!cr) delete g.game.combatRound;
+})();
+
 console.log("\n[513d] v3.794.0 — Critique plafonné à 100 % : la fiche le dit (option B de Seb)");
 (function () {
   var rows = g.HEROS_STAT_ROWS || [], prec = rows.filter(function (r) { return r.key === "precision"; })[0];

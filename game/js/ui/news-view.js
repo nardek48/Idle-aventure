@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.795.0", "menu_icons/journal_menu", _t("Grand écran : le journal du combat de la Chronique se range par round (« Round 3 », « Round 2 »…), le plus récent en haut.")],
     ["3.794.0", "combat_stats/stat_critical", _t("La chance de critique est plafonnée à 100 % : au-delà, la fiche du Héros l'indique (« 100 % max ») pour que tu mettes tes points ailleurs.")],
     ["3.793.0", "scene/pa2_besace", _t("Petites Aventures : la Montagne et la Tour ont leurs propres mots (« Gravir la montagne », « Monter l'escalier »…) au lieu de ceux de la Forêt.")],
     ["3.792.0", "codex/codex_lore", _t("Tutoriels : la Montagne (le sol qui brûle, les veines de la carte) et les étages de la Tour s'expliquent aussi sur l'écran. 40 aides éclairent maintenant les vrais boutons.")],

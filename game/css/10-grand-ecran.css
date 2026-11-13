@@ -138,6 +138,8 @@ html.chron-min:not(.chron-over) .chr-h strong { display: none; }
 .chr-harvest:disabled { opacity: 0.45; cursor: default; }
 .chr-log { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 7px; }
 .chr-log li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; font-size: 12.5px; line-height: 1.35; }
+.chr-log li.chr-round { grid-template-columns: 1fr; padding-top: 4px; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(201, 180, 140, 0.75); }
+.chr-log li.chr-round:first-child { padding-top: 0; }
 .chr-log time { font-size: 12px; color: rgba(201, 180, 140, 0.75); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .chr-strip { display: flex; flex-direction: column; align-items: center; gap: 10px; padding-top: 6px; }
 .chr-strip button { position: relative; width: 40px; height: 40px; padding: 4px; border-radius: 10px; border: 1px solid rgba(226, 177, 74, 0.3); background: rgba(0, 0, 0, 0.3); cursor: pointer; }

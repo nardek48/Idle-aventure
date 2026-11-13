@@ -208,7 +208,13 @@ var Chronique = {
       return m < 1 ? _t("à l'instant") : m < 60 ? _t("{n} min", { n: m }) : _t("{h} h", { h: Math.floor(m / 60) });
     };
     var h = '<section class="chr-s"><h4>' + esc(since ? _t("Journal du combat") : _t("Journal")) + (since ? '' : '<a onclick="switchTab(\'log\')">' + esc(_t("Tout")) + ' ›</a>') + '</h4><ul class="chr-log">';
-    log.forEach(function (e) { h += '<li class="is-' + esc(e.type || "event") + '"><span>' + esc(_td(e.text)) + '</span><time>' + esc(age(e.at)) + '</time></li>'; });
+    var prev = null;
+    log.forEach(function (e) {
+      // En combat : un intertitre « Round N » à chaque changement de round (le plus récent en tête)
+      // un numéro plus grand que le round suivant est resté d'un combat d'avant : pas d'intertitre
+      if (since && e.round && (prev === null || e.round < prev)) { h += '<li class="chr-round">' + esc(_t("Round")) + ' ' + e.round + '</li>'; prev = e.round; }
+      h += '<li class="is-' + esc(e.type || "event") + '"><span>' + esc(_td(e.text)) + '</span><time>' + esc(age(e.at)) + '</time></li>';
+    });
     return h + '</ul></section>';
   }
 };
