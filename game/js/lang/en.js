@@ -154,7 +154,6 @@ I18n.register("en", {
   "Tu commences avec 2 règles ; d'autres s'ouvrent en avançant dans l'Histoire.": "You start with 2 rules; more open up as you progress through the Story.",
   "Tes points": "Your points",
   "Chaque niveau donne un point de talent. Chaque acte fixe combien tu peux en placer : le surplus attend en réserve.": "Each level gives a talent point. Each act sets how many you can spend: the rest waits in reserve.",
-  "Le tronc": "The trunk",
   "Ton arbre est propre à ta classe. On commence par le tronc.": "Your tree belongs to your class. You start with the trunk.",
   "Deux voies": "Two paths",
   "Elles changent ta façon de combattre. Au bout de chacune, une clé de voûte : tu n'en choisiras qu'une.": "They change how you fight. At the end of each, a keystone: you'll only choose one.",
@@ -657,7 +656,6 @@ I18n.register("en", {
   "Très difficile": "Very hard",
   "Hors de portée": "Out of reach",
   "Il se soigne plus vite que tu ne frappes : ce combat ne peut pas être gagné en l'état.": "It heals faster than you hit: this fight can't be won as things stand.",
-  "Équipé : {x}": "Equipped: {x}",
   "Débloque d'abord la Scierie : quête « Le Bosquet Silencieux » (Quêtes › Annexes)": "Unlock the Sawmill first: quest “The Silent Grove” (Quests › Side quests)",
   "Préparer une petite aventure": "Preparing a short adventure",
   "Tu pars avec tes PV actuels : en route, seuls te soignent les rations de la besace, les sources, le repos (au seuil ou au feu de camp), les autels et quelques reliques.": "You set out with your current HP: on the way, only the satchel's rations, springs, resting (at a threshold or the campfire), altars and a few relics heal you.",
@@ -720,7 +718,6 @@ I18n.register("en", {
 
   // js/systems/elite-system.js
   "élite": "elite",
-  "Objet unique": "Unique item",
   "Sève d'Aeswyn": "Aeswyn Sap",
 
   // js/systems/enchant-system.js
@@ -1281,7 +1278,6 @@ I18n.register("en", {
   // js/ui/codex-view.js
   "Prologue": "Prologue",
   "Les mondes": "The worlds",
-  "Le Cycle": "The Cycle",
   "Pas encore découvert": "Not discovered yet",
   "Retour au Codex": "Back to the Codex",
   "Déjà lu.": "Already read.",
@@ -2019,7 +2015,6 @@ I18n.register("en", {
   "Voir le tableau de missions": "See the mission board",
   "Aucune expédition en cours, direction le tableau de missions.": "No expedition under way, off to the mission board.",
   "Souffle {n}": "Breath {n}",
-  "Quelque chose a été laissé là. Pas pour toi, mais tu es là.": "Something was left here. Not for you, but you're here.",
   "Butin rapporté": "Loot brought back",
   "Retour à la carte": "Back to the map",
   "Retour au Campement": "Back to Camp",
@@ -2130,7 +2125,6 @@ I18n.register("en", {
   "Tu as dit que tu ne vendais rien.": "You said you don't sell anything.",
   "Ici.": "Down here.",
   "Les morts qui dorment": "The Sleeping Dead",
-  "Deux sur quatre": "Two out of four",
   "Le Marché de la Crypte": "The Crypt Market",
   "Dans la Crypte, certains morts dorment. Ils ne jouent pas, et ton camp ne les vise pas.": "In the Crypt, some of the dead are sleeping. They don't act, and your side doesn't target them.",
   "Le combat est gagné quand les éveillés sont tombés. Les dormeurs restent couchés.": "The battle is won when the awake ones fall. The sleepers stay down.",
@@ -2548,7 +2542,6 @@ I18n.register("en", {
   "Établi": "Workbench",
   "Reforges jusqu'à {n}": "Reforges up to {n}",
   "La reforge ne touche plus la pièce : elle renforce ton héros, pour toujours. Le niveau reste à l'emplacement.": "Reforging no longer changes the item: it strengthens your hero, for good. The level stays with the slot.",
-  "niv. {a} / {b}": "lvl {a} / {b}",
   "Vide — le niveau reste à l'emplacement.": "Empty — the level stays with the slot.",
   "Acier fourni par le village (reforge exigée par l’Histoire)": "Steel provided by the village (reforge required by the Story)",
   "Améliore": "Upgrade",
@@ -2715,7 +2708,6 @@ I18n.register("en", {
   "Écho": "Echo",
   "Lame vorace": "Hungry Blade",
   "Peau d'écorce": "Barkskin",
-  "Second souffle": "Second Wind",
   "Œil du faucon": "Hawk's Eye",
   "Clairvoyance": "Foresight",
   "Poigne de fer": "Iron Grip",
@@ -3640,7 +3632,6 @@ I18n.register("en", {
   "La verrerie ensevelie": "The Buried Glassworks",
   "L'oasis basse": "The Low Oasis",
   "Le marché de sel": "The Salt Market",
-  "La tour de guet": "The Watchtower",
   "Le lit du fleuve": "The Riverbed",
   "La bête sous la dune": "The Beast Under the Dune",
   "La porte du Temple": "The Temple Gate",
@@ -3789,9 +3780,6 @@ I18n.register("en", {
   "Personne ne remonte le fleuve": "No One Goes Up the River",
   "Petite aventure — Forêt": "Short Adventure — Forest",
   "Petite aventure — Désert": "Short Adventure — Desert",
-  "Torche": "Torch",
-  "Corde": "Rope",
-  "Gourde": "Flask",
 
   // PATROL_STORIES
   "J'ai fait le tour par {secteur}. Rien de méchant, juste des traces qui tournaient en rond. J'ai rapporté ce que j'ai pu porter.": "I went round by {secteur}. Nothing nasty, just tracks going in circles. I brought back what I could carry.",
@@ -5110,7 +5098,6 @@ I18n.register("en", {
   "Pince de bâtisseur": "Builder's crowbar",
   "la pince de bâtisseur": "the builder's crowbar",
   "Contre un mur, une pince de bâtisseur, encore blanche de poussière. Tu la gardes.": "Against a wall, a builder's crowbar, still white with dust. You keep it.",
-  "La faille": "The rift",
   "Un courant d'air sort d'une fente dans la falaise.": "A draught comes out of a crack in the cliff.",
   "La sente du guet": "The lookout trail",
   "Au nord, une lueur, une seule fois. Comme un feu de guet.": "To the north, a glow, just once. Like a watch fire.",
@@ -5157,7 +5144,6 @@ I18n.register("en", {
   "Dont {n} Souffle de brûlures : la lave ne monte pas pendant le détour, mais elle est déjà là.": "Including {n} Breath of burns: the lava doesn't rise during the detour, but it's already there.",
   "Le caveau du milieu": "The middle vault",
   "Un caveau ouvert au bord du chemin. Au fond, une autre porte, et de la lumière.": "An open vault by the path. At the back, another door, and light.",
-  "L'allée des gisants": "The aisle of effigies",
   "Entre les gisants, une allée assez large pour passer. Ils ne bougent pas.": "Between the effigies, an aisle wide enough to pass. They don't move.",
   "Le passage de la lampe": "The lamp's passage",
   "Sur le mur, la lumière de la lampe tremble, comme s'il y avait de l'air derrière.": "On the wall, the lamplight trembles, as if there were air behind it.",
@@ -5537,7 +5523,6 @@ I18n.register("en", {
   "Il ne viendra pas à toi : vise-le en premier si l'équipe souffre.": "It won't come to you: target it first if the team is suffering.",
   "Tiens bon ou abrège : le pic ne dure pas.": "Hold on or finish it fast: the spike doesn't last.",
   // js/ui/pa2-view.js — v3.427.2 : besace du dernier départ
-  "Comme la dernière fois": "Same as last time",
   "Besace reprise.": "Bag restored.",
   "Besace reprise. Manque : {x}.||Besace reprise. Manquent : {x}.": ["Bag restored. Missing: {x}.", "Bag restored. Missing: {x}."],
   // v3.428.0 — Ruines, acte I (relève, réglage « Cible », Edda, chapitre 3)
@@ -7517,7 +7502,6 @@ I18n.register("en", {
   "Une bouche dans la montagne. L'air qui en sort est plus chaud que le soleil.": "A mouth in the mountain. The air coming out of it is hotter than the sun.",
   "la coulée": "the Flow",
   "La coulée": "The Flow",
-  "Sous la lave": "Under lava",
   "le Replat": "the Ledge",
   "La fumée cache la pente. On ne sait pas ce qui s'y tient.": "Smoke hides the slope. No one knows what stands there.",
   "La Montagne attend encore ailleurs": "The Mountain is still waiting elsewhere",

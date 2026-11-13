@@ -1231,6 +1231,17 @@ function run() {
     ok(true, "sauvegarde reprise : " + process.env.SAVE_IN);
   }
   if (process.env.VARIER) G.game.grimoireVarier = true;
+  // MESURE_CRIT=1 : à chaque coup du héros, sa chance de critique, la part ôtée par la Volonté de l'ennemi et le surplus au-delà de 100 %
+  if (process.env.MESURE_CRIT && typeof G.getEnemyWillCritPenalty === "function") (function (orig) {
+    STATS.crit = {};
+    G.getEnemyWillCritPenalty = function () {
+      var pen = orig.apply(this, arguments), cc = Number(G.EquipmentManager.effectiveCritChance() || 0), w = String((G.WorldManager.getWorld() || {}).id || "?");
+      var o = STATS.crit[w] = STATS.crit[w] || { n: 0, cc: 0, pen: 0, perdu: 0, coupsPerdus: 0, ccMax: 0 };
+      var perdu = Math.max(0, cc - pen - 100);
+      o.n++; o.cc += cc; o.pen += pen; o.perdu += perdu; if (perdu > 0) o.coupsPerdus++; o.ccMax = Math.max(o.ccMax, cc);
+      return pen;
+    };
+  })(G.getEnemyWillCritPenalty);
   espionOr();
   G.saveGame();
 
@@ -2295,6 +2306,7 @@ function finDePartie() {
   R.inventaire = { heros: heroSnapshot(), combat: combatLine(), or: Math.floor(game.gold), memoire: g.MemoryManager.getLevel() + "/" + ((g.MEMORY_LEVELS || []).length || "?"),
     hautsFaits: ach + "/" + (g.ACHIEVEMENTS_DB || []).length, batiments: bat.join(" · "), entrepotPlein: pleins.length + "/" + res.length,
     ilvl: ilvl.join(" "), donjons: JSON.stringify(game.dungeonLevelBest || {}), finHistoire: !!(g.TowerSystem && g.TowerSystem.ending()) };
+  if (STATS.crit) Object.keys(STATS.crit).forEach(function (w) { var o = STATS.crit[w]; console.log("CRIT " + CLASSE + " " + w + " : " + o.n + " coups · critique moyen " + (o.cc / o.n).toFixed(1) + " % (max " + o.ccMax.toFixed(1) + ") · Volonté −" + (o.pen / o.n).toFixed(1) + " pts · perdu au-delà de 100 % : " + (o.perdu / o.n).toFixed(2) + " pts en moyenne, sur " + (100 * o.coupsPerdus / o.n).toFixed(0) + " % des coups"); });
   console.log("\n=== FIN DE PARTIE · " + CLASSE + " ===");
   Object.keys(R.inventaire).forEach(function (k) { console.log("  " + k + " : " + R.inventaire[k]); });
   // 2. Jusqu'où il tient (pronostic du jeu ; sûr = Trivial/Abordable, risqué = tout sauf Très dur / Hors de portée)

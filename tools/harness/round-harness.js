@@ -25060,9 +25060,11 @@ console.log("\n[496] v3.736.0 — Grimoire vivant : 3 règles, jeux en onglets, 
     g.setGrimoireRuleCondition(2, "shieldIncoming"); g.setGrimoireRuleAction(2, "skill2");
     ok(j1.rules[2].conditionId === "shieldIncoming" && !(j0.rules[2] && j0.rules[2].conditionId), "modifier une règle : écrit dans le jeu actif seulement");
     g.activateGrimoireJeu(j0.id);
-    ok(j0.actif && !j1.actif && !G.grimoireRules[2].conditionId && G.grimoireRules[0].conditionId === "chargeIncoming", "un toucher sur un jeu : ses règles deviennent celles du combat");
+    // v3.794.0 : diagnostic des échecs intermittents vus en CI (Grimoire non modifiable ? jeu non trouvé ?)
+    var diag496 = function () { return " [éditable " + g.isGrimoireEditable() + ", verrou " + g.heroLockReason() + ", sortie " + g.SortieManager.isActive() + ", jeux " + G.grimoirePresets.map(function (p) { return p.name + (p.actif ? "*" : ""); }).join("/") + ", même objet " + (G === g.game) + "]"; };
+    ok(j0.actif && !j1.actif && !G.grimoireRules[2].conditionId && G.grimoireRules[0].conditionId === "chargeIncoming", "un toucher sur un jeu : ses règles deviennent celles du combat" + (j0.actif ? "" : diag496()));
     var keepAct = g.SortieManager.isActive; g.SortieManager.isActive = function () { return true; };
-    ok(g.activateGrimoireJeu(j1.id) === false && j0.actif, "sortie en cours : on ne change pas de jeu (Grimoire figé)");
+    ok(g.activateGrimoireJeu(j1.id) === false && j0.actif, "sortie en cours : on ne change pas de jeu (Grimoire figé)" + (j0.actif ? "" : diag496()));
     g.SortieManager.isActive = keepAct;
     g.saveGrimoirePreset("Trois", ""); ok(G.grimoirePresets.length === 3, "Ruines : 3 jeux");
     g.saveGrimoirePreset("Quatre", ""); ok(G.grimoirePresets.length === 3 && !g.canCreateGrimoireJeu(), "Ruines : pas de 4e jeu avant la Crypte");
@@ -25672,6 +25674,16 @@ console.log("\n[512] Fil rouge (v3.760.0, Seb 09/11, option A) : construire au v
     ok(!annexes.some(function (x) { return idle.title === x.title; }), "« Rien ne presse » ne reprend plus une annexe (pas de doublon)");
   } catch (err) { ok(false, "[512] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   finally { try { run("fullResetState();"); } catch (e2) {} game = freshCombat("knight"); }
+})();
+
+console.log("\n[513c] v3.794.0 — en.js : aucune clé en double (la dernière l'emportait sans bruit)");
+(function () {
+  var seen = {}, dup = [];
+  require("fs").readFileSync(require("path").join(ROOT, "js/lang/en.js"), "utf8").split("\n").forEach(function (l) {
+    var m = l.match(/^  ("(?:[^"\\]|\\.)*"): /); if (!m) return;
+    var k = JSON.parse(m[1]); if (seen[k]) dup.push(k); seen[k] = true;
+  });
+  ok(dup.length === 0, "en.js : aucune clé en double" + (dup.length ? " (" + dup.slice(0, 3).join(" | ") + ")" : ""));
 })();
 
 console.log("\n[513b] v3.793.0 — Petites Aventures de la Montagne et de la Tour : leurs propres textes (plus ceux de la Forêt)");
