@@ -25674,6 +25674,13 @@ console.log("\n[512] Fil rouge (v3.760.0, Seb 09/11, option A) : construire au v
   finally { try { run("fullResetState();"); } catch (e2) {} game = freshCombat("knight"); }
 })();
 
+console.log("\n[513b] v3.793.0 — Petites Aventures de la Montagne et de la Tour : leurs propres textes (plus ceux de la Forêt)");
+(function () {
+  var M = g.pa2Words({ worldId: "mountain" }), T = g.pa2Words({ worldId: "tower" }), F = g.pa2Words({ worldId: "forest" });
+  ok(M.enter === "Gravir la montagne" && T.enter === "Monter l'escalier" && F.enter === "Entrer dans la forêt", "bouton de départ propre à chaque monde");
+  ok([M, T].every(function (w) { return !/forêt/.test(w.enter + w.listen + w.home + w.koHalf + w.koAll + w.take) && w.takeIcon === null; }), "aucun texte de la Forêt à la Montagne ni à la Tour");
+})();
+
 console.log("\n[513] Tutoriels sur l'écran (v3.761.0, atelier tutoriels-ecran, Seb 10/11 : bulle A, « Suivant » ou toucher)");
 (function () {
   try {

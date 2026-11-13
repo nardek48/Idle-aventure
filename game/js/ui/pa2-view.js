@@ -155,6 +155,16 @@ function pa2Words(run) {
     koHalf: _t("Le silence, d'un coup. Puis des voix, des mains. La moitié de ce que tu portais reste dans le noir."),
     koAll: _t("Le silence, d'un coup. Puis des voix, des mains. Tout ce que tu portais reste dans le noir."),
     take: _t("S'approcher de l'autel"), takeIcon: null };
+  if (w === "mountain") return { // v3.793.0 : la Montagne avait les textes de la Forêt
+    enter: _t("Gravir la montagne"), listen: _t("Écouter la montagne"), home: _t("Tu as choisi de redescendre avant que la lave ne monte. La montagne garde ses veines. Tu gardes ton butin."),
+    koHalf: _t("Le silence, d'un coup. Puis des voix, des mains. La moitié de ce que tu portais reste dans la cendre."),
+    koAll: _t("Le silence, d'un coup. Puis des voix, des mains. Tout ce que tu portais reste dans la cendre."),
+    take: _t("S'approcher de la source"), takeIcon: null };
+  if (w === "tower") return { // v3.793.0 : la Tour avait les textes de la Forêt
+    enter: _t("Monter l'escalier"), listen: _t("Écouter la Tour"), home: _t("Tu as choisi de redescendre avant le palier suivant. La Tour garde ses étages. Tu gardes ton butin."),
+    koHalf: _t("Le silence, d'un coup. Puis des voix, des mains. La moitié de ce que tu portais reste dans l'escalier."),
+    koAll: _t("Le silence, d'un coup. Puis des voix, des mains. Tout ce que tu portais reste dans l'escalier."),
+    take: _t("S'approcher de la citerne"), takeIcon: null };
   if (w === "ruins") return {
     enter: _t("Entrer dans les ruines"), listen: _t("Écouter les ruines"), home: _t("Tu as choisi de rentrer avant la nuit profonde. Les ruines gardent leurs secrets. Tu gardes ton butin."),
     koHalf: _t("Le silence, d'un coup. Puis des voix, des mains. La moitié de ce que tu portais reste dans les ruines."),

@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.793.0", "scene/pa2_besace", _t("Petites Aventures : la Montagne et la Tour ont leurs propres mots (« Gravir la montagne », « Monter l'escalier »…) au lieu de ceux de la Forêt.")],
     ["3.792.0", "codex/codex_lore", _t("Tutoriels : la Montagne (le sol qui brûle, les veines de la carte) et les étages de la Tour s'expliquent aussi sur l'écran. 40 aides éclairent maintenant les vrais boutons.")],
     ["3.791.0", "codex/codex_lore", _t("Tutoriels : les écrans des Ruines et de la Crypte s'expliquent aussi sur l'écran (compagnons, Marché, murs qui bougent, obscurité, chantier errant, Cœur, gisants).")],
     ["3.790.0", "codex/codex_lore", _t("Tutoriels : les quêtes du village (zones, niveaux et améliorations du Champs, ateliers) s'affichent aussi sur l'écran.")],
