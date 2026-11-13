@@ -314,6 +314,30 @@ var COACH_TUTORIALS = {
       { sel: ".lm-node.is-village", title: _t("La Veillée"), text: _t("Le Marché de la Crypte est sur la carte, à côté de la Veillée.") }
     ]
   },
+  /* Lot 5 (option B, Seb 13/11) : écrans de la Montagne et de la Tour. */
+  montagne_06: {
+    steps: [
+      { sel: ".pa2-prep .pa2-hook", title: _t("Le sol qui brûle"), text: _t("À la Montagne, certaines cases brûlent : y marcher coûte du Souffle. À chaque pas, la lave avance d'une rangée.") },
+      { sel: ".pa2-prep .pa2-addbig", title: _t("La Pierre froide"), text: _t("La Pierre de Sarkel se met dans ta besace sans rien coûter. Posée, elle te fait traverser une case brûlante sans dommage, quelques fois par parcours.") },
+      { sel: ".pa2-go", title: _t("Veines et gardien"), text: _t("Tailler une veine rapporte de la Cendre vive, mais la lave avance plus vite. Au bout, le gardien trie : rien taillé, il te laisse passer ; taillé, il se bat pour son coffre.") }
+    ]
+  },
+  montagne_07: {
+    prepare: coachOpenLivingMap("mountain"),
+    steps: [
+      { sel: ".lm-node.is-voile:not(.is-far)", title: _t("Un secteur"), text: _t("Comme à la Crypte : tu le libères en terminant sa Petite Aventure, ou en battant l'élite qui le garde.") },
+      { sel: ".lm-node.is-voile:not(.is-far)", title: _t("Sa veine"), text: _t("Avant de partir, tu choisis : la tailler (plus de Cendre vive, mais le secteur chauffe et ses combats durcissent) ou la laisser (plus facile, moins riche).") },
+      { sel: ".lm-node.is-elite", title: _t("La coulée"), text: _t("Une Petite Aventure ratée recouvre le secteur de lave jusqu'à la prochaine nuit. Une élite perdue, elle, se retente le jour même.") }
+    ]
+  },
+  tour_06: {
+    prepare: coachOpenLivingMap("tower"),
+    steps: [
+      { sel: ".lm-node.is-voile", title: _t("Un étage"), text: _t("La carte de la Tour est en coupe : un étage par secteur. Tu le libères en terminant sa Petite Aventure.") },
+      { sel: ".lmx-pill.is-title", noHit: true, title: _t("Les mondes"), text: _t("Chaque étage se souvient d'un monde : ses obstacles viennent du Désert, des Ruines, de la Crypte ou de la Montagne.") },
+      { sel: ".lm-node.is-village", title: _t("La redite"), text: _t("Une Petite Aventure ratée, et la Tour refait l'étage : plus dur jusqu'à la prochaine nuit (toutes les 3 sorties). Rien n'est perdu.") }
+    ]
+  },
   forest_11: {
     steps: [
       { sel: ".hst-bar", title: _t("Tes points"), text: _t("Chaque niveau donne un point de talent. Chaque acte fixe combien tu peux en placer : le surplus attend en réserve.") },
