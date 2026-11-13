@@ -224,8 +224,27 @@ function compterAnnonces() {
   CE.telegraphPattern = function () { ANNONCES++; return orig.apply(this, arguments); };
 }
 
+  // MESURE_CRIT=1 : à chaque tirage du critique en combat, la chance du héros, la part ôtée par la Volonté de l'ennemi (0,05 par point) et le surplus au-delà de 100 %
+function mesureCrit() {
+  if (process.env.MESURE_CRIT) (function (EM) {
+    var orig = EM.effectiveCritChance;
+    STATS.crit = STATS.crit || {};
+    EM.effectiveCritChance = function () {
+      var cc = Number(orig.apply(this, arguments) || 0), en = G.game.enemy;
+      STATS.critAppels = (STATS.critAppels || 0) + 1;
+      if (en && en.stats && Number(en.hp) > 0) { // le robot combat sans passer par l'onglet Combat
+        var pen = Number(en.stats.will || 0) * 0.05, w = String((G.WorldManager.getWorld() || {}).id || "?");
+        var o = STATS.crit[w] = STATS.crit[w] || { n: 0, cc: 0, pen: 0, perdu: 0, coupsPerdus: 0, ccMax: 0 };
+        var perdu = Math.max(0, cc - pen - 100);
+        o.n++; o.cc += cc; o.pen += pen; o.perdu += perdu; if (perdu > 0) o.coupsPerdus++; o.ccMax = Math.max(o.ccMax, cc);
+      }
+      return cc;
+    };
+  })(G.EquipmentManager);
+}
+
 function relaunch() {
-  G = launch(); compterAnnonces();
+  G = launch(); compterAnnonces(); mesureCrit();
   if (RECHARGE_H) G.SceneRunManager.PETITE_AVENTURE_RECHARGE_MS = RECHARGE_H * 3600e3;
   G.startGame();
   G.titleScreenConfirmLoad(Number(G.HeroSlotManager.getActiveSlot()));
@@ -1213,7 +1232,7 @@ function playAdventure(id) {
 
 function run() {
   // Premier lancement, création du héros
-  G = launch(); compterAnnonces();
+  G = launch(); compterAnnonces(); mesureCrit();
   if (RECHARGE_H) G.SceneRunManager.PETITE_AVENTURE_RECHARGE_MS = RECHARGE_H * 3600e3;
   G.startGame();
   G.titleScreenNewGame();
@@ -1231,21 +1250,6 @@ function run() {
     ok(true, "sauvegarde reprise : " + process.env.SAVE_IN);
   }
   if (process.env.VARIER) G.game.grimoireVarier = true;
-  // MESURE_CRIT=1 : à chaque tirage du critique en combat, la chance du héros, la part ôtée par la Volonté de l'ennemi (0,05 par point) et le surplus au-delà de 100 %
-  if (process.env.MESURE_CRIT) (function (EM) {
-    var orig = EM.effectiveCritChance;
-    STATS.crit = {};
-    EM.effectiveCritChance = function () {
-      var cc = Number(orig.apply(this, arguments) || 0), en = G.game.enemy;
-      if (en && en.stats && G.game.activeTab === "combat") {
-        var pen = Number(en.stats.will || 0) * 0.05, w = String((G.WorldManager.getWorld() || {}).id || "?");
-        var o = STATS.crit[w] = STATS.crit[w] || { n: 0, cc: 0, pen: 0, perdu: 0, coupsPerdus: 0, ccMax: 0 };
-        var perdu = Math.max(0, cc - pen - 100);
-        o.n++; o.cc += cc; o.pen += pen; o.perdu += perdu; if (perdu > 0) o.coupsPerdus++; o.ccMax = Math.max(o.ccMax, cc);
-      }
-      return cc;
-    };
-  })(G.EquipmentManager);
   espionOr();
   G.saveGame();
 
@@ -2483,5 +2487,6 @@ if (JSON_OUT) fs.writeFileSync(JSON_OUT, JSON.stringify({ classe: CLASSE, policy
 STATS.actifMs = STATS.combatMs + (STATS.navMs || 0); // EQUI-19 : rounds + navigation, sans les attentes
 if (COMBATS) console.log("Temps actif (rounds + navigation, sans les attentes ; à comparer au journal) : " + (STATS.actifMs / 3600e3).toFixed(1) + " h (combat " + (STATS.combatMs / 3600e3).toFixed(1) + " h + navigation " + ((STATS.navMs || 0) / 3600e3).toFixed(1) + " h, " + (STATS.gestes || 0) + " gestes à " + NAV_GESTE_MS / 1000 + " s) · attente hors combat : " + ((CLOCK.offset - STATS.combatMs) / 3600e3).toFixed(1) + " h");
 if (STATS.crit) Object.keys(STATS.crit).forEach(function (w) { var o = STATS.crit[w]; console.log("CRIT " + CLASSE + " " + w + " : " + o.n + " coups · critique moyen " + (o.cc / o.n).toFixed(1) + " % (max " + o.ccMax.toFixed(1) + ") · Volonté −" + (o.pen / o.n).toFixed(1) + " pts · perdu au-delà de 100 % : " + (o.perdu / o.n).toFixed(2) + " pts en moyenne, sur " + (100 * o.coupsPerdus / o.n).toFixed(0) + " % des coups"); });
+if (process.env.MESURE_CRIT) console.log("CRIT appels : " + (STATS.critAppels || 0) + " · mondes relevés : " + Object.keys(STATS.crit || {}).join(", "));
 console.log("\n" + passes + " OK, " + failures + " échec(s) — temps simulé : " + (CLOCK.offset / 3600e3).toFixed(1) + " h (dont " + DAYS_WAITED + " attente(s) de recharge des expéditions, " + CAP_WAIT_H.toFixed(1) + " h)");
 process.exit(failures ? 1 : 0);
