@@ -225,7 +225,7 @@ function prepMap(except) {
 
 /* ====================================================================================
    P2 — Soir / matin. Village qui produit, Wenna partie 8 h, app tuée, 9 h plus tard :
-   « Continuer », écran de retour, « Tout récolter ». Coutures C1, C3.
+   « Continuer », écran de retour (v3.782.0 : récolte et butin faits à l'ouverture). Coutures C1, C3.
    ==================================================================================== */
 async function P2(browser, base) {
   var dev = await newDevice(browser);
@@ -251,23 +251,18 @@ async function P2(browser, base) {
   var txt = await page.locator(".ret-card").innerText().catch(function () { return ""; });
   ok(/Pendant ton absence/.test(txt), "titre « Pendant ton absence »");
   ok(/9 h/.test(txt), "durée d'absence affichée (9 h)");
-  ok(/Village/.test(txt), "rubrique Village (production de la nuit)");
-  ok(/Wenna/.test(txt), "rubrique Patrouilles : Wenna est rentrée");
+  ok(/Récolté/.test(txt), "rubrique Récolté (production de la nuit, récoltée à l'ouverture)");
+  ok(/Wenna/.test(txt) && !/Prendre le butin/.test(txt), "rubrique Patrouilles : Wenna est rentrée, son butin déjà pris");
   ok(await page.locator(".ret-card").count() === 1, "un seul écran de retour");
   await shot(page, "2_retour");
 
-  var before = await page.evaluate(function () { return Object.keys(WAREHOUSE_RESOURCES).reduce(function (s, k) { return s + WarehouseManager.getAmount(k); }, 0); });
-  var btn = page.locator(".ret-acts button", { hasText: "Tout récolter" });
-  ok(await btn.count() === 1, "bouton « Tout récolter »");
-  if (await btn.count()) await btn.first().click();
-  await page.waitForTimeout(300);
-  ok(/Récolte faite/.test(await page.locator(".ret-card").innerText()), "« Récolte faite » affiché");
-  var after = await page.evaluate(function () { return Object.keys(WAREHOUSE_RESOURCES).reduce(function (s, k) { return s + WarehouseManager.getAmount(k); }, 0); });
-  ok(after > before, "l'Entrepôt a reçu la récolte (" + before + " -> " + after + ")");
+  var reste = await page.evaluate(function () { var t = OfflineManager._collectPlotTotals(); return Object.keys(t).filter(function (k) { return t[k] > 0 && WarehouseManager.getFreeSpace(k) > 0; }).length; });
+  ok(reste === 0, "la récolte est faite à l'ouverture : plus rien dans les zones qui tienne dans l'Entrepôt");
+  ok(await page.locator(".ret-card .ret-go").count() === 1 && !(await page.locator(".ret-card", { hasText: "Tout récolter" }).count()), "un seul bouton principal (la suite), plus de « Tout récolter »");
   await shot(page, "3_recolte");
 
   await tap(page, ".ret-close");
-  ok(!(await visible(page, ".ret-card", 500)), "« Continuer » ferme l'écran de retour");
+  ok(!(await visible(page, ".ret-card", 500)), "« Plus tard » ferme l'écran de retour");
   consoleClean(page);
   await dev.close();
 }

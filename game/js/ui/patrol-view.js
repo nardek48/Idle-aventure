@@ -136,12 +136,12 @@ function buildReturnPatrolsHTML() {
   return buildReturnSectionHTML("images/Icons/quests/mission_exploration.webp", _t("Patrouilles"), body);
 }
 
-function returnCollectPatrols() {
+function returnCollectPatrols(quiet) {
   var st = (typeof getReturnScreenState === "function") ? getReturnScreenState() : null;
   if (!st || !window.PatrolManager) return;
   var got = PatrolManager.collectAll();
   st.patrolResults = Object.assign(st.patrolResults || {}, got);
-  if (typeof renderReturnScreen === "function") renderReturnScreen();
+  if (!quiet && typeof renderReturnScreen === "function") renderReturnScreen(); // quiet : à l'ouverture de l'écran de retour (v3.782.0)
 }
 
 function returnOpenPatrolStory(id) {

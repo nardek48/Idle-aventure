@@ -96,31 +96,17 @@ Maquette de référence : atelier-evolutions.html.
 .ret-sec-b .ret-link { min-height: 44px; } /* v3.688.0 (CPL1-9) : zone de toucher de 44 px à l'écran de retour */
 .ret-story { font-size: 12px; line-height: 1.5; font-style: italic; color: #4a3a20; border-left: 2px solid var(--c-bronze-400-2); padding-left: 8px; margin-top: 5px; }
 
-.ret-acts { margin-top: 8px; }
-.ret-acts .settings-btn { max-width: 300px; font-size: 13px; }
 .ret-btn-col { display: flex; flex-direction: column; align-items: center; }
 .ret-btn-col small { font-size: 12px; font-weight: 700; color: var(--c-cream-100-vivid); }
-/* v3.458.4 (audit C9) : sur un bouton clair (Manger, Livrer), le petit texte était crème sur crème */
-.ret-acts .settings-btn:not(.primary) .ret-btn-col small { color: var(--c-brown-750-2); }
 .ret-done { text-align: center; font-size: 12px; font-weight: 800; color: var(--c-green-750-vivid); margin: 2px 0 8px; }
 
-.ret-next { display: flex; align-items: center; gap: 8px; margin-top: 4px; border-top: 1px dashed var(--c-bronze-400-2); padding-top: 8px; }
-.ret-next img { width: 30px; height: 30px; object-fit: contain; }
-.ret-next-t { flex: 1 1 auto; font-size: 12px; line-height: 1.3; min-width: 0; }
-.ret-next-t b { display: block; font-size: 13px; }
-.ret-next-t small { font-size: 12px; font-weight: 900; color: var(--c-red-600); letter-spacing: 0.4px; text-transform: uppercase; }
-.ret-next button {
-  flex: 0 0 auto;
-  font: inherit;
-  font-size: 12px;
-  font-weight: 800;
-  padding: 7px 10px;
-  border-radius: 10px;
-  cursor: pointer;
-  border: 1px solid var(--c-brown-700-vivid);
-  background: var(--c-brown-550-3);
-  color: var(--c-cream-50-soft);
-}
+/* v3.782.0 (atelier retour-absence, variante C) : rubriques cochées, renvoi des contrats, pied « suite / plus tard » */
+.ret-sec-ok { width: 16px !important; height: 16px !important; margin-left: auto; }
+.ret-note { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--c-brown-750-2); margin: 2px 0 6px; }
+.ret-note img { width: 20px; height: 20px; object-fit: contain; }
+.ret-foot { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.ret-foot .ret-go { width: 100%; max-width: 320px; }
+.ret-foot .ret-link { min-height: 44px; font-size: 13px; }
 
 /* Pastille « Retour » : le héros est engagé, l'écran attend */
 .ret-pending {
@@ -279,7 +265,6 @@ Maquette de référence : atelier-evolutions.html.
 .pt-hint { font-size: 12px; line-height: 1.35; color: var(--c-brown-650); margin: 3px 0; }
 .pt-box .kbtn { margin-top: 6px; }
 .pt-ret-row { font-size: 12px; margin-top: 3px; }
-.ret-road { font-size: 12px; margin-top: 4px; color: var(--c-brown-750-2); } /* CPL1-2 : la caravane encore en route */
 .cp-patrol-note { font-size: 12px; font-weight: 700; color: var(--c-brown-700-soft); background: var(--c-cream-150-2); border: 1px dashed var(--c-bronze-500); border-radius: 999px; padding: 7px 12px; text-align: center; margin: 6px 0; }
 
 /* ============================================================

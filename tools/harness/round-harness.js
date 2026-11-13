@@ -10120,7 +10120,7 @@ console.log("\n[127] v3.332.0 — Écran de retour unique et fil rouge");
   ok(st && st.summary === s, "R1 : l'écran porte le résumé attendu");
   var html = g.buildReturnScreenHTML();
   ok(html.indexOf("Pendant ton absence") !== -1 && html.indexOf("Chantier terminé") !== -1 && html.indexOf("au coin du feu") !== -1, "R2 : rubriques Chantier et Héros rendues");
-  ok(html.indexOf("Ensuite") !== -1, "R2 : le fil rouge en pied d'écran");
+  ok(/class="kbtn primary ret-go" onclick="returnGoFilRouge\(\)"/.test(html) && html.indexOf(g._t("Plus tard")) !== -1 && html.indexOf("Tout récolter") === -1, "R2 (v3.782.0, variante C) : la suite du fil rouge en bouton principal, « Plus tard » ; plus de « Tout récolter »");
   g.closeReturnScreen();
 
   // --- R3 : Livrer affiche le coût, Tout récolter ne dépense rien ---
@@ -10131,7 +10131,8 @@ console.log("\n[127] v3.332.0 — Écran de retour unique et fil rouge");
   try {
     g.openReturnScreen({ ms: 3600e3, produced: { bois: 30 }, crafted: {}, fullPlots: 1, openPlots: 3, tavernNew: true, hpGain: 0 });
     var h3 = g.buildReturnScreenHTML();
-    ok(h3.indexOf("Tout récolter") !== -1 && h3.indexOf("Livrer 1 contrat") !== -1 && h3.indexOf("−40 Bois") !== -1, "R3 : deux gestes, le coût de la livraison affiché");
+    ok(g.getReturnScreenState().harvested === true && h3.indexOf("Récolté") !== -1 && h3.indexOf("Livrer 1 contrat") === -1 && h3.indexOf("1 contrat livrable, au tableau des missions.") !== -1,
+      "R3 (v3.782.0, variante C) : la récolte est faite à l'ouverture ; les contrats renvoient au tableau des missions, plus de bouton « Livrer »");
     g.closeReturnScreen();
   } finally { g.TavernManager.getLevel = tv2; g.TavernManager.getContracts = ct2; g.TavernManager.canDeliver = cd2; }
 
@@ -16164,7 +16165,7 @@ console.log("\n[262] v3.458.4 — Lot 7b : une fenêtre de fin, Histoire, Mémoi
     ok(icones.length === 21 && /hs-trait-ico/.test(hs.split("STORY_TRAITS").slice(1).join("")) && icones.every(function (l) { var f = /icon: "([^"]+)"/.exec(l)[1]; return attendues.indexOf(f) !== -1 || fs10.existsSync(ROOT + "/" + f); }), "Ce que tu portes : 19 effets possibles, chacun avec son image (fichiers présents, sauf les cinq de la Montagne à venir)");
     ok(/dont \{p\} % par tes choix/.test(fs10.readFileSync(ROOT + "/js/ui/living-map-view.js", "utf8")), "Palissade : la part des choix dite à part");
     // C9
-    ok(/class="settings-btn ret-eat"/.test(fs10.readFileSync(ROOT + "/js/ui/return-view.js", "utf8")), "écran de retour : « Manger »");
+    ok(/class="ret-link ret-eat"/.test(fs10.readFileSync(ROOT + "/js/ui/return-view.js", "utf8")) && /RETURN_EAT_PCT/.test(fs10.readFileSync(ROOT + "/js/ui/return-view.js", "utf8")), "écran de retour : « Manger », proposé sous 70 % de PV (v3.782.0)");
     // C14
     g.sortiePrep = { opts: { title: "t", onGo: function () {} }, preset: null, buffs: {} };
     var ferme = g.buildSortiePrepHTML();
@@ -23627,7 +23628,7 @@ console.log("\n[471] v3.706.0 — Atelier 4 « Signaux », variantes A (Seb 05/1
     // CPL1-2 (A) : la rubrique « Caravanes » est retirée avec les caravanes (v3.780.0)
     g.openReturnScreen({ ms: 3600e3, produced: { bois: 30 }, crafted: {}, siteDone: { name: "Forge", level: 2 }, fullPlots: 0, openPlots: 3, hpGain: 0 });
     var h = g.buildReturnScreenHTML();
-    ok(h.indexOf(g._t("Village · à récolter")) > 0 && h.indexOf("cpl-unload") < 0 && typeof g.buildReturnCaravansHTML === "undefined", "écran de retour : plus de rubrique « Caravanes »");
+    ok(h.indexOf(g._t("Récolté")) > 0 && h.indexOf("cpl-unload") < 0 && typeof g.buildReturnCaravansHTML === "undefined", "écran de retour : plus de rubrique « Caravanes »");
     g.closeReturnScreen();
     ok(/\.ret-sec-b \.ret-link \{ min-height: 44px; \}/.test(rd("css/04-panel-evolutions.css")), "CPL1-2 : « Décharger » hérite des 44 px des liens du retour");
     // UI-18 (A) : la Tour descend et rentre
