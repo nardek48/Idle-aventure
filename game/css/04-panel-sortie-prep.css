@@ -240,7 +240,6 @@
 .sp-lowhp-act span { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; font-size: 14px; font-weight: 800; }
 .sp-lowhp-act small { font-size: 12px; font-weight: 700; color: var(--c-brown-750-2); }
 .sp-lowhp-act em { font-style: normal; font-size: 13px; font-weight: 800; color: var(--c-green-650-2); }
-.sp-lowhp-none { font-size: 12.5px; font-style: italic; color: var(--sheet-ink-dim); }
 .sp-lowhp.is-ok { border-color: var(--c-green-650-2); background-color: rgba(47, 138, 70, 0.1); }
 .sp-lowhp.is-ok .sp-lowhp-t { color: var(--c-green-650-2); }
 .sp-lowhp-gauge.is-ok i { background: linear-gradient(90deg, var(--c-green-650-2), var(--c-green-450)); }

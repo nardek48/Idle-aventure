@@ -147,8 +147,8 @@ function getWarehouseOtherUses(key) {
   if (["acier", "resine_durcie", "chitine_profondeurs", "verre_trempe", "cle_de_voute", "cire_consacree", "obsidienne_taillee", "verre_faille"].indexOf(key) !== -1) {
     out.push({ icon: "images/Icons/village_buildings/village_forge.webp", text: _t("Forge : reforge de l'équipement") });
   }
-  var def = WAREHOUSE_RESOURCES[key] || {};
-  if (def.healPct) out.push({ icon: "images/Icons/camp/camp_meal.webp", text: _t("Campement : repas (+{p} % PV)", { p: Math.round(def.healPct * 100) }) });
+  // v3.786.0 : les rations ne se mangent plus au Camp ; blé, viande et eau paient le repas et le festin
+  if (window.CAMP_MEAL_PER_10 && CAMP_MEAL_PER_10[key]) out.push({ icon: "images/Icons/camp/camp_meal.webp", text: _t("Campement : repas et festin") });
   /* v3.520.0 (audit RES-3) : rangs, vivres de sortie, départs d'expédition et besace, lus dans les données */
   if ((window.COMPANION_SKILL_RANK_PRICES || []).some(function (p) { return p.mat === key; })) out.push({ icon: "images/Icons/system/upgrade.webp", text: _t("Rangs des compagnons (Héros › Alliés)") });
   // v3.785.0 : plus de vivres de sortie (sorties refaites gratuites)

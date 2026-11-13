@@ -494,14 +494,6 @@ html.wide-mode #panel-container .cw-bar i { display: block; height: 100%; border
 html.wide-mode #panel-container .cw-others { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 12px; font-size: 12.5px; color: var(--nb-ink-dim); }
 html.wide-mode #panel-container .cw-others span { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px 2px 2px; border-radius: 999px; background: rgba(228, 207, 160, 0.5); font-weight: 700; color: var(--c-brown-750-2); }
 html.wide-mode #panel-container .cw-others img { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; object-position: top; }
-html.wide-mode #panel-container .cw-rations { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
-html.wide-mode #panel-container .cw-ration { position: relative; display: flex; align-items: center; gap: 6px; padding: 8px 7px; min-width: 0; border-radius: 12px; border: 1.5px solid var(--c-bronze-250-soft); background: rgba(255, 250, 240, 0.8); cursor: pointer; text-align: left; color: var(--c-brown-850-3); }
-html.wide-mode #panel-container .cw-ration img { width: 28px; height: 28px; flex: none; object-fit: contain; }
-html.wide-mode #panel-container .cw-ration span { min-width: 0; }
-html.wide-mode #panel-container .cw-ration b { display: block; color: var(--c-green-650-2); font-size: 15px; }
-html.wide-mode #panel-container .cw-ration small { display: block; color: var(--nb-ink-dim); font-size: 12px; line-height: 1.2; }
-html.wide-mode #panel-container .cw-ration-n { position: absolute; top: -7px; right: -6px; min-width: 19px; height: 19px; padding: 0 5px; border-radius: 10px; background: var(--c-brown-850-3); border: 1.5px solid var(--c-bronze-450); color: var(--c-white-50-soft); font: 800 11px/16px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; text-align: center; font-style: normal; }
-html.wide-mode #panel-container .cw-ration.is-off, html.wide-mode #panel-container .cw-ration:disabled { opacity: 0.5; cursor: default; }
 html.wide-mode #panel-container .cw-note { margin: 8px 0 0; font-size: 12.5px; color: var(--nb-ink-dim); }
 html.wide-mode #panel-container .cw-seg { display: inline-flex; padding: 3px; gap: 3px; border-radius: 10px; background: rgba(58, 44, 26, 0.12); }
 html.wide-mode #panel-container .cw-seg button { padding: 4px 12px; border: 0; border-radius: 8px; background: none; font: 700 12.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: var(--nb-ink-dim); cursor: pointer; }
@@ -737,3 +729,7 @@ html.wide-mode #panel-container .cw .exp-row > .exp-act { grid-column: 3; grid-r
 html.wide-mode body:not(.lab-run) #tab-bar-row { box-sizing: border-box; min-height: 100%; }
 /* En combat, le bas porte les techniques et « Attaquer », le haut la jauge : la notification se pose à droite, à mi-hauteur */
 html.wide-mode body.combat-active:not(.lab-run) #toast:not(.is-top) { top: calc(var(--safe-top) + 330px); bottom: auto; max-width: 340px; }
+/* v3.786.0 : Repas et Festin dans la colonne étroite du feu de camp — prix sur toute la largeur du bouton */
+html.wide-mode #panel-container .camp-act { grid-template-columns: 28px minmax(0, 1fr); }
+html.wide-mode #panel-container .camp-act-ico { grid-row: span 2; width: 28px; height: 28px; }
+html.wide-mode #panel-container .camp-act-cost { grid-column: 1 / -1; }

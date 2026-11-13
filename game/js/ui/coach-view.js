@@ -10,7 +10,7 @@ var COACH_TUTORIALS = {
     steps: [
       { sel: ".camp-mission-card.is-main", title: _t("Ton Histoire"), text: _t("L'étape d'Histoire en cours est toujours en tête. Touche « Accepter », puis « Partir ».") },
       { sel: ".hud-band", title: _t("Ta santé"), text: _t("Hors combat et hors sortie, tu récupères 5 % de tes PV max par minute, même hors ligne.") },
-      { sel: ".camp-tabs button:first-child", title: _t("Le feu"), text: _t("Santé, rations et compagnons. Une ration soigne tout de suite 35, 60 ou 100 % de tes PV.") },
+      { sel: ".camp-tabs button:first-child", title: _t("Le feu"), text: _t("Santé, repas et compagnons. Le repas remet toute l'équipe à plein, payé en blé, viande et eau.") },
       { sel: "#hud-dock .hud-bub", title: _t("Le fil rouge"), text: _t("Il propose ta prochaine action. Touche-le quand tu ne sais pas quoi faire.") }
     ]
   },

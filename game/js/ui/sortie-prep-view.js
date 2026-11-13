@@ -101,7 +101,7 @@ function buildSortiePrepHTML() {
 
   var lowHp = sortieLowHp(o);
   if (lowHp) h += buildSortiePrepLowHpHTML();   // v3.513.0 : avant tout le reste
-  else if (sortiePrep.bare) h += buildSortiePrepHpOkHTML();   // ration mangée : la feuille réduite ne reste pas vide
+  else if (sortiePrep.bare) h += buildSortiePrepHpOkHTML();   // repas pris : la feuille réduite ne reste pas vide
   if (sortiePrep.bare) return h + '</div>' + buildSortiePrepFootHTML(lowHp);
 
   h += buildSortiePrepEliteLevelHTML();   // v3.657.0 : élites à niveaux (atelier elites-niveaux.html, A)
@@ -175,21 +175,7 @@ function buildSortiePrepFootHTML(lowHp) {
   return h + '</div></div>';
 }
 
-/* Rations mangeables d'ici, vivres du départ mis de côté ; soin réel (Cuisine de campagne comprise). */
-function sortiePrepRations() {
-  if (!window.CampManager) return [];
-  var food = sortiePrep.opts.food;
-  var req = (food && window.ProvisionsManager) ? ProvisionsManager.getRequirement(food.kind, food.ref) : null;
-  return CampManager.getRationOptions().map(function (r) {
-    r.free = Math.floor(r.amount) - (req && req.resourceId === r.id ? req.amount : 0);
-    if (r.id === "petite_ration" && window.MemoryManager && MemoryManager.has("cuisine_campagne")) {
-      r.healPct *= (typeof MEMORY_CUISINE_PETITE_RATION_MULT === "number" ? MEMORY_CUISINE_PETITE_RATION_MULT : 1.25);
-    }
-    return r;
-  }).filter(function (r) { return r.free > 0 && r.healPct > 0; });
-}
-
-/* Encart « PV bas » : jauge avec le seuil, rappel des potions, ration ou Feu de camp. */
+/* Encart « PV bas » : jauge avec le seuil, rappel des potions, repas ou Feu de camp. */
 function buildSortiePrepLowHpHTML() {
   var pct = Math.floor((game.heroHp || 0) / (game.heroMaxHp || 1) * 100);
   var ctx = sortiePrep.opts.ctx || {}, elite = ctx.type === "elite" || (ctx.type === "adventure" && sortieIsEliteQuest(ctx.id));
@@ -200,13 +186,14 @@ function buildSortiePrepLowHpHTML() {
   var cap = (typeof getSortiePotionCap === "function") ? getSortiePotionCap() : 2;
   h += '<p>' + _t("Tu pars avec {n} % de tes PV. Ils ne remontent pas d'eux-mêmes pendant la sortie : {p} potions de soin au plus.", { n: pct, p: cap }) + '</p>';
   h += '<div class="sp-lowhp-acts">';
-  var rations = sortiePrepRations();
-  rations.forEach(function (r) {
-    var gain = Math.min(100 - pct, Math.round(r.healPct * 100));
-    h += '<button type="button" class="sp-lowhp-act" onclick="sortiePrepEat(\'' + r.id + '\')"><img src="' + esc(((window.WAREHOUSE_RESOURCES || {})[r.id] || {}).icon || "") + '" alt="">'
-      + '<span>' + esc(_t("Manger : {x}", { x: _td(r.name) })) + '<small>' + _t("En stock : {n}", { n: r.free }) + '</small></span><em>+' + gain + ' %</em></button>';
-  });
-  if (!rations.length) h += '<div class="sp-lowhp-none">' + _t("Aucune ration à manger · Cuisine de camp") + '</div>';
+  // v3.786.0 : le repas du Camp (toute l'équipe à plein) remplace les rations
+  var CM = window.CampManager;
+  if (CM && !CM.teamFull()) {
+    var miss = CM.mealMissing(), cost = CM.mealCost();
+    var chips = typeof campCostChipsHTML === "function" ? campCostChipsHTML(cost, miss) : "";
+    h += '<button type="button" class="sp-lowhp-act"' + (miss.length || CM.mealLockReason() ? ' disabled' : ' onclick="sortiePrepEat()"') + '><img src="images/Icons/camp/camp_meal.webp" alt="">'
+      + '<span>' + esc(_t("Repas · Toute l'équipe à plein")) + '<small class="camp-act-cost">' + chips + '</small></span><em>100 %</em></button>';
+  }
   h += '<button type="button" class="sp-lowhp-act" onclick="sortiePrepRest()"><img src="images/Icons/camp/rest.webp" alt="">'
     + '<span>' + _t("Se reposer au Feu de camp") + '<small>' + _t("PV au maximum dans {d}", { d: formatTime(Math.ceil(CampManager.getMinutesToFull() * 60)) }) + '</small></span></button>';
   return h + '</div></div>';
@@ -229,9 +216,9 @@ function sortieIsEliteQuest(id) {
   return !!q && q.type === "elite";
 }
 
-/* La ration se mange sans quitter la feuille ; l'encart disparaît une fois le seuil passé. */
-function sortiePrepEat(id) {
-  if (window.CampManager && CampManager.eatRation(id)) renderSortiePrep();
+/* Le repas se prend sans quitter la feuille ; l'encart disparaît une fois le seuil passé. */
+function sortiePrepEat() {
+  if (window.CampManager && CampManager.eatMeal()) renderSortiePrep();
 }
 
 function sortiePrepRest() {

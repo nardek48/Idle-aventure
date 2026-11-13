@@ -132,7 +132,7 @@ var GENERIC_TUTORIALS = {
     points: [
       { icon: "images/Icons/camp/camp_welcome.webp", text: "Le Campement est ton point de ralliement entre deux expéditions — c'est ici que tu gères tout ce qui n'est pas le combat." },
       { icon: "images/Icons/combat_stats/stat_health.webp", text: "Ta santé — hors combat et hors sortie (expédition, donjon, Petite Aventure), tu récupères 5 % de tes PV max par minute, même hors ligne. Suis ta barre de vie et la régénération en haut de l'écran." },
-      { icon: "images/Icons/quests/ration_reward.webp", text: "Les rations soignent instantanément un % fixe de tes PV (35/60/100 % selon le type) : utile pour repartir vite sans attendre." },
+      { icon: "images/Icons/quests/ration_reward.webp", text: "Au feu, le Repas remet toute l'équipe à plein tout de suite, payé en blé, viande et eau selon les PV qui manquent : utile pour repartir sans attendre." },
       { icon: "images/Icons/quests/quest_list.webp", text: "Le tableau de missions — l'étape d'Histoire en cours (badge doré « Histoire ») est toujours en tête. Touche « Accepter », puis « Partir » pour ta prochaine quête : c'est elle qui te mènera au combat avec un vrai objectif." }
     ]
   },

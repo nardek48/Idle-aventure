@@ -23,10 +23,10 @@ function getHeroHpRatio() {
 }
 window.getHeroHpRatio = getHeroHpRatio;
 
-/* Soigner = aller au Campement (rations, régénération) : ferme l'overlay sans lancer. */
+/* Soigner = aller au Campement (repas, régénération) : ferme l'overlay sans lancer. */
 function goHealFromForecast() {
   closeCombatForecast();
-  if (typeof campTab !== "undefined") campTab = "feu"; // v3.683.0 (audit NOV-8) : droit au feu (santé, rations), pas aux Missions
+  if (typeof campTab !== "undefined") campTab = "feu"; // v3.683.0 (audit NOV-8) : droit au feu (santé, repas), pas aux Missions
   if (typeof switchTab === "function") switchTab("campement");
 }
 window.goHealFromForecast = goHealFromForecast;
@@ -53,7 +53,7 @@ window.storyLowHpReminderNeeded = storyLowHpReminderNeeded;
 
 function maybeStoryLowHpReminder(chapterId) {
   if (!storyLowHpReminderNeeded(chapterId)) return false;
-  showConfirmModal(_t("PV bas"), _t("Tes PV sont bas : repose-toi au feu ou mange une ration avant de partir."),
+  showConfirmModal(_t("PV bas"), _t("Tes PV sont bas : repose-toi au feu ou prends un repas avant de partir."),
     "images/Icons/combat_stats/stat_health.webp", goHealFromForecast, { ok: _t("Aller au feu"), cancel: _t("Plus tard") });
   return true;
 }
@@ -102,7 +102,7 @@ function buildCombatForecastHTML(f, opts) {
   if (opts.lowHp) {
     h += '    <div class="cf-lowhp"><img class="cf-lowhp-ico" src="images/Icons/combat_stats/stat_health.webp" alt="">'
       + '<span><b>' + _t("Attention, il faut te soigner.") + '</b> '
-      + _t("Tu pars à {n} % de tes PV : mange une ration au Campement ou laisse le feu te remettre sur pied.", { n: Math.round(getHeroHpRatio() * 100) }) + '</span></div>';
+      + _t("Tu pars à {n} % de tes PV : prends un repas au Campement ou laisse le feu te remettre sur pied.", { n: Math.round(getHeroHpRatio() * 100) }) + '</span></div>';
   }
   h += '    <div class="cf-verdict">' + esc(_td(def.label)) + '</div>';
   if (f.enemyName) h += '    <div class="cf-enemy">' + esc(_t("Adversaire annoncé : {x}", { x: _td(f.enemyName) })) + '</div>';

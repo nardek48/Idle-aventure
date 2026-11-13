@@ -26,7 +26,7 @@ var MEMORY_FAILLE_GATES = [5, 10, 15, 20];
 var MEMORY_LEVELS_PER_WORLD = 4;        // O6 : plafond par monde atteint
 var MEMORY_REPRISE_BASE_COST = 500;     // O5 : reprise d'un choix, ×3 à chaque fois ; v3.358.0 : en or (10 Aether × AETHER_GOLD_RATE)
 var MEMORY_REPRISE_MULT = 3;
-var MEMORY_CUISINE_PETITE_RATION_MULT = 1.25; // Cuisine de campagne : +25 % sur la Petite ration seule (décision Seb)
+var MEMORY_CUISINE_MEAL_MULT = 0.75; // Cuisine de campagne : le repas du Camp coûte 25 % de moins (v3.786.0, rations retirées)
 /* v3.453.0 : chiffres des niveaux 9 à 16 (conception Mémoire Ruines-Crypte v1.0), au banc. */
 var MEMORY_VALUES = {
   achever_net_rise: 0.25,     // un ennemi qui se relève revient avec 25 % de ses PV au lieu de 50 %
@@ -91,7 +91,7 @@ var MEMORY_LEVELS = [
     { id: "fidelite_wenna", name: "Fidélité de Wenna", icon: "images/Icons/memory/fidelite_wenna.webp",
       desc: "Après un KO, Wenna revient au combat suivant avec tous ses PV au lieu de 30 %." },
     { id: "cuisine_campagne", name: "Cuisine de campagne", icon: "images/Icons/memory/cuisine_campagne.webp",
-      desc: "Les Petites rations soignent 25 % de plus au Campement (35 % → 43 % des PV)." }
+      desc: "Le repas du Campement coûte 25 % de blé, de viande et d'eau en moins." }
   ] },
   { level: 4, theme: "La Mémoire", jalon: true, options: [
     { id: "memoire_vive", name: "Mémoire vive", icon: "images/Icons/memory/memoire_vive.webp",
@@ -287,6 +287,6 @@ window.MEMORY_FAILLE_GATES = MEMORY_FAILLE_GATES;
 window.MEMORY_LEVELS_PER_WORLD = MEMORY_LEVELS_PER_WORLD;
 window.MEMORY_REPRISE_BASE_COST = MEMORY_REPRISE_BASE_COST;
 window.MEMORY_REPRISE_MULT = MEMORY_REPRISE_MULT;
-window.MEMORY_CUISINE_PETITE_RATION_MULT = MEMORY_CUISINE_PETITE_RATION_MULT;
+window.MEMORY_CUISINE_MEAL_MULT = MEMORY_CUISINE_MEAL_MULT;
 window.MEMORY_LEVELS = MEMORY_LEVELS;
 window.MEMORY_VALUES = MEMORY_VALUES;

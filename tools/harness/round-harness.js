@@ -619,7 +619,7 @@ ok(boardHtml.indexOf("Accepter") !== -1, "bouton Accepter sur l'étape Histoire 
 ok(campHtml.indexOf("Voir le tableau complet") !== -1, "bouton vers le reste du tableau (encore l'écran Quêtes)");
 // v3.116.0 (Lot C) : nouveaux blocs Santé / Rations / Régénération, rendus sans exception
 ok(campHtml.indexOf("camp-hp-fill") !== -1 && campHtml.indexOf("camp-health-card") !== -1, "bloc Santé du Héros : barre de PV présente");
-ok((campHtml.match(/class="camp-ration-ib[ "]/g) || []).length === 3, "bloc Rations : trois rations en boutons (v3.411.0)");
+ok((campHtml.match(/class="camp-act[ "]/g) || []).length === 2, "v3.786.0 : Repas et Festin, deux boutons côte à côte");
 /* v3.233.0 : la barre de régénération est retirée (elle affichait hpPct, soit la
    barre de PV en double). Le bloc garde la phrase, le rythme et l'ETA. */
 ok(campHtml.indexOf("camp-regen-fill") === -1, "bloc Régénération : barre retirée (plus de doublon de la barre de PV)");
@@ -992,26 +992,29 @@ game.storyQuests.forest.currentStep = 5;
 game.adventureQuestsCompleted = {};
 ok(g.STORY_QUESTS.forest.steps[5].check(game) === false, "sans hq_wolf_pack : étape toujours non validée (pas un déverrouillage inconditionnel)");
 
-console.log("\n[49] Rations (3.106.0) : remplacent Repas, un bouton par type, soin = % de PV max, grande_ration inerte");
+console.log("\n[49] Repas du Camp (v3.786.0) : remplace les rations, toute l'équipe à plein, prix au manque");
 game = freshCombat("knight"); giveWeapon();
-ok(game.resources.ration === 3 && game.resources.petite_ration === 0 && game.resources.grande_ration === 0, "départ : 3 rations moyennes (v3.107.1), 0 petite/grande (" + game.resources.ration + ")");
-var rOpts = g.CampManager.getRationOptions();
-ok(rOpts.length === 3 && rOpts[0].id === "petite_ration" && rOpts[2].id === "grande_ration", "getRationOptions() : ordre petite -> moyenne -> grande");
-ok(Math.abs(rOpts[0].healPct - 0.35) < 1e-9 && Math.abs(rOpts[1].healPct - 0.60) < 1e-9 && Math.abs(rOpts[2].healPct - 1.00) < 1e-9, "% de soin : 35/60/100");
-game.heroHp = 10;
-var maxHp0 = game.heroMaxHp, before = game.resources.ration;
-var ate = g.CampManager.eatRation("ration");
-ok(ate === true && game.resources.ration === before - 1, "eatRation('ration') : 1 unité consommée");
-ok(game.heroHp === 10 + Math.floor(maxHp0 * 0.60), "soin = 60 % des PV max (" + game.heroHp + ")");
-game.heroHp = 10;
-ok(g.CampManager.eatRation("grande_ration") === false, "grande_ration : refusée sans stock (structure inerte, pas de recette)");
+var CM49 = g.CampManager, EP49 = game.explorationProgression = game.explorationProgression || {};
+EP49.huntBuildingUnlocked = true; EP49.wellUnlocked = true; EP49.farmUnlocked = true;
+ok(typeof CM49.eatRation === "undefined" && typeof CM49.getRationOptions === "undefined" && typeof g.campRationEmpty === "undefined", "rations du Camp retirées (eatRation, getRationOptions, campRationEmpty)");
 game.heroHp = game.heroMaxHp;
-ok(g.CampManager.eatRation("ration") === false, "PV pleins : ration refusée");
-ok(typeof g.CAMP_MEAL_COST === "undefined" && typeof g.CampManager.eat === "undefined", "ancien système Repas (viande+eau) retiré");
+ok(CM49.teamMissingPct() === 0 && Object.keys(CM49.mealCost()).length === 0 && CM49.eatMeal() === false, "équipe pleine : rien à payer, repas refusé");
+game.heroHp = Math.floor(game.heroMaxHp * 0.55); // 45 % manquants -> 5 tranches
+var c49 = CM49.mealCost();
+ok(c49.viande === 15 && c49.eau === 5 && c49.ble === 15, "prix au manque : 3 Blé + 3 Viande + 1 Eau par 10 % (" + JSON.stringify(c49) + ")");
+game.resources.viande = 0;
+ok(CM49.mealMissing().indexOf("viande") >= 0 && CM49.canEatMeal() === false && CM49.eatMeal() === false && game.heroHp < game.heroMaxHp, "viande manquante : repas refusé, PV inchangés");
+game.resources.viande = 100; game.resources.eau = 100; game.resources.ble = 100;
+ok(CM49.eatMeal() === true && game.heroHp === game.heroMaxHp && game.resources.viande === 85 && game.resources.eau === 95, "repas : PV pleins, prix payé");
+EP49.wellUnlocked = false; game.heroHp = 1;
+ok(CM49.mealCost().eau === undefined, "eau pas encore produite (Puits fermé) : pas comptée");
+EP49.wellUnlocked = true;
+ok(typeof g.MEMORY_CUISINE_MEAL_MULT === "number" && g.MEMORY_CUISINE_MEAL_MULT === 0.75, "Cuisine de campagne : repas −25 %");
+ok(typeof g.CAMP_MEAL_COST === "undefined" && typeof CM49.eat === "undefined", "ancien système Repas (viande+eau, v3.106) toujours absent");
 game.activeTab = "campement";
-game.heroHp = Math.floor(game.heroMaxHp * 0.5); // PV pleins -> "Pas faim" masque la liste (comportement voulu)
 var campHtml = (g.buildCampHTML("feu") + g.buildCampHTML("missions")); // v3.594.0 : la santé est dans l'onglet « Le feu »
-ok(campHtml.indexOf("camp-ration-row") !== -1 && campHtml.indexOf("Petite ration") !== -1 && campHtml.indexOf("Grande ration") !== -1, "écran Campement : carte Rations avec les 3 types");
+ok(campHtml.indexOf("camp-acts") !== -1 && campHtml.indexOf("CampManager.eatMeal()") !== -1 && campHtml.indexOf("camp-ration") === -1, "écran Campement : bouton Repas, plus de rations");
+ok(campHtml.indexOf("+10 % dégâts et PV, 3 sorties") !== -1 && campHtml.indexOf("camp-feast") === -1, "le Festin en 2e bouton, effet écrit en clair");
 game.heroHp = game.heroMaxHp;
 
 console.log("\n[50] Compteur de mission en combat (3.106.0) : aventure, chasse, donjon");
@@ -6483,7 +6486,7 @@ console.log("\n[62b] v3.260.0 \u2014 Retours de jeu : Brume, Colporteur, arme, c
 
   /* --- Campement : régénération sur une ligne, boutons Manger en 9 zones --- */
   var css = require("fs").readFileSync(require("path").join(ROOT, "css/04-panel-camp.css"), "utf8");
-  ok(css.indexOf(".camp-ration-btn") === -1 && css.indexOf(".camp-ration-ib") !== -1, "v3.412.0 : l'ancien bouton Manger n'a plus de style (rations en boutons-icônes)");
+  ok(css.indexOf(".camp-ration") === -1 && css.indexOf(".camp-act") !== -1, "v3.786.0 : plus de style de ration, le Repas a le sien");
 })();
 
 /* [63] v3.261.0 — Bandeau héros du combat, variante B (atelier-bandeau-combat.html). */
@@ -8729,7 +8732,7 @@ console.log("\n[104] v3.307.0 — verrou héros pendant une expédition (Chemin 
   ok(lm.ok === false && !game.livingMaps.fight, "élite de carte refusée");
 
   game.heroHp = 10;
-  ok(g.CampManager.canEatRation("ration") === false && g.CampManager.eatRation("ration") === false && game.resources.ration === 3 && game.heroHp === 10, "rations gelées");
+  ok(g.CampManager.canEatMeal() === false && g.CampManager.eatMeal() === false && game.heroHp === 10, "repas gelé");
   ok(g.CampManager.isRegenActive() === false, "pas de régénération au camp");
   g.PotionManager.usePotion("potion_power");
   ok(g.PotionManager.isArmed("potion_power") === false && g.PotionManager.getStock("potion_power") === 2, "potion non armée");
@@ -8748,7 +8751,7 @@ console.log("\n[104] v3.307.0 — verrou héros pendant une expédition (Chemin 
 
   g.SceneRunManager.abandon();
   ok(g.SceneRunManager.isHeroEngaged() === false && g.heroLockReason() === null, "expédition terminée : verrou levé");
-  ok(g.CampManager.eatRation("ration") === true, "rations de nouveau disponibles");
+  ok(g.CampManager.eatMeal() === true, "repas de nouveau disponible");
   g.EquipmentManager.equip("t_eq");
   ok(game.equipped.ring && game.equipped.ring.uid === "t_eq", "équipement de nouveau libre");
 })();
@@ -9410,10 +9413,9 @@ console.log("\n[118] v3.322.0 — Offrande, Souvenirs, niveau de Mémoire et ses
   // v3.323.0 : la Fiole quitte le niveau 3 (Ruines plus tard) ; Cuisine de campagne à la place
   ok(M.choose(3, "fiole_reserve") === false && g.getSortiePotionCap() === 2, "Fiole de réserve : plus proposée au niveau 3, 2 potions par sortie");
   M.choose(3, "cuisine_campagne");
-  game.warehouse = game.warehouse || {}; run("WarehouseManager.addResource('petite_ration', 2, true)");
-  game.heroHp = 1;
-  run("CampManager.eatRation('petite_ration')");
-  ok(game.heroHp === 1 + Math.floor(game.heroMaxHp * 0.35 * 1.25), "Cuisine de campagne : Petite ration à 43,75 % au lieu de 35 %");
+  game.explorationProgression = game.explorationProgression || {}; game.explorationProgression.huntBuildingUnlocked = true;
+  game.heroHp = Math.floor(game.heroMaxHp * 0.55);
+  ok(g.CampManager.mealCost().viande === Math.ceil(3 * 5 * 0.75), "Cuisine de campagne : le repas coûte 25 % de moins (" + JSON.stringify(g.CampManager.mealCost()) + ")");
   M.choose(4, "memoire_vive");
   var t2 = game.totalAetherEarned;
   M.gainAether(4); ok(game.totalAetherEarned === t2 + 5, "Mémoire vive : 4 -> 5");
@@ -11106,7 +11108,7 @@ console.log("\n[145] v3.369.0 — Multilangue, lot L-1 : HUD, Camp, Combat, fen�
   /* Français : textes inchangés, pluriels corrects */
   I._lang = "fr";
   var camp = (g.buildCampHTML("feu") + g.buildCampHTML("missions"));
-  ok(camp.indexOf("camp-hp-fill") !== -1 && camp.indexOf("Manger : ") !== -1 && camp.indexOf("Voir le tableau complet") !== -1, "Camp en français : textes inchangés (v3.411.0 : santé en deux lignes)");
+  ok(camp.indexOf("camp-hp-fill") !== -1 && camp.indexOf(">Festin<") !== -1 && camp.indexOf("Voir le tableau complet") !== -1, "Camp en français : textes inchangés (v3.411.0 : santé en deux lignes)");
   ok(camp.indexOf("⟦") === -1, "français : aucun ⟦ ⟧ dans le Camp");
   ok(g._tn(1, "{n} sortie", "{n} sorties") === "1 sortie" && g._tn(3, "{n} sortie", "{n} sorties") === "3 sorties", "pluriel « sortie » du Camp");
   ok(g.buildFullMenuHTML().indexOf("ksheet-ttl\">Menu<") !== -1, "menu : titre « Menu »");
@@ -11114,7 +11116,7 @@ console.log("\n[145] v3.369.0 — Multilangue, lot L-1 : HUD, Camp, Combat, fen�
   /* Pseudo-langue : les textes du lot passent par _t */
   I._lang = "xx";
   var campX = (g.buildCampHTML("feu") + g.buildCampHTML("missions"));
-  ok(campX.indexOf("⟦Manger : ") !== -1 && campX.indexOf("⟦Voir le tableau complet⟧") !== -1, "pseudo-langue : Camp extrait");
+  ok(campX.indexOf("⟦Festin⟧") !== -1 && campX.indexOf("⟦Voir le tableau complet⟧") !== -1, "pseudo-langue : Camp extrait");
   ok(g.buildHudHTML().indexOf("⟦Niv. 1⟧") !== -1, "pseudo-langue : HUD extrait (niveau)");
   ok(g.buildCbxCmdHTML().indexOf("⟦ATTAQUER⟧") !== -1, "pseudo-langue : bouton ATTAQUER extrait");
   ok(g.ResumeManager.formatAbsence(135 * 60000) === "⟦2 h⟧ ⟦15 min⟧", "pseudo-langue : unités de durée extraites");
@@ -12997,8 +12999,8 @@ console.log("\n[184] v3.411.0 — Campement R3b, nettoyage de l'Économie");
     game.heroHp = Math.floor(game.heroMaxHp * 0.5);
     game.unlockedTabs = game.unlockedTabs || {}; game.unlockedTabs.shop = true;
     var m = (g.buildCampHTML("feu") + g.buildCampHTML("missions")), d = g.buildCampHTML("depart");
-    ok(/camp-hp-line/.test(m) && /camp-ration-row/.test(m) && /camp-ration-ib-n/.test(m), "santé sur deux lignes : PV puis rations en boutons (stock en pastille)");
-    ok(/Toucher une ration pour la manger/.test(m) && /CampManager\.eatRation\('/.test(m) && m.indexOf(">Manger<") === -1, "toucher une ration la mange ; plus de bouton « Manger »");
+    ok(/camp-hp-line/.test(m) && /camp-acts/.test(m) && !/camp-ration/.test(m), "santé : PV puis Repas et Festin (v3.786.0)");
+    ok(/CampManager\.eatMeal\(\)/.test(m) && m.indexOf(">Manger<") === -1, "toucher Repas remet l'équipe à plein ; plus de bouton « Manger »");
     ok(m.indexOf("camp-missions-card") !== -1 && m.indexOf("goToPotions()") === -1 && d.indexOf("camp-missions-card") === -1, "un seul onglet affiché à la fois (Missions, puis Départ)");
     ok(/\.camp-mission-card \.camp-mission-btn \{[^}]*width: auto/.test(fs.readFileSync(path.join(ROOT, "css/04-panel-camp.css"), "utf8")), "boutons des missions à la largeur du libellé");
     var src = ["js/ui/camp-view.js", "js/ui/village-building-view.js", "js/ui/shop-view.js"].map(function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); }).join("\n");
@@ -14785,19 +14787,15 @@ console.log("\n[223] v3.448.0 — Camp : le feu et les rations soignent aussi le
     game.campRegenLastAt = Date.now() - 60000;
     K.applyRegen(false);
     ok(C.hpOf("wenna") > Math.floor(mw * 0.1), "le feu de camp soigne Wenna même quand le héros est plein");
-    run("WarehouseManager.addResource('ration', 3, true);");
-    var def = g.WAREHOUSE_RESOURCES.ration;
     game.heroHp = Math.floor(game.heroMaxHp * 0.1); C.state("wenna").hp = Math.floor(mw * 0.2);
-    var h0 = game.heroHp, w0 = C.hpOf("wenna");
-    ok(K.eatRation("ration") === true, "une ration se mange");
-    ok(game.heroHp - h0 === Math.floor(game.heroMaxHp * def.healPct) && C.hpOf("wenna") - w0 === Math.floor(mw * def.healPct),
-      "une ration soigne le héros ET Wenna du même pourcentage");
+    ok(K.eatMeal() === true && game.heroHp === game.heroMaxHp && C.hpOf("wenna") === mw, "le repas remet le héros ET Wenna à plein");
     game.heroHp = game.heroMaxHp; C.state("wenna").hp = Math.floor(mw * 0.5);
-    ok(K.eatRation("ration") === true, "héros plein : la ration sert encore, pour Wenna");
-    C.state("wenna").hp = mw;
-    ok(K.eatRation("ration") === false, "tout le monde plein : la ration reste au stock");
+    ok(K.eatMeal() === true && C.hpOf("wenna") === mw, "héros plein : le repas sert encore, pour Wenna");
+    ok(K.eatMeal() === false, "tout le monde plein : pas de repas");
+    C.state("wenna").hp = Math.floor(mw * 0.3);
     var html = g.buildCampHTML("feu");
-    ok(html.indexOf("camp-comp-hp-wenna") !== -1, "la carte du camp montre la jauge de Wenna");
+    ok(html.indexOf('id="camp-ring-wenna"') !== -1 && /--p:\d/.test(html), "la carte du camp montre l'anneau de PV de Wenna (v3.786.0)");
+    C.state("wenna").hp = mw;
   } catch (err) {
     ok(false, "[223] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
@@ -16048,7 +16046,7 @@ console.log("\n[261] v3.458.3 — Lot 7a : Partir lance la quête, Mémoire sur 
     ok(/<button type="button" class="mem-pending" onclick="memScrollToPending\(\)"/.test(asc) && typeof g.memScrollToPending === "function"
       && /game\.activeTab === "ascension" && typeof memScrollToPending/.test(fs9.readFileSync(ROOT + "/js/ui/ui-root.js", "utf8")), "Mémoire : ouverte sur le choix en attente, la pastille y mène");
     // C9
-    ok(/onclick="campRationEmpty\(\)"/.test(fs9.readFileSync(ROOT + "/js/ui/camp-view.js", "utf8")) && typeof g.campRationEmpty === "function", "ration à 0 : dit où elle se prépare");
+    ok(!/campRationEmpty/.test(fs9.readFileSync(ROOT + "/js/ui/camp-view.js", "utf8")) && typeof g.campRationEmpty === "undefined", "v3.786.0 : plus de ration à 0 au Camp");
     // C13 : vivait dans l'ancien écran Talents, injoignable depuis v3.244 et retiré en v3.692.0 (ARCH-8)
   } catch (err) {
     ok(false, "[261] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
@@ -21729,8 +21727,8 @@ console.log("\n[439] v3.656.0 — Le festin (atelier festin.html, A)");
     ok(F.left() === 0, "même à cheval sur la nuit, il dure ses 3 sorties puis s'arrête");
     run("lastRenderedTab = 'quests';");
     var h = g.buildCampHTML("feu");
-    ok(/camp-feast/.test(h) && h.indexOf("Préparer un festin") !== -1 && h.indexOf("images/Icons/camp/festin.webp") !== -1, "la carte du festin est au feu, avec le vrai chemin de son icône");
-    ok(h.indexOf("camp-soir") < h.indexOf("camp-feast"), "sous « Ce matin au camp »");
+    ok(/class="camp-act"/.test(h) && h.indexOf(">Festin<") !== -1 && h.indexOf("images/Icons/camp/festin.webp") !== -1, "le festin est au feu (2e bouton, v3.786.0), avec le vrai chemin de son icône");
+    ok(h.indexOf("camp-acts") < h.indexOf("camp-soir"), "à côté du repas, au-dessus de « Ce matin au camp »");
   } catch (err) { ok(false, "[439] exception : " + err.message); }
   run("game.sortie = null;");
 })();
@@ -21821,24 +21819,24 @@ console.log("\n[443] v3.677.0 — Pas de repas du Camp en sortie de combat (audi
   try {
     run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.heroHp = 10;");
     var CM = g.CampManager, WM = g.WarehouseManager;
-    WM.addResource("petite_ration", 3);
-    ok(!CM.rationLockReason() && CM.canEatRation("petite_ration") && CM.eatRation("petite_ration") === true, "hors sortie : la ration se mange");
+    WM.addResource("viande", 300); WM.addResource("eau", 100); WM.addResource("ble", 300);
+    ok(!CM.mealLockReason() && CM.canEatMeal() && CM.eatMeal() === true, "hors sortie : le repas se prend");
     run("game.heroHp = 10; game.dungeonRun = { active: true, dungeonId: 1, wave: 2 };");
-    var n = WM.getAmount("petite_ration");
-    ok(/pleine sortie/.test(CM.rationLockReason() || "") && !CM.canEatRation("petite_ration") && CM.eatRation("petite_ration") === false && WM.getAmount("petite_ration") === n && g.game.heroHp === 10, "en donjon : refusée, stock et PV intacts");
-    ok(/pleine sortie/.test(g.buildCampHTML ? g.buildCampHTML() : String(CM.rationLockReason())), "le Camp affiche la raison");
+    var n = WM.getAmount("viande");
+    ok(/pleine sortie/.test(CM.mealLockReason() || "") && !CM.canEatMeal() && CM.eatMeal() === false && WM.getAmount("viande") === n && g.game.heroHp === 10, "en donjon : refusé, stock et PV intacts");
+    ok(/pleine sortie/.test(g.buildCampHTML ? g.buildCampHTML() : String(CM.mealLockReason())), "le Camp affiche la raison");
     run("game.dungeonRun = null;");
     saveFight = g.game.livingMaps && g.game.livingMaps.fight;
     run("game.livingMaps = game.livingMaps || {}; game.livingMaps.fight = { mapId: 'forest', sectorId: 'arbremere', eliteId: 'x' };");
-    ok(CM.eatRation("petite_ration") === false && WM.getAmount("petite_ration") === n, "élite de carte engagée : refusée");
+    ok(CM.eatMeal() === false && WM.getAmount("viande") === n, "élite de carte engagée : refusé");
     run("game.heroHp = 10; game.activeTab = 'campement'; game.campRegenLastAt = Date.now() - 10 * 60000;");
     ok(!CM.isRegenActive() && CM.applyRegen(false) === 0 && g.game.heroHp === 10, "v3.678.0 : élite de carte engagée, le feu de camp ne soigne pas");
     run("game.campRegenLastAt = Date.now() - 10 * 60000;");
     ok(CM.applyRegen(true) === 0 && g.game.heroHp === 10, "v3.678.0 : ni hors ligne");
     run("game.livingMaps.fight = null; game.adventureQuestRun = { active: true };");
-    ok(CM.eatRation("petite_ration") === false, "quête d'aventure en cours : refusée");
+    ok(CM.eatMeal() === false, "quête d'aventure en cours : refusé");
     run("game.adventureQuestRun = null;");
-    ok(CM.eatRation("petite_ration") === true && WM.getAmount("petite_ration") === n - 1, "sortie finie : la ration se mange de nouveau");
+    ok(CM.eatMeal() === true && g.game.heroHp === g.game.heroMaxHp, "sortie finie : le repas se prend de nouveau");
   } catch (err) { ok(false, "[443] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   try { run("game.dungeonRun = null; game.adventureQuestRun = null;"); if (g.game.livingMaps) g.game.livingMaps.fight = saveFight || null; } catch (e) {}
 })();
@@ -22657,7 +22655,7 @@ console.log("\n[456] v3.691.0 — Images et premier lancement (audit 04/11, lot 
     g.setSmallPortrait(im, "./images/Heroes/mage_f.webp"); var s1 = im.src, f1 = im.a["data-full"];
     im.src = "./images/Heroes/mage_f.webp"; g.setSmallPortrait(im, "./images/Heroes/mage_f.webp"); // repli déjà fait : on n'y revient pas
     ok(s1 === "./images/Heroes/vignettes/mage_f.webp" && f1 === "./images/Heroes/mage_f.webp" && im.src === "./images/Heroes/mage_f.webp", "PERF-11 : portrait du HUD en vignette, le repli sur l'image entière n'est pas annulé au rendu suivant");
-    ok(/var t = window\.smallPortrait \? smallPortrait\(src \|\| ""\)/.test(rd("js/ui/combat-screen-view.js")) && (rd("js/ui/camp-view.js").match(/smallPortraitHTML\(/g) || []).length === 5 && /smallPortraitHTML\(def\.image, "hs-wc-img"/.test(rd("js/ui/heros-screens-view.js")), "PERF-11 : combat, Camp et équipe du Héros passent par la vignette");
+    ok(/var t = window\.smallPortrait \? smallPortrait\(src \|\| ""\)/.test(rd("js/ui/combat-screen-view.js")) && (rd("js/ui/camp-view.js").match(/smallPortraitHTML\(/g) || []).length === 4 && /smallPortraitHTML\(def\.image, "hs-wc-img"/.test(rd("js/ui/heros-screens-view.js")), "PERF-11 : combat, Camp et équipe du Héros passent par la vignette");
     ["cendre_vive_icon", "obsidienne_taillee_icon"].forEach(function (n) { var i = info("images/Icons/resources/" + n + ".webp"); ok(i.w === 256 && i.h === 256, "PERF-11 : " + n + " à 256 px comme les autres ressources"); });
     // PERF-18 : traits du héros en chargement différé (gain mesuré : −225 Ko à l'ouverture du Héros)
     ok(/img\(t\.icon, "hs-trait-ico"\)\.replace\("<img ", '<img loading="lazy" decoding="async" '\)/.test(rd("js/ui/heros-screens-view.js")), "PERF-18 : icônes des traits en loading=lazy");
@@ -23873,8 +23871,8 @@ console.log("\n[482] v3.721.0 — Boutons propres aux écrans passés au pack ; 
   try {
     var fs = require("fs"), path = require("path"), kb = fs.readFileSync(path.join(ROOT, "css/00-kbtn.css"), "utf8");
     ok(/font-size: 17px; \/\* v3\.721\.0/.test(kb) && /\.settings-btn small \{ font-size: 14px;/.test(kb) && /font-size: 16px; \/\* v3\.721\.0/.test(kb), "texte : 17 px (bouton), 14 px (2e ligne), 16 px (pastille)");
-    ok(["camp-here-go", "camp-talk-go", "exp-act", "hf-btn", "tavern-contract-btn", "cp-relic-btn"].every(function (c) { return kb.indexOf("." + c) > 0; }) && /html body button\.camp-feast-go,\nhtml body \.exp-act\.exp-go-btn \{/.test(kb), "festin, Tu es ici, Parler, Expéditions, Réclamer, Livrer, reliques : boutons du pack");
-    var vieux = [["css/04-panel-camp.css", /\.camp-feast-go \{[^}]*linear-gradient/], ["css/04-panel-expeditions.css", /\.exp-act\.is-primary \{/], ["css/04-panel-village.css", /\.tavern-contract-btn \{[^}]*background/], ["css/04-panel-achievements.css", /\.hf-btn \{[^}]*background/]];
+    ok(["camp-here-go", "camp-talk-go", "exp-act", "hf-btn", "tavern-contract-btn", "cp-relic-btn"].every(function (c) { return kb.indexOf("." + c) > 0; }) && /\nhtml body \.exp-act\.exp-go-btn \{/.test(kb) && kb.indexOf("camp-feast") < 0, "Tu es ici, Parler, Expéditions, Réclamer, Livrer, reliques : boutons du pack");
+    var vieux = [["css/04-panel-expeditions.css", /\.exp-act\.is-primary \{/], ["css/04-panel-village.css", /\.tavern-contract-btn \{[^}]*background/], ["css/04-panel-achievements.css", /\.hf-btn \{[^}]*background/]];
     ok(vieux.every(function (v) { return !v[1].test(fs.readFileSync(path.join(ROOT, v[0]), "utf8")); }), "les anciens styles de ces boutons sont retirés des écrans");
   } catch (err) { ok(false, "[482] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();

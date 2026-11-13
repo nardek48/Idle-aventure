@@ -43,7 +43,7 @@ function getReturnStockLeft() {
   return out;
 }
 
-/* PV sous lesquels la fenêtre propose une ration (même seuil que l'alerte de départ). */
+/* PV sous lesquels la fenêtre propose le repas (même seuil que l'alerte de départ). */
 var RETURN_EAT_PCT = 0.70;
 
 /* v3.782.0 (atelier retour-absence, Seb 13/11, variante C) : récolte et butin sont faits à l'ouverture (gestes gratuits) ;
@@ -92,15 +92,11 @@ function buildReturnScreenHTML() {
   if (ready.length) h += '<div class="ret-note"><img src="images/Icons/village_buildings/tavern.webp" alt=""> '
     + esc(_tn(ready.length, "{n} contrat livrable, au tableau des missions.", "{n} contrats livrables, au tableau des missions.")) + '</div>';
 
-  // Héros : PV regagnés, et une ration proposée seulement si les PV sont bas (elle se consomme : c'est un choix)
+  // Héros : PV regagnés, et le repas proposé seulement si les PV sont bas (il se paie : c'est un choix) — v3.786.0
   var CM = window.CampManager, eat = "";
-  if (CM && !CM.teamFull() && !CM.rationLockReason() && Number(game.heroHp || 0) < Number(game.heroMaxHp || 1) * RETURN_EAT_PCT) {
-    var opts = CM.getRationOptions().filter(function (r) { return r.amount >= 1; });
-    var miss = (game.heroMaxHp || 1) - (game.heroHp || 0);
-    var pick = opts.filter(function (r) { return (game.heroMaxHp || 1) * r.healPct >= miss; }).sort(function (a, b) { return a.healPct - b.healPct; })[0]
-      || opts.sort(function (a, b) { return b.healPct - a.healPct; })[0];
-    if (pick) eat = '<button type="button" class="ret-link ret-eat" onclick="CampManager.eatRation(\'' + esc(pick.id) + '\'); renderReturnScreen();">'
-      + esc(_t("Manger : {x}", { x: _td(pick.name) })) + ' (' + esc(_t("+{n} PV", { n: formatNumber(Math.floor((game.heroMaxHp || 1) * pick.healPct)) })) + ')</button>';
+  if (CM && !CM.teamFull() && !CM.mealLockReason() && !CM.mealMissing().length && Number(game.heroHp || 0) < Number(game.heroMaxHp || 1) * RETURN_EAT_PCT) {
+    eat = '<button type="button" class="ret-link ret-eat" onclick="CampManager.eatMeal(); renderReturnScreen();">'
+      + esc(_t("Repas · Toute l'équipe à plein")) + ' ' + (typeof campCostChipsHTML === "function" ? '<span class="camp-act-cost">' + campCostChipsHTML(CM.mealCost(), []) + '</span>' : '') + '</button>';
   }
   if (s.hpGain > 0 || eat) {
     h += buildReturnSectionHTML("images/Icons/camp/campfire.webp", _t("Héros"),

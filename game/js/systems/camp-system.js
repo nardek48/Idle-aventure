@@ -1,9 +1,11 @@
 "use strict";
 /* systems/camp-system.js — v3.106.0 : plus de repos à horloge. Régénération lente au Campement
-   (5 % PV max / min, sans plafond hors ligne depuis v3.457.7) + Rations (v3.106.0 : remplace Repas viande/eau).
-   Chaque ration restaure un % fixe de PV max (WAREHOUSE_RESOURCES[id].healPct). Détail : LIGNE_DIRECTRICE §4, §10. */
+   (5 % PV max / min, sans plafond hors ligne depuis v3.457.7) + Repas (v3.786.0 : remplace les rations,
+   toute l'équipe à plein, payé en blé, viande, eau selon le manque). */
 
 var CAMP_REGEN_PCT_PER_MIN = 0.05;
+var CAMP_MEAL_PER_10 = { ble: 3, viande: 3, eau: 1 };                 // v3.786.0 : prix du repas par 10 % manquants
+var CAMP_MEAL_SOURCES = { ble: "farm", viande: "hunt", eau: "well" }; // bâtiment qui produit chaque denrée
 /* v3.457.7 (P10, choix Seb) : plus de plafond hors ligne — rechargement et reprise après veille soignent pareil. */
 
 var CampManager = {
@@ -71,7 +73,7 @@ var CampManager = {
     return total;
   },
 
-  /* v3.448.0 : compagnons au camp (recrutés, pas en patrouille), que le feu et les rations soignent. */
+  /* v3.448.0 : compagnons au camp (recrutés, pas en patrouille), que le feu et le repas soignent. */
   campCompanionIds: function () {
     if (!window.CompanionManager) return [];
     return CompanionManager.unlockedIds().filter(function (id) { return !(window.PatrolManager && PatrolManager.isOnPatrol(id)); });
@@ -96,11 +98,16 @@ var CampManager = {
     var pct = Math.max(0, Math.min(100, (hp / maxHp) * 100)) + "%";
     var hpFill = document.getElementById("camp-hp-fill");
     if (hpFill) hpFill.style.width = pct;
-    // v3.448.0 : les barres des compagnons au camp
+    // v3.448.0 : les barres des compagnons au camp ; v3.786.0 : leurs anneaux autour du portrait (--p)
     this.campCompanionIds().forEach(function (id) {
+      var p = Math.max(0, Math.min(100, CompanionManager.hpOf(id) / Math.max(1, CompanionManager.maxHpOf(id)) * 100));
       var f = document.getElementById("camp-comp-hp-" + id);
-      if (f) f.style.width = Math.max(0, Math.min(100, CompanionManager.hpOf(id) / Math.max(1, CompanionManager.maxHpOf(id)) * 100)) + "%";
+      if (f) f.style.width = p + "%";
+      var r = document.getElementById("camp-ring-" + id);
+      if (r) r.style.setProperty("--p", p.toFixed(1));
     });
+    var mc = document.getElementById("camp-meal-cost"); // le prix du repas baisse avec le feu
+    if (mc && typeof campMealCostHTML === "function") mc.innerHTML = campMealCostHTML();
     // v3.233.0 : la barre camp-regen-fill n'existe plus (doublon de la barre de PV).
     var eta = document.getElementById("camp-fire-eta");
     if (eta) {
@@ -110,7 +117,7 @@ var CampManager = {
       eta.innerHTML = full
         ? '<img class=ico-inline src=images/Icons/system/check_valid.webp> ' + _t("PV au maximum")
         : '<img class=ico-inline src=images/Icons/system/hourglass_waiting.webp> ' + _t("Max dans {d}", { d: formatTime(Math.ceil(this.getMinutesToFull() * 60)) });
-      if (this.teamFull() && typeof renderPanel === "function") renderPanel(); // ré-évalue les boutons de ration (grisés si tous pleins)
+      if (this.teamFull() && typeof renderPanel === "function") renderPanel(); // ré-évalue le bouton Repas (grisé si tous pleins)
     }
   },
 
@@ -122,61 +129,66 @@ var CampManager = {
     return missing / (maxHp * this.getRegenPctPerMin());
   },
 
-  /* Liste des rations avec stock courant et % de soin, dans l'ordre d'affichage (petite -> grande). */
-  getRationOptions: function () {
-    var ids = (typeof RATION_IDS !== "undefined") ? RATION_IDS : ["petite_ration", "ration", "grande_ration"];
-    return ids.map(function (id) {
-      var def = (window.WAREHOUSE_RESOURCES || {})[id] || {};
-      return { id: id, name: def.name || id, healPct: Number(def.healPct || 0), amount: window.WarehouseManager ? WarehouseManager.getAmount(id) : 0 };
+  /* v3.786.0 (atelier repas-camp, Seb C) : LE REPAS remplace les rations. Toute l'équipe au camp remonte à plein ;
+     prix au manque : 3 Blé + 3 Viande + 1 Eau par tranche de 10 % de PV manquants (ressources déjà produites seules). */
+  teamMissingPct: function () {
+    var max = game.heroMaxHp || 1, cur = Math.min(max, Math.max(0, game.heroHp || 0));
+    this.campCompanionIds().forEach(function (id) {
+      var m = CompanionManager.maxHpOf(id);
+      max += m; cur += Math.min(m, Math.max(0, CompanionManager.hpOf(id)));
     });
+    return max > 0 ? Math.max(0, 1 - cur / max) : 0;
+  },
+
+  mealCost: function () {
+    var n = Math.ceil(this.teamMissingPct() * 10 - 1e-9), out = {};
+    if (n <= 0) return out;
+    var mult = (window.MemoryManager && MemoryManager.has("cuisine_campagne")) ? (typeof MEMORY_CUISINE_MEAL_MULT === "number" ? MEMORY_CUISINE_MEAL_MULT : 0.75) : 1;
+    Object.keys(CAMP_MEAL_PER_10).forEach(function (k) {
+      if (window.ProductionManager && !ProductionManager.isBuildingUnlocked(CAMP_MEAL_SOURCES[k])) return; // pas encore produit : gratuit
+      out[k] = Math.max(1, Math.ceil(CAMP_MEAL_PER_10[k] * n * mult));
+    });
+    return out;
+  },
+
+  mealMissing: function () {
+    var c = this.mealCost();
+    return Object.keys(c).filter(function (k) { return !window.WarehouseManager || WarehouseManager.getAmount(k) < c[k]; });
   },
 
   /* audit 04/11 (QA-8) : en sortie de combat (donjon, élite, quête, chasse), pas de repas du Camp ;
      la règle annoncée : « tu pars avec tes PV actuels ». Raison affichée, ou null. */
-  rationLockReason: function () {
+  mealLockReason: function () {
     if (window.heroLockReason && heroLockReason()) return heroLockReason(); // v3.307.0
     if (typeof hasCombatQuestContext === "function" && hasCombatQuestContext()) return _t("En pleine sortie, pas de repas : termine ou abandonne d'abord.");
     return null;
   },
 
-  canEatRation: function (rationId) {
-    if (!window.WarehouseManager) return false;
-    if (this.rationLockReason()) return false;
-    return WarehouseManager.getAmount(rationId) >= 1;
-  },
+  canEatMeal: function () { return !this.teamFull() && !this.mealLockReason() && this.mealMissing().length === 0; },
 
-  /* Ration : consomme 1 unité (via WarehouseManager), restaure healPct % des PV max. */
-  eatRation: function (rationId) {
-    var def = (window.WAREHOUSE_RESOURCES || {})[rationId];
-    if (!def || !def.healPct) return false;
-    var maxHp = game.heroMaxHp || 1;
+  eatMeal: function () {
     if (this.teamFull()) { showToast(_t("PV déjà au maximum"), 1200); return false; }
     if (window.heroLockToast && heroLockToast()) return false; // v3.307.0
-    var lock = this.rationLockReason(); // audit 04/11 (QA-8)
+    var lock = this.mealLockReason();
     if (lock) { showToast(lock, 1800); return false; }
-    if (!this.canEatRation(rationId)) { showToast(_t("Aucune {x} en stock", { x: _td(def.name).toLowerCase() }), 1600); return false; }
-    if (!WarehouseManager.removeResource(rationId, 1)) return false;
-
-    // v3.323.0 : Cuisine de campagne (Mémoire niveau 3) — la Petite ration soigne 25 % de plus
-    var pct = def.healPct;
-    if (rationId === "petite_ration" && window.MemoryManager && MemoryManager.has("cuisine_campagne")) {
-      pct *= (typeof MEMORY_CUISINE_PETITE_RATION_MULT === "number" ? MEMORY_CUISINE_PETITE_RATION_MULT : 1.25);
-    }
-    if (window.TowerSystem) pct *= TowerSystem.rationMult(); // v3.632.0 : Le pain d'abord (Mémoire 24)
-    var healed = Math.min(maxHp - (game.heroHp || 0), Math.floor(maxHp * pct));
-    game.heroHp = (game.heroHp || 0) + healed;
-    // v3.448.0 (décision Seb, option 3) : la ration nourrit toute l'équipe, du même pourcentage
-    var nourris = [];
+    if (this.mealMissing().length) { showToast(_t("Il manque de quoi préparer le repas"), 1600); return false; }
+    var c = this.mealCost();
+    Object.keys(c).forEach(function (k) { WarehouseManager.removeResource(k, c[k]); });
+    var maxHp = game.heroMaxHp || 1, healed = Math.max(0, maxHp - (game.heroHp || 0));
+    game.heroHp = maxHp;
+    this._frac.hero = 0;
+    var self = this, nourris = [];
     this.campCompanionIds().forEach(function (id) {
-      var max = CompanionManager.maxHpOf(id), cur = CompanionManager.hpOf(id);
-      if (cur >= max) return;
-      CompanionManager.state(id).hp = Math.min(max, cur + Math.floor(max * pct));
+      var max = CompanionManager.maxHpOf(id);
+      self._frac[id] = 0;
+      if (CompanionManager.hpOf(id) >= max) return;
+      CompanionManager.state(id).hp = max;
       nourris.push(_td(getCompanionDef(id).name));
     });
     addLog("🍖 " + (nourris.length
-      ? _t("{x} — +{n} PV, et pour {y}.", { x: _td(def.name), n: formatNumber(healed), y: nourris.join(", ") })
-      : _t("{x} — +{n} PV.", { x: _td(def.name), n: formatNumber(healed) })), "event");
-    showToast("🍖 " + (nourris.length ? _t("Toute l'équipe mange") : _t("+{n} PV", { n: formatNumber(healed) })), 1600);
+      ? _t("Repas au camp — +{n} PV, et pour {y}.", { n: formatNumber(healed), y: nourris.join(", ") })
+      : _t("Repas au camp — +{n} PV.", { n: formatNumber(healed) })), "event");
+    showToast("🍖 " + _t("Toute l'équipe à plein"), 1600);
     if (typeof renderAll === "function") renderAll();
     if (typeof saveGame === "function") saveGame();
     return true;
@@ -185,6 +197,7 @@ var CampManager = {
 
 window.CampManager = CampManager;
 window.CAMP_REGEN_PCT_PER_MIN = CAMP_REGEN_PCT_PER_MIN;
+window.CAMP_MEAL_PER_10 = CAMP_MEAL_PER_10;
 
 /* v3.656.0 (atelier festin.html, placement A, choix de Seb du 04/11) — LE FESTIN.
    Blé, viande et eau du village contre +10 % de dégâts et de PV pour tout le groupe, pendant 3 sorties (pas l'exploration libre).

@@ -132,15 +132,9 @@ function toggleCampRegenHelp() {
 }
 window.toggleCampRegenHelp = toggleCampRegenHelp;
 
-/* v3.458.3 (audit C9) : toucher une ration épuisée. */
-function campRationEmpty() {
-  if (typeof showToast === "function") showToast(_t("Les rations se préparent à la Cuisine de camp : Village › Ateliers."), 2600);
-}
-window.campRationEmpty = campRationEmpty;
-
 /* v3.411.0 : onglet ouvert du Campement (retenu pendant la session). */
 var CAMP_TABS = [
-  { key: "feu", label: _t("Le feu"), icon: "images/Icons/camp/campfire.webp" }, // v3.594.0 (atelier camp-carte, choix Seb) : santé, rations, compagnons
+  { key: "feu", label: _t("Le feu"), icon: "images/Icons/camp/campfire.webp" }, // v3.594.0 (atelier camp-carte, choix Seb) : santé, repas, compagnons
   { key: "missions", label: _t("Mis\u00ADsions", "sous-onglet"), icon: "images/Icons/quests/quest_list.webp" },
   { key: "depart", label: _t("Expé\u00ADdi\u00ADtions", "sous-onglet"), icon: "images/Icons/quests/start_expedition.webp" }, // v3.426.0 : était « Départ »
   { key: "grimoire", label: _t("Gri\u00ADmoire", "sous-onglet"), icon: "images/Icons/system/grimoire.webp" }
@@ -157,14 +151,13 @@ window.setCampTab = setCampTab;
 function buildCampHTML(tab) {
   if (window.CampManager) CampManager.ensureDefaults();
 
-  // v3.101.0 (P3-lite) : régénération lente + Rations (v3.106.0), plus de repos à horloge.
+  // v3.101.0 (P3-lite) : régénération lente + Repas (v3.786.0), plus de repos à horloge.
   if (window.CampManager) CampManager.applyRegen(false);
   var maxHp = game.heroMaxHp || 1;
   var hp = game.heroHp != null ? game.heroHp : maxHp;
   var hpFull = hp >= maxHp;
   var regenPct = window.CampManager ? Math.round(CampManager.getRegenPctPerMin() * 100) : 5;
   var minutesToFull = window.CampManager ? CampManager.getMinutesToFull() : 0;
-  var rationOptions = window.CampManager ? CampManager.getRationOptions() : [];
 
   var h = '<div class="nb-page-frame nb-page-frame-fill camp-page kframe-page" data-kf-banner="camp" data-kf-title="images/Icons/camp/camp_title.webp|' + _t("Campement") + '">';
 
@@ -172,7 +165,7 @@ function buildCampHTML(tab) {
   // déjà « <img class=ico-inline src=images/Icons/quests/village_quest.webp> Campement », la ligne d'ambiance n'apportait rien.
 
   if (game.justDied) {
-    h += '<div class="camp-death-banner"><img class="ico-lg" src="images/Icons/camp/hero_defeated.webp" alt=""> ' + _t("Tu es à terre. Mange une ration, ou laisse le feu faire son œuvre, avant de repartir.") + '</div>';
+    h += '<div class="camp-death-banner"><img class="ico-lg" src="images/Icons/camp/hero_defeated.webp" alt=""> ' + _t("Tu es à terre. Prends un repas, ou laisse le feu faire son œuvre, avant de repartir.") + '</div>';
     if (typeof takeDefeatResourceTipHTML === "function") h += takeDefeatResourceTipHTML(); // v3.689.0 (COMB-4) : astuce de défaite
     game.justDied = false;
   }
@@ -180,8 +173,8 @@ function buildCampHTML(tab) {
   var hpPct = Math.max(0, Math.min(100, (hp / maxHp) * 100));
 
   /* v3.411.0 (atelier Campement, Seb : R3b) : la santé tient en deux lignes et reste toujours
-     visible — ligne 1 : icône + jauge de PV (+ régénération dessous) ; ligne 2 : les rations en
-     boutons carrés (icône, soin, stock en pastille). Toucher une ration = la manger.
+     visible — ligne 1 : icône + jauge de PV (+ régénération dessous) ; puis (v3.786.0) anneaux des
+     compagnons, Repas et Festin.
      Les identifiants camp-hp-fill, camp-fire-hp-value et camp-fire-eta sont gardés : le
      système de camp les met à jour en direct. */
   var hc = '<div class="camp-card camp-health-card">'; // v3.594.0 : la santé passe dans l'onglet « Le feu »
@@ -200,40 +193,17 @@ function buildCampHTML(tab) {
   h += '<button type="button" class="camp-help-btn" aria-label="' + _t("Régénération : explication") + '" aria-expanded="' + (campRegenHelpOpen ? 'true' : 'false') + '" onclick="toggleCampRegenHelp()">?</button>';
   h += '</div>';
   if (campRegenHelpOpen) {
-    h += '<div class="camp-regen-desc">' + _t("Hors combat, tes PV remontent seuls au rythme indiqué, même pendant ton absence. Les rations soignent tout de suite.") + '</div>';
+    h += '<div class="camp-regen-desc">' + _t("Hors combat, tes PV remontent seuls au rythme indiqué, même pendant ton absence. Le repas remet tout de suite l'équipe à plein.") + '</div>';
   }
 
-  /* v3.448.0 : les compagnons au camp, une ligne fine chacun — le feu et les rations les soignent aussi. */
+  /* v3.786.0 (atelier repas-camp, Seb) : les compagnons en anneaux de PV (toucher = parler, ex-« Au coin du feu »),
+     puis le Repas (toute l'équipe à plein) et le Festin côte à côte. */
   var campMates = window.CampManager ? CampManager.campCompanionIds() : [];
-  if (campMates.length) {
-    h += '<div class="camp-mates">';
-    campMates.forEach(function (id) {
-      var def = getCompanionDef(id), mx = Math.max(1, CompanionManager.maxHpOf(id)), cur = CompanionManager.hpOf(id);
-      h += '<div class="camp-mate">' + smallPortraitHTML(def.image, "camp-mate-ico", _td(def.name)) + '<span>' + esc(_td(def.name)) + '</span>'
-        + '<div class="kgauge kgauge-thin kgauge-hp"><div class="kgauge-track"><div class="kgauge-fill" id="camp-comp-hp-' + esc(id) + '" style="width:' + Math.max(0, Math.min(100, cur / mx * 100)) + '%"></div></div></div></div>';
-    });
-    h += '</div>';
-  }
+  h += campRingsHTML(campMates);
   var teamFull = window.CampManager ? CampManager.teamFull() : hpFull;
-
-  var campLock = (window.CampManager && CampManager.rationLockReason()) || null; // v3.307.0 ; audit 04/11 (QA-8) : sortie de combat
+  var campLock = (window.CampManager && CampManager.mealLockReason()) || null; // v3.307.0 ; audit 04/11 (QA-8) : sortie de combat
   if (campLock) h += '<div class="camp-lock-note"><img class="ico-inline" src="images/Icons/system/hero_away.webp" alt=""> ' + esc(campLock) + '</div>';
-  h += '<div class="camp-ration-row">';
-  rationOptions.forEach(function (r) {
-    var def = (window.WAREHOUSE_RESOURCES || {})[r.id] || {};
-    var healValue = Math.floor(maxHp * r.healPct);
-    var canEat = r.amount >= 1 && !teamFull && !campLock;
-    h += '<button type="button" class="camp-ration-ib' + (r.amount < 1 ? ' is-empty' : '') + '"'
-      + ' title="' + esc(_td(r.name) + " · " + fmtPct(Math.round(r.healPct * 100))) + '" aria-label="' + esc(_t("Manger : {x}", { x: _td(r.name) })) + '"'
-      // v3.458.3 (audit C9) : une ration à 0 dit où elle se prépare, au lieu d'un bouton muet
-      + (canEat ? ' onclick="CampManager.eatRation(\'' + esc(r.id) + '\');"' : (r.amount < 1 ? ' onclick="campRationEmpty()"' : ' disabled')) + '>';
-    h += renderIconOrEmojiHTML(def.icon || "images/Icons/quests/ration_reward.webp", "camp-ration-ib-img", _td(r.name));
-    h += '<b>+' + formatNumber(healValue) + '</b>';
-    h += '<i class="camp-ration-ib-n">' + formatNumber(r.amount) + '</i>';
-    h += '</button>';
-  });
-  h += '</div>';
-  if (!teamFull && !campLock && rationOptions.some(function (r) { return r.amount >= 1; })) h += '<div class="camp-ration-hint">' + (campMates.length ? _t("Toucher une ration : toute l'équipe mange") : _t("Toucher une ration pour la manger")) + '</div>';
+  h += campMealActsHTML(teamFull, campLock);
   h += '</div>'; // fin .camp-health-card
   hc = h; h = h0;
 
@@ -288,13 +258,13 @@ function buildCampHTML(tab) {
       ? buildGrimoireEditHTML(grimoireEditIndex, kit) : buildGrimoireListHTML(kit, slotCount)) + '</div>';
   }
   // v3.558.0 (grand écran, option B) : une seule page, sans onglets ; v3.567.0 (option D) : blocs compacts
-  // de la maquette (atelier/grand-ecran.html) — équipe, rations, Grimoire, missions, expéditions. Le téléphone ne change pas.
+  // de la maquette (atelier/grand-ecran.html) — équipe, repas, Grimoire, missions, expéditions. Le téléphone ne change pas.
   if (!tab && document.documentElement.classList.contains("wide-mode")) {
     var titled = function (t, sub, x) { return x ? '<section class="cw-card"><h3 class="cw-h">' + esc(t) + (sub ? ' <small>' + sub + '</small>' : '') + '</h3>' + x + '</section>' : ""; };
     campShownTab = "missions";
     var sub = esc(_t("+{n} % PV/min", { n: regenPct })) + ' · <span id="camp-fire-eta">' + esc(hpFull ? _t("PV au maximum") : _t("Max dans {d}", { d: formatTime(Math.ceil(minutesToFull * 60)) })) + '</span>';
     return h + '<div class="cw"><div class="cw-col">'
-      + titled(_t("Le feu de camp"), sub, campWideTeamHTML(maxHp, hp, rationOptions, teamFull, campLock, campMates)) + eh
+      + titled(_t("Le feu de camp"), sub, campWideTeamHTML(maxHp, hp, teamFull, campLock, campMates)) + eh
       + titled(_t("Expéditions"), "", tabsHTML.depart || "") // v3.772.0 (atelier mode-pc) : sous le feu, elle était coupée sous les missions
       + titled(_t("Grimoire"), tabsHTML.grimoire ? esc(campWideRulesCount()) : "", tabsHTML.grimoire ? campWideGrimoireHTML() : "") + '</div>'
       + '<div class="cw-col">' + titled(_t("Missions"), "", campWideMissionsHTML()) + '</div></div></div>';
@@ -370,28 +340,6 @@ function campSoirTapText(id) {
   var D = campSoirData()[campSoirWorld()] || {}, any = campSoirAny();
   return (D.tap && D.tap[id]) || (any[id] && any[id].tap) || "";
 }
-/* v3.656.0 (atelier festin.html, A) : la carte du festin — prix et stock, ou les sorties qui restent. */
-function campFeastHTML() {
-  if (!window.FeastManager || !window.WarehouseManager) return "";
-  var F = FeastManager, n = F.left(), h = '<div class="camp-card camp-feast"><div class="camp-soir-k">' + esc(_t("Le festin")) + '</div>';
-  if (n > 0) {
-    var pips = ""; for (var i = 0; i < FEAST_SORTIES; i++) pips += '<i class="' + (i < n ? "is-on" : "") + '"></i>';
-    h += '<div class="camp-feast-on">' + renderIconOrEmojiHTML(FEAST_ICON, "camp-feast-ico", "") + '<span><b>' + esc(_t("Festin en cours")) + '</b>'
-      + esc(_tn(n, "+{p} % de dégâts et de PV pour tout le groupe, encore {n} sortie.", "+{p} % de dégâts et de PV pour tout le groupe, encore {n} sorties.", { n: n, p: Math.round(FEAST_BONUS * 100) })) + '</span><span class="camp-feast-pips">' + pips + '</span></div>';
-    return h + '<p class="camp-feu-hint">' + esc(_t("Le prochain se prépare quand celui-ci est fini.")) + '</p></div>';
-  }
-  var c = F.cost(), miss = F.missing();
-  h += '<div class="camp-feast-head">' + renderIconOrEmojiHTML(FEAST_ICON, "camp-feast-ico", "") + '<span><b>' + esc(_t("Préparer un festin")) + '</b><span>'
-    + esc(_t("+{p} % de dégâts et de PV pour tout le groupe, pendant {k} sorties.", { p: Math.round(FEAST_BONUS * 100), k: FEAST_SORTIES })) + '</span></span></div><div class="camp-feast-costs">';
-  ["ble", "viande", "eau"].forEach(function (k) {
-    var def = WAREHOUSE_RESOURCES[k], have = Math.floor(WarehouseManager.getAmount(k));
-    h += '<span class="camp-feast-cost' + (miss.indexOf(k) >= 0 ? ' is-short' : '') + '">' + renderIconOrEmojiHTML(def.icon, "camp-feast-res", "")
-      + formatNumber(c[k]) + ' ' + esc(_td(def.name)) + ' <small>(' + formatNumber(have) + ')</small></span>';
-  });
-  var lab = miss.length ? _t("Il manque : {x}", { x: miss.map(function (k) { return _td(WAREHOUSE_RESOURCES[k].name).toLowerCase(); }).join(", ") }) : _t("Préparer le festin");
-  return h + '</div><button type="button" class="camp-feast-go"' + (miss.length ? ' disabled' : ' onclick="FeastManager.prepare()"') + '>' + esc(lab) + '</button></div>';
-}
-
 /* v3.655.0 (C3) : l'en-tête de la carte suit le moment du jour. */
 function campMomentTitle() {
   var mo = campMoment();
@@ -414,19 +362,61 @@ function campFeuStoryHTML(campMates) {
   var h = dark
     ? '<div class="camp-card camp-soir is-night"><div class="camp-soir-k">' + esc(_t("Cette nuit")) + '</div><p class="camp-soir-t">' + esc(WorldDays.nightText()) + '</p></div>'
     : '<div class="camp-card camp-soir is-' + campMoment() + '"><div class="camp-soir-k">' + esc(campMomentTitle()) + '</div><p class="camp-soir-t">' + esc(campSoir.text) + '</p></div>';
-  h += campFeastHTML(); // v3.656.0 : le festin, sous la phrase du jour
-  if (!ids.length) return h;
-  var soir = h; // v3.639.0 : le coin du feu d'abord, la soirée ensuite
-  var half = Math.ceil(ids.length / 2), mate = function (id) {
-    // v3.601.0 (M1) : toucher ouvre la liste des sujets ; « … » quand il a quelque chose de nouveau à dire
-    var def = getCompanionDef(id), news = window.CompanionTalkManager && typeof CompanionTalkManager.hasNewTopic === "function" && CompanionTalkManager.hasNewTopic(id);
-    return '<button type="button" class="camp-feu-mate" onclick="openCompanionMenu(\'' + esc(id) + '\')">'
-      + smallPortraitHTML(def.image, "camp-feu-img", _td(def.name)) + (news ? '<i class="camp-feu-talk">…</i>' : '') + '<span>' + esc(_td(def.name)) + '</span></button>';
-  };
-  h += '<div class="camp-card camp-feu"><div class="camp-soir-k">' + esc(_t("Au coin du feu")) + '</div><div class="camp-feu-row">'
-    + ids.slice(0, half).map(mate).join("") + '<img class="camp-feu-fire" src="images/Icons/camp/campfire.webp" alt="">' + ids.slice(half).map(mate).join("") + '</div>'
-    + '<p class="camp-feu-hint">' + esc(_t("Touche un compagnon pour lui parler.")) + '</p></div>';
-  return h.slice(soir.length) + soir;
+  return h; // v3.786.0 : « Au coin du feu » passe dans les anneaux, le festin à côté du repas
+}
+
+/* v3.786.0 : anneaux de PV autour des portraits, sur une ligne (5 au plus). Assis au feu : toucher ouvre ses sujets,
+   « … » s'il a du nouveau. En sortie, ceux partis avec le héros ont leur anneau, sans conversation. */
+function campRingsHTML(campMates) {
+  if (!campMates || !campMates.length || !window.CompanionManager) return "";
+  var feu = campFeuMateIds(campMates), CT = window.CompanionTalkManager;
+  var h = '<div class="camp-rings">' + campMates.map(function (id) {
+    var def = getCompanionDef(id), p = Math.max(0, Math.min(100, CompanionManager.hpOf(id) / Math.max(1, CompanionManager.maxHpOf(id)) * 100));
+    var here = feu.indexOf(id) >= 0, news = here && CT && typeof CT.hasNewTopic === "function" && CT.hasNewTopic(id);
+    var ring = '<span class="camp-ring' + (p < 35 ? ' is-low' : '') + '" id="camp-ring-' + esc(id) + '" style="--p:' + p.toFixed(1) + '">'
+      + smallPortraitHTML(def.image, "camp-ring-img", _td(def.name)) + '</span>' + (news ? '<i class="camp-ring-talk">…</i>' : '') + '<span class="camp-ring-nm">' + esc(_td(def.name)) + '</span>';
+    return here ? '<button type="button" class="camp-ring-who" onclick="openCompanionMenu(\'' + esc(id) + '\')" aria-label="' + esc(_t("Parler à {n}", { n: _td(def.name) })) + '">' + ring + '</button>'
+      : '<span class="camp-ring-who is-away">' + ring + '</span>';
+  }).join("") + '</div>';
+  if (feu.length) h += '<p class="camp-rings-hint">' + esc(_t("Touche un compagnon pour lui parler.")) + '</p>';
+  return h;
+}
+
+/* Puces de prix (blé, viande, eau), en rouge s'il en manque. */
+function campCostChipsHTML(cost, miss) {
+  return Object.keys(cost).map(function (k) {
+    var def = (window.WAREHOUSE_RESOURCES || {})[k] || {};
+    return '<span class="camp-cost' + (miss.indexOf(k) >= 0 ? ' is-short' : '') + '" title="' + esc(_td(def.name || k)) + '">' + renderIconOrEmojiHTML(def.icon, "camp-cost-ico", "") + formatNumber(cost[k]) + '</span>';
+  }).join("");
+}
+function campMealCostHTML() {
+  if (!window.CampManager || CampManager.teamFull()) return "";
+  return campCostChipsHTML(CampManager.mealCost(), CampManager.mealMissing());
+}
+window.campMealCostHTML = campMealCostHTML;
+
+/* Le Repas (toute l'équipe à plein, prix au manque) et le Festin (+10 % dégâts et PV, 3 sorties), côte à côte. */
+function campMealActsHTML(teamFull, campLock) {
+  if (!window.CampManager) return "";
+  var CM = CampManager, okMeal = !teamFull && !campLock && !CM.mealMissing().length;
+  var mealIco = "images/Icons/camp/camp_meal.webp";
+  var h = '<div class="camp-acts"><button type="button" class="camp-act"' + (okMeal ? ' onclick="CampManager.eatMeal()"' : ' disabled') + '>'
+    + renderIconOrEmojiHTML(mealIco, "camp-act-ico", "") + '<b>' + esc(teamFull ? _t("Équipe pleine") : _t("Repas")) + '</b>'
+    + '<span class="camp-act-hint">' + esc(teamFull ? _t("rien à payer") : _t("Toute l'équipe à plein")) + '</span>'
+    + '<span class="camp-act-cost" id="camp-meal-cost">' + campMealCostHTML() + '</span></button>';
+  if (window.FeastManager && window.WarehouseManager) {
+    var F = FeastManager, n = F.left(), p = Math.round(FEAST_BONUS * 100);
+    if (n > 0) {
+      h += '<div class="camp-act is-live">' + renderIconOrEmojiHTML(FEAST_ICON, "camp-act-ico", "") + '<b>' + esc(_t("Festin actif")) + '</b>'
+        + '<span class="camp-act-hint">' + esc(_tn(n, "+{p} % dégâts et PV · encore {n} sortie", "+{p} % dégâts et PV · encore {n} sorties", { n: n, p: p })) + '</span></div>';
+    } else {
+      var miss = F.missing(), okF = !miss.length && !campLock;
+      h += '<button type="button" class="camp-act"' + (okF ? ' onclick="FeastManager.prepare()"' : ' disabled') + '>' + renderIconOrEmojiHTML(FEAST_ICON, "camp-act-ico", "")
+        + '<b>' + esc(_t("Festin")) + '</b><span class="camp-act-hint">' + esc(_t("+{p} % dégâts et PV, {k} sorties", { p: p, k: FEAST_SORTIES })) + '</span>'
+        + '<span class="camp-act-cost">' + campCostChipsHTML(F.cost(), miss) + '</span></button>';
+    }
+  }
+  return h + '</div>';
 }
 
 /* v3.594.0 (atelier camp-carte, option M3 de Seb) : en tête du « feu », le monde où l'on est et la carte. */
@@ -447,8 +437,8 @@ function campWideBar(cur, max, id) { // id : barre tenue à jour par CampManager
   return '<span class="cw-bar"><i' + (id ? ' id="' + id + '"' : '') + ' style="width:' + Math.max(0, Math.min(100, 100 * cur / Math.max(1, max))).toFixed(1) + '%"></i></span>';
 }
 
-// Le héros et les compagnons qui partent avec lui, puis ceux restés au camp, puis les rations
-function campWideTeamHTML(maxHp, hp, rations, teamFull, campLock, campMates) {
+// Le héros et les compagnons qui partent avec lui, puis ceux restés au camp, puis le repas et le festin
+function campWideTeamHTML(maxHp, hp, teamFull, campLock, campMates) {
   var hero = typeof getSelectedHero === "function" ? getSelectedHero() : null, cls = hero && typeof getClassForHero === "function" ? getClassForHero(hero) : null;
   var h = '<div class="cw-team"><div class="cw-mb">' + smallPortraitHTML((hero && hero.image) || "", "cw-mb-img", "")
     + '<div class="cw-mb-nm"><b>' + esc(game.playerName || "") + '</b><small>' + esc((cls ? _td(cls.label) + " · " : "") + _t("niv. {n}", { n: Number(game.heroLevel || 1) })) + '</small></div>'
@@ -471,14 +461,7 @@ function campWideTeamHTML(maxHp, hp, rations, teamFull, campLock, campMates) {
     h += '</div>';
   }
   if (campLock) h += '<div class="camp-lock-note"><img class="ico-inline" src="images/Icons/system/hero_away.webp" alt=""> ' + esc(campLock) + '</div>';
-  h += '<div class="cw-rations">';
-  rations.forEach(function (r) {
-    var def = (window.WAREHOUSE_RESOURCES || {})[r.id] || {}, canEat = r.amount >= 1 && !teamFull && !campLock;
-    h += '<button type="button" class="cw-ration' + (r.amount < 1 ? ' is-off' : '') + '"' + (canEat ? ' onclick="CampManager.eatRation(\'' + esc(r.id) + '\');"' : (r.amount < 1 ? ' onclick="campRationEmpty()"' : ' disabled')) + '>'
-      + renderIconOrEmojiHTML(def.icon || "images/Icons/quests/ration_reward.webp", "", "") + '<span><b>+' + formatNumber(Math.floor(maxHp * r.healPct)) + '</b><small>' + esc(_td(r.name)) + '</small></span>'
-      + '<i class="cw-ration-n">' + formatNumber(r.amount) + '</i></button>';
-  });
-  h += '</div><p class="cw-note">' + esc(party.length || (campMates || []).length ? _t("Une ration : toute l'équipe mange.") : _t("Toucher une ration pour la manger")) + '</p>';
+  h += campMealActsHTML(teamFull, campLock); // v3.786.0 : repas et festin, comme au téléphone
   return h;
 }
 

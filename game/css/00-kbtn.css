@@ -665,8 +665,7 @@ button.forge-row-btn:not(.is-off):active {
    v3.721.0 (retour Seb sur iPhone) : les boutons d'action qui avaient leur propre style passent au pack.
    Préfixe « html body » : ces règles doivent passer devant celles des écrans, chargées après ce fichier.
    ===================================================================== */
-/* Principal, taille normale : « Préparer le festin », « Envoyer » d'une patrouille */
-html body button.camp-feast-go,
+/* Principal, taille normale : « Envoyer » d'une patrouille */
 html body .exp-act.exp-go-btn {
   display: flex; align-items: center; justify-content: center; width: fit-content; min-width: 140px; max-width: 100%;
   min-height: 44px; margin: 0 auto; padding: 4px 6px; box-sizing: border-box;
@@ -696,6 +695,6 @@ html body .cp-relic-btn.is-ghost {
   border-image-source: url('../images/UI/buttons/btn-parch-1l.webp');
   color: var(--c-brown-900); text-shadow: 0 1px 0 rgba(255, 245, 220, 0.6);
 }
-html body :is(button.camp-feast-go, .exp-act, .camp-talk-go, .hf-btn, .tavern-contract-btn, .cp-relic-btn):not(:disabled):active { transform: translateY(1px); filter: brightness(0.88); }
-html body :is(button.camp-feast-go, .exp-act, .cp-relic-btn):disabled,
+html body :is(.exp-act, .camp-talk-go, .hf-btn, .tavern-contract-btn, .cp-relic-btn):not(:disabled):active { transform: translateY(1px); filter: brightness(0.88); }
+html body :is(.exp-act, .cp-relic-btn):disabled,
 html body .tavern-contract-btn:is(.is-poor, .is-done) { filter: grayscale(0.85); opacity: 0.6; cursor: not-allowed; }

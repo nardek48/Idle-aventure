@@ -594,44 +594,17 @@ function healUp(seuil) {
   flushTimers(g);
 }
 
-/* Repas au camp, comme un joueur pressé : au-delà de 20 % de PV manquants (4 min d'attente), il mange
-   la plus grosse ration qui ne déborde pas trop, en gardant 1 de chaque pour les vivres de sortie ;
-   il cuisine des Petites/Moyennes rations avec le stock présent, sans attendre la production. */
-var RATION_RESERVE = 1;
+/* Repas au camp, comme un joueur pressé (v3.786.0 : le repas remplace les rations) : au-delà de 20 % de PV
+   manquants (4 min d'attente), il prend le repas s'il a de quoi le payer ; sinon il attend le feu. */
 function mangerAuCamp() {
-  var g = G, CM = g.CampManager, WM = g.WarehouseManager, max = g.game.heroMaxHp || 1;
-  var R = STATS.rations = STATS.rations || { mangees: {}, cuisinees: {}, minutesEvitees: 0 };
-  function manque() { return 1 - (g.game.heroHp || 0) / max; }
-  function choisir() {
-    var opts = CM.getRationOptions().filter(function (r) { return r.amount > RATION_RESERVE && r.healPct > 0 && r.healPct <= manque() + 0.10; });
-    opts.sort(function (a, b) { return b.healPct - a.healPct; });
-    return opts[0] || null;
-  }
-  function cuisiner() {   // une recette dont les ingrédients sont déjà là, la plus nourrissante d'abord
-    var rec = ((g.WORKSHOPS_CONFIG.cuisine_de_camp || {}).recipes || []).filter(function (r) { return r.id !== "grande_ration"; }).reverse();
-    for (var i = 0; i < rec.length; i++) {
-      var r = rec[i], heal = ((g.WAREHOUSE_RESOURCES || {})[r.id] || {}).healPct || 0;
-      if (heal > manque() + 0.10) continue;
-      if (!r.inputs.every(function (inp) { return WM.getAmount(inp.resourceId) >= inp.quantity; })) continue;
-      if (!g.WorkshopsSystem.enqueueCraft("cuisine_de_camp", r.id, 1)) continue;
-      for (var t = 0; t < 10 && g.WorkshopsSystem.getQueue("cuisine_de_camp").length; t++) {
-        var resteMs = g.WorkshopsSystem.getQueue("cuisine_de_camp").reduce(function (s, e) { return s + Number(e.msRemaining || 0); }, 0);
-        wait(Math.max(1000, resteMs + 1000), "atelier");
-      }
-      R.cuisinees[r.id] = (R.cuisinees[r.id] || 0) + 1;
-      return true;
-    }
-    return false;
-  }
-  for (var k = 0; k < 12 && manque() > 0.20; k++) {
-    var r = choisir();
-    if (!r && cuisiner()) r = choisir();
-    if (!r) break;
-    var avant = g.game.heroHp || 0;
-    if (!CM.eatRation(r.id)) break;
-    R.mangees[r.id] = (R.mangees[r.id] || 0) + 1;
-    R.minutesEvitees += ((g.game.heroHp || 0) - avant) / (max * CM.getRegenPctPerMin());
-  }
+  var g = G, CM = g.CampManager, max = g.game.heroMaxHp || 1;
+  var R = STATS.rations = STATS.rations || { repas: 0, payes: {}, minutesEvitees: 0 };
+  if (1 - (g.game.heroHp || 0) / max <= 0.20 || !CM.canEatMeal()) return;
+  var avant = g.game.heroHp || 0, cout = CM.mealCost();
+  if (!CM.eatMeal()) return;
+  R.repas++;
+  Object.keys(cout).forEach(function (k) { R.payes[k] = (R.payes[k] || 0) + cout[k]; });
+  R.minutesEvitees += ((g.game.heroHp || 0) - avant) / (max * CM.getRegenPctPerMin());
 }
 
 /* Entre deux étapes, ce que fait un joueur : meilleur objet porté, points de talent, entraînement,
@@ -2430,7 +2403,7 @@ if (COMBATS) {
   if (STATS.objets) console.log("Objets de combat emportés (v3.738.0) : " + Object.keys(STATS.objets).map(function (k) { return k + " " + STATS.objets[k]; }).join(" · "));
   if (STATS.objetsApo) console.log("Objets de combat (v3.739.0) : recettes apprises " + (Object.keys(STATS.objetsApo.appris).map(function (k) { return k + " (" + STATS.objetsApo.appris[k] + ")"; }).join(" · ") || "aucune") + " · fabriqués " + (Object.keys(STATS.objetsApo.fabriques).map(function (k) { return k + " " + STATS.objetsApo.fabriques[k]; }).join(" · ") || "aucun"));
   console.log("Morts : " + STATS.deaths + " · potions bues : " + STATS.potions + " à la main, " + (STATS.potionsBues || 0) + " en tout · or en potions : " + (STATS.potionGold || 0) + " · temps de combat : " + (STATS.combatMs / 3600e3).toFixed(1) + " h · temps de soin au camp : " + (STATS.healMs / 3600e3).toFixed(1) + " h");
-  if (STATS.rations) console.log("Rations au camp : mangées " + JSON.stringify(STATS.rations.mangees) + " · cuisinées " + JSON.stringify(STATS.rations.cuisinees) + " · attente évitée " + (STATS.rations.minutesEvitees / 60).toFixed(1) + " h");
+  if (STATS.rations) console.log("Repas au camp : " + STATS.rations.repas + " · payé " + JSON.stringify(STATS.rations.payes) + " · attente évitée " + (STATS.rations.minutesEvitees / 60).toFixed(1) + " h");
   if (VERBOSE) STATS.fights.slice(-12).forEach(function (f) { console.log("    " + f.step + " · " + f.kind + " " + f.name + " : " + f.rounds + " rounds, PV " + Math.round(f.hp0 * 100) + "→" + Math.round((f.hp1 || 0) * 100) + " %" + (f.died ? " †" : "") + (f.potions ? " (" + f.potions + " potion)" : "")); });
 }
 console.log("Le seuil : " + (STATS.releves || 0) + " relève(s) du héros");
