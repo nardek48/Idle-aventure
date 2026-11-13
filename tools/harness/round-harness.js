@@ -21954,7 +21954,7 @@ console.log("\n[448] v3.683.0 — Tutoriel factuel (audit 04/11, lot I1)");
     ok(d1 === "" && d2 !== "", "NOV-19 : Équipement tu tant que Héros est fermé, annoncé ensuite");
     // NOV-20 : décimales à la française
     ok(g.formatCraftDuration(3000) === "3,0 s" && /1,5/.test(g.formatEquipmentStatValue("defense", 0.015)), "NOV-20 : « 3,0 s » et « +1,5% défense »");
-    ok(/CRIT", "unité"\) \+ " " \+ fmtPct\(formatNumber\(Math\.round\(v \* 10\) \/ 10\)/.test(rd("js/ui/heros-view.js")), "NOV-20 : CRIT passe par formatNumber");
+    ok(/CRIT", "unité"\) \+ " " \+ fmtPct\(formatNumber\(Math\.round\(Math\.min\(100, v\) \* 10\) \/ 10\)/.test(rd("js/ui/heros-view.js")), "NOV-20 : CRIT passe par formatNumber (v3.794.0 : plafonné à 100)");
     // NOV-21 : « Pas assez de Viande », « Pas assez d'Eau »
     var pv = rd("js/ui/production-view.js");
     ok(/_t\("Pas assez d'\{x\} \(\{a\}\/\{b\}\)"/.test(pv) && /_t\("Pas assez de \{x\} \(\{a\}\/\{b\}\)"/.test(pv) && !/insuffisant \(\{a\}/.test(pv), "NOV-21 : « Pas assez de/d' » remplace « {x} insuffisant »");
@@ -25684,6 +25684,13 @@ console.log("\n[513c] v3.794.0 — en.js : aucune clé en double (la dernière l
     var k = JSON.parse(m[1]); if (seen[k]) dup.push(k); seen[k] = true;
   });
   ok(dup.length === 0, "en.js : aucune clé en double" + (dup.length ? " (" + dup.slice(0, 3).join(" | ") + ")" : ""));
+})();
+
+console.log("\n[513d] v3.794.0 — Critique plafonné à 100 % : la fiche le dit (option B de Seb)");
+(function () {
+  var rows = g.HEROS_STAT_ROWS || [], prec = rows.filter(function (r) { return r.key === "precision"; })[0];
+  ok(!!prec && typeof prec.capNote === "function" && prec.capNote(80) === "" && /plafonné à 100 %/.test(prec.capNote(105)) && /\(max\)/.test(prec.fmt(105)) && !/\(max\)/.test(prec.fmt(80)), "Précision : « (max) » et la note du plafond au-delà de 100 %, rien en dessous");
+  ok(/c\.crit > 100 \? _t\("100 % max"\)/.test(require("fs").readFileSync(require("path").join(ROOT, "js/ui/heros-screens-view.js"), "utf8")), "résumé du Héros : « 100 % max » au-delà de 100 %");
 })();
 
 console.log("\n[513b] v3.793.0 — Petites Aventures de la Montagne et de la Tour : leurs propres textes (plus ceux de la Forêt)");

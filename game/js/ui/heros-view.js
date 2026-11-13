@@ -163,7 +163,8 @@ var HEROS_STAT_ROWS = [
     name: _t("Précision"), icon: "./images/Icons/improvement_icons/accuracy.webp",
     produces: _t("Chance de coup critique"), unit: _t("CRIT", "unité"),
     read: function () { return (typeof EquipmentManager !== "undefined") ? EquipmentManager.effectiveCritChance() : 0; },
-    fmt: function (v) { return _t("CRIT", "unité") + " " + fmtPct(formatNumber(Math.round(v * 10) / 10)); }, // v3.683.0 (NOV-20) : 7,5 %
+    fmt: function (v) { return _t("CRIT", "unité") + " " + fmtPct(formatNumber(Math.round(Math.min(100, v) * 10) / 10)) + (v > 100 ? " " + _t("(max)") : ""); }, // v3.683.0 (NOV-20) : 7,5 % ; v3.794.0 : plafonné à 100 %
+    capNote: function (v) { return v > 100 ? _t("Le critique est plafonné à 100 % : tu as {n} %, le surplus ne sert plus. Mets tes points ailleurs.", { n: formatNumber(Math.round(v * 10) / 10) }) : ""; }, // v3.794.0 (option B de Seb)
     fmtDelta: function (d) { return _t("+{n} % de critique", { n: formatNumber(Math.round(d * 10) / 10) }); }
   },
   {
@@ -437,6 +438,8 @@ function buildHeroStatCardHTML(row, buyAmount) {
     if (typeof row.extra === "function") {
       h += '<div class="pc-stat-break-row"><span>' + _t("Aussi") + '</span><span>' + esc(row.extra()) + '</span></div>';
     }
+    var capNote = typeof row.capNote === "function" ? row.capNote(row.read()) : ""; // v3.794.0 : critique au-delà de 100 %
+    if (capNote) h += '<div class="pc-stat-break-row is-cap-note"><span>' + _t("Critique") + '</span><span>' + esc(capNote) + '</span></div>';
     h += '</div>';
 
     // Ce que chaque source apporte à la valeur produite, mesuré en la

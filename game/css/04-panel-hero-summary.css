@@ -186,6 +186,7 @@
 .pc-stat-break-row { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; }
 .pc-stat-break-row span:first-child { color: var(--nb-ink-dim); }
 .pc-stat-break-row span:last-child { font-weight: 800; text-align: right; }
+.pc-stat-break-row.is-cap-note span:last-child { font-weight: 700; color: var(--c-red-600-soft); } /* v3.794.0 : critique au-delà de 100 % */
 .pc-stat-break-row.is-total {
   border-top: 1px dashed var(--nb-frame); padding-top: 3px; margin-top: 2px;
 }
