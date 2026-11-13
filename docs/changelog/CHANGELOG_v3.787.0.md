@@ -14,4 +14,5 @@ La publication de la v3.786.0 a échoué au harnais de GitHub (le site est rest�
 ## Contrôles
 - `round-harness` 7093 OK, 0 échec. Contrôles de la besace adaptés : [158] (trois rations sans stock, Entrepôt intact au départ et au retour), [484] (les trois rations toujours dans la feuille ; rien pris à l'Entrepôt).
 - boot 4 OK ; création du héros 46 OK ; i18n 100 %, 0 orphelin.
+- Parcours complet (Chromium) : 235 OK et 1 échec attendu, P7 « la ration emportée est prise à l'Entrepôt », devenu « gratuite, Entrepôt intact » ; P7 rejoué 2 fois, 20 OK.
 - Quoi de neuf : une ligne (FR + EN).

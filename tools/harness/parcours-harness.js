@@ -586,7 +586,7 @@ async function P7(browser, base) {
   await page.evaluate(function () { var t = 20261001; Math.random = function () { t = (t + 0x6D2B79F5) | 0; var x = Math.imul(t ^ (t >>> 15), 1 | t); x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x; return ((x ^ (x >>> 14)) >>> 0) / 4294967296; }; });
   await tap(page, "button[onclick=\"pa2Depart()\"]");
   ok(await visible(page, "#pa2-map") && await visible(page, "#pa2-hud"), "départ : carte de nuit et HUD du run");
-  ok(await page.evaluate(function (p0) { return WarehouseManager.getAmount("petite_ration") === p0 - 1; }, pr0), "la ration emportée est prise à l'Entrepôt");
+  ok(await page.evaluate(function (p0) { return WarehouseManager.getAmount("petite_ration") === p0; }, pr0), "v3.787.0 : la ration emportée est gratuite (Entrepôt intact)");
   ok(await page.locator("text=/Souffle/").count() > 0, "Souffle affiché");
   await shot(page, "1_run");
 
