@@ -19,4 +19,7 @@ Chantier des tutoriels sur l'écran (Seb 13/11, option A), lot 3. Les tutoriels 
 ## Contrôles
 - `round-harness` 7080 OK, 0 échec ([468] 4 ouvertures d'aide, [513] 28 tutoriels).
 - boot 4 OK ; création du héros 46 OK ; i18n 100 %, 0 orphelin.
+- Parcours complet (Chromium) 236 OK, 0 échec.
+- Captures iPhone des 5 quêtes, **validées par Seb** (`captures/lot2-planches/lot3-planche.png`) ; les 16 tutoriels des lots 1 et 2 recapturés après la retouche du moteur : tous sur l'écran.
+- Alpha mise à jour en v3.790.0 (accord de Seb).
 - Quoi de neuf : une ligne (FR + EN).
