@@ -2368,6 +2368,7 @@ I18n.register("en", {
   "Vivre de la besace des Petites Aventures : soigne 100 % des PV. Cuisine de camp (Chasse) : 1 Ration moyenne + 15 Viandes + 10 Eau → 1.": "Food for the Little Adventures bag: heals 100% of HP. Camp Kitchen (Hunt): 1 Medium ration + 15 Meat + 10 Water → 1.",
   "Tu perds la moitié du butin.": "You lose half the loot.",
   "Les rations de la besace soignent 10 % de plus.": "Rations in the bag heal 10% more.",
+  "Simplification des rations (3/4) : dans la besace des Petites Aventures, les trois rations sont gratuites et toujours là. Seule la place compte : Petite (1 place), Moyenne (2), Grande (3).": "Rations simplified (3/4): in the Little Adventures bag, the three rations are free and always available. Only space matters: Small (1 slot), Medium (2), Large (3).",
   "Contrats du jour": "Today's contracts",
   "Renouvelés dans {d}": "Renewed in {d}",
   "Livrer": "Deliver",
