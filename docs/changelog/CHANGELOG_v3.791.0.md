@@ -24,5 +24,7 @@ Chantier des tutoriels sur l'écran, option B (Seb 13/11, choix A : les écrans 
 ## Contrôles
 - `round-harness` 7080 OK, 0 échec ([513] 37 tutoriels).
 - boot 4 OK ; création du héros 46 OK ; i18n 100 %, 0 orphelin.
-- Captures iPhone des 9 tutoriels : toutes sur l'écran, 3 bulles chacune (`captures/lot2-planches/lot4-planche-*.png`).
+- Parcours complet (Chromium) 236 OK, 0 échec.
+- Captures iPhone des 9 tutoriels : toutes sur l'écran, 3 bulles chacune, **validées par Seb** (`captures/lot2-planches/lot4-planche-*.png`).
+- Alpha mise à jour en v3.791.0 (accord de Seb).
 - Quoi de neuf : une ligne (FR + EN).
