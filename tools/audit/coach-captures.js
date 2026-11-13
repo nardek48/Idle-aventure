@@ -92,14 +92,20 @@ var ACCEPT_SAVED = function (id) {
 };
 
 /* Lot 2 : étape de combat — « Partir » sur la carte d'Histoire, puis les boutons de départ, jusqu'à l'écran de combat. */
-var GO_COMBAT = function (id) {
+var GO_COMBAT = function (id, want) {
+  want = want || "combat";
   var cid = Object.keys(STORY_QUESTS).filter(function (c) { var s = StoryQuestManager.getCurrentStep(c); return s && s.id === id; })[0];
-  var m = MissionBoard.getById("story_" + cid); if (m) (m.launch || m.accept)();
+  var m = MissionBoard.getById("story_" + cid), go = m && (m.launch || m.accept);
+  if (go) go();
+  else if (want === "scene") { // lot 4 : étape qui renvoie à une Petite Aventure de la carte : celle du monde
+    var PA = { forest: "foret", desert: "desert", ruins: "ruines", crypt: "crypte", mountain: "montagne", tower: "tour" };
+    switchTab("campement"); SceneRunManager.startRun("petite_aventure_" + (PA[cid] || cid)); switchTab("scene");
+  }
   var sel = [".kwin-foot .kbtn.primary", ".sp-foot .kbtn.primary", ".sp-foot .kbtn.danger", "button.kbtn.primary"];
   return new Promise(function (ok) {
     var n = 0, t = setInterval(function () {
-      if (game.activeTab === "combat") { clearInterval(t); setTimeout(ok, 300); return; }
-      for (var i = 0; i < sel.length; i++) { var b = document.querySelector(sel[i]); if (b && b.offsetParent) { b.click(); break; } }
+      if (game.activeTab === want) { clearInterval(t); if (want === "scene") switchTab("scene"); setTimeout(ok, 300); return; } // la scène ouvre son tutoriel au passage d'onglet
+      for (var i = 0; i < sel.length; i++) { var b = document.querySelector(sel[i]); if (b && b.offsetParent && !b.closest("#tutorial-modal-root")) { b.click(); break; } } // jamais le « Compris » du tutoriel
       if (++n > 30) { clearInterval(t); ok(); }
     }, 300);
   });
@@ -146,7 +152,7 @@ var GO_COMBAT = function (id) {
     else {
       tab = await page.evaluate(fromSave ? "(" + ACCEPT_SAVED.toString() + ")(" + JSON.stringify(id) + ")" : "(" + SETUP_STORY.toString() + ")(" + JSON.stringify(id) + ")");
       await page.waitForTimeout(300);
-      if (tab === "combat") await page.evaluate("(" + GO_COMBAT.toString() + ")(" + JSON.stringify(id) + ")"); // lot 2 : on part vraiment au combat
+      if (tab === "combat" || tab === "scene") await page.evaluate("(" + GO_COMBAT.toString() + ")(" + JSON.stringify(id) + ", " + JSON.stringify(tab) + ")"); // lots 2 et 4 : on part vraiment (combat, Petite Aventure)
       else {
         if (DUMP) await page.evaluate("switchTab(" + JSON.stringify(tab) + ")"); // l'écran, pour le relevé des éléments
         await page.evaluate("switchTab(" + JSON.stringify(tab) + "); if (typeof renderPanel === 'function') renderPanel();");

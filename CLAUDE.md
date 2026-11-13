@@ -40,7 +40,7 @@ Une fois l'accord obtenu : modification minimale, limitée au besoin.
 - Aucune progression (Histoire, monde, `worldIndex`) ne dépend d'un combat hors quête : seules les quêtes définies et testées font foi.
 - **Icône manquante** : garder son vrai chemin et afficher l'icône générique. Ne jamais emprunter une autre image du jeu.
 - **Images en double ou sans rapport** : dès qu'une image sert à deux choses différentes, ou ne correspond pas à ce qu'elle illustre, le signaler à Seb (sans la corriger d'office).
-- Tutoriels : 28 s'affichent sur l'écran (`js/ui/coach-view.js`, atelier `tutoriels-ecran.html`, Seb 10/11 ; lot 1 en v3.781.0, lot 2 en v3.789.0, lot 3 (quêtes du village) en v3.790.0) ; les autres gardent la fenêtre. Chantier en cours (Seb 13/11, option A puis B) : les écrans de Forêt et Désert par lots, captures par `tools/audit/coach-captures.js` validées par Seb avant publication. Hors de ce chantier, corriger seulement une erreur factuelle.
+- Tutoriels : 37 s'affichent sur l'écran (`js/ui/coach-view.js`, atelier `tutoriels-ecran.html`, Seb 10/11 ; lots 1 à 3 en v3.781.0 à v3.790.0, lot 4 (Ruines, Crypte) en v3.791.0) ; les autres gardent la fenêtre. Chantier en cours (Seb 13/11, option A puis B) : les écrans de Forêt et Désert par lots, captures par `tools/audit/coach-captures.js` validées par Seb avant publication. Hors de ce chantier, corriger seulement une erreur factuelle.
 - Le système de classes (Chevalier/Rage, Rôdeur/Concentration, Mage/Mana) est complet depuis v3.34.
 
 ## Pièges techniques connus

@@ -12,6 +12,17 @@ function coachOpenFarmZones() {
   if (typeof setProductionSheetTab === "function") setProductionSheetTab("zones");
 }
 
+/* Lot 4 : la carte vivante du monde, ouverte (le soir qui tombe d'abord refermé). */
+function coachOpenLivingMap(worldId) {
+  return function () {
+    var night = document.getElementById("world-night-root"); if (night) night.innerHTML = "";
+    var m = window.LivingMapManager && LivingMapManager.getMapForWorld(worldId);
+    if (m && typeof openLivingMap === "function") openLivingMap(m.id);
+  };
+}
+function coachOpenProduction() { if (typeof setVillageSubTab === "function") setVillageSubTab("production"); }
+function coachOpenAllies() { if (typeof setHerosSubTab === "function") setHerosSubTab("companions"); }
+
 var COACH_TUTORIALS = {
   camp_welcome: {
     steps: [
@@ -230,6 +241,77 @@ var COACH_TUTORIALS = {
       { sel: ".wk-sheet .ksheet-title", title: _t("Chacun son niveau"), text: _t("Chaque atelier monte seul (2 en Forêt, 3 ensuite) : la Scierie fine ne change rien à la Menuiserie.") },
       { sel: ".wk-queue", title: _t("La file"), text: _t("Sa taille est égale au niveau de l'atelier, et chaque niveau ôte 8 % au temps de fabrication.") },
       { sel: ".wk-up-row", title: _t("Améliorer"), text: _t("Le coût se paie en planches et lingots, ×1,4 par niveau. Conseil : d'abord l'atelier qui tourne le plus.") }
+    ]
+  },
+  /* Lot 4 (option B, Seb 13/11) : écrans des Ruines et de la Crypte. */
+  ruines_03: {
+    prepare: coachOpenAllies,
+    steps: [
+      { sel: ".hs-comp .cp-seg", title: _t("Deux sur trois"), text: _t("Trois compagnons, mais deux seulement en combat. Choisis-les ici, avant de partir.") },
+      { sel: ".hs-comp:last-child", title: _t("Celui qui reste"), text: _t("Il garde le camp, et peut partir en patrouille.") },
+      { sel: ".hs-comp .hs-comp-head", title: _t("Chacun sa place"), text: _t("Wenna soigne, Maddoc tient ou frappe de loin, Edda achève ceux qui veulent se relever.") }
+    ]
+  },
+  ruines_04: {
+    prepare: coachOpenProduction,
+    steps: [
+      { sel: ".prod-tile[onclick*=\"'farm'\"]", title: _t("Le blé"), text: _t("Sarkel veut garnir les étals : 150 Blé, des Champs.") },
+      { sel: ".prod-tile[onclick*=\"'quarry'\"]", title: _t("La pierre"), text: _t("Et 100 Pierre, de la Carrière. La Production les fournit.") },
+      { sel: ".tab-btn[data-tab=\"campement\"]", title: _t("Livrer au Marché"), text: _t("Depuis la carte d'étape, au Camp. Le marché paie en or, et en Pierres errantes, la pierre des Ruines.") }
+    ]
+  },
+  ruines_06: {
+    steps: [
+      { sel: ".pa2-prep .pa2-hook", title: _t("Les murs bougent"), text: _t("Aux Ruines, la nuit, les passages changent : un chemin devant toi peut se fermer, et un autre s'ouvrir.") },
+      { sel: ".pa2-prep .pa2-addbig", title: _t("La Craie d'Edda"), text: _t("Elle se met dans ta besace sans rien coûter : chaque trait empêche un mur de bouger près de toi.") },
+      { sel: ".pa2-go", title: _t("La Pierre errante"), text: _t("Elle se trouve dans les trouvailles et aux destinations. Elle n'est jamais perdue.") }
+    ]
+  },
+  ruines_07: {
+    prepare: coachOpenLivingMap("ruins"),
+    steps: [
+      { sel: ".lm-node.is-voile:not(.is-far):not(.is-chantier)", title: _t("Un quartier"), text: _t("Comme au Désert : tu le libères en terminant sa Petite Aventure, ou en battant l'élite qui le garde.") },
+      { sel: ".lm-node.is-chantier", title: _t("Le chantier"), text: _t("Chaque jour, la cité rebâtit un quartier. Il change de place à chaque nuit, même sur un quartier libéré. Le libérer rapporte des Pierres errantes.") },
+      { sel: ".lmx-pill.is-pal", noHit: true, title: _t("L'Éboulement"), text: _t("Un échec sur un quartier libéré le fait retomber : c'est l'Éboulement. La Palissade d'Aeswyn le freine.") }
+    ]
+  },
+  ruines_16: {
+    prepare: coachOpenLivingMap("ruins"),
+    steps: [
+      { sel: ".lm-node[onclick*=\"'coeur'\"]", title: _t("Le Cœur"), text: _t("Un quartier nouveau est apparu au centre de la carte des Ruines.") },
+      { sel: ".lm-node[onclick*=\"'place_etals'\"]", title: _t("Ses trois voisins"), text: _t("Il s'ouvre quand les trois quartiers qui le touchent sont libérés : la place aux étals, la rue qui tourne et les couloirs couverts.") },
+      { sel: ".lm-node.is-chantier", title: _t("Pas de chantier"), text: _t("Le chantier errant ne se pose jamais sur le Cœur.") }
+    ]
+  },
+  crypte_03: {
+    prepare: coachOpenAllies,
+    steps: [
+      { sel: ".hs-comp .cp-seg", title: _t("Deux sur quatre"), text: _t("Quatre compagnons, deux seulement en combat : choisis-les ici, avant de partir.") },
+      { sel: ".hs-comp:last-child", title: _t("Ysolt"), text: _t("Elle garde le sommeil : une fois par combat, elle retarde le réveil d'un dormeur.") },
+      { sel: ".hs-comp .hs-comp-head", title: _t("Ceux qui restent"), text: _t("Ils gardent le camp, et peuvent partir en patrouille.") }
+    ]
+  },
+  crypte_04: {
+    prepare: coachOpenProduction,
+    steps: [
+      { sel: ".prod-tile[onclick*=\"'farm'\"]", title: _t("Le blé"), text: _t("Sarkel veut du blé pour la pierre plate : 200 Blé, des Champs.") },
+      { sel: ".village-tabs .village-tab:nth-child(4)", title: _t("Ton Entrepôt"), text: _t("Le blé récolté y attend. Garde-en assez.") },
+      { sel: ".tab-btn[data-tab=\"campement\"]", title: _t("Livrer au Marché"), text: _t("Depuis la carte d'étape, au Camp. Les morts laissent de l'or et des Cires de sépulcre en échange.") }
+    ]
+  },
+  crypte_06: {
+    steps: [
+      { sel: ".pa2-prep .pa2-hook", title: _t("L'obscurité"), text: _t("Dans la Crypte, la Petite Aventure se fait dans le noir : tu ne vois que la rangée devant toi.") },
+      { sel: ".pa2-prep .pa2-addbig", title: _t("La Lanterne de Sarkel"), text: _t("Elle se met dans ta besace sans rien coûter. Allumée, elle montre deux rangées de plus pendant quelques pas.") },
+      { sel: ".pa2-go", title: _t("Le gardien dort"), text: _t("Fais le tour, ou réveille-le pour son coffre : plus dur, plus riche. La Cire de sépulcre se trouve en route, jamais perdue.") }
+    ]
+  },
+  crypte_07: {
+    prepare: coachOpenLivingMap("crypt"),
+    steps: [
+      { sel: ".lm-node.is-voile:not(.is-far)", title: _t("Un couloir"), text: _t("Comme aux Ruines : tu le libères en terminant sa Petite Aventure, ou en battant l'élite qui le garde.") },
+      { sel: ".lm-node.is-voile:not(.is-far)", title: _t("Ses gisants"), text: _t("Avant de partir, tu choisis : les laisser (plus facile, moins riche) ou les réveiller (plus dur, plus de Cire). Un échec réveille le couloir jusqu'à la prochaine nuit.") },
+      { sel: ".lm-node.is-village", title: _t("La Veillée"), text: _t("Le Marché de la Crypte est sur la carte, à côté de la Veillée.") }
     ]
   },
   forest_11: {

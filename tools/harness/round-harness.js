@@ -25680,8 +25680,9 @@ console.log("\n[513] Tutoriels sur l'écran (v3.761.0, atelier tutoriels-ecran, 
     var C = g.COACH_TUTORIALS, keys = ["camp_welcome", "forest_02", "village_production", "forest_brume", "pa2_prep", "forest_12", "forest_11",
       "forest_03", "forest_04", "forest_08", "forest_13", "forest_wenna", "forest_15", "sortie_prep", // v3.781.0 : lot 1 (Seb 13/11)
       "desert_02", "desert_03", "desert_10", "desert_13", "combat_forecast", "equipment_intro", "pa2_night", "pa2_traps", "village_training", // v3.789.0 : lot 2
-      "farm_second_plot", "farm_level_two", "farm_improvement", "workshop_materials", "workshop_level_two"]; // v3.790.0 : lot 3
-    ok(keys.every(function (k) { return C[k] && C[k].steps.length >= 3 && C[k].steps.every(function (st) { return st.sel && st.title && st.text; }); }) && Object.keys(C).length === 28, "les 28 tutoriels retenus, 3 à 6 étapes chacun (sélecteur, titre, texte)");
+      "farm_second_plot", "farm_level_two", "farm_improvement", "workshop_materials", "workshop_level_two", // v3.790.0 : lot 3
+      "ruines_03", "ruines_04", "ruines_06", "ruines_07", "ruines_16", "crypte_03", "crypte_04", "crypte_06", "crypte_07"]; // v3.791.0 : lot 4
+    ok(keys.every(function (k) { return C[k] && C[k].steps.length >= 3 && C[k].steps.every(function (st) { return st.sel && st.title && st.text; }); }) && Object.keys(C).length === 37, "les 37 tutoriels retenus, 3 à 6 étapes chacun (sélecteur, titre, texte)");
     ok(["forest_03", "forest_04", "forest_08", "forest_13", "forest_wenna", "forest_15"].every(function (k) { var s = g.STORY_QUESTS.forest.steps.filter(function (x) { return x.id === k; })[0]; return s && s.tutorial; }) && !!g.GENERIC_TUTORIALS.sortie_prep, "lot 1 : chaque clé est un tutoriel d'étape de la Forêt (ou la préparation de sortie)");
     ok(!!g.GENERIC_TUTORIALS.camp_welcome && !!g.GENERIC_TUTORIALS.village_production && !!g.GENERIC_TUTORIALS.pa2_prep, "les clés génériques existent (Campement, Village, Petite Aventure)");
     var steps = ["forest_02", "forest_brume", "forest_12", "forest_11"].map(function (id) { var f = null; Object.keys(g.STORY_QUESTS).forEach(function (c) { g.STORY_QUESTS[c].steps.forEach(function (st) { if (st.id === id) f = st; }); }); return f; });

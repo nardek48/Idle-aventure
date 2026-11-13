@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.791.0", "codex/codex_lore", _t("Tutoriels : les écrans des Ruines et de la Crypte s'expliquent aussi sur l'écran (compagnons, Marché, murs qui bougent, obscurité, chantier errant, Cœur, gisants).")],
     ["3.790.0", "codex/codex_lore", _t("Tutoriels : les quêtes du village (zones, niveaux et améliorations du Champs, ateliers) s'affichent aussi sur l'écran.")],
     ["3.789.0", "codex/codex_lore", _t("Tutoriels : neuf aides de plus s'affichent sur l'écran, en éclairant les vrais boutons (silence, outre, nuée, Forge, pronostic, équipement, nuit et pièges des Petites Aventures, Terrain d'entraînement).")],
     ["3.788.0", "workshops/camp_kitchen", _t("Simplification des rations (4/4) : la Boulangerie et la Cuisine de camp ferment. Le pain et les rations en stock reviennent en blé, viande et eau. Les braises, le dernier camp et l'Apothicaire demandent maintenant du brut.")],
