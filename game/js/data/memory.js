@@ -54,7 +54,7 @@ var MEMORY_VALUES = {
   geste_cache_penalty: 0.15,  // le miroir retire 15 % au lieu de 25 %
   ce_qui_se_repete_pct: 10,   // Légendaire du Gardien qui répète : +10 points (45 %)
   forme_pretee_dmg: 0.10,     // +10 % contre les boss et les élites de la Tour
-  pain_dabord_mult: 1.10,     // les rations soignent 10 % de plus
+  pain_dabord_mult: 1.10,     // les rations de la besace soignent 10 % de plus
   ton_nom_hp: 0.10,           // +10 % de PV max à la Tour
   braise_tient_givre: 1,      // +1 Givre bleu par sortie terminée du Sommet interdit
   // v3.644.0 (Faille, FA9, validé par Seb le 03/11) : niveaux 25 à 28
@@ -242,7 +242,7 @@ var MEMORY_LEVELS = [
     { id: "forme_pretee", side: "donner", answer: "sienne", name: "La forme prêtée", icon: "images/Icons/memory/forme_pretee.webp",
       desc: "+10 % de dégâts contre les boss et les élites de la Tour." },
     { id: "pain_dabord", side: "donner", answer: "aeswyn", name: "Le pain d'abord", icon: "images/Icons/memory/pain_dabord.webp",
-      desc: "Les rations soignent 10 % de plus." },
+      desc: "Les rations de la besace soignent 10 % de plus." },
     { id: "ton_nom", side: "garder", answer: "tienne", name: "Ton nom", icon: "images/Icons/memory/ton_nom.webp",
       desc: "+10 % de PV max à la Tour." },
     { id: "braise_tient", side: "garder", answer: "rien", name: "La braise tient", icon: "images/Icons/memory/braise_tient.webp",

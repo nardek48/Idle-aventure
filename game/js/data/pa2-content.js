@@ -12,15 +12,16 @@ var PA2_BAG_SIZE = 6;
 /* Objets de besace (V11, Q5). size = places occupées. uses = charges (consommables).
    resource = pris dans l'Entrepôt au départ, rendu s'il n'a pas servi (Q5). Sans resource :
    matériel gratuit et illimité. unlock = objet du coffre d'expédition (V12, Q8), gagné à la
-   destination indiquée. Les rations reprennent le nom de l'Entrepôt (WAREHOUSE_RESOURCES). */
+   destination indiquée. v3.787.0 (Seb, option 3) : les rations sont des vivres gratuits, sans resource ;
+   on choisit leur taille (place dans la besace), plus le stock de l'Entrepôt. */
 var PA2_ITEMS = {
-  petite_ration: { id: "petite_ration", resource: "petite_ration", size: 1, uses: 1, healPct: 0.35,
+  petite_ration: { id: "petite_ration", name: "Petite ration", size: 1, uses: 1, healPct: 0.35,
     icon: "images/Icons/resources/petite_ration_icon.webp",
     pro: "Rend 35 % des PV. Cuisinée au camp ou au seuil : 70 % et une blessure en moins." },
-  ration: { id: "ration", resource: "ration", size: 2, uses: 1, healPct: 0.60, healsWound: true,
+  ration: { id: "ration", name: "Ration moyenne", size: 2, uses: 1, healPct: 0.60, healsWound: true,
     icon: "images/Icons/resources/ration_icon.webp",
     pro: "Rend 60 % des PV et efface une blessure.", con: "Encombrante." },
-  grande_ration: { id: "grande_ration", resource: "grande_ration", size: 3, uses: 1, healPct: 1.00, healsWound: true,
+  grande_ration: { id: "grande_ration", name: "Grande ration", size: 3, uses: 1, healPct: 1.00, healsWound: true,
     icon: "images/Icons/resources/grande_ration_icon.webp",
     pro: "Rend tous les PV et efface une blessure.", con: "Prend la moitié de la besace." },
   // v3.579.0 (choix A de Seb) : la gorgée éclaircit les idées, +15 Souffle et l'avantage au prochain jet

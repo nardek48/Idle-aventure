@@ -11662,10 +11662,10 @@ console.log("\n[158] v3.381.0 — Petites Aventures v2 (PA2-0) : moteur sans éc
     ok(P.bagUsed() === 3 && P.addItem("ration").ok && P.bagUsed() === 5, "l'armure prend 3 places, la ration moyenne 2");
     ok(P.addItem("ration").ok === false, "besace pleine : la seconde ration moyenne est refusée");
     P.removeItem(0);
-    ok(P.addItem("ration").ok && P.addItem("ration").ok === false && P.canAdd("ration").reason === "Plus en réserve à l'Entrepôt.", "deux rations moyennes (stock 2), pas une de plus");
+    P.removeItem(0);
+    game.resources.ration = 0;
+    ok(P.addItem("ration").ok && P.addItem("ration").ok && P.addItem("ration").ok && P.bagUsed() === 6, "v3.787.0 : vivres gratuits, trois rations moyennes sans stock à l'Entrepôt (la place seule limite)");
     P.removeItem(0); P.removeItem(0);
-    game.resources.ration = 1;
-    ok(P.addItem("ration").ok && P.addItem("ration").ok === false && P.canAdd("ration").reason === "Plus en réserve à l'Entrepôt.", "une ration par exemplaire en réserve à l'Entrepôt");
     ok(P.canAdd("bois").ok === false && P.canAdd("veilleurs").ok === false, "objets du coffre verrouillés tant qu'ils ne sont pas gagnés");
     P.removeItem(0);
     ["petite_ration", "petite_ration", "gourde", "corde", "torche", "fiole"].forEach(function (id) { P.addItem(id); });
@@ -11676,7 +11676,7 @@ console.log("\n[158] v3.381.0 — Petites Aventures v2 (PA2-0) : moteur sans éc
     /* Départ */
     ok(P.depart().ok && runv.status === "pa2-map", "départ : le run passe sur la carte");
     runv.closedEnds = []; // v3.724.0 : l'accroche est tirée au hasard ; la fin imposée du feu fermerait le gardien
-    ok(game.resources.petite_ration === pr0 - 2 && runv.stock.petite_ration === 2 && runv.stock.gourde === 2 && runv.stock.corde === 1, "vivres prélevés à l'Entrepôt, charges en besace (gourde 2, corde 1)");
+    ok(game.resources.petite_ration === pr0 && runv.stock.petite_ration === 2 && runv.stock.gourde === 2 && runv.stock.corde === 1, "v3.787.0 : vivres gratuits (Entrepôt intact), charges en besace (gourde 2, corde 1)");
     ok(S.petiteAventureCountToday() === spent0 + 1 && g.SortieManager.isActive() && runv.refGold >= 1, "la place et la sortie sont prises au départ");
     var nodes = runv.nodes, keys = Object.keys(nodes);
     ok(keys.every(function (k) { return !!nodes[k].type; }), "génération : chaque nœud du tracé a un type");
@@ -11756,7 +11756,7 @@ console.log("\n[158] v3.381.0 — Petites Aventures v2 (PA2-0) : moteur sans éc
     var lootBefore = g.game.sortie.loot.gold, pBefore = game.resources.petite_ration, stockLeft = runv.stock.petite_ration;
     var home = P.placeAction("home");
     ok(home.ok && runv.status === "completed" && runv.end.how === "home", "rentrer du camp : fin du run");
-    ok(game.resources.petite_ration === pBefore + stockLeft, "rations non mangées rendues à l'Entrepôt (" + stockLeft + ")");
+    ok(game.resources.petite_ration === pBefore, "v3.787.0 : vivres gratuits, rien à rendre à l'Entrepôt (" + stockLeft + " non mangées)");
     ok(runv.end.summary && runv.end.summary.kept.gold === Math.floor(lootBefore * 1.6), "or banqué à 100 %, multiplié par les pactes (×1,60)");
 
     /* KO : moitié du butin, place rendue ; « Pas de retour » = tout perdu ; Fiole noire */
@@ -13145,7 +13145,7 @@ console.log("\n[188] v3.416.0 — Entrepôt : tuiles T3, liste déroulante, Ma s
     var sv = run("buildWarehouseSheetHTML('seve_aeswyn')");
     ok(sv.indexOf("wh-cap") === -1 && sv.indexOf("cuisine_de_camp") === -1 && sv.indexOf("menuiserie") !== -1, "Sève : pas de plafond, consommée par la Menuiserie (plus la Cuisine de camp, v3.608.0)");
     var pr = run("buildWarehouseSheetHTML('petite_ration')");
-    ok(pr.indexOf("Campement") !== -1, "Petite ration : le repas au Campement est cité");
+    ok(pr.indexOf("Campement : repas") === -1 && run("buildWarehouseSheetHTML('viande')").indexOf("Campement : repas et festin") !== -1, "v3.786.0 : la ration ne se mange plus au Camp ; la viande paie le repas et le festin");
     run("openWarehouseSheet('ble'); setVillageSubTab('production');");
     ok(run("selectedWarehouseKey") === null, "changer d'onglet referme la feuille de la ressource");
     /* Icônes de production et de l'Atelier (v3.416.0) */
@@ -16399,7 +16399,7 @@ console.log("\n[274] v3.461.2 — Vivres : Ration moyenne aux Ruines et à la Cr
   ok([1, 2, 3, 4].every(function (id) { return res(id) === "aucune"; }) && P.getRequirement("mapelite", { mapId: "crypt", sectorId: "x", worldId: "crypt" }) === null, "v3.785.0 : donjons et élites rejoués, tous gratuits");
   game.dungeonTierCleared = { 1: true, 2: true, 3: true };
   ok(res(4) === "aucune", "première victoire à la Crypte : gratuite");
-  ok(/Ruines/.test(g.WAREHOUSE_RESOURCES.ration.desc), "la description de la Ration moyenne cite les Ruines et la Crypte");
+  ok(/besace/.test(g.WAREHOUSE_RESOURCES.ration.desc), "v3.786.0 : la Ration moyenne est un vivre de la besace");
   SQ.isStepReached = reach; g.LivingMapManager.isLiberated = lib;
 })();
 
@@ -22826,7 +22826,7 @@ console.log("\n[458] v3.693.0 — Compagnons, fin de partie et méta (audit 04/1
     ok(/camp-mission-cost is-short/.test(cout) && /Départ : Petite ration ×1 · stock 0/.test(cout) && g.buildCampMissionCostHTML(null) === "", "SUIV-11 : « Départ : Petite ration ×1 · stock 0 », en rouge s'il manque");
     ok(/entryCost: isRunning \? null : \(template\.entryCost \|\| null\)/.test(rd("js/systems/mission-board-system.js")) && /buildCampMissionCostHTML\(m\.entryCost\)/.test(rd("js/ui/camp-view.js")), "SUIV-11 : les missions d'expédition portent leur coût, la carte l'affiche");
     // SUIV-16 : la Tour demande aussi la Ration moyenne
-    ok(/à la Montagne et à la Tour/.test(g.WAREHOUSE_RESOURCES.ration.desc) && g.PROVISIONS_BY_WORLD.tower === "ration", "SUIV-16 : fiche de la Ration moyenne avec la Tour");
+    ok(!/Tour/.test(g.WAREHOUSE_RESOURCES.ration.desc), "SUIV-16 : v3.785.0, plus de vivres de sortie dans la fiche de la Ration moyenne");
   } catch (err) { MM.has = hasM; ok(false, "[458] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
@@ -23918,7 +23918,7 @@ console.log("\n[484] v3.723.0 — Petites Aventures : écran « Prêt à partir 
     var autres = Object.keys(I).filter(function (id) { return I[id].worlds && I[id].worlds.indexOf("forest") < 0; });
     ok(autres.length >= 12 && autres.every(function (id) { return list.indexOf(id) < 0; }) && list.indexOf("bois") >= 0 && list.indexOf("veilleurs") >= 0, "Forêt : aucun objet d'un autre monde dans la feuille (Outre, Craie, Lanterne, Pierre froide, 8 objets du coffre), le Bois et la Lanterne des veilleurs y sont");
     ok(!P.canAdd("ecaille").ok && P.canAdd("bois").ok, "Forêt : l'Écaille du Ver refusée, le Bois de cerf accepté");
-    ok(["grande_ration", "corde_t", "trousse_t", "torche_t"].every(function (id) { return list.indexOf(id) < 0; }) && list.indexOf("petite_ration") >= 0, "rien à l'Entrepôt (grande ration, objets fabriqués) : absent de la feuille");
+    ok(["corde_t", "trousse_t", "torche_t"].every(function (id) { return list.indexOf(id) < 0; }) && ["petite_ration", "ration", "grande_ration"].every(function (id) { return list.indexOf(id) >= 0; }), "objets fabriqués absents de la feuille ; v3.787.0 : les trois rations gratuites toujours là");
     S.abandon();
     // PB-D : coffre fermé, les objets à gagner sont invisibles
     prep({ petite_ration: 1 }); S.startRun("petite_aventure_foret"); r = game.sceneRun; r.cond = "calme";
@@ -23958,7 +23958,7 @@ console.log("\n[484] v3.723.0 — Petites Aventures : écran « Prêt à partir 
     prep({ petite_ration: 2 }); S.startRun("petite_aventure_foret"); r = game.sceneRun; r.cond = ng || "calme";
     P.addItem("gourde"); P.addItem("petite_ration"); P.addItem("petite_ration");
     hp = g.buildPa2PrepHTML(r); var st = P.bagStock(r);
-    ok(!!ng && hp.indexOf(g.esc(st.gourde + " gorgées (dont 1 de la nuit)")) > 0 && hp.indexOf("2 × " + g.esc(g.pa2ItemName("petite_ration"))) > 0 && hp.indexOf("Soins emportés") > 0 && hp.indexOf("Pris à l") > 0, "récapitulatif : noms, " + st.gourde + " gorgées dont celle de la nuit, 2 petites rations, soins, prise à l'Entrepôt");
+    ok(!!ng && hp.indexOf(g.esc(st.gourde + " gorgées (dont 1 de la nuit)")) > 0 && hp.indexOf("2 × " + g.esc(g.pa2ItemName("petite_ration"))) > 0 && hp.indexOf("Soins emportés") > 0 && hp.indexOf("Pris à l") < 0, "récapitulatif : noms, " + st.gourde + " gorgées dont celle de la nuit, 2 petites rations, soins ; rien pris à l'Entrepôt (v3.787.0)");
     P.depart();
     ok(r.stock.gourde === st.gourde, "les gorgées affichées sont celles du départ (" + r.stock.gourde + ")");
     game.sceneRun = null; if (g.SortieManager.isActive()) g.SortieManager.end("return");
@@ -25031,7 +25031,7 @@ console.log("\n[495] v3.734.0 — Rappels d'entrée : Marque exigée par l'étap
     // B — PV bas à l'acceptation d'une étape de combat
     g.game.heroMaxHp = 400; g.game.heroHp = 110;
     poser("forest_02", false); conf = null;
-    ok(g.acceptStoryStepWithCheck("forest") === true && conf && conf.text === "Tes PV sont bas : repose-toi au feu ou mange une ration avant de partir." && conf.labels.ok === "Aller au feu", "forest_02 acceptée à 27 % : rappel, bouton « Aller au feu »");
+    ok(g.acceptStoryStepWithCheck("forest") === true && conf && conf.text === "Tes PV sont bas : repose-toi au feu ou prends un repas avant de partir." && conf.labels.ok === "Aller au feu", "forest_02 acceptée à 27 % : rappel, bouton « Aller au feu »");
     ok(conf.ok === g.goHealFromForecast, "le bouton mène au feu du Campement (goHealFromForecast)");
     conf = null; ok(g.maybeStoryLowHpReminder("forest") === true, "rappel déclenché par l'acceptation seulement (appel direct possible)");
     poser("forest_02", false); g.game.heroHp = 220; conf = null; g.acceptStoryStepWithCheck("forest");
@@ -25045,7 +25045,7 @@ console.log("\n[495] v3.734.0 — Rappels d'entrée : Marque exigée par l'étap
     poser("forest_02", false); conf = null; g.campMissionAction("story_forest", "accept");
     ok(SQ.getState("forest").accepted === true && conf && conf.labels.ok === "Aller au feu", "acceptation depuis la carte du Camp : même rappel");
     ok(fsRead("js/ui/quests-view.js").indexOf("onclick=\"acceptStoryStepWithCheck(") >= 0, "Quêtes › Histoire : « Accepter » passe par le rappel");
-    ["PV bas", "Tes PV sont bas : repose-toi au feu ou mange une ration avant de partir.", "Aller au feu", "Plus tard"].forEach(function (k) {
+    ["PV bas", "Tes PV sont bas : repose-toi au feu ou prends un repas avant de partir.", "Aller au feu", "Plus tard"].forEach(function (k) {
       ok(fsRead("js/lang/en.js").indexOf(JSON.stringify(k)) >= 0, "en.js : « " + k + " » traduit");
     });
   } catch (err) { ok(false, "[495] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }

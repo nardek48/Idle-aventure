@@ -487,7 +487,7 @@ function pa2LastBagAvailable(run, last) {
 function pa2ReuseLastBag() {
   var run = Pa2Run.getRun();
   if (!run || run.status !== PA2_STATUS.prep) return;
-  for (var i = run.bag.length - 1; i >= 0; i--) Pa2Run.removeItem(i);   // on repart de la besace retenue, rations rendues
+  for (var i = run.bag.length - 1; i >= 0; i--) Pa2Run.removeItem(i);   // on repart de la besace retenue
   var missing = [];
   pa2LastBag(run).forEach(function (id) {
     var r = Pa2Run.addItem(id);
@@ -923,7 +923,7 @@ function pa2AskAbandon() {
   if (!run) return;
   var retour = Pa2Run.hasPact("retour", run);
   showConfirmModal(_t("Abandonner l'aventure ?"),
-    retour ? _t("Pacte « Pas de retour » : tout le butin reste en route.") : _t("Tu perds la moitié du butin. Les rations non mangées retournent à l'Entrepôt."),
+    retour ? _t("Pacte « Pas de retour » : tout le butin reste en route.") : _t("Tu perds la moitié du butin."),
     "images/Icons/system/warning.webp", function () {
       SceneRunManager.abandon();
       pa2View.sheet = null;

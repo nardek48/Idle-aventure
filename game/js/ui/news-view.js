@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.787.0", "scene/pa2_besace", _t("Simplification des rations (3/4) : dans la besace des Petites Aventures, les trois rations sont gratuites et toujours là. Seule la place compte : Petite (1 place), Moyenne (2), Grande (3).")],
     ["3.786.0", "camp/camp_meal", _t("Simplification des rations (2/4) : au Camp, un seul bouton « Repas » remet toute l'équipe à plein, payé en blé, viande et eau selon les PV qui manquent. Le festin passe à côté, et les PV des compagnons s'affichent en anneaux : touche-en un pour lui parler.")],
     ["3.785.0", "resources/ration_icon", _t("Simplification des rations (1/4) : refaire un donjon, une élite de carte ou le mode libre ne demande plus de vivres. Les expéditions, les traversées et la Faille partent sans ration.")],
     ["3.784.0", "village_buildings/enchantress_tower", _t("Simplification : l'Enchanteresse ne relance plus la valeur des bonus. Elle remplace un bonus indésirable (Transmuer). Le Doigté de la boutique d'Éclats réduit maintenant le prix des transmutations.")],
