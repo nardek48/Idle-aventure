@@ -5,6 +5,13 @@
 
 /* Étapes par tutoriel (id d'étape d'Histoire ou de tutoriel générique). sel : sélecteur CSS (le premier élément visible) ;
    prepare : geste fait avant de mesurer (onglet à montrer). Textes tirés des tutoriels d'origine, raccourcis. */
+/* Lot 3 : la feuille du Champs, onglet des zones (quêtes du Champs). */
+function coachOpenFarmZones() {
+  if (typeof setVillageSubTab === "function") setVillageSubTab("production");
+  if (typeof openProductionBuildingDetail === "function") openProductionBuildingDetail("farm");
+  if (typeof setProductionSheetTab === "function") setProductionSheetTab("zones");
+}
+
 var COACH_TUTORIALS = {
   camp_welcome: {
     steps: [
@@ -183,6 +190,48 @@ var COACH_TUTORIALS = {
       { sel: ".tab-btn[data-tab=\"more\"]", title: _t("L'entraînement"), text: _t("Il se paie toujours en or, dans Héros › Entraînement. Le Terrain dit jusqu'où monter, pas combien ça coûte.") }
     ]
   },
+  /* Lot 3 (Seb 13/11) : les quêtes du village (data/village-quests.js), la feuille du Champs ou les Ateliers ouverts. */
+  farm_second_plot: {
+    prepare: coachOpenFarmZones,
+    steps: [
+      { sel: ".pc3-list .pc3:first-child", title: _t("Tes zones"), text: _t("Chaque bâtiment a 3 zones, les Parcelles au Champs. La première est ouverte ; les deux autres s'ouvrent contre des ressources.") },
+      { sel: ".pc3-list .pc3:nth-child(2)", title: _t("Une autre zone"), text: _t("Chacune produit en continu, avec son propre stock. Rapide, équilibrée ou lente : une zone lente stocke davantage, pratique si tu récoltes rarement.") },
+      { sel: ".pc3-list .pc3:nth-child(2) .pc3-act", title: _t("Son prix"), text: _t("Le Champ Béni coûte du bois et de la pierre : la Scierie et la Carrière nourrissent le Champs. Chaque bâtiment nourrit les autres.") }
+    ]
+  },
+  farm_level_two: {
+    prepare: coachOpenFarmZones,
+    steps: [
+      { sel: ".pc3-list .pc3:first-child .pc3-meta", title: _t("Son niveau"), text: _t("Jusqu'au 5 en Forêt, plus haut dans les mondes suivants. Chaque niveau monte la production et le stock de la zone.") },
+      { sel: ".pc3-list .pc3-act", title: _t("Monter d'un niveau"), text: _t("Au Champs, du bois et de l'eau. Le coût grimpe un peu à chaque niveau (×1,15).") },
+      { sel: ".pc3-auto", title: _t("L'achat automatique"), text: _t("Il monte pour toi la zone la moins chère. Conseil : d'abord celle que tu récoltes le plus souvent.") }
+    ]
+  },
+  farm_improvement: {
+    prepare: coachOpenFarmZones,
+    steps: [
+      { sel: ".pc3-list .pc3:first-child .pc3-main", title: _t("Les améliorations"), text: _t("Touche une zone : sa fenêtre propose « Terre enrichie » (+8 %) et « Sillon irrigué » (+10 %). Une fois par zone, pour toujours.") },
+      { sel: ".pc3-list .pc3:first-child .pc3-bar", title: _t("Elles se cumulent"), text: _t("Entre elles et avec les niveaux : une parcelle niveau 5, enrichie et irriguée, est la meilleure terre d'Aeswyn. Aucun piège, c'est toujours un gain.") },
+      { sel: ".prod-sheet .ksheet-title", title: _t("Partout pareil"), text: _t("Tous les bâtiments ont leurs deux améliorations, sous d'autres noms : ce que tu apprends ici vaut pour la Scierie, la Mine et les autres.") }
+    ]
+  },
+  workshop_materials: {
+    prepare: function () { if (typeof setVillageSubTab === "function") setVillageSubTab("shops"); },
+    steps: [
+      { sel: "#wk-tile-scierie_fine", title: _t("La Scierie fine"), text: _t("Un atelier transforme le brut : 5 bois donnent 1 planche. Touche-le pour fabriquer.") },
+      { sel: "#wk-tile-scierie_fine .wk-tile-recipe", title: _t("Intrants et produit"), text: _t("Les intrants sont pris dès que tu lances ; le produit arrive à la fin du temps de fabrication. Les lots s'enchaînent seuls, même hors ligne.") },
+      { sel: "#wk-tile-fonderie", title: _t("La Fonderie"), text: _t("À la Mine, 5 fer donnent 1 lingot. Planches et lingots améliorent les ateliers et bâtissent le village : garde-en d'avance.") },
+      { sel: "#prod-queues-btn", title: _t("Les files"), text: _t("En mode Continu, une recette se relance dès que les ingrédients sont là. « Files » montre tout ce qui tourne.") }
+    ]
+  },
+  workshop_level_two: {
+    prepare: function () { if (typeof setVillageSubTab === "function") setVillageSubTab("shops"); if (typeof openWorkshopSheet === "function") openWorkshopSheet("scierie_fine"); },
+    steps: [
+      { sel: ".wk-sheet .ksheet-title", title: _t("Chacun son niveau"), text: _t("Chaque atelier monte seul (2 en Forêt, 3 ensuite) : la Scierie fine ne change rien à la Menuiserie.") },
+      { sel: ".wk-queue", title: _t("La file"), text: _t("Sa taille est égale au niveau de l'atelier, et chaque niveau ôte 8 % au temps de fabrication.") },
+      { sel: ".wk-up-row", title: _t("Améliorer"), text: _t("Le coût se paie en planches et lingots, ×1,4 par niveau. Conseil : d'abord l'atelier qui tourne le plus.") }
+    ]
+  },
   forest_11: {
     steps: [
       { sel: ".hst-bar", title: _t("Tes points"), text: _t("Chaque niveau donne un point de talent. Chaque acte fixe combien tu peux en placer : le surplus attend en réserve.") },
@@ -264,7 +313,8 @@ var CoachTutorial = {
     if (wait && wait.style) wait.style.pointerEvents = "none"; // le voile d'attente ne compte pas pour elementFromPoint
     var steps = def.steps.filter(function (st) {
       var el = document.querySelector(st.sel);
-      if (el && el.scrollIntoView) { var r0 = self._rect(st); if (r0 && !self._onScreen(r0)) { try { el.scrollIntoView({ block: "center" }); } catch (e) { noteErreur("coach.scroll", e); } } }
+      // lot 3 : hors écran OU couvert (bandeau collant d'un écran défilé) : on le recentre
+      if (el && el.scrollIntoView) { var r0 = self._rect(st); if (r0 && (!self._onScreen(r0) || !self._onTop(st))) { try { el.scrollIntoView({ block: "center" }); } catch (e) { noteErreur("coach.scroll", e); } } }
       return self._onScreen(self._rect(st)) && self._onTop(st);
     });
     if (wait && wait.style) wait.style.pointerEvents = "";
@@ -286,7 +336,7 @@ var CoachTutorial = {
     var st = this.steps && this.steps[this.i];
     if (!st || !this.host) return;
     var el = document.querySelector(st.sel);
-    if (el && el.scrollIntoView) { var r0 = this._rect(st); if (r0 && !this._onScreen(r0)) { try { el.scrollIntoView({ block: "center" }); } catch (e) { noteErreur("coach.scroll", e); } } }
+    if (el && el.scrollIntoView) { var r0 = this._rect(st); if (r0 && (!this._onScreen(r0) || !this._onTop(st))) { try { el.scrollIntoView({ block: "center" }); } catch (e) { noteErreur("coach.scroll", e); } } }
     var r = this._rect(st);
     if (!this._onScreen(r)) { this.next(); return; }       // élément parti entre deux étapes : on passe
     var W = window.innerWidth || 390, H = window.innerHeight || 844, pad = 4;

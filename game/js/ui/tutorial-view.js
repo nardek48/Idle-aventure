@@ -494,7 +494,7 @@ function maybeShowVillageQuestTutorial(tabName) {
 
   pendingTutorial = { villageQuestId: quest.id, tutorial: quest.tutorial };
   var host = document.getElementById("tutorial-modal-root");
-  if (host) { host.innerHTML = buildTutorialModalHTML("closeVillageQuestTutorialModal('" + esc(quest.id) + "')", quest.tutorial); wireTutorialHint(host); }
+  if (host) renderTutorialInto(host, "closeVillageQuestTutorialModal('" + esc(quest.id) + "')", quest.tutorial, quest.id); // lot 3 : sur l'écran si décrit
 }
 window.maybeShowVillageQuestTutorial = maybeShowVillageQuestTutorial;
 

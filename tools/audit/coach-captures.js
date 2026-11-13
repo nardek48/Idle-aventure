@@ -29,6 +29,11 @@ function serve() {
   });
 }
 
+function VQ(id) {
+  return "var st = VillageQuestManager.ensure(), ids = VILLAGE_QUESTS.map(function (q) { return q.id; }); st.claimed = {};"
+    + " ids.slice(0, ids.indexOf(" + JSON.stringify(id) + ")).forEach(function (k) { st.claimed[k] = true; }); st.tutorialsSeen = {};"
+    + " switchTab('campement'); switchTab('village');";
+}
 /* Déclencheurs des tutoriels génériques (même geste que le jeu). Un id absent d'ici est cherché dans l'Histoire. */
 var GENERIC = {
   sortie_prep: "CompanionManager.state('wenna').unlocked = true; CompanionManager.state('wenna').present = true; switchTab('campement'); openSortiePrep({ title: 'Test', icon: 'images/Icons/quests/mission_dungeon.webp', ctx: { type: 'dungeon', id: 1 }, food: { kind: 'dungeon', ref: DungeonManager.getById(1) }, onGo: function () {} });",
@@ -37,7 +42,10 @@ var GENERIC = {
   pa2_night: "switchTab('campement'); SceneRunManager.startRun('petite_aventure_desert'); game.sceneRun.cond = 'vent'; switchTab('scene');",
   pa2_traps: "switchTab('campement'); SceneRunManager.startRun('petite_aventure_desert'); game.sceneRun.cond = 'pillards'; Pa2Run.addItem('torche'); game.genericTutorialsSeen.pa2_night = true; Pa2Run.depart(); switchTab('scene');",
   equipment_intro: "switchTab('more'); if (typeof setHerosSubTab === 'function') setHerosSubTab('equip'); switchTab('equip');",
-  village_training: "switchTab('campement'); switchTab('village');" // lot 2 : le geste du jeu (onglet Village), la feuille n'est plus ouverte
+  village_training: "switchTab('campement'); switchTab('village');",
+  // lot 3 : quêtes du village, la chaîne remise juste avant la quête, puis l'onglet Village
+  farm_second_plot: VQ("farm_second_plot"), farm_level_two: VQ("farm_level_two"), farm_improvement: VQ("farm_improvement"),
+  workshop_materials: VQ("workshop_materials"), workshop_level_two: VQ("workshop_level_two") // lot 2 : le geste du jeu (onglet Village), la feuille n'est plus ouverte
 };
 
 /* Mise en place d'une étape d'Histoire : chapitres d'avant finis, étape courante, acceptée par le vrai geste. */
