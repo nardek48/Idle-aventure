@@ -57,6 +57,61 @@ var COACH_TUTORIALS = {
       { sel: ".grimoire-rule-row.is-locked", title: _t("D'autres emplacements"), text: _t("Tu commences avec 2 règles ; d'autres s'ouvrent en avançant dans l'Histoire.") }
     ]
   },
+  /* v3.781.0 (chantier des tutoriels sur l'écran, lot 1, Seb 13/11) : écrans de la Forêt et préparation de sortie. */
+  forest_03: {
+    prepare: function () { if (typeof openHerosSheet === "function") openHerosSheet("stats"); },
+    steps: [
+      { sel: ".pc-stat-card:has(.pc-stat-card-main)", title: _t("Ta caractéristique principale"), text: _t("Marquée « Principale », elle fait l'essentiel de tes dégâts : Force pour le Chevalier, Célérité pour le Rôdeur, Volonté pour le Mage.") },
+      { sel: ".pc-stat-card-buy", title: _t("Acheter un niveau"), text: _t("Chaque niveau monte la caractéristique pour toujours, contre de l'or. Le prix grimpe à chaque achat : étale tes achats.") },
+      { sel: ".pc-stat-list-v2", title: _t("Ce que fait chacune"), text: _t("Force : dégâts de l'attaque. Endurance : PV et un peu de défense. Célérité : la frappe bonus. Précision : chance de critique. Volonté : dégâts des critiques.") }
+    ]
+  },
+  forest_04: {
+    steps: [
+      { sel: ".nb-purchase-card", title: _t("Les potions de soin"), text: _t("La mineure rend 35 % de tes PV, la majeure 60 %. Elles se boivent en combat, à la place de ton action.") },
+      { sel: ".nb-purchase-card .btn-buy", title: _t("Acheter"), text: _t("Touche le prix pour en acheter une. Ton stock s'affiche sous chaque potion.") },
+      { sel: ".nb-purchase-card .nb-purchase-meta", title: _t("Deux par sortie"), text: _t("Au plus 2 potions par sortie : garde-les pour la fin du combat.") }
+    ]
+  },
+  forest_08: {
+    prepare: function () { if (typeof setVillageSubTab === "function") setVillageSubTab("shops"); },
+    steps: [
+      { sel: ".village-tabs .village-tab:nth-child(3)", title: _t("Les Ateliers"), text: _t("Le sentier obstrué consomme une Petite ration : la source t'en a donné une. Les suivantes se fabriquent ici.") },
+      { sel: ".wk-tile", title: _t("La Cuisine de camp"), text: _t("L'atelier de la Chasse. Touche-le pour choisir la recette Petite ration et la fabriquer.") },
+      { sel: ".wk-tile .wk-tile-recipe", title: _t("La recette"), text: _t("8 Viande et 4 Eau donnent une Petite ration. En stock, « La veine instable » la prendra toute seule.") }
+    ]
+  },
+  forest_13: {
+    steps: [
+      { sel: ".dungeon-tier-card.is-tappable", title: _t("La Tanière du Basilic"), text: _t("15 vagues d'ennemis puis un boss, d'une traite. Tu y entres avec tes PV du moment. Touche-la pour entrer.") },
+      { sel: ".dungeon-tier-card.is-tappable .dungeon-tier-runs", title: _t("Tes sorties"), text: _t("Trois par jour et par donjon. Pour cette étape, l'entrée est offerte : passe 5 vagues.") },
+      { sel: ".dungeon-tier-card.is-tappable .dungeon-tier-image", title: _t("En route"), text: _t("Des haltes : choisis une carte (un bonus, un échange, un coffre) ou passe. Le donjon fini, chaque niveau battu ouvre le suivant, plus dur et plus riche.") }
+    ]
+  },
+  forest_wenna: {
+    prepare: function () { if (typeof setHerosSubTab === "function") setHerosSubTab("companions"); },
+    steps: [
+      { sel: ".hs-comp", title: _t("Wenna"), text: _t("Un compagnon joue une action par round, à sa place dans l'ordre des tours. Wenna est un Soutien : elle soigne l'allié le plus bas en PV.") },
+      { sel: ".hs-comp .hs-comp-hp", title: _t("Ses PV"), text: _t("Tombée à 0 PV, elle est hors combat jusqu'à la fin, et revient affaiblie au combat suivant.") },
+      { sel: ".hs-comp .cp-seg", title: _t("Avec toi ou au camp"), text: _t("Deux compagnons au plus t'accompagnent. En Grimoire, ils jouent seuls ; en Tactique, tu choisis leurs actions.") },
+      { sel: ".hs-comp .hs-comp-head", title: _t("Sa fiche"), text: _t("Ni équipement ni talents : elle s'améliore contre de l'or. Touche sa carte.") }
+    ]
+  },
+  forest_15: {
+    steps: [
+      { sel: ".camp-embers-item", title: _t("La Sève d'Aeswyn"), text: _t("Elle se trouve en Petite Aventure, sur la carte de la Forêt : parfois en route, surtout en atteignant une destination.") },
+      { sel: ".camp-embers-item:nth-child(2)", title: _t("La Ration moyenne"), text: _t("À la Cuisine de camp (Chasse) : 15 Viandes et 1 Pain. Le Pain vient de la Boulangerie du Champs, ouvert par « La Terre en Friche » (Quêtes › Annexes).") },
+      { sel: ".camp-embers-btn", title: _t("L'offrande"), text: _t("Quand tout est réuni, touche ce bouton pour l'offrir aux braises.") }
+    ]
+  },
+  sortie_prep: {
+    steps: [
+      { sel: ".sortie-prep .sp-sec", title: _t("Ce que tu vas affronter"), text: _t("Il dit si une règle ou un objet répond aux traits déjà connus de l'adversaire.") },
+      { sel: ".sortie-prep .sp-team", title: _t("Ton équipe"), text: _t("Touche un compagnon pour l'emmener ou le laisser. Deux au plus partent avec toi.") },
+      { sel: ".sortie-prep .sp-fold", title: _t("Réglages"), text: _t("Règles, objets et potions à boire avant de partir, une de chaque. « Comme la dernière fois » reprend tes choix.") },
+      { sel: ".sortie-prep .sp-foot", title: _t("Partir ou renoncer"), text: _t("« Renoncer » ne lance rien. Après « Partir », le mode de combat reste figé jusqu'au retour, et tes PV ne remontent pas d'eux-mêmes.") }
+    ]
+  },
   forest_11: {
     steps: [
       { sel: ".hst-bar", title: _t("Tes points"), text: _t("Chaque niveau donne un point de talent. Chaque acte fixe combien tu peux en placer : le surplus attend en réserve.") },
