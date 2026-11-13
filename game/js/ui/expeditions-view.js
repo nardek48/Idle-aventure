@@ -6,22 +6,20 @@
    prépare sa sortie). Un TABLEAU DES DÉPARTS, rangé par état, toutes sortes mêlées :
      À récupérer · Prêts à partir · En route · Plus tard
    Sortes : Petites Aventures (places du jour → la Carte), Patrouilles (un compagnon par ligne),
-   Caravane, Donjon. En pied : Carte et Potions.
+   Donjon (v3.780.0 : la Caravane est retirée). En pied : Carte et Potions.
 
-   Deux feuilles (#exp-sheet-root, hors de #panel-container, comme les feuilles de Héros) :
-     - Patrouille : durée, monde (vignettes), une carte par lieu avec ce qu'il rapporte ;
-     - Caravane   : marché (vignettes), trajets, chargement (ui/caravan-view.js).
+   Feuille (#exp-sheet-root, hors de #panel-container, comme les feuilles de Héros) :
+     - Patrouille : durée, monde (vignettes), une carte par lieu avec ce qu'il rapporte.
 
-   Les patrouilles et la caravane partent vers N'IMPORTE QUELLE carte atteinte, sans changer
-   de monde (PatrolManager.getDestinations, CaravanManager.getMarkets). */
+   Les patrouilles partent vers N'IMPORTE QUELLE carte atteinte, sans changer de monde
+   (PatrolManager.getDestinations). */
 
-var expSheet = null; // null | { type: "patrol" | "caravan", id }
+var expSheet = null; // null | { type: "patrol" | "patrols", id }
 
 (function () {
   var ICON = {
     pa: "images/Icons/scene/path_easy.webp",
     patrol: "images/Icons/quests/mission_exploration.webp",
-    caravan: "images/Icons/village_buildings/caravan.webp",
     dungeon: "images/Icons/subtabs/dungeon.webp",
     potions: "images/Icons/subtabs/potions.webp"
   };
@@ -104,48 +102,6 @@ var expSheet = null; // null | { type: "patrol" | "caravan", id }
     });
   }
 
-  /* v3.586.0 (option A de Seb) : une seule ligne « Caravane », comme les patrouilles. */
-  function caravanSummaryEntry() {
-    var list = caravanEntries();
-    if (!list.length) return [];
-    var back = list.filter(function (e) { return e.tone === "collect"; }), away = list.filter(function (e) { return e.tone === "away"; }), ready = list.some(function (e) { return e.tone === "ready"; });
-    var e = { kind: "caravan", icon: ICON.caravan, title: _t("Caravane"), open: "openExpeditionsSheet('caravan')" }, parts = [];
-    var gold = window.CaravanManager ? CaravanManager.list().filter(function (c) { return CaravanManager._now() >= c.endsAt; }).reduce(function (t, c) { return t + CaravanManager.unloadGold(c.gold); }, 0) : 0; // ECON-12 : bonus compris
-    if (back.length) parts.push(_tn(back.length, "Rentrée · {g} or à décharger", "{n} rentrées · {g} or à décharger", { g: formatNumber(gold) }));
-    if (away.length) parts.push(_tn(away.length, "{n} en route", "{n} en route"));
-    if (ready) parts.push(_t("une place pour partir"));
-    if (back.length) { e.tone = "collect"; e.action = { label: _t("Décharger"), onclick: "caravanUnloadAll()", primary: true }; }
-    else if (ready) { e.tone = "ready"; e.action = { label: _t("Partir") + "…", onclick: e.open }; }
-    else e.tone = "away";
-    if (!back.length && away.length) e.endAt = Math.min.apply(null, away.map(function (x) { return x.endAt; })); // le premier retour
-    e.status = parts.join(" · ");
-    return [e];
-  }
-  function caravanUnloadAll() {
-    var CM = window.CaravanManager;
-    if (!CM) return;
-    var now = CM._now();
-    CM.list().filter(function (c) { return now >= c.endsAt; }).forEach(function (c) { if (typeof unloadCaravanFromSheet === "function") unloadCaravanFromSheet(c.world); });
-  }
-
-  function caravanEntries() {
-    var CM = window.CaravanManager;
-    if (!CM || !CM.isAvailable()) return [];
-    // v3.457.0 : une ligne par caravane partie, plus une « prête » s'il reste une place et un marché libre
-    var multi = CM.getMaxCaravans() > 1, now = CM._now(), out = [];
-    CM.list().forEach(function (c) {
-      var e = { kind: "caravan", icon: ICON.caravan, open: "openExpeditionsSheet('caravan')",
-        title: multi && window.WORLDS && WORLDS[c.world] ? _t("Caravane · {x}", { x: _td(WORLDS[c.world].name) }) : _t("Caravane") };
-      if (now >= c.endsAt) { e.status = _t("Rentrée · {n} or à décharger", { n: formatNumber(CM.unloadGold(c.gold)) }); e.tone = "collect"; e.action = { label: _t("Décharger"), onclick: "unloadCaravanFromSheet(" + c.world + ")", primary: true }; }
-      else { e.status = _t("En route vers le marché"); e.tone = "away"; e.endAt = c.endsAt; }
-      out.push(e);
-    });
-    var free = CM.hasFreeSlot() && CM.getMarkets().some(function (m) { return !CM.get(m.world); });
-    if (free) out.push({ kind: "caravan", icon: ICON.caravan, title: _t("Caravane"), open: "openExpeditionsSheet('caravan')",
-      status: _t("Prête · vend le surplus de l'Entrepôt"), tone: "ready", action: { label: _t("Partir") + "…", onclick: "openExpeditionsSheet('caravan')" } });
-    return out;
-  }
-
   function dungeonEntries() {
     if (!unlocked("dungeon") || !window.DungeonManager) return [];
     if (typeof DungeonManager.checkTicketReset === "function") DungeonManager.checkTicketReset();
@@ -158,12 +114,12 @@ var expSheet = null; // null | { type: "patrol" | "caravan", id }
     return [e];
   }
 
-  // v3.586.0 (option A de Seb) : un ordre fixe, une ligne par sorte : Donjon, Petites Aventures, Patrouilles, Caravane.
-  function getExpeditionEntries() { return dungeonEntries().concat(paEntries(), patrolSummaryEntry(), caravanSummaryEntry()); }
+  // v3.586.0 (option A de Seb) : un ordre fixe, une ligne par sorte : Donjon, Petites Aventures, Patrouilles.
+  function getExpeditionEntries() { return dungeonEntries().concat(paEntries(), patrolSummaryEntry()); }
   function countExpeditionsToCollect() { return getExpeditionEntries().filter(function (e) { return e.tone === "collect"; }).length; }
 
   /* ---------- Tableau des départs ---------- */
-  function kindLabel(k) { return { pa: _t("Petite Aventure"), patrol: _t("Patrouille"), patrols: _t("Patrouilles"), caravan: _t("Caravane"), dungeon: _t("Donjon") }[k]; }
+  function kindLabel(k) { return { pa: _t("Petite Aventure"), patrol: _t("Patrouille"), patrols: _t("Patrouilles"), dungeon: _t("Donjon") }[k]; }
 
   function rowHTML(e) {
     var h = '<div class="exp-row is-' + e.tone + '"' + (e.open ? ' role="button" tabindex="0" onclick="' + e.open + '"' : '') + '>'; // CPL3-12 : ligne ouvrable au clavier
@@ -278,8 +234,6 @@ var expSheet = null; // null | { type: "patrol" | "caravan", id }
       title = _t("Patrouille · {x}", { x: _td(def.name) }); icon = def.image; body = buildPatrolSheetHTML(expSheet.id);
     } else if (expSheet.type === "patrols") { // v3.586.0 : un compagnon par ligne
       title = _t("Patrouilles"); icon = ICON.patrol; body = '<div class="exp-list">' + patrolEntries().map(rowHTML).join("") + '</div>';
-    } else if (expSheet.type === "caravan") {
-      title = _t("Caravane"); icon = ICON.caravan; body = (typeof buildCaravanHTML === "function") ? buildCaravanHTML() : "";
     } else return "";
     return '<div class="ksheet-backdrop" onclick="closeExpeditionsSheet()"></div><div class="ksheet exp-sheet">'
       + kSheetHeadHTML({ icon: '<img src="' + esc(icon) + '" alt="">', title: title, close: "closeExpeditionsSheet()" })
@@ -309,15 +263,6 @@ var expSheet = null; // null | { type: "patrol" | "caravan", id }
     renderExpeditionsSheet();
   }
 
-  /* Halle marchande : la Caravane est ici maintenant ; la fiche de la Halle garde un renvoi. */
-  function buildHallCaravanLinkHTML() {
-    var CM = window.CaravanManager;
-    if (!CM || !CM.isAvailable()) return "";
-    var sub = CM.isBack() ? _t("Rentrée · à décharger") : CM.isTraveling() ? _t("En route · retour dans {d}", { d: formatTime(CM.getSecondsLeft()) }) : _t("Prête à partir");
-    return '<button type="button" class="exp-moved vb-hall-caravan' + (CM.isBack() ? ' is-collect' : '') + '" onclick="goToCaravan()">' + img(ICON.caravan)
-      + '<span><b>' + _t("Caravane") + '</b><small>' + esc(sub) + ' · ' + _t("Campement › Expéditions") + '</small></span><i class="exp-chev">›</i></button>';
-  }
-
   /* Chaque seconde (ProductionManager.updateDOM) : comptes à rebours du tableau ; une échéance
      passée redessine l'écran (la ligne change de rubrique). */
   function refreshExpeditionsDOM() {
@@ -339,9 +284,7 @@ var expSheet = null; // null | { type: "patrol" | "caravan", id }
   window.openExpeditionsSheet = openExpeditionsSheet;
   window.closeExpeditionsSheet = closeExpeditionsSheet;
   window.goToExpeditions = goToExpeditions;
-  window.buildHallCaravanLinkHTML = buildHallCaravanLinkHTML;
   window.refreshExpeditionsDOM = refreshExpeditionsDOM;
   window.patrolPick = patrolPick;
   window.patrolCollectAll = patrolCollectAll;
-  window.caravanUnloadAll = caravanUnloadAll;
 })();

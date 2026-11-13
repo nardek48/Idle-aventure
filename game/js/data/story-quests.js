@@ -1898,19 +1898,19 @@ STORY_QUESTS.ruins = {
         return "Edda avec toi " + (storyEddaInParty() ? "1/1" : "0/1") + " · Rencontres " + storyAdvProgress(game, "aq_ruines_edda", "rencontres_edda", 4) + "/4";
       }
     },
-    /* Étape 4 (doc §6) : le Marché des Ruines s'ouvre à la caravane (CARAVAN_WORLD_MARKETS).
-       Garde-fou E2 : la Halle se construit au prix d'Histoire si elle manque (isStoryVillageLevel). */
+    /* Étape 4 (doc §6) : le Marché des Ruines. v3.780.0 (simplification lot 6, Seb A) : caravanes retirées,
+       la marchandise se livre depuis la carte d'étape (offrande générique, compteur marketDelivered). */
     {
       id: "ruines_04",
       title: "On n'y vend rien. Pas encore.",
       act: "Acte I — La route du nord",
       narrative: {
         objective: "Derrière la Borne, une place carrée. Des étals de pierre, bien alignés. Rien dessus. Sarkel en fait le tour deux fois.",
-        completion: "Au matin, les étals sont vides. Le soir, la caravane rentre à Aeswyn avec de l'or, et des pierres qu'aucune carrière ne taille comme ça. Personne n'a vu d'acheteur.",
+        completion: "Au matin, les étals sont vides. Le soir, Sarkel rentre à Aeswyn avec de l'or, et des pierres qu'aucune carrière ne taille comme ça. Personne n'a vu d'acheteur.",
         dialogue: [
           { who: "Sarkel", text: "Je te l'avais dit : on n'y vend rien." },
           { who: "Sarkel", text: "Pas encore." },
-          { who: "Sarkel", text: "Envoie-moi une caravane d'Aeswyn. Du blé, de la pierre, ce que tu as en trop. On le pose ici, et on verra ce que la place en fait." },
+          { who: "Sarkel", text: "Fais-moi monter ce que tu as en trop à Aeswyn. Du blé, de la pierre. On le pose ici, et on verra ce que la place en fait." },
           { who: "Edda", text: "Elle en fera quelque chose. Elle range tout." }
         ],
         completionDialogue: [
@@ -1919,32 +1919,34 @@ STORY_QUESTS.ruins = {
           { who: "Sarkel", text: "Alors c'est un bon client." }
         ]
       },
-      objectiveLabel: "Envoyer une caravane au Marché des Ruines et la décharger à son retour",
+      objectiveLabel: "Livrer 150 Blé et 100 Pierre au Marché des Ruines",
       unlockTabs: [],
       reward: STORY_REWARDS.ruines_04,
-      // v3.436.5 : sans Halle marchande, pas de caravane : on mène d'abord à la Halle
+      offering: { ble: 150, pierre: 100 },
+      offeringKey: "marketDelivered",
+      offeringUi: {
+        where: "story",
+        buttonLabel: "Livrer au Marché",
+        lackToast: "Il manque du Blé ou de la Pierre : la Production en donne.",
+        doneToast: "La marchandise est sur les étals",
+        log: "Tu poses 150 Blé et 100 Pierre sur les étals du Marché des Ruines."
+      },
       linkTo: {
-        tab: function () { return storyCaravanReady() ? "campement" : "village"; },
-        afterGo: function () {
-          if (!storyCaravanReady()) { if (typeof goToCaravanHall === "function") goToCaravanHall(); return; }
-          if (typeof setCampTab === "function") setCampTab("depart");
-          if (typeof openExpeditionsSheet === "function") openExpeditionsSheet("caravan");
-        }
+        tab: "village", label: "Aller à la Production",
+        afterGo: function () { if (typeof setVillageSubTab === "function") setVillageSubTab("production"); }
       },
       tutorial: {
         tab: "village",
         icon: "images/Icons/resources/pierre_errante_icon.webp",
         title: "Le Marché des Ruines",
         points: [
-          { icon: "images/Icons/village_buildings/caravan_market.webp", text: "La caravane de la Halle marchande peut maintenant partir vers le Marché des Ruines, dans Campement › Expéditions. La première est une caravane d'essai : elle part à vide, revient en 3 minutes et ne prend pas de place." }, // v3.551.0
-          { icon: "images/Icons/resources/pierre_errante_icon.webp", text: "Elle en rapporte de l'or. Au trajet Long (Halle 3), 2 Pierres errantes à coup sûr, la pierre des Ruines." }
+          { icon: "images/Icons/resources/wheat_icon.webp", text: "Sarkel veut garnir les étals : livre-lui 150 Blé et 100 Pierre depuis la carte d'étape, avec « Livrer au Marché ». La Production les fournit." },
+          { icon: "images/Icons/resources/pierre_errante_icon.webp", text: "Le marché paie en or, et en Pierres errantes, la pierre des Ruines." }
         ]
       },
-      check: function () { return storyDesertFlag("ruinsMarketDone"); },
-      progress: function () {
-        if (!storyCaravanReady()) return "Bâtis d'abord la Halle marchande (Village › Bâtiments)"; // v3.436.5
-        return storyMarketCaravanProgress(2, "Caravane du Marché des Ruines", storyDesertFlag("ruinsMarketDone"));
-      }
+      // l'ancien drapeau de la caravane (sauvegardes d'avant v3.780.0) vaut livraison
+      check: function (game) { return storyChapterCounter(game, "ruins", "marketDelivered") >= 1 || storyDesertFlag("ruinsMarketDone"); },
+      progress: function (game) { return "Marchandise livrée " + (storyChapterCounter(game, "ruins", "marketDelivered") >= 1 || storyDesertFlag("ruinsMarketDone") ? "1/1" : "0/1"); }
     },
     /* Étape 5 (doc §7) : premier choix pesant des Ruines, clé « seuil », axe Soi / Aeswyn.
        Garder -> Le seuil (le héros se relève une fois par combat, RiseSystem.tryHeroRise).
@@ -2712,7 +2714,7 @@ STORY_QUESTS.crypt = {
         return "Ysolt avec toi " + (storyYsoltInParty() ? "1/1" : "0/1") + " · Rencontres " + storyAdvProgress(game, "aq_crypte_ysolt", "rencontres_ysolt", 4) + "/4";
       }
     },
-    /* Étape 4 (doc §6) : le Marché de la Crypte s'ouvre à la caravane (CARAVAN_WORLD_MARKETS). */
+    /* Étape 4 (doc §6) : le Marché de la Crypte. v3.780.0 (lot 6, Seb A) : livraison depuis la carte d'étape. */
     {
       id: "crypte_04",
       title: "Les morts n'achètent pas",
@@ -2723,7 +2725,7 @@ STORY_QUESTS.crypt = {
         dialogue: [
           { who: "Sarkel", text: "Ici, je ne vends rien. Les morts n'achètent pas." },
           { who: "Sarkel", text: "Mais ils laissent quelque chose quand on leur laisse quelque chose." },
-          { who: "Sarkel", text: "Envoie-moi une caravane d'Aeswyn. Du blé, surtout. On en fera du pain." },
+          { who: "Sarkel", text: "Fais-moi descendre du blé d'Aeswyn. Beaucoup. On en fera du pain." },
           { who: "Ysolt", text: "Le pain, ils s'en souviennent." }
         ],
         completionDialogue: [
@@ -2732,31 +2734,33 @@ STORY_QUESTS.crypt = {
           { who: "Sarkel", text: "Ici." }
         ]
       },
-      objectiveLabel: "Envoyer une caravane au Marché de la Crypte et la décharger à son retour",
+      objectiveLabel: "Livrer 200 Blé au Marché de la Crypte",
       unlockTabs: [],
       reward: STORY_REWARDS.crypte_04,
+      offering: { ble: 200 },
+      offeringKey: "marketDelivered",
+      offeringUi: {
+        where: "story",
+        buttonLabel: "Livrer au Marché",
+        lackToast: "Il manque du Blé : la Production en donne.",
+        doneToast: "Le blé est sur la pierre plate",
+        log: "Tu poses 200 Blé sur la pierre plate de la Veillée."
+      },
       linkTo: {
-        tab: function () { return storyCaravanReady() ? "campement" : "village"; },
-        afterGo: function () {
-          if (!storyCaravanReady()) { if (typeof goToCaravanHall === "function") goToCaravanHall(); return; }
-          if (typeof setCampTab === "function") setCampTab("depart");
-          if (typeof openExpeditionsSheet === "function") openExpeditionsSheet("caravan");
-        }
+        tab: "village", label: "Aller à la Production",
+        afterGo: function () { if (typeof setVillageSubTab === "function") setVillageSubTab("production"); }
       },
       tutorial: {
         tab: "village",
         icon: "images/Icons/resources/cire_sepulcre_icon.webp",
         title: "Le Marché de la Crypte",
         points: [
-          { icon: "images/Icons/village_buildings/caravan_market.webp", text: "La caravane de la Halle marchande peut maintenant partir vers le Marché de la Crypte, dans Campement › Expéditions. La première est une caravane d'essai : elle part à vide, revient en 3 minutes et ne prend pas de place." }, // v3.551.0
-          { icon: "images/Icons/resources/cire_sepulcre_icon.webp", text: "Elle en rapporte de l'or. Au trajet Long (Halle 3), 2 Cires de sépulcre à coup sûr." }
+          { icon: "images/Icons/resources/wheat_icon.webp", text: "Sarkel veut du blé pour la pierre plate : livre-lui 200 Blé depuis la carte d'étape, avec « Livrer au Marché »." },
+          { icon: "images/Icons/resources/cire_sepulcre_icon.webp", text: "Les morts laissent de l'or et des Cires de sépulcre en échange." }
         ]
       },
-      check: function () { return storyDesertFlag("cryptMarketDone"); },
-      progress: function () {
-        if (!storyCaravanReady()) return "Bâtis d'abord la Halle marchande (Village › Bâtiments)";
-        return storyMarketCaravanProgress(3, "Caravane du Marché de la Crypte", storyDesertFlag("cryptMarketDone"));
-      }
+      check: function (game) { return storyChapterCounter(game, "crypt", "marketDelivered") >= 1 || storyDesertFlag("cryptMarketDone"); },
+      progress: function (game) { return "Blé livré " + (storyChapterCounter(game, "crypt", "marketDelivered") >= 1 || storyDesertFlag("cryptMarketDone") ? "1/1" : "0/1"); }
     },
     /* Étape 5 (doc §7) : premier choix pesant de la Crypte, clé « portent », axe Soi / Aeswyn.
        Soi -> Le dû des morts (réveillé puis vaincu : +75 % d'or, SleepSystem.wakeBonus).
@@ -3615,26 +3619,6 @@ function storyRuinsSectorsFreed() {
    Fleuve compte), reforge de l'arme et de l'armure. Lecture seule, comme storyPalierDesert. */
 var STORY_PALIER_RUINES = { pieces: 6, reforge: 4 }; // banc (robot, 3 classes) : à 7, 0 à 109 h selon la chance de l'échoppe ; à 6, la variance tombe
 function storyPalierRuines(game) { return storyPalier(game, "green"); }
-/* v3.436.5 (ruines_04) : la caravane existe-t-elle ? Elle part de la Halle marchande. */
-function storyCaravanReady() { return !!(window.CaravanManager && CaravanManager.isAvailable()); }
-window.storyCaravanReady = storyCaravanReady;
-/* v3.547.0 (audit QUE-10) : ruines_04 et crypte_04 disent où en est la caravane du marché,
-   et quand une place se libère si toutes sont parties ailleurs. */
-function storyMarketCaravanProgress(world, label, done) {
-  var C = window.CaravanManager;
-  if (done || !C) return label + (done ? " 1/1" : " 0/1");
-  if (C.get(world)) {
-    if (C.isBack(world)) return _t("Caravane rentrée : décharge-la dans Campement › Expéditions");
-    return _t("Caravane en route, de retour dans {t}", { t: formatTime(C.getSecondsLeft(world)) });
-  }
-  if (typeof C.isStoryTripFor === "function" && C.isStoryTripFor(world)) return _t("Caravane d'essai prête : 3 minutes, depuis Campement › Expéditions"); // v3.551.0
-  if (!C.hasFreeSlot()) {
-    var first = C.get();
-    if (C.isBack(first.world)) return _t("Toutes les caravanes sont parties : décharge celle qui est rentrée pour en libérer une");
-    return _t("Toutes les caravanes sont parties : la prochaine rentre dans {t}", { t: formatTime(C.getSecondsLeft(first.world)) });
-  }
-  return label + " 0/1";
-}
 window.storyPalierRuines = storyPalierRuines;
 window.storyRuinsSectorsFreed = storyRuinsSectorsFreed;
 window.storyPorteSanctuaire = storyPorteSanctuaire;
@@ -4077,8 +4061,7 @@ STORY_QUESTS.mountain = {
         points: [
           { icon: "images/Icons/menu_icons/map_menu.webp", text: "La carte de la Montagne fonctionne comme celle de la Crypte : tu libères un secteur en terminant sa Petite Aventure, ou en battant l'élite qui le garde." },
           { icon: "images/Icons/combat_actions/vein_cut.webp", text: "Chaque secteur a sa veine. Avant de partir, tu choisis : la tailler (plus de Cendre vive, mais le secteur chauffe et ses combats sont plus durs ensuite) ou la laisser (plus facile, rapporte moins)." },
-          { icon: "images/Icons/combat_status/vein_heat.webp", text: "Une Petite Aventure ratée recouvre le secteur de lave : c'est La coulée. Il reste plus dur jusqu'à la prochaine nuit (toutes les 3 sorties). Une élite perdue, elle, se retente le jour même." },
-          { icon: "images/Icons/village_buildings/caravan_market.webp", text: "Le Marché de la Montagne est sur la carte, à côté du Replat. La caravane en rapporte de l'or. Au trajet Long (Halle 3), 2 Cendres vives à coup sûr." }
+          { icon: "images/Icons/combat_status/vein_heat.webp", text: "Une Petite Aventure ratée recouvre le secteur de lave : c'est La coulée. Il reste plus dur jusqu'à la prochaine nuit (toutes les 3 sorties). Une élite perdue, elle, se retente le jour même." }
         ]
       },
       check: function () { return storyMountainSectorsFreed() >= 2; },
@@ -4840,8 +4823,7 @@ STORY_QUESTS.tower = {
         points: [
           { icon: "images/Icons/menu_icons/map_menu.webp", text: "La carte de la Tour est en coupe : un étage par secteur. Tu libères un étage en terminant sa Petite Aventure." },
           { icon: "images/Icons/scene/path_easy.webp", text: "Chaque étage se souvient d'un monde : ses obstacles viennent du Désert, des Ruines, de la Crypte ou de la Montagne." },
-          { icon: "images/Icons/living_map/carte_vivante.webp", text: "Une Petite Aventure ratée, et la Tour refait l'étage : c'est La redite. Il reste plus dur jusqu'à la prochaine nuit (toutes les 3 sorties). Rien n'est perdu." },
-          { icon: "images/Icons/village_buildings/caravan_market.webp", text: "Le Marché de la Tour est au dernier camp, devant la porte. La caravane en rapporte de l'or. Au trajet Long (Halle 3), 2 Givres bleus à coup sûr." }
+          { icon: "images/Icons/living_map/carte_vivante.webp", text: "Une Petite Aventure ratée, et la Tour refait l'étage : c'est La redite. Il reste plus dur jusqu'à la prochaine nuit (toutes les 3 sorties). Rien n'est perdu." }
         ]
       },
       check: function () { return storyTowerFloorsFreed() >= STORY_TOUR_ETAGES; }, // rythme de la Tour (Seb, 03/11) : 3 -> 5

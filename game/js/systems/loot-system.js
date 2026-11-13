@@ -126,7 +126,7 @@ var LootSystem = {
     return this._roll(ctx ? ctx.allowed : getAllowedRarities(), ctx ? ctx.world : undefined, ctx ? ctx.aether : null);
   },
 
-  /* Butin du monde, même pendant un donjon : vitrine de la Halle, caravanes.
+  /* Butin du monde, même pendant un donjon : vitrine de la Halle.
      v3.621.0 : slot facultatif (la lame de Brannoc impose « weapon ») ; sans lui, emplacement au hasard. */
   rollWorldDrop: function (slot) {
     return this._roll(getAllowedRarities(), undefined, null, slot);

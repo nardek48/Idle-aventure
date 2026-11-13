@@ -35,7 +35,7 @@ function buildGrandOuvrageSheetHTML() {
   if (grandOuvrageFlash) h += '<div class="go-toast">' + esc(grandOuvrageFlash) + '</div>';
   h += '<div class="vb-sheet-text">' + _t("Edda bâtit une arche au milieu du village. Tout ce que tu as en trop y trouve sa place : chaque palier rend le village un peu plus riche.") + '</div>';
   h += '<div class="go-bonus"><img src="images/Icons/gold_icon.webp" alt=""><span>' + _t("+{p} % d'or", { p: bonus })
-    + '<small>' + _t("sur l'or des combats, de la Taverne et des caravanes ; +1 % par palier") + '</small></span></div>';
+    + '<small>' + _t("sur l'or des combats et de la Taverne ; +1 % par palier") + '</small></span></div>';
   h += '<div class="go-head"><span>' + _t("Palier {n}", { n: p.tier + 1 }) + '</span><small>' + formatNumber(p.into) + ' / ' + formatNumber(p.cost) + '</small></div>';
   h += '<div class="kgauge kgauge-thin kgauge-xp"><div class="kgauge-track"><div class="kgauge-fill" style="width:' + Math.min(100, p.into / p.cost * 100).toFixed(1) + '%"></div></div></div>';
   h += '<div class="go-go"><button type="button" class="kbtn primary"' + (sur.points > 0 ? ' onclick="pourGrandOuvrageSurplus()"' : ' disabled') + '><span>'

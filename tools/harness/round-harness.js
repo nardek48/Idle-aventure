@@ -13277,96 +13277,27 @@ console.log("\n[190] v3.418.0 — Équilibrage : Taverne et Halle à l'Atelier 2
   }
 })();
 
-console.log("\n[191] v3.419.0 — La Caravane de la Halle marchande (R3, version C1 « Surplus auto »)");
+console.log("\n[191] v3.780.0 — Caravanes retirées (simplification, lot 6) : solde des vieilles sauvegardes");
 (function () {
   try {
-    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); VillageBuildingManager.ensure(); Prefs._cache = {}; Prefs._save({});");
-    run("game.village.buildings.warehouse.level = 0; game.village.buildings.hall.level = 1; WorldManager.worldIndex = 1;");
-    ok(run("CARAVAN_TRIPS.court.units === 150 && CARAVAN_TRIPS.moyen.units === 400 && CARAVAN_TRIPS.long.units === 800 && CARAVAN_TRIPS.long.rareChance === 1 && CARAVAN_TRIPS.long.itemChance === 0.10"), "trois trajets : 150 / 400 / 800 unités, Long rare garanti (v3.611.0) et 10 % objet");
-    run("CaravanManager._getOrder0 = CaravanManager.getOrder; CaravanManager.getOrder = function () { return null; };"); // la commande du jour (v3.611.0) est testée en [406]
-    ok(run("CARAVAN_TRIPS.court.valuePct === 0.6 && CARAVAN_TRIPS.moyen.valuePct === 0.8 && CARAVAN_TRIPS.long.valuePct === 1 && CARAVAN_TRIPS.long.seconds === 28800"), "60 / 80 / 100 % de la valeur (v3.421.0), Long 8 h");
-    ok(run("CaravanManager.isTripOpen('moyen', 1) && !CaravanManager.isTripOpen('long', 2) && CaravanManager.isTripOpen('long', 3)"), "Court et Moyen dès la Halle 1, Long à la Halle 3");
-    ok(run("CaravanManager.getCapacity('court', 1)") === 150 && run("CaravanManager.getCapacity('moyen', 5)") === 560 && run("CaravanManager.getCapacity('long', 10)") === 1520, "+10 % de capacité par niveau : Moyen 560 au niveau 5, Long 1 520 au niveau 10");
-    ok(run("CaravanManager.getEligibleKeys().sort().join(',')") === "ble,bois,eau,fer,pierre,viande", "seules les matières brutes partent, Bois et Fer compris (v3.480.0, RE-3)");
-    /* Stock : Blé, Viande, Bois au plafond (500) ; Eau 300 ; Pierre 100 ; Fer 0 ; réserve de Viande 400, du Bois 500 */
-    run("['ble','viande','bois'].forEach(function (k) { game.resources[k] = 500; }); game.resources.eau = 300; game.resources.pierre = 100; game.resources.fer = 0; ResourceReserveManager.setReserve('viande', 400); ResourceReserveManager.setReserve('bois', 500); ResourceReserveManager.setReserve('ble', 0);");
-    ok(run("CaravanManager.getSpare('ble')") === 250 && run("CaravanManager.getSpare('viande')") === 100 && run("CaravanManager.getSpare('pierre')") === 0, "part libre : au-dessus de la moitié du plafond et de la réserve (Blé 250, Viande 100, Pierre 0)");
-    var court = run("CaravanManager.computeLoad('court')");
-    ok(court.ble === 75 && court.viande === 75 && !court.bois && !court.eau, "Court : les ressources au plafond d'abord, à parts égales ; le Bois, protégé par sa réserve, reste");
-    var moyen = run("CaravanManager.computeLoad('moyen')");
-    ok(run("CaravanManager.getLoadUnits(" + JSON.stringify(moyen) + ")") === 400 && moyen.viande === 100 && moyen.ble === 250 && moyen.eau === 50 && !moyen.bois, "Moyen : la Viande s'arrête à sa réserve, le Blé à la moitié du plafond, l'Eau complète");
-    ok(run("CaravanManager.getBlockReason('long')") !== "" && run("CaravanManager.getBlockReason('moyen')") === "", "Long refusé à la Halle 1, Moyen possible");
-    var gold0 = run("game.gold = 0; game.gold");
-    run("CaravanManager._now = function () { return 1000000; }; CaravanManager.depart('moyen');");
-    var c = run("CaravanManager.get()");
-    ok(c && c.trip === "moyen" && c.endsAt === 1000000 + 4 * 3600 * 1000 && c.gold === 400, "départ : trajet, retour dans 4 h, 400 or (300 Blé et Eau à 1 or, 100 Viande à 2 or, × 80 %)");
-    ok(run("game.resources.ble") >= 250 && run("game.resources.bois") === 500 && run("game.resources.viande") === 400, "jamais sous la moitié du plafond ni sous la réserve ; le Bois protégé n'est pas touché");
-    ok(run("CaravanManager.getBlockReason('court')") !== "" && run("CaravanManager.depart('court')") === false, "une seule caravane à la fois");
-    ok(run("buildSaveData()").village.caravans[0].trip === "moyen", "la caravane est dans la sauvegarde (game.village)");
-    // v3.426.0 (chantier Expéditions) : la Caravane vit dans Campement › Expéditions ; la Halle garde un renvoi.
-    run("expSheet = { type: 'caravan' };");
-    var route = run("buildExpeditionsSheetHTML()");
-    ok(route.indexOf('data-car="route"') !== -1 && route.indexOf("car-left") !== -1, "feuille « Caravane » des Expéditions : en route avec le compte à rebours");
-    var hallSheet = run("openVillageBuildingId = 'hall'; buildVillageBuildingSheetHTML('hall')");
-    ok(hallSheet.indexOf("vb-hall-caravan") !== -1 && hallSheet.indexOf("goToCaravan()") !== -1 && hallSheet.indexOf("setHallSheetSegment('caravan')") === -1 && hallSheet.indexOf("setHallSheetSegment('build')") !== -1, "feuille de la Halle : un renvoi vers la Caravane, segments Échoppe · Agrandir");
-    ok(run("CaravanManager.unload()") === null, "pas de déchargement avant l'arrivée");
-    run("CaravanManager._now = function () { return 1000000 + 4 * 3600 * 1000 + 5; };");
-    ok(run("CaravanManager.isBack()") && run("CaravanManager.checkArrival()") === true && run("CaravanManager.checkArrival()") === false, "retour hors ligne : annoncé une seule fois");
-    ok(run("getVillageSubTabBadges().buildings") >= 1 && run("buildVillageBuildingCardHTML('hall')").indexOf("is-caravan-back") !== -1, "ruban « De retour » sur la tuile de la Halle, pastille sur Bâtiments");
-    ok(run("buildExpeditionsSheetHTML()").indexOf("unloadCaravanFromSheet(1)") !== -1 && run("buildExpeditionsBoardHTML()").indexOf("caravanUnloadAll()") !== -1, "de retour : bouton Décharger (feuille et tableau des départs, v3.586.0 : une ligne)");
-    run("expSheet = null;");
-    var loot = run("CaravanManager.unload()");
-    ok(loot && loot.gold === 400 && run("game.gold") === gold0 + 400 && run("CaravanManager.get()") === null, "décharger : +400 or, la Halle est libre");
-    /* Trajet Long au niveau 3 : matériau du monde et objet, tirés au départ */
-    run("game.village.buildings.hall.level = 3; ['ble','viande','bois','eau','pierre'].forEach(function (k) { game.resources[k] = 500; }); game.resources.verre_des_dunes = 0; game.inventory = [];");
-    run("var _r = Math.random; Math.random = function () { return 0; }; CaravanManager.depart('long'); Math.random = _r;");
-    c = run("CaravanManager.get()");
-    ok(c.trip === "long" && c.rare && c.rare.key === "verre_des_dunes" && c.rare.n === 2 && !!c.item, "Long au Désert : Verre des dunes et objet d'équipement tirés au départ");
-    run("CaravanManager._now = function () { return 1e13; };");
-    run("CaravanManager.unload(); CaravanManager._now = function () { return Date.now(); };");
-    ok(run("game.resources.verre_des_dunes") === 2 && run("game.inventory.length") === 1, "au déchargement : le matériau rare à l'Entrepôt, l'objet dans le sac");
-    run("CaravanManager.getOrder = CaravanManager._getOrder0;");
-    ok(run("VILLAGE_BUILDINGS.hall.effectLabel(3)").indexOf("trajet Long") !== -1 && run("VILLAGE_BUILDINGS.hall.effectLabel(10)").indexOf("Caravane +90 %") !== -1, "fiche de la Halle : niveau 3 « trajet Long », niveau 10 « Caravane +90 % »");
-    ok(run("buildWarehouseSheetHTML('ble')").indexOf("Caravane de la Halle") !== -1, "Entrepôt : la caravane est citée dans « Où ça part » des matières brutes");
-    var idx = fs.readFileSync(ROOT + "/index.html", "utf8"), sw = fs.readFileSync(ROOT + "/sw.js", "utf8");
-    ok(idx.indexOf("js/systems/caravan-system.js") > 0 && idx.indexOf("js/ui/caravan-view.js") > idx.indexOf("js/ui/village-building-view.js") && sw.indexOf("./js/ui/caravan-view.js") > 0, "fichiers chargés et précachés");
+    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); VillageBuildingManager.ensure();");
+    var game = g.game;
+    ok(typeof g.CaravanManager.depart === "undefined" && typeof g.CARAVAN_TRIPS === "undefined", "plus de départ ni de trajets");
+    game.gold = 100; game.explorationProgression = {};
+    game.village.caravans = [{ world: 2, trip: "long", endsAt: Date.now() + 9e6, gold: 500, rare: { key: "pierre_errante", n: 2 }, item: null }];
+    game.village.caravan = { world: 0, trip: "court", endsAt: 1, gold: 40 };
+    var pe0 = g.WarehouseManager.getAmount("pierre_errante"), paid = g.CaravanManager.settleRetired();
+    ok(paid >= 540 && game.gold === 100 + paid && g.WarehouseManager.getAmount("pierre_errante") === pe0 + 2, "caravane en route livrée au chargement : or et matériau rare");
+    ok(game.village.caravans.length === 0 && !("caravan" in game.village) && game.explorationProgression.ruinsMarketDone === true, "liste vidée, ancienne forme comprise ; le marché des Ruines compte comme livré");
+    ok(g.CaravanManager.settleRetired() === 0, "rien en route : rien versé");
+    var fsx = require("fs"), px = require("path");
+    var boot = fsx.readFileSync(px.join(ROOT, "js/main/boot.js"), "utf8"), idx = fsx.readFileSync(px.join(ROOT, "index.html"), "utf8"), sw = fsx.readFileSync(px.join(ROOT, "sw.js"), "utf8");
+    ok(/CaravanManager\.settleRetired\(\)/.test(boot) && idx.indexOf("caravan-view.js") === -1 && sw.indexOf("caravan-view.js") === -1, "solde appelé au démarrage ; caravan-view.js n'est plus chargé ni précaché");
+    ok(g.VILLAGE_BUILDINGS.hall.desc.indexOf("caravane") === -1 && g.VILLAGE_BUILDINGS.hall.effectLabel(6).indexOf("caravane") === -1 && g.VILLAGE_BUILDINGS.tavern.desc.indexOf("caravane") === -1, "Halle et Taverne : plus de caravane dans les textes");
+    ok(run("buildLivingMapHTML('forest')").indexOf("lm-caravan") === -1, "carte vivante : plus de caravane sur la piste");
+    ok(g.ReturnManager.hasContent({ caravansBack: 2 }) === false, "écran de retour : une caravane ne l'ouvre plus");
   } catch (err) {
     ok(false, "[191] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
-  }
-})();
-
-console.log("\n[192] v3.420.0 — La caravane sur la carte vivante, icône de Seb");
-(function () {
-  try {
-    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); VillageBuildingManager.ensure(); Prefs._cache = {}; Prefs._save({});");
-    run("game.village.buildings.warehouse.level = 0; game.village.buildings.hall.level = 3; WorldManager.worldIndex = 1; ['ble','viande','bois'].forEach(function (k) { game.resources[k] = 500; });");
-    ok(run("Object.keys(LIVING_MAPS).every(function (k) { var m = LIVING_MAPS[k].caravanMarket; return m && m.x > 0 && m.x < 100 && m.y > 0 && m.y < 100; })"), "chaque carte vivante a son marché");
-    ok(run("buildLivingMapHTML('desert')").indexOf("lm-caravan") === -1, "pas de caravane sur la carte quand elle est au village");
-    run("CaravanManager._now = function () { return 5e12; }; CaravanManager.depart('long');");
-    ok(run("CaravanManager.get().world") === 1 && run("CaravanManager.getMapId()") === "desert", "la caravane roule sur la carte du monde de départ (Désert)");
-    var v = run("LIVING_MAPS.desert.village"), m = run("LIVING_MAPS.desert.caravanMarket");
-    var p0 = run("CaravanManager.getMapPosition('desert')");
-    ok(Math.abs(p0.x - v.x) < 1e-6 && Math.abs(p0.y - v.y) < 1e-6 && p0.outbound, "au départ : au village, sur l'aller");
-    run("CaravanManager._now = function () { return 5e12 + 4 * 3600 * 1000; };");
-    var p1 = run("CaravanManager.getMapPosition('desert')");
-    ok(Math.abs(p1.x - m.x) < 1e-6 && Math.abs(p1.y - m.y) < 1e-6, "à mi-trajet : au marché");
-    run("CaravanManager._now = function () { return 5e12 + 6 * 3600 * 1000; };");
-    var p2 = run("CaravanManager.getMapPosition('desert')");
-    ok(!p2.outbound && Math.abs(p2.x - (v.x + m.x) / 2) < 1e-6, "aux trois quarts : sur le retour, à mi-chemin");
-    var h = run("buildLivingMapHTML('desert')");
-    ok(h.indexOf('id="lm-caravan"') !== -1 && h.indexOf("is-return") !== -1 && h.indexOf("goToCaravan()") !== -1 && h.indexOf("lm-car-trail") !== -1, "sur la carte : la piste, la caravane qui revient, toucher ouvre sa feuille");
-    ok(run("buildLivingMapHTML('forest')").indexOf("lm-caravan") === -1, "pas sur la carte de l'autre monde");
-    run("CaravanManager._now = function () { return 5e12 + 9 * 3600 * 1000; };");
-    ok(run("buildLivingMapHTML('desert')").indexOf("lm-caravan is-back") !== -1, "rentrée : au village, ruban « De retour »");
-    run("hallSheetSegment = 'build'; openVillageBuildingId = null; goToCaravan();");
-    ok(run("game.activeTab") === "campement" && run("campTab") === "depart" && run("expSheet && expSheet.type") === "caravan", "goToCaravan : Campement › Expéditions, feuille Caravane ouverte (v3.426.0)");
-    run("expSheet = null;");
-    run("CaravanManager.unload(); CaravanManager._now = function () { return Date.now(); };");
-    var b = fs.readFileSync(path.join(ROOT, "images/Icons/village_buildings/caravan.webp"));
-    ok(imgInfo(b).a && imgInfo(b).w === 256, "icône de la caravane : 256 px, détourée (RGBA)");
-    ok(fs.readFileSync(path.join(ROOT, "js/ui/caravan-view.js"), "utf8").indexOf("CARAVAN_ICON") > 0 && run("buildVillageBuildingSheetHTML('hall')").indexOf("caravan.webp") !== -1, "l'icône remplace l'emoji dans la feuille");
-  } catch (err) {
-    ok(false, "[192] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
 })();
 
@@ -13646,17 +13577,10 @@ console.log("\n[198] v3.426.0 — Chantier Expéditions : Campement › Expédit
     ok(card.indexOf("exp-moved") !== -1 && card.indexOf("goToExpeditions('patrol', 'maddoc')") !== -1 && card.indexOf("pt-select") === -1, "fiche du compagnon : un renvoi vers les Expéditions, plus de formulaire");
     run("game.activeTab = 'more'; openPatrolScreen();");
     ok(run("game.activeTab") === "campement" && run("campTab") === "depart", "fil rouge « patrouille rentrée » : Campement › Expéditions");
-    // --- caravane : choisir le marché ---
-    run("game.village.buildings.hall.level = 3; game.village.buildings.warehouse.level = 0; ['ble','viande','eau'].forEach(function (k) { game.resources[k] = 500; });");
-    ok(run("CaravanManager.getMarkets().map(function (m) { return m.mapId; }).join()") === "forest,desert", "marchés : Forêt et Désert");
-    run("expSheet = { type: 'caravan' }; selectCaravanMarket('forest');");
-    var cs = run("buildExpeditionsSheetHTML()");
-    ok((cs.match(/class="exp-world( is-on)?"/g) || []).length === 2 && cs.indexOf("exp-world is-on") !== -1 && cs.indexOf("seve") !== -1, "feuille Caravane : deux vignettes de marché, la Forêt choisie (Sève au trajet Long)");
-    run("selectCaravanTrip('long'); var _r = Math.random; Math.random = function () { return 0; }; departCaravanFromSheet(); Math.random = _r;");
-    var c = run("CaravanManager.get()");
-    ok(c && c.world === 0 && c.rare && c.rare.key === "seve_aeswyn" && run("CaravanManager.getMapId()") === "forest", "départ au marché de la Forêt depuis le Désert : Sève d'Aeswyn, roule sur la carte de la Forêt");
-    ok(run("getExpeditionEntries().filter(function (e) { return e.kind === 'caravan'; })[0].status").indexOf("1 en route") !== -1, "caravane en route dans le tableau");
-    run("game.village.caravans = []; expSheet = null;");
+    // v3.780.0 (lot 6) : caravanes retirées, plus de feuille Caravane
+    run("expSheet = { type: 'caravan' };");
+    ok(run("buildExpeditionsSheetHTML()") === "" && run("getExpeditionEntries().every(function (e) { return e.kind !== 'caravan'; })"), "Expéditions : ni ligne ni feuille de caravane");
+    run("expSheet = null;");
     // --- fichiers ---
     var idx = fsx.readFileSync(px.join(ROOT, "index.html"), "utf8"), sw = fsx.readFileSync(px.join(ROOT, "sw.js"), "utf8");
     ok(idx.indexOf('id="exp-sheet-root"') !== -1 && idx.indexOf("js/ui/expeditions-view.js") > idx.indexOf("js/ui/patrol-view.js") && sw.indexOf("./js/ui/expeditions-view.js") > 0 && sw.indexOf("./css/04-panel-expeditions.css") > 0, "fichiers chargés et précachés");
@@ -13665,8 +13589,6 @@ console.log("\n[198] v3.426.0 — Chantier Expéditions : Campement › Expédit
     run("LivingMapManager.isLiberated = function (m, s) { return m === 'forest' && s === 'etang'; }; WorldManager.worldIndex = 0; patrolUi = {}; expSheet = { type: 'patrol', id: 'maddoc' };");
     var one = run("buildExpeditionsSheetHTML()");
     ok(one.indexOf("exp-worlds is-single") !== -1 && (one.match(/class="exp-world( is-on)?"/g) || []).length === 1, "une seule carte atteinte : sa vignette reste affichée (v3.426.1)");
-    run("game.village.caravans = []; expSheet = { type: 'caravan' };");
-    ok(run("buildExpeditionsSheetHTML()").indexOf("exp-worlds is-single") !== -1, "...et le marché de la Caravane aussi");
     run("expSheet = null;");
     // v3.426.2 (retours Seb) : jauge du stock plus épaisse, icônes plus grandes, détail d'Équipé collé en bas
     var cssP = fsx.readFileSync(px.join(ROOT, "css/04-panel-production.css"), "utf8"), cssH = fsx.readFileSync(px.join(ROOT, "css/04-panel-heros-screens.css"), "utf8");
@@ -13675,7 +13597,6 @@ console.log("\n[198] v3.426.0 — Chantier Expéditions : Campement › Expédit
     run("game.activeTab = 'more'; setHerosSubTabSilent('equip'); activeEquipSubTab = 'equipment';");
     var eqh = run("buildHerosHTML()");
     ok(eqh.indexOf("hs-sets") > eqh.indexOf('class="hs-eq"') && eqh.indexOf("hs-sets") < eqh.indexOf('class="hs-edetail"'), "Équipé : bonus de panoplie sous la silhouette (v3.426.3)");
-    ok(run("_t('La caravane est rentrée : décharge-la dans Campement › Expéditions')").indexOf("Expéditions") !== -1 && fsx.readFileSync(px.join(ROOT, "js/systems/caravan-system.js"), "utf8").indexOf("à la Halle marchande\")") === -1, "annonce du retour de la caravane : Campement › Expéditions");
     run("LivingMapManager.isLiberated = LivingMapManager.__lib; WorldManager.worldIndex = 0;");
   } catch (err) {
     ok(false, "[198] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
@@ -13943,7 +13864,7 @@ console.log("\n[203] v3.428.0 — Ruines, acte I : relève, réglage « Cible »
     ok(ch && ch.requiresChapter === "desert" && ch.steps.length >= 10 && ch.steps[0].id === "ruines_01" && ch.steps[9].id === "ruines_10", "chapitre 3 : ouvert après le Désert, les étapes des actes I et II en tête");
     ok(!!g.WORLD_CAPS[2] && g.WORLD_CAPS[2].village.forge === g.WORLD_CAPS[1].village.forge + 2, "plafonds du monde 3 posés (Forge des mondes : 2 niveaux de Forge par monde)");
     ok(g.STORY_AXES_OK !== false && g.STORY_CHOICE_AXES.seuil.soi.indexOf("soi") !== -1, "choix « seuil » sur l'axe Soi / Aeswyn");
-    ok(g.WAREHOUSE_RESOURCES.pierre_errante && g.CARAVAN_RARE_BY_WORLD[2] === "pierre_errante", "Pierre errante : ressource du monde 3, rare du Marché des Ruines");
+    ok(g.WAREHOUSE_RESOURCES.pierre_errante && g.STORY_REWARDS.ruines_04.resources.pierre_errante === 3, "Pierre errante : ressource du monde 3, payée par le Marché des Ruines");
     var VB = g.VillageBuildingManager;
     var hall0 = VB.getLevelCost("hall", 0);
     var _reached = g.StoryQuestManager.isStepReached;
@@ -13951,16 +13872,23 @@ console.log("\n[203] v3.428.0 — Ruines, acte I : relève, réglage « Cible »
     var hallStory = VB.getLevelCost("hall", 0);
     ok(Object.keys(hallStory).every(function (k) { return g.STORY_PROVIDED_MATERIALS.indexOf(k) === -1; }) && hallStory.gold === hall0.gold, "ruines_04 : la Halle niveau 1 au prix d'Histoire (matériaux communs fournis)");
     game.worldsEverReached = { 0: true, 1: true, 2: true };
-    ok(g.CaravanManager.getMarkets().some(function (m) { return m.world === 2; }), "le Marché des Ruines s'ouvre à la caravane");
     g.StoryQuestManager.isStepReached = _reached;
     var w0 = VB.getLevelCost("workshop", 6);
     game.storyQuests.ruins.choices = { seuil: "aeswyn" };
     var w1 = VB.getLevelCost("workshop", 6);
     ok(w1.gold === w0.gold && Object.keys(w0).filter(function (k) { return k !== "gold"; }).every(function (k) { return w1[k] === Math.max(1, Math.ceil(w0[k] * 0.9)); }), "le seuil d'Aeswyn : −10 % de matériaux sur les chantiers, l'or inchangé");
     game.storyQuests.ruins.choices = {};
-    game.village.caravan = { trip: "court", startedAt: 0, endsAt: 1, world: 2, cargo: {}, gold: 10, rare: null, item: null, notified: true };
-    g.CaravanManager.unload();
-    ok(!!(game.explorationProgression || {}).ruinsMarketDone, "une caravane revenue du Marché des Ruines valide l'étape 4");
+    // v3.780.0 (lot 6) : la marchandise se livre depuis la carte d'étape (offrande « story »)
+    var stR = g.StoryQuestManager.getState("ruins"), keepR = JSON.stringify(stR), i4 = ch.steps.map(function (x) { return x.id; }).indexOf("ruines_04");
+    var openR = g.StoryQuestManager.isChapterOpen; g.StoryQuestManager.isChapterOpen = function (c) { return c === "ruins" ? true : openR.call(this, c); };
+    stR.currentStep = i4; stR.accepted = true; stR.counters = {}; game.explorationProgression = {};
+    ok(!ch.steps[i4].check(game) && g.StoryQuestManager.offerToEmbers("ruins") === false, "ruines_04 : sans Blé ni Pierre, rien n'est livré");
+    g.WarehouseManager.addResource("ble", 150, true); g.WarehouseManager.addResource("pierre", 100, true);
+    var mb = g.MissionBoard.getById("story_ruins");
+    ok(mb && mb.launchLabel === "Livrer au Marché" && g.StoryQuestManager.offerToEmbers("ruins") === true && ch.steps[i4].check(game) && g.WarehouseManager.getAmount("ble") === 0, "ruines_04 : « Livrer au Marché » prend 150 Blé et 100 Pierre et valide l'étape");
+    game.explorationProgression = { ruinsMarketDone: true }; stR.counters = {};
+    ok(ch.steps[i4].check(game), "ancienne sauvegarde : le drapeau de la caravane vaut livraison");
+    Object.assign(stR, JSON.parse(keepR)); g.StoryQuestManager.isChapterOpen = openR;
   } catch (err) {
     ok(false, "[203] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
@@ -15404,7 +15332,8 @@ console.log("\n[240] v3.452.0 — Crypte, lot C-2 : acte I « La descente »");
     var CM = g.CompanionManager, actor = { companionId: "ysolt", charges: 1, cooldown: 0, damage: 10 };
     ok(CM.useSkill(actor, y) === true && z.wakeIn === 3 && actor.charges === 0, "Pas encore : le dormeur dort deux rounds de plus (" + z.wakeIn + ")");
     // Marché de la Crypte
-    ok(g.CARAVAN_RARE_BY_WORLD[3] === "cire_sepulcre" && g.CARAVAN_WORLD_MARKETS.crypt.requiresStoryStep === "crypte_04", "Marché de la Crypte : Cire de sépulcre, ouvert à l'étape 4");
+    var c4 = g.STORY_QUESTS.crypt.steps.filter(function (x) { return x.id === "crypte_04"; })[0];
+    ok(c4.offering.ble === 200 && c4.offeringUi.where === "story" && g.STORY_REWARDS.crypte_04.resources.cire_sepulcre === 3, "Marché de la Crypte (v3.780.0) : 200 Blé livrés depuis la carte d'étape, payés en Cire de sépulcre");
     // Le choix « portent »
     ok(g.STORY_CHOICE_AXES.portent && g.STORY_CHOICE_AXES.portent.soi.indexOf("soi") !== -1 && g.STORY_CHOICE_AXES.portent.aeswyn[0] === "aeswyn", "choix « portent » : axe Soi / Aeswyn");
     SQ.getChoice = function (k) { return k === "portent" ? "soi" : savedChoice.call(SQ, k); };
@@ -15925,53 +15854,7 @@ console.log("\n[249] v3.456.8 — Bestiaire : fiche en grand, boss de donjon, «
   }
 })();
 
-console.log("\n[250] v3.457.0 — Plusieurs caravanes : 1 + 1 tous les 3 niveaux de Halle, une par marché");
-(function () {
-  try {
-    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); VillageBuildingManager.ensure(); Prefs._cache = {}; Prefs._save({}); CaravanManager._now = function () { return 1e12; };");
-    run("game.village.buildings.warehouse.level = 0; game.village.buildings.hall.level = 1; WorldManager.worldIndex = 1;");
-    ok(Array.isArray(run("createInitialGameState()").village.caravans), "valeur par défaut : game.village.caravans = []");
-    ok([0, 1, 2, 3, 5, 6, 9, 10].map(function (l) { return run("CaravanManager.getMaxCaravans(" + l + ")"); }).join() === "0,1,1,2,2,3,4,4", "Halle 0 : aucune ; 1 : une ; 3 : deux ; 6 : trois ; 9 : quatre");
-    /* ancienne sauvegarde : une seule caravane, sans monde noté */
-    run("game.village.caravan = { trip: 'court', startedAt: 1, endsAt: 2, cargo: { ble: 5 }, gold: 3, rare: null, item: null, notified: true };");
-    ok(run("CaravanManager.list().length") === 1 && run("CaravanManager.get().world") === 1 && !("caravan" in run("game.village")), "ancienne caravane reprise dans la liste, au monde courant");
-    ok(run("CaravanManager.unload().gold") === 3 && run("CaravanManager.list().length") === 0, "elle se décharge comme avant");
-    /* Halle 3 : deux caravanes, deux marchés */
-    run("game.village.buildings.hall.level = 3; ['ble','viande','eau','pierre'].forEach(function (k) { game.resources[k] = 500; });");
-    ok(run("CaravanManager.depart('court', 0)") === true && run("CaravanManager.getBlockReason('court', 0)") === "Une caravane est déjà sur ce marché", "un marché, une caravane");
-    var spare = run("CaravanManager.computeLoad('court')");
-    ok(run("CaravanManager.getLoadUnits(" + JSON.stringify(spare) + ")") > 0 && run("CaravanManager.depart('court', 1)") === true, "la seconde part avec le surplus qui reste");
-    ok(run("CaravanManager.getBlockReason('court', 2)") === "Toutes les caravanes sont parties" && run("CaravanManager.depart('court', 2)") === false, "Halle 3 : pas de troisième");
-    ok(run("CaravanManager.getForMap('forest').world") === 0 && run("CaravanManager.getForMap('desert').world") === 1, "chacune roule sur la carte de son marché");
-    ok(run("buildLivingMapHTML('forest')").indexOf("lm-caravan") !== -1 && run("buildLivingMapHTML('desert')").indexOf("lm-caravan") !== -1, "les deux sont sur leur carte vivante");
-    run("expSheet = { type: 'caravan' };");
-    var sh = run("buildExpeditionsSheetHTML()");
-    ok((sh.match(/data-car="route"/g) || []).length === 2 && sh.indexOf("car-left-0") !== -1 && sh.indexOf("car-left-1") !== -1 && sh.indexOf('data-car="depart"') === -1, "feuille : deux blocs en route, pas de départ");
-    ok(sh.indexOf("Une caravane de plus à la Halle niveau 6.") !== -1 && sh.indexOf("Marché · ") !== -1, "feuille : le marché de chaque caravane, la prochaine au niveau 6");
-    ok(run("getExpeditionEntries().filter(function (e) { return e.kind === 'caravan'; }).map(function (e) { return e.tone + ':' + e.status; }).join()") === "away:2 en route", "tableau des départs (v3.586.0) : une seule ligne Caravane, « 2 en route »");
-    ok(run("VILLAGE_BUILDINGS.hall.effectLabel(6)").indexOf("3 caravanes") !== -1, "fiche de la Halle : « 3 caravanes » au niveau 6");
-    /* Halle 6 : une place de plus, le départ revient ; les marchés pris sont grisés */
-    run("game.village.buildings.hall.level = 6; LivingMapManager.__lib2 = LivingMapManager.isLiberated; LivingMapManager.isLiberated = function (m, s) { return m === 'forest' || m === 'desert'; };");
-    sh = run("buildExpeditionsSheetHTML()");
-    ok(sh.indexOf("Chaque marché ouvert a déjà sa caravane.") !== -1 && (sh.match(/exp-world is-busy/g) || []).length === 0, "Halle 6, Forêt et Désert pris : plus de marché libre");
-    run("LivingMapManager.isLiberated = LivingMapManager.__lib2;");
-    /* retours : une à la fois, ou toutes */
-    run("CaravanManager._now = function () { return 1e12 + 3600 * 1000 + 5; };");
-    ok(run("CaravanManager.checkArrival()") === true && run("CaravanManager.checkArrival()") === false, "retour annoncé une seule fois");
-    var l0 = run("CaravanManager.unload(0)");
-    ok(l0 && l0.world === 0 && run("CaravanManager.list().length") === 1 && run("CaravanManager.get().world") === 1, "décharger le marché de la Forêt laisse celle du Désert");
-    run("CaravanManager.depart('court', 0);");
-    ok(run("buildSaveData()").village.caravans.length === 2, "les caravanes sont dans la sauvegarde (game.village)");
-    run("CaravanManager._now = function () { return 1e13; };");
-    var all = run("CaravanManager.unload()");
-    ok(all && all.count === 2 && run("CaravanManager.list().length") === 0, "sans marché : toutes celles qui sont rentrées");
-    run("CaravanManager._now = function () { return Date.now(); }; expSheet = null;");
-  } catch (err) {
-    ok(false, "[250] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
-  }
-})();
-
-console.log("\n[251] v3.457.1 — Boss de donjon comptés à part au Bestiaire ; route de la Crypte");
+console.log("\n[251] v3.457.1 — Boss de donjon comptés à part au Bestiaire");
 (function () {
   try {
     game = freshCombat("knight");
@@ -15984,7 +15867,6 @@ console.log("\n[251] v3.457.1 — Boss de donjon comptés à part au Bestiaire ;
     ok(g.bestiaryKills("necrosupreme") === 2 && g.bestiaryKills("donjon_4") === 1, "Bestiaire : 3 victoires dont 1 Liche -> 2 Nécromanciens, 1 Liche");
     game.killCounts = { necrosupreme: 1 };
     ok(!g.bestiaryMet("necrosupreme") && g.bestiaryMet("donjon_4"), "seule la Liche vaincue : le Nécromancien suprême n'est pas rencontré");
-    ok(g.caravanRoadImageFor(3) === "images/Maps/parcours/crypte_descente.webp" && g.caravanRoadImageFor(2) === "images/Maps/parcours/ruines_route.webp", "Marché de la Crypte : la descente, plus la route des Ruines");
   } catch (err) {
     ok(false, "[251] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
@@ -16307,7 +16189,6 @@ console.log("\n[263] v3.458.7 — Icônes d'équipement en WebP 256 px (audit O4
     });
     ok(manque.length === 0 && Object.keys(g.EQUIPMENT_ICON_PNG_TYPES).length === 11, "les 55 icônes d'équipement existent en WebP" + (manque.length ? " — " + manque.slice(0, 3).join(", ") : ""));
     ok(gros.length === 0, "aucune au-delà de 60 Ko" + (gros.length ? " — " + gros.slice(0, 3).join(", ") : ""));
-    ok(!/equipment_icon\/[a-z]+_[a-z]+\.png/.test(fs.readFileSync(path.join(ROOT, "js/ui/caravan-view.js"), "utf8")), "plus de chemin .png d'équipement dans la caravane");
   } catch (err) {
     ok(false, "[263] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
   }
@@ -17695,20 +17576,6 @@ console.log("\n[300] v3.479.0 — Refonte de l'économie RE-2 : zones de product
   g.game.worldsEverReached = reached; g.WorldManager.worldIndex = wi;
 })();
 
-console.log("\n[301] v3.480.0 — Refonte de l'économie RE-3 : la caravane prend aussi le Bois et le Fer");
-(function () {
-  run("fullResetState(); game.playerName='T'; game.heroId='knight'; VillageBuildingManager.ensure(); game.village.buildings.hall.level = 3; game.village.buildings.warehouse.level = 0; WorldManager.worldIndex = 1;");
-  run("['bois','fer','pierre','eau','ble','viande'].forEach(function (k) { game.resources[k] = 0; ResourceReserveManager.setReserve(k, 0); }); game.resources.bois = 500; game.resources.fer = 500;");
-  var load = run("CaravanManager.computeLoad('long')");
-  ok(load.bois === 250 && load.fer === 250, "Bois et Fer au plafond : la caravane emporte ce qui dépasse la moitié (250 chacun)");
-  var now0 = g.CaravanManager._now;
-  run("CaravanManager._now = function () { return 1000000; }; CaravanManager.depart('long');");
-  ok(run("game.resources.bois") === 250 && run("game.resources.fer") === 250, "la moitié du plafond reste au village pour les planches et les lingots");
-  ok(run("CaravanManager.get()").gold === 1000, "or du trajet Long : 250 Bois à 1 or + 250 Fer à 3 or");
-  ok(fs.readFileSync(path.join(ROOT, "js/ui/caravan-view.js"), "utf8").indexOf("Le Bois et le Fer restent au village") === -1, "la fiche ne dit plus que le Bois et le Fer restent au village");
-  g.CaravanManager._now = now0;
-})();
-
 console.log("\n[302] v3.481.0 — Refonte de l'économie RE-4 : les matériaux de monde servent dans les mondes suivants");
 (function () {
   run("fullResetState(); game.playerName='T'; game.heroId='knight';");
@@ -17792,7 +17659,7 @@ console.log("\n[304] v3.483.0 — Refonte de l'économie F6 : textes et commenta
 (function () {
   var R = g.WAREHOUSE_RESOURCES;
   ok(R.seve_aeswyn.sourceHint.indexOf("Arbre-mère") !== -1 && R.seve_aeswyn.sourceHint.indexOf("chasse") === -1 && R.verre_des_dunes.sourceHint.indexOf("Dard des profondeurs") !== -1
-    && R.pierre_errante.sourceHint.indexOf("Labyrinthe") !== -1 && R.cire_sepulcre.sourceHint.indexOf("Ossuaire") !== -1, "« où trouver » : Arbre-mère (v3.511.0 : plus de chasse), Dard, Labyrinthe, Ossuaire cités");
+    && R.pierre_errante.sourceHint.indexOf("chantier errant") !== -1 && R.pierre_errante.sourceHint.indexOf("Labyrinthe") === -1 && R.cire_sepulcre.sourceHint.indexOf("Ossuaire") !== -1, "« où trouver » : Arbre-mère (v3.511.0 : plus de chasse), Dard, chantier errant (v3.780.0 : plus de Labyrinthe), Ossuaire cités");
   var src = function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); };
   ok(src("js/systems/tavern-system.js").indexOf('formatNumber(payout) }), 1400)') !== -1, "Taverne : la notification affiche l'or réellement versé");
   ok(src("js/systems/combat-item-system.js").indexOf("rendue à l'Entrepôt") !== -1 && src("js/systems/combat-item-system.js").indexOf("rangée dans le Sac") === -1, "Fiole noire : « rendue à l'Entrepôt »");
@@ -18123,7 +17990,6 @@ console.log("\n[311] v3.489.0 — Montagne, lot M-3 : acte II « Ce qui trie »"
     ok(rep.hostile && LM.isHostile("mountain", "ruisseaux") && /coulée/.test(rep.message), "La coulée : secteur sous la lave jusqu'au lendemain, rien n'est repris");
     var fake = { livingMap: { mapId: "mountain", sectorId: "pente_grise", wake: true }, ring: "sentier" };
     ok(Math.abs(P.gisantsMult(fake) - 1.1) < 1e-9, "secteur à la chaleur 1 : combats ×1,1");
-    ok(g.CARAVAN_RARE_BY_WORLD[4] === "cendre_vive" && g.CARAVAN_WORLD_MARKETS.mountain.requiresStoryStep === "montagne_07" && map.caravanMarket, "Marché de la Montagne : Cendre vive, ouvert à montagne_07, sur la carte");
     ok(g.ELITE_DB.vieux_golem.winDrop.rarity === "epic" && g.ELITE_DB.mere_dragonnets.repeatable, "deux élites répétables, une chance d'Épique à chaque victoire");
     // Le tri du Démon mineur
     game = freshCombat("knight");
@@ -18892,11 +18758,11 @@ console.log("\n[331] v3.509.0 — jalons du village et du héros (onglet Seconda
     ok(!MM.isClaimed(m.id), "remise à zéro : jalon effacé");
     g.restoreBaseState(sv);
     ok(MM.isClaimed(m.id), "rechargement : jalon toujours réclamé");
-    var ap = L.filter(function (x) { return x.id === "ms_d_apothicaire"; })[0], cv = L.filter(function (x) { return x.id === "ms_r_caravane"; })[0];
+    var ap = L.filter(function (x) { return x.id === "ms_d_apothicaire"; })[0], tv = L.filter(function (x) { return x.id === "ms_r_taverne"; })[0];
     run("fullResetState();");
-    ok(MM.measure(ap) === 0 && MM.measure(cv) === 0, "partie neuve : ni préparation ni caravane");
-    game = g.game; game.village.apothecary = { learned: {}, dailyKey: "Mon Oct 26 2026", dailyCount: 2 }; game.explorationProgression.ruinsMarketDone = true;
-    ok(MM.measure(ap) === 1 && MM.measure(cv) === 1, "ancienne partie : préparation et caravane déjà faites reconnues (v3.509.1)");
+    ok(MM.measure(ap) === 0 && tv && tv.kind === "counter" && tv.arg === "tavernDelivered" && tv.target === 5 && MM.measure(tv) === 0, "partie neuve : ni préparation ni contrat (v3.780.0 : la caravane cède la place à cinq contrats de Taverne)");
+    game = g.game; game.village.apothecary = { learned: {}, dailyKey: "Mon Oct 26 2026", dailyCount: 2 };
+    ok(MM.measure(ap) === 1 && !L.some(function (x) { return x.id === "ms_r_caravane"; }), "ancienne partie : préparation déjà faite reconnue (v3.509.1) ; plus de jalon de caravane");
   } catch (err) { ok(false, "[331] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
@@ -19033,7 +18899,7 @@ console.log("\n[338] v3.517.0 — correctifs de l'audit, lot 1 : textes factuels
     var res = g.WAREHOUSE_RESOURCES, chasse = Object.keys(res).filter(function (k) { return /\(chasse/.test(res[k].desc || ""); });
     ok(chasse.length === 0, "ressources : plus de « chasse » dans les vivres (" + chasse.join(", ") + ")");
     ok(/reforge 4/.test(res.chitine_profondeurs.desc) && /reforges 7 et 8/.test(res.verre_trempe.desc) && /5 à 12/.test(res.cle_de_voute.desc), "Forge des mondes : Chitine à la reforge 4, Verre trempé 7-8, Clé de voûte 5 à 12 (forge-system)");
-    ok(/Fonderie/.test(res.cire_consacree.sourceHint) && /Marché de la Montagne/.test(res.cendre_vive.sourceHint), "Cire consacrée : la Fonderie ; Cendre vive : la caravane longue");
+    ok(/Fonderie/.test(res.cire_consacree.sourceHint) && /Veines taillées/.test(res.cendre_vive.sourceHint) && !/caravane|Marque|Labyrinthe/.test(Object.keys(res).map(function (k) { return res[k].sourceHint || ""; }).join(" ")), "Cire consacrée : la Fonderie ; Cendre vive : les veines ; plus de caravane, de Marque ni de Labyrinthe dans les provenances");
     var pa = g.DUNGEON_SHOP.filter(function (x) { return /Petite Aventure/.test(x.desc || ""); });
     ok(pa.length && pa.every(function (x) { return /en réserve/.test(x.desc); }), "boutique du donjon : la place de Petite Aventure va en réserve (pas « par jour »)");
     var vq = JSON.stringify(g.VILLAGE_QUESTS.map(function (q) { return q.tutorial || null; }));
@@ -19608,27 +19474,6 @@ console.log("\n[362] v3.544.0 — Or du Labyrinthe selon le monde atteint (audit
   WC.getReachedWorldIndex = rw;
 })();
 
-console.log("\n[363] v3.547.0 — crypte_04 et ruines_04 disent où en est la caravane (audit QUE-10)");
-(function () {
-  var C = g.CaravanManager, sv = { list: C.list, max: C.getMaxCaravans, now: C._now };
-  try {
-    var T = 1e9, cars = [];
-    C._now = function () { return T; };
-    C.list = function () { return cars.slice().sort(function (a, b) { return a.endsAt - b.endsAt; }); };
-    C.getMaxCaravans = function () { return 1; };
-    var P = function () { return g.storyMarketCaravanProgress(3, "Caravane du Marché de la Crypte", false); };
-    ok(P() === "Caravane du Marché de la Crypte 0/1", "aucune caravane, place libre : « 0/1 »");
-    cars = [{ world: 3, startedAt: T - 1000, endsAt: T + 7800e3 }];
-    ok(/de retour dans 2h 10m/.test(P()), "caravane de la Crypte en route : « de retour dans 2h 10m » (" + P() + ")");
-    cars = [{ world: 3, startedAt: T - 9000, endsAt: T - 1 }];
-    ok(/décharge-la/.test(P()), "caravane de la Crypte rentrée : décharger");
-    cars = [{ world: 1, startedAt: T - 1000, endsAt: T + 3600e3 }];
-    ok(/la prochaine rentre dans 1h 0m/.test(P()), "place prise par le Désert : retour de la prochaine (" + P() + ")");
-    ok(g.storyMarketCaravanProgress(3, "X", true) === "X 1/1", "étape faite : « 1/1 »");
-  } catch (err) { ok(false, "[363] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
-  C.list = sv.list; C.getMaxCaravans = sv.max; C._now = sv.now;
-})();
-
 var ATTENTES = []; // contrôles asynchrones, attendus avant le bilan
 console.log("\n[364] v3.547.0 — Le service worker purge les images disparues (audit IMA-10)");
 (function () {
@@ -19740,37 +19585,6 @@ console.log("\n[367] v3.550.0 — Élites qui se rejouent aux Ruines (Golem, pi�
     });
     ok(g.LIVING_MAPS.ruins.plan.tomber.collapse.indexOf("tour_garde") < 0, "la tour de garde ne s'effondre pas (branche « tomber »)");
   } catch (err) { ok(false, "[367] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
-})();
-
-console.log("\n[368] v3.551.0 — Caravane d'essai de l'Histoire : 10 min, à vide, hors places (retour Seb, point 2)");
-(function () {
-  var C = g.CaravanManager, game = g.game, sv = { now: C._now, mk: C.getMarkets, av: C.isAvailable, max: C.getMaxCaravans, ep: game.explorationProgression, cars: (game.village || {}).caravans };
-  try {
-    var T = 1e9;
-    C._now = function () { return T; };
-    C.getMarkets = function () { return [{ mapId: "ruins", world: 2, name: "Ruines" }, { mapId: "desert", world: 1, name: "Désert" }]; };
-    C.isAvailable = function () { return true; };
-    C.getMaxCaravans = function () { return 1; };
-    game.explorationProgression = {}; C.ensure(); game.village.caravans = [{ trip: "long", world: 1, startedAt: T - 1000, endsAt: T + 3600e3, cargo: { ble: 10 }, gold: 50 }];
-    ok(!C.hasFreeSlot() && C.isStoryTripFor(2) && C.getBlockReason("essai", 2) === "", "toutes les places prises : la caravane d'essai part quand même");
-    ok(C.getBlockReason("essai", 1) !== "" && !C.isStoryTripFor(3), "pas d'essai vers un marché que l'Histoire ne demande pas");
-    var stock = g.WarehouseManager.getAmount("ble");
-    ok(C.depart("essai", 2) === true && g.WarehouseManager.getAmount("ble") === stock, "départ à vide : rien ne quitte l'Entrepôt");
-    var c = C.get(2);
-    ok(c && c.endsAt - c.startedAt === 180e3 && c.gold === 0 && !c.rare && !c.item, "3 minutes, sans gain (v3.740.0)");
-    ok(C._regularCount() === 1 && !C.hasFreeSlot(), "elle ne prend pas de place (la caravane du Désert reste la seule comptée)");
-    ok(/Caravane en route, de retour dans 3m/.test(g.storyMarketCaravanProgress(2, "Caravane du Marché des Ruines", false)), "ruines_04 : « de retour dans 3m » (" + g.storyMarketCaravanProgress(2, "X", false) + ")");
-    T += 600e3;
-    var l = C.unload(2);
-    ok(l && l.gold === 0 && game.explorationProgression.ruinsMarketDone === true && !C.isStoryTripFor(2), "retour : déchargée, l'étape est faite, plus d'essai");
-    ok(C.getBlockReason("essai", 2) !== "", "l'essai ne se rejoue pas");
-    var html = g.buildCaravanHTML ? g.buildCaravanHTML() : run("buildCaravanHTML()");
-    ok(!/data-car="essai"/.test(html), "feuille : plus de bloc d'essai une fois l'étape faite");
-    game.explorationProgression = {};
-    html = run("buildCaravanHTML()");
-    ok(/data-car="essai" data-world="2"/.test(html) && /departStoryCaravan\(2\)/.test(html), "feuille : le bloc « Caravane d'essai » vers le Marché des Ruines");
-  } catch (err) { ok(false, "[368] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
-  C._now = sv.now; C.getMarkets = sv.mk; C.isAvailable = sv.av; C.getMaxCaravans = sv.max; game.explorationProgression = sv.ep || {}; game.village.caravans = sv.cars || [];
 })();
 
 console.log("\n[369] v3.553.0 — Grand écran, option A : polices, coque d'un seul tenant, bandeau");
@@ -19936,7 +19750,6 @@ console.log("\n[376] v3.561.0 — Le Grand Ouvrage : verser le surplus, +1 % d'o
     ok(Math.abs(gm - game.goldMult - 0.01) < 1e-9, "or des combats : goldMult +0,01 par palier (stats-system)");
     game.village.grandOuvrage.points = 2000;
     ok(g.TavernManager.getPayout({ reward: 1000 }) === 1010, "Taverne : contrat payé avec le bonus");
-    ok(/GrandOuvrage\.applyGold\(gold\)/.test(fs.readFileSync(path.join(ROOT, "js/systems/caravan-system.js"), "utf8")), "caravane : l'or du déchargement passe par le bonus");
     ok(GO.pour({ bois: 0 }) === null && GO.pour({ inconnu: 5 }) === null, "rien versé : rien ne change");
     var hf = g.ACHIEVEMENTS_DB.filter(function (a) { return /^hf_vil_ouvrage_/.test(a.id); });
     ok(hf.length === 5 && hf.map(function (a) { return a.target; }).join() === "5,10,15,20,25" && hf.every(function (a) { return a.category === "village"; }), "hauts faits : paliers 5, 10, 15, 20, 25 (Village)");
@@ -20860,66 +20673,6 @@ console.log("\n[404] v3.609.0 — Le Grand Ouvrage automatique : au-delà du seu
   } catch (err) { ok(false, "[404] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
-console.log("\n[405] v3.610.0 — Caravane : la part laissée au village se règle (10 à 75 %), retour de Seb (caravanes bloquées au Désert)");
-(function () {
-  var C = g.CaravanManager, W = g.WarehouseManager;
-  try {
-    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; VillageBuildingManager.ensure(); game.village.buildings.hall.level = 1; game.worldsEverReached = { 0: true };");
-    ok(C.getKeepShare() === 0.5, "par défaut : la moitié du plafond reste au village");
-    var cap = W.getCap("ble");
-    run("ResourceReserveManager.setReserve('ble', 0); game.resources.ble = " + Math.floor(cap * 0.3) + ";");
-    ok(C.getSpare("ble") === 0, "blé à 30 % du plafond : rien à charger à 50 %");
-    for (var i = 0; i < 4; i++) C.stepKeepShare(-1);
-    ok(C.getKeepShare() === 0.3 && C.getSpare("ble") === 0, "part baissée à 30 % : toujours rien au-dessus");
-    C.stepKeepShare(-1);
-    ok(C.getKeepShare() === 0.25 && C.getSpare("ble") === Math.floor(cap * 0.3) - Math.ceil(cap * 0.25), "à 25 % : la caravane prend ce qui dépasse");
-    for (i = 0; i < 9; i++) C.stepKeepShare(-1);
-    ok(C.getKeepShare() === 0.1, "borne basse : 10 %");
-    for (i = 0; i < 20; i++) C.stepKeepShare(1);
-    ok(C.getKeepShare() === 0.75, "borne haute : 75 %");
-    C.stepKeepShare(-10); C.stepKeepShare(-10);
-    run("ResourceReserveManager.setReserve('ble', " + Math.floor(cap * 0.28) + ");");
-    ok(C.getSpare("ble") === Math.floor(cap * 0.3) - Math.floor(cap * 0.28), "la réserve protégée l'emporte sur la part choisie");
-    var sd = JSON.parse(JSON.stringify(g.buildSaveData()));
-    ok(sd.village && sd.village.caravanKeep === 0.1, "réglage sauvegardé avec game.village");
-    var html = g.buildCaravanDepartHTML();
-    ok(/Laisser au village : 10 % du plafond/.test(html) && /stepCaravanKeep\(1\)/.test(html), "fiche : la part réglable");
-    run("game.village.caravanKeep = 3;"); ok(C.getKeepShare() === 0.75, "valeur hors bornes ramenée à 75 %");
-    run("ResourceReserveManager.setReserve('ble', 0); delete game.village.caravanKeep;");
-  } catch (err) { ok(false, "[405] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
-})();
-
-console.log("\n[406] v3.611.0 — Caravanes : rare garanti sur le Long (R1), commande du jour par marché (R2)");
-(function () {
-  var C = g.CaravanManager, W = g.WarehouseManager;
-  try {
-    run("fullResetState(); game.playerName='Test'; game.heroId='knight'; VillageBuildingManager.ensure(); game.village.buildings.hall.level = 3; game.village.buildings.warehouse.level = 0; WorldManager.worldIndex = 1; game.worldsEverReached = { 0: true, 1: true };");
-    run("['ble','viande','bois','eau','pierre','fer'].forEach(function (k) { ResourceReserveManager.setReserve(k, 0); game.resources[k] = 500; });");
-    var o1 = C.getOrder(1), o0 = C.getOrder(0);
-    ok(C.getEligibleKeys().indexOf(o1) >= 0 && C.getOrder(1) === o1, "commande du jour : une matière brute, la même toute la journée (" + o0 + " / " + o1 + ")");
-    var load = C.computeLoad("moyen", undefined, 1);
-    ok(load[o1] === C.getSpare(o1) && C.getLoadUnits(load) === C.getCapacity("moyen"), "la commande est chargée en premier, tout son surplus");
-    var part = {}; part[o1] = load[o1];
-    ok(C.getLoadGold(part, "moyen", 1) === Math.floor(load[o1] * WAREHOUSE_RESOURCES_PRICE(o1) * 1.25 * 0.8), "+25 % d'or sur la ressource commandée");
-    ok(C.orderRareFor(load, 1) && !C.orderRareFor({}, 1), "à partir de 100 unités : +1 rare promis");
-    run("var _r = Math.random; Math.random = function () { return 0.99; };");
-    C.depart("long", 1);
-    var c = C.get(1);
-    ok(c && c.rare && c.rare.key === "verre_des_dunes" && c.rare.n === 3 && c.order === o1, "Long au Désert, tirage défavorable : 2 Verres garantis + 1 de la commande (" + (c && c.rare && c.rare.n) + ")");
-    ok(C.isOrderDone(1) && !C.orderRareFor(load, 1), "commande honorée : plus de rare ce jour-là pour ce marché");
-    var html = g.buildCaravanOrderHTML(1, load);
-    ok(/Commande du jour/.test(html) && /Honorée aujourd/.test(html), "fiche : la commande du jour, honorée");
-    run("game.village.caravans = []; game.village.caravanOrders = { day: 'hier', done: [1] };");
-    ok(!C.isOrderDone(1), "jour suivant : la commande est de nouveau à honorer");
-    run("['ble','viande','bois','eau','pierre','fer'].forEach(function (k) { game.resources[k] = 500; });");
-    C.depart("long", 0);
-    c = C.get(0);
-    ok(c && c.rare && c.rare.n >= 2, "Long au marché de la Forêt : rare du marché garanti (" + (c && c.rare && c.rare.key) + " ×" + (c && c.rare && c.rare.n) + ")");
-    run("Math.random = _r; game.village.caravans = [];");
-  } catch (err) { ok(false, "[406] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
-})();
-function WAREHOUSE_RESOURCES_PRICE(k) { return Number(g.WAREHOUSE_RESOURCES[k].sellPrice || 0); }
-
 console.log("\n[407] v3.612.0 — Zones : 3 parcelles qui montent par monde, achat automatique (idée de Seb, atelier parcelles B)");
 (function () {
   var PPS = g.ProductionPlotsSystem, S = g.PRODUCTION_PLOTS_SHARED, W = g.WarehouseManager;
@@ -21176,8 +20929,6 @@ console.log("\n[415] v3.621.0 — Audit narratif : feuillets du Veilleur, lame d
     ok(run("Object.keys(GRIMOIRE_CONDITIONS).some(function(k){ return GRIMOIRE_CONDITIONS[k].label === \"L'ennemi invoque un bouclier\"; })")
       && run("GRIMOIRE_TARGET_POLICIES.some(function(t){ return t.label === 'Celle qui soutient'; })")
       && sq.indexOf("« L'ennemi invoque un bouclier »") > 0 && sq.indexOf("« Celle qui soutient »") > 0, "les noms cités existent dans le Grimoire (conditions et cibles)");
-    ok(!/trajet Long \(Halle 3\), parfois/.test(sq) && vq.indexOf("peut ramener une rareté") < 0 && run("CARAVAN_RARE_QTY[0]") === 2,
-      "caravanes : le trajet Long promet 2 raretés à coup sûr, comme le code (v3.611.0)");
     ok(vq.indexOf("sept terres") < 0 && vq.indexOf("il reste une terre à reprendre") > 0, "deuxième parcelle du Champs : il reste une terre (3 parcelles depuis la v3.612.0)");
     ok(hq.indexOf("fondue puis taillée") < 0, "Obsidienne taillée : taillée au burin, elle ne fond pas");
     ok(run("(function(){ var s=STORY_QUESTS.mountain.steps.find(function(x){return x.id==='montagne_17';}); return s.objectiveLabel; })()").indexOf("(coût : 1 Ration moyenne)") > 0, "montagne_17 : le coût de la traversée est annoncé");
@@ -21358,7 +21109,6 @@ console.log("\n[422] v3.627.0 — Tour, lot T-2a : la carte des étages et l'esc
     var t = g.SCENE_TEMPLATES.petite_aventure_tour;
     ok(t && t.worldId === "tower" && t.successFlag === "towerPaCompleted" && t.successCount === "towerPaWins", "Petite Aventure de la Tour : réussites comptées pour « L'escalier »");
     ok(g.PA2_OBSTACLES.tower.indexOf("dalle_qui_glisse") >= 0 && g.PA2_OBSTACLES.tower.indexOf("allee_des_gisants") >= 0 && g.PA2_MAPS_BY_WORLD.tower.join() === "tour_1,tour_2" && g.PA2_RARE.tower.resourceId === "givre_bleu", "l'escalier rejoue les obstacles des autres mondes ; deux cartes ; Givre bleu");
-    ok(g.CARAVAN_WORLD_MARKETS.tower.requiresStoryStep === "tour_06" && g.CARAVAN_RARE_BY_WORLD[5] === "givre_bleu", "Marché de la Tour : ouvert à tour_06, Givre bleu au trajet Long");
     run("fullResetState(); game.playerName='Test'; game.heroId='knight'; StoryQuestManager.ensure(); LivingMapManager.ensureDefaults();");
     LM.isMapOpen = (function (f) { return function (id) { return id === "tower" ? true : f.call(LM, id); }; })(LM.isMapOpen);
     var st = LM.getState("tower", "etage_sable"); st.state = "libere"; st.liberatedCount = 1;
@@ -22690,16 +22440,14 @@ console.log("\n[452] v3.687.0 — Économie et village (audit 04/11, lot I8)");
     var nob = PPS.getAutoBlock("lumber");
     PPS.getNextAction = nb;
     ok(blk && blk.key === "bois" && /Achat automatique arrêté/.test(gh) && nob === null, "ECON-11 : achat automatique arrêté, la raison s'affiche sous l'interrupteur");
-    // ECON-12 : l'or affiché des caravanes comprend le bonus du Grand Ouvrage
     g.game.village.grandOuvrage.points = GO.getTierCost(1) + GO.getTierCost(2);
-    ok(g.CaravanManager.unloadGold(1000) === GO.applyGold(1000) && GO.applyGold(1000) > 1000 && /unloadGold\(c\.gold\)/.test(rd("js/ui/caravan-view.js")) && /unloadGold\(c\.gold\)/.test(rd("js/ui/expeditions-view.js")), "ECON-12 : or des caravanes affiché avec le bonus (" + GO.applyGold(1000) + ")");
     // ECON-9 : un bâtiment à parcelles n'a plus de coût de niveau dans l'alerte
     var gnc = g.ProductionManager.getNextCost;
     g.ProductionManager.getNextCost = function (id) { return PPS.isManaged(id) ? { cire_fantome: 1 } : gnc.call(g.ProductionManager, id); };
     var dem = g.warehouseOpenDemand(); g.ProductionManager.getNextCost = gnc;
     ok(!dem.cire_fantome, "ECON-9 : coût hérité des bâtiments à parcelles ignoré");
     // ECON-13, ECON-15 : textes
-    ok(/caravane longue au Marché de la Tour/.test(g.WAREHOUSE_RESOURCES.givre_bleu.sourceHint), "ECON-13 : le Givre bleu cite la caravane longue");
+    ok(/Étages de la Tour/.test(g.WAREHOUSE_RESOURCES.givre_bleu.sourceHint) && !/caravane/.test(g.WAREHOUSE_RESOURCES.givre_bleu.sourceHint), "ECON-13 : le Givre bleu cite les étages de la Tour (v3.780.0 : plus de caravane)");
     ok(!/_t\("Autovente"\)/.test(rd("js/ui/equipment-view.js") + rd("js/ui/heros-screens-view.js")), "ECON-15 : « Auto-offrande » au lieu d'« Autovente »");
     // SUIV-6 : or des événements du village dans « Or gagné »
     var VE = g.VillageEvents, keepVE = { cd: VE.canDeliver, nd: VE.needs, rg: VE.rewardGold, gf: VE.rewardGifts, ac: VE.active, mo: VE.marketOn };
@@ -23851,7 +23599,7 @@ console.log("\n[470] v3.705.0 — Quêtes, Boutique et Donjon au standard des pa
 console.log("\n[471] v3.706.0 — Atelier 4 « Signaux », variantes A (Seb 05/11) : EQUI-2, CPL1-2, UI-18, SUIV-8, barre de titre des pages sans bandeau");
 (function () {
   var rd = function (f) { return fs.readFileSync(path.join(ROOT, f), "utf8"); };
-  var fn = { save: g.saveGame, rp: g.renderPanel, unl: g.CaravanManager.unload, now: g.CaravanManager._now };
+  var fn = { save: g.saveGame, rp: g.renderPanel };
   try {
     g.saveGame = function () {}; g.renderPanel = function () {};
     run("fullResetState(); game.playerName='T'; game.heroId='knight'; game.worldsEverReached = {}; for (var i = 0; i <= 1; i++) game.worldsEverReached[i] = true; WorldManager.worldIndex = 1; WarehouseManager.ensure(); VillageBuildingManager.ensure();");
@@ -23876,24 +23624,11 @@ console.log("\n[471] v3.706.0 — Atelier 4 « Signaux », variantes A (Seb 05/1
     ok(/kgauge kgauge-thin kgauge-xp is-go/.test(sh) && sh.indexOf("wh-go-tick") > 0 && sh.indexOf(g.esc(g._t("Au-delà de {n} ({p} %), le surplus part tout seul au Grand Ouvrage.", { n: g.formatNumber(keep), p: 80 }))) > 0, "EQUI-2 : fiche, jauge bleue marquée et ligne « Au-delà de " + keep + " (80 %) » sous elle");
     var cv = rd("css/04-panel-village.css");
     ok(/\.wh-go-tick \{ position: absolute; top: -3px; width: 2px; height: 10px;/.test(cv) && /\.wh-tile\.is-go \.wh-tile-bar > span \{ background: var\(--c-blue-350\); \}/.test(cv), "EQUI-2 : repère 2×10 px, barre bleue (CSS)");
-    // CPL1-2 (A) : rubrique « Caravanes » après « Village », un toucher, la caravane en route
-    var t0 = Date.now(); g.CaravanManager._now = function () { return t0; };
-    run("CaravanManager.ensure(); game.village.caravans = [];");
-    g.game.village.caravans.push({ trip: "moyen", startedAt: t0 - 4 * 3600e3, endsAt: t0 - 60e3, world: 1, cargo: { bois: 10 }, gold: 300, rare: { key: "pierre", n: 2 }, item: null, notified: true, order: null });
-    g.game.village.caravans.push({ trip: "court", startedAt: t0 - 60e3, endsAt: t0 + 72 * 60e3, world: 0, cargo: { ble: 5 }, gold: 50, rare: null, item: null, notified: false, order: null });
-    var s0 = g.ReturnManager.complete({ produced: {}, crafted: {}, ms: 3600e3 }, { at: t0, site: null, tavernReset: 0, hp: g.game.heroHp });
-    ok(s0.caravansBack === 1 && g.ReturnManager.hasContent(s0), "CPL1-2 : une caravane rentrée seule suffit à ouvrir l'écran (hasContent)");
+    // CPL1-2 (A) : la rubrique « Caravanes » est retirée avec les caravanes (v3.780.0)
     g.openReturnScreen({ ms: 3600e3, produced: { bois: 30 }, crafted: {}, siteDone: { name: "Forge", level: 2 }, fullPlots: 0, openPlots: 3, hpGain: 0 });
-    var h = g.buildReturnScreenHTML(), iV = h.indexOf(g._t("Village · à récolter")), iC = h.indexOf(">" + g._t("Caravanes") + "<"), iA = h.indexOf(g._t("Ateliers et chantier"));
-    var gold = g.CaravanManager.unloadGold(300);
-    ok(iV > 0 && iC > iV && iA > iC, "CPL1-2 : « Caravanes » juste après « Village », avant « Ateliers et chantier »");
-    ok(h.indexOf('class="ret-link cpl-unload" onclick="returnUnloadCaravans()"') > 0 && h.indexOf("+" + g.formatNumber(gold) + " or") > 0 && h.indexOf(g._t("Une autre caravane rentre dans {d}.", { d: g.formatTime(72 * 60) })) > 0, "CPL1-2 : butin (+" + gold + " or, bonus compris), lien « Décharger », caravane encore en route");
-    var or0 = g.game.gold; g.returnUnloadCaravans();
-    var h2 = g.buildReturnScreenHTML();
-    ok(g.game.gold - or0 === gold && g.CaravanManager.list().length === 1 && h2.indexOf("cpl-unload") < 0 && h2.indexOf(g._t("Déchargée : <b>+{g} or</b>", { g: g.formatNumber(gold) })) > 0 && h2.indexOf(g._t("Une autre caravane rentre dans {d}.", { d: g.formatTime(72 * 60) })) > 0, "CPL1-2 : un toucher décharge (or versé), « Déchargée » reste affiché avec la caravane en route");
+    var h = g.buildReturnScreenHTML();
+    ok(h.indexOf(g._t("Village · à récolter")) > 0 && h.indexOf("cpl-unload") < 0 && typeof g.buildReturnCaravansHTML === "undefined", "écran de retour : plus de rubrique « Caravanes »");
     g.closeReturnScreen();
-    run("game.village.caravans = [];");
-    ok(g.ReturnManager.complete({ produced: {}, crafted: {} }, {}).caravansBack === 0 && g.buildReturnCaravansHTML() === "", "CPL1-2 : aucune caravane rentrée, pas de rubrique");
     ok(/\.ret-sec-b \.ret-link \{ min-height: 44px; \}/.test(rd("css/04-panel-evolutions.css")), "CPL1-2 : « Décharger » hérite des 44 px des liens du retour");
     // UI-18 (A) : la Tour descend et rentre
     ok(g.MAP_NODE_POSITIONS[5].x === 72 && g.MAP_NODE_POSITIONS[5].y === 85.5 && g.MAP_NODE_POSITIONS[4].x === 65.1 && g.MAP_NODE_POSITIONS[4].y === 64.7, "UI-18 : la Tour en (72 ; 85,5), la Montagne inchangée");
@@ -23922,7 +23657,7 @@ console.log("\n[471] v3.706.0 — Atelier 4 « Signaux », variantes A (Seb 05/1
     // Barre de titre des pages sans bandeau : largeur auto, tient dans le cadre
     ok(/#panel-container \.kfp-top-holder:not\(\.has-banner\) \.kf-top \{\s*aspect-ratio: auto; width: auto;/.test(rd("css/00-kbtn.css")), "Barre de titre (Paramètres, Ascension, Boutique, Donjon) : largeur auto, plus de dépassement de 4 px");
   } catch (err) { ok(false, "[471] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
-  g.saveGame = fn.save; g.renderPanel = fn.rp; g.CaravanManager._now = fn.now;
+  g.saveGame = fn.save; g.renderPanel = fn.rp;
   try { run("game.village.caravans = []; fullResetState();"); g.closeReturnScreen(); } catch (e) {}
 })();
 
@@ -25712,7 +25447,7 @@ console.log("\n[500] Journal de test (v3.747.0, Crypte de Seb) : boss à terre, 
 (function () {
   try {
     var J = g.JournalTest, src = fsRead("js/main/journal-test.js");
-    ok(typeof g.CaravanManager.depart._journalOrig === "function" && typeof g.CaravanManager.unload._journalOrig === "function", "caravanes : départ et déchargement enveloppés");
+    ok(!/CaravanManager/.test(fs.readFileSync(path.join(ROOT, "js/main/journal-test.js"), "utf8")), "caravanes retirées (v3.780.0) : plus rien à envelopper");
     ok(/"a_terre" : "victoire"/.test(src) && /ctx\.e\.downed/.test(src), "un boss qui se relève (downed, PV > 0) est noté « a_terre », pas « victoire »");
     ok(/rounds: g\(\)\.combatRound/.test(src), "victoire : nombre de rounds du combat");
     ok(/donjon_debut[^\n]*pv0: J\._pvPct\(\)/.test(src) && /quete_debut[^\n]*pv0/.test(src) && /"expedition", lm \? \{ id: a\[0\], pv0[^\n]*: \{ id: a\[0\], pv0/.test(src), "PV d'entrée : donjon, quête, expédition");

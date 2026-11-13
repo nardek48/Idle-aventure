@@ -14,7 +14,7 @@ var openVillageBuildingId = null;
 var hallSheetSegment = "shop"; // v3.419.0 (E-2) : segment de la feuille de la Halle ; v3.426.0 : Échoppe · Agrandir
 
 function setHallSheetSegment(seg) {
-  hallSheetSegment = (seg === "build") ? "build" : "shop"; // v3.426.0 : la Caravane est partie aux Expéditions
+  hallSheetSegment = (seg === "build") ? "build" : "shop"; // v3.426.0 : Échoppe · Agrandir
   if (openVillageBuildingId === "hall") openVillageBuildingSheet("hall");
 }
 window.setHallSheetSegment = setHallSheetSegment;
@@ -176,11 +176,9 @@ function buildVillageBuildingSheetHTML(id) {
   });
   h += '<div class="ksheet-body">';
 
-  /* v3.419.0 (E-2) : la Halle construite porte des segments. v3.426.0 (chantier Expéditions) :
-     la Caravane part dans Campement › Expéditions ; ici, un renvoi qui dit où elle en est. */
+  /* v3.419.0 (E-2) : la Halle construite porte des segments (Échoppe · Agrandir ; v3.780.0 : sans caravane). */
   if (id === "hall" && level > 0) {
     var hseg = (hallSheetSegment === "build") ? "build" : "shop";
-    if (typeof buildHallCaravanLinkHTML === "function") h += buildHallCaravanLinkHTML();
     h += '<div class="kseg vb-sheet-seg">';
     // v3.424.0 (chantier Héros, H-1, décision Seb) : la Boutique d'équipement s'installe à la Halle
     h += '<button type="button" class="' + (hseg === "shop" ? 'is-on' : '') + '" onclick="setHallSheetSegment(\'shop\')"><img class="vb-seg-ico" src="images/Icons/subtabs/equipment_shop.webp" alt="">' + _t("Échoppe") + '</button>';

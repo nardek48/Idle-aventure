@@ -128,7 +128,6 @@ window.refreshProductionSheet = refreshProductionSheet;
    feuille, la vignette du tableau de bord garde les siens). */
 function refreshProductionSheetDOM() {
   if (typeof refreshWorkshopTilesDOM === "function") refreshWorkshopTilesDOM(); // v3.415.0 : vignettes d'atelier
-  if (typeof refreshCaravanDOM === "function") refreshCaravanDOM(); // v3.419.0 (E-2) : retour et compte à rebours de la caravane
   if (typeof refreshExpeditionsDOM === "function") refreshExpeditionsDOM(); // v3.426.0 : comptes à rebours du tableau des départs
   var id = productionDetailBuildingId;
   if (!id || typeof document === "undefined") return;

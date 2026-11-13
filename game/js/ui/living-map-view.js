@@ -410,8 +410,6 @@ function buildLivingMapHTML(mapId) {
   h += '<button type="button" class="lm-node is-village' + (livingMapSelected === "village" ? " is-selected" : "") + '" style="left:' + map.village.x + '%;top:' + map.village.y + '%;" onclick="event.stopPropagation();lmxTapSector(\'village\')">';
   h += '<span class="lm-node-disc">★</span><span class="lm-node-name">' + esc(_td(map.village.name)) + '</span></button>';
 
-  /* v3.420.0 (E-3) : la caravane de la Halle sur sa piste (caravan-view.js) */
-  if (typeof buildLivingMapCaravanHTML === "function") h += buildLivingMapCaravanHTML(mapId);
 
   /* v3.456.0 (Crypte, crypte_16) : le tracé de la chaîne, en pointillé d'un couloir à l'autre */
   var trace = map.chainTrace;

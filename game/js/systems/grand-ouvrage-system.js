@@ -1,7 +1,7 @@
 "use strict";
 /* systems/grand-ouvrage-system.js — v3.561.0 (retour Seb du 29/10, point 9, option E) : LE GRAND OUVRAGE.
    Le débouché sans fin du surplus : on y verse toute ressource de l'Entrepôt, chaque palier
-   atteint donne +1 % d'or (combats via StatsSystem, Taverne, caravanes). Ouvert aux Ruines.
+   atteint donne +1 % d'or (combats via StatsSystem, Taverne ; caravanes retirées en v3.780.0). Ouvert aux Ruines.
 
    VALEUR d'une ressource (points) : une matière brute vaut 1, un matériau de monde 25, un produit
    la somme de ses ingrédients (recette des ateliers), calculée une fois. Palier n : 2 000 × 1,12^(n−1).
@@ -119,9 +119,9 @@ var GrandOuvrage = {
 
   getTier: function () { return this.getProgress().tier; },
 
-  /* Bonus d'or (0,03 = +3 %). Lu par StatsSystem (or des combats), la Taverne et la caravane. */
+  /* Bonus d'or (0,03 = +3 %). Lu par StatsSystem (or des combats) et la Taverne. */
   getGoldBonus: function () { return this.getTier() * GRAND_OUVRAGE.goldPerTier; },
-  /* Or d'une source hors combat (Taverne, caravane), bonus compris. */
+  /* Or d'une source hors combat (Taverne), bonus compris. */
   applyGold: function (gold) { return Math.floor(Number(gold || 0) * (1 + this.getGoldBonus())); },
 
   /* Valeur d'une ressource, en points (voir l'en-tête). */

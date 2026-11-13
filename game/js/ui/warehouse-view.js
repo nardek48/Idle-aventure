@@ -143,10 +143,6 @@ function getWarehouseOtherUses(key) {
   if ((window.TAVERN_CONTRACT_TEMPLATES || []).some(function (t) { return t.resourceId === key; })) {
     out.push({ icon: "images/Icons/village_buildings/tavern.webp", text: _t("Contrats de la Taverne") });
   }
-  // v3.419.0 (E-2) : la caravane emporte le surplus des matières brutes
-  if (window.CaravanManager && CaravanManager.getEligibleKeys().indexOf(key) !== -1) {
-    out.push({ icon: "images/Icons/village_buildings/caravan_market.webp", text: _t("Caravane de la Halle (au-delà de {p} % du plafond)", { p: Math.round(CaravanManager.getKeepShare() * 100) }) });
-  }
   // v3.481.0 (RE-4) : Verre trempé, Clé de voûte et Cire consacrée servent aussi aux reforges
   if (["acier", "resine_durcie", "chitine_profondeurs", "verre_trempe", "cle_de_voute", "cire_consacree", "obsidienne_taillee", "verre_faille"].indexOf(key) !== -1) {
     out.push({ icon: "images/Icons/village_buildings/village_forge.webp", text: _t("Forge : reforge de l'équipement") });

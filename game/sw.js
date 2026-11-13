@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.779.0"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.780.0"; // <- à incrémenter à CHAQUE livraison
 /* v3.751.0 : l'Alpha (/alpha/) partage l'origine du jeu ; ses caches portent un autre préfixe, sinon chaque
    service worker effacerait ceux de l'autre à l'activation. */
 var IS_ALPHA_SW = /\/alpha\/$/.test(self.registration ? self.registration.scope : "");
@@ -175,7 +175,6 @@ var PRECACHE_APP_SHELL = [
   "./js/systems/mission-board-system.js",
   "./js/systems/equip-shop-system.js",
   "./js/systems/caravan-system.js", // v3.421.0 (E-2) : NOUVEAU fichier
-  "./js/ui/caravan-view.js", // v3.421.0 (E-2) : NOUVEAU fichier
   "./js/systems/grand-ouvrage-system.js", // v3.561.0 : NOUVEAU fichier (le Grand Ouvrage)
   "./js/ui/grand-ouvrage-view.js", // v3.561.0 : NOUVEAU fichier
   "./js/systems/enchant-system.js",

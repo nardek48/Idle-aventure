@@ -268,7 +268,7 @@ var VILLAGE_MILESTONES = [ // v3.779.0 : jalons des rangs de sorts remplacés (e
   { id: "ms_d_maddoc", w: 1, g: "h", title: "Maddoc au palier 5", kind: "companionUpg", arg: "maddoc", target: 5, icon: "images/Companions/maddoc.webp", go: "c:maddoc" },
   // Ruines
   { id: "ms_r_zones", w: 2, g: "v", title: "Six zones au niveau 11", kind: "zonesAtLevel", arg: 11, target: 6, icon: "images/Production/quarry.webp", go: "production" },
-  { id: "ms_r_caravane", w: 2, g: "v", title: "Une caravane rentrée", kind: "counter", arg: "caravansBack", target: 1, icon: "images/Icons/village_buildings/caravan.webp", go: "b:hall", book: "caravane" },
+  { id: "ms_r_taverne", w: 2, g: "v", title: "Cinq contrats livrés à la Taverne", kind: "counter", arg: "tavernDelivered", target: 5, icon: "images/Icons/village_buildings/tavern.webp", go: "b:tavern" },
   { id: "ms_r_terrain", w: 2, g: "v", title: "Terrain d'entraînement niveau 10", kind: "building", arg: "training", target: 10, icon: "images/Icons/village_buildings/training_grounds.webp", go: "b:training" },
   { id: "ms_r_entrainement", w: 2, g: "h", title: "Une caractéristique entraînée à 120", kind: "trainingMax", target: 120, icon: "images/Icons/village_buildings/training_grounds.webp", go: "training" },
   { id: "ms_r_edda", w: 2, g: "h", title: "Edda au palier 5", kind: "companionUpg", arg: "edda", target: 5, icon: "images/Companions/edda.webp", go: "c:edda" },
@@ -303,10 +303,7 @@ var MILESTONE_BOOKS = {
     ["images/Icons/system/hourglass_waiting.webp", "Il fait 4 préparations par jour, 2 de plus par niveau."]] },
   competence: { title: "La compétence d'un compagnon", icon: "images/Companions/wenna.webp", tips: [
     ["images/Icons/subtabs/hero_roster.webp", "Fiche du compagnon : sa compétence signature monte du rang 0 au rang 5 (soin plus fort, frappe plus dure, une charge de plus…)."],
-    ["images/Icons/resources/verre_trempe_icon.webp", "Un rang coûte de l'or et 2 matériaux du monde. Comme les sorts du héros, le rang 2 s'ouvre au Désert, le 3 aux Ruines."]] },
-  caravane: { title: "Les caravanes", icon: "images/Icons/village_buildings/caravan.webp", tips: [
-    ["images/Icons/village_buildings/merchant_hall.webp", "La Halle marchande envoie des caravanes vers les marchés des mondes déjà libérés : trajet court (1 h), moyen (4 h) ou long (8 h)."],
-    ["images/Icons/gold_icon.webp", "Au retour, elle rapporte de l'or et des ressources du monde visité ; le trajet long ramène à coup sûr deux matériaux rares."]] }
+    ["images/Icons/resources/verre_trempe_icon.webp", "Un rang coûte de l'or et 2 matériaux du monde. Le rang 2 s'ouvre au Désert, le 3 aux Ruines, et ainsi de suite."]] }
 };
 window.MILESTONE_REWARD_BY_WORLD = MILESTONE_REWARD_BY_WORLD;
 window.VILLAGE_MILESTONES = VILLAGE_MILESTONES;

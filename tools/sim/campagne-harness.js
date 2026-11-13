@@ -578,36 +578,6 @@ function depensesOr(g) {
   }
 }
 
-/* v3.457.3 : une caravane par marché libre (trajet Long dès la Halle 3, sinon Moyen) ; déchargées au retour. */
-function caravanes(g) {
-  var C = g.CaravanManager;
-  if (!C || !C.isAvailable()) return;
-  var ST = STATS.caravanes = STATS.caravanes || { departs: 0, or: 0, rares: 0 };
-  // déchargées marché par marché, pour l'or de chacun (relevé 04/11)
-  C.list().map(function (c) { return c.world; }).forEach(function (w) {
-    if (!C.isBack(w)) return;
-    var l = C.unload(w); if (!l) return;
-    ST.or += l.gold; if (l.rare) ST.rares += l.rare.n;
-    var om = ST.orParMarche = ST.orParMarche || {}; om[w] = (om[w] || 0) + l.gold;
-  });
-  // relevé (04/11) : caravanes en route au plus, places de la Halle, départs et or par marché
-  ST.max = Math.max(ST.max || 0, C.list().length); ST.places = C.getMaxCaravans(); ST.marches = C.getMarkets().length;
-  var trip = C.isTripOpen("long") ? "long" : "moyen";
-  // un joueur garde une place pour le marché que l'Histoire va demander (ruines_04, crypte_04)
-  var ep = g.game.explorationProgression || {}, reached = g.game.worldsEverReached || {};
-  var garde = (reached[2] && !ep.ruinsMarketDone) || (reached[3] && !ep.cryptMarketDone) ? 1 : 0;
-  C.getMarkets().forEach(function (m) {
-    if (C.list().length >= C.getMaxCaravans() - garde) return;
-    if ((m.world === 2 && !ep.ruinsMarketDone) || (m.world === 3 && !ep.cryptMarketDone)) return; // audit (27/10, DUR-7) : l'étape envoie sa Courte
-    if (C.getBlockReason(trip, m.world)) return;
-    harvest();
-    if (C.depart(trip, m.world)) {
-      ST.departs++; act("caravane", 0);
-      var pm = ST.parMarche = ST.parMarche || {}; pm[m.world] = (pm[m.world] || 0) + 1;
-    }
-  });
-  ST.max = Math.max(ST.max || 0, C.list().length);
-}
 
 function closeRec(rec) {
   rec.hp1 = Math.max(0, G.game.heroHp / (G.game.heroMaxHp || 1));
@@ -758,7 +728,6 @@ function entretien() {
   if (CHANTIER) chantierHeros(g); else rangsDuStock(g); // audit (27/10, RES-4) : rangs achetés avec le stock
   depensesOr(g);       // v3.457.3 (audit I2) : vitrine et Enchanteresse quand l'or s'entasse
   boutiqueEclats(g);   // v3.457.3 : Éclats du donjon (5 sorties par jour, Sacoche)
-  caravanes(g);        // v3.457.3 : les caravanes partent vers chaque marché libre
   if (JOUEUR) { taverneJoueur(g); villageJoueur(g); apothicaireJoueur(g); if (LOT1) compagnonsJoueur(g); if (LOT3) farmDonjonsJoueur(g); } // v3.613.0 (lots 2, 1 et 3)
   var budget = g.game.gold * 0.6, avant = g.game.gold;
   for (var j = 0; j < 60 && avant - g.game.gold < budget; j++) { var o = g.game.gold; buyTraining(g, 1, true, true); if (g.game.gold === o) break; }
@@ -1239,37 +1208,6 @@ function freeSectorAgain(mapId, sectorId) {
   // v3.429.0 : combat d'élite pas fini (élite trop forte pour ce farm) : le joueur fuit, sinon la carte reste bloquée
   if (LM.getFight()) { if (g.SortieManager && g.SortieManager.flee) g.SortieManager.flee(); if (LM.getFight()) LM.abandonFight(); return false; }
   return gagne !== false; // audit (27/10) : une mort n'est plus comptée comme une victoire (élite retentée le jour même)
-}
-
-/* v3.428.0 (ruines_04) : une caravane Courte au Marché des Ruines, attendue puis déchargée.
-   La Halle se bâtit au prix d'Histoire si elle manque ; la cargaison vient de la production. */
-function caravaneMarcheRuines(g, world, flagKey) {
-  world = world || 2; flagKey = flagKey || "ruinsMarketDone"; // v3.452.0 : aussi le Marché de la Crypte
-  var C = g.CaravanManager;
-  if (!C.isAvailable()) upgradeBuilding("hall", 1);
-  if (!C.isAvailable()) { note("Halle marchande introuvable : " + g.VillageBuildingManager.getLevel("hall")); return; }
-  var m = C.getMarkets().filter(function (x) { return x.world === world; })[0];
-  if (!m) { note("marché du monde " + world + " absent : " + JSON.stringify(C.getMarkets())); return; }
-  for (var essai = 0; essai < 6 && !g.storyDesertFlag(flagKey); essai++) {
-    // v3.457.3 : caravanes multiples — on suit celle de CE marché ; une place prise ailleurs se libère au retour
-    if (C.isBack(m.world)) { C.unload(m.world); continue; }
-    if (C.get(m.world)) { wait(Math.max(60e3, C.getSecondsLeft(m.world) * 1000 + 1000), "caravane"); continue; }
-    // v3.551.0 : la caravane d'essai (3 min depuis v3.740, à vide, hors places) que l'Histoire offre
-    if (C.isStoryTripFor && C.isStoryTripFor(m.world) && !C.getBlockReason("essai", m.world)) {
-      C.depart("essai", m.world);
-      wait(Math.max(60e3, C.getSecondsLeft(m.world) * 1000 + 1000), "caravane");
-      if (C.isBack(m.world)) C.unload(m.world);
-      continue;
-    }
-    harvest();   // un joueur récolte avant de charger : la caravane ne prend que le surplus de l'Entrepôt
-    var why = C.getBlockReason("court", m.world);
-    if (why && C.isBack()) { C.unload(); why = C.getBlockReason("court", m.world); }
-    if (why && C.list().length >= C.getMaxCaravans()) { wait(Math.max(60e3, C.getSecondsLeft() * 1000 + 1000), "caravane"); continue; }
-    if (why) { note("caravane : " + why); wait(2 * 3600e3, "caravane"); continue; }
-    C.depart("court", m.world);
-    wait(Math.max(60e3, C.getSecondsLeft(m.world) * 1000 + 1000), "caravane");
-    if (C.isBack(m.world)) C.unload(m.world);
-  }
 }
 
 /* Étape à choix : sur la carte (secteur à libérer d'abord) ou sur la carte d'étape. Premier choix. */
@@ -2073,7 +2011,7 @@ var SOLVERS = {
     if (!g.storyEddaInParty()) note("Edda n'est pas du groupe : " + JSON.stringify(g.CompanionManager.partyIds()));
     playAdventure("aq_ruines_edda");
   },
-  ruines_04: function (g) { caravaneMarcheRuines(g); },
+  ruines_04: function (g) { offer(g, "ruins"); }, // v3.780.0 : livraison au Marché (caravanes retirées)
   ruines_05: function (g) {
     var val = ARGS.indexOf("--rapporter") >= 0 ? "aeswyn" : "soi";
     if (!g.storyMakeChoice("ruins", val)) note("choix refusé (seuil)");
@@ -2086,7 +2024,7 @@ var SOLVERS = {
     if (!g.storyYsoltInParty()) note("Ysolt n'est pas du groupe : " + JSON.stringify(g.CompanionManager.partyIds()));
     playAdventure("aq_crypte_ysolt");
   },
-  crypte_04: function (g) { caravaneMarcheRuines(g, 3, "cryptMarketDone"); },
+  crypte_04: function (g) { offer(g, "crypt"); },
   crypte_05: function (g) {
     var val = ARGS.indexOf("--rapporter") >= 0 ? "aeswyn" : "soi";
     if (!g.storyMakeChoice("crypt", val)) note("choix refusé (portent)");
@@ -2571,7 +2509,6 @@ if (COMBATS) {
 }
 STATS.economie = { orGagne: G.game.totalGoldEarned, or: G.game.gold, aetherTotal: G.game.totalAetherEarned, attenteDonjonH: STATS.attenteDonjonH || 0 };
 if (COMBATS) console.log("Économie : " + JSON.stringify(STATS.economie));
-if (STATS.caravanes) console.log("Caravanes : " + JSON.stringify(STATS.caravanes));
 if (ZONES) console.log("Zones défrichées ou montées : " + (STATS.zones || 0));
 if (STATS.patrouilleRefus) console.log("Patrouilles refusées : " + JSON.stringify(STATS.patrouilleRefus));
 if (RELEVE) {

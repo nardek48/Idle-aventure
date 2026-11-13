@@ -320,7 +320,7 @@ function renderPanel() {
   if (typeof renderGrimoireSheet === "function") renderGrimoireSheet(game.activeTab === "grimoire" || (game.activeTab === "campement" && typeof campTab !== "undefined" && campTab === "grimoire" && !document.documentElement.classList.contains("wide-mode"))); // v3.639.0 : Grimoire du Camp
   // v3.244.0 : même mécanique pour les feuilles Stats / Capacités du Résumé du héros.
   if (typeof renderHerosSheet === "function") renderHerosSheet(game.activeTab === "more");
-  // v3.426.0 : feuilles Patrouille / Caravane de Campement › Expéditions, même mécanique.
+  // v3.426.0 : feuilles Patrouille(s) de Campement › Expéditions, même mécanique.
   if (typeof renderExpeditionsSheet === "function") renderExpeditionsSheet();
 
   // v3.100.0 : vérification opportuniste de l'étape Histoire (throttlée 1/s dans le manager,

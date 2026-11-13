@@ -257,11 +257,6 @@ function initJournalTest() {
     function (r, a, c) { var n = ForgeManager.getLevel(a[0]); if (n > c.n) J.log("reforge", { emplacement: a[0], niveau: n, or: Math.round(c.or0 - orAvant()) }); });
   journalWrap(window.VillageBuildingManager, "startBuild", orAvant,
     function (r, a, or0) { if (r) J.log("chantier", { batiment: a[0], or: Math.round(or0 - orAvant()) }); });
-  // v3.747.0 (Crypte de Seb) : départ et déchargement des caravanes (l'or rapporté)
-  journalWrap(window.CaravanManager, "depart", null,
-    function (r, a) { if (r) J.log("caravane", { trajet: a[0], monde: typeof a[1] === "number" ? a[1] : null }); });
-  journalWrap(window.CaravanManager, "unload", orAvant,
-    function (r, a, or0) { if (r) J.log("caravane_retour", { n: r.count || 1, trajet: r.trip || null, or: Math.round(orAvant() - or0) }); });
   journalWrap(window.TalentManager, "buy", null,
     function (r, a) { if (r) J.log("talent", { id: a[0] }); });
   journalWrap(window.PotionManager, "useHealingPotion", null,

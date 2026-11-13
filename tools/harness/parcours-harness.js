@@ -1009,7 +1009,7 @@ var ECRANS_HABILLAGE = [
   ["Hauts faits", "switchTab('achievements')"], ["Journal", "switchTab('log')"], ["Paramètres", "switchTab('settings')"],
   ["Fiche Halle", "switchTab('village');openVillageBuildingSheet('hall')"], ["Fiche Taverne", "switchTab('village');openVillageBuildingSheet('tavern')"],
   ["Fiche Forge", "switchTab('village');openVillageBuildingSheet('forge')"], ["Fiche Stats", "switchTab('equip');openHerosSheet('stats')"],
-  ["Fiche Capacités", "switchTab('equip');openHerosSheet('abilities')"], ["Fiche Caravane", "switchTab('campement');openExpeditionsSheet('caravan')"],
+  ["Fiche Capacités", "switchTab('equip');openHerosSheet('abilities')"],
   ["Fiche Donjon", "switchTab('village');openDungeonSheet(1)"],
   // v3.620.0 (lot 4) : le reste du jeu
   ["Carte", "switchTab('map')"], ["Bibliothèque", "switchTab('tutorials')"], ["Camp, grimoire", "switchTab('campement');setCampTab('grimoire')"],
@@ -1040,16 +1040,13 @@ function cartesNonHabillees() {
   return Object.keys(oublis);
 }
 async function verifierHabillage(page, mode) {
-  // v3.619.1 (bug Seb) : la texture ne doit pas recouvrir une illustration propre (mannequin, route de la Caravane)
+  // v3.619.1 (bug Seb) : la texture ne doit pas recouvrir une illustration propre (mannequin ; v3.780.0 : Caravane retirée)
   var illus = await page.evaluate(function () {
     switchTab("equip"); setHerosSubTab("equip"); setEquipSubTab("equipment");
     var eq = document.querySelector(".hs-eq"), a = eq ? getComputedStyle(eq).backgroundImage : "";
-    switchTab("campement"); openExpeditionsSheet("caravan");
-    var w = document.querySelector(".exp-world"), b = w ? getComputedStyle(w).backgroundImage : "";
-    try { closeExpeditionsSheet(); } catch (x) {}
-    return { eq: a.indexOf("/Heroes/") >= 0, route: !w || (b.indexOf("url(") >= 0 && b.indexOf("parchment-cream") < 0) };
+    return { eq: a.indexOf("/Heroes/") >= 0 };
   });
-  ok(illus.eq && illus.route, mode + " · le mannequin de l'équipement et la route de la Caravane restent visibles");
+  ok(illus.eq, mode + " · le mannequin de l'équipement reste visible");
   for (var i = 0; i < ECRANS_HABILLAGE.length; i++) {
     var e = ECRANS_HABILLAGE[i];
     await page.evaluate(function () {

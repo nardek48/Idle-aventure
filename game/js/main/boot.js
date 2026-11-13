@@ -26,6 +26,9 @@ function init() {
   // catchUpOffline() pour que le rattrapage de production tienne compte du déblocage.
   if (typeof applyQuestUnlockSideEffects === "function") applyQuestUnlockSideEffects();
 
+  // v3.780.0 (lot 6) : caravanes retirées ; une caravane en route dans la sauvegarde est livrée maintenant
+  if (loaded && window.CaravanManager && typeof CaravanManager.settleRetired === "function") CaravanManager.settleRetired();
+
   // v3.113.0 : photographie l'état de la Production AVANT le rattrapage — le delta après
   // catchUpOffline() alimente la modale de retour d'absence (voir OfflineManager).
   if (window.OfflineManager && typeof OfflineManager.snapshot === "function") {

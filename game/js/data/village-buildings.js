@@ -52,7 +52,7 @@ function isStoryVillageLevel(id, targetLevel) {
     return targetLevel <= cap;
   }
   if (id === "forge") return targetLevel <= STORY_FORGE_LEVELS;
-  // v3.428.0 (Ruines, ruines_04) : la caravane du Marché des Ruines exige la Halle — son niveau 1 est aidé
+  // v3.428.0 (Ruines, ruines_04) : la Halle niveau 1 s'ouvre au Marché des Ruines, à prix aidé
   if (id === "hall") return targetLevel <= 1 && !!(window.StoryQuestManager && StoryQuestManager.isStepReached("ruines_04"));
   return false;
 }
@@ -377,12 +377,12 @@ var VILLAGE_BUILDINGS = {
     name: "Halle marchande",
     icon: "images/Icons/subtabs/equipment_shop.webp",
     iconImg: "images/Icons/village_buildings/merchant_hall.webp",
-    rank: 2,   // v3.418.0 (R3, décision Seb) : Atelier 2 — la Halle accueille la caravane (v3.419.0, caravan-system.js)
+    rank: 2,   // v3.418.0 (R3, décision Seb) : Atelier 2 ; v3.780.0 : sans caravane, l'échoppe seule
     /* 10 niveaux : 5 emplacements de vitrine gagnés (un tous les deux niveaux)
        et une remise croissante sur le renouvellement. */
     maxLevel: 10,
     implemented: true,
-    desc: "Envoie une caravane vendre le surplus de matières brutes au loin, et agrandit l'échoppe d'équipement : plus d'emplacements en vitrine, un renouvellement moins cher. L'échoppe s'installe ici, à la Halle.",
+    desc: "L'échoppe d'équipement s'installe ici. Chaque niveau l'agrandit : plus d'emplacements en vitrine, un renouvellement moins cher.",
     costTiers: [
       {
         minLevel: 0, maxLevel: 4,
@@ -411,12 +411,8 @@ var VILLAGE_BUILDINGS = {
         ? EquipShopManager.getShopSize(level)
         : 6;
       var remise = Math.round((1 - Math.pow(0.95, level)) * 100);
-      /* v3.419.0 (E-2) : la caravane — trajet Long au niveau 3, +10 % de capacité par niveau */
-      var car = "";
-      if (level >= 3) car += " · " + _t("trajet Long");
-      if (level >= 2) car += " · " + _t("Caravane +{p} %", { p: Math.round((level - 1) * 10) });
-      if (level >= 3) car += " · " + _t("jusqu'à {n} caravanes, une par marché", { n: 1 + Math.floor(level / 3) }); // v3.457.0 ; v3.457.5 (audit P17) : limitées par les marchés
-      return _t("{n} objets en vitrine", { n: slots }) + (remise > 0 ? " · " + _t("-{p} % sur le renouvellement", { p: remise }) : "") + car;
+      // v3.780.0 (lot 6) : caravanes retirées, la Halle ne porte plus que l'échoppe
+      return _t("{n} objets en vitrine", { n: slots }) + (remise > 0 ? " · " + _t("-{p} % sur le renouvellement", { p: remise }) : "");
     }
   },
 
@@ -430,7 +426,7 @@ var VILLAGE_BUILDINGS = {
        (TavernManager.getSlotCount) — chaque chantier se voit tout de suite sur le tableau. */
     maxLevel: 6, // v3.456.9 (décision Seb) : le niveau 6 à l'acte III de la Crypte (Cire consacrée)
     implemented: true,
-    desc: "Un tableau de contrats de livraison, renouvelé toutes les 6 heures. Avec la caravane de la Halle marchande, c'est le débouché du surplus de Production : l'Entrepôt ne rachète rien.",
+    desc: "Un tableau de contrats de livraison, renouvelé toutes les 6 heures. C'est le débouché du surplus de Production : l'Entrepôt ne rachète rien. Les contrats se livrent au tableau des missions.",
     costTiers: [
       {
         minLevel: 0, maxLevel: 2,
