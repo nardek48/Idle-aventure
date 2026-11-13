@@ -2306,7 +2306,6 @@ function finDePartie() {
   R.inventaire = { heros: heroSnapshot(), combat: combatLine(), or: Math.floor(game.gold), memoire: g.MemoryManager.getLevel() + "/" + ((g.MEMORY_LEVELS || []).length || "?"),
     hautsFaits: ach + "/" + (g.ACHIEVEMENTS_DB || []).length, batiments: bat.join(" · "), entrepotPlein: pleins.length + "/" + res.length,
     ilvl: ilvl.join(" "), donjons: JSON.stringify(game.dungeonLevelBest || {}), finHistoire: !!(g.TowerSystem && g.TowerSystem.ending()) };
-  if (STATS.crit) Object.keys(STATS.crit).forEach(function (w) { var o = STATS.crit[w]; console.log("CRIT " + CLASSE + " " + w + " : " + o.n + " coups · critique moyen " + (o.cc / o.n).toFixed(1) + " % (max " + o.ccMax.toFixed(1) + ") · Volonté −" + (o.pen / o.n).toFixed(1) + " pts · perdu au-delà de 100 % : " + (o.perdu / o.n).toFixed(2) + " pts en moyenne, sur " + (100 * o.coupsPerdus / o.n).toFixed(0) + " % des coups"); });
   console.log("\n=== FIN DE PARTIE · " + CLASSE + " ===");
   Object.keys(R.inventaire).forEach(function (k) { console.log("  " + k + " : " + R.inventaire[k]); });
   // 2. Jusqu'où il tient (pronostic du jeu ; sûr = Trivial/Abordable, risqué = tout sauf Très dur / Hors de portée)
@@ -2479,5 +2478,6 @@ if (JSON_OUT) fs.writeFileSync(JSON_OUT, JSON.stringify({ classe: CLASSE, policy
 // Comparable au « Temps de jeu » du journal (game.playTime, app ouverte) : seuls les combats exigent l'écran, le reste (soin, production, recharges) avance aussi hors ligne.
 STATS.actifMs = STATS.combatMs + (STATS.navMs || 0); // EQUI-19 : rounds + navigation, sans les attentes
 if (COMBATS) console.log("Temps actif (rounds + navigation, sans les attentes ; à comparer au journal) : " + (STATS.actifMs / 3600e3).toFixed(1) + " h (combat " + (STATS.combatMs / 3600e3).toFixed(1) + " h + navigation " + ((STATS.navMs || 0) / 3600e3).toFixed(1) + " h, " + (STATS.gestes || 0) + " gestes à " + NAV_GESTE_MS / 1000 + " s) · attente hors combat : " + ((CLOCK.offset - STATS.combatMs) / 3600e3).toFixed(1) + " h");
+if (STATS.crit) Object.keys(STATS.crit).forEach(function (w) { var o = STATS.crit[w]; console.log("CRIT " + CLASSE + " " + w + " : " + o.n + " coups · critique moyen " + (o.cc / o.n).toFixed(1) + " % (max " + o.ccMax.toFixed(1) + ") · Volonté −" + (o.pen / o.n).toFixed(1) + " pts · perdu au-delà de 100 % : " + (o.perdu / o.n).toFixed(2) + " pts en moyenne, sur " + (100 * o.coupsPerdus / o.n).toFixed(0) + " % des coups"); });
 console.log("\n" + passes + " OK, " + failures + " échec(s) — temps simulé : " + (CLOCK.offset / 3600e3).toFixed(1) + " h (dont " + DAYS_WAITED + " attente(s) de recharge des expéditions, " + CAP_WAIT_H.toFixed(1) + " h)");
 process.exit(failures ? 1 : 0);
