@@ -30,7 +30,7 @@ function companionQuestsData() {
           { w: "wenna", t: _t("Raconte-moi ce que tu as vu. Même les petites choses.") },
           { w: "n", t: _t("Tu racontes les flammes. Elle écrit tout sur une bande de toile, très serré.") },
           { w: "wenna", t: _t("C'est peu. C'est déjà plus que rien.") }] },
-        { type: "deliver", label: _t("Apporter du pain et du bois pour la crypte"), res: { pain: 10, bois: 200 } },
+        { type: "deliver", label: _t("Apporter du blé et du bois pour la crypte"), res: { ble: 150, bois: 200 } } /* v3.788.0 : 10 Pains → 150 Blé */,
         { type: "run", label: _t("Descendre jusqu'à une alcôve sans nom : une Petite Aventure de la Crypte"), world: "crypt", count: 1 },
         { type: "scene", label: _t("Lire les noms"), lines: [
           { w: "n", t: _t("Devant l'alcôve sans nom, Wenna déroule la toile. Elle lit les noms qu'elle a retrouvés, un par un.") },
@@ -161,7 +161,7 @@ function companionQuestsData() {
     { id: "q_sarkel_2", companion: "sarkel", relic: "sarkel_cle", title: _t("Ceux qui sont couchés là-haut"),
       blurb: _t("Personne n'a jamais laissé de pain à ceux que le Dragon a triés. Sarkel veut le faire."),
       steps: [
-        { type: "deliver", label: _t("Apporter du pain et de la pierre taillée"), res: { pain: 15, bloc: 10 } },
+        { type: "deliver", label: _t("Apporter du blé et de la pierre taillée"), res: { ble: 225, bloc: 10 } } /* v3.788.0 : 15 Pains → 225 Blé */,
         { type: "elite", label: _t("Ce qui garde leur salle : vaincre une élite de la Montagne"), world: "mountain", count: 1 },
         { type: "scene", label: _t("Fermer la salle"), lines: [
           { w: "n", t: _t("Sarkel pose le pain sur la pierre, devant eux. Il ne dit pas de prière. Il n'en connaît pas.") },

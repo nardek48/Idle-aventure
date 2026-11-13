@@ -35,8 +35,8 @@ var APOTHECARY_RECIPES = [
   {
     potionId: "potion_soin_majeur",
     kind: "healing",
-    inputs: { eau: 24, pain: 2 },
-    order: { pain: 8, eau: 80 },
+    inputs: { eau: 34, ble: 30 },    // v3.788.0 : 2 Pains (Boulangerie retirée) = 30 Blé + 10 Eau
+    order: { ble: 120, eau: 120 },
     worldIndex: 0,
     capped: true
   },
@@ -69,8 +69,8 @@ var APOTHECARY_RECIPES = [
   {
     potionId: "potion_endurance",
     kind: "run",
-    inputs: { eau: 24, pain: 2, viande: 15 },
-    order: { pain: 10, viande: 75, eau: 120 },
+    inputs: { eau: 34, ble: 30, viande: 15 }, // v3.788.0 : 2 Pains = 30 Blé + 10 Eau
+    order: { ble: 150, viande: 75, eau: 170 },
     worldIndex: 1,
     capped: true
   },

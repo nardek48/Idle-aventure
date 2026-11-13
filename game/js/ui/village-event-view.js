@@ -47,7 +47,7 @@ function buildVillageEventCardHTML() {
   var h = '<div class="vev"><div class="vev-k"><span>' + esc(_t("Ce matin à Aeswyn")) + '</span><span class="vev-left">' + esc(_tn(left, "encore {n} jour", "encore {n} jours")) + '</span></div>';
   h += '<div class="vev-main">' + villageEventIconHTML(e.type, "vev-ico") + '<div><b>' + esc(V.titleOf(e, v)) + '</b><small>' + esc(_td(e.who)) + '</small><p>' + esc(V.textOf(e, v)) + '</p></div></div>';
   if (e.type === "demande" && !v.done) h += '<div class="vev-cost">' + villageEventResChipsHTML(V.needs(), true) + '</div>';
-  if (e.type === "fete" && !v.done && V.feteCost() > 0) h += '<div class="vev-cost">' + villageEventResChipsHTML({ pain: V.feteCost() }, true) + '</div>';
+  if (e.type === "fete" && !v.done && V.feteCost() > 0) h += '<div class="vev-cost">' + villageEventResChipsHTML({ ble: V.feteCost() }, true) + '</div>';
   if (e.type === "marche") h += villageEventBuybackHTML(); // v3.606.0 (D2)
   return h + '<div class="vev-gain">' + esc(gain) + '</div><div class="vev-act">' + act + '</div></div>';
 }

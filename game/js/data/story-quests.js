@@ -43,7 +43,7 @@ var STORY_REWARDS = {
   forest_05: { gold: 450, potions: { potion_power: 1 } }, // v3.115.0 : découverte des potions per-run
   forest_06: { gold: 200, resources: { viande: 15 } },
   forest_brume: { gold: 150, resources: { seve_aeswyn: 3 } }, // v3.259.0 (C-4) : les 3 Sève que réclamera l'offrande aux braises (forest_15)
-  forest_07: { gold: 175, resources: { eau: 5, petite_ration: 1 } }, // v3.427.1 (retour Seb) : une Petite ration pour enchaîner sur Le sentier obstrué
+  forest_07: { gold: 175, resources: { eau: 5 } }, // v3.788.0 : plus de Petite ration (rations retirées, Seb 13/11)
   forest_08: { gold: 225 },
   forest_09: { gold: 225 },
   forest_crossing: { gold: 300 }, // v3.109.0 : Franchir la Lisière (placeholder, même échelle que 08/09)
@@ -162,7 +162,7 @@ var STORY_TAB_LABELS = {
    sont remplacés par une OFFRANDE aux braises au Campement : 3 Sève d'Aeswyn (Petite Aventure) + 1 Ration moyenne (chaîne
    Village).
    Consommée par StoryQuestManager.offerToEmbers(), compteur counters.offeringDone (0/1). */
-var STORY_STEP15_OFFERING = { seve_aeswyn: 3, ration: 1 };
+var STORY_STEP15_OFFERING = { seve_aeswyn: 3, viande: 15, eau: 10 }; // v3.788.0 (Seb 13/11) : la Ration moyenne devient 15 Viandes + 10 Eau
 
 /* Kills en Forêt : les 2 aventures partagent le même enemyPool, donc somme de killCounts sur ce pool. */
 function storyCountForestKills(game) {
@@ -468,7 +468,7 @@ var STORY_QUESTS = {
         title: "Le sentier obstrué",
         act: "Acte II — Le campement devient village",
         narrative: {
-          objective: "Viande et eau font une ration. Une ration fait une route. Un tronc bloque celle vers une clairière oubliée.",
+          objective: "Viande et eau font un repas. Un repas fait une route. Un tronc bloque celle vers une clairière oubliée.",
           completion: "La clairière s'ouvre. Ce qu'il y a au fond mérite qu'on creuse.",
           // v3.197.0 (passe de ton, bible B §4.7) : Brannoc laisse échapper — graine du Veilleur (pilier 3).
           dialogue: [
@@ -476,29 +476,23 @@ var STORY_QUESTS = {
             { who: "Brannoc", text: "Il en est venu un autre, avant toi. Il n'est pas revenu. Bon. Pousse, je tire." }
           ]
         },
-        objectiveLabel: "Avoir 1 Petite ration et terminer l'expédition « Le sentier obstrué »",
+        objectiveLabel: "Terminer l'expédition « Le sentier obstrué »",
         unlockTabs: [],
         reward: STORY_REWARDS.forest_08,
         linkTo: { section: "expedition", cardId: "scene_sentier_obstrue" }, // v3.122.0 (Lot S2a) : migrée vers le scene-engine
-        // v3.107.12 : popup déclenché sur Village (là où se trouve l'atelier Cuisine de camp),
-        // pas sur l'écran de l'expédition elle-même — le craft doit se faire AVANT de lancer.
+        // v3.788.0 (Seb 13/11) : la ration et la Cuisine de camp sont retirées ; le tutoriel devient « Le repas », au Camp.
         tutorial: {
-          tab: "village",
-          icon: "images/Icons/quests/ration_needed.webp",
-          title: "Fabriquer une ration",
+          tab: "campement",
+          icon: "images/Icons/camp/camp_meal.webp",
+          title: "Le repas",
           points: [
-            { icon: "images/Icons/quests/ration_needed.webp", text: "Cette expédition consomme une Petite ration — la source t'en a donné une. Les suivantes, il faudra les fabriquer." },
-            { icon: "images/Icons/quests/mission_construction.webp", text: "Pour la suivante, tu iras au Village, dans l'atelier Cuisine de camp (bâtiment Chasse)." },
-            { icon: "images/Icons/quests/ration_reward.webp", text: "Tu y choisiras la recette Petite ration (8 Viande + 4 Eau) et toucheras Fabriquer." },
-            { icon: "images/Icons/quests/quest_adventure.webp", text: "Une fois la ration en stock, tu lanceras « La veine instable » : elle la consommera automatiquement." }
+            { icon: "images/Icons/camp/campfire.webp", text: "Au Campement, l'onglet « Le feu » montre tes PV et ceux de tes compagnons, en anneaux autour de leur portrait." },
+            { icon: "images/Icons/camp/camp_meal.webp", text: "Le bouton « Repas » remet toute l'équipe à plein, tout de suite. Il se paie en blé, viande et eau, selon les PV qui manquent." },
+            { icon: "images/Icons/camp/festin.webp", text: "À côté, le Festin : +10 % de dégâts et de PV pour toute l'équipe, pendant 3 sorties. Plus cher : garde-le pour un boss." }
           ]
         },
-        // La ration est consommée par l'expédition : « en stock OU sentier terminé » évite un faux 0/1 après coup.
         check: function () { return storyExplorationDone("blockedPath"); },
-        progress: function () {
-          var done = storyExplorationDone("blockedPath");
-          return "Ration " + ((done || storyResourceAmount("petite_ration") >= 1) ? "1/1" : "0/1") + " · Sentier " + (done ? "1/1" : "0/1");
-        }
+        progress: function () { return "Sentier " + (storyExplorationDone("blockedPath") ? "1/1" : "0/1"); }
       },
       {
         id: "forest_09",
@@ -759,15 +753,15 @@ var STORY_QUESTS = {
         title: "Les braises s'éveillent",
         act: "Acte IV — L'Aether",
         narrative: {
-          objective: "La braise sous Aeswyn ne s'éteint plus. Elle demande quelque chose : la sève de la forêt, et le pain du village. Un jour, tu lui donneras aussi ce que tu portes : elle en gardera la mémoire.",
+          objective: "La braise sous Aeswyn ne s'éteint plus. Elle demande quelque chose : la sève de la forêt, et les vivres du village. Un jour, tu lui donneras aussi ce que tu portes : elle en gardera la mémoire.",
           completion: "La braise a pris. Tu sais ce qu'elle prend, maintenant. Sarkel dit que le sable commence là où la forêt s'arrête, et qu'on y vend cher.",
           // v3.197.0 (passe de ton, bible B §4.7) : le dialogue tient enfin la promesse « tu sais ce qu'est
           // l'Aether » — par les anciens, jamais par le narrateur (pilier 6). Affiché au bloc « Les braises »
           // du Campement et sur l'étape courante (buildStoryDialogueHTML, quests-view.js).
           dialogue: [
             { who: "Orwen", text: "Pose ça là. Pas plus près." },
-            { who: "Wenna", text: "Pourquoi elle prend le pain ? Le pain c'est pour nous." },
-            { who: "Orwen", text: "Elle prend ce qu'on est. Le pain, c'est nous." },
+            { who: "Wenna", text: "Pourquoi elle prend nos vivres ? C'est pour nous, ça." },
+            { who: "Orwen", text: "Elle prend ce qu'on est. Ce qu'on mange, c'est nous." },
             { who: "Brannoc", text: "Elle prenait déjà, cette nuit-là. Elle ne savait pas encore quoi… enfin. Vas-y. Elle t'attend, celle-là. Toi." },
             { who: null, text: "Aldric ne dit rien. Il est retourné au moulin." }
           ]
@@ -775,7 +769,7 @@ var STORY_QUESTS = {
         // v3.109.0 : le Seigneur de guerre orc se vainc dans la quête « Le Cœur de la Forêt » (aq_forest_depths, run dédié,
         // liée ici comme « Prouver sa valeur » l'est à forest_05) — elle est aussi la porte du Désert (gatesNextWorld).
         // v3.133.0 : + offrande aux braises (voir STORY_STEP15_OFFERING) à la place des 200 kills.
-        objectiveLabel: "Terminer « Le Cœur de la Forêt » (Seigneur de guerre orc) et offrir aux braises 3 Sève d'Aeswyn + 1 Ration moyenne",
+        objectiveLabel: "Terminer « Le Cœur de la Forêt » (Seigneur de guerre orc) et offrir aux braises 3 Sève d'Aeswyn, 15 Viandes et 10 Eau",
         unlockTabs: ["ascension"],
         reward: STORY_REWARDS.forest_15,
         offering: STORY_STEP15_OFFERING,
@@ -790,7 +784,7 @@ var STORY_QUESTS = {
           title: "Les braises d'Aeswyn",
           points: [
             { icon: "images/Icons/scene/path_easy.webp", text: "La Sève d'Aeswyn se trouve en Petite Aventure (carte de la Forêt) : parfois en route, surtout en atteignant une destination." },
-            { icon: "images/Icons/quests/ration_reward.webp", text: "La Ration moyenne se cuisine à la Cuisine de camp (bâtiment Chasse) : 15 Viandes + 1 Pain (Boulangerie du Champs ; le Champs s'ouvre par l'expédition « La Terre en Friche », Quêtes › Annexes)." },
+            { icon: "images/Icons/resources/meat_icon.webp", text: "La viande vient de la Chasse, l'eau du Puits : elles arrivent seules à l'Entrepôt." },
             { icon: "images/Icons/camp/campfire.webp", text: "Quand tout est réuni, reviens au Campement : le bloc « Les braises » te laisse faire l'offrande." }
           ]
         },
@@ -799,7 +793,7 @@ var STORY_QUESTS = {
         },
         progress: function (game) {
           var done = storyCounter(game, "offeringDone") >= 1;
-          var detail = done ? "" : " (Sève " + Math.min(3, storyResourceAmount("seve_aeswyn")) + "/3 · Ration " + Math.min(1, storyResourceAmount("ration")) + "/1)";
+          var detail = done ? "" : " (Sève " + Math.min(3, storyResourceAmount("seve_aeswyn")) + "/3 · Viande " + Math.min(15, storyResourceAmount("viande")) + "/15 · Eau " + Math.min(10, storyResourceAmount("eau")) + "/10)";
           return "Seigneur de guerre orc " + ((game.adventureQuestsCompleted || {}).aq_forest_depths ? "1/1" : "0/1")
             + " · Offrande " + (done ? "1/1" : "0/1") + detail;
         }
@@ -4600,7 +4594,7 @@ STORY_REWARDS.tour_04 = { gold: 17500 };
 STORY_REWARDS.tour_05 = { gold: 18000 };
 
 /* Dernier camp (étape 3) : ce que Sarkel demande pour planter ses pieux. Au banc. */
-var STORY_DERNIER_CAMP = { bois: 400, grande_ration: 2 };
+var STORY_DERNIER_CAMP = { bois: 400, viande: 200, eau: 100 }; // v3.788.0 (Seb 13/11) : les 2 Grandes rations deviennent 200 Viandes + 100 Eau
 
 /* Choix « braise » (étape 5) : garder la braise d'Aeswyn (Garder + Aeswyn) ou la poser sur le palier (Donner + Soi).
    Effets à la Tour seulement (TowerSystem) : 5 % des PV rendus par combat gagné, ou +10 % de dégâts. */
@@ -4707,7 +4701,7 @@ STORY_QUESTS.tower = {
           { who: "Maddoc", text: "Il a tenu la sienne pour moi. Je tiens celle-là." }
         ]
       },
-      objectiveLabel: "Dresser le dernier camp : 400 Bois et 2 Grandes rations",
+      objectiveLabel: "Dresser le dernier camp : 400 Bois, 200 Viandes et 100 Eau",
       unlockTabs: [],
       reward: STORY_REWARDS.tour_03,
       offering: STORY_DERNIER_CAMP,
@@ -4715,18 +4709,11 @@ STORY_QUESTS.tower = {
       offeringUi: {
         where: "story",
         buttonLabel: "Dresser le camp",
-        lackToast: "Il faut 400 Bois et 2 Grandes rations pour dresser le dernier camp.",
+        lackToast: "Il faut 400 Bois, 200 Viandes et 100 Eau pour dresser le dernier camp.",
         doneToast: "Le dernier camp est dressé",
         log: "Tu donnes le bois et les vivres. Sarkel plante ses pieux devant la porte."
       },
-      // v3.684.0 (QUET-6) : tant que l'offrande manque, le bouton mène aux Ateliers (Cuisine de camp), comme desert_07
-      linkTo: {
-        tab: "village", label: "Aller aux Ateliers",
-        afterGo: function () {
-          if (typeof setVillageSubTab === "function") setVillageSubTab("production");
-          if (typeof setProductionViewTab === "function") setProductionViewTab("shops");
-        }
-      },
+      // v3.788.0 : plus d'atelier à visiter (bois, viande, eau viennent de la production) ; l'ancien lien vers la Cuisine de camp est retiré
       check: function (game) { return storyChapterCounter(game, "tower", "campDresse") >= 1; },
       progress: function (game) { return "Camp dressé " + (storyChapterCounter(game, "tower", "campDresse") >= 1 ? "1/1" : "0/1"); }
     },

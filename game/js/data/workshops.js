@@ -36,34 +36,9 @@ var WORKSHOP_LEVEL_CONFIG = {
 
 var WORKSHOPS_CONFIG = {
   /* v3.484.0 (refonte de l'économie, lot S, RE-8) : Moulin, Séchoir et Station de purification retirés ;
-     le Pain, la Ration moyenne et l'Outre prennent l'équivalent brut (Farine = 5 Blés, Viande séchée = 5 Viandes, Eau purifiée = 4 Eaux). */
-  // ===== Champs =====
-  boulangerie: {
-    buildingId: "farm", name: "Boulangerie", icon: "images/Icons/workshops/bakery.webp", active: true,
-    upgradeCostBase: { planche: 4, lingot: 3 },
-    recipes: [
-      { id: "pain", inputs: [{ resourceId: "ble", quantity: 15 }, { resourceId: "eau", quantity: 5 }], outputs: [{ resourceId: "pain", quantity: 1 }], craftTimeMs: 5000 }
-    ]
-  },
-
-  // ===== Chasse =====
-  cuisine_de_camp: {
-    buildingId: "hunt", name: "Cuisine de camp", icon: "images/Icons/workshops/camp_kitchen.webp", active: true,
-    upgradeCostBase: { planche: 4, lingot: 3 },
-    // v3.107.13 : Ration moyenne restaurée sur viande séchée + pain (recette d'origine, retour arrière
-    // du passage v3.106.0 sur viande+eau brutes — non voulu pour cette recette précise, décision Seb).
-    // Petite ration reste sur viande+eau brutes (accessible dès le début de l'Acte II, décision confirmée).
-    recipes: [
-      { id: "petite_ration", inputs: [{ resourceId: "viande", quantity: 8 }, { resourceId: "eau", quantity: 4 }], outputs: [{ resourceId: "petite_ration", quantity: 1 }], craftTimeMs: 3000 },
-      // v3.330.0 (E4) : la ration moyenne devient les vivres du Désert ; v3.484.0 (lot S) : 15 viandes au lieu de 3 viandes séchées
-      { id: "ration", inputs: [{ resourceId: "viande", quantity: 15 }, { resourceId: "pain", quantity: 1 }], outputs: [{ resourceId: "ration", quantity: 1 }], craftTimeMs: 8000 },
-      // v3.137.0 (option B validée Seb) : Grande ration = Ration moyenne + 3 Sève d'Aeswyn — escalade
-      // visible sur la chaîne plutôt qu'un doublon des intrants de la Ration moyenne (option A).
-      // Premier débouché de craft de la Sève (jusqu'ici uniquement l'offrande forest_15, ponctuelle).
-      // v3.608.0 (option A de Seb) : la Sève, demandée par les bâtiments, est remplacée par 15 Viandes + 10 Eau.
-      { id: "grande_ration", inputs: [{ resourceId: "ration", quantity: 1 }, { resourceId: "viande", quantity: 15 }, { resourceId: "eau", quantity: 10 }], outputs: [{ resourceId: "grande_ration", quantity: 1 }], craftTimeMs: 12000 }
-    ]
-  },
+     l'Outre prend l'équivalent brut (Eau purifiée = 4 Eaux). */
+  /* v3.788.0 (Seb 13/11, simplification des rations 4/4) : Boulangerie (Champs) et Cuisine de camp (Chasse) retirées.
+     Le repas du Camp se paie en brut ; une file en cours dans une vieille sauvegarde est ignorée (bloc opaque). */
 
   // ===== Scierie =====
   scierie_fine: {

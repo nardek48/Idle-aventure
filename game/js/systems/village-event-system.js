@@ -120,15 +120,15 @@ var VillageEvents = {
   },
 
   /* ---------- Fête ---------- */
-  feteCost: function () { var v = this.active(), e = this.def(); return v && !(e && e.free) ? Math.round(6 * (VILLAGE_EVENT_SCALE[v.w] || 1)) : 0; }, // v3.607.0 : la table d'Orwen, offerte
+  feteCost: function () { var v = this.active(), e = this.def(); return v && !(e && e.free) ? Math.round(90 * (VILLAGE_EVENT_SCALE[v.w] || 1)) : 0; }, // v3.607.0 : la table d'Orwen, offerte ; v3.788.0 : 6 Pains → 90 Blé
   canFete: function () {
     var v = this.active();
-    return !!(v && !v.done && this.isType("fete") && window.WarehouseManager && WarehouseManager.getAmount("pain") >= this.feteCost());
+    return !!(v && !v.done && this.isType("fete") && window.WarehouseManager && WarehouseManager.getAmount("ble") >= this.feteCost());
   },
   startFete: function () {
     if (!this.canFete()) return false;
     var v = this.active();
-    if (this.feteCost() > 0) WarehouseManager.removeResource("pain", this.feteCost());
+    if (this.feteCost() > 0) WarehouseManager.removeResource("ble", this.feteCost());
     game.heroHp = game.heroMaxHp; // le camp soigne tout le monde
     if (window.CompanionManager) CompanionManager.unlockedIds().forEach(function (id) { CompanionManager.state(id).hp = CompanionManager.maxHpOf(id); });
     this._ep().villageFete = { left: VILLAGE_EVENT_FETE.sorties };

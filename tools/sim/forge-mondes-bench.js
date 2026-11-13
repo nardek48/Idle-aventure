@@ -118,7 +118,6 @@ function prepare(g, saveTxt, M, kind) {
     ctx = { type: "adventure", id: M.quest };
   } else {
     ctx = { type: "elite", id: M.elite.id, mapId: M.elite.map, sectorId: M.elite.sector };
-    ["petite_ration", "ration", "grande_ration"].forEach(function (k) { if (g.WarehouseManager.getAmount(k) < 10) g.WarehouseManager.addResource(k, 10, true); }); // vivres : hors mesure
     var sec = g.LivingMapManager.getState(M.elite.map, M.elite.sector);   // niveau ouvert (meilleur battu + 1), aucune victoire du jour
     if (sec) { sec.dailyWins = 0; sec.levelBest = Math.max(Number(sec.levelBest || 0), NIV[M.key] - 1); }
   }

@@ -22,7 +22,7 @@ var BUILDING_SCENES_READY = [
   "prod_hunt", "prod_farm", "prod_sawmill", "prod_mine", "prod_quarry", "prod_well", // v3.662.0
   "village_grand_ouvrage", "village_workshop", "village_training", "village_forge", "village_apothecary", // v3.663.0 : le village
   "village_enchanter", "village_hall", "village_tavern", "village_warehouse", "village_palisade",
-  "atelier_boulangerie", "atelier_cuisine_de_camp", "atelier_scierie_fine", "atelier_menuiserie", "atelier_fonderie", // v3.663.0 : les ateliers
+  "atelier_scierie_fine", "atelier_menuiserie", "atelier_fonderie", // v3.663.0 : les ateliers
   "atelier_forge_mine", "atelier_tailleur_de_pierre", "atelier_maconnerie", "atelier_reservoir"
 ];
 /* Moitié droite d'une ligne : la scène si elle est livrée, sinon l'image actuelle du bâtiment (iconHTML) */

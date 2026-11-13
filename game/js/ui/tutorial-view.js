@@ -132,7 +132,7 @@ var GENERIC_TUTORIALS = {
     points: [
       { icon: "images/Icons/camp/camp_welcome.webp", text: "Le Campement est ton point de ralliement entre deux expéditions — c'est ici que tu gères tout ce qui n'est pas le combat." },
       { icon: "images/Icons/combat_stats/stat_health.webp", text: "Ta santé — hors combat et hors sortie (expédition, donjon, Petite Aventure), tu récupères 5 % de tes PV max par minute, même hors ligne. Suis ta barre de vie et la régénération en haut de l'écran." },
-      { icon: "images/Icons/quests/ration_reward.webp", text: "Au feu, le Repas remet toute l'équipe à plein tout de suite, payé en blé, viande et eau selon les PV qui manquent : utile pour repartir sans attendre." },
+      { icon: "images/Icons/camp/camp_meal.webp", text: "Au feu, le Repas remet toute l'équipe à plein tout de suite, payé en blé, viande et eau selon les PV qui manquent : utile pour repartir sans attendre." },
       { icon: "images/Icons/quests/quest_list.webp", text: "Le tableau de missions — l'étape d'Histoire en cours (badge doré « Histoire ») est toujours en tête. Touche « Accepter », puis « Partir » pour ta prochaine quête : c'est elle qui te mènera au combat avec un vrai objectif." }
     ]
   },
@@ -146,7 +146,7 @@ var GENERIC_TUTORIALS = {
       { icon: "images/Icons/scene/scene_harvest.webp", text: "Les zones produisent une ressource en continu, même hors ligne — mais chaque bâtiment a un stock local limité (la jauge « 0 / 45 » sur sa carte)." },
       { icon: "images/Icons/system/harvest_transfer.webp", text: "Touche « Récolter » pour transférer ce stock vers ton Entrepôt, qui a son propre plafond (plus grand)." },
       { icon: "images/Icons/system/upgrade.webp", text: "Améliorer une zone augmente sa vitesse de production et sa capacité de stock local." },
-      { icon: "images/Icons/quests/mission_construction.webp", text: "Les Ateliers (comme la Cuisine de camp) transforment des ressources brutes (ex. viande + eau) en objets utiles (ex. rations) — file d'attente, continue même hors ligne." },
+      { icon: "images/Icons/quests/mission_construction.webp", text: "Les Ateliers (comme la Scierie fine) transforment des ressources brutes (ex. bois) en matériaux (ex. planches) — file d'attente, continue même hors ligne." },
       { icon: "images/Icons/system/warehouse_supplies.webp", text: "Garde un œil sur ton Entrepôt : une ressource pleine ne se produit plus tant que tu ne l'as pas dépensée (l'Entrepôt ne rachète rien)." }
     ]
   },
@@ -213,7 +213,7 @@ var GENERIC_TUTORIALS = {
     title: "Les patrouilles",
     points: [
       { icon: "images/Icons/quests/mission_exploration.webp", text: "Un compagnon peut partir en patrouille 2, 4 ou 8 heures vers un secteur libéré de la carte, même quand tu ne joues pas." },
-      { icon: "images/Icons/resources/wood_icon.webp", text: "Il rapporte les matériaux du secteur, un peu d'or, parfois de quoi faire des rations — et une petite histoire." },
+      { icon: "images/Icons/resources/wood_icon.webp", text: "Il rapporte les matériaux du secteur, un peu d'or, parfois de quoi faire un repas — et une petite histoire." },
       { icon: "images/Icons/system/hourglass_waiting.webp", text: "Pendant ce temps, il ne combat pas avec toi. Tu peux le rappeler quand tu veux : il rapporte ce qu'il a déjà trouvé." },
       { icon: "images/Icons/system/check_valid.webp", text: "Aucun risque : une patrouille revient toujours. Réglage sur la fiche du compagnon (Héros › Alliés)." }
     ]
@@ -229,7 +229,7 @@ var GENERIC_TUTORIALS = {
     icon: "images/Icons/dungeon/dungeon_sacoche.webp",
     title: "Préparer une petite aventure",
     points: [
-      { icon: "images/Icons/dungeon/dungeon_sacoche.webp", text: "La besace : touche « Ajouter des objets » pour y mettre des rations ou des objets. Chacun a un avantage (en vert) et souvent un prix (en rouge). Les rations que tu ne manges pas retournent à l'Entrepôt." },
+      { icon: "images/Icons/dungeon/dungeon_sacoche.webp", text: "La besace : touche « Ajouter des objets » pour y mettre des rations ou des objets. Chacun a un avantage (en vert) et souvent un prix (en rouge). Les rations sont gratuites : seule la place compte." },
       { icon: "images/Icons/combat_stats/stat_health.webp", text: "Tu pars avec tes PV actuels : en route, seuls te soignent les rations de la besace, les sources, le repos (au seuil ou au feu de camp), les autels et quelques reliques." },
       { icon: "images/Icons/scene/pacts/pact_awake.webp", text: "Les pactes ne sont pas obligatoires. Chacun rend la nuit plus dure et le retour plus riche : choisis-les quand tu t'en sens capable." },
       { icon: "images/Icons/scene/node_threshold.webp", text: "« Renoncer à cette aventure » te ramène sans rien perdre, tant que tu n'es pas encore parti." }
@@ -328,7 +328,7 @@ var GENERIC_TUTORIALS = {
     points: [
       { icon: "images/Icons/village_buildings/tavern.webp", text: "La Taverne poste des contrats au tableau des missions (Quêtes › Annexes) : livre la quantité demandée d'une ressource de l'Entrepôt (« Livrer ») et touche l'or annoncé. C'est le débouché de ton surplus : l'Entrepôt ne rachète rien." },
       { icon: "images/Icons/system/hourglass_waiting.webp", text: "Les contrats se renouvellent toutes les 6 heures. Un contrat honoré quitte le tableau jusque-là, et jamais deux contrats ne demandent la même ressource." },
-      { icon: "images/Icons/system/upgrade.webp", text: "Chaque niveau ajoute un contrat (2 au niveau 1, 7 au niveau 6) et ouvre des commandes mieux payées : planches, puis lingots et pain, puis rations. Au niveau 6, tout est payé 15 % de plus." }
+      { icon: "images/Icons/system/upgrade.webp", text: "Chaque niveau ajoute un contrat (2 au niveau 1, 7 au niveau 6) et ouvre des commandes mieux payées : planches, puis lingots, puis blocs taillés. Au niveau 6, tout est payé 15 % de plus." }
     ]
   },
   achievements_intro: {

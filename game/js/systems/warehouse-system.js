@@ -9,13 +9,21 @@
 var WAREHOUSE_LEGACY_RESOURCES = {
   farine: { ble: 5 },
   viande_sechee: { viande: 5 },
-  eau_purifiee: { eau: 4 }
+  eau_purifiee: { eau: 4 },
+  // v3.788.0 (Seb 13/11, rations 4/4) : Boulangerie et Cuisine de camp retirées, à l'équivalent de leurs recettes
+  pain: { ble: 15, eau: 5 },
+  petite_ration: { viande: 8, eau: 4 },
+  ration: { viande: 15, ble: 15, eau: 5 },
+  grande_ration: { viande: 30, ble: 15, eau: 15 }
 };
 /* Ateliers retirés au même lot : produit de leur recette unique (×1) et coût d'amélioration de base. */
 var WAREHOUSE_LEGACY_WORKSHOPS = {
   moulin: { buildingId: "farm", product: "farine" },
   sechoir: { buildingId: "hunt", product: "viande_sechee" },
-  station_purification: { buildingId: "well", product: "eau_purifiee" }
+  station_purification: { buildingId: "well", product: "eau_purifiee" },
+  // v3.788.0 : la Cuisine de camp avait trois recettes, le produit est lu sur le lot (recipeId)
+  boulangerie: { buildingId: "farm", product: "pain", upgradeBase: { planche: 4, lingot: 3 } },
+  cuisine_de_camp: { buildingId: "hunt", product: "petite_ration", upgradeBase: { planche: 4, lingot: 3 } }
 };
 var WAREHOUSE_LEGACY_WORKSHOP_UPGRADE_BASE = { planche: 3, lingot: 2 };
 
@@ -52,12 +60,13 @@ var WarehouseManager = {
       if (!ws) return;
       (Array.isArray(ws.queue) ? ws.queue : []).forEach(function (job) {
         var times = Math.floor(Number(job && job.times || 0));
-        if (times > 0) creditLegacy(info.product, times);
+        if (times > 0) creditLegacy(WAREHOUSE_LEGACY_RESOURCES[job.recipeId] ? job.recipeId : info.product, times);
       });
       var mult = (typeof WORKSHOP_LEVEL_CONFIG !== "undefined") ? WORKSHOP_LEVEL_CONFIG.upgradeCostMultPerLevel : 1.4;
+      var base = info.upgradeBase || WAREHOUSE_LEGACY_WORKSHOP_UPGRADE_BASE;
       for (var lv = 1; lv < Math.floor(Number(ws.level || 1)); lv++) {
-        Object.keys(WAREHOUSE_LEGACY_WORKSHOP_UPGRADE_BASE).forEach(function (k) {
-          credit(k, WAREHOUSE_LEGACY_WORKSHOP_UPGRADE_BASE[k] * Math.pow(mult, lv - 1));
+        Object.keys(base).forEach(function (k) {
+          credit(k, base[k] * Math.pow(mult, lv - 1));
         });
       }
       delete bucket.workshops[id];

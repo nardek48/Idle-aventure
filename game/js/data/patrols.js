@@ -35,11 +35,11 @@ var PATROL_JITTER = 0.10;                              // ±10 % à chaque dépa
 var PATROL_RATION_CHANCE_PER_H = 0.03;                 // P5 : ingrédients de rations, rarement
 var PATROL_RATION_LOOT = {
   forest: { viande: 10 },                              // v3.484.0 (lot S) : viande brute, plus de Viande séchée
-  desert: { viande: 15, pain: 1 },                     // une ration moyenne (E4)
-  ruins: { viande: 15, pain: 1 },                      // v3.457.3 : comme le Désert
-  crypt: { viande: 15, pain: 1 },
-  mountain: { viande: 15, pain: 1 }, // v3.489.0
-  tower: { viande: 15, pain: 1 }     // v3.645.0
+  desert: { viande: 15, ble: 15 },                     // v3.788.0 : le Pain devient son Blé (Boulangerie retirée)
+  ruins: { viande: 15, ble: 15 },                      // v3.457.3 : comme le Désert
+  crypt: { viande: 15, ble: 15 },
+  mountain: { viande: 15, ble: 15 }, // v3.489.0
+  tower: { viande: 15, ble: 15 }     // v3.645.0
 };
 /* P6 : chance de récit rare = base par heure, +bonus pour la nuit complète (8 h). */
 var PATROL_RARE_PER_H = 0.02;

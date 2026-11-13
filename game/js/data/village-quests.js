@@ -75,7 +75,7 @@ var VILLAGE_QUESTS = [
       title: "Améliorer une zone : les niveaux",
       points: [
         { icon: "images/Icons/system/upgrade.webp", text: "Chaque zone ouverte peut monter de niveau : jusqu'au 5 en Forêt, et le plafond monte à chaque monde. Chaque niveau augmente à la fois sa vitesse de production et sa capacité de stock local." },
-        { icon: "images/Icons/scene/node_clear_spring.webp", text: "Pour le Champs, l'amélioration coûte du bois et de l'eau — le Puits n'est pas là que pour les rations." },
+        { icon: "images/Icons/scene/node_clear_spring.webp", text: "Pour le Champs, l'amélioration coûte du bois et de l'eau — le Puits ne sert pas qu'au repas du Camp." },
         { icon: "images/Icons/system/cost_rising.webp", text: "Le coût grimpe un peu à chaque niveau (×1,15)." },
         { icon: "images/Icons/system/upgrade.webp", text: "Conseil : améliore d'abord la zone que tu récoltes le plus souvent — c'est elle qui convertit le mieux chaque ressource dépensée." }
       ]
@@ -115,45 +115,12 @@ var VILLAGE_QUESTS = [
   },
 
   /* ================= v3.112.0 (Lot C) — quêtes d'atelier =================
-     Suite de la même chaîne séquentielle : du blé aux recettes (Boulangerie ; v3.484.0, lot S : Moulin retiré),
-     puis les matériaux de craft (Scierie fine + Fonderie), puis l'amélioration d'un
+     Suite de la même chaîne séquentielle : les matériaux de craft (Scierie fine + Fonderie ; v3.788.0 :
+     « Le pain d'Aeswyn » retirée avec la Boulangerie, son tutoriel des ateliers passe ici), puis l'amélioration d'un
      atelier. Les checks de craft lisent le compteur cumulatif
      explorationProgression.villageQuests.craftCounts (alimenté par WorkshopsSystem,
      tick + hors-ligne) : fabriquer suffit, consommer ensuite ne fait jamais reculer. */
 
-  {
-    id: "workshop_first_bread",
-    title: "Le pain d'Aeswyn",
-    icon: "images/Icons/quests/ration_reward.webp",
-    buildingId: "farm",
-    section: "resource",
-    category: "side",
-    narrative: {
-      objective: "Blé du Champs, eau du Puits : la Boulangerie a tout ce qu'il faut pour rallumer son four. Le premier pain d'Aeswyn depuis l'incendie — les anciens en parleront longtemps.",
-      completion: "L'odeur a traversé tout le village. Un seul pain, et déjà on fait la file devant la Boulangerie. Orwen en a pris un morceau et l'a mis de côté, sans dire pour qui." // v3.197.0 (bible B) : graine — le pain pour la braise
-    },
-    objectiveLabel: "Fabriquer 1 Pain à la Boulangerie",
-    check: function () {
-      return VillageQuestManager.getCraftCount("pain") >= 1;
-    },
-    progress: function () {
-      return Math.min(VillageQuestManager.getCraftCount("pain"), 1) + "/1";
-    },
-    reward: { gold: 350, resources: { eau: 10, ble: 10 } }, // v3.484.1 : + la récompense de « La première mouture » (retirée)
-    tutorial: {
-      tab: "village",
-      icon: "images/Icons/quests/ration_reward.webp",
-      title: "Les ateliers : transformer les ressources",
-      points: [
-        { icon: "images/Icons/quests/mission_construction.webp", text: "Chaque bâtiment possède ses ateliers (la Boulangerie pour le Champs). Un atelier transforme des ressources brutes en produits via des recettes." },
-        { icon: "images/Icons/workshops/recipe_ingredients.webp", text: "Une recette peut demander PLUSIEURS ingrédients, venus de bâtiments différents : le pain prend 15 blé du Champs et 5 eau du Puits. Plus loin, il entre dans la Ration de la Cuisine de camp." },
-        { icon: "images/Icons/system/import.webp", text: "Les intrants sont déduits de l'Entrepôt dès que tu lances le craft — le produit est crédité à la FIN du temps de fabrication." },
-        { icon: "images/Icons/system/hourglass_waiting.webp", text: "Chaque atelier a sa propre file d'attente : tu peux empiler plusieurs lots, ils s'enchaînent tout seuls — même hors ligne." },
-        { icon: "images/Icons/system/auto_repeat.webp", text: "Le mode Auto d'une recette relance un lot dès que les ingrédients sont là (une seule recette auto par atelier) — parfait pendant que tu joues ailleurs." },
-        { icon: "images/Icons/quests/ration_reward.webp", text: "Ouvre le Champs et lance ton premier pain à la Boulangerie." }
-      ]
-    }
-  },
   {
     id: "workshop_materials",
     title: "Planche et lingot",
@@ -178,15 +145,18 @@ var VILLAGE_QUESTS = [
       var done = (VillageQuestManager.getCraftCount("planche") >= 1 ? 1 : 0) + (VillageQuestManager.getCraftCount("lingot") >= 1 ? 1 : 0);
       return done + "/2";
     },
-    reward: { gold: 250, resources: { bois: 5, fer: 5 } },
+    reward: { gold: 600, resources: { bois: 5, fer: 5, eau: 10, ble: 10 } }, // v3.788.0 : + la récompense du « Pain d'Aeswyn » (retirée)
     tutorial: {
       tab: "village",
       icon: "images/Icons/plots/reinforced_gallery.webp",
-      title: "Les matériaux de construction",
+      title: "Les ateliers : planche et lingot",
       points: [
+        { icon: "images/Icons/quests/mission_construction.webp", text: "Chaque bâtiment possède ses ateliers. Un atelier transforme des ressources brutes en produits via des recettes ; une recette peut demander plusieurs ingrédients, venus de bâtiments différents." },
+        { icon: "images/Icons/system/import.webp", text: "Les intrants sont déduits de l'Entrepôt dès que tu lances le craft — le produit est crédité à la FIN du temps de fabrication." },
+        { icon: "images/Icons/system/hourglass_waiting.webp", text: "Chaque atelier a sa propre file d'attente : tu peux empiler plusieurs lots, ils s'enchaînent tout seuls — même hors ligne." },
+        { icon: "images/Icons/system/auto_repeat.webp", text: "Le mode Auto d'une recette relance un lot dès que les ingrédients sont là (une seule recette auto par atelier) — parfait pendant que tu joues ailleurs." },
         { icon: "images/Icons/workshops/fine_sawmill.webp", text: "Chaque bâtiment a ses propres ateliers : la Scierie fine (Scierie) transforme 5 bois en 1 planche, la Fonderie (Mine) coule 5 fer en 1 lingot." },
         { icon: "images/Icons/plots/reinforced_gallery.webp", text: "Planches et lingots sont les matériaux « travaillés » d'Aeswyn : c'est avec eux que s'améliorent les ateliers — et que se bâtiront les projets à venir." },
-        { icon: "images/Icons/workshops/masonry.webp", text: "Tu as déjà croisé la planche avec « Les fondations » : chaque planche fabriquée compte, quelle que soit la raison pour laquelle tu la fabriques." },
         { icon: "images/Icons/system/stock_reserve.webp", text: "Conseil : garde toujours quelques planches et lingots d'avance — les besoins arrivent souvent d'un coup." }
       ]
     }
@@ -195,7 +165,7 @@ var VILLAGE_QUESTS = [
     id: "workshop_level_two",
     title: "L'atelier bien huilé",
     icon: "images/Icons/system/wrench_settings.webp",
-    buildingId: "farm",
+    buildingId: "sawmill", // v3.788.0 : le Champs n'a plus d'atelier
     section: "resource",
     category: "side",
     narrative: {

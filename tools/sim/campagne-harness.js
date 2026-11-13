@@ -1055,7 +1055,6 @@ function freeSector(mapId, sectorId) {
     preparerSortieCarte(g, mapId, cible, cs);
     var r = LM.start(mapId, cible);
     if (!r.ok && CAP_RE.test(r.reason || "")) { if (SANS_LENDEMAIN) return false; waitCap(); r = LM.start(mapId, cible); }
-    if (!r.ok && /Petite ration/.test(r.reason || "")) { obtain("petite_ration", 1); r = LM.start(mapId, cible); }
     if (!r.ok) { note("secteur " + cible + " : " + r.reason); wait(3600e3, "échec à rejouer"); continue; }
     emporterObjets(g);
     LAST_END = null;
@@ -1147,11 +1146,6 @@ function freeSectorAgain(mapId, sectorId) {
   if (COMBATS) healUp(); else g.game.heroHp = g.game.heroMaxHp;
   preparerSortieCarte(g, mapId, sectorId, cs);
   var r = LM.start(mapId, sectorId);
-  if (!r.ok && /Vivres/.test(r.reason || "")) {       // vivres de sortie : une ration, comme le dit le refus
-    var m = /(\d+) (Petite ration|Ration moyenne|Grande ration)/.exec(r.reason) || [];
-    obtain({ "Petite ration": "petite_ration", "Ration moyenne": "ration", "Grande ration": "grande_ration" }[m[2]] || "petite_ration", Number(m[1] || 1));
-    r = LM.start(mapId, sectorId);
-  }
   if (!r.ok) { note(sectorId + " rejoué : " + r.reason); return false; }
   emporterObjets(g);
   // rythme de la Tour (03/11) : un secteur d'expédition rejoué se joue comme une Petite aventure, pas comme un combat d'élite
@@ -1900,8 +1894,7 @@ var SOLVERS = {
   forest_05: function (g) { playAdventure("aq_forest_expedition"); },
   forest_06: function (g) { playAdventure("hq_wolf_pack"); },
   forest_07: function (g) { playExpedition("source_tarie", function () { return g.storyExplorationDone("driedSpring"); }); },
-  forest_08: function (g) {
-    obtain("petite_ration", 1);
+  forest_08: function (g) { // v3.788.0 : plus de ration à fabriquer
     playExpedition("sentier_obstrue", function () { return g.storyExplorationDone("blockedPath"); });
   },
   forest_09: function (g) { playExpedition("veine_instable", function () { return g.storyExplorationDone("unstableVein"); }); },
@@ -2244,7 +2237,6 @@ function failleRun(id, L, libre) {   // libre (v3.462.0) : mode libre du moteur
   var g = G, D = g.DungeonManager;
   g.game.heroHp = g.game.heroMaxHp; refillPotions();
   g.game.dungeonRunsUsed = {}; g.game.dungeonTierCleared = { 1: true, 2: true, 3: true, 4: true, 5: true };
-  ["petite_ration", "ration", "grande_ration"].forEach(function (k) { if (g.WarehouseManager.getAmount(k) < 10) g.WarehouseManager.addResource(k, 10, true); }); // vivres de sortie : hors mesure
   // v3.460.0 : niveaux du moteur ; FAILLE_PV / FAILLE_DMG surchargent les pourcentages des données
   if (process.env.FAILLE_PV) g.DUNGEON_CONFIG.levelHpPct = FAILLE_PV;
   if (process.env.FAILLE_DMG) g.DUNGEON_CONFIG.levelPowerPct = FAILLE_DMG;

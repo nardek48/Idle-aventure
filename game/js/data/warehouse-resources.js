@@ -37,11 +37,7 @@ var WAREHOUSE_RESOURCES = {
      activé (Forge de la Mine), et premier débouché du Lingot en dehors de la
      construction. Invendable : c'est un intrant. */
   acier: { id: "acier", name: "Acier", icon: "images/Icons/resources/acier_icon.webp", desc: "Lingot retravaillé à la Forge de la Mine. Sert à reforger l'équipement.", sellPrice: 0, tier: "crafted", cap: 999, sourceHint: "Se forge à la Forge (Mine), à partir de Lingot" },
-  // v3.137.0 : desc corrigée — la Boulangerie (Champs), pas l'Atelier de Construction, cuit le Pain.
-  pain: { id: "pain", name: "Pain", icon: "images/Icons/resources/bread_icon.webp", desc: "Cuit à la Boulangerie (Champs) à partir de Blé et d'Eau.", sellPrice: 19, tier: "crafted", cap: 999 },
-  ration: { id: "ration", name: "Ration moyenne", icon: "images/Icons/resources/ration_icon.webp", desc: "Vivre de la besace des Petites Aventures : soigne 60 % des PV. Cuisine de camp : 15 Viandes + 1 Pain.", sellPrice: 36, tier: "crafted", cap: 999, sourceHint: "Se cuisine à la Cuisine de camp (Chasse), avec de la Viande et du Pain", healPct: 0.60 },
-  petite_ration: { id: "petite_ration", name: "Petite ration", icon: "images/Icons/resources/petite_ration_icon.webp", desc: "Vivre de la besace des Petites Aventures : soigne 35 % des PV. Cuisine de camp : 8 Viandes + 4 Eau.", sellPrice: 18, tier: "crafted", cap: 999, sourceHint: "Se cuisine à la Cuisine de camp (Chasse), avec de la Viande et de l'Eau", healPct: 0.35 },
-  // v3.137.0 : recette de craft ajoutée (Cuisine de camp : Ration moyenne + 3 Sève d'Aeswyn) — desc mise à jour.
+  // v3.788.0 : Pain et rations retirés (Boulangerie et Cuisine de camp fermées) : convertis en brut par WarehouseManager (legacy).
   /* v3.303.0 (W-2, Désert D3) : l'Outre pleine, fabriquée au Réservoir du Puits. Emportée dans
      la préparation d'un parcours du Désert, elle rend du Souffle une fois. Jamais obligatoire.
      v3.304.0 : icône propre (générique en jeu tant qu'elle n'est pas dessinée), plus celle de la gourde. */
@@ -51,7 +47,6 @@ var WAREHOUSE_RESOURCES = {
   trousse_maitre: { id: "trousse_maitre", name: "Trousse de maître", icon: "images/Icons/resources/trousse_maitre_icon.webp", desc: "Forgée à la Forge de la Mine. En Petite Aventure, trois crochets au lieu de deux.", sellPrice: 0, tier: "crafted", cap: 99 },
   torche_resinee: { id: "torche_resinee", name: "Torche résinée", icon: "images/Icons/resources/torche_resinee_icon.webp", desc: "Montée à la Menuiserie. En Petite Aventure, elle éclaire sans attirer les coups.", sellPrice: 0, tier: "crafted", cap: 99 },
   outre_pleine: { id: "outre_pleine", name: "Outre pleine", icon: "images/Icons/resources/outre_pleine_icon.webp", desc: "Se remplit au Réservoir (Puits). Emportée dans un parcours du Désert, elle rend du Souffle une fois.", sellPrice: 20, tier: "crafted", cap: 99 },
-  grande_ration: { id: "grande_ration", name: "Grande ration", icon: "images/Icons/resources/grande_ration_icon.webp", desc: "Vivre de la besace des Petites Aventures : soigne 100 % des PV. Cuisine de camp (Chasse) : 1 Ration moyenne + 15 Viandes + 10 Eau → 1.", sellPrice: 60, tier: "crafted", cap: 999, sourceHint: "Se cuisine à la Cuisine de camp (Chasse), à partir d'une Ration moyenne", healPct: 1.00 },
   // v3.127.0 (Petites Aventures, Lot PA3) : butin exclusif du scene-engine petite_aventure_foret
   // (voir data/scene-templates.js, exclusiveLoot) — nom + icône validés Seb 03/09/2026.
   // Ressource de collection (tier "special", distinct de raw/crafted) : pas de sellPrice
@@ -97,7 +92,6 @@ var WAREHOUSE_RESOURCES = {
 };
 
 // v3.106.0 : ordre d'affichage des rations au Campement (petite -> grande).
-var RATION_IDS = ["petite_ration", "ration", "grande_ration"];
 
 window.WAREHOUSE_RESOURCES = WAREHOUSE_RESOURCES;
 window.WAREHOUSE_CAP_PER_LEVEL = WAREHOUSE_CAP_PER_LEVEL;
@@ -105,4 +99,3 @@ window.WAREHOUSE_CAP_HIGH_FROM = WAREHOUSE_CAP_HIGH_FROM;
 window.WAREHOUSE_CAP_PER_LEVEL_HIGH = WAREHOUSE_CAP_PER_LEVEL_HIGH;
 window.getWarehouseCapBonus = getWarehouseCapBonus;
 window.RAW_STOCK_BASE = RAW_STOCK_BASE;
-window.RATION_IDS = RATION_IDS;

@@ -31,7 +31,7 @@ var COACH_TUTORIALS = {
       { sel: ".prod-tile .prod-tile-gauge", title: _t("Le stock du bâtiment"), text: _t("Ce qu'il a produit, et sa limite. Plein, il s'arrête : pense à récolter.") },
       { sel: ".prod-tile .prod-tile-meta", title: _t("Ton Entrepôt"), text: _t("Ce que tu as en réserve, et son plafond. Une ressource pleine ne se produit plus.") },
       { sel: ".prod-tile .prod-tile-rib.is-up", title: _t("Une zone à monter"), text: _t("Ce badge dit qu'une zone peut monter : plus de production et plus de stock.") },
-      { sel: ".village-tabs .village-tab:nth-child(3)", title: _t("Les Ateliers"), text: _t("Ils transforment le brut en objets utiles : viande et eau deviennent des rations.") }
+      { sel: ".village-tabs .village-tab:nth-child(3)", title: _t("Les Ateliers"), text: _t("Ils transforment le brut en matériaux : le bois devient planche, le fer devient lingot.") }
     ]
   },
   forest_brume: {
@@ -44,7 +44,7 @@ var COACH_TUTORIALS = {
   },
   pa2_prep: {
     steps: [
-      { sel: "#pa2-bag", title: _t("Ta besace"), text: _t("« Ajouter des objets » : rations ou objets. Chacun a un avantage (en vert) et souvent un prix (en rouge). Les rations non mangées retournent à l'Entrepôt.") },
+      { sel: "#pa2-bag", title: _t("Ta besace"), text: _t("« Ajouter des objets » : rations ou objets. Chacun a un avantage (en vert) et souvent un prix (en rouge). Les rations sont gratuites : seule la place compte.") },
       { sel: ".pa2-prep .pa2-heroline", title: _t("Tes PV"), text: _t("Tu pars avec tes PV actuels. En route, seuls te soignent les rations, les sources, le repos, les autels et quelques reliques.") },
       { sel: ".pa2-prep .pa2-list", title: _t("Les pactes"), text: _t("Facultatifs : chacun rend la nuit plus dure et le retour plus riche. Prends-les quand tu t'en sens capable.") },
       { sel: ".pa2-prep .pa2-link", title: _t("Renoncer", "tuto"), text: _t("Tant que tu n'es pas parti, tu reviens sans rien perdre.") }
@@ -73,12 +73,12 @@ var COACH_TUTORIALS = {
       { sel: ".nb-purchase-card .nb-purchase-meta", title: _t("Deux par sortie"), text: _t("Au plus 2 potions par sortie : garde-les pour la fin du combat.") }
     ]
   },
-  forest_08: {
-    prepare: function () { if (typeof setVillageSubTab === "function") setVillageSubTab("shops"); },
+  forest_08: { // v3.788.0 (Seb 13/11) : « Le repas », au Camp (la Cuisine de camp est retirée)
+    prepare: function () { if (typeof setCampTab === "function") setCampTab("feu"); },
     steps: [
-      { sel: ".village-tabs .village-tab:nth-child(3)", title: _t("Les Ateliers"), text: _t("Le sentier obstrué consomme une Petite ration : la source t'en a donné une. Les suivantes se fabriquent ici.") },
-      { sel: ".wk-tile", title: _t("La Cuisine de camp"), text: _t("L'atelier de la Chasse. Touche-le pour choisir la recette Petite ration et la fabriquer.") },
-      { sel: ".wk-tile .wk-tile-recipe", title: _t("La recette"), text: _t("8 Viande et 4 Eau donnent une Petite ration. En stock, « La veine instable » la prendra toute seule.") }
+      { sel: ".camp-rings", title: _t("Ton équipe"), text: _t("Les anneaux disent les PV de tes compagnons. Touche-en un pour lui parler.") },
+      { sel: ".camp-acts .camp-act:first-child", title: _t("Le repas"), text: _t("Toute l'équipe à plein, tout de suite. Il se paie en blé, viande et eau, selon les PV qui manquent.") },
+      { sel: ".camp-acts .camp-act:nth-child(2)", title: _t("Le festin"), text: _t("+10 % de dégâts et de PV pour 3 sorties. Plus cher : garde-le pour un boss.") }
     ]
   },
   forest_13: {
@@ -100,7 +100,7 @@ var COACH_TUTORIALS = {
   forest_15: {
     steps: [
       { sel: ".camp-embers-item", title: _t("La Sève d'Aeswyn"), text: _t("Elle se trouve en Petite Aventure, sur la carte de la Forêt : parfois en route, surtout en atteignant une destination.") },
-      { sel: ".camp-embers-item:nth-child(2)", title: _t("La Ration moyenne"), text: _t("À la Cuisine de camp (Chasse) : 15 Viandes et 1 Pain. Le Pain vient de la Boulangerie du Champs, ouvert par « La Terre en Friche » (Quêtes › Annexes).") },
+      { sel: ".camp-embers-item:nth-child(2)", title: _t("La viande et l'eau"), text: _t("15 Viandes de la Chasse, 10 Eau du Puits : elles arrivent seules à l'Entrepôt.") },
       { sel: ".camp-embers-btn", title: _t("L'offrande"), text: _t("Quand tout est réuni, touche ce bouton pour l'offrir aux braises.") }
     ]
   },

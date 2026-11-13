@@ -1,7 +1,7 @@
 "use strict";
 /* data/village-events.js — v3.604.0 (événements du village, E1 validé par Seb le 31/10 ; atelier evenements-village) :
    « Ce matin à Aeswyn ». Un événement à la fois, tiré à l'aube (systems/village-event-system.js), 2 jours de jeu.
-   Types : rumeur (un lieu de la carte rapporte plus), demande (livrer), marche (l'échoppe), fete (pain contre soin et or).
+   Types : rumeur (un lieu de la carte rapporte plus), demande (livrer), marche (l'échoppe), fete (blé contre soin et or ; v3.788.0 : était le pain).
    Textes intégrés avant relecture (accord de Seb) ; {lieu} = le secteur choisi à l'aube. Littéraux pour l'audit i18n. */
 
 var VILLAGE_EVENT_DAYS = 2;           // durée, en jours de jeu
@@ -31,10 +31,10 @@ function villageEventsData() {
     /* ---------- Demandes des anciens ---------- */
     { id: "d_brannoc_fer", type: "demande", who: _t("Demande de Brannoc"), title: _t("Le fer de la forge"), text: _t("« Il me faut du fer avant que le froid prenne. Après, je ne pourrai plus chauffer assez. »"), res: { fer: 80 }, gain: { lingot: 2 }, next: "s_lame" },
     { id: "d_brannoc_bois", type: "demande", who: _t("Demande de Brannoc"), title: _t("Le charbon de bois"), text: _t("« Du bois sec. Beaucoup. Le feu de la forge mange plus que nous tous. »"), res: { bois: 100 }, gain: { planche: 4 } },
-    { id: "d_orwen_ble", type: "demande", who: _t("Demande d'Orwen"), title: _t("Les réserves d'hiver"), text: _t("« Les réserves baissent. Je n'aime pas compter les sacs à l'envers. »"), res: { ble: 110 }, gain: { pain: 3 }, next: "s_fete_orwen" },
-    { id: "d_orwen_eau", type: "demande", who: _t("Demande d'Orwen"), title: _t("L'eau des malades"), text: _t("« Wenna n'est pas là, et quelqu'un tousse dans la deuxième maison. De l'eau propre, vite. »"), res: { eau: 110 }, gain: { petite_ration: 2 }, next: "s_orwen_merci" },
+    { id: "d_orwen_ble", type: "demande", who: _t("Demande d'Orwen"), title: _t("Les réserves d'hiver"), text: _t("« Les réserves baissent. Je n'aime pas compter les sacs à l'envers. »"), res: { ble: 110 }, gain: { eau: 45 } /* v3.788.0 : était 3 Pains */, next: "s_fete_orwen" },
+    { id: "d_orwen_eau", type: "demande", who: _t("Demande d'Orwen"), title: _t("L'eau des malades"), text: _t("« Wenna n'est pas là, et quelqu'un tousse dans la deuxième maison. De l'eau propre, vite. »"), res: { eau: 110 }, gain: { viande: 25 } /* v3.788.0 : était 2 Petites rations */, next: "s_orwen_merci" },
     { id: "d_aldric_pierre", type: "demande", who: _t("Demande d'Aldric"), title: _t("Le mur qui penche"), text: _t("« Le mur nord penche de deux doigts. J'ai mesuré. Deux fois. Il faut de la pierre. »"), res: { pierre: 100 }, gain: { bloc: 2 }, next: "s_aldric" },
-    { id: "d_aldric_viande", type: "demande", who: _t("Demande d'Aldric"), title: _t("Le compte des repas"), text: _t("« Il manque des repas dans mon registre. Ou de la viande dans le fumoir. L'un des deux. »"), res: { viande: 70 }, gain: { ration: 1 } },
+    { id: "d_aldric_viande", type: "demande", who: _t("Demande d'Aldric"), title: _t("Le compte des repas"), text: _t("« Il manque des repas dans mon registre. Ou de la viande dans le fumoir. L'un des deux. »"), res: { viande: 70 }, gain: { ble: 30 } /* v3.788.0 : était 1 Ration moyenne */ },
     /* ---------- Marchés de Sarkel ---------- */
     { id: "m_sud", type: "marche", who: _t("Marché de Sarkel"), title: _t("L'étal du sud"), text: _t("« J'ai rapporté des choses du sud. Pas cher. Enfin, pas trop. »") },
     { id: "m_fin", type: "marche", who: _t("Marché de Sarkel"), title: _t("La fin de saison"), text: _t("« Fin de saison : tout doit partir. Moi aussi, d'ailleurs. »") },
@@ -53,7 +53,7 @@ function villageEventsData() {
        Un événement réussi (livré, fête lancée, rumeur jouée) appelle sa suite à l'aube suivante ;
        un marché où l'on a vendu fait revenir Sarkel à l'aube qui suit sa fin. */
     { id: "s_lame", type: "cadeau", suite: true, gift: "equip", giftSlot: "weapon", who: _t("Demande de Brannoc"), title: _t("La lame de Brannoc"), text: _t("« Ton fer est devenu ça. Prends. Je n'ai pas le temps de l'admirer. »") },
-    { id: "s_orwen_merci", type: "cadeau", suite: true, gift: { grande_ration: 1, ration: 2 }, who: _t("Demande d'Orwen"), title: _t("Plus personne ne tousse"), text: _t("« Plus personne ne tousse dans la deuxième maison. Tiens, c'est pour la route. »") },
+    { id: "s_orwen_merci", type: "cadeau", suite: true, gift: { viande: 60, ble: 60, eau: 30 } /* v3.788.0 : plus de rations */, who: _t("Demande d'Orwen"), title: _t("Plus personne ne tousse"), text: _t("« Plus personne ne tousse dans la deuxième maison. Tiens, c'est pour la route. »") },
     { id: "s_fete_orwen", type: "fete", suite: true, free: true, who: _t("Fête"), title: _t("La table d'Orwen"), text: _t("« Les réserves sont pleines. Ce soir, c'est moi qui fournis le pain. »") },
     { id: "s_aldric", type: "palissade", suite: true, who: _t("Demande d'Aldric"), title: _t("Le compte est juste"), text: _t("« Le mur est droit. J'ai recompté les pieux. Il n'en manque aucun, pour une fois. »") },
     { id: "s_rumeur2", type: "rumeur", suite: true, rumor2: true, who: _t("Rumeur de Taverne"), title: _t("Plus loin, {lieu}"), text: _t("« Les bêtes de l'autre fois ont filé vers {lieu}. Celles-là sont plus grosses. »") },

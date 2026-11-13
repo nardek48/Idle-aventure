@@ -262,7 +262,7 @@ var MissionBoard = {
     if (req.tabUnlocked && !(game.unlockedTabs && game.unlockedTabs[req.tabUnlocked])) return false;
     if (req.progressFlag && !(game.explorationProgression && game.explorationProgression[req.progressFlag])) return false;
     // v3.119.0 (retour Seb) : plusieurs conditions cumulées (ex. Terre en Friche exige à la fois
-    // le Puits ET la Cuisine de camp/petite ration) — progressFlags (pluriel), toutes requises.
+    // le Puits ET la Chasse) — progressFlags (pluriel), toutes requises.
     if (req.progressFlags && !req.progressFlags.every(function (flag) { return !!(game.explorationProgression && game.explorationProgression[flag]); })) return false;
     // v3.304.0 : ouvert par une étape d'Histoire atteinte (la Petite Aventure du Désert, étape « L'outre »)
     if (req.storyStep && !(window.StoryQuestManager && StoryQuestManager.isStepReached(req.storyStep))) return false;

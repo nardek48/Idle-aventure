@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.788.0", "workshops/camp_kitchen", _t("Simplification des rations (4/4) : la Boulangerie et la Cuisine de camp ferment. Le pain et les rations en stock reviennent en blé, viande et eau. Les braises, le dernier camp et l'Apothicaire demandent maintenant du brut.")],
     ["3.787.0", "scene/pa2_besace", _t("Simplification des rations (3/4) : dans la besace des Petites Aventures, les trois rations sont gratuites et toujours là. Seule la place compte : Petite (1 place), Moyenne (2), Grande (3).")],
     ["3.786.0", "camp/camp_meal", _t("Simplification des rations (2/4) : au Camp, un seul bouton « Repas » remet toute l'équipe à plein, payé en blé, viande et eau selon les PV qui manquent. Le festin passe à côté, et les PV des compagnons s'affichent en anneaux : touche-en un pour lui parler.")],
     ["3.785.0", "resources/ration_icon", _t("Simplification des rations (1/4) : refaire un donjon, une élite de carte ou le mode libre ne demande plus de vivres. Les expéditions, les traversées et la Faille partent sans ration.")],

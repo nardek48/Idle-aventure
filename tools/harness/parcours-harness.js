@@ -219,7 +219,6 @@ async function drivePa2(page, seek, maxSteps) {
 function prepMap(except) {
   return new Function("LivingMapManager.ensureDefaults(); var st = game.livingMaps.forest.sectors;"
     + "Object.keys(st).forEach(function (id) { if (" + JSON.stringify(except || []) + ".indexOf(id) < 0) st[id].state = 'libere'; });"
-    + "WarehouseManager.addResource('petite_ration', 10, true); WarehouseManager.addResource('ration', 10, true);"
     + "game.heroMaxHp = 99999; game.heroHp = 99999;");
 }
 
@@ -330,8 +329,6 @@ async function P5(browser, base) {
     LivingMapManager.ensureDefaults();
     var st = game.livingMaps.forest.sectors;
     Object.keys(st).forEach(function (id) { if (id !== "arbremere") st[id].state = "libere"; });
-    WarehouseManager.addResource("petite_ration", 10, true);
-    WarehouseManager.addResource("ration", 10, true);
     game.heroMaxHp = 99999; game.heroHp = 99999;         // le parcours teste l'enchaînement, pas l'équilibrage
   }]);
   await page.close();

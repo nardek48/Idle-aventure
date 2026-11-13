@@ -43,8 +43,8 @@ var TAVERN_CONTRACT_TEMPLATES = [
   /* --- Ressources fabriquées --- */
   { id: "planche", resourceId: "planche", min: 10, max: 25, tier: 2, title: "Planches pour l'appentis" },
   { id: "lingot", resourceId: "lingot", min: 8, max: 18, tier: 3, title: "Commande du forgeron" },
-  { id: "pain", resourceId: "pain", min: 6, max: 15, tier: 3, title: "Fournée pour la route" },
-  { id: "ration", resourceId: "ration", min: 3, max: 8, tier: 4, title: "Paquetage d'expédition" }
+  // v3.788.0 : Pain et Ration retirés (Boulangerie et Cuisine de camp retirées) ; le Bloc taillé prend le rang 4
+  { id: "bloc", resourceId: "bloc", min: 6, max: 15, tier: 4, title: "Seuil de la Halle" }
 ];
 
 window.TAVERN_REWARD_MULT = TAVERN_REWARD_MULT;
