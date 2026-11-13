@@ -30,7 +30,10 @@ function ok(cond, msg) { if (cond) { passes++; console.log("  ✔ " + msg); } el
 
 console.log("[boot-1] Tout premier lancement (aucune save) : init() pose bien les valeurs de départ");
 g.init();
-ok(!g.game.resources.ration && typeof g.game.resources.viande === "number", "v3.788.0 : plus de ration de départ dès le tout premier lancement (" + g.game.resources.ration + ")");
+// v3.788.0 : rations retirées ; la copie de l'Alpha (branche figée, ancien moteur) en garde 3 au départ
+var SANS_RATION = !!(g.WAREHOUSE_LEGACY_RESOURCES && g.WAREHOUSE_LEGACY_RESOURCES.ration);
+var rationsOk = function (r) { return SANS_RATION ? !r.ration : r.ration === 3; };
+ok(rationsOk(g.game.resources) && typeof g.game.resources.viande === "number", (SANS_RATION ? "v3.788.0 : plus de ration" : "Alpha : 3 rations") + " de départ dès le tout premier lancement (" + g.game.resources.ration + ")");
 ok(g.game.heroHp === 1 && g.game.gold === 0, "état neutre attendu avant sélection de héros (heroHp=1, gold=0)");
 
 console.log("\n[boot-2] Vrai flux joueur (v3.107.3) : écran titre -> Nouvelle Partie -> création de héros");
@@ -56,11 +59,11 @@ g2.ensureGameStateDefaults();
 g2.initSaveSystem();
 g2.HeroSlotManager.createHeroInSlot(1);
 g2.WarehouseManager.ensure();
-ok(!g2.game.resources.ration, "après createHeroInSlot(1) (clic « Nouvelle Partie ») : v3.788.0, plus de ration en stock");
+ok(rationsOk(g2.game.resources), "après createHeroInSlot(1) (clic « Nouvelle Partie ») : rations de départ (" + (SANS_RATION ? "aucune, v3.788.0" : "3, Alpha") + ")");
 g2.pendingHeroId = "knight";
 g2.pendingPlayerName = "TestPlayer";
 g2.confirmHeroSelection();
-ok(!g2.game.resources.ration && g2.game.playerName === "TestPlayer" && g2.game.heroHp === g2.game.heroMaxHp, "après confirmHeroSelection (héros+nom validés) : personnage prêt, sans ration (v3.788.0)");
+ok(rationsOk(g2.game.resources) && g2.game.playerName === "TestPlayer" && g2.game.heroHp === g2.game.heroMaxHp, "après confirmHeroSelection (héros+nom validés) : personnage prêt, rations de départ conformes à la version");
 
 console.log("\n" + passes + " OK, " + failures + " échec(s)");
 process.exit(failures ? 1 : 0);

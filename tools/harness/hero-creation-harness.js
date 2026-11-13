@@ -87,7 +87,8 @@ ok(g.HEROES_DB.chaosRanger.image.indexOf("chaosRanger_m.webp")!==-1, "getter her
 ok(host()==="", "création fermée");
 ok(g.titleScreenSlotBeingCreated===null || g.titleScreenSlotBeingCreated===undefined, "titleScreenSlotBeingCreated remis à null");
 g.WarehouseManager.ensure();
-ok(g.game.resources && !g.game.resources.ration, "v3.788.0 : plus de ration de départ");
+var sansRation = !!(g.WAREHOUSE_LEGACY_RESOURCES && g.WAREHOUSE_LEGACY_RESOURCES.ration); // la copie de l'Alpha garde l'ancien moteur
+ok(g.game.resources && (sansRation ? !g.game.resources.ration : g.game.resources.ration === 3), sansRation ? "v3.788.0 : plus de ration de départ" : "Alpha : 3 rations de départ");
 ok(g.HeroSlotManager.hasSlot(1), "slot 1 sauvegardé");
 
 console.log("\n[hc-4b] getSlotSummary reflète le genre DU SLOT, pas celui de la partie active en mémoire");
