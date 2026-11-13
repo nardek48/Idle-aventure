@@ -1231,17 +1231,21 @@ function run() {
     ok(true, "sauvegarde reprise : " + process.env.SAVE_IN);
   }
   if (process.env.VARIER) G.game.grimoireVarier = true;
-  // MESURE_CRIT=1 : à chaque coup du héros, sa chance de critique, la part ôtée par la Volonté de l'ennemi et le surplus au-delà de 100 %
-  if (process.env.MESURE_CRIT && typeof G.getEnemyWillCritPenalty === "function") (function (orig) {
+  // MESURE_CRIT=1 : à chaque tirage du critique en combat, la chance du héros, la part ôtée par la Volonté de l'ennemi (0,05 par point) et le surplus au-delà de 100 %
+  if (process.env.MESURE_CRIT) (function (EM) {
+    var orig = EM.effectiveCritChance;
     STATS.crit = {};
-    G.getEnemyWillCritPenalty = function () {
-      var pen = orig.apply(this, arguments), cc = Number(G.EquipmentManager.effectiveCritChance() || 0), w = String((G.WorldManager.getWorld() || {}).id || "?");
-      var o = STATS.crit[w] = STATS.crit[w] || { n: 0, cc: 0, pen: 0, perdu: 0, coupsPerdus: 0, ccMax: 0 };
-      var perdu = Math.max(0, cc - pen - 100);
-      o.n++; o.cc += cc; o.pen += pen; o.perdu += perdu; if (perdu > 0) o.coupsPerdus++; o.ccMax = Math.max(o.ccMax, cc);
-      return pen;
+    EM.effectiveCritChance = function () {
+      var cc = Number(orig.apply(this, arguments) || 0), en = G.game.enemy;
+      if (en && en.stats && G.game.activeTab === "combat") {
+        var pen = Number(en.stats.will || 0) * 0.05, w = String((G.WorldManager.getWorld() || {}).id || "?");
+        var o = STATS.crit[w] = STATS.crit[w] || { n: 0, cc: 0, pen: 0, perdu: 0, coupsPerdus: 0, ccMax: 0 };
+        var perdu = Math.max(0, cc - pen - 100);
+        o.n++; o.cc += cc; o.pen += pen; o.perdu += perdu; if (perdu > 0) o.coupsPerdus++; o.ccMax = Math.max(o.ccMax, cc);
+      }
+      return cc;
     };
-  })(G.getEnemyWillCritPenalty);
+  })(G.EquipmentManager);
   espionOr();
   G.saveGame();
 
