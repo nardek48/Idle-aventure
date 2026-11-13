@@ -86,9 +86,6 @@ body.exp-on-board .hud-dock { display: none !important; }
 .exp-world-txt small { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--c-cream-200); }
 .exp-world-txt small img { width: 16px; height: 16px; object-fit: contain; }
 
-/* Fiche de la Halle : renvoi vers la Caravane (Campement › Expéditions) */
-.vb-hall-caravan { margin: 0 0 10px; }
-.vb-hall-caravan.is-collect { border-color: var(--c-green-650-2); background: var(--c-cream-50-soft); }
 /* v3.426.1 : une seule carte atteinte — la vignette sur toute la largeur, sans effet « non choisi ». */
 .exp-worlds.is-single { grid-template-columns: 1fr; }
 .exp-worlds.is-single .exp-world { height: 72px; }

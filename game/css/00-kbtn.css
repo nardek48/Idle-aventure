@@ -476,7 +476,7 @@
   .map-quest-run-actions, .rsb-actions, .lab-actions, .wh-pick-q):has(> .is-2l) > .primary { border-image-source: url('../images/UI/buttons/btn-cuivre-2l.webp'); }
 /* Un bouton seul dans sa rangée : largeur au texte, centré */
 :is(.ksheet-foot, .kwin-foot, .set-pair, .story-step-actions, .vb-sheet-actions, .hc-actions, .title-screen-btn-row,
-  .map-quest-run-actions, .rsb-actions, .lab-actions, .wh-pick-q, .go-go, .car-go, .car-back) > :is(.kbtn, .settings-btn):only-child {
+  .map-quest-run-actions, .rsb-actions, .lab-actions, .wh-pick-q, .go-go) > :is(.kbtn, .settings-btn):only-child {
   flex: 0 0 auto;
   width: fit-content;
   min-width: 140px;

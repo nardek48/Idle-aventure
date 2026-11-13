@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.781.0", "codex/codex_lore", _t("Tutoriels : sept aides de plus s'affichent sur l'écran, en éclairant les vrais boutons (Amélioration, Boutique, ration, Donjon, compagnons, braises, préparation de la sortie).")],
     ["3.780.0", "village_buildings/merchant_hall", _t("Simplification : les caravanes sont retirées. Aux Ruines et à la Crypte, la marchandise de Sarkel se livre depuis la carte d'étape (« Livrer au Marché »). La Halle marchande garde l'échoppe ; une caravane encore en route est livrée au chargement.")],
     ["3.779.0", "special_attacks/spell_ranks", _t("Simplification : les rangs des techniques et de la défense ne s'achètent plus, ils montent avec les mondes (rang 1 au Désert, jusqu'au rang 5 à la Tour). Les jalons des rangs deviennent des jalons d'entraînement et de reliques.")],
     ["3.778.0", "village_buildings/tavern", _t("Simplification : les contrats de la Taverne passent au tableau des missions (Quêtes › Annexes), avec « Livrer » sur place. La fiche de la Taverne en garde le résumé, ses niveaux donnent toujours plus de contrats.")],

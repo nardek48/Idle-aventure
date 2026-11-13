@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.780.0"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.781.0"; // <- à incrémenter à CHAQUE livraison
 /* v3.751.0 : l'Alpha (/alpha/) partage l'origine du jeu ; ses caches portent un autre préfixe, sinon chaque
    service worker effacerait ceux de l'autre à l'activation. */
 var IS_ALPHA_SW = /\/alpha\/$/.test(self.registration ? self.registration.scope : "");
