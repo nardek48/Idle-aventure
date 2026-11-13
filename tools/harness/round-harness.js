@@ -1009,7 +1009,10 @@ game.resources.viande = 100; game.resources.eau = 100; game.resources.ble = 100;
 ok(CM49.eatMeal() === true && game.heroHp === game.heroMaxHp && game.resources.viande === 85 && game.resources.eau === 95, "repas : PV pleins, prix payé");
 EP49.wellUnlocked = false; game.heroHp = 1;
 ok(CM49.mealCost().eau === undefined, "eau pas encore produite (Puits fermé) : pas comptée");
-EP49.wellUnlocked = true;
+EP49.huntBuildingUnlocked = false; EP49.farmUnlocked = false; game.resources.viande = 0; game.resources.ble = 0; game.resources.eau = 0; game.heroHp = 1;
+ok(Object.keys(CM49.mealCost()).length === 0 && CM49.eatMeal() === true && game.heroHp === game.heroMaxHp, "v3.788.0 (Seb) : Chasse, Champs et Puits fermés, le repas est gratuit");
+EP49.wellUnlocked = true; EP49.huntBuildingUnlocked = true; EP49.farmUnlocked = true;
+game.resources.viande = 100; game.resources.ble = 100; game.resources.eau = 100; game.heroHp = Math.floor(game.heroMaxHp * 0.55);
 ok(typeof g.MEMORY_CUISINE_MEAL_MULT === "number" && g.MEMORY_CUISINE_MEAL_MULT === 0.75, "Cuisine de campagne : repas −25 %");
 ok(typeof g.CAMP_MEAL_COST === "undefined" && typeof CM49.eat === "undefined", "ancien système Repas (viande+eau, v3.106) toujours absent");
 game.activeTab = "campement";
@@ -1107,7 +1110,7 @@ ok(forest04.check(game), "point 2 : check() vrai avec un achat, peu importe l'or
 
 run("fullResetState();");
 g.WarehouseManager.ensure();
-ok(!("ration" in game.resources) && game.resources.viande >= 45, "v3.788.0 : les 3 rations de départ (fullResetState) arrivent en brut (" + game.resources.viande + " viande)");
+ok(!("ration" in game.resources) && game.resources.viande === 0, "v3.788.0 (Seb, A) : nouvelle partie sans ration ni brut de départ (" + game.resources.viande + " viande)");
 
 game = freshCombat("knight"); game.activeTab = "campement";
 run("StoryQuestManager.acceptStep('forest'); StoryQuestManager.claimStep('forest');"); // 01 -> 02

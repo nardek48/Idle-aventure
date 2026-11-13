@@ -87,7 +87,7 @@ ok(g.HEROES_DB.chaosRanger.image.indexOf("chaosRanger_m.webp")!==-1, "getter her
 ok(host()==="", "création fermée");
 ok(g.titleScreenSlotBeingCreated===null || g.titleScreenSlotBeingCreated===undefined, "titleScreenSlotBeingCreated remis à null");
 g.WarehouseManager.ensure();
-ok(g.game.resources && !g.game.resources.ration, "v3.788.0 : plus de ration de départ (convertie en brut)");
+ok(g.game.resources && !g.game.resources.ration, "v3.788.0 : plus de ration de départ");
 ok(g.HeroSlotManager.hasSlot(1), "slot 1 sauvegardé");
 
 console.log("\n[hc-4b] getSlotSummary reflète le genre DU SLOT, pas celui de la partie active en mémoire");

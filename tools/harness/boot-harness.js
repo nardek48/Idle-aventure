@@ -56,7 +56,7 @@ g2.ensureGameStateDefaults();
 g2.initSaveSystem();
 g2.HeroSlotManager.createHeroInSlot(1);
 g2.WarehouseManager.ensure();
-ok(!g2.game.resources.ration, "après createHeroInSlot(1) (clic « Nouvelle Partie ») : v3.788.0, plus de ration en stock (convertie en brut)");
+ok(!g2.game.resources.ration, "après createHeroInSlot(1) (clic « Nouvelle Partie ») : v3.788.0, plus de ration en stock");
 g2.pendingHeroId = "knight";
 g2.pendingPlayerName = "TestPlayer";
 g2.confirmHeroSelection();

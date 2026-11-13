@@ -1125,7 +1125,7 @@ function fullResetState() {
   // v3.0 : système Quêtes/Ressources/Territoire — repart bien à zéro sur un reset complet.
   // v3.35 : planche/lingot repartent aussi à zéro (artisanat tier 1).
   // v3.36 : pierre idem (v3.485.0 : farine retirée).
-  game.resources = { viande: 0, ble: 0, bois: 0, fer: 0, pierre: 0, eau: 0, planche: 0, lingot: 0, pain: 0, ration: 3, petite_ration: 0, grande_ration: 0 }; // v3.107.1 : 3 rations de départ (4 -> 3, décision Seb après test)
+  game.resources = { viande: 0, ble: 0, bois: 0, fer: 0, pierre: 0, eau: 0, planche: 0, lingot: 0 }; // v3.788.0 (accord Seb) : plus de rations de départ, le repas est gratuit jusqu'à la Chasse
   game.adventureQuestProgress = {};
   game.adventureQuestsCompleted = {};
   game.huntStats = {}; // v3.30
