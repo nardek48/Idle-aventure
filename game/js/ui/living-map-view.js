@@ -710,7 +710,7 @@ function buildLivingMapPanelHTML(mapId, running) {
   if (repeatable && known) {
     // v3.258.0 (C-5) : élite répétable — Sève par victoire, frein du jour affiché avant de partir.
     var wins = LM.getDailyWins(mapId, d.id);
-    h += '<p class="lm-panel-line"><b>' + _t("Chaque victoire :") + '</b> ' + esc(_t("+{n} {x}. Chaque combat rejoué prend ses vivres (ci-dessous), hors cap des Petites Aventures. Fuir ou tomber reste un échec.", { n: LM.getRepeatSevePerWin(mapId), x: _td(rName) })) + '</p>';
+    h += '<p class="lm-panel-line"><b>' + _t("Chaque victoire :") + '</b> ' + esc(_t("+{n} {x}, hors cap des Petites Aventures. Fuir ou tomber reste un échec.", { n: LM.getRepeatSevePerWin(mapId), x: _td(rName) })) + '</p>';
     var wr = (d.content && typeof LM.getEliteWinResource === "function") ? LM.getEliteWinResource(d.content.eliteId) : null; // v3.689.0 (COMB-22)
     var wrDef = wr && (window.WAREHOUSE_RESOURCES || {})[wr.id];
     if (wr && wr.amount > 0) h += '<p class="lm-panel-line"><b>' + _t("Butin de l'élite :") + '</b> ' + esc(_t("+{n} {x} par victoire.", { n: wr.amount, x: wrDef ? _td(wrDef.name) : wr.id })) + '</p>';

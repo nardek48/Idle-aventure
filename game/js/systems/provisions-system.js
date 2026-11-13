@@ -1,6 +1,7 @@
 "use strict";
 /* systems/provisions-system.js — v3.330.0 : VIVRES DE SORTIE (économie du village, décision E4
-   option a de Seb, 24/09/2026).
+   option a de Seb, 24/09/2026). v3.785.0 (simplification des rations, Seb 13/11, option C) : plus aucun vivre demandé ;
+   getRequirement rend null, donc check() ne refuse rien et consume() ne prélève rien (le donjon, protégé, n'a pas changé).
 
    Une ration pour partir, seulement pour les sorties qu'on REFAIT :
      - run de donjon : dès que ce donjon a déjà été fini une fois (game.dungeonTierCleared),
@@ -20,6 +21,7 @@ var ProvisionsManager = {
      kind : "dungeon" | "dungeonFree" | "mapelite" ;
      ref : l'objet de données (donjon) ou { mapId, sectorId, worldId } pour une élite de carte. */
   getRequirement: function (kind, ref) {
+    return null; // v3.785.0 (Seb 13/11, option C) : les sorties refaites sont gratuites ; le reste du fichier reste pour les appels du moteur
     if (!ref) return null;
     if (kind === "dungeonFree") return { resourceId: "ration", amount: 1 }; // v3.462.0 (N-L) : mode libre, tous les donjons
     var worldId = ref.worldId || "forest";

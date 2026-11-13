@@ -1643,7 +1643,8 @@ g.SceneRunManager.clearRun();
 // --- La Terre en Friche : verrou de lancement (Puits pas débloqué) ---
 game = freshCombat("knight");
 var startFF = g.SceneRunManager.startRun("terre_en_friche");
-ok(startFF.ok === false, "terre_en_friche : refusée sans le Puits débloqué (le canevas ne vérifie pas de flag de lancement lui-même — vérifié via MissionBoard/boardRequires, testé en [S2a])");
+ok(startFF.ok === true, "terre_en_friche : part sans coût (v3.785.0) ; son affichage au tableau reste gardé par boardRequires (testé en [S2a])");
+g.SceneRunManager.clearRun();
 
 console.log("\n[72] v3.111.0 — Lot B : chaîne de quêtes tutorielles du Village (Champs), popups pédagogiques");
 // --- Chaîne invisible tant que le Champs est verrouillé, aucun bucket créé par les checks ---
@@ -1970,10 +1971,8 @@ ok(g.game.sceneRun.status === "completed", "le run a été abandonné (flee) ava
 
 console.log("\n[S2b] veine_instable / eboulis_ferreux / source_tarie — déblocage + ressources dédiées");
 run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats(); game.explorationProgression.forgottenClearingUnlocked = true;");
-var s2bNoRation = g.SceneRunManager.startRun("veine_instable");
-ok(s2bNoRation.ok === false && /ration/i.test(s2bNoRation.reason), "veine_instable : refusé sans petite_ration (entryCost)");
-g.WarehouseManager.addResource("petite_ration", 1);
-g.SceneRunManager.startRun("veine_instable");
+var s2bStart0 = g.SceneRunManager.startRun("veine_instable");
+ok(s2bStart0.ok === true, "veine_instable : part sans ration (v3.785.0 : expéditions gratuites)");
 var s2bGuard = 0; playParcours(true); g.SceneRunManager.clearRun(); // v3.389.0 : parcours v2
 ok(g.game.explorationProgression.quarryUnlocked === true, "veine_instable : quarryUnlocked posé au succès");
 ok(g.ProductionManager.isBuildingUnlocked("quarry") && !!g.game.production.quarry, "Carrière débloquée + bucket initialisé");
@@ -2016,15 +2015,11 @@ run("game.sceneRun = { id: 'test2' }; fullResetState();");
 ok(g.game.sceneRun === null, "fullResetState() remet sceneRun à null");
 
 /* ==================== Lot S2a : quêtes de déblocage migrées vers le scene-engine ==================== */
-console.log("\n[S2a] sentier_obstrue — coût de ration, 2 paliers, déblocage Clairière oubliée");
+console.log("\n[S2a] sentier_obstrue — 2 paliers, déblocage Clairière oubliée (v3.785.0 : sans coût de ration)");
 run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
-var s2aNoRation = g.SceneRunManager.startRun("sentier_obstrue");
-ok(s2aNoRation.ok === false && /ration/i.test(s2aNoRation.reason), "refusé sans petite_ration (entryCost)");
-g.WarehouseManager.addResource("petite_ration", 1);
 var s2aStart = g.SceneRunManager.startRun("sentier_obstrue");
-ok(s2aStart.ok === true, "démarré avec 1 petite_ration en stock");
+ok(s2aStart.ok === true, "démarré sans ration (v3.785.0 : expéditions gratuites)");
 ok(g.game.sceneRun.status === "pa2-map" && g.game.sceneRun.parcours, "rien à préparer -> parcours lancé directement sur son tracé (v3.389.0)");
-ok(g.WarehouseManager.getAmount("petite_ration") === 0, "1 petite_ration débitée au départ");
 ok(g.game.sceneRun.map.rows.dest === 1 && Object.keys(g.game.sceneRun.nodes).length === 3, "tracé de 2 étapes (plus le départ)");
 var s2aGuard = 0; playParcours(true); g.SceneRunManager.clearRun(); // v3.389.0 : parcours v2
 ok(s2aGuard < 20, "run résolu sans dépasser le garde-fou");
@@ -6479,21 +6474,12 @@ console.log("\n[62b] v3.260.0 \u2014 Retours de jeu : Brume, Colporteur, arme, c
   ok(game.adventureQuestProgress.eq_forest_spider.track_spider === 0, "qu\u00eate d'\u00e9lite : pistage remis \u00e0 0 aussi (v3.261.0, d\u00e9cision Seb)");
 
 
-  /* --- Départ d'expédition refusé : l'écran dit ce qui manque --- */
+  /* --- Départ d'expédition : v3.785.0, plus de ration à payer, l'expédition part directement --- */
   game = freshCombat("knight"); game.unlockedTabs.village = true;
-  run("SceneRunManager.ensureDefaults(); game.resources.petite_ration = 0; game.resources.viande = 3; game.resources.eau = 9;");
+  run("SceneRunManager.ensureDefaults(); game.resources.petite_ration = 0;");
   run("game.activeTab = 'scene'; openSceneQuestEntry('sentier_obstrue');");
-  var bloc = g.buildSceneScreenHTML();
-  ok(bloc.indexOf("Il te manque une Petite ration") !== -1 && bloc.indexOf("Aucune exp\u00e9dition en cours") === -1, "ration manquante : l'\u00e9cran le dit au lieu de « Aucune exp\u00e9dition en cours »");
-  ok(bloc.indexOf("Cuisine de camp") !== -1 && bloc.indexOf("3/8") !== -1 && bloc.indexOf("9/4") !== -1 && bloc.indexOf("goToSceneCostWorkshop") !== -1, "recette affich\u00e9e (3/8 viande, 9/4 eau) et raccourci vers les Ateliers");
-  game.resources.petite_ration = 1;
-  ok(g.buildSceneScreenHTML().indexOf("retrySceneStart") !== -1, "ration fabriqu\u00e9e entre-temps : bouton « Partir »");
-  run("retrySceneStart();");
-  ok(g.SceneRunManager.isRunActive() && game.resources.petite_ration === 0 && g.buildSceneScreenHTML().indexOf("Il te manque") === -1, "« Partir » lance l'exp\u00e9dition et consomme la ration");
+  ok(g.SceneRunManager.isRunActive() && g.buildSceneScreenHTML().indexOf("Il te manque") === -1, "sans ration : l'expédition part quand même (v3.785.0)");
   run("SceneRunManager.abandon && SceneRunManager.abandon(); SceneRunManager.clearRun && SceneRunManager.clearRun();");
-  run("game.resources.petite_ration = 0; openSceneQuestEntry('sentier_obstrue'); goToSceneCostWorkshop();");
-  ok(game.activeTab === "village" && g.activeVillageSubTab === "shops" && g.productionViewTab === "shops", "« Pr\u00e9parer aux Ateliers » ouvre Village > Ateliers (rail v3.414.0)");
-  ok(g.buildSceneLandingHTML().indexOf("Aucune exp\u00e9dition en cours") !== -1, "une fois quitt\u00e9, l'accueil normal revient");
 
   /* --- Campement : régénération sur une ligne, boutons Manger en 9 zones --- */
   var css = require("fs").readFileSync(require("path").join(ROOT, "css/04-panel-camp.css"), "utf8");
@@ -8381,10 +8367,8 @@ console.log("\n[95] v3.300.0 — W-2 : chapitre du Désert, la traversée");
 
   /* Le run : coût, carte scriptée, monde de ses combats. */
   game.resources.ration = 0;
-  ok(R.startRun("traversee_desert").ok === false, "sans Ration moyenne : départ refusé");
-  run("WarehouseManager.addResource('ration', 1, true);");
   var started = R.startRun("traversee_desert");
-  ok(started.ok && g.WarehouseManager.getAmount("ration") === 0, "départ : 1 Ration moyenne payée");
+  ok(started.ok, "départ sans Ration moyenne (v3.785.0 : la traversée est gratuite)");
   /* v3.390.0 (chantier P, P-2) : parcours v2 sur la piste de sable. */
   var P = g.Pa2Run, r = game.sceneRun;
   var types = Object.keys(r.nodes).filter(function (k) { return k !== "S"; }).map(function (k) { var n = r.nodes[k]; return n.type + (n.gabaritId ? "/" + n.gabaritId : "") + (n.foeId ? "/" + n.foeId + "x" + n.pack : ""); }).join(" ");
@@ -9898,12 +9882,9 @@ console.log("\n[125] v3.330.0 — Plafond de stock brut, niveaux d'Histoire, Blo
     reached(["forest_01"]);
     ok(P.getRequirement("dungeon", tan) === null, "E4 : actes I et II de la Forêt : aucun vivre");
     reached(true);
-    var req = P.getRequirement("dungeon", tan);
-    ok(req && req.resourceId === "petite_ration", "E4 : donjon refait en Forêt : 1 petite ration");
-    ok(/Vivres/.test(P.check("dungeon", tan) || ""), "E4 : sans ration, le départ est refusé avec la raison");
-    ok(/Vivres : 1 Petite ration/.test(P.buildLineHTML("dungeon", tan)) && /is-missing/.test(P.buildLineHTML("dungeon", tan)), "vivres affichés (manquants)");
-    g.game.resources.petite_ration = 2;
-    ok(P.check("dungeon", tan) === null && P.consume("dungeon", tan) && g.game.resources.petite_ration === 1, "E4 : la ration est prélevée au départ");
+    // v3.785.0 (Seb 13/11, option C) : les sorties refaites sont gratuites
+    ok(P.getRequirement("dungeon", tan) === null && P.check("dungeon", tan) === null && P.consume("dungeon", tan) === true && g.game.resources.petite_ration === 0 && P.buildLineHTML("dungeon", tan) === "",
+      "E4 (v3.785.0) : donjon refait en Forêt : aucun vivre demandé, rien prélevé, aucune ligne");
     g.game.dungeonTierCleared = {};
     ok(P.buildLineHTML("dungeon", tan) === "", "sortie gratuite : aucune ligne");
     g.DungeonManager.isStoryTicketFree = sft0;
@@ -9912,7 +9893,7 @@ console.log("\n[125] v3.330.0 — Plafond de stock brut, niveaux d'Histoire, Blo
     ok(P.getRequirement("dungeon", cite) === null, "E4 : donjon jamais fini : gratuit");
     g.game.dungeonTierCleared[2] = true;
     var sft = g.DungeonManager.isStoryTicketFree; g.DungeonManager.isStoryTicketFree = function () { return false; };
-    ok((P.getRequirement("dungeon", cite) || {}).resourceId === "ration", "E4 : Cité refaite : 1 ration moyenne");
+    ok(P.getRequirement("dungeon", cite) === null && P.getRequirement("dungeonFree", cite) === null && P.getRequirement("mapelite", { mapId: "desert", sectorId: "x", worldId: "desert" }) === null, "E4 (v3.785.0) : Cité refaite, mode libre et élite rejouée : gratuits");
     g.DungeonManager.isStoryTicketFree = function () { return true; };
     ok(P.getRequirement("dungeon", cite) === null, "E4 : un ticket d'Histoire reste gratuit");
     g.DungeonManager.isStoryTicketFree = sft;
@@ -9955,8 +9936,8 @@ console.log("\n[126] v3.331.0 — Suite du recalage : Petite Aventure du Désert
   g.StoryQuestManager.isStepReached = function () { return true; };
   g.LivingMapManager.isLiberated = function () { return true; };
   try {
-    ok((g.ProvisionsManager.getRequirement("mapelite", { mapId: "forest", sectorId: "arbremere", worldId: "forest" }) || {}).resourceId === "petite_ration",
-      "R2 : l'Arbre-mère rejouée demande une ration (E4 confirmé)");
+    ok(g.ProvisionsManager.getRequirement("mapelite", { mapId: "forest", sectorId: "arbremere", worldId: "forest" }) === null,
+      "R2 : l'Arbre-mère rejouée est gratuite (v3.785.0)");
   } finally { g.StoryQuestManager.isStepReached = reachSave; g.LivingMapManager.isLiberated = libSave; }
 })();
 
@@ -10874,16 +10855,14 @@ console.log("\n[139] v3.361.0 — Acte IV, étape 16 : Personne ne remonte le fl
   var T = g.SCENE_TEMPLATES.remontee_fleuve;
   /* v3.390.0 (chantier P, P-2) : parcours v2 dans le lit asséché, besace de 3 places (H4). */
   var P = g.Pa2Run;
-  ok(T.mode === "parcours" && T.entryCost.resourceId === "ration" && T.parcours.bag === 3 && T.parcours.image === "desert_route" && T.parcours.track === "oued", "hors cap, une Ration moyenne, besace de 3 places, fond : le lit asséché");
+  ok(T.mode === "parcours" && T.entryCost === null && T.parcours.bag === 3 && T.parcours.image === "desert_route" && T.parcours.track === "oued", "hors cap, une Ration moyenne, besace de 3 places, fond : le lit asséché");
   game.resources.ration = 0; game.heroLevel = 15; game.equipped.weapon.value = 900; run("EquipmentManager.recalcStats();"); game.heroHp = game.heroMaxHp;
   var st0 = R.startRun("remontee_fleuve");
   ok(st0.ok && game.sceneRun.status === "pa2-prep", "départ : la préparation de la besace s'ouvre (le coût se paie au départ)");
   run("WarehouseManager.addResource('outre_pleine', 1, true);");
   ok(P.addItem("outre").ok && P.addItem("gourde").ok && P.addItem("corde").ok && P.addItem("torche").ok === false, "besace : trois places (Outre, gourde, corde), pas une de plus");
-  ok(P.depart().ok === false && game.sceneRun.status === "pa2-prep", "sans Ration moyenne : départ refusé, rien n'est pris");
-  run("WarehouseManager.addResource('ration', 1, true);");
   var cap0 = R.petiteAventureCountToday();
-  ok(P.depart().ok && g.WarehouseManager.getAmount("ration") === 0 && g.WarehouseManager.getAmount("outre_pleine") === 0 && R.petiteAventureCountToday() === cap0, "départ : Ration moyenne et Outre prises, aucune place de Petite Aventure");
+  ok(P.depart().ok && g.WarehouseManager.getAmount("outre_pleine") === 0 && R.petiteAventureCountToday() === cap0, "départ : Outre prise, aucune place de Petite Aventure (v3.785.0 : plus de Ration moyenne)");
   var r = game.sceneRun, types = Object.keys(r.nodes).filter(function (k) { return k !== "S"; }).map(function (k) { var n = r.nodes[k]; return n.type + (n.gabaritId ? "/" + n.gabaritId : "") + (n.foeId ? "/" + n.foeId + "x" + n.pack : ""); }).join(" ");
   ok(types === "obstacle/vent_de_face combat/sandwormx1 obstacle/sables_mouvants source combat/sandwarriorx2 obstacle/dune", "parcours scripté : " + types);
   ok(r.stock.gourde === 1 && r.map.image === "images/Maps/parcours/desert_route.webp", "au Désert : une gorgée de gourde ; fond illustré");
@@ -12487,7 +12466,7 @@ console.log("\n[165] v3.389.0 — Chantier P, lot P-1 : les quêtes de déblocag
     g.SortieManager.start("scene");
     game.sceneRun = { id: "old", templateId: "veine_instable", status: "gate", card: [], depth: 1, injuries: [], loot: 3 };
     var gone = S.getRun() === null && game.sceneRun === null, pr2 = g.WarehouseManager.getAmount("petite_ration"), again = S.startRun("veine_instable");
-    ok(gone && pr2 === pr + 1 && again.ok, "run v1 d'une quête repris : clos, ration rendue, la quête se relance (" + gone + "/" + (pr2 - pr) + "/" + again.reason + ")");
+    ok(gone && pr2 === pr && again.ok, "run v1 d'une quête repris : clos, rien à rendre (v3.785.0), la quête se relance (" + gone + "/" + (pr2 - pr) + "/" + again.reason + ")");
     S.abandon(); S.clearRun();
   } catch (err) {
     ok(false, "[165] exception : " + err.message + " " + (err.stack || "").split("\n")[1]);
@@ -12539,7 +12518,7 @@ console.log("\n[167] v3.391.0 — Chantier P, lot P-3 : retrait de l'ancien mote
     game.sceneRun = { id: "old2", templateId: "sentier_obstrue", status: "combat", loot: 3 };
     var r0 = g.WarehouseManager.getAmount("petite_ration");
     S.getRun();
-    ok(game.sceneRun === null && !g.SortieManager.isActive() && g.WarehouseManager.getAmount("petite_ration") === r0 + 1, "quête v1 au statut « combat » : close au premier passage, ration rendue");
+    ok(game.sceneRun === null && !g.SortieManager.isActive() && g.WarehouseManager.getAmount("petite_ration") === r0, "quête v1 au statut « combat » : close au premier passage (v3.785.0 : rien à rendre)");
     ok(S.isHeroEngaged() === false && S.startRun("sentier_obstrue").ok === true && game.sceneRun.pa2, "le héros est libre, la quête repart en v2");
     S.abandon(); S.clearRun();
 
@@ -14175,7 +14154,7 @@ console.log("\n[208] v3.432.0 — Ruines, acte IV (livraison 1) : le Cœur, « V
     var T = g.SCENE_TEMPLATES.vers_le_coeur;
     ok(T && T.mode === "parcours" && T.worldId === "ruins" && T.parcours.steps.length === 5 && T.parcours.points.length === 5, "« Vers le Cœur » : parcours de cinq paliers aux Ruines");
     ok(T.parcours.steps[2].type === "source" && T.parcours.steps[2].fullBreath === true && /Le Veilleur pose la main/.test(T.parcours.steps[2].text), "palier 3 : le Veilleur ouvre le mur (source pleine, sans épreuve)");
-    ok(T.entryCost.resourceId === "ration" && T.unlockOnSuccess.completionFlag === "versLeCoeurDone" && !T.travelOnSuccess, "une Ration moyenne, drapeau de fin, pas de voyage");
+    ok(T.entryCost === null && T.unlockOnSuccess.completionFlag === "versLeCoeurDone" && !T.travelOnSuccess, "une Ration moyenne, drapeau de fin, pas de voyage");
     var st17 = g.STORY_QUESTS.ruins.steps.filter(function (st) { return st.id === "ruines_17"; })[0];
     game.explorationProgression.versLeCoeurDone = false;
     ok(!st17.check(game), "étape 17 : le parcours reste à faire");
@@ -15260,7 +15239,7 @@ console.log("\n[240] v3.452.0 — Crypte, lot C-2 : acte I « La descente »");
     var ch = g.STORY_QUESTS.crypt;
     ok(ch && ch.requiresChapter === "ruins" && ch.steps.map(function (s) { return s.id; }).slice(0, 5).join() === "crypte_01,crypte_02,crypte_03,crypte_04,crypte_05", "chapitre IV : l'acte I en cinq étapes, ouvert par la fin des Ruines");
     var t = g.SceneEngine.getTemplate("traversee_crypte");
-    ok(t && t.travelOnSuccess && t.travelOnSuccess.worldId === "crypt" && t.entryCost.resourceId === "ration" && t.unlockOnSuccess.completionFlag === "cryptCrossingCompleted", "la descente : passage vers la Crypte, deux Rations moyennes");
+    ok(t && t.travelOnSuccess && t.travelOnSuccess.worldId === "crypt" && t.entryCost === null && t.unlockOnSuccess.completionFlag === "cryptCrossingCompleted", "la descente : passage vers la Crypte, deux Rations moyennes");
     ok(t.parcours.steps.length === 4 && t.parcours.steps[2].type === "combat" && t.parcours.steps[2].pack === 2, "quatre paliers ; au palier 3, deux éveillés (le troisième dort)");
     var aq = g.ADVENTURE_QUESTS.aq_crypte_sepulcres, ay = g.ADVENTURE_QUESTS.aq_crypte_ysolt;
     ok(aq.encounters.length === 5 && ay.encounters.length === 4 && ay.requiresParty === "ysolt", "Sépulcres : 5 rencontres ; Ysolt : 4, avec elle dans le groupe");
@@ -16419,9 +16398,7 @@ console.log("\n[274] v3.461.2 — Vivres : Ration moyenne aux Ruines et à la Cr
   g.LivingMapManager.isLiberated = function () { return true; };
   game.dungeonTierCleared = { 1: true, 2: true, 3: true, 4: true };
   var res = function (id) { return (P.getRequirement("dungeon", D.getById(id)) || {}).resourceId || "aucune"; };
-  ok(res(1) === "petite_ration" && res(2) === "ration", "Tanière : Petite ration, Cité : Ration moyenne (inchangé)");
-  ok(res(3) === "ration" && res(4) === "ration", "Ruines et Crypte rejouées : Ration moyenne");
-  ok((P.getRequirement("mapelite", { mapId: "crypt", sectorId: "x", worldId: "crypt" }) || {}).resourceId === "ration", "élite de carte de la Crypte rejouée : Ration moyenne");
+  ok([1, 2, 3, 4].every(function (id) { return res(id) === "aucune"; }) && P.getRequirement("mapelite", { mapId: "crypt", sectorId: "x", worldId: "crypt" }) === null, "v3.785.0 : donjons et élites rejoués, tous gratuits");
   game.dungeonTierCleared = { 1: true, 2: true, 3: true };
   ok(res(4) === "aucune", "première victoire à la Crypte : gratuite");
   ok(/Ruines/.test(g.WAREHOUSE_RESOURCES.ration.desc), "la description de la Ration moyenne cite les Ruines et la Crypte");
@@ -16440,16 +16417,13 @@ console.log("\n[275] v3.462.0 — Mode libre (N6) et or des vagues au niveau");
   prep(); D.start(4, [], 1, true);
   ok(!game.dungeonRun.active, "Crypte jamais finie : mode libre refusé");
   game.dungeonTierCleared = { 1: true, 2: true, 3: true, 4: true };
-  // vivres : 1 Ration moyenne, même à la Tanière ; refus sans ration
+  // v3.785.0 : le mode libre ne demande plus de vivres
   W.removeResource("ration", W.getAmount("ration"));
-  prep(); D.start(1, [], 1, true);
-  ok(!game.dungeonRun.active, "sans Ration moyenne : mode libre refusé");
-  ok((g.ProvisionsManager.getRequirement("dungeonFree", D.getById(1)) || {}).resourceId === "ration", "Tanière en libre : Ration moyenne (et non Petite ration)");
-  W.addResource("ration", 5, true);
+  ok(g.ProvisionsManager.getRequirement("dungeonFree", D.getById(1)) === null, "Tanière en libre : gratuite (v3.785.0)");
   game.dungeonRunsUsed = { 4: 3 };   // quota du jour épuisé
   prep(); D.start(4, [], 1, true);
   ok(game.dungeonRun.active && game.dungeonRun.free === true, "quota du jour épuisé : le mode libre part quand même");
-  ok(W.getAmount("ration") === 4 && game.dungeonRunsUsed[4] === 3, "1 Ration moyenne prélevée, quota du jour intact");
+  ok(W.getAmount("ration") === 0 && game.dungeonRunsUsed[4] === 3, "rien prélevé (v3.785.0), quota du jour intact");
   // or des vagues : ÷ 4 en libre, ×1,4 au niveau 5
   var r = Math.random; Math.random = function () { return 0; };
   var vg = [].concat(D.buildWaveEnemy(7))[0].goldReward;
@@ -17825,7 +17799,7 @@ console.log("\n[310] v3.488.0 — Montagne, lot M-2 : acte I « La montée », S
     ok(Object.keys(g.STORY_QUESTS).indexOf("mountain") === Object.keys(g.STORY_QUESTS).indexOf("crypt") + 1, "le chapitre V suit la Crypte");
     var t = g.SceneEngine.getTemplate("traversee_montagne"), st = t && t.parcours.steps;
     ok(t && t.worldId === "mountain" && t.travelOnSuccess.worldId === "mountain" && t.travelOnSuccess.adventureIndex === 0 && t.unlockOnSuccess.unlockFlag === "mountainReached" && t.unlockOnSuccess.completionFlag === "mountainCrossingCompleted", "la montée : passage vers la Montagne, monde posé à l'arrivée");
-    ok(t.entryCost.resourceId === "ration" && t.entryCost.amount === 2 && st.length === 4 && st[2].type === "combat" && st[2].pack === 3 && /ligne bleue/.test(st[2].text), "deux Rations moyennes, quatre paliers ; au palier 3, trois façonnés et la veine dans le texte");
+    ok(t.entryCost === null && st.length === 4 && st[2].type === "combat" && st[2].pack === 3 && /ligne bleue/.test(st[2].text), "deux Rations moyennes, quatre paliers ; au palier 3, trois façonnés et la veine dans le texte");
     ok(st.every(function (x) { return x.type !== "obstacle" || g.SCENE_NODES.obstacles[x.gabaritId]; }) && g.PA2_PARCOURS_IMAGES[t.parcours.image] && g.PA2_PARCOURS_IMAGES[t.parcours.image].tracks.route.length >= 7, "gabarits de la montée et piste du fond (montagne_montee) déclarés");
     var qp = g.ADVENTURE_QUESTS.aq_montagne_pentes, qs = g.ADVENTURE_QUESTS.aq_montagne_sarkel, qv = g.ADVENTURE_QUESTS.aq_montagne_veines;
     ok(qp.encounters.length === 5 && qs.encounters.length === 4 && qv.encounters.length === 5 && [qp, qs, qv].every(function (q) { return q.worldId === "mountain"; }) && qs.requiresParty === "sarkel" && qv.requiresParty === "sarkel", "quêtes : Pentes 5 rencontres ; Sarkel 4 et « Ça ne fond pas » 5, avec lui");
@@ -18974,7 +18948,7 @@ console.log("\n[341] v3.520.0 — correctifs de l'audit, lot 5 : fiches et coût
   try {
     var game = freshCombat("knight");
     var depNeuf = g.getWarehouseOtherUses("ration").map(function (u) { return u.text; }).join(" | ");
-    ok(/Départ : La traversée/.test(depNeuf) && !/couchés/.test(depNeuf), "départs : seulement ceux des mondes atteints (héros neuf : la traversée du Désert)");
+    ok(!/Départ :/.test(depNeuf), "v3.785.0 : la Ration moyenne n'est plus le prix d'aucun départ");
     game.worldsEverReached = { 0: true, 1: true, 2: true, 3: true, 4: true }; // RES-3 : départs des mondes atteints
     var uses = function (k) { return g.getWorkshopsConsuming(k).length + g.getWarehouseOtherUses(k).length; };
     var txt = function (k) { return g.getWarehouseOtherUses(k).map(function (u) { return u.text; }).join(" | "); };
@@ -18983,7 +18957,7 @@ console.log("\n[341] v3.520.0 — correctifs de l'audit, lot 5 : fiches et coût
     console.log("    (sans débouché : " + (sans.join(", ") || "aucune") + ")");
     ok(!sans.length, "Entrepôt : aucune ressource sans débouché (« Rien pour l'instant »)");
     ok(/Traversée|Départ/.test(txt("outre_pleine")) && /Besace/.test(txt("outre_pleine")), "Outre pleine : départ de la traversée et besace (" + txt("outre_pleine") + ")");
-    ok(/Vivres pour rejouer/.test(txt("ration")) && /mode libre/.test(txt("ration")) && /Départ : .+[^,] et \d+ autres/.test(txt("ration")), "Ration moyenne : vivres de sortie, mode libre, départs (liste courte)");
+    ok(!/Vivres pour rejouer/.test(txt("ration")) && !/Départ :/.test(txt("ration")), "Ration moyenne : plus de vivres de sortie ni de départ (v3.785.0)");
     ok(/Objet de combat/.test(txt("fiole_noire")), "la Fiole noire (seul objet de combat, v3.776.0) : son usage est dit");
     ok(!/Rangs des capacités/.test(txt("resine_durcie")) && /Rangs des compagnons/.test(txt("resine_durcie")), "Résine durcie : rangs des compagnons (ceux du héros sont automatiques, v3.779.0)");
     ok(g.buildWarehouseSheetHTML("resine_durcie").indexOf(g._t("Ne se vend pas.")) >= 0 && g.buildWarehouseSheetHTML("resine_durcie").indexOf("sert aux constructions et aux ateliers") < 0, "phrase du bas : plus de « sert aux constructions et aux ateliers »");
@@ -20868,7 +20842,7 @@ console.log("\n[415] v3.621.0 — Audit narratif : feuillets du Veilleur, lame d
       && sq.indexOf("« L'ennemi invoque un bouclier »") > 0 && sq.indexOf("« Celle qui soutient »") > 0, "les noms cités existent dans le Grimoire (conditions et cibles)");
     ok(vq.indexOf("sept terres") < 0 && vq.indexOf("il reste une terre à reprendre") > 0, "deuxième parcelle du Champs : il reste une terre (3 parcelles depuis la v3.612.0)");
     ok(hq.indexOf("fondue puis taillée") < 0, "Obsidienne taillée : taillée au burin, elle ne fond pas");
-    ok(run("(function(){ var s=STORY_QUESTS.mountain.steps.find(function(x){return x.id==='montagne_17';}); return s.objectiveLabel; })()").indexOf("(coût : 1 Ration moyenne)") > 0, "montagne_17 : le coût de la traversée est annoncé");
+    ok(run("(function(){ var s=STORY_QUESTS.mountain.steps.find(function(x){return x.id==='montagne_17';}); return s.objectiveLabel; })()").indexOf("coût") < 0, "montagne_17 : plus de coût annoncé (v3.785.0, traversée gratuite)");
     var m3 = "STORY_QUESTS.mountain.steps.find(function(x){return x.id==='montagne_03';})";
     run("window.__cnt415 = storyCompanionCount; storyCompanionCount = function(){ return 4; };");
     var t4 = run(m3 + ".choice.title + '|' + " + m3 + ".tutorial.title");
@@ -21014,7 +20988,7 @@ console.log("\n[421] v3.626.0 — Tour, lot T-1 : acte I « Le pied de la Tour �
     var ch = g.STORY_QUESTS.tower;
     ok(ch && ch.requiresChapter === "mountain" && ch.steps.slice(0, 5).map(function (x) { return x.id; }).join(",") === "tour_01,tour_02,tour_03,tour_04,tour_05", "chapitre VI : s'ouvre après la Montagne, acte I en cinq étapes");
     var tr = g.SCENE_TEMPLATES.traversee_tour;
-    ok(tr && tr.travelOnSuccess.worldId === "tower" && tr.unlockOnSuccess.completionFlag === "towerCrossingCompleted" && tr.entryCost.resourceId === "grande_ration" && tr.entryCost.amount === 2, "la route du nord : 2 Grandes rations, le monde posé à l'arrivée");
+    ok(tr && tr.travelOnSuccess.worldId === "tower" && tr.unlockOnSuccess.completionFlag === "towerCrossingCompleted" && tr.entryCost === null, "la route du nord : 2 Grandes rations, le monde posé à l'arrivée");
     ok(g.ADVENTURE_QUESTS.aq_tour_pied.encounters.length === 5 && g.ADVENTURE_QUESTS.aq_tour_sable.encounters.length === 4 && g.ADVENTURE_QUESTS.aq_tour_sable.encounters[0].group.indexOf("scarab") >= 0, "quêtes : 5 rencontres au pied, 4 à l'étage du sable (bêtes du Désert, écho)");
     ok(JSON.stringify(ch.steps[2].offering) === JSON.stringify({ bois: 400, grande_ration: 2 }) && ch.steps[2].offeringUi.where === "story", "dernier camp : 400 Bois et 2 Grandes rations, donnés depuis la carte d'étape");
     ok(g.STORY_CHOICE_AXES.braise.garder.join() === "garder,aeswyn" && g.STORY_CHOICE_AXES.braise.poser.join() === "donner,soi", "choix « braise » : garder = Garder + Aeswyn, poser = Donner + Soi");
@@ -21379,7 +21353,7 @@ console.log("\n[432] v3.638.0 — Faille, lot F-1 : la faille sans fond, après 
     var game = freshCombat("knight");
     game.sceneRun = null; game.explorationProgression.faille = null;
     ok(g.LAB_KINDS.faille && g.LAB_KINDS.faille.config === C && g.LAB_KINDS.faille.stateKey === "faille", "la faille est une sorte du moteur à leviers (clé d'état « faille »)");
-    ok(C.reserve === 2 && C.rechargeMs === 6 * 3600e3 && C.entryCost.resourceId === "grande_ration" && C.entryCost.amount === 1, "FA7 : 2 montées, une toutes les 6 h, 1 Grande ration");
+    ok(C.reserve === 2 && C.rechargeMs === 6 * 3600e3 && C.entryCost === null, "FA7 : 2 montées, une toutes les 6 h ; v3.785.0 : gratuite");
     TS.ending = function () { return null; };
     ok(!L.isUnlocked("faille") && !g.MissionBoard._labyrinthMissions().some(function (m) { return m.id === "faille"; }), "fermée tant que la Question n'est pas répondue, pas de carte");
     ok(/Question/.test(L.canStart("faille").reason), "la raison le dit");
@@ -21388,7 +21362,7 @@ console.log("\n[432] v3.638.0 — Faille, lot F-1 : la faille sans fond, après 
     ok(card && card.title === "La faille" && card.rewardSummary === "2/2 montées" && card.worldId === "tower", "une fois la Question répondue : la carte « La faille », 2/2 montées");
     g.WarehouseManager.addResource("grande_ration", 2);
     var gr = g.WarehouseManager.getAmount("grande_ration"), r = L.start("faille"), run = game.sceneRun;
-    ok(r.ok && run.kind === "faille" && run.floor === 1 && g.WarehouseManager.getAmount("grande_ration") === gr - 1 && L.reserveLeft() === 1, "départ : run « faille » à l'étage 1, 1 Grande ration et une montée prises");
+    ok(r.ok && run.kind === "faille" && run.floor === 1 && g.WarehouseManager.getAmount("grande_ration") === gr && L.reserveLeft() === 1, "départ : run « faille » à l'étage 1, une montée prise (v3.785.0 : plus de Grande ration)");
     ok(run.note && run.note.text === g.FAILLE_TEXTS.entryLines.aeswyn, "FA1 : le premier étage dit la fin choisie");
     ok(g.GENERIC_TUTORIALS.faille_first.condition() && !g.GENERIC_TUTORIALS.labyrinth_first, "tutoriel de la faille (celui du Labyrinthe est retiré, v3.775.0)");
     ok(L.cfg().stoneResource === "givre_bleu" && L.say("bag", "x", { s: 1, g: 2 }) === "Sac : 1 Givre bleu · 2 or", "le sac rapporte du Givre bleu");

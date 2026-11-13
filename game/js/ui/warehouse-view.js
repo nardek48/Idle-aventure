@@ -151,15 +151,13 @@ function getWarehouseOtherUses(key) {
   if (def.healPct) out.push({ icon: "images/Icons/camp/camp_meal.webp", text: _t("Campement : repas (+{p} % PV)", { p: Math.round(def.healPct * 100) }) });
   /* v3.520.0 (audit RES-3) : rangs, vivres de sortie, départs d'expédition et besace, lus dans les données */
   if ((window.COMPANION_SKILL_RANK_PRICES || []).some(function (p) { return p.mat === key; })) out.push({ icon: "images/Icons/system/upgrade.webp", text: _t("Rangs des compagnons (Héros › Alliés)") });
-  var vivres = Object.keys(window.PROVISIONS_BY_WORLD || {}).filter(function (w) { return PROVISIONS_BY_WORLD[w] === key; })
-    .map(function (w) { var wd = (window.WORLDS || []).filter(function (x) { return x.id === w; })[0]; return wd ? _td(wd.name) : w; });
-  if (vivres.length) out.push({ icon: "images/Icons/quests/ration_reward.webp", text: _t("Vivres pour rejouer un donjon ou une élite : {x}", { x: vivres.join(", ") }) + (key === "ration" ? " · " + _t("mode libre des donjons") : "") });
+  // v3.785.0 : plus de vivres de sortie (sorties refaites gratuites)
   // départs des mondes atteints, le plus récent d'abord (une traversée part du monde d'avant sa destination)
   var atteint = (window.WorldCaps && typeof WorldCaps.getReachedWorldIndex === "function") ? WorldCaps.getReachedWorldIndex() : 0;
   var wIdx = function (w) { return (window.WORLDS || []).map(function (x) { return x.id; }).indexOf(w); };
   var departs = [];
   Object.keys(window.SCENE_TEMPLATES || {}).forEach(function (id) { var t = SCENE_TEMPLATES[id], c = t && t.entryCost; if (c && c.resourceId === key) departs.push({ w: wIdx(t.worldId) - (t.travelOnSuccess ? 1 : 0), x: _td(t.title || id) }); });
-  if (window.FAILLE_CONFIG && FAILLE_CONFIG.entryCost.resourceId === key && window.LabyrinthRun && LabyrinthRun.isUnlocked("faille")) departs.push({ w: wIdx(FAILLE_CONFIG.worldId), x: _t("La faille") }); // v3.638.0
+  if (window.FAILLE_CONFIG && FAILLE_CONFIG.entryCost && FAILLE_CONFIG.entryCost.resourceId === key && window.LabyrinthRun && LabyrinthRun.isUnlocked("faille")) departs.push({ w: wIdx(FAILLE_CONFIG.worldId), x: _t("La faille") }); // v3.638.0
   departs = departs.map(function (d, i) { d.i = i; return d; }).filter(function (d) { return d.w <= atteint; })
     .sort(function (a, b) { return (b.w - a.w) || (a.i - b.i); }).map(function (d) { return d.x; });
   var depTxt = departs.length > 4 ? departs.slice(0, 3).join(", ") + " " + _tn(departs.length - 3, "et {n} autre", "et {n} autres") : departs.join(", "); // liste courte à 320 px

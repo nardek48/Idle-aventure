@@ -22,7 +22,7 @@ var SCENE_TEMPLATES = {
 
     pools: { obstacle: ["tronc_deracine", "racines"] },
 
-    entryCost: { resourceId: "petite_ration", amount: 1 }, // même coût que l'ancien moteur (exploration-quests.js, retiré)
+    entryCost: null /* v3.785.0 : gratuit (rations retirées) */, // même coût que l'ancien moteur (exploration-quests.js, retiré)
 
     // v3.124.0 (retrait ancien moteur) : boardRequires rapatrié depuis exploration-quests.js
     // (fichier supprimé) — condition d'AFFICHAGE au tableau de missions, lue par
@@ -90,7 +90,7 @@ var SCENE_TEMPLATES = {
 
     pools: { obstacle: ["ronces_epaisses", "sillons_geles", "talus_boueux"] },
 
-    entryCost: { resourceId: "petite_ration", amount: 1 },
+    entryCost: null /* v3.785.0 : gratuit (rations retirées) */,
 
     boardRequires: { progressFlags: ["wellUnlocked", "huntBuildingUnlocked"] },
 
@@ -128,7 +128,7 @@ var SCENE_TEMPLATES = {
 
     pools: { obstacle: ["filon_fragile", "paroi_instable"] },
 
-    entryCost: { resourceId: "petite_ration", amount: 1 },
+    entryCost: null /* v3.785.0 : gratuit (rations retirées) */,
 
     boardRequires: { progressFlag: "forgottenClearingUnlocked" },
 
@@ -159,7 +159,7 @@ var SCENE_TEMPLATES = {
 
     pools: { obstacle: ["veine_rougeatre", "eboulis_recent"] },
 
-    entryCost: { resourceId: "petite_ration", amount: 1 },
+    entryCost: null /* v3.785.0 : gratuit (rations retirées) */,
 
     boardRequires: { progressFlag: "quarryUnlocked" },
 
@@ -240,7 +240,7 @@ var SCENE_TEMPLATES = {
         { type: "obstacle", gabaritId: "vent_de_face", text: "Le deuxième puits est sec. Sarkel n'a pas l'air surpris. Il a de l'eau pour deux jours. Il te compte la tienne." }
       ]
     },
-    entryCost: { resourceId: "ration", amount: 1 },
+    entryCost: null /* v3.785.0 : gratuit (rations retirées) */,
     lootResource: "gold",
     unlockOnSuccess: { buildingId: null, unlockFlag: "desertReached", completionFlag: "desertCrossingCompleted" },
     travelOnSuccess: { worldId: "desert", adventureIndex: 0 }
@@ -276,7 +276,7 @@ var SCENE_TEMPLATES = {
         { type: "obstacle", gabaritId: "dalle_qui_glisse", text: "En bas, une salle longue. Des alcôves dans les murs, du sol au plafond. Elles ne sont pas vides." }
       ]
     },
-    entryCost: { resourceId: "ration", amount: 2 },
+    entryCost: null /* v3.785.0 : gratuit (rations retirées) */,
     lootResource: "gold",
     unlockOnSuccess: { buildingId: null, unlockFlag: "cryptReached", completionFlag: "cryptCrossingCompleted" },
     travelOnSuccess: { worldId: "crypt", adventureIndex: 0 }
@@ -306,7 +306,7 @@ var SCENE_TEMPLATES = {
         { type: "obstacle", gabaritId: "paroi_coupee", text: "Un replat, contre une paroi noire. Une partie de la paroi est coupée droit, net, comme au couteau." }
       ]
     },
-    entryCost: { resourceId: "ration", amount: 2 },
+    entryCost: null /* v3.785.0 : gratuit (rations retirées) */,
     lootResource: "gold",
     unlockOnSuccess: { buildingId: null, unlockFlag: "mountainReached", completionFlag: "mountainCrossingCompleted" },
     travelOnSuccess: { worldId: "mountain", adventureIndex: 0 }
@@ -332,7 +332,7 @@ var SCENE_TEMPLATES = {
         { type: "obstacle", gabaritId: "porte_ouverte", text: "Au bout, une porte. Ouverte. Pas de gonds, pas de cadre. Personne ne l'a construite." }
       ]
     },
-    entryCost: { resourceId: "grande_ration", amount: 2 },
+    entryCost: null /* v3.785.0 : gratuit (rations retirées) */,
     lootResource: "gold",
     unlockOnSuccess: { buildingId: null, unlockFlag: "towerReached", completionFlag: "towerCrossingCompleted" },
     travelOnSuccess: { worldId: "tower", adventureIndex: 0 }
@@ -361,7 +361,7 @@ var SCENE_TEMPLATES = {
         { type: "obstacle", gabaritId: "fente_ouverte", text: "Le sommet. Au-dessus, le ciel est ouvert, et ce qui passe par la fente ne fait aucun bruit." }
       ]
     },
-    entryCost: { resourceId: "grande_ration", amount: 1 },
+    entryCost: null /* v3.785.0 : gratuit (rations retirées) */,
     lootResource: "gold",
     unlockOnSuccess: { buildingId: null, unlockFlag: null, completionFlag: "failleTourDone" }
   },
@@ -388,7 +388,7 @@ var SCENE_TEMPLATES = {
         { type: "obstacle", gabaritId: "eboulis_chaud", text: "Le plateau du nid. Des écailles grandes comme des boucliers, partout. Au fond, quelque chose respire." }
       ]
     },
-    entryCost: { resourceId: "ration", amount: 1 },
+    entryCost: null /* v3.785.0 : gratuit (rations retirées) */,
     lootResource: "gold",
     unlockOnSuccess: { buildingId: null, unlockFlag: null, completionFlag: "sentierDessusDone" }
   },
@@ -472,7 +472,7 @@ var SCENE_TEMPLATES = {
         { type: "obstacle", gabaritId: "dune", text: "Le lit s'arrête contre une dune. Au sommet, un siège taillé dans le sable, tourné vers le sud. Vide." }
       ]
     },
-    entryCost: { resourceId: "ration", amount: 1 },
+    entryCost: null /* v3.785.0 : gratuit (rations retirées) */,
     lootResource: "gold",
     unlockOnSuccess: { buildingId: null, unlockFlag: null, completionFlag: "remonteeFleuveDone" }
   },
@@ -503,7 +503,7 @@ var SCENE_TEMPLATES = {
         { type: "obstacle", gabaritId: "porte_qui_attend", text: "L'arche du Cœur. En haut, un vide de la taille d'une pierre." }
       ]
     },
-    entryCost: { resourceId: "ration", amount: 1 },
+    entryCost: null /* v3.785.0 : gratuit (rations retirées) */,
     lootResource: "gold",
     unlockOnSuccess: { buildingId: null, unlockFlag: null, completionFlag: "versLeCoeurDone" }
   },
@@ -532,7 +532,7 @@ var SCENE_TEMPLATES = {
         { type: "obstacle", gabaritId: "porte_qui_attend", text: "Une salle sans alcôves. Toutes les petites chaînes y arrivent, des centaines, et se nouent en une seule, qu'une main tient." }
       ]
     },
-    entryCost: { resourceId: "ration", amount: 1 },
+    entryCost: null /* v3.785.0 : gratuit (rations retirées) */,
     lootResource: "gold",
     unlockOnSuccess: { buildingId: null, unlockFlag: null, completionFlag: "longDeLaChaineDone" }
   },

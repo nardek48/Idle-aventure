@@ -8,7 +8,7 @@ var FAILLE_CONFIG = {
   adventureIndex: 1,                 // ennemis de référence : la Tour (suivi du héros : HERO_TRACKING, à l'étape etape)
   reserve: 2,                        // FA7 : 2 montées, une revient toutes les 6 h
   rechargeMs: 6 * 3600e3,
-  entryCost: { resourceId: "grande_ration", amount: 1 }, // FA7 : même coût que la faille de l'étape 17
+  entryCost: null, // v3.785.0 (Seb 13/11, option C) : gratuite ; le brut abonde déjà au dernier monde
 
   /* Étages : mêmes grilles que le Labyrinthe (le moteur est le même) */
   sizeBase: { w: 5, h: 6 }, sizeMax: { w: 6, h: 8 },

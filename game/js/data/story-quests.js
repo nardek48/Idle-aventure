@@ -926,7 +926,7 @@ STORY_QUESTS.desert = {
           { who: null, text: "Il montre le sol. Personne au camp ne regarde dans cette direction." }
         ]
       },
-      objectiveLabel: "Terminer la traversée (coût : 1 Ration moyenne)",
+      objectiveLabel: "Terminer la traversée",
       unlockTabs: [],
       reward: STORY_REWARDS.desert_01,
       linkTo: { section: "expedition", cardId: "scene_traversee_desert" },
@@ -1604,7 +1604,7 @@ STORY_QUESTS.desert = {
           { who: "Le Veilleur", text: "Ici, on sait faire." }
         ]
       },
-      objectiveLabel: "Terminer « Personne ne remonte le fleuve » (coût : 1 Ration moyenne)",
+      objectiveLabel: "Terminer « Personne ne remonte le fleuve »",
       unlockTabs: [],
       reward: STORY_REWARDS.desert_16,
       linkTo: { section: "expedition", cardId: "scene_remontee_fleuve" },
@@ -2420,7 +2420,7 @@ STORY_QUESTS.ruins = {
           { who: "Le Veilleur", text: "Après, c'est à toi." }
         ]
       },
-      objectiveLabel: "Terminer « Vers le Cœur » (coût : 1 Ration moyenne)",
+      objectiveLabel: "Terminer « Vers le Cœur »",
       unlockTabs: [],
       reward: STORY_REWARDS.ruines_17,
       linkTo: { section: "expedition", cardId: "scene_vers_le_coeur" },
@@ -2607,7 +2607,7 @@ STORY_QUESTS.crypt = {
           { who: null, text: "Personne ne demande lequel est lequel." }
         ]
       },
-      objectiveLabel: "Descendre à la Crypte (coût : 2 Rations moyennes)",
+      objectiveLabel: "Descendre à la Crypte",
       unlockTabs: [],
       reward: STORY_REWARDS.crypte_01,
       linkTo: { section: "expedition", cardId: "scene_traversee_crypte" },
@@ -3224,7 +3224,7 @@ STORY_QUESTS.crypt = {
         get dialogue() { return [{ who: "Maddoc", text: "Il nous a ouvert." }, storyYs("s17a")]; },
         get completionDialogue() { return [{ who: "Wenna", text: "Il compte quoi ?" }, storyYs("s17b")]; }
       },
-      objectiveLabel: "Terminer « Le long de la chaîne » (coût : 1 Ration moyenne)",
+      objectiveLabel: "Terminer « Le long de la chaîne »",
       unlockTabs: [],
       reward: STORY_REWARDS.crypte_17,
       linkTo: { section: "expedition", cardId: "scene_le_long_de_la_chaine" },
@@ -3804,7 +3804,7 @@ STORY_QUESTS.mountain = {
           { who: null, text: "Il n'en dit pas plus." }
         ]
       },
-      objectiveLabel: "Monter à la Montagne (coût : 2 Rations moyennes)",
+      objectiveLabel: "Monter à la Montagne",
       unlockTabs: [],
       reward: STORY_REWARDS.montagne_01,
       linkTo: { section: "expedition", cardId: "scene_traversee_montagne" },
@@ -4395,7 +4395,7 @@ STORY_QUESTS.mountain = {
           { who: "Sarkel", text: "Il nous entend depuis la Gueule." }
         ]
       },
-      objectiveLabel: "Monter « Le sentier du dessus » (coût : 1 Ration moyenne)",
+      objectiveLabel: "Monter « Le sentier du dessus »",
       unlockTabs: [],
       reward: STORY_REWARDS.montagne_17,
       linkTo: { section: "expedition", cardId: "scene_sentier_du_dessus" },
@@ -4658,7 +4658,7 @@ STORY_QUESTS.tower = {
           { who: null, text: "La porte est là. Ouverte." }
         ]
       },
-      objectiveLabel: "Terminer la route du nord (coût : 2 Grandes rations)",
+      objectiveLabel: "Terminer la route du nord",
       unlockTabs: [],
       reward: STORY_REWARDS.tour_01,
       linkTo: { section: "expedition", cardId: "scene_traversee_tour" },
@@ -5113,7 +5113,7 @@ STORY_QUESTS.tower = {
         objective: "Plus de murs. Un escalier de lumière froide, posé sur rien. Au-dessus, le ciel est ouvert, et ce qui passe par la fente ne fait aucun bruit.",
         completion: "Le sommet. Ce n'est pas une fin."
       },
-      objectiveLabel: "Terminer le parcours de la faille, seul (coût : 1 Grande ration)",
+      objectiveLabel: "Terminer le parcours de la faille, seul",
       unlockTabs: [],
       reward: STORY_REWARDS.tour_17,
       linkTo: { section: "expedition", cardId: "scene_faille_tour" },
@@ -5251,7 +5251,7 @@ function storyTowerSetRewards(ids) {
 }
 storyTowerSetRewards(["tour_11", "tour_12", "tour_13", "tour_14", "tour_15"]);
 STORY_REWARDS.tour_16 = { gold: 27000, resources: { givre_bleu: 4 } }; // v3.630.0 (Tour, acte IV)
-STORY_REWARDS.tour_17 = { gold: 28000, resources: { grande_ration: 1 } };
+STORY_REWARDS.tour_17 = { gold: 28000 }; // v3.785.0 : la Faille est gratuite, plus de Grande ration à rendre
 STORY_REWARDS.tour_18 = { gold: 30000, resources: { verre_faille: 3 } };
 storyTowerSetRewards(["tour_16", "tour_17", "tour_18"]);
 STORY_REWARDS.tour_19 = { gold: 32000 }; // v3.631.0 (Tour, lot T-4b)
