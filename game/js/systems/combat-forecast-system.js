@@ -246,10 +246,10 @@ var CombatForecast = {
      d'abord) : tant qu'un ennemi est debout, il frappe. Un ennemi seul = getAttritionCost(e, 1). */
 
   /* v3.429.15 : la même vague, avec sa durée en rounds (rythme des soins de compagnon). */
-  getGroupFight: function (list, fullParty) {
+  getGroupFight: function (list, fullParty, sleepers) {
     var heroDmg = Math.max(1, this.getPartyDamagePerRound(fullParty)); // v3.429.9 : compagnons compris
     var alive = (list || []).filter(Boolean).slice().sort(function (a, b) { return Number(a.maxHp || 0) - Number(b.maxHp || 0); });
-    var cost = 0, elapsed = 0, self = this;
+    var self = this;
     /* v3.429.11 : arrivée au contact, règle du moteur (spawnGroup) : seul, l'ennemi met engageIn
        rounds ; en groupe, ceux qui approchent sont échelonnés 0, 1, 2… par célérité décroissante. */
     var arrive;
@@ -261,16 +261,45 @@ var CombatForecast = {
     } else {
       arrive = alive.map(function (e) { return self.getEngageRounds(e); });
     }
-    while (alive.length) {
-      var rounds = Math.ceil(Number(alive[0].maxHp || 0) / heroDmg);
-      for (var i = 0; i < alive.length; i++) {
-        var hitting = Math.max(0, Math.min(rounds, elapsed + rounds - arrive[i]));
-        cost += hitting * this.getEnemyDamagePerRound(alive[i]);
+    if (Number(sleepers) > 0 && alive.length > 1) return this.getSleepingGroupFight(alive, arrive, heroDmg, Number(sleepers));
+    return this.simGroupFight(alive, arrive, heroDmg, null, 0);
+  },
+
+  /* Le groupe tombe dans l'ordre des PV, chacun frappe de son arrivée à sa chute. B (Seb 14/11) : `asleep` (indices) ne
+     frappe ni n'est visé avant le réveil `wake` ; si les éveillés tombent avant, le combat s'arrête là. */
+  simGroupFight: function (alive, arrive, heroDmg, asleep, wake) {
+    var cost = 0, elapsed = 0, self = this;
+    var left = alive.map(function (e, i) { var dort = !!(asleep && asleep.indexOf(i) >= 0); return { e: e, at: dort ? Math.max(arrive[i], wake) : arrive[i], dort: dort }; });
+    while (left.length) {
+      var k = -1;
+      for (var i = 0; i < left.length; i++) if (!left[i].dort || elapsed >= wake) { k = i; break; }
+      if (k < 0) { // plus d'éveillé debout : les dormeurs restent couchés, sauf s'ils se lèvent avant la fin
+        if (left.every(function (x) { return x.dort; })) break;
       }
+      var rounds = Math.ceil(Number(left[k].e.maxHp || 0) / heroDmg);
+      for (var j = 0; j < left.length; j++) cost += Math.max(0, Math.min(rounds, elapsed + rounds - left[j].at)) * self.getEnemyDamagePerRound(left[j].e);
       elapsed += rounds;
-      alive.shift(); arrive.shift();
+      left.splice(k, 1);
+      if (!left.some(function (x) { return !x.dort; }) && elapsed < wake) break; // éveillés tombés avant tout réveil
     }
     return { cost: Math.floor(cost), rounds: elapsed };
+  },
+
+  /* B (Seb 14/11) : rencontre de la Crypte avec des morts qui dorment (sleep-system.js). Les dormeurs ne frappent pas et
+     le combat finit quand les éveillés tombent ; un dormeur se lève seul au bout de 3 à 5 rounds. Moyenne sur les tirages. */
+  getSleepingGroupFight: function (alive, arrive, heroDmg, sleepers) {
+    var n = Math.min(sleepers, alive.length - 1, typeof SLEEP_MAX_PER_GROUP === "number" ? SLEEP_MAX_PER_GROUP : 2); // au moins un éveillé
+    var wmin = typeof SLEEP_WAKE_ROUNDS_MIN === "number" ? SLEEP_WAKE_ROUNDS_MIN : 3, wmax = typeof SLEEP_WAKE_ROUNDS_MAX === "number" ? SLEEP_WAKE_ROUNDS_MAX : 5;
+    var self = this, combos = [], cost = 0, rounds = 0;
+    (function pick(start, chosen) { // tous les choix de n dormeurs parmi le groupe (3 membres au plus)
+      if (chosen.length === n) { combos.push(chosen.slice()); return; }
+      for (var i = start; i < alive.length; i++) { chosen.push(i); pick(i + 1, chosen); chosen.pop(); }
+    })(0, []);
+    combos.forEach(function (c) {
+      for (var w = wmin; w <= wmax; w++) { var f = self.simGroupFight(alive, arrive, heroDmg, c, w); cost += f.cost; rounds += f.rounds; } // réveil seul, délais équiprobables
+    });
+    var k = combos.length * (wmax - wmin + 1);
+    return { cost: Math.floor(cost / k), rounds: Math.round(rounds / k) };
   },
 
   /* v3.429.15 : un combat contre un ennemi seul, coût et durée (getAttritionCost pour un). */
@@ -602,7 +631,8 @@ var CombatForecast = {
         /* v3.429.9 : rencontres scriptées — l'objectif compte des RENCONTRES (un groupe = un cran) ;
            chacune a son groupe, on les additionne dans l'ordre du run. */
         for (var k = 0; k < fights; k++) {
-          list.push(this.getGroupFight([].concat(QuestEnemyManager.spawnFor(AdventureQuestManager._encounterQuest(quest, k), false) || [])));
+          var enc = quest.encounters[Math.min(k, quest.encounters.length - 1)] || {}; // B (Seb 14/11) : ses dormeurs
+          list.push(this.getGroupFight([].concat(QuestEnemyManager.spawnFor(AdventureQuestManager._encounterQuest(quest, k), false) || []), false, Number(enc.sleepers || 0)));
         }
         list.forEach(function (f) { attrition += f.cost; });
         attrition = Math.max(0, attrition - this.getCompanionHeals(list, false)); // v3.429.15 : soins de Wenna et Maddoc

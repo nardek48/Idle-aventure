@@ -298,7 +298,14 @@ function apresEchec() {
    Renvoie true si le combat de quête est terminé sans défaite. */
 /* PRONO=1 (outil, 14/11) : verdict du pronostic au départ d'une quête ou d'un donjon, puis l'issue réelle, une ligne JSON « PRONO » par sortie. */
 var PRONO = process.env.PRONO === "1";
+var PRONO_RECU = 0;   // PV perdus par le groupe (héros + compagnons) depuis le début de la sortie
+function pvGroupe() {
+  var g = G, t = Math.max(0, Number(g.game.heroHp || 0));
+  if (g.CompanionManager && typeof g.CompanionManager.partyIds === "function") g.CompanionManager.partyIds().forEach(function (id) { t += Math.max(0, Number(g.CompanionManager.hpOf(id) || 0)); });
+  return t;
+}
 function pronoAvant(kind, id, f) {
+  PRONO_RECU = 0;
   if (!PRONO || !f) return null;
   return { kind: kind, id: id, step: CURRENT_STEP, ctx: CTX, niv: G.game.heroLevel, v: f.id, ratio: f.ratio != null ? +f.ratio.toFixed(2) : null, run: f.runRatio != null ? +f.runRatio.toFixed(2) : null,
     tuer: f.roundsToKill, tomber: f.roundsToDie, dmg: f.heroDamagePerRound, recu: f.enemyDamagePerRound, soin: f.healThreshold, usure: Math.round(f.attrition || 0), pv: Math.round(f.heroHp || 0), groupe: Math.round(f.partyHp || 0), potions: f.healingReserve, ennemi: f.enemyName, pvE: f.enemyHp, nf: STATS.fights.length };
@@ -309,6 +316,7 @@ function pronoApres(p, ok) {
   p.ok = !!ok; p.mort = fs2.some(function (f) { return f.died; }); p.combats = fs2.length;
   p.rounds = fs2.reduce(function (x, f) { return x + (f.rounds || 0); }, 0);
   p.pvFin = Math.round(100 * Math.max(0, G.game.heroHp) / (G.game.heroMaxHp || 1)); p.bues = fs2.reduce(function (x, f) { return x + (f.potions || 0); }, 0);
+  p.recuTotal = Math.round(PRONO_RECU); p.recuAvantDernier = Math.round(PRONO_RECU - (der.recu || 0));
   p.dernier = der.name; p.roundsDernier = der.rounds; p.dmgReel = der.rounds ? Math.round((der.emax || 0) / der.rounds) : null;
   console.log("PRONO " + JSON.stringify(p));
 }
@@ -341,6 +349,7 @@ function fightCombat(maxKills) {
       var pid = ["potion_soin_majeur", "potion_soin_mineur"].filter(function (id) { return (g.game.healingPotionsOwned || {})[id] > 0; })[0];
       if (pid && CE.isHeroTurnAvailable() && CE.heroAction("potion", pid)) { rec.potions++; STATS.potions++; }
     }
+    var hpAvant = PRONO ? pvGroupe() : 0;
     if (auto) CE.tickRoundClock(step / 1000);
     else if (CE.isHeroTurnAvailable()) {
       // joueur attentif : il touche le bouton que le mode Tactique met en avant
@@ -356,6 +365,7 @@ function fightCombat(maxKills) {
         if (!(wantVein && CE.heroAction("vein")) && !(act && act !== "basic" && CE.heroAction(act))) CE.heroAction("basic");
       }
     }
+    if (PRONO) { var hpApres = pvGroupe(); if (hpApres < hpAvant) { PRONO_RECU += hpAvant - hpApres; if (rec) rec.recu = (rec.recu || 0) + hpAvant - hpApres; } }
     CLOCK.offset += step; STATS.combatMs += step; rec.rounds++;
     flushTimers(g);
     g.StoryQuestManager._trackKills();

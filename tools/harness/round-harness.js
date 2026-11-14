@@ -25739,6 +25739,25 @@ console.log("\n[513d] v3.794.0 — Critique plafonné à 100 % : la fiche le dit
   ok(/c\.crit > 100 \? _t\("100 % max"\)/.test(require("fs").readFileSync(require("path").join(ROOT, "js/ui/heros-screens-view.js"), "utf8")), "résumé du Héros : « 100 % max » au-delà de 100 %");
 })();
 
+console.log("\n[513j] v3.800.0 — Pronostic : les morts qui dorment comptent dans l'usure des rencontres (option B de Seb, 14/11)");
+(function () {
+  try {
+    var game = freshCombat("ranger"), F = g.CombatForecast, q = g.ADVENTURE_QUESTS.aq_crypte_ysolt, AQ = g.AdventureQuestManager;
+    run("WorldManager.worldIndex = 3; WorldManager.adventureIndex = 0;");
+    var grp = [].concat(g.QuestEnemyManager.spawnFor(AQ._encounterQuest(q, 0), false) || []);
+    // combat de durée réaliste (2 à 4 rounds, comme le héros attendu à cette étape)
+    var vrai = F.getPartyDamagePerRound, pv = grp.reduce(function (a, e) { return a + e.maxHp; }, 0);
+    F.getPartyDamagePerRound = function () { return pv / 3; };
+    var plein = F.getGroupFight(grp, false), zero = F.getGroupFight(grp, false, 0), dort = F.getGroupFight(grp, false, 2);
+    F.getPartyDamagePerRound = vrai;
+    ok(grp.length === 3 && zero.cost === plein.cost && zero.rounds === plein.rounds, "sans dormeur : même usure qu'avant (" + plein.cost + " PV)");
+    ok(dort.cost < plein.cost && dort.rounds <= plein.rounds, "2 dormeurs sur 3 : usure plus faible (" + plein.cost + " → " + dort.cost + " PV)");
+    var seul = F.getGroupFight([grp[0]], false, 2);
+    ok(seul.cost === F.getGroupFight([grp[0]], false).cost, "un ennemi seul ne dort jamais (au moins un éveillé)");
+    ok(/getGroupFight\([\s\S]{0,160}Number\(enc\.sleepers \|\| 0\)\)/.test(fsRead("js/systems/combat-forecast-system.js")), "forMission passe les dormeurs déclarés de chaque rencontre");
+  } catch (err) { ok(false, "[513j] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 console.log("\n[513i] v3.799.0 — Pronostic : le soin du boss contré par une règle du Grimoire ne compte plus (option A de Seb, 14/11)");
 (function () {
   try {
