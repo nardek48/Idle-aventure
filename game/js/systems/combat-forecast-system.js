@@ -46,7 +46,8 @@ var FORECAST_CLASS_DMG_MULT = { knight: 0.72, archer: 0.67, mage: 0.81 };
 /* v3.523.0 (audit COM-1) : dégâts réels d'une ÉLITE évaluée / estimés, par archétype (rage triplée par
    l'exaltation, blindage), et son bouclier (−50 % sur 20 à 25 % des rounds) sur les dégâts du héros. Calés au
    banc : 189 cases de 20 combats, verdicts hors bande 55 → 32. Pronostic seul : ni vagues, ni boss, ni jeu. */
-var FORECAST_ELITE_DMG_MULT = { enraged: 2.0, armored: 1.2, shielded: 1.2 };
+// C (Seb 14/11) : blindée 1,2 → 1,6, mesuré au moteur sur le Porte-couronne (Mage et Chevalier, 12 combats : reçus réels ×1,33 de l'estimé)
+var FORECAST_ELITE_DMG_MULT = { enraged: 2.0, armored: 1.6, shielded: 1.2 };
 var FORECAST_ELITE_HERO_DMG_MULT = 0.88;
 
 /* S2 (Seb 14/11) : boss qui prend le trait de ta classe (la silhouette, copyClass) : ses coups réels / estimés, par trait.

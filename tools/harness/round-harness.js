@@ -18992,8 +18992,8 @@ console.log("\n[343] v3.523.0 — lot 7 : pronostic des élites");
     var ref = CF.getReferenceEnemy({ sourceKind: "adventure", questId: "aq_ruines_golem" });
     ok(ref && ref.isElite && ref.id === "golem", "quête d'élite : le pronostic juge l'élite, plus un ennemi ordinaire");
     var dard = E.make("dard_profondeurs", "desert", 0), base = CF.getEnemyDamagePerRound(dard), f = CF.forEnemy(dard);
-    ok(Math.abs(f.enemyDamagePerRound - Math.round(base * 2.0)) <= 1 && CF.getEliteDmgMult({ isElite: false, archetype: "enraged" }) === 1 && CF.getEliteDmgMult({ isElite: true, archetype: "armored" }) === 1.2 && CF.getEliteDmgMult({ isElite: true, archetype: "vampiric" }) === 1,
-      "rage et exaltation : ×2,0 sur l'élite enragée, ×1,2 blindée, rien hors élite");
+    ok(Math.abs(f.enemyDamagePerRound - Math.round(base * 2.0)) <= 1 && CF.getEliteDmgMult({ isElite: false, archetype: "enraged" }) === 1 && CF.getEliteDmgMult({ isElite: true, archetype: "armored" }) === 1.6 && CF.getEliteDmgMult({ isElite: true, archetype: "vampiric" }) === 1,
+      "rage et exaltation : ×2,0 sur l'élite enragée, ×1,6 blindée (v3.803.0), rien hors élite");
     var hd = CF.getForecastHeroDamage() + CF.getPartyBonus(false).dmg;
     ok(Math.abs(f.heroDamagePerRound - Math.round(hd * 0.88)) <= 1 && Math.abs(CF.forEnemy(Object.assign({}, dard, { isElite: false })).heroDamagePerRound - Math.round(hd)) <= 1, "bouclier d'élite : dégâts du héros ×0,88 contre une élite, inchangés sinon");
     ok(CF.getEnemyDamagePerRound(dard) === base, "dégâts estimés inchangés hors pronostic (Petites Aventures, Labyrinthe, usure des vagues)");
@@ -25737,6 +25737,16 @@ console.log("\n[513d] v3.794.0 — Critique plafonné à 100 % : la fiche le dit
   var rows = g.HEROS_STAT_ROWS || [], prec = rows.filter(function (r) { return r.key === "precision"; })[0];
   ok(!!prec && typeof prec.capNote === "function" && prec.capNote(80) === "" && /plafonné à 100 %/.test(prec.capNote(105)) && /\(max\)/.test(prec.fmt(105)) && !/\(max\)/.test(prec.fmt(80)), "Précision : « (max) » et la note du plafond au-delà de 100 %, rien en dessous");
   ok(/c\.crit > 100 \? _t\("100 % max"\)/.test(require("fs").readFileSync(require("path").join(ROOT, "js/ui/heros-screens-view.js"), "utf8")), "résumé du Héros : « 100 % max » au-delà de 100 %");
+})();
+
+console.log("\n[513m] v3.803.0 — Pronostic des élites blindées : coups reçus ×1,6 (C, Seb 14/11)");
+(function () {
+  try {
+    var M = g.FORECAST_ELITE_DMG_MULT;
+    ok(M.armored === 1.6 && M.enraged === 2.0 && M.shielded === 1.2, "élite blindée ×1,6 ; enragée et protégée inchangées");
+    var game = freshCombat("mage"), F = g.CombatForecast, e = g.EliteManager.make("porte_couronne", "crypt", 1, { escort: { members: [] } });
+    ok(e && e.archetype === "armored" && F.getEliteDmgMult(e) === 1.6, "le Porte-couronne compte ×1,6");
+  } catch (err) { ok(false, "[513m] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
 console.log("\n[513l] v3.802.0 — Pronostic de la silhouette : combat seul, trait de la classe compté (S1 + S2, Seb 14/11)");
