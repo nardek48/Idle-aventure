@@ -652,6 +652,9 @@ var CombatForecast = {
         attrition = nb ? somme / nb : 0;
       }
     }
+    // T2b (Seb 14/11) : correctif propre à la quête (data/adventure-quests.js), comme forecastAttritionMult des donjons
+    var aqDef = (window.ADVENTURE_QUESTS || {})[mission.questId] || {};
+    if (Number(aqDef.forecastAttritionMult) > 0) attrition = Math.floor(attrition * Number(aqDef.forecastAttritionMult));
     var out = this.forEnemy(enemy, { attrition: attrition });
     if (out) { out.enemyName = enemy.name; out.precedingFights = fights; }
     /* v3.429.11 : sans boss, l'ennemi de référence n'est qu'un ennemi de plus — c'est le run

@@ -1166,6 +1166,7 @@ var ADVENTURE_QUESTS = {
   aq_tour_pied: {
     id: "aq_tour_pied",
     type: "kill",
+    forecastAttritionMult: 0.5, // T2b (Seb 14/11) : usure des rencontres estimée 2,35× le réel (robot PRONO=1), pronostic seul
     section: "adventure",
     difficulty: "hard",
     progressionStage: "world_start",
@@ -1250,6 +1251,7 @@ var ADVENTURE_QUESTS = {
   aq_tour_haut: {
     id: "aq_tour_haut",
     type: "kill",
+    forecastAttritionMult: 0.5, // T2b (Seb 14/11) : usure des rencontres estimée 2,35× le réel (robot PRONO=1), pronostic seul
     section: "adventure",
     difficulty: "hard",
     progressionStage: "world_start",

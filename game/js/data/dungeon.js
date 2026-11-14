@@ -139,8 +139,9 @@ var DUNGEONS = [
     storyChapterId: "forest",
     storyFreeSteps: ["forest_13", "forest_14"],
     /* v3.429.7 : correctif de l'usure estimée des vagues (CombatForecast.forDungeon), calé au banc
-       (plafond-bench --only taniere --pronostic) : réel ~2× l'estimé quand le héros est juste. */
-    forecastAttritionMult: 2,
+       (plafond-bench --only taniere --pronostic) : réel ~2× l'estimé quand le héros est juste.
+       T1 (Seb 14/11) : 2 → 1, l'estimé était devenu 2 à 4× le réel (robot PRONO=1, 58 sorties). */
+    forecastAttritionMult: 1,
     // v3.429.6 : la Tanière se prépare (banc plafond : 0 % sans les uniques des élites, 100 % avec)
     /* v3.475.0 (point 2 du bilan, option A de Seb) : liste de préparation cochée sur la feuille de lancement,
        tant que le donjon n'est pas terminé. Remplace le conseil en texte (prepHint, gardé en repli). */

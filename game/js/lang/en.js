@@ -2584,6 +2584,7 @@ I18n.register("en", {
   "Petites Aventures de la Forêt : une variante du chemin du lac, où le camp est un détour. Seul le sentier du milieu y mène : à toi de choisir si le repos vaut le crochet.": "Forest Little Adventures: a variant of the lake route where the camp is a detour. Only the middle trail leads there: you decide whether the rest is worth the detour.",
   "Pronostic : un boss qui se soigne n'est plus annoncé « Hors de portée » quand une règle de ton Grimoire contre son soin. L'estimation le dit : « Il se soigne · ta règle du Grimoire le contre ».": "Forecast: a healing boss is no longer called “Out of reach” when one of your Grimoire rules counters its heal. The estimate says so: “It heals · your Grimoire rule counters it”.",
   "Pronostic : dans la Crypte, les morts qui dorment ne comptent plus comme s'ils se battaient. Les quêtes à rencontres et les élites de l'Ossuaire ne sont plus annoncées « Hors de portée » à tort.": "Forecast: in the Crypt, the sleeping dead no longer count as if they were fighting. Encounter quests and the Ossuary elites are no longer wrongly called “Out of reach”.",
+  "Pronostic : la Tanière du Basilic et deux quêtes de la Tour (« Le pied de la Tour », « Le haut de l'escalier ») ne sont plus annoncées plus dures qu'elles ne le sont.": "Forecast: the Basilisk's Lair and two Tower quests (“The Foot of the Tower”, “The Top of the Stairs”) are no longer called harder than they are.",
   "Contrats du jour": "Today's contracts",
   "Renouvelés dans {d}": "Renewed in {d}",
   "Livrer": "Deliver",

@@ -25739,6 +25739,20 @@ console.log("\n[513d] v3.794.0 — Critique plafonné à 100 % : la fiche le dit
   ok(/c\.crit > 100 \? _t\("100 % max"\)/.test(require("fs").readFileSync(require("path").join(ROOT, "js/ui/heros-screens-view.js"), "utf8")), "résumé du Héros : « 100 % max » au-delà de 100 %");
 })();
 
+console.log("\n[513k] v3.801.0 — Pronostic : correctifs d'usure de la Tanière (×1) et de deux quêtes de la Tour (×0,5) (T1 + T2b de Seb, 14/11)");
+(function () {
+  try {
+    var D = g.DungeonManager.getById(1), AQ = g.ADVENTURE_QUESTS;
+    ok(D && Number(D.forecastAttritionMult) === 1, "Tanière : correctif d'usure ramené à ×1");
+    ok(AQ.aq_tour_pied.forecastAttritionMult === 0.5 && AQ.aq_tour_haut.forecastAttritionMult === 0.5, "Tour : aq_tour_pied et aq_tour_haut à ×0,5");
+    ok(Object.keys(AQ).filter(function (k) { return AQ[k].forecastAttritionMult != null; }).length === 2, "aucune autre quête ne porte de correctif");
+    var game = freshCombat("knight"), F = g.CombatForecast, m = { sourceKind: "adventure", questId: "aq_tour_pied" };
+    var avec = F.forMission(m), garde = AQ.aq_tour_pied.forecastAttritionMult;
+    delete AQ.aq_tour_pied.forecastAttritionMult; var sans = F.forMission(m); AQ.aq_tour_pied.forecastAttritionMult = garde;
+    ok(avec && sans && sans.attrition > 0 && Math.abs(avec.attrition - Math.floor(sans.attrition * 0.5)) <= 1, "forMission applique le correctif de la quête (" + sans.attrition + " → " + avec.attrition + ")");
+  } catch (err) { ok(false, "[513k] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 console.log("\n[513j] v3.800.0 — Pronostic : les morts qui dorment comptent dans l'usure des rencontres (option B de Seb, 14/11)");
 (function () {
   try {
