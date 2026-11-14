@@ -189,7 +189,13 @@ var COACH_TUTORIALS = {
   pa2_traps: {
     steps: [
       { sel: ".pa2-trap", noHit: true, title: _t("Un piège"), text: _t("Un losange rouge sur un sentier. Son icône dit ce qu'il fait : venin, alarme, entrave, aveuglement ou besace percée. La torche montre les pièges cachés.") },
-      { sel: ".pa2-trap", noHit: true, title: _t("Sur un piège"), text: _t("Désamorcer (un dé ; raté, il joue et te blesse), la Trousse (à coup sûr), Subir (sans blessure) ou Rebrousser (10 Souffle). Ses effets s'affichent en rouge en haut.") },
+      { sel: ".pa2-trap", noHit: true, title: _t("Sur un piège"), text: _t("Désamorcer (un dé ; raté, il joue et te blesse), la Trousse (à coup sûr), Subir (sans blessure) ou Rebrousser (10 Souffle). Ses effets s'affichent en rouge en haut.") }
+    ]
+  },
+  // v3.805.0 (option A de Seb) : le sentier coupé, une seule bulle (minSteps), à sa première apparition
+  pa2_cuts: {
+    minSteps: 1,
+    steps: [
       { sel: ".pa2-cut", title: _t("Un sentier coupé"), text: _t("Rond gris barré : coupé pour ce run. Il reste toujours un autre chemin.") }
     ]
   },
@@ -428,7 +434,7 @@ var CoachTutorial = {
       setTimeout(function () { if (self._token === token) self._start(host, key, closeJs, tutorial, tries + 1); }, 300);
       return;
     }
-    if (steps.length < 2) {                               // repli : la fenêtre d'origine, même clôture
+    if (steps.length < (def.minSteps || 2)) {             // repli : la fenêtre d'origine, même clôture ; minSteps (v3.805.0) : aide d'une bulle
       this._token = null;
       host.innerHTML = buildTutorialModalHTML(closeJs, tutorial);
       if (typeof wireTutorialHint === "function") wireTutorialHint(host);

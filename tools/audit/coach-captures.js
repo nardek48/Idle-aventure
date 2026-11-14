@@ -34,6 +34,7 @@ function VQ(id) {
     + " ids.slice(0, ids.indexOf(" + JSON.stringify(id) + ")).forEach(function (k) { st.claimed[k] = true; }); st.tutorialsSeen = {};"
     + " switchTab('campement'); switchTab('village');";
 }
+var PA2_DEP = "switchTab('campement'); SceneRunManager.startRun('petite_aventure_foret'); game.sceneRun.cond = 'calme'; Pa2Run.depart(); var r = game.sceneRun, m = Pa2Run.getMap(r), a = r.at, b = (m.links[a] || [])[0];";
 /* Déclencheurs des tutoriels génériques (même geste que le jeu). Un id absent d'ici est cherché dans l'Histoire. */
 var GENERIC = {
   sortie_prep: "CompanionManager.state('wenna').unlocked = true; CompanionManager.state('wenna').present = true; switchTab('campement'); openSortiePrep({ title: 'Test', icon: 'images/Icons/quests/mission_dungeon.webp', ctx: { type: 'dungeon', id: 1 }, food: { kind: 'dungeon', ref: DungeonManager.getById(1) }, onGo: function () {} });",
@@ -41,6 +42,12 @@ var GENERIC = {
   combat_forecast: "game.heroHp = Math.floor(game.heroMaxHp * 0.3); switchTab('campement'); var m = MissionBoard.list().filter(function (x) { try { return !!CombatForecast.forMission(x); } catch (e) { return false; } })[0]; launchWithForecast(m || { title: 'Test' }, function () {});",
   pa2_night: "switchTab('campement'); SceneRunManager.startRun('petite_aventure_desert'); game.sceneRun.cond = 'vent'; switchTab('scene');",
   pa2_traps: "switchTab('campement'); SceneRunManager.startRun('petite_aventure_desert'); game.sceneRun.cond = 'pillards'; Pa2Run.addItem('torche'); game.genericTutorialsSeen.pa2_night = true; Pa2Run.depart(); switchTab('scene');",
+  // v3.805.0 (option A de Seb) : aides découpées des petites aventures, posées sur une vraie carte de la Forêt après le départ
+  pa2_cuts: PA2_DEP + "r.traps = {}; r.cuts = {}; r.cuts[a + '>' + b] = 'arbre'; switchTab('scene');",
+  pa2_secret: PA2_DEP + "var k = Object.keys((window.PA2_SECRETS || {})[r.mapId] || {})[0]; r.secrets = r.secrets || {}; if (k) r.secrets[k] = 'found'; switchTab('scene');",
+  pa2_lock: PA2_DEP + "r.quest = { kind: 'lock', state: 'active', keyShown: true, key: 'crochet', keyNode: b }; switchTab('scene');",
+  pa2_cache: PA2_DEP + "r.quest = { kind: 'cache', state: 'annoncee', halt: a, node: b, back: [], seen: false, foeDone: false }; switchTab('scene');",
+  pa2_ends: PA2_DEP + "var dest = Object.keys(r.nodes).map(function (k) { return r.nodes[k]; }).filter(function (n) { return !n.hidden && Pa2Run.isDest(n, r); })[0]; r.quest = { kind: 'end', state: 'active', end: dest && dest.type }; switchTab('scene');",
   equipment_intro: "switchTab('more'); if (typeof setHerosSubTab === 'function') setHerosSubTab('equip'); switchTab('equip');",
   village_training: "switchTab('campement'); switchTab('village');",
   // lot 3 : quêtes du village, la chaîne remise juste avant la quête, puis l'onglet Village

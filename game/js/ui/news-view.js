@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.805.0", "scene/pa2_besace", _t("Petites Aventures : les aides arrivent au moment où elles servent. Une bulle pour le premier sentier coupé, deux pour le premier piège, et une courte fenêtre pour chaque petite quête (passage secret, verrou, cache, fins) au lieu d'une seule de cinq lignes.")],
     ["3.804.0", "quests/mission_combat", _t("Combat : la barre de ressource n'est plus rognée (« ncentration… ») sur les petits écrans et en mode Grimoire ; le nom s'efface quand la place manque, et les chiffres retrouvent leurs espaces.")],
     ["3.803.0", "system/forecast", _t("Pronostic des élites blindées (le Porte-couronne, le Serment sous l'armure…) : elles frappent plus fort qu'il ne le disait. Le Porte-couronne est maintenant annoncé « Risqué » quand il peut te mettre à terre.")],
     ["3.802.0", "system/forecast", _t("Pronostic de la silhouette : il ne compte plus tes compagnons (tu l'affrontes seul) et tient compte du trait qu'elle prend à ta classe. Le Chevalier est prévenu : c'est un combat très difficile.")],

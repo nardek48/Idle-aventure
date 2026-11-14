@@ -251,7 +251,8 @@ var GENERIC_TUTORIALS = {
       { icon: "images/Icons/scene/ui/ui_hero_marker.webp", text: "En route, la pastille dorée en haut de l'écran te rappelle la nuit : touche-la." }
     ]
   },
-  /* v3.469.2 (PA-T1) : la première fois qu'un piège ou un sentier coupé apparaît sur la carte (ou qu'on marche sur un piège caché). */
+  /* v3.469.2 (PA-T1) : la première fois qu'un piège apparaît sur la carte (ou qu'on marche sur un piège caché).
+     v3.805.0 (audit de l'Alpha, option A de Seb) : les sentiers coupés ont leur propre aide (pa2_cuts). */
   pa2_traps: {
     tab: "scene",
     condition: function () {
@@ -259,36 +260,69 @@ var GENERIC_TUTORIALS = {
       if (!run || !run.pa2 || run.parcours || !P) return false;
       if (run.status === "pa2-trap") return true;
       if (run.status !== "pa2-map" && run.status !== "pa2-node") return false;
-      return Object.keys(run.traps || {}).some(function (k) { return P.isTrapShown(k, run); }) || Object.keys(run.cuts || {}).some(function (k) { return P.isCutShown(k, run); });
+      return Object.keys(run.traps || {}).some(function (k) { return P.isTrapShown(k, run); });
     },
     icon: "images/Icons/scene/traps/fx_venom.webp",
-    title: "Pièges et sentiers coupés",
+    title: "Les pièges",
     points: [
       { icon: "images/Icons/scene/traps/fx_venom.webp", text: "Un losange rouge sur un sentier, c'est un piège. Son icône dit ce qu'il fait : venin, alarme, entrave, aveuglement ou besace percée." },
       { icon: "images/Icons/scene/torch.webp", text: "Certains pièges sont cachés. La torche montre ceux des sentiers que tu peux prendre ; à la Crypte, la Lanterne allumée aussi." },
       { icon: "images/Icons/scene/items/item_lockpicks.webp", text: "Sur un piège : Désamorcer (un dé ; raté, l'effet joue et te blesse), la Trousse (à coup sûr), Subir (l'effet, sans blessure) ou Rebrousser (10 Souffle)." },
-      { icon: "images/Icons/scene/traps/fx_snare.webp", text: "Les effets en cours s'affichent en rouge en haut de l'écran, avec les pas qu'il leur reste." },
-      { icon: "images/Icons/scene/cuts/cut_fallen_tree.webp", text: "Un rond gris barré : le sentier est coupé pour ce run. Il reste toujours un autre chemin." }
+      { icon: "images/Icons/scene/traps/fx_snare.webp", text: "Les effets en cours s'affichent en rouge en haut de l'écran, avec les pas qu'il leur reste." }
     ]
   },
-  /* v3.771.0 (point ouvert v3.724.0) : la première petite quête du chemin (carnier, verrou, fins) ou le premier passage
-     secret trouvé, dans une petite aventure (pas les parcours d'Histoire). */
-  pa2_quests: {
+  /* v3.805.0 (option A de Seb) : le premier sentier coupé en vue (une bulle, même pour qui a vu l'ancienne fenêtre). */
+  pa2_cuts: {
     tab: "scene",
     condition: function () {
       var run = game.sceneRun, P = window.Pa2Run;
       if (!run || !run.pa2 || run.parcours || !P) return false;
-      if (["pa2-map", "pa2-node", "pa2-lock"].indexOf(run.status) < 0) return false;
-      var q = run.quest;
-      return run.status === "pa2-lock" || !!(q && q.state && q.state !== "rencontre" && q.state !== "sans") || P.foundSecrets(run).length > 0;
+      if (run.status !== "pa2-map" && run.status !== "pa2-node") return false;
+      return Object.keys(run.cuts || {}).some(function (k) { return P.isCutShown(k, run); });
     },
-    icon: "images/Icons/scene/node_discovery.webp",
-    title: "Les petites quêtes du chemin",
+    icon: "images/Icons/scene/cuts/cut_fallen_tree.webp",
+    title: "Les sentiers coupés",
     points: [
-      { icon: "images/Icons/scene/node_encounter.webp", text: "Une rencontre peut lancer une petite quête : une cache à récupérer, une porte à ouvrir avec sa clé, une fin imposée ou une fin cachée. Elle est rappelée en haut de l'écran." },
-      { icon: "images/Icons/scene/items/item_lockpicks.webp", text: "Le verrou : la clé attend sur une case du chemin, dans une poche à part. Devant la porte : Ouvrir avec la clé, Forcer (ça passe toujours, mais ça coûte) ou Rebrousser." },
-      { icon: "images/Icons/scene/pa2_besace.webp", text: "La cache : annoncée à une halte, à deux pas du chemin au plus. Le retour se fait par une trace claire, et une bête sans or le garde." },
-      { icon: "images/Icons/scene/torch.webp", text: "Les passages secrets : chaque case est fouillée gratuitement à ton arrivée. Un « ? » est un indice : « Chercher encore » coûte 10 de Souffle. La torche et la lanterne aident." },
+      { icon: "images/Icons/scene/cuts/cut_fallen_tree.webp", text: "Un rond gris barré : le sentier est coupé pour ce run. Il reste toujours un autre chemin." }
+    ]
+  },
+  /* v3.771.0 : les petites quêtes du chemin. v3.805.0 (audit de l'Alpha, option A de Seb) : une fenêtre courte par mécanique,
+     à sa première apparition, au lieu d'une seule de cinq lignes. Déjà vu l'ancienne fenêtre (pa2_quests) : rien. */
+  pa2_secret: {
+    tab: "scene",
+    condition: function () { var run = pa2TutoRun(); return !!(run && ["pa2-map", "pa2-node"].indexOf(run.status) >= 0 && Pa2Run.foundSecrets(run).length > 0); },
+    icon: "images/Icons/scene/torch.webp",
+    title: "Les passages secrets",
+    points: [
+      { icon: "images/Icons/scene/torch.webp", text: "Les passages secrets : chaque case est fouillée gratuitement à ton arrivée. Un « ? » est un indice : « Chercher encore » coûte 10 de Souffle. La torche et la lanterne aident." }
+    ]
+  },
+  pa2_lock: {
+    tab: "scene",
+    condition: function () { var run = pa2TutoRun(), q = run && run.quest; return !!(run && (run.status === "pa2-lock" || (q && q.kind === "lock" && q.keyShown && ["pa2-map", "pa2-node"].indexOf(run.status) >= 0))); },
+    icon: "images/Icons/scene/items/item_lockpicks.webp",
+    title: "Le verrou",
+    points: [
+      { icon: "images/Icons/scene/items/item_lockpicks.webp", text: "Le verrou : la clé attend sur une case du chemin, dans une poche à part. Devant la porte : Ouvrir avec la clé, Forcer (ça passe toujours, mais ça coûte) ou Rebrousser." }
+    ]
+  },
+  pa2_cache: {
+    tab: "scene",
+    condition: function () { var run = pa2TutoRun(), q = run && run.quest; return !!(run && q && q.kind === "cache" && q.state === "annoncee" && ["pa2-map", "pa2-node"].indexOf(run.status) >= 0); },
+    icon: "images/Icons/scene/pa2_besace.webp",
+    title: "La cache",
+    points: [
+      { icon: "images/Icons/scene/node_encounter.webp", text: "Une rencontre peut lancer une petite quête. Elle est rappelée en haut de l'écran." },
+      { icon: "images/Icons/scene/pa2_besace.webp", text: "La cache : annoncée à une halte, à deux pas du chemin au plus. Le retour se fait par une trace claire, et une bête sans or le garde." }
+    ]
+  },
+  pa2_ends: {
+    tab: "scene",
+    condition: function () { var run = pa2TutoRun(), q = run && run.quest; return !!(run && q && (q.kind === "end" || q.kind === "hiddenEnd") && q.state === "active" && ["pa2-map", "pa2-node"].indexOf(run.status) >= 0); },
+    icon: "images/Icons/scene/node_threshold.webp",
+    title: "Les fins",
+    points: [
+      { icon: "images/Icons/scene/node_encounter.webp", text: "Une rencontre peut lancer une petite quête. Elle est rappelée en haut de l'écran." },
       { icon: "images/Icons/scene/node_threshold.webp", text: "Les fins : une fin imposée laisse une seule sortie ouverte ; une fin cachée se révèle par son passage secret, et paie mieux." }
     ]
   },
@@ -416,6 +450,14 @@ function storyStepClaimed(stepId) {
   return true;
 }
 window.storyStepClaimed = storyStepClaimed;
+
+/* v3.805.0 : petite aventure en cours (pas un parcours d'Histoire) pour les aides des petites quêtes ; null si l'ancienne
+   fenêtre « Les petites quêtes du chemin » a déjà été vue (pa2_quests). */
+function pa2TutoRun() {
+  var run = game.sceneRun;
+  if (!run || !run.pa2 || run.parcours || !window.Pa2Run || (game.genericTutorialsSeen || {}).pa2_quests) return null;
+  return run;
+}
 
 function maybeShowGenericTutorial(tabName) {
   if (pendingTutorial) return; // v3.107.12 : ne jamais écraser un popup déjà ouvert (même conteneur DOM)

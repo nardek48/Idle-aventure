@@ -16913,7 +16913,7 @@ console.log("\n[284] v3.469.2 — Petites Aventures : fenêtres des nouveautés 
     if (g.SortieManager.isActive()) g.SortieManager.end("return");
   }
   try {
-    ok(T.pa2_night && T.pa2_night.tab === "scene" && T.pa2_night.points.length === 4 && T.pa2_traps && T.pa2_traps.points.length === 5, "deux fenêtres : « La nuit du run » (4 lignes), « Pièges et sentiers coupés » (5 lignes)");
+    ok(T.pa2_night && T.pa2_night.tab === "scene" && T.pa2_night.points.length === 4 && T.pa2_traps && T.pa2_traps.points.length === 4 && T.pa2_cuts && T.pa2_cuts.points.length === 1, "fenêtres : « La nuit du run » (4 lignes), « Les pièges » (4), « Les sentiers coupés » (1, v3.805.0)");
     prep(); S.startRun("petite_aventure_foret"); var r = game.sceneRun;
     r.cond = "brouillard"; var n1 = T.pa2_night.condition();
     r.cond = "calme"; var n2 = T.pa2_night.condition();
@@ -16922,7 +16922,7 @@ console.log("\n[284] v3.469.2 — Petites Aventures : fenêtres des nouveautés 
     P.depart(); r.traps = {}; r.cuts = {};
     ok(!T.pa2_traps.condition(), "pièges : rien tant qu'aucun piège ni sentier coupé n'est en vue");
     r.cuts = { "S>L0": "arbre" };
-    ok(T.pa2_traps.condition(), "un sentier coupé en vue : la fenêtre s'ouvre");
+    ok(!T.pa2_traps.condition() && T.pa2_cuts.condition(), "un sentier coupé en vue : l'aide des sentiers coupés, pas celle des pièges (v3.805.0)");
     r.cuts = {}; r.traps = { "S>C0": { fx: "venin", hidden: true, seen: false, done: false } };
     ok(!T.pa2_traps.condition(), "un piège caché, invisible : pas encore");
     P.moveTo("C0");
@@ -25847,14 +25847,14 @@ console.log("\n[513] Tutoriels sur l'écran (v3.761.0, atelier tutoriels-ecran, 
       "desert_02", "desert_03", "desert_10", "desert_13", "combat_forecast", "equipment_intro", "pa2_night", "pa2_traps", "village_training", // v3.789.0 : lot 2
       "farm_second_plot", "farm_level_two", "farm_improvement", "workshop_materials", "workshop_level_two", // v3.790.0 : lot 3
       "ruines_03", "ruines_04", "ruines_06", "ruines_07", "ruines_16", "crypte_03", "crypte_04", "crypte_06", "crypte_07", // v3.791.0 : lot 4
-      "montagne_06", "montagne_07", "tour_06"]; // v3.792.0 : lot 5
-    ok(keys.every(function (k) { return C[k] && C[k].steps.length >= 3 && C[k].steps.every(function (st) { return st.sel && st.title && st.text; }); }) && Object.keys(C).length === 40, "les 40 tutoriels retenus, 3 à 6 étapes chacun (sélecteur, titre, texte)");
+      "montagne_06", "montagne_07", "tour_06"]; // v3.792.0 : lot 5 (pa2_cuts, v3.805.0 : une bulle, à part)
+    ok(keys.every(function (k) { return C[k] && C[k].steps.length >= (k === "pa2_traps" ? 2 : 3) && C[k].steps.every(function (st) { return st.sel && st.title && st.text; }); }) && Object.keys(C).length === 41 && C.pa2_cuts && C.pa2_cuts.minSteps === 1 && C.pa2_cuts.steps.length === 1, "les 40 tutoriels retenus (3 à 6 étapes) et le sentier coupé d'une bulle (v3.805.0)");
     ok(["forest_03", "forest_04", "forest_08", "forest_13", "forest_wenna", "forest_15"].every(function (k) { var s = g.STORY_QUESTS.forest.steps.filter(function (x) { return x.id === k; })[0]; return s && s.tutorial; }) && !!g.GENERIC_TUTORIALS.sortie_prep, "lot 1 : chaque clé est un tutoriel d'étape de la Forêt (ou la préparation de sortie)");
     ok(!!g.GENERIC_TUTORIALS.camp_welcome && !!g.GENERIC_TUTORIALS.village_production && !!g.GENERIC_TUTORIALS.pa2_prep, "les clés génériques existent (Campement, Village, Petite Aventure)");
     var steps = ["forest_02", "forest_brume", "forest_12", "forest_11"].map(function (id) { var f = null; Object.keys(g.STORY_QUESTS).forEach(function (c) { g.STORY_QUESTS[c].steps.forEach(function (st) { if (st.id === id) f = st; }); }); return f; });
     ok(steps.every(function (st) { return st && st.tutorial; }), "les étapes d'Histoire visées ont toutes un tutoriel (la fenêtre reste le repli)");
     var src = fsRead("js/ui/coach-view.js");
-    ok(/wide-mode[\s\S]*?pc-mode[\s\S]*?return false;/.test(src) && /steps\.length < 2[\s\S]*?buildTutorialModalHTML\(closeJs, tutorial\)/.test(src), "repli : fenêtre classique en grand écran, ou si moins de deux éléments sont visibles");
+    ok(/wide-mode[\s\S]*?pc-mode[\s\S]*?return false;/.test(src) && /steps\.length < \(def\.minSteps \|\| 2\)[\s\S]*?buildTutorialModalHTML\(closeJs, tutorial\)/.test(src), "repli : fenêtre classique en grand écran, ou si moins de deux éléments sont visibles");
     ok(/COACH_SETTLE_MS = \d+/.test(src) && /COACH_RETRIES = \d+/.test(src) && /elementFromPoint/.test(src), "mesure après la pose de l'écran, remesure si un élément est couvert (prologue, fenêtre)");
     ok(/class="coach-skip" onclick="CoachTutorial\.finish\(\)"/.test(src) && /class="coach-spot"[^>]*onclick="CoachTutorial\.next\(\)"/.test(src) && /class="kbtn primary coach-next" onclick="CoachTutorial\.next\(\)"/.test(src), "avancer : « Suivant » ou toucher l'éclairage ; « Passer » termine");
     ok(/\(new Function\(js\)\)\(\)/.test(src) && /renderTutorialInto\(host, "closeTutorialModal\(/.test(fsRead("js/ui/tutorial-view.js")), "fin : même clôture que la fenêtre (tutoriel noté vu, sauvegarde)");
@@ -25999,21 +25999,24 @@ console.log("\n[519] Forge 9 de la Tour : Givre bleu et Verre de faille fermés 
   finally { SQ.isStepReached = keep; }
 })();
 
-console.log("\n[520] Petites Aventures : tutoriel des petites quêtes du chemin (v3.771.0)");
+console.log("\n[520] Petites Aventures : aides des petites quêtes du chemin, une par mécanique (v3.771.0, découpées en v3.805.0)");
 (function () {
-  var keep = game.sceneRun, P = g.Pa2Run, fs0 = P.foundSecrets;
+  var keep = game.sceneRun, P = g.Pa2Run, fs0 = P.foundSecrets, seen0 = game.genericTutorialsSeen;
   try {
-    var T = g.GENERIC_TUTORIALS.pa2_quests;
-    ok(T && T.tab === "scene" && T.points.length === 5 && T.points.every(function (p) { return p.icon && p.text; }), "tutoriel posé : 5 points (quête, verrou, cache, passages secrets, fins)");
+    var T = g.GENERIC_TUTORIALS;
+    game.genericTutorialsSeen = {};
+    ok(!T.pa2_quests && ["pa2_secret", "pa2_lock", "pa2_cache", "pa2_ends"].every(function (k) { return T[k] && T[k].tab === "scene" && T[k].points.length >= 1 && T[k].points.length <= 2; }), "quatre fenêtres courtes (1 ou 2 lignes) remplacent celle de cinq lignes");
     P.foundSecrets = function () { return []; };
     game.sceneRun = { pa2: true, status: "pa2-map", quest: { kind: "cache", state: "rencontre" } };
-    ok(!T.condition(), "pas avant la rencontre qui lance la quête");
-    game.sceneRun.quest.state = "halte"; ok(T.condition(), "la cache annoncée : il s'ouvre");
-    game.sceneRun = { pa2: true, status: "pa2-lock", quest: { kind: "lock", state: "active" } }; ok(T.condition(), "devant un verrou : il s'ouvre");
-    game.sceneRun = { pa2: true, status: "pa2-map", quest: null }; P.foundSecrets = function () { return ["L4>L6"]; }; ok(T.condition(), "premier passage secret trouvé : il s'ouvre");
-    game.sceneRun = { pa2: true, parcours: true, status: "pa2-map", quest: { kind: "lock", state: "active" } }; ok(!T.condition(), "pas dans les parcours d'Histoire");
+    ok(!T.pa2_cache.condition() && !T.pa2_secret.condition(), "rien avant la rencontre ni le premier secret");
+    game.sceneRun.quest.state = "annoncee"; ok(T.pa2_cache.condition() && !T.pa2_lock.condition(), "la cache annoncée : son aide, seule");
+    game.sceneRun = { pa2: true, status: "pa2-lock", quest: { kind: "lock", state: "active" } }; ok(T.pa2_lock.condition() && !T.pa2_cache.condition(), "devant un verrou : son aide");
+    game.sceneRun = { pa2: true, status: "pa2-map", quest: { kind: "end", state: "active" } }; ok(T.pa2_ends.condition(), "fin imposée : son aide");
+    game.sceneRun = { pa2: true, status: "pa2-map", quest: null }; P.foundSecrets = function () { return ["L4>L6"]; }; ok(T.pa2_secret.condition(), "premier passage secret trouvé : son aide");
+    game.genericTutorialsSeen = { pa2_quests: true }; ok(!T.pa2_secret.condition(), "ancienne fenêtre déjà vue : les nouvelles ne se montrent pas");
+    game.genericTutorialsSeen = {}; game.sceneRun = { pa2: true, parcours: true, status: "pa2-map", quest: { kind: "lock", state: "active" } }; ok(!T.pa2_lock.condition(), "pas dans les parcours d'Histoire");
   } catch (err) { ok(false, "[520] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
-  finally { P.foundSecrets = fs0; game.sceneRun = keep; }
+  finally { P.foundSecrets = fs0; game.sceneRun = keep; game.genericTutorialsSeen = seen0; }
 })();
 
 console.log("\n[521] Variante du Chaos : ouverte quand un héros a fini l'Histoire (v3.774.0, Seb 12/11)");
