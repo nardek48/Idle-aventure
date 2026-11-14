@@ -296,6 +296,22 @@ function apresEchec() {
    Mode Grimoire (le choix d'action est celui du joueur absent), vitesse ×1. Le seul geste
    ajouté est celui d'un joueur attentif : une potion de soin sous 30 % de PV.
    Renvoie true si le combat de quête est terminé sans défaite. */
+/* PRONO=1 (outil, 14/11) : verdict du pronostic au départ d'une quête ou d'un donjon, puis l'issue réelle, une ligne JSON « PRONO » par sortie. */
+var PRONO = process.env.PRONO === "1";
+function pronoAvant(kind, id, f) {
+  if (!PRONO || !f) return null;
+  return { kind: kind, id: id, step: CURRENT_STEP, ctx: CTX, niv: G.game.heroLevel, v: f.id, ratio: f.ratio != null ? +f.ratio.toFixed(2) : null, run: f.runRatio != null ? +f.runRatio.toFixed(2) : null,
+    tuer: f.roundsToKill, tomber: f.roundsToDie, dmg: f.heroDamagePerRound, recu: f.enemyDamagePerRound, soin: f.healThreshold, usure: Math.round(f.attrition || 0), pv: Math.round(f.heroHp || 0), groupe: Math.round(f.partyHp || 0), potions: f.healingReserve, ennemi: f.enemyName, pvE: f.enemyHp, nf: STATS.fights.length };
+}
+function pronoApres(p, ok) {
+  if (!p) return;
+  var fs2 = STATS.fights.slice(p.nf), der = fs2[fs2.length - 1] || {}; delete p.nf;
+  p.ok = !!ok; p.mort = fs2.some(function (f) { return f.died; }); p.combats = fs2.length;
+  p.rounds = fs2.reduce(function (x, f) { return x + (f.rounds || 0); }, 0);
+  p.pvFin = Math.round(100 * Math.max(0, G.game.heroHp) / (G.game.heroMaxHp || 1)); p.bues = fs2.reduce(function (x, f) { return x + (f.potions || 0); }, 0);
+  p.dernier = der.name; p.roundsDernier = der.rounds; p.dmgReel = der.rounds ? Math.round((der.emax || 0) / der.rounds) : null;
+  console.log("PRONO " + JSON.stringify(p));
+}
 var FIGHT = null, LAST_WAVE = 0;   // étiquette du combat en cours (étape, type)
 var CTX = "histoire";   // audit (26/10) : contexte du combat (histoire, farm, élites, entretien), noté dans STATS.fights
 function fightCombat(maxKills) {
@@ -315,7 +331,7 @@ function fightCombat(maxKills) {
       if (rec) closeRec(rec);
       cur = e; kills++;
       if (kills > (maxKills || 60) + 1) { note("combat : plus de " + maxKills + " ennemis"); return false; }
-      rec = { step: CURRENT_STEP, ctx: CTX, name: e.name, kind: e.isBoss ? "boss" : (e.isElite ? "élite" : "normal"), hp0: g.game.heroHp / (g.game.heroMaxHp || 1), rounds: 0, potions: 0, died: false, pat0: ANNONCES };
+      rec = { step: CURRENT_STEP, ctx: CTX, name: e.name, kind: e.isBoss ? "boss" : (e.isElite ? "élite" : "normal"), hp0: g.game.heroHp / (g.game.heroMaxHp || 1), emax: e.maxHp, rounds: 0, potions: 0, died: false, pat0: ANNONCES };
     }
     // v3.433.0 : halte du Sanctuaire — le joueur souffle (dans le jeu, la feuille bloque le combat)
     if (g.DungeonManager && g.DungeonManager.isCampPending && g.DungeonManager.isCampPending()) { if (sortieObjectif()) continue; g.DungeonManager.campAction("souffler"); STATS.camps = (STATS.camps || 0) + 1; continue; }
@@ -1138,12 +1154,14 @@ function playDungeonOnce(id, withMark, libreOk, niveau, libreForce) {
   var viv = !libre && g.ProvisionsManager && D.getById(id) && g.ProvisionsManager.check("dungeon", D.getById(id)) && g.ProvisionsManager.getRequirement("dungeon", D.getById(id));
   if (viv) obtain(viv.resourceId, viv.amount);
   preparerSortie(g, { type: "dungeon", id: id });
+  var prD = PRONO ? pronoAvant("donjon", id + (niveau > 1 ? " niv. " + niveau : ""), g.CombatForecast.forDungeon(id, marks, libre ? (niveau || 1) : niveau)) : null, boss0P = Number(g.game.dungeonBossClears || 0);
   if (libre) D.start(id, [], niveau || 1, true); else D.start(id, marks, niveau);
   emporterObjets(g);
   act((libre ? "donjonLibre" : "donjon") + ":" + id + (niveau > 1 ? " niv. " + niveau : ""), 0);
   if (!g.game.dungeonRun.active) { note("donjon " + id + " : entrée refusée (sorties restantes " + D.getRunsLeft(id) + ", PV " + Math.floor(g.game.heroHp) + ", verrou " + (g.heroLockReason ? g.heroLockReason() : "") + ", quête " + !!(g.game.adventureQuestRun && g.game.adventureQuestRun.active) + ", chasse " + !!(g.game.huntRun && g.game.huntRun.active) + ")"); return null; }
   winCombat(200);
   flushTimers(g);
+  pronoApres(prD, Number(g.game.dungeonBossClears || 0) > boss0P);
   if (process.env.TRACE_SORTIE) console.log("      [donjon " + id + "] run actif " + !!g.game.dungeonRun.active + " · sortie active " + g.SortieManager.isActive() + " · halte " + D.isCampPending() + " · vague " + g.game.dungeonRun.wave + " · PV " + Math.floor(g.game.heroHp));
   if (g.closeDungeonSummary) g.closeDungeonSummary();
   return !!(g.game.dungeonTierCleared || {})[id];
@@ -1208,12 +1226,14 @@ function playAdventure(id) {
     if (g.game.adventureQuestsCompleted[id]) return true;
     if (COMBATS) healUp();
     preparerSortie(g, { type: "adventure", id: id });
+    var pr = PRONO ? pronoAvant("quête", id, g.CombatForecast.forMission({ sourceKind: "adventure", questId: id })) : null;
     g.AdventureQuestManager.start(id);
     emporterObjets(g);
     if (!g.game.adventureQuestRun.active) { note("quête " + id + " : départ refusé"); return false; }
     var nf = STATS.fights.length;
     var fin = winCombat(80);
     flushTimers(g);
+    pronoApres(pr, !!g.game.adventureQuestsCompleted[id]);
     // v3.452.0 (Crypte) : PV restants et potions bues à la fin du run (cible : 25 à 35 % des PV, sans mort)
     if (COMBATS && /crypte|montagne|tour/.test(id) && g.game.adventureQuestsCompleted[id]) {
       var sm = g.game.lastSortieSummary || {};
