@@ -441,9 +441,18 @@ var PA2_MAPS = {
   }
 };
 
+/* v3.798.0 (Seb 14/11, conception Parcours PA v0.2 §5.2, E) : foret_2b, même image et mêmes places que foret_2 ; L2 > L4 et
+   R2 > R4 remplacent L2 > CAMP et R2 > CAMP : seul C2 mène au camp, le repos devient un détour. */
+PA2_MAPS.foret_2b = (function () {
+  var m = JSON.parse(JSON.stringify(PA2_MAPS.foret_2));
+  m.id = "foret_2b";
+  m.links.L2 = ["L4"]; m.links.R2 = ["R4"];
+  return m;
+})();
+
 /* Cartes proposées par monde (tirage au lancement). */
 var PA2_MAPS_BY_WORLD = {
-  forest: ["foret_1", "foret_2"], // v3.386.0 : tirée au lancement, comme l'accroche
+  forest: ["foret_1", "foret_2", "foret_2b"], // v3.386.0 : tirée au lancement, comme l'accroche ; v3.798.0 : foret_2b
   desert: ["desert_1"],            // v3.387.0 (PA2-5)
   ruins: ["ruines_1", "ruines_2"], // v3.429.0 (U-6)
   crypt: ["crypte_1", "crypte_2"],  // v3.454.0

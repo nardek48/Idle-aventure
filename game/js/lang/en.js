@@ -2580,6 +2580,7 @@ I18n.register("en", {
   "Petites Aventures de la Montagne : une quatrième accroche, « La case blanche d'Edda ». Suis la fumée droite : un passage secret mène à une fin cachée.": "Mountain Little Adventures: a fourth hook, \"Edda's Blank Square\". Follow the straight smoke: a secret passage leads to a hidden ending.",
   "Le foyer taillé": "The Carved Hearth",
   "Entrer dans le foyer taillé": "Enter the carved hearth",
+  "Petites Aventures de la Forêt : une variante du chemin du lac, où le camp est un détour. Seul le sentier du milieu y mène : à toi de choisir si le repos vaut le crochet.": "Forest Little Adventures: a variant of the lake route where the camp is a detour. Only the middle trail leads there: you decide whether the rest is worth the detour.",
   "Contrats du jour": "Today's contracts",
   "Renouvelés dans {d}": "Renewed in {d}",
   "Livrer": "Deliver",

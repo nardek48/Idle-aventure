@@ -850,6 +850,7 @@ PA2_HOOKS.gouffre.quest = {
       hint: "« Au lac, la porte de la rive. La gaffe pour la barre, je l'ai laissée en route. Là. » Il te montre l'endroit sur ta carte." } }
   }
 };
+PA2_HOOKS.gouffre.quest.byMap.foret_2b = PA2_HOOKS.gouffre.quest.byMap.foret_2; // v3.798.0 : même image, même rive
 PA2_HOOKS.feu.quest = {
   kind: "end", end: "tertre", announce: "prep",
   text: {
@@ -930,6 +931,7 @@ var PA2_SECRETS = {
     "R6>PALIER": { name: "La marche de lumière", hint: "Une des marches bleues ne monte pas vers la porte. Elle penche vers un palier détaché." }
   }
 };
+PA2_SECRETS.foret_2b = PA2_SECRETS.foret_2; // v3.798.0 : même image, mêmes passages
 
 /* v3.387.0 (PA2-5, F3-F4) : les accroches du Désert. Maddoc reprend l'événement de la v1 : il
    passe avant les autres tant que l'Histoire le permet (priority + eligible), une fois par partie

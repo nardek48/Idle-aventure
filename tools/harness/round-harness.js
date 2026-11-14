@@ -25686,6 +25686,18 @@ console.log("\n[513c] v3.794.0 — en.js : aucune clé en double (la dernière l
   ok(dup.length === 0, "en.js : aucune clé en double" + (dup.length ? " (" + dup.slice(0, 3).join(" | ") + ")" : ""));
 })();
 
+console.log("\n[513h] v3.798.0 — Forêt : foret_2b, le camp en détour (conception Parcours PA v0.2, §5.2)");
+(function () {
+  var A = g.PA2_MAPS.foret_2, B = g.PA2_MAPS.foret_2b;
+  ok(!!B && B.image === A.image && JSON.stringify(B.nodes) === JSON.stringify(A.nodes) && g.PA2_MAPS_BY_WORLD.forest.indexOf("foret_2b") >= 0, "même image et mêmes places que foret_2, tirée en Forêt");
+  var into = Object.keys(B.links).filter(function (k) { return B.links[k].indexOf("CAMP") >= 0; });
+  ok(into.join() === "C2" && B.links.L2.join() === "L4" && B.links.R2.join() === "R4" && A.links.L2.join() === "CAMP", "seul C2 mène au camp ; L2 > L4 et R2 > R4 (foret_2 inchangée)");
+  var seen = { S: true }, todo = ["S"];
+  while (todo.length) (B.links[todo.pop()] || []).forEach(function (k) { if (!seen[k]) { seen[k] = true; todo.push(k); } });
+  ok(["CAMP", "SEUIL", "BOSS", "CLAIRIERE", "TERTRE"].every(function (k) { return seen[k]; }), "camp, seuil et les trois fins restent atteignables");
+  ok(g.PA2_SECRETS.foret_2b === g.PA2_SECRETS.foret_2 && g.PA2_HOOKS.gouffre.quest.byMap.foret_2b === g.PA2_HOOKS.gouffre.quest.byMap.foret_2, "passages secrets et rive du lac repris de foret_2");
+})();
+
 console.log("\n[513g] v3.797.0 — Montagne : la fumée droite (fin cachée, le foyer taillé)");
 (function () {
   var h = g.PA2_HOOKS.fumee, q = h && h.quest;
