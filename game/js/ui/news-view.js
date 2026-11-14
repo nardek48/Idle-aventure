@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.802.0", "system/forecast", _t("Pronostic de la silhouette : il ne compte plus tes compagnons (tu l'affrontes seul) et tient compte du trait qu'elle prend à ta classe. Le Chevalier est prévenu : c'est un combat très difficile.")],
     ["3.801.0", "system/forecast", _t("Pronostic : la Tanière du Basilic et deux quêtes de la Tour (« Le pied de la Tour », « Le haut de l'escalier ») ne sont plus annoncées plus dures qu'elles ne le sont.")],
     ["3.800.0", "system/forecast", _t("Pronostic : dans la Crypte, les morts qui dorment ne comptent plus comme s'ils se battaient. Les quêtes à rencontres et les élites de l'Ossuaire ne sont plus annoncées « Hors de portée » à tort.")],
     ["3.799.0", "system/forecast", _t("Pronostic : un boss qui se soigne n'est plus annoncé « Hors de portée » quand une règle de ton Grimoire contre son soin. L'estimation le dit : « Il se soigne · ta règle du Grimoire le contre ».")],

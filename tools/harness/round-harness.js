@@ -25739,6 +25739,26 @@ console.log("\n[513d] v3.794.0 — Critique plafonné à 100 % : la fiche le dit
   ok(/c\.crit > 100 \? _t\("100 % max"\)/.test(require("fs").readFileSync(require("path").join(ROOT, "js/ui/heros-screens-view.js"), "utf8")), "résumé du Héros : « 100 % max » au-delà de 100 %");
 })();
 
+console.log("\n[513l] v3.802.0 — Pronostic de la silhouette : combat seul, trait de la classe compté (S1 + S2, Seb 14/11)");
+(function () {
+  try {
+    var F = g.CombatForecast, m = { sourceKind: "adventure", questId: "aq_tour_silhouette" }, res = {};
+    ["knight", "mage"].forEach(function (h) {
+      var game = freshCombat(h);
+      g.CompanionManager.state("wenna").unlocked = true; g.CompanionManager.state("wenna").present = true;
+      var f = F.forMission(m);
+      res[h] = { f: f, party: F.getPartyBonus(true).hp };
+    });
+    ok(res.knight.f && res.knight.f.partyHp === 0 && res.knight.party > 0, "quête solo : aucun compagnon dans le pronostic (Wenna présente hors de ce combat : " + res.knight.party + " PV)");
+    ok(F._solo === false && F._copyMult === 1, "drapeaux remis à zéro après le pronostic");
+    var base = res.knight.f.enemyDamagePerRound, mage = res.mage.f.enemyDamagePerRound;
+    var game = freshCombat("knight"); var sansTrait = (function () { var k = g.FORECAST_COPYCLASS_DMG_MULT.enraged; g.FORECAST_COPYCLASS_DMG_MULT.enraged = 1; var f = F.forMission(m); g.FORECAST_COPYCLASS_DMG_MULT.enraged = k; return f.enemyDamagePerRound; })();
+    ok(g.FORECAST_COPYCLASS_DMG_MULT.enraged === 1.6 && Math.abs(base / Math.max(1, sansTrait) - 1.6) < 0.05, "Chevalier : la silhouette enragée frappe ×1,6 (" + sansTrait + " → " + base + ")");
+    var autre = F.forMission({ sourceKind: "adventure", questId: "aq_tour_pied" });
+    ok(autre && F._copyMult === 1, "une autre quête n'est pas touchée");
+  } catch (err) { ok(false, "[513l] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 console.log("\n[513k] v3.801.0 — Pronostic : correctifs d'usure de la Tanière (×1) et de deux quêtes de la Tour (×0,5) (T1 + T2b de Seb, 14/11)");
 (function () {
   try {

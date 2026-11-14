@@ -49,6 +49,10 @@ var FORECAST_CLASS_DMG_MULT = { knight: 0.72, archer: 0.67, mage: 0.81 };
 var FORECAST_ELITE_DMG_MULT = { enraged: 2.0, armored: 1.2, shielded: 1.2 };
 var FORECAST_ELITE_HERO_DMG_MULT = 0.88;
 
+/* S2 (Seb 14/11) : boss qui prend le trait de ta classe (la silhouette, copyClass) : ses coups réels / estimés, par trait.
+   Mesuré au moteur (Chevalier, 4 combats, sauvegarde du robot à tour_18) : 140 à 148 reçus par round pour 91 estimés. */
+var FORECAST_COPYCLASS_DMG_MULT = { enraged: 1.6 };
+
 /* v3.429.15 : part des soins de compagnon modélisés qui compte. Au banc, le héros boit ses potions
    avant de passer sous le seuil de Wenna : soins réels 0,3 à 0,8 du modèle pour le Chevalier. */
 var FORECAST_COMPANION_HEAL_MULT = 0.75;
@@ -125,6 +129,7 @@ var CombatForecast = {
      à ceux du héros, ses PV au réservoir. full = PV max (entrée de donjon, groupe soigné). */
   getPartyBonus: function (full) {
     var out = { dmg: 0, hp: 0 };
+    if (this._solo) return out; // S1 (Seb 14/11) : quête `solo` (la silhouette), aucun compagnon
     if (!window.CompanionManager || typeof CompanionManager.partyIds !== "function") return out;
     CompanionManager.partyIds().forEach(function (id) {
       var s = CompanionManager.statsOf(id);
@@ -313,6 +318,7 @@ var CombatForecast = {
      dès qu'un allié est touché. Groupe approché en un seul réservoir de PV. Un compagnon ne
      joue plus une fois l'ennemi tombé : un combat d'un round ne lui laisse aucun soin. */
   getCompanionHeals: function (fights, fullParty) {
+    if (this._solo) return 0; // S1 (Seb 14/11)
     if (!window.CompanionManager || typeof CompanionManager.partyIds !== "function" || typeof getCompanionDef !== "function") return 0;
     var heroMax = Number(game.heroMaxHp || 1), poolMax = heroMax, deficit = fullParty ? 0 : Math.max(0, heroMax - Number(game.heroHp != null ? game.heroHp : heroMax));
     var healers = [];
@@ -393,7 +399,7 @@ var CombatForecast = {
 
     var party = this.getPartyBonus(!!options.fullParty); // v3.429.9
     var heroDmg = (this.getForecastHeroDamage() + party.dmg) * (enemy.isElite ? FORECAST_ELITE_HERO_DMG_MULT : 1); // v3.523.0 : bouclier d'élite
-    var enemyDmg = this.getEnemyDamagePerRound(enemy) * this.getEliteDmgMult(enemy); // v3.523.0 : rage et exaltation
+    var enemyDmg = this.getEnemyDamagePerRound(enemy) * this.getEliteDmgMult(enemy) * (this._copyMult || 1); // v3.523.0 : rage et exaltation ; S2 : trait copié
     var heroHp = Number(game.heroHp != null ? game.heroHp : (game.heroMaxHp || 1));
     var heroMaxHp = Number(game.heroMaxHp || 1);
     var enemyHp = Number(enemy.maxHp || 0);
@@ -621,6 +627,16 @@ var CombatForecast = {
   forMission: function (mission) {
     // v3.429.7 : un donjon lancé du tableau du Camp reçoit le pronostic du run entier
     if (mission && mission.sourceKind === "dungeon") return this.forDungeon(String(mission.id).replace("dungeon_", ""), []);
+    // S1 et S2 (Seb 14/11) : combat seul, et boss qui prend le trait de ta classe (la silhouette)
+    var aq = mission && mission.sourceKind === "adventure" ? (window.ADVENTURE_QUESTS || {})[mission.questId] : null;
+    var copie = !!(aq && Array.isArray(aq.bossPhases) && aq.bossPhases.some(function (p) { return p && p.copyClass; }));
+    var trait = copie && window.TowerSystem && window.TOWER_CLASS_ARCHETYPE ? TOWER_CLASS_ARCHETYPE[TowerSystem.baseHeroId(game.heroId)] : null;
+    this._solo = !!(aq && aq.solo);
+    this._copyMult = (trait && FORECAST_COPYCLASS_DMG_MULT[trait]) || 1;
+    try { return this._forMission(mission); } finally { this._solo = false; this._copyMult = 1; }
+  },
+
+  _forMission: function (mission) {
     var enemy = this.getReferenceEnemy(mission);
     if (!enemy) return null;
     var attrition = 0, list = [];
@@ -693,6 +709,7 @@ window.FORECAST_RATIO_THRESHOLDS = FORECAST_RATIO_THRESHOLDS;
 window.FORECAST_POTION_WEIGHT = FORECAST_POTION_WEIGHT; // v3.695.0 (COMB-9)
 window.FORECAST_CLASS_DMG_MULT = FORECAST_CLASS_DMG_MULT;
 window.FORECAST_COMPANION_HEAL_MULT = FORECAST_COMPANION_HEAL_MULT;
+window.FORECAST_COPYCLASS_DMG_MULT = FORECAST_COPYCLASS_DMG_MULT;
 window.COMBAT_FORECAST_LEVELS = COMBAT_FORECAST_LEVELS;
 window.CombatForecast = CombatForecast;
 
