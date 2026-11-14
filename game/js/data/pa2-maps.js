@@ -340,11 +340,13 @@ var PA2_MAPS = {
       L6: { row: 6, x: 170, y: 360 }, C6: { row: 6, x: 435, y: 310 }, R6: { row: 6, x: 620, y: 300 },
       BOSS: { row: 7, x: 435, y: 150, type: "boss" },                  // le golem sur son coffre
       CLAIRIERE: { row: 7, x: 160, y: 170, type: "clairiere" },        // la source chaude
-      TERTRE: { row: 7, x: 715, y: 175, type: "tertre" }               // la paroi à la fente
+      TERTRE: { row: 7, x: 715, y: 175, type: "tertre" },              // la paroi à la fente
+      // v3.797.0 (Seb 14/11) : fin cachée (la fumée droite), la brèche entre les aiguilles, à gauche du trieur (PIL)
+      FORGE: { row: 7, x: 285, y: 105, type: "cachee", hidden: true }
     },
     /* v3.726.0 (Seb 06/11, C) : la sente de la coulée (L4 > L6) et la croûte froide (R1 > R3), sur la roche, hors lave (PIL).
        La lave suit un passage (Pa2Run._advanceLava) : il fait gagner une case, jamais de l'avance sur elle. */
-    secrets: { "L4>L6": {}, "R1>R3": {} },
+    secrets: { "L4>L6": {}, "R1>R3": {}, "L6>FORGE": { quest: "hiddenEnd", via: [225, 235] } },
     keySlots: { 2: ["L3", "R3"] }, // v3.796.0 : la clavette de la chaîne, après le surplomb
     links: RUINES_PA_LINKS
   },
@@ -368,10 +370,12 @@ var PA2_MAPS = {
       L6: { row: 6, x: 210, y: 365 }, C6: { row: 6, x: 440, y: 300 }, R6: { row: 6, x: 620, y: 330 },
       BOSS: { row: 7, x: 430, y: 140, type: "boss" },
       CLAIRIERE: { row: 7, x: 150, y: 175, type: "clairiere" },
-      TERTRE: { row: 7, x: 720, y: 170, type: "tertre" }
+      TERTRE: { row: 7, x: 720, y: 170, type: "tertre" },
+      // v3.797.0 (Seb 14/11) : fin cachée, sous la colonne de fumée entre les orgues, à gauche du trieur (PIL)
+      FORGE: { row: 7, x: 300, y: 105, type: "cachee", hidden: true }
     },
     // v3.726.0 (C) : la vire de basalte (L4 > L6) et la crête fumante (R4 > R6), sur la roche, hors lave (PIL)
-    secrets: { "L4>L6": {}, "R4>R6": {} },
+    secrets: { "L4>L6": {}, "R4>R6": {}, "L6>FORGE": { quest: "hiddenEnd", via: [250, 240] } },
     keySlots: { 2: ["L3", "R3"] }, // v3.796.0 : la clavette de la chaîne, après le surplomb
     links: RUINES_PA_LINKS
   },

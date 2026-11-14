@@ -699,7 +699,10 @@ var PA2_DESTS = {
       win: "Au bord de l'eau, un galet poli, frais malgré la chaleur." },
     tertre: { name: "La paroi fermée", line: "Une paroi coupée droit, comme au Replat. Au milieu, une fente, fermée de l'intérieur.",
       win: "La fente a cédé. Derrière, une niche taillée net. Il reste ce qu'elle gardait.",
-      fail: "La fente a tenu. Tu repars avec ce que tu portais. La roche autour est un peu plus chaude." }
+      fail: "La fente a tenu. Tu repars avec ce que tu portais. La roche autour est un peu plus chaude." },
+    // v3.797.0 (Seb 14/11) : la fin cachée de l'accroche de la fumée droite, derrière un passage secret
+    cachee: { name: "Le foyer taillé", line: "Une forge taillée dans la roche, plus vieille que le Replat. Le foyer est froid : la seule chose froide de la montagne.",
+      win: "Sur l'enclume, ce qu'on a oublié de reprendre : de la Cendre, des pièces, un outil sans manche. Tu prends ce qui se prend." }
   },
   tower: { // v3.627.0 : le gardien du palier, la citerne haute, la porte murée
     boss: { name: "Le gardien du palier", line: "En haut, un gardien de pierre fait les cent pas devant un coffre. Toujours les mêmes dalles.",
@@ -908,11 +911,13 @@ var PA2_SECRETS = {
   },
   montagne_1: {
     "L4>L6": { name: "La sente de la coulée", hint: "Le long de la coulée, une sente de roche refroidie monte vers le haut." },
-    "R1>R3": { name: "La croûte froide", hint: "Une croûte noire, froide en surface, monte le long de la coulée de l'est." }
+    "R1>R3": { name: "La croûte froide", hint: "Une croûte noire, froide en surface, monte le long de la coulée de l'est." },
+    "L6>FORGE": { name: "La sente de la fumée", hint: "Entre deux aiguilles, une fumée monte droit. Derrière elle, la roche est taillée." } // v3.797.0
   },
   montagne_2: {
     "L4>L6": { name: "La vire de basalte", hint: "Une vire étroite longe la paroi, vers le haut. La roche y est froide." },
-    "R4>R6": { name: "La crête fumante", hint: "Entre deux fumerolles, une crête de roche monte vers le nord." }
+    "R4>R6": { name: "La crête fumante", hint: "Entre deux fumerolles, une crête de roche monte vers le nord." },
+    "L6>FORGE": { name: "Le couloir de fumée", hint: "Une colonne de fumée monte droit entre les orgues de basalte. Dessous, une marche taillée." } // v3.797.0
   },
   tour_1: { // v3.727.0 (Seb 06/11)
     "C0>CAMP": { name: "L'escalier dans le mur", hint: "Derrière la porte aux deux statues, un escalier droit monte dans l'épaisseur du mur." },
@@ -1317,6 +1322,28 @@ PA2_HOOKS.chaine.quest = {
   }
 };
 PA2_HOOKS.chaine.quest.byMap.montagne_2 = PA2_HOOKS.chaine.quest.byMap.montagne_1; // même tracé, même seuil
+/* v3.797.0 (Seb 14/11, point 5) : Montagne — fumée D cachée (le foyer taillé ; « La forge froide » est un secteur de la carte vivante), textes validés par Seb. */
+PA2_HOOKS.fumee = {
+  id: "fumee", worldId: "mountain",
+  title: "La case blanche d'Edda",
+  lede: "Edda a dessiné une case de plus sur sa carte, en haut, là où il n'y a rien. Elle dit qu'elle l'a vue de loin, une nuit, et qu'elle ne l'a jamais retrouvée.",
+  event: {
+    name: "La fumée droite",
+    text: "Une fumée qui monte droit, sans vent, d'une fente dans la roche. Autour, la cendre est froide.",
+    branches: {
+      suivre: { label: "La suivre des yeux", cost: { breath: 10 }, text: "Elle monte droit, puis se couche vers une paroi que tu ne voyais pas. Là-haut, quelque chose est taillé." },
+      passer: { label: "Passer", text: "Tu passes. La fumée monte toujours, droite, derrière toi." }
+    }
+  },
+  clairiere: {
+    suivre: "Depuis la source, tu vois la fumée droite. Elle monte toujours au même endroit, contre la paroi.",
+    other: "Au bord de la source, la cendre est froide par endroits. Tu ne sais pas pourquoi."
+  }
+};
+PA2_HOOKS.fumee.quest = {
+  kind: "hiddenEnd", branches: ["suivre"], announce: "event", node: "FORGE",
+  text: { found: "Derrière la fumée, une sente que tu n'avais pas vue. Au bout, une paroi taillée, et un foyer froid.", take: "Entrer dans le foyer taillé" }
+};
 /* v3.727.0 (Seb 06/11, accroches de la Tour v0.1) : pas A (le sac sous le sable), porte B (la porte sans cadre, clé : cale),
    marche D cachée (le palier en trop). Rien d'après tour_06 : la carte des étages s'ouvre là. */
 PA2_HOOKS.pas = {
@@ -1413,7 +1440,7 @@ var PA2_HOOKS_BY_WORLD = {
   desert: ["maddoc", "caravane", "sentinelle"],
   ruins: ["carnet", "batisseur", "statue"], // v3.469.3 : deux de plus
   crypt: ["lampe", "garcon", "cloche"],      // v3.454.0 ; v3.469.3 : deux de plus
-  mountain: ["pioche", "forme", "chaine"],   // v3.489.0 ; v3.796.0 : la chaîne (B)
+  mountain: ["pioche", "forme", "chaine", "fumee"], // v3.489.0 ; v3.796.0 : la chaîne (B) ; v3.797.0 : la fumée (D cachée)
   tower: ["pas", "porte", "marche"]          // v3.727.0 (Seb 06/11)
 };
 

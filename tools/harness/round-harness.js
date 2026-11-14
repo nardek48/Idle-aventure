@@ -25686,6 +25686,15 @@ console.log("\n[513c] v3.794.0 — en.js : aucune clé en double (la dernière l
   ok(dup.length === 0, "en.js : aucune clé en double" + (dup.length ? " (" + dup.slice(0, 3).join(" | ") + ")" : ""));
 })();
 
+console.log("\n[513g] v3.797.0 — Montagne : la fumée droite (fin cachée, le foyer taillé)");
+(function () {
+  var h = g.PA2_HOOKS.fumee, q = h && h.quest;
+  ok(!!h && g.PA2_HOOKS_BY_WORLD.mountain.indexOf("fumee") >= 0 && q.kind === "hiddenEnd" && q.node === "FORGE" && q.branches.join() === "suivre", "accroche tirée à la Montagne ; « La suivre des yeux » lance la fin cachée");
+  ok(["montagne_1", "montagne_2"].every(function (m) { var map = g.PA2_MAPS[m], n = map.nodes.FORGE, s = map.secrets["L6>FORGE"];
+    return n && n.hidden && n.type === "cachee" && n.row === map.rows.dest && s && s.quest === "hiddenEnd" && g.PA2_SECRETS[m]["L6>FORGE"]; }), "les deux pentes : forge cachée sur la rangée des fins, passage secret nommé depuis L6");
+  ok(!!g.PA2_DESTS.mountain.cachee, "texte du foyer taillé (destination cachée)");
+})();
+
 console.log("\n[513f] v3.796.0 — Montagne : la chaîne de l'arche (verrou B, clé : clavette)");
 (function () {
   var h = g.PA2_HOOKS.chaine, q = h && h.quest;
