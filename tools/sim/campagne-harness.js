@@ -310,6 +310,14 @@ function pronoAvant(kind, id, f) {
   return { kind: kind, id: id, step: CURRENT_STEP, ctx: CTX, niv: G.game.heroLevel, v: f.id, ratio: f.ratio != null ? +f.ratio.toFixed(2) : null, run: f.runRatio != null ? +f.runRatio.toFixed(2) : null,
     tuer: f.roundsToKill, tomber: f.roundsToDie, dmg: f.heroDamagePerRound, recu: f.enemyDamagePerRound, soin: f.healThreshold, usure: Math.round(f.attrition || 0), pv: Math.round(f.heroHp || 0), groupe: Math.round(f.partyHp || 0), potions: f.healingReserve, ennemi: f.enemyName, pvE: f.enemyHp, nf: STATS.fights.length };
 }
+function pronoElite(mapId, sectorId) {
+  if (!PRONO) return null;
+  var LM = G.LivingMapManager, d = LM.getSectorDef(mapId, sectorId), c = d && (d.content || d.firstContent);
+  if (!c || !c.eliteId || LM.getFight && !LM.getFight()) return null;
+  var lv = (LM.getFight() || {}).level || 1;
+  // héros et PV d'avant le premier coup : le pronostic tel que la feuille de préparation l'affiche
+  return pronoAvant("élite", mapId + "/" + sectorId + (lv > 1 ? " niv. " + lv : ""), G.CombatForecast.forMapElite(mapId, sectorId, c.eliteId, lv));
+}
 function pronoApres(p, ok) {
   if (!p) return;
   var fs2 = STATS.fights.slice(p.nf), der = fs2[fs2.length - 1] || {}; delete p.nf;
@@ -1103,9 +1111,11 @@ function freeSector(mapId, sectorId) {
     if (!r.ok) { note("secteur " + cible + " : " + r.reason); wait(3600e3, "échec à rejouer"); continue; }
     emporterObjets(g);
     LAST_END = null;
+    var prE = g.SceneRunManager.isRunActive() ? null : pronoElite(mapId, cible);
     if (g.SceneRunManager.isRunActive()) { if (!playScene() && g.SceneRunManager.isRunActive()) g.SceneRunManager.abandon(); }
     else winCombat();
     flushTimers(g);
+    pronoApres(prE, LM.isLiberated(mapId, cible));
     var ss = STATS.secteurs[mapId] = STATS.secteurs[mapId] || { essais: 0, liberes: 0 };
     ss.essais++; if (LM.isLiberated(mapId, cible)) ss.liberes++;
     if (!LM.isLiberated(mapId, cible)) {
@@ -1197,7 +1207,9 @@ function freeSectorAgain(mapId, sectorId) {
   emporterObjets(g);
   // rythme de la Tour (03/11) : un secteur d'expédition rejoué se joue comme une Petite aventure, pas comme un combat d'élite
   if (g.SceneRunManager.isRunActive()) { var fini = playScene(); if (!fini && g.SceneRunManager.isRunActive()) g.SceneRunManager.abandon(); flushTimers(g); return !!fini; }
+  var prR = pronoElite(mapId, sectorId);
   var gagne = winCombat();
+  pronoApres(prR, gagne !== false && !LM.getFight() && (g.game.heroHp || 0) > 0);
   // v3.429.0 : combat d'élite pas fini (élite trop forte pour ce farm) : le joueur fuit, sinon la carte reste bloquée
   if (LM.getFight()) { if (g.SortieManager && g.SortieManager.flee) g.SortieManager.flee(); if (LM.getFight()) LM.abandonFight(); return false; }
   return gagne !== false; // audit (27/10) : une mort n'est plus comptée comme une victoire (élite retentée le jour même)
