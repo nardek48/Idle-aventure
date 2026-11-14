@@ -25686,6 +25686,16 @@ console.log("\n[513c] v3.794.0 — en.js : aucune clé en double (la dernière l
   ok(dup.length === 0, "en.js : aucune clé en double" + (dup.length ? " (" + dup.slice(0, 3).join(" | ") + ")" : ""));
 })();
 
+console.log("\n[513f] v3.796.0 — Montagne : la chaîne de l'arche (verrou B, clé : clavette)");
+(function () {
+  var h = g.PA2_HOOKS.chaine, q = h && h.quest;
+  ok(!!h && g.PA2_HOOKS_BY_WORLD.mountain.indexOf("chaine") >= 0 && q.kind === "lock", "accroche tirée à la Montagne, mini-quête de verrou");
+  ok(["montagne_1", "montagne_2"].every(function (m) { var b = q.byMap[m], map = g.PA2_MAPS[m]; return b && b.lock === "SEUIL" && b.key === "clavette" && map.keySlots && map.keySlots[2].every(function (k) { return !!map.nodes[k]; }); }), "les deux pentes : seuil fermé, clavette posée après le surplomb");
+  var k = g.PA2_QUEST_KEYS.clavette;
+  ok(!!k && k.icon === "images/Icons/scene/quest/quest_clavette.webp", "clavette : vrai chemin d'icône gardé (image à fournir, générique en attendant)");
+  ok(h.assist.branches.join() === "gourde,porter" && q.showKey.join() === "gourde,porter" && h.destGold.passer === 0.85, "aider le tailleur marque la clé ; passer : or ×0,85");
+})();
+
 console.log("\n[513e] v3.795.0 — Chronique (grand écran) : journal du combat groupé par round");
 (function () {
   var cr = g.game.combatRound, n0 = cr ? cr.number : 0, len = g.gameLog.length, t0 = Date.now();

@@ -345,6 +345,7 @@ var PA2_MAPS = {
     /* v3.726.0 (Seb 06/11, C) : la sente de la coulée (L4 > L6) et la croûte froide (R1 > R3), sur la roche, hors lave (PIL).
        La lave suit un passage (Pa2Run._advanceLava) : il fait gagner une case, jamais de l'avance sur elle. */
     secrets: { "L4>L6": {}, "R1>R3": {} },
+    keySlots: { 2: ["L3", "R3"] }, // v3.796.0 : la clavette de la chaîne, après le surplomb
     links: RUINES_PA_LINKS
   },
   montagne_2: {
@@ -371,6 +372,7 @@ var PA2_MAPS = {
     },
     // v3.726.0 (C) : la vire de basalte (L4 > L6) et la crête fumante (R4 > R6), sur la roche, hors lave (PIL)
     secrets: { "L4>L6": {}, "R4>R6": {} },
+    keySlots: { 2: ["L3", "R3"] }, // v3.796.0 : la clavette de la chaîne, après le surplomb
     links: RUINES_PA_LINKS
   },
   /* v3.627.0 (Tour, lot T-2a) : l'escalier. v3.660.0 : places relevées sur les images de Seb (04/11). */

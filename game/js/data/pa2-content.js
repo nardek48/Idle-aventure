@@ -866,7 +866,9 @@ var PA2_QUEST_KEYS = {
   cheville: { name: "Cheville de la poulie", need: "la cheville de la poulie", icon: "images/Icons/scene/quest/quest_cheville.webp", found: "Dans le sable, une cheville de bois dur, usée par la corde. Elle va dans ta poche de quête." },
   pince: { name: "Pince de bâtisseur", need: "la pince de bâtisseur", icon: "images/Icons/scene/quest/quest_pince.webp", found: "Contre un mur, une pince de bâtisseur, encore blanche de poussière. Tu la gardes." },
   // v3.727.0 (Seb 06/11) : la porte sans cadre (accroche de la porte, Tour)
-  cale: { name: "Cale de porte", need: "la cale de porte", icon: "images/Icons/scene/quest/quest_cale.webp", found: "Contre une marche, une cale de pierre, usée d'un seul côté. Elle a tenu une porte, longtemps. Elle va dans ta poche de quête." }
+  cale: { name: "Cale de porte", need: "la cale de porte", icon: "images/Icons/scene/quest/quest_cale.webp", found: "Contre une marche, une cale de pierre, usée d'un seul côté. Elle a tenu une porte, longtemps. Elle va dans ta poche de quête." },
+  // v3.796.0 (Seb 14/11) : la chaîne de l'arche (Montagne) ; image à fournir par Seb, l'icône générique la remplace
+  clavette: { name: "Clavette de la chaîne", need: "la clavette de la chaîne", icon: "images/Icons/scene/quest/quest_clavette.webp", found: "Dans la cendre, une clavette de fer noircie, encore chaude. Elle va dans ta poche de quête." }
 };
 /* Passages secrets : noms et indices (« de justesse »), par carte. Tracés : PA2_MAPS[carte].secrets. */
 var PA2_SECRETS = {
@@ -1276,6 +1278,45 @@ PA2_HOOKS.forme.quest = {
     closed: "La fumée s'est refermée sur les autres pentes. Seule la source chaude reste ouverte."
   }
 };
+/* v3.796.0 (Seb 14/11, point 5) : Montagne — chaîne B (l'arche du seuil, clé : clavette), textes validés par Seb. */
+PA2_HOOKS.chaine = {
+  id: "chaine", worldId: "mountain",
+  title: "La chaîne de l'arche",
+  lede: "Maddoc dit que les tailleurs fermaient l'arche du haut avec une chaîne, la nuit, pour que les façonnés ne descendent pas. La chaîne est toujours là. La clavette qui la tient, non.",
+  event: {
+    name: "Le tailleur assis",
+    text: "Un vieux tailleur assis contre une veine morte, les mains brûlées. Il n'arrive plus à remonter.",
+    branches: {
+      gourde: { label: "Lui donner la gourde", cost: { stock: "gourde" }, text: "Il boit, puis il montre le haut du menton : « L'arche. Ma clavette. »" },
+      porter: { label: "Lui porter son sac", cost: { breath: 20 }, text: "Tu portes son sac jusqu'au replat. Il s'assoit, et il reprend son souffle avant toi." },
+      passer: { label: "Passer", text: "Tu passes. Derrière toi, il recommence à souffler sur ses mains." }
+    }
+  },
+  assist: { branches: ["gourde", "porter"] },
+  destGold: { passer: 0.85 },
+  echo: {
+    assist: "Un bloc roule d'une corniche, pile sur l'un d'eux. En haut, le tailleur souffle sur ses mains.",
+    dest: "Il manque une poignée de pièces au coffre. Un tailleur est passé avant toi."
+  },
+  clairiere: {
+    gourde: "Au bord de la source, le tailleur trempe ses mains dans l'eau tiède. Il lève la tête quand tu arrives.",
+    porter: "Au bord de la source, le tailleur trempe ses mains dans l'eau tiède. Il lève la tête quand tu arrives.",
+    other: "Au bord de la source, des traces de mains noires sur la roche."
+  }
+};
+PA2_HOOKS.chaine.quest = {
+  kind: "lock", showKey: ["gourde", "porter"], announce: "event",
+  force: { voie: "power" },
+  byMap: {
+    montagne_1: { lock: "SEUIL", key: "clavette", text: { // l'arche : une case fermée, tous ses accès
+      name: "La chaîne de l'arche",
+      lock: "L'arche est fermée par une chaîne de fer, tendue d'un pilier à l'autre. Elle tient par une clavette, et la clavette n'est plus là.",
+      open: "La clavette entre dans le maillon. La chaîne se détend et tombe dans la cendre.",
+      force: "Tu tires la chaîne jusqu'à ce que le maillon s'ouvre. Le fer brûle tes paumes.",
+      hint: "« L'arche du haut, la chaîne. Ma clavette est tombée en montant. Là. » Il te montre l'endroit sur ta carte." } }
+  }
+};
+PA2_HOOKS.chaine.quest.byMap.montagne_2 = PA2_HOOKS.chaine.quest.byMap.montagne_1; // même tracé, même seuil
 /* v3.727.0 (Seb 06/11, accroches de la Tour v0.1) : pas A (le sac sous le sable), porte B (la porte sans cadre, clé : cale),
    marche D cachée (le palier en trop). Rien d'après tour_06 : la carte des étages s'ouvre là. */
 PA2_HOOKS.pas = {
@@ -1372,7 +1413,7 @@ var PA2_HOOKS_BY_WORLD = {
   desert: ["maddoc", "caravane", "sentinelle"],
   ruins: ["carnet", "batisseur", "statue"], // v3.469.3 : deux de plus
   crypt: ["lampe", "garcon", "cloche"],      // v3.454.0 ; v3.469.3 : deux de plus
-  mountain: ["pioche", "forme"],             // v3.489.0
+  mountain: ["pioche", "forme", "chaine"],   // v3.489.0 ; v3.796.0 : la chaîne (B)
   tower: ["pas", "porte", "marche"]          // v3.727.0 (Seb 06/11)
 };
 
