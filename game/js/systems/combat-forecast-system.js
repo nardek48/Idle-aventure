@@ -223,6 +223,11 @@ var CombatForecast = {
     return (Number(enemy.maxHp || 0) * pct / every) * 1.25;
   },
 
+  /* A (Seb 14/11) : vrai si une règle active du Grimoire contre le soin du boss (même lecture que le moteur). */
+  isHealCountered: function () {
+    return typeof getConfiguredCounterSlotsForCondition === "function" && getConfiguredCounterSlotsForCondition("healIncoming").length > 0;
+  },
+
   /* Coût en PV des combats qui précèdent, dans une mission qui n'offre aucun repos. Sans ça,
      le pronostic ne voyait que le boss : mesuré au banc, un Chevalier sans rien perd 98 % de
      ses runs alors que le boss seul lui est abordable — il tombe pendant les neuf ennemis
@@ -365,6 +370,9 @@ var CombatForecast = {
     var enemyHp = Number(enemy.maxHp || 0);
 
     var healThreshold = this.getHealThreshold(enemy);
+    // A (Seb 14/11) : une règle active du Grimoire contre le soin annoncé, le moteur l'annule (Nezzam : 91 à 105 rounds annoncés, 23 à 45 joués)
+    var healCountered = healThreshold > 0 && this.isHealCountered();
+    if (healCountered) healThreshold = 0;
     var netDmg = healThreshold > 0 ? (heroDmg - healThreshold) : heroDmg;
 
     /* Les potions repoussent le moment où l'on tombe : elles comptent comme des PV (pondérés, COMB-9).
@@ -382,6 +390,7 @@ var CombatForecast = {
       healingReserve: reserve,
       attrition: attrition,
       healThreshold: Math.ceil(healThreshold),
+      healCountered: healCountered,
       roundsToKill: null,
       roundsToDie: enemyDmg > 0 ? Math.ceil(effectiveHp / enemyDmg) + this.getEngageRounds(enemy) : Infinity, // v3.429.11 : approche
       unwinnable: false,

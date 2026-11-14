@@ -25739,6 +25739,27 @@ console.log("\n[513d] v3.794.0 — Critique plafonné à 100 % : la fiche le dit
   ok(/c\.crit > 100 \? _t\("100 % max"\)/.test(require("fs").readFileSync(require("path").join(ROOT, "js/ui/heros-screens-view.js"), "utf8")), "résumé du Héros : « 100 % max » au-delà de 100 %");
 })();
 
+console.log("\n[513i] v3.799.0 — Pronostic : le soin du boss contré par une règle du Grimoire ne compte plus (option A de Seb, 14/11)");
+(function () {
+  try {
+    var game = freshCombat("knight"), F = g.CombatForecast;
+    run("WorldManager.worldIndex = 0; WorldManager.adventureIndex = 0; WorldManager.enemyIndex = 9;");
+    g.CombatEngine.spawnEnemy();
+    var boss = game.enemy, seuil = F.getHealThreshold(boss);
+    game.grimoireRules = [];
+    var sans = F.forEnemy(boss);
+    ok(boss.isBoss && seuil > 0 && sans.healThreshold > 0 && sans.healCountered === false, "sans règle : le soin du boss compte (" + sans.healThreshold + " / round)");
+    game.grimoireRules = [{ conditionId: "healIncoming", actionSlot: "skill1" }];
+    var avec = F.forEnemy(boss);
+    ok(F.isHealCountered() && avec.healCountered === true && avec.healThreshold === 0 && avec.roundsToKill < sans.roundsToKill, "règle « se soigne → Frappe » : soin retiré, moins de rounds (" + sans.roundsToKill + " → " + avec.roundsToKill + ")");
+    ok(F.getHealThreshold(boss) === seuil, "Petites Aventures (sans Grimoire) : le seuil de soin reste inchangé");
+    game.grimoireRules = [{ conditionId: "healIncoming", actionSlot: "basic" }];
+    ok(F.forEnemy(boss).healCountered === false, "une règle dont l'action ne contre pas le soin ne compte pas");
+    ok(/healCountered[\s\S]*?ta règle du Grimoire le contre/.test(fsRead("js/ui/combat-forecast-view.js")), "l'estimation l'affiche : « Il se soigne · ta règle du Grimoire le contre »");
+    game.grimoireRules = [];
+  } catch (err) { ok(false, "[513i] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 console.log("\n[513b] v3.793.0 — Petites Aventures de la Montagne et de la Tour : leurs propres textes (plus ceux de la Forêt)");
 (function () {
   var M = g.pa2Words({ worldId: "mountain" }), T = g.pa2Words({ worldId: "tower" }), F = g.pa2Words({ worldId: "forest" });

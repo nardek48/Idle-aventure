@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.799.0", "system/forecast", _t("Pronostic : un boss qui se soigne n'est plus annoncé « Hors de portée » quand une règle de ton Grimoire contre son soin. L'estimation le dit : « Il se soigne · ta règle du Grimoire le contre ».")],
     ["3.798.0", "scene/pa2_besace", _t("Petites Aventures de la Forêt : une variante du chemin du lac, où le camp est un détour. Seul le sentier du milieu y mène : à toi de choisir si le repos vaut le crochet.")],
     ["3.797.0", "scene/quest/quest_secret", _t("Petites Aventures de la Montagne : une quatrième accroche, « La case blanche d'Edda ». Suis la fumée droite : un passage secret mène à une fin cachée.")],
     ["3.796.0", "scene/quest/quest_lock", _t("Petites Aventures de la Montagne : une nouvelle accroche, « La chaîne de l'arche ». Aide le vieux tailleur pour savoir où est tombée sa clavette, ou force la chaîne.")],

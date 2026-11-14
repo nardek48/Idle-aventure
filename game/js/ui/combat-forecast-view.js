@@ -111,6 +111,7 @@ function buildCombatForecastHTML(f, opts) {
   h += '      <div class="cf-row"><span>' + _t("Tes dégâts") + '</span><span>' + _t("{n} / round", { n: formatNumber(f.heroDamagePerRound) }) + '</span></div>';
   h += '      <div class="cf-row"><span>' + _t("Ses dégâts") + '</span><span>' + _t("{n} / round", { n: formatNumber(f.enemyDamagePerRound) }) + '</span></div>';
   h += '      <div class="cf-row"><span>' + _t("Ses PV") + '</span><span>' + formatNumber(f.enemyHp) + '</span></div>';
+  if (f.healCountered) h += '      <div class="cf-row"><span>' + _t("Il se soigne") + '</span><span>' + _t("ta règle du Grimoire le contre") + '</span></div>'; // A (Seb 14/11)
   if (f.healThreshold > 0) {
     h += '      <div class="cf-row' + (f.unwinnable ? ' is-blocking' : '') + '"><span>' + _t("Il se soigne") + '</span><span>' + _t("il faut plus de {n} dégâts / round", { n: formatNumber(f.healThreshold) }) + '</span></div>';
   }
