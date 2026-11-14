@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.804.0", "quests/mission_combat", _t("Combat : la barre de ressource n'est plus rognée (« ncentration… ») sur les petits écrans et en mode Grimoire ; le nom s'efface quand la place manque, et les chiffres retrouvent leurs espaces.")],
     ["3.803.0", "system/forecast", _t("Pronostic des élites blindées (le Porte-couronne, le Serment sous l'armure…) : elles frappent plus fort qu'il ne le disait. Le Porte-couronne est maintenant annoncé « Risqué » quand il peut te mettre à terre.")],
     ["3.802.0", "system/forecast", _t("Pronostic de la silhouette : il ne compte plus tes compagnons (tu l'affrontes seul) et tient compte du trait qu'elle prend à ta classe. Le Chevalier est prévenu : c'est un combat très difficile.")],
     ["3.801.0", "system/forecast", _t("Pronostic : la Tanière du Basilic et deux quêtes de la Tour (« Le pied de la Tour », « Le haut de l'escalier ») ne sont plus annoncées plus dures qu'elles ne le sont.")],

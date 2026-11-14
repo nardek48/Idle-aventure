@@ -25739,6 +25739,15 @@ console.log("\n[513d] v3.794.0 — Critique plafonné à 100 % : la fiche le dit
   ok(/c\.crit > 100 \? _t\("100 % max"\)/.test(require("fs").readFileSync(require("path").join(ROOT, "js/ui/heros-screens-view.js"), "utf8")), "résumé du Héros : « 100 % max » au-delà de 100 %");
 })();
 
+console.log("\n[513n] v3.804.0 — Combat : nom de la ressource retiré quand la barre est trop étroite, espaces réels (audit de l'Alpha)");
+(function () {
+  try {
+    var css = fsRead("css/03-combat-screen.css");
+    ok(/\.cbx-res \{[^}]*container-type: inline-size/.test(css) && /@container \(max-width: 130px\) \{ \.cbx-res-lbl \{ display: none; \} \}/.test(css), "barre de ressource : conteneur, nom retiré sous 130 px");
+    ok(/\.cbx-res-txt \{ gap: \.3em; \}/.test(css) && /\.cbx-hpbar \.gauge-text small \{[^}]*margin-left: \.3em/.test(css), "espaces entre nom, valeur et maximum (ressource et PV)");
+  } catch (err) { ok(false, "[513n] exception : " + err.message); }
+})();
+
 console.log("\n[513m] v3.803.0 — Pronostic des élites blindées : coups reçus ×1,6 (C, Seb 14/11)");
 (function () {
   try {

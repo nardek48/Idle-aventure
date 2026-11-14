@@ -273,11 +273,15 @@ html body.combat-active #combat-speed-bar { display: none !important; }
 .cbx-team.c3 .cbx-card-nm { font-size: 12px; }
 /* Ressource de classe (couleur par classe). v3.458.2 (audit C2) : nom et valeur écrits dedans, sur toute
    la largeur de la carte ; la célérité a sa propre ligne dorée sous le nom. */
-.cbx-res { position: relative; height: 15px; border-radius: 6px; border: 1px solid rgba(0, 0, 0, .8); background: rgba(0, 0, 0, .65); overflow: hidden; }
+.cbx-res { position: relative; height: 15px; border-radius: 6px; border: 1px solid rgba(0, 0, 0, .8); background: rgba(0, 0, 0, .65); overflow: hidden; container-type: inline-size; }
 .cbx-card.is-hero .cbx-res { grid-column: 1 / -1; }
 .cbx-res-txt { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 1px; font-size: 12px; font-weight: 900; line-height: 1;
   color: var(--cbx-ink); text-shadow: 0 1px 2px #000, 0 0 3px #000; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .cbx-res-txt small { font-size: 12px; font-weight: 700; opacity: .8; }
+/* v3.804.0 (audit de l'Alpha) : vrai espace entre nom, valeur et maximum (une espace en bord d'élément flex disparaît) ;
+   barre trop étroite pour « Concentration 61 / 100 » : le nom se retire, comme avec 2 ou 3 compagnons. */
+.cbx-res-txt { gap: .3em; }
+@container (max-width: 130px) { .cbx-res-lbl { display: none; } }
 .cbx-cel { grid-column: 2; align-self: center; position: relative; height: 4px; border-radius: 2px; background: rgba(0, 0, 0, .55); overflow: hidden; }
 .cbx-cel u { position: absolute; inset: 0 auto 0 0; background: var(--cbx-gold); transition: width .25s ease; }
 .cbx-res i { position: absolute; inset: 0 auto 0 0; transition: width .25s ease; background: linear-gradient(90deg, rgba(15, 118, 110, 1), var(--cbx-teal)); }
@@ -292,7 +296,7 @@ html body.combat-active #combat-speed-bar { display: none !important; }
 .cbx-hpbar.is-low i.is-fill { background: linear-gradient(180deg, rgba(252, 165, 165, 1), var(--cbx-red) 45%, rgba(153, 27, 27, 1)); animation: cbxLowHp 1s ease-in-out infinite; }
 .cbx-hpbar span { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; line-height: 1;
   font-size: 12px; font-weight: 900; color: var(--cbx-ink); font-variant-numeric: tabular-nums; text-shadow: 0 1px 2px #000, 0 0 3px #000; }
-.cbx-hpbar .gauge-text small { font-size: 12px; font-weight: 700; opacity: .8; margin-left: 1px; }
+.cbx-hpbar .gauge-text small { font-size: 12px; font-weight: 700; opacity: .8; margin-left: .3em; } /* v3.804.0 : espace avant « / max » (celle du texte disparaît en bord flex) */
 .cbx-team.c1 .cbx-card-pt { width: 52px; height: 52px; }
 .cbx-team.c1 .cbx-hpbar { height: 22px; border-radius: 11px; }
 .cbx-team.c1 .cbx-hpbar span { font-size: 14px; }
