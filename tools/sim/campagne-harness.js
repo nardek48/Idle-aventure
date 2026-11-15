@@ -268,7 +268,8 @@ function relaunch() {
      la courbe à d'autres bâtiments. Le jeu n'est pas modifié. */
   if (process.env.EXP_PUITS) (function () {
     var ab = process.env.EXP_PUITS.split(",").map(Number), PS = G.ProductionPlotsSystem, o = PS.getPlotRatePerMin;
-    PS.getPlotRatePerMin = function (i, plot, bid) { var r = o.apply(this, arguments); if ((process.env.EXP_BATS || "well").split(",").indexOf(bid) < 0) return r; var L = Number(plot && plot.level) || 1; return r * (1 + (ab[0] - 1) * Math.max(0, (ab[1] - L) / (ab[1] - 1))); };
+    PS.getPlotRatePerMin = function (i, plot, bid) { var r = o.apply(this, arguments); var bats = {}; (process.env.EXP_BATS || "well").split(",").forEach(function (e) { var kv = e.split(":"); bats[kv[0]] = Number(kv[1]) || ab[0]; });
+      if (!bats[bid]) return r; var L = Number(plot && plot.level) || 1; return r * (1 + (bats[bid] - 1) * Math.max(0, (ab[1] - L) / (ab[1] - 1))); };
   })();
   /* Espion (lecture seule) : quelle porte de sortie a fermé le dernier run. */
   ["_evacuate", "_exhaust", "leaveNow", "abandon"].forEach(function (fn) {
