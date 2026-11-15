@@ -27,7 +27,7 @@ var ADVENTURE_QUESTS = {
        trop facile. PV des ennemis ORDINAIRES doublés (×0,8), le Roi Slime reste à ×0,4.
        sim/roi-marais-bench.js : 0 % d'échec toujours, mais 23-26 rounds au lieu de 16-18 et
        53-67 % des PV à l'arrivée au lieu de 70-78 %. */
-    target: { rounds: 0.91, hit: 0.0214 }, // v3.764.0 (C1) : avant enemyHpMult 0,8, bossHpMult 0,4
+    target: { rounds: 1.5, hit: 0.0321 }, // v3.811.0 (rythme, Seb 15/11) : avant 0.91 round(s), coup 0.0214 ; plus long et ×1,5
     bossTarget: { rounds: 3.18, hit: 0.0515 },
     name: "Prouver sa valeur",
     story: "Le Roi Slime géant règne sur la Lisière depuis des lunes, gardant jalousement le passage vers le cœur de la forêt. Pour qu'on te laisse poursuivre, il faudra d'abord montrer que tu n'es pas qu'un simple aventurier de passage.",
@@ -132,7 +132,7 @@ var ADVENTURE_QUESTS = {
     difficulty: "medium",
     /* v3.326.0 (plan C-2, décision Seb : plus long, plus dur). Première étape de l'acte III : calée à 40 d'entraînement
        (plafond de l'acte II), vitrine : 93-100 %, 54-95 rounds, 32-52 % de PV, 1,3-2 potions. */
-    target: { rounds: 1.02, hit: 0.0221 }, // v3.764.0 (C1) : avant enemyPowerMult 1,3, enemyHpMult 1,3
+    target: { rounds: 1.75, hit: 0.0331 }, // v3.811.0 (rythme, Seb 15/11) : avant 1.02 round(s), coup 0.0221 ; plus long et ×1,5
     bossTarget: { rounds: 7.11, hit: 0.0532 },
     progressionStage: "world_mid",
     category: "side",
@@ -157,7 +157,7 @@ var ADVENTURE_QUESTS = {
     section: "adventure",
     difficulty: "easy",
     // v3.326.0 (C-2) : entr. 60 vitrine 100 %, ~50 % de PV ; à 50, 97-100 %, 0,9-1,9 potion
-    target: { rounds: 1.17, hit: 0.0407 }, // v3.764.0 (C1) : avant enemyPowerMult 2,5, enemyHpMult 1,3
+    target: { rounds: 2.25, hit: 0.0611 }, // v3.811.0 (rythme, Seb 15/11) : avant 1.17 round(s), coup 0.0407 ; plus long et ×1,5
     progressionStage: "world_mid",
     category: "side",
     worldId: "forest",
@@ -1093,7 +1093,7 @@ var ADVENTURE_QUESTS = {
     type: "elite",
     section: "adventure",
     difficulty: "easy",
-    target: { rounds: 1.22, hit: 0.0222 }, // v3.764.0 (C1) : avant aucun multiplicateur
+    target: { rounds: 2, hit: 0.0333 }, // v3.811.0 (rythme, Seb 15/11) : avant 1.22 round(s), coup 0.0222 ; plus long et ×1,5
     progressionStage: "world_end",
     category: "side",
     worldId: "forest",
@@ -1130,7 +1130,7 @@ var ADVENTURE_QUESTS = {
     type: "elite",
     section: "adventure",
     difficulty: "medium",
-    target: { rounds: 0.9, hit: 0.0163 }, // v3.764.0 (C1) : avant aucun multiplicateur
+    target: { rounds: 2, hit: 0.0244 }, // v3.811.0 (rythme, Seb 15/11) : avant 0.9 round(s), coup 0.0163 ; plus long et ×1,5
     progressionStage: "world_end",
     category: "side",
     worldId: "forest",

@@ -5314,7 +5314,7 @@ console.log("\n[48b] v3.246.0 \u2014 Compteur de round, reprise de quête, PV de
 
   /* --- 3. PV des ennemis de « Prouver sa valeur » --- */
   var q = g.ADVENTURE_QUESTS.aq_forest_expedition;
-  ok(q.target.rounds === 0.91 && q.bossTarget.rounds === 3.18, "aq_forest_expedition : cibles de la courbe (v3.764.0, ex-×0,8 / boss ×0,4)");
+  ok(q.target.rounds === 1.5 && q.bossTarget.rounds === 3.18, "aq_forest_expedition : cibles de la courbe (v3.811.0 : 1,5 round, boss inchangé)");
   run("WorldManager.worldIndex = 0; WorldManager.adventureIndex = 0; WorldManager.enemyIndex = 0;");
   var farmNormal = run("WorldManager.generateEnemy()").maxHp;
   run("WorldManager.enemyIndex = 9;");
@@ -5327,7 +5327,7 @@ console.log("\n[48b] v3.246.0 \u2014 Compteur de round, reprise de quête, PV de
   g.WorldManager.generateEnemy = function () { return { id: "slime", hp: 100, maxHp: 100, isBoss: false }; };
   var qFixe = g.QuestEnemyManager.spawnFor(q, false).maxHp;
   g.WorldManager.generateEnemy = genSave;
-  ok(qFixe === Math.floor(100 * g.QuestEnemyManager.levelOf(q, false).hp) && qFixe < 100 && qNormal > 0 && farmNormal > 0, "ennemis ordinaires de la qu\u00eate sous le farm (100 PV -> " + qFixe + ", cible de la courbe)");
+  ok(qFixe === Math.floor(100 * g.QuestEnemyManager.levelOf(q, false).hp) && qNormal > 0 && farmNormal > 0, "ennemis ordinaires de la qu\u00eate selon leur cible (v3.811.0 : au-dessus du farm, 100 PV -> " + qFixe + ", cible de la courbe)");
   ok(farmBoss === 696, "le Roi Slime du FARM reste \u00e0 " + farmBoss + " PV (la r\u00e9duction est propre \u00e0 la qu\u00eate)");
   var other = g.ADVENTURE_QUESTS.hq_wolf_pack; // v3.326.0 : aq_forest_depths a désormais son réglage (lot C-2)
   ok(!other || (other.enemyHpMult === undefined && other.target), "v3.764.0 : plus de enemyHpMult, chaque qu\u00eate porte sa cible");
@@ -8082,7 +8082,7 @@ console.log("\n[89] v3.293.0 — Plus de farm libre : contexte de quête, runs d
   /* Les trois runs : composition identique à l'ancien farm. */
   var A = g.ADVENTURE_QUESTS;
   ok(A.aq_story_premier_sang.adventureIndex === 0 && A.aq_story_premier_sang.steps[0].target === 5, "Premier sang : 5 ennemis à la Lisière");
-  ok(A.aq_story_lisiere.steps[0].target === 9 && A.aq_story_lisiere.steps[1].bossId === "slimeking" && !!A.aq_story_lisiere.bossTarget && A.aq_story_lisiere.target.rounds === 1.02, "Franchir la Lisière : 9 + Roi Slime, cibles de la courbe (v3.764.0, ex-PV ×1,3)");
+  ok(A.aq_story_lisiere.steps[0].target === 9 && A.aq_story_lisiere.steps[1].bossId === "slimeking" && !!A.aq_story_lisiere.bossTarget && A.aq_story_lisiere.target.rounds === 1.75, "Franchir la Lisière : 9 + Roi Slime, cibles de la courbe (v3.764.0, ex-PV ×1,3)");
   ok(A.aq_story_coeur.adventureIndex === 1 && JSON.stringify(A.aq_story_coeur.enemyFilter) === JSON.stringify(g.STORY_COEUR_ACT3_POOL), "Tenir le Cœur : pool de l'Acte III");
   ["aq_story_premier_sang", "aq_story_lisiere", "aq_story_coeur"].forEach(function (id) {
     ok(Object.keys(A[id].reward || {}).length === 0 && !A[id].gatesNextWorld && A[id].type === "kill", id + " : sans récompense propre, n'ouvre aucun monde");
@@ -9577,7 +9577,7 @@ console.log("\n[121] v3.326.0 — Lot C-2 : enemyPowerMult et recalage des comba
   ok(E.dard_profondeurs.statMult.power === 3.5 && E.dard_profondeurs.statMult.endurance === 3.5, "dard des profondeurs : 3,5 / 3,5 (v3.357.0, réglé sur le héros de campagne)");
   ok(E.ronce_ardente.statMult.power === 1.4 && E.ronce_ardente.statMult.endurance === 2.8, "ronce ardente : 1,4 / 2,8");
   ok(D.filter(function (d) { return d.id === 1; })[0].rewardRank === 1.8, "Tanière du Basilic : rang de récompense 1,8 (ex-difficulté, v3.765.0)");
-  ok(A.aq_story_coeur.target.hit === 0.0407 && A.aq_forest_depths.target.hit === 0.0839, "Cœur et orc de l'étape 15 : cibles (v3.764.0, ex-×2,5 / ×6)");
+  ok(A.aq_story_coeur.target.hit === 0.0611 && A.aq_forest_depths.target.hit === 0.0839, "Cœur et orc de l'étape 15 : cibles (v3.811.0 : Cœur ×1,5, finale inchangée)");
   ok(A.aq_desert_gouffre.target.rounds === 5.91 && A.aq_desert_nuee.target.rounds === 3.65, "gouffre et nuée : cibles (v3.764.0, ex-PV ×2,4 / ×1,9)");
 })();
 
@@ -25743,6 +25743,17 @@ console.log("\n[513d] v3.794.0 — Critique plafonné à 100 % : la fiche le dit
 })();
 
 function fs0Exists(rel) { return require("fs").existsSync(require("path").join(ROOT, "..", rel)); }
+console.log("\n[513s] v3.811.0 — Forêt : cibles des quêtes plus longues et ×1,5 au coup, sauf la Meute et la finale (rythme, Seb 15/11)");
+(function () {
+  try {
+    var Q = g.ADVENTURE_QUESTS, T = { aq_forest_expedition: 1.5, aq_story_lisiere: 1.75, eq_forest_spider: 2, eq_forest_bramble: 2, aq_story_coeur: 2.25 };
+    Object.keys(T).forEach(function (id) { ok(Q[id].target.rounds === T[id], id + " : " + T[id] + " round(s)"); });
+    ok(Q.hq_wolf_pack.target.rounds === 1.07 && Q.hq_wolf_pack.target.hit === 0.0206, "la Meute inchangée");
+    ok(Q.aq_forest_depths.target.rounds === 0.98 && Q.aq_forest_depths.target.hit === 0.0839, "la finale de la Forêt inchangée");
+    ok(Q.aq_story_premier_sang.target.rounds === 1.1, "Premier sang inchangé (premier combat)");
+  } catch (err) { ok(false, "[513s] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 console.log("\n[513r] v3.810.0 — Puits ×3 et Chasse ×2 au niveau 1, bonus effacé au niveau 10 (rythme, P2, Seb 15/11)");
 (function () {
   try {
