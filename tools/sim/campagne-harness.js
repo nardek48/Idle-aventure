@@ -264,10 +264,11 @@ function relaunch() {
   flushTimers(G);
   espionOr();
   if (process.env.TRACE_EAU) espionDenree(process.env.TRACE_EAU);
-  /* EXP_PUITS="2,10" (banc) : débit du Puits ×2 au niveau 1, qui retombe à ×1 au niveau 10 ; le jeu n'est pas modifié. */
+  /* EXP_PUITS="2,10" (banc) : débit du Puits ×2 au niveau 1, qui retombe à ×1 au niveau 10 ; EXP_BATS="well,hunt" étend
+     la courbe à d'autres bâtiments. Le jeu n'est pas modifié. */
   if (process.env.EXP_PUITS) (function () {
     var ab = process.env.EXP_PUITS.split(",").map(Number), PS = G.ProductionPlotsSystem, o = PS.getPlotRatePerMin;
-    PS.getPlotRatePerMin = function (i, plot, bid) { var r = o.apply(this, arguments); if (bid !== "well") return r; var L = Number(plot && plot.level) || 1; return r * (1 + (ab[0] - 1) * Math.max(0, (ab[1] - L) / (ab[1] - 1))); };
+    PS.getPlotRatePerMin = function (i, plot, bid) { var r = o.apply(this, arguments); if ((process.env.EXP_BATS || "well").split(",").indexOf(bid) < 0) return r; var L = Number(plot && plot.level) || 1; return r * (1 + (ab[0] - 1) * Math.max(0, (ab[1] - L) / (ab[1] - 1))); };
   })();
   /* Espion (lecture seule) : quelle porte de sortie a fermé le dernier run. */
   ["_evacuate", "_exhaust", "leaveNow", "abandon"].forEach(function (fn) {
