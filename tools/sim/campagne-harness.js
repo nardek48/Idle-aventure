@@ -243,6 +243,19 @@ function mesureCrit() {
   })(G.EquipmentManager);
 }
 
+/* TRACE_EAU=eau : qui dépense la denrée (fonction du jeu appelante, chapitre), lecture seule. */
+function espionDenree(res) {
+  var W = G.WarehouseManager, orig = W.removeResource;
+  W.removeResource = function (k, n) {
+    if (k === res && n > 0) {
+      var pile = new Error().stack.split("\n").slice(2, 6).map(function (l) { return (l.match(/at (\S+)/) || [])[1]; }).filter(function (f) { return f && !/^(Array|Object\.<anon)/.test(f); });
+      var qui = pile.filter(function (f) { return !/Warehouse/.test(f); })[0] || "?", ch = String(CURRENT_STEP || "").split("_")[0];
+      var D = STATS.denree = STATS.denree || {}, c = ch + " · " + qui; D[c] = (D[c] || 0) + Number(n);
+    }
+    return orig.apply(this, arguments);
+  };
+}
+
 function relaunch() {
   G = launch(); compterAnnonces(); mesureCrit();
   if (RECHARGE_H) G.SceneRunManager.PETITE_AVENTURE_RECHARGE_MS = RECHARGE_H * 3600e3;
@@ -250,6 +263,7 @@ function relaunch() {
   G.titleScreenConfirmLoad(Number(G.HeroSlotManager.getActiveSlot()));
   flushTimers(G);
   espionOr();
+  if (process.env.TRACE_EAU) espionDenree(process.env.TRACE_EAU);
   /* Espion (lecture seule) : quelle porte de sortie a fermé le dernier run. */
   ["_evacuate", "_exhaust", "leaveNow", "abandon"].forEach(function (fn) {
     var orig = G.SceneRunManager[fn];
@@ -2464,6 +2478,7 @@ if (COMBATS) {
   if (STATS.objets) console.log("Objets de combat emportés (v3.738.0) : " + Object.keys(STATS.objets).map(function (k) { return k + " " + STATS.objets[k]; }).join(" · "));
   if (STATS.objetsApo) console.log("Objets de combat (v3.739.0) : recettes apprises " + (Object.keys(STATS.objetsApo.appris).map(function (k) { return k + " (" + STATS.objetsApo.appris[k] + ")"; }).join(" · ") || "aucune") + " · fabriqués " + (Object.keys(STATS.objetsApo.fabriques).map(function (k) { return k + " " + STATS.objetsApo.fabriques[k]; }).join(" · ") || "aucun"));
   console.log("Morts : " + STATS.deaths + " · potions bues : " + STATS.potions + " à la main, " + (STATS.potionsBues || 0) + " en tout · or en potions : " + (STATS.potionGold || 0) + " · temps de combat : " + (STATS.combatMs / 3600e3).toFixed(1) + " h · temps de soin au camp : " + (STATS.healMs / 3600e3).toFixed(1) + " h");
+  if (STATS.denree) Object.keys(STATS.denree).sort().forEach(function (k) { console.log("Dépense de " + process.env.TRACE_EAU + " : " + k + " · " + Math.round(STATS.denree[k])); });
   if (STATS.prodBrut) console.log("Production strictement nécessaire : " + (STATS.prodBrut / 60).toFixed(2) + " h");
   if (STATS.prodLog) Object.keys(STATS.prodLog).forEach(function (k) { console.log("Production : " + k + " · " + (STATS.prodLog[k] / 60).toFixed(2) + " h"); });
   if (STATS.healLog) Object.keys(STATS.healLog).forEach(function (k) { var h = STATS.healLog[k]; console.log("Soin : " + k + " · " + h.n + " fois · " + (h.min / 60).toFixed(2) + " h · PV moyens " + Math.round(100 * h.pv / h.n) + " %"); });
