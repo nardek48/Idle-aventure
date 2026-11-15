@@ -31,9 +31,10 @@ function goHealFromForecast() {
 }
 window.goHealFromForecast = goHealFromForecast;
 
-/* v3.734.0 (Seb 07/11) : accepter une étape d'Histoire de combat sous la moitié des PV rappelle de se soigner.
-   Une fois par acceptation, jamais pendant une activité en cours ; rien de bloquant (l'étape reste acceptée). */
-var STORY_LOW_HP_PCT = 0.50;
+/* v3.734.0 (Seb 07/11) : accepter une étape d'Histoire de combat sous ce seuil de PV rappelle de se soigner.
+   Une fois par acceptation, jamais pendant une activité en cours ; rien de bloquant (l'étape reste acceptée).
+   v3.808.0 (audit de l'Alpha, option A de Seb) : 50 % → 70 %, le seuil des autres alertes de PV (Meute à 66 % sans potion : 3 Mages sur 6 tombent). */
+var STORY_LOW_HP_PCT = 0.70;
 window.STORY_LOW_HP_PCT = STORY_LOW_HP_PCT;
 
 /* Étape de combat : liée à une quête d'aventure, une Petite Aventure ou un donjon, ou comptant des victoires. */

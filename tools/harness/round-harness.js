@@ -25002,8 +25002,10 @@ console.log("\n[495] v3.734.0 — Rappels d'entrée : Marque exigée par l'étap
     ok(g.acceptStoryStepWithCheck("forest") === true && conf && conf.text === "Tes PV sont bas : repose-toi au feu ou prends un repas avant de partir." && conf.labels.ok === "Aller au feu", "forest_02 acceptée à 27 % : rappel, bouton « Aller au feu »");
     ok(conf.ok === g.goHealFromForecast, "le bouton mène au feu du Campement (goHealFromForecast)");
     conf = null; ok(g.maybeStoryLowHpReminder("forest") === true, "rappel déclenché par l'acceptation seulement (appel direct possible)");
-    poser("forest_02", false); g.game.heroHp = 220; conf = null; g.acceptStoryStepWithCheck("forest");
-    ok(!conf, "forest_02 acceptée à 55 % : pas de rappel");
+    poser("forest_02", false); g.game.heroHp = 264; conf = null; g.acceptStoryStepWithCheck("forest");
+    ok(conf && g.STORY_LOW_HP_PCT === 0.70, "forest_02 acceptée à 66 % : rappel (seuil 70 %, v3.808.0)");
+    poser("forest_02", false); g.game.heroHp = 300; conf = null; g.acceptStoryStepWithCheck("forest");
+    ok(!conf, "forest_02 acceptée à 75 % : pas de rappel");
     poser("forest_04", false); g.game.heroHp = 110; conf = null; g.acceptStoryStepWithCheck("forest");
     ok(!conf && !g.storyStepIsCombat(g.STORY_QUESTS.forest.steps.filter(function (s2) { return s2.id === "forest_04"; })[0]), "forest_04 (boutique, sans combat) : pas de rappel");
     poser("forest_13", false); ok(g.storyLowHpReminderNeeded("forest") === true, "forest_13 (donjon) comptée comme étape de combat");

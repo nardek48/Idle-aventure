@@ -2596,6 +2596,7 @@ I18n.register("en", {
   "Petites Aventures : les aides arrivent au moment où elles servent. Une bulle pour le premier sentier coupé, deux pour le premier piège, et une courte fenêtre pour chaque petite quête (passage secret, verrou, cache, fins) au lieu d'une seule de cinq lignes.": "Little Adventures: help now arrives when it's useful. One bubble for the first cut path, two for the first trap, and a short window for each little quest (secret passage, lock, cache, endings) instead of a single five-line one.",
   "L'écran de la nuit attend que tu aies fermé le trophée ou la fin de quête, au lieu de s'afficher par-dessus.": "The nightfall screen now waits until you've closed the trophy or the quest-complete window, instead of appearing on top of them.",
   "Les bulles du sac et du fil rouge s'effacent pendant que tu fais défiler un écran, pour laisser lire le bord des cartes. Elles reviennent dès que tu t'arrêtes, et restent touchables.": "The bag and red-thread bubbles fade while you scroll a screen, so you can read the edge of the cards. They come back as soon as you stop, and stay tappable.",
+  "Le rappel « PV bas » s'affiche dès 70 % des PV (au lieu de 50 %) quand tu acceptes une étape de combat : un repas au feu avant de partir évite de tomber en chemin.": "The “Low HP” reminder now shows from 70% HP (instead of 50%) when you accept a combat step: a meal at the fire before you leave keeps you from falling on the way.",
   "Contrats du jour": "Today's contracts",
   "Renouvelés dans {d}": "Renewed in {d}",
   "Livrer": "Deliver",
