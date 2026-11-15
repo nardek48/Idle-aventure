@@ -638,9 +638,12 @@ function healUp(seuil) {
   if ((g.game.heroHp || 0) >= (g.game.heroMaxHp || 1) * (seuil || SEUIL_SOIN)) return;
   g.game.activeTab = "campement";
   g.CampManager.applyRegen(false);
-  if (RATIONS_CAMP) mangerAuCamp();
+  var pv0 = (g.game.heroHp || 0) / (g.game.heroMaxHp || 1), mange = RATIONS_CAMP ? mangerAuCamp() : "sans repas";
   var min = g.CampManager.getMinutesToFull();
   if (min > 0) { CLOCK.offset += min * 60000 + 1000; STATS.healMs += min * 60000; }
+  // trace du soin : pourquoi le robot attend le feu (repas pris, PV trop hauts, repas trop cher…)
+  var HL = STATS.healLog = STATS.healLog || {}, cle = (typeof CURRENT_STEP !== "undefined" ? CURRENT_STEP : "?") + " · " + (mange || "repas pris") + (seuil === 1 ? " · plein exigé" : "");
+  HL[cle] = HL[cle] || { n: 0, min: 0, pv: 0 }; HL[cle].n++; HL[cle].min += min; HL[cle].pv += pv0;
   g.CampManager.applyRegen(false);
   if (g.ProductionManager) g.ProductionManager.catchUpOffline();
   if (g.VillageBuildingManager) g.VillageBuildingManager.tick();
@@ -652,12 +655,14 @@ function healUp(seuil) {
 function mangerAuCamp() {
   var g = G, CM = g.CampManager, max = g.game.heroMaxHp || 1;
   var R = STATS.rations = STATS.rations || { repas: 0, payes: {}, minutesEvitees: 0 };
-  if (1 - (g.game.heroHp || 0) / max <= 0.20 || !CM.canEatMeal()) return;
+  if (1 - (g.game.heroHp || 0) / max <= 0.20) return "moins de 20 % manquants";
+  if (!CM.canEatMeal()) return "repas impayable (manque " + CM.mealMissing().map(function (k) { return k + " " + Math.floor(g.WarehouseManager.getAmount(k)) + "/" + CM.mealCost()[k]; }).join(", ") + ")";
   var avant = g.game.heroHp || 0, cout = CM.mealCost();
-  if (!CM.eatMeal()) return;
+  if (!CM.eatMeal()) return "repas refusé";
   R.repas++;
   Object.keys(cout).forEach(function (k) { R.payes[k] = (R.payes[k] || 0) + cout[k]; });
   R.minutesEvitees += ((g.game.heroHp || 0) - avant) / (max * CM.getRegenPctPerMin());
+  return "";
 }
 
 /* Entre deux étapes, ce que fait un joueur : meilleur objet porté, points de talent, entraînement,
@@ -942,6 +947,9 @@ function obtainIn(res, qty, depth) {
     for (var h = 0, sansProgres = 0, best = have(); h < 432 && have() < qty; h++) {
       var parMin = Number(g.ProductionManager.getRatePerMin(bid) || 0);
       var minutes = parMin > 0 ? Math.ceil((qty - have()) / parMin) : 60;
+      var PL = STATS.prodLog = STATS.prodLog || {}, cp = CURRENT_STEP + " · " + res + " (" + qty + ", débit " + parMin.toFixed(1) + "/min)" + (process.env.TRACE_PROD ? " ← " + (new Error().stack.split("\n").slice(2, 10).map(function (l) { return (l.match(/at (\S+)/) || [])[1]; }).join(" < ")) : "");
+      PL[cp] = (PL[cp] || 0) + Math.max(10, Math.min(60, minutes)); // trace : qui fait attendre, où
+      STATS.prodBrut = (STATS.prodBrut || 0) + Math.min(60, minutes); // temps strictement nécessaire (sans le palier de 10 min)
       wait(Math.max(10, Math.min(60, minutes)) * 60e3, "production"); harvest();
       if (have() > best) { best = have(); sansProgres = 0; } else sansProgres++;
       var utile = Math.min(g.GrandOuvrage && g.GrandOuvrage.autoKeep ? g.GrandOuvrage.autoKeep(res) : Infinity, g.WarehouseManager.getCap(res));
@@ -2456,6 +2464,9 @@ if (COMBATS) {
   if (STATS.objets) console.log("Objets de combat emportés (v3.738.0) : " + Object.keys(STATS.objets).map(function (k) { return k + " " + STATS.objets[k]; }).join(" · "));
   if (STATS.objetsApo) console.log("Objets de combat (v3.739.0) : recettes apprises " + (Object.keys(STATS.objetsApo.appris).map(function (k) { return k + " (" + STATS.objetsApo.appris[k] + ")"; }).join(" · ") || "aucune") + " · fabriqués " + (Object.keys(STATS.objetsApo.fabriques).map(function (k) { return k + " " + STATS.objetsApo.fabriques[k]; }).join(" · ") || "aucun"));
   console.log("Morts : " + STATS.deaths + " · potions bues : " + STATS.potions + " à la main, " + (STATS.potionsBues || 0) + " en tout · or en potions : " + (STATS.potionGold || 0) + " · temps de combat : " + (STATS.combatMs / 3600e3).toFixed(1) + " h · temps de soin au camp : " + (STATS.healMs / 3600e3).toFixed(1) + " h");
+  if (STATS.prodBrut) console.log("Production strictement nécessaire : " + (STATS.prodBrut / 60).toFixed(2) + " h");
+  if (STATS.prodLog) Object.keys(STATS.prodLog).forEach(function (k) { console.log("Production : " + k + " · " + (STATS.prodLog[k] / 60).toFixed(2) + " h"); });
+  if (STATS.healLog) Object.keys(STATS.healLog).forEach(function (k) { var h = STATS.healLog[k]; console.log("Soin : " + k + " · " + h.n + " fois · " + (h.min / 60).toFixed(2) + " h · PV moyens " + Math.round(100 * h.pv / h.n) + " %"); });
   if (STATS.rations) console.log("Repas au camp : " + STATS.rations.repas + " · payé " + JSON.stringify(STATS.rations.payes) + " · attente évitée " + (STATS.rations.minutesEvitees / 60).toFixed(1) + " h");
   if (VERBOSE) STATS.fights.slice(-12).forEach(function (f) { console.log("    " + f.step + " · " + f.kind + " " + f.name + " : " + f.rounds + " rounds, PV " + Math.round(f.hp0 * 100) + "→" + Math.round((f.hp1 || 0) * 100) + " %" + (f.died ? " †" : "") + (f.potions ? " (" + f.potions + " potion)" : "")); });
 }
