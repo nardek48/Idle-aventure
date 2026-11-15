@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.812.0", "scene/node_clear_spring", _t("Forêt : La source tarie, Le sentier obstrué et La veine instable ont chacune leur forme et leur récit. Sous le tronc du sentier, quelque chose a fait son nid.")],
     ["3.811.0", "quests/mission_combat", _t("Forêt : les ennemis des quêtes tiennent plus longtemps et frappent plus fort (Prouver sa valeur, Franchir la Lisière, Tenir le Cœur, Les yeux blancs, Ce qui a poussé sur la cendre). La Meute Affamée et Le Cœur de la Forêt ne changent pas.")],
     ["3.810.0", "resources/water_icon", _t("Le Puits et la Chasse produisent plus au début (eau ×3 et viande ×2 au niveau 1, puis le bonus s'efface jusqu'au niveau 10) : le repas au feu de camp manque moins souvent d'eau ou de viande.")],
     ["3.809.0", "system/forecast", _t("Pronostic du Rôdeur : son Tir perforant, qui touche aussi un second ennemi, compte maintenant dans les combats de groupe.")],

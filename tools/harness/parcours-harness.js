@@ -945,7 +945,7 @@ async function P13(browser, base) {
   await dismissTutorials(page);
   var bois0 = await page.evaluate(function () { return WarehouseManager.getAmount("bois"); });
   await page.evaluate(function () { var t = 20260929; Math.random = function () { t = (t + 0x6D2B79F5) | 0; var x = Math.imul(t ^ (t >>> 15), 1 | t); x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x; return ((x ^ (x >>> 14)) >>> 0) / 4294967296; }; Pa2Run.rand = function () { return 0.999; }; });
-  await page.evaluate(function () { switchTab("scene"); openSceneQuestEntry("sentier_obstrue"); });
+  await page.evaluate(function () { switchTab("scene"); openSceneQuestEntry("bosquet_silencieux"); }); // v3.812.0 : le Sentier a trois étapes ; le Bosquet garde deux obstacles
   await page.waitForTimeout(600);
   ok(await visible(page, "#pa2-map img.pa2-map-img") && await visible(page, "#pa2-hud"), "parcours : tracé sur la carte de la Forêt et HUD");
   ok(await page.locator("#pa2-map .pa2-node").count() === 3, "trois nœuds : le départ et deux étapes");
@@ -963,8 +963,8 @@ async function P13(browser, base) {
     if (await cont.count() && await cont.first().isVisible()) { await page.waitForTimeout(600); await cont.first().click({ force: true }); }
     await page.waitForTimeout(600);
   }
-  var end = await page.evaluate(function () { var r = game.sceneRun; return { st: r && r.status, how: r && r.end && r.end.how, flag: game.explorationProgression.blockedPathCompleted, txt: document.body.innerText }; });
-  ok(end.st === "completed" && end.how === "parcours" && end.flag === true, "arrivée : parcours terminé, Clairière débloquée");
+  var end = await page.evaluate(function () { var r = game.sceneRun; return { st: r && r.status, how: r && r.end && r.end.how, flag: game.explorationProgression.silentGroveDiscoveryCompleted, txt: document.body.innerText }; });
+  ok(end.st === "completed" && end.how === "parcours" && end.flag === true, "arrivée : parcours terminé, Scierie débloquée");
   ok(/Parcours terminé/i.test(end.txt) && !/Perdu en route/i.test(end.txt), "bilan affiché, sans perte");
   await shot(page, "3_bilan");
   await tap(page, "button[onclick=\"pa2Leave()\"]");

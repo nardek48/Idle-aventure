@@ -6,7 +6,7 @@
    à sable expedition_faille sont retirés avec les Petites Aventures v1. Les anneaux de la carte
    vivante sont décrits par PA2_RINGS (data/pa2-content.js). */
 
-var FOE_MULT_SENTIER = 1; // v3.812.0 : force de l'araignée du Sentier obstrué (banc : 10 à 20 % des PV perdus)
+var FOE_MULT_SENTIER = 1.6; // v3.812.0 : force de l'araignée du Sentier obstrué (banc : 10 à 20 % des PV perdus)
 
 var SCENE_TEMPLATES = {
   /* ================= Quêtes de déblocage (v3.122.0 ; parcours v2 depuis v3.389.0) =================

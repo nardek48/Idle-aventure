@@ -2001,13 +2001,14 @@ run("game.sceneRun = { id: 'test2' }; fullResetState();");
 ok(g.game.sceneRun === null, "fullResetState() remet sceneRun à null");
 
 /* ==================== Lot S2a : quêtes de déblocage migrées vers le scene-engine ==================== */
-console.log("\n[S2a] sentier_obstrue — 2 paliers, déblocage Clairière oubliée (v3.785.0 : sans coût de ration)");
-run("fullResetState(); game.playerName='Test'; game.heroId='knight'; EquipmentManager.recalcStats();");
+console.log("\n[S2a] sentier_obstrue — 3 paliers dont un combat (v3.812.0), déblocage Clairière oubliée (v3.785.0 : sans coût de ration)");
+// v3.812.0 : héros au niveau de l'étape forest_08 (robot : niveau 5), l'araignée couche un héros neuf
+run("fullResetState(); game.playerName='Test'; game.heroId='knight'; game.heroLevel = 5; EquipmentManager.recalcStats(); game.heroHp = game.heroMaxHp;");
 var s2aStart = g.SceneRunManager.startRun("sentier_obstrue");
 ok(s2aStart.ok === true, "démarré sans ration (v3.785.0 : expéditions gratuites)");
 ok(g.game.sceneRun.status === "pa2-map" && g.game.sceneRun.parcours, "rien à préparer -> parcours lancé directement sur son tracé (v3.389.0)");
-ok(g.game.sceneRun.map.rows.dest === 1 && Object.keys(g.game.sceneRun.nodes).length === 3, "tracé de 2 étapes (plus le départ)");
-var s2aGuard = 0; playParcours(true); g.SceneRunManager.clearRun(); // v3.389.0 : parcours v2
+ok(g.game.sceneRun.map.rows.dest === 2 && Object.keys(g.game.sceneRun.nodes).length === 4, "tracé de 3 étapes (plus le départ), v3.812.0 : combat sous le tronc");
+var s2aGuard = 0; var s2aRun = playParcours(true); if (!g.game.explorationProgression.blockedPathCompleted) console.log("    [S2a] arrêt : " + s2aRun.status + " " + JSON.stringify(s2aRun.end) + " " + JSON.stringify(s2aRun.lastResult && s2aRun.lastResult.kind) + " sur " + s2aRun.at + " (" + (s2aRun.nodes[s2aRun.at] || {}).type + "), PV " + g.game.heroHp); g.SceneRunManager.clearRun(); // v3.389.0 : parcours v2
 ok(s2aGuard < 20, "run résolu sans dépasser le garde-fou");
 ok(g.game.explorationProgression.forgottenClearingUnlocked === true, "forgottenClearingUnlocked posé au succès (chambre finale résolue)");
 ok(g.game.explorationProgression.blockedPathCompleted === true, "completionFlag posé");
@@ -12403,7 +12404,7 @@ console.log("\n[165] v3.389.0 — Chantier P, lot P-1 : les quêtes de déblocag
     g.WarehouseManager.addResource("petite_ration", 5);
   }
   try {
-    ok(Q.every(function (id) { var t = T[id]; return t.mode === "parcours" && t.parcours.steps.length === 2 && P.isTemplate(t) && !P.isPaTemplate(t) && !t.depthMax && !t.loadoutSlots; }), "les six quêtes : canevas « parcours » de deux étapes, sans champ du moteur v1");
+    ok(Q.every(function (id) { var t = T[id]; return t.mode === "parcours" && t.parcours.steps.length === ({ sentier_obstrue: 3, veine_instable: 3 }[id] || 2) && P.isTemplate(t) && !P.isPaTemplate(t) && !t.depthMax && !t.loadoutSlots; }), "les six quêtes : canevas « parcours » de deux étapes (trois au Sentier et à la Veine, v3.812.0), sans champ du moteur v1");
     ok(Q.every(function (id) { return T[id].pools.obstacle.every(function (gid) { return !!g.PA2_OBSTACLE_LINES[gid] && !!g.SCENE_NODES.obstacles[gid]; }); }), "chaque obstacle de quête a sa phrase d'ambiance");
     Q.forEach(function (id) {
       fresh(id);
@@ -25743,6 +25744,20 @@ console.log("\n[513d] v3.794.0 — Critique plafonné à 100 % : la fiche le dit
 })();
 
 function fs0Exists(rel) { return require("fs").existsSync(require("path").join(ROOT, "..", rel)); }
+console.log("\n[513t] v3.812.0 — Forêt 7 à 9 : trois expéditions de formes différentes, textes validés par Seb (rythme, A)");
+(function () {
+  try {
+    var T = g.SCENE_TEMPLATES, ty = function (id) { return T[id].parcours.steps.map(function (s) { return s.type; }).join(","); };
+    ok(ty("source_tarie") === "obstacle,source" && T.source_tarie.parcours.steps[1].fullBreath === true, "Source tarie : un obstacle puis la source, Souffle rendu");
+    ok(ty("sentier_obstrue") === "obstacle,combat,obstacle" && T.sentier_obstrue.parcours.steps[1].foe === "spider" && !!g.ENEMY_DB.spider, "Sentier obstrué : combat d'araignée entre deux obstacles");
+    ok(ty("veine_instable") === "obstacle,obstacle,obstacle", "Veine instable : trois obstacles");
+    ["source_tarie", "sentier_obstrue", "veine_instable"].forEach(function (id) {
+      var pc = T[id].parcours; ok(pc.points.length === pc.steps.length && pc.steps.every(function (s) { return s.type !== "obstacle" || !!g.SCENE_NODES.obstacles[s.gabaritId]; }), id + " : un point de piste et un gabarit connu par étape");
+    });
+    ok(ty("bosquet_silencieux") === "obstacle,obstacle", "les quêtes de déblocage gardent leurs deux obstacles");
+  } catch (err) { ok(false, "[513t] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 console.log("\n[513s] v3.811.0 — Forêt : cibles des quêtes plus longues et ×1,5 au coup, sauf la Meute et la finale (rythme, Seb 15/11)");
 (function () {
   try {
