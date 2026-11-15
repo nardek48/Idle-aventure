@@ -25739,6 +25739,18 @@ console.log("\n[513d] v3.794.0 — Critique plafonné à 100 % : la fiche le dit
   ok(/c\.crit > 100 \? _t\("100 % max"\)/.test(require("fs").readFileSync(require("path").join(ROOT, "js/ui/heros-screens-view.js"), "utf8")), "résumé du Héros : « 100 % max » au-delà de 100 %");
 })();
 
+function fs0Exists(rel) { return require("fs").existsSync(require("path").join(ROOT, "..", rel)); }
+console.log("\n[513p] v3.807.0 — Bulles du sac et du fil rouge à 25 % pendant le défilement, retour en 0,4 s (atelier bulles-defilement, B1)");
+(function () {
+  try {
+    var css = fsRead("css/02-layout.css"), js = fsRead("js/ui/hud-dock-view.js");
+    ok(/\.hud-dock\.is-scrolling \{ opacity: \.25;/.test(css), "opacité 25 % pendant le défilement");
+    ok(g.HUD_DOCK_SCROLL_BACK_MS === 400 && /addEventListener\("scroll", hudDockOnScroll, \{ capture: true, passive: true \}\)/.test(js), "écouté en capture sur toutes les zones qui défilent, retour après 0,4 s");
+    ok(!/is-scrolling[^}]*pointer-events/.test(css), "les bulles restent touchables pendant l'effacement");
+    ok(fs0Exists("atelier/bulles-defilement.html"), "atelier conservé (atelier/bulles-defilement.html)");
+  } catch (err) { ok(false, "[513p] exception : " + err.message); }
+})();
+
 console.log("\n[513o] v3.806.0 — La nuit attend que le trophée ou la fin de quête soient fermés (audit de l'Alpha)");
 (function () {
   var other = g.tutorialOtherWindowOpen, st = g.setTimeout;

@@ -176,6 +176,9 @@ html:not(.wide-mode) #panel-container .kfp-scrollzone > .kfb:first-child { margi
   gap: 10px;
   pointer-events: none;
 }
+/* v3.807.0 (atelier bulles-defilement, B1) : à 25 % pendant le défilement (ui/hud-dock-view.js), retour en douceur */
+.hud-dock { transition: opacity .25s ease; }
+.hud-dock.is-scrolling { opacity: .25; transition-duration: .15s; }
 body.combat-active .hud-dock,
 body.scene-active .hud-dock,
 body.living-map-active .hud-dock { display: none; }

@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.807.0", "menu_icons/equip_menu", _t("Les bulles du sac et du fil rouge s'effacent pendant que tu fais défiler un écran, pour laisser lire le bord des cartes. Elles reviennent dès que tu t'arrêtes, et restent touchables.")],
     ["3.806.0", "camp/rest", _t("L'écran de la nuit attend que tu aies fermé le trophée ou la fin de quête, au lieu de s'afficher par-dessus.")],
     ["3.805.0", "scene/pa2_besace", _t("Petites Aventures : les aides arrivent au moment où elles servent. Une bulle pour le premier sentier coupé, deux pour le premier piège, et une courte fenêtre pour chaque petite quête (passage secret, verrou, cache, fins) au lieu d'une seule de cinq lignes.")],
     ["3.804.0", "quests/mission_combat", _t("Combat : la barre de ressource n'est plus rognée (« ncentration… ») sur les petits écrans et en mode Grimoire ; le nom s'efface quand la place manque, et les chiffres retrouvent leurs espaces.")],

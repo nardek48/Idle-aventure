@@ -141,5 +141,20 @@ function liftHudDock() {
 }
 window.liftHudDock = liftHudDock;
 if (typeof window.addEventListener === "function") window.addEventListener("resize", function () { hudDockLift = null; liftHudDock(); });
+/* v3.807.0 (atelier bulles-defilement, Seb 15/11, B1) : pendant qu'un écran défile, les bulles passent à 25 %, pour
+   laisser lire le bord des cartes ; elles reviennent 0,4 s après l'arrêt. Toujours touchables. */
+var HUD_DOCK_SCROLL_BACK_MS = 400;
+var hudDockScrollTimer = null;
+function hudDockOnScroll() {
+  var root = typeof document !== "undefined" && document.getElementById ? document.getElementById("hud-dock") : null;
+  if (!root || !root.classList) return;
+  root.classList.add("is-scrolling");
+  clearTimeout(hudDockScrollTimer);
+  hudDockScrollTimer = setTimeout(function () { root.classList.remove("is-scrolling"); }, HUD_DOCK_SCROLL_BACK_MS);
+}
+// le défilement ne remonte pas : écouté en capture, il couvre chaque zone qui défile (Village, Quêtes, Héros, Camp)
+if (typeof document !== "undefined" && typeof document.addEventListener === "function") document.addEventListener("scroll", hudDockOnScroll, { capture: true, passive: true });
+window.hudDockOnScroll = hudDockOnScroll;
+window.HUD_DOCK_SCROLL_BACK_MS = HUD_DOCK_SCROLL_BACK_MS;
 window.hudDockOrder = hudDockOrder;
 window.hudDockItems = hudDockItems;
