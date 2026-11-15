@@ -264,6 +264,7 @@ function relaunch() {
   flushTimers(G);
   espionOr();
   if (process.env.TRACE_EAU) espionDenree(process.env.TRACE_EAU);
+  if (process.env.SANS_BOOST) Object.keys(G.PRODUCTION_PLOTS_BUILDINGS).forEach(function (b) { G.PRODUCTION_PLOTS_BUILDINGS[b].earlyBoost = 1; }); // banc : jeu d'avant v3.810.0
   /* EXP_PUITS="2,10" (banc) : débit du Puits ×2 au niveau 1, qui retombe à ×1 au niveau 10 ; EXP_BATS="well,hunt" étend
      la courbe à d'autres bâtiments. Le jeu n'est pas modifié. */
   if (process.env.EXP_PUITS) (function () {
@@ -2523,6 +2524,7 @@ if (COMBATS) {
 STATS.economie = { orGagne: G.game.totalGoldEarned, or: G.game.gold, aetherTotal: G.game.totalAetherEarned, attenteDonjonH: STATS.attenteDonjonH || 0 };
 if (COMBATS) console.log("Économie : " + JSON.stringify(STATS.economie));
 if (ZONES) console.log("Zones défrichées ou montées : " + (STATS.zones || 0));
+if (ZONES && G.ProductionPlotsSystem) console.log("Niveaux des parcelles : " + G.ProductionPlotsSystem.getManagedBuildingIds().map(function (b) { return b + " " + G.ProductionPlotsSystem.getPlots(b).slice(0, 3).map(function (p) { return p.state === "open" ? p.level : "-"; }).join("/"); }).join(" · "));
 if (STATS.patrouilleRefus) console.log("Patrouilles refusées : " + JSON.stringify(STATS.patrouilleRefus));
 if (RELEVE) {
   var dirR = path.join(__dirname, "releves"); fs.mkdirSync(dirR, { recursive: true });
