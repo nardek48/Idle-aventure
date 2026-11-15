@@ -267,25 +267,48 @@ var CombatForecast = {
     } else {
       arrive = alive.map(function (e) { return self.getEngageRounds(e); });
     }
-    if (Number(sleepers) > 0 && alive.length > 1) return this.getSleepingGroupFight(alive, arrive, heroDmg, Number(sleepers));
-    return this.simGroupFight(alive, arrive, heroDmg, null, 0);
+    this._spill = alive.length > 1 ? this.getForecastHeroDamage() * this.getTraverseShare() : 0; // C1 (Seb 15/11) : Tir perforant
+    try {
+      if (Number(sleepers) > 0 && alive.length > 1) return this.getSleepingGroupFight(alive, arrive, heroDmg, Number(sleepers));
+      return this.simGroupFight(alive, arrive, heroDmg, null, 0);
+    } finally { this._spill = 0; }
+  },
+
+  /* C1 (Seb 15/11, option C du pronostic) : part des dégâts du kit portée par une technique qui traverse (Tir perforant,
+     class-combat-system.js applyTraverse : le premier autre ennemi debout reçoit le même coup). Même moyenne que
+     getKitDamageMultiplier (attaque de base comprise) ; 0 sans technique qui traverse (Chevalier, Mage). */
+  getTraverseShare: function () {
+    if (typeof getClassByHeroId !== "function" || typeof getClassSkills !== "function") return 0;
+    var cls = getClassByHeroId(game.heroId), kit = cls ? getClassSkills(cls.id) : null;
+    if (!kit || !kit.actions) return 0;
+    var sum = 1, trav = 0;
+    ["skill1", "skill2", "skill3"].forEach(function (slot) {
+      var a = kit.actions[slot];
+      if (!a || a.type !== "damage" || !(Number(a.damageMultiplier) > 0)) return;
+      sum += Number(a.damageMultiplier);
+      if (a.traverse) trav += Number(a.damageMultiplier);
+    });
+    return trav / sum;
   },
 
   /* Le groupe tombe dans l'ordre des PV, chacun frappe de son arrivée à sa chute. B (Seb 14/11) : `asleep` (indices) ne
      frappe ni n'est visé avant le réveil `wake` ; si les éveillés tombent avant, le combat s'arrête là. */
   simGroupFight: function (alive, arrive, heroDmg, asleep, wake) {
     var cost = 0, elapsed = 0, self = this;
-    var left = alive.map(function (e, i) { var dort = !!(asleep && asleep.indexOf(i) >= 0); return { e: e, at: dort ? Math.max(arrive[i], wake) : arrive[i], dort: dort }; });
+    var left = alive.map(function (e, i) { var dort = !!(asleep && asleep.indexOf(i) >= 0); return { e: e, at: dort ? Math.max(arrive[i], wake) : arrive[i], dort: dort, hp: Number(e.maxHp || 0) }; });
     while (left.length) {
       var k = -1;
       for (var i = 0; i < left.length; i++) if (!left[i].dort || elapsed >= wake) { k = i; break; }
       if (k < 0) { // plus d'éveillé debout : les dormeurs restent couchés, sauf s'ils se lèvent avant la fin
         if (left.every(function (x) { return x.dort; })) break;
       }
-      var rounds = Math.ceil(Number(left[k].e.maxHp || 0) / heroDmg);
+      var rounds = Math.ceil(Math.max(0, left[k].hp) / heroDmg);
       for (var j = 0; j < left.length; j++) cost += Math.max(0, Math.min(rounds, elapsed + rounds - left[j].at)) * self.getEnemyDamagePerRound(left[j].e);
+      // C1 : le Tir perforant touche aussi le premier autre ennemi visable, pendant ces rounds
+      if (self._spill > 0) for (var s2 = 0; s2 < left.length; s2++) if (s2 !== k && (!left[s2].dort || elapsed + rounds >= wake)) { left[s2].hp -= self._spill * rounds; break; }
       elapsed += rounds;
       left.splice(k, 1);
+      left = left.filter(function (x) { return x.hp > 0 || x.dort; }); // tombé sous le Tir perforant
       if (!left.some(function (x) { return !x.dort; }) && elapsed < wake) break; // éveillés tombés avant tout réveil
     }
     return { cost: Math.floor(cost), rounds: elapsed };
