@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.810.0", "resources/water_icon", _t("Le Puits et la Chasse produisent plus au début (eau ×3 et viande ×2 au niveau 1, puis le bonus s'efface jusqu'au niveau 10) : le repas au feu de camp manque moins souvent d'eau ou de viande.")],
     ["3.809.0", "system/forecast", _t("Pronostic du Rôdeur : son Tir perforant, qui touche aussi un second ennemi, compte maintenant dans les combats de groupe.")],
     ["3.808.0", "combat_stats/stat_health", _t("Le rappel « PV bas » s'affiche dès 70 % des PV (au lieu de 50 %) quand tu acceptes une étape de combat : un repas au feu avant de partir évite de tomber en chemin.")],
     ["3.807.0", "menu_icons/equip_menu", _t("Les bulles du sac et du fil rouge s'effacent pendant que tu fais défiler un écran, pour laisser lire le bord des cartes. Elles reviennent dès que tu t'arrêtes, et restent touchables.")],

@@ -81,6 +81,7 @@ var ProductionPlotsSystem = {
     var profile = this.getProfile(plotIndex);
     var cfg = buildingId ? PRODUCTION_PLOTS_BUILDINGS[buildingId] : null;
     var rate = profile.baseRatePerMin * this.levelMult(plot.level) * ((cfg && cfg.rateMult) || 1); // relevé 2 : linéaire
+    rate *= this.earlyBoostMult(cfg, plot.level); // v3.810.0 : Puits et Chasse plus généreux au début
     /* v3.422.0 : le bonus de carte vivante (Puits, Scierie +10 %) s'applique ICI, à la zone.
        Avant, seul l'affichage du total (ProductionManager.getRatePerMin) le comptait : depuis
        la v3.97.0, les 6 bâtiments passent par les zones et le bonus n'était jamais produit. */
@@ -91,6 +92,16 @@ var ProductionPlotsSystem = {
     if (plot.fertile) bonus += PRODUCTION_PLOTS_SHARED.bonusPerImprovement.fertile;
     if (plot.irrigated) bonus += PRODUCTION_PLOTS_SHARED.bonusPerImprovement.irrigated;
     return rate * bonus;
+  },
+
+  /* v3.810.0 (rythme, Seb 15/11) : bonus de début, ×earlyBoost au niveau 1 puis ×1 au niveau earlyBoostUntil (10) ;
+     baisse au carré, sinon le débit reculerait entre les niveaux 9 et 10. */
+  earlyBoostMult: function (cfg, level) {
+    var b = Number(cfg && cfg.earlyBoost) || 1, until = PRODUCTION_PLOTS_SHARED.earlyBoostUntil || 10;
+    if (b <= 1) return 1;
+    var L = Math.max(1, Number(level) || 1);
+    var f = Math.max(0, (until - L) / (until - 1));
+    return 1 + (b - 1) * f * f;
   },
 
   /* Relevé 2 (27/10) : multiplicateur du niveau, 1 + 0,7 × (niveau − 1). */

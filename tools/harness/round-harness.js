@@ -25742,6 +25742,20 @@ console.log("\n[513d] v3.794.0 — Critique plafonné à 100 % : la fiche le dit
 })();
 
 function fs0Exists(rel) { return require("fs").existsSync(require("path").join(ROOT, "..", rel)); }
+console.log("\n[513r] v3.810.0 — Puits ×3 et Chasse ×2 au niveau 1, bonus effacé au niveau 10 (rythme, P2, Seb 15/11)");
+(function () {
+  try {
+    var PS = g.ProductionPlotsSystem, B = g.PRODUCTION_PLOTS_BUILDINGS;
+    var r = function (bid, L) { return PS.getPlotRatePerMin(0, { level: L }, bid); };
+    var base = function (bid, L) { return PS.getProfile(0).baseRatePerMin * PS.levelMult(L) * (B[bid].rateMult || 1); };
+    ok(Math.abs(r("well", 1) / base("well", 1) - 3) < 1e-6 && Math.abs(r("hunt", 1) / base("hunt", 1) - 2) < 1e-6, "niveau 1 : Puits ×3, Chasse ×2");
+    ok(Math.abs(r("well", 10) / base("well", 10) - 1) < 1e-6 && Math.abs(r("hunt", 12) / base("hunt", 12) - 1) < 1e-6, "niveau 10 et au-delà : plus de bonus");
+    ok(Math.abs(r("farm", 1) / base("farm", 1) - 1) < 1e-6 && Math.abs(r("mine", 1) / base("mine", 1) - 1) < 1e-6, "Champs et Mine inchangés");
+    var monte = true; for (var L = 1; L < 12; L++) if (r("well", L + 1) < r("well", L)) monte = false;
+    ok(monte, "le débit du Puits ne baisse jamais en montant de niveau");
+  } catch (err) { ok(false, "[513r] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 console.log("\n[513q] v3.809.0 — Pronostic : le Tir perforant du Rôdeur compté dans les combats de groupe (C1, Seb 15/11)");
 (function () {
   try {

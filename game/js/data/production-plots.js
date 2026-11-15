@@ -40,7 +40,8 @@ var PRODUCTION_PLOTS_SHARED = {
   p3Caps: [5, 10, 12, 15, 17],            // plafond des parcelles par monde (world-caps.js)
   legacyCaps: [5, 8, 11, 14, 17],         // l'ancienne grille : niveaux et rangées par monde, enveloppe des coûts
   legacyRows: [1, 2, 2, 3, 3],
-  p3CostGrowth: 1.25,                     // dans un monde, chaque niveau coûte 25 % de plus que le précédent (même total)
+  p3CostGrowth: 1.25,
+  earlyBoostUntil: 10,                    // v3.810.0 : niveau où le bonus de début (earlyBoost) est revenu à ×1                     // dans un monde, chaque niveau coûte 25 % de plus que le précédent (même total)
   profiles: {
     rapide: {
       label: "Zone rapide",
@@ -103,6 +104,7 @@ var PRODUCTION_PLOTS_BUILDINGS = {
   },
   hunt: {
     rateMult: 0.8, // v3.418.0 (R4, décision Seb) : nourriture et pierre −20 %, trop de surplus
+    earlyBoost: 2, // v3.810.0 (rythme, Seb 15/11) : ×2 au niveau 1, ramené à ×1 au niveau 10 — la viande du Repas
     sectionLabel: "🌲 Territoires",
     zoneNamePrefix: "Territoire",
     zoneNames: ["Bois d'Aeswyn", "Orée Runique", "Bois du Veneur", "Ravin des Loups", "Bois des Ombres", "Layon Maudit", "Forêt Interdite", "Repaire du Wyrm", "Confins d'Argent"],
@@ -149,6 +151,7 @@ var PRODUCTION_PLOTS_BUILDINGS = {
   },
   well: {
     rateMult: 0.8, // v3.418.0 (R4, décision Seb) : nourriture et pierre −20 %, trop de surplus
+    earlyBoost: 3, // v3.810.0 (rythme, Seb 15/11) : ×3 au niveau 1, ramené à ×1 au niveau 10 — l'eau du Repas manquait au début
     sectionLabel: "💧 Réseau hydraulique",
     zoneNamePrefix: "Point d'eau",
     zoneNames: ["Source d'Aeswyn", "Mare Sacrée", "Puisard Runique", "Bassin des Anciens", "Ruisseau Maudit", "Nappe d'Ombre", "Rivière Oubliée", "Œil du Wyrm", "Abysse Primordial"],
