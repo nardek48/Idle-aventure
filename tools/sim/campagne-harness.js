@@ -264,6 +264,11 @@ function relaunch() {
   flushTimers(G);
   espionOr();
   if (process.env.TRACE_EAU) espionDenree(process.env.TRACE_EAU);
+  /* EXP_CIBLES="aq_x:2:1.5,…" (banc) : rounds et ×coup de la cible des ennemis normaux d'une quête ; le jeu n'est pas modifié. */
+  if (process.env.EXP_CIBLES) process.env.EXP_CIBLES.split(",").forEach(function (e) {
+    var v = e.split(":"), q = G.ADVENTURE_QUESTS[v[0]]; if (!q || !q.target) return;
+    q.target = { rounds: Number(v[1]) || q.target.rounds, hit: q.target.hit * (Number(v[2]) || 1) };
+  });
   if (process.env.SANS_BOOST) Object.keys(G.PRODUCTION_PLOTS_BUILDINGS).forEach(function (b) { G.PRODUCTION_PLOTS_BUILDINGS[b].earlyBoost = 1; }); // banc : jeu d'avant v3.810.0
   /* EXP_PUITS="2,10" (banc) : débit du Puits ×2 au niveau 1, qui retombe à ×1 au niveau 10 ; EXP_BATS="well,hunt" étend
      la courbe à d'autres bâtiments. Le jeu n'est pas modifié. */
