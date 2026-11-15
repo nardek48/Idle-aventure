@@ -13164,7 +13164,8 @@ console.log("\n[190] v3.418.0 — Équilibrage : Taverne et Halle à l'Atelier 2
     var P = g.ProductionPlotsSystem, plot = { level: 3, fertile: false, irrigated: false };
     var base = P.getPlotRatePerMin(0, plot);
     ["farm", "hunt", "quarry", "well"].forEach(function (b) {
-      ok(Math.abs(P.getPlotRatePerMin(0, plot, b) - base * 0.8) < 1e-9, b + " : débit −20 %");
+      var eb = P.earlyBoostMult(g.PRODUCTION_PLOTS_BUILDINGS[b], plot.level); // v3.810.0 : hors bonus de début
+      ok(Math.abs(P.getPlotRatePerMin(0, plot, b) / eb - base * 0.8) < 1e-9, b + " : débit −20 %");
     });
     ok(P.getPlotRatePerMin(0, plot, "sawmill") === base && P.getPlotRatePerMin(0, plot, "mine") === base, "bois et fer : débit inchangé");
   } catch (err) {
