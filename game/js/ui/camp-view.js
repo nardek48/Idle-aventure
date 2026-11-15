@@ -301,6 +301,10 @@ function buildCampHTML(tab) {
 function worldNightShow() {
   if (typeof document === "undefined" || !document.body || !window.WorldDays || game.activeTab !== "campement") return;
   if (window.SortieManager && SortieManager.ensure().active) return;
+  if (worldNightBlocked()) { // v3.806.0 (audit de l'Alpha) : trophée, fin de quête ou aide encore ouverts : la nuit attend
+    if (!worldNightShow._retry && typeof setTimeout === "function") worldNightShow._retry = setTimeout(function () { worldNightShow._retry = null; if (WorldDays.ensure().pending) worldNightShow(); }, 700);
+    return;
+  }
   var night = WorldDays.takePending();
   if (!night) return;
   var w = window.WORLDS ? WORLDS.filter(function (x) { return x.id === night.world; })[0] : null;
@@ -315,12 +319,19 @@ function worldNightShow() {
     + '<button type="button" class="kbtn primary wn-ok" onclick="worldNightClose()">' + esc(_t("Au matin")) + '</button></div></div>';
   if (typeof saveGame === "function") saveGame();
 }
+/* v3.806.0 : une autre fenêtre est à l'écran (fenêtres « …-modal-root », aide, ouverture de chapitre). */
+function worldNightBlocked() {
+  if (typeof tutorialOtherWindowOpen === "function" && tutorialOtherWindowOpen()) return true;
+  var tuto = document.getElementById("tutorial-modal-root"), pro = document.getElementById("prologue-root");
+  return !!((tuto && tuto.innerHTML.trim()) || (pro && pro.innerHTML.trim() && pro.offsetParent !== null));
+}
 function worldNightClose() {
   var root = document.getElementById("world-night-root");
   if (root) root.innerHTML = "";
 }
 window.worldNightShow = worldNightShow;
 window.worldNightClose = worldNightClose;
+window.worldNightBlocked = worldNightBlocked;
 
 /* v3.595.0 (C1 et C2, data/camp-soir.js) : la phrase du soir, tirée à chaque retour au Camp,
    et les compagnons restés au camp autour du feu ; toucher l'un d'eux affiche sa phrase. */

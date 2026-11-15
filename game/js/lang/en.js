@@ -2594,6 +2594,7 @@ I18n.register("en", {
   "Une rencontre peut lancer une petite quête. Elle est rappelée en haut de l'écran.": "An encounter can start a little quest. It is shown at the top of the screen.",
   "Combat : la barre de ressource n'est plus rognée (« ncentration… ») sur les petits écrans et en mode Grimoire ; le nom s'efface quand la place manque, et les chiffres retrouvent leurs espaces.": "Combat: the resource bar is no longer cut off (“ncentration…”) on small screens and in Grimoire mode; the name steps aside when space runs short, and the numbers get their spaces back.",
   "Petites Aventures : les aides arrivent au moment où elles servent. Une bulle pour le premier sentier coupé, deux pour le premier piège, et une courte fenêtre pour chaque petite quête (passage secret, verrou, cache, fins) au lieu d'une seule de cinq lignes.": "Little Adventures: help now arrives when it's useful. One bubble for the first cut path, two for the first trap, and a short window for each little quest (secret passage, lock, cache, endings) instead of a single five-line one.",
+  "L'écran de la nuit attend que tu aies fermé le trophée ou la fin de quête, au lieu de s'afficher par-dessus.": "The nightfall screen now waits until you've closed the trophy or the quest-complete window, instead of appearing on top of them.",
   "Contrats du jour": "Today's contracts",
   "Renouvelés dans {d}": "Renewed in {d}",
   "Livrer": "Deliver",

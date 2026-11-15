@@ -25739,6 +25739,25 @@ console.log("\n[513d] v3.794.0 — Critique plafonné à 100 % : la fiche le dit
   ok(/c\.crit > 100 \? _t\("100 % max"\)/.test(require("fs").readFileSync(require("path").join(ROOT, "js/ui/heros-screens-view.js"), "utf8")), "résumé du Héros : « 100 % max » au-delà de 100 %");
 })();
 
+console.log("\n[513o] v3.806.0 — La nuit attend que le trophée ou la fin de quête soient fermés (audit de l'Alpha)");
+(function () {
+  var other = g.tutorialOtherWindowOpen, st = g.setTimeout;
+  try {
+    var game = freshCombat("knight"); game.activeTab = "campement";
+    var W = g.WorldDays.ensure(); W.pending = true; W.night = { day: 3, world: "forest", kind: "calme" };
+    g.setTimeout = function () { return 1; }; // la relance différée n'est pas jouée ici
+    g.tutorialOtherWindowOpen = function () { return true; };
+    ok(g.worldNightBlocked() === true, "une autre fenêtre ouverte (trophée, fin de quête) : la nuit est bloquée");
+    g.worldNightShow();
+    ok(W.pending === true, "elle attend : la nuit reste à montrer");
+    g.tutorialOtherWindowOpen = function () { return false; }; g.worldNightShow._retry = null;
+    g.worldNightShow();
+    ok(W.pending === false, "fenêtre fermée : la nuit est montrée");
+    ok(/worldNightBlocked\(\)\) \{[\s\S]{0,260}setTimeout/.test(fsRead("js/ui/camp-view.js")), "relance différée tant qu'une fenêtre est ouverte");
+  } catch (err) { ok(false, "[513o] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+  finally { g.tutorialOtherWindowOpen = other; g.setTimeout = st; }
+})();
+
 console.log("\n[513n] v3.804.0 — Combat : nom de la ressource retiré quand la barre est trop étroite, espaces réels (audit de l'Alpha)");
 (function () {
   try {

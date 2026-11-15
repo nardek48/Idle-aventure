@@ -606,6 +606,7 @@ async function P7(browser, base) {
     }
     await page.waitForTimeout(900);
     if (!(await visible(page, "#pa2-overlay .pa2-sheet", 2000))) break;
+    await dismissTutorials(page); // v3.806.0 : une aide courte (passage secret, sentier coupé, v3.805.0) peut s'ouvrir sur la feuille du nœud
     var card = page.locator("#pa2-overlay .pa2-card");
     if (await card.count()) { await card.first().click(); await page.waitForTimeout(900); await card.first().click(); await page.waitForTimeout(200); }
     // Un combat se fuit (héros sans équipement : l'estimation le dit mortel) ; ailleurs, le premier choix.
