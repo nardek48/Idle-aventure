@@ -6,6 +6,8 @@
    à sable expedition_faille sont retirés avec les Petites Aventures v1. Les anneaux de la carte
    vivante sont décrits par PA2_RINGS (data/pa2-content.js). */
 
+var FOE_MULT_SENTIER = 1; // v3.812.0 : force de l'araignée du Sentier obstrué (banc : 10 à 20 % des PV perdus)
+
 var SCENE_TEMPLATES = {
   /* ================= Quêtes de déblocage (v3.122.0 ; parcours v2 depuis v3.389.0) =================
      Deux obstacles en ligne droite, joués par Pa2Run (mode "parcours"). unlockOnSuccess
@@ -17,7 +19,13 @@ var SCENE_TEMPLATES = {
     worldId: "forest", // v3.298.0 (W-1b, D6) : ses combats sortent de la Forêt, où que réside le joueur
     mode: "parcours", // v3.389.0 (chantier P) : parcours sur le moteur des Petites Aventures v2
     title: "Le Sentier Obstrué",
-    parcours: { steps: [{ type: "obstacle" }, { type: "obstacle" }], image: "foret_quetes", points: [0, 2] }, // gabarits tirés dans pools.obstacle
+    // v3.812.0 (rythme, Seb 15/11) : trois étapes, un combat sous le tronc ; textes validés par Seb
+    parcours: { image: "foret_quetes", points: [0, 1, 2], steps: [
+      { type: "obstacle", gabaritId: "tronc_deracine", text: "Le tronc a été scié net, il y a longtemps. Quelqu'un l'a remis en travers." },
+      { type: "combat", foe: "spider", pack: 1, foeMult: FOE_MULT_SENTIER, text: "Sous le tronc, la terre est creusée. Des fils blancs, épais comme des doigts. Au fond, ça bouge.",
+        after: "Brannoc écrase le dernier fil du talon. « Ça, c'était pas là la dernière fois. »" },
+      { type: "obstacle", gabaritId: "racines", text: "La clairière est derrière. Les racines ont poussé vers le sentier, pas vers la lumière." }
+    ] },
     icon: "images/Icons/codex/world_forest.webp",
 
     pools: { obstacle: ["tronc_deracine", "racines"] },
@@ -123,7 +131,11 @@ var SCENE_TEMPLATES = {
     worldId: "forest", // v3.298.0 (W-1b, D6) : ses combats sortent de la Forêt, où que réside le joueur
     mode: "parcours", // v3.389.0 (chantier P) : parcours sur le moteur des Petites Aventures v2
     title: "La Veine Instable",
-    parcours: { steps: [{ type: "obstacle" }, { type: "obstacle" }], image: "foret_quetes", points: [3, 5] }, // gabarits tirés dans pools.obstacle
+    // v3.812.0 (rythme, Seb 15/11) : trois obstacles, la roche se referme ; texte validé par Seb
+    parcours: { image: "foret_quetes", points: [3, 4, 5], steps: [
+      { type: "obstacle", gabaritId: "filon_fragile" }, { type: "obstacle", gabaritId: "paroi_instable" },
+      { type: "obstacle", gabaritId: "eboulis", text: "La roche chauffe sous la main. Derrière toi, la fente par où tu es entré est plus étroite." }
+    ] },
     icon: "images/Icons/scene/scene_mine.webp",
 
     pools: { obstacle: ["filon_fragile", "paroi_instable"] },
@@ -185,7 +197,11 @@ var SCENE_TEMPLATES = {
     worldId: "forest", // v3.298.0 (W-1b, D6) : ses combats sortent de la Forêt, où que réside le joueur
     mode: "parcours", // v3.389.0 (chantier P) : parcours sur le moteur des Petites Aventures v2
     title: "La Source Tarie",
-    parcours: { steps: [{ type: "obstacle" }, { type: "obstacle" }], image: "foret_quetes", points: [5, 6] }, // gabarits tirés dans pools.obstacle
+    // v3.812.0 (rythme, Seb 15/11) : un obstacle puis la source ; textes validés par Seb
+    parcours: { image: "foret_quetes", points: [5, 6], steps: [
+      { type: "obstacle", gabaritId: "source_irreguliere", text: "Le lit de la source est sec sur cent pas. Plus haut, on l'entend couler. Puis plus rien." },
+      { type: "source", fullBreath: true, text: "L'eau sort d'entre deux pierres. Froide. Tu bois le premier." }
+    ] },
     icon: "images/Icons/scene/node_clear_spring.webp",
 
     // v3.131.0 : seul canevas sans boardRequires (oubli) — disponible dès le lancement d'une
