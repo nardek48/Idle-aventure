@@ -2597,6 +2597,7 @@ I18n.register("en", {
   "L'écran de la nuit attend que tu aies fermé le trophée ou la fin de quête, au lieu de s'afficher par-dessus.": "The nightfall screen now waits until you've closed the trophy or the quest-complete window, instead of appearing on top of them.",
   "Les bulles du sac et du fil rouge s'effacent pendant que tu fais défiler un écran, pour laisser lire le bord des cartes. Elles reviennent dès que tu t'arrêtes, et restent touchables.": "The bag and red-thread bubbles fade while you scroll a screen, so you can read the edge of the cards. They come back as soon as you stop, and stay tappable.",
   "Le rappel « PV bas » s'affiche dès 70 % des PV (au lieu de 50 %) quand tu acceptes une étape de combat : un repas au feu avant de partir évite de tomber en chemin.": "The “Low HP” reminder now shows from 70% HP (instead of 50%) when you accept a combat step: a meal at the fire before you leave keeps you from falling on the way.",
+  "Pronostic du Rôdeur : son Tir perforant, qui touche aussi un second ennemi, compte maintenant dans les combats de groupe.": "Ranger forecast: their Piercing Shot, which also hits a second enemy, now counts in group fights.",
   "Contrats du jour": "Today's contracts",
   "Renouvelés dans {d}": "Renewed in {d}",
   "Livrer": "Deliver",

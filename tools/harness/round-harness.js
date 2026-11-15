@@ -25742,6 +25742,23 @@ console.log("\n[513d] v3.794.0 — Critique plafonné à 100 % : la fiche le dit
 })();
 
 function fs0Exists(rel) { return require("fs").existsSync(require("path").join(ROOT, "..", rel)); }
+console.log("\n[513q] v3.809.0 — Pronostic : le Tir perforant du Rôdeur compté dans les combats de groupe (C1, Seb 15/11)");
+(function () {
+  try {
+    var F = g.CombatForecast, game = freshCombat("ranger");
+    var share = F.getTraverseShare();
+    ok(share > 0.3 && share < 0.45, "Rôdeur : part du Tir perforant dans le kit (" + share.toFixed(2) + ")");
+    game = freshCombat("knight"); ok(F.getTraverseShare() === 0, "Chevalier : aucune technique qui traverse");
+    game = freshCombat("ranger");
+    var wolf = function () { var q = g.ADVENTURE_QUESTS.hq_wolf_pack; return [].concat(g.QuestEnemyManager.spawnFor(q, false)); };
+    var grp = wolf(), avec = F.getGroupFight(grp), keep = F.getTraverseShare;
+    F.getTraverseShare = function () { return 0; }; var sans = F.getGroupFight(wolf()); F.getTraverseShare = keep;
+    ok(avec.cost < sans.cost && F._spill === 0, "meute de deux loups : usure plus faible avec le Tir perforant (" + sans.cost + " → " + avec.cost + "), réglage retiré après le calcul");
+    var seul = F.getGroupFight([grp[0]]); F.getTraverseShare = function () { return 0; }; var seul0 = F.getGroupFight([grp[0]]); F.getTraverseShare = keep;
+    ok(seul.cost === seul0.cost, "ennemi seul : rien ne change");
+  } catch (err) { ok(false, "[513q] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
+})();
+
 console.log("\n[513p] v3.807.0 — Bulles du sac et du fil rouge à 25 % pendant le défilement, retour en 0,4 s (atelier bulles-defilement, B1)");
 (function () {
   try {
