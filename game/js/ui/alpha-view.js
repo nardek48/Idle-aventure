@@ -40,8 +40,8 @@ function alphaBtn(label, onclick, primary) {
 /* ---------- Premier lancement ---------- */
 function alphaIntroHTML() {
   var body = '<p class="kwin-quote">' + esc(_t("« Note tout. Les pas, les coups, ce que ça coûte. Un jour, quelqu'un lira. » — Maddoc")) + '</p>'
-    + '<p class="kwin-text">' + esc(_t("Cette route s'arrête au bout du Désert. Un carnet te suit jusque-là : étapes, combats, morts, or, équipement.")) + '</p>'
-    + '<p class="alpha-mini">' + esc(_t("Rien de personnel, ni nom ni adresse. Le carnet reste sur ce téléphone ; c'est toi qui choisis de l'envoyer, à la fin. Paramètres › Appareil pour le fermer.")) + '</p>';
+    + '<p class="kwin-text">' + esc(_t("Cette route s'arrête au bout du Désert. Un carnet te suit jusque-là : étapes, combats, morts, or, équipement, et l'heure de chaque ligne.")) + '</p>'
+    + '<p class="alpha-mini">' + esc(_t("Ni le nom de ton héros, ni rien sur ton appareil. Le carnet reste ici ; c'est toi qui choisis de l'envoyer, à la fin ou quand tu veux depuis Paramètres › Appareil, où tu peux aussi le fermer.")) + '</p>';
   return alphaWinHTML({ ico: "α", title: _t("Avant de partir"), sub: _t("Version Alpha · Forêt et Désert"), body: body,
     foot: alphaBtn(_t("D'accord"), "closeAlphaIntro(true)", true) + alphaBtn(_t("Ne pas enregistrer"), "closeAlphaIntro(false)") });
 }
@@ -80,7 +80,8 @@ function alphaQuestionHTML(q) {
       return '<button type="button" aria-pressed="' + (v === c[0]) + '" onclick="alphaAvisSet(\'' + q.id + '\',\'' + c[0] + '\')">' + esc(c[1]()) + '</button>';
     }).join("") + '</div>';
   } else {
-    h += '<textarea id="alpha-q-' + q.id + '" maxlength="' + ALPHA_AVIS_TEXTE_MAX + '" aria-labelledby="' + lid + '" placeholder="' + esc(_t("Facultatif")) + '" oninput="alphaAvisText(\'' + q.id + '\', this.value)">' + esc(v || "") + '</textarea>';
+    h += '<textarea id="alpha-q-' + q.id + '" maxlength="' + ALPHA_AVIS_TEXTE_MAX + '" aria-labelledby="' + lid + '" placeholder="' + esc(_t("Facultatif")) + '" oninput="alphaAvisText(\'' + q.id + '\', this.value)">' + esc(v || "") + '</textarea>'
+      + '<p class="alpha-mini">' + esc(_t("N'écris ni ton nom ni ton adresse.")) + '</p>'; // v3.814.0 (DATA-1) : le texte part tel quel
   }
   return h + '</div>';
 }

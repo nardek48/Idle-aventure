@@ -9,7 +9,8 @@
 
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
-  return [
+  var liste = [
+    ["3.814.0", "codex/codex_lore", _t("Version Alpha : la fenêtre « Avant de partir » dit tout ce que note le carnet et qu'on peut l'envoyer à tout moment ; « Quoi de neuf » ne montre plus que les nouveautés de l'Alpha.")],
     ["3.813.0", "codex/codex_lore", _t("Premier lancement : le tutoriel du Campement s'affiche sur l'écran même si tu lis la fin du prologue.")],
     ["3.813.0", "system/forecast", _t("Pronostic : quand il manque des pièces d'équipement, le conseil renvoie à la Boutique (Héros → Équipement).")],
     ["3.812.0", "scene/node_clear_spring", _t("Forêt : La source tarie, Le sentier obstrué et La veine instable ont chacune leur forme et leur récit. Sous le tronc du sentier, quelque chose a fait son nid.")],
@@ -250,6 +251,9 @@ function newsEntries() {
     ["3.584.0", "menu_icons/village_menu", _t("Plus de grand cadre : le décor du monde passe entre les blocs.")],
     ["3.581.0", "menu_icons/map_menu", _t("Chaque écran ouvre sur une illustration qui évolue avec ton aventure.")]
   ];
+  // v3.814.0 (audit Alpha, CONT-1) : en Alpha, pas le journal du développement (il parle des mondes suivants)
+  if (typeof isAlphaEdition === "function" && isAlphaEdition() && window.ALPHA_NEWS_FROM) return liste.filter(function (n) { return newsCompare(n[0], ALPHA_NEWS_FROM) >= 0; });
+  return liste;
 }
 
 var NEWS_MAX_LINES = 5;

@@ -26175,6 +26175,14 @@ console.log("\n[523] Audit de sortie de l'Alpha : premier lancement, cache d'ima
     });
     var fc = fsRead("js/systems/combat-forecast-system.js");
     ok(fc.indexOf("l'échoppe du village") < 0 && fc.indexOf("la Boutique (Héros → Équipement)") > 0, "PREM-4 : le pronostic renvoie à la Boutique (Héros → Équipement), pas à une échoppe du village");
+    // v3.814.0 (CONT-1, DATA-1) : en Alpha, Quoi de neuf part d'ALPHA_NEWS_FROM ; le champ libre de l'avis porte sa consigne
+    var isA = g.isAlphaEdition, tout = g.newsEntries().length;
+    g.isAlphaEdition = function () { return true; };
+    var alphaN = g.newsEntries();
+    g.isAlphaEdition = isA;
+    ok(alphaN.length > 0 && alphaN.length < tout && alphaN.every(function (n) { return g.newsCompare(n[0], g.ALPHA_NEWS_FROM) >= 0; }), "CONT-1 : en Alpha, Quoi de neuf ne garde que les versions depuis " + g.ALPHA_NEWS_FROM + " (" + alphaN.length + " sur " + tout + ")");
+    ok(g.newsEntries().length === tout, "CONT-1 : l'édition jeu garde toute la liste");
+    ok(alpha.indexOf("N'écris ni ton nom ni ton adresse.") > 0 && alpha.indexOf("et l'heure de chaque ligne") > 0 && alpha.indexOf("Rien de personnel") < 0, "DATA-1 : l'intro dit l'heure de chaque ligne, le champ libre dit de ne pas écrire son nom");
   } catch (err) { ok(false, "[523] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
