@@ -49,11 +49,11 @@ function alphaIntroHTML() {
 function openAlphaIntro() {
   if (!document.body) return;
   alphaRoot().innerHTML = alphaIntroHTML();
-  if (window.Prefs) Prefs.setValue("alphaIntroSeen", "1"); // une fois par appareil
 }
 
 function closeAlphaIntro(garder) {
   alphaRoot().innerHTML = "";
+  if (window.Prefs) Prefs.setValue("alphaIntroSeen", "1"); // une fois par appareil, au choix (v3.813.0 : quitter avant de choisir la redonne)
   if (window.JournalTest) JournalTest.setOn(!!garder);
   if (typeof showToast === "function") showToast(garder ? _t("Journal actif. Bonne route !") : _t("Journal coupé"), 1600);
 }

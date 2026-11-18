@@ -45,7 +45,7 @@ les onglets ouverts via postMessage (voir la fin de l'event
 petite bannière "Nouvelle version disponible — Recharger".
 ============================================================ */
 
-var CACHE_VERSION = "3.812.0"; // <- à incrémenter à CHAQUE livraison
+var CACHE_VERSION = "3.813.0"; // <- à incrémenter à CHAQUE livraison
 /* v3.751.0 : l'Alpha (/alpha/) partage l'origine du jeu ; ses caches portent un autre préfixe, sinon chaque
    service worker effacerait ceux de l'autre à l'activation. */
 var IS_ALPHA_SW = /\/alpha\/$/.test(self.registration ? self.registration.scope : "");
@@ -374,7 +374,8 @@ self.addEventListener("activate", function (event) {
     caches.keys().then(function (names) {
       return Promise.all(
         names
-          .filter(function (name) { return name.indexOf(CACHE_PREFIX) === 0 && name !== CACHE_NAME; })
+          // v3.813.0 : en Alpha, IMAGE_CACHE commence par CACHE_PREFIX : on le garde (régression du P8)
+          .filter(function (name) { return name.indexOf(CACHE_PREFIX) === 0 && name !== CACHE_NAME && name !== IMAGE_CACHE; })
           .map(function (name) { return caches.delete(name); })
       );
     }).then(function () {

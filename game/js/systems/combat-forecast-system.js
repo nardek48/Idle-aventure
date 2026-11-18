@@ -553,7 +553,7 @@ var CombatForecast = {
     // v3.717.0 (Seb 06/11) : ordre vide > rareté du repère (sinon communes) > reforge du repère > entraînement
     var rep = this.zoneRepere(), have = rep && typeof storyPalier === "function" ? storyPalier(game, rep.rarity) : null;
     var parts = [];
-    if (empty > 0) parts.push(_tn(empty, "{n} emplacement d'équipement vide — l'échoppe du village est le gain le plus rapide", "{n} emplacements d'équipement vides — l'échoppe du village est le gain le plus rapide"));
+    if (empty > 0) parts.push(_tn(empty, "{n} emplacement d'équipement vide — la Boutique (Héros → Équipement) est le gain le plus rapide", "{n} emplacements d'équipement vides — la Boutique (Héros → Équipement) est le gain le plus rapide")); // v3.813.0 : pas d'échoppe au Village avant la Halle
     if (have && have.pieces < rep.pieces) parts.push(this.repereRarityLine(rep.rarity, have.pieces, rep.pieces));
     else if (empty === 0 && commons >= 4) parts.push(_t("ton équipement est encore tout en commun : une pièce de meilleure qualité change plus que dix niveaux d'entraînement"));
     if (have && have.arme < rep.reforge) {

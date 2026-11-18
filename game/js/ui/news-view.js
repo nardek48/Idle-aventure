@@ -10,6 +10,8 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   return [
+    ["3.813.0", "codex/codex_lore", _t("Premier lancement : le tutoriel du Campement s'affiche sur l'écran même si tu lis la fin du prologue.")],
+    ["3.813.0", "system/forecast", _t("Pronostic : quand il manque des pièces d'équipement, le conseil renvoie à la Boutique (Héros → Équipement).")],
     ["3.812.0", "scene/node_clear_spring", _t("Forêt : La source tarie, Le sentier obstrué et La veine instable ont chacune leur forme et leur récit. Sous le tronc du sentier, quelque chose a fait son nid.")],
     ["3.811.0", "quests/mission_combat", _t("Forêt : les ennemis des quêtes tiennent plus longtemps et frappent plus fort (Prouver sa valeur, Franchir la Lisière, Tenir le Cœur, Les yeux blancs, Ce qui a poussé sur la cendre). La Meute Affamée et Le Cœur de la Forêt ne changent pas.")],
     ["3.810.0", "resources/water_icon", _t("Le Puits et la Chasse produisent plus au début (eau ×3 et viande ×2 au niveau 1, puis le bonus s'efface jusqu'au niveau 10) : le repas au feu de camp manque moins souvent d'eau ou de viande.")],
@@ -283,7 +285,8 @@ function newsCanShow() {
   if (game.activeTab === "combat" || game.activeTab === "scene") return false;
   if (window.SceneRunManager && typeof SceneRunManager.isHeroEngaged === "function" && SceneRunManager.isHeroEngaged()) return false;
   // seules les fenêtres affichées comptent : certaines restent dans la page, masquées
-  var open = document.querySelectorAll(".kwin-veil, .ksheet-backdrop, .prologue, #title-screen-root .title-screen-overlay");
+  // v3.813.0 : le tutoriel sur l'écran et son voile d'attente comptent aussi (fenêtre de l'Alpha posée dessous)
+  var open = document.querySelectorAll(".kwin-veil, .ksheet-backdrop, .prologue, #title-screen-root .title-screen-overlay, .coach, .coach-wait");
   for (var i = 0; i < open.length; i++) if (open[i].getClientRects().length) return false;
   return true;
 }

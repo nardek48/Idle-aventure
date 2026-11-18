@@ -670,7 +670,9 @@ I18n.register("en", {
   "monte tes caractéristiques dans Héros → Entraînement": "raise your attributes in Hero → Training",
   "Reviens plus fort : {liste}.": "Come back stronger: {liste}.",
   "Pour améliorer tes chances : {liste}.": "To improve your odds: {liste}.",
-  "{n} emplacement d'équipement vide — l'échoppe du village est le gain le plus rapide||{n} emplacements d'équipement vides — l'échoppe du village est le gain le plus rapide": ["{n} empty equipment slot — the village stall is the quickest gain", "{n} empty equipment slots — the village stall is the quickest gain"],
+  "Premier lancement : le tutoriel du Campement s'affiche sur l'écran même si tu lis la fin du prologue.": "First launch: the Camp tutorial shows on the screen even if you read the end of the prologue.",
+  "Pronostic : quand il manque des pièces d'équipement, le conseil renvoie à la Boutique (Héros → Équipement).": "Forecast: when equipment pieces are missing, the advice now points to the Shop (Hero → Equipment).",
+  "{n} emplacement d'équipement vide — la Boutique (Héros → Équipement) est le gain le plus rapide||{n} emplacements d'équipement vides — la Boutique (Héros → Équipement) est le gain le plus rapide": ["{n} empty equipment slot — the Shop (Hero → Equipment) is the quickest gain", "{n} empty equipment slots — the Shop (Hero → Equipment) is the quickest gain"],
 
   // js/systems/companion-system.js
   "Pas assez d'or": "Not enough gold",

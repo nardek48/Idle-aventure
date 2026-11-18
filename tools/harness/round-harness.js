@@ -15837,7 +15837,16 @@ console.log("\n[254] v3.457.4 — Sauvegarde et mise à jour (audit P3, P4, P6, 
     run("saveLockedKey = null; instanceLocked = false;");
     // O2, P8 : service worker
     ok(/new Request\(url, \{ cache: "no-cache" \}\)/.test(sw) && sw.indexOf('cache: "reload"') === -1, "précache en no-cache (fichiers inchangés en 304)");
-    ok(/IMAGE_CACHE = IS_ALPHA_SW \? "aethervale-alpha-images" : "aethervale-images"/.test(sw) && /CACHE_PREFIX = IS_ALPHA_SW \? "aethervale-alpha-" : "quest-idle-"/.test(sw) && sw.indexOf("name.indexOf(CACHE_PREFIX) === 0") > 0, "images dans un cache durable, hors du nettoyage des versions"); // v3.751.0 : préfixes jeu / alpha
+    // v3.813.0 (audit Alpha, PUB-1) : contrôle d'effet du nettoyage d'activation, pour les deux portées
+    var actF = sw.match(/addEventListener\("activate"[\s\S]*?\.filter\((function \(name\) \{[\s\S]*?\})\)/);
+    [["/Idle-aventure/", "aethervale-alpha-", "aethervale-alpha-images"], ["/Idle-aventure/alpha/", "quest-idle-", "aethervale-images"]].forEach(function (sc) {
+      var swCtx = require("vm").createContext({ self: { registration: { scope: "https://exemple.io" + sc[0] }, addEventListener: function () {} } });
+      require("vm").runInContext(sw, swCtx);
+      var aSuppr = actF ? require("vm").runInContext("(" + actF[1] + ")", swCtx) : function () { return true; };
+      var noms = [swCtx.CACHE_NAME, swCtx.CACHE_PREFIX + "0.0.1", swCtx.IMAGE_CACHE, sc[1] + "0.0.1", sc[2]];
+      var suppr = noms.filter(aSuppr);
+      ok(!!actF && suppr.length === 1 && suppr[0] === swCtx.CACHE_PREFIX + "0.0.1", "portée " + sc[0] + " : seule l'ancienne version est effacée, cache d'images (" + swCtx.IMAGE_CACHE + ") et caches de l'autre édition gardés");
+    });
     var pwa = fs4.readFileSync(ROOT + "/js/main/pwa.js", "utf8");
     ok(/function dismissPwaUpdateBanner/.test(pwa) && /pwaHeroEngaged\(\)/.test(pwa) && idx.indexOf("dismissPwaUpdateBanner()") > 0, "bannière de mise à jour : reportée pendant un combat, « Plus tard »");
     ok(/function checkPwaIosStorageHint/.test(pwa), "rappel Safari (7 jours)");
@@ -26142,6 +26151,31 @@ console.log("\n[522] Le Labyrinthe aux leviers est retiré du jeu (v3.775.0, sim
     ok(!g.WAREHOUSE_RESOURCES.ration, "la Ration moyenne n'a plus de fiche (v3.788.0)");
   } catch (err) { ok(false, "[522] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
   finally { SQ.isStepReached = reached; game.sceneRun = keep; }
+})();
+
+console.log("\n[523] Audit de sortie de l'Alpha : premier lancement, cache d'images, conseil du pronostic (v3.813.0)");
+(function () {
+  try {
+    // Source : le corps d'une fonction nommée (de « function nom » à la suivante)
+    var corps = function (src, nom) { var i = src.indexOf("function " + nom), j = src.indexOf("\nfunction ", i + 1); return i < 0 ? "" : src.slice(i, j < 0 ? undefined : j); };
+    var news = fsRead("js/ui/news-view.js"), coach = fsRead("js/ui/coach-view.js"), alpha = fsRead("js/ui/alpha-view.js");
+    ok(/\.coach, \.coach-wait"/.test(corps(news, "newsCanShow()")), "PREM-1 : newsCanShow compte le tutoriel sur l'écran (.coach, .coach-wait) comme une fenêtre ouverte");
+    var st = coach.slice(coach.indexOf("_start: function"), coach.indexOf("render: function"));
+    ok(st.indexOf("PrologueView.active && document.querySelector(\"#prologue-root .prologue\")") > 0 && st.indexOf("PrologueView.active") < st.indexOf("def.prepare"), "PREM-2 : le tutoriel sur l'écran attend la fin du prologue affiché, avant prepare et sans compter d'essai");
+    ok(corps(alpha, "openAlphaIntro").indexOf("alphaIntroSeen") < 0 && corps(alpha, "closeAlphaIntro").indexOf("alphaIntroSeen") > 0, "RET-5 : « Avant de partir » marquée vue au choix, pas à l'ouverture");
+    // PUB-1 : le nom du cache d'images ne suit pas la version (sinon chaque mise à jour le vide)
+    var sw = fsRead("sw.js"), vmI = require("vm"), nomImages = function (scope, ver) {
+      var c = vmI.createContext({ self: { registration: { scope: "https://exemple.io" + scope }, addEventListener: function () {} } });
+      vmI.runInContext(sw.replace(/var CACHE_VERSION = "[^"]*"/, 'var CACHE_VERSION = "' + ver + '"'), c);
+      return c.IMAGE_CACHE + "|" + c.CACHE_NAME;
+    };
+    ["/Idle-aventure/", "/Idle-aventure/alpha/"].forEach(function (sc) {
+      var a = nomImages(sc, "1.0.0").split("|"), b = nomImages(sc, "2.0.0").split("|");
+      ok(a[0] === b[0] && a[1] !== b[1], "PUB-1 : portée " + sc + " : cache d'images (" + a[0] + ") identique d'une version à l'autre");
+    });
+    var fc = fsRead("js/systems/combat-forecast-system.js");
+    ok(fc.indexOf("l'échoppe du village") < 0 && fc.indexOf("la Boutique (Héros → Équipement)") > 0, "PREM-4 : le pronostic renvoie à la Boutique (Héros → Équipement), pas à une échoppe du village");
+  } catch (err) { ok(false, "[523] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 
 Promise.all(ATTENTES).then(function () {

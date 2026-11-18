@@ -420,6 +420,8 @@ var CoachTutorial = {
   _start: function (host, key, closeJs, tutorial, tries) {
     var def = COACH_TUTORIALS[key], self = this, token = this._token;
     tries = tries || 0;
+    // v3.813.0 : prologue encore ouvert (planches 5-6 lues) : on attend sa fin sans compter d'essai
+    if (window.PrologueView && PrologueView.active && document.querySelector("#prologue-root .prologue")) { setTimeout(function () { if (self._token === token) self._start(host, key, closeJs, tutorial, tries); }, 300); return; }
     if (!tries && typeof def.prepare === "function") { try { def.prepare(); } catch (e) { noteErreur("coach.prepare", e); } }
     var wait = host.firstChild;
     if (wait && wait.style) wait.style.pointerEvents = "none"; // le voile d'attente ne compte pas pour elementFromPoint
