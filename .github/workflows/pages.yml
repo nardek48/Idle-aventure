@@ -71,7 +71,9 @@ jobs:
           node tools/harness/boot-harness.js game
           if [ -d game/alpha ]; then node tools/harness/boot-harness.js game/alpha; fi
       - name: Création du héros (copie publiée)
-        run: node tools/harness/hero-creation-harness.js game
+        run: |
+          node tools/harness/hero-creation-harness.js game
+          if [ -d game/alpha ]; then node tools/harness/hero-creation-harness.js game/alpha; fi
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

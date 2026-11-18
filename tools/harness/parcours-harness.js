@@ -9,6 +9,7 @@
 
    Lancer :   node tools/harness/parcours-harness.js .            (tous les parcours)
               node tools/harness/parcours-harness.js . P2 P5      (au choix)
+              node tools/harness/parcours-harness.js <copie publiée>/alpha   (édition Alpha : servie sous /alpha/, P16 en plus)
    Prérequis : npm i -D playwright  puis  npx playwright install chromium
    Sortie :    une ligne ✔/✘ par contrôle, erreurs de console, captures dans captures/parcours/. */
 
@@ -18,6 +19,8 @@ try { chromium = require("playwright").chromium; }
 catch (e) { console.error("Playwright absent : npm i -D playwright && npx playwright install chromium"); process.exit(2); }
 
 var ROOT = require("../chemins.js").jeu(process.argv[2]);
+// v3.815.0 (audit Alpha, TEST-1) : copie publiée de l'Alpha (édition « alpha ») servie sous /alpha/, comme en ligne
+var ALPHA = /^var GAME_EDITION = "alpha";/m.test(fs.readFileSync(path.join(ROOT, "js/core/edition.js"), "utf8"));
 var ONLY = process.argv.slice(3);
 var SHOTS = require("../chemins.js").captures("parcours");
 var H = 3600e3;
@@ -32,6 +35,7 @@ function serve(root) {
   return new Promise(function (resolve) {
     var srv = http.createServer(function (req, res) {
       var p = decodeURIComponent(req.url.split("?")[0]);
+      if (ALPHA) { if (p.indexOf("/alpha/") !== 0) { res.writeHead(404); return res.end(); } p = p.slice(6); } // portée du service worker : /alpha/
       if (p === "/") p = "/index.html";
       if (srv._override && srv._override[p] != null) {          // P9 : une « nouvelle version » en ligne
         res.writeHead(200, { "Content-Type": MIME[path.extname(p)] || "text/plain", "Cache-Control": "no-store" });
@@ -63,6 +67,12 @@ async function newDevice(browser, ua, opts) {
   var ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: "fr-FR", userAgent: ua || undefined }); // v3.359.0 : ua optionnel (P11, iPhone)
   // v3.761.0 : tutoriels sur l'écran coupés (fenêtre classique) sauf pour les parcours qui les testent (opts.coach)
   if (!(opts && opts.coach)) await ctx.addInitScript(function () { window.COACH_OFF = true; });
+  // v3.815.0 : en Alpha, « Avant de partir » et la fin de l'Alpha sont déjà vues, sauf pour P16 qui les teste (opts.alpha)
+  if (ALPHA && !(opts && opts.alpha)) await ctx.addInitScript(function () {
+    var k = "alpha:aethervale_prefs", d = {};
+    try { d = JSON.parse(localStorage.getItem(k) || "{}") || {}; } catch (e) { d = {}; }
+    if (!d.alphaIntroSeen) { d.alphaIntroSeen = "1"; d.alphaFinSeen = "1"; localStorage.setItem(k, JSON.stringify(d)); }
+  });
   return ctx;
 }
 
@@ -151,7 +161,7 @@ function prepVillage() {
 /* Vieillit une sauvegarde : toutes ses dates récentes reculent de `ms` (absence simulée). */
 async function age(page, slot, ms) {
   await page.evaluate(function (a) {
-    var key = "quest_idle_save_v6_slot" + a.slot, now = Date.now();
+    var key = (window.STORAGE_PREFIX || "") + "quest_idle_save_v6_slot" + a.slot, now = Date.now();
     var d = JSON.parse(localStorage.getItem(key));
     (function shift(o) {
       if (!o || typeof o !== "object") return;
@@ -165,7 +175,7 @@ async function age(page, slot, ms) {
 }
 
 async function savedAt(page, slot) {
-  return page.evaluate(function (s) { var d = JSON.parse(localStorage.getItem("quest_idle_save_v6_slot" + s) || "{}"); return d.savedAt || 0; }, slot);
+  return page.evaluate(function (s) { var d = JSON.parse(localStorage.getItem((window.STORAGE_PREFIX || "") + "quest_idle_save_v6_slot" + s) || "{}"); return d.savedAt || 0; }, slot);
 }
 
 
@@ -453,7 +463,7 @@ async function P1(browser, base) {
     ok(await winFight(page, new Function("return (game.totalKills || 0) > " + kills0 + ";")), "premier ennemi vaincu au bouton ATTAQUER");
   }
   await shot(page, "3_combat");
-  ok(await page.evaluate(function () { return !!localStorage.getItem("quest_idle_save_v6_slot1"); }), "la partie est sauvegardée");
+  ok(await page.evaluate(function () { return !!localStorage.getItem((window.STORAGE_PREFIX || "") + "quest_idle_save_v6_slot1"); }), "la partie est sauvegardée");
   consoleClean(page);
   await dev.close();
 }
@@ -1204,13 +1214,87 @@ async function P15(browser, base) {
   await dev.close();
 }
 
+/* ====================================================================================
+   P16 — Alpha (v3.815.0, audit Alpha TEST-1). Seulement sur la copie publiée de l'Alpha.
+   Premier lancement avec « Passer » rapide : le tutoriel d'accueil sur l'écran d'abord, puis
+   « Avant de partir » au premier plan ; rechargement sans réouverture ; fin de l'Alpha après le
+   Désert, avis, journal téléchargé (sans nom de héros) ; Ruines fermées.
+   ==================================================================================== */
+async function P16(browser, base) {
+  if (!ALPHA) { console.log("  (édition jeu : parcours propre à l'Alpha, sans objet)"); return; }
+  var dev = await newDevice(browser, undefined, { coach: true, alpha: true });
+  var page = await launch(dev, base);
+  await tap(page, ".title-screen-img-btn");
+  await tap(page, ".prologue-skip");
+  await page.fill("#player-name-input", "Lise");
+  await page.locator("#player-name-input").press("Enter"); await page.waitForTimeout(300);
+  await page.locator('[onclick^="selectHeroClass"]').first().click(); await page.waitForTimeout(250);
+  var next = page.locator('[onclick^="goToConfirmStep"]');
+  if (await next.count()) { await next.first().click(); await page.waitForTimeout(250); }
+  await page.locator('[onclick^="confirmHeroSelection"]').first().click(); await page.waitForTimeout(800);
+  await tap(page, ".prologue-skip");                                  // « Passer » rapide (ALPHA-PREM-1)
+  ok(await visible(page, "#tutorial-modal-root .coach-next", 4000), "tutoriel d'accueil sur l'écran");
+  // Pendant tout le tutoriel, la fenêtre de l'Alpha attend (alphaWatch toutes les 2,5 s)
+  var dessous = false, bulles = 0;
+  for (var i = 0; i < 8 && await page.locator("#tutorial-modal-root .coach-next").count(); i++) {
+    await page.waitForTimeout(1400);
+    if (await page.locator("#alpha-win-root .alpha-win").count()) dessous = true;
+    await page.locator("#tutorial-modal-root .coach-next").first().click(); bulles++;
+    await page.waitForTimeout(300);
+  }
+  ok(!dessous && bulles >= 3, "« Avant de partir » ne s'ouvre pas sous le tutoriel (" + bulles + " bulles)");
+  await dismissTutorials(page);
+  ok(await visible(page, "#alpha-win-root .alpha-win", 6000), "« Avant de partir » s'ouvre après le tutoriel");
+  await shot(page, "1_avant_de_partir");
+  ok(await page.evaluate(function () {
+    var b = Array.prototype.filter.call(document.querySelectorAll("#alpha-win-root button"), function (x) { return x.textContent.trim() === "D'accord"; })[0];
+    if (!b) return false;
+    var r = b.getBoundingClientRect(), e = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    return !!e && (e === b || b.contains(e));
+  }), "« D'accord » au premier plan, touchable");
+  ok(await page.evaluate(function () { return !Prefs.has("alphaIntroSeen"); }), "pas encore marquée vue tant que rien n'est choisi (ALPHA-RET-5)");
+  await page.locator("#alpha-win-root button", { hasText: "D'accord" }).first().click(); await page.waitForTimeout(400);
+  ok(await page.evaluate(function () { return Prefs.has("alphaIntroSeen") && JournalTest.isOn() && !document.querySelector("#alpha-win-root .alpha-win"); }), "« D'accord » : journal actif, fenêtre fermée et marquée vue");
+  await page.evaluate(function () { saveGame(); });
+  await page.close();
+  page = await launch(dev, base);
+  await tap(page, ".title-screen-continue"); await page.waitForTimeout(500);
+  await dismissTutorials(page);
+  await page.waitForTimeout(3200);
+  ok(!(await page.locator("#alpha-win-root .alpha-win").count()), "rechargement : « Avant de partir » ne revient pas");
+  // Fin de l'Alpha : le chapitre du Désert fini (setup), la fenêtre s'ouvre d'elle-même
+  await page.evaluate(function () {
+    ["forest", "desert"].forEach(function (c) { StoryQuestManager.getState(c).currentStep = StoryQuestManager.getChapter(c).steps.length; });
+    game.activeTab = "campement"; saveGame();
+  });
+  ok(await page.evaluate(function () { return AlphaEdition.isFinished() && !StoryQuestManager.isChapterOpen("ruins") && WorldTravel.arrive("ruins") === false; }), "Désert fini : fin de l'Alpha, Ruines fermées, voyage refusé");
+  await dismissTutorials(page);
+  ok(await visible(page, "#alpha-win-root .alpha-win", 7000) && await page.evaluate(function () { return /La route du nord attendra/.test(document.getElementById("alpha-win-root").textContent); }), "fenêtre « La route du nord attendra »");
+  await shot(page, "2_fin");
+  await page.locator("#alpha-win-root button", { hasText: "Donner mon avis" }).first().click(); await page.waitForTimeout(300);
+  await page.locator("#alpha-win-root .alpha-q-n button").nth(6).click(); await page.waitForTimeout(200);
+  ok(await page.evaluate(function () { return /N'écris ni ton nom ni ton adresse/.test(document.getElementById("alpha-win-root").textContent); }), "avis : consigne sous le champ libre (ALPHA-DATA-1)");
+  await page.locator("#alpha-win-root button", { hasText: "Valider" }).first().click(); await page.waitForTimeout(300);
+  ok(await visible(page, "#alpha-win-root button:has-text('Envoyer mon journal')", 2000), "« Le carnet est prêt » : Envoyer mon journal");
+  var dl = page.waitForEvent("download", { timeout: 5000 }).catch(function () { return null; });
+  await page.locator("#alpha-win-root button", { hasText: "Envoyer mon journal" }).first().click();
+  var file = await dl, contenu = null;
+  if (file) { try { contenu = JSON.parse(fs.readFileSync(await file.path(), "utf8")); } catch (e) { contenu = null; } }
+  ok(!!file && /^aethervale-alpha-journal-\d{4}-\d\d-\d\d\.json$/.test(file.suggestedFilename()), "journal téléchargé (sans menu de partage) : " + (file ? file.suggestedFilename() : "aucun fichier"));
+  var txt = contenu ? JSON.stringify(contenu) : "";
+  ok(!!contenu && txt.indexOf('"avis"') >= 0 && txt.indexOf("Lise") < 0, "le fichier contient l'avis et pas le nom du héros");
+  consoleClean(page);
+  await dev.close();
+}
+
 /* ---------- Lancement ---------- */
 
-var PARCOURS = { P1: P1, P2: P2, P3: P3, P4: P4, P5: P5, P6: P6, P7: P7, P8: P8, P9: P9, P10: P10, P11: P11, P12: P12, P13: P13, P14: P14, P15: P15 };
+var PARCOURS = { P1: P1, P2: P2, P3: P3, P4: P4, P5: P5, P6: P6, P7: P7, P8: P8, P9: P9, P10: P10, P11: P11, P12: P12, P13: P13, P14: P14, P15: P15, P16: P16 };
 
 (async function () {
   var srv = await serve(ROOT);
-  var base = "http://127.0.0.1:" + srv.address().port;
+  var base = "http://127.0.0.1:" + srv.address().port + (ALPHA ? "/alpha" : "");
+  console.log("Édition : " + (ALPHA ? "alpha (servie sous /alpha/)" : "jeu"));
   var browser = await chromium.launch();
   var ids = Object.keys(PARCOURS).filter(function (id) { return !ONLY.length || ONLY.indexOf(id) >= 0; });
   for (var i = 0; i < ids.length; i++) {
