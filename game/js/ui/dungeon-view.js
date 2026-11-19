@@ -90,7 +90,9 @@ function buildDungeonCardHTML(dungeon) {
 
   if (!unlocked) {
     var lockText;
-    if (reason === "data") {
+    if (window.AlphaEdition && AlphaEdition.isWorldBeyond(dungeon.worldRequired)) {
+      lockText = esc(_t("Hors de cette version Alpha.")); // v3.815.0 (CONT-2)
+    } else if (reason === "data") {
       lockText = dungeon.lockedHint ? esc(_td(dungeon.lockedHint)) : _t("Pas encore disponible");
     } else if (reason === "world") {
       var reqWorld = (window.WORLDS && WORLDS[dungeon.worldRequired]) ? _td(WORLDS[dungeon.worldRequired].name) : null;

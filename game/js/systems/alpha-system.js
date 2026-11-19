@@ -17,6 +17,13 @@ var AlphaEdition = {
     return (window.WORLDS || []).findIndex(function (w) { return w.id === id; });
   },
 
+  /* v3.815.0 : monde fermé par l'Alpha (après le Désert) — carte, donjons, renvois « s'ouvre aux… » */
+  isWorldBeyond: function (index) {
+    if (!isAlphaEdition()) return false;
+    var last = this.lastWorldIndex();
+    return last >= 0 && Number(index) > last;
+  },
+
   /* L'Alpha est finie : le dernier chapitre ouvert est terminé (desert_18). */
   isFinished: function () {
     return isAlphaEdition() && !!(window.StoryQuestManager && StoryQuestManager.isChapterCompleted(ALPHA_LAST_CHAPTER));
@@ -40,6 +47,20 @@ var AlphaEdition = {
         var last = self.lastWorldIndex();
         if (last >= 0 && this.indexOf(worldId) > last) return false;
         return arrive.apply(this, arguments);
+      };
+    }
+    // v3.815.0 (audit Alpha, FONC-4 et CONT-2) : « s'ouvre aux Ruines anciennes » devient « s'ouvre au-delà de cette Alpha »
+    if (window.WorldCaps && typeof WorldCaps.withPrep === "function") {
+      var withPrep = WorldCaps.withPrep, atAct = WorldCaps.atAct;
+      WorldCaps.withPrep = function (index) { return self.isWorldBeyond(index) ? _t("au-delà de cette Alpha") : withPrep.apply(this, arguments); };
+      if (typeof atAct === "function") WorldCaps.atAct = function (act, index) { return self.isWorldBeyond(index) ? _t("au-delà de cette Alpha") : atAct.apply(this, arguments); };
+    }
+    // Boutique d'Éclats : le palier tient à l'Ossuaire (Crypte), fermé en Alpha
+    if (window.DungeonManager && typeof DungeonManager.getShardShopLockText === "function") {
+      var lockText = DungeonManager.getShardShopLockText;
+      DungeonManager.getShardShopLockText = function (need) {
+        var d = this.getById(DUNGEON_CONFIG.shopPalierDungeonId || 4);
+        return d && self.isWorldBeyond(d.worldRequired) ? _t("Au-delà de cette Alpha") : lockText.apply(this, arguments);
       };
     }
   }

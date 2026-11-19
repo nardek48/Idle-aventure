@@ -11,6 +11,7 @@ function getWorldProgressText(index) {
   if (index === (WorldManager.worldIndex || 0)) return _t("Tu es ici");
   if (isWorldUnlocked(index)) return _t("Atteint");
   // v3.299.0 (W-1c) : plus de questline de monde — un monde s'ouvre par sa traversée.
+  if (window.AlphaEdition && AlphaEdition.isWorldBeyond(index)) return _t("Hors de cette version Alpha"); // v3.815.0 (FONC-4)
   return _t("Verrouillé");
 }
 
@@ -173,7 +174,8 @@ function buildMapWideSheetHTML() {
     h += '<button class="kbtn" type="button"' + (refusal ? ' disabled title="' + esc(refusal) + '"' : ' onclick="travelToWorldFromUI(\'' + esc(world.id) + '\')"') + '>' + _t("Y voyager") + '</button>';
   }
   h += '</div></div></div>';
-  if (!reached) return h + '<p class="mw-locked">' + esc(_t("Ce monde s'ouvre en traversant le précédent.")) + '</p>' + buildMapWideWorldsHTML(idx) + '</div>';
+  var lockedLine = window.AlphaEdition && AlphaEdition.isWorldBeyond(idx) ? _t("Hors de cette version Alpha : la suite viendra.") : _t("Ce monde s'ouvre en traversant le précédent."); // v3.815.0
+  if (!reached) return h + '<p class="mw-locked">' + esc(lockedLine) + '</p>' + buildMapWideWorldsHTML(idx) + '</div>';
 
   // Cartes : carte vivante, Petite aventure, donjon (le monde où tu es pour les départs)
   var cards = "";

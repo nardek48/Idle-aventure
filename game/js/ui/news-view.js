@@ -10,6 +10,7 @@
 /* [version, icône, texte] — la plus récente en premier. Textes littéraux : audit i18n. */
 function newsEntries() {
   var liste = [
+    ["3.815.0", "codex/codex_lore", _t("Version Alpha : une fois le Désert traversé, la carte, Quêtes › Histoire, les donjons, la Forge et le Village disent ce qui est hors de cette version, au lieu de renvoyer aux Ruines.")],
     ["3.814.0", "codex/codex_lore", _t("Version Alpha : la fenêtre « Avant de partir » dit tout ce que note le carnet et qu'on peut l'envoyer à tout moment ; « Quoi de neuf » ne montre plus que les nouveautés de l'Alpha.")],
     ["3.813.0", "codex/codex_lore", _t("Premier lancement : le tutoriel du Campement s'affiche sur l'écran même si tu lis la fin du prologue.")],
     ["3.813.0", "system/forecast", _t("Pronostic : quand il manque des pièces d'équipement, le conseil renvoie à la Boutique (Héros → Équipement).")],

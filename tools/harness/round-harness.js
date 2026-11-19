@@ -26183,6 +26183,21 @@ console.log("\n[523] Audit de sortie de l'Alpha : premier lancement, cache d'ima
     ok(alphaN.length > 0 && alphaN.length < tout && alphaN.every(function (n) { return g.newsCompare(n[0], g.ALPHA_NEWS_FROM) >= 0; }), "CONT-1 : en Alpha, Quoi de neuf ne garde que les versions depuis " + g.ALPHA_NEWS_FROM + " (" + alphaN.length + " sur " + tout + ")");
     ok(g.newsEntries().length === tout, "CONT-1 : l'édition jeu garde toute la liste");
     ok(alpha.indexOf("N'écris ni ton nom ni ton adresse.") > 0 && alpha.indexOf("et l'heure de chaque ligne") > 0 && alpha.indexOf("Rien de personnel") < 0, "DATA-1 : l'intro dit l'heure de chaque ligne, le champ libre dit de ne pas écrire son nom");
+    // v3.815.0 (FONC-4, CONT-2) : en Alpha, les mondes suivants disent « hors de cette version » ; le jeu ne change pas
+    var gIsA = g.isAlphaEdition, WC = g.WorldCaps, DM = g.DungeonManager, SQM = g.StoryQuestManager, WT = g.WorldTravel;
+    var orig = { wp: WC.withPrep, aa: WC.atAct, lt: DM.getShardShopLockText, op: SQM.isChapterOpen, ar: WT.arrive };
+    var jeuRuines = WC.withPrep(2);
+    try {
+      g.isAlphaEdition = function () { return true; };
+      g.AlphaEdition.install();
+      ok(WC.withPrep(2) === "au-delà de cette Alpha" && WC.atAct(2, 3) === "au-delà de cette Alpha" && WC.withPrep(1) !== "au-delà de cette Alpha", "FONC-4 : en Alpha, « s'ouvre aux Ruines » devient « s'ouvre au-delà de cette Alpha » (le Désert ne change pas)");
+      ok(g.getWorldProgressText(2) === "Hors de cette version Alpha", "FONC-4 : carte, monde après le Désert : « Hors de cette version Alpha »");
+      ok(DM.getShardShopLockText(3) === "Au-delà de cette Alpha", "CONT-2 : boutique d'Éclats, palier de l'Ossuaire : « Au-delà de cette Alpha »");
+      ok(/Fin de l(&#39;|')Alpha/.test(g.buildAlphaEndCardHTML()) && /openAlphaFin\(\)/.test(g.buildAlphaEndCardHTML()), "FONC-4 : Quêtes › Histoire, carte « Fin de l'Alpha » avec « Revoir la fin »");
+    } finally {
+      g.isAlphaEdition = gIsA; WC.withPrep = orig.wp; WC.atAct = orig.aa; DM.getShardShopLockText = orig.lt; SQM.isChapterOpen = orig.op; WT.arrive = orig.ar;
+    }
+    ok(WC.withPrep(2) === jeuRuines && /Ruines/.test(jeuRuines) && g.getWorldProgressText(2) === "Verrouillé", "édition jeu : renvois et carte inchangés (" + jeuRuines + ")");
   } catch (err) { ok(false, "[523] exception : " + err.message + " " + (err.stack || "").split("\n")[1]); }
 })();
 

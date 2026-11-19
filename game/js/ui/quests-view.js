@@ -860,6 +860,7 @@ function buildStoryChainHTML() {
   });
 
   if (!completedMode && storyAllDone()) h = buildStoryEndCardHTML() + h; // v3.534.0 (PLA-9) : carte du bilan en tête
+  else if (!completedMode && window.AlphaEdition && AlphaEdition.isFinished()) h = buildAlphaEndCardHTML() + h; // v3.815.0 (FONC-4)
   // v3.639.0 (atelier onglets-alleges) : prologue, ouvertures et chapitres terminés rangés en bas, dans « Déjà vécu »
   return h + (completedMode ? done : buildStoryPastHTML(done));
 }
@@ -936,6 +937,12 @@ function buildStoryEndCardHTML() {
     + '<button class="story-end-link" type="button" onclick="TowerSystem.playEpilogue(null)">' + esc(_t("Revoir l'épilogue")) + ' ▸</button></div>';
   return '<div class="story-end-card"><b>' + esc(_t("Fin de l'Histoire, pour l'instant")) + '</b><p>' + esc(_t("La suite de l'Histoire arrive bientôt.")) + '</p>'
     + '<button class="story-end-link" type="button" onclick="openStoryEndPopup()">' + esc(_t("Revoir le bilan")) + ' ▸</button></div>';
+}
+
+/* v3.815.0 (audit Alpha, FONC-4) : le Désert fini, l'Alpha le dit ici aussi ; « Revoir la fin » rouvre la fenêtre et l'avis */
+function buildAlphaEndCardHTML() {
+  return '<div class="story-end-card"><b>' + esc(_t("Fin de l'Alpha")) + '</b><p>' + esc(_t("Tu as traversé le Désert. La suite de l'Histoire n'est pas dans cette version.")) + '</p>'
+    + '<button class="story-end-link" type="button" onclick="openAlphaFin()">' + esc(_t("Revoir la fin")) + ' ▸</button></div>';
 }
 
 /* v3.639.0 (atelier onglets-alleges) : carte « Déjà vécu » en bas d'Histoire — deux lignes repliées,

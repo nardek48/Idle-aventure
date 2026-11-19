@@ -431,7 +431,7 @@ var FilRouge = {
     function obj(id, icon, titre, a, b, reason, goLabel, go) {
       if (!(b > 0) || a >= b) return;
       out.push({ id: "apres_" + id, urgent: false, icon: icon, ratio: a / b,
-        title: _t("{x} : {a} / {b}", { x: titre, a: a, b: b }), reason: _t("Après l'Histoire.") + " " + reason, goLabel: goLabel, go: go });
+        title: _t("{x} : {a} / {b}", { x: titre, a: a, b: b }), reason: (window.AlphaEdition && AlphaEdition.isFinished() ? _t("Après l'Alpha.") : _t("Après l'Histoire.")) + " " + reason, goLabel: goLabel, go: go });
     }
     function sheet(bid) {
       return function () {
